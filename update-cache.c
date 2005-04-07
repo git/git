@@ -1,3 +1,8 @@
+/*
+ * GIT - The information manager from hell
+ *
+ * Copyright (C) Linus Torvalds, 2005
+ */
 #include "cache.h"
 
 static int cache_name_compare(const char *name1, int len1, const char *name2, int len2)

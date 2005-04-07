@@ -1,3 +1,8 @@
+/*
+ * GIT - The information manager from hell
+ *
+ * Copyright (C) Linus Torvalds, 2005
+ */
 #include "cache.h"
 
 static int check_valid_sha1(unsigned char *sha1)
