@@ -5,6 +5,32 @@
  */
 #include "cache.h"
 
+static void create_directories(const char *path)
+{
+	int len = strlen(path);
+	char *buf = malloc(len + 1);
+	const char *slash = path;
+
+	while ((slash = strchr(slash+1, '/')) != NULL) {
+		len = slash - path;
+		memcpy(buf, path, len);
+		buf[len] = 0;
+		mkdir(buf, 0700);
+	}
+}
+
+static int create_file(const char *path)
+{
+	int fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+	if (fd < 0) {
+		if (errno == ENOENT) {
+			create_directories(path);
+			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+		}
+	}
+	return fd;
+}
+
 static int unpack(unsigned char *sha1)
 {
 	void *buffer;
@@ -20,12 +46,26 @@ static int unpack(unsigned char *sha1)
 		int len = strlen(buffer)+1;
 		unsigned char *sha1 = buffer + len;
 		char *path = strchr(buffer, ' ')+1;
+		char *data;
+		unsigned long filesize;
 		unsigned int mode;
+		int fd;
+
 		if (size < len + 20 || sscanf(buffer, "%o", &mode) != 1)
 			usage("corrupt 'tree' file");
 		buffer = sha1 + 20;
 		size -= len + 20;
-		printf("%o %s (%s)\n", mode, path, sha1_to_hex(sha1));
+		data = read_sha1_file(sha1, type, &filesize);
+		if (!data || strcmp(type, "blob"))
+			usage("tree file refers to bad file data");
+		fd = create_file(path);
+		if (fd < 0)
+			usage("unable to create file");
+		if (write(fd, data, filesize) != filesize)
+			usage("unable to write file");
+		fchmod(fd, mode);
+		close(fd);
+		free(data);
 	}
 	return 0;
 }
