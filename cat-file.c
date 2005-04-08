@@ -11,18 +11,42 @@ int main(int argc, char **argv)
 	char type[20];
 	void *buf;
 	unsigned long size;
-	char template[] = "temp_git_file_XXXXXX";
 	int fd;
 
-	if (argc != 2 || get_sha1_hex(argv[1], sha1))
-		usage("cat-file: cat-file <sha1>");
+	if (argc != 3 || get_sha1_hex(argv[2], sha1))
+		usage("cat-file: cat-file [-t | tagname] <sha1>");
 	buf = read_sha1_file(sha1, type, &size);
-	if (!buf)
+	if (!buf) {
+		fprintf(stderr, "cat-file %s: bad file\n", argv[2]);
 		exit(1);
-	fd = mkstemp(template);
-	if (fd < 0)
-		usage("unable to create tempfile");
-	if (write(fd, buf, size) != size)
-		strcpy(type, "bad");
-	printf("%s: %s\n", template, type);
+	}
+	if (!strcmp("-t", argv[1])) {
+		buf = type;
+		size = strlen(type);
+		type[size] = '\n';
+		size++;
+	} else if (strcmp(type, argv[1])) {
+		fprintf(stderr, "cat-file %s: bad tag\n", argv[2]);
+		exit(1);	/* bad tag */
+	}
+
+	while (size > 0) {
+		long ret = write(1, buf, size);
+		if (ret < 0) {
+			if (errno == EAGAIN)
+				continue;
+			/* Ignore epipe */
+			if (errno == EPIPE)
+				break;
+			fprintf(stderr, "cat-file: %s\n", strerror(errno));
+			exit(1);
+		}
+		if (!ret) {
+			fprintf(stderr, "cat-file: disk full?");
+			exit(1);
+		}
+		size -= ret;
+		buf += ret;
+	}
+	return 0;
 }
