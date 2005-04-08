@@ -50,6 +50,7 @@ static int remove_file_from_cache(char *path)
 		if (pos < active_nr)
 			memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos - 1) * sizeof(struct cache_entry *));
 	}
+	return 0;
 }
 
 static int add_cache_entry(struct cache_entry *ce)
@@ -250,4 +251,5 @@ int main(int argc, char **argv)
 		return 0;
 out:
 	unlink(".dircache/index.lock");
+	return 0;
 }

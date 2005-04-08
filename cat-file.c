@@ -11,7 +11,6 @@ int main(int argc, char **argv)
 	char type[20];
 	void *buf;
 	unsigned long size;
-	int fd;
 
 	if (argc != 3 || get_sha1_hex(argv[2], sha1))
 		usage("cat-file: cat-file [-t | tagname] <sha1>");

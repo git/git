@@ -89,7 +89,7 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 	z_stream stream;
 	char buffer[8192];
 	struct stat st;
-	int i, fd, ret, bytes;
+	int fd, ret, bytes;
 	void *map, *buf;
 	char *filename = sha1_file_name(sha1);
 
@@ -173,7 +173,7 @@ int write_sha1_file(char *buf, unsigned len)
 int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size)
 {
 	char *filename = sha1_file_name(sha1);
-	int i, fd;
+	int fd;
 
 	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0)
@@ -228,6 +228,7 @@ int read_cache(void)
 	if (fd < 0)
 		return (errno == ENOENT) ? 0 : error("open failed");
 
+	size = 0; // avoid gcc warning
 	map = (void *)-1;
 	if (!fstat(fd, &st)) {
 		map = NULL;

@@ -31,7 +31,7 @@ static int prepend_integer(char *buffer, unsigned val, int i)
 
 int main(int argc, char **argv)
 {
-	unsigned long size, offset, val;
+	unsigned long size, offset;
 	int i, entries = read_cache();
 	char *buffer;
 

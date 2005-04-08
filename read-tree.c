@@ -72,7 +72,6 @@ static int unpack(unsigned char *sha1)
 
 int main(int argc, char **argv)
 {
-	int fd;
 	unsigned char sha1[20];
 
 	if (argc != 2)

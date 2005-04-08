@@ -60,7 +60,6 @@ int main(int argc, char **argv)
 		struct stat st;
 		struct cache_entry *ce = active_cache[i];
 		int n, changed;
-		unsigned int mode;
 		unsigned long size;
 		char type[20];
 		void *new;
