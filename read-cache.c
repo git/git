@@ -84,6 +84,17 @@ char *sha1_file_name(unsigned char *sha1)
 	return base;
 }
 
+int check_sha1_signature(unsigned char *sha1, void *map, unsigned long size)
+{
+	unsigned char real_sha1[20];
+	SHA_CTX c;
+
+	SHA1_Init(&c);
+	SHA1_Update(&c, map, size);
+	SHA1_Final(real_sha1, &c);
+	return memcmp(sha1, real_sha1, 20) ? -1 : 0;
+}
+
 void *map_sha1_file(unsigned char *sha1, unsigned long *size)
 {
 	char *filename = sha1_file_name(sha1);
