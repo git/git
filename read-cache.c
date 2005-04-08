@@ -84,33 +84,40 @@ char *sha1_file_name(unsigned char *sha1)
 	return base;
 }
 
-void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
+void *map_sha1_file(unsigned char *sha1, unsigned long *size)
 {
-	z_stream stream;
-	char buffer[8192];
-	struct stat st;
-	int fd, ret, bytes;
-	void *map, *buf;
 	char *filename = sha1_file_name(sha1);
+	int fd = open(filename, O_RDONLY);
+	struct stat st;
+	void *map;
 
-	fd = open(filename, O_RDONLY);
 	if (fd < 0) {
 		perror(filename);
 		return NULL;
 	}
 	if (fstat(fd, &st) < 0) {
-		close(fd);
+		close(fd);  
 		return NULL;
 	}
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 	if (-1 == (int)(long)map)
 		return NULL;
+	*size = st.st_size;
+	return map;
+}
+
+void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size)
+{
+	int ret, bytes;
+	z_stream stream;
+	char buffer[8192];
+	char *buf;
 
 	/* Get the data stream */
 	memset(&stream, 0, sizeof(stream));
 	stream.next_in = map;
-	stream.avail_in = st.st_size;
+	stream.avail_in = mapsize;
 	stream.next_out = buffer;
 	stream.avail_out = sizeof(buffer);
 
@@ -118,6 +125,7 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 	ret = inflate(&stream, 0);
 	if (sscanf(buffer, "%10s %lu", type, size) != 2)
 		return NULL;
+
 	bytes = strlen(buffer) + 1;
 	buf = malloc(*size);
 	if (!buf)
@@ -133,6 +141,20 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 	}
 	inflateEnd(&stream);
 	return buf;
+}
+
+void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
+{
+	unsigned long mapsize;
+	void *map, *buf;
+
+	map = map_sha1_file(sha1, &mapsize);
+	if (map) {
+		buf = unpack_sha1_file(map, mapsize, type, size);
+		munmap(map, mapsize);
+		return buf;
+	}
+	return NULL;
 }
 
 int write_sha1_file(char *buf, unsigned len)
