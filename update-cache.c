@@ -5,44 +5,6 @@
  */
 #include "cache.h"
 
-static int remove_file_from_cache(char *path)
-{
-	int pos = cache_name_pos(path, strlen(path));
-	if (pos < 0) {
-		pos = -pos-1;
-		active_nr--;
-		if (pos < active_nr)
-			memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos - 1) * sizeof(struct cache_entry *));
-	}
-	return 0;
-}
-
-static int add_cache_entry(struct cache_entry *ce)
-{
-	int pos;
-
-	pos = cache_name_pos(ce->name, ce->namelen);
-
-	/* existing match? Just replace it */
-	if (pos < 0) {
-		active_cache[-pos-1] = ce;
-		return 0;
-	}
-
-	/* Make sure the array is big enough .. */
-	if (active_nr == active_alloc) {
-		active_alloc = alloc_nr(active_alloc);
-		active_cache = realloc(active_cache, active_alloc * sizeof(struct cache_entry *));
-	}
-
-	/* Add it in.. */
-	active_nr++;
-	if (active_nr > pos)
-		memmove(active_cache + pos + 1, active_cache + pos, (active_nr - pos - 1) * sizeof(ce));
-	active_cache[pos] = ce;
-	return 0;
-}
-
 static int index_fd(const char *path, int namelen, struct cache_entry *ce, int fd, struct stat *st)
 {
 	z_stream stream;
@@ -125,37 +87,6 @@ static int add_file_to_cache(char *path)
 
 	return add_cache_entry(ce);
 }
-
-static int write_cache(int newfd, struct cache_entry **cache, int entries)
-{
-	SHA_CTX c;
-	struct cache_header hdr;
-	int i;
-
-	hdr.signature = CACHE_SIGNATURE;
-	hdr.version = 1;
-	hdr.entries = entries;
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, &hdr, offsetof(struct cache_header, sha1));
-	for (i = 0; i < entries; i++) {
-		struct cache_entry *ce = cache[i];
-		int size = ce_size(ce);
-		SHA1_Update(&c, ce, size);
-	}
-	SHA1_Final(hdr.sha1, &c);
-
-	if (write(newfd, &hdr, sizeof(hdr)) != sizeof(hdr))
-		return -1;
-
-	for (i = 0; i < entries; i++) {
-		struct cache_entry *ce = cache[i];
-		int size = ce_size(ce);
-		if (write(newfd, ce, size) != size)
-			return -1;
-	}
-	return 0;
-}		
 
 /*
  * We fundamentally don't like some paths: we don't want

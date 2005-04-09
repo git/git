@@ -73,7 +73,10 @@ unsigned int active_nr, active_alloc;
 
 /* Initialize and use the cache information */
 extern int read_cache(void);
+extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int cache_name_pos(const char *name, int namelen);
+extern int add_cache_entry(struct cache_entry *ce);
+extern int remove_file_from_cache(char *path);
 extern int cache_match_stat(struct cache_entry *ce, struct stat *st);
 
 #define MTIME_CHANGED	0x0001
@@ -97,8 +100,8 @@ extern int write_sha1_file(char *buf, unsigned len);
 extern int check_sha1_signature(unsigned char *sha1, void *buf, unsigned long size);
 
 /* Convert to/from hex/sha1 representation */
-extern int get_sha1_hex(char *hex, unsigned char *sha1);
-extern char *sha1_to_hex(unsigned char *sha1);	/* static buffer! */
+extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 
 /* General helper functions */
 extern void usage(const char *err);
