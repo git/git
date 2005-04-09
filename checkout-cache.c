@@ -45,13 +45,13 @@ static int write_entry(struct cache_entry *ce)
 
 	new = read_sha1_file(ce->sha1, "blob", &size);
 	if (!new) {
-		fprintf(stderr, "checkout-cache: unable to read sha1 file of %s (%s)",
+		fprintf(stderr, "checkout-cache: unable to read sha1 file of %s (%s)\n",
 			ce->name, sha1_to_hex(ce->sha1));
 		return -1;
 	}
 	fd = open(ce->name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (fd < 0) {
-		fprintf(stderr, "checkout-cache: unable to create %s (%s)",
+		fprintf(stderr, "checkout-cache: unable to create %s (%s)\n",
 			ce->name, strerror(errno));
 		free(new);
 		return -1;
@@ -61,7 +61,7 @@ static int write_entry(struct cache_entry *ce)
 	free(new);
 	if (wrote == size)
 		return 0;
-	fprintf(stderr, "checkout-cache: unable to write %s", ce->name);
+	fprintf(stderr, "checkout-cache: unable to write %s\n", ce->name);
 	return -1;
 }
 
@@ -72,11 +72,9 @@ static int checkout_entry(struct cache_entry *ce)
 
 		if (!stat(ce->name, &st)) {
 			unsigned changed = cache_match_stat(ce, &st);
-			if (!changed)
-				return 0;
-			if (!quiet)
-				fprintf(stderr, "checkout-cache: %s already exists", ce->name);
-			return -1;
+			if (changed && !quiet)
+				fprintf(stderr, "checkout-cache: %s already exists\n", ce->name);
+			return 0;
 		}
 	}
 	return write_entry(ce);
@@ -87,7 +85,7 @@ static int checkout_file(const char *name)
 	int pos = cache_name_pos(name, strlen(name));
 	if (pos < 0) {
 		if (!quiet)
-			fprintf(stderr, "checkout-cache: %s is not in the cache", name);
+			fprintf(stderr, "checkout-cache: %s is not in the cache\n", name);
 		return -1;
 	}
 	return checkout_entry(active_cache[pos]);
@@ -110,7 +108,7 @@ int main(int argc, char **argv)
 	int i, force_filename = 0;
 
 	if (read_cache() < 0) {
-		fprintf(stderr, "Invalid cache");
+		fprintf(stderr, "Invalid cache\n");
 		exit(1);
 	}
 
