@@ -222,6 +222,29 @@ static int error(const char * string)
 	return -1;
 }
 
+int cache_match_stat(struct cache_entry *ce, struct stat *st)
+{
+	unsigned int changed = 0;
+
+	if (ce->mtime.sec  != (unsigned int)st->st_mtim.tv_sec ||
+	    ce->mtime.nsec != (unsigned int)st->st_mtim.tv_nsec)
+		changed |= MTIME_CHANGED;
+	if (ce->ctime.sec  != (unsigned int)st->st_ctim.tv_sec ||
+	    ce->ctime.nsec != (unsigned int)st->st_ctim.tv_nsec)
+		changed |= CTIME_CHANGED;
+	if (ce->st_uid != (unsigned int)st->st_uid ||
+	    ce->st_gid != (unsigned int)st->st_gid)
+		changed |= OWNER_CHANGED;
+	if (ce->st_mode != (unsigned int)st->st_mode)
+		changed |= MODE_CHANGED;
+	if (ce->st_dev != (unsigned int)st->st_dev ||
+	    ce->st_ino != (unsigned int)st->st_ino)
+		changed |= INODE_CHANGED;
+	if (ce->st_size != (unsigned int)st->st_size)
+		changed |= DATA_CHANGED;
+	return changed;
+}
+
 static int cache_name_compare(const char *name1, int len1, const char *name2, int len2)
 {
 	int len = len1 < len2 ? len1 : len2;
