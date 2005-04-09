@@ -35,6 +35,7 @@ static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
 
 static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 {
+	int parents;
 	unsigned char tree_sha1[20];
 	unsigned char parent_sha1[20];
 
@@ -44,12 +45,16 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 		return -1;
 	mark_needs_sha1(sha1, "tree", tree_sha1);
 	data += 5 + 40 + 1;	/* "tree " + <hex sha1> + '\n' */
+	parents = 0;
 	while (!memcmp(data, "parent ", 7)) {
 		if (get_sha1_hex(data + 7, parent_sha1) < 0)
 			return -1;
 		mark_needs_sha1(sha1, "commit", parent_sha1);
 		data += 7 + 40 + 1; 	/* "parent " + <hex sha1> + '\n' */
+		parents++;
 	}
+	if (!parents)
+		printf("root: %s\n", sha1_to_hex(sha1));
 	return 0;
 }
 
