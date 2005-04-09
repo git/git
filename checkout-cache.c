@@ -36,6 +36,34 @@
 
 static int force = 0, quiet = 0;
 
+static void create_directories(const char *path)
+{
+	int len = strlen(path);
+	char *buf = malloc(len + 1);
+	const char *slash = path;
+
+	while ((slash = strchr(slash+1, '/')) != NULL) {
+		len = slash - path;
+		memcpy(buf, path, len);
+		buf[len] = 0;
+		mkdir(buf, 0700);
+	}
+}
+
+static int create_file(const char *path, unsigned int mode)
+{
+	int fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+	if (fd < 0) {
+		if (errno == ENOENT) {
+			create_directories(path);
+			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+		}
+	}
+	if (fd >= 0)
+		fchmod(fd, mode);
+	return fd;
+}
+
 static int write_entry(struct cache_entry *ce)
 {
 	int fd;
@@ -50,7 +78,7 @@ static int write_entry(struct cache_entry *ce)
 			ce->name, sha1_to_hex(ce->sha1));
 		return -1;
 	}
-	fd = open(ce->name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	fd = create_file(ce->name, ce->st_mode);
 	if (fd < 0) {
 		fprintf(stderr, "checkout-cache: unable to create %s (%s)\n",
 			ce->name, strerror(errno));
