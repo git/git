@@ -4,16 +4,12 @@
 #include <dirent.h>
 
 /*
- * These three functions should build up a graph in memory about
+ * These two functions should build up a graph in memory about
  * what objects we've referenced, and found, and types..
  *
  * Right now we don't do that kind of reachability checking. Yet.
  */
-static void fsck_tree(void *data, unsigned long size)
-{
-}
-
-static void fsck_commit(void *data, unsigned long size)
+static void mark_needs_sha1(unsigned char *parent, const char * type, unsigned char *child)
 {
 }
 
@@ -22,15 +18,50 @@ static int mark_sha1_seen(unsigned char *sha1, char *tag)
 	return 0;
 }
 
+static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
+{
+	while (size) {
+		int len = 1+strlen(data);
+		unsigned char *file_sha1 = data + len;
+		char *path = strchr(data, ' ');
+		if (size < len + 20 || !path)
+			return -1;
+		data += len + 20;
+		size -= len + 20;
+		mark_needs_sha1(sha1, "blob", file_sha1);
+	}
+}
+
+static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
+{
+	unsigned char tree_sha1[20];
+	unsigned char parent_sha1[20];
+
+	if (memcmp(data, "tree ", 5))
+		return -1;
+	if (get_sha1_hex(data + 5, tree_sha1) < 0)
+		return -1;
+	mark_needs_sha1(sha1, "tree", tree_sha1);
+	data += 5 + 40 + 1;	/* "tree " + <hex sha1> + '\n' */
+	while (!memcmp(data, "parent ", 7)) {
+		if (get_sha1_hex(data + 7, parent_sha1) < 0)
+			return -1;
+		mark_needs_sha1(sha1, "commit", parent_sha1);
+		data += 7 + 40 + 1; 	/* "parent " + <hex sha1> + '\n' */
+	}
+}
+
 static int fsck_entry(unsigned char *sha1, char *tag, void *data, unsigned long size)
 {
-	if (!strcmp(tag, "blob")) 
+	if (!strcmp(tag, "blob")) {
 		/* Nothing to check */;
-	else if (!strcmp(tag, "tree"))
-		fsck_tree(data, size);
-	else if (!strcmp(tag, "commit"))
-		fsck_commit(data, size);
-	else
+	} else if (!strcmp(tag, "tree")) {
+		if (fsck_tree(sha1, data, size) < 0)
+			return -1;
+	} else if (!strcmp(tag, "commit")) {
+		if (fsck_commit(sha1, data, size) < 0)
+			return -1;
+	} else
 		return -1;
 	return mark_sha1_seen(sha1, tag);
 }
