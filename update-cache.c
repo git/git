@@ -5,42 +5,6 @@
  */
 #include "cache.h"
 
-static int cache_name_compare(const char *name1, int len1, const char *name2, int len2)
-{
-	int len = len1 < len2 ? len1 : len2;
-	int cmp;
-
-	cmp = memcmp(name1, name2, len);
-	if (cmp)
-		return cmp;
-	if (len1 < len2)
-		return -1;
-	if (len1 > len2)
-		return 1;
-	return 0;
-}
-
-static int cache_name_pos(const char *name, int namelen)
-{
-	int first, last;
-
-	first = 0;
-	last = active_nr;
-	while (last > first) {
-		int next = (last + first) >> 1;
-		struct cache_entry *ce = active_cache[next];
-		int cmp = cache_name_compare(name, namelen, ce->name, ce->namelen);
-		if (!cmp)
-			return -next-1;
-		if (cmp < 0) {
-			last = next;
-			continue;
-		}
-		first = next+1;
-	}
-	return first;
-}
-
 static int remove_file_from_cache(char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));

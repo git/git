@@ -73,6 +73,7 @@ unsigned int active_nr, active_alloc;
 
 /* Initialize the cache information */
 extern int read_cache(void);
+extern int cache_name_pos(const char *name, int namelen);
 
 /* Return a statically allocated filename matching the sha1 signature */
 extern char *sha1_file_name(unsigned char *sha1);
