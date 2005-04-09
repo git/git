@@ -245,7 +245,7 @@ int cache_match_stat(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-static int cache_name_compare(const char *name1, int len1, const char *name2, int len2)
+int cache_name_compare(const char *name1, int len1, const char *name2, int len2)
 {
 	int len = len1 < len2 ? len1 : len2;
 	int cmp;
