@@ -42,9 +42,10 @@ static int write_entry(struct cache_entry *ce)
 	void *new;
 	unsigned long size;
 	long wrote;
+	char type[20];
 
-	new = read_sha1_file(ce->sha1, "blob", &size);
-	if (!new) {
+	new = read_sha1_file(ce->sha1, type, &size);
+	if (!new || strcmp(type, "blob")) {
 		fprintf(stderr, "checkout-cache: unable to read sha1 file of %s (%s)\n",
 			ce->name, sha1_to_hex(ce->sha1));
 		return -1;
