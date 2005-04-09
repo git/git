@@ -20,6 +20,8 @@ static int mark_sha1_seen(unsigned char *sha1, char *tag)
 
 static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
 {
+	int warn_old_tree = 1;
+
 	while (size) {
 		int len = 1+strlen(data);
 		unsigned char *file_sha1 = data + len;
@@ -27,6 +29,13 @@ static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
 		unsigned int mode;
 		if (size < len + 20 || !path || sscanf(data, "%o", &mode) != 1)
 			return -1;
+
+		/* Warn about trees that don't do the recursive thing.. */
+		if (warn_old_tree && strchr(path, '/')) {
+			fprintf(stderr, "warning: fsck-cache: tree %s has full pathnames in it\n", sha1_to_hex(sha1));
+			warn_old_tree = 0;
+		}
+
 		data += len + 20;
 		size -= len + 20;
 		mark_needs_sha1(sha1, S_ISDIR(mode) ? "tree" : "blob", file_sha1);
