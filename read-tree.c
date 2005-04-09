@@ -5,22 +5,23 @@
  */
 #include "cache.h"
 
-static int read_one_entry(unsigned char *sha1, const char *pathname, unsigned mode)
+static int read_one_entry(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode)
 {
 	int len = strlen(pathname);
-	unsigned int size = cache_entry_size(len);
+	unsigned int size = cache_entry_size(baselen + len);
 	struct cache_entry *ce = malloc(size);
 
 	memset(ce, 0, size);
 
 	ce->st_mode = mode;
-	ce->namelen = len;
-	memcpy(ce->name, pathname, len+1);
+	ce->namelen = baselen + len;
+	memcpy(ce->name, base, baselen);
+	memcpy(ce->name + baselen, pathname, len+1);
 	memcpy(ce->sha1, sha1, 20);
 	return add_cache_entry(ce);
 }
 
-static int read_tree(unsigned char *sha1)
+static int read_tree(unsigned char *sha1, const char *base, int baselen)
 {
 	void *buffer;
 	unsigned long size;
@@ -43,7 +44,20 @@ static int read_tree(unsigned char *sha1)
 		buffer = sha1 + 20;
 		size -= len + 20;
 
-		if (read_one_entry(sha1, path, mode) < 0)
+		if (S_ISDIR(mode)) {
+			int retval;
+			int pathlen = strlen(path);
+			char *newbase = malloc(baselen + 1 + pathlen);
+			memcpy(newbase, base, baselen);
+			memcpy(newbase + baselen, path, pathlen);
+			newbase[baselen + pathlen] = '/';
+			retval = read_tree(sha1, newbase, baselen + pathlen + 1);
+			free(newbase);
+			if (retval)
+				return -1;
+			continue;
+		}
+		if (read_one_entry(sha1, base, baselen, path, mode) < 0)
 			return -1;
 	}
 	return 0;
@@ -77,7 +91,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "read-tree [-m] <sha1>\n");
 			goto out;
 		}
-		if (read_tree(sha1) < 0) {
+		if (read_tree(sha1, "", 0) < 0) {
 			fprintf(stderr, "failed to unpack tree object %s\n", arg);
 			goto out;
 		}

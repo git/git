@@ -24,11 +24,12 @@ static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
 		int len = 1+strlen(data);
 		unsigned char *file_sha1 = data + len;
 		char *path = strchr(data, ' ');
-		if (size < len + 20 || !path)
+		unsigned int mode;
+		if (size < len + 20 || !path || sscanf(data, "%o", &mode) != 1)
 			return -1;
 		data += len + 20;
 		size -= len + 20;
-		mark_needs_sha1(sha1, "blob", file_sha1);
+		mark_needs_sha1(sha1, S_ISDIR(mode) ? "tree" : "blob", file_sha1);
 	}
 	return 0;
 }
