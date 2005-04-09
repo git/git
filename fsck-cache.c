@@ -30,6 +30,7 @@ static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
 		size -= len + 20;
 		mark_needs_sha1(sha1, "blob", file_sha1);
 	}
+	return 0;
 }
 
 static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
@@ -49,6 +50,7 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 		mark_needs_sha1(sha1, "commit", parent_sha1);
 		data += 7 + 40 + 1; 	/* "parent " + <hex sha1> + '\n' */
 	}
+	return 0;
 }
 
 static int fsck_entry(unsigned char *sha1, char *tag, void *data, unsigned long size)
