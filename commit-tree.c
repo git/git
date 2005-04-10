@@ -111,6 +111,7 @@ int main(int argc, char **argv)
 	int parents = 0;
 	unsigned char tree_sha1[20];
 	unsigned char parent_sha1[MAXPARENT][20];
+	unsigned char commit_sha1[20];
 	char *gecos, *realgecos;
 	char *email, realemail[1000];
 	char *date, *realdate;
@@ -172,6 +173,7 @@ int main(int argc, char **argv)
 
 	finish_buffer("commit ", &buffer, &size);
 
-	write_sha1_file(buffer, size);
+	write_sha1_file(buffer, size, commit_sha1);
+	printf("%s\n", sha1_to_hex(commit_sha1));
 	return 0;
 }

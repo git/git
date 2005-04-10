@@ -168,7 +168,7 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 	return NULL;
 }
 
-int write_sha1_file(char *buf, unsigned len)
+int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 {
 	int size;
 	char *compressed;
@@ -199,7 +199,8 @@ int write_sha1_file(char *buf, unsigned len)
 
 	if (write_sha1_buffer(sha1, compressed, size) < 0)
 		return -1;
-	printf("%s\n", sha1_to_hex(sha1));
+	if (returnsha1)
+		memcpy(returnsha1, sha1, 20);
 	return 0;
 }
 

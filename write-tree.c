@@ -29,35 +29,67 @@ static int prepend_integer(char *buffer, unsigned val, int i)
 
 #define ORIG_OFFSET (40)	/* Enough space to add the header of "tree <size>\0" */
 
-int main(int argc, char **argv)
+static int write_tree(struct cache_entry **cachep, int maxentries, const char *base, int baselen, unsigned char *returnsha1)
 {
+	unsigned char subdir_sha1[20];
 	unsigned long size, offset;
-	int i, entries = read_cache();
 	char *buffer;
+	int i, nr;
 
-	if (entries <= 0) {
-		fprintf(stderr, "No file-cache to create a tree of\n");
-		exit(1);
-	}
-
-	/* Guess at an initial size */
-	size = entries * 40 + 400;
+	/* Guess at some random initial size */
+	size = 8192;
 	buffer = malloc(size);
 	offset = ORIG_OFFSET;
 
-	for (i = 0; i < entries; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (check_valid_sha1(ce->sha1) < 0)
+	nr = 0;
+	do {
+		struct cache_entry *ce = cachep[nr];
+		const char *pathname = ce->name, *filename, *dirname;
+		int pathlen = ce->namelen, entrylen;
+		unsigned char *sha1;
+		unsigned int mode;
+
+		/* Did we hit the end of the directory? Return how many we wrote */
+		if (baselen >= pathlen || memcmp(base, pathname, baselen))
+			break;
+
+		sha1 = ce->sha1;
+		mode = ce->st_mode;
+
+		/* Do we have _further_ subdirectories? */
+		filename = pathname + baselen;
+		dirname = strchr(filename, '/');
+		if (dirname) {
+			int subdir_written;
+
+			subdir_written = write_tree(cachep + nr, maxentries - nr, pathname, dirname-pathname+1, subdir_sha1);
+			fprintf(stderr, "Wrote %d entries from subdirectory '%.*s'\n", 
+				subdir_written, dirname-pathname, pathname);
+			nr += subdir_written;
+
+			/* Now we need to write out the directory entry into this tree.. */
+			mode = S_IFDIR;
+			pathlen = dirname - pathname;
+
+			/* ..but the directory entry doesn't count towards the total count */
+			nr--;
+			sha1 = subdir_sha1;
+		}
+
+		if (check_valid_sha1(sha1) < 0)
 			exit(1);
-		if (offset + ce->namelen + 60 > size) {
-			size = alloc_nr(offset + ce->namelen + 60);
+
+		entrylen = pathlen - baselen;
+		if (offset + entrylen + 100 > size) {
+			size = alloc_nr(offset + entrylen + 100);
 			buffer = realloc(buffer, size);
 		}
-		offset += sprintf(buffer + offset, "%o %s", ce->st_mode, ce->name);
+		offset += sprintf(buffer + offset, "%o %.*s", mode, entrylen, filename);
 		buffer[offset++] = 0;
-		memcpy(buffer + offset, ce->sha1, 20);
+		memcpy(buffer + offset, sha1, 20);
 		offset += 20;
-	}
+		nr++;
+	} while (nr < maxentries);
 
 	i = prepend_integer(buffer, offset - ORIG_OFFSET, ORIG_OFFSET);
 	i -= 5;
@@ -66,6 +98,19 @@ int main(int argc, char **argv)
 	buffer += i;
 	offset -= i;
 
-	write_sha1_file(buffer, offset);
+	write_sha1_file(buffer, offset, returnsha1);
+	return nr;
+}
+
+int main(int argc, char **argv)
+{
+	int entries = read_cache();
+	unsigned char sha1[20];
+
+	if (entries <= 0)
+		usage("no cache contents to write");
+	if (write_tree(active_cache, entries, "", 0, sha1) != entries)
+		usage("write-tree: internal error");
+	printf("%s\n", sha1_to_hex(sha1));
 	return 0;
 }
