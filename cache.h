@@ -75,7 +75,7 @@ unsigned int active_nr, active_alloc;
 extern int read_cache(void);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int cache_name_pos(const char *name, int namelen);
-extern int add_cache_entry(struct cache_entry *ce);
+extern int add_cache_entry(struct cache_entry *ce, int ok_to_add);
 extern int remove_file_from_cache(char *path);
 extern int cache_match_stat(struct cache_entry *ce, struct stat *st);
 
@@ -104,7 +104,7 @@ extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 
 /* General helper functions */
-extern void usage(const char *err);
+extern void usage(const char *err, ...);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
 
 #endif /* CACHE_H */

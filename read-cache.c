@@ -9,9 +9,13 @@ const char *sha1_file_directory = NULL;
 struct cache_entry **active_cache = NULL;
 unsigned int active_nr = 0, active_alloc = 0;
 
-void usage(const char *err)
+void usage(const char *err, ...)
 {
-	fprintf(stderr, "read-tree: %s\n", err);
+	va_list args;
+
+	va_start(args, err);
+	vfprintf(stderr, err, args);
+	va_end(args);
 	exit(1);
 }
 
@@ -294,7 +298,7 @@ int remove_file_from_cache(char *path)
 	return 0;
 }
 
-int add_cache_entry(struct cache_entry *ce)
+int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 {
 	int pos;
 
@@ -305,6 +309,9 @@ int add_cache_entry(struct cache_entry *ce)
 		active_cache[-pos-1] = ce;
 		return 0;
 	}
+
+	if (!ok_to_add)
+		return -1;
 
 	/* Make sure the array is big enough .. */
 	if (active_nr == active_alloc) {

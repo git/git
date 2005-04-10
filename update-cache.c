@@ -5,6 +5,15 @@
  */
 #include "cache.h"
 
+/*
+ * Default to not allowing changes to the list of files. The
+ * tool doesn't actually care, but this makes it harder to add
+ * files to the revision control by mistake by doing something
+ * like "update-cache *" and suddenly having all the object
+ * files be revision controlled.
+ */
+static int allow_add = 0, allow_remove = 0;
+
 static int index_fd(const char *path, int namelen, struct cache_entry *ce, int fd, struct stat *st)
 {
 	z_stream stream;
@@ -57,8 +66,10 @@ static int add_file_to_cache(char *path)
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (errno == ENOENT)
-			return remove_file_from_cache(path);
+		if (errno == ENOENT) {
+			if (allow_remove)
+				return remove_file_from_cache(path);
+		}
 		return -1;
 	}
 	if (fstat(fd, &st) < 0) {
@@ -85,7 +96,29 @@ static int add_file_to_cache(char *path)
 	if (index_fd(path, namelen, ce, fd, &st) < 0)
 		return -1;
 
-	return add_cache_entry(ce);
+	return add_cache_entry(ce, allow_add);
+}
+
+static void refresh_entry(struct cache_entry *ce)
+{
+	/*
+	 * This is really not the right way to do it, but
+	 * add_file_to_cache() does do the right thing.
+	 *
+	 * We should really just update the cache
+	 * entry in-place, I think. With this approach we
+	 * end up allocating a new one, searching for where
+	 * to insert it etc etc crud.
+	 */
+	add_file_to_cache(ce->name);
+}
+
+static void refresh_cache(void)
+{
+	int i;
+
+	for (i = 0; i < active_nr; i++)
+		refresh_entry(active_cache[i]);
 }
 
 /*
@@ -119,6 +152,7 @@ inside:
 int main(int argc, char **argv)
 {
 	int i, newfd, entries;
+	int allow_options = 1;
 
 	entries = read_cache();
 	if (entries < 0) {
@@ -133,6 +167,26 @@ int main(int argc, char **argv)
 	}
 	for (i = 1 ; i < argc; i++) {
 		char *path = argv[i];
+
+		if (allow_options && *path == '-') {
+			if (!strcmp(path, "--")) {
+				allow_options = 0;
+				continue;
+			}
+			if (!strcmp(path, "--add")) {
+				allow_add = 1;
+				continue;
+			}
+			if (!strcmp(path, "--remove")) {
+				allow_remove = 1;
+				continue;
+			}
+			if (!strcmp(path, "--refresh")) {
+				refresh_cache();
+				continue;
+			}
+			usage("unknown option %s", path);
+		}
 		if (!verify_path(path)) {
 			fprintf(stderr, "Ignoring path %s\n", argv[i]);
 			continue;

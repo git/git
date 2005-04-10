@@ -63,8 +63,6 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 			int subdir_written;
 
 			subdir_written = write_tree(cachep + nr, maxentries - nr, pathname, dirname-pathname+1, subdir_sha1);
-			fprintf(stderr, "Wrote %d entries from subdirectory '%.*s'\n", 
-				subdir_written, dirname-pathname, pathname);
 			nr += subdir_written;
 
 			/* Now we need to write out the directory entry into this tree.. */

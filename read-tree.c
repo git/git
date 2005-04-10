@@ -18,7 +18,7 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
 	memcpy(ce->sha1, sha1, 20);
-	return add_cache_entry(ce);
+	return add_cache_entry(ce, 1);
 }
 
 static int read_tree(unsigned char *sha1, const char *base, int baselen)
