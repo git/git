@@ -2,7 +2,7 @@
 
 static int recursive = 0;
 
-static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *src, const char *dst);
+static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *base);
 
 static void update_tree_entry(void **bufp, unsigned long *sizep)
 {
@@ -36,12 +36,13 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 	printf("%s%o %s %s%s%c", prefix, mode, sha1_to_hex(sha1), base, path, 0);
 }
 
-static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *src, const char *dst)
+static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
 {
 	unsigned mode1, mode2;
 	const char *path1, *path2;
 	const unsigned char *sha1, *sha2;
 	int cmp, pathlen1, pathlen2;
+	char old_sha1_hex[50];
 
 	sha1 = extract(tree1, size1, &path1, &mode1);
 	sha2 = extract(tree2, size2, &path2, &mode2);
@@ -50,48 +51,46 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	pathlen2 = strlen(path2);
 	cmp = cache_name_compare(path1, pathlen1, path2, pathlen2);
 	if (cmp < 0) {
-		show_file("-", tree1, size1, src);
+		show_file("-", tree1, size1, base);
 		return -1;
 	}
 	if (cmp > 0) {
-		show_file("+", tree2, size2, dst);
+		show_file("+", tree2, size2, base);
 		return 1;
 	}
 	if (!memcmp(sha1, sha2, 20) && mode1 == mode2)
 		return 0;
 	if (recursive && S_ISDIR(mode1) && S_ISDIR(mode2)) {
-		int srclen = strlen(src);
-		int dstlen = strlen(dst);
-		char *srcbase = malloc(srclen + pathlen1 + 2);
-		char *dstbase = malloc(srclen + pathlen1 + 2);
-		memcpy(srcbase, src, srclen);
-		memcpy(srcbase + srclen, path1, pathlen1);
-		memcpy(srcbase + srclen + pathlen1, "/", 2);
-		memcpy(dstbase, dst, dstlen);
-		memcpy(dstbase + dstlen, path2, pathlen2);
-		memcpy(dstbase + dstlen + pathlen2, "/", 2);
-		return diff_tree_sha1(sha1, sha2, srcbase, dstbase);
+		int retval;
+		int baselen = strlen(base);
+		char *newbase = malloc(baselen + pathlen1 + 2);
+		memcpy(newbase, base, baselen);
+		memcpy(newbase + baselen, path1, pathlen1);
+		memcpy(newbase + baselen + pathlen1, "/", 2);
+		retval = diff_tree_sha1(sha1, sha2, newbase);
+		free(newbase);
+		return retval;
 	}
 
-	show_file("<", tree1, size1, src);
-	show_file(">", tree2, size2, dst);
+	strcpy(old_sha1_hex, sha1_to_hex(sha1));
+	printf("*%o->%o %s->%s %s%s%c", mode1, mode2, old_sha1_hex, sha1_to_hex(sha2), base, path1, 0);
 	return 0;
 }
 
-static int diff_tree(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *src, const char *dst)
+static int diff_tree(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
 {
 	while (size1 | size2) {
 		if (!size1) {
-			show_file("+", tree2, size2, dst);
+			show_file("+", tree2, size2, base);
 			update_tree_entry(&tree2, &size2);
 			continue;
 		}
 		if (!size2) {
-			show_file("-", tree1, size1, src);
+			show_file("-", tree1, size1, base);
 			update_tree_entry(&tree1, &size1);
 			continue;
 		}
-		switch (compare_tree_entry(tree1, size1, tree2, size2, src, dst)) {
+		switch (compare_tree_entry(tree1, size1, tree2, size2, base)) {
 		case -1:
 			update_tree_entry(&tree1, &size1);
 			continue;
@@ -107,7 +106,7 @@ static int diff_tree(void *tree1, unsigned long size1, void *tree2, unsigned lon
 	return 0;
 }
 
-static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *src, const char *dst)
+static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *base)
 {
 	void *tree1, *tree2;
 	unsigned long size1, size2;
@@ -120,7 +119,7 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	tree2 = read_sha1_file(new, type, &size2);
 	if (!tree2 || strcmp(type, "tree"))
 		usage("unable to read destination tree");
-	retval = diff_tree(tree1, size1, tree2, size2, src, dst);
+	retval = diff_tree(tree1, size1, tree2, size2, base);
 	free(tree1);
 	free(tree2);
 	return retval;
@@ -143,5 +142,5 @@ int main(int argc, char **argv)
 
 	if (argc != 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
 		usage("diff-tree <tree sha1> <tree sha1>");
-	return diff_tree_sha1(old, new, "", "");
+	return diff_tree_sha1(old, new, "");
 }
