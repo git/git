@@ -63,7 +63,7 @@ char * sha1_to_hex(const unsigned char *sha1)
  * careful about using it. Do a "strdup()" if you need to save the
  * filename.
  */
-char *sha1_file_name(unsigned char *sha1)
+char *sha1_file_name(const unsigned char *sha1)
 {
 	int i;
 	static char *name, *base;
@@ -99,7 +99,7 @@ int check_sha1_signature(unsigned char *sha1, void *map, unsigned long size)
 	return memcmp(sha1, real_sha1, 20) ? -1 : 0;
 }
 
-void *map_sha1_file(unsigned char *sha1, unsigned long *size)
+void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
 	char *filename = sha1_file_name(sha1);
 	int fd = open(filename, O_RDONLY);
@@ -158,7 +158,7 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return buf;
 }
 
-void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
+void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
@@ -208,7 +208,7 @@ int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 	return 0;
 }
 
-int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size)
+int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 {
 	char *filename = sha1_file_name(sha1);
 	int fd;
