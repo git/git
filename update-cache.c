@@ -123,7 +123,7 @@ static int match_data(int fd, void *buffer, unsigned long size)
 	return 0;
 }
 
-static int compare_data(struct cache_entry *ce)
+static int compare_data(struct cache_entry *ce, unsigned long expected_size)
 {
 	int match = -1;
 	int fd = open(ce->name, O_RDONLY);
@@ -135,7 +135,7 @@ static int compare_data(struct cache_entry *ce)
 
 		buffer = read_sha1_file(ce->sha1, type, &size);
 		if (buffer) {
-			if (size == ce->st_size && !strcmp(type, "blob"))
+			if (size == expected_size && !strcmp(type, "blob"))
 				match = match_data(fd, buffer, size);
 			free(buffer);
 		}
@@ -169,19 +169,20 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 		return ce;
 
 	/*
-	 * If the length has changed, there's no point in trying
+	 * If the mode has changed, there's no point in trying
 	 * to refresh the entry - it's not going to match
 	 */
-	if (changed & (DATA_CHANGED | MODE_CHANGED))
+	if (changed & MODE_CHANGED)
 		return NULL;
 
-	if (compare_data(ce))
+	if (compare_data(ce, st.st_size))
 		return NULL;
 
 	size = ce_size(ce);
 	updated = malloc(size);
 	memcpy(updated, ce, size);
 	fill_stat_cache_info(updated, &st);
+	updated->st_size = st.st_size;
 	return updated;
 }
 
