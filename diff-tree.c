@@ -28,11 +28,51 @@ static const unsigned char *extract(void *tree, unsigned long size, const char *
 	return sha1;
 }
 
+static char *malloc_base(const char *base, const char *path, int pathlen)
+{
+	int baselen = strlen(base);
+	char *newbase = malloc(baselen + pathlen + 2);
+	memcpy(newbase, base, baselen);
+	memcpy(newbase + baselen, path, pathlen);
+	memcpy(newbase + baselen + pathlen, "/", 2);
+	return newbase;
+}
+
+static void show_file(const char *prefix, void *tree, unsigned long size, const char *base);
+
+/* A whole sub-tree went away or appeared */
+static void show_tree(const char *prefix, void *tree, unsigned long size, const char *base)
+{
+	while (size) {
+		show_file(prefix, tree, size, base);
+		update_tree_entry(&tree, &size);
+	}
+}
+
+/* A file entry went away or appeared */
 static void show_file(const char *prefix, void *tree, unsigned long size, const char *base)
 {
 	unsigned mode;
 	const char *path;
 	const unsigned char *sha1 = extract(tree, size, &path, &mode);
+
+	if (recursive && S_ISDIR(mode)) {
+		char type[20];
+		unsigned long size;
+		char *newbase = malloc_base(base, path, strlen(path));
+		void *tree;
+
+		tree = read_sha1_file(sha1, type, &size);
+		if (!tree || strcmp(type, "tree"))
+			usage("corrupt tree sha %s", sha1_to_hex(sha1));
+
+		show_tree(prefix, tree, size, newbase);
+		
+		free(tree);
+		free(newbase);
+		return;
+	}
+
 	printf("%s%o %s %s%s%c", prefix, mode, sha1_to_hex(sha1), base, path, 0);
 }
 
@@ -60,13 +100,20 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	}
 	if (!memcmp(sha1, sha2, 20) && mode1 == mode2)
 		return 0;
-	if (recursive && S_ISDIR(mode1) && S_ISDIR(mode2)) {
+
+	/*
+	 * If the filemode has changed to/from a directory from/to a regular
+	 * file, we need to consider it a remove and an add. 
+	 */
+	if (S_ISDIR(mode1) != S_ISDIR(mode2)) {
+		show_file("-", tree1, size1, base);
+		show_file("+", tree2, size2, base);
+		return 0;
+	}
+
+	if (recursive && S_ISDIR(mode1)) {
 		int retval;
-		int baselen = strlen(base);
-		char *newbase = malloc(baselen + pathlen1 + 2);
-		memcpy(newbase, base, baselen);
-		memcpy(newbase + baselen, path1, pathlen1);
-		memcpy(newbase + baselen + pathlen1, "/", 2);
+		char *newbase = malloc_base(base, path1, pathlen1);
 		retval = diff_tree_sha1(sha1, sha2, newbase);
 		free(newbase);
 		return retval;
