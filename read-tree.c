@@ -63,6 +63,14 @@ static int read_tree(unsigned char *sha1, const char *base, int baselen)
 	return 0;
 }
 
+static int remove_lock = 0;
+
+static void remove_lock_file(void)
+{
+	if (remove_lock)
+		unlink(".dircache/index.lock");
+}
+
 int main(int argc, char **argv)
 {
 	int i, newfd;
@@ -71,35 +79,28 @@ int main(int argc, char **argv)
 	newfd = open(".dircache/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
 		usage("unable to create new cachefile");
+	atexit(remove_lock_file);
+	remove_lock = 1;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		/* "-m" stands for "merge" current directory cache */
 		if (!strcmp(arg, "-m")) {
-			if (active_cache) {
-				fprintf(stderr, "read-tree: cannot merge old cache on top of new\n");
-				goto out;
-			}
-			if (read_cache() < 0) {
-				fprintf(stderr, "read-tree: corrupt directory cache\n");
-				goto out;
-			}
+			if (active_cache)
+				usage("read-tree: cannot merge old cache on top of new");
+			if (read_cache() < 0)
+				usage("read-tree: corrupt directory cache");
 			continue;
 		}
-		if (get_sha1_hex(arg, sha1) < 0) {
-			fprintf(stderr, "read-tree [-m] <sha1>\n");
-			goto out;
-		}
-		if (read_tree(sha1, "", 0) < 0) {
-			fprintf(stderr, "failed to unpack tree object %s\n", arg);
-			goto out;
-		}
+		if (get_sha1_hex(arg, sha1) < 0)
+			usage("read-tree [-m] <sha1>");
+		if (read_tree(sha1, "", 0) < 0)
+			usage("failed to unpack tree object %s", arg);
 	}
-	if (!write_cache(newfd, active_cache, active_nr) && !rename(".dircache/index.lock", ".dircache/index"))
-		return 0;
-
-out:
-	unlink(".dircache/index.lock");
-	exit(1);
+	if (write_cache(newfd, active_cache, active_nr) ||
+	    rename(".dircache/index.lock", ".dircache/index"))
+		usage("unable to write new index file");
+	remove_lock = 0;
+	return 0;
 }
