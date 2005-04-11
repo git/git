@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 		char *arg = argv[1];
 		argv++;
 		argc--;
-		if (!strcmp(arg, "-R")) {
+		if (!strcmp(arg, "-r")) {
 			recursive = 1;
 			continue;
 		}
