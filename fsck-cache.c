@@ -106,7 +106,7 @@ static int mark_sha1_seen(unsigned char *sha1, char *tag)
 		seen = realloc(seen, alloc_seen*sizeof(struct seen));
 	}
 	s = seen + nr_seen;
-	memset(s, 0, sizeof(s));
+	memset(s, 0, sizeof(*s));
 	nr_seen++;
 	memcpy(s->sha1, sha1, 20);
 	strncpy(s->tag, tag, sizeof(s->tag));
