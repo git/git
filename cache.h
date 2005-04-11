@@ -64,7 +64,7 @@ struct cache_entry **active_cache;
 unsigned int active_nr, active_alloc;
 
 #define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
-#define DEFAULT_DB_ENVIRONMENT ".dircache/objects"
+#define DEFAULT_DB_ENVIRONMENT ".git/objects"
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 #define ce_size(ce) cache_entry_size((ce)->namelen)

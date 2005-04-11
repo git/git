@@ -122,7 +122,7 @@ it's not something "git" does for you.
 Another way of saying the same thing: "git" itself only handles content
 integrity, the trust has to come from outside. 
 
-	Current Directory Cache (".dircache/index")
+	Current Directory Cache (".git/index")
 
 The "current directory cache" is a simple binary file, which contains an
 efficient representation of a virtual directory content at some random

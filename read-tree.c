@@ -68,7 +68,7 @@ static int remove_lock = 0;
 static void remove_lock_file(void)
 {
 	if (remove_lock)
-		unlink(".dircache/index.lock");
+		unlink(".git/index.lock");
 }
 
 int main(int argc, char **argv)
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	int i, newfd;
 	unsigned char sha1[20];
 
-	newfd = open(".dircache/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
+	newfd = open(".git/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
 		usage("unable to create new cachefile");
 	atexit(remove_lock_file);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 			usage("failed to unpack tree object %s", arg);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    rename(".dircache/index.lock", ".dircache/index"))
+	    rename(".git/index.lock", ".git/index"))
 		usage("unable to write new index file");
 	remove_lock = 0;
 	return 0;

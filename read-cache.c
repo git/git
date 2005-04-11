@@ -364,7 +364,7 @@ int read_cache(void)
 		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 	if (access(sha1_file_directory, X_OK) < 0)
 		return error("no access to SHA1 file directory");
-	fd = open(".dircache/index", O_RDONLY);
+	fd = open(".git/index", O_RDONLY);
 	if (fd < 0)
 		return (errno == ENOENT) ? 0 : error("open failed");
 

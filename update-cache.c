@@ -205,7 +205,7 @@ static void refresh_cache(void)
 /*
  * We fundamentally don't like some paths: we don't want
  * dot or dot-dot anywhere, and in fact, we don't even want
- * any other dot-files (.dircache or anything else). They
+ * any other dot-files (.git or anything else). They
  * are hidden, for chist sake.
  *
  * Also, we don't want double slashes or slashes at the
@@ -235,7 +235,7 @@ static int remove_lock = 0;
 static void remove_lock_file(void)
 {
 	if (remove_lock)
-		unlink(".dircache/index.lock");
+		unlink(".git/index.lock");
 }
 
 int main(int argc, char **argv)
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 	int i, newfd, entries;
 	int allow_options = 1;
 
-	newfd = open(".dircache/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
+	newfd = open(".git/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
 		usage("unable to create new cachefile");
 
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
 			usage("Unable to add %s to database", path);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    rename(".dircache/index.lock", ".dircache/index"))
+	    rename(".git/index.lock", ".git/index"))
 		usage("Unable to write new cachefile");
 
 	remove_lock = 0;
