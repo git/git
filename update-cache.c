@@ -57,6 +57,23 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 	return write_sha1_buffer(ce->sha1, out, stream.total_out);
 }
 
+/*
+ * This only updates the "non-critical" parts of the directory
+ * cache, ie the parts that aren't tracked by GIT, and only used
+ * to validate the cache.
+ */
+static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
+{
+	ce->ctime.sec = st->st_ctime;
+	ce->ctime.nsec = st->st_ctim.tv_nsec;
+	ce->mtime.sec = st->st_mtime;
+	ce->mtime.nsec = st->st_mtim.tv_nsec;
+	ce->st_dev = st->st_dev;
+	ce->st_ino = st->st_ino;
+	ce->st_uid = st->st_uid;
+	ce->st_gid = st->st_gid;
+}
+
 static int add_file_to_cache(char *path)
 {
 	int size, namelen;
@@ -81,15 +98,8 @@ static int add_file_to_cache(char *path)
 	ce = malloc(size);
 	memset(ce, 0, size);
 	memcpy(ce->name, path, namelen);
-	ce->ctime.sec = st.st_ctime;
-	ce->ctime.nsec = st.st_ctim.tv_nsec;
-	ce->mtime.sec = st.st_mtime;
-	ce->mtime.nsec = st.st_mtim.tv_nsec;
-	ce->st_dev = st.st_dev;
-	ce->st_ino = st.st_ino;
+	fill_stat_cache_info(ce, &st);
 	ce->st_mode = st.st_mode;
-	ce->st_uid = st.st_uid;
-	ce->st_gid = st.st_gid;
 	ce->st_size = st.st_size;
 	ce->namelen = namelen;
 
@@ -99,26 +109,96 @@ static int add_file_to_cache(char *path)
 	return add_cache_entry(ce, allow_add);
 }
 
-static void refresh_entry(struct cache_entry *ce)
+static int match_data(int fd, void *buffer, unsigned long size)
 {
+	while (size) {
+		char compare[1024];
+		int ret = read(fd, compare, sizeof(compare));
+
+		if (ret <= 0 || ret > size || memcmp(buffer, compare, ret))
+			return -1;
+		size -= ret;
+		buffer += ret;
+	}
+	return 0;
+}
+
+static int compare_data(struct cache_entry *ce)
+{
+	int match = -1;
+	int fd = open(ce->name, O_RDONLY);
+
+	if (fd >= 0) {
+		void *buffer;
+		unsigned long size;
+		char type[10];
+
+		buffer = read_sha1_file(ce->sha1, type, &size);
+		if (buffer) {
+			if (size == ce->st_size && !strcmp(type, "blob"))
+				match = match_data(fd, buffer, size);
+			free(buffer);
+		}
+		close(fd);
+	}
+	return match;
+}
+
+/*
+ * "refresh" does not calculate a new sha1 file or bring the
+ * cache up-to-date for mode/content changes. But what it
+ * _does_ do is to "re-match" the stat information of a file
+ * with the cache, so that you can refresh the cache for a
+ * file that hasn't been changed but where the stat entry is
+ * out of date.
+ *
+ * For example, you'd want to do this after doing a "read-tree",
+ * to link up the stat cache details with the proper files.
+ */
+static struct cache_entry *refresh_entry(struct cache_entry *ce)
+{
+	struct stat st;
+	struct cache_entry *updated;
+	int changed, size;
+
+	if (stat(ce->name, &st) < 0)
+		return NULL;
+
+	changed = cache_match_stat(ce, &st);
+	if (!changed)
+		return ce;
+
 	/*
-	 * This is really not the right way to do it, but
-	 * add_file_to_cache() does do the right thing.
-	 *
-	 * We should really just update the cache
-	 * entry in-place, I think. With this approach we
-	 * end up allocating a new one, searching for where
-	 * to insert it etc etc crud.
+	 * If the length has changed, there's no point in trying
+	 * to refresh the entry - it's not going to match
 	 */
-	add_file_to_cache(ce->name);
+	if (changed & (DATA_CHANGED | MODE_CHANGED))
+		return NULL;
+
+	if (compare_data(ce))
+		return NULL;
+
+	size = ce_size(ce);
+	updated = malloc(size);
+	memcpy(updated, ce, size);
+	fill_stat_cache_info(updated, &st);
+	return updated;
 }
 
 static void refresh_cache(void)
 {
 	int i;
 
-	for (i = 0; i < active_nr; i++)
-		refresh_entry(active_cache[i]);
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		struct cache_entry *new = refresh_entry(ce);
+
+		if (!new) {
+			printf("%s: needs update\n", ce->name);
+			continue;
+		}
+		active_cache[i] = new;
+	}
 }
 
 /*
