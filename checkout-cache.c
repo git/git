@@ -46,7 +46,7 @@ static void create_directories(const char *path)
 		len = slash - path;
 		memcpy(buf, path, len);
 		buf[len] = 0;
-		mkdir(buf, 0700);
+		mkdir(buf, 0755);
 	}
 }
 

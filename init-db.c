@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	char *sha1_dir = getenv(DB_ENVIRONMENT), *path;
 	int len, i;
 
-	if (mkdir(".dircache", 0700) < 0) {
+	if (mkdir(".dircache", 0755) < 0) {
 		perror("unable to create .dircache");
 		exit(1);
 	}
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	sha1_dir = DEFAULT_DB_ENVIRONMENT;
 	fprintf(stderr, "defaulting to private storage area\n");
 	len = strlen(sha1_dir);
-	if (mkdir(sha1_dir, 0700) < 0) {
+	if (mkdir(sha1_dir, 0755) < 0) {
 		if (errno != EEXIST) {
 			perror(sha1_dir);
 			exit(1);
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 	memcpy(path, sha1_dir, len);
 	for (i = 0; i < 256; i++) {
 		sprintf(path+len, "/%02x", i);
-		if (mkdir(path, 0700) < 0) {
+		if (mkdir(path, 0755) < 0) {
 			if (errno != EEXIST) {
 				perror(path);
 				exit(1);
