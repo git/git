@@ -69,6 +69,7 @@ static void check_connectivity(void)
 		if (lookup_seen(n->needs, n->tag))
 			continue;
 		strcpy(hex, sha1_to_hex(n->parent));
+		printf("missing %s: %s referenced by %s\n", n->tag, sha1_to_hex(n->needs), hex);
 	}
 
 	/* Tell the user about things not referenced.. */
