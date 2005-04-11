@@ -12,10 +12,12 @@ unsigned int active_nr = 0, active_alloc = 0;
 void usage(const char *err, ...)
 {
 	va_list args;
+	char string[200];
 
 	va_start(args, err);
-	vfprintf(stderr, err, args);
+	vsnprintf(string, sizeof(string), err, args);
 	va_end(args);
+	fprintf(stderr, "%s\n", string);
 	exit(1);
 }
 
