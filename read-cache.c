@@ -276,24 +276,23 @@ int cache_name_pos(const char *name, int namelen)
 		struct cache_entry *ce = active_cache[next];
 		int cmp = cache_name_compare(name, namelen, ce->name, ce->namelen);
 		if (!cmp)
-			return -next-1;
+			return next;
 		if (cmp < 0) {
 			last = next;
 			continue;
 		}
 		first = next+1;
 	}
-	return first;
+	return -first-1;
 }
 
 int remove_file_from_cache(char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
-	if (pos < 0) {
-		pos = -pos-1;
+	if (pos >= 0) {
 		active_nr--;
 		if (pos < active_nr)
-			memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos - 1) * sizeof(struct cache_entry *));
+			memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos) * sizeof(struct cache_entry *));
 	}
 	return 0;
 }
@@ -305,10 +304,11 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 	pos = cache_name_pos(ce->name, ce->namelen);
 
 	/* existing match? Just replace it */
-	if (pos < 0) {
-		active_cache[-pos-1] = ce;
+	if (pos >= 0) {
+		active_cache[pos] = ce;
 		return 0;
 	}
+	pos = -pos-1;
 
 	if (!ok_to_add)
 		return -1;
