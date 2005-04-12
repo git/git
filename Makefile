@@ -68,7 +68,7 @@ read-cache.o: cache.h
 show-diff.o: cache.h
 
 clean:
-	rm -f *.o $(PROG) temp_git_file_*
+	rm -f *.o $(PROG)
 
 backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
