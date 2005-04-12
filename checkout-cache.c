@@ -96,12 +96,14 @@ static int write_entry(struct cache_entry *ce)
 
 static int checkout_entry(struct cache_entry *ce)
 {
-	if (!force) {
-		struct stat st;
+	struct stat st;
 
-		if (!stat(ce->name, &st)) {
-			unsigned changed = cache_match_stat(ce, &st);
-			if (changed && !quiet)
+	if (!stat(ce->name, &st)) {
+		unsigned changed = cache_match_stat(ce, &st);
+		if (!changed)
+			return 0;
+		if (!force) {
+			if (!quiet)
 				fprintf(stderr, "checkout-cache: %s already exists\n", ce->name);
 			return 0;
 		}
