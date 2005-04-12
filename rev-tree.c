@@ -14,6 +14,7 @@
 #define SEEN 0x10000
 
 static int show_edges = 0;
+static int basemask = 0;
 
 struct parent {
 	struct revision *parent;
@@ -180,6 +181,9 @@ static int interesting(struct revision *rev)
 		}
 		return 0;
 	}
+	if (mask & basemask)
+		return 0;
+
 	return 1;
 }
 
@@ -214,6 +218,10 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		if (arg[0] == '^') {
+			arg++;
+			basemask |= 1<<nr;
+		}
 		if (nr >= MAX_COMMITS || get_sha1_hex(arg, sha1[nr]))
 			usage("rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id>]");
 		parse_commit(sha1[nr]);
