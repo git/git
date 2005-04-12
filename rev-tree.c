@@ -1,3 +1,6 @@
+#define _XOPEN_SOURCE /* glibc2 needs this */
+#include <time.h>
+#include <ctype.h>
 #include "cache.h"
 
 /*
@@ -24,6 +27,7 @@ struct parent {
 struct revision {
 	unsigned int flags;
 	unsigned char sha1[20];
+	unsigned long date;
 	struct parent *parent;
 };
 
@@ -97,6 +101,52 @@ static int add_relationship(struct revision *rev, unsigned char *parent_sha)
 	return 1;
 }
 
+static unsigned long parse_time(const char *buf)
+{
+	char c, *p;
+	char buffer[100];
+	struct tm tm;
+	const char *formats[] = {
+		"%c",
+		"%a %b %d %T %y",
+		NULL
+	};
+	const char **fmt = formats;
+
+	p = buffer;
+	while (isspace(c = *buf))
+		buf++;
+	while ((c = *buf++) != '\n')
+		*p++ = c;
+	*p++ = 0;
+	buf = buffer;
+	memset(&tm, 0, sizeof(tm));
+	do {
+		const char *next = strptime(buf, *fmt, &tm);
+		fmt++;
+		if (next) {
+			if (!*next)
+				return mktime(&tm);
+			buf = next;
+		}
+	} while (*buf && *fmt);
+	return mktime(&tm);
+}
+		
+
+static unsigned long parse_commit_date(const char *buf)
+{
+	if (memcmp(buf, "author", 6))
+		return 0;
+	while (*buf++ != '\n')
+		/* nada */;
+	if (memcmp(buf, "committer", 9))
+		return 0;
+	while (*buf++ != '>')
+		/* nada */;
+	return parse_time(buf);
+}
+
 static int parse_commit(unsigned char *sha1)
 {
 	struct revision *rev = lookup_rev(sha1);
@@ -117,6 +167,8 @@ static int parse_commit(unsigned char *sha1)
 			parse_commit(parent);
 			buffer += 48;	/* "parent " + "hex sha1" + "\n" */
 		}
+		rev->date = parse_commit_date(buffer);
+		free(buffer);
 	}
 	return 0;	
 }
@@ -124,20 +176,35 @@ static int parse_commit(unsigned char *sha1)
 static void read_cache_file(const char *path)
 {
 	FILE *file = fopen(path, "r");
-	char line[100];
+	char line[500];
 
 	if (!file)
 		usage("bad revtree cache file (%s)", path);
 
 	while (fgets(line, sizeof(line), file)) {
-		unsigned char sha1[20], parent[20];
+		unsigned long date;
+		unsigned char sha1[20];
 		struct revision *rev;
+		const char *buf;
 
-		if (get_sha1_hex(line, sha1) || get_sha1_hex(line + 41, parent))
-			usage("bad rev-tree cache file %s", path);
+		if (sscanf(line, "%lu", &date) != 1)
+			break;
+		buf = strchr(line, ' ');
+		if (!buf)
+			break;
+		if (get_sha1_hex(buf+1, sha1))
+			break;
 		rev = lookup_rev(sha1);
 		rev->flags |= SEEN;
-		add_relationship(rev, parent);
+		rev->date = date;
+
+		/* parents? */
+		while ((buf = strchr(buf+1, ' ')) != NULL) {
+			unsigned char parent[20];
+			if (get_sha1_hex(buf + 1, parent))
+				break;
+			add_relationship(rev, parent);
+		}
 	}
 	fclose(file);
 }
@@ -244,7 +311,7 @@ int main(int argc, char **argv)
 		if (!interesting(rev))
 			continue;
 
-		printf("%s:%d", sha1_to_hex(rev->sha1), marked(rev));
+		printf("%lu %s:%d", rev->date, sha1_to_hex(rev->sha1), marked(rev));
 		p = rev->parent;
 		while (p) {
 			printf(" %s:%d", sha1_to_hex(p->parent->sha1), marked(p->parent));
