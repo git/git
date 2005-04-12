@@ -1,6 +1,19 @@
 #include "cache.h"
 
-#define SEEN 1
+/*
+ * The low 16 bits of the "flags" field shows whether
+ * a commit is part of the path to the root for that
+ * parent.
+ *
+ * Bit 16 is an internal flag that we've seen the
+ * definition for this rev, and not just seen it as
+ * a parent target.
+ */
+#define MAX_COMMITS (16)
+#define marked(rev)	((rev)->flags & 0xffff)
+#define SEEN 0x10000
+
+static int show_edges = 0;
 
 struct parent {
 	struct revision *parent;
@@ -112,17 +125,66 @@ static void read_cache_file(const char *path)
 	FILE *file = fopen(path, "r");
 	char line[100];
 
+	if (!file)
+		usage("bad revtree cache file (%s)", path);
+
 	while (fgets(line, sizeof(line), file)) {
 		unsigned char sha1[20], parent[20];
+		struct revision *rev;
+
 		if (get_sha1_hex(line, sha1) || get_sha1_hex(line + 41, parent))
 			usage("bad rev-tree cache file %s", path);
-		add_relationship(lookup_rev(sha1), parent);
+		rev = lookup_rev(sha1);
+		rev->flags |= SEEN;
+		add_relationship(rev, parent);
 	}
 	fclose(file);
 }
 
+static void mark_sha1_path(struct revision *rev, unsigned int mask)
+{
+	struct parent *p;
+
+	if (rev->flags & mask)
+		return;
+
+	rev->flags |= mask;
+	p = rev->parent;
+	while (p) {
+		mark_sha1_path(p->parent, mask);
+		p = p->next;
+	}
+}
+
 /*
- * Usage: rev-tree [--cache <cache-file>] <commit-id>
+ * Some revisions are less interesting than others.
+ *
+ * For example, if we use a cache-file, that one may contain
+ * revisions that were never used. They are never interesting.
+ *
+ * And sometimes we're only interested in "edge" commits, ie
+ * places where the marking changes between parent and child.
+ */
+static int interesting(struct revision *rev)
+{
+	unsigned mask = marked(rev);
+
+	if (!mask)
+		return 0;
+	if (show_edges) {
+		struct parent *p = rev->parent;
+		while (p) {
+			if (mask != marked(p->parent))
+				return 1;
+			p = p->next;
+		}
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ * Usage: rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id2>]
  *
  * The cache-file can be quite important for big trees. This is an
  * expensive operation if you have to walk the whole chain of
@@ -131,26 +193,50 @@ static void read_cache_file(const char *path)
 int main(int argc, char **argv)
 {
 	int i;
-	unsigned char sha1[20];
+	int nr = 0;
+	unsigned char sha1[MAX_COMMITS][20];
 
-	while (argc > 2) {
-		if (!strcmp(argv[1], "--cache")) {
+	/*
+	 * First - pick up all the revisions we can (both from
+	 * caches and from commit file chains).
+	 */
+	for (i = 1; i < argc ; i++) {
+		char *arg = argv[i];
+
+		if (!strcmp(arg, "--cache")) {
 			read_cache_file(argv[2]);
-			argv += 2;
-			argc -= 2;
+			i++;
 			continue;
 		}
-		usage("unknown option %s", argv[1]);
+
+		if (!strcmp(arg, "--edges")) {
+			show_edges = 1;
+			continue;
+		}
+
+		if (nr >= MAX_COMMITS || get_sha1_hex(arg, sha1[nr]))
+			usage("rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id>]");
+		parse_commit(sha1[nr]);
+		nr++;
 	}
 
-	if (argc != 2 || get_sha1_hex(argv[1], sha1))
-		usage("rev-tree [--cache <cache-file>] <commit-id>");
-	parse_commit(sha1);
+	/*
+	 * Now we have the maximal tree. Walk the different sha files back to the root.
+	 */
+	for (i = 0; i < nr; i++)
+		mark_sha1_path(lookup_rev(sha1[i]), 1 << i);
+
+	/*
+	 * Now print out the results..
+	 */
 	for (i = 0; i < nr_revs; i++) {
 		struct revision *rev = revs[i];
 		struct parent *p;
 
-		printf("%s", sha1_to_hex(rev->sha1));
+		if (!interesting(rev))
+			continue;
+
+		printf("%x %s", marked(rev), sha1_to_hex(rev->sha1));
 		p = rev->parent;
 		while (p) {
 			printf(" %s", sha1_to_hex(p->parent->sha1));
