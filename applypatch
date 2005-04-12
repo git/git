@@ -1,0 +1,35 @@
+#!/bin/sh
+##
+## applypatch takes four file arguments, and uses those to
+## apply the unpacked patch (surprise surprise) that they
+## represent to the current tree.
+##
+## The arguments are:
+##	$1 - file with commit message
+##	$2 - file with the actual patch
+##	$3 - file with list of filenames the patch touches
+##	$4 - "info" file with Author, email and subject
+##
+MSGFILE=$1
+PATCHFILE=$2
+FILES=$3
+INFO=$4
+export AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' .dotest/info)"
+export AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' .dotest/info)"
+export SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' .dotest/info)"
+
+echo
+echo Applying $SUBJECT
+echo
+
+(echo "[PATCH] $SUBJECT" ; echo ; cat $MSGFILE ) > .dotest/final-commit
+
+check-files $(cat $FILES) || exit 1
+patch -u --no-backup-if-mismatch -f -p1 --fuzz=0 --input=$PATCHFILE || exit 1
+update-cache --add --remove $(cat $FILES) || exit 1
+tree=$(write-tree) || exit 1
+echo Wrote tree $tree
+commit=$(commit-tree $tree -p $(cat .git/HEAD) < .dotest/final-commit) || exit 1
+echo Committed: $commit
+echo $commit > .git/HEAD
+

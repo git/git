@@ -3,7 +3,7 @@ CFLAGS=-Wall -O2
 HOME=$(shell echo $$HOME)
 
 PROGRAMS=mailsplit mailinfo
-SCRIPTS=
+SCRIPTS=dotest applypatch
 
 all: $(PROGRAMS)
 

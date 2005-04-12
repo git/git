@@ -1,0 +1,17 @@
+#!/bin/sh
+##
+## "dotest" is my stupid name for my patch-application script, which
+## I never got around to renaming after I tested it. We're now on the
+## second generation of scripts, still called "dotest".
+##
+## You give it a mbox-format collection of emails, and it will try to
+## apply them to the kernel using "applypatch"
+##
+rm -rf .dotest
+mkdir .dotest
+mailsplit $1 .dotest || exit 1
+for i in .dotest/*
+do
+	mailinfo .dotest/msg .dotest/patch .dotest/file < $i > .dotest/info || exit 1
+	applypatch .dotest/msg .dotest/patch .dotest/file .dotest/info || exit 1
+done

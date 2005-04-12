@@ -7,7 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 
-static FILE *cmitmsg, *patchfile;
+static FILE *cmitmsg, *patchfile, *filelist;
 
 static char line[1000];
 static char name[1000];
@@ -195,6 +195,7 @@ static void show_filename(char *line)
 		case '\t': case '\n':
 			break;
 
+		/* patch tends to special-case these things.. */
 		case '~':
 			break;
 		}
@@ -205,7 +206,7 @@ static void show_filename(char *line)
 		len -=5;
 	if (!len)
 		return;
-	printf("filename: %.*s\n", len, name);
+	fprintf(filelist, "%.*s\n", len, name);
 }
 
 static void handle_rest(void)
@@ -270,13 +271,13 @@ static void handle_body(void)
 
 static void usage(void)
 {
-	fprintf(stderr, "mailinfo msg-file path-file < email\n");
+	fprintf(stderr, "mailinfo msg-file path-file filelist-file < email\n");
 	exit(1);
 }
 
 int main(int argc, char ** argv)
 {
-	if (argc != 3)
+	if (argc != 4)
 		usage();
 	cmitmsg = fopen(argv[1], "w");
 	if (!cmitmsg) {
@@ -286,6 +287,11 @@ int main(int argc, char ** argv)
 	patchfile = fopen(argv[2], "w");
 	if (!patchfile) {
 		perror(argv[2]);
+		exit(1);
+	}
+	filelist = fopen(argv[3], "w");
+	if (!filelist) {
+		perror(argv[3]);
 		exit(1);
 	}
 	while (fgets(line, sizeof(line), stdin) != NULL) {
