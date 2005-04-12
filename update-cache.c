@@ -17,12 +17,16 @@ static int allow_add = 0, allow_remove = 0;
 static int index_fd(const char *path, int namelen, struct cache_entry *ce, int fd, struct stat *st)
 {
 	z_stream stream;
-	int max_out_bytes = namelen + st->st_size + 200;
+	unsigned long size = st->st_size;
+	int max_out_bytes = namelen + size + 200;
 	void *out = malloc(max_out_bytes);
 	void *metadata = malloc(namelen + 200);
-	void *in = mmap(NULL, st->st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	void *in;
 	SHA_CTX c;
 
+	in = "";
+	if (size)
+		in = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 	if (!out || (int)(long)in == -1)
 		return -1;
@@ -34,7 +38,7 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 	 * ASCII size + nul byte
 	 */	
 	stream.next_in = metadata;
-	stream.avail_in = 1+sprintf(metadata, "blob %lu", (unsigned long) st->st_size);
+	stream.avail_in = 1+sprintf(metadata, "blob %lu", size);
 	stream.next_out = out;
 	stream.avail_out = max_out_bytes;
 	while (deflate(&stream, 0) == Z_OK)
@@ -44,7 +48,7 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 	 * File content
 	 */
 	stream.next_in = in;
-	stream.avail_in = st->st_size;
+	stream.avail_in = size;
 	while (deflate(&stream, Z_FINISH) == Z_OK)
 		/*nothing */;
 
