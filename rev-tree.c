@@ -236,10 +236,10 @@ int main(int argc, char **argv)
 		if (!interesting(rev))
 			continue;
 
-		printf("%x %s", marked(rev), sha1_to_hex(rev->sha1));
+		printf("%s:%d", sha1_to_hex(rev->sha1), marked(rev));
 		p = rev->parent;
 		while (p) {
-			printf(" %s", sha1_to_hex(p->parent->sha1));
+			printf(" %s:%d", sha1_to_hex(p->parent->sha1), marked(p->parent));
 			p = p->next;
 		}
 		printf("\n");
