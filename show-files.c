@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		usage("show-files (--[cached|deleted|others|ignoded])*");
+		usage("show-files (--[cached|deleted|others|ignored])*");
 	}
 
 	/* With no flags, we default to showing the cached files */
