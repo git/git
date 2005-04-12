@@ -136,7 +136,7 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 		return NULL;
 	}
 	if (fstat(fd, &st) < 0) {
-		close(fd);  
+		close(fd);
 		return NULL;
 	}
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);

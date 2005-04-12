@@ -41,7 +41,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 	alloc = (size + 32767) & ~32767;
 	buf = *bufp;
 	if (newsize > alloc) {
-		alloc = (newsize + 32767) & ~32767;   
+		alloc = (newsize + 32767) & ~32767;
 		buf = realloc(buf, alloc);
 		*bufp = buf;
 	}

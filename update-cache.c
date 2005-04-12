@@ -213,7 +213,7 @@ static void refresh_cache(void)
  * are hidden, for chist sake.
  *
  * Also, we don't want double slashes or slashes at the
- * end that can make pathnames ambiguous. 
+ * end that can make pathnames ambiguous.
  */
 static int verify_path(char *path)
 {

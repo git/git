@@ -103,7 +103,7 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 
 	/*
 	 * If the filemode has changed to/from a directory from/to a regular
-	 * file, we need to consider it a remove and an add. 
+	 * file, we need to consider it a remove and an add.
 	 */
 	if (S_ISDIR(mode1) != S_ISDIR(mode2)) {
 		show_file("-", tree1, size1, base);

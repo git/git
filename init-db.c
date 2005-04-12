@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	}
 
 	/*
-	 * The default case is to have a DB per managed directory. 
+	 * The default case is to have a DB per managed directory.
 	 */
 	sha1_dir = DEFAULT_DB_ENVIRONMENT;
 	fprintf(stderr, "defaulting to private storage area\n");

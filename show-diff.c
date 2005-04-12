@@ -5,7 +5,7 @@
  */
 #include "cache.h"
 
-static void show_differences(char *name, 
+static void show_differences(char *name,
 	void *old_contents, unsigned long long old_size)
 {
 	static char cmd[1000];
@@ -33,7 +33,7 @@ static void show_diff_empty(struct cache_entry *ce)
 		printf("--- %s\n", ce->name);
 		printf("+++ /dev/null\n");
 		p = old;
-		end = old + size; 
+		end = old + size;
 		while (p < end)
 			if (*p++ == '\n')
 				lines ++;
@@ -44,7 +44,7 @@ static void show_diff_empty(struct cache_entry *ce)
 			if (startline) {
 				putchar('-');
 				startline = 0;
-			} 
+			}
 			putchar(c);
 			if (c == '\n')
 				startline = 1;

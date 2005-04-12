@@ -41,7 +41,7 @@ static void add_name(const char *pathname, int len)
  * handle them at all yet. Maybe that will change some day.
  *
  * Also, we currently ignore all names starting with a dot.
- * That likely will not change. 
+ * That likely will not change.
  */
 static void read_directory(const char *path, const char *base, int baselen)
 {
