@@ -152,22 +152,22 @@ static int parse_commit(unsigned char *sha1)
 	struct revision *rev = lookup_rev(sha1);
 
 	if (!(rev->flags & SEEN)) {
-		void *buffer;
+		void *buffer, *bufptr;
 		unsigned long size;
 		char type[20];
 		unsigned char parent[20];
 
 		rev->flags |= SEEN;
-		buffer = read_sha1_file(sha1, type, &size);
+		buffer = bufptr = read_sha1_file(sha1, type, &size);
 		if (!buffer || strcmp(type, "commit"))
 			return -1;
-		buffer += 46; /* "tree " + "hex sha1" + "\n" */
-		while (!memcmp(buffer, "parent ", 7) && !get_sha1_hex(buffer+7, parent)) {
+		bufptr += 46; /* "tree " + "hex sha1" + "\n" */
+		while (!memcmp(bufptr, "parent ", 7) && !get_sha1_hex(bufptr+7, parent)) {
 			add_relationship(rev, parent);
 			parse_commit(parent);
-			buffer += 48;	/* "parent " + "hex sha1" + "\n" */
+			bufptr += 48;	/* "parent " + "hex sha1" + "\n" */
 		}
-		rev->date = parse_commit_date(buffer);
+		rev->date = parse_commit_date(bufptr);
 		free(buffer);
 	}
 	return 0;	
