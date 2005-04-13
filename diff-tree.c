@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 			recursive = 1;
 			continue;
 		}
-		usage("diff-tree [-R] <tree sha1> <tree sha1>");
+		usage("diff-tree [-r] <tree sha1> <tree sha1>");
 	}
 
 	if (argc != 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
