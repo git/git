@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
 	pw = getpwuid(getuid());
 	if (!pw)
-		usage("You don't exist. Go away!");
+		die("You don't exist. Go away!");
 	realgecos = pw->pw_gecos;
 	len = strlen(pw->pw_name);
 	memcpy(realemail, pw->pw_name, len);

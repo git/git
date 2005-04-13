@@ -3,23 +3,46 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#include <stdarg.h>
 #include "cache.h"
 
 const char *sha1_file_directory = NULL;
 struct cache_entry **active_cache = NULL;
 unsigned int active_nr = 0, active_alloc = 0;
 
-void usage(const char *err, ...)
+void usage(const char *err)
 {
-	va_list args;
-	char string[200];
-
-	va_start(args, err);
-	vsnprintf(string, sizeof(string), err, args);
-	va_end(args);
-	fprintf(stderr, "%s\n", string);
+	fprintf(stderr, "usage: %s\n", err);
 	exit(1);
 }
+
+static void report(const char *prefix, const char *err, va_list params)
+{
+	fputs(prefix, stderr);
+	vfprintf(stderr, err, params);
+	fputs("\n", stderr);
+}
+
+void die(const char *err, ...)
+{
+	va_list params;
+
+	va_start(params, err);
+	report("fatal: ", err, params);
+	va_end(params);
+	exit(1);
+}
+
+int error(const char *err, ...)
+{
+	va_list params;
+
+	va_start(params, err);
+	report("error: ", err, params);
+	va_end(params);
+	return -1;
+}
+
 
 static unsigned hexval(char c)
 {
@@ -218,7 +241,6 @@ int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0) {
 		void *map;
-		static int error(const char * string);
 
 		if (errno != EEXIST)
 			return -1;
@@ -238,12 +260,6 @@ int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 	write(fd, buf, size);
 	close(fd);
 	return 0;
-}
-
-static int error(const char * string)
-{
-	fprintf(stderr, "error: %s\n", string);
-	return -1;
 }
 
 int cache_match_stat(struct cache_entry *ce, struct stat *st)

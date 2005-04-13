@@ -106,9 +106,9 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 
 	if (entries <= 0)
-		usage("no cache contents to write");
+		die("write-tree: no cache contents to write");
 	if (write_tree(active_cache, entries, "", 0, sha1) != entries)
-		usage("write-tree: internal error");
+		die("write-tree: internal error");
 	printf("%s\n", sha1_to_hex(sha1));
 	return 0;
 }

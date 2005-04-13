@@ -104,7 +104,10 @@ extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 
 /* General helper functions */
-extern void usage(const char *err, ...);
+extern void usage(const char *err);
+extern void die(const char *err, ...);
+extern int error(const char *err, ...);
+
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
 
 #endif /* CACHE_H */

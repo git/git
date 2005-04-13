@@ -205,8 +205,7 @@ static int fsck_dir(int i, char *path)
 	struct dirent *de;
 
 	if (!dir) {
-		fprintf(stderr, "missing sha1 directory '%s'", path);
-		return -1;
+		return error("missing sha1 directory '%s'", path);
 	}
 
 	while ((de = readdir(dir)) != NULL) {

@@ -74,24 +74,21 @@ static int write_entry(struct cache_entry *ce)
 
 	new = read_sha1_file(ce->sha1, type, &size);
 	if (!new || strcmp(type, "blob")) {
-		fprintf(stderr, "checkout-cache: unable to read sha1 file of %s (%s)\n",
+		return error("checkout-cache: unable to read sha1 file of %s (%s)",
 			ce->name, sha1_to_hex(ce->sha1));
-		return -1;
 	}
 	fd = create_file(ce->name, ce->st_mode);
 	if (fd < 0) {
-		fprintf(stderr, "checkout-cache: unable to create %s (%s)\n",
-			ce->name, strerror(errno));
 		free(new);
-		return -1;
+		return error("checkout-cache: unable to create %s (%s)",
+			ce->name, strerror(errno));
 	}
 	wrote = write(fd, new, size);
 	close(fd);
 	free(new);
-	if (wrote == size)
-		return 0;
-	fprintf(stderr, "checkout-cache: unable to write %s\n", ce->name);
-	return -1;
+	if (wrote != size)
+		return error("checkout-cache: unable to write %s", ce->name);
+	return 0;
 }
 
 static int checkout_entry(struct cache_entry *ce)
@@ -139,8 +136,7 @@ int main(int argc, char **argv)
 	int i, force_filename = 0;
 
 	if (read_cache() < 0) {
-		fprintf(stderr, "Invalid cache\n");
-		exit(1);
+		die("invalid cache");
 	}
 
 	for (i = 1; i < argc; i++) {

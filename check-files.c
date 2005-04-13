@@ -18,22 +18,22 @@ static void check_file(const char *path)
 	/* Nonexistent is fine */
 	if (fd < 0) {
 		if (errno != ENOENT)
-			usage("%s: %s", path, strerror(errno));
+			die("%s: %s", path, strerror(errno));
 		return;
 	}
 
 	/* Exists but is not in the cache is not fine */
 	pos = cache_name_pos(path, strlen(path));
 	if (pos < 0)
-		usage("preparing to update existing file '%s' not in cache", path);
+		die("preparing to update existing file '%s' not in cache", path);
 	ce = active_cache[pos];
 
 	if (fstat(fd, &st) < 0)
-		usage("fstat(%s): %s", path, strerror(errno));
+		die("fstat(%s): %s", path, strerror(errno));
 
 	changed = cache_match_stat(ce, &st);
 	if (changed)
-		usage("preparing to update file '%s' not uptodate in cache", path);
+		die("preparing to update file '%s' not uptodate in cache", path);
 }
 
 int main(int argc, char **argv)

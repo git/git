@@ -249,14 +249,14 @@ int main(int argc, char **argv)
 
 	newfd = open(".git/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
-		usage("unable to create new cachefile");
+		die("unable to create new cachefile");
 
 	atexit(remove_lock_file);
 	remove_lock = 1;
 
 	entries = read_cache();
 	if (entries < 0)
-		usage("cache corrupted");
+		die("cache corrupted");
 
 	for (i = 1 ; i < argc; i++) {
 		char *path = argv[i];
@@ -278,18 +278,18 @@ int main(int argc, char **argv)
 				refresh_cache();
 				continue;
 			}
-			usage("unknown option %s", path);
+			die("unknown option %s", path);
 		}
 		if (!verify_path(path)) {
 			fprintf(stderr, "Ignoring path %s\n", argv[i]);
 			continue;
 		}
 		if (add_file_to_cache(path))
-			usage("Unable to add %s to database", path);
+			die("Unable to add %s to database", path);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    rename(".git/index.lock", ".git/index"))
-		usage("Unable to write new cachefile");
+		die("Unable to write new cachefile");
 
 	remove_lock = 0;
 	return 0;

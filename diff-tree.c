@@ -11,7 +11,7 @@ static void update_tree_entry(void **bufp, unsigned long *sizep)
 	int len = strlen(buf) + 1 + 20;
 
 	if (size < len)
-		usage("corrupt tree file");
+		die("corrupt tree file");
 	*bufp = buf + len;
 	*sizep = size - len;
 }
@@ -23,7 +23,7 @@ static const unsigned char *extract(void *tree, unsigned long size, const char *
 	const char *path = strchr(tree, ' ');
 
 	if (!path || size < len + 20 || sscanf(tree, "%o", modep) != 1)
-		usage("corrupt tree file");
+		die("corrupt tree file");
 	*pathp = path+1;
 	return sha1;
 }
@@ -64,7 +64,7 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 
 		tree = read_sha1_file(sha1, type, &size);
 		if (!tree || strcmp(type, "tree"))
-			usage("corrupt tree sha %s", sha1_to_hex(sha1));
+			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
 		show_tree(prefix, tree, size, newbase);
 		
@@ -148,7 +148,7 @@ static int diff_tree(void *tree1, unsigned long size1, void *tree2, unsigned lon
 			update_tree_entry(&tree2, &size2);
 			continue;
 		}
-		usage("diff-tree: internal error");
+		die("diff-tree: internal error");
 	}
 	return 0;
 }
@@ -162,10 +162,10 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 
 	tree1 = read_sha1_file(old, type, &size1);
 	if (!tree1 || strcmp(type, "tree"))
-		usage("unable to read source tree");
+		die("unable to read source tree (%s)", sha1_to_hex(old));
 	tree2 = read_sha1_file(new, type, &size2);
 	if (!tree2 || strcmp(type, "tree"))
-		usage("unable to read destination tree");
+		die("unable to read destination tree (%s)", sha1_to_hex(new));
 	retval = diff_tree(tree1, size1, tree2, size2, base);
 	free(tree1);
 	free(tree2);

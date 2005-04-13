@@ -179,7 +179,7 @@ static void read_cache_file(const char *path)
 	char line[500];
 
 	if (!file)
-		usage("bad revtree cache file (%s)", path);
+		die("bad revtree cache file (%s)", path);
 
 	while (fgets(line, sizeof(line), file)) {
 		unsigned long date;

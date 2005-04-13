@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
 	newfd = open(".git/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
-		usage("unable to create new cachefile");
+		die("unable to create new cachefile");
 	atexit(remove_lock_file);
 	remove_lock = 1;
 
@@ -88,19 +88,19 @@ int main(int argc, char **argv)
 		/* "-m" stands for "merge" current directory cache */
 		if (!strcmp(arg, "-m")) {
 			if (active_cache)
-				usage("read-tree: cannot merge old cache on top of new");
+				die("read-tree: cannot merge old cache on top of new");
 			if (read_cache() < 0)
-				usage("read-tree: corrupt directory cache");
+				die("read-tree: corrupt directory cache");
 			continue;
 		}
 		if (get_sha1_hex(arg, sha1) < 0)
 			usage("read-tree [-m] <sha1>");
 		if (read_tree(sha1, "", 0) < 0)
-			usage("failed to unpack tree object %s", arg);
+			die("failed to unpack tree object %s", arg);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    rename(".git/index.lock", ".git/index"))
-		usage("unable to write new index file");
+		die("unable to write new index file");
 	remove_lock = 0;
 	return 0;
 }

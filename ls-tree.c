@@ -13,9 +13,9 @@ static int list(unsigned char *sha1)
 
 	buffer = read_sha1_file(sha1, type, &size);
 	if (!buffer)
-		usage("unable to read sha1 file");
+		die("unable to read sha1 file");
 	if (strcmp(type, "tree"))
-		usage("expected a 'tree' node");
+		die("expected a 'tree' node");
 	while (size) {
 		int len = strlen(buffer)+1;
 		unsigned char *sha1 = buffer + len;
@@ -24,7 +24,7 @@ static int list(unsigned char *sha1)
 		unsigned char *type;
 
 		if (size < len + 20 || sscanf(buffer, "%o", &mode) != 1)
-			usage("corrupt 'tree' file");
+			die("corrupt 'tree' file");
 		buffer = sha1 + 20;
 		size -= len + 20;
 		/* XXX: We do some ugly mode heuristics here.
@@ -48,6 +48,6 @@ int main(int argc, char **argv)
 	if (!sha1_file_directory)
 		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 	if (list(sha1) < 0)
-		usage("list failed");
+		die("list failed");
 	return 0;
 }
