@@ -19,7 +19,6 @@
 #define REACHABLE 0x40000
 
 static int show_unreachable = 0;
-static int head_supplied = 0;
 static unsigned char head_sha1[20];
 
 struct parent {
@@ -121,9 +120,6 @@ static void mark_reachable(struct revision *rev)
 static void check_connectivity(void)
 {
 	int i;
-
-	if (head_supplied)
-		mark_reachable(lookup_rev(head_sha1));
 
 	/* Look up all the requirements, warn about missing objects.. */
 	for (i = 0; i < nr_revs; i++) {
@@ -282,22 +278,8 @@ static int fsck_dir(int i, char *path)
 
 int main(int argc, char **argv)
 {
-	int i;
+	int i, heads;
 	char *sha1_dir;
-
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--unreachable")) {
-			show_unreachable = 1;
-			continue;
-		}
-		if (!get_sha1_hex(argv[i], head_sha1)) {
-			head_supplied = 1;
-			continue;
-		}
-		usage("fsck-cache [[--unreachable] <head-sha1>]");
-	}
-	if (show_unreachable && !head_supplied)
-		usage("unable to do reachability checks without a head");
 
 	sha1_dir = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
 	for (i = 0; i < 256; i++) {
@@ -305,6 +287,29 @@ int main(int argc, char **argv)
 		sprintf(dir, "%s/%02x", sha1_dir, i);
 		fsck_dir(i, dir);
 	}
+
+	heads = 0;
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--unreachable")) {
+			show_unreachable = 1;
+			continue;
+		}
+		if (!get_sha1_hex(argv[i], head_sha1)) {
+			mark_reachable(lookup_rev(head_sha1));
+			heads++;
+			continue;
+		}
+		error("fsck-cache [[--unreachable] <head-sha1>*]");
+	}
+
+	if (!heads) {
+		if (show_unreachable) {
+			fprintf(stderr, "unable to do reachability without a head\n");
+			show_unreachable = 0; 
+		}
+		fprintf(stderr, "expect dangling commits - potential heads - due to lack of head information\n");
+	}
+
 	check_connectivity();
 	return 0;
 }
