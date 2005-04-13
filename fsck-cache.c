@@ -108,6 +108,9 @@ static void mark_reachable(struct revision *rev)
 {
 	struct parent *p = rev->parent;
 
+	/* If we've been here already, don't bother */
+	if (rev->flags & REACHABLE)
+		return;
 	rev->flags |= REACHABLE | USED;
 	while (p) {
 		mark_reachable(p->parent);
