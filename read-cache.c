@@ -216,8 +216,25 @@ int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 	int fd;
 
 	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0)
-		return (errno == EEXIST) ? 0 : -1;
+	if (fd < 0) {
+		void *map;
+		static int error(const char * string);
+
+		if (errno != EEXIST)
+			return -1;
+#ifndef COLLISION_CHECK
+		fd = open(filename, O_RDONLY);
+		if (fd < 0)
+			return -1;
+		map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		if (map == MAP_FAILED)
+			return -1;
+		if (memcmp(buf, map, size))
+			return error("SHA1 collision detected!"
+					" This is bad, bad, BAD!\a\n");
+#endif
+		return 0;
+	}
 	write(fd, buf, size);
 	close(fd);
 	return 0;

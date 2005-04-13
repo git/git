@@ -1,4 +1,8 @@
+# -DCOLLISION_CHECK if you believe that SHA1's
+# 1461501637330902918203684832716283019655932542976 hashes do not give you
+# enough guarantees about no collisions between objects ever hapenning.
 CFLAGS=-g -O3 -Wall
+
 CC=gcc
 
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
