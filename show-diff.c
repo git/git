@@ -31,7 +31,7 @@ static void show_diff_empty(struct cache_entry *ce)
 		int c = 0;
 
 		printf("--- %s\n", ce->name);
-		printf("+++ %s\n", ce->name);
+		printf("+++ /dev/null\n");
 		p = old;
 		end = old + size; 
 		while (p < end)
