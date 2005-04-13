@@ -1,9 +1,9 @@
 CFLAGS=-g -O3 -Wall
 CC=gcc
 
-PROG=	update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
-	check-files
+	check-files ls-tree
 
 all: $(PROG)
 
@@ -49,6 +49,9 @@ show-files: show-files.o read-cache.o
 
 check-files: check-files.o read-cache.o
 	$(CC) $(CFLAGS) -o check-files check-files.o read-cache.o $(LIBS)
+
+ls-tree: ls-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
 read-cache.o: cache.h
 show-diff.o: cache.h
