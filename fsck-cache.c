@@ -3,114 +3,159 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-struct needs {
-	unsigned char parent[20];
-	unsigned char needs[20];
-	char tag[10];
-};
-
-struct seen {
-	unsigned char sha1[20];
-	char tag[10];
-	unsigned needed;
-};
-
-static struct needs *needs;
-static struct seen *seen;
-
-static int nr_seen, alloc_seen, nr_needs, alloc_needs;
-
 /*
- * These two functions build up a graph in memory about
- * what objects we've referenced, and found, and types..
+ * The low 16 bits of the "flags" field shows whether
+ * a commit is part of the path to the root for that
+ * parent.
+ *
+ * Bit 16 is an internal flag that we've seen the
+ * definition for this rev, and not just seen it as
+ * a parent target.
  */
-static int compare_seen(const void *s1, const void *s2)
+#define MAX_COMMITS (16)
+#define marked(rev)	((rev)->flags & 0xffff)
+#define SEEN 0x10000
+#define USED 0x20000
+#define REACHABLE 0x40000
+
+static int show_unreachable = 0;
+static int head_supplied = 0;
+static unsigned char head_sha1[20];
+
+struct parent {
+	struct revision *parent;
+	struct parent *next;
+};
+
+struct revision {
+	unsigned int flags;
+	unsigned char sha1[20];
+	unsigned long date;
+	struct parent *parent;
+};
+
+static struct revision **revs;
+static int nr_revs, rev_allocs;
+
+static int find_rev(unsigned char *sha1)
 {
-	return memcmp(s1, s2, 20);
-}
+	int first = 0, last = nr_revs;
 
-static int lookup_seen(unsigned char *sha1, char *tag)
-{
-	int first = 0, last = nr_seen;
+	while (first < last) {
+		int next = (first + last) / 2;
+		struct revision *rev = revs[next];
+		int cmp;
 
-	while (last > first) {
-		int next = (last + first) / 2;
-		struct seen *s = seen + next;
-		int cmp = memcmp(sha1, s->sha1, 20);
-
+		cmp = memcmp(sha1, rev->sha1, 20);
+		if (!cmp)
+			return next;
 		if (cmp < 0) {
 			last = next;
 			continue;
 		}
-		if (cmp > 0) {
-			first = next+1;
-			continue;
-		}
-		if (strcmp(tag, s->tag))
-			break;
-		s->needed++;
-		return 1;
+		first = next+1;
 	}
-	return 0;
+	return -first-1;
+}
+
+static struct revision *lookup_rev(unsigned char *sha1)
+{
+	int pos = find_rev(sha1);
+	struct revision *n;
+
+	if (pos >= 0)
+		return revs[pos];
+	
+	pos = -pos-1;
+
+	if (rev_allocs == nr_revs) {
+		rev_allocs = alloc_nr(rev_allocs);
+		revs = realloc(revs, rev_allocs * sizeof(struct revision *));
+	}
+	n = malloc(sizeof(struct revision));
+
+	n->flags = 0;
+	memcpy(n->sha1, sha1, 20);
+	n->parent = NULL;
+
+	/* Insert it into the right place */
+	memmove(revs + pos + 1, revs + pos, (nr_revs - pos) * sizeof(struct revision *));
+	revs[pos] = n;
+	nr_revs++;
+
+	return n;
+}
+
+static struct revision *add_relationship(struct revision *rev, unsigned char *needs)
+{
+	struct revision *parent_rev = lookup_rev(needs);
+	struct parent **pp = &rev->parent, *p;
+
+	while ((p = *pp) != NULL) {
+		if (p->parent == parent_rev)
+			return parent_rev;
+		pp = &p->next;
+	}
+
+	p = malloc(sizeof(*p));
+	p->parent = parent_rev;
+	p->next = NULL;
+	*pp = p;
+	return parent_rev;
+}
+
+static void mark_reachable(struct revision *rev)
+{
+	struct parent *p = rev->parent;
+
+	rev->flags |= REACHABLE | USED;
+	while (p) {
+		mark_reachable(p->parent);
+		p = p->next;
+	}
 }
 
 static void check_connectivity(void)
 {
 	int i;
 
-	/* Sort the "seen" tags for quicker lookup */
-	qsort(seen, nr_seen, sizeof(struct seen), compare_seen);
+	if (head_supplied)
+		mark_reachable(lookup_rev(head_sha1));
 
 	/* Look up all the requirements, warn about missing objects.. */
-	for (i = 0; i < nr_needs; i++) {
-		struct needs *n = needs + i;
-		char hex[60];
+	for (i = 0; i < nr_revs; i++) {
+		struct revision *rev = revs[i];
 
-		if (lookup_seen(n->needs, n->tag))
+		if (show_unreachable && !(rev->flags & REACHABLE)) {
+			printf("unreachable %s\n", sha1_to_hex(rev->sha1));
 			continue;
-		strcpy(hex, sha1_to_hex(n->parent));
-		printf("missing %s: %s referenced by %s\n", n->tag, sha1_to_hex(n->needs), hex);
-	}
+		}
 
-	/* Tell the user about things not referenced.. */
-	for (i = 0; i < nr_seen; i++) {
-		struct seen *s = seen + i;
-
-		if (s->needed)
-			continue;
-		printf("unreferenced %s: %s\n", s->tag, sha1_to_hex(s->sha1));
+		switch (rev->flags & (SEEN | USED)) {
+		case 0:
+			printf("bad %s\n", sha1_to_hex(rev->sha1));
+			break;
+		case USED:
+			printf("missing %s\n", sha1_to_hex(rev->sha1));
+			break;
+		case SEEN:
+			printf("dangling %s\n", sha1_to_hex(rev->sha1));
+			break;
+		}
 	}
 }
 
 static void mark_needs_sha1(unsigned char *parent, const char * tag, unsigned char *child)
 {
-	struct needs *n;
-
-	if (nr_needs == alloc_needs) {
-		alloc_needs = alloc_nr(alloc_needs);
-		needs = realloc(needs, alloc_needs*sizeof(struct needs));
-	}
-	n = needs + nr_needs;
-	nr_needs++;
-	memcpy(n->parent, parent, 20);
-	memcpy(n->needs, child, 20);
-	strncpy(n->tag, tag, sizeof(n->tag));
+	struct revision * child_rev = add_relationship(lookup_rev(parent), child);
+	child_rev->flags |= USED;
 }
 
 static int mark_sha1_seen(unsigned char *sha1, char *tag)
 {
-	struct seen *s;
+	struct revision *rev = lookup_rev(sha1);
 
-	if (nr_seen == alloc_seen) {
-		alloc_seen = alloc_nr(alloc_seen);
-		seen = realloc(seen, alloc_seen*sizeof(struct seen));
-	}
-	s = seen + nr_seen;
-	memset(s, 0, sizeof(*s));
-	nr_seen++;
-	memcpy(s->sha1, sha1, 20);
-	strncpy(s->tag, tag, sizeof(s->tag));
-	
+	rev->flags |= SEEN;
 	return 0;
 }
 
@@ -160,7 +205,7 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 		parents++;
 	}
 	if (!parents)
-		printf("root: %s\n", sha1_to_hex(sha1));
+		printf("root %s\n", sha1_to_hex(sha1));
 	return 0;
 }
 
@@ -237,8 +282,20 @@ int main(int argc, char **argv)
 	int i;
 	char *sha1_dir;
 
-	if (argc != 1)
-		usage("fsck-cache");
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--unreachable")) {
+			show_unreachable = 1;
+			continue;
+		}
+		if (!get_sha1_hex(argv[i], head_sha1)) {
+			head_supplied = 1;
+			continue;
+		}
+		usage("fsck-cache [[--unreachable] <head-sha1>]");
+	}
+	if (show_unreachable && !head_supplied)
+		usage("unable to do reachability checks without a head");
+
 	sha1_dir = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
