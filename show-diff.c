@@ -57,8 +57,17 @@ static void show_diff_empty(struct cache_entry *ce)
 
 int main(int argc, char **argv)
 {
+	int silent = 0;
 	int entries = read_cache();
 	int i;
+
+	while (argc-- > 1) {
+		if (!strcmp(argv[1], "-s")) {
+			silent = 1;
+			continue;
+		}
+		usage("show-diff [-s]");
+	}
 
 	if (entries < 0) {
 		perror("read_cache");
@@ -74,7 +83,7 @@ int main(int argc, char **argv)
 
 		if (stat(ce->name, &st) < 0) {
 			printf("%s: %s\n", ce->name, strerror(errno));
-			if (errno ==  ENOENT)
+			if (errno == ENOENT && !silent)
 				show_diff_empty(ce);
 			continue;
 		}
@@ -86,6 +95,9 @@ int main(int argc, char **argv)
 			printf("%02x", ce->sha1[n]);
 		printf("\n");
 		fflush(stdout);
+		if (silent)
+			continue;
+
 		new = read_sha1_file(ce->sha1, type, &size);
 		show_differences(ce->name, new, size);
 		free(new);
