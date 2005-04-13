@@ -69,9 +69,13 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 {
 	ce->ctime.sec = st->st_ctime;
+#ifdef NSEC
 	ce->ctime.nsec = st->st_ctim.tv_nsec;
+#endif
 	ce->mtime.sec = st->st_mtime;
+#ifdef NSEC
 	ce->mtime.nsec = st->st_mtim.tv_nsec;
+#endif
 	ce->st_dev = st->st_dev;
 	ce->st_ino = st->st_ino;
 	ce->st_uid = st->st_uid;
