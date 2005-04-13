@@ -73,7 +73,9 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 		return;
 	}
 
-	printf("%s%o %s %s%s%c", prefix, mode, sha1_to_hex(sha1), base, path, 0);
+	printf("%s%o\t%s\t%s\t%s%s%c", prefix, mode,
+	       S_ISDIR(mode) ? "tree" : "blob",
+	       sha1_to_hex(sha1), base, path, 0);
 }
 
 static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
@@ -120,7 +122,9 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	}
 
 	strcpy(old_sha1_hex, sha1_to_hex(sha1));
-	printf("*%o->%o %s->%s %s%s%c", mode1, mode2, old_sha1_hex, sha1_to_hex(sha2), base, path1, 0);
+	printf("*%o->%o\t%s\t%s->%s\t%s%s%c", mode1, mode2,
+	       S_ISDIR(mode1) ? "tree" : "blob",
+	       old_sha1_hex, sha1_to_hex(sha2), base, path1, 0);
 	return 0;
 }
 
