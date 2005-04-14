@@ -233,6 +233,33 @@ int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 	return 0;
 }
 
+static inline int collision_check(char *filename, void *buf, unsigned int size)
+{
+#ifdef COLLISION_CHECK
+	void *map;
+	int fd = open(filename, O_RDONLY);
+	struct stat st;
+	int cmp;
+
+	/* Unreadable object, or object went away? Strange. */
+	if (fd < 0)
+		return -1;
+
+	if (fstat(fd, &st) < 0 || size != st.st_size)
+		return -1;
+
+	map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
+	if (map == MAP_FAILED)
+		return -1;
+	cmp = memcmp(buf, map, size);
+	munmap(map, size);
+	if (cmp)
+		return -1;
+#endif
+	return 0;
+}
+
 int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 {
 	char *filename = sha1_file_name(sha1);
@@ -240,21 +267,11 @@ int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 
 	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0) {
-		void *map;
-
 		if (errno != EEXIST)
 			return -1;
-#ifndef COLLISION_CHECK
-		fd = open(filename, O_RDONLY);
-		if (fd < 0)
-			return -1;
-		map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-		if (map == MAP_FAILED)
-			return -1;
-		if (memcmp(buf, map, size))
+		if (collision_check(filename, buf, size))
 			return error("SHA1 collision detected!"
 					" This is bad, bad, BAD!\a\n");
-#endif
 		return 0;
 	}
 	write(fd, buf, size);
