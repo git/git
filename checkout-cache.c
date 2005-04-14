@@ -77,6 +77,8 @@ static int write_entry(struct cache_entry *ce, const char *path)
 
 	new = read_sha1_file(ce->sha1, type, &size);
 	if (!new || strcmp(type, "blob")) {
+		if (new)
+			free(new);
 		return error("checkout-cache: unable to read sha1 file of %s (%s)",
 			path, sha1_to_hex(ce->sha1));
 	}
