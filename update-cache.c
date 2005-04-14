@@ -131,7 +131,7 @@ static int compare_data(struct cache_entry *ce, unsigned long expected_size)
 	if (fd >= 0) {
 		void *buffer;
 		unsigned long size;
-		char type[10];
+		char type[20];
 
 		buffer = read_sha1_file(ce->sha1, type, &size);
 		if (buffer) {
