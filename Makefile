@@ -14,7 +14,7 @@ CC=gcc
 
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
-	check-files ls-tree
+	check-files ls-tree merge-tree
 
 all: $(PROG)
 
@@ -63,6 +63,9 @@ check-files: check-files.o read-cache.o
 
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
+
+merge-tree: merge-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o merge-tree merge-tree.o read-cache.o $(LIBS)
 
 read-cache.o: cache.h
 show-diff.o: cache.h
