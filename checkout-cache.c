@@ -48,6 +48,7 @@ static void create_directories(const char *path)
 		buf[len] = 0;
 		mkdir(buf, 0755);
 	}
+	free(buf);
 }
 
 static int create_file(const char *path, unsigned int mode)
