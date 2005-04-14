@@ -77,6 +77,7 @@ static int list(unsigned char *sha1)
 	if (!buffer)
 		die("unable to read sha1 file");
 	list_recursive(buffer, "tree", size, NULL);
+	free(buffer);
 	return 0;
 }
 
