@@ -7,6 +7,9 @@
 
 #include <pwd.h>
 #include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
 
 #define BLOCKING (1ul << 14)
 #define ORIG_OFFSET (40)
@@ -95,6 +98,148 @@ static void remove_special(char *p)
 	}
 }
 
+static const char *month_names[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+static const char *weekday_names[] = {
+        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+};
+
+
+static char *skipfws(char *str)
+{
+	while (isspace(*str))
+		str++;
+	return str;
+}
+
+	
+/* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
+   (i.e. English) day/month names, and it doesn't work correctly with %z. */
+static void parse_rfc2822_date(char *date, char *result, int maxlen)
+{
+	struct tm tm;
+	char *p;
+	int i, offset;
+	time_t then;
+
+	memset(&tm, 0, sizeof(tm));
+
+	/* Skip day-name */
+	p = skipfws(date);
+	if (!isdigit(*p)) {
+		for (i=0; i<7; i++) {
+			if (!strncmp(p,weekday_names[i],3) && p[3] == ',') {
+				p = skipfws(p+4);
+				goto day;
+			}
+		}
+		return;
+	}					
+
+	/* day */
+ day:
+	tm.tm_mday = strtoul(p, &p, 10);
+
+	if (tm.tm_mday < 1 || tm.tm_mday > 31)
+		return;
+
+	if (!isspace(*p))
+		return;
+
+	p = skipfws(p);
+
+	/* month */
+
+	for (i=0; i<12; i++) {
+		if (!strncmp(p, month_names[i], 3) && isspace(p[3])) {
+			tm.tm_mon = i;
+			p = skipfws(p+strlen(month_names[i]));
+			goto year;
+		}
+	}
+	return; /* Error -- bad month */
+
+	/* year */
+ year:	
+	tm.tm_year = strtoul(p, &p, 10);
+
+	if (!tm.tm_year && !isspace(*p))
+		return;
+
+	if (tm.tm_year > 1900)
+		tm.tm_year -= 1900;
+		
+	p=skipfws(p);
+
+	/* hour */
+	if (!isdigit(*p))
+		return;
+	tm.tm_hour = strtoul(p, &p, 10);
+	
+	if (!tm.tm_hour > 23)
+		return;
+
+	if (*p != ':')
+		return; /* Error -- bad time */
+	p++;
+
+	/* minute */
+	if (!isdigit(*p))
+		return;
+	tm.tm_min = strtoul(p, &p, 10);
+	
+	if (!tm.tm_min > 59)
+		return;
+
+	if (isspace(*p))
+		goto zone;
+
+	if (*p != ':')
+		return; /* Error -- bad time */
+	p++;
+
+	/* second */
+	if (!isdigit(*p))
+		return;
+	tm.tm_sec = strtoul(p, &p, 10);
+	
+	if (!tm.tm_sec > 59)
+		return;
+
+	if (!isspace(*p))
+		return;
+
+ zone:
+	p = skipfws(p);
+
+	if (*p == '-')
+		offset = -60;
+	else if (*p == '+')
+		offset = 60;
+	else
+	       return;
+
+	if (!isdigit(p[1]) || !isdigit(p[2]) || !isdigit(p[3]) || !isdigit(p[4]))
+		return;
+
+	i = strtoul(p+1, NULL, 10);
+	offset *= ((i % 100) + ((i / 100) * 60));
+
+	if (*(skipfws(p + 5)))
+		return;
+
+	then = mktime(&tm); /* mktime appears to ignore the GMT offset, stupidly */
+	if (then == -1)
+		return;
+
+	then -= offset;
+
+	snprintf(result, maxlen, "%lu %5.5s", then, p);
+}
+
 /*
  * Having more than two parents may be strange, but hey, there's
  * no conceptual reason why the file format couldn't accept multi-way
@@ -114,10 +259,12 @@ int main(int argc, char **argv)
 	unsigned char commit_sha1[20];
 	char *gecos, *realgecos;
 	char *email, realemail[1000];
-	char *date, *realdate;
+	char date[20], realdate[20];
+	char *audate;
 	char comment[1000];
 	struct passwd *pw;
 	time_t now;
+	struct tm *tm;
 	char *buffer;
 	unsigned int size;
 
@@ -142,15 +289,19 @@ int main(int argc, char **argv)
 	realemail[len] = '@';
 	gethostname(realemail+len+1, sizeof(realemail)-len-1);
 	time(&now);
-	realdate = ctime(&now);
+	tm = localtime(&now);
+
+	strftime(realdate, sizeof(realdate), "%s %z", tm);
+	strcpy(date, realdate);
 
 	gecos = getenv("AUTHOR_NAME") ? : realgecos;
 	email = getenv("AUTHOR_EMAIL") ? : realemail;
-	date = getenv("AUTHOR_DATE") ? : realdate;
+	audate = getenv("AUTHOR_DATE");
+	if (audate)
+		parse_rfc2822_date(audate, date, sizeof(date));
 
 	remove_special(gecos); remove_special(realgecos);
 	remove_special(email); remove_special(realemail);
-	remove_special(date); remove_special(realdate);
 
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));

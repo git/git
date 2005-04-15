@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE /* glibc2 needs this */
+#define _BSD_SOURCE /* for tm.tm_gmtoff */
 #include <time.h>
 #include <ctype.h>
 
@@ -21,6 +22,7 @@ static unsigned long parse_time(const char *buf)
 	char buffer[100];
 	struct tm tm;
 	const char *formats[] = {
+		"%s",
 		"%c",
 		"%a %b %d %T %y",
 		NULL
@@ -30,7 +32,7 @@ static unsigned long parse_time(const char *buf)
 	p = buffer;
 	while (isspace(c = *buf))
 		buf++;
-	while ((c = *buf++) != '\n')
+	while ((c = *buf++) != '\n' && c)
 		*p++ = c;
 	*p++ = 0;
 	buf = buffer;
@@ -50,6 +52,8 @@ static unsigned long parse_time(const char *buf)
 
 static unsigned long parse_commit_date(const char *buf)
 {
+	unsigned long time;
+
 	if (memcmp(buf, "author", 6))
 		return 0;
 	while (*buf++ != '\n')
@@ -58,7 +62,11 @@ static unsigned long parse_commit_date(const char *buf)
 		return 0;
 	while (*buf++ != '>')
 		/* nada */;
-	return parse_time(buf);
+
+	time = strtoul(buf, NULL, 10);
+	if (!time)
+		time = parse_time(buf);
+	return time;
 }
 
 static int parse_commit(unsigned char *sha1)
