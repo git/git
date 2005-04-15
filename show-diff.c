@@ -58,15 +58,20 @@ static void show_diff_empty(struct cache_entry *ce)
 int main(int argc, char **argv)
 {
 	int silent = 0;
+	int silent_on_nonexisting_files = 0;
 	int entries = read_cache();
 	int i;
 
-	while (argc-- > 1) {
-		if (!strcmp(argv[1], "-s")) {
-			silent = 1;
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-s")) {
+			silent_on_nonexisting_files = silent = 1;
 			continue;
 		}
-		usage("show-diff [-s]");
+		if (!strcmp(argv[i], "-q")) {
+			silent_on_nonexisting_files = 1;
+			continue;
+		}
+		usage("show-diff [-s] [-q]");
 	}
 
 	if (entries < 0) {
@@ -82,8 +87,10 @@ int main(int argc, char **argv)
 		void *new;
 
 		if (stat(ce->name, &st) < 0) {
+			if (errno == ENOENT && silent_on_nonexisting_files)
+				continue;
 			printf("%s: %s\n", ce->name, strerror(errno));
-			if (errno == ENOENT && !silent)
+			if (errno == ENOENT)
 				show_diff_empty(ce);
 			continue;
 		}
