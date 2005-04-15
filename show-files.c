@@ -14,6 +14,7 @@ static int show_deleted = 0;
 static int show_cached = 0;
 static int show_others = 0;
 static int show_ignored = 0;
+static int line_terminator = '\n';
 
 static const char **dir;
 static int nr_dir;
@@ -105,12 +106,12 @@ static void show_files(void)
 	}
 	if (show_others) {
 		for (i = 0; i < nr_dir; i++)
-			printf("%s\n", dir[i]);
+			printf("%s%c", dir[i], line_terminator);
 	}
 	if (show_cached) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
-			printf("%s\n", ce->name);
+			printf("%s%c", ce->name, line_terminator);
 		}
 	}
 	if (show_deleted) {
@@ -119,7 +120,7 @@ static void show_files(void)
 			struct stat st;
 			if (!stat(ce->name, &st))
 				continue;
-			printf("%s\n", ce->name);
+			printf("%s%c", ce->name, line_terminator);
 		}
 	}
 	if (show_ignored) {
@@ -133,6 +134,11 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
+
+		if (!strcmp(arg, "-z")) {
+			line_terminator = 0;
+			continue;
+		}
 
 		if (!strcmp(arg, "--cached")) {
 			show_cached = 1;
