@@ -8,7 +8,7 @@
 
  - random three-letter combination that is pronounceable, and not
    actually used by any common UNIX command.  The fact that it is a
-   mispronounciation of "get" may or may not be relevant.
+   mispronunciation of "get" may or may not be relevant.
  - stupid. contemptible and despicable. simple. Take your pick from the
    dictionary of slang.
  - "global information tracker": you're in a good mood, and it actually
@@ -35,13 +35,13 @@ up a hierarchy of objects.
 
 All objects have a statically determined "type" aka "tag", which is
 determined at object creation time, and which identifies the format of
-the object (ie how it is used, and how it can refer to other objects). 
+the object (i.e. how it is used, and how it can refer to other objects). 
 There are currently three different object types: "blob", "tree" and
 "commit". 
 
 A "blob" object cannot refer to any other object, and is, like the tag
 implies, a pure storage object containing some user data.  It is used to
-actually store the file data, ie a blob object is associated with some
+actually store the file data, i.e. a blob object is associated with some
 particular version of some file. 
 
 A "tree" object is an object that ties one or more "blob" objects into a
@@ -90,7 +90,7 @@ The object types in some more detail:
 	consistent (it _is_ indexed by its sha1 hash, so the data itself
 	is certainly correct), it has absolutely no other attributes. 
 	No name associations, no permissions.  It is purely a blob of
-	data (ie normally "file contents"). 
+	data (i.e. normally "file contents"). 
 
 	In particular, since the blob is entirely defined by its data,
 	if two files in a directory tree (or in multiple different
@@ -108,7 +108,7 @@ The object types in some more detail:
 	Like the "blob" object, a tree object is uniquely determined by
 	the set contents, and so two separate but identical trees will
 	always share the exact same object. This is true at all levels,
-	ie it's true for a "leaf" tree (which does not refer to any
+	i.e. it's true for a "leaf" tree (which does not refer to any
 	other trees, only blobs) as well as for a whole subdirectory.
 
 	For that reason a "tree" object is just a pure data abstraction:
@@ -130,7 +130,7 @@ The object types in some more detail:
 	the difference, rather than the size of the tree. 
 
 	Side note 2 on trees: since the name of a "blob" depends
-	entirely and exclusively on its contents (ie there are no names
+	entirely and exclusively on its contents (i.e. there are no names
 	or permissions involved), you can see trivial renames or
 	permission changes by noticing that the blob stayed the same. 
 	However, renames with data changes need a smarter "diff" implementation. 
@@ -150,7 +150,7 @@ CHANGESET: The "changeset" object is an object that introduces the
 	actually have any relationship with the result, for example. 
 
 	Note on changesets: unlike real SCM's, changesets do not contain
-	rename information or file mode chane information.  All of that
+	rename information or file mode change information.  All of that
 	is implicit in the trees involved (the result tree, and the
 	result trees of the parents), and describing that makes no sense
 	in this idiotic file manager. 
@@ -265,7 +265,7 @@ main combinations:
 
 	but to avoid common mistakes with filename globbing etc, the
 	command will not normally add totally new entries or remove old
-	entries, ie it will normally just update existing cache entryes.
+	entries, i.e. it will normally just update existing cache entryes.
 
 	To tell git that yes, you really do realize that certain files
 	no longer exist in the archive, or that new files should be
@@ -319,7 +319,7 @@ main combinations:
 	out" files. This is not a very common operation, since normally
 	you'd just keep your files updated, and rather than write to
 	your working directory, you'd tell the index files about the
-	changes in your working directory (ie "update-cache").
+	changes in your working directory (i.e. "update-cache").
 
 	However, if you decide to jump to a new version, or check out
 	somebody elses version, or just restore a previous tree, you'd
