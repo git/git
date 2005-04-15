@@ -45,7 +45,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 	do {
 		struct cache_entry *ce = cachep[nr];
 		const char *pathname = ce->name, *filename, *dirname;
-		int pathlen = ce->namelen, entrylen;
+		int pathlen = ce_namelen(ce), entrylen;
 		unsigned char *sha1;
 		unsigned int mode;
 
@@ -54,7 +54,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 			break;
 
 		sha1 = ce->sha1;
-		mode = ce->st_mode;
+		mode = ntohl(ce->ce_mode);
 
 		/* Do we have _further_ subdirectories? */
 		filename = pathname + baselen;

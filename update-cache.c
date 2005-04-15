@@ -68,18 +68,17 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
  */
 static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 {
-	ce->ctime.sec = st->st_ctime;
+	ce->ce_ctime.sec = htonl(st->st_ctime);
+	ce->ce_mtime.sec = htonl(st->st_mtime);
 #ifdef NSEC
-	ce->ctime.nsec = st->st_ctim.tv_nsec;
+	ce->ce_ctime.nsec = htonl(st->st_ctim.tv_nsec);
+	ce->ce_mtime.nsec = htonl(st->st_mtim.tv_nsec);
 #endif
-	ce->mtime.sec = st->st_mtime;
-#ifdef NSEC
-	ce->mtime.nsec = st->st_mtim.tv_nsec;
-#endif
-	ce->st_dev = st->st_dev;
-	ce->st_ino = st->st_ino;
-	ce->st_uid = st->st_uid;
-	ce->st_gid = st->st_gid;
+	ce->ce_dev = htonl(st->st_dev);
+	ce->ce_ino = htonl(st->st_ino);
+	ce->ce_uid = htonl(st->st_uid);
+	ce->ce_gid = htonl(st->st_gid);
+	ce->ce_size = htonl(st->st_size);
 }
 
 static int add_file_to_cache(char *path)
@@ -107,9 +106,8 @@ static int add_file_to_cache(char *path)
 	memset(ce, 0, size);
 	memcpy(ce->name, path, namelen);
 	fill_stat_cache_info(ce, &st);
-	ce->st_mode = st.st_mode;
-	ce->st_size = st.st_size;
-	ce->namelen = namelen;
+	ce->ce_mode = htonl(st.st_mode);
+	ce->ce_namelen = htons(namelen);
 
 	if (index_fd(path, namelen, ce, fd, &st) < 0)
 		return -1;
@@ -190,7 +188,6 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	updated = malloc(size);
 	memcpy(updated, ce, size);
 	fill_stat_cache_info(updated, &st);
-	updated->st_size = st.st_size;
 	return updated;
 }
 

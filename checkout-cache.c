@@ -77,7 +77,7 @@ static int write_entry(struct cache_entry *ce)
 		return error("checkout-cache: unable to read sha1 file of %s (%s)",
 			ce->name, sha1_to_hex(ce->sha1));
 	}
-	fd = create_file(ce->name, ce->st_mode);
+	fd = create_file(ce->name, ntohl(ce->ce_mode));
 	if (fd < 0) {
 		free(new);
 		return error("checkout-cache: unable to create %s (%s)",

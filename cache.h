@@ -10,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <netinet/in.h>
 
 #include <openssl/sha.h>
 #include <zlib.h>
@@ -24,9 +25,9 @@
 
 #define CACHE_SIGNATURE 0x44495243	/* "DIRC" */
 struct cache_header {
-	unsigned int signature;
-	unsigned int version;
-	unsigned int entries;
+	unsigned int hdr_signature;
+	unsigned int hdr_version;
+	unsigned int hdr_entries;
 	unsigned char sha1[20];
 };
 
@@ -44,18 +45,21 @@ struct cache_time {
  * dev/ino/uid/gid/size are also just tracked to the low 32 bits
  * Again - this is just a (very strong in practice) heuristic that
  * the inode hasn't changed.
+ *
+ * We save the fields in big-endian order to allow using the
+ * index file over NFS transparently.
  */
 struct cache_entry {
-	struct cache_time ctime;
-	struct cache_time mtime;
-	unsigned int st_dev;
-	unsigned int st_ino;
-	unsigned int st_mode;
-	unsigned int st_uid;
-	unsigned int st_gid;
-	unsigned int st_size;
+	struct cache_time ce_ctime;
+	struct cache_time ce_mtime;
+	unsigned int ce_dev;
+	unsigned int ce_ino;
+	unsigned int ce_mode;
+	unsigned int ce_uid;
+	unsigned int ce_gid;
+	unsigned int ce_size;
 	unsigned char sha1[20];
-	unsigned short namelen;
+	unsigned short ce_namelen;
 	char name[0];
 };
 
@@ -67,7 +71,8 @@ unsigned int active_nr, active_alloc;
 #define DEFAULT_DB_ENVIRONMENT ".git/objects"
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
-#define ce_size(ce) cache_entry_size((ce)->namelen)
+#define ce_namelen(ce) ntohs((ce)->ce_namelen)
+#define ce_size(ce) cache_entry_size(ce_namelen(ce))
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
