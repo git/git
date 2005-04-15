@@ -1,6 +1,7 @@
 #include "cache.h"
 
 static int recursive = 0;
+static int line_termination = '\n';
 
 static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *base);
 
@@ -75,7 +76,8 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 
 	printf("%s%o\t%s\t%s\t%s%s%c", prefix, mode,
 	       S_ISDIR(mode) ? "tree" : "blob",
-	       sha1_to_hex(sha1), base, path, 0);
+	       sha1_to_hex(sha1), base, path,
+	       line_termination);
 }
 
 static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
@@ -124,7 +126,8 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	strcpy(old_sha1_hex, sha1_to_hex(sha1));
 	printf("*%o->%o\t%s\t%s->%s\t%s%s%c", mode1, mode2,
 	       S_ISDIR(mode1) ? "tree" : "blob",
-	       old_sha1_hex, sha1_to_hex(sha2), base, path1, 0);
+	       old_sha1_hex, sha1_to_hex(sha2), base, path1,
+	       line_termination);
 	return 0;
 }
 
@@ -188,7 +191,11 @@ int main(int argc, char **argv)
 			recursive = 1;
 			continue;
 		}
-		usage("diff-tree [-r] <tree sha1> <tree sha1>");
+		if (!strcmp(arg, "-z")) {
+			line_termination = '\0';
+			continue;
+		}
+		usage("diff-tree [-r] [-z] <tree sha1> <tree sha1>");
 	}
 
 	if (argc != 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
