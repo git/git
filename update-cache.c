@@ -235,6 +235,35 @@ inside:
 	}
 }
 
+static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
+{
+	int size, len;
+	unsigned int mode;
+	unsigned char sha1[20];
+	struct cache_entry *ce;
+
+	if (sscanf(arg1, "%o", &mode) != 1)
+		return -1;
+	printf("got mode %o\n", mode);
+	if (get_sha1_hex(arg2, sha1))
+		return -1;
+	printf("got sha1 %s\n", sha1_to_hex(sha1));
+	if (!verify_path(arg3))
+		return -1;
+	printf("got path %s\n", arg3);
+
+	len = strlen(arg3);
+	size = cache_entry_size(len);
+	ce = malloc(size);
+	memset(ce, 0, size);
+
+	memcpy(ce->sha1, sha1, 20);
+	memcpy(ce->name, arg3, len);
+	ce->ce_namelen = htons(len);
+	ce->ce_mode = htonl(mode);
+	return add_cache_entry(ce, allow_add);
+}
+
 static int remove_lock = 0;
 
 static void remove_lock_file(void)
@@ -277,6 +306,12 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(path, "--refresh")) {
 				refresh_cache();
+				continue;
+			}
+			if (!strcmp(path, "--cacheinfo")) {
+				if (i+3 >= argc || add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
+					die("update-cache: --cacheinfo <mode> <sha1> <path>");
+				i += 3;
 				continue;
 			}
 			die("unknown option %s", path);
