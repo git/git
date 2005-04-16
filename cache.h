@@ -66,7 +66,7 @@ struct cache_entry {
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
 
-#define create_ce_flags(len, stage) ((len) | ((stage) << 12))
+#define create_ce_flags(len, stage) htons((len) | ((stage) << 12))
 
 const char *sha1_file_directory;
 struct cache_entry **active_cache;
