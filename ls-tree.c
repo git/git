@@ -48,30 +48,22 @@ static void list_recursive(void *buffer,
 		buffer = sha1 + 20;
 		size -= namelen + 20;
 
-		/* XXX: We do some ugly mode heuristics here.
-		 * It seems not worth it to read each file just to get this
-		 * and the file size. -- pasky@ucw.cz
-		 * ... that is, when we are not recursive -- junkio@cox.net
-		 */
-		eltbuf = (recursive ? read_sha1_file(sha1, elttype, &eltsize) :
-			  NULL);
-		if (! eltbuf) {
-			if (recursive)
-				error("cannot read %s", sha1_to_hex(sha1));
-			type = S_ISDIR(mode) ? "tree" : "blob";
-		}
-		else
-			type = elttype;
-
-		printf("%03o\t%s\t%s\t", mode, type, sha1_to_hex(sha1));
+		printf("%06o\t%s\t%s\t", mode,
+		       S_ISDIR(mode) ? "tree" : "blob",
+		       sha1_to_hex(sha1));
 		print_path_prefix(prefix);
 		fputs(path, stdout);
 		putchar(line_termination);
 
-		if (eltbuf && !strcmp(type, "tree")) {
-			this_prefix.name = path;
-			list_recursive(eltbuf, elttype, eltsize, &this_prefix);
+		if (! recursive || ! S_ISDIR(mode))
+			continue;
+
+		if (! (eltbuf = read_sha1_file(sha1, elttype, &eltsize)) ) {
+			error("cannot read %s", sha1_to_hex(sha1));
+			continue;
 		}
+		this_prefix.name = path;
+		list_recursive(eltbuf, elttype, eltsize, &this_prefix);
 		free(eltbuf);
 	}
 }
@@ -89,10 +81,7 @@ static int list(unsigned char *sha1)
 	return 0;
 }
 
-static void _usage(void)
-{
-	usage("ls-tree [-r] [-z] <key>");
-}
+static const char *ls_tree_usage = "ls-tree [-r] [-z] <key>";
 
 int main(int argc, char **argv)
 {
@@ -107,15 +96,15 @@ int main(int argc, char **argv)
 			recursive = 1;
 			break;
 		default:
-			_usage();
+			usage(ls_tree_usage);
 		}
 		argc--; argv++;
 	}
 
 	if (argc != 2)
-		_usage();
+		usage(ls_tree_usage);
 	if (get_sha1_hex(argv[1], sha1) < 0)
-		_usage();
+		usage(ls_tree_usage);
 	sha1_file_directory = getenv(DB_ENVIRONMENT);
 	if (!sha1_file_directory)
 		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
