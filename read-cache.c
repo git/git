@@ -355,15 +355,28 @@ int cache_name_pos(const char *name, int namelen)
 	return -first-1;
 }
 
+/* Remove entry, return true if there are more entries to go.. */
+static int remove_entry_at(int pos)
+{
+	active_nr--;
+	if (pos >= active_nr)
+		return 0;
+	memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos) * sizeof(struct cache_entry *));
+	return 1;
+}
+
 int remove_file_from_cache(char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
-	if (pos >= 0) {
-		active_nr--;
-		if (pos < active_nr)
-			memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos) * sizeof(struct cache_entry *));
-	}
+	if (pos >= 0)
+		remove_entry_at(pos);
 	return 0;
+}
+
+static int same_name(struct cache_entry *a, struct cache_entry *b)
+{
+	int len = ce_namelen(a);
+	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
 }
 
 int add_cache_entry(struct cache_entry *ce, int ok_to_add)
@@ -378,6 +391,19 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 		return 0;
 	}
 	pos = -pos-1;
+
+	/*
+	 * Inserting a merged entry ("stage 0") into the index
+	 * will always replace all non-merged entries..
+	 */
+	if (pos < active_nr && ce_stage(ce) == 0) {
+		while (same_name(active_cache[pos], ce)) {
+			ok_to_add = 1;
+			active_nr--;
+			if (!remove_entry_at(pos))
+				break;
+		}
+	}
 
 	if (!ok_to_add)
 		return -1;
