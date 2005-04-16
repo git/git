@@ -107,7 +107,7 @@ static int add_file_to_cache(char *path)
 	memcpy(ce->name, path, namelen);
 	fill_stat_cache_info(ce, &st);
 	ce->ce_mode = htonl(st.st_mode);
-	ce->ce_namelen = htons(namelen);
+	ce->ce_flags = htons(namelen);
 
 	if (index_fd(path, namelen, ce, fd, &st) < 0)
 		return -1;
@@ -259,7 +259,7 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 
 	memcpy(ce->sha1, sha1, 20);
 	memcpy(ce->name, arg3, len);
-	ce->ce_namelen = htons(len);
+	ce->ce_flags = htons(len);
 	ce->ce_mode = htonl(mode);
 	return add_cache_entry(ce, allow_add);
 }
