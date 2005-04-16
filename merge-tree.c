@@ -1,5 +1,7 @@
 #include "cache.h"
 
+static int line_termination = '\n';
+
 struct tree_entry {
 	unsigned mode;
 	unsigned char *sha1;
@@ -35,7 +37,8 @@ static struct tree_entry *read_tree(unsigned char *sha1)
 
 static void show(const struct tree_entry *a, const char *path)
 {
-	printf("select %o %s %s%c", a->mode, sha1_to_hex(a->sha1), path, 0);
+	printf("select %o %s %s%c", a->mode, sha1_to_hex(a->sha1), path,
+	       line_termination);
 }
 
 static void merge(const struct tree_entry *a, const struct tree_entry *b, const struct tree_entry *c, const char *path)
@@ -46,7 +49,7 @@ static void merge(const struct tree_entry *a, const struct tree_entry *b, const 
 	strcpy(hex_c, sha1_to_hex(c->sha1));
 	printf("merge %o->%o,%o %s->%s,%s %s%c",
 		a->mode, b->mode, c->mode,
-		hex_a, hex_b, hex_c, path, 0);
+		hex_a, hex_b, hex_c, path, line_termination);
 }
 
 static int same(const struct tree_entry *a, const struct tree_entry *b)
@@ -114,15 +117,29 @@ static void merge_tree(struct tree_entry *src, struct tree_entry *dst1, struct t
 	}
 }
 
+static const char *merge_tree_usage =
+    "merge-tree [-z] <src> <dst1> <dst2>";
+
 int main(int argc, char **argv)
 {
 	unsigned char src[20], dst1[20], dst2[20];
+
+	while ((1 < argc) && argv[1][0] == '-') {
+		switch (argv[1][1]) {
+		case 'z':
+			line_termination = 0;
+			break;
+		default:
+			usage(merge_tree_usage);
+		}
+		argc--; argv++;
+	}
 
 	if (argc != 4 ||
 	    get_sha1_hex(argv[1], src) ||
 	    get_sha1_hex(argv[2], dst1) ||
 	    get_sha1_hex(argv[3], dst2))
-		usage("merge-tree <src> <dst1> <dst2>");
+		usage(merge_tree_usage);
 	merge_tree(read_tree(src), read_tree(dst1), read_tree(dst2));
 	return 0;
 }
