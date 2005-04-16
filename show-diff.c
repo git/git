@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 		changed = cache_match_stat(ce, &st);
 		if (!changed)
 			continue;
-		printf("%.*s:  ", ce_namelen(ce), ce->name);
+		printf("%s:  ", ce->name);
 		for (n = 0; n < 20; n++)
 			printf("%02x", ce->sha1[n]);
 		printf("\n");
