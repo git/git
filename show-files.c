@@ -15,6 +15,7 @@ static int show_cached = 0;
 static int show_others = 0;
 static int show_ignored = 0;
 static int show_stage = 0;
+static int show_unmerged = 0;
 static int line_terminator = '\n';
 
 static const char **dir;
@@ -112,6 +113,8 @@ static void show_files(void)
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
+			if (show_unmerged && !ce_stage(ce))
+				continue;
 			if (!show_stage)
 				printf("%s%c", ce->name, line_terminator);
 			else
@@ -170,12 +173,18 @@ int main(int argc, char **argv)
 			show_stage = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--unmerged")) {
+			// There's no point in showing unmerged unless you also show the stage information
+			show_stage = 1;
+			show_unmerged = 1;
+			continue;
+		}
 
 		usage("show-files [-z] (--[cached|deleted|others|ignored|stage])*");
 	}
 
 	/* With no flags, we default to showing the cached files */
-	if (!(show_stage | show_deleted | show_others | show_ignored))
+	if (!(show_stage | show_deleted | show_others | show_ignored | show_unmerged))
 		show_cached = 1;
 
 	read_cache();
