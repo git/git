@@ -102,11 +102,29 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 
 int main(int argc, char **argv)
 {
+	int i, unmerged;
 	int entries = read_cache();
 	unsigned char sha1[20];
 
 	if (entries <= 0)
 		die("write-tree: no cache contents to write");
+
+	/* Verify that the tree is merged */
+	unmerged = 0;
+	for (i = 0; i < entries; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ntohs(ce->ce_flags) & ~CE_NAMEMASK) {
+			if (++unmerged > 10) {
+				fprintf(stderr, "...\n");
+				break;
+			}
+			fprintf(stderr, "%s: unmerged (%s)\n", ce->name, sha1_to_hex(ce->sha1));
+		}
+	}
+	if (unmerged)
+		die("write-tree: not able to write tree");
+
+	/* Ok, write it out */
 	if (write_tree(active_cache, entries, "", 0, sha1) != entries)
 		die("write-tree: internal error");
 	printf("%s\n", sha1_to_hex(sha1));
