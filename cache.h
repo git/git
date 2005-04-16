@@ -65,8 +65,14 @@ struct cache_entry {
 
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
+#define CE_STAGESHIFT 12
 
-#define create_ce_flags(len, stage) htons((len) | ((stage) << 12))
+#define create_ce_flags(len, stage) htons((len) | ((stage) << CE_STAGESHIFT))
+#define ce_namelen(ce) (CE_NAMEMASK & ntohs((ce)->ce_flags))
+#define ce_size(ce) cache_entry_size(ce_namelen(ce))
+#define ce_stage(ce) ((CE_STAGEMASK & ntohs((ce)->ce_flags)) >> CE_STAGESHIFT)
+
+#define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
 const char *sha1_file_directory;
 struct cache_entry **active_cache;
@@ -74,10 +80,6 @@ unsigned int active_nr, active_alloc;
 
 #define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
 #define DEFAULT_DB_ENVIRONMENT ".git/objects"
-
-#define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
-#define ce_namelen(ce) (CE_NAMEMASK & ntohs((ce)->ce_flags))
-#define ce_size(ce) cache_entry_size(ce_namelen(ce))
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
