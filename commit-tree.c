@@ -240,6 +240,18 @@ static void parse_rfc2822_date(char *date, char *result, int maxlen)
 	snprintf(result, maxlen, "%lu %5.5s", then, p);
 }
 
+static void check_valid(unsigned char *sha1, const char *expect)
+{
+	void *buf;
+	char type[20];
+	unsigned long size;
+
+	buf = read_sha1_file(sha1, type, &size);
+	if (!buf || strcmp(type, expect))
+		die("%s is not a valid '%s' object", sha1_to_hex(sha1), expect);
+	free(buf);
+}
+
 /*
  * Having more than two parents may be strange, but hey, there's
  * no conceptual reason why the file format couldn't accept multi-way
@@ -271,11 +283,13 @@ int main(int argc, char **argv)
 	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
 		usage("commit-tree <sha1> [-p <sha1>]* < changelog");
 
+	check_valid(tree_sha1, "tree");
 	for (i = 2; i < argc; i += 2) {
 		char *a, *b;
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p") || get_sha1_hex(b, parent_sha1[parents]))
 			usage("commit-tree <sha1> [-p <sha1>]* < changelog");
+		check_valid(parent_sha1[parents], "commit");
 		parents++;
 	}
 	if (!parents)
