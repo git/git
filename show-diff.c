@@ -4,14 +4,70 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include <ctype.h>
 
-static void show_differences(char *name,
-	void *old_contents, unsigned long long old_size)
+static char *diff_cmd = "diff -L '%s' -u -N  - '%s'";
+
+/* Help to copy the thing properly quoted for the shell safety.
+ * any single quote is replaced with '\'', and the caller is
+ * expected to enclose the result within a single quote pair.
+ *
+ * E.g.
+ *  original     sq_expand     result
+ *  name     ==> name      ==> 'name'
+ *  a b      ==> a b       ==> 'a b'
+ *  a'b      ==> a'\''b    ==> 'a'\''b'
+ *
+ * NOTE! The returned memory belongs to this function so
+ * do not free it.
+ */
+static char *sq_expand(char *src)
 {
-	static char cmd[1000];
-	FILE *f;
+	static char *buf = NULL;
+	static int buf_size = -1;
+	int cnt, c;
+	char *cp;
 
-	snprintf(cmd, sizeof(cmd), "diff -L %s -u -N  - %s", name, name);
+	/* count single quote characters */ 
+	for (cnt = 0, cp = src; *cp; cnt++, cp++)
+		if (*cp == '\'')
+			cnt += 3;
+
+	if (buf_size < cnt) {
+		free(buf);
+		buf_size = cnt;
+		buf = malloc(cnt);
+	}
+
+	cp = buf;
+	while ((c = *src++)) {
+		if (c != '\'')
+			*cp++ = c;
+		else {
+			cp = strcpy(cp, "'\\''");
+			cp += 4;
+		}
+	}
+	*cp = 0;
+	return buf;
+}
+
+static void show_differences(char *name, void *old_contents,
+			     unsigned long long old_size)
+{
+	FILE *f;
+	static char *cmd = NULL;
+	static int cmd_size = -1;
+
+	char *name_sq = sq_expand(name);
+	int cmd_required_length = strlen(name_sq) * 2 + strlen(diff_cmd);
+
+	if (cmd_size < cmd_required_length) {
+		free(cmd);
+		cmd_size = cmd_required_length;
+		cmd = malloc(cmd_required_length);
+	}
+	snprintf(cmd, cmd_size, diff_cmd, name_sq, name_sq);
 	f = popen(cmd, "w");
 	if (old_size)
 		fwrite(old_contents, old_size, 1, f);
