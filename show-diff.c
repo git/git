@@ -55,6 +55,23 @@ static void show_diff_empty(struct cache_entry *ce)
 	}
 }
 
+static const char *show_diff_usage = "show-diff [-s] [-q] [paths...]";
+
+static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
+{
+	int i;
+	int namelen = ce_namelen(ce);
+	for (i = 0; i < cnt; i++) {
+		int speclen = strlen(spec[i]);
+		if (! strncmp(spec[i], ce->name, speclen) &&
+		    speclen <= namelen &&
+		    (ce->name[speclen] == 0 ||
+		     ce->name[speclen] == '/'))
+			return 1;
+	}
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int silent = 0;
@@ -62,18 +79,19 @@ int main(int argc, char **argv)
 	int entries = read_cache();
 	int i;
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "-s")) {
+	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "-s"))
 			silent_on_nonexisting_files = silent = 1;
-			continue;
-		}
-		if (!strcmp(argv[i], "-q")) {
+		else if (!strcmp(argv[1], "-q"))
 			silent_on_nonexisting_files = 1;
-			continue;
-		}
-		usage("show-diff [-s] [-q]");
+		else
+			usage(show_diff_usage);
+		argv++; argc--;
 	}
 
+	/* At this point, if argc == 1, then we are doing everything.
+	 * Otherwise argv[1] .. argv[argc-1] have the explicit paths.
+	 */
 	if (entries < 0) {
 		perror("read_cache");
 		exit(1);
@@ -85,6 +103,10 @@ int main(int argc, char **argv)
 		unsigned long size;
 		char type[20];
 		void *new;
+
+		if (1 <argc &&
+		    ! matches_pathspec(ce, argv+1, argc-1))
+			continue;
 
 		if (stat(ce->name, &st) < 0) {
 			if (errno == ENOENT && silent_on_nonexisting_files)
