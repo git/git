@@ -55,7 +55,7 @@ static void show_diff_empty(struct cache_entry *ce)
 	}
 }
 
-static const char *show_diff_usage = "show-diff [-s] [-q] [paths...]";
+static const char *show_diff_usage = "show-diff [-s] [-q] [-z] [paths...]";
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
 {
@@ -76,6 +76,7 @@ int main(int argc, char **argv)
 {
 	int silent = 0;
 	int silent_on_nonexisting_files = 0;
+	int machine_readable = 0;
 	int entries = read_cache();
 	int i;
 
@@ -84,6 +85,9 @@ int main(int argc, char **argv)
 			silent_on_nonexisting_files = silent = 1;
 		else if (!strcmp(argv[1], "-q"))
 			silent_on_nonexisting_files = 1;
+		else if (!strcmp(argv[1], "-z")) {
+			machine_readable = 1;
+		}
 		else
 			usage(show_diff_usage);
 		argv++; argc--;
@@ -99,7 +103,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		struct cache_entry *ce = active_cache[i];
-		int n, changed;
+		int changed;
 		unsigned long size;
 		char type[20];
 		void *new;
@@ -111,18 +115,24 @@ int main(int argc, char **argv)
 		if (stat(ce->name, &st) < 0) {
 			if (errno == ENOENT && silent_on_nonexisting_files)
 				continue;
-			printf("%s: %s\n", ce->name, strerror(errno));
-			if (errno == ENOENT)
-				show_diff_empty(ce);
+			if (machine_readable)
+				printf("X %s%c", ce->name, 0);
+			else {
+				printf("%s: %s\n", ce->name, strerror(errno));
+				if (errno == ENOENT)
+					show_diff_empty(ce);
+			}
 			continue;
 		}
 		changed = cache_match_stat(ce, &st);
 		if (!changed)
 			continue;
-		printf("%s:  ", ce->name);
-		for (n = 0; n < 20; n++)
-			printf("%02x", ce->sha1[n]);
-		printf("\n");
+		if (!machine_readable)
+			printf("%s: %s\n", ce->name, sha1_to_hex(ce->sha1));
+		else {
+			printf("%s %s%c", sha1_to_hex(ce->sha1), ce->name, 0);
+			continue;
+		}
 		fflush(stdout);
 		if (silent)
 			continue;
