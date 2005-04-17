@@ -37,7 +37,7 @@ static void read_cache_file(const char *path)
 			break;
 		if (get_sha1_hex(buf+1, sha1))
 			break;
-		rev = lookup_rev(sha1);
+		rev = lookup_rev(sha1, "commit");
 		rev->flags |= SEEN;
 		rev->date = date;
 
@@ -46,7 +46,7 @@ static void read_cache_file(const char *path)
 			unsigned char parent[20];
 			if (get_sha1_hex(buf + 1, parent))
 				break;
-			add_relationship(rev, parent);
+			add_relationship(rev, parent, "commit");
 		}
 	}
 	fclose(file);
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 	 * Now we have the maximal tree. Walk the different sha files back to the root.
 	 */
 	for (i = 0; i < nr; i++)
-		mark_reachable(lookup_rev(sha1[i]), 1 << i);
+		mark_reachable(lookup_rev(sha1[i], "commit"), 1 << i);
 
 	/*
 	 * Now print out the results..

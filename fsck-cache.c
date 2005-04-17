@@ -17,33 +17,33 @@ static void check_connectivity(void)
 		struct revision *rev = revs[i];
 
 		if (show_unreachable && !(rev->flags & REACHABLE)) {
-			printf("unreachable %s\n", sha1_to_hex(rev->sha1));
+			printf("unreachable %s %s\n", rev->tag, sha1_to_hex(rev->sha1));
 			continue;
 		}
 
 		switch (rev->flags & (SEEN | USED)) {
 		case 0:
-			printf("bad %s\n", sha1_to_hex(rev->sha1));
+			printf("bad %s %s\n", rev->tag, sha1_to_hex(rev->sha1));
 			break;
 		case USED:
-			printf("missing %s\n", sha1_to_hex(rev->sha1));
+			printf("missing %s, %s\n", rev->tag, sha1_to_hex(rev->sha1));
 			break;
 		case SEEN:
-			printf("dangling %s\n", sha1_to_hex(rev->sha1));
+			printf("dangling %s %s\n", rev->tag, sha1_to_hex(rev->sha1));
 			break;
 		}
 	}
 }
 
-static void mark_needs_sha1(unsigned char *parent, const char * tag, unsigned char *child)
+static void mark_needs_sha1(unsigned char *parent, const char *ptag, unsigned char *child, const char *ctag)
 {
-	struct revision * child_rev = add_relationship(lookup_rev(parent), child);
+	struct revision * child_rev = add_relationship(lookup_rev(parent, ptag), child, ctag);
 	child_rev->flags |= USED;
 }
 
-static int mark_sha1_seen(unsigned char *sha1, char *tag)
+static int mark_sha1_seen(unsigned char *sha1, const char *tag)
 {
-	struct revision *rev = lookup_rev(sha1);
+	struct revision *rev = lookup_rev(sha1, tag);
 
 	rev->flags |= SEEN;
 	return 0;
@@ -69,7 +69,7 @@ static int fsck_tree(unsigned char *sha1, void *data, unsigned long size)
 
 		data += len + 20;
 		size -= len + 20;
-		mark_needs_sha1(sha1, S_ISDIR(mode) ? "tree" : "blob", file_sha1);
+		mark_needs_sha1(sha1, "tree", file_sha1, S_ISDIR(mode) ? "tree" : "blob");
 	}
 	return 0;
 }
@@ -84,13 +84,13 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 		return -1;
 	if (get_sha1_hex(data + 5, tree_sha1) < 0)
 		return -1;
-	mark_needs_sha1(sha1, "tree", tree_sha1);
+	mark_needs_sha1(sha1, "commit", tree_sha1, "tree");
 	data += 5 + 40 + 1;	/* "tree " + <hex sha1> + '\n' */
 	parents = 0;
 	while (!memcmp(data, "parent ", 7)) {
 		if (get_sha1_hex(data + 7, parent_sha1) < 0)
 			return -1;
-		mark_needs_sha1(sha1, "commit", parent_sha1);
+		mark_needs_sha1(sha1, "commit", parent_sha1, "commit");
 		data += 7 + 40 + 1; 	/* "parent " + <hex sha1> + '\n' */
 		parents++;
 	}
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!get_sha1_hex(argv[i], head_sha1)) {
-			mark_reachable(lookup_rev(head_sha1), REACHABLE);
+			mark_reachable(lookup_rev(head_sha1, "commit"), REACHABLE);
 			heads++;
 			continue;
 		}

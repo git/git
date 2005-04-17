@@ -25,6 +25,7 @@ struct revision {
 	unsigned char sha1[20];
 	unsigned long date;
 	struct parent *parent;
+	char tag[1];
 };
 
 static struct revision **revs;
@@ -51,13 +52,17 @@ static int find_rev(unsigned char *sha1)
 	return -first-1;
 }
 
-static struct revision *lookup_rev(unsigned char *sha1)
+static struct revision *lookup_rev(unsigned char *sha1, const char *tag)
 {
 	int pos = find_rev(sha1);
 	struct revision *n;
 
-	if (pos >= 0)
-		return revs[pos];
+	if (pos >= 0) {
+		n = revs[pos];
+		if (strcmp(n->tag, tag))
+			error("expected tag %s on object %s: got %s", tag, sha1_to_hex(sha1), n->tag);
+		return n;
+	}
 	
 	pos = -pos-1;
 
@@ -65,11 +70,12 @@ static struct revision *lookup_rev(unsigned char *sha1)
 		rev_allocs = alloc_nr(rev_allocs);
 		revs = realloc(revs, rev_allocs * sizeof(struct revision *));
 	}
-	n = malloc(sizeof(struct revision));
+	n = malloc(sizeof(struct revision) + strlen(tag));
 
 	n->flags = 0;
 	memcpy(n->sha1, sha1, 20);
 	n->parent = NULL;
+	strcpy(n->tag, tag);
 
 	/* Insert it into the right place */
 	memmove(revs + pos + 1, revs + pos, (nr_revs - pos) * sizeof(struct revision *));
@@ -79,9 +85,9 @@ static struct revision *lookup_rev(unsigned char *sha1)
 	return n;
 }
 
-static struct revision *add_relationship(struct revision *rev, unsigned char *needs)
+static struct revision *add_relationship(struct revision *rev, unsigned char *needs, const char *tag)
 {
-	struct revision *parent_rev = lookup_rev(needs);
+	struct revision *parent_rev = lookup_rev(needs, tag);
 	struct parent **pp = &rev->parent, *p;
 
 	while ((p = *pp) != NULL) {
@@ -131,7 +137,7 @@ static unsigned long parse_commit_date(const char *buf)
 
 static struct revision * parse_commit(unsigned char *sha1)
 {
-	struct revision *rev = lookup_rev(sha1);
+	struct revision *rev = lookup_rev(sha1, "commit");
 
 	if (!(rev->flags & SEEN)) {
 		void *buffer, *bufptr;
@@ -145,7 +151,7 @@ static struct revision * parse_commit(unsigned char *sha1)
 			die("%s is not a commit object", sha1_to_hex(sha1));
 		bufptr += 46; /* "tree " + "hex sha1" + "\n" */
 		while (!memcmp(bufptr, "parent ", 7) && !get_sha1_hex(bufptr+7, parent)) {
-			add_relationship(rev, parent);
+			add_relationship(rev, parent, "commit");
 			parse_commit(parent);
 			bufptr += 48;	/* "parent " + "hex sha1" + "\n" */
 		}
