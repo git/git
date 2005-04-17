@@ -369,7 +369,9 @@ static int remove_entry_at(int pos)
 int remove_file_from_cache(char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
-	if (pos >= 0)
+	if (pos < 0)
+		pos = -pos-1;
+	while (pos < active_nr && !strcmp(active_cache[pos]->name, path))
 		remove_entry_at(pos);
 	return 0;
 }
