@@ -93,10 +93,8 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 	i -= 5;
 	memcpy(buffer+i, "tree ", 5);
 
-	buffer += i;
-	offset -= i;
-
-	write_sha1_file(buffer, offset, returnsha1);
+	write_sha1_file(buffer + i, offset - i, returnsha1);
+	free(buffer);
 	return nr;
 }
 
