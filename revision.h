@@ -97,22 +97,24 @@ static struct revision *add_relationship(struct revision *rev, unsigned char *ne
 	return parent_rev;
 }
 
-static void mark_reachable(struct revision *rev)
+static void mark_reachable(struct revision *rev, unsigned int mask)
 {
 	struct parent *p = rev->parent;
 
 	/* If we've been here already, don't bother */
-	if (rev->flags & REACHABLE)
+	if (rev->flags & mask)
 		return;
-	rev->flags |= REACHABLE | USED;
+	rev->flags |= mask | USED;
 	while (p) {
-		mark_reachable(p->parent);
+		mark_reachable(p->parent, mask);
 		p = p->next;
 	}
 }
 
 static unsigned long parse_commit_date(const char *buf)
 {
+	unsigned long date;
+
 	if (memcmp(buf, "author", 6))
 		return 0;
 	while (*buf++ != '\n')
@@ -121,8 +123,10 @@ static unsigned long parse_commit_date(const char *buf)
 		return 0;
 	while (*buf++ != '>')
 		/* nada */;
-
-	return strtoul(buf, NULL, 10);
+	date = strtoul(buf, NULL, 10);
+	if (date == ULONG_MAX)
+		date = 0;
+	return date;
 }
 
 static int parse_commit(unsigned char *sha1)

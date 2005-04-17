@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!get_sha1_hex(argv[i], head_sha1)) {
-			mark_reachable(lookup_rev(head_sha1));
+			mark_reachable(lookup_rev(head_sha1), REACHABLE);
 			heads++;
 			continue;
 		}
