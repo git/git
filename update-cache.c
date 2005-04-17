@@ -14,13 +14,13 @@
  */
 static int allow_add = 0, allow_remove = 0;
 
-static int index_fd(const char *path, int namelen, struct cache_entry *ce, int fd, struct stat *st)
+static int index_fd(unsigned char *sha1, int fd, struct stat *st)
 {
 	z_stream stream;
 	unsigned long size = st->st_size;
-	int max_out_bytes = namelen + size + 200;
+	int max_out_bytes = size + 200;
 	void *out = malloc(max_out_bytes);
-	void *metadata = malloc(namelen + 200);
+	void *metadata = malloc(200);
 	void *in;
 	SHA_CTX c;
 
@@ -56,9 +56,9 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 	
 	SHA1_Init(&c);
 	SHA1_Update(&c, out, stream.total_out);
-	SHA1_Final(ce->sha1, &c);
+	SHA1_Final(sha1, &c);
 
-	return write_sha1_buffer(ce->sha1, out, stream.total_out);
+	return write_sha1_buffer(sha1, out, stream.total_out);
 }
 
 /*
@@ -109,7 +109,7 @@ static int add_file_to_cache(char *path)
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	ce->ce_flags = htons(namelen);
 
-	if (index_fd(path, namelen, ce, fd, &st) < 0)
+	if (index_fd(ce->sha1, fd, &st) < 0)
 		return -1;
 
 	return add_cache_entry(ce, allow_add);
@@ -244,13 +244,10 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 
 	if (sscanf(arg1, "%o", &mode) != 1)
 		return -1;
-	printf("got mode %o\n", mode);
 	if (get_sha1_hex(arg2, sha1))
 		return -1;
-	printf("got sha1 %s\n", sha1_to_hex(sha1));
 	if (!verify_path(arg3))
 		return -1;
-	printf("got path %s\n", arg3);
 
 	len = strlen(arg3);
 	size = cache_entry_size(len);
