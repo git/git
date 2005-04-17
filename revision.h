@@ -111,4 +111,44 @@ static void mark_reachable(struct revision *rev)
 	}
 }
 
+static unsigned long parse_commit_date(const char *buf)
+{
+	if (memcmp(buf, "author", 6))
+		return 0;
+	while (*buf++ != '\n')
+		/* nada */;
+	if (memcmp(buf, "committer", 9))
+		return 0;
+	while (*buf++ != '>')
+		/* nada */;
+
+	return strtoul(buf, NULL, 10);
+}
+
+static int parse_commit(unsigned char *sha1)
+{
+	struct revision *rev = lookup_rev(sha1);
+
+	if (!(rev->flags & SEEN)) {
+		void *buffer, *bufptr;
+		unsigned long size;
+		char type[20];
+		unsigned char parent[20];
+
+		rev->flags |= SEEN;
+		buffer = bufptr = read_sha1_file(sha1, type, &size);
+		if (!buffer || strcmp(type, "commit"))
+			return -1;
+		bufptr += 46; /* "tree " + "hex sha1" + "\n" */
+		while (!memcmp(bufptr, "parent ", 7) && !get_sha1_hex(bufptr+7, parent)) {
+			add_relationship(rev, parent);
+			parse_commit(parent);
+			bufptr += 48;	/* "parent " + "hex sha1" + "\n" */
+		}
+		rev->date = parse_commit_date(bufptr);
+		free(buffer);
+	}
+	return 0;	
+}
+
 #endif /* REVISION_H */
