@@ -52,11 +52,14 @@ static void create_directories(const char *path)
 
 static int create_file(const char *path, unsigned int mode)
 {
-	int fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+	int fd;
+
+	mode = (mode & 0100) ? 777 : 666;
+	fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 	if (fd < 0) {
 		if (errno == ENOENT) {
 			create_directories(path);
-			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 		}
 	}
 	if (fd >= 0)
@@ -104,6 +107,14 @@ static int checkout_entry(struct cache_entry *ce)
 				fprintf(stderr, "checkout-cache: %s already exists\n", ce->name);
 			return 0;
 		}
+
+		/*
+		 * We unlink the old file, to get the new one with the
+		 * right permissions (including umask, which is nasty
+		 * to emulate by hand - much easier to let the system
+		 * just do the right thing)
+		 */
+		unlink(ce->name);
 	}
 	return write_entry(ce);
 }

@@ -72,6 +72,9 @@ struct cache_entry {
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
 #define ce_stage(ce) ((CE_STAGEMASK & ntohs((ce)->ce_flags)) >> CE_STAGESHIFT)
 
+#define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
+#define create_ce_mode(mode) htonl(S_IFREG | ce_permissions(mode))
+
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
 const char *sha1_file_directory;

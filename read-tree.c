@@ -15,7 +15,7 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 
 	memset(ce, 0, size);
 
-	ce->ce_mode = htonl(mode);
+	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = create_ce_flags(baselen + len, stage);
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
