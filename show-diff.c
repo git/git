@@ -167,6 +167,19 @@ int main(int argc, char **argv)
 		    ! matches_pathspec(ce, argv+1, argc-1))
 			continue;
 
+		if (ce_stage(ce)) {
+			if (machine_readable)
+				printf("U %s%c", ce->name, 0);
+			else
+				printf("%s: Unmerged\n",
+				       ce->name);
+			while (i < entries &&
+			       !strcmp(ce->name, active_cache[i]->name))
+				i++;
+			i--; /* compensate for loop control increments */
+			continue;
+		}
+ 
 		if (stat(ce->name, &st) < 0) {
 			if (errno == ENOENT && silent_on_nonexisting_files)
 				continue;
