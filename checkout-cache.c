@@ -121,8 +121,15 @@ static int checkout_file(const char *name)
 {
 	int pos = cache_name_pos(name, strlen(name));
 	if (pos < 0) {
-		if (!quiet)
-			fprintf(stderr, "checkout-cache: %s is not in the cache\n", name);
+		if (!quiet) {
+			pos = -pos - 1;
+			fprintf(stderr,
+				"checkout-cache: %s is %s.\n",
+				name,
+				(pos < active_nr &&
+				 !strcmp(active_cache[pos]->name, name)) ?
+				"unmerged" : "not in the cache");
+		}
 		return -1;
 	}
 	return checkout_entry(active_cache[pos]);
