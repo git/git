@@ -249,6 +249,9 @@ static int refresh_cache(void)
 			continue;
 		}
 		active_cache_changed = 1;
+		/* You can NOT just free active_cache[i] here, since it
+		 * might not be necessarily malloc()ed but can also come
+		 * from mmap(). */
 		active_cache[i] = new;
 	}
 	return has_errors;
