@@ -96,6 +96,21 @@ static void remove_special(char *p)
 		if (!c)
 			break;
 	}
+
+	/*
+	 * Go back, and remove crud from the end: some people
+	 * have commas etc in their gecos field
+	 */
+	dst--;
+	while (--dst >= p) {
+		unsigned char c = *dst;
+		switch (c) {
+		case ',': case ';': case '.':
+			*dst = 0;
+			continue;
+		}
+		break;
+	}
 }
 
 static const char *month_names[] = {
