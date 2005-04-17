@@ -111,7 +111,7 @@ static void show_diff_empty(struct cache_entry *ce)
 	}
 }
 
-static const char *show_diff_usage = "show-diff [-s] [-q] [-z] [paths...]";
+static const char *show_diff_usage = "show-diff [-q] [-s] [-z] [paths...]";
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
 {
@@ -141,9 +141,8 @@ int main(int argc, char **argv)
 			silent_on_nonexisting_files = silent = 1;
 		else if (!strcmp(argv[1], "-q"))
 			silent_on_nonexisting_files = 1;
-		else if (!strcmp(argv[1], "-z")) {
+		else if (!strcmp(argv[1], "-z"))
 			machine_readable = 1;
-		}
 		else
 			usage(show_diff_usage);
 		argv++; argc--;
@@ -164,7 +163,7 @@ int main(int argc, char **argv)
 		char type[20];
 		void *old;
 
-		if (1 <argc &&
+		if (1 < argc &&
 		    ! matches_pathspec(ce, argv+1, argc-1))
 			continue;
 
