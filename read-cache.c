@@ -304,7 +304,7 @@ int cache_match_stat(struct cache_entry *ce, struct stat *st)
 	    ce->ce_gid != htonl(st->st_gid))
 		changed |= OWNER_CHANGED;
 	/* We consider only the owner x bit to be relevant for "mode changes" */
-	if (0100 & (ntohs(ce->ce_mode) ^ st->st_mode))
+	if (0100 & (ntohl(ce->ce_mode) ^ st->st_mode))
 		changed |= MODE_CHANGED;
 	if (ce->ce_dev != htonl(st->st_dev) ||
 	    ce->ce_ino != htonl(st->st_ino))
