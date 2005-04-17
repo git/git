@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 		int changed;
 		unsigned long size;
 		char type[20];
-		void *new;
+		void *old;
 
 		if (1 <argc &&
 		    ! matches_pathspec(ce, argv+1, argc-1))
@@ -193,9 +193,9 @@ int main(int argc, char **argv)
 		if (silent)
 			continue;
 
-		new = read_sha1_file(ce->sha1, type, &size);
-		show_differences(ce->name, new, size);
-		free(new);
+		old = read_sha1_file(ce->sha1, type, &size);
+		show_differences(ce->name, old, size);
+		free(old);
 	}
 	return 0;
 }
