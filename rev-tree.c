@@ -52,21 +52,6 @@ static void read_cache_file(const char *path)
 	fclose(file);
 }
 
-static void mark_sha1_path(struct revision *rev, unsigned int mask)
-{
-	struct parent *p;
-
-	if (rev->flags & mask)
-		return;
-
-	rev->flags |= mask;
-	p = rev->parent;
-	while (p) {
-		mark_sha1_path(p->parent, mask);
-		p = p->next;
-	}
-}
-
 /*
  * Some revisions are less interesting than others.
  *
@@ -142,7 +127,7 @@ int main(int argc, char **argv)
 	 * Now we have the maximal tree. Walk the different sha files back to the root.
 	 */
 	for (i = 0; i < nr; i++)
-		mark_sha1_path(lookup_rev(sha1[i]), 1 << i);
+		mark_reachable(lookup_rev(sha1[i]), 1 << i);
 
 	/*
 	 * Now print out the results..
