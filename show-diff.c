@@ -4,7 +4,6 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
-#include <ctype.h>
 
 static char *diff_cmd = "diff -L '%s' -u -N  - '%s'";
 
