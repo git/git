@@ -46,10 +46,7 @@ int main(int argc, char **argv)
 	 * That's some time off, though, and in the meantime we know
 	 * that we have a solution to the eventual expense.
 	 */
-	parse_commit(rev1);
-	parse_commit(rev2);
-
-	common = common_parent(lookup_rev(rev1), lookup_rev(rev2));
+	common = common_parent(parse_commit(rev1), parse_commit(rev2));
 	if (!common)
 		die("no common parent found");
 	printf("%s\n", sha1_to_hex(common->sha1));
