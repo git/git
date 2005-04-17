@@ -54,7 +54,7 @@ static int create_file(const char *path, unsigned int mode)
 {
 	int fd;
 
-	mode = (mode & 0100) ? 777 : 666;
+	mode = (mode & 0100) ? 0777 : 0666;
 	fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 	if (fd < 0) {
 		if (errno == ENOENT) {
@@ -62,8 +62,6 @@ static int create_file(const char *path, unsigned int mode)
 			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 		}
 	}
-	if (fd >= 0)
-		fchmod(fd, mode);
 	return fd;
 }
 
