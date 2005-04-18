@@ -6,7 +6,7 @@
 merge_repo=$1
 
 echo "Getting object database"
-rsync -avz --ignore-existing $merge_repo/ .git/
+rsync -avz --ignore-existing $merge_repo/objects/. .git/objects/.
 
 echo "Getting remote head"
 rsync -avz $merge_repo/HEAD .git/MERGE_HEAD
