@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# This is the git merge script, called with
+#
+#   $1 - original file (or empty string)
+#   $2 - file in branch1 (or empty string)
+#   $3 - file in branch2 (or empty string)
+#   $4 - pathname in repository
+#
+#
+# Case 1: file removed in both
+#
+if [ -z "$2$3" ]; then
+	rm -- "$4"
+	update-cache --remove -- "$4"
+	exit 0
+fi
+#
+# Case 2: file exists in just one
+#
+if [ "$2$3" == "$3$2" ]; then
+	cat "$2$3" > "$4"
+	update-cache --add -- "$4"
+	exit 0
+fi
+#
+# Case 3: file exists in both
+#
+src="$1"
+if [ -z "$1" ]; then
+	src=/dev/null
+fi	
+echo "Auto-merging $4"
+cp "$3" "$4"
+merge "$4" "$src" "$2" && update-cache --add -- "$4"
