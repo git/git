@@ -196,9 +196,18 @@ static void refresh_cache(void)
 	int i;
 
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		struct cache_entry *new = refresh_entry(ce);
+		struct cache_entry *ce, *new;
+		ce = active_cache[i];
+		if (ce_stage(ce)) {
+			printf("%s: needs merge\n", ce->name);
+			while ((i < active_nr) &&
+			       ! strcmp(active_cache[i]->name, ce->name))
+				i++;
+			i--;
+			continue;
+		}
 
+		new = refresh_entry(ce);
 		if (!new) {
 			printf("%s: needs update\n", ce->name);
 			continue;
