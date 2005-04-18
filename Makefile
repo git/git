@@ -52,8 +52,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
