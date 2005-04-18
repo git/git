@@ -71,6 +71,11 @@ static void show_diff_empty(struct cache_entry *ce)
 	unsigned char type[20], *p, *end;
 
 	old = read_sha1_file(ce->sha1, type, &size);
+	if (! old) {
+		error("unable to read blob object for %s (%s)", ce->name,
+		      sha1_to_hex(ce->sha1));
+		return;
+	}
 	if (size > 0) {
 		int startline = 1;
 		int c = 0;
@@ -195,7 +200,11 @@ int main(int argc, char **argv)
 			continue;
 
 		old = read_sha1_file(ce->sha1, type, &size);
-		show_differences(ce->name, old, size);
+		if (! old)
+			error("unable to read blob object for %s (%s)",
+			      ce->name, sha1_to_hex(ce->sha1));
+		else
+			show_differences(ce->name, old, size);
 		free(old);
 	}
 	return 0;
