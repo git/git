@@ -43,8 +43,8 @@ commit-tree: commit-tree.o read-cache.o
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
