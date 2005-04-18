@@ -22,7 +22,7 @@ all: $(PROG)
 install: $(PROG)
 	install $(PROG) $(HOME)/bin/
 
-LIB_OBJS=read-cache.o object.o commit.o tree.o blob.o
+LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o
 LIB_FILE=libgit.a
 
 $(LIB_FILE): $(LIB_OBJS)
