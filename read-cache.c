@@ -402,7 +402,6 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 	if (pos < active_nr && ce_stage(ce) == 0) {
 		while (same_name(active_cache[pos], ce)) {
 			ok_to_add = 1;
-			active_nr--;
 			if (!remove_entry_at(pos))
 				break;
 		}
