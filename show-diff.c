@@ -7,6 +7,8 @@
 
 static char *diff_cmd = "diff -L 'a/%s' -L 'b/%s' ";
 static char *diff_opts = "-p -u";
+static char *diff_arg_forward  = " - '%s'";
+static char *diff_arg_reverse  = " '%s' -";
 
 static void prepare_diff_cmd(void)
 {
@@ -63,12 +65,12 @@ static char *sq_expand(char *src)
 }
 
 static void show_differences(char *name, char *label, void *old_contents,
-			     unsigned long long old_size)
+			     unsigned long long old_size, int reverse)
 {
-	static char *diff_arg = " - '%s'";
 	FILE *f;
 	char *name_sq = sq_expand(name);
 	char *label_sq = (name != label) ? sq_expand(label) : name_sq;
+	char *diff_arg = reverse ? diff_arg_reverse : diff_arg_forward;
 	int cmd_size = strlen(name_sq) + strlen(label_sq) * 2 +
 		strlen(diff_cmd) + strlen(diff_opts) + strlen(diff_arg);
 	char *cmd = malloc(cmd_size);
@@ -88,7 +90,7 @@ static void show_differences(char *name, char *label, void *old_contents,
 	free(cmd);
 }
 
-static void show_diff_empty(struct cache_entry *ce)
+static void show_diff_empty(struct cache_entry *ce, int reverse)
 {
 	char *old;
 	unsigned long int size;
@@ -100,7 +102,7 @@ static void show_diff_empty(struct cache_entry *ce)
 		      sha1_to_hex(ce->sha1));
 		return;
 	}
-	show_differences("/dev/null", ce->name, old, size);
+	show_differences("/dev/null", ce->name, old, size, reverse);
 }
 
 static const char *show_diff_usage = "show-diff [-q] [-s] [-z] [paths...]";
@@ -125,11 +127,14 @@ int main(int argc, char **argv)
 	int silent = 0;
 	int silent_on_nonexisting_files = 0;
 	int machine_readable = 0;
+	int reverse = 0;
 	int entries = read_cache();
 	int i;
 
 	while (1 < argc && argv[1][0] == '-') {
-		if (!strcmp(argv[1], "-s"))
+		if  (!strcmp(argv[1], "-R"))
+			reverse = 1;
+		else if (!strcmp(argv[1], "-s"))
 			silent_on_nonexisting_files = silent = 1;
 		else if (!strcmp(argv[1], "-q"))
 			silent_on_nonexisting_files = 1;
@@ -181,7 +186,7 @@ int main(int argc, char **argv)
 			else {
 				printf("%s: %s\n", ce->name, strerror(errno));
 				if (errno == ENOENT)
-					show_diff_empty(ce);
+					show_diff_empty(ce, reverse);
 			}
 			continue;
 		}
@@ -202,7 +207,8 @@ int main(int argc, char **argv)
 			error("unable to read blob object for %s (%s)",
 			      ce->name, sha1_to_hex(ce->sha1));
 		else
-			show_differences(ce->name, ce->name, old, size);
+			show_differences(ce->name, ce->name, old, size,
+					 reverse);
 		free(old);
 	}
 	return 0;
