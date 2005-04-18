@@ -5,7 +5,23 @@
  */
 #include "cache.h"
 
-static char *diff_cmd = "diff -L 'a/%s' -L 'b/%s' -p -u - '%s'";
+static char *diff_cmd = "diff -L 'a/%s' -L 'b/%s' ";
+static char *diff_opts = "-p -u";
+
+static void prepare_diff_cmd(void)
+{
+	/*
+	 * Default values above are meant to match the
+	 * Linux kernel development style.  Examples of
+	 * alternative styles you can specify via environment
+	 * variables are:
+	 *
+	 * GIT_DIFF_CMD="diff -L '%s' -L '%s'"
+	 * GIT_DIFF_OPTS="-c";
+	 */
+	diff_cmd = getenv("GIT_DIFF_CMD") ? : diff_cmd;
+	diff_opts = getenv("GIT_DIFF_OPTS") ? : diff_opts;
+}
 
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', and the caller is
@@ -49,15 +65,19 @@ static char *sq_expand(char *src)
 static void show_differences(char *name, char *label, void *old_contents,
 			     unsigned long long old_size)
 {
+	static char *diff_arg = " - '%s'";
 	FILE *f;
 	char *name_sq = sq_expand(name);
 	char *label_sq = (name != label) ? sq_expand(label) : name_sq;
-	int cmd_size = strlen(name_sq) +
-		strlen(label_sq) * 2 + strlen(diff_cmd);
+	int cmd_size = strlen(name_sq) + strlen(label_sq) * 2 +
+		strlen(diff_cmd) + strlen(diff_opts) + strlen(diff_arg);
 	char *cmd = malloc(cmd_size);
+	int next_at;
 
 	fflush(stdout);
-	snprintf(cmd, cmd_size, diff_cmd, label_sq, label_sq, name_sq);
+	next_at = snprintf(cmd, cmd_size, diff_cmd, label_sq, label_sq);
+	next_at += snprintf(cmd+next_at, cmd_size-next_at, "%s", diff_opts);
+	next_at += snprintf(cmd+next_at, cmd_size-next_at, diff_arg, name_sq);
 	f = popen(cmd, "w");
 	if (old_size)
 		fwrite(old_contents, old_size, 1, f);
@@ -127,6 +147,7 @@ int main(int argc, char **argv)
 		perror("read_cache");
 		exit(1);
 	}
+	prepare_diff_cmd();
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		struct cache_entry *ce = active_cache[i];
