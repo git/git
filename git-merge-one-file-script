@@ -2,34 +2,50 @@
 #
 # This is the git merge script, called with
 #
-#   $1 - original file (or empty string)
-#   $2 - file in branch1 (or empty string)
-#   $3 - file in branch2 (or empty string)
+#   $1 - original file SHA1 (or empty)
+#   $2 - file in branch1 SHA1 (or empty)
+#   $3 - file in branch2 SHA1 (or empty)
 #   $4 - pathname in repository
 #
 #
-# Case 1: file removed in both
+# Handle some trivial cases.. The _really_ trivial cases have
+# been handled already by read-tree, but that one doesn't
+# do any merges that migth change the tree layout
 #
-if [ -z "$2$3" ]; then
-	rm -- "$4"
+
+case "${1:-.}${2:-.}${3:-.}" in
+#
+# deleted in both, or deleted in one and unchanged in the other
+#
+"$1.." | "$1.$1" | "$1$1.")
+	rm -f -- "$4"
 	update-cache --remove -- "$4"
 	exit 0
-fi
+	;;
+
 #
-# Case 2: file exists in just one
+# added in one, or added identically in both
 #
-if [ "$2$3" == "$3$2" ]; then
-	cat "$2$3" > "$4"
-	update-cache --add -- "$4"
+".$2." | "..$3" | ".$2$2")
+	mv $(unpack-file "${2:-$3}") $4
+	update-cache --add -- $4
 	exit 0
-fi
+	;;
+
 #
-# Case 3: file exists in both
+# Modified in both, but differently ;(
 #
-src="$1"
-if [ -z "$1" ]; then
-	src=/dev/null
-fi	
-echo "Auto-merging $4"
-cp "$3" "$4"
-merge "$4" "$src" "$2" && update-cache --add -- "$4"
+"$1$2$3")
+	echo "Auto-merging $4"
+	orig=$(unpack-file $1)
+	src1=$(unpack-file $2)
+	src2=$(unpack-file $3)
+	merge "$src2" "$orig" "$src1" || echo Leaving conflict merge in $src2 && exit 1
+	cp "$src2" "$4" && update-cache --add -- "$4" && exit 0
+	;;
+
+*)
+	echo "Not handling case $1 -> $2 -> $3"
+	;;
+esac
+exit 1

@@ -25,29 +25,6 @@ static void run_program(void)
 		die("merge program failed");
 }
 
-static char *create_temp_file(int stage, unsigned char *sha1)
-{
-	static char template[4][50];
-	char *path = template[stage];
-	void *buf;
-	char type[100];
-	unsigned long size;
-	int fd;
-
-	buf = read_sha1_file(sha1, type, &size);
-	if (!buf || strcmp(type, "blob"))
-		die("unable to read blob object %s", sha1_to_hex(sha1));
-
-	strcpy(path, ".merge_file_XXXXXX");
-	fd = mkstemp(path);
-	if (fd < 0)
-		die("unable to create temp-file");
-	if (write(fd, buf, size) != size)
-		die("unable to write temp-file");
-	close(fd);
-	return path;
-}
-
 static int merge_entry(int pos, const char *path)
 {
 	int found;
@@ -61,13 +38,15 @@ static int merge_entry(int pos, const char *path)
 	arguments[4] = path;
 	found = 0;
 	do {
+		static char hexbuf[4][60];
 		struct cache_entry *ce = active_cache[pos];
 		int stage = ce_stage(ce);
 
 		if (strcmp(ce->name, path))
 			break;
 		found++;
-		arguments[stage] = create_temp_file(stage, ce->sha1);
+		strcpy(hexbuf[stage], sha1_to_hex(ce->sha1));
+		arguments[stage] = hexbuf[stage];
 	} while (++pos < active_nr);
 	if (!found)
 		die("merge-cache: %s not in the cache", path);
