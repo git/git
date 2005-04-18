@@ -15,7 +15,7 @@ AR=ar
 
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
-	check-files ls-tree merge-base merge-cache
+	check-files ls-tree merge-base merge-cache unpack-file
 
 all: $(PROG)
 
@@ -78,6 +78,9 @@ merge-base: merge-base.o $(LIB_FILE) object.o commit.o tree.o blob.o
 merge-cache: merge-cache.o $(LIB_FILE)
 	$(CC) $(CFLAGS) -o merge-cache merge-cache.o $(LIBS)
 
+unpack-file: unpack-file.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o unpack-file unpack-file.o $(LIBS)
+
 blob.o: $(LIB_H)
 cat-file.o: $(LIB_H)
 check-files.o: $(LIB_H)
@@ -100,6 +103,7 @@ show-files.o: $(LIB_H)
 tree.o: $(LIB_H)
 update-cache.o: $(LIB_H)
 usage.o: $(LIB_H)
+unpack-file.o: $(LIB_H)
 write-tree.o: $(LIB_H)
 
 clean:
