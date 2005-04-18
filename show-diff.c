@@ -46,19 +46,23 @@ static char *sq_expand(char *src)
 	return buf;
 }
 
-static void show_differences(char *name, void *old_contents,
+static void show_differences(char *name, char *label, void *old_contents,
 			     unsigned long long old_size)
 {
 	FILE *f;
 	char *name_sq = sq_expand(name);
-	int cmd_size = strlen(name_sq) * 2 + strlen(diff_cmd);
+	char *label_sq = (name != label) ? sq_expand(label) : name_sq;
+	int cmd_size = strlen(name_sq) + strlen(label_sq) + strlen(diff_cmd);
 	char *cmd = malloc(cmd_size);
 
-	snprintf(cmd, cmd_size, diff_cmd, name_sq, name_sq);
+	fflush(stdout);
+	snprintf(cmd, cmd_size, diff_cmd, label_sq, name_sq);
 	f = popen(cmd, "w");
 	if (old_size)
 		fwrite(old_contents, old_size, 1, f);
 	pclose(f);
+	if (label_sq != name_sq)
+		free(label_sq);
 	free(name_sq);
 	free(cmd);
 }
@@ -67,8 +71,7 @@ static void show_diff_empty(struct cache_entry *ce)
 {
 	char *old;
 	unsigned long int size;
-	int lines=0;
-	unsigned char type[20], *p, *end;
+	unsigned char type[20];
 
 	old = read_sha1_file(ce->sha1, type, &size);
 	if (! old) {
@@ -76,33 +79,7 @@ static void show_diff_empty(struct cache_entry *ce)
 		      sha1_to_hex(ce->sha1));
 		return;
 	}
-	if (size > 0) {
-		int startline = 1;
-		int c = 0;
-
-		printf("--- %s\n", ce->name);
-		printf("+++ /dev/null\n");
-		p = old;
-		end = old + size;
-		while (p < end)
-			if (*p++ == '\n')
-				lines ++;
-		printf("@@ -1,%d +0,0 @@\n", lines);
-		p = old;
-		while (p < end) {
-			c = *p++;
-			if (startline) {
-				putchar('-');
-				startline = 0;
-			}
-			putchar(c);
-			if (c == '\n')
-				startline = 1;
-		}
-		if (c!='\n')
-			printf("\n");
-		fflush(stdout);
-	}
+	show_differences("/dev/null", ce->name, old, size);
 }
 
 static const char *show_diff_usage = "show-diff [-q] [-s] [-z] [paths...]";
@@ -195,7 +172,6 @@ int main(int argc, char **argv)
 			printf("%s %s%c", sha1_to_hex(ce->sha1), ce->name, 0);
 			continue;
 		}
-		fflush(stdout);
 		if (silent)
 			continue;
 
@@ -204,7 +180,7 @@ int main(int argc, char **argv)
 			error("unable to read blob object for %s (%s)",
 			      ce->name, sha1_to_hex(ce->sha1));
 		else
-			show_differences(ce->name, old, size);
+			show_differences(ce->name, ce->name, old, size);
 		free(old);
 	}
 	return 0;
