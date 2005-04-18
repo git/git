@@ -24,6 +24,7 @@ install: $(PROG)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o
 LIB_FILE=libgit.a
+LIB_H=cache.h object.h
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(AR) rcs $@ $(LIB_OBJS)
@@ -77,8 +78,29 @@ merge-base: merge-base.o $(LIB_FILE) object.o commit.o tree.o blob.o
 merge-cache: merge-cache.o $(LIB_FILE)
 	$(CC) $(CFLAGS) -o merge-cache merge-cache.o $(LIBS)
 
-read-cache.o: cache.h
-show-diff.o: cache.h
+blob.o: $(LIB_H)
+cat-file.o: $(LIB_H)
+check-files.o: $(LIB_H)
+checkout-cache.o: $(LIB_H)
+commit.o: $(LIB_H)
+commit-tree.o: $(LIB_H)
+diff-tree.o: $(LIB_H)
+fsck-cache.o: $(LIB_H)
+init-db.o: $(LIB_H)
+ls-tree.o: $(LIB_H)
+merge-base.o: $(LIB_H)
+merge-cache.o: $(LIB_H)
+object.o: $(LIB_H)
+read-cache.o: $(LIB_H)
+read-tree.o: $(LIB_H)
+rev-tree.o: $(LIB_H)
+sha1_file.o: $(LIB_H)
+show-diff.o: $(LIB_H)
+show-files.o: $(LIB_H)
+tree.o: $(LIB_H)
+update-cache.o: $(LIB_H)
+usage.o: $(LIB_H)
+write-tree.o: $(LIB_H)
 
 clean:
 	rm -f *.o $(PROG) $(LIB_FILE)
