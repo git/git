@@ -34,9 +34,6 @@ static void prepare_diff_cmd(void)
  *  name     ==> name      ==> 'name'
  *  a b      ==> a b       ==> 'a b'
  *  a'b      ==> a'\''b    ==> 'a'\''b'
- *
- * NOTE! The returned memory belongs to this function so
- * do not free it.
  */
 static char *sq_expand(char *src)
 {
