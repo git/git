@@ -4,7 +4,7 @@
 #include <ctype.h>
 
 #include "cache.h"
-#include "revision.h"
+#include "commit.h"
 
 /*
  * revision.h leaves the low 16 bits of the "flags" field of the
@@ -18,38 +18,7 @@ static int basemask = 0;
 
 static void read_cache_file(const char *path)
 {
-	FILE *file = fopen(path, "r");
-	char line[500];
-
-	if (!file)
-		die("bad revtree cache file (%s)", path);
-
-	while (fgets(line, sizeof(line), file)) {
-		unsigned long date;
-		unsigned char sha1[20];
-		struct revision *rev;
-		const char *buf;
-
-		if (sscanf(line, "%lu", &date) != 1)
-			break;
-		buf = strchr(line, ' ');
-		if (!buf)
-			break;
-		if (get_sha1_hex(buf+1, sha1))
-			break;
-		rev = lookup_rev(sha1, "commit");
-		rev->flags |= SEEN;
-		rev->date = date;
-
-		/* parents? */
-		while ((buf = strchr(buf+1, ' ')) != NULL) {
-			unsigned char parent[20];
-			if (get_sha1_hex(buf + 1, parent))
-				break;
-			add_relationship(rev, parent, "commit");
-		}
-	}
-	fclose(file);
+	die("no revtree cache file yet");
 }
 
 /*
@@ -61,16 +30,16 @@ static void read_cache_file(const char *path)
  * And sometimes we're only interested in "edge" commits, ie
  * places where the marking changes between parent and child.
  */
-static int interesting(struct revision *rev)
+static int interesting(struct commit *rev)
 {
-	unsigned mask = marked(rev);
+	unsigned mask = rev->object.flags;
 
 	if (!mask)
 		return 0;
 	if (show_edges) {
-		struct parent *p = rev->parent;
+		struct commit_list *p = rev->parents;
 		while (p) {
-			if (mask != marked(p->parent))
+			if (mask != p->item->object.flags)
 				return 1;
 			p = p->next;
 		}
@@ -80,6 +49,19 @@ static int interesting(struct revision *rev)
 		return 0;
 
 	return 1;
+}
+
+void process_commit(unsigned char *sha1)
+{
+	struct commit_list *parents;
+	struct commit *obj = lookup_commit(sha1);
+	parse_commit(obj);
+	
+	parents = obj->parents;
+	while (parents) {
+		process_commit(parents->item->object.sha1);
+		parents = parents->next;
+	}
 }
 
 /*
@@ -119,7 +101,7 @@ int main(int argc, char **argv)
 		}
 		if (nr >= MAX_COMMITS || get_sha1_hex(arg, sha1[nr]))
 			usage("rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id>]");
-		parse_commit(sha1[nr]);
+		process_commit(sha1[nr]);
 		nr++;
 	}
 
@@ -127,22 +109,30 @@ int main(int argc, char **argv)
 	 * Now we have the maximal tree. Walk the different sha files back to the root.
 	 */
 	for (i = 0; i < nr; i++)
-		mark_reachable(lookup_rev(sha1[i], "commit"), 1 << i);
+		mark_reachable(&lookup_commit(sha1[i])->object, 1 << i);
 
 	/*
 	 * Now print out the results..
 	 */
-	for (i = 0; i < nr_revs; i++) {
-		struct revision *rev = revs[i];
-		struct parent *p;
+	for (i = 0; i < nr_objs; i++) {
+		struct object *obj = objs[i];
+		struct commit *commit;
+		struct commit_list *p;
 
-		if (!interesting(rev))
+		if (obj->type != commit_type)
 			continue;
 
-		printf("%lu %s:%d", rev->date, sha1_to_hex(rev->sha1), marked(rev));
-		p = rev->parent;
+		commit = (struct commit *) obj;
+
+		if (!interesting(commit))
+			continue;
+
+		printf("%lu %s:%d", commit->date, sha1_to_hex(obj->sha1), 
+		       obj->flags);
+		p = commit->parents;
 		while (p) {
-			printf(" %s:%d", sha1_to_hex(p->parent->sha1), marked(p->parent));
+			printf(" %s:%d", sha1_to_hex(p->item->object.sha1), 
+			       p->item->object.flags);
 			p = p->next;
 		}
 		printf("\n");

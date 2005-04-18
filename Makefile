@@ -43,8 +43,8 @@ commit-tree: commit-tree.o read-cache.o
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -52,8 +52,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -64,8 +64,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
 
 merge-cache: merge-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o merge-cache merge-cache.o read-cache.o $(LIBS)
