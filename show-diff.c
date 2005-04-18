@@ -23,7 +23,6 @@ static char *diff_cmd = "diff -L '%s' -u -N  - '%s'";
 static char *sq_expand(char *src)
 {
 	static char *buf = NULL;
-	static int buf_size = -1;
 	int cnt, c;
 	char *cp;
 
@@ -32,12 +31,8 @@ static char *sq_expand(char *src)
 		if (*cp == '\'')
 			cnt += 3;
 
-	if (buf_size < cnt) {
-		free(buf);
-		buf_size = cnt;
-		buf = malloc(cnt);
-	}
-
+	if (! (buf = malloc(cnt)))
+	    return buf;
 	cp = buf;
 	while ((c = *src++)) {
 		if (c != '\'')
@@ -55,22 +50,17 @@ static void show_differences(char *name, void *old_contents,
 			     unsigned long long old_size)
 {
 	FILE *f;
-	static char *cmd = NULL;
-	static int cmd_size = -1;
-
 	char *name_sq = sq_expand(name);
-	int cmd_required_length = strlen(name_sq) * 2 + strlen(diff_cmd);
+	int cmd_size = strlen(name_sq) * 2 + strlen(diff_cmd);
+	char *cmd = malloc(cmd_size);
 
-	if (cmd_size < cmd_required_length) {
-		free(cmd);
-		cmd_size = cmd_required_length;
-		cmd = malloc(cmd_required_length);
-	}
 	snprintf(cmd, cmd_size, diff_cmd, name_sq, name_sq);
 	f = popen(cmd, "w");
 	if (old_size)
 		fwrite(old_contents, old_size, 1, f);
 	pclose(f);
+	free(name_sq);
+	free(cmd);
 }
 
 static void show_diff_empty(struct cache_entry *ce)
