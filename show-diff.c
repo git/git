@@ -5,7 +5,7 @@
  */
 #include "cache.h"
 
-static char *diff_cmd = "diff -L '%s' -u -N  - '%s'";
+static char *diff_cmd = "diff -L 'a/%s' -L 'b/%s' -p -u - '%s'";
 
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', and the caller is
@@ -52,11 +52,12 @@ static void show_differences(char *name, char *label, void *old_contents,
 	FILE *f;
 	char *name_sq = sq_expand(name);
 	char *label_sq = (name != label) ? sq_expand(label) : name_sq;
-	int cmd_size = strlen(name_sq) + strlen(label_sq) + strlen(diff_cmd);
+	int cmd_size = strlen(name_sq) +
+		strlen(label_sq) * 2 + strlen(diff_cmd);
 	char *cmd = malloc(cmd_size);
 
 	fflush(stdout);
-	snprintf(cmd, cmd_size, diff_cmd, label_sq, name_sq);
+	snprintf(cmd, cmd_size, diff_cmd, label_sq, label_sq, name_sq);
 	f = popen(cmd, "w");
 	if (old_size)
 		fwrite(old_contents, old_size, 1, f);
