@@ -64,8 +64,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
 
 read-cache.o: cache.h
 show-diff.o: cache.h
