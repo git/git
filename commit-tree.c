@@ -83,11 +83,11 @@ static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
 static void remove_special(char *p)
 {
 	char c;
-	char *dst = p;
+	char *dst = p, *src = p;
 
 	for (;;) {
-		c = *p;
-		p++;
+		c = *src;
+		src++;
 		switch(c) {
 		case '\n': case '<': case '>':
 			continue;
