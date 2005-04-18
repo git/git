@@ -10,6 +10,7 @@
 CFLAGS=-g -O3 -Wall
 
 CC=gcc
+AR=ar
 
 
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
@@ -21,60 +22,66 @@ all: $(PROG)
 install: $(PROG)
 	install $(PROG) $(HOME)/bin/
 
-LIBS= -lssl -lz
+LIB_OBJS=read-cache.o object.o commit.o tree.o blob.o
+LIB_FILE=libgit.a
+
+$(LIB_FILE): $(LIB_OBJS)
+	$(AR) rcs $@ $(LIB_OBJS)
+
+LIBS= $(LIB_FILE) -lssl -lz
 
 init-db: init-db.o
 
-update-cache: update-cache.o read-cache.o
-	$(CC) $(CFLAGS) -o update-cache update-cache.o read-cache.o $(LIBS)
+update-cache: update-cache.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o update-cache update-cache.o $(LIBS)
 
-show-diff: show-diff.o read-cache.o
-	$(CC) $(CFLAGS) -o show-diff show-diff.o read-cache.o $(LIBS)
+show-diff: show-diff.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o show-diff show-diff.o $(LIBS)
 
-write-tree: write-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o write-tree write-tree.o read-cache.o $(LIBS)
+write-tree: write-tree.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o write-tree write-tree.o $(LIBS)
 
-read-tree: read-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
+read-tree: read-tree.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o read-tree read-tree.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+commit-tree: commit-tree.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o commit-tree commit-tree.o $(LIBS)
 
-cat-file: cat-file.o read-cache.o
-	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
+cat-file: cat-file.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o cat-file cat-file.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o $(LIB_FILE) object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o $(LIBS)
 
-checkout-cache: checkout-cache.o read-cache.o
-	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
+checkout-cache: checkout-cache.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o $(LIBS)
 
-diff-tree: diff-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
+diff-tree: diff-tree.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o diff-tree diff-tree.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o $(LIB_FILE) object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o $(LIBS)
 
-show-files: show-files.o read-cache.o
-	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
+show-files: show-files.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o show-files show-files.o $(LIBS)
 
-check-files: check-files.o read-cache.o
-	$(CC) $(CFLAGS) -o check-files check-files.o read-cache.o $(LIBS)
+check-files: check-files.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o check-files check-files.o $(LIBS)
 
-ls-tree: ls-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
+ls-tree: ls-tree.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o ls-tree ls-tree.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+merge-base: merge-base.o $(LIB_FILE) object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o $(LIBS)
 
-merge-cache: merge-cache.o read-cache.o
-	$(CC) $(CFLAGS) -o merge-cache merge-cache.o read-cache.o $(LIBS)
+merge-cache: merge-cache.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o merge-cache merge-cache.o $(LIBS)
 
 read-cache.o: cache.h
 show-diff.o: cache.h
 
 clean:
-	rm -f *.o $(PROG)
+	rm -f *.o $(PROG) $(LIB_FILE)
 
 backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
