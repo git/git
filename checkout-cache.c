@@ -141,6 +141,8 @@ static int checkout_all(void)
 
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce))
+			continue;
 		if (checkout_entry(ce) < 0)
 			return -1;
 	}
