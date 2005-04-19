@@ -317,8 +317,10 @@ int main(int argc, char **argv)
 	memcpy(realemail, pw->pw_name, len);
 	realemail[len] = '@';
 	gethostname(realemail+len+1, sizeof(realemail)-len-1);
-	strcat(realemail, ".");
-	getdomainname(realemail+strlen(realemail), sizeof(realemail)-strlen(realemail)-1);
+	if (!strchr(realemail+len+1, '.')) {
+		strcat(realemail, ".");
+		getdomainname(realemail+strlen(realemail), sizeof(realemail)-strlen(realemail)-1);
+	}
 	time(&now);
 	tm = localtime(&now);
 
