@@ -15,7 +15,7 @@ AR=ar
 
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
-	check-files ls-tree merge-base merge-cache unpack-file
+	check-files ls-tree merge-base merge-cache unpack-file git-export
 
 all: $(PROG)
 
@@ -81,6 +81,9 @@ merge-cache: merge-cache.o $(LIB_FILE)
 unpack-file: unpack-file.o $(LIB_FILE)
 	$(CC) $(CFLAGS) -o unpack-file unpack-file.o $(LIBS)
 
+git-export: git-export.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o git-export git-export.o $(LIBS)
+
 blob.o: $(LIB_H)
 cat-file.o: $(LIB_H)
 check-files.o: $(LIB_H)
@@ -89,6 +92,7 @@ commit.o: $(LIB_H)
 commit-tree.o: $(LIB_H)
 diff-tree.o: $(LIB_H)
 fsck-cache.o: $(LIB_H)
+git_export.o: $(LIB_H)
 init-db.o: $(LIB_H)
 ls-tree.o: $(LIB_H)
 merge-base.o: $(LIB_H)
