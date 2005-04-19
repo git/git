@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 	sha1_dir = getenv(DB_ENVIRONMENT);
 	if (sha1_dir) {
 		struct stat st;
-		if (!stat(sha1_dir, &st) < 0 && S_ISDIR(st.st_mode))
+		if (!stat(sha1_dir, &st) && S_ISDIR(st.st_mode))
 			return 0;
 		fprintf(stderr, "DB_ENVIRONMENT set to bad directory %s: ", sha1_dir);
 	}
