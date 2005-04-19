@@ -21,7 +21,7 @@ static void check_connectivity(void)
 		struct object *obj = objs[i];
 
 		if (show_unreachable && !(obj->flags & REACHABLE)) {
-			printf("unreachable %s\n", sha1_to_hex(obj->sha1));
+			printf("unreachable %s %s\n", obj->type, sha1_to_hex(obj->sha1));
 			continue;
 		}
 
