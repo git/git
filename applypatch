@@ -19,7 +19,7 @@ export AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' .dotest/info)"
 export SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' .dotest/info)"
 
 echo
-echo Applying $SUBJECT
+echo Applying "'$SUBJECT'"
 echo
 
 (echo "[PATCH] $SUBJECT" ; echo ; cat $MSGFILE ) > .dotest/final-commit
