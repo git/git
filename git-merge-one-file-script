@@ -13,6 +13,11 @@
 # do any merges that migth change the tree layout
 #
 
+# if the directory is newly added in a branch, it might not exist
+# in the current tree
+dir=$(dirname "$4")
+mkdir -p "$dir"
+
 case "${1:-.}${2:-.}${3:-.}" in
 #
 # deleted in both, or deleted in one and unchanged in the other
@@ -40,7 +45,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 	orig=$(unpack-file $1)
 	src1=$(unpack-file $2)
 	src2=$(unpack-file $3)
-	merge "$src2" "$orig" "$src1" || echo Leaving conflict merge in $src2 && exit 1
+	merge "$src2" "$orig" "$src1"
+	if [ $? -ne 0 ]; then
+		echo Leaving conflict merge in $src2
+		exit 1
+	fi
 	cp "$src2" "$4" && update-cache --add -- "$4" && exit 0
 	;;
 
