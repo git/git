@@ -284,8 +284,8 @@ int main(int argc, char **argv)
 	unsigned char tree_sha1[20];
 	unsigned char parent_sha1[MAXPARENT][20];
 	unsigned char commit_sha1[20];
-	char *gecos, *realgecos;
-	char *email, realemail[1000];
+	char *gecos, *realgecos, *commitgecos;
+	char *email, *commitemail, realemail[1000];
 	char date[20], realdate[20];
 	char *audate;
 	char comment[1000];
@@ -317,20 +317,24 @@ int main(int argc, char **argv)
 	memcpy(realemail, pw->pw_name, len);
 	realemail[len] = '@';
 	gethostname(realemail+len+1, sizeof(realemail)-len-1);
+	strcat(realemail, ".");
+	getdomainname(realemail+strlen(realemail), sizeof(realemail)-strlen(realemail)-1);
 	time(&now);
 	tm = localtime(&now);
 
 	strftime(realdate, sizeof(realdate), "%s %z", tm);
 	strcpy(date, realdate);
 
+	commitgecos = getenv("COMMIT_AUTHOR_NAME") ? : realgecos;
+	commitemail = getenv("COMMIT_AUTHOR_EMAIL") ? : realemail;
 	gecos = getenv("AUTHOR_NAME") ? : realgecos;
 	email = getenv("AUTHOR_EMAIL") ? : realemail;
 	audate = getenv("AUTHOR_DATE");
 	if (audate)
 		parse_rfc2822_date(audate, date, sizeof(date));
 
-	remove_special(gecos); remove_special(realgecos);
-	remove_special(email); remove_special(realemail);
+	remove_special(gecos); remove_special(realgecos); remove_special(commitgecos);
+	remove_special(email); remove_special(realemail); remove_special(commitemail);
 
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
@@ -345,7 +349,7 @@ int main(int argc, char **argv)
 
 	/* Person/date information */
 	add_buffer(&buffer, &size, "author %s <%s> %s\n", gecos, email, date);
-	add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", realgecos, realemail, realdate);
+	add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", commitgecos, commitemail, realdate);
 
 	/* And add the comment */
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
