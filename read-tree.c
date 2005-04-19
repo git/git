@@ -169,9 +169,36 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 			nr -= 2;
 			active_nr -= 2;
 		}
-		*dst = ce;
+		*dst++ = ce;
 		src++;
-		dst++;
+		nr--;
+	}
+}
+
+static void merge_stat_info(struct cache_entry **src, int nr)
+{
+	static struct cache_entry null_entry;
+	struct cache_entry **dst = src;
+	struct cache_entry *old = &null_entry;
+
+	while (nr) {
+		struct cache_entry *ce;
+
+		ce = src[0];
+
+		/* We throw away original cache entries except for the stat information */
+		if (!ce_stage(ce)) {
+			old = ce;
+			src++;
+			nr--;
+			active_nr--;
+			continue;
+		}
+		if (path_matches(ce, old) && same(ce, old))
+			*ce = *old;
+		ce->ce_flags &= ~htons(CE_STAGEMASK);
+		*dst++ = ce;
+		src++;
 		nr--;
 	}
 }
@@ -214,9 +241,16 @@ int main(int argc, char **argv)
 		stage++;
 	}
 	if (merge) {
-		if (stage != 4)
-			usage("I need three trees to merge: original, branch1 and branch2");
-		trivially_merge_cache(active_cache, active_nr);
+		switch (stage) {
+		case 4:	/* Three-way merge */
+			trivially_merge_cache(active_cache, active_nr);
+			break;
+		case 2:	/* Just read a tree, merge with old cache contents */
+			merge_stat_info(active_cache, active_nr);
+			break;
+		default:
+			die("just how do you expect me to merge %d trees?", stage-1);
+		}
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    rename(".git/index.lock", ".git/index"))
