@@ -55,6 +55,10 @@ void process_commit(unsigned char *sha1)
 {
 	struct commit_list *parents;
 	struct commit *obj = lookup_commit(sha1);
+
+	if (obj->object.parsed)
+		return;
+
 	parse_commit(obj);
 	
 	parents = obj->parents;
