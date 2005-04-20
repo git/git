@@ -173,11 +173,29 @@ int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 	z_stream stream;
 	unsigned char sha1[20];
 	SHA_CTX c;
+	char *filename;
+	int fd;
 
 	/* Sha1.. */
 	SHA1_Init(&c);
 	SHA1_Update(&c, buf, len);
 	SHA1_Final(sha1, &c);
+
+	if (returnsha1)
+		memcpy(returnsha1, sha1, 20);
+
+	filename = sha1_file_name(sha1);
+	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	if (fd < 0) {
+		if (errno != EEXIST)
+			return -1;
+
+		/*
+		 * We might do collision checking here, but we'd need to
+		 * uncompress the old file and check it. Later.
+		 */
+		return 0;
+	}
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
@@ -195,10 +213,10 @@ int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 	deflateEnd(&stream);
 	size = stream.total_out;
 
-	if (write_sha1_buffer(sha1, compressed, size) < 0)
-		return -1;
-	if (returnsha1)
-		memcpy(returnsha1, sha1, 20);
+	if (write(fd, compressed, size) != size)
+		die("unable to write file");
+	close(fd);
+		
 	return 0;
 }
 
