@@ -227,6 +227,42 @@ unmap:
 	return error("verify header failed");
 }
 
+#define WRITE_BUFFER_SIZE 8192
+static char write_buffer[WRITE_BUFFER_SIZE];
+static unsigned long write_buffer_len;
+
+static int ce_write(int fd, void *data, unsigned int len)
+{
+	while (len) {
+		unsigned int buffered = write_buffer_len;
+		unsigned int partial = WRITE_BUFFER_SIZE - buffered;
+		if (partial > len)
+			partial = len;
+		memcpy(write_buffer + buffered, data, partial);
+		buffered += partial;
+		if (buffered == WRITE_BUFFER_SIZE) {
+			if (write(fd, write_buffer, WRITE_BUFFER_SIZE) != WRITE_BUFFER_SIZE)
+				return -1;
+			buffered = 0;
+		}
+		write_buffer_len = buffered;
+		len -= partial;
+		data += partial;
+ 	}
+ 	return 0;
+}
+
+static int ce_flush(int fd)
+{
+	unsigned int left = write_buffer_len;
+	if (left) {
+		write_buffer_len = 0;
+		if (write(fd, write_buffer, left) != left)
+			return -1;
+	}
+	return 0;
+}
+
 int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
@@ -246,14 +282,13 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 	}
 	SHA1_Final(hdr.sha1, &c);
 
-	if (write(newfd, &hdr, sizeof(hdr)) != sizeof(hdr))
+	if (ce_write(newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
-		int size = ce_size(ce);
-		if (write(newfd, ce, size) != size)
+		if (ce_write(newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
-	return 0;
+	return ce_flush(newfd);
 }
