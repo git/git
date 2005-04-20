@@ -34,62 +34,17 @@ LIBS= $(LIB_FILE) -lssl -lz
 
 init-db: init-db.o
 
-update-cache: update-cache.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o update-cache update-cache.o $(LIBS)
-
-show-diff: show-diff.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o show-diff show-diff.o $(LIBS)
-
-write-tree: write-tree.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o write-tree write-tree.o $(LIBS)
-
-read-tree: read-tree.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o read-tree read-tree.o $(LIBS)
-
-commit-tree: commit-tree.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o $(LIBS)
-
-cat-file: cat-file.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o cat-file cat-file.o $(LIBS)
-
 fsck-cache: fsck-cache.o $(LIB_FILE) object.o commit.o tree.o blob.o
 	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o $(LIBS)
-
-checkout-cache: checkout-cache.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o $(LIBS)
-
-diff-tree: diff-tree.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o diff-tree diff-tree.o $(LIBS)
 
 rev-tree: rev-tree.o $(LIB_FILE) object.o commit.o tree.o blob.o
 	$(CC) $(CFLAGS) -o rev-tree rev-tree.o $(LIBS)
 
-show-files: show-files.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o show-files show-files.o $(LIBS)
-
-check-files: check-files.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o check-files check-files.o $(LIBS)
-
-ls-tree: ls-tree.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o ls-tree ls-tree.o $(LIBS)
-
 merge-base: merge-base.o $(LIB_FILE) object.o commit.o tree.o blob.o
 	$(CC) $(CFLAGS) -o merge-base merge-base.o $(LIBS)
 
-merge-cache: merge-cache.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o merge-cache merge-cache.o $(LIBS)
-
-unpack-file: unpack-file.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o unpack-file unpack-file.o $(LIBS)
-
-git-export: git-export.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o git-export git-export.o $(LIBS)
-
-diff-cache: diff-cache.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o diff-cache diff-cache.o $(LIBS)
-
-convert-cache: convert-cache.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o convert-cache convert-cache.o $(LIBS)
+%: %.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 blob.o: $(LIB_H)
 cat-file.o: $(LIB_H)
