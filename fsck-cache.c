@@ -85,12 +85,13 @@ static int fsck_name(char *hex)
 		if (map) {
 			char type[100];
 			unsigned long size;
-			void *buffer = NULL;
-			if (!check_sha1_signature(sha1, map, mapsize))
-				buffer = unpack_sha1_file(map, mapsize, type,
-							  &size);
+			void *buffer = unpack_sha1_file(map, mapsize, type, &size);
+			if (!buffer)
+				return -1;
+			if (check_sha1_signature(sha1, buffer, size, type) < 0)
+				printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
 			munmap(map, mapsize);
-			if (buffer && !fsck_entry(sha1, type, buffer, size))
+			if (!fsck_entry(sha1, type, buffer, size))
 				return 0;
 		}
 	}
