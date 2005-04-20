@@ -179,6 +179,20 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
+static void commit_to_tree(unsigned char *sha1)
+{
+	void *buf;
+	char type[20];
+	unsigned long size;
+
+	buf = read_sha1_file(sha1, type, &size);
+	if (buf) {
+		if (!strcmp(type, "commit"))
+			get_sha1_hex(buf+5, sha1);
+		free(buf);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char old[20], new[20];
@@ -200,5 +214,7 @@ int main(int argc, char **argv)
 
 	if (argc != 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
 		usage("diff-tree <tree sha1> <tree sha1>");
+	commit_to_tree(old);
+	commit_to_tree(new);
 	return diff_tree_sha1(old, new, "");
 }
