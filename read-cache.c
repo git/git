@@ -161,14 +161,13 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error("bad signature");
-	if (hdr->hdr_version != htonl(1))
-		return error("bad version");
+	if (hdr->hdr_version != htonl(2))
+		return error("bad index version");
 	SHA1_Init(&c);
-	SHA1_Update(&c, hdr, offsetof(struct cache_header, sha1));
-	SHA1_Update(&c, hdr+1, size - sizeof(*hdr));
+	SHA1_Update(&c, hdr, size - 20);
 	SHA1_Final(sha1, &c);
-	if (memcmp(sha1, hdr->sha1, 20))
-		return error("bad header sha1");
+	if (memcmp(sha1, (void *)hdr + size - 20, 20))
+		return error("bad index file sha1 signature");
 	return 0;
 }
 
@@ -198,7 +197,7 @@ int read_cache(void)
 	if (!fstat(fd, &st)) {
 		size = st.st_size;
 		errno = EINVAL;
-		if (size >= sizeof(struct cache_header))
+		if (size >= sizeof(struct cache_header) + 20)
 			map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	}
 	close(fd);
@@ -231,7 +230,7 @@ unmap:
 static char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 
-static int ce_write(int fd, void *data, unsigned int len)
+static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 {
 	while (len) {
 		unsigned int buffered = write_buffer_len;
@@ -241,6 +240,7 @@ static int ce_write(int fd, void *data, unsigned int len)
 		memcpy(write_buffer + buffered, data, partial);
 		buffered += partial;
 		if (buffered == WRITE_BUFFER_SIZE) {
+			SHA1_Update(context, write_buffer, WRITE_BUFFER_SIZE);
 			if (write(fd, write_buffer, WRITE_BUFFER_SIZE) != WRITE_BUFFER_SIZE)
 				return -1;
 			buffered = 0;
@@ -252,14 +252,20 @@ static int ce_write(int fd, void *data, unsigned int len)
  	return 0;
 }
 
-static int ce_flush(int fd)
+static int ce_flush(SHA_CTX *context, int fd)
 {
 	unsigned int left = write_buffer_len;
+
 	if (left) {
 		write_buffer_len = 0;
-		if (write(fd, write_buffer, left) != left)
-			return -1;
+		SHA1_Update(context, write_buffer, left);
 	}
+
+	/* Append the SHA1 signature at the end */
+	SHA1_Final(write_buffer + left, context);
+	left += 20;
+	if (write(fd, write_buffer, left) != left)
+		return -1;
 	return 0;
 }
 
@@ -270,25 +276,17 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 	int i;
 
 	hdr.hdr_signature = htonl(CACHE_SIGNATURE);
-	hdr.hdr_version = htonl(1);
+	hdr.hdr_version = htonl(2);
 	hdr.hdr_entries = htonl(entries);
 
 	SHA1_Init(&c);
-	SHA1_Update(&c, &hdr, offsetof(struct cache_header, sha1));
-	for (i = 0; i < entries; i++) {
-		struct cache_entry *ce = cache[i];
-		int size = ce_size(ce);
-		SHA1_Update(&c, ce, size);
-	}
-	SHA1_Final(hdr.sha1, &c);
-
-	if (ce_write(newfd, &hdr, sizeof(hdr)) < 0)
+	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
-		if (ce_write(newfd, ce, ce_size(ce)) < 0)
+		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
-	return ce_flush(newfd);
+	return ce_flush(&c, newfd);
 }

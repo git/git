@@ -28,7 +28,6 @@ struct cache_header {
 	unsigned int hdr_signature;
 	unsigned int hdr_version;
 	unsigned int hdr_entries;
-	unsigned char sha1[20];
 };
 
 /*
