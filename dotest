@@ -7,11 +7,26 @@
 ## You give it a mbox-format collection of emails, and it will try to
 ## apply them to the kernel using "applypatch"
 ##
+## dotest [ -q ] mail_archive [Signoff_file]
+##
 rm -rf .dotest
 mkdir .dotest
+case $1 in
+
+	-q)	touch .dotest/.query_apply
+		shift;;
+esac
 mailsplit $1 .dotest || exit 1
 for i in .dotest/*
 do
 	mailinfo .dotest/msg .dotest/patch .dotest/file < $i > .dotest/info || exit 1
-	applypatch .dotest/msg .dotest/patch .dotest/file .dotest/info || exit 1
+	applypatch .dotest/msg .dotest/patch .dotest/file .dotest/info "$2"
+	ret=$?
+	if [ $ret -ne 0 ]; then
+		# 2 is a special exit code from applypatch to indicate that
+	    	# the patch wasn't applied, but continue anyway 
+		[ $ret -ne 2 ] && exit $ret
+	fi
 done
+# return to pristine
+rm -fr .dotest
