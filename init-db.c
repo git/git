@@ -22,15 +22,10 @@ int main(int argc, char **argv)
 	}
 
 	sha1_dir = getenv(DB_ENVIRONMENT);
-	if (sha1_dir) {
-		struct stat st;
-		if (!stat(sha1_dir, &st) && S_ISDIR(st.st_mode))
-			return 0;
-		fprintf(stderr, "DB_ENVIRONMENT set to bad directory %s: ", sha1_dir);
+	if (!sha1_dir) {
+		sha1_dir = DEFAULT_DB_ENVIRONMENT;
+		fprintf(stderr, "defaulting to local storage area\n");
 	}
-
-	sha1_dir = DEFAULT_DB_ENVIRONMENT;
-	fprintf(stderr, "defaulting to private storage area\n");
 	len = strlen(sha1_dir);
 	if (mkdir(sha1_dir, 0755) < 0) {
 		if (errno != EEXIST) {
