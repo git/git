@@ -7,7 +7,7 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
-CFLAGS=-g -O3 -Wall
+CFLAGS=-g -O2 -Wall
 
 CC=gcc
 AR=ar
