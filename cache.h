@@ -125,4 +125,8 @@ extern int error(const char *err, ...);
 
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
 
+extern void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
+						unsigned long *size,
+						unsigned char *tree_sha1_ret);
+
 #endif /* CACHE_H */

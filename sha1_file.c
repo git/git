@@ -166,6 +166,46 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	return NULL;
 }
 
+void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
+					 unsigned long *size,
+					 unsigned char *tree_sha1_return)
+{
+	char type[20];
+	void *buffer;
+	unsigned long isize;
+	int was_commit = 0;
+	char tree_sha1[20];
+
+	buffer = read_sha1_file(sha1, type, &isize);
+
+	/* 
+	 * We might have read a commit instead of a tree, in which case
+	 * we parse out the tree_sha1 and attempt to read from there.
+	 * (buffer + 5) is because the tree sha1 is always at offset 5
+	 * in a commit record ("tree ").
+	 */
+	if (buffer &&
+	    !strcmp(type, "commit") &&
+	    !get_sha1_hex(buffer + 5, tree_sha1)) {
+		free(buffer);
+		buffer = read_sha1_file(tree_sha1, type, &isize);
+		was_commit = 1;
+	}
+
+	/*
+	 * Now do we have something and if so is it a tree?
+	 */
+	if (!buffer || strcmp(type, "tree")) {
+		free(buffer);
+		return;
+	}
+
+	*size = isize;
+	if (tree_sha1_return)
+		memcpy(tree_sha1_return, was_commit ? tree_sha1 : sha1, 20);
+	return buffer;
+}
+
 int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 {
 	int size;
