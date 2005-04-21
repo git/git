@@ -14,7 +14,7 @@
 #include <sys/param.h>
 #include <netinet/in.h>
 
-#include <openssl/sha.h>
+#include SHA1_HEADER
 #include <zlib.h>
 
 /*

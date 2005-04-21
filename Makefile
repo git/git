@@ -29,21 +29,21 @@ LIB_H=cache.h object.h
 
 LIBS = $(LIB_FILE)
 LIBS += -lz
-LIBS += -lssl
+
+ifdef MOZILLA_SHA1
+  SHA1_HEADER="mozilla-sha1/sha1.h"
+  LIB_OBJS += mozilla-sha1/sha1.o
+else
+  SHA1_HEADER=<openssl/sha.h>
+  LIBS += -lssl
+endif
+
+CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(AR) rcs $@ $(LIB_OBJS)
 
 init-db: init-db.o
-
-fsck-cache: fsck-cache.o $(LIB_FILE) object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o $(LIBS)
-
-rev-tree: rev-tree.o $(LIB_FILE) object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o $(LIBS)
-
-merge-base: merge-base.o $(LIB_FILE) object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o $(LIBS)
 
 %: %.o $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
@@ -77,7 +77,7 @@ unpack-file.o: $(LIB_H)
 write-tree.o: $(LIB_H)
 
 clean:
-	rm -f *.o $(PROG) $(LIB_FILE)
+	rm -f *.o mozilla-sha1/*.o $(PROG) $(LIB_FILE)
 
 backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
