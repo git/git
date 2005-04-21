@@ -89,8 +89,7 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (!strcmp(arg, "--cache")) {
-			read_cache_file(argv[2]);
-			i++;
+			read_cache_file(argv[++i]);
 			continue;
 		}
 

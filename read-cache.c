@@ -24,9 +24,9 @@ int cache_match_stat(struct cache_entry *ce, struct stat *st)
 	 * as long as it is in the inode cache you get right nsec
 	 * but after it gets flushed, you get zero nsec.
 	 */
-	if (ce->ce_mtime.nsec != htonl(st->st_mtim.tv_nsec)
+	if (ce->ce_mtime.nsec != htonl(st->st_mtim.tv_nsec))
 		changed |= MTIME_CHANGED;
-	if (ce->ce_ctime.nsec != htonl(st->st_ctim.tv_nsec)
+	if (ce->ce_ctime.nsec != htonl(st->st_ctim.tv_nsec))
 		changed |= CTIME_CHANGED;
 #endif	
 
