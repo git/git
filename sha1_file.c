@@ -174,7 +174,7 @@ void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
 	void *buffer;
 	unsigned long isize;
 	int was_commit = 0;
-	char tree_sha1[20];
+	unsigned char tree_sha1[20];
 
 	buffer = read_sha1_file(sha1, type, &isize);
 
@@ -197,7 +197,7 @@ void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
 	 */
 	if (!buffer || strcmp(type, "tree")) {
 		free(buffer);
-		return;
+		return NULL;
 	}
 
 	*size = isize;
