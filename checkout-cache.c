@@ -32,6 +32,8 @@
  * of "-a" causing problems (not possible in the above example,
  * but get used to it in scripting!).
  */
+#include <sys/param.h>
+
 #include "cache.h"
 
 static int force = 0, quiet = 0;
@@ -65,7 +67,7 @@ static int create_file(const char *path, unsigned int mode)
 	return fd;
 }
 
-static int write_entry(struct cache_entry *ce)
+static int write_entry(struct cache_entry *ce, const char *path)
 {
 	int fd;
 	void *new;
@@ -76,33 +78,38 @@ static int write_entry(struct cache_entry *ce)
 	new = read_sha1_file(ce->sha1, type, &size);
 	if (!new || strcmp(type, "blob")) {
 		return error("checkout-cache: unable to read sha1 file of %s (%s)",
-			ce->name, sha1_to_hex(ce->sha1));
+			path, sha1_to_hex(ce->sha1));
 	}
-	fd = create_file(ce->name, ntohl(ce->ce_mode));
+	fd = create_file(path, ntohl(ce->ce_mode));
 	if (fd < 0) {
 		free(new);
 		return error("checkout-cache: unable to create %s (%s)",
-			ce->name, strerror(errno));
+			path, strerror(errno));
 	}
 	wrote = write(fd, new, size);
 	close(fd);
 	free(new);
 	if (wrote != size)
-		return error("checkout-cache: unable to write %s", ce->name);
+		return error("checkout-cache: unable to write %s", path);
 	return 0;
 }
 
-static int checkout_entry(struct cache_entry *ce)
+static int checkout_entry(struct cache_entry *ce, const char *base_dir)
 {
 	struct stat st;
+	static char path[MAXPATHLEN+1];
+	int len = strlen(base_dir);
 
-	if (!stat(ce->name, &st)) {
+	memcpy(path, base_dir, len);
+	strcpy(path + len, ce->name);
+
+	if (!stat(path, &st)) {
 		unsigned changed = cache_match_stat(ce, &st);
 		if (!changed)
 			return 0;
 		if (!force) {
 			if (!quiet)
-				fprintf(stderr, "checkout-cache: %s already exists\n", ce->name);
+				fprintf(stderr, "checkout-cache: %s already exists\n", path);
 			return 0;
 		}
 
@@ -112,12 +119,12 @@ static int checkout_entry(struct cache_entry *ce)
 		 * to emulate by hand - much easier to let the system
 		 * just do the right thing)
 		 */
-		unlink(ce->name);
+		unlink(path);
 	}
-	return write_entry(ce);
+	return write_entry(ce, path);
 }
 
-static int checkout_file(const char *name)
+static int checkout_file(const char *name, const char *base_dir)
 {
 	int pos = cache_name_pos(name, strlen(name));
 	if (pos < 0) {
@@ -132,10 +139,10 @@ static int checkout_file(const char *name)
 		}
 		return -1;
 	}
-	return checkout_entry(active_cache[pos]);
+	return checkout_entry(active_cache[pos], base_dir);
 }
 
-static int checkout_all(void)
+static int checkout_all(const char *base_dir)
 {
 	int i;
 
@@ -143,7 +150,7 @@ static int checkout_all(void)
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce))
 			continue;
-		if (checkout_entry(ce) < 0)
+		if (checkout_entry(ce, base_dir) < 0)
 			return -1;
 	}
 	return 0;
@@ -152,6 +159,7 @@ static int checkout_all(void)
 int main(int argc, char **argv)
 {
 	int i, force_filename = 0;
+	const char *base_dir = "";
 
 	if (read_cache() < 0) {
 		die("invalid cache");
@@ -161,7 +169,7 @@ int main(int argc, char **argv)
 		const char *arg = argv[i];
 		if (!force_filename) {
 			if (!strcmp(arg, "-a")) {
-				checkout_all();
+				checkout_all(base_dir);
 				continue;
 			}
 			if (!strcmp(arg, "--")) {
@@ -176,8 +184,12 @@ int main(int argc, char **argv)
 				quiet = 1;
 				continue;
 			}
+			if (!memcmp(arg, "--prefix=", 9)) {
+				base_dir = arg+9;
+				continue;
+			}
 		}
-		checkout_file(arg);
+		checkout_file(arg, base_dir);
 	}
 	return 0;
 }
