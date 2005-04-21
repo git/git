@@ -164,33 +164,18 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 {
 	void *tree1, *tree2;
 	unsigned long size1, size2;
-	char type[20];
 	int retval;
 
-	tree1 = read_sha1_file(old, type, &size1);
-	if (!tree1 || strcmp(type, "tree"))
+	tree1 = read_tree_with_tree_or_commit_sha1(old, &size1, 0);
+	if (!tree1)
 		die("unable to read source tree (%s)", sha1_to_hex(old));
-	tree2 = read_sha1_file(new, type, &size2);
-	if (!tree2 || strcmp(type, "tree"))
+	tree2 = read_tree_with_tree_or_commit_sha1(new, &size2, 0);
+	if (!tree2)
 		die("unable to read destination tree (%s)", sha1_to_hex(new));
 	retval = diff_tree(tree1, size1, tree2, size2, base);
 	free(tree1);
 	free(tree2);
 	return retval;
-}
-
-static void commit_to_tree(unsigned char *sha1)
-{
-	void *buf;
-	char type[20];
-	unsigned long size;
-
-	buf = read_sha1_file(sha1, type, &size);
-	if (buf) {
-		if (!strcmp(type, "commit"))
-			get_sha1_hex(buf+5, sha1);
-		free(buf);
-	}
 }
 
 int main(int argc, char **argv)
@@ -214,7 +199,5 @@ int main(int argc, char **argv)
 
 	if (argc != 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
 		usage("diff-tree <tree sha1> <tree sha1>");
-	commit_to_tree(old);
-	commit_to_tree(new);
 	return diff_tree_sha1(old, new, "");
 }
