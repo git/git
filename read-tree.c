@@ -217,6 +217,8 @@ static void merge_stat_info(struct cache_entry **src, int nr)
 	}
 }
 
+static char *read_tree_usage = "read-tree (<sha> | -m <sha1> [<sha2> <sha3>])";
+
 int main(int argc, char **argv)
 {
 	int i, newfd, merge;
@@ -236,20 +238,20 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "-m")) {
 			int i;
 			if (stage)
-				usage("-m needs to come first");
+				die("-m needs to come first");
 			read_cache();
 			for (i = 0; i < active_nr; i++) {
 				if (ce_stage(active_cache[i]))
-					usage("you need to resolve your current index first");
+					die("you need to resolve your current index first");
 			}
 			stage = 1;
 			merge = 1;
 			continue;
 		}
 		if (get_sha1_hex(arg, sha1) < 0)
-			usage("read-tree [-m] <sha1>");
+			usage(read_tree_usage);
 		if (stage > 3)
-			usage("can't merge more than two trees");
+			usage(read_tree_usage);
 		if (read_tree(sha1, "", 0) < 0)
 			die("failed to unpack tree object %s", arg);
 		stage++;

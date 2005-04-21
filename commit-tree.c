@@ -268,14 +268,12 @@ static void check_valid(unsigned char *sha1, const char *expect)
 }
 
 /*
- * Having more than two parents may be strange, but hey, there's
- * no conceptual reason why the file format couldn't accept multi-way
- * merges. It might be the "union" of several packages, for example.
- *
- * I don't really expect that to happen, but this is here to make
- * it clear that _conceptually_ it's ok..
+ * Having more than two parents is not strange at all, and this is
+ * how multi-way merges are represented.
  */
 #define MAXPARENT (16)
+
+static char *commit_tree_usage = "commit-tree <sha1> [-p <sha1>]* < changelog";
 
 int main(int argc, char **argv)
 {
@@ -296,14 +294,14 @@ int main(int argc, char **argv)
 	unsigned int size;
 
 	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
-		usage("commit-tree <sha1> [-p <sha1>]* < changelog");
+		usage(commit_tree_usage);
 
 	check_valid(tree_sha1, "tree");
 	for (i = 2; i < argc; i += 2) {
 		char *a, *b;
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p") || get_sha1_hex(b, parent_sha1[parents]))
-			usage("commit-tree <sha1> [-p <sha1>]* < changelog");
+			usage(commit_tree_usage);
 		check_valid(parent_sha1[parents], "commit");
 		parents++;
 	}

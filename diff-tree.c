@@ -178,6 +178,8 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
+static char *diff_tree_usage = "diff-tree [-r] [-z] <tree sha1> <tree sha1>";
+
 int main(int argc, char **argv)
 {
 	unsigned char old[20], new[20];
@@ -194,10 +196,10 @@ int main(int argc, char **argv)
 			line_termination = '\0';
 			continue;
 		}
-		usage("diff-tree [-r] [-z] <tree sha1> <tree sha1>");
+		usage(diff_tree_usage);
 	}
 
 	if (argc != 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
-		usage("diff-tree <tree sha1> <tree sha1>");
+		usage(diff_tree_usage);
 	return diff_tree_sha1(old, new, "");
 }

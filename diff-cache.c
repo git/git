@@ -215,6 +215,8 @@ static int diff_cache(void *tree, unsigned long size, struct cache_entry **ac, i
 	return 0;
 }
 
+static char *diff_cache_usage = "diff-cache [-r] [-z] [--cached] <tree sha1>";
+
 int main(int argc, char **argv)
 {
 	unsigned char tree_sha1[20];
@@ -238,11 +240,11 @@ int main(int argc, char **argv)
 			cached_only = 1;
 			continue;
 		}
-		usage("diff-cache [-r] [-z] <tree sha1>");
+		usage(diff_cache_usage);
 	}
 
 	if (argc != 2 || get_sha1_hex(argv[1], tree_sha1))
-		usage("diff-cache [-r] [-z] <tree sha1>");
+		usage(diff_cache_usage);
 
 	tree = read_tree_with_tree_or_commit_sha1(tree_sha1, &size, 0);
 	if (!tree)
