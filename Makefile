@@ -27,10 +27,12 @@ LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h
 
+LIBS = $(LIB_FILE)
+LIBS += -lz
+LIBS += -lssl
+
 $(LIB_FILE): $(LIB_OBJS)
 	$(AR) rcs $@ $(LIB_OBJS)
-
-LIBS= $(LIB_FILE) -lssl -lz
 
 init-db: init-db.o
 
