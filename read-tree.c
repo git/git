@@ -79,12 +79,12 @@ static int read_tree(unsigned char *sha1, const char *base, int baselen)
 	return read_tree_recursive(buffer, "tree", size, base, baselen);
 }
 
-static int remove_lock = 0;
+static char *lockfile_name;
 
 static void remove_lock_file(void)
 {
-	if (remove_lock)
-		unlink(".git/index.lock");
+	if (lockfile_name)
+		unlink(lockfile_name);
 }
 
 static int path_matches(struct cache_entry *a, struct cache_entry *b)
@@ -223,12 +223,16 @@ int main(int argc, char **argv)
 {
 	int i, newfd, merge;
 	unsigned char sha1[20];
+	static char lockfile[MAXPATHLEN+1];
+	const char *indexfile = get_index_file();
 
-	newfd = open(".git/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
+	snprintf(lockfile, sizeof(lockfile), "%s.lock", indexfile);
+
+	newfd = open(lockfile, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
 		die("unable to create new cachefile");
 	atexit(remove_lock_file);
-	remove_lock = 1;
+	lockfile_name = lockfile;
 
 	merge = 0;
 	for (i = 1; i < argc; i++) {
@@ -268,9 +272,8 @@ int main(int argc, char **argv)
 			die("just how do you expect me to merge %d trees?", stage-1);
 		}
 	}
-	if (write_cache(newfd, active_cache, active_nr) ||
-	    rename(".git/index.lock", ".git/index"))
+	if (write_cache(newfd, active_cache, active_nr) || rename(lockfile, indexfile))
 		die("unable to write new index file");
-	remove_lock = 0;
+	lockfile_name = NULL;
 	return 0;
 }

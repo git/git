@@ -274,25 +274,29 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 	return add_cache_entry(ce, allow_add);
 }
 
-static int remove_lock = 0;
+static const char *lockfile_name = NULL;
 
 static void remove_lock_file(void)
 {
-	if (remove_lock)
-		unlink(".git/index.lock");
+	if (lockfile_name)
+		unlink(lockfile_name);
 }
 
 int main(int argc, char **argv)
 {
 	int i, newfd, entries;
 	int allow_options = 1;
+	static char lockfile[MAXPATHLEN+1];
+	const char *indexfile = get_index_file();
 
-	newfd = open(".git/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
+	snprintf(lockfile, sizeof(lockfile), "%s.lock", indexfile);
+
+	newfd = open(lockfile, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0)
 		die("unable to create new cachefile");
 
 	atexit(remove_lock_file);
-	remove_lock = 1;
+	lockfile_name = lockfile;
 
 	entries = read_cache();
 	if (entries < 0)
@@ -333,10 +337,9 @@ int main(int argc, char **argv)
 		if (add_file_to_cache(path))
 			die("Unable to add %s to database", path);
 	}
-	if (write_cache(newfd, active_cache, active_nr) ||
-	    rename(".git/index.lock", ".git/index"))
+	if (write_cache(newfd, active_cache, active_nr) || rename(lockfile, indexfile))
 		die("Unable to write new cachefile");
 
-	remove_lock = 0;
+	lockfile_name = NULL;
 	return 0;
 }

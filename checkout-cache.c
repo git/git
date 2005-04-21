@@ -32,8 +32,6 @@
  * of "-a" causing problems (not possible in the above example,
  * but get used to it in scripting!).
  */
-#include <sys/param.h>
-
 #include "cache.h"
 
 static int force = 0, quiet = 0;

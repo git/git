@@ -6,7 +6,6 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include <dirent.h>
-#include <sys/param.h>
 
 #include "cache.h"
 
