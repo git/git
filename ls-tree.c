@@ -24,9 +24,9 @@ static void print_path_prefix(struct path_prefix *prefix)
 }
 
 static void list_recursive(void *buffer,
-			  unsigned char *type,
-			  unsigned long size,
-			  struct path_prefix *prefix)
+			   const unsigned char *type,
+			   unsigned long size,
+			   struct path_prefix *prefix)
 {
 	struct path_prefix this_prefix;
 	this_prefix.prev = prefix;
@@ -72,12 +72,11 @@ static int list(unsigned char *sha1)
 {
 	void *buffer;
 	unsigned long size;
-	char type[20];
 
-	buffer = read_sha1_file(sha1, type, &size);
+	buffer = read_tree_with_tree_or_commit_sha1(sha1, &size, 0);
 	if (!buffer)
 		die("unable to read sha1 file");
-	list_recursive(buffer, type, size, NULL);
+	list_recursive(buffer, "tree", size, NULL);
 	return 0;
 }
 
