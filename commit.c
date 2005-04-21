@@ -1,6 +1,7 @@
 #include "commit.h"
 #include "cache.h"
 #include <string.h>
+#include <limits.h>
 
 const char *commit_type = "commit";
 
