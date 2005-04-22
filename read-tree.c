@@ -7,67 +7,7 @@
 
 static int stage = 0;
 
-static int read_one_entry(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode)
-{
-	int len = strlen(pathname);
-	unsigned int size = cache_entry_size(baselen + len);
-	struct cache_entry *ce = malloc(size);
-
-	memset(ce, 0, size);
-
-	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = create_ce_flags(baselen + len, stage);
-	memcpy(ce->name, base, baselen);
-	memcpy(ce->name + baselen, pathname, len+1);
-	memcpy(ce->sha1, sha1, 20);
-	return add_cache_entry(ce, 1);
-}
-
-static int read_tree_recursive(void *buffer, unsigned long size,
-			       const char *base, int baselen)
-{
-	while (size) {
-		int len = strlen(buffer)+1;
-		unsigned char *sha1 = buffer + len;
-		char *path = strchr(buffer, ' ')+1;
-		unsigned int mode;
-
-		if (size < len + 20 || sscanf(buffer, "%o", &mode) != 1)
-			return -1;
-
-		buffer = sha1 + 20;
-		size -= len + 20;
-
-		if (S_ISDIR(mode)) {
-			int retval;
-			int pathlen = strlen(path);
-			char *newbase = malloc(baselen + 1 + pathlen);
-			void *eltbuf;
-			char elttype[20];
-			unsigned long eltsize;
-
-			eltbuf = read_sha1_file(sha1, elttype, &eltsize);
-			if (!eltbuf || strcmp(elttype, "tree"))
-				return -1;
-			memcpy(newbase, base, baselen);
-			memcpy(newbase + baselen, path, pathlen);
-			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(eltbuf, eltsize,
-						     newbase,
-						     baselen + pathlen + 1);
-			free(eltbuf);
-			free(newbase);
-			if (retval)
-				return -1;
-			continue;
-		}
-		if (read_one_entry(sha1, base, baselen, path, mode) < 0)
-			return -1;
-	}
-	return 0;
-}
-
-static int read_tree(unsigned char *sha1, const char *base, int baselen)
+static int unpack_tree(unsigned char *sha1)
 {
 	void *buffer;
 	unsigned long size;
@@ -75,7 +15,7 @@ static int read_tree(unsigned char *sha1, const char *base, int baselen)
 	buffer = read_tree_with_tree_or_commit_sha1(sha1, &size, 0);
 	if (!buffer)
 		return -1;
-	return read_tree_recursive(buffer, size, base, baselen);
+	return read_tree(buffer, size, stage);
 }
 
 static char *lockfile_name;
@@ -255,7 +195,7 @@ int main(int argc, char **argv)
 			usage(read_tree_usage);
 		if (stage > 3)
 			usage(read_tree_usage);
-		if (read_tree(sha1, "", 0) < 0)
+		if (unpack_tree(sha1) < 0)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}

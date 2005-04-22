@@ -122,6 +122,9 @@ extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned lon
 extern int write_sha1_file(char *buf, unsigned len, unsigned char *return_sha1);
 extern int check_sha1_signature(unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
+/* Read a tree into the cache */
+extern int read_tree(void *buffer, unsigned long size, int stage);
+
 /* Convert to/from hex/sha1 representation */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
