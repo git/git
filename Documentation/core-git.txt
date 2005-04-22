@@ -1022,6 +1022,14 @@ shown:
 	the diff command:
 	     git-ls-files --others --exclude-from=dontdiff
 
+-t
+	Identify the file status with the following tags (followed by
+	a space) at the start of each line:
+	H	cached
+	M	unmerged
+	R	removed/deleted
+	?	other
+
 Output
 show files just outputs the filename unless --stage is specified in
 which case it outputs:

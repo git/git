@@ -18,6 +18,11 @@ static int show_stage = 0;
 static int show_unmerged = 0;
 static int line_terminator = '\n';
 
+static const char *tag_cached = "";
+static const char *tag_unmerged = "";
+static const char *tag_removed = "";
+static const char *tag_other = "";
+
 static int nr_excludes;
 static const char **excludes;
 static int excludes_alloc;
@@ -143,7 +148,8 @@ static void read_directory(const char *path, const char *base, int baselen)
 				/* fallthrough */
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
-				read_directory(fullname, fullname, baselen + len + 1);
+				read_directory(fullname, fullname,
+					       baselen + len + 1);
 				continue;
 			case DT_REG:
 				break;
@@ -172,7 +178,7 @@ static void show_files(void)
 		read_directory(".", "", 0);
 		qsort(dir, nr_dir, sizeof(char *), cmp_name);
 		for (i = 0; i < nr_dir; i++)
-			printf("%s%c", dir[i], line_terminator);
+			printf("%s%s%c", tag_other, dir[i], line_terminator);
 	}
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
@@ -182,14 +188,17 @@ static void show_files(void)
 			if (show_unmerged && !ce_stage(ce))
 				continue;
 			if (!show_stage)
-				printf("%s%c", ce->name, line_terminator);
+				printf("%s%s%c",
+				       ce_stage(ce) ? tag_unmerged :
+				       tag_cached,
+				       ce->name, line_terminator);
 			else
-				printf(/* "%06o %s %d %10d %s%c", */
-				       "%06o %s %d %s%c",
+				printf("%s%06o %s %d %s%c",
+				       ce_stage(ce) ? tag_unmerged :
+				       tag_cached,
 				       ntohl(ce->ce_mode),
 				       sha1_to_hex(ce->sha1),
 				       ce_stage(ce),
-				       /* ntohl(ce->ce_size), */
 				       ce->name, line_terminator); 
 		}
 	}
@@ -201,13 +210,14 @@ static void show_files(void)
 				continue;
 			if (!lstat(ce->name, &st))
 				continue;
-			printf("%s%c", ce->name, line_terminator);
+			printf("%s%s%c", tag_removed, ce->name,
+			       line_terminator);
 		}
 	}
 }
 
 static const char *ls_files_usage =
-	"ls-files [-z] (--[cached|deleted|others|stage|unmerged])* "
+	"ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged])* "
 	"[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]";
 
 int main(int argc, char **argv)
@@ -219,6 +229,11 @@ int main(int argc, char **argv)
 
 		if (!strcmp(arg, "-z")) {
 			line_terminator = 0;
+		} else if (!strcmp(arg, "-t")) {
+			tag_cached = "H ";
+			tag_unmerged = "M ";
+			tag_removed = "R ";
+			tag_other = "? ";
 		} else if (!strcmp(arg, "-c") || !strcmp(arg, "--cached")) {
 			show_cached = 1;
 		} else if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
@@ -230,7 +245,9 @@ int main(int argc, char **argv)
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--stage")) {
 			show_stage = 1;
 		} else if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
-			// There's no point in showing unmerged unless you also show the stage information
+			/* There's no point in showing unmerged unless
+			 * you also show the stage information.
+			 */
 			show_stage = 1;
 			show_unmerged = 1;
 		} else if (!strcmp(arg, "-x") && i+1 < argc) {
@@ -246,7 +263,8 @@ int main(int argc, char **argv)
 	}
 
 	if (show_ignored && !nr_excludes) {
-		fprintf(stderr, "%s: --ignored needs some exclude pattern\n", argv[0]);
+		fprintf(stderr, "%s: --ignored needs some exclude pattern\n",
+			argv[0]);
 		exit(1);
 	}
 
