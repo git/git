@@ -23,12 +23,9 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 	return add_cache_entry(ce, 1);
 }
 
-static int read_tree_recursive(void *buffer, const char *type,
-			       unsigned long size,
+static int read_tree_recursive(void *buffer, unsigned long size,
 			       const char *base, int baselen)
 {
-	if (!buffer || strcmp(type, "tree"))
-		return -1;
 	while (size) {
 		int len = strlen(buffer)+1;
 		unsigned char *sha1 = buffer + len;
@@ -50,12 +47,12 @@ static int read_tree_recursive(void *buffer, const char *type,
 			unsigned long eltsize;
 
 			eltbuf = read_sha1_file(sha1, elttype, &eltsize);
-			if (!eltbuf)
+			if (!eltbuf || strcmp(elttype, "tree"))
 				return -1;
 			memcpy(newbase, base, baselen);
 			memcpy(newbase + baselen, path, pathlen);
 			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(eltbuf, elttype, eltsize,
+			retval = read_tree_recursive(eltbuf, eltsize,
 						     newbase,
 						     baselen + pathlen + 1);
 			free(eltbuf);
@@ -76,7 +73,9 @@ static int read_tree(unsigned char *sha1, const char *base, int baselen)
 	unsigned long size;
 
 	buffer = read_tree_with_tree_or_commit_sha1(sha1, &size, 0);
-	return read_tree_recursive(buffer, "tree", size, base, baselen);
+	if (!buffer)
+		return -1;
+	return read_tree_recursive(buffer, size, base, baselen);
 }
 
 static char *lockfile_name;
