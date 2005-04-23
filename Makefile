@@ -34,8 +34,13 @@ ifdef MOZILLA_SHA1
   SHA1_HEADER="mozilla-sha1/sha1.h"
   LIB_OBJS += mozilla-sha1/sha1.o
 else
+ifdef PPC_SHA1
+  SHA1_HEADER="ppc/sha1.h"
+  LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+else
   SHA1_HEADER=<openssl/sha.h>
   LIBS += -lssl
+endif
 endif
 
 CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
@@ -77,7 +82,7 @@ unpack-file.o: $(LIB_H)
 write-tree.o: $(LIB_H)
 
 clean:
-	rm -f *.o mozilla-sha1/*.o $(PROG) $(LIB_FILE)
+	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
 
 backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
