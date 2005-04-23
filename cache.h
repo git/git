@@ -99,7 +99,9 @@ extern int read_cache(void);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int cache_name_pos(const char *name, int namelen);
 extern int add_cache_entry(struct cache_entry *ce, int ok_to_add);
+extern int remove_entry_at(int pos);
 extern int remove_file_from_cache(char *path);
+extern int same_name(struct cache_entry *a, struct cache_entry *b);
 extern int cache_match_stat(struct cache_entry *ce, struct stat *st);
 
 #define MTIME_CHANGED	0x0001

@@ -87,7 +87,7 @@ int cache_name_pos(const char *name, int namelen)
 }
 
 /* Remove entry, return true if there are more entries to go.. */
-static int remove_entry_at(int pos)
+int remove_entry_at(int pos)
 {
 	active_nr--;
 	if (pos >= active_nr)
@@ -106,7 +106,7 @@ int remove_file_from_cache(char *path)
 	return 0;
 }
 
-static int same_name(struct cache_entry *a, struct cache_entry *b)
+int same_name(struct cache_entry *a, struct cache_entry *b)
 {
 	int len = ce_namelen(a);
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
