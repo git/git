@@ -233,6 +233,13 @@ static int convert_date_line(char *dst, void **buf, unsigned long *sp)
 		return len + datelen;
 	}
 
+	/*
+	 * Hacky hacky: one of the sparse old-style commits does not have
+	 * any date at all, but we can fake it by using the committer date.
+	 */
+	if (*date == '\n' && strchr(next, '>'))
+		date = strchr(next, '>')+2;
+
 	return len + sprintf(dst, "%lu -0700\n", parse_oldstyle_date(date));
 }
 
