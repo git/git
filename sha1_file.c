@@ -11,6 +11,16 @@
 
 const char *sha1_file_directory = NULL;
 
+#ifndef O_NOATIME
+#if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
+#define O_NOATIME 01000000
+#else
+#define O_NOATIME 0
+#endif
+#endif
+
+static unsigned int sha1_file_open_flag = O_NOATIME;
+
 static unsigned hexval(char c)
 {
 	if (c >= '0' && c <= '9')
@@ -96,13 +106,26 @@ int check_sha1_signature(unsigned char *sha1, void *map, unsigned long size, con
 void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
 	char *filename = sha1_file_name(sha1);
-	int fd = open(filename, O_RDONLY);
 	struct stat st;
 	void *map;
+	int fd;
 
+	fd = open(filename, O_RDONLY | sha1_file_open_flag);
 	if (fd < 0) {
-		perror(filename);
-		return NULL;
+		/* See if it works without O_NOATIME */
+		switch (sha1_file_open_flag) {
+		default:
+			fd = open(filename, O_RDONLY);
+			if (fd >= 0)
+				break;
+		/* Fallthrough */
+		case 0:
+			perror(filename);
+			return NULL;
+		}
+
+		/* If it failed once, it will probably fail again. Stop using O_NOATIME */
+		sha1_file_open_flag = 0;
 	}
 	if (fstat(fd, &st) < 0) {
 		close(fd);
