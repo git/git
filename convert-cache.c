@@ -1,3 +1,6 @@
+#define _XOPEN_SOURCE /* glibc2 needs this */
+#include <time.h>
+#include <ctype.h>
 #include "cache.h"
 
 struct entry {
@@ -46,11 +49,6 @@ static struct entry *lookup_entry(unsigned char *sha1)
 	return insert_new(sha1, low);
 }
 
-static void convert_blob(void *buffer, unsigned long size)
-{
-	/* Nothing to do */
-}
-
 static void convert_binary_sha1(void *buffer)
 {
 	struct entry *entry = convert_entry(buffer);
@@ -68,8 +66,80 @@ static void convert_ascii_sha1(void *buffer)
 	memcpy(buffer, sha1_to_hex(entry->new_sha1), 40);
 }
 
-static void convert_tree(void *buffer, unsigned long size)
+#define ORIG_OFFSET (40)
+
+static int prepend_integer(char *buffer, unsigned val, int i)
 {
+	buffer[--i] = '\0';
+	do {
+		buffer[--i] = '0' + (val % 10);
+		val /= 10;
+	} while (val);
+	return i;
+}
+
+
+static int write_subdirectory(void *buffer, unsigned long size, const char *base, int baselen, unsigned char *result_sha1)
+{
+	char *new = malloc(size + ORIG_OFFSET);
+	unsigned long newlen = ORIG_OFFSET;
+	unsigned long used;
+	int i;
+
+	used = 0;
+	while (size) {
+		int len = 21 + strlen(buffer);
+		char *path = strchr(buffer, ' ');
+		unsigned char *sha1;
+		unsigned int mode;
+		char *slash, *origpath;
+
+		if (!path || sscanf(buffer, "%o", &mode) != 1)
+			die("bad tree conversion");
+		path++;
+		if (memcmp(path, base, baselen))
+			break;
+		origpath = path;
+		path += baselen;
+		slash = strchr(path, '/');
+		if (!slash) {
+			newlen += sprintf(new + newlen, "%o %s", mode, path);
+			new[newlen++] = '\0';
+			memcpy(new + newlen, buffer + len - 20, 20);
+			newlen += 20;
+
+			used += len;
+			size -= len;
+			buffer += len;
+			continue;
+		}
+
+		newlen += sprintf(new + newlen, "%o %.*s", S_IFDIR, slash - path, path);
+		new[newlen++] = 0;
+		sha1 = (unsigned char *)(new + newlen);
+		newlen += 20;
+
+		len = write_subdirectory(buffer, size, origpath, slash-origpath+1, sha1);
+
+		used += len;
+		size -= len;
+		buffer += len;
+	}
+
+	i = prepend_integer(new, newlen - ORIG_OFFSET, ORIG_OFFSET);
+	i -= 5;
+	memcpy(new + i, "tree ", 5);
+
+	write_sha1_file(new + i, newlen - i, result_sha1);
+	free(new);
+	return used;
+}
+
+static void convert_tree(void *buffer, unsigned long size, unsigned char *result_sha1)
+{
+	void *orig_buffer = buffer;
+	unsigned long orig_size = size;
+
 	while (size) {
 		int len = 1+strlen(buffer);
 
@@ -81,16 +151,140 @@ static void convert_tree(void *buffer, unsigned long size)
 		size -= len;
 		buffer += len;
 	}
+
+	write_subdirectory(orig_buffer, orig_size, "", 0, result_sha1);
 }
 
-static void convert_commit(void *buffer, unsigned long size)
+static unsigned long parse_oldstyle_date(const char *buf)
 {
+	char c, *p;
+	char buffer[100];
+	struct tm tm;
+	const char *formats[] = {
+		"%c",
+		"%a %b %d %T",
+		"%Z",
+		"%Y",
+		" %Y",
+		NULL
+	};
+	/* We only ever did two timezones in the bad old format .. */
+	const char *timezones[] = {
+		"PDT", "PST", NULL
+	};
+	const char **fmt = formats;
+
+	p = buffer;
+	while (isspace(c = *buf))
+		buf++;
+	while ((c = *buf++) != '\n')
+		*p++ = c;
+	*p++ = 0;
+	buf = buffer;
+	memset(&tm, 0, sizeof(tm));
+	do {
+		const char *next = strptime(buf, *fmt, &tm);
+		if (next) {
+			if (!*next)
+				return mktime(&tm);
+			buf = next;
+		} else {
+			const char **p = timezones;
+			while (isspace(*buf))
+				buf++;
+			while (*p) {
+				if (!memcmp(buf, *p, strlen(*p))) {
+					buf += strlen(*p);
+					break;
+				}
+				p++;
+			}
+		}
+		fmt++;
+	} while (*buf && *fmt);
+	printf("left: %s\n", buf);
+	return mktime(&tm);				
+}
+
+static int convert_date_line(char *dst, void **buf, unsigned long *sp)
+{
+	unsigned long size = *sp;
+	char *line = *buf;
+	char *next = strchr(line, '\n');
+	char *date = strchr(line, '>');
+	int len;
+
+	if (!next || !date)
+		die("missing or bad author/committer line %s", line);
+	next++; date += 2;
+
+	*buf = next;
+	*sp = size - (next - line);
+
+	len = date - line;
+	memcpy(dst, line, len);
+	dst += len;
+
+	/* Is it already in new format? */
+	if (isdigit(*date)) {
+		int datelen = next - date;
+		memcpy(dst, date, datelen);
+		printf("new format date '%.*s'?\n", datelen-1, date);
+		return len + datelen;
+	}
+
+	return len + sprintf(dst, "%lu -0700\n", parse_oldstyle_date(date));
+}
+
+static void convert_date(void *buffer, unsigned long size, unsigned char *result_sha1)
+{
+	char *new = malloc(size + ORIG_OFFSET + 100);
+	unsigned long newlen = ORIG_OFFSET;
+	int i;
+
+	// "tree <sha1>\n"
+	memcpy(new + newlen, buffer, 46);
+	newlen += 46;
+	buffer += 46;
+	size -= 46;
+
+	// "parent <sha1>\n"
+	while (!memcmp(buffer, "parent ", 7)) {
+		memcpy(new + newlen, buffer, 48);
+		newlen += 48;
+		buffer += 48;
+		size -= 48;
+	}
+
+	// "author xyz <xyz> date"
+	newlen += convert_date_line(new + newlen, &buffer, &size);
+	// "committer xyz <xyz> date"
+	newlen += convert_date_line(new + newlen, &buffer, &size);
+
+	// Rest
+	memcpy(new + newlen, buffer, size);
+	newlen += size;
+
+	i = prepend_integer(new, newlen - ORIG_OFFSET, ORIG_OFFSET);
+	i -= 7;
+	memcpy(new + i, "commit ", 7);
+
+	write_sha1_file(new + i, newlen - i, result_sha1);
+	free(new);	
+}
+
+static void convert_commit(void *buffer, unsigned long size, unsigned char *result_sha1)
+{
+	void *orig_buffer = buffer;
+	unsigned long orig_size = size;
+
 	convert_ascii_sha1(buffer+5);
 	buffer += 46;    /* "tree " + "hex sha1" + "\n" */
 	while (!memcmp(buffer, "parent ", 7)) {
 		convert_ascii_sha1(buffer+7);
 		buffer += 48;
 	}
+	convert_date(orig_buffer, orig_size, result_sha1);
 }
 
 static struct entry * convert_entry(unsigned char *sha1)
@@ -110,15 +304,14 @@ static struct entry * convert_entry(unsigned char *sha1)
 	offset = sprintf(buffer, "%s %lu", type, size)+1;
 	memcpy(buffer + offset, data, size);
 	
-	if (!strcmp(type, "blob"))
-		convert_blob(buffer + offset, size);
-	else if (!strcmp(type, "tree"))
-		convert_tree(buffer + offset, size);
+	if (!strcmp(type, "blob")) {
+		write_sha1_file(buffer, size + offset, entry->new_sha1);
+	} else if (!strcmp(type, "tree"))
+		convert_tree(buffer + offset, size, entry->new_sha1);
 	else if (!strcmp(type, "commit"))
-		convert_commit(buffer + offset, size);
+		convert_commit(buffer + offset, size, entry->new_sha1);
 	else
 		die("unknown object type '%s' in %s", type, sha1_to_hex(sha1));
-	write_sha1_file(buffer, size + offset, entry->new_sha1);
 	entry->converted = 1;
 	free(buffer);
 	return entry;
