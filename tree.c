@@ -77,6 +77,7 @@ struct tree *lookup_tree(unsigned char *sha1)
 		struct tree *ret = malloc(sizeof(struct tree));
 		memset(ret, 0, sizeof(struct tree));
 		created_object(sha1, &ret->object);
+		ret->object.type = tree_type;
 		return ret;
 	}
 	if (obj->parsed && obj->type != tree_type) {
@@ -96,7 +97,6 @@ int parse_tree(struct tree *item)
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
-	item->object.type = tree_type;
 	buffer = bufptr = read_sha1_file(item->object.sha1, type, &size);
 	if (!buffer)
 		return error("Could not read %s",

@@ -12,6 +12,7 @@ struct commit *lookup_commit(unsigned char *sha1)
 		struct commit *ret = malloc(sizeof(struct commit));
 		memset(ret, 0, sizeof(struct commit));
 		created_object(sha1, &ret->object);
+		ret->object.type = commit_type;
 		return ret;
 	}
 	if (obj->parsed && obj->type != commit_type) {
@@ -56,7 +57,6 @@ int parse_commit(struct commit *item)
 	if (strcmp(type, commit_type))
 		return error("Object %s not a commit",
 			     sha1_to_hex(item->object.sha1));
-	item->object.type = commit_type;
 	get_sha1_hex(bufptr + 5, parent);
 	item->tree = lookup_tree(parent);
 	add_ref(&item->object, &item->tree->object);
