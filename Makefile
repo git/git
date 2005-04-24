@@ -16,7 +16,7 @@ AR=ar
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache unpack-file git-export \
-	diff-cache convert-cache http-pull rpush rpull
+	diff-cache convert-cache http-pull rpush rpull rev-list
 
 all: $(PROG)
 
