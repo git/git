@@ -34,7 +34,7 @@
  */
 #include "cache.h"
 
-static int force = 0, quiet = 0;
+static int force = 0, quiet = 0, not_new = 0;
 
 static void create_directories(const char *path)
 {
@@ -118,7 +118,8 @@ static int checkout_entry(struct cache_entry *ce, const char *base_dir)
 		 * just do the right thing)
 		 */
 		unlink(path);
-	}
+	} else if (not_new) 
+		return 0;
 	return write_entry(ce, path);
 }
 
@@ -180,6 +181,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "-q")) {
 				quiet = 1;
+				continue;
+			}
+			if (!strcmp(arg, "-n")) {
+				not_new = 1;
 				continue;
 			}
 			if (!memcmp(arg, "--prefix=", 9)) {
