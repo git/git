@@ -16,7 +16,7 @@ AR=ar
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache unpack-file git-export \
-	diff-cache convert-cache
+	diff-cache convert-cache http-pull rpush rpull
 
 all: $(PROG)
 
@@ -51,7 +51,13 @@ $(LIB_FILE): $(LIB_OBJS)
 init-db: init-db.o
 
 %: %.c $(LIB_FILE)
-	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
+
+rpush: rsh.c
+
+rpull: rsh.c
+
+http-pull: LIBS += -lcurl
 
 blob.o: $(LIB_H)
 cat-file.o: $(LIB_H)
@@ -80,6 +86,9 @@ update-cache.o: $(LIB_H)
 usage.o: $(LIB_H)
 unpack-file.o: $(LIB_H)
 write-tree.o: $(LIB_H)
+http-pull.o: $(LIB_H)
+rpull.o: $(LIB_H)
+rpush.o: $(LIB_H)
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
