@@ -124,8 +124,11 @@ struct commit *pop_most_recent_commit(struct commit_list **list)
 	free(old);
 
 	while (parents) {
-		parse_commit(parents->item);
-		insert_by_date(list, parents->item);
+		struct commit *commit = parents->item;
+		if (!commit->object.parsed) {
+			parse_commit(commit);
+			insert_by_date(list, commit);
+		}
 		parents = parents->next;
 	}
 	return ret;
