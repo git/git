@@ -137,7 +137,8 @@ int parse_tree(struct tree *item)
 			entry->item.blob = lookup_blob(file_sha1);
 			obj = &entry->item.blob->object;
 		}
-		add_ref(&item->object, obj);
+		if (obj)
+			add_ref(&item->object, obj);
 
 		*list_p = entry;
 		list_p = &entry->next;

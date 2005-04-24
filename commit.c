@@ -59,13 +59,16 @@ int parse_commit(struct commit *item)
 			     sha1_to_hex(item->object.sha1));
 	get_sha1_hex(bufptr + 5, parent);
 	item->tree = lookup_tree(parent);
-	add_ref(&item->object, &item->tree->object);
+	if (item->tree)
+		add_ref(&item->object, &item->tree->object);
 	bufptr += 46; /* "tree " + "hex sha1" + "\n" */
 	while (!memcmp(bufptr, "parent ", 7) &&
 	       !get_sha1_hex(bufptr + 7, parent)) {
 		struct commit *new_parent = lookup_commit(parent);
-		commit_list_insert(new_parent, &item->parents);
-		add_ref(&item->object, &new_parent->object);
+		if (new_parent) {
+			commit_list_insert(new_parent, &item->parents);
+			add_ref(&item->object, &new_parent->object);
+		}
 		bufptr += 48;
 	}
 	item->date = parse_commit_date(bufptr);
