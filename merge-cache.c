@@ -4,7 +4,7 @@
 #include "cache.h"
 
 static const char *pgm = NULL;
-static const char *arguments[5];
+static const char *arguments[8];
 
 static void run_program(void)
 {
@@ -18,6 +18,9 @@ static void run_program(void)
 			    arguments[2],
 			    arguments[3],
 			    arguments[4],
+			    arguments[5],
+			    arguments[6],
+			    arguments[7],
 			    NULL);
 		die("unable to execute '%s'", pgm);
 	}
@@ -36,9 +39,13 @@ static int merge_entry(int pos, const char *path)
 	arguments[2] = "";
 	arguments[3] = "";
 	arguments[4] = path;
+	arguments[5] = "";
+	arguments[6] = "";
+	arguments[7] = "";
 	found = 0;
 	do {
 		static char hexbuf[4][60];
+		static char ownbuf[4][60];
 		struct cache_entry *ce = active_cache[pos];
 		int stage = ce_stage(ce);
 
@@ -46,7 +53,9 @@ static int merge_entry(int pos, const char *path)
 			break;
 		found++;
 		strcpy(hexbuf[stage], sha1_to_hex(ce->sha1));
+		sprintf(ownbuf[stage], "%o", ntohl(ce->ce_mode) & (~S_IFMT));
 		arguments[stage] = hexbuf[stage];
+		arguments[stage + 4] = ownbuf[stage];
 	} while (++pos < active_nr);
 	if (!found)
 		die("merge-cache: %s not in the cache", path);
