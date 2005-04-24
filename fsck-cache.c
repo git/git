@@ -57,6 +57,8 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 		return -1;
 	if (!commit->parents)
 		printf("root %s\n", sha1_to_hex(sha1));
+	if (!commit->date)
+		printf("bad commit date in %s\n", sha1_to_hex(sha1));
 	return 0;
 }
 
