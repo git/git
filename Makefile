@@ -50,7 +50,7 @@ $(LIB_FILE): $(LIB_OBJS)
 
 init-db: init-db.o
 
-%: %.o $(LIB_FILE)
+%: %.c $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 blob.o: $(LIB_H)
