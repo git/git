@@ -170,7 +170,7 @@ static unsigned long parse_oldstyle_date(const char *buf)
 	};
 	/* We only ever did two timezones in the bad old format .. */
 	const char *timezones[] = {
-		"PDT", "PST", NULL
+		"PDT", "PST", "CEST", NULL
 	};
 	const char **fmt = formats;
 
@@ -229,7 +229,6 @@ static int convert_date_line(char *dst, void **buf, unsigned long *sp)
 	if (isdigit(*date)) {
 		int datelen = next - date;
 		memcpy(dst, date, datelen);
-		printf("new format date '%.*s'?\n", datelen-1, date);
 		return len + datelen;
 	}
 
