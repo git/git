@@ -15,7 +15,7 @@ struct commit *lookup_commit(unsigned char *sha1)
 		ret->object.type = commit_type;
 		return ret;
 	}
-	if (obj->parsed && obj->type != commit_type) {
+	if (obj->type != commit_type) {
 		error("Object %s is a %s, not a commit", 
 		      sha1_to_hex(sha1), obj->type);
 		return NULL;
