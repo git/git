@@ -6,29 +6,11 @@ static struct commit *process_list(struct commit_list **list_p, int this_mark,
 				   int other_mark)
 {
 	struct commit *item = (*list_p)->item;
-	
-	if (item->object.flags & this_mark) {
-		/*
-		  printf("%d already seen %s %x\n",
-		  this_mark
-		  sha1_to_hex(posn->parent->sha1),
-		  posn->parent->flags);
-		*/
-		/* do nothing; this indicates that this side
-		 * split and reformed, and we only need to
-		 * mark it once.
-		 */
-		*list_p = (*list_p)->next;
-	} else if (item->object.flags & other_mark) {
+
+	if (item->object.flags & other_mark) {
 		return item;
 	} else {
-		/*
-		  printf("%d based on %s\n",
-		  this_mark,
-		  sha1_to_hex(posn->parent->sha1));
-		*/
-		pop_most_recent_commit(list_p);
-		item->object.flags |= this_mark;
+		pop_most_recent_commit(list_p, this_mark);
 	}
 	return NULL;
 }
@@ -39,7 +21,9 @@ struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 	struct commit_list *rev2list = NULL;
 
 	commit_list_insert(rev1, &rev1list);
+	rev1->object.flags |= 0x1;
 	commit_list_insert(rev2, &rev2list);
+	rev2->object.flags |= 0x2;
 
 	parse_commit(rev1);
 	parse_commit(rev2);

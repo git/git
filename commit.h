@@ -31,6 +31,7 @@ void sort_by_date(struct commit_list **list);
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
  **/
-struct commit *pop_most_recent_commit(struct commit_list **list);
+struct commit *pop_most_recent_commit(struct commit_list **list, 
+				      unsigned int mark);
 
 #endif /* COMMIT_H */

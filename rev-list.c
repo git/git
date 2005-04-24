@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
 	commit_list_insert(commit, &list);
 	do {
-		struct commit *commit = pop_most_recent_commit(&list);
+		struct commit *commit = pop_most_recent_commit(&list, 0x1);
 		printf("%s\n", sha1_to_hex(commit->object.sha1));
 	} while (list);
 	return 0;

@@ -114,7 +114,8 @@ void sort_by_date(struct commit_list **list)
 	*list = ret;
 }
 
-struct commit *pop_most_recent_commit(struct commit_list **list)
+struct commit *pop_most_recent_commit(struct commit_list **list,
+				      unsigned int mark)
 {
 	struct commit *ret = (*list)->item;
 	struct commit_list *parents = ret->parents;
@@ -125,8 +126,9 @@ struct commit *pop_most_recent_commit(struct commit_list **list)
 
 	while (parents) {
 		struct commit *commit = parents->item;
-		if (!commit->object.parsed) {
-			parse_commit(commit);
+		parse_commit(commit);
+		if (!(commit->object.flags & mark)) {
+			commit->object.flags |= mark;
 			insert_by_date(list, commit);
 		}
 		parents = parents->next;
