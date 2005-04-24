@@ -12,7 +12,23 @@
  * like "update-cache *" and suddenly having all the object
  * files be revision controlled.
  */
-static int allow_add = 0, allow_remove = 0;
+static int allow_add = 0, allow_remove = 0, not_new = 0;
+
+/* Three functions to allow overloaded pointer return; see linux/err.h */
+static inline void *ERR_PTR(long error)
+{
+	return (void *) error;
+}
+
+static inline long PTR_ERR(const void *ptr)
+{
+	return (long) ptr;
+}
+
+static inline long IS_ERR(const void *ptr)
+{
+	return (unsigned long)ptr > (unsigned long)-1000L;
+}
 
 static int index_fd(unsigned char *sha1, int fd, struct stat *st)
 {
@@ -172,7 +188,7 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	int changed, size;
 
 	if (stat(ce->name, &st) < 0)
-		return NULL;
+		return ERR_PTR(-errno);
 
 	changed = cache_match_stat(ce, &st);
 	if (!changed)
@@ -183,10 +199,10 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	 * to refresh the entry - it's not going to match
 	 */
 	if (changed & MODE_CHANGED)
-		return NULL;
+		return ERR_PTR(-EINVAL);
 
 	if (compare_data(ce, st.st_size))
-		return NULL;
+		return ERR_PTR(-EINVAL);
 
 	size = ce_size(ce);
 	updated = malloc(size);
@@ -212,8 +228,9 @@ static void refresh_cache(void)
 		}
 
 		new = refresh_entry(ce);
-		if (!new) {
-			printf("%s: needs update\n", ce->name);
+		if (IS_ERR(new)) {
+			if (!(not_new && PTR_ERR(new) == -ENOENT))
+				printf("%s: needs update\n", ce->name);
 			continue;
 		}
 		active_cache[i] = new;
@@ -326,6 +343,10 @@ int main(int argc, char **argv)
 				if (i+3 >= argc || add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
 					die("update-cache: --cacheinfo <mode> <sha1> <path>");
 				i += 3;
+				continue;
+			}
+			if (!strcmp(path, "--ignore-missing")) {
+				not_new = 1;
 				continue;
 			}
 			die("unknown option %s", path);
