@@ -57,7 +57,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 		}
 		/* No matching 1-stage (tree) entry? Show the current one as added */
 		if (entries == 1 || !same_name(ce, ac[1])) {
-			show_file("-", ce);
+			show_file("+", ce);
 			ac++;
 			entries--;
 			continue;
