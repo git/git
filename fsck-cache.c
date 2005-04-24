@@ -60,11 +60,19 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 	return 0;
 }
 
+static int fsck_blob(unsigned char *sha1, void *data, unsigned long size)
+{
+	struct blob *blob = lookup_blob(sha1);
+	blob->object.parsed = 1;
+	return 0;
+}
+
 static int fsck_entry(unsigned char *sha1, char *tag, void *data, 
 		      unsigned long size)
 {
 	if (!strcmp(tag, "blob")) {
-		lookup_blob(sha1); /* Nothing to check; but notice it. */
+		if (fsck_blob(sha1, data, size) < 0)
+			return -1;
 	} else if (!strcmp(tag, "tree")) {
 		if (fsck_tree(sha1, data, size) < 0)
 			return -1;

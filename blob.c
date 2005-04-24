@@ -12,7 +12,6 @@ struct blob *lookup_blob(unsigned char *sha1)
 		memset(ret, 0, sizeof(struct blob));
 		created_object(sha1, &ret->object);
 		ret->object.type = blob_type;
-		ret->object.parsed = 1;
 		return ret;
 	}
 	if (obj->parsed && obj->type != blob_type) {
