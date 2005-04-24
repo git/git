@@ -328,3 +328,75 @@ int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
 	close(fd);
 	return 0;
 }
+
+int write_sha1_from_fd(const unsigned char *sha1, int fd)
+{
+	char *filename = sha1_file_name(sha1);
+
+	int local;
+	z_stream stream;
+	unsigned char real_sha1[20];
+	char buf[4096];
+	char discard[4096];
+	int ret;
+	SHA_CTX c;
+
+	local = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+
+	if (local < 0)
+		return error("Couldn't open %s\n", filename);
+
+	memset(&stream, 0, sizeof(stream));
+
+	inflateInit(&stream);
+
+	SHA1_Init(&c);
+
+	do {
+		ssize_t size;
+		size = read(fd, buf, 4096);
+		if (size <= 0) {
+			close(local);
+			unlink(filename);
+			if (!size)
+				return error("Connection closed?");
+			perror("Reading from connection");
+			return -1;
+		}
+		write(local, buf, size);
+		stream.avail_in = size;
+		stream.next_in = buf;
+		do {
+			stream.next_out = discard;
+			stream.avail_out = sizeof(discard);
+			ret = inflate(&stream, Z_SYNC_FLUSH);
+			SHA1_Update(&c, discard, sizeof(discard) -
+				    stream.avail_out);
+		} while (stream.avail_in && ret == Z_OK);
+		
+	} while (ret == Z_OK);
+	inflateEnd(&stream);
+
+	close(local);
+	SHA1_Final(real_sha1, &c);
+	if (ret != Z_STREAM_END) {
+		unlink(filename);
+		return error("File %s corrupted", sha1_to_hex(sha1));
+	}
+	if (memcmp(sha1, real_sha1, 20)) {
+		unlink(filename);
+		return error("File %s has bad hash\n", sha1_to_hex(sha1));
+	}
+	
+	return 0;
+}
+
+int has_sha1_file(const unsigned char *sha1)
+{
+	char *filename = sha1_file_name(sha1);
+	struct stat st;
+
+	if (!stat(filename, &st))
+		return 1;
+	return 0;
+}

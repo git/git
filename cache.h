@@ -122,10 +122,15 @@ extern void * map_sha1_file(const unsigned char *sha1, unsigned long *size);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
 extern int write_sha1_file(char *buf, unsigned len, unsigned char *return_sha1);
+
 extern int check_sha1_signature(unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 /* Read a tree into the cache */
 extern int read_tree(void *buffer, unsigned long size, int stage);
+
+extern int write_sha1_from_fd(const unsigned char *sha1, int fd);
+
+extern int has_sha1_file(const unsigned char *sha1);
 
 /* Convert to/from hex/sha1 representation */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
