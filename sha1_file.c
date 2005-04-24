@@ -155,6 +155,8 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 
 	inflateInit(&stream);
 	ret = inflate(&stream, 0);
+       if (ret < Z_OK)
+               return NULL;
 	if (sscanf(buffer, "%10s %lu", type, size) != 2)
 		return NULL;
 
