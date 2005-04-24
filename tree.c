@@ -92,6 +92,7 @@ int parse_tree(struct tree *item)
 	char type[20];
 	void *buffer, *bufptr;
 	unsigned long size;
+	struct tree_entry_list **list_p;
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
@@ -103,8 +104,10 @@ int parse_tree(struct tree *item)
 	if (strcmp(type, tree_type))
 		return error("Object %s not a tree",
 			     sha1_to_hex(item->object.sha1));
+	list_p = &item->entries;
 	while (size) {
 		struct object *obj;
+		struct tree_entry_list *entry;
 		int len = 1+strlen(bufptr);
 		unsigned char *file_sha1 = bufptr + len;
 		char *path = strchr(bufptr, ' ');
@@ -112,6 +115,12 @@ int parse_tree(struct tree *item)
 		if (size < len + 20 || !path || 
 		    sscanf(bufptr, "%o", &mode) != 1)
 			return -1;
+
+		entry = malloc(sizeof(struct tree_entry_list));
+		entry->name = strdup(path + 1);
+		entry->directory = S_ISDIR(mode);
+		entry->executable = mode & S_IXUSR;
+		entry->next = NULL;
 
 		/* Warn about trees that don't do the recursive thing.. */
 		if (strchr(path, '/')) {
@@ -121,12 +130,17 @@ int parse_tree(struct tree *item)
 		bufptr += len + 20;
 		size -= len + 20;
 
-		if (S_ISDIR(mode)) {
-			obj = &lookup_tree(file_sha1)->object;
+		if (entry->directory) {
+			entry->item.tree = lookup_tree(file_sha1);
+			obj = &entry->item.tree->object;
 		} else {
-			obj = &lookup_blob(file_sha1)->object;
+			entry->item.blob = lookup_blob(file_sha1);
+			obj = &entry->item.blob->object;
 		}
 		add_ref(&item->object, obj);
+
+		*list_p = entry;
+		list_p = &entry->next;
 	}
 	return 0;
 }
