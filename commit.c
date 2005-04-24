@@ -63,17 +63,22 @@ int parse_commit(struct commit *item)
 	bufptr += 46; /* "tree " + "hex sha1" + "\n" */
 	while (!memcmp(bufptr, "parent ", 7) &&
 	       !get_sha1_hex(bufptr + 7, parent)) {
-		struct commit_list *new_parent = 
-			malloc(sizeof(struct commit_list));
-		new_parent->next = item->parents;
-		new_parent->item = lookup_commit(parent);
-		add_ref(&item->object, &new_parent->item->object);
-		item->parents = new_parent;
+		struct commit *new_parent = lookup_commit(parent);
+		commit_list_insert(new_parent, &item->parents);
+		add_ref(&item->object, &new_parent->object);
 		bufptr += 48;
 	}
 	item->date = parse_commit_date(bufptr);
 	free(buffer);
 	return 0;
+}
+
+void commit_list_insert(struct commit *item, struct commit_list **list_p)
+{
+	struct commit_list *new_list = malloc(sizeof(struct commit_list));
+	new_list->item = item;
+	new_list->next = *list_p;
+	*list_p = new_list;
 }
 
 void free_commit_list(struct commit_list *list)
@@ -83,4 +88,45 @@ void free_commit_list(struct commit_list *list)
 		list = temp->next;
 		free(temp);
 	}
+}
+
+static void insert_by_date(struct commit_list **list, struct commit *item)
+{
+	struct commit_list **pp = list;
+	struct commit_list *p;
+	while ((p = *pp) != NULL) {
+		if (p->item->date < item->date) {
+			break;
+		}
+		pp = &p->next;
+	}
+	commit_list_insert(item, pp);
+}
+
+	
+void sort_by_date(struct commit_list **list)
+{
+	struct commit_list *ret = NULL;
+	while (*list) {
+		insert_by_date(&ret, (*list)->item);
+		*list = (*list)->next;
+	}
+	*list = ret;
+}
+
+struct commit *pop_most_recent_commit(struct commit_list **list)
+{
+	struct commit *ret = (*list)->item;
+	struct commit_list *parents = ret->parents;
+	struct commit_list *old = *list;
+
+	*list = (*list)->next;
+	free(old);
+
+	while (parents) {
+		parse_commit(parents->item);
+		insert_by_date(list, parents->item);
+		parents = parents->next;
+	}
+	return ret;
 }

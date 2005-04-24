@@ -22,6 +22,15 @@ struct commit *lookup_commit(unsigned char *sha1);
 
 int parse_commit(struct commit *item);
 
+void commit_list_insert(struct commit *item, struct commit_list **list_p);
+
 void free_commit_list(struct commit_list *list);
+
+void sort_by_date(struct commit_list **list);
+
+/** Removes the first commit from a list sorted by date, and adds all
+ * of its parents.
+ **/
+struct commit *pop_most_recent_commit(struct commit_list **list);
 
 #endif /* COMMIT_H */
