@@ -17,29 +17,17 @@ static int check_valid_sha1(unsigned char *sha1)
 	return ret;
 }
 
-static int prepend_integer(char *buffer, unsigned val, int i)
-{
-	buffer[--i] = '\0';
-	do {
-		buffer[--i] = '0' + (val % 10);
-		val /= 10;
-	} while (val);
-	return i;
-}
-
-#define ORIG_OFFSET (40)	/* Enough space to add the header of "tree <size>\0" */
-
 static int write_tree(struct cache_entry **cachep, int maxentries, const char *base, int baselen, unsigned char *returnsha1)
 {
 	unsigned char subdir_sha1[20];
 	unsigned long size, offset;
 	char *buffer;
-	int i, nr;
+	int nr;
 
 	/* Guess at some random initial size */
 	size = 8192;
 	buffer = malloc(size);
-	offset = ORIG_OFFSET;
+	offset = 0;
 
 	nr = 0;
 	do {
@@ -89,11 +77,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 		nr++;
 	} while (nr < maxentries);
 
-	i = prepend_integer(buffer, offset - ORIG_OFFSET, ORIG_OFFSET);
-	i -= 5;
-	memcpy(buffer+i, "tree ", 5);
-
-	write_sha1_file(buffer + i, offset - i, returnsha1);
+	write_sha1_file(buffer, offset, "tree", returnsha1);
 	free(buffer);
 	return nr;
 }

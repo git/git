@@ -66,25 +66,11 @@ static void convert_ascii_sha1(void *buffer)
 	memcpy(buffer, sha1_to_hex(entry->new_sha1), 40);
 }
 
-#define ORIG_OFFSET (40)
-
-static int prepend_integer(char *buffer, unsigned val, int i)
-{
-	buffer[--i] = '\0';
-	do {
-		buffer[--i] = '0' + (val % 10);
-		val /= 10;
-	} while (val);
-	return i;
-}
-
-
 static int write_subdirectory(void *buffer, unsigned long size, const char *base, int baselen, unsigned char *result_sha1)
 {
-	char *new = malloc(size + ORIG_OFFSET);
-	unsigned long newlen = ORIG_OFFSET;
+	char *new = malloc(size);
+	unsigned long newlen = 0;
 	unsigned long used;
-	int i;
 
 	used = 0;
 	while (size) {
@@ -126,11 +112,7 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 		buffer += len;
 	}
 
-	i = prepend_integer(new, newlen - ORIG_OFFSET, ORIG_OFFSET);
-	i -= 5;
-	memcpy(new + i, "tree ", 5);
-
-	write_sha1_file(new + i, newlen - i, result_sha1);
+	write_sha1_file(new, newlen, "tree", result_sha1);
 	free(new);
 	return used;
 }
@@ -244,9 +226,8 @@ static int convert_date_line(char *dst, void **buf, unsigned long *sp)
 
 static void convert_date(void *buffer, unsigned long size, unsigned char *result_sha1)
 {
-	char *new = malloc(size + ORIG_OFFSET + 100);
-	unsigned long newlen = ORIG_OFFSET;
-	int i;
+	char *new = malloc(size + 100);
+	unsigned long newlen = 0;
 
 	// "tree <sha1>\n"
 	memcpy(new + newlen, buffer, 46);
@@ -271,11 +252,7 @@ static void convert_date(void *buffer, unsigned long size, unsigned char *result
 	memcpy(new + newlen, buffer, size);
 	newlen += size;
 
-	i = prepend_integer(new, newlen - ORIG_OFFSET, ORIG_OFFSET);
-	i -= 7;
-	memcpy(new + i, "commit ", 7);
-
-	write_sha1_file(new + i, newlen - i, result_sha1);
+	write_sha1_file(new, newlen, "commit", result_sha1);
 	free(new);	
 }
 
@@ -298,7 +275,7 @@ static struct entry * convert_entry(unsigned char *sha1)
 	struct entry *entry = lookup_entry(sha1);
 	char type[20];
 	void *buffer, *data;
-	unsigned long size, offset;
+	unsigned long size;
 
 	if (entry->converted)
 		return entry;
@@ -306,16 +283,15 @@ static struct entry * convert_entry(unsigned char *sha1)
 	if (!data)
 		die("unable to read object %s", sha1_to_hex(sha1));
 
-	buffer = malloc(size + 100);
-	offset = sprintf(buffer, "%s %lu", type, size)+1;
-	memcpy(buffer + offset, data, size);
+	buffer = malloc(size);
+	memcpy(buffer, data, size);
 	
 	if (!strcmp(type, "blob")) {
-		write_sha1_file(buffer, size + offset, entry->new_sha1);
+		write_sha1_file(buffer, size, "blob", entry->new_sha1);
 	} else if (!strcmp(type, "tree"))
-		convert_tree(buffer + offset, size, entry->new_sha1);
+		convert_tree(buffer, size, entry->new_sha1);
 	else if (!strcmp(type, "commit"))
-		convert_commit(buffer + offset, size, entry->new_sha1);
+		convert_commit(buffer, size, entry->new_sha1);
 	else
 		die("unknown object type '%s' in %s", type, sha1_to_hex(sha1));
 	entry->converted = 1;

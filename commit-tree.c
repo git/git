@@ -12,19 +12,14 @@
 #include <time.h>
 
 #define BLOCKING (1ul << 14)
-#define ORIG_OFFSET (40)
 
 /*
- * Leave space at the beginning to insert the tag
- * once we know how big things are.
- *
  * FIXME! Share the code with "write-tree.c"
  */
 static void init_buffer(char **bufp, unsigned int *sizep)
 {
 	char *buf = malloc(BLOCKING);
-	memset(buf, 0, ORIG_OFFSET);
-	*sizep = ORIG_OFFSET;
+	*sizep = 0;
 	*bufp = buf;
 }
 
@@ -50,34 +45,6 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 	}
 	*sizep = newsize;
 	memcpy(buf + size, one_line, len);
-}
-
-static int prepend_integer(char *buffer, unsigned val, int i)
-{
-	buffer[--i] = '\0';
-	do {
-		buffer[--i] = '0' + (val % 10);
-		val /= 10;
-	} while (val);
-	return i;
-}
-
-static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
-{
-	int taglen;
-	int offset;
-	char *buf = *bufp;
-	unsigned int size = *sizep;
-
-	offset = prepend_integer(buf, size - ORIG_OFFSET, ORIG_OFFSET);
-	taglen = strlen(tag);
-	offset -= taglen;
-	buf += offset;
-	size -= offset;
-	memcpy(buf, tag, taglen);
-
-	*bufp = buf;
-	*sizep = size;
 }
 
 static void remove_special(char *p)
@@ -355,9 +322,7 @@ int main(int argc, char **argv)
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
 		add_buffer(&buffer, &size, "%s", comment);
 
-	finish_buffer("commit ", &buffer, &size);
-
-	write_sha1_file(buffer, size, commit_sha1);
+	write_sha1_file(buffer, size, "commit", commit_sha1);
 	printf("%s\n", sha1_to_hex(commit_sha1));
 	return 0;
 }

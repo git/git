@@ -155,8 +155,8 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 
 	inflateInit(&stream);
 	ret = inflate(&stream, 0);
-       if (ret < Z_OK)
-               return NULL;
+	if (ret < Z_OK)
+		return NULL;
 	if (sscanf(buffer, "%10s %lu", type, size) != 2)
 		return NULL;
 
@@ -231,7 +231,7 @@ void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
 	return buffer;
 }
 
-int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
+int write_sha1_file(char *buf, unsigned len, const char *type, unsigned char *returnsha1)
 {
 	int size;
 	char *compressed;
@@ -239,10 +239,15 @@ int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 	unsigned char sha1[20];
 	SHA_CTX c;
 	char *filename;
-	int fd;
+	char hdr[50];
+	int fd, hdrlen;
+
+	/* Generate the header */
+	hdrlen = sprintf(hdr, "%s %d", type, len)+1;
 
 	/* Sha1.. */
 	SHA1_Init(&c);
+	SHA1_Update(&c, hdr, hdrlen);
 	SHA1_Update(&c, buf, len);
 	SHA1_Final(sha1, &c);
 
@@ -265,14 +270,22 @@ int write_sha1_file(char *buf, unsigned len, unsigned char *returnsha1)
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, Z_BEST_COMPRESSION);
-	size = deflateBound(&stream, len);
+	size = deflateBound(&stream, len+hdrlen);
 	compressed = malloc(size);
 
 	/* Compress it */
-	stream.next_in = buf;
-	stream.avail_in = len;
 	stream.next_out = compressed;
 	stream.avail_out = size;
+
+	/* First header.. */
+	stream.next_in = hdr;
+	stream.avail_in = hdrlen;
+	while (deflate(&stream, 0) == Z_OK)
+		/* nothing */
+
+	/* Then the data itself.. */
+	stream.next_in = buf;
+	stream.avail_in = len;
 	while (deflate(&stream, Z_FINISH) == Z_OK)
 		/* nothing */;
 	deflateEnd(&stream);
