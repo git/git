@@ -73,6 +73,7 @@ static int fsck_tag(unsigned char *sha1, void *data, unsigned long size)
 {
 	int typelen, taglen;
 	unsigned char object[20];
+	char object_hex[60];
 	const char *type_line, *tag_line, *sig_line;
 
 	if (size < 64)
@@ -98,10 +99,12 @@ static int fsck_tag(unsigned char *sha1, void *data, unsigned long size)
 		return -1;
 	taglen = sig_line - tag_line - strlen("tag \n");
 
-	printf("tagged %.*s %s (%.*s)\n",
+	strcpy(object_hex, sha1_to_hex(object));
+	printf("tagged %.*s %s (%.*s) in %s\n",
 		typelen, type_line + 5,
-		sha1_to_hex(object),
-		taglen, tag_line + 4);
+		object_hex,
+		taglen, tag_line + 4,
+		sha1_to_hex(sha1));
 	return 0;
 }
 
