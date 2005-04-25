@@ -95,7 +95,7 @@ The object types in some more detail:
 	In particular, since the blob is entirely defined by its data,
 	if two files in a directory tree (or in multiple different
 	versions of the repository) have the same contents, they will
-	share the same blob object. The object is toally independent
+	share the same blob object. The object is totally independent
 	of it's location in the directory tree, and renaming a file does
 	not change the object that file is associated with in any way.
 
@@ -322,7 +322,7 @@ main combinations:
 	changes in your working directory (i.e. "update-cache").
 
 	However, if you decide to jump to a new version, or check out
-	somebody elses version, or just restore a previous tree, you'd
+	somebody else's version, or just restore a previous tree, you'd
 	populate your index file with read-tree, and then you need to
 	check out the result with
 
