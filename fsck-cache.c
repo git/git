@@ -9,6 +9,7 @@
 
 #define REACHABLE 0x0001
 
+static int show_root = 0;
 static int show_tags = 0;
 static int show_unreachable = 0;
 static unsigned char head_sha1[20];
@@ -56,7 +57,7 @@ static int fsck_commit(unsigned char *sha1, void *data, unsigned long size)
 		return -1;
 	if (!commit->tree)
 		return -1;
-	if (!commit->parents)
+	if (!commit->parents && show_root)
 		printf("root %s\n", sha1_to_hex(sha1));
 	if (!commit->date)
 		printf("bad commit date in %s\n", sha1_to_hex(sha1));
@@ -201,6 +202,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--tags")) {
 			show_tags = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--root")) {
+			show_root = 1;
 			continue;
 		}
 		if (*arg == '-')
