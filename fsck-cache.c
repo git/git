@@ -69,6 +69,42 @@ static int fsck_blob(unsigned char *sha1, void *data, unsigned long size)
 	return 0;
 }
 
+static int fsck_tag(unsigned char *sha1, void *data, unsigned long size)
+{
+	int typelen, taglen;
+	unsigned char object[20];
+	const char *type_line, *tag_line, *sig_line;
+
+	if (size < 64)
+		return -1;
+	if (memcmp("object ", data, 7) || get_sha1_hex(data + 7, object))
+		return -1;
+
+	type_line = data + 48;
+	if (memcmp("\ntype ", type_line-1, 6))
+		return -1;
+
+	tag_line = strchr(type_line, '\n');
+	if (!tag_line || memcmp("tag ", ++tag_line, 4))
+		return -1;
+
+	sig_line = strchr(tag_line, '\n');
+	if (!sig_line)
+		return -1;
+	sig_line++;
+
+	typelen = tag_line - type_line - strlen("type \n");
+	if (typelen >= 20)
+		return -1;
+	taglen = sig_line - tag_line - strlen("tag \n");
+
+	printf("tagged %.*s %s (%.*s)\n",
+		typelen, type_line + 5,
+		sha1_to_hex(object),
+		taglen, tag_line + 4);
+	return 0;
+}
+
 static int fsck_entry(unsigned char *sha1, char *tag, void *data, 
 		      unsigned long size)
 {
@@ -80,6 +116,9 @@ static int fsck_entry(unsigned char *sha1, char *tag, void *data,
 			return -1;
 	} else if (!strcmp(tag, "commit")) {
 		if (fsck_commit(sha1, data, size) < 0)
+			return -1;
+	} else if (!strcmp(tag, "tag")) {
+		if (fsck_tag(sha1, data, size) < 0)
 			return -1;
 	} else
 		return -1;
