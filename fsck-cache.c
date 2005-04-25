@@ -9,6 +9,7 @@
 
 #define REACHABLE 0x0001
 
+static int show_tags = 0;
 static int show_unreachable = 0;
 static unsigned char head_sha1[20];
 
@@ -99,6 +100,9 @@ static int fsck_tag(unsigned char *sha1, void *data, unsigned long size)
 		return -1;
 	taglen = sig_line - tag_line - strlen("tag \n");
 
+	if (!show_tags)
+		return 0;
+
 	strcpy(object_hex, sha1_to_hex(object));
 	printf("tagged %.*s %s (%.*s) in %s\n",
 		typelen, type_line + 5,
@@ -188,6 +192,21 @@ int main(int argc, char **argv)
 	int i, heads;
 	char *sha1_dir;
 
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (!strcmp(arg, "--unreachable")) {
+			show_unreachable = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--tags")) {
+			show_tags = 1;
+			continue;
+		}
+		if (*arg == '-')
+			usage("fsck-cache [--tags] [[--unreachable] <head-sha1>*]");
+	}
+
 	sha1_dir = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
@@ -197,18 +216,19 @@ int main(int argc, char **argv)
 
 	heads = 0;
 	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--unreachable")) {
-			show_unreachable = 1;
+		const char *arg = argv[i]; 
+
+		if (*arg == '-')
 			continue;
-		}
-		if (!get_sha1_hex(argv[i], head_sha1)) {
+
+		if (!get_sha1_hex(arg, head_sha1)) {
 			struct object *obj = &lookup_commit(head_sha1)->object;
 			obj->used = 1;
 			mark_reachable(obj, REACHABLE);
 			heads++;
 			continue;
 		}
-		error("fsck-cache [[--unreachable] <head-sha1>*]");
+		error("expected sha1, got %s", arg);
 	}
 
 	if (!heads) {
