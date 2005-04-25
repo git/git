@@ -121,7 +121,7 @@ extern int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int 
 extern void * map_sha1_file(const unsigned char *sha1, unsigned long *size);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
-extern int write_sha1_file(char *buf, unsigned len, const char *type, unsigned char *return_sha1);
+extern int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 
 extern int check_sha1_signature(unsigned char *sha1, void *buf, unsigned long size, const char *type);
 

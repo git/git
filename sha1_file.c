@@ -231,7 +231,7 @@ void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
 	return buffer;
 }
 
-int write_sha1_file(char *buf, unsigned len, const char *type, unsigned char *returnsha1)
+int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
 	char *compressed;
@@ -243,7 +243,7 @@ int write_sha1_file(char *buf, unsigned len, const char *type, unsigned char *re
 	int fd, hdrlen;
 
 	/* Generate the header */
-	hdrlen = sprintf(hdr, "%s %d", type, len)+1;
+	hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
 	SHA1_Init(&c);
