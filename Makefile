@@ -12,6 +12,7 @@ CFLAGS=-g -O2 -Wall
 CC=gcc
 AR=ar
 
+SCRIPTS=git-merge-one-file-script git-prune-script git-pull-script git-tag-script
 
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
@@ -20,8 +21,8 @@ PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 
 all: $(PROG)
 
-install: $(PROG)
-	install $(PROG) $(HOME)/bin/
+install: $(PROG) $(SCRIPTS)
+	install $(PROG) $(SCRIPTS) $(HOME)/bin/
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o
 LIB_FILE=libgit.a
