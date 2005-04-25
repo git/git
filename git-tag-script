@@ -1,0 +1,8 @@
+#!/bin/sh
+object=${2:-$(cat .git/HEAD)}
+type=$(cat-file -t $object) || exit 1
+( echo -e "object $object\ntype $type\ntag $1\n"; cat ) > .tmp-tag
+rm -f .tmp-tag.asc
+gpg -bsa .tmp-tag && cat .tmp-tag.asc >> .tmp-tag
+git-mktag < .tmp-tag
+#rm .tmp-tag .tmp-tag.sig
