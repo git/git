@@ -73,7 +73,7 @@ static int add_file_to_cache(char *path)
 			if (allow_remove)
 				return remove_file_from_cache(path);
 		}
-		return -1;
+		return error("open(\"%s\"): %s", path, strerror(errno));
 	}
 	namelen = strlen(path);
 	size = cache_entry_size(namelen);
