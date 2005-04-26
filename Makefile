@@ -17,7 +17,8 @@ SCRIPTS=git-merge-one-file-script git-prune-script git-pull-script git-tag-scrip
 PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache unpack-file git-export \
-	diff-cache convert-cache http-pull rpush rpull rev-list git-mktag
+	diff-cache convert-cache http-pull rpush rpull rev-list git-mktag \
+	diff-tree-helper
 
 all: $(PROG)
 
@@ -27,6 +28,9 @@ install: $(PROG) $(SCRIPTS)
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h
+
+LIB_H += strbuf.h
+LIB_OBJS += strbuf.o
 
 LIB_H += diff.h
 LIB_OBJS += diff.o
