@@ -5,7 +5,8 @@
 #
 merge_repo=$1
 
-rm -f .git/MERGE_HEAD
+rm -f .git/MERGE_HEAD .git/ORIG_HEAD
+cp .git/HEAD .git/ORIG_HEAD
 
 echo "Getting object database"
 rsync -avz --ignore-existing $merge_repo/objects/. .git/objects/.
@@ -41,8 +42,15 @@ if [ "$common" == "$head" ]; then
 fi
 echo "Trying to merge $merge_head into $head"
 read-tree -m $common_tree $head_tree $merge_tree
-result_tree=$(write-tree) || exit 1
-result_commit=$(echo "Merge $merge_repo" | commit-tree $result_tree -p $head -p $merge_head)
+merge_msg="Merge of $merge_repo"
+result_tree=$(write-tree  2> /dev/null)
+if [ $? -ne 0 ]; then
+	echo "Simple merge failed, trying Automatic merge"
+	merge-cache git-merge-one-file-script -a
+	merge_msg="Automatic merge of $merge_repo"
+	result_tree=$(write-tree) || exit 1
+fi
+result_commit=$(echo "$merge_msg" | commit-tree $result_tree -p $head -p $merge_head)
 echo "Committed merge $result_commit"
 echo $result_commit > .git/HEAD
 checkout-cache -f -a && update-cache --refresh
