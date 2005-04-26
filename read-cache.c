@@ -143,7 +143,7 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 	/* Make sure the array is big enough .. */
 	if (active_nr == active_alloc) {
 		active_alloc = alloc_nr(active_alloc);
-		active_cache = realloc(active_cache, active_alloc * sizeof(struct cache_entry *));
+		active_cache = xrealloc(active_cache, active_alloc * sizeof(struct cache_entry *));
 	}
 
 	/* Add it in.. */

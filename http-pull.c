@@ -73,7 +73,7 @@ static int fetch(unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_FILE, NULL);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 
-	url = malloc(strlen(base) + 50);
+	url = xmalloc(strlen(base) + 50);
 	strcpy(url, base);
 	posn = url + strlen(base);
 	strcpy(posn, "objects/");

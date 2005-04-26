@@ -9,7 +9,7 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 {
 	int len = strlen(pathname);
 	unsigned int size = cache_entry_size(baselen + len);
-	struct cache_entry *ce = malloc(size);
+	struct cache_entry *ce = xmalloc(size);
 
 	memset(ce, 0, size);
 
@@ -39,7 +39,7 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 		if (S_ISDIR(mode)) {
 			int retval;
 			int pathlen = strlen(path);
-			char *newbase = malloc(baselen + 1 + pathlen);
+			char *newbase = xmalloc(baselen + 1 + pathlen);
 			void *eltbuf;
 			char elttype[20];
 			unsigned long eltsize;
@@ -74,7 +74,7 @@ struct tree *lookup_tree(unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		struct tree *ret = malloc(sizeof(struct tree));
+		struct tree *ret = xmalloc(sizeof(struct tree));
 		memset(ret, 0, sizeof(struct tree));
 		created_object(sha1, &ret->object);
 		ret->object.type = tree_type;
@@ -116,7 +116,7 @@ int parse_tree(struct tree *item)
 		    sscanf(bufptr, "%o", &mode) != 1)
 			return -1;
 
-		entry = malloc(sizeof(struct tree_entry_list));
+		entry = xmalloc(sizeof(struct tree_entry_list));
 		entry->name = strdup(path + 1);
 		entry->directory = S_ISDIR(mode);
 		entry->executable = mode & S_IXUSR;

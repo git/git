@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "defaulting to local storage area\n");
 	}
 	len = strlen(sha1_dir);
-	path = malloc(len + 40);
+	path = xmalloc(len + 40);
 	memcpy(path, sha1_dir, len);
 
 	safe_create_dir(sha1_dir);

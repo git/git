@@ -59,8 +59,7 @@ static char *sq_expand(const char *src)
 		if (*cp == '\'')
 			cnt += 3;
 
-	if (! (buf = malloc(cnt)))
-	    return buf;
+	buf = xmalloc(cnt);
 	bp = buf;
 	while ((c = *src++)) {
 		if (c != '\'')
@@ -100,7 +99,7 @@ static void builtin_diff(const char *name,
 			strlen(diff_arg) +
 			strlen(name_1_sq) + strlen(name_2_sq)
 			- 5);
-	char *cmd = malloc(cmd_size);
+	char *cmd = xmalloc(cmd_size);
 	int next_at = 0;
 
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,

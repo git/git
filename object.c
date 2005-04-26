@@ -52,7 +52,7 @@ void created_object(unsigned char *sha1, struct object *obj)
 
 	if (obj_allocs == nr_objs) {
 		obj_allocs = alloc_nr(obj_allocs);
-		objs = realloc(objs, obj_allocs * sizeof(struct object *));
+		objs = xrealloc(objs, obj_allocs * sizeof(struct object *));
 	}
 
 	/* Insert it into the right place */
@@ -75,7 +75,7 @@ void add_ref(struct object *refer, struct object *target)
 	}
 
 	target->used = 1;
-	p = malloc(sizeof(*p));
+	p = xmalloc(sizeof(*p));
 	p->item = target;
 	p->next = NULL;
 	*pp = p;

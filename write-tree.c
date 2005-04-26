@@ -26,7 +26,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 
 	/* Guess at some random initial size */
 	size = 8192;
-	buffer = malloc(size);
+	buffer = xmalloc(size);
 	offset = 0;
 
 	nr = 0;
@@ -68,7 +68,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 		entrylen = pathlen - baselen;
 		if (offset + entrylen + 100 > size) {
 			size = alloc_nr(offset + entrylen + 100);
-			buffer = realloc(buffer, size);
+			buffer = xrealloc(buffer, size);
 		}
 		offset += sprintf(buffer + offset, "%o %.*s", mode, entrylen, filename);
 		buffer[offset++] = 0;

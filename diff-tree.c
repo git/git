@@ -37,7 +37,7 @@ static const unsigned char *extract(void *tree, unsigned long size, const char *
 static char *malloc_base(const char *base, const char *path, int pathlen)
 {
 	int baselen = strlen(base);
-	char *newbase = malloc(baselen + pathlen + 2);
+	char *newbase = xmalloc(baselen + pathlen + 2);
 	memcpy(newbase, base, baselen);
 	memcpy(newbase + baselen, path, pathlen);
 	memcpy(newbase + baselen + pathlen, "/", 2);
@@ -270,7 +270,7 @@ int main(int argc, char **argv)
 
 		paths = &argv[3];
 		nr_paths = argc - 3;
-		pathlens = malloc(nr_paths * sizeof(int));
+		pathlens = xmalloc(nr_paths * sizeof(int));
 		for (i=0; i<nr_paths; i++)
 			pathlens[i] = strlen(paths[i]);
 	}

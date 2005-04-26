@@ -9,7 +9,7 @@ struct commit *lookup_commit(unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		struct commit *ret = malloc(sizeof(struct commit));
+		struct commit *ret = xmalloc(sizeof(struct commit));
 		memset(ret, 0, sizeof(struct commit));
 		created_object(sha1, &ret->object);
 		ret->object.type = commit_type;
@@ -78,7 +78,7 @@ int parse_commit(struct commit *item)
 
 void commit_list_insert(struct commit *item, struct commit_list **list_p)
 {
-	struct commit_list *new_list = malloc(sizeof(struct commit_list));
+	struct commit_list *new_list = xmalloc(sizeof(struct commit_list));
 	new_list->item = item;
 	new_list->next = *list_p;
 	*list_p = new_list;

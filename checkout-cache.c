@@ -39,7 +39,7 @@ static int force = 0, quiet = 0, not_new = 0;
 static void create_directories(const char *path)
 {
 	int len = strlen(path);
-	char *buf = malloc(len + 1);
+	char *buf = xmalloc(len + 1);
 	const char *slash = path;
 
 	while ((slash = strchr(slash+1, '/')) != NULL) {

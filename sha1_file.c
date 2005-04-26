@@ -73,7 +73,7 @@ char *sha1_file_name(const unsigned char *sha1)
 	if (!base) {
 		char *sha1_file_directory = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
 		int len = strlen(sha1_file_directory);
-		base = malloc(len + 60);
+		base = xmalloc(len + 60);
 		memcpy(base, sha1_file_directory, len);
 		memset(base+len, 0, 60);
 		base[len] = '/';
@@ -161,9 +161,7 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 		return NULL;
 
 	bytes = strlen(buffer) + 1;
-	buf = malloc(*size);
-	if (!buf)
-		return NULL;
+	buf = xmalloc(*size);
 
 	memcpy(buf, buffer + bytes, stream.total_out - bytes);
 	bytes = stream.total_out - bytes;
@@ -271,7 +269,7 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, Z_BEST_COMPRESSION);
 	size = deflateBound(&stream, len+hdrlen);
-	compressed = malloc(size);
+	compressed = xmalloc(size);
 
 	/* Compress it */
 	stream.next_out = compressed;

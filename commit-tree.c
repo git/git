@@ -18,7 +18,7 @@
  */
 static void init_buffer(char **bufp, unsigned int *sizep)
 {
-	char *buf = malloc(BLOCKING);
+	char *buf = xmalloc(BLOCKING);
 	*sizep = 0;
 	*bufp = buf;
 }
@@ -40,7 +40,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 	buf = *bufp;
 	if (newsize > alloc) {
 		alloc = (newsize + 32767) & ~32767;
-		buf = realloc(buf, alloc);
+		buf = xrealloc(buf, alloc);
 		*bufp = buf;
 	}
 	*sizep = newsize;

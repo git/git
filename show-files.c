@@ -30,9 +30,9 @@ static void add_name(const char *pathname, int len)
 
 	if (nr_dir == dir_alloc) {
 		dir_alloc = alloc_nr(dir_alloc);
-		dir = realloc(dir, dir_alloc*sizeof(char *));
+		dir = xrealloc(dir, dir_alloc*sizeof(char *));
 	}
-	name = malloc(len + 1);
+	name = xmalloc(len + 1);
 	memcpy(name, pathname, len + 1);
 	dir[nr_dir++] = name;
 }

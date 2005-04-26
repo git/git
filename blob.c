@@ -8,7 +8,7 @@ struct blob *lookup_blob(unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		struct blob *ret = malloc(sizeof(struct blob));
+		struct blob *ret = xmalloc(sizeof(struct blob));
 		memset(ret, 0, sizeof(struct blob));
 		created_object(sha1, &ret->object);
 		ret->object.type = blob_type;

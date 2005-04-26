@@ -147,4 +147,20 @@ extern void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
 						unsigned long *size,
 						unsigned char *tree_sha1_ret);
 
+static inline void *xmalloc(int size)
+{
+	void *ret = malloc(size);
+	if (!ret)
+		die("Out of memory, malloc failed");
+	return ret;
+}
+
+static inline void *xrealloc(void *ptr, int size)
+{
+	void *ret = realloc(ptr, size);
+	if (!ret)
+		die("Out of memory, realloc failed");
+	return ret;
+}
+
 #endif /* CACHE_H */

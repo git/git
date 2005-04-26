@@ -18,8 +18,7 @@ static struct entry * convert_entry(unsigned char *sha1);
 
 static struct entry *insert_new(unsigned char *sha1, int pos)
 {
-	struct entry *new = malloc(sizeof(struct entry));
-
+	struct entry *new = xmalloc(sizeof(struct entry));
 	memset(new, 0, sizeof(*new));
 	memcpy(new->old_sha1, sha1, 20);
 	memmove(convert + pos + 1, convert + pos, (nr_convert - pos) * sizeof(struct entry *));
@@ -68,7 +67,7 @@ static void convert_ascii_sha1(void *buffer)
 
 static int write_subdirectory(void *buffer, unsigned long size, const char *base, int baselen, unsigned char *result_sha1)
 {
-	char *new = malloc(size);
+	char *new = xmalloc(size);
 	unsigned long newlen = 0;
 	unsigned long used;
 
@@ -226,9 +225,9 @@ static int convert_date_line(char *dst, void **buf, unsigned long *sp)
 
 static void convert_date(void *buffer, unsigned long size, unsigned char *result_sha1)
 {
-	char *new = malloc(size + 100);
+	char *new = xmalloc(size + 100);
 	unsigned long newlen = 0;
-
+	
 	// "tree <sha1>\n"
 	memcpy(new + newlen, buffer, 46);
 	newlen += 46;
@@ -283,7 +282,7 @@ static struct entry * convert_entry(unsigned char *sha1)
 	if (!data)
 		die("unable to read object %s", sha1_to_hex(sha1));
 
-	buffer = malloc(size);
+	buffer = xmalloc(size);
 	memcpy(buffer, data, size);
 	
 	if (!strcmp(type, "blob")) {

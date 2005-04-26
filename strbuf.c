@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "strbuf.h"
+#include "cache.h"
 
 void strbuf_init(struct strbuf *sb) {
 	sb->buf = 0;
@@ -15,7 +16,7 @@ static void strbuf_begin(struct strbuf *sb) {
 static void inline strbuf_add(struct strbuf *sb, int ch) {
 	if (sb->alloc <= sb->len) {
 		sb->alloc = sb->alloc * 3 / 2 + 16;
-		sb->buf = realloc(sb->buf, sb->alloc);
+		sb->buf = xrealloc(sb->buf, sb->alloc);
 	}
 	sb->buf[sb->len++] = ch;
 }
