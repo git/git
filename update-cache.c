@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#include <signal.h>
 #include "cache.h"
 
 /*
@@ -299,6 +300,11 @@ static void remove_lock_file(void)
 		unlink(lockfile_name);
 }
 
+static void remove_lock_file_on_signal(int signo)
+{
+	remove_lock_file();
+}
+
 int main(int argc, char **argv)
 {
 	int i, newfd, entries;
@@ -312,6 +318,7 @@ int main(int argc, char **argv)
 	if (newfd < 0)
 		die("unable to create new cachefile");
 
+	signal(SIGINT, remove_lock_file_on_signal);
 	atexit(remove_lock_file);
 	lockfile_name = lockfile;
 
