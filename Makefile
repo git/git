@@ -28,6 +28,9 @@ LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h
 
+LIB_H += diff.h
+LIB_OBJS += diff.o
+
 LIBS = $(LIB_FILE)
 LIBS += -lz
 
@@ -67,6 +70,7 @@ checkout-cache.o: $(LIB_H)
 commit.o: $(LIB_H)
 commit-tree.o: $(LIB_H)
 convert-cache.o: $(LIB_H)
+diff.o: $(LIB_H)
 diff-cache.o: $(LIB_H)
 diff-tree.o: $(LIB_H)
 fsck-cache.o: $(LIB_H)
