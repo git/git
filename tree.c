@@ -39,14 +39,17 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 		if (S_ISDIR(mode)) {
 			int retval;
 			int pathlen = strlen(path);
-			char *newbase = xmalloc(baselen + 1 + pathlen);
+			char *newbase;
 			void *eltbuf;
 			char elttype[20];
 			unsigned long eltsize;
 
 			eltbuf = read_sha1_file(sha1, elttype, &eltsize);
-			if (!eltbuf || strcmp(elttype, "tree"))
+			if (!eltbuf || strcmp(elttype, "tree")) {
+				if (eltbuf) free(eltbuf);
 				return -1;
+			}
+			newbase = xmalloc(baselen + 1 + pathlen);
 			memcpy(newbase, base, baselen);
 			memcpy(newbase + baselen, path, pathlen);
 			newbase[baselen + pathlen] = '/';
