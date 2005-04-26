@@ -1,17 +1,31 @@
+/*
+ * Copyright (C) 2005 Junio C Hamano
+ */
 #ifndef DIFF_H
 #define DIFF_H
 
-extern void prepare_diff_cmd(void);
+/* These two are for backward compatibility with show-diff;
+ * new users should not use them.
+ */
+extern void show_differences(const struct cache_entry *ce, int reverse);
+extern void show_diff_empty(const struct cache_entry *ce, int reverse);
 
-extern void show_differences(const char *name, /* filename on the filesystem */
-			     const char *label, /* diff label to use */
-			     void *old_contents, /* contents in core */
-			     unsigned long long old_size, /* size in core */
-			     int reverse /* 0: diff core file
-					    1: diff file core */);
+struct diff_spec {
+	union {
+		const char *name;       /* path on the filesystem */
+		unsigned char sha1[20]; /* blob object ID */
+	} u;
+	unsigned short mode;	 /* file mode */
+	unsigned sha1_valid : 1; /* if true, use u.sha1 and trust mode.
+				  * (however with a NULL SHA1, read them
+				  * from the file!).
+				  * if false, use u.name and read mode from
+				  * the filesystem.
+				  */
+	unsigned file_valid : 1; /* if false the file does not even exist */
+};
 
-extern void show_diff_empty(const unsigned char *sha1,
-			    const char *name,
-			    int reverse);
+extern void run_external_diff(const char *name,
+			      struct diff_spec *, struct diff_spec *);
 
 #endif /* DIFF_H */

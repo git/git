@@ -53,14 +53,11 @@ int main(int argc, char **argv)
 		perror("read_cache");
 		exit(1);
 	}
-	prepare_diff_cmd();
+
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
-		unsigned long size;
-		char type[20];
-		void *old;
 
 		if (1 < argc &&
 		    ! matches_pathspec(ce, argv+1, argc-1))
@@ -87,8 +84,7 @@ int main(int argc, char **argv)
 			else {
 				printf("%s: %s\n", ce->name, strerror(errno));
 				if (errno == ENOENT)
-					show_diff_empty(ce->sha1, ce->name,
-							reverse);
+					show_diff_empty(ce, reverse);
 			}
 			continue;
 		}
@@ -104,14 +100,7 @@ int main(int argc, char **argv)
 		if (silent)
 			continue;
 
-		old = read_sha1_file(ce->sha1, type, &size);
-		if (! old)
-			error("unable to read blob object for %s (%s)",
-			      ce->name, sha1_to_hex(ce->sha1));
-		else
-			show_differences(ce->name, ce->name, old, size,
-					 reverse);
-		free(old);
+		show_differences(ce, reverse);
 	}
 	return 0;
 }
