@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 			continue;
 
 		if (ce_stage(ce)) {
-			show_file("U", ce);
+			printf("U %s%c", ce->name, line_termination);
 
 			while (i < entries &&
 			       !strcmp(ce->name, active_cache[i]->name))
