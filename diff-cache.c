@@ -77,7 +77,7 @@ static void remove_merge_entries(void)
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
-		printf("%s: unmerged\n", ce->name);
+		printf("U %s%c", ce->name, line_termination);
 		while (remove_entry_at(i)) {
 			if (!ce_stage(active_cache[i]))
 				break;
