@@ -4,9 +4,13 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
-#include "diff.h"
 
 static const char *show_diff_usage = "show-diff [-q] [-s] [-z] [paths...]";
+
+static int recursive = 0;
+static int line_termination = '\n';
+static int silent = 0;
+static int silent_on_nonexisting_files = 0;
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
 {
@@ -23,24 +27,27 @@ static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
 	return 0;
 }
 
+static void show_file(const char *prefix, struct cache_entry *ce)
+{
+	printf("%s%o\t%s\t%s\t%s%c", prefix, ntohl(ce->ce_mode), "blob",
+		sha1_to_hex(ce->sha1), ce->name, line_termination);
+}
+
 int main(int argc, char **argv)
 {
-	int silent = 0;
-	int silent_on_nonexisting_files = 0;
-	int machine_readable = 0;
-	int reverse = 0;
+	static const char null_sha1_hex[] = "0000000000000000000000000000000000000000";
 	int entries = read_cache();
 	int i;
 
 	while (1 < argc && argv[1][0] == '-') {
-		if  (!strcmp(argv[1], "-R"))
-			reverse = 1;
-		else if (!strcmp(argv[1], "-s"))
+		if (!strcmp(argv[1], "-s"))
 			silent_on_nonexisting_files = silent = 1;
 		else if (!strcmp(argv[1], "-q"))
 			silent_on_nonexisting_files = 1;
 		else if (!strcmp(argv[1], "-z"))
-			machine_readable = 1;
+			line_termination = 0;
+		else if (!strcmp(argv[1], "-r"))
+			recursive = 1;		/* No-op */
 		else
 			usage(show_diff_usage);
 		argv++; argc--;
@@ -56,6 +63,7 @@ int main(int argc, char **argv)
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
+		unsigned int oldmode, mode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 
@@ -64,11 +72,8 @@ int main(int argc, char **argv)
 			continue;
 
 		if (ce_stage(ce)) {
-			if (machine_readable)
-				printf("U %s%c", ce->name, 0);
-			else
-				printf("%s: Unmerged\n",
-				       ce->name);
+			show_file("U", ce);
+
 			while (i < entries &&
 			       !strcmp(ce->name, active_cache[i]->name))
 				i++;
@@ -77,30 +82,26 @@ int main(int argc, char **argv)
 		}
  
 		if (stat(ce->name, &st) < 0) {
-			if (errno == ENOENT && silent_on_nonexisting_files)
+			if (errno != ENOENT) {
+				perror(ce->name);
 				continue;
-			if (machine_readable)
-				printf("X %s%c", ce->name, 0);
-			else {
-				printf("%s: %s\n", ce->name, strerror(errno));
-				if (errno == ENOENT)
-					show_diff_empty(ce, reverse);
-			}
+			}	
+			if (silent_on_nonexisting_files)
+				continue;
+			show_file("-", ce);
 			continue;
 		}
 		changed = cache_match_stat(ce, &st);
 		if (!changed)
 			continue;
-		if (!machine_readable)
-			printf("%s: %s\n", ce->name, sha1_to_hex(ce->sha1));
-		else {
-			printf("%s %s%c", sha1_to_hex(ce->sha1), ce->name, 0);
-			continue;
-		}
-		if (silent)
-			continue;
 
-		show_differences(ce, reverse);
+		oldmode = ntohl(ce->ce_mode);
+		mode = S_IFREG | ce_permissions(st.st_mode);
+
+		printf("*%o->%o\t%s\t%s->%s\t%s%c",
+			oldmode, mode, "blob",
+			sha1_to_hex(ce->sha1), null_sha1_hex,
+			ce->name, line_termination);
 	}
 	return 0;
 }
