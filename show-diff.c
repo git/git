@@ -6,12 +6,12 @@
 #include "cache.h"
 #include "diff.h"
 
-static const char *show_diff_usage = "show-diff [-q] [-s] [-z] [-p] [paths...]";
+static const char *show_diff_usage =
+"show-diff [-p] [-q] [-r] [-z] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';
 static int silent = 0;
-static int silent_on_nonexisting_files = 0;
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
 {
@@ -69,16 +69,16 @@ int main(int argc, char **argv)
 	int i;
 
 	while (1 < argc && argv[1][0] == '-') {
-		if (!strcmp(argv[1], "-s"))
-			silent_on_nonexisting_files = silent = 1;
-		else if (!strcmp(argv[1], "-p"))
+		if (!strcmp(argv[1], "-p"))
 			generate_patch = 1;
 		else if (!strcmp(argv[1], "-q"))
-			silent_on_nonexisting_files = 1;
-		else if (!strcmp(argv[1], "-z"))
-			line_termination = 0;
+			silent = 1;
 		else if (!strcmp(argv[1], "-r"))
 			; /* no-op */
+		else if (!strcmp(argv[1], "-s"))
+			; /* no-op */
+		else if (!strcmp(argv[1], "-z"))
+			line_termination = 0;
 		else
 			usage(show_diff_usage);
 		argv++; argc--;
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 				perror(ce->name);
 				continue;
 			}	
-			if (silent_on_nonexisting_files)
+			if (silent)
 				continue;
 			show_file('-', ce);
 			continue;
