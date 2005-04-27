@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-p")) {
-			generate_patch = 1;
+			recursive = generate_patch = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
