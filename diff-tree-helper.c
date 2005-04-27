@@ -56,7 +56,7 @@ static int parse_diff_tree_output(const char *buf,
 
 	switch (*cp++) {
 	case 'U':
-		fprintf(stderr, "warning: unmerged path %s\n", cp+1);
+		diff_unmerge(cp + 1);
 		return WARNED_OURSELVES;
 	case '+':
 		old->file_valid = 0;
