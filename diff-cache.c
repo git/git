@@ -47,41 +47,58 @@ static int diff_cache(struct cache_entry **ac, int entries)
 {
 	while (entries) {
 		struct cache_entry *ce = *ac;
+		int same = (entries > 1) && same_name(ce, ac[1]);
 
-		/* No matching 0-stage (current) entry? Show it as deleted */
-		if (ce_stage(ce)) {
-			show_file("-", ce);
+		switch (ce_stage(ce)) {
+		case 0:
+			/* No stage 1 entry? That means it's a new file */
+			if (!same) {
+				show_file("+", ce);
+				break;
+			}
+			/* Show difference between old and new */
+			show_modified(ac[1], ce);
+			break;
+		case 1:
+			/* No stage 3 (merge) entry? That means it's been deleted */
+			if (!same) {
+				show_file("-", ce);
+				break;
+			}
+			/* Otherwise we fall through to the "unmerged" case */
+		case 3:
+			printf("U %s%c", ce->name, line_termination);
+			break;
+
+		default:
+			die("impossible cache entry stage");
+		}
+
+		/*
+		 * Ignore all the different stages for this file,
+		 * we've handled the relevant cases now.
+		 */
+		do {
 			ac++;
 			entries--;
-			continue;
-		}
-		/* No matching 1-stage (tree) entry? Show the current one as added */
-		if (entries == 1 || !same_name(ce, ac[1])) {
-			show_file("+", ce);
-			ac++;
-			entries--;
-			continue;
-		}
-		show_modified(ac[1], ce);
-		ac += 2;
-		entries -= 2;
-		continue;
+		} while (entries && same_name(ce, ac[0]));
 	}
 	return 0;
 }
 
-static void remove_merge_entries(void)
+/*
+ * This turns all merge entries into "stage 3". That guarantees that
+ * when we read in the new tree (into "stage 1"), we won't lose sight
+ * of the fact that we had unmerged entries.
+ */
+static void mark_merge_entries(void)
 {
 	int i;
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
-		printf("U %s%c", ce->name, line_termination);
-		while (remove_entry_at(i)) {
-			if (!ce_stage(active_cache[i]))
-				break;
-		}
+		ce->ce_flags |= htons(CE_STAGEMASK);
 	}
 }
 
@@ -116,7 +133,7 @@ int main(int argc, char **argv)
 	if (argc != 2 || get_sha1_hex(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
-	remove_merge_entries();
+	mark_merge_entries();
 
 	tree = read_tree_with_tree_or_commit_sha1(tree_sha1, &size, 0);
 	if (!tree)
