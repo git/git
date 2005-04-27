@@ -6,41 +6,67 @@ static int generate_patch = 0;
 static int line_termination = '\n';
 
 /* A file entry went away or appeared */
-static void show_file(const char *prefix, struct cache_entry *ce)
+static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
 {
 	if (generate_patch)
-		diff_addremove(prefix[0], ntohl(ce->ce_mode),
-			       ce->sha1, ce->name, NULL);
+		diff_addremove(prefix[0], ntohl(mode), sha1, ce->name, NULL);
 	else
-		printf("%s%06o\tblob\t%s\t%s%c", prefix, ntohl(ce->ce_mode),
-		       sha1_to_hex(ce->sha1), ce->name,
-		       line_termination);
+		printf("%s%06o\tblob\t%s\t%s%c", prefix, ntohl(mode),
+		       sha1_to_hex(sha1), ce->name, line_termination);
 }
 
-static int show_modified(struct cache_entry *old, struct cache_entry *new)
+static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned int *modep)
 {
-	unsigned int mode = ntohl(new->ce_mode), oldmode;
-	unsigned char *sha1 = new->sha1;
-	unsigned char old_sha1_hex[60];
+	unsigned char *sha1 = ce->sha1;
+	unsigned int mode = ce->ce_mode;
 
 	if (!cached_only) {
 		static unsigned char no_sha1[20];
 		int changed;
 		struct stat st;
-		if (stat(new->name, &st) < 0) {
-			show_file("-", old);
+		if (stat(ce->name, &st) < 0)
 			return -1;
-		}
-		changed = cache_match_stat(new, &st);
+		changed = cache_match_stat(ce, &st);
 		if (changed) {
-			mode = st.st_mode;
+			mode = create_ce_mode(st.st_mode);
 			sha1 = no_sha1;
 		}
 	}
 
-	oldmode = ntohl(old->ce_mode);
+	*sha1p = sha1;
+	*modep = mode;
+	return 0;
+}
+
+static int show_new_file(struct cache_entry *new)
+{
+	unsigned char *sha1;
+	unsigned int mode;
+
+	/* New file in the index: it might actually be different in the working copy */
+	if (get_stat_data(new, &sha1, &mode) < 0)
+		return -1;
+
+	show_file("+", new, sha1, mode);
+}
+
+static int show_modified(struct cache_entry *old, struct cache_entry *new)
+{
+	unsigned int mode, oldmode;
+	unsigned char *sha1;
+	unsigned char old_sha1_hex[60];
+
+	if (get_stat_data(new, &sha1, &mode) < 0) {
+		show_file("-", old, old->sha1, old->ce_mode);
+		return -1;
+	}
+
+	oldmode = old->ce_mode;
 	if (mode == oldmode && !memcmp(sha1, old->sha1, 20))
 		return 0;
+
+	mode = ntohl(mode);
+	oldmode = ntohl(oldmode);
 
 	if (generate_patch)
 		diff_change(oldmode, mode,
@@ -64,7 +90,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 		case 0:
 			/* No stage 1 entry? That means it's a new file */
 			if (!same) {
-				show_file("+", ce);
+				show_new_file(ce);
 				break;
 			}
 			/* Show difference between old and new */
@@ -73,7 +99,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 		case 1:
 			/* No stage 3 (merge) entry? That means it's been deleted */
 			if (!same) {
-				show_file("-", ce);
+				show_file("-", ce, ce->sha1, ce->ce_mode);
 				break;
 			}
 			/* Otherwise we fall through to the "unmerged" case */
