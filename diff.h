@@ -4,11 +4,20 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-/* These two are for backward compatibility with show-diff;
- * new users should not use them.
- */
-extern void show_differences(const struct cache_entry *ce, int reverse);
-extern void show_diff_empty(const struct cache_entry *ce, int reverse);
+extern void diff_addremove(int addremove,
+			   unsigned mode,
+			   const unsigned char *sha1,
+			   const char *base,
+			   const char *path);
+
+extern void diff_change(unsigned mode1, unsigned mode2,
+			     const unsigned char *sha1,
+			     const unsigned char *sha2,
+			     const char *base, const char *path);
+
+extern void diff_unmerge(const char *path);
+
+/* These are for diff-tree-helper */
 
 struct diff_spec {
 	union {
