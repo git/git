@@ -198,7 +198,7 @@ int read_cache(void)
 		size = st.st_size;
 		errno = EINVAL;
 		if (size >= sizeof(struct cache_header) + 20)
-			map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+			map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	}
 	close(fd);
 	if (-1 == (int)(long)map)
