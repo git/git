@@ -1,7 +1,9 @@
 #include "cache.h"
+#include "diff.h"
 
 static int recursive = 0;
 static int line_termination = '\n';
+static int generate_patch = 0;
 
 // What paths are we interested in?
 static int nr_paths = 0;
@@ -79,10 +81,15 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 		return;
 	}
 
-	printf("%s%o\t%s\t%s\t%s%s%c", prefix, mode,
-	       S_ISDIR(mode) ? "tree" : "blob",
-	       sha1_to_hex(sha1), base, path,
-	       line_termination);
+	if (generate_patch) {
+		if (!S_ISDIR(mode))
+			diff_addremove(prefix[0], mode, sha1, base, path);
+	}
+	else
+		printf("%s%06o\t%s\t%s\t%s%s%c", prefix, mode,
+		       S_ISDIR(mode) ? "tree" : "blob",
+		       sha1_to_hex(sha1), base, path,
+		       line_termination);
 }
 
 static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
@@ -128,11 +135,17 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		return retval;
 	}
 
-	strcpy(old_sha1_hex, sha1_to_hex(sha1));
-	printf("*%o->%o\t%s\t%s->%s\t%s%s%c", mode1, mode2,
-	       S_ISDIR(mode1) ? "tree" : "blob",
-	       old_sha1_hex, sha1_to_hex(sha2), base, path1,
-	       line_termination);
+	if (generate_patch) {
+		if (!S_ISDIR(mode1))
+			diff_change(mode1, mode2, sha1, sha2, base, path1);
+	}
+	else {
+		strcpy(old_sha1_hex, sha1_to_hex(sha1));
+		printf("*%06o->%06o\t%s\t%s->%s\t%s%s%c", mode1, mode2,
+		       S_ISDIR(mode1) ? "tree" : "blob",
+		       old_sha1_hex, sha1_to_hex(sha2), base, path1,
+		       line_termination);
+	}
 	return 0;
 }
 
@@ -253,6 +266,10 @@ int main(int argc, char **argv)
 		argc--;
 		if (!strcmp(arg, "-r")) {
 			recursive = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-p")) {
+			generate_patch = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
