@@ -256,7 +256,6 @@ void diff_addremove(int addremove, unsigned mode,
 	
 	if (path) {
 		strcpy(concatpath, base);
-		strcat(concatpath, "/");
 		strcat(concatpath, path);
 	}
 	run_external_diff(path ? concatpath : base, one, two);
@@ -278,7 +277,6 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 
 	if (path) {
 		strcpy(concatpath, base);
-		strcat(concatpath, "/");
 		strcat(concatpath, path);
 	}
 	run_external_diff(path ? concatpath : base, &spec[0], &spec[1]);
