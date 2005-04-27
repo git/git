@@ -1,13 +1,20 @@
 #include "cache.h"
+#include "diff.h"
 
 static int cached_only = 0;
+static int generate_patch = 0;
 static int line_termination = '\n';
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce)
 {
-	printf("%s%o\t%s\t%s\t%s%c", prefix, ntohl(ce->ce_mode), "blob",
-	       sha1_to_hex(ce->sha1), ce->name, line_termination);
+	if (generate_patch)
+		diff_addremove(prefix[0], ntohl(ce->ce_mode),
+			       ce->sha1, ce->name, NULL);
+	else
+		printf("%s%06o\tblob\t%s\t%s%c", prefix, ntohl(ce->ce_mode),
+		       sha1_to_hex(ce->sha1), ce->name,
+		       line_termination);
 }
 
 static int show_modified(struct cache_entry *old, struct cache_entry *new)
@@ -35,11 +42,15 @@ static int show_modified(struct cache_entry *old, struct cache_entry *new)
 	if (mode == oldmode && !memcmp(sha1, old->sha1, 20))
 		return 0;
 
-	strcpy(old_sha1_hex, sha1_to_hex(old->sha1));
-	printf("*%o->%o\t%s\t%s->%s\t%s%c", oldmode, mode,
-	       "blob",
-	       old_sha1_hex, sha1_to_hex(sha1),
-	       old->name, line_termination);
+	if (generate_patch)
+		diff_change(oldmode, mode,
+			    old->sha1, sha1, old->name, NULL);
+	else {
+		strcpy(old_sha1_hex, sha1_to_hex(old->sha1));
+		printf("*%06o->%06o\tblob\t%s->%s\t%s%c", oldmode, mode,
+		       old_sha1_hex, sha1_to_hex(sha1),
+		       old->name, line_termination);
+	}
 	return 0;
 }
 
@@ -67,7 +78,10 @@ static int diff_cache(struct cache_entry **ac, int entries)
 			}
 			/* Otherwise we fall through to the "unmerged" case */
 		case 3:
-			printf("U %s%c", ce->name, line_termination);
+			if (generate_patch)
+				diff_unmerge(ce->name);
+			else
+				printf("U %s%c", ce->name, line_termination);
 			break;
 
 		default:
@@ -102,7 +116,8 @@ static void mark_merge_entries(void)
 	}
 }
 
-static char *diff_cache_usage = "diff-cache [-r] [-z] [--cached] <tree sha1>";
+static char *diff_cache_usage =
+"diff-cache [-r] [-z] [-p] [--cached] <tree sha1>";
 
 int main(int argc, char **argv)
 {
@@ -117,6 +132,10 @@ int main(int argc, char **argv)
 		argc--;
 		if (!strcmp(arg, "-r")) {
 			/* We accept the -r flag just to look like diff-tree */
+			continue;
+		}
+		if (!strcmp(arg, "-p")) {
+			generate_patch = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
