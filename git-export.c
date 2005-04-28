@@ -18,7 +18,7 @@ void show_commit(struct commit *commit)
 		char *against = sha1_to_hex(commit->parents->item->object.sha1);
 		printf("\n\n======== diff against %s ========\n", against);
 		fflush(NULL);
-		sprintf(cmdline, "diff-tree -p -r %s %s", against, hex);
+		sprintf(cmdline, "diff-tree -p %s %s", against, hex);
 		system(cmdline);
 	}
 	printf("======== end ========\n\n");
