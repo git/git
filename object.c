@@ -1,5 +1,9 @@
 #include "object.h"
+#include "blob.h"
+#include "tree.h"
+#include "commit.h"
 #include "cache.h"
+#include "tag.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -93,4 +97,40 @@ void mark_reachable(struct object *obj, unsigned int mask)
 		mark_reachable(p->item, mask);
 		p = p->next;
 	}
+}
+
+struct object *parse_object(unsigned char *sha1)
+{
+	unsigned long mapsize;
+	void *map = map_sha1_file(sha1, &mapsize);
+	if (map) {
+		char type[100];
+		unsigned long size;
+		void *buffer = unpack_sha1_file(map, mapsize, type, &size);
+		if (!buffer)
+			return NULL;
+		if (check_sha1_signature(sha1, buffer, size, type) < 0)
+			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
+		munmap(map, mapsize);
+		if (!strcmp(type, "blob")) {
+			struct blob *ret = lookup_blob(sha1);
+			parse_blob(ret);
+			return &ret->object;
+		} else if (!strcmp(type, "tree")) {
+			struct tree *ret = lookup_tree(sha1);
+			parse_tree(ret);
+			return &ret->object;
+		} else if (!strcmp(type, "commit")) {
+			struct commit *ret = lookup_commit(sha1);
+			parse_commit(ret);
+			return &ret->object;
+		} else if (!strcmp(type, "tag")) {
+			struct tag *ret = lookup_tag(sha1);
+			parse_tag(ret);
+			return &ret->object;
+		} else {
+			return NULL;
+		}
+	}
+	return NULL;
 }
