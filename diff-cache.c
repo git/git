@@ -38,14 +38,14 @@ static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned
 	return 0;
 }
 
-static int show_new_file(struct cache_entry *new)
+static void show_new_file(struct cache_entry *new)
 {
 	unsigned char *sha1;
 	unsigned int mode;
 
 	/* New file in the index: it might actually be different in the working copy */
 	if (get_stat_data(new, &sha1, &mode) < 0)
-		return -1;
+		return;
 
 	show_file("+", new, sha1, mode);
 }
