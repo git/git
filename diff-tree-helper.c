@@ -5,7 +5,7 @@
 #include "strbuf.h"
 #include "diff.h"
 
-static int matches_pathspec(const char *name, char **spec, int cnt)
+static int matches_pathspec(const char *name, const char **spec, int cnt)
 {
 	int i;
 	int namelen = strlen(name);
@@ -44,70 +44,69 @@ static int parse_oneside_change(const char *cp, struct diff_spec *one,
 	return 0;
 }
 
-#define PLEASE_WARN -1
-#define WARNED_OURSELVES -2
- 
-static int parse_diff_tree_output(const char *buf,
-				  struct diff_spec *old,
-				  struct diff_spec *new,
-				  char *path) {
+static int parse_diff_tree_output(const char *buf, const char **spec, int cnt)
+{
+	struct diff_spec old, new;
+	char path[PATH_MAX];
 	const char *cp = buf;
 	int ch;
 
 	switch (*cp++) {
 	case 'U':
-		diff_unmerge(cp + 1);
-		return WARNED_OURSELVES;
+		if (!cnt || matches_pathspec(cp + 1, spec, cnt))
+			diff_unmerge(cp + 1);
+		return 0;
 	case '+':
-		old->file_valid = 0;
-		return parse_oneside_change(cp, new, path);
+		old.file_valid = 0;
+		parse_oneside_change(cp, &new, path);
+		break;
 	case '-':
-		new->file_valid = 0;
-		return parse_oneside_change(cp, old, path);
+		new.file_valid = 0;
+		parse_oneside_change(cp, &old, path);
+		break;
 	case '*':
+		old.file_valid = old.sha1_valid =
+			new.file_valid = new.sha1_valid = 1;
+		old.mode = new.mode = 0;
+		while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
+			old.mode = (old.mode << 3) | (ch - '0');
+			cp++;
+		}
+		if (strncmp(cp, "->", 2))
+			return -1;
+		cp += 2;
+		while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
+			new.mode = (new.mode << 3) | (ch - '0');
+			cp++;
+		}
+		if (strncmp(cp, "\tblob\t", 6))
+			return -1;
+		cp += 6;
+		if (get_sha1_hex(cp, old.u.sha1))
+			return -1;
+		cp += 40;
+		if (strncmp(cp, "->", 2))
+			return -1;
+		cp += 2;
+		if (get_sha1_hex(cp, new.u.sha1))
+			return -1;
+		cp += 40;
+		if (*cp++ != '\t')
+			return -1;
+		strcpy(path, cp);
 		break;
 	default:
-		return PLEASE_WARN;
+		return -1;
 	}
-	
-	/* This is for '*' entries */
-	old->file_valid = old->sha1_valid = 1;
-	new->file_valid = new->sha1_valid = 1;
-
-	old->mode = new->mode = 0;
-	while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
-		old->mode = (old->mode << 3) | (ch - '0');
-		cp++;
-	}
-	if (strncmp(cp, "->", 2))
-		return PLEASE_WARN;
-	cp += 2;
-	while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
-		new->mode = (new->mode << 3) | (ch - '0');
-		cp++;
-	}
-	if (strncmp(cp, "\tblob\t", 6))
-		return PLEASE_WARN;
-	cp += 6;
-	if (get_sha1_hex(cp, old->u.sha1))
-		return PLEASE_WARN;
-	cp += 40;
-	if (strncmp(cp, "->", 2))
-		return PLEASE_WARN;
-	cp += 2;
-	if (get_sha1_hex(cp, new->u.sha1))
-		return PLEASE_WARN;
-	cp += 40;
-	if (*cp++ != '\t')
-		return PLEASE_WARN;
-	strcpy(path, cp);
+	if (!cnt || matches_pathspec(path, spec, cnt))
+		run_external_diff(path, &old, &new);
 	return 0;
 }
 
 static const char *diff_tree_helper_usage =
 "diff-tree-helper [-R] [-z] paths...";
 
-int main(int ac, char **av) {
+int main(int ac, const char **av) {
 	struct strbuf sb;
 	int reverse_diff = 0;
 	int line_termination = '\n';
@@ -127,21 +126,12 @@ int main(int ac, char **av) {
 
 	while (1) {
 		int status;
-		struct diff_spec old, new;
-		char path[PATH_MAX];
 		read_line(&sb, stdin, line_termination);
 		if (sb.eof)
 			break;
-		status = parse_diff_tree_output(sb.buf, &old, &new, path);
-		if (status) {
-			if (status == PLEASE_WARN)
-				fprintf(stderr, "cannot parse %s\n", sb.buf);
-			continue;
-		}
-		if (1 < ac && !matches_pathspec(path, av+1, ac-1))
-			continue;
-
-		run_external_diff(path, &old, &new);
+		status = parse_diff_tree_output(sb.buf, av+1, ac-1);
+		if (status)
+			fprintf(stderr, "cannot parse %s\n", sb.buf);
 	}
 	return 0;
 }
