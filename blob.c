@@ -14,10 +14,28 @@ struct blob *lookup_blob(unsigned char *sha1)
 		ret->object.type = blob_type;
 		return ret;
 	}
-	if (obj->parsed && obj->type != blob_type) {
+	if (obj->type != blob_type) {
 		error("Object %s is a %s, not a blob", 
 		      sha1_to_hex(sha1), obj->type);
 		return NULL;
 	}
 	return (struct blob *) obj;
+}
+
+int parse_blob(struct blob *item)
+{
+        char type[20];
+        void *buffer;
+        unsigned long size;
+        if (item->object.parsed)
+                return 0;
+        item->object.parsed = 1;
+        buffer = read_sha1_file(item->object.sha1, type, &size);
+        if (!buffer)
+                return error("Could not read %s",
+                             sha1_to_hex(item->object.sha1));
+        if (strcmp(type, blob_type))
+                return error("Object %s not a blob",
+                             sha1_to_hex(item->object.sha1));
+	return 0;
 }

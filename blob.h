@@ -11,4 +11,6 @@ struct blob {
 
 struct blob *lookup_blob(unsigned char *sha1);
 
+int parse_blob(struct blob *item);
+
 #endif /* BLOB_H */
