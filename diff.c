@@ -3,6 +3,7 @@
  */
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include "cache.h"
 #include "diff.h"
 
@@ -135,6 +136,9 @@ static void prepare_temp_file(const char *name,
 
 	if (!one->file_valid) {
 	not_a_valid_file:
+		/* A '-' entry produces this for file-2, and
+		 * a '+' entry produces this for file-1.
+		 */
 		temp->name = "/dev/null";
 		strcpy(temp->hex, ".");
 		strcpy(temp->mode, ".");
@@ -155,7 +159,7 @@ static void prepare_temp_file(const char *name,
 				goto not_a_valid_file;
 			die("stat(%s): %s", temp->name, strerror(errno));
 		}
-		strcpy(temp->hex, ".");
+		strcpy(temp->hex, sha1_to_hex(null_sha1));
 		sprintf(temp->mode, "%06o",
 			S_IFREG |ce_permissions(st.st_mode));
 	}
@@ -196,6 +200,11 @@ static void remove_tempfile(void)
 		}
 }
 
+static void remove_tempfile_on_signal(int signo)
+{
+	remove_tempfile();
+}
+
 /* An external diff command takes:
  *
  * diff-cmd name infile1 infile1-sha1 infile1-mode \
@@ -207,7 +216,8 @@ void run_external_diff(const char *name,
 		       struct diff_spec *two)
 {
 	struct diff_tempfile *temp = diff_temp;
-	int pid, status;
+	pid_t pid;
+	int status;
 	static int atexit_asked = 0;
 
 	if (one && two) {
@@ -219,6 +229,7 @@ void run_external_diff(const char *name,
 			atexit_asked = 1;
 			atexit(remove_tempfile);
 		}
+		signal(SIGINT, remove_tempfile_on_signal);
 	}
 
 	fflush(NULL);
@@ -246,9 +257,17 @@ void run_external_diff(const char *name,
 			printf("* Unmerged path %s\n", name);
 		exit(0);
 	}
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status))
-		die("diff program failed");
-
+	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status)) {
+		/* We do not check the exit status because typically
+		 * diff exits non-zero if files are different, and
+		 * we are not interested in knowing that.  We *knew*
+		 * they are different and that's why we ran diff
+		 * in the first place!  However if it dies by a signal,
+		 * we stop processing immediately.
+		 */
+		remove_tempfile();
+		die("external diff died unexpectedly.\n");
+	}
 	remove_tempfile();
 }
 
