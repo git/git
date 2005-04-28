@@ -73,7 +73,7 @@ static int list(unsigned char *sha1)
 	void *buffer;
 	unsigned long size;
 
-	buffer = read_tree_with_tree_or_commit_sha1(sha1, &size, 0);
+	buffer = read_object_with_reference(sha1, "tree", &size, 0);
 	if (!buffer)
 		die("unable to read sha1 file");
 	list_recursive(buffer, "tree", size, NULL);

@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 	// Read the signature
 	size = read(0, buffer, MAXSIZE);
 
-	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntag "
+	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntype "
 	if (verify_tag(buffer, size) < 0)
 		die("invalid tag signature file");
 

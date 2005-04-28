@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 
 	mark_merge_entries();
 
-	tree = read_tree_with_tree_or_commit_sha1(tree_sha1, &size, 0);
+	tree = read_object_with_reference(tree_sha1, "tree", &size, 0);
 	if (!tree)
 		die("bad tree object %s", argv[1]);
 	if (read_tree(tree, size, 1))

@@ -189,44 +189,49 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	return NULL;
 }
 
-void *read_tree_with_tree_or_commit_sha1(const unsigned char *sha1,
-					 unsigned long *size,
-					 unsigned char *tree_sha1_return)
+void *read_object_with_reference(const unsigned char *sha1,
+				 const unsigned char *required_type,
+				 unsigned long *size,
+				 unsigned char *actual_sha1_return)
 {
 	char type[20];
 	void *buffer;
 	unsigned long isize;
-	int was_commit = 0;
-	unsigned char tree_sha1[20];
+	unsigned char actual_sha1[20];
 
-	buffer = read_sha1_file(sha1, type, &isize);
+	memcpy(actual_sha1, sha1, 20);
+	while (1) {
+		int ref_length = -1;
+		const char *ref_type = NULL;
 
-	/* 
-	 * We might have read a commit instead of a tree, in which case
-	 * we parse out the tree_sha1 and attempt to read from there.
-	 * (buffer + 5) is because the tree sha1 is always at offset 5
-	 * in a commit record ("tree ").
-	 */
-	if (buffer &&
-	    !strcmp(type, "commit") &&
-	    !get_sha1_hex(buffer + 5, tree_sha1)) {
-		free(buffer);
-		buffer = read_sha1_file(tree_sha1, type, &isize);
-		was_commit = 1;
+		buffer = read_sha1_file(actual_sha1, type, &isize);
+		if (!buffer)
+			return NULL;
+		if (!strcmp(type, required_type)) {
+			*size = isize;
+			if (actual_sha1_return)
+				memcpy(actual_sha1_return, actual_sha1, 20);
+			return buffer;
+		}
+		/* Handle references */
+		else if (!strcmp(type, "commit"))
+			ref_type = "tree ";
+		else if (!strcmp(type, "tag"))
+			ref_type = "object ";
+		else {
+			free(buffer);
+			return NULL;
+		}
+		ref_length = strlen(ref_type);
+
+		if (memcmp(buffer, ref_type, ref_length) ||
+		    get_sha1_hex(buffer + ref_length, actual_sha1)) {
+			free(buffer);
+			return NULL;
+		}
+		/* Now we have the ID of the referred-to object in
+		 * actual_sha1.  Check again. */
 	}
-
-	/*
-	 * Now do we have something and if so is it a tree?
-	 */
-	if (!buffer || strcmp(type, "tree")) {
-		free(buffer);
-		return NULL;
-	}
-
-	*size = isize;
-	if (tree_sha1_return)
-		memcpy(tree_sha1_return, was_commit ? tree_sha1 : sha1, 20);
-	return buffer;
 }
 
 int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned char *returnsha1)

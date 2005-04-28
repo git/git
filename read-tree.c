@@ -12,7 +12,7 @@ static int unpack_tree(unsigned char *sha1)
 	void *buffer;
 	unsigned long size;
 
-	buffer = read_tree_with_tree_or_commit_sha1(sha1, &size, 0);
+	buffer = read_object_with_reference(sha1, "tree", &size, 0);
 	if (!buffer)
 		return -1;
 	return read_tree(buffer, size, stage);
