@@ -6,7 +6,6 @@
 #include "cache.h"
 #include "diff.h"
 
-static char *diff_cmd = "diff -L'k/%s' -L'l/%s'";
 static char *diff_opts = "-pu";
 
 static const char *external_diff(void)
@@ -23,14 +22,12 @@ static const char *external_diff(void)
 	 * alternative styles you can specify via environment
 	 * variables are:
 	 *
-	 * GIT_DIFF_CMD="diff -L '%s' -L '%s'"
 	 * GIT_DIFF_OPTS="-c";
 	 */
 	if (getenv("GIT_EXTERNAL_DIFF"))
 		external_diff_cmd = getenv("GIT_EXTERNAL_DIFF");
 
 	/* In case external diff fails... */
-	diff_cmd = getenv("GIT_DIFF_CMD") ? : diff_cmd;
 	diff_opts = getenv("GIT_DIFF_OPTS") ? : diff_opts;
 
 	done_preparing = 1;
@@ -83,31 +80,50 @@ static struct diff_tempfile {
 static void builtin_diff(const char *name,
 			 struct diff_tempfile *temp)
 {
-	static char *diff_arg  = "'%s' '%s'";
-	const char *name_1_sq = sq_expand(temp[0].name);
-	const char *name_2_sq = sq_expand(temp[1].name);
+	int i, next_at;
+	const char *diff_cmd = "diff -L'%s%s%s' -L'%s%s%s'";
+	const char *diff_arg  = "'%s' '%s'";
+	const char *input_name_sq[2];
+	const char *path0[2];
+	const char *path1[2];
+	char mode[2][20];
 	const char *name_sq = sq_expand(name);
-
-	/* diff_cmd and diff_arg have 4 %s in total which makes
-	 * the sum of these strings 8 bytes larger than required.
+	char *cmd;
+	
+	/* diff_cmd and diff_arg have 8 %s in total which makes
+	 * the sum of these strings 16 bytes larger than required.
 	 * we use 2 spaces around diff-opts, and we need to count
-	 * terminating NUL, so we subtract 5 here.
+	 * terminating NUL, so we subtract 13 here.
 	 */
-	int cmd_size = (strlen(diff_cmd) + 
-			strlen(name_sq) * 2 +
-			strlen(diff_opts) +
-			strlen(diff_arg) +
-			strlen(name_1_sq) + strlen(name_2_sq)
-			- 5);
-	char *cmd = xmalloc(cmd_size);
-	int next_at = 0;
+	int cmd_size = (strlen(diff_cmd) + strlen(diff_opts) +
+			strlen(diff_arg) - 13);
+	for (i = 0; i < 2; i++) {
+		input_name_sq[i] = sq_expand(temp[i].name);
+		if (!strcmp(temp[i].name, "/dev/null")) {
+			path0[i] = "/dev/null";
+			path1[i] = "";
+			mode[i][0] = 0;
+		} else {
+			path0[i] = i ? "l/" : "k/";
+			path1[i] = name_sq;
+			sprintf(mode[i], "  (mode:%s)", temp[i].mode);
+		}
+		cmd_size += (strlen(path0[i]) + strlen(path1[i]) +
+			     strlen(mode[i]) + strlen(input_name_sq[i]));
+	}
 
+	cmd = xmalloc(cmd_size);
+
+	next_at = 0;
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
-			    diff_cmd, name_sq, name_sq);
+			    diff_cmd,
+			    path0[0], path1[0], mode[0],
+			    path0[1], path1[1], mode[1]);
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    " %s ", diff_opts);
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
-			    diff_arg, name_1_sq, name_2_sq);
+			    diff_arg, input_name_sq[0], input_name_sq[1]);
+
 	execlp("/bin/sh","sh", "-c", cmd, NULL);
 }
 
