@@ -206,6 +206,10 @@ static void show_files(void)
 	}
 }
 
+static const char *show_files_usage =
+	"show-files [-z] (--[cached|deleted|others|stage|unmerged])* "
+	"[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]";
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -215,55 +219,30 @@ int main(int argc, char **argv)
 
 		if (!strcmp(arg, "-z")) {
 			line_terminator = 0;
-			continue;
-		}
-
-		if (!strcmp(arg, "--cached")) {
+		} else if (!strcmp(arg, "-c") || !strcmp(arg, "--cached")) {
 			show_cached = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--deleted")) {
+		} else if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
 			show_deleted = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--others")) {
+		} else if (!strcmp(arg, "-o") || !strcmp(arg, "--others")) {
 			show_others = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--ignored")) {
+		} else if (!strcmp(arg, "-i") || !strcmp(arg, "--ignored")) {
 			show_ignored = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--stage")) {
+		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--stage")) {
 			show_stage = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--unmerged")) {
+		} else if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
 			// There's no point in showing unmerged unless you also show the stage information
 			show_stage = 1;
 			show_unmerged = 1;
-			continue;
-		}
-
-		if (!strcmp(arg, "-x") && i+1 < argc) {
+		} else if (!strcmp(arg, "-x") && i+1 < argc) {
 			add_exclude(argv[++i]);
-			continue;
-		}
-		if (!strncmp(arg, "--exclude=", 10)) {
+		} else if (!strncmp(arg, "--exclude=", 10)) {
 			add_exclude(arg+10);
-			continue;
-		}
-		if (!strcmp(arg, "-X") && i+1 < argc) {
+		} else if (!strcmp(arg, "-X") && i+1 < argc) {
 			add_excludes_from_file(argv[++i]);
-			continue;
-		}
-		if (!strncmp(arg, "--exclude-from=", 15)) {
+		} else if (!strncmp(arg, "--exclude-from=", 15)) {
 			add_excludes_from_file(arg+15);
-			continue;
-		}
-
-		usage("show-files [-z] (--[cached|deleted|others|stage])* "
-		      "[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]");
+		} else
+			usage(show_files_usage);
 	}
 
 	if (show_ignored && !nr_excludes) {
