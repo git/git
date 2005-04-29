@@ -32,7 +32,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 "$1.." | "$1.$1" | "$1$1.")
 	rm -f -- "$4"
 	echo "Removing $4"
-	update-cache --remove -- "$4"
+	git-update-cache --remove -- "$4"
 	exit 0
 	;;
 
@@ -43,7 +43,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	echo "Adding $4 with perm $6$7"
 	mv $(unpack-file "$2$3") $4
 	chmod "$6$7" $4
-	update-cache --add -- $4
+	git-update-cache --add -- $4
 	exit 0
 	;;
 #
@@ -57,16 +57,16 @@ case "${1:-.}${2:-.}${3:-.}" in
 	echo "Adding $4 with perm $6"
 	mv $(unpack-file "$2") $4
 	chmod "$6" $4
-	update-cache --add -- $4
+	git-update-cache --add -- $4
 	exit 0;;
 #
 # Modified in both, but differently ;(
 #
 "$1$2$3")
 	echo "Auto-merging $4"
-	orig=$(unpack-file $1)
-	src1=$(unpack-file $2)
-	src2=$(unpack-file $3)
+	orig=$(git-unpack-file $1)
+	src1=$(git-unpack-file $2)
+	src2=$(git-unpack-file $3)
 	merge "$src2" "$orig" "$src1"
 	ret=$?
 	if [ "$6" != "$7" ]; then
@@ -81,7 +81,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: Leaving conflict merge in $src2"
 		exit 1
 	fi
-	cp -- "$src2" "$4" && chmod -- "$6" "$4" &&  update-cache --add -- "$4" && exit 0
+	cp -- "$src2" "$4" && chmod -- "$6" "$4" &&  git-update-cache --add -- "$4" && exit 0
 	;;
 
 *)
