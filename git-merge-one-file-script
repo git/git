@@ -9,7 +9,7 @@
 #
 #
 # Handle some trivial cases.. The _really_ trivial cases have
-# been handled already by read-tree, but that one doesn't
+# been handled already by git-read-tree, but that one doesn't
 # do any merges that migth change the tree layout
 #
 
@@ -41,7 +41,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 ".$2." | "..$3" )
 	echo "Adding $4 with perm $6$7"
-	mv $(unpack-file "$2$3") $4
+	mv $(git-unpack-file "$2$3") $4
 	chmod "$6$7" $4
 	git-update-cache --add -- $4
 	exit 0
@@ -55,7 +55,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		exit 1
 	fi
 	echo "Adding $4 with perm $6"
-	mv $(unpack-file "$2") $4
+	mv $(git-unpack-file "$2") $4
 	chmod "$6" $4
 	git-update-cache --add -- $4
 	exit 0;;
