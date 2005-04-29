@@ -291,35 +291,28 @@ static void traverse_tree(void *buffer, unsigned long size,
 }
 
 /* get commit time from committer line of commit object */
-time_t commit_time(const unsigned char *sha1)
+time_t commit_time(void * buffer, unsigned long size)
 {
-        char type[20];
-        void *buffer;
-        unsigned long size;
 	time_t result = 0;
+	char *p = buffer;
 
-        buffer = read_sha1_file(sha1, type, &size);
-	if (buffer) {
-		char *p = buffer;
-		while (size > 0) {
-			char *endp = memchr(p, '\n', size);
-			if (!endp || endp == p)
+	while (size > 0) {
+		char *endp = memchr(p, '\n', size);
+		if (!endp || endp == p)
+			break;
+		*endp = '\0';
+		if (endp - p > 10 && !memcmp(p, "committer ", 10)) {
+			char *nump = strrchr(p, '>');
+			if (!nump)
 				break;
-			*endp = '\0';
-			if (endp - p > 10 && !memcmp(p, "committer ", 10)) {
-				char *nump = strrchr(p, '>');
-				if (!nump)
-					break;
-				nump++;
-				result = strtoul(nump, &endp, 10);
-				if (*endp != ' ')
-					result = 0;
-				break;
-			}
-			size -= endp - p - 1;
-			p = endp + 1;
+			nump++;
+			result = strtoul(nump, &endp, 10);
+			if (*endp != ' ')
+				result = 0;
+			break;
 		}
-		free(buffer);
+		size -= endp - p - 1;
+		p = endp + 1;
 	}
 	return result;
 }
@@ -329,7 +322,6 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 	void *buffer;
 	unsigned long size;
-	unsigned char tree_sha1[20];
 
 	switch (argc) {
 	case 3:
@@ -347,11 +339,15 @@ int main(int argc, char **argv)
 	if (!sha1_file_directory)
 		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 
-	buffer = read_tree_with_tree_or_commit_sha1(sha1, &size, tree_sha1);
+	buffer = read_object_with_reference(sha1, "commit", &size, NULL);
+	if (buffer) {
+		archive_time = commit_time(buffer, size);
+		free(buffer);
+	}
+	buffer = read_object_with_reference(sha1, "tree", &size, NULL);
 	if (!buffer)
-		die("unable to read sha1 file");
-	if (memcmp(sha1, tree_sha1, 20))	/* is sha1 a commit object? */
-		archive_time = commit_time(sha1);
+		die("not a reference to a tag, commit or tree object: %s",
+		    sha1_to_hex(sha1));
 	if (!archive_time)
 		archive_time = time(NULL);
 	if (basedir)
