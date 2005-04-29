@@ -9,7 +9,7 @@ rm -f .git/MERGE_HEAD .git/ORIG_HEAD
 cp .git/HEAD .git/ORIG_HEAD
 
 echo "Getting object database"
-rsync -avz --ignore-existing $merge_repo/objects/. .git/objects/.
+rsync -avz --ignore-existing $merge_repo/objects/. ${SHA1_FILE_DIRECTORY:-.git/objects}/.
 
 echo "Getting remote head"
 rsync -L $merge_repo/HEAD .git/MERGE_HEAD || exit 1
