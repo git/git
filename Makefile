@@ -12,13 +12,16 @@ CFLAGS=-g -O2 -Wall
 CC=gcc
 AR=ar
 
-SCRIPTS=git-merge-one-file-script git-prune-script git-pull-script git-tag-script
+SCRIPTS=git-merge-one-file-script git-prune-script git-pull-script \
+	git-tag-script
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
-	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
-	check-files ls-tree merge-base merge-cache unpack-file git-export \
-	diff-cache convert-cache http-pull rpush rpull rev-list git-mktag \
-	diff-tree-helper tar-tree
+PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
+	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
+	git-checkout-cache git-diff-tree git-rev-tree git-show-files \
+	git-check-files git-ls-tree git-merge-base git-merge-cache \
+	git-unpack-file git-export git-diff-cache git-convert-cache \
+	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
+	git-diff-tree-helper git-tar-tree
 
 all: $(PROG)
 
@@ -58,46 +61,49 @@ $(LIB_FILE): $(LIB_OBJS)
 
 init-db: init-db.o
 
-%: %.c $(LIB_FILE)
+git-%: %.c $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
 
-rpush: rsh.c
+git-update-cache: update-cache.c
+git-diff-files: diff-files.c
+git-init-db: init-db.c
+git-write-tree: write-tree.c
+git-read-tree: read-tree.c
+git-commit-tree: commit-tree.c
+git-cat-file: cat-file.c
+git-fsck-cache: fsck-cache.c
+git-checkout-cache: checkout-cache.c
+git-diff-tree: diff-tree.c
+git-rev-tree: rev-tree.c
+git-show-files: show-files.c
+git-check-files: check-files.c
+git-ls-tree: ls-tree.c
+git-merge-base: merge-base.c
+git-merge-cache: merge-cache.c
+git-unpack-file: unpack-file.c
+git-export: export.c
+git-diff-cache: diff-cache.c
+git-convert-cache: convert-cache.c
+git-http-pull: http-pull.c
+git-rpush: rsh.c
+git-rpull: rsh.c
+git-rev-list: rev-list.c
+git-mktag: mktag.c
+git-diff-tree-helper: diff-tree-helper.c
+git-tar-tree: tar-tree.c
 
-rpull: rsh.c
+git-http-pull: LIBS += -lcurl
 
-http-pull: LIBS += -lcurl
-
+# Library objects..
 blob.o: $(LIB_H)
-cat-file.o: $(LIB_H)
-check-files.o: $(LIB_H)
-checkout-cache.o: $(LIB_H)
+tree.o: $(LIB_H)
 commit.o: $(LIB_H)
-commit-tree.o: $(LIB_H)
-convert-cache.o: $(LIB_H)
-diff.o: $(LIB_H)
-diff-cache.o: $(LIB_H)
-diff-tree.o: $(LIB_H)
-fsck-cache.o: $(LIB_H)
-git-export.o: $(LIB_H)
-init-db.o: $(LIB_H)
-ls-tree.o: $(LIB_H)
-merge-base.o: $(LIB_H)
-merge-cache.o: $(LIB_H)
+tag.o: $(LIB_H)
 object.o: $(LIB_H)
 read-cache.o: $(LIB_H)
-read-tree.o: $(LIB_H)
-rev-tree.o: $(LIB_H)
 sha1_file.o: $(LIB_H)
-show-diff.o: $(LIB_H)
-show-files.o: $(LIB_H)
-tree.o: $(LIB_H)
-update-cache.o: $(LIB_H)
 usage.o: $(LIB_H)
-unpack-file.o: $(LIB_H)
-write-tree.o: $(LIB_H)
-http-pull.o: $(LIB_H)
-rpull.o: $(LIB_H)
-rpush.o: $(LIB_H)
+diff.o: $(LIB_H)
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
