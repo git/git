@@ -148,6 +148,9 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 					unsigned long *size,
 					unsigned char *sha1_ret);
 
+void parse_date(char *date, char *buf, int bufsize);
+void datestamp(char *buf, int bufsize);
+
 static inline void *xmalloc(int size)
 {
 	void *ret = malloc(size);

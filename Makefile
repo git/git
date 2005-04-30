@@ -28,7 +28,8 @@ all: $(PROG)
 install: $(PROG) $(SCRIPTS)
 	install $(PROG) $(SCRIPTS) $(HOME)/bin/
 
-LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o tag.o
+LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
+	 tag.o date.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h blob.h tree.h commit.h tag.h
 
@@ -91,7 +92,6 @@ git-diff-tree-helper: diff-tree-helper.c
 git-tar-tree: tar-tree.c
 
 git-http-pull: LIBS += -lcurl
-git-commit-tree: LIBS += -lcurl
 
 # Library objects..
 blob.o: $(LIB_H)

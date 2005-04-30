@@ -10,7 +10,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <curl/curl.h>
 
 #define BLOCKING (1ul << 14)
 
@@ -81,24 +80,6 @@ static void remove_special(char *p)
 	}
 }
 
-/* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
-   (i.e. English) day/month names, and it doesn't work correctly with %z. */
-static void parse_date(char *date, time_t *now, char *result, int maxlen)
-{
-	char *p;
-	time_t then;
-
-	if ((then = curl_getdate(date, now)) == 0)
-		return;
-
-	/* find the timezone at the end */
-	p = date + strlen(date);
-	while (p > date && isdigit(*--p))
-		;
-	if ((*p == '+' || *p == '-') && strlen(p) == 5)
-		snprintf(result, maxlen, "%lu %5.5s", then, p);
-}
-
 static void check_valid(unsigned char *sha1, const char *expect)
 {
 	void *buf;
@@ -132,8 +113,6 @@ int main(int argc, char **argv)
 	char *audate;
 	char comment[1000];
 	struct passwd *pw;
-	time_t now;
-	struct tm *tm;
 	char *buffer;
 	unsigned int size;
 
@@ -163,10 +142,8 @@ int main(int argc, char **argv)
 		strcat(realemail, ".");
 		getdomainname(realemail+strlen(realemail), sizeof(realemail)-strlen(realemail)-1);
 	}
-	time(&now);
-	tm = localtime(&now);
 
-	strftime(realdate, sizeof(realdate), "%s %z", tm);
+	datestamp(realdate, sizeof(realdate));
 	strcpy(date, realdate);
 
 	commitgecos = getenv("COMMIT_AUTHOR_NAME") ? : realgecos;
@@ -175,7 +152,7 @@ int main(int argc, char **argv)
 	email = getenv("AUTHOR_EMAIL") ? : realemail;
 	audate = getenv("AUTHOR_DATE");
 	if (audate)
-		parse_date(audate, &now, date, sizeof(date));
+		parse_date(audate, date, sizeof(date));
 
 	remove_special(gecos); remove_special(realgecos); remove_special(commitgecos);
 	remove_special(email); remove_special(realemail); remove_special(commitemail);
