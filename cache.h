@@ -17,6 +17,10 @@
 #include SHA1_HEADER
 #include <zlib.h>
 
+#if ZLIB_VERNUM < 0x1200
+#define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
+#endif
+
 /*
  * Basic data structures for the directory cache
  *
