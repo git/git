@@ -91,6 +91,7 @@ git-diff-tree-helper: diff-tree-helper.c
 git-tar-tree: tar-tree.c
 
 git-http-pull: LIBS += -lcurl
+git-commit-tree: LIBS += -lcurl
 
 # Library objects..
 blob.o: $(LIB_H)
