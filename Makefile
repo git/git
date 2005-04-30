@@ -17,7 +17,7 @@ SCRIPTS=git-merge-one-file-script git-prune-script git-pull-script \
 
 PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
-	git-checkout-cache git-diff-tree git-rev-tree git-show-files \
+	git-checkout-cache git-diff-tree git-rev-tree git-ls-files \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
@@ -74,7 +74,7 @@ git-fsck-cache: fsck-cache.c
 git-checkout-cache: checkout-cache.c
 git-diff-tree: diff-tree.c
 git-rev-tree: rev-tree.c
-git-show-files: show-files.c
+git-ls-files: ls-files.c
 git-check-files: check-files.c
 git-ls-tree: ls-tree.c
 git-merge-base: merge-base.c
