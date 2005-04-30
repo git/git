@@ -129,7 +129,7 @@ static void read_directory(const char *path, const char *base, int baselen)
 			len = strlen(de->d_name);
 			memcpy(fullname + baselen, de->d_name, len+1);
 
-			switch (de->d_type) {
+			switch (DTYPE(de)) {
 			struct stat st;
 			default:
 				continue;

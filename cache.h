@@ -21,6 +21,15 @@
 #define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
 #endif
 
+#ifdef DT_UNKNOWN
+#define DTYPE(de)	((de)->d_type)
+#else
+#define DT_UNKNOWN	0
+#define DT_DIR		1
+#define DT_REG		2
+#define DTYPE(de)	DT_UNKNOWN
+#endif
+
 /*
  * Basic data structures for the directory cache
  *
