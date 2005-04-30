@@ -250,7 +250,7 @@ static int match_tz(char *date, int *offp)
 void parse_date(char *date, char *result, int maxlen)
 {
 	struct tm tm;
-	int offset;
+	int offset, sign;
 	time_t then;
 
 	memset(&tm, 0, sizeof(tm));
@@ -293,7 +293,13 @@ void parse_date(char *date, char *result, int maxlen)
 
 	then -= offset * 60;
 
-	snprintf(result, maxlen, "%lu %+03d%02d", then, offset/60, offset % 60);
+	sign = '+';
+	if (offset < 0) {
+		offset = -offset;
+		sign = '-';
+	}
+
+	snprintf(result, maxlen, "%lu %c%02d%02d", then, sign, offset/60, offset % 60);
 }
 
 void datestamp(char *buf, int bufsize)
