@@ -203,9 +203,11 @@ static int match_digit(char *date, struct tm *tm, int *offset)
 			tm->tm_mon = num - 1;
 			tm->tm_mday = num2;
 			if (*end == c && isdigit(end[1])) {
-				num3 = strtoul(end, &end, 10);
+				num3 = strtoul(end+1, &end, 10);
 				if (num3 > 1900)
 					num3 -= 1900;
+				else if (num3 < 38)
+					num3 += 100;
 				tm->tm_year = num3;
 			}
 			break;
