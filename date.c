@@ -30,144 +30,253 @@ static time_t my_mktime(struct tm *tm)
 }
 
 static const char *month_names[] = {
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	"January", "February", "March", "April", "May", "June",
+	"July", "August", "September", "October", "November", "December"
 };
 
 static const char *weekday_names[] = {
-        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 };
 
+/*
+ * Check these. And note how it doesn't do the summer-time conversion.
+ *
+ * In my world, it's always summer, and things are probably a bit off
+ * in other ways too.
+ */
+static const struct {
+	const char *name;
+	int offset;
+} timezone_names[] = {
+	{ "IDLW", -12 },	/* International Date Line West */
+	{ "NT",   -11 },	/* Nome */
+	{ "CAT",  -10 },	/* Central Alaska */
+	{ "HST",  -10 },	/* Hawaii Standard */
+	{ "HDT",   -9 },	/* Hawaii Daylight */
+	{ "YDT",   -8 },	/* Yukon Daylight */
+	{ "YST",   -9 },	/* Yukon Standard */
+	{ "PST",   -8 },	/* Pacific Standard */
+	{ "PDT",   -7 },	/* Pacific Daylight */
+	{ "MST",   -7 },	/* Mountain Standard */
+	{ "MDT",   -6 },	/* Mountain Daylight */
+	{ "CST",   -6 },	/* Central Standard */
+	{ "CDT",   -5 },	/* Central Daylight */
+	{ "EST",   -5 },	/* Eastern Standard */
+	{ "EDT",   -4 },	/* Eastern Daylight */
+	{ "AST",   -3 },	/* Atlantic Standard */
+	{ "ADT",   -2 },	/* Atlantic Daylight */
+	{ "WAT",   -1 },	/* West Africa */
 
-static char *skipfws(char *str)
+	{ "GMT",    0 },	/* Greenwich Mean */
+	{ "UTC",    0 },	/* Universal (Coordinated) */
+
+	{ "WET",    0 },	/* Western European */
+	{ "BST",    0 },	/* British Summer */
+	{ "CET",   +1 },	/* Central European */
+	{ "MET",   +1 },	/* Middle European */
+	{ "MEWT",  +1 },	/* Middle European Winter */
+	{ "MEST",  +2 },	/* Middle European Summer */
+	{ "CEST",  +2 },	/* Central European Summer */
+	{ "MESZ",  +1 },	/* Middle European Summer */
+	{ "FWT",   +1 },	/* French Winter */
+	{ "FST",   +2 },	/* French Summer */
+	{ "EET",   +2 },	/* Eastern Europe, USSR Zone 1 */
+	{ "WAST",  +7 },	/* West Australian Standard */
+	{ "WADT",  +8 },	/* West Australian Daylight */
+	{ "CCT",   +8 },	/* China Coast, USSR Zone 7 */
+	{ "JST",   +9 },	/* Japan Standard, USSR Zone 8 */
+	{ "EAST", +10 },	/* Eastern Australian Standard */
+	{ "EADT", +11 },	/* Eastern Australian Daylight */
+	{ "GST",  +10 },	/* Guam Standard, USSR Zone 9 */
+	{ "NZT",  +11 },	/* New Zealand */
+	{ "NZST", +11 },	/* New Zealand Standard */
+	{ "NZDT", +12 },	/* New Zealand Daylight */
+	{ "IDLE", +12 },	/* International Date Line East */
+};
+
+#define NR_TZ (sizeof(timezone_names) / sizeof(timezone_names[0]))
+	
+static int match_string(const char *date, const char *str)
 {
-	while (isspace(*str))
-		str++;
-	return str;
+	int i = 0;
+
+	for (i = 0; *date; date++, str++, i++) {
+		if (*date == *str)
+			continue;
+		if (toupper(*date) == toupper(*str))
+			continue;
+		if (!isalnum(*date))
+			break;
+		return 0;
+	}
+	return i;
 }
 
-	
+/*
+* Parse month, weekday, or timezone name
+*/
+static int match_alpha(const char *date, struct tm *tm, int *offset)
+{
+	int i;
+
+	for (i = 0; i < 12; i++) {
+		int match = match_string(date, month_names[i]);
+		if (match >= 3) {
+			tm->tm_mon = i;
+			return match;
+		}
+	}
+
+	for (i = 0; i < 7; i++) {
+		int match = match_string(date, weekday_names[i]);
+		if (match >= 3) {
+			tm->tm_wday = i;
+			return match;
+		}
+	}
+
+	for (i = 0; i < NR_TZ; i++) {
+		int match = match_string(date, timezone_names[i].name);
+		if (match >= 3) {
+			*offset = 60*timezone_names[i].offset;
+			return match;
+		}
+	}
+
+	/* BAD CRAP */
+	return 0;
+}
+
+static int match_digit(char *date, struct tm *tm, int *offset)
+{
+	char *end, c;
+	unsigned long num, num2, num3;
+
+	num = strtoul(date, &end, 10);
+
+	/* Time? num:num[:num] */
+	if (num < 24 && end[0] == ':' && isdigit(end[1])) {
+		tm->tm_hour = num;
+		num = strtoul(end+1, &end, 10);
+		if (num < 60) {
+			tm->tm_min = num;
+			if (end[0] == ':' && isdigit(end[1])) {
+				num = strtoul(end+1, &end, 10);
+				if (num < 61)
+					tm->tm_sec = num;
+			}
+		}
+		return end - date;
+	}
+
+	/* Year? Day of month? Numeric date-string?*/
+	c = *end;
+	switch (c) {
+	default:
+		if (num > 0 && num < 32) {
+			tm->tm_mday = num;
+			break;
+		}
+		if (num > 1900) {
+			tm->tm_year = num - 1900;
+			break;
+		}
+		if (num > 70) {
+			tm->tm_year = num;
+			break;
+		}
+		break;
+
+	case '-':
+	case '/':
+		if (num && num < 32 && isdigit(end[1])) {
+			num2 = strtoul(end+1, &end, 10);
+			if (!num2 || num2 > 31)
+				break;
+			if (num > 12) {
+				if (num2 > 12)
+					break;
+				num3 = num;
+				num  = num2;
+				num2 = num3;
+			}
+			tm->tm_mon = num - 1;
+			tm->tm_mday = num2;
+			if (*end == c && isdigit(end[1])) {
+				num3 = strtoul(end, &end, 10);
+				if (num3 > 1900)
+					num3 -= 1900;
+				tm->tm_year = num3;
+			}
+			break;
+		}
+	}
+		
+	return end - date;
+			
+}
+
+static int match_tz(char *date, int *offp)
+{
+	char *end;
+	int offset = strtoul(date+1, &end, 10);
+	int min, hour;
+
+	min = offset % 100;
+	hour = offset / 100;
+
+	offset = hour*60+min;
+	if (*date == '-')
+		offset = -offset;
+
+	*offp = offset;
+	return end - date;
+}
+
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
 void parse_date(char *date, char *result, int maxlen)
 {
 	struct tm tm;
-	char *p, *tz;
-	int i, offset;
+	int offset;
 	time_t then;
 
 	memset(&tm, 0, sizeof(tm));
+	tm.tm_year = -1;
+	tm.tm_mon = -1;
+	tm.tm_mday = -1;
+	offset = 0;
 
-	/* Skip day-name */
-	p = skipfws(date);
-	if (!isdigit(*p)) {
-		for (i=0; i<7; i++) {
-			if (!strncmp(p,weekday_names[i],3) && p[3] == ',') {
-				p = skipfws(p+4);
-				goto day;
-			}
-		}
-		return;
-	}					
+	for (;;) {
+		int match = 0;
+		unsigned char c = *date;
 
-	/* day */
- day:
-	tm.tm_mday = strtoul(p, &p, 10);
+		/* Stop at end of string or newline */
+		if (!c || c == '\n')
+			break;
 
-	if (tm.tm_mday < 1 || tm.tm_mday > 31)
-		return;
+		if (isalpha(c))
+			match = match_alpha(date, &tm, &offset);
+		else if (isdigit(c))
+			match = match_digit(date, &tm, &offset);
+		else if ((c == '-' || c == '+') && isdigit(date[1]))
+			match = match_tz(date, &offset);
 
-	if (!isspace(*p))
-		return;
+		if (!match) {
+			/* BAD CRAP */
+			match = 1;
+		}	
 
-	p = skipfws(p);
-
-	/* month */
-
-	for (i=0; i<12; i++) {
-		if (!strncmp(p, month_names[i], 3) && isspace(p[3])) {
-			tm.tm_mon = i;
-			p = skipfws(p+strlen(month_names[i]));
-			goto year;
-		}
+		date += match;
 	}
-	return; /* Error -- bad month */
-
-	/* year */
- year:	
-	tm.tm_year = strtoul(p, &p, 10);
-
-	if (!tm.tm_year && !isspace(*p))
-		return;
-
-	if (tm.tm_year > 1900)
-		tm.tm_year -= 1900;
-		
-	p=skipfws(p);
-
-	/* hour */
-	if (!isdigit(*p))
-		return;
-	tm.tm_hour = strtoul(p, &p, 10);
-	
-	if (tm.tm_hour > 23)
-		return;
-
-	if (*p != ':')
-		return; /* Error -- bad time */
-	p++;
-
-	/* minute */
-	if (!isdigit(*p))
-		return;
-	tm.tm_min = strtoul(p, &p, 10);
-	
-	if (tm.tm_min > 59)
-		return;
-
-	if (*p != ':')
-		goto zone;
-	p++;
-
-	/* second */
-	if (!isdigit(*p))
-		return;
-	tm.tm_sec = strtoul(p, &p, 10);
-	
-	if (tm.tm_sec > 60)
-		return;
-
- zone:
-	if (!isspace(*p))
-		return;
-
-	p = skipfws(p);
-
-	if (*p == '-')
-		offset = -60;
-	else if (*p == '+')
-		offset = 60;
-	else
-	       return;
-
-	if (!isdigit(p[1]) || !isdigit(p[2]) || !isdigit(p[3]) || !isdigit(p[4]))
-		return;
-
-	tz = p;
-	i = strtoul(p+1, NULL, 10);
-	offset *= ((i % 100) + ((i / 100) * 60));
-
-	p = skipfws(p + 5);
-	if (*p && *p != '(') /* trailing comment like (EDT) is ok */
-		return;
 
 	then = my_mktime(&tm); /* mktime uses local timezone */
 	if (then == -1)
 		return;
 
-	then -= offset;
+	then -= offset * 60;
 
-	snprintf(result, maxlen, "%lu %5.5s", then, tz);
+	snprintf(result, maxlen, "%lu %+03d%02d", then, offset/60, offset % 60);
 }
 
 void datestamp(char *buf, int bufsize)

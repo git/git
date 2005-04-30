@@ -60,6 +60,9 @@ CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
 $(LIB_FILE): $(LIB_OBJS)
 	$(AR) rcs $@ $(LIB_OBJS)
 
+test-date: test-date.c date.o
+	$(CC) $(CFLAGS) -o $@ test-date.c date.o
+
 git-%: %.c $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
 
