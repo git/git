@@ -47,51 +47,52 @@ static const char *weekday_names[] = {
 static const struct {
 	const char *name;
 	int offset;
+	int dst;
 } timezone_names[] = {
-	{ "IDLW", -12 },	/* International Date Line West */
-	{ "NT",   -11 },	/* Nome */
-	{ "CAT",  -10 },	/* Central Alaska */
-	{ "HST",  -10 },	/* Hawaii Standard */
-	{ "HDT",   -9 },	/* Hawaii Daylight */
-	{ "YDT",   -8 },	/* Yukon Daylight */
-	{ "YST",   -9 },	/* Yukon Standard */
-	{ "PST",   -8 },	/* Pacific Standard */
-	{ "PDT",   -7 },	/* Pacific Daylight */
-	{ "MST",   -7 },	/* Mountain Standard */
-	{ "MDT",   -6 },	/* Mountain Daylight */
-	{ "CST",   -6 },	/* Central Standard */
-	{ "CDT",   -5 },	/* Central Daylight */
-	{ "EST",   -5 },	/* Eastern Standard */
-	{ "EDT",   -4 },	/* Eastern Daylight */
-	{ "AST",   -3 },	/* Atlantic Standard */
-	{ "ADT",   -2 },	/* Atlantic Daylight */
-	{ "WAT",   -1 },	/* West Africa */
+	{ "IDLW", -12, 0, },	/* International Date Line West */
+	{ "NT",   -11, 0, },	/* Nome */
+	{ "CAT",  -10, 0, },	/* Central Alaska */
+	{ "HST",  -10, 0, },	/* Hawaii Standard */
+	{ "HDT",  -10, 1, },	/* Hawaii Daylight */
+	{ "YST",   -9, 0, },	/* Yukon Standard */
+	{ "YDT",   -9, 1, },	/* Yukon Daylight */
+	{ "PST",   -8, 0, },	/* Pacific Standard */
+	{ "PDT",   -8, 1, },	/* Pacific Daylight */
+	{ "MST",   -7, 0, },	/* Mountain Standard */
+	{ "MDT",   -7, 1, },	/* Mountain Daylight */
+	{ "CST",   -6, 0, },	/* Central Standard */
+	{ "CDT",   -6, 1, },	/* Central Daylight */
+	{ "EST",   -5, 0, },	/* Eastern Standard */
+	{ "EDT",   -5, 1, },	/* Eastern Daylight */
+	{ "AST",   -3, 0, },	/* Atlantic Standard */
+	{ "ADT",   -3, 1, },	/* Atlantic Daylight */
+	{ "WAT",   -1, 0, },	/* West Africa */
 
-	{ "GMT",    0 },	/* Greenwich Mean */
-	{ "UTC",    0 },	/* Universal (Coordinated) */
+	{ "GMT",    0, 0, },	/* Greenwich Mean */
+	{ "UTC",    0, 0, },	/* Universal (Coordinated) */
 
-	{ "WET",    0 },	/* Western European */
-	{ "BST",    0 },	/* British Summer */
-	{ "CET",   +1 },	/* Central European */
-	{ "MET",   +1 },	/* Middle European */
-	{ "MEWT",  +1 },	/* Middle European Winter */
-	{ "MEST",  +2 },	/* Middle European Summer */
-	{ "CEST",  +2 },	/* Central European Summer */
-	{ "MESZ",  +1 },	/* Middle European Summer */
-	{ "FWT",   +1 },	/* French Winter */
-	{ "FST",   +2 },	/* French Summer */
-	{ "EET",   +2 },	/* Eastern Europe, USSR Zone 1 */
-	{ "WAST",  +7 },	/* West Australian Standard */
-	{ "WADT",  +8 },	/* West Australian Daylight */
-	{ "CCT",   +8 },	/* China Coast, USSR Zone 7 */
-	{ "JST",   +9 },	/* Japan Standard, USSR Zone 8 */
-	{ "EAST", +10 },	/* Eastern Australian Standard */
-	{ "EADT", +11 },	/* Eastern Australian Daylight */
-	{ "GST",  +10 },	/* Guam Standard, USSR Zone 9 */
-	{ "NZT",  +11 },	/* New Zealand */
-	{ "NZST", +11 },	/* New Zealand Standard */
-	{ "NZDT", +12 },	/* New Zealand Daylight */
-	{ "IDLE", +12 },	/* International Date Line East */
+	{ "WET",    0, 0, },	/* Western European */
+	{ "BST",    0, 1, },	/* British Summer */
+	{ "CET",   +1, 0, },	/* Central European */
+	{ "MET",   +1, 0, },	/* Middle European */
+	{ "MEWT",  +1, 0, },	/* Middle European Winter */
+	{ "MEST",  +1, 1, },	/* Middle European Summer */
+	{ "CEST",  +1, 1, },	/* Central European Summer */
+	{ "MESZ",  +1, 1, },	/* Middle European Summer */
+	{ "FWT",   +1, 0, },	/* French Winter */
+	{ "FST",   +1, 1, },	/* French Summer */
+	{ "EET",   +2, 0, },	/* Eastern Europe, USSR Zone 1 */
+	{ "WAST",  +7, 0, },	/* West Australian Standard */
+	{ "WADT",  +7, 1, },	/* West Australian Daylight */
+	{ "CCT",   +8, 0, },	/* China Coast, USSR Zone 7 */
+	{ "JST",   +9, 0, },	/* Japan Standard, USSR Zone 8 */
+	{ "EAST", +10, 0, },	/* Eastern Australian Standard */
+	{ "EADT", +10, 1, },	/* Eastern Australian Daylight */
+	{ "GST",  +10, 0, },	/* Guam Standard, USSR Zone 9 */
+	{ "NZT",  +11, 0, },	/* New Zealand */
+	{ "NZST", +11, 0, },	/* New Zealand Standard */
+	{ "NZDT", +11, 1, },	/* New Zealand Daylight */
+	{ "IDLE", +12, 0, },	/* International Date Line East */
 };
 
 #define NR_TZ (sizeof(timezone_names) / sizeof(timezone_names[0]))
@@ -138,7 +139,12 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 	for (i = 0; i < NR_TZ; i++) {
 		int match = match_string(date, timezone_names[i].name);
 		if (match >= 3) {
-			*offset = 60*timezone_names[i].offset;
+			int off = timezone_names[i].offset;
+
+			/* This is bogus, but we like summer */
+			off += timezone_names[i].dst;
+
+			*offset = 60*off;
 			return match;
 		}
 	}
