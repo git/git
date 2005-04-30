@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -O2
 HOME=$(shell echo $$HOME)
 
-PROGRAMS=mailsplit mailinfo
+PROGRAMS=mailsplit mailinfo stripspace
 SCRIPTS=dotest applypatch
 
 all: $(PROGRAMS)

@@ -32,7 +32,7 @@ if [ -n "$signoff" -a -f "$signoff" ]; then
 	cat $signoff >> $MSGFILE
 fi
 
-(echo "[PATCH] $SUBJECT" ; echo ; cat $MSGFILE ) > $final
+(echo "[PATCH] $SUBJECT" ; if [ -s $MSGFILE ]; then echo ; cat $MSGFILE; fi ) > $final
 
 f=0
 [ -f $query_apply ] || f=1
