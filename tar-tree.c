@@ -160,7 +160,7 @@ static unsigned int path_len(int is_dir, const char *basepath,
 	return len;
 }
 
-static void write_header(const char *, const char *, struct path_prefix *,
+static void write_header(const char *, char, const char *, struct path_prefix *,
                          const char *, unsigned int, unsigned long);
 
 /* stores a pax extended header directly in the block buffer */
@@ -169,7 +169,7 @@ static void write_extended_header(const char *headerfilename, int is_dir,
                                   struct path_prefix *prefix,
                                   const char *path, unsigned int namelen)
 {
-	char *records, *p;
+	char *p;
 	unsigned int size = 1 + 6 + namelen + 1;
 	if (size > 9)
 		size++;
@@ -177,12 +177,10 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 		size++;
 	if (size > RECORDSIZE)
 		die("tar-tree: extended header too big, wtf?");
-	write_header(NULL, NULL, NULL, headerfilename, 0100600, size);
-
-	records = block + offset;
-	memset(records, 0, RECORDSIZE);
+	write_header(NULL, 'x', NULL, NULL, headerfilename, 0100600, size);
+	p = block + offset;
+	memset(p, 0, RECORDSIZE);
 	offset += RECORDSIZE;
-	p = records;
 	append_long(&p, size);
 	append_string(&p, " path=");
 	append_path(&p, is_dir, basepath, prefix, path);
@@ -190,8 +188,22 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 	write_if_needed();
 }
 
+static void write_global_extended_header(const char *sha1)
+{
+	char *p;
+	write_header(NULL, 'g', NULL, NULL, "pax_global_header", 0, 52);
+	p = block + offset;
+	memset(p, 0, RECORDSIZE);
+	offset += RECORDSIZE;
+	append_long(&p, 52);	/* 2 + 9 + 40 + 1 */
+	append_string(&p, " comment=");
+	append_string(&p, sha1_to_hex(sha1));
+	append_char(&p, '\n');
+	write_if_needed();
+}
+
 /* stores a ustar header directly in the block buffer */
-static void write_header(const char *sha1, const char *basepath,
+static void write_header(const char *sha1, char typeflag, const char *basepath,
                          struct path_prefix *prefix, const char *path,
                          unsigned int mode, unsigned long size)
 {
@@ -236,11 +248,7 @@ static void write_header(const char *sha1, const char *basepath,
 	sprintf(&header[124], "%011lo", S_ISDIR(mode) ? 0 : size);
 	sprintf(&header[136], "%011lo", archive_time);
 
-	/* typeflag */
-	if (!sha1)
-		header[156] = 'x';	/* extended header */
-	else
-		header[156] = S_ISDIR(mode) ? '5' : '0';
+	header[156] = typeflag;
 
 	memcpy(&header[257], "ustar", 6);
 	memcpy(&header[263], "00", 2);
@@ -279,7 +287,8 @@ static void traverse_tree(void *buffer, unsigned long size,
 		eltbuf = read_sha1_file(sha1, elttype, &eltsize);
 		if (!eltbuf)
 			die("cannot read %s", sha1_to_hex(sha1));
-		write_header(sha1, basedir, prefix, path, mode, eltsize);
+		write_header(sha1, S_ISDIR(mode) ? '5' : '0', basedir,
+		             prefix, path, mode, eltsize);
 		if (!strcmp(elttype, "tree")) {
 			this_prefix.name = path;
 			traverse_tree(eltbuf, eltsize, &this_prefix);
@@ -320,6 +329,7 @@ time_t commit_time(void * buffer, unsigned long size)
 int main(int argc, char **argv)
 {
 	unsigned char sha1[20];
+	unsigned char commit_sha1[20];
 	void *buffer;
 	unsigned long size;
 
@@ -339,8 +349,9 @@ int main(int argc, char **argv)
 	if (!sha1_file_directory)
 		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 
-	buffer = read_object_with_reference(sha1, "commit", &size, NULL);
+	buffer = read_object_with_reference(sha1, "commit", &size, commit_sha1);
 	if (buffer) {
+		write_global_extended_header(commit_sha1);
 		archive_time = commit_time(buffer, size);
 		free(buffer);
 	}
@@ -351,7 +362,7 @@ int main(int argc, char **argv)
 	if (!archive_time)
 		archive_time = time(NULL);
 	if (basedir)
-		write_header("0", NULL, NULL, basedir, 040755, 0);
+		write_header("0", '5', NULL, NULL, basedir, 040755, 0);
 	traverse_tree(buffer, size, NULL);
 	free(buffer);
 	write_trailer();
