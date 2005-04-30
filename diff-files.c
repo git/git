@@ -6,8 +6,8 @@
 #include "cache.h"
 #include "diff.h"
 
-static const char *show_diff_usage =
-"show-diff [-p] [-q] [-r] [-z] [paths...]";
+static const char *diff_files_usage =
+"diff-files [-p] [-q] [-r] [-z] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		else if (!strcmp(argv[1], "-z"))
 			line_termination = 0;
 		else
-			usage(show_diff_usage);
+			usage(diff_files_usage);
 		argv++; argc--;
 	}
 

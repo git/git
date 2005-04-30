@@ -206,8 +206,8 @@ static void show_files(void)
 	}
 }
 
-static const char *show_files_usage =
-	"show-files [-z] (--[cached|deleted|others|stage|unmerged])* "
+static const char *ls_files_usage =
+	"ls-files [-z] (--[cached|deleted|others|stage|unmerged])* "
 	"[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]";
 
 int main(int argc, char **argv)
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 		} else if (!strncmp(arg, "--exclude-from=", 15)) {
 			add_excludes_from_file(arg+15);
 		} else
-			usage(show_files_usage);
+			usage(ls_files_usage);
 	}
 
 	if (show_ignored && !nr_excludes) {
