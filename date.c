@@ -82,6 +82,7 @@ static const struct {
 	{ "FWT",   +1, 0, },	/* French Winter */
 	{ "FST",   +1, 1, },	/* French Summer */
 	{ "EET",   +2, 0, },	/* Eastern Europe, USSR Zone 1 */
+	{ "EEST",  +2, 1, },	/* Eastern European Daylight */
 	{ "WAST",  +7, 0, },	/* West Australian Standard */
 	{ "WADT",  +7, 1, },	/* West Australian Daylight */
 	{ "CCT",   +8, 0, },	/* China Coast, USSR Zone 7 */
@@ -144,7 +145,10 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 			/* This is bogus, but we like summer */
 			off += timezone_names[i].dst;
 
-			*offset = 60*off;
+			/* Only use the tz name offset if we don't have anything better */
+			if (*offset == -1)
+				*offset = 60*off;
+
 			return match;
 		}
 	}
