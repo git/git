@@ -48,7 +48,7 @@ int setup_connection(int *fd_in, int *fd_out, char *remote_prog,
 		}
 	}
 	strcpy(posn, " -");
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv)) {
 		return error("Couldn't create socket");
 	}
 	if (!fork()) {

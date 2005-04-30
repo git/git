@@ -26,6 +26,10 @@ int parse_tag(struct tag *item)
         char type[20];
         void *data, *bufptr;
         unsigned long size;
+	int typelen, taglen;
+	unsigned char object[20];
+	const char *type_line, *tag_line, *sig_line;
+
         if (item->object.parsed)
                 return 0;
         item->object.parsed = 1;
@@ -36,10 +40,6 @@ int parse_tag(struct tag *item)
         if (strcmp(type, tag_type))
                 return error("Object %s not a tag",
                              sha1_to_hex(item->object.sha1));
-
-	int typelen, taglen;
-	unsigned char object[20];
-	const char *type_line, *tag_line, *sig_line;
 
 	if (size < 64)
 		return -1;
