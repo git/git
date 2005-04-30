@@ -1,8 +1,3 @@
-#define _XOPEN_SOURCE /* glibc2 needs this */
-#define _BSD_SOURCE /* for tm.tm_gmtoff */
-#include <time.h>
-#include <ctype.h>
-
 #include "cache.h"
 #include "commit.h"
 
