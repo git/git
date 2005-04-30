@@ -23,26 +23,32 @@ static void check_connectivity(void)
 		struct object *obj = objs[i];
 		struct object_list *refs;
 
+		if (!obj->parsed) {
+			printf("missing %s %s\n", obj->type, sha1_to_hex(obj->sha1));
+			continue;
+		}
+
+		for (refs = obj->refs; refs; refs = refs->next) {
+			if (refs->item->parsed)
+				continue;
+			printf("broken link from %7s %s\n",
+			       obj->type, sha1_to_hex(obj->sha1));
+			printf("              to %7s %s\n",
+			       obj->type, sha1_to_hex(refs->item->sha1));
+		}
+
+		/* Don't bother with tag reachability. */
+		if (obj->type == tag_type)
+			continue;
+
 		if (show_unreachable && !(obj->flags & REACHABLE)) {
 			printf("unreachable %s %s\n", obj->type, sha1_to_hex(obj->sha1));
 			continue;
 		}
 
-		if (!obj->parsed) {
-			printf("missing %s %s\n", obj->type, 
-			       sha1_to_hex(obj->sha1));
-		}
 		if (!obj->used) {
 			printf("dangling %s %s\n", obj->type, 
 			       sha1_to_hex(obj->sha1));
-		}
-		for (refs = obj->refs; refs; refs = refs->next) {
-			if (!refs->item->parsed) {
-				printf("broken link from %s\n",
-				       sha1_to_hex(obj->sha1));
-				printf("              to %s\n",
-				       sha1_to_hex(refs->item->sha1));
-			}
 		}
 	}
 }
