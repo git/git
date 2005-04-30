@@ -174,7 +174,14 @@ int main(int argc, char **argv)
 			continue;
 
 		if (!get_sha1_hex(arg, head_sha1)) {
-			struct object *obj = &lookup_commit(head_sha1)->object;
+			struct commit *commit = lookup_commit(head_sha1);
+			struct object *obj;
+
+			/* Error is printed by lookup_commit(). */
+			if (!commit)
+				continue;
+
+			obj = &commit->object;
 			obj->used = 1;
 			mark_reachable(obj, REACHABLE);
 			heads++;
