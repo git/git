@@ -86,9 +86,9 @@ git-unpack-file: unpack-file.c
 git-export: export.c
 git-diff-cache: diff-cache.c
 git-convert-cache: convert-cache.c
-git-http-pull: http-pull.c
+git-http-pull: http-pull.c pull.c
 git-rpush: rsh.c
-git-rpull: rsh.c
+git-rpull: rsh.c pull.c
 git-rev-list: rev-list.c
 git-mktag: mktag.c
 git-diff-tree-helper: diff-tree-helper.c
