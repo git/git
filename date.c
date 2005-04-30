@@ -245,7 +245,8 @@ void parse_date(char *date, char *result, int maxlen)
 	tm.tm_year = -1;
 	tm.tm_mon = -1;
 	tm.tm_mday = -1;
-	offset = 0;
+	tm.tm_isdst = -1;
+	offset = -1;
 
 	for (;;) {
 		int match = 0;
@@ -270,7 +271,11 @@ void parse_date(char *date, char *result, int maxlen)
 		date += match;
 	}
 
-	then = my_mktime(&tm); /* mktime uses local timezone */
+	/* mktime uses local timezone */
+	then = my_mktime(&tm); 
+	if (offset == -1)
+		offset = (then - mktime(&tm)) / 60;
+
 	if (then == -1)
 		return;
 
