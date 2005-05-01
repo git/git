@@ -44,7 +44,8 @@ static int parse_oneside_change(const char *cp, struct diff_spec *one,
 	return 0;
 }
 
-static int parse_diff_tree_output(const char *buf, const char **spec, int cnt)
+static int parse_diff_tree_output(const char *buf,
+				  const char **spec, int cnt, int reverse)
 {
 	struct diff_spec old, new;
 	char path[PATH_MAX];
@@ -98,8 +99,12 @@ static int parse_diff_tree_output(const char *buf, const char **spec, int cnt)
 	default:
 		return -1;
 	}
-	if (!cnt || matches_pathspec(path, spec, cnt))
-		run_external_diff(path, &old, &new);
+	if (!cnt || matches_pathspec(path, spec, cnt)) {
+		if (reverse)
+			run_external_diff(path, &new, &old);
+		else
+			run_external_diff(path, &old, &new);
+	}
 	return 0;
 }
 
@@ -108,14 +113,14 @@ static const char *diff_tree_helper_usage =
 
 int main(int ac, const char **av) {
 	struct strbuf sb;
-	int reverse_diff = 0;
+	int reverse = 0;
 	int line_termination = '\n';
 
 	strbuf_init(&sb);
 
 	while (1 < ac && av[1][0] == '-') {
 		if (av[1][1] == 'R')
-			reverse_diff = 1;
+			reverse = 1;
 		else if (av[1][1] == 'z')
 			line_termination = 0;
 		else
@@ -129,7 +134,7 @@ int main(int ac, const char **av) {
 		read_line(&sb, stdin, line_termination);
 		if (sb.eof)
 			break;
-		status = parse_diff_tree_output(sb.buf, av+1, ac-1);
+		status = parse_diff_tree_output(sb.buf, av+1, ac-1, reverse);
 		if (status)
 			fprintf(stderr, "cannot parse %s\n", sb.buf);
 	}
