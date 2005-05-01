@@ -111,7 +111,7 @@ static int add_file_to_cache(char *path)
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (errno == ENOENT) {
+		if (errno == ENOENT || errno == ENOTDIR) {
 			if (allow_remove)
 				return remove_file_from_cache(path);
 		}
