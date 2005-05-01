@@ -114,6 +114,15 @@ static int match_string(const char *date, const char *str)
 	return i;
 }
 
+static int skip_alpha(const char *date)
+{
+	int i = 0;
+	do {
+		i++;
+	} while (isalpha(date[i]));
+	return i;
+}
+
 /*
 * Parse month, weekday, or timezone name
 */
@@ -153,8 +162,14 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 		}
 	}
 
+	if (match_string(date, "PM") == 2) {
+		if (tm->tm_hour > 0 && tm->tm_hour < 12)
+			tm->tm_hour += 12;
+		return 2;
+	}
+
 	/* BAD CRAP */
-	return 0;
+	return skip_alpha(date);
 }
 
 static int is_date(int year, int month, int day, struct tm *tm)
@@ -332,14 +347,13 @@ static int match_tz(char *date, int *offp)
 	 * a valid minute. We might want to check that the minutes
 	 * are divisible by 30 or something too.
 	 */
-	if (min >= 60 || n < 3)
-		return 0;
+	if (min < 60 && n > 2) {
+		offset = hour*60+min;
+		if (*date == '-')
+			offset = -offset;
 
-	offset = hour*60+min;
-	if (*date == '-')
-		offset = -offset;
-
-	*offp = offset;
+		*offp = offset;
+	}
 	return end - date;
 }
 

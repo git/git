@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 		memcpy(result, "bad", 4);
 		parse_date(argv[i], result, sizeof(result));
 		t = strtoul(result, NULL, 0);
-		printf("%s -> %s -> %s\n", argv[i], result, ctime(&t));
+		printf("%s -> %s -> %s", argv[i], result, ctime(&t));
 	}
 	return 0;
 }
