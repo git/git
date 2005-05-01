@@ -1,0 +1,60 @@
+#!/bin/sh
+# Copyright (C) 2005 Junio C Hamano
+#
+# Applying diff between two trees to the work tree can be
+# done with the following single command:
+#
+# GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p $tree1 $tree2
+#
+
+case "$#" in
+2)    exit 1 ;; # do not feed unmerged diff to me!
+esac
+name="$1" tmp1="$2" hex1="$3" mode1="$4" tmp2="$5" hex2="$6" mode2="$7"
+case "$mode1" in *7??) mode1=+x ;; *6??) mode1=-x ;; esac
+case "$mode2" in *7??) mode2=+x ;; *6??) mode2=-x ;; esac
+
+if test -f "$name.orig" || test -f "$name.rej"
+then
+    echo >&2 "Unresolved patch conflicts in the previous run found."
+    exit 1
+fi
+# This will say "patching ..." so we do not say anything outselves.
+
+diff -u -L "a/$name" -L "b/$name" "$tmp1" "$tmp2" | patch -p1
+test -f "$name.rej" || {
+    case "$mode1,$mode2" in
+    .,?x)
+	# newly created
+	case "$mode2" in
+	+x)
+	    echo >&2 "created $name with mode +x."
+	    chmod "$mode2" "$name"
+	    ;;
+	-)
+	    echo >&2 "created $name."
+	    ;;
+	esac
+	git-update-cache --add -- "$name"
+	;;
+    ?x,.)
+	# deleted
+	echo >&2 "deleted $name."
+	rm -f "$name"
+	git-update-cache --remove -- "$name"
+	;;
+    *)
+	# changed
+	case "$mode1,$mode2" in
+	"$mode2,$mode1") ;;
+	*)
+	    echo >&2 "changing mode from $mode1 to $mode2."
+	    chmod "$mode2" "$name"
+	    ;;
+	esac
+    esac
+    # This bit is debatable---the SCM may not want to keep
+    # cache in sync with the work tree (JIT does want to).
+    git-update-cache -- "$name"
+}
+exit 0

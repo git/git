@@ -12,8 +12,8 @@ CFLAGS=-g -O2 -Wall
 CC=gcc
 AR=ar
 
-SCRIPTS=git-merge-one-file-script git-prune-script git-pull-script \
-	git-tag-script
+SCRIPTS=git-apply-patch-script git-merge-one-file-script git-prune-script \
+	git-pull-script git-tag-script
 
 PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
