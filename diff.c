@@ -82,35 +82,32 @@ static void builtin_diff(const char *name,
 			 struct diff_tempfile *temp)
 {
 	int i, next_at;
-	const char *diff_cmd = "diff -L'%s%s%s' -L'%s%s%s'";
+	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
 	const char *diff_arg  = "'%s' '%s'";
 	const char *input_name_sq[2];
 	const char *path0[2];
 	const char *path1[2];
-	char mode[2][20];
 	const char *name_sq = sq_expand(name);
 	char *cmd;
 	
-	/* diff_cmd and diff_arg have 8 %s in total which makes
-	 * the sum of these strings 16 bytes larger than required.
+	/* diff_cmd and diff_arg have 6 %s in total which makes
+	 * the sum of these strings 12 bytes larger than required.
 	 * we use 2 spaces around diff-opts, and we need to count
-	 * terminating NUL, so we subtract 13 here.
+	 * terminating NUL, so we subtract 9 here.
 	 */
 	int cmd_size = (strlen(diff_cmd) + strlen(diff_opts) +
-			strlen(diff_arg) - 13);
+			strlen(diff_arg) - 9);
 	for (i = 0; i < 2; i++) {
 		input_name_sq[i] = sq_expand(temp[i].name);
 		if (!strcmp(temp[i].name, "/dev/null")) {
 			path0[i] = "/dev/null";
 			path1[i] = "";
-			mode[i][0] = 0;
 		} else {
 			path0[i] = i ? "l/" : "k/";
 			path1[i] = name_sq;
-			sprintf(mode[i], "  (mode:%s)", temp[i].mode);
 		}
 		cmd_size += (strlen(path0[i]) + strlen(path1[i]) +
-			     strlen(mode[i]) + strlen(input_name_sq[i]));
+			     strlen(input_name_sq[i]));
 	}
 
 	cmd = xmalloc(cmd_size);
@@ -118,13 +115,20 @@ static void builtin_diff(const char *name,
 	next_at = 0;
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    diff_cmd,
-			    path0[0], path1[0], mode[0],
-			    path0[1], path1[1], mode[1]);
+			    path0[0], path1[0], path0[1], path1[1]);
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    " %s ", diff_opts);
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    diff_arg, input_name_sq[0], input_name_sq[1]);
 
+	if (!path1[0][0])
+		printf("Created: %s (mode:%s)\n", name, temp[1].mode);
+	else if (!path1[1][0])
+		printf("Deleted: %s\n", name);
+	else if (strcmp(temp[0].mode, temp[1].mode))
+		printf("Mode changed: %s (%s->%s)\n", name,
+		       temp[0].mode, temp[1].mode);
+	fflush(NULL);
 	execlp("/bin/sh","sh", "-c", cmd, NULL);
 }
 
