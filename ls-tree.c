@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
 	if (argc != 2)
 		usage(ls_tree_usage);
-	if (get_sha1_hex(argv[1], sha1) < 0)
+	if (get_sha1(argv[1], sha1) < 0)
 		usage(ls_tree_usage);
 	sha1_file_directory = getenv(DB_ENVIRONMENT);
 	if (!sha1_file_directory)

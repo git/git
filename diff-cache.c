@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 		usage(diff_cache_usage);
 	}
 
-	if (argc != 2 || get_sha1_hex(argv[1], tree_sha1))
+	if (argc != 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
 	mark_merge_entries();

@@ -146,6 +146,7 @@ extern int write_sha1_from_fd(const unsigned char *sha1, int fd);
 extern int has_sha1_file(const unsigned char *sha1);
 
 /* Convert to/from hex/sha1 representation */
+extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 

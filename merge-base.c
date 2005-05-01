@@ -58,8 +58,8 @@ int main(int argc, char **argv)
 	unsigned char rev1key[20], rev2key[20];
 
 	if (argc != 3 ||
-	    get_sha1_hex(argv[1], rev1key) ||
-	    get_sha1_hex(argv[2], rev2key)) {
+	    get_sha1(argv[1], rev1key) ||
+	    get_sha1(argv[2], rev2key)) {
 		usage("merge-base <commit-id> <commit-id>");
 	}
 	rev1 = lookup_commit(rev1key);

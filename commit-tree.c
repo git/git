@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 	for (i = 2; i < argc; i += 2) {
 		char *a, *b;
 		a = argv[i]; b = argv[i+1];
-		if (!b || strcmp(a, "-p") || get_sha1_hex(b, parent_sha1[parents]))
+		if (!b || strcmp(a, "-p") || get_sha1(b, parent_sha1[parents]))
 			usage(commit_tree_usage);
 		check_valid(parent_sha1[parents], "commit");
 		parents++;

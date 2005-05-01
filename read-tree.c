@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 			merge = 1;
 			continue;
 		}
-		if (get_sha1_hex(arg, sha1) < 0)
+		if (get_sha1(arg, sha1) < 0)
 			usage(read_tree_usage);
 		if (stage > 3)
 			usage(read_tree_usage);

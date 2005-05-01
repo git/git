@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 	struct entry *entry;
 
-	if (argc != 2 || get_sha1_hex(argv[1], sha1))
+	if (argc != 2 || get_sha1(argv[1], sha1))
 		usage("convert-cache <sha1>");
 
 	entry = convert_entry(sha1);

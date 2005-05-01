@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 {
 	unsigned char sha1[20];
 
-	if (argc != 2 || get_sha1_hex(argv[1], sha1))
+	if (argc != 2 || get_sha1(argv[1], sha1))
 		usage("unpack-file.c <sha1>");
 
 	puts(create_temp_file(sha1));

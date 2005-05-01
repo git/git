@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 		usage(diff_tree_usage);
 	}
 
-	if (argc < 3 || get_sha1_hex(argv[1], old) || get_sha1_hex(argv[2], new))
+	if (argc < 3 || get_sha1(argv[1], old) || get_sha1(argv[2], new))
 		usage(diff_tree_usage);
 
 	if (argc > 3) {

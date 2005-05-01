@@ -338,7 +338,7 @@ int main(int argc, char **argv)
 		basedir = argv[2];
 		/* FALLTHROUGH */
 	case 2:
-		if (get_sha1_hex(argv[1], sha1) < 0)
+		if (get_sha1(argv[1], sha1) < 0)
 			usage(tar_tree_usage);
 		break;
 	default:

@@ -73,8 +73,8 @@ int main(int argc, char **argv)
 	unsigned char top_sha1[20];
 
 	if (argc < 2 || argc > 4 ||
-	    get_sha1_hex(argv[1], top_sha1) ||
-	    (argc == 3 && get_sha1_hex(argv[2], base_sha1)))
+	    get_sha1(argv[1], top_sha1) ||
+	    (argc == 3 && get_sha1(argv[2], base_sha1)))
 		usage("git-export top [base]");
 	export(get_commit(top_sha1), argc==3 ? get_commit(base_sha1) : NULL);
 	return 0;

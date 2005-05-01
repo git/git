@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 	struct commit_list *list = NULL;
 	struct commit *commit;
 
-	if (argc != 2 || get_sha1_hex(argv[1], sha1))
+	if (argc != 2 || get_sha1(argv[1], sha1))
 		usage("rev-list <commit-id>");
 
 	commit = lookup_commit(sha1);

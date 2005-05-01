@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 		if (*arg == '-')
 			continue;
 
-		if (!get_sha1_hex(arg, head_sha1)) {
+		if (!get_sha1(arg, head_sha1)) {
 			struct commit *commit = lookup_commit(head_sha1);
 			struct object *obj;
 
