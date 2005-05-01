@@ -16,7 +16,7 @@
 # if the directory is newly added in a branch, it might not exist
 # in the current tree
 dir=$(dirname "$4")
-mkdir -p "$dir"
+mkdir -p "$dir" || exit
 
 case "${1:-.}${2:-.}${3:-.}" in
 #
@@ -30,22 +30,18 @@ case "${1:-.}${2:-.}${3:-.}" in
 # deleted in one and unchanged in the other
 #
 "$1.." | "$1.$1" | "$1$1.")
-	rm -f -- "$4"
 	echo "Removing $4"
-	git-update-cache --remove -- "$4"
-	exit 0
-	;;
-
+	rm -f -- "$4" && exec git-update-cache --remove -- "$4" ;;
 #
 # added in one
 #
 ".$2." | "..$3" )
-	echo "Adding $4 with perm $6$7"
-	mv $(git-unpack-file "$2$3") $4
-	chmod "$6$7" $4
-	git-update-cache --add -- $4
-	exit 0
-	;;
+	case "$6$7" in *7??) mode=+x;; *) mode=-x;; esac
+	echo "Adding $4 with perm $mode"
+	rm -f -- "$4" &&
+	git-cat-file blob "$2$3" >"$4" &&
+	chmod "$mode" -- "$4" &&
+	exec git-update-cache --add -- "$4" ;;
 #
 # Added in both (check for same permissions)
 #
@@ -54,11 +50,12 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: File $4 added in both branches, permissions conflict $6->$7"
 		exit 1
 	fi
-	echo "Adding $4 with perm $6"
-	mv $(git-unpack-file "$2") $4
-	chmod "$6" $4
-	git-update-cache --add -- $4
-	exit 0;;
+	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
+	echo "Adding $4 with perm $mode"
+	rm -f -- "$4" &&
+	git-cat-file blob "$2" >"$4" &&
+	chmod "$mode" -- "$4" &&
+	exec git-update-cache --add -- "$4" ;;
 #
 # Modified in both, but differently ;(
 #
@@ -76,16 +73,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 		fi
 		exit 1
 	fi
-	chmod -- "$6" "$src2"
 	if [ $ret -ne 0 ]; then
 		echo "ERROR: Leaving conflict merge in $src2"
 		exit 1
 	fi
-	cp -- "$src2" "$4" && chmod -- "$6" "$4" &&  git-update-cache --add -- "$4" && exit 0
-	;;
-
+	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
+	rm -f -- "$4" && cat "$src2" >"$4" && chmod "$mode" -- "$4" &&
+	exec git-update-cache --add -- "$4" ;;
 *)
-	echo "Not handling case $1 -> $2 -> $3"
-	;;
+	echo "Not handling case $4: $1 -> $2 -> $3" ;;
 esac
 exit 1
