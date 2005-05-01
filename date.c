@@ -157,75 +157,164 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 	return 0;
 }
 
-static int match_digit(char *date, struct tm *tm, int *offset)
+static int is_date(int year, int month, int day, struct tm *tm)
 {
-	char *end, c;
-	unsigned long num, num2, num3;
-
-	num = strtoul(date, &end, 10);
-
-	/* Time? num:num[:num] */
-	if (num < 24 && end[0] == ':' && isdigit(end[1])) {
-		tm->tm_hour = num;
-		num = strtoul(end+1, &end, 10);
-		if (num < 60) {
-			tm->tm_min = num;
-			if (end[0] == ':' && isdigit(end[1])) {
-				num = strtoul(end+1, &end, 10);
-				if (num < 61)
-					tm->tm_sec = num;
-			}
+	if (month > 0 && month < 13 && day > 0 && day < 32) {
+		if (year == -1) {
+			tm->tm_mon = month-1;
+			tm->tm_mday = day;
+			return 1;
 		}
-		return end - date;
+		if (year >= 1970 && year < 2100) {
+			year -= 1900;
+		} else if (year > 70 && year < 100) {
+			/* ok */
+		} else if (year < 38) {
+			year += 100;
+		} else
+			return 0;
+
+		tm->tm_mon = month-1;
+		tm->tm_mday = day;
+		tm->tm_year = year;
+		return 1;
 	}
+	return 0;
+}
 
-	/* Year? Day of month? Numeric date-string?*/
-	c = *end;
+static int match_multi_number(unsigned long num, char c, char *date, char *end, struct tm *tm)
+{
+	long num2, num3;
+
+	num2 = strtol(end+1, &end, 10);
+	num3 = -1;
+	if (*end == c && isdigit(end[1]))
+		num3 = strtol(end+1, &end, 10);
+
+	/* Time? Date? */
 	switch (c) {
-	default:
-		if (num > 0 && num < 32) {
-			tm->tm_mday = num;
+	case ':':
+		if (num3 < 0)
+			num3 = 0;
+		if (num < 25 && num2 >= 0 && num2 < 60 && num3 >= 0 && num3 <= 60) {
+			tm->tm_hour = num;
+			tm->tm_min = num2;
+			tm->tm_sec = num3;
 			break;
 		}
-		if (num > 1900) {
-			tm->tm_year = num - 1900;
-			break;
-		}
-		if (num > 70) {
-			tm->tm_year = num;
-			break;
-		}
-		break;
+		return 0;
 
 	case '-':
 	case '/':
-		if (num && num < 32 && isdigit(end[1])) {
-			num2 = strtoul(end+1, &end, 10);
-			if (!num2 || num2 > 31)
+		if (num > 70) {
+			/* yyyy-mm-dd? */
+			if (is_date(num, num2, num3, tm))
 				break;
-			if (num > 12) {
-				if (num2 > 12)
-					break;
-				num3 = num;
-				num  = num2;
-				num2 = num3;
-			}
-			tm->tm_mon = num - 1;
-			tm->tm_mday = num2;
-			if (*end == c && isdigit(end[1])) {
-				num3 = strtoul(end+1, &end, 10);
-				if (num3 > 1900)
-					num3 -= 1900;
-				else if (num3 < 38)
-					num3 += 100;
-				tm->tm_year = num3;
-			}
+			/* yyyy-dd-mm? */
+			if (is_date(num, num3, num2, tm))
+				break;
+		}
+		/* mm/dd/yy ? */
+		if (is_date(num3, num2, num, tm))
 			break;
+		/* dd/mm/yy ? */
+		if (is_date(num3, num, num2, tm))
+			break;
+		return 0;
+	}
+	return end - date;
+}
+
+/*
+ * We've seen a digit. Time? Year? Date? 
+ */
+static int match_digit(char *date, struct tm *tm, int *offset)
+{
+	int n;
+	char *end;
+	unsigned long num;
+
+	num = strtoul(date, &end, 10);
+
+	/*
+	 * Seconds since 1970? We trigger on that for anything after Jan 1, 2000
+	 */
+	if (num > 946684800) {
+		time_t time = num;
+		if (gmtime_r(&time, tm))
+			return end - date;
+	}
+
+	/*
+	 * Check for special formats: num[:-/]num[same]num
+	 */
+	switch (*end) {
+	case ':':
+	case '/':
+	case '-':
+		if (isdigit(end[1])) {
+			int match = match_multi_number(num, *end, date, end, tm);
+			if (match)
+				return match;
 		}
 	}
+
+	/*
+	 * None of the special formats? Try to guess what
+	 * the number meant. We use the number of digits
+	 * to make a more educated guess..
+	 */
+	n = 0;
+	do {
+		n++;
+	} while (isdigit(date[n]));
+
+	/* Four-digit year or a timezone? */
+	if (n == 4) {
+		if (num <= 1200 && *offset == -1) {
+			unsigned int minutes = num % 100;
+			unsigned int hours = num / 100;
+			*offset = hours*60 + minutes;
+		} else if (num > 1900 && num < 2100)
+			tm->tm_year = num - 1900;
+		return n;
+	}
+
+	/*
+	 * NOTE! We will give precedence to day-of-month over month or
+	 * year numebers in the 1-12 range. So 05 is always "mday 5",
+	 * unless we already have a mday..
+	 *
+	 * IOW, 01 Apr 05 parses as "April 1st, 2005".
+	 */
+	if (num > 0 && num < 32 && tm->tm_mday < 0) {
+		tm->tm_mday = num;
+		return n;
+	}
+
+	/* Two-digit year? */
+	if (n == 2 && tm->tm_year < 0) {
+		if (num < 10 && tm->tm_mday >= 0) {
+			tm->tm_year = num + 100;
+			return n;
+		}
+		if (num >= 70) {
+			tm->tm_year = num;
+			return n;
+		}
+	}
+
+	if (num > 0 && num < 32) {
+		tm->tm_mday = num;
+	} else if (num > 1900) {
+		tm->tm_year = num - 1900;
+	} else if (num > 70) {
+		tm->tm_year = num;
+	} else if (num > 0 && num < 13) {
+		tm->tm_mon = num-1;
+	}
 		
-	return end - date;
-			
+	return n;
 }
 
 static int match_tz(char *date, int *offp)
@@ -233,9 +322,18 @@ static int match_tz(char *date, int *offp)
 	char *end;
 	int offset = strtoul(date+1, &end, 10);
 	int min, hour;
+	int n = end - date - 1;
 
 	min = offset % 100;
 	hour = offset / 100;
+
+	/*
+	 * Don't accept any random crap.. At least 3 digits, and
+	 * a valid minute. We might want to check that the minutes
+	 * are divisible by 30 or something too.
+	 */
+	if (min >= 60 || n < 3)
+		return 0;
 
 	offset = hour*60+min;
 	if (*date == '-')
