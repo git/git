@@ -306,6 +306,15 @@ int main(int argc, char **argv)
 				i += 3;
 				continue;
 			}
+			if (!strcmp(path, "--force-remove")) {
+				if (argc <= i + 1)
+					die("update-cache: --force-remove <path>");
+				if (remove_file_from_cache(argv[i+1]))
+					die("update-cache: --force-remove cannot remove %s", argv[i+1]);
+				i++;
+				continue;
+			}
+
 			if (!strcmp(path, "--ignore-missing")) {
 				not_new = 1;
 				continue;
