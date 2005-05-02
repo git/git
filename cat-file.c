@@ -21,6 +21,7 @@ int main(int argc, char **argv)
 			buf = type;
 			size = strlen(type);
 			type[size] = '\n';
+			size++;
 		}
 	} else {
 		buf = read_object_with_reference(sha1, argv[1], &size, NULL);
