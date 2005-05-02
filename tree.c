@@ -122,11 +122,6 @@ int parse_tree(struct tree *item)
 		entry->executable = mode & S_IXUSR;
 		entry->next = NULL;
 
-		/* Warn about trees that don't do the recursive thing.. */
-		if (strchr(path, '/')) {
-			item->has_full_path = 1;
-		}
-
 		bufptr += len + 20;
 		size -= len + 20;
 

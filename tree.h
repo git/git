@@ -18,7 +18,6 @@ struct tree_entry_list {
 
 struct tree {
 	struct object object;
-	unsigned has_full_path : 1;
 	struct tree_entry_list *entries;
 };
 

@@ -53,13 +53,69 @@ static void check_connectivity(void)
 	}
 }
 
+/*
+ * The entries in a tree are ordered in the _path_ order,
+ * which means that a directory entry is ordered by adding
+ * a slash to the end of it.
+ *
+ * So a directory called "a" is ordered _after_ a file
+ * called "a.c", because "a/" sorts after "a.c".
+ */
+static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
+{
+	int len1 = strlen(a->name);
+	int len2 = strlen(b->name);
+	int len = len1 < len2 ? len1 : len2;
+	unsigned char c1, c2;
+	int cmp;
+
+	cmp = memcmp(a->name, b->name, len);
+	if (cmp < 0)
+		return 0;
+	if (cmp > 0)
+		return -1;
+
+	/*
+	 * Ok, the first <len> characters are the same.
+	 * Now we need to order the next one, but turn
+	 * a '\0' into a '/' for a directory entry.
+	 */
+	c1 = a->name[len];
+	c2 = b->name[len];
+	if (!c1 && a->directory)
+		c1 = '/';
+	if (!c2 && b->directory)
+		c2 = '/';
+	return c1 < c2 ? 0 : -1;
+}
+
 static int fsck_tree(struct tree *item)
 {
-	if (item->has_full_path) {
+	int has_full_path = 0;
+	struct tree_entry_list *entry, *last;
+
+	last = NULL;
+	for (entry = item->entries; entry; entry = entry->next) {
+		if (strchr(entry->name, '/'))
+			has_full_path = 1;
+
+		if (last) {
+			if (verify_ordered(last, entry) < 0) {
+				fprintf(stderr, "tree %s not ordered\n",
+					sha1_to_hex(item->object.sha1));
+				return -1;
+			}
+		}
+
+		last = entry;
+	}
+
+	if (has_full_path) {
 		fprintf(stderr, "warning: fsck-cache: tree %s "
 			"has full pathnames in it\n", 
 			sha1_to_hex(item->object.sha1));
 	}
+
 	return 0;
 }
 
