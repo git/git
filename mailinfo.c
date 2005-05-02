@@ -10,6 +10,7 @@
 static FILE *cmitmsg, *patchfile, *filelist;
 
 static char line[1000];
+static char date[1000];
 static char name[1000];
 static char email[1000];
 static char subject[1000];
@@ -78,6 +79,11 @@ static int handle_from(char *line)
 	return 1;
 }
 
+static void handle_date(char *line)
+{
+	strcpy(date, line);
+}
+
 static void handle_subject(char *line)
 {
 	strcpy(subject, line);
@@ -99,6 +105,11 @@ static void check_line(char *line, int len)
 		cont = 0;
 		return;
 	}
+	if (!memcmp(line, "Date:", 5) && isspace(line[5])) {
+		handle_date(line+6);
+		cont = 0;
+		return;
+	}
 	if (!memcmp(line, "Subject:", 8) && isspace(line[8])) {
 		handle_subject(line+9);
 		cont = 1;
@@ -107,7 +118,7 @@ static void check_line(char *line, int len)
 	if (isspace(*line)) {
 		switch (cont) {
 		case 0:
-			fprintf(stderr, "I don't do 'From:' line continuations\n");
+			fprintf(stderr, "I don't do 'Date:' or 'From:' line continuations\n");
 			break;
 		case 1:
 			add_subject_line(line);
@@ -213,9 +224,10 @@ static void handle_rest(void)
 {
 	char *sub = cleanup_subject(subject);
 	cleanup_space(name);
+	cleanup_space(date);
 	cleanup_space(email);
 	cleanup_space(sub);
-	printf("Author: %s\nEmail: %s\nSubject: %s\n\n", name, email, sub);
+	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n", name, email, sub, date);
 	FILE *out = cmitmsg;
 
 	do {
