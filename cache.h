@@ -116,6 +116,7 @@ extern int remove_entry_at(int pos);
 extern int remove_file_from_cache(char *path);
 extern int same_name(struct cache_entry *a, struct cache_entry *b);
 extern int cache_match_stat(struct cache_entry *ce, struct stat *st);
+extern int index_fd(unsigned char *sha1, int fd, struct stat *st);
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
