@@ -53,10 +53,6 @@ int fetch(unsigned char *sha1)
 	char *url;
 	char *posn;
 
-	if (has_sha1_file(sha1)) {
-		return 0;
-	}
-
 	local = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 
 	if (local < 0)

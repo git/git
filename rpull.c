@@ -14,8 +14,6 @@ static int fd_out;
 
 int fetch(unsigned char *sha1)
 {
-	if (has_sha1_file(sha1))
-		return 0;
 	write(fd_out, sha1, 20);
 	return write_sha1_from_fd(sha1, fd_in);
 }
