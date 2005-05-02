@@ -14,17 +14,20 @@ int main(int argc, char **argv)
 
 	if (argc != 3 || get_sha1(argv[2], sha1))
 		usage("cat-file [-t | tagname] <sha1>");
-	buf = read_sha1_file(sha1, type, &size);
+
+	if (!strcmp("-t", argv[1])) {
+		buf = read_sha1_file(sha1, type, &size);
+		if (buf) {
+			buf = type;
+			size = strlen(type);
+			type[size] = '\n';
+		}
+	} else {
+		buf = read_object_with_reference(sha1, argv[1], &size, NULL);
+	}
+
 	if (!buf)
 		die("cat-file %s: bad file", argv[2]);
-	if (!strcmp("-t", argv[1])) {
-		buf = type;
-		size = strlen(type);
-		type[size] = '\n';
-		size++;
-	} else if (strcmp(type, argv[1])) {
-		die("cat-file %s: bad tag", argv[2]);
-	}
 
 	while (size > 0) {
 		long ret = write(1, buf, size);
