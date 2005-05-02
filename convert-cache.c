@@ -99,7 +99,7 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 			continue;
 		}
 
-		newlen += sprintf(new + newlen, "%o %.*s", S_IFDIR, slash - path, path);
+		newlen += sprintf(new + newlen, "%o %.*s", S_IFDIR, (int)(slash - path), path);
 		new[newlen++] = 0;
 		sha1 = (unsigned char *)(new + newlen);
 		newlen += 20;
