@@ -103,7 +103,7 @@ static void builtin_diff(const char *name,
 			path0[i] = "/dev/null";
 			path1[i] = "";
 		} else {
-			path0[i] = i ? "l/" : "k/";
+			path0[i] = i ? "b/" : "a/";
 			path1[i] = name_sq;
 		}
 		cmd_size += (strlen(path0[i]) + strlen(path1[i]) +
