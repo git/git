@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	unsigned long size;
 
 	if (argc != 3 || get_sha1(argv[2], sha1))
-		usage("cat-file [-t | tagname] <sha1>");
+		usage("git-cat-file [-t | tagname] <sha1>");
 
 	if (!strcmp("-t", argv[1])) {
 		buf = read_sha1_file(sha1, type, &size);
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!buf)
-		die("cat-file %s: bad file", argv[2]);
+		die("git-cat-file %s: bad file", argv[2]);
 
 	while (size > 0) {
 		long ret = write(1, buf, size);
@@ -38,9 +38,9 @@ int main(int argc, char **argv)
 			/* Ignore epipe */
 			if (errno == EPIPE)
 				break;
-			die("cat-file: %s", strerror(errno));
+			die("git-cat-file: %s", strerror(errno));
 		} else if (!ret) {
-			die("cat-file: disk full?");
+			die("git-cat-file: disk full?");
 		}
 		size -= ret;
 		buf += ret;

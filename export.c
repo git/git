@@ -12,7 +12,7 @@ void show_commit(struct commit *commit)
 	strcpy(hex, sha1_to_hex(commit->object.sha1));
 	printf("Id: %s\n", hex);
 	fflush(NULL);
-	sprintf(cmdline, "cat-file commit %s", hex);
+	sprintf(cmdline, "git-cat-file commit %s", hex);
 	system(cmdline);
 	if (commit->parents) {
 		char *against = sha1_to_hex(commit->parents->item->object.sha1);
