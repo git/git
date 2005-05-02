@@ -60,17 +60,74 @@ int get_sha1_file(const char *path, unsigned char *result)
 	return get_sha1_hex(buffer, result);
 }
 
+static int get_parent(int index, const char *str, unsigned char *result)
+{
+	unsigned char sha1[20];
+	char *buffer;
+	unsigned long size, offset;
+	int ret;
+
+	if (get_sha1(str, sha1) < 0)
+		return -1;
+	buffer = read_object_with_reference(sha1, "commit", &size, NULL);
+	if (!buffer)
+		return -1;
+	ret = -1;
+	offset = 46;
+	for (;;) {
+		if (offset + 48 > size)
+			break;
+		if (memcmp(buffer + offset, "parent ", 7))
+			break;
+		if (index > 0) {
+			offset += 48;
+			index--;
+			continue;
+		}
+		ret = get_sha1_hex(buffer + offset + 7, result);
+		break;
+	}
+	free(buffer);
+	return ret;	
+}
+
 int get_sha1(const char *str, unsigned char *sha1)
 {
 	static char pathname[PATH_MAX];
+	static const char *prefix[] = {
+		"",
+		"refs",
+		"refs/tags",
+		"refs/heads",
+		"refs/snap",
+		NULL
+	};
+	const char *gitdir;
+	const char **p;
 
 	if (!get_sha1_hex(str, sha1))
 		return 0;
-	if (!get_sha1_file(str, sha1))
-		return 0;
-	snprintf(pathname, sizeof(pathname), ".git/%s", str);
-	if (!get_sha1_file(pathname, sha1))
-		return 0;
+
+	switch (*str) {
+	case '/':
+		if (!get_sha1_file(str, sha1))
+			return 0;
+		break;
+	case '-':
+		return get_parent(0, str+1, sha1);
+	case '0' ... '9':
+		if (str[1] == '-')
+			return get_parent(*str - '0', str+2, sha1);
+		break;
+	}
+
+	gitdir = ".git";
+	for (p = prefix; *p; p++) {
+		snprintf(pathname, sizeof(pathname), "%s/%s/%s", gitdir, *p, str);
+		if (!get_sha1_file(pathname, sha1))
+			return 0;
+	}
+
 	return -1;
 }
 
