@@ -21,7 +21,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
-	git-diff-tree-helper git-tar-tree
+	git-diff-tree-helper git-tar-tree git-local-pull
 
 all: $(PROG)
 
@@ -87,6 +87,7 @@ git-export: export.c
 git-diff-cache: diff-cache.c
 git-convert-cache: convert-cache.c
 git-http-pull: http-pull.c pull.c
+git-local-pull: local-pull.c pull.c
 git-rpush: rsh.c
 git-rpull: rsh.c pull.c
 git-rev-list: rev-list.c
