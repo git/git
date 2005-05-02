@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2005 Junio C Hamano
+ */
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
@@ -10,6 +13,7 @@
 
 static int use_link = 0;
 static int use_symlink = 0;
+static int use_filecopy = 1;
 static int verbose = 0;
 
 static char *path;
@@ -25,9 +29,6 @@ int fetch(unsigned char *sha1)
 	static char filename[PATH_MAX];
 	char *hex = sha1_to_hex(sha1);
 	const char *dest_filename = sha1_file_name(sha1);
-	int ifd, ofd, status;
-	struct stat st;
-	void *map;
 
 	if (object_name_start < 0) {
 		strcpy(filename, path); /* e.g. git.git */
@@ -46,33 +47,47 @@ int fetch(unsigned char *sha1)
 		say("Symlinked %s.\n", hex);
 		return 0;
 	}
-	ifd = open(filename, O_RDONLY);
-	if (ifd < 0 || fstat(ifd, &st) < 0) {
+	if (use_filecopy) {
+		int ifd, ofd, status;
+		struct stat st;
+		void *map;
+		ifd = open(filename, O_RDONLY);
+		if (ifd < 0 || fstat(ifd, &st) < 0) {
+			close(ifd);
+			fprintf(stderr, "Cannot open %s\n", filename);
+			return -1;
+		}
+		map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, ifd, 0);
 		close(ifd);
-		fprintf(stderr, "Cannot open %s\n", filename);
-		return -1;
+		if (-1 == (int)(long)map) {
+			fprintf(stderr, "Cannot mmap %s\n", filename);
+			return -1;
+		}
+		ofd = open(dest_filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+		status = ((ofd < 0) ||
+			  (write(ofd, map, st.st_size) != st.st_size));
+		munmap(map, st.st_size);
+		close(ofd);
+		if (status)
+			fprintf(stderr, "Cannot write %s (%ld bytes)\n",
+				dest_filename, st.st_size);
+		else
+			say("Copied %s.\n", hex);
+		return status;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, ifd, 0);
-	close(ifd);
-	if (-1 == (int)(long)map) {
-		fprintf(stderr, "Cannot mmap %s\n", filename);
-		return -1;
-	}
-	ofd = open(dest_filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	status = ((ofd < 0) || (write(ofd, map, st.st_size) != st.st_size));
-	munmap(map, st.st_size);
-	close(ofd);
-	if (status)
-		fprintf(stderr, "Cannot write %s (%ld bytes)\n",
-			dest_filename, st.st_size);
-	else
-		say("Copied %s.\n", hex);
-	return status;
+	fprintf(stderr, "No copy method was provided to copy %s.\n", hex);
+	return -1;
 }
 
 static const char *local_pull_usage = 
-"git-local-pull [-c] [-t] [-a] [-l] [-s] [-v] commit-id path";
+"git-local-pull [-c] [-t] [-a] [-l] [-s] [-n] [-v] commit-id path";
 
+/* 
+ * By default we only use file copy.
+ * If -l is specified, a hard link is attempted.
+ * If -s is specified, then a symlink is attempted.
+ * If -n is _not_ specified, then a regular file-to-file copy is done.
+ */
 int main(int argc, char **argv)
 {
 	char *commit_id;
@@ -92,6 +107,8 @@ int main(int argc, char **argv)
 			use_link = 1;
 		else if (argv[arg][1] == 's')
 			use_symlink = 1;
+		else if (argv[arg][1] == 'n')
+			use_filecopy = 0;
 		else if (argv[arg][1] == 'v')
 			verbose = 1;
 		else
