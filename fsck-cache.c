@@ -88,23 +88,76 @@ static int fsck_tag(struct tag *tag)
 	return 0;
 }
 
-static int fsck_name(char *hex)
+static int fsck_sha1(unsigned char *sha1)
 {
-	unsigned char sha1[20];
-	if (!get_sha1_hex(hex, sha1)) {
-		struct object *obj = parse_object(sha1);
-		if (!obj)
-			return -1;
-		if (obj->type == blob_type)
-			return 0;
-		if (obj->type == tree_type)
-			return fsck_tree((struct tree *) obj);
-		if (obj->type == commit_type)
-			return fsck_commit((struct commit *) obj);
-		if (obj->type == tag_type)
-			return fsck_tag((struct tag *) obj);
-	}
+	struct object *obj = parse_object(sha1);
+	if (!obj)
+		return -1;
+	if (obj->type == blob_type)
+		return 0;
+	if (obj->type == tree_type)
+		return fsck_tree((struct tree *) obj);
+	if (obj->type == commit_type)
+		return fsck_commit((struct commit *) obj);
+	if (obj->type == tag_type)
+		return fsck_tag((struct tag *) obj);
 	return -1;
+}
+
+/*
+ * This is the sorting chunk size: make it reasonably
+ * big so that we can sort well..
+ */
+#define MAX_SHA1_ENTRIES (1024)
+
+struct sha1_entry {
+	unsigned long ino;
+	unsigned char sha1[20];
+};
+
+static struct {
+	unsigned long nr;
+	struct sha1_entry *entry[MAX_SHA1_ENTRIES];
+} sha1_list;
+
+static int ino_compare(const void *_a, const void *_b)
+{
+	const struct sha1_entry *a = _a, *b = _b;
+	unsigned long ino1 = a->ino, ino2 = b->ino;
+	return ino1 < ino2 ? -1 : ino1 > ino2 ? 1 : 0;
+}
+
+static void fsck_sha1_list(void)
+{
+	int i, nr = sha1_list.nr;
+
+	qsort(sha1_list.entry, nr, sizeof(struct sha1_entry *), ino_compare);
+	for (i = 0; i < nr; i++) {
+		struct sha1_entry *entry = sha1_list.entry[i];
+		unsigned char *sha1 = entry->sha1;
+
+		sha1_list.entry[i] = NULL;
+		if (fsck_sha1(sha1) < 0)
+			fprintf(stderr, "bad sha1 entry '%s'\n", sha1_to_hex(sha1));
+		free(entry);
+	}
+	sha1_list.nr = 0;
+}
+
+static void add_sha1_list(unsigned char *sha1, unsigned long ino)
+{
+	struct sha1_entry *entry = xmalloc(sizeof(*entry));
+	int nr;
+
+	entry->ino = ino;
+	memcpy(entry->sha1, sha1, 20);
+	nr = sha1_list.nr;
+	if (nr == MAX_SHA1_ENTRIES) {
+		fsck_sha1_list();
+		nr = 0;
+	}
+	sha1_list.entry[nr] = entry;
+	sha1_list.nr = ++nr;
 }
 
 static int fsck_dir(int i, char *path)
@@ -118,6 +171,7 @@ static int fsck_dir(int i, char *path)
 
 	while ((de = readdir(dir)) != NULL) {
 		char name[100];
+		unsigned char sha1[20];
 		int len = strlen(de->d_name);
 
 		switch (len) {
@@ -131,8 +185,10 @@ static int fsck_dir(int i, char *path)
 		case 38:
 			sprintf(name, "%02x", i);
 			memcpy(name+2, de->d_name, len+1);
-			if (!fsck_name(name))
-				continue;
+			if (get_sha1_hex(name, sha1) < 0)
+				break;
+			add_sha1_list(sha1, de->d_ino);
+			continue;
 		}
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
 	}
@@ -170,6 +226,7 @@ int main(int argc, char **argv)
 		sprintf(dir, "%s/%02x", sha1_dir, i);
 		fsck_dir(i, dir);
 	}
+	fsck_sha1_list();
 
 	heads = 0;
 	for (i = 1; i < argc; i++) {
