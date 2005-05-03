@@ -133,14 +133,17 @@ static int fsck_commit(struct commit *commit)
 
 static int fsck_tag(struct tag *tag)
 {
+	struct object *tagged = tag->tagged;
+
+	if (!tagged) {
+		printf("bad object in tag %s\n", sha1_to_hex(tag->object.sha1));
+		return -1;
+	}
 	if (!show_tags)
 		return 0;
 
-	printf("tagged %s %s",
-	       tag->tagged->type,
-	       sha1_to_hex(tag->tagged->sha1));
-	printf(" (%s) in %s\n",
-	       tag->tag, sha1_to_hex(tag->object.sha1));
+	printf("tagged %s %s", tagged->type, sha1_to_hex(tagged->sha1));
+	printf(" (%s) in %s\n", tag->tag, sha1_to_hex(tag->object.sha1));
 	return 0;
 }
 
