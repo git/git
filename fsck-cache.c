@@ -34,7 +34,7 @@ static void check_connectivity(void)
 			printf("broken link from %7s %s\n",
 			       obj->type, sha1_to_hex(obj->sha1));
 			printf("              to %7s %s\n",
-			       obj->type, sha1_to_hex(refs->item->sha1));
+			       refs->item->type, sha1_to_hex(refs->item->sha1));
 		}
 
 		/* Don't bother with tag reachability. */
