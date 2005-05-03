@@ -284,8 +284,9 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 	unsigned char sha1[20];
 	SHA_CTX c;
 	char *filename;
+	static char tmpfile[PATH_MAX];
 	char hdr[50];
-	int fd, hdrlen;
+	int fd, hdrlen, ret;
 
 	/* Generate the header */
 	hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
@@ -300,16 +301,26 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 		memcpy(returnsha1, sha1, 20);
 
 	filename = sha1_file_name(sha1);
-	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0) {
-		if (errno != EEXIST)
-			return -1;
-
+	fd = open(filename, O_RDONLY);
+	if (fd >= 0) {
 		/*
-		 * We might do collision checking here, but we'd need to
-		 * uncompress the old file and check it. Later.
+		 * FIXME!!! We might do collision checking here, but we'd
+		 * need to uncompress the old file and check it. Later.
 		 */
+		close(fd);
 		return 0;
+	}
+
+	if (errno != ENOENT) {
+		fprintf(stderr, "sha1 file %s: %s", filename, strerror(errno));
+		return -1;
+	}
+
+	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
+	fd = mkstemp(tmpfile);
+	if (fd < 0) {
+		fprintf(stderr, "unable to create temporary sha1 filename %s: %s", tmpfile, strerror(errno));
+		return -1;
 	}
 
 	/* Set it up */
@@ -338,54 +349,21 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 
 	if (write(fd, compressed, size) != size)
 		die("unable to write file");
+	fchmod(fd, 0444);
 	close(fd);
-		
-	return 0;
-}
 
-static inline int collision_check(char *filename, void *buf, unsigned int size)
-{
-#ifdef COLLISION_CHECK
-	void *map;
-	int fd = open(filename, O_RDONLY);
-	struct stat st;
-	int cmp;
-
-	/* Unreadable object, or object went away? Strange. */
-	if (fd < 0)
-		return -1;
-
-	if (fstat(fd, &st) < 0 || size != st.st_size)
-		return -1;
-
-	map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	close(fd);
-	if (map == MAP_FAILED)
-		return -1;
-	cmp = memcmp(buf, map, size);
-	munmap(map, size);
-	if (cmp)
-		return -1;
-#endif
-	return 0;
-}
-
-int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size)
-{
-	char *filename = sha1_file_name(sha1);
-	int fd;
-
-	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0) {
-		if (errno != EEXIST)
+	ret = link(tmpfile, filename);
+	if (ret < 0)
+		ret = errno;
+	unlink(tmpfile);
+	if (ret) {
+		if (ret != EEXIST) {
+			fprintf(stderr, "unable to write sha1 filename %s: %s", filename, strerror(ret));
 			return -1;
-		if (collision_check(filename, buf, size))
-			return error("SHA1 collision detected!"
-					" This is bad, bad, BAD!\a\n");
-		return 0;
+		}
+		/* FIXME!!! Collision check here ? */
 	}
-	write(fd, buf, size);
-	close(fd);
+
 	return 0;
 }
 
@@ -463,51 +441,19 @@ int has_sha1_file(const unsigned char *sha1)
 
 int index_fd(unsigned char *sha1, int fd, struct stat *st)
 {
-	z_stream stream;
 	unsigned long size = st->st_size;
-	int max_out_bytes = size + 200;
-	void *out = xmalloc(max_out_bytes);
-	void *metadata = xmalloc(200);
-	int metadata_size;
-	void *in;
-	SHA_CTX c;
+	void *buf;
+	int ret;
 
-	in = "";
+	buf = "";
 	if (size)
-		in = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		buf = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (!out || (int)(long)in == -1)
+	if ((int)(long)buf == -1)
 		return -1;
 
-	metadata_size = 1+sprintf(metadata, "blob %lu", size);
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, metadata, metadata_size);
-	SHA1_Update(&c, in, size);
-	SHA1_Final(sha1, &c);
-
-	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
-
-	/*
-	 * ASCII size + nul byte
-	 */	
-	stream.next_in = metadata;
-	stream.avail_in = metadata_size;
-	stream.next_out = out;
-	stream.avail_out = max_out_bytes;
-	while (deflate(&stream, 0) == Z_OK)
-		/* nothing */;
-
-	/*
-	 * File content
-	 */
-	stream.next_in = in;
-	stream.avail_in = size;
-	while (deflate(&stream, Z_FINISH) == Z_OK)
-		/*nothing */;
-
-	deflateEnd(&stream);
-	
-	return write_sha1_buffer(sha1, out, stream.total_out);
+	ret = write_sha1_file(buf, size, "blob", sha1);
+	if (size)
+		munmap(buf, size);
+	return ret;
 }

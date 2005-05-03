@@ -128,9 +128,6 @@ extern int index_fd(unsigned char *sha1, int fd, struct stat *st);
 /* Return a statically allocated filename matching the sha1 signature */
 extern char *sha1_file_name(const unsigned char *sha1);
 
-/* Write a memory buffer out to the sha file */
-extern int write_sha1_buffer(const unsigned char *sha1, void *buf, unsigned int size);
-
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern void * map_sha1_file(const unsigned char *sha1, unsigned long *size);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
