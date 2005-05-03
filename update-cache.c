@@ -31,57 +31,6 @@ static inline long IS_ERR(const void *ptr)
 	return (unsigned long)ptr > (unsigned long)-1000L;
 }
 
-static int index_fd(unsigned char *sha1, int fd, struct stat *st)
-{
-	z_stream stream;
-	unsigned long size = st->st_size;
-	int max_out_bytes = size + 200;
-	void *out = xmalloc(max_out_bytes);
-	void *metadata = xmalloc(200);
-	int metadata_size;
-	void *in;
-	SHA_CTX c;
-
-	in = "";
-	if (size)
-		in = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	close(fd);
-	if (!out || (int)(long)in == -1)
-		return -1;
-
-	metadata_size = 1+sprintf(metadata, "blob %lu", size);
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, metadata, metadata_size);
-	SHA1_Update(&c, in, size);
-	SHA1_Final(sha1, &c);
-
-	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
-
-	/*
-	 * ASCII size + nul byte
-	 */	
-	stream.next_in = metadata;
-	stream.avail_in = metadata_size;
-	stream.next_out = out;
-	stream.avail_out = max_out_bytes;
-	while (deflate(&stream, 0) == Z_OK)
-		/* nothing */;
-
-	/*
-	 * File content
-	 */
-	stream.next_in = in;
-	stream.avail_in = size;
-	while (deflate(&stream, Z_FINISH) == Z_OK)
-		/*nothing */;
-
-	deflateEnd(&stream);
-	
-	return write_sha1_buffer(sha1, out, stream.total_out);
-}
-
 /*
  * This only updates the "non-critical" parts of the directory
  * cache, ie the parts that aren't tracked by GIT, and only used
@@ -357,6 +306,15 @@ int main(int argc, char **argv)
 				i += 3;
 				continue;
 			}
+			if (!strcmp(path, "--force-remove")) {
+				if (argc <= i + 1)
+					die("update-cache: --force-remove <path>");
+				if (remove_file_from_cache(argv[i+1]))
+					die("update-cache: --force-remove cannot remove %s", argv[i+1]);
+				i++;
+				continue;
+			}
+
 			if (!strcmp(path, "--ignore-missing")) {
 				not_new = 1;
 				continue;

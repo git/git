@@ -6,81 +6,69 @@
 #   $2 - file in branch1 SHA1 (or empty)
 #   $3 - file in branch2 SHA1 (or empty)
 #   $4 - pathname in repository
-#
+#   $5 - orignal file mode (or empty)
+#   $6 - file in branch1 mode (or empty)
+#   $7 - file in branch2 mode (or empty)
 #
 # Handle some trivial cases.. The _really_ trivial cases have
 # been handled already by git-read-tree, but that one doesn't
-# do any merges that migth change the tree layout
-#
-
-# if the directory is newly added in a branch, it might not exist
-# in the current tree
-dir=$(dirname "$4")
-mkdir -p "$dir" || exit
+# do any merges that migth change the tree layout.
 
 case "${1:-.}${2:-.}${3:-.}" in
 #
-# deleted in both
+# Deleted in both.
 #
 "$1..")
-	echo "ERROR: $4 is removed in both branches"
-	echo "ERROR: This is a potential rename conflict"
+	echo "ERROR: $4 is removed in both branches."
+	echo "ERROR: This is a potential rename conflict."
 	exit 1;;
 #
-# deleted in one and unchanged in the other
+# Deleted in one and unchanged in the other.
 #
 "$1.." | "$1.$1" | "$1$1.")
 	echo "Removing $4"
-	rm -f -- "$4" && exec git-update-cache --remove -- "$4" ;;
+	exec git-update-cache --force-remove "$4" ;;
 #
-# added in one
+# Added in one.
 #
 ".$2." | "..$3" )
 	case "$6$7" in *7??) mode=+x;; *) mode=-x;; esac
-	echo "Adding $4 with perm $mode"
-	rm -f -- "$4" &&
-	git-cat-file blob "$2$3" >"$4" &&
-	chmod "$mode" -- "$4" &&
-	exec git-update-cache --add -- "$4" ;;
+	echo "Adding $4 with perm $mode."
+	exec git-update-cache --add --cacheinfo "$6$7" "$2$3" "$4" ;;
 #
-# Added in both (check for same permissions)
+# Added in both (check for same permissions).
 #
-".$2$2")
+".$3$2")
 	if [ "$6" != "$7" ]; then
-		echo "ERROR: File $4 added in both branches, permissions conflict $6->$7"
+		echo "ERROR: File $4 added identically in both branches,"
+		echo "ERROR: but permissions conflict $6->$7."
 		exit 1
 	fi
 	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode"
-	rm -f -- "$4" &&
-	git-cat-file blob "$2" >"$4" &&
-	chmod "$mode" -- "$4" &&
-	exec git-update-cache --add -- "$4" ;;
+	exec git-update-cache --add --cacheinfo "$6" "$2" "$4" ;;
 #
-# Modified in both, but differently ;(
+# Modified in both, but differently.
 #
 "$1$2$3")
-	echo "Auto-merging $4"
+	echo "Auto-merging $4."
 	orig=$(git-unpack-file $1)
 	src1=$(git-unpack-file $2)
 	src2=$(git-unpack-file $3)
 	merge "$src2" "$orig" "$src1"
 	ret=$?
 	if [ "$6" != "$7" ]; then
-		echo "ERROR: Permissions $5->$6->$7 don't match merging $src2"
-		if [ $ret -ne 0 ]; then
-			echo "ERROR: Leaving conflict merge in $src2"
-		fi
-		exit 1
+		echo "ERROR: Permissions $5->$6->$7 don't match."
 	fi
 	if [ $ret -ne 0 ]; then
-		echo "ERROR: Leaving conflict merge in $src2"
+		echo "ERROR: Leaving conflict merge in $src2."
 		exit 1
 	fi
-	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
-	rm -f -- "$4" && cat "$src2" >"$4" && chmod "$mode" -- "$4" &&
-	exec git-update-cache --add -- "$4" ;;
+	sha1=$(git-write-blob "$src2") || {
+		echo "ERROR: Leaving conflict merge in $src2."
+	}
+	exec git-update-cache --add --cacheinfo "$6" $sha1 "$4" ;;
 *)
-	echo "Not handling case $4: $1 -> $2 -> $3" ;;
+	echo "ERROR: Not handling case $4: $1 -> $2 -> $3" ;;
 esac
 exit 1
