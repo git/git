@@ -353,8 +353,21 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 	close(fd);
 
 	ret = link(tmpfile, filename);
-	if (ret < 0)
+	if (ret < 0) {
 		ret = errno;
+
+		/*
+		 * Coda hack - coda doesn't like cross-directory links,
+		 * so we fall back to a rename, which will mean that it
+		 * won't be able to check collisions, but that's not a
+		 * big deal.
+		 *
+		 * When this succeeds, we just return 0. We have nothing
+		 * left to unlink.
+		 */
+		if (ret == EXDEV && !rename(tmpfile, filename))
+			return 0;
+	}
 	unlink(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
