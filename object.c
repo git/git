@@ -107,11 +107,12 @@ struct object *parse_object(unsigned char *sha1)
 		char type[100];
 		unsigned long size;
 		void *buffer = unpack_sha1_file(map, mapsize, type, &size);
+		munmap(map, mapsize);
 		if (!buffer)
 			return NULL;
 		if (check_sha1_signature(sha1, buffer, size, type) < 0)
 			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
-		munmap(map, mapsize);
+		free(buffer);
 		if (!strcmp(type, "blob")) {
 			struct blob *ret = lookup_blob(sha1);
 			parse_blob(ret);

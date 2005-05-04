@@ -54,9 +54,11 @@ int parse_commit(struct commit *item)
 	if (!buffer)
 		return error("Could not read %s",
 			     sha1_to_hex(item->object.sha1));
-	if (strcmp(type, commit_type))
+	if (strcmp(type, commit_type)) {
+		free(buffer);
 		return error("Object %s not a commit",
 			     sha1_to_hex(item->object.sha1));
+	}
 	get_sha1_hex(bufptr + 5, parent);
 	item->tree = lookup_tree(parent);
 	if (item->tree)

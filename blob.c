@@ -34,6 +34,7 @@ int parse_blob(struct blob *item)
         if (!buffer)
                 return error("Could not read %s",
                              sha1_to_hex(item->object.sha1));
+	free(buffer);
         if (strcmp(type, blob_type))
                 return error("Object %s not a blob",
                              sha1_to_hex(item->object.sha1));

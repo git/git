@@ -101,9 +101,11 @@ int parse_tree(struct tree *item)
 	if (!buffer)
 		return error("Could not read %s",
 			     sha1_to_hex(item->object.sha1));
-	if (strcmp(type, tree_type))
+	if (strcmp(type, tree_type)) {
+		free(buffer);
 		return error("Object %s not a tree",
 			     sha1_to_hex(item->object.sha1));
+	}
 	list_p = &item->entries;
 	while (size) {
 		struct object *obj;
@@ -113,8 +115,10 @@ int parse_tree(struct tree *item)
 		char *path = strchr(bufptr, ' ');
 		unsigned int mode;
 		if (size < len + 20 || !path || 
-		    sscanf(bufptr, "%o", &mode) != 1)
+		    sscanf(bufptr, "%o", &mode) != 1) {
+			free(buffer);
 			return -1;
+		}
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
 		entry->name = strdup(path + 1);
@@ -138,5 +142,6 @@ int parse_tree(struct tree *item)
 		*list_p = entry;
 		list_p = &entry->next;
 	}
+	free(buffer);
 	return 0;
 }

@@ -37,37 +37,44 @@ int parse_tag(struct tag *item)
         if (!data)
                 return error("Could not read %s",
                              sha1_to_hex(item->object.sha1));
-        if (strcmp(type, tag_type))
+        if (strcmp(type, tag_type)) {
+		free(data);
                 return error("Object %s not a tag",
                              sha1_to_hex(item->object.sha1));
+	}
 
 	if (size < 64)
-		return -1;
+		goto err;
 	if (memcmp("object ", data, 7) || get_sha1_hex(data + 7, object))
-		return -1;
+		goto err;
 
 	item->tagged = parse_object(object);
 
 	type_line = data + 48;
 	if (memcmp("\ntype ", type_line-1, 6))
-		return -1;
+		goto err;
 
 	tag_line = strchr(type_line, '\n');
 	if (!tag_line || memcmp("tag ", ++tag_line, 4))
-		return -1;
+		goto err;
 
 	sig_line = strchr(tag_line, '\n');
 	if (!sig_line)
-		return -1;
+		goto err;
 	sig_line++;
 
 	typelen = tag_line - type_line - strlen("type \n");
 	if (typelen >= 20)
-		return -1;
+		goto err;
 	taglen = sig_line - tag_line - strlen("tag \n");
 	item->tag = xmalloc(taglen + 1);
 	memcpy(item->tag, tag_line + 4, taglen);
 	item->tag[taglen] = '\0';
 
+	free(data);
 	return 0;
+
+err:
+	free(data);
+	return -1;
 }
