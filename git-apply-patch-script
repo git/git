@@ -28,6 +28,15 @@ case "$mode1,$mode2" in
 	echo >&2 "cannot create leading path for $name."
 	exit 1
     }
+    if test -f "$name"
+    then
+	echo >&2 "file $name to be created already exists."
+	exit 1
+    fi
+    cat "$tmp2" >"$name" || {
+	echo >&2 "cannot create $name."
+	exit 1
+    } 
     case "$mode2" in
     +x)
 	echo >&2 "created $name with mode +x."
