@@ -54,3 +54,4 @@ result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $me
 echo "Committed merge $result_commit"
 echo $result_commit > .git/HEAD
 git-checkout-cache -f -a && git-update-cache --refresh
+git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
