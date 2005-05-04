@@ -35,7 +35,7 @@ static int parse_oneside_change(const char *cp, struct diff_spec *one,
 	if (strncmp(cp, "\tblob\t", 6))
 		return -1;
 	cp += 6;
-	if (get_sha1_hex(cp, one->u.sha1))
+	if (get_sha1_hex(cp, one->blob_sha1))
 		return -1;
 	cp += 40;
 	if (*cp++ != '\t')
@@ -83,13 +83,13 @@ static int parse_diff_tree_output(const char *buf,
 		if (strncmp(cp, "\tblob\t", 6))
 			return -1;
 		cp += 6;
-		if (get_sha1_hex(cp, old.u.sha1))
+		if (get_sha1_hex(cp, old.blob_sha1))
 			return -1;
 		cp += 40;
 		if (strncmp(cp, "->", 2))
 			return -1;
 		cp += 2;
-		if (get_sha1_hex(cp, new.u.sha1))
+		if (get_sha1_hex(cp, new.blob_sha1))
 			return -1;
 		cp += 40;
 		if (*cp++ != '\t')
