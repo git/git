@@ -83,7 +83,7 @@ static void builtin_diff(const char *name,
 {
 	int i, next_at;
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
-	const char *diff_arg  = "'%s' '%s'";
+	const char *diff_arg  = "'%s' '%s'||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
 	const char *path0[2];
 	const char *path1[2];
@@ -261,16 +261,20 @@ void run_external_diff(const char *name,
 			printf("* Unmerged path %s\n", name);
 		exit(0);
 	}
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status)) {
-		/* We do not check the exit status because typically
+	if (waitpid(pid, &status, 0) < 0 ||
+	    !WIFEXITED(status) || WEXITSTATUS(status)) {
+		/* Earlier we did not check the exit status because
 		 * diff exits non-zero if files are different, and
-		 * we are not interested in knowing that.  We *knew*
-		 * they are different and that's why we ran diff
-		 * in the first place!  However if it dies by a signal,
-		 * we stop processing immediately.
+		 * we are not interested in knowing that.  It was a
+		 * mistake which made it harder to quit a diff-*
+		 * session that uses the git-apply-patch-script as
+		 * the GIT_EXTERNAL_DIFF.  A custom GIT_EXTERNAL_DIFF
+		 * should also exit non-zero only when it wants to
+		 * abort the entire diff-* session.
 		 */
 		remove_tempfile();
-		die("external diff died unexpectedly.\n");
+		fprintf(stderr, "external diff died, stopping at %s.\n", name);
+		exit(1);
 	}
 	remove_tempfile();
 }
