@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	commit_id = argv[arg];
 	url = argv[arg + 1];
 
-	if (setup_connection(&fd_in, &fd_out, "rpush", url, arg, argv + 1))
+	if (setup_connection(&fd_in, &fd_out, "git-rpush", url, arg, argv + 1))
 		return 1;
 
 	if (pull(commit_id))
