@@ -9,6 +9,8 @@ struct tree_entry_list {
 	struct tree_entry_list *next;
 	unsigned directory : 1;
 	unsigned executable : 1;
+	unsigned symlink : 1;
+	unsigned int mode;
 	char *name;
 	union {
 		struct tree *tree;

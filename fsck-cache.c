@@ -100,6 +100,28 @@ static int fsck_tree(struct tree *item)
 		if (strchr(entry->name, '/'))
 			has_full_path = 1;
 
+		switch (entry->mode) {
+		/*
+		 * Standard modes.. 
+		 */
+		case S_IFREG | 0755:
+		case S_IFREG | 0644:
+		case S_IFLNK:
+		case S_IFDIR:
+			break;
+		/*
+		 * This is nonstandard, but we had a few of these
+		 * early on when we honored the full set of mode
+		 * bits..
+		 */
+		case S_IFREG | 0664:
+			break;
+		default:
+			printf("tree %s has entry %o %s\n",
+				sha1_to_hex(item->object.sha1),
+				entry->mode, entry->name);
+		}
+
 		if (last) {
 			if (verify_ordered(last, entry) < 0) {
 				fprintf(stderr, "tree %s not ordered\n",

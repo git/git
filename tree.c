@@ -122,8 +122,10 @@ int parse_tree(struct tree *item)
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
 		entry->name = strdup(path + 1);
-		entry->directory = S_ISDIR(mode);
-		entry->executable = mode & S_IXUSR;
+		entry->directory = S_ISDIR(mode) != 0;
+		entry->executable = (mode & S_IXUSR) != 0;
+		entry->symlink = S_ISLNK(mode) != 0;
+		entry->mode = mode;
 		entry->next = NULL;
 
 		bufptr += len + 20;
