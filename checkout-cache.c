@@ -96,6 +96,7 @@ static int write_entry(struct cache_entry *ce, const char *path)
 	case S_IFLNK:
 		memcpy(target, new, size);
 		target[size] = '\0';
+		create_directories(path);
 		if (symlink(target, path)) {
 			free(new);
 			return error("checkout-cache: unable to create symlink %s (%s)",
