@@ -3,6 +3,7 @@
 
 static int cached_only = 0;
 static int generate_patch = 0;
+static int match_nonexisting = 0;
 static int line_termination = '\n';
 
 /* A file entry went away or appeared */
@@ -24,8 +25,14 @@ static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned
 		static unsigned char no_sha1[20];
 		int changed;
 		struct stat st;
-		if (lstat(ce->name, &st) < 0)
+		if (lstat(ce->name, &st) < 0) {
+			if (errno == ENOENT && match_nonexisting) {
+				*sha1p = sha1;
+				*modep = mode;
+				return 0;
+			}
 			return -1;
+		}
 		changed = cache_match_stat(ce, &st);
 		if (changed) {
 			mode = create_ce_mode(st.st_mode);
@@ -143,7 +150,7 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"diff-cache [-r] [-z] [-p] [--cached] <tree sha1>";
+"diff-cache [-r] [-z] [-p] [-i] [--cached] <tree sha1>";
 
 int main(int argc, char **argv)
 {
@@ -166,6 +173,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-z")) {
 			line_termination = '\0';
+			continue;
+		}
+		if (!strcmp(arg, "-m")) {
+			match_nonexisting = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--cached")) {
