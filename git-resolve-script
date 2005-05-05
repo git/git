@@ -49,7 +49,7 @@ if [ $? -ne 0 ]; then
 	merge_msg="Automatic merge of $merge_repo"
 	result_tree=$(git-write-tree) || exit 1
 fi
-result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge_head)
+result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
 echo "Committed merge $result_commit"
 echo $result_commit > .git/HEAD
 git-checkout-cache -f -a && git-update-cache --refresh
