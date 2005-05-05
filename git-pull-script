@@ -39,6 +39,7 @@ if [ "$common" == "$head" ]; then
 	sleep 3
 	git-read-tree -m $merge_tree && git-checkout-cache -f -a && git-update-cache --refresh
 	echo $merge_head > .git/HEAD
+	git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
 	exit 0
 fi
 echo "Trying to merge $merge_head into $head"
