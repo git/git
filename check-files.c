@@ -28,8 +28,8 @@ static void check_file(const char *path)
 		die("preparing to update existing file '%s' not in cache", path);
 	ce = active_cache[pos];
 
-	if (fstat(fd, &st) < 0)
-		die("fstat(%s): %s", path, strerror(errno));
+	if (lstat(path, &st) < 0)
+		die("lstat(%s): %s", path, strerror(errno));
 
 	changed = cache_match_stat(ce, &st);
 	if (changed)

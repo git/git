@@ -13,6 +13,16 @@ int cache_match_stat(struct cache_entry *ce, struct stat *st)
 {
 	unsigned int changed = 0;
 
+	switch (ntohl(ce->ce_mode) & S_IFMT) {
+	case S_IFREG:
+		changed |= !S_ISREG(st->st_mode) ? TYPE_CHANGED : 0;
+		break;
+	case S_IFLNK:
+		changed |= !S_ISLNK(st->st_mode) ? TYPE_CHANGED : 0;
+		break;
+	default:
+		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
+	}
 	if (ce->ce_mtime.sec != htonl(st->st_mtime))
 		changed |= MTIME_CHANGED;
 	if (ce->ce_ctime.sec != htonl(st->st_ctime))

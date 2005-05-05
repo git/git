@@ -57,17 +57,14 @@ static int add_file_to_cache(char *path)
 	struct cache_entry *ce;
 	struct stat st;
 	int fd;
+	unsigned int len;
+	char target[1024];
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
+	if (lstat(path, &st) < 0) {
 		if (errno == ENOENT || errno == ENOTDIR) {
 			if (allow_remove)
 				return remove_file_from_cache(path);
 		}
-		return -1;
-	}
-	if (fstat(fd, &st) < 0) {
-		close(fd);
 		return -1;
 	}
 	namelen = strlen(path);
@@ -78,10 +75,24 @@ static int add_file_to_cache(char *path)
 	fill_stat_cache_info(ce, &st);
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	ce->ce_flags = htons(namelen);
-
-	if (index_fd(ce->sha1, fd, &st) < 0)
+	switch (st.st_mode & S_IFMT) {
+	case S_IFREG:
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			return -1;
+		if (index_fd(ce->sha1, fd, &st) < 0)
+			return -1;
+		break;
+	case S_IFLNK:
+		len = readlink(path, target, sizeof(target));
+		if (len == -1 || len+1 > sizeof(target))
+			return -1;
+		if (write_sha1_file(target, len, "blob", ce->sha1))
+			return -1;
+		break;
+	default:
 		return -1;
-
+	}
 	return add_cache_entry(ce, allow_add);
 }
 
@@ -137,7 +148,7 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	struct cache_entry *updated;
 	int changed, size;
 
-	if (stat(ce->name, &st) < 0)
+	if (lstat(ce->name, &st) < 0)
 		return ERR_PTR(-errno);
 
 	changed = cache_match_stat(ce, &st);
@@ -145,10 +156,10 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 		return ce;
 
 	/*
-	 * If the mode has changed, there's no point in trying
+	 * If the mode or type has changed, there's no point in trying
 	 * to refresh the entry - it's not going to match
 	 */
-	if (changed & MODE_CHANGED)
+	if (changed & (MODE_CHANGED | TYPE_CHANGED))
 		return ERR_PTR(-EINVAL);
 
 	if (compare_data(ce, st.st_size))

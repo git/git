@@ -72,23 +72,41 @@ static int write_entry(struct cache_entry *ce, const char *path)
 	unsigned long size;
 	long wrote;
 	char type[20];
+	char target[1024];
 
 	new = read_sha1_file(ce->sha1, type, &size);
 	if (!new || strcmp(type, "blob")) {
 		return error("checkout-cache: unable to read sha1 file of %s (%s)",
 			path, sha1_to_hex(ce->sha1));
 	}
-	fd = create_file(path, ntohl(ce->ce_mode));
-	if (fd < 0) {
+	switch (ntohl(ce->ce_mode) & S_IFMT) {
+	case S_IFREG:
+		fd = create_file(path, ntohl(ce->ce_mode));
+		if (fd < 0) {
+			free(new);
+			return error("checkout-cache: unable to create file %s (%s)",
+				path, strerror(errno));
+		}
+		wrote = write(fd, new, size);
+		close(fd);
 		free(new);
-		return error("checkout-cache: unable to create %s (%s)",
-			path, strerror(errno));
+		if (wrote != size)
+			return error("checkout-cache: unable to write file %s", path);
+		break;
+	case S_IFLNK:
+		memcpy(target, new, size);
+		target[size] = '\0';
+		if (symlink(target, path)) {
+			free(new);
+			return error("checkout-cache: unable to create symlink %s (%s)",
+				path, strerror(errno));
+		}
+		free(new);
+		break;
+	default:
+		free(new);
+		return error("checkout-cache: unknown file mode for %s", path);
 	}
-	wrote = write(fd, new, size);
-	close(fd);
-	free(new);
-	if (wrote != size)
-		return error("checkout-cache: unable to write %s", path);
 	return 0;
 }
 
@@ -101,7 +119,7 @@ static int checkout_entry(struct cache_entry *ce, const char *base_dir)
 	memcpy(path, base_dir, len);
 	strcpy(path + len, ce->name);
 
-	if (!stat(path, &st)) {
+	if (!lstat(path, &st)) {
 		unsigned changed = cache_match_stat(ce, &st);
 		if (!changed)
 			return 0;

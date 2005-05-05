@@ -24,7 +24,7 @@ static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned
 		static unsigned char no_sha1[20];
 		int changed;
 		struct stat st;
-		if (stat(ce->name, &st) < 0)
+		if (lstat(ce->name, &st) < 0)
 			return -1;
 		changed = cache_match_stat(ce, &st);
 		if (changed) {

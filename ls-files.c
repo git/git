@@ -199,7 +199,7 @@ static void show_files(void)
 			struct stat st;
 			if (excluded(ce->name) != show_ignored)
 				continue;
-			if (!stat(ce->name, &st))
+			if (!lstat(ce->name, &st))
 				continue;
 			printf("%s%c", ce->name, line_terminator);
 		}
