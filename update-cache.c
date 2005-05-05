@@ -15,6 +15,12 @@
  */
 static int allow_add = 0, allow_remove = 0, not_new = 0;
 
+/*
+ * update-cache --refresh may not touch anything at all, in which case
+ * writing 1.6MB of the same thing is a waste.
+ */
+static int cache_changed = 0;
+
 /* Three functions to allow overloaded pointer return; see linux/err.h */
 static inline void *ERR_PTR(long error)
 {
@@ -51,7 +57,7 @@ static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 	ce->ce_size = htonl(st->st_size);
 }
 
-static int add_file_to_cache(char *path)
+static int add_file_to_cache_1(char *path)
 {
 	int size, namelen;
 	struct cache_entry *ce;
@@ -93,7 +99,33 @@ static int add_file_to_cache(char *path)
 	default:
 		return -1;
 	}
+	if (!cache_changed) {
+		/* If we have not smudged the cache, be careful
+		 * to keep it clean.  Find out if we have a matching
+		 * cache entry that add_cache_entry would replace with,
+		 * and if it matches then do not bother calling it.
+		 */
+		int pos = cache_name_pos(ce->name, namelen);
+		if ((0 <= pos) &&
+		    !memcmp(active_cache[pos], ce, sizeof(*ce))) {
+			free(ce);
+			/* magic to tell add_file_to_cache that
+			 * we have not updated anything.
+			 */
+			return 999;
+		}
+	}
 	return add_cache_entry(ce, allow_add);
+}
+
+static int add_file_to_cache(char *path)
+{
+	int ret = add_file_to_cache_1(path);
+	if (ret == 0)
+		cache_changed = 1;
+	else if (ret == 999)
+		ret = 0;
+	return ret;
 }
 
 static int match_data(int fd, void *buffer, unsigned long size)
@@ -165,6 +197,7 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	if (compare_data(ce, st.st_size))
 		return ERR_PTR(-EINVAL);
 
+	cache_changed = 1;
 	size = ce_size(ce);
 	updated = xmalloc(size);
 	memcpy(updated, ce, size);
@@ -245,6 +278,7 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 	if (!verify_path(arg3))
 		return -1;
 
+	cache_changed = 1;
 	len = strlen(arg3);
 	size = cache_entry_size(len);
 	ce = xmalloc(size);
@@ -339,9 +373,13 @@ int main(int argc, char **argv)
 		if (add_file_to_cache(path))
 			die("Unable to add %s to database", path);
 	}
-	if (write_cache(newfd, active_cache, active_nr) || rename(lockfile, indexfile))
+
+	if (!cache_changed)
+		unlink(lockfile);
+	else if (write_cache(newfd, active_cache, active_nr) ||
+		 rename(lockfile, indexfile))
 		die("Unable to write new cachefile");
 
 	lockfile_name = NULL;
-	return has_errors;
+	return has_errors ? 1 : 0;
 }
