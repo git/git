@@ -250,7 +250,7 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
-static char *diff_tree_usage = "diff-tree [-r] [-z] <tree sha1> <tree sha1>";
+static char *diff_tree_usage = "diff-tree [-p] [-r] [-z] <tree sha1> <tree sha1>";
 
 int main(int argc, char **argv)
 {
