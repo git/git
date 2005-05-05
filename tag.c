@@ -49,6 +49,8 @@ int parse_tag(struct tag *item)
 		goto err;
 
 	item->tagged = parse_object(object);
+	if (item->tagged)
+		add_ref(&item->object, item->tagged);
 
 	type_line = data + 48;
 	if (memcmp("\ntype ", type_line-1, 6))
