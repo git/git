@@ -6,54 +6,10 @@
 merge_repo=$1
 merge_name=${2:-HEAD}
 
-rm -f .git/MERGE_HEAD .git/ORIG_HEAD
-cp .git/HEAD .git/ORIG_HEAD
-
 echo "Getting object database"
 rsync -avz --ignore-existing $merge_repo/objects/. ${SHA1_FILE_DIRECTORY:-.git/objects}/.
 
 echo "Getting remote $merge_name"
 rsync -L $merge_repo/$merge_name .git/MERGE_HEAD || exit 1
 
-head=$(cat .git/HEAD)
-merge_head=$(cat .git/MERGE_HEAD)
-common=$(git-merge-base $head $merge_head)
-if [ -z "$common" ]; then
-	echo "Unable to find common commit between" $merge_head $head
-	exit 1
-fi
-
-# Get the trees associated with those commits
-common_tree=$(git-cat-file commit $common | sed 's/tree //;q')
-head_tree=$(git-cat-file commit $head | sed 's/tree //;q')
-merge_tree=$(git-cat-file commit $merge_head | sed 's/tree //;q')
-
-if [ "$common" == "$merge_head" ]; then
-	echo "Already up-to-date. Yeeah!"
-	exit 0
-fi
-if [ "$common" == "$head" ]; then
-	echo "Updating from $head to $merge_head."
-	echo "Destroying all noncommitted data!"
-	echo "Kill me within 3 seconds.."
-	sleep 3
-	git-read-tree -m $merge_tree && git-checkout-cache -f -a && git-update-cache --refresh
-	echo $merge_head > .git/HEAD
-	git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
-	exit 0
-fi
-echo "Trying to merge $merge_head into $head"
-git-read-tree -m $common_tree $head_tree $merge_tree
-merge_msg="Merge of $merge_repo"
-result_tree=$(git-write-tree  2> /dev/null)
-if [ $? -ne 0 ]; then
-	echo "Simple merge failed, trying Automatic merge"
-	git-merge-cache git-merge-one-file-script -a
-	merge_msg="Automatic merge of $merge_repo"
-	result_tree=$(git-write-tree) || exit 1
-fi
-result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge_head)
-echo "Committed merge $result_commit"
-echo $result_commit > .git/HEAD
-git-checkout-cache -f -a && git-update-cache --refresh
-git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
+git-resolve-script "$(cat .git/HEAD)" "$(cat .git/MERGE_HEAD)" "$merge_repo"

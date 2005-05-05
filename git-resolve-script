@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# Resolve two trees.
+#
+head="$1"
+merge="$2"
+merge_repo="$3"
+
+rm -f .git/MERGE_HEAD .git/ORIG_HEAD
+echo $head > .git/ORIG_HEAD
+echo $merge > .git/MERGE_HEAD
+
+#
+# The remote name is just used for the message,
+# but we do want it.
+#
+if [ "$merge_repo" == "" ]; then
+	echo "git-resolve-script <head> <remote> <merge-repo-name>"
+	exit 1
+fi
+
+common=$(git-merge-base $head $merge)
+if [ -z "$common" ]; then
+	echo "Unable to find common commit between" $merge $head
+	exit 1
+fi
+
+if [ "$common" == "$merge" ]; then
+	echo "Already up-to-date. Yeeah!"
+	exit 0
+fi
+if [ "$common" == "$head" ]; then
+	echo "Updating from $head to $merge."
+	echo "Destroying all noncommitted data!"
+	echo "Kill me within 3 seconds.."
+	sleep 3
+	git-read-tree -m $merge && git-checkout-cache -f -a && git-update-cache --refresh
+	echo $merge > .git/HEAD
+	git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
+	exit 0
+fi
+echo "Trying to merge $merge into $head"
+git-read-tree -m $common $head $merge
+merge_msg="Merge of $merge_repo"
+result_tree=$(git-write-tree  2> /dev/null)
+if [ $? -ne 0 ]; then
+	echo "Simple merge failed, trying Automatic merge"
+	git-merge-cache git-merge-one-file-script -a
+	merge_msg="Automatic merge of $merge_repo"
+	result_tree=$(git-write-tree) || exit 1
+fi
+result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge_head)
+echo "Committed merge $result_commit"
+echo $result_commit > .git/HEAD
+git-checkout-cache -f -a && git-update-cache --refresh
+git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
