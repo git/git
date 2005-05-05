@@ -83,7 +83,7 @@ static void builtin_diff(const char *name,
 {
 	int i, next_at;
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
-	const char *diff_arg  = "'%s' '%s'";
+	const char *diff_arg  = "'%s' '%s'||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
 	const char *path0[2];
 	const char *path1[2];
@@ -132,11 +132,50 @@ static void builtin_diff(const char *name,
 	execlp("/bin/sh","sh", "-c", cmd, NULL);
 }
 
+/*
+ * Given a name and sha1 pair, if the dircache tells us the file in
+ * the work tree has that object contents, return true, so that
+ * prepare_temp_file() does not have to inflate and extract.
+ */
+static int work_tree_matches(const char *name, const unsigned char *sha1)
+{
+	struct cache_entry *ce;
+	struct stat st;
+	int pos, len;
+	
+	/* We do not read the cache ourselves here, because the
+	 * benchmark with my previous version that always reads cache
+	 * shows that it makes things worse for diff-tree comparing
+	 * two linux-2.6 kernel trees in an already checked out work
+	 * tree.  This is because most diff-tree comparison deals with
+	 * only a small number of files, while reading the cache is
+	 * expensive for a large project, and its cost outweighs the
+	 * savings we get by not inflating the object to a temporary
+	 * file.  Practically, this code only helps when we are used
+	 * by diff-cache --cached, which does read the cache before
+	 * calling us.
+	 */ 
+	if (!active_cache)
+		return 0;
+
+	len = strlen(name);
+	pos = cache_name_pos(name, len);
+	if (pos < 0)
+		return 0;
+	ce = active_cache[pos];
+	if ((stat(name, &st) < 0) ||
+	    cache_match_stat(ce, &st) ||
+	    memcmp(sha1, ce->sha1, 20))
+		return 0;
+	return 1;
+}
+
 static void prepare_temp_file(const char *name,
 			      struct diff_tempfile *temp,
 			      struct diff_spec *one)
 {
 	static unsigned char null_sha1[20] = { 0, };
+	int use_work_tree = 0;
 
 	if (!one->file_valid) {
 	not_a_valid_file:
@@ -150,20 +189,22 @@ static void prepare_temp_file(const char *name,
 	}
 
 	if (one->sha1_valid &&
-	    !memcmp(one->u.sha1, null_sha1, sizeof(null_sha1))) {
-		one->sha1_valid = 0;
-		one->u.name = name;
-	}
+	    (!memcmp(one->blob_sha1, null_sha1, sizeof(null_sha1)) ||
+	     work_tree_matches(name, one->blob_sha1)))
+		use_work_tree = 1;
 
-	if (!one->sha1_valid) {
+	if (!one->sha1_valid || use_work_tree) {
 		struct stat st;
-		temp->name = one->u.name;
+		temp->name = name;
 		if (stat(temp->name, &st) < 0) {
 			if (errno == ENOENT)
 				goto not_a_valid_file;
 			die("stat(%s): %s", temp->name, strerror(errno));
 		}
-		strcpy(temp->hex, sha1_to_hex(null_sha1));
+		if (!one->sha1_valid)
+			strcpy(temp->hex, sha1_to_hex(null_sha1));
+		else
+			strcpy(temp->hex, sha1_to_hex(one->blob_sha1));
 		sprintf(temp->mode, "%06o",
 			S_IFREG |ce_permissions(st.st_mode));
 	}
@@ -173,10 +214,10 @@ static void prepare_temp_file(const char *name,
 		char type[20];
 		unsigned long size;
 
-		blob = read_sha1_file(one->u.sha1, type, &size);
+		blob = read_sha1_file(one->blob_sha1, type, &size);
 		if (!blob || strcmp(type, "blob"))
 			die("unable to read blob object for %s (%s)",
-			    name, sha1_to_hex(one->u.sha1));
+			    name, sha1_to_hex(one->blob_sha1));
 
 		strcpy(temp->tmp_path, ".diff_XXXXXX");
 		fd = mkstemp(temp->tmp_path);
@@ -187,7 +228,7 @@ static void prepare_temp_file(const char *name,
 		close(fd);
 		free(blob);
 		temp->name = temp->tmp_path;
-		strcpy(temp->hex, sha1_to_hex(one->u.sha1));
+		strcpy(temp->hex, sha1_to_hex(one->blob_sha1));
 		temp->hex[40] = 0;
 		sprintf(temp->mode, "%06o", one->mode);
 	}
@@ -261,16 +302,20 @@ void run_external_diff(const char *name,
 			printf("* Unmerged path %s\n", name);
 		exit(0);
 	}
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status)) {
-		/* We do not check the exit status because typically
+	if (waitpid(pid, &status, 0) < 0 ||
+	    !WIFEXITED(status) || WEXITSTATUS(status)) {
+		/* Earlier we did not check the exit status because
 		 * diff exits non-zero if files are different, and
-		 * we are not interested in knowing that.  We *knew*
-		 * they are different and that's why we ran diff
-		 * in the first place!  However if it dies by a signal,
-		 * we stop processing immediately.
+		 * we are not interested in knowing that.  It was a
+		 * mistake which made it harder to quit a diff-*
+		 * session that uses the git-apply-patch-script as
+		 * the GIT_EXTERNAL_DIFF.  A custom GIT_EXTERNAL_DIFF
+		 * should also exit non-zero only when it wants to
+		 * abort the entire diff-* session.
 		 */
 		remove_tempfile();
-		die("external diff died unexpectedly.\n");
+		fprintf(stderr, "external diff died, stopping at %s.\n", name);
+		exit(1);
 	}
 	remove_tempfile();
 }
@@ -282,7 +327,7 @@ void diff_addremove(int addremove, unsigned mode,
 	char concatpath[PATH_MAX];
 	struct diff_spec spec[2], *one, *two;
 
-	memcpy(spec[0].u.sha1, sha1, 20);
+	memcpy(spec[0].blob_sha1, sha1, 20);
 	spec[0].mode = mode;
 	spec[0].sha1_valid = spec[0].file_valid = 1;
 	spec[1].file_valid = 0;
@@ -307,9 +352,9 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 	char concatpath[PATH_MAX];
 	struct diff_spec spec[2];
 
-	memcpy(spec[0].u.sha1, old_sha1, 20);
+	memcpy(spec[0].blob_sha1, old_sha1, 20);
 	spec[0].mode = old_mode;
-	memcpy(spec[1].u.sha1, new_sha1, 20);
+	memcpy(spec[1].blob_sha1, new_sha1, 20);
 	spec[1].mode = new_mode;
 	spec[0].sha1_valid = spec[0].file_valid = 1;
 	spec[1].sha1_valid = spec[1].file_valid = 1;

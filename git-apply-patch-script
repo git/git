@@ -19,40 +19,60 @@ then
     echo >&2 "Unresolved patch conflicts in the previous run found."
     exit 1
 fi
-# This will say "patching ..." so we do not say anything outselves.
 
-diff -u -L "a/$name" -L "b/$name" "$tmp1" "$tmp2" | patch -p1
-test -f "$name.rej" || {
-    case "$mode1,$mode2" in
-    .,?x)
-	# newly created
-	case "$mode2" in
-	+x)
-	    echo >&2 "created $name with mode +x."
-	    chmod "$mode2" "$name"
-	    ;;
-	-x)
-	    echo >&2 "created $name."
-	    ;;
-	esac
-	git-update-cache --add -- "$name"
+case "$mode1,$mode2" in
+.,?x)
+    # newly created
+    dir=$(dirname "$name")
+    case "$dir" in '' | .) ;; *) mkdir -p "$dir" esac || {
+	echo >&2 "cannot create leading path for $name."
+	exit 1
+    }
+    if test -f "$name"
+    then
+	echo >&2 "file $name to be created already exists."
+	exit 1
+    fi
+    cat "$tmp2" >"$name" || {
+	echo >&2 "cannot create $name."
+	exit 1
+    } 
+    case "$mode2" in
+    +x)
+	echo >&2 "created $name with mode +x."
+	chmod "$mode2" "$name"
 	;;
-    ?x,.)
-	# deleted
-	echo >&2 "deleted $name."
-	rm -f "$name"
-	git-update-cache --remove -- "$name"
+    -x)
+	echo >&2 "created $name."
 	;;
-    *)
-	# changed
-	case "$mode1,$mode2" in
-	"$mode2,$mode1") ;;
-	*)
-	    echo >&2 "changing mode from $mode1 to $mode2."
-	    chmod "$mode2" "$name"
-	    ;;
-	esac
-	git-update-cache -- "$name"
     esac
-}
-exit 0
+    git-update-cache --add -- "$name"
+    ;;
+?x,.)
+    # deleted
+    echo >&2 "deleted $name."
+    rm -f "$name" || {
+	echo >&2 "cannot remove $name";
+	exit 1
+    }
+    git-update-cache --remove -- "$name"
+    ;;
+*)
+    # changed
+    dir=$(dirname "$name")
+    case "$dir" in '' | .) ;; *) mkdir -p "$dir" esac || {
+	echo >&2 "cannot create leading path for $name."
+	exit 1
+    }
+    # This will say "patching ..." so we do not say anything outselves.
+    diff -u -L "a/$name" -L "b/$name" "$tmp1" "$tmp2" | patch -p1 || exit
+
+    case "$mode1,$mode2" in
+    "$mode2,$mode1") ;;
+    *)
+	echo >&2 "changing mode from $mode1 to $mode2."
+	chmod "$mode2" "$name"
+	;;
+    esac
+    git-update-cache -- "$name"
+esac

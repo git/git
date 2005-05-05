@@ -12,6 +12,7 @@
 static int show_root = 0;
 static int show_tags = 0;
 static int show_unreachable = 0;
+static int keep_cache_objects = 0; 
 static unsigned char head_sha1[20];
 
 static void check_connectivity(void)
@@ -275,8 +276,12 @@ int main(int argc, char **argv)
 			show_root = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--cache")) {
+			keep_cache_objects = 1;
+			continue;
+		}
 		if (*arg == '-')
-			usage("fsck-cache [--tags] [[--unreachable] <head-sha1>*]");
+			usage("fsck-cache [--tags] [[--unreachable] [--cache] <head-sha1>*]");
 	}
 
 	sha1_dir = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
@@ -309,12 +314,27 @@ int main(int argc, char **argv)
 		error("expected sha1, got %s", arg);
 	}
 
-	if (!heads) {
+	if (keep_cache_objects) {
+		int i;
+		read_cache();
+		for (i = 0; i < active_nr; i++) {
+			struct blob *blob = lookup_blob(active_cache[i]->sha1);
+			struct object *obj;
+			if (!blob)
+				continue;
+			obj = &blob->object;
+			obj->used = 1;
+			mark_reachable(obj, REACHABLE);
+		}
+	}
+
+	if (!heads && !keep_cache_objects) {
 		if (show_unreachable) {
-			fprintf(stderr, "unable to do reachability without a head\n");
+			fprintf(stderr, "unable to do reachability without a head nor --cache\n");
 			show_unreachable = 0; 
 		}
-		fprintf(stderr, "expect dangling commits - potential heads - due to lack of head information\n");
+		if (!heads)
+			fprintf(stderr, "expect dangling commits - potential heads - due to lack of head information\n");
 	}
 
 	check_connectivity();

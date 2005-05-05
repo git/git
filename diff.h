@@ -20,15 +20,12 @@ extern void diff_unmerge(const char *path);
 /* These are for diff-tree-helper */
 
 struct diff_spec {
-	union {
-		const char *name;       /* path on the filesystem */
-		unsigned char sha1[20]; /* blob object ID */
-	} u;
+	unsigned char blob_sha1[20];
 	unsigned short mode;	 /* file mode */
-	unsigned sha1_valid : 1; /* if true, use u.sha1 and trust mode.
-				  * (however with a NULL SHA1, read them
-				  * from the file!).
-				  * if false, use u.name and read mode from
+	unsigned sha1_valid : 1; /* if true, use blob_sha1 and trust mode;
+				  * however with a NULL SHA1, read them
+				  * from the file system.
+				  * if false, use the name and read mode from
 				  * the filesystem.
 				  */
 	unsigned file_valid : 1; /* if false the file does not even exist */

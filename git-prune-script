@@ -1,4 +1,36 @@
 #!/bin/sh
-REFS=$(cat .git/refs/*/*)
-[ "$REFS" ] || exit 1
-git-fsck-cache --unreachable $REFS | grep unreachable | cut -d' ' -f3 | sed 's:^\(..\):.git/objects/\1/:' | xargs -r rm
+dryrun=
+while case "$#" in 0) break ;; esac
+do
+    case "$1" in
+    -n) dryrun=echo ;;
+    --) break ;;
+    -*) echo >&2 "usage: git-prune-script [ -n ] [ heads... ]"; exit 1 ;;
+    *)  break ;;
+    esac
+    shift;
+done
+
+# Defaulting to include .git/refs/*/* may be debatable from the
+# purist POV but power users can always give explicit parameters
+# to the script anyway.
+
+case "$#" in
+0)
+    x_40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+    x_40="$x_40$x_40$x_40$x_40$x_40$x_40$x_40$x_40"
+    set x $(sed -ne "/^$x_40\$/p" .git/HEAD .git/refs/*/* 2>/dev/null)
+    shift ;;
+esac
+
+git-fsck-cache --cache --unreachable "$@" |
+sed -ne '/unreachable /{
+    s/unreachable [^ ][^ ]* //
+    s|\(..\)|\1/|p
+}' | {
+	case "$SHA1_FILE_DIRECTORY" in
+	'') cd .git/objects/ ;;
+	*) cd "$SHA1_FILE_DIRECTORY" ;;
+	esac || exit
+	xargs -r $dryrun rm -f
+}
