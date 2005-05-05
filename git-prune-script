@@ -1,2 +1,4 @@
 #!/bin/sh
-git-fsck-cache --unreachable $(cat .git/HEAD ) | grep unreachable | cut -d' ' -f3 | sed 's:^\(..\):.git/objects/\1/:' | xargs rm
+REFS=$(cat .git/refs/*/*)
+[ "$REFS" ] || exit 1
+git-fsck-cache --unreachable $REFS | grep unreachable | cut -d' ' -f3 | sed 's:^\(..\):.git/objects/\1/:' | xargs -r rm
