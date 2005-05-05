@@ -89,11 +89,9 @@ struct cache_entry {
 #define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
 static inline unsigned int create_ce_mode(unsigned int mode)
 {
-	if (S_ISREG(mode))
-		return htonl(S_IFREG | ce_permissions(mode));
 	if (S_ISLNK(mode))
 		return htonl(S_IFLNK);
-	return htonl(mode);
+	return htonl(S_IFREG | ce_permissions(mode));
 }
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
