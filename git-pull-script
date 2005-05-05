@@ -4,6 +4,7 @@
 # just hard-codes it.
 #
 merge_repo=$1
+merge_name=${2:-HEAD}
 
 rm -f .git/MERGE_HEAD .git/ORIG_HEAD
 cp .git/HEAD .git/ORIG_HEAD
@@ -11,8 +12,8 @@ cp .git/HEAD .git/ORIG_HEAD
 echo "Getting object database"
 rsync -avz --ignore-existing $merge_repo/objects/. ${SHA1_FILE_DIRECTORY:-.git/objects}/.
 
-echo "Getting remote head"
-rsync -L $merge_repo/HEAD .git/MERGE_HEAD || exit 1
+echo "Getting remote $merge_name"
+rsync -L $merge_repo/$merge_name .git/MERGE_HEAD || exit 1
 
 head=$(cat .git/HEAD)
 merge_head=$(cat .git/MERGE_HEAD)
