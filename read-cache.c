@@ -196,11 +196,6 @@ int read_cache(void)
 	if (active_cache)
 		return error("more than one cachefile");
 	errno = ENOENT;
-	sha1_file_directory = getenv(DB_ENVIRONMENT);
-	if (!sha1_file_directory)
-		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
-	if (access(sha1_file_directory, X_OK) < 0)
-		return error("no access to SHA1 file directory");
 	fd = open(get_index_file(), O_RDONLY);
 	if (fd < 0)
 		return (errno == ENOENT) ? 0 : error("open failed");

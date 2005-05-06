@@ -104,9 +104,6 @@ int main(int argc, char **argv)
 		usage(ls_tree_usage);
 	if (get_sha1(argv[1], sha1) < 0)
 		usage(ls_tree_usage);
-	sha1_file_directory = getenv(DB_ENVIRONMENT);
-	if (!sha1_file_directory)
-		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 	if (list(sha1) < 0)
 		die("list failed");
 	return 0;

@@ -418,10 +418,6 @@ int main(int argc, char **argv)
 		usage(tar_tree_usage);
 	}
 
-	sha1_file_directory = getenv(DB_ENVIRONMENT);
-	if (!sha1_file_directory)
-		sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
-
 	buffer = read_object_with_reference(sha1, "commit", &size, commit_sha1);
 	if (buffer) {
 		write_global_extended_header(commit_sha1);
