@@ -41,6 +41,14 @@ Identifier terminology used:
 
 
 ################################################################
+git-apply-patch-script
+
+This is a sample script to be used as GIT_EXTERNAL_DIFF to apply
+differences git-diff-* family of commands reports to the current
+work tree.
+
+
+################################################################
 git-cat-file
 	git-cat-file (-t | <type>) <object>
 
@@ -226,6 +234,12 @@ see also: git-write-tree
 
 
 ################################################################
+git-convert-cache
+
+Converts old-style GIT repository to the latest.
+
+
+################################################################
 git-diff-cache
 	git-diff-cache [-p] [-r] [-z] [--cached] <tree-ish>
 
@@ -335,6 +349,7 @@ which file is in which state, since the "has been updated" ones show a
 valid sha1, and the "not in sync with the index" ones will always have the
 special all-zero sha1.
 
+
 ################################################################
 git-diff-tree
 	git-diff-tree [-p] [-r] [-z] <tree-ish> <tree-ish> [<pattern>]*
@@ -409,6 +424,7 @@ this one:
 
 in case you care).
 
+
 ################################################################
 git-diff-tree-helper
 	git-diff-tree-helper [-z] [-R]
@@ -430,6 +446,7 @@ generates patch format output.
 	<tree>.
 
 See also the section on generating patches.
+
 
 ################################################################
 git-fsck-cache
@@ -525,6 +542,7 @@ SHA1_FILE_DIRECTORY
 GIT_INDEX_FILE
 	used to specify the cache
 
+
 ################################################################
 git-export
 	git-export top [base]
@@ -545,6 +563,18 @@ environment variable then the sha1 directories are created underneath -
 otherwise the default .git/objects directory is used.
 
 git-init-db won't hurt an existing repository.
+
+
+################################################################
+git-http-pull
+
+Downloads a remote GIT repository via HTTP protocol.
+
+
+################################################################
+git-local-pull
+
+Downloads another GIT repository on a local system.
 
 
 ################################################################
@@ -629,6 +659,33 @@ where the latter example shows how "git-merge-cache" will stop trying to
 merge once anything has returned an error (ie "cat" returned an error
 for the AA file, because it didn't exist in the original, and thus
 "git-merge-cache" didn't even try to merge the MM thing).
+
+################################################################
+git-merge-one-file-script
+
+This is the standard helper program to use with git-merge-cache
+to resolve a merge after the trivial merge done with git-read-tree -m.
+
+################################################################
+git-mktag
+
+Reads a tag contents from its standard input and creates a tag object.
+The input must be a well formed tag object.
+
+
+################################################################
+git-prune-script
+
+This runs git-fsck-cache --unreachable program using the heads specified
+on the command line (or .git/refs/heads/* and .git/refs/tags/* if none is
+specified), and prunes all unreachable objects from the object database.
+
+
+################################################################
+git-pull-script
+
+This script is used by Linus to pull from a remote repository and perform
+a merge.
 
 
 ################################################################
@@ -754,6 +811,12 @@ git-ls-files
 
 
 ################################################################
+git-resolve-script
+
+This script is used by Linus to merge two trees.
+
+
+################################################################
 git-rev-list <commit>
 
 Lists commit objects in reverse chronological order starting at the
@@ -823,6 +886,19 @@ think.)
 
 
 ################################################################
+git-rpull
+
+Pulls from a remote repository over ssh connection, invoking git-rpush on
+the other end.
+
+
+################################################################
+git-rpush
+
+Helper "server-side" program used by git-rpull.
+
+
+################################################################
 git-diff-files
 	git-diff-files [-p] [-q] [-r] [-z] [<pattern>...]
 
@@ -847,6 +923,23 @@ Output format:
 
 See "Output format from git-diff-cache, git-diff-tree and git-diff-files"
 section.
+
+
+################################################################
+git-tag-script
+
+This is an example script that uses git-mktag to create a tag object
+signed with GPG.
+
+
+################################################################
+git-tar-tree
+
+	git-tar-tree <tree-ish> [ <base> ]
+
+Creates a tar archive containing the tree structure for the named tree.
+When <base> is specified it is added as a leading path as the files in the
+generated tar archive.
 
 
 ################################################################
@@ -998,6 +1091,17 @@ To pretend you have a file with mode and sha1 at path, say:
 To update and refresh only the files already checked out:
 
    git-checkout-cache -n -f -a && git-update-cache --ignore-missing --refresh
+
+
+################################################################
+git-write-blob
+
+	git-write-blob <any-file-on-the-filesystem>
+
+Writes the contents of the named file (which can be outside of the work
+tree) as a blob into the object database, and reports its object ID to its
+standard output.  This is used by git-merge-one-file-script to update the
+cache without modifying files in the work tree.
 
 
 ################################################################
