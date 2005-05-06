@@ -39,6 +39,34 @@ static const char *weekday_names[] = {
 };
 
 /*
+ * The "tz" thing is passed in as this strange "decimal parse of tz"
+ * thing, which means that tz -0100 is passed in as the integer -100,
+ * even though it means "sixty minutes off"
+ */
+const char *show_date(unsigned long time, int tz)
+{
+	struct tm *tm;
+	time_t t;
+	static char timebuf[200];
+	int minutes;
+
+	minutes = tz < 0 ? -tz : tz;
+	minutes = (tz / 100)*60 + (tz % 100);
+	minutes = tz < 0 ? -minutes : minutes;
+	t = time - minutes * 60;
+	tm = gmtime(&t);
+	if (!tm)
+		return NULL;
+	sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d %+05d",
+		weekday_names[tm->tm_wday],
+		month_names[tm->tm_mon],
+		tm->tm_mday,
+		tm->tm_hour, tm->tm_min, tm->tm_sec,
+		tm->tm_year + 1900, tz);
+	return timebuf;
+}
+
+/*
  * Check these. And note how it doesn't do the summer-time conversion.
  *
  * In my world, it's always summer, and things are probably a bit off
