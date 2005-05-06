@@ -9,8 +9,6 @@
 #include <stdarg.h>
 #include "cache.h"
 
-const char *sha1_file_directory = NULL;
-
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
 #define O_NOATIME 01000000
