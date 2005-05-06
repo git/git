@@ -13,6 +13,12 @@ extern int get_history;
 /** Set to fetch the trees in the commit history. **/
 extern int get_all;
 
+/* Set to be verbose */
+extern int get_verbosely;
+
+/* Report what we got under get_verbosely */
+extern void pull_say(const char *, const char *);
+
 extern int pull(char *target);
 
 #endif /* PULL_H */

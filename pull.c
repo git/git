@@ -7,11 +7,17 @@
 int get_tree = 0;
 int get_history = 0;
 int get_all = 0;
+int get_verbosely = 0;
 static unsigned char current_commit_sha1[20];
 
 static const char commitS[] = "commit";
 static const char treeS[] = "tree";
 static const char blobS[] = "blob";
+
+void pull_say(const char *fmt, const char *hex) {
+	if (get_verbosely)
+		fprintf(stderr, fmt, hex);
+}
 
 static void report_missing(const char *what, const unsigned char *missing)
 {

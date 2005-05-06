@@ -79,8 +79,6 @@ int fetch(unsigned char *sha1)
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
-	/*printf("Getting %s\n", hex);*/
-
 	if (curl_easy_perform(curl))
 		return error("Couldn't get %s for %s\n", url, hex);
 
@@ -96,6 +94,7 @@ int fetch(unsigned char *sha1)
 		return error("File %s has bad hash\n", hex);
 	}
 	
+	pull_say("got %s\n", hex);
 	return 0;
 }
 
@@ -114,11 +113,13 @@ int main(int argc, char **argv)
 			get_all = 1;
 			get_tree = 1;
 			get_history = 1;
+		} else if (argv[arg][1] == 'v') {
+			get_verbosely = 1;
 		}
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("http-pull [-c] [-t] [-a] commit-id url");
+		usage("git-http-pull [-c] [-t] [-a] [-v] commit-id url");
 		return 1;
 	}
 	commit_id = argv[arg];

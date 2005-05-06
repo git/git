@@ -14,14 +14,8 @@
 static int use_link = 0;
 static int use_symlink = 0;
 static int use_filecopy = 1;
-static int verbose = 0;
 
 static char *path;
-
-static void say(const char *fmt, const char *hex) {
-	if (verbose)
-		fprintf(stderr, fmt, hex);
-}
 
 int fetch(unsigned char *sha1)
 {
@@ -41,7 +35,7 @@ int fetch(unsigned char *sha1)
 	strcpy(filename + object_name_start + 3, hex + 2);
 	if (use_link) {
 		if (!link(filename, dest_filename)) {
-			say("link %s\n", hex);
+			pull_say("link %s\n", hex);
 			return 0;
 		}
 		/* If we got ENOENT there is no point continuing. */
@@ -51,7 +45,7 @@ int fetch(unsigned char *sha1)
 		}
 	}
 	if (use_symlink && !symlink(filename, dest_filename)) {
-		say("symlink %s\n", hex);
+		pull_say("symlink %s\n", hex);
 		return 0;
 	}
 	if (use_filecopy) {
@@ -79,7 +73,7 @@ int fetch(unsigned char *sha1)
 			fprintf(stderr, "cannot write %s (%ld bytes)\n",
 				dest_filename, st.st_size);
 		else
-			say("copy %s\n", hex);
+			pull_say("copy %s\n", hex);
 		return status;
 	}
 	fprintf(stderr, "failed to copy %s with given copy methods.\n", hex);
@@ -117,7 +111,7 @@ int main(int argc, char **argv)
 		else if (argv[arg][1] == 'n')
 			use_filecopy = 0;
 		else if (argv[arg][1] == 'v')
-			verbose = 1;
+			get_verbosely = 1;
 		else
 			usage(local_pull_usage);
 		arg++;

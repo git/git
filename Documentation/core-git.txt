@@ -568,14 +568,35 @@ git-init-db won't hurt an existing repository.
 ################################################################
 git-http-pull
 
+	git-http-pull [-c] [-t] [-a] [-v] commit-id url
+
 Downloads a remote GIT repository via HTTP protocol.
+
+-c
+	Get the commit objects.
+-t
+	Get trees associated with the commit objects.
+-a
+	Get all the objects.
+-v
+	Report what is downloaded.
 
 
 ################################################################
 git-local-pull
 
+	git-local-pull [-c] [-t] [-a] [-l] [-s] [-n] [-v] commit-id path
+
 Downloads another GIT repository on a local system.
 
+-c
+	Get the commit objects.
+-t
+	Get trees associated with the commit objects.
+-a
+	Get all the objects.
+-v
+	Report what is downloaded.
 
 ################################################################
 git-ls-tree
@@ -888,8 +909,19 @@ think.)
 ################################################################
 git-rpull
 
+	git-rpull [-c] [-t] [-a] [-v] commit-id url
+
 Pulls from a remote repository over ssh connection, invoking git-rpush on
 the other end.
+
+-c
+	Get the commit objects.
+-t
+	Get trees associated with the commit objects.
+-a
+	Get all the objects.
+-v
+	Report what is downloaded.
 
 
 ################################################################
