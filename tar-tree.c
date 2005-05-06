@@ -199,13 +199,14 @@ static void append_extended_header(char **p, const char *keyword,
 }
 
 static void write_header(const char *, char, const char *, struct path_prefix *,
-                         const char *, unsigned int, unsigned long);
+                         const char *, unsigned int, void *, unsigned long);
 
 /* stores a pax extended header directly in the block buffer */
 static void write_extended_header(const char *headerfilename, int is_dir,
-                                  const char *basepath,
+                                  unsigned int flags, const char *basepath,
                                   struct path_prefix *prefix,
-                                  const char *path, unsigned int namelen)
+                                  const char *path, unsigned int namelen,
+                                  void *content, unsigned int contentsize)
 {
 	char *p;
 	unsigned int pathlen, size;
@@ -214,7 +215,7 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 	if (size > RECORDSIZE)
 		die("tar-tree: extended header too big, wtf?");
 	write_header(NULL, TYPEFLAG_EXT_HEADER, NULL, NULL, headerfilename,
-	             0100600, size);
+	             0100600, NULL, size);
 
 	p = get_record();
 	append_extended_header_prefix(&p, pathlen, "path");
@@ -230,7 +231,7 @@ static void write_global_extended_header(const char *sha1)
 
 	size = extended_header_len("comment", 40);
 	write_header(NULL, TYPEFLAG_GLOBAL_HEADER, NULL, NULL,
-	             "pax_global_header", 0100600, size);
+	             "pax_global_header", 0100600, NULL, size);
 
 	p = get_record();
 	append_extended_header(&p, "comment", sha1_to_hex(sha1), 40);
@@ -240,7 +241,7 @@ static void write_global_extended_header(const char *sha1)
 /* stores a ustar header directly in the block buffer */
 static void write_header(const char *sha1, char typeflag, const char *basepath,
                          struct path_prefix *prefix, const char *path,
-                         unsigned int mode, unsigned long size)
+                         unsigned int mode, void *buffer, unsigned long size)
 {
 	unsigned int namelen; 
 	char *p, *header = NULL;
@@ -262,8 +263,9 @@ static void write_header(const char *sha1, char typeflag, const char *basepath,
 		char headerfilename[51];
 		sprintf(headerfilename, "%s.paxheader", sha1_hex);
 		/* the extended header must be written before the normal one */
-		write_extended_header(headerfilename, S_ISDIR(mode), basepath,
-				      prefix, path, namelen);
+		write_extended_header(headerfilename, S_ISDIR(mode),
+		                      0, basepath, prefix, path,
+		                      namelen, buffer, size);
 
 		header = get_record();
 		sprintf(header, "%s.data", sha1_hex);
@@ -325,7 +327,7 @@ static void traverse_tree(void *buffer, unsigned long size,
 		if (!eltbuf)
 			die("cannot read %s", sha1_to_hex(sha1));
 		write_header(sha1, TYPEFLAG_AUTO, basedir, prefix, path,
-		             mode, eltsize);
+		             mode, eltbuf, eltsize);
 		if (!strcmp(elttype, "tree")) {
 			this_prefix.name = path;
 			traverse_tree(eltbuf, eltsize, &this_prefix);
@@ -399,7 +401,8 @@ int main(int argc, char **argv)
 	if (!archive_time)
 		archive_time = time(NULL);
 	if (basedir)
-		write_header("0", TYPEFLAG_DIR, NULL, NULL, basedir, 040755, 0);
+		write_header("0", TYPEFLAG_DIR, NULL, NULL, basedir, 040755,
+		             NULL, 0);
 	traverse_tree(buffer, size, NULL);
 	free(buffer);
 	write_trailer();
