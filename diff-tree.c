@@ -284,6 +284,26 @@ static int get_one_line(const char *msg, unsigned long len)
 	return ret;
 }
 
+static int add_author_info(char *buf, const char *line, int len)
+{
+	char *date;
+	unsigned int namelen;
+	unsigned long time;
+	int tz;
+
+	line += strlen("author ");
+	date = strchr(line, '>');
+	if (!date)
+		return 0;
+	namelen = ++date - line;
+	time = strtoul(date, &date, 10);
+	tz = strtol(date, NULL, 10);
+
+	return sprintf(buf, "Author: %.*s\nDate:   %s\n",
+		namelen, line,
+		show_date(time, tz));
+}
+
 static char *generate_header(const char *commit, const char *parent, const char *msg, unsigned long len)
 {
 	static char this_header[1000];
@@ -306,8 +326,11 @@ static char *generate_header(const char *commit, const char *parent, const char 
 			len -= linelen;
 			if (linelen == 1)
 				hdr = 0;
-			if (hdr)
+			if (hdr) {
+				if (!memcmp(line, "author ", 7))
+					offset += add_author_info(this_header + offset, line, linelen);
 				continue;
+			}
 			memset(this_header + offset, ' ', 4);
 			memcpy(this_header + offset + 4, line, linelen);
 			offset += linelen + 4;
