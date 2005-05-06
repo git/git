@@ -63,7 +63,6 @@ static int add_file_to_cache_1(char *path)
 	struct cache_entry *ce;
 	struct stat st;
 	int fd;
-	unsigned int len;
 	char *target;
 
 	if (lstat(path, &st) < 0) {
