@@ -1,7 +1,10 @@
+#include <ctype.h>
 #include "cache.h"
 #include "diff.h"
 
+static int ignore_merges = 1;
 static int recursive = 0;
+static int read_stdin = 0;
 static int line_termination = '\n';
 static int generate_patch = 0;
 
@@ -250,20 +253,67 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
+static int diff_tree_stdin(char *line)
+{
+	int len = strlen(line);
+	unsigned char commit[20], parent[20];
+	unsigned long size, offset;
+	char *buf;
+
+	if (!len || line[len-1] != '\n')
+		return -1;
+	line[len-1] = 0;
+	if (get_sha1_hex(line, commit))
+		return -1;
+	if (isspace(line[40]) && !get_sha1_hex(line+41, parent)) {
+		line[40] = ' ';
+		line[81] = 0;
+		printf("%s:\n", line);
+		return diff_tree_sha1(parent, commit, "");
+	}
+	buf = read_object_with_reference(commit, "commit", &size, NULL);
+	if (!buf)
+		return -1;
+
+	/* More than one parent? */
+	if (ignore_merges) {
+		if (!memcmp(buf + 46 + 48, "parent ", 7))
+			return 0;
+	}
+
+	line[40] = 0;
+	offset = 46;
+	while (offset + 48 < size && !memcmp(buf + offset, "parent ", 7)) {
+		if (get_sha1_hex(buf + offset + 7, parent))
+			return -1;
+		printf("%s %s:\n", line, sha1_to_hex(parent));
+		diff_tree_sha1(parent, commit, "");
+		offset += 48;
+	}
+	return -1;
+}
+
 static char *diff_tree_usage = "diff-tree [-p] [-r] [-z] <tree sha1> <tree sha1>";
 
 int main(int argc, char **argv)
 {
+	char line[1000];
 	unsigned char old[20], new[20];
 
 	for (;;) {
-		char *arg = argv[1];
-
-		if (!arg || *arg != '-')
-			break;
+		char *arg;
 
 		argv++;
 		argc--;
+		arg = *argv;
+		if (!arg || *arg != '-')
+			break;
+
+		if (!strcmp(arg, "-")) {
+			argv++;
+			argc--;
+			break;
+		}
 		if (!strcmp(arg, "-r")) {
 			recursive = 1;
 			continue;
@@ -276,21 +326,39 @@ int main(int argc, char **argv)
 			line_termination = '\0';
 			continue;
 		}
+		if (!strcmp(arg, "-m")) {
+			ignore_merges = 0;
+			continue;
+		}
+		if (!strcmp(arg, "--stdin")) {
+			read_stdin = 1;
+			continue;
+		}
 		usage(diff_tree_usage);
 	}
 
-	if (argc < 3 || get_sha1(argv[1], old) || get_sha1(argv[2], new))
-		usage(diff_tree_usage);
+	if (!read_stdin) {
+		if (argc < 2 || get_sha1(argv[0], old) || get_sha1(argv[1], new))
+			usage(diff_tree_usage);
+		argv += 2;
+		argc -= 2;
+	}
 
-	if (argc > 3) {
+	if (argc > 0) {
 		int i;
 
-		paths = &argv[3];
-		nr_paths = argc - 3;
+		paths = argv;
+		nr_paths = argc;
 		pathlens = xmalloc(nr_paths * sizeof(int));
 		for (i=0; i<nr_paths; i++)
 			pathlens[i] = strlen(paths[i]);
 	}
 
-	return diff_tree_sha1(old, new, "");
+	if (!read_stdin)
+		return diff_tree_sha1(old, new, "");
+
+	while (fgets(line, sizeof(line), stdin))
+		diff_tree_stdin(line);
+
+	return 0;
 }
