@@ -45,6 +45,15 @@ static void write_if_needed(void)
 	}
 }
 
+/* acquire the next record from the buffer; user must call write_if_needed() */
+static char *get_record(void)
+{
+	char *p = block + offset;
+	memset(p, 0, RECORDSIZE);
+	offset += RECORDSIZE;
+	return p;
+}
+
 /*
  * The end of tar archives is marked by 1024 nul bytes and after that
  * follows the rest of the block (if any).
@@ -178,9 +187,7 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 	if (size > RECORDSIZE)
 		die("tar-tree: extended header too big, wtf?");
 	write_header(NULL, 'x', NULL, NULL, headerfilename, 0100600, size);
-	p = block + offset;
-	memset(p, 0, RECORDSIZE);
-	offset += RECORDSIZE;
+	p = get_record();
 	append_long(&p, size);
 	append_string(&p, " path=");
 	append_path(&p, is_dir, basepath, prefix, path);
@@ -192,9 +199,7 @@ static void write_global_extended_header(const char *sha1)
 {
 	char *p;
 	write_header(NULL, 'g', NULL, NULL, "pax_global_header", 0, 52);
-	p = block + offset;
-	memset(p, 0, RECORDSIZE);
-	offset += RECORDSIZE;
+	p = get_record();
 	append_long(&p, 52);	/* 2 + 9 + 40 + 1 */
 	append_string(&p, " comment=");
 	append_string(&p, sha1_to_hex(sha1));
@@ -223,15 +228,10 @@ static void write_header(const char *sha1, char typeflag, const char *basepath,
 		write_extended_header(headerfilename, S_ISDIR(mode), basepath,
 				      prefix, path, namelen);
 
-		header = block + offset;
-		memset(header, 0, RECORDSIZE);
-		offset += RECORDSIZE;
+		header = get_record();
 		sprintf(header, "%s.data", sha1_hex);
 	} else {
-		header = block + offset;
-		memset(header, 0, RECORDSIZE);
-		offset += RECORDSIZE;
-		p = header;
+		p = header = get_record();
 		append_path(&p, S_ISDIR(mode), basepath, prefix, path);
 	}
 
