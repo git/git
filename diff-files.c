@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 			continue;
 		}
  
-		if (stat(ce->name, &st) < 0) {
+		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT) {
 				perror(ce->name);
 				continue;

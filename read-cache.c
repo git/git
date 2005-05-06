@@ -16,6 +16,9 @@ int cache_match_stat(struct cache_entry *ce, struct stat *st)
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
 	case S_IFREG:
 		changed |= !S_ISREG(st->st_mode) ? TYPE_CHANGED : 0;
+		/* We consider only the owner x bit to be relevant for "mode changes" */
+		if (0100 & (ntohl(ce->ce_mode) ^ st->st_mode))
+			changed |= MODE_CHANGED;
 		break;
 	case S_IFLNK:
 		changed |= !S_ISLNK(st->st_mode) ? TYPE_CHANGED : 0;
@@ -43,9 +46,6 @@ int cache_match_stat(struct cache_entry *ce, struct stat *st)
 	if (ce->ce_uid != htonl(st->st_uid) ||
 	    ce->ce_gid != htonl(st->st_gid))
 		changed |= OWNER_CHANGED;
-	/* We consider only the owner x bit to be relevant for "mode changes" */
-	if (0100 & (ntohl(ce->ce_mode) ^ st->st_mode))
-		changed |= MODE_CHANGED;
 	if (ce->ce_dev != htonl(st->st_dev) ||
 	    ce->ce_ino != htonl(st->st_ino))
 		changed |= INODE_CHANGED;

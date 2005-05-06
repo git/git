@@ -64,7 +64,7 @@ static int add_file_to_cache_1(char *path)
 	struct stat st;
 	int fd;
 	unsigned int len;
-	char target[1024];
+	char *target;
 
 	if (lstat(path, &st) < 0) {
 		if (errno == ENOENT || errno == ENOTDIR) {
@@ -90,11 +90,14 @@ static int add_file_to_cache_1(char *path)
 			return -1;
 		break;
 	case S_IFLNK:
-		len = readlink(path, target, sizeof(target));
-		if (len == -1 || len+1 > sizeof(target))
+		target = xmalloc(st.st_size+1);
+		if (readlink(path, target, st.st_size+1) != st.st_size) {
+			free(target);
 			return -1;
-		if (write_sha1_file(target, len, "blob", ce->sha1))
+		}
+		if (write_sha1_file(target, st.st_size, "blob", ce->sha1))
 			return -1;
+		free(target);
 		break;
 	default:
 		return -1;
@@ -163,6 +166,33 @@ static int compare_data(struct cache_entry *ce, unsigned long expected_size)
 	return match;
 }
 
+static int compare_link(struct cache_entry *ce, unsigned long expected_size)
+{
+	int match = -1;
+	char *target;
+	void *buffer;
+	unsigned long size;
+	char type[10];
+	int len;
+
+	target = xmalloc(expected_size);
+	len = readlink(ce->name, target, expected_size);
+	if (len != expected_size) {
+		free(target);
+		return -1;
+	}
+	buffer = read_sha1_file(ce->sha1, type, &size);
+	if (!buffer) {
+		free(target);
+		return -1;
+	}
+	if (size == expected_size)
+		match = memcmp(buffer, target, size);
+	free(buffer);
+	free(target);
+	return match;
+}
+
 /*
  * "refresh" does not calculate a new sha1 file or bring the
  * cache up-to-date for mode/content changes. But what it
@@ -194,8 +224,18 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	if (changed & (MODE_CHANGED | TYPE_CHANGED))
 		return ERR_PTR(-EINVAL);
 
-	if (compare_data(ce, st.st_size))
+	switch (st.st_mode & S_IFMT) {
+	case S_IFREG:
+		if (compare_data(ce, st.st_size))
+			return ERR_PTR(-EINVAL);
+		break;
+	case S_IFLNK:
+		if (compare_link(ce, st.st_size))
+			return ERR_PTR(-EINVAL);
+		break;
+	default:
 		return ERR_PTR(-EINVAL);
+	}
 
 	cache_changed = 1;
 	size = ce_size(ce);
