@@ -2,11 +2,13 @@
 #include "cache.h"
 #include "diff.h"
 
+static int silent = 0;
 static int ignore_merges = 1;
 static int recursive = 0;
 static int read_stdin = 0;
 static int line_termination = '\n';
 static int generate_patch = 0;
+static const char *header = NULL;
 
 // What paths are we interested in?
 static int nr_paths = 0;
@@ -66,6 +68,14 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 	unsigned mode;
 	const char *path;
 	const unsigned char *sha1 = extract(tree, size, &path, &mode);
+
+	if (header) {
+		printf("%s", header);
+		header = NULL;
+	}
+
+	if (silent)
+		return;
 
 	if (recursive && S_ISDIR(mode)) {
 		char type[20];
@@ -137,6 +147,13 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		free(newbase);
 		return retval;
 	}
+
+	if (header) {
+		printf("%s", header);
+		header = NULL;
+	}
+	if (silent)
+		return 0;
 
 	if (generate_patch) {
 		if (!S_ISDIR(mode1))
@@ -258,6 +275,7 @@ static int diff_tree_stdin(char *line)
 	int len = strlen(line);
 	unsigned char commit[20], parent[20];
 	unsigned long size, offset;
+	static char this_header[100];
 	char *buf;
 
 	if (!len || line[len-1] != '\n')
@@ -266,9 +284,10 @@ static int diff_tree_stdin(char *line)
 	if (get_sha1_hex(line, commit))
 		return -1;
 	if (isspace(line[40]) && !get_sha1_hex(line+41, parent)) {
-		line[40] = ' ';
+		line[40] = 0;
 		line[81] = 0;
-		printf("%s:\n", line);
+		sprintf(this_header, "%s (from %s)\n", line, line+41);
+		header = this_header;
 		return diff_tree_sha1(parent, commit, "");
 	}
 	buf = read_object_with_reference(commit, "commit", &size, NULL);
@@ -286,7 +305,8 @@ static int diff_tree_stdin(char *line)
 	while (offset + 48 < size && !memcmp(buf + offset, "parent ", 7)) {
 		if (get_sha1_hex(buf + offset + 7, parent))
 			return -1;
-		printf("%s %s:\n", line, sha1_to_hex(parent));
+		sprintf(this_header, "%s (from %s)\n", line, sha1_to_hex(parent));
+		header = this_header;
 		diff_tree_sha1(parent, commit, "");
 		offset += 48;
 	}
@@ -328,6 +348,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-m")) {
 			ignore_merges = 0;
+			continue;
+		}
+		if (!strcmp(arg, "-s")) {
+			silent = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--stdin")) {
