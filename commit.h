@@ -20,6 +20,8 @@ extern const char *commit_type;
 
 struct commit *lookup_commit(unsigned char *sha1);
 
+int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
+
 int parse_commit(struct commit *item);
 
 void commit_list_insert(struct commit *item, struct commit_list **list_p);

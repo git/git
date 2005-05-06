@@ -104,6 +104,7 @@ struct object *parse_object(unsigned char *sha1)
 	unsigned long mapsize;
 	void *map = map_sha1_file(sha1, &mapsize);
 	if (map) {
+		struct object *obj;
 		char type[100];
 		unsigned long size;
 		void *buffer = unpack_sha1_file(map, mapsize, type, &size);
@@ -112,26 +113,27 @@ struct object *parse_object(unsigned char *sha1)
 			return NULL;
 		if (check_sha1_signature(sha1, buffer, size, type) < 0)
 			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
-		free(buffer);
 		if (!strcmp(type, "blob")) {
-			struct blob *ret = lookup_blob(sha1);
-			parse_blob(ret);
-			return &ret->object;
+			struct blob *blob = lookup_blob(sha1);
+			parse_blob_buffer(blob, buffer, size);
+			obj = &blob->object;
 		} else if (!strcmp(type, "tree")) {
-			struct tree *ret = lookup_tree(sha1);
-			parse_tree(ret);
-			return &ret->object;
+			struct tree *tree = lookup_tree(sha1);
+			parse_tree_buffer(tree, buffer, size);
+			obj = &tree->object;
 		} else if (!strcmp(type, "commit")) {
-			struct commit *ret = lookup_commit(sha1);
-			parse_commit(ret);
-			return &ret->object;
+			struct commit *commit = lookup_commit(sha1);
+			parse_commit_buffer(commit, buffer, size);
+			obj = &commit->object;
 		} else if (!strcmp(type, "tag")) {
-			struct tag *ret = lookup_tag(sha1);
-			parse_tag(ret);
-			return &ret->object;
+			struct tag *tag = lookup_tag(sha1);
+			parse_tag_buffer(tag, buffer, size);
+			obj = &tag->object;
 		} else {
-			return NULL;
+			obj = NULL;
 		}
+		free(buffer);
+		return obj;
 	}
 	return NULL;
 }

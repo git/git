@@ -41,24 +41,14 @@ static unsigned long parse_commit_date(const char *buf)
 	return date;
 }
 
-int parse_commit(struct commit *item)
+int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 {
-	char type[20];
-	void * buffer, *bufptr;
-	unsigned long size;
+	void *bufptr = buffer;
 	unsigned char parent[20];
+
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
-	buffer = bufptr = read_sha1_file(item->object.sha1, type, &size);
-	if (!buffer)
-		return error("Could not read %s",
-			     sha1_to_hex(item->object.sha1));
-	if (strcmp(type, commit_type)) {
-		free(buffer);
-		return error("Object %s not a commit",
-			     sha1_to_hex(item->object.sha1));
-	}
 	get_sha1_hex(bufptr + 5, parent);
 	item->tree = lookup_tree(parent);
 	if (item->tree)
@@ -74,8 +64,30 @@ int parse_commit(struct commit *item)
 		bufptr += 48;
 	}
 	item->date = parse_commit_date(bufptr);
-	free(buffer);
 	return 0;
+}
+
+int parse_commit(struct commit *item)
+{
+	char type[20];
+	void *buffer;
+	unsigned long size;
+	int ret;
+
+	if (item->object.parsed)
+		return 0;
+	buffer = read_sha1_file(item->object.sha1, type, &size);
+	if (!buffer)
+		return error("Could not read %s",
+			     sha1_to_hex(item->object.sha1));
+	if (strcmp(type, commit_type)) {
+		free(buffer);
+		return error("Object %s not a commit",
+			     sha1_to_hex(item->object.sha1));
+	}
+	ret = parse_commit_buffer(item, buffer, size);
+	free(buffer);
+	return ret;
 }
 
 void commit_list_insert(struct commit *item, struct commit_list **list_p)

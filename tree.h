@@ -25,6 +25,8 @@ struct tree {
 
 struct tree *lookup_tree(unsigned char *sha1);
 
+int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
+
 int parse_tree(struct tree *tree);
 
 #endif /* TREE_H */
