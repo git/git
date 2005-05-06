@@ -7,7 +7,7 @@
 #include "cache.h"
 
 struct cache_entry **active_cache = NULL;
-unsigned int active_nr = 0, active_alloc = 0;
+unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
 
 int cache_match_stat(struct cache_entry *ce, struct stat *st)
 {
@@ -99,6 +99,7 @@ int cache_name_pos(const char *name, int namelen)
 /* Remove entry, return true if there are more entries to go.. */
 int remove_entry_at(int pos)
 {
+	active_cache_changed = 1;
 	active_nr--;
 	if (pos >= active_nr)
 		return 0;
@@ -130,6 +131,7 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 
 	/* existing match? Just replace it */
 	if (pos >= 0) {
+		active_cache_changed = 1;
 		active_cache[pos] = ce;
 		return 0;
 	}
@@ -161,6 +163,7 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 	if (active_nr > pos)
 		memmove(active_cache + pos + 1, active_cache + pos, (active_nr - pos - 1) * sizeof(ce));
 	active_cache[pos] = ce;
+	active_cache_changed = 1;
 	return 0;
 }
 

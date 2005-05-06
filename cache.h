@@ -98,7 +98,7 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 
 const char *sha1_file_directory;
 struct cache_entry **active_cache;
-unsigned int active_nr, active_alloc;
+unsigned int active_nr, active_alloc, active_cache_changed;
 
 #define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
 #define DEFAULT_DB_ENVIRONMENT ".git/objects"
