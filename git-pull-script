@@ -1,15 +1,40 @@
 #!/bin/sh
 #
-# use "$1" or something in a real script, this 
-# just hard-codes it.
-#
 merge_repo=$1
 merge_name=${2:-HEAD}
 
-echo "Getting object database"
-rsync -avz --ignore-existing $merge_repo/objects/. ${SHA1_FILE_DIRECTORY:-.git/objects}/.
+download_one () {
+	# remote_path="$1" local_file="$2"
+	case "$1" in
+	http://*)
+		wget -q -O "$2" "$1" ;;
+	/*)
+		test -f "$1" && cat >"$2" "$1" ;;
+	*)
+		rsync -L "$1" "$2" ;;
+	esac
+}
+
+download_objects () {
+	# remote_repo="$1" head_sha1="$2"
+	case "$1" in
+	http://*)
+		git-http-pull -a "$2" "$1/"
+		;;
+	/*)
+		git-local-pull -l -a "$2" "$1/"
+		;;
+	*)
+		rsync -avz --ignore-existing "$1/objects/." \
+			${SHA_FILE_DIRECTORY:-.git/objects}/.
+		;;
+	esac
+}
 
 echo "Getting remote $merge_name"
-rsync -L $merge_repo/$merge_name .git/MERGE_HEAD || exit 1
+download_one "$merge_repo/$merge_name" .git/MERGE_HEAD
+
+echo "Getting object database"
+download_objects "$merge_repo" "$(cat .git/MERGE_HEAD)"
 
 git-resolve-script "$(cat .git/HEAD)" "$(cat .git/MERGE_HEAD)" "$merge_repo"
