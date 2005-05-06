@@ -363,7 +363,8 @@ static int diff_tree_stdin(char *line)
 	return -1;
 }
 
-static char *diff_tree_usage = "diff-tree [-p] [-r] [-z] <tree sha1> <tree sha1>";
+static char *diff_tree_usage =
+"diff-tree [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] <tree sha1> <tree sha1>";
 
 int main(int argc, char **argv)
 {

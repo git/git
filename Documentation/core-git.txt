@@ -352,7 +352,7 @@ special all-zero sha1.
 
 ################################################################
 git-diff-tree
-	git-diff-tree [-p] [-r] [-z] <tree-ish> <tree-ish> [<pattern>]*
+	git-diff-tree [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] <tree-ish> <tree-ish> [<pattern>]*
 
 Compares the content and mode of the blobs found via two tree objects.
 
@@ -377,6 +377,34 @@ Note that git-diff-tree can use the tree encapsulated in a commit object.
 
 -z
 	\0 line termination on output
+
+--stdin
+	When --stdin is specified, the command does not take
+	<tree-ish> arguments from the command line.  Instead, it
+	reads either one <commit> or a pair of <tree-ish>
+	separated with a single space from its standard input.
+
+        When a single commit is given on one line of such input,
+        it compares the commit with its parents.  The following
+        flags further affects its behaviour.  This does not
+        apply to the case where two <tree-ish> separated with a
+        single space are given.
+
+-m
+	By default, "git-diff-tree --stdin" does not show
+	differences for merge commits.  With this flag, it shows
+	differences to that commit from all of its parents.
+
+-s
+	By default, "git-diff-tree --stdin" shows differences,
+	either in machine-readable form (without -p) or in patch
+	form (with -p).  This output can be supressed.  It is
+	only useful with -v flag.
+
+-v
+	This flag causes "git-diff-tree --stdin" to also show
+	the commit message before the differences.
+
 
 Limiting Output
 
