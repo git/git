@@ -6,9 +6,13 @@
 
 #define TYPEFLAG_AUTO		'\0'
 #define TYPEFLAG_REG		'0'
+#define TYPEFLAG_LNK		'2'
 #define TYPEFLAG_DIR		'5'
 #define TYPEFLAG_GLOBAL_HEADER	'g'
 #define TYPEFLAG_EXT_HEADER	'x'
+
+#define EXT_HEADER_PATH		1
+#define EXT_HEADER_LINKPATH	2
 
 static const char *tar_tree_usage = "tar-tree <key> [basedir]";
 
@@ -209,9 +213,13 @@ static void write_extended_header(const char *headerfilename, int is_dir,
                                   void *content, unsigned int contentsize)
 {
 	char *p;
-	unsigned int pathlen, size;
+	unsigned int pathlen, size, linkpathlen = 0;
 
 	size = pathlen = extended_header_len("path", namelen);
+	if (flags & EXT_HEADER_LINKPATH) {
+		linkpathlen = extended_header_len("linkpath", contentsize);
+		size += linkpathlen;
+	}
 	if (size > RECORDSIZE)
 		die("tar-tree: extended header too big, wtf?");
 	write_header(NULL, TYPEFLAG_EXT_HEADER, NULL, NULL, headerfilename,
@@ -221,6 +229,8 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 	append_extended_header_prefix(&p, pathlen, "path");
 	append_path(&p, is_dir, basepath, prefix, path);
 	append_char(&p, '\n');
+	if (flags & EXT_HEADER_LINKPATH)
+		append_extended_header(&p, "linkpath", content, contentsize);
 	write_if_needed();
 }
 
@@ -244,38 +254,60 @@ static void write_header(const char *sha1, char typeflag, const char *basepath,
                          unsigned int mode, void *buffer, unsigned long size)
 {
 	unsigned int namelen; 
-	char *p, *header = NULL;
+	char *header = NULL;
 	unsigned int checksum = 0;
 	int i;
+	unsigned int ext_header = 0;
 
 	if (typeflag == TYPEFLAG_AUTO) {
 		if (S_ISDIR(mode))
 			typeflag = TYPEFLAG_DIR;
+		else if (S_ISLNK(mode))
+			typeflag = TYPEFLAG_LNK;
 		else
 			typeflag = TYPEFLAG_REG;
 	}
 
 	namelen = path_len(S_ISDIR(mode), basepath, prefix, path);
-	if (namelen > 500) {
+	if (namelen > 500)
 		die("tar-tree: name too log of object %s\n", sha1_to_hex(sha1));
-	} else if (namelen > 100) {
-		char *sha1_hex = sha1_to_hex(sha1);
-		char headerfilename[51];
-		sprintf(headerfilename, "%s.paxheader", sha1_hex);
-		/* the extended header must be written before the normal one */
-		write_extended_header(headerfilename, S_ISDIR(mode),
-		                      0, basepath, prefix, path,
-		                      namelen, buffer, size);
+	else if (namelen > 100)
+		ext_header |= EXT_HEADER_PATH;
+	if (typeflag == TYPEFLAG_LNK && size > 100)
+		ext_header |= EXT_HEADER_LINKPATH;
 
-		header = get_record();
-		sprintf(header, "%s.data", sha1_hex);
+	/* the extended header must be written before the normal one */
+	if (ext_header) {
+		char headerfilename[51];
+		sprintf(headerfilename, "%s.paxheader", sha1_to_hex(sha1));
+		write_extended_header(headerfilename, S_ISDIR(mode),
+		                      ext_header, basepath, prefix, path,
+		                      namelen, buffer, size);
+	}
+
+	header = get_record();
+
+	if (ext_header) {
+		sprintf(header, "%s.data", sha1_to_hex(sha1));
 	} else {
-		p = header = get_record();
+		char *p = header;
 		append_path(&p, S_ISDIR(mode), basepath, prefix, path);
+	}
+
+	if (typeflag == TYPEFLAG_LNK) {
+		if (ext_header & EXT_HEADER_LINKPATH) {
+			sprintf(&header[157], "see %s.paxheader",
+			        sha1_to_hex(sha1));
+		} else {
+			if (buffer)
+				strncpy(&header[157], buffer, size);
+		}
 	}
 
 	if (S_ISDIR(mode))
 		mode |= 0755;	/* GIT doesn't store permissions of dirs */
+	if (S_ISLNK(mode))
+		mode |= 0777;   /* ... nor of symlinks */
 	sprintf(&header[100], "%07o", mode & 07777);
 
 	/* XXX: should we provide more meaningful info here? */
@@ -284,7 +316,9 @@ static void write_header(const char *sha1, char typeflag, const char *basepath,
 	strncpy(&header[265], "git", 31);	/* uname */
 	strncpy(&header[297], "git", 31);	/* gname */
 
-	sprintf(&header[124], "%011lo", S_ISDIR(mode) ? 0 : size);
+	if (S_ISDIR(mode) || S_ISLNK(mode))
+		size = 0;
+	sprintf(&header[124], "%011lo", size);
 	sprintf(&header[136], "%011lo", archive_time);
 
 	header[156] = typeflag;
@@ -331,7 +365,7 @@ static void traverse_tree(void *buffer, unsigned long size,
 		if (!strcmp(elttype, "tree")) {
 			this_prefix.name = path;
 			traverse_tree(eltbuf, eltsize, &this_prefix);
-		} else if (!strcmp(elttype, "blob")) {
+		} else if (!strcmp(elttype, "blob") && !S_ISLNK(mode)) {
 			write_blocked(eltbuf, eltsize);
 		}
 		free(eltbuf);
