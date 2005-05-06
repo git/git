@@ -4,6 +4,12 @@
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
 
+#define TYPEFLAG_AUTO		'\0'
+#define TYPEFLAG_REG		'0'
+#define TYPEFLAG_DIR		'5'
+#define TYPEFLAG_GLOBAL_HEADER	'g'
+#define TYPEFLAG_EXT_HEADER	'x'
+
 static const char *tar_tree_usage = "tar-tree <key> [basedir]";
 
 static char block[BLOCKSIZE];
@@ -186,7 +192,8 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 		size++;
 	if (size > RECORDSIZE)
 		die("tar-tree: extended header too big, wtf?");
-	write_header(NULL, 'x', NULL, NULL, headerfilename, 0100600, size);
+	write_header(NULL, TYPEFLAG_EXT_HEADER, NULL, NULL, headerfilename,
+	             0100600, size);
 	p = get_record();
 	append_long(&p, size);
 	append_string(&p, " path=");
@@ -198,7 +205,8 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 static void write_global_extended_header(const char *sha1)
 {
 	char *p;
-	write_header(NULL, 'g', NULL, NULL, "pax_global_header", 0, 52);
+	write_header(NULL, TYPEFLAG_GLOBAL_HEADER, NULL, NULL,
+	             "pax_global_header", 0100600, 52);
 	p = get_record();
 	append_long(&p, 52);	/* 2 + 9 + 40 + 1 */
 	append_string(&p, " comment=");
@@ -216,6 +224,13 @@ static void write_header(const char *sha1, char typeflag, const char *basepath,
 	char *p, *header = NULL;
 	unsigned int checksum = 0;
 	int i;
+
+	if (typeflag == TYPEFLAG_AUTO) {
+		if (S_ISDIR(mode))
+			typeflag = TYPEFLAG_DIR;
+		else
+			typeflag = TYPEFLAG_REG;
+	}
 
 	namelen = path_len(S_ISDIR(mode), basepath, prefix, path);
 	if (namelen > 500) {
@@ -287,8 +302,8 @@ static void traverse_tree(void *buffer, unsigned long size,
 		eltbuf = read_sha1_file(sha1, elttype, &eltsize);
 		if (!eltbuf)
 			die("cannot read %s", sha1_to_hex(sha1));
-		write_header(sha1, S_ISDIR(mode) ? '5' : '0', basedir,
-		             prefix, path, mode, eltsize);
+		write_header(sha1, TYPEFLAG_AUTO, basedir, prefix, path,
+		             mode, eltsize);
 		if (!strcmp(elttype, "tree")) {
 			this_prefix.name = path;
 			traverse_tree(eltbuf, eltsize, &this_prefix);
@@ -362,7 +377,7 @@ int main(int argc, char **argv)
 	if (!archive_time)
 		archive_time = time(NULL);
 	if (basedir)
-		write_header("0", '5', NULL, NULL, basedir, 040755, 0);
+		write_header("0", TYPEFLAG_DIR, NULL, NULL, basedir, 040755, 0);
 	traverse_tree(buffer, size, NULL);
 	free(buffer);
 	write_trailer();
