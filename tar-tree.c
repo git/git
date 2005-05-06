@@ -128,12 +128,6 @@ static void append_char(char **p, char c)
 	*p += 1;
 }
 
-static void append_long(char **p, long n)
-{
-	int len = sprintf(*p, "%ld", n);
-	*p += len;
-}
-
 static void append_path_prefix(char **buffer, struct path_prefix *prefix)
 {
 	if (!prefix)
@@ -175,6 +169,35 @@ static unsigned int path_len(int is_dir, const char *basepath,
 	return len;
 }
 
+static void append_extended_header_prefix(char **p, unsigned int size,
+                                          const char *keyword)
+{
+	int len = sprintf(*p, "%u %s=", size, keyword);
+	*p += len;
+}
+
+static unsigned int extended_header_len(const char *keyword,
+                                        unsigned int valuelen)
+{
+	/* "%u %s=%s\n" */
+	unsigned int len = 1 + 1 + strlen(keyword) + 1 + valuelen + 1;
+	if (len > 9)
+		len++;
+	if (len > 99)
+		len++;
+	return len;
+}
+
+static void append_extended_header(char **p, const char *keyword,
+                                   const char *value, unsigned int len)
+{
+	unsigned int size = extended_header_len(keyword, len);
+	append_extended_header_prefix(p, size, keyword);
+	memcpy(*p, value, len);
+	*p += len;
+	append_char(p, '\n');
+}
+
 static void write_header(const char *, char, const char *, struct path_prefix *,
                          const char *, unsigned int, unsigned long);
 
@@ -185,18 +208,16 @@ static void write_extended_header(const char *headerfilename, int is_dir,
                                   const char *path, unsigned int namelen)
 {
 	char *p;
-	unsigned int size = 1 + 6 + namelen + 1;
-	if (size > 9)
-		size++;
-	if (size > 99)
-		size++;
+	unsigned int pathlen, size;
+
+	size = pathlen = extended_header_len("path", namelen);
 	if (size > RECORDSIZE)
 		die("tar-tree: extended header too big, wtf?");
 	write_header(NULL, TYPEFLAG_EXT_HEADER, NULL, NULL, headerfilename,
 	             0100600, size);
+
 	p = get_record();
-	append_long(&p, size);
-	append_string(&p, " path=");
+	append_extended_header_prefix(&p, pathlen, "path");
 	append_path(&p, is_dir, basepath, prefix, path);
 	append_char(&p, '\n');
 	write_if_needed();
@@ -205,13 +226,14 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 static void write_global_extended_header(const char *sha1)
 {
 	char *p;
+	unsigned int size;
+
+	size = extended_header_len("comment", 40);
 	write_header(NULL, TYPEFLAG_GLOBAL_HEADER, NULL, NULL,
-	             "pax_global_header", 0100600, 52);
+	             "pax_global_header", 0100600, size);
+
 	p = get_record();
-	append_long(&p, 52);	/* 2 + 9 + 40 + 1 */
-	append_string(&p, " comment=");
-	append_string(&p, sha1_to_hex(sha1));
-	append_char(&p, '\n');
+	append_extended_header(&p, "comment", sha1_to_hex(sha1), 40);
 	write_if_needed();
 }
 
