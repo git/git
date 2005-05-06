@@ -125,9 +125,16 @@ static void builtin_diff(const char *name,
 		printf("Created: %s (mode:%s)\n", name, temp[1].mode);
 	else if (!path1[1][0])
 		printf("Deleted: %s\n", name);
-	else if (strcmp(temp[0].mode, temp[1].mode))
+	else if (strcmp(temp[0].mode, temp[1].mode)) {
 		printf("Mode changed: %s (%s->%s)\n", name,
 		       temp[0].mode, temp[1].mode);
+		/* Be careful.  We do not want to diff between
+		 * symlink and a file.
+		 */
+		if (strncmp(temp[0].mode, "120", 3) !=
+		    strncmp(temp[1].mode, "120", 3))
+			exit(0);
+	}
 	fflush(NULL);
 	execlp("/bin/sh","sh", "-c", cmd, NULL);
 }
@@ -163,11 +170,33 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	if (pos < 0)
 		return 0;
 	ce = active_cache[pos];
-	if ((stat(name, &st) < 0) ||
+	if ((lstat(name, &st) < 0) ||
+	    !S_ISREG(st.st_mode) ||
 	    cache_match_stat(ce, &st) ||
 	    memcmp(sha1, ce->sha1, 20))
 		return 0;
 	return 1;
+}
+
+static void prep_temp_blob(struct diff_tempfile *temp,
+			   void *blob,
+			   unsigned long size,
+			   unsigned char *sha1,
+			   int mode)
+{
+	int fd;
+
+	strcpy(temp->tmp_path, ".diff_XXXXXX");
+	fd = mkstemp(temp->tmp_path);
+	if (fd < 0)
+		die("unable to create temp-file");
+	if (write(fd, blob, size) != size)
+		die("unable to write temp-file");
+	close(fd);
+	temp->name = temp->tmp_path;
+	strcpy(temp->hex, sha1_to_hex(sha1));
+	temp->hex[40] = 0;
+	sprintf(temp->mode, "%06o", mode);
 }
 
 static void prepare_temp_file(const char *name,
@@ -196,20 +225,36 @@ static void prepare_temp_file(const char *name,
 	if (!one->sha1_valid || use_work_tree) {
 		struct stat st;
 		temp->name = name;
-		if (stat(temp->name, &st) < 0) {
+		if (lstat(temp->name, &st) < 0) {
 			if (errno == ENOENT)
 				goto not_a_valid_file;
 			die("stat(%s): %s", temp->name, strerror(errno));
 		}
-		if (!one->sha1_valid)
-			strcpy(temp->hex, sha1_to_hex(null_sha1));
-		else
-			strcpy(temp->hex, sha1_to_hex(one->blob_sha1));
-		sprintf(temp->mode, "%06o",
-			S_IFREG |ce_permissions(st.st_mode));
+		if (S_ISLNK(st.st_mode)) {
+			int ret;
+			char *buf, buf_[1024];
+			buf = ((sizeof(buf_) < st.st_size) ?
+			       xmalloc(st.st_size) : buf_);
+			ret = readlink(name, buf, st.st_size);
+			if (ret < 0)
+				die("readlink(%s)", name);
+			prep_temp_blob(temp, buf, st.st_size,
+				       (one->sha1_valid ?
+					one->blob_sha1 : null_sha1),
+				       (one->sha1_valid ?
+					one->mode : S_IFLNK));
+		}
+		else {
+			if (!one->sha1_valid)
+				strcpy(temp->hex, sha1_to_hex(null_sha1));
+			else
+				strcpy(temp->hex, sha1_to_hex(one->blob_sha1));
+			sprintf(temp->mode, "%06o",
+				S_IFREG |ce_permissions(st.st_mode));
+		}
+		return;
 	}
 	else {
-		int fd;
 		void *blob;
 		char type[20];
 		unsigned long size;
@@ -218,19 +263,8 @@ static void prepare_temp_file(const char *name,
 		if (!blob || strcmp(type, "blob"))
 			die("unable to read blob object for %s (%s)",
 			    name, sha1_to_hex(one->blob_sha1));
-
-		strcpy(temp->tmp_path, ".diff_XXXXXX");
-		fd = mkstemp(temp->tmp_path);
-		if (fd < 0)
-			die("unable to create temp-file");
-		if (write(fd, blob, size) != size)
-			die("unable to write temp-file");
-		close(fd);
+		prep_temp_blob(temp, blob, size, one->blob_sha1, one->mode);
 		free(blob);
-		temp->name = temp->tmp_path;
-		strcpy(temp->hex, sha1_to_hex(one->blob_sha1));
-		temp->hex[40] = 0;
-		sprintf(temp->mode, "%06o", one->mode);
 	}
 }
 

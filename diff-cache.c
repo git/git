@@ -57,14 +57,17 @@ static void show_new_file(struct cache_entry *new)
 	show_file("+", new, sha1, mode);
 }
 
-static int show_modified(struct cache_entry *old, struct cache_entry *new)
+static int show_modified(struct cache_entry *old,
+			 struct cache_entry *new,
+			 int report_missing)
 {
 	unsigned int mode, oldmode;
 	unsigned char *sha1;
 	unsigned char old_sha1_hex[60];
 
 	if (get_stat_data(new, &sha1, &mode) < 0) {
-		show_file("-", old, old->sha1, old->ce_mode);
+		if (report_missing)
+			show_file("-", old, old->sha1, old->ce_mode);
 		return -1;
 	}
 
@@ -101,7 +104,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 				break;
 			}
 			/* Show difference between old and new */
-			show_modified(ac[1], ce);
+			show_modified(ac[1], ce, 1);
 			break;
 		case 1:
 			/* No stage 3 (merge) entry? That means it's been deleted */
@@ -109,7 +112,19 @@ static int diff_cache(struct cache_entry **ac, int entries)
 				show_file("-", ce, ce->sha1, ce->ce_mode);
 				break;
 			}
-			/* Otherwise we fall through to the "unmerged" case */
+			/* We come here with ce pointing at stage 1
+			 * (original tree) and ac[1] pointing at stage
+			 * 3 (unmerged).  show-modified with
+			 * report-mising set to false does not say the
+			 * file is deleted but reports true if work
+			 * tree does not have it, in which case we
+			 * fall through to report the unmerged state.
+			 * Otherwise, we show the differences between
+			 * the original tree and the work tree.
+			 */
+			if (!cached_only && !show_modified(ce, ac[1], 0))
+				break;
+			/* fallthru */
 		case 3:
 			if (generate_patch)
 				diff_unmerge(ce->name);
