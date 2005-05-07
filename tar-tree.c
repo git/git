@@ -212,7 +212,7 @@ static void write_extended_header(const char *headerfilename, int is_dir,
                                   const char *path, unsigned int namelen,
                                   void *content, unsigned int contentsize)
 {
-	char *p;
+	char *buffer, *p;
 	unsigned int pathlen, size, linkpathlen = 0;
 
 	size = pathlen = extended_header_len("path", namelen);
@@ -220,18 +220,19 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 		linkpathlen = extended_header_len("linkpath", contentsize);
 		size += linkpathlen;
 	}
-	if (size > RECORDSIZE)
-		die("tar-tree: extended header too big, wtf?");
 	write_header(NULL, TYPEFLAG_EXT_HEADER, NULL, NULL, headerfilename,
 	             0100600, NULL, size);
 
-	p = get_record();
+	buffer = p = malloc(size);
+	if (!buffer)
+		die("git-tar-tree: %s", strerror(errno));
 	append_extended_header_prefix(&p, pathlen, "path");
 	append_path(&p, is_dir, basepath, prefix, path);
 	append_char(&p, '\n');
 	if (flags & EXT_HEADER_LINKPATH)
 		append_extended_header(&p, "linkpath", content, contentsize);
-	write_if_needed();
+	write_blocked(buffer, size);
+	free(buffer);
 }
 
 static void write_global_extended_header(const char *sha1)
@@ -269,9 +270,7 @@ static void write_header(const char *sha1, char typeflag, const char *basepath,
 	}
 
 	namelen = path_len(S_ISDIR(mode), basepath, prefix, path);
-	if (namelen > 500)
-		die("tar-tree: name too log of object %s\n", sha1_to_hex(sha1));
-	else if (namelen > 100)
+	if (namelen > 100)
 		ext_header |= EXT_HEADER_PATH;
 	if (typeflag == TYPEFLAG_LNK && size > 100)
 		ext_header |= EXT_HEADER_LINKPATH;
