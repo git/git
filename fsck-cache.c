@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 			usage("fsck-cache [--tags] [[--unreachable] [--cache] <head-sha1>*]");
 	}
 
-	sha1_dir = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
+	sha1_dir = get_object_directory();
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
 		sprintf(dir, "%s/%02x", sha1_dir, i);

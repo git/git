@@ -101,6 +101,7 @@ unsigned int active_nr, active_alloc, active_cache_changed;
 
 #define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
 #define DEFAULT_DB_ENVIRONMENT ".git/objects"
+#define ALTERNATE_DB_ENVIRONMENT "SHA1_FILE_DIRECTORIES"
 
 #define get_object_directory() (getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT)
 
