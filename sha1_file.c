@@ -425,6 +425,7 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 		die("unable to write file");
 	fchmod(fd, 0444);
 	close(fd);
+	free(compressed);
 
 	ret = link(tmpfile, filename);
 	if (ret < 0) {
