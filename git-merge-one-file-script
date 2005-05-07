@@ -52,9 +52,9 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 "$1$2$3")
 	echo "Auto-merging $4."
-	orig=$(git-unpack-file $1)
-	src1=$(git-unpack-file $2)
-	src2=$(git-unpack-file $3)
+	orig=`git-unpack-file $1`
+	src1=`git-unpack-file $2`
+	src2=`git-unpack-file $3`
 	merge "$src2" "$orig" "$src1"
 	ret=$?
 	if [ "$6" != "$7" ]; then
@@ -64,7 +64,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: Leaving conflict merge in $src2."
 		exit 1
 	fi
-	sha1=$(git-write-blob "$src2") || {
+	sha1=`git-write-blob "$src2"` || {
 		echo "ERROR: Leaving conflict merge in $src2."
 	}
 	exec git-update-cache --add --cacheinfo "$6" $sha1 "$4" ;;
