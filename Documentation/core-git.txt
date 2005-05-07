@@ -241,7 +241,7 @@ Converts old-style GIT repository to the latest.
 
 ################################################################
 git-diff-cache
-	git-diff-cache [-p] [-r] [-z] [--cached] <tree-ish>
+	git-diff-cache [-p] [-r] [-z] [-m] [--cached] <tree-ish>
 
 Compares the content and mode of the blobs found via a tree object
 with the content of the current cache and, optionally ignoring the
@@ -263,6 +263,13 @@ stat state of the file on disk.
 
 --cached
 	do not consider the on-disk file at all
+
+-m
+
+	By default, files recorded in the index but not checked
+	out are reported as deleted.  This flag makes
+	git-diff-cache say that all non-checked-out files are up
+	to date.
 
 Output format:
 
