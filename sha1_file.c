@@ -7,6 +7,7 @@
  * creation etc.
  */
 #include <stdarg.h>
+#include <limits.h>
 #include "cache.h"
 
 #ifndef O_NOATIME

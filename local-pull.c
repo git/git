@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "cache.h"
 #include "commit.h"
 #include <errno.h>

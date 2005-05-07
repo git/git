@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
+#include <limits.h>
 #include "cache.h"
 #include "strbuf.h"
 #include "diff.h"
