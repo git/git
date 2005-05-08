@@ -27,7 +27,8 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
-	git-diff-tree-helper git-tar-tree git-local-pull git-write-blob
+	git-diff-tree-helper git-tar-tree git-local-pull git-write-blob \
+	git-get-tar-commit-id
 
 all: $(PROG)
 
