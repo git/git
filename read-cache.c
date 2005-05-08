@@ -152,7 +152,7 @@ static int check_file_directory_conflict(const struct cache_entry *ce,
 	cp = pathbuf;
 	while (1) {
 		char *ep = strchr(cp, '/');
-		if (ep == 0)
+		if (!ep)
 			break;
 		*ep = 0;    /* first cut it at slash */
 		pos = cache_name_pos(pathbuf,
