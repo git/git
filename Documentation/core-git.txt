@@ -1098,7 +1098,7 @@ returns the name of the temporary file in the following format:
 ################################################################
 git-update-cache
 	git-update-cache
-	     [--add] [--remove] [--refresh]
+	     [--add] [--remove] [--refresh] [--replace]
 	     [--ignore-missing]
 	     [--force-remove <file>]
 	     [--cacheinfo <mode> <object> <file>]*
@@ -1134,6 +1134,14 @@ using the various options:
 --force-remove
 	Remove the file from the index even when the working directory
 	still has such a file.
+
+--replace
+	By default, when a file "path" exists in the index,
+	git-update-cache refuses an attempt to add "path/file".
+	Similarly if a file "path/file" exists, a file "path"
+	cannot be added.  With --replace flag, existing entries
+	that conflicts with the entry being added are
+	automatically removed with warning messages.
 
 --
 	Do not interpret any more arguments as options.

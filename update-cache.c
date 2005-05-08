@@ -13,7 +13,7 @@
  * like "update-cache *" and suddenly having all the object
  * files be revision controlled.
  */
-static int allow_add = 0, allow_remove = 0, not_new = 0;
+static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0;
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
 static inline void *ERR_PTR(long error)
@@ -53,7 +53,7 @@ static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 
 static int add_file_to_cache(char *path)
 {
-	int size, namelen;
+	int size, namelen, option;
 	struct cache_entry *ce;
 	struct stat st;
 	int fd;
@@ -95,7 +95,9 @@ static int add_file_to_cache(char *path)
 	default:
 		return -1;
 	}
-	return add_cache_entry(ce, allow_add);
+	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
+	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
+	return add_cache_entry(ce, option);
 }
 
 static int match_data(int fd, void *buffer, unsigned long size)
@@ -273,7 +275,7 @@ inside:
 
 static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 {
-	int size, len;
+	int size, len, option;
 	unsigned int mode;
 	unsigned char sha1[20];
 	struct cache_entry *ce;
@@ -294,7 +296,9 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 	memcpy(ce->name, arg3, len);
 	ce->ce_flags = htons(len);
 	ce->ce_mode = create_ce_mode(mode);
-	return add_cache_entry(ce, allow_add);
+	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
+	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
+	return add_cache_entry(ce, option);
 }
 
 static const char *lockfile_name = NULL;
@@ -341,6 +345,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(path, "--add")) {
 				allow_add = 1;
+				continue;
+			}
+			if (!strcmp(path, "--replace")) {
+				allow_replace = 1;
 				continue;
 			}
 			if (!strcmp(path, "--remove")) {
