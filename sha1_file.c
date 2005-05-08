@@ -335,7 +335,7 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 	stream.next_in = hdr;
 	stream.avail_in = hdrlen;
 	while (deflate(&stream, 0) == Z_OK)
-		/* nothing */
+		/* nothing */;
 
 	/* Then the data itself.. */
 	stream.next_in = buf;
