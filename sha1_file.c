@@ -141,20 +141,40 @@ char *sha1_file_name(const unsigned char *sha1)
 	return base;
 }
 
-static struct alternate_object_database
-{
+static struct alternate_object_database {
 	char *base;
 	char *name;
 } *alt_odb;
 
+/*
+ * Prepare alternate object database registry.
+ * alt_odb points at an array of struct alternate_object_database.
+ * This array is terminated with an element that has both its base
+ * and name set to NULL.  alt_odb[n] comes from n'th non-empty
+ * element from colon separated $SHA1_FILE_DIRECTORIES environment
+ * variable, and its base points at a statically allocated buffer
+ * that contains "/the/directory/corresponding/to/.git/objects/...",
+ * while its name points just after the slash at the end of
+ * ".git/objects/" in the example above, and has enough space to hold
+ * 40-byte hex SHA1, an extra slash for the first level indirection,
+ * and the terminating NUL.
+ * This function allocates the alt_odb array and all the strings
+ * pointed by base fields of the array elements with one xmalloc();
+ * the string pool immediately follows the array.
+ */
 static void prepare_alt_odb(void)
 {
 	int pass, totlen, i;
-	void *buf;
 	const char *cp, *last;
 	char *op = 0;
 	const char *alt = getenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
 
+	/* The first pass counts how large an area to allocate to
+	 * hold the entire alt_odb structure, including array of
+	 * structs and path buffers for them.  The second pass fills
+	 * the structure and prepares the path buffers for use by
+	 * fill_sha1_path().
+	 */
 	for (totlen = pass = 0; pass < 2; pass++) {
 		last = alt;
 		i = 0;
@@ -182,7 +202,7 @@ static void prepare_alt_odb(void)
 		} while (*cp);
 		if (pass)
 			break;
-		alt_odb = buf = xmalloc(sizeof(*alt_odb) * (i + 1) + totlen);
+		alt_odb = xmalloc(sizeof(*alt_odb) * (i + 1) + totlen);
 		alt_odb[i].base = alt_odb[i].name = 0;
 		op = (char*)(&alt_odb[i+1]);
 	}
