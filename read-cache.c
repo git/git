@@ -123,6 +123,88 @@ int same_name(struct cache_entry *a, struct cache_entry *b)
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
 }
 
+/* We may be in a situation where we already have path/file and path
+ * is being added, or we already have path and path/file is being
+ * added.  Either one would result in a nonsense tree that has path
+ * twice when git-write-tree tries to write it out.  Prevent it.
+ */
+static int check_file_directory_conflict(const struct cache_entry *ce)
+{
+	int pos;
+	const char *path = ce->name;
+	int namelen = strlen(path);
+	int stage = ce_stage(ce);
+	char *pathbuf = xmalloc(namelen + 1);
+	char *cp;
+
+	memcpy(pathbuf, path, namelen + 1);
+
+	/*
+	 * We are inserting path/file.  Do they have path registered at
+	 * the same stage?  We need to do this for all the levels of our
+	 * subpath.
+	 */
+	cp = pathbuf;
+	while (1) {
+		char *ep = strchr(cp, '/');
+		if (ep == 0)
+			break;
+		*ep = 0;    /* first cut it at slash */
+		pos = cache_name_pos(pathbuf,
+				     htons(create_ce_flags(ep-cp, stage)));
+		if (0 <= pos) {
+			/* Our leading path component is registered as a file,
+			 * and we are trying to make it a directory.  This is
+			 * bad.
+			 */
+			free(pathbuf);
+			return -1;
+		}
+		*ep = '/';  /* then restore it and go downwards */
+		cp = ep + 1;
+	}
+	free(pathbuf);
+
+	/* Do we have an entry in the cache that makes our path a prefix
+	 * of it?  That is, are we creating a file where they already expect
+	 * a directory there?
+	 */
+	pos = cache_name_pos(path,
+			     htons(create_ce_flags(namelen, stage)));
+
+	/* (0 <= pos) cannot happen because add_cache_entry()
+	 * should have taken care of that case.
+	 */
+	pos = -pos-1;
+
+	/* pos would point at an existing entry that would come immediately
+	 * after our path.  It could be the same as our path in higher stage,
+	 * or different path but in a lower stage.
+	 *
+	 * E.g. when we are inserting path at stage 2,
+	 *
+	 *        1 path
+	 * pos->  3 path
+	 *        2 path/file
+	 *        3 path/file
+	 *
+	 * We need to examine pos, ignore it because it is at different
+	 * stage, examine next to find the path/file at stage 2, and
+	 * complain.
+	 */
+
+	while (pos < active_nr) {
+		struct cache_entry *other = active_cache[pos];
+		if (strncmp(other->name, path, namelen))
+			break; /* it is not our "subdirectory" anymore */
+		if ((ce_stage(other) == stage) && other->name[namelen] == '/')
+			return -1;
+		pos++;
+	}
+
+	return 0;
+}
+
 int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 {
 	int pos;
@@ -150,6 +232,9 @@ int add_cache_entry(struct cache_entry *ce, int ok_to_add)
 	}
 
 	if (!ok_to_add)
+		return -1;
+
+	if (check_file_directory_conflict(ce))
 		return -1;
 
 	/* Make sure the array is big enough .. */
