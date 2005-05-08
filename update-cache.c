@@ -369,8 +369,10 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp(path, "--cacheinfo")) {
-				if (i+3 >= argc || add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
+				if (i+3 >= argc)
 					die("update-cache: --cacheinfo <mode> <sha1> <path>");
+				if (add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
+					die("update-cache: --cacheinfo cannot add %s", argv[i+3]);
 				i += 3;
 				continue;
 			}
