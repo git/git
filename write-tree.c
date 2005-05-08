@@ -30,7 +30,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 	offset = 0;
 
 	nr = 0;
-	do {
+	while (nr < maxentries) {
 		struct cache_entry *ce = cachep[nr];
 		const char *pathname = ce->name, *filename, *dirname;
 		int pathlen = ce_namelen(ce), entrylen;
@@ -75,7 +75,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 		memcpy(buffer + offset, sha1, 20);
 		offset += 20;
 		nr++;
-	} while (nr < maxentries);
+	}
 
 	write_sha1_file(buffer, offset, "tree", returnsha1);
 	free(buffer);
@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 	int entries = read_cache();
 	unsigned char sha1[20];
 
-	if (entries <= 0)
-		die("write-tree: no cache contents to write");
+	if (entries < 0)
+		die("write-tree: error reading cache");
 
 	/* Verify that the tree is merged */
 	unmerged = 0;
