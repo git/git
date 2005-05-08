@@ -53,14 +53,23 @@ static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 
 static int add_file_to_cache(char *path)
 {
-	int size, namelen, option;
+	int size, namelen, option, status;
 	struct cache_entry *ce;
 	struct stat st;
 	int fd;
 	char *target;
 
-	if (lstat(path, &st) < 0) {
-		if (errno == ENOENT || errno == ENOTDIR) {
+	status = lstat(path, &st);
+	if (status < 0 || S_ISDIR(st.st_mode)) {
+		/* When we used to have "path" and now we want to add
+		 * "path/file", we need a way to remove "path" before
+		 * being able to add "path/file".  However,
+		 * "git-update-cache --remove path" would not work.
+		 * --force-remove can be used but this is more user
+		 * friendly, especially since we can do the opposite
+		 * case just fine without --force-remove.
+		 */
+		if (status == 0 || (errno == ENOENT || errno == ENOTDIR)) {
 			if (allow_remove)
 				return remove_file_from_cache(path);
 		}
