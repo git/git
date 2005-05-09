@@ -1,0 +1,418 @@
+#!/bin/sh
+# Tcl ignores the next line -*- tcl -*- \
+exec wish "$0" -- "${1+$@}"
+
+# Copyright (C) 2005 Paul Mackerras.  All rights reserved.
+# This program is free software; it may be used, copied, modified
+# and distributed under the terms of the GNU General Public Licence,
+# either version 2, or (at your option) any later version.
+
+set datemode 0
+set boldnames 0
+set revtreeargs {}
+
+foreach arg $argv {
+    switch -regexp -- $arg {
+	"^$" { }
+	"^-d" { set datemode 1 }
+	"^-b" { set boldnames 1 }
+	"^-.*" {
+	    puts stderr "unrecognized option $arg"
+	    exit 1
+	}
+	default {
+	    lappend revtreeargs $arg
+	}
+    }
+}
+
+proc getcommits {rargs} {
+    global commits parents cdate nparents children nchildren
+    if {$rargs == {}} {
+	set rargs HEAD
+    }
+    set commits {}
+    foreach c [split [eval exec git-rev-tree $rargs] "\n"] {
+	set i 0
+	set cid {}
+	foreach f $c {
+	    if {$i == 0} {
+		set d $f
+	    } else {
+		set id [lindex [split $f :] 0]
+		if {![info exists nchildren($id)]} {
+		    set children($id) {}
+		    set nchildren($id) 0
+		}
+		if {$i == 1} {
+		    set cid $id
+		    lappend commits $id
+		    set parents($id) {}
+		    set cdate($id) $d
+		    set nparents($id) 0
+		} else {
+		    lappend parents($cid) $id
+		    incr nparents($cid)
+		    incr nchildren($id)
+		    lappend children($id) $cid
+		}
+	    }
+	    incr i
+	}
+    }
+}
+
+proc readcommit {id} {
+    global commitinfo
+    set inhdr 1
+    set comment {}
+    set headline {}
+    set auname {}
+    set audate {}
+    set comname {}
+    set comdate {}
+    foreach line [split [exec git-cat-file commit $id] "\n"] {
+	if {$inhdr} {
+	    if {$line == {}} {
+		set inhdr 0
+	    } else {
+		set tag [lindex $line 0]
+		if {$tag == "author"} {
+		    set x [expr {[llength $line] - 2}]
+		    set audate [lindex $line $x]
+		    set auname [lrange $line 1 [expr {$x - 1}]]
+		} elseif {$tag == "committer"} {
+		    set x [expr {[llength $line] - 2}]
+		    set comdate [lindex $line $x]
+		    set comname [lrange $line 1 [expr {$x - 1}]]
+		}
+	    }
+	} else {
+	    if {$comment == {}} {
+		set headline $line
+	    } else {
+		append comment "\n"
+	    }
+	    append comment $line
+	}
+    }
+    if {$audate != {}} {
+	set audate [clock format $audate -format "%Y-%m-%d %H:%M:%S"]
+    }
+    if {$comdate != {}} {
+	set comdate [clock format $comdate -format "%Y-%m-%d %H:%M:%S"]
+    }
+    set commitinfo($id) [list $comment $auname $audate $comname $comdate]
+    return [list $headline $auname $audate]
+}
+
+proc makewindow {} {
+    global canv linespc charspc ctext
+    frame .clist
+    set canv .clist.canv
+    canvas $canv -height [expr 30 * $linespc + 4] -width [expr 90 * $charspc] \
+	-bg white -relief sunk -bd 1 \
+	-yscrollincr $linespc -yscrollcommand ".clist.csb set"
+    scrollbar .clist.csb -command "$canv yview" -highlightthickness 0
+    pack .clist.csb -side right -fill y
+    pack $canv -side bottom -fill both -expand 1
+    pack .clist -side top -fill both -expand 1
+    set ctext .ctext
+    text $ctext -bg white
+    pack $ctext -side top -fill x -expand 1
+
+    bind $canv <1> {selcanvline %x %y}
+    bind $canv <B1-Motion> {selcanvline %x %y}
+    bind $canv <ButtonRelease-4> "$canv yview scroll -5 u"
+    bind $canv <ButtonRelease-5> "$canv yview scroll 5 u"
+    bind $canv <2> "$canv scan mark 0 %y"
+    bind $canv <B2-Motion> "$canv scan dragto 0 %y"
+    bind . <Key-Prior> "$canv yview scroll -1 p"
+    bind . <Key-Next> "$canv yview scroll 1 p"
+    bind . <Key-Delete> "$canv yview scroll -1 p"
+    bind . <Key-BackSpace> "$canv yview scroll -1 p"
+    bind . <Key-space> "$canv yview scroll 1 p"
+    bind . <Key-Up> "$canv yview scroll -1 u"
+    bind . <Key-Down> "$canv yview scroll 1 u"
+    bind . Q "set stopped 1; destroy ."
+}
+
+proc truncatetofit {str width font} {
+    if {[font measure $font $str] <= $width} {
+	return $str
+    }
+    set best 0
+    set bad [string length $str]
+    set tmp $str
+    while {$best < $bad - 1} {
+	set try [expr {int(($best + $bad) / 2)}]
+	set tmp "[string range $str 0 [expr $try-1]]..."
+	if {[font measure $font $tmp] <= $width} {
+	    set best $try
+	} else {
+	    set bad $try
+	}
+    }
+    return $tmp
+}
+
+proc drawgraph {start} {
+    global parents children nparents nchildren commits
+    global canv mainfont namefont canvx0 canvy0 linespc namex datex
+    global datemode cdate
+    global lineid linehtag linentag linedtag
+
+    set colors {green red blue magenta darkgrey brown orange}
+    set ncolors [llength $colors]
+    set nextcolor 0
+    set colormap($start) [lindex $colors 0]
+    foreach id $commits {
+	set ncleft($id) $nchildren($id)
+    }
+    set todo [list $start]
+    set level 0
+    set canvy $canvy0
+    set linestarty(0) $canvy
+    set nullentry -1
+    set lineno -1
+    while 1 {
+	incr lineno
+	set nlines [llength $todo]
+	set id [lindex $todo $level]
+	set lineid($lineno) $id
+	foreach p $parents($id) {
+	    incr ncleft($p) -1
+	}
+	set cinfo [readcommit $id]
+	set x [expr $canvx0 + $level * $linespc]
+	set y2 [expr $canvy + $linespc]
+	if {$linestarty($level) < $canvy} {
+	    set t [$canv create line $x $linestarty($level) $x $canvy \
+		       -width 2 -fill $colormap($id)]
+	    $canv lower $t
+	    set linestarty($level) $canvy
+	}
+	set t [$canv create oval [expr $x - 4] [expr $canvy - 4] \
+		   [expr $x + 3] [expr $canvy + 3] \
+		   -fill blue -outline black -width 1]
+	$canv raise $t
+	set xt [expr $canvx0 + $nlines * $linespc]
+	set headline [lindex $cinfo 0]
+	set name [lindex $cinfo 1]
+	set date [lindex $cinfo 2]
+	set headline [truncatetofit $headline [expr $namex-$xt-$linespc] \
+			 $mainfont]
+	set linehtag($lineno) [$canv create text $xt $canvy -anchor w \
+				   -text $headline -font $mainfont ]
+	set name [truncatetofit $name [expr $datex-$namex-$linespc] $namefont]
+	set linentag($lineno) [$canv create text $namex $canvy -anchor w \
+				   -text $name -font $namefont]
+	set linedtag($lineno) [$canv create text $datex $canvy -anchor w \
+				 -text $date -font $mainfont]
+	if {!$datemode && $nparents($id) == 1} {
+	    set p [lindex $parents($id) 0]
+	    if {$ncleft($p) == 0 && [lsearch -exact $todo $p] < 0} {
+		set todo [lreplace $todo $level $level $p]
+		set colormap($p) $colormap($id)
+		set canvy $y2
+		$canv conf -scrollregion [list 0 0 0 $canvy]
+		update
+		continue
+	    }
+	}
+
+	set oldtodo $todo
+	set oldlevel $level
+	set lines {}
+	for {set i 0} {$i < $nlines} {incr i} {
+	    if {[lindex $todo $i] == {}} continue
+	    set oldstarty($i) $linestarty($i)
+	    if {$i != $level} {
+		lappend lines [list $i [lindex $todo $i]]
+	    }
+	}
+	unset linestarty
+	if {$nullentry >= 0} {
+	    set todo [lreplace $todo $nullentry $nullentry]
+	    if {$nullentry < $level} {
+		incr level -1
+	    }
+	}
+
+	set badcolors [list $colormap($id)]
+	foreach p $parents($id) {
+	    if {[info exists colormap($p)]} {
+		lappend badcolors $colormap($p)
+	    }
+	}
+	set todo [lreplace $todo $level $level]
+	if {$nullentry > $level} {
+	    incr nullentry -1
+	}
+	set i $level
+	foreach p $parents($id) {
+	    set k [lsearch -exact $todo $p]
+	    if {$k < 0} {
+		set todo [linsert $todo $i $p]
+		if {$nullentry >= $i} {
+		    incr nullentry
+		}
+		if {$nparents($id) == 1 && $nparents($p) == 1
+		    && $nchildren($p) == 1} {
+		    set colormap($p) $colormap($id)
+		} else {
+		    for {set j 0} {$j <= $ncolors} {incr j} {
+			if {[incr nextcolor] >= $ncolors} {
+			    set nextcolor 0
+			}
+			set c [lindex $colors $nextcolor]
+			# make sure the incoming and outgoing colors differ
+			if {[lsearch -exact $badcolors $c] < 0} break
+		    }
+		    set colormap($p) $c
+		    lappend badcolors $c
+		}
+	    }
+	    lappend lines [list $oldlevel $p]
+	}
+
+	# choose which one to do next time around
+	set todol [llength $todo]
+	set level -1
+	set latest {}
+	for {set k $todol} {[incr k -1] >= 0} {} {
+	    set p [lindex $todo $k]
+	    if {$p == {}} continue
+	    if {$ncleft($p) == 0} {
+		if {$datemode} {
+		    if {$latest == {} || $cdate($p) > $latest} {
+			set level $k
+			set latest $cdate($p)
+		    }
+		} else {
+		    set level $k
+		    break
+		}
+	    }
+	}
+	if {$level < 0} {
+	    if {$todo != {}} {
+		puts "ERROR: none of the pending commits can be done yet:"
+		foreach p $todo {
+		    puts "  $p"
+		}
+	    }
+	    break
+	}
+
+	# If we are reducing, put in a null entry
+	if {$todol < $nlines} {
+	    if {$nullentry >= 0} {
+		set i $nullentry
+		while {$i < $todol
+		       && [lindex $oldtodo $i] == [lindex $todo $i]} {
+		    incr i
+		}
+	    } else {
+		set i $oldlevel
+		if {$level >= $i} {
+		    incr i
+		}
+	    }
+	    if {$i >= $todol} {
+		set nullentry -1
+	    } else {
+		set nullentry $i
+		set todo [linsert $todo $nullentry {}]
+		if {$level >= $i} {
+		    incr level
+		}
+	    }
+	} else {
+	    set nullentry -1
+	}
+
+	foreach l $lines {
+	    set i [lindex $l 0]
+	    set dst [lindex $l 1]
+	    set j [lsearch -exact $todo $dst]
+	    if {$i == $j} {
+		set linestarty($i) $oldstarty($i)
+		continue
+	    }
+	    set xi [expr {$canvx0 + $i * $linespc}]
+	    set xj [expr {$canvx0 + $j * $linespc}]
+	    set coords {}
+	    if {$oldstarty($i) < $canvy} {
+		lappend coords $xi $oldstarty($i)
+	    }
+	    lappend coords $xi $canvy
+	    if {$j < $i - 1} {
+		lappend coords [expr $xj + $linespc] $canvy
+	    } elseif {$j > $i + 1} {
+		lappend coords [expr $xj - $linespc] $canvy
+	    }
+	    lappend coords $xj $y2
+	    set t [$canv create line $coords -width 2 -fill $colormap($dst)]
+	    $canv lower $t
+	    if {![info exists linestarty($j)]} {
+		set linestarty($j) $y2
+	    }
+	}
+	set canvy $y2
+	$canv conf -scrollregion [list 0 0 0 $canvy]
+	update
+    }
+}
+
+proc selcanvline {x y} {
+    global canv canvy0 ctext linespc selectedline
+    global lineid linehtag linentag linedtag commitinfo
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    set yfrac [lindex [$canv yview] 0]
+    set y [expr {$y + $yfrac * $ymax}]
+    set l [expr {int(($y - $canvy0) / $linespc + 0.5)}]
+    if {$l < 0} {
+	set l 0
+    }
+    if {[info exists selectedline] && $selectedline == $l} return
+    if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
+    $canv select clear
+    $canv select from $linehtag($l) 0
+    $canv select to $linehtag($l) end
+    set id $lineid($l)
+    $ctext delete 0.0 end
+    set info $commitinfo($id)
+    $ctext insert end "Author: [lindex $info 1]  \t[lindex $info 2]\n"
+    $ctext insert end "Committer: [lindex $info 3]  \t[lindex $info 4]\n"
+    $ctext insert end "\n"
+    $ctext insert end [lindex $info 0]
+}
+
+getcommits $revtreeargs
+
+set mainfont {Helvetica 9}
+set namefont $mainfont
+if {$boldnames} {
+    lappend namefont bold
+}
+set linespc [font metrics $mainfont -linespace]
+set charspc [font measure $mainfont "m"]
+
+set canvy0 [expr 3 + 0.5 * $linespc]
+set canvx0 [expr 3 + 0.5 * $linespc]
+set namex [expr 45 * $charspc]
+set datex [expr 75 * $charspc]
+
+makewindow
+
+set start {}
+foreach id $commits {
+    if {$nchildren($id) == 0} {
+	set start $id
+	break
+    }
+}
+if {$start != {}} {
+    drawgraph $start
+}
