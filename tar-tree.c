@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2005 Rene Scharfe
+ */
 #include <time.h>
 #include "cache.h"
 
