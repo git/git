@@ -7,11 +7,18 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.3 $
+# CVS $Revision: 1.4 $
 
 set datemode 0
 set boldnames 0
 set revtreeargs {}
+
+set mainfont {Helvetica 9}
+set namefont $mainfont
+if {$boldnames} {
+    lappend namefont bold
+}
+catch {source ~/.gitk}
 
 foreach arg $argv {
     switch -regexp -- $arg {
@@ -123,18 +130,29 @@ proc gettreediffs {id} {
 }
 
 proc makewindow {} {
-    global canv linespc charspc ctext cflist
+    global canv canv2 canv3 linespc charspc ctext cflist
     panedwindow .ctop -orient vertical
-    frame .ctop.clist
-    set canv .ctop.clist.canv
-    canvas $canv -height [expr 30 * $linespc + 4] -width [expr 90 * $charspc] \
-	-bg white -relief sunk -bd 1 \
-	-yscrollincr $linespc -yscrollcommand ".ctop.clist.csb set"
-    scrollbar .ctop.clist.csb -command "$canv yview" -highlightthickness 0
-    pack .ctop.clist.csb -side right -fill y
-    pack $canv -side bottom -fill both -expand 1
+    panedwindow .ctop.clist -orient horizontal -sashpad 0 -handlesize 4
     .ctop add .ctop.clist
-    #pack .ctop.clist -side top -fill both -expand 1
+    set canv .ctop.clist.canv
+    set cscroll .ctop.clist.dates.csb
+    canvas $canv -height [expr 30 * $linespc + 4] -width [expr 45 * $charspc] \
+	-bg white -bd 0 \
+	-yscrollincr $linespc -yscrollcommand "$cscroll set"
+    .ctop.clist add $canv
+    set canv2 .ctop.clist.canv2
+    canvas $canv2 -height [expr 30 * $linespc +4] -width [expr 30 * $charspc] \
+	-bg white -bd 0 -yscrollincr $linespc
+    .ctop.clist add $canv2
+    frame .ctop.clist.dates
+    .ctop.clist add .ctop.clist.dates
+    set canv3 .ctop.clist.dates.canv3
+    canvas $canv3 -height [expr 30 * $linespc +4] -width [expr 15 * $charspc] \
+	-bg white -bd 0 -yscrollincr $linespc
+    scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
+    pack .ctop.clist.dates.csb -side right -fill y
+    pack $canv3 -side left -fill both -expand 1
+
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
     set ctext .ctop.cdet.ctext
@@ -146,20 +164,34 @@ proc makewindow {} {
     .ctop.cdet add $cflist
     pack .ctop -side top -fill both -expand 1
 
-    bind $canv <1> {selcanvline %x %y}
-    bind $canv <B1-Motion> {selcanvline %x %y}
-    bind $canv <ButtonRelease-4> "$canv yview scroll -5 u"
-    bind $canv <ButtonRelease-5> "$canv yview scroll 5 u"
-    bind $canv <2> "$canv scan mark 0 %y"
-    bind $canv <B2-Motion> "$canv scan dragto 0 %y"
-    bind . <Key-Prior> "$canv yview scroll -1 p"
-    bind . <Key-Next> "$canv yview scroll 1 p"
-    bind . <Key-Delete> "$canv yview scroll -1 p"
-    bind . <Key-BackSpace> "$canv yview scroll -1 p"
-    bind . <Key-space> "$canv yview scroll 1 p"
+    bindall <1> {selcanvline %x %y}
+    bindall <B1-Motion> {selcanvline %x %y}
+    bindall <ButtonRelease-4> "allcanvs yview scroll -5 u"
+    bindall <ButtonRelease-5> "allcanvs yview scroll 5 u"
+    bindall <2> "allcanvs scan mark 0 %y"
+    bindall <B2-Motion> "allcanvs scan dragto 0 %y"
+    bind . <Key-Prior> "allcanvs yview scroll -1 p"
+    bind . <Key-Next> "allcanvs yview scroll 1 p"
+    bind . <Key-Delete> "allcanvs yview scroll -1 p"
+    bind . <Key-BackSpace> "allcanvs yview scroll -1 p"
+    bind . <Key-space> "allcanvs yview scroll 1 p"
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
     bind . Q "set stopped 1; destroy ."
+}
+
+proc allcanvs args {
+    global canv canv2 canv3
+    eval $canv $args
+    eval $canv2 $args
+    eval $canv3 $args
+}
+
+proc bindall {event action} {
+    global canv canv2 canv3
+    bind $canv $event $action
+    bind $canv2 $event $action
+    bind $canv3 $event $action
 }
 
 proc truncatetofit {str width font} {
@@ -183,7 +215,7 @@ proc truncatetofit {str width font} {
 
 proc drawgraph {start} {
     global parents children nparents nchildren commits
-    global canv mainfont namefont canvx0 canvy0 canvy linespc namex datex
+    global canv canv2 canv3 mainfont namefont canvx0 canvy0 canvy linespc
     global datemode cdate
     global lineid linehtag linentag linedtag commitsummary
 
@@ -196,11 +228,14 @@ proc drawgraph {start} {
     }
     set todo [list $start]
     set level 0
-    set canvy $canvy0
-    set linestarty(0) $canvy
+    set y2 $canvy0
+    set linestarty(0) $canvy0
     set nullentry -1
     set lineno -1
     while 1 {
+	set canvy $y2
+	allcanvs conf -scrollregion [list 0 0 0 $canvy]
+	update
 	incr lineno
 	set nlines [llength $todo]
 	set id [lindex $todo $level]
@@ -231,23 +266,17 @@ proc drawgraph {start} {
 	set headline [lindex $commitsummary($id) 0]
 	set name [lindex $commitsummary($id) 1]
 	set date [lindex $commitsummary($id) 2]
-	set headline [truncatetofit $headline [expr $namex-$xt-$linespc] \
-			 $mainfont]
 	set linehtag($lineno) [$canv create text $xt $canvy -anchor w \
 				   -text $headline -font $mainfont ]
-	set name [truncatetofit $name [expr $datex-$namex-$linespc] $namefont]
-	set linentag($lineno) [$canv create text $namex $canvy -anchor w \
+	set linentag($lineno) [$canv2 create text 3 $canvy -anchor w \
 				   -text $name -font $namefont]
-	set linedtag($lineno) [$canv create text $datex $canvy -anchor w \
+	set linedtag($lineno) [$canv3 create text 3 $canvy -anchor w \
 				 -text $date -font $mainfont]
 	if {!$datemode && [llength $actualparents] == 1} {
 	    set p [lindex $actualparents 0]
 	    if {$ncleft($p) == 0 && [lsearch -exact $todo $p] < 0} {
 		set todo [lreplace $todo $level $level $p]
 		set colormap($p) $colormap($id)
-		set canvy $y2
-		$canv conf -scrollregion [list 0 0 0 $canvy]
-		update
 		continue
 	    }
 	}
@@ -390,9 +419,6 @@ proc drawgraph {start} {
 		set linestarty($j) $y2
 	    }
 	}
-	set canvy $y2
-	$canv conf -scrollregion [list 0 0 0 $canvy]
-	update
     }
 }
 
@@ -423,10 +449,10 @@ proc selectline {l} {
     set ybot [expr {($y + $linespc / 2.0) / $canvy}]
     set wnow [$canv yview]
     if {$ytop < [lindex $wnow 0]} {
-	$canv yview moveto $ytop
+	allcanvs yview moveto $ytop
     } elseif {$ybot > [lindex $wnow 1]} {
 	set wh [expr {[lindex $wnow 1] - [lindex $wnow 0]}]
-	$canv yview moveto [expr {$ybot - $wh}]
+	allcanvs yview moveto [expr {$ybot - $wh}]
     }
     set selectedline $l
 
@@ -461,11 +487,6 @@ proc selnextline {dir} {
 
 getcommits $revtreeargs
 
-set mainfont {Helvetica 9}
-set namefont $mainfont
-if {$boldnames} {
-    lappend namefont bold
-}
 set linespc [font metrics $mainfont -linespace]
 set charspc [font measure $mainfont "m"]
 
