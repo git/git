@@ -9,12 +9,29 @@ git-mktag - Creates a tag object
 
 SYNOPSIS
 --------
-'git-mktag'
+'git-mktag' < signature_file
 
 DESCRIPTION
 -----------
-Reads a tag contents from its standard input and creates a tag object.
-The input must be a well formed tag object.
+Reads a tag contents on standard input and creates a tag object
+that can also be used to sign other objects.
+
+The output is the new tag's <object> identifier.
+
+Tag Format
+----------
+A tag signature file has a very simple fixed format: three lines of
+
+  object <sha1>
+  type <typename>
+  tag <tagname>
+
+followed by some 'optional' free-form signature that git itself
+doesn't care about, but that can be verified with gpg or similar.
+
+The size of the full object is artificially limited to 8kB.  (Just
+because I'm a lazy bastard, and if you can't fit a signature in that
+size, you're doing something wrong)
 
 
 Author

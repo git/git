@@ -83,7 +83,9 @@ the dircache records up to three such pairs; one from tree O in stage
 the user (or Cogito) to see what should eventually be recorded at the
 path. (see read-cache for more information on state)
 
-see also: link:read-cache.html[read-cache]
+See Also
+--------
+link:read-cache.html[read-cache]
 
 
 Author

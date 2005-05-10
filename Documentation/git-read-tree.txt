@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Reads the tree information given by <tree> into the directory cache,
-but does not actually _update_ any of the files it "caches". (see:
+but does not actually *update* any of the files it "caches". (see:
 git-checkout-cache)
 
 Optionally, it can merge a tree into the cache or perform a 3-way
@@ -133,7 +133,9 @@ the index file, which is a temporary thing anyway. There is no need to
 worry about what is in the working directory, since it is never shown
 and never used.
 
-see also: link:git-write-tree.html[git-write-tree], link:git-ls-files.html[git-ls-files]
+See Also
+--------
+link:git-write-tree.html[git-write-tree]; link:git-ls-files.html[git-ls-files]
 
 
 Author

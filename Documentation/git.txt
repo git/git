@@ -190,6 +190,44 @@ Identifier terminology
 	Indicates a filename - always relative to the root of
 	the tree structure GIT_INDEX_FILE describes.
 
+Symbolic Identifiers
+--------------------
+Any git comand accepting any <object> can also use the following symbolic notation:
+
+HEAD::
+	indicates the head of the repository (ie the contents of `$GIT_DIR/HEAD`)
+<tag>::
+	a valid tag 'name'+
+	(ie the contents of `$GIT_DIR/refs/tags/<tag>`)
+<head>::
+	a valid head 'name'+
+	(ie the contents of `$GIT_DIR/refs/heads/<head>`)
+<snap>::
+	a valid snapshot 'name'+
+	(ie the contents of `$GIT_DIR/refs/snap/<snap>`)
+
+
+File/Directory Structure
+------------------------
+The git-core manipulates the following areas in the directory:
+
+ .git/	       The base (overridden with $GIT_DIR)
+   objects/    The object base (overridden with $GIT_OBJECT_DIRECTORY)
+     ??/       'First 2 chars of object' directories
+
+It can interrogate (but never updates) the following areas:
+
+   refs/       Directories containing symbolic names for objects
+	       (each file contains the hex SHA1 + newline)
+     heads/    Commits which are heads of various sorts
+     tags/     Tags, by the tag name (or some local renaming of it)
+     snap/     ????
+   ...         Everything else isn't shared
+   HEAD        Symlink to refs/heads/<something>
+
+Higher level SCMs may provide and manage additional information in the
+GIT_DIR.
+
 Terminology
 -----------
 Each line contains terms used interchangeably
@@ -210,17 +248,52 @@ Environment Variables
 ---------------------
 Various git commands use the following environment variables:
 
-- 'GIT_AUTHOR_NAME'
-- 'GIT_AUTHOR_EMAIL'
-- 'GIT_AUTHOR_DATE'
-- 'GIT_COMMITTER_NAME'
-- 'GIT_COMMITTER_EMAIL'
-- 'GIT_DIFF_OPTS'
-- 'GIT_EXTERNAL_DIFF'
-- 'GIT_INDEX_FILE'
-- 'GIT_OBJECT_DIRECTORY'
-- 'GIT_ALTERNATE_OBJECT_DIRECTORIES'
+The git Repository
+~~~~~~~~~~~~~~~~~~
+These environment variables apply to 'all' core git commands. Nb: it
+is worth noting that they may be used/overridden by SCMS sitting above
+git so take care if using Cogito etc
 
+'GIT_INDEX_FILE'::
+	This environment allows the specification of an alternate
+	cache/index file. If not specified, the default of
+	`$GIT_DIR/index` is used.
+
+'GIT_OBJECT_DIRECTORY'::
+	If the object storage directory is specified via this
+	environment variable then the sha1 directories are created
+	underneath - otherwise the default `$GIT_DIR/objects`
+	directory is used.
+
+'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
+	Due to the immutable nature of git objects, old objects can be
+	archived into shared, read-only directories. This variable
+	specifies a ":" seperated list of git object directories which
+	can be used to search for git objects. New objects will not be
+	written to these directories.
+
+'GIT_DIR'::
+	If the 'GIT_DIR' environment variable is set then it specifies
+	a path to use instead of `./.git` for the base of the
+	repository.
+
+git Commits
+~~~~~~~~~~~
+'GIT_AUTHOR_NAME'::
+'GIT_AUTHOR_EMAIL'::
+'GIT_AUTHOR_DATE'::
+'GIT_COMMITTER_NAME'::
+'GIT_COMMITTER_EMAIL'::
+	see link:git-commit-tree.html[git-commit-tree]
+
+git Diffs
+~~~~~~~~~
+GIT_DIFF_OPTS::
+GIT_EXTERNAL_DIFF::
+	see the "generating patches" section in :
+	link:git-diff-cache.html[git-diff-cache];
+	link:git-diff-files.html[git-diff-files];
+	link:git-diff-tree.html[git-diff-tree]
 
 Author
 ------

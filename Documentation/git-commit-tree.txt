@@ -64,7 +64,14 @@ A commit comment is read from stdin (max 999 chars). If a changelog
 entry is not provided via '<' redirection, "git-commit-tree" will just wait
 for one to be entered and terminated with ^D
 
-see also: link:git-write-tree.html[git-write-tree]
+Diagnostics
+-----------
+You don't exist. Go away!::
+    The passwd(5) gecos field couldn't be read
+
+See Also
+--------
+link:git-write-tree.html[git-write-tree]
 
 
 Author

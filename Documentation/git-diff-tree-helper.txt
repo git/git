@@ -30,7 +30,9 @@ OPTIONS
 +
 would show a diff to bring the working file back to what is in the <tree>.
 
-See also the section on generating patches in link:git-diff-cache.html[git-diff-cache]
+See Also
+--------
+The section on generating patches in link:git-diff-cache.html[git-diff-cache]
 
 
 Author

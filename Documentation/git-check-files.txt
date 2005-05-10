@@ -31,7 +31,9 @@ preparing to update file <file> not uptodate in cache::
 Exits with a status code indicating success if all files are
 up-to-date.
 
-see also: link:git-update-cache.html[git-update-cache]
+See Also
+--------
+link:git-update-cache.html[git-update-cache]
 
 
 Author
