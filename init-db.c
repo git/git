@@ -27,11 +27,12 @@ int main(int argc, char **argv)
 	char *path;
 	int len, i;
 
-	safe_create_dir(".git");
-
-	sha1_dir = gitenv(DB_ENVIRONMENT);
-	if (!sha1_dir) {
-		sha1_dir = DEFAULT_DB_ENVIRONMENT;
+	sha1_dir = get_object_directory();
+	if (!gitenv(DB_ENVIRONMENT) && !gitenv(GIT_DIR_ENVIRONMENT)) {
+		/* We create leading paths only when we fall back
+		 * to local .git/objects, at least for now.
+		 */
+		safe_create_dir(DEFAULT_GIT_DIR_ENVIRONMENT);
 		fprintf(stderr, "defaulting to local storage area\n");
 	}
 	len = strlen(sha1_dir);

@@ -11,6 +11,9 @@ do
     shift;
 done
 
+: ${GIT_DIR=.git}
+: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
+
 # Defaulting to include .git/refs/*/* may be debatable from the
 # purist POV but power users can always give explicit parameters
 # to the script anyway.
@@ -19,7 +22,8 @@ case "$#" in
 0)
     x_40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
     x_40="$x_40$x_40$x_40$x_40$x_40$x_40$x_40$x_40"
-    set x $(sed -ne "/^$x_40\$/p" .git/HEAD .git/refs/*/* 2>/dev/null)
+    set x $(sed -ne "/^$x_40\$/p" \
+	"$GIT_DIR"/HEAD "$GIT_DIR"/refs/*/* /dev/null 2>/dev/null)
     shift ;;
 esac
 
@@ -28,13 +32,7 @@ sed -ne '/unreachable /{
     s/unreachable [^ ][^ ]* //
     s|\(..\)|\1/|p
 }' | {
-	for d in "$GIT_OBJECT_DIRECTORY" "$SHA1_FILE_DIRECTORY" ''
-	do
-		test "$d" != "" && test -d "$d" && break
-	done
-	case "$d" in
-	'') cd .git/objects/ ;;
-	*) cd "$d" ;;
-	esac || exit
+	cd "$GIT_OBJECT_DIRECTORY" || exit
 	xargs -r $dryrun rm -f
 }
+

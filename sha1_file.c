@@ -59,6 +59,38 @@ int get_sha1_file(const char *path, unsigned char *result)
 	return get_sha1_hex(buffer, result);
 }
 
+static char *git_dir, *git_object_dir, *git_index_file;
+static void setup_git_env(void)
+{
+	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
+	if (!git_dir)
+		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+	git_object_dir = gitenv(DB_ENVIRONMENT);
+	if (!git_object_dir) {
+		git_object_dir = xmalloc(strlen(git_dir) + 9);
+		sprintf(git_object_dir, "%s/objects", git_dir);
+	}
+	git_index_file = gitenv(INDEX_ENVIRONMENT);
+	if (!git_index_file) {
+		git_index_file = xmalloc(strlen(git_dir) + 7);
+		sprintf(git_index_file, "%s/index", git_dir);
+	}
+}
+
+char *get_object_directory(void)
+{
+	if (!git_object_dir)
+		setup_git_env();
+	return git_object_dir;
+}
+
+char *get_index_file(void)
+{
+	if (!git_index_file)
+		setup_git_env();
+	return git_index_file;
+}
+
 int get_sha1(const char *str, unsigned char *sha1)
 {
 	static char pathname[PATH_MAX];
@@ -70,15 +102,16 @@ int get_sha1(const char *str, unsigned char *sha1)
 		"refs/snap",
 		NULL
 	};
-	const char *gitdir;
 	const char **p;
 
 	if (!get_sha1_hex(str, sha1))
 		return 0;
 
-	gitdir = ".git";
+	if (!git_dir)
+		setup_git_env();
 	for (p = prefix; *p; p++) {
-		snprintf(pathname, sizeof(pathname), "%s/%s/%s", gitdir, *p, str);
+		snprintf(pathname, sizeof(pathname), "%s/%s/%s",
+			 git_dir, *p, str);
 		if (!get_sha1_file(pathname, sha1))
 			return 0;
 	}

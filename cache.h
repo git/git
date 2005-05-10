@@ -106,16 +106,15 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 struct cache_entry **active_cache;
 unsigned int active_nr, active_alloc, active_cache_changed;
 
+#define GIT_DIR_ENVIRONMENT "GIT_DIR"
+#define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
-#define DEFAULT_DB_ENVIRONMENT ".git/objects"
-#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
-
-#define get_object_directory() (gitenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT)
-
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
-#define DEFAULT_INDEX_ENVIRONMENT ".git/index"
 
-#define get_index_file() (gitenv(INDEX_ENVIRONMENT) ? : DEFAULT_INDEX_ENVIRONMENT)
+extern char *get_object_directory(void);
+extern char *get_index_file(void);
+
+#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
 #define alloc_nr(x) (((x)+16)*3/2)
 

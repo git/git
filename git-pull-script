@@ -3,6 +3,9 @@
 merge_repo=$1
 merge_name=${2:-HEAD}
 
+: ${GIT_DIR=.git}
+: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
+
 download_one () {
 	# remote_path="$1" local_file="$2"
 	case "$1" in
@@ -25,16 +28,19 @@ download_objects () {
 		git-local-pull -l -a "$2" "$1/"
 		;;
 	*)
-		rsync -avz --ignore-existing "$1/objects/." \
-			${SHA_FILE_DIRECTORY:-.git/objects}/.
+		rsync -avz --ignore-existing \
+			"$1/objects/." "$GIT_OBJECT_DIRECTORY"/.
 		;;
 	esac
 }
 
 echo "Getting remote $merge_name"
-download_one "$merge_repo/$merge_name" .git/MERGE_HEAD
+download_one "$merge_repo/$merge_name" "$GIT_DIR"/MERGE_HEAD
 
 echo "Getting object database"
-download_objects "$merge_repo" "$(cat .git/MERGE_HEAD)"
+download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
 
-git-resolve-script "$(cat .git/HEAD)" "$(cat .git/MERGE_HEAD)" "$merge_repo"
+git-resolve-script \
+	"$(cat "$GIT_DIR"/HEAD)" \
+	"$(cat "$GIT_DIR"/MERGE_HEAD)" \
+	"$merge_repo"
