@@ -1,0 +1,31 @@
+git-pull-script(1)
+==================
+v0.1, May 2005
+
+NAME
+----
+git-pull-script - Script used by Linus to pull and merge a remote repository
+
+
+SYNOPSIS
+--------
+'git-pull-script'
+
+DESCRIPTION
+-----------
+This script is used by Linus to pull from a remote repository and perform
+a merge.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

@@ -1,0 +1,224 @@
+git(1)
+======
+v0.1, May 2005
+
+NAME
+----
+git - the stupid content tracker
+
+
+SYNOPSIS
+--------
+'git-<command>' <args>
+
+DESCRIPTION
+-----------
+
+This is reference information for the core git commands.
+
+The link:README[] contains much useful definition and clarification
+info - read that first.  And of the commands, I suggest reading
+'git-update-cache' and 'git-read-tree' first - I wish I had!
+
+David Greaves <david@dgreaves.com>
+08/05/05
+
+Updated by Junio C Hamano <junkio@cox.net> on 2005-05-05 to
+reflect recent changes.
+
+Commands Overview
+-----------------
+The git commands can helpfully be split into those that manipulate
+the repository, the cache and the working fileset and those that
+interrogate and compare them.
+
+Manipulation commands
+~~~~~~~~~~~~~~~~~~~~~
+link:git-apply-patch-script.html[git-apply-patch-script]::
+	Sample script to apply the diffs from git-diff-*
+
+link:git-checkout-cache.html[git-checkout-cache]::
+	Copy files from the cache to the working directory
+
+link:git-commit-tree.html[git-commit-tree]::
+	Creates a new commit object
+
+link:git-convert-cache.html[git-convert-cache]::
+	Converts old-style GIT repository
+
+link:git-http-pull.html[git-http-pull]::
+	Downloads a remote GIT repository via HTTP
+
+link:git-init-db.html[git-init-db]::
+	Creates an empty git object database
+
+link:git-local-pull.html[git-local-pull]::
+	Duplicates another GIT repository on a local system
+
+link:git-merge-base.html[git-merge-base]::
+	Finds as good a common ancestor as possible for a merge
+
+link:git-merge-one-file-script.html[git-merge-one-file-script]::
+	The standard helper program to use with "git-merge-cache"
+
+link:git-mktag.html[git-mktag]::
+	Creates a tag object
+
+link:git-prune-script.html[git-prune-script]::
+	Prunes all unreachable objects from the object database
+
+link:git-pull-script.html[git-pull-script]::
+	Script used by Linus to pull and merge a remote repository
+
+link:git-read-tree.html[git-read-tree]::
+	Reads tree information into the directory cache
+
+link:git-resolve-script.html[git-resolve-script]::
+	Script used to merge two trees
+
+link:git-rpull.html[git-rpull]::
+	Pulls from a remote repository over ssh connection
+
+link:git-tag-script.html[git-tag-script]::
+	An example script to create a tag object signed with GPG
+
+link:git-update-cache.html[git-update-cache]::
+	Modifies the index or directory cache
+
+link:git-write-blob.html[git-write-blob]::
+	Creates a blob from a file
+
+link:git-write-tree.html[git-write-tree]::
+	Creates a tree from the current cache
+
+Interrogation commands
+~~~~~~~~~~~~~~~~~~~~~~
+link:git-cat-file.html[git-cat-file]::
+	Provide content or type information for repository objects
+
+link:git-check-files.html[git-check-files]::
+	Verify a list of files are up-to-date
+
+link:git-diff-cache.html[git-diff-cache]::
+	Compares content and mode of blobs between the cache and repository
+
+link:git-diff-files.html[git-diff-files]::
+	Compares files in the working tree and the cache
+
+link:git-diff-tree.html[git-diff-tree]::
+	Compares the content and mode of blobs found via two tree objects
+
+link:git-diff-tree-helper.html[git-diff-tree-helper]::
+	Generates patch format output for git-diff-*
+
+link:git-export.html[git-export]::
+	Exports each commit and a diff against each of its parents
+
+link:git-fsck-cache.html[git-fsck-cache]::
+	Verifies the connectivity and validity of the objects in the database
+
+link:git-ls-files.html[git-ls-files]::
+	Information about files in the cache/working directory
+
+link:git-ls-tree.html[git-ls-tree]::
+	Displays a tree object in human readable form
+
+link:git-merge-cache.html[git-merge-cache]::
+	Runs a merge for files needing merging
+
+link:git-rev-list.html[git-rev-list]::
+	Lists commit objects in reverse chronological order
+
+link:git-rev-tree.html[git-rev-tree]::
+	Provides the revision tree for one or more commits
+
+link:git-rpush.html[git-rpush]::
+	Helper "server-side" program used by git-rpull
+
+link:git-tar-tree.html[git-tar-tree]::
+	Creates a tar archive of the files in the named tree
+
+link:git-unpack-file.html[git-unpack-file]::
+	Creates a temporary file with a blob's contents
+
+The interrogate commands may create files - and you can force them to
+touch the working file set - but in general they don't
+
+
+Terminology
+-----------
+see README for description
+
+Identifier terminology
+----------------------
+<object>::
+	Indicates any object sha1 identifier
+
+<blob>::
+	Indicates a blob object sha1 identifier
+
+<tree>::
+	Indicates a tree object sha1 identifier
+
+<commit>::
+	Indicates a commit object sha1 identifier
+
+<tree-ish>::
+	Indicates a tree, commit or tag object sha1 identifier.
+	A command that takes a <tree-ish> argument ultimately
+	wants to operate on a <tree> object but automatically
+	dereferences <commit> and <tag> that points at a
+	<tree>.
+
+<type>::
+	Indicates that an object type is required.
+	Currently one of: blob/tree/commit/tag
+
+<file>::
+	Indicates a filename - always relative to the root of
+	the tree structure GIT_INDEX_FILE describes.
+
+Terminology
+-----------
+Each line contains terms used interchangeably
+
+ object database, .git directory
+ directory cache, index
+ id, sha1, sha1-id, sha1 hash
+ type, tag
+ blob, blob object
+ tree, tree object
+ commit, commit object
+ parent
+ root object
+ changeset
+
+
+Environment Variables
+---------------------
+Various git commands use the following environment variables:
+
+- 'GIT_AUTHOR_NAME'
+- 'GIT_AUTHOR_EMAIL'
+- 'GIT_AUTHOR_DATE'
+- 'GIT_COMMITTER_NAME'
+- 'GIT_COMMITTER_EMAIL'
+- 'GIT_DIFF_OPTS'
+- 'GIT_EXTERNAL_DIFF'
+- 'GIT_INDEX_FILE'
+- 'GIT_OBJECT_DIRECTORY'
+- 'GIT_ALTERNATE_OBJECT_DIRECTORIES'
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

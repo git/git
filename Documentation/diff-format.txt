@@ -51,15 +51,15 @@ customization also applies to "git-diff-tree-helper".
    these commands internally invoke "diff" like this:
 
       diff -L a/<path> -L a/<path> -pu <old> <new>
++
+For added files, `/dev/null` is used for <old>.  For removed
+files, `/dev/null` is used for <new>
++
+The "diff" formatting options can be customized via the
+environment variable 'GIT_DIFF_OPTS'.  For example, if you
+prefer context diff:
 
-   For added files, `/dev/null` is used for <old>.  For removed
-   files, `/dev/null` is used for <new>
-
-   The "diff" formatting options can be customized via the
-   environment variable 'GIT_DIFF_OPTS'.  For example, if you
-   prefer context diff:
-
-	  GIT_DIFF_OPTS=-c git-diff-cache -p $(cat .git/HEAD)
+      GIT_DIFF_OPTS=-c git-diff-cache -p $(cat .git/HEAD)
 
 
 2. When the environment variable 'GIT_EXTERNAL_DIFF' is set, the

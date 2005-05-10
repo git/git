@@ -1,0 +1,32 @@
+git-prune-script(1)
+===================
+v0.1, May 2005
+
+NAME
+----
+git-prune-script - Prunes all unreachable objects from the object database
+
+
+SYNOPSIS
+--------
+'git-prune-script'
+
+DESCRIPTION
+-----------
+This runs "git-fsck-cache --unreachable" program using the heads specified
+on the command line (or `.git/refs/heads/\*` and `.git/refs/tags/\*` if none is
+specified), and prunes all unreachable objects from the object database.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

@@ -1,0 +1,52 @@
+git-write-tree(1)
+=================
+v0.1, May 2005
+
+NAME
+----
+git-write-tree - Creates a tree from the current cache
+
+
+SYNOPSIS
+--------
+'git-write-tree'
+
+DESCRIPTION
+-----------
+Creates a tree object using the current cache.
+
+The cache must be merged.
+
+Conceptually, "git-write-tree" sync()s the current directory cache contents
+into a set of tree files.
+In order to have that match what is actually in your directory right
+now, you need to have done a "git-update-cache" phase before you did the
+"git-write-tree".
+
+
+
+
+////////////////////////////////////////////////////////////////
+
+Producing man pages and html
+
+To create a set of html pages run:
+  perl split-docs.pl -html < core-git.txt
+
+To create a set of man pages run:
+  perl split-docs.pl -man < core-git.txt
+
+
+////////////////////////////////////////////////////////////////
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

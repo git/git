@@ -1,0 +1,51 @@
+git-diff-files(1)
+=================
+v0.1, May 2005
+
+NAME
+----
+git-diff-files - Compares files in the working tree and the cache
+
+
+SYNOPSIS
+--------
+'git-diff-files' [-p] [-q] [-r] [-z] [<pattern>...]
+
+DESCRIPTION
+-----------
+Compares the files in the working tree and the cache.  When paths
+are specified, compares only those named paths.  Otherwise all
+entries in the cache are compared.  The output format is the
+same as "git-diff-cache" and "git-diff-tree".
+
+OPTIONS
+-------
+-p::
+	generate patch (see section on generating patches).
+
+-q::
+	Remain silent even on nonexisting files
+
+-r::
+	This flag does not mean anything.  It is there only to match
+	git-diff-tree.  Unlike git-diff-tree, git-diff-files always looks
+	at all the subdirectories.
+
+
+Output format
+-------------
+include::diff-format.txt[]
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

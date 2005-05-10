@@ -1,0 +1,88 @@
+git-rev-tree(1)
+===============
+v0.1, May 2005
+
+NAME
+----
+git-rev-tree - Provides the revision tree for one or more commits
+
+
+SYNOPSIS
+--------
+'git-rev-tree' [--edges] [--cache <cache-file>] [^]<commit> [[^]<commit>]
+
+DESCRIPTION
+-----------
+Provides the revision tree for one or more commits.
+
+OPTIONS
+-------
+--edges::
+	Show edges (ie places where the marking changes between parent
+	and child)
+
+--cache <cache-file>::
+	Use the specified file as a cache from a previous git-rev-list run
+	to speed things up.  Note that this "cache" is totally different
+	concept from the directory index.  Also this option is not
+	implemented yet.
+
+[^]<commit>::
+	The commit id to trace (a leading caret means to ignore this
+	commit-id and below)
+
+Output
+------
+
+        <date> <commit>:<flags> [<parent-commit>:<flags> ]\*
+
+<date>::
+	Date in 'seconds since epoch'
+
+<commit>::
+	id of commit object
+
+<parent-commit>::
+	id of each parent commit object (>1 indicates a merge)
+
+<flags>::
+
+	The flags are read as a bitmask representing each commit
+	provided on the commandline. eg: given the command:
+
+		 $ git-rev-tree <com1> <com2> <com3>
+
+	The output:
+
+	    <date> <commit>:5
+
+	 means that <commit> is reachable from <com1>(1) and <com3>(4)
+	
+A revtree can get quite large. "git-rev-tree" will eventually allow
+you to cache previous state so that you don't have to follow the whole
+thing down.
+
+So the change difference between two commits is literally
+
+	git-rev-tree [commit-id1]  > commit1-revtree
+	git-rev-tree [commit-id2]  > commit2-revtree
+	join -t : commit1-revtree commit2-revtree > common-revisions
+
+(this is also how to find the most common parent - you'd look at just
+the head revisions - the ones that aren't referred to by other
+revisions - in "common-revision", and figure out the best one. I
+think.)
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

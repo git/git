@@ -1,0 +1,37 @@
+git-init-db(1)
+==============
+v0.1, May 2005
+
+NAME
+----
+git-init-db - Creates an empty git object database
+
+
+SYNOPSIS
+--------
+'git-init-db'
+
+DESCRIPTION
+-----------
+This simply creates an empty git object database - basically a `.git`
+directory and `.git/object/??/` directories.
+
+If the object storage directory is specified via the 'GIT_OBJECT_DIRECTORY'
+environment variable then the sha1 directories are created underneath -
+otherwise the default `.git/objects` directory is used.
+
+"git-init-db" won't hurt an existing repository.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

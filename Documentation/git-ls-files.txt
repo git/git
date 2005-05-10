@@ -1,0 +1,100 @@
+git-ls-files(1)
+===============
+v0.1, May 2005
+
+NAME
+----
+git-ls-files - Information about files in the cache/working directory
+
+
+SYNOPSIS
+--------
+'git-ls-files' [-z] [-t]
+		(--[cached|deleted|others|ignored|stage|unmerged])\*
+		(-[c|d|o|i|s|u])\*
+		[-x <pattern>|--exclude=<pattern>]
+		[-X <file>|--exclude-from=<file>]
+
+DESCRIPTION
+-----------
+This merges the file listing in the directory cache index with the
+actual working directory list, and shows different combinations of the
+two.
+
+One or more of the options below may be used to determine the files
+shown:
+
+OPTIONS
+-------
+-c|--cached::
+	Show cached files in the output (default)
+
+-d|--deleted::
+	Show deleted files in the output
+
+-o|--others::
+	Show other files in the output
+
+-i|--ignored::
+	Show ignored files in the output
+	Note the this also reverses any exclude list present.
+
+-s|--stage::
+	Show stage files in the output
+
+-u|--unmerged::
+	Show unmerged files in the output (forces --stage)
+
+-z::
+	\0 line termination on output
+
+-x|--exclude=<pattern>::
+	Skips files matching pattern.
+	Note that pattern is a shell wildcard pattern.
+
+-X|--exclude-from=<file>::
+	exclude patterns are read from <file>; 1 per line.
+	Allows the use of the famous dontdiff file as follows to find
+	out about uncommitted files just as dontdiff is used with
+	the diff command:
+	     git-ls-files --others --exclude-from=dontdiff
+
+-t::
+	Identify the file status with the following tags (followed by
+	a space) at the start of each line:
+	H	cached
+	M	unmerged
+	R	removed/deleted
+	?	other
+
+Output
+------
+show files just outputs the filename unless '--stage' is specified in
+which case it outputs:
+
+        [<tag> ]<mode> <object> <stage> <file>
+
+"git-ls-files --unmerged" and "git-ls-files --stage" can be used to examine
+detailed information on unmerged paths.
+
+For an unmerged path, instead of recording a single mode/SHA1 pair,
+the dircache records up to three such pairs; one from tree O in stage
+1, A in stage 2, and B in stage 3.  This information can be used by
+the user (or Cogito) to see what should eventually be recorded at the
+path. (see read-cache for more information on state)
+
+see also: link:read-cache.html[read-cache]
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

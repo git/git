@@ -1,0 +1,46 @@
+git-ls-tree(1)
+==============
+v0.1, May 2005
+
+NAME
+----
+git-ls-tree - Displays a tree object in human readable form
+
+
+SYNOPSIS
+--------
+'git-ls-tree' [-r] [-z] <tree-ish>
+
+DESCRIPTION
+-----------
+Converts the tree object to a human readable (and script processable)
+form.
+
+OPTIONS
+-------
+<tree-ish>::
+	Id of a tree.
+
+-r::
+	recurse into sub-trees
+
+-z::
+	\0 line termination on output
+
+Output Format
+-------------
+        <mode>\t	<type>\t	<object>\t	<file>
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

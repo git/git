@@ -1,0 +1,31 @@
+git-mktag(1)
+============
+v0.1, May 2005
+
+NAME
+----
+git-mktag - Creates a tag object
+
+
+SYNOPSIS
+--------
+'git-mktag'
+
+DESCRIPTION
+-----------
+Reads a tag contents from its standard input and creates a tag object.
+The input must be a well formed tag object.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

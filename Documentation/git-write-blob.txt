@@ -1,0 +1,33 @@
+git-write-blob(1)
+=================
+v0.1, May 2005
+
+NAME
+----
+git-write-blob - Creates a blob from a file
+
+
+SYNOPSIS
+--------
+'git-write-blob' <any-file-on-the-filesystem>
+
+DESCRIPTION
+-----------
+Writes the contents of the named file (which can be outside of the work
+tree) as a blob into the object database, and reports its object ID to its
+standard output.  This is used by "git-merge-one-file-script" to update the
+cache without modifying files in the work tree.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+
