@@ -5,7 +5,7 @@
  */
 #include "cache.h"
 
-void safe_create_dir(char *dir)
+void safe_create_dir(const char *dir)
 {
 	if (mkdir(dir, 0755) < 0) {
 		if (errno != EEXIST) {
@@ -23,12 +23,13 @@ void safe_create_dir(char *dir)
  */
 int main(int argc, char **argv)
 {
-	char *sha1_dir, *path;
+	const char *sha1_dir;
+	char *path;
 	int len, i;
 
 	safe_create_dir(".git");
 
-	sha1_dir = getenv(DB_ENVIRONMENT);
+	sha1_dir = gitenv(DB_ENVIRONMENT);
 	if (!sha1_dir) {
 		sha1_dir = DEFAULT_DB_ENVIRONMENT;
 		fprintf(stderr, "defaulting to local storage area\n");

@@ -46,6 +46,8 @@ LIB_OBJS += strbuf.o
 LIB_H += diff.h
 LIB_OBJS += diff.o
 
+LIB_OBJS += gitenv.o
+
 LIBS = $(LIB_FILE)
 LIBS += -lz
 
@@ -116,6 +118,7 @@ sha1_file.o: $(LIB_H)
 usage.o: $(LIB_H)
 diff.o: $(LIB_H)
 strbuf.o: $(LIB_H)
+gitenv.o: $(LIB_H)
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)

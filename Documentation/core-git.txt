@@ -210,15 +210,16 @@ Environment Variables
 ---------------------
 Various git commands use the following environment variables:
 
-- 'AUTHOR_NAME'
-- 'AUTHOR_EMAIL'
-- 'AUTHOR_DATE'
-- 'COMMIT_AUTHOR_NAME'
-- 'COMMIT_AUTHOR_EMAIL'
+- 'GIT_AUTHOR_NAME'
+- 'GIT_AUTHOR_EMAIL'
+- 'GIT_AUTHOR_DATE'
+- 'GIT_COMMITTER_NAME'
+- 'GIT_COMMITTER_EMAIL'
 - 'GIT_DIFF_OPTS'
 - 'GIT_EXTERNAL_DIFF'
 - 'GIT_INDEX_FILE'
-- 'SHA1_FILE_DIRECTORY'
+- 'GIT_OBJECT_DIRECTORY'
+- 'GIT_ALTERNATE_OBJECT_DIRECTORIES'
 
 
 NAME
@@ -439,11 +440,11 @@ If not provided, "git-commit-tree" uses your name, hostname and domain to
 provide author and committer info. This can be overridden using the
 following environment variables.
 
-	AUTHOR_NAME
-	AUTHOR_EMAIL
-	AUTHOR_DATE
-	COMMIT_AUTHOR_NAME
-	COMMIT_AUTHOR_EMAIL
+	GIT_AUTHOR_NAME
+	GIT_AUTHOR_EMAIL
+	GIT_AUTHOR_DATE
+	GIT_COMMITTER_NAME
+	GIT_COMMITTER_EMAIL
 
 (nb <,> and '\n's are stripped)
 
@@ -876,7 +877,7 @@ sha1 mismatch <object>::
 Environment Variables
 ---------------------
 
-SHA1_FILE_DIRECTORY::
+GIT_OBJECT_DIRECTORY::
 	used to specify the object database root (usually .git/objects)
 
 GIT_INDEX_FILE::
@@ -918,7 +919,7 @@ DESCRIPTION
 This simply creates an empty git object database - basically a `.git`
 directory and `.git/object/??/` directories.
 
-If the object storage directory is specified via the 'SHA1_FILE_DIRECTORY'
+If the object storage directory is specified via the 'GIT_OBJECT_DIRECTORY'
 environment variable then the sha1 directories are created underneath -
 otherwise the default `.git/objects` directory is used.
 

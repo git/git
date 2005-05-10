@@ -31,6 +31,13 @@
 #endif
 
 /*
+ * Environment variables transition.
+ * We accept older names for now but warn.
+ */
+extern char *gitenv_bc(const char *);
+#define gitenv(e) (getenv(e) ? : gitenv_bc(e))
+
+/*
  * Basic data structures for the directory cache
  *
  * NOTE NOTE NOTE! This is all in the native CPU byte format. It's
@@ -99,16 +106,16 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 struct cache_entry **active_cache;
 unsigned int active_nr, active_alloc, active_cache_changed;
 
-#define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
+#define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define DEFAULT_DB_ENVIRONMENT ".git/objects"
-#define ALTERNATE_DB_ENVIRONMENT "SHA1_FILE_DIRECTORIES"
+#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
-#define get_object_directory() (getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT)
+#define get_object_directory() (gitenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT)
 
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define DEFAULT_INDEX_ENVIRONMENT ".git/index"
 
-#define get_index_file() (getenv(INDEX_ENVIRONMENT) ? : DEFAULT_INDEX_ENVIRONMENT)
+#define get_index_file() (gitenv(INDEX_ENVIRONMENT) ? : DEFAULT_INDEX_ENVIRONMENT)
 
 #define alloc_nr(x) (((x)+16)*3/2)
 

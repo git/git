@@ -28,9 +28,13 @@ sed -ne '/unreachable /{
     s/unreachable [^ ][^ ]* //
     s|\(..\)|\1/|p
 }' | {
-	case "$SHA1_FILE_DIRECTORY" in
+	for d in "$GIT_OBJECT_DIRECTORY" "$SHA1_FILE_DIRECTORY" ''
+	do
+		test "$d" != "" && test -d "$d" && break
+	done
+	case "$d" in
 	'') cd .git/objects/ ;;
-	*) cd "$SHA1_FILE_DIRECTORY" ;;
+	*) cd "$d" ;;
 	esac || exit
 	xargs -r $dryrun rm -f
 }

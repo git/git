@@ -120,7 +120,7 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
  *
  * Also note that this returns the location for creating.  Reading
  * SHA1 file can happen from any alternate directory listed in the
- * SHA1_FILE_DIRECTORIES environment variable if it is not found in
+ * DB_ENVIRONMENT environment variable if it is not found in
  * the primary object database.
  */
 char *sha1_file_name(const unsigned char *sha1)
@@ -128,7 +128,7 @@ char *sha1_file_name(const unsigned char *sha1)
 	static char *name, *base;
 
 	if (!base) {
-		char *sha1_file_directory = get_object_directory();
+		const char *sha1_file_directory = get_object_directory();
 		int len = strlen(sha1_file_directory);
 		base = xmalloc(len + 60);
 		memcpy(base, sha1_file_directory, len);
@@ -151,7 +151,7 @@ static struct alternate_object_database {
  * alt_odb points at an array of struct alternate_object_database.
  * This array is terminated with an element that has both its base
  * and name set to NULL.  alt_odb[n] comes from n'th non-empty
- * element from colon separated $SHA1_FILE_DIRECTORIES environment
+ * element from colon separated ALTERNATE_DB_ENVIRONMENT environment
  * variable, and its base points at a statically allocated buffer
  * that contains "/the/directory/corresponding/to/.git/objects/...",
  * while its name points just after the slash at the end of
@@ -167,7 +167,7 @@ static void prepare_alt_odb(void)
 	int pass, totlen, i;
 	const char *cp, *last;
 	char *op = 0;
-	const char *alt = getenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
+	const char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
 
 	/* The first pass counts how large an area to allocate to
 	 * hold the entire alt_odb structure, including array of
