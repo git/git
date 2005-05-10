@@ -15,8 +15,8 @@ struct object {
 	struct object_list *refs;
 };
 
-int nr_objs;
-struct object **objs;
+extern int nr_objs;
+extern struct object **objs;
 
 struct object *lookup_object(unsigned char *sha1);
 

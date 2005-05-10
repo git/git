@@ -96,8 +96,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
-struct cache_entry **active_cache;
-unsigned int active_nr, active_alloc, active_cache_changed;
+extern struct cache_entry **active_cache;
+extern unsigned int active_nr, active_alloc, active_cache_changed;
 
 #define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
 #define DEFAULT_DB_ENVIRONMENT ".git/objects"
