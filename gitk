@@ -7,6 +7,8 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
+# CVS $Revision: 1.2 $
+
 set datemode 0
 set boldnames 0
 set revtreeargs {}
@@ -63,7 +65,7 @@ proc getcommits {rargs} {
 }
 
 proc readcommit {id} {
-    global commitinfo
+    global commitinfo commitsummary
     set inhdr 1
     set comment {}
     set headline {}
@@ -103,23 +105,27 @@ proc readcommit {id} {
 	set comdate [clock format $comdate -format "%Y-%m-%d %H:%M:%S"]
     }
     set commitinfo($id) [list $comment $auname $audate $comname $comdate]
-    return [list $headline $auname $audate]
+    set commitsummary($id) [list $headline $auname $audate]
 }
 
 proc makewindow {} {
     global canv linespc charspc ctext
-    frame .clist
-    set canv .clist.canv
+    panedwindow .ctop -orient vertical
+    frame .ctop.clist
+    set canv .ctop.clist.canv
     canvas $canv -height [expr 30 * $linespc + 4] -width [expr 90 * $charspc] \
 	-bg white -relief sunk -bd 1 \
-	-yscrollincr $linespc -yscrollcommand ".clist.csb set"
-    scrollbar .clist.csb -command "$canv yview" -highlightthickness 0
-    pack .clist.csb -side right -fill y
+	-yscrollincr $linespc -yscrollcommand ".ctop.clist.csb set"
+    scrollbar .ctop.clist.csb -command "$canv yview" -highlightthickness 0
+    pack .ctop.clist.csb -side right -fill y
     pack $canv -side bottom -fill both -expand 1
-    pack .clist -side top -fill both -expand 1
-    set ctext .ctext
+    .ctop add .ctop.clist
+    #pack .ctop.clist -side top -fill both -expand 1
+    set ctext .ctop.ctext
     text $ctext -bg white
-    pack $ctext -side top -fill x -expand 1
+    .ctop add .ctop.ctext
+    #pack $ctext -side top -fill x -expand 1
+    pack .ctop -side top -fill both -expand 1
 
     bind $canv <1> {selcanvline %x %y}
     bind $canv <B1-Motion> {selcanvline %x %y}
@@ -160,7 +166,7 @@ proc drawgraph {start} {
     global parents children nparents nchildren commits
     global canv mainfont namefont canvx0 canvy0 linespc namex datex
     global datemode cdate
-    global lineid linehtag linentag linedtag
+    global lineid linehtag linentag linedtag commitsummary
 
     set colors {green red blue magenta darkgrey brown orange}
     set ncolors [llength $colors]
@@ -180,10 +186,16 @@ proc drawgraph {start} {
 	set nlines [llength $todo]
 	set id [lindex $todo $level]
 	set lineid($lineno) $id
+	set actualparents {}
 	foreach p $parents($id) {
-	    incr ncleft($p) -1
+	    if {[info exists ncleft($p)]} {
+		incr ncleft($p) -1
+		lappend actualparents $p
+	    }
 	}
-	set cinfo [readcommit $id]
+	if {![info exists commitsummary($id)]} {
+	    readcommit $id
+	}
 	set x [expr $canvx0 + $level * $linespc]
 	set y2 [expr $canvy + $linespc]
 	if {$linestarty($level) < $canvy} {
@@ -197,9 +209,9 @@ proc drawgraph {start} {
 		   -fill blue -outline black -width 1]
 	$canv raise $t
 	set xt [expr $canvx0 + $nlines * $linespc]
-	set headline [lindex $cinfo 0]
-	set name [lindex $cinfo 1]
-	set date [lindex $cinfo 2]
+	set headline [lindex $commitsummary($id) 0]
+	set name [lindex $commitsummary($id) 1]
+	set date [lindex $commitsummary($id) 2]
 	set headline [truncatetofit $headline [expr $namex-$xt-$linespc] \
 			 $mainfont]
 	set linehtag($lineno) [$canv create text $xt $canvy -anchor w \
@@ -209,8 +221,8 @@ proc drawgraph {start} {
 				   -text $name -font $namefont]
 	set linedtag($lineno) [$canv create text $datex $canvy -anchor w \
 				 -text $date -font $mainfont]
-	if {!$datemode && $nparents($id) == 1} {
-	    set p [lindex $parents($id) 0]
+	if {!$datemode && [llength $actualparents] == 1} {
+	    set p [lindex $actualparents 0]
 	    if {$ncleft($p) == 0 && [lsearch -exact $todo $p] < 0} {
 		set todo [lreplace $todo $level $level $p]
 		set colormap($p) $colormap($id)
@@ -240,7 +252,7 @@ proc drawgraph {start} {
 	}
 
 	set badcolors [list $colormap($id)]
-	foreach p $parents($id) {
+	foreach p $actualparents {
 	    if {[info exists colormap($p)]} {
 		lappend badcolors $colormap($p)
 	    }
@@ -250,7 +262,7 @@ proc drawgraph {start} {
 	    incr nullentry -1
 	}
 	set i $level
-	foreach p $parents($id) {
+	foreach p $actualparents {
 	    set k [lsearch -exact $todo $p]
 	    if {$k < 0} {
 		set todo [linsert $todo $i $p]
