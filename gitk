@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.2 $
+# CVS $Revision: 1.3 $
 
 set datemode 0
 set boldnames 0
@@ -108,8 +108,22 @@ proc readcommit {id} {
     set commitsummary($id) [list $headline $auname $audate]
 }
 
+proc gettreediffs {id} {
+    global treediffs parents
+    set p [lindex $parents($id) 0]
+    set diff {}
+    foreach line [split [exec git-diff-tree -r $p $id] "\n"] {
+	set type [lindex $line 1]
+	set file [lindex $line 3]
+	if {$type == "blob"} {
+	    lappend diff $file
+	}
+    }
+    set treediffs($id) $diff
+}
+
 proc makewindow {} {
-    global canv linespc charspc ctext
+    global canv linespc charspc ctext cflist
     panedwindow .ctop -orient vertical
     frame .ctop.clist
     set canv .ctop.clist.canv
@@ -121,10 +135,15 @@ proc makewindow {} {
     pack $canv -side bottom -fill both -expand 1
     .ctop add .ctop.clist
     #pack .ctop.clist -side top -fill both -expand 1
-    set ctext .ctop.ctext
-    text $ctext -bg white
-    .ctop add .ctop.ctext
+    panedwindow .ctop.cdet -orient horizontal
+    .ctop add .ctop.cdet
+    set ctext .ctop.cdet.ctext
+    text $ctext -bg white -state disabled
+    .ctop.cdet add $ctext
     #pack $ctext -side top -fill x -expand 1
+    set cflist .ctop.cdet.cfiles
+    listbox $cflist -width 30 -bg white
+    .ctop.cdet add $cflist
     pack .ctop -side top -fill both -expand 1
 
     bind $canv <1> {selcanvline %x %y}
@@ -138,8 +157,8 @@ proc makewindow {} {
     bind . <Key-Delete> "$canv yview scroll -1 p"
     bind . <Key-BackSpace> "$canv yview scroll -1 p"
     bind . <Key-space> "$canv yview scroll 1 p"
-    bind . <Key-Up> "$canv yview scroll -1 u"
-    bind . <Key-Down> "$canv yview scroll 1 u"
+    bind . <Key-Up> "selnextline -1"
+    bind . <Key-Down> "selnextline 1"
     bind . Q "set stopped 1; destroy ."
 }
 
@@ -164,7 +183,7 @@ proc truncatetofit {str width font} {
 
 proc drawgraph {start} {
     global parents children nparents nchildren commits
-    global canv mainfont namefont canvx0 canvy0 linespc namex datex
+    global canv mainfont namefont canvx0 canvy0 canvy linespc namex datex
     global datemode cdate
     global lineid linehtag linentag linedtag commitsummary
 
@@ -388,17 +407,56 @@ proc selcanvline {x y} {
 	set l 0
     }
     if {[info exists selectedline] && $selectedline == $l} return
+    selectline $l
+}
+
+proc selectline {l} {
+    global canv ctext commitinfo selectedline lineid linehtag
+    global canvy canvy0 linespc nparents
+    global cflist treediffs
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv select clear
     $canv select from $linehtag($l) 0
     $canv select to $linehtag($l) end
+    set y [expr {$canvy0 + $l * $linespc}]
+    set ytop [expr {($y - $linespc / 2.0) / $canvy}]
+    set ybot [expr {($y + $linespc / 2.0) / $canvy}]
+    set wnow [$canv yview]
+    if {$ytop < [lindex $wnow 0]} {
+	$canv yview moveto $ytop
+    } elseif {$ybot > [lindex $wnow 1]} {
+	set wh [expr {[lindex $wnow 1] - [lindex $wnow 0]}]
+	$canv yview moveto [expr {$ybot - $wh}]
+    }
+    set selectedline $l
+
     set id $lineid($l)
+    $ctext conf -state normal
     $ctext delete 0.0 end
     set info $commitinfo($id)
     $ctext insert end "Author: [lindex $info 1]  \t[lindex $info 2]\n"
     $ctext insert end "Committer: [lindex $info 3]  \t[lindex $info 4]\n"
     $ctext insert end "\n"
     $ctext insert end [lindex $info 0]
+    $ctext conf -state disabled
+
+    $cflist delete 0 end
+    if {$nparents($id) == 1} {
+	if {![info exists treediffs($id)]} {
+	    gettreediffs $id
+	}
+	foreach f $treediffs($id) {
+	    $cflist insert end $f
+	}
+    }
+
+}
+
+proc selnextline {dir} {
+    global selectedline
+    if {![info exists selectedline]} return
+    set l [expr $selectedline + $dir]
+    selectline $l
 }
 
 getcommits $revtreeargs
