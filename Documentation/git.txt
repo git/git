@@ -32,55 +32,29 @@ The git commands can helpfully be split into those that manipulate
 the repository, the cache and the working fileset and those that
 interrogate and compare them.
 
+There are also some ancilliary programs that can be viewed as useful
+aids for using the core commands but which are unlikely to be used by
+SCMs layered over git.
+
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
-link:git-apply-patch-script.html[git-apply-patch-script]::
-	Sample script to apply the diffs from git-diff-*
-
 link:git-checkout-cache.html[git-checkout-cache]::
 	Copy files from the cache to the working directory
 
 link:git-commit-tree.html[git-commit-tree]::
 	Creates a new commit object
 
-link:git-convert-cache.html[git-convert-cache]::
-	Converts old-style GIT repository
-
-link:git-http-pull.html[git-http-pull]::
-	Downloads a remote GIT repository via HTTP
-
 link:git-init-db.html[git-init-db]::
 	Creates an empty git object database
-
-link:git-local-pull.html[git-local-pull]::
-	Duplicates another GIT repository on a local system
 
 link:git-merge-base.html[git-merge-base]::
 	Finds as good a common ancestor as possible for a merge
 
-link:git-merge-one-file-script.html[git-merge-one-file-script]::
-	The standard helper program to use with "git-merge-cache"
-
 link:git-mktag.html[git-mktag]::
 	Creates a tag object
 
-link:git-prune-script.html[git-prune-script]::
-	Prunes all unreachable objects from the object database
-
-link:git-pull-script.html[git-pull-script]::
-	Script used by Linus to pull and merge a remote repository
-
 link:git-read-tree.html[git-read-tree]::
 	Reads tree information into the directory cache
-
-link:git-resolve-script.html[git-resolve-script]::
-	Script used to merge two trees
-
-link:git-rpull.html[git-rpull]::
-	Pulls from a remote repository over ssh connection
-
-link:git-tag-script.html[git-tag-script]::
-	An example script to create a tag object signed with GPG
 
 link:git-update-cache.html[git-update-cache]::
 	Modifies the index or directory cache
@@ -108,9 +82,6 @@ link:git-diff-files.html[git-diff-files]::
 link:git-diff-tree.html[git-diff-tree]::
 	Compares the content and mode of blobs found via two tree objects
 
-link:git-diff-tree-helper.html[git-diff-tree-helper]::
-	Generates patch format output for git-diff-*
-
 link:git-export.html[git-export]::
 	Exports each commit and a diff against each of its parents
 
@@ -132,9 +103,6 @@ link:git-rev-list.html[git-rev-list]::
 link:git-rev-tree.html[git-rev-tree]::
 	Provides the revision tree for one or more commits
 
-link:git-rpush.html[git-rpush]::
-	Helper "server-side" program used by git-rpull
-
 link:git-tar-tree.html[git-tar-tree]::
 	Creates a tar archive of the files in the named tree
 
@@ -143,6 +111,50 @@ link:git-unpack-file.html[git-unpack-file]::
 
 The interrogate commands may create files - and you can force them to
 touch the working file set - but in general they don't
+
+
+Ancilliary Commands
+-------------------
+Manipulators:
+
+link:git-apply-patch-script.html[git-apply-patch-script]::
+	Sample script to apply the diffs from git-diff-*
+
+link:git-convert-cache.html[git-convert-cache]::
+	Converts old-style GIT repository
+
+link:git-http-pull.html[git-http-pull]::
+	Downloads a remote GIT repository via HTTP
+
+link:git-local-pull.html[git-local-pull]::
+	Duplicates another GIT repository on a local system
+
+link:git-merge-one-file-script.html[git-merge-one-file-script]::
+	The standard helper program to use with "git-merge-cache"
+
+link:git-pull-script.html[git-pull-script]::
+	Script used by Linus to pull and merge a remote repository
+
+link:git-prune-script.html[git-prune-script]::
+	Prunes all unreachable objects from the object database
+
+link:git-resolve-script.html[git-resolve-script]::
+	Script used to merge two trees
+
+link:git-tag-script.html[git-tag-script]::
+	An example script to create a tag object signed with GPG
+
+link:git-rpull.html[git-rpull]::
+	Pulls from a remote repository over ssh connection
+
+Interogators:
+
+link:git-diff-tree-helper.html[git-diff-tree-helper]::
+	Generates patch format output for git-diff-*
+
+link:git-rpush.html[git-rpush]::
+	Helper "server-side" program used by git-rpull
+
 
 
 Terminology
