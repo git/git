@@ -60,7 +60,7 @@ ifdef PPC_SHA1
   LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
 else
   SHA1_HEADER=<openssl/sha.h>
-  LIBS += -lssl
+  LIBS += -lcrypto
 endif
 endif
 
