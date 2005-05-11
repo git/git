@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.4 $
+# CVS $Revision: 1.5 $
 
 set datemode 0
 set boldnames 0
@@ -115,20 +115,6 @@ proc readcommit {id} {
     set commitsummary($id) [list $headline $auname $audate]
 }
 
-proc gettreediffs {id} {
-    global treediffs parents
-    set p [lindex $parents($id) 0]
-    set diff {}
-    foreach line [split [exec git-diff-tree -r $p $id] "\n"] {
-	set type [lindex $line 1]
-	set file [lindex $line 3]
-	if {$type == "blob"} {
-	    lappend diff $file
-	}
-    }
-    set treediffs($id) $diff
-}
-
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist
     panedwindow .ctop -orient vertical
@@ -155,13 +141,24 @@ proc makewindow {} {
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
-    set ctext .ctop.cdet.ctext
-    text $ctext -bg white -state disabled
-    .ctop.cdet add $ctext
-    #pack $ctext -side top -fill x -expand 1
-    set cflist .ctop.cdet.cfiles
-    listbox $cflist -width 30 -bg white
-    .ctop.cdet add $cflist
+    frame .ctop.cdet.left
+    set ctext .ctop.cdet.left.ctext
+    text $ctext -bg white -state disabled \
+	-yscrollcommand ".ctop.cdet.left.sb set"
+    scrollbar .ctop.cdet.left.sb -command "$ctext yview"
+    pack .ctop.cdet.left.sb -side right -fill y
+    pack $ctext -side left -fill both -expand 1
+    .ctop.cdet add .ctop.cdet.left
+
+    frame .ctop.cdet.right
+    set cflist .ctop.cdet.right.cfiles
+    listbox $cflist -width 30 -bg white \
+	-yscrollcommand ".ctop.cdet.right.sb set"
+    scrollbar .ctop.cdet.right.sb -command "$cflist yview"
+    pack .ctop.cdet.right.sb -side right -fill y
+    pack $cflist -side left -fill both -expand 1
+    .ctop.cdet add .ctop.cdet.right
+
     pack .ctop -side top -fill both -expand 1
 
     bindall <1> {selcanvline %x %y}
@@ -437,13 +434,23 @@ proc selcanvline {x y} {
 }
 
 proc selectline {l} {
-    global canv ctext commitinfo selectedline lineid linehtag
-    global canvy canvy0 linespc nparents
-    global cflist treediffs
+    global canv canv2 canv3 ctext commitinfo selectedline
+    global lineid linehtag linentag linedtag
+    global canvy canvy0 linespc nparents treepending
+    global cflist treediffs currentid
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
-    $canv select clear
-    $canv select from $linehtag($l) 0
-    $canv select to $linehtag($l) end
+    $canv delete secsel
+    set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv cget -selectbackground]]
+    $canv lower $t
+    $canv2 delete secsel
+    set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv2 cget -selectbackground]]
+    $canv2 lower $t
+    $canv3 delete secsel
+    set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv3 cget -selectbackground]]
+    $canv3 lower $t
     set y [expr {$canvy0 + $l * $linespc}]
     set ytop [expr {($y - $linespc / 2.0) / $canvy}]
     set ybot [expr {($y + $linespc / 2.0) / $canvy}]
@@ -460,22 +467,62 @@ proc selectline {l} {
     $ctext conf -state normal
     $ctext delete 0.0 end
     set info $commitinfo($id)
-    $ctext insert end "Author: [lindex $info 1]  \t[lindex $info 2]\n"
-    $ctext insert end "Committer: [lindex $info 3]  \t[lindex $info 4]\n"
+    $ctext insert end "Author: [lindex $info 1]  [lindex $info 2]\n"
+    $ctext insert end "Committer: [lindex $info 3]  [lindex $info 4]\n"
     $ctext insert end "\n"
     $ctext insert end [lindex $info 0]
     $ctext conf -state disabled
 
     $cflist delete 0 end
+    set currentid $id
     if {$nparents($id) == 1} {
 	if {![info exists treediffs($id)]} {
-	    gettreediffs $id
-	}
-	foreach f $treediffs($id) {
-	    $cflist insert end $f
+	    if {![info exists treepending]} {
+		gettreediffs $id
+	    }
+	} else {
+	    addtocflist $id
 	}
     }
 
+}
+
+proc addtocflist {id} {
+    global currentid treediffs cflist treepending
+    if {$id != $currentid} {
+	gettreediffs $currentid
+	return
+    }
+    foreach f $treediffs($currentid) {
+	$cflist insert end $f
+    }
+}
+
+proc gettreediffs {id} {
+    global treediffs parents treepending
+    set treepending $id
+    set treediffs($id) {}
+    set p [lindex $parents($id) 0]
+    if [catch {set gdtf [open "|git-diff-tree -r $p $id" r]}] return
+    fconfigure $gdtf -blocking 0
+    fileevent $gdtf readable "gettreediffline $gdtf $id"
+}
+
+proc gettreediffline {gdtf id} {
+    global treediffs treepending
+    set n [gets $gdtf line]
+    if {$n < 0} {
+	if {![eof $gdtf]} return
+	close $gdtf
+	unset treepending
+	addtocflist $id
+	return
+    }
+    set type [lindex $line 1]
+    set file [lindex $line 3]
+    if {$type == "blob"} {
+	lappend treediffs($id) $file
+    }
 }
 
 proc selnextline {dir} {
