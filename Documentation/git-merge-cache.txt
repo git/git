@@ -9,7 +9,7 @@ git-merge-cache - Runs a merge for files needing merging
 
 SYNOPSIS
 --------
-'git-merge-cache' <merge-program> (-a | -- | <file>\*) 
+'git-merge-cache' [-o] <merge-program> (-a | -- | <file>\*) 
 
 DESCRIPTION
 -----------
@@ -25,6 +25,12 @@ OPTIONS
 
 -a::
 	Run merge against all files in the cache that need merging.
+
+-o::
+	Instead of stopping at the first failed merge, do all of them
+	in one shot - continue with merging even when previous merges
+	returned errors, and only return the error code after all the
+	merges are over.
 
 If "git-merge-cache" is called with multiple <file>s (or -a) then it
 processes them in turn only stopping if merge returns a non-zero exit
@@ -66,6 +72,7 @@ for the AA file, because it didn't exist in the original, and thus
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
+One-shot merge by Petr Baudis <pasky@ucw.cz>
 
 Documentation
 --------------
