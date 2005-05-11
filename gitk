@@ -7,24 +7,31 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.5 $
+# CVS $Revision: 1.6 $
 
 set datemode 0
 set boldnames 0
 set revtreeargs {}
+set diffopts "-U 5 -p"
 
 set mainfont {Helvetica 9}
 set namefont $mainfont
+set textfont {Courier 9}
 if {$boldnames} {
     lappend namefont bold
 }
+
+set colors {green red blue magenta darkgrey brown orange}
+set colorbycommitter false
+
 catch {source ~/.gitk}
 
 foreach arg $argv {
     switch -regexp -- $arg {
 	"^$" { }
-	"^-d" { set datemode 1 }
 	"^-b" { set boldnames 1 }
+	"^-c" { set colorbycommitter 1 }
+	"^-d" { set datemode 1 }
 	"^-.*" {
 	    puts stderr "unrecognized option $arg"
 	    exit 1
@@ -72,7 +79,7 @@ proc getcommits {rargs} {
 }
 
 proc readcommit {id} {
-    global commitinfo commitsummary
+    global commitinfo
     set inhdr 1
     set comment {}
     set headline {}
@@ -111,29 +118,30 @@ proc readcommit {id} {
     if {$comdate != {}} {
 	set comdate [clock format $comdate -format "%Y-%m-%d %H:%M:%S"]
     }
-    set commitinfo($id) [list $comment $auname $audate $comname $comdate]
-    set commitsummary($id) [list $headline $auname $audate]
+    set commitinfo($id) [list $headline $auname $audate \
+			     $comname $comdate $comment]
 }
 
 proc makewindow {} {
-    global canv canv2 canv3 linespc charspc ctext cflist
+    global canv canv2 canv3 linespc charspc ctext cflist textfont
     panedwindow .ctop -orient vertical
     panedwindow .ctop.clist -orient horizontal -sashpad 0 -handlesize 4
     .ctop add .ctop.clist
     set canv .ctop.clist.canv
     set cscroll .ctop.clist.dates.csb
-    canvas $canv -height [expr 30 * $linespc + 4] -width [expr 45 * $charspc] \
+    set height [expr 25 * $linespc + 4]
+    canvas $canv -height $height -width [expr 45 * $charspc] \
 	-bg white -bd 0 \
 	-yscrollincr $linespc -yscrollcommand "$cscroll set"
     .ctop.clist add $canv
     set canv2 .ctop.clist.canv2
-    canvas $canv2 -height [expr 30 * $linespc +4] -width [expr 30 * $charspc] \
+    canvas $canv2 -height $height -width [expr 30 * $charspc] \
 	-bg white -bd 0 -yscrollincr $linespc
     .ctop.clist add $canv2
     frame .ctop.clist.dates
     .ctop.clist add .ctop.clist.dates
     set canv3 .ctop.clist.dates.canv3
-    canvas $canv3 -height [expr 30 * $linespc +4] -width [expr 15 * $charspc] \
+    canvas $canv3 -height $height -width [expr 15 * $charspc] \
 	-bg white -bd 0 -yscrollincr $linespc
     scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
     pack .ctop.clist.dates.csb -side right -fill y
@@ -143,16 +151,21 @@ proc makewindow {} {
     .ctop add .ctop.cdet
     frame .ctop.cdet.left
     set ctext .ctop.cdet.left.ctext
-    text $ctext -bg white -state disabled \
+    text $ctext -bg white -state disabled -font $textfont -height 32 \
 	-yscrollcommand ".ctop.cdet.left.sb set"
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
     .ctop.cdet add .ctop.cdet.left
 
+    $ctext tag conf filesep -font [concat $textfont bold]
+    $ctext tag conf hunksep -back blue -fore white
+    $ctext tag conf d0 -back "#ff8080"
+    $ctext tag conf d1 -back green
+
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
-    listbox $cflist -width 30 -bg white \
+    listbox $cflist -width 30 -bg white -selectmode extended \
 	-yscrollcommand ".ctop.cdet.right.sb set"
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
@@ -167,14 +180,20 @@ proc makewindow {} {
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 u"
     bindall <2> "allcanvs scan mark 0 %y"
     bindall <B2-Motion> "allcanvs scan dragto 0 %y"
-    bind . <Key-Prior> "allcanvs yview scroll -1 p"
-    bind . <Key-Next> "allcanvs yview scroll 1 p"
-    bind . <Key-Delete> "allcanvs yview scroll -1 p"
-    bind . <Key-BackSpace> "allcanvs yview scroll -1 p"
-    bind . <Key-space> "allcanvs yview scroll 1 p"
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
+    bind . p "selnextline -1"
+    bind . n "selnextline 1"
+    bind . <Key-Prior> "allcanvs yview scroll -1 p"
+    bind . <Key-Next> "allcanvs yview scroll 1 p"
+    bind . <Key-Delete> "$ctext yview scroll -1 p"
+    bind . <Key-BackSpace> "$ctext yview scroll -1 p"
+    bind . <Key-space> "$ctext yview scroll 1 p"
+    bind . b "$ctext yview scroll -1 p"
+    bind . d "$ctext yview scroll 18 u"
+    bind . u "$ctext yview scroll -18 u"
     bind . Q "set stopped 1; destroy ."
+    bind $cflist <<ListboxSelect>> listboxsel
 }
 
 proc allcanvs args {
@@ -210,16 +229,71 @@ proc truncatetofit {str width font} {
     return $tmp
 }
 
+proc assigncolor {id} {
+    global commitinfo colormap commcolors colors nextcolor
+    global colorbycommitter
+    global parents nparents children nchildren
+    if [info exists colormap($id)] return
+    set ncolors [llength $colors]
+    if {$colorbycommitter} {
+	if {![info exists commitinfo($id)]} {
+	    readcommit $id
+	}
+	set comm [lindex $commitinfo($id) 3]
+	if {![info exists commcolors($comm)]} {
+	    set commcolors($comm) [lindex $colors $nextcolor]
+	    if {[incr nextcolor] >= $ncolors} {
+		set nextcolor 0
+	    }
+	}
+	set colormap($id) $commcolors($comm)
+    } else {
+	if {$nparents($id) == 1 && $nchildren($id) == 1} {
+	    set child [lindex $children($id) 0]
+	    if {[info exists colormap($child)]
+		&& $nparents($child) == 1} {
+		set colormap($id) $colormap($child)
+		return
+	    }
+	}
+	set badcolors {}
+	foreach child $children($id) {
+	    if {[info exists colormap($child)]
+		&& [lsearch -exact $badcolors $colormap($child)] < 0} {
+		lappend badcolors $colormap($child)
+	    }
+	    if {[info exists parents($child)]} {
+		foreach p $parents($child) {
+		    if {[info exists colormap($p)]
+			&& [lsearch -exact $badcolors $colormap($p)] < 0} {
+			lappend badcolors $colormap($p)
+		    }
+		}
+	    }
+	}
+	if {[llength $badcolors] >= $ncolors} {
+	    set badcolors {}
+	}
+	for {set i 0} {$i <= $ncolors} {incr i} {
+	    set c [lindex $colors $nextcolor]
+	    if {[incr nextcolor] >= $ncolors} {
+		set nextcolor 0
+	    }
+	    if {[lsearch -exact $badcolors $c]} break
+	}
+	set colormap($id) $c
+    }
+}
+
 proc drawgraph {start} {
     global parents children nparents nchildren commits
     global canv canv2 canv3 mainfont namefont canvx0 canvy0 canvy linespc
     global datemode cdate
-    global lineid linehtag linentag linedtag commitsummary
+    global lineid linehtag linentag linedtag commitinfo
+    global nextcolor colormap
 
-    set colors {green red blue magenta darkgrey brown orange}
-    set ncolors [llength $colors]
     set nextcolor 0
-    set colormap($start) [lindex $colors 0]
+    assigncolor $start
     foreach id $commits {
 	set ncleft($id) $nchildren($id)
     }
@@ -244,7 +318,7 @@ proc drawgraph {start} {
 		lappend actualparents $p
 	    }
 	}
-	if {![info exists commitsummary($id)]} {
+	if {![info exists commitinfo($id)]} {
 	    readcommit $id
 	}
 	set x [expr $canvx0 + $level * $linespc]
@@ -260,9 +334,9 @@ proc drawgraph {start} {
 		   -fill blue -outline black -width 1]
 	$canv raise $t
 	set xt [expr $canvx0 + $nlines * $linespc]
-	set headline [lindex $commitsummary($id) 0]
-	set name [lindex $commitsummary($id) 1]
-	set date [lindex $commitsummary($id) 2]
+	set headline [lindex $commitinfo($id) 0]
+	set name [lindex $commitinfo($id) 1]
+	set date [lindex $commitinfo($id) 2]
 	set linehtag($lineno) [$canv create text $xt $canvy -anchor w \
 				   -text $headline -font $mainfont ]
 	set linentag($lineno) [$canv2 create text 3 $canvy -anchor w \
@@ -272,8 +346,8 @@ proc drawgraph {start} {
 	if {!$datemode && [llength $actualparents] == 1} {
 	    set p [lindex $actualparents 0]
 	    if {$ncleft($p) == 0 && [lsearch -exact $todo $p] < 0} {
+		assigncolor $p
 		set todo [lreplace $todo $level $level $p]
-		set colormap($p) $colormap($id)
 		continue
 	    }
 	}
@@ -296,12 +370,6 @@ proc drawgraph {start} {
 	    }
 	}
 
-	set badcolors [list $colormap($id)]
-	foreach p $actualparents {
-	    if {[info exists colormap($p)]} {
-		lappend badcolors $colormap($p)
-	    }
-	}
 	set todo [lreplace $todo $level $level]
 	if {$nullentry > $level} {
 	    incr nullentry -1
@@ -310,24 +378,10 @@ proc drawgraph {start} {
 	foreach p $actualparents {
 	    set k [lsearch -exact $todo $p]
 	    if {$k < 0} {
+		assigncolor $p
 		set todo [linsert $todo $i $p]
 		if {$nullentry >= $i} {
 		    incr nullentry
-		}
-		if {$nparents($id) == 1 && $nparents($p) == 1
-		    && $nchildren($p) == 1} {
-		    set colormap($p) $colormap($id)
-		} else {
-		    for {set j 0} {$j <= $ncolors} {incr j} {
-			if {[incr nextcolor] >= $ncolors} {
-			    set nextcolor 0
-			}
-			set c [lindex $colors $nextcolor]
-			# make sure the incoming and outgoing colors differ
-			if {[lsearch -exact $badcolors $c] < 0} break
-		    }
-		    set colormap($p) $c
-		    lappend badcolors $c
 		}
 	    }
 	    lappend lines [list $oldlevel $p]
@@ -421,7 +475,7 @@ proc drawgraph {start} {
 
 proc selcanvline {x y} {
     global canv canvy0 ctext linespc selectedline
-    global lineid linehtag linentag linedtag commitinfo
+    global lineid linehtag linentag linedtag
     set ymax [lindex [$canv cget -scrollregion] 3]
     set yfrac [lindex [$canv yview] 0]
     set y [expr {$y + $yfrac * $ymax}]
@@ -470,7 +524,9 @@ proc selectline {l} {
     $ctext insert end "Author: [lindex $info 1]  [lindex $info 2]\n"
     $ctext insert end "Committer: [lindex $info 3]  [lindex $info 4]\n"
     $ctext insert end "\n"
-    $ctext insert end [lindex $info 0]
+    $ctext insert end [lindex $info 5]
+    $ctext insert end "\n"
+    $ctext tag delete Comments
     $ctext conf -state disabled
 
     $cflist delete 0 end
@@ -484,7 +540,13 @@ proc selectline {l} {
 	    addtocflist $id
 	}
     }
+}
 
+proc selnextline {dir} {
+    global selectedline
+    if {![info exists selectedline]} return
+    set l [expr $selectedline + $dir]
+    selectline $l
 }
 
 proc addtocflist {id} {
@@ -493,9 +555,11 @@ proc addtocflist {id} {
 	gettreediffs $currentid
 	return
     }
+    $cflist insert end "All files"
     foreach f $treediffs($currentid) {
 	$cflist insert end $f
     }
+    getblobdiffs $id
 }
 
 proc gettreediffs {id} {
@@ -525,11 +589,96 @@ proc gettreediffline {gdtf id} {
     }
 }
 
-proc selnextline {dir} {
-    global selectedline
-    if {![info exists selectedline]} return
-    set l [expr $selectedline + $dir]
-    selectline $l
+proc getblobdiffs {id} {
+    global parents diffopts blobdifffd env curdifftag curtagstart
+    set p [lindex $parents($id) 0]
+    set env(GIT_DIFF_OPTS) $diffopts
+    if [catch {set bdf [open "|git-diff-tree -r -p $p $id" r]} err] {
+	puts "error getting diffs: $err"
+	return
+    }
+    fconfigure $bdf -blocking 0
+    set blobdifffd($id) $bdf
+    set curdifftag Comments
+    set curtagstart 0.0
+    fileevent $bdf readable "getblobdiffline $bdf $id"
+}
+
+proc getblobdiffline {bdf id} {
+    global currentid blobdifffd ctext curdifftag curtagstart
+    set n [gets $bdf line]
+    if {$n < 0} {
+	if {[eof $bdf]} {
+	    close $bdf
+	    if {$id == $currentid && $bdf == $blobdifffd($id)} {
+		$ctext tag add $curdifftag $curtagstart end
+	    }
+	}
+	return
+    }
+    if {$id != $currentid || $bdf != $blobdifffd($id)} {
+	return
+    }
+    $ctext conf -state normal
+    if {[regexp {^---[ \t]+([^/])+/(.*)} $line match s1 fname]} {
+	# start of a new file
+	$ctext insert end "\n"
+	$ctext tag add $curdifftag $curtagstart end
+	set curtagstart [$ctext index "end - 1c"]
+	set curdifftag "f:$fname"
+	$ctext tag delete $curdifftag
+	set l [expr {(78 - [string length $fname]) / 2}]
+	set pad [string range "----------------------------------------" 1 $l]
+	$ctext insert end "$pad $fname $pad\n" filesep
+    } elseif {[string range $line 0 2] == "+++"} {
+	# no need to do anything with this
+    } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
+		   $line match f1l f1c f2l f2c rest]} {
+	$ctext insert end "\t" hunksep
+	$ctext insert end "    $f1l    " d0 "    $f2l    " d1
+	$ctext insert end "    $rest \n" hunksep
+    } else {
+	set x [string range $line 0 0]
+	if {$x == "-" || $x == "+"} {
+	    set tag [expr {$x == "+"}]
+	    set line [string range $line 1 end]
+	    $ctext insert end "$line\n" d$tag
+	} elseif {$x == " "} {
+	    set line [string range $line 1 end]
+	    $ctext insert end "$line\n"
+	} else {
+	    # Something else we don't recognize
+	    if {$curdifftag != "Comments"} {
+		$ctext insert end "\n"
+		$ctext tag add $curdifftag $curtagstart end
+		set curtagstart [$ctext index "end - 1c"]
+		set curdifftag Comments
+	    }
+	    $ctext insert end "$line\n" filesep
+	}
+    }
+    $ctext conf -state disabled
+}
+
+proc listboxsel {} {
+    global ctext cflist currentid treediffs
+    set sel [$cflist curselection]
+    if {$sel == {} || [lsearch -exact $sel 0] >= 0} {
+	# show everything
+	$ctext tag conf Comments -elide 0
+	foreach f $treediffs($currentid) {
+	    $ctext tag conf "f:$f" -elide 0
+	}
+    } else {
+	# just show selected files
+	$ctext tag conf Comments -elide 1
+	set i 1
+	foreach f $treediffs($currentid) {
+	    set elide [expr {[lsearch -exact $sel $i] < 0}]
+	    $ctext tag conf "f:$f" -elide $elide
+	    incr i
+	}
+    }
 }
 
 getcommits $revtreeargs
