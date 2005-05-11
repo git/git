@@ -24,7 +24,7 @@ There are two object abstractions: the "object database", and the
 
 
 
-	The Object Database (SHA1_FILE_DIRECTORY)
+	The Object Database (GIT_OBJECT_DIRECTORY)
 
 
 The object database is literally just a content-addressable collection

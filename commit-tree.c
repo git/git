@@ -146,11 +146,11 @@ int main(int argc, char **argv)
 	datestamp(realdate, sizeof(realdate));
 	strcpy(date, realdate);
 
-	commitgecos = getenv("COMMIT_AUTHOR_NAME") ? : realgecos;
-	commitemail = getenv("COMMIT_AUTHOR_EMAIL") ? : realemail;
-	gecos = getenv("AUTHOR_NAME") ? : realgecos;
-	email = getenv("AUTHOR_EMAIL") ? : realemail;
-	audate = getenv("AUTHOR_DATE");
+	commitgecos = gitenv("GIT_COMMITTER_NAME") ? : realgecos;
+	commitemail = gitenv("GIT_COMMITTER_EMAIL") ? : realemail;
+	gecos = gitenv("GIT_AUTHOR_NAME") ? : realgecos;
+	email = gitenv("GIT_AUTHOR_EMAIL") ? : realemail;
+	audate = gitenv("GIT_AUTHOR_DATE");
 	if (audate)
 		parse_date(audate, date, sizeof(date));
 

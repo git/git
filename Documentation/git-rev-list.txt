@@ -1,0 +1,32 @@
+git-rev-list(1)
+===============
+v0.1, May 2005
+
+NAME
+----
+git-rev-list - Lists commit objects in reverse chronological order
+
+
+SYNOPSIS
+--------
+'git-rev-list' <commit>
+
+DESCRIPTION
+-----------
+Lists commit objects in reverse chronological order starting at the
+given commit, taking ancestry relationship into account.  This is
+useful to produce human-readable log output.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

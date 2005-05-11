@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "cache.h"
 #include "commit.h"
 #include <errno.h>
@@ -70,8 +71,7 @@ int fetch(unsigned char *sha1)
 		munmap(map, st.st_size);
 		close(ofd);
 		if (status)
-			fprintf(stderr, "cannot write %s (%ld bytes)\n",
-				dest_filename, st.st_size);
+			fprintf(stderr, "cannot write %s\n", dest_filename);
 		else
 			pull_say("copy %s\n", hex);
 		return status;

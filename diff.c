@@ -4,14 +4,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <limits.h>
 #include "cache.h"
 #include "diff.h"
 
-static char *diff_opts = "-pu";
+static const char *diff_opts = "-pu";
 
 static const char *external_diff(void)
 {
-	static char *external_diff_cmd = NULL;
+	static const char *external_diff_cmd = NULL;
 	static int done_preparing = 0;
 
 	if (done_preparing)
@@ -25,11 +26,11 @@ static const char *external_diff(void)
 	 *
 	 * GIT_DIFF_OPTS="-c";
 	 */
-	if (getenv("GIT_EXTERNAL_DIFF"))
-		external_diff_cmd = getenv("GIT_EXTERNAL_DIFF");
+	if (gitenv("GIT_EXTERNAL_DIFF"))
+		external_diff_cmd = gitenv("GIT_EXTERNAL_DIFF");
 
 	/* In case external diff fails... */
-	diff_opts = getenv("GIT_DIFF_OPTS") ? : diff_opts;
+	diff_opts = gitenv("GIT_DIFF_OPTS") ? : diff_opts;
 
 	done_preparing = 1;
 	return external_diff_cmd;

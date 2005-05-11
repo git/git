@@ -1,0 +1,43 @@
+git-rpull(1)
+============
+v0.1, May 2005
+
+NAME
+----
+git-rpull - Pulls from a remote repository over ssh connection
+
+
+
+SYNOPSIS
+--------
+'git-rpull' [-c] [-t] [-a] [-v] commit-id url
+
+DESCRIPTION
+-----------
+Pulls from a remote repository over ssh connection, invoking git-rpush on
+the other end.
+
+OPTIONS
+-------
+-c::
+	Get the commit objects.
+-t::
+	Get trees associated with the commit objects.
+-a::
+	Get all the objects.
+-v::
+	Report what is downloaded.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

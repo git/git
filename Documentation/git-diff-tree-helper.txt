@@ -1,0 +1,49 @@
+git-diff-tree-helper(1)
+=======================
+v0.1, May 2005
+
+NAME
+----
+git-diff-tree-helper - Generates patch format output for git-diff-*
+
+
+SYNOPSIS
+--------
+'git-diff-tree-helper' [-z] [-R]
+
+DESCRIPTION
+-----------
+Reads output from "git-diff-cache", "git-diff-tree" and "git-diff-files" and
+generates patch format output.
+
+OPTIONS
+-------
+-z::
+	\0 line termination on input
+
+-R::
+	Output diff in reverse.  This is useful for displaying output from
+	"git-diff-cache" which always compares tree with cache or working
+	file.  E.g.
+
+		git-diff-cache <tree> | git-diff-tree-helper -R file.c
++
+would show a diff to bring the working file back to what is in the <tree>.
+
+See Also
+--------
+The section on generating patches in link:git-diff-cache.html[git-diff-cache]
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

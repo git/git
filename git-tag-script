@@ -1,5 +1,9 @@
 #!/bin/sh
-object=${2:-$(cat .git/HEAD)}
+# Copyright (c) 2005 Linus Torvalds
+
+: ${GIT_DIR=.git}
+
+object=${2:-$(cat "$GIT_DIR"/HEAD)}
 type=$(git-cat-file -t $object) || exit 1
 ( echo -e "object $object\ntype $type\ntag $1\n"; cat ) > .tmp-tag
 rm -f .tmp-tag.asc

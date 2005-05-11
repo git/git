@@ -31,6 +31,13 @@
 #endif
 
 /*
+ * Environment variables transition.
+ * We accept older names for now but warn.
+ */
+extern char *gitenv_bc(const char *);
+#define gitenv(e) (getenv(e) ? : gitenv_bc(e))
+
+/*
  * Basic data structures for the directory cache
  *
  * NOTE NOTE NOTE! This is all in the native CPU byte format. It's
@@ -99,15 +106,15 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
 
-#define DB_ENVIRONMENT "SHA1_FILE_DIRECTORY"
-#define DEFAULT_DB_ENVIRONMENT ".git/objects"
-
-#define get_object_directory() (getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT)
-
+#define GIT_DIR_ENVIRONMENT "GIT_DIR"
+#define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
+#define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
-#define DEFAULT_INDEX_ENVIRONMENT ".git/index"
 
-#define get_index_file() (getenv(INDEX_ENVIRONMENT) ? : DEFAULT_INDEX_ENVIRONMENT)
+extern char *get_object_directory(void);
+extern char *get_index_file(void);
+
+#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
@@ -115,7 +122,9 @@ extern unsigned int active_nr, active_alloc, active_cache_changed;
 extern int read_cache(void);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int cache_name_pos(const char *name, int namelen);
-extern int add_cache_entry(struct cache_entry *ce, int ok_to_add);
+#define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
+#define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
+extern int add_cache_entry(struct cache_entry *ce, int option);
 extern int remove_entry_at(int pos);
 extern int remove_file_from_cache(char *path);
 extern int same_name(struct cache_entry *a, struct cache_entry *b);

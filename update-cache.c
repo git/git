@@ -13,7 +13,7 @@
  * like "update-cache *" and suddenly having all the object
  * files be revision controlled.
  */
-static int allow_add = 0, allow_remove = 0, not_new = 0;
+static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0;
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
 static inline void *ERR_PTR(long error)
@@ -53,14 +53,23 @@ static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 
 static int add_file_to_cache(char *path)
 {
-	int size, namelen;
+	int size, namelen, option, status;
 	struct cache_entry *ce;
 	struct stat st;
 	int fd;
 	char *target;
 
-	if (lstat(path, &st) < 0) {
-		if (errno == ENOENT || errno == ENOTDIR) {
+	status = lstat(path, &st);
+	if (status < 0 || S_ISDIR(st.st_mode)) {
+		/* When we used to have "path" and now we want to add
+		 * "path/file", we need a way to remove "path" before
+		 * being able to add "path/file".  However,
+		 * "git-update-cache --remove path" would not work.
+		 * --force-remove can be used but this is more user
+		 * friendly, especially since we can do the opposite
+		 * case just fine without --force-remove.
+		 */
+		if (status == 0 || (errno == ENOENT || errno == ENOTDIR)) {
 			if (allow_remove)
 				return remove_file_from_cache(path);
 		}
@@ -95,7 +104,9 @@ static int add_file_to_cache(char *path)
 	default:
 		return -1;
 	}
-	return add_cache_entry(ce, allow_add);
+	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
+	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
+	return add_cache_entry(ce, option);
 }
 
 static int match_data(int fd, void *buffer, unsigned long size)
@@ -273,7 +284,7 @@ inside:
 
 static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 {
-	int size, len;
+	int size, len, option;
 	unsigned int mode;
 	unsigned char sha1[20];
 	struct cache_entry *ce;
@@ -294,7 +305,9 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 	memcpy(ce->name, arg3, len);
 	ce->ce_flags = htons(len);
 	ce->ce_mode = create_ce_mode(mode);
-	return add_cache_entry(ce, allow_add);
+	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
+	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
+	return add_cache_entry(ce, option);
 }
 
 static const char *lockfile_name = NULL;
@@ -343,6 +356,10 @@ int main(int argc, char **argv)
 				allow_add = 1;
 				continue;
 			}
+			if (!strcmp(path, "--replace")) {
+				allow_replace = 1;
+				continue;
+			}
 			if (!strcmp(path, "--remove")) {
 				allow_remove = 1;
 				continue;
@@ -352,8 +369,10 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp(path, "--cacheinfo")) {
-				if (i+3 >= argc || add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
+				if (i+3 >= argc)
 					die("update-cache: --cacheinfo <mode> <sha1> <path>");
+				if (add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
+					die("update-cache: --cacheinfo cannot add %s", argv[i+3]);
 				i += 3;
 				continue;
 			}

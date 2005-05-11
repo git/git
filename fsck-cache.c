@@ -62,6 +62,9 @@ static void check_connectivity(void)
  * So a directory called "a" is ordered _after_ a file
  * called "a.c", because "a/" sorts after "a.c".
  */
+#define TREE_UNORDERED (-1)
+#define TREE_HAS_DUPS  (-2)
+
 static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
 {
 	int len1 = strlen(a->name);
@@ -74,7 +77,7 @@ static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
 	if (cmp < 0)
 		return 0;
 	if (cmp > 0)
-		return -1;
+		return TREE_UNORDERED;
 
 	/*
 	 * Ok, the first <len> characters are the same.
@@ -83,11 +86,18 @@ static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
 	 */
 	c1 = a->name[len];
 	c2 = b->name[len];
+	if (!c1 && !c2)
+		/*
+		 * git-write-tree used to write out a nonsense tree that has
+		 * entries with the same name, one blob and one tree.  Make
+		 * sure we do not have duplicate entries.
+		 */
+		return TREE_HAS_DUPS;
 	if (!c1 && a->directory)
 		c1 = '/';
 	if (!c2 && b->directory)
 		c2 = '/';
-	return c1 < c2 ? 0 : -1;
+	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
 
 static int fsck_tree(struct tree *item)
@@ -123,10 +133,18 @@ static int fsck_tree(struct tree *item)
 		}
 
 		if (last) {
-			if (verify_ordered(last, entry) < 0) {
+			switch (verify_ordered(last, entry)) {
+			case TREE_UNORDERED:
 				fprintf(stderr, "tree %s not ordered\n",
 					sha1_to_hex(item->object.sha1));
 				return -1;
+			case TREE_HAS_DUPS:
+				fprintf(stderr, "tree %s has duplicate entries for '%s'\n",
+					sha1_to_hex(item->object.sha1),
+					entry->name);
+				return -1;
+			default:
+				break;
 			}
 		}
 
@@ -306,7 +324,7 @@ int main(int argc, char **argv)
 			usage("fsck-cache [--tags] [[--unreachable] [--cache] <head-sha1>*]");
 	}
 
-	sha1_dir = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
+	sha1_dir = get_object_directory();
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
 		sprintf(dir, "%s/%02x", sha1_dir, i);

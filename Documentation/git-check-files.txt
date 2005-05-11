@@ -1,0 +1,50 @@
+git-check-files(1)
+==================
+v0.1, May 2005
+
+NAME
+----
+git-check-files - Verify a list of files are up-to-date
+
+
+
+SYNOPSIS
+--------
+'git-check-files' <file>...
+
+DESCRIPTION
+-----------
+Check that a list of files are up-to-date between the filesystem and
+the cache. Used to verify a patch target before doing a patch.
+
+Files that do not exist on the filesystem are considered up-to-date
+(whether or not they are in the cache).
+
+Emits an error message on failure:
+
+preparing to update existing file <file> not in cache::
+	  <file> exists but is not in the cache
+
+preparing to update file <file> not uptodate in cache::
+	  <file> on disk is not up-to-date with the cache
+
+Exits with a status code indicating success if all files are
+up-to-date.
+
+See Also
+--------
+link:git-update-cache.html[git-update-cache]
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

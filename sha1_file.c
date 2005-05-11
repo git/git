@@ -7,6 +7,7 @@
  * creation etc.
  */
 #include <stdarg.h>
+#include <limits.h>
 #include "cache.h"
 
 #ifndef O_NOATIME
@@ -58,6 +59,38 @@ int get_sha1_file(const char *path, unsigned char *result)
 	return get_sha1_hex(buffer, result);
 }
 
+static char *git_dir, *git_object_dir, *git_index_file;
+static void setup_git_env(void)
+{
+	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
+	if (!git_dir)
+		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+	git_object_dir = gitenv(DB_ENVIRONMENT);
+	if (!git_object_dir) {
+		git_object_dir = xmalloc(strlen(git_dir) + 9);
+		sprintf(git_object_dir, "%s/objects", git_dir);
+	}
+	git_index_file = gitenv(INDEX_ENVIRONMENT);
+	if (!git_index_file) {
+		git_index_file = xmalloc(strlen(git_dir) + 7);
+		sprintf(git_index_file, "%s/index", git_dir);
+	}
+}
+
+char *get_object_directory(void)
+{
+	if (!git_object_dir)
+		setup_git_env();
+	return git_object_dir;
+}
+
+char *get_index_file(void)
+{
+	if (!git_index_file)
+		setup_git_env();
+	return git_index_file;
+}
+
 int get_sha1(const char *str, unsigned char *sha1)
 {
 	static char pathname[PATH_MAX];
@@ -69,15 +102,16 @@ int get_sha1(const char *str, unsigned char *sha1)
 		"refs/snap",
 		NULL
 	};
-	const char *gitdir;
 	const char **p;
 
 	if (!get_sha1_hex(str, sha1))
 		return 0;
 
-	gitdir = ".git";
+	if (!git_dir)
+		setup_git_env();
 	for (p = prefix; *p; p++) {
-		snprintf(pathname, sizeof(pathname), "%s/%s/%s", gitdir, *p, str);
+		snprintf(pathname, sizeof(pathname), "%s/%s/%s",
+			 git_dir, *p, str);
 		if (!get_sha1_file(pathname, sha1))
 			return 0;
 	}
@@ -100,18 +134,34 @@ char * sha1_to_hex(const unsigned char *sha1)
 	return buffer;
 }
 
+static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
+{
+	int i;
+	for (i = 0; i < 20; i++) {
+		static char hex[] = "0123456789abcdef";
+		unsigned int val = sha1[i];
+		char *pos = pathbuf + i*2 + (i > 0);
+		*pos++ = hex[val >> 4];
+		*pos = hex[val & 0xf];
+	}
+}
+
 /*
  * NOTE! This returns a statically allocated buffer, so you have to be
  * careful about using it. Do a "strdup()" if you need to save the
  * filename.
+ *
+ * Also note that this returns the location for creating.  Reading
+ * SHA1 file can happen from any alternate directory listed in the
+ * DB_ENVIRONMENT environment variable if it is not found in
+ * the primary object database.
  */
 char *sha1_file_name(const unsigned char *sha1)
 {
-	int i;
 	static char *name, *base;
 
 	if (!base) {
-		char *sha1_file_directory = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
+		const char *sha1_file_directory = get_object_directory();
 		int len = strlen(sha1_file_directory);
 		base = xmalloc(len + 60);
 		memcpy(base, sha1_file_directory, len);
@@ -120,14 +170,92 @@ char *sha1_file_name(const unsigned char *sha1)
 		base[len+3] = '/';
 		name = base + len + 1;
 	}
-	for (i = 0; i < 20; i++) {
-		static char hex[] = "0123456789abcdef";
-		unsigned int val = sha1[i];
-		char *pos = name + i*2 + (i > 0);
-		*pos++ = hex[val >> 4];
-		*pos = hex[val & 0xf];
-	}
+	fill_sha1_path(name, sha1);
 	return base;
+}
+
+static struct alternate_object_database {
+	char *base;
+	char *name;
+} *alt_odb;
+
+/*
+ * Prepare alternate object database registry.
+ * alt_odb points at an array of struct alternate_object_database.
+ * This array is terminated with an element that has both its base
+ * and name set to NULL.  alt_odb[n] comes from n'th non-empty
+ * element from colon separated ALTERNATE_DB_ENVIRONMENT environment
+ * variable, and its base points at a statically allocated buffer
+ * that contains "/the/directory/corresponding/to/.git/objects/...",
+ * while its name points just after the slash at the end of
+ * ".git/objects/" in the example above, and has enough space to hold
+ * 40-byte hex SHA1, an extra slash for the first level indirection,
+ * and the terminating NUL.
+ * This function allocates the alt_odb array and all the strings
+ * pointed by base fields of the array elements with one xmalloc();
+ * the string pool immediately follows the array.
+ */
+static void prepare_alt_odb(void)
+{
+	int pass, totlen, i;
+	const char *cp, *last;
+	char *op = 0;
+	const char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
+
+	/* The first pass counts how large an area to allocate to
+	 * hold the entire alt_odb structure, including array of
+	 * structs and path buffers for them.  The second pass fills
+	 * the structure and prepares the path buffers for use by
+	 * fill_sha1_path().
+	 */
+	for (totlen = pass = 0; pass < 2; pass++) {
+		last = alt;
+		i = 0;
+		do {
+			cp = strchr(last, ':') ? : last + strlen(last);
+			if (last != cp) {
+				/* 43 = 40-byte + 2 '/' + terminating NUL */
+				int pfxlen = cp - last;
+				int entlen = pfxlen + 43;
+				if (pass == 0)
+					totlen += entlen;
+				else {
+					alt_odb[i].base = op;
+					alt_odb[i].name = op + pfxlen + 1;
+					memcpy(op, last, pfxlen);
+					op[pfxlen] = op[pfxlen + 3] = '/';
+					op[entlen-1] = 0;
+					op += entlen;
+				}
+				i++;
+			}
+			while (*cp && *cp == ':')
+				cp++;
+			last = cp;
+		} while (*cp);
+		if (pass)
+			break;
+		alt_odb = xmalloc(sizeof(*alt_odb) * (i + 1) + totlen);
+		alt_odb[i].base = alt_odb[i].name = 0;
+		op = (char*)(&alt_odb[i+1]);
+	}
+}
+
+static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
+{
+	int i;
+	char *name = sha1_file_name(sha1);
+
+	if (!stat(name, st))
+		return name;
+	if (!alt_odb)
+		prepare_alt_odb();
+	for (i = 0; (name = alt_odb[i].name) != NULL; i++) {
+		fill_sha1_path(name, sha1);
+		if (!stat(alt_odb[i].base, st))
+			return alt_odb[i].base;
+	}
+	return NULL;
 }
 
 int check_sha1_signature(unsigned char *sha1, void *map, unsigned long size, const char *type)
@@ -145,10 +273,15 @@ int check_sha1_signature(unsigned char *sha1, void *map, unsigned long size, con
 
 void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
-	char *filename = sha1_file_name(sha1);
 	struct stat st;
 	void *map;
 	int fd;
+	char *filename = find_sha1_file(sha1, &st);
+
+	if (!filename) {
+		error("cannot map sha1 file %s", sha1_to_hex(sha1));
+		return NULL;
+	}
 
 	fd = open(filename, O_RDONLY | sha1_file_open_flag);
 	if (fd < 0) {
@@ -166,10 +299,6 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 
 		/* If it failed once, it will probably fail again. Stop using O_NOATIME */
 		sha1_file_open_flag = 0;
-	}
-	if (fstat(fd, &st) < 0) {
-		close(fd);
-		return NULL;
 	}
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
@@ -315,6 +444,7 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 	}
 
 	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
+
 	fd = mkstemp(tmpfile);
 	if (fd < 0) {
 		fprintf(stderr, "unable to create temporary sha1 filename %s: %s", tmpfile, strerror(errno));
@@ -349,6 +479,7 @@ int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned cha
 		die("unable to write file");
 	fchmod(fd, 0444);
 	close(fd);
+	free(compressed);
 
 	ret = link(tmpfile, filename);
 	if (ret < 0) {
@@ -442,12 +573,8 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd)
 
 int has_sha1_file(const unsigned char *sha1)
 {
-	char *filename = sha1_file_name(sha1);
 	struct stat st;
-
-	if (!stat(filename, &st))
-		return 1;
-	return 0;
+	return !!find_sha1_file(sha1, &st);
 }
 
 int index_fd(unsigned char *sha1, int fd, struct stat *st)

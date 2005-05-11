@@ -1,0 +1,37 @@
+git-unpack-file(1)
+==================
+v0.1, May 2005
+
+NAME
+----
+git-unpack-file - Creates a temporary file with a blob's contents
+
+
+
+SYNOPSIS
+--------
+'git-unpack-file' <blob>
+
+DESCRIPTION
+-----------
+Creates a file holding the contents of the blob specified by sha1. It
+returns the name of the temporary file in the following format:
+	.merge_file_XXXXX
+
+OPTIONS
+-------
+<blob>::
+	Must be a blob id
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

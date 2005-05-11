@@ -1,0 +1,31 @@
+git-export(1)
+=============
+v0.1, May 2005
+
+NAME
+----
+git-export - Exports each commit and a diff against each of its parents
+
+
+SYNOPSIS
+--------
+'git-export' top [base]
+
+DESCRIPTION
+-----------
+Exports each commit and diff against each of its parents, between
+top and base.  If base is not specified it exports everything.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

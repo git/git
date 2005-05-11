@@ -1,0 +1,30 @@
+git-resolve-script(1)
+=====================
+v0.1, May 2005
+
+NAME
+----
+git-resolve-script - Script used to merge two trees
+
+
+SYNOPSIS
+--------
+'git-resolve-script'
+
+DESCRIPTION
+-----------
+This script is used by Linus to merge two trees.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

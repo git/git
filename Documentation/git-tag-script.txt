@@ -1,0 +1,32 @@
+git-tag-script(1)
+=================
+v0.1, May 2005
+
+NAME
+----
+git-tag-script - An example script to create a tag object signed with GPG
+
+
+
+SYNOPSIS
+--------
+'git-tag-script'
+
+DESCRIPTION
+-----------
+This is an example script that uses "git-mktag" to create a tag object
+signed with GPG.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

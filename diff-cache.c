@@ -165,7 +165,7 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"diff-cache [-r] [-z] [-p] [-i] [--cached] <tree sha1>";
+"git-diff-cache [-p] [-r] [-z] [-m] [--cached] <tree sha1>";
 
 int main(int argc, char **argv)
 {

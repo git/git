@@ -1,14 +1,19 @@
 #!/bin/sh
 #
+# Copyright (c) 2005 Linus Torvalds
+#
 # Resolve two trees.
 #
 head="$1"
 merge="$2"
 merge_repo="$3"
 
-rm -f .git/MERGE_HEAD .git/ORIG_HEAD
-echo $head > .git/ORIG_HEAD
-echo $merge > .git/MERGE_HEAD
+: ${GIT_DIR=.git}
+: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
+
+rm -f "$GIT_DIR"/MERGE_HEAD "$GIT_DIR"/ORIG_HEAD
+echo $head > "$GIT_DIR"/ORIG_HEAD
+echo $merge > "$GIT_DIR"/MERGE_HEAD
 
 #
 # The remote name is just used for the message,
@@ -35,7 +40,7 @@ if [ "$common" == "$head" ]; then
 	echo "Kill me within 3 seconds.."
 	sleep 3
 	git-read-tree -m $merge && git-checkout-cache -f -a && git-update-cache --refresh
-	echo $merge > .git/HEAD
+	echo $merge > "$GIT_DIR"/HEAD
 	git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
 	exit 0
 fi
@@ -51,6 +56,6 @@ if [ $? -ne 0 ]; then
 fi
 result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
 echo "Committed merge $result_commit"
-echo $result_commit > .git/HEAD
+echo $result_commit > "$GIT_DIR"/HEAD
 git-checkout-cache -f -a && git-update-cache --refresh
 git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1

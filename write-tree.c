@@ -84,7 +84,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 
 int main(int argc, char **argv)
 {
-	int i, unmerged;
+	int i, funny;
 	int entries = read_cache();
 	unsigned char sha1[20];
 
@@ -92,18 +92,45 @@ int main(int argc, char **argv)
 		die("write-tree: error reading cache");
 
 	/* Verify that the tree is merged */
-	unmerged = 0;
+	funny = 0;
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = active_cache[i];
 		if (ntohs(ce->ce_flags) & ~CE_NAMEMASK) {
-			if (++unmerged > 10) {
+			if (10 < ++funny) {
 				fprintf(stderr, "...\n");
 				break;
 			}
 			fprintf(stderr, "%s: unmerged (%s)\n", ce->name, sha1_to_hex(ce->sha1));
 		}
 	}
-	if (unmerged)
+	if (funny)
+		die("write-tree: not able to write tree");
+
+	/* Also verify that the cache does not have path and path/file
+	 * at the same time.  At this point we know the cache has only
+	 * stage 0 entries.
+	 */
+	funny = 0;
+	for (i = 0; i < entries - 1; i++) {
+		/* path/file always comes after path because of the way
+		 * the cache is sorted.  Also path can appear only once,
+		 * which means conflicting one would immediately follow.
+		 */
+		const char *this_name = active_cache[i]->name;
+		const char *next_name = active_cache[i+1]->name;
+		int this_len = strlen(this_name);
+		if (this_len < strlen(next_name) &&
+		    strncmp(this_name, next_name, this_len) == 0 &&
+		    next_name[this_len] == '/') {
+			if (10 < ++funny) {
+				fprintf(stderr, "...\n");
+				break;
+			}
+			fprintf(stderr, "You have both %s and %s\n",
+				this_name, next_name);
+		}
+	}
+	if (funny)
 		die("write-tree: not able to write tree");
 
 	/* Ok, write it out */

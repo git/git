@@ -7,10 +7,16 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
-CFLAGS=-g -O2 -Wall
+COPTS=-O2
+CFLAGS=-g $(COPTS) -Wall
+
+prefix=$(HOME)
+bin=$(prefix)/bin
+# dest=
 
 CC=gcc
 AR=ar
+INSTALL=install
 
 SCRIPTS=git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script
@@ -21,12 +27,13 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
-	git-diff-tree-helper git-tar-tree git-local-pull git-write-blob
+	git-diff-tree-helper git-tar-tree git-local-pull git-write-blob \
+	git-get-tar-commit-id
 
 all: $(PROG)
 
 install: $(PROG) $(SCRIPTS)
-	install $(PROG) $(SCRIPTS) $(HOME)/bin/
+	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 	 tag.o date.o
@@ -38,6 +45,8 @@ LIB_OBJS += strbuf.o
 
 LIB_H += diff.h
 LIB_OBJS += diff.o
+
+LIB_OBJS += gitenv.o
 
 LIBS = $(LIB_FILE)
 LIBS += -lz
@@ -51,7 +60,7 @@ ifdef PPC_SHA1
   LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
 else
   SHA1_HEADER=<openssl/sha.h>
-  LIBS += -lssl
+  LIBS += -lcrypto
 endif
 endif
 
@@ -109,6 +118,7 @@ sha1_file.o: $(LIB_H)
 usage.o: $(LIB_H)
 diff.o: $(LIB_H)
 strbuf.o: $(LIB_H)
+gitenv.o: $(LIB_H)
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
