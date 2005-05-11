@@ -265,7 +265,7 @@ main combinations:
 
 	but to avoid common mistakes with filename globbing etc, the
 	command will not normally add totally new entries or remove old
-	entries, i.e. it will normally just update existing cache entryes.
+	entries, i.e. it will normally just update existing cache entries.
 
 	To tell git that yes, you really do realize that certain files
 	no longer exist in the archive, or that new files should be
@@ -283,7 +283,7 @@ main combinations:
 	As a special case, you can also do "update-cache --refresh",
 	which will refresh the "stat" information of each index to match
 	the current stat information. It will _not_ update the object
-	status itself, and it wil only update the fields that are used
+	status itself, and it will only update the fields that are used
 	to quickly test whether an object still matches its old backing
 	store object.
 
