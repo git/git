@@ -5,6 +5,7 @@
 
 static const char *pgm = NULL;
 static const char *arguments[8];
+static int one_shot;
 static int err;
 
 static void run_program(void)
@@ -25,8 +26,12 @@ static void run_program(void)
 			    NULL);
 		die("unable to execute '%s'", pgm);
 	}
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status))
-		err++;
+	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status)) {
+		if (one_shot)
+			err++;
+		else
+			die("merge program failed");
+	}
 }
 
 static int merge_entry(int pos, const char *path)
@@ -92,12 +97,17 @@ int main(int argc, char **argv)
 	int i, force_file = 0;
 
 	if (argc < 3)
-		usage("merge-cache <merge-program> (-a | <filename>*)");
+		usage("merge-cache [-o] <merge-program> (-a | <filename>*)");
 
 	read_cache();
 
-	pgm = argv[1];
-	for (i = 2; i < argc; i++) {
+	i = 1;
+	if (!strcmp(argv[1], "-o")) {
+		one_shot = 1;
+		i++;
+	}
+	pgm = argv[i++];
+	for (; i < argc; i++) {
 		char *arg = argv[i];
 		if (!force_file && *arg == '-') {
 			if (!strcmp(arg, "--")) {
