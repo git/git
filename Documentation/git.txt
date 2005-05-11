@@ -288,8 +288,8 @@ git Commits
 
 git Diffs
 ~~~~~~~~~
-GIT_DIFF_OPTS::
-GIT_EXTERNAL_DIFF::
+'GIT_DIFF_OPTS'::
+'GIT_EXTERNAL_DIFF'::
 	see the "generating patches" section in :
 	link:git-diff-cache.html[git-diff-cache];
 	link:git-diff-files.html[git-diff-files];
