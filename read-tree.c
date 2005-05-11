@@ -11,11 +11,14 @@ static int unpack_tree(unsigned char *sha1)
 {
 	void *buffer;
 	unsigned long size;
+	int ret;
 
 	buffer = read_object_with_reference(sha1, "tree", &size, 0);
 	if (!buffer)
 		return -1;
-	return read_tree(buffer, size, stage);
+	ret = read_tree(buffer, size, stage);
+	free(buffer);
+	return ret;
 }
 
 static char *lockfile_name;
