@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.6 $
+# CVS $Revision: 1.7 $
 
 set datemode 0
 set boldnames 0
@@ -48,7 +48,17 @@ proc getcommits {rargs} {
 	set rargs HEAD
     }
     set commits {}
-    foreach c [split [eval exec git-rev-tree $rargs] "\n"] {
+    if [catch {set clist [eval exec git-rev-tree $rargs]} err] {
+	if {[string range $err 0 4] == "usage"} {
+	    puts stderr "Error reading commits: bad arguments to git-rev-tree"
+	    puts stderr "Note: arguments to gitk are passed to git-rev-tree"
+	    puts stderr "      to allow selection of commits to be displayed"
+	} else {
+	    puts stderr "Error reading commits: $err"
+	}
+	return 0
+    }
+    foreach c [split $clist "\n"] {
 	set i 0
 	set cid {}
 	foreach f $c {
@@ -76,6 +86,7 @@ proc getcommits {rargs} {
 	    incr i
 	}
     }
+    return 1
 }
 
 proc readcommit {id} {
@@ -124,6 +135,16 @@ proc readcommit {id} {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
+
+    menu .bar
+    .bar add cascade -label "File" -menu .bar.file
+    menu .bar.file
+    .bar.file add command -label "Quit" -command "set stopped 1; destroy ."
+    menu .bar.help
+    .bar add cascade -label "Help" -menu .bar.help
+    .bar.help add command -label "About gitk" -command about
+    . configure -menu .bar
+
     panedwindow .ctop -orient vertical
     panedwindow .ctop.clist -orient horizontal -sashpad 0 -handlesize 4
     .ctop add .ctop.clist
@@ -193,6 +214,7 @@ proc makewindow {} {
     bind . d "$ctext yview scroll 18 u"
     bind . u "$ctext yview scroll -18 u"
     bind . Q "set stopped 1; destroy ."
+    bind . <Control-q> "set stopped 1; destroy ."
     bind $cflist <<ListboxSelect>> listboxsel
 }
 
@@ -208,6 +230,28 @@ proc bindall {event action} {
     bind $canv $event $action
     bind $canv2 $event $action
     bind $canv3 $event $action
+}
+
+proc about {} {
+    set w .about
+    if {[winfo exists $w]} {
+	raise $w
+	return
+    }
+    toplevel $w
+    wm title $w "About gitk"
+    message $w.m -text {
+Gitk version 0.9
+
+Copyright © 2005 Paul Mackerras
+
+Use and redistribute under the terms of the GNU General Public License
+
+(CVS $Revision: 1.7 $)} \
+	    -justify center -aspect 400
+    pack $w.m -side top -fill x -padx 20 -pady 20
+    button $w.ok -text Close -command "destroy $w"
+    pack $w.ok -side bottom
 }
 
 proc truncatetofit {str width font} {
@@ -291,6 +335,7 @@ proc drawgraph {start} {
     global datemode cdate
     global lineid linehtag linentag linedtag commitinfo
     global nextcolor colormap
+    global stopped
 
     set nextcolor 0
     assigncolor $start
@@ -307,6 +352,7 @@ proc drawgraph {start} {
 	set canvy $y2
 	allcanvs conf -scrollregion [list 0 0 0 $canvy]
 	update
+	if {$stopped} return
 	incr lineno
 	set nlines [llength $todo]
 	set id [lindex $todo $level]
@@ -662,6 +708,7 @@ proc getblobdiffline {bdf id} {
 
 proc listboxsel {} {
     global ctext cflist currentid treediffs
+    if {![info exists currentid]} return
     set sel [$cflist curselection]
     if {$sel == {} || [lsearch -exact $sel 0] >= 0} {
 	# show everything
@@ -681,7 +728,9 @@ proc listboxsel {} {
     }
 }
 
-getcommits $revtreeargs
+if {![getcommits $revtreeargs]} {
+    exit 1
+}
 
 set linespc [font metrics $mainfont -linespace]
 set charspc [font measure $mainfont "m"]
@@ -691,6 +740,7 @@ set canvx0 [expr 3 + 0.5 * $linespc]
 set namex [expr 45 * $charspc]
 set datex [expr 75 * $charspc]
 
+set stopped 0
 makewindow
 
 set start {}
