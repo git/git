@@ -8,8 +8,9 @@ html: $(DOC_HTML)
 
 man: $(DOC_MAN)
 
-git-%: %.c $(LIB_FILE)
-	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
+# 'include' dependencies
+git-diff-%.txt: diff-format.txt
+	touch $@
 
 clean:
 	rm -f *.xml *.html *.1
