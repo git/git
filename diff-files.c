@@ -126,7 +126,8 @@ int main(int argc, char **argv)
 			continue;
 
 		oldmode = ntohl(ce->ce_mode);
-		mode = S_IFREG | ce_permissions(st.st_mode);
+		mode = (S_ISLNK(st.st_mode) ? S_IFLNK :
+			S_IFREG | ce_permissions(st.st_mode));
 
 		show_modified(oldmode, mode, ce->sha1, null_sha1,
 			      ce->name);
