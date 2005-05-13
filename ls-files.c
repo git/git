@@ -109,8 +109,9 @@ static void add_name(const char *pathname, int len)
 
 /*
  * Read a directory tree. We currently ignore anything but
- * directories and regular files. That's because git doesn't
- * handle them at all yet. Maybe that will change some day.
+ * directories, regular files and symlinks. That's because git
+ * doesn't handle them at all yet. Maybe that will change some
+ * day.
  *
  * Also, we currently ignore all names starting with a dot.
  * That likely will not change.
@@ -141,7 +142,7 @@ static void read_directory(const char *path, const char *base, int baselen)
 			case DT_UNKNOWN:
 				if (lstat(fullname, &st))
 					continue;
-				if (S_ISREG(st.st_mode))
+				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))
 					break;
 				if (!S_ISDIR(st.st_mode))
 					continue;
@@ -152,6 +153,7 @@ static void read_directory(const char *path, const char *base, int baselen)
 					       baselen + len + 1);
 				continue;
 			case DT_REG:
+			case DT_LNK:
 				break;
 			}
 			add_name(fullname, baselen + len);

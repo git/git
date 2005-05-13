@@ -27,6 +27,7 @@
 #define DT_UNKNOWN	0
 #define DT_DIR		1
 #define DT_REG		2
+#define DT_LNK		3
 #define DTYPE(de)	DT_UNKNOWN
 #endif
 
