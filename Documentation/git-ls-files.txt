@@ -10,8 +10,8 @@ git-ls-files - Information about files in the cache/working directory
 SYNOPSIS
 --------
 'git-ls-files' [-z] [-t]
-		(--[cached|deleted|others|ignored|stage|unmerged])\*
-		(-[c|d|o|i|s|u])\*
+		(--[cached|deleted|others|ignored|stage|unmerged|killed])\*
+		(-[c|d|o|i|s|u|k])\*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 
@@ -45,6 +45,11 @@ OPTIONS
 -u|--unmerged::
 	Show unmerged files in the output (forces --stage)
 
+-k|--killed::
+	Show files on the filesystem that need to be removed due
+	to file/directory conflicts for checkout-cache to
+	succeed.
+
 -z::
 	\0 line termination on output
 
@@ -65,6 +70,7 @@ OPTIONS
 	H	cached
 	M	unmerged
 	R	removed/deleted
+	K	to be killed
 	?	other
 
 Output

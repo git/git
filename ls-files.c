@@ -16,12 +16,14 @@ static int show_others = 0;
 static int show_ignored = 0;
 static int show_stage = 0;
 static int show_unmerged = 0;
+static int show_killed = 0;
 static int line_terminator = '\n';
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
 static const char *tag_removed = "";
 static const char *tag_other = "";
+static const char *tag_killed = "";
 
 static int nr_excludes;
 static const char **excludes;
@@ -87,24 +89,30 @@ static int excluded(const char *pathname)
 	return 0;
 }
 
-static const char **dir;
+struct nond_on_fs {
+	int len;
+	char name[0];
+};
+
+static struct nond_on_fs **dir;
 static int nr_dir;
 static int dir_alloc;
 
 static void add_name(const char *pathname, int len)
 {
-	char *name;
+	struct nond_on_fs *ent;
 
 	if (cache_name_pos(pathname, len) >= 0)
 		return;
 
 	if (nr_dir == dir_alloc) {
 		dir_alloc = alloc_nr(dir_alloc);
-		dir = xrealloc(dir, dir_alloc*sizeof(char *));
+		dir = xrealloc(dir, dir_alloc*sizeof(ent));
 	}
-	name = xmalloc(len + 1);
-	memcpy(name, pathname, len + 1);
-	dir[nr_dir++] = name;
+	ent = xmalloc(sizeof(*ent) + len + 1);
+	ent->len = len;
+	memcpy(ent->name, pathname, len);
+	dir[nr_dir++] = ent;
 }
 
 /*
@@ -164,11 +172,62 @@ static void read_directory(const char *path, const char *base, int baselen)
 
 static int cmp_name(const void *p1, const void *p2)
 {
-	const char *n1 = *(const char **)p1;
-	const char *n2 = *(const char **)p2;
-	int l1 = strlen(n1), l2 = strlen(n2);
+	const struct nond_on_fs *e1 = *(const struct nond_on_fs **)p1;
+	const struct nond_on_fs *e2 = *(const struct nond_on_fs **)p2;
 
-	return cache_name_compare(n1, l1, n2, l2);
+	return cache_name_compare(e1->name, e1->len,
+				  e2->name, e2->len);
+}
+
+static void show_killed_files()
+{
+	int i;
+	for (i = 0; i < nr_dir; i++) {
+		struct nond_on_fs *ent = dir[i];
+		char *cp, *sp;
+		int pos, len, killed = 0;
+
+		for (cp = ent->name; cp - ent->name < ent->len; cp = sp + 1) {
+			sp = strchr(cp, '/');
+			if (!sp) {
+				/* If ent->name is prefix of an entry in the
+				 * cache, it will be killed.
+				 */
+				pos = cache_name_pos(ent->name, ent->len);
+				if (0 <= pos)
+					die("bug in show-killed-files");
+				pos = -pos - 1;
+				while (pos < active_nr &&
+				       ce_stage(active_cache[pos]))
+					pos++; /* skip unmerged */
+				if (active_nr <= pos)
+					break;
+				/* pos points at a name immediately after
+				 * ent->name in the cache.  Does it expect
+				 * ent->name to be a directory?
+				 */
+				len = ce_namelen(active_cache[pos]);
+				if ((ent->len < len) &&
+				    !strncmp(active_cache[pos]->name,
+					     ent->name, ent->len) &&
+				    active_cache[pos]->name[ent->len] == '/')
+					killed = 1;
+				break;
+			}
+			if (0 <= cache_name_pos(ent->name, sp - ent->name)) {
+				/* If any of the leading directories in
+				 * ent->name is registered in the cache,
+				 * ent->name will be killed.
+				 */
+				killed = 1;
+				break;
+			}
+		}
+		if (killed)
+			printf("%s%.*s%c", tag_killed,
+			       dir[i]->len, dir[i]->name,
+			       line_terminator);
+	}
 }
 
 static void show_files(void)
@@ -176,11 +235,16 @@ static void show_files(void)
 	int i;
 
 	/* For cached/deleted files we don't need to even do the readdir */
-	if (show_others) {
+	if (show_others || show_killed) {
 		read_directory(".", "", 0);
-		qsort(dir, nr_dir, sizeof(char *), cmp_name);
-		for (i = 0; i < nr_dir; i++)
-			printf("%s%s%c", tag_other, dir[i], line_terminator);
+		qsort(dir, nr_dir, sizeof(struct nond_on_fs *), cmp_name);
+		if (show_others)
+			for (i = 0; i < nr_dir; i++)
+				printf("%s%.*s%c", tag_other,
+				       dir[i]->len, dir[i]->name,
+				       line_terminator);
+		if (show_killed)
+			show_killed_files();
 	}
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
@@ -219,7 +283,7 @@ static void show_files(void)
 }
 
 static const char *ls_files_usage =
-	"ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged])* "
+	"ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed])* "
 	"[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]";
 
 int main(int argc, char **argv)
@@ -236,6 +300,7 @@ int main(int argc, char **argv)
 			tag_unmerged = "M ";
 			tag_removed = "R ";
 			tag_other = "? ";
+			tag_killed = "K ";
 		} else if (!strcmp(arg, "-c") || !strcmp(arg, "--cached")) {
 			show_cached = 1;
 		} else if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
@@ -246,6 +311,8 @@ int main(int argc, char **argv)
 			show_ignored = 1;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--stage")) {
 			show_stage = 1;
+		} else if (!strcmp(arg, "-k") || !strcmp(arg, "--killed")) {
+			show_killed = 1;
 		} else if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
 			/* There's no point in showing unmerged unless
 			 * you also show the stage information.
@@ -271,7 +338,7 @@ int main(int argc, char **argv)
 	}
 
 	/* With no flags, we default to showing the cached files */
-	if (!(show_stage | show_deleted | show_others | show_unmerged))
+	if (!(show_stage | show_deleted | show_others | show_unmerged | show_killed))
 		show_cached = 1;
 
 	read_cache();
