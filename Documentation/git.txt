@@ -149,7 +149,7 @@ link:git-rpull.html[git-rpull]::
 
 Interogators:
 
-link:git-diff-tree-helper.html[git-diff-tree-helper]::
+link:git-diff-helper.html[git-diff-helper]::
 	Generates patch format output for git-diff-*
 
 link:git-rpush.html[git-rpush]::

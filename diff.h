@@ -17,7 +17,7 @@ extern void diff_change(unsigned mode1, unsigned mode2,
 
 extern void diff_unmerge(const char *path);
 
-/* These are for diff-tree-helper */
+/* These are for diff-helper */
 
 struct diff_spec {
 	unsigned char blob_sha1[20];
