@@ -83,6 +83,7 @@ static void builtin_diff(const char *name,
 			 struct diff_tempfile *temp)
 {
 	int i, next_at;
+	const char *git_prefix = "# mode: ";
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
 	const char *diff_arg  = "'%s' '%s'||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
@@ -123,17 +124,18 @@ static void builtin_diff(const char *name,
 			    diff_arg, input_name_sq[0], input_name_sq[1]);
 
 	if (!path1[0][0])
-		printf("Created: %s (mode:%s)\n", name, temp[1].mode);
+		printf("%s. %s %s\n", git_prefix, temp[1].mode, name);
 	else if (!path1[1][0])
-		printf("Deleted: %s\n", name);
-	else if (strcmp(temp[0].mode, temp[1].mode)) {
-		printf("Mode changed: %s (%s->%s)\n", name,
-		       temp[0].mode, temp[1].mode);
-		/* Be careful.  We do not want to diff between
-		 * symlink and a file.
-		 */
-		if (strncmp(temp[0].mode, "120", 3) !=
-		    strncmp(temp[1].mode, "120", 3))
+		printf("%s%s . %s\n", git_prefix, temp[0].mode, name);
+	else {
+		if (strcmp(temp[0].mode, temp[1].mode))
+			printf("%s%s %s %s\n", git_prefix,
+			       temp[0].mode, temp[1].mode, name);
+
+		if (strncmp(temp[0].mode, temp[1].mode, 3))
+			/* we do not run diff between different kind
+			 * of objects.
+			 */
 			exit(0);
 	}
 	fflush(NULL);
