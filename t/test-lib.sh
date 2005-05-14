@@ -50,6 +50,8 @@ do
 	case "$1" in
 	-d|--d|--de|--deb|--debu|--debug)
 		debug=t; shift ;;
+	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
+		immediate=t; shift ;;
 	-h|--h|--he|--hel|--help)
 		echo "$test_description"
 		exit 0 ;;
@@ -70,19 +72,25 @@ fi
 test_failure=0
 test_count=0
 
-test_debug () {
-	test "$debug" == "" || eval "$1"
-}
 
-test_ok () {
+# You are not expected to call test_ok_ and test_failure_ directly, use
+# the text_expect_* functions instead.
+
+test_ok_ () {
 	test_count=$(expr "$test_count" + 1)
 	say "  ok $test_count: $@"
 }
 
-test_failure () {
+test_failure_ () {
 	test_count=$(expr "$test_count" + 1)
 	test_failure=$(expr "$test_failure" + 1);
 	say "FAIL $test_count: $@"
+	test "$immediate" == "" || exit 1
+}
+
+
+test_debug () {
+	test "$debug" == "" || eval "$1"
 }
 
 test_expect_failure () {
@@ -91,9 +99,9 @@ test_expect_failure () {
 	say >&3 "expecting failure: $2"
 	if eval >&3 2>&4 "$2"
 	then
-		test_failure "$@"
+		test_failure_ "$@"
 	else
-		test_ok "$1"
+		test_ok_ "$1"
 	fi
 }
 
@@ -103,9 +111,9 @@ test_expect_success () {
 	say >&3 "expecting success: $2"
 	if eval >&3 2>&4 "$2"
 	then
-		test_ok "$1"
+		test_ok_ "$1"
 	else
-		test_failure "$@"
+		test_failure_ "$@"
 	fi
 }
 

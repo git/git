@@ -76,15 +76,12 @@ test_expect_success \
     'git-read-tree $tree2 && git-checkout-cache -f -a'
 test_debug show_files $tree2
 
-if test ! -h path0 && test -d path0 &&
-   test ! -h path1 && test -d path1 &&
-   test ! -h path0/file0 && test -f path0/file0 &&
-   test ! -h path1/file1 && test -f path1/file1
-then
-    test_ok "checked out correctly."
-else
-    test_failure "did not check out correctly."
-fi
+test_expect_success \
+    'checking out conflicting path with -f' \
+    'test ! -h path0 && test -d path0 &&
+     test ! -h path1 && test -d path1 &&
+     test ! -h path0/file0 && test -f path0/file0 &&
+     test ! -h path1/file1 && test -f path1/file1'
 
 test_done
 

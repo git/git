@@ -44,12 +44,9 @@ test_expect_success \
     'git-checkout-cache with -f should succeed.' \
     'git-checkout-cache -f -a'
 
-if test -f path0 && test -d path1 && test -f path1/file1
-then
-	test_ok "checkout successful"
-else
-	test_failure "checkout failed"
-fi
+test_expect_success \
+    'git-checkout-cache conflicting paths.' \
+    'test -f path0 && test -d path1 && test -f path1/file1'
 
 test_done
 
