@@ -55,6 +55,31 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 	failed test.
 
 
+Naming Tests
+------------
+
+The test files are named as:
+
+	tNNNN-commandname-details.sh
+
+where N is a decimal digit.
+
+First digit tells the family:
+
+	0 - the absolute basics and global stuff
+	1 - the basic commands concerning database
+	2 - the basic commands concerning the working tree
+	3 - the other basic commands (e.g. ls-files)
+	4 - the diff commands
+	5 - the pull and exporting commands
+	6 - the revision tree commands (even e.g. merge-base)
+
+Second digit tells the particular command we are testing.
+
+Third digit (optionally) tells the particular switch or group of switches
+we are testing.
+
+
 Writing Tests
 -------------
 
@@ -71,6 +96,7 @@ assignment to variable 'test_description', like this:
 
 	This test registers the following structure in the cache
 	and tries to run git-ls-files with option --frotz.'
+
 
 Source 'test-lib.sh'
 --------------------
@@ -93,7 +119,6 @@ This test harness library does the following things:
    use.  These functions are designed to make all scripts behave
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
-
 
 End with test_done
 ------------------
