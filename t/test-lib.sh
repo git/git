@@ -76,13 +76,13 @@ test_debug () {
 
 test_ok () {
 	test_count=$(expr "$test_count" + 1)
-	say "ok #$test_count: $@"
+	say "  ok $test_count: $@"
 }
 
 test_failure () {
 	test_count=$(expr "$test_count" + 1)
 	test_failure=$(expr "$test_failure" + 1);
-	say "NO #$test_count: $@"
+	say "FAIL $test_count: $@"
 }
 
 test_expect_failure () {
