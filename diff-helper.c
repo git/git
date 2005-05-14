@@ -45,8 +45,8 @@ static int parse_oneside_change(const char *cp, struct diff_spec *one,
 	return 0;
 }
 
-static int parse_diff_tree_output(const char *buf,
-				  const char **spec, int cnt, int reverse)
+static int parse_diff_raw_output(const char *buf,
+				 const char **spec, int cnt, int reverse)
 {
 	struct diff_spec old, new;
 	char path[PATH_MAX];
@@ -109,8 +109,8 @@ static int parse_diff_tree_output(const char *buf,
 	return 0;
 }
 
-static const char *diff_tree_helper_usage =
-"diff-tree-helper [-R] [-z] paths...";
+static const char *diff_helper_usage =
+"git-diff-helper [-R] [-z] paths...";
 
 int main(int ac, const char **av) {
 	struct strbuf sb;
@@ -125,7 +125,7 @@ int main(int ac, const char **av) {
 		else if (av[1][1] == 'z')
 			line_termination = 0;
 		else
-			usage(diff_tree_helper_usage);
+			usage(diff_helper_usage);
 		ac--; av++;
 	}
 	/* the remaining parameters are paths patterns */
@@ -135,7 +135,7 @@ int main(int ac, const char **av) {
 		read_line(&sb, stdin, line_termination);
 		if (sb.eof)
 			break;
-		status = parse_diff_tree_output(sb.buf, av+1, ac-1, reverse);
+		status = parse_diff_raw_output(sb.buf, av+1, ac-1, reverse);
 		if (status)
 			fprintf(stderr, "cannot parse %s\n", sb.buf);
 	}
