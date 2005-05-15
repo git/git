@@ -7,48 +7,35 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.8 $
-
-set datemode 0
-set boldnames 0
-set revtreeargs {}
-set diffopts "-U 5 -p"
-
-set mainfont {Helvetica 9}
-set namefont $mainfont
-set textfont {Courier 9}
-if {$boldnames} {
-    lappend namefont bold
-}
-
-set colors {green red blue magenta darkgrey brown orange}
-set colorbycommitter false
-
-catch {source ~/.gitk}
-
-foreach arg $argv {
-    switch -regexp -- $arg {
-	"^$" { }
-	"^-b" { set boldnames 1 }
-	"^-c" { set colorbycommitter 1 }
-	"^-d" { set datemode 1 }
-	"^-.*" {
-	    puts stderr "unrecognized option $arg"
-	    exit 1
-	}
-	default {
-	    lappend revtreeargs $arg
-	}
-    }
-}
+# CVS $Revision: 1.9 $
 
 proc getcommits {rargs} {
-    global commits parents cdate nparents children nchildren
+    global commits commfd phase canv mainfont
     if {$rargs == {}} {
 	set rargs HEAD
     }
     set commits {}
-    if [catch {set clist [eval exec git-rev-tree $rargs]} err] {
+    set phase getcommits
+    if [catch {set commfd [open "|git-rev-tree $rargs" r]} err] {
+	puts stder "Error executing git-rev-tree: $err"
+	exit 1
+    }
+    fconfigure $commfd -blocking 0
+    fileevent $commfd readable "getcommitline $commfd"
+    $canv delete all
+    $canv create text 3 3 -anchor nw -text "Reading commits..." \
+	-font $mainfont -tags textitems
+}
+
+proc getcommitline {commfd}  {
+    global commits parents cdate nparents children nchildren
+    set n [gets $commfd line]
+    if {$n < 0} {
+	if {![eof $commfd]} return
+	if {![catch {close $commfd} err]} {
+	    after idle drawgraph
+	    return
+	}
 	if {[string range $err 0 4] == "usage"} {
 	    puts stderr "Error reading commits: bad arguments to git-rev-tree"
 	    puts stderr "Note: arguments to gitk are passed to git-rev-tree"
@@ -56,37 +43,35 @@ proc getcommits {rargs} {
 	} else {
 	    puts stderr "Error reading commits: $err"
 	}
-	return 0
+	exit 1
     }
-    foreach c [split $clist "\n"] {
-	set i 0
-	set cid {}
-	foreach f $c {
-	    if {$i == 0} {
-		set d $f
-	    } else {
-		set id [lindex [split $f :] 0]
-		if {![info exists nchildren($id)]} {
-		    set children($id) {}
-		    set nchildren($id) 0
-		}
-		if {$i == 1} {
-		    set cid $id
-		    lappend commits $id
-		    set parents($id) {}
-		    set cdate($id) $d
-		    set nparents($id) 0
-		} else {
-		    lappend parents($cid) $id
-		    incr nparents($cid)
-		    incr nchildren($id)
-		    lappend children($id) $cid
-		}
+
+    set i 0
+    set cid {}
+    foreach f $line {
+	if {$i == 0} {
+	    set d $f
+	} else {
+	    set id [lindex [split $f :] 0]
+	    if {![info exists nchildren($id)]} {
+		set children($id) {}
+		set nchildren($id) 0
 	    }
-	    incr i
+	    if {$i == 1} {
+		set cid $id
+		lappend commits $id
+		set parents($id) {}
+		set cdate($id) $d
+		set nparents($id) 0
+	    } else {
+		lappend parents($cid) $id
+		incr nparents($cid)
+		incr nchildren($id)
+		lappend children($id) $cid
+	    }
 	}
+	incr i
     }
-    return 1
 }
 
 proc readcommit {id} {
@@ -140,7 +125,7 @@ proc makewindow {} {
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
     menu .bar.file
-    .bar.file add command -label "Quit" -command "set stopped 1; destroy ."
+    .bar.file add command -label "Quit" -command doquit
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
@@ -235,11 +220,15 @@ proc makewindow {} {
     bind . b "$ctext yview scroll -1 p"
     bind . d "$ctext yview scroll 18 u"
     bind . u "$ctext yview scroll -18 u"
-    bind . Q "set stopped 1; destroy ."
-    bind . <Control-q> "set stopped 1; destroy ."
+    bind . Q doquit
+    bind . <Control-q> doquit
     bind . <Control-f> dofind
     bind . <Control-g> findnext
     bind . <Control-r> findprev
+    bind . <Control-equal> {incrfont 1}
+    bind . <Control-KP_Add> {incrfont 1}
+    bind . <Control-minus> {incrfont -1}
+    bind . <Control-KP_Subtract> {incrfont -1}
     bind $cflist <<ListboxSelect>> listboxsel
 }
 
@@ -272,7 +261,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.8 $)} \
+(CVS $Revision: 1.9 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -354,32 +343,45 @@ proc assigncolor {id} {
     }
 }
 
-proc drawgraph {startlist} {
+proc drawgraph {} {
     global parents children nparents nchildren commits
     global canv canv2 canv3 mainfont namefont canvx0 canvy0 canvy linespc
     global datemode cdate
     global lineid linehtag linentag linedtag commitinfo
     global nextcolor colormap numcommits
-    global stopped
+    global stopped phase redisplaying selectedline
 
-    set nextcolor 0
+    allcanvs delete all
+    set start {}
     foreach id $commits {
+	if {$nchildren($id) == 0} {
+	    lappend start $id
+	}
 	set ncleft($id) $nchildren($id)
     }
-    foreach id $startlist {
+    if {$start == {}} {
+	$canv create text 3 3 -anchor nw -font $mainfont \
+	    -text "ERROR: No starting commits found"
+	set phase {}
+	return
+    }
+
+    set nextcolor 0
+    foreach id $start {
 	assigncolor $id
     }
-    set todo $startlist
+    set todo $start
     set level [expr [llength $todo] - 1]
     set y2 $canvy0
     set nullentry -1
     set lineno -1
     set numcommits 0
+    set phase drawgraph
     while 1 {
 	set canvy $y2
 	allcanvs conf -scrollregion [list 0 0 0 $canvy]
 	update
-	if {$stopped} return
+	if {$stopped} break
 	incr numcommits
 	incr lineno
 	set nlines [llength $todo]
@@ -547,6 +549,18 @@ proc drawgraph {startlist} {
 	    if {![info exists linestarty($j)]} {
 		set linestarty($j) $y2
 	    }
+	}
+    }
+    set phase {}
+    if {$redisplaying} {
+	if {$stopped == 0 && [info exists selectedline]} {
+	    selectline $selectedline
+	}
+	if {$stopped == 1} {
+	    set stopped 0
+	    after idle drawgraph
+	} else {
+	    set redisplaying 0
 	}
     }
 }
@@ -896,27 +910,84 @@ proc listboxsel {} {
     }
 }
 
-if {![getcommits $revtreeargs]} {
-    exit 1
+proc setcoords {} {
+    global linespc charspc canvx0 canvy0 mainfont
+    set linespc [font metrics $mainfont -linespace]
+    set charspc [font measure $mainfont "m"]
+    set canvy0 [expr 3 + 0.5 * $linespc]
+    set canvx0 [expr 3 + 0.5 * $linespc]
 }
 
-set linespc [font metrics $mainfont -linespace]
-set charspc [font measure $mainfont "m"]
-
-set canvy0 [expr 3 + 0.5 * $linespc]
-set canvx0 [expr 3 + 0.5 * $linespc]
-set namex [expr 45 * $charspc]
-set datex [expr 75 * $charspc]
-
-set stopped 0
-makewindow
-
-set start {}
-foreach id $commits {
-    if {$nchildren($id) == 0} {
-	lappend start $id
+proc redisplay {} {
+    global selectedline stopped redisplaying phase
+    if {$stopped > 1} return
+    if {$phase == "getcommits"} return
+    set redisplaying 1
+    if {$phase == "drawgraph"} {
+	set stopped 1
+    } else {
+	drawgraph
     }
 }
-if {$start != {}} {
-    drawgraph $start
+
+proc incrfont {inc} {
+    global mainfont namefont textfont selectedline ctext canv phase
+    global stopped
+    unmarkmatches
+    set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
+    set namefont [lreplace $namefont 1 1 [expr {[lindex $namefont 1] + $inc}]]
+    set textfont [lreplace $textfont 1 1 [expr {[lindex $textfont 1] + $inc}]]
+    setcoords
+    $ctext conf -font $textfont
+    $ctext tag conf filesep -font [concat $textfont bold]
+    if {$phase == "getcommits"} {
+	$canv itemconf textitems -font $mainfont
+    }
+    redisplay
 }
+
+proc doquit {} {
+    global stopped
+    set stopped 100
+    destroy .
+}
+
+# defaults...
+set datemode 0
+set boldnames 0
+set diffopts "-U 5 -p"
+
+set mainfont {Helvetica 9}
+set namefont $mainfont
+set textfont {Courier 9}
+if {$boldnames} {
+    lappend namefont bold
+}
+
+set colors {green red blue magenta darkgrey brown orange}
+set colorbycommitter false
+
+catch {source ~/.gitk}
+
+set revtreeargs {}
+foreach arg $argv {
+    switch -regexp -- $arg {
+	"^$" { }
+	"^-b" { set boldnames 1 }
+	"^-c" { set colorbycommitter 1 }
+	"^-d" { set datemode 1 }
+	"^-.*" {
+	    puts stderr "unrecognized option $arg"
+	    exit 1
+	}
+	default {
+	    lappend revtreeargs $arg
+	}
+    }
+}
+
+set stopped 0
+set redisplaying 0
+setcoords
+makewindow
+getcommits $revtreeargs
