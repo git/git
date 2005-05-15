@@ -32,7 +32,7 @@ the tests.
 Or you can run each test individually from command line, like
 this:
 
-    $ sh ./t0500-ls-files.sh
+    $ sh ./t3001-ls-files-killed.sh
     *   ok 1: git-update-cache --add to add various paths.
     *   ok 2: git-ls-files -k to show killed files.
     *   ok 3: validate git-ls-files -k output.
@@ -92,7 +92,7 @@ assignment to variable 'test_description', like this:
 	# Copyright (c) 2005 Junio C Hamano
 	#
 
-	test_description=xxx test (option --frotz)
+	test_description='xxx test (option --frotz)
 
 	This test registers the following structure in the cache
 	and tries to run git-ls-files with option --frotz.'
@@ -119,6 +119,7 @@ This test harness library does the following things:
    use.  These functions are designed to make all scripts behave
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
+
 
 End with test_done
 ------------------

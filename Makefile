@@ -120,7 +120,7 @@ diff.o: $(LIB_H)
 strbuf.o: $(LIB_H)
 gitenv.o: $(LIB_H)
 
-test:
+test: all
 	make -C t/ all
 
 clean:
