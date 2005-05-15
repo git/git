@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.11 $
+# CVS $Revision: 1.12 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -155,6 +155,7 @@ proc makewindow {} {
     canvas $canv3 -height $height -width [expr 15 * $charspc] \
 	-bg white -bd 0 -yscrollincr $linespc
     .ctop.top.clist add $canv3
+    bind .ctop.top.clist <Configure> {resizeclistpanes %W %w}
 
     set sha1entry .ctop.top.bar.sha1
     label .ctop.top.bar.sha1label -text "SHA1 ID: "
@@ -185,6 +186,7 @@ proc makewindow {} {
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
     .ctop.cdet add .ctop.cdet.left
+    bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
 
     $ctext tag conf filesep -font [concat $textfont bold]
     $ctext tag conf hunksep -back blue -fore white
@@ -232,6 +234,58 @@ proc makewindow {} {
     bind $cflist <<ListboxSelect>> listboxsel
 }
 
+proc resizeclistpanes {win w} {
+    global oldwidth
+    if [info exists oldwidth($win)] {
+	set s0 [$win sash coord 0]
+	set s1 [$win sash coord 1]
+	if {$w < 60} {
+	    set sash0 [expr {int($w/2 - 2)}]
+	    set sash1 [expr {int($w*5/6 - 2)}]
+	} else {
+	    set factor [expr {1.0 * $w / $oldwidth($win)}]
+	    set sash0 [expr {int($factor * [lindex $s0 0])}]
+	    set sash1 [expr {int($factor * [lindex $s1 0])}]
+	    if {$sash0 < 30} {
+		set sash0 30
+	    }
+	    if {$sash1 < $sash0 + 20} {
+		set sash1 [expr $sash0 + 20]
+	    }
+	    if {$sash1 > $w - 10} {
+		set sash1 [expr $w - 10]
+		if {$sash0 > $sash1 - 20} {
+		    set sash0 [expr $sash1 - 20]
+		}
+	    }
+	}
+	$win sash place 0 $sash0 [lindex $s0 1]
+	$win sash place 1 $sash1 [lindex $s1 1]
+    }
+    set oldwidth($win) $w
+}
+
+proc resizecdetpanes {win w} {
+    global oldwidth
+    if [info exists oldwidth($win)] {
+	set s0 [$win sash coord 0]
+	if {$w < 60} {
+	    set sash0 [expr {int($w*3/4 - 2)}]
+	} else {
+	    set factor [expr {1.0 * $w / $oldwidth($win)}]
+	    set sash0 [expr {int($factor * [lindex $s0 0])}]
+	    if {$sash0 < 45} {
+		set sash0 45
+	    }
+	    if {$sash0 > $w - 15} {
+		set sash0 [expr $w - 15]
+	    }
+	}
+	$win sash place 0 $sash0 [lindex $s0 1]
+    }
+    set oldwidth($win) $w
+}
+
 proc allcanvs args {
     global canv canv2 canv3
     eval $canv $args
@@ -261,7 +315,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.11 $)} \
+(CVS $Revision: 1.12 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
