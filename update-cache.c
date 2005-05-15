@@ -191,7 +191,7 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	if (lstat(ce->name, &st) < 0)
 		return ERR_PTR(-errno);
 
-	changed = cache_match_stat(ce, &st);
+	changed = ce_match_stat(ce, &st);
 	if (!changed)
 		return ce;
 

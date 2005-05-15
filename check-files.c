@@ -31,7 +31,7 @@ static void check_file(const char *path)
 	if (lstat(path, &st) < 0)
 		die("lstat(%s): %s", path, strerror(errno));
 
-	changed = cache_match_stat(ce, &st);
+	changed = ce_match_stat(ce, &st);
 	if (changed)
 		die("preparing to update file '%s' not uptodate in cache", path);
 }

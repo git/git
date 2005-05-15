@@ -33,7 +33,7 @@ static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned
 			}
 			return -1;
 		}
-		changed = cache_match_stat(ce, &st);
+		changed = ce_match_stat(ce, &st);
 		if (changed) {
 			mode = create_ce_mode(st.st_mode);
 			sha1 = no_sha1;

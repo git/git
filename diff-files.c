@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 			show_file('-', ce);
 			continue;
 		}
-		changed = cache_match_stat(ce, &st);
+		changed = ce_match_stat(ce, &st);
 		if (!changed)
 			continue;
 

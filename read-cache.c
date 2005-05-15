@@ -9,7 +9,7 @@
 struct cache_entry **active_cache = NULL;
 unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
 
-int cache_match_stat(struct cache_entry *ce, struct stat *st)
+int ce_match_stat(struct cache_entry *ce, struct stat *st)
 {
 	unsigned int changed = 0;
 

@@ -167,7 +167,7 @@ static int checkout_entry(struct cache_entry *ce, const char *base_dir)
 	strcpy(path + len, ce->name);
 
 	if (!lstat(path, &st)) {
-		unsigned changed = cache_match_stat(ce, &st);
+		unsigned changed = ce_match_stat(ce, &st);
 		if (!changed)
 			return 0;
 		if (!force) {

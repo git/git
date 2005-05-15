@@ -175,7 +175,7 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	ce = active_cache[pos];
 	if ((lstat(name, &st) < 0) ||
 	    !S_ISREG(st.st_mode) ||
-	    cache_match_stat(ce, &st) ||
+	    ce_match_stat(ce, &st) ||
 	    memcmp(sha1, ce->sha1, 20))
 		return 0;
 	return 1;
