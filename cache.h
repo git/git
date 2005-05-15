@@ -40,10 +40,6 @@ extern char *gitenv_bc(const char *);
 
 /*
  * Basic data structures for the directory cache
- *
- * NOTE NOTE NOTE! This is all in the native CPU byte format. It's
- * not even trying to be portable. It's trying to be efficient. It's
- * just a cache, after all.
  */
 
 #define CACHE_SIGNATURE 0x44495243	/* "DIRC" */
