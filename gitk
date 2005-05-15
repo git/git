@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.9 $
+# CVS $Revision: 1.10 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -255,13 +255,13 @@ proc about {} {
     toplevel $w
     wm title $w "About gitk"
     message $w.m -text {
-Gitk version 0.9
+Gitk version 0.91
 
 Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.9 $)} \
+(CVS $Revision: 1.10 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
