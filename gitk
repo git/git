@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.7 $
+# CVS $Revision: 1.8 $
 
 set datemode 0
 set boldnames 0
@@ -135,6 +135,7 @@ proc readcommit {id} {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
+    global sha1entry findtype findloc findstring
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -146,27 +147,48 @@ proc makewindow {} {
     . configure -menu .bar
 
     panedwindow .ctop -orient vertical
-    panedwindow .ctop.clist -orient horizontal -sashpad 0 -handlesize 4
-    .ctop add .ctop.clist
-    set canv .ctop.clist.canv
-    set cscroll .ctop.clist.dates.csb
+    frame .ctop.top
+    frame .ctop.top.bar
+    pack .ctop.top.bar -side bottom -fill x
+    set cscroll .ctop.top.csb
+    scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
+    pack $cscroll -side right -fill y
+    panedwindow .ctop.top.clist -orient horizontal -sashpad 0 -handlesize 4
+    pack .ctop.top.clist -side top -fill both -expand 1
+    .ctop add .ctop.top
+    set canv .ctop.top.clist.canv
     set height [expr 25 * $linespc + 4]
     canvas $canv -height $height -width [expr 45 * $charspc] \
 	-bg white -bd 0 \
 	-yscrollincr $linespc -yscrollcommand "$cscroll set"
-    .ctop.clist add $canv
-    set canv2 .ctop.clist.canv2
+    .ctop.top.clist add $canv
+    set canv2 .ctop.top.clist.canv2
     canvas $canv2 -height $height -width [expr 30 * $charspc] \
 	-bg white -bd 0 -yscrollincr $linespc
-    .ctop.clist add $canv2
-    frame .ctop.clist.dates
-    .ctop.clist add .ctop.clist.dates
-    set canv3 .ctop.clist.dates.canv3
+    .ctop.top.clist add $canv2
+    set canv3 .ctop.top.clist.canv3
     canvas $canv3 -height $height -width [expr 15 * $charspc] \
 	-bg white -bd 0 -yscrollincr $linespc
-    scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
-    pack .ctop.clist.dates.csb -side right -fill y
-    pack $canv3 -side left -fill both -expand 1
+    .ctop.top.clist add $canv3
+
+    set sha1entry .ctop.top.bar.sha1
+    label .ctop.top.bar.sha1label -text "SHA1 ID: "
+    pack .ctop.top.bar.sha1label -side left
+    entry $sha1entry -width 40 -font $textfont -state readonly
+    pack $sha1entry -side left -pady 2
+    button .ctop.top.bar.findbut -text "Find" -command dofind
+    pack .ctop.top.bar.findbut -side left
+    set findstring {}
+    entry .ctop.top.bar.findstring -width 30 -font $textfont \
+	-textvariable findstring
+    pack .ctop.top.bar.findstring -side left -expand 1 -fill x
+    set findtype Exact
+    tk_optionMenu .ctop.top.bar.findtype findtype Exact IgnCase Regexp
+    set findloc "All fields"
+    tk_optionMenu .ctop.top.bar.findloc findloc "All fields" Headline \
+	Comments Author Committer
+    pack .ctop.top.bar.findloc -side right
+    pack .ctop.top.bar.findtype -side right
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
@@ -215,6 +237,9 @@ proc makewindow {} {
     bind . u "$ctext yview scroll -18 u"
     bind . Q "set stopped 1; destroy ."
     bind . <Control-q> "set stopped 1; destroy ."
+    bind . <Control-f> dofind
+    bind . <Control-g> findnext
+    bind . <Control-r> findprev
     bind $cflist <<ListboxSelect>> listboxsel
 }
 
@@ -247,7 +272,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.7 $)} \
+(CVS $Revision: 1.8 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -329,30 +354,33 @@ proc assigncolor {id} {
     }
 }
 
-proc drawgraph {start} {
+proc drawgraph {startlist} {
     global parents children nparents nchildren commits
     global canv canv2 canv3 mainfont namefont canvx0 canvy0 canvy linespc
     global datemode cdate
     global lineid linehtag linentag linedtag commitinfo
-    global nextcolor colormap
+    global nextcolor colormap numcommits
     global stopped
 
     set nextcolor 0
-    assigncolor $start
     foreach id $commits {
 	set ncleft($id) $nchildren($id)
     }
-    set todo [list $start]
-    set level 0
+    foreach id $startlist {
+	assigncolor $id
+    }
+    set todo $startlist
+    set level [expr [llength $todo] - 1]
     set y2 $canvy0
-    set linestarty(0) $canvy0
     set nullentry -1
     set lineno -1
+    set numcommits 0
     while 1 {
 	set canvy $y2
 	allcanvs conf -scrollregion [list 0 0 0 $canvy]
 	update
 	if {$stopped} return
+	incr numcommits
 	incr lineno
 	set nlines [llength $todo]
 	set id [lindex $todo $level]
@@ -369,12 +397,12 @@ proc drawgraph {start} {
 	}
 	set x [expr $canvx0 + $level * $linespc]
 	set y2 [expr $canvy + $linespc]
-	if {$linestarty($level) < $canvy} {
+	if {[info exists linestarty($level)] && $linestarty($level) < $canvy} {
 	    set t [$canv create line $x $linestarty($level) $x $canvy \
 		       -width 2 -fill $colormap($id)]
 	    $canv lower $t
-	    set linestarty($level) $canvy
 	}
+	set linestarty($level) $canvy
 	set t [$canv create oval [expr $x - 4] [expr $canvy - 4] \
 		   [expr $x + 3] [expr $canvy + 3] \
 		   -fill blue -outline black -width 1]
@@ -403,12 +431,14 @@ proc drawgraph {start} {
 	set lines {}
 	for {set i 0} {$i < $nlines} {incr i} {
 	    if {[lindex $todo $i] == {}} continue
-	    set oldstarty($i) $linestarty($i)
+	    if {[info exists linestarty($i)]} {
+		set oldstarty($i) $linestarty($i)
+		unset linestarty($i)
+	    }
 	    if {$i != $level} {
 		lappend lines [list $i [lindex $todo $i]]
 	    }
 	}
-	unset linestarty
 	if {$nullentry >= 0} {
 	    set todo [lreplace $todo $nullentry $nullentry]
 	    if {$nullentry < $level} {
@@ -494,13 +524,15 @@ proc drawgraph {start} {
 	    set dst [lindex $l 1]
 	    set j [lsearch -exact $todo $dst]
 	    if {$i == $j} {
-		set linestarty($i) $oldstarty($i)
+		if {[info exists oldstarty($i)]} {
+		    set linestarty($i) $oldstarty($i)
+		}
 		continue
 	    }
 	    set xi [expr {$canvx0 + $i * $linespc}]
 	    set xj [expr {$canvx0 + $j * $linespc}]
 	    set coords {}
-	    if {$oldstarty($i) < $canvy} {
+	    if {[info exists oldstarty($i)] && $oldstarty($i) < $canvy} {
 		lappend coords $xi $oldstarty($i)
 	    }
 	    lappend coords $xi $canvy
@@ -519,6 +551,133 @@ proc drawgraph {start} {
     }
 }
 
+proc dofind {} {
+    global findtype findloc findstring markedmatches commitinfo
+    global numcommits lineid linehtag linentag linedtag
+    global mainfont namefont canv canv2 canv3 selectedline
+    global matchinglines
+    unmarkmatches
+    set matchinglines {}
+    set fldtypes {Headline Author Date Committer CDate Comment}
+    if {$findtype == "IgnCase"} {
+	set fstr [string tolower $findstring]
+    } else {
+	set fstr $findstring
+    }
+    set mlen [string length $findstring]
+    if {$mlen == 0} return
+    if {![info exists selectedline]} {
+	set oldsel -1
+    } else {
+	set oldsel $selectedline
+    }
+    set didsel 0
+    for {set l 0} {$l < $numcommits} {incr l} {
+	set id $lineid($l)
+	set info $commitinfo($id)
+	set doesmatch 0
+	foreach f $info ty $fldtypes {
+	    if {$findloc != "All fields" && $findloc != $ty} {
+		continue
+	    }
+	    if {$findtype == "Regexp"} {
+		set matches [regexp -indices -all -inline $fstr $f]
+	    } else {
+		if {$findtype == "IgnCase"} {
+		    set str [string tolower $f]
+		} else {
+		    set str $f
+		}
+		set matches {}
+		set i 0
+		while {[set j [string first $fstr $str $i]] >= 0} {
+		    lappend matches [list $j [expr $j+$mlen-1]]
+		    set i [expr $j + $mlen]
+		}
+	    }
+	    if {$matches == {}} continue
+	    set doesmatch 1
+	    if {$ty == "Headline"} {
+		markmatches $canv $l $f $linehtag($l) $matches $mainfont
+	    } elseif {$ty == "Author"} {
+		markmatches $canv2 $l $f $linentag($l) $matches $namefont
+	    } elseif {$ty == "Date"} {
+		markmatches $canv3 $l $f $linedtag($l) $matches $mainfont
+	    }
+	}
+	if {$doesmatch} {
+	    lappend matchinglines $l
+	    if {!$didsel && $l > $oldsel} {
+		selectline $l
+		set didsel 1
+	    }
+	}
+    }
+    if {$matchinglines == {}} {
+	bell
+    } elseif {!$didsel} {
+	selectline [lindex $matchinglines 0]
+    }
+}
+
+proc findnext {} {
+    global matchinglines selectedline
+    if {![info exists matchinglines]} {
+	dofind
+	return
+    }
+    if {![info exists selectedline]} return
+    foreach l $matchinglines {
+	if {$l > $selectedline} {
+	    selectline $l
+	    return
+	}
+    }
+    bell
+}
+
+proc findprev {} {
+    global matchinglines selectedline
+    if {![info exists matchinglines]} {
+	dofind
+	return
+    }
+    if {![info exists selectedline]} return
+    set prev {}
+    foreach l $matchinglines {
+	if {$l >= $selectedline} break
+	set prev $l
+    }
+    if {$prev != {}} {
+	selectline $prev
+    } else {
+	bell
+    }
+}
+
+proc markmatches {canv l str tag matches font} {
+    set bbox [$canv bbox $tag]
+    set x0 [lindex $bbox 0]
+    set y0 [lindex $bbox 1]
+    set y1 [lindex $bbox 3]
+    foreach match $matches {
+	set start [lindex $match 0]
+	set end [lindex $match 1]
+	if {$start > $end} continue
+	set xoff [font measure $font [string range $str 0 [expr $start-1]]]
+	set xlen [font measure $font [string range $str 0 [expr $end]]]
+	set t [$canv create rect [expr $x0+$xoff] $y0 [expr $x0+$xlen+2] $y1 \
+		   -outline {} -tags matches -fill yellow]
+	$canv lower $t
+    }
+}
+
+proc unmarkmatches {} {
+    global matchinglines
+    allcanvs delete matches
+    catch {unset matchinglines}
+}
+
 proc selcanvline {x y} {
     global canv canvy0 ctext linespc selectedline
     global lineid linehtag linentag linedtag
@@ -530,6 +689,7 @@ proc selcanvline {x y} {
 	set l 0
     }
     if {[info exists selectedline] && $selectedline == $l} return
+    unmarkmatches
     selectline $l
 }
 
@@ -537,7 +697,7 @@ proc selectline {l} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
     global canvy canvy0 linespc nparents treepending
-    global cflist treediffs currentid
+    global cflist treediffs currentid sha1entry
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
     set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
@@ -564,6 +724,13 @@ proc selectline {l} {
     set selectedline $l
 
     set id $lineid($l)
+    $sha1entry conf -state normal
+    $sha1entry delete 0 end
+    $sha1entry insert 0 $id
+    $sha1entry selection from 0
+    $sha1entry selection to end
+    $sha1entry conf -state readonly
+
     $ctext conf -state normal
     $ctext delete 0.0 end
     set info $commitinfo($id)
@@ -592,6 +759,7 @@ proc selnextline {dir} {
     global selectedline
     if {![info exists selectedline]} return
     set l [expr $selectedline + $dir]
+    unmarkmatches
     selectline $l
 }
 
@@ -746,8 +914,7 @@ makewindow
 set start {}
 foreach id $commits {
     if {$nchildren($id) == 0} {
-	set start $id
-	break
+	lappend start $id
     }
 }
 if {$start != {}} {
