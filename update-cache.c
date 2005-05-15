@@ -3,7 +3,6 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include <signal.h>
 #include "cache.h"
 
 /*
@@ -29,26 +28,6 @@ static inline long PTR_ERR(const void *ptr)
 static inline long IS_ERR(const void *ptr)
 {
 	return (unsigned long)ptr > (unsigned long)-1000L;
-}
-
-/*
- * This only updates the "non-critical" parts of the directory
- * cache, ie the parts that aren't tracked by GIT, and only used
- * to validate the cache.
- */
-static void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
-{
-	ce->ce_ctime.sec = htonl(st->st_ctime);
-	ce->ce_mtime.sec = htonl(st->st_mtime);
-#ifdef NSEC
-	ce->ce_ctime.nsec = htonl(st->st_ctim.tv_nsec);
-	ce->ce_mtime.nsec = htonl(st->st_mtim.tv_nsec);
-#endif
-	ce->ce_dev = htonl(st->st_dev);
-	ce->ce_ino = htonl(st->st_ino);
-	ce->ce_uid = htonl(st->st_uid);
-	ce->ce_gid = htonl(st->st_gid);
-	ce->ce_size = htonl(st->st_size);
 }
 
 static int add_file_to_cache(char *path)
@@ -313,35 +292,16 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 	return add_cache_entry(ce, option);
 }
 
-static const char *lockfile_name = NULL;
-
-static void remove_lock_file(void)
-{
-	if (lockfile_name)
-		unlink(lockfile_name);
-}
-
-static void remove_lock_file_on_signal(int signo)
-{
-	remove_lock_file();
-}
+struct cache_file cache_file;
 
 int main(int argc, char **argv)
 {
 	int i, newfd, entries, has_errors = 0;
 	int allow_options = 1;
-	static char lockfile[MAXPATHLEN+1];
-	const char *indexfile = get_index_file();
 
-	snprintf(lockfile, sizeof(lockfile), "%s.lock", indexfile);
-
-	newfd = open(lockfile, O_RDWR | O_CREAT | O_EXCL, 0600);
+	newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (newfd < 0)
 		die("unable to create new cachefile");
-
-	signal(SIGINT, remove_lock_file_on_signal);
-	atexit(remove_lock_file);
-	lockfile_name = lockfile;
 
 	entries = read_cache();
 	if (entries < 0)
@@ -401,9 +361,9 @@ int main(int argc, char **argv)
 		if (add_file_to_cache(path))
 			die("Unable to add %s to database", path);
 	}
-	if (write_cache(newfd, active_cache, active_nr) || rename(lockfile, indexfile))
+	if (write_cache(newfd, active_cache, active_nr) ||
+	    commit_index_file(&cache_file))
 		die("Unable to write new cachefile");
 
-	lockfile_name = NULL;
 	return has_errors ? 1 : 0;
 }

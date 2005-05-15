@@ -9,7 +9,7 @@ git-checkout-cache - Copy files from the cache to the working directory
 
 SYNOPSIS
 --------
-'git-checkout-cache' [-q] [-a] [-f] [-n] [--prefix=<string>]
+'git-checkout-cache' [-u] [-q] [-a] [-f] [-n] [--prefix=<string>]
 	           [--] <file>...
 
 DESCRIPTION
@@ -19,6 +19,10 @@ Will copy all files listed from the cache to the working directory
 
 OPTIONS
 -------
+-u::
+	update stat information for the checked out entries in
+	the cache file.
+
 -q::
 	be quiet if files exist or are not in the cache
 

@@ -127,6 +127,15 @@ extern int remove_file_from_cache(char *path);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st);
+extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
+
+struct cache_file {
+	struct cache_file *next;
+	char lockfile[PATH_MAX];
+};
+extern int hold_index_file_for_update(struct cache_file *, const char *path);
+extern int commit_index_file(struct cache_file *);
+extern void rollback_index_file(struct cache_file *);
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002

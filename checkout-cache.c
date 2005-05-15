@@ -36,7 +36,7 @@
 #include <dirent.h>
 #include "cache.h"
 
-static int force = 0, quiet = 0, not_new = 0;
+static int force = 0, quiet = 0, not_new = 0, refresh_cache = 0;
 
 static void create_directories(const char *path)
 {
@@ -154,6 +154,12 @@ static int write_entry(struct cache_entry *ce, const char *path)
 		free(new);
 		return error("checkout-cache: unknown file mode for %s", path);
 	}
+
+	if (refresh_cache) {
+		struct stat st;
+		lstat(ce->name, &st);
+		fill_stat_cache_info(ce, &st);
+	}
 	return 0;
 }
 
@@ -224,6 +230,8 @@ int main(int argc, char **argv)
 {
 	int i, force_filename = 0;
 	const char *base_dir = "";
+	struct cache_file cache_file;
+	int newfd = -1;
 
 	if (read_cache() < 0) {
 		die("invalid cache");
@@ -252,12 +260,37 @@ int main(int argc, char **argv)
 				not_new = 1;
 				continue;
 			}
+			if (!strcmp(arg, "-u")) {
+				refresh_cache = 1;
+				if (newfd < 0)
+					newfd = hold_index_file_for_update
+						(&cache_file,
+						 get_index_file());
+				if (newfd < 0)
+					die("cannot open index.lock file.");
+				continue;
+			}
 			if (!memcmp(arg, "--prefix=", 9)) {
 				base_dir = arg+9;
 				continue;
 			}
 		}
+		if (base_dir[0]) {
+			/* when --prefix is specified we do not
+			 * want to update cache.
+			 */
+			if (refresh_cache) {
+				close(newfd); newfd = -1;
+				rollback_index_file(&cache_file);
+			}
+			refresh_cache = 0;
+		}
 		checkout_file(arg, base_dir);
 	}
+
+	if (0 <= newfd &&
+	    (write_cache(newfd, active_cache, active_nr) ||
+	     commit_index_file(&cache_file)))
+		die("Unable to write new cachefile");
 	return 0;
 }
