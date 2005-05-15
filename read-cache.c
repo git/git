@@ -97,7 +97,7 @@ int cache_name_pos(const char *name, int namelen)
 }
 
 /* Remove entry, return true if there are more entries to go.. */
-int remove_entry_at(int pos)
+int remove_cache_entry_at(int pos)
 {
 	active_cache_changed = 1;
 	active_nr--;
@@ -113,11 +113,11 @@ int remove_file_from_cache(char *path)
 	if (pos < 0)
 		pos = -pos-1;
 	while (pos < active_nr && !strcmp(active_cache[pos]->name, path))
-		remove_entry_at(pos);
+		remove_cache_entry_at(pos);
 	return 0;
 }
 
-int same_name(struct cache_entry *a, struct cache_entry *b)
+int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 {
 	int len = ce_namelen(a);
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
@@ -167,7 +167,7 @@ static int check_file_directory_conflict(const struct cache_entry *ce,
 				return -1;
 			}
 			fprintf(stderr, "removing file '%s' to replace it with a directory to create '%s'.\n", pathbuf, path);
-			remove_entry_at(pos);
+			remove_cache_entry_at(pos);
 			replaced = 1;
 		}
 		*ep = '/';  /* then restore it and go downwards */
@@ -215,7 +215,7 @@ static int check_file_directory_conflict(const struct cache_entry *ce,
 			if (!ok_to_replace)
 				return -1;
 			fprintf(stderr, "removing file '%s' under '%s' to be replaced with a file\n", other->name, path);
-			remove_entry_at(pos);
+			remove_cache_entry_at(pos);
 			replaced = 1;
 			continue; /* cycle without updating pos */
 		}
@@ -244,9 +244,9 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	 * will always replace all non-merged entries..
 	 */
 	if (pos < active_nr && ce_stage(ce) == 0) {
-		while (same_name(active_cache[pos], ce)) {
+		while (ce_same_name(active_cache[pos], ce)) {
 			ok_to_add = 1;
-			if (!remove_entry_at(pos))
+			if (!remove_cache_entry_at(pos))
 				break;
 		}
 	}

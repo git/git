@@ -94,7 +94,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 {
 	while (entries) {
 		struct cache_entry *ce = *ac;
-		int same = (entries > 1) && same_name(ce, ac[1]);
+		int same = (entries > 1) && ce_same_name(ce, ac[1]);
 
 		switch (ce_stage(ce)) {
 		case 0:
@@ -143,7 +143,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 		do {
 			ac++;
 			entries--;
-		} while (entries && same_name(ce, ac[0]));
+		} while (entries && ce_same_name(ce, ac[0]));
 	}
 	return 0;
 }
