@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.12 $
+# CVS $Revision: 1.13 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -120,7 +120,7 @@ proc readcommit {id} {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
-    global sha1entry findtype findloc findstring
+    global sha1entry findtype findloc findstring geometry
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -131,7 +131,19 @@ proc makewindow {} {
     .bar.help add command -label "About gitk" -command about
     . configure -menu .bar
 
+    if {![info exists geometry(canv1)]} {
+	set geometry(canv1) [expr 45 * $charspc]
+	set geometry(canv2) [expr 30 * $charspc]
+	set geometry(canv3) [expr 15 * $charspc]
+	set geometry(canvh) [expr 25 * $linespc + 4]
+	set geometry(ctextw) 80
+	set geometry(ctexth) 30
+	set geometry(cflistw) 30
+    }
     panedwindow .ctop -orient vertical
+    if {[info exists geometry(width)]} {
+	.ctop conf -width $geometry(width) -height $geometry(height)
+    }
     frame .ctop.top
     frame .ctop.top.bar
     pack .ctop.top.bar -side bottom -fill x
@@ -142,17 +154,16 @@ proc makewindow {} {
     pack .ctop.top.clist -side top -fill both -expand 1
     .ctop add .ctop.top
     set canv .ctop.top.clist.canv
-    set height [expr 25 * $linespc + 4]
-    canvas $canv -height $height -width [expr 45 * $charspc] \
+    canvas $canv -height $geometry(canvh) -width $geometry(canv1) \
 	-bg white -bd 0 \
 	-yscrollincr $linespc -yscrollcommand "$cscroll set"
     .ctop.top.clist add $canv
     set canv2 .ctop.top.clist.canv2
-    canvas $canv2 -height $height -width [expr 30 * $charspc] \
+    canvas $canv2 -height $geometry(canvh) -width $geometry(canv2) \
 	-bg white -bd 0 -yscrollincr $linespc
     .ctop.top.clist add $canv2
     set canv3 .ctop.top.clist.canv3
-    canvas $canv3 -height $height -width [expr 15 * $charspc] \
+    canvas $canv3 -height $geometry(canvh) -width $geometry(canv3) \
 	-bg white -bd 0 -yscrollincr $linespc
     .ctop.top.clist add $canv3
     bind .ctop.top.clist <Configure> {resizeclistpanes %W %w}
@@ -177,16 +188,22 @@ proc makewindow {} {
     pack .ctop.top.bar.findtype -side right
 
     panedwindow .ctop.cdet -orient horizontal
+    if {[info exists geometry(cdeth)]} {
+	.ctop.cdet conf -height $geometry(cdeth)
+    }
     .ctop add .ctop.cdet
     frame .ctop.cdet.left
     set ctext .ctop.cdet.left.ctext
-    text $ctext -bg white -state disabled -font $textfont -height 32 \
+    text $ctext -bg white -state disabled -font $textfont \
+	-width $geometry(ctextw) -height $geometry(ctexth) \
 	-yscrollcommand ".ctop.cdet.left.sb set"
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
     .ctop.cdet add .ctop.cdet.left
-    bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
+    if {[info exists geometry(detlw)]} {
+	.ctop.cdet.left conf -width $geometry(detlw)
+    }
 
     $ctext tag conf filesep -font [concat $textfont bold]
     $ctext tag conf hunksep -back blue -fore white
@@ -195,12 +212,16 @@ proc makewindow {} {
 
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
-    listbox $cflist -width 30 -bg white -selectmode extended \
+    listbox $cflist -width $geometry(cflistw) -bg white -selectmode extended \
 	-yscrollcommand ".ctop.cdet.right.sb set"
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
     .ctop.cdet add .ctop.cdet.right
+    if {[info exists geometry(detsash)]} {
+	eval .ctop.cdet sash place 0 $geometry(detsash)
+    }
+    bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
 
     pack .ctop -side top -fill both -expand 1
 
@@ -232,6 +253,37 @@ proc makewindow {} {
     bind . <Control-minus> {incrfont -1}
     bind . <Control-KP_Subtract> {incrfont -1}
     bind $cflist <<ListboxSelect>> listboxsel
+    bind . <Destroy> {savestuff %W}
+}
+
+proc savestuff {w} {
+    global canv canv2 canv3 ctext cflist mainfont textfont
+    global stuffsaved
+    if {$stuffsaved} return
+    catch {
+	set f [open "~/.gitk-new" w]
+	puts $f "set mainfont {$mainfont}"
+	puts $f "set textfont {$textfont}"
+	puts $f "set geometry(width) [winfo width .ctop]"
+	puts $f "set geometry(height) [winfo height .ctop]"
+	puts $f "set geometry(canv1) [winfo width $canv]"
+	puts $f "set geometry(canv2) [winfo width $canv2]"
+	puts $f "set geometry(canv3) [winfo width $canv3]"
+	puts $f "set geometry(canvh) [winfo height $canv]"
+	puts $f "set geometry(cdeth) [winfo height .ctop.cdet]"
+	set wid [expr {([winfo width $ctext] - 8) \
+			   / [font measure $textfont "0"]}]
+	set ht [expr {([winfo height $ctext] - 8) \
+			  / [font metrics $textfont -linespace]}]
+	puts $f "set geometry(ctextw) $wid"
+	puts $f "set geometry(ctexth) $ht"
+	set wid [expr {([winfo width $cflist] - 11) \
+			   / [font measure [$cflist cget -font] "0"]}]
+	puts $f "set geometry(cflistw) $wid"
+	close $f
+	file rename -force "~/.gitk-new" "~/.gitk"
+    }
+    set stuffsaved 1
 }
 
 proc resizeclistpanes {win w} {
@@ -315,7 +367,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.12 $)} \
+(CVS $Revision: 1.13 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -1042,6 +1094,7 @@ foreach arg $argv {
 
 set stopped 0
 set redisplaying 0
+set stuffsaved 0
 setcoords
 makewindow
 getcommits $revtreeargs
