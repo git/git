@@ -296,6 +296,70 @@ static int fsck_dir(int i, char *path)
 	return 0;
 }
 
+static void read_sha1_reference(const char *path)
+{
+	char hexname[60];
+	unsigned char sha1[20];
+	int fd = open(path, O_RDONLY), len;
+	struct object *obj;
+
+	if (fd < 0)
+		return;
+
+	len = read(fd, hexname, sizeof(hexname));
+	close(fd);
+	if (len < 40)
+		return;
+
+	if (get_sha1_hex(hexname, sha1) < 0)
+		return;
+
+	obj = lookup_object(sha1);
+	obj->used = 1;
+	mark_reachable(obj, REACHABLE);
+}
+
+static void find_file_objects(const char *base, const char *name)
+{
+	int baselen = strlen(base);
+	int namelen = strlen(name);
+	char *path = xmalloc(baselen + namelen + 2);
+	struct stat st;
+
+	memcpy(path, base, baselen);
+	path[baselen] = '/';
+	memcpy(path + baselen + 1, name, namelen+1);
+	if (stat(path, &st) < 0)
+		return;
+
+	/*
+	 * Recurse into directories
+	 */
+	if (S_ISDIR(st.st_mode)) {
+		DIR *dir = opendir(path);
+		if (dir) {
+			struct dirent *de;
+			while ((de = readdir(dir)) != NULL) {
+				if (de->d_name[0] == '.')
+					continue;
+				find_file_objects(path, de->d_name);
+			}
+			closedir(dir);
+		}
+		return;
+	}
+	if (S_ISREG(st.st_mode)) {
+		read_sha1_reference(path);
+		return;
+	}
+}
+
+static void get_default_heads(void)
+{
+	char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
+	find_file_objects(git_dir, "refs");
+}
+
 int main(int argc, char **argv)
 {
 	int i, heads;
@@ -354,6 +418,16 @@ int main(int argc, char **argv)
 		error("expected sha1, got %s", arg);
 	}
 
+	/*
+	 * If we've been asked to do reachability without any explicit
+	 * head information, do the default ones from .git/refs. We also
+	 * consider the index file in this case (ie this implies --cache).
+	 */
+	if (show_unreachable && !heads) {
+		get_default_heads();
+		keep_cache_objects = 1;
+	}
+
 	if (keep_cache_objects) {
 		int i;
 		read_cache();
@@ -366,15 +440,6 @@ int main(int argc, char **argv)
 			obj->used = 1;
 			mark_reachable(obj, REACHABLE);
 		}
-	}
-
-	if (!heads && !keep_cache_objects) {
-		if (show_unreachable) {
-			fprintf(stderr, "unable to do reachability without a head nor --cache\n");
-			show_unreachable = 0; 
-		}
-		if (!heads)
-			fprintf(stderr, "expect dangling commits - potential heads - due to lack of head information\n");
 	}
 
 	check_connectivity();
