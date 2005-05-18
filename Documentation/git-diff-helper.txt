@@ -9,7 +9,7 @@ git-diff-helper - Generates patch format output for git-diff-*
 
 SYNOPSIS
 --------
-'git-diff-helper' [-z] [-R]
+'git-diff-helper' [-z] [-R] [-r]
 
 DESCRIPTION
 -----------
@@ -28,7 +28,12 @@ OPTIONS
 
 		git-diff-cache <tree> | git-diff-helper -R file.c
 
-would show a diff to bring the working file back to what is in the <tree>.
+	would show a diff to bring the working file back to what
+	is in the <tree>.
+
+-r::
+	Detect renames.
+
 
 See Also
 --------
@@ -37,7 +42,8 @@ The section on generating patches in link:git-diff-cache.html[git-diff-cache]
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Junio C Hamano <junkio@cox.net>
+
 
 Documentation
 --------------

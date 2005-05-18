@@ -31,7 +31,7 @@ struct diff_spec {
 	unsigned file_valid : 1; /* if false the file does not even exist */
 };
 
-extern void run_external_diff(const char *name,
+extern void run_external_diff(const char *name, const char *other,
 			      struct diff_spec *, struct diff_spec *);
 
 #endif /* DIFF_H */
