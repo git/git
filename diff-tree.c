@@ -397,19 +397,29 @@ static char *diff_tree_usage =
 
 int main(int argc, char **argv)
 {
+	int nr_sha1;
 	char line[1000];
-	unsigned char old[20], new[20];
+	unsigned char sha1[2][20];
 
+	nr_sha1 = 0;
 	for (;;) {
 		char *arg;
 
 		argv++;
 		argc--;
 		arg = *argv;
-		if (!arg || *arg != '-')
+		if (!arg)
 			break;
 
-		if (!strcmp(arg, "-")) {
+		if (*arg != '-') {
+			if (nr_sha1 < 2 && !get_sha1(arg, sha1[nr_sha1])) {
+				nr_sha1++;
+				continue;
+			}
+			break;
+		}
+
+		if (!strcmp(arg, "--")) {
 			argv++;
 			argc--;
 			break;
@@ -446,13 +456,6 @@ int main(int argc, char **argv)
 		usage(diff_tree_usage);
 	}
 
-	if (!read_stdin) {
-		if (argc < 2 || get_sha1(argv[0], old) || get_sha1(argv[1], new))
-			usage(diff_tree_usage);
-		argv += 2;
-		argc -= 2;
-	}
-
 	if (argc > 0) {
 		int i;
 
@@ -463,8 +466,21 @@ int main(int argc, char **argv)
 			pathlens[i] = strlen(paths[i]);
 	}
 
+	switch (nr_sha1) {
+	case 0:
+		if (!read_stdin)
+			usage(diff_tree_usage);
+		break;
+	case 1:
+		diff_tree_commit(sha1[0], sha1_to_hex(sha1[0]));
+		break;
+	case 2:
+		diff_tree_sha1(sha1[0], sha1[1], "");
+		break;
+	}
+
 	if (!read_stdin)
-		return diff_tree_sha1(old, new, "");
+		return 0;
 
 	while (fgets(line, sizeof(line), stdin))
 		diff_tree_stdin(line);
