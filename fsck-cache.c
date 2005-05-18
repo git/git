@@ -419,11 +419,11 @@ int main(int argc, char **argv)
 	}
 
 	/*
-	 * If we've been asked to do reachability without any explicit
-	 * head information, do the default ones from .git/refs. We also
-	 * consider the index file in this case (ie this implies --cache).
+	 * If we've not been gived any explicit head information, do the
+	 * default ones from .git/refs. We also consider the index file
+	 * in this case (ie this implies --cache).
 	 */
-	if (show_unreachable && !heads) {
+	if (!heads) {
 		get_default_heads();
 		keep_cache_objects = 1;
 	}
