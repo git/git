@@ -60,7 +60,7 @@ echo
 
 git-check-files $(cat $FILES) || exit 1
 git-checkout-cache -q $(cat $FILES) || exit 1
-patch -u --no-backup-if-mismatch -f -p1 --fuzz=0 --input=$PATCHFILE || exit 1
+patch -E -u --no-backup-if-mismatch -f -p1 --fuzz=0 --input=$PATCHFILE || exit 1
 git-update-cache --add --remove $(cat $FILES) || exit 1
 tree=$(git-write-tree) || exit 1
 echo Wrote tree $tree
