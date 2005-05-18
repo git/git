@@ -356,6 +356,12 @@ static int diff_tree_commit(const unsigned char *commit, const char *name)
 			return 0;
 	}
 
+	if (!name) {
+		static char commit_name[60];
+		strcpy(commit_name, sha1_to_hex(commit));
+		name = commit_name;
+	}
+
 	offset = 46;
 	while (offset + 48 < size && !memcmp(buf + offset, "parent ", 7)) {
 		unsigned char parent[20];
@@ -472,7 +478,7 @@ int main(int argc, char **argv)
 			usage(diff_tree_usage);
 		break;
 	case 1:
-		diff_tree_commit(sha1[0], sha1_to_hex(sha1[0]));
+		diff_tree_commit(sha1[0], NULL);
 		break;
 	case 2:
 		diff_tree_sha1(sha1[0], sha1[1], "");
