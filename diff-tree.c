@@ -204,6 +204,8 @@ static int interesting(void *tree, unsigned long size, const char *base)
 		if (matchlen > pathlen) {
 			if (match[pathlen] != '/')
 				continue;
+			if (!S_ISDIR(mode))
+				continue;
 		}
 
 		if (strncmp(path, match, pathlen))
