@@ -26,7 +26,9 @@ test_expect_success \
     'git-diff-files -p after editing work tree.' \
     'git-diff-files -p >current'
 cat >expected <<\EOF
-# mode: 100644 100755 path0
+diff --git a/path0 b/path0
+old mode 100644
+new mode 100755
 --- a/path0
 +++ b/path0
 @@ -1,3 +1,3 @@
@@ -34,7 +36,8 @@ cat >expected <<\EOF
  Line 2
 -line 3
 +Line 3
-# mode: 100755 . path1
+diff --git a/path1 b/path1
+deleted file mode 100755
 --- a/path1
 +++ /dev/null
 @@ -1,3 +0,0 @@

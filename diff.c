@@ -83,7 +83,6 @@ static void builtin_diff(const char *name,
 			 struct diff_tempfile *temp)
 {
 	int i, next_at;
-	const char *git_prefix = "# mode: ";
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
 	const char *diff_arg  = "'%s' '%s'||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
@@ -123,15 +122,16 @@ static void builtin_diff(const char *name,
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    diff_arg, input_name_sq[0], input_name_sq[1]);
 
+	printf("diff --git a/%s b/%s\n", name, name);
 	if (!path1[0][0])
-		printf("%s. %s %s\n", git_prefix, temp[1].mode, name);
+		printf("new file mode %s\n", temp[1].mode);
 	else if (!path1[1][0])
-		printf("%s%s . %s\n", git_prefix, temp[0].mode, name);
+		printf("deleted file mode %s\n", temp[0].mode);
 	else {
-		if (strcmp(temp[0].mode, temp[1].mode))
-			printf("%s%s %s %s\n", git_prefix,
-			       temp[0].mode, temp[1].mode, name);
-
+		if (strcmp(temp[0].mode, temp[1].mode)) {
+			printf("old mode %s\n", temp[0].mode);
+			printf("new mode %s\n", temp[1].mode);
+		}
 		if (strncmp(temp[0].mode, temp[1].mode, 3))
 			/* we do not run diff between different kind
 			 * of objects.
