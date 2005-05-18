@@ -54,15 +54,7 @@ static char *malloc_base(const char *base, const char *path, int pathlen)
 }
 
 static void show_file(const char *prefix, void *tree, unsigned long size, const char *base);
-
-/* A whole sub-tree went away or appeared */
-static void show_tree(const char *prefix, void *tree, unsigned long size, const char *base)
-{
-	while (size) {
-		show_file(prefix, tree, size, base);
-		update_tree_entry(&tree, &size);
-	}
-}
+static void show_tree(const char *prefix, void *tree, unsigned long size, const char *base);
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, void *tree, unsigned long size, const char *base)
@@ -220,6 +212,16 @@ static int interesting(void *tree, unsigned long size, const char *base)
 		return 1;
 	}
 	return 0; /* No matches */
+}
+
+/* A whole sub-tree went away or appeared */
+static void show_tree(const char *prefix, void *tree, unsigned long size, const char *base)
+{
+	while (size) {
+		if (interesting(tree, size, base))
+			show_file(prefix, tree, size, base);
+		update_tree_entry(&tree, &size);
+	}
 }
 
 static int diff_tree(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
