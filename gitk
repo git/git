@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.14 $
+# CVS $Revision: 1.15 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -160,6 +160,9 @@ proc makewindow {} {
     panedwindow .ctop -orient vertical
     if {[info exists geometry(width)]} {
 	.ctop conf -width $geometry(width) -height $geometry(height)
+	set texth [expr {$geometry(height) - $geometry(canvh) - 56}]
+	set geometry(ctexth) [expr {($texth - 8) /
+				    [font metrics $textfont -linespace]}]
     }
     frame .ctop.top
     frame .ctop.top.bar
@@ -195,8 +198,6 @@ proc makewindow {} {
     set findstring {}
     set fstring .ctop.top.bar.findstring
     entry $fstring -width 30 -font $textfont -textvariable findstring
-    # stop the toplevel events from firing on key presses
-    bind $fstring <Key> "[bind Entry <Key>]; break"
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
     tk_optionMenu .ctop.top.bar.findtype findtype Exact IgnCase Regexp
@@ -226,7 +227,7 @@ proc makewindow {} {
 
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
-    listbox $cflist -width $geometry(cflistw) -bg white -selectmode extended \
+    listbox $cflist -bg white -selectmode extended -width $geometry(cflistw) \
 	-yscrollcommand ".ctop.cdet.right.sb set"
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
@@ -242,10 +243,10 @@ proc makewindow {} {
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 u"
     bindall <2> "allcanvs scan mark 0 %y"
     bindall <B2-Motion> "allcanvs scan dragto 0 %y"
-    bindall <Key-Up> "selnextline -1"
-    bindall <Key-Down> "selnextline 1"
-    bindall <Key-Prior> "allcanvs yview scroll -1 p"
-    bindall <Key-Next> "allcanvs yview scroll 1 p"
+    bind . <Key-Up> "selnextline -1"
+    bind . <Key-Down> "selnextline 1"
+    bind . <Key-Prior> "allcanvs yview scroll -1 p"
+    bind . <Key-Next> "allcanvs yview scroll 1 p"
     bindkey <Key-Delete> "$ctext yview scroll -1 p"
     bindkey <Key-BackSpace> "$ctext yview scroll -1 p"
     bindkey <Key-space> "$ctext yview scroll 1 p"
@@ -267,6 +268,7 @@ proc makewindow {} {
     bind $cflist <<ListboxSelect>> listboxsel
     bind . <Destroy> {savestuff %W}
     bind . <Button-1> "click %W"
+    bind $fstring <Key-Return> dofind
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -306,13 +308,9 @@ proc savestuff {w} {
 	puts $f "set geometry(canv2) [expr [winfo width $canv2]-2]"
 	puts $f "set geometry(canv3) [expr [winfo width $canv3]-2]"
 	puts $f "set geometry(canvh) [expr [winfo height $canv]-2]"
-	puts $f "set geometry(csash) {[.ctop sash coord 0]}"
 	set wid [expr {([winfo width $ctext] - 8) \
 			   / [font measure $textfont "0"]}]
-	set ht [expr {([winfo height $ctext] - 8) \
-			  / [font metrics $textfont -linespace]}]
 	puts $f "set geometry(ctextw) $wid"
-	puts $f "set geometry(ctexth) $ht"
 	set wid [expr {([winfo width $cflist] - 11) \
 			   / [font measure [$cflist cget -font] "0"]}]
 	puts $f "set geometry(cflistw) $wid"
@@ -403,7 +401,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.14 $)} \
+(CVS $Revision: 1.15 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -520,9 +518,11 @@ proc drawgraph {} {
     set lineno -1
     set numcommits 0
     set phase drawgraph
+    set lthickness [expr {($linespc / 9) + 1}]
     while 1 {
 	set canvy $y2
-	allcanvs conf -scrollregion [list 0 0 0 $canvy]
+	allcanvs conf -scrollregion \
+	    [list 0 0 0 [expr $canvy + 0.5 * $linespc + 2]]
 	update
 	if {$stopped} break
 	incr numcommits
@@ -551,13 +551,15 @@ proc drawgraph {} {
 	set y2 [expr $canvy + $linespc]
 	if {[info exists linestarty($level)] && $linestarty($level) < $canvy} {
 	    set t [$canv create line $x $linestarty($level) $x $canvy \
-		       -width 2 -fill $colormap($id)]
+		       -width $lthickness -fill $colormap($id)]
 	    $canv lower $t
 	}
 	set linestarty($level) $canvy
-	set t [$canv create oval [expr $x - 4] [expr $canvy - 4] \
-		   [expr $x + 3] [expr $canvy + 3] \
-		   -fill blue -outline black -width 1]
+	set ofill [expr {[info exists parents($id)]? "blue": "white"}]
+	set orad [expr {$linespc / 3}]
+	set t [$canv create oval [expr $x - $orad] [expr $canvy - $orad] \
+		   [expr $x + $orad - 1] [expr $canvy + $orad - 1] \
+		   -fill $ofill -outline black -width 1]
 	$canv raise $t
 	set xt [expr $canvx0 + $nlines * $linespc]
 	set headline [lindex $commitinfo($id) 0]
@@ -694,7 +696,8 @@ proc drawgraph {} {
 		lappend coords [expr $xj - $linespc] $canvy
 	    }
 	    lappend coords $xj $y2
-	    set t [$canv create line $coords -width 2 -fill $colormap($dst)]
+	    set t [$canv create line $coords -width $lthickness \
+		       -fill $colormap($dst)]
 	    $canv lower $t
 	    if {![info exists linestarty($j)]} {
 		set linestarty($j) $y2
@@ -882,9 +885,9 @@ proc selcanvline {x y} {
 proc selectline {l} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
-    global canvy canvy0 linespc nparents treepending
+    global canvy0 linespc nparents treepending
     global cflist treediffs currentid sha1entry
-    global commentend
+    global commentend seenfile numcommits
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
     set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
@@ -899,14 +902,24 @@ proc selectline {l} {
 	       -tags secsel -fill [$canv3 cget -selectbackground]]
     $canv3 lower $t
     set y [expr {$canvy0 + $l * $linespc}]
-    set ytop [expr {($y - $linespc / 2.0) / $canvy}]
-    set ybot [expr {($y + $linespc / 2.0) / $canvy}]
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    set ytop [expr {($y - $linespc / 2.0 - 1) / $ymax}]
+    set ybot [expr {($y + $linespc / 2.0 + 1) / $ymax}]
     set wnow [$canv yview]
-    if {$ytop < [lindex $wnow 0]} {
+    set scrincr [expr {$linespc * 1.0 / $ymax}]
+    set wtop [lindex $wnow 0]
+    if {$ytop < $wtop} {
+	if {$ytop > $wtop - $scrincr} {
+	    set ytop [expr {$wtop - $scrincr}]
+	}
 	allcanvs yview moveto $ytop
     } elseif {$ybot > [lindex $wnow 1]} {
-	set wh [expr {[lindex $wnow 1] - [lindex $wnow 0]}]
-	allcanvs yview moveto [expr {$ybot - $wh}]
+	set wh [expr {[lindex $wnow 1] - $wtop}]
+	set ytop [expr {$ybot - $wh}]
+	if {$ytop < $wtop + $scrincr} {
+	    set ytop [expr {$wtop + $scrincr}]
+	}
+	allcanvs yview moveto $ytop
     }
     set selectedline $l
 
@@ -942,6 +955,7 @@ proc selectline {l} {
 	    addtocflist $id
 	}
     }
+    catch {unset seenfile}
 }
 
 proc selnextline {dir} {
@@ -1008,13 +1022,15 @@ proc getblobdiffs {id} {
 }
 
 proc getblobdiffline {bdf id} {
-    global currentid blobdifffd ctext curdifftag curtagstart
+    global currentid blobdifffd ctext curdifftag curtagstart seenfile
+    global diffnexthead
     set n [gets $bdf line]
     if {$n < 0} {
 	if {[eof $bdf]} {
 	    close $bdf
 	    if {$id == $currentid && $bdf == $blobdifffd($id)} {
 		$ctext tag add $curdifftag $curtagstart end
+		set seenfile($curdifftag) 1
 	    }
 	}
 	return
@@ -1023,11 +1039,16 @@ proc getblobdiffline {bdf id} {
 	return
     }
     $ctext conf -state normal
-    if {[regexp {^---[ \t]+([^/])+/(.*)} $line match s1 fname]} {
+    if {[regexp {^---[ \t]+([^/])*/(.*)} $line match s1 fname]} {
 	# start of a new file
 	$ctext insert end "\n"
 	$ctext tag add $curdifftag $curtagstart end
+	set seenfile($curdifftag) 1
 	set curtagstart [$ctext index "end - 1c"]
+	if {[info exists diffnexthead]} {
+	    set fname $diffnexthead
+	    unset diffnexthead
+	}
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
 	set l [expr {(78 - [string length $fname]) / 2}]
@@ -1035,6 +1056,10 @@ proc getblobdiffline {bdf id} {
 	$ctext insert end "$pad $fname $pad\n" filesep
     } elseif {[string range $line 0 2] == "+++"} {
 	# no need to do anything with this
+    } elseif {[regexp {^Created: (.*) \(mode: *[0-7]*\)} $line match fn]} {
+	set diffnexthead $fn
+    } elseif {[string range $line 0 8] == "Deleted: "} {
+	set diffnexthead [string range $line 9 end]
     } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
 		   $line match f1l f1c f2l f2c rest]} {
 	$ctext insert end "\t" hunksep
@@ -1054,6 +1079,7 @@ proc getblobdiffline {bdf id} {
 	    if {$curdifftag != "Comments"} {
 		$ctext insert end "\n"
 		$ctext tag add $curdifftag $curtagstart end
+		set seenfile($curdifftag) 1
 		set curtagstart [$ctext index "end - 1c"]
 		set curdifftag Comments
 	    }
@@ -1064,14 +1090,16 @@ proc getblobdiffline {bdf id} {
 }
 
 proc listboxsel {} {
-    global ctext cflist currentid treediffs
+    global ctext cflist currentid treediffs seenfile
     if {![info exists currentid]} return
     set sel [$cflist curselection]
     if {$sel == {} || [lsearch -exact $sel 0] >= 0} {
 	# show everything
 	$ctext tag conf Comments -elide 0
 	foreach f $treediffs($currentid) {
-	    $ctext tag conf "f:$f" -elide 0
+	    if [info exists seenfile(f:$f)] {
+		$ctext tag conf "f:$f" -elide 0
+	    }
 	}
     } else {
 	# just show selected files
@@ -1079,7 +1107,9 @@ proc listboxsel {} {
 	set i 1
 	foreach f $treediffs($currentid) {
 	    set elide [expr {[lsearch -exact $sel $i] < 0}]
-	    $ctext tag conf "f:$f" -elide $elide
+	    if [info exists seenfile(f:$f)] {
+		$ctext tag conf "f:$f" -elide $elide
+	    }
 	    incr i
 	}
     }
@@ -1133,16 +1163,17 @@ set boldnames 0
 set diffopts "-U 5 -p"
 
 set mainfont {Helvetica 9}
-set namefont $mainfont
 set textfont {Courier 9}
-if {$boldnames} {
-    lappend namefont bold
-}
 
 set colors {green red blue magenta darkgrey brown orange}
 set colorbycommitter false
 
 catch {source ~/.gitk}
+
+set namefont $mainfont
+if {$boldnames} {
+    lappend namefont bold
+}
 
 set revtreeargs {}
 foreach arg $argv {
