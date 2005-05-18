@@ -51,9 +51,9 @@ const char *show_date(unsigned long time, int tz)
 	int minutes;
 
 	minutes = tz < 0 ? -tz : tz;
-	minutes = (tz / 100)*60 + (tz % 100);
+	minutes = (minutes / 100)*60 + (minutes % 100);
 	minutes = tz < 0 ? -minutes : minutes;
-	t = time - minutes * 60;
+	t = time + minutes * 60;
 	tm = gmtime(&t);
 	if (!tm)
 		return NULL;
