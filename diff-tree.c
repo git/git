@@ -342,13 +342,39 @@ static char *generate_header(const char *commit, const char *parent, const char 
 	return this_header;
 }
 
+static int diff_tree_commit(const unsigned char *commit, const char *name)
+{
+	unsigned long size, offset;
+	char *buf = read_object_with_reference(commit, "commit", &size, NULL);
+
+	if (!buf)
+		return -1;
+
+	/* More than one parent? */
+	if (ignore_merges) {
+		if (!memcmp(buf + 46 + 48, "parent ", 7))
+			return 0;
+	}
+
+	offset = 46;
+	while (offset + 48 < size && !memcmp(buf + offset, "parent ", 7)) {
+		unsigned char parent[20];
+		if (get_sha1_hex(buf + offset + 7, parent))
+			return -1;
+		header = generate_header(name, sha1_to_hex(parent), buf, size);
+		diff_tree_sha1(parent, commit, "");
+		if (!header && verbose_header)
+			header_prefix = "\ndiff-tree ";
+		offset += 48;
+	}
+	return 0;
+}
+
 static int diff_tree_stdin(char *line)
 {
 	int len = strlen(line);
 	unsigned char commit[20], parent[20];
-	unsigned long size, offset;
 	static char this_header[1000];
-	char *buf;
 
 	if (!len || line[len-1] != '\n')
 		return -1;
@@ -362,28 +388,8 @@ static int diff_tree_stdin(char *line)
 		header = this_header;
 		return diff_tree_sha1(parent, commit, "");
 	}
-	buf = read_object_with_reference(commit, "commit", &size, NULL);
-	if (!buf)
-		return -1;
-
-	/* More than one parent? */
-	if (ignore_merges) {
-		if (!memcmp(buf + 46 + 48, "parent ", 7))
-			return 0;
-	}
-
 	line[40] = 0;
-	offset = 46;
-	while (offset + 48 < size && !memcmp(buf + offset, "parent ", 7)) {
-		if (get_sha1_hex(buf + offset + 7, parent))
-			return -1;
-		header = generate_header(line, sha1_to_hex(parent), buf, size);
-		diff_tree_sha1(parent, commit, "");
-		if (!header && verbose_header)
-			header_prefix = "\ndiff-tree ";
-		offset += 48;
-	}
-	return -1;
+	return diff_tree_commit(commit, line);
 }
 
 static char *diff_tree_usage =
