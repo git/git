@@ -268,11 +268,12 @@ int main(int ac, const char **av) {
 		if (sb.eof)
 			break;
 		status = parse_diff_raw_output(sb.buf, av+1, ac-1, reverse);
-		if (status)
-			fprintf(stderr, "cannot parse %s\n", sb.buf);
+		if (status) {
+			flush_renames(av+1, ac-1, reverse);
+			printf("%s%c", sb.buf, line_termination);
+		}
 	}
 
-	if (detect_rename)
-		flush_renames(av+1, ac-1, reverse);
+	flush_renames(av+1, ac-1, reverse);
 	return 0;
 }
