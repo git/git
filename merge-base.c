@@ -62,8 +62,8 @@ int main(int argc, char **argv)
 	    get_sha1(argv[2], rev2key)) {
 		usage("merge-base <commit-id> <commit-id>");
 	}
-	rev1 = lookup_commit(rev1key);
-	rev2 = lookup_commit(rev2key);
+	rev1 = lookup_commit_reference(rev1key);
+	rev2 = lookup_commit_reference(rev2key);
 	ret = common_ancestor(rev1, rev2);
 	if (!ret)
 		return 1;
