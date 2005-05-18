@@ -1,9 +1,31 @@
+#include "tag.h"
 #include "commit.h"
 #include "cache.h"
 #include <string.h>
 #include <limits.h>
 
 const char *commit_type = "commit";
+
+static struct commit *check_commit(struct object *obj, unsigned char *sha1)
+{
+	if (obj->type != commit_type) {
+		error("Object %s is a %s, not a commit", 
+		      sha1_to_hex(sha1), obj->type);
+		return NULL;
+	}
+	return (struct commit *) obj;
+}
+
+struct commit *lookup_commit_reference(unsigned char *sha1)
+{
+	struct object *obj = parse_object(sha1);
+
+	if (!obj)
+		return NULL;
+	if (obj->type == tag_type)
+		obj = ((struct tag *)obj)->tagged;
+	return check_commit(obj, sha1);
+}
 
 struct commit *lookup_commit(unsigned char *sha1)
 {
@@ -15,12 +37,7 @@ struct commit *lookup_commit(unsigned char *sha1)
 		ret->object.type = commit_type;
 		return ret;
 	}
-	if (obj->type != commit_type) {
-		error("Object %s is a %s, not a commit", 
-		      sha1_to_hex(sha1), obj->type);
-		return NULL;
-	}
-	return (struct commit *) obj;
+	return check_commit(obj, sha1);
 }
 
 static unsigned long parse_commit_date(const char *buf)
