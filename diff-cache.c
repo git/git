@@ -63,7 +63,7 @@ static int show_modified(struct cache_entry *old,
 {
 	unsigned int mode, oldmode;
 	unsigned char *sha1;
-	unsigned char old_sha1_hex[60];
+	char old_sha1_hex[60];
 
 	if (get_stat_data(new, &sha1, &mode) < 0) {
 		if (report_missing)

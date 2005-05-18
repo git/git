@@ -344,7 +344,7 @@ unmap:
 }
 
 #define WRITE_BUFFER_SIZE 8192
-static char write_buffer[WRITE_BUFFER_SIZE];
+static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 
 static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)

@@ -24,7 +24,7 @@ static void print_path_prefix(struct path_prefix *prefix)
 }
 
 static void list_recursive(void *buffer,
-			   const unsigned char *type,
+			   const char *type,
 			   unsigned long size,
 			   struct path_prefix *prefix)
 {

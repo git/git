@@ -205,7 +205,7 @@ static void append_extended_header(char **p, const char *keyword,
 	append_char(p, '\n');
 }
 
-static void write_header(const char *, char, const char *, struct path_prefix *,
+static void write_header(const unsigned char *, char, const char *, struct path_prefix *,
                          const char *, unsigned int, void *, unsigned long);
 
 /* stores a pax extended header directly in the block buffer */
@@ -238,7 +238,7 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 	free(buffer);
 }
 
-static void write_global_extended_header(const char *sha1)
+static void write_global_extended_header(const unsigned char *sha1)
 {
 	char *p;
 	unsigned int size;
@@ -253,7 +253,7 @@ static void write_global_extended_header(const char *sha1)
 }
 
 /* stores a ustar header directly in the block buffer */
-static void write_header(const char *sha1, char typeflag, const char *basepath,
+static void write_header(const unsigned char *sha1, char typeflag, const char *basepath,
                          struct path_prefix *prefix, const char *path,
                          unsigned int mode, void *buffer, unsigned long size)
 {

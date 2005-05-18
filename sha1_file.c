@@ -313,13 +313,13 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	int ret, bytes;
 	z_stream stream;
 	char buffer[8192];
-	char *buf;
+	unsigned char *buf;
 
 	/* Get the data stream */
 	memset(&stream, 0, sizeof(stream));
 	stream.next_in = map;
 	stream.avail_in = mapsize;
-	stream.next_out = buffer;
+	stream.next_out = (unsigned char *)buffer;
 	stream.avail_out = sizeof(buffer);
 
 	inflateInit(&stream);
@@ -359,7 +359,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
-				 const unsigned char *required_type,
+				 const char *required_type,
 				 unsigned long *size,
 				 unsigned char *actual_sha1_return)
 {
@@ -403,20 +403,20 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
-	char *compressed;
+	unsigned char *compressed;
 	z_stream stream;
 	unsigned char sha1[20];
 	SHA_CTX c;
 	char *filename;
 	static char tmpfile[PATH_MAX];
-	char hdr[50];
+	unsigned char hdr[50];
 	int fd, hdrlen, ret;
 
 	/* Generate the header */
-	hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
+	hdrlen = sprintf((char *)hdr, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
 	SHA1_Init(&c);
@@ -516,8 +516,8 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd)
 	int local;
 	z_stream stream;
 	unsigned char real_sha1[20];
-	char buf[4096];
-	char discard[4096];
+	unsigned char buf[4096];
+	unsigned char discard[4096];
 	int ret;
 	SHA_CTX c;
 

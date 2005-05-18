@@ -6,7 +6,7 @@
 void service(int fd_in, int fd_out) {
 	ssize_t size;
 	int posn;
-	char sha1[20];
+	char unsigned sha1[20];
 	unsigned long objsize;
 	void *buf;
 	do {

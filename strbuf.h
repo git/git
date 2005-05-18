@@ -4,7 +4,7 @@ struct strbuf {
 	int alloc;
 	int len;
 	int eof;
-	unsigned char *buf;
+	char *buf;
 };
 
 extern void strbuf_init(struct strbuf *);

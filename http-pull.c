@@ -24,7 +24,7 @@ static int zret;
 
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb, 
 			       void *data) {
-	char expn[4096];
+	unsigned char expn[4096];
 	size_t size = eltsize * nmemb;
 	int posn = 0;
 	do {
@@ -49,7 +49,7 @@ int fetch(unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
 	char *filename = sha1_file_name(sha1);
-	char real_sha1[20];
+	unsigned char real_sha1[20];
 	char *url;
 	char *posn;
 

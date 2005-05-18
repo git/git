@@ -143,7 +143,7 @@ extern char *sha1_file_name(const unsigned char *sha1);
 extern void * map_sha1_file(const unsigned char *sha1, unsigned long *size);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
-extern int write_sha1_file(char *buf, unsigned long len, const char *type, unsigned char *return_sha1);
+extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 
 extern int check_sha1_signature(unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
@@ -167,7 +167,7 @@ extern int error(const char *err, ...);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
 
 extern void *read_object_with_reference(const unsigned char *sha1,
-					const unsigned char *required_type,
+					const char *required_type,
 					unsigned long *size,
 					unsigned char *sha1_ret);
 

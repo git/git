@@ -48,7 +48,7 @@ static void show_file(int pfx, struct cache_entry *ce)
 }
 
 static void show_modified(int oldmode, int mode,
-			  const char *old_sha1, const char *sha1,
+			  const unsigned char *old_sha1, const unsigned char *sha1,
 			  char *path)
 {
 	char old_sha1_hex[41];
@@ -64,7 +64,7 @@ static void show_modified(int oldmode, int mode,
 
 int main(int argc, char **argv)
 {
-	static const char null_sha1[20] = { 0, };
+	static const unsigned char null_sha1[20] = { 0, };
 	int entries = read_cache();
 	int i;
 
