@@ -670,9 +670,6 @@ void diff_flush(void)
 		dst = mx[c].dst;
 		if ((src->flags & MATCHED) || (dst->flags & MATCHED))
 			continue;
-		fprintf(stderr,
-			"**score ** %d %s %s\n",
-			mx[c].score, src->path, dst->path);
 	}
 
  	for (c = 0; c < num_create * num_delete; c++) {
