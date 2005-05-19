@@ -37,6 +37,8 @@ void read_line(struct strbuf *sb, FILE *fp, int term) {
 			break;
 		strbuf_add(sb, ch);
 	}
+	if (ch == EOF && sb->len == 0)
+		sb->eof = 1;
 	strbuf_end(sb);
 }
 
