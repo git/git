@@ -50,4 +50,13 @@ test_expect_success \
     'validate git-diff-files -p output.' \
     'cmp -s current expected'
 
+test_expect_success \
+    'build same diff using git-diff-helper.' \
+    'git-diff-files -z | git-diff-helper -z >current'
+
+
+test_expect_success \
+    'validate git-diff-helper output.' \
+    'cmp -s current expected'
+
 test_done
