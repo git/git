@@ -5,6 +5,7 @@ static int cached_only = 0;
 static int generate_patch = 0;
 static int match_nonexisting = 0;
 static int line_termination = '\n';
+static int detect_rename = 0;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
@@ -165,13 +166,14 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"git-diff-cache [-p] [-r] [-z] [-m] [--cached] <tree sha1>";
+"git-diff-cache [-p] [-r] [-z] [-m] [-M] [--cached] <tree-ish>";
 
 int main(int argc, char **argv)
 {
 	unsigned char tree_sha1[20];
 	void *tree;
 	unsigned long size;
+	int ret;
 
 	read_cache();
 	while (argc > 2) {
@@ -184,6 +186,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-p")) {
 			generate_patch = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-M")) {
+			generate_patch = detect_rename = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
@@ -204,6 +210,9 @@ int main(int argc, char **argv)
 	if (argc != 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
+	if (generate_patch)
+		diff_setup(detect_rename, 0, 0, 0, 0);
+
 	mark_merge_entries();
 
 	tree = read_object_with_reference(tree_sha1, "tree", &size, 0);
@@ -212,5 +221,8 @@ int main(int argc, char **argv)
 	if (read_tree(tree, size, 1))
 		die("unable to read tree object %s", argv[1]);
 
-	return diff_cache(active_cache, active_nr);
+	ret = diff_cache(active_cache, active_nr);
+	if (generate_patch)
+		diff_flush();
+	return ret;
 }

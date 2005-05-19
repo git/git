@@ -17,21 +17,10 @@ extern void diff_change(unsigned mode1, unsigned mode2,
 
 extern void diff_unmerge(const char *path);
 
-/* These are for diff-helper */
+extern void diff_setup(int detect_rename, int minimum_score,
+		       int reverse,
+		       const char **spec, int cnt);
 
-struct diff_spec {
-	unsigned char blob_sha1[20];
-	unsigned short mode;	 /* file mode */
-	unsigned sha1_valid : 1; /* if true, use blob_sha1 and trust mode;
-				  * however with a NULL SHA1, read them
-				  * from the file system.
-				  * if false, use the name and read mode from
-				  * the filesystem.
-				  */
-	unsigned file_valid : 1; /* if false the file does not even exist */
-};
-
-extern void run_external_diff(const char *name, const char *other,
-			      struct diff_spec *, struct diff_spec *);
+extern void diff_flush(void);
 
 #endif /* DIFF_H */

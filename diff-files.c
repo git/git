@@ -7,10 +7,11 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"diff-files [-p] [-q] [-r] [-z] [paths...]";
+"diff-files [-p] [-q] [-r] [-z] [-M] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';
+static int detect_rename = 0;
 static int silent = 0;
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
@@ -79,6 +80,9 @@ int main(int argc, char **argv)
 			; /* no-op */
 		else if (!strcmp(argv[1], "-z"))
 			line_termination = 0;
+		else if (!strcmp(argv[1], "-M")) {
+			detect_rename = generate_patch = 1;
+		}
 		else
 			usage(diff_files_usage);
 		argv++; argc--;
@@ -91,6 +95,9 @@ int main(int argc, char **argv)
 		perror("read_cache");
 		exit(1);
 	}
+
+	if (generate_patch)
+		diff_setup(detect_rename, 0, 0, 0, 0);		
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
@@ -132,5 +139,7 @@ int main(int argc, char **argv)
 		show_modified(oldmode, mode, ce->sha1, null_sha1,
 			      ce->name);
 	}
+	if (generate_patch)
+		diff_flush();
 	return 0;
 }

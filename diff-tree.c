@@ -9,6 +9,7 @@ static int recursive = 0;
 static int read_stdin = 0;
 static int line_termination = '\n';
 static int generate_patch = 0;
+static int detect_rename = 0;
 static const char *header = NULL;
 static const char *header_prefix = "";
 
@@ -281,6 +282,18 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
+static int diff_tree_sha1_top(const unsigned char *old,
+			      const unsigned char *new, const char *base)
+{
+	int ret;
+	if (generate_patch)
+		diff_setup(detect_rename, 0, 0, 0, 0);
+	ret = diff_tree_sha1(old, new, base);
+	if (generate_patch)
+		diff_flush();
+	return ret;
+}
+
 static int get_one_line(const char *msg, unsigned long len)
 {
 	int ret = 0;
@@ -377,7 +390,7 @@ static int diff_tree_commit(const unsigned char *commit, const char *name)
 		if (get_sha1_hex(buf + offset + 7, parent))
 			return -1;
 		header = generate_header(name, sha1_to_hex(parent), buf, size);
-		diff_tree_sha1(parent, commit, "");
+		diff_tree_sha1_top(parent, commit, "");
 		if (!header && verbose_header)
 			header_prefix = "\ndiff-tree ";
 		offset += 48;
@@ -401,14 +414,14 @@ static int diff_tree_stdin(char *line)
 		line[81] = 0;
 		sprintf(this_header, "%s (from %s)\n", line, line+41);
 		header = this_header;
-		return diff_tree_sha1(parent, commit, "");
+		return diff_tree_sha1_top(parent, commit, "");
 	}
 	line[40] = 0;
 	return diff_tree_commit(commit, line);
 }
 
 static char *diff_tree_usage =
-"diff-tree [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] <tree sha1> <tree sha1>";
+"diff-tree [-p] [-r] [-z] [--stdin] [-M] [-m] [-s] [-v] <tree-ish> <tree-ish>";
 
 int main(int argc, char **argv)
 {
@@ -445,6 +458,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-p")) {
 			recursive = generate_patch = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-M")) {
+			detect_rename = recursive = generate_patch = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
@@ -490,7 +507,7 @@ int main(int argc, char **argv)
 		diff_tree_commit(sha1[0], NULL);
 		break;
 	case 2:
-		diff_tree_sha1(sha1[0], sha1[1], "");
+		diff_tree_sha1_top(sha1[0], sha1[1], "");
 		break;
 	}
 

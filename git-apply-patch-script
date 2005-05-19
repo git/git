@@ -11,6 +11,9 @@ case "$#" in
 1)
     echo >&2 "cannot handle unmerged diff on path $1."
     exit 1 ;;
+8)
+    echo >&2 "cannot handle rename diff between $1 and $8 yet."
+    exit 1 ;;
 esac
 name="$1" tmp1="$2" hex1="$3" mode1="$4" tmp2="$5" hex2="$6" mode2="$7"
 
