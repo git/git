@@ -1,2 +1,2 @@
 #!/bin/sh
-git-rev-list HEAD | git-diff-tree --stdin -v -r "$@"
+git-rev-list HEAD | git-diff-tree --stdin -v -r "$@" | less -S
