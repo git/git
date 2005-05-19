@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.16 $
+# CVS $Revision: 1.17 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -257,6 +257,7 @@ proc makewindow {} {
     bindkey u "$ctext yview scroll -18 u"
     bindkey / findnext
     bindkey ? findprev
+    bindkey f nextfile
     bind . <Control-q> doquit
     bind . <Control-f> dofind
     bind . <Control-g> findnext
@@ -401,7 +402,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.16 $)} \
+(CVS $Revision: 1.17 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -1022,6 +1023,7 @@ proc gettreediffline {gdtf id} {
 
 proc getblobdiffs {id} {
     global parents diffopts blobdifffd env curdifftag curtagstart
+    global diffindex difffilestart
     set p [lindex $parents($id) 0]
     set env(GIT_DIFF_OPTS) $diffopts
     if [catch {set bdf [open "|git-diff-tree -r -p $p $id" r]} err] {
@@ -1032,12 +1034,14 @@ proc getblobdiffs {id} {
     set blobdifffd($id) $bdf
     set curdifftag Comments
     set curtagstart 0.0
+    set diffindex 0
+    catch {unset difffilestart}
     fileevent $bdf readable "getblobdiffline $bdf $id"
 }
 
 proc getblobdiffline {bdf id} {
     global currentid blobdifffd ctext curdifftag curtagstart seenfile
-    global diffnexthead diffnextnote
+    global diffnexthead diffnextnote diffindex difffilestart
     set n [gets $bdf line]
     if {$n < 0} {
 	if {[eof $bdf]} {
@@ -1065,6 +1069,8 @@ proc getblobdiffline {bdf id} {
 	    set header "$diffnexthead ($diffnextnote)"
 	    unset diffnexthead
 	}
+	set difffilestart($diffindex) [$ctext index "end - 1c"]
+	incr diffindex
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
 	set l [expr {(78 - [string length $header]) / 2}]
@@ -1077,6 +1083,14 @@ proc getblobdiffline {bdf id} {
 	set diffnextnote "created, mode $m"
     } elseif {[string range $line 0 8] == "Deleted: "} {
 	set diffnexthead [string range $line 9 end]
+	set diffnextnote "deleted"
+    } elseif {[regexp {^diff --git a/(.*) b/} $line match fn]} {
+	# save the filename in case the next thing is "new file mode ..."
+	set diffnexthead $fn
+	set diffnextnote "modified"
+    } elseif {[regexp {^new file mode ([0-7]+)} $line match m]} {
+	set diffnextnote "new file, mode $m"
+    } elseif {[string range $line 0 11] == "deleted file"} {
 	set diffnextnote "deleted"
     } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
 		   $line match f1l f1c f2l f2c rest]} {
@@ -1108,6 +1122,17 @@ proc getblobdiffline {bdf id} {
 	}
     }
     $ctext conf -state disabled
+}
+
+proc nextfile {} {
+    global difffilestart ctext
+    set here [$ctext index @0,0]
+    for {set i 0} {[info exists difffilestart($i)]} {incr i} {
+	if {[$ctext compare $difffilestart($i) > $here]} {
+	    $ctext yview $difffilestart($i)
+	    break
+	}
+    }
 }
 
 proc listboxsel {} {
