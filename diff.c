@@ -85,12 +85,10 @@ struct diff_spec {
 	unsigned char blob_sha1[20];
 	unsigned short mode;	 /* file mode */
 	unsigned sha1_valid : 1; /* if true, use blob_sha1 and trust mode;
-				  * however with a NULL SHA1, read them
-				  * from the file system.
-				  * if false, use the name and read mode from
+				  * if false, use the name and read from
 				  * the filesystem.
 				  */
-	unsigned file_valid : 1; /* if false the file does not even exist */
+	unsigned file_valid : 1; /* if false the file does not exist */
 };
 
 static void builtin_diff(const char *name_a,
@@ -506,6 +504,7 @@ static void free_data(struct diff_spec_hold *s)
 	else if (s->flags & SHOULD_MUNMAP)
 		munmap(s->data, s->size);
 	s->flags &= ~(SHOULD_FREE|SHOULD_MUNMAP);
+	s->data = 0;
 }
 
 static void flush_remaining_diff(struct diff_spec_hold *elem,
@@ -625,9 +624,17 @@ void diff_flush(void)
 
 	/* We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
+	 *
+	 * With the current callers, we should not have already
+	 * matched entries at this point, but it is nonetheless
+	 * checked for sanity.
 	 */
 	for (dst = createdfile; dst; dst = dst->next) {
+		if (dst->flags & MATCHED)
+			continue;
 		for (src = deletedfile; src; src = src->next) {
+			if (src->flags & MATCHED)
+				continue;
 			if (! is_exact_match(src, dst))
 				continue;
 			flush_rename_pair(src, dst);
@@ -665,12 +672,17 @@ void diff_flush(void)
 	}
 	qsort(mx, num_create*num_delete, sizeof(*mx), score_compare); 
 
+#if 0
  	for (c = 0; c < num_create * num_delete; c++) {
 		src = mx[c].src;
 		dst = mx[c].dst;
 		if ((src->flags & MATCHED) || (dst->flags & MATCHED))
 			continue;
+		fprintf(stderr,
+			"**score ** %d %s %s\n",
+			mx[c].score, src->path, dst->path);
 	}
+#endif
 
  	for (c = 0; c < num_create * num_delete; c++) {
 		src = mx[c].src;
@@ -681,6 +693,7 @@ void diff_flush(void)
 			break;
 		flush_rename_pair(src, dst);
 	}
+	free(mx);
 
  exit_path:
 	flush_remaining_diff(createdfile, 1);
