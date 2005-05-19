@@ -36,9 +36,9 @@ install: $(PROG) $(SCRIPTS)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
-	 tag.o date.o
+	 tag.o date.o diff-delta.o patch-delta.o
 LIB_FILE=libgit.a
-LIB_H=cache.h object.h blob.h tree.h commit.h tag.h
+LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h
 
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
@@ -71,6 +71,9 @@ $(LIB_FILE): $(LIB_OBJS)
 
 test-date: test-date.c date.o
 	$(CC) $(CFLAGS) -o $@ test-date.c date.o
+
+test-delta: test-delta.c diff-delta.o patch-delta.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 git-%: %.c $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
