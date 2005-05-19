@@ -95,7 +95,7 @@ static void builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_tempfile *temp)
 {
-	int i, next_at;
+	int i, next_at, cmd_size;
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
 	const char *diff_arg  = "'%s' '%s'||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
@@ -112,7 +112,7 @@ static void builtin_diff(const char *name_a,
 	 * we use 2 spaces around diff-opts, and we need to count
 	 * terminating NUL, so we subtract 9 here.
 	 */
-	int cmd_size = (strlen(diff_cmd) + strlen(diff_opts) +
+	cmd_size = (strlen(diff_cmd) + strlen(diff_opts) +
 			strlen(diff_arg) - 9);
 	for (i = 0; i < 2; i++) {
 		input_name_sq[i] = sq_expand(temp[i].name);
