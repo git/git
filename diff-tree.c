@@ -3,6 +3,7 @@
 #include "diff.h"
 
 static int silent = 0;
+static int show_root_diff = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
 static int recursive = 0;
@@ -294,6 +295,24 @@ static int diff_tree_sha1_top(const unsigned char *old,
 	return ret;
 }
 
+static int diff_root_tree(const unsigned char *new, const char *base)
+{
+	int retval;
+	void *tree;
+	unsigned long size;
+
+	if (generate_patch)
+		diff_setup(detect_rename, 0, 0, 0, 0);
+	tree = read_object_with_reference(new, "tree", &size, 0);
+	if (!tree)
+		die("unable to read root tree (%s)", sha1_to_hex(new));
+	retval = diff_tree("", 0, tree, size, base);
+	free(tree);
+	if (generate_patch)
+		diff_flush();
+	return retval;
+}
+
 static int get_one_line(const char *msg, unsigned long len)
 {
 	int ret = 0;
@@ -372,16 +391,22 @@ static int diff_tree_commit(const unsigned char *commit, const char *name)
 	if (!buf)
 		return -1;
 
-	/* More than one parent? */
-	if (ignore_merges) {
-		if (!memcmp(buf + 46 + 48, "parent ", 7))
-			return 0;
-	}
-
 	if (!name) {
 		static char commit_name[60];
 		strcpy(commit_name, sha1_to_hex(commit));
 		name = commit_name;
+	}
+
+	/* Root commit? */
+	if (show_root_diff && memcmp(buf + 46, "parent ", 7)) {
+		header = generate_header(name, "root", buf, size);
+		diff_root_tree(commit, "");
+	}
+
+	/* More than one parent? */
+	if (ignore_merges) {
+		if (!memcmp(buf + 46 + 48, "parent ", 7))
+			return 0;
 	}
 
 	offset = 46;
@@ -483,6 +508,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--stdin")) {
 			read_stdin = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--root")) {
+			show_root_diff = 1;
 			continue;
 		}
 		usage(diff_tree_usage);
