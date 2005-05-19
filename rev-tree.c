@@ -64,7 +64,7 @@ void process_commit(unsigned char *sha1)
 }
 
 /*
- * Usage: rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id2>]
+ * Usage: git-rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id2>]
  *
  * The cache-file can be quite important for big trees. This is an
  * expensive operation if you have to walk the whole chain of
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 			basemask |= 1<<nr;
 		}
 		if (nr >= MAX_COMMITS || get_sha1(arg, sha1[nr]))
-			usage("rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id>]");
+			usage("git-rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id>]");
 		process_commit(sha1[nr]);
 		nr++;
 	}

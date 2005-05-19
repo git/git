@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!commit_arg || get_sha1(commit_arg, sha1))
-		usage("usage: rev-list [OPTION] commit-id\n"
+		usage("usage: git-rev-list [OPTION] commit-id\n"
 		      "  --max-count=nr\n"
 		      "  --max-age=epoch\n"
 		      "  --min-age=epoch\n");

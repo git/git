@@ -14,7 +14,7 @@ void service(int fd_in, int fd_out) {
 		do {
 			size = read(fd_in, sha1 + posn, 20 - posn);
 			if (size < 0) {
-				perror("rpush: read ");
+				perror("git-rpush: read ");
 				return;
 			}
 			if (!size)
@@ -26,7 +26,7 @@ void service(int fd_in, int fd_out) {
 
 		buf = map_sha1_file(sha1, &objsize);
 		if (!buf) {
-			fprintf(stderr, "rpush: could not find %s\n", 
+			fprintf(stderr, "git-rpush: could not find %s\n", 
 				sha1_to_hex(sha1));
 			return;
 		}
@@ -35,9 +35,9 @@ void service(int fd_in, int fd_out) {
 			size = write(fd_out, buf + posn, objsize - posn);
 			if (size <= 0) {
 				if (!size) {
-					fprintf(stderr, "rpush: write closed");
+					fprintf(stderr, "git-rpush: write closed");
 				} else {
-					perror("rpush: write ");
+					perror("git-rpush: write ");
 				}
 				return;
 			}
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
                 arg++;
         }
         if (argc < arg + 2) {
-                usage("rpush [-c] [-t] [-a] commit-id url");
+                usage("git-rpush [-c] [-t] [-a] commit-id url");
                 return 1;
         }
 	commit_id = argv[arg];

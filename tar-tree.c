@@ -17,7 +17,7 @@
 #define EXT_HEADER_PATH		1
 #define EXT_HEADER_LINKPATH	2
 
-static const char *tar_tree_usage = "tar-tree <key> [basedir]";
+static const char *tar_tree_usage = "git-tar-tree <key> [basedir]";
 
 static char block[BLOCKSIZE];
 static unsigned long offset;
@@ -40,9 +40,9 @@ static void reliable_write(void *buf, unsigned long size)
 				continue;
 			if (errno == EPIPE)
 				exit(0);
-			die("tar-tree: %s", strerror(errno));
+			die("git-tar-tree: %s", strerror(errno));
 		} else if (!ret) {
-			die("tar-tree: disk full?");
+			die("git-tar-tree: disk full?");
 		}
 		size -= ret;
 		buf += ret;

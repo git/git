@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 	if (argc != 3 ||
 	    get_sha1(argv[1], rev1key) ||
 	    get_sha1(argv[2], rev2key)) {
-		usage("merge-base <commit-id> <commit-id>");
+		usage("git-merge-base <commit-id> <commit-id>");
 	}
 	rev1 = lookup_commit_reference(rev1key);
 	rev2 = lookup_commit_reference(rev2key);

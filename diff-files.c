@@ -7,7 +7,7 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"diff-files [-p] [-q] [-r] [-z] [-M] [paths...]";
+"git-diff-files [-p] [-q] [-r] [-z] [-M] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';

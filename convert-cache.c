@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 	struct entry *entry;
 
 	if (argc != 2 || get_sha1(argv[1], sha1))
-		usage("convert-cache <sha1>");
+		usage("git-convert-cache <sha1>");
 
 	entry = convert_entry(sha1);
 	printf("new sha1: %s\n", sha1_to_hex(entry->new_sha1));

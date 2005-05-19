@@ -259,7 +259,7 @@ static int diff_tree(void *tree1, unsigned long size1, void *tree2, unsigned lon
 			update_tree_entry(&tree2, &size2);
 			continue;
 		}
-		die("diff-tree: internal error");
+		die("git-diff-tree: internal error");
 	}
 	return 0;
 }
@@ -421,7 +421,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"diff-tree [-p] [-r] [-z] [--stdin] [-M] [-m] [-s] [-v] <tree-ish> <tree-ish>";
+"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-m] [-s] [-v] <tree-ish> <tree-ish>";
 
 int main(int argc, char **argv)
 {

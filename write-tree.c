@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 
 	if (entries < 0)
-		die("write-tree: error reading cache");
+		die("git-write-tree: error reading cache");
 
 	/* Verify that the tree is merged */
 	funny = 0;
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 		}
 	}
 	if (funny)
-		die("write-tree: not able to write tree");
+		die("git-write-tree: not able to write tree");
 
 	/* Also verify that the cache does not have path and path/file
 	 * at the same time.  At this point we know the cache has only
@@ -131,11 +131,11 @@ int main(int argc, char **argv)
 		}
 	}
 	if (funny)
-		die("write-tree: not able to write tree");
+		die("git-write-tree: not able to write tree");
 
 	/* Ok, write it out */
 	if (write_tree(active_cache, entries, "", 0, sha1) != entries)
-		die("write-tree: internal error");
+		die("git-write-tree: internal error");
 	printf("%s\n", sha1_to_hex(sha1));
 	return 0;
 }

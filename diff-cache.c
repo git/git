@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 		argv++;
 		argc--;
 		if (!strcmp(arg, "-r")) {
-			/* We accept the -r flag just to look like diff-tree */
+			/* We accept the -r flag just to look like git-diff-tree */
 			continue;
 		}
 		if (!strcmp(arg, "-p")) {

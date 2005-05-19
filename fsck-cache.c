@@ -152,7 +152,7 @@ static int fsck_tree(struct tree *item)
 	}
 
 	if (has_full_path) {
-		fprintf(stderr, "warning: fsck-cache: tree %s "
+		fprintf(stderr, "warning: git-fsck-cache: tree %s "
 			"has full pathnames in it\n", 
 			sha1_to_hex(item->object.sha1));
 	}
@@ -385,7 +385,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (*arg == '-')
-			usage("fsck-cache [--tags] [[--unreachable] [--cache] <head-sha1>*]");
+			usage("git-fsck-cache [--tags] [[--unreachable] [--cache] <head-sha1>*]");
 	}
 
 	sha1_dir = get_object_directory();

@@ -283,7 +283,7 @@ static void show_files(void)
 }
 
 static const char *ls_files_usage =
-	"ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed])* "
+	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed])* "
 	"[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]";
 
 int main(int argc, char **argv)

@@ -39,7 +39,7 @@ static int merge_entry(int pos, const char *path)
 	int found;
 	
 	if (pos >= active_nr)
-		die("merge-cache: %s not in the cache", path);
+		die("git-merge-cache: %s not in the cache", path);
 	arguments[0] = pgm;
 	arguments[1] = "";
 	arguments[2] = "";
@@ -64,7 +64,7 @@ static int merge_entry(int pos, const char *path)
 		arguments[stage + 4] = ownbuf[stage];
 	} while (++pos < active_nr);
 	if (!found)
-		die("merge-cache: %s not in the cache", path);
+		die("git-merge-cache: %s not in the cache", path);
 	run_program();
 	return found;
 }
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 	int i, force_file = 0;
 
 	if (argc < 3)
-		usage("merge-cache [-o] <merge-program> (-a | <filename>*)");
+		usage("git-merge-cache [-o] <merge-program> (-a | <filename>*)");
 
 	read_cache();
 
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 				merge_all();
 				continue;
 			}
-			die("merge-cache: unknown option %s", arg);
+			die("git-merge-cache: unknown option %s", arg);
 		}
 		merge_file(arg);
 	}

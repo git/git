@@ -5,22 +5,22 @@
  *
  * Careful: order of argument flags does matter. For example,
  *
- *	checkout-cache -a -f file.c
+ *	git-checkout-cache -a -f file.c
  *
  * Will first check out all files listed in the cache (but not
  * overwrite any old ones), and then force-checkout "file.c" a
  * second time (ie that one _will_ overwrite any old contents
  * with the same filename).
  *
- * Also, just doing "checkout-cache" does nothing. You probably
- * meant "checkout-cache -a". And if you want to force it, you
- * want "checkout-cache -f -a".
+ * Also, just doing "git-checkout-cache" does nothing. You probably
+ * meant "git-checkout-cache -a". And if you want to force it, you
+ * want "git-checkout-cache -f -a".
  *
  * Intuitiveness is not the goal here. Repeatability is. The
  * reason for the "no arguments means no work" thing is that
  * from scripts you are supposed to be able to do things like
  *
- *	find . -name '*.h' -print0 | xargs -0 checkout-cache -f --
+ *	find . -name '*.h' -print0 | xargs -0 git-checkout-cache -f --
  *
  * which will force all existing *.h files to be replaced with
  * their cached copies. If an empty command line implied "all",
@@ -122,7 +122,7 @@ static int write_entry(struct cache_entry *ce, const char *path)
 	if (!new || strcmp(type, "blob")) {
 		if (new)
 			free(new);
-		return error("checkout-cache: unable to read sha1 file of %s (%s)",
+		return error("git-checkout-cache: unable to read sha1 file of %s (%s)",
 			path, sha1_to_hex(ce->sha1));
 	}
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
@@ -130,14 +130,14 @@ static int write_entry(struct cache_entry *ce, const char *path)
 		fd = create_file(path, ntohl(ce->ce_mode));
 		if (fd < 0) {
 			free(new);
-			return error("checkout-cache: unable to create file %s (%s)",
+			return error("git-checkout-cache: unable to create file %s (%s)",
 				path, strerror(errno));
 		}
 		wrote = write(fd, new, size);
 		close(fd);
 		free(new);
 		if (wrote != size)
-			return error("checkout-cache: unable to write file %s", path);
+			return error("git-checkout-cache: unable to write file %s", path);
 		break;
 	case S_IFLNK:
 		memcpy(target, new, size);
@@ -145,14 +145,14 @@ static int write_entry(struct cache_entry *ce, const char *path)
 		create_directories(path);
 		if (symlink(target, path)) {
 			free(new);
-			return error("checkout-cache: unable to create symlink %s (%s)",
+			return error("git-checkout-cache: unable to create symlink %s (%s)",
 				path, strerror(errno));
 		}
 		free(new);
 		break;
 	default:
 		free(new);
-		return error("checkout-cache: unknown file mode for %s", path);
+		return error("git-checkout-cache: unknown file mode for %s", path);
 	}
 
 	if (refresh_cache) {
@@ -178,7 +178,7 @@ static int checkout_entry(struct cache_entry *ce, const char *base_dir)
 			return 0;
 		if (!force) {
 			if (!quiet)
-				fprintf(stderr, "checkout-cache: %s already exists\n", path);
+				fprintf(stderr, "git-checkout-cache: %s already exists\n", path);
 			return 0;
 		}
 
@@ -201,7 +201,7 @@ static int checkout_file(const char *name, const char *base_dir)
 		if (!quiet) {
 			pos = -pos - 1;
 			fprintf(stderr,
-				"checkout-cache: %s is %s.\n",
+				"git-checkout-cache: %s is %s.\n",
 				name,
 				(pos < active_nr &&
 				 !strcmp(active_cache[pos]->name, name)) ?

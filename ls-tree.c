@@ -81,7 +81,7 @@ static int list(unsigned char *sha1)
 	return 0;
 }
 
-static const char *ls_tree_usage = "ls-tree [-r] [-z] <key>";
+static const char *ls_tree_usage = "git-ls-tree [-r] [-z] <key>";
 
 int main(int argc, char **argv)
 {

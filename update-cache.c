@@ -9,7 +9,7 @@
  * Default to not allowing changes to the list of files. The
  * tool doesn't actually care, but this makes it harder to add
  * files to the revision control by mistake by doing something
- * like "update-cache *" and suddenly having all the object
+ * like "git-update-cache *" and suddenly having all the object
  * files be revision controlled.
  */
 static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0;
@@ -158,7 +158,7 @@ static int compare_link(struct cache_entry *ce, unsigned long expected_size)
  * file that hasn't been changed but where the stat entry is
  * out of date.
  *
- * For example, you'd want to do this after doing a "read-tree",
+ * For example, you'd want to do this after doing a "git-read-tree",
  * to link up the stat cache details with the proper files.
  */
 static struct cache_entry *refresh_entry(struct cache_entry *ce)
@@ -333,17 +333,17 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(path, "--cacheinfo")) {
 				if (i+3 >= argc)
-					die("update-cache: --cacheinfo <mode> <sha1> <path>");
+					die("git-update-cache: --cacheinfo <mode> <sha1> <path>");
 				if (add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
-					die("update-cache: --cacheinfo cannot add %s", argv[i+3]);
+					die("git-update-cache: --cacheinfo cannot add %s", argv[i+3]);
 				i += 3;
 				continue;
 			}
 			if (!strcmp(path, "--force-remove")) {
 				if (argc <= i + 1)
-					die("update-cache: --force-remove <path>");
+					die("git-update-cache: --force-remove <path>");
 				if (remove_file_from_cache(argv[i+1]))
-					die("update-cache: --force-remove cannot remove %s", argv[i+1]);
+					die("git-update-cache: --force-remove cannot remove %s", argv[i+1]);
 				i++;
 				continue;
 			}
