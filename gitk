@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.15 $
+# CVS $Revision: 1.16 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -395,13 +395,13 @@ proc about {} {
     toplevel $w
     wm title $w "About gitk"
     message $w.m -text {
-Gitk version 0.95
+Gitk version 1.0
 
 Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.15 $)} \
+(CVS $Revision: 1.16 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -903,23 +903,37 @@ proc selectline {l} {
     $canv3 lower $t
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
-    set ytop [expr {($y - $linespc / 2.0 - 1) / $ymax}]
-    set ybot [expr {($y + $linespc / 2.0 + 1) / $ymax}]
+    set ytop [expr {$y - $linespc - 1}]
+    set ybot [expr {$y + $linespc + 1}]
     set wnow [$canv yview]
-    set scrincr [expr {$linespc * 1.0 / $ymax}]
-    set wtop [lindex $wnow 0]
+    set wtop [expr [lindex $wnow 0] * $ymax]
+    set wbot [expr [lindex $wnow 1] * $ymax]
+    set wh [expr {$wbot - $wtop}]
+    set newtop $wtop
     if {$ytop < $wtop} {
-	if {$ytop > $wtop - $scrincr} {
-	    set ytop [expr {$wtop - $scrincr}]
+	if {$ybot < $wtop} {
+	    set newtop [expr {$y - $wh / 2.0}]
+	} else {
+	    set newtop $ytop
+	    if {$newtop > $wtop - $linespc} {
+		set newtop [expr {$wtop - $linespc}]
+	    }
 	}
-	allcanvs yview moveto $ytop
-    } elseif {$ybot > [lindex $wnow 1]} {
-	set wh [expr {[lindex $wnow 1] - $wtop}]
-	set ytop [expr {$ybot - $wh}]
-	if {$ytop < $wtop + $scrincr} {
-	    set ytop [expr {$wtop + $scrincr}]
+    } elseif {$ybot > $wbot} {
+	if {$ytop > $wbot} {
+	    set newtop [expr {$y - $wh / 2.0}]
+	} else {
+	    set newtop [expr {$ybot - $wh}]
+	    if {$newtop < $wtop + $linespc} {
+		set newtop [expr {$wtop + $linespc}]
+	    }
 	}
-	allcanvs yview moveto $ytop
+    }
+    if {$newtop != $wtop} {
+	if {$newtop < 0} {
+	    set newtop 0
+	}
+	allcanvs yview moveto [expr $newtop * 1.0 / $ymax]
     }
     set selectedline $l
 
@@ -1023,7 +1037,7 @@ proc getblobdiffs {id} {
 
 proc getblobdiffline {bdf id} {
     global currentid blobdifffd ctext curdifftag curtagstart seenfile
-    global diffnexthead
+    global diffnexthead diffnextnote
     set n [gets $bdf line]
     if {$n < 0} {
 	if {[eof $bdf]} {
@@ -1045,21 +1059,25 @@ proc getblobdiffline {bdf id} {
 	$ctext tag add $curdifftag $curtagstart end
 	set seenfile($curdifftag) 1
 	set curtagstart [$ctext index "end - 1c"]
+	set header $fname
 	if {[info exists diffnexthead]} {
 	    set fname $diffnexthead
+	    set header "$diffnexthead ($diffnextnote)"
 	    unset diffnexthead
 	}
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
-	set l [expr {(78 - [string length $fname]) / 2}]
+	set l [expr {(78 - [string length $header]) / 2}]
 	set pad [string range "----------------------------------------" 1 $l]
-	$ctext insert end "$pad $fname $pad\n" filesep
+	$ctext insert end "$pad $header $pad\n" filesep
     } elseif {[string range $line 0 2] == "+++"} {
 	# no need to do anything with this
-    } elseif {[regexp {^Created: (.*) \(mode: *[0-7]*\)} $line match fn]} {
+    } elseif {[regexp {^Created: (.*) \((mode: *[0-7]*)\)} $line match fn m]} {
 	set diffnexthead $fn
+	set diffnextnote "created, mode $m"
     } elseif {[string range $line 0 8] == "Deleted: "} {
 	set diffnexthead [string range $line 9 end]
+	set diffnextnote "deleted"
     } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
 		   $line match f1l f1c f2l f2c rest]} {
 	$ctext insert end "\t" hunksep
@@ -1074,6 +1092,9 @@ proc getblobdiffline {bdf id} {
 	} elseif {$x == " "} {
 	    set line [string range $line 1 end]
 	    $ctext insert end "$line\n"
+	} elseif {$x == "\\"} {
+	    # e.g. "\ No newline at end of file"
+	    $ctext insert end "$line\n" filesep
 	} else {
 	    # Something else we don't recognize
 	    if {$curdifftag != "Comments"} {
