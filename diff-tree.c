@@ -107,7 +107,7 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 
 	pathlen1 = strlen(path1);
 	pathlen2 = strlen(path2);
-	cmp = cache_name_compare(path1, pathlen1, path2, pathlen2);
+	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
 	if (cmp < 0) {
 		show_file("-", tree1, size1, base);
 		return -1;
