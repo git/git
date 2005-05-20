@@ -350,15 +350,6 @@ static void run_external_diff(const char *name,
 	int status;
 	static int atexit_asked = 0;
 
-	if (reverse_diff) {
-		struct diff_spec *tmp_spec;
-		tmp_spec = one; one = two; two = tmp_spec;
-		if (other) {
-			const char *tmp;
-			tmp = name; name = other; other = tmp;
-		}
-	}
-
 	if (!matches_pathspec(name) && (!other || !matches_pathspec(other)))
 		return;
 
@@ -765,11 +756,12 @@ void diff_addremove(int addremove, unsigned mode,
 	char concatpath[PATH_MAX];
 	struct diff_spec spec[2], *one, *two;
 
+	if (reverse_diff)
+		addremove = (addremove == '+' ? '-' : '+');
+
 	if (0 <= diff_raw_output) {
 		if (!path)
 			path = "";
-		if (reverse_diff)
-			addremove = (addremove == '+' ? '-' : '+');
 		printf("%c%06o %s %s %s%s%c",
 		       addremove,
 		       mode,
@@ -806,24 +798,24 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 	char concatpath[PATH_MAX];
 	struct diff_spec spec[2];
 
+	if (reverse_diff) {
+		unsigned tmp;
+		const unsigned char *tmp_c;
+		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
+		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
+	}
+
 	if (0 <= diff_raw_output) {
 		char old_hex[41];
 		strcpy(old_hex, sha1_to_hex(old_sha1));
 
 		if (!path)
 			path = "";
-		if (reverse_diff)
-			printf("*%06o->%06o %s %s->%s %s%s%c",
-			       new_mode, old_mode,
-			       git_object_type(new_mode),
-			       sha1_to_hex(new_sha1), old_hex,
-			       base, path, diff_raw_output);
-		else
-			printf("*%06o->%06o %s %s->%s %s%s%c",
-			       old_mode, new_mode,
-			       git_object_type(new_mode),
-			       old_hex, sha1_to_hex(new_sha1),
-			       base, path, diff_raw_output);
+		printf("*%06o->%06o %s %s->%s %s%s%c",
+		       old_mode, new_mode,
+		       git_object_type(new_mode),
+		       old_hex, sha1_to_hex(new_sha1),
+		       base, path, diff_raw_output);
 		return;
 	}
 	if (S_ISDIR(new_mode))
