@@ -126,6 +126,19 @@ cat >.test-recursive-AB <<\EOF
 *100644->100644 blob 3fdbe17fd013303a2e981e1ca1c6cd6e72789087->7e09d6a3a14bd630913e8c75693cea32157b606d Z/NM
 EOF
 
+
+x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+x40="$x40$x40$x40$x40$x40$x40$x40$x40"
+z40='0000000000000000000000000000000000000000'
+cmp_diff_files_output () {
+    # diff-files never reports additions.  Also it does not fill in the
+    # object ID for the changed files because it wants you to look at the
+    # filesystem.
+    sed <"$2" >.test-tmp \
+	-e '/^+/d;/\^*/s/\( '$x40'->\)'$x40' /\1'$z40' /' &&
+    diff "$1" .test-tmp
+}
+
 test_expect_success \
     'diff-tree of known trees.' \
     'git-diff-tree $tree_O $tree_A >.test-a &&
@@ -155,6 +168,54 @@ test_expect_success \
     'diff-tree of known trees.' \
     'git-diff-tree -r $tree_A $tree_B >.test-a &&
      cmp -s .test-a .test-recursive-AB'
+
+test_expect_success \
+    'diff-cache O with A in cache' \
+    'git-read-tree $tree_A &&
+     git-diff-cache --cached $tree_O >.test-a &&
+     cmp -s .test-a .test-recursive-OA'
+
+test_expect_success \
+    'diff-cache O with B in cache' \
+    'git-read-tree $tree_B &&
+     git-diff-cache --cached $tree_O >.test-a &&
+     cmp -s .test-a .test-recursive-OB'
+
+test_expect_success \
+    'diff-cache A with B in cache' \
+    'git-read-tree $tree_B &&
+     git-diff-cache --cached $tree_A >.test-a &&
+     cmp -s .test-a .test-recursive-AB'
+
+test_expect_success \
+    'diff-files with O in cache and A checked out' \
+    'rm -fr Z [A-Z][A-Z] &&
+     git-read-tree $tree_A &&
+     git-checkout-cache -f -a &&
+     git-read-tree -m $tree_O || (exit 1)
+     git-update-cache --refresh >/dev/null ;# this can exit non-zero
+     git-diff-files >.test-a &&
+     cmp_diff_files_output .test-a .test-recursive-OA'
+
+test_expect_success \
+    'diff-files with O in cache and B checked out' \
+    'rm -fr Z [A-Z][A-Z] &&
+     git-read-tree $tree_B &&
+     git-checkout-cache -f -a &&
+     git-read-tree -m $tree_O || (exit 1)
+     git-update-cache --refresh >/dev/null ;# this can exit non-zero
+     git-diff-files >.test-a &&
+     cmp_diff_files_output .test-a .test-recursive-OB'
+
+test_expect_success \
+    'diff-files with A in cache and B checked out' \
+    'rm -fr Z [A-Z][A-Z] &&
+     git-read-tree $tree_B &&
+     git-checkout-cache -f -a &&
+     git-read-tree -m $tree_A || (exit 1)
+     git-update-cache --refresh >/dev/null ;# this can exit non-zero
+     git-diff-files >.test-a &&
+     cmp_diff_files_output .test-a .test-recursive-AB'
 
 ################################################################
 # Now we have established the baseline, we do not have to

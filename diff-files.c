@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 		}
 
 		if (lstat(ce->name, &st) < 0) {
-			if (errno != ENOENT) {
+			if (errno != ENOENT && errno != ENOTDIR) {
 				perror(ce->name);
 				continue;
 			}
