@@ -29,3 +29,5 @@ rm -f path0 &&
 git-read-tree $t &&
 git-checkout-cache -u -f -a &&
 git-diff-files | diff - /dev/null'
+
+test_done

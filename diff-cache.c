@@ -6,15 +6,13 @@ static int generate_patch = 0;
 static int match_nonexisting = 0;
 static int line_termination = '\n';
 static int detect_rename = 0;
+static int reverse_diff = 0;
+static int diff_score_opt = 0;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
 {
-	if (generate_patch)
-		diff_addremove(prefix[0], ntohl(mode), sha1, ce->name, NULL);
-	else
-		printf("%s%06o\tblob\t%s\t%s%c", prefix, ntohl(mode),
-		       sha1_to_hex(sha1), ce->name, line_termination);
+	diff_addremove(prefix[0], ntohl(mode), sha1, ce->name, NULL);
 }
 
 static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned int *modep)
@@ -64,7 +62,6 @@ static int show_modified(struct cache_entry *old,
 {
 	unsigned int mode, oldmode;
 	unsigned char *sha1;
-	char old_sha1_hex[60];
 
 	if (get_stat_data(new, &sha1, &mode) < 0) {
 		if (report_missing)
@@ -79,15 +76,8 @@ static int show_modified(struct cache_entry *old,
 	mode = ntohl(mode);
 	oldmode = ntohl(oldmode);
 
-	if (generate_patch)
-		diff_change(oldmode, mode,
-			    old->sha1, sha1, old->name, NULL);
-	else {
-		strcpy(old_sha1_hex, sha1_to_hex(old->sha1));
-		printf("*%06o->%06o\tblob\t%s->%s\t%s%c", oldmode, mode,
-		       old_sha1_hex, sha1_to_hex(sha1),
-		       old->name, line_termination);
-	}
+	diff_change(oldmode, mode,
+		    old->sha1, sha1, old->name, NULL);
 	return 0;
 }
 
@@ -127,10 +117,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 				break;
 			/* fallthru */
 		case 3:
-			if (generate_patch)
-				diff_unmerge(ce->name);
-			else
-				printf("U %s%c", ce->name, line_termination);
+			diff_unmerge(ce->name);
 			break;
 
 		default:
@@ -166,7 +153,7 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"git-diff-cache [-p] [-r] [-z] [-m] [-M] [--cached] <tree-ish>";
+"git-diff-cache [-p] [-r] [-z] [-m] [-M] [-R] [--cached] <tree-ish>";
 
 int main(int argc, char **argv)
 {
@@ -188,12 +175,17 @@ int main(int argc, char **argv)
 			generate_patch = 1;
 			continue;
 		}
-		if (!strcmp(arg, "-M")) {
+		if (!strncmp(arg, "-M", 2)) {
 			generate_patch = detect_rename = 1;
+			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
 			line_termination = '\0';
+			continue;
+		}
+		if (!strcmp(arg, "-R")) {
+			reverse_diff = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-m")) {
@@ -210,8 +202,9 @@ int main(int argc, char **argv)
 	if (argc != 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
-	if (generate_patch)
-		diff_setup(detect_rename, 0, 0, 0, 0);
+	diff_setup(detect_rename, diff_score_opt, reverse_diff,
+		   (generate_patch ? -1 : line_termination),
+		   0, 0);
 
 	mark_merge_entries();
 
@@ -222,7 +215,6 @@ int main(int argc, char **argv)
 		die("unable to read tree object %s", argv[1]);
 
 	ret = diff_cache(active_cache, active_nr);
-	if (generate_patch)
-		diff_flush();
+	diff_flush();
 	return ret;
 }

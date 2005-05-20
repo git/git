@@ -166,7 +166,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'validate git-diff-files output for a know cache/work tree state.' \
-    'git-diff-files >current && cmp -s current expected'
+    'git-diff-files >current && diff >/dev/null -b current expected'
 
 test_expect_success \
     'git-update-cache --refresh should succeed.' \

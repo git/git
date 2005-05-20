@@ -58,3 +58,9 @@ rename new path1
  Line 13
  Line 14
 EOF
+
+test_expect_success \
+    'validate the output.' \
+    'diff -I "rename similarity.*" >/dev/null current expected'
+
+test_done

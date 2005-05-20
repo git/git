@@ -17,8 +17,10 @@ extern void diff_change(unsigned mode1, unsigned mode2,
 
 extern void diff_unmerge(const char *path);
 
+extern int diff_scoreopt_parse(const char *opt);
+
 extern void diff_setup(int detect_rename, int minimum_score,
-		       int reverse,
+		       int reverse, int raw_output,
 		       const char **spec, int cnt);
 
 extern void diff_flush(void);

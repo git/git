@@ -7,11 +7,13 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"git-diff-files [-p] [-q] [-r] [-z] [-M] [paths...]";
+"git-diff-files [-p] [-q] [-r] [-z] [-M] [-R] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';
 static int detect_rename = 0;
+static int reverse_diff = 0;
+static int diff_score_opt = 0;
 static int silent = 0;
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
@@ -31,36 +33,19 @@ static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
 
 static void show_unmerge(const char *path)
 {
-	if (generate_patch)
-		diff_unmerge(path);
-	else
-		printf("U %s%c", path, line_termination);
+	diff_unmerge(path);
 }
 
 static void show_file(int pfx, struct cache_entry *ce)
 {
-	if (generate_patch)
-		diff_addremove(pfx, ntohl(ce->ce_mode), ce->sha1,
-			       ce->name, NULL);
-	else
-		printf("%c%06o\t%s\t%s\t%s%c",
-		       pfx, ntohl(ce->ce_mode), "blob",
-		       sha1_to_hex(ce->sha1), ce->name, line_termination);
+	diff_addremove(pfx, ntohl(ce->ce_mode), ce->sha1, ce->name, NULL);
 }
 
 static void show_modified(int oldmode, int mode,
 			  const unsigned char *old_sha1, const unsigned char *sha1,
 			  char *path)
 {
-	char old_sha1_hex[41];
-	strcpy(old_sha1_hex, sha1_to_hex(old_sha1));
-
-	if (generate_patch)
-		diff_change(oldmode, mode, old_sha1, sha1, path, NULL);
-	else
-		printf("*%06o->%06o\tblob\t%s->%s\t%s%c",
-		       oldmode, mode, old_sha1_hex, sha1_to_hex(sha1), path,
-		       line_termination);
+	diff_change(oldmode, mode, old_sha1, sha1, path, NULL);
 }
 
 int main(int argc, char **argv)
@@ -80,7 +65,10 @@ int main(int argc, char **argv)
 			; /* no-op */
 		else if (!strcmp(argv[1], "-z"))
 			line_termination = 0;
-		else if (!strcmp(argv[1], "-M")) {
+		else if (!strcmp(argv[1], "-R"))
+			reverse_diff = 1;
+		else if (!strncmp(argv[1], "-M", 2)) {
+			diff_score_opt = diff_scoreopt_parse(argv[1]);
 			detect_rename = generate_patch = 1;
 		}
 		else
@@ -96,8 +84,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (generate_patch)
-		diff_setup(detect_rename, 0, 0, 0, 0);		
+	diff_setup(detect_rename, diff_score_opt, reverse_diff,
+		   (generate_patch ? -1 : line_termination),
+		   0, 0);
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
@@ -117,12 +106,12 @@ int main(int argc, char **argv)
 			i--; /* compensate for loop control increments */
 			continue;
 		}
- 
+
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT) {
 				perror(ce->name);
 				continue;
-			}	
+			}
 			if (silent)
 				continue;
 			show_file('-', ce);
@@ -139,7 +128,6 @@ int main(int argc, char **argv)
 		show_modified(oldmode, mode, ce->sha1, null_sha1,
 			      ce->name);
 	}
-	if (generate_patch)
-		diff_flush();
+	diff_flush();
 	return 0;
 }

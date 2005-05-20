@@ -7,6 +7,7 @@
 #include "diff.h"
 
 static int detect_rename = 0;
+static int diff_score_opt = 0;
 
 static int parse_oneside_change(const char *cp, int *mode,
 				unsigned char *sha1, char *path)
@@ -19,15 +20,15 @@ static int parse_oneside_change(const char *cp, int *mode,
 		cp++;
 	}
 	*mode = m;
-	if (strncmp(cp, "\tblob\t", 6))
+	if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6))
 		return -1;
 	cp += 6;
 	if (get_sha1_hex(cp, sha1))
 		return -1;
 	cp += 40;
-	if (*cp++ != '\t')
+	if ((*cp != '\t') && *cp != ' ')
 		return -1;
-	strcpy(path, cp);
+	strcpy(path, ++cp);
 	return 0;
 }
 
@@ -63,7 +64,7 @@ static int parse_diff_raw_output(const char *buf)
 			new_mode = (new_mode << 3) | (ch - '0');
 			cp++;
 		}
-		if (strncmp(cp, "\tblob\t", 6))
+		if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6))
 			return -1;
 		cp += 6;
 		if (get_sha1_hex(cp, old_sha1))
@@ -75,9 +76,9 @@ static int parse_diff_raw_output(const char *buf)
 		if (get_sha1_hex(cp, new_sha1))
 			return -1;
 		cp += 40;
-		if (*cp++ != '\t')
+		if ((*cp != '\t') && *cp != ' ')
 			return -1;
-		strcpy(path, cp);
+		strcpy(path, ++cp);
 		diff_change(old_mode, new_mode, old_sha1, new_sha1, path, 0);
 		break;
 	default:
@@ -101,15 +102,17 @@ int main(int ac, const char **av) {
 			reverse = 1;
 		else if (av[1][1] == 'z')
 			line_termination = 0;
-		else if (av[1][1] == 'M')
+		else if (av[1][1] == 'M') {
 			detect_rename = 1;
+			diff_score_opt = diff_scoreopt_parse(av[1]);
+		}
 		else
 			usage(diff_helper_usage);
 		ac--; av++;
 	}
 	/* the remaining parameters are paths patterns */
 
-	diff_setup(detect_rename, 0, reverse, av+1, ac-1);
+	diff_setup(detect_rename, diff_score_opt, reverse, -1, av+1, ac-1);
 
 	while (1) {
 		int status;

@@ -11,6 +11,7 @@ static int read_stdin = 0;
 static int line_termination = '\n';
 static int generate_patch = 0;
 static int detect_rename = 0;
+static int diff_score_opt = 0;
 static const char *header = NULL;
 static const char *header_prefix = "";
 
@@ -84,21 +85,13 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
 		show_tree(prefix, tree, size, newbase);
-		
+
 		free(tree);
 		free(newbase);
 		return;
 	}
 
-	if (generate_patch) {
-		if (!S_ISDIR(mode))
-			diff_addremove(prefix[0], mode, sha1, base, path);
-	}
-	else
-		printf("%s%06o\t%s\t%s\t%s%s%c", prefix, mode,
-		       S_ISDIR(mode) ? "tree" : "blob",
-		       sha1_to_hex(sha1), base, path,
-		       line_termination);
+	diff_addremove(prefix[0], mode, sha1, base, path);
 }
 
 static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
@@ -107,7 +100,6 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	const char *path1, *path2;
 	const unsigned char *sha1, *sha2;
 	int cmp, pathlen1, pathlen2;
-	char old_sha1_hex[50];
 
 	sha1 = extract(tree1, size1, &path1, &mode1);
 	sha2 = extract(tree2, size2, &path2, &mode2);
@@ -151,17 +143,7 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	if (silent)
 		return 0;
 
-	if (generate_patch) {
-		if (!S_ISDIR(mode1))
-			diff_change(mode1, mode2, sha1, sha2, base, path1);
-	}
-	else {
-		strcpy(old_sha1_hex, sha1_to_hex(sha1));
-		printf("*%06o->%06o\t%s\t%s->%s\t%s%s%c", mode1, mode2,
-		       S_ISDIR(mode1) ? "tree" : "blob",
-		       old_sha1_hex, sha1_to_hex(sha2), base, path1,
-		       line_termination);
-	}
+	diff_change(mode1, mode2, sha1, sha2, base, path1);
 	return 0;
 }
 
@@ -287,11 +269,12 @@ static int diff_tree_sha1_top(const unsigned char *old,
 			      const unsigned char *new, const char *base)
 {
 	int ret;
-	if (generate_patch)
-		diff_setup(detect_rename, 0, 0, 0, 0);
+
+	diff_setup(detect_rename, diff_score_opt, 0,
+		   (generate_patch ? -1 : line_termination),
+		   0, 0);
 	ret = diff_tree_sha1(old, new, base);
-	if (generate_patch)
-		diff_flush();
+	diff_flush();
 	return ret;
 }
 
@@ -301,15 +284,15 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	void *tree;
 	unsigned long size;
 
-	if (generate_patch)
-		diff_setup(detect_rename, 0, 0, 0, 0);
+	diff_setup(detect_rename, diff_score_opt, 0,
+		   (generate_patch ? -1 : line_termination),
+		   0, 0);
 	tree = read_object_with_reference(new, "tree", &size, 0);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
 	retval = diff_tree("", 0, tree, size, base);
 	free(tree);
-	if (generate_patch)
-		diff_flush();
+	diff_flush();
 	return retval;
 }
 
@@ -485,8 +468,9 @@ int main(int argc, char **argv)
 			recursive = generate_patch = 1;
 			continue;
 		}
-		if (!strcmp(arg, "-M")) {
+		if (!strncmp(arg, "-M", 2)) {
 			detect_rename = recursive = generate_patch = 1;
+			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
