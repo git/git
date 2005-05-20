@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Script to deltafy an entire GIT repository based on the commit list.
+# The most recent version of a file is the reference and previous versions
+# are made delta against the best earlier version available. And so on for
+# successive versions going back in time.  This way the delta overhead is
+# pushed towards older version of any given file.
+#
+# NOTE: the "best earlier version" is not implemented in mkdelta yet
+#       and therefore only the next eariler version is used at this time.
+#
+# TODO: deltafy tree objects as well.
+#
+# The -d argument allows to provide a limit on the delta chain depth.
+# If 0 is passed then everything is undeltafied.
+
+set -e
+
+depth=
+[ "$1" == "-d" ] && depth="--max-depth=$2" && shift 2
+
+curr_file=""
+
+git-rev-list HEAD |
+git-diff-tree -r --stdin |
+sed -n '/^\*/ s/^.*->\(.\{41\}\)\(.*\)$/\2 \1/p' | sort | uniq |
+while read file sha1; do
+	if [ "$file" == "$curr_file" ]; then
+		list="$list $sha1"
+	else
+		if [ "$list" ]; then
+			echo "Processing $curr_file"
+			echo "$head $list" | xargs git-mkdelta $depth -v
+		fi
+		curr_file="$file"
+		list=""
+		head="$sha1"
+	fi
+done
