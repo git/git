@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include "cache.h"
+#include "delta.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -353,6 +354,19 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
+		if (buf && !strcmp(type, "delta")) {
+			void *ref = NULL, *delta = buf;
+			unsigned long ref_size, delta_size = *size;
+			buf = NULL;
+			if (delta_size > 20)
+				ref = read_sha1_file(delta, type, &ref_size);
+			if (ref)
+				buf = patch_delta(ref, ref_size,
+						  delta+20, delta_size-20, 
+						  size);
+			free(delta);
+			free(ref);
+		}
 		return buf;
 	}
 	return NULL;

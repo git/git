@@ -25,20 +25,14 @@
 static int verify_object(unsigned char *sha1, const char *expected_type)
 {
 	int ret = -1;
-	unsigned long mapsize;
-	void *map = map_sha1_file(sha1, &mapsize);
+	char type[100];
+	unsigned long size;
+	void *buffer = read_sha1_file(sha1, type, &size);
 
-	if (map) {
-		char type[100];
-		unsigned long size;
-		void *buffer = unpack_sha1_file(map, mapsize, type, &size);
-
-		if (buffer) {
-			if (!strcmp(type, expected_type))
-				ret = check_sha1_signature(sha1, buffer, size, type);
-			free(buffer);
-		}
-		munmap(map, mapsize);
+	if (buffer) {
+		if (!strcmp(type, expected_type))
+			ret = check_sha1_signature(sha1, buffer, size, type);
+		free(buffer);
 	}
 	return ret;
 }
