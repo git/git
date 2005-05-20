@@ -296,7 +296,7 @@ static int fsck_dir(int i, char *path)
 	return 0;
 }
 
-static void read_sha1_reference(const char *path)
+static int read_sha1_reference(const char *path)
 {
 	char hexname[60];
 	unsigned char sha1[20];
@@ -304,19 +304,23 @@ static void read_sha1_reference(const char *path)
 	struct object *obj;
 
 	if (fd < 0)
-		return;
+		return -1;
 
 	len = read(fd, hexname, sizeof(hexname));
 	close(fd);
 	if (len < 40)
-		return;
+		return -1;
 
 	if (get_sha1_hex(hexname, sha1) < 0)
-		return;
+		return -1;
 
 	obj = lookup_object(sha1);
+	if (!obj)
+		return error("%s: invalid sha1 pointer %.40s", path, hexname);
+
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
+	return 0;
 }
 
 static void find_file_objects(const char *base, const char *name)
