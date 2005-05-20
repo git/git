@@ -9,7 +9,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 
 SYNOPSIS
 --------
-'git-diff-tree' [-p] [-r] [-z] [--stdin] [-M] [-m] [-s] [-v] <tree-ish> <tree-ish> [<pattern>]\*
+'git-diff-tree' [-p] [-r] [-z] [--stdin] [-M] [-R] [-m] [-s] [-v] <tree-ish> <tree-ish> [<pattern>]\*
 
 DESCRIPTION
 -----------
@@ -35,6 +35,9 @@ OPTIONS
 
 -M::
 	Detect renames; implies -p, in turn implying also '-r'.
+
+-R::
+	Output diff in reverse.
 
 -r::
 	recurse
