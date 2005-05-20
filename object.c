@@ -4,6 +4,7 @@
 #include "commit.h"
 #include "cache.h"
 #include "tag.h"
+#include "delta.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -104,6 +105,7 @@ struct object *parse_object(unsigned char *sha1)
 	unsigned long mapsize;
 	void *map = map_sha1_file(sha1, &mapsize);
 	if (map) {
+		int is_delta;
 		struct object *obj;
 		char type[100];
 		unsigned long size;
@@ -111,9 +113,14 @@ struct object *parse_object(unsigned char *sha1)
 		munmap(map, mapsize);
 		if (!buffer)
 			return NULL;
-		if (check_sha1_signature(sha1, buffer, size, type) < 0)
+		is_delta = !strcmp(type, "delta");
+		if (!is_delta && check_sha1_signature(sha1, buffer, size, type) < 0)
 			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
-		if (!strcmp(type, "blob")) {
+		if (is_delta) {
+			struct delta *delta = lookup_delta(sha1);
+			parse_delta_buffer(delta, buffer, size);
+			obj = (struct object *) delta;
+		} else if (!strcmp(type, "blob")) {
 			struct blob *blob = lookup_blob(sha1);
 			parse_blob_buffer(blob, buffer, size);
 			obj = &blob->object;

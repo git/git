@@ -14,6 +14,8 @@ struct blob *lookup_blob(unsigned char *sha1)
 		ret->object.type = blob_type;
 		return ret;
 	}
+	if (!obj->type)
+		obj->type = blob_type;
 	if (obj->type != blob_type) {
 		error("Object %s is a %s, not a blob", 
 		      sha1_to_hex(sha1), obj->type);

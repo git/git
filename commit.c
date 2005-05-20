@@ -37,6 +37,8 @@ struct commit *lookup_commit(unsigned char *sha1)
 		ret->object.type = commit_type;
 		return ret;
 	}
+	if (!obj->type)
+		obj->type = commit_type;
 	return check_commit(obj, sha1);
 }
 

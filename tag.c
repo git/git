@@ -13,6 +13,8 @@ struct tag *lookup_tag(unsigned char *sha1)
                 ret->object.type = tag_type;
                 return ret;
         }
+	if (!obj->type)
+		obj->type = tag_type;
         if (obj->type != tag_type) {
                 error("Object %s is a %s, not a tree", 
                       sha1_to_hex(sha1), obj->type);

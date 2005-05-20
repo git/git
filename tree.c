@@ -83,6 +83,8 @@ struct tree *lookup_tree(unsigned char *sha1)
 		ret->object.type = tree_type;
 		return ret;
 	}
+	if (!obj->type)
+		obj->type = tree_type;
 	if (obj->type != tree_type) {
 		error("Object %s is a %s, not a tree", 
 		      sha1_to_hex(sha1), obj->type);

@@ -9,10 +9,12 @@ struct object_list {
 struct object {
 	unsigned parsed : 1;
 	unsigned used : 1;
+	unsigned delta : 1;
 	unsigned int flags;
 	unsigned char sha1[20];
 	const char *type;
 	struct object_list *refs;
+	struct object_list *attached_deltas;
 };
 
 extern int nr_objs;
