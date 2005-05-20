@@ -44,7 +44,7 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-int get_sha1_file(const char *path, unsigned char *result)
+static int get_sha1_file(const char *path, unsigned char *result)
 {
 	char buffer[60];
 	int fd = open(path, O_RDONLY);
@@ -199,7 +199,7 @@ static void prepare_alt_odb(void)
 {
 	int pass, totlen, i;
 	const char *cp, *last;
-	char *op = 0;
+	char *op = NULL;
 	const char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
 
 	/* The first pass counts how large an area to allocate to
@@ -236,7 +236,7 @@ static void prepare_alt_odb(void)
 		if (pass)
 			break;
 		alt_odb = xmalloc(sizeof(*alt_odb) * (i + 1) + totlen);
-		alt_odb[i].base = alt_odb[i].name = 0;
+		alt_odb[i].base = alt_odb[i].name = NULL;
 		op = (char*)(&alt_odb[i+1]);
 	}
 }

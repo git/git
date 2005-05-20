@@ -254,10 +254,10 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	unsigned long size1, size2;
 	int retval;
 
-	tree1 = read_object_with_reference(old, "tree", &size1, 0);
+	tree1 = read_object_with_reference(old, "tree", &size1, NULL);
 	if (!tree1)
 		die("unable to read source tree (%s)", sha1_to_hex(old));
-	tree2 = read_object_with_reference(new, "tree", &size2, 0);
+	tree2 = read_object_with_reference(new, "tree", &size2, NULL);
 	if (!tree2)
 		die("unable to read destination tree (%s)", sha1_to_hex(new));
 	retval = diff_tree(tree1, size1, tree2, size2, base);
@@ -273,7 +273,7 @@ static int diff_tree_sha1_top(const unsigned char *old,
 
 	diff_setup(detect_rename, diff_score_opt, reverse_diff,
 		   (generate_patch ? -1 : line_termination),
-		   0, 0);
+		   NULL, 0);
 	ret = diff_tree_sha1(old, new, base);
 	diff_flush();
 	return ret;
@@ -287,8 +287,8 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 
 	diff_setup(detect_rename, diff_score_opt, reverse_diff,
 		   (generate_patch ? -1 : line_termination),
-		   0, 0);
-	tree = read_object_with_reference(new, "tree", &size, 0);
+		   NULL, 0);
+	tree = read_object_with_reference(new, "tree", &size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
 	retval = diff_tree("", 0, tree, size, base);

@@ -204,11 +204,11 @@ int main(int argc, char **argv)
 
 	diff_setup(detect_rename, diff_score_opt, reverse_diff,
 		   (generate_patch ? -1 : line_termination),
-		   0, 0);
+		   NULL, 0);
 
 	mark_merge_entries();
 
-	tree = read_object_with_reference(tree_sha1, "tree", &size, 0);
+	tree = read_object_with_reference(tree_sha1, "tree", &size, NULL);
 	if (!tree)
 		die("bad tree object %s", argv[1]);
 	if (read_tree(tree, size, 1))

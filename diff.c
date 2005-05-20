@@ -385,7 +385,7 @@ static void run_external_diff(const char *name,
 				*arg++ = temp[1].mode;
 				if (other)
 					*arg++ = other;
-				*arg = 0;
+				*arg = NULL;
 				execvp(pgm, (char *const*) exec_arg);
 			}
 			else
@@ -504,7 +504,7 @@ static void free_data(struct diff_spec_hold *s)
 	else if (s->flags & SHOULD_MUNMAP)
 		munmap(s->data, s->size);
 	s->flags &= ~(SHOULD_FREE|SHOULD_MUNMAP);
-	s->data = 0;
+	s->data = NULL;
 }
 
 static void flush_remaining_diff(struct diff_spec_hold *elem,
@@ -541,7 +541,7 @@ static int is_exact_match(struct diff_spec_hold *src,
 	return 0;
 }
 
-int estimate_similarity(struct diff_spec_hold *src, struct diff_spec_hold *dst)
+static int estimate_similarity(struct diff_spec_hold *src, struct diff_spec_hold *dst)
 {
 	/* src points at a deleted file and dst points at a created
 	 * file.  They may be quite similar, in which case we want to

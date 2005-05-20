@@ -10,6 +10,8 @@
 #include <ctype.h>
 #include <time.h>
 
+#include "cache.h"
+
 static time_t my_mktime(struct tm *tm)
 {
 	static const int mdays[] = {

@@ -375,7 +375,7 @@ static void traverse_tree(void *buffer, unsigned long size,
 }
 
 /* get commit time from committer line of commit object */
-time_t commit_time(void * buffer, unsigned long size)
+static time_t commit_time(void * buffer, unsigned long size)
 {
 	time_t result = 0;
 	char *p = buffer;

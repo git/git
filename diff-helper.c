@@ -79,7 +79,7 @@ static int parse_diff_raw_output(const char *buf)
 		if ((*cp != '\t') && *cp != ' ')
 			return -1;
 		strcpy(path, ++cp);
-		diff_change(old_mode, new_mode, old_sha1, new_sha1, path, 0);
+		diff_change(old_mode, new_mode, old_sha1, new_sha1, path, NULL);
 		break;
 	default:
 		return -1;

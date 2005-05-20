@@ -292,7 +292,7 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 	return add_cache_entry(ce, option);
 }
 
-struct cache_file cache_file;
+static struct cache_file cache_file;
 
 int main(int argc, char **argv)
 {

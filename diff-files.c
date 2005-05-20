@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 
 	diff_setup(detect_rename, diff_score_opt, reverse_diff,
 		   (generate_patch ? -1 : line_termination),
-		   0, 0);
+		   NULL, 0);
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;

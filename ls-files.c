@@ -179,7 +179,7 @@ static int cmp_name(const void *p1, const void *p2)
 				  e2->name, e2->len);
 }
 
-static void show_killed_files()
+static void show_killed_files(void)
 {
 	int i;
 	for (i = 0; i < nr_dir; i++) {

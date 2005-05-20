@@ -15,7 +15,7 @@ static struct commit *process_list(struct commit_list **list_p, int this_mark,
 	return NULL;
 }
 
-struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
+static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 {
 	struct commit_list *rev1list = NULL;
 	struct commit_list *rev2list = NULL;

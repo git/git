@@ -4,7 +4,7 @@
 #include "cache.h"
 
 void strbuf_init(struct strbuf *sb) {
-	sb->buf = 0;
+	sb->buf = NULL;
 	sb->eof = sb->alloc = sb->len = 0;
 }
 

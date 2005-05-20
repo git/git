@@ -46,7 +46,7 @@ static int interesting(struct commit *rev)
 	return 1;
 }
 
-void process_commit(unsigned char *sha1)
+static void process_commit(unsigned char *sha1)
 {
 	struct commit_list *parents;
 	struct commit *obj = lookup_commit(sha1);

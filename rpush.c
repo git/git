@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 
-void service(int fd_in, int fd_out) {
+static void service(int fd_in, int fd_out) {
 	ssize_t size;
 	int posn;
 	char unsigned sha1[20];

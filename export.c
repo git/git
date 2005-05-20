@@ -4,7 +4,7 @@
 /*
  * Show one commit
  */
-void show_commit(struct commit *commit)
+static void show_commit(struct commit *commit)
 {
 	char cmdline[400];
 	char hex[100];
@@ -27,7 +27,7 @@ void show_commit(struct commit *commit)
 /*
  * Show all unseen commits, depth-first
  */
-void show_unseen(struct commit *top)
+static void show_unseen(struct commit *top)
 {
 	struct commit_list *parents;
 
@@ -42,7 +42,7 @@ void show_unseen(struct commit *top)
 	show_commit(top);
 }
 
-void export(struct commit *top, struct commit *base)
+static void export(struct commit *top, struct commit *base)
 {
 	mark_reachable(&top->object, 1);
 	if (base)
@@ -50,7 +50,7 @@ void export(struct commit *top, struct commit *base)
 	show_unseen(top);
 }
 
-struct commit *get_commit(unsigned char *sha1)
+static struct commit *get_commit(unsigned char *sha1)
 {
 	struct commit *commit = lookup_commit(sha1);
 	if (!commit->object.parsed) {
