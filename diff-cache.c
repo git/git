@@ -71,7 +71,8 @@ static int show_modified(struct cache_entry *old,
 	}
 
 	oldmode = old->ce_mode;
-	if (mode == oldmode && !memcmp(sha1, old->sha1, 20))
+	if (mode == oldmode && !memcmp(sha1, old->sha1, 20) &&
+	    detect_rename < 2)
 		return 0;
 
 	mode = ntohl(mode);

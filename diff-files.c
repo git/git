@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		changed = ce_match_stat(ce, &st);
-		if (!changed)
+		if (!changed && detect_rename < 2)
 			continue;
 
 		oldmode = ntohl(ce->ce_mode);
