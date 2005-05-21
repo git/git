@@ -68,37 +68,39 @@ static int estimate_similarity(struct diff_filespec *src,
 	 * else.
 	 */
 	void *delta;
-	unsigned long delta_size;
+	unsigned long delta_size, base_size;
 	int score;
 
 	delta_size = ((src->size < dst->size) ?
 		      (dst->size - src->size) : (src->size - dst->size));
+	base_size = ((src->size < dst->size) ? src->size : dst->size);
 
-	/* We would not consider rename followed by more than
-	 * minimum_score/MAX_SCORE edits; that is, delta_size must be smaller
-	 * than (src->size + dst->size)/2 * minimum_score/MAX_SCORE,
-	 * which means...
+	/* We would not consider edits that change the file size so
+	 * drastically.  delta_size must be smaller than
+	 * minimum_score/MAX_SCORE * min(src->size, dst->size).
+	 * Note that base_size == 0 case is handled here already
+	 * and the final score computation below would not have a
+	 * divide-by-zero issue.
 	 */
-
-	if ((src->size+dst->size)*minimum_score < delta_size*MAX_SCORE*2)
+	if (base_size * minimum_score < delta_size * MAX_SCORE)
 		return 0;
 
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
 			   &delta_size);
+	/*
+	 * We currently punt here, but we may later end up parsing the
+	 * delta to really assess the extent of damage.  A big consecutive
+	 * remove would produce small delta_size that affects quite a
+	 * big portion of the file.
+	 */
 	free(delta);
 
-	/* This "delta" is really xdiff with adler32 and all the
-	 * overheads but it is a quick and dirty approximation.
-	 *
-	 * Now we will give some score to it.  100% edit gets
-	 * 0 points and 0% edit gets MAX_SCORE points.  That is, every
-	 * 1/MAX_SCORE edit gets 1 point penalty.  The amount of penalty is:
-	 *
-	 * (delta_size * 2 / (src->size + dst->size)) * MAX_SCORE
-	 *
+	/*
+	 * Now we will give some score to it.  100% edit gets 0 points
+	 * and 0% edit gets MAX_SCORE points.
 	 */
-	score = MAX_SCORE-(MAX_SCORE*2*delta_size/(src->size+dst->size));
+	score = MAX_SCORE - (MAX_SCORE * delta_size / base_size); 
 	if (score < 0) return 0;
 	if (MAX_SCORE < score) return MAX_SCORE;
 	return score;
@@ -314,7 +316,7 @@ void diff_detect_rename(struct diff_queue_struct *q,
 		if (mx[i].dst->xfrm_flags & RENAME_DST_MATCHED)
 			continue; /* alreayd done, either exact or fuzzy. */
 		if (mx[i].score < minimum_score)
-			continue;
+			break; /* there is not any more diffs applicable. */
 		record_rename_pair(&outq,
 				  mx[i].src, mx[i].dst, mx[i].rank,
 				  mx[i].score);
