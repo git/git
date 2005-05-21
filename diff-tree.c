@@ -414,8 +414,15 @@ static int diff_tree_commit(const unsigned char *commit, const char *name)
 			return -1;
 		header = generate_header(name, sha1_to_hex(parent), buf, size);
 		diff_tree_sha1_top(parent, commit, "");
-		if (!header && verbose_header)
+		if (!header && verbose_header) {
 			header_prefix = "\ndiff-tree ";
+			/*
+			 * Don't print multiple merge entries if we
+			 * don't print the diffs.
+			 */
+			if (silent)
+				break;
+		}
 		offset += 48;
 	}
 	return 0;
