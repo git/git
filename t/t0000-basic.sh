@@ -32,7 +32,7 @@ test_expect_success \
 find .git/objects -type d -print >full-of-directories
 test_expect_success \
     '.git/objects should have 256 subdirectories.' \
-    'test "$(wc -l full-of-directories | sed -e "s/ .*//")" = 257'
+    'test $(cat full-of-directories | wc -l) = 257'
 
 ################################################################
 # Basics of the basics
