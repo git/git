@@ -9,7 +9,7 @@
 static int detect_rename = 0;
 static int diff_score_opt = 0;
 static int generate_patch = 1;
-static char *pickaxe = 0;
+static const char *pickaxe = NULL;
 
 static int parse_oneside_change(const char *cp, int *mode,
 				unsigned char *sha1, char *path)

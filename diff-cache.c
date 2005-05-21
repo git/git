@@ -8,7 +8,7 @@ static int line_termination = '\n';
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
-static char *pickaxe = 0;
+static const char *pickaxe = NULL;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)

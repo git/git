@@ -13,7 +13,7 @@ static int generate_patch = 0;
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
-static char *pickaxe = 0;
+static const char *pickaxe = NULL;
 static const char *header = NULL;
 static const char *header_prefix = "";
 

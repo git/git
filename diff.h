@@ -20,7 +20,7 @@ extern void diff_unmerge(const char *path);
 extern int diff_scoreopt_parse(const char *opt);
 
 extern void diff_setup(int detect_rename, int minimum_score,
-		       char *pickaxe,
+		       const char *pickaxe,
 		       int reverse, int raw_output,
 		       const char **spec, int cnt);
 

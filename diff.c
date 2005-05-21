@@ -513,7 +513,7 @@ int diff_scoreopt_parse(const char *opt)
 }
 
 void diff_setup(int detect_rename_, int minimum_score_,
-		char *pickaxe_,
+		const char *pickaxe_,
 		int reverse_diff_, int diff_raw_output_,
 		const char **pathspec_, int speccnt_)
 {
