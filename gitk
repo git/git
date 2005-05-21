@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.17 $
+# CVS $Revision: 1.18 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -123,6 +123,35 @@ proc readcommit {id} {
 			     $comname $comdate $comment]
 }
 
+proc readrefs {} {
+    global tagids idtags
+    set tags [glob -nocomplain -types f .git/refs/tags/*]
+    foreach f $tags {
+	catch {
+	    set fd [open $f r]
+	    set line [read $fd]
+	    if {[regexp {^[0-9a-f]{40}} $line id]} {
+		set contents [split [exec git-cat-file tag $id] "\n"]
+		set obj {}
+		set type {}
+		set tag {}
+		foreach l $contents {
+		    if {$l == {}} break
+		    switch -- [lindex $l 0] {
+			"object" {set obj [lindex $l 1]}
+			"type" {set type [lindex $l 1]}
+			"tag" {set tag [string range $l 4 end]}
+		    }
+		}
+		if {$obj != {} && $type == "commit" && $tag != {}} {
+		    set tagids($tag) $obj
+		    lappend idtags($obj) $tag
+		}
+	    }
+	}
+    }
+}
+
 proc error_popup msg {
     set w .error
     toplevel $w
@@ -137,7 +166,8 @@ proc error_popup msg {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
-    global sha1entry findtype findloc findstring fstring geometry
+    global findtype findloc findstring fstring geometry
+    global entries sha1entry sha1string sha1but
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -189,14 +219,20 @@ proc makewindow {} {
     bind .ctop.top.clist <Configure> {resizeclistpanes %W %w}
 
     set sha1entry .ctop.top.bar.sha1
-    label .ctop.top.bar.sha1label -text "SHA1 ID: "
+    set entries $sha1entry
+    set sha1but .ctop.top.bar.sha1label
+    button $sha1but -text "SHA1 ID: " -state disabled -relief flat \
+	-command gotocommit -width 8
+    $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .ctop.top.bar.sha1label -side left
-    entry $sha1entry -width 40 -font $textfont -state readonly
+    entry $sha1entry -width 40 -font $textfont -textvariable sha1string
+    trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
     button .ctop.top.bar.findbut -text "Find" -command dofind
     pack .ctop.top.bar.findbut -side left
     set findstring {}
     set fstring .ctop.top.bar.findstring
+    lappend entries $fstring
     entry $fstring -width 30 -font $textfont -textvariable findstring
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
@@ -270,28 +306,32 @@ proc makewindow {} {
     bind . <Destroy> {savestuff %W}
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
+    bind $sha1entry <Key-Return> gotocommit
 }
 
 # when we make a key binding for the toplevel, make sure
 # it doesn't get triggered when that key is pressed in the
 # find string entry widget.
 proc bindkey {ev script} {
-    global fstring
+    global entries
     bind . $ev $script
     set escript [bind Entry $ev]
     if {$escript == {}} {
 	set escript [bind Entry <Key>]
     }
-    bind $fstring $ev "$escript; break"
+    foreach e $entries {
+	bind $e $ev "$escript; break"
+    }
 }
 
 # set the focus back to the toplevel for any click outside
-# the find string entry widget
+# the entry widgets
 proc click {w} {
-    global fstring
-    if {$w != $fstring} {
-	focus .
+    global entries
+    foreach e $entries {
+	if {$w == $e} return
     }
+    focus .
 }
 
 proc savestuff {w} {
@@ -402,7 +442,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.17 $)} \
+(CVS $Revision: 1.18 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -490,7 +530,7 @@ proc drawgraph {} {
     global datemode cdate
     global lineid linehtag linentag linedtag commitinfo
     global nextcolor colormap numcommits
-    global stopped phase redisplaying selectedline
+    global stopped phase redisplaying selectedline idtags idline
 
     allcanvs delete all
     set start {}
@@ -531,6 +571,7 @@ proc drawgraph {} {
 	set nlines [llength $todo]
 	set id [lindex $todo $level]
 	set lineid($lineno) $id
+	set idline($id) $lineno
 	set actualparents {}
 	if {[info exists parents($id)]} {
 	    foreach p $parents($id) {
@@ -563,6 +604,34 @@ proc drawgraph {} {
 		   -fill $ofill -outline black -width 1]
 	$canv raise $t
 	set xt [expr $canvx0 + $nlines * $linespc]
+	if {$nparents($id) > 2} {
+	    set xt [expr {$xt + ($nparents($id) - 2) * $linespc}]
+	}
+	if {[info exists idtags($id)] && $idtags($id) != {}} {
+	    set delta [expr {int(0.5 * ($linespc - $lthickness))}]
+	    set yt [expr $canvy - 0.5 * $linespc]
+	    set yb [expr $yt + $linespc - 1]
+	    set xvals {}
+	    set wvals {}
+	    foreach tag $idtags($id) {
+		set wid [font measure $mainfont $tag]
+		lappend xvals $xt
+		lappend wvals $wid
+		set xt [expr {$xt + $delta + $wid + $lthickness + $linespc}]
+	    }
+	    set t [$canv create line $x $canvy [lindex $xvals end] $canvy \
+		       -width $lthickness -fill black]
+	    $canv lower $t
+	    foreach tag $idtags($id) x $xvals wid $wvals {
+		set xl [expr $x + $delta]
+		set xr [expr $x + $delta + $wid + $lthickness]
+		$canv create polygon $x [expr $yt + $delta] $xl $yt\
+		    $xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
+		    -width 1 -outline black -fill yellow
+		$canv create text $xl $canvy -anchor w -text $tag \
+		    -font $mainfont
+	    }
+	}
 	set headline [lindex $commitinfo($id) 0]
 	set name [lindex $commitinfo($id) 1]
 	set date [lindex $commitinfo($id) 2]
@@ -743,7 +812,7 @@ proc dofind {} {
     global findtype findloc findstring markedmatches commitinfo
     global numcommits lineid linehtag linentag linedtag
     global mainfont namefont canv canv2 canv3 selectedline
-    global matchinglines foundstring foundstrlen
+    global matchinglines foundstring foundstrlen idtags
     unmarkmatches
     focus .
     set matchinglines {}
@@ -888,7 +957,7 @@ proc selectline {l} {
     global lineid linehtag linentag linedtag
     global canvy0 linespc nparents treepending
     global cflist treediffs currentid sha1entry
-    global commentend seenfile numcommits
+    global commentend seenfile numcommits idtags
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
     set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
@@ -939,18 +1008,24 @@ proc selectline {l} {
     set selectedline $l
 
     set id $lineid($l)
-    $sha1entry conf -state normal
+    set currentid $id
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     $sha1entry selection from 0
     $sha1entry selection to end
-    $sha1entry conf -state readonly
 
     $ctext conf -state normal
     $ctext delete 0.0 end
     set info $commitinfo($id)
     $ctext insert end "Author: [lindex $info 1]  [lindex $info 2]\n"
     $ctext insert end "Committer: [lindex $info 3]  [lindex $info 4]\n"
+    if {[info exists idtags($id)]} {
+	$ctext insert end "Tags:"
+	foreach tag $idtags($id) {
+	    $ctext insert end " $tag"
+	}
+	$ctext insert end "\n"
+    }
     $ctext insert end "\n"
     $ctext insert end [lindex $info 5]
     $ctext insert end "\n"
@@ -960,7 +1035,6 @@ proc selectline {l} {
     set commentend [$ctext index "end - 1c"]
 
     $cflist delete 0 end
-    set currentid $id
     if {$nparents($id) == 1} {
 	if {![info exists treediffs($id)]} {
 	    if {![info exists treepending]} {
@@ -1191,10 +1265,50 @@ proc incrfont {inc} {
     setcoords
     $ctext conf -font $textfont
     $ctext tag conf filesep -font [concat $textfont bold]
+    foreach e $entries {
+	$e conf -font $mainfont
+    }
     if {$phase == "getcommits"} {
 	$canv itemconf textitems -font $mainfont
     }
     redisplay
+}
+
+proc sha1change {n1 n2 op} {
+    global sha1string currentid sha1but
+    if {$sha1string == {}
+	|| ([info exists currentid] && $sha1string == $currentid)} {
+	set state disabled
+    } else {
+	set state normal
+    }
+    if {[$sha1but cget -state] == $state} return
+    if {$state == "normal"} {
+	$sha1but conf -state normal -relief raised -text "Goto: "
+    } else {
+	$sha1but conf -state disabled -relief flat -text "SHA1 ID: "
+    }
+}
+
+proc gotocommit {} {
+    global sha1string currentid idline tagids
+    if {$sha1string == {}
+	|| ([info exists currentid] && $sha1string == $currentid)} return
+    if {[info exists tagids($sha1string)]} {
+	set id $tagids($sha1string)
+    } else {
+	set id [string tolower $sha1string]
+    }
+    if {[info exists idline($id)]} {
+	selectline $idline($id)
+	return
+    }
+    if {[regexp {^[0-9a-fA-F]{40}$} $sha1string]} {
+	set type "SHA1 id"
+    } else {
+	set type "Tag"
+    }
+    error_popup "$type $sha1string is not known"
 }
 
 proc doquit {} {
@@ -1243,4 +1357,5 @@ set redisplaying 0
 set stuffsaved 0
 setcoords
 makewindow
+readrefs
 getcommits $revtreeargs
