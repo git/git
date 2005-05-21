@@ -9,7 +9,7 @@ git-diff-cache - Compares content and mode of blobs between the cache and reposi
 
 SYNOPSIS
 --------
-'git-diff-cache' [-p] [-r] [-z] [-m] [-M] [-R] [--cached] <tree-ish>
+'git-diff-cache' [-p] [-r] [-z] [-m] [-M] [-R] [-C] [--cached] <tree-ish>
 
 DESCRIPTION
 -----------
@@ -35,6 +35,9 @@ OPTIONS
 
 -M::
 	Detect renames; implies -p.
+
+-C::
+	Detect copies as well as renames; implies -p.
 
 -R::
 	Output diff in reverse.

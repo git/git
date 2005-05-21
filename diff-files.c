@@ -7,7 +7,7 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"git-diff-files [-p] [-q] [-r] [-z] [-M] [-R] [paths...]";
+"git-diff-files [-p] [-q] [-r] [-z] [-M] [-C] [-R] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';
@@ -70,6 +70,11 @@ int main(int argc, char **argv)
 		else if (!strncmp(argv[1], "-M", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
 			detect_rename = generate_patch = 1;
+		}
+		else if (!strncmp(argv[1], "-C", 2)) {
+			diff_score_opt = diff_scoreopt_parse(argv[1]);
+			detect_rename = 2;
+			generate_patch = 1;
 		}
 		else
 			usage(diff_files_usage);

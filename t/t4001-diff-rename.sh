@@ -31,7 +31,7 @@ test_expect_success \
 
 test_expect_success \
     'write that tree.' \
-    'tree=$(git-write-tree)'
+    'tree=$(git-write-tree) && echo $tree'
 
 sed -e 's/line/Line/' <path0 >path1
 rm -f path0
@@ -61,6 +61,6 @@ EOF
 
 test_expect_success \
     'validate the output.' \
-    'diff -I "rename similarity.*" >/dev/null current expected'
+    'diff -I "similarity.*" >/dev/null current expected'
 
 test_done

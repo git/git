@@ -7,12 +7,17 @@
 #include <limits.h>
 #include "cache.h"
 #include "diff.h"
-#include "delta.h"
+#include "diffcore.h"
 
 static const char *diff_opts = "-pu";
 static unsigned char null_sha1[20] = { 0, };
-#define MAX_SCORE 10000
-#define DEFAULT_MINIMUM_SCORE 5000
+
+static int detect_rename;
+static int reverse_diff;
+static int diff_raw_output = -1;
+static const char **pathspec;
+static int speccnt;
+static int minimum_score;
 
 static const char *external_diff(void)
 {
@@ -77,26 +82,16 @@ static char *sq_expand(const char *src)
 }
 
 static struct diff_tempfile {
-	const char *name;
+	const char *name; /* filename external diff should read from */
 	char hex[41];
 	char mode[10];
 	char tmp_path[50];
 } diff_temp[2];
 
-struct diff_spec {
-	unsigned char blob_sha1[20];
-	unsigned short mode;	 /* file mode */
-	unsigned sha1_valid : 1; /* if true, use blob_sha1 and trust mode;
-				  * if false, use the name and read from
-				  * the filesystem.
-				  */
-	unsigned file_valid : 1; /* if false the file does not exist */
-};
-
 static void builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_tempfile *temp,
-			 int rename_score)
+			 const char *xfrm_msg)
 {
 	int i, next_at, cmd_size;
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
@@ -151,14 +146,9 @@ static void builtin_diff(const char *name_a,
 			printf("old mode %s\n", temp[0].mode);
 			printf("new mode %s\n", temp[1].mode);
 		}
-		if (strcmp(name_a, name_b)) {
-			if (0 < rename_score)
-				printf("rename similarity index %d%%\n",
-				       (int)(0.5+
-					     rename_score*100.0/MAX_SCORE));
-			printf("rename old %s\n", name_a);
-			printf("rename new %s\n", name_b);
-		}
+		if (xfrm_msg && xfrm_msg[0])
+			fputs(xfrm_msg, stdout);
+
 		if (strncmp(temp[0].mode, temp[1].mode, 3))
 			/* we do not run diff between different kind
 			 * of objects.
@@ -167,6 +157,28 @@ static void builtin_diff(const char *name_a,
 	}
 	fflush(NULL);
 	execlp("/bin/sh","sh", "-c", cmd, NULL);
+}
+
+struct diff_filespec *alloc_filespec(const char *path)
+{
+	int namelen = strlen(path);
+	struct diff_filespec *spec = xmalloc(sizeof(*spec) + namelen + 1);
+	spec->path = (char *)(spec + 1);
+	strcpy(spec->path, path);
+	spec->should_free = spec->should_munmap = spec->file_valid = 0;
+	spec->xfrm_flags = 0;
+	spec->size = 0;
+	spec->data = 0;
+	return spec;
+}
+
+void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
+		   unsigned short mode)
+{
+	spec->mode = mode;
+	memcpy(spec->sha1, sha1, 20);
+	spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
+	spec->file_valid = 1;
 }
 
 /*
@@ -201,11 +213,84 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 		return 0;
 	ce = active_cache[pos];
 	if ((lstat(name, &st) < 0) ||
-	    !S_ISREG(st.st_mode) ||
+	    !S_ISREG(st.st_mode) || /* careful! */
 	    ce_match_stat(ce, &st) ||
 	    memcmp(sha1, ce->sha1, 20))
 		return 0;
+	/* we return 1 only when we can stat, it is a regular file,
+	 * stat information matches, and sha1 recorded in the cache
+	 * matches.  I.e. we know the file in the work tree really is
+	 * the same as the <name, sha1> pair.
+	 */
 	return 1;
+}
+
+/*
+ * While doing rename detection and pickaxe operation, we may need to
+ * grab the data for the blob (or file) for our own in-core comparison.
+ * diff_filespec has data and size fields for this purpose.
+ */
+int diff_populate_filespec(struct diff_filespec *s)
+{
+	int err = 0;
+	if (!s->file_valid)
+		die("internal error: asking to populate invalid file.");
+	if (S_ISDIR(s->mode))
+		return -1;
+
+	if (s->data)
+		return err;
+	if (!s->sha1_valid ||
+	    work_tree_matches(s->path, s->sha1)) {
+		struct stat st;
+		int fd;
+		if (lstat(s->path, &st) < 0) {
+			if (errno == ENOENT) {
+			err_empty:
+				err = -1;
+			empty:
+				s->data = "";
+				s->size = 0;
+				return err;
+			}
+		}
+		s->size = st.st_size;
+		if (!s->size)
+			goto empty;
+		if (S_ISLNK(st.st_mode)) {
+			int ret;
+			s->data = xmalloc(s->size);
+			s->should_free = 1;
+			ret = readlink(s->path, s->data, s->size);
+			if (ret < 0) {
+				free(s->data);
+				goto err_empty;
+			}
+			return 0;
+		}
+		fd = open(s->path, O_RDONLY);
+		if (fd < 0)
+			goto err_empty;
+		s->data = mmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
+		s->should_munmap = 1;
+		close(fd);
+	}
+	else {
+		char type[20];
+		s->data = read_sha1_file(s->sha1, type, &s->size);
+		s->should_free = 1;
+	}
+	return 0;
+}
+
+void diff_free_filespec_data(struct diff_filespec *s)
+{
+	if (s->should_free)
+		free(s->data);
+	else if (s->should_munmap)
+		munmap(s->data, s->size);
+	s->should_free = s->should_munmap = 0;
+	s->data = 0;
 }
 
 static void prep_temp_blob(struct diff_tempfile *temp,
@@ -231,7 +316,7 @@ static void prep_temp_blob(struct diff_tempfile *temp,
 
 static void prepare_temp_file(const char *name,
 			      struct diff_tempfile *temp,
-			      struct diff_spec *one)
+			      struct diff_filespec *one)
 {
 	if (!one->file_valid) {
 	not_a_valid_file:
@@ -245,13 +330,12 @@ static void prepare_temp_file(const char *name,
 	}
 
 	if (!one->sha1_valid ||
-	    work_tree_matches(name, one->blob_sha1)) {
+	    work_tree_matches(name, one->sha1)) {
 		struct stat st;
-		temp->name = name;
-		if (lstat(temp->name, &st) < 0) {
+		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
 				goto not_a_valid_file;
-			die("stat(%s): %s", temp->name, strerror(errno));
+			die("stat(%s): %s", name, strerror(errno));
 		}
 		if (S_ISLNK(st.st_mode)) {
 			int ret;
@@ -263,31 +347,27 @@ static void prepare_temp_file(const char *name,
 				die("readlink(%s)", name);
 			prep_temp_blob(temp, buf, st.st_size,
 				       (one->sha1_valid ?
-					one->blob_sha1 : null_sha1),
+					one->sha1 : null_sha1),
 				       (one->sha1_valid ?
 					one->mode : S_IFLNK));
 		}
 		else {
+			/* we can borrow from the file in the work tree */
+			temp->name = name;
 			if (!one->sha1_valid)
 				strcpy(temp->hex, sha1_to_hex(null_sha1));
 			else
-				strcpy(temp->hex, sha1_to_hex(one->blob_sha1));
+				strcpy(temp->hex, sha1_to_hex(one->sha1));
 			sprintf(temp->mode, "%06o",
 				S_IFREG |ce_permissions(st.st_mode));
 		}
 		return;
 	}
 	else {
-		void *blob;
-		char type[20];
-		unsigned long size;
-
-		blob = read_sha1_file(one->blob_sha1, type, &size);
-		if (!blob || strcmp(type, "blob"))
-			die("unable to read blob object for %s (%s)",
-			    name, sha1_to_hex(one->blob_sha1));
-		prep_temp_blob(temp, blob, size, one->blob_sha1, one->mode);
-		free(blob);
+		if (diff_populate_filespec(one))
+			die("cannot read data blob for %s", one->path);
+		prep_temp_blob(temp, one->data, one->size,
+			       one->sha1, one->mode);
 	}
 }
 
@@ -306,13 +386,6 @@ static void remove_tempfile_on_signal(int signo)
 {
 	remove_tempfile();
 }
-
-static int detect_rename;
-static int reverse_diff;
-static int diff_raw_output = -1;
-static const char **pathspec;
-static int speccnt;
-static int minimum_score;
 
 static int matches_pathspec(const char *name)
 {
@@ -341,9 +414,9 @@ static int matches_pathspec(const char *name)
  */
 static void run_external_diff(const char *name,
 			      const char *other,
-			      struct diff_spec *one,
-			      struct diff_spec *two,
-			      int rename_score)
+			      struct diff_filespec *one,
+			      struct diff_filespec *two,
+			      const char *xfrm_msg)
 {
 	struct diff_tempfile *temp = diff_temp;
 	pid_t pid;
@@ -373,7 +446,7 @@ static void run_external_diff(const char *name,
 		const char *pgm = external_diff();
 		if (pgm) {
 			if (one && two) {
-				const char *exec_arg[9];
+				const char *exec_arg[10];
 				const char **arg = &exec_arg[0];
 				*arg++ = pgm;
 				*arg++ = name;
@@ -383,9 +456,11 @@ static void run_external_diff(const char *name,
 				*arg++ = temp[1].name;
 				*arg++ = temp[1].hex;
 				*arg++ = temp[1].mode;
-				if (other)
+				if (other) {
 					*arg++ = other;
-				*arg = NULL;
+					*arg++ = xfrm_msg;
+				}
+				*arg = 0;
 				execvp(pgm, (char *const*) exec_arg);
 			}
 			else
@@ -395,7 +470,7 @@ static void run_external_diff(const char *name,
 		 * otherwise we use the built-in one.
 		 */
 		if (one && two)
-			builtin_diff(name, other ? : name, temp, rename_score);
+			builtin_diff(name, other ? : name, temp, xfrm_msg);
 		else
 			printf("* Unmerged path %s\n", name);
 		exit(0);
@@ -418,303 +493,11 @@ static void run_external_diff(const char *name,
 	remove_tempfile();
 }
 
-/*
- * We do not detect circular renames.  Just hold created and deleted
- * entries and later attempt to match them up.  If they do not match,
- * then spit them out as deletes or creates as original.
- */
-
-static struct diff_spec_hold {
-	struct diff_spec_hold *next;
-	struct diff_spec it;
-	unsigned long size;
-	int flags;
-#define MATCHED 1
-#define SHOULD_FREE 2
-#define SHOULD_MUNMAP 4
-	void *data;
-	char path[1];
-} *createdfile, *deletedfile;
-
-static void hold_diff(const char *name,
-		      struct diff_spec *one,
-		      struct diff_spec *two)
-{
-	struct diff_spec_hold **list, *elem;
-
-	if (one->file_valid && two->file_valid)
-		die("internal error");
-
-	if (!detect_rename) {
-		run_external_diff(name, NULL, one, two, -1);
-		return;
-	}
-	elem = xmalloc(sizeof(*elem) + strlen(name));
-	strcpy(elem->path, name);
-	elem->size = 0;
-	elem->data = NULL;
-	elem->flags = 0;
-	if (one->file_valid) {
-		list = &deletedfile;
-		elem->it = *one;
-	}
-	else {
-		list = &createdfile;
-		elem->it = *two;
-	}
-	elem->next = *list;
-	*list = elem;
-}
-
-static int populate_data(struct diff_spec_hold *s)
-{
-	char type[20];
-
-	if (s->data)
-		return 0;
-	if (s->it.sha1_valid) {
-		s->data = read_sha1_file(s->it.blob_sha1, type, &s->size);
-		s->flags |= SHOULD_FREE;
-	}
-	else {
-		struct stat st;
-		int fd;
-		fd = open(s->path, O_RDONLY);
-		if (fd < 0)
-			return -1;
-		if (fstat(fd, &st)) {
-			close(fd);
-			return -1;
-		}
-		s->size = st.st_size;
-		s->data = mmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
-		close(fd);
-		if (!s->size)
-			s->data = "";
-		else
-			s->flags |= SHOULD_MUNMAP;
-	}
-	return 0;
-}
-
-static void free_data(struct diff_spec_hold *s)
-{
-	if (s->flags & SHOULD_FREE)
-		free(s->data);
-	else if (s->flags & SHOULD_MUNMAP)
-		munmap(s->data, s->size);
-	s->flags &= ~(SHOULD_FREE|SHOULD_MUNMAP);
-	s->data = NULL;
-}
-
-static void flush_remaining_diff(struct diff_spec_hold *elem,
-				 int on_created_list)
-{
-	static struct diff_spec null_file_spec;
-
-	null_file_spec.file_valid = 0;
-	for ( ; elem ; elem = elem->next) {
-		free_data(elem);
-		if (elem->flags & MATCHED)
-			continue;
-		if (on_created_list)
-			run_external_diff(elem->path, NULL,
-					  &null_file_spec, &elem->it, -1);
-		else
-			run_external_diff(elem->path, NULL,
-					  &elem->it, &null_file_spec, -1);
-	}
-}
-
-static int is_exact_match(struct diff_spec_hold *src,
-			  struct diff_spec_hold *dst)
-{
-	if (src->it.sha1_valid && dst->it.sha1_valid &&
-	    !memcmp(src->it.blob_sha1, dst->it.blob_sha1, 20))
-		return 1;
-	if (populate_data(src) || populate_data(dst))
-		/* this is an error but will be caught downstream */
-		return 0;
-	if (src->size == dst->size &&
-	    !memcmp(src->data, dst->data, src->size))
-		return 1;
-	return 0;
-}
-
-static int estimate_similarity(struct diff_spec_hold *src, struct diff_spec_hold *dst)
-{
-	/* src points at a deleted file and dst points at a created
-	 * file.  They may be quite similar, in which case we want to
-	 * say src is renamed to dst.
-	 *
-	 * Compare them and return how similar they are, representing
-	 * the score as an integer between 0 and 10000, except
-	 * where they match exactly it is considered better than anything
-	 * else.
-	 */
-	void *delta;
-	unsigned long delta_size;
-	int score;
-
-	delta_size = ((src->size < dst->size) ?
-		      (dst->size - src->size) : (src->size - dst->size));
-
-	/* We would not consider rename followed by more than
-	 * minimum_score/MAX_SCORE edits; that is, delta_size must be smaller
-	 * than (src->size + dst->size)/2 * minimum_score/MAX_SCORE,
-	 * which means...
-	 */
-
-	if ((src->size+dst->size)*minimum_score < delta_size*MAX_SCORE*2)
-		return 0;
-
-	delta = diff_delta(src->data, src->size,
-			   dst->data, dst->size,
-			   &delta_size);
-	free(delta);
-
-	/* This "delta" is really xdiff with adler32 and all the
-	 * overheads but it is a quick and dirty approximation.
-	 *
-	 * Now we will give some score to it.  100% edit gets
-	 * 0 points and 0% edit gets MAX_SCORE points.  That is, every
-	 * 1/MAX_SCORE edit gets 1 point penalty.  The amount of penalty is:
-	 *
-	 * (delta_size * 2 / (src->size + dst->size)) * MAX_SCORE
-	 *
-	 */
-	score = MAX_SCORE-(MAX_SCORE*2*delta_size/(src->size+dst->size));
-	if (score < 0) return 0;
-	if (MAX_SCORE < score) return MAX_SCORE;
-	return score;
-}
-
-struct diff_score {
-	struct diff_spec_hold *src;
-	struct diff_spec_hold *dst;
-	int score;
-};
-
-static int score_compare(const void *a_, const void *b_)
-{
-	const struct diff_score *a = a_, *b = b_;
-	return b->score - a->score;
-}
-
-static void flush_rename_pair(struct diff_spec_hold *src,
-			      struct diff_spec_hold *dst,
-			      int rename_score)
-{
-	src->flags |= MATCHED;
-	dst->flags |= MATCHED;
-	free_data(src);
-	free_data(dst);
-	run_external_diff(src->path, dst->path,
-			  &src->it, &dst->it, rename_score);
-}
-
-static void free_held_diff(struct diff_spec_hold *list)
-{
-	struct diff_spec_hold *h;
-	for (h = list; list; list = h) {
-		h = list->next;
-		free_data(list);
-		free(list);
-	}
-}
-
-void diff_flush(void)
-{
-	int num_create, num_delete, c, d;
-	struct diff_spec_hold *elem, *src, *dst;
-	struct diff_score *mx;
-
-	/* We really want to cull the candidates list early
-	 * with cheap tests in order to avoid doing deltas.
-	 *
-	 * With the current callers, we should not have already
-	 * matched entries at this point, but it is nonetheless
-	 * checked for sanity.
-	 */
-	for (dst = createdfile; dst; dst = dst->next) {
-		if (dst->flags & MATCHED)
-			continue;
-		for (src = deletedfile; src; src = src->next) {
-			if (src->flags & MATCHED)
-				continue;
-			if (! is_exact_match(src, dst))
-				continue;
-			flush_rename_pair(src, dst, MAX_SCORE);
-			break;
-		}
-	}
-
-	/* Count surviving candidates */
-	for (num_create = 0, elem = createdfile; elem; elem = elem->next)
-		if (!(elem->flags & MATCHED))
-			num_create++;
-
-	for (num_delete = 0, elem = deletedfile; elem; elem = elem->next)
-		if (!(elem->flags & MATCHED))
-			num_delete++;
-
-	if (num_create == 0 ||  num_delete == 0)
-		goto exit_path;
-
-	mx = xmalloc(sizeof(*mx) * num_create * num_delete);
-	for (c = 0, dst = createdfile; dst; dst = dst->next) {
-		int base = c * num_delete;
-		if (dst->flags & MATCHED)
-			continue;
-		for (d = 0, src = deletedfile; src; src = src->next) {
-			struct diff_score *m = &mx[base+d];
-			if (src->flags & MATCHED)
-				continue;
-			m->src = src;
-			m->dst = dst;
-			m->score = estimate_similarity(src, dst);
-			d++;
-		}
-		c++;
-	}
-	qsort(mx, num_create*num_delete, sizeof(*mx), score_compare);
-
-#if 0
- 	for (c = 0; c < num_create * num_delete; c++) {
-		src = mx[c].src;
-		dst = mx[c].dst;
-		if ((src->flags & MATCHED) || (dst->flags & MATCHED))
-			continue;
-		fprintf(stderr,
-			"**score ** %d %s %s\n",
-			mx[c].score, src->path, dst->path);
-	}
-#endif
-
- 	for (c = 0; c < num_create * num_delete; c++) {
-		src = mx[c].src;
-		dst = mx[c].dst;
-		if ((src->flags & MATCHED) || (dst->flags & MATCHED))
-			continue;
-		if (mx[c].score < minimum_score)
-			break;
-		flush_rename_pair(src, dst, mx[c].score);
-	}
-	free(mx);
-
- exit_path:
-	flush_remaining_diff(createdfile, 1);
-	flush_remaining_diff(deletedfile, 0);
-	free_held_diff(createdfile);
-	free_held_diff(deletedfile);
-	createdfile = deletedfile = NULL;
-}
-
 int diff_scoreopt_parse(const char *opt)
 {
 	int diglen, num, scale, i;
-	if (opt[0] != '-' || opt[1] != 'M')
-		return -1; /* that is not -M option */
+	if (opt[0] != '-' || (opt[1] != 'M' && opt[1] != 'C'))
+		return -1; /* that is not a -M nor -C option */
 	diglen = strspn(opt+2, "0123456789");
 	if (diglen == 0 || strlen(opt+2) != diglen)
 		return 0; /* use default */
@@ -732,10 +515,6 @@ void diff_setup(int detect_rename_, int minimum_score_, int reverse_diff_,
 		int diff_raw_output_,
 		const char **pathspec_, int speccnt_)
 {
-	free_held_diff(createdfile);
-	free_held_diff(deletedfile);
-	createdfile = deletedfile = NULL;
-
 	detect_rename = detect_rename_;
 	reverse_diff = reverse_diff_;
 	pathspec = pathspec_;
@@ -744,9 +523,136 @@ void diff_setup(int detect_rename_, int minimum_score_, int reverse_diff_,
 	minimum_score = minimum_score_ ? : DEFAULT_MINIMUM_SCORE;
 }
 
+static struct diff_queue_struct queued_diff;
+
+struct diff_file_pair *diff_queue(struct diff_queue_struct *queue,
+				  struct diff_filespec *one,
+				  struct diff_filespec *two)
+{
+	struct diff_file_pair *dp = xmalloc(sizeof(*dp));
+	dp->one = one;
+	dp->two = two;
+	dp->xfrm_msg = 0;
+	dp->orig_order = queue->nr;
+	dp->xfrm_work = 0;
+	if (queue->alloc <= queue->nr) {
+		queue->alloc = alloc_nr(queue->alloc);
+		queue->queue = xrealloc(queue->queue,
+				       sizeof(dp) * queue->alloc);
+	}
+	queue->queue[queue->nr++] = dp;
+	return dp;
+}
+
 static const char *git_object_type(unsigned mode)
 {
 	return S_ISDIR(mode) ? "tree" : "blob";
+}
+
+static void diff_flush_raw(struct diff_file_pair *p)
+{
+	struct diff_filespec *it;
+	int addremove;
+
+	/* raw output does not have a way to express rename nor copy */
+	if (strcmp(p->one->path, p->two->path))
+		return;
+
+	if (p->one->file_valid && p->two->file_valid) {
+		char hex[41];
+		strcpy(hex, sha1_to_hex(p->one->sha1));
+		printf("*%06o->%06o %s %s->%s %s%c",
+		       p->one->mode, p->two->mode,
+		       git_object_type(p->one->mode),
+		       hex, sha1_to_hex(p->two->sha1),
+		       p->one->path, diff_raw_output);
+		return;
+	}
+
+	if (p->one->file_valid) {
+		it = p->one;
+		addremove = '-';
+	} else {
+		it = p->two;
+		addremove = '+';
+	}
+
+	printf("%c%06o %s %s %s%c",
+	       addremove,
+	       it->mode, git_object_type(it->mode),
+	       sha1_to_hex(it->sha1), it->path, diff_raw_output);
+}
+
+static void diff_flush_patch(struct diff_file_pair *p)
+{
+	const char *name, *other;
+
+	name = p->one->path;
+	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	if ((p->one->file_valid && S_ISDIR(p->one->mode)) ||
+	    (p->two->file_valid && S_ISDIR(p->two->mode)))
+		return; /* no tree diffs in patch format */ 
+
+	run_external_diff(name, other, p->one, p->two, p->xfrm_msg);
+}
+
+static int identical(struct diff_filespec *one, struct diff_filespec *two)
+{
+	/* This function is written stricter than necessary to support
+	 * the currently implemented transformers, but the idea is to
+	 * let transformers to produce diff_file_pairs any way they want,
+	 * and filter and clean them up here before producing the output.
+	 */
+
+	if (!one->file_valid && !two->file_valid)
+		return 1; /* not interesting */
+
+	/* deletion, addition, mode change and renames are all interesting. */
+	if ((one->file_valid != two->file_valid) || (one->mode != two->mode) ||
+	    strcmp(one->path, two->path))
+		return 0;
+
+	/* both are valid and point at the same path.  that is, we are
+	 * dealing with a change.
+	 */
+	if (one->sha1_valid && two->sha1_valid &&
+	    !memcmp(one->sha1, two->sha1, sizeof(one->sha1)))
+		return 1; /* no change */
+	if (!one->sha1_valid && !two->sha1_valid)
+		return 1; /* both look at the same file on the filesystem. */
+	return 0;
+}
+
+static void diff_flush_one(struct diff_file_pair *p)
+{
+	if (identical(p->one, p->two))
+		return;
+	if (0 <= diff_raw_output)
+		diff_flush_raw(p);
+	else
+		diff_flush_patch(p);
+}
+
+void diff_flush(void)
+{
+	struct diff_queue_struct *q = &queued_diff;
+	int i;
+
+	if (detect_rename)
+		diff_detect_rename(q, detect_rename, minimum_score);
+	for (i = 0; i < q->nr; i++)
+		diff_flush_one(q->queue[i]);
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_file_pair *p = q->queue[i];
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
+		free(p->xfrm_msg);
+		free(p);
+	}
+	free(q->queue);
+	q->queue = NULL;
+	q->nr = q->alloc = 0;
 }
 
 void diff_addremove(int addremove, unsigned mode,
@@ -754,41 +660,35 @@ void diff_addremove(int addremove, unsigned mode,
 		    const char *base, const char *path)
 {
 	char concatpath[PATH_MAX];
-	struct diff_spec spec[2], *one, *two;
+	struct diff_filespec *one, *two;
 
+	/* This may look odd, but it is a preparation for
+	 * feeding "there are unchanged files which should
+	 * not produce diffs, but when you are doing copy
+	 * detection you would need them, so here they are"
+	 * entries to the diff-core.  They will be prefixed
+	 * with something like '=' or '*' (I haven't decided
+	 * which but should not make any difference).
+	 * Feeding the same new and old to diff_change() should
+	 * also have the same effect.  diff_flush() should
+	 * filter the identical ones out at the final output
+	 * stage.
+	 */
 	if (reverse_diff)
-		addremove = (addremove == '+' ? '-' : '+');
+		addremove = (addremove == '+' ? '-' :
+			     addremove == '-' ? '+' : addremove);
 
-	if (0 <= diff_raw_output) {
-		if (!path)
-			path = "";
-		printf("%c%06o %s %s %s%s%c",
-		       addremove,
-		       mode,
-		       git_object_type(mode), sha1_to_hex(sha1),
-		       base, path, diff_raw_output);
-		return;
-	}
-	if (S_ISDIR(mode))
-		return;
+	if (!path) path = "";
+	sprintf(concatpath, "%s%s", base, path);
+	one = alloc_filespec(concatpath);
+	two = alloc_filespec(concatpath);
 
-	memcpy(spec[0].blob_sha1, sha1, 20);
-	spec[0].mode = mode;
-	spec[0].sha1_valid = !!memcmp(sha1, null_sha1, 20);
-	spec[0].file_valid = 1;
-	spec[1].file_valid = 0;
+	if (addremove != '+')
+		fill_filespec(one, sha1, mode);
+	if (addremove != '-')
+		fill_filespec(two, sha1, mode);
 
-	if (addremove == '+') {
-		one = spec + 1; two = spec;
-	} else {
-		one = spec; two = one + 1;
-	}
-
-	if (path) {
-		strcpy(concatpath, base);
-		strcat(concatpath, path);
-	}
-	hold_diff(path ? concatpath : base, one, two);
+	diff_queue(&queued_diff, one, two);
 }
 
 void diff_change(unsigned old_mode, unsigned new_mode,
@@ -796,7 +696,7 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 		 const unsigned char *new_sha1,
 		 const char *base, const char *path) {
 	char concatpath[PATH_MAX];
-	struct diff_spec spec[2];
+	struct diff_filespec *one, *two;
 
 	if (reverse_diff) {
 		unsigned tmp;
@@ -804,41 +704,14 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
 	}
+	if (!path) path = "";
+	sprintf(concatpath, "%s%s", base, path);
+	one = alloc_filespec(concatpath);
+	two = alloc_filespec(concatpath);
+	fill_filespec(one, old_sha1, old_mode);
+	fill_filespec(two, new_sha1, new_mode);
 
-	if (0 <= diff_raw_output) {
-		char old_hex[41];
-		strcpy(old_hex, sha1_to_hex(old_sha1));
-
-		if (!path)
-			path = "";
-		printf("*%06o->%06o %s %s->%s %s%s%c",
-		       old_mode, new_mode,
-		       git_object_type(new_mode),
-		       old_hex, sha1_to_hex(new_sha1),
-		       base, path, diff_raw_output);
-		return;
-	}
-	if (S_ISDIR(new_mode))
-		return;
-
-	if (path) {
-		strcpy(concatpath, base);
-		strcat(concatpath, path);
-	}
-
-	memcpy(spec[0].blob_sha1, old_sha1, 20);
-	spec[0].mode = old_mode;
-	memcpy(spec[1].blob_sha1, new_sha1, 20);
-	spec[1].mode = new_mode;
-	spec[0].sha1_valid = !!memcmp(old_sha1, null_sha1, 20);
-	spec[1].sha1_valid = !!memcmp(new_sha1, null_sha1, 20);
-	spec[1].file_valid = spec[0].file_valid = 1;
-
-	/* We do not look at changed files as candidate for
-	 * rename detection ever.
-	 */
-	run_external_diff(path ? concatpath : base, NULL,
-			  &spec[0], &spec[1], -1);
+	diff_queue(&queued_diff, one, two);
 }
 
 void diff_unmerge(const char *path)
@@ -847,5 +720,5 @@ void diff_unmerge(const char *path)
 		printf("U %s%c", path, diff_raw_output);
 		return;
 	}
-	run_external_diff(path, NULL, NULL, NULL, -1);
+	run_external_diff(path, NULL, NULL, NULL, NULL);
 }

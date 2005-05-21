@@ -153,7 +153,7 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"git-diff-cache [-p] [-r] [-z] [-m] [-M] [-R] [--cached] <tree-ish>";
+"git-diff-cache [-p] [-r] [-z] [-m] [-M] [-C] [-R] [--cached] <tree-ish>";
 
 int main(int argc, char **argv)
 {
@@ -177,6 +177,12 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "-M", 2)) {
 			generate_patch = detect_rename = 1;
+			diff_score_opt = diff_scoreopt_parse(arg);
+			continue;
+		}
+		if (!strncmp(arg, "-C", 2)) {
+			generate_patch = 1;
+			detect_rename = 2;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}

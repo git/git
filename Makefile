@@ -45,7 +45,7 @@ LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
 
 LIB_H += diff.h
-LIB_OBJS += diff.o
+LIB_OBJS += diff.o diffcore-rename.o
 
 LIB_OBJS += gitenv.o
 
@@ -121,9 +121,10 @@ object.o: $(LIB_H)
 read-cache.o: $(LIB_H)
 sha1_file.o: $(LIB_H)
 usage.o: $(LIB_H)
-diff.o: $(LIB_H)
 strbuf.o: $(LIB_H)
 gitenv.o: $(LIB_H)
+diff.o: $(LIB_H)
+diffcore-rename.o : $(LIB_H)
 
 test: all
 	make -C t/ all

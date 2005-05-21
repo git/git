@@ -430,7 +430,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-R] [-m] [-s] [-v] <tree-ish> <tree-ish>";
+"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-m] [-s] [-v] <tree-ish> <tree-ish>";
 
 int main(int argc, char **argv)
 {
@@ -475,6 +475,12 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "-M", 2)) {
 			detect_rename = recursive = generate_patch = 1;
+			diff_score_opt = diff_scoreopt_parse(arg);
+			continue;
+		}
+		if (!strncmp(arg, "-C", 2)) {
+			detect_rename = 2;
+			recursive = generate_patch = 1;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}

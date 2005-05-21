@@ -8,6 +8,7 @@
 
 static int detect_rename = 0;
 static int diff_score_opt = 0;
+static int generate_patch = 1;
 
 static int parse_oneside_change(const char *cp, int *mode,
 				unsigned char *sha1, char *path)
@@ -20,7 +21,8 @@ static int parse_oneside_change(const char *cp, int *mode,
 		cp++;
 	}
 	*mode = m;
-	if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6))
+	if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6) &&
+	    strncmp(cp, "\ttree\t", 6) && strncmp(cp, " tree ", 6))
 		return -1;
 	cp += 6;
 	if (get_sha1_hex(cp, sha1))
@@ -44,11 +46,13 @@ static int parse_diff_raw_output(const char *buf)
 		diff_unmerge(cp + 1);
 		break;
 	case '+':
-		parse_oneside_change(cp, &new_mode, new_sha1, path);
+		if (parse_oneside_change(cp, &new_mode, new_sha1, path))
+			return -1;
 		diff_addremove('+', new_mode, new_sha1, path, NULL);
 		break;
 	case '-':
-		parse_oneside_change(cp, &old_mode, old_sha1, path);
+		if (parse_oneside_change(cp, &old_mode, old_sha1, path))
+			return -1;
 		diff_addremove('-', old_mode, old_sha1, path, NULL);
 		break;
 	case '*':
@@ -64,7 +68,8 @@ static int parse_diff_raw_output(const char *buf)
 			new_mode = (new_mode << 3) | (ch - '0');
 			cp++;
 		}
-		if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6))
+		if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6) &&
+		    strncmp(cp, "\ttree\t", 6) && strncmp(cp, " tree ", 6))
 			return -1;
 		cp += 6;
 		if (get_sha1_hex(cp, old_sha1))
@@ -88,7 +93,7 @@ static int parse_diff_raw_output(const char *buf)
 }
 
 static const char *diff_helper_usage =
-	"git-diff-helper [-z] [-R] [-M] paths...";
+	"git-diff-helper [-z] [-R] [-M] [-C] paths...";
 
 int main(int ac, const char **av) {
 	struct strbuf sb;
@@ -102,8 +107,14 @@ int main(int ac, const char **av) {
 			reverse = 1;
 		else if (av[1][1] == 'z')
 			line_termination = 0;
+		else if (av[1][1] == 'p') /* hidden from the help */
+			generate_patch = 0;
 		else if (av[1][1] == 'M') {
 			detect_rename = 1;
+			diff_score_opt = diff_scoreopt_parse(av[1]);
+		}
+		else if (av[1][1] == 'C') {
+			detect_rename = 2;
 			diff_score_opt = diff_scoreopt_parse(av[1]);
 		}
 		else
@@ -112,7 +123,9 @@ int main(int ac, const char **av) {
 	}
 	/* the remaining parameters are paths patterns */
 
-	diff_setup(detect_rename, diff_score_opt, reverse, -1, av+1, ac-1);
+	diff_setup(detect_rename, diff_score_opt, reverse,
+		   (generate_patch ? -1 : line_termination),
+		   av+1, ac-1);
 
 	while (1) {
 		int status;
