@@ -38,7 +38,7 @@ extern void fill_filespec(struct diff_filespec *, const unsigned char *,
 extern int diff_populate_filespec(struct diff_filespec *);
 extern void diff_free_filespec_data(struct diff_filespec *);
 
-struct diff_file_pair {
+struct diff_filepair {
 	struct diff_filespec *one;
 	struct diff_filespec *two;
 	char *xfrm_msg;
@@ -47,14 +47,15 @@ struct diff_file_pair {
 };
 
 struct diff_queue_struct {
-	struct diff_file_pair **queue;
+	struct diff_filepair **queue;
 	int alloc;
 	int nr;
 };
 
-extern struct diff_file_pair *diff_queue(struct diff_queue_struct *,
-					 struct diff_filespec *,
-					 struct diff_filespec *);
+extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
+					struct diff_filespec *,
+					struct diff_filespec *);
 extern void diff_detect_rename(struct diff_queue_struct *, int, int);
+extern void diff_pickaxe(struct diff_queue_struct *, const char *);
 
 #endif

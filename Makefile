@@ -45,7 +45,7 @@ LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
 
 LIB_H += diff.h
-LIB_OBJS += diff.o diffcore-rename.o
+LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o
 
 LIB_OBJS += gitenv.o
 
@@ -125,6 +125,7 @@ strbuf.o: $(LIB_H)
 gitenv.o: $(LIB_H)
 diff.o: $(LIB_H)
 diffcore-rename.o : $(LIB_H)
+diffcore-pickaxe.o : $(LIB_H)
 
 test: all
 	make -C t/ all

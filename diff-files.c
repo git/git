@@ -7,13 +7,14 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"git-diff-files [-p] [-q] [-r] [-z] [-M] [-C] [-R] [paths...]";
+"git-diff-files [-p] [-q] [-r] [-z] [-M] [-C] [-R] [-S<string>] [paths...]";
 
 static int generate_patch = 0;
 static int line_termination = '\n';
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
+static char *pickaxe = 0;
 static int silent = 0;
 
 static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
@@ -67,6 +68,8 @@ int main(int argc, char **argv)
 			line_termination = 0;
 		else if (!strcmp(argv[1], "-R"))
 			reverse_diff = 1;
+		else if (!strcmp(argv[1], "-S"))
+			pickaxe = argv[1] + 2;
 		else if (!strncmp(argv[1], "-M", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
 			detect_rename = generate_patch = 1;
@@ -89,8 +92,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	diff_setup(detect_rename, diff_score_opt, reverse_diff,
-		   (generate_patch ? -1 : line_termination),
+	diff_setup(detect_rename, diff_score_opt, pickaxe,
+		   reverse_diff, (generate_patch ? -1 : line_termination),
 		   NULL, 0);
 
 	for (i = 0; i < entries; i++) {

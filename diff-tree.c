@@ -13,6 +13,7 @@ static int generate_patch = 0;
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
+static char *pickaxe = 0;
 static const char *header = NULL;
 static const char *header_prefix = "";
 
@@ -271,8 +272,8 @@ static int diff_tree_sha1_top(const unsigned char *old,
 {
 	int ret;
 
-	diff_setup(detect_rename, diff_score_opt, reverse_diff,
-		   (generate_patch ? -1 : line_termination),
+	diff_setup(detect_rename, diff_score_opt, pickaxe,
+		   reverse_diff, (generate_patch ? -1 : line_termination),
 		   NULL, 0);
 	ret = diff_tree_sha1(old, new, base);
 	diff_flush();
@@ -285,8 +286,8 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	void *tree;
 	unsigned long size;
 
-	diff_setup(detect_rename, diff_score_opt, reverse_diff,
-		   (generate_patch ? -1 : line_termination),
+	diff_setup(detect_rename, diff_score_opt, pickaxe,
+		   reverse_diff, (generate_patch ? -1 : line_termination),
 		   NULL, 0);
 	tree = read_object_with_reference(new, "tree", &size, NULL);
 	if (!tree)
@@ -430,7 +431,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-m] [-s] [-v] <tree-ish> <tree-ish>";
+"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-m] [-s] [-v] <tree-ish> <tree-ish>";
 
 int main(int argc, char **argv)
 {
@@ -471,6 +472,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-p")) {
 			recursive = generate_patch = 1;
+			continue;
+		}
+		if (!strncmp(arg, "-S", 2)) {
+			pickaxe = arg + 2;
 			continue;
 		}
 		if (!strncmp(arg, "-M", 2)) {

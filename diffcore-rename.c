@@ -129,7 +129,7 @@ static void record_rename_pair(struct diff_queue_struct *outq,
 	 * To achieve this sort order, we give xform_work the number
 	 * above.
 	 */
-	struct diff_file_pair *dp = diff_queue(outq, src, dst);
+	struct diff_filepair *dp = diff_queue(outq, src, dst);
 	dp->xfrm_work = (rank * 2 + 1) | (score<<RENAME_SCORE_SHIFT);
 	dst->xfrm_flags |= RENAME_DST_MATCHED;
 }
@@ -148,7 +148,7 @@ static void debug_filespec(struct diff_filespec *s, int x, const char *one)
 		s->size, s->xfrm_flags);
 }
 
-static void debug_filepair(const struct diff_file_pair *p, int i)
+static void debug_filepair(const struct diff_filepair *p, int i)
 {
 	debug_filespec(p->one, i, "one");
 	debug_filespec(p->two, i, "two");
@@ -165,7 +165,7 @@ static void debug_queue(const char *msg, struct diff_queue_struct *q)
 		fprintf(stderr, "%s\n", msg);
 	fprintf(stderr, "q->nr = %d\n", q->nr);
 	for (i = 0; i < q->nr; i++) {
-		struct diff_file_pair *p = q->queue[i];
+		struct diff_filepair *p = q->queue[i];
 		debug_filepair(p, i);
 	}
 }
@@ -180,8 +180,8 @@ static void debug_queue(const char *msg, struct diff_queue_struct *q)
  */
 static int rank_compare(const void *a_, const void *b_)
 {
-	const struct diff_file_pair *a = *(const struct diff_file_pair **)a_;
-	const struct diff_file_pair *b = *(const struct diff_file_pair **)b_;
+	const struct diff_filepair *a = *(const struct diff_filepair **)a_;
+	const struct diff_filepair *b = *(const struct diff_filepair **)b_;
 	int a_rank = a->xfrm_work & ((1<<RENAME_SCORE_SHIFT) - 1);
 	int b_rank = b->xfrm_work & ((1<<RENAME_SCORE_SHIFT) - 1);
 
@@ -207,7 +207,7 @@ static int needs_to_stay(struct diff_queue_struct *q, int i,
 	 * as the source of rename/copy), we need to copy, not rename.
 	 */
 	while (i < q->nr) {
-		struct diff_file_pair *p = q->queue[i++];
+		struct diff_filepair *p = q->queue[i++];
 		if (!p->two->file_valid)
 			continue; /* removed is fine */
 		if (strcmp(p->one->path, it->path))
@@ -243,15 +243,8 @@ void diff_detect_rename(struct diff_queue_struct *q,
 	srcs[0] = &deleted;
 	srcs[1] = &stay;
 
-	/* NEEDSWORK:
-	 * (1) make sure we properly ignore but pass trees.
-	 *
-	 * (2) make sure we do right thing on the same path deleted
-	 *     and created in the same patch.
-	 */
-
 	for (i = 0; i < q->nr; i++) {
-		struct diff_file_pair *p = q->queue[i];
+		struct diff_filepair *p = q->queue[i];
 		if (!p->one->file_valid)
 			if (!p->two->file_valid)
 				continue; /* ignore nonsense */
@@ -340,11 +333,11 @@ void diff_detect_rename(struct diff_queue_struct *q,
 	 * See comments at the top of record_rename_pair for numbers used
 	 * to assign xfrm_work.
 	 *
-	 * Note that we have not annotated the diff_file_pair with any comment
+	 * Note that we have not annotated the diff_filepair with any comment
 	 * so there is nothing other than p to free.
 	 */
 	for (i = 0; i < q->nr; i++) {
-		struct diff_file_pair *dp, *p = q->queue[i];
+		struct diff_filepair *dp, *p = q->queue[i];
 		if (!p->one->file_valid) {
 			if (p->two->file_valid) {
 				/* creation */
@@ -378,7 +371,7 @@ void diff_detect_rename(struct diff_queue_struct *q,
 
 	/* Copy it out to q, removing duplicates. */
 	for (i = 0; i < outq.nr; i++) {
-		struct diff_file_pair *p = outq.queue[i];
+		struct diff_filepair *p = outq.queue[i];
 		if (!p->one->file_valid) {
 			/* created */
 			if (p->two->xfrm_flags & RENAME_DST_MATCHED)
@@ -395,7 +388,7 @@ void diff_detect_rename(struct diff_queue_struct *q,
 		}
 		else if (strcmp(p->one->path, p->two->path)) {
 			/* rename or copy */
-			struct diff_file_pair *dp =
+			struct diff_filepair *dp =
 				diff_queue(q, p->one, p->two);
 			int msglen = (strlen(p->one->path) +
 				      strlen(p->two->path) + 100);

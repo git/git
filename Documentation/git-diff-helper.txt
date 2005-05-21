@@ -9,7 +9,7 @@ git-diff-helper - Generates patch format output for git-diff-*
 
 SYNOPSIS
 --------
-'git-diff-helper' [-z] [-R] [-M] [-C]
+'git-diff-helper' [-z] [-R] [-M] [-C] [-S<string>]
 
 DESCRIPTION
 -----------
@@ -36,6 +36,10 @@ OPTIONS
 
 -C::
 	Detect copies as well as renames.
+
+-S<string>::
+	Look for differences that contains the change in <string>.
+
 
 See Also
 --------

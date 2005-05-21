@@ -8,6 +8,7 @@ static int line_termination = '\n';
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
+static char *pickaxe = 0;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
@@ -153,7 +154,7 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"git-diff-cache [-p] [-r] [-z] [-m] [-M] [-C] [-R] [--cached] <tree-ish>";
+"git-diff-cache [-p] [-r] [-z] [-m] [-M] [-C] [-R] [-S<string>] [--cached] <tree-ish>";
 
 int main(int argc, char **argv)
 {
@@ -194,6 +195,10 @@ int main(int argc, char **argv)
 			reverse_diff = 1;
 			continue;
 		}
+		if (!strcmp(arg, "-S")) {
+			pickaxe = arg + 2;
+			continue;
+		}
 		if (!strcmp(arg, "-m")) {
 			match_nonexisting = 1;
 			continue;
@@ -208,8 +213,8 @@ int main(int argc, char **argv)
 	if (argc != 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
-	diff_setup(detect_rename, diff_score_opt, reverse_diff,
-		   (generate_patch ? -1 : line_termination),
+	diff_setup(detect_rename, diff_score_opt, pickaxe,
+		   reverse_diff, (generate_patch ? -1 : line_termination),
 		   NULL, 0);
 
 	mark_merge_entries();

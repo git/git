@@ -9,7 +9,7 @@ git-diff-files - Compares files in the working tree and the cache
 
 SYNOPSIS
 --------
-'git-diff-files' [-p] [-q] [-r] [-z] [-M] [-C] [-R] [<pattern>...]
+'git-diff-files' [-p] [-q] [-r] [-z] [-M] [-C] [-R] [-S<string>] [<pattern>...]
 
 DESCRIPTION
 -----------
@@ -34,6 +34,10 @@ OPTIONS
 
 -C::
 	Detect copies as well as renames; implies -p.
+
+-S<string>::
+	Look for differences that contains the change in <string>.
+
 
 -r::
 	This flag does not mean anything.  It is there only to match

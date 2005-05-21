@@ -9,6 +9,7 @@
 static int detect_rename = 0;
 static int diff_score_opt = 0;
 static int generate_patch = 1;
+static char *pickaxe = 0;
 
 static int parse_oneside_change(const char *cp, int *mode,
 				unsigned char *sha1, char *path)
@@ -93,7 +94,7 @@ static int parse_diff_raw_output(const char *buf)
 }
 
 static const char *diff_helper_usage =
-	"git-diff-helper [-z] [-R] [-M] [-C] paths...";
+	"git-diff-helper [-z] [-R] [-M] [-C] [-S<string>] paths...";
 
 int main(int ac, const char **av) {
 	struct strbuf sb;
@@ -117,14 +118,17 @@ int main(int ac, const char **av) {
 			detect_rename = 2;
 			diff_score_opt = diff_scoreopt_parse(av[1]);
 		}
+		else if (av[1][1] == 'S') {
+			pickaxe = av[1] + 2;
+		}
 		else
 			usage(diff_helper_usage);
 		ac--; av++;
 	}
 	/* the remaining parameters are paths patterns */
 
-	diff_setup(detect_rename, diff_score_opt, reverse,
-		   (generate_patch ? -1 : line_termination),
+	diff_setup(detect_rename, diff_score_opt, pickaxe,
+		   reverse, (generate_patch ? -1 : line_termination),
 		   av+1, ac-1);
 
 	while (1) {

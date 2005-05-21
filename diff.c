@@ -17,6 +17,7 @@ static int reverse_diff;
 static int diff_raw_output = -1;
 static const char **pathspec;
 static int speccnt;
+static const char *pickaxe;
 static int minimum_score;
 
 static const char *external_diff(void)
@@ -511,8 +512,9 @@ int diff_scoreopt_parse(const char *opt)
 	return MAX_SCORE * num / scale;
 }
 
-void diff_setup(int detect_rename_, int minimum_score_, int reverse_diff_,
-		int diff_raw_output_,
+void diff_setup(int detect_rename_, int minimum_score_,
+		char *pickaxe_,
+		int reverse_diff_, int diff_raw_output_,
 		const char **pathspec_, int speccnt_)
 {
 	detect_rename = detect_rename_;
@@ -521,15 +523,16 @@ void diff_setup(int detect_rename_, int minimum_score_, int reverse_diff_,
 	diff_raw_output = diff_raw_output_;
 	speccnt = speccnt_;
 	minimum_score = minimum_score_ ? : DEFAULT_MINIMUM_SCORE;
+	pickaxe = pickaxe_;
 }
 
 static struct diff_queue_struct queued_diff;
 
-struct diff_file_pair *diff_queue(struct diff_queue_struct *queue,
+struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 				  struct diff_filespec *one,
 				  struct diff_filespec *two)
 {
-	struct diff_file_pair *dp = xmalloc(sizeof(*dp));
+	struct diff_filepair *dp = xmalloc(sizeof(*dp));
 	dp->one = one;
 	dp->two = two;
 	dp->xfrm_msg = 0;
@@ -549,7 +552,7 @@ static const char *git_object_type(unsigned mode)
 	return S_ISDIR(mode) ? "tree" : "blob";
 }
 
-static void diff_flush_raw(struct diff_file_pair *p)
+static void diff_flush_raw(struct diff_filepair *p)
 {
 	struct diff_filespec *it;
 	int addremove;
@@ -583,7 +586,7 @@ static void diff_flush_raw(struct diff_file_pair *p)
 	       sha1_to_hex(it->sha1), it->path, diff_raw_output);
 }
 
-static void diff_flush_patch(struct diff_file_pair *p)
+static void diff_flush_patch(struct diff_filepair *p)
 {
 	const char *name, *other;
 
@@ -600,7 +603,7 @@ static int identical(struct diff_filespec *one, struct diff_filespec *two)
 {
 	/* This function is written stricter than necessary to support
 	 * the currently implemented transformers, but the idea is to
-	 * let transformers to produce diff_file_pairs any way they want,
+	 * let transformers to produce diff_filepairs any way they want,
 	 * and filter and clean them up here before producing the output.
 	 */
 
@@ -623,7 +626,7 @@ static int identical(struct diff_filespec *one, struct diff_filespec *two)
 	return 0;
 }
 
-static void diff_flush_one(struct diff_file_pair *p)
+static void diff_flush_one(struct diff_filepair *p)
 {
 	if (identical(p->one, p->two))
 		return;
@@ -640,11 +643,13 @@ void diff_flush(void)
 
 	if (detect_rename)
 		diff_detect_rename(q, detect_rename, minimum_score);
+	if (pickaxe)
+		diff_pickaxe(q, pickaxe);
 	for (i = 0; i < q->nr; i++)
 		diff_flush_one(q->queue[i]);
 
 	for (i = 0; i < q->nr; i++) {
-		struct diff_file_pair *p = q->queue[i];
+		struct diff_filepair *p = q->queue[i];
 		diff_free_filespec_data(p->one);
 		diff_free_filespec_data(p->two);
 		free(p->xfrm_msg);
