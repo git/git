@@ -132,6 +132,7 @@ test: all
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
+	make -C Documentation/ clean
 
 backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
