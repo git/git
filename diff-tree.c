@@ -332,7 +332,7 @@ static int add_author_info(char *buf, const char *line, int len)
 
 static char *generate_header(const char *commit, const char *parent, const char *msg, unsigned long len)
 {
-	static char this_header[1000];
+	static char this_header[16384];
 	int offset;
 
 	offset = sprintf(this_header, "%s%s (from %s)\n", header_prefix, commit, parent);
@@ -345,8 +345,16 @@ static char *generate_header(const char *commit, const char *parent, const char 
 
 			if (!linelen)
 				break;
-			if (offset + linelen + 10 > sizeof(this_header))
+
+			/*
+			 * We want some slop for indentation and a possible
+			 * final "...". Thus the "+ 20".
+			 */
+			if (offset + linelen + 20 > sizeof(this_header)) {
+				memcpy(this_header + offset, "    ...\n", 8);
+				offset += 8;
 				break;
+			}
 
 			msg += linelen;
 			len -= linelen;
@@ -361,7 +369,12 @@ static char *generate_header(const char *commit, const char *parent, const char 
 			memcpy(this_header + offset + 4, line, linelen);
 			offset += linelen + 4;
 		}
-		this_header[offset++] = '\n';
+		/* Make sure there is an EOLN */
+		if (this_header[offset-1] != '\n')
+			this_header[offset++] = '\n';
+		/* Add _another_ EOLN if we are doing diff output */
+		if (!silent)
+			this_header[offset++] = '\n';
 		this_header[offset] = 0;
 	}
 
