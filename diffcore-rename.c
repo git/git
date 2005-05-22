@@ -235,6 +235,8 @@ void diff_detect_rename(int detect_rename,
 	int h, i, j;
 	int num_create, num_src, dst_cnt, src_cnt;
 
+	if (!minimum_score)
+		minimum_score = DEFAULT_MINIMUM_SCORE;
 	outq.queue = NULL;
 	outq.nr = outq.alloc = 0;
 
