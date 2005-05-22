@@ -5,8 +5,6 @@
 #include "cache.h"
 #include "tag.h"
 #include "delta.h"
-#include <stdlib.h>
-#include <string.h>
 
 struct object **objs;
 int nr_objs;

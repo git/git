@@ -5,7 +5,6 @@
 #include "tag.h"
 #include "delta.h"
 #include "cache.h"
-#include <string.h>
 
 /* the delta object definition (it can alias any other object) */
 struct delta {

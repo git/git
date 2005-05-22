@@ -1,15 +1,8 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
 #include "cache.h"
 #include "commit.h"
-#include <errno.h>
-#include <stdio.h>
 #include "pull.h"
 
 static int use_link = 0;

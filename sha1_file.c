@@ -6,8 +6,6 @@
  * This handles basic git sha1 object files - packing, unpacking,
  * creation etc.
  */
-#include <stdarg.h>
-#include <limits.h>
 #include "cache.h"
 #include "delta.h"
 

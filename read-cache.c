@@ -3,7 +3,6 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include <stdarg.h>
 #include "cache.h"
 
 struct cache_entry **active_cache = NULL;

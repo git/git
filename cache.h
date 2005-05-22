@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <netinet/in.h>
