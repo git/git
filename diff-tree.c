@@ -262,7 +262,7 @@ static void call_diff_setup(void)
 	diff_setup(reverse_diff);
 }
 
-static int call_diff_flush()
+static int call_diff_flush(void)
 {
 	if (detect_rename)
 		diffcore_rename(detect_rename, diff_score_opt);

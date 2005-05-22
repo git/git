@@ -165,7 +165,7 @@ struct diff_filespec *alloc_filespec(const char *path)
 	spec->should_free = spec->should_munmap = 0;
 	spec->xfrm_flags = 0;
 	spec->size = 0;
-	spec->data = 0;
+	spec->data = NULL;
 	spec->mode = 0;
 	memset(spec->sha1, 0, 20);
 	return spec;
@@ -296,7 +296,7 @@ void diff_free_filespec_data(struct diff_filespec *s)
 	else if (s->should_munmap)
 		munmap(s->data, s->size);
 	s->should_free = s->should_munmap = 0;
-	s->data = 0;
+	s->data = NULL;
 }
 
 static void prep_temp_blob(struct diff_tempfile *temp,
@@ -444,7 +444,7 @@ static void run_external_diff(const char *name,
 					*arg++ = other;
 					*arg++ = xfrm_msg;
 				}
-				*arg = 0;
+				*arg = NULL;
 				execvp(pgm, (char *const*) exec_arg);
 			}
 			else
@@ -501,7 +501,7 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	struct diff_filepair *dp = xmalloc(sizeof(*dp));
 	dp->one = one;
 	dp->two = two;
-	dp->xfrm_msg = 0;
+	dp->xfrm_msg = NULL;
 	dp->orig_order = queue->nr;
 	dp->xfrm_work = 0;
 	diff_q(queue, dp);
