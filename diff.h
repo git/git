@@ -19,11 +19,13 @@ extern void diff_unmerge(const char *path);
 
 extern int diff_scoreopt_parse(const char *opt);
 
-extern void diff_setup(int detect_rename, int minimum_score,
-		       const char *pickaxe,
-		       int reverse, int raw_output,
-		       const char **spec, int cnt);
+extern void diff_setup(int reverse, int diff_raw_output);
 
-extern void diff_flush(void);
+extern void diff_detect_rename(int, int);
+extern void diff_pickaxe(const char *);
+
+extern int diff_queue_is_empty(void);
+
+extern void diff_flush(const char **, int);
 
 #endif /* DIFF_H */

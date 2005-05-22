@@ -127,10 +127,7 @@ int main(int ac, const char **av) {
 	}
 	/* the remaining parameters are paths patterns */
 
-	diff_setup(detect_rename, diff_score_opt, pickaxe,
-		   reverse, (generate_patch ? -1 : line_termination),
-		   av+1, ac-1);
-
+	diff_setup(reverse, (generate_patch ? -1 : line_termination));
 	while (1) {
 		int status;
 		read_line(&sb, stdin, line_termination);
@@ -138,11 +135,15 @@ int main(int ac, const char **av) {
 			break;
 		status = parse_diff_raw_output(sb.buf);
 		if (status) {
-			diff_flush();
+			diff_flush(av+1, ac-1);
 			printf("%s%c", sb.buf, line_termination);
 		}
 	}
 
-	diff_flush();
+	if (detect_rename)
+		diff_detect_rename(detect_rename, diff_score_opt);
+	if (pickaxe)
+		diff_pickaxe(pickaxe);
+	diff_flush(av+1, ac-1);
 	return 0;
 }

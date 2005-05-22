@@ -214,9 +214,7 @@ int main(int argc, char **argv)
 	if (argc != 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
-	diff_setup(detect_rename, diff_score_opt, pickaxe,
-		   reverse_diff, (generate_patch ? -1 : line_termination),
-		   NULL, 0);
+	diff_setup(reverse_diff, (generate_patch ? -1 : line_termination));
 
 	mark_merge_entries();
 
@@ -227,6 +225,10 @@ int main(int argc, char **argv)
 		die("unable to read tree object %s", argv[1]);
 
 	ret = diff_cache(active_cache, active_nr);
-	diff_flush();
+	if (detect_rename)
+		diff_detect_rename(detect_rename, diff_score_opt);
+	if (pickaxe)
+		diff_pickaxe(pickaxe);
+	diff_flush(NULL, 0);
 	return ret;
 }

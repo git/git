@@ -92,9 +92,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	diff_setup(detect_rename, diff_score_opt, pickaxe,
-		   reverse_diff, (generate_patch ? -1 : line_termination),
-		   NULL, 0);
+	diff_setup(reverse_diff, (generate_patch ? -1 : line_termination));
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
@@ -136,6 +134,10 @@ int main(int argc, char **argv)
 		show_modified(oldmode, mode, ce->sha1, null_sha1,
 			      ce->name);
 	}
-	diff_flush();
+	if (detect_rename)
+		diff_detect_rename(detect_rename, diff_score_opt);
+	if (pickaxe)
+		diff_pickaxe(pickaxe);
+	diff_flush(NULL, 0);
 	return 0;
 }

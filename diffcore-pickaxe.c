@@ -21,8 +21,9 @@ static int contains(struct diff_filespec *one,
 	return 0;
 }
 
-void diff_pickaxe(struct diff_queue_struct *q, const char *needle)
+void diff_pickaxe(const char *needle)
 {
+	struct diff_queue_struct *q = &diff_queued_diff;
 	unsigned long len = strlen(needle);
 	int i;
 	struct diff_queue_struct outq;

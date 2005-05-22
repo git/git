@@ -12,13 +12,10 @@
 static const char *diff_opts = "-pu";
 static unsigned char null_sha1[20] = { 0, };
 
-static int detect_rename;
 static int reverse_diff;
 static int diff_raw_output = -1;
 static const char **pathspec;
 static int speccnt;
-static const char *pickaxe;
-static int minimum_score;
 
 static const char *external_diff(void)
 {
@@ -512,21 +509,13 @@ int diff_scoreopt_parse(const char *opt)
 	return MAX_SCORE * num / scale;
 }
 
-void diff_setup(int detect_rename_, int minimum_score_,
-		const char *pickaxe_,
-		int reverse_diff_, int diff_raw_output_,
-		const char **pathspec_, int speccnt_)
+void diff_setup(int reverse_diff_, int diff_raw_output_)
 {
-	detect_rename = detect_rename_;
 	reverse_diff = reverse_diff_;
-	pathspec = pathspec_;
 	diff_raw_output = diff_raw_output_;
-	speccnt = speccnt_;
-	minimum_score = minimum_score_ ? : DEFAULT_MINIMUM_SCORE;
-	pickaxe = pickaxe_;
 }
 
-static struct diff_queue_struct queued_diff;
+struct diff_queue_struct diff_queued_diff;
 
 struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 				  struct diff_filespec *one,
@@ -636,15 +625,27 @@ static void diff_flush_one(struct diff_filepair *p)
 		diff_flush_patch(p);
 }
 
-void diff_flush(void)
+int diff_queue_is_empty(void)
 {
-	struct diff_queue_struct *q = &queued_diff;
+	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
 
-	if (detect_rename)
-		diff_detect_rename(q, detect_rename, minimum_score);
-	if (pickaxe)
-		diff_pickaxe(q, pickaxe);
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		if (!identical(p->one, p->two))
+			return 0;
+	}
+	return 1;
+}
+
+void diff_flush(const char **pathspec_, int speccnt_)
+{
+	struct diff_queue_struct *q = &diff_queued_diff;
+	int i;
+
+	pathspec = pathspec_;
+	speccnt = speccnt_;
+
 	for (i = 0; i < q->nr; i++)
 		diff_flush_one(q->queue[i]);
 
@@ -693,7 +694,7 @@ void diff_addremove(int addremove, unsigned mode,
 	if (addremove != '-')
 		fill_filespec(two, sha1, mode);
 
-	diff_queue(&queued_diff, one, two);
+	diff_queue(&diff_queued_diff, one, two);
 }
 
 void diff_change(unsigned old_mode, unsigned new_mode,
@@ -716,7 +717,7 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 	fill_filespec(one, old_sha1, old_mode);
 	fill_filespec(two, new_sha1, new_mode);
 
-	diff_queue(&queued_diff, one, two);
+	diff_queue(&diff_queued_diff, one, two);
 }
 
 void diff_unmerge(const char *path)

@@ -224,10 +224,10 @@ static int needs_to_stay(struct diff_queue_struct *q, int i,
 	return 0;
 }
 
-void diff_detect_rename(struct diff_queue_struct *q,
-			int detect_rename,
+void diff_detect_rename(int detect_rename,
 			int minimum_score)
 {
+	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
 	struct diff_rename_pool created, deleted, stay;
 	struct diff_rename_pool *(srcs[2]);

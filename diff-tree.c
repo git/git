@@ -267,16 +267,28 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
+static void call_diff_setup(void)
+{
+	diff_setup(reverse_diff, (generate_patch ? -1 : line_termination));
+}
+
+static void call_diff_flush(void)
+{
+	if (detect_rename)
+		diff_detect_rename(detect_rename, diff_score_opt);
+	if (pickaxe)
+		diff_pickaxe(pickaxe);
+	diff_flush(NULL, 0);
+}
+
 static int diff_tree_sha1_top(const unsigned char *old,
 			      const unsigned char *new, const char *base)
 {
 	int ret;
 
-	diff_setup(detect_rename, diff_score_opt, pickaxe,
-		   reverse_diff, (generate_patch ? -1 : line_termination),
-		   NULL, 0);
+	call_diff_setup();
 	ret = diff_tree_sha1(old, new, base);
-	diff_flush();
+	call_diff_flush();
 	return ret;
 }
 
@@ -286,15 +298,13 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	void *tree;
 	unsigned long size;
 
-	diff_setup(detect_rename, diff_score_opt, pickaxe,
-		   reverse_diff, (generate_patch ? -1 : line_termination),
-		   NULL, 0);
+	call_diff_setup();
 	tree = read_object_with_reference(new, "tree", &size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
 	retval = diff_tree("", 0, tree, size, base);
 	free(tree);
-	diff_flush();
+	call_diff_flush();
 	return retval;
 }
 

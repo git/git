@@ -52,10 +52,9 @@ struct diff_queue_struct {
 	int nr;
 };
 
+extern struct diff_queue_struct diff_queued_diff;
 extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
 					struct diff_filespec *,
 					struct diff_filespec *);
-extern void diff_detect_rename(struct diff_queue_struct *, int, int);
-extern void diff_pickaxe(struct diff_queue_struct *, const char *);
 
 #endif
