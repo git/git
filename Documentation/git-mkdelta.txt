@@ -1,0 +1,45 @@
+git-mkdelta(1)
+==============
+May 2005
+
+NAME
+----
+git-mkdelta - Creates a delta object
+
+
+SYNOPSIS
+--------
+'git-mkdelta' [-v] [-d N | --max-depth=N ] <reference_object> <target_object> [ <next_object> ... ]
+
+DESCRIPTION
+-----------
+Creates a delta object to replace <reference_object> by using an
+ordered list of potential objects to deltafy against earlier objects
+in the list.
+
+A cap on the depth of delta references can be provided as well,
+otherwise the default is to not have any limit.  A limit of 0 will
+also undeltafy a given object.
+
+
+OPTIONS
+-------
+-v::
+	Verbose
+
+-d|--max-depth::
+	limit the number of delta references in a chain
+	If 0 then all objects are undeltafied.
+	
+Author
+------
+Git is written by Linus Torvalds <torvalds@osdl.org> and the git-list <git@vger.kernel.org>.
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

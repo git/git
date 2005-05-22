@@ -32,8 +32,8 @@ build up a hierarchy of objects.
 All objects have a statically determined "type" aka "tag", which is
 determined at object creation time, and which identifies the format of
 the object (i.e. how it is used, and how it can refer to other
-objects).  There are currently four different object types: "blob",
-"tree", "commit" and "tag".
+objects).  There are currently five different object types: "blob",
+"tree", "commit", "tag" and "delta"
 
 A "blob" object cannot refer to any other object, and is, like the tag
 implies, a pure storage object containing some user data.  It is used to
@@ -62,13 +62,17 @@ A "tag" object symbolically identifies and can be used to sign other
 objects. It contains the identifier and type of another object, a
 symbolic name (of course!) and, optionally, a signature.
 
-Regardless of object type, all objects are share the following
-characteristics: they are all in deflated with zlib, and have a header
-that not only specifies their tag, but also size information about the
-data in the object.  It's worth noting that the SHA1 hash that is used
-to name the object is the hash of the original data (historical note:
-in the dawn of the age of git this was the sha1 of the _compressed_
-object)
+A "delta" object is used internally by the object database to minimise
+disk usage. Instead of storing the entire contents of a revision, git
+can behave in a similar manner to RCS et al and simply store a delta.
+
+Regardless of object type, all objects share the following
+characteristics: they are all deflated with zlib, and have a header
+that not only specifies their tag, but also provides size information
+about the data in the object.  It's worth noting that the SHA1 hash
+that is used to name the object is the hash of the original data or
+the delta. (Historical note: in the dawn of the age of git the hash
+was the sha1 of the _compressed_ object)
 
 As a result, the general consistency of an object can always be tested
 independently of the contents or the type of the object: all objects can
@@ -214,6 +218,30 @@ verification) has to come from outside.
 
 A tag is created with link:git-mktag.html[git-mktag] and
 it's data can be accessed by link:git-cat-file.html[git-cat-file]
+
+Delta Object
+~~~~~~~~~~~~
+
+The "delta" object is used internally by the object database to
+minimise storage usage by using xdeltas (byte level diffs). Deltas can
+form chains of arbitrary length as RCS does (although this is
+configureable at creation time). Most operations won't see or even be
+aware of delta objects as they are automatically 'applied' and appear
+as 'real' git objects In other words, if you write your own routines
+to look at the contents of the object database then you need to know
+about this - otherwise you don't. Actually, that's not quite true -
+one important area where deltas are likely to prove very valuable is
+in reducing bandwidth loads - so the more sophisticated network tools
+for git repositories will be aware of them too.
+
+Finally, git repositories can (and must) be deltafied in the
+background - the work to calculate the differences does not take place
+automatically at commit time.
+
+A delta can be created (or undeltafied) with
+link:git-mkdelta.html[git-mkdelta] it's raw data cannot be accessed at
+present.
+
 
 The "index" aka "Current Directory Cache"
 -----------------------------------------
