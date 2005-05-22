@@ -9,8 +9,7 @@
 static const char *diff_files_usage =
 "git-diff-files [-p] [-q] [-r] [-z] [-M] [-C] [-R] [-S<string>] [paths...]";
 
-static int generate_patch = 0;
-static int line_termination = '\n';
+static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
@@ -57,7 +56,7 @@ int main(int argc, char **argv)
 
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-p"))
-			generate_patch = 1;
+			diff_output_format = DIFF_FORMAT_PATCH;
 		else if (!strcmp(argv[1], "-q"))
 			silent = 1;
 		else if (!strcmp(argv[1], "-r"))
@@ -65,19 +64,18 @@ int main(int argc, char **argv)
 		else if (!strcmp(argv[1], "-s"))
 			; /* no-op */
 		else if (!strcmp(argv[1], "-z"))
-			line_termination = 0;
+			diff_output_format = DIFF_FORMAT_MACHINE;
 		else if (!strcmp(argv[1], "-R"))
 			reverse_diff = 1;
 		else if (!strcmp(argv[1], "-S"))
 			pickaxe = argv[1] + 2;
 		else if (!strncmp(argv[1], "-M", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
-			detect_rename = generate_patch = 1;
+			detect_rename = 1;
 		}
 		else if (!strncmp(argv[1], "-C", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
 			detect_rename = 2;
-			generate_patch = 1;
 		}
 		else
 			usage(diff_files_usage);
@@ -92,7 +90,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	diff_setup(reverse_diff, (generate_patch ? -1 : line_termination));
+	diff_setup(reverse_diff, diff_output_format);
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;

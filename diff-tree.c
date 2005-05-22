@@ -8,8 +8,7 @@ static int verbose_header = 0;
 static int ignore_merges = 1;
 static int recursive = 0;
 static int read_stdin = 0;
-static int line_termination = '\n';
-static int generate_patch = 0;
+static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
@@ -269,7 +268,7 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 
 static void call_diff_setup(void)
 {
-	diff_setup(reverse_diff, (generate_patch ? -1 : line_termination));
+	diff_setup(reverse_diff, diff_output_format);
 }
 
 static void call_diff_flush(void)
@@ -501,7 +500,8 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-p")) {
-			recursive = generate_patch = 1;
+			diff_output_format = DIFF_FORMAT_PATCH;
+			recursive = 1;
 			continue;
 		}
 		if (!strncmp(arg, "-S", 2)) {
@@ -509,18 +509,17 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strncmp(arg, "-M", 2)) {
-			detect_rename = recursive = generate_patch = 1;
+			detect_rename = 1;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strncmp(arg, "-C", 2)) {
 			detect_rename = 2;
-			recursive = generate_patch = 1;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
-			line_termination = '\0';
+			diff_output_format = DIFF_FORMAT_MACHINE;
 			continue;
 		}
 		if (!strcmp(arg, "-m")) {

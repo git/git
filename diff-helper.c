@@ -8,88 +8,51 @@
 
 static int detect_rename = 0;
 static int diff_score_opt = 0;
-static int generate_patch = 1;
 static const char *pickaxe = NULL;
+static int diff_output_style = DIFF_FORMAT_PATCH;
+static int line_termination = '\n';
+static int inter_name_termination = '\t';
 
-static int parse_oneside_change(const char *cp, int *mode,
-				unsigned char *sha1, char *path)
+static int parse_diff_raw(char *buf1, char *buf2, char *buf3)
 {
-	int ch, m;
-
-	m = 0;
-	while ((ch = *cp) && '0' <= ch && ch <= '7') {
-		m = (m << 3) | (ch - '0');
-		cp++;
-	}
-	*mode = m;
-	if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6) &&
-	    strncmp(cp, "\ttree\t", 6) && strncmp(cp, " tree ", 6))
-		return -1;
-	cp += 6;
-	if (get_sha1_hex(cp, sha1))
-		return -1;
-	cp += 40;
-	if ((*cp != '\t') && *cp != ' ')
-		return -1;
-	strcpy(path, ++cp);
-	return 0;
-}
-
-static int parse_diff_raw_output(const char *buf)
-{
-	char path[PATH_MAX];
+	char old_path[PATH_MAX];
 	unsigned char old_sha1[20], new_sha1[20];
-	const char *cp = buf;
+	char *ep;
+	char *cp = buf1;
 	int ch, old_mode, new_mode;
 
-	switch (*cp++) {
-	case 'U':
-		diff_unmerge(cp + 1);
-		break;
-	case '+':
-		if (parse_oneside_change(cp, &new_mode, new_sha1, path))
-			return -1;
-		diff_addremove('+', new_mode, new_sha1, path, NULL);
-		break;
-	case '-':
-		if (parse_oneside_change(cp, &old_mode, old_sha1, path))
-			return -1;
-		diff_addremove('-', old_mode, old_sha1, path, NULL);
-		break;
-	case '*':
-		old_mode = new_mode = 0;
-		while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
-			old_mode = (old_mode << 3) | (ch - '0');
-			cp++;
-		}
-		if (strncmp(cp, "->", 2))
-			return -1;
-		cp += 2;
-		while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
-			new_mode = (new_mode << 3) | (ch - '0');
-			cp++;
-		}
-		if (strncmp(cp, "\tblob\t", 6) && strncmp(cp, " blob ", 6) &&
-		    strncmp(cp, "\ttree\t", 6) && strncmp(cp, " tree ", 6))
-			return -1;
-		cp += 6;
-		if (get_sha1_hex(cp, old_sha1))
-			return -1;
-		cp += 40;
-		if (strncmp(cp, "->", 2))
-			return -1;
-		cp += 2;
-		if (get_sha1_hex(cp, new_sha1))
-			return -1;
-		cp += 40;
-		if ((*cp != '\t') && *cp != ' ')
-			return -1;
-		strcpy(path, ++cp);
-		diff_change(old_mode, new_mode, old_sha1, new_sha1, path, NULL);
-		break;
-	default:
-		return -1;
+	old_mode = new_mode = 0;
+	while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
+		old_mode = (old_mode << 3) | (ch - '0');
+		cp++;
 	}
+	if (*cp++ != ' ')
+		return -1;
+	while ((ch = *cp) && ('0' <= ch && ch <= '7')) {
+		new_mode = (new_mode << 3) | (ch - '0');
+		cp++;
+	}
+	if (*cp++ != ' ')
+		return -1;
+	if (get_sha1_hex(cp, old_sha1))
+		return -1;
+	cp += 40;
+	if (*cp++ != ' ')
+		return -1;
+	if (get_sha1_hex(cp, new_sha1))
+		return -1;
+	cp += 40;
+	if (*cp++ != inter_name_termination)
+		return -1;
+	if (buf2)
+		cp = buf2;
+	ep = strchr(cp, inter_name_termination);
+	if (!ep)
+		return -1;
+	*ep++ = 0;
+	strcpy(old_path, cp);
+	diff_guif(old_mode, new_mode, old_sha1, new_sha1,
+		  old_path, buf3 ? buf3 : ep);
 	return 0;
 }
 
@@ -97,19 +60,22 @@ static const char *diff_helper_usage =
 	"git-diff-helper [-z] [-R] [-M] [-C] [-S<string>] paths...";
 
 int main(int ac, const char **av) {
-	struct strbuf sb;
-	int reverse = 0;
-	int line_termination = '\n';
+	struct strbuf sb1, sb2, sb3;
+	int reverse_diff = 0;
 
-	strbuf_init(&sb);
+	strbuf_init(&sb1);
+	strbuf_init(&sb2);
+	strbuf_init(&sb3);
 
 	while (1 < ac && av[1][0] == '-') {
 		if (av[1][1] == 'R')
-			reverse = 1;
+			reverse_diff = 1;
 		else if (av[1][1] == 'z')
-			line_termination = 0;
+			line_termination = inter_name_termination = 0;
 		else if (av[1][1] == 'p') /* hidden from the help */
-			generate_patch = 0;
+			diff_output_style = DIFF_FORMAT_HUMAN;
+		else if (av[1][1] == 'P') /* hidden from the help */
+			diff_output_style = DIFF_FORMAT_MACHINE;
 		else if (av[1][1] == 'M') {
 			detect_rename = 1;
 			diff_score_opt = diff_scoreopt_parse(av[1]);
@@ -127,19 +93,38 @@ int main(int ac, const char **av) {
 	}
 	/* the remaining parameters are paths patterns */
 
-	diff_setup(reverse, (generate_patch ? -1 : line_termination));
+	diff_setup(reverse_diff, diff_output_style);
 	while (1) {
 		int status;
-		read_line(&sb, stdin, line_termination);
-		if (sb.eof)
+		read_line(&sb1, stdin, line_termination);
+		if (sb1.eof)
 			break;
-		status = parse_diff_raw_output(sb.buf);
+		switch (sb1.buf[0]) {
+		case 'U':
+			diff_unmerge(sb1.buf + 2);
+			continue;
+		case ':':
+			break;
+		default:
+			goto unrecognized;
+		}
+		if (!line_termination) {
+			read_line(&sb2, stdin, line_termination);
+			if (sb2.eof)
+				break;
+			read_line(&sb3, stdin, line_termination);
+			if (sb3.eof)
+				break;
+			status = parse_diff_raw(sb1.buf+1, sb2.buf, sb3.buf);
+		}
+		else
+			status = parse_diff_raw(sb1.buf+1, NULL, NULL);
 		if (status) {
+		unrecognized:
 			diff_flush(av+1, ac-1);
-			printf("%s%c", sb.buf, line_termination);
+			printf("%s%c", sb1.buf, line_termination);
 		}
 	}
-
 	if (detect_rename)
 		diff_detect_rename(detect_rename, diff_score_opt);
 	if (pickaxe)

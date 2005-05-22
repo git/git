@@ -142,7 +142,7 @@ static void debug_filespec(struct diff_filespec *s, int x, const char *one)
 	fprintf(stderr, "queue[%d] %s (%s) %s %06o %s\n",
 		x, one,
 		s->path,
-		s->file_valid ? "valid" : "invalid",
+		DIFF_FILE_VALID(s) ? "valid" : "invalid",
 		s->mode,
 		s->sha1_valid ? sha1_to_hex(s->sha1) : "");
 	fprintf(stderr, "queue[%d] %s size %lu flags %d\n",
@@ -210,7 +210,7 @@ static int needs_to_stay(struct diff_queue_struct *q, int i,
 	 */
 	while (i < q->nr) {
 		struct diff_filepair *p = q->queue[i++];
-		if (!p->two->file_valid)
+		if (!DIFF_FILE_VALID(p->two))
 			continue; /* removed is fine */
 		if (strcmp(p->one->path, it->path))
 			continue; /* not relevant */
@@ -247,12 +247,12 @@ void diff_detect_rename(int detect_rename,
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (!p->one->file_valid)
-			if (!p->two->file_valid)
+		if (!DIFF_FILE_VALID(p->one))
+			if (!DIFF_FILE_VALID(p->two))
 				continue; /* ignore nonsense */
 			else
 				diff_rename_pool_add(&created, p->two);
-		else if (!p->two->file_valid)
+		else if (!DIFF_FILE_VALID(p->two))
 			diff_rename_pool_add(&deleted, p->one);
 		else if (1 < detect_rename) /* find copy, too */
 			diff_rename_pool_add(&stay, p->one);
@@ -340,15 +340,15 @@ void diff_detect_rename(int detect_rename,
 	 */
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *dp, *p = q->queue[i];
-		if (!p->one->file_valid) {
-			if (p->two->file_valid) {
+		if (!DIFF_FILE_VALID(p->one)) {
+			if (DIFF_FILE_VALID(p->two)) {
 				/* creation */
 				dp = diff_queue(&outq, p->one, p->two);
 				dp->xfrm_work = 4;
 			}
 			/* otherwise it is a nonsense; just ignore it */
 		}
-		else if (!p->two->file_valid) {
+		else if (!DIFF_FILE_VALID(p->two)) {
 			/* deletion */
 			dp = diff_queue(&outq, p->one, p->two);
 			dp->xfrm_work = 2;
@@ -374,14 +374,14 @@ void diff_detect_rename(int detect_rename,
 	/* Copy it out to q, removing duplicates. */
 	for (i = 0; i < outq.nr; i++) {
 		struct diff_filepair *p = outq.queue[i];
-		if (!p->one->file_valid) {
+		if (!DIFF_FILE_VALID(p->one)) {
 			/* created */
 			if (p->two->xfrm_flags & RENAME_DST_MATCHED)
 				; /* rename/copy created it already */
 			else
 				diff_queue(q, p->one, p->two);
 		}
-		else if (!p->two->file_valid) {
+		else if (!DIFF_FILE_VALID(p->two)) {
 			/* deleted */
 			if (p->one->xfrm_flags & RENAME_SRC_GONE)
 				; /* rename/copy deleted it already */

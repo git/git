@@ -30,10 +30,10 @@ OPTIONS
 	Output diff in reverse.
 
 -M::
-	Detect renames; implies -p.
+	Detect renames.
 
 -C::
-	Detect copies as well as renames; implies -p.
+	Detect copies as well as renames.
 
 -S<string>::
 	Look for differences that contains the change in <string>.

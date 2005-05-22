@@ -32,14 +32,14 @@ void diff_pickaxe(const char *needle)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (!p->one->file_valid) {
-			if (!p->two->file_valid)
+		if (!DIFF_FILE_VALID(p->one)) {
+			if (!DIFF_FILE_VALID(p->two))
 				continue; /* ignore nonsense */
 			/* created */
 			if (contains(p->two, needle, len))
 				diff_queue(&outq, p->one, p->two);
 		}
-		else if (!p->two->file_valid) {
+		else if (!DIFF_FILE_VALID(p->two)) {
 			if (contains(p->one, needle, len))
 				diff_queue(&outq, p->one, p->two);
 		}

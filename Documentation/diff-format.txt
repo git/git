@@ -16,25 +16,30 @@ git-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
 git-diff-files [<pattern>...]::
         compares the cache and the files on the filesystem.
 
-The following desription uses "old" and "new" to mean those
-compared entities.
 
-For files in old but not in new (i.e. removed):
+An output line is formatted this way:
 
-    -<mode> \t <type> \t <object> \t <path>
+  ':' <mode> ' ' <mode> ' ' <sha1> ' ' <sha1> I <path> I <path> L
 
-For files not in old but in new (i.e. added):
+By default, I and L are '\t' and '\n' respectively.  When '-z'
+flag is in effect, both I and L are '\0'.
 
-    +<mode> \t <type> \t <object> \t <path>
+In each <mode>, <sha1> and <path> pair, left hand side describes
+the left hand side of what is being compared (<tree-ish> in
+git-diff-cache, <tree-ish-1> in git-diff-tree, cache contents in
+git-diff-files).  Non-existence is shown by having 000000 in the
+<mode> column.  That is, 000000 appears as the first <mode> for
+newly created files, and as the second <mode> for deleted files.
 
-For files that differ:
+Usually two <path> are the same.  When rename/copy detection is
+used, however, an "create" and another "delete" records can be
+merged into a single record that has two <path>, old name and
+new name.
 
-    *<old-mode>-><new-mode> \t <type> \t <old-sha1>-><new-sha1> \t <path>
+<sha1> is shown as all 0's if new is a file on the filesystem
+and it is out of sync with the cache.  Example:
 
-<new-sha1> is shown as all 0's if new is a file on the
-filesystem and it is out of sync with the cache.  Example:
-
-  *100644->100644 blob    5be4a4.......->000000.......      file.c
+  :100644 100644 5be4a4...... 000000......    file.c    file.c
 
 
 Generating patches with -p

@@ -2,9 +2,8 @@
 #include "diff.h"
 
 static int cached_only = 0;
-static int generate_patch = 0;
+static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int match_nonexisting = 0;
-static int line_termination = '\n';
 static int detect_rename = 0;
 static int reverse_diff = 0;
 static int diff_score_opt = 0;
@@ -174,22 +173,21 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-p")) {
-			generate_patch = 1;
+			diff_output_format = DIFF_FORMAT_PATCH;
 			continue;
 		}
 		if (!strncmp(arg, "-M", 2)) {
-			generate_patch = detect_rename = 1;
+			detect_rename = 1;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strncmp(arg, "-C", 2)) {
-			generate_patch = 1;
 			detect_rename = 2;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
-			line_termination = '\0';
+			diff_output_format = DIFF_FORMAT_MACHINE;
 			continue;
 		}
 		if (!strcmp(arg, "-R")) {
@@ -214,7 +212,7 @@ int main(int argc, char **argv)
 	if (argc != 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
 
-	diff_setup(reverse_diff, (generate_patch ? -1 : line_termination));
+	diff_setup(reverse_diff, diff_output_format);
 
 	mark_merge_entries();
 

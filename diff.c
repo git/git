@@ -13,7 +13,9 @@ static const char *diff_opts = "-pu";
 static unsigned char null_sha1[20] = { 0, };
 
 static int reverse_diff;
-static int diff_raw_output = -1;
+static int generate_patch;
+static int line_termination = '\n';
+static int inter_name_termination = '\t';
 static const char **pathspec;
 static int speccnt;
 
@@ -163,20 +165,23 @@ struct diff_filespec *alloc_filespec(const char *path)
 	struct diff_filespec *spec = xmalloc(sizeof(*spec) + namelen + 1);
 	spec->path = (char *)(spec + 1);
 	strcpy(spec->path, path);
-	spec->should_free = spec->should_munmap = spec->file_valid = 0;
+	spec->should_free = spec->should_munmap = 0;
 	spec->xfrm_flags = 0;
 	spec->size = 0;
 	spec->data = 0;
+	spec->mode = 0;
+	memset(spec->sha1, 0, 20);
 	return spec;
 }
 
 void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 		   unsigned short mode)
 {
-	spec->mode = mode;
-	memcpy(spec->sha1, sha1, 20);
-	spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
-	spec->file_valid = 1;
+	if (mode) { /* just playing defensive */
+		spec->mode = mode;
+		memcpy(spec->sha1, sha1, 20);
+		spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
+	}
 }
 
 /*
@@ -231,7 +236,7 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 int diff_populate_filespec(struct diff_filespec *s)
 {
 	int err = 0;
-	if (!s->file_valid)
+	if (!DIFF_FILE_VALID(s))
 		die("internal error: asking to populate invalid file.");
 	if (S_ISDIR(s->mode))
 		return -1;
@@ -316,7 +321,7 @@ static void prepare_temp_file(const char *name,
 			      struct diff_tempfile *temp,
 			      struct diff_filespec *one)
 {
-	if (!one->file_valid) {
+	if (!DIFF_FILE_VALID(one)) {
 	not_a_valid_file:
 		/* A '-' entry produces this for file-2, and
 		 * a '+' entry produces this for file-1.
@@ -509,10 +514,22 @@ int diff_scoreopt_parse(const char *opt)
 	return MAX_SCORE * num / scale;
 }
 
-void diff_setup(int reverse_diff_, int diff_raw_output_)
+void diff_setup(int reverse_diff_, int diff_output_style)
 {
 	reverse_diff = reverse_diff_;
-	diff_raw_output = diff_raw_output_;
+	generate_patch = 0;
+	switch (diff_output_style) {
+	case DIFF_FORMAT_HUMAN:
+		line_termination = '\n';
+		inter_name_termination = '\t';
+		break;
+	case DIFF_FORMAT_MACHINE:
+		line_termination = inter_name_termination = 0;
+		break;
+	case DIFF_FORMAT_PATCH:
+		generate_patch = 1;
+		break;
+	}
 }
 
 struct diff_queue_struct diff_queued_diff;
@@ -536,43 +553,17 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	return dp;
 }
 
-static const char *git_object_type(unsigned mode)
-{
-	return S_ISDIR(mode) ? "tree" : "blob";
-}
-
 static void diff_flush_raw(struct diff_filepair *p)
 {
-	struct diff_filespec *it;
-	int addremove;
-
-	/* raw output does not have a way to express rename nor copy */
-	if (strcmp(p->one->path, p->two->path))
-		return;
-
-	if (p->one->file_valid && p->two->file_valid) {
-		char hex[41];
-		strcpy(hex, sha1_to_hex(p->one->sha1));
-		printf("*%06o->%06o %s %s->%s %s%c",
-		       p->one->mode, p->two->mode,
-		       git_object_type(p->one->mode),
-		       hex, sha1_to_hex(p->two->sha1),
-		       p->one->path, diff_raw_output);
-		return;
-	}
-
-	if (p->one->file_valid) {
-		it = p->one;
-		addremove = '-';
-	} else {
-		it = p->two;
-		addremove = '+';
-	}
-
-	printf("%c%06o %s %s %s%c",
-	       addremove,
-	       it->mode, git_object_type(it->mode),
-	       sha1_to_hex(it->sha1), it->path, diff_raw_output);
+	/*
+	 * We used to reject rename/copy but new diff-raw can express them.
+	 */
+	printf(":%06o %06o %s ",
+	       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
+	printf("%s%c%s%c%s%c",
+	       sha1_to_hex(p->two->sha1), inter_name_termination,
+	       p->one->path, inter_name_termination,
+	       p->two->path, line_termination);
 }
 
 static void diff_flush_patch(struct diff_filepair *p)
@@ -581,8 +572,8 @@ static void diff_flush_patch(struct diff_filepair *p)
 
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
-	if ((p->one->file_valid && S_ISDIR(p->one->mode)) ||
-	    (p->two->file_valid && S_ISDIR(p->two->mode)))
+	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
+	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
 		return; /* no tree diffs in patch format */ 
 
 	run_external_diff(name, other, p->one, p->two, p->xfrm_msg);
@@ -596,11 +587,12 @@ static int identical(struct diff_filespec *one, struct diff_filespec *two)
 	 * and filter and clean them up here before producing the output.
 	 */
 
-	if (!one->file_valid && !two->file_valid)
+	if (!DIFF_FILE_VALID(one) && !DIFF_FILE_VALID(two))
 		return 1; /* not interesting */
 
 	/* deletion, addition, mode change and renames are all interesting. */
-	if ((one->file_valid != two->file_valid) || (one->mode != two->mode) ||
+	if (DIFF_FILE_VALID(one) != DIFF_FILE_VALID(two) ||
+	    (one->mode != two->mode) ||
 	    strcmp(one->path, two->path))
 		return 0;
 
@@ -619,10 +611,10 @@ static void diff_flush_one(struct diff_filepair *p)
 {
 	if (identical(p->one, p->two))
 		return;
-	if (0 <= diff_raw_output)
-		diff_flush_raw(p);
-	else
+	if (generate_patch)
 		diff_flush_patch(p);
+	else
+		diff_flush_raw(p);
 }
 
 int diff_queue_is_empty(void)
@@ -697,10 +689,35 @@ void diff_addremove(int addremove, unsigned mode,
 	diff_queue(&diff_queued_diff, one, two);
 }
 
+void diff_guif(unsigned old_mode,
+	       unsigned new_mode,
+	       const unsigned char *old_sha1,
+	       const unsigned char *new_sha1,
+	       const char *old_path,
+	       const char *new_path)
+{
+	struct diff_filespec *one, *two;
+
+	if (reverse_diff) {
+		unsigned tmp;
+		const unsigned char *tmp_c;
+		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
+		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
+	}
+	one = alloc_filespec(old_path);
+	two = alloc_filespec(new_path);
+	if (old_mode)
+		fill_filespec(one, old_sha1, old_mode);
+	if (new_mode)
+		fill_filespec(two, new_sha1, new_mode);
+	diff_queue(&diff_queued_diff, one, two);
+}
+
 void diff_change(unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *base, const char *path) {
+		 const char *base, const char *path) 
+{
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
 
@@ -722,9 +739,8 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 
 void diff_unmerge(const char *path)
 {
-	if (0 <= diff_raw_output) {
-		printf("U %s%c", path, diff_raw_output);
-		return;
-	}
-	run_external_diff(path, NULL, NULL, NULL, NULL);
+	if (generate_patch)
+		run_external_diff(path, NULL, NULL, NULL, NULL);
+	else
+		printf("U %s%c", path, line_termination);
 }

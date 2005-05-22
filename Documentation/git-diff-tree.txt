@@ -34,11 +34,10 @@ OPTIONS
 	git-diff-tree, this flag implies '-r' as well.
 
 -M::
-	Detect renames; implies -p, in turn implying also '-r'.
+	Detect renames.
 
 -C::
-	Detect copies as well as renames; implies -p, in turn
-	implying also '-r'.
+	Detect copies as well as renames.
 
 -R::
 	Output diff in reverse.

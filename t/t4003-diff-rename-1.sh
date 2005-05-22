@@ -26,7 +26,7 @@ test_expect_success \
 # both are slightly edited.  So we say you copy-and-edit one,
 # and rename-and-edit the other.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -M $tree |
+GIT_DIFF_OPTS=--unified=0 git-diff-cache -M -p $tree |
 sed -e 's/\([0-9][0-9]*\)/#/g' >current &&
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.#
@@ -68,7 +68,7 @@ test_expect_success \
 # both are slightly edited.  So we say you edited one,
 # and copy-and-edit the other.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -C $tree |
+GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree |
 sed -e 's/\([0-9][0-9]*\)/#/g' >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.#
@@ -108,7 +108,7 @@ test_expect_success \
 # this is only possible because -C mode now reports the unmodified
 # file to the diff-core.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -C $tree |
+GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree |
 sed -e 's/\([0-9][0-9]*\)/#/g' >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.#

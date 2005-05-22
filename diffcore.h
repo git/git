@@ -26,7 +26,7 @@ struct diff_filespec {
 				  * if false, use the name and read from
 				  * the filesystem.
 				  */
-	unsigned file_valid : 1; /* if false the file does not exist */
+#define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
 };
