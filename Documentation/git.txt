@@ -1,6 +1,6 @@
 git(7)
 ======
-v0.1, May 2005
+May 2005
 
 NAME
 ----
@@ -16,9 +16,10 @@ DESCRIPTION
 
 This is reference information for the core git commands.
 
-The link:README[] contains much useful definition and clarification
-info - read that first.  And of the commands, I suggest reading
-'git-update-cache' and 'git-read-tree' first - I wish I had!
+The Discussion section below contains much useful definition and
+clarification info - read that first.  And of the commands, I suggest
+reading link:git-update-cache.html[git-update-cache] and
+link:git-read-tree.html[git-read-tree] first - I wish I had!
 
 David Greaves <david@dgreaves.com>
 08/05/05
@@ -157,14 +158,10 @@ link:git-rpush.html[git-rpush]::
 
 
 
-Terminology
------------
-see README for description
-
-Identifier terminology
+Identifier Terminology
 ----------------------
 <object>::
-	Indicates any object sha1 identifier
+	Indicates the sha1 identifier for any type of object
 
 <blob>::
 	Indicates a blob object sha1 identifier
@@ -176,11 +173,10 @@ Identifier terminology
 	Indicates a commit object sha1 identifier
 
 <tree-ish>::
-	Indicates a tree, commit or tag object sha1 identifier.
-	A command that takes a <tree-ish> argument ultimately
-	wants to operate on a <tree> object but automatically
-	dereferences <commit> and <tag> that points at a
-	<tree>.
+	Indicates a tree, commit or tag object sha1 identifier.  A
+	command that takes a <tree-ish> argument ultimately wants to
+	operate on a <tree> object but automatically dereferences
+	<commit> and <tag> objects that point at a <tree>.
 
 <type>::
 	Indicates that an object type is required.
@@ -192,10 +188,12 @@ Identifier terminology
 
 Symbolic Identifiers
 --------------------
-Any git comand accepting any <object> can also use the following symbolic notation:
+Any git comand accepting any <object> can also use the following
+symbolic notation:
 
 HEAD::
-	indicates the head of the repository (ie the contents of `$GIT_DIR/HEAD`)
+	indicates the head of the repository (ie the contents of
+	`$GIT_DIR/HEAD`)
 <tag>::
 	a valid tag 'name'+
 	(ie the contents of `$GIT_DIR/refs/tags/<tag>`)
@@ -230,18 +228,12 @@ GIT_DIR.
 
 Terminology
 -----------
-Each line contains terms used interchangeably
+Each line contains terms which you may see used interchangeably
 
  object database, .git directory
  directory cache, index
  id, sha1, sha1-id, sha1 hash
  type, tag
- blob, blob object
- tree, tree object
- commit, commit object
- parent
- root object
- changeset
 
 
 Environment Variables
@@ -295,9 +287,13 @@ git Diffs
 	link:git-diff-files.html[git-diff-files];
 	link:git-diff-tree.html[git-diff-tree]
 
+Discussion
+----------
+include::../README[]
+
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Linus Torvalds <torvalds@osdl.org> and the git-list <git@vger.kernel.org>.
 
 Documentation
 --------------
