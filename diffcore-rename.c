@@ -77,12 +77,12 @@ static int estimate_similarity(struct diff_filespec *src,
 
 	/* We would not consider edits that change the file size so
 	 * drastically.  delta_size must be smaller than
-	 * minimum_score/MAX_SCORE * min(src->size, dst->size).
+	 * (MAX_SCORE-minimum_score)/MAX_SCORE * min(src->size, dst->size).
 	 * Note that base_size == 0 case is handled here already
 	 * and the final score computation below would not have a
 	 * divide-by-zero issue.
 	 */
-	if (base_size * minimum_score < delta_size * MAX_SCORE)
+	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
 	delta = diff_delta(src->data, src->size,
