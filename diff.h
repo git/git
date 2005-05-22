@@ -26,16 +26,24 @@ extern void diff_unmerge(const char *path);
 
 extern int diff_scoreopt_parse(const char *opt);
 
-#define DIFF_FORMAT_HUMAN   0
-#define DIFF_FORMAT_MACHINE 1
-#define DIFF_FORMAT_PATCH   2
-extern void diff_setup(int reverse, int diff_output_style);
+#define DIFF_FORMAT_HUMAN	0
+#define DIFF_FORMAT_MACHINE	1
+#define DIFF_FORMAT_PATCH	2
+#define DIFF_FORMAT_NO_OUTPUT	3
+extern void diff_setup(int reverse);
 
-extern void diff_detect_rename(int, int);
-extern void diff_pickaxe(const char *);
+#define DIFF_DETECT_RENAME	1
+#define DIFF_DETECT_COPY	2
+
+extern void diffcore_rename(int rename_copy, int minimum_score);
+
+extern void diffcore_prune(void);
+
+extern void diffcore_pickaxe(const char *needle);
+extern void diffcore_pathspec(const char **pathspec);
 
 extern int diff_queue_is_empty(void);
 
-extern void diff_flush(const char **, int);
+extern void diff_flush(int output_style);
 
 #endif /* DIFF_H */

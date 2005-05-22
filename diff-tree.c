@@ -18,7 +18,7 @@ static const char *header_prefix = "";
 
 // What paths are we interested in?
 static int nr_paths = 0;
-static char **paths = NULL;
+static const char **paths = NULL;
 static int *pathlens = NULL;
 
 static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *base);
@@ -66,11 +66,6 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 	unsigned mode;
 	const char *path;
 	const unsigned char *sha1 = extract(tree, size, &path, &mode);
-
-	if (header) {
-		printf("%s", header);
-		header = NULL;
-	}
 
 	if (silent)
 		return;
@@ -137,10 +132,6 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		return retval;
 	}
 
-	if (header) {
-		printf("%s", header);
-		header = NULL;
-	}
 	if (silent)
 		return 0;
 
@@ -268,16 +259,29 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 
 static void call_diff_setup(void)
 {
-	diff_setup(reverse_diff, diff_output_format);
+	diff_setup(reverse_diff);
 }
 
-static void call_diff_flush(void)
+static int call_diff_flush()
 {
 	if (detect_rename)
-		diff_detect_rename(detect_rename, diff_score_opt);
-	if (pickaxe)
-		diff_pickaxe(pickaxe);
-	diff_flush(NULL, 0);
+		diffcore_rename(detect_rename, diff_score_opt);
+	diffcore_prune();
+	if (pickaxe) {
+		diffcore_pickaxe(pickaxe);
+		if (diff_queue_is_empty()) {
+			diff_flush(DIFF_FORMAT_NO_OUTPUT);
+			return 0;
+		}
+	}
+	if (nr_paths)
+		diffcore_pathspec(paths);
+	if (header) {
+		printf("%s", header);
+		header = NULL;
+	}
+	diff_flush(diff_output_format);
+	return 1;
 }
 
 static int diff_tree_sha1_top(const unsigned char *old,
@@ -462,7 +466,7 @@ static int diff_tree_stdin(char *line)
 static char *diff_tree_usage =
 "git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-m] [-s] [-v] <tree-ish> <tree-ish>";
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	int nr_sha1;
 	char line[1000];
@@ -470,7 +474,7 @@ int main(int argc, char **argv)
 
 	nr_sha1 = 0;
 	for (;;) {
-		char *arg;
+		const char *arg;
 
 		argv++;
 		argc--;
@@ -509,12 +513,12 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strncmp(arg, "-M", 2)) {
-			detect_rename = 1;
+			detect_rename = DIFF_DETECT_RENAME;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strncmp(arg, "-C", 2)) {
-			detect_rename = 2;
+			detect_rename = DIFF_DETECT_COPY;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}

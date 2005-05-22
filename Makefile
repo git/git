@@ -45,7 +45,7 @@ LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
 
 LIB_H += diff.h
-LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o
+LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o diffcore-pathspec.o
 
 LIB_OBJS += gitenv.o
 
@@ -123,9 +123,10 @@ sha1_file.o: $(LIB_H)
 usage.o: $(LIB_H)
 strbuf.o: $(LIB_H)
 gitenv.o: $(LIB_H)
-diff.o: $(LIB_H)
-diffcore-rename.o : $(LIB_H)
-diffcore-pickaxe.o : $(LIB_H)
+diff.o: $(LIB_H) diffcore.h
+diffcore-rename.o : $(LIB_H) diffcore.h
+diffcore-pathspec.o : $(LIB_H) diffcore.h
+diffcore-pickaxe.o : $(LIB_H) diffcore.h
 
 test: all
 	make -C t/ all

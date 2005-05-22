@@ -16,8 +16,6 @@ static int reverse_diff;
 static int generate_patch;
 static int line_termination = '\n';
 static int inter_name_termination = '\t';
-static const char **pathspec;
-static int speccnt;
 
 static const char *external_diff(void)
 {
@@ -286,6 +284,12 @@ int diff_populate_filespec(struct diff_filespec *s)
 	return 0;
 }
 
+void diff_free_filepair(struct diff_filepair *p)
+{
+	free(p->xfrm_msg);
+	free(p);
+}
+
 void diff_free_filespec_data(struct diff_filespec *s)
 {
 	if (s->should_free)
@@ -390,25 +394,6 @@ static void remove_tempfile_on_signal(int signo)
 	remove_tempfile();
 }
 
-static int matches_pathspec(const char *name)
-{
-	int i;
-	int namelen;
-
-	if (speccnt == 0)
-		return 1;
-
-	namelen = strlen(name);
-	for (i = 0; i < speccnt; i++) {
-		int speclen = strlen(pathspec[i]);
-		if (! strncmp(pathspec[i], name, speclen) &&
-		    speclen <= namelen &&
-		    (name[speclen] == 0 || name[speclen] == '/'))
-			return 1;
-	}
-	return 0;
-}
-
 /* An external diff command takes:
  *
  * diff-cmd name infile1 infile1-sha1 infile1-mode \
@@ -425,9 +410,6 @@ static void run_external_diff(const char *name,
 	pid_t pid;
 	int status;
 	static int atexit_asked = 0;
-
-	if (!matches_pathspec(name) && (!other || !matches_pathspec(other)))
-		return;
 
 	if (one && two) {
 		prepare_temp_file(name, &temp[0], one);
@@ -496,47 +478,26 @@ static void run_external_diff(const char *name,
 	remove_tempfile();
 }
 
-int diff_scoreopt_parse(const char *opt)
-{
-	int diglen, num, scale, i;
-	if (opt[0] != '-' || (opt[1] != 'M' && opt[1] != 'C'))
-		return -1; /* that is not a -M nor -C option */
-	diglen = strspn(opt+2, "0123456789");
-	if (diglen == 0 || strlen(opt+2) != diglen)
-		return 0; /* use default */
-	sscanf(opt+2, "%d", &num);
-	for (i = 0, scale = 1; i < diglen; i++)
-		scale *= 10;
-
-	/* user says num divided by scale and we say internally that
-	 * is MAX_SCORE * num / scale.
-	 */
-	return MAX_SCORE * num / scale;
-}
-
-void diff_setup(int reverse_diff_, int diff_output_style)
+void diff_setup(int reverse_diff_)
 {
 	reverse_diff = reverse_diff_;
-	generate_patch = 0;
-	switch (diff_output_style) {
-	case DIFF_FORMAT_HUMAN:
-		line_termination = '\n';
-		inter_name_termination = '\t';
-		break;
-	case DIFF_FORMAT_MACHINE:
-		line_termination = inter_name_termination = 0;
-		break;
-	case DIFF_FORMAT_PATCH:
-		generate_patch = 1;
-		break;
-	}
 }
 
 struct diff_queue_struct diff_queued_diff;
 
+void diff_q(struct diff_queue_struct *queue, struct diff_filepair *dp)
+{
+	if (queue->alloc <= queue->nr) {
+		queue->alloc = alloc_nr(queue->alloc);
+		queue->queue = xrealloc(queue->queue,
+					sizeof(dp) * queue->alloc);
+	}
+	queue->queue[queue->nr++] = dp;
+}
+
 struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
-				  struct diff_filespec *one,
-				  struct diff_filespec *two)
+				 struct diff_filespec *one,
+				 struct diff_filespec *two)
 {
 	struct diff_filepair *dp = xmalloc(sizeof(*dp));
 	dp->one = one;
@@ -544,20 +505,16 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	dp->xfrm_msg = 0;
 	dp->orig_order = queue->nr;
 	dp->xfrm_work = 0;
-	if (queue->alloc <= queue->nr) {
-		queue->alloc = alloc_nr(queue->alloc);
-		queue->queue = xrealloc(queue->queue,
-				       sizeof(dp) * queue->alloc);
-	}
-	queue->queue[queue->nr++] = dp;
+	diff_q(queue, dp);
 	return dp;
 }
 
 static void diff_flush_raw(struct diff_filepair *p)
 {
-	/*
-	 * We used to reject rename/copy but new diff-raw can express them.
-	 */
+	if (DIFF_PAIR_UNMERGED(p)) {
+		printf("U %s%c", p->one->path, line_termination);
+		return;
+	}
 	printf(":%06o %06o %s ",
 	       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
 	printf("%s%c%s%c%s%c",
@@ -576,19 +533,26 @@ static void diff_flush_patch(struct diff_filepair *p)
 	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
 		return; /* no tree diffs in patch format */ 
 
-	run_external_diff(name, other, p->one, p->two, p->xfrm_msg);
+	if (DIFF_PAIR_UNMERGED(p))
+		run_external_diff(name, NULL, NULL, NULL, NULL);
+	else
+		run_external_diff(name, other, p->one, p->two, p->xfrm_msg);
 }
 
-static int identical(struct diff_filespec *one, struct diff_filespec *two)
+static int uninteresting(struct diff_filepair *p)
 {
 	/* This function is written stricter than necessary to support
 	 * the currently implemented transformers, but the idea is to
 	 * let transformers to produce diff_filepairs any way they want,
 	 * and filter and clean them up here before producing the output.
 	 */
+	struct diff_filespec *one, *two;
 
-	if (!DIFF_FILE_VALID(one) && !DIFF_FILE_VALID(two))
-		return 1; /* not interesting */
+	if (DIFF_PAIR_UNMERGED(p))
+		return 0; /* unmerged is interesting */
+
+	one = p->one;
+	two = p->two;
 
 	/* deletion, addition, mode change and renames are all interesting. */
 	if (DIFF_FILE_VALID(one) != DIFF_FILE_VALID(two) ||
@@ -607,9 +571,44 @@ static int identical(struct diff_filespec *one, struct diff_filespec *two)
 	return 0;
 }
 
+void diffcore_prune(void)
+{
+	/*
+	 * Although rename/copy detection wants to have "no-change"
+	 * entries fed into them, the downstream do not need to see
+	 * them.  This function removes such entries.
+	 *
+	 * The applications that use rename/copy should:
+	 *
+	 * (1) feed change and "no-change" entries via diff_queue().
+	 * (2) call diffcore_rename, and any other future diffcore_xxx
+	 *     that would benefit by still having "no-change" entries.
+	 * (3) call diffcore_prune
+	 * (4) call other diffcore_xxx that do not need to see
+	 *     "no-change" entries.
+	 */
+	struct diff_queue_struct *q = &diff_queued_diff;
+	struct diff_queue_struct outq;
+	int i;
+
+	outq.queue = NULL;
+	outq.nr = outq.alloc = 0;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		if (!uninteresting(p))
+			diff_q(&outq, p);
+		else
+			diff_free_filepair(p);
+	}
+	free(q->queue);
+	*q = outq;
+	return;
+}
+
 static void diff_flush_one(struct diff_filepair *p)
 {
-	if (identical(p->one, p->two))
+	if (uninteresting(p))
 		return;
 	if (generate_patch)
 		diff_flush_patch(p);
@@ -624,23 +623,32 @@ int diff_queue_is_empty(void)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (!identical(p->one, p->two))
+		if (!uninteresting(p))
 			return 0;
 	}
 	return 1;
 }
 
-void diff_flush(const char **pathspec_, int speccnt_)
+void diff_flush(int diff_output_style)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
 
-	pathspec = pathspec_;
-	speccnt = speccnt_;
-
+	generate_patch = 0;
+	switch (diff_output_style) {
+	case DIFF_FORMAT_HUMAN:
+		line_termination = '\n';
+		inter_name_termination = '\t';
+		break;
+	case DIFF_FORMAT_MACHINE:
+		line_termination = inter_name_termination = 0;
+		break;
+	case DIFF_FORMAT_PATCH:
+		generate_patch = 1;
+		break;
+	}
 	for (i = 0; i < q->nr; i++)
 		diff_flush_one(q->queue[i]);
-
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		diff_free_filespec_data(p->one);
@@ -669,7 +677,7 @@ void diff_addremove(int addremove, unsigned mode,
 	 * which but should not make any difference).
 	 * Feeding the same new and old to diff_change() should
 	 * also have the same effect.  diff_flush() should
-	 * filter the identical ones out at the final output
+	 * filter uninteresting ones out at the final output
 	 * stage.
 	 */
 	if (reverse_diff)
@@ -739,8 +747,8 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 
 void diff_unmerge(const char *path)
 {
-	if (generate_patch)
-		run_external_diff(path, NULL, NULL, NULL, NULL);
-	else
-		printf("U %s%c", path, line_termination);
+	struct diff_filespec *one, *two;
+	one = alloc_filespec(path);
+	two = alloc_filespec(path);
+	diff_queue(&diff_queued_diff, one, two);
 }

@@ -77,11 +77,11 @@ int main(int ac, const char **av) {
 		else if (av[1][1] == 'P') /* hidden from the help */
 			diff_output_style = DIFF_FORMAT_MACHINE;
 		else if (av[1][1] == 'M') {
-			detect_rename = 1;
+			detect_rename = DIFF_DETECT_RENAME;
 			diff_score_opt = diff_scoreopt_parse(av[1]);
 		}
 		else if (av[1][1] == 'C') {
-			detect_rename = 2;
+			detect_rename = DIFF_DETECT_COPY;
 			diff_score_opt = diff_scoreopt_parse(av[1]);
 		}
 		else if (av[1][1] == 'S') {
@@ -93,7 +93,7 @@ int main(int ac, const char **av) {
 	}
 	/* the remaining parameters are paths patterns */
 
-	diff_setup(reverse_diff, diff_output_style);
+	diff_setup(reverse_diff);
 	while (1) {
 		int status;
 		read_line(&sb1, stdin, line_termination);
@@ -121,14 +121,17 @@ int main(int ac, const char **av) {
 			status = parse_diff_raw(sb1.buf+1, NULL, NULL);
 		if (status) {
 		unrecognized:
-			diff_flush(av+1, ac-1);
+			diff_flush(diff_output_style);
 			printf("%s%c", sb1.buf, line_termination);
 		}
 	}
 	if (detect_rename)
-		diff_detect_rename(detect_rename, diff_score_opt);
+		diffcore_rename(detect_rename, diff_score_opt);
+	diffcore_prune();
 	if (pickaxe)
-		diff_pickaxe(pickaxe);
-	diff_flush(av+1, ac-1);
+		diffcore_pickaxe(pickaxe);
+	if (ac)
+		diffcore_pathspec(av + 1);
+	diff_flush(diff_output_style);
 	return 0;
 }

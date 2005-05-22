@@ -224,8 +224,25 @@ static int needs_to_stay(struct diff_queue_struct *q, int i,
 	return 0;
 }
 
-void diff_detect_rename(int detect_rename,
-			int minimum_score)
+int diff_scoreopt_parse(const char *opt)
+{
+	int diglen, num, scale, i;
+	if (opt[0] != '-' || (opt[1] != 'M' && opt[1] != 'C'))
+		return -1; /* that is not a -M nor -C option */
+	diglen = strspn(opt+2, "0123456789");
+	if (diglen == 0 || strlen(opt+2) != diglen)
+		return 0; /* use default */
+	sscanf(opt+2, "%d", &num);
+	for (i = 0, scale = 1; i < diglen; i++)
+		scale *= 10;
+
+	/* user says num divided by scale and we say internally that
+	 * is MAX_SCORE * num / scale.
+	 */
+	return MAX_SCORE * num / scale;
+}
+
+void diffcore_rename(int detect_rename, int minimum_score)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;

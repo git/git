@@ -45,6 +45,8 @@ struct diff_filepair {
 	int orig_order; /* the original order of insertion into the queue */
 	int xfrm_work; /* for use by tramsformers, not by diffcore */
 };
+#define DIFF_PAIR_UNMERGED(p) \
+	(!DIFF_FILE_VALID((p)->one) && !DIFF_FILE_VALID((p)->two))
 
 struct diff_queue_struct {
 	struct diff_filepair **queue;
@@ -56,5 +58,7 @@ extern struct diff_queue_struct diff_queued_diff;
 extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
 					struct diff_filespec *,
 					struct diff_filespec *);
+extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
+extern void diff_free_filepair(struct diff_filepair *);
 
 #endif

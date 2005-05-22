@@ -21,7 +21,7 @@ static int contains(struct diff_filespec *one,
 	return 0;
 }
 
-void diff_pickaxe(const char *needle)
+void diffcore_pickaxe(const char *needle)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	unsigned long len = strlen(needle);
@@ -32,24 +32,23 @@ void diff_pickaxe(const char *needle)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
+		int onum = outq.nr;
 		if (!DIFF_FILE_VALID(p->one)) {
 			if (!DIFF_FILE_VALID(p->two))
 				continue; /* ignore nonsense */
 			/* created */
 			if (contains(p->two, needle, len))
-				diff_queue(&outq, p->one, p->two);
+				diff_q(&outq, p);
 		}
 		else if (!DIFF_FILE_VALID(p->two)) {
 			if (contains(p->one, needle, len))
-				diff_queue(&outq, p->one, p->two);
+				diff_q(&outq, p);
 		}
 		else if (contains(p->one, needle, len) !=
 			 contains(p->two, needle, len))
-			diff_queue(&outq, p->one, p->two);
-	}
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		free(p);
+			diff_q(&outq, p);
+		if (onum == outq.nr)
+			diff_free_filepair(p);
 	}
 	free(q->queue);
 	*q = outq;

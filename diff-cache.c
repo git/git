@@ -71,7 +71,7 @@ static int show_modified(struct cache_entry *old,
 
 	oldmode = old->ce_mode;
 	if (mode == oldmode && !memcmp(sha1, old->sha1, 20) &&
-	    detect_rename < 2)
+	    detect_rename < DIFF_DETECT_COPY)
 		return 0;
 
 	mode = ntohl(mode);
@@ -156,7 +156,7 @@ static void mark_merge_entries(void)
 static char *diff_cache_usage =
 "git-diff-cache [-p] [-r] [-z] [-m] [-M] [-C] [-R] [-S<string>] [--cached] <tree-ish>";
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	unsigned char tree_sha1[20];
 	void *tree;
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 
 	read_cache();
 	while (argc > 2) {
-		char *arg = argv[1];
+		const char *arg = argv[1];
 		argv++;
 		argc--;
 		if (!strcmp(arg, "-r")) {
@@ -177,12 +177,12 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strncmp(arg, "-M", 2)) {
-			detect_rename = 1;
+			detect_rename = DIFF_DETECT_RENAME;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strncmp(arg, "-C", 2)) {
-			detect_rename = 2;
+			detect_rename = DIFF_DETECT_COPY;
 			diff_score_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
@@ -209,10 +209,14 @@ int main(int argc, char **argv)
 		usage(diff_cache_usage);
 	}
 
-	if (argc != 2 || get_sha1(argv[1], tree_sha1))
+	if (argc < 2 || get_sha1(argv[1], tree_sha1))
 		usage(diff_cache_usage);
+	argv++;
+	argc--;
 
-	diff_setup(reverse_diff, diff_output_format);
+	/* The rest is for paths restriction. */
+
+	diff_setup(reverse_diff);
 
 	mark_merge_entries();
 
@@ -224,9 +228,12 @@ int main(int argc, char **argv)
 
 	ret = diff_cache(active_cache, active_nr);
 	if (detect_rename)
-		diff_detect_rename(detect_rename, diff_score_opt);
+		diffcore_rename(detect_rename, diff_score_opt);
+	diffcore_prune();
 	if (pickaxe)
-		diff_pickaxe(pickaxe);
-	diff_flush(NULL, 0);
+		diffcore_pickaxe(pickaxe);
+	if (2 <= argc)
+		diffcore_pathspec(argv + 1);
+	diff_flush(diff_output_format);
 	return ret;
 }

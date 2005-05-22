@@ -16,21 +16,6 @@ static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static int silent = 0;
 
-static int matches_pathspec(struct cache_entry *ce, char **spec, int cnt)
-{
-	int i;
-	int namelen = ce_namelen(ce);
-	for (i = 0; i < cnt; i++) {
-		int speclen = strlen(spec[i]);
-		if (! strncmp(spec[i], ce->name, speclen) &&
-		    speclen <= namelen &&
-		    (ce->name[speclen] == 0 ||
-		     ce->name[speclen] == '/'))
-			return 1;
-	}
-	return 0;
-}
-
 static void show_unmerge(const char *path)
 {
 	diff_unmerge(path);
@@ -48,7 +33,7 @@ static void show_modified(int oldmode, int mode,
 	diff_change(oldmode, mode, old_sha1, sha1, path, NULL);
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	static const unsigned char null_sha1[20] = { 0, };
 	int entries = read_cache();
@@ -71,11 +56,11 @@ int main(int argc, char **argv)
 			pickaxe = argv[1] + 2;
 		else if (!strncmp(argv[1], "-M", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
-			detect_rename = 1;
+			detect_rename = DIFF_DETECT_RENAME;
 		}
 		else if (!strncmp(argv[1], "-C", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
-			detect_rename = 2;
+			detect_rename = DIFF_DETECT_COPY;
 		}
 		else
 			usage(diff_files_usage);
@@ -90,17 +75,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	diff_setup(reverse_diff, diff_output_format);
+	diff_setup(reverse_diff);
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		unsigned int oldmode, mode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
-
-		if (1 < argc &&
-		    ! matches_pathspec(ce, argv+1, argc-1))
-			continue;
 
 		if (ce_stage(ce)) {
 			show_unmerge(ce->name);
@@ -122,7 +103,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		changed = ce_match_stat(ce, &st);
-		if (!changed && detect_rename < 2)
+		if (!changed && detect_rename < DIFF_DETECT_COPY)
 			continue;
 
 		oldmode = ntohl(ce->ce_mode);
@@ -133,9 +114,12 @@ int main(int argc, char **argv)
 			      ce->name);
 	}
 	if (detect_rename)
-		diff_detect_rename(detect_rename, diff_score_opt);
+		diffcore_rename(detect_rename, diff_score_opt);
+	diffcore_prune();
 	if (pickaxe)
-		diff_pickaxe(pickaxe);
-	diff_flush(NULL, 0);
+		diffcore_pickaxe(pickaxe);
+	if (1 < argc)
+		diffcore_pathspec(argv + 1);
+	diff_flush(diff_output_format);
 	return 0;
 }
