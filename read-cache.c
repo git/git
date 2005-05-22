@@ -17,7 +17,7 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 {
 	ce->ce_ctime.sec = htonl(st->st_ctime);
 	ce->ce_mtime.sec = htonl(st->st_mtime);
-#ifdef NSEC
+#ifdef USE_NSEC
 	ce->ce_ctime.nsec = htonl(st->st_ctim.tv_nsec);
 	ce->ce_mtime.nsec = htonl(st->st_mtim.tv_nsec);
 #endif
@@ -50,7 +50,7 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 	if (ce->ce_ctime.sec != htonl(st->st_ctime))
 		changed |= CTIME_CHANGED;
 
-#ifdef NSEC
+#ifdef USE_NSEC
 	/*
 	 * nsec seems unreliable - not all filesystems support it, so
 	 * as long as it is in the inode cache you get right nsec
@@ -65,9 +65,19 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 	if (ce->ce_uid != htonl(st->st_uid) ||
 	    ce->ce_gid != htonl(st->st_gid))
 		changed |= OWNER_CHANGED;
-	if (ce->ce_dev != htonl(st->st_dev) ||
-	    ce->ce_ino != htonl(st->st_ino))
+	if (ce->ce_ino != htonl(st->st_ino))
 		changed |= INODE_CHANGED;
+
+#ifdef USE_STDEV
+	/*
+	 * st_dev breaks on network filesystems where different
+	 * clients will have different views of what "device"
+	 * the filesystem is on
+	 */
+	if (ce->ce_dev != htonl(st->st_dev))
+		changed |= INODE_CHANGED;
+#endif
+
 	if (ce->ce_size != htonl(st->st_size))
 		changed |= DATA_CHANGED;
 	return changed;

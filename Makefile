@@ -2,7 +2,9 @@
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # enough guarantees about no collisions between objects ever hapenning.
 #
-# -DNSEC if you want git to care about sub-second file mtimes and ctimes.
+# -DUSE_NSEC if you want git to care about sub-second file mtimes and ctimes.
+# -DUSE_STDEV if you want git to care about st_dev changing
+#
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
