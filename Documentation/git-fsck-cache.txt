@@ -9,7 +9,7 @@ git-fsck-cache - Verifies the connectivity and validity of the objects in the da
 
 SYNOPSIS
 --------
-'git-fsck-cache' [--tags] [--root] [--delta-depth] [[--unreachable] [--cache] <object>\*]
+'git-fsck-cache' [--tags] [--root] [--delta-depth] [--unreachable] [--cache] [<object>*]
 
 DESCRIPTION
 -----------
@@ -20,9 +20,12 @@ OPTIONS
 <object>::
 	An object to treat as the head of an unreachability trace.
 
+	If no objects are given, git-fsck-cache defaults to using the
+	index file and all SHA1 references in .git/refs/* as heads.
+
 --unreachable::
 	Print out objects that exist but that aren't readable from any
-	of the specified head nodes.
+	of the reference nodes.
 
 --root::
 	Report root nodes.
