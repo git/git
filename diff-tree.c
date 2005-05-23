@@ -267,12 +267,12 @@ static int call_diff_flush(void)
 	if (detect_rename)
 		diffcore_rename(detect_rename, diff_score_opt);
 	diffcore_prune();
-	if (pickaxe) {
+	if (pickaxe)
 		diffcore_pickaxe(pickaxe);
-		if (diff_queue_is_empty()) {
-			diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
-			return 0;
-		}
+
+	if (diff_queue_is_empty()) {
+		diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
+		return 0;
 	}
 	if (nr_paths)
 		diffcore_pathspec(paths);
