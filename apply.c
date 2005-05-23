@@ -240,7 +240,7 @@ static int apply_single_patch(char *line, unsigned long size)
 	while (size > 4 && !memcmp(line, "@@ -", 4)) {
 		int len = apply_fragment(line, size);
 		if (len <= 0)
-			break;
+			die("corrupt patch");
 
 printf("applying fragment:\n%.*s\n\n", len, line);
 
