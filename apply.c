@@ -21,6 +21,8 @@
 static int merge_patch = 1;
 static const char apply_usage[] = "git-apply <patch>";
 
+static int linenr = 1;
+
 #define CHUNKSIZE (8192)
 
 static void *read_patch_file(int fd, unsigned long *sizep)
@@ -77,7 +79,7 @@ static int parse_git_header(char *line, unsigned int size)
 {
 	unsigned long offset, len;
 
-	for (offset = 0 ; size > 0 ; offset += len, size -= len, line += len) {
+	for (offset = 0 ; size > 0 ; offset += len, size -= len, line += len, linenr++) {
 		len = linelen(line, size);
 		if (!len)
 			break;
@@ -102,56 +104,6 @@ static int parse_git_header(char *line, unsigned int size)
 
 	/* We want either a patch _or_ something real */
 	return offset ? :-1;
-}
-
-static int find_header(char *line, unsigned long size, int *hdrsize)
-{
-	unsigned long offset, len;
-
-	for (offset = 0; size > 0; offset += len, size -= len, line += len) {
-		unsigned long nextlen;
-
-		len = linelen(line, size);
-		if (!len)
-			break;
-
-		/* Testing this early allows us to take a few shortcuts.. */
-		if (len < 6)
-			continue;
-		if (size < len + 6)
-			break;
-
-		/*
-		 * Git patch? It might not have a real patch, just a rename
-		 * or mode change, so we handle that specially
-		 */
-		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_header(line + len, size - len);
-			if (git_hdr_len < 0)
-				continue;
-
-			*hdrsize = len + git_hdr_len;
-			return offset;
-		}
-
-		/** --- followed by +++ ? */
-		if (memcmp("--- ", line,  4) || memcmp("+++ ", line + len, 4))
-			continue;
-
-		/*
-		 * We only accept unified patches, so we want it to
-		 * at least have "@@ -a,b +c,d @@\n", which is 14 chars
-		 * minimum
-		 */
-		nextlen = linelen(line + len, size - len);
-		if (size < nextlen + 14 || memcmp("@@ -", line + len + nextlen, 4))
-			continue;
-
-		/* Ok, we'll consider it a patch */
-		*hdrsize = len + nextlen;
-		return offset;
-	}
-	return -1;
 }
 
 static int parse_num(const char *line, int len, int offset, const char *expect, unsigned long *p)
@@ -184,6 +136,90 @@ static int parse_num(const char *line, int len, int offset, const char *expect, 
 }
 
 /*
+ * Parse a unified diff fragment header of the
+ * form "@@ -a,b +c,d @@"
+ */
+static int parse_fragment_header(char *line, int len, unsigned long *pos)
+{
+	int offset;
+
+	if (!len || line[len-1] != '\n')
+		return -1;
+
+	/* Figure out the number of lines in a fragment */
+	offset = parse_num(line, len, 4, ",", pos);
+	offset = parse_num(line, len, offset, " +", pos+1);
+	offset = parse_num(line, len, offset, ",", pos+2);
+	offset = parse_num(line, len, offset, " @@", pos+3);
+
+	return offset;
+}
+
+static int find_header(char *line, unsigned long size, int *hdrsize)
+{
+	unsigned long offset, len;
+
+	for (offset = 0; size > 0; offset += len, size -= len, line += len, linenr++) {
+		unsigned long nextlen;
+
+		len = linelen(line, size);
+		if (!len)
+			break;
+
+		/* Testing this early allows us to take a few shortcuts.. */
+		if (len < 6)
+			continue;
+
+		/*
+		 * Make sure we don't find any unconnected patch fragmants.
+		 * That's a sign that we didn't find a header, and that a
+		 * patch has become corrupted/broken up.
+		 */
+		if (!memcmp("@@ -", line, 4)) {
+			unsigned long pos[4];
+			if (parse_fragment_header(line, len, pos) < 0)
+				continue;
+			error("patch fragment without header at line %d: %.*s", linenr, len-1, line);
+		}
+
+		if (size < len + 6)
+			break;
+
+		/*
+		 * Git patch? It might not have a real patch, just a rename
+		 * or mode change, so we handle that specially
+		 */
+		if (!memcmp("diff --git ", line, 11)) {
+			int git_hdr_len = parse_git_header(line + len, size - len);
+			if (git_hdr_len < 0)
+				continue;
+
+			*hdrsize = len + git_hdr_len;
+			return offset;
+		}
+
+		/** --- followed by +++ ? */
+		if (memcmp("--- ", line,  4) || memcmp("+++ ", line + len, 4))
+			continue;
+
+		/*
+		 * We only accept unified patches, so we want it to
+		 * at least have "@@ -a,b +c,d @@\n", which is 14 chars
+		 * minimum
+		 */
+		nextlen = linelen(line + len, size - len);
+		if (size < nextlen + 14 || memcmp("@@ -", line + len + nextlen, 4))
+			continue;
+
+		/* Ok, we'll consider it a patch */
+		*hdrsize = len + nextlen;
+		linenr += 2;
+		return offset;
+	}
+	return -1;
+}
+
+/*
  * Parse a unified diff. Note that this really needs
  * to parse each fragment separately, since the only
  * way to know the difference between a "---" that is
@@ -193,23 +229,19 @@ static int parse_num(const char *line, int len, int offset, const char *expect, 
 static int apply_fragment(char *line, unsigned long size)
 {
 	int len = linelen(line, size), offset;
-	unsigned long oldpos, oldlines, newpos, newlines;
+	unsigned long pos[4], oldlines, newlines;
 
-	if (!len || line[len-1] != '\n')
-		return -1;
-
-	/* Figure out the number of lines in a fragment */
-	offset = parse_num(line, len, 4, ",", &oldpos);
-	offset = parse_num(line, len, offset, " +", &oldlines);
-	offset = parse_num(line, len, offset, ",", &newpos);
-	offset = parse_num(line, len, offset, " @@", &newlines);
+	offset = parse_fragment_header(line, len, pos);
 	if (offset < 0)
 		return -1;
+	oldlines = pos[1];
+	newlines = pos[3];
 
 	/* Parse the thing.. */
 	line += len;
 	size -= len;
-	for (offset = len; size > 0; offset += len, size -= len, line += len) {
+	linenr++;
+	for (offset = len; size > 0; offset += len, size -= len, line += len, linenr++) {
 		if (!oldlines && !newlines)
 			break;
 		len = linelen(line, size);
@@ -240,7 +272,7 @@ static int apply_single_patch(char *line, unsigned long size)
 	while (size > 4 && !memcmp(line, "@@ -", 4)) {
 		int len = apply_fragment(line, size);
 		if (len <= 0)
-			die("corrupt patch");
+			die("corrupt patch at line %d", linenr);
 
 printf("applying fragment:\n%.*s\n\n", len, line);
 
