@@ -509,6 +509,7 @@ static int apply_patch(int fd)
 int main(int argc, char **argv)
 {
 	int i;
+	int read_stdin = 1;
 
 	if (read_cache() < 0)
 		die("unable to read index file");
@@ -519,6 +520,7 @@ int main(int argc, char **argv)
 
 		if (!strcmp(arg, "-")) {
 			apply_patch(0);
+			read_stdin = 0;
 			continue;
 		}
 		if (!strcmp(arg, "--no-merge")) {
@@ -528,8 +530,11 @@ int main(int argc, char **argv)
 		fd = open(arg, O_RDONLY);
 		if (fd < 0)
 			usage(apply_usage);
+		read_stdin = 0;
 		apply_patch(fd);
 		close(fd);
 	}
+	if (read_stdin)
+		apply_patch(0);
 	return 0;
 }
