@@ -21,9 +21,18 @@
 static int merge_patch = 1;
 static const char apply_usage[] = "git-apply <patch>";
 
+/*
+ * Various "current state", notably line numbers and what
+ * file (and how) we're patching right now.. The "is_xxxx"
+ * things are flags, where -1 means "don't know yet".
+ */
 static int linenr = 1;
+static int old_mode, new_mode;
+static char *old_name, *new_name, *def_name;
+static int is_rename, is_copy, is_new, is_delete;
 
 #define CHUNKSIZE (8192)
+#define SLOP (16)
 
 static void *read_patch_file(int fd, unsigned long *sizep)
 {
@@ -48,6 +57,15 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 		size += nr;
 	}
 	*sizep = size;
+
+	/*
+	 * Make sure that we have some slop in the buffer
+	 * so that we can do speculative "memcmp" etc, and
+	 * see to it that it is NUL-filled.
+	 */
+	if (alloc < size + SLOP)
+		buffer = xrealloc(buffer, size + SLOP);
+	memset(buffer + size, 0, SLOP);
 	return buffer;
 }
 
@@ -62,48 +80,200 @@ static unsigned long linelen(char *buffer, unsigned long size)
 	return len;
 }
 
-static int match_word(const char *line, const char *match)
+static int is_dev_null(const char *str)
 {
+	return !memcmp("/dev/null", str, 9) && isspace(str[9]);
+}
+
+static char * find_name(const char *line, char *def, int p_value)
+{
+	int len;
+	const char *start = line;
+	char *name;
+
 	for (;;) {
-		char c = *match++;
-		if (!c)
+		char c = *line;
+		if (isspace(c))
 			break;
-		if (*line++ != c)
-			return 0;
+		line++;
+		if (c == '/' && !--p_value)
+			start = line;
 	}
-	return *line == ' ';
+	if (!start)
+		return def;
+	len = line - start;
+	if (!len)
+		return def;
+
+	/*
+	 * Generally we prefer the shorter name, especially
+	 * if the other one is just a variation of that with
+	 * something else tacked on to the end (ie "file.orig"
+	 * or "file~").
+	 */
+	if (def) {
+		int deflen = strlen(def);
+		if (deflen < len && !strncmp(start, def, deflen))
+			return def;
+	}
+
+	name = xmalloc(len + 1);
+	memcpy(name, start, len);
+	name[len] = 0;
+	free(def);
+	return name;
+}
+
+/*
+ * Get the name etc info from the --/+++ lines of a traditional patch header
+ *
+ * NOTE! This hardcodes "-p1" behaviour in filename detection.
+ */
+static int parse_traditional_patch(const char *first, const char *second)
+{
+	int p_value = 1;
+	char *name;
+
+	first += 4;	// skip "--- "
+	second += 4;	// skip "+++ "
+	if (is_dev_null(first)) {
+		is_new = 1;
+		name = find_name(second, def_name, p_value);
+	} else if (is_dev_null(second)) {
+		is_delete = 1;
+		name = find_name(first, def_name, p_value);
+	} else {
+		name = find_name(first, def_name, p_value);
+		name = find_name(second, name, p_value);
+	}
+	if (!name)
+		die("unable to find filename in patch at line %d", linenr);
+	old_name = name;
+	new_name = name;
+}
+
+static int gitdiff_hdrend(const char *line)
+{
+	return -1;
+}
+
+static int gitdiff_oldname(const char *line)
+{
+	if (!old_name)
+		old_name = find_name(line, NULL, 1);
+	return 0;
+}
+
+static int gitdiff_newname(const char *line)
+{
+	if (!new_name)
+		new_name = find_name(line, NULL, 1);
+	return 0;
+}
+
+static int gitdiff_oldmode(const char *line)
+{
+	old_mode = strtoul(line, NULL, 8);
+	return 0;
+}
+
+static int gitdiff_newmode(const char *line)
+{
+	new_mode = strtoul(line, NULL, 8);
+	return 0;
+}
+
+static int gitdiff_delete(const char *line)
+{
+	is_delete = 1;
+	return gitdiff_oldmode(line);
+}
+
+static int gitdiff_newfile(const char *line)
+{
+	is_new = 1;
+	return gitdiff_newmode(line);
+}
+
+static int gitdiff_copysrc(const char *line)
+{
+	is_copy = 1;
+	old_name = find_name(line, NULL, 0);
+	return 0;
+}
+
+static int gitdiff_copydst(const char *line)
+{
+	is_copy = 1;
+	new_name = find_name(line, NULL, 0);
+	return 0;
+}
+
+static int gitdiff_renamesrc(const char *line)
+{
+	is_rename = 1;
+	old_name = find_name(line, NULL, 0);
+	return 0;
+}
+
+static int gitdiff_renamedst(const char *line)
+{
+	is_rename = 1;
+	new_name = find_name(line, NULL, 0);
+	return 0;
+}
+
+static int gitdiff_similarity(const char *line)
+{
+	return 0;
 }
 
 /* Verify that we recognize the lines following a git header */
-static int parse_git_header(char *line, unsigned int size)
+static int parse_git_header(char *line, int len, unsigned int size)
 {
-	unsigned long offset, len;
+	unsigned long offset;
 
-	for (offset = 0 ; size > 0 ; offset += len, size -= len, line += len, linenr++) {
+	/* A git diff has explicit new/delete information, so we don't guess */
+	is_new = 0;
+	is_delete = 0;
+
+	line += len;
+	size -= len;
+	linenr++;
+	for (offset = len ; size > 0 ; offset += len, size -= len, line += len, linenr++) {
+		static const struct opentry {
+			const char *str;
+			int (*fn)(const char *);
+		} optable[] = {
+			{ "@@ -", gitdiff_hdrend },
+			{ "--- ", gitdiff_oldname },
+			{ "+++ ", gitdiff_newname },
+			{ "old mode ", gitdiff_oldmode },
+			{ "new mode ", gitdiff_newmode },
+			{ "deleted file mode ", gitdiff_delete },
+			{ "new file mode ", gitdiff_newfile },
+			{ "copy from ", gitdiff_copysrc },
+			{ "copy to ", gitdiff_copydst },
+			{ "rename from ", gitdiff_renamesrc },
+			{ "rename to ", gitdiff_renamedst },
+			{ "similarity index ", gitdiff_similarity },
+		};
+		int i;
+
 		len = linelen(line, size);
-		if (!len)
+		if (!len || line[len-1] != '\n')
 			break;
-		if (line[len-1] != '\n')
-			return -1;
-		if (len < 4)
-			break;
-		if (!memcmp(line, "@@ -", 4))
-			return offset;
-		if (match_word(line, "new file mode"))
-			continue;
-		if (match_word(line, "deleted file mode"))
-			continue;
-		if (match_word(line, "copy"))
-			continue;
-		if (match_word(line, "rename"))
-			continue;
-		if (match_word(line, "similarity index"))
-			continue;
-		break;
+		for (i = 0; i < sizeof(optable) / sizeof(optable[0]); i++) {
+			const struct opentry *p = optable + i;
+			int oplen = strlen(p->str);
+			if (len < oplen || memcmp(p->str, line, oplen))
+				continue;
+			if (p->fn(line + oplen) < 0)
+				return offset;
+		}
 	}
 
-	/* We want either a patch _or_ something real */
-	return offset ? :-1;
+	return offset;
 }
 
 static int parse_num(const char *line, int len, int offset, const char *expect, unsigned long *p)
@@ -159,6 +329,10 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 {
 	unsigned long offset, len;
 
+	is_rename = is_copy = 0;
+	is_new = is_delete = -1;
+	old_mode = new_mode = -1;
+	def_name = old_name = new_name = NULL;
 	for (offset = 0; size > 0; offset += len, size -= len, line += len, linenr++) {
 		unsigned long nextlen;
 
@@ -190,11 +364,11 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 		 * or mode change, so we handle that specially
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_header(line + len, size - len);
+			int git_hdr_len = parse_git_header(line, len, size);
 			if (git_hdr_len < 0)
 				continue;
 
-			*hdrsize = len + git_hdr_len;
+			*hdrsize = git_hdr_len;
 			return offset;
 		}
 
@@ -212,6 +386,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 			continue;
 
 		/* Ok, we'll consider it a patch */
+		parse_traditional_patch(line, line+len);
 		*hdrsize = len + nextlen;
 		linenr += 2;
 		return offset;
@@ -236,6 +411,11 @@ static int apply_fragment(char *line, unsigned long size)
 		return -1;
 	oldlines = pos[1];
 	newlines = pos[3];
+
+	if (is_new < 0 && (pos[0] || oldlines))
+		is_new = 0;
+	if (is_delete < 0 && (pos[1] || newlines))
+		is_delete = 0;
 
 	/* Parse the thing.. */
 	line += len;
@@ -294,6 +474,12 @@ static int apply_chunk(char *buffer, unsigned long size)
 	header = buffer + offset;
 
 printf("Found header:\n%.*s\n\n", hdrsize, header);
+printf("Rename: %d\n", is_rename);
+printf("Copy:   %d\n", is_copy);
+printf("New:    %d\n", is_new);
+printf("Delete: %d\n", is_delete);
+printf("Mode:   %o->%o\n", old_mode, new_mode);
+printf("Name:   '%s'->'%s'\n", old_name, new_name);
 
 	patch = header + hdrsize;
 	patchsize = apply_single_patch(patch, size - offset - hdrsize);
