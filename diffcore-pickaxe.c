@@ -44,7 +44,8 @@ void diffcore_pickaxe(const char *needle)
 			if (contains(p->one, needle, len))
 				diff_q(&outq, p);
 		}
-		else if (contains(p->one, needle, len) !=
+		else if (!diff_unmodified_pair(p) &&
+			 contains(p->one, needle, len) !=
 			 contains(p->two, needle, len))
 			diff_q(&outq, p);
 		if (onum == outq.nr)
