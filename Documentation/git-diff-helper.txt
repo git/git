@@ -9,7 +9,7 @@ git-diff-helper - Generates patch format output for git-diff-*
 
 SYNOPSIS
 --------
-'git-diff-helper' [-z] [-R] [-M] [-C] [-S<string>]
+'git-diff-helper' [-z] [-S<string>]
 
 DESCRIPTION
 -----------
@@ -20,22 +20,6 @@ OPTIONS
 -------
 -z::
 	\0 line termination on input
-
--R::
-	Output diff in reverse.  This is useful for displaying output from
-	"git-diff-cache" which always compares tree with cache or working
-	file.  E.g.
-
-		git-diff-cache <tree> | git-diff-helper -R file.c
-
-	would show a diff to bring the working file back to what
-	is in the <tree>.
-
--M::
-	Detect renames.
-
--C::
-	Detect copies as well as renames.
 
 -S<string>::
 	Look for differences that contains the change in <string>.

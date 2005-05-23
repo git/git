@@ -8,6 +8,14 @@ test_description='More rename detection
 '
 . ./test-lib.sh
 
+compare_diff_patch () {
+    # When heuristics are improved, the score numbers would change.
+    # Ignore them while comparing.
+    sed -e '/^similarity index [0-9]*%$/d' <"$1" >.tmp-1
+    sed -e '/^similarity index [0-9]*%$/d' <"$2" >.tmp-2
+    diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
+}
+
 test_expect_success \
     'prepare reference tree' \
     'cat ../../COPYING >COPYING &&
@@ -28,38 +36,35 @@ test_expect_success \
 # copy-and-edit one, and rename-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -M -p $tree |
-sed -e 's/\([0-9][0-9]*\)/#/g' >current &&
+GIT_DIFF_OPTS=--unified=0 git-diff-cache -M -p $tree >current
 cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.#
-similarity index #%
+diff --git a/COPYING b/COPYING.1
 copy from COPYING
-copy to COPYING.#
+copy to COPYING.1
 --- a/COPYING
-+++ b/COPYING.#
-@@ -# +# @@
-- HOWEVER, in order to allow a migration to GPLv# if that seems like
-+ However, in order to allow a migration to GPLv# if that seems like
-diff --git a/COPYING b/COPYING.#
-similarity index #%
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
+diff --git a/COPYING b/COPYING.2
 rename old COPYING
-rename new COPYING.#
+rename new COPYING.2
 --- a/COPYING
-+++ b/COPYING.#
-@@ -# +# @@
++++ b/COPYING.2
+@@ -2 +2 @@
 - Note that the only valid version of the GPL as far as this project
 + Note that the only valid version of the G.P.L as far as this project
-@@ -# +# @@
-- HOWEVER, in order to allow a migration to GPLv# if that seems like
-+ HOWEVER, in order to allow a migration to G.P.Lv# if that seems like
-@@ -# +# @@
--	This file is licensed under the GPL v#, or a later version
-+	This file is licensed under the G.P.L v#, or a later version
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ HOWEVER, in order to allow a migration to G.P.Lv3 if that seems like
+@@ -12 +12 @@
+-	This file is licensed under the GPL v2, or a later version
++	This file is licensed under the G.P.L v2, or a later version
 EOF
 
 test_expect_success \
-    'validate output from rename/copy detection' \
-    'diff -u current expected'
+    'validate output from rename/copy detection (#1)' \
+    'compare_diff_patch current expected'
 
 test_expect_success \
     'prepare work tree again' \
@@ -71,35 +76,33 @@ test_expect_success \
 # edited one, and copy-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree |
-sed -e 's/\([0-9][0-9]*\)/#/g' >current
+GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree >current
 cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.#
-similarity index #%
+diff --git a/COPYING b/COPYING.1
 copy from COPYING
-copy to COPYING.#
+copy to COPYING.1
 --- a/COPYING
-+++ b/COPYING.#
-@@ -# +# @@
-- HOWEVER, in order to allow a migration to GPLv# if that seems like
-+ However, in order to allow a migration to GPLv# if that seems like
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
 diff --git a/COPYING b/COPYING
 --- a/COPYING
 +++ b/COPYING
-@@ -# +# @@
+@@ -2 +2 @@
 - Note that the only valid version of the GPL as far as this project
 + Note that the only valid version of the G.P.L as far as this project
-@@ -# +# @@
-- HOWEVER, in order to allow a migration to GPLv# if that seems like
-+ HOWEVER, in order to allow a migration to G.P.Lv# if that seems like
-@@ -# +# @@
--	This file is licensed under the GPL v#, or a later version
-+	This file is licensed under the G.P.L v#, or a later version
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ HOWEVER, in order to allow a migration to G.P.Lv3 if that seems like
+@@ -12 +12 @@
+-	This file is licensed under the GPL v2, or a later version
++	This file is licensed under the G.P.L v2, or a later version
 EOF
 
 test_expect_success \
-    'validate output from rename/copy detection' \
-    'diff -u current expected'
+    'validate output from rename/copy detection (#2)' \
+    'compare_diff_patch current expected'
 
 test_expect_success \
     'prepare work tree once again' \
@@ -112,22 +115,20 @@ test_expect_success \
 # the diff-core.  Unchanged rezrov, although being fed to
 # git-diff-cache as well, should not be mentioned.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree |
-sed -e 's/\([0-9][0-9]*\)/#/g' >current
+GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree >current
 cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.#
-similarity index #%
+diff --git a/COPYING b/COPYING.1
 copy from COPYING
-copy to COPYING.#
+copy to COPYING.1
 --- a/COPYING
-+++ b/COPYING.#
-@@ -# +# @@
-- HOWEVER, in order to allow a migration to GPLv# if that seems like
-+ However, in order to allow a migration to GPLv# if that seems like
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
 EOF
 
 test_expect_success \
-    'validate output from rename/copy detection' \
-    'diff -u current expected'
+    'validate output from rename/copy detection (#3)' \
+    'compare_diff_patch current expected'
 
 test_done

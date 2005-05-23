@@ -47,6 +47,7 @@ struct diff_filepair {
 			  * certain ordering of patches that later
 			  * diffcore transformations should not break.
 			  */
+	int status; /* M C R N D U (see Documentation/diff-format.txt) */
 };
 #define DIFF_PAIR_UNMERGED(p) \
 	(!DIFF_FILE_VALID((p)->one) && !DIFF_FILE_VALID((p)->two))

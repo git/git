@@ -504,16 +504,29 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 
 static void diff_flush_raw(struct diff_filepair *p)
 {
-	if (DIFF_PAIR_UNMERGED(p)) {
-		printf("U %s%c", p->one->path, line_termination);
-		return;
+	int two_paths;
+	char status[10];
+	switch (p->status) {
+	case 'C': case 'R':
+		two_paths = 1;
+		sprintf(status, "%c%1d", p->status, p->score);
+		break;
+	default:
+		two_paths = 0;
+		status[0] = p->status;
+		status[1] = 0;
+		break;
 	}
 	printf(":%06o %06o %s ",
 	       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
-	printf("%s%c%s%c%s%c",
-	       sha1_to_hex(p->two->sha1), inter_name_termination,
-	       p->one->path, inter_name_termination,
-	       p->two->path, line_termination);
+	printf("%s %s%c%s",
+	       sha1_to_hex(p->two->sha1),
+	       status,
+	       inter_name_termination,
+	       p->one->path);
+	if (two_paths)
+		printf("%c%s", inter_name_termination, p->two->path);
+	putchar(line_termination);
 }
 
 int diff_unmodified_pair(struct diff_filepair *p)
@@ -548,9 +561,10 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	return 0;
 }
 
-static void diff_flush_patch(struct diff_filepair *p, const char *msg)
+static void diff_flush_patch(struct diff_filepair *p)
 {
 	const char *name, *other;
+	char msg_[PATH_MAX*2+200], *msg;
 
 	/* diffcore_prune() keeps "stay" entries for diff-raw
 	 * copy/rename detection, but when we are generating
@@ -564,6 +578,29 @@ static void diff_flush_patch(struct diff_filepair *p, const char *msg)
 	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
 	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
 		return; /* no tree diffs in patch format */ 
+
+	switch (p->status) {
+	case 'C':
+		sprintf(msg_,
+			"similarity index %d%%\n"
+			"copy from %s\n"
+			"copy to %s\n",
+			(int)(0.5 + p->score * 100/MAX_SCORE),
+			p->one->path, p->two->path);
+		msg = msg_;
+		break;
+	case 'R':
+		sprintf(msg_,
+			"similarity index %d%%\n"
+			"rename old %s\n"
+			"rename new %s\n",
+			(int)(0.5 + p->score * 100/MAX_SCORE),
+			p->one->path, p->two->path);
+		msg = msg_;
+		break;
+	default:
+		msg = NULL;
+	}
 
 	if (DIFF_PAIR_UNMERGED(p))
 		run_external_diff(name, NULL, NULL, NULL, NULL);
@@ -643,21 +680,13 @@ void diffcore_prune(void)
 	return;
 }
 
-static void diff_flush_one(struct diff_filepair *p, const char *msg)
-{
-	if (generate_patch)
-		diff_flush_patch(p, msg);
-	else
-		diff_flush_raw(p);
-}
-
 int diff_queue_is_empty(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	return q->nr == 0;
 }
 
-void diff_flush(int diff_output_style)
+void diff_flush(int diff_output_style, int resolve_rename_copy)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
@@ -676,28 +705,28 @@ void diff_flush(int diff_output_style)
 		break;
 	}
 	for (i = 0; i < q->nr; i++) {
-		char msg_[PATH_MAX*2+200], *msg = NULL;
 		struct diff_filepair *p = q->queue[i];
-		if (strcmp(p->one->path, p->two->path)) {
-			/* This is rename or copy.  Which one is it? */
-			if (diff_needs_to_stay(q, i+1, p->one)) {
-				sprintf(msg_,
-					"similarity index %d%%\n"
-					"copy from %s\n"
-					"copy to %s\n",
-					(int)(0.5 + p->score * 100/MAX_SCORE),
-					p->one->path, p->two->path);
+		if (resolve_rename_copy) {
+			if (DIFF_PAIR_UNMERGED(p))
+				p->status = 'U';
+			else if (!DIFF_FILE_VALID((p)->one))
+				p->status = 'N';
+			else if (!DIFF_FILE_VALID((p)->two))
+				p->status = 'D';
+			else if (strcmp(p->one->path, p->two->path)) {
+				/* This is rename or copy.  Which one is it? */
+				if (diff_needs_to_stay(q, i+1, p->one))
+					p->status = 'C';
+				else
+					p->status = 'R';
 			}
 			else
-				sprintf(msg_,
-					"similarity index %d%%\n"
-					"rename old %s\n"
-					"rename new %s\n",
-					(int)(0.5 + p->score * 100/MAX_SCORE),
-					p->one->path, p->two->path);
-			msg = msg_;
+				p->status = 'M';
 		}
-		diff_flush_one(p, msg);
+		if (generate_patch)
+			diff_flush_patch(p);
+		else
+			diff_flush_raw(p);
 	}
 
 	for (i = 0; i < q->nr; i++) {
@@ -747,28 +776,27 @@ void diff_addremove(int addremove, unsigned mode,
 	diff_queue(&diff_queued_diff, one, two);
 }
 
-void diff_guif(unsigned old_mode,
-	       unsigned new_mode,
-	       const unsigned char *old_sha1,
-	       const unsigned char *new_sha1,
-	       const char *old_path,
-	       const char *new_path)
+void diff_helper_input(unsigned old_mode,
+		       unsigned new_mode,
+		       const unsigned char *old_sha1,
+		       const unsigned char *new_sha1,
+		       const char *old_path,
+		       int status,
+		       int score,
+		       const char *new_path)
 {
 	struct diff_filespec *one, *two;
+	struct diff_filepair *dp;
 
-	if (reverse_diff) {
-		unsigned tmp;
-		const unsigned char *tmp_c;
-		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
-		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
-	}
 	one = alloc_filespec(old_path);
 	two = alloc_filespec(new_path);
 	if (old_mode)
 		fill_filespec(one, old_sha1, old_mode);
 	if (new_mode)
 		fill_filespec(two, new_sha1, new_mode);
-	diff_queue(&diff_queued_diff, one, two);
+	dp = diff_queue(&diff_queued_diff, one, two);
+	dp->score = score;
+	dp->status = status;
 }
 
 void diff_change(unsigned old_mode, unsigned new_mode,

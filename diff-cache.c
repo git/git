@@ -234,6 +234,6 @@ int main(int argc, const char **argv)
 		diffcore_pickaxe(pickaxe);
 	if (2 <= argc)
 		diffcore_pathspec(argv + 1);
-	diff_flush(diff_output_format);
+	diff_flush(diff_output_format, 1);
 	return ret;
 }

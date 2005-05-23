@@ -19,28 +19,34 @@ git-diff-files [<pattern>...]::
 
 An output line is formatted this way:
 
-  ':' <mode> ' ' <mode> ' ' <sha1> ' ' <sha1> I <path> I <path> L
+in-place edit  :100644 100644 bcd1234... 0123456... M file0
+copy-edit      :100644 100644 abcd123... 1234567... C68 file1 file2
+rename-edit    :100644 100644 abcd123... 1234567... R86 file1 file3
+create         :000000 100644 0000000... 1234567... N file4
+delete         :100644 000000 1234567... 0000000... D file5
+unmerged       :000000 000000 0000000... 0000000... U file6
 
-By default, I and L are '\t' and '\n' respectively.  When '-z'
-flag is in effect, both I and L are '\0'.
+That is, from the left to the right:
 
-In each <mode>, <sha1> and <path> pair, left hand side describes
-the left hand side of what is being compared (<tree-ish> in
-git-diff-cache, <tree-ish-1> in git-diff-tree, cache contents in
-git-diff-files).  Non-existence is shown by having 000000 in the
-<mode> column.  That is, 000000 appears as the first <mode> for
-newly created files, and as the second <mode> for deleted files.
-
-Usually two <path> are the same.  When rename/copy detection is
-used, however, an "create" and another "delete" records can be
-merged into a single record that has two <path>, old name and
-new name.
+  (1) a colon.
+  (2) mode for "src"; 000000 if creation or unmerged.
+  (3) a space.
+  (4) mode for "dst"; 000000 if deletion or unmerged.
+  (5) a space.
+  (6) sha1 for "src"; 0{40} if creation or unmerged.
+  (7) a space.
+  (8) sha1 for "dst"; 0{40} if creation, unmerged or "look at work tree".
+  (9) status, followed by similarlity index number only for C and R.
+ (10) a tab or a NUL when '-z' option is used.
+ (11) path for "src"
+ (12) a tab or a NUL when '-z' option is used; only exists for C or R.
+ (13) path for "dst"; only exists for C or R.
+ (14) an LF or a NUL when '-z' option is used, to terminate the record.
 
 <sha1> is shown as all 0's if new is a file on the filesystem
 and it is out of sync with the cache.  Example:
 
-  :100644 100644 5be4a4...... 000000......    file.c    file.c
-
+  :100644 100644 5be4a4...... 000000...... M file.c
 
 Generating patches with -p
 --------------------------

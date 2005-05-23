@@ -8,6 +8,22 @@ test_description='Same rename detection as t4003 but testing diff-raw.
 '
 . ./test-lib.sh
 
+compare_diff_raw () {
+    # When heuristics are improved, the score numbers would change.
+    # Ignore them while comparing.
+    sed -e 's/ \([CR]\)[0-9]*	/\1#/' <"$1" >.tmp-1
+    sed -e 's/ \([CR]\)[0-9]*	/\1#/' <"$2" >.tmp-2
+    diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
+}
+
+compare_diff_patch () {
+    # When heuristics are improved, the score numbers would change.
+    # Ignore them while comparing.
+    sed -e '/^similarity index [0-9]*%$/d' <"$1" >.tmp-1
+    sed -e '/^similarity index [0-9]*%$/d' <"$2" >.tmp-2
+    diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
+}
+
 test_expect_success \
     'prepare reference tree' \
     'cat ../../COPYING >COPYING &&
@@ -31,13 +47,47 @@ test_expect_success \
 git-diff-cache -M $tree >current
 
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178	COPYING	COPYING.1
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471	COPYING	COPYING.2
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 R1234	COPYING	COPYING.2
 EOF
 
 test_expect_success \
-    'validate output from rename/copy detection' \
-    'diff -u current expected'
+    'validate output from rename/copy detection (#1)' \
+    'compare_diff_raw current expected'
+
+# make sure diff-helper can grok it.
+mv expected diff-raw
+GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
+cat >expected <<\EOF
+diff --git a/COPYING b/COPYING.1
+copy from COPYING
+copy to COPYING.1
+--- a/COPYING
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
+diff --git a/COPYING b/COPYING.2
+rename old COPYING
+rename new COPYING.2
+--- a/COPYING
++++ b/COPYING.2
+@@ -2 +2 @@
+- Note that the only valid version of the GPL as far as this project
++ Note that the only valid version of the G.P.L as far as this project
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ HOWEVER, in order to allow a migration to G.P.Lv3 if that seems like
+@@ -12 +12 @@
+-	This file is licensed under the GPL v2, or a later version
++	This file is licensed under the G.P.L v2, or a later version
+EOF
+
+test_expect_success \
+    'validate output from diff-helper (#1)' \
+    'compare_diff_patch current expected'
+
+################################################################
 
 test_expect_success \
     'prepare work tree again' \
@@ -51,18 +101,50 @@ test_expect_success \
 
 git-diff-cache -C $tree >current
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178	COPYING	COPYING.1
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471	COPYING	COPYING
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 M	COPYING
 EOF
 
 test_expect_success \
-    'validate output from rename/copy detection' \
-    'diff -u current expected'
+    'validate output from rename/copy detection (#2)' \
+    'compare_diff_raw current expected'
 
 test_expect_success \
     'prepare work tree once again' \
     'cat ../../COPYING >COPYING &&
      git-update-cache --add --remove COPYING COPYING.1'
+
+# make sure diff-helper can grok it.
+mv expected diff-raw
+GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
+cat >expected <<\EOF
+diff --git a/COPYING b/COPYING.1
+copy from COPYING
+copy to COPYING.1
+--- a/COPYING
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
+diff --git a/COPYING b/COPYING
+--- a/COPYING
++++ b/COPYING
+@@ -2 +2 @@
+- Note that the only valid version of the GPL as far as this project
++ Note that the only valid version of the G.P.L as far as this project
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ HOWEVER, in order to allow a migration to G.P.Lv3 if that seems like
+@@ -12 +12 @@
+-	This file is licensed under the GPL v2, or a later version
++	This file is licensed under the G.P.L v2, or a later version
+EOF
+
+test_expect_success \
+    'validate output from diff-helper (#2)' \
+    'compare_diff_patch current expected'
+
+################################################################
 
 # tree has COPYING and rezrov.  work tree has the same COPYING and
 # copy-edited COPYING.1, and unchanged rezrov.  We should see
@@ -71,12 +153,30 @@ test_expect_success \
 
 git-diff-cache -C $tree >current
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178	COPYING	COPYING.1
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 6ff87c4664981e4397625791c8ea3bbb5f2279a3	COPYING	COPYING
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 6ff87c4664981e4397625791c8ea3bbb5f2279a3 M	COPYING
 EOF
 
 test_expect_success \
-    'validate output from rename/copy detection' \
-    'diff -u current expected'
+    'validate output from rename/copy detection (#3)' \
+    'compare_diff_raw current expected'
+
+# make sure diff-helper can grok it.
+mv expected diff-raw
+GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
+cat >expected <<\EOF
+diff --git a/COPYING b/COPYING.1
+copy from COPYING
+copy to COPYING.1
+--- a/COPYING
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
+EOF
+
+test_expect_success \
+    'validate output from diff-helper (#3)' \
+    'compare_diff_patch current expected'
 
 test_done

@@ -15,12 +15,14 @@ extern void diff_change(unsigned mode1, unsigned mode2,
 			     const unsigned char *sha2,
 			     const char *base, const char *path);
 
-extern void diff_guif(unsigned mode1,
-		      unsigned mode2,
-		      const unsigned char *sha1,
-		      const unsigned char *sha2,
-		      const char *path1,
-		      const char *path2);
+extern void diff_helper_input(unsigned mode1,
+			      unsigned mode2,
+			      const unsigned char *sha1,
+			      const unsigned char *sha2,
+			      const char *path1,
+			      int status,
+			      int score,
+			      const char *path2);
 
 extern void diff_unmerge(const char *path);
 
@@ -44,6 +46,6 @@ extern void diffcore_pathspec(const char **pathspec);
 
 extern int diff_queue_is_empty(void);
 
-extern void diff_flush(int output_style);
+extern void diff_flush(int output_style, int resolve_rename_copy);
 
 #endif /* DIFF_H */

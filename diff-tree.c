@@ -270,7 +270,7 @@ static int call_diff_flush(void)
 	if (pickaxe) {
 		diffcore_pickaxe(pickaxe);
 		if (diff_queue_is_empty()) {
-			diff_flush(DIFF_FORMAT_NO_OUTPUT);
+			diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
 			return 0;
 		}
 	}
@@ -291,7 +291,7 @@ static int call_diff_flush(void)
 		}
 		header = NULL;
 	}
-	diff_flush(diff_output_format);
+	diff_flush(diff_output_format, 1);
 	return 1;
 }
 
