@@ -277,7 +277,18 @@ static int call_diff_flush(void)
 	if (nr_paths)
 		diffcore_pathspec(paths);
 	if (header) {
-		printf("%s", header);
+		if (diff_output_format == DIFF_FORMAT_MACHINE) {
+			const char *ep, *cp;
+			for (cp = header; *cp; cp = ep) {
+				ep = strchr(cp, '\n');
+				if (ep == 0) ep = cp + strlen(cp);
+				printf("%.*s%c", ep-cp, cp, 0);
+				if (*ep) ep++;
+			}
+		}
+		else {
+			printf("%s", header);
+		}
 		header = NULL;
 	}
 	diff_flush(diff_output_format);

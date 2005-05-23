@@ -121,7 +121,7 @@ int main(int ac, const char **av) {
 		if (status) {
 		unrecognized:
 			diff_flush(diff_output_style);
-			printf("%s%c", sb1.buf, line_termination);
+			printf("%s\n", sb1.buf);
 		}
 	}
 	if (detect_rename)
