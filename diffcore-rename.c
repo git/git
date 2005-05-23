@@ -20,7 +20,7 @@ static void diff_rename_pool_add(struct diff_rename_pool *pool,
 				 struct diff_filespec *s)
 {
 	if (S_ISDIR(s->mode))
-		return;  /* rename/copy patch for tree does not make sense. */
+		return;  /* no trees, please */
 
 	if (pool->alloc <= pool->nr) {
 		pool->alloc = alloc_nr(pool->alloc);
@@ -70,6 +70,13 @@ static int estimate_similarity(struct diff_filespec *src,
 	void *delta;
 	unsigned long delta_size, base_size;
 	int score;
+
+	/* We deal only with regular files.  Symlink renames are handled
+	 * only when they are exact matches --- in other words, no edits
+	 * after renaming.
+	 */
+	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
+		return 0;
 
 	delta_size = ((src->size < dst->size) ?
 		      (dst->size - src->size) : (src->size - dst->size));
@@ -268,7 +275,7 @@ void diffcore_rename(int detect_rename, int minimum_score)
 		struct diff_filepair *p = q->queue[i];
 		if (!DIFF_FILE_VALID(p->one))
 			if (!DIFF_FILE_VALID(p->two))
-				continue; /* ignore nonsense */
+				continue; /* unmerged */
 			else
 				diff_rename_pool_add(&created, p->two);
 		else if (!DIFF_FILE_VALID(p->two))
@@ -360,12 +367,9 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *dp, *p = q->queue[i];
 		if (!DIFF_FILE_VALID(p->one)) {
-			if (DIFF_FILE_VALID(p->two)) {
-				/* creation */
-				dp = diff_queue(&outq, p->one, p->two);
-				dp->xfrm_work = 4;
-			}
-			/* otherwise it is a nonsense; just ignore it */
+			/* creation or unmerged entries */
+			dp = diff_queue(&outq, p->one, p->two);
+			dp->xfrm_work = 4;
 		}
 		else if (!DIFF_FILE_VALID(p->two)) {
 			/* deletion */
@@ -394,7 +398,7 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	for (i = 0; i < outq.nr; i++) {
 		struct diff_filepair *p = outq.queue[i];
 		if (!DIFF_FILE_VALID(p->one)) {
-			/* created */
+			/* created or unmerged */
 			if (p->two->xfrm_flags & RENAME_DST_MATCHED)
 				; /* rename/copy created it already */
 			else
@@ -443,7 +447,7 @@ void diffcore_rename(int detect_rename, int minimum_score)
 		else
 			/* otherwise it is a modified (or stayed) entry */
 			diff_queue(q, p->one, p->two);
-		free(p);
+		diff_free_filepair(p);
 	}
 
 	free(outq.queue);
