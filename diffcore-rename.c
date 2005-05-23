@@ -119,27 +119,34 @@ static void record_rename_pair(struct diff_queue_struct *outq,
 			       int rank,
 			       int score)
 {
-	/* The rank is used to sort the final output, because there
-	 * are certain dependencies.
+	/*
+	 * These ranks are used to sort the final output, because there
+	 * are certain dependencies:
 	 *
-	 *  - rank #0 depends on deleted ones.
-	 *  - rank #1 depends on kept files before they are modified.
-	 *  - rank #2 depends on kept files after they are modified;
-	 *    currently not used.
-	 *
-	 * Therefore, the final output order should be:
-	 *
-	 *  1. rank #0 rename/copy diffs.
+	 *  1. rename/copy that depends on deleted ones.
 	 *  2. deletions in the original.
-	 *  3. rank #1 rename/copy diffs.
-	 *  4. additions and modifications in the original.
-	 *  5. rank #2 rename/copy diffs; currently not used.
+	 *  3. rename/copy that depends on the pre-edit image of kept files.
+	 *  4. additions, modifications and no-modifications in the original.
+	 *  5. rename/copy that depends on the post-edit image of kept files
+	 *     (note that we currently do not detect such rename/copy).
 	 *
-	 * To achieve this sort order, we give xform_work the number
-	 * above.
+	 * The downstream diffcore transformers are free to reorder
+	 * the entries as long as they keep file pairs that has the
+	 * same p->one->path in earlier rename_rank to appear before
+	 * later ones.  This ordering is used by the diff_flush()
+	 * logic to tell renames from copies, and also used by the
+	 * diffcore_prune() logic to omit unnecessary
+	 * "no-modification" entries.
+	 *
+	 * To the final output routine, and in the diff-raw format
+	 * output, a rename/copy that is based on a path that has a
+	 * later entry that shares the same p->one->path and is not a
+	 * deletion is a copy.  Otherwise it is a rename.
 	 */
+
 	struct diff_filepair *dp = diff_queue(outq, src, dst);
-	dp->xfrm_work = (rank * 2 + 1) | (score<<RENAME_SCORE_SHIFT);
+	dp->rename_rank = rank * 2 + 1;
+	dp->score = score;
 	dst->xfrm_flags |= RENAME_DST_MATCHED;
 }
 
@@ -161,10 +168,8 @@ static void debug_filepair(const struct diff_filepair *p, int i)
 {
 	debug_filespec(p->one, i, "one");
 	debug_filespec(p->two, i, "two");
-	fprintf(stderr, "pair flags %d, orig order %d, score %d\n",
-		(p->xfrm_work & ((1<<RENAME_SCORE_SHIFT) - 1)),
-		p->orig_order,
-		(p->xfrm_work >> RENAME_SCORE_SHIFT));
+	fprintf(stderr, "pair rank %d, orig order %d, score %d\n",
+		p->rename_rank, p->orig_order, p->score);
 }
 
 static void debug_queue(const char *msg, struct diff_queue_struct *q)
@@ -191,8 +196,8 @@ static int rank_compare(const void *a_, const void *b_)
 {
 	const struct diff_filepair *a = *(const struct diff_filepair **)a_;
 	const struct diff_filepair *b = *(const struct diff_filepair **)b_;
-	int a_rank = a->xfrm_work & ((1<<RENAME_SCORE_SHIFT) - 1);
-	int b_rank = b->xfrm_work & ((1<<RENAME_SCORE_SHIFT) - 1);
+	int a_rank = a->rename_rank;
+	int b_rank = b->rename_rank;
 
 	if (a_rank != b_rank)
 		return a_rank - b_rank;
@@ -207,28 +212,6 @@ static int score_compare(const void *a_, const void *b_)
 {
 	const struct diff_score *a = a_, *b = b_;
 	return b->score - a->score;
-}
-
-static int needs_to_stay(struct diff_queue_struct *q, int i,
-			 struct diff_filespec *it)
-{
-	/* If it will be used in later entry (either stay or used
-	 * as the source of rename/copy), we need to copy, not rename.
-	 */
-	while (i < q->nr) {
-		struct diff_filepair *p = q->queue[i++];
-		if (!DIFF_FILE_VALID(p->two))
-			continue; /* removed is fine */
-		if (strcmp(p->one->path, it->path))
-			continue; /* not relevant */
-
-		/* p has its src set to *it and it is not a delete;
-		 * it will be used for in-place change or rename/copy,
-		 * so we cannot rename it out.
-		 */
-		return 1;
-	}
-	return 0;
 }
 
 int diff_scoreopt_parse(const char *opt)
@@ -359,27 +342,24 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	 * downstream, so we assign the sort keys in this loop.
 	 *
 	 * See comments at the top of record_rename_pair for numbers used
-	 * to assign xfrm_work.
-	 *
-	 * Note that we have not annotated the diff_filepair with any comment
-	 * so there is nothing other than p to free.
+	 * to assign rename_rank.
 	 */
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *dp, *p = q->queue[i];
 		if (!DIFF_FILE_VALID(p->one)) {
 			/* creation or unmerged entries */
 			dp = diff_queue(&outq, p->one, p->two);
-			dp->xfrm_work = 4;
+			dp->rename_rank = 4;
 		}
 		else if (!DIFF_FILE_VALID(p->two)) {
 			/* deletion */
 			dp = diff_queue(&outq, p->one, p->two);
-			dp->xfrm_work = 2;
+			dp->rename_rank = 2;
 		}
 		else {
 			/* modification, or stay as is */
 			dp = diff_queue(&outq, p->one, p->two);
-			dp->xfrm_work = 4;
+			dp->rename_rank = 4;
 		}
 		free(p);
 	}
@@ -415,39 +395,21 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			/* rename or copy */
 			struct diff_filepair *dp =
 				diff_queue(q, p->one, p->two);
-			int msglen = (strlen(p->one->path) +
-				      strlen(p->two->path) + 100);
-			int score = (p->xfrm_work >> RENAME_SCORE_SHIFT);
-			dp->xfrm_msg = xmalloc(msglen);
+			dp->score = p->score;
 
 			/* if we have a later entry that is a rename/copy
 			 * that depends on p->one, then we copy here.
 			 * otherwise we rename it.
 			 */
-			if (needs_to_stay(&outq, i+1, p->one)) {
-				/* copy it */
-				sprintf(dp->xfrm_msg,
-					"similarity index %d%%\n"
-					"copy from %s\n"
-					"copy to %s\n",
-					(int)(0.5 + score * 100 / MAX_SCORE),
-					p->one->path, p->two->path);
-			}
-			else {
-				/* rename it, and mark it as gone. */
+			if (!diff_needs_to_stay(&outq, i+1, p->one))
+				/* this is the last one, so mark it as gone.
+				 */
 				p->one->xfrm_flags |= RENAME_SRC_GONE;
-				sprintf(dp->xfrm_msg,
-					"similarity index %d%%\n"
-					"rename old %s\n"
-					"rename new %s\n",
-					(int)(0.5 + score * 100 / MAX_SCORE),
-					p->one->path, p->two->path);
-			}
 		}
 		else
-			/* otherwise it is a modified (or stayed) entry */
+			/* otherwise it is a modified (or "stay") entry */
 			diff_queue(q, p->one, p->two);
-		diff_free_filepair(p);
+		free(p);
 	}
 
 	free(outq.queue);

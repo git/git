@@ -55,7 +55,7 @@ void diffcore_pathspec(const char **pathspec)
 		    matches_pathspec(p->two->path, spec, speccnt))
 			diff_q(&outq, p);
 		else
-			diff_free_filepair(p);
+			free(p);
 	}
 	free(q->queue);
 	*q = outq;

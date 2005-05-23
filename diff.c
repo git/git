@@ -283,12 +283,6 @@ int diff_populate_filespec(struct diff_filespec *s)
 	return 0;
 }
 
-void diff_free_filepair(struct diff_filepair *p)
-{
-	free(p->xfrm_msg);
-	free(p);
-}
-
 void diff_free_filespec_data(struct diff_filespec *s)
 {
 	if (s->should_free)
@@ -501,9 +495,9 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	struct diff_filepair *dp = xmalloc(sizeof(*dp));
 	dp->one = one;
 	dp->two = two;
-	dp->xfrm_msg = NULL;
+	dp->score = 0;
 	dp->orig_order = queue->nr;
-	dp->xfrm_work = 0;
+	dp->rename_rank = 0;
 	diff_q(queue, dp);
 	return dp;
 }
@@ -522,23 +516,7 @@ static void diff_flush_raw(struct diff_filepair *p)
 	       p->two->path, line_termination);
 }
 
-static void diff_flush_patch(struct diff_filepair *p)
-{
-	const char *name, *other;
-
-	name = p->one->path;
-	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
-	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
-	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
-		return; /* no tree diffs in patch format */ 
-
-	if (DIFF_PAIR_UNMERGED(p))
-		run_external_diff(name, NULL, NULL, NULL, NULL);
-	else
-		run_external_diff(name, other, p->one, p->two, p->xfrm_msg);
-}
-
-static int uninteresting(struct diff_filepair *p)
+int diff_unmodified_pair(struct diff_filepair *p)
 {
 	/* This function is written stricter than necessary to support
 	 * the currently implemented transformers, but the idea is to
@@ -570,12 +548,70 @@ static int uninteresting(struct diff_filepair *p)
 	return 0;
 }
 
+static void diff_flush_patch(struct diff_filepair *p, const char *msg)
+{
+	const char *name, *other;
+
+	/* diffcore_prune() keeps "stay" entries for diff-raw
+	 * copy/rename detection, but when we are generating
+	 * patches we do not need them.
+	 */
+	if (diff_unmodified_pair(p))
+		return;
+
+	name = p->one->path;
+	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
+	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
+		return; /* no tree diffs in patch format */ 
+
+	if (DIFF_PAIR_UNMERGED(p))
+		run_external_diff(name, NULL, NULL, NULL, NULL);
+	else
+		run_external_diff(name, other, p->one, p->two, msg);
+}
+
+int diff_needs_to_stay(struct diff_queue_struct *q, int i,
+		       struct diff_filespec *it)
+{
+	/* If it will be used in later entry (either stay or used
+	 * as the source of rename/copy), we need to copy, not rename.
+	 */
+	while (i < q->nr) {
+		struct diff_filepair *p = q->queue[i++];
+		if (!DIFF_FILE_VALID(p->two))
+			continue; /* removed is fine */
+		if (strcmp(p->one->path, it->path))
+			continue; /* not relevant */
+
+		/* p has its src set to *it and it is not a delete;
+		 * it will be used for in-place change, rename/copy,
+		 * or just stays there.  We cannot rename it out.
+		 */
+		return 1;
+	}
+	return 0;
+}
+
+static int diff_used_as_source(struct diff_queue_struct *q, int lim,
+			       struct diff_filespec *it)
+{
+	int i;
+	for (i = 0; i < lim; i++) {
+		struct diff_filepair *p = q->queue[i++];
+		if (!strcmp(p->one->path, it->path))
+			return 1;
+	}
+	return 0;
+}
+
 void diffcore_prune(void)
 {
 	/*
 	 * Although rename/copy detection wants to have "no-change"
 	 * entries fed into them, the downstream do not need to see
-	 * them.  This function removes such entries.
+	 * them, unless we had rename/copy for the same path earlier.
+	 * This function removes such entries.
 	 *
 	 * The applications that use rename/copy should:
 	 *
@@ -585,6 +621,7 @@ void diffcore_prune(void)
 	 * (3) call diffcore_prune
 	 * (4) call other diffcore_xxx that do not need to see
 	 *     "no-change" entries.
+	 * (5) call diff_flush().
 	 */
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
@@ -595,22 +632,21 @@ void diffcore_prune(void)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (!uninteresting(p))
+		if (!diff_unmodified_pair(p) ||
+		    diff_used_as_source(q, i, p->one))
 			diff_q(&outq, p);
 		else
-			diff_free_filepair(p);
+			free(p);
 	}
 	free(q->queue);
 	*q = outq;
 	return;
 }
 
-static void diff_flush_one(struct diff_filepair *p)
+static void diff_flush_one(struct diff_filepair *p, const char *msg)
 {
-	if (uninteresting(p))
-		return;
 	if (generate_patch)
-		diff_flush_patch(p);
+		diff_flush_patch(p, msg);
 	else
 		diff_flush_raw(p);
 }
@@ -618,14 +654,7 @@ static void diff_flush_one(struct diff_filepair *p)
 int diff_queue_is_empty(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int i;
-
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		if (!uninteresting(p))
-			return 0;
-	}
-	return 1;
+	return q->nr == 0;
 }
 
 void diff_flush(int diff_output_style)
@@ -646,13 +675,35 @@ void diff_flush(int diff_output_style)
 		generate_patch = 1;
 		break;
 	}
-	for (i = 0; i < q->nr; i++)
-		diff_flush_one(q->queue[i]);
+	for (i = 0; i < q->nr; i++) {
+		char msg_[PATH_MAX*2+200], *msg = NULL;
+		struct diff_filepair *p = q->queue[i];
+		if (strcmp(p->one->path, p->two->path)) {
+			/* This is rename or copy.  Which one is it? */
+			if (diff_needs_to_stay(q, i+1, p->one)) {
+				sprintf(msg_,
+					"similarity index %d%%\n"
+					"copy from %s\n"
+					"copy to %s\n",
+					(int)(0.5 + p->score * 100/MAX_SCORE),
+					p->one->path, p->two->path);
+			}
+			else
+				sprintf(msg_,
+					"similarity index %d%%\n"
+					"rename old %s\n"
+					"rename new %s\n",
+					(int)(0.5 + p->score * 100/MAX_SCORE),
+					p->one->path, p->two->path);
+			msg = msg_;
+		}
+		diff_flush_one(p, msg);
+	}
+
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		diff_free_filespec_data(p->one);
 		diff_free_filespec_data(p->two);
-		free(p->xfrm_msg);
 		free(p);
 	}
 	free(q->queue);
@@ -674,10 +725,10 @@ void diff_addremove(int addremove, unsigned mode,
 	 * entries to the diff-core.  They will be prefixed
 	 * with something like '=' or '*' (I haven't decided
 	 * which but should not make any difference).
-	 * Feeding the same new and old to diff_change() should
-	 * also have the same effect.  diff_flush() should
-	 * filter uninteresting ones out at the final output
-	 * stage.
+	 * Feeding the same new and old to diff_change() 
+	 * also has the same effect.  diffcore_prune() should
+	 * be used to filter uninteresting ones out before the
+	 * final output happens.
 	 */
 	if (reverse_diff)
 		addremove = (addremove == '+' ? '-' :
