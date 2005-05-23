@@ -331,7 +331,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 
 	is_rename = is_copy = 0;
 	is_new = is_delete = -1;
-	old_mode = new_mode = -1;
+	old_mode = new_mode = 0;
 	def_name = old_name = new_name = NULL;
 	for (offset = 0; size > 0; offset += len, size -= len, line += len, linenr++) {
 		unsigned long nextlen;
