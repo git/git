@@ -37,6 +37,8 @@
 #include "cache.h"
 
 static int force = 0, quiet = 0, not_new = 0, refresh_cache = 0;
+static const char *base_dir = "";
+static int base_dir_len = 0;
 
 static void create_directories(const char *path)
 {
@@ -51,10 +53,10 @@ static void create_directories(const char *path)
 		if (mkdir(buf, 0755)) {
 			if (errno == EEXIST) {
 				struct stat st;
-				if (!lstat(buf, &st) && S_ISDIR(st.st_mode))
-					continue; /* ok */
-				if (force && !unlink(buf) && !mkdir(buf, 0755))
+				if (len > base_dir_len && force && !unlink(buf) && !mkdir(buf, 0755))
 					continue;
+				if (!stat(buf, &st) && S_ISDIR(st.st_mode))
+					continue; /* ok */
 			}
 			die("cannot create directory at %s", buf);
 		}
@@ -163,11 +165,11 @@ static int write_entry(struct cache_entry *ce, const char *path)
 	return 0;
 }
 
-static int checkout_entry(struct cache_entry *ce, const char *base_dir)
+static int checkout_entry(struct cache_entry *ce)
 {
 	struct stat st;
 	static char path[MAXPATHLEN+1];
-	int len = strlen(base_dir);
+	int len = base_dir_len;
 
 	memcpy(path, base_dir, len);
 	strcpy(path + len, ce->name);
@@ -194,7 +196,7 @@ static int checkout_entry(struct cache_entry *ce, const char *base_dir)
 	return write_entry(ce, path);
 }
 
-static int checkout_file(const char *name, const char *base_dir)
+static int checkout_file(const char *name)
 {
 	int pos = cache_name_pos(name, strlen(name));
 	if (pos < 0) {
@@ -209,10 +211,10 @@ static int checkout_file(const char *name, const char *base_dir)
 		}
 		return -1;
 	}
-	return checkout_entry(active_cache[pos], base_dir);
+	return checkout_entry(active_cache[pos]);
 }
 
-static int checkout_all(const char *base_dir)
+static int checkout_all(void)
 {
 	int i;
 
@@ -220,7 +222,7 @@ static int checkout_all(const char *base_dir)
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce))
 			continue;
-		if (checkout_entry(ce, base_dir) < 0)
+		if (checkout_entry(ce) < 0)
 			return -1;
 	}
 	return 0;
@@ -229,7 +231,6 @@ static int checkout_all(const char *base_dir)
 int main(int argc, char **argv)
 {
 	int i, force_filename = 0;
-	const char *base_dir = "";
 	struct cache_file cache_file;
 	int newfd = -1;
 
@@ -241,7 +242,7 @@ int main(int argc, char **argv)
 		const char *arg = argv[i];
 		if (!force_filename) {
 			if (!strcmp(arg, "-a")) {
-				checkout_all(base_dir);
+				checkout_all();
 				continue;
 			}
 			if (!strcmp(arg, "--")) {
@@ -272,10 +273,11 @@ int main(int argc, char **argv)
 			}
 			if (!memcmp(arg, "--prefix=", 9)) {
 				base_dir = arg+9;
+				base_dir_len = strlen(base_dir);
 				continue;
 			}
 		}
-		if (base_dir[0]) {
+		if (base_dir_len) {
 			/* when --prefix is specified we do not
 			 * want to update cache.
 			 */
@@ -285,7 +287,7 @@ int main(int argc, char **argv)
 			}
 			refresh_cache = 0;
 		}
-		checkout_file(arg, base_dir);
+		checkout_file(arg);
 	}
 
 	if (0 <= newfd &&
