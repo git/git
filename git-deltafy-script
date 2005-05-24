@@ -23,8 +23,9 @@ curr_file=""
 
 git-rev-list HEAD |
 git-diff-tree -r --stdin |
-sed -n '/^\*/ s/^.*->\(.\{41\}\)\(.*\)$/\2 \1/p' | sort | uniq |
-while read file sha1; do
+awk '/^:/ { if ($5 == "M" || $5 == "N") print $4, $6 }' |
+LC_ALL=C sort -s -k 2 | uniq |
+while read sha1 file; do
 	if [ "$file" == "$curr_file" ]; then
 		list="$list $sha1"
 	else
