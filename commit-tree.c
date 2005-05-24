@@ -107,8 +107,8 @@ int main(int argc, char **argv)
 	unsigned char commit_sha1[20];
 	char *gecos, *realgecos, *commitgecos;
 	char *email, *commitemail, realemail[1000];
-	char date[20], realdate[20];
-	char *audate;
+	char date[50], realdate[50];
+	char *audate, *cmdate;
 	char comment[1000];
 	struct passwd *pw;
 	char *buffer;
@@ -151,6 +151,9 @@ int main(int argc, char **argv)
 	audate = gitenv("GIT_AUTHOR_DATE");
 	if (audate)
 		parse_date(audate, date, sizeof(date));
+	cmdate = gitenv("GIT_COMMITTER_DATE");
+	if (cmdate)
+		parse_date(audate, realdate, sizeof(realdate));
 
 	remove_special(gecos); remove_special(realgecos); remove_special(commitgecos);
 	remove_special(email); remove_special(realemail); remove_special(commitemail);
