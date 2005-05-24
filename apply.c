@@ -159,7 +159,7 @@ static char * find_name(const char *line, char *def, int p_value, int terminate)
  * files, we can happily check the index for a match, but for creating a
  * new file we should try to match whatever "patch" does. I have no idea.
  */
-static int parse_traditional_patch(const char *first, const char *second)
+static void parse_traditional_patch(const char *first, const char *second)
 {
 	int p_value = 1;
 	char *name;
