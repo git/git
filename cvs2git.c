@@ -82,18 +82,24 @@ static void prepare_commit(void)
 	if (!strcmp(src_branch, "HEAD"))
 		src_branch = "master";
 	printf("ln -sf refs/heads/'%s' .git/HEAD\n", src_branch);
-	printf("git-read-tree -m HEAD\n");
+	printf("git-read-tree -m HEAD || exit 1\n");
 	printf("git-checkout-cache -f -u -a\n");
 }
 
 static void commit(void)
 {
 	const char *cmit_parent = initial_commit ? "" : "-p HEAD";
+	const char *dst_branch;
 
 	printf("tree=$(git-write-tree)\n");
 	printf("cat > .cmitmsg <<EOFMSG\n%s\nEOFMSG\n", log);
 	printf("commit=$(cat .cmitmsg | git-commit-tree $tree %s)\n", cmit_parent);
-	printf("echo $commit > .git/HEAD\n");
+
+	dst_branch = branch;
+	if (!strcmp(dst_branch, "HEAD"))
+		dst_branch = "master";
+
+	printf("echo $commit > .git/refs/heads/'%s'\n", dst_branch);
 
 	*date = 0;
 	*author = 0;
@@ -154,7 +160,7 @@ static void update_file(char *line)
 
 	get_rcs_name(rcspathname, name, dir);
 		
-	printf("co -p -r%s '%s' > '%s'\n", version, rcspathname, name);
+	printf("co -q -p -r%s '%s' > '%s'\n", version, rcspathname, name);
 	printf("git-update-cache --add -- '%s'\n", name);
 }
 
