@@ -2,7 +2,6 @@
 #include "cache.h"
 #include "diff.h"
 
-static int silent = 0;
 static int show_root_diff = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
@@ -67,9 +66,6 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 	const char *path;
 	const unsigned char *sha1 = extract(tree, size, &path, &mode);
 
-	if (silent)
-		return;
-
 	if (recursive && S_ISDIR(mode)) {
 		char type[20];
 		unsigned long size;
@@ -131,9 +127,6 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		free(newbase);
 		return retval;
 	}
-
-	if (silent)
-		return 0;
 
 	diff_change(mode1, mode2, sha1, sha2, base, path1);
 	return 0;
@@ -395,8 +388,7 @@ static char *generate_header(const char *commit, const char *parent, const char 
 		if (this_header[offset-1] != '\n')
 			this_header[offset++] = '\n';
 		/* Add _another_ EOLN if we are doing diff output */
-		if (!silent)
-			this_header[offset++] = '\n';
+		this_header[offset++] = '\n';
 		this_header[offset] = 0;
 	}
 
@@ -442,8 +434,6 @@ static int diff_tree_commit(const unsigned char *commit, const char *name)
 			 * Don't print multiple merge entries if we
 			 * don't print the diffs.
 			 */
-			if (silent)
-				break;
 		}
 		offset += 48;
 	}
@@ -540,7 +530,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-s")) {
-			silent = 1;
+			diff_output_format = DIFF_FORMAT_NO_OUTPUT;
 			continue;
 		}
 		if (!strcmp(arg, "-v")) {
