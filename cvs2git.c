@@ -82,6 +82,19 @@ static void prepare_commit(void)
 	if (!strcmp(src_branch, "HEAD"))
 		src_branch = "master";
 	printf("ln -sf refs/heads/'%s' .git/HEAD\n", src_branch);
+
+	/*
+	 * Even if cvsps claims an ancestor, we'll let the new
+	 * branch name take precedence if it already exists
+	 */
+	if (*ancestor) {
+		src_branch = branch;
+		if (!strcmp(src_branch, "HEAD"))
+			src_branch = "master";
+		printf("[ -e .git/refs/heads/'%s' ] && ln -sf refs/heads/'%s' .git/HEAD\n",
+			src_branch, src_branch);
+	}
+
 	printf("git-read-tree -m HEAD || exit 1\n");
 	printf("git-checkout-cache -f -u -a\n");
 }
@@ -90,9 +103,28 @@ static void commit(void)
 {
 	const char *cmit_parent = initial_commit ? "" : "-p HEAD";
 	const char *dst_branch;
+	int i;
 
 	printf("tree=$(git-write-tree)\n");
-	printf("cat > .cmitmsg <<EOFMSG\n%s\nEOFMSG\n", log);
+	printf("cat > .cmitmsg <<EOFMSG\n");
+
+	/* Escape $ characters, and remove control characters */
+	for (i = 0; i < loglen; i++) {
+		unsigned char c = log[i];
+
+		switch (c) {
+		case '$':
+			putchar('\\');
+			break;
+		case 0 ... 31:
+			if (c == '\n' || c == '\t')
+				break;
+		case 128 ... 159:
+			continue;
+		}
+		putchar(c);
+	}
+	printf("\nEOFMSG\n");
 	printf("commit=$(cat .cmitmsg | git-commit-tree $tree %s)\n", cmit_parent);
 
 	dst_branch = branch;
