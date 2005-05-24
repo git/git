@@ -9,13 +9,15 @@ git-diff-cache - Compares content and mode of blobs between the cache and reposi
 
 SYNOPSIS
 --------
-'git-diff-cache' [-p] [-r] [-z] [-m] [-M] [-R] [-C] [-S<string>] [--cached] <tree-ish>
+'git-diff-cache' [-p] [-r] [-z] [-m] [-M] [-R] [-C] [-S<string>] [--cached] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
-Compares the content and mode of the blobs found via a tree object
-with the content of the current cache and, optionally ignoring the
-stat state of the file on disk.
+Compares the content and mode of the blobs found via a tree
+object with the content of the current cache and, optionally
+ignoring the stat state of the file on disk.  When paths are
+specified, compares only those named paths.  Otherwise all
+entries in the cache are compared.
 
 OPTIONS
 -------
