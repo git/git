@@ -40,11 +40,6 @@ struct diff_filepair {
 	struct diff_filespec *one;
 	struct diff_filespec *two;
 	int score; /* only valid when one and two are different paths */
-	int orig_order; /* the original order of insertion into the queue */
-	int rename_rank; /* rename/copy dependency needs to enforce
-			  * certain ordering of patches that later
-			  * diffcore transformations should not break.
-			  */
 	int status; /* M C R N D U (see Documentation/diff-format.txt) */
 };
 #define DIFF_PAIR_UNMERGED(p) \
@@ -66,5 +61,16 @@ extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
 extern int diff_needs_to_stay(struct diff_queue_struct *, int,
 			      struct diff_filespec *);
+
+#define DIFF_DEBUG 0
+#if DIFF_DEBUG
+void diff_debug_filespec(struct diff_filespec *, int, const char *);
+void diff_debug_filepair(const struct diff_filepair *, int);
+void diff_debug_queue(const char *, struct diff_queue_struct *);
+#else
+#define diff_debug_filespec(a,b,c) do {} while(0)
+#define diff_debug_filepair(a,b) do {} while(0)
+#define diff_debug_queue(a,b) do {} while(0)
+#endif
 
 #endif

@@ -493,8 +493,6 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	dp->one = one;
 	dp->two = two;
 	dp->score = 0;
-	dp->orig_order = queue->nr;
-	dp->rename_rank = 0;
 	diff_q(queue, dp);
 	return dp;
 }
@@ -505,6 +503,17 @@ static void diff_flush_raw(struct diff_filepair *p,
 {
 	int two_paths;
 	char status[10];
+
+	if (line_termination) {
+		const char *err = "path %s cannot be expressed without -z";
+		if (strchr(p->one->path, line_termination) ||
+		    strchr(p->one->path, inter_name_termination))
+			die(err, p->one->path);
+		if (strchr(p->two->path, line_termination) ||
+		    strchr(p->two->path, inter_name_termination))
+			die(err, p->two->path);
+	}
+
 	switch (p->status) {
 	case 'C': case 'R':
 		two_paths = 1;
@@ -628,41 +637,110 @@ int diff_needs_to_stay(struct diff_queue_struct *q, int i,
 int diff_queue_is_empty(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	return q->nr == 0;
+	int i;
+	for (i = 0; i < q->nr; i++)
+		if (!diff_unmodified_pair(q->queue[i]))
+			return 0;
+	return 1;
 }
+
+#if DIFF_DEBUG
+void diff_debug_filespec(struct diff_filespec *s, int x, const char *one)
+{
+	fprintf(stderr, "queue[%d] %s (%s) %s %06o %s\n",
+		x, one ? : "",
+		s->path,
+		DIFF_FILE_VALID(s) ? "valid" : "invalid",
+		s->mode,
+		s->sha1_valid ? sha1_to_hex(s->sha1) : "");
+	fprintf(stderr, "queue[%d] %s size %lu flags %d\n",
+		x, one ? : "",
+		s->size, s->xfrm_flags);
+}
+
+void diff_debug_filepair(const struct diff_filepair *p, int i)
+{
+	diff_debug_filespec(p->one, i, "one");
+	diff_debug_filespec(p->two, i, "two");
+	fprintf(stderr, "score %d, status %c\n",
+		p->score, p->status ? : '?');
+}
+
+void diff_debug_queue(const char *msg, struct diff_queue_struct *q)
+{
+	int i;
+	if (msg)
+		fprintf(stderr, "%s\n", msg);
+	fprintf(stderr, "q->nr = %d\n", q->nr);
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		diff_debug_filepair(p, i);
+	}
+}
+#endif
 
 static void diff_resolve_rename_copy(void)
 {
-	int i;
+	int i, j;
+	struct diff_filepair *p, *pp;
 	struct diff_queue_struct *q = &diff_queued_diff;
+
+	/* This should not depend on the ordering of things. */
+
+	diff_debug_queue("resolve-rename-copy", q);
+
 	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
+		p = q->queue[i];
 		p->status = 0;
 		if (DIFF_PAIR_UNMERGED(p))
 			p->status = 'U';
 		else if (!DIFF_FILE_VALID((p)->one))
 			p->status = 'N';
 		else if (!DIFF_FILE_VALID((p)->two)) {
-			/* maybe earlier one said 'R', meaning
-			 * it will take it, in which case we do
-			 * not need to keep 'D'.
+			/* Deletion record should be omitted if there
+			 * is another entry that is a rename or a copy
+			 * and it uses this one as the source.  Then we
+			 * can say the other one is a rename.
 			 */
-			int j;
-			for (j = 0; j < i; j++) {
-				struct diff_filepair *pp = q->queue[j];
-				if (pp->status == 'R' &&
-				    !strcmp(pp->one->path, p->one->path))
+			for (j = 0; j < q->nr; j++) {
+				pp = q->queue[j];
+				if (!strcmp(pp->one->path, p->one->path) &&
+				    strcmp(pp->one->path, pp->two->path))
 					break;
 			}
-			if (j < i)
-				continue;
+			if (j < q->nr)
+				continue; /* has rename/copy */
 			p->status = 'D';
 		}
 		else if (strcmp(p->one->path, p->two->path)) {
-			/* This is rename or copy.  Which one is it? */
-			if (diff_needs_to_stay(q, i+1, p->one))
-				p->status = 'C';
-			else
+			/* See if there is somebody else anywhere that
+			 * will keep the path (either modified or
+			 * unmodified).  If so, we have to be a copy,
+			 * not a rename.  In addition, if there is
+			 * some other rename or copy that comes later
+			 * than us that uses the same source, we
+			 * cannot be a rename either.
+			 */
+			for (j = 0; j < q->nr; j++) {
+				pp = q->queue[j];
+				if (strcmp(pp->one->path, p->one->path))
+					continue;
+				if (!strcmp(pp->one->path, pp->two->path)) {
+					if (DIFF_FILE_VALID(pp->two)) {
+						/* non-delete */
+						p->status = 'C';
+						break;
+					}
+					continue;
+				}
+				/* pp is a rename/copy ... */
+				if (i < j) {
+					/* ... and comes later than us */
+					p->status = 'C';
+					break;
+				}
+			}
+			if (!p->status)
 				p->status = 'R';
 		}
 		else if (memcmp(p->one->sha1, p->two->sha1, 20))
@@ -672,6 +750,7 @@ static void diff_resolve_rename_copy(void)
 			p->status = 0;
 		}
 	}
+	diff_debug_queue("resolve-rename-copy done", q);
 }
 
 void diff_flush(int diff_output_style, int resolve_rename_copy)

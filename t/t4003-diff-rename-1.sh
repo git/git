@@ -78,14 +78,6 @@ test_expect_success \
 
 GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree >current
 cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.1
-copy from COPYING
-copy to COPYING.1
---- a/COPYING
-+++ b/COPYING.1
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ However, in order to allow a migration to GPLv3 if that seems like
 diff --git a/COPYING b/COPYING
 --- a/COPYING
 +++ b/COPYING
@@ -98,6 +90,14 @@ diff --git a/COPYING b/COPYING
 @@ -12 +12 @@
 -	This file is licensed under the GPL v2, or a later version
 +	This file is licensed under the G.P.L v2, or a later version
+diff --git a/COPYING b/COPYING.1
+copy from COPYING
+copy to COPYING.1
+--- a/COPYING
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
 EOF
 
 test_expect_success \

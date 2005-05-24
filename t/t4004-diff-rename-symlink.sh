@@ -35,6 +35,13 @@ test_expect_success \
 
 GIT_DIFF_OPTS=--unified=0 git-diff-cache -M -p $tree >current
 cat >expected <<\EOF
+diff --git a/bozbar b/bozbar
+new file mode 120000
+--- /dev/null
++++ b/bozbar
+@@ -0,0 +1 @@
++xzzzy
+\ No newline at end of file
 diff --git a/frotz b/nitfol
 similarity index 100%
 copy from frotz
@@ -49,13 +56,6 @@ deleted file mode 100644
 +++ /dev/null
 @@ -1 +0,0 @@
 -xyzzy
-\ No newline at end of file
-diff --git a/bozbar b/bozbar
-new file mode 120000
---- /dev/null
-+++ b/bozbar
-@@ -0,0 +1 @@
-+xzzzy
 \ No newline at end of file
 EOF
 

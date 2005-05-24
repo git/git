@@ -101,8 +101,8 @@ test_expect_success \
 
 git-diff-cache -C $tree >current
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 M	COPYING
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
 EOF
 
 test_expect_success \
@@ -118,14 +118,6 @@ test_expect_success \
 mv expected diff-raw
 GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
 cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.1
-copy from COPYING
-copy to COPYING.1
---- a/COPYING
-+++ b/COPYING.1
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ However, in order to allow a migration to GPLv3 if that seems like
 diff --git a/COPYING b/COPYING
 --- a/COPYING
 +++ b/COPYING
@@ -138,6 +130,14 @@ diff --git a/COPYING b/COPYING
 @@ -12 +12 @@
 -	This file is licensed under the GPL v2, or a later version
 +	This file is licensed under the G.P.L v2, or a later version
+diff --git a/COPYING b/COPYING.1
+copy from COPYING
+copy to COPYING.1
+--- a/COPYING
++++ b/COPYING.1
+@@ -6 +6 @@
+- HOWEVER, in order to allow a migration to GPLv3 if that seems like
++ However, in order to allow a migration to GPLv3 if that seems like
 EOF
 
 test_expect_success \
