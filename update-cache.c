@@ -238,13 +238,42 @@ static int refresh_cache(void)
 
 /*
  * We fundamentally don't like some paths: we don't want
- * dot or dot-dot anywhere, and in fact, we don't even want
- * any other dot-files (.git or anything else). They
- * are hidden, for chist sake.
+ * dot or dot-dot anywhere, and for obvious reasons don't
+ * want to recurse into ".git" either.
  *
  * Also, we don't want double slashes or slashes at the
  * end that can make pathnames ambiguous.
  */
+static int verify_dotfile(const char *rest)
+{
+	/*
+	 * The first character was '.', but that
+	 * has already been discarded, we now test
+	 * the rest.
+	 */
+	switch (*rest) {
+	/* "." is not allowed */
+	case '\0': case '/':
+		return 0;
+
+	/*
+	 * ".git" followed by  NUL or slash is bad. This
+	 * shares the path end test with the ".." case.
+	 */
+	case 'g':
+		if (rest[1] != 'i')
+			break;
+		if (rest[2] != 't')
+			break;
+		rest += 2;
+	/* fallthrough */
+	case '.':
+		if (rest[1] == '\0' || rest[1] == '/')
+			return 0;
+	}
+	return 1;
+}
+
 static int verify_path(char *path)
 {
 	char c;
@@ -256,8 +285,15 @@ static int verify_path(char *path)
 		if (c == '/') {
 inside:
 			c = *path++;
-			if (c != '/' && c != '.' && c != '\0')
+			switch (c) {
+			default:
 				continue;
+			case '/': case '\0':
+				break;
+			case '.':
+				if (verify_dotfile(path))
+					continue;
+			}
 			return 0;
 		}
 		c = *path++;
