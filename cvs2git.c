@@ -114,6 +114,8 @@ static void commit(void)
 
 		switch (c) {
 		case '$':
+		case '\\':
+		case '`':
 			putchar('\\');
 			break;
 		case 0 ... 31:
@@ -132,6 +134,8 @@ static void commit(void)
 		dst_branch = "master";
 
 	printf("echo $commit > .git/refs/heads/'%s'\n", dst_branch);
+
+	printf("echo 'Committed (to %s):' ; cat .cmitmsg; echo\n", dst_branch);
 
 	*date = 0;
 	*author = 0;
