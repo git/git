@@ -69,11 +69,11 @@ static void prepare_commit(void)
 
 	printf("export GIT_COMMITTER_NAME=%s\n", author_name);
 	printf("export GIT_COMMITTER_EMAIL=%s\n", author_email);
-	printf("export GIT_COMMITTER_DATE='%s'\n", date);
+	printf("export GIT_COMMITTER_DATE='+0000 %s'\n", date);
 
 	printf("export GIT_AUTHOR_NAME=%s\n", author_name);
 	printf("export GIT_AUTHOR_EMAIL=%s\n", author_email);
-	printf("export GIT_AUTHOR_DATE='%s'\n", date);
+	printf("export GIT_AUTHOR_DATE='+0000 %s'\n", date);
 
 	if (initial_commit)
 		return;
