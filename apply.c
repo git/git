@@ -85,7 +85,28 @@ static int is_dev_null(const char *str)
 	return !memcmp("/dev/null", str, 9) && isspace(str[9]);
 }
 
-static char * find_name(const char *line, char *def, int p_value)
+#define TERM_EXIST	1
+#define TERM_SPACE	2
+#define TERM_TAB	4
+
+static int name_terminate(const char *name, int namelen, int c, int terminate)
+{
+	if (c == ' ' && !(terminate & TERM_SPACE))
+		return 0;
+	if (c == '\t' && !(terminate & TERM_TAB))
+		return 0;
+
+	/*
+	 * Do we want an existing name? Return false and
+	 * continue if it's not there.
+	 */
+	if (terminate & TERM_EXIST)
+		return cache_name_pos(name, namelen) >= 0;
+
+	return 1;
+}
+
+static char * find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
 	const char *start = line;
@@ -93,8 +114,13 @@ static char * find_name(const char *line, char *def, int p_value)
 
 	for (;;) {
 		char c = *line;
-		if (isspace(c))
-			break;
+
+		if (isspace(c)) {
+			if (c == '\n')
+				break;
+			if (name_terminate(start, line-start, c, terminate))
+				break;
+		}
 		line++;
 		if (c == '/' && !--p_value)
 			start = line;
@@ -128,6 +154,10 @@ static char * find_name(const char *line, char *def, int p_value)
  * Get the name etc info from the --/+++ lines of a traditional patch header
  *
  * NOTE! This hardcodes "-p1" behaviour in filename detection.
+ *
+ * FIXME! The end-of-filename heuristics are kind of screwy. For existing
+ * files, we can happily check the index for a match, but for creating a
+ * new file we should try to match whatever "patch" does. I have no idea.
  */
 static int parse_traditional_patch(const char *first, const char *second)
 {
@@ -138,18 +168,19 @@ static int parse_traditional_patch(const char *first, const char *second)
 	second += 4;	// skip "+++ "
 	if (is_dev_null(first)) {
 		is_new = 1;
-		name = find_name(second, def_name, p_value);
+		name = find_name(second, def_name, p_value, TERM_SPACE | TERM_TAB);
+		new_name = name;
 	} else if (is_dev_null(second)) {
 		is_delete = 1;
-		name = find_name(first, def_name, p_value);
+		name = find_name(first, def_name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		old_name = name;
 	} else {
-		name = find_name(first, def_name, p_value);
-		name = find_name(second, name, p_value);
+		name = find_name(first, def_name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		name = find_name(second, name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		old_name = new_name = name;
 	}
 	if (!name)
 		die("unable to find filename in patch at line %d", linenr);
-	old_name = name;
-	new_name = name;
 }
 
 static int gitdiff_hdrend(const char *line)
@@ -159,15 +190,15 @@ static int gitdiff_hdrend(const char *line)
 
 static int gitdiff_oldname(const char *line)
 {
-	if (!old_name)
-		old_name = find_name(line, NULL, 1);
+	if (!old_name && !is_new)
+		old_name = find_name(line, NULL, 1, 0);
 	return 0;
 }
 
 static int gitdiff_newname(const char *line)
 {
-	if (!new_name)
-		new_name = find_name(line, NULL, 1);
+	if (!new_name && !is_delete)
+		new_name = find_name(line, NULL, 1, 0);
 	return 0;
 }
 
@@ -198,34 +229,43 @@ static int gitdiff_newfile(const char *line)
 static int gitdiff_copysrc(const char *line)
 {
 	is_copy = 1;
-	old_name = find_name(line, NULL, 0);
+	old_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
 static int gitdiff_copydst(const char *line)
 {
 	is_copy = 1;
-	new_name = find_name(line, NULL, 0);
+	new_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
 static int gitdiff_renamesrc(const char *line)
 {
 	is_rename = 1;
-	old_name = find_name(line, NULL, 0);
+	old_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
 static int gitdiff_renamedst(const char *line)
 {
 	is_rename = 1;
-	new_name = find_name(line, NULL, 0);
+	new_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
 static int gitdiff_similarity(const char *line)
 {
 	return 0;
+}
+
+/*
+ * This is normal for a diff that doesn't change anything: we'll fall through
+ * into the next diff. Tell the parser to break out.
+ */
+static int gitdiff_unrecognized(const char *line)
+{
+	return -1;
 }
 
 /* Verify that we recognize the lines following a git header */
@@ -257,6 +297,7 @@ static int parse_git_header(char *line, int len, unsigned int size)
 			{ "rename from ", gitdiff_renamesrc },
 			{ "rename to ", gitdiff_renamedst },
 			{ "similarity index ", gitdiff_similarity },
+			{ "", gitdiff_unrecognized },
 		};
 		int i;
 
@@ -270,6 +311,7 @@ static int parse_git_header(char *line, int len, unsigned int size)
 				continue;
 			if (p->fn(line + oplen) < 0)
 				return offset;
+			break;
 		}
 	}
 
@@ -478,8 +520,15 @@ printf("Rename: %d\n", is_rename);
 printf("Copy:   %d\n", is_copy);
 printf("New:    %d\n", is_new);
 printf("Delete: %d\n", is_delete);
-printf("Mode:   %o->%o\n", old_mode, new_mode);
-printf("Name:   '%s'->'%s'\n", old_name, new_name);
+printf("Mode:   %o:%o\n", old_mode, new_mode);
+printf("Name:   '%s':'%s'\n", old_name, new_name);
+
+	if (old_name && cache_name_pos(old_name, strlen(old_name)) < 0)
+		die("file %s does not exist", old_name);
+	if (new_name && (is_new | is_rename | is_copy)) {
+		if (cache_name_pos(new_name, strlen(new_name)) >= 0)
+			die("file %s already exists", new_name);
+	}
 
 	patch = header + hdrsize;
 	patchsize = apply_single_patch(patch, size - offset - hdrsize);
