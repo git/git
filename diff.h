@@ -39,8 +39,6 @@ extern void diff_setup(int reverse);
 
 extern void diffcore_rename(int rename_copy, int minimum_score);
 
-extern void diffcore_prune(void);
-
 extern void diffcore_pickaxe(const char *needle);
 extern void diffcore_pathspec(const char **pathspec);
 

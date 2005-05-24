@@ -115,7 +115,6 @@ int main(int argc, const char **argv)
 	}
 	if (detect_rename)
 		diffcore_rename(detect_rename, diff_score_opt);
-	diffcore_prune();
 	if (pickaxe)
 		diffcore_pickaxe(pickaxe);
 	if (1 < argc)

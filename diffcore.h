@@ -12,8 +12,6 @@
 #define DEFAULT_MINIMUM_SCORE 5000
 
 #define RENAME_DST_MATCHED 01
-#define RENAME_SRC_GONE    02
-#define RENAME_SCORE_SHIFT 8
 
 struct diff_filespec {
 	unsigned char sha1[20];

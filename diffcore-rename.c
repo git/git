@@ -133,10 +133,7 @@ static void record_rename_pair(struct diff_queue_struct *outq,
 	 * The downstream diffcore transformers are free to reorder
 	 * the entries as long as they keep file pairs that has the
 	 * same p->one->path in earlier rename_rank to appear before
-	 * later ones.  This ordering is used by the diff_flush()
-	 * logic to tell renames from copies, and also used by the
-	 * diffcore_prune() logic to omit unnecessary
-	 * "no-modification" entries.
+	 * later ones.
 	 *
 	 * To the final output routine, and in the diff-raw format
 	 * output, a rename/copy that is based on a path that has a
@@ -271,14 +268,8 @@ void diffcore_rename(int detect_rename, int minimum_score)
 
 	/* We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
-	 *
-	 * With the current callers, we should not have already
-	 * matched entries at this point, but it is nonetheless
-	 * checked for sanity.
 	 */
 	for (i = 0; i < created.nr; i++) {
-		if (created.s[i]->xfrm_flags & RENAME_DST_MATCHED)
-			continue; /* we have matched exactly already */
 		for (h = 0; h < sizeof(srcs)/sizeof(srcs[0]); h++) {
 			struct diff_rename_pool *p = srcs[h];
 			for (j = 0; j < p->nr; j++) {
@@ -386,25 +377,13 @@ void diffcore_rename(int detect_rename, int minimum_score)
 		}
 		else if (!DIFF_FILE_VALID(p->two)) {
 			/* deleted */
-			if (p->one->xfrm_flags & RENAME_SRC_GONE)
-				; /* rename/copy deleted it already */
-			else
-				diff_queue(q, p->one, p->two);
+			diff_queue(q, p->one, p->two);
 		}
 		else if (strcmp(p->one->path, p->two->path)) {
 			/* rename or copy */
 			struct diff_filepair *dp =
 				diff_queue(q, p->one, p->two);
 			dp->score = p->score;
-
-			/* if we have a later entry that is a rename/copy
-			 * that depends on p->one, then we copy here.
-			 * otherwise we rename it.
-			 */
-			if (!diff_needs_to_stay(&outq, i+1, p->one))
-				/* this is the last one, so mark it as gone.
-				 */
-				p->one->xfrm_flags |= RENAME_SRC_GONE;
 		}
 		else
 			/* otherwise it is a modified (or "stay") entry */
