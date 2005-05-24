@@ -188,17 +188,59 @@ static int gitdiff_hdrend(const char *line)
 	return -1;
 }
 
+/*
+ * We're anal about diff header consistency, to make
+ * sure that we don't end up having strange ambiguous
+ * patches floating around.
+ *
+ * As a result, gitdiff_{old|new}name() will check
+ * their names against any previous information, just
+ * to make sure..
+ */
+static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
+{
+	int len;
+	const char *name;
+
+	if (!orig_name && !isnull)
+		return find_name(line, NULL, 1, 0);
+
+	name = "/dev/null";
+	len = 9;
+	if (orig_name) {
+		name = orig_name;
+		len = strlen(name);
+		if (isnull)
+			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
+	}
+
+	if (*name == '/')
+		goto absolute_path;
+
+	for (;;) {
+		char c = *line++;
+		if (c == '\n')
+			break;
+		if (c != '/')
+			continue;
+absolute_path:
+		if (memcmp(line, name, len) || line[len] != '\n')
+			break;
+		return orig_name;
+	}
+	die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
+	return NULL;
+}
+
 static int gitdiff_oldname(const char *line)
 {
-	if (!old_name && !is_new)
-		old_name = find_name(line, NULL, 1, 0);
+	old_name = gitdiff_verify_name(line, is_new, old_name, "old");
 	return 0;
 }
 
 static int gitdiff_newname(const char *line)
 {
-	if (!new_name && !is_delete)
-		new_name = find_name(line, NULL, 1, 0);
+	new_name = gitdiff_verify_name(line, is_delete, new_name, "new");
 	return 0;
 }
 
