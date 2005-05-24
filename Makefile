@@ -46,8 +46,9 @@ LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
 
-LIB_H += diff.h
-LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o diffcore-pathspec.o
+LIB_H += diff.h count-delta.h
+LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o diffcore-pathspec.o \
+	count-delta.o
 
 LIB_OBJS += gitenv.o
 

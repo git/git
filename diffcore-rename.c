@@ -5,6 +5,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "delta.h"
+#include "count-delta.h"
 
 /* Table of rename/copy destinations */
 
@@ -158,13 +159,18 @@ static int estimate_similarity(struct diff_filespec *src,
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
 			   &delta_size);
-	/*
-	 * We currently punt here, but we may later end up parsing the
-	 * delta to really assess the extent of damage.  A big consecutive
-	 * remove would produce small delta_size that affects quite a
-	 * big portion of the file.
+
+	/* A delta that has a lot of literal additions would have
+	 * big delta_size no matter what else it does.
 	 */
+	if (minimum_score < MAX_SCORE * delta_size / base_size)
+		return 0;
+
+	/* Estimate the edit size by interpreting delta. */
+	delta_size = count_delta(delta, delta_size);
 	free(delta);
+	if (delta_size == UINT_MAX)
+		return 0;
 
 	/*
 	 * Now we will give some score to it.  100% edit gets 0 points
