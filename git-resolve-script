@@ -39,7 +39,7 @@ if [ "$common" == "$head" ]; then
 	echo "Destroying all noncommitted data!"
 	echo "Kill me within 3 seconds.."
 	sleep 3
-	git-read-tree -m $merge && git-checkout-cache -f -a && git-update-cache --refresh
+	git-read-tree -m $merge && git-checkout-cache -f -u -a
 	echo $merge > "$GIT_DIR"/HEAD
 	git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
 	exit 0
@@ -57,5 +57,5 @@ fi
 result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
 echo "Committed merge $result_commit"
 echo $result_commit > "$GIT_DIR"/HEAD
-git-checkout-cache -f -a && git-update-cache --refresh
+git-checkout-cache -f -u -a
 git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
