@@ -20,8 +20,9 @@ mkdir path2
 date >path2/file2
 test_expect_success \
     'git-ls-files --others to show output.' \
-    'git-ls-files --others >.output'
-cat >.expected <<EOF
+    'git-ls-files --others >output'
+cat >expected <<EOF
+output
 path0
 path1
 path2/file2
@@ -29,5 +30,5 @@ EOF
 
 test_expect_success \
     'git-ls-files --others should pick up symlinks.' \
-    'diff .output .expected'
+    'diff output expected'
 test_done
