@@ -136,7 +136,10 @@ static void read_directory(const char *path, const char *base, int baselen)
 		while ((de = readdir(dir)) != NULL) {
 			int len;
 
-			if (de->d_name[0] == '.')
+			if ((de->d_name[0] == '.') &&
+			    (de->d_name[1] == 0 ||
+			     !strcmp(de->d_name + 1, ".") ||
+			     !strcmp(de->d_name + 1, "git")))
 				continue;
 			if (excluded(de->d_name) != show_ignored)
 				continue;
