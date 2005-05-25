@@ -7,6 +7,9 @@
  * this commit <N>" bitmask.
  */
 #define MAX_COMMITS 16
+#define REACHABLE (1U << 16)
+
+#define cmit_flags(cmit) ((cmit)->object.flags & ~REACHABLE)
 
 static int show_edges = 0;
 static int basemask = 0;
@@ -27,14 +30,14 @@ static void read_cache_file(const char *path)
  */
 static int interesting(struct commit *rev)
 {
-	unsigned mask = rev->object.flags;
+	unsigned mask = cmit_flags(rev);
 
 	if (!mask)
 		return 0;
 	if (show_edges) {
 		struct commit_list *p = rev->parents;
 		while (p) {
-			if (mask != p->item->object.flags)
+			if (mask != cmit_flags(p->item))
 				return 1;
 			p = p->next;
 		}
@@ -44,23 +47,6 @@ static int interesting(struct commit *rev)
 		return 0;
 
 	return 1;
-}
-
-static void process_commit(unsigned char *sha1)
-{
-	struct commit_list *parents;
-	struct commit *obj = lookup_commit(sha1);
-
-	if (obj && obj->object.parsed)
-		return;
-	if (!obj || parse_commit(obj))
-		die("unable to parse commit (%s)", sha1_to_hex(sha1));
-
-	parents = obj->parents;
-	while (parents) {
-		process_commit(parents->item->object.sha1);
-		parents = parents->next;
-	}
 }
 
 /*
@@ -75,6 +61,7 @@ int main(int argc, char **argv)
 	int i;
 	int nr = 0;
 	unsigned char sha1[MAX_COMMITS][20];
+	struct commit_list *list = NULL;
 
 	/*
 	 * First - pick up all the revisions we can (both from
@@ -82,6 +69,7 @@ int main(int argc, char **argv)
 	 */
 	for (i = 1; i < argc ; i++) {
 		char *arg = argv[i];
+		struct commit *commit;
 
 		if (!strcmp(arg, "--cache")) {
 			read_cache_file(argv[++i]);
@@ -99,15 +87,28 @@ int main(int argc, char **argv)
 		}
 		if (nr >= MAX_COMMITS || get_sha1(arg, sha1[nr]))
 			usage("git-rev-tree [--edges] [--cache <cache-file>] <commit-id> [<commit-id>]");
-		process_commit(sha1[nr]);
+
+		commit = lookup_commit_reference(sha1[nr]);
+		if (!commit || parse_commit(commit) < 0)
+			die("bad commit object");
+		commit_list_insert(commit, &list);
 		nr++;
 	}
+
+	/*
+	 * Parse all the commits in date order.
+	 *
+	 * We really should stop once we know enough, but that's a
+	 * decision that isn't trivial to make.
+	 */
+	while (list)
+		pop_most_recent_commit(&list, REACHABLE);
 
 	/*
 	 * Now we have the maximal tree. Walk the different sha files back to the root.
 	 */
 	for (i = 0; i < nr; i++)
-		mark_reachable(&lookup_commit(sha1[i])->object, 1 << i);
+		mark_reachable(&lookup_commit_reference(sha1[i])->object, 1 << i);
 
 	/*
 	 * Now print out the results..
@@ -125,12 +126,12 @@ int main(int argc, char **argv)
 		if (!interesting(commit))
 			continue;
 
-		printf("%lu %s:%d", commit->date, sha1_to_hex(obj->sha1), 
-		       obj->flags);
+		printf("%lu %s:%d", commit->date, sha1_to_hex(obj->sha1),
+				    cmit_flags(commit));
 		p = commit->parents;
 		while (p) {
 			printf(" %s:%d", sha1_to_hex(p->item->object.sha1), 
-			       p->item->object.flags);
+			       cmit_flags(p->item));
 			p = p->next;
 		}
 		printf("\n");
