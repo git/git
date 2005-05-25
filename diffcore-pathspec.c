@@ -21,8 +21,8 @@ static int matches_pathspec(const char *name, struct path_spec *s, int cnt)
 
 	namelen = strlen(name);
 	for (i = 0; i < cnt; i++) {
-		int len = s->len;
-		if (! strncmp(s->spec, name, len) &&
+		int len = s[i].len;
+		if (! strncmp(s[i].spec, name, len) &&
 		    len <= namelen &&
 		    (name[len] == 0 || name[len] == '/'))
 			return 1;
