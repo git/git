@@ -768,7 +768,7 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		if (p->status == 0)
-			continue;
+			p->status = '?';
 		switch (diff_output_style) {
 		case DIFF_FORMAT_PATCH:
 			diff_flush_patch(p);
