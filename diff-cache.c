@@ -158,16 +158,27 @@ static char *diff_cache_usage =
 
 int main(int argc, const char **argv)
 {
-	unsigned char tree_sha1[20];
+	const char *tree_name = NULL;
+	unsigned char sha1[20];
+	const char **pathspec = NULL;
 	void *tree;
 	unsigned long size;
 	int ret;
+	int i;
 
 	read_cache();
-	while (argc > 2) {
-		const char *arg = argv[1];
-		argv++;
-		argc--;
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (*arg != '-') {
+			if (tree_name) {
+				pathspec = argv + i;
+				break;
+			}
+			tree_name = arg;
+			continue;
+		}
+			
 		if (!strcmp(arg, "-r")) {
 			/* We accept the -r flag just to look like git-diff-tree */
 			continue;
@@ -209,30 +220,27 @@ int main(int argc, const char **argv)
 		usage(diff_cache_usage);
 	}
 
-	if (argc < 2 || get_sha1(argv[1], tree_sha1))
+	if (!tree_name || get_sha1(tree_name, sha1))
 		usage(diff_cache_usage);
-	argv++;
-	argc--;
 
 	/* The rest is for paths restriction. */
-
 	diff_setup(reverse_diff);
 
 	mark_merge_entries();
 
-	tree = read_object_with_reference(tree_sha1, "tree", &size, NULL);
+	tree = read_object_with_reference(sha1, "tree", &size, NULL);
 	if (!tree)
-		die("bad tree object %s", argv[1]);
+		die("bad tree object %s", tree_name);
 	if (read_tree(tree, size, 1))
-		die("unable to read tree object %s", argv[1]);
+		die("unable to read tree object %s", tree_name);
 
 	ret = diff_cache(active_cache, active_nr);
 	if (detect_rename)
 		diffcore_rename(detect_rename, diff_score_opt);
 	if (pickaxe)
 		diffcore_pickaxe(pickaxe);
-	if (2 <= argc)
-		diffcore_pathspec(argv + 1);
+	if (pathspec)
+		diffcore_pathspec(pathspec);
 	diff_flush(diff_output_format, 1);
 	return ret;
 }
