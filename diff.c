@@ -691,27 +691,34 @@ static void diff_resolve_rename_copy(void)
 
 	for (i = 0; i < q->nr; i++) {
 		p = q->queue[i];
-		p->status = 0;
+		p->status = 0; /* undecided */
 		if (DIFF_PAIR_UNMERGED(p))
 			p->status = 'U';
 		else if (!DIFF_FILE_VALID((p)->one))
 			p->status = 'N';
 		else if (!DIFF_FILE_VALID((p)->two)) {
 			/* Deletion record should be omitted if there
-			 * is another entry that is a rename or a copy
-			 * and it uses this one as the source.  Then we
-			 * can say the other one is a rename.
+			 * are rename/copy entries using this one as
+			 * the source.  Then we can say one of them
+			 * is a rename and the rest are copies.
 			 */
+			p->status = 'D';
 			for (j = 0; j < q->nr; j++) {
 				pp = q->queue[j];
 				if (!strcmp(pp->one->path, p->one->path) &&
-				    strcmp(pp->one->path, pp->two->path))
+				    strcmp(pp->one->path, pp->two->path)) {
+					p->status = 'X';
 					break;
+				}
 			}
-			if (j < q->nr)
-				continue; /* has rename/copy */
-			p->status = 'D';
 		}
+		else if (DIFF_PAIR_TYPE_CHANGED(p))
+			p->status = 'T';
+
+		/* from this point on, we are dealing with a pair
+		 * whose both sides are valid and of the same type, i.e.
+		 * either in-place edit or rename/copy edit.
+		 */
 		else if (strcmp(p->one->path, p->two->path)) {
 			/* See if there is somebody else anywhere that
 			 * will keep the path (either modified or
@@ -719,7 +726,7 @@ static void diff_resolve_rename_copy(void)
 			 * not a rename.  In addition, if there is
 			 * some other rename or copy that comes later
 			 * than us that uses the same source, we
-			 * cannot be a rename either.
+			 * have to be a copy, not a rename.
 			 */
 			for (j = 0; j < q->nr; j++) {
 				pp = q->queue[j];
@@ -745,10 +752,9 @@ static void diff_resolve_rename_copy(void)
 		}
 		else if (memcmp(p->one->sha1, p->two->sha1, 20))
 			p->status = 'M';
-		else {
-			/* we do not need this one */
-			p->status = 0;
-		}
+		else
+			/* this is a "no-change" entry */
+			p->status = 'X';
 	}
 	diff_debug_queue("resolve-rename-copy done", q);
 }
@@ -767,8 +773,10 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
+		if (p->status == 'X')
+			continue;
 		if (p->status == 0)
-			p->status = '?';
+			die("internal error in diff-resolve-rename-copy");
 		switch (diff_output_style) {
 		case DIFF_FORMAT_PATCH:
 			diff_flush_patch(p);

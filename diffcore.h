@@ -45,6 +45,9 @@ struct diff_filepair {
 #define DIFF_PAIR_UNMERGED(p) \
 	(!DIFF_FILE_VALID((p)->one) && !DIFF_FILE_VALID((p)->two))
 
+#define DIFF_PAIR_TYPE_CHANGED(p) \
+	((S_IFMT & (p)->one->mode) != (S_IFMT & (p)->two->mode))
+
 extern int diff_unmodified_pair(struct diff_filepair *);
 
 struct diff_queue_struct {
