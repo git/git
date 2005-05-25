@@ -6,6 +6,7 @@ static int show_root_diff = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
 static int recursive = 0;
+static int show_tree_entry_in_recursive = 0;
 static int read_stdin = 0;
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
@@ -123,6 +124,8 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 	if (recursive && S_ISDIR(mode1)) {
 		int retval;
 		char *newbase = malloc_base(base, path1, pathlen1);
+		if (show_tree_entry_in_recursive)
+			diff_change(mode1, mode2, sha1, sha2, base, path1);
 		retval = diff_tree_sha1(sha1, sha2, newbase);
 		free(newbase);
 		return retval;
@@ -463,7 +466,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-m] [-s] [-v] <tree-ish> <tree-ish>";
+"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-m] [-s] [-v] [-t] <tree-ish> <tree-ish>";
 
 int main(int argc, const char **argv)
 {
@@ -496,6 +499,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "-r")) {
 			recursive = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-t")) {
+			recursive = show_tree_entry_in_recursive = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-R")) {
