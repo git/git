@@ -1,14 +1,23 @@
 #!/bin/sh
 #
 merge_repo=$1
-merge_name=${2:-HEAD}
+
+merge_name=$(echo "$1" | sed 's:\.git/*$::')
+merge_head=HEAD
+if [ "$2" ]
+then
+   merge_name="'$2' branch from
+
+	$merge_name"
+   merge_head="refs/heads/$2"
+fi
 
 : ${GIT_DIR=.git}
 : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 
-git-fetch-script "$merge_repo" "$merge_name"
+git-fetch-script "$merge_repo" "$merge_head"
 
 git-resolve-script \
 	"$(cat "$GIT_DIR"/HEAD)" \
 	"$(cat "$GIT_DIR"/MERGE_HEAD)" \
-	"$merge_repo"
+	"$merge_name"
