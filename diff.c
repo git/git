@@ -517,7 +517,8 @@ static void diff_flush_raw(struct diff_filepair *p,
 	switch (p->status) {
 	case 'C': case 'R':
 		two_paths = 1;
-		sprintf(status, "%c%1d", p->status, p->score);
+		sprintf(status, "%c%03d", p->status,
+			(int)(0.5 + p->score * 100.0/MAX_SCORE));
 		break;
 	default:
 		two_paths = 0;
@@ -750,7 +751,8 @@ static void diff_resolve_rename_copy(void)
 			if (!p->status)
 				p->status = 'R';
 		}
-		else if (memcmp(p->one->sha1, p->two->sha1, 20))
+		else if (memcmp(p->one->sha1, p->two->sha1, 20) ||
+			 p->one->mode != p->two->mode)
 			p->status = 'M';
 		else
 			/* this is a "no-change" entry */
