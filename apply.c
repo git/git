@@ -22,6 +22,13 @@ static int merge_patch = 1;
 static const char apply_usage[] = "git-apply <patch>";
 
 /*
+ * For "diff-stat" like behaviour, we keep track of the biggest change
+ * we've seen, and the longest filename. That allows us to do simple
+ * scaling.
+ */
+static int max_change, max_len;
+
+/*
  * Various "current state", notably line numbers and what
  * file (and how) we're patching right now.. The "is_xxxx"
  * things are flags, where -1 means "don't know yet".
@@ -41,6 +48,7 @@ struct patch {
 	char *new_name, *old_name;
 	unsigned int old_mode, new_mode;
 	int is_rename, is_copy, is_new, is_delete;
+	int lines_added, lines_deleted;
 	struct fragment *fragments;
 	struct patch *next;
 };
@@ -503,6 +511,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
  */
 static int parse_fragment(char *line, unsigned long size, struct patch *patch, struct fragment *fragment)
 {
+	int added, deleted;
 	int len = linelen(line, size), offset;
 	unsigned long pos[4], oldlines, newlines;
 
@@ -521,6 +530,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	line += len;
 	size -= len;
 	linenr++;
+	added = deleted = 0;
 	for (offset = len; size > 0; offset += len, size -= len, line += len, linenr++) {
 		if (!oldlines && !newlines)
 			break;
@@ -535,13 +545,17 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			newlines--;
 			break;
 		case '-':
+			deleted++;
 			oldlines--;
 			break;
 		case '+':
+			added++;
 			newlines--;
 			break;
 		}
 	}
+	patch->lines_added += added;
+	patch->lines_deleted += deleted;
 	return offset;
 }
 
@@ -586,14 +600,52 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	return offset + hdrsize + patchsize;
 }
 
+const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+const char minuses[]= "----------------------------------------------------------------------";
+
+static void show_stats(struct patch *patch)
+{
+	char *name = patch->old_name;
+	int len, max, add, del;
+
+	if (!name)
+		name = patch->new_name;
+
+	/*
+	 * "scale" the filename
+	 */
+	len = strlen(name);
+	max = max_len;
+	if (max > 50)
+		max = 50;
+	if (len > max)
+		name += len - max;
+	len = max;
+
+	/*
+	 * scale the add/delete
+	 */
+	max = max_change;
+	if (max + len > 70)
+		max = 70 - len;
+	
+	add = (patch->lines_added * max + max_change/2) / max_change;
+	del = (patch->lines_deleted * max + max_change/2) / max_change;
+	printf(" %-*s |%5d %.*s%.*s\n",
+		len, name, patch->lines_added + patch->lines_deleted,
+		add, pluses, del, minuses);
+}
+
 static void apply_patch_list(struct patch *patch)
 {
+	int files, adds, dels;
+
+	files = adds = dels = 0;
 	if (!patch)
 		die("no patch found");
 	do {
 		const char *old_name = patch->old_name;
 		const char *new_name = patch->new_name;
-		struct fragment *frag;
 
 		if (old_name) {
 			if (cache_name_pos(old_name, strlen(old_name)) < 0)
@@ -606,21 +658,30 @@ static void apply_patch_list(struct patch *patch)
 				die("file %s already exists", new_name);
 		}
 
-		printf("Applying patch to %s\n", new_name);
-		printf("  new=%d delete=%d copy=%d rename=%d\n",
-			patch->is_new, patch->is_delete, patch->is_copy, patch->is_rename);
-		if (patch->old_mode != patch->new_mode)
-			printf("  %o->%o\n", patch->old_mode, patch->new_mode);
-		frag = patch->fragments;
-		while (frag) {
-			printf("Fragment %lu,%lu -> %lu,%lu\n%.*s",
-				frag->oldpos, frag->oldlines,
-				frag->newpos, frag->newlines,
-				frag->size, frag->patch);
-			frag = frag->next;
-		}
-
+		files++;
+		adds += patch->lines_added;
+		dels += patch->lines_deleted;
+		show_stats(patch);
 	} while ((patch = patch->next) != NULL);
+	printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
+}
+
+static void patch_stats(struct patch *patch)
+{
+	int lines = patch->lines_added + patch->lines_deleted;
+
+	if (lines > max_change)
+		max_change = lines;
+	if (patch->old_name) {
+		int len = strlen(patch->old_name);
+		if (len > max_len)
+			max_len = len;
+	}
+	if (patch->new_name) {
+		int len = strlen(patch->new_name);
+		if (len > max_len)
+			max_len = len;
+	}
 }
 
 static int apply_patch(int fd)
@@ -641,6 +702,7 @@ static int apply_patch(int fd)
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
+		patch_stats(patch);
 		*listp = patch;
 		listp = &patch->next;
 		offset += nr;
