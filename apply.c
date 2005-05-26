@@ -19,6 +19,8 @@
 // We default to the merge behaviour, since that's what most people would
 // expect
 static int merge_patch = 1;
+static int diffstat = 0;
+static int check = 1;
 static const char apply_usage[] = "git-apply <patch>";
 
 /*
@@ -384,9 +386,19 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	return offset;
 }
 
-static int parse_num(const char *line, int len, int offset, const char *expect, unsigned long *p)
+static int parse_num(const char *line, unsigned long *p)
 {
 	char *ptr;
+
+	if (!isdigit(*line))
+		return 0;
+	*p = strtoul(line, &ptr, 10);
+	return ptr - line;
+}
+
+static int parse_range(const char *line, int len, int offset, const char *expect,
+			unsigned long *p1, unsigned long *p2)
+{
 	int digits, ex;
 
 	if (offset < 0 || offset >= len)
@@ -394,15 +406,24 @@ static int parse_num(const char *line, int len, int offset, const char *expect, 
 	line += offset;
 	len -= offset;
 
-	if (!isdigit(*line))
+	digits = parse_num(line, p1);
+	if (!digits)
 		return -1;
-	*p = strtoul(line, &ptr, 10);
-
-	digits = ptr - line;
 
 	offset += digits;
 	line += digits;
 	len -= digits;
+
+	*p2 = *p1;
+	if (*line == ',') {
+		digits = parse_num(line+1, p2);
+		if (!digits)
+			return -1;
+
+		offset += digits+1;
+		line += digits+1;
+		len -= digits+1;
+	}
 
 	ex = strlen(expect);
 	if (ex > len)
@@ -425,10 +446,8 @@ static int parse_fragment_header(char *line, int len, struct fragment *fragment)
 		return -1;
 
 	/* Figure out the number of lines in a fragment */
-	offset = parse_num(line, len, 4, ",", &fragment->oldpos);
-	offset = parse_num(line, len, offset, " +", &fragment->oldlines);
-	offset = parse_num(line, len, offset, ",", &fragment->newpos);
-	offset = parse_num(line, len, offset, " @@", &fragment->newlines);
+	offset = parse_range(line, len, 4, " +", &fragment->oldpos, &fragment->oldlines);
+	offset = parse_range(line, len, offset, " @@", &fragment->newpos, &fragment->newlines);
 
 	return offset;
 }
@@ -552,6 +571,9 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			added++;
 			newlines--;
 			break;
+		/* We allow "\ No newline at end of file" */
+		case '\\':
+			break;
 		}
 	}
 	patch->lines_added += added;
@@ -608,8 +630,11 @@ static void show_stats(struct patch *patch)
 	char *name = patch->old_name;
 	int len, max, add, del;
 
-	if (!name)
+	if (!name) {
 		name = patch->new_name;
+		if (!name)
+			return;
+	}
 
 	/*
 	 * "scale" the filename
@@ -636,6 +661,23 @@ static void show_stats(struct patch *patch)
 		add, pluses, del, minuses);
 }
 
+static void check_patch(struct patch *patch)
+{
+	const char *old_name = patch->old_name;
+	const char *new_name = patch->new_name;
+
+	if (old_name) {
+		if (cache_name_pos(old_name, strlen(old_name)) < 0)
+			die("file %s does not exist", old_name);
+		if (patch->is_new < 0)
+			patch->is_new = 0;
+	}
+	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
+		if (cache_name_pos(new_name, strlen(new_name)) >= 0)
+			die("file %s already exists", new_name);
+	}
+}
+
 static void apply_patch_list(struct patch *patch)
 {
 	int files, adds, dels;
@@ -644,26 +686,19 @@ static void apply_patch_list(struct patch *patch)
 	if (!patch)
 		die("no patch found");
 	do {
-		const char *old_name = patch->old_name;
-		const char *new_name = patch->new_name;
+		if (check)
+			check_patch(patch);
 
-		if (old_name) {
-			if (cache_name_pos(old_name, strlen(old_name)) < 0)
-				die("file %s does not exist", old_name);
-			if (patch->is_new < 0)
-				patch->is_new = 0;
+		if (diffstat) {
+			files++;
+			adds += patch->lines_added;
+			dels += patch->lines_deleted;
+			show_stats(patch);
 		}
-		if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
-			if (cache_name_pos(new_name, strlen(new_name)) >= 0)
-				die("file %s already exists", new_name);
-		}
-
-		files++;
-		adds += patch->lines_added;
-		dels += patch->lines_deleted;
-		show_stats(patch);
 	} while ((patch = patch->next) != NULL);
-	printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
+
+	if (diffstat)
+		printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
 }
 
 static void patch_stats(struct patch *patch)
@@ -734,6 +769,11 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--no-merge")) {
 			merge_patch = 0;
+			continue;
+		}
+		if (!strcmp(arg, "--stat")) {
+			check = 0;
+			diffstat = 1;
 			continue;
 		}
 		fd = open(arg, O_RDONLY);
