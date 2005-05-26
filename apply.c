@@ -381,7 +381,7 @@ static char *git_header_name(char *line)
 				if (c == '/')
 					break;
 			}
-			if (!memcmp(name, second, len)) {
+			if (second[len] == '\n' && !memcmp(name, second, len)) {
 				char *ret = xmalloc(len + 1);
 				memcpy(ret, name, len);
 				ret[len] = 0;
