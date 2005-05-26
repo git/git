@@ -36,7 +36,6 @@ static int max_change, max_len;
  * things are flags, where -1 means "don't know yet".
  */
 static int linenr = 1;
-static char *def_name = NULL;
 
 struct fragment {
 	unsigned long oldpos, oldlines;
@@ -47,7 +46,7 @@ struct fragment {
 };
 
 struct patch {
-	char *new_name, *old_name;
+	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
 	int is_rename, is_copy, is_new, is_delete;
 	int lines_added, lines_deleted;
@@ -193,15 +192,15 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
-		name = find_name(second, def_name, p_value, TERM_SPACE | TERM_TAB);
+		name = find_name(second, NULL, p_value, TERM_SPACE | TERM_TAB);
 		patch->new_name = name;
 	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
-		name = find_name(first, def_name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		name = find_name(first, NULL, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
 		patch->old_name = name;
 	} else {
-		name = find_name(first, def_name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		name = find_name(first, NULL, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
 		name = find_name(second, name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
 		patch->old_name = patch->new_name = name;
 	}
@@ -285,12 +284,14 @@ static int gitdiff_newmode(const char *line, struct patch *patch)
 static int gitdiff_delete(const char *line, struct patch *patch)
 {
 	patch->is_delete = 1;
+	patch->old_name = patch->def_name;
 	return gitdiff_oldmode(line, patch);
 }
 
 static int gitdiff_newfile(const char *line, struct patch *patch)
 {
 	patch->is_new = 1;
+	patch->new_name = patch->def_name;
 	return gitdiff_newmode(line, patch);
 }
 
@@ -336,6 +337,61 @@ static int gitdiff_unrecognized(const char *line, struct patch *patch)
 	return -1;
 }
 
+static char *git_header_name(char *line)
+{
+	int len;
+	char *name, *second;
+
+	/*
+	 * Find the first '/'
+	 */
+	name = line;
+	for (;;) {
+		char c = *name++;
+		if (c == '\n')
+			return NULL;
+		if (c == '/')
+			break;
+	}
+
+	/*
+	 * We don't accept absolute paths (/dev/null) as possibly valid
+	 */
+	if (name == line+1)
+		return NULL;
+
+	/*
+	 * Accept a name only if it shows up twice, exactly the same
+	 * form.
+	 */
+	for (len = 0 ; ; len++) {
+		char c = name[len];
+
+		switch (c) {
+		default:
+			continue;
+		case '\n':
+			break;
+		case '\t': case ' ':
+			second = name+len;
+			for (;;) {
+				char c = *second++;
+				if (c == '\n')
+					return NULL;
+				if (c == '/')
+					break;
+			}
+			if (!memcmp(name, second, len)) {
+				char *ret = xmalloc(len + 1);
+				memcpy(ret, name, len);
+				ret[len] = 0;
+				return ret;
+			}
+		}
+	}
+	return NULL;
+}
+
 /* Verify that we recognize the lines following a git header */
 static int parse_git_header(char *line, int len, unsigned int size, struct patch *patch)
 {
@@ -344,6 +400,14 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	/* A git diff has explicit new/delete information, so we don't guess */
 	patch->is_new = 0;
 	patch->is_delete = 0;
+
+	/*
+	 * Some things may not have the old name in the
+	 * rest of the headers anywhere (pure mode changes,
+	 * or removing or adding empty files), so we get
+	 * the default name from the header.
+	 */
+	patch->def_name = git_header_name(line + strlen("diff --git "));
 
 	line += len;
 	size -= len;
@@ -494,7 +558,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			int git_hdr_len = parse_git_header(line, len, size, patch);
 			if (git_hdr_len < 0)
 				continue;
-
+			if (!patch->old_name && !patch->new_name)
+				die("git diff header lacks filename information");
 			*hdrsize = git_hdr_len;
 			return offset;
 		}
@@ -630,11 +695,8 @@ static void show_stats(struct patch *patch)
 	char *name = patch->old_name;
 	int len, max, add, del;
 
-	if (!name) {
+	if (!name)
 		name = patch->new_name;
-		if (!name)
-			return;
-	}
 
 	/*
 	 * "scale" the filename
