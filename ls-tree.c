@@ -127,7 +127,7 @@ static void list_recursive(void *buffer,
 		 * print out the info
 		 */
 		if (!matches || (matched != NULL && mtype == 0)) {
-			printf("%06o\t%s\t%s\t", mode,
+			printf("%06o %s %s\t", mode,
 			       S_ISDIR(mode) ? "tree" : "blob",
 			       sha1_to_hex(sha1));
 			print_path_prefix(&this_prefix);

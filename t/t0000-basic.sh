@@ -92,14 +92,14 @@ test_expect_success \
     'git-ls-files --stage >current'
 
 cat >expected <<\EOF
-100644 f87290f8eb2cbbea7857214459a0739927eab154 0 path0
-120000 15a98433ae33114b085f3eb3bb03b832b3180a01 0 path0sym
-100644 3feff949ed00a62d9f7af97c15cd8a30595e7ac7 0 path2/file2
-120000 d8ce161addc5173867a3c3c730924388daedbc38 0 path2/file2sym
-100644 0aa34cae68d0878578ad119c86ca2b5ed5b28376 0 path3/file3
-120000 8599103969b43aff7e430efea79ca4636466794f 0 path3/file3sym
-100644 00fb5908cb97c2564a9783c0c64087333b3b464f 0 path3/subp3/file3
-120000 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c 0 path3/subp3/file3sym
+100644 f87290f8eb2cbbea7857214459a0739927eab154 0	path0
+120000 15a98433ae33114b085f3eb3bb03b832b3180a01 0	path0sym
+100644 3feff949ed00a62d9f7af97c15cd8a30595e7ac7 0	path2/file2
+120000 d8ce161addc5173867a3c3c730924388daedbc38 0	path2/file2sym
+100644 0aa34cae68d0878578ad119c86ca2b5ed5b28376 0	path3/file3
+120000 8599103969b43aff7e430efea79ca4636466794f 0	path3/file3sym
+100644 00fb5908cb97c2564a9783c0c64087333b3b464f 0	path3/subp3/file3
+120000 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c 0	path3/subp3/file3sym
 EOF
 test_expect_success \
     'validate git-ls-files output for a known tree.' \
@@ -116,10 +116,10 @@ test_expect_success \
     'showing tree with git-ls-tree' \
     'git-ls-tree $tree >current'
 cat >expected <<\EOF
-100644	blob	f87290f8eb2cbbea7857214459a0739927eab154	path0
-120000	blob	15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
-040000	tree	58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
-040000	tree	21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
+100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
+120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
+040000 tree 58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
+040000 tree 21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
 EOF
 test_expect_success \
     'git-ls-tree output for a known tree.' \
@@ -129,17 +129,17 @@ test_expect_success \
     'showing tree with git-ls-tree -r' \
     'git-ls-tree -r $tree >current'
 cat >expected <<\EOF
-100644	blob	f87290f8eb2cbbea7857214459a0739927eab154	path0
-120000	blob	15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
-040000	tree	58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
-100644	blob	3feff949ed00a62d9f7af97c15cd8a30595e7ac7	path2/file2
-120000	blob	d8ce161addc5173867a3c3c730924388daedbc38	path2/file2sym
-040000	tree	21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
-100644	blob	0aa34cae68d0878578ad119c86ca2b5ed5b28376	path3/file3
-120000	blob	8599103969b43aff7e430efea79ca4636466794f	path3/file3sym
-040000	tree	3c5e5399f3a333eddecce7a9b9465b63f65f51e2	path3/subp3
-100644	blob	00fb5908cb97c2564a9783c0c64087333b3b464f	path3/subp3/file3
-120000	blob	6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c	path3/subp3/file3sym
+100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
+120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
+040000 tree 58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
+100644 blob 3feff949ed00a62d9f7af97c15cd8a30595e7ac7	path2/file2
+120000 blob d8ce161addc5173867a3c3c730924388daedbc38	path2/file2sym
+040000 tree 21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
+100644 blob 0aa34cae68d0878578ad119c86ca2b5ed5b28376	path3/file3
+120000 blob 8599103969b43aff7e430efea79ca4636466794f	path3/file3sym
+040000 tree 3c5e5399f3a333eddecce7a9b9465b63f65f51e2	path3/subp3
+100644 blob 00fb5908cb97c2564a9783c0c64087333b3b464f	path3/subp3/file3
+120000 blob 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c	path3/subp3/file3sym
 EOF
 test_expect_success \
     'git-ls-tree -r output for a known tree.' \

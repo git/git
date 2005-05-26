@@ -262,7 +262,7 @@ static void show_files(void)
 				       tag_cached,
 				       ce->name, line_terminator);
 			else
-				printf("%s%06o %s %d %s%c",
+				printf("%s%06o %s %d\t%s%c",
 				       ce_stage(ce) ? tag_unmerged :
 				       tag_cached,
 				       ntohl(ce->ce_mode),
