@@ -103,6 +103,10 @@ int parse_commit(struct commit *item)
 			     sha1_to_hex(item->object.sha1));
 	}
 	ret = parse_commit_buffer(item, buffer, size);
+	if (!ret) {
+		item->buffer = buffer;
+		return 0;
+	}
 	free(buffer);
 	return ret;
 }
