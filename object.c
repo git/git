@@ -129,6 +129,10 @@ struct object *parse_object(unsigned char *sha1)
 		} else if (!strcmp(type, "commit")) {
 			struct commit *commit = lookup_commit(sha1);
 			parse_commit_buffer(commit, buffer, size);
+			if (!commit->buffer) {
+				commit->buffer = buffer;
+				buffer = NULL;
+			}
 			obj = &commit->object;
 		} else if (!strcmp(type, "tag")) {
 			struct tag *tag = lookup_tag(sha1);

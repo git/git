@@ -14,7 +14,7 @@ struct commit {
 	unsigned long date;
 	struct commit_list *parents;
 	struct tree *tree;
-	const char *buffer;
+	char *buffer;
 };
 
 extern const char *commit_type;

@@ -203,6 +203,8 @@ static int fsck_tree(struct tree *item)
 
 static int fsck_commit(struct commit *commit)
 {
+	free(commit->buffer);
+	commit->buffer = NULL;
 	if (!commit->tree)
 		return -1;
 	if (!commit->parents && show_root)
