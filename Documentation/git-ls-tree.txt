@@ -9,7 +9,7 @@ git-ls-tree - Displays a tree object in human readable form
 
 SYNOPSIS
 --------
-'git-ls-tree' [-r] [-z] <tree-ish>
+'git-ls-tree' [-r] [-z] <tree-ish> [paths...]
 
 DESCRIPTION
 -----------
@@ -26,6 +26,11 @@ OPTIONS
 
 -z::
 	\0 line termination on output
+
+paths::
+	Optionally, restrict the output of git-ls-tree to specific
+	paths. Directories will only list their tree blob ids.
+	Implies -r.
 
 Output Format
 -------------
