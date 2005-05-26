@@ -17,11 +17,19 @@
 #include "cache.h"
 
 // We default to the merge behaviour, since that's what most people would
-// expect
+// expect.
+//
+//  --check turns on checking that the working tree matches the
+//    files that are being modified, but doesn't apply the patch
+//  --stat does just a diffstat, and doesn't actually apply
+//  --show-files shows the directory changes
+//
 static int merge_patch = 1;
 static int diffstat = 0;
-static int check = 1;
-static const char apply_usage[] = "git-apply <patch>";
+static int check = 0;
+static int apply = 1;
+static int show_files = 0;
+static const char apply_usage[] = "git-apply [--stat] [--check] [--show-files] <patch>";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -723,44 +731,90 @@ static void show_stats(struct patch *patch)
 		add, pluses, del, minuses);
 }
 
-static void check_patch(struct patch *patch)
+static int check_patch(struct patch *patch)
 {
+	struct stat st;
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
 
 	if (old_name) {
-		if (cache_name_pos(old_name, strlen(old_name)) < 0)
-			die("file %s does not exist", old_name);
+		int pos = cache_name_pos(old_name, strlen(old_name));
+		int changed;
+
+		if (pos < 0)
+			return error("%s: does not exist in index", old_name);
 		if (patch->is_new < 0)
 			patch->is_new = 0;
+		if (lstat(old_name, &st) < 0)
+			return error("%s: %s\n", strerror(errno));
+		changed = ce_match_stat(active_cache[pos], &st);
+		if (changed)
+			return error("%s: does not match index", old_name);
+		if (!patch->old_mode)
+			patch->old_mode = st.st_mode;
 	}
+
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
 		if (cache_name_pos(new_name, strlen(new_name)) >= 0)
-			die("file %s already exists", new_name);
+			return error("%s: already exists in index", new_name);
+		if (!lstat(new_name, &st))
+			return error("%s: already exists in working directory", new_name);
+		if (errno != ENOENT)
+			return error("%s: %s", new_name, strerror(errno));
+	}
+	return 0;
+}
+
+static int check_patch_list(struct patch *patch)
+{
+	int error = 0;
+
+	for (;patch ; patch = patch->next)
+		error |= check_patch(patch);
+	return error;
+}
+
+static void show_file(int c, unsigned int mode, const char *name)
+{
+	printf("%c %o %s\n", c, mode, name);
+}
+
+static void show_file_list(struct patch *patch)
+{
+	for (;patch ; patch = patch->next) {
+		if (patch->is_rename) {
+			show_file('-', patch->old_mode, patch->old_name);
+			show_file('+', patch->new_mode, patch->new_name);
+			continue;
+		}
+		if (patch->is_copy || patch->is_new) {
+			show_file('+', patch->new_mode, patch->new_name);
+			continue;
+		}
+		if (patch->is_delete) {
+			show_file('-', patch->old_mode, patch->old_name);
+			continue;
+		}
+		if (patch->old_mode && patch->new_mode && patch->old_mode != patch->new_mode) {
+			printf("M %o:%o %s\n", patch->old_mode, patch->new_mode, patch->old_name);
+			continue;
+		}
+		printf("M %o %s\n", patch->old_mode, patch->old_name);
 	}
 }
 
-static void apply_patch_list(struct patch *patch)
+static void stat_patch_list(struct patch *patch)
 {
 	int files, adds, dels;
 
-	files = adds = dels = 0;
-	if (!patch)
-		die("no patch found");
-	do {
-		if (check)
-			check_patch(patch);
+	for (files = adds = dels = 0 ; patch ; patch = patch->next) {
+		files++;
+		adds += patch->lines_added;
+		dels += patch->lines_deleted;
+		show_stats(patch);
+	}
 
-		if (diffstat) {
-			files++;
-			adds += patch->lines_added;
-			dels += patch->lines_deleted;
-			show_stats(patch);
-		}
-	} while ((patch = patch->next) != NULL);
-
-	if (diffstat)
-		printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
+	printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
 }
 
 static void patch_stats(struct patch *patch)
@@ -806,7 +860,14 @@ static int apply_patch(int fd)
 		size -= nr;
 	}
 
-	apply_patch_list(list);
+	if ((check || apply) && check_patch_list(list) < 0)
+		exit(1);
+
+	if (show_files)
+		show_file_list(list);
+
+	if (diffstat)
+		stat_patch_list(list);
 
 	free(buffer);
 	return 0;
@@ -834,8 +895,17 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "--stat")) {
-			check = 0;
+			apply = 0;
 			diffstat = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--check")) {
+			apply = 0;
+			check = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--show-files")) {
+			show_files = 1;
 			continue;
 		}
 		fd = open(arg, O_RDONLY);
