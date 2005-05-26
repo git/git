@@ -27,9 +27,23 @@ static const char apply_usage[] = "git-apply <patch>";
  * things are flags, where -1 means "don't know yet".
  */
 static int linenr = 1;
-static int old_mode, new_mode;
-static char *old_name, *new_name, *def_name;
-static int is_rename, is_copy, is_new, is_delete;
+static char *def_name = NULL;
+
+struct fragment {
+	unsigned long oldpos, oldlines;
+	unsigned long newpos, newlines;
+	const char *patch;
+	int size;
+	struct fragment *next;
+};
+
+struct patch {
+	char *new_name, *old_name;
+	unsigned int old_mode, new_mode;
+	int is_rename, is_copy, is_new, is_delete;
+	struct fragment *fragments;
+	struct patch *next;
+};
 
 #define CHUNKSIZE (8192)
 #define SLOP (16)
@@ -159,7 +173,7 @@ static char * find_name(const char *line, char *def, int p_value, int terminate)
  * files, we can happily check the index for a match, but for creating a
  * new file we should try to match whatever "patch" does. I have no idea.
  */
-static void parse_traditional_patch(const char *first, const char *second)
+static void parse_traditional_patch(const char *first, const char *second, struct patch *patch)
 {
 	int p_value = 1;
 	char *name;
@@ -167,23 +181,25 @@ static void parse_traditional_patch(const char *first, const char *second)
 	first += 4;	// skip "--- "
 	second += 4;	// skip "+++ "
 	if (is_dev_null(first)) {
-		is_new = 1;
+		patch->is_new = 1;
+		patch->is_delete = 0;
 		name = find_name(second, def_name, p_value, TERM_SPACE | TERM_TAB);
-		new_name = name;
+		patch->new_name = name;
 	} else if (is_dev_null(second)) {
-		is_delete = 1;
+		patch->is_new = 0;
+		patch->is_delete = 1;
 		name = find_name(first, def_name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
-		old_name = name;
+		patch->old_name = name;
 	} else {
 		name = find_name(first, def_name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
 		name = find_name(second, name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
-		old_name = new_name = name;
+		patch->old_name = patch->new_name = name;
 	}
 	if (!name)
 		die("unable to find filename in patch at line %d", linenr);
 }
 
-static int gitdiff_hdrend(const char *line)
+static int gitdiff_hdrend(const char *line, struct patch *patch)
 {
 	return -1;
 }
@@ -232,71 +248,71 @@ absolute_path:
 	return NULL;
 }
 
-static int gitdiff_oldname(const char *line)
+static int gitdiff_oldname(const char *line, struct patch *patch)
 {
-	old_name = gitdiff_verify_name(line, is_new, old_name, "old");
+	patch->old_name = gitdiff_verify_name(line, patch->is_new, patch->old_name, "old");
 	return 0;
 }
 
-static int gitdiff_newname(const char *line)
+static int gitdiff_newname(const char *line, struct patch *patch)
 {
-	new_name = gitdiff_verify_name(line, is_delete, new_name, "new");
+	patch->new_name = gitdiff_verify_name(line, patch->is_delete, patch->new_name, "new");
 	return 0;
 }
 
-static int gitdiff_oldmode(const char *line)
+static int gitdiff_oldmode(const char *line, struct patch *patch)
 {
-	old_mode = strtoul(line, NULL, 8);
+	patch->old_mode = strtoul(line, NULL, 8);
 	return 0;
 }
 
-static int gitdiff_newmode(const char *line)
+static int gitdiff_newmode(const char *line, struct patch *patch)
 {
-	new_mode = strtoul(line, NULL, 8);
+	patch->new_mode = strtoul(line, NULL, 8);
 	return 0;
 }
 
-static int gitdiff_delete(const char *line)
+static int gitdiff_delete(const char *line, struct patch *patch)
 {
-	is_delete = 1;
-	return gitdiff_oldmode(line);
+	patch->is_delete = 1;
+	return gitdiff_oldmode(line, patch);
 }
 
-static int gitdiff_newfile(const char *line)
+static int gitdiff_newfile(const char *line, struct patch *patch)
 {
-	is_new = 1;
-	return gitdiff_newmode(line);
+	patch->is_new = 1;
+	return gitdiff_newmode(line, patch);
 }
 
-static int gitdiff_copysrc(const char *line)
+static int gitdiff_copysrc(const char *line, struct patch *patch)
 {
-	is_copy = 1;
-	old_name = find_name(line, NULL, 0, 0);
+	patch->is_copy = 1;
+	patch->old_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
-static int gitdiff_copydst(const char *line)
+static int gitdiff_copydst(const char *line, struct patch *patch)
 {
-	is_copy = 1;
-	new_name = find_name(line, NULL, 0, 0);
+	patch->is_copy = 1;
+	patch->new_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
-static int gitdiff_renamesrc(const char *line)
+static int gitdiff_renamesrc(const char *line, struct patch *patch)
 {
-	is_rename = 1;
-	old_name = find_name(line, NULL, 0, 0);
+	patch->is_rename = 1;
+	patch->old_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
-static int gitdiff_renamedst(const char *line)
+static int gitdiff_renamedst(const char *line, struct patch *patch)
 {
-	is_rename = 1;
-	new_name = find_name(line, NULL, 0, 0);
+	patch->is_rename = 1;
+	patch->new_name = find_name(line, NULL, 0, 0);
 	return 0;
 }
 
-static int gitdiff_similarity(const char *line)
+static int gitdiff_similarity(const char *line, struct patch *patch)
 {
 	return 0;
 }
@@ -305,19 +321,19 @@ static int gitdiff_similarity(const char *line)
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
  */
-static int gitdiff_unrecognized(const char *line)
+static int gitdiff_unrecognized(const char *line, struct patch *patch)
 {
 	return -1;
 }
 
 /* Verify that we recognize the lines following a git header */
-static int parse_git_header(char *line, int len, unsigned int size)
+static int parse_git_header(char *line, int len, unsigned int size, struct patch *patch)
 {
 	unsigned long offset;
 
 	/* A git diff has explicit new/delete information, so we don't guess */
-	is_new = 0;
-	is_delete = 0;
+	patch->is_new = 0;
+	patch->is_delete = 0;
 
 	line += len;
 	size -= len;
@@ -325,7 +341,7 @@ static int parse_git_header(char *line, int len, unsigned int size)
 	for (offset = len ; size > 0 ; offset += len, size -= len, line += len, linenr++) {
 		static const struct opentry {
 			const char *str;
-			int (*fn)(const char *);
+			int (*fn)(const char *, struct patch *);
 		} optable[] = {
 			{ "@@ -", gitdiff_hdrend },
 			{ "--- ", gitdiff_oldname },
@@ -351,7 +367,7 @@ static int parse_git_header(char *line, int len, unsigned int size)
 			int oplen = strlen(p->str);
 			if (len < oplen || memcmp(p->str, line, oplen))
 				continue;
-			if (p->fn(line + oplen) < 0)
+			if (p->fn(line + oplen, patch) < 0)
 				return offset;
 			break;
 		}
@@ -393,7 +409,7 @@ static int parse_num(const char *line, int len, int offset, const char *expect, 
  * Parse a unified diff fragment header of the
  * form "@@ -a,b +c,d @@"
  */
-static int parse_fragment_header(char *line, int len, unsigned long *pos)
+static int parse_fragment_header(char *line, int len, struct fragment *fragment)
 {
 	int offset;
 
@@ -401,22 +417,22 @@ static int parse_fragment_header(char *line, int len, unsigned long *pos)
 		return -1;
 
 	/* Figure out the number of lines in a fragment */
-	offset = parse_num(line, len, 4, ",", pos);
-	offset = parse_num(line, len, offset, " +", pos+1);
-	offset = parse_num(line, len, offset, ",", pos+2);
-	offset = parse_num(line, len, offset, " @@", pos+3);
+	offset = parse_num(line, len, 4, ",", &fragment->oldpos);
+	offset = parse_num(line, len, offset, " +", &fragment->oldlines);
+	offset = parse_num(line, len, offset, ",", &fragment->newpos);
+	offset = parse_num(line, len, offset, " @@", &fragment->newlines);
 
 	return offset;
 }
 
-static int find_header(char *line, unsigned long size, int *hdrsize)
+static int find_header(char *line, unsigned long size, int *hdrsize, struct patch *patch)
 {
 	unsigned long offset, len;
 
-	is_rename = is_copy = 0;
-	is_new = is_delete = -1;
-	old_mode = new_mode = 0;
-	def_name = old_name = new_name = NULL;
+	patch->is_rename = patch->is_copy = 0;
+	patch->is_new = patch->is_delete = -1;
+	patch->old_mode = patch->new_mode = 0;
+	patch->old_name = patch->new_name = NULL;
 	for (offset = 0; size > 0; offset += len, size -= len, line += len, linenr++) {
 		unsigned long nextlen;
 
@@ -434,8 +450,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 		 * patch has become corrupted/broken up.
 		 */
 		if (!memcmp("@@ -", line, 4)) {
-			unsigned long pos[4];
-			if (parse_fragment_header(line, len, pos) < 0)
+			struct fragment dummy;
+			if (parse_fragment_header(line, len, &dummy) < 0)
 				continue;
 			error("patch fragment without header at line %d: %.*s", linenr, len-1, line);
 		}
@@ -448,7 +464,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 		 * or mode change, so we handle that specially
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_header(line, len, size);
+			int git_hdr_len = parse_git_header(line, len, size, patch);
 			if (git_hdr_len < 0)
 				continue;
 
@@ -470,7 +486,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
 			continue;
 
 		/* Ok, we'll consider it a patch */
-		parse_traditional_patch(line, line+len);
+		parse_traditional_patch(line, line+len, patch);
 		*hdrsize = len + nextlen;
 		linenr += 2;
 		return offset;
@@ -485,21 +501,21 @@ static int find_header(char *line, unsigned long size, int *hdrsize)
  * part of a patch, and a "---" that starts the next
  * patch is to look at the line counts..
  */
-static int apply_fragment(char *line, unsigned long size)
+static int parse_fragment(char *line, unsigned long size, struct patch *patch, struct fragment *fragment)
 {
 	int len = linelen(line, size), offset;
 	unsigned long pos[4], oldlines, newlines;
 
-	offset = parse_fragment_header(line, len, pos);
+	offset = parse_fragment_header(line, len, fragment);
 	if (offset < 0)
 		return -1;
-	oldlines = pos[1];
-	newlines = pos[3];
+	oldlines = fragment->oldlines;
+	newlines = fragment->newlines;
 
-	if (is_new < 0 && (pos[0] || oldlines))
-		is_new = 0;
-	if (is_delete < 0 && (pos[1] || newlines))
-		is_delete = 0;
+	if (patch->is_new < 0 && (pos[0] || oldlines))
+		patch->is_new = 0;
+	if (patch->is_delete < 0 && (pos[1] || newlines))
+		patch->is_delete = 0;
 
 	/* Parse the thing.. */
 	line += len;
@@ -529,16 +545,26 @@ static int apply_fragment(char *line, unsigned long size)
 	return offset;
 }
 
-static int apply_single_patch(char *line, unsigned long size)
+static int parse_single_patch(char *line, unsigned long size, struct patch *patch)
 {
 	unsigned long offset = 0;
+	struct fragment **fragp = &patch->fragments;
 
 	while (size > 4 && !memcmp(line, "@@ -", 4)) {
-		int len = apply_fragment(line, size);
+		struct fragment *fragment;
+		int len;
+
+		fragment = xmalloc(sizeof(*fragment));
+		memset(fragment, 0, sizeof(*fragment));
+		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
 
-printf("applying fragment:\n%.*s\n\n", len, line);
+		fragment->patch = line;
+		fragment->size = len;
+
+		*fragp = fragment;
+		fragp = &fragment->next;
 
 		offset += len;
 		line += len;
@@ -547,52 +573,82 @@ printf("applying fragment:\n%.*s\n\n", len, line);
 	return offset;
 }
 
-static int apply_chunk(char *buffer, unsigned long size)
+static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 {
 	int hdrsize, patchsize;
-	int offset = find_header(buffer, size, &hdrsize);
-	char *header, *patch;
+	int offset = find_header(buffer, size, &hdrsize, patch);
 
 	if (offset < 0)
 		return offset;
-	header = buffer + offset;
 
-printf("Found header:\n%.*s\n\n", hdrsize, header);
-printf("Rename: %d\n", is_rename);
-printf("Copy:   %d\n", is_copy);
-printf("New:    %d\n", is_new);
-printf("Delete: %d\n", is_delete);
-printf("Mode:   %o:%o\n", old_mode, new_mode);
-printf("Name:   '%s':'%s'\n", old_name, new_name);
-
-	if (old_name && cache_name_pos(old_name, strlen(old_name)) < 0)
-		die("file %s does not exist", old_name);
-	if (new_name && (is_new | is_rename | is_copy)) {
-		if (cache_name_pos(new_name, strlen(new_name)) >= 0)
-			die("file %s already exists", new_name);
-	}
-
-	patch = header + hdrsize;
-	patchsize = apply_single_patch(patch, size - offset - hdrsize);
+	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
 
 	return offset + hdrsize + patchsize;
+}
+
+static void apply_patch_list(struct patch *patch)
+{
+	if (!patch)
+		die("no patch found");
+	do {
+		const char *old_name = patch->old_name;
+		const char *new_name = patch->new_name;
+		struct fragment *frag;
+
+		if (old_name) {
+			if (cache_name_pos(old_name, strlen(old_name)) < 0)
+				die("file %s does not exist", old_name);
+			if (patch->is_new < 0)
+				patch->is_new = 0;
+		}
+		if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
+			if (cache_name_pos(new_name, strlen(new_name)) >= 0)
+				die("file %s already exists", new_name);
+		}
+
+		printf("Applying patch to %s\n", new_name);
+		printf("  new=%d delete=%d copy=%d rename=%d\n",
+			patch->is_new, patch->is_delete, patch->is_copy, patch->is_rename);
+		if (patch->old_mode != patch->new_mode)
+			printf("  %o->%o\n", patch->old_mode, patch->new_mode);
+		frag = patch->fragments;
+		while (frag) {
+			printf("Fragment %lu,%lu -> %lu,%lu\n%.*s",
+				frag->oldpos, frag->oldlines,
+				frag->newpos, frag->newlines,
+				frag->size, frag->patch);
+			frag = frag->next;
+		}
+
+	} while ((patch = patch->next) != NULL);
 }
 
 static int apply_patch(int fd)
 {
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
+	struct patch *list = NULL, **listp = &list;
 
 	if (!buffer)
 		return -1;
 	offset = 0;
 	while (size > 0) {
-		int nr = apply_chunk(buffer + offset, size);
+		struct patch *patch;
+		int nr;
+
+		patch = xmalloc(sizeof(*patch));
+		memset(patch, 0, sizeof(*patch));
+		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
+		*listp = patch;
+		listp = &patch->next;
 		offset += nr;
 		size -= nr;
 	}
+
+	apply_patch_list(list);
+
 	free(buffer);
 	return 0;
 }
