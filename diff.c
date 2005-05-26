@@ -171,8 +171,8 @@ struct diff_filespec *alloc_filespec(const char *path)
 void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 		   unsigned short mode)
 {
-	if (mode) { /* just playing defensive */
-		spec->mode = mode;
+	if (mode) {
+		spec->mode = DIFF_FILE_CANON_MODE(mode);
 		memcpy(spec->sha1, sha1, 20);
 		spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
 	}
@@ -390,7 +390,8 @@ static void remove_tempfile_on_signal(int signo)
  *               infile2 infile2-sha1 infile2-mode [ rename-to ]
  *
  */
-static void run_external_diff(const char *name,
+static void run_external_diff(const char *pgm,
+			      const char *name,
 			      const char *other,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
@@ -418,7 +419,6 @@ static void run_external_diff(const char *name,
 	if (pid < 0)
 		die("unable to fork");
 	if (!pid) {
-		const char *pgm = external_diff();
 		if (pgm) {
 			if (one && two) {
 				const char *exec_arg[10];
@@ -466,6 +466,30 @@ static void run_external_diff(const char *name,
 		exit(1);
 	}
 	remove_tempfile();
+}
+
+static void run_diff(const char *name,
+		     const char *other,
+		     struct diff_filespec *one,
+		     struct diff_filespec *two,
+		     const char *xfrm_msg)
+{
+	const char *pgm = external_diff();
+	if (!pgm &&
+	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
+	    (S_IFMT & one->mode) != (S_IFMT & two->mode)) {
+		/* a filepair that changes between file and symlink
+		 * needs to be split into deletion and creation.
+		 */
+		struct diff_filespec *null = alloc_filespec(two->path);
+		run_external_diff(NULL, name, other, one, null, xfrm_msg);
+		free(null);
+		null = alloc_filespec(one->path);
+		run_external_diff(NULL, name, other, null, two, xfrm_msg);
+		free(null);
+	}
+	else
+		run_external_diff(pgm, name, other, one, two, xfrm_msg);
 }
 
 void diff_setup(int reverse_diff_)
@@ -553,9 +577,11 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	one = p->one;
 	two = p->two;
 
-	/* deletion, addition, mode change and renames are all interesting. */
+	/* deletion, addition, mode or type change
+	 * and rename are all interesting.
+	 */
 	if (DIFF_FILE_VALID(one) != DIFF_FILE_VALID(two) ||
-	    (one->mode != two->mode) ||
+	    DIFF_PAIR_MODE_CHANGED(p) ||
 	    strcmp(one->path, two->path))
 		return 0;
 
@@ -608,9 +634,9 @@ static void diff_flush_patch(struct diff_filepair *p)
 	}
 
 	if (DIFF_PAIR_UNMERGED(p))
-		run_external_diff(name, NULL, NULL, NULL, NULL);
+		run_diff(name, NULL, NULL, NULL, NULL);
 	else
-		run_external_diff(name, other, p->one, p->two, msg);
+		run_diff(name, other, p->one, p->two, msg);
 }
 
 int diff_needs_to_stay(struct diff_queue_struct *q, int i,
@@ -775,7 +801,8 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (p->status == 'X')
+		if ((diff_output_style == DIFF_FORMAT_NO_OUTPUT) ||
+		    (p->status == 'X'))
 			continue;
 		if (p->status == 0)
 			die("internal error in diff-resolve-rename-copy");

@@ -48,6 +48,12 @@ struct diff_filepair {
 #define DIFF_PAIR_TYPE_CHANGED(p) \
 	((S_IFMT & (p)->one->mode) != (S_IFMT & (p)->two->mode))
 
+#define DIFF_PAIR_MODE_CHANGED(p) ((p)->one->mode != (p)->two->mode)
+
+#define DIFF_FILE_CANON_MODE(mode) \
+	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
+	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
+
 extern int diff_unmodified_pair(struct diff_filepair *);
 
 struct diff_queue_struct {
