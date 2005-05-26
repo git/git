@@ -84,7 +84,7 @@ do
 done
 test_expect_success \
     'adding various types of objects with git-update-cache --add.' \
-    'find path* ! -type d -print0 | xargs -0 -r git-update-cache --add'
+    'find path* ! -type d -print0 | xargs -0 git-update-cache --add'
 
 # Show them and see that matches what we expect.
 test_expect_success \

@@ -86,8 +86,7 @@ committer A U Thor <author@example.xz>
 EOF
 test_expect_success \
     'verify old AUTHOR variables were used correctly in commit' \
-    'sed -ne '\''/^\(author\|committer\)/s|>.*|>|p'\'' current |
-     cmp - expected'
+    'sed -ne '\''/^\(author\)/s|>.*|>|p'\'' -e'\''/^\(committer\)/s|>.*|>|p'\''\    current > out && cmp out expected'
 
 unset GIT_DIR
 test_expect_success \
@@ -128,7 +127,6 @@ committer R O Htua <rohtua@example.xz>
 EOF
 test_expect_success \
     'verify new AUTHOR variables were used correctly in commit.' \
-    'sed -ne '\''/^\(author\|committer\)/s|>.*|>|p'\'' current |
-     cmp - expected'
+    'sed -ne '\''/^\(author\)/s|>.*|>|p'\'' -e'\''/^\(committer\)/s|>.*|>|p'\''\    current > out && cmp out expected'
 
 test_done
