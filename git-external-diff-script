@@ -1,0 +1,67 @@
+#!/bin/sh
+# Copyright (C) 2005 Junio C Hamano
+#
+# This script is designed to emulate what the built-in diff driver
+# does when set as GIT_EXTERNAL_SCRIPT.
+
+case "$#" in
+1)
+    echo "* Unmerged path $1"
+    exit 0 ;;
+*)
+    name1="$1" tmp1="$2" hex1="$3" mode1="$4" tmp2="$5" hex2="$6" mode2="$7"
+    case "$#" in
+    7)
+	name2="$name1" ;;
+    9)
+	name2="$8" xfrm_msg="$9" ;;
+    esac ;;	
+esac
+
+show_create () {
+    name_="$1" tmp_="$2" hex_="$3" mode_="$4"
+    echo "diff --git a/$name_ b/$name_"
+    echo "new file mode $mode_"
+    diff ${GIT_DIFF_OPTS-'-pu'} -L /dev/null -L "b/$name_" /dev/null "$tmp_"
+}
+
+show_delete () {
+    name_="$1" tmp_="$2" hex_="$3" mode_="$4"
+    echo "diff --git a/$name_ b/$name_"
+    echo "deleted file mode $mode_"
+    diff ${GIT_DIFF_OPTS-'-pu'} -L "a/$name_" -L /dev/null "$tmp_" /dev/null
+}
+
+case "$mode1" in
+120*) type1=l ;;
+100*) type1=f ;;
+.)    show_create "$name2" "$tmp2" "$hex2" "$mode2"
+      exit 0 ;;
+esac
+case "$mode2" in
+120*) type2=l ;;
+100*) type2=f ;;
+.)    show_delete "$name1" "$tmp1" "$hex1" "$mode1"
+      exit 0 ;;
+esac
+
+if test "$type1" != "$type2"
+then
+	show_delete "$name1" "$tmp1" "$hex1" "$mode1"
+	show_create "$name2" "$tmp2" "$hex2" "$mode2"
+	exit 0
+fi
+
+echo diff --git "a/$name1" "b/$name2"
+if test "$mode1" != "$mode2"
+then
+    echo "old mode $mode1"
+    echo "new mode $mode2"
+    if test "$xfrm_msg" != ""
+    then
+	echo -n $xfrm_msg
+    fi
+fi
+diff ${GIT_DIFF_OPTS-'-pu'} -L "a/$name1" -L "b/$name2" "$tmp1" "$tmp2"
+exit 0
+
