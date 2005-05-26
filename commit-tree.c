@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 		parse_date(audate, date, sizeof(date));
 	cmdate = gitenv("GIT_COMMITTER_DATE");
 	if (cmdate)
-		parse_date(audate, realdate, sizeof(realdate));
+		parse_date(cmdate, realdate, sizeof(realdate));
 
 	remove_special(gecos); remove_special(realgecos); remove_special(commitgecos);
 	remove_special(email); remove_special(realemail); remove_special(commitemail);
