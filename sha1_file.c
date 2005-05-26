@@ -329,7 +329,7 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 		return NULL;
 
 	bytes = strlen(buffer) + 1;
-	buf = xmalloc(*size);
+	buf = xmalloc(1+*size);
 
 	memcpy(buf, buffer + bytes, stream.total_out - bytes);
 	bytes = stream.total_out - bytes;
@@ -339,6 +339,7 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 		while (inflate(&stream, Z_FINISH) == Z_OK)
 			/* nothing */;
 	}
+	buf[*size] = 0;
 	inflateEnd(&stream);
 	return buf;
 }
