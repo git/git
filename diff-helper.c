@@ -4,7 +4,6 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "diff.h"
-#include "diffcore.h" /* just for MAX_SCORE */
 
 static const char *pickaxe = NULL;
 static int line_termination = '\n';
@@ -78,7 +77,6 @@ int main(int ac, const char **av) {
 			if (status == 'R' || status == 'C') {
 				two_paths = 1;
 				sscanf(cp, "%d", &score);
-				score = score * MAX_SCORE / 100;
 				if (line_termination) {
 					cp = strchr(cp,
 						    inter_name_termination);

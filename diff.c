@@ -886,7 +886,7 @@ void diff_helper_input(unsigned old_mode,
 	if (new_mode)
 		fill_filespec(two, new_sha1, new_mode);
 	dp = diff_queue(&diff_queued_diff, one, two);
-	dp->score = score;
+	dp->score = score * MAX_SCORE / 100;
 	dp->status = status;
 }
 
