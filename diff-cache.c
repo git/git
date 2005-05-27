@@ -8,6 +8,7 @@ static int detect_rename = 0;
 static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
+static int pickaxe_opts = 0;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
@@ -209,6 +210,10 @@ int main(int argc, const char **argv)
 			pickaxe = arg + 2;
 			continue;
 		}
+		if (!strcmp(arg, "--pickaxe-all")) {
+			pickaxe_opts = DIFF_PICKAXE_ALL;
+			continue;
+		}
 		if (!strcmp(arg, "-m")) {
 			match_nonexisting = 1;
 			continue;
@@ -238,7 +243,7 @@ int main(int argc, const char **argv)
 	if (detect_rename)
 		diffcore_rename(detect_rename, diff_score_opt);
 	if (pickaxe)
-		diffcore_pickaxe(pickaxe);
+		diffcore_pickaxe(pickaxe, pickaxe_opts);
 	if (pathspec)
 		diffcore_pathspec(pathspec);
 	diff_flush(diff_output_format, 1);

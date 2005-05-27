@@ -6,6 +6,7 @@
 #include "diff.h"
 
 static const char *pickaxe = NULL;
+static int pickaxe_opts = 0;
 static int line_termination = '\n';
 static int inter_name_termination = '\t';
 
@@ -23,6 +24,8 @@ int main(int ac, const char **av) {
 		else if (av[1][1] == 'S') {
 			pickaxe = av[1] + 2;
 		}
+		else if (!strcmp(av[1], "--pickaxe-all"))
+			pickaxe_opts = DIFF_PICKAXE_ALL;
 		else
 			usage(diff_helper_usage);
 		ac--; av++;
@@ -127,14 +130,14 @@ int main(int ac, const char **av) {
 			continue;
 		}
 		if (pickaxe)
-			diffcore_pickaxe(pickaxe);
+			diffcore_pickaxe(pickaxe, pickaxe_opts);
 		if (1 < ac)
 			diffcore_pathspec(av + 1);
 		diff_flush(DIFF_FORMAT_PATCH, 0);
 		printf("%s\n", sb.buf);
 	}
 	if (pickaxe)
-		diffcore_pickaxe(pickaxe);
+		diffcore_pickaxe(pickaxe, pickaxe_opts);
 	if (1 < ac)
 		diffcore_pathspec(av + 1);
 	diff_flush(DIFF_FORMAT_PATCH, 0);

@@ -36,7 +36,9 @@ extern void diff_setup(int flags);
 
 extern void diffcore_rename(int rename_copy, int minimum_score);
 
-extern void diffcore_pickaxe(const char *needle);
+#define DIFF_PICKAXE_ALL	1
+extern void diffcore_pickaxe(const char *needle, int opts);
+
 extern void diffcore_pathspec(const char **pathspec);
 
 extern int diff_queue_is_empty(void);
