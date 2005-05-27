@@ -268,8 +268,6 @@ static int call_diff_flush(void)
 		diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
 		return 0;
 	}
-	if (nr_paths)
-		diffcore_pathspec(paths);
 	if (header) {
 		if (diff_output_format == DIFF_FORMAT_MACHINE) {
 			const char *ep, *cp;
