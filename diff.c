@@ -647,28 +647,6 @@ static void diff_flush_patch(struct diff_filepair *p)
 		run_diff(name, other, p->one, p->two, msg);
 }
 
-int diff_needs_to_stay(struct diff_queue_struct *q, int i,
-		       struct diff_filespec *it)
-{
-	/* If it will be used in later entry (either stay or used
-	 * as the source of rename/copy), we need to copy, not rename.
-	 */
-	while (i < q->nr) {
-		struct diff_filepair *p = q->queue[i++];
-		if (!DIFF_FILE_VALID(p->two))
-			continue; /* removed is fine */
-		if (strcmp(p->one->path, it->path))
-			continue; /* not relevant */
-
-		/* p has its src set to *it and it is not a delete;
-		 * it will be used for in-place change, rename/copy,
-		 * or just stays there.  We cannot rename it out.
-		 */
-		return 1;
-	}
-	return 0;
-}
-
 int diff_queue_is_empty(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;

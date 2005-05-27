@@ -70,9 +70,6 @@ extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
 					struct diff_filespec *);
 extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
-extern int diff_needs_to_stay(struct diff_queue_struct *, int,
-			      struct diff_filespec *);
-
 #define DIFF_DEBUG 0
 #if DIFF_DEBUG
 void diff_debug_filespec(struct diff_filespec *, int, const char *);
