@@ -59,7 +59,7 @@ then
     echo "new mode $mode2"
     if test "$xfrm_msg" != ""
     then
-	echo -n $xfrm_msg
+	echo "$xfrm_msg"
     fi
 fi
 diff ${GIT_DIFF_OPTS-'-pu'} -L "a/$name1" -L "b/$name2" "$tmp1" "$tmp2"

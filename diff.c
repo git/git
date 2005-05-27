@@ -141,7 +141,7 @@ static void builtin_diff(const char *name_a,
 			printf("new mode %s\n", temp[1].mode);
 		}
 		if (xfrm_msg && xfrm_msg[0])
-			fputs(xfrm_msg, stdout);
+			puts(xfrm_msg);
 
 		if (strncmp(temp[0].mode, temp[1].mode, 3))
 			/* we do not run diff between different kind
@@ -622,7 +622,7 @@ static void diff_flush_patch(struct diff_filepair *p)
 		sprintf(msg_,
 			"similarity index %d%%\n"
 			"copy from %s\n"
-			"copy to %s\n",
+			"copy to %s",
 			(int)(0.5 + p->score * 100.0/MAX_SCORE),
 			p->one->path, p->two->path);
 		msg = msg_;
@@ -631,7 +631,7 @@ static void diff_flush_patch(struct diff_filepair *p)
 		sprintf(msg_,
 			"similarity index %d%%\n"
 			"rename old %s\n"
-			"rename new %s\n",
+			"rename new %s",
 			(int)(0.5 + p->score * 100.0/MAX_SCORE),
 			p->one->path, p->two->path);
 		msg = msg_;
