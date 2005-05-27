@@ -113,7 +113,6 @@ struct diff_score {
 	int src; /* index in rename_src */
 	int dst; /* index in rename_dst */
 	int score;
-	int rank;
 };
 
 static int estimate_similarity(struct diff_filespec *src,
