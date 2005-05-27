@@ -55,8 +55,7 @@ void diffcore_pathspec(const char **pathspec)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (matches_pathspec(p->one->path, spec, speccnt) ||
-		    matches_pathspec(p->two->path, spec, speccnt))
+		if (matches_pathspec(p->two->path, spec, speccnt))
 			diff_q(&outq, p);
 		else
 			diff_free_filepair(p);
