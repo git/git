@@ -11,7 +11,7 @@ static const char *diff_files_usage =
 
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
-static int reverse_diff = 0;
+static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static int silent = 0;
@@ -51,7 +51,7 @@ int main(int argc, const char **argv)
 		else if (!strcmp(argv[1], "-z"))
 			diff_output_format = DIFF_FORMAT_MACHINE;
 		else if (!strcmp(argv[1], "-R"))
-			reverse_diff = 1;
+			diff_setup_opt |= DIFF_SETUP_REVERSE;
 		else if (!strcmp(argv[1], "-S"))
 			pickaxe = argv[1] + 2;
 		else if (!strncmp(argv[1], "-M", 2)) {
@@ -75,7 +75,7 @@ int main(int argc, const char **argv)
 		exit(1);
 	}
 
-	diff_setup(reverse_diff);
+	diff_setup(diff_setup_opt);
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;

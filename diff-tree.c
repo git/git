@@ -10,7 +10,7 @@ static int show_tree_entry_in_recursive = 0;
 static int read_stdin = 0;
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
-static int reverse_diff = 0;
+static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static const char *header = NULL;
@@ -255,7 +255,7 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 
 static void call_diff_setup(void)
 {
-	diff_setup(reverse_diff);
+	diff_setup(diff_setup_opt);
 }
 
 static int call_diff_flush(void)
@@ -497,7 +497,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-R")) {
-			reverse_diff = 1;
+			diff_setup_opt |= DIFF_SETUP_REVERSE;
 			continue;
 		}
 		if (!strcmp(arg, "-p")) {

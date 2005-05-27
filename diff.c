@@ -492,9 +492,10 @@ static void run_diff(const char *name,
 		run_external_diff(pgm, name, other, one, two, xfrm_msg);
 }
 
-void diff_setup(int reverse_diff_)
+void diff_setup(int flags)
 {
-	reverse_diff = reverse_diff_;
+	if (flags & DIFF_SETUP_REVERSE)
+		reverse_diff = 1;
 }
 
 struct diff_queue_struct diff_queued_diff;

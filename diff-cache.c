@@ -5,7 +5,7 @@ static int cached_only = 0;
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int match_nonexisting = 0;
 static int detect_rename = 0;
-static int reverse_diff = 0;
+static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 
@@ -202,7 +202,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-R")) {
-			reverse_diff = 1;
+			diff_setup_opt |= DIFF_SETUP_REVERSE;
 			continue;
 		}
 		if (!strcmp(arg, "-S")) {
@@ -224,7 +224,7 @@ int main(int argc, const char **argv)
 		usage(diff_cache_usage);
 
 	/* The rest is for paths restriction. */
-	diff_setup(reverse_diff);
+	diff_setup(diff_setup_opt);
 
 	mark_merge_entries();
 
