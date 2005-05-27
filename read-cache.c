@@ -200,11 +200,13 @@ static int check_file_directory_conflict(const struct cache_entry *ce,
 	cp = pathbuf;
 	while (1) {
 		char *ep = strchr(cp, '/');
+		int len;
 		if (!ep)
 			break;
 		*ep = 0;    /* first cut it at slash */
+		len = ep - pathbuf;
 		pos = cache_name_pos(pathbuf,
-				     htons(create_ce_flags(ep-cp, stage)));
+				     htons(create_ce_flags(len, stage)));
 		if (0 <= pos) {
 			/* Our leading path component is registered as a file,
 			 * and we are trying to make it a directory.  This is
