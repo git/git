@@ -269,18 +269,11 @@ static int call_diff_flush(void)
 		return 0;
 	}
 	if (header) {
-		if (diff_output_format == DIFF_FORMAT_MACHINE) {
-			const char *ep, *cp;
-			for (cp = header; *cp; cp = ep) {
-				ep = strchr(cp, '\n');
-				if (ep == 0) ep = cp + strlen(cp);
-				printf("%.*s%c", ep-cp, cp, 0);
-				if (*ep) ep++;
-			}
-		}
-		else {
-			printf("%s", header);
-		}
+		const char *fmt = "%s";
+		if (diff_output_format == DIFF_FORMAT_MACHINE)
+			fmt = "%s%c";
+		
+		printf(fmt, header, 0);
 		header = NULL;
 	}
 	diff_flush(diff_output_format, 1);
