@@ -521,6 +521,13 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	return dp;
 }
 
+void diff_free_filepair(struct diff_filepair *p)
+{
+	diff_free_filespec_data(p->one);
+	diff_free_filespec_data(p->two);
+	free(p);
+}
+
 static void diff_flush_raw(struct diff_filepair *p,
 			   int line_termination,
 			   int inter_name_termination)
@@ -817,12 +824,8 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 			break;
 		}
 	}
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		diff_free_filespec_data(p->one);
-		diff_free_filespec_data(p->two);
-		free(p);
-	}
+	for (i = 0; i < q->nr; i++)
+		diff_free_filepair(q->queue[i]);
 	free(q->queue);
 	q->queue = NULL;
 	q->nr = q->alloc = 0;

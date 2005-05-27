@@ -54,6 +54,8 @@ struct diff_filepair {
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
 
+extern void diff_free_filepair(struct diff_filepair *);
+
 extern int diff_unmodified_pair(struct diff_filepair *);
 
 struct diff_queue_struct {

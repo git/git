@@ -361,11 +361,8 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			else
 				pair_to_free = p;
 		}
-		if (pair_to_free) {
-			diff_free_filespec_data(pair_to_free->one);
-			diff_free_filespec_data(pair_to_free->two);
-			free(pair_to_free);
-		}
+		if (pair_to_free)
+			diff_free_filepair(pair_to_free);
 	}
 	diff_debug_queue("done copying original", &outq);
 

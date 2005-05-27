@@ -49,7 +49,7 @@ void diffcore_pickaxe(const char *needle)
 			 contains(p->two, needle, len))
 			diff_q(&outq, p);
 		if (onum == outq.nr)
-			free(p);
+			diff_free_filepair(p);
 	}
 	free(q->queue);
 	*q = outq;
