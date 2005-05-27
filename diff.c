@@ -518,6 +518,7 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	dp->one = one;
 	dp->two = two;
 	dp->score = 0;
+	dp->source_stays = 0;
 	diff_q(queue, dp);
 	return dp;
 }
@@ -675,8 +676,8 @@ void diff_debug_filepair(const struct diff_filepair *p, int i)
 {
 	diff_debug_filespec(p->one, i, "one");
 	diff_debug_filespec(p->two, i, "two");
-	fprintf(stderr, "score %d, status %c\n",
-		p->score, p->status ? : '?');
+	fprintf(stderr, "score %d, status %c source_stays %d\n",
+		p->score, p->status ? : '?', p->source_stays);
 }
 
 void diff_debug_queue(const char *msg, struct diff_queue_struct *q)
@@ -698,8 +699,6 @@ static void diff_resolve_rename_copy(void)
 	struct diff_filepair *p, *pp;
 	struct diff_queue_struct *q = &diff_queued_diff;
 
-	/* This should not depend on the ordering of things. */
-
 	diff_debug_queue("resolve-rename-copy", q);
 
 	for (i = 0; i < q->nr; i++) {
@@ -707,23 +706,28 @@ static void diff_resolve_rename_copy(void)
 		p->status = 0; /* undecided */
 		if (DIFF_PAIR_UNMERGED(p))
 			p->status = 'U';
-		else if (!DIFF_FILE_VALID((p)->one))
+		else if (!DIFF_FILE_VALID(p->one))
 			p->status = 'N';
-		else if (!DIFF_FILE_VALID((p)->two)) {
-			/* Deletion record should be omitted if there
-			 * are rename/copy entries using this one as
-			 * the source.  Then we can say one of them
-			 * is a rename and the rest are copies.
+		else if (!DIFF_FILE_VALID(p->two)) {
+			/* Deleted entry may have been picked up by
+			 * another rename-copy entry.  So we scan the
+			 * queue and if we find one that uses us as the
+			 * source we do not say delete for this entry.
 			 */
-			p->status = 'D';
 			for (j = 0; j < q->nr; j++) {
 				pp = q->queue[j];
-				if (!strcmp(pp->one->path, p->one->path) &&
-				    strcmp(pp->one->path, pp->two->path)) {
+				if (!strcmp(p->one->path, pp->one->path) &&
+				    pp->score) {
+					/* rename/copy are always valid
+					 * so we do not say DIFF_FILE_VALID()
+					 * on pp->one and pp->two.
+					 */
 					p->status = 'X';
 					break;
 				}
 			}
+			if (!p->status)
+				p->status = 'D';
 		}
 		else if (DIFF_PAIR_TYPE_CHANGED(p))
 			p->status = 'T';
@@ -732,33 +736,24 @@ static void diff_resolve_rename_copy(void)
 		 * whose both sides are valid and of the same type, i.e.
 		 * either in-place edit or rename/copy edit.
 		 */
-		else if (strcmp(p->one->path, p->two->path)) {
-			/* See if there is somebody else anywhere that
-			 * will keep the path (either modified or
-			 * unmodified).  If so, we have to be a copy,
-			 * not a rename.  In addition, if there is
-			 * some other rename or copy that comes later
-			 * than us that uses the same source, we
-			 * have to be a copy, not a rename.
+		else if (p->score) {
+			if (p->source_stays) {
+				p->status = 'C';
+				continue;
+			}
+			/* See if there is some other filepair that
+			 * copies from the same source as us.  If so
+			 * we are a copy.  Otherwise we are a rename.
 			 */
-			for (j = 0; j < q->nr; j++) {
+			for (j = i + 1; j < q->nr; j++) {
 				pp = q->queue[j];
 				if (strcmp(pp->one->path, p->one->path))
-					continue;
-				if (!strcmp(pp->one->path, pp->two->path)) {
-					if (DIFF_FILE_VALID(pp->two)) {
-						/* non-delete */
-						p->status = 'C';
-						break;
-					}
-					continue;
-				}
-				/* pp is a rename/copy ... */
-				if (i < j) {
-					/* ... and comes later than us */
-					p->status = 'C';
-					break;
-				}
+					continue; /* not us */
+				if (!pp->score)
+					continue; /* not a rename/copy */
+				/* pp is a rename/copy from the same source */
+				p->status = 'C';
+				break;
 			}
 			if (!p->status)
 				p->status = 'R';
@@ -767,8 +762,11 @@ static void diff_resolve_rename_copy(void)
 			 p->one->mode != p->two->mode)
 			p->status = 'M';
 		else
-			/* this is a "no-change" entry */
-			p->status = 'X';
+			/* this is a "no-change" entry.
+			 * should not happen anymore.
+			 * p->status = 'X';
+			 */
+			die("internal error in diffcore: unmodified entry remains");
 	}
 	diff_debug_queue("resolve-rename-copy done", q);
 }

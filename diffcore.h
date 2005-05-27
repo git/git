@@ -39,8 +39,11 @@ extern void diff_free_filespec_data(struct diff_filespec *);
 struct diff_filepair {
 	struct diff_filespec *one;
 	struct diff_filespec *two;
-	int score; /* only valid when one and two are different paths */
-	int status; /* M C R N D U (see Documentation/diff-format.txt) */
+	unsigned short int score; /* only valid when one and two are
+				   * different paths
+				   */
+	char source_stays; /* all of R/C are copies */
+	char status; /* M C R N D U (see Documentation/diff-format.txt) */
 };
 #define DIFF_PAIR_UNMERGED(p) \
 	(!DIFF_FILE_VALID((p)->one) && !DIFF_FILE_VALID((p)->two))
