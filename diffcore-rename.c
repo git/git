@@ -163,7 +163,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	/* A delta that has a lot of literal additions would have
 	 * big delta_size no matter what else it does.
 	 */
-	if (minimum_score < MAX_SCORE * delta_size / base_size)
+	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
 	/* Estimate the edit size by interpreting delta. */
