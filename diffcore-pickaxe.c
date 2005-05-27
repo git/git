@@ -11,7 +11,7 @@ static int contains(struct diff_filespec *one,
 {
 	unsigned long offset, sz;
 	const char *data;
-	if (diff_populate_filespec(one))
+	if (diff_populate_filespec(one, 0))
 		return 0;
 	sz = one->size;
 	data = one->data;

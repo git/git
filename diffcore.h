@@ -33,7 +33,7 @@ extern struct diff_filespec *alloc_filespec(const char *);
 extern void fill_filespec(struct diff_filespec *, const unsigned char *,
 			  unsigned short);
 
-extern int diff_populate_filespec(struct diff_filespec *);
+extern int diff_populate_filespec(struct diff_filespec *, int);
 extern void diff_free_filespec_data(struct diff_filespec *);
 
 struct diff_filepair {

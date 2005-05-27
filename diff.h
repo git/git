@@ -29,6 +29,8 @@ extern void diff_unmerge(const char *path);
 extern int diff_scoreopt_parse(const char *opt);
 
 #define DIFF_SETUP_REVERSE      	1
+#define DIFF_SETUP_USE_CACHE		2
+#define DIFF_SETUP_USE_SIZE_CACHE	4
 extern void diff_setup(int flags);
 
 #define DIFF_DETECT_RENAME	1

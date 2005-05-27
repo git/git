@@ -578,6 +578,9 @@ int main(int argc, const char **argv)
 	if (!read_stdin)
 		return 0;
 
+	if (detect_rename)
+		diff_setup_opt |= (DIFF_SETUP_USE_SIZE_CACHE |
+				   DIFF_SETUP_USE_CACHE);
 	while (fgets(line, sizeof(line), stdin))
 		diff_tree_stdin(line);
 

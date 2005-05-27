@@ -12,6 +12,7 @@ static const char *diff_opts = "-pu";
 static unsigned char null_sha1[20] = { 0, };
 
 static int reverse_diff;
+static int use_size_cache;
 
 static const char *external_diff(void)
 {
@@ -222,18 +223,69 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	return 1;
 }
 
+static struct sha1_size_cache {
+	unsigned char sha1[20];
+	unsigned long size;
+} **sha1_size_cache;
+static int sha1_size_cache_nr, sha1_size_cache_alloc;
+
+static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
+						 unsigned long size)
+{
+	int first, last;
+	struct sha1_size_cache *e;
+
+	first = 0;
+	last = sha1_size_cache_nr;
+	while (last > first) {
+		int next = (last + first) >> 1;
+		e = sha1_size_cache[next];
+		int cmp = memcmp(e->sha1, sha1, 20);
+		if (!cmp)
+			return e;
+		if (cmp < 0) {
+			last = next;
+			continue;
+		}
+		first = next+1;
+	}
+	/* not found */
+	if (size == UINT_MAX)
+		return NULL;
+	/* insert to make it at "first" */
+	if (sha1_size_cache_alloc <= sha1_size_cache_nr) {
+		sha1_size_cache_alloc = alloc_nr(sha1_size_cache_alloc);
+		sha1_size_cache = xrealloc(sha1_size_cache,
+					   sha1_size_cache_alloc *
+					   sizeof(*sha1_size_cache));
+	}
+	sha1_size_cache_nr++;
+	if (first < sha1_size_cache_nr)
+		memmove(sha1_size_cache + first + 1, sha1_size_cache + first,
+			(sha1_size_cache_nr - first - 1) *
+			sizeof(*sha1_size_cache));
+	e = xmalloc(sizeof(struct sha1_size_cache));
+	sha1_size_cache[first] = e;
+	memcpy(e->sha1, sha1, 20);
+	e->size = size;
+	return e;
+}
+
 /*
  * While doing rename detection and pickaxe operation, we may need to
  * grab the data for the blob (or file) for our own in-core comparison.
  * diff_filespec has data and size fields for this purpose.
  */
-int diff_populate_filespec(struct diff_filespec *s)
+int diff_populate_filespec(struct diff_filespec *s, int size_only)
 {
 	int err = 0;
 	if (!DIFF_FILE_VALID(s))
 		die("internal error: asking to populate invalid file.");
 	if (S_ISDIR(s->mode))
 		return -1;
+
+	if (!use_size_cache)
+		size_only = 0;
 
 	if (s->data)
 		return err;
@@ -254,6 +306,8 @@ int diff_populate_filespec(struct diff_filespec *s)
 		s->size = st.st_size;
 		if (!s->size)
 			goto empty;
+		if (size_only)
+			return 0;
 		if (S_ISLNK(st.st_mode)) {
 			int ret;
 			s->data = xmalloc(s->size);
@@ -273,9 +327,21 @@ int diff_populate_filespec(struct diff_filespec *s)
 		close(fd);
 	}
 	else {
+		/* We cannot do size only for SHA1 blobs */
 		char type[20];
+		struct sha1_size_cache *e;
+
+		if (size_only) {
+			e = locate_size_cache(s->sha1, UINT_MAX);
+			if (e) {
+				s->size = e->size;
+				return 0;
+			}
+		}
 		s->data = read_sha1_file(s->sha1, type, &s->size);
 		s->should_free = 1;
+		if (s->data && size_only)
+			locate_size_cache(s->sha1, s->size);
 	}
 	return 0;
 }
@@ -361,7 +427,7 @@ static void prepare_temp_file(const char *name,
 		return;
 	}
 	else {
-		if (diff_populate_filespec(one))
+		if (diff_populate_filespec(one, 0))
 			die("cannot read data blob for %s", one->path);
 		prep_temp_blob(temp, one->data, one->size,
 			       one->sha1, one->mode);
@@ -496,6 +562,19 @@ void diff_setup(int flags)
 {
 	if (flags & DIFF_SETUP_REVERSE)
 		reverse_diff = 1;
+	if (flags & DIFF_SETUP_USE_CACHE) {
+		if (!active_cache)
+			/* read-cache does not die even when it fails
+			 * so it is safe for us to do this here.  Also
+			 * it does not smudge active_cache or active_nr
+			 * when it fails, so we do not have to worry about
+			 * cleaning it up oufselves either.
+			 */
+			read_cache();
+	}
+	if (flags & DIFF_SETUP_USE_SIZE_CACHE)
+		use_size_cache = 1;
+	
 }
 
 struct diff_queue_struct diff_queued_diff;
