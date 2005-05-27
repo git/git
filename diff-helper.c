@@ -129,17 +129,17 @@ int main(int ac, const char **av) {
 					  new_path);
 			continue;
 		}
-		if (pickaxe)
-			diffcore_pickaxe(pickaxe, pickaxe_opts);
 		if (1 < ac)
 			diffcore_pathspec(av + 1);
+		if (pickaxe)
+			diffcore_pickaxe(pickaxe, pickaxe_opts);
 		diff_flush(DIFF_FORMAT_PATCH, 0);
 		printf("%s\n", sb.buf);
 	}
-	if (pickaxe)
-		diffcore_pickaxe(pickaxe, pickaxe_opts);
 	if (1 < ac)
 		diffcore_pathspec(av + 1);
+	if (pickaxe)
+		diffcore_pickaxe(pickaxe, pickaxe_opts);
 	diff_flush(DIFF_FORMAT_PATCH, 0);
 	return 0;
 }

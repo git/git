@@ -46,23 +46,23 @@ cat >expected <<\EOF
 EOF
 
 test_expect_success \
-    'validate the result' \
+    'validate the result (#1)' \
     'compare_diff_raw current expected'
 
 # In the tree, there is only path0/COPYING.  In the cache, path0 and
 # path1 both have COPYING and the latter is a copy of path0/COPYING.
-# When we omit output from path0 it should still be able to tell us
-# that path1/COPYING is result from a copy from path0/COPYING, not
-# rename, which would imply path0/COPYING is now gone.
+# However when we say we care only about path1, we should just see
+# path1/COPYING suddenly appearing from nowhere, not detected as
+# a copy from path0/COPYING.
 
 git-diff-cache -C $tree path1 >current
 
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 6ff87c4664981e4397625791c8ea3bbb5f2279a3 C100	path0/COPYING	path1/COPYING
+:000000 100644 0000000000000000000000000000000000000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 N	path1/COPYING
 EOF
 
 test_expect_success \
-    'validate the result' \
+    'validate the result (#2)' \
     'compare_diff_raw current expected'
 
 test_expect_success \
@@ -82,22 +82,22 @@ cat >expected <<\EOF
 EOF
 
 test_expect_success \
-    'validate the result' \
+    'validate the result (#3)' \
     'compare_diff_raw current expected'
 
 # In the tree, there is only path0/COPYING.  In the cache, path0 does
 # not have COPYING anymore and path1 has COPYING which is a copy of
-# path0/COPYING.  Even if we restrict the output to path1, it still
-# should show us the rename.
+# path0/COPYING.  When we say we care only about path1, we should just
+# see path1/COPYING appearing from nowhere.
 
 git-diff-cache -C $tree path1 >current
 
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 6ff87c4664981e4397625791c8ea3bbb5f2279a3 R100	path0/COPYING	path1/COPYING
+:000000 100644 0000000000000000000000000000000000000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 N	path1/COPYING
 EOF
 
 test_expect_success \
-    'validate the result' \
+    'validate the result (#4)' \
     'compare_diff_raw current expected'
 
 test_done

@@ -240,12 +240,12 @@ int main(int argc, const char **argv)
 		die("unable to read tree object %s", tree_name);
 
 	ret = diff_cache(active_cache, active_nr);
+	if (pathspec)
+		diffcore_pathspec(pathspec);
 	if (detect_rename)
 		diffcore_rename(detect_rename, diff_score_opt);
 	if (pickaxe)
 		diffcore_pickaxe(pickaxe, pickaxe_opts);
-	if (pathspec)
-		diffcore_pathspec(pathspec);
 	diff_flush(diff_output_format, 1);
 	return ret;
 }
