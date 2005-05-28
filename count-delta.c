@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include "delta.h"
 #include "count-delta.h"
 
 static unsigned long get_hdr_size(const unsigned char **datap)

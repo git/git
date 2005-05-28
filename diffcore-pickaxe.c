@@ -4,7 +4,6 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "delta.h"
 
 static int contains(struct diff_filespec *one,
 		    const char *needle, unsigned long len)
