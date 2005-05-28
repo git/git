@@ -54,6 +54,10 @@ OPTIONS
 -z::
 	\0 line termination on output
 
+--root::
+	When '--root' is specified the initial commit will be showed as a big
+	creation event. This is equivalent to a diff against the NULL tree.
+
 --stdin::
 	When '--stdin' is specified, the command does not take
 	<tree-ish> arguments from the command line.  Instead, it
