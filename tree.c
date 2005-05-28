@@ -133,7 +133,7 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 		}
 		if (obj)
 			add_ref(&item->object, obj);
-
+		entry->parent = NULL; /* needs to be filled by the user */
 		*list_p = entry;
 		list_p = &entry->next;
 	}
