@@ -15,6 +15,7 @@ static const char *diff_helper_usage =
 
 int main(int ac, const char **av) {
 	struct strbuf sb;
+	const char *garbage_flush_format;
 
 	strbuf_init(&sb);
 
@@ -30,6 +31,8 @@ int main(int ac, const char **av) {
 			usage(diff_helper_usage);
 		ac--; av++;
 	}
+	garbage_flush_format = (line_termination == 0) ? "%s" : "%s\n";
+
 	/* the remaining parameters are paths patterns */
 
 	diff_setup(0);
@@ -134,7 +137,7 @@ int main(int ac, const char **av) {
 		if (pickaxe)
 			diffcore_pickaxe(pickaxe, pickaxe_opts);
 		diff_flush(DIFF_FORMAT_PATCH, 0);
-		printf("%s\n", sb.buf);
+		printf(garbage_flush_format, sb.buf);
 	}
 	if (1 < ac)
 		diffcore_pathspec(av + 1);
