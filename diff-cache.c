@@ -206,7 +206,7 @@ int main(int argc, const char **argv)
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
 			continue;
 		}
-		if (!strcmp(arg, "-S")) {
+		if (!strncmp(arg, "-S", 2)) {
 			pickaxe = arg + 2;
 			continue;
 		}

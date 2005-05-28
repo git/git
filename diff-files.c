@@ -53,7 +53,7 @@ int main(int argc, const char **argv)
 			diff_output_format = DIFF_FORMAT_MACHINE;
 		else if (!strcmp(argv[1], "-R"))
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
-		else if (!strcmp(argv[1], "-S"))
+		else if (!strncmp(argv[1], "-S", 2))
 			pickaxe = argv[1] + 2;
 		else if (!strcmp(argv[1], "--pickaxe-all"))
 			pickaxe_opts = DIFF_PICKAXE_ALL;

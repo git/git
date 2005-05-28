@@ -9,7 +9,7 @@ git-diff-cache - Compares content and mode of blobs between the cache and reposi
 
 SYNOPSIS
 --------
-'git-diff-cache' [-p] [-r] [-z] [-m] [-M] [-R] [-C] [-S<string>] [--cached] <tree-ish> [<path>...]
+'git-diff-cache' [-p] [-r] [-z] [-m] [-M] [-R] [-C] [-S<string>] [--pickaxe-all] [--cached] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
@@ -44,6 +44,10 @@ OPTIONS
 -S<string>::
 	Look for differences that contains the change in <string>.
 
+--pickaxe-all::
+	When -S finds a change, show all the changes in that
+	changeset, not just the files that contains the change
+	in <string>.
 
 -R::
 	Output diff in reverse.
