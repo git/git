@@ -887,6 +887,18 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 	q->nr = q->alloc = 0;
 }
 
+void diffcore_std(const char **paths,
+		  int detect_rename, int rename_score,
+		  const char *pickaxe, int pickaxe_opts)
+{
+	if (paths && paths[0])
+		diffcore_pathspec(paths);
+	if (detect_rename)
+		diffcore_rename(detect_rename, rename_score);
+	if (pickaxe)
+		diffcore_pickaxe(pickaxe, pickaxe_opts);
+}
+
 void diff_addremove(int addremove, unsigned mode,
 		    const unsigned char *sha1,
 		    const char *base, const char *path)

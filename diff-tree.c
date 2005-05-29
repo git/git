@@ -261,10 +261,9 @@ static void call_diff_setup(void)
 
 static int call_diff_flush(void)
 {
-	if (detect_rename)
-		diffcore_rename(detect_rename, diff_score_opt);
-	if (pickaxe)
-		diffcore_pickaxe(pickaxe, pickaxe_opts);
+	diffcore_std(0,
+		     detect_rename, diff_score_opt,
+		     pickaxe, pickaxe_opts);
 	if (diff_queue_is_empty()) {
 		diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
 		return 0;

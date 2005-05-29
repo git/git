@@ -116,12 +116,9 @@ int main(int argc, const char **argv)
 		show_modified(oldmode, mode, ce->sha1, null_sha1,
 			      ce->name);
 	}
-	if (1 < argc)
-		diffcore_pathspec(argv + 1);
-	if (detect_rename)
-		diffcore_rename(detect_rename, diff_score_opt);
-	if (pickaxe)
-		diffcore_pickaxe(pickaxe, pickaxe_opts);
+	diffcore_std(argv + 1,
+		     detect_rename, diff_score_opt,
+		     pickaxe, pickaxe_opts);
 	diff_flush(diff_output_format, 1);
 	return 0;
 }
