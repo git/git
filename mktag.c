@@ -106,7 +106,18 @@ int main(int argc, char **argv)
 		usage("cat <signaturefile> | git-mktag");
 
 	// Read the signature
-	size = read(0, buffer, MAXSIZE);
+	size = 0;
+	for (;;) {
+		int ret = read(0, buffer + size, MAXSIZE - size);
+		if (!ret)
+			break;
+		if (ret < 0) {
+			if (errno == EAGAIN)
+				continue;
+			break;
+		}
+		size += ret;
+	}
 
 	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntype "
 	if (verify_tag(buffer, size) < 0)
