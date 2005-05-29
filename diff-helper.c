@@ -80,17 +80,16 @@ int main(int ac, const char **av) {
 			if (!strchr("MCRNDU", status))
 				break;
 			two_paths = score = 0;
-			if (status == 'R' || status == 'C') {
+			if (status == 'R' || status == 'C')
 				two_paths = 1;
-				sscanf(cp, "%d", &score);
-				if (line_termination) {
-					cp = strchr(cp,
-						    inter_name_termination);
-					if (!cp)
-						break;
-				}
-			}
 
+			/* pick up score if exists */
+			if (sscanf(cp, "%d", &score) != 1)
+				score = 0;
+			cp = strchr(cp,
+				    inter_name_termination);
+			if (!cp)
+				break;
 			if (*cp++ != inter_name_termination)
 				break;
 

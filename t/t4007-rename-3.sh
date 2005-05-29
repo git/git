@@ -10,7 +10,7 @@ test_description='Rename interaction with pathspec.
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-sanitize_diff_raw='s/ \('"$_x40"'\) \1 \([CR]\)[0-9]*	/ \1 \1 \2#	/'
+sanitize_diff_raw='s/ '"$_x40"' '"$_x40"' \([A-Z]\)[0-9]*	/ X X \1#	/'
 compare_diff_raw () {
     # When heuristics are improved, the score numbers would change.
     # Ignore them while comparing.

@@ -36,7 +36,7 @@ That is, from the left to the right:
   (6) sha1 for "src"; 0{40} if creation or unmerged.
   (7) a space.
   (8) sha1 for "dst"; 0{40} if creation, unmerged or "look at work tree".
-  (9) status, followed by similarlity index number only for C and R.
+  (9) status, followed by optional "score" number.
  (10) a tab or a NUL when '-z' option is used.
  (11) path for "src"
  (12) a tab or a NUL when '-z' option is used; only exists for C or R.

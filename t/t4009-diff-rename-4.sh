@@ -3,22 +3,22 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='Same rename detection as t4003 but testing diff-raw.
+test_description='Same rename detection as t4003 but testing diff-raw -z.
 
 '
 . ./test-lib.sh
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-sanitize_diff_raw='s/ '"$_x40"' '"$_x40"' \([A-Z]\)[0-9]*	/ X X \1#	/'
+sanitize_diff_raw='/^:/s/ '"$_x40"' '"$_x40"' \([A-Z]\)[0-9]*$/ X X \1#/'
 compare_diff_raw () {
     # When heuristics are improved, the score numbers would change.
     # Ignore them while comparing.
     # Also we do not check SHA1 hash generation in this test, which
     # is a job for t0000-basic.sh
 
-    sed -e "$sanitize_diff_raw" <"$1" >.tmp-1
-    sed -e "$sanitize_diff_raw" <"$2" >.tmp-2
+    tr '\0' '\012' <"$1" | sed -e "$sanitize_diff_raw" >.tmp-1
+    tr '\0' '\012' <"$2" | sed -e "$sanitize_diff_raw" >.tmp-2
     diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
 }
 
@@ -50,11 +50,15 @@ test_expect_success \
 # and COPYING.2 are based on COPYING, and do not say anything about
 # rezrov.
 
-git-diff-cache -M $tree >current
+git-diff-cache -z -M $tree >current
 
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 R1234	COPYING	COPYING.2
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234
+COPYING
+COPYING.1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 R1234
+COPYING
+COPYING.2
 EOF
 
 test_expect_success \
@@ -62,8 +66,8 @@ test_expect_success \
     'compare_diff_raw current expected'
 
 # make sure diff-helper can grok it.
-mv expected diff-raw
-GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
+mv current diff-raw
+GIT_DIFF_OPTS=--unified=0 git-diff-helper -z <diff-raw >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.1
 copy from COPYING
@@ -105,10 +109,13 @@ test_expect_success \
 # is based on COPYING and COPYING is still there, and do not say anything
 # about rezrov.
 
-git-diff-cache -C $tree >current
+git-diff-cache -z -C $tree >current
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 M	COPYING
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 M
+COPYING
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234
+COPYING
+COPYING.1
 EOF
 
 test_expect_success \
@@ -116,8 +123,8 @@ test_expect_success \
     'compare_diff_raw current expected'
 
 # make sure diff-helper can grok it.
-mv expected diff-raw
-GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
+mv current diff-raw
+GIT_DIFF_OPTS=--unified=0 git-diff-helper -z <diff-raw >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING
 --- a/COPYING
@@ -157,9 +164,11 @@ test_expect_success \
     'cat ../../COPYING >COPYING &&
      git-update-cache --add --remove COPYING COPYING.1'
 
-git-diff-cache -C $tree >current
+git-diff-cache -z -C $tree >current
 cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234
+COPYING
+COPYING.1
 EOF
 
 test_expect_success \
@@ -167,8 +176,8 @@ test_expect_success \
     'compare_diff_raw current expected'
 
 # make sure diff-helper can grok it.
-mv expected diff-raw
-GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
+mv current diff-raw
+GIT_DIFF_OPTS=--unified=0 git-diff-helper -z <diff-raw >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.1
 copy from COPYING
