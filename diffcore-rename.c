@@ -207,7 +207,7 @@ static void record_rename_pair(struct diff_queue_struct *renq,
 	fill_filespec(two, dst->sha1, dst->mode);
 
 	dp = diff_queue(renq, one, two);
-	dp->score = score ? : 1; /* make sure it is at least 1 */
+	dp->score = score;
 	dp->source_stays = rename_src[src_index].src_stays;
 	rename_dst[dst_index].pair = dp;
 }

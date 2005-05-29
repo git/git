@@ -796,7 +796,7 @@ static void diff_resolve_rename_copy(void)
 			for (j = 0; j < q->nr; j++) {
 				pp = q->queue[j];
 				if (!strcmp(p->one->path, pp->one->path) &&
-				    pp->score) {
+				    DIFF_PAIR_RENAME(pp)) {
 					/* rename/copy are always valid
 					 * so we do not say DIFF_FILE_VALID()
 					 * on pp->one and pp->two.
@@ -815,7 +815,7 @@ static void diff_resolve_rename_copy(void)
 		 * whose both sides are valid and of the same type, i.e.
 		 * either in-place edit or rename/copy edit.
 		 */
-		else if (p->score) {
+		else if (DIFF_PAIR_RENAME(p)) {
 			if (p->source_stays) {
 				p->status = 'C';
 				continue;
@@ -828,7 +828,7 @@ static void diff_resolve_rename_copy(void)
 				pp = q->queue[j];
 				if (strcmp(pp->one->path, p->one->path))
 					continue; /* not us */
-				if (!pp->score)
+				if (!DIFF_PAIR_RENAME(pp))
 					continue; /* not a rename/copy */
 				/* pp is a rename/copy from the same source */
 				p->status = 'C';
