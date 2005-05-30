@@ -13,13 +13,13 @@ report () {
     trailer="#
 "
     case "$status" in
-    M) echo "#	modified: $name";;
-    D) echo "#	deleted:  $name";;
-    T) echo "#	typechange: $name";;
-    C) echo "#	copied: $name -> $newname";;
-    R) echo "#	renamed: $name -> $newname";;
-    N) echo "#	new file: $name";;
-    U) echo "#	unmerged: $name";;
+    M ) echo "#	modified: $name";;
+    D*) echo "#	deleted:  $name";;
+    T ) echo "#	typechange: $name";;
+    C*) echo "#	copied: $name -> $newname";;
+    R*) echo "#	renamed: $name -> $newname";;
+    N*) echo "#	new file: $name";;
+    U ) echo "#	unmerged: $name";;
     esac
   done
   echo -n "$trailer"
