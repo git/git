@@ -14,6 +14,7 @@ static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
+static int diff_break_opt = -1;
 static const char *header = NULL;
 static const char *header_prefix = "";
 
@@ -263,7 +264,8 @@ static int call_diff_flush(void)
 {
 	diffcore_std(0,
 		     detect_rename, diff_score_opt,
-		     pickaxe, pickaxe_opts);
+		     pickaxe, pickaxe_opts,
+		     diff_break_opt);
 	if (diff_queue_is_empty()) {
 		diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
 		return 0;
@@ -521,6 +523,10 @@ int main(int argc, const char **argv)
 		if (!strncmp(arg, "-C", 2)) {
 			detect_rename = DIFF_DETECT_COPY;
 			diff_score_opt = diff_scoreopt_parse(arg);
+			continue;
+		}
+		if (!strncmp(arg, "-B", 2)) {
+			diff_break_opt = diff_scoreopt_parse(arg);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {

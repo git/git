@@ -15,6 +15,7 @@ static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
+static int diff_break_opt = -1;
 static int silent = 0;
 
 static void show_unmerge(const char *path)
@@ -57,6 +58,8 @@ int main(int argc, const char **argv)
 			pickaxe = argv[1] + 2;
 		else if (!strcmp(argv[1], "--pickaxe-all"))
 			pickaxe_opts = DIFF_PICKAXE_ALL;
+		else if (!strncmp(argv[1], "-B", 2))
+			diff_break_opt = diff_scoreopt_parse(argv[1]);
 		else if (!strncmp(argv[1], "-M", 2)) {
 			diff_score_opt = diff_scoreopt_parse(argv[1]);
 			detect_rename = DIFF_DETECT_RENAME;
@@ -116,9 +119,10 @@ int main(int argc, const char **argv)
 		show_modified(oldmode, mode, ce->sha1, null_sha1,
 			      ce->name);
 	}
-	diffcore_std(argv + 1,
+	diffcore_std((1 < argc) ? argv + 1 : NULL,
 		     detect_rename, diff_score_opt,
-		     pickaxe, pickaxe_opts);
+		     pickaxe, pickaxe_opts,
+		     diff_break_opt);
 	diff_flush(diff_output_format, 1);
 	return 0;
 }

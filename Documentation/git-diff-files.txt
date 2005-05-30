@@ -9,7 +9,7 @@ git-diff-files - Compares files in the working tree and the cache
 
 SYNOPSIS
 --------
-'git-diff-files' [-p] [-q] [-r] [-z] [-M] [-C] [-R] [-S<string>] [--pickaxe-all] [<pattern>...]
+'git-diff-files' [-p] [-q] [-r] [-z] [-B] [-M] [-C] [-R] [-S<string>] [--pickaxe-all] [<pattern>...]
 
 DESCRIPTION
 -----------
@@ -28,6 +28,9 @@ OPTIONS
 
 -R::
 	Output diff in reverse.
+
+-B::
+	Break complete rewrite changes into pairs of delete and create.
 
 -M::
 	Detect renames.

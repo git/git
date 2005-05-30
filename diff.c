@@ -603,6 +603,7 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	dp->two = two;
 	dp->score = 0;
 	dp->source_stays = 0;
+	dp->broken_pair = 0;
 	diff_q(queue, dp);
 	return dp;
 }
@@ -636,6 +637,16 @@ static void diff_flush_raw(struct diff_filepair *p,
 		two_paths = 1;
 		sprintf(status, "%c%03d", p->status,
 			(int)(0.5 + p->score * 100.0/MAX_SCORE));
+		break;
+	case 'N': case 'D':
+		two_paths = 0;
+		if (p->score)
+			sprintf(status, "%c%03d", p->status,
+				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+		else {
+			status[0] = p->status;
+			status[1] = 0;
+		}
 		break;
 	default:
 		two_paths = 0;
@@ -760,8 +771,9 @@ void diff_debug_filepair(const struct diff_filepair *p, int i)
 {
 	diff_debug_filespec(p->one, i, "one");
 	diff_debug_filespec(p->two, i, "two");
-	fprintf(stderr, "score %d, status %c source_stays %d\n",
-		p->score, p->status ? : '?', p->source_stays);
+	fprintf(stderr, "score %d, status %c stays %d broken %d\n",
+		p->score, p->status ? : '?',
+		p->source_stays, p->broken_pair);
 }
 
 void diff_debug_queue(const char *msg, struct diff_queue_struct *q)
@@ -875,10 +887,13 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 
 void diffcore_std(const char **paths,
 		  int detect_rename, int rename_score,
-		  const char *pickaxe, int pickaxe_opts)
+		  const char *pickaxe, int pickaxe_opts,
+		  int break_opt)
 {
 	if (paths && paths[0])
 		diffcore_pathspec(paths);
+	if (0 <= break_opt)
+		diffcore_break(break_opt);
 	if (detect_rename)
 		diffcore_rename(detect_rename, rename_score);
 	if (pickaxe)

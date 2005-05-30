@@ -9,6 +9,7 @@ static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
+static int diff_break_opt = -1;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
@@ -188,6 +189,10 @@ int main(int argc, const char **argv)
 			diff_output_format = DIFF_FORMAT_PATCH;
 			continue;
 		}
+		if (!strncmp(arg, "-B", 2)) {
+			diff_break_opt = diff_scoreopt_parse(arg);
+			continue;
+		}
 		if (!strncmp(arg, "-M", 2)) {
 			detect_rename = DIFF_DETECT_RENAME;
 			diff_score_opt = diff_scoreopt_parse(arg);
@@ -240,9 +245,11 @@ int main(int argc, const char **argv)
 		die("unable to read tree object %s", tree_name);
 
 	ret = diff_cache(active_cache, active_nr);
-	diffcore_std(pathspec,
+
+	diffcore_std(pathspec ? : NULL,
 		     detect_rename, diff_score_opt,
-		     pickaxe, pickaxe_opts);
+		     pickaxe, pickaxe_opts,
+		     diff_break_opt);
 	diff_flush(diff_output_format, 1);
 	return ret;
 }

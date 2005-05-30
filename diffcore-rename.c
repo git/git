@@ -225,8 +225,8 @@ static int score_compare(const void *a_, const void *b_)
 int diff_scoreopt_parse(const char *opt)
 {
 	int diglen, num, scale, i;
-	if (opt[0] != '-' || (opt[1] != 'M' && opt[1] != 'C'))
-		return -1; /* that is not a -M nor -C option */
+	if (opt[0] != '-' || (opt[1] != 'M' && opt[1] != 'C' && opt[1] != 'B'))
+		return -1; /* that is not a -M, -C nor -B option */
 	diglen = strspn(opt+2, "0123456789");
 	if (diglen == 0 || strlen(opt+2) != diglen)
 		return 0; /* use default */
@@ -249,7 +249,7 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	int num_create, num_src, dst_cnt;
 
 	if (!minimum_score)
-		minimum_score = DEFAULT_MINIMUM_SCORE;
+		minimum_score = DEFAULT_RENAME_SCORE;
 	renq.queue = NULL;
 	renq.nr = renq.alloc = 0;
 
@@ -353,17 +353,36 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			/*
 			 * Deletion
 			 *
-			 * We would output this delete record if renq
-			 * does not have a rename/copy to move
-			 * p->one->path out.
+			 * We would output this delete record if:
+			 *
+			 * (1) this is a broken delete and the counterpart
+			 *     broken create remains in the output; or
+			 * (2) this is not a broken delete, and renq does
+			 *     not have a rename/copy to move p->one->path
+			 *     out.
+			 *
+			 * Otherwise, the counterpart broken create
+			 * has been turned into a rename-edit; or
+			 * delete did not have a matching create to
+			 * begin with.
 			 */
-			for (j = 0; j < renq.nr; j++)
-				if (!strcmp(renq.queue[j]->one->path,
-					    p->one->path))
-					break;
-			if (j < renq.nr)
-				/* this path remains */
-				pair_to_free = p;
+			if (DIFF_PAIR_BROKEN(p)) {
+				/* broken delete */
+				struct diff_rename_dst *dst =
+					locate_rename_dst(p->one, 0);
+				if (dst && dst->pair)
+					/* counterpart is now rename/copy */
+					pair_to_free = p;
+			}
+			else {
+				for (j = 0; j < renq.nr; j++)
+					if (!strcmp(renq.queue[j]->one->path,
+						    p->one->path))
+						break;
+				if (j < renq.nr)
+					/* this path remains */
+					pair_to_free = p;
+			}
 
 			if (pair_to_free)
 				;

@@ -8,8 +8,9 @@
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
  * in anything else.
  */
-#define MAX_SCORE 10000
-#define DEFAULT_MINIMUM_SCORE 5000
+#define MAX_SCORE 60000
+#define DEFAULT_RENAME_SCORE 30000 /* rename/copy similarity minimum (50%) */
+#define DEFAULT_BREAK_SCORE  59400 /* minimum for break to happen (99%)*/
 
 #define RENAME_DST_MATCHED 01
 
@@ -40,13 +41,18 @@ struct diff_filepair {
 	struct diff_filespec *one;
 	struct diff_filespec *two;
 	unsigned short int score;
-	char source_stays; /* all of R/C are copies */
 	char status; /* M C R N D U (see Documentation/diff-format.txt) */
+	unsigned source_stays : 1; /* all of R/C are copies */
+	unsigned broken_pair : 1;
 };
 #define DIFF_PAIR_UNMERGED(p) \
 	(!DIFF_FILE_VALID((p)->one) && !DIFF_FILE_VALID((p)->two))
 
 #define DIFF_PAIR_RENAME(p) (strcmp((p)->one->path, (p)->two->path))
+
+#define DIFF_PAIR_BROKEN(p) \
+	( (!DIFF_FILE_VALID((p)->one) != !DIFF_FILE_VALID((p)->two)) && \
+	  ((p)->broken_pair != 0) )
 
 #define DIFF_PAIR_TYPE_CHANGED(p) \
 	((S_IFMT & (p)->one->mode) != (S_IFMT & (p)->two->mode))
