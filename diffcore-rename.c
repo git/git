@@ -328,24 +328,46 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	outq.nr = outq.alloc = 0;
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		struct diff_rename_dst *dst = locate_rename_dst(p->two, 0);
 		struct diff_filepair *pair_to_free = NULL;
 
-		if (dst) {
-			/* creation */
-			if (dst->pair) {
-				/* renq has rename/copy to produce
-				 * this file already, so we do not
-				 * emit the creation record in the
-				 * output.
-				 */
+		if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
+			/*
+			 * Creation
+			 *
+			 * We would output this create record if it has
+			 * not been turned into a rename/copy already.
+			 */
+			struct diff_rename_dst *dst =
+				locate_rename_dst(p->two, 0);
+			if (dst && dst->pair) {
 				diff_q(&outq, dst->pair);
 				pair_to_free = p;
 			}
 			else
-				/* no matching rename/copy source, so record
-				 * this as a creation.
+				/* no matching rename/copy source, so
+				 * record this as a creation.
 				 */
+				diff_q(&outq, p);
+		}
+		else if (DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two)) {
+			/*
+			 * Deletion
+			 *
+			 * We would output this delete record if renq
+			 * does not have a rename/copy to move
+			 * p->one->path out.
+			 */
+			for (j = 0; j < renq.nr; j++)
+				if (!strcmp(renq.queue[j]->one->path,
+					    p->one->path))
+					break;
+			if (j < renq.nr)
+				/* this path remains */
+				pair_to_free = p;
+
+			if (pair_to_free)
+				;
+			else
 				diff_q(&outq, p);
 		}
 		else if (!diff_unmodified_pair(p))

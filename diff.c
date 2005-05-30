@@ -792,27 +792,8 @@ static void diff_resolve_rename_copy(void)
 			p->status = 'U';
 		else if (!DIFF_FILE_VALID(p->one))
 			p->status = 'N';
-		else if (!DIFF_FILE_VALID(p->two)) {
-			/* Deleted entry may have been picked up by
-			 * another rename-copy entry.  So we scan the
-			 * queue and if we find one that uses us as the
-			 * source we do not say delete for this entry.
-			 */
-			for (j = 0; j < q->nr; j++) {
-				pp = q->queue[j];
-				if (!strcmp(p->one->path, pp->one->path) &&
-				    DIFF_PAIR_RENAME(pp)) {
-					/* rename/copy are always valid
-					 * so we do not say DIFF_FILE_VALID()
-					 * on pp->one and pp->two.
-					 */
-					p->status = 'X';
-					break;
-				}
-			}
-			if (!p->status)
-				p->status = 'D';
-		}
+		else if (!DIFF_FILE_VALID(p->two))
+			p->status = 'D';
 		else if (DIFF_PAIR_TYPE_CHANGED(p))
 			p->status = 'T';
 
