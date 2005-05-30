@@ -421,8 +421,13 @@ static void prepare_temp_file(const char *name,
 				strcpy(temp->hex, sha1_to_hex(null_sha1));
 			else
 				strcpy(temp->hex, sha1_to_hex(one->sha1));
-			sprintf(temp->mode, "%06o",
-				S_IFREG |ce_permissions(st.st_mode));
+			/* Even though we may sometimes borrow the
+			 * contents from the work tree, we always want
+			 * one->mode.  mode is trustworthy even when
+			 * !(one->sha1_valid), as long as
+			 * DIFF_FILE_VALID(one).
+			 */
+			sprintf(temp->mode, "%06o", one->mode);
 		}
 		return;
 	}
