@@ -888,7 +888,8 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 void diffcore_std(const char **paths,
 		  int detect_rename, int rename_score,
 		  const char *pickaxe, int pickaxe_opts,
-		  int break_opt)
+		  int break_opt,
+		  const char *orderfile)
 {
 	if (paths && paths[0])
 		diffcore_pathspec(paths);
@@ -898,6 +899,8 @@ void diffcore_std(const char **paths,
 		diffcore_rename(detect_rename, rename_score);
 	if (pickaxe)
 		diffcore_pickaxe(pickaxe, pickaxe_opts);
+	if (orderfile)
+		diffcore_order(orderfile);
 }
 
 void diff_addremove(int addremove, unsigned mode,

@@ -15,6 +15,7 @@ static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
 static int diff_break_opt = -1;
+static const char *orderfile = NULL;
 static const char *header = NULL;
 static const char *header_prefix = "";
 
@@ -265,7 +266,8 @@ static int call_diff_flush(void)
 	diffcore_std(0,
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
-		     diff_break_opt);
+		     diff_break_opt,
+		     orderfile);
 	if (diff_queue_is_empty()) {
 		diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
 		return 0;
@@ -509,6 +511,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strncmp(arg, "-S", 2)) {
 			pickaxe = arg + 2;
+			continue;
+		}
+		if (!strncmp(arg, "-O", 2)) {
+			orderfile = arg + 2;
 			continue;
 		}
 		if (!strcmp(arg, "--pickaxe-all")) {

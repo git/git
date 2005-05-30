@@ -48,7 +48,7 @@ LIB_OBJS += strbuf.o
 
 LIB_H += diff.h count-delta.h
 LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o diffcore-pathspec.o \
-	count-delta.o diffcore-break.o
+	count-delta.o diffcore-break.o diffcore-order.o
 
 LIB_OBJS += gitenv.o
 
@@ -132,6 +132,7 @@ diffcore-rename.o : $(LIB_H) diffcore.h
 diffcore-pathspec.o : $(LIB_H) diffcore.h
 diffcore-pickaxe.o : $(LIB_H) diffcore.h
 diffcore-break.o : $(LIB_H) diffcore.h
+diffcore-order.o : $(LIB_H) diffcore.h
 
 test: all
 	$(MAKE) -C t/ all
