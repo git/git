@@ -22,7 +22,7 @@ INSTALL=install
 
 SCRIPTS=git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
-	git-deltafy-script git-fetch-script
+	git-deltafy-script git-fetch-script git-status-script git-commit-script
 
 PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
@@ -31,7 +31,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
-	git-get-tar-commit-id git-mkdelta git-apply
+	git-get-tar-commit-id git-mkdelta git-apply git-stripspace
 
 all: $(PROG)
 
@@ -112,6 +112,7 @@ git-diff-helper: diff-helper.c
 git-tar-tree: tar-tree.c
 git-write-blob: write-blob.c
 git-mkdelta: mkdelta.c
+git-stripspace: stripspace.c
 
 git-http-pull: LIBS += -lcurl
 
