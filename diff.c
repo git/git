@@ -132,10 +132,16 @@ static void builtin_diff(const char *name_a,
 			    diff_arg, input_name_sq[0], input_name_sq[1]);
 
 	printf("diff --git a/%s b/%s\n", name_a, name_b);
-	if (!path1[0][0])
+	if (!path1[0][0]) {
 		printf("new file mode %s\n", temp[1].mode);
-	else if (!path1[1][0])
+		if (xfrm_msg && xfrm_msg[0])
+			puts(xfrm_msg);
+	}
+	else if (!path1[1][0]) {
 		printf("deleted file mode %s\n", temp[0].mode);
+		if (xfrm_msg && xfrm_msg[0])
+			puts(xfrm_msg);
+	}
 	else {
 		if (strcmp(temp[0].mode, temp[1].mode)) {
 			printf("old mode %s\n", temp[0].mode);
@@ -732,6 +738,16 @@ static void diff_flush_patch(struct diff_filepair *p)
 			(int)(0.5 + p->score * 100.0/MAX_SCORE),
 			p->one->path, p->two->path);
 		msg = msg_;
+		break;
+	case 'D': case 'N':
+		if (DIFF_PAIR_BROKEN(p)) {
+			sprintf(msg_,
+				"dissimilarity index %d%%",
+				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			msg = msg_;
+		}
+		else
+			msg = NULL;
 		break;
 	default:
 		msg = NULL;

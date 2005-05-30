@@ -336,6 +336,11 @@ static int gitdiff_similarity(const char *line, struct patch *patch)
 	return 0;
 }
 
+static int gitdiff_dissimilarity(const char *line, struct patch *patch)
+{
+	return 0;
+}
+
 /*
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
@@ -437,6 +442,7 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 			{ "rename from ", gitdiff_renamesrc },
 			{ "rename to ", gitdiff_renamedst },
 			{ "similarity index ", gitdiff_similarity },
+			{ "dissimilarity index ", gitdiff_dissimilarity },
 			{ "", gitdiff_unrecognized },
 		};
 		int i;
