@@ -1,40 +1,67 @@
 #!/bin/bash
 
-# Script to deltafy an entire GIT repository based on the commit list.
+# Example script to deltafy an entire GIT repository based on the commit list.
 # The most recent version of a file is the reference and previous versions
 # are made delta against the best earlier version available. And so on for
-# successive versions going back in time.  This way the delta overhead is
-# pushed towards older version of any given file.
-#
-# NOTE: the "best earlier version" is not implemented in mkdelta yet
-#       and therefore only the next eariler version is used at this time.
-#
-# TODO: deltafy tree objects as well.
+# successive versions going back in time.  This way the increasing delta
+# overhead is pushed towards older versions of any given file.
 #
 # The -d argument allows to provide a limit on the delta chain depth.
-# If 0 is passed then everything is undeltafied.
+# If 0 is passed then everything is undeltafied.  Limiting the delta
+# depth is meaningful for subsequent access performance to old revisions.
+# A value of 16 might be a good compromize between performance and good
+# space saving.  Current default is unbounded.
+#
+# The --max-behind=30 argument is passed to git-mkdelta so to keep
+# combinations and memory usage bounded a bit.  If you have lots of memory
+# and CPU power you may remove it (or set to 0) to let git-mkdelta find the
+# best delta match regardless of the number of revisions for a given file.
+# You can also make the value smaller to make it faster and less
+# memory hungry.  A value of 5 ought to still give pretty good results.
+# When set to 0 or ommitted then look behind is unbounded.  Note that
+# git-mkdelta might die with a segmentation fault in that case if it
+# runs out of memory.  Note that the GIT repository will still be consistent
+# even if git-mkdelta dies unexpectedly.
 
 set -e
 
 depth=
 [ "$1" == "-d" ] && depth="--max-depth=$2" && shift 2
 
+function process_list() {
+	if [ "$list" ]; then
+		echo "Processing $curr_file"
+		echo "$head $list" | xargs git-mkdelta $depth --max-behind=30 -v
+	fi
+}
+
 curr_file=""
 
 git-rev-list HEAD |
-git-diff-tree -r --stdin |
-awk '/^:/ { if ($5 == "M" || $5 == "N") print $4, $6 }' |
+git-diff-tree -r -t --stdin |
+awk '/^:/ { if ($5 == "M" || $5 == "N") print $4, $6;
+            if ($5 == "M") print $3, $6 }' |
 LC_ALL=C sort -s -k 2 | uniq |
 while read sha1 file; do
 	if [ "$file" == "$curr_file" ]; then
 		list="$list $sha1"
 	else
-		if [ "$list" ]; then
-			echo "Processing $curr_file"
-			echo "$head $list" | xargs git-mkdelta $depth -v
-		fi
+		process_list
 		curr_file="$file"
 		list=""
 		head="$sha1"
 	fi
 done
+process_list
+
+curr_file="root directory"
+head=""
+list="$(
+	git-rev-list HEAD |
+	while read commit; do
+		git-cat-file commit $commit |
+		sed -n 's/tree //p;Q'
+	done
+	)"
+process_list
+
