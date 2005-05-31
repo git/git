@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	unsigned char sha1[2][20];
 	struct commit_list *list = NULL;
 	struct commit *commit, *end;
-	int i, verbose_header = 0;
+	int i, verbose_header = 0, show_parents = 0;
 	unsigned long max_age = -1;
 	unsigned long min_age = -1;
 	int max_count = -1;
@@ -64,6 +64,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--header")) {
 			verbose_header = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--parents")) {
+			show_parents = 1;
 			continue;
 		}
 
@@ -116,7 +120,15 @@ int main(int argc, char **argv)
 			break;
 		if (max_count != -1 && !max_count--)
 			break;
-		printf("%s\n", sha1_to_hex(commit->object.sha1));
+		printf("%s", sha1_to_hex(commit->object.sha1));
+		if (show_parents) {
+			struct commit_list *parents = commit->parents;
+			while (parents) {
+				printf(" %s", sha1_to_hex(parents->item->object.sha1));
+				parents = parents->next;
+			}
+		}
+		putchar('\n');
 		if (verbose_header)
 			printf("%s%c", commit->buffer, 0);
 	}
