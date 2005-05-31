@@ -116,9 +116,8 @@ static int is_dev_null(const char *str)
 	return !memcmp("/dev/null", str, 9) && isspace(str[9]);
 }
 
-#define TERM_EXIST	1
-#define TERM_SPACE	2
-#define TERM_TAB	4
+#define TERM_SPACE	1
+#define TERM_TAB	2
 
 static int name_terminate(const char *name, int namelen, int c, int terminate)
 {
@@ -126,13 +125,6 @@ static int name_terminate(const char *name, int namelen, int c, int terminate)
 		return 0;
 	if (c == '\t' && !(terminate & TERM_TAB))
 		return 0;
-
-	/*
-	 * Do we want an existing name? Return false and
-	 * continue if it's not there.
-	 */
-	if (terminate & TERM_EXIST)
-		return cache_name_pos(name, namelen) >= 0;
 
 	return 1;
 }
@@ -205,11 +197,11 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
-		name = find_name(first, NULL, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		name = find_name(first, NULL, p_value, TERM_SPACE | TERM_TAB);
 		patch->old_name = name;
 	} else {
-		name = find_name(first, NULL, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
-		name = find_name(second, name, p_value, TERM_EXIST | TERM_SPACE | TERM_TAB);
+		name = find_name(first, NULL, p_value, TERM_SPACE | TERM_TAB);
+		name = find_name(second, name, p_value, TERM_SPACE | TERM_TAB);
 		patch->old_name = patch->new_name = name;
 	}
 	if (!name)
