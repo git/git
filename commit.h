@@ -26,7 +26,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 
 int parse_commit(struct commit *item);
 
-void commit_list_insert(struct commit *item, struct commit_list **list_p);
+struct commit_list * commit_list_insert(struct commit *item, struct commit_list **list_p);
 
 void free_commit_list(struct commit_list *list);
 
