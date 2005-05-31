@@ -41,7 +41,7 @@ if [ "$common" == "$head" ]; then
 	sleep 3
 	git-read-tree -m $merge && git-checkout-cache -f -u -a
 	echo $merge > "$GIT_DIR"/HEAD
-	git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
+	git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
 	exit 0
 fi
 echo "Trying to merge $merge into $head"
@@ -58,4 +58,4 @@ result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $me
 echo "Committed merge $result_commit"
 echo $result_commit > "$GIT_DIR"/HEAD
 git-checkout-cache -f -u -a
-git-diff-tree -p ORIG_HEAD HEAD | diffstat -p1
+git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
