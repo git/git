@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.18 $
+# CVS $Revision: 1.19 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -16,8 +16,8 @@ proc getcommits {rargs} {
     }
     set commits {}
     set phase getcommits
-    if [catch {set commfd [open "|git-rev-tree $rargs" r]} err] {
-	puts stderr "Error executing git-rev-tree: $err"
+    if [catch {set commfd [open "|git-rev-list $rargs" r]} err] {
+	puts stderr "Error executing git-rev-list: $err"
 	exit 1
     }
     fconfigure $commfd -blocking 0
@@ -35,13 +35,13 @@ proc getcommitline {commfd}  {
 	# this works around what is apparently a bug in Tcl...
 	fconfigure $commfd -blocking 1
 	if {![catch {close $commfd} err]} {
-	    after idle drawgraph
+	    after idle readallcommits
 	    return
 	}
 	if {[string range $err 0 4] == "usage"} {
 	    set err "\
-Gitk: error reading commits: bad arguments to git-rev-tree.\n\
-(Note: arguments to gitk are passed to git-rev-tree\
+Gitk: error reading commits: bad arguments to git-rev-list.\n\
+(Note: arguments to gitk are passed to git-rev-list\
 to allow selection of commits to be displayed.)"
 	} else {
 	    set err "Error reading commits: $err"
@@ -49,37 +49,24 @@ to allow selection of commits to be displayed.)"
 	error_popup $err
 	exit 1
     }
-
-    set i 0
-    set cid {}
-    foreach f $line {
-	if {$i == 0} {
-	    set d $f
-	} else {
-	    set id [lindex [split $f :] 0]
-	    if {![info exists nchildren($id)]} {
-		set children($id) {}
-		set nchildren($id) 0
-	    }
-	    if {$i == 1} {
-		set cid $id
-		lappend commits $id
-		set parents($id) {}
-		set cdate($id) $d
-		set nparents($id) 0
-	    } else {
-		lappend parents($cid) $id
-		incr nparents($cid)
-		incr nchildren($id)
-		lappend children($id) $cid
-	    }
-	}
-	incr i
+    if {![regexp {^[0-9a-f]{40}$} $line]} {
+	error_popup "Can't parse git-rev-tree output: {$line}"
+	exit 1
     }
+    lappend commits $line
+}
+
+proc readallcommits {} {
+    global commits
+    foreach id $commits {
+	readcommit $id
+	update
+    }
+    drawgraph
 }
 
 proc readcommit {id} {
-    global commitinfo
+    global commitinfo children nchildren parents nparents cdate
     set inhdr 1
     set comment {}
     set headline {}
@@ -87,6 +74,12 @@ proc readcommit {id} {
     set audate {}
     set comname {}
     set comdate {}
+    if {![info exists nchildren($id)]} {
+	set children($id) {}
+	set nchildren($id) 0
+    }
+    set parents($id) {}
+    set nparents($id) 0
     if [catch {set contents [exec git-cat-file commit $id]}] return
     foreach line [split $contents "\n"] {
 	if {$inhdr} {
@@ -94,7 +87,19 @@ proc readcommit {id} {
 		set inhdr 0
 	    } else {
 		set tag [lindex $line 0]
-		if {$tag == "author"} {
+		if {$tag == "parent"} {
+		    set p [lindex $line 1]
+		    if {![info exists nchildren($p)]} {
+			set children($p) {}
+			set nchildren($p) 0
+		    }
+		    lappend parents($id) $p
+		    incr nparents($id)
+		    if {[lsearch -exact $children($p) $id] < 0} {
+			lappend children($p) $id
+			incr nchildren($p)
+		    }
+		} elseif {$tag == "author"} {
 		    set x [expr {[llength $line] - 2}]
 		    set audate [lindex $line $x]
 		    set auname [lrange $line 1 [expr {$x - 1}]]
@@ -117,6 +122,7 @@ proc readcommit {id} {
 	set audate [clock format $audate -format "%Y-%m-%d %H:%M:%S"]
     }
     if {$comdate != {}} {
+	set cdate($id) $comdate
 	set comdate [clock format $comdate -format "%Y-%m-%d %H:%M:%S"]
     }
     set commitinfo($id) [list $headline $auname $audate \
@@ -275,22 +281,22 @@ proc makewindow {} {
 
     bindall <1> {selcanvline %x %y}
     bindall <B1-Motion> {selcanvline %x %y}
-    bindall <ButtonRelease-4> "allcanvs yview scroll -5 u"
-    bindall <ButtonRelease-5> "allcanvs yview scroll 5 u"
+    bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
+    bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
     bindall <2> "allcanvs scan mark 0 %y"
     bindall <B2-Motion> "allcanvs scan dragto 0 %y"
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
-    bind . <Key-Prior> "allcanvs yview scroll -1 p"
-    bind . <Key-Next> "allcanvs yview scroll 1 p"
-    bindkey <Key-Delete> "$ctext yview scroll -1 p"
-    bindkey <Key-BackSpace> "$ctext yview scroll -1 p"
-    bindkey <Key-space> "$ctext yview scroll 1 p"
+    bind . <Key-Prior> "allcanvs yview scroll -1 pages"
+    bind . <Key-Next> "allcanvs yview scroll 1 pages"
+    bindkey <Key-Delete> "$ctext yview scroll -1 pages"
+    bindkey <Key-BackSpace> "$ctext yview scroll -1 pages"
+    bindkey <Key-space> "$ctext yview scroll 1 pages"
     bindkey p "selnextline -1"
     bindkey n "selnextline 1"
-    bindkey b "$ctext yview scroll -1 p"
-    bindkey d "$ctext yview scroll 18 u"
-    bindkey u "$ctext yview scroll -18 u"
+    bindkey b "$ctext yview scroll -1 pages"
+    bindkey d "$ctext yview scroll 18 units"
+    bindkey u "$ctext yview scroll -18 units"
     bindkey / findnext
     bindkey ? findprev
     bindkey f nextfile
@@ -436,13 +442,13 @@ proc about {} {
     toplevel $w
     wm title $w "About gitk"
     message $w.m -text {
-Gitk version 1.0
+Gitk version 1.1
 
 Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.18 $)} \
+(CVS $Revision: 1.19 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -573,14 +579,18 @@ proc drawgraph {} {
 	set lineid($lineno) $id
 	set idline($id) $lineno
 	set actualparents {}
+	set ofill white
 	if {[info exists parents($id)]} {
 	    foreach p $parents($id) {
-		incr ncleft($p) -1
-		if {![info exists commitinfo($p)]} {
-		    readcommit $p
-		    if {![info exists commitinfo($p)]} continue
+		if {[info exists ncleft($p)]} {
+		    incr ncleft($p) -1
+		    if {![info exists commitinfo($p)]} {
+			readcommit $p
+			if {![info exists commitinfo($p)]} continue
+		    }
+		    lappend actualparents $p
+		    set ofill blue
 		}
-		lappend actualparents $p
 	    }
 	}
 	if {![info exists commitinfo($id)]} {
@@ -597,7 +607,6 @@ proc drawgraph {} {
 	    $canv lower $t
 	}
 	set linestarty($level) $canvy
-	set ofill [expr {[info exists parents($id)]? "blue": "white"}]
 	set orad [expr {$linespc / 3}]
 	set t [$canv create oval [expr $x - $orad] [expr $canvy - $orad] \
 		   [expr $x + $orad - 1] [expr $canvy + $orad - 1] \
@@ -683,6 +692,7 @@ proc drawgraph {} {
 		if {$nullentry >= $i} {
 		    incr nullentry
 		}
+		incr i
 	    }
 	    lappend lines [list $oldlevel $p]
 	}
@@ -941,6 +951,7 @@ proc selcanvline {x y} {
     global canv canvy0 ctext linespc selectedline
     global lineid linehtag linentag linedtag
     set ymax [lindex [$canv cget -scrollregion] 3]
+    if {$ymax == {}} return
     set yfrac [lindex [$canv yview] 0]
     set y [expr {$y + $yfrac * $ymax}]
     set l [expr {int(($y - $canvy0) / $linespc + 0.5)}]
@@ -1257,7 +1268,7 @@ proc redisplay {} {
 
 proc incrfont {inc} {
     global mainfont namefont textfont selectedline ctext canv phase
-    global stopped
+    global stopped entries
     unmarkmatches
     set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
     set namefont [lreplace $namefont 1 1 [expr {[lindex $namefont 1] + $inc}]]
@@ -1342,10 +1353,6 @@ foreach arg $argv {
 	"^-b" { set boldnames 1 }
 	"^-c" { set colorbycommitter 1 }
 	"^-d" { set datemode 1 }
-	"^-.*" {
-	    puts stderr "unrecognized option $arg"
-	    exit 1
-	}
 	default {
 	    lappend revtreeargs $arg
 	}
