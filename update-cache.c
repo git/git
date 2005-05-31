@@ -13,6 +13,7 @@
  * files be revision controlled.
  */
 static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0;
+static int force_remove;
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
 static inline void *ERR_PTR(long error)
@@ -376,11 +377,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp(path, "--force-remove")) {
-				if (argc <= i + 1)
-					die("git-update-cache: --force-remove <path>");
-				if (remove_file_from_cache(argv[i+1]))
-					die("git-update-cache: --force-remove cannot remove %s", argv[i+1]);
-				i++;
+				force_remove = 1;
 				continue;
 			}
 
@@ -392,6 +389,11 @@ int main(int argc, char **argv)
 		}
 		if (!verify_path(path)) {
 			fprintf(stderr, "Ignoring path %s\n", argv[i]);
+			continue;
+		}
+		if (force_remove) {
+			if (remove_file_from_cache(path))
+				die("git-update-cache: --force-remove cannot remove %s", path);
 			continue;
 		}
 		if (add_file_to_cache(path))

@@ -12,7 +12,7 @@ SYNOPSIS
 'git-update-cache'
 	     [--add] [--remove] [--refresh] [--replace]
 	     [--ignore-missing]
-	     [--force-remove <file>]
+	     [--force-remove]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--] [<file>]\*
 
@@ -49,7 +49,7 @@ OPTIONS
 	
 --force-remove::
 	Remove the file from the index even when the working directory
-	still has such a file.
+	still has such a file. (Implies --remove.)
 
 --replace::
 	By default, when a file `path` exists in the index,
