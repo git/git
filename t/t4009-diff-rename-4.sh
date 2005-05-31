@@ -7,28 +7,7 @@ test_description='Same rename detection as t4003 but testing diff-raw -z.
 
 '
 . ./test-lib.sh
-
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-sanitize_diff_raw='/^:/s/ '"$_x40"' '"$_x40"' \([A-Z]\)[0-9]*$/ X X \1#/'
-compare_diff_raw () {
-    # When heuristics are improved, the score numbers would change.
-    # Ignore them while comparing.
-    # Also we do not check SHA1 hash generation in this test, which
-    # is a job for t0000-basic.sh
-
-    tr '\0' '\012' <"$1" | sed -e "$sanitize_diff_raw" >.tmp-1
-    tr '\0' '\012' <"$2" | sed -e "$sanitize_diff_raw" >.tmp-2
-    diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
-}
-
-compare_diff_patch () {
-    # When heuristics are improved, the score numbers would change.
-    # Ignore them while comparing.
-    sed -e '/^similarity index [0-9]*%$/d' <"$1" >.tmp-1
-    sed -e '/^similarity index [0-9]*%$/d' <"$2" >.tmp-2
-    diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
-}
+. ../diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     'prepare reference tree' \
@@ -63,7 +42,7 @@ EOF
 
 test_expect_success \
     'validate output from rename/copy detection (#1)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw_z current expected'
 
 # make sure diff-helper can grok it.
 mv current diff-raw
@@ -120,7 +99,7 @@ EOF
 
 test_expect_success \
     'validate output from rename/copy detection (#2)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw_z current expected'
 
 # make sure diff-helper can grok it.
 mv current diff-raw
@@ -173,7 +152,7 @@ EOF
 
 test_expect_success \
     'validate output from rename/copy detection (#3)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw_z current expected'
 
 # make sure diff-helper can grok it.
 mv current diff-raw

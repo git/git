@@ -7,14 +7,7 @@ test_description='More rename detection
 
 '
 . ./test-lib.sh
-
-compare_diff_patch () {
-    # When heuristics are improved, the score numbers would change.
-    # Ignore them while comparing.
-    sed -e '/^similarity index [0-9]*%$/d' <"$1" >.tmp-1
-    sed -e '/^similarity index [0-9]*%$/d' <"$2" >.tmp-2
-    diff -u .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
-}
+. ../diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     'prepare reference tree' \
