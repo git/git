@@ -21,9 +21,13 @@ static int matches_pathspec(const char *name, struct path_spec *s, int cnt)
 	namelen = strlen(name);
 	for (i = 0; i < cnt; i++) {
 		int len = s[i].len;
-		if (! strncmp(s[i].spec, name, len) &&
-		    len <= namelen &&
-		    (name[len] == 0 || name[len] == '/'))
+		if (namelen < len)
+			continue;
+		if (memcmp(s[i].spec, name, len))
+			continue;
+		if (s[i].spec[len-1] == '/' ||
+		    name[len] == 0 ||
+		    name[len] == '/')
 			return 1;
 	}
 	return 0;
@@ -44,12 +48,8 @@ void diffcore_pathspec(const char **pathspec)
 	speccnt = i;
 	spec = xmalloc(sizeof(*spec) * speccnt);
 	for (i = 0; pathspec[i]; i++) {
-		int l;
 		spec[i].spec = pathspec[i];
-		l = strlen(pathspec[i]);
-		while (l > 0 && pathspec[i][l-1] == '/')
-			l--;
-		spec[i].len = l;
+		spec[i].len = strlen(pathspec[i]);
 	}
 
 	for (i = 0; i < q->nr; i++) {
