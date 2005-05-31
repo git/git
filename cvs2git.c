@@ -24,6 +24,17 @@ static int verbose = 0;
  * Hopefully David Mansfield will update his distribution soon
  * enough (he's the one who wrote the patch, so at least we don't
  * have to figt maintainer issues ;)
+ *
+ * Usage:
+ *
+ *	TZ=UTC cvsps -A |
+ *		cvs2git --cvsroot=[root] --module=[module] > script
+ *
+ * Creates a shell script that will generate the .git archive of
+ * the names CVS repository.
+ *
+ * IMPORTANT NOTE ABOUT "cvsps"! This requires version 2.1 or better,
+ * and the "TZ=UTC" and the "-A" flag is required for sane results!
  */
 enum state {
 	Header,
@@ -31,7 +42,8 @@ enum state {
 	Members
 };
 
-static char *rcsdir;
+static const char *cvsroot;
+static const char *cvsmodule;
 
 static char date[100];
 static char author[100];
@@ -147,28 +159,8 @@ static void commit(void)
 	initial_commit = 0;
 }
 
-static void get_rcs_name(char *rcspathname, char *name, char *dir)
-{
-	sprintf(rcspathname, "%s/%s,v", rcsdir, name);
-	if (!access(rcspathname, R_OK))
-		return;
-
-	sprintf(rcspathname, "%s/Attic/%s,v", rcsdir, name);
-	if (!access(rcspathname, R_OK))
-		return;
-
-	if (dir) {
-		sprintf(rcspathname, "%s/%.*s/Attic/%s,v", rcsdir, (int)(dir - name), name, dir+1);
-		if (!access(rcspathname, R_OK))
-			return;
-	}
-	fprintf(stderr, "Unable to find RCS file for %s\n", name);
-	exit(1);
-}
-
 static void update_file(char *line)
 {
-	static char rcspathname[4096];
 	char *name, *version;
 	char *dir;
 
@@ -194,9 +186,7 @@ static void update_file(char *line)
 	if (dir)
 		printf("mkdir -p %.*s\n", (int)(dir - name), name);
 
-	get_rcs_name(rcspathname, name, dir);
-		
-	printf("co -q -p -r%s '%s' > '%s'\n", version, rcspathname, name);
+	printf("cvs -q -d %s checkout -r%s -p '%s/%s' > '%s'\n", cvsroot, version, cvsmodule, name, name);
 	printf("git-update-cache --add -- '%s'\n", name);
 }
 
@@ -217,10 +207,30 @@ int main(int argc, char **argv)
 {
 	static char line[1000];
 	enum state state = Header;
+	int i;
 
-	rcsdir = getenv("RCSDIR");
-	if (!rcsdir) {
-		fprintf(stderr, "I need an $RCSDIR\n");
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!memcmp(arg, "--cvsroot=", 10)) {
+			cvsroot = arg + 10;
+			continue;
+		}
+		if (!memcmp(arg, "--module=", 9)) {
+			cvsmodule = arg+9;
+			continue;
+		} 
+		if (!strcmp(arg, "-v")) {
+			verbose = 1;
+			continue;
+		}
+	}
+
+
+	if (!cvsroot)
+		cvsroot = getenv("CVSROOT");
+
+	if (!cvsmodule || !cvsroot) {
+		fprintf(stderr, "I need a CVSROOT and module name\n");
 		exit(1);
 	}
 
