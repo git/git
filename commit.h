@@ -32,6 +32,9 @@ void free_commit_list(struct commit_list *list);
 
 void sort_by_date(struct commit_list **list);
 
+extern unsigned long pretty_print_commit(const char *msg, unsigned long len, char *buf, unsigned long space);
+
+
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
  **/

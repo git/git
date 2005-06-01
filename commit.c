@@ -174,3 +174,83 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 	}
 	return ret;
 }
+
+/*
+ * Generic support for pretty-printing the header
+ */
+static int get_one_line(const char *msg, unsigned long len)
+{
+	int ret = 0;
+
+	while (len--) {
+		char c = *msg++;
+		ret++;
+		if (c == '\n')
+			break;
+		if (!c)
+			return 0;
+	}
+	return ret;
+}
+
+static int add_author_info(char *buf, const char *line, int len)
+{
+	char *date;
+	unsigned int namelen;
+	unsigned long time;
+	int tz;
+
+	line += strlen("author ");
+	date = strchr(line, '>');
+	if (!date)
+		return 0;
+	namelen = ++date - line;
+	time = strtoul(date, &date, 10);
+	tz = strtol(date, NULL, 10);
+
+	return sprintf(buf, "Author: %.*s\nDate:   %s\n",
+		namelen, line,
+		show_date(time, tz));
+}
+
+unsigned long pretty_print_commit(const char *msg, unsigned long len, char *buf, unsigned long space)
+{
+	int hdr = 1;
+	unsigned long offset = 0;
+
+	for (;;) {
+		const char *line = msg;
+		int linelen = get_one_line(msg, len);
+
+		if (!linelen)
+			break;
+
+		/*
+		 * We want some slop for indentation and a possible
+		 * final "...". Thus the "+ 20".
+		 */
+		if (offset + linelen + 20 > space) {
+			memcpy(buf + offset, "    ...\n", 8);
+			offset += 8;
+			break;
+		}
+
+		msg += linelen;
+		len -= linelen;
+		if (linelen == 1)
+			hdr = 0;
+		if (hdr) {
+			if (!memcmp(line, "author ", 7))
+				offset += add_author_info(buf + offset, line, linelen);
+			continue;
+		}
+		memset(buf + offset, ' ', 4);
+		memcpy(buf + offset + 4, line, linelen);
+		offset += linelen + 4;
+	}
+	/* Make sure there is an EOLN */
+	if (buf[offset - 1] != '\n')
+		buf[offset++] = '\n';
+	buf[offset] = '\0';
+	return offset;
+}

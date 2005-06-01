@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include "cache.h"
 #include "diff.h"
+#include "commit.h"
 
 static int show_root_diff = 0;
 static int verbose_header = 0;
@@ -311,38 +312,6 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	return retval;
 }
 
-static int get_one_line(const char *msg, unsigned long len)
-{
-	int ret = 0;
-
-	while (len--) {
-		ret++;
-		if (*msg++ == '\n')
-			break;
-	}
-	return ret;
-}
-
-static int add_author_info(char *buf, const char *line, int len)
-{
-	char *date;
-	unsigned int namelen;
-	unsigned long time;
-	int tz;
-
-	line += strlen("author ");
-	date = strchr(line, '>');
-	if (!date)
-		return 0;
-	namelen = ++date - line;
-	time = strtoul(date, &date, 10);
-	tz = strtol(date, NULL, 10);
-
-	return sprintf(buf, "Author: %.*s\nDate:   %s\n",
-		namelen, line,
-		show_date(time, tz));
-}
-
 static char *generate_header(const char *commit, const char *parent, const char *msg, unsigned long len)
 {
 	static char this_header[16384];
@@ -350,44 +319,9 @@ static char *generate_header(const char *commit, const char *parent, const char 
 
 	offset = sprintf(this_header, "%s%s (from %s)\n", header_prefix, commit, parent);
 	if (verbose_header) {
-		int hdr = 1;
-
-		for (;;) {
-			const char *line = msg;
-			int linelen = get_one_line(msg, len);
-
-			if (!linelen)
-				break;
-
-			/*
-			 * We want some slop for indentation and a possible
-			 * final "...". Thus the "+ 20".
-			 */
-			if (offset + linelen + 20 > sizeof(this_header)) {
-				memcpy(this_header + offset, "    ...\n", 8);
-				offset += 8;
-				break;
-			}
-
-			msg += linelen;
-			len -= linelen;
-			if (linelen == 1)
-				hdr = 0;
-			if (hdr) {
-				if (!memcmp(line, "author ", 7))
-					offset += add_author_info(this_header + offset, line, linelen);
-				continue;
-			}
-			memset(this_header + offset, ' ', 4);
-			memcpy(this_header + offset + 4, line, linelen);
-			offset += linelen + 4;
-		}
-		/* Make sure there is an EOLN */
-		if (this_header[offset-1] != '\n')
-			this_header[offset++] = '\n';
-		/* Add _another_ EOLN if we are doing diff output */
+		offset += pretty_print_commit(msg, len, this_header + offset, sizeof(this_header) - offset);
 		this_header[offset++] = '\n';
-		this_header[offset] = 0;
+		this_header[offset++] = 0;
 	}
 
 	return this_header;
