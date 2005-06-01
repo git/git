@@ -59,10 +59,6 @@ struct diff_filepair {
 
 #define DIFF_PAIR_MODE_CHANGED(p) ((p)->one->mode != (p)->two->mode)
 
-#define DIFF_FILE_CANON_MODE(mode) \
-	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
-	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
-
 extern void diff_free_filepair(struct diff_filepair *);
 
 extern int diff_unmodified_pair(struct diff_filepair *);

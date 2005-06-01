@@ -854,12 +854,14 @@ static void diff_resolve_rename_copy(void)
 		else if (memcmp(p->one->sha1, p->two->sha1, 20) ||
 			 p->one->mode != p->two->mode)
 			p->status = 'M';
-		else
-			/* this is a "no-change" entry.
-			 * should not happen anymore.
-			 * p->status = 'X';
+		else {
+			/* This is a "no-change" entry and should not
+			 * happen anymore, but prepare for broken callers.
 			 */
-			die("internal error in diffcore: unmodified entry remains");
+			error("feeding unmodified %s to diffcore",
+			      p->one->path);
+			p->status = 'X';
+		}
 	}
 	diff_debug_queue("resolve-rename-copy done", q);
 }

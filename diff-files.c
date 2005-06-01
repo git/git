@@ -88,7 +88,7 @@ int main(int argc, const char **argv)
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
-		unsigned int oldmode, mode;
+		unsigned int oldmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 
@@ -116,10 +116,8 @@ int main(int argc, const char **argv)
 			continue;
 
 		oldmode = ntohl(ce->ce_mode);
-		mode = (S_ISLNK(st.st_mode) ? S_IFLNK :
-			S_IFREG | ce_permissions(st.st_mode));
-
-		show_modified(oldmode, mode, ce->sha1, null_sha1,
+		show_modified(oldmode, DIFF_FILE_CANON_MODE(st.st_mode),
+			      ce->sha1, null_sha1,
 			      ce->name);
 	}
 	diffcore_std((1 < argc) ? argv + 1 : NULL,

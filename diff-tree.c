@@ -44,10 +44,12 @@ static const unsigned char *extract(void *tree, unsigned long size, const char *
 	int len = strlen(tree)+1;
 	const unsigned char *sha1 = tree + len;
 	const char *path = strchr(tree, ' ');
+	unsigned int mode;
 
-	if (!path || size < len + 20 || sscanf(tree, "%o", modep) != 1)
+	if (!path || size < len + 20 || sscanf(tree, "%o", &mode) != 1)
 		die("corrupt tree file");
 	*pathp = path+1;
+	*modep = DIFF_FILE_CANON_MODE(mode);
 	return sha1;
 }
 

@@ -4,6 +4,10 @@
 #ifndef DIFF_H
 #define DIFF_H
 
+#define DIFF_FILE_CANON_MODE(mode) \
+	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
+	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
+
 extern void diff_addremove(int addremove,
 			   unsigned mode,
 			   const unsigned char *sha1,
