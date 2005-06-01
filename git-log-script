@@ -1,0 +1,2 @@
+#!/bin/sh
+git-rev-list --pretty HEAD | LESS=-S ${PAGER:-less}

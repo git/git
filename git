@@ -1,0 +1,4 @@
+#!/bin/sh
+cmd="git-$1-script"
+shift
+exec $cmd "$@"
