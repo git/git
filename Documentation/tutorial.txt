@@ -1,0 +1,413 @@
+A short git tutorial
+====================
+May 2005
+
+
+Introduction
+------------
+
+This is trying to be a short tutorial on setting up and using a git
+archive, mainly because being hands-on and using explicit examples is
+often the best way of explaining what is going on.
+
+In normal life, most people wouldn't use the "core" git programs
+directly, but rather script around them to make them more palatable. 
+Understanding the core git stuff may help some people get those scripts
+done, though, and it may also be instructive in helping people
+understand what it is that the higher-level helper scripts are actually
+doing. 
+
+The core git is often called "plumbing", with the prettier user
+interfaces on top of it called "porcelain". You may want to know what
+the plumbing does for when the porcelain isn't flushing...
+
+
+Creating a git archive
+----------------------
+
+Creating a new git archive couldn't be easier: all git archives start
+out empty, and the only thing you need to do is find yourself a
+subdirectory that you want to use as a working tree - either an empty
+one for a totally new project, or an existing working tree that you want
+to import into git. 
+
+For our first example, we're going to start a totally new arhive from
+scratch, with no pre-existing files, and we'll call it "git-tutorial".
+To start up, create a subdirectory for it, change into that
+subdirectory, and initialize the git infrastructure with "git-init-db":
+
+	mkdir git-tutorial
+	cd git-tutorial
+	git-init-db 
+
+to which git will reply
+
+	defaulting to local storage area
+
+which is just gits way of saying that you haven't been doing anything
+strange, and that it will have created a local .git directory setup for
+your new project. You will now have a ".git" directory, and you can
+inspect that with "ls". For your new empty project, ls should show you
+three entries:
+
+ - a symlink called HEAD, pointing to "refs/heads/master"
+
+   Don't worry about the fact that the file that the HEAD link points to
+   dosn't even exist yet - you haven't created the commit that will
+   start your HEAD development branch yet.
+
+ - a subdirectory called "objects", which will contain all the git SHA1
+   objects of your project. You should never have any real reason to
+   look at the objects directly, but you might want to know that these
+   objects are what contains all the real _data_ in your repository.
+
+ - a subdirectory called "refs", which contains references to objects.
+
+   In particular, the "refs" subdirectory will contain two other
+   subdirectories, named "heads" and "tags" respectively.  They do
+   exactly what their names imply: they contain references to any number
+   of different "heads" of development (aka "branches"), and to any
+   "tags" that you have created to name specific versions of your
+   repository. 
+
+   One note: the special "master" head is the default branch, which is
+   why the .git/HEAD file was created as a symlink to it even if it
+   doesn't yet exist. Bascially, the HEAD link is supposed to always
+   point to the branch you are working on right now, and you always
+   start out expecting to work on the "master" branch.
+
+   However, this is only a convention, and you can name your branches
+   anything you want, and don't have to ever even _have_ a "master"
+   branch.  A number of the git tools will assume that .git/HEAD is
+   valid, though.
+
+   [ Implementation note: an "object" is identified by its 160-bit SHA1
+   hash, aka "name", and a reference to an object is always the 40-byte
+   hex representation of that SHA1 name. The files in the "refs"
+   subdirectory are expected to contain these hex references (usually
+   with a final '\n' at the end), and you should thus expect to see a
+   number of 41-byte files containing these references in this refs
+   subdirectories when you actually start populating your tree ]
+
+You have now created your first git archive. Of course, since it's
+empty, that's not very useful, so let's start populating it with data.
+
+
+	Populating a git archive
+	------------------------
+
+We'll keep this simple and stupid, so we'll start off with populating a
+few trivial files just to get a feel for it.
+
+Start off with just creating any random files that you want to maintain
+in your git archive. We'll start off with a few bad examples, just to
+get a feel for how this works:
+
+	echo "Hello World" > a
+	echo "Silly example" > b
+
+you have now created two files in your working directory, but to
+actually check in your hard work, you will have to go through two steps:
+
+ - fill in the "cache" aka "index" file with the information about your
+   working directory state
+
+ - commit that index file as an object.
+
+The first step is trivial: when you want to tell git about any changes
+to your working directory, you use the "git-update-cache" program.  That
+program normally just takes a list of filenames you want to update, but
+to avoid trivial mistakes, it refuses to add new entries to the cache
+(or remove existing ones) unless you explicitly tell it that you're
+adding a new entry with the "--add" flag (or removing an entry with the
+"--remove") flag. 
+
+So to populate the index with the two files you just created, you can do
+
+	git-update-cache --add a b
+
+and you have now told git to track those two files.
+
+In fact, as you did that, if you now look into your object directory,
+you'll notice that git will have added two ne wobjects to the object
+store.  If you did exactly the steps above, you should now be able to do
+
+	ls .git/objects/??/*
+
+and see two files:
+
+	.git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238 
+	.git/objects/f2/4c74a2e500f5ee1332c86b94199f52b1d1d962
+
+which correspond with the object with SHA1 names of 557db... and f24c7..
+respectively.
+
+If you want to, you can use "git-cat-file" to look at those objects, but
+you'll have to use the object name, not the filename of the object:
+
+	git-cat-file -t 557db03de997c86a4a028e1ebd3a1ceb225be238
+
+where the "-t" tells git-cat-file to tell you what the "type" of the
+object is. Git will tell you that you have a "blob" object (ie just a
+regular file), and you can see the contents with
+
+	git-cat-file "blob" 557db03de997c86a4a028e1ebd3a1ceb225be238
+
+which will print out "Hello World".  The object 557db...  is nothing
+more than the contents of your file "a". 
+
+[ Digression: don't confuse that object with the file "a" itself.  The
+object is literally just those specific _contents_ of the file, and
+however much you later change the contents in file "a", the object we
+just looked at will never change. Objects are immutable. ]
+
+Anyway, as we mentioned previously, you normally never actually take a
+look at the objects themselves, and typing long 40-character hex SHA1
+names is not something you'd normally want to do.  The above digression
+was just to show that "git-update-cache" did something magical, and
+actually saved away the contents of your files into the git content
+store. 
+
+Updating the cache did something else too: it created a ".git/index"
+file.  This is the index that describes your current working tree, and
+something you should be very aware of.  Again, you normally never worry
+about the index file itself, but you should be aware of the fact that
+you have not actually really "checked in" your files into git so far,
+you've only _told_ git about them.
+
+However, since git knows about them, you can how start using some of the
+most basic git commands to manipulate the files or look at their status. 
+
+In particular, let's not even check in the two files into git yet, we'll
+start off by adding another line to "a" first:
+
+	echo "It's a new day for git" >> a
+
+and you can now, since you told git about the previous state of "a", ask
+git what has changed in the tree compared to your old index, using the
+"git-diff-files" command:
+
+	git-diff-files 
+
+oops.  That wasn't very readable.  It just spit out its own internal
+version of a "diff", but that internal version really just tells you
+that it has noticed that "a" has been modified, and that the old object
+contents it had have been replaced with something else.
+
+To make it readable, we can tell git-diff-files to output the
+differences as a patch, using the "-p" flag:
+
+	git-diff-files -p
+
+which will spit out
+
+	diff --git a/a b/a
+	--- a/a
+	+++ b/a
+	@@ -1 +1,2 @@
+	 Hello World
+	+It's a new day for git
+
+ie the diff of the change we caused by adding another line to "a".
+
+In other words, git-diff-files always shows us the difference between
+what is recorded in the index, and what is currently in the working
+tree. That's very useful.
+
+
+	Committing git state
+	--------------------
+
+Now, we want to go to the next stage in git, which is to take the files
+that git knows about in the index, and commit them as a real tree. We do
+that in two phases: creating a "tree" object, and committing that "tree"
+object as a "commit" object together with an explanation of what the
+tree was all about, along with information of how we came to that state.
+
+Creating a tree object is trivial, and is done with "git-write-tree". 
+There are no options or other input: git-write-tree will take the
+current index state, and write an object that describes that whole
+index.  In other words, we're now tying together all the different
+filenames with their contents (and their permissions), and we're
+creating the equivalent of a git "directory" object:
+
+	git-write-tree
+
+and this will just output the name of the resulting tree, in this case
+(if you have does exactly as I've described) it should be
+
+	3ede4ed7e895432c0a247f09d71a76db53bd0fa4
+
+which is another incomprehensible object name. Again, if you want to,
+you can use "git-cat-file -t 3ede4.." to see that this time the object
+is not a "blob" object, but a "tree" object (you can also use
+git-cat-file to actually output the raw object contents, but you'll see
+mainly a binary mess, so that's less interesting).
+
+However - normally you'd never use "git-write-tree" on its own, because
+normally you always commit a tree into a commit object using the
+"git-commit-tree" command. In fact, it's easier to not actually use
+git-write-tree on its own at all, but to just pass its result in as an
+argument to "git-commit-tree".
+
+"git-commit-tree" normally takes several arguments - it wants to know
+what the _parent_ of a commit was, but since this is the first commit
+ever in this new archive, and it has no parents, we only need to pass in
+the tree ID. However, git-commit-tree also wants to get a commit message
+on its standard input, and it will write out the resulting ID for the
+commit to its standard output.
+
+And this is where we start using the .git/HEAD file. The HEAD file is
+supposed to contain the reference to the top-of-tree, and since that's
+exactly what git-commit-tree spits out, we can do this all with a simple
+shell pipeline:
+
+	echo "Initial commit" | git-commit-tree $(git-write-tree) > .git/HEAD
+
+which will say:
+
+	Committing initial tree 3ede4ed7e895432c0a247f09d71a76db53bd0fa4
+
+just to warn you about the fact that it created a totally new commit
+that is not related to anything else. Normally you do this only _once_
+for a project ever, and all later commits will be parented on top of an
+earlier commit, and you'll never see this "Committing initial tree"
+message ever again.
+
+
+	Making a change
+	---------------
+
+Remember how we did the "git-update-cache" on file "a" and then we
+changed "a" afterwards, and could compare the new state of "a" with the
+state we saved in the index file? 
+
+Further, remember how I said that "git-write-tree" writes the contents
+of the _index_ file to the tree, and thus what we just committed was in
+fact the _original_ contents of the file "a", not the new ones. We did
+that on purpose, to show the difference between the index state, and the
+state in the working directory, and how they don't have to match, even
+when we commit things.
+
+As before, if we do "git-diff-files -p" in our git-tutorial project,
+we'll still see the same difference we saw last time: the index file
+hasn't changed by the act of committing anything.  However, now that we
+have committed something, we can also learn to use a new command:
+"git-diff-cache".
+
+Unlike "git-diff-files", which showed the difference between the index
+file and the working directory, "git-diff-cache" shows the differences
+between a committed _tree_ and the index file.  In other words,
+git-diff-cache wants a tree to be diffed against, and before we did the
+commit, we couldn't do that, because we didn't have anything to diff
+against. 
+
+But now we can do 
+
+	git-diff-cache -p HEAD
+
+(where "-p" has the same meaning as it did in git-diff-files), and it
+will show us the same difference, but for a totally different reason. 
+Now we're not comparing against the index file, we're comparing against
+the tree we just wrote.  It just so happens that those two are obviously
+the same. 
+
+"git-diff-cache" also has a specific flag "--cached", which is used to
+tell it to show the differences purely with the index file, and ignore
+the current working directory state entirely.  Since we just wrote the
+index file to HEAD, doing "git-diff-cache --cached -p HEAD" should thus
+return an empty set of differences, and that's exactly what it does. 
+
+However, our next step is to commit the _change_ we did, and again, to
+understand what's going on, keep in mind the difference between "workign
+directory contents", "index file" and "committed tree".  We have changes
+in the working directory that we want to commit, and we always have to
+work through the index file, so the first thing we need to do is to
+update the index cache:
+
+	git-update-cache a
+
+(note how we didn't need the "--add" flag this time, since git knew
+about the file already).
+
+Note what happens to the different git-diff-xxx versions here.  After
+we've updated "a" in the index, "git-diff-files -p" now shows no
+differences, but "git-diff-cache -p HEAD" still _does_ show that the
+current state is different from the state we committed.  In fact, now
+"git-diff-cache" shows the same difference whether we use the "--cached"
+flag or not, since now the index is coherent with the working directory. 
+
+Now, since we've updated "a" in the index, we can commit the new
+version. We could do it by writing the tree by hand, and committing the
+tree (this time we'd have to use the "-p HEAD" flag to tell commit that
+the HEAD was the _parent_ fo the new commit, and that this wasn't an
+initial commit any more), but the fact is, git has a simple helper
+script for doing all of the non-initial commits that does all of this
+for you, and starts up an editor to let you write your commit message
+yourself, so let's just use that:
+
+	git-commit-script
+
+Write whatever message you want, and all the lines that start with '#'
+will be pruned out, and the rest will be used as the commit message for
+the change. If you decide you don't want to commit anything after all at
+this point (you can continue to edit things and update the cache), you
+can just leave an empty message. Otherwise git-commit-script will commit
+the change for you.
+
+(Btw, current versions of git will consider the change in question to be
+so big that it's considered a whole new file, since the diff is actually
+bigger than the file.  So the helpful comments that git-commit-script
+tells you for this example will say that you deleted and re-created the
+file "a".  For a less contrieved example, these things are usually more
+obvious). 
+
+You've now made your first real git commit. And if you're interested in
+looking at what git-commit-script really does, feel free to investigate:
+it's a few very simple shell scripts to generate the helpful (?) commit
+message headers, and a few one-liners that actually do the commit itself.
+
+
+	Checking it out
+	---------------
+
+While creating changes is useful, it's even more useful if you can tell
+later what changed.  The most useful command for this is another of the
+"diff" family, namely "git-diff-tree". 
+
+git-diff-tree can be given two arbitrary trees, and it will tell you the
+differences between them. Perhaps even more commonly, though, you can
+give it just a single commit object, and it will figure out the parent
+of that commit itself, and show the difference directly. Thus, to get
+the same diff that we've already seen several times, we can now do
+
+	git-diff-tree -p HEAD
+
+(again, "-p" means to show the difference as a human-readable patch),
+and it will show what the last commit (in HEAD) actually changed.
+
+More interestingly, you can also give git-diff-tree the "-v" flag, which
+tells it to also show the commit message and author and date of the
+commit, and you can tell it to show a whole series of diffs.
+Alternatively, you can tell it to be "silent", and not show the diffs at
+all, but just show the actual commit message.
+
+In fact, together with the "git-rev-list" program (which generates a
+list of revisions), git-diff-tree ends up being a veritable fount of
+changes. A trivial (but very useful) script called "git-whatchanged" is
+included with git which does exactly this, and shows a log of recent
+activity.
+
+To see the whole history of our pitiful little git-tutorial project, we
+can do
+
+	git-whatchanged -p --root HEAD
+
+(the "--root" flag is a flag to git-diff-tree to tell it to show the
+initial aka "root" commit as a diff too), and you will see exactly what
+has changed in the repository over its short history.
+
+With that, you should now be having some incling of what git does, and
+can explore on your own.
+
+[ to be continued.. cvs2git, tagging versions, branches, merging.. ]
