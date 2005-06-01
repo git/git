@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.19 $
+# CVS $Revision: 1.20 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -448,7 +448,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.19 $)} \
+(CVS $Revision: 1.20 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -1099,11 +1099,8 @@ proc gettreediffline {gdtf id} {
 	addtocflist $id
 	return
     }
-    set type [lindex $line 1]
-    set file [lindex $line 3]
-    if {$type == "blob"} {
-	lappend treediffs($id) $file
-    }
+    set file [lindex $line 5]
+    lappend treediffs($id) $file
 }
 
 proc getblobdiffs {id} {
