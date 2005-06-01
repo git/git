@@ -115,6 +115,7 @@ static void commit(void)
 {
 	const char *cmit_parent = initial_commit ? "" : "-p HEAD";
 	const char *dst_branch;
+	char *space;
 	int i;
 
 	printf("tree=$(git-write-tree)\n");
@@ -146,6 +147,12 @@ static void commit(void)
 		dst_branch = "master";
 
 	printf("echo $commit > .git/refs/heads/'%s'\n", dst_branch);
+
+	space = strchr(tag, ' ');
+	if (space)
+		*space = 0;
+	if (strcmp(tag, "(none)"))
+		printf("echo $commit > .git/refs/tags/'%s'\n", tag);
 
 	printf("echo 'Committed (to %s):' ; cat .cmitmsg; echo\n", dst_branch);
 
