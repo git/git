@@ -10,4 +10,4 @@ grep -v '^#' < .editmsg | git-stripspace > .cmitmsg
 [ -s .cmitmsg ] || exit 1
 tree=$(git-write-tree) || exit 1
 commit=$(cat .cmitmsg | git-commit-tree $tree -p HEAD) || exit 1
-echo $commit > .git/HEAD
+echo $commit > ${GIT_DIR:-.git}/HEAD
