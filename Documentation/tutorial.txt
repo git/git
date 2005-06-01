@@ -31,7 +31,7 @@ subdirectory that you want to use as a working tree - either an empty
 one for a totally new project, or an existing working tree that you want
 to import into git. 
 
-For our first example, we're going to start a totally new arhive from
+For our first example, we're going to start a totally new archive from
 scratch, with no pre-existing files, and we'll call it "git-tutorial".
 To start up, create a subdirectory for it, change into that
 subdirectory, and initialize the git infrastructure with "git-init-db":
@@ -44,7 +44,7 @@ to which git will reply
 
 	defaulting to local storage area
 
-which is just gits way of saying that you haven't been doing anything
+which is just git's way of saying that you haven't been doing anything
 strange, and that it will have created a local .git directory setup for
 your new project. You will now have a ".git" directory, and you can
 inspect that with "ls". For your new empty project, ls should show you
@@ -53,7 +53,7 @@ three entries:
  - a symlink called HEAD, pointing to "refs/heads/master"
 
    Don't worry about the fact that the file that the HEAD link points to
-   dosn't even exist yet - you haven't created the commit that will
+   doesn't even exist yet - you haven't created the commit that will
    start your HEAD development branch yet.
 
  - a subdirectory called "objects", which will contain all the git SHA1
@@ -72,7 +72,7 @@ three entries:
 
    One note: the special "master" head is the default branch, which is
    why the .git/HEAD file was created as a symlink to it even if it
-   doesn't yet exist. Bascially, the HEAD link is supposed to always
+   doesn't yet exist. Basically, the HEAD link is supposed to always
    point to the branch you are working on right now, and you always
    start out expecting to work on the "master" branch.
 
@@ -129,7 +129,7 @@ So to populate the index with the two files you just created, you can do
 and you have now told git to track those two files.
 
 In fact, as you did that, if you now look into your object directory,
-you'll notice that git will have added two ne wobjects to the object
+you'll notice that git will have added two new objects to the object
 store.  If you did exactly the steps above, you should now be able to do
 
 	ls .git/objects/??/*
@@ -279,7 +279,7 @@ message ever again.
 	---------------
 
 Remember how we did the "git-update-cache" on file "a" and then we
-changed "a" afterwards, and could compare the new state of "a" with the
+changed "a" afterward, and could compare the new state of "a" with the
 state we saved in the index file? 
 
 Further, remember how I said that "git-write-tree" writes the contents
@@ -319,7 +319,7 @@ index file to HEAD, doing "git-diff-cache --cached -p HEAD" should thus
 return an empty set of differences, and that's exactly what it does. 
 
 However, our next step is to commit the _change_ we did, and again, to
-understand what's going on, keep in mind the difference between "workign
+understand what's going on, keep in mind the difference between "working
 directory contents", "index file" and "committed tree".  We have changes
 in the working directory that we want to commit, and we always have to
 work through the index file, so the first thing we need to do is to
@@ -340,7 +340,7 @@ flag or not, since now the index is coherent with the working directory.
 Now, since we've updated "a" in the index, we can commit the new
 version. We could do it by writing the tree by hand, and committing the
 tree (this time we'd have to use the "-p HEAD" flag to tell commit that
-the HEAD was the _parent_ fo the new commit, and that this wasn't an
+the HEAD was the _parent_ of the new commit, and that this wasn't an
 initial commit any more), but the fact is, git has a simple helper
 script for doing all of the non-initial commits that does all of this
 for you, and starts up an editor to let you write your commit message
@@ -359,7 +359,7 @@ the change for you.
 so big that it's considered a whole new file, since the diff is actually
 bigger than the file.  So the helpful comments that git-commit-script
 tells you for this example will say that you deleted and re-created the
-file "a".  For a less contrieved example, these things are usually more
+file "a".  For a less contrived example, these things are usually more
 obvious). 
 
 You've now made your first real git commit. And if you're interested in
@@ -401,13 +401,13 @@ activity.
 To see the whole history of our pitiful little git-tutorial project, we
 can do
 
-	git-whatchanged -p --root HEAD
+	git-whatchanged -p --root
 
 (the "--root" flag is a flag to git-diff-tree to tell it to show the
 initial aka "root" commit as a diff too), and you will see exactly what
 has changed in the repository over its short history.
 
-With that, you should now be having some incling of what git does, and
+With that, you should now be having some inkling of what git does, and
 can explore on your own.
 
 [ to be continued.. cvs2git, tagging versions, branches, merging.. ]
