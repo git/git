@@ -54,54 +54,58 @@ static int prepare_children(struct tree_entry_list *elem)
 	return 0;
 }
 
-static struct tree_entry_list *find_entry_0(struct tree_entry_list *elem,
-					    const char *path,
-					    const char *path_end)
+static struct tree_entry_list *find_entry(const char *path)
 {
-	const char *ep;
+	const char *next, *slash;
 	int len;
+	struct tree_entry_list *elem = &root_entry;
 
-	while (path < path_end) {
-		if (prepare_children(elem))
-			return NULL;
-
-		/* In elem->tree->entries, find the one that has name
-		 * that matches what is between path and ep.
-		 */
-		elem = elem->item.tree->entries;
-
-		ep = strchr(path, '/');
-		if (!ep || path_end <= ep)
-			ep = path_end;
-		len = ep - path;
-
-		while (elem) {
-			if ((strlen(elem->name) == len) &&
-			    !strncmp(elem->name, path, len))
-				break;
-			elem = elem->next;
-		}
-		if (path_end <= ep || !elem)
-			return elem;
-		while (*ep == '/' && ep < path_end)
-			ep++;
-		path = ep;
-	}
-	return NULL;
-}
-
-static struct tree_entry_list *find_entry(const char *path,
-					  const char *path_end)
-{
 	/* Find tree element, descending from root, that
 	 * corresponds to the named path, lazily expanding
 	 * the tree if possible.
 	 */
-	if (path == path_end) {
-		/* Special.  This is the root level */
-		return &root_entry;
+
+	while (path) {
+		/* The fact we still have path means that the caller
+		 * wants us to make sure that elem at this point is a
+		 * directory, and possibly descend into it.  Even what
+		 * is left is just trailing slashes, we loop back to
+		 * here, and this call to prepare_children() will
+		 * catch elem not being a tree.  Nice.
+		 */
+		if (prepare_children(elem))
+			return NULL;
+
+		slash = strchr(path, '/');
+		if (!slash) {
+			len = strlen(path);
+			next = 0;
+		}
+		else {
+			next = slash + 1;
+			len = slash - path;
+		}
+		if (len) {
+			/* (len == 0) if the original path was "drivers/char/"
+			 * and we have run already two rounds, having elem
+			 * pointing at the drivers/char directory.
+			 */
+			elem = elem->item.tree->entries;
+			while (elem) {
+				if ((strlen(elem->name) == len) &&
+				    !strncmp(elem->name, path, len)) {
+					/* found */
+					break;
+				}
+				elem = elem->next;
+			}
+			if (!elem)
+				return NULL;
+		}
+		path = next;
 	}
-	return find_entry_0(&root_entry, path, path_end);
+
+	return elem;
 }
 
 static void show_entry_name(struct tree_entry_list *e)
@@ -180,10 +184,10 @@ static int show_entry(struct tree_entry_list *e, int level)
 	return err;
 }
 
-static int list_one(const char *path, const char *path_end)
+static int list_one(const char *path)
 {
 	int err = 0;
-	struct tree_entry_list *e = find_entry(path, path_end);
+	struct tree_entry_list *e = find_entry(path);
 	if (!e) {
 		/* traditionally ls-tree does not complain about
 		 * missing path.  We may change this later to match
@@ -199,12 +203,8 @@ static int list(char **path)
 {
 	int i;
 	int err = 0;
-	for (i = 0; path[i]; i++) {
-		int len = strlen(path[i]);
-		while (0 <= len && path[i][len] == '/')
-			len--;
-		err = err | list_one(path[i], path[i] + len);
-	}
+	for (i = 0; path[i]; i++)
+		err = err | list_one(path[i]);
 	return err;
 }
 

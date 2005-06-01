@@ -14,7 +14,7 @@ This test runs git-ls-tree with the following in a tree.
     path2/baz/b - a file in a directory in a directory
 
 The new path restriction code should do the right thing for path2 and
-path2/baz
+path2/baz.  Also path0/ should snow nothing.
 '
 . ./test-lib.sh
 
@@ -63,7 +63,7 @@ EOF
      test_output'
 
 test_expect_success \
-    'ls-tree filtered' \
+    'ls-tree filtered with path' \
     'git-ls-tree $tree path >current &&
      cat >expected <<\EOF &&
 EOF
@@ -71,7 +71,7 @@ EOF
 
 
 test_expect_success \
-    'ls-tree filtered' \
+    'ls-tree filtered with path1 path0' \
     'git-ls-tree $tree path1 path0 >current &&
      cat >expected <<\EOF &&
 120000 blob X	path1
@@ -80,7 +80,14 @@ EOF
      test_output'
 
 test_expect_success \
-    'ls-tree filtered' \
+    'ls-tree filtered with path0/' \
+    'git-ls-tree $tree path0/ >current &&
+     cat >expected <<\EOF &&
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree filtered with path2' \
     'git-ls-tree $tree path2 >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2
@@ -91,11 +98,33 @@ EOF
      test_output'
 
 test_expect_success \
-    'ls-tree filtered' \
+    'ls-tree filtered with path2/baz' \
     'git-ls-tree $tree path2/baz >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2/baz
 100644 blob X	path2/baz/b
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree filtered with path2' \
+    'git-ls-tree $tree path2 >current &&
+     cat >expected <<\EOF &&
+040000 tree X	path2
+040000 tree X	path2/baz
+120000 blob X	path2/bazbo
+100644 blob X	path2/foo
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree filtered with path2/' \
+    'git-ls-tree $tree path2/ >current &&
+     cat >expected <<\EOF &&
+040000 tree X	path2
+040000 tree X	path2/baz
+120000 blob X	path2/bazbo
+100644 blob X	path2/foo
 EOF
      test_output'
 
