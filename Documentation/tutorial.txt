@@ -157,9 +157,9 @@ which will print out "Hello World".  The object 557db...  is nothing
 more than the contents of your file "a". 
 
 [ Digression: don't confuse that object with the file "a" itself.  The
-object is literally just those specific _contents_ of the file, and
-however much you later change the contents in file "a", the object we
-just looked at will never change. Objects are immutable. ]
+  object is literally just those specific _contents_ of the file, and
+  however much you later change the contents in file "a", the object we
+  just looked at will never change.  Objects are immutable.  ]
 
 Anyway, as we mentioned previously, you normally never actually take a
 look at the objects themselves, and typing long 40-character hex SHA1
@@ -346,7 +346,7 @@ script for doing all of the non-initial commits that does all of this
 for you, and starts up an editor to let you write your commit message
 yourself, so let's just use that:
 
-	git-commit-script
+	git commit
 
 Write whatever message you want, and all the lines that start with '#'
 will be pruned out, and the rest will be used as the commit message for
@@ -398,14 +398,25 @@ changes. A trivial (but very useful) script called "git-whatchanged" is
 included with git which does exactly this, and shows a log of recent
 activity.
 
-To see the whole history of our pitiful little git-tutorial project, we
+To see the whole history of our pitiful little git-tutorial project, you
 can do
+
+	git log
+
+which shows just the log messages, or if we want to see the log together
+whith the associated patches use the more complex (and much more
+powerful)
 
 	git-whatchanged -p --root
 
-(the "--root" flag is a flag to git-diff-tree to tell it to show the
-initial aka "root" commit as a diff too), and you will see exactly what
-has changed in the repository over its short history.
+and you will see exactly what has changed in the repository over its
+short history. 
+
+[ Side note: the "--root" flag is a flag to git-diff-tree to tell it to
+  show the initial aka "root" commit too.  Normally you'd probably not
+  want to see the initial import diff, but since the tutorial project
+  was started from scratch and is so small, we use it to make the result
+  a bit more interesting ]
 
 With that, you should now be having some inkling of what git does, and
 can explore on your own.
