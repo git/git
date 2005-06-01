@@ -10,7 +10,8 @@ static const char rev_list_usage[] =
 		      "  --max-count=nr\n"
 		      "  --max-age=epoch\n"
 		      "  --min-age=epoch\n"
-		      "  --header";
+		      "  --header\n"
+		      "  --pretty";
 
 static void mark_parents_uninteresting(struct commit *commit)
 {
@@ -41,7 +42,9 @@ int main(int argc, char **argv)
 	unsigned char sha1[2][20];
 	struct commit_list *list = NULL;
 	struct commit *commit, *end;
-	int i, verbose_header = 0, show_parents = 0;
+	int i, verbose_header = 0, show_parents = 0, pretty_print = 0;
+	int hdr_termination = 0;
+	const char *prefix = "";
 	unsigned long max_age = -1;
 	unsigned long min_age = -1;
 	int max_count = -1;
@@ -64,6 +67,13 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--header")) {
 			verbose_header = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--pretty")) {
+			verbose_header = 1;
+			pretty_print = 1;
+			hdr_termination = '\n';
+			prefix = "commit ";
 			continue;
 		}
 		if (!strcmp(arg, "--parents")) {
@@ -120,7 +130,7 @@ int main(int argc, char **argv)
 			break;
 		if (max_count != -1 && !max_count--)
 			break;
-		printf("%s", sha1_to_hex(commit->object.sha1));
+		printf("%s%s", prefix, sha1_to_hex(commit->object.sha1));
 		if (show_parents) {
 			struct commit_list *parents = commit->parents;
 			while (parents) {
@@ -129,8 +139,15 @@ int main(int argc, char **argv)
 			}
 		}
 		putchar('\n');
-		if (verbose_header)
-			printf("%s%c", commit->buffer, 0);
+		if (verbose_header) {
+			const char *buf = commit->buffer;
+			if (pretty_print) {
+				static char pretty_header[16384];
+				pretty_print_commit(commit->buffer, ~0, pretty_header, sizeof(pretty_header));
+				buf = pretty_header;
+			}
+			printf("%s%c", buf, hdr_termination);
+		}
 	}
 	return 0;
 }
