@@ -405,7 +405,7 @@ can do
 	git log
 
 which shows just the log messages, or if we want to see the log together
-whith the associated patches use the more complex (and much more
+with the associated patches use the more complex (and much more
 powerful)
 
 	git-whatchanged -p --root
@@ -423,10 +423,10 @@ With that, you should now be having some inkling of what git does, and
 can explore on your own.
 
 
-	Copoying archives
+	Copying archives
 	-----------------
 
-Git arhives are normally totally self-sufficient, and it's worth noting
+Git archives are normally totally self-sufficient, and it's worth noting
 that unlike CVS, for example, there is no separate notion of
 "repository" and "working tree".  A git repository normally _is_ the
 working tree, with the local git information hidden in the ".git"
@@ -486,7 +486,7 @@ actual core git files. Such a repository usually doesn't even have the
 repository.
 
 To create your own local live copy of such a "raw" git repository, you'd
-first create your own subdirectory for the project, adn then copy the
+first create your own subdirectory for the project, and then copy the
 raw repository contents into the ".git" directory. For example, to
 create your own copy of the git repository, you'd do the following
 
@@ -506,13 +506,13 @@ those, you'd check them out with
 	git-checkout-cache -u -a
 
 where the "-u" flag means that you want the checkout to keep the index
-up-to-date (so that you don't have to refresh it afterwards), and the
+up-to-date (so that you don't have to refresh it afterward), and the
 "-a" file means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the "-f"
 file first, to tell git-checkout-cache to _force_ overwriting of any old
 files). 
 
-You have now successfully copied somebody elses (mine) remote
+You have now successfully copied somebody else's (mine) remote
 repository, and checked it out. 
 
 [ to be continued.. cvs2git, tagging versions, branches, merging.. ]
