@@ -84,6 +84,25 @@ static int everybody_uninteresting(struct commit_list *list)
 	return 1;
 }
 
+struct commit_list *limit_list(struct commit_list *list, struct commit *end)
+{
+	struct commit_list *newlist = NULL;
+	struct commit_list **p = &newlist;
+	do {
+		struct commit *commit = pop_most_recent_commit(&list, SEEN);
+		struct object *obj = &commit->object;
+
+		if (commit == end || (obj->flags & UNINTERESTING)) {
+			mark_parents_uninteresting(commit);
+			if (everybody_uninteresting(list))
+				break;
+			continue;
+		}
+		p = &commit_list_insert(commit, p)->next;
+	} while (list);
+	return newlist;
+}
+
 int main(int argc, char **argv)
 {
 	int nr_sha;
@@ -144,23 +163,8 @@ int main(int argc, char **argv)
 	}
 
 	commit_list_insert(commit, &list);
-	if (end) {
-		struct commit_list *newlist = NULL;
-		struct commit_list **p = &newlist;
-		do {
-			struct commit *commit = pop_most_recent_commit(&list, SEEN);
-			struct object *obj = &commit->object;
-
-			if (commit == end || (obj->flags & UNINTERESTING)) {
-				mark_parents_uninteresting(commit);
-				if (everybody_uninteresting(list))
-					break;
-				continue;
-			}
-			p = &commit_list_insert(commit, p)->next;
-		} while (list);
-		list = newlist;
-	}
+	if (end)
+		list = limit_list(list, end);
 
 	show_commit_list(list);
 	return 0;
