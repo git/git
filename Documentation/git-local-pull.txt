@@ -9,7 +9,7 @@ git-local-pull - Duplicates another GIT repository on a local system
 
 SYNOPSIS
 --------
-'git-local-pull' [-c] [-t] [-a] [-l] [-s] [-n] [-v] commit-id path
+'git-local-pull' [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] commit-id path
 
 DESCRIPTION
 -----------
@@ -23,6 +23,10 @@ OPTIONS
 	Get trees associated with the commit objects.
 -a::
 	Get all the objects.
+-d::
+	Do not check for delta base objects (use this option
+	only when you know the remote repository is not
+	deltified).
 -v::
 	Report what is downloaded.
 

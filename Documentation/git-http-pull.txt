@@ -9,7 +9,7 @@ git-http-pull - Downloads a remote GIT repository via HTTP
 
 SYNOPSIS
 --------
-'git-http-pull' [-c] [-t] [-a] [-v] commit-id url
+'git-http-pull' [-c] [-t] [-a] [-v] [-d] commit-id url
 
 DESCRIPTION
 -----------
@@ -21,6 +21,10 @@ Downloads a remote GIT repository via HTTP.
 	Get trees associated with the commit objects.
 -a::
 	Get all the objects.
+-d::
+	Do not check for delta base objects (use this option
+	only when you know the remote repository is not
+	deltified).
 -v::
 	Report what is downloaded.
 

@@ -74,7 +74,7 @@ int fetch(unsigned char *sha1)
 }
 
 static const char *local_pull_usage = 
-"git-local-pull [-c] [-t] [-a] [-l] [-s] [-n] [-v] commit-id path";
+"git-local-pull [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] commit-id path";
 
 /* 
  * By default we only use file copy.
@@ -92,6 +92,8 @@ int main(int argc, char **argv)
 			get_tree = 1;
 		else if (argv[arg][1] == 'c')
 			get_history = 1;
+		else if (argv[arg][1] == 'd')
+			get_delta = 0;
 		else if (argv[arg][1] == 'a') {
 			get_all = 1;
 			get_tree = 1;

@@ -401,6 +401,37 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+int sha1_delta_base(const unsigned char *sha1, unsigned char *base_sha1)
+{
+	int ret;
+	unsigned long mapsize, size;
+	void *map;
+	z_stream stream;
+	char hdr[64], type[20];
+	void *delta_data_head;
+
+	map = map_sha1_file(sha1, &mapsize);
+	if (!map)
+		return -1;
+	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
+	if (ret < Z_OK || parse_sha1_header(hdr, type, &size) < 0) {
+		ret = -1;
+		goto out;
+	}
+	if (strcmp(type, "delta")) {
+		ret = 0;
+		goto out;
+	}
+
+	delta_data_head = hdr + strlen(hdr) + 1;
+	ret = 1;
+	memcpy(base_sha1, delta_data_head, 20);
+ out:
+	inflateEnd(&stream);
+	munmap(map, mapsize);
+	return ret;
+}
+
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;

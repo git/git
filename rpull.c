@@ -27,6 +27,8 @@ int main(int argc, char **argv)
 			get_tree = 1;
 		} else if (argv[arg][1] == 'c') {
 			get_history = 1;
+		} else if (argv[arg][1] == 'd') {
+			get_delta = 0;
 		} else if (argv[arg][1] == 'a') {
 			get_all = 1;
 			get_tree = 1;
@@ -37,7 +39,7 @@ int main(int argc, char **argv)
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("git-rpull [-c] [-t] [-a] [-v] commit-id url");
+		usage("git-rpull [-c] [-t] [-a] [-v] [-d] commit-id url");
 		return 1;
 	}
 	commit_id = argv[arg];

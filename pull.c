@@ -6,6 +6,7 @@
 
 int get_tree = 0;
 int get_history = 0;
+int get_delta = 1;
 int get_all = 0;
 int get_verbosely = 0;
 static unsigned char current_commit_sha1[20];
@@ -37,6 +38,12 @@ static int make_sure_we_have_it(const char *what, unsigned char *sha1)
 	status = fetch(sha1);
 	if (status && what)
 		report_missing(what, sha1);
+	if (get_delta) {
+		char delta_sha1[20];
+		status = sha1_delta_base(sha1, delta_sha1);
+		if (0 < status)
+			status = make_sure_we_have_it(what, delta_sha1);
+	}
 	return status;
 }
 
