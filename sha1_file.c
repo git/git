@@ -432,6 +432,66 @@ int sha1_delta_base(const unsigned char *sha1, unsigned char *base_sha1)
 	return ret;
 }
 
+int sha1_file_size(const unsigned char *sha1, unsigned long *sizep)
+{
+	int ret, status;
+	unsigned long mapsize, size;
+	void *map;
+	z_stream stream;
+	char hdr[64], type[20];
+	const unsigned char *data;
+	unsigned char cmd;
+	int i;
+
+	map = map_sha1_file(sha1, &mapsize);
+	if (!map)
+		return -1;
+	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
+	status = -1;
+	if (ret < Z_OK || parse_sha1_header(hdr, type, &size) < 0)
+		goto out;
+	if (strcmp(type, "delta")) {
+		*sizep = size;
+		status = 0;
+		goto out;
+	}
+
+	/* We are dealing with a delta object.  Inflated, the first
+	 * 20 bytes hold the base object SHA1, and delta data follows
+	 * immediately after it.
+	 *
+	 * The initial part of the delta starts at delta_data_head +
+	 * 20.  Borrow code from patch-delta to read the result size.
+	 */
+	data = hdr + strlen(hdr) + 1 + 20;
+
+	/* Skip over the source size; we are not interested in
+	 * it and we cannot verify it because we do not want
+	 * to read the base object.
+	 */
+	cmd = *data++;
+	while (cmd) {
+		if (cmd & 1)
+			data++;
+		cmd >>= 1;
+	}
+	/* Read the result size */
+	size = i = 0;
+	cmd = *data++;
+	while (cmd) {
+		if (cmd & 1)
+			size |= *data++ << i;
+		i += 8;
+		cmd >>= 1;
+	}
+	*sizep = size;
+	status = 0;
+ out:
+	inflateEnd(&stream);
+	munmap(map, mapsize);
+	return status;
+}
+
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;

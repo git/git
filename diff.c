@@ -333,7 +333,6 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		close(fd);
 	}
 	else {
-		/* We cannot do size only for SHA1 blobs */
 		char type[20];
 		struct sha1_size_cache *e;
 
@@ -343,11 +342,13 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 				s->size = e->size;
 				return 0;
 			}
+			if (!sha1_file_size(s->sha1, &s->size))
+				locate_size_cache(s->sha1, s->size);
 		}
-		s->data = read_sha1_file(s->sha1, type, &s->size);
-		s->should_free = 1;
-		if (s->data && size_only)
-			locate_size_cache(s->sha1, s->size);
+		else {
+			s->data = read_sha1_file(s->sha1, type, &s->size);
+			s->should_free = 1;
+		}
 	}
 	return 0;
 }
