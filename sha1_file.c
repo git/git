@@ -307,6 +307,19 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 	return map;
 }
 
+int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size)
+{
+	/* Get the data stream */
+	memset(stream, 0, sizeof(*stream));
+	stream->next_in = map;
+	stream->avail_in = mapsize;
+	stream->next_out = buffer;
+	stream->avail_out = size;
+
+	inflateInit(stream);
+	return inflate(stream, 0);
+}
+
 void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size)
 {
 	int ret, bytes;
@@ -314,18 +327,8 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	char buffer[8192];
 	unsigned char *buf;
 
-	/* Get the data stream */
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = map;
-	stream.avail_in = mapsize;
-	stream.next_out = (unsigned char *)buffer;
-	stream.avail_out = sizeof(buffer);
-
-	inflateInit(&stream);
-	ret = inflate(&stream, 0);
-	if (ret < Z_OK)
-		return NULL;
-	if (sscanf(buffer, "%10s %lu", type, size) != 2)
+	ret = unpack_sha1_header(&stream, map, mapsize, buffer, sizeof(buffer));
+	if (ret < Z_OK || sscanf(buffer, "%10s %lu", type, size) != 2)
 		return NULL;
 
 	bytes = strlen(buffer) + 1;
