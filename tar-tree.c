@@ -73,16 +73,13 @@ static char *get_record(void)
  */
 static void write_trailer(void)
 {
-	memset(block + offset, 0, RECORDSIZE);
-	offset += RECORDSIZE;
+	get_record();
 	write_if_needed();
-	memset(block + offset, 0, RECORDSIZE);
-	offset += RECORDSIZE;
+	get_record();
 	write_if_needed();
 	if (offset) {
-		memset(block + offset, 0, BLOCKSIZE - offset);
-		reliable_write(block, BLOCKSIZE);
-		offset = 0;
+		get_record();
+		write_if_needed();
 	}
 }
 
