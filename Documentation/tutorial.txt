@@ -18,8 +18,9 @@ understand what it is that the higher-level helper scripts are actually
 doing. 
 
 The core git is often called "plumbing", with the prettier user
-interfaces on top of it called "porcelain". You may want to know what
-the plumbing does for when the porcelain isn't flushing...
+interfaces on top of it called "porcelain".  You may not want to use the
+plumbing directly very often, but it can be good to know what the
+plumbing does for when the porcelain isn't flushing... 
 
 
 Creating a git archive
@@ -175,7 +176,7 @@ about the index file itself, but you should be aware of the fact that
 you have not actually really "checked in" your files into git so far,
 you've only _told_ git about them.
 
-However, since git knows about them, you can how start using some of the
+However, since git knows about them, you can now start using some of the
 most basic git commands to manipulate the files or look at their status. 
 
 In particular, let's not even check in the two files into git yet, we'll
@@ -420,5 +421,98 @@ short history.
 
 With that, you should now be having some inkling of what git does, and
 can explore on your own.
+
+
+	Copoying archives
+	-----------------
+
+Git arhives are normally totally self-sufficient, and it's worth noting
+that unlike CVS, for example, there is no separate notion of
+"repository" and "working tree".  A git repository normally _is_ the
+working tree, with the local git information hidden in the ".git"
+subdirectory.  There is nothing else.  What you see is what you got. 
+
+[ Side note: you can tell git to split the git internal information from
+  the directory that it tracks, but we'll ignore that for now: it's not
+  how normal projects work, and it's really only meant for special uses.
+  So the mental model of "the git information is always tied directly to
+  the working directory that it describes" may not be technically 100%
+  accurate, but it's a good model for all normal use ]
+
+This has two implications: 
+
+ - if you grow bored with the tutorial archive you created (or you've
+   made a mistake and want to start all over), you can just do simple
+
+	rm -rf git-tutorial
+
+   and it will be gone. There's no external repository, and there's no
+   history outside of the project you created.
+
+ - if you want to move or duplicate a git archive, you can do so. There
+   is no "git clone" command: if you want to create a copy of your
+   archive (with all the full history that went along with it), you can
+   do so with a regular "cp -a git-tutorial new-git-tutorial".
+
+   Note that when you've moved or copied a git archive, your git index
+   file (which caches various information, notably some of the "stat"
+   information for the files involved) will likely need to be refreshed.
+   So after you do a "cp -a" to create a new copy, you'll want to do
+
+	git-update-cache --refresh
+
+   to make sure that the index file is up-to-date in the new one. 
+
+Note that the second point is true even across machines.  You can
+duplicate a remote git archive with _any_ regular copy mechanism, be it
+"scp", "rsync" or "wget". 
+
+When copying a remote repository, you'll want to at a minimum update the
+index cache when you do this, and especially with other peoples
+repositories you often want to make sure that the index cache is in some
+known state (you don't know _what_ they've done and not yet checked in),
+so usually you'll precede the "git-update-cache" with a
+
+	git-read-tree HEAD
+	git-update-cache --refresh
+
+which will force a total index re-build from the tree pointed to by
+HEAD.
+
+In fact, many public remote repositories will not contain any of the
+checked out files or even an index file, and will _only_ contain the
+actual core git files. Such a repository usually doesn't even have the
+".git" subdirectory, but has all the git files directly in the
+repository.
+
+To create your own local live copy of such a "raw" git repository, you'd
+first create your own subdirectory for the project, adn then copy the
+raw repository contents into the ".git" directory. For example, to
+create your own copy of the git repository, you'd do the following
+
+	mkdir my-git
+	cd my-git
+	rsync -rL rsync://rsync.kernel.org/pub/scm/linux/kernel/git/torvalds/git.git/ .git
+
+followed by 
+
+	git-read-tree HEAD
+
+to populate the index. However, now you have populated the index, and
+you have all the git internal files, but you will notice that you don't
+actually have any of the _working_directory_ files to work on. To get
+those, you'd check them out with
+
+	git-checkout-cache -u -a
+
+where the "-u" flag means that you want the checkout to keep the index
+up-to-date (so that you don't have to refresh it afterwards), and the
+"-a" file means "check out all files" (if you have a stale copy or an
+older version of a checked out tree you may also need to add the "-f"
+file first, to tell git-checkout-cache to _force_ overwriting of any old
+files). 
+
+You have now successfully copied somebody elses (mine) remote
+repository, and checked it out. 
 
 [ to be continued.. cvs2git, tagging versions, branches, merging.. ]
