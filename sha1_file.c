@@ -320,31 +320,85 @@ int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void 
 	return inflate(stream, 0);
 }
 
-void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size)
+void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size)
 {
-	int ret, bytes;
-	z_stream stream;
-	char buffer[8192];
-	unsigned char *buf;
+	int bytes = strlen(buffer) + 1;
+	char *buf = xmalloc(1+size);
 
-	ret = unpack_sha1_header(&stream, map, mapsize, buffer, sizeof(buffer));
-	if (ret < Z_OK || sscanf(buffer, "%10s %lu", type, size) != 2)
-		return NULL;
-
-	bytes = strlen(buffer) + 1;
-	buf = xmalloc(1+*size);
-
-	memcpy(buf, buffer + bytes, stream.total_out - bytes);
-	bytes = stream.total_out - bytes;
-	if (bytes < *size && ret == Z_OK) {
-		stream.next_out = buf + bytes;
-		stream.avail_out = *size - bytes;
-		while (inflate(&stream, Z_FINISH) == Z_OK)
+	memcpy(buf, buffer + bytes, stream->total_out - bytes);
+	bytes = stream->total_out - bytes;
+	if (bytes < size) {
+		stream->next_out = buf + bytes;
+		stream->avail_out = size - bytes;
+		while (inflate(stream, Z_FINISH) == Z_OK)
 			/* nothing */;
 	}
-	buf[*size] = 0;
-	inflateEnd(&stream);
+	buf[size] = 0;
+	inflateEnd(stream);
 	return buf;
+}
+
+/*
+ * We used to just use "sscanf()", but that's actually way
+ * too permissive for what we want to check. So do an anal
+ * object header parse by hand.
+ */
+int parse_sha1_header(char *hdr, char *type, unsigned long *sizep)
+{
+	int i;
+	unsigned long size;
+
+	/*
+	 * The type can be at most ten bytes (including the 
+	 * terminating '\0' that we add), and is followed by
+	 * a space. 
+	 */
+	i = 10;
+	for (;;) {
+		char c = *hdr++;
+		if (c == ' ')
+			break;
+		if (!--i)
+			return -1;
+		*type++ = c;
+	}
+	*type = 0;
+
+	/*
+	 * The length must follow immediately, and be in canonical
+	 * decimal format (ie "010" is not valid).
+	 */
+	size = *hdr++ - '0';
+	if (size > 9)
+		return -1;
+	if (size) {
+		for (;;) {
+			unsigned long c = *hdr - '0';
+			if (c > 9)
+				break;
+			hdr++;
+			size = size * 10 + c;
+		}
+	}
+	*sizep = size;
+
+	/*
+	 * The length must be followed by a zero byte
+	 */
+	return *hdr ? -1 : 0;
+}
+
+void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size)
+{
+	int ret;
+	z_stream stream;
+	char hdr[8192];
+
+	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
+	if (ret < Z_OK || parse_sha1_header(hdr, type, size) < 0)
+		return NULL;
+
+	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
