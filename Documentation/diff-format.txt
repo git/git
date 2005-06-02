@@ -36,12 +36,13 @@ That is, from the left to the right:
   (6) sha1 for "src"; 0{40} if creation or unmerged.
   (7) a space.
   (8) sha1 for "dst"; 0{40} if creation, unmerged or "look at work tree".
-  (9) status, followed by optional "score" number.
- (10) a tab or a NUL when '-z' option is used.
- (11) path for "src"
- (12) a tab or a NUL when '-z' option is used; only exists for C or R.
- (13) path for "dst"; only exists for C or R.
- (14) an LF or a NUL when '-z' option is used, to terminate the record.
+  (9) a space.
+ (10) status, followed by optional "score" number.
+ (11) a tab or a NUL when '-z' option is used.
+ (12) path for "src"
+ (13) a tab or a NUL when '-z' option is used; only exists for C or R.
+ (14) path for "dst"; only exists for C or R.
+ (15) an LF or a NUL when '-z' option is used, to terminate the record.
 
 <sha1> is shown as all 0's if new is a file on the filesystem
 and it is out of sync with the cache.  Example:
