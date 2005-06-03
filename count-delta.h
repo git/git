@@ -4,6 +4,7 @@
 #ifndef COUNT_DELTA_H
 #define COUNT_DELTA_H
 
-unsigned long count_delta(void *, unsigned long);
+int count_delta(void *, unsigned long,
+		unsigned long *src_copied, unsigned long *literal_added);
 
 #endif

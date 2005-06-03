@@ -12,8 +12,6 @@
 #define DEFAULT_RENAME_SCORE 30000 /* rename/copy similarity minimum (50%) */
 #define DEFAULT_BREAK_SCORE  59400 /* minimum for break to happen (99%)*/
 
-#define RENAME_DST_MATCHED 01
-
 struct diff_filespec {
 	unsigned char sha1[20];
 	char *path;

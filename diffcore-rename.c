@@ -135,7 +135,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	 * call into this function in that case.
 	 */
 	void *delta;
-	unsigned long delta_size, base_size;
+	unsigned long delta_size, base_size, src_copied, literal_added;
 	int score;
 
 	/* We deal only with regular files.  Symlink renames are handled
@@ -174,10 +174,17 @@ static int estimate_similarity(struct diff_filespec *src,
 		return 0;
 
 	/* Estimate the edit size by interpreting delta. */
-	delta_size = count_delta(delta, delta_size);
-	free(delta);
-	if (delta_size == UINT_MAX)
+	if (count_delta(delta, delta_size, &src_copied, &literal_added)) {
+		free(delta);
 		return 0;
+	}
+	free(delta);
+
+	/* Extent of damage */
+	if (src->size + literal_added < src_copied)
+		delta_size = 0;
+	else
+		delta_size = (src->size - src_copied) + literal_added;
 
 	/*
 	 * Now we will give some score to it.  100% edit gets 0 points

@@ -23,7 +23,7 @@ static int very_different(struct diff_filespec *src,
 	 * want to get the filepair broken.
 	 */
 	void *delta;
-	unsigned long delta_size, base_size;
+	unsigned long delta_size, base_size, src_copied, literal_added;
 
 	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
 		return 0; /* leave symlink rename alone */
@@ -61,10 +61,17 @@ static int very_different(struct diff_filespec *src,
 		return MAX_SCORE;
 
 	/* Estimate the edit size by interpreting delta. */
-	delta_size = count_delta(delta, delta_size);
+	if (count_delta(delta, delta_size, &src_copied, &literal_added)) {
+		free(delta);
+		return 0;
+	}
 	free(delta);
-	if (delta_size == UINT_MAX)
-		return 0; /* error in delta computation */
+
+	/* Extent of damage */
+	if (src->size + literal_added < src_copied)
+		delta_size = 0;
+	else
+		delta_size = (src->size - src_copied) + literal_added;
 
 	if (base_size < delta_size)
 		return MAX_SCORE;
