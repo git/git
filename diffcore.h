@@ -8,9 +8,19 @@
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
  * in anything else.
  */
+
+/* We internally use unsigned short as the score value,
+ * and rely on an int capable to hold 32-bits.  -B can take
+ * -Bmerge_score/break_score format and the two scores are
+ * passed around in one int (high 16-bit for merge and low 16-bit
+ * for break).
+ */
 #define MAX_SCORE 60000
 #define DEFAULT_RENAME_SCORE 30000 /* rename/copy similarity minimum (50%) */
 #define DEFAULT_BREAK_SCORE  59400 /* minimum for break to happen (99%)*/
+#define DEFAULT_MERGE_SCORE  48000 /* maximum for break-merge to happen (80%)*/
+
+#define MINIMUM_BREAK_SIZE     400 /* do not break a file smaller than this */
 
 struct diff_filespec {
 	unsigned char sha1[20];
@@ -76,6 +86,7 @@ extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 extern void diffcore_pathspec(const char **pathspec);
 extern void diffcore_break(int);
 extern void diffcore_rename(int rename_copy, int);
+extern void diffcore_merge_broken(void);
 extern void diffcore_pickaxe(const char *needle, int opts);
 extern void diffcore_order(const char *orderfile);
 

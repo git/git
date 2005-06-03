@@ -614,7 +614,7 @@ static int parse_num(const char **cp_p)
 
 int diff_scoreopt_parse(const char *opt)
 {
-	int opt1, cmd;
+	int opt1, opt2, cmd;
 
 	if (*opt++ != '-')
 		return -1;
@@ -623,9 +623,21 @@ int diff_scoreopt_parse(const char *opt)
 		return -1; /* that is not a -M, -C nor -B option */
 
 	opt1 = parse_num(&opt);
+	if (cmd != 'B')
+		opt2 = 0;
+	else {
+		if (*opt == 0)
+			opt2 = 0;
+		else if (*opt != '/')
+			return -1; /* we expect -B80/99 or -B80 */
+		else {
+			opt++;
+			opt2 = parse_num(&opt);
+		}
+	}
 	if (*opt != 0)
 		return -1;
-	return opt1;
+	return opt1 | (opt2 << 16);
 }
 
 struct diff_queue_struct diff_queued_diff;
@@ -955,6 +967,8 @@ void diffcore_std(const char **paths,
 		diffcore_break(break_opt);
 	if (detect_rename)
 		diffcore_rename(detect_rename, rename_score);
+	if (0 <= break_opt)
+		diffcore_merge_broken();
 	if (pickaxe)
 		diffcore_pickaxe(pickaxe, pickaxe_opts);
 	if (orderfile)
