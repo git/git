@@ -24,7 +24,7 @@ struct tree {
 	struct tree_entry_list *entries;
 };
 
-struct tree *lookup_tree(unsigned char *sha1);
+struct tree *lookup_tree(const unsigned char *sha1);
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 

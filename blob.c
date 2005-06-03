@@ -4,7 +4,7 @@
 
 const char *blob_type = "blob";
 
-struct blob *lookup_blob(unsigned char *sha1)
+struct blob *lookup_blob(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {

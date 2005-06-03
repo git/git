@@ -21,12 +21,12 @@ struct object {
 extern int nr_objs;
 extern struct object **objs;
 
-struct object *lookup_object(unsigned char *sha1);
+struct object *lookup_object(const unsigned char *sha1);
 
-void created_object(unsigned char *sha1, struct object *obj);
+void created_object(const unsigned char *sha1, struct object *obj);
 
 /** Returns the object, having parsed it to find out what it is. **/
-struct object *parse_object(unsigned char *sha1);
+struct object *parse_object(const unsigned char *sha1);
 
 void add_ref(struct object *refer, struct object *target);
 

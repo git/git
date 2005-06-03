@@ -19,8 +19,8 @@ struct commit {
 
 extern const char *commit_type;
 
-struct commit *lookup_commit(unsigned char *sha1);
-struct commit *lookup_commit_reference(unsigned char *sha1);
+struct commit *lookup_commit(const unsigned char *sha1);
+struct commit *lookup_commit_reference(const unsigned char *sha1);
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 

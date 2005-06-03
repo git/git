@@ -5,7 +5,7 @@
 
 const char *commit_type = "commit";
 
-static struct commit *check_commit(struct object *obj, unsigned char *sha1)
+static struct commit *check_commit(struct object *obj, const unsigned char *sha1)
 {
 	if (obj->type != commit_type) {
 		error("Object %s is a %s, not a commit", 
@@ -15,7 +15,7 @@ static struct commit *check_commit(struct object *obj, unsigned char *sha1)
 	return (struct commit *) obj;
 }
 
-struct commit *lookup_commit_reference(unsigned char *sha1)
+struct commit *lookup_commit_reference(const unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
 
@@ -26,7 +26,7 @@ struct commit *lookup_commit_reference(unsigned char *sha1)
 	return check_commit(obj, sha1);
 }
 
-struct commit *lookup_commit(unsigned char *sha1)
+struct commit *lookup_commit(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {

@@ -73,7 +73,7 @@ int read_tree(void *buffer, unsigned long size, int stage)
 	return read_tree_recursive(buffer, size, "", 0, stage);
 }
 
-struct tree *lookup_tree(unsigned char *sha1)
+struct tree *lookup_tree(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {

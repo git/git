@@ -3,7 +3,7 @@
 
 const char *tag_type = "tag";
 
-struct tag *lookup_tag(unsigned char *sha1)
+struct tag *lookup_tag(const unsigned char *sha1)
 {
         struct object *obj = lookup_object(sha1);
         if (!obj) {

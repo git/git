@@ -10,7 +10,7 @@ struct object **objs;
 int nr_objs;
 static int obj_allocs;
 
-static int find_object(unsigned char *sha1)
+static int find_object(const unsigned char *sha1)
 {
 	int first = 0, last = nr_objs;
 
@@ -31,7 +31,7 @@ static int find_object(unsigned char *sha1)
         return -first-1;
 }
 
-struct object *lookup_object(unsigned char *sha1)
+struct object *lookup_object(const unsigned char *sha1)
 {
 	int pos = find_object(sha1);
 	if (pos >= 0)
@@ -39,7 +39,7 @@ struct object *lookup_object(unsigned char *sha1)
 	return NULL;
 }
 
-void created_object(unsigned char *sha1, struct object *obj)
+void created_object(const unsigned char *sha1, struct object *obj)
 {
 	int pos = find_object(sha1);
 
@@ -98,7 +98,7 @@ void mark_reachable(struct object *obj, unsigned int mask)
 	}
 }
 
-struct object *parse_object(unsigned char *sha1)
+struct object *parse_object(const unsigned char *sha1)
 {
 	unsigned long mapsize;
 	void *map = map_sha1_file(sha1, &mapsize);

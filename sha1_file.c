@@ -266,7 +266,7 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 	return NULL;
 }
 
-int check_sha1_signature(unsigned char *sha1, void *map, unsigned long size, const char *type)
+int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
 {
 	char header[100];
 	unsigned char real_sha1[20];

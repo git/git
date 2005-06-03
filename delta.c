@@ -17,7 +17,7 @@ struct delta {
 	} u;
 };
 
-struct delta *lookup_delta(unsigned char *sha1)
+struct delta *lookup_delta(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
