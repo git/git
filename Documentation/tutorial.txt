@@ -371,13 +371,6 @@ this point (you can continue to edit things and update the cache), you
 can just leave an empty message. Otherwise git-commit-script will commit
 the change for you.
 
-(Btw, current versions of git will consider the change in question to be
-so big that it's considered a whole new file, since the diff is actually
-bigger than the file.  So the helpful comments that git-commit-script
-tells you for this example will say that you deleted and re-created the
-file "a".  For a less contrived example, these things are usually more
-obvious). 
-
 You've now made your first real git commit. And if you're interested in
 looking at what git-commit-script really does, feel free to investigate:
 it's a few very simple shell scripts to generate the helpful (?) commit
