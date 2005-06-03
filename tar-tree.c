@@ -77,7 +77,7 @@ static void write_trailer(void)
 	write_if_needed();
 	get_record();
 	write_if_needed();
-	if (offset) {
+	while (offset) {
 		get_record();
 		write_if_needed();
 	}
