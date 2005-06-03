@@ -5,17 +5,13 @@
 
 test_description='git-tar-tree and git-get-tar-commit-id test
 
-This test covers the topics of long paths, file contents, commit date
-handling and commit id embedding:
-
-  Paths longer than 100 characters require the use of a pax extended
-  header to store them.  The test creates files with pathes both longer
-  and shorter than 100 chars, and also checks symlinks with long and
-  short pathes both as their own name and as target path.
+This test covers the topics of file contents, commit date handling and
+commit id embedding:
 
   The contents of the repository is compared to the extracted tar
   archive.  The repository contains simple text files, symlinks and a
-  binary file (/bin/sh).
+  binary file (/bin/sh).  Only pathes shorter than 99 characters are
+  used.
 
   git-tar-tree applies the commit date to every file in the archive it
   creates.  The test sets the commit date to a specific value and checks
@@ -33,20 +29,10 @@ handling and commit id embedding:
 test_expect_success \
     'populate workdir' \
     'mkdir a b c &&
-     p48=1.......10........20........30........40......48 &&
-     p50=1.......10........20........30........40........50 &&
-     p98=${p48}${p50} &&
      echo simple textfile >a/a &&
-     echo 100 chars in path >a/${p98} &&
-     echo 101 chars in path >a/${p98}x &&
-     echo 102 chars in path >a/${p98}xx &&
-     echo 103 chars in path >a/${p98}xxx &&
      mkdir a/bin &&
-     cp /bin/sh a/bin/sh &&
+     cp /bin/sh a/bin &&
      ln -s a a/l1 &&
-     ln -s ${p98}xx a/l100 &&
-     ln -s ${p98}xxx a/l101 &&
-     ln -s ${p98}xxx a/l${p98} &&
      (cd a && find .) | sort >a.lst'
 
 test_expect_success \
@@ -64,7 +50,8 @@ test_expect_success \
 
 test_expect_success \
     'validate file modification time' \
-    'tar tvf b.tar a/a | awk \{print\ \$4,\$5\} >b.mtime &&
+    'tar tvf b.tar a/a |
+     awk \{print\ \$4,\ length\(\$5\)\<7\ ?\ \$5\":00\"\ :\ \$5\} >b.mtime &&
      echo "2005-05-27 22:00:00" >expected.mtime &&
      diff expected.mtime b.mtime'
 
