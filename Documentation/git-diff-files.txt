@@ -27,7 +27,8 @@ OPTIONS
 	Remain silent even on nonexisting files
 
 -R::
-	Output diff in reverse.
+	Swap two inputs; that is, show differences from on-disk files
+	to cache contents.
 
 -B::
 	Break complete rewrite changes into pairs of delete and create.

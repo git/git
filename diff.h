@@ -35,21 +35,13 @@ extern int diff_scoreopt_parse(const char *opt);
 #define DIFF_SETUP_REVERSE      	1
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
+
 extern void diff_setup(int flags);
 
 #define DIFF_DETECT_RENAME	1
 #define DIFF_DETECT_COPY	2
 
-extern void diffcore_rename(int rename_copy, int minimum_score);
-
 #define DIFF_PICKAXE_ALL	1
-extern void diffcore_pickaxe(const char *needle, int opts);
-
-extern void diffcore_pathspec(const char **pathspec);
-
-extern void diffcore_order(const char *orderfile);
-
-extern void diffcore_break(int max_score);
 
 extern void diffcore_std(const char **paths,
 			 int detect_rename, int rename_score,

@@ -7,11 +7,22 @@
 
 static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
+static const char *orderfile = NULL;
 static int line_termination = '\n';
 static int inter_name_termination = '\t';
 
+static void flush_them(int ac, const char **av)
+{
+	diffcore_std(av + 1,
+		     0, 0, /* no renames */
+		     pickaxe, pickaxe_opts,
+		     -1, /* no breaks */
+		     orderfile);
+	diff_flush(DIFF_FORMAT_PATCH, 0);
+}
+
 static const char *diff_helper_usage =
-	"git-diff-helper [-z] [-S<string>] paths...";
+	"git-diff-helper [-z] [-S<string>] [-O<orderfile>] paths...";
 
 int main(int ac, const char **av) {
 	struct strbuf sb;
@@ -131,17 +142,9 @@ int main(int ac, const char **av) {
 					  new_path);
 			continue;
 		}
-		if (1 < ac)
-			diffcore_pathspec(av + 1);
-		if (pickaxe)
-			diffcore_pickaxe(pickaxe, pickaxe_opts);
-		diff_flush(DIFF_FORMAT_PATCH, 0);
+		flush_them(ac, av);
 		printf(garbage_flush_format, sb.buf);
 	}
-	if (1 < ac)
-		diffcore_pathspec(av + 1);
-	if (pickaxe)
-		diffcore_pickaxe(pickaxe, pickaxe_opts);
-	diff_flush(DIFF_FORMAT_PATCH, 0);
+	flush_them(ac, av);
 	return 0;
 }

@@ -73,6 +73,12 @@ extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
 					struct diff_filespec *);
 extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
+extern void diffcore_pathspec(const char **pathspec);
+extern void diffcore_break(int);
+extern void diffcore_rename(int rename_copy, int);
+extern void diffcore_pickaxe(const char *needle, int opts);
+extern void diffcore_order(const char *orderfile);
+
 #define DIFF_DEBUG 0
 #if DIFF_DEBUG
 void diff_debug_filespec(struct diff_filespec *, int, const char *);

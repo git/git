@@ -57,7 +57,8 @@ OPTIONS
 	<orderfile>, which has one shell glob pattern per line.
 
 -R::
-	Output diff in reverse.
+	Swap two inputs; that is, show differences from cache or
+	on-disk file to tree contents.
 
 --cached::
 	do not consider the on-disk file at all

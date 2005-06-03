@@ -43,7 +43,7 @@ OPTIONS
 	Detect copies as well as renames.
 
 -R::
-	Output diff in reverse.
+	Swap two input trees.
 
 -S<string>::
 	Look for differences that contains the change in <string>.
