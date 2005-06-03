@@ -589,6 +589,45 @@ void diff_setup(int flags)
 	
 }
 
+static int parse_num(const char **cp_p)
+{
+	int num, scale, ch, cnt;
+	const char *cp = *cp_p;
+
+	cnt = num = 0;
+	scale = 1;
+	while ('0' <= (ch = *cp) && ch <= '9') {
+		if (cnt++ < 5) {
+			/* We simply ignore more than 5 digits precision. */
+			scale *= 10;
+			num = num * 10 + ch - '0';
+		}
+		*cp++;
+	}
+	*cp_p = cp;
+
+	/* user says num divided by scale and we say internally that
+	 * is MAX_SCORE * num / scale.
+	 */
+	return (MAX_SCORE * num / scale);
+}
+
+int diff_scoreopt_parse(const char *opt)
+{
+	int opt1, cmd;
+
+	if (*opt++ != '-')
+		return -1;
+	cmd = *opt++;
+	if (cmd != 'M' && cmd != 'C' && cmd != 'B')
+		return -1; /* that is not a -M, -C nor -B option */
+
+	opt1 = parse_num(&opt);
+	if (*opt != 0)
+		return -1;
+	return opt1;
+}
+
 struct diff_queue_struct diff_queued_diff;
 
 void diff_q(struct diff_queue_struct *queue, struct diff_filepair *dp)

@@ -61,14 +61,21 @@ int main(int argc, const char **argv)
 			orderfile = argv[1] + 2;
 		else if (!strcmp(argv[1], "--pickaxe-all"))
 			pickaxe_opts = DIFF_PICKAXE_ALL;
-		else if (!strncmp(argv[1], "-B", 2))
-			diff_break_opt = diff_scoreopt_parse(argv[1]);
+		else if (!strncmp(argv[1], "-B", 2)) {
+			if ((diff_break_opt =
+			     diff_scoreopt_parse(argv[1])) == -1)
+				usage(diff_files_usage);
+		}
 		else if (!strncmp(argv[1], "-M", 2)) {
-			diff_score_opt = diff_scoreopt_parse(argv[1]);
+			if ((diff_score_opt =
+			     diff_scoreopt_parse(argv[1])) == -1)
+				usage(diff_files_usage);
 			detect_rename = DIFF_DETECT_RENAME;
 		}
 		else if (!strncmp(argv[1], "-C", 2)) {
-			diff_score_opt = diff_scoreopt_parse(argv[1]);
+			if ((diff_score_opt =
+			     diff_scoreopt_parse(argv[1])) == -1)
+				usage(diff_files_usage);
 			detect_rename = DIFF_DETECT_COPY;
 		}
 		else

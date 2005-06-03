@@ -459,16 +459,19 @@ int main(int argc, const char **argv)
 		}
 		if (!strncmp(arg, "-M", 2)) {
 			detect_rename = DIFF_DETECT_RENAME;
-			diff_score_opt = diff_scoreopt_parse(arg);
+			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
+				usage(diff_tree_usage);
 			continue;
 		}
 		if (!strncmp(arg, "-C", 2)) {
 			detect_rename = DIFF_DETECT_COPY;
-			diff_score_opt = diff_scoreopt_parse(arg);
+			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
+				usage(diff_tree_usage);
 			continue;
 		}
 		if (!strncmp(arg, "-B", 2)) {
-			diff_break_opt = diff_scoreopt_parse(arg);
+			if ((diff_break_opt = diff_scoreopt_parse(arg)) == -1)
+				usage(diff_tree_usage);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
