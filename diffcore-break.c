@@ -61,14 +61,7 @@ static int should_break(struct diff_filespec *src,
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
-	delta_size = ((src->size < dst->size) ?
-		      (dst->size - src->size) : (src->size - dst->size));
-
-	/* Notice that we use max of src and dst as the base size,
-	 * unlike rename similarity detection.  This is so that we do
-	 * not mistake a large addition as a complete rewrite.
-	 */
-	base_size = ((src->size < dst->size) ? dst->size : src->size);
+	base_size = ((src->size < dst->size) ? src->size : dst->size);
 
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
@@ -88,10 +81,11 @@ static int should_break(struct diff_filespec *src,
 	 * less than the minimum, after rename/copy runs.
 	 */
 	if (src->size <= src_copied)
-		delta_size = 0; /* avoid wrapping around */
-	else
+		; /* all copied, nothing removed */
+	else {
 		delta_size = src->size - src_copied;
-	*merge_score_p = delta_size * MAX_SCORE / src->size;
+		*merge_score_p = delta_size * MAX_SCORE / src->size;
+	}
 	
 	/* Extent of damage, which counts both inserts and
 	 * deletes.
@@ -174,7 +168,8 @@ void diffcore_break(int break_score)
 		    !S_ISDIR(p->one->mode) && !S_ISDIR(p->two->mode) &&
 		    !strcmp(p->one->path, p->two->path)) {
 			if (should_break(p->one, p->two,
-					 break_score, &score)) {
+					 break_score, &score) &&
+			    MINIMUM_BREAK_SIZE <= p->one->size) {
 				/* Split this into delete and create */
 				struct diff_filespec *null_one, *null_two;
 				struct diff_filepair *dp;
@@ -185,8 +180,7 @@ void diffcore_break(int break_score)
 				 * Also we do not want to break very
 				 * small files.
 				 */
-				if ((score < merge_score) ||
-				    (p->one->size < MINIMUM_BREAK_SIZE))
+				if (score < merge_score)
 					score = 0;
 
 				/* deletion of one */

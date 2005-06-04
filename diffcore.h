@@ -17,7 +17,7 @@
  */
 #define MAX_SCORE 60000
 #define DEFAULT_RENAME_SCORE 30000 /* rename/copy similarity minimum (50%) */
-#define DEFAULT_BREAK_SCORE  59400 /* minimum for break to happen (99%)*/
+#define DEFAULT_BREAK_SCORE  30000 /* minimum for break to happen (50%)*/
 #define DEFAULT_MERGE_SCORE  48000 /* maximum for break-merge to happen (80%)*/
 
 #define MINIMUM_BREAK_SIZE     400 /* do not break a file smaller than this */
