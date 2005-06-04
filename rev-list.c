@@ -84,7 +84,7 @@ static int everybody_uninteresting(struct commit_list *list)
 	return 1;
 }
 
-struct commit_list *limit_list(struct commit_list *list, struct commit *end)
+struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
@@ -92,7 +92,7 @@ struct commit_list *limit_list(struct commit_list *list, struct commit *end)
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 		struct object *obj = &commit->object;
 
-		if (commit == end || (obj->flags & UNINTERESTING)) {
+		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
 			if (everybody_uninteresting(list))
 				break;
@@ -105,15 +105,14 @@ struct commit_list *limit_list(struct commit_list *list, struct commit *end)
 
 int main(int argc, char **argv)
 {
-	int nr_sha;
-	unsigned char sha1[2][20];
 	struct commit_list *list = NULL;
-	struct commit *commit, *end;
-	int i;
+	int i, limited = 0;
 
-	nr_sha = 0;
 	for (i = 1 ; i < argc; i++) {
+		int flags;
 		char *arg = argv[i];
+		unsigned char sha1[20];
+		struct commit *commit;
 
 		if (!strncmp(arg, "--max-count=", 12)) {
 			max_count = atoi(arg + 12);
@@ -143,28 +142,26 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (nr_sha > 2 || get_sha1(arg, sha1[nr_sha]))
+		flags = 0;
+		if (*arg == '^') {
+			flags = UNINTERESTING;
+			arg++;
+			limited = 1;
+		}
+		if (get_sha1(arg, sha1))
 			usage(rev_list_usage);
-		nr_sha++;
+		commit = lookup_commit_reference(sha1);
+		if (!commit || parse_commit(commit) < 0)
+			die("bad commit object %s", arg);
+		commit->object.flags |= flags;
+		commit_list_insert(commit, &list);
 	}
 
-	if (!nr_sha)
+	if (!list)
 		usage(rev_list_usage);
 
-	commit = lookup_commit_reference(sha1[0]);
-	if (!commit || parse_commit(commit) < 0)
-		die("bad starting commit object");
-
-	end = NULL;
-	if (nr_sha > 1) {
-		end = lookup_commit_reference(sha1[1]);
-		if (!end || parse_commit(end) < 0)
-			die("bad ending commit object");
-	}
-
-	commit_list_insert(commit, &list);
-	if (end)
-		list = limit_list(list, end);
+	if (limited)
+		list = limit_list(list);
 
 	show_commit_list(list);
 	return 0;
