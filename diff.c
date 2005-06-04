@@ -964,11 +964,11 @@ void diffcore_std(const char **paths,
 {
 	if (paths && paths[0])
 		diffcore_pathspec(paths);
-	if (0 <= break_opt)
+	if (break_opt != -1)
 		diffcore_break(break_opt);
 	if (detect_rename)
 		diffcore_rename(detect_rename, rename_score);
-	if (0 <= break_opt)
+	if (break_opt != -1)
 		diffcore_merge_broken();
 	if (pickaxe)
 		diffcore_pickaxe(pickaxe, pickaxe_opts);
