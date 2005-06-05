@@ -15,12 +15,12 @@ static const char rev_list_usage[] =
 
 static int verbose_header = 0;
 static int show_parents = 0;
-static int pretty_print = 0;
 static int hdr_termination = 0;
 static const char *prefix = "";
 static unsigned long max_age = -1;
 static unsigned long min_age = -1;
 static int max_count = -1;
+static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 
 static void show_commit(struct commit *commit)
 {
@@ -34,13 +34,9 @@ static void show_commit(struct commit *commit)
 	}
 	putchar('\n');
 	if (verbose_header) {
-		const char *buf = commit->buffer;
-		if (pretty_print) {
-			static char pretty_header[16384];
-			pretty_print_commit(commit->buffer, ~0, pretty_header, sizeof(pretty_header));
-			buf = pretty_header;
-		}
-		printf("%s%c", buf, hdr_termination);
+		static char pretty_header[16384];
+		pretty_print_commit(commit_format, commit->buffer, ~0, pretty_header, sizeof(pretty_header));
+		printf("%s%c", pretty_header, hdr_termination);
 	}
 }
 
@@ -103,6 +99,20 @@ struct commit_list *limit_list(struct commit_list *list)
 	return newlist;
 }
 
+static enum cmit_fmt get_commit_format(const char *arg)
+{
+	if (!*arg)
+		return CMIT_FMT_DEFAULT;
+	if (!strcmp(arg, "=raw"))
+		return CMIT_FMT_RAW;
+	if (!strcmp(arg, "=medium"))
+		return CMIT_FMT_MEDIUM;
+	if (!strcmp(arg, "=short"))
+		return CMIT_FMT_SHORT;
+	usage(rev_list_usage);	
+}			
+
+
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;
@@ -130,9 +140,9 @@ int main(int argc, char **argv)
 			verbose_header = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--pretty")) {
+		if (!strncmp(arg, "--pretty", 8)) {
+			commit_format = get_commit_format(arg+8);
 			verbose_header = 1;
-			pretty_print = 1;
 			hdr_termination = '\n';
 			prefix = "commit ";
 			continue;

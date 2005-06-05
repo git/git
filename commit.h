@@ -32,7 +32,15 @@ void free_commit_list(struct commit_list *list);
 
 void sort_by_date(struct commit_list **list);
 
-extern unsigned long pretty_print_commit(const char *msg, unsigned long len, char *buf, unsigned long space);
+/* Commit formats */
+enum cmit_fmt {
+	CMIT_FMT_RAW,
+	CMIT_FMT_MEDIUM,
+	CMIT_FMT_DEFAULT = CMIT_FMT_MEDIUM,
+	CMIT_FMT_SHORT
+};
+
+extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space);
 
 
 /** Removes the first commit from a list sorted by date, and adds all

@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "tag.h"
 #include "commit.h"
 #include "cache.h"
@@ -193,12 +194,12 @@ static int get_one_line(const char *msg, unsigned long len)
 	return ret;
 }
 
-static int add_author_info(char *buf, const char *line, int len)
+static int add_author_info(enum cmit_fmt fmt, char *buf, const char *line, int len)
 {
 	char *date;
 	unsigned int namelen;
 	unsigned long time;
-	int tz;
+	int tz, ret;
 
 	line += strlen("author ");
 	date = strchr(line, '>');
@@ -208,14 +209,22 @@ static int add_author_info(char *buf, const char *line, int len)
 	time = strtoul(date, &date, 10);
 	tz = strtol(date, NULL, 10);
 
-	return sprintf(buf, "Author: %.*s\nDate:   %s\n",
-		namelen, line,
-		show_date(time, tz));
+	ret = sprintf(buf, "Author: %.*s\n", namelen, line);
+	if (fmt == CMIT_FMT_MEDIUM)
+		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
+	return ret;
 }
 
-unsigned long pretty_print_commit(const char *msg, unsigned long len, char *buf, unsigned long space)
+static int is_empty_line(const char *line, int len)
 {
-	int hdr = 1;
+	while (len && isspace(line[len-1]))
+		len--;
+	return !len;
+}
+
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space)
+{
+	int hdr = 1, body = 0;
 	unsigned long offset = 0;
 
 	for (;;) {
@@ -237,12 +246,29 @@ unsigned long pretty_print_commit(const char *msg, unsigned long len, char *buf,
 
 		msg += linelen;
 		len -= linelen;
-		if (linelen == 1)
-			hdr = 0;
 		if (hdr) {
+			if (linelen == 1) {
+				hdr = 0;
+				buf[offset++] = '\n';
+				continue;
+			}
+			if (fmt == CMIT_FMT_RAW) {
+				memcpy(buf + offset, line, linelen);
+				offset += linelen;
+				continue;
+			}
 			if (!memcmp(line, "author ", 7))
-				offset += add_author_info(buf + offset, line, linelen);
+				offset += add_author_info(fmt, buf + offset, line, linelen);
 			continue;
+		}
+
+		if (is_empty_line(line, linelen)) {
+			if (!body)
+				continue;
+			if (fmt == CMIT_FMT_SHORT)
+				break;
+		} else {
+			body = 1;
 		}
 		memset(buf + offset, ' ', 4);
 		memcpy(buf + offset + 4, line, linelen);

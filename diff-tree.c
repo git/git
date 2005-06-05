@@ -19,6 +19,7 @@ static int diff_break_opt = -1;
 static const char *orderfile = NULL;
 static const char *header = NULL;
 static const char *header_prefix = "";
+static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 
 // What paths are we interested in?
 static int nr_paths = 0;
@@ -321,7 +322,7 @@ static char *generate_header(const char *commit, const char *parent, const char 
 
 	offset = sprintf(this_header, "%s%s (from %s)\n", header_prefix, commit, parent);
 	if (verbose_header) {
-		offset += pretty_print_commit(msg, len, this_header + offset, sizeof(this_header) - offset);
+		offset += pretty_print_commit(commit_format, msg, len, this_header + offset, sizeof(this_header) - offset);
 		this_header[offset++] = '\n';
 		this_header[offset++] = 0;
 	}
