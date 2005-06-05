@@ -435,8 +435,8 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 			{ "new file mode ", gitdiff_newfile },
 			{ "copy from ", gitdiff_copysrc },
 			{ "copy to ", gitdiff_copydst },
-			{ "rename from ", gitdiff_renamesrc },
-			{ "rename to ", gitdiff_renamedst },
+			{ "rename old ", gitdiff_renamesrc },
+			{ "rename new ", gitdiff_renamedst },
 			{ "similarity index ", gitdiff_similarity },
 			{ "dissimilarity index ", gitdiff_dissimilarity },
 			{ "", gitdiff_unrecognized },
@@ -569,7 +569,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			if (git_hdr_len < 0)
 				continue;
 			if (!patch->old_name && !patch->new_name)
-				die("git diff header lacks filename information");
+				die("git diff header lacks filename information (line %d)", linenr);
 			*hdrsize = git_hdr_len;
 			return offset;
 		}
