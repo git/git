@@ -8,6 +8,8 @@ use strict;
 # (hopefully few) missing names
 #
 my %mailmap = (
+	'R.Marek@sh.cvut.cz' => 'Rudolf Marek',
+	'Ralf.Wildenhues@gmx.de' => 'Ralf Wildenhues',
 	'aherrman@de.ibm.com' => 'Andreas Herrmann',
 	'akpm@osdl.org' => 'Andrew Morton',
 	'andrew.vasquez@qlogic.com' => 'Andrew Vasquez',
@@ -20,6 +22,7 @@ my %mailmap = (
 	'dwmw2@shinybook.infradead.org' => 'David Woodhouse',
 	'ecashin@coraid.com' => 'Ed L Cashin',
 	'felix@derklecks.de' => 'Felix Moeller',
+	'fzago@systemfabricworks.com' => 'Frank Zago',
 	'gregkh@suse.de' => 'Greg Kroah-Hartman',
 	'hch@lst.de' => 'Christoph Hellwig',
 	'htejun@gmail.com' => 'Tejun Heo',
@@ -29,10 +32,17 @@ my %mailmap = (
 	'johnpol@2ka.mipt.ru' => 'Evgeniy Polyakov',
 	'kay.sievers@vrfy.org' => 'Kay Sievers',
 	'minyard@acm.org' => 'Corey Minyard',
-	'R.Marek@sh.cvut.cz' => 'Rudolf Marek',
+	'mshah@teja.com' => 'Mitesh shah',
+	'pj@ludd.ltu.se' => 'Peter A Jonsson',
+	'rmps@joel.ist.utl.pt' => 'Rui Saraiva',
+	'santtu.hyrkko@gmail.com' => 'Santtu Hyrkkö',
 	'simon@thekelleys.org.uk' => 'Simon Kelley',
 	'ssant@in.ibm.com' => 'Sachin P Sant',
+	'terra@gnome.org' => 'Morten Welinder',
 	'tony.luck@intel.com' => 'Tony Luck',
+	'welinder@anemone.rentec.com' => 'Morten Welinder',
+	'welinder@darter.rentec.com' => 'Morten Welinder',
+	'welinder@troll.com' => 'Morten Welinder',
 );
 
 my (%map);
