@@ -1,0 +1,167 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+#
+# Even with git, we don't always have name translations.
+# So have an email->real name table to translate the
+# (hopefully few) missing names
+#
+my %mailmap = (
+	'aherrman@de.ibm.com' => 'Andreas Herrmann',
+	'akpm@osdl.org' => 'Andrew Morton',
+	'andrew.vasquez@qlogic.com' => 'Andrew Vasquez',
+	'aquynh@gmail.com' => 'Nguyen Anh Quynh',
+	'axboe@suse.de' => 'Jens Axboe',
+	'blaisorblade@yahoo.it' => 'Paolo \'Blaisorblade\' Giarrusso',
+	'bunk@stusta.de' => 'Adrian Bunk',
+	'domen@coderock.org' => 'Domen Puncer',
+	'dougg@torque.net' => 'Douglas Gilbert',
+	'dwmw2@shinybook.infradead.org' => 'David Woodhouse',
+	'ecashin@coraid.com' => 'Ed L Cashin',
+	'felix@derklecks.de' => 'Felix Moeller',
+	'gregkh@suse.de' => 'Greg Kroah-Hartman',
+	'hch@lst.de' => 'Christoph Hellwig',
+	'htejun@gmail.com' => 'Tejun Heo',
+	'jejb@mulgrave.(none)' => 'James Bottomley',
+	'jejb@titanic.il.steeleye.com' => 'James Bottomley',
+	'jgarzik@pretzel.yyz.us' => 'Jeff Garzik',
+	'johnpol@2ka.mipt.ru' => 'Evgeniy Polyakov',
+	'kay.sievers@vrfy.org' => 'Kay Sievers',
+	'minyard@acm.org' => 'Corey Minyard',
+	'R.Marek@sh.cvut.cz' => 'Rudolf Marek',
+	'simon@thekelleys.org.uk' => 'Simon Kelley',
+	'ssant@in.ibm.com' => 'Sachin P Sant',
+	'tony.luck@intel.com' => 'Tony Luck',
+);
+
+my (%map);
+my $pstate = 1;
+my $n_records = 0;
+my $n_output = 0;
+
+
+sub shortlog_entry($$) {
+	my ($name, $desc) = @_;
+	my $key = $name;
+
+	$desc =~ s#/pub/scm/linux/kernel/git/#/.../#g;
+	$desc =~ s#\[PATCH\] ##g;
+
+	# store description in array, in email->{desc list} map
+	if (exists $map{$key}) {
+		# grab ref
+		my $obj = $map{$key};
+
+		# add desc to array
+		push(@$obj, $desc);
+	} else {
+		# create new array, containing 1 item
+		my @arr = ($desc);
+
+		# store ref to array
+		$map{$key} = \@arr;
+	}
+}
+
+# sort comparison function
+sub by_name($$) {
+	my ($a, $b) = @_;
+
+	uc($a) cmp uc($b);
+}
+
+sub shortlog_output {
+	my ($obj, $key, $desc);
+
+	foreach $key (sort by_name keys %map) {
+		# output author
+		printf "%s:\n", $key;
+
+		# output author's 1-line summaries
+		$obj = $map{$key};
+		foreach $desc (@$obj) {
+			print "  $desc\n";
+			$n_output++;
+		}
+
+		# blank line separating author from next author
+		print "\n";
+	}
+}
+
+sub changelog_input {
+	my ($author, $desc);
+
+	while (<>) {
+		# get author and email
+		if ($pstate == 1) {
+			my ($email);
+
+			next unless /^Author: (.*)<(.*)>.*$/;
+	
+			$n_records++;
+	
+			$author = $1;
+			$email = $2;
+			$desc = undef;
+
+			# trim trailing whitespace.
+			# why doesn't chomp work?
+			while ($author && ($author =~ /\s$/)) {
+				chop $author;
+			}
+	
+			# cset author fixups
+			if (exists $mailmap{$email}) {
+				$author = $mailmap{$email};
+			} elsif (exists $mailmap{$author}) {
+				$author = $mailmap{$author};
+			} elsif ((!$author) || ($author eq "")) {
+				$author = $email;
+			}
+	
+			$pstate++;
+		}
+	
+		# skip to blank line
+		elsif ($pstate == 2) {
+			next unless /^\s*$/;
+			$pstate++;
+		}
+	
+		# skip to non-blank line
+		elsif ($pstate == 3) {
+			next unless /^\s*(\S.*)$/;
+
+			# skip lines that are obviously not
+			# a 1-line cset description
+			next if /^\s*From: /;
+
+			chomp;
+			$desc = $1;
+	
+			&shortlog_entry($author, $desc);
+	
+			$pstate = 1;
+		}
+	
+		else {
+			die "invalid parse state $pstate";
+		}
+	}
+}
+
+sub finalize {
+	#print "\n$n_records records parsed.\n";
+
+	if ($n_records != $n_output) {
+		die "parse error: input records != output records\n";
+	}
+}
+
+&changelog_input;
+&shortlog_output;
+&finalize;
+exit(0);
+
