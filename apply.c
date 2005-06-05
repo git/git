@@ -773,19 +773,20 @@ static int read_old_data(struct stat *st, const char *path, void *buf, unsigned 
 
 static int find_offset(const char *buf, unsigned long size, const char *fragment, unsigned long fragsize, int line)
 {
-	unsigned long start;
+	int i;
+	unsigned long start, backwards, forwards;
 
 	if (fragsize > size)
 		return -1;
 
 	start = 0;
 	if (line > 1) {
-		line--;
 		unsigned long offset = 0;
-		while (start + offset <= size) {
+		i = line-1;
+		while (offset + fragsize <= size) {
 			if (buf[offset++] == '\n') {
 				start = offset;
-				if (!--line)
+				if (!--i)
 					break;
 			}
 		}
@@ -796,13 +797,60 @@ static int find_offset(const char *buf, unsigned long size, const char *fragment
 		return start;
 
 	/*
+	 * There's probably some smart way to do this, but I'll leave
+	 * that to the smart and beautiful people. I'm simple and stupid.
+	 */
+	backwards = start;
+	forwards = start;
+	for (i = 0; ; i++) {
+		unsigned long try;
+		int n;
+
+		/* "backward" */
+		if (i & 1) {
+			if (!backwards) {
+				if (forwards + fragsize > size)
+					break;
+				continue;
+			}
+			do {
+				--backwards;
+			} while (backwards && buf[backwards-1] != '\n');
+			try = backwards;
+		} else {
+			while (forwards + fragsize <= size) {
+				if (buf[forwards++] == '\n')
+					break;
+			}
+			try = forwards;
+		}
+
+		if (try + fragsize > size)
+			continue;
+		if (memcmp(buf + try, fragment, fragsize))
+			continue;
+		n = (i >> 1)+1;
+		if (i & 1)
+			n = -n;
+		fprintf(stderr, "Fragment applied at offset %d\n", n);
+		return try;
+	}
+
+	/*
 	 * We should start searching forward and backward.
 	 */
 	return -1;
 }
 
-static int apply_one_fragment(char *buf, unsigned long *sizep, unsigned long *bufsizep, struct fragment *frag)
+struct buffer_desc {
+	char *buffer;
+	unsigned long size;
+	unsigned long alloc;
+};
+
+static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 {
+	char *buf = desc->buffer;
 	const char *patch = frag->patch;
 	int offset, size = frag->size;
 	char *old = xmalloc(size);
@@ -848,9 +896,21 @@ static int apply_one_fragment(char *buf, unsigned long *sizep, unsigned long *bu
 		size -= len;
 	}
 
-	offset = find_offset(buf, *sizep, old, oldsize, frag->newpos);
+	offset = find_offset(buf, desc->size, old, oldsize, frag->newpos);
 	if (offset >= 0) {
-		printf("found at offset %d\n", offset);
+		int diff = newsize - oldsize;
+		unsigned long size = desc->size + diff;
+		unsigned long alloc = desc->alloc;
+
+		if (size > alloc) {
+			alloc = size + 8192;
+			desc->alloc = alloc;
+			buf = xrealloc(buf, alloc);
+			desc->buffer = buf;
+		}
+		desc->size = size;
+		memmove(buf + offset + newsize, buf + offset + oldsize, size - offset - newsize);
+		memcpy(buf + offset, new, newsize);
 		offset = 0;
 	}
 
@@ -859,12 +919,12 @@ static int apply_one_fragment(char *buf, unsigned long *sizep, unsigned long *bu
 	return offset;
 }
 
-static int apply_fragments(char *buf, unsigned long *sizep, unsigned long *bufsizep, struct patch *patch)
+static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 
 	while (frag) {
-		if (apply_one_fragment(buf, sizep, bufsizep, frag) < 0)
+		if (apply_one_fragment(desc, frag) < 0)
 			return error("patch failed: %s:%d", patch->old_name, frag->oldpos);
 		frag = frag->next;
 	}
@@ -872,18 +932,25 @@ static int apply_fragments(char *buf, unsigned long *sizep, unsigned long *bufsi
 
 static int apply_data(struct patch *patch, struct stat *st)
 {
-	unsigned long size, bufsize;
-	void *buf;
+	char *buf;
+	unsigned long size, alloc;
+	struct buffer_desc desc;
 
 	if (!patch->old_name || !patch->fragments)
 		return 0;
 	size = st->st_size;
-	bufsize = size + 16;
-	buf = xmalloc(bufsize);
-	if (read_old_data(st, patch->old_name, buf, bufsize) != size)
+	alloc = size + 8192;
+	buf = xmalloc(alloc);
+	if (read_old_data(st, patch->old_name, buf, alloc) != size)
 		return error("read of %s failed", patch->old_name);
-	if (apply_fragments(buf, &size, &bufsize, patch) < 0)
+
+	desc.size = size;
+	desc.alloc = alloc;
+	desc.buffer = buf;
+	if (apply_fragments(&desc, patch) < 0)
 		return -1;
+	patch->result = desc.buffer;
+	patch->resultsize = desc.size;
 	return 0;
 }
 
