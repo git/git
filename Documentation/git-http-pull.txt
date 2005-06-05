@@ -9,7 +9,7 @@ git-http-pull - Downloads a remote GIT repository via HTTP
 
 SYNOPSIS
 --------
-'git-http-pull' [-c] [-t] [-a] [-v] [-d] commit-id url
+'git-http-pull' [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url
 
 DESCRIPTION
 -----------
@@ -25,6 +25,9 @@ Downloads a remote GIT repository via HTTP.
 	Do not check for delta base objects (use this option
 	only when you know the remote repository is not
 	deltified).
+--recover::
+	Check dependency of deltified object more carefully than
+	usual, to recover after earlier pull that was interrupted.
 -v::
 	Report what is downloaded.
 

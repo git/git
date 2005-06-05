@@ -9,7 +9,7 @@ git-local-pull - Duplicates another GIT repository on a local system
 
 SYNOPSIS
 --------
-'git-local-pull' [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] commit-id path
+'git-local-pull' [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] [--recover] commit-id path
 
 DESCRIPTION
 -----------
@@ -27,6 +27,9 @@ OPTIONS
 	Do not check for delta base objects (use this option
 	only when you know the remote repository is not
 	deltified).
+--recover::
+	Check dependency of deltified object more carefully than
+	usual, to recover after earlier pull that was interrupted.
 -v::
 	Report what is downloaded.
 

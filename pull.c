@@ -6,6 +6,7 @@
 
 int get_tree = 0;
 int get_history = 0;
+/* 1 means "get delta", 2 means "really check delta harder */
 int get_delta = 1;
 int get_all = 0;
 int get_verbosely = 0;
@@ -32,12 +33,16 @@ static void report_missing(const char *what, const unsigned char *missing)
 
 static int make_sure_we_have_it(const char *what, unsigned char *sha1)
 {
-	int status;
-	if (has_sha1_file(sha1))
+	int status = 0;
+
+	if (!has_sha1_file(sha1)) {
+		status = fetch(sha1);
+		if (status && what)
+			report_missing(what, sha1);
+	}
+	else if (get_delta < 2)
 		return 0;
-	status = fetch(sha1);
-	if (status && what)
-		report_missing(what, sha1);
+
 	if (get_delta) {
 		char delta_sha1[20];
 		status = sha1_delta_base(sha1, delta_sha1);

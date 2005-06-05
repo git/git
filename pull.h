@@ -13,7 +13,9 @@ extern int get_history;
 /** Set to fetch the trees in the commit history. **/
 extern int get_all;
 
-/* Set to zero to skip the check for delta object base. */
+/* Set to zero to skip the check for delta object base;
+ * set to two to check delta dependency even for objects we already have.
+ */
 extern int get_delta;
 
 /* Set to be verbose */

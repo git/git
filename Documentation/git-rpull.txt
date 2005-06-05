@@ -10,7 +10,7 @@ git-rpull - Pulls from a remote repository over ssh connection
 
 SYNOPSIS
 --------
-'git-rpull' [-c] [-t] [-a] [-d] [-v] commit-id url
+'git-rpull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
 
 DESCRIPTION
 -----------
@@ -29,6 +29,9 @@ OPTIONS
 	Do not check for delta base objects (use this option
 	only when you know the remote repository is not
 	deltified).
+--recover::
+	Check dependency of deltified object more carefully than
+	usual, to recover after earlier pull that was interrupted.
 -v::
 	Report what is downloaded.
 

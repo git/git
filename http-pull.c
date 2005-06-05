@@ -105,6 +105,8 @@ int main(int argc, char **argv)
 			get_history = 1;
 		} else if (argv[arg][1] == 'd') {
 			get_delta = 0;
+		} else if (!strcmp(argv[arg], "--recover")) {
+			get_delta = 2;
 		} else if (argv[arg][1] == 'a') {
 			get_all = 1;
 			get_tree = 1;
@@ -115,7 +117,7 @@ int main(int argc, char **argv)
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("git-http-pull [-c] [-t] [-a] [-d] [-v] commit-id url");
+		usage("git-http-pull [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url");
 		return 1;
 	}
 	commit_id = argv[arg];
