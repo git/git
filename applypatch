@@ -58,7 +58,7 @@ echo
 echo Applying "'$SUBJECT'"
 echo
 
-git-apply $PATCHFILE || exit 1
+git-apply --index $PATCHFILE || exit 1
 tree=$(git-write-tree) || exit 1
 echo Wrote tree $tree
 commit=$(git-commit-tree $tree -p $(cat .git/HEAD) < $final) || exit 1
