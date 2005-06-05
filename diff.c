@@ -786,8 +786,8 @@ static void diff_flush_patch(struct diff_filepair *p)
 	case 'R':
 		sprintf(msg_,
 			"similarity index %d%%\n"
-			"rename old %s\n"
-			"rename new %s",
+			"rename from %s\n"
+			"rename to %s",
 			(int)(0.5 + p->score * 100.0/MAX_SCORE),
 			p->one->path, p->two->path);
 		msg = msg_;

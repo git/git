@@ -44,8 +44,8 @@ test_expect_success \
     'git-diff-cache -p -M $tree >current'
 cat >expected <<\EOF
 diff --git a/path0 b/path1
-rename old path0
-rename new path1
+rename from path0
+rename to path1
 --- a/path0
 +++ b/path1
 @@ -8,7 +8,7 @@ Line 7

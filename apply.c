@@ -437,6 +437,8 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 			{ "copy to ", gitdiff_copydst },
 			{ "rename old ", gitdiff_renamesrc },
 			{ "rename new ", gitdiff_renamedst },
+			{ "rename from ", gitdiff_renamesrc },
+			{ "rename to ", gitdiff_renamedst },
 			{ "similarity index ", gitdiff_similarity },
 			{ "dissimilarity index ", gitdiff_dissimilarity },
 			{ "", gitdiff_unrecognized },

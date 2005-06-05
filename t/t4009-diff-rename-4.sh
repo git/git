@@ -57,8 +57,8 @@ copy to COPYING.1
 - HOWEVER, in order to allow a migration to GPLv3 if that seems like
 + However, in order to allow a migration to GPLv3 if that seems like
 diff --git a/COPYING b/COPYING.2
-rename old COPYING
-rename new COPYING.2
+rename from COPYING
+rename to COPYING.2
 --- a/COPYING
 +++ b/COPYING.2
 @@ -2 +2 @@

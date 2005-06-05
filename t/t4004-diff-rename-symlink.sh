@@ -48,8 +48,8 @@ copy from frotz
 copy to nitfol
 diff --git a/frotz b/rezrov
 similarity index 100%
-rename old frotz
-rename new rezrov
+rename from frotz
+rename to rezrov
 diff --git a/yomin b/yomin
 deleted file mode 100644
 --- a/yomin
