@@ -1186,6 +1186,9 @@ static void write_out_one_result(struct patch *patch)
 
 static void write_out_results(struct patch *list)
 {
+	if (!list)
+		die("No changes");
+
 	while (list) {
 		write_out_one_result(list);
 		list = list->next;
