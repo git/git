@@ -25,6 +25,7 @@
 //  --show-files shows the directory changes
 //
 static int merge_patch = 1;
+static int check_index = 0;
 static int diffstat = 0;
 static int check = 0;
 static int apply = 1;
@@ -59,6 +60,8 @@ struct patch {
 	int is_rename, is_copy, is_new, is_delete;
 	int lines_added, lines_deleted;
 	struct fragment *fragments;
+	const char *result;
+	unsigned long resultsize;
 	struct patch *next;
 };
 
@@ -100,7 +103,7 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 	return buffer;
 }
 
-static unsigned long linelen(char *buffer, unsigned long size)
+static unsigned long linelen(const char *buffer, unsigned long size)
 {
 	unsigned long len = 0;
 	while (size--) {
@@ -644,6 +647,8 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			break;
 		/* We allow "\ No newline at end of file" */
 		case '\\':
+			if (len < 12 || memcmp(line, "\\ No newline", 12))
+				return -1;
 			break;
 		}
 	}
@@ -734,6 +739,154 @@ static void show_stats(struct patch *patch)
 		add, pluses, del, minuses);
 }
 
+static int read_old_data(struct stat *st, const char *path, void *buf, unsigned long size)
+{
+	int fd;
+	unsigned long got;
+
+	switch (st->st_mode & S_IFMT) {
+	case S_IFLNK:
+		return readlink(path, buf, size);
+	case S_IFREG:
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			return error("unable to open %s", path);
+		got = 0;
+		for (;;) {
+			int ret = read(fd, buf + got, size - got);
+			if (ret < 0) {
+				if (errno == EAGAIN)
+					continue;
+				break;
+			}
+			if (!ret)
+				break;
+			got += ret;
+		}
+		close(fd);
+		return got;
+
+	default:
+		return -1;
+	}
+}
+
+static int find_offset(const char *buf, unsigned long size, const char *fragment, unsigned long fragsize, int line)
+{
+	unsigned long start;
+
+	if (fragsize > size)
+		return -1;
+
+	start = 0;
+	if (line > 1) {
+		line--;
+		unsigned long offset = 0;
+		while (start + offset <= size) {
+			if (buf[offset++] == '\n') {
+				start = offset;
+				if (!--line)
+					break;
+			}
+		}
+	}
+
+	/* Exact line number? */
+	if (!memcmp(buf + start, fragment, fragsize))
+		return start;
+
+	/*
+	 * We should start searching forward and backward.
+	 */
+	return -1;
+}
+
+static int apply_one_fragment(char *buf, unsigned long *sizep, unsigned long *bufsizep, struct fragment *frag)
+{
+	const char *patch = frag->patch;
+	int offset, size = frag->size;
+	char *old = xmalloc(size);
+	char *new = xmalloc(size);
+	int oldsize = 0, newsize = 0;
+
+	while (size > 0) {
+		int len = linelen(patch, size);
+		int plen;
+
+		if (!len)
+			break;
+
+		/*
+		 * "plen" is how much of the line we should use for
+		 * the actual patch data. Normally we just remove the
+		 * first character on the line, but if the line is
+		 * followed by "\ No newline", then we also remove the
+		 * last one (which is the newline, of course).
+		 */
+		plen = len-1;
+		if (len > size && patch[len] == '\\')
+			plen--;
+		switch (*patch) {
+		case ' ':
+		case '-':
+			memcpy(old + oldsize, patch + 1, plen);
+			oldsize += plen;
+			if (*patch == '-')
+				break;
+		/* Fall-through for ' ' */
+		case '+':
+			memcpy(new + newsize, patch + 1, plen);
+			newsize += plen;
+			break;
+		case '@': case '\\':
+			/* Ignore it, we already handled it */
+			break;
+		default:
+			return -1;
+		}
+		patch += len;
+		size -= len;
+	}
+
+	offset = find_offset(buf, *sizep, old, oldsize, frag->newpos);
+	if (offset >= 0) {
+		printf("found at offset %d\n", offset);
+		offset = 0;
+	}
+
+	free(old);
+	free(new);
+	return offset;
+}
+
+static int apply_fragments(char *buf, unsigned long *sizep, unsigned long *bufsizep, struct patch *patch)
+{
+	struct fragment *frag = patch->fragments;
+
+	while (frag) {
+		if (apply_one_fragment(buf, sizep, bufsizep, frag) < 0)
+			return error("patch failed: %s:%d", patch->old_name, frag->oldpos);
+		frag = frag->next;
+	}
+}
+
+static int apply_data(struct patch *patch, struct stat *st)
+{
+	unsigned long size, bufsize;
+	void *buf;
+
+	if (!patch->old_name || !patch->fragments)
+		return 0;
+	size = st->st_size;
+	bufsize = size + 16;
+	buf = xmalloc(bufsize);
+	if (read_old_data(st, patch->old_name, buf, bufsize) != size)
+		return error("read of %s failed", patch->old_name);
+	if (apply_fragments(buf, &size, &bufsize, patch) < 0)
+		return -1;
+	return 0;
+}
+
 static int check_patch(struct patch *patch)
 {
 	struct stat st;
@@ -741,30 +894,50 @@ static int check_patch(struct patch *patch)
 	const char *new_name = patch->new_name;
 
 	if (old_name) {
-		int pos = cache_name_pos(old_name, strlen(old_name));
 		int changed;
 
-		if (pos < 0)
-			return error("%s: does not exist in index", old_name);
-		if (patch->is_new < 0)
-			patch->is_new = 0;
 		if (lstat(old_name, &st) < 0)
 			return error("%s: %s\n", strerror(errno));
-		changed = ce_match_stat(active_cache[pos], &st);
-		if (changed)
-			return error("%s: does not match index", old_name);
+		if (check_index) {
+			int pos = cache_name_pos(old_name, strlen(old_name));
+			if (pos < 0)
+				return error("%s: does not exist in index", old_name);
+			changed = ce_match_stat(active_cache[pos], &st);
+			if (changed)
+				return error("%s: does not match index", old_name);
+		}
+		if (patch->is_new < 0)
+			patch->is_new = 0;
 		if (!patch->old_mode)
 			patch->old_mode = st.st_mode;
+		if ((st.st_mode ^ patch->old_mode) & S_IFMT)
+			return error("%s: wrong type", old_name);
+		if (st.st_mode != patch->old_mode)
+			fprintf(stderr, "warning: %s has type %o, expected %o\n",
+				old_name, st.st_mode, patch->old_mode);
 	}
 
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
-		if (cache_name_pos(new_name, strlen(new_name)) >= 0)
+		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
 			return error("%s: already exists in index", new_name);
 		if (!lstat(new_name, &st))
 			return error("%s: already exists in working directory", new_name);
 		if (errno != ENOENT)
 			return error("%s: %s", new_name, strerror(errno));
 	}
+
+	if (new_name && old_name) {
+		int same = !strcmp(old_name, new_name);
+		if (!patch->new_mode)
+			patch->new_mode = patch->old_mode;
+		if ((patch->old_mode ^ patch->new_mode) & S_IFMT)
+			return error("new mode (%o) of %s does not match old mode (%o)%s%s",
+				patch->new_mode, new_name, patch->old_mode,
+				same ? "" : " of ", same ? "" : old_name);
+	}	
+
+	if (apply_data(patch, &st) < 0)
+		return error("%s: patch does not apply", old_name);
 	return 0;
 }
 
@@ -905,6 +1078,10 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "--check")) {
 			apply = 0;
 			check = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--index")) {
+			check_index = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--show-files")) {
