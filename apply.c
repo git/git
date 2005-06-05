@@ -26,6 +26,7 @@
 //
 static int merge_patch = 1;
 static int check_index = 0;
+static int write_index = 0;
 static int diffstat = 0;
 static int check = 0;
 static int apply = 1;
@@ -60,7 +61,7 @@ struct patch {
 	int is_rename, is_copy, is_new, is_delete;
 	int lines_added, lines_deleted;
 	struct fragment *fragments;
-	const char *result;
+	char *result;
 	unsigned long resultsize;
 	struct patch *next;
 };
@@ -966,6 +967,10 @@ static int apply_data(struct patch *patch, struct stat *st)
 		return -1;
 	patch->result = desc.buffer;
 	patch->resultsize = desc.size;
+
+	if (patch->is_delete && patch->resultsize)
+		return error("removal patch leaves file contents");
+
 	return 0;
 }
 
@@ -1006,6 +1011,8 @@ static int check_patch(struct patch *patch)
 			return error("%s: already exists in working directory", new_name);
 		if (errno != ENOENT)
 			return error("%s: %s", new_name, strerror(errno));
+		if (!patch->new_mode)
+			patch->new_mode = S_IFREG | 0644;
 	}
 
 	if (new_name && old_name) {
@@ -1093,8 +1100,103 @@ static void patch_stats(struct patch *patch)
 	}
 }
 
+static void remove_file(struct patch *patch)
+{
+	if (write_index) {
+		if (remove_file_from_cache(patch->old_name) < 0)
+			die("unable to remove %s from index", patch->old_name);
+	}
+	unlink(patch->old_name);
+}
+
+static void add_index_file(const char *path, unsigned mode, void *buf, unsigned long size)
+{
+	struct stat st;
+	struct cache_entry *ce;
+	int namelen = strlen(path);
+	unsigned ce_size = cache_entry_size(namelen);
+
+	if (!write_index)
+		return;
+
+	ce = xmalloc(ce_size);
+	memset(ce, 0, ce_size);
+	memcpy(ce->name, path, namelen);
+	ce->ce_mode = create_ce_mode(mode);
+	ce->ce_flags = htons(namelen);
+	if (lstat(path, &st) < 0)
+		die("unable to stat newly created file %s", path);
+	fill_stat_cache_info(ce, &st);
+	if (write_sha1_file(buf, size, "blob", ce->sha1) < 0)
+		die("unable to create backing store for newly created file %s", path);
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
+		die("unable to add cache entry for %s", path);
+}
+
+static void create_file(struct patch *patch)
+{
+	const char *path = patch->new_name;
+	unsigned mode = patch->new_mode;
+	unsigned long size = patch->resultsize;
+	char *buf = patch->result;
+
+	if (!mode)
+		mode = S_IFREG | 0644;
+	if (S_ISREG(mode)) {
+		int fd;
+		mode = (mode & 0100) ? 0777 : 0666;
+		fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+		if (fd < 0)
+			die("unable to create file %s (%s)", path, strerror(errno));
+		if (write(fd, buf, size) != size)
+			die("unable to write file %s", path);
+		close(fd);
+		add_index_file(path, mode, buf, size);
+		return;
+	}
+	if (S_ISLNK(mode)) {
+		if (size && buf[size-1] == '\n')
+			size--;
+		buf[size] = 0;
+		if (symlink(buf, path) < 0)
+			die("unable to write symlink %s", path);
+		add_index_file(path, mode, buf, size);
+		return;
+	}
+	die("unable to write file mode %o", mode);
+}
+
+static void write_out_one_result(struct patch *patch)
+{
+	if (patch->is_delete > 0) {
+		remove_file(patch);
+		return;
+	}
+	if (patch->is_new > 0 || patch->is_copy) {
+		create_file(patch);
+		return;
+	}
+	/*
+	 * Rename or modification boils down to the same
+	 * thing: remove the old, write the new
+	 */
+	remove_file(patch);
+	create_file(patch);
+}
+
+static void write_out_results(struct patch *list)
+{
+	while (list) {
+		write_out_one_result(list);
+		list = list->next;
+	}
+}
+
+static struct cache_file cache_file;
+
 static int apply_patch(int fd)
 {
+	int newfd;
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
 	struct patch *list = NULL, **listp = &list;
@@ -1118,8 +1220,26 @@ static int apply_patch(int fd)
 		size -= nr;
 	}
 
+	newfd = -1;
+	write_index = check_index && apply;
+	if (write_index)
+		newfd = hold_index_file_for_update(&cache_file, get_index_file());
+	if (check_index) {
+		if (read_cache() < 0)
+			die("unable to read index file");
+	}
+
 	if ((check || apply) && check_patch_list(list) < 0)
 		exit(1);
+
+	if (apply)
+		write_out_results(list);
+
+	if (write_index) {
+		if (write_cache(newfd, active_cache, active_nr) ||
+		    commit_index_file(&cache_file))
+			die("Unable to write new cachefile");
+	}
 
 	if (show_files)
 		show_file_list(list);
@@ -1135,9 +1255,6 @@ int main(int argc, char **argv)
 {
 	int i;
 	int read_stdin = 1;
-
-	if (read_cache() < 0)
-		die("unable to read index file");
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
