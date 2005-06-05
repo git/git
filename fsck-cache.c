@@ -368,7 +368,7 @@ static int read_sha1_reference(const char *path)
 	return 0;
 }
 
-static void find_file_objects(const char *base, const char *name)
+static int find_file_objects(const char *base, const char *name)
 {
 	int baselen = strlen(base);
 	int namelen = strlen(name);
@@ -379,34 +379,36 @@ static void find_file_objects(const char *base, const char *name)
 	path[baselen] = '/';
 	memcpy(path + baselen + 1, name, namelen+1);
 	if (stat(path, &st) < 0)
-		return;
+		return 0;
 
 	/*
 	 * Recurse into directories
 	 */
 	if (S_ISDIR(st.st_mode)) {
+		int count = 0;
 		DIR *dir = opendir(path);
 		if (dir) {
 			struct dirent *de;
 			while ((de = readdir(dir)) != NULL) {
 				if (de->d_name[0] == '.')
 					continue;
-				find_file_objects(path, de->d_name);
+				count += find_file_objects(path, de->d_name);
 			}
 			closedir(dir);
 		}
-		return;
+		return count;
 	}
-	if (S_ISREG(st.st_mode)) {
-		read_sha1_reference(path);
-		return;
-	}
+	if (S_ISREG(st.st_mode))
+		return read_sha1_reference(path) == 0;
+	return 0;
 }
 
 static void get_default_heads(void)
 {
 	char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
-	find_file_objects(git_dir, "refs");
+	int count = find_file_objects(git_dir, "refs");
+	if (!count)
+		die("No default references");
 }
 
 int main(int argc, char **argv)
