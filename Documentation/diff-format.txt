@@ -52,7 +52,7 @@ Generating patches with -p
 --------------------------
 
 When "git-diff-cache", "git-diff-tree", or "git-diff-files" are run
-with a '-p' option, they do not produce the output described above
+with a '-p' option, they do not produce the output described above;
 instead they produce a patch file.
 
 The patch generation can be customized at two levels.  This
@@ -98,3 +98,37 @@ temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
 
 For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
 parameter, <path>.
+
+
+Git specific extention to diff format
+-------------------------------------
+
+What -p option produces is slightly different from the
+traditional diff format.
+
+ (1) It is preceeded with a "git diff" header, that looks like
+     this:
+
+     diff --git a/file1 b/file2
+
+     The a/ and b/ filenames are the same unless rename/copy is
+     involved.  Especially, even for a creation or a deletion,
+     /dev/null is _not_ used in place of a/ or b/ filename.
+
+     When rename/copy is involved, file1 and file2 shows the
+     name of the source file of the rename/copy and the name of
+     the file that rename/copy produces, respectively.
+
+ (2) It is followed by extended header lines that are one or
+     more of:
+
+       old mode <mode>
+       new mode <mode>
+       deleted file mode <mode>
+       new file mode <mode>
+       copy from <path>
+       copy to <path>
+       rename from <path>
+       rename to <path>
+       similarity index <number>
+       dissimilarity index <number>
