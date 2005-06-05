@@ -1,21 +1,21 @@
-git-rpull(1)
-============
+git-ssh-pull(1)
+===============
 v0.1, May 2005
 
 NAME
 ----
-git-rpull - Pulls from a remote repository over ssh connection
+git-ssh-pull - Pulls from a remote repository over ssh connection
 
 
 
 SYNOPSIS
 --------
-'git-rpull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
+'git-ssh-pull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
 
 DESCRIPTION
 -----------
-Pulls from a remote repository over ssh connection, invoking git-rpush on
-the other end.
+Pulls from a remote repository over ssh connection, invoking git-ssh-push
+on the other end.
 
 OPTIONS
 -------

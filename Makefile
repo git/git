@@ -30,7 +30,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-checkout-cache git-diff-tree git-rev-tree git-ls-files \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
-	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
+	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
 	git-get-tar-commit-id git-mkdelta git-apply git-stripspace
 
@@ -105,8 +105,8 @@ git-diff-cache: diff-cache.c
 git-convert-cache: convert-cache.c
 git-http-pull: http-pull.c pull.c
 git-local-pull: local-pull.c pull.c
-git-rpush: rsh.c
-git-rpull: rsh.c pull.c
+git-ssh-push: rsh.c
+git-ssh-pull: rsh.c pull.c
 git-rev-list: rev-list.c
 git-mktag: mktag.c
 git-diff-helper: diff-helper.c

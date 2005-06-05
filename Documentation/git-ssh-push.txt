@@ -1,19 +1,19 @@
-git-rpush(1)
-============
+git-ssh-push(1)
+===============
 v0.1, May 2005
 
 NAME
 ----
-git-rpush - Helper "server-side" program used by git-rpull
+git-ssh-push - Helper "server-side" program used by git-ssh-pull
 
 
 SYNOPSIS
 --------
-'git-rpush'
+'git-ssh-push'
 
 DESCRIPTION
 -----------
-Helper "server-side" program used by git-rpull.
+Helper "server-side" program used by git-ssh-pull.
 
 
 Author

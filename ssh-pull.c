@@ -64,13 +64,13 @@ int main(int argc, char **argv)
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("git-rpull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
+		usage("git-ssh-pull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
 		return 1;
 	}
 	commit_id = argv[arg];
 	url = argv[arg + 1];
 
-	if (setup_connection(&fd_in, &fd_out, "git-rpush", url, arg, argv + 1))
+	if (setup_connection(&fd_in, &fd_out, "git-ssh-push", url, arg, argv + 1))
 		return 1;
 
 	if (get_version())

@@ -148,7 +148,7 @@ link:git-resolve-script.html[git-resolve-script]::
 link:git-tag-script.html[git-tag-script]::
 	An example script to create a tag object signed with GPG
 
-link:git-rpull.html[git-rpull]::
+link:git-ssh-pull.html[git-ssh-pull]::
 	Pulls from a remote repository over ssh connection
 
 Interogators:
@@ -156,8 +156,8 @@ Interogators:
 link:git-diff-helper.html[git-diff-helper]::
 	Generates patch format output for git-diff-*
 
-link:git-rpush.html[git-rpush]::
-	Helper "server-side" program used by git-rpull
+link:git-ssh-push.html[git-ssh-push]::
+	Helper "server-side" program used by git-ssh-pull
 
 
 

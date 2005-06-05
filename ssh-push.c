@@ -16,7 +16,7 @@ int serve_object(int fd_in, int fd_out) {
 	do {
 		size = read(fd_in, sha1 + posn, 20 - posn);
 		if (size < 0) {
-			perror("git-rpush: read ");
+			perror("git-ssh-push: read ");
 			return -1;
 		}
 		if (!size)
@@ -30,7 +30,7 @@ int serve_object(int fd_in, int fd_out) {
 	buf = map_sha1_file(sha1, &objsize);
 	
 	if (!buf) {
-		fprintf(stderr, "git-rpush: could not find %s\n", 
+		fprintf(stderr, "git-ssh-push: could not find %s\n", 
 			sha1_to_hex(sha1));
 		remote = -1;
 	}
@@ -45,9 +45,9 @@ int serve_object(int fd_in, int fd_out) {
 		size = write(fd_out, buf + posn, objsize - posn);
 		if (size <= 0) {
 			if (!size) {
-				fprintf(stderr, "git-rpush: write closed");
+				fprintf(stderr, "git-ssh-push: write closed");
 			} else {
-				perror("git-rpush: write ");
+				perror("git-ssh-push: write ");
 			}
 			return -1;
 		}
@@ -71,7 +71,7 @@ void service(int fd_in, int fd_out) {
 		retval = read(fd_in, &type, 1);
 		if (retval < 1) {
 			if (retval < 0)
-				perror("rpush: read ");
+				perror("git-ssh-push: read ");
 			return;
 		}
 		if (type == 'v' && serve_version(fd_in, fd_out))
@@ -91,12 +91,12 @@ int main(int argc, char **argv)
                 arg++;
         }
         if (argc < arg + 2) {
-		usage("git-rpush [-c] [-t] [-a] commit-id url");
+		usage("git-ssh-push [-c] [-t] [-a] commit-id url");
                 return 1;
         }
 	commit_id = argv[arg];
 	url = argv[arg + 1];
-	if (setup_connection(&fd_in, &fd_out, "git-rpull", url, arg, argv + 1))
+	if (setup_connection(&fd_in, &fd_out, "git-ssh-pull", url, arg, argv + 1))
 		return 1;
 
 	service(fd_in, fd_out);
