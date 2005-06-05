@@ -606,7 +606,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 {
 	int added, deleted;
 	int len = linelen(line, size), offset;
-	unsigned long pos[4], oldlines, newlines;
+	unsigned long oldlines, newlines;
 
 	offset = parse_fragment_header(line, len, fragment);
 	if (offset < 0)
@@ -614,10 +614,21 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	oldlines = fragment->oldlines;
 	newlines = fragment->newlines;
 
-	if (patch->is_new < 0 && (pos[0] || oldlines))
-		patch->is_new = 0;
-	if (patch->is_delete < 0 && (pos[1] || newlines))
-		patch->is_delete = 0;
+	if (patch->is_new < 0) {
+		patch->is_new =  !oldlines;
+		if (!oldlines)
+			patch->old_name = NULL;
+	}
+	if (patch->is_delete < 0) {
+		patch->is_delete = !newlines;
+		if (!newlines)
+			patch->new_name = NULL;
+	}
+
+	if (patch->is_new != !oldlines)
+		return error("new file depends on old contents");
+	if (patch->is_delete != !newlines)
+		return error("deleted file still has contents");
 
 	/* Parse the thing.. */
 	line += len;
@@ -928,6 +939,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 			return error("patch failed: %s:%d", patch->old_name, frag->oldpos);
 		frag = frag->next;
 	}
+	return 0;
 }
 
 static int apply_data(struct patch *patch, struct stat *st)
@@ -936,13 +948,16 @@ static int apply_data(struct patch *patch, struct stat *st)
 	unsigned long size, alloc;
 	struct buffer_desc desc;
 
-	if (!patch->old_name || !patch->fragments)
-		return 0;
-	size = st->st_size;
-	alloc = size + 8192;
-	buf = xmalloc(alloc);
-	if (read_old_data(st, patch->old_name, buf, alloc) != size)
-		return error("read of %s failed", patch->old_name);
+	size = 0;
+	alloc = 0;
+	buf = NULL;
+	if (patch->old_name) {
+		size = st->st_size;
+		alloc = size + 8192;
+		buf = xmalloc(alloc);
+		if (read_old_data(st, patch->old_name, buf, alloc) != size)
+			return error("read of %s failed", patch->old_name);
+	}
 
 	desc.size = size;
 	desc.alloc = alloc;
