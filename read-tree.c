@@ -118,16 +118,12 @@ static void verify_uptodate(struct cache_entry *ce)
  * it's up-to-date or not (ie it can be a file that we
  * have updated but not committed yet).
  */
-static void verify_cleared(struct cache_entry *ce)
+static void reject_merge(struct cache_entry *ce)
 {
-	if (ce)
-		die("Entry '%s' would be overwritten by merge. Cannot merge.", ce->name);
+	die("Entry '%s' would be overwritten by merge. Cannot merge.", ce->name);
 }
 
-static int old_match(struct cache_entry *old, struct cache_entry *a)
-{
-	return old && path_matches(old, a) && same(old, a);
-}
+#define CHECK_OLD(ce) if (old && same(old, ce)) { verify_uptodate(old); old = NULL; }
 
 static void trivially_merge_cache(struct cache_entry **src, int nr)
 {
@@ -141,22 +137,28 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 
 		/* We throw away original cache entries except for the stat information */
 		if (!ce_stage(ce)) {
-			verify_cleared(old);
+			if (old)
+				reject_merge(old);
 			old = ce;
 			src++;
 			nr--;
 			active_nr--;
 			continue;
 		}
+		if (old && !path_matches(old, ce))
+			reject_merge(old);
 		if (nr > 2 && (result = merge_entries(ce, src[1], src[2])) != NULL) {
 			/*
 			 * See if we can re-use the old CE directly?
 			 * That way we get the uptodate stat info.
 			 */
-			if (old_match(old, result)) {
+			if (old && same(old, result)) {
 				*result = *old;
 				old = NULL;
 			}
+			CHECK_OLD(ce);
+			CHECK_OLD(src[1]);
+			CHECK_OLD(src[2]);
 			ce = result;
 			ce->ce_flags &= ~htons(CE_STAGEMASK);
 			src += 2;
@@ -168,15 +170,13 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 		 * If we had an old entry that we now effectively
 		 * overwrite, make sure it wasn't dirty.
 		 */
-		if (old_match(old, ce)) {
-			verify_uptodate(old);
-			old = NULL;
-		}
+		CHECK_OLD(ce);
 		*dst++ = ce;
 		src++;
 		nr--;
 	}
-	verify_cleared(old);
+	if (old)
+		reject_merge(old);
 }
 
 static void merge_stat_info(struct cache_entry **src, int nr)
