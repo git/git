@@ -15,6 +15,7 @@ struct object {
 	const char *type;
 	struct object_list *refs;
 	struct object_list *attached_deltas;
+	void *util;
 };
 
 extern int nr_objs;

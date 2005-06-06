@@ -130,7 +130,7 @@ void free_commit_list(struct commit_list *list)
 	}
 }
 
-static void insert_by_date(struct commit_list **list, struct commit *item)
+void insert_by_date(struct commit_list **list, struct commit *item)
 {
 	struct commit_list **pp = list;
 	struct commit_list *p;
@@ -280,3 +280,25 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 	buf[offset] = '\0';
 	return offset;
 }
+
+struct commit *pop_commit(struct commit_list **stack)
+{
+	struct commit_list *top = *stack;
+	struct commit *item = top ? top->item : NULL;
+
+	if (top) {
+		*stack = top->next;
+		free(top);
+	}
+	return item;
+}
+
+int count_parents(struct commit * commit)
+{
+        int count = 0;
+        struct commit_list * parents = commit->parents;
+        for (count=0;parents; parents=parents->next,count++)
+          ;
+        return count;
+}
+

@@ -42,6 +42,7 @@ enum cmit_fmt {
 
 extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space);
 
+void insert_by_date(struct commit_list **list, struct commit *item);
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
@@ -49,4 +50,7 @@ extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, uns
 struct commit *pop_most_recent_commit(struct commit_list **list, 
 				      unsigned int mark);
 
+struct commit *pop_commit(struct commit_list **stack);
+
+int count_parents(struct commit * commit);
 #endif /* COMMIT_H */

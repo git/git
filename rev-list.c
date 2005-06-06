@@ -1,9 +1,9 @@
 #include "cache.h"
 #include "commit.h"
+#include "epoch.h"
 
 #define SEEN		(1u << 0)
 #define INTERESTING	(1u << 1)
-#define UNINTERESTING	(1u << 2)
 
 static const char rev_list_usage[] =
 	"usage: git-rev-list [OPTION] commit-id <commit-id>\n"
@@ -11,7 +11,8 @@ static const char rev_list_usage[] =
 		      "  --max-age=epoch\n"
 		      "  --min-age=epoch\n"
 		      "  --header\n"
-		      "  --pretty";
+		      "  --pretty\n"
+		      "  --merge-order [ --show-breaks ]";
 
 static int verbose_header = 0;
 static int show_parents = 0;
@@ -21,9 +22,19 @@ static unsigned long max_age = -1;
 static unsigned long min_age = -1;
 static int max_count = -1;
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
+static int merge_order = 0;
+static int show_breaks = 0;
 
 static void show_commit(struct commit *commit)
 {
+	if (show_breaks) {
+		prefix = "| ";
+		if (commit->object.flags & DISCONTINUITY) {
+			prefix = "^ ";     
+		} else if (commit->object.flags & BOUNDARY) {
+			prefix = "= ";
+		} 
+        }        		
 	printf("%s%s", prefix, sha1_to_hex(commit->object.sha1));
 	if (show_parents) {
 		struct commit_list *parents = commit->parents;
@@ -37,7 +48,38 @@ static void show_commit(struct commit *commit)
 		static char pretty_header[16384];
 		pretty_print_commit(commit_format, commit->buffer, ~0, pretty_header, sizeof(pretty_header));
 		printf("%s%c", pretty_header, hdr_termination);
+	}	
+}
+
+static int filter_commit(struct commit * commit)
+{
+	if (commit->object.flags & UNINTERESTING)
+		return CONTINUE;
+	if (min_age != -1 && (commit->date > min_age))
+		return CONTINUE;
+	if (max_age != -1 && (commit->date < max_age))
+		return STOP;
+	if (max_count != -1 && !max_count--)
+		return STOP;
+
+	return DO;
+}
+
+static int process_commit(struct commit * commit)
+{
+	int action=filter_commit(commit);
+
+	if (action == STOP) {
+		return STOP;
 	}
+
+	if (action == CONTINUE) {
+		return CONTINUE;
+	}
+
+	show_commit(commit);
+
+	return CONTINUE;
 }
 
 static void show_commit_list(struct commit_list *list)
@@ -45,15 +87,8 @@ static void show_commit_list(struct commit_list *list)
 	while (list) {
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 
-		if (commit->object.flags & UNINTERESTING)
-			continue;
-		if (min_age != -1 && (commit->date > min_age))
-			continue;
-		if (max_age != -1 && (commit->date < max_age))
+		if (process_commit(commit) == STOP)
 			break;
-		if (max_count != -1 && !max_count--)
-			break;
-		show_commit(commit);
 	}
 }
 
@@ -151,6 +186,14 @@ int main(int argc, char **argv)
 			show_parents = 1;
 			continue;
 		}
+		if (!strncmp(arg, "--merge-order", 13)) {
+		        merge_order = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--show-breaks", 13)) {
+			show_breaks = 1;
+			continue;
+		}
 
 		flags = 0;
 		if (*arg == '^') {
@@ -158,7 +201,7 @@ int main(int argc, char **argv)
 			arg++;
 			limited = 1;
 		}
-		if (get_sha1(arg, sha1))
+		if (get_sha1(arg, sha1) || (show_breaks && !merge_order))
 			usage(rev_list_usage);
 		commit = lookup_commit_reference(sha1);
 		if (!commit || parse_commit(commit) < 0)
@@ -170,9 +213,19 @@ int main(int argc, char **argv)
 	if (!list)
 		usage(rev_list_usage);
 
-	if (limited)
-		list = limit_list(list);
+	if (!merge_order) {		
+	
+	        if (limited) 
+			list = limit_list(list);
+		show_commit_list(list);
+			
+	} else {
+		
+		if (sort_list_in_merge_order(list, &process_commit)) {
+			  die("merge order sort failed\n");
+		}
+					
+	}
 
-	show_commit_list(list);
 	return 0;
 }

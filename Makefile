@@ -40,9 +40,9 @@ install: $(PROG) $(SCRIPTS)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
-	 tag.o delta.o date.o index.o diff-delta.o patch-delta.o entry.o
+	 tag.o delta.o date.o index.o diff-delta.o patch-delta.o entry.o epoch.o
 LIB_FILE=libgit.a
-LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h
+LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h
 
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
@@ -135,6 +135,7 @@ diffcore-pathspec.o : $(LIB_H) diffcore.h
 diffcore-pickaxe.o : $(LIB_H) diffcore.h
 diffcore-break.o : $(LIB_H) diffcore.h
 diffcore-order.o : $(LIB_H) diffcore.h
+epoch.o: $(LIB_H)
 
 test: all
 	$(MAKE) -C t/ all
