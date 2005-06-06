@@ -45,7 +45,7 @@ the -p option is not used.  E.g.
 The diffcore mechanism is fed a list of such comparison results
 (each of which is called "filepair", although at this point each
 of them talks about a single file), and transforms such a list
-into another list.  There are currently 7 such transformations:
+into another list.  There are currently 6 such transformations:
 
  - diffcore-pathspec
  - diffcore-break
