@@ -32,6 +32,12 @@
 #define DTYPE(de)	DT_UNKNOWN
 #endif
 
+#ifdef __GNUC__
+#define NORETURN __attribute__((__noreturn__))
+#else
+#define NORETURN
+#endif
+
 /*
  * Environment variables transition.
  * We accept older names for now but warn.
@@ -175,8 +181,8 @@ extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 
 /* General helper functions */
-extern void usage(const char *err);
-extern void die(const char *err, ...);
+extern void usage(const char *err) NORETURN;
+extern void die(const char *err, ...) NORETURN;
 extern int error(const char *err, ...);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
