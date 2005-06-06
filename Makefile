@@ -128,6 +128,7 @@ sha1_file.o: $(LIB_H)
 usage.o: $(LIB_H)
 strbuf.o: $(LIB_H)
 gitenv.o: $(LIB_H)
+entry.o: $(LIB_H)
 diff.o: $(LIB_H) diffcore.h
 diffcore-rename.o : $(LIB_H) diffcore.h
 diffcore-pathspec.o : $(LIB_H) diffcore.h

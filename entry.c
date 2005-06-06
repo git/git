@@ -117,7 +117,7 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 		return error("git-checkout-cache: unknown file mode for %s", path);
 	}
 
-	if (state->update) {
+	if (state->refresh_cache) {
 		struct stat st;
 		lstat(ce->name, &st);
 		fill_stat_cache_info(ce, &st);
