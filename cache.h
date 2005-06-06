@@ -214,4 +214,15 @@ static inline void *xcalloc(size_t nmemb, size_t size)
 	return ret;
 }
 
+struct checkout {
+	const char *base_dir;
+	int base_dir_len;
+	unsigned force:1,
+		 quiet:1,
+		 not_new:1,
+		 refresh_cache:1;
+};
+
+extern int checkout_entry(struct cache_entry *ce, struct checkout *state);
+
 #endif /* CACHE_H */
