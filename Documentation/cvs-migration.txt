@@ -1,0 +1,105 @@
+CVS annotate.
+
+The core GIT itself does not have a "cvs annotate" equivalent.
+It has something that you may want to use when you would use
+"cvs annotate".
+
+Let's step back a bit and think about the reason why you would
+want to do "cvs annotate a-file.c" to begin with.
+
+You would use "cvs annotate" on a file when you have trouble
+with a function (or even a single "if" statement in a function)
+that happens to be defined in the file, which does not do what
+you want it to do.  And you would want to find out why it was
+written that way, because you are about to modify it to suit
+your needs, and at the same time you do not want to break its
+current callers.  For that, you are trying to find out why the
+original author did things that way in the original context.
+
+Many times, it may be enough to see the commit log messages of
+commits that touch the file in question, possibly along with the
+patches themselves, like this:
+
+	$ git-whatchanged -p a-file.c
+
+This will show log messages and patches for each commit that
+touches a-file.
+
+This, however, may not be very useful when this file has many
+modifications that are not related to the piece of code you are
+interested in.  You would see many log messages and patches that
+do not have anything to do with the piece of code you are
+interested in.  As an example, assuming that you have this piece
+code that you are interested in in the HEAD version:
+
+	if (frotz) {
+		nitfol();
+	}
+
+you would use git-rev-list and git-diff-tree like this:
+
+	$ git-rev-list HEAD |
+	  git-diff-tree --stdin -v -p -S'if (frotz) {
+		nitfol();
+	}'
+
+We have already talked about the "--stdin" form of git-diff-tree
+command that reads the list of commits and compares each commit
+with its parents.  The git-whatchanged command internally runs
+the equivalent of the above command, and can be used like this:
+
+	$ git-whatchanged -p -S'if (frotz) {
+		nitfol();
+	}'
+
+When the -S option is used, git-diff-tree command outputs
+differences between two commits only if one tree has the
+specified string in a file and the corresponding file in the
+other tree does not.  The above example looks for a commit that
+has the "if" statement in it in a file, but its parent commit
+does not have it in the same shape in the corresponding file (or
+the other way around, where the parent has it and the commit
+does not), and the differences between them are shown, along
+with the commit message (thanks to the -v flag).  It does not
+show anything for commits that do not touch this "if" statement.
+
+Also, in the original context, the same statement might have
+appeared at first in a different file and later the file was
+renamed to "a-file.c".  CVS annotate would not help you to go
+back across such a rename, but GIT would still help you in such
+a situation.  For that, you can give the -C flag to
+git-diff-tree, like this:
+
+	$ git-whatchanged -p -C -S'if (frotz) {
+		nitfol();
+	}'
+
+When the -C flag is used, file renames and copies are followed.
+So if the "if" statement in question happens to be in "a-file.c"
+in the current HEAD commit, even if the file was originally
+called "o-file.c" and then renamed in an earlier commit, or if
+the file was created by copying an existing "o-file.c" in an
+earlier commit, you will not lose track.  If the "if" statement
+did not change across such rename or copy, then the commit that
+does rename or copy would not show in the output, and if the
+"if" statement was modified while the file was still called
+"o-file.c", it would find the commit that changed the statement
+when it was in "o-file.c".
+
+[ BTW, the current versions of "git-diff-tree -C" is not eager
+  enough to find copies, and it will miss the fact that a-file.c
+  was created by copying o-file.c unless o-file.c was somehow
+  changed in the same commit.]
+
+You can use the --pickaxe-all flag in addition to the -S flag.
+This causes the differences from all the files contained in
+those two commits, not just the differences between the files
+that contain this changed "if" statement:
+
+	$ git-whatchanged -p -C -S'if (frotz) {
+		nitfol();
+	}' --pickaxe-all
+
+[ Side note.  This option is called "--pickaxe-all" because -S
+  option is internally called "pickaxe", a tool for software
+  archaeologists.]
