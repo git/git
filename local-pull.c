@@ -73,6 +73,11 @@ int fetch(unsigned char *sha1)
 	return -1;
 }
 
+int fetch_ref(char *ref, unsigned char *sha1)
+{
+	return -1;
+}
+
 static const char *local_pull_usage = 
 "git-local-pull [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] [--recover] commit-id path";
 

@@ -39,6 +39,11 @@ int get_version(void)
 	return 0;
 }
 
+int fetch_ref(char *ref, unsigned char *sha1)
+{
+	return -1;
+}
+
 int main(int argc, char **argv)
 {
 	char *commit_id;
