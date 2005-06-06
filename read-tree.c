@@ -221,7 +221,9 @@ static void check_updates(struct cache_entry **src, int nr)
 	}
 }
 
-static void merge_cache(struct cache_entry **src, int nr, int (*fn)(struct cache_entry **, struct cache_entry **))
+typedef int (*merge_fn_t)(struct cache_entry **, struct cache_entry **);
+
+static void merge_cache(struct cache_entry **src, int nr, merge_fn_t fn)
 {
 	struct cache_entry **dst = src;
 
@@ -296,20 +298,14 @@ int main(int argc, char **argv)
 		stage++;
 	}
 	if (merge) {
-		switch (stage) {
-		case 4:	/* Three-way merge */
-			merge_cache(active_cache, active_nr, threeway_merge);
-			break;
-		case 3:	/* Update from one tree to another */
-			merge_cache(active_cache, active_nr, twoway_merge);
-			check_updates(active_cache, active_nr);
-			break;
-		case 2:	/* Just read a tree, merge with old cache contents */
-			merge_cache(active_cache, active_nr, oneway_merge);
-			break;
-		default:
+		static const merge_fn_t merge_function[] = {
+			[1] = oneway_merge,
+			[2] = twoway_merge,
+			[3] = threeway_merge,
+		};
+		if (stage < 2 || stage > 4)
 			die("just how do you expect me to merge %d trees?", stage-1);
-		}
+		merge_cache(active_cache, active_nr, merge_function[stage-1]);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
