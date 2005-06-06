@@ -77,9 +77,26 @@ In addition:
 ################################################################
 # Try merging and showing the various diffs
 
-test_expect_success \
+# The tree is dirty at this point.
+test_expect_failure \
     '3-way merge with git-read-tree -m' \
     "git-read-tree -m $tree_O $tree_A $tree_B"
+
+# This is done on an empty work directory, which is the normal
+# merge person behaviour.
+test_expect_success \
+    '3-way merge with git-read-tree -m' \
+    "rm -fr [NDMALTS][NDMALTSF] Z &&
+     rm .git/index &&
+     git-read-tree -m $tree_O $tree_A $tree_B"
+
+# This starts out with the first head, which is the normal
+# patch submitter behaviour.
+test_expect_success \
+    '3-way merge with git-read-tree -m' \
+    "git-read-tree $tree_A &&
+     git-checkout-cache -f -u -a &&
+     git-read-tree -m $tree_O $tree_A $tree_B"
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
