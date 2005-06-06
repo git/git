@@ -36,8 +36,8 @@ int setup_connection(int *fd_in, int *fd_out, char *remote_prog,
 	*(path++) = '\0';
 	/* ssh <host> 'cd /<path>; stdio-pull <arg...> <commit-id>' */
 	snprintf(command, COMMAND_SIZE, 
-		 "cd /%s; %s=objects %s",
-		 path, DB_ENVIRONMENT, remote_prog);
+		 "%s='/%s' %s",
+		 GIT_DIR_ENVIRONMENT, path, remote_prog);
 	posn = command + strlen(command);
 	for (i = 0; i < rmt_argc; i++) {
 		*(posn++) = ' ';
