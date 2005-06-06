@@ -58,7 +58,7 @@ static int get_sha1_file(const char *path, unsigned char *result)
 	return get_sha1_hex(buffer, result);
 }
 
-static char *git_dir, *git_object_dir, *git_index_file;
+static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir;
 static void setup_git_env(void)
 {
 	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
@@ -69,6 +69,8 @@ static void setup_git_env(void)
 		git_object_dir = xmalloc(strlen(git_dir) + 9);
 		sprintf(git_object_dir, "%s/objects", git_dir);
 	}
+	git_refs_dir = xmalloc(strlen(git_dir) + 6);
+	sprintf(git_refs_dir, "%s/refs", git_dir);
 	git_index_file = gitenv(INDEX_ENVIRONMENT);
 	if (!git_index_file) {
 		git_index_file = xmalloc(strlen(git_dir) + 7);
@@ -81,6 +83,13 @@ char *get_object_directory(void)
 	if (!git_object_dir)
 		setup_git_env();
 	return git_object_dir;
+}
+
+char *get_refs_directory(void)
+{
+	if (!git_refs_dir)
+		setup_git_env();
+	return git_refs_dir;
 }
 
 char *get_index_file(void)

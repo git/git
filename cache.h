@@ -117,6 +117,7 @@ extern unsigned int active_nr, active_alloc, active_cache_changed;
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 
 extern char *get_object_directory(void);
+extern char *get_refs_directory(void);
 extern char *get_index_file(void);
 
 #define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
