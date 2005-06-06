@@ -167,13 +167,14 @@ int main(int argc, const char **argv)
 	void *tree;
 	unsigned long size;
 	int ret;
+	int allow_options = 1;
 	int i;
 
 	read_cache();
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
-		if (*arg != '-') {
+		if (!allow_options || *arg != '-') {
 			if (tree_name) {
 				pathspec = argv + i;
 				break;
@@ -182,6 +183,10 @@ int main(int argc, const char **argv)
 			continue;
 		}
 			
+		if (!strcmp(arg, "--")) {
+			allow_options = 0;
+			continue;
+		}
 		if (!strcmp(arg, "-r")) {
 			/* We accept the -r flag just to look like git-diff-tree */
 			continue;
