@@ -93,11 +93,46 @@ static struct cache_entry *merge_entries(struct cache_entry *a,
 	return NULL;
 }
 
+/*
+ * When a CE gets turned into an unmerged entry, we
+ * want it to be up-to-date
+ */
+static void verify_uptodate(struct cache_entry *ce)
+{
+	struct stat st;
+
+	if (!lstat(ce->name, &st)) {
+		unsigned changed = ce_match_stat(ce, &st);
+		if (!changed)
+			return;
+		errno = 0;
+	}
+	if (errno == ENOENT)
+		return;
+	die("Entry '%s' not uptodate. Cannot merge.", ce->name);
+}
+
+/*
+ * If the old tree contained a CE that isn't even in the
+ * result, that's always a problem, regardless of whether
+ * it's up-to-date or not (ie it can be a file that we
+ * have updated but not committed yet).
+ */
+static void verify_cleared(struct cache_entry *ce)
+{
+	if (ce)
+		die("Entry '%s' would be overwritten by merge. Cannot merge.", ce->name);
+}
+
+static int old_match(struct cache_entry *old, struct cache_entry *a)
+{
+	return old && path_matches(old, a) && same(old, a);
+}
+
 static void trivially_merge_cache(struct cache_entry **src, int nr)
 {
-	static struct cache_entry null_entry;
 	struct cache_entry **dst = src;
-	struct cache_entry *old = &null_entry;
+	struct cache_entry *old = NULL;
 
 	while (nr) {
 		struct cache_entry *ce, *result;
@@ -106,6 +141,7 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 
 		/* We throw away original cache entries except for the stat information */
 		if (!ce_stage(ce)) {
+			verify_cleared(old);
 			old = ce;
 			src++;
 			nr--;
@@ -117,18 +153,30 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 			 * See if we can re-use the old CE directly?
 			 * That way we get the uptodate stat info.
 			 */
-			if (path_matches(result, old) && same(result, old))
+			if (old_match(old, result)) {
 				*result = *old;
+				old = NULL;
+			}
 			ce = result;
 			ce->ce_flags &= ~htons(CE_STAGEMASK);
 			src += 2;
 			nr -= 2;
 			active_nr -= 2;
 		}
+
+		/*
+		 * If we had an old entry that we now effectively
+		 * overwrite, make sure it wasn't dirty.
+		 */
+		if (old_match(old, ce)) {
+			verify_uptodate(old);
+			old = NULL;
+		}
 		*dst++ = ce;
 		src++;
 		nr--;
 	}
+	verify_cleared(old);
 }
 
 static void merge_stat_info(struct cache_entry **src, int nr)

@@ -39,13 +39,14 @@ if [ "$common" == "$head" ]; then
 	echo "Destroying all noncommitted data!"
 	echo "Kill me within 3 seconds.."
 	sleep 3
-	git-read-tree -m $merge && git-checkout-cache -f -u -a
+	git-read-tree -m $merge || exit 1
+	git-checkout-cache -f -u -a
 	echo $merge > "$GIT_DIR"/HEAD
 	git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
 	exit 0
 fi
 echo "Trying to merge $merge into $head"
-git-read-tree -m $common $head $merge
+git-read-tree -m $common $head $merge || exit 1
 merge_msg="Merge of $merge_repo"
 result_tree=$(git-write-tree  2> /dev/null)
 if [ $? -ne 0 ]; then
