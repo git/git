@@ -146,7 +146,7 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 		}
 		if (old && !path_matches(old, ce))
 			reject_merge(old);
-		if (nr > 2 && (result = merge_entries(ce, src[1], src[2])) != NULL) {
+		if (nr > 2 && (result = merge_entries(ce, src[0], src[1])) != NULL) {
 			result->ce_flags |= htons(CE_UPDATE);
 			/*
 			 * See if we can re-use the old CE directly?
@@ -160,8 +160,8 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 				old = NULL;
 			}
 			CHECK_OLD(ce);
+			CHECK_OLD(src[0]);
 			CHECK_OLD(src[1]);
-			CHECK_OLD(src[2]);
 			ce = result;
 			ce->ce_flags &= ~htons(CE_STAGEMASK);
 			src += 2;
