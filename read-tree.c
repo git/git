@@ -39,27 +39,11 @@ static int same(struct cache_entry *a, struct cache_entry *b)
 /*
  * This removes all trivial merges that don't change the tree
  * and collapses them to state 0.
- *
- * _Any_ other merge is left to user policy.  That includes "both
- * created the same file", and "both removed the same file" - which are
- * trivial, but the user might still want to _note_ it. 
  */
 static struct cache_entry *merge_entries(struct cache_entry *a,
 					 struct cache_entry *b,
 					 struct cache_entry *c)
 {
-	int len = ce_namelen(a);
-
-	/*
-	 * Are they all the same filename? We won't do
-	 * any name merging
-	 */
-	if (ce_namelen(b) != len ||
-	    ce_namelen(c) != len ||
-	    memcmp(a->name, b->name, len) ||
-	    memcmp(a->name, c->name, len))
-		return NULL;
-
 	/*
 	 * Ok, all three entries describe the same
 	 * filename, but maybe the contents or file
@@ -77,12 +61,14 @@ static struct cache_entry *merge_entries(struct cache_entry *a,
 	 * Here "a" is "original", and "b" and "c" are the two
 	 * trees we are merging.
 	 */
-	if (same(b,c))
-		return c;
-	if (same(a,b))
-		return c;
-	if (same(a,c))
-		return b;
+	if (a && b && c) {
+		if (same(b,c))
+			return c;
+		if (same(a,b))
+			return c;
+		if (same(a,c))
+			return b;
+	}
 	return NULL;
 }
 
@@ -116,88 +102,54 @@ static void reject_merge(struct cache_entry *ce)
 	die("Entry '%s' would be overwritten by merge. Cannot merge.", ce->name);
 }
 
-#define CHECK_OLD(ce) if (old && same(old, ce)) { verify_uptodate(old); old = NULL; }
-
-static void trivially_merge_cache(struct cache_entry **src, int nr)
+static int merged_entry(struct cache_entry *merge, struct cache_entry *old, struct cache_entry **dst)
 {
-	struct cache_entry **dst = src;
-	struct cache_entry *old = NULL;
-
-	while (nr--) {
-		struct cache_entry *ce, *result;
-
-		ce = *src++;
-
-		/* We throw away original cache entries except for the stat information */
-		if (!ce_stage(ce)) {
-			if (old)
-				reject_merge(old);
-			old = ce;
-			active_nr--;
-			continue;
-		}
-		if (old && !path_matches(old, ce))
-			reject_merge(old);
-		if (nr > 1 && (result = merge_entries(ce, src[0], src[1])) != NULL) {
-			result->ce_flags |= htons(CE_UPDATE);
-			/*
-			 * See if we can re-use the old CE directly?
-			 * That way we get the uptodate stat info.
-			 *
-			 * This also removes the UPDATE flag on
-			 * a match.
-			 */
-			if (old && same(old, result)) {
-				*result = *old;
-				old = NULL;
-			}
-			CHECK_OLD(ce);
-			CHECK_OLD(src[0]);
-			CHECK_OLD(src[1]);
-			ce = result;
-			ce->ce_flags &= ~htons(CE_STAGEMASK);
-			src += 2;
-			nr -= 2;
-			active_nr -= 2;
-		}
-
+	merge->ce_flags |= htons(CE_UPDATE);
+	if (old) {
 		/*
-		 * If we had an old entry that we now effectively
-		 * overwrite, make sure it wasn't dirty.
+		 * See if we can re-use the old CE directly?
+		 * That way we get the uptodate stat info.
+		 *
+		 * This also removes the UPDATE flag on
+		 * a match.
 		 */
-		CHECK_OLD(ce);
-		*dst++ = ce;
+		if (same(old, merge)) {
+			*merge = *old;
+		} else {
+			verify_uptodate(old);
+		}
 	}
-	if (old)
-		reject_merge(old);
+	merge->ce_flags &= ~htons(CE_STAGEMASK);
+	*dst++ = merge;
+	return 1;
 }
 
-/*
- * When we find a "stage2" entry in the two-way merge, that's
- * the one that will remain. If we have an exact old match,
- * we don't care whether the file is up-to-date or not, we just
- * re-use the thing directly.
- *
- * If we didn't have an exact match, then we want to make sure
- * that we've seen a stage1 that matched the old, and that the
- * old file was up-to-date. Because it will be gone after this
- * merge..
- */
-static void twoway_check(struct cache_entry *old, int seen_stage1, struct cache_entry *ce)
+static int threeway_merge(struct cache_entry *stages[4], struct cache_entry **dst)
 {
-	if (path_matches(old, ce)) {
-		/*
-		 * This also removes the UPDATE flag on
-		 * a match
-		 */
-		if (same(old, ce)) {
-			*ce = *old;
-			return;
-		}
-		if (!seen_stage1)
-			reject_merge(old);
+	struct cache_entry *old = stages[0];
+	struct cache_entry *a = stages[1], *b = stages[2], *c = stages[3];
+	struct cache_entry *merge;
+	int count;
+
+	/*
+	 * If we have an entry in the index cache ("old"), then we want
+	 * to make sure that it matches any entries in stage 2 ("first
+	 * branch", aka "b").
+	 */
+	if (old) {
+		if (!b || !same(old, b))
+			return -1;
 	}
-	verify_uptodate(old);
+	merge = merge_entries(a, b, c);
+	if (merge)
+		return merged_entry(merge, old, dst);
+	if (old)
+		verify_uptodate(old);
+	count = 0;
+	if (a) { *dst++ = a; count++; }
+	if (b) { *dst++ = b; count++; }
+	if (c) { *dst++ = c; count++; }
+	return count;
 }
 
 /*
@@ -208,79 +160,46 @@ static void twoway_check(struct cache_entry *old, int seen_stage1, struct cache_
  *  - if the current entry matches the new tree, we leave it
  *    as-is. Otherwise we require that it be up-to-date.
  */
-static void twoway_merge(struct cache_entry **src, int nr)
+static int twoway_merge(struct cache_entry **src, struct cache_entry **dst)
 {
-	int seen_stage1 = 0;
-	struct cache_entry *old = NULL;
-	struct cache_entry **dst = src;
+	struct cache_entry *old = src[0];
+	struct cache_entry *a = src[1], *b = src[2];
 
-	while (nr--) {
-		struct cache_entry *ce = *src++;
-		int stage = ce_stage(ce);
+	if (src[3])
+		return -1;
 
-		switch (stage) {
-		case 0:
-			if (old)
-				reject_merge(old);
-			old = ce;
-			seen_stage1 = 0;
-			active_nr--;
-			continue;
-
-		case 1:
-			active_nr--;
-			if (!old)
-				continue;
-			if (!path_matches(old, ce) || !same(old, ce))
-				reject_merge(old);
-			seen_stage1 = 1;
-			continue;
-
-		case 2:
-			ce->ce_flags |= htons(CE_UPDATE);
-			if (old) {
-				twoway_check(old, seen_stage1, ce);
-				old = NULL;
-			}
-			ce->ce_flags &= ~htons(CE_STAGEMASK);
-			*dst++ = ce;
-			continue;
-		}
-		die("impossible two-way stage");
-	}
-
-	/*
-	 * Unmatched with a new entry? Make sure it was
-	 * at least uptodate in the working directory _and_
-	 * the original tree..
-	 */
 	if (old) {
-		if (!seen_stage1)
-			reject_merge(old);
-		verify_uptodate(old);
+		if (!a || !same(old, a))
+			return -1;
 	}
+	if (b)
+		return merged_entry(b, old, dst);
+	if (old)
+		verify_uptodate(old);
+	return 0;
 }
 
-static void merge_stat_info(struct cache_entry **src, int nr)
+/*
+ * One-way merge.
+ *
+ * The rule is:
+ * - take the stat information from stage0, take the data from stage1
+ */
+static int oneway_merge(struct cache_entry **src, struct cache_entry **dst)
 {
-	static struct cache_entry null_entry;
-	struct cache_entry **dst = src;
-	struct cache_entry *stat = &null_entry;
+	struct cache_entry *old = src[0];
+	struct cache_entry *a = src[1];
 
-	while (nr--) {
-		struct cache_entry *ce = *src++;
+	if (src[2] || src[3])
+		return -1;
 
-		/* We throw away original cache entries except for the stat information */
-		if (!ce_stage(ce)) {
-			stat = ce;
-			active_nr--;
-			continue;
-		}
-		if (path_matches(ce, stat) && same(ce, stat))
-			*ce = *stat;
-		ce->ce_flags &= ~htons(CE_STAGEMASK);
-		*dst++ = ce;
-	}
+	if (!a)
+		return 0;
+	if (old && same(old, a))
+		*a = *old;
+	a->ce_flags &= ~htons(CE_STAGEMASK);
+	*dst++ = a;
+	return 1;
 }
 
 static void check_updates(struct cache_entry **src, int nr)
@@ -300,6 +219,35 @@ static void check_updates(struct cache_entry **src, int nr)
 				checkout_entry(ce, &state);
 		}
 	}
+}
+
+static void merge_cache(struct cache_entry **src, int nr, int (*fn)(struct cache_entry **, struct cache_entry **))
+{
+	struct cache_entry **dst = src;
+
+	while (nr) {
+		int entries;
+		struct cache_entry *name, *ce, *stages[4] = { NULL, };
+
+		name = ce = *src;
+		for (;;) {
+			int stage = ce_stage(ce);
+			stages[stage] = ce;
+			ce = *++src;
+			active_nr--;
+			if (!--nr)
+				break;
+			if (!path_matches(ce, name))
+				break;
+		}
+
+		entries = fn(stages, dst);
+		if (entries < 0)
+			reject_merge(name);
+		dst += entries;
+		active_nr += entries;
+	}
+	check_updates(active_cache, active_nr);
 }
 
 static char *read_tree_usage = "git-read-tree (<sha> | -m <sha1> [<sha2> [<sha3>]])";
@@ -350,15 +298,14 @@ int main(int argc, char **argv)
 	if (merge) {
 		switch (stage) {
 		case 4:	/* Three-way merge */
-			trivially_merge_cache(active_cache, active_nr);
-			check_updates(active_cache, active_nr);
+			merge_cache(active_cache, active_nr, threeway_merge);
 			break;
 		case 3:	/* Update from one tree to another */
-			twoway_merge(active_cache, active_nr);
+			merge_cache(active_cache, active_nr, twoway_merge);
 			check_updates(active_cache, active_nr);
 			break;
 		case 2:	/* Just read a tree, merge with old cache contents */
-			merge_stat_info(active_cache, active_nr);
+			merge_cache(active_cache, active_nr, oneway_merge);
 			break;
 		default:
 			die("just how do you expect me to merge %d trees?", stage-1);
