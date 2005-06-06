@@ -146,7 +146,7 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 		}
 		if (old && !path_matches(old, ce))
 			reject_merge(old);
-		if (nr > 2 && (result = merge_entries(ce, src[0], src[1])) != NULL) {
+		if (nr > 1 && (result = merge_entries(ce, src[0], src[1])) != NULL) {
 			result->ce_flags |= htons(CE_UPDATE);
 			/*
 			 * See if we can re-use the old CE directly?
