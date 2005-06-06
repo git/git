@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "rsh.h"
 #include "pull.h"
+#include "refs.h"
 
 static int fd_in;
 static int fd_out;
@@ -41,7 +42,15 @@ int get_version(void)
 
 int fetch_ref(char *ref, unsigned char *sha1)
 {
-	return -1;
+	signed char remote;
+	char type = 'r';
+	write(fd_out, &type, 1);
+	write(fd_out, ref, strlen(ref) + 1);
+	read(fd_in, &remote, 1);
+	if (remote < 0)
+		return remote;
+	read(fd_in, sha1, 20);
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -65,11 +74,14 @@ int main(int argc, char **argv)
 			get_history = 1;
 		} else if (argv[arg][1] == 'v') {
 			get_verbosely = 1;
+		} else if (argv[arg][1] == 'w') {
+			write_ref = argv[arg + 1];
+			arg++;
 		}
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("git-ssh-pull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
+		usage("git-ssh-pull [-c] [-t] [-a] [-v] [-d] [--recover] [-w ref] commit-id url");
 		return 1;
 	}
 	commit_id = argv[arg];

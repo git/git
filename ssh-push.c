@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "rsh.h"
-#include <sys/socket.h>
-#include <errno.h>
+#include "refs.h"
 
 unsigned char local_version = 1;
 unsigned char remote_version = 0;
@@ -64,6 +63,27 @@ int serve_version(int fd_in, int fd_out)
 	return 0;
 }
 
+int serve_ref(int fd_in, int fd_out)
+{
+	char ref[PATH_MAX];
+	unsigned char sha1[20];
+	int posn = 0;
+	signed char remote = 0;
+	do {
+		if (read(fd_in, ref + posn, 1) < 1)
+			return -1;
+		posn++;
+	} while (ref[posn - 1]);
+	if (get_ref_sha1(ref, sha1))
+		remote = -1;
+	write(fd_out, &remote, 1);
+	if (remote)
+		return 0;
+	write(fd_out, sha1, 20);
+        return 0;
+}
+
+
 void service(int fd_in, int fd_out) {
 	char type;
 	int retval;
@@ -78,6 +98,8 @@ void service(int fd_in, int fd_out) {
 			return;
 		if (type == 'o' && serve_object(fd_in, fd_out))
 			return;
+		if (type == 'r' && serve_ref(fd_in, fd_out))
+			return;
 	} while (1);
 }
 
@@ -88,10 +110,12 @@ int main(int argc, char **argv)
         char *url;
 	int fd_in, fd_out;
 	while (arg < argc && argv[arg][0] == '-') {
+		if (argv[arg][1] == 'w')
+			arg++;
                 arg++;
         }
         if (argc < arg + 2) {
-		usage("git-ssh-push [-c] [-t] [-a] commit-id url");
+		usage("git-ssh-push [-c] [-t] [-a] [-w ref] commit-id url");
                 return 1;
         }
 	commit_id = argv[arg];
