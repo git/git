@@ -84,6 +84,7 @@ struct cache_entry {
 
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
+#define CE_UPDATE    (0x4000)
 #define CE_STAGESHIFT 12
 
 #define create_ce_flags(len, stage) htons((len) | ((stage) << CE_STAGESHIFT))

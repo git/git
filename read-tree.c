@@ -6,6 +6,7 @@
 #include "cache.h"
 
 static int stage = 0;
+static int update = 0;
 
 static int unpack_tree(unsigned char *sha1)
 {
@@ -130,27 +131,29 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 	struct cache_entry **dst = src;
 	struct cache_entry *old = NULL;
 
-	while (nr) {
+	while (nr--) {
 		struct cache_entry *ce, *result;
 
-		ce = src[0];
+		ce = *src++;
 
 		/* We throw away original cache entries except for the stat information */
 		if (!ce_stage(ce)) {
 			if (old)
 				reject_merge(old);
 			old = ce;
-			src++;
-			nr--;
 			active_nr--;
 			continue;
 		}
 		if (old && !path_matches(old, ce))
 			reject_merge(old);
 		if (nr > 2 && (result = merge_entries(ce, src[1], src[2])) != NULL) {
+			result->ce_flags |= htons(CE_UPDATE);
 			/*
 			 * See if we can re-use the old CE directly?
 			 * That way we get the uptodate stat info.
+			 *
+			 * This also removes the UPDATE flag on
+			 * a match.
 			 */
 			if (old && same(old, result)) {
 				*result = *old;
@@ -172,8 +175,66 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 		 */
 		CHECK_OLD(ce);
 		*dst++ = ce;
-		src++;
-		nr--;
+	}
+	if (old)
+		reject_merge(old);
+}
+
+/*
+ * Two-way merge.
+ *
+ * The rule is: 
+ *  - every current entry has to match the old tree
+ *  - if the current entry matches the new tree, we leave it
+ *    as-is. Otherwise we require that it be up-to-date.
+ */
+static void twoway_merge(struct cache_entry **src, int nr)
+{
+	static struct cache_entry null_entry;
+	struct cache_entry *old = NULL, *stat = &null_entry;
+	struct cache_entry **dst = src;
+
+	while (nr--) {
+		struct cache_entry *ce = *src++;
+		int stage = ce_stage(ce);
+
+		switch (stage) {
+		case 0:
+			if (old)
+				reject_merge(old);
+			old = ce;
+			stat = ce;
+			active_nr--;
+			continue;
+
+		case 1:
+			active_nr--;
+			if (!old)
+				continue;
+			if (!path_matches(old, ce) || !same(old, ce))
+				reject_merge(old);
+			continue;
+
+		case 2:
+			ce->ce_flags |= htons(CE_UPDATE);
+			if (old) {
+				if (!path_matches(old, ce))
+					reject_merge(old);
+				/*
+				 * This also removes the UPDATE flag on
+				 * a match
+				 */
+				if (same(old, ce))
+					*ce = *old;
+				else
+					verify_uptodate(old);
+				old = NULL;
+			}
+			ce->ce_flags &= ~htons(CE_STAGEMASK);
+			*dst++ = ce;
+			continue;
+		}
+		die("impossible two-way stage");
 	}
 	if (old)
 		reject_merge(old);
@@ -183,31 +244,44 @@ static void merge_stat_info(struct cache_entry **src, int nr)
 {
 	static struct cache_entry null_entry;
 	struct cache_entry **dst = src;
-	struct cache_entry *old = &null_entry;
+	struct cache_entry *stat = &null_entry;
 
-	while (nr) {
-		struct cache_entry *ce;
-
-		ce = src[0];
+	while (nr--) {
+		struct cache_entry *ce = *src++;
 
 		/* We throw away original cache entries except for the stat information */
 		if (!ce_stage(ce)) {
-			old = ce;
-			src++;
-			nr--;
+			stat = ce;
 			active_nr--;
 			continue;
 		}
-		if (path_matches(ce, old) && same(ce, old))
-			*ce = *old;
+		if (path_matches(ce, stat) && same(ce, stat))
+			*ce = *stat;
 		ce->ce_flags &= ~htons(CE_STAGEMASK);
 		*dst++ = ce;
-		src++;
-		nr--;
 	}
 }
 
-static char *read_tree_usage = "git-read-tree (<sha> | -m <sha1> [<sha2> <sha3>])";
+static void check_updates(struct cache_entry **src, int nr)
+{
+	static struct checkout state = {
+		.base_dir = "",
+		.force = 1,
+		.quiet = 1,
+		.refresh_cache = 1,
+	};
+	unsigned short mask = htons(CE_UPDATE);
+	while (nr--) {
+		struct cache_entry *ce = *src++;
+		if (ce->ce_flags & mask) {
+			ce->ce_flags &= ~mask;
+			if (update)
+				checkout_entry(ce, &state);
+		}
+	}
+}
+
+static char *read_tree_usage = "git-read-tree (<sha> | -m <sha1> [<sha2> [<sha3>]])";
 
 int main(int argc, char **argv)
 {
@@ -227,6 +301,12 @@ int main(int argc, char **argv)
 	merge = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
+
+		/* "-u" means "update", meaning that a merge will update the working directory */
+		if (!strcmp(arg, "-u")) {
+			update = 1;
+			continue;
+		}
 
 		/* "-m" stands for "merge", meaning we start in stage 1 */
 		if (!strcmp(arg, "-m")) {
@@ -254,6 +334,11 @@ int main(int argc, char **argv)
 		switch (stage) {
 		case 4:	/* Three-way merge */
 			trivially_merge_cache(active_cache, active_nr);
+			check_updates(active_cache, active_nr);
+			break;
+		case 3:	/* Update from one tree to another */
+			twoway_merge(active_cache, active_nr);
+			check_updates(active_cache, active_nr);
 			break;
 		case 2:	/* Just read a tree, merge with old cache contents */
 			merge_stat_info(active_cache, active_nr);
