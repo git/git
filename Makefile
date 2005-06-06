@@ -116,6 +116,7 @@ git-mkdelta: mkdelta.c
 git-stripspace: stripspace.c
 
 git-http-pull: LIBS += -lcurl
+git-rev-list: LIBS += -lssl
 
 # Library objects..
 blob.o: $(LIB_H)
