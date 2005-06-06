@@ -181,6 +181,34 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
 }
 
 /*
+ * When we find a "stage2" entry in the two-way merge, that's
+ * the one that will remain. If we have an exact old match,
+ * we don't care whether the file is up-to-date or not, we just
+ * re-use the thing directly.
+ *
+ * If we didn't have an exact match, then we want to make sure
+ * that we've seen a stage1 that matched the old, and that the
+ * old file was up-to-date. Because it will be gone after this
+ * merge..
+ */
+static void twoway_check(struct cache_entry *old, int seen_stage1, struct cache_entry *ce)
+{
+	if (path_matches(old, ce)) {
+		/*
+		 * This also removes the UPDATE flag on
+		 * a match
+		 */
+		if (same(old, ce)) {
+			*ce = *old;
+			return;
+		}
+		if (!seen_stage1)
+			reject_merge(old);
+	}
+	verify_uptodate(old);
+}
+
+/*
  * Two-way merge.
  *
  * The rule is: 
@@ -190,8 +218,8 @@ static void trivially_merge_cache(struct cache_entry **src, int nr)
  */
 static void twoway_merge(struct cache_entry **src, int nr)
 {
-	static struct cache_entry null_entry;
-	struct cache_entry *old = NULL, *stat = &null_entry;
+	int seen_stage1 = 0;
+	struct cache_entry *old = NULL;
 	struct cache_entry **dst = src;
 
 	while (nr--) {
@@ -203,7 +231,7 @@ static void twoway_merge(struct cache_entry **src, int nr)
 			if (old)
 				reject_merge(old);
 			old = ce;
-			stat = ce;
+			seen_stage1 = 0;
 			active_nr--;
 			continue;
 
@@ -213,21 +241,13 @@ static void twoway_merge(struct cache_entry **src, int nr)
 				continue;
 			if (!path_matches(old, ce) || !same(old, ce))
 				reject_merge(old);
+			seen_stage1 = 1;
 			continue;
 
 		case 2:
 			ce->ce_flags |= htons(CE_UPDATE);
 			if (old) {
-				if (!path_matches(old, ce))
-					reject_merge(old);
-				/*
-				 * This also removes the UPDATE flag on
-				 * a match
-				 */
-				if (same(old, ce))
-					*ce = *old;
-				else
-					verify_uptodate(old);
+				twoway_check(old, seen_stage1, ce);
 				old = NULL;
 			}
 			ce->ce_flags &= ~htons(CE_STAGEMASK);
@@ -236,8 +256,17 @@ static void twoway_merge(struct cache_entry **src, int nr)
 		}
 		die("impossible two-way stage");
 	}
-	if (old)
-		reject_merge(old);
+
+	/*
+	 * Unmatched with a new entry? Make sure it was
+	 * at least uptodate in the working directory _and_
+	 * the original tree..
+	 */
+	if (old) {
+		if (!seen_stage1)
+			reject_merge(old);
+		verify_uptodate(old);
+	}
 }
 
 static void merge_stat_info(struct cache_entry **src, int nr)
