@@ -1,28 +1,53 @@
 git-ssh-push(1)
 ===============
-v0.1, May 2005
+v0.1, Jun 2005
 
 NAME
 ----
-git-ssh-push - Helper "server-side" program used by git-ssh-pull
+git-ssh-push - Pushes to a remote repository over ssh connection
 
 
 SYNOPSIS
 --------
-'git-ssh-push'
+'git-ssh-push' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] commit-id url
 
 DESCRIPTION
 -----------
-Helper "server-side" program used by git-ssh-pull.
+Pushes from a remote repository over ssh connection, invoking
+git-ssh-pull on the other end. It functions identically to
+git-ssh-pull, aside from which end you run it on.
 
+OPTIONS
+-------
+commit-id::
+        Either the hash or the filename under $GIT_DIR/refs/ to push.
+
+-c::
+        Get the commit objects.
+-t::
+        Get tree associated with the requested commit object.
+-a::
+        Get all the objects.
+-d::
+        Do not check for delta base objects (use this option
+        only when you know the local repository is not
+        deltified).
+--recover::
+        Check dependency of deltified object more carefully than
+        usual, to recover after earlier push that was interrupted.
+-v::
+        Report what is uploaded.
+-w::
+        Writes the commit-id into the filename under [URL]/refs/ on
+        the remote end after the transfer is complete.
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Daniel Barkalow <barkalow@iabervon.org>
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by Daniel Barkalow
 
 GIT
 ---
