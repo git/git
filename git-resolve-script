@@ -36,9 +36,6 @@ if [ "$common" == "$merge" ]; then
 fi
 if [ "$common" == "$head" ]; then
 	echo "Updating from $head to $merge."
-	echo "Destroying all noncommitted data!"
-	echo "Kill me within 3 seconds.."
-	sleep 3
 	git-read-tree -u -m $head $merge || exit 1
 	echo $merge > "$GIT_DIR"/HEAD
 	git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
