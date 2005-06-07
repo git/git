@@ -1,4 +1,92 @@
-CVS annotate.
+Git for CVS users
+=================
+
+Ok, so you're a CVS user. That's ok, it's a treatable condition, and the
+first step to recovery is admitting you have a problem. The fact that
+you are reading this file means that you may be well on that path
+already.
+
+The thing about CVS is that it absolutely sucks as a source control
+manager, and you'll thus be happy with almost anything else. Git,
+however, may be a bit _too_ different (read: "good") for your taste, and
+does a lot of things differently. 
+
+One particular suckage of CVS is very hard to work around: CVS is
+basically a tool for tracking _file_ history, while git is a tool for
+tracking _project_ history.  This sometimes causes problems if you are
+used to doign very strange things in CVS, in particular if you're doing
+things like making branches of just a subset of the project.  Git can't
+track that, since git never tracks things on the level of an individual
+file, only on the whole project level. 
+
+The good news is that most people don't do that, and in fact most sane
+people think it's a bug in CVS that makes it tag (and check in changes)
+one file at a time.  So most projects you'll ever see will use CVS
+_as_if_ it was sane.  In which case you'll find it very easy indeed to
+move over to Git. 
+
+First off: this is not a git tutorial. See Documentation/tutorial.txt
+for how git actually works. This is more of a random collection of
+gotcha's and notes on converting from CVS to git.
+
+Second: CVS has the notion of a "repository" as opposed to the thing
+that you're actually working in (your working directory, or your
+"checked out tree").  Git does not have that notion at all, and all git
+working directories _are_ the repositories.  However, you can easily
+emulate the CVS model by having one special "global repository", which
+people can synchronize with.  See details later, but in the meantime
+just keep in mind that with git, every checked out working tree will be
+a full revision control of its own. 
+
+
+Importing a CVS archive
+-----------------------
+
+Ok, you have an old project, and you want to at least give git a chance
+to see how it performs. The first thing you want to do (after you've
+gone through the git tutorial, and generally familiarized yourself with
+how to commit stuff etc in git) is to create a git'ified version of your
+CVS archive.
+
+Happily, that's very easy indeed. Git will do it for you, although git
+will need the help of a program called "cvsps":
+
+	http://www.cobite.com/cvsps/
+
+which is not actually related to git at all, but which makes CVS usage
+look almost sane (ie you almost certainly want to have it even if you
+decide to stay with CVS). However, git will want at _least_ version 2.1
+of cvsps (available at the address above), and in fact will currently
+refuse to work with anything else.
+
+Once you've gotten (and installed) cvsps, you may or may not want to get
+any more familiar with it, but make sure it is in your path. After that,
+the magic command line is
+
+	git cvsimport <cvsroot> <module>
+
+which will do exactly what you'd think it does: it will create a git
+archive of the named CVS module. The new archive will be created in a
+subdirectory named <module>.
+
+It can take some time to actually do the conversion for a large archive,
+and the conversion script can be reasonably chatty, but on some not very
+scientific tests it averaged about eight revisions per second, so a
+medium-sized project should not take more than a couple of minutes.
+
+
+Emulating CVS behaviour
+-----------------------
+
+
+FIXME! Talk about setting up several repositories, and pulling and
+pushing between them. Talk about merging, and branches. Some of this
+needs to be in the tutorial too.
+
+
+
+CVS annotate
+------------
 
 The core GIT itself does not have a "cvs annotate" equivalent.
 It has something that you may want to use when you would use
