@@ -58,6 +58,7 @@ int main(int argc, char **argv)
 	char *commit_id;
 	char *url;
 	int arg = 1;
+	const char *prog = getenv("GIT_SSH_PUSH") ? : "git-ssh-push";
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -87,7 +88,7 @@ int main(int argc, char **argv)
 	commit_id = argv[arg];
 	url = argv[arg + 1];
 
-	if (setup_connection(&fd_in, &fd_out, "git-ssh-push", url, arg, argv + 1))
+	if (setup_connection(&fd_in, &fd_out, prog, url, arg, argv + 1))
 		return 1;
 
 	if (get_version())

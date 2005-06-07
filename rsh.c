@@ -8,7 +8,7 @@
 
 #define COMMAND_SIZE 4096
 
-int setup_connection(int *fd_in, int *fd_out, char *remote_prog, 
+int setup_connection(int *fd_in, int *fd_out, const char *remote_prog, 
 		     char *url, int rmt_argc, char **rmt_argv)
 {
 	char *host;
@@ -25,11 +25,13 @@ int setup_connection(int *fd_in, int *fd_out, char *remote_prog,
 	}
 
 	host = strstr(url, "//");
-	if (!host) {
-		return error("Bad URL: %s", url);
+	if (host) {
+		host += 2;
+		path = strchr(host, '/');
+	} else {
+		host = url;
+		path = strchr(host, ':');
 	}
-	host += 2;
-	path = strchr(host, '/');
 	if (!path) {
 		return error("Bad URL: %s", url);
 	}

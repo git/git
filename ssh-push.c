@@ -109,6 +109,8 @@ int main(int argc, char **argv)
         char *commit_id;
         char *url;
 	int fd_in, fd_out;
+	const char *prog = getenv("GIT_SSH_PULL") ? : "git-ssh-pull";
+
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 'w')
 			arg++;
@@ -120,7 +122,7 @@ int main(int argc, char **argv)
         }
 	commit_id = argv[arg];
 	url = argv[arg + 1];
-	if (setup_connection(&fd_in, &fd_out, "git-ssh-pull", url, arg, argv + 1))
+	if (setup_connection(&fd_in, &fd_out, prog, url, arg, argv + 1))
 		return 1;
 
 	service(fd_in, fd_out);
