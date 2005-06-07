@@ -1,0 +1,25 @@
+#!/bin/sh
+ARGS=""
+if [ "$1" == "-v" ]; then
+	ARGS=$1
+	shift
+fi
+
+export CVSROOT="$1"
+export MODULE="$2"
+if [ ! "$CVSROOT" ] || [ ! "$MODULE" ] || [ ! -d $CVSROOT ] || [ ! -d $CVSROOT/CVSROOT ] || [ ! -d $CVSROOT/$MODULE ] ; then
+	echo "Usage: git cvsimport <cvsroot> <module>"
+	exit 1
+fi
+
+cvsps -h 2>&1 | grep -q "cvsps version 2.1" >& /dev/null || {
+	echo "I need cvsps version 2.1"
+	exit 1
+}
+
+mkdir "$MODULE" || exit 1
+cd "$MODULE"
+
+TZ=UTC cvsps -A $MODULE | git-cvs2git $ARGS --cvsroot="$CVSROOT" --module="$MODULE" > .git-create-script || exit 1
+sh .git-create-script
+
