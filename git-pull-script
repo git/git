@@ -15,7 +15,7 @@ fi
 : ${GIT_DIR=.git}
 : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 
-git-fetch-script "$merge_repo" "$merge_head"
+git-fetch-script "$merge_repo" "$merge_head" || exit 1
 
 git-resolve-script \
 	"$(cat "$GIT_DIR"/HEAD)" \
