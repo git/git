@@ -53,6 +53,80 @@ the stuff that really changed.
 This is used to avoid unnecessary false hits when "git-diff-files" is
 run after git-read-tree.
 
+
+Two Tree Merge
+~~~~~~~~~~~~~~
+
+Typically, this is invoked as "git-read-tree -m $H $M", where $H
+is the head commit of the current repository, and $M is the head
+of a foreign tree, which is simply ahead of $H (i.e. we are in a
+fast forward situation).
+
+When two trees are specified, the user is telling git-read-tree
+the following:
+
+    (1) The current index and work tree is derived from $H, but
+        the user may have local changes in them since $H;
+
+    (2) The user wants to fast-forward to $M.
+
+In this case, the "git-read-tree -m $H $M" command makes sure
+that no local change is lost as the result of this "merge".
+Here are the "carry forward" rules:
+
+        I (index)           H        M        Result
+       -------------------------------------------------------
+      0 nothing             nothing  nothing  (does not happen)
+      1 nothing             nothing  exists   use M
+      2 nothing             exists   nothing  remove path from cache
+      3 nothing             exists   exists   use M
+
+        clean I==H  I==M
+       ------------------
+      4 yes   N/A   N/A     nothing  nothing  keep index
+      5 no    N/A   N/A     nothing  nothing  keep index
+
+      6 yes   N/A   yes     nothing  exists   keep index
+      7 no    N/A   yes     nothing  exists   keep index
+      8 yes   N/A   no      nothing  exists   fail
+      9 no    N/A   no      nothing  exists   fail
+
+     10 yes   yes   N/A     exists   nothing  remove path from cache
+     11 no    yes   N/A     exists   nothing  fail
+     12 yes   no    N/A     exists   nothing  fail
+     13 no    no    N/A     exists   nothing  fail
+
+        clean (H=M)
+       ------
+     14 yes                 exists   exists   keep index
+     15 no                  exists   exists   keep index
+
+        clean I==H  I==M (H!=M)
+       ------------------
+     16 yes   no    no      exists   exists   fail
+     17 no    no    no      exists   exists   fail
+     18 yes   no    yes     exists   exists   keep index
+     19 no    no    yes     exists   exists   keep index
+     20 yes   yes   no      exists   exists   use M
+     21 no    yes   no      exists   exists   fail
+
+In all "keep index" cases, the cache entry stays as in the
+original index file.  If the entry were not up to date,
+git-read-tree keeps the copy in the work tree intact when
+operating under the -u flag.
+
+When this form of git-read-tree returns successfully, you can
+see what "local changes" you made are carried forward by running
+"git-diff-cache --cached $M".  Note that this does not
+necessarily match "git-diff-cache --cached $H" would have
+produced before such a two tree merge.  This is because of cases
+18 and 19 --- if you already had the changes in $M (e.g. maybe
+you picked it up via e-mail in a patch form), "git-diff-cache
+--cached $H" would have told you about the change before this
+merge, but it would not show in "git-diff-cache --cached $M"
+output after two-tree merge.
+
+
 3-Way Merge
 ~~~~~~~~~~~
 Each "index" entry has two bits worth of "stage" state. stage 0 is the

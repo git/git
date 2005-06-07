@@ -155,28 +155,51 @@ static int threeway_merge(struct cache_entry *stages[4], struct cache_entry **ds
 /*
  * Two-way merge.
  *
- * The rule is: 
- *  - every current entry has to match the old tree
- *  - if the current entry matches the new tree, we leave it
- *    as-is. Otherwise we require that it be up-to-date.
+ * The rule is to "carry forward" what is in the index without losing
+ * information across a "fast forward", favoring a successful merge
+ * over a merge failure when it makes sense.  For details of the
+ * "carry forward" rule, please see <Documentation/git-read-tree.txt>.
+ *
  */
 static int twoway_merge(struct cache_entry **src, struct cache_entry **dst)
 {
-	struct cache_entry *old = src[0];
-	struct cache_entry *a = src[1], *b = src[2];
+	struct cache_entry *current = src[0];
+	struct cache_entry *oldtree = src[1], *newtree = src[2];
 
 	if (src[3])
 		return -1;
 
-	if (old) {
-		if (!a || !same(old, a))
+	if (current) {
+		if ((!oldtree && !newtree) || /* 4 and 5 */
+		    (!oldtree && newtree &&
+		     same(current, newtree)) || /* 6 and 7 */
+		    (oldtree && newtree &&
+		     same(oldtree, newtree)) || /* 14 and 15 */
+		    (oldtree && newtree &&
+		     !same(oldtree, newtree) && /* 18 and 19*/
+		     same(current, newtree))) {
+			*dst++ = current;
+			return 1;
+		}
+		else if (oldtree && !newtree && same(current, oldtree)) {
+			/* 10 or 11 */
+			verify_uptodate(current);
+			return 0;
+		}
+		else if (oldtree && newtree &&
+			 same(current, oldtree) && !same(current, newtree)) {
+			/* 20 or 21 */
+			verify_uptodate(current);
+			return merged_entry(newtree, NULL, dst);
+		}
+		else
+			/* all other failures */
 			return -1;
 	}
-	if (b)
-		return merged_entry(b, old, dst);
-	if (old)
-		verify_uptodate(old);
-	return 0;
+	else if (newtree)
+		return merged_entry(newtree, NULL, dst);
+	else
+		return 0;
 }
 
 /*
