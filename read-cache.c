@@ -132,7 +132,7 @@ int cache_name_pos(const char *name, int namelen)
 	while (last > first) {
 		int next = (last + first) >> 1;
 		struct cache_entry *ce = active_cache[next];
-		int cmp = cache_name_compare(name, namelen, ce->name, htons(ce->ce_flags));
+		int cmp = cache_name_compare(name, namelen, ce->name, ntohs(ce->ce_flags));
 		if (!cmp)
 			return next;
 		if (cmp < 0) {
@@ -206,7 +206,7 @@ static int check_file_directory_conflict(const struct cache_entry *ce,
 		*ep = 0;    /* first cut it at slash */
 		len = ep - pathbuf;
 		pos = cache_name_pos(pathbuf,
-				     htons(create_ce_flags(len, stage)));
+				     ntohs(create_ce_flags(len, stage)));
 		if (0 <= pos) {
 			/* Our leading path component is registered as a file,
 			 * and we are trying to make it a directory.  This is
@@ -230,7 +230,7 @@ static int check_file_directory_conflict(const struct cache_entry *ce,
 	 * a directory there?
 	 */
 	pos = cache_name_pos(path,
-			     htons(create_ce_flags(namelen, stage)));
+			     ntohs(create_ce_flags(namelen, stage)));
 
 	/* (0 <= pos) cannot happen because add_cache_entry()
 	 * should have taken care of that case.
@@ -279,7 +279,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	int pos;
 	int ok_to_add = option & ADD_CACHE_OK_TO_ADD;
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
-	pos = cache_name_pos(ce->name, htons(ce->ce_flags));
+	pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 
 	/* existing match? Just replace it */
 	if (pos >= 0) {
@@ -307,7 +307,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (check_file_directory_conflict(ce, ok_to_replace)) {
 		if (!ok_to_replace)
 			return -1;
-		pos = cache_name_pos(ce->name, htons(ce->ce_flags));
+		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 		pos = -pos-1;
 	}
 
