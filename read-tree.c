@@ -275,7 +275,7 @@ static void merge_cache(struct cache_entry **src, int nr, merge_fn_t fn)
 	check_updates(active_cache, active_nr);
 }
 
-static char *read_tree_usage = "git-read-tree (<sha> | -m <sha1> [<sha2> [<sha3>]])";
+static char *read_tree_usage = "git-read-tree (<sha> | -m [-u] <sha1> [<sha2> [<sha3>]])";
 
 static struct cache_file cache_file;
 
@@ -320,6 +320,8 @@ int main(int argc, char **argv)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}
+	if (update && !merge)
+		usage(read_tree_usage);
 	if (merge) {
 		static const merge_fn_t merge_function[] = {
 			[1] = oneway_merge,
