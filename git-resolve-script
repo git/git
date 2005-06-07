@@ -47,7 +47,11 @@ merge_msg="Merge of $merge_repo"
 result_tree=$(git-write-tree  2> /dev/null)
 if [ $? -ne 0 ]; then
 	echo "Simple merge failed, trying Automatic merge"
-	git-merge-cache git-merge-one-file-script -a
+	git-merge-cache -o git-merge-one-file-script -a
+	if [ $? -ne 0 ]; then
+		echo "Automatic merge failed, fix up by hand"
+		exit 1
+	fi
 	merge_msg="Automatic merge of $merge_repo"
 	result_tree=$(git-write-tree) || exit 1
 fi
