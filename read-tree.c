@@ -218,11 +218,11 @@ static int oneway_merge(struct cache_entry **src, struct cache_entry **dst)
 
 	if (!a)
 		return 0;
-	if (old && same(old, a))
-		*a = *old;
-	a->ce_flags &= ~htons(CE_STAGEMASK);
-	*dst++ = a;
-	return 1;
+	if (old && same(old, a)) {
+		*dst++ = old;
+		return 1;
+	}
+	return merged_entry(a, NULL, dst);
 }
 
 static void check_updates(struct cache_entry **src, int nr)
