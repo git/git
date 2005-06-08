@@ -21,4 +21,5 @@ grep -v '^#' < .editmsg | git-stripspace > .cmitmsg
 [ -s .cmitmsg ] || exit 1
 tree=$(git-write-tree) || exit 1
 commit=$(cat .cmitmsg | git-commit-tree $tree -p $PARENTS) || exit 1
-echo $commit > ${GIT_DIR:-.git}/HEAD
+echo $commit > $GIT_DIR/HEAD
+rm -f -- $GIT_DIR/MERGE_HEAD
