@@ -229,7 +229,7 @@ static int find_base_for_list(struct commit_list *list, struct commit **boundary
 
 		struct commit *item = list->item;
 
-		if (item->object.util || (item->object.flags & UNINTERESTING)) {
+		if (item->object.util) {
 			die("%s:%d:%s: logic error: this should not have happened - commit %s\n",
 			    __FILE__, __LINE__, __FUNCTION__, sha1_to_hex(item->object.sha1));
 		}
@@ -323,7 +323,6 @@ static int find_base(struct commit *head, struct commit **boundary)
 	struct commit_list *pending = NULL;
 	struct commit_list *next;
 
-	commit_list_insert(head, &pending);
 	for (next = head->parents; next; next = next->next) {
 		commit_list_insert(next->item, &pending);
 	}
@@ -418,8 +417,8 @@ static void mark_ancestors_uninteresting(struct commit *commit)
 	int boundary = flags & BOUNDARY;
 	int uninteresting = flags & UNINTERESTING;
 
+	commit->object.flags |= UNINTERESTING;
 	if (uninteresting || boundary || !visited) {
-		commit->object.flags |= UNINTERESTING;
 		return;
 
 		// we only need to recurse if
