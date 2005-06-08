@@ -43,7 +43,7 @@ if [ "$common" == "$head" ]; then
 fi
 echo "Trying to merge $merge into $head"
 git-read-tree -u -m $common $head $merge || exit 1
-merge_msg="Merge of $merge_repo"
+merge_msg="Merge $merge_repo"
 result_tree=$(git-write-tree  2> /dev/null)
 if [ $? -ne 0 ]; then
 	echo "Simple merge failed, trying Automatic merge"
@@ -52,7 +52,6 @@ if [ $? -ne 0 ]; then
 		echo "Automatic merge failed, fix up by hand"
 		exit 1
 	fi
-	merge_msg="Automatic merge of $merge_repo"
 	result_tree=$(git-write-tree) || exit 1
 fi
 result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)

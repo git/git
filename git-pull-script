@@ -6,9 +6,7 @@ merge_name=$(echo "$1" | sed 's:\.git/*$::')
 merge_head=HEAD
 if [ "$2" ]
 then
-   merge_name="'$2' branch from
-
-	$merge_name"
+   merge_name="'$2' branch of $merge_name"
    merge_head="refs/heads/$2"
 fi
 
