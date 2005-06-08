@@ -88,9 +88,26 @@ needs to be in the tutorial too.
 CVS annotate
 ------------
 
-The core GIT itself does not have a "cvs annotate" equivalent.
-It has something that you may want to use when you would use
-"cvs annotate".
+So, something has gone wrong, and you don't know whom to blame, and
+you're an ex-CVS user and used to do "cvs annotate" to see who caused
+the breakage. You're looking for the "git annotate", and it's just
+claiming not to find such a script. You're annoyed.
+
+Yes, that's right.  Core git doesn't do "annotate", although it's
+technically possible, and there are at least two specialized scripts out
+there that can be used to get equivalent information (see the git
+mailing list archives for details). 
+
+Git has a couple of alternatives, though, that you may find sufficient
+or even superior depending on your use.  One is called "git-whatchanged"
+(for obvious reasons) and the other one is called "pickaxe" ("a tool for
+the software archeologist"). 
+
+The "git-whatchanged" script is a truly trivial script that can give you
+a good overview of what has changed in a file or a directory (or an
+arbitrary list of files or directories).  The "pickaxe" support is an
+additional layer that can be used to further specify exactly what you're
+looking for, if you already know the specific area that changed.
 
 Let's step back a bit and think about the reason why you would
 want to do "cvs annotate a-file.c" to begin with.
