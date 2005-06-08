@@ -214,17 +214,13 @@ int main(int argc, char **argv)
 		usage(rev_list_usage);
 
 	if (!merge_order) {		
-	
-	        if (limited) 
+	        if (limited)
 			list = limit_list(list);
 		show_commit_list(list);
-			
 	} else {
-		
 		if (sort_list_in_merge_order(list, &process_commit)) {
 			  die("merge order sort failed\n");
 		}
-					
 	}
 
 	return 0;
