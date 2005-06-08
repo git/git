@@ -57,4 +57,5 @@ fi
 result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
 echo "Committed merge $result_commit"
 echo $result_commit > "$GIT_DIR"/HEAD
-git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
+git-diff-tree -p $head $result_commit | git-apply --stat
+rm $GIT_DIR/ORIG_HEAD $GIT_DIR/MERGE_HEAD
