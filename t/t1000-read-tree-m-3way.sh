@@ -77,34 +77,6 @@ In addition:
 ################################################################
 # Try merging and showing the various diffs
 
-# The tree is dirty at this point.
-test_expect_failure \
-    '3-way merge with git-read-tree -m' \
-    "git-read-tree -m $tree_O $tree_A $tree_B"
-
-# This is done on an empty work directory, which is the normal
-# merge person behaviour.
-test_expect_success \
-    '3-way merge with git-read-tree -m' \
-    "rm -fr [NDMALTS][NDMALTSF] Z &&
-     rm .git/index &&
-     git-read-tree -m $tree_O $tree_A $tree_B"
-
-# This starts out with the first head, which is the normal
-# patch submitter behaviour.
-test_expect_success \
-    '3-way merge with git-read-tree -m' \
-    "git-read-tree $tree_A &&
-     git-checkout-cache -f -u -a &&
-     git-read-tree -m $tree_O $tree_A $tree_B"
-
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-test_expect_success \
-    'git-ls-files --stage of the merge result' \
-    'git-ls-files --stage >current- &&
-     sed -e "s/ $_x40 / X /" <current- >current'
-
 cat >expected <<\EOF
 100644 X 2	AA
 100644 X 3	AA
@@ -154,8 +126,34 @@ cat >expected <<\EOF
 100644 X 0	Z/NN
 EOF
 
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
+# The tree is dirty at this point.
+test_expect_failure \
+    '3-way merge with git-read-tree -m, dirty cache' \
+    "git-read-tree -m $tree_O $tree_A $tree_B"
+
+# This is done on an empty work directory, which is the normal
+# merge person behaviour.
 test_expect_success \
-    'validate merge result' \
-    'diff current expected'
+    '3-way merge with git-read-tree -m, empty cache' \
+    "rm -fr [NDMALTS][NDMALTSF] Z &&
+     rm .git/index &&
+     git-read-tree -m $tree_O $tree_A $tree_B &&
+     git-ls-files --stage |
+     sed -e 's/ $_x40 / X /' >current &&
+     diff -u expected current"
+
+# This starts out with the first head, which is the normal
+# patch submitter behaviour.
+test_expect_success \
+    '3-way merge with git-read-tree -m, match H' \
+    "git-read-tree $tree_A &&
+     git-checkout-cache -f -u -a &&
+     git-read-tree -m $tree_O $tree_A $tree_B &&
+     git-ls-files --stage |
+     sed -e 's/ $_x40 / X /' >current &&
+     diff -u expected current"
 
 test_done

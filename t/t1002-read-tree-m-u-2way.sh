@@ -93,7 +93,7 @@ test_expect_success \
      compare_change 5diff.out expected &&
      check_cache_at yomin dirty &&
      sha1sum -c M.sha1 &&
-     : dirty index should have prevented -u from checking it out.
+     : dirty index should have prevented -u from checking it out. &&
      echo yomin yomin >yomin1 &&
      diff yomin yomin1 &&
      rm -f yomin1'
@@ -122,7 +122,7 @@ test_expect_success \
      diff --unified=0 M.out 7.out &&
      check_cache_at frotz dirty &&
      if sha1sum -c M.sha1; then false; else :; fi &&
-     : dirty index should have prevented -u from checking it out.
+     : dirty index should have prevented -u from checking it out. &&
      echo frotz frotz >frotz1 &&
      diff frotz frotz1 &&
      rm -f frotz1'
