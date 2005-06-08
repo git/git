@@ -19,22 +19,25 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Deleted in both.
 #
 "$1..")
-	echo "ERROR: $4 is removed in both branches."
-	echo "ERROR: This is a potential rename conflict."
-	exit 1;;
+	echo "WARNING: $4 is removed in both branches."
+	echo "WARNING: This is a potential rename conflict."
+	exec git-update-cache --remove -- "$4" ;;
 #
 # Deleted in one and unchanged in the other.
 #
 "$1.." | "$1.$1" | "$1$1.")
 	echo "Removing $4"
-	exec git-update-cache --force-remove "$4" ;;
+	rm -f -- "$4"
+	exec git-update-cache --remove -- "$4" ;;
 #
 # Added in one.
 #
 ".$2." | "..$3" )
 	case "$6$7" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode."
-	exec git-update-cache --add --cacheinfo "$6$7" "$2$3" "$4" ;;
+	git-cat-file blob "$2$3" > "$4"
+	chmod $mode -- "$4"
+	exec git-update-cache --add -- "$4" ;;
 #
 # Added in both (check for same permissions).
 #
@@ -46,7 +49,9 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode"
-	exec git-update-cache --add --cacheinfo "$6" "$2" "$4" ;;
+	git-cat-file blob "$2" > "$4"
+	chmod $mode -- "$4"
+	exec git-update-cache --add -- "$4" ;;
 #
 # Modified in both, but differently.
 #
@@ -55,19 +60,21 @@ case "${1:-.}${2:-.}${3:-.}" in
 	orig=`git-unpack-file $1`
 	src1=`git-unpack-file $2`
 	src2=`git-unpack-file $3`
-	merge "$src2" "$orig" "$src1"
+	merge -p "$src1" "$orig" "$src2" > "$4"
 	ret=$?
+	rm -f -- "$orig" "$src1" "$src2"
 	if [ "$6" != "$7" ]; then
 		echo "ERROR: Permissions $5->$6->$7 don't match."
+		ret=1
 	fi
 	if [ $ret -ne 0 ]; then
-		echo "ERROR: Leaving conflict merge in $src2."
+		# Reset the index to the first branch, making
+		# git-diff-file useful
+		git-update-cache --add --cacheinfo "$6" "$2" "$4"
+		echo "ERROR: Merge conflict in $4."
 		exit 1
 	fi
-	sha1=`git-write-blob "$src2"` || {
-		echo "ERROR: Leaving conflict merge in $src2."
-	}
-	exec git-update-cache --add --cacheinfo "$6" $sha1 "$4" ;;
+	exec git-update-cache --add -- "$4" ;;
 *)
 	echo "ERROR: Not handling case $4: $1 -> $2 -> $3" ;;
 esac
