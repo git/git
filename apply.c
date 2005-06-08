@@ -630,8 +630,11 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 
 	if (patch->is_new != !oldlines)
 		return error("new file depends on old contents");
-	if (patch->is_delete != !newlines)
-		return error("deleted file still has contents");
+	if (patch->is_delete != !newlines) {
+		if (newlines)
+			return error("deleted file still has contents");
+		fprintf(stderr, "** warning: file %s becomes empty but is not deleted\n", patch->new_name);
+	}
 
 	/* Parse the thing.. */
 	line += len;
