@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# This is the git merge script, called with
+# Copyright (c) Linus Torvalds, 2005
+#
+# This is the git per-file merge script, called with
 #
 #   $1 - original file SHA1 (or empty)
 #   $2 - file in branch1 SHA1 (or empty)
@@ -12,7 +14,7 @@
 #
 # Handle some trivial cases.. The _really_ trivial cases have
 # been handled already by git-read-tree, but that one doesn't
-# do any merges that migth change the tree layout.
+# do any merges that might change the tree layout.
 
 case "${1:-.}${2:-.}${3:-.}" in
 #
@@ -21,23 +23,29 @@ case "${1:-.}${2:-.}${3:-.}" in
 "$1..")
 	echo "WARNING: $4 is removed in both branches."
 	echo "WARNING: This is a potential rename conflict."
-	exec git-update-cache --remove -- "$4" ;;
+	exec git-update-cache --remove -- "$4"
+	;;
+
 #
 # Deleted in one and unchanged in the other.
 #
-"$1.." | "$1.$1" | "$1$1.")
+"$1.$1" | "$1$1.")
 	echo "Removing $4"
-	rm -f -- "$4"
-	exec git-update-cache --remove -- "$4" ;;
+	exec rm -f -- "$4" &&
+		git-update-cache --remove -- "$4"
+	;;
+
 #
 # Added in one.
 #
 ".$2." | "..$3" )
 	case "$6$7" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode."
-	git-cat-file blob "$2$3" > "$4"
-	chmod $mode -- "$4"
-	exec git-update-cache --add -- "$4" ;;
+	exec git-cat-file blob "$2$3" >"$4" &&
+		chmod $mode -- "$4" &&
+		git-update-cache --add -- "$4"
+	;;
+
 #
 # Added in both (check for same permissions).
 #
@@ -49,9 +57,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode"
-	git-cat-file blob "$2" > "$4"
-	chmod $mode -- "$4"
-	exec git-update-cache --add -- "$4" ;;
+	exec git-cat-file blob "$2" >"$4" &&
+		chmod $mode -- "$4" &&
+		git-update-cache --add -- "$4"
+	;;
+
 #
 # Modified in both, but differently.
 #
@@ -60,12 +70,13 @@ case "${1:-.}${2:-.}${3:-.}" in
 	orig=`git-unpack-file $1`
 	src1=`git-unpack-file $2`
 	src2=`git-unpack-file $3`
+
 	merge -p "$src1" "$orig" "$src2" > "$4"
 	ret=$?
 	rm -f -- "$orig" "$src1" "$src2"
 
 	if [ "$6" != "$7" ]; then
-		echo "ERROR: Permissions $5->$6->$7 don't match."
+		echo "ERROR: Permissions conflict: $5->$6,$7."
 		ret=1
 	fi
 	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
@@ -78,8 +89,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: Merge conflict in $4."
 		exit 1
 	fi
-	exec git-update-cache --add -- "$4" ;;
+	exec git-update-cache --add -- "$4"
+	;;
+
 *)
-	echo "ERROR: Not handling case $4: $1 -> $2 -> $3" ;;
+	echo "ERROR: $4: Not handling case $1 -> $2 -> $3"
+	;;
 esac
 exit 1
