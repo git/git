@@ -142,3 +142,17 @@ test_expect_success \
     'recording branch B tree' \
     'tree_B=$(git-write-tree)'
 
+test_expect_success \
+    'keep contents of 3 trees for easy access' \
+    'rm -f .git/index &&
+     git-read-tree $tree_O &&
+     mkdir .orig-O &&
+     git-checkout-cache --prefix=.orig-O/ -f -q -a &&
+     rm -f .git/index &&
+     git-read-tree $tree_A &&
+     mkdir .orig-A &&
+     git-checkout-cache --prefix=.orig-A/ -f -q -a &&
+     rm -f .git/index &&
+     git-read-tree $tree_B &&
+     mkdir .orig-B &&
+     git-checkout-cache --prefix=.orig-B/ -f -q -a'
