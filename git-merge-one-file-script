@@ -23,7 +23,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 "$1..")
 	echo "WARNING: $4 is removed in both branches."
 	echo "WARNING: This is a potential rename conflict."
-	exec git-update-cache --remove -- "$4"
+	rm -f -- "$4" &&
+		exec git-update-cache --remove -- "$4"
 	;;
 
 #
