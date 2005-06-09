@@ -16,6 +16,14 @@
 # been handled already by git-read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
+verify_path() {
+    file="$1"
+    dir=`dirname "$file"` &&
+    mkdir -p "$dir" &&
+    rm -f -- "$file" &&
+    : >"$file"
+}
+
 case "${1:-.}${2:-.}${3:-.}" in
 #
 # Deleted in both.
@@ -32,8 +40,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 "$1.$1" | "$1$1.")
 	echo "Removing $4"
-	exec rm -f -- "$4" &&
-		git-update-cache --remove -- "$4"
+	rm -f -- "$4" &&
+		exec git-update-cache --remove -- "$4"
 	;;
 
 #
@@ -42,9 +50,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 ".$2." | "..$3" )
 	case "$6$7" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode."
-	exec git-cat-file blob "$2$3" >"$4" &&
+	verify_path "$4" &&
+		git-cat-file blob "$2$3" >"$4" &&
 		chmod $mode -- "$4" &&
-		git-update-cache --add -- "$4"
+		exec git-update-cache --add -- "$4"
 	;;
 
 #
@@ -58,9 +67,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 	case "$6" in *7??) mode=+x;; *) mode=-x;; esac
 	echo "Adding $4 with perm $mode"
-	exec git-cat-file blob "$2" >"$4" &&
+	verify_path "$4" &&
+		git-cat-file blob "$2" >"$4" &&
 		chmod $mode -- "$4" &&
-		git-update-cache --add -- "$4"
+		exec git-update-cache --add -- "$4"
 	;;
 
 #
@@ -72,7 +82,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 	src1=`git-unpack-file $2`
 	src2=`git-unpack-file $3`
 
-	merge -p "$src1" "$orig" "$src2" > "$4"
+	verify_path "$4" &&
+		merge -p "$src1" "$orig" "$src2" > "$4"
 	ret=$?
 	rm -f -- "$orig" "$src1" "$src2"
 
