@@ -124,6 +124,15 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old, stru
 	return 1;
 }
 
+static int deleted_entry(struct cache_entry *ce, struct cache_entry *old, struct cache_entry **dst)
+{
+	if (old)
+		verify_uptodate(old);
+	ce->ce_mode = 0;
+	*dst++ = ce;
+	return 1;
+}
+
 static int threeway_merge(struct cache_entry *stages[4], struct cache_entry **dst)
 {
 	struct cache_entry *old = stages[0];
@@ -183,23 +192,21 @@ static int twoway_merge(struct cache_entry **src, struct cache_entry **dst)
 		}
 		else if (oldtree && !newtree && same(current, oldtree)) {
 			/* 10 or 11 */
-			verify_uptodate(current);
-			return 0;
+			return deleted_entry(oldtree, current, dst);
 		}
 		else if (oldtree && newtree &&
 			 same(current, oldtree) && !same(current, newtree)) {
 			/* 20 or 21 */
-			verify_uptodate(current);
-			return merged_entry(newtree, NULL, dst);
+			return merged_entry(newtree, current, dst);
 		}
 		else
 			/* all other failures */
 			return -1;
 	}
 	else if (newtree)
-		return merged_entry(newtree, NULL, dst);
+		return merged_entry(newtree, current, dst);
 	else
-		return 0;
+		return deleted_entry(oldtree, current, dst);
 }
 
 /*
@@ -236,6 +243,11 @@ static void check_updates(struct cache_entry **src, int nr)
 	unsigned short mask = htons(CE_UPDATE);
 	while (nr--) {
 		struct cache_entry *ce = *src++;
+		if (!ce->ce_mode) {
+			if (update)
+				unlink(ce->name);
+			continue;
+		}
 		if (ce->ce_flags & mask) {
 			ce->ce_flags &= ~mask;
 			if (update)

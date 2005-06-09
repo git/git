@@ -452,6 +452,8 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
+		if (!ce->ce_mode)
+			continue;
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
