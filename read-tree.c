@@ -275,13 +275,35 @@ static void merge_cache(struct cache_entry **src, int nr, merge_fn_t fn)
 	check_updates(active_cache, active_nr);
 }
 
+static int read_cache_unmerged(void)
+{
+	int i, deleted;
+	struct cache_entry **dst;
+
+	read_cache();
+	dst = active_cache;
+	deleted = 0;
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce)) {
+			deleted++;
+			continue;
+		}
+		if (deleted)
+			*dst = ce;
+		dst++;
+	}
+	active_nr -= deleted;
+	return deleted;
+}
+
 static char *read_tree_usage = "git-read-tree (<sha> | -m [-u] <sha1> [<sha2> [<sha3>]])";
 
 static struct cache_file cache_file;
 
 int main(int argc, char **argv)
 {
-	int i, newfd, merge;
+	int i, newfd, merge, reset;
 	unsigned char sha1[20];
 
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
@@ -289,6 +311,7 @@ int main(int argc, char **argv)
 		die("unable to create new cachefile");
 
 	merge = 0;
+	reset = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -298,16 +321,22 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		/* This differs from "-m" in that we'll silently ignore unmerged entries */
+		if (!strcmp(arg, "--reset")) {
+			if (stage || merge)
+				usage(read_tree_usage);
+			reset = 1;
+			merge = 1;
+			stage = 1;
+			read_cache_unmerged();
+		}
+
 		/* "-m" stands for "merge", meaning we start in stage 1 */
 		if (!strcmp(arg, "-m")) {
-			int i;
-			if (stage)
-				die("-m needs to come first");
-			read_cache();
-			for (i = 0; i < active_nr; i++) {
-				if (ce_stage(active_cache[i]))
-					die("you need to resolve your current index first");
-			}
+			if (stage || merge)
+				usage(read_tree_usage);
+			if (read_cache_unmerged())
+				die("you need to resolve your current index first");
 			stage = 1;
 			merge = 1;
 			continue;
