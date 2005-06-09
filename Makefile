@@ -33,7 +33,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
 	git-get-tar-commit-id git-mkdelta git-apply git-stripspace \
-	git-cvs2git
+	git-cvs2git git-diff-stages
 
 all: $(PROG)
 
@@ -117,6 +117,7 @@ git-write-blob: write-blob.c
 git-mkdelta: mkdelta.c
 git-stripspace: stripspace.c
 git-cvs2git: cvs2git.c
+git-diff-stages: diff-stages.c
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += -lssl
