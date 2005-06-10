@@ -20,6 +20,8 @@ cvsps -h 2>&1 | grep -q "cvsps version 2.1" >& /dev/null || {
 mkdir "$MODULE" || exit 1
 cd "$MODULE"
 
-TZ=UTC cvsps -A $MODULE | git-cvs2git $ARGS --cvsroot="$CVSROOT" --module="$MODULE" > .git-create-script || exit 1
+TZ=UTC cvsps -x -A $MODULE > .git-cvsps-result
+[ -s .git-cvsps-result ] || exit 1
+git-cvs2git $ARGS --cvsroot="$CVSROOT" --module="$MODULE" < .git-cvsps-result > .git-create-script || exit 1
 sh .git-create-script
 
