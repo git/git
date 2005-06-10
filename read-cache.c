@@ -440,11 +440,15 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
-	int i;
+	int i, removed;
+
+	for (i = removed = 0; i < entries; i++)
+		if (!cache[i]->ce_mode)
+			removed++;
 
 	hdr.hdr_signature = htonl(CACHE_SIGNATURE);
 	hdr.hdr_version = htonl(2);
-	hdr.hdr_entries = htonl(entries);
+	hdr.hdr_entries = htonl(entries - removed);
 
 	SHA1_Init(&c);
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
