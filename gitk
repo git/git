@@ -7,7 +7,7 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.20 $
+# CVS $Revision: 1.21 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
@@ -50,7 +50,7 @@ to allow selection of commits to be displayed.)"
 	exit 1
     }
     if {![regexp {^[0-9a-f]{40}$} $line]} {
-	error_popup "Can't parse git-rev-tree output: {$line}"
+	error_popup "Can't parse git-rev-list output: {$line}"
 	exit 1
     }
     lappend commits $line
@@ -130,7 +130,7 @@ proc readcommit {id} {
 }
 
 proc readrefs {} {
-    global tagids idtags
+    global tagids idtags headids idheads
     set tags [glob -nocomplain -types f .git/refs/tags/*]
     foreach f $tags {
 	catch {
@@ -154,6 +154,20 @@ proc readrefs {} {
 		    lappend idtags($obj) $tag
 		}
 	    }
+	    close $fd
+	}
+    }
+    set heads [glob -nocomplain -types f .git/refs/heads/*]
+    foreach f $heads {
+	catch {
+	    set fd [open $f r]
+	    set line [read $fd 40]
+	    if {[regexp {^[0-9a-f]{40}} $line id]} {
+		set head [file tail $f]
+		set headids($head) $line
+		lappend idheads($line) $head
+	    }
+	    close $fd
 	}
     }
 }
@@ -448,7 +462,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.20 $)} \
+(CVS $Revision: 1.21 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -537,6 +551,7 @@ proc drawgraph {} {
     global lineid linehtag linentag linedtag commitinfo
     global nextcolor colormap numcommits
     global stopped phase redisplaying selectedline idtags idline
+    global idheads
 
     allcanvs delete all
     set start {}
@@ -616,13 +631,22 @@ proc drawgraph {} {
 	if {$nparents($id) > 2} {
 	    set xt [expr {$xt + ($nparents($id) - 2) * $linespc}]
 	}
-	if {[info exists idtags($id)] && $idtags($id) != {}} {
+	set marks {}
+	set ntags 0
+	if {[info exists idtags($id)]} {
+	    set marks $idtags($id)
+	    set ntags [llength $marks]
+	}
+	if {[info exists idheads($id)]} {
+	    set marks [concat $marks $idheads($id)]
+	}
+	if {$marks != {}} {
 	    set delta [expr {int(0.5 * ($linespc - $lthickness))}]
 	    set yt [expr $canvy - 0.5 * $linespc]
 	    set yb [expr $yt + $linespc - 1]
 	    set xvals {}
 	    set wvals {}
-	    foreach tag $idtags($id) {
+	    foreach tag $marks {
 		set wid [font measure $mainfont $tag]
 		lappend xvals $xt
 		lappend wvals $wid
@@ -631,12 +655,20 @@ proc drawgraph {} {
 	    set t [$canv create line $x $canvy [lindex $xvals end] $canvy \
 		       -width $lthickness -fill black]
 	    $canv lower $t
-	    foreach tag $idtags($id) x $xvals wid $wvals {
+	    foreach tag $marks x $xvals wid $wvals {
 		set xl [expr $x + $delta]
 		set xr [expr $x + $delta + $wid + $lthickness]
-		$canv create polygon $x [expr $yt + $delta] $xl $yt\
-		    $xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
-		    -width 1 -outline black -fill yellow
+		if {[incr ntags -1] >= 0} {
+		    # draw a tag
+		    $canv create polygon $x [expr $yt + $delta] $xl $yt\
+			$xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
+			-width 1 -outline black -fill yellow
+		} else {
+		    # draw a head
+		    set xl [expr $xl - $delta/2]
+		    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
+			-width 1 -outline black -fill green
+		}
 		$canv create text $xl $canvy -anchor w -text $tag \
 		    -font $mainfont
 	    }
@@ -1334,7 +1366,7 @@ set mainfont {Helvetica 9}
 set textfont {Courier 9}
 
 set colors {green red blue magenta darkgrey brown orange}
-set colorbycommitter false
+set colorbycommitter 0
 
 catch {source ~/.gitk}
 
