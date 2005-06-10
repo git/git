@@ -7,7 +7,7 @@ fi
 
 export CVSROOT="$1"
 export MODULE="$2"
-if [ ! "$CVSROOT" ] || [ ! "$MODULE" ] || [ ! -d $CVSROOT ] || [ ! -d $CVSROOT/CVSROOT ] || [ ! -d $CVSROOT/$MODULE ] ; then
+if [ ! "$CVSROOT" ] || [ ! "$MODULE" ] ; then
 	echo "Usage: git cvsimport <cvsroot> <module>"
 	exit 1
 fi
