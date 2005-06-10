@@ -14,7 +14,7 @@ does a lot of things differently.
 One particular suckage of CVS is very hard to work around: CVS is
 basically a tool for tracking _file_ history, while git is a tool for
 tracking _project_ history.  This sometimes causes problems if you are
-used to doign very strange things in CVS, in particular if you're doing
+used to doing very strange things in CVS, in particular if you're doing
 things like making branches of just a subset of the project.  Git can't
 track that, since git never tracks things on the level of an individual
 file, only on the whole project level. 
@@ -35,8 +35,8 @@ that you're actually working in (your working directory, or your
 working directories _are_ the repositories.  However, you can easily
 emulate the CVS model by having one special "global repository", which
 people can synchronize with.  See details later, but in the meantime
-just keep in mind that with git, every checked out working tree will be
-a full revision control of its own. 
+just keep in mind that with git, every checked out working tree will
+have a full revision control history of its own.
 
 
 Importing a CVS archive
@@ -69,10 +69,12 @@ which will do exactly what you'd think it does: it will create a git
 archive of the named CVS module. The new archive will be created in a
 subdirectory named <module>.
 
-It can take some time to actually do the conversion for a large archive,
+It can take some time to actually do the conversion for a large archive
+since it involves checking out from CVS every revision of every file,
 and the conversion script can be reasonably chatty, but on some not very
 scientific tests it averaged about eight revisions per second, so a
-medium-sized project should not take more than a couple of minutes.
+medium-sized project should not take more than a couple of minutes.  For
+larger projects or remote repositories, the process may take longer.
 
 
 Emulating CVS behaviour
