@@ -1,15 +1,26 @@
 #!/bin/sh
-ARGS=""
-if [ "$1" == "-v" ]; then
-	ARGS=$1
+
+usage () {
+	echo "Usage: git cvsimport [-v] [-z fuzz] <cvsroot> <module>"
+	exit 1
+}
+
+CVS2GIT=""
+CVSPS="--cvs-direct -x -A"
+while true; do
+	case "$1" in
+	-v) CVS2GIT="$1" ;;
+	-z) shift; CVSPS="$CVSPS -z $1" ;;
+	-*) usage ;;
+	*)  break ;;
+	esac
 	shift
-fi
+done
 
 export CVSROOT="$1"
 export MODULE="$2"
 if [ ! "$CVSROOT" ] || [ ! "$MODULE" ] ; then
-	echo "Usage: git cvsimport <cvsroot> <module>"
-	exit 1
+	usage
 fi
 
 cvsps -h 2>&1 | grep -q "cvsps version 2.1" >& /dev/null || {
@@ -20,8 +31,8 @@ cvsps -h 2>&1 | grep -q "cvsps version 2.1" >& /dev/null || {
 mkdir "$MODULE" || exit 1
 cd "$MODULE"
 
-TZ=UTC cvsps -x -A $MODULE > .git-cvsps-result
+TZ=UTC cvsps $CVSPS $MODULE > .git-cvsps-result
 [ -s .git-cvsps-result ] || exit 1
-git-cvs2git $ARGS --cvsroot="$CVSROOT" --module="$MODULE" < .git-cvsps-result > .git-create-script || exit 1
+git-cvs2git $CVS2GIT --cvsroot="$CVSROOT" --module="$MODULE" < .git-cvsps-result > .git-create-script || exit 1
 sh .git-create-script
 
