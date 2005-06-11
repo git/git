@@ -102,7 +102,7 @@ static void reject_merge(struct cache_entry *ce)
 	die("Entry '%s' would be overwritten by merge. Cannot merge.", ce->name);
 }
 
-static int merged_entry(struct cache_entry *merge, struct cache_entry *old, struct cache_entry **dst)
+static int merged_entry_internal(struct cache_entry *merge, struct cache_entry *old, struct cache_entry **dst, int allow_dirty)
 {
 	merge->ce_flags |= htons(CE_UPDATE);
 	if (old) {
@@ -115,13 +115,23 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old, stru
 		 */
 		if (same(old, merge)) {
 			*merge = *old;
-		} else {
+		} else if (!allow_dirty) {
 			verify_uptodate(old);
 		}
 	}
 	merge->ce_flags &= ~htons(CE_STAGEMASK);
 	*dst++ = merge;
 	return 1;
+}
+
+static int merged_entry_allow_dirty(struct cache_entry *merge, struct cache_entry *old, struct cache_entry **dst)
+{
+	return merged_entry_internal(merge, old, dst, 1);
+}
+
+static int merged_entry(struct cache_entry *merge, struct cache_entry *old, struct cache_entry **dst)
+{
+	return merged_entry_internal(merge, old, dst, 0);
 }
 
 static int deleted_entry(struct cache_entry *ce, struct cache_entry *old, struct cache_entry **dst)
@@ -140,6 +150,12 @@ static int threeway_merge(struct cache_entry *stages[4], struct cache_entry **ds
 	struct cache_entry *merge;
 	int count;
 
+	/* #5ALT */
+	if (!a && b && c && same(b, c)) {
+		if (old && !same(b, old))
+			return -1;
+		return merged_entry_allow_dirty(b, old, dst);
+	}
 	/*
 	 * If we have an entry in the index cache ("old"), then we want
 	 * to make sure that it matches any entries in stage 2 ("first

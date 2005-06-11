@@ -75,7 +75,8 @@ In addition:
 . ../lib-read-tree-m-3way.sh
 
 ################################################################
-# This is the "no trivial merge unless all three exists" table.
+# Trivial "majority when 3 stages exist" merge plus #5ALT trivial
+# merge.
 
 cat >expected <<\EOF
 100644 X 2	AA
@@ -88,8 +89,7 @@ cat >expected <<\EOF
 100644 X 3	DM
 100644 X 1	DN
 100644 X 3	DN
-100644 X 2	LL
-100644 X 3	LL
+100644 X 0	LL
 100644 X 1	MD
 100644 X 2	MD
 100644 X 1	MM
@@ -289,23 +289,24 @@ test_expect_failure \
      git-read-tree -m $tree_O $tree_A $tree_B"
 
 test_expect_success \
-    '5 - must match and be up-to-date in !O && A && B && A==B case.' \
+    '5 - must match in !O && A && B && A==B case.' \
     "rm -f .git/index LL &&
      cp .orig-A/LL LL &&
      git-update-cache --add LL &&
      git-read-tree -m $tree_O $tree_A $tree_B &&
      check_result"
 
-test_expect_failure \
-    '5 (fail) - must match and be up-to-date in !O && A && B && A==B case.' \
+test_expect_success \
+    '5 - must match in !O && A && B && A==B case.' \
     "rm -f .git/index LL &&
      cp .orig-A/LL LL &&
      git-update-cache --add LL &&
      echo extra >>LL &&
-     git-read-tree -m $tree_O $tree_A $tree_B"
+     git-read-tree -m $tree_O $tree_A $tree_B &&
+     check_result"
 
 test_expect_failure \
-    '5 (fail) - must match and be up-to-date in !O && A && B && A==B case.' \
+    '5 (fail) - must match A in !O && A && B && A==B case.' \
     "rm -f .git/index LL &&
      cp .orig-A/LL LL &&
      echo extra >>LL &&

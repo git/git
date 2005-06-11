@@ -117,9 +117,8 @@ test_expect_success \
      check_cache_at yomin dirty'
 
 # "read-tree -m H I+H M" where !H && M && (I+H) == M, so this should
-# succeed (even the entry is clean), but without #5ALT this does not
-# work.
-: test_expect_success \
+# succeed (even the entry is clean), now thanks to #5ALT.
+test_expect_success \
     '6 - local addition already has the same.' \
     'rm -f .git/index &&
      git-update-cache --add frotz &&
@@ -129,8 +128,8 @@ test_expect_success \
      check_cache_at frotz clean'
 
 # Exactly the same pattern as above but with dirty cache.  This also
-# should succeed, but without #5ALT it does not.
-: test_expect_success \
+# should succeed, now thanks to #5ALT.
+test_expect_success \
     '7 - local addition already has the same.' \
     'rm -f .git/index &&
      echo frotz >frotz &&
