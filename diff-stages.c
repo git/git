@@ -18,9 +18,47 @@ static const char *diff_filter = NULL;
 static char *diff_stages_usage =
 "git-diff-stages [-p] [-r] [-z] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] <stage1> <stage2> [<path>...]";
 
+static void diff_stages(int stage1, int stage2)
+{
+	int i = 0;
+	while (i < active_nr) {
+		struct cache_entry *ce, *stages[4] = { NULL, };
+		struct cache_entry *one, *two;
+		const char *name;
+		int len;
+		ce = active_cache[i];
+		len = ce_namelen(ce);
+		name = ce->name;
+		for (;;) {
+			int stage = ce_stage(ce);
+			stages[stage] = ce;
+			if (active_nr <= ++i)
+				break;
+			ce = active_cache[i];
+			if (ce_namelen(ce) != len ||
+			    memcmp(name, ce->name, len))
+				break;
+		}
+		one = stages[stage1];
+		two = stages[stage2];
+		if (!one && !two)
+			continue;
+		if (!one)
+			diff_addremove('+', ntohl(two->ce_mode),
+				       two->sha1, name, NULL);
+		else if (!two)
+			diff_addremove('-', ntohl(one->ce_mode),
+				       one->sha1, name, NULL);
+		else if (memcmp(one->sha1, two->sha1, 20) ||
+			 (one->ce_mode != two->ce_mode))
+			 diff_change(ntohl(one->ce_mode), ntohl(two->ce_mode),
+				     one->sha1, two->sha1, name, NULL);
+	}
+}
+
 int main(int ac, const char **av)
 {
-	int stage1, stage2, i;
+	int stage1, stage2;
 
 	read_cache();
 	while (1 < ac && av[1][0] == '-') {
@@ -70,40 +108,7 @@ int main(int ac, const char **av)
 	av += 3; /* The rest from av[0] are for paths restriction. */
 	diff_setup(diff_setup_opt);
 
-	i = 0;
-	while (i < active_nr) {
-		struct cache_entry *ce, *stages[4] = { NULL, };
-		struct cache_entry *one, *two;
-		const char *name;
-		int len;
-		ce = active_cache[i];
-		len = ce_namelen(ce);
-		name = ce->name;
-		for (;;) {
-			int stage = ce_stage(ce);
-			stages[stage] = ce;
-			if (active_nr <= ++i)
-				break;
-			ce = active_cache[i];
-			if (ce_namelen(ce) != len ||
-			    memcmp(name, ce->name, len))
-				break;
-		}
-		one = stages[stage1];
-		two = stages[stage2];
-		if (!one && !two)
-			continue;
-		if (!one)
-			diff_addremove('+', ntohl(two->ce_mode),
-				       two->sha1, name, NULL);
-		else if (!two)
-			diff_addremove('-', ntohl(one->ce_mode),
-				       one->sha1, name, NULL);
-		else if (memcmp(one->sha1, two->sha1, 20) ||
-			 (one->ce_mode != two->ce_mode))
-			 diff_change(ntohl(one->ce_mode), ntohl(two->ce_mode),
-				     one->sha1, two->sha1, name, NULL);
-	}
+	diff_stages(stage1, stage2);
 
 	diffcore_std(av,
 		     detect_rename, diff_score_opt,
