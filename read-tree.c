@@ -210,6 +210,58 @@ static int twoway_merge(struct cache_entry **src, struct cache_entry **dst)
 }
 
 /*
+ * Two-way merge emulated with three-way merge.
+ *
+ * This treats "read-tree -m H M" by transforming it internally
+ * into "read-tree -m H I+H M", where I+H is a tree that would
+ * contain the contents of the current index file, overlayed on
+ * top of H.  Unlike the traditional two-way merge, this leaves
+ * the stages in the resulting index file and lets the user resolve
+ * the merge conflicts using standard tools for three-way merge.
+ *
+ * This function is just to set-up such an arrangement, and the
+ * actual merge uses threeway_merge() function.
+ */
+static void setup_emu23(void)
+{
+	/* stage0 contains I, stage1 H, stage2 M.
+	 * move stage2 to stage3, and create stage2 entries
+	 * by scanning stage0 and stage1 entries.
+	 */
+	int i, namelen, size;
+	struct cache_entry *ce, *stage2;
+
+	for (i = 0; i < active_nr; i++) {
+		ce = active_cache[i];
+		if (ce_stage(ce) != 2)
+			continue;
+		/* hoist them up to stage 3 */
+		namelen = ce_namelen(ce);
+		ce->ce_flags = create_ce_flags(namelen, 3);
+	}
+
+	for (i = 0; i < active_nr; i++) {
+		ce = active_cache[i];
+		if (ce_stage(ce) > 1)
+			continue;
+		namelen = ce_namelen(ce);
+		size = cache_entry_size(namelen);
+		stage2 = xmalloc(size);
+		memcpy(stage2, ce, size);
+		stage2->ce_flags = create_ce_flags(namelen, 2);
+		if (add_cache_entry(stage2, ADD_CACHE_OK_TO_ADD) < 0)
+			die("cannot merge index and our head tree");
+
+		/* We are done with this name, so skip to next name */
+		while (i < active_nr &&
+		       ce_namelen(active_cache[i]) == namelen &&
+		       !memcmp(active_cache[i]->name, ce->name, namelen))
+			i++;
+		i--; /* compensate for the loop control */
+	}
+}
+
+/*
  * One-way merge.
  *
  * The rule is:
@@ -315,7 +367,7 @@ static struct cache_file cache_file;
 
 int main(int argc, char **argv)
 {
-	int i, newfd, merge, reset;
+	int i, newfd, merge, reset, emu23;
 	unsigned char sha1[20];
 
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
@@ -324,6 +376,7 @@ int main(int argc, char **argv)
 
 	merge = 0;
 	reset = 0;
+	emu23 = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -335,7 +388,7 @@ int main(int argc, char **argv)
 
 		/* This differs from "-m" in that we'll silently ignore unmerged entries */
 		if (!strcmp(arg, "--reset")) {
-			if (stage || merge)
+			if (stage || merge || emu23)
 				usage(read_tree_usage);
 			reset = 1;
 			merge = 1;
@@ -345,7 +398,7 @@ int main(int argc, char **argv)
 
 		/* "-m" stands for "merge", meaning we start in stage 1 */
 		if (!strcmp(arg, "-m")) {
-			if (stage || merge)
+			if (stage || merge || emu23)
 				usage(read_tree_usage);
 			if (read_cache_unmerged())
 				die("you need to resolve your current index first");
@@ -353,6 +406,17 @@ int main(int argc, char **argv)
 			merge = 1;
 			continue;
 		}
+
+		/* "-emu23" uses 3-way merge logic to perform fast-forward */
+		if (!strcmp(arg, "--emu23")) {
+			if (stage || merge || emu23)
+				usage(read_tree_usage);
+			if (read_cache_unmerged())
+				die("you need to resolve your current index first");
+			merge = emu23 = stage = 1;
+			continue;
+		}
+
 		if (get_sha1(arg, sha1) < 0)
 			usage(read_tree_usage);
 		if (stage > 3)
@@ -369,9 +433,18 @@ int main(int argc, char **argv)
 			[2] = twoway_merge,
 			[3] = threeway_merge,
 		};
+		merge_fn_t fn;
+
 		if (stage < 2 || stage > 4)
 			die("just how do you expect me to merge %d trees?", stage-1);
-		merge_cache(active_cache, active_nr, merge_function[stage-1]);
+		if (emu23 && stage != 3)
+			die("--emu23 takes only two trees");
+		fn = merge_function[stage-1];
+		if (stage == 3 && emu23) { 
+			setup_emu23();
+			fn = merge_function[3];
+		}
+		merge_cache(active_cache, active_nr, fn);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
