@@ -80,6 +80,17 @@ test_expect_success \
      git-ls-tree $treeM &&
      git-diff-tree $treeH $treeM'
 
+# "read-tree -m H I+H M" but I is empty so this is "read-tree -m H H M".
+#
+# bozbar [O && A && B && O==A && O!=B (#14) ==> B] take M by read-tree
+# frotz  [!O && !A && B (#2) ==> B]                take M by read-tree
+# nitfol [O && A && B && O==A && O==B (#15) ==> B] take M by read-tree
+# rezrov [O && A && !B && O==A (#10) ==> no merge] removed by script
+#
+# Earlier one did not have #2ALT so taking M was done by the script,
+# which also updated the work tree and making frotz clean.  With #2ALT,
+# this is resolved by read-tree itself and the path is left dirty
+# because we are not testing "read-tree -u --emu23".
 test_expect_success \
     '1, 2, 3 - no carry forward' \
     'rm -f .git/index &&
@@ -87,7 +98,7 @@ test_expect_success \
      git-ls-files --stage >1-3.out &&
      diff -u M.out 1-3.out &&
      check_cache_at bozbar dirty &&
-     check_cache_at frotz clean && # different from pure 2-way
+     check_cache_at frotz dirty && # same as pure 2-way again.
      check_cache_at nitfol dirty'
 
 echo '+100644 X 0	yomin' >expected
@@ -103,8 +114,8 @@ test_expect_success \
      check_cache_at yomin clean'
 
 # "read-tree -m H I+H M" where !H && !M; so (I+H) not being up-to-date
-# should not matter, but without #3ALT this does not work.
-: test_expect_success \
+# should not matter.  Thanks to #3ALT, this is now possible.
+test_expect_success \
     '5 - carry forward local addition.' \
     'rm -f .git/index &&
      echo yomin >yomin &&
@@ -218,6 +229,7 @@ test_expect_success \
 # This is different from straight 2-way merge in that it leaves
 # three stages of bozbar in the index file without failing, so
 # the user can run git-diff-stages to examine the situation.
+# With #2ALT, frotz is resolved internally.
 test_expect_success \
     '16 - conflicting local change.' \
     'rm -f .git/index &&
@@ -228,7 +240,7 @@ test_expect_success \
 100644 X 1	bozbar
 100644 X 2	bozbar
 100644 X 3	bozbar
-100644 X 3	frotz
+100644 X 0	frotz
 100644 X 0	nitfol
 100644 X 1	rezrov
 100644 X 2	rezrov

@@ -75,13 +75,13 @@ In addition:
 . ../lib-read-tree-m-3way.sh
 
 ################################################################
-# Trivial "majority when 3 stages exist" merge plus #5ALT trivial
-# merge.
+# Trivial "majority when 3 stages exist" merge plus #2ALT, #3ALT
+# and #5ALT trivial merges.
 
 cat >expected <<\EOF
 100644 X 2	AA
 100644 X 3	AA
-100644 X 2	AN
+100644 X 0	AN
 100644 X 1	DD
 100644 X 3	DF
 100644 X 2	DF/DF
@@ -96,7 +96,7 @@ cat >expected <<\EOF
 100644 X 2	MM
 100644 X 3	MM
 100644 X 0	MN
-100644 X 3	NA
+100644 X 0	NA
 100644 X 1	ND
 100644 X 2	ND
 100644 X 0	NM
@@ -107,7 +107,7 @@ cat >expected <<\EOF
 100644 X 3	TT
 100644 X 2	Z/AA
 100644 X 3	Z/AA
-100644 X 2	Z/AN
+100644 X 0	Z/AN
 100644 X 1	Z/DD
 100644 X 1	Z/DM
 100644 X 3	Z/DM
@@ -119,7 +119,7 @@ cat >expected <<\EOF
 100644 X 2	Z/MM
 100644 X 3	Z/MM
 100644 X 0	Z/MN
-100644 X 3	Z/NA
+100644 X 0	Z/NA
 100644 X 1	Z/ND
 100644 X 2	Z/ND
 100644 X 0	Z/NM
@@ -233,23 +233,31 @@ test_expect_failure \
      git-update-cache --add XX &&
      git-read-tree -m $tree_O $tree_A $tree_B"
 
-test_expect_failure \
-    '2 - must not have an entry not in A.' \
+test_expect_success \
+    '2 - must match B in !O && !A && B case.' \
     "rm -f .git/index NA &&
      cp .orig-B/NA NA &&
      git-update-cache --add NA &&
      git-read-tree -m $tree_O $tree_A $tree_B"
 
 test_expect_success \
-    '3 - must match and be up-to-date in !O && A && !B case.' \
+    '2 - matching B alone is OK in !O && !A && B case.' \
+    "rm -f .git/index NA &&
+     cp .orig-B/NA NA &&
+     git-update-cache --add NA &&
+     echo extra >>NA &&
+     git-read-tree -m $tree_O $tree_A $tree_B"
+
+test_expect_success \
+    '3 - must match A in !O && A && !B case.' \
     "rm -f .git/index AN &&
      cp .orig-A/AN AN &&
      git-update-cache --add AN &&
      git-read-tree -m $tree_O $tree_A $tree_B &&
      check_result"
 
-test_expect_failure \
-    '3 (fail) - must match and be up-to-date in !O && A && !B case.' \
+test_expect_success \
+    '3 - matching A alone is OK in !O && A && !B case.' \
     "rm -f .git/index AN &&
      cp .orig-A/AN AN &&
      git-update-cache --add AN &&
@@ -257,7 +265,7 @@ test_expect_failure \
      git-read-tree -m $tree_O $tree_A $tree_B"
 
 test_expect_failure \
-    '3 (fail) - must match and be up-to-date in !O && A && !B case.' \
+    '3 (fail) - must match A in !O && A && !B case.' \
     "rm -f .git/index AN &&
      cp .orig-A/AN AN &&
      echo extra >>AN &&
