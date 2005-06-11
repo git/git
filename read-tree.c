@@ -280,6 +280,12 @@ static int threeway_merge(struct cache_entry *stages[4],
 		}
 		/* otherwise we will apply the original rule */
 	}
+	/* #14ALT */
+	if (a && b && c && same(a, b) && !same(a, c)) {
+		if (old && same(old, c))
+			return merged_entry_allow_dirty(c, old, dst);
+		/* otherwise the regular rule applies */
+	}
 	/*
 	 * If we have an entry in the index cache ("old"), then we want
 	 * to make sure that it matches any entries in stage 2 ("first

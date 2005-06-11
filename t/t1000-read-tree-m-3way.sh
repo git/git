@@ -464,6 +464,15 @@ test_expect_success \
      git-read-tree -m $tree_O $tree_A $tree_B &&
      check_result"
 
+test_expect_success \
+    '14 - may match B in O && A && B && O==A && O!=B case' \
+    "rm -f .git/index NM &&
+     cp .orig-B/NM NM &&
+     git-update-cache --add NM &&
+     echo extra >>NM &&
+     git-read-tree -m $tree_O $tree_A $tree_B &&
+     check_result"
+
 test_expect_failure \
     '14 (fail) - must match and be up-to-date in O && A && B && O==A && O!=B case' \
     "rm -f .git/index NM &&
