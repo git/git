@@ -11,6 +11,7 @@ static int show_tree_entry_in_recursive = 0;
 static int read_stdin = 0;
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
+static int find_copies_harder = 0;
 static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
@@ -115,7 +116,7 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		show_file("+", tree2, size2, base);
 		return 1;
 	}
-	if (!memcmp(sha1, sha2, 20) && mode1 == mode2)
+	if (!find_copies_harder && !memcmp(sha1, sha2, 20) && mode1 == mode2)
 		return 0;
 
 	/*
@@ -199,7 +200,7 @@ static int interesting(void *tree, unsigned long size, const char *base)
 static void show_tree(const char *prefix, void *tree, unsigned long size, const char *base)
 {
 	while (size) {
-		if (interesting(tree, size, base))
+		if (find_copies_harder || interesting(tree, size, base))
 			show_file(prefix, tree, size, base);
 		update_tree_entry(&tree, &size);
 	}
@@ -267,7 +268,7 @@ static void call_diff_setup(void)
 
 static int call_diff_flush(void)
 {
-	diffcore_std(0,
+	diffcore_std(find_copies_harder ? paths : 0,
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
@@ -488,6 +489,10 @@ int main(int argc, const char **argv)
 				usage(diff_tree_usage);
 			continue;
 		}
+		if (!strcmp(arg, "--find-copies-harder")) {
+			find_copies_harder = 1;
+			continue;
+		}
 		if (!strcmp(arg, "-z")) {
 			diff_output_format = DIFF_FORMAT_MACHINE;
 			continue;
@@ -521,6 +526,8 @@ int main(int argc, const char **argv)
 		}
 		usage(diff_tree_usage);
 	}
+	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
+		usage(diff_tree_usage);
 
 	if (argc > 0) {
 		int i;
