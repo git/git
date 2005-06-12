@@ -568,7 +568,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
 			int git_hdr_len = parse_git_header(line, len, size, patch);
-			if (git_hdr_len < 0)
+			if (git_hdr_len <= len)
 				continue;
 			if (!patch->old_name && !patch->new_name)
 				die("git diff header lacks filename information (line %d)", linenr);
