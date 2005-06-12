@@ -249,8 +249,14 @@ void diffcore_rename(int detect_rename, int minimum_score)
 				continue; /* unmerged */
 			else
 				locate_rename_dst(p->two, 1);
-		else if (!DIFF_FILE_VALID(p->two))
-			register_rename_src(p->one, 0);
+		else if (!DIFF_FILE_VALID(p->two)) {
+			/* If the source is a broken "delete", and
+			 * they did not really want to get broken,
+			 * that means the source actually stays.
+			 */
+			int stays = (p->broken_pair && !p->score);
+			register_rename_src(p->one, stays);
+		}
 		else if (detect_rename == DIFF_DETECT_COPY)
 			register_rename_src(p->one, 1);
 	}
