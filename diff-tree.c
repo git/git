@@ -18,6 +18,7 @@ static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
 static int diff_break_opt = -1;
 static const char *orderfile = NULL;
+static const char *diff_filter = NULL;
 static const char *header = NULL;
 static const char *header_prefix = "";
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
@@ -272,9 +273,10 @@ static int call_diff_flush(void)
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
-		     orderfile);
+		     orderfile,
+		     diff_filter);
 	if (diff_queue_is_empty()) {
-		diff_flush(DIFF_FORMAT_NO_OUTPUT, 0);
+		diff_flush(DIFF_FORMAT_NO_OUTPUT);
 		return 0;
 	}
 	if (header) {
@@ -285,7 +287,7 @@ static int call_diff_flush(void)
 		printf(fmt, header, 0);
 		header = NULL;
 	}
-	diff_flush(diff_output_format, 1);
+	diff_flush(diff_output_format);
 	return 1;
 }
 
@@ -466,6 +468,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strncmp(arg, "-O", 2)) {
 			orderfile = arg + 2;
+			continue;
+		}
+		if (!strncmp(arg, "--diff-filter=", 14)) {
+			diff_filter = arg + 14;
 			continue;
 		}
 		if (!strcmp(arg, "--pickaxe-all")) {

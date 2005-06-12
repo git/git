@@ -8,17 +8,16 @@
 static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
 static const char *orderfile = NULL;
+static const char *diff_filter = NULL;
 static int line_termination = '\n';
 static int inter_name_termination = '\t';
 
 static void flush_them(int ac, const char **av)
 {
-	diffcore_std(av + 1,
-		     0, 0, /* no renames */
-		     pickaxe, pickaxe_opts,
-		     -1, /* no breaks */
-		     orderfile);
-	diff_flush(DIFF_FORMAT_PATCH, 0);
+	diffcore_std_no_resolve(av + 1,
+				pickaxe, pickaxe_opts,
+				orderfile, diff_filter);
+	diff_flush(DIFF_FORMAT_PATCH);
 }
 
 static const char *diff_helper_usage =
@@ -38,6 +37,10 @@ int main(int ac, const char **av) {
 		}
 		else if (!strcmp(av[1], "--pickaxe-all"))
 			pickaxe_opts = DIFF_PICKAXE_ALL;
+		else if (!strncmp(av[1], "--diff-filter=", 14))
+			diff_filter = av[1] + 14;
+		else if (!strncmp(av[1], "-O", 2))
+			orderfile = av[1] + 2;
 		else
 			usage(diff_helper_usage);
 		ac--; av++;

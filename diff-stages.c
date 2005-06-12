@@ -13,6 +13,7 @@ static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
 static int diff_break_opt = -1;
 static const char *orderfile = NULL;
+static const char *diff_filter = NULL;
 
 static char *diff_stages_usage =
 "git-diff-stages [-p] [-r] [-z] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] <stage1> <stage2> [<path>...]";
@@ -50,6 +51,8 @@ int main(int ac, const char **av)
 			pickaxe = arg + 2;
 		else if (!strncmp(arg, "-O", 2))
 			orderfile = arg + 2;
+		else if (!strncmp(arg, "--diff-filter=", 14))
+			diff_filter = arg + 14;
 		else if (!strcmp(arg, "--pickaxe-all"))
 			pickaxe_opts = DIFF_PICKAXE_ALL;
 		else
@@ -106,7 +109,8 @@ int main(int ac, const char **av)
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
-		     orderfile);
-	diff_flush(diff_output_format, 1);
+		     orderfile,
+		     diff_filter);
+	diff_flush(diff_output_format);
 	return 0;
 }

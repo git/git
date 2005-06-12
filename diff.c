@@ -921,7 +921,7 @@ static void diff_resolve_rename_copy(void)
 	diff_debug_queue("resolve-rename-copy done", q);
 }
 
-void diff_flush(int diff_output_style, int resolve_rename_copy)
+void diff_flush(int diff_output_style)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
@@ -930,8 +930,6 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 
 	if (diff_output_style == DIFF_FORMAT_MACHINE)
 		line_termination = inter_name_termination = 0;
-	if (resolve_rename_copy)
-		diff_resolve_rename_copy();
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -958,11 +956,58 @@ void diff_flush(int diff_output_style, int resolve_rename_copy)
 	q->nr = q->alloc = 0;
 }
 
+static void diffcore_apply_filter(const char *filter)
+{
+	int i;
+	struct diff_queue_struct *q = &diff_queued_diff;
+	struct diff_queue_struct outq;
+	outq.queue = NULL;
+	outq.nr = outq.alloc = 0;
+
+	if (!filter)
+		return;
+
+	if (strchr(filter, 'A')) {
+		/* All-or-none */
+		int found;
+		for (i = found = 0; !found && i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if ((p->broken_pair && strchr(filter, 'B')) ||
+			    (!p->broken_pair && strchr(filter, p->status)))
+				found++;
+		}
+		if (found)
+			return;
+
+		/* otherwise we will clear the whole queue
+		 * by copying the empty outq at the end of this
+		 * function, but first clear the current entries
+		 * in the queue.
+		 */
+		for (i = 0; i < q->nr; i++)
+			diff_free_filepair(q->queue[i]);
+	}
+	else {
+		/* Only the matching ones */
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if ((p->broken_pair && strchr(filter, 'B')) ||
+			    (!p->broken_pair && strchr(filter, p->status)))
+				diff_q(&outq, p);
+			else
+				diff_free_filepair(p);
+		}
+	}
+	free(q->queue);
+	*q = outq;
+}
+
 void diffcore_std(const char **paths,
 		  int detect_rename, int rename_score,
 		  const char *pickaxe, int pickaxe_opts,
 		  int break_opt,
-		  const char *orderfile)
+		  const char *orderfile,
+		  const char *filter)
 {
 	if (paths && paths[0])
 		diffcore_pathspec(paths);
@@ -976,6 +1021,23 @@ void diffcore_std(const char **paths,
 		diffcore_pickaxe(pickaxe, pickaxe_opts);
 	if (orderfile)
 		diffcore_order(orderfile);
+	diff_resolve_rename_copy();
+	diffcore_apply_filter(filter);
+}
+
+
+void diffcore_std_no_resolve(const char **paths,
+			     const char *pickaxe, int pickaxe_opts,
+			     const char *orderfile,
+			     const char *filter)
+{
+	if (paths && paths[0])
+		diffcore_pathspec(paths);
+	if (pickaxe)
+		diffcore_pickaxe(pickaxe, pickaxe_opts);
+	if (orderfile)
+		diffcore_order(orderfile);
+	diffcore_apply_filter(filter);
 }
 
 void diff_addremove(int addremove, unsigned mode,

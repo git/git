@@ -47,7 +47,11 @@ extern void diffcore_std(const char **paths,
 			 int detect_rename, int rename_score,
 			 const char *pickaxe, int pickaxe_opts,
 			 int break_opt,
-			 const char *orderfile);
+			 const char *orderfile, const char *filter);
+
+extern void diffcore_std_no_resolve(const char **paths,
+				    const char *pickaxe, int pickaxe_opts,
+				    const char *orderfile, const char *filter);
 
 extern int diff_queue_is_empty(void);
 
@@ -56,6 +60,6 @@ extern int diff_queue_is_empty(void);
 #define DIFF_FORMAT_PATCH	2
 #define DIFF_FORMAT_NO_OUTPUT	3
 
-extern void diff_flush(int output_style, int resolve_rename_copy);
+extern void diff_flush(int output_style);
 
 #endif /* DIFF_H */

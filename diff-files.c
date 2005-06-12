@@ -17,6 +17,7 @@ static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
 static int diff_break_opt = -1;
 static const char *orderfile = NULL;
+static const char *diff_filter = NULL;
 static int silent = 0;
 
 static void show_unmerge(const char *path)
@@ -59,6 +60,8 @@ int main(int argc, const char **argv)
 			pickaxe = argv[1] + 2;
 		else if (!strncmp(argv[1], "-O", 2))
 			orderfile = argv[1] + 2;
+		else if (!strncmp(argv[1], "--diff-filter=", 14))
+			diff_filter = argv[1] + 14;
 		else if (!strcmp(argv[1], "--pickaxe-all"))
 			pickaxe_opts = DIFF_PICKAXE_ALL;
 		else if (!strncmp(argv[1], "-B", 2)) {
@@ -131,7 +134,7 @@ int main(int argc, const char **argv)
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
-		     orderfile);
-	diff_flush(diff_output_format, 1);
+		     orderfile, diff_filter);
+	diff_flush(diff_output_format);
 	return 0;
 }

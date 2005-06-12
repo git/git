@@ -11,6 +11,7 @@ static const char *pickaxe = NULL;
 static int pickaxe_opts = 0;
 static int diff_break_opt = -1;
 static const char *orderfile = NULL;
+static const char *diff_filter = NULL;
 
 /* A file entry went away or appeared */
 static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
@@ -224,6 +225,10 @@ int main(int argc, const char **argv)
 			pickaxe = arg + 2;
 			continue;
 		}
+		if (!strncmp(arg, "--diff-filter=", 14)) {
+			diff_filter = arg + 14;
+			continue;
+		}
 		if (!strncmp(arg, "-O", 2)) {
 			orderfile = arg + 2;
 			continue;
@@ -263,7 +268,7 @@ int main(int argc, const char **argv)
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
-		     orderfile);
-	diff_flush(diff_output_format, 1);
+		     orderfile, diff_filter);
+	diff_flush(diff_output_format);
 	return ret;
 }
