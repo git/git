@@ -507,6 +507,7 @@ int main(int argc, const char **argv)
 		}
 		if (!strncmp(arg, "--pretty", 8)) {
 			verbose_header = 1;
+			header_prefix = "diff-tree ";
 			commit_format = get_commit_format(arg+8);
 			continue;
 		}
