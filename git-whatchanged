@@ -1,2 +1,2 @@
 #!/bin/sh
-git-rev-list HEAD | git-diff-tree --stdin -v -r "$@" | LESS="$LESS -S" ${PAGER:-less}
+git-rev-list HEAD | git-diff-tree --stdin --pretty -r "$@" | LESS="$LESS -S" ${PAGER:-less}
