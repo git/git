@@ -398,7 +398,20 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] [-m] [-s] [-v] [-t] <tree-ish> <tree-ish>";
+"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] [-m] [-s] [-v] [--pretty] [-t] <tree-ish> <tree-ish>";
+
+static enum cmit_fmt get_commit_format(const char *arg)
+{
+	if (!*arg)
+		return CMIT_FMT_DEFAULT;
+	if (!strcmp(arg, "=raw"))
+		return CMIT_FMT_RAW;
+	if (!strcmp(arg, "=medium"))
+		return CMIT_FMT_MEDIUM;
+	if (!strcmp(arg, "=short"))
+		return CMIT_FMT_SHORT;
+	usage(diff_tree_usage);
+}
 
 int main(int argc, const char **argv)
 {
@@ -490,6 +503,11 @@ int main(int argc, const char **argv)
 		if (!strcmp(arg, "-v")) {
 			verbose_header = 1;
 			header_prefix = "diff-tree ";
+			continue;
+		}
+		if (!strncmp(arg, "--pretty", 8)) {
+			verbose_header = 1;
+			commit_format = get_commit_format(arg+8);
 			continue;
 		}
 		if (!strcmp(arg, "--stdin")) {
