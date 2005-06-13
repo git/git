@@ -989,7 +989,7 @@ static int check_patch(struct patch *patch)
 		int changed;
 
 		if (lstat(old_name, &st) < 0)
-			return error("%s: %s\n", strerror(errno));
+			return error("%s: %s", old_name, strerror(errno));
 		if (check_index) {
 			int pos = cache_name_pos(old_name, strlen(old_name));
 			if (pos < 0)
