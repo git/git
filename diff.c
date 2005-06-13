@@ -555,6 +555,7 @@ static void run_diff(const char *name,
 {
 	const char *pgm = external_diff();
 	if (!pgm &&
+	    one && two &&
 	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
 	    (S_IFMT & one->mode) != (S_IFMT & two->mode)) {
 		/* a filepair that changes between file and symlink
