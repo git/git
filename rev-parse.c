@@ -5,6 +5,33 @@
  */
 #include "cache.h"
 
+/*
+ * Some arguments are relevant "revision" arguments,
+ * others are about output format or other details.
+ * This sorts it all out.
+ */
+static int is_rev_argument(const char *arg)
+{
+	static const char *rev_args[] = {
+		"--max-count=",
+		"--max-age=",
+		"--min-age=",
+		"--merge-order",
+		NULL
+	};
+	const char **p = rev_args;
+
+	for (;;) {
+		const char *str = *p++;
+		int len;
+		if (!str)
+			return 0;
+		len = strlen(str);
+		if (!strncmp(arg, str, len))
+			return 1;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int i, as_is = 0, revs_only = 0, no_revs = 0;
@@ -44,8 +71,10 @@ int main(int argc, char **argv)
 				no_revs = 1;
 				continue;
 			}
-			if (revs_only)
-				continue;
+			if (revs_only | no_revs) {
+				if (is_rev_argument(arg) != revs_only)
+					continue;
+			}
 			printf("%s\n", arg);
 			continue;
 		}
