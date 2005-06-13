@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-	int i, as_is = 0;
+	int i, as_is = 0, revs_only = 0, no_revs = 0;
 	char *def = NULL;
 	unsigned char sha1[20];
 
@@ -25,6 +25,8 @@ int main(int argc, char **argv)
 					printf("%s\n", def);
 					def = NULL;
 				}
+				if (revs_only)
+					break;
 				as_is = 1;
 			}
 			if (!strcmp(arg, "--default")) {
@@ -34,15 +36,30 @@ int main(int argc, char **argv)
 				i++;
 				continue;
 			}
+			if (!strcmp(arg, "--revs-only")) {
+				revs_only = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--no-revs")) {
+				no_revs = 1;
+				continue;
+			}
+			if (revs_only)
+				continue;
 			printf("%s\n", arg);
 			continue;
 		}
-		def = NULL;
 		if (!get_sha1(arg, sha1)) {
+			if (no_revs)
+				continue;
+			def = NULL;
 			printf("%s\n", sha1_to_hex(sha1));
 			continue;
 		}
 		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
+			if (no_revs)
+				continue;
+			def = NULL;
 			printf("^%s\n", sha1_to_hex(sha1));
 			continue;
 		}
@@ -55,6 +72,9 @@ int main(int argc, char **argv)
 				if (!*n)
 					n = "HEAD";
 				if (!get_sha1(n, end)) {
+					if (no_revs)
+						continue;
+					def = NULL;
 					printf("%s\n", sha1_to_hex(end));
 					printf("^%s\n", sha1_to_hex(sha1));
 					continue;
@@ -62,6 +82,9 @@ int main(int argc, char **argv)
 			}
 			*dotdot = '.';
 		}
+		if (revs_only)
+			continue;
+		def = NULL;
 		printf("%s\n", arg);
 	}
 	if (def)
