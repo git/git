@@ -1,16 +1,35 @@
 #!/bin/sh
 : ${GIT_DIR=.git}
-PARENTS="HEAD"
-if [ -f $GIT_DIR/MERGE_HEAD ]; then
-	echo "#"
-	echo "# It looks like your may be committing a MERGE."
-	echo "# If this is not correct, please remove the file"
-	echo "#	$GIT_DIR/MERGE_HEAD"
-	echo "# and try again"
-	echo "#"
-	PARENTS="HEAD -p MERGE_HEAD"
-fi > .editmsg
-git-status-script >> .editmsg
+if [ ! -d $GIT_DIR ]; then
+	echo Not a git directory 1>&2
+	exit 1
+fi
+PARENTS="-p HEAD"
+if [ ! -r $GIT_DIR/HEAD ]; then
+	if [ -z "$(git-ls-files)" ]; then
+		echo Nothing to commit 1>&2
+		exit 1
+	fi
+	(
+		echo "#"
+		echo "# Initial commit"
+		echo "#"
+		git-ls-files | sed 's/^/# New file: /'
+		echo "#"
+	) > .editmsg
+	PARENTS=""
+else
+	if [ -f $GIT_DIR/MERGE_HEAD ]; then
+		echo "#"
+		echo "# It looks like your may be committing a MERGE."
+		echo "# If this is not correct, please remove the file"
+		echo "#	$GIT_DIR/MERGE_HEAD"
+		echo "# and try again"
+		echo "#"
+		PARENTS="-p HEAD -p MERGE_HEAD"
+	fi > .editmsg
+	git-status-script >> .editmsg
+fi
 if [ "$?" != "0" ]
 then
 	cat .editmsg
@@ -20,6 +39,6 @@ ${VISUAL:-${EDITOR:-vi}} .editmsg
 grep -v '^#' < .editmsg | git-stripspace > .cmitmsg
 [ -s .cmitmsg ] || exit 1
 tree=$(git-write-tree) || exit 1
-commit=$(cat .cmitmsg | git-commit-tree $tree -p $PARENTS) || exit 1
+commit=$(cat .cmitmsg | git-commit-tree $tree $PARENTS) || exit 1
 echo $commit > $GIT_DIR/HEAD
 rm -f -- $GIT_DIR/MERGE_HEAD
