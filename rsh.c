@@ -31,14 +31,15 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	} else {
 		host = url;
 		path = strchr(host, ':');
+		if (path)
+			*(path++) = '\0';
 	}
 	if (!path) {
 		return error("Bad URL: %s", url);
 	}
-	*(path++) = '\0';
-	/* ssh <host> 'cd /<path>; stdio-pull <arg...> <commit-id>' */
+	/* ssh <host> 'cd <path>; stdio-pull <arg...> <commit-id>' */
 	snprintf(command, COMMAND_SIZE, 
-		 "%s='/%s' %s",
+		 "%s='%s' %s",
 		 GIT_DIR_ENVIRONMENT, path, remote_prog);
 	posn = command + strlen(command);
 	for (i = 0; i < rmt_argc; i++) {
