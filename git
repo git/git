@@ -1,4 +1,19 @@
 #!/bin/sh
-cmd="git-$1-script"
+cmd="$1"
 shift
-exec $cmd "$@"
+if which git-$cmd-script >& /dev/null
+then
+	exec git-$cmd-script "$@"
+fi
+
+if which git-$cmd >& /dev/null
+then
+	exec git-$cmd "$@"
+fi
+
+alternatives=($(echo $PATH | tr ':' '\n' | while read i; do ls $i/git-*-script 2> /dev/null; done))
+
+echo Git command "'$cmd'" not found. Try one of
+for i in "${alternatives[@]}"; do
+	echo $i | sed 's:^.*/git-:   :' | sed 's:-script$::'
+done | sort | uniq
