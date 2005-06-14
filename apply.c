@@ -1000,6 +1000,7 @@ static int check_patch(struct patch *patch)
 		}
 		if (patch->is_new < 0)
 			patch->is_new = 0;
+		st.st_mode = ntohl(create_ce_mode(st.st_mode));
 		if (!patch->old_mode)
 			patch->old_mode = st.st_mode;
 		if ((st.st_mode ^ patch->old_mode) & S_IFMT)
