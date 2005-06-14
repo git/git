@@ -50,8 +50,9 @@ test_expect_success \
 
 test_expect_success \
     'validate file modification time' \
-    'tar tvf b.tar a/a |
-     awk \{print\ \$4,\ length\(\$5\)\<7\ ?\ \$5\":00\"\ :\ \$5\} >b.mtime &&
+    'TZ= tar tvf b.tar a/a |
+     awk \{print\ \$4,\ \(length\(\$5\)\<7\)\ ?\ \$5\":00\"\ :\ \$5\} \
+     >b.mtime &&
      echo "2005-05-27 22:00:00" >expected.mtime &&
      diff expected.mtime b.mtime'
 
