@@ -1,0 +1,3 @@
+#!/bin/sh
+git-read-tree --reset HEAD
+git-update-cache --refresh
