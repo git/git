@@ -543,6 +543,7 @@ int main(int argc, char **argv)
 			merge = 1;
 			stage = 1;
 			read_cache_unmerged();
+			continue;
 		}
 
 		/* "-m" stands for "merge", meaning we start in stage 1 */
