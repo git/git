@@ -481,17 +481,29 @@ repositories you often want to make sure that the index cache is in some
 known state (you don't know _what_ they've done and not yet checked in),
 so usually you'll precede the "git-update-cache" with a
 
-	git-read-tree HEAD
+	git-read-tree --reset HEAD
 	git-update-cache --refresh
 
-which will force a total index re-build from the tree pointed to by
-HEAD.
+which will force a total index re-build from the tree pointed to by HEAD
+(it resets the index contents to HEAD, and then the git-update-cache
+makes sure to match up all index entries with the checked-out files). 
 
-In fact, many public remote repositories will not contain any of the
-checked out files or even an index file, and will _only_ contain the
-actual core git files. Such a repository usually doesn't even have the
+The above can also be written as simply
+
+	git reset
+
+and in fact a lot of the common git command combinations can be scripted
+with the "git xyz" interfaces, and you can learn things by just looking
+at what the git-*-script scripts do ("git reset" is the above two lines
+implemented in "git-reset-script", but some things like "git status" and
+"git commit" are slightly more complex scripts around the basic git
+commands). 
+
+NOTE! Many (most?) public remote repositories will not contain any of
+the checked out files or even an index file, and will _only_ contain the
+actual core git files.  Such a repository usually doesn't even have the
 ".git" subdirectory, but has all the git files directly in the
-repository.
+repository. 
 
 To create your own local live copy of such a "raw" git repository, you'd
 first create your own subdirectory for the project, and then copy the
