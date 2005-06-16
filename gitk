@@ -7,11 +7,12 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.22 $
+# CVS $Revision: 1.23 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
     global startmsecs nextupdate
+    global ctext maincursor textcursor
 
     if {$rargs == {}} {
 	set rargs HEAD
@@ -29,6 +30,8 @@ proc getcommits {rargs} {
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
+    . config -cursor watch
+    $ctext config -cursor watch
 }
 
 proc getcommitline {commfd}  {
@@ -238,6 +241,7 @@ proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
     global findtype findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
+    global maincursor textcursor
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -377,6 +381,9 @@ proc makewindow {} {
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
     bind $sha1entry <Key-Return> gotocommit
+
+    set maincursor [. cget -cursor]
+    set textcursor [$ctext cget -cursor]
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -512,7 +519,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.22 $)} \
+(CVS $Revision: 1.23 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -874,6 +881,7 @@ proc drawcommit {id} {
 proc finishcommits {} {
     global phase
     global startcommits
+    global ctext maincursor textcursor
 
     if {$phase != "incrdraw"} {
 	$canv delete all
@@ -885,6 +893,8 @@ proc finishcommits {} {
     drawslants
     set level [decidenext]
     drawrest $level [llength $startcommits]
+    . config -cursor $maincursor
+    $ctext config -cursor $textcursor
 }
 
 proc drawgraph {} {
@@ -1506,8 +1516,7 @@ foreach arg $argv {
     }
 }
 
-set noreadobj [load libreadobj.so.0.0]
-set noreadobj 0
+set noreadobj [catch {load libreadobj.so.0.0}]
 set stopped 0
 set redisplaying 0
 set stuffsaved 0
