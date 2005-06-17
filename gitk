@@ -7,12 +7,12 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.23 $
+# CVS $Revision: 1.24 $
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
     global startmsecs nextupdate
-    global ctext maincursor textcursor
+    global ctext maincursor textcursor nlines
 
     if {$rargs == {}} {
 	set rargs HEAD
@@ -25,6 +25,7 @@ proc getcommits {rargs} {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
     }
+    set nlines 0
     fconfigure $commfd -blocking 0
     fileevent $commfd readable "getcommitline $commfd"
     $canv delete all
@@ -37,7 +38,7 @@ proc getcommits {rargs} {
 proc getcommitline {commfd}  {
     global commits parents cdate children nchildren ncleft
     global commitlisted phase commitinfo nextupdate
-    global stopped redisplaying
+    global stopped redisplaying nlines
 
     set n [gets $commfd line]
     if {$n < 0} {
@@ -59,6 +60,7 @@ to allow selection of commits to be displayed.)}
 	error_popup $err
 	exit 1
     }
+    incr nlines
     if {![regexp {^[0-9a-f]{40}$} $line id]} {
 	error_popup "Can't parse git-rev-list output: {$line}"
 	exit 1
@@ -242,6 +244,7 @@ proc makewindow {} {
     global findtype findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor
+    global linectxmenu
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -384,6 +387,10 @@ proc makewindow {} {
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
+
+    set linectxmenu .linectxmenu
+    menu $linectxmenu -tearoff 0
+    $linectxmenu add command -label "Select" -command lineselect
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -519,7 +526,7 @@ Copyright © 2005 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License
 
-(CVS $Revision: 1.23 $)} \
+(CVS $Revision: 1.24 $)} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -569,7 +576,7 @@ proc assigncolor {id} {
 
 proc initgraph {} {
     global canvy canvy0 lineno numcommits lthickness nextcolor linespc
-    global linestarty
+    global glines
     global nchildren ncleft
 
     allcanvs delete all
@@ -578,7 +585,7 @@ proc initgraph {} {
     set lineno -1
     set numcommits 0
     set lthickness [expr {int($linespc / 9) + 1}]
-    catch {unset linestarty}
+    catch {unset glines}
     foreach id [array names nchildren] {
 	set ncleft($id) $nchildren($id)
     }
@@ -592,7 +599,7 @@ proc drawcommitline {level} {
     global colormap numcommits currentparents
     global oldlevel oldnlines oldtodo
     global idtags idline idheads
-    global lineno lthickness linestarty
+    global lineno lthickness glines
     global commitlisted
 
     incr numcommits
@@ -617,10 +624,15 @@ proc drawcommitline {level} {
     set canvy [expr $canvy + $linespc]
     allcanvs conf -scrollregion \
 	[list 0 0 0 [expr $y1 + 0.5 * $linespc + 2]]
-    if {[info exists linestarty($id)] && $linestarty($id) < $y1} {
-	set t [$canv create line $x $linestarty($id) $x $y1 \
+    if {[info exists glines($id)]} {
+	lappend glines($id) $x $y1
+	set t [$canv create line $glines($id) \
 		   -width $lthickness -fill $colormap($id)]
 	$canv lower $t
+	$canv bind $t <Button-3> "linemenu %X %Y $id"
+	$canv bind $t <Enter> "lineenter %x %y $id"
+	$canv bind $t <Motion> "linemotion %x %y $id"
+	$canv bind $t <Leave> "lineleave $id"
     }
     set orad [expr {$linespc / 3}]
     set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
@@ -655,6 +667,10 @@ proc drawcommitline {level} {
 	set t [$canv create line $x $y1 [lindex $xvals end] $y1 \
 		   -width $lthickness -fill black]
 	$canv lower $t
+	$canv bind $t <Button-3> "linemenu %X %Y $id"
+	$canv bind $t <Enter> "lineenter %x %y $id"
+	$canv bind $t <Motion> "linemotion %x %y $id"
+	$canv bind $t <Leave> "lineleave $id"
 	foreach tag $marks x $xvals wid $wvals {
 	    set xl [expr $x + $delta]
 	    set xr [expr $x + $delta + $wid + $lthickness]
@@ -686,8 +702,8 @@ proc drawcommitline {level} {
 
 proc updatetodo {level noshortcut} {
     global datemode currentparents ncleft todo
-    global linestarty oldlevel oldtodo oldnlines
-    global canvy linespc
+    global glines oldlevel oldtodo oldnlines
+    global canvx0 canvy linespc glines
     global commitinfo
 
     foreach p $currentparents {
@@ -695,11 +711,13 @@ proc updatetodo {level noshortcut} {
 	    readcommit $p
 	}
     }
+    set x [expr $canvx0 + $level * $linespc]
+    set y [expr $canvy - $linespc]
     if {!$noshortcut && [llength $currentparents] == 1} {
 	set p [lindex $currentparents 0]
 	if {$ncleft($p) == 0 && [lsearch -exact $todo $p] < 0} {
 	    assigncolor $p
-	    set linestarty($p) [expr $canvy - $linespc]
+	    set glines($p) [list $x $y]
 	    set todo [lreplace $todo $level $level $p]
 	    return 0
 	}
@@ -723,7 +741,7 @@ proc updatetodo {level noshortcut} {
 }
 
 proc drawslants {} {
-    global canv linestarty canvx0 canvy linespc
+    global canv glines canvx0 canvy linespc
     global oldlevel oldtodo todo currentparents
     global lthickness linespc canvy colormap
 
@@ -737,8 +755,8 @@ proc drawslants {} {
 	if {$i == $oldlevel} {
 	    foreach p $currentparents {
 		set j [lsearch -exact $todo $p]
-		if {$i == $j && ![info exists linestarty($p)]} {
-		    set linestarty($p) $y1
+		if {$i == $j && ![info exists glines($p)]} {
+		    set glines($p) [list $xi $y1]
 		} else {
 		    set xj [expr {$canvx0 + $j * $linespc}]
 		    set coords [list $xi $y1]
@@ -748,26 +766,23 @@ proc drawslants {} {
 			lappend coords [expr $xj - $linespc] $y1
 		    }
 		    lappend coords $xj $y2
-		    set t [$canv create line $coords -width $lthickness \
-			       -fill $colormap($p)]
-		    $canv lower $t
-		    if {![info exists linestarty($p)]} {
-			set linestarty($p) $y2
+		    if {![info exists glines($p)]} {
+			set glines($p) $coords
+		    } else {
+			set t [$canv create line $coords -width $lthickness \
+				   -fill $colormap($p)]
+			$canv lower $t
+			$canv bind $t <Button-3> "linemenu %X %Y $p"
+			$canv bind $t <Enter> "lineenter %x %y $p"
+			$canv bind $t <Motion> "linemotion %x %y $p"
+			$canv bind $t <Leave> "lineleave $p"
 		    }
 		}
 	    }
 	} elseif {[lindex $todo $i] != $id} {
 	    set j [lsearch -exact $todo $id]
 	    set xj [expr {$canvx0 + $j * $linespc}]
-	    set coords {}
-	    if {[info exists linestarty($id)] && $linestarty($id) < $y1} {
-		lappend coords $xi $linestarty($id)
-	    }
-	    lappend coords $xi $y1 $xj $y2
-	    set t [$canv create line $coords -width $lthickness \
-		       -fill $colormap($id)]
-	    $canv lower $t
-	    set linestarty($id) $y2
+	    lappend glines($id) $xi $y1 $xj $y2
 	}
     }
 }
@@ -946,7 +961,7 @@ proc drawrest {level startix} {
     }
     set phase {}
     set drawmsecs [expr [clock clicks -milliseconds] - $startmsecs]
-    puts "overall $drawmsecs ms for $numcommits commits"
+    #puts "overall $drawmsecs ms for $numcommits commits"
     if {$redisplaying} {
 	if {$stopped == 0 && [info exists selectedline]} {
 	    selectline $selectedline
@@ -1131,6 +1146,7 @@ proc selectline {l} {
     global canvy0 linespc nparents treepending
     global cflist treediffs currentid sha1entry
     global commentend seenfile idtags
+    $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
     set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
@@ -1479,6 +1495,82 @@ proc gotocommit {} {
 	set type "Tag"
     }
     error_popup "$type $sha1string is not known"
+}
+
+proc linemenu {x y id} {
+    global linectxmenu linemenuid
+    set linemenuid $id
+    $linectxmenu post $x $y
+}
+
+proc lineselect {} {
+    global linemenuid idline
+    if {[info exists linemenuid] && [info exists idline($linemenuid)]} {
+	selectline $idline($linemenuid)
+    }
+}
+
+proc lineenter {x y id} {
+    global hoverx hovery hoverid hovertimer
+    global commitinfo canv
+
+    if {![info exists commitinfo($id)]} return
+    set hoverx $x
+    set hovery $y
+    set hoverid $id
+    if {[info exists hovertimer]} {
+	after cancel $hovertimer
+    }
+    set hovertimer [after 500 linehover]
+    $canv delete hover
+}
+
+proc linemotion {x y id} {
+    global hoverx hovery hoverid hovertimer
+
+    if {[info exists hoverid] && $id == $hoverid} {
+	set hoverx $x
+	set hovery $y
+	if {[info exists hovertimer]} {
+	    after cancel $hovertimer
+	}
+	set hovertimer [after 500 linehover]
+    }
+}
+
+proc lineleave {id} {
+    global hoverid hovertimer canv
+
+    if {[info exists hoverid] && $id == $hoverid} {
+	$canv delete hover
+	if {[info exists hovertimer]} {
+	    after cancel $hovertimer
+	    unset hovertimer
+	}
+	unset hoverid
+    }
+}
+
+proc linehover {} {
+    global hoverx hovery hoverid hovertimer
+    global canv linespc lthickness
+    global commitinfo mainfont
+
+    set text [lindex $commitinfo($hoverid) 0]
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    if {$ymax == {}} return
+    set yfrac [lindex [$canv yview] 0]
+    set x [expr {$hoverx + 2 * $linespc}]
+    set y [expr {$hovery + $yfrac * $ymax - $linespc / 2}]
+    set x0 [expr {$x - 2 * $lthickness}]
+    set y0 [expr {$y - 2 * $lthickness}]
+    set x1 [expr {$x + [font measure $mainfont $text] + 2 * $lthickness}]
+    set y1 [expr {$y + $linespc + 2 * $lthickness}]
+    set t [$canv create rectangle $x0 $y0 $x1 $y1 \
+	       -fill \#ffff80 -outline black -width 1 -tags hover]
+    $canv raise $t
+    set t [$canv create text $x $y -anchor nw -text $text -tags hover]
+    $canv raise $t
 }
 
 proc doquit {} {
