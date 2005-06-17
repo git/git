@@ -570,8 +570,11 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			int git_hdr_len = parse_git_header(line, len, size, patch);
 			if (git_hdr_len <= len)
 				continue;
-			if (!patch->old_name && !patch->new_name)
-				die("git diff header lacks filename information (line %d)", linenr);
+			if (!patch->old_name && !patch->new_name) {
+				if (!patch->def_name)
+					die("git diff header lacks filename information (line %d)", linenr);
+				patch->old_name = patch->new_name = patch->def_name;
+			}
 			*hdrsize = git_hdr_len;
 			return offset;
 		}
