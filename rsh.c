@@ -41,6 +41,7 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	snprintf(command, COMMAND_SIZE, 
 		 "%s='%s' %s",
 		 GIT_DIR_ENVIRONMENT, path, remote_prog);
+	*path = '\0';
 	posn = command + strlen(command);
 	for (i = 0; i < rmt_argc; i++) {
 		*(posn++) = ' ';
