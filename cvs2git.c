@@ -28,10 +28,16 @@ static int verbose = 0;
  * Usage:
  *
  *	TZ=UTC cvsps -A |
- *		cvs2git --cvsroot=[root] --module=[module] > script
+ *		git-cvs2git --cvsroot=[root] --module=[module] > script
  *
  * Creates a shell script that will generate the .git archive of
  * the names CVS repository.
+ *
+ *	TZ=UTC cvsps -s 1234- -A |
+ *		git-cvs2git -u --cvsroot=[root] --module=[module] > script
+ *
+ * Creates a shell script that will update the .git archive with
+ * CVS changes from patchset 1234 until the last one.
  *
  * IMPORTANT NOTE ABOUT "cvsps"! This requires version 2.1 or better,
  * and the "TZ=UTC" and the "-A" flag is required for sane results!
@@ -233,6 +239,10 @@ int main(int argc, char **argv)
 			verbose = 1;
 			continue;
 		}
+		if (!strcmp(arg, "-u")) {
+			initial_commit = 0;
+			continue;
+		}
 	}
 
 
@@ -244,11 +254,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	printf("[ -d .git ] && exit 1\n");
-	printf("git-init-db\n");
-	printf("mkdir -p .git/refs/heads\n");
-	printf("mkdir -p .git/refs/tags\n");
-	printf("ln -sf refs/heads/master .git/HEAD\n");
+	if (initial_commit) {
+		printf("[ -d .git ] && exit 1\n");
+		    printf("git-init-db\n");
+		printf("mkdir -p .git/refs/heads\n");
+		printf("mkdir -p .git/refs/tags\n");
+		printf("ln -sf refs/heads/master .git/HEAD\n");
+	}
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int linelen = strlen(line);
