@@ -1,0 +1,64 @@
+
+		Git installation
+
+Normally you can just do "make" followed by "make install", and that
+will install the git programs in your own ~/bin/ directory.  If you want
+to do a global install, you can do
+
+	make prefix=/usr install
+
+(or prefix=/usr/local, of course).  Some day somebody may send me a RPM
+spec file or something, and you can do "make rpm" or whatever.
+
+Issues of note:
+
+ - git normally installs a helper script wrapper called "git", which
+   conflicts with a similarly named "GNU interactive tools" program.
+
+   Tough.  Either don't use the wrapper script, or delete the old GNU
+   interactive tools.  None of the core git stuff needs the wrapper,
+   it's just a convenient shorthand and while it is documented in some
+   places, you can always replace "git commit" with "git-commit-script"
+   instead. 
+
+   But let's face it, most of us don't have GNU interactive tools, and
+   even if we had it, we wouldn't know what it does.  I don't think it
+   has been actively developed since 1997, and people have moved over to
+   graphical file managers.
+
+ - Git is reasonably self-sufficient, but does depend on a few external
+   programs and libraries:
+
+	- "zlib", the compression library. Git won't build without it.
+
+	- "openssl".  The git-rev-list program uses bignum support from
+	  openssl, and unless you specify otherwise, you'll also get the
+	  SHA1 library from here.
+
+	  If you don't have openssl, you can use one of the SHA1 libraries
+	  that come with git (git includes the one from Mozilla, and has
+	  its own PowerPC-optimized one too - see the Makefile), and you
+	  can avoid the bignum support by excising git-rev-list support
+	  for "--merge-order" (by hand).
+
+	- "libcurl".  git-http-pull uses this.  You can disable building of
+	  that program if you just want to get started. 
+
+	- "GNU patch" to generate patches.  Of course, you don't _have_ to
+	  generate patches if you don't want to, but let's face it, you'll
+	  be wanting to. Or why did you get git in the first place?
+
+	  Non-GNU versions of the patch program don't generally support
+	  the unified patch format (which is the one git uses), so you
+	  really do want to get the GNU one.  Trust me, you will want to
+	  do that even if it wasn't for git.  There's no point in living
+	  in the dark ages any more. 
+
+	- "merge", the standard UNIX three-way merge program.  It usually
+	  comes with the "rcs" package on most Linux distributions, so if
+	  you have a developer install you probably have it already, but a
+	  "graphical user desktop" install might have left it out.
+
+	  You'll only need the merge program if you do development using
+	  git, and if you only use git to track other peoples work you'll
+	  never notice the lack of it. 
