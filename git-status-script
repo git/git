@@ -27,7 +27,7 @@ report () {
 }
 
 git-update-cache --refresh >& /dev/null
-git-diff-cache -B -C --cached HEAD | sed 's/^://' | report "Updated but not checked in" "will commit"
+git-diff-cache -M --cached HEAD | sed 's/^://' | report "Updated but not checked in" "will commit"
 committable="$?"
 git-diff-files | sed 's/^://' | report "Changed but not updated" "use git-update-cache to mark for commit"
 if [ "$committable" == "0" ]

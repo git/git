@@ -3,13 +3,13 @@ rev=($(git-rev-parse --revs-only "$@"))
 flags=($(git-rev-parse --no-revs "$@"))
 case "${#rev[*]}" in
 0)
-	git-diff-files -p "$@";;
+	git-diff-files -M -p "$@";;
 1)
-	git-diff-cache -p "$@";;
+	git-diff-cache -M -p "$@";;
 2)
 	begin=$(echo "${rev[1]}" | tr -d '^')
 	end="${rev[0]}"
-	git-diff-tree -p $flags $begin $end;;
+	git-diff-tree -M -p $flags $begin $end;;
 *)
 	echo "I don't understand"
 	exit 1;;
