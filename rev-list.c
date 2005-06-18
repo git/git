@@ -4,6 +4,7 @@
 
 #define SEEN		(1u << 0)
 #define INTERESTING	(1u << 1)
+#define COUNTED		(1u << 2)
 
 static const char rev_list_usage[] =
 	"usage: git-rev-list [OPTION] commit-id <commit-id>\n"
@@ -14,6 +15,7 @@ static const char rev_list_usage[] =
 		      "  --pretty\n"
 		      "  --merge-order [ --show-breaks ]";
 
+static int bisect_list = 0;
 static int verbose_header = 0;
 static int show_parents = 0;
 static int hdr_termination = 0;
@@ -115,6 +117,78 @@ static int everybody_uninteresting(struct commit_list *list)
 	return 1;
 }
 
+/*
+ * This is a truly stupid algorithm, but it's only
+ * used for bisection, and we just don't care enough.
+ *
+ * We care just barely enough to avoid recursing for
+ * non-merge entries.
+ */
+static int count_distance(struct commit_list *entry)
+{
+	int nr = 0;
+
+	while (entry) {
+		struct commit *commit = entry->item;
+		struct commit_list *p;
+
+		if (commit->object.flags & (UNINTERESTING | COUNTED))
+			break;
+		nr++;
+		commit->object.flags |= COUNTED;
+		p = commit->parents;
+		entry = p;
+		if (p) {
+			p = p->next;
+			while (p) {
+				nr += count_distance(p);
+				p = p->next;
+			}
+		}
+	}
+	return nr;
+}
+
+static int clear_distance(struct commit_list *list)
+{
+	while (list) {
+		struct commit *commit = list->item;
+		commit->object.flags &= ~COUNTED;
+		list = list->next;
+	}
+}
+
+static struct commit_list *find_bisection(struct commit_list *list)
+{
+	int nr, closest;
+	struct commit_list *p, *best;
+
+	nr = 0;
+	p = list;
+	while (p) {
+		nr++;
+		p = p->next;
+	}
+	closest = 0;
+	best = list;
+
+	p = list;
+	while (p) {
+		int distance = count_distance(p);
+		clear_distance(list);
+		if (nr - distance < distance)
+			distance = nr - distance;
+		if (distance > closest) {
+			best = p;
+			closest = distance;
+		}
+		p = p->next;
+	}
+	if (best)
+		best->next = NULL;
+	return best;
+}
+
 struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
@@ -131,6 +205,8 @@ struct commit_list *limit_list(struct commit_list *list)
 		}
 		p = &commit_list_insert(commit, p)->next;
 	} while (list);
+	if (bisect_list)
+		newlist = find_bisection(newlist);
 	return newlist;
 }
 
@@ -184,6 +260,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--parents")) {
 			show_parents = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--bisect")) {
+			bisect_list = 1;
 			continue;
 		}
 		if (!strncmp(arg, "--merge-order", 13)) {
