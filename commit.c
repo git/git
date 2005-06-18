@@ -222,10 +222,29 @@ static int is_empty_line(const char *line, int len)
 	return !len;
 }
 
+static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int parents)
+{
+	int offset = 0;
+	switch (parents) {
+	case 1:
+		break;
+	case 2:
+		/* Go back to the previous line: 40 characters of previous parent, and one '\n' */
+		offset = sprintf(buf, "Merge: %.40s\n", line-41);
+		/* Fallthrough */
+	default:
+		/* Replace the previous '\n' with a space */
+		buf[offset-1] = ' ';
+		offset += sprintf(buf + offset, "%.40s\n", line+7);
+	}
+	return offset;
+}
+
 unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
+	int parents = 0;
 
 	for (;;) {
 		const char *line = msg;
@@ -256,6 +275,11 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 				memcpy(buf + offset, line, linelen);
 				offset += linelen;
 				continue;
+			}
+			if (!memcmp(line, "parent ", 7)) {
+				if (linelen != 48)
+					die("bad parent line in commit");
+				offset += add_parent_info(fmt, buf + offset, line, ++parents);
 			}
 			if (!memcmp(line, "author ", 7))
 				offset += add_author_info(fmt, buf + offset, line, linelen);
