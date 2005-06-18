@@ -193,7 +193,10 @@ static void update_file(char *line)
 	if (dir)
 		printf("mkdir -p %.*s\n", (int)(dir - name), name);
 
-	printf("cvs -q -d %s checkout -r%s -p '%s/%s' > '%s'\n", cvsroot, version, cvsmodule, name, name);
+	printf("cvs -q -d %s checkout -d .git-tmp -r%s '%s/%s'\n", 
+		cvsroot, version, cvsmodule, name);
+	printf("mv -f .git-tmp/%s %s\n", dir ? dir+1 : name, name);
+	printf("rm -rf .git-tmp\n");
 	printf("git-update-cache --add -- '%s'\n", name);
 }
 
