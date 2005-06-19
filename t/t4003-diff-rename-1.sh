@@ -108,7 +108,8 @@ test_expect_success \
 # the diff-core.  Unchanged rezrov, although being fed to
 # git-diff-cache as well, should not be mentioned.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-cache -C -p $tree >current
+GIT_DIFF_OPTS=--unified=0 \
+    git-diff-cache -C --find-copies-harder -p $tree >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.1
 copy from COPYING

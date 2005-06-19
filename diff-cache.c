@@ -5,6 +5,7 @@ static int cached_only = 0;
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int match_nonexisting = 0;
 static int detect_rename = 0;
+static int find_copies_harder = 0;
 static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
@@ -75,7 +76,7 @@ static int show_modified(struct cache_entry *old,
 
 	oldmode = old->ce_mode;
 	if (mode == oldmode && !memcmp(sha1, old->sha1, 20) &&
-	    detect_rename < DIFF_DETECT_COPY)
+	    !find_copies_harder)
 		return 0;
 
 	mode = ntohl(mode);
@@ -158,7 +159,7 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"git-diff-cache [-p] [-r] [-z] [-m] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] [--cached] <tree-ish> [<path>...]";
+"git-diff-cache [-p] [-r] [-z] [-m] [--cached] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> [<path>...]";
 
 int main(int argc, const char **argv)
 {
@@ -213,6 +214,10 @@ int main(int argc, const char **argv)
 				usage(diff_cache_usage);
 			continue;
 		}
+		if (!strcmp(arg, "--find-copies-harder")) {
+			find_copies_harder = 1;
+			continue;
+		}
 		if (!strcmp(arg, "-z")) {
 			diff_output_format = DIFF_FORMAT_MACHINE;
 			continue;
@@ -247,6 +252,9 @@ int main(int argc, const char **argv)
 		}
 		usage(diff_cache_usage);
 	}
+
+	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
+		usage(diff_cache_usage);
 
 	if (!tree_name || get_sha1(tree_name, sha1))
 		usage(diff_cache_usage);

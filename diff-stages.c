@@ -7,6 +7,7 @@
 
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
+static int find_copies_harder = 0;
 static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
@@ -16,7 +17,7 @@ static const char *orderfile = NULL;
 static const char *diff_filter = NULL;
 
 static char *diff_stages_usage =
-"git-diff-stages [-p] [-r] [-z] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] <stage1> <stage2> [<path>...]";
+"git-diff-stages [-p] [-r] [-z] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <stage1> <stage2> [<path>...]";
 
 static void diff_stages(int stage1, int stage2)
 {
@@ -50,9 +51,10 @@ static void diff_stages(int stage1, int stage2)
 			diff_addremove('-', ntohl(one->ce_mode),
 				       one->sha1, name, NULL);
 		else if (memcmp(one->sha1, two->sha1, 20) ||
-			 (one->ce_mode != two->ce_mode))
-			 diff_change(ntohl(one->ce_mode), ntohl(two->ce_mode),
-				     one->sha1, two->sha1, name, NULL);
+			 (one->ce_mode != two->ce_mode) ||
+			 find_copies_harder)
+			diff_change(ntohl(one->ce_mode), ntohl(two->ce_mode),
+				    one->sha1, two->sha1, name, NULL);
 	}
 }
 
@@ -81,6 +83,8 @@ int main(int ac, const char **av)
 			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
 				usage(diff_stages_usage);
 		}
+		else if (!strcmp(arg, "--find-copies-harder"))
+			find_copies_harder = 1;
 		else if (!strcmp(arg, "-z"))
 			diff_output_format = DIFF_FORMAT_MACHINE;
 		else if (!strcmp(arg, "-R"))
@@ -102,7 +106,8 @@ int main(int ac, const char **av)
 	    sscanf(av[1], "%d", &stage1) != 1 ||
 	    ! (0 <= stage1 && stage1 <= 3) ||
 	    sscanf(av[2], "%d", &stage2) != 1 ||
-	    ! (0 <= stage2 && stage2 <= 3))
+	    ! (0 <= stage2 && stage2 <= 3) ||
+	    find_copies_harder && detect_rename != DIFF_DETECT_COPY)
 		usage(diff_stages_usage);
 
 	av += 3; /* The rest from av[0] are for paths restriction. */

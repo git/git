@@ -201,7 +201,7 @@ static int interesting(void *tree, unsigned long size, const char *base)
 static void show_tree(const char *prefix, void *tree, unsigned long size, const char *base)
 {
 	while (size) {
-		if (find_copies_harder || interesting(tree, size, base))
+		if (interesting(tree, size, base))
 			show_file(prefix, tree, size, base);
 		update_tree_entry(&tree, &size);
 	}
@@ -269,7 +269,7 @@ static void call_diff_setup(void)
 
 static int call_diff_flush(void)
 {
-	diffcore_std(find_copies_harder ? paths : 0,
+	diffcore_std(NULL,
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
@@ -401,7 +401,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"git-diff-tree [-p] [-r] [-z] [--stdin] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] [-m] [-s] [-v] [--pretty] [-t] <tree-ish> <tree-ish>";
+"git-diff-tree [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] [--pretty] [-t] [-R] [-B] [-M] [-C] [--find-copies-header] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> <tree-ish>";
 
 static enum cmit_fmt get_commit_format(const char *arg)
 {

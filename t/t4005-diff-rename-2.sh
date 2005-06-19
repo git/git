@@ -136,7 +136,7 @@ test_expect_success \
     'cat ../../COPYING >COPYING &&
      git-update-cache --add --remove COPYING COPYING.1'
 
-git-diff-cache -C $tree >current
+git-diff-cache -C --find-copies-harder $tree >current
 cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234	COPYING	COPYING.1
 EOF

@@ -7,10 +7,11 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"git-diff-files [-p] [-q] [-r] [-z] [-M] [-C] [-R] [-S<string>] [-O<orderfile>] [paths...]";
+"git-diff-files [-p] [-q] [-r] [-z] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] [<path>...]";
 
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;
+static int find_copies_harder = 0;
 static int diff_setup_opt = 0;
 static int diff_score_opt = 0;
 static const char *pickaxe = NULL;
@@ -81,10 +82,15 @@ int main(int argc, const char **argv)
 				usage(diff_files_usage);
 			detect_rename = DIFF_DETECT_COPY;
 		}
+		else if (!strcmp(argv[1], "--find-copies-harder"))
+			find_copies_harder = 1;
 		else
 			usage(diff_files_usage);
 		argv++; argc--;
 	}
+
+	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
+		usage(diff_files_usage);
 
 	/* At this point, if argc == 1, then we are doing everything.
 	 * Otherwise argv[1] .. argv[argc-1] have the explicit paths.
@@ -122,12 +128,11 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		changed = ce_match_stat(ce, &st);
-		if (!changed && detect_rename < DIFF_DETECT_COPY)
+		if (!changed && !find_copies_harder)
 			continue;
-
 		oldmode = ntohl(ce->ce_mode);
 		show_modified(oldmode, DIFF_FILE_CANON_MODE(st.st_mode),
-			      ce->sha1, null_sha1,
+			      ce->sha1, (changed ? null_sha1 : ce->sha1),
 			      ce->name);
 	}
 	diffcore_std((1 < argc) ? argv + 1 : NULL,
