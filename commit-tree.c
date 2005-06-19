@@ -95,15 +95,28 @@ static void check_valid(unsigned char *sha1, const char *expect)
  * how multi-way merges are represented.
  */
 #define MAXPARENT (16)
+static unsigned char parent_sha1[MAXPARENT][20];
 
 static char *commit_tree_usage = "git-commit-tree <sha1> [-p <sha1>]* < changelog";
+
+static int new_parent(int idx)
+{
+	int i;
+	unsigned char *sha1 = parent_sha1[idx];
+	for (i = 0; i < idx; i++) {
+		if (!memcmp(parent_sha1[i], sha1, 20)) {
+			error("duplicate parent %s ignored", sha1_to_hex(sha1));
+			return 0;
+		}
+	}
+	return 1;
+}
 
 int main(int argc, char **argv)
 {
 	int i, len;
 	int parents = 0;
 	unsigned char tree_sha1[20];
-	unsigned char parent_sha1[MAXPARENT][20];
 	unsigned char commit_sha1[20];
 	char *gecos, *realgecos, *commitgecos;
 	char *email, *commitemail, realemail[1000];
@@ -124,7 +137,8 @@ int main(int argc, char **argv)
 		if (!b || strcmp(a, "-p") || get_sha1(b, parent_sha1[parents]))
 			usage(commit_tree_usage);
 		check_valid(parent_sha1[parents], "commit");
-		parents++;
+		if (new_parent(parents))
+			parents++;
 	}
 	if (!parents)
 		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
