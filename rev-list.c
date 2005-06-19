@@ -149,7 +149,7 @@ static int count_distance(struct commit_list *entry)
 	return nr;
 }
 
-static int clear_distance(struct commit_list *list)
+static void clear_distance(struct commit_list *list)
 {
 	while (list) {
 		struct commit *commit = list->item;
