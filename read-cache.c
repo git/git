@@ -171,6 +171,84 @@ int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
 }
 
+/*
+ * Do we have another file that has the beginning components being a
+ * proper superset of the name we're trying to add?
+ */
+static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replace)
+{
+	int retval = 0;
+	int len = ce_namelen(ce);
+	const char *name = ce->name;
+
+	while (pos < active_nr) {
+		struct cache_entry *p = active_cache[pos++];
+
+		if (len >= ce_namelen(p))
+			break;
+		if (memcmp(name, p->name, len))
+			break;
+		if (p->name[len] != '/')
+			continue;
+fprintf(stderr, "conflict: %s %s\n", ce->name, p->name);
+		retval = -1;
+		if (!ok_to_replace)
+			break;
+		remove_cache_entry_at(--pos);
+	}
+	return retval;
+}
+
+/*
+ * Do we have another file with a pathname that is a proper
+ * subset of the name we're trying to add?
+ */
+static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace)
+{
+	int retval = 0;
+	const char *name = ce->name;
+	const char *slash = name + ce_namelen(ce);
+
+	for (;;) {
+		int len;
+
+		for (;;) {
+			if (*--slash == '/')
+				break;
+			if (slash <= ce->name)
+				return retval;
+		}
+		len = slash - name;
+
+		pos = cache_name_pos(name, len);
+		if (pos >= 0) {
+			retval = -1;
+			if (ok_to_replace)
+				break;
+			remove_cache_entry_at(pos);
+			continue;
+		}
+
+		/*
+		 * Trivial optimization: if we find an entry that
+		 * already matches the sub-directory, then we know
+		 * we're ok, and we can exit
+		 */
+		pos = -pos-1;
+		if (pos < active_nr) {
+			struct cache_entry *p = active_cache[pos];
+			if (ce_namelen(p) <= len)
+				continue;
+			if (p->name[len] != '/')
+				continue;
+			if (memcmp(p->name, name, len))
+				continue;
+			break;
+		}
+	}
+	return retval;
+}
+
 /* We may be in a situation where we already have path/file and path
  * is being added, or we already have path and path/file is being
  * added.  Either one would result in a nonsense tree that has path
@@ -180,98 +258,19 @@ int ce_same_name(struct cache_entry *a, struct cache_entry *b)
  * from the cache so the caller should recompute the insert position.
  * When this happens, we return non-zero.
  */
-static int check_file_directory_conflict(const struct cache_entry *ce,
-					 int ok_to_replace)
+static int check_file_directory_conflict(const struct cache_entry *ce, int pos, int ok_to_replace)
 {
-	int pos, replaced = 0;
-	const char *path = ce->name;
-	int namelen = strlen(path);
-	int stage = ce_stage(ce);
-	char *pathbuf = xmalloc(namelen + 1);
-	char *cp;
-
-	memcpy(pathbuf, path, namelen + 1);
-
 	/*
-	 * We are inserting path/file.  Do they have path registered at
-	 * the same stage?  We need to do this for all the levels of our
-	 * subpath.
+	 * We check if the path is a sub-path of a subsequent pathname
+	 * first, since removing those will not change the position
+	 * in the array
 	 */
-	cp = pathbuf;
-	while (1) {
-		char *ep = strchr(cp, '/');
-		int len;
-		if (!ep)
-			break;
-		*ep = 0;    /* first cut it at slash */
-		len = ep - pathbuf;
-		pos = cache_name_pos(pathbuf,
-				     ntohs(create_ce_flags(len, stage)));
-		if (0 <= pos) {
-			/* Our leading path component is registered as a file,
-			 * and we are trying to make it a directory.  This is
-			 * bad.
-			 */
-			if (!ok_to_replace) {
-				free(pathbuf);
-				return -1;
-			}
-			fprintf(stderr, "removing file '%s' to replace it with a directory to create '%s'.\n", pathbuf, path);
-			remove_cache_entry_at(pos);
-			replaced = 1;
-		}
-		*ep = '/';  /* then restore it and go downwards */
-		cp = ep + 1;
-	}
-	free(pathbuf);
-
-	/* Do we have an entry in the cache that makes our path a prefix
-	 * of it?  That is, are we creating a file where they already expect
-	 * a directory there?
+	int retval = has_file_name(ce, pos, ok_to_replace);
+	/*
+	 * Then check if the path might have a clashing sub-directory
+	 * before it.
 	 */
-	pos = cache_name_pos(path,
-			     ntohs(create_ce_flags(namelen, stage)));
-
-	/* (0 <= pos) cannot happen because add_cache_entry()
-	 * should have taken care of that case.
-	 */
-	pos = -pos-1;
-
-	/* pos would point at an existing entry that would come immediately
-	 * after our path.  It could be the same as our path in higher stage,
-	 * or different path but in a lower stage.
-	 *
-	 * E.g. when we are inserting path at stage 2,
-	 *
-	 *        1 path
-	 * pos->  3 path
-	 *        2 path/file1
-	 *        3 path/file1
-	 *        2 path/file2
-	 *        2 patho
-	 *
-	 * We need to examine pos, ignore it because it is at different
-	 * stage, examine next to find the path/file at stage 2, and
-	 * complain.  We need to do this until we are not the leading
-	 * path of an existing entry anymore.
-	 */
-
-	while (pos < active_nr) {
-		struct cache_entry *other = active_cache[pos];
-		if (strncmp(other->name, path, namelen))
-			break; /* it is not our "subdirectory" anymore */
-		if ((ce_stage(other) == stage) &&
-		    other->name[namelen] == '/') {
-			if (!ok_to_replace)
-				return -1;
-			fprintf(stderr, "removing file '%s' under '%s' to be replaced with a file\n", other->name, path);
-			remove_cache_entry_at(pos);
-			replaced = 1;
-			continue; /* cycle without updating pos */
-		}
-		pos++;
-	}
-	return replaced;
+	return retval + has_dir_name(ce, pos, ok_to_replace);
 }
 
 int add_cache_entry(struct cache_entry *ce, int option)
@@ -304,7 +303,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (!ok_to_add)
 		return -1;
 
-	if (check_file_directory_conflict(ce, ok_to_replace)) {
+	if (!ce_stage(ce) && check_file_directory_conflict(ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
 			return -1;
 		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
