@@ -83,10 +83,88 @@ static struct diff_tempfile {
 	char tmp_path[50];
 } diff_temp[2];
 
+static int count_lines(const char *filename)
+{
+	FILE *in;
+	int count, ch, completely_empty = 1, nl_just_seen = 0;
+	in = fopen(filename, "r");
+	count = 0;
+	while ((ch = fgetc(in)) != EOF)
+		if (ch == '\n') {
+			count++;
+			nl_just_seen = 1;
+			completely_empty = 0;
+		}
+		else {
+			nl_just_seen = 0;
+			completely_empty = 0;
+		}
+	fclose(in);
+	if (completely_empty)
+		return 0;
+	if (!nl_just_seen)
+		count++; /* no trailing newline */
+	return count;
+}
+
+static void print_line_count(int count)
+{
+	switch (count) {
+	case 0:
+		printf("0,0");
+		break;
+	case 1:
+		printf("1");
+		break;
+	default:
+		printf("1,%d", count);
+		break;
+	}
+}
+
+static void copy_file(int prefix, const char *filename)
+{
+	FILE *in;
+	int ch, nl_just_seen = 1;
+	in = fopen(filename, "r");
+	while ((ch = fgetc(in)) != EOF) {
+		if (nl_just_seen)
+			putchar(prefix);
+		putchar(ch);
+		if (ch == '\n')
+			nl_just_seen = 1;
+		else
+			nl_just_seen = 0;
+	}
+	fclose(in);
+	if (!nl_just_seen)
+		printf("\n\\ No newline at end of file\n");
+}
+
+static void emit_rewrite_diff(const char *name_a,
+			      const char *name_b,
+			      struct diff_tempfile *temp)
+{
+	/* Use temp[i].name as input, name_a and name_b as labels */
+	int lc_a, lc_b;
+	lc_a = count_lines(temp[0].name);
+	lc_b = count_lines(temp[1].name);
+	printf("--- %s\n+++ %s\n@@ -", name_a, name_b);
+	print_line_count(lc_a);
+	printf(" +");
+	print_line_count(lc_b);
+	printf(" @@\n");
+	if (lc_a)
+		copy_file('-', temp[0].name);
+	if (lc_b)
+		copy_file('+', temp[1].name);
+}
+
 static void builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_tempfile *temp,
-			 const char *xfrm_msg)
+			 const char *xfrm_msg,
+			 int complete_rewrite)
 {
 	int i, next_at, cmd_size;
 	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
@@ -149,12 +227,16 @@ static void builtin_diff(const char *name_a,
 		}
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
-
 		if (strncmp(temp[0].mode, temp[1].mode, 3))
 			/* we do not run diff between different kind
 			 * of objects.
 			 */
 			exit(0);
+		if (complete_rewrite) {
+			fflush(NULL);
+			emit_rewrite_diff(name_a, name_b, temp);
+			exit(0);
+		}
 	}
 	fflush(NULL);
 	execlp("/bin/sh","sh", "-c", cmd, NULL);
@@ -474,7 +556,8 @@ static void run_external_diff(const char *pgm,
 			      const char *other,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
-			      const char *xfrm_msg)
+			      const char *xfrm_msg,
+			      int complete_rewrite)
 {
 	struct diff_tempfile *temp = diff_temp;
 	pid_t pid;
@@ -524,7 +607,8 @@ static void run_external_diff(const char *pgm,
 		 * otherwise we use the built-in one.
 		 */
 		if (one && two)
-			builtin_diff(name, other ? : name, temp, xfrm_msg);
+			builtin_diff(name, other ? : name, temp, xfrm_msg,
+				     complete_rewrite);
 		else
 			printf("* Unmerged path %s\n", name);
 		exit(0);
@@ -547,29 +631,75 @@ static void run_external_diff(const char *pgm,
 	remove_tempfile();
 }
 
-static void run_diff(const char *name,
-		     const char *other,
-		     struct diff_filespec *one,
-		     struct diff_filespec *two,
-		     const char *xfrm_msg)
+static void run_diff(struct diff_filepair *p)
 {
 	const char *pgm = external_diff();
+	char msg_[PATH_MAX*2+200], *xfrm_msg;
+	struct diff_filespec *one;
+	struct diff_filespec *two;
+	const char *name;
+	const char *other;
+	int complete_rewrite = 0;
+
+	if (DIFF_PAIR_UNMERGED(p)) {
+		/* unmerged */
+		run_external_diff(pgm, p->one->path, NULL, NULL, NULL, NULL,
+				  0);
+		return;
+	}
+
+	name = p->one->path;
+	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	one = p->one; two = p->two;
+	switch (p->status) {
+	case 'C':
+		sprintf(msg_,
+			"similarity index %d%%\n"
+			"copy from %s\n"
+			"copy to %s",
+			(int)(0.5 + p->score * 100.0/MAX_SCORE),
+			name, other);
+		xfrm_msg = msg_;
+		break;
+	case 'R':
+		sprintf(msg_,
+			"similarity index %d%%\n"
+			"rename from %s\n"
+			"rename to %s",
+			(int)(0.5 + p->score * 100.0/MAX_SCORE),
+			name, other);
+		xfrm_msg = msg_;
+		break;
+	case 'M':
+		if (p->score) {
+			sprintf(msg_,
+				"dissimilarity index %d%%",
+				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			xfrm_msg = msg_;
+			complete_rewrite = 1;
+			break;
+		}
+		/* fallthru */
+	default:
+		xfrm_msg = NULL;
+	}
+
 	if (!pgm &&
-	    one && two &&
 	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
 	    (S_IFMT & one->mode) != (S_IFMT & two->mode)) {
 		/* a filepair that changes between file and symlink
 		 * needs to be split into deletion and creation.
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
-		run_external_diff(NULL, name, other, one, null, xfrm_msg);
+		run_external_diff(NULL, name, other, one, null, xfrm_msg, 0);
 		free(null);
 		null = alloc_filespec(one->path);
-		run_external_diff(NULL, name, other, null, two, xfrm_msg);
+		run_external_diff(NULL, name, other, null, two, xfrm_msg, 0);
 		free(null);
 	}
 	else
-		run_external_diff(pgm, name, other, one, two, xfrm_msg);
+		run_external_diff(pgm, name, other, one, two, xfrm_msg,
+				  complete_rewrite);
 }
 
 void diff_setup(int flags)
@@ -693,26 +823,22 @@ static void diff_flush_raw(struct diff_filepair *p,
 			die(err, p->two->path);
 	}
 
+	if (p->score)
+		sprintf(status, "%c%03d", p->status,
+			(int)(0.5 + p->score * 100.0/MAX_SCORE));
+	else {
+		status[0] = p->status;
+		status[1] = 0;
+	}
 	switch (p->status) {
 	case 'C': case 'R':
 		two_paths = 1;
-		sprintf(status, "%c%03d", p->status,
-			(int)(0.5 + p->score * 100.0/MAX_SCORE));
 		break;
 	case 'N': case 'D':
 		two_paths = 0;
-		if (p->score)
-			sprintf(status, "%c%03d", p->status,
-				(int)(0.5 + p->score * 100.0/MAX_SCORE));
-		else {
-			status[0] = p->status;
-			status[1] = 0;
-		}
 		break;
 	default:
 		two_paths = 0;
-		status[0] = p->status;
-		status[1] = 0;
 		break;
 	}
 	printf(":%06o %06o %s ",
@@ -763,55 +889,14 @@ int diff_unmodified_pair(struct diff_filepair *p)
 
 static void diff_flush_patch(struct diff_filepair *p)
 {
-	const char *name, *other;
-	char msg_[PATH_MAX*2+200], *msg;
-
 	if (diff_unmodified_pair(p))
 		return;
 
-	name = p->one->path;
-	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
 	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
 	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
 		return; /* no tree diffs in patch format */ 
 
-	switch (p->status) {
-	case 'C':
-		sprintf(msg_,
-			"similarity index %d%%\n"
-			"copy from %s\n"
-			"copy to %s",
-			(int)(0.5 + p->score * 100.0/MAX_SCORE),
-			p->one->path, p->two->path);
-		msg = msg_;
-		break;
-	case 'R':
-		sprintf(msg_,
-			"similarity index %d%%\n"
-			"rename from %s\n"
-			"rename to %s",
-			(int)(0.5 + p->score * 100.0/MAX_SCORE),
-			p->one->path, p->two->path);
-		msg = msg_;
-		break;
-	case 'D': case 'N':
-		if (DIFF_PAIR_BROKEN(p)) {
-			sprintf(msg_,
-				"dissimilarity index %d%%",
-				(int)(0.5 + p->score * 100.0/MAX_SCORE));
-			msg = msg_;
-		}
-		else
-			msg = NULL;
-		break;
-	default:
-		msg = NULL;
-	}
-
-	if (DIFF_PAIR_UNMERGED(p))
-		run_diff(name, NULL, NULL, NULL, NULL);
-	else
-		run_diff(name, other, p->one, p->two, msg);
+	run_diff(p);
 }
 
 int diff_queue_is_empty(void)
@@ -972,8 +1057,10 @@ static void diffcore_apply_filter(const char *filter)
 		int found;
 		for (i = found = 0; !found && i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if ((p->broken_pair && strchr(filter, 'B')) ||
-			    (!p->broken_pair && strchr(filter, p->status)))
+			if (((p->status == 'M') &&
+			     ((p->score && strchr(filter, 'B')) ||
+			      (!p->score && strchr(filter, 'M')))) ||
+			    ((p->status != 'M') && strchr(filter, p->status)))
 				found++;
 		}
 		if (found)
@@ -991,8 +1078,10 @@ static void diffcore_apply_filter(const char *filter)
 		/* Only the matching ones */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if ((p->broken_pair && strchr(filter, 'B')) ||
-			    (!p->broken_pair && strchr(filter, p->status)))
+			if (((p->status == 'M') &&
+			     ((p->score && strchr(filter, 'B')) ||
+			      (!p->score && strchr(filter, 'M')))) ||
+			    ((p->status != 'M') && strchr(filter, p->status)))
 				diff_q(&outq, p);
 			else
 				diff_free_filepair(p);

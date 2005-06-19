@@ -44,13 +44,12 @@ test_expect_success \
 
 cat >expected <<\EOF
 :100644 000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 0000000000000000000000000000000000000000 D	file0
-:100644 000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0000000000000000000000000000000000000000 D100	file1
-:000000 100644 0000000000000000000000000000000000000000 11e331465a89c394dc25c780de230043750c1ec8 N100	file1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 11e331465a89c394dc25c780de230043750c1ec8 M100	file1
 EOF
 
 test_expect_success \
     'validate result of -B (#1)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'run diff with -B and -M' \
@@ -62,7 +61,7 @@ EOF
 
 test_expect_success \
     'validate result of -B -M (#2)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'swap file0 and file1' \
@@ -79,15 +78,13 @@ test_expect_success \
     'git-diff-cache -B "$tree" >current'
 
 cat >expected <<\EOF
-:100644 000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 0000000000000000000000000000000000000000 D100	file0
-:000000 100644 0000000000000000000000000000000000000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 N100	file0
-:100644 000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0000000000000000000000000000000000000000 D100	file1
-:000000 100644 0000000000000000000000000000000000000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 N100	file1
+:100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 6ff87c4664981e4397625791c8ea3bbb5f2279a3 M100	file0
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
 EOF
 
 test_expect_success \
     'validate result of -B (#3)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'run diff with -B and -M' \
@@ -100,7 +97,7 @@ EOF
 
 test_expect_success \
     'validate result of -B -M (#4)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'make file0 into something completely different' \
@@ -114,13 +111,12 @@ test_expect_success \
 
 cat >expected <<\EOF
 :100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0000000000000000000000000000000000000000 D100	file1
-:000000 100644 0000000000000000000000000000000000000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 N100	file1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
 EOF
 
 test_expect_success \
     'validate result of -B (#5)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'run diff with -B' \
@@ -130,13 +126,12 @@ test_expect_success \
 # due to type differences.
 cat >expected <<\EOF
 :100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0000000000000000000000000000000000000000 D100	file1
-:000000 100644 0000000000000000000000000000000000000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 N100	file1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
 EOF
 
 test_expect_success \
     'validate result of -B -M (#6)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'run diff with -M' \
@@ -151,7 +146,7 @@ EOF
 
 test_expect_success \
     'validate result of -M (#7)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'file1 edited to look like file0 and file0 rename-edited to file2' \
@@ -169,14 +164,13 @@ test_expect_success \
 
 cat >expected <<\EOF
 :100644 000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 0000000000000000000000000000000000000000 D	file0
-:100644 000000 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0000000000000000000000000000000000000000 D100	file1
-:000000 100644 0000000000000000000000000000000000000000 08bb2fb671deff4c03a4d4a0a1315dff98d5732c N100	file1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 08bb2fb671deff4c03a4d4a0a1315dff98d5732c M100	file1
 :000000 100644 0000000000000000000000000000000000000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 N	file2
 EOF
 
 test_expect_success \
     'validate result of -B (#8)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_expect_success \
     'run diff with -B -M' \
@@ -189,6 +183,6 @@ EOF
 
 test_expect_success \
     'validate result of -B -M (#9)' \
-    'compare_diff_raw current expected'
+    'compare_diff_raw expected current'
 
 test_done

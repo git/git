@@ -214,7 +214,7 @@ static void merge_broken(struct diff_filepair *p,
 			 struct diff_queue_struct *outq)
 {
 	/* p and pp are broken pairs we want to merge */
-	struct diff_filepair *c = p, *d = pp;
+	struct diff_filepair *c = p, *d = pp, *dp;
 	if (DIFF_FILE_VALID(p->one)) {
 		/* this must be a delete half */
 		d = p; c = pp;
@@ -229,7 +229,8 @@ static void merge_broken(struct diff_filepair *p,
 	if (!DIFF_FILE_VALID(c->two))
 		die("internal error in merge #4");
 
-	diff_queue(outq, d->one, c->two);
+	dp = diff_queue(outq, d->one, c->two);
+	dp->score = p->score;
 	diff_free_filespec_data(d->two);
 	diff_free_filespec_data(c->one);
 	free(d);
@@ -251,7 +252,6 @@ void diffcore_merge_broken(void)
 			/* we already merged this with its peer */
 			continue;
 		else if (p->broken_pair &&
-			 p->score == 0 &&
 			 !strcmp(p->one->path, p->two->path)) {
 			/* If the peer also survived rename/copy, then
 			 * we merge them back together.
@@ -259,7 +259,6 @@ void diffcore_merge_broken(void)
 			for (j = i + 1; j < q->nr; j++) {
 				struct diff_filepair *pp = q->queue[j];
 				if (pp->broken_pair &&
-				    p->score == 0 &&
 				    !strcmp(pp->one->path, pp->two->path) &&
 				    !strcmp(p->one->path, pp->two->path)) {
 					/* Peer survived.  Merge them */

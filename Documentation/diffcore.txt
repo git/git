@@ -191,6 +191,15 @@ like these:
 	-B/60   (the same as above, since diffcore-break defautls to
 		 50%).
 
+Note that earlier implementation left a broken pair as a separate
+creation and deletion patches.  This was unnecessary hack and
+the latest implementation always merges all the broken pairs
+back into modifications, but the resulting patch output is
+formatted differently to still let the reviewing easier for such
+a complete rewrite by showing the entire contents of old version
+prefixed with '-', followed by the entire contents of new
+version prefixed with '+'.
+
 
 diffcore-pickaxe
 ----------------
