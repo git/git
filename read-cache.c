@@ -190,7 +190,6 @@ static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replac
 			break;
 		if (p->name[len] != '/')
 			continue;
-fprintf(stderr, "conflict: %s %s\n", ce->name, p->name);
 		retval = -1;
 		if (!ok_to_replace)
 			break;
