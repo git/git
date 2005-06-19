@@ -44,11 +44,11 @@ Issues of note:
 	- "libcurl".  git-http-pull uses this.  You can disable building of
 	  that program if you just want to get started. 
 
-	- "GNU patch" to generate patches.  Of course, you don't _have_ to
+	- "GNU diff" to generate patches.  Of course, you don't _have_ to
 	  generate patches if you don't want to, but let's face it, you'll
 	  be wanting to. Or why did you get git in the first place?
 
-	  Non-GNU versions of the patch program don't generally support
+	  Non-GNU versions of the diff/patch programs don't generally support
 	  the unified patch format (which is the one git uses), so you
 	  really do want to get the GNU one.  Trust me, you will want to
 	  do that even if it wasn't for git.  There's no point in living
