@@ -9,7 +9,7 @@ git-diff-cache - Compares content and mode of blobs between the cache and reposi
 
 SYNOPSIS
 --------
-'git-diff-cache' [-p] [-r] [-z] [-m] [-B] [-M] [-R] [-C] [-O<orderfile>] [-S<string>] [--pickaxe-all] [--cached] <tree-ish> [<path>...]
+'git-diff-cache' [-p] [-r] [-z] [-m] [--cached] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
@@ -43,6 +43,14 @@ OPTIONS
 
 -C::
 	Detect copies as well as renames.
+
+--find-copies-harder::
+	By default, -C option finds copies only if the original
+	file of the copy was modified in the same changeset for
+	performance reasons.  This flag makes the command
+	inspect unmodified files as candidates for the source of
+	copy.  This is a very expensive operation for large
+	projects, so use it with caution.
 
 -S<string>::
 	Look for differences that contains the change in <string>.

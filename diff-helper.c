@@ -21,7 +21,7 @@ static void flush_them(int ac, const char **av)
 }
 
 static const char *diff_helper_usage =
-	"git-diff-helper [-z] [-S<string>] [-O<orderfile>] paths...";
+"git-diff-helper [-z] [-O<orderfile>] [-S<string>] [--pickaxe-all] [<path>...]";
 
 int main(int ac, const char **av) {
 	struct strbuf sb;

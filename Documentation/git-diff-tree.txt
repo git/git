@@ -9,7 +9,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 
 SYNOPSIS
 --------
-'git-diff-tree' [-p] [-r] [-z] [--stdin] [-B] [-M] [-R] [-C] [-O<orderfile>] [-S<string>] [--pickaxe-all] [-m] [-s] [-v] [-t] <tree-ish> <tree-ish> [<pattern>]\*
+'git-diff-tree' [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] [-t] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
@@ -22,11 +22,11 @@ OPTIONS
 <tree-ish>::
 	The id of a tree object.
 
-<pattern>::
+<path>...::
 	If provided, the results are limited to a subset of files
 	matching one of these prefix strings.
 	ie file matches `/^<pattern1>|<pattern2>|.../`
-	Note that pattern does not provide any wildcard or regexp
+	Note that this parameter does not provide any wildcard or regexp
 	features.
 
 -p::
@@ -41,6 +41,14 @@ OPTIONS
 
 -C::
 	Detect copies as well as renames.
+
+--find-copies-harder::
+	By default, -C option finds copies only if the original
+	file of the copy was modified in the same changeset for
+	performance reasons.  This flag makes the command
+	inspect unmodified files as candidates for the source of
+	copy.  This is a very expensive operation for large
+	projects, so use it with caution.
 
 -R::
 	Swap two input trees.
@@ -95,6 +103,11 @@ separated with a single space are given.
 -v::
 	This flag causes "git-diff-tree --stdin" to also show
 	the commit message before the differences.
+
+--pretty[=(raw|medium|short)]::
+	This is used to control "pretty printing" format of the
+	commit message.  Without "=<style>", it defaults to
+	medium.
 
 
 Limiting Output

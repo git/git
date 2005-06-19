@@ -1,34 +1,36 @@
-git-diff-files(1)
-=================
-v0.1, May 2005
+git-diff-stages(1)
+==================
+v0.1, June 2005
 
 NAME
 ----
-git-diff-files - Compares files in the working tree and the cache
+git-diff-stages - Compares content and mode of blobs between stages in an unmerged index file.
 
 
 SYNOPSIS
 --------
-'git-diff-files' [-p] [-q] [-r] [-z] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] [<path>...]
+'git-diff-stages' [-p] [-r] [-z] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <stage1> <stage2> [<path>...]
 
 DESCRIPTION
 -----------
-Compares the files in the working tree and the cache.  When paths
-are specified, compares only those named paths.  Otherwise all
-entries in the cache are compared.  The output format is the
-same as "git-diff-cache" and "git-diff-tree".
+Compares the content and mode of the blobs in two stages in an
+unmerged index file.
 
 OPTIONS
 -------
+<stage1>,<stage2>::
+	The stage number to be compared.
+
 -p::
-	generate patch (see section on generating patches).
+	Generate patch (see section on generating patches)
 
--q::
-	Remain silent even on nonexisting files
+-r::
+	This flag does not mean anything.  It is there only to match
+	"git-diff-tree".  Unlike "git-diff-tree", "git-diff-stages"
+	always looks at all the subdirectories.
 
--R::
-	Swap two inputs; that is, show differences from on-disk files
-	to cache contents.
+-z::
+	\0 line termination on output
 
 -B::
 	Break complete rewrite changes into pairs of delete and create.
@@ -59,11 +61,9 @@ OPTIONS
 	Output the patch in the order specified in the
 	<orderfile>, which has one shell glob pattern per line.
 
--r::
-	This flag does not mean anything.  It is there only to match
-	git-diff-tree.  Unlike git-diff-tree, git-diff-files always looks
-	at all the subdirectories.
-
+-R::
+	Swap two inputs; that is, show differences from <stage2> to
+	<stage1>.
 
 Output format
 -------------
@@ -72,13 +72,12 @@ include::diff-format.txt[]
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Junio C Hamano <junkio@cox.net>
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by Junio C Hamano.
 
 GIT
 ---
 Part of the link:git.html[git] suite
-

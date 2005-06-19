@@ -150,15 +150,13 @@ similarity score different from the default 50% by giving a
 number after "-M" or "-C" option (e.g. "-M8" to tell it to use
 8/10 = 80%).
 
-Note.  When the "-C" option is used, git-diff-cache and
-git-diff-file commands feed not just modified filepairs but
-unmodified ones to diffcore mechanism as well.  This lets the
-copy detector consider unmodified files as copy source
-candidates at the expense of making it slower.  Currently
-git-diff-tree does not feed unmodified filepairs even when the
-"-C" option is used, so it can detect copies only if the file
-that was copied happened to have been modified in the same
-changeset.
+Note.  When the "-C" option is used with --find-copies-harder
+option, git-diff-* commands feed unmodified filepairs to
+diffcore mechanism as well as modified ones.  This lets the copy
+detector consider unmodified files as copy source candidates at
+the expense of making it slower.  Without --find-copies-harder,
+git-diff-* commands can detect copies only if the file that was
+copied happened to have been modified in the same changeset.
 
 
 diffcore-merge-broken
