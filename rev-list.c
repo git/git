@@ -27,6 +27,7 @@ static int max_count = -1;
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 static int merge_order = 0;
 static int show_breaks = 0;
+static int stop_traversal = 0;
 
 static void show_commit(struct commit *commit)
 {
@@ -57,12 +58,20 @@ static void show_commit(struct commit *commit)
 
 static int filter_commit(struct commit * commit)
 {
+	if (merge_order && stop_traversal && commit->object.flags & BOUNDARY)
+		return STOP;
 	if (commit->object.flags & (UNINTERESTING|SHOWN))
 		return CONTINUE;
 	if (min_age != -1 && (commit->date > min_age))
 		return CONTINUE;
-	if (max_age != -1 && (commit->date < max_age))
-		return STOP;
+	if (max_age != -1 && (commit->date < max_age)) {
+		if (!merge_order)
+			return STOP;
+		else {
+			stop_traversal = 1;
+			return CONTINUE;
+		}
+	}
 	if (max_count != -1 && !max_count--)
 		return STOP;
 	return DO;
