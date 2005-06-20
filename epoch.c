@@ -606,7 +606,9 @@ int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter)
 		}
 	}
 
-	if (!reversed->next) {
+	if (!reversed)
+		return ret;
+	else if (!reversed->next) {
 		/*
 		 * If there is only one element in the list, we can sort it
 		 * using sort_in_merge_order.
