@@ -78,20 +78,6 @@ int main(int argc, char **argv)
 			printf("%s\n", arg);
 			continue;
 		}
-		if (!get_sha1(arg, sha1)) {
-			if (no_revs)
-				continue;
-			def = NULL;
-			printf("%s\n", sha1_to_hex(sha1));
-			continue;
-		}
-		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
-			if (no_revs)
-				continue;
-			def = NULL;
-			printf("^%s\n", sha1_to_hex(sha1));
-			continue;
-		}
 		dotdot = strstr(arg, "..");
 		if (dotdot) {
 			unsigned char end[20];
@@ -110,6 +96,20 @@ int main(int argc, char **argv)
 				}
 			}
 			*dotdot = '.';
+		}
+		if (!get_sha1(arg, sha1)) {
+			if (no_revs)
+				continue;
+			def = NULL;
+			printf("%s\n", sha1_to_hex(sha1));
+			continue;
+		}
+		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
+			if (no_revs)
+				continue;
+			def = NULL;
+			printf("^%s\n", sha1_to_hex(sha1));
+			continue;
 		}
 		if (revs_only)
 			continue;
