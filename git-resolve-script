@@ -4,25 +4,30 @@
 #
 # Resolve two trees.
 #
-head="$1"
-merge="$2"
+head=$(git-rev-parse --revs-only "$1")
+merge=$(git-rev-parse --revs-only "$2")
 merge_repo="$3"
 
 : ${GIT_DIR=.git}
 : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 
-rm -f "$GIT_DIR"/MERGE_HEAD "$GIT_DIR"/ORIG_HEAD
-echo $head > "$GIT_DIR"/ORIG_HEAD
-echo $merge > "$GIT_DIR"/MERGE_HEAD
+dropheads() {
+	rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD" \
+		"$GIT_DIR/LAST_MERGE" || exit 1
+}
 
 #
 # The remote name is just used for the message,
 # but we do want it.
 #
-if [ "$merge_repo" == "" ]; then
+if [ -z "$head" -o -z "$merge" -o -z "$merge_repo" ]; then
 	echo "git-resolve-script <head> <remote> <merge-repo-name>"
 	exit 1
 fi
+
+dropheads
+echo $head > "$GIT_DIR"/ORIG_HEAD
+echo $merge > "$GIT_DIR"/LAST_MERGE
 
 common=$(git-merge-base $head $merge)
 if [ -z "$common" ]; then
@@ -32,7 +37,7 @@ fi
 
 if [ "$common" == "$merge" ]; then
 	echo "Already up-to-date. Yeeah!"
-	rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD"
+	dropheads
 	exit 0
 fi
 if [ "$common" == "$head" ]; then
@@ -40,7 +45,7 @@ if [ "$common" == "$head" ]; then
 	git-read-tree -u -m $head $merge || exit 1
 	echo $merge > "$GIT_DIR"/HEAD
 	git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
-	rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD"
+	dropheads
 	exit 0
 fi
 echo "Trying to merge $merge into $head"
@@ -51,6 +56,7 @@ if [ $? -ne 0 ]; then
 	echo "Simple merge failed, trying Automatic merge"
 	git-merge-cache -o git-merge-one-file-script -a
 	if [ $? -ne 0 ]; then
+		echo $merge > "$GIT_DIR"/MERGE_HEAD
 		echo "Automatic merge failed, fix up by hand"
 		exit 1
 	fi
@@ -60,4 +66,4 @@ result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $me
 echo "Committed merge $result_commit"
 echo $result_commit > "$GIT_DIR"/HEAD
 git-diff-tree -p $head $result_commit | git-apply --stat
-rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD"
+dropheads
