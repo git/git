@@ -621,20 +621,27 @@ int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter)
 			base->object.flags |= BOUNDARY;
 
 		while (reversed) {
-			sort_first_epoch(pop_commit(&reversed), &stack);
-			if (reversed) {
-				/*
-				 * If we have more commits to push, then the
-				 * first push for the next parent may (or may
-				 * not) represent a discontinuity with respect
-				 * to the parent currently on the top of
-				 * the stack.
-				 *
-				 * Mark it for checking here, and check it
-				 * with the next push. See sort_first_epoch()
-				 * for more details.
-				 */
-				stack->item->object.flags |= DISCONTINUITY;
+			struct commit * next = pop_commit(&reversed);
+
+			if (!(next->object.flags & VISITED)) {
+				sort_first_epoch(next, &stack);
+				if (reversed) {
+					/*
+					 * If we have more commits 
+					 * to push, then the first
+					 * push for the next parent may 
+					 * (or may * not) represent a 
+					 * discontinuity with respect
+					 * to the parent currently on 
+					 * the top of the stack.
+					 *
+					 * Mark it for checking here, 
+					 * and check it with the next 
+					 * push. See sort_first_epoch()
+					 * for more details.
+					 */
+					stack->item->object.flags |= DISCONTINUITY;
+				}
 			}
 		}
 
