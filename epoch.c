@@ -224,17 +224,13 @@ static int find_base_for_list(struct commit_list *list, struct commit **boundary
 	for (; list; list = list->next) {
 		struct commit *item = list->item;
 
-		if (item->object.util) {
-			die("%s:%d:%s: logic error: this should not have happened - commit %s",
-			    __FILE__, __LINE__, __FUNCTION__,
-			    sha1_to_hex(item->object.sha1));
+		if (!item->object.util) {
+			new_mass_counter(list->item, get_one());
+			add(&injected, &injected, get_one());
+
+			commit_list_insert(list->item, &cleaner);
+			commit_list_insert(list->item, &pending);
 		}
-
-		new_mass_counter(list->item, get_one());
-		add(&injected, &injected, get_one());
-
-		commit_list_insert(list->item, &cleaner);
-		commit_list_insert(list->item, &pending);
 	}
 
 	while (!*boundary && pending && !ret) {
