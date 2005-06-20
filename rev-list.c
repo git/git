@@ -5,6 +5,7 @@
 #define SEEN		(1u << 0)
 #define INTERESTING	(1u << 1)
 #define COUNTED		(1u << 2)
+#define SHOWN		(LAST_EPOCH_FLAG << 2)
 
 static const char rev_list_usage[] =
 	"usage: git-rev-list [OPTION] commit-id <commit-id>\n"
@@ -29,6 +30,7 @@ static int show_breaks = 0;
 
 static void show_commit(struct commit *commit)
 {
+	commit->object.flags |= SHOWN;
 	if (show_breaks) {
 		prefix = "| ";
 		if (commit->object.flags & DISCONTINUITY) {
@@ -55,7 +57,7 @@ static void show_commit(struct commit *commit)
 
 static int filter_commit(struct commit * commit)
 {
-	if (commit->object.flags & UNINTERESTING)
+	if (commit->object.flags & (UNINTERESTING|SHOWN))
 		return CONTINUE;
 	if (min_age != -1 && (commit->date > min_age))
 		return CONTINUE;
@@ -63,7 +65,6 @@ static int filter_commit(struct commit * commit)
 		return STOP;
 	if (max_count != -1 && !max_count--)
 		return STOP;
-
 	return DO;
 }
 
