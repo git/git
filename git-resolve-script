@@ -32,6 +32,7 @@ fi
 
 if [ "$common" == "$merge" ]; then
 	echo "Already up-to-date. Yeeah!"
+	rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD"
 	exit 0
 fi
 if [ "$common" == "$head" ]; then
@@ -39,6 +40,7 @@ if [ "$common" == "$head" ]; then
 	git-read-tree -u -m $head $merge || exit 1
 	echo $merge > "$GIT_DIR"/HEAD
 	git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
+	rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD"
 	exit 0
 fi
 echo "Trying to merge $merge into $head"
@@ -58,4 +60,4 @@ result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $me
 echo "Committed merge $result_commit"
 echo $result_commit > "$GIT_DIR"/HEAD
 git-diff-tree -p $head $result_commit | git-apply --stat
-rm $GIT_DIR/ORIG_HEAD $GIT_DIR/MERGE_HEAD
+rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD"
