@@ -111,9 +111,12 @@ int main(int argc, char **argv)
 			printf("^%s\n", sha1_to_hex(sha1));
 			continue;
 		}
+		if (def) {
+			printf("%s\n", def);
+			def = NULL;
+		}
 		if (revs_only)
 			continue;
-		def = NULL;
 		printf("%s\n", arg);
 	}
 	if (def)
