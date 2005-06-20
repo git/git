@@ -107,7 +107,7 @@ int main(int ac, const char **av)
 	    ! (0 <= stage1 && stage1 <= 3) ||
 	    sscanf(av[2], "%d", &stage2) != 1 ||
 	    ! (0 <= stage2 && stage2 <= 3) ||
-	    find_copies_harder && detect_rename != DIFF_DETECT_COPY)
+	    (find_copies_harder && detect_rename != DIFF_DETECT_COPY))
 		usage(diff_stages_usage);
 
 	av += 3; /* The rest from av[0] are for paths restriction. */
