@@ -536,6 +536,8 @@ static int sort_in_merge_order(struct commit *head_of_epoch, emitter_func emitte
 
 	ret = parse_commit(head_of_epoch);
 
+	next->object.flags |= BOUNDARY;
+
 	while (next && next->parents && !ret && (action != STOP)) {
 		struct commit *base = NULL;
 
