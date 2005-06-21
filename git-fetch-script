@@ -35,7 +35,7 @@ download_objects () {
 }
 
 echo "Getting remote $merge_name"
-download_one "$merge_repo/$merge_name" "$GIT_DIR"/MERGE_HEAD || exit 1
+download_one "$merge_repo/$merge_name" "$GIT_DIR"/FETCH_HEAD || exit 1
 
 echo "Getting object database"
-download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)" || exit 1
+download_objects "$merge_repo" "$(cat "$GIT_DIR"/FETCH_HEAD)" || exit 1

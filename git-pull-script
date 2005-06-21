@@ -17,5 +17,5 @@ git-fetch-script "$merge_repo" "$merge_head" || exit 1
 
 git-resolve-script \
 	"$(cat "$GIT_DIR"/HEAD)" \
-	"$(cat "$GIT_DIR"/MERGE_HEAD)" \
+	"$(cat "$GIT_DIR"/FETCH_HEAD)" \
 	"$merge_name"

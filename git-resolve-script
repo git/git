@@ -12,7 +12,7 @@ merge_repo="$3"
 : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 
 dropheads() {
-	rm -f -- "$GIT_DIR/ORIG_HEAD" "$GIT_DIR/MERGE_HEAD" \
+	rm -f -- "$GIT_DIR/MERGE_HEAD" \
 		"$GIT_DIR/LAST_MERGE" || exit 1
 }
 
@@ -44,7 +44,7 @@ if [ "$common" == "$head" ]; then
 	echo "Updating from $head to $merge."
 	git-read-tree -u -m $head $merge || exit 1
 	echo $merge > "$GIT_DIR"/HEAD
-	git-diff-tree -p ORIG_HEAD HEAD | git-apply --stat
+	git-diff-tree -p $head $merge | git-apply --stat
 	dropheads
 	exit 0
 fi
