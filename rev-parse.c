@@ -62,7 +62,7 @@ static int get_parent(char *name, unsigned char *result, int idx)
 
 /*
  * This is like "get_sha1()", except it allows "sha1 expressions",
- * notably "xyz.p" for "parent of xyz"
+ * notably "xyz^" for "parent of xyz"
  */
 static int get_extended_sha1(char *name, unsigned char *sha1)
 {
@@ -70,15 +70,15 @@ static int get_extended_sha1(char *name, unsigned char *sha1)
 	int len = strlen(name);
 
 	parent = 1;
-	if (len > 3 && name[len-1] >= '1' && name[len-1] <= '9') {
+	if (len > 2 && name[len-1] >= '1' && name[len-1] <= '9') {
 		parent = name[len-1] - '0';
 		len--;
 	}
-	if (len > 2 && !memcmp(name + len - 2, ".p", 2)) {
+	if (len > 1 && name[len-1] == '^') {
 		int ret;
-		name[len-2] = 0;
+		name[len-1] = 0;
 		ret = get_parent(name, sha1, parent);
-		name[len-2] = '.';
+		name[len-1] = '^';
 		if (!ret)
 			return 0;
 	}
