@@ -36,7 +36,7 @@ proc getcommits {rargs} {
 }
 
 proc getcommitline {commfd}  {
-    global commits parents cdate children nchildren ncleft
+    global commits parents cdate children nchildren
     global commitlisted phase commitinfo nextupdate
     global stopped redisplaying nlines
 
@@ -144,12 +144,11 @@ proc readcommit {id} {
 		    }
 		    lappend parents($id) $p
 		    incr nparents($id)
+		    # sometimes we get a commit that lists a parent twice...
 		    if {[lsearch -exact $children($p) $id] < 0} {
 			lappend children($p) $id
 			incr nchildren($p)
 			incr ncleft($p)
-		    } else {
-			puts "child $id already in $p's list??"
 		    }
 		} elseif {$tag == "author"} {
 		    set x [expr {[llength $line] - 2}]
@@ -591,12 +590,21 @@ proc initgraph {} {
     }
 }
 
+proc bindline {t id} {
+    global canv
+
+    $canv bind $t <Button-3> "linemenu %X %Y $id"
+    $canv bind $t <Enter> "lineenter %x %y $id"
+    $canv bind $t <Motion> "linemotion %x %y $id"
+    $canv bind $t <Leave> "lineleave $id"
+}
+
 proc drawcommitline {level} {
-    global parents children nparents nchildren ncleft todo
+    global parents children nparents nchildren todo
     global canv canv2 canv3 mainfont namefont canvx0 canvy linespc
     global datemode cdate
     global lineid linehtag linentag linedtag commitinfo
-    global colormap numcommits currentparents
+    global colormap numcommits currentparents dupparents
     global oldlevel oldnlines oldtodo
     global idtags idline idheads
     global lineno lthickness glines
@@ -616,8 +624,16 @@ proc drawcommitline {level} {
 	}
     }
     set currentparents {}
+    set dupparents {}
     if {[info exists commitlisted($id)] && [info exists parents($id)]} {
-	set currentparents $parents($id)
+	foreach p $parents($id) {
+	    if {[lsearch -exact $currentparents $p] < 0} {
+		lappend currentparents $p
+	    } else {
+		# remember that this parent was listed twice
+		lappend dupparents $p
+	    }
+	}
     }
     set x [expr $canvx0 + $level * $linespc]
     set y1 $canvy
@@ -629,10 +645,7 @@ proc drawcommitline {level} {
 	set t [$canv create line $glines($id) \
 		   -width $lthickness -fill $colormap($id)]
 	$canv lower $t
-	$canv bind $t <Button-3> "linemenu %X %Y $id"
-	$canv bind $t <Enter> "lineenter %x %y $id"
-	$canv bind $t <Motion> "linemotion %x %y $id"
-	$canv bind $t <Leave> "lineleave $id"
+	bindline $t $id
     }
     set orad [expr {$linespc / 3}]
     set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
@@ -667,10 +680,6 @@ proc drawcommitline {level} {
 	set t [$canv create line $x $y1 [lindex $xvals end] $y1 \
 		   -width $lthickness -fill black]
 	$canv lower $t
-	$canv bind $t <Button-3> "linemenu %X %Y $id"
-	$canv bind $t <Enter> "lineenter %x %y $id"
-	$canv bind $t <Motion> "linemotion %x %y $id"
-	$canv bind $t <Leave> "lineleave $id"
 	foreach tag $marks x $xvals wid $wvals {
 	    set xl [expr $x + $delta]
 	    set xr [expr $x + $delta + $wid + $lthickness]
@@ -742,7 +751,7 @@ proc updatetodo {level noshortcut} {
 
 proc drawslants {} {
     global canv glines canvx0 canvy linespc
-    global oldlevel oldtodo todo currentparents
+    global oldlevel oldtodo todo currentparents dupparents
     global lthickness linespc canvy colormap
 
     set y1 [expr $canvy - $linespc]
@@ -755,27 +764,36 @@ proc drawslants {} {
 	if {$i == $oldlevel} {
 	    foreach p $currentparents {
 		set j [lsearch -exact $todo $p]
-		if {$i == $j && ![info exists glines($p)]} {
-		    set glines($p) [list $xi $y1]
-		} else {
-		    set xj [expr {$canvx0 + $j * $linespc}]
-		    set coords [list $xi $y1]
-		    if {$j < $i - 1} {
-			lappend coords [expr $xj + $linespc] $y1
-		    } elseif {$j > $i + 1} {
-			lappend coords [expr $xj - $linespc] $y1
-		    }
+		set coords [list $xi $y1]
+		set xj [expr {$canvx0 + $j * $linespc}]
+		if {$j < $i - 1} {
+		    lappend coords [expr $xj + $linespc] $y1
+		} elseif {$j > $i + 1} {
+		    lappend coords [expr $xj - $linespc] $y1
+		}
+		if {[lsearch -exact $dupparents $p] >= 0} {
+		    # draw a double-width line to indicate the doubled parent
 		    lappend coords $xj $y2
+		    set t [$canv create line $coords \
+			       -width [expr 2*$lthickness] -fill $colormap($p)]
+		    $canv lower $t
+		    bindline $t $p
 		    if {![info exists glines($p)]} {
+			set glines($p) [list $xj $y2]
+		    }
+		} else {
+		    # normal case, no parent duplicated
+		    if {![info exists glines($p)]} {
+			if {$i != $j} {
+			    lappend coords $xj $y2
+			}
 			set glines($p) $coords
 		    } else {
-			set t [$canv create line $coords -width $lthickness \
-				   -fill $colormap($p)]
+			lappend coords $xj $y2
+			set t [$canv create line $coords \
+				   -width $lthickness -fill $colormap($p)]
 			$canv lower $t
-			$canv bind $t <Button-3> "linemenu %X %Y $p"
-			$canv bind $t <Enter> "lineenter %x %y $p"
-			$canv bind $t <Motion> "linemotion %x %y $p"
-			$canv bind $t <Leave> "lineleave $p"
+			bindline $t $p
 		    }
 		}
 	    }
@@ -929,34 +947,36 @@ proc drawrest {level startix} {
     global numcommits
     global nextupdate startmsecs startcommits idline
 
-    set phase drawgraph
-    set startid [lindex $startcommits $startix]
-    set startline -1
-    if {$startid != {}} {
-	set startline $idline($startid)
-    }
-    while 1 {
-	if {$stopped} break
-	drawcommitline $level
-	set hard [updatetodo $level $datemode]
-	if {$numcommits == $startline} {
-	    lappend todo $startid
-	    set hard 1
-	    incr startix
-	    set startid [lindex $startcommits $startix]
-	    set startline -1
-	    if {$startid != {}} {
-		set startline $idline($startid)
+    if {$level >= 0} {
+	set phase drawgraph
+	set startid [lindex $startcommits $startix]
+	set startline -1
+	if {$startid != {}} {
+	    set startline $idline($startid)
+	}
+	while 1 {
+	    if {$stopped} break
+	    drawcommitline $level
+	    set hard [updatetodo $level $datemode]
+	    if {$numcommits == $startline} {
+		lappend todo $startid
+		set hard 1
+		incr startix
+		set startid [lindex $startcommits $startix]
+		set startline -1
+		if {$startid != {}} {
+		    set startline $idline($startid)
+		}
 	    }
-	}
-	if {$hard} {
-	    set level [decidenext]
-	    if {$level < 0} break
-	    drawslants
-	}
-	if {[clock clicks -milliseconds] >= $nextupdate} {
-	    update
-	    incr nextupdate 100
+	    if {$hard} {
+		set level [decidenext]
+		if {$level < 0} break
+		drawslants
+	    }
+	    if {[clock clicks -milliseconds] >= $nextupdate} {
+		update
+		incr nextupdate 100
+	    }
 	}
     }
     set phase {}
