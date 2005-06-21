@@ -332,7 +332,7 @@ int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void 
 void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size)
 {
 	int bytes = strlen(buffer) + 1;
-	char *buf = xmalloc(1+size);
+	unsigned char *buf = xmalloc(1+size);
 
 	memcpy(buf, buffer + bytes, stream->total_out - bytes);
 	bytes = stream->total_out - bytes;
@@ -472,7 +472,7 @@ int sha1_file_size(const unsigned char *sha1, unsigned long *sizep)
 	 * The initial part of the delta starts at delta_data_head +
 	 * 20.  Borrow code from patch-delta to read the result size.
 	 */
-	data = hdr + strlen(hdr) + 1 + 20;
+	data = (unsigned char *)(hdr + strlen(hdr) + 1 + 20);
 
 	/* Skip over the source size; we are not interested in
 	 * it and we cannot verify it because we do not want

@@ -430,8 +430,8 @@ int main(int argc, char **argv)
 	if (!archive_time)
 		archive_time = time(NULL);
 	if (basedir)
-		write_header("0", TYPEFLAG_DIR, NULL, NULL, basedir, 040755,
-		             NULL, 0);
+		write_header((unsigned char *)"0", TYPEFLAG_DIR, NULL, NULL,
+			basedir, 040755, NULL, 0);
 	traverse_tree(buffer, size, NULL);
 	free(buffer);
 	write_trailer();

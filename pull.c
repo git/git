@@ -49,7 +49,7 @@ static int make_sure_we_have_it(const char *what, unsigned char *sha1)
 		return 0;
 
 	if (get_delta) {
-		char delta_sha1[20];
+		unsigned char delta_sha1[20];
 		status = sha1_delta_base(sha1, delta_sha1);
 		if (0 < status)
 			status = make_sure_we_have_it(what, delta_sha1);

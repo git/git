@@ -8,7 +8,7 @@ unsigned char remote_version = 0;
 int serve_object(int fd_in, int fd_out) {
 	ssize_t size;
 	int posn = 0;
-	char sha1[20];
+	unsigned char sha1[20];
 	unsigned long objsize;
 	void *buf;
 	signed char remote;

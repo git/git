@@ -36,10 +36,10 @@ static int replace_object(char *buf, unsigned long size, unsigned char *sha1)
 	return 0;
 }
 
-static void *create_object(char *buf, unsigned long len, char *hdr, int hdrlen,
-			   unsigned long *retsize)
+static void *create_object(unsigned char *buf, unsigned long len,
+			   char *hdr, int hdrlen, unsigned long *retsize)
 {
-	char *compressed;
+	unsigned char *compressed;
 	unsigned long size;
 	z_stream stream;
 
@@ -54,7 +54,7 @@ static void *create_object(char *buf, unsigned long len, char *hdr, int hdrlen,
 	stream.avail_out = size;
 
 	/* First header.. */
-	stream.next_in = hdr;
+	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
 	while (deflate(&stream, 0) == Z_OK)
 		/* nothing */;
@@ -69,7 +69,7 @@ static void *create_object(char *buf, unsigned long len, char *hdr, int hdrlen,
 	return compressed;
 }
 
-static int restore_original_object(char *buf, unsigned long len,
+static int restore_original_object(unsigned char *buf, unsigned long len,
 				   char *type, unsigned char *sha1)
 {
 	char hdr[50];
@@ -84,7 +84,7 @@ static int restore_original_object(char *buf, unsigned long len,
 	return ret;
 }
 
-static void *create_delta_object(char *buf, unsigned long len,
+static void *create_delta_object(unsigned char *buf, unsigned long len,
 				 unsigned char *sha1_ref, unsigned long *size)
 {
 	char hdr[50];
