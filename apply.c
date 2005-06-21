@@ -751,9 +751,11 @@ static void show_stats(struct patch *patch)
 	del = patch->lines_deleted;
 	total = add + del;
 
-	total = (total * max + max_change / 2) / max_change;
-	add = (add * max + max_change / 2) / max_change;
-	del = total - add;
+	if (max_change > 0) {
+		total = (total * max + max_change / 2) / max_change;
+		add = (add * max + max_change / 2) / max_change;
+		del = total - add;
+	}
 	printf(" %-*s |%5d %.*s%.*s\n",
 		len, name, patch->lines_added + patch->lines_deleted,
 		add, pluses, del, minuses);
