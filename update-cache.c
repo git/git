@@ -12,7 +12,7 @@
  * like "git-update-cache *" and suddenly having all the object
  * files be revision controlled.
  */
-static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0;
+static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0, quiet = 0;
 static int force_remove;
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
@@ -222,10 +222,12 @@ static int refresh_cache(void)
 
 		new = refresh_entry(ce);
 		if (IS_ERR(new)) {
-			if (!(not_new && PTR_ERR(new) == -ENOENT)) {
-				printf("%s: needs update\n", ce->name);
-				has_errors = 1;
-			}
+			if (not_new && PTR_ERR(new) == -ENOENT)
+				continue;
+			if (quiet)
+				continue;
+			printf("%s: needs update\n", ce->name);
+			has_errors = 1;
 			continue;
 		}
 		active_cache_changed = 1;
@@ -350,6 +352,10 @@ int main(int argc, char **argv)
 		if (allow_options && *path == '-') {
 			if (!strcmp(path, "--")) {
 				allow_options = 0;
+				continue;
+			}
+			if (!strcmp(path, "-q")) {
+				quiet = 1;
 				continue;
 			}
 			if (!strcmp(path, "--add")) {
