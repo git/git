@@ -4,6 +4,9 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "commit.h"
+
+static int get_extended_sha1(char *name, unsigned char *sha1);
 
 /*
  * Some arguments are relevant "revision" arguments,
@@ -30,6 +33,56 @@ static int is_rev_argument(const char *arg)
 		if (!strncmp(arg, str, len))
 			return 1;
 	}
+}
+
+static int get_parent(char *name, unsigned char *result, int idx)
+{
+	unsigned char sha1[20];
+	int ret = get_extended_sha1(name, sha1);
+	struct commit *commit;
+	struct commit_list *p;
+
+	if (ret)
+		return ret;
+	commit = lookup_commit_reference(sha1);
+	if (!commit)
+		return -1;
+	if (parse_commit(commit))
+		return -1;
+	p = commit->parents;
+	while (p) {
+		if (!--idx) {
+			memcpy(result, p->item->object.sha1, 20);
+			return 0;
+		}
+		p = p->next;
+	}
+	return -1;
+}
+
+/*
+ * This is like "get_sha1()", except it allows "sha1 expressions",
+ * notably "xyz.p" for "parent of xyz"
+ */
+static int get_extended_sha1(char *name, unsigned char *sha1)
+{
+	int parent;
+	int len = strlen(name);
+
+	parent = 1;
+	if (len > 3 && name[len-1] >= '1' && name[len-1] <= '9') {
+		parent = name[len-1] - '0';
+		len--;
+	}
+	if (len > 2 && !memcmp(name + len - 2, ".p", 2)) {
+		int ret;
+		name[len-2] = 0;
+		ret = get_parent(name, sha1, parent);
+		name[len-2] = '.';
+		if (!ret)
+			return 0;
+	}
+	return get_sha1(name, sha1);
 }
 
 int main(int argc, char **argv)
@@ -83,10 +136,10 @@ int main(int argc, char **argv)
 			unsigned char end[20];
 			char *n = dotdot+2;
 			*dotdot = 0;
-			if (!get_sha1(arg, sha1)) {
+			if (!get_extended_sha1(arg, sha1)) {
 				if (!*n)
 					n = "HEAD";
-				if (!get_sha1(n, end)) {
+				if (!get_extended_sha1(n, end)) {
 					if (no_revs)
 						continue;
 					def = NULL;
@@ -97,14 +150,14 @@ int main(int argc, char **argv)
 			}
 			*dotdot = '.';
 		}
-		if (!get_sha1(arg, sha1)) {
+		if (!get_extended_sha1(arg, sha1)) {
 			if (no_revs)
 				continue;
 			def = NULL;
 			printf("%s\n", sha1_to_hex(sha1));
 			continue;
 		}
-		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
+		if (*arg == '^' && !get_extended_sha1(arg+1, sha1)) {
 			if (no_revs)
 				continue;
 			def = NULL;
