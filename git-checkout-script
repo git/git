@@ -1,27 +1,35 @@
 #!/bin/sh
 : ${GIT_DIR=.git}
 old=$(git-rev-parse HEAD)
-new=$(git-rev-parse --revs-only "$@")
-new=${new:-$old}
-args=($(git-rev-parse --no-revs "$@"))
-
-i=0
+new=
 force=
-update=
-while [ $i -lt ${#args} ]; do
-    case "${args[$i]}" in
+branch=
+while [ "$#" != "0" ]; do
+    arg="$1"
+    shift
+    case "$arg" in
 	"-f")
-		force=1;;
-	"-u")
-		update=1;;
-	"")
+		force=1
 		;;
 	*)
-		echo "unknown flag ${args[$i]}"
-		exit 1;;
+		rev=$(git-rev-parse "$arg")
+		if [ -z "$rev" ]; then
+			echo "unknown flag $arg"
+			exit 1
+		fi
+		if [ "$new" ]; then
+			echo "Multiple revisions?"
+			exit 1
+		fi
+		new="$rev"
+		if [ -f "$GIT_DIR/revs/heads/$arg" ]; then
+			branch="$arg"
+		fi
+		;;
     esac
     i=$(($i+1))
 done
+: ${new=$old}
 
 if [ "$force" ]
 then
@@ -29,5 +37,4 @@ then
 	git-checkout-cache -q -f -u -a
 else
     git-read-tree -m -u $old $new
-fi && [ "$update" ] && echo $new > "$GIT_DIR/HEAD"
-
+fi && [ "$branch" ] && ln -sf "refs/heads/$branch" "$GIT_DIR/HEAD"
