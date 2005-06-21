@@ -4,6 +4,7 @@ if [ ! -d $GIT_DIR ]; then
 	echo Not a git directory 1>&2
 	exit 1
 fi
+git-update-cache -q --refresh -- "$@" || exit 1
 PARENTS="-p HEAD"
 if [ ! -r $GIT_DIR/HEAD ]; then
 	if [ -z "$(git-ls-files)" ]; then
