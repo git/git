@@ -424,17 +424,8 @@ static void mark_ancestors_uninteresting(struct commit *commit)
 static void sort_first_epoch(struct commit *head, struct commit_list **stack)
 {
 	struct commit_list *parents;
-	struct commit_list *reversed_parents = NULL;
 
 	head->object.flags |= VISITED;
-
-	/*
-	 * parse_commit() builds the parent list in reverse order with respect
-	 * to the order of the git-commit-tree arguments. So we need to reverse
-	 * this list to output the oldest (or most "local") commits last.
-	 */
-	for (parents = head->parents; parents; parents = parents->next)
-		commit_list_insert(parents->item, &reversed_parents);
 
 	/*
 	 * TODO: By sorting the parents in a different order, we can alter the
@@ -445,8 +436,8 @@ static void sort_first_epoch(struct commit *head, struct commit_list **stack)
 	 * changes.
 	 */
 
-	while (reversed_parents) {
-		struct commit *parent = pop_commit(&reversed_parents);
+	for (parents = head->parents; parents; parents = parents->next) {
+		struct commit *parent = parents->item;
 
 		if (head->object.flags & UNINTERESTING) {
 			/*
@@ -470,7 +461,7 @@ static void sort_first_epoch(struct commit *head, struct commit_list **stack)
 
 			} else {
 				sort_first_epoch(parent, stack);
-				if (reversed_parents) {
+				if (parents) {
 					/*
 					 * This indicates a possible
 					 * discontinuity it may not be be
