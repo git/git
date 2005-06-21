@@ -37,4 +37,15 @@ then
 	git-checkout-cache -q -f -u -a
 else
     git-read-tree -m -u $old $new
-fi && [ "$branch" ] && ln -sf "refs/heads/$branch" "$GIT_DIR/HEAD"
+fi
+
+# 
+# Switch the HEAD pointer to the new branch if it we
+# checked out a branch head, and remove any potential
+# old MERGE_HEAD's (subsequent commits will clearly not
+# be based on them, since we re-set the index)
+#
+if [ "$?" -eq 0 ]; then
+	[ "$branch" ] && ln -sf "refs/heads/$branch" "$GIT_DIR/HEAD"
+	rm -f "$GIT_DIR/MERGE_HEAD"
+fi

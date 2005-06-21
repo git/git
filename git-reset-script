@@ -1,3 +1,5 @@
 #!/bin/sh
+: ${GIT_DIR=.git}
 git-read-tree --reset HEAD
 git-update-cache --refresh
+rm -f "$GIT_DIR/MERGE_HEAD"
