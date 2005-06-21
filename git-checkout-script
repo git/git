@@ -1,0 +1,30 @@
+#!/bin/sh
+: ${GIT_DIR=.git}
+old=$(git-rev-parse HEAD)
+new=$(git-rev-parse --revs-only "$@")
+new=${new:-$old}
+args=($(git-rev-parse --no-revs "$@"))
+
+i=0
+force=0
+while [ $i -lt ${#args} ]; do
+    case "${args[$i]}" in
+	"-f")
+		force=1;;
+	"")
+		;;
+	*)
+		echo "unknown flag ${args[$i]}"
+		exit 1;;
+    esac
+    i=$(($i+1))
+done
+
+if $force
+then
+    git-read-tree --reset $new &&
+	git-checkout-cache -q -f -u -a &&
+	echo $new > "$GIT_DIR/HEAD"
+else
+    git-read-tree -m -u $old $new && echo $new > "$GIT_DIR/HEAD"
+fi
