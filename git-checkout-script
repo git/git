@@ -29,7 +29,7 @@ while [ "$#" != "0" ]; do
     esac
     i=$(($i+1))
 done
-: ${new=$old}
+[ -z "$new" ] && new=$old
 
 if [ "$force" ]
 then
