@@ -63,6 +63,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 {
 	void *bufptr = buffer;
 	unsigned char parent[20];
+	struct commit_list **pptr;
 
 	if (item->object.parsed)
 		return 0;
@@ -72,11 +73,12 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 	if (item->tree)
 		add_ref(&item->object, &item->tree->object);
 	bufptr += 46; /* "tree " + "hex sha1" + "\n" */
+	pptr = &item->parents;
 	while (!memcmp(bufptr, "parent ", 7) &&
 	       !get_sha1_hex(bufptr + 7, parent)) {
 		struct commit *new_parent = lookup_commit(parent);
 		if (new_parent) {
-			commit_list_insert(new_parent, &item->parents);
+			pptr = &commit_list_insert(new_parent, pptr)->next;
 			add_ref(&item->object, &new_parent->object);
 		}
 		bufptr += 48;
