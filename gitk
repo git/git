@@ -14,14 +14,22 @@ proc getcommits {rargs} {
     global startmsecs nextupdate
     global ctext maincursor textcursor nlines
 
-    if {$rargs == {}} {
-	set rargs HEAD
-    }
     set commits {}
     set phase getcommits
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr $startmsecs + 100]
-    if [catch {set commfd [open "|git-rev-list --merge-order $rargs" r]} err] {
+    if [catch {
+	set parse_args [concat --default HEAD --merge-order $rargs]
+	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
+    }] {
+	if {$rargs == {}} {
+	    set rargs HEAD
+	}
+	set parsed_args [concat --merge-order $rargs]
+    }
+    if [catch {
+	set commfd [open "|git-rev-list $parsed_args" r]
+    } err] {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
     }
