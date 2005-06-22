@@ -723,11 +723,11 @@ const char minuses[]= "---------------------------------------------------------
 
 static void show_stats(struct patch *patch)
 {
-	char *name = patch->old_name;
+	char *name = patch->new_name;
 	int len, max, add, del, total;
 
 	if (!name)
-		name = patch->new_name;
+		name = patch->old_name;
 
 	/*
 	 * "scale" the filename
