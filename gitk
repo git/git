@@ -552,6 +552,8 @@ Use and redistribute under the terms of the GNU General Public License
 proc assigncolor {id} {
     global commitinfo colormap commcolors colors nextcolor
     global parents nparents children nchildren
+    global cornercrossings crossings
+
     if [info exists colormap($id)] return
     set ncolors [llength $colors]
     if {$nparents($id) <= 1 && $nchildren($id) == 1} {
@@ -563,22 +565,50 @@ proc assigncolor {id} {
 	}
     }
     set badcolors {}
-    foreach child $children($id) {
-	if {[info exists colormap($child)]
-	    && [lsearch -exact $badcolors $colormap($child)] < 0} {
-	    lappend badcolors $colormap($child)
+    if {[info exists cornercrossings($id)]} {
+	foreach x $cornercrossings($id) {
+	    if {[info exists colormap($x)]
+		&& [lsearch -exact $badcolors $colormap($x)] < 0} {
+		lappend badcolors $colormap($x)
+	    }
 	}
-	if {[info exists parents($child)]} {
-	    foreach p $parents($child) {
-		if {[info exists colormap($p)]
-		    && [lsearch -exact $badcolors $colormap($p)] < 0} {
-		    lappend badcolors $colormap($p)
+	if {[llength $badcolors] >= $ncolors} {
+	    set badcolors {}
+	}
+    }
+    set origbad $badcolors
+    if {[llength $badcolors] < $ncolors - 1} {
+	if {[info exists crossings($id)]} {
+	    foreach x $crossings($id) {
+		if {[info exists colormap($x)]
+		    && [lsearch -exact $badcolors $colormap($x)] < 0} {
+		    lappend badcolors $colormap($x)
+		}
+	    }
+	    if {[llength $badcolors] >= $ncolors} {
+		set badcolors $origbad
+	    }
+	}
+	set origbad $badcolors
+    }
+    if {[llength $badcolors] < $ncolors - 1} {
+	foreach child $children($id) {
+	    if {[info exists colormap($child)]
+		&& [lsearch -exact $badcolors $colormap($child)] < 0} {
+		lappend badcolors $colormap($child)
+	    }
+	    if {[info exists parents($child)]} {
+		foreach p $parents($child) {
+		    if {[info exists colormap($p)]
+			&& [lsearch -exact $badcolors $colormap($p)] < 0} {
+			lappend badcolors $colormap($p)
+		    }
 		}
 	    }
 	}
-    }
-    if {[llength $badcolors] >= $ncolors} {
-	set badcolors {}
+	if {[llength $badcolors] >= $ncolors} {
+	    set badcolors $origbad
+	}
     }
     for {set i 0} {$i <= $ncolors} {incr i} {
 	set c [lindex $colors $nextcolor]
@@ -771,6 +801,34 @@ proc updatetodo {level noshortcut} {
     return 1
 }
 
+proc notecrossings {id lo hi corner} {
+    global oldtodo crossings cornercrossings
+
+    for {set i $lo} {[incr i] < $hi} {} {
+	set p [lindex $oldtodo $i]
+	if {$p == {}} continue
+	if {$i == $corner} {
+	    if {![info exists cornercrossings($id)]
+		|| [lsearch -exact $cornercrossings($id) $p] < 0} {
+		lappend cornercrossings($id) $p
+	    }
+	    if {![info exists cornercrossings($p)]
+		|| [lsearch -exact $cornercrossings($p) $id] < 0} {
+		lappend cornercrossings($p) $id
+	    }
+	} else {
+	    if {![info exists crossings($id)]
+		|| [lsearch -exact $crossings($id) $p] < 0} {
+		lappend crossings($id) $p
+	    }
+	    if {![info exists crossings($p)]
+		|| [lsearch -exact $crossings($p) $id] < 0} {
+		lappend crossings($p) $id
+	    }
+	}
+    }
+}
+
 proc drawslants {} {
     global canv mainline sidelines canvx0 canvy linespc
     global oldlevel oldtodo todo currentparents dupparents
@@ -790,8 +848,10 @@ proc drawslants {} {
 		set xj [expr {$canvx0 + $j * $linespc}]
 		if {$j < $i - 1} {
 		    lappend coords [expr $xj + $linespc] $y1
+		    notecrossings $p $j $i [expr {$j + 1}]
 		} elseif {$j > $i + 1} {
 		    lappend coords [expr $xj - $linespc] $y1
+		    notecrossings $p $i $j [expr {$j - 1}]
 		}
 		if {[lsearch -exact $dupparents $p] >= 0} {
 		    # draw a double-width line to indicate the doubled parent
