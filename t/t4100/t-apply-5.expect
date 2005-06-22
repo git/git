@@ -1,0 +1,19 @@
+ Documentation/git-rpull.txt    |   50 -------------------
+ Documentation/git-rpush.txt    |   30 ------------
+ Documentation/git-ssh-pull.txt |   50 +++++++++++++++++++
+ Documentation/git-ssh-push.txt |   30 ++++++++++++
+ Documentation/git.txt          |    6 +-
+ Makefile                       |    6 +-
+ rpull.c                        |   83 --------------------------------
+ rpush.c                        |  104 ----------------------------------------
+ ssh-pull.c                     |   83 ++++++++++++++++++++++++++++++++
+ ssh-push.c                     |  104 ++++++++++++++++++++++++++++++++++++++++
+ 10 files changed, 273 insertions(+), 273 deletions(-)
+ delete Documentation/git-rpull.txt
+ delete Documentation/git-rpush.txt
+ create Documentation/git-ssh-pull.txt
+ create Documentation/git-ssh-push.txt
+ delete rpull.c
+ delete rpush.c
+ create ssh-pull.c
+ create ssh-push.c
