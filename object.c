@@ -98,6 +98,22 @@ void mark_reachable(struct object *obj, unsigned int mask)
 	}
 }
 
+struct object *lookup_object_type(const unsigned char *sha1, const char *type)
+{
+	if (!strcmp(type, blob_type)) {
+		return &lookup_blob(sha1)->object;
+	} else if (!strcmp(type, tree_type)) {
+		return &lookup_tree(sha1)->object;
+	} else if (!strcmp(type, commit_type)) {
+		return &lookup_commit(sha1)->object;
+	} else if (!strcmp(type, tag_type)) {
+		return &lookup_tag(sha1)->object;
+	} else {
+		error("Unknown type %s", type);
+		return NULL;
+	}
+}
+
 struct object *parse_object(const unsigned char *sha1)
 {
 	unsigned long mapsize;
