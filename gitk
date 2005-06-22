@@ -12,30 +12,31 @@ exec wish "$0" -- "${1+$@}"
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
     global startmsecs nextupdate
-    global ctext maincursor textcursor nlines
+    global ctext maincursor textcursor leftover
 
     set commits {}
     set phase getcommits
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr $startmsecs + 100]
     if [catch {
-	set parse_args [concat --default HEAD --merge-order $rargs]
+	set parse_args [concat --default HEAD $rargs]
 	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
     }] {
+	# if git-rev-parse failed for some reason...
 	if {$rargs == {}} {
 	    set rargs HEAD
 	}
-	set parsed_args [concat --merge-order $rargs]
+	set parsed_args $rargs
     }
     if [catch {
-	set commfd [open "|git-rev-list $parsed_args" r]
+	set commfd [open "|git-rev-list --header --merge-order $parsed_args" r]
     } err] {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
     }
-    set nlines 0
-    fconfigure $commfd -blocking 0
-    fileevent $commfd readable "getcommitline $commfd"
+    set leftover {}
+    fconfigure $commfd -blocking 0 -translation binary
+    fileevent $commfd readable "getcommitlines $commfd"
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
@@ -43,13 +44,13 @@ proc getcommits {rargs} {
     $ctext config -cursor watch
 }
 
-proc getcommitline {commfd}  {
+proc getcommitlines {commfd}  {
     global commits parents cdate children nchildren
     global commitlisted phase commitinfo nextupdate
-    global stopped redisplaying nlines
+    global stopped redisplaying leftover
 
-    set n [gets $commfd line]
-    if {$n < 0} {
+    set stuff [read $commfd]
+    if {$stuff == {}} {
 	if {![eof $commfd]} return
 	# this works around what is apparently a bug in Tcl...
 	fconfigure $commfd -blocking 1
@@ -68,35 +69,41 @@ to allow selection of commits to be displayed.)}
 	error_popup $err
 	exit 1
     }
-    incr nlines
-    if {![regexp {^[0-9a-f]{40}$} $line id]} {
-	error_popup "Can't parse git-rev-list output: {$line}"
-	exit 1
-    }
-    lappend commits $id
-    set commitlisted($id) 1
-    if {![info exists commitinfo($id)]} {
-	readcommit $id
-    }
-    foreach p $parents($id) {
-	if {[info exists commitlisted($p)]} {
-	    puts "oops, parent $p before child $id"
+    set start 0
+    while 1 {
+	set i [string first "\0" $stuff $start]
+	if {$i < 0} {
+	    set leftover [string range $stuff $start end]
+	    return
 	}
-    }
-    drawcommit $id
-    if {[clock clicks -milliseconds] >= $nextupdate} {
-	doupdate
-    }
-    while {$redisplaying} {
-	set redisplaying 0
-	if {$stopped == 1} {
-	    set stopped 0
-	    set phase "getcommits"
-	    foreach id $commits {
-		drawcommit $id
-		if {$stopped} break
-		if {[clock clicks -milliseconds] >= $nextupdate} {
-		    doupdate
+	set cmit [string range $stuff $start [expr {$i - 1}]]
+	if {$start == 0} {
+	    set cmit "$leftover$cmit"
+	}
+	set start [expr {$i + 1}]
+	if {![regexp {^([0-9a-f]{40})\n} $cmit match id]} {
+	    error_popup "Can't parse git-rev-list output: {$cmit}"
+	    exit 1
+	}
+	set cmit [string range $cmit 41 end]
+	lappend commits $id
+	set commitlisted($id) 1
+	parsecommit $id $cmit 1
+	drawcommit $id
+	if {[clock clicks -milliseconds] >= $nextupdate} {
+	    doupdate
+	}
+	while {$redisplaying} {
+	    set redisplaying 0
+	    if {$stopped == 1} {
+		set stopped 0
+		set phase "getcommits"
+		foreach id $commits {
+		    drawcommit $id
+		    if {$stopped} break
+		    if {[clock clicks -milliseconds] >= $nextupdate} {
+			doupdate
+		    }
 		}
 	    }
 	}
@@ -109,12 +116,16 @@ proc doupdate {} {
     incr nextupdate 100
     fileevent $commfd readable {}
     update
-    fileevent $commfd readable "getcommitline $commfd"
+    fileevent $commfd readable "getcommitlines $commfd"
 }
 
 proc readcommit {id} {
+    if [catch {set contents [exec git-cat-file commit $id]}] return
+    parsecommit $id $contents 0
+}
+
+proc parsecommit {id contents listed} {
     global commitinfo children nchildren parents nparents cdate ncleft
-    global noreadobj
 
     set inhdr 1
     set comment {}
@@ -130,13 +141,6 @@ proc readcommit {id} {
     }
     set parents($id) {}
     set nparents($id) 0
-    if {$noreadobj} {
-	if [catch {set contents [exec git-cat-file commit $id]}] return
-    } else {
-	if [catch {set x [readobj $id]}] return
-	if {[lindex $x 0] != "commit"} return
-	set contents [lindex $x 1]
-    }
     foreach line [split $contents "\n"] {
 	if {$inhdr} {
 	    if {$line == {}} {
@@ -153,7 +157,7 @@ proc readcommit {id} {
 		    lappend parents($id) $p
 		    incr nparents($id)
 		    # sometimes we get a commit that lists a parent twice...
-		    if {[lsearch -exact $children($p) $id] < 0} {
+		    if {$listed && [lsearch -exact $children($p) $id] < 0} {
 			lappend children($p) $id
 			incr nchildren($p)
 			incr ncleft($p)
@@ -545,7 +549,7 @@ proc assigncolor {id} {
     global parents nparents children nchildren
     if [info exists colormap($id)] return
     set ncolors [llength $colors]
-    if {$nparents($id) == 1 && $nchildren($id) == 1} {
+    if {$nparents($id) <= 1 && $nchildren($id) == 1} {
 	set child [lindex $children($id) 0]
 	if {[info exists colormap($child)]
 	    && $nparents($child) == 1} {
@@ -583,7 +587,7 @@ proc assigncolor {id} {
 
 proc initgraph {} {
     global canvy canvy0 lineno numcommits lthickness nextcolor linespc
-    global glines
+    global mainline sidelines
     global nchildren ncleft
 
     allcanvs delete all
@@ -592,7 +596,8 @@ proc initgraph {} {
     set lineno -1
     set numcommits 0
     set lthickness [expr {int($linespc / 9) + 1}]
-    catch {unset glines}
+    catch {unset mainline}
+    catch {unset sidelines}
     foreach id [array names nchildren] {
 	set ncleft($id) $nchildren($id)
     }
@@ -610,12 +615,11 @@ proc bindline {t id} {
 proc drawcommitline {level} {
     global parents children nparents nchildren todo
     global canv canv2 canv3 mainfont namefont canvx0 canvy linespc
-    global datemode cdate
     global lineid linehtag linentag linedtag commitinfo
     global colormap numcommits currentparents dupparents
     global oldlevel oldnlines oldtodo
     global idtags idline idheads
-    global lineno lthickness glines
+    global lineno lthickness mainline sidelines
     global commitlisted
 
     incr numcommits
@@ -631,6 +635,7 @@ proc drawcommitline {level} {
 	    set nparents($id) 0
 	}
     }
+    assigncolor $id
     set currentparents {}
     set dupparents {}
     if {[info exists commitlisted($id)] && [info exists parents($id)]} {
@@ -648,12 +653,22 @@ proc drawcommitline {level} {
     set canvy [expr $canvy + $linespc]
     allcanvs conf -scrollregion \
 	[list 0 0 0 [expr $y1 + 0.5 * $linespc + 2]]
-    if {[info exists glines($id)]} {
-	lappend glines($id) $x $y1
-	set t [$canv create line $glines($id) \
+    if {[info exists mainline($id)]} {
+	lappend mainline($id) $x $y1
+	set t [$canv create line $mainline($id) \
 		   -width $lthickness -fill $colormap($id)]
 	$canv lower $t
 	bindline $t $id
+    }
+    if {[info exists sidelines($id)]} {
+	foreach ls $sidelines($id) {
+	    set coords [lindex $ls 0]
+	    set thick [lindex $ls 1]
+	    set t [$canv create line $coords -fill $colormap($id) \
+		       -width [expr {$thick * $lthickness}]]
+	    $canv lower $t
+	    bindline $t $id
+	}
     }
     set orad [expr {$linespc / 3}]
     set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
@@ -661,8 +676,8 @@ proc drawcommitline {level} {
 	       -fill $ofill -outline black -width 1]
     $canv raise $t
     set xt [expr $canvx0 + [llength $todo] * $linespc]
-    if {$nparents($id) > 2} {
-	set xt [expr {$xt + ($nparents($id) - 2) * $linespc}]
+    if {[llength $currentparents] > 2} {
+	set xt [expr {$xt + ([llength $currentparents] - 2) * $linespc}]
     }
     set marks {}
     set ntags 0
@@ -718,38 +733,32 @@ proc drawcommitline {level} {
 }
 
 proc updatetodo {level noshortcut} {
-    global datemode currentparents ncleft todo
-    global glines oldlevel oldtodo oldnlines
-    global canvx0 canvy linespc glines
+    global currentparents ncleft todo
+    global mainline oldlevel oldtodo oldnlines
+    global canvx0 canvy linespc mainline
     global commitinfo
 
-    foreach p $currentparents {
-	if {![info exists commitinfo($p)]} {
-	    readcommit $p
-	}
-    }
-    set x [expr $canvx0 + $level * $linespc]
-    set y [expr $canvy - $linespc]
+    set oldlevel $level
+    set oldtodo $todo
+    set oldnlines [llength $todo]
     if {!$noshortcut && [llength $currentparents] == 1} {
 	set p [lindex $currentparents 0]
-	if {$ncleft($p) == 0 && [lsearch -exact $todo $p] < 0} {
-	    assigncolor $p
-	    set glines($p) [list $x $y]
+	if {$ncleft($p) == 1 && [lsearch -exact $todo $p] < 0} {
+	    set ncleft($p) 0
+	    set x [expr $canvx0 + $level * $linespc]
+	    set y [expr $canvy - $linespc]
+	    set mainline($p) [list $x $y]
 	    set todo [lreplace $todo $level $level $p]
 	    return 0
 	}
     }
 
-    set oldlevel $level
-    set oldtodo $todo
-    set oldnlines [llength $todo]
     set todo [lreplace $todo $level $level]
     set i $level
     foreach p $currentparents {
 	incr ncleft($p) -1
 	set k [lsearch -exact $todo $p]
 	if {$k < 0} {
-	    assigncolor $p
 	    set todo [linsert $todo $i $p]
 	    incr i
 	}
@@ -758,7 +767,7 @@ proc updatetodo {level noshortcut} {
 }
 
 proc drawslants {} {
-    global canv glines canvx0 canvy linespc
+    global canv mainline sidelines canvx0 canvy linespc
     global oldlevel oldtodo todo currentparents dupparents
     global lthickness linespc canvy colormap
 
@@ -782,33 +791,27 @@ proc drawslants {} {
 		if {[lsearch -exact $dupparents $p] >= 0} {
 		    # draw a double-width line to indicate the doubled parent
 		    lappend coords $xj $y2
-		    set t [$canv create line $coords \
-			       -width [expr 2*$lthickness] -fill $colormap($p)]
-		    $canv lower $t
-		    bindline $t $p
-		    if {![info exists glines($p)]} {
-			set glines($p) [list $xj $y2]
+		    lappend sidelines($p) [list $coords 2]
+		    if {![info exists mainline($p)]} {
+			set mainline($p) [list $xj $y2]
 		    }
 		} else {
 		    # normal case, no parent duplicated
-		    if {![info exists glines($p)]} {
+		    if {![info exists mainline($p)]} {
 			if {$i != $j} {
 			    lappend coords $xj $y2
 			}
-			set glines($p) $coords
+			set mainline($p) $coords
 		    } else {
 			lappend coords $xj $y2
-			set t [$canv create line $coords \
-				   -width $lthickness -fill $colormap($p)]
-			$canv lower $t
-			bindline $t $p
+			lappend sidelines($p) [list $coords 1]
 		    }
 		}
 	    }
 	} elseif {[lindex $todo $i] != $id} {
 	    set j [lsearch -exact $todo $id]
 	    set xj [expr {$canvx0 + $j * $linespc}]
-	    lappend glines($id) $xi $y1 $xj $y2
+	    lappend mainline($id) $xi $y1 $xj $y2
 	}
     }
 }
@@ -849,7 +852,7 @@ proc decidenext {} {
 	if {$todo != {}} {
 	    puts "ERROR: none of the pending commits can be done yet:"
 	    foreach p $todo {
-		puts "  $p"
+		puts "  $p ($ncleft($p))"
 	    }
 	}
 	return -1
@@ -888,14 +891,12 @@ proc drawcommit {id} {
 	set todo $id
 	set startcommits $id
 	initgraph
-	assigncolor $id
 	drawcommitline 0
 	updatetodo 0 $datemode
     } else {
 	if {$nchildren($id) == 0} {
 	    lappend todo $id
 	    lappend startcommits $id
-	    assigncolor $id
 	}
 	set level [decidenext]
 	if {$id != [lindex $todo $level]} {
@@ -1636,7 +1637,6 @@ foreach arg $argv {
     }
 }
 
-set noreadobj [catch {load libreadobj.so.0.0}]
 set stopped 0
 set redisplaying 0
 set stuffsaved 0
