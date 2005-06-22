@@ -3,6 +3,8 @@
 #include "cache.h"
 #include "commit.h"
 #include "tree.h"
+#include "tag.h"
+#include "blob.h"
 #include "refs.h"
 
 const char *write_ref = NULL;
@@ -56,6 +58,8 @@ static int make_sure_we_have_it(const char *what, unsigned char *sha1)
 	}
 	return status;
 }
+
+static int process_unknown(unsigned char *sha1);
 
 static int process_tree(unsigned char *sha1)
 {
@@ -115,6 +119,35 @@ static int process_commit(unsigned char *sha1)
 	return 0;
 }
 
+static int process_tag(unsigned char *sha1)
+{
+	struct tag *obj = lookup_tag(sha1);
+
+	if (parse_tag(obj))
+		return -1;
+	return process_unknown(obj->tagged->sha1);
+}
+
+static int process_unknown(unsigned char *sha1)
+{
+	struct object *obj;
+	if (make_sure_we_have_it("object", sha1))
+		return -1;
+	obj = parse_object(sha1);
+	if (!obj)
+		return error("Unable to parse object %s", sha1_to_hex(sha1));
+	if (obj->type == commit_type)
+		return process_commit(sha1);
+	if (obj->type == tree_type)
+		return process_tree(sha1);
+	if (obj->type == blob_type)
+		return 0;
+	if (obj->type == tag_type)
+		return process_tag(sha1);
+	return error("Unable to determine requirement of type %s for %s",
+		     obj->type, sha1_to_hex(sha1));
+}
+
 static int interpret_target(char *target, unsigned char *sha1)
 {
 	if (!get_sha1_hex(target, sha1))
@@ -142,7 +175,7 @@ int pull(char *target)
 	if (interpret_target(target, sha1))
 		return error("Could not interpret %s as something to pull",
 			     target);
-	if (process_commit(sha1))
+	if (process_unknown(sha1))
 		return -1;
 	
 	if (write_ref) {
