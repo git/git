@@ -9,7 +9,7 @@ static int use_link = 0;
 static int use_symlink = 0;
 static int use_filecopy = 1;
 
-static char *path;
+static char *path; /* "Remote" git repository */
 
 int fetch(unsigned char *sha1)
 {
@@ -75,11 +75,34 @@ int fetch(unsigned char *sha1)
 
 int fetch_ref(char *ref, unsigned char *sha1)
 {
-	return -1;
+	static int ref_name_start = -1;
+	static char filename[PATH_MAX];
+	static char hex[41];
+	int ifd;
+
+	if (ref_name_start < 0) {
+		sprintf(filename, "%s/refs/", path);
+		ref_name_start = strlen(filename);
+	}
+	strcpy(filename + ref_name_start, ref);
+	ifd = open(filename, O_RDONLY);
+	if (ifd < 0) {
+		close(ifd);
+		fprintf(stderr, "cannot open %s\n", filename);
+		return -1;
+	}
+	if (read(ifd, hex, 40) != 40 || get_sha1_hex(hex, sha1)) {
+		close(ifd);
+		fprintf(stderr, "cannot read from %s\n", filename);
+		return -1;
+	}
+	close(ifd);
+	pull_say("ref %s\n", sha1_to_hex(sha1));
+	return 0;
 }
 
 static const char *local_pull_usage = 
-"git-local-pull [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] [--recover] commit-id path";
+"git-local-pull [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path";
 
 /* 
  * By default we only use file copy.
@@ -114,6 +137,8 @@ int main(int argc, char **argv)
 			use_filecopy = 0;
 		else if (argv[arg][1] == 'v')
 			get_verbosely = 1;
+		else if (argv[arg][1] == 'w')
+			write_ref = argv[++arg];
 		else
 			usage(local_pull_usage);
 		arg++;

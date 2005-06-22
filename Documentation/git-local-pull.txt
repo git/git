@@ -9,7 +9,7 @@ git-local-pull - Duplicates another GIT repository on a local system
 
 SYNOPSIS
 --------
-'git-local-pull' [-c] [-t] [-a] [-l] [-s] [-n] [-v] [-d] [--recover] commit-id path
+'git-local-pull' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path
 
 DESCRIPTION
 -----------
@@ -32,10 +32,13 @@ OPTIONS
 	usual, to recover after earlier pull that was interrupted.
 -v::
 	Report what is downloaded.
+-w::
+        Writes the commit-id into the filename under $GIT_DIR/refs/ on
+        the local end after the transfer is complete.
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Junio C Hamano <junkio@cox.net>
 
 Documentation
 --------------
