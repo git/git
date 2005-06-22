@@ -174,9 +174,14 @@ proc parsecommit {id contents listed} {
 	    }
 	} else {
 	    if {$comment == {}} {
-		set headline $line
+		set headline [string trim $line]
 	    } else {
 		append comment "\n"
+	    }
+	    if {!$listed} {
+		# git-rev-list indents the comment by 4 spaces;
+		# if we got this via git-cat-file, add the indentation
+		append comment "    "
 	    }
 	    append comment $line
 	}
