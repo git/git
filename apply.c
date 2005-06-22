@@ -1144,6 +1144,51 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 		die("unable to add cache entry for %s", path);
 }
 
+static void create_subdirectories(const char *path)
+{
+	int len = strlen(path);
+	char *buf = xmalloc(len + 1);
+	const char *slash = path;
+
+	while ((slash = strchr(slash+1, '/')) != NULL) {
+		len = slash - path;
+		memcpy(buf, path, len);
+		buf[len] = 0;
+		if (mkdir(buf, 0755) < 0) {
+			if (errno != EEXIST)
+				break;
+		}
+	}
+	free(buf);
+}
+
+/*
+ * We optimistically assume that the directories exist,
+ * which is true 99% of the time anyway. If they don't,
+ * we create them and try again.
+ */
+static int create_regular_file(const char *path, unsigned int mode)
+{
+	int ret = open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+
+	if (ret < 0 && errno == ENOENT) {
+		create_subdirectories(path);
+		ret = open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+	}
+	return ret;
+}
+
+static int create_symlink(const char *buf, const char *path)
+{
+	int ret = symlink(buf, path);
+
+	if (ret < 0 && errno == ENOENT) {
+		create_subdirectories(path);
+		ret = symlink(buf, path);
+	}
+	return ret;
+}
+
 static void create_file(struct patch *patch)
 {
 	const char *path = patch->new_name;
@@ -1156,7 +1201,7 @@ static void create_file(struct patch *patch)
 	if (S_ISREG(mode)) {
 		int fd;
 		mode = (mode & 0100) ? 0777 : 0666;
-		fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+		fd = create_regular_file(path, mode);
 		if (fd < 0)
 			die("unable to create file %s (%s)", path, strerror(errno));
 		if (write(fd, buf, size) != size)
@@ -1169,7 +1214,7 @@ static void create_file(struct patch *patch)
 		if (size && buf[size-1] == '\n')
 			size--;
 		buf[size] = 0;
-		if (symlink(buf, path) < 0)
+		if (create_symlink(buf, path) < 0)
 			die("unable to write symlink %s", path);
 		add_index_file(path, mode, buf, size);
 		return;
