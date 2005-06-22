@@ -28,10 +28,11 @@ static int merge_patch = 1;
 static int check_index = 0;
 static int write_index = 0;
 static int diffstat = 0;
+static int summary = 0;
 static int check = 0;
 static int apply = 1;
 static int show_files = 0;
-static const char apply_usage[] = "git-apply [--stat] [--check] [--show-files] <patch>";
+static const char apply_usage[] = "git-apply [--stat] [--summary] [--check] [--show-files] <patch>";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -60,6 +61,7 @@ struct patch {
 	unsigned int old_mode, new_mode;
 	int is_rename, is_copy, is_new, is_delete;
 	int lines_added, lines_deleted;
+	int score;
 	struct fragment *fragments;
 	char *result;
 	unsigned long resultsize;
@@ -329,11 +331,15 @@ static int gitdiff_renamedst(const char *line, struct patch *patch)
 
 static int gitdiff_similarity(const char *line, struct patch *patch)
 {
+	if ((patch->score = strtoul(line, NULL, 10)) == ULONG_MAX)
+		patch->score = 0;
 	return 0;
 }
 
 static int gitdiff_dissimilarity(const char *line, struct patch *patch)
 {
+	if ((patch->score = strtoul(line, NULL, 10)) == ULONG_MAX)
+		patch->score = 0;
 	return 0;
 }
 
@@ -1093,6 +1099,84 @@ static void stat_patch_list(struct patch *patch)
 	printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
 }
 
+static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
+{
+	if (mode)
+		printf(" %s mode %06o %s\n", newdelete, mode, name);
+	else
+		printf(" %s %s\n", newdelete, name);
+}
+
+static void show_mode_change(struct patch *p, int show_name)
+{
+	if (p->old_mode && p->new_mode && p->old_mode != p->new_mode) {
+		if (show_name)
+			printf(" mode change %06o => %06o %s\n",
+			       p->old_mode, p->new_mode, p->new_name);
+		else
+			printf(" mode change %06o => %06o\n",
+			       p->old_mode, p->new_mode);
+	}
+}
+
+static void show_rename_copy(struct patch *p)
+{
+	const char *renamecopy = p->is_rename ? "rename" : "copy";
+	const char *old, *new;
+
+	/* Find common prefix */
+	old = p->old_name;
+	new = p->new_name;
+	while (1) {
+		const char *slash_old, *slash_new;
+		slash_old = strchr(old, '/');
+		slash_new = strchr(new, '/');
+		if (!slash_old ||
+		    !slash_new ||
+		    slash_old - old != slash_new - new ||
+		    memcmp(old, new, slash_new - new))
+			break;
+		old = slash_old + 1;
+		new = slash_new + 1;
+	}
+	/* p->old_name thru old is the common prefix, and old and new
+	 * through the end of names are renames
+	 */
+	if (old != p->old_name)
+		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
+		       old - p->old_name, p->old_name,
+		       old, new, p->score);
+	else
+		printf(" %s %s => %s (%d%%)\n", renamecopy,
+		       p->old_name, p->new_name, p->score);
+	show_mode_change(p, 0);
+}
+
+static void summary_patch_list(struct patch *patch)
+{
+	struct patch *p;
+
+	for (p = patch; p; p = p->next) {
+		if (p->is_new)
+			show_file_mode_name("create", p->new_mode, p->new_name);
+		else if (p->is_delete)
+			show_file_mode_name("delete", p->old_mode, p->old_name);
+		else {
+			if (p->is_rename || p->is_copy)
+				show_rename_copy(p);
+			else {
+				if (p->score) {
+					printf(" rewrite %s (%d%%)\n",
+					       p->new_name, p->score);
+					show_mode_change(p, 0);
+				}
+				else
+					show_mode_change(p, 1);
+			}
+		}
+	}
+}
+
 static void patch_stats(struct patch *patch)
 {
 	int lines = patch->lines_added + patch->lines_deleted;
@@ -1306,6 +1390,9 @@ static int apply_patch(int fd)
 	if (diffstat)
 		stat_patch_list(list);
 
+	if (summary)
+		summary_patch_list(list);
+
 	free(buffer);
 	return 0;
 }
@@ -1331,6 +1418,11 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "--stat")) {
 			apply = 0;
 			diffstat = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--summary")) {
+			apply = 0;
+			summary = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--check")) {
