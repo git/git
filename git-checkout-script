@@ -22,7 +22,7 @@ while [ "$#" != "0" ]; do
 			exit 1
 		fi
 		new="$rev"
-		if [ -f "$GIT_DIR/revs/heads/$arg" ]; then
+		if [ -f "$GIT_DIR/refs/heads/$arg" ]; then
 			branch="$arg"
 		fi
 		;;
