@@ -172,6 +172,13 @@ on_committer_date "1971-08-16 00:00:17" save_tag l4 unique_commit l4 tree -p l3
 on_committer_date "1971-08-16 00:00:18" save_tag l5 unique_commit l5 tree -p l4
 on_committer_date "1971-08-16 00:00:19" save_tag m1 unique_commit m1 tree -p a4 -p c3
 on_committer_date "1971-08-16 00:00:20" save_tag m2 unique_commit m2 tree -p c3 -p a4
+on_committer_date "1971-08-16 00:00:21" hide_error save_tag alt_root unique_commit alt_root tree
+on_committer_date "1971-08-16 00:00:22" save_tag r0 unique_commit r0 tree -p alt_root
+on_committer_date "1971-08-16 00:00:23" save_tag r1 unique_commit r1 tree -p r0
+on_committer_date "1971-08-16 00:00:24" save_tag l5r1 unique_commit l5r1 tree -p l5 -p r1
+on_committer_date "1971-08-16 00:00:25" save_tag r1l5 unique_commit r1l5 tree -p r1 -p l5
+
+
 #
 # note: as of 20/6, it isn't possible to create duplicate parents, so this
 # can't be tested.
@@ -483,6 +490,60 @@ EOF
 
 test_expect_success "head ^head no --merge-order" 'git-rev-list a3 ^a3' <<EOF
 EOF
+
+test_output_expect_success 'simple merge order (l5r1)' 'git-rev-list --merge-order --show-breaks l5r1' <<EOF
+= l5r1
+| r1
+| r0
+| alt_root
+^ l5
+| l4
+| l3
+| a4
+| c3
+| c2
+| c1
+^ b4
+| b3
+| b2
+| b1
+^ a3
+| a2
+| a1
+| a0
+| l2
+| l1
+| l0
+= root
+EOF
+
+test_output_expect_success 'simple merge order (r1l5)' 'git-rev-list --merge-order --show-breaks r1l5' <<EOF
+= r1l5
+| l5
+| l4
+| l3
+| a4
+| c3
+| c2
+| c1
+^ b4
+| b3
+| b2
+| b1
+^ a3
+| a2
+| a1
+| a0
+| l2
+| l1
+| l0
+| root
+^ r1
+| r0
+= alt_root
+EOF
+
+
 #
 #
 
