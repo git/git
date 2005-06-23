@@ -488,7 +488,7 @@ static void sort_first_epoch(struct commit *head, struct commit_list **stack)
  *
  * Sets the return value to STOP if no further output should be generated.
  */
-static int emit_stack(struct commit_list **stack, emitter_func emitter)
+static int emit_stack(struct commit_list **stack, emitter_func emitter, int include_last)
 {
 	unsigned int seen = 0;
 	int action = CONTINUE;
@@ -496,8 +496,11 @@ static int emit_stack(struct commit_list **stack, emitter_func emitter)
 	while (*stack && (action != STOP)) {
 		struct commit *next = pop_commit(stack);
 		seen |= next->object.flags;
-		if (*stack)
+		if (*stack || include_last) {
+			if (!*stack) 
+				next->object.flags |= BOUNDARY;
 			action = (*emitter) (next);
+		}
 	}
 
 	if (*stack) {
@@ -553,7 +556,7 @@ static int sort_in_merge_order(struct commit *head_of_epoch, emitter_func emitte
 		} else {
 			struct commit_list *stack = NULL;
 			sort_first_epoch(next, &stack);
-			action = emit_stack(&stack, emitter);
+			action = emit_stack(&stack, emitter, (base == NULL));
 			next = base;
 		}
 	}
@@ -636,7 +639,7 @@ int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter)
 			}
 		}
 
-		action = emit_stack(&stack, emitter);
+		action = emit_stack(&stack, emitter, (base==NULL));
 	}
 
 	if (base && (action != STOP)) {
