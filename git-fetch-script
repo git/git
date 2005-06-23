@@ -1,7 +1,13 @@
 #!/bin/sh
 #
+destination=FETCH_HEAD
+
 merge_repo=$1
 merge_name=${2:-HEAD}
+if [ "$2" = "tag" ]; then
+	merge_name="refs/tags/$3"
+	destination="$merge_name"
+fi
 
 : ${GIT_DIR=.git}
 : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
@@ -35,7 +41,7 @@ download_objects () {
 }
 
 echo "Getting remote $merge_name"
-download_one "$merge_repo/$merge_name" "$GIT_DIR"/FETCH_HEAD || exit 1
+download_one "$merge_repo/$merge_name" "$GIT_DIR/$destination" || exit 1
 
 echo "Getting object database"
-download_objects "$merge_repo" "$(cat "$GIT_DIR"/FETCH_HEAD)" || exit 1
+download_objects "$merge_repo" "$(cat "$GIT_DIR/$destination")" || exit 1
