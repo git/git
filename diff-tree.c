@@ -280,11 +280,7 @@ static int call_diff_flush(void)
 		return 0;
 	}
 	if (header) {
-		const char *fmt = "%s";
-		if (diff_output_format == DIFF_FORMAT_MACHINE)
-			fmt = "%s%c";
-		
-		printf(fmt, header, 0);
+		printf("%s%c", header, diff_output_format == DIFF_FORMAT_MACHINE ? 0 : '\n');
 		header = NULL;
 	}
 	diff_flush(diff_output_format);
@@ -318,18 +314,16 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	return retval;
 }
 
-static char *generate_header(const char *commit, const char *parent, const char *msg, unsigned long len)
+static const char *generate_header(const char *commit, const char *parent, const char *msg, unsigned long len)
 {
 	static char this_header[16384];
 	int offset;
 
-	offset = sprintf(this_header, "%s%s (from %s)\n", header_prefix, commit, parent);
-	if (verbose_header) {
-		offset += pretty_print_commit(commit_format, msg, len, this_header + offset, sizeof(this_header) - offset);
-		this_header[offset++] = '\n';
-		this_header[offset++] = 0;
-	}
+	if (!verbose_header)
+		return commit;
 
+	offset = sprintf(this_header, "%s%s (from %s)\n", header_prefix, commit, parent);
+	offset += pretty_print_commit(commit_format, msg, len, this_header + offset, sizeof(this_header) - offset);
 	return this_header;
 }
 
