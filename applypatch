@@ -7,11 +7,10 @@
 ## The arguments are:
 ##	$1 - file with commit message
 ##	$2 - file with the actual patch
-##	$3 - file with list of filenames the patch touches
-##	$4 - "info" file with Author, email and subject
-##	$5 - optional file containing signoff to add
+##	$3 - "info" file with Author, email and subject
+##	$4 - optional file containing signoff to add
 ##
-signoff="$5"
+signoff="$4"
 final=.dotest/final-commit
 ##
 ## If this file exists, we ask before applying
@@ -19,8 +18,7 @@ final=.dotest/final-commit
 query_apply=.dotest/.query_apply
 MSGFILE=$1
 PATCHFILE=$2
-FILES=$3
-INFO=$4
+INFO=$3
 EDIT=${VISUAL:-$EDITOR}
 EDIT=${EDIT:-vi}
 

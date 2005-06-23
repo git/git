@@ -7,7 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 
-static FILE *cmitmsg, *patchfile, *filelist;
+static FILE *cmitmsg, *patchfile;
 
 static char line[1000];
 static char date[1000];
@@ -181,45 +181,6 @@ static void cleanup_space(char *buf)
 	}
 }
 
-/*
- * Hacky hacky. This depends not only on -p1, but on
- * filenames not having some special characters in them,
- * like tilde.
- */
-static void show_filename(char *line)
-{
-	int len;
-	char *name = strchr(line, '/');
-
-	if (!name || !isspace(*line))
-		return;
-	name++;
-	len = 0;
-	for (;;) {
-		unsigned char c = name[len];
-		switch (c) {
-		default:
-			len++;
-			continue;
-
-		case 0:	case ' ':
-		case '\t': case '\n':
-			break;
-
-		/* patch tends to special-case these things.. */
-		case '~':
-			break;
-		}
-		break;
-	}
-	/* remove ".orig" from the end - common patch behaviour */
-	if (len > 5 && !memcmp(name+len-5, ".orig", 5))
-		len -=5;
-	if (!len)
-		return;
-	fprintf(filelist, "%.*s\n", len, name);
-}
-
 static void handle_rest(void)
 {
 	char *sub = cleanup_subject(subject);
@@ -231,14 +192,9 @@ static void handle_rest(void)
 	FILE *out = cmitmsg;
 
 	do {
-		/* Track filename information from the patch.. */
-		if (!memcmp("---", line, 3)) {
+		if (!memcmp("diff -", line, 6) ||
+		    !memcmp("---", line, 3))
 			out = patchfile;
-			show_filename(line+3);
-		}
-
-		if (!memcmp("+++", line, 3))
-			show_filename(line+3);
 
 		fputs(line, out);
 	} while (fgets(line, sizeof(line), stdin) != NULL);
@@ -283,13 +239,13 @@ static void handle_body(void)
 
 static void usage(void)
 {
-	fprintf(stderr, "mailinfo msg-file path-file filelist-file < email\n");
+	fprintf(stderr, "mailinfo msg-file path-file < email\n");
 	exit(1);
 }
 
 int main(int argc, char ** argv)
 {
-	if (argc != 4)
+	if (argc != 3)
 		usage();
 	cmitmsg = fopen(argv[1], "w");
 	if (!cmitmsg) {
@@ -299,11 +255,6 @@ int main(int argc, char ** argv)
 	patchfile = fopen(argv[2], "w");
 	if (!patchfile) {
 		perror(argv[2]);
-		exit(1);
-	}
-	filelist = fopen(argv[3], "w");
-	if (!filelist) {
-		perror(argv[3]);
 		exit(1);
 	}
 	while (fgets(line, sizeof(line), stdin) != NULL) {

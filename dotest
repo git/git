@@ -19,9 +19,9 @@ esac
 mailsplit $1 .dotest || exit 1
 for i in .dotest/*
 do
-	mailinfo .dotest/msg .dotest/patch .dotest/file < $i > .dotest/info || exit 1
+	mailinfo .dotest/msg .dotest/patch < $i > .dotest/info || exit 1
 	stripspace < .dotest/msg > .dotest/msg-clean
-	applypatch .dotest/msg-clean .dotest/patch .dotest/file .dotest/info "$2"
+	applypatch .dotest/msg-clean .dotest/patch .dotest/info "$2"
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		# 2 is a special exit code from applypatch to indicate that
