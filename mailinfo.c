@@ -193,7 +193,8 @@ static void handle_rest(void)
 
 	do {
 		if (!memcmp("diff -", line, 6) ||
-		    !memcmp("---", line, 3))
+		    !memcmp("---", line, 3) ||
+		    !memcmp("Index: ", line, 7))
 			out = patchfile;
 
 		fputs(line, out);
