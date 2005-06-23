@@ -860,7 +860,6 @@ static int find_offset(const char *buf, unsigned long size, const char *fragment
 		n = (i >> 1)+1;
 		if (i & 1)
 			n = -n;
-		fprintf(stderr, "Fragment applied at offset %d\n", n);
 		return try;
 	}
 
@@ -1432,6 +1431,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--index")) {
 			check_index = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--apply")) {
+			apply = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--show-files")) {
