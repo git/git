@@ -74,10 +74,6 @@ static void check_connectivity(void)
 			       refs->item->type, sha1_to_hex(refs->item->sha1));
 		}
 
-		/* Don't bother with tag reachability. */
-		if (obj->type == tag_type)
-			continue;
-
 		if (show_unreachable && !(obj->flags & REACHABLE)) {
 			if (obj->attached_deltas)
 				printf("foreign delta reference %s\n", 
