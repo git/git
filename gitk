@@ -398,6 +398,7 @@ proc makewindow {} {
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
     bind $sha1entry <Key-Return> gotocommit
+    bind $sha1entry <<PasteSelection>> clearsha1
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -1564,6 +1565,13 @@ proc incrfont {inc} {
 	$canv itemconf textitems -font $mainfont
     }
     redisplay
+}
+
+proc clearsha1 {} {
+    global sha1entry sha1string
+    if {[string length $sha1string] == 40} {
+	$sha1entry delete 0 end
+    }
 }
 
 proc sha1change {n1 n2 op} {
