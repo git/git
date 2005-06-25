@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "object.h"
 
+static int dry_run;
 static int nr_entries;
 static const char *base_name;
 static const char unpack_usage[] = "git-unpack-objects basename";
@@ -8,6 +10,9 @@ struct pack_entry {
 	unsigned int offset;
 	unsigned char sha1[20];
 };
+
+static void *pack_base;
+static unsigned long pack_size;
 
 static struct pack_entry **pack_list;
 
@@ -63,7 +68,7 @@ static int check_index(void *index, unsigned long idx_size)
 		nr = n;
 	}
 	if (idx_size != 4*256 + nr * 24) {
-		printf("idx_size=%d, expected %d (%d)\n", idx_size, 4*256 + nr * 24, nr);
+		printf("idx_size=%lu, expected %u (%u)\n", idx_size, 4*256 + nr * 24, nr);
 		return error("wrong index file size");
 	}
 
@@ -78,17 +83,64 @@ static int check_index(void *index, unsigned long idx_size)
 	return 0;
 }
 
+static void unpack_entry(struct pack_entry *entry)
+{
+	unsigned long size;
+	unsigned long offset;
+	unsigned char *pack;
+
+	/* Have we done this one already due to deltas based on it? */
+	if (lookup_object(entry->sha1))
+		return;
+
+	offset = ntohl(entry->offset);
+	if (offset > pack_size - 5)
+		die("object offset outside of pack file");
+	pack = pack_base + offset;
+	offset = pack_size - offset;
+	switch (*pack) {
+	case 'C': case 'T': case 'B':
+		size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
+		printf("%s %c %lu\n", sha1_to_hex(entry->sha1), *pack, size);
+		break;
+	case 'D':
+		printf("%s D", sha1_to_hex(entry->sha1));
+		printf(" %s\n", sha1_to_hex(pack+1));
+		break;
+	default:
+		die("corrupted pack file");
+	}
+}
+
+/*
+ * We unpack from the end, older files first. Now, usually
+ * there are deltas etc, so we'll not actually write the
+ * objects in that order, but we might as well try..
+ */
+static void unpack_all(void)
+{
+	int i = nr_entries;
+
+	while (--i >= 0) {
+		struct pack_entry *entry = pack_list[i];
+		unpack_entry(entry);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int i;
-	unsigned long idx_size, pack_size;
-	void *index, *pack;
+	unsigned long idx_size;
+	void *index;
 
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (*arg == '-') {
-			/* Maybe we'll have some flags here some day.. */
+			if (!strcmp(arg, "-n")) {
+				dry_run = 1;
+				continue;
+			}
 			usage(unpack_usage);
 		}
 		if (base_name)
@@ -98,8 +150,9 @@ int main(int argc, char **argv)
 	if (!base_name)
 		usage(unpack_usage);
 	index = map_file("idx", &idx_size);
-	pack = map_file("pack", &pack_size);
+	pack_base = map_file("pack", &pack_size);
 	if (check_index(index, idx_size) < 0)
 		die("bad index file");
+	unpack_all();
 	return 0;
 }
