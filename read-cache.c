@@ -179,6 +179,7 @@ static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replac
 {
 	int retval = 0;
 	int len = ce_namelen(ce);
+	int stage = ce_stage(ce);
 	const char *name = ce->name;
 
 	while (pos < active_nr) {
@@ -188,6 +189,8 @@ static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replac
 			break;
 		if (memcmp(name, p->name, len))
 			break;
+		if (ce_stage(p) != stage)
+			continue;
 		if (p->name[len] != '/')
 			continue;
 		retval = -1;
@@ -205,6 +208,7 @@ static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replac
 static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace)
 {
 	int retval = 0;
+	int stage = ce_stage(ce);
 	const char *name = ce->name;
 	const char *slash = name + ce_namelen(ce);
 
@@ -219,7 +223,7 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		}
 		len = slash - name;
 
-		pos = cache_name_pos(name, len);
+		pos = cache_name_pos(name, ntohs(create_ce_flags(len, stage)));
 		if (pos >= 0) {
 			retval = -1;
 			if (ok_to_replace)
@@ -231,18 +235,23 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		/*
 		 * Trivial optimization: if we find an entry that
 		 * already matches the sub-directory, then we know
-		 * we're ok, and we can exit
+		 * we're ok, and we can exit.
 		 */
 		pos = -pos-1;
-		if (pos < active_nr) {
+		while (pos < active_nr) {
 			struct cache_entry *p = active_cache[pos];
-			if (ce_namelen(p) <= len)
-				continue;
-			if (p->name[len] != '/')
-				continue;
-			if (memcmp(p->name, name, len))
-				continue;
-			break;
+			if ((ce_namelen(p) <= len) ||
+			    (p->name[len] != '/') ||
+			    memcmp(p->name, name, len))
+				break; /* not our subdirectory */
+			if (ce_stage(p) == stage)
+				/* p is at the same stage as our entry, and
+				 * is a subdirectory of what we are looking
+				 * at, so we cannot have conflicts at our
+				 * level or anything shorter.
+				 */
+				return retval;
+			pos++;
 		}
 	}
 	return retval;
@@ -277,6 +286,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	int pos;
 	int ok_to_add = option & ADD_CACHE_OK_TO_ADD;
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
+	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 	pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 
 	/* existing match? Just replace it */
@@ -302,7 +312,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (!ok_to_add)
 		return -1;
 
-	if (!ce_stage(ce) && check_file_directory_conflict(ce, pos, ok_to_replace)) {
+	if (!skip_df_check && check_file_directory_conflict(ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
 			return -1;
 		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));

@@ -366,6 +366,7 @@ test_expect_success \
      treeDF=`git-write-tree` &&
      echo treeDF $treeDF &&
      git-ls-tree $treeDF &&
+     git-ls-files --stage >DF.out
 
      rm -f DF &&
      mkdir DF &&
@@ -377,7 +378,7 @@ test_expect_success \
      git-ls-files --stage >DFDF.out'
 
 test_expect_success \
-    'DF vs DF/DF case test.' \
+    'DF vs DF/DF case test (#1)' \
     'rm -f .git/index &&
      rm -fr DF &&
      echo DF >DF &&
@@ -388,10 +389,24 @@ test_expect_success \
      check_cache_at DF/DF clean && # different from pure 2-way
      :'
 
-# Emu23 can grok I having more than H.  Make sure we did not
-# botch the conflict tests (Linus code botches this test).
+# The other way around
 test_expect_success \
-    'DF vs DF/DF case test (#2).' \
+    'DF vs DF/DF case test (#2)' \
+    'rm -f .git/index &&
+     rm -fr DF &&
+     mkdir DF &&
+     echo DF/DF >DF/DF &&
+     git-update-cache --add DF/DF &&
+     read_tree_twoway $treeDFDF $treeDF &&
+     git-ls-files --stage >DFDFcheck.out &&
+     diff -u DF.out DFDFcheck.out &&
+     check_cache_at DF clean && # different from pure 2-way
+     :'
+
+# Emu23 can grok I having more than H.  Make sure we did not
+# botch the conflict tests (fixed).
+test_expect_success \
+    'DF vs DF/DF case test (#3).' \
     'rm -f .git/index &&
      rm -fr DF &&
      mkdir DF &&
@@ -400,8 +415,8 @@ test_expect_success \
      # This should fail because I and H have a conflict
      # at DF.
      if git-read-tree --emu23 $treeDF $treeDFDF
-     then true  ;# should be false
-     else false ;# should be true
+     then false
+     else true
      fi'
 
 test_done
