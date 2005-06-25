@@ -9,7 +9,7 @@ git-http-pull - Downloads a remote GIT repository via HTTP
 
 SYNOPSIS
 --------
-'git-http-pull' [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url
+'git-http-pull' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] commit-id url
 
 DESCRIPTION
 -----------
@@ -30,7 +30,9 @@ Downloads a remote GIT repository via HTTP.
 	usual, to recover after earlier pull that was interrupted.
 -v::
 	Report what is downloaded.
-
+-w::
+        Writes the commit-id into the filename under $GIT_DIR/refs/ on
+        the local end after the transfer is complete.
 
 Author
 ------
