@@ -7,8 +7,6 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-# CVS $Revision: 1.24 $
-
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont
     global startmsecs nextupdate
@@ -260,7 +258,7 @@ proc makewindow {} {
     global findtype findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor
-    global linectxmenu
+    global rowctxmenu
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -366,8 +364,8 @@ proc makewindow {} {
 
     pack .ctop -side top -fill both -expand 1
 
-    bindall <1> {selcanvline %x %y}
-    bindall <B1-Motion> {selcanvline %x %y}
+    bindall <1> {selcanvline %W %x %y}
+    #bindall <B1-Motion> {selcanvline %W %x %y}
     bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
     bindall <2> "allcanvs scan mark 0 %y"
@@ -404,9 +402,12 @@ proc makewindow {} {
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
 
-    set linectxmenu .linectxmenu
-    menu $linectxmenu -tearoff 0
-    $linectxmenu add command -label "Select" -command lineselect
+    set rowctxmenu .rowctxmenu
+    menu $rowctxmenu -tearoff 0
+    $rowctxmenu add command -label "Diff this -> selected" \
+	-command {diffvssel 0}
+    $rowctxmenu add command -label "Diff selected -> this" \
+	-command {diffvssel 1}
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -536,13 +537,11 @@ proc about {} {
     toplevel $w
     wm title $w "About gitk"
     message $w.m -text {
-Gitk version 1.1
+Gitk version 1.2
 
 Copyright © 2005 Paul Mackerras
 
-Use and redistribute under the terms of the GNU General Public License
-
-(CVS $Revision: 1.24 $)} \
+Use and redistribute under the terms of the GNU General Public License} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
@@ -641,10 +640,10 @@ proc initgraph {} {
 proc bindline {t id} {
     global canv
 
-    $canv bind $t <Button-3> "linemenu %X %Y $id"
     $canv bind $t <Enter> "lineenter %x %y $id"
     $canv bind $t <Motion> "linemotion %x %y $id"
     $canv bind $t <Leave> "lineleave $id"
+    $canv bind $t <Button-1> "lineclick %x %y $id"
 }
 
 proc drawcommitline {level} {
@@ -655,7 +654,7 @@ proc drawcommitline {level} {
     global oldlevel oldnlines oldtodo
     global idtags idline idheads
     global lineno lthickness mainline sidelines
-    global commitlisted
+    global commitlisted rowtextx
 
     incr numcommits
     incr lineno
@@ -710,10 +709,12 @@ proc drawcommitline {level} {
 	       [expr $x + $orad - 1] [expr $y1 + $orad - 1] \
 	       -fill $ofill -outline black -width 1]
     $canv raise $t
+    $canv bind $t <1> {selcanvline {} %x %y}
     set xt [expr $canvx0 + [llength $todo] * $linespc]
     if {[llength $currentparents] > 2} {
 	set xt [expr {$xt + ([llength $currentparents] - 2) * $linespc}]
     }
+    set rowtextx($lineno) $xt
     set marks {}
     set ntags 0
     if {[info exists idtags($id)]} {
@@ -761,6 +762,7 @@ proc drawcommitline {level} {
     set date [lindex $commitinfo($id) 2]
     set linehtag($lineno) [$canv create text $xt $y1 -anchor w \
 			       -text $headline -font $mainfont ]
+    $canv bind $linehtag($lineno) <Button-3> "rowmenu %X %Y $id"
     set linentag($lineno) [$canv2 create text 3 $y1 -anchor w \
 			       -text $name -font $namefont]
     set linedtag($lineno) [$canv3 create text 3 $y1 -anchor w \
@@ -1218,9 +1220,9 @@ proc unmarkmatches {} {
     catch {unset matchinglines}
 }
 
-proc selcanvline {x y} {
+proc selcanvline {w x y} {
     global canv canvy0 ctext linespc selectedline
-    global lineid linehtag linentag linedtag
+    global lineid linehtag linentag linedtag rowtextx
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax == {}} return
     set yfrac [lindex [$canv yview] 0]
@@ -1229,7 +1231,9 @@ proc selcanvline {x y} {
     if {$l < 0} {
 	set l 0
     }
-    if {[info exists selectedline] && $selectedline == $l} return
+    if {$w eq $canv} {
+	if {![info exists rowtextx($l)] || $x < $rowtextx($l)} return
+    }
     unmarkmatches
     selectline $l
 }
@@ -1237,8 +1241,8 @@ proc selcanvline {x y} {
 proc selectline {l} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
-    global canvy0 linespc nparents treepending
-    global cflist treediffs currentid sha1entry
+    global canvy0 linespc parents nparents
+    global cflist currentid sha1entry diffids
     global commentend seenfile idtags
     $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
@@ -1292,6 +1296,7 @@ proc selectline {l} {
 
     set id $lineid($l)
     set currentid $id
+    set diffids [concat $id $parents($id)]
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     $sha1entry selection from 0
@@ -1299,6 +1304,8 @@ proc selectline {l} {
 
     $ctext conf -state normal
     $ctext delete 0.0 end
+    $ctext mark set fmark.0 0.0
+    $ctext mark gravity fmark.0 left
     set info $commitinfo($id)
     $ctext insert end "Author: [lindex $info 1]  [lindex $info 2]\n"
     $ctext insert end "Committer: [lindex $info 3]  [lindex $info 4]\n"
@@ -1318,16 +1325,23 @@ proc selectline {l} {
     set commentend [$ctext index "end - 1c"]
 
     $cflist delete 0 end
+    $cflist insert end "Comments"
     if {$nparents($id) == 1} {
-	if {![info exists treediffs($id)]} {
-	    if {![info exists treepending]} {
-		gettreediffs $id
-	    }
-	} else {
-	    addtocflist $id
-	}
+	startdiff
     }
     catch {unset seenfile}
+}
+
+proc startdiff {} {
+    global treediffs diffids treepending
+
+    if {![info exists treediffs($diffids)]} {
+	if {![info exists treepending]} {
+	    gettreediffs $diffids
+	}
+    } else {
+	addtocflist $diffids
+    }
 }
 
 proc selnextline {dir} {
@@ -1338,76 +1352,81 @@ proc selnextline {dir} {
     selectline $l
 }
 
-proc addtocflist {id} {
-    global currentid treediffs cflist treepending
-    if {$id != $currentid} {
-	gettreediffs $currentid
+proc addtocflist {ids} {
+    global diffids treediffs cflist
+    if {$ids != $diffids} {
+	gettreediffs $diffids
 	return
     }
-    $cflist insert end "All files"
-    foreach f $treediffs($currentid) {
+    foreach f $treediffs($ids) {
 	$cflist insert end $f
     }
-    getblobdiffs $id
+    getblobdiffs $ids
 }
 
-proc gettreediffs {id} {
+proc gettreediffs {ids} {
     global treediffs parents treepending
-    set treepending $id
-    set treediffs($id) {}
-    set p [lindex $parents($id) 0]
+    set treepending $ids
+    set treediffs($ids) {}
+    set id [lindex $ids 0]
+    set p [lindex $ids 1]
     if [catch {set gdtf [open "|git-diff-tree -r $p $id" r]}] return
     fconfigure $gdtf -blocking 0
-    fileevent $gdtf readable "gettreediffline $gdtf $id"
+    fileevent $gdtf readable "gettreediffline $gdtf {$ids}"
 }
 
-proc gettreediffline {gdtf id} {
+proc gettreediffline {gdtf ids} {
     global treediffs treepending
     set n [gets $gdtf line]
     if {$n < 0} {
 	if {![eof $gdtf]} return
 	close $gdtf
 	unset treepending
-	addtocflist $id
+	addtocflist $ids
 	return
     }
     set file [lindex $line 5]
-    lappend treediffs($id) $file
+    lappend treediffs($ids) $file
 }
 
-proc getblobdiffs {id} {
-    global parents diffopts blobdifffd env curdifftag curtagstart
-    global diffindex difffilestart
-    set p [lindex $parents($id) 0]
+proc getblobdiffs {ids} {
+    global diffopts blobdifffd env curdifftag curtagstart
+    global diffindex difffilestart nextupdate
+
+    set id [lindex $ids 0]
+    set p [lindex $ids 1]
     set env(GIT_DIFF_OPTS) $diffopts
     if [catch {set bdf [open "|git-diff-tree -r -p $p $id" r]} err] {
 	puts "error getting diffs: $err"
 	return
     }
     fconfigure $bdf -blocking 0
-    set blobdifffd($id) $bdf
+    set blobdifffd($ids) $bdf
     set curdifftag Comments
     set curtagstart 0.0
     set diffindex 0
     catch {unset difffilestart}
-    fileevent $bdf readable "getblobdiffline $bdf $id"
+    fileevent $bdf readable "getblobdiffline $bdf {$ids}"
+    set nextupdate [expr {[clock clicks -milliseconds] + 100}]
 }
 
-proc getblobdiffline {bdf id} {
-    global currentid blobdifffd ctext curdifftag curtagstart seenfile
+proc getblobdiffline {bdf ids} {
+    global diffids blobdifffd ctext curdifftag curtagstart seenfile
     global diffnexthead diffnextnote diffindex difffilestart
+    global nextupdate
+
     set n [gets $bdf line]
     if {$n < 0} {
 	if {[eof $bdf]} {
 	    close $bdf
-	    if {$id == $currentid && $bdf == $blobdifffd($id)} {
+	    if {$ids == $diffids && $bdf == $blobdifffd($ids)} {
 		$ctext tag add $curdifftag $curtagstart end
 		set seenfile($curdifftag) 1
 	    }
 	}
 	return
     }
-    if {$id != $currentid || $bdf != $blobdifffd($id)} {
+    if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
 	return
     }
     $ctext conf -state normal
@@ -1423,8 +1442,12 @@ proc getblobdiffline {bdf id} {
 	    set header "$diffnexthead ($diffnextnote)"
 	    unset diffnexthead
 	}
-	set difffilestart($diffindex) [$ctext index "end - 1c"]
+	set here [$ctext index "end - 1c"]
+	set difffilestart($diffindex) $here
 	incr diffindex
+	# start mark names at fmark.1 for first file
+	$ctext mark set fmark.$diffindex $here
+	$ctext mark gravity fmark.$diffindex left
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
 	set l [expr {(78 - [string length $header]) / 2}]
@@ -1476,6 +1499,12 @@ proc getblobdiffline {bdf id} {
 	}
     }
     $ctext conf -state disabled
+    if {[clock clicks -milliseconds] >= $nextupdate} {
+	incr nextupdate 100
+	fileevent $bdf readable {}
+	update
+	fileevent $bdf readable "getblobdiffline $bdf {$ids}"
+    }
 }
 
 proc nextfile {} {
@@ -1492,27 +1521,10 @@ proc nextfile {} {
 proc listboxsel {} {
     global ctext cflist currentid treediffs seenfile
     if {![info exists currentid]} return
-    set sel [$cflist curselection]
-    if {$sel == {} || [lsearch -exact $sel 0] >= 0} {
-	# show everything
-	$ctext tag conf Comments -elide 0
-	foreach f $treediffs($currentid) {
-	    if [info exists seenfile(f:$f)] {
-		$ctext tag conf "f:$f" -elide 0
-	    }
-	}
-    } else {
-	# just show selected files
-	$ctext tag conf Comments -elide 1
-	set i 1
-	foreach f $treediffs($currentid) {
-	    set elide [expr {[lsearch -exact $sel $i] < 0}]
-	    if [info exists seenfile(f:$f)] {
-		$ctext tag conf "f:$f" -elide $elide
-	    }
-	    incr i
-	}
-    }
+    set sel [lsort [$cflist curselection]]
+    if {$sel eq {}} return
+    set first [lindex $sel 0]
+    catch {$ctext yview fmark.$first}
 }
 
 proc setcoords {} {
@@ -1591,19 +1603,6 @@ proc gotocommit {} {
     error_popup "$type $sha1string is not known"
 }
 
-proc linemenu {x y id} {
-    global linectxmenu linemenuid
-    set linemenuid $id
-    $linectxmenu post $x $y
-}
-
-proc lineselect {} {
-    global linemenuid idline
-    if {[info exists linemenuid] && [info exists idline($linemenuid)]} {
-	selectline $idline($linemenuid)
-    }
-}
-
 proc lineenter {x y id} {
     global hoverx hovery hoverid hovertimer
     global commitinfo canv
@@ -1665,6 +1664,101 @@ proc linehover {} {
     $canv raise $t
     set t [$canv create text $x $y -anchor nw -text $text -tags hover]
     $canv raise $t
+}
+
+proc lineclick {x y id} {
+    global ctext commitinfo children cflist canv
+
+    unmarkmatches
+    $canv delete hover
+    # fill the details pane with info about this line
+    $ctext conf -state normal
+    $ctext delete 0.0 end
+    $ctext insert end "Parent:\n "
+    catch {destroy $ctext.$id}
+    button $ctext.$id -text "Go:" -command "selbyid $id" \
+	-padx 4 -pady 0
+    $ctext window create end -window $ctext.$id -align center
+    set info $commitinfo($id)
+    $ctext insert end "\t[lindex $info 0]\n"
+    $ctext insert end "\tAuthor:\t[lindex $info 1]\n"
+    $ctext insert end "\tDate:\t[lindex $info 2]\n"
+    $ctext insert end "\tID:\t$id\n"
+    if {[info exists children($id)]} {
+	$ctext insert end "\nChildren:"
+	foreach child $children($id) {
+	    $ctext insert end "\n "
+	    catch {destroy $ctext.$child}
+	    button $ctext.$child -text "Go:" -command "selbyid $child" \
+		-padx 4 -pady 0
+	    $ctext window create end -window $ctext.$child -align center
+	    set info $commitinfo($child)
+	    $ctext insert end "\t[lindex $info 0]"
+	}
+    }
+    $ctext conf -state disabled
+
+    $cflist delete 0 end
+}
+
+proc selbyid {id} {
+    global idline
+    if {[info exists idline($id)]} {
+	selectline $idline($id)
+    }
+}
+
+proc mstime {} {
+    global startmstime
+    if {![info exists startmstime]} {
+	set startmstime [clock clicks -milliseconds]
+    }
+    return [format "%.3f" [expr {([clock click -milliseconds] - $startmstime) / 1000.0}]]
+}
+
+proc rowmenu {x y id} {
+    global rowctxmenu idline selectedline rowmenuid
+
+    if {![info exists selectedline] || $idline($id) eq $selectedline} {
+	set state disabled
+    } else {
+	set state normal
+    }
+    $rowctxmenu entryconfigure 0 -state $state
+    $rowctxmenu entryconfigure 1 -state $state
+    set rowmenuid $id
+    tk_popup $rowctxmenu $x $y
+}
+
+proc diffvssel {dirn} {
+    global rowmenuid selectedline lineid
+    global ctext cflist
+    global diffids commitinfo
+
+    if {![info exists selectedline]} return
+    if {$dirn} {
+	set oldid $lineid($selectedline)
+	set newid $rowmenuid
+    } else {
+	set oldid $rowmenuid
+	set newid $lineid($selectedline)
+    }
+    $ctext conf -state normal
+    $ctext delete 0.0 end
+    $ctext mark set fmark.0 0.0
+    $ctext mark gravity fmark.0 left
+    $cflist delete 0 end
+    $cflist insert end "Top"
+    $ctext insert end "From $oldid\n     "
+    $ctext insert end [lindex $commitinfo($oldid) 0]
+    $ctext insert end "\n\nTo   $newid\n     "
+    $ctext insert end [lindex $commitinfo($newid) 0]
+    $ctext insert end "\n"
+    $ctext conf -state disabled
+    $ctext tag delete Comments
+    $ctext tag remove found 1.0 end
+    set diffids [list $newid $oldid]
+    startdiff
 }
 
 proc doquit {} {
