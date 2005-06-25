@@ -22,8 +22,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 "$1.." | "$1.$1" | "$1$1.")
 	echo "Removing $4"
-	rm -f -- "$4" &&
-		exec git-update-cache --remove -- "$4"
+	if test -f "$4"
+	then
+		rm -f -- "$4"
+	fi &&
+	exec git-update-cache --remove -- "$4"
 	;;
 
 #
