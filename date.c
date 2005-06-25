@@ -270,7 +270,7 @@ static int match_multi_number(unsigned long num, char c, char *date, char *end, 
 /*
  * We've seen a digit. Time? Year? Date? 
  */
-static int match_digit(char *date, struct tm *tm, int *offset)
+static int match_digit(char *date, struct tm *tm, int *offset, int *tm_gmt)
 {
 	int n;
 	char *end;
@@ -283,8 +283,10 @@ static int match_digit(char *date, struct tm *tm, int *offset)
 	 */
 	if (num > 946684800) {
 		time_t time = num;
-		if (gmtime_r(&time, tm))
+		if (gmtime_r(&time, tm)) {
+			*tm_gmt = 1;
 			return end - date;
+		}
 	}
 
 	/*
@@ -389,7 +391,7 @@ static int match_tz(char *date, int *offp)
 void parse_date(char *date, char *result, int maxlen)
 {
 	struct tm tm;
-	int offset, sign;
+	int offset, sign, tm_gmt;
 	time_t then;
 
 	memset(&tm, 0, sizeof(tm));
@@ -398,6 +400,7 @@ void parse_date(char *date, char *result, int maxlen)
 	tm.tm_mday = -1;
 	tm.tm_isdst = -1;
 	offset = -1;
+	tm_gmt = 0;
 
 	for (;;) {
 		int match = 0;
@@ -410,7 +413,7 @@ void parse_date(char *date, char *result, int maxlen)
 		if (isalpha(c))
 			match = match_alpha(date, &tm, &offset);
 		else if (isdigit(c))
-			match = match_digit(date, &tm, &offset);
+			match = match_digit(date, &tm, &offset, &tm_gmt);
 		else if ((c == '-' || c == '+') && isdigit(date[1]))
 			match = match_tz(date, &offset);
 
@@ -430,7 +433,8 @@ void parse_date(char *date, char *result, int maxlen)
 	if (then == -1)
 		return;
 
-	then -= offset * 60;
+	if (!tm_gmt)
+		then -= offset * 60;
 
 	sign = '+';
 	if (offset < 0) {
