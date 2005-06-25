@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# Copyright (c) 2005 Junio C Hamano.
+#
+
+usage="usage: $0 "'<upstream> [<head>]
+
+             __*__*__*__*__> <upstream>
+            /
+  fork-point
+            \__+__+__+__+__+__+__+__> <head>
+
+Each commit between the fork-point and <head> is examined, and
+compared against the change each commit between the fork-point and
+<upstream> introduces.  If the change does not seem to be in the
+upstream, it is shown on the standard output.
+
+The output is intended to be used as:
+
+    OLD_HEAD=$(git-rev-parse HEAD)
+    git-rev-parse linus >${GIT_DIR-.}/HEAD
+    git-cherry linus OLD_HEAD |
+    while read commit
+    do
+        GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p "$commit" &&
+	git-commit-script -m "$commit"
+    done
+'
+
+case "$#" in
+1) linus=`git-rev-parse "$1"` &&
+   junio=`git-rev-parse HEAD` || exit
+   ;;
+2) linus=`git-rev-parse "$1"` &&
+   junio=`git-rev-parse "$2"` || exit
+   ;;
+*) echo >&2 "$usage"; exit 1 ;;
+esac
+
+# Note that these list commits in reverse order;
+# not that the order in inup matters...
+inup=`git-rev-list ^$junio $linus` &&
+ours=`git-rev-list $junio ^$linus` || exit
+
+tmp=.cherry-tmp$$
+patch=$tmp-patch
+mkdir $patch
+trap "rm -rf $tmp-*" 0 1 2 3 15
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
+for c in $inup
+do
+	git-diff-tree -p $c
+done | git-patch-id |
+while read id name
+do
+	echo $name >>$patch/$id
+done
+
+LF='
+'
+
+O=
+for c in $ours
+do
+	set x `git-diff-tree -p $c | git-patch-id`
+	if test "$2" != ""
+	then
+		if test -f "$patch/$2"
+		then
+			sign=-
+		else
+			sign=+
+		fi
+		case "$O" in
+		'')	O="$sign $c" ;;
+		*)	O="$sign $c$LF$O" ;;
+		esac
+	fi
+done
+case "$O" in
+'') ;;
+*)  echo "$O" ;;
+esac
