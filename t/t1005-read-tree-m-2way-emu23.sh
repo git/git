@@ -32,7 +32,6 @@ read_tree_twoway () {
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 compare_change () {
-    	cat current
 	sed -n >current \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
 	    -e 's/^\([-+][0-7][0-7][0-7][0-7][0-7][0-7]\) '"$_x40"' /\1 X /p' \
@@ -60,11 +59,22 @@ check_stages () {
     diff -u expected_stages current_stages
 }
 
+cat >bozbar-old <<\EOF
+This is a sample file used in two-way fast forward merge
+tests.  Its second line ends with a magic word bozbar
+which will be modified by the merged head to gnusto.
+It has some extra lines so that external tools can
+successfully merge independent changes made to later
+lines (such as this one), avoiding line conflicts.
+EOF
+
+sed -e 's/bozbar/gnusto (earlier bozbar)/' bozbar-old >bozbar-new
+
 test_expect_success \
     setup \
     'echo frotz >frotz &&
      echo nitfol >nitfol &&
-     echo bozbar >bozbar &&
+     cat bozbar-old >bozbar &&
      echo rezrov >rezrov &&
      echo yomin >yomin &&
      git-update-cache --add nitfol bozbar rezrov &&
@@ -72,7 +82,7 @@ test_expect_success \
      echo treeH $treeH &&
      git-ls-tree $treeH &&
 
-     echo gnusto >bozbar &&
+     cat bozbar-new >bozbar &&
      git-update-cache --add frotz bozbar --force-remove rezrov &&
      git-ls-files --stage >M.out &&
      treeM=`git-write-tree` &&
@@ -106,6 +116,8 @@ echo '+100644 X 0	yomin' >expected
 test_expect_success \
     '4 - carry forward local addition.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      git-update-cache --add yomin &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >4.out || exit
@@ -118,6 +130,8 @@ test_expect_success \
 test_expect_success \
     '5 - carry forward local addition.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo yomin >yomin &&
      git-update-cache --add yomin &&
      echo yomin yomin >yomin &&
@@ -132,6 +146,8 @@ test_expect_success \
 test_expect_success \
     '6 - local addition already has the same.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      git-update-cache --add frotz &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >6.out &&
@@ -143,6 +159,8 @@ test_expect_success \
 test_expect_success \
     '7 - local addition already has the same.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo frotz >frotz &&
      git-update-cache --add frotz &&
      echo frotz frotz >frotz &&
@@ -154,6 +172,8 @@ test_expect_success \
 test_expect_success \
     '8 - conflicting addition.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo frotz frotz >frotz &&
      git-update-cache --add frotz &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
@@ -161,6 +181,8 @@ test_expect_success \
 test_expect_success \
     '9 - conflicting addition.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo frotz frotz >frotz &&
      git-update-cache --add frotz &&
      echo frotz >frotz &&
@@ -169,6 +191,8 @@ test_expect_success \
 test_expect_success \
     '10 - path removed.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo rezrov >rezrov &&
      git-update-cache --add rezrov &&
      read_tree_twoway $treeH $treeM &&
@@ -178,6 +202,8 @@ test_expect_success \
 test_expect_success \
     '11 - dirty path removed.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo rezrov >rezrov &&
      git-update-cache --add rezrov &&
      echo rezrov rezrov >rezrov &&
@@ -186,6 +212,8 @@ test_expect_success \
 test_expect_success \
     '12 - unmatching local changes being removed.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo rezrov rezrov >rezrov &&
      git-update-cache --add rezrov &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
@@ -193,6 +221,8 @@ test_expect_success \
 test_expect_success \
     '13 - unmatching local changes being removed.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo rezrov rezrov >rezrov &&
      git-update-cache --add rezrov &&
      echo rezrov >rezrov &&
@@ -206,6 +236,8 @@ EOF
 test_expect_success \
     '14 - unchanged in two heads.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo nitfol nitfol >nitfol &&
      git-update-cache --add nitfol &&
      read_tree_twoway $treeH $treeM &&
@@ -217,6 +249,8 @@ test_expect_success \
 test_expect_success \
     '15 - unchanged in two heads.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo nitfol nitfol >nitfol &&
      git-update-cache --add nitfol &&
      echo nitfol nitfol nitfol >nitfol &&
@@ -233,6 +267,8 @@ test_expect_success \
 test_expect_success \
     '16 - conflicting local change.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo bozbar bozbar >bozbar &&
      git-update-cache --add bozbar &&
      git-read-tree --emu23 $treeH $treeM &&
@@ -249,6 +285,8 @@ EOF
 test_expect_success \
     '17 - conflicting local change.' \
     'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
      echo bozbar bozbar >bozbar &&
      git-update-cache --add bozbar &&
      echo bozbar bozbar bozbar >bozbar &&
@@ -257,7 +295,9 @@ test_expect_success \
 test_expect_success \
     '18 - local change already having a good result.' \
     'rm -f .git/index &&
-     echo gnusto >bozbar &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
+     cat bozbar-new >bozbar &&
      git-update-cache --add bozbar &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >18.out &&
@@ -267,7 +307,9 @@ test_expect_success \
 test_expect_success \
     '19 - local change already having a good result, further modified.' \
     'rm -f .git/index &&
-     echo gnusto >bozbar &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
+     cat bozbar-new >bozbar &&
      git-update-cache --add bozbar &&
      echo gnusto gnusto >bozbar &&
      read_tree_twoway $treeH $treeM &&
@@ -278,7 +320,9 @@ test_expect_success \
 test_expect_success \
     '20 - no local change, use new tree.' \
     'rm -f .git/index &&
-     echo bozbar >bozbar &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
+     cat bozbar-old >bozbar &&
      git-update-cache --add bozbar &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >20.out &&
@@ -288,10 +332,30 @@ test_expect_success \
 test_expect_success \
     '21 - no local change, dirty cache.' \
     'rm -f .git/index &&
-     echo bozbar >bozbar &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
+     cat bozbar-old >bozbar &&
      git-update-cache --add bozbar &&
      echo gnusto gnusto >bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
+
+echo '-100644 X 0	bozbar
++100644 X 0	bozbar' >expected
+
+# This fails with straight two-way fast forward, but emu23
+# can merge them.
+test_expect_success \
+    '22 - local change cache updated.' \
+    'rm -f .git/index &&
+     git-read-tree $treeH &&
+     git-checkout-cache -u -f -q -a &&
+     sed -e "s/such as/SUCH AS/" bozbar-old >bozbar &&
+     git-update-cache --add bozbar &&
+     read_tree_twoway $treeH $treeM &&
+     git-ls-files --stage >22.out || exit
+     diff -u M.out 22.out >22diff.out
+     compare_change 22diff.out &&
+     check_cache_at bozbar clean'
 
 # Also make sure we did not break DF vs DF/DF case.
 test_expect_success \
@@ -323,5 +387,21 @@ test_expect_success \
      diff -u DFDF.out DFDFcheck.out &&
      check_cache_at DF/DF clean && # different from pure 2-way
      :'
+
+# Emu23 can grok I having more than H.  Make sure we did not
+# botch the conflict tests (Linus code botches this test).
+test_expect_success \
+    'DF vs DF/DF case test (#2).' \
+    'rm -f .git/index &&
+     rm -fr DF &&
+     mkdir DF &&
+     echo DF/DF >DF/DF &&
+     git-update-cache --add DF/DF &&
+     # This should fail because I and H have a conflict
+     # at DF.
+     if git-read-tree --emu23 $treeDF $treeDFDF
+     then true  ;# should be false
+     else false ;# should be true
+     fi'
 
 test_done
