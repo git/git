@@ -7,14 +7,13 @@
 
 static int check_valid_sha1(unsigned char *sha1)
 {
-	char *filename = sha1_file_name(sha1);
 	int ret;
 
 	/* If we were anal, we'd check that the sha1 of the contents actually matches */
-	ret = access(filename, R_OK);
-	if (ret)
-		perror(filename);
-	return ret;
+	ret = has_sha1_file(sha1);
+	if (ret == 0)
+		perror(sha1_file_name(sha1));
+	return ret ? 0 : -1;
 }
 
 static int write_tree(struct cache_entry **cachep, int maxentries, const char *base, int baselen, unsigned char *returnsha1)
