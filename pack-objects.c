@@ -172,7 +172,7 @@ static void write_index_file(void)
 	 * Write the actual SHA1 entries..
 	 */
 	list = sorted_by_sha;
-	for (i < 0; i < nr_objects; i++) {
+	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *entry = *list++;
 		unsigned int offset = htonl(entry->offset);
 		fwrite(&offset, 4, 1, f);
