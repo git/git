@@ -1,5 +1,7 @@
 #include "cache.h"
 #include "commit.h"
+#include "tree.h"
+#include "blob.h"
 #include "epoch.h"
 
 #define SEEN		(1u << 0)
@@ -17,6 +19,8 @@ static const char rev_list_usage[] =
 		      "  --merge-order [ --show-breaks ]";
 
 static int bisect_list = 0;
+static int tree_objects = 0;
+static int blob_objects = 0;
 static int verbose_header = 0;
 static int show_parents = 0;
 static int hdr_termination = 0;
@@ -94,13 +98,93 @@ static int process_commit(struct commit * commit)
 	return CONTINUE;
 }
 
+static struct object_list **add_object(struct object *obj, struct object_list **p)
+{
+	struct object_list *entry = xmalloc(sizeof(*entry));
+	entry->item = obj;
+	entry->next = NULL;
+	*p = entry;
+	return &entry->next;
+}
+
+static struct object_list **process_blob(struct blob *blob, struct object_list **p)
+{
+	struct object *obj = &blob->object;
+
+	if (!blob_objects)
+		return p;
+	if (obj->flags & (UNINTERESTING | SEEN))
+		return p;
+	obj->flags |= SEEN;
+	return add_object(obj, p);
+}
+
+static struct object_list **process_tree(struct tree *tree, struct object_list **p)
+{
+	struct object *obj = &tree->object;
+	struct tree_entry_list *entry;
+
+	if (!tree_objects)
+		return p;
+	if (obj->flags & (UNINTERESTING | SEEN))
+		return p;
+	if (parse_tree(tree) < 0)
+		die("bad tree object %s", sha1_to_hex(obj->sha1));
+	obj->flags |= SEEN;
+	p = add_object(obj, p);
+	for (entry = tree->entries ; entry ; entry = entry->next) {
+		if (entry->directory)
+			p = process_tree(entry->item.tree, p);
+		else
+			p = process_blob(entry->item.blob, p);
+	}
+	return p;
+}
+
 static void show_commit_list(struct commit_list *list)
 {
+	struct object_list *objects = NULL, **p = &objects;
 	while (list) {
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 
+		p = process_tree(commit->tree, p);
 		if (process_commit(commit) == STOP)
 			break;
+	}
+	while (objects) {
+		puts(sha1_to_hex(objects->item->sha1));
+		objects = objects->next;
+	}
+}
+
+static void mark_blob_uninteresting(struct blob *blob)
+{
+	if (!blob_objects)
+		return;
+	if (blob->object.flags & UNINTERESTING)
+		return;
+	blob->object.flags |= UNINTERESTING;
+}
+
+static void mark_tree_uninteresting(struct tree *tree)
+{
+	struct object *obj = &tree->object;
+	struct tree_entry_list *entry;
+
+	if (!tree_objects)
+		return;
+	if (obj->flags & UNINTERESTING)
+		return;
+	obj->flags |= UNINTERESTING;
+	if (parse_tree(tree) < 0)
+		die("bad tree %s", sha1_to_hex(obj->sha1));
+	entry = tree->entries;
+	while (entry) {
+		if (entry->directory)
+			mark_tree_uninteresting(entry->item.tree);
+		else
+			mark_blob_uninteresting(entry->item.blob);
+		entry = entry->next;
 	}
 }
 
@@ -108,6 +192,8 @@ static void mark_parents_uninteresting(struct commit *commit)
 {
 	struct commit_list *parents = commit->parents;
 
+	if (tree_objects)
+		mark_tree_uninteresting(commit->tree);
 	while (parents) {
 		struct commit *commit = parents->item;
 		commit->object.flags |= UNINTERESTING;
@@ -274,6 +360,11 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--bisect")) {
 			bisect_list = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--objects")) {
+			tree_objects = 1;
+			blob_objects = 1;
 			continue;
 		}
 		if (!strncmp(arg, "--merge-order", 13)) {
