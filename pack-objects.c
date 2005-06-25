@@ -114,6 +114,7 @@ static unsigned long write_object(FILE *f, struct object_entry *entry)
 	memcpy(header+1, &datalen, 4);
 	hdrlen = 5;
 	if (entry->delta) {
+		header[0] = 'D';
 		memcpy(header+1, entry->delta, 20);
 		buf = delta_against(buf, size, entry);
 		size = entry->delta_size;
