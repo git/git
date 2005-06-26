@@ -26,7 +26,6 @@ struct object_entry {
 static struct object_entry **sorted_by_sha, **sorted_by_type;
 static struct object_entry *objects = NULL;
 static int nr_objects = 0, nr_alloc = 0;
-static int delta_window = 10;
 static const char *base_name;
 
 struct myfile {
@@ -364,6 +363,7 @@ static void find_deltas(struct object_entry **list, int window)
 int main(int argc, char **argv)
 {
 	char line[128];
+	int window = 10;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -372,7 +372,7 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strncmp("--window=", arg, 9)) {
 				char *end;
-				delta_window = strtoul(arg+9, &end, 0);
+				window = strtoul(arg+9, &end, 0);
 				if (!arg[9] || *end)
 					usage(pack_usage);
 				continue;
@@ -399,8 +399,8 @@ int main(int argc, char **argv)
 
 	sorted_by_sha = create_sorted_list(sha1_sort);
 	sorted_by_type = create_sorted_list(type_size_sort);
-	if (delta_window)
-		find_deltas(sorted_by_type, delta_window);
+	if (window)
+		find_deltas(sorted_by_type, window+1);
 
 	write_pack_file();
 	write_index_file();
