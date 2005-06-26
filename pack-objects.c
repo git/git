@@ -321,6 +321,7 @@ static int try_delta(struct unpacked *cur, struct unpacked *old)
 		}
 	}
 	free(delta_buf);
+	return 0;
 }
 
 static void find_deltas(struct object_entry **list, int window)
