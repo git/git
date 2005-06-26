@@ -98,16 +98,17 @@ static int process_commit(struct commit * commit)
 	return CONTINUE;
 }
 
-static struct object_list **add_object(struct object *obj, struct object_list **p)
+static struct object_list **add_object(struct object *obj, struct object_list **p, const char *name)
 {
 	struct object_list *entry = xmalloc(sizeof(*entry));
 	entry->item = obj;
 	entry->next = NULL;
+	entry->name = name;
 	*p = entry;
 	return &entry->next;
 }
 
-static struct object_list **process_blob(struct blob *blob, struct object_list **p)
+static struct object_list **process_blob(struct blob *blob, struct object_list **p, const char *name)
 {
 	struct object *obj = &blob->object;
 
@@ -116,10 +117,10 @@ static struct object_list **process_blob(struct blob *blob, struct object_list *
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
 	obj->flags |= SEEN;
-	return add_object(obj, p);
+	return add_object(obj, p, name);
 }
 
-static struct object_list **process_tree(struct tree *tree, struct object_list **p)
+static struct object_list **process_tree(struct tree *tree, struct object_list **p, const char *name)
 {
 	struct object *obj = &tree->object;
 	struct tree_entry_list *entry;
@@ -131,12 +132,12 @@ static struct object_list **process_tree(struct tree *tree, struct object_list *
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
-	p = add_object(obj, p);
+	p = add_object(obj, p, name);
 	for (entry = tree->entries ; entry ; entry = entry->next) {
 		if (entry->directory)
-			p = process_tree(entry->item.tree, p);
+			p = process_tree(entry->item.tree, p, entry->name);
 		else
-			p = process_blob(entry->item.blob, p);
+			p = process_blob(entry->item.blob, p, entry->name);
 	}
 	return p;
 }
@@ -147,12 +148,12 @@ static void show_commit_list(struct commit_list *list)
 	while (list) {
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 
-		p = process_tree(commit->tree, p);
+		p = process_tree(commit->tree, p, "");
 		if (process_commit(commit) == STOP)
 			break;
 	}
 	while (objects) {
-		puts(sha1_to_hex(objects->item->sha1));
+		printf("%s %s\n", sha1_to_hex(objects->item->sha1), objects->name);
 		objects = objects->next;
 	}
 }

@@ -4,6 +4,7 @@
 struct object_list {
 	struct object *item;
 	struct object_list *next;
+	const char *name;
 };
 
 struct object {
