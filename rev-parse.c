@@ -13,6 +13,10 @@ static int revs_only = 0;
 static int do_rev_argument = 1;
 static int output_revs = 0;
 
+#define NORMAL 0
+#define REVERSED 1
+static int show_type = NORMAL;
+
 static int get_extended_sha1(char *name, unsigned char *sha1);
 
 /*
@@ -42,20 +46,12 @@ static int is_rev_argument(const char *arg)
 	}
 }
 
-static void show_rev(unsigned char *sha1)
+static void show_rev(int type, unsigned char *sha1)
 {
 	if (no_revs)
 		return;
 	output_revs++;
-	puts(sha1_to_hex(sha1));
-}
-
-static void show_antirev(unsigned char *sha1)
-{
-	if (no_revs)
-		return;
-	output_revs++;
-	printf("^%s\n", sha1_to_hex(sha1));
+	printf("%s%s\n", type == show_type ? "" : "^", sha1_to_hex(sha1));
 }
 
 static void show_rev_arg(char *rev)
@@ -139,7 +135,7 @@ static void show_default(void)
 
 		def = NULL;
 		if (!get_extended_sha1(s, sha1)) {
-			show_rev(sha1);
+			show_rev(NORMAL, sha1);
 			return;
 		}
 		show_arg(s);
@@ -185,6 +181,10 @@ int main(int argc, char **argv)
 				single_rev = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--not")) {
+				show_type ^= REVERSED;
+				continue;
+			}
 			show_arg(arg);
 			continue;
 		}
@@ -200,8 +200,8 @@ int main(int argc, char **argv)
 					if (no_revs)
 						continue;
 					def = NULL;
-					show_rev(end);
-					show_antirev(sha1);
+					show_rev(NORMAL, end);
+					show_rev(REVERSED, sha1);
 					continue;
 				}
 			}
@@ -211,14 +211,14 @@ int main(int argc, char **argv)
 			if (no_revs)
 				continue;
 			def = NULL;
-			show_rev(sha1);
+			show_rev(NORMAL, sha1);
 			continue;
 		}
 		if (*arg == '^' && !get_extended_sha1(arg+1, sha1)) {
 			if (no_revs)
 				continue;
 			def = NULL;
-			show_antirev(sha1);
+			show_rev(REVERSED, sha1);
 			continue;
 		}
 		show_default();
