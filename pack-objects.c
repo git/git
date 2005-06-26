@@ -344,11 +344,12 @@ static void find_deltas(struct object_entry **list, int window)
 		n->data = read_sha1_file(entry->sha1, type, &size);
 		if (size != entry->size)
 			die("object %s inconsistent object length (%lu vs %lu)", sha1_to_hex(entry->sha1), size, entry->size);
-		for (j = 0; j < window; j++) {
-			unsigned int other_idx = idx - 1 - j;
+		j = window;
+		while (--j > 0) {
+			unsigned int other_idx = idx + j;
 			struct unpacked *m;
-			if (other_idx < 0)
-				other_idx += window;
+			if (other_idx >= window)
+				other_idx -= window;
 			m = array + other_idx;
 			if (!m->entry)
 				break;
