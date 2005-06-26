@@ -96,7 +96,7 @@ static unsigned long write_object(FILE *f, struct object_entry *entry)
 	unsigned long size;
 	char type[10];
 	void *buf = read_sha1_file(entry->sha1, type, &size);
-	char header[21];
+	char header[25];
 	unsigned hdrlen, datalen;
 
 	if (!buf)
@@ -110,16 +110,16 @@ static unsigned long write_object(FILE *f, struct object_entry *entry)
 	 * instead.
 	 */
 	header[0] = ".CTB"[entry->type];
-	datalen = htonl(size);
-	memcpy(header+1, &datalen, 4);
 	hdrlen = 5;
 	if (entry->delta) {
 		header[0] = 'D';
-		memcpy(header+1, entry->delta, 20);
+		memcpy(header+5, entry->delta, 20);
 		buf = delta_against(buf, size, entry);
 		size = entry->delta_size;
-		hdrlen = 21;
+		hdrlen = 25;
 	}
+	datalen = htonl(size);
+	memcpy(header+1, &datalen, 4);
 	fwrite(header, hdrlen, 1, f);
 	datalen = fwrite_compressed(buf, size, f);
 	free(buf);

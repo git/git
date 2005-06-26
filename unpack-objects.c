@@ -88,26 +88,26 @@ static int check_index(void)
 }
 
 static int unpack_non_delta_entry(struct pack_entry *entry,
-				  unsigned char *pack)
+				  int kind,
+				  unsigned char *data,
+				  unsigned long size,
+				  unsigned long left)
 {
-	int st, kind;
-	unsigned long size;
+	int st;
 	z_stream stream;
 	char *buffer;
 	unsigned char sha1[20];
 	char *type_s;
-	unsigned long offset = ntohl(entry->offset);
 
-	kind = pack[0];
-	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
 	printf("%s %c %lu\n", sha1_to_hex(entry->sha1), kind, size);
-	pack += 5;
+	if (dry_run)
+		return 0;
 
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = pack;
-	stream.avail_in = pack_size - offset; /* sheesh. */
+	stream.next_in = data;
+	stream.avail_in = left;
 	stream.next_out = buffer;
 	stream.avail_out = size;
 
@@ -148,14 +148,15 @@ static int find_pack_entry(unsigned char *sha1, struct pack_entry **ent)
 	do {
 		int mi = (lo + hi) / 2;
 		int cmp = memcmp(index + 24 * mi + 4, sha1, 20);
+printf("lo=%d mi=%d hi=%d cmp=%d\n", lo, mi, hi, cmp);
 		if (!cmp) {
 			*ent = index + 24 * mi;
 			return 1;
 		}
-		if (cmp < 0)
+		if (cmp > 0)
 			hi = mi;
 		else
-			lo = mi;
+			lo = mi+1;
 	} while (lo < hi);
 	return 0;
 }
@@ -163,70 +164,55 @@ static int find_pack_entry(unsigned char *sha1, struct pack_entry **ent)
 /* forward declaration for a mutually recursive function */
 static void unpack_entry(struct pack_entry *);
 
-static int unpack_delta_entry(struct pack_entry *entry, unsigned char *pack)
+static int unpack_delta_entry(struct pack_entry *entry,
+			      unsigned char *base_sha1,
+			      unsigned long delta_size,
+			      unsigned long left)
 {
-	void *delta_data, *result, *base;
-	unsigned long delta_alloc, delta_size, result_size, base_size;
+	void *data, *delta_data, *result, *base;
+	unsigned long data_size, result_size, base_size;
 	z_stream stream;
 	int st;
 	char type[20];
 	unsigned char sha1[20];
 
-	printf("%s D", sha1_to_hex(entry->sha1));
-	printf(" %s\n", sha1_to_hex(pack+1));
+	if (left < 20)
+		die("truncated pack file");
+	data = base_sha1 + 20;
+	data_size = left - 20;
+	printf("%s D %lu", sha1_to_hex(entry->sha1), delta_size);
+	printf(" %s\n", sha1_to_hex(base_sha1));
 
-	/* pack+1 is the base sha1, unless we have it, we need to
+	if (dry_run)
+		return 0;
+
+	/* pack+5 is the base sha1, unless we have it, we need to
 	 * unpack it first.
 	 */
-	if (!has_sha1_file(pack+1)) {
+	if (!has_sha1_file(base_sha1)) {
 		struct pack_entry *base;
-		if (!find_pack_entry(pack+1, &base))
+		if (!find_pack_entry(base_sha1, &base))
 			die("cannot find delta-pack base object");
 		unpack_entry(base);
 	}
-
-	/* pack+1 thru pack+20 is the base sha1 and
-	 * pack+21 thru unknown number is the delta data.
-	 * we do not even have size of the delta data uncompressed.
-	 * sheesh!
-	 */
-	delta_alloc = 1024;
-	delta_data = xmalloc(delta_alloc);
+	delta_data = xmalloc(delta_size);
 
 	memset(&stream, 0, sizeof(stream));
 
-	stream.next_in = pack + 21;
-	stream.avail_in = pack_size - ntohl(entry->offset); /* sheesh. */
+	stream.next_in = data;
+	stream.avail_in = data_size;
 	stream.next_out = delta_data;
-	stream.avail_out = delta_alloc;
-	delta_size = 0;
+	stream.avail_out = delta_size;
 
 	inflateInit(&stream);
-	while (1) {
-		st = inflate(&stream, Z_FINISH);
-		if (st == Z_STREAM_END) {
-			delta_size = stream.total_out;
-			break;
-		}
-		if (st < 0)
-			break;
-
-		if (delta_alloc <= stream.total_out) {
-			delta_alloc = (delta_alloc +1024) * 3 / 2;
-			delta_data = xrealloc(delta_data, delta_alloc);
-			stream.next_out = delta_data + stream.total_out;
-			stream.avail_out = delta_alloc - stream.total_out;
-		}
-	}
+	st = inflate(&stream, Z_FINISH);
 	inflateEnd(&stream);
-	if (st != Z_STREAM_END) {
-		free(delta_data);
-		return -1;
-	}
+	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
+		die("delta data unpack failed");
 
-	base = read_sha1_file(pack+1, type, &base_size);
+	base = read_sha1_file(base_sha1, type, &base_size);
 	if (!base)
-		die("failed to read delta-pack base object");
+		die("failed to read delta-pack base object %s", sha1_to_hex(base_sha1));
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     &result_size);
@@ -246,7 +232,7 @@ static int unpack_delta_entry(struct pack_entry *entry, unsigned char *pack)
 
 static void unpack_entry(struct pack_entry *entry)
 {
-	unsigned long offset;
+	unsigned long offset, size, left;
 	unsigned char *pack;
 
 	/* Have we done this one already due to deltas based on it? */
@@ -257,13 +243,14 @@ static void unpack_entry(struct pack_entry *entry)
 	if (offset > pack_size - 5)
 		die("object offset outside of pack file");
 	pack = pack_base + offset;
-	offset = pack_size - offset;
+	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
+	left = pack_size - offset - 5;
 	switch (*pack) {
 	case 'C': case 'T': case 'B':
-		unpack_non_delta_entry(entry, pack);
+		unpack_non_delta_entry(entry, *pack, pack+5, size, left);
 		break;
 	case 'D':
-		unpack_delta_entry(entry, pack);
+		unpack_delta_entry(entry, pack+5, size, left);
 		break;
 	default:
 		die("corrupted pack file");
