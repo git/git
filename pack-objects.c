@@ -280,18 +280,18 @@ struct unpacked {
 };
 
 /*
- * We search for deltas in a list sorted by type and by size, and
- * walk the "old" chain backwards in the list, so if the type
- * has changed or the size difference is too big, there's no point
- * in even continuing the walk, since the other old objects are
- * going to be even smaller or of a different type. So return -1
- * once we determine that there's no point even trying.
+ * We search for deltas _backwards_ in a list sorted by type and
+ * by size, so that we see progressively smaller and smaller files.
+ * That's because we prefer deltas to be from the bigger file
+ * to the smaller - deletes are potentially cheaper, but perhaps
+ * more importantly, the bigger file is likely the more recent
+ * one.
  */
 static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_depth)
 {
 	struct object_entry *cur_entry = cur->entry;
 	struct object_entry *old_entry = old->entry;
-	unsigned long size, oldsize, delta_size;
+	unsigned long size, oldsize, delta_size, sizediff;
 	long max_size;
 	void *delta_buf;
 
@@ -299,12 +299,12 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	if (cur_entry->type != old_entry->type)
 		return -1;
 
-	/* Size is guaranteed to be larger than or equal to oldsize */
 	size = cur_entry->size;
 	if (size < 50)
 		return -1;
 	oldsize = old_entry->size;
-	if (size - oldsize > oldsize / 4)
+	sizediff = oldsize > size ? oldsize - size : size - oldsize;
+	if (sizediff > size / 8)
 		return -1;
 	if (old_entry->depth >= max_depth)
 		return 0;
@@ -332,13 +332,14 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 
 static void find_deltas(struct object_entry **list, int window, int depth)
 {
-	unsigned int i;
+	int i, idx;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array = xmalloc(array_size);
 
 	memset(array, 0, array_size);
-	for (i = 0; i < nr_objects; i++) {
-		unsigned int idx = i % window;
+	i = nr_objects;
+	idx = 0;
+	while (--i >= 0) {
 		struct object_entry *entry = list[i];
 		struct unpacked *n = array + idx;
 		unsigned long size;
@@ -362,6 +363,9 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			if (try_delta(n, m, depth) < 0)
 				break;
 		}
+		idx++;
+		if (idx >= window)
+			idx = 0;
 	}
 }
 
