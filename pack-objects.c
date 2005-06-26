@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
@@ -17,7 +18,7 @@ struct object_entry {
 	unsigned long size;
 	unsigned long offset;
 	unsigned int depth;
-	unsigned int flags;
+	unsigned int hash;
 	enum object_type type;
 	unsigned long delta_size;
 	struct object_entry *delta;
@@ -182,7 +183,7 @@ static void write_index_file(void)
 	fclose(f);
 }
 
-static void add_object_entry(unsigned char *sha1)
+static void add_object_entry(unsigned char *sha1, unsigned int hash)
 {
 	unsigned int idx = nr_objects;
 	struct object_entry *entry;
@@ -195,6 +196,7 @@ static void add_object_entry(unsigned char *sha1)
 	entry = objects + idx;
 	memset(entry, 0, sizeof(*entry));
 	memcpy(entry->sha1, sha1, 20);
+	entry->hash = hash;
 	nr_objects = idx+1;
 }
 
@@ -267,6 +269,10 @@ static int type_size_sort(const struct object_entry *a, const struct object_entr
 		return -1;
 	if (a->type > b->type)
 		return 1;
+	if (a->hash < b->hash)
+		return -1;
+	if (a->hash > b->hash)
+		return 1;
 	if (a->size < b->size)
 		return -1;
 	if (a->size > b->size)
@@ -319,6 +325,8 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	max_size = size / 2 - 20;
 	if (cur_entry->delta)
 		max_size = cur_entry->delta_size-1;
+	if (sizediff >= max_size)
+		return -1;
 	delta_buf = diff_delta(old->data, oldsize,
 			       cur->data, size, &delta_size, max_size);
 	if (!delta_buf)
@@ -371,7 +379,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 int main(int argc, char **argv)
 {
-	char line[128];
+	char line[PATH_MAX + 20];
 	int window = 10, depth = 10;
 	int i;
 
@@ -404,10 +412,21 @@ int main(int argc, char **argv)
 		usage(pack_usage);
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
+		unsigned int hash;
+		char *p;
 		unsigned char sha1[20];
+
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage");
-		add_object_entry(sha1);
+		hash = 0;
+		p = line+40;
+		while (*p) {
+			unsigned char c = *p++;
+			if (isspace(c))
+				continue;
+			hash = hash * 11 + c;
+		}
+		add_object_entry(sha1, hash);
 	}
 	get_object_details();
 
