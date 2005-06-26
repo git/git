@@ -2,7 +2,7 @@
 #include "object.h"
 #include "delta.h"
 
-static const char pack_usage[] = "git-pack-objects [--window=N] base-name < object-list";
+static const char pack_usage[] = "git-pack-objects [--window=N] [--depth=N] base-name < object-list";
 
 enum object_type {
 	OBJ_NONE,
@@ -286,7 +286,7 @@ struct unpacked {
  * going to be even smaller or of a different type. So return -1
  * once we determine that there's no point even trying.
  */
-static int try_delta(struct unpacked *cur, struct unpacked *old)
+static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_depth)
 {
 	struct object_entry *cur_entry = cur->entry;
 	struct object_entry *old_entry = old->entry;
@@ -305,6 +305,8 @@ static int try_delta(struct unpacked *cur, struct unpacked *old)
 	oldsize = old_entry->size;
 	if (size - oldsize > oldsize / 4)
 		return -1;
+	if (old_entry->depth >= max_depth)
+		return 0;
 
 	/*
 	 * NOTE!
@@ -321,11 +323,12 @@ static int try_delta(struct unpacked *cur, struct unpacked *old)
 		return 0;
 	cur_entry->delta = old_entry;
 	cur_entry->delta_size = delta_size;
+	cur_entry->depth = old_entry->depth + 1;
 	free(delta_buf);
 	return 0;
 }
 
-static void find_deltas(struct object_entry **list, int window)
+static void find_deltas(struct object_entry **list, int window, int depth)
 {
 	unsigned int i;
 	unsigned int array_size = window * sizeof(struct unpacked);
@@ -354,7 +357,7 @@ static void find_deltas(struct object_entry **list, int window)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
-			if (try_delta(n, m) < 0)
+			if (try_delta(n, m, depth) < 0)
 				break;
 		}
 	}
@@ -363,7 +366,7 @@ static void find_deltas(struct object_entry **list, int window)
 int main(int argc, char **argv)
 {
 	char line[128];
-	int window = 10;
+	int window = 10, depth = 10;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -374,6 +377,13 @@ int main(int argc, char **argv)
 				char *end;
 				window = strtoul(arg+9, &end, 0);
 				if (!arg[9] || *end)
+					usage(pack_usage);
+				continue;
+			}
+			if (!strncmp("--depth=", arg, 8)) {
+				char *end;
+				depth = strtoul(arg+8, &end, 0);
+				if (!arg[8] || *end)
 					usage(pack_usage);
 				continue;
 			}
@@ -399,8 +409,8 @@ int main(int argc, char **argv)
 
 	sorted_by_sha = create_sorted_list(sha1_sort);
 	sorted_by_type = create_sorted_list(type_size_sort);
-	if (window)
-		find_deltas(sorted_by_type, window+1);
+	if (window && depth)
+		find_deltas(sorted_by_type, window+1, depth);
 
 	write_pack_file();
 	write_index_file();
