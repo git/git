@@ -82,7 +82,8 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
 
 	if (!otherbuf)
 		die("unable to read %s", sha1_to_hex(entry->delta->sha1));
-        delta_buf = diff_delta(buf, size, otherbuf, othersize, &delta_size, ~0UL);
+        delta_buf = diff_delta(otherbuf, othersize,
+			       buf, size, &delta_size, ~0UL);
         if (!delta_buf || delta_size != entry->delta_size)
         	die("delta size changed");
         free(buf);
@@ -318,7 +319,8 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	max_size = size / 2 - 20;
 	if (cur_entry->delta)
 		max_size = cur_entry->delta_size-1;
-	delta_buf = diff_delta(cur->data, size, old->data, oldsize, &delta_size, max_size);
+	delta_buf = diff_delta(old->data, oldsize,
+			       cur->data, size, &delta_size, max_size);
 	if (!delta_buf)
 		return 0;
 	cur_entry->delta = old_entry;
