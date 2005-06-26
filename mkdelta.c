@@ -278,7 +278,8 @@ int main(int argc, char **argv)
 				continue;
 			}
 			delta_buf = diff_delta(ref[r].buf, ref[r].size,
-					       trg.buf, trg.size, &delta_size);
+					       trg.buf, trg.size,
+					       &delta_size, ~0UL);
 			if (!delta_buf)
 				die("out of memory");
 			if (trg.depth < max_depth &&

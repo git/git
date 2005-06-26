@@ -60,10 +60,12 @@ int main(int argc, char *argv[])
 
 	if (argv[1][1] == 'd')
 		out_buf = diff_delta(from_buf, from_size,
-				     data_buf, data_size, &out_size);
+				     data_buf, data_size,
+				     &out_size, ~0UL);
 	else
 		out_buf = patch_delta(from_buf, from_size,
-				      data_buf, data_size, &out_size);
+				      data_buf, data_size,
+				      &out_size);
 	if (!out_buf) {
 		fprintf(stderr, "delta operation failed (returned NULL)\n");
 		return 1;

@@ -203,7 +203,8 @@ static void delta_cleanup(bdfile_t *bdf)
 
 void *diff_delta(void *from_buf, unsigned long from_size,
 		 void *to_buf, unsigned long to_size,
-		 unsigned long *delta_size)
+		 unsigned long *delta_size,
+		 unsigned long max_size)
 {
 	int i, outpos, outsize, inscnt, csize, msize, moff;
 	unsigned int fp;
@@ -312,6 +313,11 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 		}
 
 		/* next time around the largest possible output is 1 + 4 + 3 */
+		if (max_size && outpos > max_size) {
+			free(out);
+			delta_cleanup(&bdf);
+			return NULL;
+		}
 		if (outpos > outsize - 8) {
 			void *tmp = out;
 			outsize = outsize * 3 / 2;

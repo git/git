@@ -165,7 +165,7 @@ static int estimate_similarity(struct diff_filespec *src,
 
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
-			   &delta_size);
+			   &delta_size, ~0UL);
 
 	/* A delta that has a lot of literal additions would have
 	 * big delta_size no matter what else it does.

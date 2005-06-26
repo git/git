@@ -83,8 +83,8 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
 
 	if (!otherbuf)
 		die("unable to read %s", sha1_to_hex(entry->delta->sha1));
-        delta_buf = diff_delta(buf, size, otherbuf, othersize, &delta_size);
-        if (delta_size != entry->delta_size)
+        delta_buf = diff_delta(buf, size, otherbuf, othersize, &delta_size, ~0UL);
+        if (!delta_buf || delta_size != entry->delta_size)
         	die("delta size changed");
         free(buf);
         free(otherbuf);
@@ -292,6 +292,7 @@ static int try_delta(struct unpacked *cur, struct unpacked *old)
 	struct object_entry *cur_entry = cur->entry;
 	struct object_entry *old_entry = old->entry;
 	unsigned long size, oldsize, delta_size;
+	long max_size;
 	void *delta_buf;
 
 	/* Don't bother doing diffs between different types */
@@ -300,6 +301,8 @@ static int try_delta(struct unpacked *cur, struct unpacked *old)
 
 	/* Size is guaranteed to be larger than or equal to oldsize */
 	size = cur_entry->size;
+	if (size < 50)
+		return -1;
 	oldsize = old_entry->size;
 	if (size - oldsize > oldsize / 4)
 		return -1;
@@ -311,15 +314,14 @@ static int try_delta(struct unpacked *cur, struct unpacked *old)
 	 * more space-efficient (deletes don't have to say _what_ they
 	 * delete).
 	 */
-	delta_buf = diff_delta(cur->data, size, old->data, oldsize, &delta_size);
+	max_size = size / 2 - 20;
+	if (cur_entry->delta)
+		max_size = cur_entry->delta_size-1;
+	delta_buf = diff_delta(cur->data, size, old->data, oldsize, &delta_size, max_size);
 	if (!delta_buf)
-		die("unable to create delta");
-	if (delta_size + 20 < size / 2) {
-		if (!cur_entry->delta || cur_entry->delta_size > delta_size) {
-			cur_entry->delta = old_entry;
-			cur_entry->delta_size = delta_size;
-		}
-	}
+		return 0;
+	cur_entry->delta = old_entry;
+	cur_entry->delta_size = delta_size;
 	free(delta_buf);
 	return 0;
 }
