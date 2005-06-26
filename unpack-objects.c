@@ -148,7 +148,6 @@ static int find_pack_entry(unsigned char *sha1, struct pack_entry **ent)
 	do {
 		int mi = (lo + hi) / 2;
 		int cmp = memcmp(index + 24 * mi + 4, sha1, 20);
-printf("lo=%d mi=%d hi=%d cmp=%d\n", lo, mi, hi, cmp);
 		if (!cmp) {
 			*ent = index + 24 * mi;
 			return 1;
