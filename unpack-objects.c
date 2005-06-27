@@ -61,7 +61,7 @@ static int check_index(void)
 	unsigned int nr;
 	int i;
 
-	if (index_size < 4*256)
+	if (index_size < 4*256 + 20)
 		return error("index file too small");
 	nr = 0;
 	for (i = 0; i < 256; i++) {
@@ -70,11 +70,14 @@ static int check_index(void)
 			return error("non-monotonic index");
 		nr = n;
 	}
-	if (index_size != 4*256 + nr * 24) {
-		printf("index_size=%lu, expected %u (%u)\n",
-		       index_size, 4*256 + nr * 24, nr);
+	/*
+	 * Total size:
+	 *  - 256 index entries 4 bytes each
+	 *  - 24-byte entries * nr (20-byte sha1 + 4-byte offset)
+	 *  - 20-byte SHA1 file checksum
+	 */
+	if (index_size != 4*256 + nr * 24 + 20)
 		return error("wrong index file size");
-	}
 
 	nr_entries = nr;
 	pack_list = xmalloc(nr * sizeof(struct pack_entry *));

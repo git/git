@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
+#include "csum-file.h"
 
 static const char pack_usage[] = "git-pack-objects [--window=N] [--depth=N] base-name < object-list";
 
@@ -29,51 +30,6 @@ static struct object_entry *objects = NULL;
 static int nr_objects = 0, nr_alloc = 0;
 static const char *base_name;
 
-struct myfile {
-	int fd;
-	unsigned long chars;
-	unsigned char buffer[8192];
-};
-
-static FILE *create_file(const char *suffix)
-{
-	static char filename[PATH_MAX];
-	unsigned len;
-
-	len = snprintf(filename, PATH_MAX, "%s.%s", base_name, suffix);
-	if (len >= PATH_MAX)
-		die("you wascally wabbit, you");
-	return fopen(filename, "w");
-}
-
-static unsigned long fwrite_compressed(void *in, unsigned long size, FILE *f)
-{
-	z_stream stream;
-	unsigned long maxsize;
-	void *out;
-
-	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_DEFAULT_COMPRESSION);
-	maxsize = deflateBound(&stream, size);
-	out = xmalloc(maxsize);
-
-	/* Compress it */
-	stream.next_in = in;
-	stream.avail_in = size;
-
-	stream.next_out = out;
-	stream.avail_out = maxsize;
-
-	while (deflate(&stream, Z_FINISH) == Z_OK)
-		/* nothing */;
-	deflateEnd(&stream);
-
-	size = stream.total_out;
-	fwrite(out, size, 1, f);
-	free(out);
-	return size;
-}
-
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
 {
 	unsigned long othersize, delta_size;
@@ -92,7 +48,7 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
 	return delta_buf;
 }
 
-static unsigned long write_object(FILE *f, struct object_entry *entry)
+static unsigned long write_object(struct sha1file *f, struct object_entry *entry)
 {
 	unsigned long size;
 	char type[10];
@@ -121,8 +77,8 @@ static unsigned long write_object(FILE *f, struct object_entry *entry)
 	}
 	datalen = htonl(size);
 	memcpy(header+1, &datalen, 4);
-	fwrite(header, hdrlen, 1, f);
-	datalen = fwrite_compressed(buf, size, f);
+	sha1write(f, header, hdrlen);
+	datalen = sha1write_compressed(f, buf, size);
 	free(buf);
 	return hdrlen + datalen;
 }
@@ -130,7 +86,7 @@ static unsigned long write_object(FILE *f, struct object_entry *entry)
 static void write_pack_file(void)
 {
 	int i;
-	FILE *f = create_file("pack");
+	struct sha1file *f = sha1create("%s.%s", base_name, "pack");
 	unsigned long offset = 0;
 	unsigned long mb;
 
@@ -139,7 +95,7 @@ static void write_pack_file(void)
 		entry->offset = offset;
 		offset += write_object(f, entry);
 	}
-	fclose(f);
+	sha1close(f);
 	mb = offset >> 20;
 	offset &= 0xfffff;
 }
@@ -147,7 +103,7 @@ static void write_pack_file(void)
 static void write_index_file(void)
 {
 	int i;
-	FILE *f = create_file("idx");
+	struct sha1file *f = sha1create("%s.%s", base_name, "idx");
 	struct object_entry **list = sorted_by_sha;
 	struct object_entry **last = list + nr_objects;
 	unsigned int array[256];
@@ -168,7 +124,7 @@ static void write_index_file(void)
 		array[i] = htonl(next - sorted_by_sha);
 		list = next;
 	}
-	fwrite(array, 256, sizeof(int), f);
+	sha1write(f, array, 256 * sizeof(int));
 
 	/*
 	 * Write the actual SHA1 entries..
@@ -177,10 +133,10 @@ static void write_index_file(void)
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *entry = *list++;
 		unsigned int offset = htonl(entry->offset);
-		fwrite(&offset, 4, 1, f);
-		fwrite(entry->sha1, 20, 1, f);
+		sha1write(f, &offset, 4);
+		sha1write(f, entry->sha1, 20);
 	}
-	fclose(f);
+	sha1close(f);
 }
 
 static void add_object_entry(unsigned char *sha1, unsigned int hash)
