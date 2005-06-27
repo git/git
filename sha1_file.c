@@ -6,7 +6,10 @@
  * This handles basic git sha1 object files - packing, unpacking,
  * creation etc.
  */
+#include <sys/types.h>
+#include <dirent.h>
 #include "cache.h"
+#include "delta.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -265,6 +268,184 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 	return NULL;
 }
 
+#define PACK_MAX_SZ (1<<26)
+static int pack_used_ctr;
+static unsigned long pack_mapped;
+static struct packed_git {
+	struct packed_git *next;
+	unsigned long index_size;
+	unsigned long pack_size;
+	unsigned int *index_base;
+	void *pack_base;
+	unsigned int pack_last_used;
+	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
+} *packed_git;
+
+struct pack_entry {
+	unsigned int offset;
+	unsigned char sha1[20];
+	struct packed_git *p;
+};
+
+static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
+				void **idx_map_)
+{
+	void *idx_map;
+	unsigned int *index;
+	unsigned long idx_size;
+	int nr, i;
+	int fd = open(path, O_RDONLY);
+	struct stat st;
+	if (fd < 0)
+		return -1;
+	if (fstat(fd, &st)) {
+		close(fd);
+		return -1;
+	}
+	idx_size = st.st_size;
+	idx_map = mmap(NULL, idx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
+	if (idx_map == MAP_FAILED)
+		return -1;
+
+	index = idx_map;
+
+	/* check index map */
+	if (idx_size < 4*256 + 20)
+		return error("index file too small");
+	nr = 0;
+	for (i = 0; i < 256; i++) {
+		unsigned int n = ntohl(index[i]);
+		if (n < nr)
+			return error("non-monotonic index");
+		nr = n;
+	}
+
+	/*
+	 * Total size:
+	 *  - 256 index entries 4 bytes each
+	 *  - 24-byte entries * nr (20-byte sha1 + 4-byte offset)
+	 *  - 20-byte SHA1 of the packfile
+	 *  - 20-byte SHA1 file checksum
+	 */
+	if (idx_size != 4*256 + nr * 24 + 20 + 20)
+		return error("wrong index file size");
+
+	*idx_map_ = idx_map;
+	*idx_size_ = idx_size;
+	return 0;
+}
+
+static void unuse_one_packed_git(void)
+{
+	/* NOTYET */
+}
+
+static int use_packed_git(struct packed_git *p)
+{
+	if (!p->pack_base) {
+		int fd;
+		struct stat st;
+		void *map;
+
+		pack_mapped += p->pack_size;
+		while (PACK_MAX_SZ < pack_mapped)
+			unuse_one_packed_git();
+		fd = open(p->pack_name, O_RDONLY);
+		if (fd < 0)
+			return -1;
+		if (fstat(fd, &st)) {
+			close(fd);
+			return -1;
+		}
+		if (st.st_size != p->pack_size)
+			return -1;
+		map = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, fd, 0);
+		close(fd);
+		if (map == MAP_FAILED)
+			return -1;
+		p->pack_base = map;
+	}
+	p->pack_last_used = pack_used_ctr++;
+	return 0;
+}
+
+static struct packed_git *add_packed_git(char *path, int path_len)
+{
+	struct stat st;
+	struct packed_git *p;
+	unsigned long idx_size;
+	void *idx_map;
+
+	if (check_packed_git_idx(path, &idx_size, &idx_map))
+		return NULL;
+
+	/* do we have a corresponding .pack file? */
+	strcpy(path + path_len - 4, ".pack");
+	if (stat(path, &st) || !S_ISREG(st.st_mode)) {
+		munmap(idx_map, idx_size);
+		return NULL;
+	}
+	/* ok, it looks sane as far as we can check without
+	 * actually mapping the pack file.
+	 */
+	p = xmalloc(sizeof(*p) + path_len + 2);
+	strcpy(p->pack_name, path);
+	p->index_size = idx_size;
+	p->pack_size = st.st_size;
+	p->index_base = idx_map;
+	p->next = NULL;
+	p->pack_last_used = 0;
+	return p;
+}
+
+static void prepare_packed_git_one(char *objdir)
+{
+	char path[PATH_MAX];
+	int len;
+	DIR *dir;
+	struct dirent *de;
+
+	sprintf(path, "%s/pack", objdir);
+	len = strlen(path);
+	dir = opendir(path);
+	if (!dir)
+		return;
+	path[len++] = '/';
+	while ((de = readdir(dir)) != NULL) {
+		int namelen = strlen(de->d_name);
+		struct packed_git *p;
+
+		if (strcmp(de->d_name + namelen - 4, ".idx"))
+			continue;
+
+		/* we have .idx.  Is it a file we can map? */
+		strcpy(path + len, de->d_name);
+		p = add_packed_git(path, len + namelen);
+		if (!p)
+			continue;
+		p->next = packed_git;
+		packed_git = p;
+	}
+}
+
+static void prepare_packed_git(void)
+{
+	int i;
+	static int run_once = 0;
+
+	if (run_once++)
+		return;
+
+	prepare_packed_git_one(get_object_directory());
+	if (!alt_odb)
+		prepare_alt_odb();
+	for (i = 0; alt_odb[i].base != NULL; i++) {
+		alt_odb[i].name[0] = 0;
+		prepare_packed_git_one(alt_odb[i].base);
+	}
+}
+
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
 {
 	char header[100];
@@ -278,7 +459,9 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	return memcmp(sha1, real_sha1, 20) ? -1 : 0;
 }
 
-void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
+static void *map_sha1_file_internal(const unsigned char *sha1,
+				    unsigned long *size,
+				    int say_error)
 {
 	struct stat st;
 	void *map;
@@ -286,7 +469,8 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 	char *filename = find_sha1_file(sha1, &st);
 
 	if (!filename) {
-		error("cannot map sha1 file %s", sha1_to_hex(sha1));
+		if (say_error)
+			error("cannot map sha1 file %s", sha1_to_hex(sha1));
 		return NULL;
 	}
 
@@ -300,11 +484,14 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 				break;
 		/* Fallthrough */
 		case 0:
-			perror(filename);
+			if (say_error)
+				perror(filename);
 			return NULL;
 		}
 
-		/* If it failed once, it will probably fail again. Stop using O_NOATIME */
+		/* If it failed once, it will probably fail again.
+		 * Stop using O_NOATIME
+		 */
 		sha1_file_open_flag = 0;
 	}
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -313,6 +500,11 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 		return NULL;
 	*size = st.st_size;
 	return map;
+}
+
+void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
+{
+	return map_sha1_file_internal(sha1, size, 1);
 }
 
 int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size)
@@ -409,6 +601,191 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+/* Returns 0 on fast-path success, returns 1 on deltified
+ * and need to unpack to see info.
+ */
+static int packed_object_info(struct pack_entry *entry,
+			      char *type, unsigned long *sizep)
+{
+	struct packed_git *p = entry->p;
+	unsigned long offset, size, left;
+	unsigned char *pack;
+
+	offset = entry->offset;
+	if (p->pack_size - 5 < offset)
+		die("object offset outside of pack file");
+	pack = p->pack_base + offset;
+	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
+	left = p->pack_size - offset - 5;
+	switch (*pack) {
+	case 'D':
+		return 1;
+		break;
+	case 'C':
+		strcpy(type, "commit");
+		break;
+	case 'T':
+		strcpy(type, "tree");
+		break;
+	case 'B':
+		strcpy(type, "blob");
+		break;
+	default:
+		die("corrupted pack file");
+	}
+	*sizep = size;
+	return 0;
+}
+
+/* forward declaration for a mutually recursive function */
+static void *unpack_entry(struct pack_entry *, char *, unsigned long *);
+
+static void *unpack_delta_entry(unsigned char *base_sha1,
+				unsigned long delta_size,
+				unsigned long left,
+				char *type,
+				unsigned long *sizep)
+{
+	void *data, *delta_data, *result, *base;
+	unsigned long data_size, result_size, base_size;
+	z_stream stream;
+	int st;
+
+	if (left < 20)
+		die("truncated pack file");
+	data = base_sha1 + 20;
+	data_size = left - 20;
+	delta_data = xmalloc(delta_size);
+
+	memset(&stream, 0, sizeof(stream));
+
+	stream.next_in = data;
+	stream.avail_in = data_size;
+	stream.next_out = delta_data;
+	stream.avail_out = delta_size;
+
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	inflateEnd(&stream);
+	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
+		die("delta data unpack failed");
+
+	/* This may recursively unpack the base, which is what we want */
+	base = read_sha1_file(base_sha1, type, &base_size);
+	if (!base)
+		die("failed to read delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
+	result = patch_delta(base, base_size,
+			     delta_data, delta_size,
+			     &result_size);
+	if (!result)
+		die("failed to apply delta");
+	free(delta_data);
+	free(base);
+	*sizep = result_size;
+	return result;
+}
+
+static void *unpack_non_delta_entry(unsigned char *data,
+				    unsigned long size,
+				    unsigned long left)
+{
+	int st;
+	z_stream stream;
+	char *buffer;
+
+	buffer = xmalloc(size + 1);
+	buffer[size] = 0;
+	memset(&stream, 0, sizeof(stream));
+	stream.next_in = data;
+	stream.avail_in = left;
+	stream.next_out = buffer;
+	stream.avail_out = size;
+
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	inflateEnd(&stream);
+	if ((st != Z_STREAM_END) || stream.total_out != size) {
+		free(buffer);
+		return NULL;
+	}
+
+	return buffer;
+}
+
+static void *unpack_entry(struct pack_entry *entry,
+			  char *type, unsigned long *sizep)
+{
+	struct packed_git *p = entry->p;
+	unsigned long offset, size, left;
+	unsigned char *pack;
+
+	offset = entry->offset;
+	if (p->pack_size - 5 < offset)
+		die("object offset outside of pack file");
+
+	if (use_packed_git(p))
+		die("cannot map packed file");
+
+	pack = p->pack_base + offset;
+	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
+	left = p->pack_size - offset - 5;
+	switch (*pack) {
+	case 'D':
+		return unpack_delta_entry(pack+5, size, left, type, sizep);
+	case 'C':
+		strcpy(type, "commit");
+		break;
+	case 'T':
+		strcpy(type, "tree");
+		break;
+	case 'B':
+		strcpy(type, "blob");
+		break;
+	default:
+		die("corrupted pack file");
+	}
+	*sizep = size;
+	return unpack_non_delta_entry(pack+5, size, left);
+}
+
+static int find_pack_entry_1(const unsigned char *sha1,
+			     struct pack_entry *e, struct packed_git *p)
+{
+	int *level1_ofs = p->index_base;
+	int hi = ntohl(level1_ofs[*sha1]);
+	int lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
+	void *index = p->index_base + 256;
+
+	do {
+		int mi = (lo + hi) / 2;
+		int cmp = memcmp(index + 24 * mi + 4, sha1, 20);
+		if (!cmp) {
+			e->offset = ntohl(*((int*)(index + 24 * mi)));
+			memcpy(e->sha1, sha1, 20);
+			e->p = p;
+			return 1;
+		}
+		if (cmp > 0)
+			hi = mi;
+		else
+			lo = mi+1;
+	} while (lo < hi);
+	return 0;
+}
+
+static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
+{
+	struct packed_git *p;
+	prepare_packed_git();
+
+	for (p = packed_git; p; p = p->next) {
+		if (find_pack_entry_1(sha1, e, p))
+			return 1;
+	}
+	return 0;
+}
+
 int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
 {
 	int status;
@@ -417,9 +794,19 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	z_stream stream;
 	char hdr[128];
 
-	map = map_sha1_file(sha1, &mapsize);
-	if (!map)
-		return error("unable to map %s", sha1_to_hex(sha1));
+	map = map_sha1_file_internal(sha1, &mapsize, 0);
+	if (!map) {
+		struct pack_entry e;
+
+		if (!find_pack_entry(sha1, &e))
+			return error("unable to find %s", sha1_to_hex(sha1));
+		if (!packed_object_info(&e, type, sizep))
+			return 0;
+		/* sheesh */
+		map = unpack_entry(&e, type, sizep);
+		free(map);
+		return (map == NULL) ? 0 : -1;
+	}
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
@@ -434,18 +821,29 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	return status;
 }
 
+static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned long *size)
+{
+	struct pack_entry e;
+
+	if (!find_pack_entry(sha1, &e)) {
+		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
+		return NULL;
+	}
+	return unpack_entry(&e, type, size);
+}
+
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
 
-	map = map_sha1_file(sha1, &mapsize);
+	map = map_sha1_file_internal(sha1, &mapsize, 0);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
 		return buf;
 	}
-	return NULL;
+	return read_packed_sha1(sha1, type, size);
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
@@ -664,7 +1062,11 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd)
 int has_sha1_file(const unsigned char *sha1)
 {
 	struct stat st;
-	return !!find_sha1_file(sha1, &st);
+	struct pack_entry e;
+
+	if (find_sha1_file(sha1, &st))
+		return 1;
+	return find_pack_entry(sha1, &e);
 }
 
 int index_fd(unsigned char *sha1, int fd, struct stat *st)
