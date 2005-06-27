@@ -2,6 +2,8 @@
 #include "rsh.h"
 #include "refs.h"
 
+#include <string.h>
+
 unsigned char local_version = 1;
 unsigned char remote_version = 0;
 
@@ -103,6 +105,9 @@ void service(int fd_in, int fd_out) {
 	} while (1);
 }
 
+static const char *ssh_push_usage =
+	"git-ssh-push [-c] [-t] [-a] [-w ref] commit-id url";
+
 int main(int argc, char **argv)
 {
 	int arg = 1;
@@ -110,18 +115,23 @@ int main(int argc, char **argv)
         char *url;
 	int fd_in, fd_out;
 	const char *prog = getenv("GIT_SSH_PULL") ? : "git-ssh-pull";
+	unsigned char sha1[20];
+	char hex[41];
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 'w')
 			arg++;
                 arg++;
         }
-        if (argc < arg + 2) {
-		usage("git-ssh-push [-c] [-t] [-a] [-w ref] commit-id url");
-                return 1;
-        }
+	if (argc < arg + 2)
+		usage(ssh_push_usage);
 	commit_id = argv[arg];
 	url = argv[arg + 1];
+	if (get_sha1(commit_id, sha1))
+		usage(ssh_push_usage);
+	memcpy(hex, sha1_to_hex(sha1), sizeof(hex));
+	argv[arg] = hex;
+
 	if (setup_connection(&fd_in, &fd_out, prog, url, arg, argv + 1))
 		return 1;
 

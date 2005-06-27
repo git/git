@@ -20,7 +20,7 @@ git-ssh-pull, aside from which end you run it on.
 OPTIONS
 -------
 commit-id::
-        Either the hash or the filename under $GIT_DIR/refs/ to push.
+        Id of commit to push.
 
 -c::
         Get the commit objects.
