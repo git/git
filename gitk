@@ -894,11 +894,11 @@ proc drawslants {} {
     }
 }
 
-proc decidenext {} {
+proc decidenext {{noread 0}} {
     global parents children nchildren ncleft todo
     global canv canv2 canv3 mainfont namefont canvx0 canvy linespc
     global datemode cdate
-    global lineid linehtag linentag linedtag commitinfo
+    global commitinfo
     global currentparents oldlevel oldnlines oldtodo
     global lineno lthickness
 
@@ -916,6 +916,12 @@ proc decidenext {} {
 	set p [lindex $todo $k]
 	if {$ncleft($p) == 0} {
 	    if {$datemode} {
+		if {![info exists commitinfo($p)]} {
+		    if {$noread} {
+			return {}
+		    }
+		    readcommit $p
+		}
 		if {$latest == {} || $cdate($p) > $latest} {
 		    set level $k
 		    set latest $cdate($p)
@@ -976,15 +982,16 @@ proc drawcommit {id} {
 	    lappend todo $id
 	    lappend startcommits $id
 	}
-	set level [decidenext]
-	if {$id != [lindex $todo $level]} {
+	set level [decidenext 1]
+	if {$level == {} || $id != [lindex $todo $level]} {
 	    return
 	}
 	while 1 {
 	    drawslants
 	    drawcommitline $level
 	    if {[updatetodo $level $datemode]} {
-		set level [decidenext]
+		set level [decidenext 1]
+		if {$level == {}} break
 	    }
 	    set id [lindex $todo $level]
 	    if {![info exists commitlisted($id)]} {
@@ -1001,18 +1008,18 @@ proc drawcommit {id} {
 proc finishcommits {} {
     global phase
     global startcommits
-    global ctext maincursor textcursor
+    global canv mainfont ctext maincursor textcursor
 
     if {$phase != "incrdraw"} {
 	$canv delete all
 	$canv create text 3 3 -anchor nw -text "No commits selected" \
 	    -font $mainfont -tags textitems
 	set phase {}
-	return
+    } else {
+	drawslants
+	set level [decidenext]
+	drawrest $level [llength $startcommits]
     }
-    drawslants
-    set level [decidenext]
-    drawrest $level [llength $startcommits]
     . config -cursor $maincursor
     $ctext config -cursor $textcursor
 }
