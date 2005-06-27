@@ -29,6 +29,7 @@ static struct object_entry **sorted_by_sha, **sorted_by_type;
 static struct object_entry *objects = NULL;
 static int nr_objects = 0, nr_alloc = 0;
 static const char *base_name;
+static unsigned char pack_file_sha1[20];
 
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
 {
@@ -95,7 +96,7 @@ static void write_pack_file(void)
 		entry->offset = offset;
 		offset += write_object(f, entry);
 	}
-	sha1close(f);
+	sha1close(f, pack_file_sha1, 1);
 	mb = offset >> 20;
 	offset &= 0xfffff;
 }
@@ -111,7 +112,7 @@ static void write_index_file(void)
 	/*
 	 * Write the first-level table (the list is sorted,
 	 * but we use a 256-entry lookup to be able to avoid
-	 * having to do eight extra binary search iterations)
+	 * having to do eight extra binary search iterations).
 	 */
 	for (i = 0; i < 256; i++) {
 		struct object_entry **next = list;
@@ -136,7 +137,8 @@ static void write_index_file(void)
 		sha1write(f, &offset, 4);
 		sha1write(f, entry->sha1, 20);
 	}
-	sha1close(f);
+	sha1write(f, pack_file_sha1, 20);
+	sha1close(f, NULL, 1);
 }
 
 static void add_object_entry(unsigned char *sha1, unsigned int hash)

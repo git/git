@@ -24,14 +24,14 @@ static int sha1flush(struct sha1file *f, unsigned int count)
 			return 0;
 		}
 		if (!ret)
-			die("sha1 file write error. Out of diskspace");
+			die("sha1 file '%s' write error. Out of diskspace", f->name);
 		if (errno == EAGAIN || errno == EINTR)
 			continue;
-		die("sha1 file write error (%s)", strerror(errno));
+		die("sha1 file '%s' write error (%s)", f->name, strerror(errno));
 	}
 }
 
-int sha1close(struct sha1file *f)
+int sha1close(struct sha1file *f, unsigned char *result, int update)
 {
 	unsigned offset = f->offset;
 	if (offset) {
@@ -39,7 +39,12 @@ int sha1close(struct sha1file *f)
 		sha1flush(f, offset);
 	}
 	SHA1_Final(f->buffer, &f->ctx);
-	sha1flush(f, 20);
+	if (result)
+		memcpy(result, f->buffer, 20);
+	if (update)
+		sha1flush(f, 20);
+	if (close(f->fd))
+		die("%s: sha1 file error on close (%s)", f->name, strerror(errno));
 	return 0;
 }
 
@@ -66,22 +71,23 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 
 struct sha1file *sha1create(const char *fmt, ...)
 {
-	static char filename[PATH_MAX];
 	struct sha1file *f;
 	unsigned len;
 	va_list arg;
 	int fd;
 
-	va_start(arg, fmt);
-	len = vsnprintf(filename, PATH_MAX, fmt, arg);
-	va_end(arg);
+	f = xmalloc(sizeof(*f));
 
+	va_start(arg, fmt);
+	len = vsnprintf(f->name, sizeof(f->name), fmt, arg);
+	va_end(arg);
 	if (len >= PATH_MAX)
 		die("you wascally wabbit, you");
-	fd = open(filename, O_CREAT | O_EXCL | O_WRONLY, 0644);
+	f->namelen = len;
+
+	fd = open(f->name, O_CREAT | O_EXCL | O_WRONLY, 0644);
 	if (fd < 0)
-		die("unable to open %s (%s)", filename, strerror(errno));
-	f = xmalloc(sizeof(*f));
+		die("unable to open %s (%s)", f->name, strerror(errno));
 	f->fd = fd;
 	f->error = 0;
 	f->offset = 0;

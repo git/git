@@ -74,9 +74,10 @@ static int check_index(void)
 	 * Total size:
 	 *  - 256 index entries 4 bytes each
 	 *  - 24-byte entries * nr (20-byte sha1 + 4-byte offset)
+	 *  - 20-byte SHA1 of the packfile
 	 *  - 20-byte SHA1 file checksum
 	 */
-	if (index_size != 4*256 + nr * 24 + 20)
+	if (index_size != 4*256 + nr * 24 + 20 + 20)
 		return error("wrong index file size");
 
 	nr_entries = nr;
