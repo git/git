@@ -37,9 +37,11 @@ enum cmit_fmt {
 	CMIT_FMT_RAW,
 	CMIT_FMT_MEDIUM,
 	CMIT_FMT_DEFAULT = CMIT_FMT_MEDIUM,
-	CMIT_FMT_SHORT
+	CMIT_FMT_SHORT,
+	CMIT_FMT_FULL,
 };
 
+extern enum cmit_fmt get_commit_format(const char *arg);
 extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space);
 
 void insert_by_date(struct commit_list **list, struct commit *item);

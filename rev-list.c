@@ -307,20 +307,6 @@ struct commit_list *limit_list(struct commit_list *list)
 	return newlist;
 }
 
-static enum cmit_fmt get_commit_format(const char *arg)
-{
-	if (!*arg)
-		return CMIT_FMT_DEFAULT;
-	if (!strcmp(arg, "=raw"))
-		return CMIT_FMT_RAW;
-	if (!strcmp(arg, "=medium"))
-		return CMIT_FMT_MEDIUM;
-	if (!strcmp(arg, "=short"))
-		return CMIT_FMT_SHORT;
-	usage(rev_list_usage);	
-}			
-
-
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;

@@ -397,19 +397,6 @@ static int diff_tree_stdin(char *line)
 static char *diff_tree_usage =
 "git-diff-tree [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] [--pretty] [-t] [-R] [-B] [-M] [-C] [--find-copies-header] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> <tree-ish>";
 
-static enum cmit_fmt get_commit_format(const char *arg)
-{
-	if (!*arg)
-		return CMIT_FMT_DEFAULT;
-	if (!strcmp(arg, "=raw"))
-		return CMIT_FMT_RAW;
-	if (!strcmp(arg, "=medium"))
-		return CMIT_FMT_MEDIUM;
-	if (!strcmp(arg, "=short"))
-		return CMIT_FMT_SHORT;
-	usage(diff_tree_usage);
-}
-
 int main(int argc, const char **argv)
 {
 	int nr_sha1;
