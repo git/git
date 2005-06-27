@@ -12,7 +12,7 @@ while [ "$#" != "0" ]; do
 		force=1
 		;;
 	*)
-		rev=$(git-rev-parse "$arg")
+		rev=$(git-rev-parse --verify --revs-only "$arg")
 		if [ -z "$rev" ]; then
 			echo "unknown flag $arg"
 			exit 1
