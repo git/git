@@ -22,7 +22,7 @@ INSTALL=install
 
 SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
-	git-deltafy-script git-fetch-script git-status-script git-commit-script \
+	git-fetch-script git-status-script git-commit-script \
 	git-log-script git-shortlog git-cvsimport-script git-diff-script \
 	git-reset-script git-add-script git-checkout-script git-clone-script \
 	gitk git-cherry git-rebase-script git-relink-script
@@ -34,7 +34,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
-	git-get-tar-commit-id git-mkdelta git-apply git-stripspace \
+	git-get-tar-commit-id git-apply git-stripspace \
 	git-cvs2git git-diff-stages git-rev-parse git-patch-id \
 	git-pack-objects git-unpack-objects
 
@@ -44,7 +44,7 @@ install: $(PROG) $(SCRIPTS)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
-	 tag.o delta.o date.o index.o diff-delta.o patch-delta.o entry.o \
+	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o \
 	 epoch.o refs.o csum-file.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h
@@ -117,7 +117,6 @@ git-mktag: mktag.c
 git-diff-helper: diff-helper.c
 git-tar-tree: tar-tree.c
 git-write-blob: write-blob.c
-git-mkdelta: mkdelta.c
 git-stripspace: stripspace.c
 git-cvs2git: cvs2git.c
 git-diff-stages: diff-stages.c

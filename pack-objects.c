@@ -11,7 +11,7 @@ enum object_type {
 	OBJ_COMMIT,
 	OBJ_TREE,
 	OBJ_BLOB,
-	OBJ_DELTA	// NOTE! This is _not_ the same as a "delta" object in the filesystem
+	OBJ_DELTA
 };
 
 struct object_entry {

@@ -51,9 +51,6 @@ link:git-init-db.html[git-init-db]::
 link:git-merge-base.html[git-merge-base]::
 	Finds as good a common ancestor as possible for a merge
 
-link:git-mkdelta.html[git-mkdelta]::
-	Creates a delta object
-
 link:git-mktag.html[git-mktag]::
 	Creates a tag object
 

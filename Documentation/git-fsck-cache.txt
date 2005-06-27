@@ -9,7 +9,7 @@ git-fsck-cache - Verifies the connectivity and validity of the objects in the da
 
 SYNOPSIS
 --------
-'git-fsck-cache' [--tags] [--root] [--delta-depth] [--unreachable] [--cache] [<object>*]
+'git-fsck-cache' [--tags] [--root] [--unreachable] [--cache] [<object>*]
 
 DESCRIPTION
 -----------
@@ -36,9 +36,6 @@ OPTIONS
 --cache::
 	Consider any object recorded in the cache also as a head node for
 	an unreachability trace.
-
---delta-depth::
-	Report back the length of the longest delta chain found.
 
 It tests SHA1 and general object sanity, and it does full tracking of
 the resulting reachability and everything else. It prints out any

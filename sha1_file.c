@@ -7,7 +7,6 @@
  * creation etc.
  */
 #include "cache.h"
-#include "delta.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -410,37 +409,6 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
-int sha1_delta_base(const unsigned char *sha1, unsigned char *base_sha1)
-{
-	int ret;
-	unsigned long mapsize, size;
-	void *map;
-	z_stream stream;
-	char hdr[64], type[20];
-	void *delta_data_head;
-
-	map = map_sha1_file(sha1, &mapsize);
-	if (!map)
-		return -1;
-	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
-	if (ret < Z_OK || parse_sha1_header(hdr, type, &size) < 0) {
-		ret = -1;
-		goto out;
-	}
-	if (strcmp(type, "delta")) {
-		ret = 0;
-		goto out;
-	}
-
-	delta_data_head = hdr + strlen(hdr) + 1;
-	ret = 1;
-	memcpy(base_sha1, delta_data_head, 20);
- out:
-	inflateEnd(&stream);
-	munmap(map, mapsize);
-	return ret;
-}
-
 int sha1_file_size(const unsigned char *sha1, unsigned long *sizep)
 {
 	int ret, status;
@@ -448,54 +416,17 @@ int sha1_file_size(const unsigned char *sha1, unsigned long *sizep)
 	void *map;
 	z_stream stream;
 	char hdr[64], type[20];
-	const unsigned char *data;
-	unsigned char cmd;
-	int i;
 
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
 		return -1;
 	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
-	status = -1;
 	if (ret < Z_OK || parse_sha1_header(hdr, type, &size) < 0)
-		goto out;
-	if (strcmp(type, "delta")) {
-		*sizep = size;
+		status = -1;
+	else {
 		status = 0;
-		goto out;
+		*sizep = size;
 	}
-
-	/* We are dealing with a delta object.  Inflated, the first
-	 * 20 bytes hold the base object SHA1, and delta data follows
-	 * immediately after it.
-	 *
-	 * The initial part of the delta starts at delta_data_head +
-	 * 20.  Borrow code from patch-delta to read the result size.
-	 */
-	data = (unsigned char *)(hdr + strlen(hdr) + 1 + 20);
-
-	/* Skip over the source size; we are not interested in
-	 * it and we cannot verify it because we do not want
-	 * to read the base object.
-	 */
-	cmd = *data++;
-	while (cmd) {
-		if (cmd & 1)
-			data++;
-		cmd >>= 1;
-	}
-	/* Read the result size */
-	size = i = 0;
-	cmd = *data++;
-	while (cmd) {
-		if (cmd & 1)
-			size |= *data++ << i;
-		i += 8;
-		cmd >>= 1;
-	}
-	*sizep = size;
-	status = 0;
- out:
 	inflateEnd(&stream);
 	munmap(map, mapsize);
 	return status;
@@ -510,19 +441,6 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
-		if (buf && !strcmp(type, "delta")) {
-			void *ref = NULL, *delta = buf;
-			unsigned long ref_size, delta_size = *size;
-			buf = NULL;
-			if (delta_size > 20)
-				ref = read_sha1_file(delta, type, &ref_size);
-			if (ref)
-				buf = patch_delta(ref, ref_size,
-						  delta+20, delta_size-20, 
-						  size);
-			free(delta);
-			free(ref);
-		}
 		return buf;
 	}
 	return NULL;

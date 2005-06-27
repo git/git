@@ -21,13 +21,6 @@ Downloads a remote GIT repository via HTTP.
 	Get trees associated with the commit objects.
 -a::
 	Get all the objects.
--d::
-	Do not check for delta base objects (use this option
-	only when you know the remote repository is not
-	deltified).
---recover::
-	Check dependency of deltified object more carefully than
-	usual, to recover after earlier pull that was interrupted.
 -v::
 	Report what is downloaded.
 -w::
