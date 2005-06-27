@@ -160,28 +160,22 @@ static void add_object_entry(unsigned char *sha1, unsigned int hash)
 
 static void check_object(struct object_entry *entry)
 {
-	char buffer[128];
-	char type[10];
-	unsigned long mapsize;
-	z_stream stream;
-	void *map;
+	char type[20];
 
-	map = map_sha1_file(entry->sha1, &mapsize);
-	if (!map)
-		die("unable to map %s", sha1_to_hex(entry->sha1));
-	if (unpack_sha1_header(&stream, map, mapsize, buffer, sizeof(buffer)) < 0)
-		die("unable to unpack %s header", sha1_to_hex(entry->sha1));
-	munmap(map, mapsize);
-	if (parse_sha1_header(buffer, type, &entry->size) < 0)
-		die("unable to parse %s header", sha1_to_hex(entry->sha1));
-	if (!strcmp(type, "commit")) {
-		entry->type = OBJ_COMMIT;
-	} else if (!strcmp(type, "tree")) {
-		entry->type = OBJ_TREE;
-	} else if (!strcmp(type, "blob")) {
-		entry->type = OBJ_BLOB;
-	} else
-		die("unable to pack object %s of type %s", sha1_to_hex(entry->sha1), type);
+	if (!sha1_object_info(entry->sha1, type, &entry->size)) {
+		if (!strcmp(type, "commit")) {
+			entry->type = OBJ_COMMIT;
+		} else if (!strcmp(type, "tree")) {
+			entry->type = OBJ_TREE;
+		} else if (!strcmp(type, "blob")) {
+			entry->type = OBJ_BLOB;
+		} else
+			die("unable to pack object %s of type %s",
+			    sha1_to_hex(entry->sha1), type);
+	}
+	else
+		die("unable to get type of object %s",
+		    sha1_to_hex(entry->sha1));
 }
 
 static void get_object_details(void)

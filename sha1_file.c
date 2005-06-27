@@ -409,20 +409,22 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
-int sha1_file_size(const unsigned char *sha1, unsigned long *sizep)
+int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
 {
-	int ret, status;
+	int status;
 	unsigned long mapsize, size;
 	void *map;
 	z_stream stream;
-	char hdr[64], type[20];
+	char hdr[128];
 
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
-		return -1;
-	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
-	if (ret < Z_OK || parse_sha1_header(hdr, type, &size) < 0)
-		status = -1;
+		return error("unable to map %s", sha1_to_hex(sha1));
+	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
+		status = error("unable to unpack %s header",
+			       sha1_to_hex(sha1));
+	if (parse_sha1_header(hdr, type, &size) < 0)
+		status = error("unable to parse %s header", sha1_to_hex(sha1));
 	else {
 		status = 0;
 		*sizep = size;

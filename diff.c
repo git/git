@@ -425,7 +425,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 				s->size = e->size;
 				return 0;
 			}
-			if (!sha1_file_size(s->sha1, &s->size))
+			if (!sha1_object_info(s->sha1, type, &s->size))
 				locate_size_cache(s->sha1, 0, s->size);
 		}
 		else {
