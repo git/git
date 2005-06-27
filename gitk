@@ -425,6 +425,7 @@ proc makewindow {} {
     $rowctxmenu add command -label "Diff selected -> this" \
 	-command {diffvssel 1}
     $rowctxmenu add command -label "Make patch" -command mkpatch
+    $rowctxmenu add command -label "Create tag" -command mktag
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -671,7 +672,7 @@ proc drawcommitline {level} {
     global oldlevel oldnlines oldtodo
     global idtags idline idheads
     global lineno lthickness mainline sidelines
-    global commitlisted rowtextx
+    global commitlisted rowtextx idpos
 
     incr numcommits
     incr lineno
@@ -732,47 +733,9 @@ proc drawcommitline {level} {
 	set xt [expr {$xt + ([llength $currentparents] - 2) * $linespc}]
     }
     set rowtextx($lineno) $xt
-    set marks {}
-    set ntags 0
-    if {[info exists idtags($id)]} {
-	set marks $idtags($id)
-	set ntags [llength $marks]
-    }
-    if {[info exists idheads($id)]} {
-	set marks [concat $marks $idheads($id)]
-    }
-    if {$marks != {}} {
-	set delta [expr {int(0.5 * ($linespc - $lthickness))}]
-	set yt [expr $y1 - 0.5 * $linespc]
-	set yb [expr $yt + $linespc - 1]
-	set xvals {}
-	set wvals {}
-	foreach tag $marks {
-	    set wid [font measure $mainfont $tag]
-	    lappend xvals $xt
-	    lappend wvals $wid
-	    set xt [expr {$xt + $delta + $wid + $lthickness + $linespc}]
-	}
-	set t [$canv create line $x $y1 [lindex $xvals end] $y1 \
-		   -width $lthickness -fill black]
-	$canv lower $t
-	foreach tag $marks x $xvals wid $wvals {
-	    set xl [expr $x + $delta]
-	    set xr [expr $x + $delta + $wid + $lthickness]
-	    if {[incr ntags -1] >= 0} {
-		# draw a tag
-		$canv create polygon $x [expr $yt + $delta] $xl $yt\
-		    $xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
-		    -width 1 -outline black -fill yellow
-	    } else {
-		# draw a head
-		set xl [expr $xl - $delta/2]
-		$canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
-		    -width 1 -outline black -fill green
-	    }
-	    $canv create text $xl $y1 -anchor w -text $tag \
-		-font $mainfont
-	}
+    set idpos($id) [list $x $xt $y1]
+    if {[info exists idtags($id)] || [info exists idheads($id)]} {
+	set xt [drawtags $id $x $xt $y1]
     }
     set headline [lindex $commitinfo($id) 0]
     set name [lindex $commitinfo($id) 1]
@@ -784,6 +747,58 @@ proc drawcommitline {level} {
 			       -text $name -font $namefont]
     set linedtag($lineno) [$canv3 create text 3 $y1 -anchor w \
 			       -text $date -font $mainfont]
+}
+
+proc drawtags {id x xt y1} {
+    global idtags idheads
+    global linespc lthickness
+    global canv mainfont
+
+    set marks {}
+    set ntags 0
+    if {[info exists idtags($id)]} {
+	set marks $idtags($id)
+	set ntags [llength $marks]
+    }
+    if {[info exists idheads($id)]} {
+	set marks [concat $marks $idheads($id)]
+    }
+    if {$marks eq {}} {
+	return $xt
+    }
+
+    set delta [expr {int(0.5 * ($linespc - $lthickness))}]
+    set yt [expr $y1 - 0.5 * $linespc]
+    set yb [expr $yt + $linespc - 1]
+    set xvals {}
+    set wvals {}
+    foreach tag $marks {
+	set wid [font measure $mainfont $tag]
+	lappend xvals $xt
+	lappend wvals $wid
+	set xt [expr {$xt + $delta + $wid + $lthickness + $linespc}]
+    }
+    set t [$canv create line $x $y1 [lindex $xvals end] $y1 \
+	       -width $lthickness -fill black -tags tag.$id]
+    $canv lower $t
+    foreach tag $marks x $xvals wid $wvals {
+	set xl [expr $x + $delta]
+	set xr [expr $x + $delta + $wid + $lthickness]
+	if {[incr ntags -1] >= 0} {
+	    # draw a tag
+	    $canv create polygon $x [expr $yt + $delta] $xl $yt\
+		$xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
+		-width 1 -outline black -fill yellow -tags tag.$id
+	} else {
+	    # draw a head
+	    set xl [expr $xl - $delta/2]
+	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
+		-width 1 -outline black -fill green -tags tag.$id
+	}
+	$canv create text $xl $y1 -anchor w -text $tag \
+	    -font $mainfont -tags tag.$id
+    }
+    return $xt
 }
 
 proc updatetodo {level noshortcut} {
@@ -1831,7 +1846,7 @@ proc mkpatch {} {
     entry $top.fname -width 60
     $top.fname insert 0 [file normalize "patch$patchnum.patch"]
     incr patchnum
-    grid $top.flab $top.fname
+    grid $top.flab $top.fname -sticky w
     frame $top.buts
     button $top.buts.gen -text "Generate" -command mkpatchgo
     button $top.buts.can -text "Cancel" -command mkpatchcan
@@ -1839,6 +1854,7 @@ proc mkpatch {} {
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
     grid $top.buts - -pady 10 -sticky ew
+    focus $top.fname
 }
 
 proc mkpatchrev {} {
@@ -1875,6 +1891,87 @@ proc mkpatchcan {} {
 
     catch {destroy $patchtop}
     unset patchtop
+}
+
+proc mktag {} {
+    global rowmenuid mktagtop commitinfo
+
+    set top .maketag
+    set mktagtop $top
+    catch {destroy $top}
+    toplevel $top
+    label $top.title -text "Create tag"
+    grid $top.title -
+    label $top.id -text "ID:"
+    entry $top.sha1 -width 40
+    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 conf -state readonly
+    grid $top.id $top.sha1 -sticky w
+    entry $top.head -width 40
+    $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
+    $top.head conf -state readonly
+    grid x $top.head -sticky w
+    label $top.tlab -text "Tag name:"
+    entry $top.tag -width 40
+    grid $top.tlab $top.tag -sticky w
+    frame $top.buts
+    button $top.buts.gen -text "Create" -command mktaggo
+    button $top.buts.can -text "Cancel" -command mktagcan
+    grid $top.buts.gen $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - -pady 10 -sticky ew
+    focus $top.tag
+}
+
+proc domktag {} {
+    global mktagtop env tagids idtags
+    global idpos idline linehtag canv selectedline
+
+    set id [$mktagtop.sha1 get]
+    set tag [$mktagtop.tag get]
+    if {$tag == {}} {
+	error_popup "No tag name specified"
+	return
+    }
+    if {[info exists tagids($tag)]} {
+	error_popup "Tag \"$tag\" already exists"
+	return
+    }
+    if {[catch {
+	set dir ".git"
+	if {[info exists env(GIT_DIR)]} {
+	    set dir $env(GIT_DIR)
+	}
+	set fname [file join $dir "refs/tags" $tag]
+	set f [open $fname w]
+	puts $f $id
+	close $f
+    } err]} {
+	error_popup "Error creating tag: $err"
+	return
+    }
+
+    set tagids($tag) $id
+    lappend idtags($id) $tag
+    $canv delete tag.$id
+    set xt [eval drawtags $id $idpos($id)]
+    $canv coords $linehtag($idline($id)) $xt [lindex $idpos($id) 2]
+    if {[info exists selectedline] && $selectedline == $idline($id)} {
+	selectline $selectedline
+    }
+}
+
+proc mktagcan {} {
+    global mktagtop
+
+    catch {destroy $mktagtop}
+    unset mktagtop
+}
+
+proc mktaggo {} {
+    domktag
+    mktagcan
 }
 
 proc doquit {} {
