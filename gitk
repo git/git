@@ -419,6 +419,7 @@ proc makewindow {} {
 	-command {diffvssel 0}
     $rowctxmenu add command -label "Diff selected -> this" \
 	-command {diffvssel 1}
+    $rowctxmenu add command -label "Make patch" -command mkpatch
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -1751,6 +1752,7 @@ proc rowmenu {x y id} {
     }
     $rowctxmenu entryconfigure 0 -state $state
     $rowctxmenu entryconfigure 1 -state $state
+    $rowctxmenu entryconfigure 2 -state $state
     set rowmenuid $id
     tk_popup $rowctxmenu $x $y
 }
@@ -1784,6 +1786,90 @@ proc diffvssel {dirn} {
     $ctext tag remove found 1.0 end
     set diffids [list $newid $oldid]
     startdiff
+}
+
+proc mkpatch {} {
+    global rowmenuid currentid commitinfo patchtop patchnum
+
+    if {![info exists currentid]} return
+    set oldid $currentid
+    set oldhead [lindex $commitinfo($oldid) 0]
+    set newid $rowmenuid
+    set newhead [lindex $commitinfo($newid) 0]
+    set top .patch
+    set patchtop $top
+    catch {destroy $top}
+    toplevel $top
+    label $top.title -text "Generate patch"
+    grid $top.title -
+    label $top.from -text "From:"
+    entry $top.fromsha1 -width 40
+    $top.fromsha1 insert 0 $oldid
+    $top.fromsha1 conf -state readonly
+    grid $top.from $top.fromsha1 -sticky w
+    entry $top.fromhead -width 60
+    $top.fromhead insert 0 $oldhead
+    $top.fromhead conf -state readonly
+    grid x $top.fromhead -sticky w
+    label $top.to -text "To:"
+    entry $top.tosha1 -width 40
+    $top.tosha1 insert 0 $newid
+    $top.tosha1 conf -state readonly
+    grid $top.to $top.tosha1 -sticky w
+    entry $top.tohead -width 60
+    $top.tohead insert 0 $newhead
+    $top.tohead conf -state readonly
+    grid x $top.tohead -sticky w
+    button $top.rev -text "Reverse" -command mkpatchrev -padx 5
+    grid $top.rev x -pady 10
+    label $top.flab -text "Output file:"
+    entry $top.fname -width 60
+    $top.fname insert 0 [file normalize "patch$patchnum.patch"]
+    incr patchnum
+    grid $top.flab $top.fname
+    frame $top.buts
+    button $top.buts.gen -text "Generate" -command mkpatchgo
+    button $top.buts.can -text "Cancel" -command mkpatchcan
+    grid $top.buts.gen $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - -pady 10 -sticky ew
+}
+
+proc mkpatchrev {} {
+    global patchtop
+
+    set oldid [$patchtop.fromsha1 get]
+    set oldhead [$patchtop.fromhead get]
+    set newid [$patchtop.tosha1 get]
+    set newhead [$patchtop.tohead get]
+    foreach e [list fromsha1 fromhead tosha1 tohead] \
+	    v [list $newid $newhead $oldid $oldhead] {
+	$patchtop.$e conf -state normal
+	$patchtop.$e delete 0 end
+	$patchtop.$e insert 0 $v
+	$patchtop.$e conf -state readonly
+    }
+}
+
+proc mkpatchgo {} {
+    global patchtop
+
+    set oldid [$patchtop.fromsha1 get]
+    set newid [$patchtop.tosha1 get]
+    set fname [$patchtop.fname get]
+    if {[catch {exec git-diff-tree -p $oldid $newid >$fname &} err]} {
+	error_popup "Error creating patch: $err"
+    }
+    catch {destroy $patchtop}
+    unset patchtop
+}
+
+proc mkpatchcan {} {
+    global patchtop
+
+    catch {destroy $patchtop}
+    unset patchtop
 }
 
 proc doquit {} {
@@ -1824,6 +1910,7 @@ foreach arg $argv {
 set stopped 0
 set redisplaying 0
 set stuffsaved 0
+set patchnum 0
 setcoords
 makewindow
 readrefs
