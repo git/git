@@ -1,0 +1,9 @@
+#!/bin/sh
+GIT_DIR=${GIT_DIR:-.git}
+
+tag=$1
+[ -f "$GIT_DIR/refs/tags/$tag" ] && tag=$(cat "$GIT_DIR/refs/tags/$tag")
+
+git-cat-file tag $tag > .tmp-vtag || exit 1
+cat .tmp-vtag | sed '/-----BEGIN PGP/Q' | gpg --verify .tmp-vtag -
+rm -f .tmp-vtag
