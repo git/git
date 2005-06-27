@@ -81,16 +81,21 @@ to allow selection of commits to be displayed.)}
     while 1 {
 	set i [string first "\0" $stuff $start]
 	if {$i < 0} {
-	    set leftover [string range $stuff $start end]
+	    append leftover [string range $stuff $start end]
 	    return
 	}
 	set cmit [string range $stuff $start [expr {$i - 1}]]
 	if {$start == 0} {
 	    set cmit "$leftover$cmit"
+	    set leftover {}
 	}
 	set start [expr {$i + 1}]
 	if {![regexp {^([0-9a-f]{40})\n} $cmit match id]} {
-	    error_popup "Can't parse git-rev-list output: {$cmit}"
+	    set shortcmit $cmit
+	    if {[string length $shortcmit] > 80} {
+		set shortcmit "[string range $shortcmit 0 80]..."
+	    }
+	    error_popup "Can't parse git-rev-list output: {$shortcmit}"
 	    exit 1
 	}
 	set cmit [string range $cmit 41 end]
