@@ -99,7 +99,6 @@ test_expect_success \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      git-init-db &&
-     mkdir .git2/objects/pack &&
      cp test-1.pack test-1.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
