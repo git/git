@@ -10,6 +10,7 @@ struct sha1file {
 	unsigned char buffer[8192];
 };
 
+extern struct sha1file *sha1fd(int fd, const char *name);
 extern struct sha1file *sha1create(const char *fmt, ...);
 extern int sha1close(struct sha1file *, unsigned char *, int);
 extern int sha1write(struct sha1file *, void *, unsigned int);

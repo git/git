@@ -96,6 +96,26 @@ struct sha1file *sha1create(const char *fmt, ...)
 	return f;
 }
 
+struct sha1file *sha1fd(int fd, const char *name)
+{
+	struct sha1file *f;
+	unsigned len;
+
+	f = xmalloc(sizeof(*f));
+
+	len = strlen(name);
+	if (len >= PATH_MAX)
+		die("you wascally wabbit, you");
+	f->namelen = len;
+	memcpy(f->name, name, len+1);
+
+	f->fd = fd;
+	f->error = 0;
+	f->offset = 0;
+	SHA1_Init(&f->ctx);
+	return f;
+}
+
 int sha1write_compressed(struct sha1file *f, void *in, unsigned int size)
 {
 	z_stream stream;
