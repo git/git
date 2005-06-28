@@ -58,6 +58,7 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 		memcpy(f->buffer + offset, buf, nr);
 		count -= nr;
 		offset += nr;
+		buf += nr;
 		left -= nr;
 		if (!left) {
 			SHA1_Update(&f->ctx, f->buffer, offset);
