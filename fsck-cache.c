@@ -12,6 +12,8 @@
 static int show_root = 0;
 static int show_tags = 0;
 static int show_unreachable = 0;
+static int standalone = 0;
+static int check_full = 0;
 static int keep_cache_objects = 0; 
 static unsigned char head_sha1[20];
 
@@ -25,13 +27,17 @@ static void check_connectivity(void)
 		struct object_list *refs;
 
 		if (!obj->parsed) {
-			printf("missing %s %s\n",
-			       obj->type, sha1_to_hex(obj->sha1));
+			if (!standalone && has_sha1_file(obj->sha1))
+				; /* it is in pack */
+			else
+				printf("missing %s %s\n",
+				       obj->type, sha1_to_hex(obj->sha1));
 			continue;
 		}
 
 		for (refs = obj->refs; refs; refs = refs->next) {
-			if (refs->item->parsed)
+			if (refs->item->parsed ||
+			    (!standalone && has_sha1_file(refs->item->sha1)))
 				continue;
 			printf("broken link from %7s %s\n",
 			       obj->type, sha1_to_hex(obj->sha1));
@@ -315,8 +321,11 @@ static int read_sha1_reference(const char *path)
 		return -1;
 
 	obj = lookup_object(sha1);
-	if (!obj)
+	if (!obj) {
+		if (!standalone && has_sha1_file(sha1))
+			return 0; /* it is in pack */
 		return error("%s: invalid sha1 pointer %.40s", path, hexname);
+	}
 
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
@@ -366,10 +375,20 @@ static void get_default_heads(void)
 		die("No default references");
 }
 
+static void fsck_object_dir(const char *path)
+{
+	int i;
+	for (i = 0; i < 256; i++) {
+		static char dir[4096];
+		sprintf(dir, "%s/%02x", path, i);
+		fsck_dir(i, dir);
+	}
+	fsck_sha1_list();
+}
+
 int main(int argc, char **argv)
 {
 	int i, heads;
-	char *sha1_dir;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -390,17 +409,45 @@ int main(int argc, char **argv)
 			keep_cache_objects = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--standalone")) {
+			standalone = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--full")) {
+			check_full = 1;
+			continue;
+		}
 		if (*arg == '-')
-			usage("git-fsck-cache [--tags] [[--unreachable] [--cache] <head-sha1>*]");
+			usage("git-fsck-cache [--tags] [[--unreachable] [--cache] [--standalone | --full] <head-sha1>*]");
 	}
 
-	sha1_dir = get_object_directory();
-	for (i = 0; i < 256; i++) {
-		static char dir[4096];
-		sprintf(dir, "%s/%02x", sha1_dir, i);
-		fsck_dir(i, dir);
+	if (standalone && check_full)
+		die("Only one of --standalone or --full can be used.");
+	if (standalone)
+		unsetenv("GIT_ALTERNATE_OBJECT_DIRECTORIES");
+
+	fsck_object_dir(get_object_directory());
+	if (check_full) {
+		int j;
+		struct packed_git *p;
+		prepare_alt_odb();
+		for (j = 0; alt_odb[j].base; j++) {
+			alt_odb[j].name[-1] = 0; /* was slash */
+			fsck_object_dir(alt_odb[j].base);
+			alt_odb[j].name[-1] = '/';
+		}
+		prepare_packed_git();
+		for (p = packed_git; p; p = p->next) {
+			int num = num_packed_objects(p);
+			for (i = 0; i < num; i++) {
+				unsigned char sha1[20];
+				nth_packed_object_sha1(p, i, sha1);
+				if (fsck_sha1(sha1) < 0)
+					fprintf(stderr, "bad sha1 entry '%s'\n", sha1_to_hex(sha1));
+
+			}
+		}
 	}
-	fsck_sha1_list();
 
 	heads = 0;
 	for (i = 1; i < argc; i++) {
