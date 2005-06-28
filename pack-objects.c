@@ -6,21 +6,21 @@
 
 static const char pack_usage[] = "git-pack-objects [--window=N] [--depth=N] base-name < object-list";
 
-enum object_type {
-	OBJ_NONE,
-	OBJ_COMMIT,
-	OBJ_TREE,
-	OBJ_BLOB,
-	OBJ_DELTA
-};
-
+/*
+ * The object type is a single-character shorthand:
+ *  - 'C' for "Commit"
+ *  - 'T' for "Tree"
+ *  - 'B' for "Blob"
+ *  - 'G' for "taG"
+ *  - 'D' for "Delta"
+ */
 struct object_entry {
 	unsigned char sha1[20];
 	unsigned long size;
 	unsigned long offset;
 	unsigned int depth;
 	unsigned int hash;
-	enum object_type type;
+	unsigned char type;
 	unsigned long delta_size;
 	struct object_entry *delta;
 };
@@ -67,7 +67,7 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 	 * length, except for deltas that has the 20 bytes of delta sha
 	 * instead.
 	 */
-	header[0] = ".CTB"[entry->type];
+	header[0] = entry->type;
 	hdrlen = 5;
 	if (entry->delta) {
 		header[0] = 'D';
@@ -164,11 +164,13 @@ static void check_object(struct object_entry *entry)
 
 	if (!sha1_object_info(entry->sha1, type, &entry->size)) {
 		if (!strcmp(type, "commit")) {
-			entry->type = OBJ_COMMIT;
+			entry->type = 'C';
 		} else if (!strcmp(type, "tree")) {
-			entry->type = OBJ_TREE;
+			entry->type = 'T';
 		} else if (!strcmp(type, "blob")) {
-			entry->type = OBJ_BLOB;
+			entry->type = 'B';
+		} else if (!strcmp(type, "tag")) {
+			entry->type = 'G';
 		} else
 			die("unable to pack object %s of type %s",
 			    sha1_to_hex(entry->sha1), type);

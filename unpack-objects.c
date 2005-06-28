@@ -124,6 +124,7 @@ static int unpack_non_delta_entry(struct pack_entry *entry,
 	case 'C': type_s = "commit"; break;
 	case 'T': type_s = "tree"; break;
 	case 'B': type_s = "blob"; break;
+	case 'G': type_s = "tag"; break;
 	default: goto err_finish;
 	}
 	if (write_sha1_file(buffer, size, type_s, sha1) < 0)
@@ -249,7 +250,7 @@ static void unpack_entry(struct pack_entry *entry)
 	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
 	left = pack_size - offset - 5;
 	switch (*pack) {
-	case 'C': case 'T': case 'B':
+	case 'C': case 'T': case 'B': case 'G':
 		unpack_non_delta_entry(entry, *pack, pack+5, size, left);
 		break;
 	case 'D':

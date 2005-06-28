@@ -695,6 +695,9 @@ static int packed_object_info(struct pack_entry *entry,
 	case 'B':
 		strcpy(type, "blob");
 		break;
+	case 'G':
+		strcpy(type, "tag");
+		break;
 	default:
 		die("corrupted pack file");
 	}
@@ -806,6 +809,9 @@ static void *unpack_entry(struct pack_entry *entry,
 		break;
 	case 'B':
 		strcpy(type, "blob");
+		break;
+	case 'G':
+		strcpy(type, "tag");
 		break;
 	default:
 		die("corrupted pack file");
