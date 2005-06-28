@@ -61,6 +61,8 @@ package CVSconn;
 # Basic CVS dialog.
 # We're only interested in connecting and downloading, so ...
 
+use POSIX qw(strftime dup2);
+
 sub new {
 	my($what,$repo,$subdir) = @_;
 	$what=ref($what) if ref($what);
@@ -571,7 +573,9 @@ while(<CVS>) {
 #	VERSION:1.96->1.96.2.1
 		my $init = ($2 eq "INITIAL");
 		my $fn = $1;
-		my $data = $cvs->file($fn,$3);
+		my $rev = $3;
+		$fn =~ s#^/+##;
+		my $data = $cvs->file($fn,$rev);
 		print "".($init ? "New" : "Update")." $fn: ".length($data)." bytes.\n";
 		mkpath(dirname($fn),$opt_v);
 		open(F,"> ./$fn")
@@ -583,7 +587,9 @@ while(<CVS>) {
 		chmod(pmode($cvs->{'mode'}), $fn);
 		push(@new,$fn); # may be resurrected!
 	} elsif($state == 9 and /^\s+(\S+):\d(?:\.\d+)+->(\d(?:\.\d+)+)\(DEAD\)\s*$/) {
-		push(@old,$1);
+		my $fn = $1;
+		$fn =~ s#^/+##;
+		push(@old,$fn);
 	} elsif($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif(($state == 9 or $state == 10) and /^-+$/) {
