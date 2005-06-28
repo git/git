@@ -601,9 +601,70 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
-/* Returns 0 on fast-path success, returns 1 on deltified
- * and need to unpack to see info.
- */
+static int packed_delta_info(unsigned char *base_sha1,
+			     unsigned long delta_size,
+			     unsigned long left,
+			     char *type,
+			     unsigned long *sizep)
+{
+	unsigned char *data;
+	unsigned char delta_head[64];
+	int i;
+	unsigned char cmd;
+	unsigned long data_size, result_size, base_size, verify_base_size;
+	z_stream stream;
+	int st;
+
+	if (left < 20)
+		die("truncated pack file");
+	if (sha1_object_info(base_sha1, type, &base_size))
+		die("cannot get info for delta-pack base");
+
+	data = base_sha1 + 20;
+	data_size = left - 20;
+
+	memset(&stream, 0, sizeof(stream));
+
+	stream.next_in = data;
+	stream.avail_in = data_size;
+	stream.next_out = delta_head;
+	stream.avail_out = sizeof(delta_head);
+
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	inflateEnd(&stream);
+	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head))
+		die("delta data unpack-initial failed");
+
+	/* Examine the initial part of the delta to figure out
+	 * the result size.  Verify the base size while we are at it.
+	 */
+	data = delta_head;
+	verify_base_size = i = 0;
+	cmd = *data++;
+	while (cmd) {
+		if (cmd & 1)
+			verify_base_size |= *data++ << i;
+		i += 8;
+		cmd >>= 1;
+	}
+
+	/* Read the result size */
+	result_size = i = 0;
+	cmd = *data++;
+	while (cmd) {
+		if (cmd & 1)
+			result_size |= *data++ << i;
+		i += 8;
+		cmd >>= 1;
+	}
+	if (verify_base_size != base_size)
+		die("delta base size mismatch");
+
+	*sizep = result_size;
+	return 0;
+}
+
 static int packed_object_info(struct pack_entry *entry,
 			      char *type, unsigned long *sizep)
 {
@@ -614,12 +675,16 @@ static int packed_object_info(struct pack_entry *entry,
 	offset = entry->offset;
 	if (p->pack_size - 5 < offset)
 		die("object offset outside of pack file");
+
+	if (use_packed_git(p))
+		die("cannot map packed file");
+
 	pack = p->pack_base + offset;
 	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
 	left = p->pack_size - offset - 5;
 	switch (*pack) {
 	case 'D':
-		return 1;
+		return packed_delta_info(pack+5, size, left, type, sizep);
 		break;
 	case 'C':
 		strcpy(type, "commit");
