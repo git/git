@@ -12,6 +12,7 @@
 static int show_root = 0;
 static int show_tags = 0;
 static int show_unreachable = 0;
+static int standalone = 0;
 static int keep_cache_objects = 0; 
 static unsigned char head_sha1[20];
 
@@ -25,13 +26,17 @@ static void check_connectivity(void)
 		struct object_list *refs;
 
 		if (!obj->parsed) {
-			printf("missing %s %s\n",
-			       obj->type, sha1_to_hex(obj->sha1));
+			if (!standalone && has_sha1_file(obj->sha1))
+				; /* it is in pack */
+			else
+				printf("missing %s %s\n",
+				       obj->type, sha1_to_hex(obj->sha1));
 			continue;
 		}
 
 		for (refs = obj->refs; refs; refs = refs->next) {
-			if (refs->item->parsed)
+			if (refs->item->parsed ||
+			    (!standalone && has_sha1_file(refs->item->sha1)))
 				continue;
 			printf("broken link from %7s %s\n",
 			       obj->type, sha1_to_hex(obj->sha1));
@@ -315,8 +320,11 @@ static int read_sha1_reference(const char *path)
 		return -1;
 
 	obj = lookup_object(sha1);
-	if (!obj)
+	if (!obj) {
+		if (!standalone && has_sha1_file(sha1))
+			return 0; /* it is in pack */
 		return error("%s: invalid sha1 pointer %.40s", path, hexname);
+	}
 
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
@@ -388,6 +396,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--cache")) {
 			keep_cache_objects = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--standalone")) {
+			standalone = 1;
 			continue;
 		}
 		if (*arg == '-')
