@@ -396,6 +396,7 @@ static struct packed_git *add_packed_git(char *path, int path_len)
 	p->pack_size = st.st_size;
 	p->index_base = idx_map;
 	p->next = NULL;
+	p->pack_base = NULL;
 	p->pack_last_used = 0;
 	return p;
 }
