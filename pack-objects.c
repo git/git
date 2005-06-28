@@ -4,7 +4,7 @@
 #include "delta.h"
 #include "csum-file.h"
 
-static const char pack_usage[] = "git-pack-objects [--window=N] [--depth=N] base-name < object-list";
+static const char pack_usage[] = "git-pack-objects [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
 /*
  * The object type is a single-character shorthand:
@@ -87,10 +87,14 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 static void write_pack_file(void)
 {
 	int i;
-	struct sha1file *f = sha1create("%s.%s", base_name, "pack");
+	struct sha1file *f;
 	unsigned long offset = 0;
 	unsigned long mb;
 
+	if (!base_name)
+		f = sha1fd(1, "<stdout>");
+	else
+		f = sha1create("%s.%s", base_name, "pack");
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *entry = objects + i;
 		entry->offset = offset;
@@ -334,7 +338,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 int main(int argc, char **argv)
 {
 	char line[PATH_MAX + 20];
-	int window = 10, depth = 10;
+	int window = 10, depth = 10, pack_to_stdout = 0;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -355,6 +359,10 @@ int main(int argc, char **argv)
 					usage(pack_usage);
 				continue;
 			}
+			if (!strcmp("--stdout", arg)) {
+				pack_to_stdout = 1;
+				continue;
+			}
 			usage(pack_usage);
 		}
 		if (base_name)
@@ -362,7 +370,7 @@ int main(int argc, char **argv)
 		base_name = arg;
 	}
 
-	if (!base_name)
+	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
@@ -384,7 +392,7 @@ int main(int argc, char **argv)
 	}
 	get_object_details();
 
-	printf("Packing %d objects\n", nr_objects);
+	fprintf(stderr, "Packing %d objects\n", nr_objects);
 
 	sorted_by_sha = create_sorted_list(sha1_sort);
 	sorted_by_type = create_sorted_list(type_size_sort);
@@ -392,6 +400,7 @@ int main(int argc, char **argv)
 		find_deltas(sorted_by_type, window+1, depth);
 
 	write_pack_file();
-	write_index_file();
+	if (!pack_to_stdout)
+		write_index_file();
 	return 0;
 }
