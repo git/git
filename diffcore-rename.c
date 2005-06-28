@@ -136,6 +136,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	 */
 	void *delta;
 	unsigned long delta_size, base_size, src_copied, literal_added;
+	unsigned long delta_limit;
 	int score;
 
 	/* We deal only with regular files.  Symlink renames are handled
@@ -163,9 +164,13 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
+	delta_limit = base_size * (MAX_SCORE-minimum_score) / MAX_SCORE;
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
-			   &delta_size, ~0UL);
+			   &delta_size, delta_limit);
+	if (!delta)
+		/* If delta_limit is exceeded, we have too much differences */
+		return 0;
 
 	/* A delta that has a lot of literal additions would have
 	 * big delta_size no matter what else it does.
