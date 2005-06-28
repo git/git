@@ -9,7 +9,7 @@ git-fsck-cache - Verifies the connectivity and validity of the objects in the da
 
 SYNOPSIS
 --------
-'git-fsck-cache' [--tags] [--root] [--unreachable] [--cache] [<object>*]
+'git-fsck-cache' [--tags] [--root] [--unreachable] [--cache] [--standalone | --full] [<object>*]
 
 DESCRIPTION
 -----------
@@ -36,6 +36,22 @@ OPTIONS
 --cache::
 	Consider any object recorded in the cache also as a head node for
 	an unreachability trace.
+
+--standalone::
+	Limit checks to the contents of GIT_OBJECT_DIRECTORY
+	(.git/objects), making sure that it is consistent and
+	complete without referring to objects found in alternate
+	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES,
+	nor packed GIT archives found in .git/objects/pack;
+	cannot be used with --full.
+
+--full::
+	Check not just objects in GIT_OBJECT_DIRECTORY
+	(.git/objects), but also the ones found in alternate
+	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES,
+	and in packed GIT archives found in .git/objects/pack
+	and corresponding pack subdirectories in alternate
+	object pools; cannot be used with --standalone.
 
 It tests SHA1 and general object sanity, and it does full tracking of
 the resulting reachability and everything else. It prints out any
