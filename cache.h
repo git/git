@@ -233,4 +233,23 @@ struct checkout {
 
 extern int checkout_entry(struct cache_entry *ce, struct checkout *state);
 
+extern struct alternate_object_database {
+	char *base;
+	char *name;
+} *alt_odb;
+extern void prepare_alt_odb(void);
+
+extern struct packed_git {
+	struct packed_git *next;
+	unsigned long index_size;
+	unsigned long pack_size;
+	unsigned int *index_base;
+	void *pack_base;
+	unsigned int pack_last_used;
+	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
+} *packed_git;
+extern void prepare_packed_git(void);
+extern int num_packed_objects(const struct packed_git *p);
+extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
+
 #endif /* CACHE_H */

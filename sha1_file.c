@@ -184,10 +184,7 @@ char *sha1_file_name(const unsigned char *sha1)
 	return base;
 }
 
-static struct alternate_object_database {
-	char *base;
-	char *name;
-} *alt_odb;
+struct alternate_object_database *alt_odb;
 
 /*
  * Prepare alternate object database registry.
@@ -205,13 +202,15 @@ static struct alternate_object_database {
  * pointed by base fields of the array elements with one xmalloc();
  * the string pool immediately follows the array.
  */
-static void prepare_alt_odb(void)
+void prepare_alt_odb(void)
 {
 	int pass, totlen, i;
 	const char *cp, *last;
 	char *op = NULL;
 	const char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
 
+	if (alt_odb)
+		return;
 	/* The first pass counts how large an area to allocate to
 	 * hold the entire alt_odb structure, including array of
 	 * structs and path buffers for them.  The second pass fills
@@ -258,8 +257,7 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 
 	if (!stat(name, st))
 		return name;
-	if (!alt_odb)
-		prepare_alt_odb();
+	prepare_alt_odb();
 	for (i = 0; (name = alt_odb[i].name) != NULL; i++) {
 		fill_sha1_path(name, sha1);
 		if (!stat(alt_odb[i].base, st))
@@ -271,15 +269,7 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 #define PACK_MAX_SZ (1<<26)
 static int pack_used_ctr;
 static unsigned long pack_mapped;
-static struct packed_git {
-	struct packed_git *next;
-	unsigned long index_size;
-	unsigned long pack_size;
-	unsigned int *index_base;
-	void *pack_base;
-	unsigned int pack_last_used;
-	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
-} *packed_git;
+struct packed_git *packed_git;
 
 struct pack_entry {
 	unsigned int offset;
@@ -429,7 +419,7 @@ static void prepare_packed_git_one(char *objdir)
 	}
 }
 
-static void prepare_packed_git(void)
+void prepare_packed_git(void)
 {
 	int i;
 	static int run_once = 0;
@@ -438,8 +428,7 @@ static void prepare_packed_git(void)
 		return;
 
 	prepare_packed_git_one(get_object_directory());
-	if (!alt_odb)
-		prepare_alt_odb();
+	prepare_alt_odb();
 	for (i = 0; alt_odb[i].base != NULL; i++) {
 		alt_odb[i].name[0] = 0;
 		prepare_packed_git_one(alt_odb[i].base);
@@ -818,6 +807,22 @@ static void *unpack_entry(struct pack_entry *entry,
 	}
 	*sizep = size;
 	return unpack_non_delta_entry(pack+5, size, left);
+}
+
+int num_packed_objects(const struct packed_git *p)
+{
+	/* See check_packed_git_idx and pack-objects.c */
+	return (p->index_size - 20 - 20 - 4*256) / 24;
+}
+
+int nth_packed_object_sha1(const struct packed_git *p, int n,
+			   unsigned char* sha1)
+{
+	void *index = p->index_base + 256;
+	if (n < 0 || num_packed_objects(p) <= n)
+		return -1;
+	memcpy(sha1, (index + 24 * n + 4), 20);
+	return 0;
 }
 
 static int find_pack_entry_1(const unsigned char *sha1,
