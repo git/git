@@ -12,7 +12,7 @@ fi
 if [ "$2" ]
 then
    merge_name="$type '$2' of $merge_name"
-   merge_head="refs/{$type}s/$2"
+   merge_head="refs/${type}s/$2"
 fi
 
 : ${GIT_DIR=.git}
