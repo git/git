@@ -87,5 +87,7 @@ int main(int argc, char **argv)
 		sprintf(path+len, "/%02x", i);
 		safe_create_dir(path);
 	}
+	strcpy(path+len, "/pack");
+	safe_create_dir(path);
 	return 0;
 }
