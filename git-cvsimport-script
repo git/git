@@ -323,6 +323,7 @@ sub getwd() {
 chdir($git_tree);
 
 my $last_branch = "";
+my $orig_branch = "";
 my %branch_date;
 
 my $git_dir = $ENV{"GIT_DIR"} || ".git";
@@ -335,9 +336,14 @@ unless(-d $git_dir) {
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;
+	$orig_branch = "";
 } else {
 	$last_branch = basename(readlink("$git_dir/HEAD"));
-	die "Cannot read the last branch name: $!\n" unless $last_branch;
+	unless($last_branch) {
+		warn "Cannot read the last branch name: $! -- assuming 'master'\n";
+		$last_branch = "master";
+	}
+	$orig_branch = $last_branch;
 
 	# Get the last import timestamps
 	opendir(D,"$git_dir/refs/heads");
@@ -558,8 +564,8 @@ while(<CVS>) {
 		}
 		if(($ancestor || $branch) ne $last_branch) {
 			print "Switching from $last_branch to $branch\n" if $opt_v;
-			system("git-read-tree -m -u $last_branch $branch");
-			die "read-tree $branch failed at $branch: $?\n" if $?;
+			system("git-read-tree","-m","-u","$last_branch","$branch");
+			die "read-tree failed: $?\n" if $?;
 		}
 		if($branch ne $last_branch) {
 			unlink("$git_dir/HEAD");
@@ -605,4 +611,19 @@ while(<CVS>) {
 }
 &$commit() if $branch and $state != 11;
 
-print "DONE\n" if $opt_v;
+# Now switch back to the branch we were in before all of this happened
+if($orig_branch) {
+	print "DONE; switching back to $orig_branch\n" if $opt_v;
+} else {
+	$orig_branch = "master";
+	print "DONE; creating $orig_branch branch\n" if $opt_v;
+	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
+		unless -f "$git_dir/refs/heads/master";
+}
+
+system("git-read-tree","-m","-u","$last_branch","$orig_branch");
+die "read-tree failed: $?\n" if $?;
+
+unlink("$git_dir/HEAD");
+symlink("refs/heads/$orig_branch","$git_dir/HEAD");
+
