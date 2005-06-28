@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
+#include "pack.h"
 
 static int dry_run;
 static int nr_entries;
@@ -92,7 +93,7 @@ static int check_index(void)
 }
 
 static int unpack_non_delta_entry(struct pack_entry *entry,
-				  int kind,
+				  enum object_type kind,
 				  unsigned char *data,
 				  unsigned long size,
 				  unsigned long left)
@@ -101,9 +102,9 @@ static int unpack_non_delta_entry(struct pack_entry *entry,
 	z_stream stream;
 	char *buffer;
 	unsigned char sha1[20];
-	char *type_s;
+	char *type;
 
-	printf("%s %c %lu\n", sha1_to_hex(entry->sha1), kind, size);
+	printf("%s %c %lu\n", sha1_to_hex(entry->sha1), ".CTBGD"[kind], size);
 	if (dry_run)
 		return 0;
 
@@ -121,18 +122,18 @@ static int unpack_non_delta_entry(struct pack_entry *entry,
 	if ((st != Z_STREAM_END) || stream.total_out != size)
 		goto err_finish;
 	switch (kind) {
-	case 'C': type_s = "commit"; break;
-	case 'T': type_s = "tree"; break;
-	case 'B': type_s = "blob"; break;
-	case 'G': type_s = "tag"; break;
+	case OBJ_COMMIT: type = "commit"; break;
+	case OBJ_TREE:   type = "tree"; break;
+	case OBJ_BLOB:   type = "blob"; break;
+	case OBJ_TAG:    type = "tag"; break;
 	default: goto err_finish;
 	}
-	if (write_sha1_file(buffer, size, type_s, sha1) < 0)
+	if (write_sha1_file(buffer, size, type, sha1) < 0)
 		die("failed to write %s (%s)",
-		    sha1_to_hex(entry->sha1), type_s);
-	printf("%s %s\n", sha1_to_hex(sha1), type_s);
+		    sha1_to_hex(entry->sha1), type);
+	printf("%s %s\n", sha1_to_hex(sha1), type);
 	if (memcmp(sha1, entry->sha1, 20))
-		die("resulting %s have wrong SHA1", type_s);
+		die("resulting %s have wrong SHA1", type);
 
  finish:
 	st = 0;
@@ -237,28 +238,44 @@ static int unpack_delta_entry(struct pack_entry *entry,
 static void unpack_entry(struct pack_entry *entry)
 {
 	unsigned long offset, size, left;
-	unsigned char *pack;
+	unsigned char *pack, c;
+	int type;
 
 	/* Have we done this one already due to deltas based on it? */
 	if (lookup_object(entry->sha1))
 		return;
 
 	offset = ntohl(entry->offset);
-	if (offset > pack_size - 5)
-		die("object offset outside of pack file");
+	if (offset >= pack_size)
+		goto bad;
+
 	pack = pack_base + offset;
-	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
-	left = pack_size - offset - 5;
-	switch (*pack) {
-	case 'C': case 'T': case 'B': case 'G':
-		unpack_non_delta_entry(entry, *pack, pack+5, size, left);
-		break;
-	case 'D':
-		unpack_delta_entry(entry, pack+5, size, left);
-		break;
-	default:
-		die("corrupted pack file");
+	c = *pack++;
+	offset++;
+	type = (c >> 4) & 7;
+	size = (c & 15);
+	while (c & 0x80) {
+		if (offset >= pack_size)
+			goto bad;
+		offset++;
+		c = *pack++;
+		size = (size << 7) + (c & 0x7f);
+		
 	}
+	left = pack_size - offset;
+	switch (type) {
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+		unpack_non_delta_entry(entry, type, pack, size, left);
+		return;
+	case OBJ_DELTA:
+		unpack_delta_entry(entry, pack+5, size, left);
+		return;
+	}
+bad:
+	die("corrupted pack file");
 }
 
 /*

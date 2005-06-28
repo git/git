@@ -2,25 +2,18 @@
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
+#include "pack.h"
 #include "csum-file.h"
 
 static const char pack_usage[] = "git-pack-objects [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
-/*
- * The object type is a single-character shorthand:
- *  - 'C' for "Commit"
- *  - 'T' for "Tree"
- *  - 'B' for "Blob"
- *  - 'G' for "taG"
- *  - 'D' for "Delta"
- */
 struct object_entry {
 	unsigned char sha1[20];
 	unsigned long size;
 	unsigned long offset;
 	unsigned int depth;
 	unsigned int hash;
-	unsigned char type;
+	enum object_type type;
 	unsigned long delta_size;
 	struct object_entry *delta;
 };
@@ -49,13 +42,54 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
 	return delta_buf;
 }
 
+/*
+ * The per-object header is a pretty dense thing, which is
+ *  - first byte: low four bits are "size", then three bits of "type",
+ *    and the high bit is "size continues".
+ *  - each byte afterwards: low seven bits are size continuation,
+ *    with the high bit being "size continues"
+ */
+static int encode_header(enum object_type type, unsigned long size, unsigned char *hdr)
+{
+	int n = 1, i;
+	unsigned char c;
+
+	if (type < OBJ_COMMIT || type > OBJ_DELTA)
+		die("bad type %d", type);
+
+	/*
+	 * Shift the size up by 7 bits at a time,
+	 * until you get bits in the "high four".
+	 * That will be our beginning. We'll have
+	 * four size bits in 28..31, then groups
+	 * of seven in 21..27, 14..20, 7..13 and
+	 * finally 0..6.
+	 */
+	if (size) {
+		n = 5;
+		while (!(size & 0xfe000000)) {
+			size <<= 7;
+			n--;
+		}
+	}
+	c = (type << 4) | (size >> 28);
+	for (i = 1; i < n; i++) {
+		*hdr++ = c | 0x80;
+		c = (size >> 21) & 0x7f;
+		size <<= 7;
+	}
+	*hdr = c;
+	return n;
+}
+
 static unsigned long write_object(struct sha1file *f, struct object_entry *entry)
 {
 	unsigned long size;
 	char type[10];
 	void *buf = read_sha1_file(entry->sha1, type, &size);
-	char header[25];
+	unsigned char header[10];
 	unsigned hdrlen, datalen;
+	enum object_type obj_type;
 
 	if (!buf)
 		die("unable to read %s", sha1_to_hex(entry->sha1));
@@ -67,18 +101,18 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 	 * length, except for deltas that has the 20 bytes of delta sha
 	 * instead.
 	 */
-	header[0] = entry->type;
-	hdrlen = 5;
+	obj_type = entry->type;
 	if (entry->delta) {
-		header[0] = 'D';
-		memcpy(header+5, entry->delta, 20);
 		buf = delta_against(buf, size, entry);
 		size = entry->delta_size;
-		hdrlen = 25;
+		obj_type = OBJ_DELTA;
 	}
-	datalen = htonl(size);
-	memcpy(header+1, &datalen, 4);
+	hdrlen = encode_header(obj_type, size, header);
 	sha1write(f, header, hdrlen);
+	if (entry->delta) {
+		sha1write(f, entry->delta, 20);
+		hdrlen += 20;
+	}
 	datalen = sha1write_compressed(f, buf, size);
 	free(buf);
 	return hdrlen + datalen;
@@ -88,13 +122,19 @@ static void write_pack_file(void)
 {
 	int i;
 	struct sha1file *f;
-	unsigned long offset = 0;
+	unsigned long offset;
 	unsigned long mb;
+	struct pack_header hdr;
 
 	if (!base_name)
 		f = sha1fd(1, "<stdout>");
 	else
 		f = sha1create("%s.%s", base_name, "pack");
+	hdr.hdr_signature = htonl(PACK_SIGNATURE);
+	hdr.hdr_version = htonl(1);
+	hdr.hdr_entries = htonl(nr_objects);
+	sha1write(f, &hdr, sizeof(hdr));
+	offset = sizeof(hdr);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *entry = objects + i;
 		entry->offset = offset;
@@ -168,13 +208,13 @@ static void check_object(struct object_entry *entry)
 
 	if (!sha1_object_info(entry->sha1, type, &entry->size)) {
 		if (!strcmp(type, "commit")) {
-			entry->type = 'C';
+			entry->type = OBJ_COMMIT;
 		} else if (!strcmp(type, "tree")) {
-			entry->type = 'T';
+			entry->type = OBJ_TREE;
 		} else if (!strcmp(type, "blob")) {
-			entry->type = 'B';
+			entry->type = OBJ_BLOB;
 		} else if (!strcmp(type, "tag")) {
-			entry->type = 'G';
+			entry->type = OBJ_TAG;
 		} else
 			die("unable to pack object %s of type %s",
 			    sha1_to_hex(entry->sha1), type);

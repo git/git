@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include "cache.h"
 #include "delta.h"
+#include "pack.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -665,37 +666,60 @@ static int packed_delta_info(unsigned char *base_sha1,
 	return 0;
 }
 
+static unsigned long unpack_object_header(struct packed_git *p, unsigned long offset,
+	enum object_type *type, unsigned long *sizep)
+{
+	unsigned char *pack, c;
+	unsigned long size;
+
+	if (offset >= p->pack_size)
+		die("object offset outside of pack file");
+
+	pack =  p->pack_base + offset;
+	c = *pack++;
+	offset++;
+	*type = (c >> 4) & 7;
+	size = c & 15;
+	while (c & 0x80) {
+		if (offset >= p->pack_size)
+			die("object offset outside of pack file");
+		c = *pack++;
+		offset++;
+		size = (size << 7) | (c & 0x7f);
+	}
+	*sizep = size;
+	return offset;
+}
+
 static int packed_object_info(struct pack_entry *entry,
 			      char *type, unsigned long *sizep)
 {
 	struct packed_git *p = entry->p;
 	unsigned long offset, size, left;
 	unsigned char *pack;
-
-	offset = entry->offset;
-	if (p->pack_size - 5 < offset)
-		die("object offset outside of pack file");
+	enum object_type kind;
 
 	if (use_packed_git(p))
 		die("cannot map packed file");
 
+	offset = unpack_object_header(p, entry->offset, &kind, &size);
 	pack = p->pack_base + offset;
-	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
-	left = p->pack_size - offset - 5;
-	switch (*pack) {
-	case 'D':
-		return packed_delta_info(pack+5, size, left, type, sizep);
+	left = p->pack_size - offset;
+
+	switch (kind) {
+	case OBJ_DELTA:
+		return packed_delta_info(pack, size, left, type, sizep);
 		break;
-	case 'C':
+	case OBJ_COMMIT:
 		strcpy(type, "commit");
 		break;
-	case 'T':
+	case OBJ_TREE:
 		strcpy(type, "tree");
 		break;
-	case 'B':
+	case OBJ_BLOB:
 		strcpy(type, "blob");
 		break;
-	case 'G':
+	case OBJ_TAG:
 		strcpy(type, "tag");
 		break;
 	default:
@@ -787,37 +811,34 @@ static void *unpack_entry(struct pack_entry *entry,
 	struct packed_git *p = entry->p;
 	unsigned long offset, size, left;
 	unsigned char *pack;
-
-	offset = entry->offset;
-	if (p->pack_size - 5 < offset)
-		die("object offset outside of pack file");
+	enum object_type kind;
 
 	if (use_packed_git(p))
 		die("cannot map packed file");
 
+	offset = unpack_object_header(p, entry->offset, &kind, &size);
 	pack = p->pack_base + offset;
-	size = (pack[1] << 24) + (pack[2] << 16) + (pack[3] << 8) + pack[4];
-	left = p->pack_size - offset - 5;
-	switch (*pack) {
-	case 'D':
-		return unpack_delta_entry(pack+5, size, left, type, sizep);
-	case 'C':
+	left = p->pack_size - offset;
+	switch (kind) {
+	case OBJ_DELTA:
+		return unpack_delta_entry(pack, size, left, type, sizep);
+	case OBJ_COMMIT:
 		strcpy(type, "commit");
 		break;
-	case 'T':
+	case OBJ_TREE:
 		strcpy(type, "tree");
 		break;
-	case 'B':
+	case OBJ_BLOB:
 		strcpy(type, "blob");
 		break;
-	case 'G':
+	case OBJ_TAG:
 		strcpy(type, "tag");
 		break;
 	default:
 		die("corrupted pack file");
 	}
 	*sizep = size;
-	return unpack_non_delta_entry(pack+5, size, left);
+	return unpack_non_delta_entry(pack, size, left);
 }
 
 static int find_pack_entry_1(const unsigned char *sha1,
