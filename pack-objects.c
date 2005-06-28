@@ -97,9 +97,9 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 		die("object %s size inconsistency (%lu vs %lu)", sha1_to_hex(entry->sha1), size, entry->size);
 
 	/*
-	 * The object header is a byte of 'type' followed by four bytes of
-	 * length, except for deltas that has the 20 bytes of delta sha
-	 * instead.
+	 * The object header is a byte of 'type' followed by zero or
+	 * more bytes of length.  For deltas, the 20 bytes of delta sha1
+	 * follows that.
 	 */
 	obj_type = entry->type;
 	if (entry->delta) {

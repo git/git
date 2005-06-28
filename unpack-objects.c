@@ -271,7 +271,7 @@ static void unpack_entry(struct pack_entry *entry)
 		unpack_non_delta_entry(entry, type, pack, size, left);
 		return;
 	case OBJ_DELTA:
-		unpack_delta_entry(entry, pack+5, size, left);
+		unpack_delta_entry(entry, pack, size, left);
 		return;
 	}
 bad:
