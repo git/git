@@ -16,13 +16,11 @@ int main(int argc, char **argv)
 		usage("git-cat-file [-t | tagname] <sha1>");
 
 	if (!strcmp("-t", argv[1])) {
-		buf = read_sha1_file(sha1, type, &size);
-		if (buf) {
-			buf = type;
-			size = strlen(type);
-			type[size] = '\n';
-			size++;
+		if (!sha1_object_info(sha1, type, &size)) {
+			printf("%s\n", type);
+			return 0;
 		}
+		buf = NULL;
 	} else {
 		buf = read_object_with_reference(sha1, argv[1], &size, NULL);
 	}
