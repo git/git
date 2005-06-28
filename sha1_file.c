@@ -891,31 +891,46 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
+static char *write_sha1_file_prepare(void *buf,
+				     unsigned long len,
+				     const char *type,
+				     unsigned char *sha1,
+				     unsigned char *hdr,
+				     int *hdrlen)
+{
+	SHA_CTX c;
+
+	/* Generate the header */
+	*hdrlen = sprintf((char *)hdr, "%s %lu", type, len)+1;
+
+	/* Sha1.. */
+	SHA1_Init(&c);
+	SHA1_Update(&c, hdr, *hdrlen);
+	SHA1_Update(&c, buf, len);
+	SHA1_Final(sha1, &c);
+
+	return sha1_file_name(sha1);
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
 	unsigned char *compressed;
 	z_stream stream;
 	unsigned char sha1[20];
-	SHA_CTX c;
 	char *filename;
 	static char tmpfile[PATH_MAX];
 	unsigned char hdr[50];
 	int fd, hdrlen, ret;
 
-	/* Generate the header */
-	hdrlen = sprintf((char *)hdr, "%s %lu", type, len)+1;
-
-	/* Sha1.. */
-	SHA1_Init(&c);
-	SHA1_Update(&c, hdr, hdrlen);
-	SHA1_Update(&c, buf, len);
-	SHA1_Final(sha1, &c);
-
+	/* Normally if we have it in the pack then we do not bother writing
+	 * it out into .git/objects/??/?{38} file.
+	 */
+	filename = write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	if (returnsha1)
 		memcpy(returnsha1, sha1, 20);
-
-	filename = sha1_file_name(sha1);
+	if (has_sha1_file(sha1))
+		return 0;
 	fd = open(filename, O_RDONLY);
 	if (fd >= 0) {
 		/*
