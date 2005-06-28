@@ -63,7 +63,7 @@ Once you've gotten (and installed) cvsps, you may or may not want to get
 any more familiar with it, but make sure it is in your path. After that,
 the magic command line is
 
-	git cvsimport -d <cvsroot> <module> <destination>
+	git cvsimport -v -d <cvsroot> <module> <destination>
 
 which will do exactly what you'd think it does: it will create a git
 archive of the named CVS module. The new archive will be created in the
@@ -72,25 +72,29 @@ Default is the local directory.
 
 It can take some time to actually do the conversion for a large archive
 since it involves checking out from CVS every revision of every file,
-and the conversion script can be reasonably chatty, but on some not very
-scientific tests it averaged about twenty revisions per second, so a
-medium-sized project should not take more than a couple of minutes.  For
-larger projects or remote repositories, the process may take longer.
+and the conversion script is reasonably chatty unless you omit the '-v'
+option, but on some not very scientific tests it averaged about twenty
+revisions per second, so a medium-sized project should not take more
+than a couple of minutes.  For larger projects or remote repositories,
+the process may take longer.
 
-After the import is done, do this:
-
-	cp .git/refs/heads/<branch> .git/refs/heads/master
-	git-read-tree
-	git-checkout-cache -q -f -u -a
-
-The head branch is named "origin" by default; you can change that using
-the '-o' option to "git cvsimport".
+After the (initial) import is done, the CVS archive's current head
+revision will be checked out -- thus, you can start adding your own
+changes right away.
 
 The import is incremental, i.e. if you call it again next month it'll
-fetch any CVS updates that have been happening in the meantime. You can
-then merge those updates into your main branch:
+fetch any CVS updates that have been happening in the meantime. The
+cut-off is date-based, so don't change the branches that were imported
+from CVS.
+
+You can merge those updates (or, in fact, a different CVS branch) into
+your main branch:
 
 	cg-merge <branch>
+
+The HEAD revision from CVS is named "origin", not "HEAD", because git
+already uses "HEAD". (If you don't like 'origin', use cvsimport's
+'-o' option to change it.)
 
 
 Emulating CVS behaviour
