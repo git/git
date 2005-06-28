@@ -19,37 +19,47 @@ use Getopt::Std;
 use File::Path qw(mkpath);
 use File::Basename qw(basename dirname);
 use Time::Local;
-use POSIX qw(strftime);
+use IO::Socket;
+use IO::Pipe;
+use POSIX qw(strftime dup2);
 
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v);
+our($opt_h,$opt_o,$opt_v,$opt_d);
 
 sub usage() {
 	print STDERR <<END;
-Usage: ${\basename $0}  -- fetch/update GIT from CVS
-       [ -h (help) ]
-	   [ -v (verbose) ] [ -o name-of-HEAD ]
-       CVS_archive GIT_dest
+Usage: ${\basename $0}     # fetch/update GIT from CVS
+	   [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
+       CVS_module [ GIT_repository ]
 END
 	exit(1);
 }
 
-getopts("hqvo:") or usage();
+getopts("hqvo:d:") or usage();
 usage if $opt_h;
 
-@ARGV == 2 or usage();
-$opt_o ||= "origin";
+@ARGV == 1 or @ARGV == 2 or usage();
 
 my($cvs_tree, $git_tree) = @ARGV;
+
+if($opt_d) {
+	$ENV{"CVSROOT"} = $opt_d;
+} elsif($ENV{"CVSROOT"}) {
+	$opt_d = $ENV{"CVSROOT"};
+} else {
+	die "CVSROOT needs to be set";
+}
+$opt_o ||= "origin";
+$git_tree ||= ".";
 
 select(STDERR); $|=1; select(STDOUT);
 
 
 package CVSconn;
 # Basic CVS dialog.
-# We're only interested in downloading files.
+# We're only interested in connecting and downloading, so ...
 
 sub new {
 	my($what,$repo,$subdir) = @_;
@@ -75,7 +85,7 @@ sub conn {
 	if($repo =~ s/^:pserver:(?:(.*?)(?::(.*?))?@)?([^:\/]*)(?::(\d*))?//) {
 		my($user,$pass,$serv,$port) = ($1,$2,$3,$4);
 		$user="anonymous" unless defined $user;
-		my $rr2;
+		my $rr2 = "-";
 		unless($port) {
 			$rr2 = ":pserver:$user\@$serv:$repo";
 			$port=2401;
@@ -98,7 +108,6 @@ sub conn {
 		}
 		$pass="A" unless $pass;
 
-		use IO::Socket;
 		my $s = IO::Socket::INET->new(PeerHost => $serv, PeerPort => $port);
 		die "Socket to $serv: $!\n" unless defined $s;
 		$s->write("BEGIN AUTH REQUEST\n$repo\n$user\n$pass\nEND AUTH REQUEST\n")
@@ -114,7 +123,6 @@ sub conn {
 		$self->{'socketo'} = $s;
 		$self->{'socketi'} = $s;
 	} else { # local: Fork off our own cvs server.
-		use IO::Pipe;
 		my $pr = IO::Pipe->new();
 		my $pw = IO::Pipe->new();
 		my $pid = fork();
@@ -122,7 +130,6 @@ sub conn {
 		unless($pid) {
 			$pr->writer();
 			$pw->reader();
-			use POSIX qw(dup2);
 			dup2($pw->fileno(),0);
 			dup2($pr->fileno(),1);
 			$pr->close();
@@ -265,7 +272,7 @@ sub file {
 
 package main;
 
-my $cvs = CVSconn->new(dirname($cvs_tree), basename($cvs_tree));
+my $cvs = CVSconn->new($opt_d, $cvs_tree);
 
 
 sub pdate($) {
@@ -409,13 +416,18 @@ my $commit = sub {
 		print "Parent ID $parent\n" if $opt_v;
 	}
 
-	pipe(I,O)
-		or die "No pipe: $!\n";
-	$pid = open(C,"|-");
-	die "Cannot fork: $!" unless defined $pid;
+	my $pr = IO::Pipe->new();
+	my $pw = IO::Pipe->new();
+	$pid = fork();
+	die "Fork: $!\n" unless defined $pid;
 	unless($pid) {
-		close(I);
-		open(STDOUT,">&O");
+		$pr->writer();
+		$pw->reader();
+		dup2($pw->fileno(),0);
+		dup2($pr->fileno(),1);
+		$pr->close();
+		$pw->close();
+
 		my @par = ();
 		@par = ("-p",$parent) if $parent;
 		exec("env",
@@ -428,17 +440,21 @@ my $commit = sub {
 			"git-commit-tree", $tree,@par);
 		die "Cannot exec git-commit-tree: $!\n";
 	}
-	close(O);
-	print C $logmsg
+	$pw->writer();
+	$pr->reader();
+	print $pw $logmsg
 		or die "Error writing to git-commit-tree: $!\n";
-	close(C)
-		or die "Error running git-commit-tree: $?\n";
+	$pw->close();
+
 	print "Committed patch $patchset ($branch)\n" if $opt_v;
-	chomp(my $cid = <I>);
+	chomp(my $cid = <$pr>);
 	length($cid) == 40
 		or die "Cannot get commit id ($cid): $!\n";
 	print "Commit ID $cid\n" if $opt_v;
-	close(I);
+	$pr->close();
+
+	waitpid($pid,0);
+	die "Error running git-commit-tree: $?\n" if $?;
 
 	open(C,">$git_dir/refs/heads/$branch")
 		or die "Cannot open branch $branch for update: $!\n";
@@ -539,6 +555,7 @@ while(<CVS>) {
 				or die "Could not write branch $branch: $!";
 		}
 		if(($ancestor || $branch) ne $last_branch) {
+			print "Switching from $last_branch to $branch\n" if $opt_v;
 			system("git-read-tree -m -u $last_branch $branch");
 			die "read-tree $branch failed at $branch: $?\n" if $?;
 		}
@@ -550,11 +567,12 @@ while(<CVS>) {
 		$state = 9;
 	} elsif($state == 8) {
 		$logmsg .= "$_\n";
-	} elsif($state == 9 and /^\s+(\S+):(?:INITIAL|\d(?:\.\d+)+)->(\d(?:\.\d+)+)\s*$/) {
+	} elsif($state == 9 and /^\s+(\S+):(INITIAL|\d(?:\.\d+)+)->(\d(?:\.\d+)+)\s*$/) {
 #	VERSION:1.96->1.96.2.1
+		my $init = ($2 eq "INITIAL");
 		my $fn = $1;
-		my $data = $cvs->file($fn,$2);
-		print "Update $fn: ".length($data)." bytes.\n";
+		my $data = $cvs->file($fn,$3);
+		print "".($init ? "New" : "Update")." $fn: ".length($data)." bytes.\n";
 		mkpath(dirname($fn),$opt_v);
 		open(F,"> ./$fn")
 			or die "Cannot create '$fn': $!\n";
