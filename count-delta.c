@@ -11,16 +11,13 @@
 static unsigned long get_hdr_size(const unsigned char **datap)
 {
 	const unsigned char *data = *datap;
-	unsigned long size;
-	unsigned char cmd;
-	int i;
-	size = i = 0;
-	cmd = *data++;
-	while (cmd) {
-		if (cmd & 1)
-			size |= *data++ << i;
-		i += 8;
-		cmd >>= 1;
+	unsigned char cmd = *data++;
+	unsigned long size = cmd & ~0x80;
+	int i = 7;
+	while (cmd & 0x80) {
+		cmd = *data++;
+		size |= (cmd & ~0x80) << i;
+		i += 7;
 	}
 	*datap = data;
 	return size;
@@ -47,8 +44,8 @@ int count_delta(void *delta_buf, unsigned long delta_size,
 	unsigned char cmd;
 	unsigned long src_size, dst_size, out;
 
-	/* the smallest delta size possible is 6 bytes */
-	if (delta_size < 6)
+	/* the smallest delta size possible is 4 bytes */
+	if (delta_size < 4)
 		return -1;
 
 	data = delta_buf;

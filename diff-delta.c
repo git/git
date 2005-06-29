@@ -228,28 +228,22 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 	top = to_buf + to_size;
 
 	/* store reference buffer size */
-	orig = out + outpos++;
-	*orig = i = 0;
-	do {
-		if (from_size & 0xff) {
-			*orig |= (1 << i);
-			out[outpos++] = from_size;
-		}
-		i++;
-		from_size >>= 8;
-	} while (from_size);
+	out[outpos++] = from_size;
+	from_size >>= 7;
+	while (from_size) {
+		out[outpos - 1] |= 0x80;
+		out[outpos++] = from_size;
+		from_size >>= 7;
+	}
 
 	/* store target buffer size */
-	orig = out + outpos++;
-	*orig = i = 0;
-	do {
-		if (to_size & 0xff) {
-			*orig |= (1 << i);
-			out[outpos++] = to_size;
-		}
-		i++;
-		to_size >>= 8;
-	} while (to_size);
+	out[outpos++] = to_size;
+	to_size >>= 7;
+	while (to_size) {
+		out[outpos - 1] |= 0x80;
+		out[outpos++] = to_size;
+		to_size >>= 7;
+	}
 
 	inscnt = 0;
 	moff = 0;
