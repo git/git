@@ -155,7 +155,8 @@ static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
 	case OBJ_TAG:    type = "tag"; break;
 	default: die("bad type %d", kind);
 	}
-	write_object(buf, size, type);
+	if (!dry_run)
+		write_object(buf, size, type);
 	free(buf);
 	return 0;
 }
@@ -171,6 +172,10 @@ static int unpack_delta_entry(unsigned long delta_size)
 	use(20);
 
 	delta_data = get_data(delta_size);
+	if (dry_run) {
+		free(delta_data);
+		return 0;
+	}
 
 	if (!has_sha1_file(base_sha1)) {
 		add_delta_to_list(base_sha1, delta_data, delta_size);
