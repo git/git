@@ -543,6 +543,11 @@ test_output_expect_success 'simple merge order (r1l5)' 'git-rev-list --merge-ord
 = alt_root
 EOF
 
+test_output_expect_success "don't print things unreachable from one branch" "git-rev-list a3 ^b3 --merge-order" <<EOF
+a3
+a2
+a1
+EOF
 
 #
 #
