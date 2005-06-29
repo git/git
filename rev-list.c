@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "tag.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
@@ -103,7 +104,7 @@ static struct object_list **add_object(struct object *obj, struct object_list **
 {
 	struct object_list *entry = xmalloc(sizeof(*entry));
 	entry->item = obj;
-	entry->next = NULL;
+	entry->next = *p;
 	entry->name = name;
 	*p = entry;
 	return &entry->next;
@@ -143,15 +144,37 @@ static struct object_list **process_tree(struct tree *tree, struct object_list *
 	return p;
 }
 
+static struct object_list *pending_objects = NULL;
+
 static void show_commit_list(struct commit_list *list)
 {
-	struct object_list *objects = NULL, **p = &objects;
+	struct object_list *objects = NULL, **p = &objects, *pending;
 	while (list) {
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 
 		p = process_tree(commit->tree, p, "");
 		if (process_commit(commit) == STOP)
 			break;
+	}
+	for (pending = pending_objects; pending; pending = pending->next) {
+		struct object *obj = pending->item;
+		const char *name = pending->name;
+		if (obj->flags & (UNINTERESTING | SEEN))
+			continue;
+		if (obj->type == tag_type) {
+			obj->flags |= SEEN;
+			p = add_object(obj, p, name);
+			continue;
+		}
+		if (obj->type == tree_type) {
+			p = process_tree((struct tree *)obj, p, name);
+			continue;
+		}
+		if (obj->type == blob_type) {
+			p = process_blob((struct blob *)obj, p, name);
+			continue;
+		}
+		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
 	}
 	while (objects) {
 		printf("%s %s\n", sha1_to_hex(objects->item->sha1), objects->name);
@@ -291,7 +314,7 @@ struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
-	do {
+	while (list) {
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 		struct object *obj = &commit->object;
 
@@ -302,24 +325,82 @@ struct commit_list *limit_list(struct commit_list *list)
 			continue;
 		}
 		p = &commit_list_insert(commit, p)->next;
-	} while (list);
+	}
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
 }
 
+static void add_pending_object(struct object *obj, const char *name)
+{
+	add_object(obj, &pending_objects, name);
+}
+
 static struct commit *get_commit_reference(const char *name, unsigned int flags)
 {
 	unsigned char sha1[20];
-	struct commit *commit;
+	struct object *object;
 
 	if (get_sha1(name, sha1))
 		usage(rev_list_usage);
-	commit = lookup_commit_reference(sha1);
-	if (!commit || parse_commit(commit) < 0)
-		die("bad commit object %s", name);
-	commit->object.flags |= flags;
-	return commit;
+	object = parse_object(sha1);
+	if (!object)
+		die("bad object %s", name);
+
+	/*
+	 * Tag object? Look what it points to..
+	 */
+	if (object->type == tag_type) {
+		struct tag *tag = (struct tag *) object;
+		object->flags |= flags;
+		if (tag_objects && !(object->flags & UNINTERESTING))
+			add_pending_object(object, tag->tag);
+		object = tag->tagged;
+	}
+
+	/*
+	 * Commit object? Just return it, we'll do all the complex
+	 * reachability crud.
+	 */
+	if (object->type == commit_type) {
+		struct commit *commit = (struct commit *)object;
+		object->flags |= flags;
+		if (parse_commit(commit) < 0)
+			die("unable to parse commit %s", name);
+		return commit;
+	}
+
+	/*
+	 * Tree object? Either mark it uniniteresting, or add it
+	 * to the list of objects to look at later..
+	 */
+	if (object->type == tree_type) {
+		struct tree *tree = (struct tree *)object;
+		if (!tree_objects)
+			die("%s is a tree object, not a commit", name);
+		if (flags & UNINTERESTING) {
+			mark_tree_uninteresting(tree);
+			return NULL;
+		}
+		add_pending_object(object, "");
+		return NULL;
+	}
+
+	/*
+	 * Blob object? You know the drill by now..
+	 */
+	if (object->type == blob_type) {
+		struct blob *blob = (struct blob *)object;
+		if (!blob_objects)
+			die("%s is a blob object, not a commit", name);
+		if (flags & UNINTERESTING) {
+			mark_blob_uninteresting(blob);
+			return NULL;
+		}
+		add_pending_object(object, "");
+		return NULL;
+	}
+	die("%s is unknown object", name);
 }
 
 int main(int argc, char **argv)
@@ -391,9 +472,6 @@ int main(int argc, char **argv)
 			continue;
 		commit_list_insert(commit, &list);
 	}
-
-	if (!list)
-		usage(rev_list_usage);
 
 	if (!merge_order) {		
 	        if (limited)
