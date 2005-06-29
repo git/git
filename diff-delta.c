@@ -306,12 +306,13 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 			*orig = i;
 		}
 
-		/* next time around the largest possible output is 1 + 4 + 3 */
 		if (max_size && outpos > max_size) {
 			free(out);
 			delta_cleanup(&bdf);
 			return NULL;
 		}
+
+		/* next time around the largest possible output is 1 + 4 + 3 */
 		if (outpos > outsize - 8) {
 			void *tmp = out;
 			outsize = outsize * 3 / 2;

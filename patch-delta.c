@@ -20,36 +20,20 @@ void *patch_delta(void *src_buf, unsigned long src_size,
 	const unsigned char *data, *top;
 	unsigned char *dst_buf, *out, cmd;
 	unsigned long size;
-	int i;
 
-	/* the smallest delta size possible is 4 bytes */
-	if (delta_size < 4)
+	if (delta_size < DELTA_SIZE_MIN)
 		return NULL;
 
 	data = delta_buf;
 	top = delta_buf + delta_size;
 
 	/* make sure the orig file size matches what we expect */
-	cmd = *data++;
-	size = cmd & ~0x80;
-	i = 7;
-	while (cmd & 0x80) {
-		cmd = *data++;
-		size |= (cmd & ~0x80) << i;
-		i += 7;
-	}
+	size = get_delta_hdr_size(&data);
 	if (size != src_size)
 		return NULL;
 
 	/* now the result size */
-	cmd = *data++;
-	size = cmd & ~0x80;
-	i = 7;
-	while (cmd & 0x80) {
-		cmd = *data++;
-		size |= (cmd & ~0x80) << i;
-		i += 7;
-	}
+	size = get_delta_hdr_size(&data);
 	dst_buf = malloc(size);
 	if (!dst_buf)
 		return NULL;

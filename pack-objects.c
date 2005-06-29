@@ -34,7 +34,7 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
 	if (!otherbuf)
 		die("unable to read %s", sha1_to_hex(entry->delta->sha1));
         delta_buf = diff_delta(otherbuf, othersize,
-			       buf, size, &delta_size, ~0UL);
+			       buf, size, &delta_size, 0);
         if (!delta_buf || delta_size != entry->delta_size)
         	die("delta size changed");
         free(buf);
