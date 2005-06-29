@@ -47,7 +47,7 @@ LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o \
 	 epoch.o refs.o csum-file.o
 LIB_FILE=libgit.a
-LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h
+LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h pack.h
 
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o

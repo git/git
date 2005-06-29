@@ -659,6 +659,7 @@ static int packed_delta_info(unsigned char *base_sha1,
 static unsigned long unpack_object_header(struct packed_git *p, unsigned long offset,
 	enum object_type *type, unsigned long *sizep)
 {
+	unsigned shift;
 	unsigned char *pack, c;
 	unsigned long size;
 
@@ -670,12 +671,14 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	offset++;
 	*type = (c >> 4) & 7;
 	size = c & 15;
+	shift = 4;
 	while (c & 0x80) {
 		if (offset >= p->pack_size)
 			die("object offset outside of pack file");
 		c = *pack++;
 		offset++;
-		size = (size << 7) | (c & 0x7f);
+		size += (c & 0x7f) << shift;
+		shift += 7;
 	}
 	*sizep = size;
 	return offset;

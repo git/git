@@ -183,6 +183,7 @@ static int unpack_delta_entry(unsigned long delta_size)
 
 static void unpack_one(void)
 {
+	unsigned shift;
 	unsigned char *pack, c;
 	unsigned long size;
 	enum object_type type;
@@ -192,11 +193,13 @@ static void unpack_one(void)
 	use(1);
 	type = (c >> 4) & 7;
 	size = (c & 15);
+	shift = 4;
 	while (c & 0x80) {
 		pack = fill(1);
 		c = *pack++;
 		use(1);
-		size = (size << 7) + (c & 0x7f);
+		size += (c & 0x7f) << shift;
+		shift += 7;
 	}
 	switch (type) {
 	case OBJ_COMMIT:
@@ -227,7 +230,7 @@ static void unpack_all(void)
 
 	if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
 		die("bad pack file");
-	if (version != 1)
+	if (version != PACK_VERSION)
 		die("unable to handle pack file version %d", version);
 	fprintf(stderr, "Unpacking %d objects\n", nr_objects);
 

@@ -51,32 +51,19 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
  */
 static int encode_header(enum object_type type, unsigned long size, unsigned char *hdr)
 {
-	int n = 1, i;
+	int n = 1;
 	unsigned char c;
 
 	if (type < OBJ_COMMIT || type > OBJ_DELTA)
 		die("bad type %d", type);
 
-	/*
-	 * Shift the size up by 7 bits at a time,
-	 * until you get bits in the "high four".
-	 * That will be our beginning. We'll have
-	 * four size bits in 28..31, then groups
-	 * of seven in 21..27, 14..20, 7..13 and
-	 * finally 0..6.
-	 */
-	if (size) {
-		n = 5;
-		while (!(size & 0xfe000000)) {
-			size <<= 7;
-			n--;
-		}
-	}
-	c = (type << 4) | (size >> 28);
-	for (i = 1; i < n; i++) {
+	c = (type << 4) | (size & 15);
+	size >>= 4;
+	while (size) {
 		*hdr++ = c | 0x80;
-		c = (size >> 21) & 0x7f;
-		size <<= 7;
+		c = size & 0x7f;
+		size >>= 7;
+		n++;
 	}
 	*hdr = c;
 	return n;
@@ -148,7 +135,7 @@ static void write_pack_file(void)
 	else
 		f = sha1create("%s.%s", base_name, "pack");
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(1);
+	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_objects);
 	sha1write(f, &hdr, sizeof(hdr));
 	offset = sizeof(hdr);
