@@ -19,6 +19,7 @@ static const char rev_list_usage[] =
 		      "  --merge-order [ --show-breaks ]";
 
 static int bisect_list = 0;
+static int tag_objects = 0;
 static int tree_objects = 0;
 static int blob_objects = 0;
 static int verbose_header = 0;
@@ -307,6 +308,20 @@ struct commit_list *limit_list(struct commit_list *list)
 	return newlist;
 }
 
+static struct commit *get_commit_reference(const char *name, unsigned int flags)
+{
+	unsigned char sha1[20];
+	struct commit *commit;
+
+	if (get_sha1(name, sha1))
+		usage(rev_list_usage);
+	commit = lookup_commit_reference(sha1);
+	if (!commit || parse_commit(commit) < 0)
+		die("bad commit object %s", name);
+	commit->object.flags |= flags;
+	return commit;
+}
+
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;
@@ -315,7 +330,6 @@ int main(int argc, char **argv)
 	for (i = 1 ; i < argc; i++) {
 		int flags;
 		char *arg = argv[i];
-		unsigned char sha1[20];
 		struct commit *commit;
 
 		if (!strncmp(arg, "--max-count=", 12)) {
@@ -350,6 +364,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "--objects")) {
+			tag_objects = 1;
 			tree_objects = 1;
 			blob_objects = 1;
 			continue;
@@ -369,12 +384,11 @@ int main(int argc, char **argv)
 			arg++;
 			limited = 1;
 		}
-		if (get_sha1(arg, sha1) || (show_breaks && !merge_order))
+		if (show_breaks && !merge_order)
 			usage(rev_list_usage);
-		commit = lookup_commit_reference(sha1);
-		if (!commit || parse_commit(commit) < 0)
-			die("bad commit object %s", arg);
-		commit->object.flags |= flags;
+		commit = get_commit_reference(arg, flags);
+		if (!commit)
+			continue;
 		commit_list_insert(commit, &list);
 	}
 
