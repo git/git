@@ -118,6 +118,23 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 	return hdrlen + datalen;
 }
 
+static unsigned long write_one(struct sha1file *f,
+			       struct object_entry *e,
+			       unsigned long offset)
+{
+	if (e->offset)
+		/* offset starts from header size and cannot be zero
+		 * if it is written already.
+		 */
+		return offset;
+	e->offset = offset;
+	offset += write_object(f, e);
+	/* if we are delitified, write out its base object. */
+	if (e->delta)
+		offset = write_one(f, e->delta, offset);
+	return offset;
+}
+
 static void write_pack_file(void)
 {
 	int i;
@@ -135,11 +152,9 @@ static void write_pack_file(void)
 	hdr.hdr_entries = htonl(nr_objects);
 	sha1write(f, &hdr, sizeof(hdr));
 	offset = sizeof(hdr);
-	for (i = 0; i < nr_objects; i++) {
-		struct object_entry *entry = objects + i;
-		entry->offset = offset;
-		offset += write_object(f, entry);
-	}
+	for (i = 0; i < nr_objects; i++)
+		offset = write_one(f, objects + i, offset);
+
 	sha1close(f, pack_file_sha1, 1);
 	mb = offset >> 20;
 	offset &= 0xfffff;
