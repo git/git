@@ -4,278 +4,213 @@
 #include "pack.h"
 
 static int dry_run;
-static int nr_entries;
-static const char *base_name;
-static const char unpack_usage[] = "git-unpack-objects basename";
+static const char unpack_usage[] = "git-unpack-objects < pack-file";
 
-struct pack_entry {
-	unsigned int offset; /* network byte order */
-	unsigned char sha1[20];
+/* We always read in 4kB chunks. */
+static unsigned char buffer[4096];
+static unsigned long offset, len, eof;
+static SHA_CTX ctx;
+
+/*
+ * Make sure at least "min" bytes are available in the buffer, and
+ * return the pointer to the buffer.
+ */
+static void * fill(int min)
+{
+	if (min <= len)
+		return buffer + offset;
+	if (eof)
+		die("unable to fill input");
+	if (min > sizeof(buffer))
+		die("cannot fill %d bytes", min);
+	if (offset) {
+		SHA1_Update(&ctx, buffer, offset);
+		memcpy(buffer, buffer + offset, len);
+		offset = 0;
+	}
+	do {
+		int ret = read(0, buffer + len, sizeof(buffer) - len);
+		if (ret <= 0) {
+			if (!ret)
+				die("early EOF");
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+			die("read error on input: %s", strerror(errno));
+		}
+		len += ret;
+	} while (len < min);
+	return buffer;
+}
+
+static void use(int bytes)
+{
+	if (bytes > len)
+		die("used more bytes than were available");
+	len -= bytes;
+	offset += bytes;
+}
+
+static void *get_data(unsigned long size)
+{
+	z_stream stream;
+	void *buf = xmalloc(size);
+
+	if (!size)
+		return buf;
+	memset(&stream, 0, sizeof(stream));
+
+	stream.next_out = buf;
+	stream.avail_out = size;
+	stream.next_in = fill(1);
+	stream.avail_in = len;
+	inflateInit(&stream);
+
+	for (;;) {
+		int ret = inflate(&stream, 0);
+		use(len - stream.avail_in);
+		if (stream.total_out == size && ret == Z_STREAM_END)
+			break;
+		if (ret != Z_OK)
+			die("inflate returned %d\n", ret);
+		stream.next_in = fill(1);
+		stream.avail_in = len;
+	}
+	return buf;
+}
+
+struct delta_info {
+	unsigned char base_sha1[20];
+	unsigned long size;
+	void *delta;
+	struct delta_info *next;
 };
 
-static void *pack_base;
-static unsigned long pack_size;
-static void *index_base;
-static unsigned long index_size;
+static struct delta_info *delta_list;
 
-static struct pack_entry **pack_list;
-
-static void *map_file(const char *suffix, unsigned long *sizep)
+static void add_delta_to_list(unsigned char *base_sha1, void *delta, unsigned long size)
 {
-	static char pathname[PATH_MAX];
-	unsigned long len;
-	int fd;
-	struct stat st;
-	void *map;
+	struct delta_info *info = xmalloc(sizeof(*info));
 
-	len = snprintf(pathname, PATH_MAX, "%s.%s", base_name, suffix);
-	if (len >= PATH_MAX)
-		die("bad pack base-name");
-	fd = open(pathname, O_RDONLY);
-	if (fd < 0 || fstat(fd, &st))
-		die("unable to open '%s'", pathname);
-	len = st.st_size;
-	if (!len)
-		die("bad pack file '%s'", pathname);
-	map = mmap(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (-1 == (int)(long)map)
-		die("unable to mmap '%s'", pathname);
-	close(fd);
-	*sizep = len;
-	return map;
+	memcpy(info->base_sha1, base_sha1, 20);
+	info->size = size;
+	info->delta = delta;
+	info->next = delta_list;
+	delta_list = info;
 }
 
-static int sort_by_offset(const void *_a, const void *_b)
+static void added_object(unsigned char *sha1, char *type, void *data, unsigned long size);
+
+static int resolve_delta(char *type,
+	void *base, unsigned long base_size, 
+	void *delta, unsigned long delta_size)
 {
-	struct pack_entry *a = *(struct pack_entry **)_a;
-	struct pack_entry *b = *(struct pack_entry **)_b;
-	unsigned int o1, o2;
+	void *result;
+	unsigned long result_size;
+	unsigned char sha1[20];
 
-	o1 = ntohl(a->offset);
-	o2 = ntohl(b->offset);
-	return o1 < o2 ? -1 : 1;
-}
+	result = patch_delta(base, base_size,
+			     delta, delta_size,
+			     &result_size);
+	if (!result)
+		die("failed to apply delta");
+	free(delta);
 
-static int check_index(void)
-{
-	unsigned int *array = index_base;
-	unsigned int nr;
-	int i;
-
-	if (index_size < 4*256 + 20)
-		return error("index file too small");
-	nr = 0;
-	for (i = 0; i < 256; i++) {
-		unsigned int n = ntohl(array[i]);
-		if (n < nr)
-			return error("non-monotonic index");
-		nr = n;
-	}
-	/*
-	 * Total size:
-	 *  - 256 index entries 4 bytes each
-	 *  - 24-byte entries * nr (20-byte sha1 + 4-byte offset)
-	 *  - 20-byte SHA1 of the packfile
-	 *  - 20-byte SHA1 file checksum
-	 */
-	if (index_size != 4*256 + nr * 24 + 20 + 20)
-		return error("wrong index file size");
-
-	nr_entries = nr;
-	pack_list = xmalloc(nr * sizeof(struct pack_entry *));
-	for (i = 0; i < nr; i++)
-		pack_list[i] = index_base + 4*256 + i*24;
-
-	qsort(pack_list, nr, sizeof(*pack_list), sort_by_offset);
-
-	printf("%d entries\n", nr);
+	if (write_sha1_file(result, result_size, type, sha1) < 0)
+		die("failed to write object");
+	added_object(sha1, type, result, result_size);
+	free(result);
 	return 0;
 }
 
-static int unpack_non_delta_entry(struct pack_entry *entry,
-				  enum object_type kind,
-				  unsigned char *data,
-				  unsigned long size,
-				  unsigned long left)
+static void added_object(unsigned char *sha1, char *type, void *data, unsigned long size)
 {
-	int st;
-	z_stream stream;
-	char *buffer;
+	struct delta_info **p = &delta_list;
+	struct delta_info *info;
+
+	while ((info = *p) != NULL) {
+		if (!memcmp(info->base_sha1, sha1, 20)) {
+			*p = info->next;
+			p = &delta_list;
+			resolve_delta(type, data, size, info->delta, info->size);
+			free(info);
+			continue;
+		}
+		p = &info->next;
+	}
+}
+
+static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
+{
+	void *buf = get_data(size);
 	unsigned char sha1[20];
 	char *type;
 
-	printf("%s %c %lu\n", sha1_to_hex(entry->sha1), ".CTBGD"[kind], size);
-	if (dry_run)
-		return 0;
-
-	buffer = xmalloc(size + 1);
-	buffer[size] = 0;
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = left;
-	stream.next_out = buffer;
-	stream.avail_out = size;
-
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != size)
-		goto err_finish;
 	switch (kind) {
 	case OBJ_COMMIT: type = "commit"; break;
 	case OBJ_TREE:   type = "tree"; break;
 	case OBJ_BLOB:   type = "blob"; break;
 	case OBJ_TAG:    type = "tag"; break;
-	default: goto err_finish;
+	default: die("bad type %d", kind);
 	}
-	if (write_sha1_file(buffer, size, type, sha1) < 0)
-		die("failed to write %s (%s)",
-		    sha1_to_hex(entry->sha1), type);
-	printf("%s %s\n", sha1_to_hex(sha1), type);
-	if (memcmp(sha1, entry->sha1, 20))
-		die("resulting %s have wrong SHA1", type);
-
- finish:
-	st = 0;
-	free(buffer);
-	return st;
- err_finish:
-	st = -1;
-	goto finish;
-}
-
-static int find_pack_entry(unsigned char *sha1, struct pack_entry **ent)
-{
-	int *level1_ofs = index_base;
-	int hi = ntohl(level1_ofs[*sha1]);
-	int lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
-	void *index = index_base + 4*256;
-
-	do {
-		int mi = (lo + hi) / 2;
-		int cmp = memcmp(index + 24 * mi + 4, sha1, 20);
-		if (!cmp) {
-			*ent = index + 24 * mi;
-			return 1;
-		}
-		if (cmp > 0)
-			hi = mi;
-		else
-			lo = mi+1;
-	} while (lo < hi);
+	if (write_sha1_file(buf, size, type, sha1) < 0)
+		die("failed to write object");
+	added_object(sha1, type, buf, size);
+	free(buf);
 	return 0;
 }
 
-/* forward declaration for a mutually recursive function */
-static void unpack_entry(struct pack_entry *);
-
-static int unpack_delta_entry(struct pack_entry *entry,
-			      unsigned char *base_sha1,
-			      unsigned long delta_size,
-			      unsigned long left)
+static int unpack_delta_entry(unsigned long delta_size)
 {
-	void *data, *delta_data, *result, *base;
-	unsigned long data_size, result_size, base_size;
-	z_stream stream;
-	int st;
+	void *delta_data, *base;
+	unsigned long base_size;
 	char type[20];
-	unsigned char sha1[20];
+	unsigned char base_sha1[20];
 
-	if (left < 20)
-		die("truncated pack file");
-	data = base_sha1 + 20;
-	data_size = left - 20;
-	printf("%s D %lu", sha1_to_hex(entry->sha1), delta_size);
-	printf(" %s\n", sha1_to_hex(base_sha1));
+	memcpy(base_sha1, fill(20), 20);
+	use(20);
 
-	if (dry_run)
-		return 0;
+	delta_data = get_data(delta_size);
 
-	/* pack+5 is the base sha1, unless we have it, we need to
-	 * unpack it first.
-	 */
 	if (!has_sha1_file(base_sha1)) {
-		struct pack_entry *base;
-		if (!find_pack_entry(base_sha1, &base))
-			die("cannot find delta-pack base object");
-		unpack_entry(base);
+		add_delta_to_list(base_sha1, delta_data, delta_size);
+		return 0;
 	}
-	delta_data = xmalloc(delta_size);
-
-	memset(&stream, 0, sizeof(stream));
-
-	stream.next_in = data;
-	stream.avail_in = data_size;
-	stream.next_out = delta_data;
-	stream.avail_out = delta_size;
-
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
-		die("delta data unpack failed");
-
 	base = read_sha1_file(base_sha1, type, &base_size);
 	if (!base)
 		die("failed to read delta-pack base object %s", sha1_to_hex(base_sha1));
-	result = patch_delta(base, base_size,
-			     delta_data, delta_size,
-			     &result_size);
-	if (!result)
-		die("failed to apply delta");
-	free(delta_data);
-
-	if (write_sha1_file(result, result_size, type, sha1) < 0)
-		die("failed to write %s (%s)",
-		    sha1_to_hex(entry->sha1), type);
-	free(result);
-	printf("%s %s\n", sha1_to_hex(sha1), type);
-	if (memcmp(sha1, entry->sha1, 20))
-		die("resulting %s have wrong SHA1", type);
-	return 0;
+	return resolve_delta(type, base, base_size, delta_data, delta_size);
 }
 
-static void unpack_entry(struct pack_entry *entry)
+static void unpack_one(void)
 {
-	unsigned long offset, size, left;
 	unsigned char *pack, c;
-	int type;
+	unsigned long size;
+	enum object_type type;
 
-	/* Have we done this one already due to deltas based on it? */
-	if (lookup_object(entry->sha1))
-		return;
-
-	offset = ntohl(entry->offset);
-	if (offset >= pack_size)
-		goto bad;
-
-	pack = pack_base + offset;
-	c = *pack++;
-	offset++;
+	pack = fill(1);
+	c = *pack;
+	use(1);
 	type = (c >> 4) & 7;
 	size = (c & 15);
 	while (c & 0x80) {
-		if (offset >= pack_size)
-			goto bad;
-		offset++;
+		pack = fill(1);
 		c = *pack++;
+		use(1);
 		size = (size << 7) + (c & 0x7f);
-		
 	}
-	left = pack_size - offset;
 	switch (type) {
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		unpack_non_delta_entry(entry, type, pack, size, left);
+		unpack_non_delta_entry(type, size);
 		return;
 	case OBJ_DELTA:
-		unpack_delta_entry(entry, pack, size, left);
+		unpack_delta_entry(size);
 		return;
+	default:
+		die("bad object type %d", type);
 	}
-bad:
-	die("corrupted pack file");
 }
 
 /*
@@ -285,17 +220,28 @@ bad:
  */
 static void unpack_all(void)
 {
-	int i = nr_entries;
+	int i;
+	struct pack_header *hdr = fill(sizeof(struct pack_header));
+	unsigned version = ntohl(hdr->hdr_version);
+	unsigned nr_objects = ntohl(hdr->hdr_entries);
 
-	while (--i >= 0) {
-		struct pack_entry *entry = pack_list[i];
-		unpack_entry(entry);
-	}
+	if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
+		die("bad pack file");
+	if (version != 1)
+		die("unable to handle pack file version %d", version);
+	fprintf(stderr, "Unpacking %d objects\n", nr_objects);
+
+	use(sizeof(struct pack_header));
+	for (i = 0; i < nr_objects; i++)
+		unpack_one();
+	if (delta_list)
+		die("unresolved deltas left after unpacking");
 }
 
 int main(int argc, char **argv)
 {
 	int i;
+	unsigned char sha1[20];
 
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
@@ -307,16 +253,32 @@ int main(int argc, char **argv)
 			}
 			usage(unpack_usage);
 		}
-		if (base_name)
-			usage(unpack_usage);
-		base_name = arg;
-	}
-	if (!base_name)
+
+		/* We don't take any non-flag arguments now.. Maybe some day */
 		usage(unpack_usage);
-	index_base = map_file("idx", &index_size);
-	pack_base = map_file("pack", &pack_size);
-	if (check_index() < 0)
-		die("bad index file");
+	}
+	SHA1_Init(&ctx);
 	unpack_all();
+	SHA1_Update(&ctx, buffer, offset);
+	SHA1_Final(sha1, &ctx);
+	if (memcmp(fill(20), sha1, 20))
+		die("final sha1 did not match");
+	use(20);
+
+	/* Write the last part of the buffer to stdout */
+	while (len) {
+		int ret = write(1, buffer + offset, len);
+		if (!ret)
+			break;
+		if (ret < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+			break;
+		}
+		len -= ret;
+		offset += ret;
+	}
+
+	/* All done */
 	return 0;
 }
