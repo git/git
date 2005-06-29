@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	if (argv[1][1] == 'd')
 		out_buf = diff_delta(from_buf, from_size,
 				     data_buf, data_size,
-				     &out_size, ~0UL);
+				     &out_size, 0);
 	else
 		out_buf = patch_delta(from_buf, from_size,
 				      data_buf, data_size,

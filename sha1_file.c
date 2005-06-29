@@ -598,9 +598,9 @@ static int packed_delta_info(unsigned char *base_sha1,
 			     char *type,
 			     unsigned long *sizep)
 {
-	unsigned char *data;
+	const unsigned char *data;
 	unsigned char delta_head[64];
-	unsigned long data_size, result_size, base_size, verify_base_size;
+	unsigned long result_size, base_size, verify_base_size;
 	z_stream stream;
 	int st;
 
@@ -609,13 +609,10 @@ static int packed_delta_info(unsigned char *base_sha1,
 	if (sha1_object_info(base_sha1, type, &base_size))
 		die("cannot get info for delta-pack base");
 
-	data = base_sha1 + 20;
-	data_size = left - 20;
-
 	memset(&stream, 0, sizeof(stream));
 
-	stream.next_in = data;
-	stream.avail_in = data_size;
+	data = stream.next_in = base_sha1 + 20;
+	stream.avail_in = left - 20;
 	stream.next_out = delta_head;
 	stream.avail_out = sizeof(delta_head);
 
