@@ -592,6 +592,22 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+static unsigned long parse_delta_size(unsigned char **p)
+{
+	unsigned char c;
+	unsigned long size = 0;
+	unsigned shift = 0;
+	unsigned char *data = *p;
+
+	do {
+		c = *data++;
+		size += (c & 0x7f) << shift;
+		shift += 7;
+	} while (c & 0x80);
+	*p = data;
+	return size;
+}
+
 static int packed_delta_info(unsigned char *base_sha1,
 			     unsigned long delta_size,
 			     unsigned long left,
@@ -600,8 +616,6 @@ static int packed_delta_info(unsigned char *base_sha1,
 {
 	unsigned char *data;
 	unsigned char delta_head[64];
-	int i;
-	unsigned char cmd;
 	unsigned long data_size, result_size, base_size, verify_base_size;
 	z_stream stream;
 	int st;
@@ -631,24 +645,8 @@ static int packed_delta_info(unsigned char *base_sha1,
 	 * the result size.  Verify the base size while we are at it.
 	 */
 	data = delta_head;
-	verify_base_size = i = 0;
-	cmd = *data++;
-	while (cmd) {
-		if (cmd & 1)
-			verify_base_size |= *data++ << i;
-		i += 8;
-		cmd >>= 1;
-	}
-
-	/* Read the result size */
-	result_size = i = 0;
-	cmd = *data++;
-	while (cmd) {
-		if (cmd & 1)
-			result_size |= *data++ << i;
-		i += 8;
-		cmd >>= 1;
-	}
+	verify_base_size = parse_delta_size(&data);
+	result_size = parse_delta_size(&data);
 	if (verify_base_size != base_size)
 		die("delta base size mismatch");
 
