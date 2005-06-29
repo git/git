@@ -27,4 +27,6 @@ struct pack_header {
 	unsigned int hdr_entries;
 };
 
+extern int verify_pack(struct packed_git *);
+
 #endif

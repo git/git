@@ -246,9 +246,13 @@ extern struct packed_git {
 	unsigned int *index_base;
 	void *pack_base;
 	unsigned int pack_last_used;
+	unsigned int pack_use_cnt;
 	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
 } *packed_git;
 extern void prepare_packed_git(void);
+extern int use_packed_git(struct packed_git *);
+extern void unuse_packed_git(struct packed_git *);
+extern struct packed_git *add_packed_git(char *, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 

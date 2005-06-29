@@ -125,4 +125,42 @@ test_expect_success \
     } >current &&
     diff expect current'
 
+unset GIT_OBJECT_DIRECTORY
+
+test_expect_success \
+    'verify pack' \
+    'git-verify-pack test-1.idx test-2.idx'
+
+test_expect_success \
+    'corrupt a pack and see if verify catches' \
+    'cp test-1.idx test-3.idx &&
+     cp test-2.pack test-3.pack &&
+     if git-verify-pack test-3.idx
+     then false
+     else :;
+     fi &&
+
+     cp test-1.pack test-3.pack &&
+     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
+     if git-verify-pack test-3.idx
+     then false
+     else :;
+     fi &&
+
+     cp test-1.pack test-3.pack &&
+     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
+     if git-verify-pack test-3.idx
+     then false
+     else :;
+     fi &&
+
+     cp test-1.pack test-3.pack &&
+     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
+     if git-verify-pack test-3.idx
+     then false
+     else :;
+     fi &&
+
+     :'
+
 test_done

@@ -110,6 +110,9 @@ link:git-tar-tree.html[git-tar-tree]::
 link:git-unpack-file.html[git-unpack-file]::
 	Creates a temporary file with a blob's contents
 
+link:git-verify-pack.html[git-verify-pack]::
+	Validates packed GIT archive files
+
 The interrogate commands may create files - and you can force them to
 touch the working file set - but in general they don't
 

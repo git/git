@@ -6,6 +6,7 @@
 #include "tree.h"
 #include "blob.h"
 #include "tag.h"
+#include "pack.h"
 
 #define REACHABLE 0x0001
 
@@ -437,6 +438,10 @@ int main(int argc, char **argv)
 			alt_odb[j].name[-1] = '/';
 		}
 		prepare_packed_git();
+		for (p = packed_git; p; p = p->next)
+			/* verify gives error messages itself */
+			verify_pack(p); 
+
 		for (p = packed_git; p; p = p->next) {
 			int num = num_packed_objects(p);
 			for (i = 0; i < num; i++) {

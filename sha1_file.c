@@ -302,7 +302,7 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	index = idx_map;
 
 	/* check index map */
-	if (idx_size < 4*256 + 20)
+	if (idx_size < 4*256 + 20 + 20)
 		return error("index file too small");
 	nr = 0;
 	for (i = 0; i < 256; i++) {
@@ -327,12 +327,29 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	return 0;
 }
 
-static void unuse_one_packed_git(void)
+static int unuse_one_packed_git(void)
 {
-	/* NOTYET */
+	struct packed_git *p, *lru = NULL;
+
+	for (p = packed_git; p; p = p->next) {
+		if (p->pack_use_cnt || !p->pack_base)
+			continue;
+		if (!lru || p->pack_last_used < lru->pack_last_used)
+			lru = p;
+	}
+	if (!lru)
+		return 0;
+	munmap(lru->pack_base, lru->pack_size);
+	lru->pack_base = NULL;
+	return 1;
 }
 
-static int use_packed_git(struct packed_git *p)
+void unuse_packed_git(struct packed_git *p)
+{
+	p->pack_use_cnt--;
+}
+
+int use_packed_git(struct packed_git *p)
 {
 	if (!p->pack_base) {
 		int fd;
@@ -340,28 +357,36 @@ static int use_packed_git(struct packed_git *p)
 		void *map;
 
 		pack_mapped += p->pack_size;
-		while (PACK_MAX_SZ < pack_mapped)
-			unuse_one_packed_git();
+		while (PACK_MAX_SZ < pack_mapped && unuse_one_packed_git())
+			; /* nothing */
 		fd = open(p->pack_name, O_RDONLY);
 		if (fd < 0)
-			return -1;
+			die("packfile %s cannot be opened", p->pack_name);
 		if (fstat(fd, &st)) {
 			close(fd);
-			return -1;
+			die("packfile %s cannot be opened", p->pack_name);
 		}
 		if (st.st_size != p->pack_size)
-			return -1;
+			die("packfile %s size mismatch.", p->pack_name);
 		map = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
 		if (map == MAP_FAILED)
-			return -1;
+			die("packfile %s cannot be mapped.", p->pack_name);
 		p->pack_base = map;
+
+		/* Check if the pack file matches with the index file.
+		 * this is cheap.
+		 */
+		if (memcmp((char*)(p->index_base) + p->index_size - 40,
+			   p->pack_base + p->pack_size - 20, 20))
+			die("packfile %s does not match index.", p->pack_name);
 	}
 	p->pack_last_used = pack_used_ctr++;
+	p->pack_use_cnt++;
 	return 0;
 }
 
-static struct packed_git *add_packed_git(char *path, int path_len)
+struct packed_git *add_packed_git(char *path, int path_len)
 {
 	struct stat st;
 	struct packed_git *p;
@@ -388,6 +413,7 @@ static struct packed_git *add_packed_git(char *path, int path_len)
 	p->next = NULL;
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
+	p->pack_use_cnt = 0;
 	return p;
 }
 
@@ -671,6 +697,7 @@ static int packed_object_info(struct pack_entry *entry,
 	unsigned long offset, size, left;
 	unsigned char *pack;
 	enum object_type kind;
+	int retval;
 
 	if (use_packed_git(p))
 		die("cannot map packed file");
@@ -681,8 +708,9 @@ static int packed_object_info(struct pack_entry *entry,
 
 	switch (kind) {
 	case OBJ_DELTA:
-		return packed_delta_info(pack, size, left, type, sizep);
-		break;
+		retval = packed_delta_info(pack, size, left, type, sizep);
+		unuse_packed_git(p);
+		return retval;
 	case OBJ_COMMIT:
 		strcpy(type, "commit");
 		break;
@@ -699,6 +727,7 @@ static int packed_object_info(struct pack_entry *entry,
 		die("corrupted pack file");
 	}
 	*sizep = size;
+	unuse_packed_git(p);
 	return 0;
 }
 
@@ -785,6 +814,7 @@ static void *unpack_entry(struct pack_entry *entry,
 	unsigned long offset, size, left;
 	unsigned char *pack;
 	enum object_type kind;
+	void *retval;
 
 	if (use_packed_git(p))
 		die("cannot map packed file");
@@ -794,7 +824,9 @@ static void *unpack_entry(struct pack_entry *entry,
 	left = p->pack_size - offset;
 	switch (kind) {
 	case OBJ_DELTA:
-		return unpack_delta_entry(pack, size, left, type, sizep);
+		retval = unpack_delta_entry(pack, size, left, type, sizep);
+		unuse_packed_git(p);
+		return retval;
 	case OBJ_COMMIT:
 		strcpy(type, "commit");
 		break;
@@ -811,12 +843,14 @@ static void *unpack_entry(struct pack_entry *entry,
 		die("corrupted pack file");
 	}
 	*sizep = size;
-	return unpack_non_delta_entry(pack, size, left);
+	retval = unpack_non_delta_entry(pack, size, left);
+	unuse_packed_git(p);
+	return retval;
 }
 
 int num_packed_objects(const struct packed_git *p)
 {
-	/* See check_packed_git_idx and pack-objects.c */
+	/* See check_packed_git_idx() */
 	return (p->index_size - 20 - 20 - 4*256) / 24;
 }
 

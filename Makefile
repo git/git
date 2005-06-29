@@ -36,7 +36,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
 	git-get-tar-commit-id git-apply git-stripspace \
 	git-cvs2git git-diff-stages git-rev-parse git-patch-id \
-	git-pack-objects git-unpack-objects
+	git-pack-objects git-unpack-objects git-verify-pack
 
 all: $(PROG)
 
@@ -45,7 +45,7 @@ install: $(PROG) $(SCRIPTS)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o \
-	 epoch.o refs.o csum-file.o
+	 epoch.o refs.o csum-file.o verify_pack.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h pack.h
 
@@ -124,6 +124,7 @@ git-rev-parse: rev-parse.c
 git-patch-id: patch-id.c
 git-pack-objects: pack-objects.c
 git-unpack-objects: unpack-objects.c
+git-verify-pack: verify-pack.c
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += -lssl
