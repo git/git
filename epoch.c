@@ -586,10 +586,7 @@ int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter)
 		struct commit *next = list->item;
 
 		if (!(next->object.flags & UNINTERESTING)) {
-			if (next->object.flags & DUPCHECK) {
-				fprintf(stderr, "%s: duplicate commit %s ignored\n",
-					__FUNCTION__, sha1_to_hex(next->object.sha1));
-			} else {
+			if (!(next->object.flags & DUPCHECK)) {
 				next->object.flags |= DUPCHECK;
 				commit_list_insert(list->item, &reversed);
 			}
