@@ -45,7 +45,8 @@ test_expect_success \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      git-init-db &&
-     git-unpack-objects test-1'
+     git-unpack-objects -n <test-1.pack &&
+     git-unpack-objects <test-1.pack'
 
 unset GIT_OBJECT_DIRECTORY
 cd $TRASH/.git2
@@ -75,7 +76,8 @@ test_expect_success \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      git-init-db &&
-     git-unpack-objects test-2'
+     git-unpack-objects -n <test-2.pack &&
+     git-unpack-objects <test-2.pack'
 
 unset GIT_OBJECT_DIRECTORY
 cd $TRASH/.git2
