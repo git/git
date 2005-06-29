@@ -98,15 +98,22 @@ static void add_delta_to_list(unsigned char *base_sha1, void *delta, unsigned lo
 	delta_list = info;
 }
 
-static void added_object(unsigned char *sha1, char *type, void *data, unsigned long size);
+static void added_object(unsigned char *sha1, const char *type, void *data, unsigned long size);
 
-static int resolve_delta(char *type,
+static void write_object(void *buf, unsigned long size, const char *type)
+{
+	unsigned char sha1[20];
+	if (write_sha1_file(buf, size, type, sha1) < 0)
+		die("failed to write object");
+	added_object(sha1, type, buf, size);
+}
+
+static int resolve_delta(const char *type,
 	void *base, unsigned long base_size, 
 	void *delta, unsigned long delta_size)
 {
 	void *result;
 	unsigned long result_size;
-	unsigned char sha1[20];
 
 	result = patch_delta(base, base_size,
 			     delta, delta_size,
@@ -114,15 +121,12 @@ static int resolve_delta(char *type,
 	if (!result)
 		die("failed to apply delta");
 	free(delta);
-
-	if (write_sha1_file(result, result_size, type, sha1) < 0)
-		die("failed to write object");
-	added_object(sha1, type, result, result_size);
+	write_object(result, result_size, type);
 	free(result);
 	return 0;
 }
 
-static void added_object(unsigned char *sha1, char *type, void *data, unsigned long size)
+static void added_object(unsigned char *sha1, const char *type, void *data, unsigned long size)
 {
 	struct delta_info **p = &delta_list;
 	struct delta_info *info;
@@ -142,8 +146,7 @@ static void added_object(unsigned char *sha1, char *type, void *data, unsigned l
 static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
 {
 	void *buf = get_data(size);
-	unsigned char sha1[20];
-	char *type;
+	const char *type;
 
 	switch (kind) {
 	case OBJ_COMMIT: type = "commit"; break;
@@ -152,9 +155,7 @@ static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
 	case OBJ_TAG:    type = "tag"; break;
 	default: die("bad type %d", kind);
 	}
-	if (write_sha1_file(buf, size, type, sha1) < 0)
-		die("failed to write object");
-	added_object(sha1, type, buf, size);
+	write_object(buf, size, type);
 	free(buf);
 	return 0;
 }
