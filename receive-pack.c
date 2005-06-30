@@ -97,11 +97,22 @@ struct command {
 
 struct command *commands = NULL;
 
+static int is_all_zeroes(const char *hex)
+{
+	int i;
+	for (i = 0; i < 40; i++)
+		if (*hex++ != '0')
+			return 0;
+	return 1;
+}
+
 static int verify_old_ref(const char *name, char *hex_contents)
 {
 	int fd, ret;
 	char buffer[60];
 
+	if (is_all_zeroes(hex_contents))
+		return 0;
 	fd = open(name, O_RDONLY);
 	if (fd < 0)
 		return -1;
@@ -125,8 +136,6 @@ static void update(const char *name, unsigned char *old_sha1, unsigned char *new
 	memcpy(lock_name + namelen, ".lock", 6);
 
 	strcpy(new_hex, sha1_to_hex(new_sha1));
-	new_hex[40] = '\n';
-	new_hex[41] = 0;
 	old_hex = sha1_to_hex(old_sha1);
 	if (!has_sha1_file(new_sha1))
 		die("unpack should have generated %s, but I can't find it!", new_hex);
@@ -134,7 +143,14 @@ static void update(const char *name, unsigned char *old_sha1, unsigned char *new
 	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0644);
 	if (newfd < 0)
 		die("unable to create %s (%s)", lock_name, strerror(errno));
+
+	/* Write the ref with an ending '\n' */
+	new_hex[40] = '\n';
+	new_hex[41] = 0;
 	written = write(newfd, new_hex, 41);
+	/* Remove the '\n' again */
+	new_hex[40] = 0;
+
 	close(newfd);
 	if (written != 41) {
 		unlink(lock_name);
