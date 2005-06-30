@@ -5,18 +5,73 @@ static const char send_pack_usage[] = "git-send-pack [--exec=other] destination 
 
 static const char *exec = "git-receive-pack";
 
+struct ref {
+	struct ref *next;
+	unsigned char old_sha1[20];
+	unsigned char new_sha1[20];
+	char name[0];
+};
+
+static struct ref *ref_list = NULL;
+
+static int read_ref(const char *ref, unsigned char *sha1)
+{
+	int fd, ret;
+	static char pathname[PATH_MAX];
+	char buffer[60];
+	const char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
+
+	snprintf(pathname, sizeof(pathname), "%s/%s", git_dir, ref);
+	fd = open(pathname, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	ret = -1;
+	if (read(fd, buffer, sizeof(buffer)) >= 40)
+		ret = get_sha1_hex(buffer, sha1);
+	close(fd);
+	return ret;
+}
+
 static int send_pack(int in, int out)
 {
 	for (;;) {
+		unsigned char old_sha1[20];
+		unsigned char new_sha1[20];
 		static char buffer[1000];
+		char *name;
+		struct ref *n;
 		int len;
 
 		len = packet_read_line(in, buffer, sizeof(buffer));
-		if (len > 0) {
-			write(2, buffer, len);
+		if (!len)
+			break;
+		if (buffer[len-1] == '\n')
+			buffer[--len] = 0;
+
+		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
+			die("protocol error: expected sha/ref, got '%s'", buffer);
+		name = buffer + 41;
+		if (read_ref(name, new_sha1) < 0) {
+			fprintf(stderr, "no such local reference '%s'\n", name);
 			continue;
 		}
-		break;
+		if (!has_sha1_file(old_sha1)) {
+			fprintf(stderr, "remote '%s' points to object I don't have\n", name);
+			continue;
+		}
+		if (!memcmp(old_sha1, new_sha1, 20)) {
+			fprintf(stderr, "'%s' unchanged\n", name);
+		} else {
+			char new_hex[60];
+			strcpy(new_hex, sha1_to_hex(new_sha1));
+			fprintf(stderr, "%s: updating from %s to %s\n", name, sha1_to_hex(old_sha1), new_hex);
+		}
+		n = xmalloc(sizeof(*n) + len - 40);
+		memcpy(n->old_sha1, old_sha1, 20);
+		memcpy(n->new_sha1, new_sha1, 20);
+		memcpy(n->name, buffer + 41, len - 40);
+		n->next = ref_list;
+		ref_list = n;
 	}
 	packet_flush(out);
 	close(out);
