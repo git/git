@@ -9,7 +9,7 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
-COPTS=-O2
+COPTS=
 CFLAGS=-g $(COPTS) -Wall
 
 prefix=$(HOME)
@@ -46,9 +46,10 @@ install: $(PROG) $(SCRIPTS)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o \
-	 epoch.o refs.o csum-file.o verify_pack.o
+	 epoch.o refs.o csum-file.o verify_pack.o pkt-line.o
 LIB_FILE=libgit.a
-LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h pack.h
+LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h \
+	pack.h pkt-line.h
 
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o

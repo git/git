@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "pkt-line.h"
 
 static const char send_pack_usage[] = "git-send-pack [--exec=other] destination [heads]*";
 
@@ -8,13 +9,16 @@ static int send_pack(int in, int out)
 {
 	for (;;) {
 		static char buffer[1000];
-		int ret = read(in, buffer, sizeof(buffer));
-		if (ret > 0) {
-			write(1, buffer, ret);
+		int len;
+
+		len = packet_read_line(in, buffer, sizeof(buffer));
+		if (len > 0) {
+			write(2, buffer, len);
 			continue;
 		}
 		break;
 	}
+	packet_flush(out);
 	close(out);
 	return 0;
 }
@@ -77,7 +81,7 @@ static int setup_connection(int fd[2], char *url, char **heads)
 		if (host)
 			execlp("ssh", "ssh", host, command, NULL);
 		else
-			execlp(host, command, NULL);
+			execlp("sh", "sh", "-c", command, NULL);
 		die("exec failed");
 	}		
 	fd[0] = pipefd[0][0];

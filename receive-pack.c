@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "pkt-line.h"
 #include <sys/wait.h>
 
 static const char receive_pack_usage[] = "git-receive-pack [--unpack=executable] <git-dir> [heads]";
@@ -26,61 +27,9 @@ static int path_match(const char *path, int nr, char **match)
 	return 0;
 }
 
-static void safe_write(int fd, const void *buf, unsigned n)
-{
-	while (n) {
-		int ret = write(fd, buf, n);
-		if (ret > 0) {
-			buf += ret;
-			n -= ret;
-			continue;
-		}
-		if (!ret)
-			die("write error (disk full?)");
-		if (errno == EAGAIN || errno == EINTR)
-			continue;
-		die("write error (%s)", strerror(errno));
-	}
-}
-
-/*
- * If we buffered things up above (we don't, but we should),
- * we'd flush it here
- */
-static void flush_safe(int fd)
-{
-}
-
-/*
- * Write a packetized stream, where each line is preceded by
- * its length (including the header) as a 4-byte hex number.
- * A length of 'zero' means end of stream (and a length of 1-3
- * would be an error). 
- */
-#define hex(a) (hexchar[(a) & 15])
-static void packet_write(const char *fmt, ...)
-{
-	static char buffer[1000];
-	static char hexchar[] = "0123456789abcdef";
-	va_list args;
-	unsigned n;
-
-	va_start(args, fmt);
-	n = vsnprintf(buffer + 4, sizeof(buffer) - 4, fmt, args);
-	va_end(args);
-	if (n >= sizeof(buffer)-4)
-		die("protocol error: impossibly long line");
-	n += 4;
-	buffer[0] = hex(n >> 12);
-	buffer[1] = hex(n >> 8);
-	buffer[2] = hex(n >> 4);
-	buffer[3] = hex(n);
-	safe_write(1, buffer, n);
-}
-
 static void show_ref(const char *path, unsigned char *sha1)
 {
-	packet_write("%s %s\n", sha1_to_hex(sha1), path);
+	packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 }
 
 static int read_ref(const char *path, unsigned char *sha1)
@@ -137,66 +86,6 @@ static void write_head_info(const char *base, int nr, char **match)
 	}
 }
 
-/*
- * This is all pretty stupid, but we use this packetized line
- * format to make a streaming format possible without ever
- * over-running the read buffers. That way we'll never read
- * into what might be the pack data (which should go to another
- * process entirely).
- *
- * The writing side could use stdio, but since the reading
- * side can't, we stay with pure read/write interfaces.
- */
-static void safe_read(int fd, void *buffer, unsigned size)
-{
-	int n = 0;
-
-	while (n < size) {
-		int ret = read(0, buffer + n, size - n);
-		if (ret < 0) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-			die("read error (%s)", strerror(errno));
-		}
-		if (!ret)
-			die("unexpected EOF");
-		n += ret;
-	}
-}
-
-static int safe_read_line(char *buffer, unsigned size)
-{
-	int n, len;
-
-	safe_read(0, buffer, 4);
-
-	len = 0;
-	for (n = 0; n < 4; n++) {
-		unsigned char c = buffer[n];
-		len <<= 4;
-		if (c >= '0' && c <= '9') {
-			len += c - '0';
-			continue;
-		}
-		if (c >= 'a' && c <= 'f') {
-			len += c - 'a' + 10;
-			continue;
-		}
-		if (c >= 'A' && c <= 'F') {
-			len += c - 'A' + 10;
-			continue;
-		}
-		die("protocol error: bad line length character");
-	}
-	if (!len)
-		return 0;
-	if (len < 4 || len >= size)
-		die("protocol error: bad line length %d", len);
-	safe_read(0, buffer + 4, len - 4);
-	buffer[len] = 0;
-	return len;
-}
-
 struct line {
 	struct line *next;
 	char data[0];
@@ -213,7 +102,7 @@ static void execute_commands(void)
 	struct line *line = commands;
 
 	while (line) {
-		printf("%s", line->data);
+		fprintf(stderr, "%s", line->data);
 		line = line->next;
 	}
 }
@@ -223,7 +112,7 @@ static void read_head_info(void)
 	struct line **p = &commands;
 	for (;;) {
 		static char line[1000];
-		int len = safe_read_line(line, sizeof(line));
+		int len = packet_read_line(0, line, sizeof(line));
 		struct line *n;
 		if (!len)
 			break;
@@ -242,8 +131,8 @@ static void unpack(void)
 	if (pid < 0)
 		die("unpack fork failed");
 	if (!pid) {
-		char *const envp[] = { "GIT_DIR=.", NULL };
-		execle(unpacker, unpacker, NULL, envp);
+		setenv("GIT_DIR", ".", 1);
+		execlp(unpacker, unpacker, NULL);
 		die("unpack execute failed");
 	}
 
@@ -311,8 +200,7 @@ int main(int argc, char **argv)
 	write_head_info("refs/", nr_heads, heads);
 
 	/* EOF */
-	safe_write(1, "0000", 4);
-	flush_safe(1);
+	packet_flush(1);
 
 	read_head_info();
 	unpack();
