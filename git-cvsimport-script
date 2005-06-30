@@ -397,10 +397,28 @@ my($patchset,$date,$author,$branch,$ancestor,$tag,$logmsg);
 my(@old,@new);
 my $commit = sub {
 	my $pid;
-	system("git-update-cache","--force-remove","--",@old) if @old;
-	die "Cannot remove files: $?\n" if $?;
-	system("git-update-cache","--add","--",@new) if @new;
-	die "Cannot add files: $?\n" if $?;
+	while(@old) {
+		my @o2;
+		if(@old > 55) {
+			@o2 = splice(@old,0,50);
+		} else {
+			@o2 = @old;
+			@old = ();
+		}
+		system("git-update-cache","--force-remove","--",@o2);
+		die "Cannot remove files: $?\n" if $?;
+	}
+	while(@new) {
+		my @n2;
+		if(@new > 55) {
+			@n2 = splice(@new,0,50);
+		} else {
+			@n2 = @new;
+			@new = ();
+		}
+		system("git-update-cache","--add","--",@n2);
+		die "Cannot add files: $?\n" if $?;
+	}
 
 	$pid = open(C,"-|");
 	die "Cannot fork: $!" unless defined $pid;
