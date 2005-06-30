@@ -86,12 +86,14 @@ static void write_head_info(const char *base, int nr, char **match)
 	}
 }
 
-struct line {
-	struct line *next;
-	char data[0];
+struct command {
+	struct command *next;
+	unsigned char old_sha1[20];
+	unsigned char new_sha1[20];
+	char ref_name[0];
 };
 
-struct line *commands = NULL;
+struct command *commands = NULL;
 
 /*
  * This gets called after(if) we've successfully
@@ -99,28 +101,44 @@ struct line *commands = NULL;
  */
 static void execute_commands(void)
 {
-	struct line *line = commands;
+	struct command *cmd = commands;
 
-	while (line) {
-		fprintf(stderr, "%s", line->data);
-		line = line->next;
+	while (cmd) {
+		char old_hex[60], *new_hex;
+		strcpy(old_hex, sha1_to_hex(cmd->old_sha1));
+		new_hex = sha1_to_hex(cmd->new_sha1);
+		fprintf(stderr, "%s: %s -> %s\n", cmd->ref_name, old_hex, new_hex);
+		cmd = cmd->next;
 	}
 }
 
 static void read_head_info(void)
 {
-	struct line **p = &commands;
+	struct command **p = &commands;
 	for (;;) {
 		static char line[1000];
-		int len = packet_read_line(0, line, sizeof(line));
-		struct line *n;
+		unsigned char old_sha1[20], new_sha1[20];
+		struct command *cmd;
+		int len;
+
+		len = packet_read_line(0, line, sizeof(line));
 		if (!len)
 			break;
-		n = xmalloc(sizeof(struct line) + len);
-		n->next = NULL;
-		memcpy(n->data, line + 4, len - 3);
-		*p = n;
-		p = &n->next;
+		if (line[len-1] == '\n')
+			line[--len] = 0;
+		if (len < 83 ||
+		    line[40] != ' ' ||
+		    line[81] != ' ' ||
+		    get_sha1_hex(line, old_sha1) ||
+		    get_sha1_hex(line + 41, new_sha1))
+			die("protocol error: expected old/new/ref, got '%s'", line);
+		cmd = xmalloc(sizeof(struct command) + len - 80);
+		memcpy(cmd->old_sha1, old_sha1, 20);
+		memcpy(cmd->new_sha1, new_sha1, 20);
+		memcpy(cmd->ref_name, line + 82, len - 81);
+		cmd->next = NULL;
+		*p = cmd;
+		p = &cmd->next;
 	}
 }
 
