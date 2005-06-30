@@ -498,9 +498,6 @@ my $commit = sub {
 			or die "Cannot write tag $branch: $!\n";
 		print "Created tag '$tag' on '$branch'\n" if $opt_v;
 	}
-
-	@old = ();
-	@new = ();
 };
 
 while(<CVS>) {
