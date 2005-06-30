@@ -585,11 +585,9 @@ int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter)
 	for (; list; list = list->next) {
 		struct commit *next = list->item;
 
-		if (!(next->object.flags & UNINTERESTING)) {
-			if (!(next->object.flags & DUPCHECK)) {
-				next->object.flags |= DUPCHECK;
-				commit_list_insert(list->item, &reversed);
-			}
+		if (!(next->object.flags & DUPCHECK)) {
+			next->object.flags |= DUPCHECK;
+			commit_list_insert(list->item, &reversed);
 		}
 	}
 

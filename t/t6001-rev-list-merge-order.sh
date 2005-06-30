@@ -367,33 +367,33 @@ test_output_expect_success "three nodes one head, one internal, one base" 'git-r
 EOF
 
 test_output_expect_success "linear prune l2 ^root" 'git-rev-list --merge-order --show-breaks l2 ^root' <<EOF
-= l2
+^ l2
 | l1
 | l0
 EOF
 
 test_output_expect_success "linear prune l2 ^l0" 'git-rev-list --merge-order --show-breaks l2 ^l0' <<EOF
-= l2
+^ l2
 | l1
 EOF
 
 test_output_expect_success "linear prune l2 ^l1" 'git-rev-list --merge-order --show-breaks l2 ^l1' <<EOF
-= l2
+^ l2
 EOF
 
 test_output_expect_success "linear prune l5 ^a4" 'git-rev-list --merge-order --show-breaks l5 ^a4' <<EOF
-= l5
+^ l5
 | l4
 | l3
 EOF
 
 test_output_expect_success "linear prune l5 ^l3" 'git-rev-list --merge-order --show-breaks l5 ^l3' <<EOF
-= l5
+^ l5
 | l4
 EOF
 
 test_output_expect_success "linear prune l5 ^l4" 'git-rev-list --merge-order --show-breaks l5 ^l4' <<EOF
-= l5
+^ l5
 EOF
 
 test_output_expect_success "max-count 10 - merge order" 'git-rev-list --merge-order --show-breaks --max-count=10 l5' <<EOF
