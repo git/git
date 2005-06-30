@@ -182,7 +182,7 @@ sub _file {
 	$self->{'socketo'}->write("Argument $self->{'subdir'}/$fn\n") or return undef;
 	$self->{'socketo'}->write("Directory .\n") or return undef;
 	$self->{'socketo'}->write("$self->{'repo'}\n") or return undef;
-	$self->{'socketo'}->write("Sticky T1.1\n") or return undef;
+	# $self->{'socketo'}->write("Sticky T1.0\n") or return undef;
 	$self->{'socketo'}->write("co\n") or return undef;
 	$self->{'socketo'}->flush() or return undef;
 	$self->{'lines'} = 0;
