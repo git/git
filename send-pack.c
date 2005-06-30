@@ -3,8 +3,28 @@
 #include <sys/wait.h>
 
 static const char send_pack_usage[] = "git-send-pack [--exec=other] destination [heads]*";
-
 static const char *exec = "git-receive-pack";
+
+static int path_match(const char *path, int nr, char **match)
+{
+	int i;
+	int pathlen = strlen(path);
+
+	for (i = 0; i < nr; i++) {
+		char *s = match[i];
+		int len = strlen(s);
+
+		if (!len || len > pathlen)
+			continue;
+		if (memcmp(path + pathlen - len, s, len))
+			continue;
+		if (pathlen > len && path[pathlen - len - 1] != '/')
+			continue;
+		*s = 0;
+		return 1;
+	}
+	return 0;
+}
 
 struct ref {
 	struct ref *next;
@@ -108,7 +128,7 @@ static int read_ref(const char *ref, unsigned char *sha1)
 	return ret;
 }
 
-static int send_pack(int in, int out)
+static int send_pack(int in, int out, int nr_match, char **match)
 {
 	struct ref *ref_list = NULL, **last_ref = &ref_list;
 	struct ref *ref;
@@ -129,6 +149,8 @@ static int send_pack(int in, int out)
 		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
 			die("protocol error: expected sha/ref, got '%s'", buffer);
 		name = buffer + 41;
+		if (nr_match && !path_match(name, nr_match, match))
+			continue;
 		if (read_ref(name, new_sha1) < 0)
 			return error("no such local reference '%s'", name);
 		if (!has_sha1_file(old_sha1))
@@ -260,7 +282,7 @@ int main(int argc, char **argv)
 	pid = setup_connection(fd, dest, heads);
 	if (pid < 0)
 		return 1;
-	ret = send_pack(fd[0], fd[1]);
+	ret = send_pack(fd[0], fd[1], nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
 	waitpid(pid, NULL, 0);

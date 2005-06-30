@@ -2,30 +2,9 @@
 #include "pkt-line.h"
 #include <sys/wait.h>
 
-static const char receive_pack_usage[] = "git-receive-pack [--unpack=executable] <git-dir> [heads]";
+static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static const char *unpacker = "git-unpack-objects";
-
-static int path_match(const char *path, int nr, char **match)
-{
-	int i;
-	int pathlen = strlen(path);
-
-	for (i = 0; i < nr; i++) {
-		char *s = match[i];
-		int len = strlen(s);
-
-		if (!len || len > pathlen)
-			continue;
-		if (memcmp(path + pathlen - len, s, len))
-			continue;
-		if (pathlen > len && path[pathlen - len - 1] != '/')
-			continue;
-		*s = 0;
-		return 1;
-	}
-	return 0;
-}
 
 static void show_ref(const char *path, unsigned char *sha1)
 {
@@ -46,7 +25,7 @@ static int read_ref(const char *path, unsigned char *sha1)
 	return ret;
 }
 
-static void write_head_info(const char *base, int nr, char **match)
+static void write_head_info(const char *base)
 {
 	DIR *dir = opendir(base);
 
@@ -72,14 +51,12 @@ static void write_head_info(const char *base, int nr, char **match)
 			if (S_ISDIR(st.st_mode)) {
 				path[baselen + namelen] = '/';
 				path[baselen + namelen + 1] = 0;
-				write_head_info(path, nr, match);
+				write_head_info(path);
 				continue;
 			}
 			if (read_ref(path, sha1) < 0)
 				continue;
 			if (!has_sha1_file(sha1))
-				continue;
-			if (nr && !path_match(path, nr, match))
 				continue;
 			show_ref(path, sha1);
 		}
@@ -247,26 +224,20 @@ static void unpack(void)
 
 int main(int argc, char **argv)
 {
-	int i, nr_heads = 0;
+	int i;
 	const char *dir = NULL;
-	char **heads = NULL;
 
 	argv++;
 	for (i = 1; i < argc; i++) {
 		const char *arg = *argv++;
 
 		if (*arg == '-') {
-			if (!strncmp(arg, "--unpack=", 9)) {
-				unpacker = arg+9;
-				continue;
-			}
 			/* Do flag handling here */
 			usage(receive_pack_usage);
 		}
+		if (dir)
+			usage(receive_pack_usage);
 		dir = arg;
-		heads = argv;
-		nr_heads = argc - i - 1;
-		break;
 	}
 	if (!dir)
 		usage(receive_pack_usage);
@@ -285,7 +256,7 @@ int main(int argc, char **argv)
 
 	if (access("objects", X_OK) < 0 || access("refs/heads", X_OK) < 0)
 		die("%s doesn't appear to be a git directory", dir);
-	write_head_info("refs/", nr_heads, heads);
+	write_head_info("refs/");
 
 	/* EOF */
 	packet_flush(1);
