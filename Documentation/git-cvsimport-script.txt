@@ -1,0 +1,82 @@
+git-cvsimport-script(1)
+=======================
+v0.1, July 2005
+
+NAME
+----
+git-cvsimport-script - Import a CVS repository into git
+
+
+SYNOPSIS
+--------
+'git-cvsimport-script' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
+			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
+			<CVS_module> [ <GIT_repository> ]
+
+
+DESCRIPTION
+-----------
+Imports a CVS repository into git. It will either create a new
+repository, or incrementally import into an existing one.
+
+Spitting the CVS log into patch sets is done by 'cvsps'.
+At least version 2.1 is required.
+
+OPTIONS
+-------
+-d <CVSROOT>::
+	The root of the CVS archive. May be local (a simple path) or remote;
+	currently, only the :pserver: access method is supported.
+
+-o <branch-for-HEAD>::
+	The 'HEAD' branch from CVS is imported to the 'origin' branch within
+	the git repository, as 'HEAD' already has a special meaning for git.
+	Use this option if you want to import into a different branch.
+
+	Use '-o master' for continuing an import that was initially done by
+	the old cvs2git tool.
+
+-p <options-for-cvsps>::
+	Additional options for cvsps.
+	The options '-x' and '-A' are implicit and should not be used here.
+
+	If you need to pass multiple options, separate them with a comma.
+
+-v::
+	Verbosity: let 'cvsimport' report what it is doing.
+
+<CVS_module>::
+	The CVS module you want to import. Relative to <CVSROOT>.
+
+<type>::
+	Typically this matches the real type of <object> but asking
+	for a type that can trivially dereferenced from the given
+	<object> is also permitted.  An example is to ask for a
+	"tree" with <object> being a commit object that contains it,
+	or to ask for a "blob" with <object> being a tag object that
+	points at it.
+
+-h::
+	Print a short usage message and exit.
+
+OUTPUT
+------
+If '-v' is specified, the script reports what it is doing.
+
+Otherwise, success is indicated the Unix way, i.e. by simply exiting with
+a zero exit status.
+
+
+Author
+------
+Written by Matthias Urlichs <smurf@smurf.noris.de>, with help from
+various participants of the git-list <git@vger.kernel.org>.
+
+Documentation
+--------------
+Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+
