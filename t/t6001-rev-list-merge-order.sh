@@ -408,12 +408,12 @@ test_output_expect_success "max-count 10 - merge order" 'git-rev-list --merge-or
 | b2
 EOF
 
-test_output_expect_success "max-count 10 - non merge order" 'git-rev-list --max-count=10 l5 | sort' <<EOF
+test_output_expect_success "max-count 10 - non merge order" 'git-rev-list --max-count=10 l5 | entag | sort' <<EOF
+a2
+a3
 a4
-b2
 b3
 b4
-c1
 c2
 c3
 l3
