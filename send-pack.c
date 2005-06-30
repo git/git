@@ -79,6 +79,17 @@ static int send_pack(int in, int out)
 	}
 	
 	packet_flush(out);
+	/*
+	 * FIXME! Here we need to now send the pack-file to the "out" fd, using something
+	 * like this:
+	 *
+	 *   fork() +
+	 *	dup2(out, 1) +
+	 *	execve("/bin/sh git-rev-list --objects ..for-each-ref-list.. | "
+	 *		"git-pack-objects --stdout");
+	 *
+	 * but I'm too tired right now.
+	 */
 	close(out);
 	return 0;
 }
