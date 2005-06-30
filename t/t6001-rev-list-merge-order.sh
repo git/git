@@ -408,17 +408,17 @@ test_output_expect_success "max-count 10 - merge order" 'git-rev-list --merge-or
 | b2
 EOF
 
-test_output_expect_success "max-count 10 - non merge order" 'git-rev-list --max-count=10 l5 | entag | sort' <<EOF
-a2
-a3
-a4
-b3
-b4
-c2
-c3
-l3
-l4
+test_output_expect_success "max-count 10 - non merge order" 'git-rev-list --max-count=10 l5' <<EOF
 l5
+l4
+l3
+a4
+b4
+a3
+a2
+c3
+c2
+b3
 EOF
 
 test_output_expect_success '--max-age=c3, no --merge-order' "git-rev-list --max-age=$(commit_date c3) l5" <<EOF
