@@ -203,7 +203,9 @@ int main(int argc, char **argv)
 	packet_flush(1);
 
 	read_head_info();
-	unpack();
-	execute_commands();
+	if (commands) {
+		unpack();
+		execute_commands();
+	}
 	return 0;
 }

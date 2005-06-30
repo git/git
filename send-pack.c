@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include <sys/wait.h>
 
 static const char send_pack_usage[] = "git-send-pack [--exec=other] destination [heads]*";
 
@@ -12,7 +13,7 @@ struct ref {
 	char name[0];
 };
 
-static struct ref *ref_list = NULL;
+static struct ref *ref_list = NULL, **last_ref = &ref_list;
 
 static int read_ref(const char *ref, unsigned char *sha1)
 {
@@ -34,12 +35,13 @@ static int read_ref(const char *ref, unsigned char *sha1)
 
 static int send_pack(int in, int out)
 {
+	struct ref *ref;
+
 	for (;;) {
 		unsigned char old_sha1[20];
 		unsigned char new_sha1[20];
 		static char buffer[1000];
 		char *name;
-		struct ref *n;
 		int len;
 
 		len = packet_read_line(in, buffer, sizeof(buffer));
@@ -51,28 +53,31 @@ static int send_pack(int in, int out)
 		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
 			die("protocol error: expected sha/ref, got '%s'", buffer);
 		name = buffer + 41;
-		if (read_ref(name, new_sha1) < 0) {
-			fprintf(stderr, "no such local reference '%s'\n", name);
-			continue;
-		}
-		if (!has_sha1_file(old_sha1)) {
-			fprintf(stderr, "remote '%s' points to object I don't have\n", name);
-			continue;
-		}
+		if (read_ref(name, new_sha1) < 0)
+			return error("no such local reference '%s'", name);
+		if (!has_sha1_file(old_sha1))
+			return error("remote '%s' points to object I don't have", name);
 		if (!memcmp(old_sha1, new_sha1, 20)) {
 			fprintf(stderr, "'%s' unchanged\n", name);
-		} else {
-			char new_hex[60];
-			strcpy(new_hex, sha1_to_hex(new_sha1));
-			fprintf(stderr, "%s: updating from %s to %s\n", name, sha1_to_hex(old_sha1), new_hex);
+			continue;
 		}
-		n = xmalloc(sizeof(*n) + len - 40);
-		memcpy(n->old_sha1, old_sha1, 20);
-		memcpy(n->new_sha1, new_sha1, 20);
-		memcpy(n->name, buffer + 41, len - 40);
-		n->next = ref_list;
-		ref_list = n;
+		ref = xmalloc(sizeof(*ref) + len - 40);
+		memcpy(ref->old_sha1, old_sha1, 20);
+		memcpy(ref->new_sha1, new_sha1, 20);
+		memcpy(ref->name, buffer + 41, len - 40);
+		ref->next = NULL;
+		*last_ref = ref;
+		last_ref = &ref->next;
 	}
+
+	for (ref = ref_list; ref; ref = ref->next) {
+		char old_hex[60], *new_hex;
+		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
+		new_hex = sha1_to_hex(ref->new_sha1);
+		packet_write(out, "%s %s %s", old_hex, new_hex, ref->name);
+		fprintf(stderr, "'%s': updating from %s to %s\n", ref->name, old_hex, new_hex);
+	}
+	
 	packet_flush(out);
 	close(out);
 	return 0;
@@ -113,6 +118,7 @@ static int setup_connection(int fd[2], char *url, char **heads)
 	const char *host, *path;
 	char *colon;
 	int pipefd[2][2];
+	pid_t pid;
 
 	url = shell_safe(url);
 	host = NULL;
@@ -126,7 +132,8 @@ static int setup_connection(int fd[2], char *url, char **heads)
 	snprintf(command, sizeof(command), "%s %s", exec, path);
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
-	if (!fork()) {
+	pid = fork();
+	if (!pid) {
 		dup2(pipefd[1][0], 0);
 		dup2(pipefd[0][1], 1);
 		close(pipefd[0][0]);
@@ -143,7 +150,7 @@ static int setup_connection(int fd[2], char *url, char **heads)
 	fd[1] = pipefd[1][1];
 	close(pipefd[0][1]);
 	close(pipefd[1][0]);
-	return 0;
+	return pid;
 }
 
 int main(int argc, char **argv)
@@ -151,7 +158,8 @@ int main(int argc, char **argv)
 	int i, nr_heads = 0;
 	char *dest = NULL;
 	char **heads = NULL;
-	int fd[2];
+	int fd[2], ret;
+	pid_t pid;
 
 	argv++;
 	for (i = 1; i < argc; i++) {
@@ -171,7 +179,12 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(send_pack_usage);
-	if (setup_connection(fd, dest, heads))
+	pid = setup_connection(fd, dest, heads);
+	if (pid < 0)
 		return 1;
-	return send_pack(fd[0], fd[1]);
+	ret = send_pack(fd[0], fd[1]);
+	close(fd[0]);
+	close(fd[1]);
+	waitpid(pid, NULL, 0);
+	return ret;
 }
