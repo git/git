@@ -9,7 +9,7 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
-COPTS=
+COPTS=-O2
 CFLAGS=-g $(COPTS) -Wall
 
 prefix=$(HOME)
