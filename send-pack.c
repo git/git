@@ -13,7 +13,82 @@ struct ref {
 	char name[0];
 };
 
-static struct ref *ref_list = NULL, **last_ref = &ref_list;
+static void exec_pack_objects(void)
+{
+	static char *args[] = {
+		"git-pack-objects",
+		"--stdout",
+		NULL
+	};
+	execvp("git-pack-objects", args);
+	die("git-pack-objects exec failed (%s)", strerror(errno));
+}
+
+static void exec_rev_list(struct ref *refs)
+{
+	static char *args[1000];
+	int i = 0;
+
+	args[i++] = "git-rev-list";	/* 0 */
+	args[i++] = "--objects";	/* 1 */
+	while (refs) {
+		char *buf = malloc(100);
+		if (i > 900)
+			die("git-rev-list environment overflow");
+		args[i++] = buf;
+		snprintf(buf, 50, "^%s", sha1_to_hex(refs->old_sha1));
+		buf += 50;
+		args[i++] = buf;
+		snprintf(buf, 50, "%s", sha1_to_hex(refs->new_sha1));
+		refs = refs->next;
+	}
+	args[i] = NULL;
+	execvp("git-rev-list", args);
+	die("git-rev-list exec failed (%s)", strerror(errno));
+}
+
+static void rev_list(int fd, struct ref *refs)
+{
+	int pipe_fd[2];
+	pid_t pack_objects_pid;
+
+	if (pipe(pipe_fd) < 0)
+		die("rev-list setup: pipe failed");
+	pack_objects_pid = fork();
+	if (!pack_objects_pid) {
+		dup2(pipe_fd[0], 0);
+		dup2(fd, 1);
+		close(pipe_fd[0]);
+		close(pipe_fd[1]);
+		close(fd);
+		exec_pack_objects();
+		die("pack-objects setup failed");
+	}
+	if (pack_objects_pid < 0)
+		die("pack-objects fork failed");
+	dup2(pipe_fd[1], 1);
+	close(pipe_fd[0]);
+	close(pipe_fd[1]);
+	close(fd);
+	exec_rev_list(refs);
+}
+
+static int pack_objects(int fd, struct ref *refs)
+{
+	pid_t rev_list_pid;
+
+	rev_list_pid = fork();
+	if (!rev_list_pid) {
+		rev_list(fd, refs);
+		die("rev-list setup failed");
+	}
+	if (rev_list_pid < 0)
+		die("rev-list fork failed");
+	/*
+	 * We don't wait for the rev-list pipeline in the parent:
+	 * we end up waiting for the other end instead
+	 */
+}
 
 static int read_ref(const char *ref, unsigned char *sha1)
 {
@@ -35,6 +110,7 @@ static int read_ref(const char *ref, unsigned char *sha1)
 
 static int send_pack(int in, int out)
 {
+	struct ref *ref_list = NULL, **last_ref = &ref_list;
 	struct ref *ref;
 
 	for (;;) {
@@ -79,17 +155,8 @@ static int send_pack(int in, int out)
 	}
 	
 	packet_flush(out);
-	/*
-	 * FIXME! Here we need to now send the pack-file to the "out" fd, using something
-	 * like this:
-	 *
-	 *   fork() +
-	 *	dup2(out, 1) +
-	 *	execve("/bin/sh git-rev-list --objects ..for-each-ref-list.. | "
-	 *		"git-pack-objects --stdout");
-	 *
-	 * but I'm too tired right now.
-	 */
+	if (ref_list)
+		pack_objects(out, ref_list);
 	close(out);
 	return 0;
 }
