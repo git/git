@@ -85,13 +85,12 @@ check_output()
 {
 	_name=$1
 	shift 1
-	if "$@" | entag > $_name.actual
+	if eval "$*" | entag > $_name.actual
 	then
 		diff $_name.expected $_name.actual
 	else
 		return 1;
 	fi
-	
 }
 
 # Turn a reasonable test description into a reasonable test name.
@@ -114,7 +113,7 @@ test_output_expect_success()
         [ $# -eq 2 ] || error "usage: test_output_expect_success description test <<EOF ... EOF"
         _name=$(echo $_description | name_from_description)
 	cat > $_name.expected
-	test_expect_success "$_description" "check_output $_name $_test" 
+	test_expect_success "$_description" "check_output $_name \"$_test\"" 
 }
 
 # --- end of stuff to move ---
