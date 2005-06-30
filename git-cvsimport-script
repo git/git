@@ -529,7 +529,7 @@ while(<CVS>) {
 	} elsif($state == 5 and s/^Ancestor branch:\s+//) {
 		s/\s+$//;
 		$ancestor = $_;
-		$ancestor = $opt_o if $ancestor == "HEAD";
+		$ancestor = $opt_o if $ancestor eq "HEAD";
 		$state = 6;
 	} elsif($state == 5) {
 		$ancestor = undef;
