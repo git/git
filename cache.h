@@ -14,6 +14,8 @@
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include SHA1_HEADER
 #include <zlib.h>

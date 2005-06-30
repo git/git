@@ -36,7 +36,8 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
 	git-get-tar-commit-id git-apply git-stripspace \
 	git-cvs2git git-diff-stages git-rev-parse git-patch-id \
-	git-pack-objects git-unpack-objects git-verify-pack
+	git-pack-objects git-unpack-objects git-verify-pack \
+	git-receive-pack
 
 all: $(PROG)
 
@@ -125,6 +126,7 @@ git-patch-id: patch-id.c
 git-pack-objects: pack-objects.c
 git-unpack-objects: unpack-objects.c
 git-verify-pack: verify-pack.c
+git-receive-pack: receive-pack.c
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += -lssl
