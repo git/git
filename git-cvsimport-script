@@ -468,7 +468,12 @@ my $commit = sub {
 	}
 	$pw->writer();
 	$pr->reader();
-	print $pw $logmsg
+
+	# compatibility with git2cvs
+	substr($logmsg,32767) = "" if length($logmsg) > 32767;
+	$logmsg =~ s/[\s\n]+\z//;
+
+	print $pw "$logmsg\n"
 		or die "Error writing to git-commit-tree: $!\n";
 	$pw->close();
 
