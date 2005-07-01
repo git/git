@@ -624,41 +624,49 @@ static int packed_delta_info(unsigned char *base_sha1,
 			     char *type,
 			     unsigned long *sizep)
 {
-	const unsigned char *data;
-	unsigned char delta_head[64];
-	unsigned long result_size, base_size, verify_base_size;
-	z_stream stream;
-	int st;
-
 	if (left < 20)
 		die("truncated pack file");
-	if (sha1_object_info(base_sha1, type, &base_size))
+
+	/* We choose to only get the type of the base object and
+	 * ignore potentially corrupt pack file that expects the delta
+	 * based on a base with a wrong size.  This saves tons of
+	 * inflate() calls.
+	 */
+
+	if (sha1_object_info(base_sha1, type, NULL))
 		die("cannot get info for delta-pack base");
 
-	memset(&stream, 0, sizeof(stream));
+	if (sizep) {
+		const unsigned char *data;
+		unsigned char delta_head[64];
+		unsigned long result_size;
+		z_stream stream;
+		int st;
 
-	data = stream.next_in = base_sha1 + 20;
-	stream.avail_in = left - 20;
-	stream.next_out = delta_head;
-	stream.avail_out = sizeof(delta_head);
+		memset(&stream, 0, sizeof(stream));
 
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head))
-		die("delta data unpack-initial failed");
+		data = stream.next_in = base_sha1 + 20;
+		stream.avail_in = left - 20;
+		stream.next_out = delta_head;
+		stream.avail_out = sizeof(delta_head);
 
-	/* Examine the initial part of the delta to figure out
-	 * the result size.  Verify the base size while we are at it.
-	 */
-	data = delta_head;
-	verify_base_size = get_delta_hdr_size(&data);
-	if (verify_base_size != base_size)
-		die("delta base size mismatch");
+		inflateInit(&stream);
+		st = inflate(&stream, Z_FINISH);
+		inflateEnd(&stream);
+		if ((st != Z_STREAM_END) &&
+		    stream.total_out != sizeof(delta_head))
+			die("delta data unpack-initial failed");
 
-	/* Read the result size */
-	result_size = get_delta_hdr_size(&data);
-	*sizep = result_size;
+		/* Examine the initial part of the delta to figure out
+		 * the result size.
+		 */
+		data = delta_head;
+		get_delta_hdr_size(&data); /* ignore base size */
+
+		/* Read the result size */
+		result_size = get_delta_hdr_size(&data);
+		*sizep = result_size;
+	}
 	return 0;
 }
 
@@ -726,7 +734,8 @@ static int packed_object_info(struct pack_entry *entry,
 	default:
 		die("corrupted pack file");
 	}
-	*sizep = size;
+	if (sizep)
+		*sizep = size;
 	unuse_packed_git(p);
 	return 0;
 }
@@ -915,12 +924,7 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 
 		if (!find_pack_entry(sha1, &e))
 			return error("unable to find %s", sha1_to_hex(sha1));
-		if (!packed_object_info(&e, type, sizep))
-			return 0;
-		/* sheesh */
-		map = unpack_entry(&e, type, sizep);
-		free(map);
-		return (map == NULL) ? 0 : -1;
+		return packed_object_info(&e, type, sizep);
 	}
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
@@ -929,7 +933,8 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 		status = error("unable to parse %s header", sha1_to_hex(sha1));
 	else {
 		status = 0;
-		*sizep = size;
+		if (sizep)
+			*sizep = size;
 	}
 	inflateEnd(&stream);
 	munmap(map, mapsize);

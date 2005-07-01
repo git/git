@@ -16,7 +16,8 @@ int main(int argc, char **argv)
 		usage("git-cat-file [-t | -s | tagname] <sha1>");
 
 	if (!strcmp("-t", argv[1]) || !strcmp("-s", argv[1])) {
-		if (!sha1_object_info(sha1, type, &size)) {
+		if (!sha1_object_info(sha1, type,
+				      argv[1][1] == 's' ? &size : NULL)) {
 			switch (argv[1][1]) {
 			case 't':
 				printf("%s\n", type);
