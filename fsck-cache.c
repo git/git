@@ -440,7 +440,7 @@ int main(int argc, char **argv)
 		prepare_packed_git();
 		for (p = packed_git; p; p = p->next)
 			/* verify gives error messages itself */
-			verify_pack(p); 
+			verify_pack(p, 0);
 
 		for (p = packed_git; p; p = p->next) {
 			int num = num_packed_objects(p);

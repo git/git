@@ -272,12 +272,6 @@ static int pack_used_ctr;
 static unsigned long pack_mapped;
 struct packed_git *packed_git;
 
-struct pack_entry {
-	unsigned int offset;
-	unsigned char sha1[20];
-	struct packed_git *p;
-};
-
 static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 				void **idx_map_)
 {
@@ -618,14 +612,26 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+/* forward declaration for a mutually recursive function */
+static int packed_object_info(struct pack_entry *entry,
+			      char *type, unsigned long *sizep);
+
 static int packed_delta_info(unsigned char *base_sha1,
 			     unsigned long delta_size,
 			     unsigned long left,
 			     char *type,
-			     unsigned long *sizep)
+			     unsigned long *sizep,
+			     struct packed_git *p)
 {
+	struct pack_entry base_ent;
+
 	if (left < 20)
 		die("truncated pack file");
+
+	/* The base entry _must_ be in the same pack */
+	if (!find_pack_entry_one(base_sha1, &base_ent, p))
+		die("failed to find delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
@@ -633,7 +639,7 @@ static int packed_delta_info(unsigned char *base_sha1,
 	 * inflate() calls.
 	 */
 
-	if (sha1_object_info(base_sha1, type, NULL))
+	if (packed_object_info(&base_ent, type, NULL))
 		die("cannot get info for delta-pack base");
 
 	if (sizep) {
@@ -716,7 +722,7 @@ static int packed_object_info(struct pack_entry *entry,
 
 	switch (kind) {
 	case OBJ_DELTA:
-		retval = packed_delta_info(pack, size, left, type, sizep);
+		retval = packed_delta_info(pack, size, left, type, sizep, p);
 		unuse_packed_git(p);
 		return retval;
 	case OBJ_COMMIT:
@@ -747,8 +753,10 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 				unsigned long delta_size,
 				unsigned long left,
 				char *type,
-				unsigned long *sizep)
+				unsigned long *sizep,
+				struct packed_git *p)
 {
+	struct pack_entry base_ent;
 	void *data, *delta_data, *result, *base;
 	unsigned long data_size, result_size, base_size;
 	z_stream stream;
@@ -773,8 +781,11 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
 		die("delta data unpack failed");
 
-	/* This may recursively unpack the base, which is what we want */
-	base = read_sha1_file(base_sha1, type, &base_size);
+	/* The base entry _must_ be in the same pack */
+	if (!find_pack_entry_one(base_sha1, &base_ent, p))
+		die("failed to find delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
+	base = unpack_entry_gently(&base_ent, type, &base_size);
 	if (!base)
 		die("failed to read delta-pack base object %s",
 		    sha1_to_hex(base_sha1));
@@ -820,21 +831,33 @@ static void *unpack_entry(struct pack_entry *entry,
 			  char *type, unsigned long *sizep)
 {
 	struct packed_git *p = entry->p;
-	unsigned long offset, size, left;
-	unsigned char *pack;
-	enum object_type kind;
 	void *retval;
 
 	if (use_packed_git(p))
 		die("cannot map packed file");
+	retval = unpack_entry_gently(entry, type, sizep);
+	unuse_packed_git(p);
+	if (!retval)
+		die("corrupted pack file");
+	return retval;
+}
+
+/* The caller is responsible for use_packed_git()/unuse_packed_git() pair */
+void *unpack_entry_gently(struct pack_entry *entry,
+			  char *type, unsigned long *sizep)
+{
+	struct packed_git *p = entry->p;
+	unsigned long offset, size, left;
+	unsigned char *pack;
+	enum object_type kind;
+	void *retval;
 
 	offset = unpack_object_header(p, entry->offset, &kind, &size);
 	pack = p->pack_base + offset;
 	left = p->pack_size - offset;
 	switch (kind) {
 	case OBJ_DELTA:
-		retval = unpack_delta_entry(pack, size, left, type, sizep);
-		unuse_packed_git(p);
+		retval = unpack_delta_entry(pack, size, left, type, sizep, p);
 		return retval;
 	case OBJ_COMMIT:
 		strcpy(type, "commit");
@@ -849,11 +872,10 @@ static void *unpack_entry(struct pack_entry *entry,
 		strcpy(type, "tag");
 		break;
 	default:
-		die("corrupted pack file");
+		return NULL;
 	}
 	*sizep = size;
 	retval = unpack_non_delta_entry(pack, size, left);
-	unuse_packed_git(p);
 	return retval;
 }
 
@@ -873,8 +895,8 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 	return 0;
 }
 
-static int find_pack_entry_1(const unsigned char *sha1,
-			     struct pack_entry *e, struct packed_git *p)
+int find_pack_entry_one(const unsigned char *sha1,
+			struct pack_entry *e, struct packed_git *p)
 {
 	int *level1_ofs = p->index_base;
 	int hi = ntohl(level1_ofs[*sha1]);
@@ -904,7 +926,7 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 	prepare_packed_git();
 
 	for (p = packed_git; p; p = p->next) {
-		if (find_pack_entry_1(sha1, e, p))
+		if (find_pack_entry_one(sha1, e, p))
 			return 1;
 	}
 	return 0;

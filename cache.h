@@ -251,11 +251,20 @@ extern struct packed_git {
 	unsigned int pack_use_cnt;
 	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
 } *packed_git;
+
+struct pack_entry {
+	unsigned int offset;
+	unsigned char sha1[20];
+	struct packed_git *p;
+};
+
 extern void prepare_packed_git(void);
 extern int use_packed_git(struct packed_git *);
 extern void unuse_packed_git(struct packed_git *);
 extern struct packed_git *add_packed_git(char *, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
+extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struct packed_git *);
+extern void *unpack_entry_gently(struct pack_entry *, char *, unsigned long *);
 
 #endif /* CACHE_H */
