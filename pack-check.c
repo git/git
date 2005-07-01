@@ -72,7 +72,36 @@ static int verify_packfile(struct packed_git *p)
 
 static void show_pack_info(struct packed_git *p)
 {
-	/* Next round */
+	struct pack_header *hdr;
+	int nr_objects, i;
+
+	hdr = p->pack_base;
+	nr_objects = ntohl(hdr->hdr_entries);
+
+	for (i = 0; i < nr_objects; i++) {
+		unsigned char sha1[20], base_sha1[20];
+		struct pack_entry e;
+		char type[20];
+		unsigned long size;
+		unsigned long store_size;
+		int delta_chain_length;
+
+		if (nth_packed_object_sha1(p, i, sha1))
+			die("internal error pack-check nth-packed-object");
+		if (!find_pack_entry_one(sha1, &e, p))
+			die("internal error pack-check find-pack-entry-one");
+
+		packed_object_info_detail(&e, type, &size, &store_size,
+					  &delta_chain_length,
+					  base_sha1);
+		printf("%s ", sha1_to_hex(sha1));
+		if (!delta_chain_length)
+			printf("%-6s %lu %u\n", type, size, e.offset);
+		else
+			printf("%-6s %lu %u %d %s\n", type, size, e.offset,
+			       delta_chain_length, sha1_to_hex(base_sha1));
+	}
+
 }
 
 int verify_pack(struct packed_git *p, int verbose)
@@ -103,7 +132,9 @@ int verify_pack(struct packed_git *p, int verbose)
 		if (ret)
 			printf("%s: bad\n", p->pack_name);
 		else {
+			use_packed_git(p);
 			show_pack_info(p);
+			unuse_packed_git(p);
 			printf("%s: ok\n", p->pack_name);
 		}
 	}

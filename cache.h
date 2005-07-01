@@ -266,5 +266,6 @@ extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struct packed_git *);
 extern void *unpack_entry_gently(struct pack_entry *, char *, unsigned long *);
+extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long *, unsigned long *, int *, unsigned char *);
 
 #endif /* CACHE_H */

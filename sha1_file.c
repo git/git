@@ -704,6 +704,57 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	return offset;
 }
 
+void packed_object_info_detail(struct pack_entry *e,
+			       char *type,
+			       unsigned long *size,
+			       unsigned long *store_size,
+			       int *delta_chain_length,
+			       unsigned char *base_sha1)
+{
+	struct packed_git *p = e->p;
+	unsigned long offset, left;
+	unsigned char *pack;
+	enum object_type kind;
+
+	offset = unpack_object_header(p, e->offset, &kind, size);
+	pack = p->pack_base + offset;
+	left = p->pack_size - offset;
+	if (kind != OBJ_DELTA)
+		*delta_chain_length = 0;
+	else {
+		int chain_length = 0;
+		memcpy(base_sha1, pack, 20);
+		do {
+			struct pack_entry base_ent;
+			unsigned long junk;
+
+			find_pack_entry_one(pack, &base_ent, p);
+			offset = unpack_object_header(p, base_ent.offset,
+						      &kind, &junk);
+			pack = p->pack_base + offset;
+			chain_length++;
+		} while (kind == OBJ_DELTA);
+		*delta_chain_length = chain_length;
+	}
+	switch (kind) {
+	case OBJ_COMMIT:
+		strcpy(type, "commit");
+		break;
+	case OBJ_TREE:
+		strcpy(type, "tree");
+		break;
+	case OBJ_BLOB:
+		strcpy(type, "blob");
+		break;
+	case OBJ_TAG:
+		strcpy(type, "tag");
+		break;
+	default:
+		die("corrupted pack file");
+	}
+	*store_size = 0; /* notyet */
+}
+
 static int packed_object_info(struct pack_entry *entry,
 			      char *type, unsigned long *sizep)
 {
