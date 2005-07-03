@@ -19,7 +19,7 @@ DESCRIPTION
 Imports a CVS repository into git. It will either create a new
 repository, or incrementally import into an existing one.
 
-Spitting the CVS log into patch sets is done by 'cvsps'.
+Splitting the CVS log into patch sets is done by 'cvsps'.
 At least version 2.1 is required.
 
 OPTIONS
