@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "commit.h"
+#include "refs.h"
 
 static char *def = NULL;
 static int no_revs = 0;
@@ -46,7 +47,7 @@ static int is_rev_argument(const char *arg)
 	}
 }
 
-static void show_rev(int type, unsigned char *sha1)
+static void show_rev(int type, const unsigned char *sha1)
 {
 	if (no_revs)
 		return;
@@ -142,6 +143,12 @@ static void show_default(void)
 	}
 }
 
+static int show_reference(const char *refname, const unsigned char *sha1)
+{
+	show_rev(NORMAL, sha1);
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int i, as_is = 0;
@@ -183,6 +190,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--not")) {
 				show_type ^= REVERSED;
+				continue;
+			}
+			if (!strcmp(arg, "--all")) {
+				for_each_ref(show_reference);
 				continue;
 			}
 			show_arg(arg);

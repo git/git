@@ -377,7 +377,7 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 	if (object->type == tree_type) {
 		struct tree *tree = (struct tree *)object;
 		if (!tree_objects)
-			die("%s is a tree object, not a commit", name);
+			return NULL;
 		if (flags & UNINTERESTING) {
 			mark_tree_uninteresting(tree);
 			return NULL;
@@ -392,7 +392,7 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 	if (object->type == blob_type) {
 		struct blob *blob = (struct blob *)object;
 		if (!blob_objects)
-			die("%s is a blob object, not a commit", name);
+			return NULL;
 		if (flags & UNINTERESTING) {
 			mark_blob_uninteresting(blob);
 			return NULL;
