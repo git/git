@@ -148,6 +148,8 @@ sub conn {
 		my $pw = IO::Pipe->new();
 		my $pid = fork();
 		die "Fork: $!\n" unless defined $pid;
+		my $cvs = 'cvs';
+		$cvs = $ENV{CVS_SERVER} if exists $ENV{CVS_SERVER};
 		unless($pid) {
 			$pr->writer();
 			$pw->reader();
@@ -155,7 +157,7 @@ sub conn {
 			dup2($pr->fileno(),1);
 			$pr->close();
 			$pw->close();
-			exec("cvs","server");
+			exec($cvs,"server");
 		}
 		$pw->writer();
 		$pr->reader();
