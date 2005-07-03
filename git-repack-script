@@ -1,18 +1,13 @@
 #!/bin/sh
 : ${GIT_DIR=.git}
 : ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
-packname=$(date +"pack-%s")
-if [ -f "$GIT_OBJECT_DIRECTORY/pack/$packname.idx" ]; then
-	echo Pack $packname already exists
+rm -f .tmp-pack-*
+packname=$(git-rev-list --unpacked --objects $(git-rev-parse --all) |
+	git-pack-objects --non-empty --incremental .tmp-pack) ||
 	exit 1
-fi
-rm -f $packname.idx $packname.pack
-git-rev-list --unpacked --objects $(git-rev-parse --all) |
-	git-pack-objects --non-empty --incremental $packname ||
-	exit 1
-
-if [ ! -f $packname.idx ]; then
+if [ -z "$packname" ]; then
 	echo Nothing new to pack
 	exit 0
 fi
-mv $packname.idx $packname.pack "$GIT_OBJECT_DIRECTORY/pack/"
+mv .tmp-pack-$packname.pack "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.pack"
+mv .tmp-pack-$packname.idx  "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.idx"

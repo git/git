@@ -18,6 +18,7 @@ struct object_entry {
 	struct object_entry *delta;
 };
 
+static unsigned char object_list_sha1[20];
 static int non_empty = 0;
 static int incremental = 0;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
@@ -135,7 +136,7 @@ static void write_pack_file(void)
 	if (!base_name)
 		f = sha1fd(1, "<stdout>");
 	else
-		f = sha1create("%s.%s", base_name, "pack");
+		f = sha1create("%s-%s.%s", base_name, sha1_to_hex(object_list_sha1), "pack");
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_objects);
@@ -152,7 +153,7 @@ static void write_pack_file(void)
 static void write_index_file(void)
 {
 	int i;
-	struct sha1file *f = sha1create("%s.%s", base_name, "idx");
+	struct sha1file *f = sha1create("%s-%s.%s", base_name, sha1_to_hex(object_list_sha1), "idx");
 	struct object_entry **list = sorted_by_sha;
 	struct object_entry **last = list + nr_objects;
 	unsigned int array[256];
@@ -189,13 +190,13 @@ static void write_index_file(void)
 	sha1close(f, NULL, 1);
 }
 
-static void add_object_entry(unsigned char *sha1, unsigned int hash)
+static int add_object_entry(unsigned char *sha1, unsigned int hash)
 {
 	unsigned int idx = nr_objects;
 	struct object_entry *entry;
 
 	if (incremental && has_sha1_pack(sha1))
-		return;
+		return 0;
 
 	if (idx >= nr_alloc) {
 		unsigned int needed = (idx + 1024) * 3 / 2;
@@ -207,6 +208,7 @@ static void add_object_entry(unsigned char *sha1, unsigned int hash)
 	memcpy(entry->sha1, sha1, 20);
 	entry->hash = hash;
 	nr_objects = idx+1;
+	return 1;
 }
 
 static void check_object(struct object_entry *entry)
@@ -384,6 +386,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 int main(int argc, char **argv)
 {
+	SHA_CTX ctx;
 	char line[PATH_MAX + 20];
 	int window = 10, depth = 10, pack_to_stdout = 0;
 	int i;
@@ -428,6 +431,7 @@ int main(int argc, char **argv)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
+	SHA1_Init(&ctx);
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned int hash;
 		char *p;
@@ -443,8 +447,10 @@ int main(int argc, char **argv)
 				continue;
 			hash = hash * 11 + c;
 		}
-		add_object_entry(sha1, hash);
+		if (add_object_entry(sha1, hash))
+			SHA1_Update(&ctx, sha1, 20);
 	}
+	SHA1_Final(object_list_sha1, &ctx);
 	if (non_empty && !nr_objects)
 		return 0;
 	get_object_details();
@@ -457,7 +463,9 @@ int main(int argc, char **argv)
 		find_deltas(sorted_by_type, window+1, depth);
 
 	write_pack_file();
-	if (!pack_to_stdout)
+	if (!pack_to_stdout) {
 		write_index_file();
+		puts(sha1_to_hex(object_list_sha1));
+	}
 	return 0;
 }
