@@ -378,7 +378,7 @@ unless(-d $git_dir) {
 	$last_branch = $opt_o;
 	$orig_branch = "";
 } else {
-	-f "$git_dir/refs/head/$opt_o"
+	-f "$git_dir/refs/heads/$opt_o"
 		or die "Branch '$opt_o' does not exist.\n".
 		       "Either use the correct '-o branch' option,\n".
 		       "or import to a new repository.\n";
