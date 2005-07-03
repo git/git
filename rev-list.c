@@ -15,10 +15,14 @@ static const char rev_list_usage[] =
 		      "  --max-count=nr\n"
 		      "  --max-age=epoch\n"
 		      "  --min-age=epoch\n"
+		      "  --bisect\n"
+		      "  --objects\n"
+		      "  --unpacked\n"
 		      "  --header\n"
 		      "  --pretty\n"
 		      "  --merge-order [ --show-breaks ]";
 
+static int unpacked = 0;
 static int bisect_list = 0;
 static int tag_objects = 0;
 static int tree_objects = 0;
@@ -318,6 +322,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 		struct object *obj = &commit->object;
 
+		if (unpacked && has_sha1_pack(obj->sha1))
+			obj->flags |= UNINTERESTING;
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
 			if (everybody_uninteresting(list))
@@ -448,6 +454,11 @@ int main(int argc, char **argv)
 			tag_objects = 1;
 			tree_objects = 1;
 			blob_objects = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--unpacked")) {
+			unpacked = 1;
+			limited = 1;
 			continue;
 		}
 		if (!strncmp(arg, "--merge-order", 13)) {
