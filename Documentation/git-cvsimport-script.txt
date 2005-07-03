@@ -48,14 +48,6 @@ OPTIONS
 <CVS_module>::
 	The CVS module you want to import. Relative to <CVSROOT>.
 
-<type>::
-	Typically this matches the real type of <object> but asking
-	for a type that can trivially dereferenced from the given
-	<object> is also permitted.  An example is to ask for a
-	"tree" with <object> being a commit object that contains it,
-	or to ask for a "blob" with <object> being a tag object that
-	points at it.
-
 -h::
 	Print a short usage message and exit.
 
