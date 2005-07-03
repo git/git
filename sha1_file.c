@@ -1267,6 +1267,12 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd)
 	return 0;
 }
 
+int has_sha1_pack(const unsigned char *sha1)
+{
+	struct pack_entry e;
+	return find_pack_entry(sha1, &e);
+}
+
 int has_sha1_file(const unsigned char *sha1)
 {
 	struct stat st;
