@@ -20,6 +20,12 @@ CC=gcc
 AR=ar
 INSTALL=install
 
+#
+# sparse is architecture-neutral, which means that we need to tell it
+# explicitly what architecture to check for. Fix this up for yours..
+#
+SPARSE_FLAGS=-D__BIG_ENDIAN__ -D__powerpc__
+
 SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
 	git-fetch-script git-status-script git-commit-script \
@@ -49,7 +55,7 @@ LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 	 epoch.o refs.o csum-file.o pack-check.o pkt-line.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h \
-	pack.h pkt-line.h
+	pack.h pkt-line.h refs.h
 
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
@@ -80,6 +86,9 @@ CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(AR) rcs $@ $(LIB_OBJS)
+
+check:
+	for i in *.c; do sparse $(CFLAGS) $(SPARSE_FLAGS) $$i; done
 
 test-date: test-date.c date.o
 	$(CC) $(CFLAGS) -o $@ test-date.c date.o
