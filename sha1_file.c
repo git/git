@@ -531,7 +531,7 @@ int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void 
 	return inflate(stream, 0);
 }
 
-void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size)
+static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size)
 {
 	int bytes = strlen(buffer) + 1;
 	unsigned char *buf = xmalloc(1+size);

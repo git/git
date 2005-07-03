@@ -28,7 +28,7 @@ static BN_CTX *context = NULL;
 static struct fraction *one = NULL;
 static struct fraction *zero = NULL;
 
-static BN_CTX *get_BN_CTX()
+static BN_CTX *get_BN_CTX(void)
 {
 	if (!context) {
 		context = BN_CTX_new();
@@ -36,7 +36,7 @@ static BN_CTX *get_BN_CTX()
 	return context;
 }
 
-static struct fraction *new_zero()
+static struct fraction *new_zero(void)
 {
 	struct fraction *result = xmalloc(sizeof(*result));
 	BN_init(&result->numerator);
@@ -75,7 +75,7 @@ static struct fraction *init_fraction(struct fraction *fraction)
 	return fraction;
 }
 
-static struct fraction *get_one()
+static struct fraction *get_one(void)
 {
 	if (!one) {
 		one = new_zero();
@@ -84,7 +84,7 @@ static struct fraction *get_one()
 	return one;
 }
 
-static struct fraction *get_zero()
+static struct fraction *get_zero(void)
 {
 	if (!zero) {
 		zero = new_zero();

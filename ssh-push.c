@@ -4,10 +4,10 @@
 
 #include <string.h>
 
-unsigned char local_version = 1;
-unsigned char remote_version = 0;
+static unsigned char local_version = 1;
+static unsigned char remote_version = 0;
 
-int serve_object(int fd_in, int fd_out) {
+static int serve_object(int fd_in, int fd_out) {
 	ssize_t size;
 	int posn = 0;
 	unsigned char sha1[20];
@@ -57,7 +57,7 @@ int serve_object(int fd_in, int fd_out) {
 	return 0;
 }
 
-int serve_version(int fd_in, int fd_out)
+static int serve_version(int fd_in, int fd_out)
 {
 	if (read(fd_in, &remote_version, 1) < 1)
 		return -1;
@@ -65,7 +65,7 @@ int serve_version(int fd_in, int fd_out)
 	return 0;
 }
 
-int serve_ref(int fd_in, int fd_out)
+static int serve_ref(int fd_in, int fd_out)
 {
 	char ref[PATH_MAX];
 	unsigned char sha1[20];
@@ -86,7 +86,7 @@ int serve_ref(int fd_in, int fd_out)
 }
 
 
-void service(int fd_in, int fd_out) {
+static void service(int fd_in, int fd_out) {
 	char type;
 	int retval;
 	do {

@@ -310,7 +310,7 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	return best;
 }
 
-struct commit_list *limit_list(struct commit_list *list)
+static struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;

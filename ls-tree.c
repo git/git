@@ -79,7 +79,7 @@ static struct tree_entry_list *find_entry(const char *path)
 		slash = strchr(path, '/');
 		if (!slash) {
 			len = strlen(path);
-			next = 0;
+			next = NULL;
 		}
 		else {
 			next = slash + 1;

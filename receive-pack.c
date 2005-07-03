@@ -25,7 +25,7 @@ struct command {
 	char ref_name[0];
 };
 
-struct command *commands = NULL;
+static struct command *commands = NULL;
 
 static int is_all_zeroes(const char *hex)
 {

@@ -29,7 +29,7 @@ int fetch(unsigned char *sha1)
 	return ret;
 }
 
-int get_version(void)
+static int get_version(void)
 {
 	char type = 'v';
 	write(fd_out, &type, 1);

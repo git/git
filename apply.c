@@ -724,8 +724,8 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	return offset + hdrsize + patchsize;
 }
 
-const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-const char minuses[]= "----------------------------------------------------------------------";
+static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+static const char minuses[]= "----------------------------------------------------------------------";
 
 static void show_stats(struct patch *patch)
 {

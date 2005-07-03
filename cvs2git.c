@@ -206,7 +206,7 @@ static void update_file(char *line)
 	printf("git-update-cache --add -- '%s'\n", name);
 }
 
-struct hdrentry {
+static struct hdrentry {
 	const char *name;
 	char *dest;
 } hdrs[] = {
