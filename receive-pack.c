@@ -7,7 +7,7 @@ static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static const char *unpacker = "git-unpack-objects";
 
-static int show_ref(const char *path, unsigned char *sha1)
+static int show_ref(const char *path, const unsigned char *sha1)
 {
 	packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	return 0;

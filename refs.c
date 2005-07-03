@@ -17,7 +17,7 @@ static int read_ref(const char *path, unsigned char *sha1)
 	return ret;
 }
 
-static int do_for_each_ref(const char *base, int (*fn)(const char *path, unsigned char *sha1))
+static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1))
 {
 	int retval = 0;
 	DIR *dir = opendir(base);
@@ -27,6 +27,8 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, unsigne
 		int baselen = strlen(base);
 		char *path = xmalloc(baselen + 257);
 		memcpy(path, base, baselen);
+		if (baselen && base[baselen-1] != '/')
+			path[baselen++] = '/';
 
 		while ((de = readdir(dir)) != NULL) {
 			unsigned char sha1[20];
@@ -42,8 +44,6 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, unsigne
 			if (lstat(path, &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				path[baselen + namelen] = '/';
-				path[baselen + namelen + 1] = 0;
 				retval = do_for_each_ref(path, fn);
 				if (retval)
 					break;
@@ -63,9 +63,9 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, unsigne
 	return retval;
 }
 
-int for_each_ref(int (*fn)(const char *path, unsigned char *sha1))
+int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref("refs/", fn);
+	return do_for_each_ref(get_refs_directory(), fn);
 }
 
 static char *ref_file_name(const char *ref)

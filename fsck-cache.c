@@ -6,6 +6,7 @@
 #include "tree.h"
 #include "blob.h"
 #include "tag.h"
+#include "refs.h"
 #include "pack.h"
 
 #define REACHABLE 0x0001
@@ -303,76 +304,30 @@ static int fsck_dir(int i, char *path)
 	return 0;
 }
 
-static int read_sha1_reference(const char *path)
+static int default_refs = 0;
+
+static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 {
-	char hexname[60];
-	unsigned char sha1[20];
-	int fd = open(path, O_RDONLY), len;
 	struct object *obj;
-
-	if (fd < 0)
-		return -1;
-
-	len = read(fd, hexname, sizeof(hexname));
-	close(fd);
-	if (len < 40)
-		return -1;
-
-	if (get_sha1_hex(hexname, sha1) < 0)
-		return -1;
 
 	obj = lookup_object(sha1);
 	if (!obj) {
 		if (!standalone && has_sha1_file(sha1))
-			return 0; /* it is in pack */
-		return error("%s: invalid sha1 pointer %.40s", path, hexname);
+			return 0; /* it is in a pack */
+		error("%s: invalid sha1 pointer %s", refname, sha1_to_hex(sha1));
+		/* We'll continue with the rest despite the error.. */
+		return 0;
 	}
-
+	default_refs++;
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
 	return 0;
 }
 
-static int find_file_objects(const char *base, const char *name)
-{
-	int baselen = strlen(base);
-	int namelen = strlen(name);
-	char *path = xmalloc(baselen + namelen + 2);
-	struct stat st;
-
-	memcpy(path, base, baselen);
-	path[baselen] = '/';
-	memcpy(path + baselen + 1, name, namelen+1);
-	if (stat(path, &st) < 0)
-		return 0;
-
-	/*
-	 * Recurse into directories
-	 */
-	if (S_ISDIR(st.st_mode)) {
-		int count = 0;
-		DIR *dir = opendir(path);
-		if (dir) {
-			struct dirent *de;
-			while ((de = readdir(dir)) != NULL) {
-				if (de->d_name[0] == '.')
-					continue;
-				count += find_file_objects(path, de->d_name);
-			}
-			closedir(dir);
-		}
-		return count;
-	}
-	if (S_ISREG(st.st_mode))
-		return read_sha1_reference(path) == 0;
-	return 0;
-}
-
 static void get_default_heads(void)
 {
-	char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
-	int count = find_file_objects(git_dir, "refs");
-	if (!count)
+	for_each_ref(fsck_handle_ref);
+	if (!default_refs)
 		die("No default references");
 }
 

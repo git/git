@@ -5,7 +5,7 @@
  * Calls the specified function for each ref file until it returns nonzero,
  * and returns the value
  */
-extern int for_each_ref(int (*fn)(const char *path, unsigned char *sha1));
+extern int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1));
 
 /** Reads the refs file specified into sha1 **/
 extern int get_ref_sha1(const char *ref, unsigned char *sha1);
