@@ -11,7 +11,7 @@ SYNOPSIS
 --------
 'git-cvsimport-script' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
-			<CVS_module> [ <GIT_repository> ]
+			[ -C <GIT_repository> ] [ <CVS_module> ]
 
 
 DESCRIPTION
