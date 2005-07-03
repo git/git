@@ -602,7 +602,7 @@ while(<CVS>) {
 		$branch = $opt_o if $branch eq "HEAD";
 		if(defined $branch_date{$branch} and $branch_date{$branch} >= $date) {
 			# skip
-			print "skip patchset $patchset: $date before $branch_date{$branch}\n";
+			print "skip patchset $patchset: $date before $branch_date{$branch}\n" if $opt_v;
 			$state = 11;
 			next;
 		}
@@ -649,7 +649,7 @@ while(<CVS>) {
 		my $rev = $3;
 		$fn =~ s#^/+##;
 		my $data = $cvs->file($fn,$rev);
-		print "".($init ? "New" : "Update")." $fn: ".length($data)." bytes.\n";
+		print "".($init ? "New" : "Update")." $fn: ".length($data)." bytes.\n" if $opt_v;
 		mkpath(dirname($fn),$opt_v);
 		open(F,"> ./$fn")
 			or die "Cannot create '$fn': $!\n";
