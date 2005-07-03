@@ -143,13 +143,32 @@ sub conn {
 		}
 		$self->{'socketo'} = $s;
 		$self->{'socketi'} = $s;
-	} else { # local: Fork off our own cvs server.
+	} else { # local or ext: Fork off our own cvs server.
 		my $pr = IO::Pipe->new();
 		my $pw = IO::Pipe->new();
 		my $pid = fork();
 		die "Fork: $!\n" unless defined $pid;
 		my $cvs = 'cvs';
 		$cvs = $ENV{CVS_SERVER} if exists $ENV{CVS_SERVER};
+		my $rsh = 'rsh';
+		$rsh = $ENV{CVS_RSH} if exists $ENV{CVS_RSH};
+
+		my @cvs = ($cvs, 'server');
+		my ($local, $user, $host);
+		$local = $repo =~ s/:local://;
+		if (!$local) {
+		    $repo =~ s/:ext://;
+		    $local = !($repo =~ s/^(?:([^\@:]+)\@)?([^:]+)://);
+		    ($user, $host) = ($1, $2);
+		}
+		if (!$local) {
+		    if ($user) {
+			unshift @cvs, $rsh, '-l', $user, $host;
+		    } else {
+			unshift @cvs, $rsh, $host;
+		    }
+		}
+
 		unless($pid) {
 			$pr->writer();
 			$pw->reader();
@@ -157,7 +176,7 @@ sub conn {
 			dup2($pr->fileno(),1);
 			$pr->close();
 			$pw->close();
-			exec($cvs,"server");
+			exec(@cvs);
 		}
 		$pw->writer();
 		$pr->reader();

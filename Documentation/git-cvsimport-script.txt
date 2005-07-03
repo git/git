@@ -26,7 +26,8 @@ OPTIONS
 -------
 -d <CVSROOT>::
 	The root of the CVS archive. May be local (a simple path) or remote;
-	currently, only the :pserver: access method is supported.
+	currently, only the :local:, :ext: and :pserver: access methods 
+	are supported.
 
 -o <branch-for-HEAD>::
 	The 'HEAD' branch from CVS is imported to the 'origin' branch within
