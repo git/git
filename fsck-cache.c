@@ -342,6 +342,31 @@ static void fsck_object_dir(const char *path)
 	fsck_sha1_list();
 }
 
+static int fsck_head_link(void)
+{
+	int fd, count;
+	char hex[40];
+	unsigned char sha1[20];
+	static char path[PATH_MAX], link[PATH_MAX];
+	const char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
+
+	snprintf(path, sizeof(path), "%s/HEAD", git_dir);
+	if (readlink(path, link, sizeof(link)) < 0)
+		return error("HEAD is not a symlink");
+	if (strncmp("refs/heads/", link, 11))
+		return error("HEAD points to something strange (%s)", link);
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return error("HEAD: %s", strerror(errno));
+	count = read(fd, hex, sizeof(hex));
+	close(fd);
+	if (count < 0)
+		return error("HEAD: %s", strerror(errno));
+	if (count < 40 || get_sha1_hex(hex, sha1))
+		return error("HEAD: not a valid git pointer");
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int i, heads;
@@ -382,6 +407,7 @@ int main(int argc, char **argv)
 	if (standalone)
 		unsetenv("GIT_ALTERNATE_OBJECT_DIRECTORIES");
 
+	fsck_head_link();
 	fsck_object_dir(get_object_directory());
 	if (check_full) {
 		int j;
