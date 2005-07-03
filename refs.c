@@ -3,6 +3,71 @@
 
 #include <errno.h>
 
+static int read_ref(const char *path, unsigned char *sha1)
+{
+	int ret = -1;
+	int fd = open(path, O_RDONLY);
+
+	if (fd >= 0) {
+		char buffer[60];
+		if (read(fd, buffer, sizeof(buffer)) >= 40)
+			ret = get_sha1_hex(buffer, sha1);
+		close(fd);
+	}
+	return ret;
+}
+
+static int do_for_each_ref(const char *base, int (*fn)(const char *path, unsigned char *sha1))
+{
+	int retval = 0;
+	DIR *dir = opendir(base);
+
+	if (dir) {
+		struct dirent *de;
+		int baselen = strlen(base);
+		char *path = xmalloc(baselen + 257);
+		memcpy(path, base, baselen);
+
+		while ((de = readdir(dir)) != NULL) {
+			unsigned char sha1[20];
+			struct stat st;
+			int namelen;
+
+			if (de->d_name[0] == '.')
+				continue;
+			namelen = strlen(de->d_name);
+			if (namelen > 255)
+				continue;
+			memcpy(path + baselen, de->d_name, namelen+1);
+			if (lstat(path, &st) < 0)
+				continue;
+			if (S_ISDIR(st.st_mode)) {
+				path[baselen + namelen] = '/';
+				path[baselen + namelen + 1] = 0;
+				retval = do_for_each_ref(path, fn);
+				if (retval)
+					break;
+				continue;
+			}
+			if (read_ref(path, sha1) < 0)
+				continue;
+			if (!has_sha1_file(sha1))
+				continue;
+			retval = fn(path, sha1);
+			if (retval)
+				break;
+		}
+		free(path);
+		closedir(dir);
+	}
+	return retval;
+}
+
+int for_each_ref(int (*fn)(const char *path, unsigned char *sha1))
+{
+	return do_for_each_ref("refs/", fn);
+}
+
 static char *ref_file_name(const char *ref)
 {
 	char *base = get_refs_directory();

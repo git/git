@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 #include "pkt-line.h"
 #include <sys/wait.h>
 
@@ -6,63 +7,15 @@ static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static const char *unpacker = "git-unpack-objects";
 
-static void show_ref(const char *path, unsigned char *sha1)
+static int show_ref(const char *path, unsigned char *sha1)
 {
 	packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
+	return 0;
 }
 
-static int read_ref(const char *path, unsigned char *sha1)
+static void write_head_info(void)
 {
-	int ret = -1;
-	int fd = open(path, O_RDONLY);
-
-	if (fd >= 0) {
-		char buffer[60];
-		if (read(fd, buffer, sizeof(buffer)) >= 40)
-			ret = get_sha1_hex(buffer, sha1);
-		close(fd);
-	}
-	return ret;
-}
-
-static void write_head_info(const char *base)
-{
-	DIR *dir = opendir(base);
-
-	if (dir) {
-		struct dirent *de;
-		int baselen = strlen(base);
-		char *path = xmalloc(baselen + 257);
-		memcpy(path, base, baselen);
-
-		while ((de = readdir(dir)) != NULL) {
-			char sha1[20];
-			struct stat st;
-			int namelen;
-
-			if (de->d_name[0] == '.')
-				continue;
-			namelen = strlen(de->d_name);
-			if (namelen > 255)
-				continue;
-			memcpy(path + baselen, de->d_name, namelen+1);
-			if (lstat(path, &st) < 0)
-				continue;
-			if (S_ISDIR(st.st_mode)) {
-				path[baselen + namelen] = '/';
-				path[baselen + namelen + 1] = 0;
-				write_head_info(path);
-				continue;
-			}
-			if (read_ref(path, sha1) < 0)
-				continue;
-			if (!has_sha1_file(sha1))
-				continue;
-			show_ref(path, sha1);
-		}
-		free(path);
-		closedir(dir);
-	}
+	for_each_ref(show_ref);
 }
 
 struct command {
@@ -256,7 +209,7 @@ int main(int argc, char **argv)
 
 	if (access("objects", X_OK) < 0 || access("refs/heads", X_OK) < 0)
 		die("%s doesn't appear to be a git directory", dir);
-	write_head_info("refs/");
+	write_head_info();
 
 	/* EOF */
 	packet_flush(1);
