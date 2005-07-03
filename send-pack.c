@@ -108,6 +108,7 @@ static int pack_objects(int fd, struct ref *refs)
 	 * We don't wait for the rev-list pipeline in the parent:
 	 * we end up waiting for the other end instead
 	 */
+	return 0;
 }
 
 static int read_ref(const char *ref, unsigned char *sha1)
