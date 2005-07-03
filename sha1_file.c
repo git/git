@@ -294,6 +294,8 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 		return -1;
 
 	index = idx_map;
+	*idx_map_ = idx_map;
+	*idx_size_ = idx_size;
 
 	/* check index map */
 	if (idx_size < 4*256 + 20 + 20)
@@ -316,8 +318,6 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	if (idx_size != 4*256 + nr * 24 + 20 + 20)
 		return error("wrong index file size");
 
-	*idx_map_ = idx_map;
-	*idx_size_ = idx_size;
 	return 0;
 }
 
@@ -857,7 +857,7 @@ static void *unpack_non_delta_entry(unsigned char *data,
 {
 	int st;
 	z_stream stream;
-	char *buffer;
+	unsigned char *buffer;
 
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
@@ -949,7 +949,7 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 int find_pack_entry_one(const unsigned char *sha1,
 			struct pack_entry *e, struct packed_git *p)
 {
-	int *level1_ofs = p->index_base;
+	unsigned int *level1_ofs = p->index_base;
 	int hi = ntohl(level1_ofs[*sha1]);
 	int lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
 	void *index = p->index_base + 256;
