@@ -18,6 +18,7 @@ struct object_entry {
 	struct object_entry *delta;
 };
 
+static int non_empty = 0;
 static int incremental = 0;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
 static struct object_entry *objects = NULL;
@@ -391,6 +392,10 @@ int main(int argc, char **argv)
 		const char *arg = argv[i];
 
 		if (*arg == '-') {
+			if (!strcmp("--non-empty", arg)) {
+				non_empty = 1;
+				continue;
+			}
 			if (!strcmp("--incremental", arg)) {
 				incremental = 1;
 				continue;
@@ -440,6 +445,8 @@ int main(int argc, char **argv)
 		}
 		add_object_entry(sha1, hash);
 	}
+	if (non_empty && !nr_objects)
+		return 0;
 	get_object_details();
 
 	fprintf(stderr, "Packing %d objects\n", nr_objects);
