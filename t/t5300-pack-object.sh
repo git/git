@@ -35,18 +35,18 @@ test_expect_success \
 
 test_expect_success \
     'pack without delta' \
-    'git-pack-objects --window=0 test-1 <obj-list'
+    'packname_1=$(git-pack-objects --window=0 test-1 <obj-list)'
 
 rm -fr .git2
 mkdir .git2
 
 test_expect_success \
     'unpack without delta' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
+    "GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      git-init-db &&
-     git-unpack-objects -n <test-1.pack &&
-     git-unpack-objects <test-1.pack'
+     git-unpack-objects -n <test-1-${packname_1}.pack &&
+     git-unpack-objects <test-1-${packname_1}.pack"
 
 unset GIT_OBJECT_DIRECTORY
 cd $TRASH/.git2
@@ -66,7 +66,7 @@ cd $TRASH
 test_expect_success \
     'pack with delta' \
     'pwd &&
-     git-pack-objects test-2 <obj-list'
+     packname_2=$(git-pack-objects test-2 <obj-list)'
 
 rm -fr .git2
 mkdir .git2
@@ -76,8 +76,8 @@ test_expect_success \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      git-init-db &&
-     git-unpack-objects -n <test-2.pack &&
-     git-unpack-objects <test-2.pack'
+     git-unpack-objects -n <test-2-${packname_2}.pack &&
+     git-unpack-objects <test-2-${packname_2}.pack'
 
 unset GIT_OBJECT_DIRECTORY
 cd $TRASH/.git2
@@ -101,7 +101,7 @@ test_expect_success \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      git-init-db &&
-     cp test-1.pack test-1.idx .git2/objects/pack && {
+     cp test-1-${packname_1}.pack test-1-${packname_1}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
 	 do
@@ -117,7 +117,7 @@ test_expect_success \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
      rm -f .git2/objects/pack/test-?.idx &&
-     cp test-2.pack test-2.idx .git2/objects/pack && {
+     cp test-2-${packname_2}.pack test-2-${packname_2}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
 	 do
@@ -131,32 +131,32 @@ unset GIT_OBJECT_DIRECTORY
 
 test_expect_success \
     'verify pack' \
-    'git-verify-pack test-1.idx test-2.idx'
+    'git-verify-pack test-1-${packname_1}.idx test-2-${packname_2}.idx'
 
 test_expect_success \
     'corrupt a pack and see if verify catches' \
-    'cp test-1.idx test-3.idx &&
-     cp test-2.pack test-3.pack &&
+    'cp test-1-${packname_1}.idx test-3.idx &&
+     cp test-2-${packname_2}.pack test-3.pack &&
      if git-verify-pack test-3.idx
      then false
      else :;
      fi &&
 
-     cp test-1.pack test-3.pack &&
+     cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git-verify-pack test-3.idx
      then false
      else :;
      fi &&
 
-     cp test-1.pack test-3.pack &&
+     cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git-verify-pack test-3.idx
      then false
      else :;
      fi &&
 
-     cp test-1.pack test-3.pack &&
+     cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git-verify-pack test-3.idx
      then false
