@@ -26,6 +26,11 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 		struct dirent *de;
 		int baselen = strlen(base);
 		char *path = xmalloc(baselen + 257);
+
+		if (!strncmp(base, "./", 2)) {
+			base += 2;
+			baselen -= 2;
+		}
 		memcpy(path, base, baselen);
 		if (baselen && base[baselen-1] != '/')
 			path[baselen++] = '/';
