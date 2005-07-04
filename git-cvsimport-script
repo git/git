@@ -651,9 +651,10 @@ while(<CVS>) {
 		}
 		if(($ancestor || $branch) ne $last_branch) {
 			print "Switching from $last_branch to $branch\n" if $opt_v;
-			system("git-read-tree","-m","$last_branch","$branch");
+			system("git-read-tree", $branch);
 			die "read-tree failed: $?\n" if $?;
 		}
+		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
 	} elsif($state == 8) {
 		$logmsg .= "$_\n";
