@@ -131,8 +131,57 @@ static int find_short_object_filename(int len, const char *name, unsigned char *
 	return 0;
 }
 
+static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)
+{
+	do {
+		if (*a != *b)
+			return 0;
+		a++;
+		b++;
+		len -= 2;
+	} while (len > 1);
+	if (len)
+		if ((*a ^ *b) & 0xf0)
+			return 0;
+	return 1;
+}
+
 static int find_short_packed_object(int len, const unsigned char *match, unsigned char *sha1)
 {
+	struct packed_git *p;
+
+	prepare_packed_git();
+	for (p = packed_git; p; p = p->next) {
+		unsigned num = num_packed_objects(p);
+		unsigned first = 0, last = num;
+		while (first < last) {
+			unsigned mid = (first + last) / 2;
+			unsigned char now[20];
+			int cmp;
+
+			nth_packed_object_sha1(p, mid, now);
+			cmp = memcmp(match, now, 20);
+			if (!cmp) {
+				first = mid;
+				break;
+			}
+			if (cmp > 0) {
+				first = mid+1;
+				continue;
+			}
+			last = mid;
+		}
+		if (first < num) {
+			unsigned char now[20], next[20];
+			nth_packed_object_sha1(p, first, now);
+			if (match_sha(len, match, now)) {
+				if (nth_packed_object_sha1(p, first+1, next) || !match_sha(len, match, next)) {
+					memcpy(sha1, now, 20);
+					return 1;
+				}
+			}
+		}	
+	}
 	return 0;
 }
 
