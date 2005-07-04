@@ -63,7 +63,8 @@ static void show_commit(struct commit *commit)
 		static char pretty_header[16384];
 		pretty_print_commit(commit_format, commit->buffer, ~0, pretty_header, sizeof(pretty_header));
 		printf("%s%c", pretty_header, hdr_termination);
-	}	
+	}
+	fflush(stdout);
 }
 
 static int filter_commit(struct commit * commit)
