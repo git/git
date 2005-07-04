@@ -40,10 +40,10 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
-	git-get-tar-commit-id git-apply git-stripspace \
-	git-cvs2git git-diff-stages git-rev-parse git-patch-id \
-	git-pack-objects git-unpack-objects git-verify-pack \
-	git-receive-pack git-send-pack git-prune-packed
+	git-get-tar-commit-id git-apply git-stripspace git-cvs2git \
+	git-diff-stages git-rev-parse git-patch-id git-pack-objects \
+	git-unpack-objects git-verify-pack git-receive-pack git-send-pack \
+	git-prune-packed git-fetch-pack git-upload-pack
 
 all: $(PROG)
 
@@ -139,6 +139,7 @@ git-verify-pack: verify-pack.c
 git-receive-pack: receive-pack.c
 git-send-pack: send-pack.c
 git-prune-packed: prune-packed.c
+git-fetch-pack: fetch-pack.c
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += -lssl
