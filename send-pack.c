@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "pkt-line.h"
-#include <sys/wait.h>
 
 static const char send_pack_usage[] = "git-send-pack [--exec=other] destination [heads]*";
 static const char *exec = "git-receive-pack";
@@ -184,76 +183,6 @@ static int send_pack(int in, int out, int nr_match, char **match)
 	return 0;
 }
 
-/*
- * First, make it shell-safe.  We do this by just disallowing any
- * special characters. Somebody who cares can do escaping and let
- * through the rest. But since we're doing to feed this to ssh as
- * a command line, we're going to be pretty damn anal for now.
- */
-static char *shell_safe(char *url)
-{
-	char *n = url;
-	unsigned char c;
-	static const char flags[256] = {
-		['0'...'9'] = 1,
-		['a'...'z'] = 1,
-		['A'...'Z'] = 1,
-		['.'] = 1, ['/'] = 1,
-		['-'] = 1, ['+'] = 1,
-		[':'] = 1
-	};
-
-	while ((c = *n++) != 0) {
-		if (flags[c] != 1)
-			die("I don't like '%c'. Sue me.", c);
-	}
-	return url;
-}
-
-/*
- * Yeah, yeah, fixme. Need to pass in the heads etc.
- */
-static int setup_connection(int fd[2], char *url, char **heads)
-{
-	char command[1024];
-	const char *host, *path;
-	char *colon;
-	int pipefd[2][2];
-	pid_t pid;
-
-	url = shell_safe(url);
-	host = NULL;
-	path = url;
-	colon = strchr(url, ':');
-	if (colon) {
-		*colon = 0;
-		host = url;
-		path = colon+1;
-	}
-	snprintf(command, sizeof(command), "%s %s", exec, path);
-	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
-		die("unable to create pipe pair for communication");
-	pid = fork();
-	if (!pid) {
-		dup2(pipefd[1][0], 0);
-		dup2(pipefd[0][1], 1);
-		close(pipefd[0][0]);
-		close(pipefd[0][1]);
-		close(pipefd[1][0]);
-		close(pipefd[1][1]);
-		if (host)
-			execlp("ssh", "ssh", host, command, NULL);
-		else
-			execlp("sh", "sh", "-c", command, NULL);
-		die("exec failed");
-	}		
-	fd[0] = pipefd[0][0];
-	fd[1] = pipefd[1][1];
-	close(pipefd[0][1]);
-	close(pipefd[1][0]);
-	return pid;
-}
-
 int main(int argc, char **argv)
 {
 	int i, nr_heads = 0;
@@ -280,12 +209,12 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(send_pack_usage);
-	pid = setup_connection(fd, dest, heads);
+	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
 	ret = send_pack(fd[0], fd[1], nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	waitpid(pid, NULL, 0);
+	finish_connect(pid);
 	return ret;
 }

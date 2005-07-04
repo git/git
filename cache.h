@@ -259,6 +259,9 @@ struct pack_entry {
 	struct packed_git *p;
 };
 
+extern int git_connect(int fd[2], char *url, const char *prog);
+extern int finish_connect(pid_t pid);
+
 extern void prepare_packed_git(void);
 extern int use_packed_git(struct packed_git *);
 extern void unuse_packed_git(struct packed_git *);
