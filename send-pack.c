@@ -4,27 +4,6 @@
 static const char send_pack_usage[] = "git-send-pack [--exec=other] destination [heads]*";
 static const char *exec = "git-receive-pack";
 
-static int path_match(const char *path, int nr, char **match)
-{
-	int i;
-	int pathlen = strlen(path);
-
-	for (i = 0; i < nr; i++) {
-		char *s = match[i];
-		int len = strlen(s);
-
-		if (!len || len > pathlen)
-			continue;
-		if (memcmp(path + pathlen - len, s, len))
-			continue;
-		if (pathlen > len && path[pathlen - len - 1] != '/')
-			continue;
-		*s = 0;
-		return 1;
-	}
-	return 0;
-}
-
 struct ref {
 	struct ref *next;
 	unsigned char old_sha1[20];

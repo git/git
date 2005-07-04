@@ -1,6 +1,27 @@
 #include "cache.h"
 #include <sys/wait.h>
 
+int path_match(const char *path, int nr, char **match)
+{
+	int i;
+	int pathlen = strlen(path);
+
+	for (i = 0; i < nr; i++) {
+		char *s = match[i];
+		int len = strlen(s);
+
+		if (!len || len > pathlen)
+			continue;
+		if (memcmp(path + pathlen - len, s, len))
+			continue;
+		if (pathlen > len && path[pathlen - len - 1] != '/')
+			continue;
+		*s = 0;
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * First, make it shell-safe.  We do this by just disallowing any
  * special characters. Somebody who cares can do escaping and let
