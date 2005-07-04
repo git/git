@@ -10,16 +10,57 @@ static int nr_has = 0, nr_needs = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
 
+static int strip(char *line, int len)
+{
+	if (len && line[len-1] == '\n')
+		line[--len] = 0;
+	return len;
+}
+
 static void create_pack_file(void)
 {
-	/*
-	 * Here, we should do
-	 *
-	 *	git-rev-list --objects needs_sha1 --not has_sha1 |
-	 *		git-pack-objects --stdout
-	 *
-	 * but we don't.
-	 */
+	int fd[2];
+	pid_t pid;
+
+	if (pipe(fd) < 0)
+		die("git-upload-pack: unable to create pipe");
+	pid = fork();
+	if (pid < 0)
+		die("git-upload-pack: unable to fork git-rev-list");
+
+	if (!pid) {
+		int i;
+		int args = nr_has + nr_needs + 5;
+		char **argv = xmalloc(args * sizeof(char *));
+		char *buf = xmalloc(args * 45);
+		char **p = argv;
+
+		dup2(fd[1], 1);
+		close(0);
+		close(fd[0]);
+		close(fd[1]);
+		*p++ = "git-rev-list";
+		*p++ = "--objects";
+		for (i = 0; i < nr_needs; i++) {
+			*p++ = buf;
+			memcpy(buf, sha1_to_hex(needs_sha1[i]), 41);
+			buf += 41;
+		}
+		for (i = 0; i < nr_has; i++) {
+			*p++ = buf;
+			*buf++ = '^';
+			memcpy(buf, sha1_to_hex(has_sha1[i]), 41);
+			buf += 41;
+		}
+		*p++ = NULL;
+		execvp("git-rev-list", argv);
+		die("git-upload-pack: unable to exec git-rev-list");
+	}
+	dup2(fd[0], 0);
+	close(fd[0]);
+	close(fd[1]);
+	execlp("git-pack-objects", "git-pack-objects", "--stdout", NULL);
+	die("git-upload-pack: unable to exec git-pack-objects");
 }
 
 static int got_sha1(char *hex, unsigned char *sha1)
@@ -50,8 +91,7 @@ static int get_common_commits(void)
 			packet_write(1, "NAK\n");
 			continue;
 		}
-		if (line[len-1] == '\n')
-			line[--len] = 0;
+		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
 			if (got_sha1(line+5, sha1)) {
 				packet_write(1, "ACK %s\n", sha1_to_hex(sha1));
@@ -69,7 +109,8 @@ static int get_common_commits(void)
 	for (;;) {
 		len = packet_read_line(0, line, sizeof(line));
 		if (!len)
-			break;
+			continue;
+		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
 			got_sha1(line+5, sha1);
 			continue;

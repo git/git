@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include <sys/wait.h>
 
 static const char fetch_pack_usage[] = "git-fetch-pack [host:]directory [heads]* < mycommitlist";
 static const char *exec = "git-upload-pack";
@@ -26,11 +27,17 @@ static int get_ack(int fd, unsigned char *result_sha1)
 static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *remote)
 {
 	static char line[1000];
-	int count = 0, flushes = 0;
+	int count = 0, flushes = 0, retval;
+	FILE *revs;
 
+	revs = popen("git-rev-list $(git-rev-parse --all)", "r");
+	if (!revs)
+		die("unable to run 'git-rev-list'");
 	packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 	packet_flush(fd[1]);
-	while (fgets(line, sizeof(line), stdin) != NULL) {
+	flushes = 1;
+	retval = -1;
+	while (fgets(line, sizeof(line), revs) != NULL) {
 		unsigned char sha1[20];
 		if (get_sha1_hex(line, sha1))
 			die("git-fetch-pack: expected object name, got crud");
@@ -45,19 +52,22 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 			 */
 			if (count == 32)
 				continue;
-			if (get_ack(fd[0], result_sha1))
-				return 0;
+			if (get_ack(fd[0], result_sha1)) {
+				flushes = 0;
+				retval = 0;
+				break;
+			}
 			flushes--;
 		}
 	}
-	flushes++;
-	packet_flush(fd[1]);
+	pclose(revs);
+	packet_write(fd[1], "done\n");
 	while (flushes) {
 		flushes--;
 		if (get_ack(fd[0], result_sha1))
 			return 0;
 	}
-	return -1;
+	return retval;
 }
 
 static int get_old_sha1(const char *refname, unsigned char *sha1)
@@ -88,12 +98,12 @@ static int check_ref(const char *refname, const unsigned char *sha1)
 		memset(mysha1, 0, 20);
 
 	if (!memcmp(sha1, mysha1, 20)) {
-		printf("%s: unchanged\n", refname);
+		fprintf(stderr, "%s: unchanged\n", refname);
 		return 0;
 	}
 	
 	memcpy(oldhex, sha1_to_hex(mysha1), 41);
-	printf("%s: %s (%s)\n", refname, sha1_to_hex(sha1), oldhex);
+	fprintf(stderr, "%s: %s (%s)\n", refname, sha1_to_hex(sha1), oldhex);
 	return 1;
 }
 
@@ -128,7 +138,8 @@ static int get_remote_heads(int fd, int nr_match, char **match, unsigned char *r
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
 	unsigned char sha1[20], remote[20];
-	int heads;
+	int heads, status;
+	pid_t pid;
 
 	heads = get_remote_heads(fd[0], nr_match, match, remote);
 	if (heads != 1) {
@@ -137,11 +148,34 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	}
 	if (find_common(fd, sha1, remote) < 0)
 		die("git-fetch-pack: no common commits");
-	close(fd[1]);
-	dup2(fd[0], 0);
+	pid = fork();
+	if (pid < 0)
+		die("git-fetch-pack: unable to fork off git-unpack-objects");
+	if (!pid) {
+		close(fd[1]);
+		dup2(fd[0], 0);
+		close(fd[0]);
+		execlp("git-unpack-objects", "git-unpack-objects", NULL);
+		die("git-unpack-objects exec failed");
+	}
 	close(fd[0]);
-	execlp("git-unpack-objects", "git-unpack-objects", NULL);
-	die("git-unpack-objects exec failed");
+	close(fd[1]);
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR)
+			die("waiting for git-unpack-objects: %s", strerror(errno));
+	}
+	if (WIFEXITED(status)) {
+		int code = WEXITSTATUS(status);
+		if (code)
+			die("git-unpack-objects died with error code %d", code);
+		puts(sha1_to_hex(remote));
+		return 0;
+	}
+	if (WIFSIGNALED(status)) {
+		int sig = WTERMSIG(status);
+		die("git-unpack-objects died of signal %d", sig);
+	}
+	die("Sherlock Holmes! git-unpack-objects died of unnatural causes %d!", status);
 }
 
 int main(int argc, char **argv)
