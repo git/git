@@ -102,13 +102,84 @@ static int get_parent(char *name, unsigned char *result, int idx)
 	return -1;
 }
 
+static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
+{
+	static char dirname[PATH_MAX];
+	char hex[40];
+	DIR *dir;
+	int found;
+
+	snprintf(dirname, sizeof(dirname), "%s/%.2s", get_object_directory(), name);
+	dir = opendir(dirname);
+	sprintf(hex, "%.2s", name);
+	found = 0;
+	if (dir) {
+		struct dirent *de;
+		while ((de = readdir(dir)) != NULL) {
+			if (strlen(de->d_name) != 38)
+				continue;
+			if (memcmp(de->d_name, name + 2, len-2))
+				continue;
+			memcpy(hex + 2, de->d_name, 38);
+			if (++found > 1)
+				break;
+		}
+		closedir(dir);
+	}
+	if (found == 1)
+		return get_sha1_hex(hex, sha1) == 0;
+	return 0;
+}
+
+static int find_short_packed_object(int len, const unsigned char *match, unsigned char *sha1)
+{
+	return 0;
+}
+
+static int get_short_sha1(char *name, unsigned char *sha1)
+{
+	int i;
+	char canonical[40];
+	unsigned char res[20];
+
+	memset(res, 0, 20);
+	memset(canonical, 'x', 40);
+	for (i = 0;;i++) {
+		unsigned char c = name[i];
+		unsigned char val;
+		if (!c || i > 40)
+			break;
+		if (c >= '0' && c <= '9')
+			val = c - '0';
+		else if (c >= 'a' && c <= 'f')
+			val = c - 'a' + 10;
+		else if (c >= 'A' && c <='F') {
+			val = c - 'A' + 10;
+			c -= 'A' - 'a';
+		}
+		else
+			return -1;
+		canonical[i] = c;
+		if (!(i & 1))
+			val <<= 4;
+		res[i >> 1] |= val;
+	}
+	if (i < 4)
+		return -1;
+	if (find_short_object_filename(i, canonical, sha1))
+		return 0;
+	if (find_short_packed_object(i, res, sha1))
+		return 0;
+	return -1;
+}
+
 /*
  * This is like "get_sha1()", except it allows "sha1 expressions",
  * notably "xyz^" for "parent of xyz"
  */
 static int get_extended_sha1(char *name, unsigned char *sha1)
 {
-	int parent;
+	int parent, ret;
 	int len = strlen(name);
 
 	parent = 1;
@@ -117,14 +188,16 @@ static int get_extended_sha1(char *name, unsigned char *sha1)
 		len--;
 	}
 	if (len > 1 && name[len-1] == '^') {
-		int ret;
 		name[len-1] = 0;
 		ret = get_parent(name, sha1, parent);
 		name[len-1] = '^';
 		if (!ret)
 			return 0;
 	}
-	return get_sha1(name, sha1);
+	ret = get_sha1(name, sha1);
+	if (!ret)
+		return 0;
+	return get_short_sha1(name, sha1);
 }
 
 static void show_default(void)
