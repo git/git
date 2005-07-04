@@ -16,6 +16,8 @@
 use strict;
 use warnings;
 use Getopt::Std;
+use File::Spec;
+use File::Temp qw(tempfile);
 use File::Path qw(mkpath);
 use File::Basename qw(basename dirname);
 use Time::Local;
@@ -377,6 +379,12 @@ my %branch_date;
 my $git_dir = $ENV{"GIT_DIR"} || ".git";
 $git_dir = getwd()."/".$git_dir unless $git_dir =~ m#^/#;
 $ENV{"GIT_DIR"} = $git_dir;
+my $orig_git_index;
+$orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
+my ($git_ih, $git_index) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+				    DIR => File::Spec->tmpdir());
+close ($git_ih);
+$ENV{GIT_INDEX_FILE} = $git_index;
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
@@ -397,6 +405,9 @@ unless(-d $git_dir) {
 		$last_branch = "master";
 	}
 	$orig_branch = $last_branch;
+
+	# populate index
+	system('git-read-tree', $last_branch);
 
 	# Get the last import timestamps
 	opendir(D,"$git_dir/refs/heads");
@@ -643,11 +654,6 @@ while(<CVS>) {
 			system("git-read-tree","-m","$last_branch","$branch");
 			die "read-tree failed: $?\n" if $?;
 		}
-		if($branch ne $last_branch) {
-			unlink("$git_dir/HEAD");
-			symlink("refs/heads/$branch","$git_dir/HEAD");
-			$last_branch = $branch;
-		}
 		$state = 9;
 	} elsif($state == 8) {
 		$logmsg .= "$_\n";
@@ -686,26 +692,23 @@ while(<CVS>) {
 }
 &$commit() if $branch and $state != 11;
 
+unlink($git_index);
+
 # Now switch back to the branch we were in before all of this happened
 if($orig_branch) {
-	print "DONE; switching back to $orig_branch\n" if $opt_v;
+	print "DONE\n" if $opt_v;
 } else {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		unless -f "$git_dir/refs/heads/master";
+	unlink("$git_dir/HEAD");
+	symlink("refs/heads/$orig_branch","$git_dir/HEAD");
+	if (defined $orig_git_index) {
+	    $ENV{GIT_INDEX_FILE} = $orig_git_index;
+	} else {
+	    delete $ENV{GIT_INDEX_FILE};
+	}
+	system('git checkout');
+	die "checkout failed: $?\n" if $?;
 }
-
-if ($orig_branch) {
-	system("git-read-tree",$last_branch);
-	die "read-tree failed: $?\n" if $?;
-} else {
-	system('git-read-tree', $orig_branch);
-	die "read-tree failed: $?\n" if $?;
-	system('git-checkout-cache', '-a');
-	die "checkout-cache failed: $?\n" if $?;
-}
-
-unlink("$git_dir/HEAD");
-symlink("refs/heads/$orig_branch","$git_dir/HEAD");
-
