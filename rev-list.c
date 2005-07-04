@@ -482,7 +482,7 @@ int main(int argc, char **argv)
 		commit = get_commit_reference(arg, flags);
 		if (!commit)
 			continue;
-		commit_list_insert(commit, &list);
+		insert_by_date(&list, commit);
 	}
 
 	if (!merge_order) {		
