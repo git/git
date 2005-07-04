@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 #include "pkt-line.h"
 
 static const char fetch_pack_usage[] = "git-fetch-pack [host:]directory [heads]* < mycommitlist";
@@ -22,11 +23,13 @@ static int get_ack(int fd, unsigned char *result_sha1)
 	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
 }
 
-static int find_common(int fd[2], unsigned char *result_sha1)
+static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *remote)
 {
 	static char line[1000];
 	int count = 0, flushes = 0;
 
+	packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
+	packet_flush(fd[1]);
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned char sha1[20];
 		if (get_sha1_hex(line, sha1))
@@ -57,8 +60,47 @@ static int find_common(int fd[2], unsigned char *result_sha1)
 	return -1;
 }
 
-static int get_remote_heads(int fd, int nr_match, char **match)
+static int get_old_sha1(const char *refname, unsigned char *sha1)
 {
+	static char pathname[PATH_MAX];
+	const char *git_dir;
+	int fd, ret;
+
+	git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
+	snprintf(pathname, sizeof(pathname), "%s/%s", git_dir, refname);
+	fd = open(pathname, O_RDONLY);
+	ret = -1;
+	if (fd >= 0) {
+		char buffer[60];
+		if (read(fd, buffer, sizeof(buffer)) >= 40)
+			ret = get_sha1_hex(buffer, sha1);
+		close(fd);
+	}
+	return ret;
+}
+
+static int check_ref(const char *refname, const unsigned char *sha1)
+{
+	unsigned char mysha1[20];
+	char oldhex[41];
+
+	if (get_old_sha1(refname, mysha1) < 0)
+		memset(mysha1, 0, 20);
+
+	if (!memcmp(sha1, mysha1, 20)) {
+		printf("%s: unchanged\n", refname);
+		return 0;
+	}
+	
+	memcpy(oldhex, sha1_to_hex(mysha1), 41);
+	printf("%s: %s (%s)\n", refname, sha1_to_hex(sha1), oldhex);
+	return 1;
+}
+
+static int get_remote_heads(int fd, int nr_match, char **match, unsigned char *result)
+{
+	int count = 0;
+
 	for (;;) {
 		static char line[1000];
 		unsigned char sha1[20];
@@ -75,20 +117,31 @@ static int get_remote_heads(int fd, int nr_match, char **match)
 		refname = line+41;
 		if (nr_match && !path_match(refname, nr_match, match))
 			continue;
-		printf("%s %s\n", sha1_to_hex(sha1), refname);
+		if (check_ref(refname, sha1)) {
+			count++;
+			memcpy(result, sha1, 20);
+		}
 	}
-	return 0;
+	return count;
 }
 
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
-	unsigned char sha1[20];
+	unsigned char sha1[20], remote[20];
+	int heads;
 
-	get_remote_heads(fd[0], nr_match, match);
-	if (find_common(fd, sha1) < 0)
+	heads = get_remote_heads(fd[0], nr_match, match, remote);
+	if (heads != 1) {
+		packet_flush(fd[1]);
+		die(heads ? "multiple remote heads" : "no matching remote head");
+	}
+	if (find_common(fd, sha1, remote) < 0)
 		die("git-fetch-pack: no common commits");
-	printf("common commit: %s\n", sha1_to_hex(sha1));
-	return 0;
+	close(fd[1]);
+	dup2(fd[0], 0);
+	close(fd[0]);
+	execlp("git-unpack-objects", "git-unpack-objects", NULL);
+	die("git-unpack-objects exec failed");
 }
 
 int main(int argc, char **argv)

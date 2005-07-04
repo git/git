@@ -4,11 +4,37 @@
 
 static const char upload_pack_usage[] = "git-upload-pack <dir>";
 
+#define MAX_HAS (16)
+#define MAX_NEEDS (16)
+static int nr_has = 0, nr_needs = 0;
+static unsigned char has_sha1[MAX_HAS][20];
+static unsigned char needs_sha1[MAX_NEEDS][20];
+
+static void create_pack_file(void)
+{
+	/*
+	 * Here, we should do
+	 *
+	 *	git-rev-list --objects needs_sha1 --not has_sha1 |
+	 *		git-pack-objects --stdout
+	 *
+	 * but we don't.
+	 */
+}
+
 static int got_sha1(char *hex, unsigned char *sha1)
 {
+	int nr;
 	if (get_sha1_hex(hex, sha1))
 		die("git-upload-pack: expected SHA1 object, got '%s'", hex);
-	return has_sha1_file(sha1);
+	if (!has_sha1_file(sha1))
+		return 0;
+	nr = nr_has;
+	if (nr < MAX_HAS) {
+		memcpy(has_sha1[nr], sha1, 20);
+		nr_has = nr+1;
+	}
+	return 1;
 }
 
 static int get_common_commits(void)
@@ -55,6 +81,29 @@ static int get_common_commits(void)
 	return 0;
 }
 
+static int receive_needs(void)
+{
+	static char line[1000];
+	int len, needs;
+
+	needs = 0;
+	for (;;) {
+		len = packet_read_line(0, line, sizeof(line));
+		if (!len)
+			return needs;
+
+		/*
+		 * This is purely theoretical right now: git-fetch-pack only
+		 * ever asks for a single HEAD
+		 */
+		if (needs >= MAX_NEEDS)
+			die("I'm only doing a max of %d requests", MAX_NEEDS);
+		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, needs_sha1[needs]))
+			die("git-upload-pack: protocol error, expected to get sha, not '%s'", line);
+		needs++;
+	}
+}
+
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
 	packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
@@ -65,7 +114,11 @@ static int upload_pack(void)
 {
 	for_each_ref(send_ref);
 	packet_flush(1);
+	nr_needs = receive_needs();
+	if (!nr_needs)
+		return 0;
 	get_common_commits();
+	create_pack_file();
 	return 0;
 }
 
