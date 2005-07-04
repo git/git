@@ -408,6 +408,7 @@ unless(-d $git_dir) {
 
 	# populate index
 	system('git-read-tree', $last_branch);
+	die "read-tree failed: $?\n" if $?;
 
 	# Get the last import timestamps
 	opendir(D,"$git_dir/refs/heads");
@@ -510,8 +511,8 @@ my $commit = sub {
 		print "Parent ID $parent\n" if $opt_v;
 	}
 
-	my $pr = IO::Pipe->new();
-	my $pw = IO::Pipe->new();
+	my $pr = IO::Pipe->new() or die "Cannot open pipe: $!\n";
+	my $pw = IO::Pipe->new() or die "Cannot open pipe: $!\n";
 	$pid = fork();
 	die "Fork: $!\n" unless defined $pid;
 	unless($pid) {
