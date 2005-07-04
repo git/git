@@ -28,19 +28,19 @@ use POSIX qw(strftime dup2);
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C);
+our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C,$opt_z);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
-	   [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
-       [ -p opts-for-cvsps ] [ -C GIT_repository ]
+       [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
+       [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
        [ CVS_module ]
 END
 	exit(1);
 }
 
-getopts("hqvo:d:p:C:") or usage();
+getopts("hqvo:d:p:C:z:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -436,6 +436,7 @@ die "Cannot fork: $!\n" unless defined $pid;
 unless($pid) {
 	my @opt;
 	@opt = split(/,/,$opt_p) if defined $opt_p;
+	unshift @opt, '-z', $opt_z if defined $opt_z;
 	exec("cvsps",@opt,"-u","-A","--cvs-direct",'--root',$opt_d,$cvs_tree);
 	die "Could not start cvsps: $!\n";
 }
