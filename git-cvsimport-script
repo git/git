@@ -359,8 +359,6 @@ sub pmode($) {
 	return $m;
 }
 
-my $tmpcv = "/var/cache/cvs";
-
 sub getwd() {
 	my $pwd = `pwd`;
 	chomp $pwd;
