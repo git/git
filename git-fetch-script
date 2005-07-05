@@ -11,37 +11,22 @@ fi
 
 : ${GIT_DIR=.git}
 : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
+TMP_HEAD="$GIT_DIR/TMP_HEAD"
 
-download_one () {
-	# remote_path="$1" local_file="$2"
-	case "$1" in
-	http://*)
-		wget -q -O "$2" "$1" ;;
-	/*)
-		test -f "$1" && cat >"$2" "$1" ;;
-	*)
-		rsync -L "$1" "$2" ;;
-	esac
-}
-
-download_objects () {
-	# remote_repo="$1" head_sha1="$2"
-	case "$1" in
-	http://*)
-		git-http-pull -a "$2" "$1/"
-		;;
-	/*)
-		git-local-pull -l -a "$2" "$1/"
-		;;
-	*)
-		rsync -avz --ignore-existing \
-			"$1/objects/." "$GIT_OBJECT_DIRECTORY"/.
-		;;
-	esac
-}
-
-echo "Getting remote $merge_name"
-download_one "$merge_repo/$merge_name" "$GIT_DIR/$destination" || exit 1
-
-echo "Getting object database"
-download_objects "$merge_repo" "$(cat "$GIT_DIR/$destination")" || exit 1
+case "$merge_repo" in
+http://*)
+	head=$(wget -q -O - "$merge_repo/$merge_name") || exit 1
+	git-http-pull -a "$head" "$merge_repo"
+	;;
+rsync://*)
+	rsync -L "$merge_repo/$merge_name" "$TMP_HEAD" || exit 1
+	head=$(git-rev-parse TMP_HEAD)
+	rm -f "$TMP_HEAD"
+	rsync -avz --ignore-existing "$merge_repo/objects/" "$GIT_OBJECT_DIRECTORY/"
+	;;
+*)
+	head=$(git-fetch-pack "$merge_repo" "$merge_name")
+	;;
+esac || exit 1
+git-rev-parse --verify "$head" > /dev/null || exit 1
+echo "$head" > "$GIT_DIR/$destination"
