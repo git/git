@@ -43,7 +43,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-get-tar-commit-id git-apply git-stripspace \
 	git-diff-stages git-rev-parse git-patch-id git-pack-objects \
 	git-unpack-objects git-verify-pack git-receive-pack git-send-pack \
-	git-prune-packed git-fetch-pack git-upload-pack
+	git-prune-packed git-fetch-pack git-upload-pack git-clone-pack
 
 all: $(PROG)
 
