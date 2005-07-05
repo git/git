@@ -1,7 +1,4 @@
 #!/bin/sh
 repo="$1"
 dir="$2"
-mkdir $dir || exit 1
-cd $dir
-git-init-db
-git fetch "$repo" && ( git-rev-parse FETCH_HEAD > .git/HEAD )
+mkdir "$dir" && cd "$dir" && git-init-db && git-clone-pack "$repo"
