@@ -6,24 +6,6 @@
 static const char fetch_pack_usage[] = "git-fetch-pack [host:]directory [heads]* < mycommitlist";
 static const char *exec = "git-upload-pack";
 
-static int get_ack(int fd, unsigned char *result_sha1)
-{
-	static char line[1000];
-	int len = packet_read_line(fd, line, sizeof(line));
-
-	if (!len)
-		die("git-fetch-pack: expected ACK/NAK, got EOF");
-	if (line[len-1] == '\n')
-		line[--len] = 0;
-	if (!strcmp(line, "NAK"))
-		return 0;
-	if (!strncmp(line, "ACK ", 3)) {
-		if (!get_sha1_hex(line+4, result_sha1))
-			return 1;
-	}
-	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
-}
-
 static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *remote)
 {
 	static char line[1000];
