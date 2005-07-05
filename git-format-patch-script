@@ -1,0 +1,121 @@
+#!/bin/sh
+#
+# Copyright (c) 2005 Junio C Hamano
+#
+
+usage () {
+    echo >&2 "usage: $0"' [-n] [-o dir] [-<diff options>...] upstream [ our-head ]
+
+Prepare each commit with its patch since our-head forked from upstream,
+one file per patch, for e-mail submission.  Each output file is
+numbered sequentially from 1, and uses the first line of the commit
+message (massaged for pathname safety) as the filename.
+
+When -o is specified, output files are created in that directory; otherwise in
+the current working directory.
+
+When -n is specified, instead of "[PATCH] Subject", the first line is formatted
+as "[PATCH N/M] Subject", unless you have only one patch.
+'
+    exit 1
+}
+
+diff_opts=
+IFS='
+'
+LF='
+'
+outdir=./
+
+while case "$#" in 0) break;; esac
+do
+    case "$1" in
+    -n|--n|--nu|--num|--numb|--numbe|--number|--numbere|--numbered)
+    numbered=t ;;
+    -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
+    --output-d=*|--output-di=*|--output-dir=*|--output-dire=*|\
+    --output-direc=*|--output-direct=*|--output-directo=*|\
+    --output-director=*|--output-directory=*)
+    outdir=`expr "$1" : '-[^=]*=\(.*\)'` ;;
+    -o|--o|--ou|--out|--outp|--outpu|--output|--output-|--output-d|\
+    --output-di|--output-dir|--output-dire|--output-direc|--output-direct|\
+    --output-directo|--output-director|--output-directory)
+    case "$#" in 1) usage ;; esac; shift
+    outdir="$1" ;;
+    -*)	diff_opts="$diff_opts$LF$1" ;;
+    *) break ;;
+    esac
+    shift
+done
+
+case "$#" in
+2)    linus="$1" junio="$2" ;;
+1)    linus="$1" junio=HEAD ;;
+*)    usage ;;
+esac
+
+case "$outdir" in
+*/) ;;
+*) outdir="$outdir/" ;;
+esac
+test -d "$outdir" || mkdir -p "$outdir" || exit
+
+tmp=.tmp-series$$
+trap 'rm -f $tmp-*' 0 1 2 3 15
+
+series=$tmp-series
+
+titleScript='
+	1,/^$/d
+	: loop
+	/^$/b loop
+	s/[^-a-z.A-Z_0-9]/-/g
+        s/\.\.\.*/\./g
+	s/\.*$//
+	s/--*/-/g
+	s/^-//
+	s/-$//
+	s/$/./
+	q
+'
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
+
+git-rev-list --merge-order "$junio" "^$linus" >$series
+total=`wc -l <$series`
+i=$total
+while read commit
+do
+    title=`git-cat-file commit "$commit" | sed -e "$titleScript"`
+    case "$numbered" in
+    '') num= ;;
+    *)
+	case $total in
+	1) num= ;;
+	*) num=' '`printf "%d/%d" $i $total` ;;
+	esac
+    esac
+    file=`printf '%04d-%stxt' $i "$title"`
+    i=`expr "$i" - 1`
+    echo "$file"
+    {
+	mailScript='
+	1,/^$/d
+	: loop
+	/^$/b loop
+	s|^|[PATCH'"$num"'] |
+	: body
+	p
+	n
+	b body'
+
+	git-cat-file commit "$commit" | sed -ne "$mailScript"
+	echo '---'
+	echo
+	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
+	echo
+	git-diff-tree -p $diff_opts "$commit" | sed -e "$stripCommitHead"
+    } >"$outdir$file"
+done <$series
