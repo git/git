@@ -38,7 +38,7 @@ END
 	exit(1);
 }
 
-getopts("hqvo:d:p:C:") or usage();
+getopts("hvo:d:p:C:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
