@@ -72,13 +72,9 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 
 static int get_old_sha1(const char *refname, unsigned char *sha1)
 {
-	static char pathname[PATH_MAX];
-	const char *git_dir;
 	int fd, ret;
 
-	git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
-	snprintf(pathname, sizeof(pathname), "%s/%s", git_dir, refname);
-	fd = open(pathname, O_RDONLY);
+	fd = open(git_path("%s", refname), O_RDONLY);
 	ret = -1;
 	if (fd >= 0) {
 		char buffer[60];

@@ -68,6 +68,15 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 	return retval;
 }
 
+int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
+{
+	unsigned char sha1[20];
+	const char *headpath = git_path("HEAD");
+	if (!read_ref(headpath, sha1))
+		fn(headpath, sha1);
+	return do_for_each_ref(get_refs_directory(), fn);
+}
+
 int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
 	return do_for_each_ref(get_refs_directory(), fn);

@@ -158,6 +158,7 @@ extern void rollback_index_file(struct cache_file *);
 #define TYPE_CHANGED    0x0040
 
 /* Return a statically allocated filename matching the sha1 signature */
+extern char *git_path(const char *fmt, ...);
 extern char *sha1_file_name(const unsigned char *sha1);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */

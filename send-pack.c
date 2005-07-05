@@ -92,12 +92,9 @@ static int pack_objects(int fd, struct ref *refs)
 static int read_ref(const char *ref, unsigned char *sha1)
 {
 	int fd, ret;
-	static char pathname[PATH_MAX];
 	char buffer[60];
-	const char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
 
-	snprintf(pathname, sizeof(pathname), "%s/%s", git_dir, ref);
-	fd = open(pathname, O_RDONLY);
+	fd = open(git_path("%s", ref), O_RDONLY);
 	if (fd < 0)
 		return -1;
 	ret = -1;

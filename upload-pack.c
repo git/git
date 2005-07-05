@@ -153,6 +153,7 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 
 static int upload_pack(void)
 {
+	head_ref(send_ref);
 	for_each_ref(send_ref);
 	packet_flush(1);
 	nr_needs = receive_needs();

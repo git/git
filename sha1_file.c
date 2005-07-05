@@ -102,9 +102,30 @@ char *get_index_file(void)
 	return git_index_file;
 }
 
-int get_sha1(const char *str, unsigned char *sha1)
+char *git_path(const char *fmt, ...)
 {
 	static char pathname[PATH_MAX];
+	va_list args;
+	int len;
+
+	if (!git_dir)
+		setup_git_env();
+	len = strlen(git_dir);
+	if (len == 1 && *git_dir == '.')
+		len = 0;
+	if (len > PATH_MAX-100)
+		return "pad-path";
+	memcpy(pathname, git_dir, len);
+	if (len && git_dir[len-1] != '/')
+		pathname[len++] = '/';
+	va_start(args, fmt);
+	vsnprintf(pathname + len, sizeof(pathname) - len, fmt, args);
+	va_end(args);
+	return pathname;
+}
+
+int get_sha1(const char *str, unsigned char *sha1)
+{
 	static const char *prefix[] = {
 		"",
 		"refs",
@@ -118,11 +139,8 @@ int get_sha1(const char *str, unsigned char *sha1)
 	if (!get_sha1_hex(str, sha1))
 		return 0;
 
-	if (!git_dir)
-		setup_git_env();
 	for (p = prefix; *p; p++) {
-		snprintf(pathname, sizeof(pathname), "%s/%s/%s",
-			 git_dir, *p, str);
+		char * pathname = git_path("%s/%s", *p, str);
 		if (!get_sha1_file(pathname, sha1))
 			return 0;
 	}
