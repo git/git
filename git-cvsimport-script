@@ -1,38 +1,737 @@
-#!/bin/sh
+#!/usr/bin/perl -w
 
-usage () {
-	echo "Usage: git cvsimport [-v] [-z fuzz] <cvsroot> <module>"
-	exit 1
+# This tool is copyright (c) 2005, Matthias Urlichs.
+# It is released under the Gnu Public License, version 2.
+#
+# The basic idea is to aggregate CVS check-ins into related changes.
+# Fortunately, "cvsps" does that for us; all we have to do is to parse
+# its output.
+#
+# Checking out the files is done by a single long-running CVS connection
+# / server process.
+#
+# The head revision is on branch "origin" by default.
+# You can change that with the '-o' option.
+
+use strict;
+use warnings;
+use Getopt::Std;
+use File::Spec;
+use File::Temp qw(tempfile);
+use File::Path qw(mkpath);
+use File::Basename qw(basename dirname);
+use Time::Local;
+use IO::Socket;
+use IO::Pipe;
+use POSIX qw(strftime dup2);
+
+$SIG{'PIPE'}="IGNORE";
+$ENV{'TZ'}="UTC";
+
+our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C,$opt_z);
+
+sub usage() {
+	print STDERR <<END;
+Usage: ${\basename $0}     # fetch/update GIT from CVS
+       [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
+       [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
+       [ CVS_module ]
+END
+	exit(1);
 }
 
-CVS2GIT=""
-CVSPS="--cvs-direct -x -A"
-while true; do
-	case "$1" in
-	-v) CVS2GIT="$1" ;;
-	-z) shift; CVSPS="$CVSPS -z $1" ;;
-	-*) usage ;;
-	*)  break ;;
-	esac
-	shift
-done
+getopts("hvo:d:p:C:z:") or usage();
+usage if $opt_h;
 
-export CVSROOT="$1"
-export MODULE="$2"
-if [ ! "$CVSROOT" ] || [ ! "$MODULE" ] ; then
-	usage
-fi
+@ARGV <= 1 or usage();
 
-cvsps -h 2>&1 | grep -q "cvsps version 2.1" >& /dev/null || {
-	echo "I need cvsps version 2.1"
-	exit 1
+if($opt_d) {
+	$ENV{"CVSROOT"} = $opt_d;
+} elsif(-f 'CVS/Root') {
+	open my $f, '<', 'CVS/Root' or die 'Failed to open CVS/Root';
+	$opt_d = <$f>;
+	chomp $opt_d;
+	close $f;
+	$ENV{"CVSROOT"} = $opt_d;
+} elsif($ENV{"CVSROOT"}) {
+	$opt_d = $ENV{"CVSROOT"};
+} else {
+	die "CVSROOT needs to be set";
+}
+$opt_o ||= "origin";
+my $git_tree = $opt_C;
+$git_tree ||= ".";
+
+my $cvs_tree;
+if ($#ARGV == 0) {
+	$cvs_tree = $ARGV[0];
+} elsif (-f 'CVS/Repository') {
+	open my $f, '<', 'CVS/Repository' or 
+	    die 'Failed to open CVS/Repository';
+	$cvs_tree = <$f>;
+	chomp $cvs_tree;
+	close $f
+} else {
+	usage();
 }
 
-mkdir "$MODULE" || exit 1
-cd "$MODULE"
+select(STDERR); $|=1; select(STDOUT);
 
-TZ=UTC cvsps $CVSPS $MODULE > .git-cvsps-result
-[ -s .git-cvsps-result ] || exit 1
-git-cvs2git $CVS2GIT --cvsroot="$CVSROOT" --module="$MODULE" < .git-cvsps-result > .git-create-script || exit 1
-sh .git-create-script
 
+package CVSconn;
+# Basic CVS dialog.
+# We're only interested in connecting and downloading, so ...
+
+use File::Spec;
+use File::Temp qw(tempfile);
+use POSIX qw(strftime dup2);
+
+sub new {
+	my($what,$repo,$subdir) = @_;
+	$what=ref($what) if ref($what);
+
+	my $self = {};
+	$self->{'buffer'} = "";
+	bless($self,$what);
+
+	$repo =~ s#/+$##;
+	$self->{'fullrep'} = $repo;
+	$self->conn();
+
+	$self->{'subdir'} = $subdir;
+	$self->{'lines'} = undef;
+
+	return $self;
+}
+
+sub conn {
+	my $self = shift;
+	my $repo = $self->{'fullrep'};
+	if($repo =~ s/^:pserver:(?:(.*?)(?::(.*?))?@)?([^:\/]*)(?::(\d*))?//) {
+		my($user,$pass,$serv,$port) = ($1,$2,$3,$4);
+		$user="anonymous" unless defined $user;
+		my $rr2 = "-";
+		unless($port) {
+			$rr2 = ":pserver:$user\@$serv:$repo";
+			$port=2401;
+		}
+		my $rr = ":pserver:$user\@$serv:$port$repo";
+
+		unless($pass) {
+			open(H,$ENV{'HOME'}."/.cvspass") and do {
+				# :pserver:cvs@mea.tmt.tele.fi:/cvsroot/zmailer Ah<Z
+				while(<H>) {
+					chomp;
+					s/^\/\d+\s+//;
+					my ($w,$p) = split(/\s/,$_,2);
+					if($w eq $rr or $w eq $rr2) {
+						$pass = $p;
+						last;
+					}
+				}
+			};
+		}
+		$pass="A" unless $pass;
+
+		my $s = IO::Socket::INET->new(PeerHost => $serv, PeerPort => $port);
+		die "Socket to $serv: $!\n" unless defined $s;
+		$s->write("BEGIN AUTH REQUEST\n$repo\n$user\n$pass\nEND AUTH REQUEST\n")
+			or die "Write to $serv: $!\n";
+		$s->flush();
+
+		my $rep = <$s>;
+
+		if($rep ne "I LOVE YOU\n") {
+			$rep="<unknown>" unless $rep;
+			die "AuthReply: $rep\n";
+		}
+		$self->{'socketo'} = $s;
+		$self->{'socketi'} = $s;
+	} else { # local or ext: Fork off our own cvs server.
+		my $pr = IO::Pipe->new();
+		my $pw = IO::Pipe->new();
+		my $pid = fork();
+		die "Fork: $!\n" unless defined $pid;
+		my $cvs = 'cvs';
+		$cvs = $ENV{CVS_SERVER} if exists $ENV{CVS_SERVER};
+		my $rsh = 'rsh';
+		$rsh = $ENV{CVS_RSH} if exists $ENV{CVS_RSH};
+
+		my @cvs = ($cvs, 'server');
+		my ($local, $user, $host);
+		$local = $repo =~ s/:local://;
+		if (!$local) {
+		    $repo =~ s/:ext://;
+		    $local = !($repo =~ s/^(?:([^\@:]+)\@)?([^:]+)://);
+		    ($user, $host) = ($1, $2);
+		}
+		if (!$local) {
+		    if ($user) {
+			unshift @cvs, $rsh, '-l', $user, $host;
+		    } else {
+			unshift @cvs, $rsh, $host;
+		    }
+		}
+
+		unless($pid) {
+			$pr->writer();
+			$pw->reader();
+			dup2($pw->fileno(),0);
+			dup2($pr->fileno(),1);
+			$pr->close();
+			$pw->close();
+			exec(@cvs);
+		}
+		$pw->writer();
+		$pr->reader();
+		$self->{'socketo'} = $pw;
+		$self->{'socketi'} = $pr;
+	}
+	$self->{'socketo'}->write("Root $repo\n");
+
+	# Trial and error says that this probably is the minimum set
+	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E F Checked-in Created Updated Merged Removed\n");
+
+	$self->{'socketo'}->write("valid-requests\n");
+	$self->{'socketo'}->flush();
+
+	chomp(my $rep=$self->readline());
+	if($rep !~ s/^Valid-requests\s*//) {
+		$rep="<unknown>" unless $rep;
+		die "Expected Valid-requests from server, but got: $rep\n";
+	}
+	chomp(my $res=$self->readline());
+	die "validReply: $res\n" if $res ne "ok";
+
+	$self->{'socketo'}->write("UseUnchanged\n") if $rep =~ /\bUseUnchanged\b/;
+	$self->{'repo'} = $repo;
+}
+
+sub readline {
+	my($self) = @_;
+	return $self->{'socketi'}->getline();
+}
+
+sub _file {
+	# Request a file with a given revision.
+	# Trial and error says this is a good way to do it. :-/
+	my($self,$fn,$rev) = @_;
+	$self->{'socketo'}->write("Argument -N\n") or return undef;
+	$self->{'socketo'}->write("Argument -P\n") or return undef;
+	# $self->{'socketo'}->write("Argument -ko\n") or return undef;
+	# -ko: Linus' version doesn't use it
+	$self->{'socketo'}->write("Argument -r\n") or return undef;
+	$self->{'socketo'}->write("Argument $rev\n") or return undef;
+	$self->{'socketo'}->write("Argument --\n") or return undef;
+	$self->{'socketo'}->write("Argument $self->{'subdir'}/$fn\n") or return undef;
+	$self->{'socketo'}->write("Directory .\n") or return undef;
+	$self->{'socketo'}->write("$self->{'repo'}\n") or return undef;
+	# $self->{'socketo'}->write("Sticky T1.0\n") or return undef;
+	$self->{'socketo'}->write("co\n") or return undef;
+	$self->{'socketo'}->flush() or return undef;
+	$self->{'lines'} = 0;
+	return 1;
+}
+sub _line {
+	# Read a line from the server.
+	# ... except that 'line' may be an entire file. ;-)
+	my($self, $fh) = @_;
+	die "Not in lines" unless defined $self->{'lines'};
+
+	my $line;
+	my $res=0;
+	while(defined($line = $self->readline())) {
+		# M U gnupg-cvs-rep/AUTHORS
+		# Updated gnupg-cvs-rep/
+		# /daten/src/rsync/gnupg-cvs-rep/AUTHORS
+		# /AUTHORS/1.1///T1.1
+		# u=rw,g=rw,o=rw
+		# 0
+		# ok
+
+		if($line =~ s/^(?:Created|Updated) //) {
+			$line = $self->readline(); # path
+			$line = $self->readline(); # Entries line
+			my $mode = $self->readline(); chomp $mode;
+			$self->{'mode'} = $mode;
+			defined (my $cnt = $self->readline())
+				or die "EOF from server after 'Changed'\n";
+			chomp $cnt;
+			die "Duh: Filesize $cnt" if $cnt !~ /^\d+$/;
+			$line="";
+			$res=0;
+			while($cnt) {
+				my $buf;
+				my $num = $self->{'socketi'}->read($buf,$cnt);
+				die "Server: Filesize $cnt: $num: $!\n" if not defined $num or $num<=0;
+				print $fh $buf;
+				$res += $num;
+				$cnt -= $num;
+			}
+		} elsif($line =~ s/^ //) {
+			print $fh $line;
+			$res += length($line);
+		} elsif($line =~ /^M\b/) {
+			# output, do nothing
+		} elsif($line =~ /^Mbinary\b/) {
+			my $cnt;
+			die "EOF from server after 'Mbinary'" unless defined ($cnt = $self->readline());
+			chomp $cnt;
+			die "Duh: Mbinary $cnt" if $cnt !~ /^\d+$/ or $cnt<1;
+			$line="";
+			while($cnt) {
+				my $buf;
+				my $num = $self->{'socketi'}->read($buf,$cnt);
+				die "S: Mbinary $cnt: $num: $!\n" if not defined $num or $num<=0;
+				print $fh $buf;
+				$res += $num;
+				$cnt -= $num;
+			}
+		} else {
+			chomp $line;
+			if($line eq "ok") {
+				# print STDERR "S: ok (".length($res).")\n";
+				return $res;
+			} elsif($line =~ s/^E //) {
+				# print STDERR "S: $line\n";
+			} else {
+				die "Unknown: $line\n";
+			}
+		}
+	}
+}
+sub file {
+	my($self,$fn,$rev) = @_;
+	my $res;
+
+	my ($fh, $name) = tempfile('gitcvs.XXXXXX', 
+		    DIR => File::Spec->tmpdir(), UNLINK => 1);
+
+	$self->_file($fn,$rev) and $res = $self->_line($fh);
+
+	if (!defined $res) {
+	    # retry
+	    $self->conn();
+	    $self->_file($fn,$rev)
+		    or die "No file command send\n";
+	    $res = $self->_line($fh);
+	    die "No input: $fn $rev\n" unless defined $res;
+	}
+
+	return ($name, $res);
+}
+
+
+package main;
+
+my $cvs = CVSconn->new($opt_d, $cvs_tree);
+
+
+sub pdate($) {
+	my($d) = @_;
+	m#(\d{2,4})/(\d\d)/(\d\d)\s(\d\d):(\d\d)(?::(\d\d))?#
+		or die "Unparseable date: $d\n";
+	my $y=$1; $y-=1900 if $y>1900;
+	return timegm($6||0,$5,$4,$3,$2-1,$y);
+}
+
+sub pmode($) {
+	my($mode) = @_;
+	my $m = 0;
+	my $mm = 0;
+	my $um = 0;
+	for my $x(split(//,$mode)) {
+		if($x eq ",") {
+			$m |= $mm&$um;
+			$mm = 0;
+			$um = 0;
+		} elsif($x eq "u") { $um |= 0700;
+		} elsif($x eq "g") { $um |= 0070;
+		} elsif($x eq "o") { $um |= 0007;
+		} elsif($x eq "r") { $mm |= 0444;
+		} elsif($x eq "w") { $mm |= 0222;
+		} elsif($x eq "x") { $mm |= 0111;
+		} elsif($x eq "=") { # do nothing
+		} else { die "Unknown mode: $mode\n";
+		}
+	}
+	$m |= $mm&$um;
+	return $m;
+}
+
+sub getwd() {
+	my $pwd = `pwd`;
+	chomp $pwd;
+	return $pwd;
+}
+
+-d $git_tree
+	or mkdir($git_tree,0777)
+	or die "Could not create $git_tree: $!";
+chdir($git_tree);
+
+my $last_branch = "";
+my $orig_branch = "";
+my $forward_master = 0;
+my %branch_date;
+
+my $git_dir = $ENV{"GIT_DIR"} || ".git";
+$git_dir = getwd()."/".$git_dir unless $git_dir =~ m#^/#;
+$ENV{"GIT_DIR"} = $git_dir;
+my $orig_git_index;
+$orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
+my ($git_ih, $git_index) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+				    DIR => File::Spec->tmpdir());
+close ($git_ih);
+$ENV{GIT_INDEX_FILE} = $git_index;
+unless(-d $git_dir) {
+	system("git-init-db");
+	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
+	system("git-read-tree");
+	die "Cannot init an empty tree: $?\n" if $?;
+
+	$last_branch = $opt_o;
+	$orig_branch = "";
+} else {
+	-f "$git_dir/refs/heads/$opt_o"
+		or die "Branch '$opt_o' does not exist.\n".
+		       "Either use the correct '-o branch' option,\n".
+		       "or import to a new repository.\n";
+
+	$last_branch = basename(readlink("$git_dir/HEAD"));
+	unless($last_branch) {
+		warn "Cannot read the last branch name: $! -- assuming 'master'\n";
+		$last_branch = "master";
+	}
+	$orig_branch = $last_branch;
+	if (-f "$git_dir/CVS2GIT_HEAD") {
+		die <<EOM;
+CVS2GIT_HEAD exists.
+Make sure your working directory corresponds to HEAD and remove CVS2GIT_HEAD.
+You may need to run
+
+    git-read-tree -m -u CVS2GIT_HEAD HEAD
+EOM
+	}
+	system('cp', "$git_dir/HEAD", "$git_dir/CVS2GIT_HEAD");
+
+	$forward_master =
+	    $opt_o ne 'master' && -f "$git_dir/refs/heads/master" &&
+	    system('cmp', '-s', "$git_dir/refs/heads/master", 
+				"$git_dir/refs/heads/$opt_o") == 0;
+
+	# populate index
+	system('git-read-tree', $last_branch);
+	die "read-tree failed: $?\n" if $?;
+
+	# Get the last import timestamps
+	opendir(D,"$git_dir/refs/heads");
+	while(defined(my $head = readdir(D))) {
+		next if $head =~ /^\./;
+		open(F,"$git_dir/refs/heads/$head")
+			or die "Bad head branch: $head: $!\n";
+		chomp(my $ftag = <F>);
+		close(F);
+		open(F,"git-cat-file commit $ftag |");
+		while(<F>) {
+			next unless /^author\s.*\s(\d+)\s[-+]\d{4}$/;
+			$branch_date{$head} = $1;
+			last;
+		}
+		close(F);
+	}
+	closedir(D);
+}
+
+-d $git_dir
+	or die "Could not create git subdir ($git_dir).\n";
+
+my $pid = open(CVS,"-|");
+die "Cannot fork: $!\n" unless defined $pid;
+unless($pid) {
+	my @opt;
+	@opt = split(/,/,$opt_p) if defined $opt_p;
+	unshift @opt, '-z', $opt_z if defined $opt_z;
+	exec("cvsps",@opt,"-u","-A","--cvs-direct",'--root',$opt_d,$cvs_tree);
+	die "Could not start cvsps: $!\n";
+}
+
+
+## cvsps output:
+#---------------------
+#PatchSet 314
+#Date: 1999/09/18 13:03:59
+#Author: wkoch
+#Branch: STABLE-BRANCH-1-0
+#Ancestor branch: HEAD
+#Tag: (none)
+#Log:
+#    See ChangeLog: Sat Sep 18 13:03:28 CEST 1999  Werner Koch
+#Members:
+#	README:1.57->1.57.2.1
+#	VERSION:1.96->1.96.2.1
+#
+#---------------------
+
+my $state = 0;
+
+my($patchset,$date,$author,$branch,$ancestor,$tag,$logmsg);
+my(@old,@new);
+my $commit = sub {
+	my $pid;
+	while(@old) {
+		my @o2;
+		if(@old > 55) {
+			@o2 = splice(@old,0,50);
+		} else {
+			@o2 = @old;
+			@old = ();
+		}
+		system("git-update-cache","--force-remove","--",@o2);
+		die "Cannot remove files: $?\n" if $?;
+	}
+	while(@new) {
+		my @n2;
+		if(@new > 12) {
+			@n2 = splice(@new,0,10);
+		} else {
+			@n2 = @new;
+			@new = ();
+		}
+		system("git-update-cache","--add",
+			(map { ('--cacheinfo', @$_) } @n2));
+		die "Cannot add files: $?\n" if $?;
+	}
+
+	$pid = open(C,"-|");
+	die "Cannot fork: $!" unless defined $pid;
+	unless($pid) {
+		exec("git-write-tree");
+		die "Cannot exec git-write-tree: $!\n";
+	}
+	chomp(my $tree = <C>);
+	length($tree) == 40
+		or die "Cannot get tree id ($tree): $!\n";
+	close(C)
+		or die "Error running git-write-tree: $?\n";
+	print "Tree ID $tree\n" if $opt_v;
+
+	my $parent = "";
+	if(open(C,"$git_dir/refs/heads/$last_branch")) {
+		chomp($parent = <C>);
+		close(C);
+		length($parent) == 40
+			or die "Cannot get parent id ($parent): $!\n";
+		print "Parent ID $parent\n" if $opt_v;
+	}
+
+	my $pr = IO::Pipe->new() or die "Cannot open pipe: $!\n";
+	my $pw = IO::Pipe->new() or die "Cannot open pipe: $!\n";
+	$pid = fork();
+	die "Fork: $!\n" unless defined $pid;
+	unless($pid) {
+		$pr->writer();
+		$pw->reader();
+		dup2($pw->fileno(),0);
+		dup2($pr->fileno(),1);
+		$pr->close();
+		$pw->close();
+
+		my @par = ();
+		@par = ("-p",$parent) if $parent;
+		exec("env",
+			"GIT_AUTHOR_NAME=$author",
+			"GIT_AUTHOR_EMAIL=$author",
+			"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
+			"GIT_COMMITTER_NAME=$author",
+			"GIT_COMMITTER_EMAIL=$author",
+			"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
+			"git-commit-tree", $tree,@par);
+		die "Cannot exec git-commit-tree: $!\n";
+	}
+	$pw->writer();
+	$pr->reader();
+
+	# compatibility with git2cvs
+	substr($logmsg,32767) = "" if length($logmsg) > 32767;
+	$logmsg =~ s/[\s\n]+\z//;
+
+	print $pw "$logmsg\n"
+		or die "Error writing to git-commit-tree: $!\n";
+	$pw->close();
+
+	print "Committed patch $patchset ($branch)\n" if $opt_v;
+	chomp(my $cid = <$pr>);
+	length($cid) == 40
+		or die "Cannot get commit id ($cid): $!\n";
+	print "Commit ID $cid\n" if $opt_v;
+	$pr->close();
+
+	waitpid($pid,0);
+	die "Error running git-commit-tree: $?\n" if $?;
+
+	open(C,">$git_dir/refs/heads/$branch")
+		or die "Cannot open branch $branch for update: $!\n";
+	print C "$cid\n"
+		or die "Cannot write branch $branch for update: $!\n";
+	close(C)
+		or die "Cannot write branch $branch for update: $!\n";
+
+	if($tag) {
+		open(C,">$git_dir/refs/tags/$tag")
+			or die "Cannot create tag $tag: $!\n";
+		print C "$cid\n"
+			or die "Cannot write tag $branch: $!\n";
+		close(C)
+			or die "Cannot write tag $branch: $!\n";
+		print "Created tag '$tag' on '$branch'\n" if $opt_v;
+	}
+};
+
+while(<CVS>) {
+	chomp;
+	if($state == 0 and /^-+$/) {
+		$state = 1;
+	} elsif($state == 0) {
+		$state = 1;
+		redo;
+	} elsif(($state==0 or $state==1) and s/^PatchSet\s+//) {
+		$patchset = 0+$_;
+		$state=2;
+	} elsif($state == 2 and s/^Date:\s+//) {
+		$date = pdate($_);
+		unless($date) {
+			print STDERR "Could not parse date: $_\n";
+			$state=0;
+			next;
+		}
+		$state=3;
+	} elsif($state == 3 and s/^Author:\s+//) {
+		s/\s+$//;
+		$author = $_;
+		$state = 4;
+	} elsif($state == 4 and s/^Branch:\s+//) {
+		s/\s+$//;
+		$branch = $_;
+		$state = 5;
+	} elsif($state == 5 and s/^Ancestor branch:\s+//) {
+		s/\s+$//;
+		$ancestor = $_;
+		$ancestor = $opt_o if $ancestor eq "HEAD";
+		$state = 6;
+	} elsif($state == 5) {
+		$ancestor = undef;
+		$state = 6;
+		redo;
+	} elsif($state == 6 and s/^Tag:\s+//) {
+		s/\s+$//;
+		if($_ eq "(none)") {
+			$tag = undef;
+		} else {
+			$tag = $_;
+		}
+		$state = 7;
+	} elsif($state == 7 and /^Log:/) {
+		$logmsg = "";
+		$state = 8;
+	} elsif($state == 8 and /^Members:/) {
+		$branch = $opt_o if $branch eq "HEAD";
+		if(defined $branch_date{$branch} and $branch_date{$branch} >= $date) {
+			# skip
+			print "skip patchset $patchset: $date before $branch_date{$branch}\n" if $opt_v;
+			$state = 11;
+			next;
+		}
+		if($ancestor) {
+			if(-f "$git_dir/refs/heads/$branch") {
+				print STDERR "Branch $branch already exists!\n";
+				$state=11;
+				next;
+			}
+			unless(open(H,"$git_dir/refs/heads/$ancestor")) {
+				print STDERR "Branch $ancestor does not exist!\n";
+				$state=11;
+				next;
+			}
+			chomp(my $id = <H>);
+			close(H);
+			unless(open(H,"> $git_dir/refs/heads/$branch")) {
+				print STDERR "Could not create branch $branch: $!\n";
+				$state=11;
+				next;
+			}
+			print H "$id\n"
+				or die "Could not write branch $branch: $!";
+			close(H)
+				or die "Could not write branch $branch: $!";
+		}
+		if(($ancestor || $branch) ne $last_branch) {
+			print "Switching from $last_branch to $branch\n" if $opt_v;
+			system("git-read-tree", $branch);
+			die "read-tree failed: $?\n" if $?;
+		}
+		$last_branch = $branch if $branch ne $last_branch;
+		$state = 9;
+	} elsif($state == 8) {
+		$logmsg .= "$_\n";
+	} elsif($state == 9 and /^\s+(\S+):(INITIAL|\d(?:\.\d+)+)->(\d(?:\.\d+)+)\s*$/) {
+#	VERSION:1.96->1.96.2.1
+		my $init = ($2 eq "INITIAL");
+		my $fn = $1;
+		my $rev = $3;
+		$fn =~ s#^/+##;
+		my ($tmpname, $size) = $cvs->file($fn,$rev);
+		print "".($init ? "New" : "Update")." $fn: $size bytes.\n" if $opt_v;
+		open my $F, '-|', "git-write-blob $tmpname"
+			or die "Cannot create object: $!\n";
+		my $sha = <$F>;
+		chomp $sha;
+		close $F;
+		unlink($tmpname);
+		my $mode = pmode($cvs->{'mode'});
+		push(@new,[$mode, $sha, $fn]); # may be resurrected!
+	} elsif($state == 9 and /^\s+(\S+):\d(?:\.\d+)+->(\d(?:\.\d+)+)\(DEAD\)\s*$/) {
+		my $fn = $1;
+		$fn =~ s#^/+##;
+		push(@old,$fn);
+	} elsif($state == 9 and /^\s*$/) {
+		$state = 10;
+	} elsif(($state == 9 or $state == 10) and /^-+$/) {
+		&$commit();
+		$state = 1;
+	} elsif($state == 11 and /^-+$/) {
+		$state = 1;
+	} elsif(/^-+$/) { # end of unknown-line processing
+		$state = 1;
+	} elsif($state != 11) { # ignore stuff when skipping
+		print "* UNKNOWN LINE * $_\n";
+	}
+}
+&$commit() if $branch and $state != 11;
+
+unlink($git_index);
+
+if (defined $orig_git_index) {
+	$ENV{GIT_INDEX_FILE} = $orig_git_index;
+} else {
+	delete $ENV{GIT_INDEX_FILE};
+}
+
+# Now switch back to the branch we were in before all of this happened
+if($orig_branch) {
+	print "DONE\n" if $opt_v;
+	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
+		if $forward_master;
+	system('git-read-tree', '-m', '-u', 'CVS2GIT_HEAD', 'HEAD');
+	die "read-tree failed: $?\n" if $?;
+} else {
+	$orig_branch = "master";
+	print "DONE; creating $orig_branch branch\n" if $opt_v;
+	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
+		unless -f "$git_dir/refs/heads/master";
+	unlink("$git_dir/HEAD");
+	symlink("refs/heads/$orig_branch","$git_dir/HEAD");
+	system('git checkout');
+	die "checkout failed: $?\n" if $?;
+}
+unlink("$git_dir/CVS2GIT_HEAD");
