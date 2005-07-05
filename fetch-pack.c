@@ -70,39 +70,6 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 	return retval;
 }
 
-static int get_old_sha1(const char *refname, unsigned char *sha1)
-{
-	int fd, ret;
-
-	fd = open(git_path("%s", refname), O_RDONLY);
-	ret = -1;
-	if (fd >= 0) {
-		char buffer[60];
-		if (read(fd, buffer, sizeof(buffer)) >= 40)
-			ret = get_sha1_hex(buffer, sha1);
-		close(fd);
-	}
-	return ret;
-}
-
-static int check_ref(const char *refname, const unsigned char *sha1)
-{
-	unsigned char mysha1[20];
-	char oldhex[41];
-
-	if (get_old_sha1(refname, mysha1) < 0)
-		memset(mysha1, 0, 20);
-
-	if (!memcmp(sha1, mysha1, 20)) {
-		fprintf(stderr, "%s: unchanged\n", refname);
-		return 0;
-	}
-	
-	memcpy(oldhex, sha1_to_hex(mysha1), 41);
-	fprintf(stderr, "%s: %s (%s)\n", refname, sha1_to_hex(sha1), oldhex);
-	return 1;
-}
-
 static int get_remote_heads(int fd, int nr_match, char **match, unsigned char *result)
 {
 	int count = 0;
@@ -119,14 +86,12 @@ static int get_remote_heads(int fd, int nr_match, char **match, unsigned char *r
 		if (line[len-1] == '\n')
 			line[--len] = 0;
 		if (len < 42 || get_sha1_hex(line, sha1))
-			die("git-fetch-pack: protocol error - expected ref descriptor, got '%sÃ¤'", line);
+			die("git-fetch-pack: protocol error - expected ref descriptor, got '%s¤'", line);
 		refname = line+41;
 		if (nr_match && !path_match(refname, nr_match, match))
 			continue;
-		if (check_ref(refname, sha1)) {
-			count++;
-			memcpy(result, sha1, 20);
-		}
+		count++;
+		memcpy(result, sha1, 20);
 	}
 	return count;
 }
