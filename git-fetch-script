@@ -16,7 +16,8 @@ TMP_HEAD="$GIT_DIR/TMP_HEAD"
 case "$merge_repo" in
 http://*)
 	head=$(wget -q -O - "$merge_repo/$merge_name") || exit 1
-	git-http-pull -a "$head" "$merge_repo"
+	echo Fetching $head using http
+	git-http-pull -v -a "$head" "$merge_repo/"
 	;;
 rsync://*)
 	rsync -L "$merge_repo/$merge_name" "$TMP_HEAD" || exit 1
