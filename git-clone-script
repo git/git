@@ -1,4 +1,70 @@
 #!/bin/sh
+#
+# Copyright (c) 2005, Linus Torvalds
+# Copyright (c) 2005, Junio C Hamano
+# 
+# Clone a repository into a different directory that does not yet exist.
+
+usage() {
+	echo >&2 "* git clone [-l] <repo> <dir>"
+	exit 1
+}
+
+use_local=no
+while
+	case "$#,$1" in
+	0,*) break ;;
+        *,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
+	*,-*) usage ;;
+	*) break ;;
+	esac
+do
+	shift
+done
+
 repo="$1"
 dir="$2"
-mkdir "$dir" && cd "$dir" && git-init-db && git-clone-pack "$repo"
+mkdir "$dir" &&
+D=$(
+	(cd "$dir" && git-init-db && pwd)
+) &&
+test -d "$D" || usage
+
+# We do local magic only when the user tells us to.
+case "$use_local" in
+yes)
+	( cd "$repo/objects" ) || {
+		repo="$repo/.git"
+		( cd "$repo/objects" ) || {
+		    echo >&2 "-l flag seen but $repo is not local."
+		    exit 1
+		}
+	}
+
+	# See if we can hardlink and drop "l" if not.
+	sample_file=$(cd "$repo" && \
+		      find objects -type f -print | sed -e 1q)
+
+	# objects directory should not be empty since we are cloning!
+	test -f "$repo/$sample_file" || exit
+
+	l=
+	if ln "$repo/$sample_file" "$D/.git/objects/sample" 2>/dev/null
+	then
+		l=l
+	fi &&
+	rm -f "$D/.git/objects/sample" &&
+	cp -r$l "$repo/objects" "$D/.git/" || exit 1
+
+	# Make a duplicate of refs and HEAD pointer
+	HEAD=
+	if test -f "$repo/HEAD"
+	then
+		HEAD=HEAD
+	fi
+	tar Ccf "$repo" - refs $HEAD | tar Cxf "$D/.git" - || exit 1
+	exit 0
+	;;
+esac
+
+cd "$D" && git clone-pack "$repo"
