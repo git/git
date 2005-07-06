@@ -37,7 +37,7 @@ proc getcommits {rargs} {
 	set parsed_args $rargs
     }
     if [catch {
-	set commfd [open "|git-rev-list --header --merge-order $parsed_args" r]
+	set commfd [open "|git-rev-list --header --topo-order $parsed_args" r]
     } err] {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
