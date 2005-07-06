@@ -130,6 +130,25 @@ char *git_path(const char *fmt, ...)
 	return ret;
 }
 
+int safe_create_leading_directories(char *path)
+{
+	char *pos = path;
+
+	while (pos) {
+		pos = strchr(pos, '/');
+		if (!pos)
+			break;
+		*pos = 0;
+		if (mkdir(path, 0777) < 0)
+			if (errno != EEXIST) {
+				*pos = '/';
+				return -1;
+			}
+		*pos++ = '/';
+	}
+	return 0;
+}
+
 int get_sha1(const char *str, unsigned char *sha1)
 {
 	static const char *prefix[] = {

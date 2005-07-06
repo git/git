@@ -68,9 +68,12 @@ static int is_master(struct ref *ref)
 static void write_one_ref(struct ref *ref)
 {
 	char *path = git_path(ref->name);
-	int fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	int fd;
 	char *hex;
 
+	if (safe_create_leading_directories(path))
+		die("unable to create leading directory for %s", ref->name);
+	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0)
 		die("unable to create ref %s", ref->name);
 	hex = sha1_to_hex(ref->sha1);
