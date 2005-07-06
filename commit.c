@@ -147,7 +147,7 @@ void free_commit_list(struct commit_list *list)
 	}
 }
 
-void insert_by_date(struct commit_list **list, struct commit *item)
+struct commit_list * insert_by_date(struct commit *item, struct commit_list **list)
 {
 	struct commit_list **pp = list;
 	struct commit_list *p;
@@ -157,7 +157,7 @@ void insert_by_date(struct commit_list **list, struct commit *item)
 		}
 		pp = &p->next;
 	}
-	commit_list_insert(item, pp);
+	return commit_list_insert(item, pp);
 }
 
 	
@@ -165,7 +165,7 @@ void sort_by_date(struct commit_list **list)
 {
 	struct commit_list *ret = NULL;
 	while (*list) {
-		insert_by_date(&ret, (*list)->item);
+		insert_by_date((*list)->item, &ret);
 		*list = (*list)->next;
 	}
 	*list = ret;
@@ -186,7 +186,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 		parse_commit(commit);
 		if (!(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
-			insert_by_date(list, commit);
+			insert_by_date(commit, list);
 		}
 		parents = parents->next;
 	}

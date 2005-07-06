@@ -27,6 +27,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 int parse_commit(struct commit *item);
 
 struct commit_list * commit_list_insert(struct commit *item, struct commit_list **list_p);
+struct commit_list * insert_by_date(struct commit *item, struct commit_list **list);
 
 void free_commit_list(struct commit_list *list);
 
@@ -43,8 +44,6 @@ enum cmit_fmt {
 
 extern enum cmit_fmt get_commit_format(const char *arg);
 extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space);
-
-void insert_by_date(struct commit_list **list, struct commit *item);
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.

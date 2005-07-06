@@ -255,11 +255,11 @@ static int find_base_for_list(struct commit_list *list, struct commit **boundary
 
 				if (!parent_node) {
 					parent_node = new_mass_counter(parent, &distribution);
-					insert_by_date(&pending, parent);
+					insert_by_date(parent, &pending);
 					commit_list_insert(parent, &cleaner);
 				} else {
 					if (!compare(&parent_node->pending, get_zero()))
-						insert_by_date(&pending, parent);
+						insert_by_date(parent, &pending);
 					add(&parent_node->pending, &parent_node->pending, &distribution);
 				}
 			}
