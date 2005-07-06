@@ -71,19 +71,15 @@ static void show_commit(struct commit *commit)
 
 static int filter_commit(struct commit * commit)
 {
-	if (merge_order && stop_traversal && commit->object.flags & BOUNDARY)
+	if (stop_traversal && (commit->object.flags & BOUNDARY))
 		return STOP;
 	if (commit->object.flags & (UNINTERESTING|SHOWN))
 		return CONTINUE;
 	if (min_age != -1 && (commit->date > min_age))
 		return CONTINUE;
 	if (max_age != -1 && (commit->date < max_age)) {
-		if (!merge_order)
-			return STOP;
-		else {
-			stop_traversal = 1;
-			return CONTINUE;
-		}
+		stop_traversal=1;
+		return merge_order?CONTINUE:STOP;
 	}
 	if (max_count != -1 && !max_count--)
 		return STOP;
