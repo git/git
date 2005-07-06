@@ -426,6 +426,7 @@ proc makewindow {} {
 	-command {diffvssel 1}
     $rowctxmenu add command -label "Make patch" -command mkpatch
     $rowctxmenu add command -label "Create tag" -command mktag
+    $rowctxmenu add command -label "Write commit to file" -command writecommit
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -1821,22 +1822,22 @@ proc mkpatch {} {
     catch {destroy $top}
     toplevel $top
     label $top.title -text "Generate patch"
-    grid $top.title -
+    grid $top.title - -pady 10
     label $top.from -text "From:"
-    entry $top.fromsha1 -width 40
+    entry $top.fromsha1 -width 40 -relief flat
     $top.fromsha1 insert 0 $oldid
     $top.fromsha1 conf -state readonly
     grid $top.from $top.fromsha1 -sticky w
-    entry $top.fromhead -width 60
+    entry $top.fromhead -width 60 -relief flat
     $top.fromhead insert 0 $oldhead
     $top.fromhead conf -state readonly
     grid x $top.fromhead -sticky w
     label $top.to -text "To:"
-    entry $top.tosha1 -width 40
+    entry $top.tosha1 -width 40 -relief flat
     $top.tosha1 insert 0 $newid
     $top.tosha1 conf -state readonly
     grid $top.to $top.tosha1 -sticky w
-    entry $top.tohead -width 60
+    entry $top.tohead -width 60 -relief flat
     $top.tohead insert 0 $newhead
     $top.tohead conf -state readonly
     grid x $top.tohead -sticky w
@@ -1901,18 +1902,18 @@ proc mktag {} {
     catch {destroy $top}
     toplevel $top
     label $top.title -text "Create tag"
-    grid $top.title -
+    grid $top.title - -pady 10
     label $top.id -text "ID:"
-    entry $top.sha1 -width 40
+    entry $top.sha1 -width 40 -relief flat
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    entry $top.head -width 40
+    entry $top.head -width 60 -relief flat
     $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky w
     label $top.tlab -text "Tag name:"
-    entry $top.tag -width 40
+    entry $top.tag -width 60
     grid $top.tlab $top.tag -sticky w
     frame $top.buts
     button $top.buts.gen -text "Create" -command mktaggo
@@ -1974,6 +1975,61 @@ proc mktaggo {} {
     mktagcan
 }
 
+proc writecommit {} {
+    global rowmenuid wrcomtop commitinfo wrcomcmd
+
+    set top .writecommit
+    set wrcomtop $top
+    catch {destroy $top}
+    toplevel $top
+    label $top.title -text "Write commit to file"
+    grid $top.title - -pady 10
+    label $top.id -text "ID:"
+    entry $top.sha1 -width 40 -relief flat
+    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 conf -state readonly
+    grid $top.id $top.sha1 -sticky w
+    entry $top.head -width 60 -relief flat
+    $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
+    $top.head conf -state readonly
+    grid x $top.head -sticky w
+    label $top.clab -text "Command:"
+    entry $top.cmd -width 60 -textvariable wrcomcmd
+    grid $top.clab $top.cmd -sticky w -pady 10
+    label $top.flab -text "Output file:"
+    entry $top.fname -width 60
+    $top.fname insert 0 [file normalize "commit-[string range $rowmenuid 0 6]"]
+    grid $top.flab $top.fname -sticky w
+    frame $top.buts
+    button $top.buts.gen -text "Write" -command wrcomgo
+    button $top.buts.can -text "Cancel" -command wrcomcan
+    grid $top.buts.gen $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - -pady 10 -sticky ew
+    focus $top.fname
+}
+
+proc wrcomgo {} {
+    global wrcomtop
+
+    set id [$wrcomtop.sha1 get]
+    set cmd "echo $id | [$wrcomtop.cmd get]"
+    set fname [$wrcomtop.fname get]
+    if {[catch {exec sh -c $cmd >$fname &} err]} {
+	error_popup "Error writing commit: $err"
+    }
+    catch {destroy $wrcomtop}
+    unset wrcomtop
+}
+
+proc wrcomcan {} {
+    global wrcomtop
+
+    catch {destroy $wrcomtop}
+    unset wrcomtop
+}
+
 proc doquit {} {
     global stopped
     set stopped 100
@@ -1984,6 +2040,7 @@ proc doquit {} {
 set datemode 0
 set boldnames 0
 set diffopts "-U 5 -p"
+set wrcomcmd "git-diff-tree --stdin -p --pretty"
 
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
