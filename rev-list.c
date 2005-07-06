@@ -9,7 +9,6 @@
 #define INTERESTING	(1u << 1)
 #define COUNTED		(1u << 2)
 #define SHOWN		(1u << 3)
-#define DUPCHECK	(1u << 4)
 
 static const char rev_list_usage[] =
 	"usage: git-rev-list [OPTION] commit-id <commit-id>\n"
@@ -488,9 +487,9 @@ int main(int argc, char **argv)
 		commit = get_commit_reference(arg, flags);
 		if (!commit)
 			continue;
-		if (commit->object.flags & DUPCHECK)
+		if (commit->object.flags & SEEN)
 			continue;
-		commit->object.flags |= DUPCHECK;
+		commit->object.flags |= SEEN;
 		insert(commit, &list);
 	}
 
