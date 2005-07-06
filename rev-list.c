@@ -39,6 +39,7 @@ static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 static int merge_order = 0;
 static int show_breaks = 0;
 static int stop_traversal = 0;
+static int topo_order = 0;
 
 static void show_commit(struct commit *commit)
 {
@@ -474,6 +475,10 @@ int main(int argc, char **argv)
 			show_breaks = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--topo-order")) {
+		        topo_order = 1;
+			continue;
+		}
 
 		flags = 0;
 		if (*arg == '^') {
@@ -495,6 +500,8 @@ int main(int argc, char **argv)
 	if (!merge_order) {		
 	        if (limited)
 			list = limit_list(list);
+		if (topo_order)
+			sort_in_topological_order(&list);
 		show_commit_list(list);
 	} else {
 		if (sort_list_in_merge_order(list, &process_commit)) {
