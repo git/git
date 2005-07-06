@@ -606,7 +606,7 @@ int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter)
 		while (reversed) {
 			struct commit * next = pop_commit(&reversed);
 
-			if (!(next->object.flags & VISITED)) {
+			if (!(next->object.flags & VISITED) && next!=base) {
 				sort_first_epoch(next, &stack);
 				if (reversed) {
 					/*
