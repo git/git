@@ -438,6 +438,26 @@ a2
 a1
 EOF
 
+test_output_expect_success "--merge-order a4 l3" "git-rev-list --merge-order a4 l3" <<EOF
+l3
+a4
+c3
+c2
+c1
+b4
+b3
+b2
+b1
+a3
+a2
+a1
+a0
+l2
+l1
+l0
+root
+EOF
+
 #
 #
 
