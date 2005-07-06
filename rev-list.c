@@ -473,6 +473,7 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--topo-order")) {
 		        topo_order = 1;
+		        limited = 1;
 			continue;
 		}
 
