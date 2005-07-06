@@ -13,6 +13,8 @@ static int single_rev = 0;
 static int revs_only = 0;
 static int do_rev_argument = 1;
 static int output_revs = 0;
+static int flags_only = 0;
+static int no_flags = 0;
 
 #define NORMAL 0
 #define REVERSED 1
@@ -64,6 +66,8 @@ static void show_rev_arg(char *rev)
 
 static void show_norev(char *norev)
 {
+	if (flags_only)
+		return;
 	if (revs_only)
 		return;
 	puts(norev);
@@ -71,6 +75,8 @@ static void show_norev(char *norev)
 
 static void show_arg(char *arg)
 {
+	if (no_flags)
+		return;
 	if (do_rev_argument && is_rev_argument(arg))
 		show_rev_arg(arg);
 	else
@@ -302,6 +308,14 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--no-revs")) {
 				no_revs = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--flags")) {
+				flags_only = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--no-flags")) {
+				no_flags = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--verify")) {
