@@ -463,6 +463,7 @@ static void prepare_packed_git_one(char *objdir)
 		p->next = packed_git;
 		packed_git = p;
 	}
+	closedir(dir);
 }
 
 void prepare_packed_git(void)
