@@ -86,7 +86,7 @@ struct sha1file *sha1create(const char *fmt, ...)
 		die("you wascally wabbit, you");
 	f->namelen = len;
 
-	fd = open(f->name, O_CREAT | O_EXCL | O_WRONLY, 0644);
+	fd = open(f->name, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0)
 		die("unable to open %s (%s)", f->name, strerror(errno));
 	f->fd = fd;

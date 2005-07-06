@@ -1237,7 +1237,7 @@ static void create_subdirectories(const char *path)
 		len = slash - path;
 		memcpy(buf, path, len);
 		buf[len] = 0;
-		if (mkdir(buf, 0755) < 0) {
+		if (mkdir(buf, 0777) < 0) {
 			if (errno != EEXIST)
 				break;
 		}

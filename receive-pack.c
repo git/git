@@ -70,7 +70,7 @@ static void update(const char *name, unsigned char *old_sha1, unsigned char *new
 	if (!has_sha1_file(new_sha1))
 		die("unpack should have generated %s, but I can't find it!", new_hex);
 
-	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0644);
+	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (newfd < 0)
 		die("unable to create %s (%s)", lock_name, strerror(errno));
 
