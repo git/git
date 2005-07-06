@@ -10,12 +10,12 @@ typedef int (*emitter_func) (struct commit *);
 
 int sort_list_in_merge_order(struct commit_list *list, emitter_func emitter);
 
-#define UNINTERESTING   (1u<<2)
-#define BOUNDARY        (1u<<3)
-#define VISITED         (1u<<4)
-#define DISCONTINUITY   (1u<<5)
-#define DUPCHECK        (1u<<6)
-#define LAST_EPOCH_FLAG (1u<<6)
+/* Low bits are used by rev-list */
+#define UNINTERESTING   (1u<<10)
+#define BOUNDARY        (1u<<11)
+#define VISITED         (1u<<12)
+#define DISCONTINUITY   (1u<<13)
+#define LAST_EPOCH_FLAG (1u<<14)
 
 
 #endif	/* EPOCH_H */
