@@ -55,8 +55,6 @@ static void *get_data(unsigned long size)
 	z_stream stream;
 	void *buf = xmalloc(size);
 
-	if (!size)
-		return buf;
 	memset(&stream, 0, sizeof(stream));
 
 	stream.next_out = buf;
