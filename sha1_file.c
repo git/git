@@ -104,15 +104,13 @@ char *get_index_file(void)
 
 char *git_path(const char *fmt, ...)
 {
-	static char pathname[PATH_MAX];
+	static char pathname[PATH_MAX], *ret;
 	va_list args;
 	int len;
 
 	if (!git_dir)
 		setup_git_env();
 	len = strlen(git_dir);
-	if (len == 1 && *git_dir == '.')
-		len = 0;
 	if (len > PATH_MAX-100)
 		return "pad-path";
 	memcpy(pathname, git_dir, len);
@@ -121,7 +119,15 @@ char *git_path(const char *fmt, ...)
 	va_start(args, fmt);
 	vsnprintf(pathname + len, sizeof(pathname) - len, fmt, args);
 	va_end(args);
-	return pathname;
+	ret = pathname;
+
+	/* Clean it up */
+	if (!memcmp(pathname, "./", 2)) {
+		ret += 2;
+		while (*ret == '/')
+			ret++;
+	}
+	return ret;
 }
 
 int get_sha1(const char *str, unsigned char *sha1)
