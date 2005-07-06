@@ -317,6 +317,7 @@ sub file {
 	    $res = $self->_line($fh);
 	    die "No input: $fn $rev\n" unless defined $res;
 	}
+	close ($fh);
 
 	return ($name, $res);
 }
