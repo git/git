@@ -1,6 +1,7 @@
 #!/bin/sh
 rev=($(git-rev-parse --revs-only "$@"))
-flags=($(git-rev-parse --no-revs "$@"))
+flags=($(git-rev-parse --no-revs --flags "$@"))
+files=($(git-rev-parse --no-revs --no-flags "$@"))
 case "${#rev[*]}" in
 0)
 	git-diff-files -M -p "$@";;
@@ -9,7 +10,7 @@ case "${#rev[*]}" in
 2)
 	begin=$(echo "${rev[1]}" | tr -d '^')
 	end="${rev[0]}"
-	git-diff-tree -M -p $flags $begin $end;;
+	git-diff-tree -M -p $flags $begin $end $files;;
 *)
 	echo "I don't understand"
 	exit 1;;
