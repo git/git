@@ -54,4 +54,17 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 struct commit *pop_commit(struct commit_list **stack);
 
 int count_parents(struct commit * commit);
+
+/*
+ * Performs an in-place topological sort of list supplied.
+ *
+ * Pre-conditions:
+ *   all commits in input list and all parents of those
+ *   commits must have object.util == NULL
+ *        
+ * Post-conditions: 
+ *   invariant of resulting list is:
+ *      a reachable from b => ord(b) < ord(a)
+ */
+void sort_in_topological_order(struct commit_list ** list);
 #endif /* COMMIT_H */
