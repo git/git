@@ -58,7 +58,7 @@ static int verify_packfile(struct packed_git *p)
 			continue;
 		}
 		if (check_sha1_signature(sha1, data, size, type)) {
-			err = error("cannot packed %s from %s corrupt",
+			err = error("packed %s from %s is corrupt",
 				    sha1_to_hex(sha1), p->pack_name);
 			free(data);
 			continue;
