@@ -79,15 +79,6 @@ save_tag g4 unique_commit g6 tree -p g3 -p h2
 
 tag l5 > .git/HEAD
 
-#
-# cd to t/trash and use 
-#
-#    git-rev-list ... 2>&1 | sed "$(cat sed.script)" 
-#
-# if you ever want to manually debug the operation of git-rev-list
-#
-echo "$sed_script" | tr ' ' \\012 > sed.script
-
 test_expect_success 'rev-list has correct number of entries' 'git-rev-list HEAD | wc -l | tr -s " "' <<EOF
 19
 EOF

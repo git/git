@@ -1,6 +1,6 @@
 [ -d .git/refs/tags ] || mkdir -p .git/refs/tags
 
-sed_script="";
+:> sed.script
 
 # Answer the sha1 has associated with the tag. The tag must exist in .git or .git/refs/tags
 tag()
@@ -21,7 +21,7 @@ unique_commit()
 }
 
 # Save the output of a command into the tag specified. Prepend
-# a substitution script for the tag onto the front of $sed_script
+# a substitution script for the tag onto the front of sed.script
 save_tag()
 {
 	_tag=$1	
@@ -29,14 +29,16 @@ save_tag()
 	shift 1
     	"$@" >.git/refs/tags/$_tag
 
-       sed_script="s/$(tag $_tag)/$_tag/g
-$sed_script"
+        echo "s/$(tag $_tag)/$_tag/g" > sed.script.tmp
+	cat sed.script >> sed.script.tmp
+	rm sed.script
+	mv sed.script.tmp sed.script
 }
 
 # Replace unhelpful sha1 hashses with their symbolic equivalents 
 entag()
 {
-	sed "$sed_script"
+	sed -f sed.script
 }
 
 # Execute a command after first saving, then setting the GIT_AUTHOR_EMAIL

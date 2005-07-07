@@ -113,16 +113,6 @@ on_committer_date "1971-08-16 00:00:04" save_tag u4 unique_commit u4 tree -p u0
 on_committer_date "1971-08-16 00:00:05" save_tag u5 unique_commit u5 tree -p u0
 on_committer_date "1971-08-16 00:00:06" save_tag V unique_commit V tree -p u1 -p u2 -p u3 -p u4 -p u5
 
-
-#
-# cd to t/trash and use 
-#
-#    git-rev-list ... 2>&1 | sed "$(cat sed.script)" 
-#
-# if you ever want to manually debug the operation of git-rev-list
-#
-echo $sed_script > sed.script
-
 test_sequence()
 {
 	_bisect_option=$1	
