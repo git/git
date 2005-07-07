@@ -410,10 +410,8 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;
-	struct commit_list *(*insert)(struct commit *, struct commit_list **);
 	int i, limited = 0;
 
-	insert = insert_by_date;
 	for (i = 1 ; i < argc; i++) {
 		int flags;
 		char *arg = argv[i];
@@ -463,7 +461,6 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--merge-order")) {
 		        merge_order = 1;
-		        insert = commit_list_insert;
 			continue;
 		}
 		if (!strcmp(arg, "--show-breaks")) {
@@ -490,10 +487,11 @@ int main(int argc, char **argv)
 		if (commit->object.flags & SEEN)
 			continue;
 		commit->object.flags |= SEEN;
-		insert(commit, &list);
+		commit_list_insert(commit, &list);
 	}
 
 	if (!merge_order) {		
+		sort_by_date(&list);
 	        if (limited)
 			list = limit_list(list);
 		if (topo_order)
