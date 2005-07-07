@@ -79,6 +79,14 @@ Second digit tells the particular command we are testing.
 Third digit (optionally) tells the particular switch or group of switches
 we are testing.
 
+If you create files under t/ directory (i.e. here) that is not
+the top-level test script, never name the file to match the above
+pattern.  The Makefile here considers all such files as the
+top-level test script and tries to run all of them.  A care is
+especially needed if you are creating a common test library
+file, similar to test-lib.sh, because such a library file may
+not be suitable for standalone execution.
+
 
 Writing Tests
 -------------

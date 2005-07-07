@@ -6,7 +6,7 @@
 test_description='Tests git-rev-list --merge-order functionality'
 
 . ./test-lib.sh
-. ../t6000-lib.sh # t6xxx specific functions
+. ../t6000lib.sh # t6xxx specific functions
 
 # test-case specific test function
 check_adjacency()
