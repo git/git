@@ -499,7 +499,7 @@ static int emit_stack(struct commit_list **stack, emitter_func emitter, int incl
 		if (*stack || include_last) {
 			if (!*stack) 
 				next->object.flags |= BOUNDARY;
-			action = (*emitter) (next);
+			action = emitter(next);
 		}
 	}
 
@@ -545,7 +545,7 @@ static int sort_in_merge_order(struct commit *head_of_epoch, emitter_func emitte
 				if (next->object.flags & UNINTERESTING) {
 					action = STOP;
 				} else {
-					action = (*emitter) (next);
+					action = emitter(next);
 				}
 				if (action != STOP) {
 					next = next->parents->item;
@@ -562,7 +562,7 @@ static int sort_in_merge_order(struct commit *head_of_epoch, emitter_func emitte
 	}
 
 	if (next && (action != STOP) && !ret) {
-		(*emitter) (next);
+		emitter(next);
 	}
 
 	return ret;
