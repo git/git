@@ -9,6 +9,8 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
+GIT_VERSION=0.99
+
 COPTS=-O2
 CFLAGS=-g $(COPTS) -Wall
 
@@ -49,6 +51,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 all: $(PROG)
 
 install: $(PROG) $(SCRIPTS)
+	$(INSTALL) -m755 -d $(dest)$(bin)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
@@ -163,6 +166,21 @@ diffcore-pickaxe.o : $(LIB_H) diffcore.h
 diffcore-break.o : $(LIB_H) diffcore.h
 diffcore-order.o : $(LIB_H) diffcore.h
 epoch.o: $(LIB_H)
+
+git.spec: git.spec.in
+	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
+
+GIT_TARNAME=git-$(GIT_VERSION)
+dist: git.spec
+	git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
+	@mkdir -p $(GIT_TARNAME)
+	@cp git.spec $(GIT_TARNAME)
+	tar rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git.spec
+	@rm -rf $(GIT_TARNAME)
+	gzip -9 $(GIT_TARNAME).tar
+
+rpm: dist
+	rpmbuild -ta git-$(GIT_VERSION).tar.gz
 
 test: all
 	$(MAKE) -C t/ all

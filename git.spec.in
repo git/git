@@ -1,0 +1,42 @@
+Name: 		git
+Version: 	@@VERSION@@
+Release: 	1
+Vendor: 	Linus Torvalds <torvalds@osdl.org>
+Summary:  	Git core and tools
+License: 	GPL
+Group: 		Development/Tools
+URL: 		http://kernel.org/pub/software/scm/git/
+Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
+BuildRequires:	zlib-devel, openssl-devel, curl-devel
+BuildRoot:	%{_tmppath}/%{name}-%{version}-root
+Prereq: 	sh-utils, diffutils, rsync, rcs, mktemp >= 1.5
+
+%description
+GIT comes in two layers. The bottom layer is merely an extremely fast
+and flexible filesystem-based database designed to store directory trees
+with regard to their history. The top layer is a SCM-like tool which
+enables human beings to work with the database in a manner to a degree
+similar to other SCM tools (like CVS, BitKeeper or Monotone).
+
+%prep
+%setup -q
+
+%build
+
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make dest=$RPM_BUILD_ROOT prefix=%{_prefix} install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%{_bindir}/*
+%doc README COPYING Documentation/*
+
+%changelog
+* Wed Jul 7 2005 Chris Wright <chris@osdl.org>
+- initial git spec file
