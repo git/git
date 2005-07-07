@@ -12,7 +12,7 @@ struct ref {
 	char name[0];
 };
 
-struct ref *get_remote_refs(int fd, int nr_match, char **match)
+static struct ref *get_remote_refs(int fd, int nr_match, char **match)
 {
 	struct ref *ref_list = NULL, **next_ref = &ref_list;
 
