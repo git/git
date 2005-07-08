@@ -683,7 +683,7 @@ while(<CVS>) {
 		$fn =~ s#^/+##;
 		my ($tmpname, $size) = $cvs->file($fn,$rev);
 		print "".($init ? "New" : "Update")." $fn: $size bytes.\n" if $opt_v;
-		open my $F, '-|', "git-write-blob $tmpname"
+		open my $F, '-|', "git-hash-object -w $tmpname"
 			or die "Cannot create object: $!\n";
 		my $sha = <$F>;
 		chomp $sha;

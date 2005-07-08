@@ -68,7 +68,7 @@ static int add_file_to_cache(char *path)
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return -1;
-		if (index_fd(ce->sha1, fd, &st) < 0)
+		if (index_fd(ce->sha1, fd, &st, 1, NULL) < 0)
 			return -1;
 		break;
 	case S_IFLNK:

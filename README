@@ -102,8 +102,8 @@ object. The object is totally independent of it's location in the
 directory tree, and renaming a file does not change the object that
 file is associated with in any way.
 
-A blob is created with link:git-write-blob.html[git-write-blob] and
-it's data can be accessed by link:git-cat-file.html[git-cat-file]
+A blob is typically created when link:git-update-cache.html[git-update-cache]
+is run, and it's data can be accessed by link:git-cat-file.html[git-cat-file].
 
 Tree Object
 ~~~~~~~~~~~

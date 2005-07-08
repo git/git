@@ -42,7 +42,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
-	git-diff-helper git-tar-tree git-local-pull git-write-blob \
+	git-diff-helper git-tar-tree git-local-pull git-hash-object \
 	git-get-tar-commit-id git-apply git-stripspace \
 	git-diff-stages git-rev-parse git-patch-id git-pack-objects \
 	git-unpack-objects git-verify-pack git-receive-pack git-send-pack \
@@ -135,7 +135,7 @@ git-rev-list: rev-list.c
 git-mktag: mktag.c
 git-diff-helper: diff-helper.c
 git-tar-tree: tar-tree.c
-git-write-blob: write-blob.c
+git-hash-object: hash-object.c
 git-stripspace: stripspace.c
 git-diff-stages: diff-stages.c
 git-rev-parse: rev-parse.c

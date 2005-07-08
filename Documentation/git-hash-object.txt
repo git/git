@@ -1,0 +1,36 @@
+git-hash-object(1)
+==================
+v0.1, May 2005
+
+NAME
+----
+git-hash-object - Computes object ID and optionally creates a blob from a file.
+
+
+SYNOPSIS
+--------
+'git-hash-object' [-t <type>] [-w] <any-file-on-the-filesystem>
+
+DESCRIPTION
+-----------
+Computes the object ID value for an object with specified type
+with the contents of the named file (which can be outside of the
+work tree), and optionally writes the resulting object into the
+object database.  Reports its object ID to its standard output.
+This is used by "git-cvsimport-script" to update the cache
+without modifying files in the work tree.  When <type> is not
+specified, it defaults to "blob". 
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

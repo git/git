@@ -60,8 +60,8 @@ link:git-read-tree.html[git-read-tree]::
 link:git-update-cache.html[git-update-cache]::
 	Modifies the index or directory cache
 
-link:git-write-blob.html[git-write-blob]::
-	Creates a blob from a file
+link:git-hash-object.html[git-hash-object]::
+	Computes the object ID from a file.
 
 link:git-write-tree.html[git-write-tree]::
 	Creates a tree from the current cache
