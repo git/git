@@ -14,6 +14,7 @@ SYNOPSIS
 	     [--ignore-missing]
 	     [--force-remove]
 	     [--cacheinfo <mode> <object> <file>]\*
+	     [--info-only]
 	     [--] [<file>]\*
 
 DESCRIPTION
@@ -47,6 +48,11 @@ OPTIONS
 --cacheinfo <mode> <object> <path>::
 	Directly insert the specified info into the cache.
 	
+--info-only::
+	Do not create objects in the object database for all
+	<file> arguments that follow this flag; just insert
+	their object IDs into the cache.
+
 --force-remove::
 	Remove the file from the index even when the working directory
 	still has such a file. (Implies --remove.)
@@ -80,15 +86,27 @@ the stat entry is out of date.
 For example, you'd want to do this after doing a "git-read-tree", to link
 up the stat cache details with the proper files.
 
-Using --cacheinfo
------------------
-'--cacheinfo' is used to register a file that is not in the current
-working directory.  This is useful for minimum-checkout merging.
+Using --cacheinfo or --info-only
+--------------------------------
+'--cacheinfo' is used to register a file that is not in the
+current working directory.  This is useful for minimum-checkout
+merging.
 
-To pretend you have a file with mode and sha1 at path, say:
+  To pretend you have a file with mode and sha1 at path, say:
 
- $ git-update-cache --cacheinfo mode sha1 path
+   $ git-update-cache --cacheinfo mode sha1 path
 
+'--info-only' is used to register files without placing them in the object
+database.  This is useful for status-only repositories.
+
+Both '--cacheinfo' and '--info-only' behave similarly: the index is updated
+but the object database isn't.  '--cacheinfo' is useful when the object is
+in the database but the file isn't available locally.  '--info-only' is
+useful when the file is available, but you do not wish to update the
+object database.
+
+Examples
+--------
 To update and refresh only the files already checked out:
 
    git-checkout-cache -n -f -a && git-update-cache --ignore-missing --refresh
