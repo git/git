@@ -438,7 +438,7 @@ int main(int argc, const char **argv)
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
 			continue;
 		}
-		if (!strcmp(arg, "-p")) {
+		if (!strcmp(arg, "-p") || !strcmp(arg, "-u")) {
 			diff_output_format = DIFF_FORMAT_PATCH;
 			recursive = 1;
 			continue;

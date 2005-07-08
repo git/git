@@ -193,7 +193,8 @@ int main(int argc, const char **argv)
 			/* We accept the -r flag just to look like git-diff-tree */
 			continue;
 		}
-		if (!strcmp(arg, "-p")) {
+		/* We accept the -u flag as a synonym for "-p" */
+		if (!strcmp(arg, "-p") || !strcmp(arg, "-u")) {
 			diff_output_format = DIFF_FORMAT_PATCH;
 			continue;
 		}

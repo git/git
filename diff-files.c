@@ -45,7 +45,7 @@ int main(int argc, const char **argv)
 	int i;
 
 	while (1 < argc && argv[1][0] == '-') {
-		if (!strcmp(argv[1], "-p"))
+		if (!strcmp(argv[1], "-p") || !strcmp(argv[1], "-u"))
 			diff_output_format = DIFF_FORMAT_PATCH;
 		else if (!strcmp(argv[1], "-q"))
 			silent = 1;
