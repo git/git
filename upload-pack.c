@@ -170,8 +170,12 @@ int main(int argc, char **argv)
 	if (argc != 2)
 		usage(upload_pack_usage);
 	dir = argv[1];
-	if (chdir(dir))
-		die("git-upload-pack unable to chdir to %s", dir);
+
+	/* chdir to the directory. If that fails, try appending ".git" */
+	if (chdir(dir) < 0) {
+		if (chdir(mkpath("%s.git", dir)) < 0)
+			die("git-upload-pack unable to chdir to %s", dir);
+	}
 	chdir(".git");
 	if (access("objects", X_OK) || access("refs", X_OK))
 		die("git-upload-pack: %s doesn't seem to be a git archive", dir);

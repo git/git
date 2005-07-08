@@ -197,9 +197,7 @@ int main(int argc, char **argv)
 
 	/* chdir to the directory. If that fails, try appending ".git" */
 	if (chdir(dir) < 0) {
-		static char path[PATH_MAX];
-		snprintf(path, sizeof(path), "%s.git", dir);
-		if (chdir(path) < 0)
+		if (chdir(mkpath("%s.git", dir)) < 0)
 			die("unable to cd to %s", dir);
 	}
 
