@@ -94,36 +94,15 @@ static int add_file_to_cache(char *path)
 	return add_cache_entry(ce, option);
 }
 
-static int match_data(int fd, void *buffer, unsigned long size)
-{
-	while (size) {
-		char compare[1024];
-		int ret = read(fd, compare, sizeof(compare));
-
-		if (ret <= 0 || ret > size || memcmp(buffer, compare, ret))
-			return -1;
-		size -= ret;
-		buffer += ret;
-	}
-	return 0;
-}
-
-static int compare_data(struct cache_entry *ce, unsigned long expected_size)
+static int compare_data(struct cache_entry *ce, struct stat *st)
 {
 	int match = -1;
 	int fd = open(ce->name, O_RDONLY);
 
 	if (fd >= 0) {
-		void *buffer;
-		unsigned long size;
-		char type[20];
-
-		buffer = read_sha1_file(ce->sha1, type, &size);
-		if (buffer) {
-			if (size == expected_size && !strcmp(type, "blob"))
-				match = match_data(fd, buffer, size);
-			free(buffer);
-		}
+		unsigned char sha1[20];
+		if (!index_fd(sha1, fd, st, 0, NULL))
+			match = memcmp(sha1, ce->sha1, 20);
 		close(fd);
 	}
 	return match;
@@ -189,7 +168,7 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 
 	switch (st.st_mode & S_IFMT) {
 	case S_IFREG:
-		if (compare_data(ce, st.st_size))
+		if (compare_data(ce, &st))
 			return ERR_PTR(-EINVAL);
 		break;
 	case S_IFLNK:
