@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Set up GIT_DIR and GIT_OBJECT_DIRECTORY
+# and return true if everything looks ok
+#
+: ${GIT_DIR=.git}
+: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+
+die() {
+	echo "$@" >&2
+	exit 1
+}
+
+[ -d "$GIT_DIR" ] &&
+[ -d "$GIT_DIR/refs" ]
+[ -d "$GIT_OBJECT_DIRECTORY" ] &&
+[ -d "$GIT_OBJECT_DIRECTORY/00" ]

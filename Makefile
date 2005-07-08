@@ -34,7 +34,7 @@ SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-log-script git-shortlog git-cvsimport-script git-diff-script \
 	git-reset-script git-add-script git-checkout-script git-clone-script \
 	gitk git-cherry git-rebase-script git-relink-script git-repack-script \
-	git-format-patch-script
+	git-format-patch-script git-sh-setup-script
 
 PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-read-tree git-commit-tree git-cat-file git-fsck-cache \

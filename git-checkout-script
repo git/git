@@ -1,5 +1,6 @@
 #!/bin/sh
-: ${GIT_DIR=.git}
+. git-sh-setup-script || die "Not a git archive"
+
 old=$(git-rev-parse HEAD)
 new=
 force=

@@ -1,4 +1,7 @@
 #!/bin/sh
+
+. git-sh-setup-script || die "Not a git archive"
+
 dryrun=
 while case "$#" in 0) break ;; esac
 do
@@ -10,9 +13,6 @@ do
     esac
     shift;
 done
-
-: ${GIT_DIR=.git}
-: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 
 git-fsck-cache --cache --unreachable "$@" |
 sed -ne '/unreachable /{

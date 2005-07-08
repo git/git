@@ -4,12 +4,11 @@
 #
 # Resolve two trees.
 #
+. git-sh-setup-script || die "Not a git archive"
+
 head=$(git-rev-parse --revs-only "$1")
 merge=$(git-rev-parse --revs-only "$2")
 merge_repo="$3"
-
-: ${GIT_DIR=.git}
-: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 
 dropheads() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" \
@@ -21,8 +20,7 @@ dropheads() {
 # but we do want it.
 #
 if [ -z "$head" -o -z "$merge" -o -z "$merge_repo" ]; then
-	echo "git-resolve-script <head> <remote> <merge-repo-name>"
-	exit 1
+	die "git-resolve-script <head> <remote> <merge-repo-name>"
 fi
 
 dropheads
@@ -31,8 +29,7 @@ echo $merge > "$GIT_DIR"/LAST_MERGE
 
 common=$(git-merge-base $head $merge)
 if [ -z "$common" ]; then
-	echo "Unable to find common commit between" $merge $head
-	exit 1
+	die "Unable to find common commit between" $merge $head
 fi
 
 if [ "$common" == "$merge" ]; then
@@ -57,8 +54,7 @@ if [ $? -ne 0 ]; then
 	git-merge-cache -o git-merge-one-file-script -a
 	if [ $? -ne 0 ]; then
 		echo $merge > "$GIT_DIR"/MERGE_HEAD
-		echo "Automatic merge failed, fix up by hand"
-		exit 1
+		die "Automatic merge failed, fix up by hand"
 	fi
 	result_tree=$(git-write-tree) || exit 1
 fi

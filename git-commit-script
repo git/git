@@ -3,16 +3,12 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
+. git-sh-setup-script || die "Not a git archive"
+
 usage () {
-    echo 'git commit [-m existing-commit] [<path>...]'
-    exit 1
+	die 'git commit [-m existing-commit] [<path>...]'
 }
 
-: ${GIT_DIR=.git}
-if [ ! -d "$GIT_DIR" ]; then
-	echo Not a git directory 1>&2
-	exit 1
-fi
 while case "$#" in 0) break ;; esac
 do
     case "$1" in

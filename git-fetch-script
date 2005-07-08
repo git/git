@@ -9,8 +9,8 @@ if [ "$2" = "tag" ]; then
 	destination="$merge_name"
 fi
 
-: ${GIT_DIR=.git}
-: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
+. git-sh-setup-script || die "Not a git archive"
+
 TMP_HEAD="$GIT_DIR/TMP_HEAD"
 
 case "$merge_repo" in
