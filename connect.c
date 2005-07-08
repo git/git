@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include "quote.h"
 #include <sys/wait.h>
 
 int get_ack(int fd, unsigned char *result_sha1)
@@ -42,34 +43,6 @@ int path_match(const char *path, int nr, char **match)
 }
 
 /*
- * First, make it shell-safe.  We do this by just disallowing any
- * special characters. Somebody who cares can do escaping and let
- * through the rest. But since we're doing to feed this to ssh as
- * a command line, we're going to be pretty damn anal for now.
- */
-static char *shell_safe(char *url)
-{
-	char *n = url;
-	unsigned char c;
-	static const char flags[256] = {
-		['0'...'9'] = 1,
-		['a'...'z'] = 1,
-		['A'...'Z'] = 1,
-		['.'] = 1, ['/'] = 1,
-		['-'] = 1, ['+'] = 1,
-		[':'] = 1, ['_'] = 1,
-		['@'] = 1, [','] = 1,
-		['~'] = 1, ['^'] = 1,
-	};
-
-	while ((c = *n++) != 0) {
-		if (flags[c] != 1)
-			die("I don't like '%c'. Sue me.", c);
-	}
-	return url;
-}
-
-/*
  * Yeah, yeah, fixme. Need to pass in the heads etc.
  */
 int git_connect(int fd[2], char *url, const char *prog)
@@ -80,7 +53,6 @@ int git_connect(int fd[2], char *url, const char *prog)
 	int pipefd[2][2];
 	pid_t pid;
 
-	url = shell_safe(url);
 	host = NULL;
 	path = url;
 	colon = strchr(url, ':');
@@ -89,11 +61,12 @@ int git_connect(int fd[2], char *url, const char *prog)
 		host = url;
 		path = colon+1;
 	}
-	snprintf(command, sizeof(command), "%s %s", prog, path);
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
 	pid = fork();
 	if (!pid) {
+		snprintf(command, sizeof(command), "%s %s", prog,
+			 sq_quote(path));
 		dup2(pipefd[1][0], 0);
 		dup2(pipefd[0][1], 1);
 		close(pipefd[0][0]);
