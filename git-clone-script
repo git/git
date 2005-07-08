@@ -10,6 +10,10 @@ usage() {
 	exit 1
 }
 
+get_repo_base() {
+	(cd "$1" && (cd .git ; pwd)) 2> /dev/null
+}
+
 use_local=no
 while
 	case "$#,$1" in
@@ -22,7 +26,15 @@ do
 	shift
 done
 
+# Turn the source into an absolute path if
+# it is local
 repo="$1"
+local=no
+if base=$(get_repo_base "$repo"); then
+	repo="$base"
+	local=yes
+fi
+
 dir="$2"
 mkdir "$dir" &&
 D=$(
@@ -31,8 +43,8 @@ D=$(
 test -d "$D" || usage
 
 # We do local magic only when the user tells us to.
-case "$use_local" in
-yes)
+case "$local,$use_local" in
+yes,yes)
 	( cd "$repo/objects" ) || {
 		repo="$repo/.git"
 		( cd "$repo/objects" ) || {
