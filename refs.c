@@ -3,10 +3,10 @@
 
 #include <errno.h>
 
-static int read_ref(const char *path, unsigned char *sha1)
+static int read_ref(const char *refname, unsigned char *sha1)
 {
 	int ret = -1;
-	int fd = open(path, O_RDONLY);
+	int fd = open(git_path(refname), O_RDONLY);
 
 	if (fd >= 0) {
 		char buffer[60];
@@ -20,7 +20,7 @@ static int read_ref(const char *path, unsigned char *sha1)
 static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1))
 {
 	int retval = 0;
-	DIR *dir = opendir(base);
+	DIR *dir = opendir(git_path(base));
 
 	if (dir) {
 		struct dirent *de;
@@ -46,7 +46,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			if (namelen > 255)
 				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
-			if (lstat(path, &st) < 0)
+			if (lstat(git_path(path), &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
 				retval = do_for_each_ref(path, fn);
@@ -71,15 +71,14 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
 	unsigned char sha1[20];
-	const char *headpath = git_path("HEAD");
-	if (!read_ref(headpath, sha1))
-		return fn(headpath, sha1);
+	if (!read_ref("HEAD", sha1))
+		return fn("HEAD", sha1);
 	return 0;
 }
 
 int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref(get_refs_directory(), fn);
+	return do_for_each_ref("refs", fn);
 }
 
 static char *ref_file_name(const char *ref)
