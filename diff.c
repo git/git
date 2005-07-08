@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include "cache.h"
+#include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
 
@@ -38,42 +39,6 @@ static const char *external_diff(void)
 
 	done_preparing = 1;
 	return external_diff_cmd;
-}
-
-/* Help to copy the thing properly quoted for the shell safety.
- * any single quote is replaced with '\'', and the caller is
- * expected to enclose the result within a single quote pair.
- *
- * E.g.
- *  original     sq_expand     result
- *  name     ==> name      ==> 'name'
- *  a b      ==> a b       ==> 'a b'
- *  a'b      ==> a'\''b    ==> 'a'\''b'
- */
-static char *sq_expand(const char *src)
-{
-	static char *buf = NULL;
-	int cnt, c;
-	const char *cp;
-	char *bp;
-
-	/* count bytes needed to store the quoted string. */
-	for (cnt = 1, cp = src; *cp; cnt++, cp++)
-		if (*cp == '\'')
-			cnt += 3;
-
-	buf = xmalloc(cnt);
-	bp = buf;
-	while ((c = *src++)) {
-		if (c != '\'')
-			*bp++ = c;
-		else {
-			bp = strcpy(bp, "'\\''");
-			bp += 4;
-		}
-	}
-	*bp = 0;
-	return buf;
 }
 
 static struct diff_tempfile {
@@ -167,16 +132,16 @@ static void builtin_diff(const char *name_a,
 			 int complete_rewrite)
 {
 	int i, next_at, cmd_size;
-	const char *diff_cmd = "diff -L'%s%s' -L'%s%s'";
-	const char *diff_arg  = "'%s' '%s'||:"; /* "||:" is to return 0 */
+	const char *diff_cmd = "diff -L%s%s -L%s%s";
+	const char *diff_arg  = "%s %s||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
 	const char *path0[2];
 	const char *path1[2];
 	const char *name_sq[2];
 	char *cmd;
 
-	name_sq[0] = sq_expand(name_a);
-	name_sq[1] = sq_expand(name_b);
+	name_sq[0] = sq_quote(name_a);
+	name_sq[1] = sq_quote(name_b);
 
 	/* diff_cmd and diff_arg have 6 %s in total which makes
 	 * the sum of these strings 12 bytes larger than required.
@@ -186,7 +151,7 @@ static void builtin_diff(const char *name_a,
 	cmd_size = (strlen(diff_cmd) + strlen(diff_opts) +
 			strlen(diff_arg) - 9);
 	for (i = 0; i < 2; i++) {
-		input_name_sq[i] = sq_expand(temp[i].name);
+		input_name_sq[i] = sq_quote(temp[i].name);
 		if (!strcmp(temp[i].name, "/dev/null")) {
 			path0[i] = "/dev/null";
 			path1[i] = "";

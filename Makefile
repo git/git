@@ -65,6 +65,9 @@ LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h 
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
 
+LIB_H += quote.h
+LIB_OBJS += quote.o 
+
 LIB_H += diff.h count-delta.h
 LIB_OBJS += diff.o diffcore-rename.o diffcore-pickaxe.o diffcore-pathspec.o \
 	count-delta.o diffcore-break.o diffcore-order.o
