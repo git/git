@@ -102,34 +102,6 @@ char *get_index_file(void)
 	return git_index_file;
 }
 
-char *git_path(const char *fmt, ...)
-{
-	static char pathname[PATH_MAX], *ret;
-	va_list args;
-	int len;
-
-	if (!git_dir)
-		setup_git_env();
-	len = strlen(git_dir);
-	if (len > PATH_MAX-100)
-		return "pad-path";
-	memcpy(pathname, git_dir, len);
-	if (len && git_dir[len-1] != '/')
-		pathname[len++] = '/';
-	va_start(args, fmt);
-	vsnprintf(pathname + len, sizeof(pathname) - len, fmt, args);
-	va_end(args);
-	ret = pathname;
-
-	/* Clean it up */
-	if (!memcmp(pathname, "./", 2)) {
-		ret += 2;
-		while (*ret == '/')
-			ret++;
-	}
-	return ret;
-}
-
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path;
