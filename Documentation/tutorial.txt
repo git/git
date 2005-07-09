@@ -215,6 +215,12 @@ In other words, git-diff-files always shows us the difference between
 what is recorded in the index, and what is currently in the working
 tree. That's very useful.
 
+A common shorthand for "git-diff-files -p" is to just write
+
+	git diff
+
+which will do the same thing. 
+
 
 	Committing git state
 	--------------------
@@ -275,6 +281,14 @@ for a project ever, and all later commits will be parented on top of an
 earlier commit, and you'll never see this "Committing initial tree"
 message ever again.
 
+Again, normally you'd never actually do this by hand.  There is a
+helpful script called "git commit" that will do all of this for you. So
+you could have just writtten
+
+	git commit
+
+instead, and it would have done the above magic scripting for you.
+
 
 	Making a change
 	---------------
@@ -312,6 +326,13 @@ will show us the same difference, but for a totally different reason.
 Now we're comparing the working directory not against the index file,
 but against the tree we just wrote.  It just so happens that those two
 are obviously the same, so we get the same result.
+
+Again, because this is a common operation, you can also just shorthand
+it with
+
+	git diff HEAD
+
+which ends up doing the above for you.
 
 In other words, "git-diff-cache" normally compares a tree against the
 working directory, but when given the "--cached" flag, it is told to
@@ -354,15 +375,16 @@ current state is different from the state we committed.  In fact, now
 flag or not, since now the index is coherent with the working directory. 
 
 Now, since we've updated "a" in the index, we can commit the new
-version. We could do it by writing the tree by hand, and committing the
-tree (this time we'd have to use the "-p HEAD" flag to tell commit that
-the HEAD was the _parent_ of the new commit, and that this wasn't an
-initial commit any more), but the fact is, git has a simple helper
-script for doing all of the non-initial commits that does all of this
-for you, and starts up an editor to let you write your commit message
-yourself, so let's just use that:
+version.  We could do it by writing the tree by hand again, and
+committing the tree (this time we'd have to use the "-p HEAD" flag to
+tell commit that the HEAD was the _parent_ of the new commit, and that
+this wasn't an initial commit any more), but you've done that once
+already, so let's just use the helpful script this time:
 
 	git commit
+
+which starts an editor for you to write the commit message and tells you
+a bit about what you're doing. 
 
 Write whatever message you want, and all the lines that start with '#'
 will be pruned out, and the rest will be used as the commit message for
@@ -532,7 +554,219 @@ older version of a checked out tree you may also need to add the "-f"
 file first, to tell git-checkout-cache to _force_ overwriting of any old
 files). 
 
+Again, this can all be simplified with
+
+	git clone rsync://rsync.kernel.org/pub/scm/linux/kernel/git/torvalds/git.git/ my-git
+	cd my-git
+	git checkout
+
+which will end up doing all of the above for you.
+
 You have now successfully copied somebody else's (mine) remote
 repository, and checked it out. 
 
-[ to be continued.. cvs2git, tagging versions, branches, merging.. ]
+
+	Creating a new branch
+	---------------------
+
+Branches in git are really nothing more than pointers into the git
+object space from within the ",git/refs/" subdirectory, and as we
+already discussed, the HEAD branch is nothing but a symlink to one of
+these object pointers. 
+
+You can at any time create a new branch by just picking an arbitrary
+point in the project history, and just writing the SHA1 name of that
+object into a file under .git/refs/heads/.  You can use any filename you
+want (and indeed, subdirectories), but the convention is that the
+"normal" branch is called "master".  That's just a convention, though,
+and nothing enforces it. 
+
+To show that as an example, let's go back to the git-tutorial archive we
+used earlier, and create a branch in it.  You literally do that by just
+creating a new SHA1 reference file, and switch to it by just making the
+HEAD pointer point to it:
+
+	cat .git/HEAD > .git/refs/heads/mybranch
+	ln -sf refs/heads/mybranch .git/HEAD
+
+and you're done.
+
+Now, if you make the decision to start your new branch at some other
+point in the history than the current HEAD, you usually also want to
+actually switch the contents of your working directory to that point
+when you switch the head, and "git checkout" will do that for you:
+instead of switching the branch by hand with "ln -sf", you can just do
+
+	git checkout mybranch
+
+which will basically "jump" to the branch specified, update your working
+directory to that state, and also make it become the new default HEAD. 
+
+You can always just jump back to your original "master" branch by doing
+
+	git checkout master
+
+and if you forget which branch you happen to be on, a simple
+
+	ls -l .git/HEAD
+
+will tell you where it's pointing.
+
+
+	Merging two branches
+	--------------------
+
+One of the ideas of having a branch is that you do some (possibly
+experimental) work in it, and eventually merge it back to the main
+branch.  So assuming you created the above "mybranch" that started out
+being the same as the original "master" branch, let's make sure we're in
+that branch, and do some work there.
+
+	git checkout mybranch
+	echo "Work, work, work" >> a
+	git commit a
+
+Here, we just added another line to "a", and we used a shorthand for
+both going a "git-update-cache a" and "git commit" by just giving the
+filename directly to "git commit". 
+
+Now, to make it a bit more interesting, let's assume that somebody else
+does some work in the original branch, and simulate that by going back
+to the master branch, and editing the same file differently there:
+
+	git checkout master
+
+Here, take a moment to look at the contents of "a", and notice how they
+don't contain the work we just did in "mybranch" - because that work
+hasn't happened in the "master" branch at all. Then do
+
+	echo "Play, play, play" >> a
+	echo "Lots of fun" >> b
+	git commit a b
+
+since the master branch is obviously in a much better mood.
+
+Now, you've got two branches, and you decide that you want to merge the
+work done. Before we do that, let's introduce a cool graphical tool that
+helps you view what's going on:
+
+	gitk --all
+
+will show you graphically both of your branches (that's what the "--all"
+means: normally it will just show you your current HEAD) and their
+histories.  You can also see exactly how they came to be from a common
+source. 
+
+Anyway, let's exit gitk (^Q or the File menu), and decide that we want
+to merge the work we did on the "mybranch" branch into the "master"
+branch (which is currently our HEAD too).  To do that, there's a nice
+script called "git resolve", which wants to know which branches you want
+to resolve and what the merge is all about:
+
+	git resolve HEAD mybranch "Merge work in mybranch"
+
+where the third argument is going to be used as the commit message if
+the merge can be resolved automatically.
+
+Now, in this case we've intentionally created a situation where the
+merge will need to be fixed up by hand, though, so git will do as much
+of it as it can automatically (which in this case is just merge the "b"
+file, which had no differences in the "mybranch" branch), and say:
+
+	Simple merge failed, trying Automatic merge
+	Auto-merging a.
+	merge: warning: conflicts during merge
+	ERROR: Merge conflict in a.
+	fatal: merge program failed
+	Automatic merge failed, fix up by hand
+
+which is way too verbose, but it basically tells you that it failed the
+really trivial merge ("Simple merge") and did an "Automatic merge"
+instead, but that too failed due to conflicts in "a".
+
+Not to worry. It left the (trivial) conflict in "a" in the same form you
+should already be well used to if you've ever used CVS, so let's just
+open "a" in our editor (whatever that may be), and fix it up somehow.
+I'd suggest just making it so that "a" contains all four lines:
+
+	Hello World
+	It's a new day for git
+	Play, play, play
+	Work, work, work
+
+and once you're happy with your manual merge, just do a
+
+	git commit a
+
+which will very loudly warn you that you're now committing a merge
+(which is correct, so never mind), and you can write a small merge
+message about your adventures in git-merge-land. 
+
+After you're done, start up "gitk --all" to see graphically what the
+history looks like.  Notive that "mybranch" still exists, and you can
+switch to it, and continue to work with it if you want to.  The
+"mybranch" branch will not contain the merge, but next time you merge it
+from the "master" branch, git will know how you merged it, so you'll not
+have to do _that_ merge again.
+
+
+	Merging external work
+	---------------------
+
+It's usually much more common that you merge with somebody else than
+merging with your own branches, so it's worth pointing out that git
+makes that very easy too, and in fact, it's not that different from
+doing a "git resolve".  In fact, a remote merge ends up being nothing
+more than "fetch the work from a remote repository into a temporary tag"
+followed by a "git resolve". 
+
+It's such a common thing to do that it's called "git pull", and you can
+simply do
+
+	git pull <remote-repository>
+
+and optionally give a branch-name for the remote end as a second
+argument.
+
+[ Todo: fill in real examples ]
+
+
+	Tagging a version
+	-----------------
+
+In git, there's two kinds of tags, a "light" one, and a "signed tag".
+
+A "light" tag is technically nothing more than a branch, except we put
+it in the ".git/refs/tags/" subdirectory instead of calling it a "head".
+So the simplest form of tag involves nothing more than
+
+	cat .git/HEAD > .git/refs/tags/my-first-tag
+
+after which point you can use this symbolic name for that particular
+state. You can, for example, do
+
+	git diff my-first-tag
+
+to diff your current state against that tag (which at this point will
+obviously be an empty diff, but if you continue to develop and commit
+stuff, you can use your tag as a "anchor-point" to see what has changed
+since you tagged it.
+
+A "signed tag" is actually a real git object, and contains not only a
+pointer to the state you want to tag, but also a small tag name and
+message, along with a PGP signature that says that yes, you really did
+that tag. You create these signed tags with
+
+	git tag <tagname>
+
+which will sign the current HEAD (but you can also give it another
+argument that specifies the thing to tag, ie you could have tagged the
+current "mybranch" point by using "git tag <tagname> mybranch").
+
+You normally only do signed tags for major releases or things
+like that, while the light-weight tags are useful for any marking you
+want to do - any time you decide that you want to remember a certain
+point, just create a private tag for it, and you have a nice symbolic
+name for the state at that point.
+
+[ to be continued.. cvsimports, pushing and pulling ]
