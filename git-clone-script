@@ -79,4 +79,16 @@ yes,yes)
 	;;
 esac
 
-cd "$D" && git clone-pack "$repo"
+case "$repo" in
+rsync://*)
+	rsync -avz --ignore-existing "$repo/objects/" "$D/.git/objects/" &&
+	rsync -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
+	;;
+http://*)
+	echo "Somebody should add http fetch" >&2
+	exit 1
+	;;
+*)
+	cd "$D" && git-clone-pack "$repo"
+	;;
+esac
