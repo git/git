@@ -8,7 +8,7 @@
 
 head=$(git-rev-parse --revs-only "$1")
 merge=$(git-rev-parse --revs-only "$2")
-merge_repo="$3"
+merge_msg="$3"
 
 dropheads() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" \
@@ -19,8 +19,8 @@ dropheads() {
 # The remote name is just used for the message,
 # but we do want it.
 #
-if [ -z "$head" -o -z "$merge" -o -z "$merge_repo" ]; then
-	die "git-resolve-script <head> <remote> <merge-repo-name>"
+if [ -z "$head" -o -z "$merge" -o -z "$merge_msg" ]; then
+	die "git-resolve-script <head> <remote> <merge-message>"
 fi
 
 dropheads
@@ -47,7 +47,6 @@ if [ "$common" == "$head" ]; then
 fi
 echo "Trying to merge $merge into $head"
 git-read-tree -u -m $common $head $merge || exit 1
-merge_msg="Merge $merge_repo"
 result_tree=$(git-write-tree  2> /dev/null)
 if [ $? -ne 0 ]; then
 	echo "Simple merge failed, trying Automatic merge"
