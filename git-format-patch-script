@@ -53,6 +53,8 @@ case "$#" in
 1)    linus="$1" junio=HEAD ;;
 *)    usage ;;
 esac
+junio=`git-rev-parse --verify "$junio"`
+linus=`git-rev-parse --verify "$linus"`
 
 case "$outdir" in
 */) ;;
@@ -66,9 +68,9 @@ trap 'rm -f $tmp-*' 0 1 2 3 15
 series=$tmp-series
 
 titleScript='
-	1,/^$/d
-	: loop
-	/^$/b loop
+	/./d
+	/^$/n
+	s/^\[PATCH[^]]*\] *//
 	s/[^-a-z.A-Z_0-9]/-/g
         s/\.\.\.*/\./g
 	s/\.*$//
@@ -76,6 +78,7 @@ titleScript='
 	s/^-//
 	s/-$//
 	s/$/./
+	p
 	q
 '
 
@@ -88,7 +91,9 @@ total=`wc -l <$series`
 i=$total
 while read commit
 do
-    title=`git-cat-file commit "$commit" | sed -e "$titleScript"`
+    title=`git-cat-file commit "$commit" |
+    git-stripspace |
+    sed -ne "$titleScript"`
     case "$numbered" in
     '') num= ;;
     *)
@@ -102,16 +107,17 @@ do
     echo "$file"
     {
 	mailScript='
-	1,/^$/d
-	: loop
-	/^$/b loop
+	/./d
+	/^$/n
 	s|^|[PATCH'"$num"'] |
 	: body
 	p
 	n
 	b body'
 
-	git-cat-file commit "$commit" | sed -ne "$mailScript"
+	git-cat-file commit "$commit" |
+	git-stripspace |
+	sed -ne "$mailScript"
 	echo '---'
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
