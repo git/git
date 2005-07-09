@@ -14,11 +14,13 @@ get_repo_base() {
 	(cd "$1" && (cd .git ; pwd)) 2> /dev/null
 }
 
+quiet=
 use_local=no
 while
 	case "$#,$1" in
 	0,*) break ;;
         *,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
+	*,-q|*,--quiet) quiet=-q ;;
 	*,-*) usage ;;
 	*) break ;;
 	esac
@@ -81,14 +83,14 @@ esac
 
 case "$repo" in
 rsync://*)
-	rsync -avz --ignore-existing "$repo/objects/" "$D/.git/objects/" &&
-	rsync -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
+	rsync $quiet -avz --ignore-existing "$repo/objects/" "$D/.git/objects/" &&
+	rsync $quiet -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
 	;;
 http://*)
 	echo "Somebody should add http fetch" >&2
 	exit 1
 	;;
 *)
-	cd "$D" && git-clone-pack "$repo"
+	cd "$D" && git-clone-pack $quiet "$repo"
 	;;
 esac

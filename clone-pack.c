@@ -3,6 +3,7 @@
 #include "pkt-line.h"
 #include <sys/wait.h>
 
+static int quiet;
 static const char clone_pack_usage[] = "git-clone-pack [host:]directory [heads]*";
 static const char *exec = "git-upload-pack";
 
@@ -154,7 +155,8 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 		close(fd[1]);
 		dup2(fd[0], 0);
 		close(fd[0]);
-		execlp("git-unpack-objects", "git-unpack-objects", NULL);
+		execlp("git-unpack-objects", "git-unpack-objects",
+			quiet ? "-q" : NULL, NULL);
 		die("git-unpack-objects exec failed");
 	}
 	close(fd[0]);
@@ -190,7 +192,10 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			/* Arguments go here */
+			if (!strcmp("-q", arg)) {
+				quiet = 1;
+				continue;
+			}
 			usage(clone_pack_usage);
 		}
 		dest = arg;
