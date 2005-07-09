@@ -3,7 +3,9 @@
 #include "delta.h"
 #include "pack.h"
 
-static int dry_run;
+#include <sys/time.h>
+
+static int dry_run, quiet;
 static const char unpack_usage[] = "git-unpack-objects < pack-file";
 
 /* We always read in 4kB chunks. */
@@ -185,7 +187,7 @@ static int unpack_delta_entry(unsigned long delta_size)
 	return resolve_delta(type, base, base_size, delta_data, delta_size);
 }
 
-static void unpack_one(void)
+static void unpack_one(unsigned nr, unsigned total)
 {
 	unsigned shift;
 	unsigned char *pack, c;
@@ -204,6 +206,19 @@ static void unpack_one(void)
 		use(1);
 		size += (c & 0x7f) << shift;
 		shift += 7;
+	}
+	if (!quiet) {
+		static unsigned long last_sec;
+		static unsigned last_percent;
+		struct timeval now;
+		unsigned percentage = ((1+nr) * 100) / total;
+
+		gettimeofday(&now, NULL);
+		if (percentage != last_percent || now.tv_sec != last_sec) {
+			last_sec = now.tv_sec;
+			last_percent = percentage;
+			fprintf(stderr, "%4u%% (%u/%u) done\r", percentage, nr, total);
+		}
 	}
 	switch (type) {
 	case OBJ_COMMIT:
@@ -240,7 +255,7 @@ static void unpack_all(void)
 
 	use(sizeof(struct pack_header));
 	for (i = 0; i < nr_objects; i++)
-		unpack_one();
+		unpack_one(i, nr_objects);
 	if (delta_list)
 		die("unresolved deltas left after unpacking");
 }
@@ -256,6 +271,10 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strcmp(arg, "-n")) {
 				dry_run = 1;
+				continue;
+			}
+			if (!strcmp(arg, "-q")) {
+				quiet = 1;
 				continue;
 			}
 			usage(unpack_usage);
@@ -287,5 +306,7 @@ int main(int argc, char **argv)
 	}
 
 	/* All done */
+	if (!quiet)
+		fprintf(stderr, "\n");
 	return 0;
 }
