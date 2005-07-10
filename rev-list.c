@@ -203,6 +203,8 @@ static void mark_tree_uninteresting(struct tree *tree)
 	if (obj->flags & UNINTERESTING)
 		return;
 	obj->flags |= UNINTERESTING;
+	if (!has_sha1_file(obj->sha1))
+		return;
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
 	entry = tree->entries;
@@ -224,6 +226,17 @@ static void mark_parents_uninteresting(struct commit *commit)
 	while (parents) {
 		struct commit *commit = parents->item;
 		commit->object.flags |= UNINTERESTING;
+
+		/*
+		 * A missing commit is ok iff its parent is marked 
+		 * uninteresting.
+		 *
+		 * We just mark such a thing parsed, so that when
+		 * it is popped next time around, we won't be trying
+		 * to parse it and get an error.
+		 */
+		if (!has_sha1_file(commit->object.sha1))
+			commit->object.parsed = 1;
 		parents = parents->next;
 	}
 }
@@ -371,6 +384,8 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 		object->flags |= flags;
 		if (parse_commit(commit) < 0)
 			die("unable to parse commit %s", name);
+		if (flags & UNINTERESTING)
+			mark_parents_uninteresting(commit);
 		return commit;
 	}
 
