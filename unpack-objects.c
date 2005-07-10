@@ -211,7 +211,7 @@ static void unpack_one(unsigned nr, unsigned total)
 		static unsigned long last_sec;
 		static unsigned last_percent;
 		struct timeval now;
-		unsigned percentage = ((1+nr) * 100) / total;
+		unsigned percentage = (nr * 100) / total;
 
 		gettimeofday(&now, NULL);
 		if (percentage != last_percent || now.tv_sec != last_sec) {
@@ -255,7 +255,7 @@ static void unpack_all(void)
 
 	use(sizeof(struct pack_header));
 	for (i = 0; i < nr_objects; i++)
-		unpack_one(i, nr_objects);
+		unpack_one(i+1, nr_objects);
 	if (delta_list)
 		die("unresolved deltas left after unpacking");
 }
