@@ -416,9 +416,11 @@ int main(int argc, char **argv)
 		struct packed_git *p;
 		prepare_alt_odb();
 		for (j = 0; alt_odb[j].base; j++) {
-			alt_odb[j].name[-1] = 0; /* was slash */
-			fsck_object_dir(alt_odb[j].base);
-			alt_odb[j].name[-1] = '/';
+			char namebuf[PATH_MAX];
+			int namelen = alt_odb[j].name - alt_odb[j].base;
+			memcpy(namebuf, alt_odb[j].base, namelen);
+			namebuf[namelen - 1] = 0;
+			fsck_object_dir(namebuf);
 		}
 		prepare_packed_git();
 		for (p = packed_git; p; p = p->next)
