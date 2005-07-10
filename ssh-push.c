@@ -7,13 +7,13 @@
 static unsigned char local_version = 1;
 static unsigned char remote_version = 0;
 
+static int verbose = 0;
+
 static int serve_object(int fd_in, int fd_out) {
 	ssize_t size;
-	int posn = 0;
 	unsigned char sha1[20];
-	unsigned long objsize;
-	void *buf;
 	signed char remote;
+	int posn = 0;
 	do {
 		size = read(fd_in, sha1 + posn, 20 - posn);
 		if (size < 0) {
@@ -25,12 +25,12 @@ static int serve_object(int fd_in, int fd_out) {
 		posn += size;
 	} while (posn < 20);
 	
-	/* fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1)); */
+	if (verbose)
+		fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1));
+
 	remote = 0;
 	
-	buf = map_sha1_file(sha1, &objsize);
-	
-	if (!buf) {
+	if (!has_sha1_file(sha1)) {
 		fprintf(stderr, "git-ssh-push: could not find %s\n", 
 			sha1_to_hex(sha1));
 		remote = -1;
@@ -41,20 +41,7 @@ static int serve_object(int fd_in, int fd_out) {
 	if (remote < 0)
 		return 0;
 	
-	posn = 0;
-	do {
-		size = write(fd_out, buf + posn, objsize - posn);
-		if (size <= 0) {
-			if (!size) {
-				fprintf(stderr, "git-ssh-push: write closed");
-			} else {
-				perror("git-ssh-push: write ");
-			}
-			return -1;
-		}
-		posn += size;
-	} while (posn < objsize);
-	return 0;
+	return write_sha1_to_fd(fd_out, sha1);
 }
 
 static int serve_version(int fd_in, int fd_out)
@@ -76,6 +63,10 @@ static int serve_ref(int fd_in, int fd_out)
 			return -1;
 		posn++;
 	} while (ref[posn - 1]);
+
+	if (verbose)
+		fprintf(stderr, "Serving %s\n", ref);
+
 	if (get_ref_sha1(ref, sha1))
 		remote = -1;
 	write(fd_out, &remote, 1);

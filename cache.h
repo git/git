@@ -185,6 +185,7 @@ extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned l
 extern int read_tree(void *buffer, unsigned long size, int stage);
 
 extern int write_sha1_from_fd(const unsigned char *sha1, int fd);
+extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 extern int has_sha1_file(const unsigned char *sha1);

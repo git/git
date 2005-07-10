@@ -1221,6 +1221,65 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	return 0;
 }
 
+int write_sha1_to_fd(int fd, const unsigned char *sha1)
+{
+	ssize_t size;
+	unsigned long objsize;
+	int posn = 0;
+	char *buf = map_sha1_file_internal(sha1, &objsize, 0);
+	z_stream stream;
+	if (!buf) {
+		unsigned char *unpacked;
+		unsigned long len;
+		char type[20];
+		char hdr[50];
+		int hdrlen;
+		// need to unpack and recompress it by itself
+		unpacked = read_packed_sha1(sha1, type, &len);
+
+		hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
+
+		/* Set it up */
+		memset(&stream, 0, sizeof(stream));
+		deflateInit(&stream, Z_BEST_COMPRESSION);
+		size = deflateBound(&stream, len + hdrlen);
+		buf = xmalloc(size);
+
+		/* Compress it */
+		stream.next_out = buf;
+		stream.avail_out = size;
+		
+		/* First header.. */
+		stream.next_in = hdr;
+		stream.avail_in = hdrlen;
+		while (deflate(&stream, 0) == Z_OK)
+			/* nothing */;
+
+		/* Then the data itself.. */
+		stream.next_in = unpacked;
+		stream.avail_in = len;
+		while (deflate(&stream, Z_FINISH) == Z_OK)
+			/* nothing */;
+		deflateEnd(&stream);
+		
+		objsize = stream.total_out;
+	}
+
+	do {
+		size = write(fd, buf + posn, objsize - posn);
+		if (size <= 0) {
+			if (!size) {
+				fprintf(stderr, "write closed");
+			} else {
+				perror("write ");
+			}
+			return -1;
+		}
+		posn += size;
+	} while (posn < objsize);
+	return 0;
+}
+
 int write_sha1_from_fd(const unsigned char *sha1, int fd)
 {
 	char *filename = sha1_file_name(sha1);
