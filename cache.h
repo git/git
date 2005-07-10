@@ -165,7 +165,6 @@ extern char *sha1_file_name(const unsigned char *sha1);
 int safe_create_leading_directories(char *path);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern void * map_sha1_file(const unsigned char *sha1, unsigned long *size);
 extern int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size);
 extern int parse_sha1_header(char *hdr, char *type, unsigned long *sizep);
 extern int sha1_object_info(const unsigned char *, char *, unsigned long *);

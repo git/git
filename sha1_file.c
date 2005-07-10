@@ -487,8 +487,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 }
 
 static void *map_sha1_file_internal(const unsigned char *sha1,
-				    unsigned long *size,
-				    int say_error)
+				    unsigned long *size)
 {
 	struct stat st;
 	void *map;
@@ -496,8 +495,6 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 	char *filename = find_sha1_file(sha1, &st);
 
 	if (!filename) {
-		if (say_error)
-			error("cannot map sha1 file %s", sha1_to_hex(sha1));
 		return NULL;
 	}
 
@@ -511,8 +508,6 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 				break;
 		/* Fallthrough */
 		case 0:
-			if (say_error)
-				perror(filename);
 			return NULL;
 		}
 
@@ -527,11 +522,6 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 		return NULL;
 	*size = st.st_size;
 	return map;
-}
-
-void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
-{
-	return map_sha1_file_internal(sha1, size, 1);
 }
 
 int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size)
@@ -1007,7 +997,7 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	z_stream stream;
 	char hdr[128];
 
-	map = map_sha1_file_internal(sha1, &mapsize, 0);
+	map = map_sha1_file_internal(sha1, &mapsize);
 	if (!map) {
 		struct pack_entry e;
 
@@ -1046,7 +1036,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	unsigned long mapsize;
 	void *map, *buf;
 
-	map = map_sha1_file_internal(sha1, &mapsize, 0);
+	map = map_sha1_file_internal(sha1, &mapsize);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
@@ -1226,7 +1216,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 	ssize_t size;
 	unsigned long objsize;
 	int posn = 0;
-	char *buf = map_sha1_file_internal(sha1, &objsize, 0);
+	char *buf = map_sha1_file_internal(sha1, &objsize);
 	z_stream stream;
 	if (!buf) {
 		unsigned char *unpacked;
