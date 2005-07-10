@@ -1216,7 +1216,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 	ssize_t size;
 	unsigned long objsize;
 	int posn = 0;
-	char *buf = map_sha1_file_internal(sha1, &objsize);
+	void *buf = map_sha1_file_internal(sha1, &objsize);
 	z_stream stream;
 	if (!buf) {
 		unsigned char *unpacked;
@@ -1240,7 +1240,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 		stream.avail_out = size;
 		
 		/* First header.. */
-		stream.next_in = hdr;
+		stream.next_in = (void *)hdr;
 		stream.avail_in = hdrlen;
 		while (deflate(&stream, 0) == Z_OK)
 			/* nothing */;
