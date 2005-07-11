@@ -367,12 +367,12 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 	/*
 	 * Tag object? Look what it points to..
 	 */
-	if (object->type == tag_type) {
+	while (object->type == tag_type) {
 		struct tag *tag = (struct tag *) object;
 		object->flags |= flags;
 		if (tag_objects && !(object->flags & UNINTERESTING))
 			add_pending_object(object, tag->tag);
-		object = tag->tagged;
+		object = parse_object(tag->tagged->sha1);
 	}
 
 	/*

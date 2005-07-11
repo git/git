@@ -52,8 +52,9 @@ struct commit *lookup_commit_reference(const unsigned char *sha1)
 
 	if (!obj)
 		return NULL;
-	if (obj->type == tag_type)
-		obj = ((struct tag *)obj)->tagged;
+	while (obj->type == tag_type)
+		obj = parse_object(((struct tag *)obj)->tagged->sha1);
+
 	return check_commit(obj, sha1);
 }
 
