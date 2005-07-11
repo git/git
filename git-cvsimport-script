@@ -28,19 +28,19 @@ use POSIX qw(strftime dup2);
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C,$opt_z);
+our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
        [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
-       [ CVS_module ]
+       [ -i ] [ CVS_module ]
 END
 	exit(1);
 }
 
-getopts("hvo:d:p:C:z:") or usage();
+getopts("hivo:d:p:C:z:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -723,8 +723,10 @@ if($orig_branch) {
 	print "DONE\n" if $opt_v;
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		if $forward_master;
-	system('git-read-tree', '-m', '-u', 'CVS2GIT_HEAD', 'HEAD');
-	die "read-tree failed: $?\n" if $?;
+	unless ($opt_i) {
+		system('git-read-tree', '-m', '-u', 'CVS2GIT_HEAD', 'HEAD');
+		die "read-tree failed: $?\n" if $?;
+	}
 } else {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
@@ -732,7 +734,9 @@ if($orig_branch) {
 		unless -f "$git_dir/refs/heads/master";
 	unlink("$git_dir/HEAD");
 	symlink("refs/heads/$orig_branch","$git_dir/HEAD");
-	system('git checkout');
-	die "checkout failed: $?\n" if $?;
+	unless ($opt_i) {
+		system('git checkout');
+		die "checkout failed: $?\n" if $?;
+	}
 }
 unlink("$git_dir/CVS2GIT_HEAD");
