@@ -5,6 +5,8 @@
  */
 #include "cache.h"
 
+static int missing_ok = 0;
+
 static int check_valid_sha1(unsigned char *sha1)
 {
 	int ret;
@@ -61,7 +63,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 			sha1 = subdir_sha1;
 		}
 
-		if (check_valid_sha1(sha1) < 0)
+		if (!missing_ok && check_valid_sha1(sha1) < 0)
 			exit(1);
 
 		entrylen = pathlen - baselen;
@@ -86,6 +88,16 @@ int main(int argc, char **argv)
 	int i, funny;
 	int entries = read_cache();
 	unsigned char sha1[20];
+	
+	if (argc==2) {
+		if (!strcmp(argv[1], "--missing-ok"))
+			missing_ok = 1;
+		else
+			die("unknown option %s", argv[1]);
+	}
+	
+	if (argc>2)
+		die("too many options");
 
 	if (entries < 0)
 		die("git-write-tree: error reading cache");

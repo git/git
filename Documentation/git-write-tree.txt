@@ -10,6 +10,7 @@ git-write-tree - Creates a tree from the current cache
 SYNOPSIS
 --------
 'git-write-tree'
+		[--missing-ok]
 
 DESCRIPTION
 -----------
@@ -23,7 +24,11 @@ In order to have that match what is actually in your directory right
 now, you need to have done a "git-update-cache" phase before you did the
 "git-write-tree".
 
-
+OPTIONS
+-------
+--missing-ok::
+	Normally "git-write-tree" ensures that the objects referenced by the
+	directory exist in the object database.  This option disables this check.
 
 
 ////////////////////////////////////////////////////////////////
