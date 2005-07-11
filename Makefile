@@ -175,8 +175,8 @@ git.spec: git.spec.in
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
 
 GIT_TARNAME=git-$(GIT_VERSION)
-dist: git.spec
-	git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
+dist: git.spec git-tar-tree
+	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
 	@cp git.spec $(GIT_TARNAME)
 	tar rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git.spec
