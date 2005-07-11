@@ -1035,14 +1035,17 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 {
 	unsigned long mapsize;
 	void *map, *buf;
+	struct pack_entry e;
 
+	if (find_pack_entry(sha1, &e))
+		return read_packed_sha1(sha1, type, size);
 	map = map_sha1_file_internal(sha1, &mapsize);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
 		return buf;
 	}
-	return read_packed_sha1(sha1, type, size);
+	return NULL;
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
@@ -1343,9 +1346,9 @@ int has_sha1_file(const unsigned char *sha1)
 	struct stat st;
 	struct pack_entry e;
 
-	if (find_sha1_file(sha1, &st))
+	if (find_pack_entry(sha1, &e))
 		return 1;
-	return find_pack_entry(sha1, &e);
+	return find_sha1_file(sha1, &st) ? 1 : 0;
 }
 
 int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type)
