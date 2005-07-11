@@ -48,11 +48,8 @@ test -d "$D" || usage
 case "$local,$use_local" in
 yes,yes)
 	( cd "$repo/objects" ) || {
-		repo="$repo/.git"
-		( cd "$repo/objects" ) || {
-		    echo >&2 "-l flag seen but $repo is not local."
-		    exit 1
-		}
+		echo >&2 "-l flag seen but $repo is not local."
+		exit 1
 	}
 
 	# See if we can hardlink and drop "l" if not.
@@ -68,7 +65,9 @@ yes,yes)
 		l=l
 	fi &&
 	rm -f "$D/.git/objects/sample" &&
-	cp -r$l "$repo/objects" "$D/.git/" || exit 1
+	cd "$repo" &&
+	find objects -type f -print |
+	cpio -puamd$l "$D/.git/" || exit 1
 
 	# Make a duplicate of refs and HEAD pointer
 	HEAD=
