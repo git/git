@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. git-sh-setup-script || die "Not a git archive"
+
+branchname="$1"
+rev=$(git-rev-parse --verify --default HEAD "$2"^0) || exit
+
+[ -z "$branchname" ] && die "git branch: I want a branch name"
+[ -e "$GIT_DIR/refs/heads/$branchname" ] && die "$branchname already exists"
+
+echo $rev > "$GIT_DIR/refs/heads/$branchname"
