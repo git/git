@@ -1143,7 +1143,7 @@ static void show_rename_copy(struct patch *p)
 	 */
 	if (old != p->old_name)
 		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
-		       old - p->old_name, p->old_name,
+		       (int)(old - p->old_name), p->old_name,
 		       old, new, p->score);
 	else
 		printf(" %s %s => %s (%d%%)\n", renamecopy,
