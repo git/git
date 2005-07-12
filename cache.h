@@ -211,6 +211,9 @@ const char *show_date(unsigned long time, int timezone);
 void parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 
+extern int setup_ident(void);
+extern char *get_ident(const char *name, const char *email, const char *date_str);
+
 static inline void *xmalloc(size_t size)
 {
 	void *ret = malloc(size);
