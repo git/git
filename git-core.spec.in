@@ -1,4 +1,4 @@
-Name: 		git
+Name: 		git-core
 Version: 	@@VERSION@@
 Release: 	1
 Vendor: 	Linus Torvalds <torvalds@osdl.org>

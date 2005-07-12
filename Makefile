@@ -172,20 +172,20 @@ diffcore-break.o : $(LIB_H) diffcore.h
 diffcore-order.o : $(LIB_H) diffcore.h
 epoch.o: $(LIB_H)
 
-git.spec: git.spec.in
+git-core.spec: git-core.spec.in
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
 
-GIT_TARNAME=git-$(GIT_VERSION)
-dist: git.spec git-tar-tree
+GIT_TARNAME=git-core-$(GIT_VERSION)
+dist: git-core.spec git-tar-tree
 	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
-	@cp git.spec $(GIT_TARNAME)
-	tar rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git.spec
+	@cp git-core.spec $(GIT_TARNAME)
+	tar rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git-core.spec
 	@rm -rf $(GIT_TARNAME)
 	gzip -9 $(GIT_TARNAME).tar
 
 rpm: dist
-	rpmbuild -ta git-$(GIT_VERSION).tar.gz
+	rpmbuild -ta git-core-$(GIT_VERSION).tar.gz
 
 test: all
 	$(MAKE) -C t/ all
