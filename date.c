@@ -224,7 +224,7 @@ static int is_date(int year, int month, int day, struct tm *tm)
 	return 0;
 }
 
-static int match_multi_number(unsigned long num, char c, char *date, char *end, struct tm *tm)
+static int match_multi_number(unsigned long num, char c, const char *date, char *end, struct tm *tm)
 {
 	long num2, num3;
 
@@ -270,7 +270,7 @@ static int match_multi_number(unsigned long num, char c, char *date, char *end, 
 /*
  * We've seen a digit. Time? Year? Date? 
  */
-static int match_digit(char *date, struct tm *tm, int *offset, int *tm_gmt)
+static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt)
 {
 	int n;
 	char *end;
@@ -361,7 +361,7 @@ static int match_digit(char *date, struct tm *tm, int *offset, int *tm_gmt)
 	return n;
 }
 
-static int match_tz(char *date, int *offp)
+static int match_tz(const char *date, int *offp)
 {
 	char *end;
 	int offset = strtoul(date+1, &end, 10);
@@ -388,7 +388,7 @@ static int match_tz(char *date, int *offp)
 
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
-void parse_date(char *date, char *result, int maxlen)
+void parse_date(const char *date, char *result, int maxlen)
 {
 	struct tm tm;
 	int offset, sign, tm_gmt;
