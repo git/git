@@ -675,7 +675,7 @@ while(<CVS>) {
 		$state = 9;
 	} elsif($state == 8) {
 		$logmsg .= "$_\n";
-	} elsif($state == 9 and /^\s+(\S+):(INITIAL|\d(?:\.\d+)+)->(\d(?:\.\d+)+)\s*$/) {
+	} elsif($state == 9 and /^\s+(\S+):(INITIAL|\d+(?:\.\d+)+)->(\d+(?:\.\d+)+)\s*$/) {
 #	VERSION:1.96->1.96.2.1
 		my $init = ($2 eq "INITIAL");
 		my $fn = $1;
