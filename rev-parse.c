@@ -97,6 +97,10 @@ static int get_parent(char *name, unsigned char *result, int idx)
 		return -1;
 	if (parse_commit(commit))
 		return -1;
+	if (!idx) {
+		memcpy(result, commit->object.sha1, 20);
+		return 0;
+	}
 	p = commit->parents;
 	while (p) {
 		if (!--idx) {
@@ -238,7 +242,7 @@ static int get_extended_sha1(char *name, unsigned char *sha1)
 	int len = strlen(name);
 
 	parent = 1;
-	if (len > 2 && name[len-1] >= '1' && name[len-1] <= '9') {
+	if (len > 2 && name[len-1] >= '0' && name[len-1] <= '9') {
 		parent = name[len-1] - '0';
 		len--;
 	}
