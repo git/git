@@ -204,9 +204,6 @@ static int send_pack(int in, int out, int nr_match, char **match)
 		if (read_ref(name, new_sha1) < 0)
 			continue;
 
-		if (nr_match && !path_match(name, nr_match, match))
-			continue;
-
 		if (!memcmp(ref->old_sha1, new_sha1, 20)) {
 			fprintf(stderr, "'%s' unchanged\n", name);
 			continue;
