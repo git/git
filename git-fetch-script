@@ -9,8 +9,11 @@ merge_store="$_remote_store"
 TMP_HEAD="$GIT_DIR/TMP_HEAD"
 
 case "$merge_repo" in
-http://*)
-	head=$(wget -q -O - "$merge_repo/$merge_head") || exit 1
+http://* | https://*)
+        if [ -n "$GIT_SSL_NO_VERIFY" ]; then
+            curl_extra_args="-k"
+        fi
+	head=$(curl -ns $curl_extra_args "$merge_repo/$merge_head") || exit 1
 	echo Fetching "$merge_head" using http
 	git-http-pull -v -a "$head" "$merge_repo/"
 	;;

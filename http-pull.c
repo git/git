@@ -16,6 +16,8 @@ static z_stream stream;
 static int local;
 static int zret;
 
+static int curl_ssl_verify;
+
 struct buffer
 {
         size_t posn;
@@ -172,6 +174,10 @@ int main(int argc, char **argv)
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	curl = curl_easy_init();
+
+	curl_ssl_verify = gitenv("GIT_SSL_NO_VERIFY") ? 0 : 1;
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, curl_ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 
 	base = url;
 
