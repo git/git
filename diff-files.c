@@ -7,7 +7,9 @@
 #include "diff.h"
 
 static const char *diff_files_usage =
-"git-diff-files [-p] [-q] [-r] [-z] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] [<path>...]";
+"git-diff-files [-q] "
+"[<common diff options>] [<path>...]"
+COMMON_DIFF_OPTIONS_HELP;
 
 static int diff_output_format = DIFF_FORMAT_HUMAN;
 static int detect_rename = 0;

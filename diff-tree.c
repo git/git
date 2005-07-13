@@ -395,7 +395,9 @@ static int diff_tree_stdin(char *line)
 }
 
 static char *diff_tree_usage =
-"git-diff-tree [-p] [-r] [-z] [--stdin] [-m] [-s] [-v] [--pretty] [-t] [-R] [-B] [-M] [-C] [--find-copies-header] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> <tree-ish>";
+"git-diff-tree [--stdin] [-m] [-s] [-v] [--pretty] [-t] "
+"[<common diff options>] <tree-ish> <tree-ish>"
+COMMON_DIFF_OPTIONS_HELP;
 
 int main(int argc, const char **argv)
 {

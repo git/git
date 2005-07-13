@@ -159,7 +159,9 @@ static void mark_merge_entries(void)
 }
 
 static char *diff_cache_usage =
-"git-diff-cache [-p] [-r] [-z] [-m] [--cached] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> [<path>...]";
+"git-diff-cache [-m] [--cached] "
+"[<common diff options>] <tree-ish> [<path>...]"
+COMMON_DIFF_OPTIONS_HELP;
 
 int main(int argc, const char **argv)
 {

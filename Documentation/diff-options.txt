@@ -1,0 +1,53 @@
+-p::
+	Generate patch (see section on generating patches)
+
+-u::
+	Synonym for "-p".
+
+-r::
+	Look recursivelly in subdirectories; this flag does not
+	mean anything to commands other than "git-diff-tree";
+	other commands always looks at all the subdirectories.
+
+-z::
+	\0 line termination on output
+
+--name-only::
+	Show only names of changed files.
+
+--name-only-z::
+	Same as --name-only, but terminate lines with NUL.
+
+-B::
+	Break complete rewrite changes into pairs of delete and create.
+
+-M::
+	Detect renames.
+
+-C::
+	Detect copies as well as renames.
+
+--find-copies-harder::
+	By default, -C option finds copies only if the original
+	file of the copy was modified in the same changeset for
+	performance reasons.  This flag makes the command
+	inspect unmodified files as candidates for the source of
+	copy.  This is a very expensive operation for large
+	projects, so use it with caution.
+
+-S<string>::
+	Look for differences that contains the change in <string>.
+
+--pickaxe-all::
+	When -S finds a change, show all the changes in that
+	changeset, not just the files that contains the change
+	in <string>.
+
+-O<orderfile>::
+	Output the patch in the order specified in the
+	<orderfile>, which has one shell glob pattern per line.
+
+-R::
+	Swap two inputs; that is, show differences from cache or
+	on-disk file to tree contents.
+

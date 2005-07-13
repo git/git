@@ -9,7 +9,7 @@ git-diff-cache - Compares content and mode of blobs between the cache and reposi
 
 SYNOPSIS
 --------
-'git-diff-cache' [-p] [-r] [-z] [-m] [--cached] [-R] [-B] [-M] [-C] [--find-copies-harder] [-O<orderfile>] [-S<string>] [--pickaxe-all] <tree-ish> [<path>...]
+'git-diff-cache' [-m] [--cached] [<common diff options>] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
@@ -21,52 +21,10 @@ entries in the cache are compared.
 
 OPTIONS
 -------
+include::diff-options.txt[]
+
 <tree-ish>::
 	The id of a tree object to diff against.
-
--p::
-	Generate patch (see section on generating patches)
-
--r::
-	This flag does not mean anything.  It is there only to match
-	"git-diff-tree".  Unlike "git-diff-tree", "git-diff-cache"
-	always looks at all the subdirectories.
-
--z::
-	\0 line termination on output
-
--B::
-	Break complete rewrite changes into pairs of delete and create.
-
--M::
-	Detect renames.
-
--C::
-	Detect copies as well as renames.
-
---find-copies-harder::
-	By default, -C option finds copies only if the original
-	file of the copy was modified in the same changeset for
-	performance reasons.  This flag makes the command
-	inspect unmodified files as candidates for the source of
-	copy.  This is a very expensive operation for large
-	projects, so use it with caution.
-
--S<string>::
-	Look for differences that contains the change in <string>.
-
---pickaxe-all::
-	When -S finds a change, show all the changes in that
-	changeset, not just the files that contains the change
-	in <string>.
-
--O<orderfile>::
-	Output the patch in the order specified in the
-	<orderfile>, which has one shell glob pattern per line.
-
--R::
-	Swap two inputs; that is, show differences from cache or
-	on-disk file to tree contents.
 
 --cached::
 	do not consider the on-disk file at all

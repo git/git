@@ -25,7 +25,7 @@ man1: $(DOC_MAN1)
 man7: $(DOC_MAN7)
 
 # 'include' dependencies
-git-diff-%.txt: diff-format.txt
+git-diff-%.txt: diff-format.txt diff-options.txt
 	touch $@
 
 clean:
