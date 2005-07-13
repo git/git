@@ -223,6 +223,14 @@ int main(int argc, const char **argv)
 			diff_output_format = DIFF_FORMAT_MACHINE;
 			continue;
 		}
+		if (!strcmp(arg, "--name-only")) {
+			diff_output_format = DIFF_FORMAT_NAME;
+			continue;
+		}
+		if (!strcmp(arg, "--name-only-z")) {
+			diff_output_format = DIFF_FORMAT_NAME_Z;
+			continue;
+		}
 		if (!strcmp(arg, "-R")) {
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
 			continue;

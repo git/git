@@ -87,6 +87,10 @@ int main(int ac, const char **av)
 			find_copies_harder = 1;
 		else if (!strcmp(arg, "-z"))
 			diff_output_format = DIFF_FORMAT_MACHINE;
+		else if (!strcmp(arg, "--name-only"))
+			diff_output_format = DIFF_FORMAT_NAME;
+		else if (!strcmp(arg, "--name-only-z"))
+			diff_output_format = DIFF_FORMAT_NAME_Z;
 		else if (!strcmp(arg, "-R"))
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
 		else if (!strncmp(arg, "-S", 2))

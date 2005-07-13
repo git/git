@@ -818,6 +818,12 @@ static void diff_flush_raw(struct diff_filepair *p,
 	putchar(line_termination);
 }
 
+static void diff_flush_name(struct diff_filepair *p,
+			    int line_termination)
+{
+	printf("%s%c", p->two->path, line_termination);
+}
+
 int diff_unmodified_pair(struct diff_filepair *p)
 {
 	/* This function is written stricter than necessary to support
@@ -978,7 +984,8 @@ void diff_flush(int diff_output_style)
 	int line_termination = '\n';
 	int inter_name_termination = '\t';
 
-	if (diff_output_style == DIFF_FORMAT_MACHINE)
+	if (diff_output_style == DIFF_FORMAT_MACHINE ||
+	    diff_output_style == DIFF_FORMAT_NAME_Z)
 		line_termination = inter_name_termination = 0;
 
 	for (i = 0; i < q->nr; i++) {
@@ -996,6 +1003,10 @@ void diff_flush(int diff_output_style)
 		case DIFF_FORMAT_MACHINE:
 			diff_flush_raw(p, line_termination,
 				       inter_name_termination);
+			break;
+		case DIFF_FORMAT_NAME:
+		case DIFF_FORMAT_NAME_Z:
+			diff_flush_name(p, line_termination);
 			break;
 		}
 	}

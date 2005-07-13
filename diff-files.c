@@ -55,6 +55,10 @@ int main(int argc, const char **argv)
 			; /* no-op */
 		else if (!strcmp(argv[1], "-z"))
 			diff_output_format = DIFF_FORMAT_MACHINE;
+		else if (!strcmp(argv[1], "--name-only"))
+			diff_output_format = DIFF_FORMAT_NAME;
+		else if (!strcmp(argv[1], "--name-only-z"))
+			diff_output_format = DIFF_FORMAT_NAME_Z;
 		else if (!strcmp(argv[1], "-R"))
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
 		else if (!strncmp(argv[1], "-S", 2))
