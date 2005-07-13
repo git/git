@@ -67,7 +67,7 @@ int main(int ac, const char **av)
 		const char *arg = av[1];
 		if (!strcmp(arg, "-r"))
 			; /* as usual */
-		else if (!strcmp(arg, "-p"))
+		else if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
 			diff_output_format = DIFF_FORMAT_PATCH;
 		else if (!strncmp(arg, "-B", 2)) {
 			if ((diff_break_opt = diff_scoreopt_parse(arg)) == -1)
