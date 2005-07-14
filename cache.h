@@ -191,7 +191,7 @@ extern char *write_sha1_file_prepare(void *buf,
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 /* Read a tree into the cache */
-extern int read_tree(void *buffer, unsigned long size, int stage);
+extern int read_tree(void *buffer, unsigned long size, int stage, char **paths);
 
 extern int write_sha1_from_fd(const unsigned char *sha1, int fd);
 extern int write_sha1_to_fd(int fd, const unsigned char *sha1);

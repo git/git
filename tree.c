@@ -21,8 +21,51 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 	return add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 }
 
+static int match_tree_entry(const char *base, int baselen, const char *path, unsigned int mode, char **paths)
+{
+	char *match;
+	int pathlen;
+
+	if (!paths)
+		return 1;
+	pathlen = strlen(path);
+	while ((match = *paths++) != NULL) {
+		int matchlen = strlen(match);
+
+		if (baselen >= matchlen) {
+			/* If it doesn't match, move along... */
+			if (strncmp(base, match, matchlen))
+				continue;
+			/* The base is a subdirectory of a path which was specified. */
+			return 1;
+		}
+
+		/* Does the base match? */
+		if (strncmp(base, match, baselen))
+			continue;
+
+		match += baselen;
+		matchlen -= baselen;
+
+		if (pathlen > matchlen)
+			continue;
+
+		if (matchlen > pathlen) {
+			if (match[pathlen] != '/')
+				continue;
+			if (!S_ISDIR(mode))
+				continue;
+		}
+
+		if (strncmp(path, match, pathlen))
+			continue;
+	}
+	return 0;
+}
+
 static int read_tree_recursive(void *buffer, unsigned long size,
-			       const char *base, int baselen, int stage)
+			       const char *base, int baselen,
+			       int stage, char **match)
 {
 	while (size) {
 		int len = strlen(buffer)+1;
@@ -35,6 +78,9 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 
 		buffer = sha1 + 20;
 		size -= len + 20;
+
+		if (!match_tree_entry(base, baselen, path, mode, match))
+			continue;
 
 		if (S_ISDIR(mode)) {
 			int retval;
@@ -55,7 +101,8 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 			newbase[baselen + pathlen] = '/';
 			retval = read_tree_recursive(eltbuf, eltsize,
 						     newbase,
-						     baselen + pathlen + 1, stage);
+						     baselen + pathlen + 1,
+						     stage, match);
 			free(eltbuf);
 			free(newbase);
 			if (retval)
@@ -68,9 +115,9 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 	return 0;
 }
 
-int read_tree(void *buffer, unsigned long size, int stage)
+int read_tree(void *buffer, unsigned long size, int stage, char **match)
 {
-	return read_tree_recursive(buffer, size, "", 0, stage);
+	return read_tree_recursive(buffer, size, "", 0, stage, match);
 }
 
 struct tree *lookup_tree(const unsigned char *sha1)
