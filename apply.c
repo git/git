@@ -32,7 +32,8 @@ static int summary = 0;
 static int check = 0;
 static int apply = 1;
 static int show_files = 0;
-static const char apply_usage[] = "git-apply [--stat] [--summary] [--check] [--show-files] <patch>";
+static const char apply_usage[] =
+"git-apply [--no-merge] [--stat] [--summary] [--check] [--index] [--apply] [--show-files] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -1424,6 +1425,7 @@ int main(int argc, char **argv)
 			read_stdin = 0;
 			continue;
 		}
+		/* NEEDSWORK: this does not do anything at this moment. */
 		if (!strcmp(arg, "--no-merge")) {
 			merge_patch = 0;
 			continue;

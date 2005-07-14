@@ -9,8 +9,7 @@ git-apply - Apply patch on a GIT index file and a work tree
 
 SYNOPSIS
 --------
-'git-apply' [--no-merge] [--stat] [--summary] [--check]
-[--index] [--show-files] [-] [<file>...]
+'git-apply' [--no-merge] [--stat] [--summary] [--check] [--index] [--show-files] [--apply] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -19,31 +18,29 @@ and a work tree.
 
 OPTIONS
 -------
-<file>...::
-	The files to read patch from.
-
--::
-	Instead of reading from a file, read from standard input.
+<patch>...::
+	The files to read patch from.  '-' can be used to read
+	from the standard input.
 
 --no-merge::
 	The default mode of operation is the merge behaviour
-	which is not quite implemented yet.  This flag
-	explicitly tells the program not to use the merge
-	behaviour.
+	which is not implemented yet.  This flag explicitly
+	tells the program not to use the merge behaviour.
 
 --stat::
 	Instead of applying the patch, output diffstat for the
-	input.
+	input.  Turns off "apply".
 
 --summary::
 	Instead of applying the patch, output a condensed
 	summary of information obtained from git diff extended
 	headers, such as creations, renames and mode changes.
+	Turns off "apply".
 
 --check::
 	Instead of applying the patch, see if the patch is
 	applicable to the current work tree and/or the index
-	file and detects errors.
+	file and detects errors.  Turns off "apply".
 
 --index::
 	When --check is in effect, or when applying the patch
@@ -56,6 +53,13 @@ OPTIONS
 
 --show-files::
 	Show summary of files that are affected by the patch.
+
+--apply::
+	If you use any of the options marked ``Turns off
+	"apply"'' above, git-apply reads and outputs the
+	information you asked without actually applying the
+	patch.  Give this flag after those flags to also apply
+	the patch.
 
 
 Author
