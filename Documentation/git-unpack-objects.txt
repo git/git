@@ -1,0 +1,33 @@
+git-unpack-objects(1)
+=====================
+v0.1, July 2005
+
+NAME
+----
+git-unpack-objects - Create a packed archive of objects.
+
+
+SYNOPSIS
+--------
+'git-unpack-objects' < pack-file
+
+
+DESCRIPTION
+-----------
+Reads a packed archive (.pack) from the standard input, and
+expands the objects contained in the pack into "one-file
+one-object" format in $GIT_OBJECT_DIRECTORY.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+-------------
+Documentation by Junio C Hamano
+
+GIT
+---
+Part of the link:git.html[git] suite
+
