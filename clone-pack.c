@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 
 static int quiet;
-static const char clone_pack_usage[] = "git-clone-pack [host:]directory [heads]*";
+static const char clone_pack_usage[] = "git-clone-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
 static const char *exec = "git-upload-pack";
 
 struct ref {
@@ -194,6 +194,10 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strcmp("-q", arg)) {
 				quiet = 1;
+				continue;
+			}
+			if (!strncmp("--exec=", arg, 7)) {
+				exec = arg + 7;
 				continue;
 			}
 			usage(clone_pack_usage);

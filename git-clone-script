@@ -6,7 +6,7 @@
 # Clone a repository into a different directory that does not yet exist.
 
 usage() {
-	echo >&2 "* git clone [-l] <repo> <dir>"
+	echo >&2 "* git clone [-l] [-q] [-u <upload-pack>] <repo> <dir>"
 	exit 1
 }
 
@@ -16,11 +16,16 @@ get_repo_base() {
 
 quiet=
 use_local=no
+upload_pack=
 while
 	case "$#,$1" in
 	0,*) break ;;
         *,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
 	*,-q|*,--quiet) quiet=-q ;;
+	1,-u|*,--upload-pack) usage ;;
+	*,-u|*,--upload-pack)
+		shift
+		upload_pack="--exec=$2" ;;
 	*,-*) usage ;;
 	*) break ;;
 	esac
@@ -90,6 +95,9 @@ http://*)
 	exit 1
 	;;
 *)
-	cd "$D" && git-clone-pack $quiet "$repo"
+	cd "$D" && case "$upload_pack" in
+	'') git-clone-pack $quiet "$repo" ;;
+	*) git-clone-pack $quiet "$upload_pack" "$repo" ;;
+	esac
 	;;
 esac

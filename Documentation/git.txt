@@ -127,6 +127,13 @@ link:git-apply-patch-script.html[git-apply-patch-script]::
 link:git-convert-cache.html[git-convert-cache]::
 	Converts old-style GIT repository
 
+link:git-clone-script.html[git-clone-script]::
+	Clones a repository into the current repository (user interface)
+
+link:git-clone-pack.html[git-clone-pack]::
+	Clones a repository into the current repository (engine
+	for ssh and local transport)
+
 link:git-http-pull.html[git-http-pull]::
 	Downloads a remote GIT repository via HTTP
 
