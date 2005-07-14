@@ -278,12 +278,12 @@ int main(int argc, const char **argv)
 	tree = read_object_with_reference(sha1, "tree", &size, NULL);
 	if (!tree)
 		die("bad tree object %s", tree_name);
-	if (read_tree(tree, size, 1, NULL))
+	if (read_tree(tree, size, 1, pathspec))
 		die("unable to read tree object %s", tree_name);
 
 	ret = diff_cache(active_cache, active_nr);
 
-	diffcore_std(pathspec ? : NULL,
+	diffcore_std(pathspec,
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
