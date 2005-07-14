@@ -43,6 +43,7 @@ static void show_modified(int oldmode, int mode,
 int main(int argc, const char **argv)
 {
 	static const unsigned char null_sha1[20] = { 0, };
+	const char **pathspec;
 	int entries = read_cache();
 	int i;
 
@@ -95,6 +96,9 @@ int main(int argc, const char **argv)
 		argv++; argc--;
 	}
 
+	/* Do we have a pathspec? */
+	pathspec = (argc > 1) ? argv + 1 : NULL;
+
 	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
 		usage(diff_files_usage);
 
@@ -113,6 +117,9 @@ int main(int argc, const char **argv)
 		unsigned int oldmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
+
+		if (!ce_path_match(ce, pathspec))
+			continue;
 
 		if (ce_stage(ce)) {
 			show_unmerge(ce->name);
@@ -141,7 +148,7 @@ int main(int argc, const char **argv)
 			      ce->sha1, (changed ? null_sha1 : ce->sha1),
 			      ce->name);
 	}
-	diffcore_std((1 < argc) ? argv + 1 : NULL,
+	diffcore_std(pathspec, 
 		     detect_rename, diff_score_opt,
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,

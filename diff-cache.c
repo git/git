@@ -87,28 +87,6 @@ static int show_modified(struct cache_entry *old,
 	return 0;
 }
 
-static int ce_path_match(const struct cache_entry *ce, const char **pathspec)
-{
-	const char *match, *name;
-	int len;
-
-	if (!pathspec)
-		return 1;
-
-	len = ce_namelen(ce);
-	name = ce->name;
-	while ((match = *pathspec++) != NULL) {
-		int matchlen = strlen(match);
-		if (matchlen > len)
-			continue;
-		if (memcmp(name, match, matchlen))
-			continue;
-		if (name[matchlen] == '/' || !name[matchlen])
-			return 1;
-	}
-	return 0;
-}
-
 static int diff_cache(struct cache_entry **ac, int entries, const char **pathspec)
 {
 	while (entries) {
