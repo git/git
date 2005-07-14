@@ -62,11 +62,11 @@ static int create_file(const char *path, unsigned int mode, int force)
 	int fd;
 
 	mode = (mode & 0100) ? 0777 : 0666;
-	fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
+	fd = open(path, O_WRONLY | O_TRUNC | O_CREAT | O_EXCL, mode);
 	if (fd < 0) {
 		if (errno == EISDIR && force) {
 			remove_subtree(path);
-			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
+			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT | O_EXCL, mode);
 		}
 	}
 	return fd;
