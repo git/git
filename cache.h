@@ -41,6 +41,16 @@
 #endif
 
 /*
+ * Intensive research over the course of many years has shown that
+ * port 9418 is totally unused by anything else. Or
+ *
+ *	Your search - "port 9418" - did not match any documents.
+ *
+ * as www.google.com puts it.
+ */
+#define DEFAULT_GIT_PORT 9418
+
+/*
  * Environment variables transition.
  * We accept older names for now but warn.
  */

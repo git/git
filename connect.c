@@ -2,6 +2,10 @@
 #include "pkt-line.h"
 #include "quote.h"
 #include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 int get_ack(int fd, unsigned char *result_sha1)
 {
@@ -42,25 +46,100 @@ int path_match(const char *path, int nr, char **match)
 	return 0;
 }
 
+enum protocol {
+	PROTO_LOCAL = 1,
+	PROTO_SSH,
+	PROTO_GIT,
+};
+
+static enum protocol get_protocol(const char *name)
+{
+	if (!strcmp(name, "ssh"))
+		return PROTO_SSH;
+	if (!strcmp(name, "git"))
+		return PROTO_GIT;
+	die("I don't handle protocol '%s'", name);
+}
+
+static void lookup_host(const char *host, struct sockaddr *in)
+{
+	struct addrinfo *res;
+	int ret;
+
+	ret = getaddrinfo(host, NULL, NULL, &res);
+	if (ret)
+		die("Unable to look up %s (%s)", host, gai_strerror(ret));
+	*in = *res->ai_addr;
+	freeaddrinfo(res);
+}
+
+static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
+{
+	struct sockaddr addr;
+	int port = DEFAULT_GIT_PORT, sockfd;
+	char *colon;
+
+	colon = strchr(host, ':');
+	if (colon) {
+		char *end;
+		unsigned long n = strtoul(colon+1, &end, 0);
+		if (colon[1] && !*end) {
+			*colon = 0;
+			port = n;
+		}
+	}
+
+	lookup_host(host, &addr);
+	((struct sockaddr_in *)&addr)->sin_port = htons(port);
+
+	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
+	if (sockfd < 0)
+		die("unable to create socket (%s)", strerror(errno));
+	if (connect(sockfd, (void *)&addr, sizeof(addr)) < 0)
+		die("unable to connect (%s)", strerror(errno));
+	fd[0] = sockfd;
+	fd[1] = sockfd;
+	packet_write(sockfd, "%s %s\n", prog, path);
+	return 0;
+}
+
 /*
  * Yeah, yeah, fixme. Need to pass in the heads etc.
  */
 int git_connect(int fd[2], char *url, const char *prog)
 {
 	char command[1024];
-	const char *host, *path;
+	char *host, *path;
 	char *colon;
 	int pipefd[2][2];
 	pid_t pid;
+	enum protocol protocol;
 
 	host = NULL;
 	path = url;
 	colon = strchr(url, ':');
+	protocol = PROTO_LOCAL;
 	if (colon) {
 		*colon = 0;
 		host = url;
 		path = colon+1;
+		protocol = PROTO_SSH;
+		if (!memcmp(path, "//", 2)) {
+			char *slash = strchr(path + 2, '/');
+			if (slash) {
+				int nr = slash - path - 2;
+				memmove(path, path+2, nr);
+				path[nr] = 0;
+				protocol = get_protocol(url);
+				host = path;
+				path = slash;
+			}
+		}
 	}
+
+	if (protocol == PROTO_GIT)
+		return git_tcp_connect(fd, prog, host, path);
+
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
 	pid = fork();
@@ -73,7 +152,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 		close(pipefd[0][1]);
 		close(pipefd[1][0]);
 		close(pipefd[1][1]);
-		if (host)
+		if (protocol == PROTO_SSH)
 			execlp("ssh", "ssh", host, command, NULL);
 		else
 			execlp("sh", "sh", "-c", command, NULL);
