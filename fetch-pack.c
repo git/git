@@ -68,7 +68,7 @@ static int get_remote_heads(int fd, int nr_match, char **match, unsigned char *r
 		if (line[len-1] == '\n')
 			line[--len] = 0;
 		if (len < 42 || get_sha1_hex(line, sha1))
-			die("git-fetch-pack: protocol error - expected ref descriptor, got '%s¤'", line);
+			die("git-fetch-pack: protocol error - expected ref descriptor, got '%s'", line);
 		refname = line+41;
 		if (nr_match && !path_match(refname, nr_match, match))
 			continue;
