@@ -30,19 +30,6 @@ OPTIONS
 	Normally "git-write-tree" ensures that the objects referenced by the
 	directory exist in the object database.  This option disables this check.
 
-
-////////////////////////////////////////////////////////////////
-
-Producing man pages and html
-
-To create a set of html pages run:
-  perl split-docs.pl -html < core-git.txt
-
-To create a set of man pages run:
-  perl split-docs.pl -man < core-git.txt
-
-
-////////////////////////////////////////////////////////////////
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
