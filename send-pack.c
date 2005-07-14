@@ -2,7 +2,8 @@
 #include "refs.h"
 #include "pkt-line.h"
 
-static const char send_pack_usage[] = "git-send-pack [--exec=other] destination [heads]*";
+static const char send_pack_usage[] =
+"git-send-pack [--exec=git-receive-pack] [host:]directory [heads]*";
 static const char *exec = "git-receive-pack";
 
 struct ref {

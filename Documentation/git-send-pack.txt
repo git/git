@@ -1,0 +1,46 @@
+git-send-pack(1)
+================
+v0.1, July 2005
+
+NAME
+----
+git-send-pack - Push missing objects packed.
+
+
+SYNOPSIS
+--------
+'git-send-pack' [--exec=<git-receive-pack>] [<host>:]<directory> [<head>...]
+
+DESCRIPTION
+-----------
+Invokes 'git-receive-pack' on a possibly remote repository, and
+updates it from the current repository, sending named heads.
+
+
+OPTIONS
+-------
+--exec=<git-receive-pack>::
+	Path to the 'git-receive-pack' program on the remote
+	end.  Sometimes useful when pushing to a remote
+	repository over ssh, and you do not have the program in
+	a directory on the default $PATH.
+
+<host>::
+	A remote host to house the repository.  When this
+	part is specified, 'git-receive-pack' is invoked via
+	ssh.
+
+<directory>::
+	The repository to update.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano.
+
+GIT
+---
+Part of the link:git.html[git] suite

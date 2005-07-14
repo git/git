@@ -1,0 +1,41 @@
+git-receive-pack(1)
+===================
+v0.1, July 2005
+
+NAME
+----
+git-receive-pack - Receive what is pushed into it
+
+
+SYNOPSIS
+--------
+'git-receive-pack' <directory>
+
+DESCRIPTION
+-----------
+Invoked by 'git-send-pack' and updates the repository with the
+information fed from the remote end.
+
+This command is usually not invoked directly by the end user.
+The UI for the protocol is on the 'git-send-pack' side, and the
+program pair is meant to be used to push updates to remote
+repository.  For pull operations, see 'git-fetch-pack' and
+'git-clone-pack'.
+
+
+OPTIONS
+-------
+<directory>::
+	The repository to sync into.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano.
+
+GIT
+---
+Part of the link:git.html[git] suite
