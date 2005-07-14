@@ -30,8 +30,9 @@ reflect recent changes.
 Commands Overview
 -----------------
 The git commands can helpfully be split into those that manipulate
-the repository, the cache and the working fileset and those that
-interrogate and compare them.
+the repository, the cache and the working fileset, those that
+interrogate and compare them, and those that moves objects and
+references between repositories.
 
 There are also some ancilliary programs that can be viewed as useful
 aids for using the core commands but which are unlikely to be used by
@@ -117,6 +118,43 @@ The interrogate commands may create files - and you can force them to
 touch the working file set - but in general they don't
 
 
+link:git-clone-script.html[git-clone-script]::
+	Clones a repository into the current repository (user interface)
+
+link:git-clone-pack.html[git-clone-pack]::
+	Clones a repository into the current repository (engine
+	for ssh and local transport)
+
+link:git-pull-script.html[git-pull-script]::
+	Pull from a repote repository via various protocols
+	(user interface).
+
+link:git-http-pull.html[git-http-pull]::
+	Downloads a remote GIT repository via HTTP
+
+link:git-local-pull.html[git-local-pull]::
+	Duplicates another GIT repository on a local system
+
+link:git-ssh-pull.html[git-ssh-pull]::
+	Pulls from a remote repository over ssh connection
+
+link:git-send-pack.html[git-send-pack]::
+	Pushes to a remote repository, intelligently.
+
+link:git-receive-pack.html[git-receive-pack]::
+	Invoked by 'git-send-pack' to receive what is pushed to it.
+
+link:git-clone-pack.html[git-clone-pack]::
+	Clones from a remote repository.
+
+link:git-fetch-pack.html[git-fetch-pack]::
+	Updates from a remote repository.
+
+link:git-upload-pack.html[git-upload-pack]::
+	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
+	what are asked for.
+
+
 Ancilliary Commands
 -------------------
 Manipulators:
@@ -127,24 +165,8 @@ link:git-apply-patch-script.html[git-apply-patch-script]::
 link:git-convert-cache.html[git-convert-cache]::
 	Converts old-style GIT repository
 
-link:git-clone-script.html[git-clone-script]::
-	Clones a repository into the current repository (user interface)
-
-link:git-clone-pack.html[git-clone-pack]::
-	Clones a repository into the current repository (engine
-	for ssh and local transport)
-
-link:git-http-pull.html[git-http-pull]::
-	Downloads a remote GIT repository via HTTP
-
-link:git-local-pull.html[git-local-pull]::
-	Duplicates another GIT repository on a local system
-
 link:git-merge-one-file-script.html[git-merge-one-file-script]::
 	The standard helper program to use with "git-merge-cache"
-
-link:git-pull-script.html[git-pull-script]::
-	Script used by Linus to pull and merge a remote repository
 
 link:git-prune-script.html[git-prune-script]::
 	Prunes all unreachable objects from the object database
@@ -155,8 +177,6 @@ link:git-resolve-script.html[git-resolve-script]::
 link:git-tag-script.html[git-tag-script]::
 	An example script to create a tag object signed with GPG
 
-link:git-ssh-pull.html[git-ssh-pull]::
-	Pulls from a remote repository over ssh connection
 
 Interogators:
 
@@ -221,17 +241,16 @@ The git-core manipulates the following areas in the directory:
 
  .git/	       The base (overridden with $GIT_DIR)
    objects/    The object base (overridden with $GIT_OBJECT_DIRECTORY)
-     ??/       'First 2 chars of object' directories
-
-It can interrogate (but never updates) the following areas:
+     ??/       'First 2 chars of object' directories.
+     pack/     Packed archives.
 
    refs/       Directories containing symbolic names for objects
 	       (each file contains the hex SHA1 + newline)
      heads/    Commits which are heads of various sorts
      tags/     Tags, by the tag name (or some local renaming of it)
-     snap/     ????
-   ...         Everything else isn't shared
-   HEAD        Symlink to refs/heads/<something>
+     */        Any other subdirectory of refs/ can be used to store
+	       files similar to what are under refs/heads/.
+   HEAD        Symlink to refs/heads/<current-branch-name>
 
 Higher level SCMs may provide and manage additional information in the
 GIT_DIR.
