@@ -21,9 +21,9 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 	return add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 }
 
-static int match_tree_entry(const char *base, int baselen, const char *path, unsigned int mode, char **paths)
+static int match_tree_entry(const char *base, int baselen, const char *path, unsigned int mode, const char **paths)
 {
-	char *match;
+	const char *match;
 	int pathlen;
 
 	if (!paths)
@@ -59,13 +59,15 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 
 		if (strncmp(path, match, pathlen))
 			continue;
+
+		return 1;
 	}
 	return 0;
 }
 
 static int read_tree_recursive(void *buffer, unsigned long size,
 			       const char *base, int baselen,
-			       int stage, char **match)
+			       int stage, const char **match)
 {
 	while (size) {
 		int len = strlen(buffer)+1;
@@ -115,7 +117,7 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 	return 0;
 }
 
-int read_tree(void *buffer, unsigned long size, int stage, char **match)
+int read_tree(void *buffer, unsigned long size, int stage, const char **match)
 {
 	return read_tree_recursive(buffer, size, "", 0, stage, match);
 }
