@@ -1,22 +1,28 @@
-git-clone-pack(1)
+git-fetch-pack(1)
 =================
 v0.1, July 2005
 
 NAME
 ----
-git-clone-pack - Clones a repository by receiving packed objects.
+git-fetch-pack - Receive missing objects from another repository.
 
 
 SYNOPSIS
 --------
-'git-clone-pack' [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...]
+git-fetch-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...] < <commit-list>
 
 DESCRIPTION
 -----------
-Clones a repository into the current repository by invoking
-'git-upload-pack', possibly on the remote host via ssh, in
-the named repository, and invoking 'git-unpack-objects' locally
-to receive the pack.
+Invokes 'git-upload-pack' on a potentially remote repository,
+and asks it to send objects missing from this repository, to
+update the named heads.  The list of commits available locally
+is fed from the standard input, to be sent to 'git-upload-pack'
+running on the other end.
+
+This command can be used only when the local side has a common
+(ancestor) commit with the remote head that is being pulled
+from.  Use 'git-clone-pack' for that.
+
 
 OPTIONS
 -------
@@ -45,9 +51,13 @@ OPTIONS
 	The repository to sync from.
 
 <head>...::
-	The heads to update.  This is relative to $GIT_DIR
-	(e.g. "HEAD", "refs/heads/master").  When unspecified,
-	all heads are updated to match the remote repository.
+	The remote heads to update from. This is relative to
+	$GIT_DIR (e.g. "HEAD", "refs/heads/master").  When
+	unspecified, update from all heads the remote side has.
+
+	However the program refuses to work if more than one
+	remote head matches the specified heads.  I am not sure
+	what this means... Help!!!!!
 
 
 Author
@@ -58,8 +68,6 @@ Documentation
 --------------
 Documentation by Junio C Hamano.
 
-
 GIT
 ---
 Part of the link:git.html[git] suite
-

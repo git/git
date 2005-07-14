@@ -3,7 +3,8 @@
 #include "pkt-line.h"
 #include <sys/wait.h>
 
-static const char fetch_pack_usage[] = "git-fetch-pack [host:]directory [heads]* < mycommitlist";
+static int quiet;
+static const char fetch_pack_usage[] = "git-fetch-pack [-q] [--exec=upload-pack] [host:]directory [heads]* < mycommitlist";
 static const char *exec = "git-upload-pack";
 
 static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *remote)
@@ -98,7 +99,8 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		dup2(fd[0], 0);
 		close(fd[0]);
 		close(fd[1]);
-		execlp("git-unpack-objects", "git-unpack-objects", NULL);
+		execlp("git-unpack-objects", "git-unpack-objects",
+		       quiet ? "-q" : NULL, NULL);
 		die("git-unpack-objects exec failed");
 	}
 	close(fd[0]);
@@ -134,7 +136,10 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			/* Arguments go here */
+			if (!strncmp("--exec=", arg, 7)) {
+				exec = arg + 7;
+				continue;
+			}
 			usage(fetch_pack_usage);
 		}
 		dest = arg;
