@@ -57,19 +57,10 @@ static void remove_subtree(const char *path)
 		die("cannot rmdir %s", path);
 }
 
-static int create_file(const char *path, unsigned int mode, int force)
+static int create_file(const char *path, unsigned int mode)
 {
-	int fd;
-
 	mode = (mode & 0100) ? 0777 : 0666;
-	fd = open(path, O_WRONLY | O_TRUNC | O_CREAT | O_EXCL, mode);
-	if (fd < 0) {
-		if (errno == EISDIR && force) {
-			remove_subtree(path);
-			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT | O_EXCL, mode);
-		}
-	}
-	return fd;
+	return open(path, O_WRONLY | O_TRUNC | O_CREAT | O_EXCL, mode);
 }
 
 static int write_entry(struct cache_entry *ce, const char *path, struct checkout *state)
@@ -90,7 +81,7 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 	}
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
 	case S_IFREG:
-		fd = create_file(path, ntohl(ce->ce_mode), state->force);
+		fd = create_file(path, ntohl(ce->ce_mode));
 		if (fd < 0) {
 			free(new);
 			return error("git-checkout-cache: unable to create file %s (%s)",
@@ -151,6 +142,11 @@ int checkout_entry(struct cache_entry *ce, struct checkout *state)
 		 * just do the right thing)
 		 */
 		unlink(path);
+		if (S_ISDIR(st.st_mode)) {
+			if (!state->force)
+				return error("%s is a directory", path);
+			remove_subtree(path);
+		}
 	} else if (state->not_new) 
 		return 0;
 	create_directories(path, state);
