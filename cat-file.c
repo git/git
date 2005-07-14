@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	unsigned long size;
 
 	if (argc != 3 || get_sha1(argv[2], sha1))
-		usage("git-cat-file [-t | -s | tagname] <sha1>");
+		usage("git-cat-file [-t | -s | <type>] <sha1>");
 
 	if (!strcmp("-t", argv[1]) || !strcmp("-s", argv[1])) {
 		if (!sha1_object_info(sha1, type,
