@@ -87,11 +87,36 @@ static int show_modified(struct cache_entry *old,
 	return 0;
 }
 
-static int diff_cache(struct cache_entry **ac, int entries)
+static int ce_path_match(const struct cache_entry *ce, const char **pathspec)
+{
+	const char *match, *name;
+	int len;
+
+	if (!pathspec)
+		return 1;
+
+	len = ce_namelen(ce);
+	name = ce->name;
+	while ((match = *pathspec++) != NULL) {
+		int matchlen = strlen(match);
+		if (matchlen > len)
+			continue;
+		if (memcmp(name, match, matchlen))
+			continue;
+		if (name[matchlen] == '/' || !name[matchlen])
+			return 1;
+	}
+	return 0;
+}
+
+static int diff_cache(struct cache_entry **ac, int entries, const char **pathspec)
 {
 	while (entries) {
 		struct cache_entry *ce = *ac;
 		int same = (entries > 1) && ce_same_name(ce, ac[1]);
+
+		if (!ce_path_match(ce, pathspec))
+			goto skip_entry;
 
 		switch (ce_stage(ce)) {
 		case 0:
@@ -130,6 +155,7 @@ static int diff_cache(struct cache_entry **ac, int entries)
 			die("impossible cache entry stage");
 		}
 
+skip_entry:
 		/*
 		 * Ignore all the different stages for this file,
 		 * we've handled the relevant cases now.
@@ -281,7 +307,7 @@ int main(int argc, const char **argv)
 	if (read_tree(tree, size, 1, pathspec))
 		die("unable to read tree object %s", tree_name);
 
-	ret = diff_cache(active_cache, active_nr);
+	ret = diff_cache(active_cache, active_nr, pathspec);
 
 	diffcore_std(pathspec,
 		     detect_rename, diff_score_opt,
