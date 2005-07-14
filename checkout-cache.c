@@ -75,6 +75,9 @@ static int checkout_all(void)
 	return 0;
 }
 
+static const char *checkout_cache_usage =
+"git-checkout-cache [-u] [-q] [-a] [-f] [-n] [--prefix=<string>] [--] <file>...";
+
 int main(int argc, char **argv)
 {
 	int i, force_filename = 0;
@@ -123,6 +126,8 @@ int main(int argc, char **argv)
 				state.base_dir_len = strlen(state.base_dir);
 				continue;
 			}
+			if (arg[0] == '-')
+				usage(checkout_cache_usage);
 		}
 		if (state.base_dir_len) {
 			/* when --prefix is specified we do not
