@@ -95,9 +95,9 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	if (pid < 0)
 		die("git-fetch-pack: unable to fork off git-unpack-objects");
 	if (!pid) {
-		close(fd[1]);
 		dup2(fd[0], 0);
 		close(fd[0]);
+		close(fd[1]);
 		execlp("git-unpack-objects", "git-unpack-objects", NULL);
 		die("git-unpack-objects exec failed");
 	}
