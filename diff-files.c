@@ -11,7 +11,8 @@ static const char *diff_files_usage =
 "[<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-static int diff_output_format = DIFF_FORMAT_HUMAN;
+static int diff_output_format = DIFF_FORMAT_RAW;
+static int diff_line_termination = '\n';
 static int detect_rename = 0;
 static int find_copies_harder = 0;
 static int diff_setup_opt = 0;
@@ -57,11 +58,9 @@ int main(int argc, const char **argv)
 		else if (!strcmp(argv[1], "-s"))
 			; /* no-op */
 		else if (!strcmp(argv[1], "-z"))
-			diff_output_format = DIFF_FORMAT_MACHINE;
+			diff_line_termination = 0;
 		else if (!strcmp(argv[1], "--name-only"))
 			diff_output_format = DIFF_FORMAT_NAME;
-		else if (!strcmp(argv[1], "--name-only-z"))
-			diff_output_format = DIFF_FORMAT_NAME_Z;
 		else if (!strcmp(argv[1], "-R"))
 			diff_setup_opt |= DIFF_SETUP_REVERSE;
 		else if (!strncmp(argv[1], "-S", 2))
@@ -153,6 +152,6 @@ int main(int argc, const char **argv)
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
 		     orderfile, diff_filter);
-	diff_flush(diff_output_format);
+	diff_flush(diff_output_format, diff_line_termination);
 	return 0;
 }

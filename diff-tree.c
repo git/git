@@ -9,7 +9,8 @@ static int ignore_merges = 1;
 static int recursive = 0;
 static int show_tree_entry_in_recursive = 0;
 static int read_stdin = 0;
-static int diff_output_format = DIFF_FORMAT_HUMAN;
+static int diff_output_format = DIFF_FORMAT_RAW;
+static int diff_line_termination = '\n';
 static int detect_rename = 0;
 static int find_copies_harder = 0;
 static int diff_setup_opt = 0;
@@ -276,14 +277,14 @@ static int call_diff_flush(void)
 		     orderfile,
 		     diff_filter);
 	if (diff_queue_is_empty()) {
-		diff_flush(DIFF_FORMAT_NO_OUTPUT);
+		diff_flush(DIFF_FORMAT_NO_OUTPUT, diff_line_termination);
 		return 0;
 	}
 	if (header) {
-		printf("%s%c", header, diff_output_format == DIFF_FORMAT_MACHINE ? 0 : '\n');
+		printf("%s%c", header, diff_line_termination);
 		header = NULL;
 	}
-	diff_flush(diff_output_format);
+	diff_flush(diff_output_format, diff_line_termination);
 	return 1;
 }
 
@@ -486,12 +487,8 @@ int main(int argc, const char **argv)
 			diff_output_format = DIFF_FORMAT_NAME;
 			continue;
 		}
-		if (!strcmp(arg, "--name-only-z")) {
-			diff_output_format = DIFF_FORMAT_NAME_Z;
-			continue;
-		}
 		if (!strcmp(arg, "-z")) {
-			diff_output_format = DIFF_FORMAT_MACHINE;
+			diff_line_termination = 0;
 			continue;
 		}
 		if (!strcmp(arg, "-m")) {

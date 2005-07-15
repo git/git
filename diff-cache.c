@@ -2,7 +2,8 @@
 #include "diff.h"
 
 static int cached_only = 0;
-static int diff_output_format = DIFF_FORMAT_HUMAN;
+static int diff_output_format = DIFF_FORMAT_RAW;
+static int diff_line_termination = '\n';
 static int match_nonexisting = 0;
 static int detect_rename = 0;
 static int find_copies_harder = 0;
@@ -226,15 +227,11 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
-			diff_output_format = DIFF_FORMAT_MACHINE;
+			diff_line_termination = 0;
 			continue;
 		}
 		if (!strcmp(arg, "--name-only")) {
 			diff_output_format = DIFF_FORMAT_NAME;
-			continue;
-		}
-		if (!strcmp(arg, "--name-only-z")) {
-			diff_output_format = DIFF_FORMAT_NAME_Z;
 			continue;
 		}
 		if (!strcmp(arg, "-R")) {
@@ -292,6 +289,6 @@ int main(int argc, const char **argv)
 		     pickaxe, pickaxe_opts,
 		     diff_break_opt,
 		     orderfile, diff_filter);
-	diff_flush(diff_output_format);
+	diff_flush(diff_output_format, diff_line_termination);
 	return ret;
 }

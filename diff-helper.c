@@ -17,7 +17,7 @@ static void flush_them(int ac, const char **av)
 	diffcore_std_no_resolve(av + 1,
 				pickaxe, pickaxe_opts,
 				orderfile, diff_filter);
-	diff_flush(DIFF_FORMAT_PATCH);
+	diff_flush(DIFF_FORMAT_PATCH, '\n');
 }
 
 static const char *diff_helper_usage =

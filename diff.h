@@ -75,13 +75,11 @@ extern void diffcore_std_no_resolve(const char **paths,
 
 extern int diff_queue_is_empty(void);
 
-#define DIFF_FORMAT_HUMAN	0
-#define DIFF_FORMAT_MACHINE	1
+#define DIFF_FORMAT_RAW		1
 #define DIFF_FORMAT_PATCH	2
 #define DIFF_FORMAT_NO_OUTPUT	3
 #define DIFF_FORMAT_NAME	4
-#define DIFF_FORMAT_NAME_Z	5
 
-extern void diff_flush(int output_style);
+extern void diff_flush(int output_style, int line_terminator);
 
 #endif /* DIFF_H */
