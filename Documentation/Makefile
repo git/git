@@ -45,7 +45,7 @@ clean:
 	rm -f *.xml *.html *.1 *.7
 
 %.html : %.txt
-	asciidoc -b css-embedded -d manpage $<
+	asciidoc -b xhtml11 -d manpage $<
 
 %.1 %.7 : %.xml
 	xmlto man $<
