@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-static const char daemon_usage[] = "git-daemon [--port=n]";
+static const char daemon_usage[] = "git-daemon [--inetd | --port=n]";
 
 static int upload(char *dir, int dirlen)
 {
@@ -96,6 +96,7 @@ static int serve(int port)
 int main(int argc, char **argv)
 {
 	int port = DEFAULT_GIT_PORT;
+	int inetd_mode = 0;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -110,8 +111,17 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
+
+		if (!strcmp(arg, "--inetd")) {
+			inetd_mode = 1;
+			continue;
+		}
+
 		usage(daemon_usage);
 	}
+
+	if (inetd_mode)
+		return execute();
 
 	return serve(port);
 }
