@@ -21,6 +21,7 @@ bin=$(prefix)/bin
 CC=gcc
 AR=ar
 INSTALL=install
+RPMBUILD=rpmbuild
 
 #
 # sparse is architecture-neutral, which means that we need to tell it
@@ -186,7 +187,7 @@ dist: git-core.spec git-tar-tree
 	gzip -9 $(GIT_TARNAME).tar
 
 rpm: dist
-	rpmbuild -ta git-core-$(GIT_VERSION).tar.gz
+	$(RPMBUILD) -ta git-core-$(GIT_VERSION).tar.gz
 
 test: all
 	$(MAKE) -C t/ all
