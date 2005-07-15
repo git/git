@@ -9,7 +9,7 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
-GIT_VERSION=0.99
+GIT_VERSION=0.99.1
 
 COPTS=-O2
 CFLAGS=-g $(COPTS) -Wall
@@ -174,7 +174,7 @@ diffcore-break.o : $(LIB_H) diffcore.h
 diffcore-order.o : $(LIB_H) diffcore.h
 epoch.o: $(LIB_H)
 
-git-core.spec: git-core.spec.in
+git-core.spec: git-core.spec.in Makefile
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
 
 GIT_TARNAME=git-core-$(GIT_VERSION)
