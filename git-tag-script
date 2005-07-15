@@ -7,6 +7,7 @@ name="$1"
 
 object=${2:-$(cat "$GIT_DIR"/HEAD)}
 type=$(git-cat-file -t $object) || exit 1
+tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 
 ( echo "#"
   echo "# Write a tag message"
@@ -17,7 +18,7 @@ grep -v '^#' < .editmsg | git-stripspace > .tagmsg
 
 [ -s .tagmsg ] || exit
 
-( echo -e "object $object\ntype $type\ntag $name\n"; cat .tagmsg ) > .tmp-tag
+( echo -e "object $object\ntype $type\ntag $name\ntagger $tagger\n"; cat .tagmsg ) > .tmp-tag
 rm -f .tmp-tag.asc .tagmsg
 gpg -bsa .tmp-tag && cat .tmp-tag.asc >> .tmp-tag
 mkdir -p "$GIT_DIR/refs/tags"

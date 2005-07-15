@@ -42,7 +42,7 @@ static int verify_tag(char *buffer, unsigned long size)
 	int typelen;
 	char type[20];
 	unsigned char sha1[20];
-	const char *object, *type_line, *tag_line;
+	const char *object, *type_line, *tag_line, *tagger_line;
 
 	if (size < 64 || size > MAXSIZE-1)
 		return -1;
@@ -92,6 +92,12 @@ static int verify_tag(char *buffer, unsigned long size)
 		return -1;
 	}
 
+	/* Verify the tagger line */
+	tagger_line = tag_line;
+
+	if (memcmp(tagger_line, "tagger", 6) || (tagger_line[6] == '\n'))
+		return -1;
+
 	/* The actual stuff afterwards we don't care about.. */
 	return 0;
 }
@@ -119,7 +125,7 @@ int main(int argc, char **argv)
 		size += ret;
 	}
 
-	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntype "
+	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntype\ntagger "
 	if (verify_tag(buffer, size) < 0)
 		die("invalid tag signature file");
 
