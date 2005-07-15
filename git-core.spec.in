@@ -1,3 +1,4 @@
+# Pass --without docs to rpmbuild if you don't want the documetnation
 Name: 		git-core
 Version: 	@@VERSION@@
 Release: 	1
@@ -7,7 +8,7 @@ License: 	GPL
 Group: 		Development/Tools
 URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
-BuildRequires:	zlib-devel, openssl-devel, curl-devel
+BuildRequires:	zlib-devel, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-root
 Prereq: 	sh-utils, diffutils, rsync, rcs, mktemp >= 1.5
 
@@ -23,11 +24,11 @@ similar to other SCM tools (like CVS, BitKeeper or Monotone).
 
 %build
 
-make
+make all %{!?_without_docs: doc}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make dest=$RPM_BUILD_ROOT prefix=%{_prefix} install
+make dest=$RPM_BUILD_ROOT prefix=%{_prefix} mandir=%{_mandir} install %{!?_without_docs: install-doc}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -35,8 +36,13 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %{_bindir}/*
-%doc README COPYING Documentation/*
+%doc README COPYING Documentation/*.txt
+%{!?_without_docs: %doc Documentation/*.html }
+%{!?_without_docs: %{_mandir}/man1/*.1.gz}
+%{!?_without_docs: %{_mandir}/man7/*.7.gz}
 
 %changelog
+* Thu Jul 14 2005 Eric Biederman <ebiederm@xmission.com>
+- Add the man pages, and the --without docs build option
 * Wed Jul 7 2005 Chris Wright <chris@osdl.org>
 - initial git spec file
