@@ -111,6 +111,9 @@ link:git-tar-tree.html[git-tar-tree]::
 link:git-unpack-file.html[git-unpack-file]::
 	Creates a temporary file with a blob's contents
 
+link:git-var.html[git-var]::
+	Displays a git logical variable
+
 link:git-verify-pack.html[git-verify-pack]::
 	Validates packed GIT archive files
 

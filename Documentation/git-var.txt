@@ -1,0 +1,60 @@
+git-var(1)
+==================
+v0.1, July 2005
+
+NAME
+----
+git-var - Print the git users identity
+
+
+SYNOPSIS
+--------
+git-var [ -l | <variable> ]
+
+DESCRIPTION
+-----------
+Prints a git logical variable.
+
+-l causes the logical variables to be listed.
+
+EXAMPLE
+--------
+$git-var GIT_AUTHOR_IDENT
+
+Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
+
+
+VARIABLES
+----------
+GIT_AUTHOR_IDENT
+    The author of a piece of code.
+
+GIT_COMMITTER_IDENT
+    The person who put a piece of code into git.
+
+Diagnostics
+-----------
+You don't exist. Go away!::
+    The passwd(5) gecos field couldn't be read
+Your parents must have hated you!::
+    The password(5) gecos field is longer than a giant static buffer.
+Your sysadmin must hate you!::
+    The password(5) name field is longer than a giant static buffer.
+
+See Also
+--------
+link:git-commit-tree.html[git-commit-tree]
+link:git-tag-script.html[git-tag-script]
+
+Author
+------
+Written by Eric Biederman <ebiederm@xmission.com>
+
+Documentation
+--------------
+Documentation by Eric Biederman and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+
