@@ -28,8 +28,16 @@ static int upload(char *dir, int dirlen)
 	return -1;
 }
 
-static int execute(char *line, int len)
+static int execute(void)
 {
+	static char line[1000];
+	int len;
+
+	len = packet_read_line(0, line, sizeof(line));
+
+	if (len && line[len-1] == '\n')
+		line[--len] = 0;
+
 	if (!strncmp("git-upload-pack /", line, 17))
 		return upload(line + 16, len - 16);
 
@@ -39,9 +47,6 @@ static int execute(char *line, int len)
 
 static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
 {
-	static char line[1000];
-	int len;
-
 	if (fork()) {
 		close(incoming);
 		return;
@@ -50,12 +55,7 @@ static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
 	dup2(incoming, 0);
 	dup2(incoming, 1);
 	close(incoming);
-	len = packet_read_line(0, line, sizeof(line));
-
-	if (len && line[len-1] == '\n')
-		line[--len] = 0;
-
-	exit(execute(line, len));
+	exit(execute());
 }
 
 static int serve(int port)
