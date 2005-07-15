@@ -184,7 +184,7 @@ dist: git-core.spec git-tar-tree
 	@cp git-core.spec $(GIT_TARNAME)
 	tar rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git-core.spec
 	@rm -rf $(GIT_TARNAME)
-	gzip -9 $(GIT_TARNAME).tar
+	gzip -f -9 $(GIT_TARNAME).tar
 
 rpm: dist
 	$(RPMBUILD) -ta git-core-$(GIT_VERSION).tar.gz
