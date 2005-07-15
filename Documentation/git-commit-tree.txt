@@ -68,6 +68,10 @@ Diagnostics
 -----------
 You don't exist. Go away!::
     The passwd(5) gecos field couldn't be read
+Your parents must have hated you!::
+    The password(5) gecos field is longer than a giant static buffer.
+Your sysadmin must hate you!::
+    The password(5) name field is longer than a giant static buffer.
 
 See Also
 --------
