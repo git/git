@@ -79,16 +79,6 @@ static int new_parent(int idx)
 	return 1;
 }
 
-static char *git_author_info(void)
-{
-	return get_ident(gitenv("GIT_AUTHOR_NAME"), gitenv("GIT_AUTHOR_EMAIL"), gitenv("GIT_AUTHOR_DATE"));
-}
-
-static char *git_committer_info(void)
-{
-	return get_ident(gitenv("GIT_COMMITTER_NAME"), gitenv("GIT_COMMITTER_EMAIL"), gitenv("GIT_COMMITTER_DATE"));
-}
-
 int main(int argc, char **argv)
 {
 	int i;

@@ -136,3 +136,13 @@ char *get_ident(const char *name, const char *email, const char *date_str)
 	buffer[i] = 0;
 	return buffer;
 }
+
+char *git_author_info(void)
+{
+	return get_ident(gitenv("GIT_AUTHOR_NAME"), gitenv("GIT_AUTHOR_EMAIL"), gitenv("GIT_AUTHOR_DATE"));
+}
+
+char *git_committer_info(void)
+{
+	return get_ident(gitenv("GIT_COMMITTER_NAME"), gitenv("GIT_COMMITTER_EMAIL"), gitenv("GIT_COMMITTER_DATE"));
+}
