@@ -26,13 +26,13 @@ int setup_ident(void)
 	/* Get the name ("gecos") */
 	len = strlen(pw->pw_gecos);
 	if (len >= sizeof(real_name))
-		die("Your parents must have hated you");
+		die("Your parents must have hated you!");
 	memcpy(real_name, pw->pw_gecos, len+1);
 
 	/* Make up a fake email address (name + '@' + hostname [+ '.' + domainname]) */
 	len = strlen(pw->pw_name);
 	if (len > sizeof(real_email)/2)
-		die("Your parents must have hated you");
+		die("Your sysadmin must hate you!");
 	memcpy(real_email, pw->pw_name, len);
 	real_email[len++] = '@';
 	gethostname(real_email + len, sizeof(real_email) - len);
