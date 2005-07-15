@@ -1,0 +1,81 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+CFLAGS = -g -Wall
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+       CFLAGS += -O0
+else
+       CFLAGS += -O2
+endif
+export CFLAGS
+
+PREFIX := /usr
+MANDIR := /usr/share/man/
+
+SRC    := ./
+DOC    := Documentation/
+DESTDIR  := $(CURDIR)/debian/tmp
+DOC_DESTDIR := $(DESTDIR)/usr/share/doc/git-core/
+MAN_DESTDIR := $(DESTDIR)/$(MANDIR)
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	$(MAKE) all doc
+	touch debian/build-stamp
+
+debian-clean:
+	dh_testdir
+	dh_testroot
+	rm -f debian/build-stamp
+	dh_clean
+
+clean: debian-clean
+	$(MAKE) clean
+
+install: debian/build-stamp
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs 
+
+	make dest=$(DESTDIR) prefix=$(PREFIX) mandir=$(MANDIR) install install-doc
+
+	mkdir -p $(DOC_DESTDIR)
+	find $(DOC) '(' -name '*.txt' -o -name '*.html' ')' -exec install {} $(DOC_DESTDIR) ';'
+
+	dh_install --sourcedir=$(DESTDIR)
+
+binary:
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+#	dh_installmenu
+#	dh_installdebconf	
+#	dh_installlogrotate	
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress 
+	dh_fixperms
+#	dh_perl
+#	dh_python
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+.PHONY: build clean binary install clean debian-clean

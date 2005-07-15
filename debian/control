@@ -1,0 +1,17 @@
+Source: git-core
+Section: devel
+Priority: optional
+Maintainer: Linus Torvalds <torvalds@osdl.org>
+Build-Depends-Indep: libz-dev, libssl-dev, libcurl3-dev, asciidoc > 6.0.3, xmlto, debhelper (>= 4.0.0)
+Standards-Version: 3.6.1
+
+Package: git-core
+Architecture: any
+Depends: ${shlibs:Depends}, shellutils, diff, rysnc, rcs
+Description: The git content addressable filesystem
+ GIT comes in two layers. The bottom layer is merely an extremely fast
+ and flexible filesystem-based database designed to store directory trees
+ with regard to their history. The top layer is a SCM-like tool which
+ enables human beings to work with the database in a manner to a degree
+ similar to other SCM tools (like CVS, BitKeeper or Monotone).
+

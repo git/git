@@ -1,0 +1,12 @@
+Document: git-core
+Title: git-core
+Author: 
+Abstract: This manual describes git
+Section: Devel
+
+Format: HTML
+Index: /usr/share/doc/git-core/html/git.html
+Files: /usr/share/doc/git-core/html/*.html
+
+Format: text
+Files: /usr/share/doc/git-core/git-core.txt
