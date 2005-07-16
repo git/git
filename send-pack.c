@@ -5,6 +5,7 @@
 static const char send_pack_usage[] =
 "git-send-pack [--exec=git-receive-pack] [host:]directory [heads]*";
 static const char *exec = "git-receive-pack";
+static int send_all = 0;
 
 struct ref {
 	struct ref *next;
@@ -137,15 +138,24 @@ static int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha
 
 static int local_ref_nr_match;
 static char **local_ref_match;
-static struct ref **local_ref_list;
+static struct ref *local_ref_list;
+static struct ref **local_last_ref;
 
 static int try_to_match(const char *refname, const unsigned char *sha1)
 {
 	struct ref *ref;
 	int len;
 
-	if (!path_match(refname, local_ref_nr_match, local_ref_match))
-		return 0;
+	if (!path_match(refname, local_ref_nr_match, local_ref_match)) {
+		if (!send_all)
+			return 0;
+
+		/* If we have it listed already, skip it */
+		for (ref = local_ref_list ; ref ; ref = ref->next) {
+			if (!strcmp(ref->name, refname))
+				return 0;
+		}
+	}
 
 	len = strlen(refname)+1;
 	ref = xmalloc(sizeof(*ref) + len);
@@ -153,8 +163,8 @@ static int try_to_match(const char *refname, const unsigned char *sha1)
 	memcpy(ref->new_sha1, sha1, 20);
 	memcpy(ref->name, refname, len);
 	ref->next = NULL;
-	*local_ref_list = ref;
-	local_ref_list = &ref->next;
+	*local_last_ref = ref;
+	local_last_ref = &ref->next;
 	return 0;
 }
 
@@ -225,7 +235,8 @@ static int send_pack(int in, int out, int nr_match, char **match)
 	if (nr_match) {
 		local_ref_nr_match = nr_match;
 		local_ref_match = match;
-		local_ref_list = last_ref;
+		local_ref_list = ref_list;
+		local_last_ref = last_ref;
 		for_each_ref(try_to_match);
 	}
 
@@ -260,19 +271,26 @@ int main(int argc, char **argv)
 	pid_t pid;
 
 	argv++;
-	for (i = 1; i < argc; i++) {
-		char *arg = *argv++;
+	for (i = 1; i < argc; i++, argv++) {
+		char *arg = *argv;
 
 		if (*arg == '-') {
 			if (!strncmp(arg, "--exec=", 7)) {
 				exec = arg + 7;
 				continue;
 			}
+			if (!strcmp(arg, "--all")) {
+				send_all = 1;
+				continue;
+			}
 			usage(send_pack_usage);
 		}
-		dest = arg;
+		if (!dest) {
+			dest = arg;
+			continue;
+		}
 		heads = argv;
-		nr_heads = argc - i -1;
+		nr_heads = argc - i;
 		break;
 	}
 	if (!dest)
