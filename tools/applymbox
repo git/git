@@ -4,6 +4,8 @@
 ## I never got around to renaming after I tested it. We're now on the
 ## second generation of scripts, still called "dotest".
 ##
+## Update: Ryan Anderson finally shamed me into naming this "applymbox".
+##
 ## You give it a mbox-format collection of emails, and it will try to
 ## apply them to the kernel using "applypatch"
 ##
@@ -20,7 +22,7 @@ mailsplit $1 .dotest || exit 1
 for i in .dotest/*
 do
 	mailinfo .dotest/msg .dotest/patch < $i > .dotest/info || exit 1
-	stripspace < .dotest/msg > .dotest/msg-clean
+	git-stripspace < .dotest/msg > .dotest/msg-clean
 	applypatch .dotest/msg-clean .dotest/patch .dotest/info "$2"
 	ret=$?
 	if [ $ret -ne 0 ]; then

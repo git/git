@@ -2,8 +2,8 @@ CC=gcc
 CFLAGS=-Wall -O2
 HOME=$(shell echo $$HOME)
 
-PROGRAMS=mailsplit mailinfo stripspace cvs2git
-SCRIPTS=dotest applypatch
+PROGRAMS=mailsplit mailinfo
+SCRIPTS=applymbox applypatch
 
 all: $(PROGRAMS)
 
