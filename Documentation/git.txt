@@ -121,6 +121,9 @@ The interrogate commands may create files - and you can force them to
 touch the working file set - but in general they don't
 
 
+Synching repositories
+~~~~~~~~~~~~~~~~~~~~~
+
 link:git-clone-script.html[git-clone-script]::
 	Clones a repository into the current repository (user interface)
 
@@ -128,9 +131,13 @@ link:git-clone-pack.html[git-clone-pack]::
 	Clones a repository into the current repository (engine
 	for ssh and local transport)
 
-link:git-pull-script.html[git-pull-script]::
+link:git-fetch-script.html[git-pull-script]::
 	Pull from a repote repository via various protocols
 	(user interface).
+
+link:git-pull-script.html[git-pull-script]::
+	Fetch from and merge with a repote repository via
+	various protocols (user interface).
 
 link:git-http-pull.html[git-http-pull]::
 	Downloads a remote GIT repository via HTTP

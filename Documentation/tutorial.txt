@@ -810,6 +810,34 @@ pull from:
   course, you will pay the price of more disk usage to hold
   multiple working trees, but disk space is cheap these days.  ]
 
+It is likely that you will be pulling from the same remote
+repository from time to time.  As a short hand, you can store
+the remote repository URL in a file under .git/branches/
+directory, like this:
+
+	mkdir -p .git/branches
+	echo rsync://kernel.org/pub/scm/git/git.git/ \
+	    >.git/branches/linus
+
+and use the filenae to "git pull" instead of the full URL.
+The contents of a file under .git/branches can even be a prefix
+of a full URL, like this:
+
+	echo rsync://kernel.org/pub/.../jgarzik/
+	        >.git/branches/jgarzik
+
+Examples.
+
+	(1) git pull linus
+	(2) git pull linus tag v0.99.1
+	(3) git pull jgarzik/netdev-2.6.git/ e100
+
+the above are equivalent to:
+
+	(1) git pull rsync://kernel.org/pub/scm/git/git.git/ HEAD
+	(2) git pull rsync://kernel.org/pub/scm/git/git.git/ tag v0.99.1
+	(3) git pull rsync://kernel.org/pub/.../jgarzik/netdev-2.6.git e100
+
 
 	Publishing your work
 	--------------------

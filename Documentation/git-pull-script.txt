@@ -4,22 +4,28 @@ v0.1, May 2005
 
 NAME
 ----
-git-pull-script - Script used by Linus to pull and merge a remote repository
+git-pull-script - Pull and merge from another repository.
 
 
 SYNOPSIS
 --------
-'git-pull-script'
+'git-pull-script' <repository> [ <head> | tag <tag> ]
+
 
 DESCRIPTION
 -----------
-This script is used by Linus to pull from a remote repository and perform
-a merge.
+Runs 'git-fetch-script' with the given parameters, then
+'git-resolve-script' to merge the local HEAD and FETCH_HEAD.
+
+
+OPTIONS
+-------
+include::pull-fetch-param.txt[]
 
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
 
 Documentation
 --------------

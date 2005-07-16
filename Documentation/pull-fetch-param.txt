@@ -1,0 +1,36 @@
+<repository>::
+	The "remote" repository to pull from.  One of the
+	following notations can be used to name the repository
+	to pull from:
+
+		Rsync URL
+			rsync://remote.machine/path/to/repo.git/
+
+		HTTP(s) URL
+			http://remote.machine/path/to/repo.git/
+
+		GIT URL
+			git://remote.machine/path/to/repo.git/
+			remote.machine:/path/to/repo.git/
+
+		Local directory
+			/path/to/repo.git/
+
+	In addition to that, as a short-hand, the name of a file
+	in $GIT_DIR/branches directory can be specified; the
+	named file should contain a single line, a URL in one of
+	the above formats, optionally followed by a hash '#' and
+	the name of remote head.
+
+<head>::
+	The remote head name to fetch from.  That is, make the
+	objects reachable from the commit recorded in
+	$GIT_DIR/refs/heads/<head> in the remote repository
+	available locally.
+
+tag <tag>::
+	The remote head tag to fetch from.  That is, make the
+	objects reachable from the commit recorded in
+	$GIT_DIR/refs/tags/<tag> in the remote repository
+	available locally.
+
