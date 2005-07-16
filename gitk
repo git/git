@@ -270,7 +270,7 @@ proc error_popup msg {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
-    global findtype findloc findstring fstring geometry
+    global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor
     global rowctxmenu
@@ -342,12 +342,15 @@ proc makewindow {} {
     entry $fstring -width 30 -font $textfont -textvariable findstring
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
-    tk_optionMenu .ctop.top.bar.findtype findtype Exact IgnCase Regexp
+    set findtypemenu [tk_optionMenu .ctop.top.bar.findtype \
+			  findtype Exact IgnCase Regexp]
     set findloc "All fields"
     tk_optionMenu .ctop.top.bar.findloc findloc "All fields" Headline \
-	Comments Author Committer
+	Comments Author Committer Files Pickaxe
     pack .ctop.top.bar.findloc -side right
     pack .ctop.top.bar.findtype -side right
+    # for making sure type==Exact whenever loc==Pickaxe
+    trace add variable findloc write findlocchange
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
@@ -397,12 +400,13 @@ proc makewindow {} {
     bindkey b "$ctext yview scroll -1 pages"
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
-    bindkey / findnext
+    bindkey / {findnext 1}
+    bindkey <Key-Return> {findnext 0}
     bindkey ? findprev
     bindkey f nextfile
     bind . <Control-q> doquit
     bind . <Control-f> dofind
-    bind . <Control-g> findnext
+    bind . <Control-g> {findnext 0}
     bind . <Control-r> findprev
     bind . <Control-equal> {incrfont 1}
     bind . <Control-KP_Add> {incrfont 1}
@@ -1136,10 +1140,15 @@ proc dofind {} {
     global numcommits lineid linehtag linentag linedtag
     global mainfont namefont canv canv2 canv3 selectedline
     global matchinglines foundstring foundstrlen
+
+    stopfindproc
     unmarkmatches
     focus .
     set matchinglines {}
-    set fldtypes {Headline Author Date Committer CDate Comment}
+    if {$findloc == "Pickaxe"} {
+	findpatches
+	return
+    }
     if {$findtype == "IgnCase"} {
 	set foundstring [string tolower $findstring]
     } else {
@@ -1147,12 +1156,17 @@ proc dofind {} {
     }
     set foundstrlen [string length $findstring]
     if {$foundstrlen == 0} return
+    if {$findloc == "Files"} {
+	findfiles
+	return
+    }
     if {![info exists selectedline]} {
 	set oldsel -1
     } else {
 	set oldsel $selectedline
     }
     set didsel 0
+    set fldtypes {Headline Author Date Committer CDate Comment}
     for {set l 0} {$l < $numcommits} {incr l} {
 	set id $lineid($l)
 	set info $commitinfo($id)
@@ -1202,10 +1216,12 @@ proc findselectline {l} {
     }
 }
 
-proc findnext {} {
+proc findnext {restart} {
     global matchinglines selectedline
     if {![info exists matchinglines]} {
-	dofind
+	if {$restart} {
+	    dofind
+	}
 	return
     }
     if {![info exists selectedline]} return
@@ -1237,6 +1253,203 @@ proc findprev {} {
     }
 }
 
+proc findlocchange {name ix op} {
+    global findloc findtype findtypemenu
+    if {$findloc == "Pickaxe"} {
+	set findtype Exact
+	set state disabled
+    } else {
+	set state normal
+    }
+    $findtypemenu entryconf 1 -state $state
+    $findtypemenu entryconf 2 -state $state
+}
+
+proc stopfindproc {{done 0}} {
+    global findprocpid findprocfile findids
+    global ctext findoldcursor phase maincursor textcursor
+    global findinprogress
+
+    catch {unset findids}
+    if {[info exists findprocpid]} {
+	if {!$done} {
+	    catch {exec kill $findprocpid}
+	}
+	catch {close $findprocfile}
+	unset findprocpid
+    }
+    if {[info exists findinprogress]} {
+	unset findinprogress
+	if {$phase != "incrdraw"} {
+	    . config -cursor $maincursor
+	    $ctext config -cursor $textcursor
+	}
+    }
+}
+
+proc findpatches {} {
+    global findstring selectedline numcommits
+    global findprocpid findprocfile
+    global finddidsel ctext lineid findinprogress
+
+    if {$numcommits == 0} return
+
+    # make a list of all the ids to search, starting at the one
+    # after the selected line (if any)
+    if {[info exists selectedline]} {
+	set l $selectedline
+    } else {
+	set l -1
+    }
+    set inputids {}
+    for {set i 0} {$i < $numcommits} {incr i} {
+	if {[incr l] >= $numcommits} {
+	    set l 0
+	}
+	append inputids $lineid($l) "\n"
+    }
+
+    if {[catch {
+	set f [open [list | git-diff-tree --stdin -s -r -S$findstring \
+			 << $inputids] r]
+    } err]} {
+	error_popup "Error starting search process: $err"
+	return
+    }
+
+    set findprocfile $f
+    set findprocpid [pid $f]
+    fconfigure $f -blocking 0
+    fileevent $f readable readfindproc
+    set finddidsel 0
+    . config -cursor watch
+    $ctext config -cursor watch
+    set findinprogress 1
+}
+
+proc readfindproc {} {
+    global findprocfile finddidsel
+    global idline matchinglines
+
+    set n [gets $findprocfile line]
+    if {$n < 0} {
+	if {[eof $findprocfile]} {
+	    stopfindproc 1
+	    if {!$finddidsel} {
+		bell
+	    }
+	}
+	return
+    }
+    if {![regexp {^[0-9a-f]{40}} $line id]} {
+	error_popup "Can't parse git-diff-tree output: $line"
+	stopfindproc
+	return
+    }
+    if {![info exists idline($id)]} {
+	puts stderr "spurious id: $id"
+	return
+    }
+    set l $idline($id)
+    lappend matchinglines $l
+    if {!$finddidsel} {
+	findselectline $l
+	set finddidsel 1
+    }
+}
+
+proc findfiles {} {
+    global selectedline numcommits lineid
+    global ffileline finddidsel parents findstartline
+    global findinprogress ctext
+
+    if {$numcommits == 0} return
+
+    if {[info exists selectedline]} {
+	set l [expr {$selectedline + 1}]
+    } else {
+	set l 0
+    }
+    set ffileline $l
+    set finddidsel 0
+    set findstartline $l
+    set id $lineid($l)
+    set p [lindex $parents($id) 0]
+    . config -cursor watch
+    $ctext config -cursor watch
+    set findinprogress 1
+    update
+    findcont [list $id $p]
+}
+
+proc findcont {ids} {
+    global findids treediffs parents nparents treepending
+    global ffileline findstartline finddidsel
+    global lineid numcommits matchinglines findinprogress
+    global findmergefiles
+
+    set id [lindex $ids 0]
+    set p [lindex $ids 1]
+    set pi [lsearch -exact $parents($id) $p]
+    set l $ffileline
+    while 1 {
+	if {$findmergefiles || $nparents($id) == 1} {
+	    if {![info exists treediffs($ids)]} {
+		set findids $ids
+		set ffileline $l
+		if {![info exists treepending]} {
+		    gettreediffs $ids
+		}
+		return
+	    }
+	    set doesmatch 0
+	    foreach f $treediffs($ids) {
+		set x [findmatches $f]
+		if {$x != {}} {
+		    set doesmatch 1
+		    break
+		}
+	    }
+	    if {$doesmatch} {
+		lappend matchinglines $l
+		markheadline $l $id
+		if {!$finddidsel} {
+		    findselectline $l
+		    set finddidsel 1
+		}
+		set pi $nparents($id)
+	    }
+	} else {
+	    set pi $nparents($id)
+	}
+	if {[incr pi] >= $nparents($id)} {
+	    set pi 0
+	    if {[incr l] >= $numcommits} {
+		set l 0
+	    }
+	    if {$l == $findstartline} break
+	    set id $lineid($l)
+	}
+	set p [lindex $parents($id) $pi]
+	set ids [list $id $p]
+    }
+    stopfindproc
+    if {!$finddidsel} {
+	bell
+    }
+}
+
+# mark a commit as matching by putting a yellow background
+# behind the headline
+proc markheadline {l id} {
+    global canv mainfont linehtag commitinfo
+
+    set bbox [$canv bbox $linehtag($l)]
+    set t [$canv create rect $bbox -outline {} -tags matches -fill yellow]
+    $canv lower $t
+}
+
+# mark the bits of a headline, author or date that match a find string
 proc markmatches {canv l str tag matches font} {
     set bbox [$canv bbox $tag]
     set x0 [lindex $bbox 0]
@@ -1255,9 +1468,10 @@ proc markmatches {canv l str tag matches font} {
 }
 
 proc unmarkmatches {} {
-    global matchinglines
+    global matchinglines findids
     allcanvs delete matches
     catch {unset matchinglines}
+    catch {unset findids}
 }
 
 proc selcanvline {w x y} {
@@ -1393,11 +1607,7 @@ proc selnextline {dir} {
 }
 
 proc addtocflist {ids} {
-    global diffids treediffs cflist
-    if {$ids != $diffids} {
-	gettreediffs $diffids
-	return
-    }
+    global treediffs cflist
     foreach f $treediffs($ids) {
 	$cflist insert end $f
     }
@@ -1416,13 +1626,28 @@ proc gettreediffs {ids} {
 }
 
 proc gettreediffline {gdtf ids} {
-    global treediffs treepending
+    global treediffs treepending diffids findids
     set n [gets $gdtf line]
     if {$n < 0} {
 	if {![eof $gdtf]} return
 	close $gdtf
 	unset treepending
-	addtocflist $ids
+	if {[info exists diffids]} {
+	    if {$ids != $diffids} {
+		gettreediffs $diffids
+	    } else {
+		addtocflist $ids
+	    }
+	}
+	if {[info exists findids]} {
+	    if {$ids != $findids} {
+		if {![info exists treepending]} {
+		    gettreediffs $findids
+		}
+	    } else {
+		findcont $ids
+	    }
+	}
 	return
     }
     set file [lindex $line 5]
@@ -1459,14 +1684,17 @@ proc getblobdiffline {bdf ids} {
     if {$n < 0} {
 	if {[eof $bdf]} {
 	    close $bdf
-	    if {$ids == $diffids && $bdf == $blobdifffd($ids)} {
+	    if {[info exists diffids] && $ids == $diffids
+		&& $bdf == $blobdifffd($ids)} {
 		$ctext tag add $curdifftag $curtagstart end
 		set seenfile($curdifftag) 1
+		unset diffids
 	    }
 	}
 	return
     }
-    if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
+    if {![info exists diffids] || $ids != $diffids
+	|| $bdf != $blobdifffd($ids)} {
 	return
     }
     $ctext conf -state normal
@@ -2044,6 +2272,7 @@ set wrcomcmd "git-diff-tree --stdin -p --pretty"
 
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
+set findmergefiles 0
 
 set colors {green red blue magenta darkgrey brown orange}
 
