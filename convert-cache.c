@@ -116,6 +116,34 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 	return used;
 }
 
+static int convert_mode(char *buffer)
+{
+	char *end;
+	unsigned short mode = strtoul(buffer, &end, 8);
+	unsigned short newmode;
+	char num[10];
+	int len;
+
+	if (*end != ' ')
+		die("corrupt tree object");
+	switch (mode) {
+	case S_IFREG | 0644:
+	case S_IFREG | 0755:
+	case S_IFLNK:
+	case S_IFDIR:
+		return 0;
+	}
+	newmode = 0;
+	if (S_ISREG(mode))
+		newmode = (mode & 0100) ? 0755 : 0644;
+	newmode |= mode & S_IFMT;
+	len = sprintf(num, "%o", newmode);
+	if (len != end - buffer)
+		return error("unable to convert tree entry mode %o to %o", mode, newmode);
+	memcpy(buffer, num, len);
+	return 0;
+}
+
 static void convert_tree(void *buffer, unsigned long size, unsigned char *result_sha1)
 {
 	void *orig_buffer = buffer;
@@ -124,6 +152,7 @@ static void convert_tree(void *buffer, unsigned long size, unsigned char *result
 	while (size) {
 		int len = 1+strlen(buffer);
 
+		convert_mode(buffer);
 		convert_binary_sha1(buffer + len);
 
 		len += 20;
