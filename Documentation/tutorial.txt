@@ -967,7 +967,19 @@ unpacked in the destination, unless rsync transport is used.
 	Working with Others
 	-------------------
 
-A recommended work cycle for a "project lead" is like this:
+Although git is a truly distributed system, it is often
+convenient to organize your project with an informal hierarchy
+of developers.  Linux kernel development is run this way.  There
+is a nice illustration (page 17, "Merges to Mainline") in Randy
+Dunlap's presentation (http://tinyurl.com/a2jdg).
+
+It should be stressed that this hierarchy is purely "informal".
+There is nothing fundamental in git that enforces the "chain of
+patch flow" this hierarchy implies.  You do not have to pull
+from only one remote repository.
+
+
+A recommended workflow for a "project lead" goes like this:
 
  (1) Prepare your primary repository on your local machine. Your
      work is done there.
@@ -978,23 +990,28 @@ A recommended work cycle for a "project lead" is like this:
      repository.
 
  (4) "git repack" the public repository.  This establishes a big
-     pack that contains the initial set of objects.
+     pack that contains the initial set of objects as the
+     baseline, and possibly "git prune-packed" if the transport
+     used for pulling from your repository supports packed
+     repositories.
 
- (5) Keep working in your primary repository, and push your
-     changes to the public repository.  Your changes include
-     your own, patches you receive via e-mail, and merge resulting
-     from pulling the "public" repositories of your "subsystem
-     maintainers".
+ (5) Keep working in your primary repository.  Your changes
+     include modifications of your own, patches you receive via
+     e-mails, and merges resulting from pulling the "public"
+     repositories of your "subsystem maintainers".
 
      You can repack this private repository whenever you feel
      like.
 
- (6) Every once in a while, "git repack" the public repository.
+ (6) Push your changes to the public repository, and announce it
+     to the public.
+
+ (7) Every once in a while, "git repack" the public repository.
      Go back to step (5) and continue working.
 
-A recommended work cycle for a "subsystem maintainer" that
-works on that project and has own "public repository" is like
-this:
+
+A recommended work cycle for a "subsystem maintainer" that works
+on that project and has own "public repository" goes like this:
 
  (1) Prepare your work repository, by "git clone" the public
      repository of the "project lead".
@@ -1006,20 +1023,26 @@ this:
      currently not automated.
 
  (4) Push into the public repository from your primary
-     repository.
+     repository.  Run "git repack" (and possibly "git
+     prune-packed" if the transport used for pulling from your
+     repository supports packed repositories.
 
- (5) Keep working in your primary repository, and push your
-     changes to your public repository, and ask your "project
-     lead" to pull from it.  Your changes include your own,
-     patches you receive via e-mail, and merge resulting from
-     pulling the "public" repositories of your "project lead"
-     and possibly your "sub-subsystem maintainers".
+ (5) Keep working in your primary repository.  Your changes
+     include modifications of your own, patches you receive via
+     e-mails, and merges resulting from pulling the "public"
+     repositories of your "project lead" and possibly your
+     "sub-subsystem maintainers".
 
      You can repack this private repository whenever you feel
      like.
 
- (6) Every once in a while, "git repack" the public repository.
+ (6) Push your changes to your public repository, and ask your
+     "project lead" and possibly your "sub-subsystem
+     maintainers" to pull from it.
+
+ (7) Every once in a while, "git repack" the public repository.
      Go back to step (5) and continue working.
+
 
 A recommended work cycle for an "individual developer" who does
 not have a "public" repository is somewhat different.  It goes
