@@ -63,7 +63,7 @@ Once you've gotten (and installed) cvsps, you may or may not want to get
 any more familiar with it, but make sure it is in your path. After that,
 the magic command line is
 
-	git cvsimport -v -d <cvsroot> <module> <destination>
+	git cvsimport -v -d <cvsroot> -C <destination> <module>
 
 which will do exactly what you'd think it does: it will create a git
 archive of the named CVS module. The new archive will be created in the
