@@ -1,9 +1,8 @@
 #!/bin/sh
-GIT_DIR=${GIT_DIR:-.git}
+. git-sh-setup-script || die "Not a git archive"
 
-tag=$1
-[ -f "$GIT_DIR/refs/tags/$tag" ] && tag=$(cat "$GIT_DIR/refs/tags/$tag")
+tag=$(git-rev-parse $1) || exit 1
 
 git-cat-file tag $tag > .tmp-vtag || exit 1
-cat .tmp-vtag | sed '/-----BEGIN PGP/Q' | gpg --verify .tmp-vtag -
+cat .tmp-vtag | sed '/-----BEGIN PGP/Q' | gpg --verify .tmp-vtag - || exit 1
 rm -f .tmp-vtag
