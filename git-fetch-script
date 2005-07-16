@@ -29,6 +29,8 @@ git-rev-parse --verify "$head" > /dev/null || exit 1
 
 case "$merge_store" in
 '')
+	;;
+*)
 	echo "$head" > "$GIT_DIR/$merge_store"
 esac &&
 
