@@ -26,6 +26,12 @@ static int upload(char *dir, int dirlen)
 	    access("HEAD", R_OK))
 		return -1;
 
+	/*
+	 * We'll ignore SIGTERM from now on, we have a
+	 * good client.
+	 */
+	signal(SIGTERM, SIG_IGN);
+
 	/* git-upload-pack only ever reads stuff, so this is safe */
 	execlp("git-upload-pack", "git-upload-pack", ".", NULL);
 	return -1;
@@ -128,33 +134,24 @@ static void remove_child(pid_t pid, unsigned deleted, unsigned spawned)
  *
  * Really, this is just a place-holder for a _real_ algorithm.
  */
-static void kill_some_children(int connections, unsigned start, unsigned stop)
+static void kill_some_children(int signo, unsigned start, unsigned stop)
 {
 	start %= MAX_CHILDREN;
 	stop %= MAX_CHILDREN;
 	while (start != stop) {
 		if (!(start & 3))
-			kill(live_child[start].pid, SIGTERM);
+			kill(live_child[start].pid, signo);
 		start = (start + 1) % MAX_CHILDREN;
 	}
 }
 
-static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
+static void check_max_connections(void)
 {
-	pid_t pid = fork();
-
-	if (pid) {
+	for (;;) {
 		int active;
 		unsigned spawned, reaped, deleted;
 
-		close(incoming);
-		if (pid < 0)
-			return;
-
 		spawned = children_spawned;
-		add_child(spawned % MAX_CHILDREN, pid, addr, addrlen);
-		children_spawned = ++spawned;
-
 		reaped = children_reaped;
 		deleted = children_deleted;
 
@@ -166,15 +163,36 @@ static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
 		children_deleted = deleted;
 
 		active = spawned - deleted;
-		if (active > max_connections) {
-			kill_some_children(active, deleted, spawned);
+		if (active <= max_connections)
+			break;
 
-			/* Wait to make sure they're gone */
-			while (spawned - children_reaped > max_connections)
-				sleep(1);
-		}
-			
+		/* Kill some unstarted connections with SIGTERM */
+		kill_some_children(SIGTERM, deleted, spawned);
+		if (active <= max_connections << 1)
+			break;
 
+		/* If the SIGTERM thing isn't helping use SIGKILL */
+		kill_some_children(SIGKILL, deleted, spawned);
+		sleep(1);
+	}
+}
+
+static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
+{
+	pid_t pid = fork();
+
+	if (pid) {
+		unsigned idx;
+
+		close(incoming);
+		if (pid < 0)
+			return;
+
+		idx = children_spawned % MAX_CHILDREN;
+		children_spawned++;
+		add_child(idx, pid, addr, addrlen);
+
+		check_max_connections();
 		return;
 	}
 
