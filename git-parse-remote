@@ -1,0 +1,79 @@
+: To be included in git-pull and git-fetch scripts.
+
+# A remote repository can be specified on the command line
+# in one of the following formats:
+#
+#	<repo>
+#	<repo> <head>
+#	<repo> tag <tag>
+#
+# where <repo> could be one of:
+#
+#	a URL (including absolute or local pathname)
+#	a short-hand
+#	a short-hand followed by a trailing path
+#
+# A short-hand <name> has a corresponding file $GIT_DIR/branches/<name>,
+# whose contents is a URL, possibly followed by a URL fragment #<head>
+# to name the default branch on the remote side to fetch from.
+
+_remote_repo= _remote_store= _remote_head= _remote_name=
+
+case "$1" in
+*:* | /* | ../* | ./* )
+	_remote_repo="$1"
+	;;
+* )
+	# otherwise, it is a short hand.
+	case "$1" in
+	*/*)
+		# a short-hand followed by a trailing path
+		_token=$(expr "$1" : '\([^/]*\)/')
+		_rest=$(expr "$1" : '[^/]*\(/.*\)$')
+		;;
+	*)
+		_token="$1"
+		_rest=
+		_remote_store="refs/heads/$_token"
+		;;
+	esac
+	test -f "$GIT_DIR/branches/$_token" ||
+	die "No such remote branch: $_token"
+
+	_remote_repo=$(cat "$GIT_DIR/branches/$_token")"$_rest"
+	;;
+esac
+
+case "$_remote_repo" in
+*"#"*)
+	_remote_head=`expr "$_remote_repo" : '.*#\(.*\)$'`
+	_remote_repo=`expr "$_remote_repo" : '\(.*\)#'`
+	;;
+esac
+
+_remote_name=$(echo "$_remote_repo" | sed 's|\.git/*$||')
+
+case "$2" in
+tag)
+	_remote_name="tag '$3' of $_remote_name"
+	_remote_head="refs/tags/$3"
+	_remote_store="$_remote_head"
+	;;
+?*)
+	# command line specified a head explicitly; do not
+	# store the fetched head as a branch head.
+	_remote_name="head '$2' of $_remote_name"
+	_remote_head="refs/heads/$2"
+	_remote_store=''
+	;;
+'')
+	case "$_remote_head" in
+	'')
+		_remote_head=HEAD ;;
+	*)
+		_remote_head="refs/heads/$_remote_head"
+		_remote_name="head '$_remote_head' of $_remote_name"
+		;;
+	esac
+	;;
+esac

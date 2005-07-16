@@ -1,33 +1,39 @@
 #!/bin/sh
 #
-destination=FETCH_HEAD
-
-merge_repo=$1
-merge_name=${2:-HEAD}
-if [ "$2" = "tag" ]; then
-	merge_name="refs/tags/$3"
-	destination="$merge_name"
-fi
-
 . git-sh-setup-script || die "Not a git archive"
+. git-parse-remote "$@"
+merge_repo="$_remote_repo"
+merge_head="$_remote_head"
+merge_store="$_remote_store"
 
 TMP_HEAD="$GIT_DIR/TMP_HEAD"
 
 case "$merge_repo" in
 http://*)
-	head=$(wget -q -O - "$merge_repo/$merge_name") || exit 1
-	echo Fetching $head using http
-	git-http-pull -v -a "$head" "$merge_repo/"
+	head=$(wget -q -O - "$merge_repo/$merge_head") || exit 1
+	echo Fetching "$merge_head" using http
+	git-http-pull -v -a "$merge_head" "$merge_repo/"
 	;;
 rsync://*)
-	rsync -L "$merge_repo/$merge_name" "$TMP_HEAD" || exit 1
+	rsync -L "$merge_repo/$merge_head" "$TMP_HEAD" || exit 1
 	head=$(git-rev-parse TMP_HEAD)
 	rm -f "$TMP_HEAD"
 	rsync -avz --ignore-existing "$merge_repo/objects/" "$GIT_OBJECT_DIRECTORY/"
 	;;
 *)
-	head=$(git-fetch-pack "$merge_repo" "$merge_name")
+	head=$(git-fetch-pack "$merge_repo" "$merge_head")
 	;;
 esac || exit 1
+
 git-rev-parse --verify "$head" > /dev/null || exit 1
-echo "$head" > "$GIT_DIR/$destination"
+
+case "$merge_store" in
+'')
+	echo "$head" > "$GIT_DIR/$merge_store"
+esac &&
+
+# FETCH_HEAD is fed to git-resolve-script which will eventually be
+# passed to git-commit-tree as one of the parents.  Make sure we do
+# not give a tag object ID.
+
+git-rev-parse "$head^0" >"$GIT_DIR/FETCH_HEAD"
