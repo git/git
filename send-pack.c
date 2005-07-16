@@ -7,13 +7,6 @@ static const char send_pack_usage[] =
 static const char *exec = "git-receive-pack";
 static int send_all = 0;
 
-struct ref {
-	struct ref *next;
-	unsigned char old_sha1[20];
-	unsigned char new_sha1[20];
-	char name[0];
-};
-
 static int is_zero_sha1(const unsigned char *sha1)
 {
 	int i;
@@ -170,36 +163,12 @@ static int try_to_match(const char *refname, const unsigned char *sha1)
 
 static int send_pack(int in, int out, int nr_match, char **match)
 {
-	struct ref *ref_list = NULL, **last_ref = &ref_list;
+	struct ref *ref_list, **last_ref;
 	struct ref *ref;
 	int new_refs;
 
-	/*
-	 * Read all the refs from the other end
-	 */
-	for (;;) {
-		unsigned char old_sha1[20];
-		static char buffer[1000];
-		char *name;
-		int len;
-
-		len = packet_read_line(in, buffer, sizeof(buffer));
-		if (!len)
-			break;
-		if (buffer[len-1] == '\n')
-			buffer[--len] = 0;
-
-		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
-			die("protocol error: expected sha/ref, got '%s'", buffer);
-		name = buffer + 41;
-		ref = xmalloc(sizeof(*ref) + len - 40);
-		memcpy(ref->old_sha1, old_sha1, 20);
-		memset(ref->new_sha1, 0, 20);
-		memcpy(ref->name, buffer + 41, len - 40);
-		ref->next = NULL;
-		*last_ref = ref;
-		last_ref = &ref->next;
-	}
+	/* First we get all heads, whether matching or not.. */
+	last_ref = get_remote_heads(in, &ref_list, 0, NULL);
 
 	/*
 	 * Go through the refs, see if we want to update

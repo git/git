@@ -53,44 +53,28 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 	return retval;
 }
 
-static int get_remote_heads(int fd, int nr_match, char **match, unsigned char *result)
-{
-	int count = 0;
-
-	for (;;) {
-		static char line[1000];
-		unsigned char sha1[20];
-		char *refname;
-		int len;
-
-		len = packet_read_line(fd, line, sizeof(line));
-		if (!len)
-			break;
-		if (line[len-1] == '\n')
-			line[--len] = 0;
-		if (len < 42 || get_sha1_hex(line, sha1))
-			die("git-fetch-pack: protocol error - expected ref descriptor, got '%s'", line);
-		refname = line+41;
-		if (nr_match && !path_match(refname, nr_match, match))
-			continue;
-		count++;
-		memcpy(result, sha1, 20);
-	}
-	return count;
-}
-
+/*
+ * Eventually we'll want to be able to fetch multiple heads.
+ *
+ * Right now we'll just require a single match.
+ */
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
-	unsigned char sha1[20], remote[20];
-	int heads, status;
+	struct ref *ref;
+	unsigned char sha1[20];
+	int status;
 	pid_t pid;
 
-	heads = get_remote_heads(fd[0], nr_match, match, remote);
-	if (heads != 1) {
+	get_remote_heads(fd[0], &ref, nr_match, match);
+	if (!ref) {
 		packet_flush(fd[1]);
-		die(heads ? "multiple remote heads" : "no matching remote head");
+		die("no matching remote head");
 	}
-	if (find_common(fd, sha1, remote) < 0)
+	if (ref->next) {
+		packet_flush(fd[1]);
+		die("multiple remote heads");
+	}
+	if (find_common(fd, sha1, ref->old_sha1) < 0)
 		die("git-fetch-pack: no common commits");
 	pid = fork();
 	if (pid < 0)
@@ -113,7 +97,7 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		int code = WEXITSTATUS(status);
 		if (code)
 			die("git-unpack-objects died with error code %d", code);
-		puts(sha1_to_hex(remote));
+		puts(sha1_to_hex(ref->old_sha1));
 		return 0;
 	}
 	if (WIFSIGNALED(status)) {

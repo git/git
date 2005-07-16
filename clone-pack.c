@@ -7,50 +7,12 @@ static int quiet;
 static const char clone_pack_usage[] = "git-clone-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
 static const char *exec = "git-upload-pack";
 
-struct ref {
-	struct ref *next;
-	unsigned char sha1[20];
-	char name[0];
-};
-
-static struct ref *get_remote_refs(int fd, int nr_match, char **match)
-{
-	struct ref *ref_list = NULL, **next_ref = &ref_list;
-
-	for (;;) {
-		static char line[1000];
-		unsigned char sha1[20];
-		struct ref *ref;
-		char *refname;
-		int len;
-
-		len = packet_read_line(fd, line, sizeof(line));
-		if (!len)
-			break;
-		if (line[len-1] == '\n')
-			line[--len] = 0;
-		if (len < 42 || get_sha1_hex(line, sha1))
-			die("git-clone-pack: protocol error - expected ref descriptor, got '%s'", line);
-		refname = line+41;
-		len = len-40;
-		if (nr_match && !path_match(refname, nr_match, match))
-			continue;
-		ref = xmalloc(sizeof(struct ref) + len);
-		ref->next = NULL;
-		memcpy(ref->sha1, sha1, 20);
-		memcpy(ref->name, refname, len);
-		*next_ref = ref;
-		next_ref = &ref->next;
-	}
-	return ref_list;
-}
-
 static void clone_handshake(int fd[2], struct ref *ref)
 {
 	unsigned char sha1[20];
 
 	while (ref) {
-		packet_write(fd[1], "want %s\n", sha1_to_hex(ref->sha1));
+		packet_write(fd[1], "want %s\n", sha1_to_hex(ref->old_sha1));
 		ref = ref->next;
 	}
 	packet_flush(fd[1]);
@@ -77,7 +39,7 @@ static void write_one_ref(struct ref *ref)
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0)
 		die("unable to create ref %s", ref->name);
-	hex = sha1_to_hex(ref->sha1);
+	hex = sha1_to_hex(ref->old_sha1);
 	hex[40] = '\n';
 	if (write(fd, hex, 41) != 41)
 		die("unable to write ref %s", ref->name);
@@ -98,7 +60,7 @@ static void write_refs(struct ref *ref)
 	while (ref) {
 		if (is_master(ref))
 			master_ref = ref;
-		if (head && !memcmp(ref->sha1, head->sha1, 20)) {
+		if (head && !memcmp(ref->old_sha1, head->old_sha1, 20)) {
 			if (!head_ptr || ref == master_ref)
 				head_ptr = ref;
 		}
@@ -142,7 +104,7 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 	int status;
 	pid_t pid;
 
-	refs = get_remote_refs(fd[0], nr_match, match);
+	get_remote_heads(fd[0], &refs, nr_match, match);
 	if (!refs) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
