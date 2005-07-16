@@ -1,0 +1,64 @@
+#!/bin/sh
+##
+## applypatch takes four file arguments, and uses those to
+## apply the unpacked patch (surprise surprise) that they
+## represent to the current tree.
+##
+## The arguments are:
+##	$1 - file with commit message
+##	$2 - file with the actual patch
+##	$3 - "info" file with Author, email and subject
+##	$4 - optional file containing signoff to add
+##
+signoff="$4"
+final=.dotest/final-commit
+##
+## If this file exists, we ask before applying
+##
+query_apply=.dotest/.query_apply
+MSGFILE=$1
+PATCHFILE=$2
+INFO=$3
+EDIT=${VISUAL:-$EDITOR}
+EDIT=${EDIT:-vi}
+
+export GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' .dotest/info)"
+export GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' .dotest/info)"
+export GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' .dotest/info)"
+export SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' .dotest/info)"
+
+if [ -n "$signoff" -a -f "$signoff" ]; then
+	cat $signoff >> $MSGFILE
+fi
+
+(echo "[PATCH] $SUBJECT" ; if [ -s $MSGFILE ]; then echo ; cat $MSGFILE; fi ) > $final
+
+f=0
+[ -f $query_apply ] || f=1
+
+while [ $f -eq 0 ]; do
+	echo "Commit Body is:"
+	echo "--------------------------"
+	cat $final
+	echo "--------------------------"
+	echo -n "Apply? [y]es/[n]o/[e]dit/[a]ccept all "
+	read reply
+	case $reply in
+		y|Y) f=1;;
+		n|N) exit 2;;	# special value to tell dotest to keep going
+		e|E) $EDIT $final;;
+		a|A) rm -f $query_apply
+		     f=1;;
+	esac
+done
+
+echo
+echo Applying "'$SUBJECT'"
+echo
+
+git-apply --index $PATCHFILE || exit 1
+tree=$(git-write-tree) || exit 1
+echo Wrote tree $tree
+commit=$(git-commit-tree $tree -p $(cat .git/HEAD) < $final) || exit 1
+echo Committed: $commit
+echo $commit > .git/HEAD
