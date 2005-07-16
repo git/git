@@ -12,7 +12,7 @@ case "$merge_repo" in
 http://*)
 	head=$(wget -q -O - "$merge_repo/$merge_head") || exit 1
 	echo Fetching "$merge_head" using http
-	git-http-pull -v -a "$merge_head" "$merge_repo/"
+	git-http-pull -v -a "$head" "$merge_repo/"
 	;;
 rsync://*)
 	rsync -L "$merge_repo/$merge_head" "$TMP_HEAD" || exit 1
