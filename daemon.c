@@ -1,9 +1,23 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include <signal.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 static const char daemon_usage[] = "git-daemon [--inetd | --port=n]";
+
+/* We don't actually do anything about this yet */
+static int max_connections = 10;
+
+/*
+ * We count spawned/reaped separately, just to avoid any
+ * races when updating them from signals. The SIGCHLD handler
+ * will only update children_reaped, and the fork logic will
+ * only update children_spawned.
+ */
+static unsigned int children_spawned = 0;
+static unsigned int children_reaped = 0;
 
 static int upload(char *dir, int dirlen)
 {
@@ -47,8 +61,24 @@ static int execute(void)
 
 static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
 {
-	if (fork()) {
+	pid_t pid = fork();
+
+	if (pid) {
+		int active;
+
 		close(incoming);
+		if (pid < 0)
+			return;
+
+		active = ++children_spawned - children_reaped;
+		if (active > max_connections) {
+			/*
+			 * Fixme! This is where you'd have to do something to
+			 * limit the number of children. Like killing off random
+			 * ones, or at least the ones that haven't even gotten
+			 * started yet.
+			 */
+		}
 		return;
 	}
 
@@ -58,11 +88,23 @@ static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
 	exit(execute());
 }
 
+static void child_handler(int signo)
+{
+	for (;;) {
+		if (waitpid(-1, NULL, WNOHANG) > 0) {
+			children_reaped++;
+			continue;
+		}
+		break;
+	}
+}
+
 static int serve(int port)
 {
 	int sockfd;
 	struct sockaddr_in addr;
 
+	signal(SIGCHLD, child_handler);
 	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (sockfd < 0)
 		die("unable to open socket (%s)", strerror(errno));
