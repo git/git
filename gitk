@@ -1291,6 +1291,7 @@ proc findpatches {} {
     global findstring selectedline numcommits
     global findprocpid findprocfile
     global finddidsel ctext lineid findinprogress
+    global findinsertpos
 
     if {$numcommits == 0} return
 
@@ -1317,6 +1318,7 @@ proc findpatches {} {
 	return
     }
 
+    set findinsertpos end
     set findprocfile $f
     set findprocpid [pid $f]
     fconfigure $f -blocking 0
@@ -1329,7 +1331,7 @@ proc findpatches {} {
 
 proc readfindproc {} {
     global findprocfile finddidsel
-    global idline matchinglines
+    global idline matchinglines findinsertpos
 
     set n [gets $findprocfile line]
     if {$n < 0} {
@@ -1351,7 +1353,24 @@ proc readfindproc {} {
 	return
     }
     set l $idline($id)
-    lappend matchinglines $l
+    insertmatch $l $id
+}
+
+proc insertmatch {l id} {
+    global matchinglines findinsertpos finddidsel
+
+    if {$findinsertpos == "end"} {
+	if {$matchinglines != {} && $l < [lindex $matchinglines 0]} {
+	    set matchinglines [linsert $matchinglines 0 $l]
+	    set findinsertpos 1
+	} else {
+	    lappend matchinglines $l
+	}
+    } else {
+	set matchinglines [linsert $matchinglines $findinsertpos $l]
+	incr findinsertpos
+    }
+    markheadline $l $id
     if {!$finddidsel} {
 	findselectline $l
 	set finddidsel 1
@@ -1359,9 +1378,11 @@ proc readfindproc {} {
 }
 
 proc findfiles {} {
-    global selectedline numcommits lineid
-    global ffileline finddidsel parents findstartline
-    global findinprogress ctext
+    global selectedline numcommits lineid ctext
+    global ffileline finddidsel parents nparents
+    global findinprogress findstartline findinsertpos
+    global treediffs fdiffids fdiffsneeded fdiffpos
+    global findmergefiles
 
     if {$numcommits == 0} return
 
@@ -1371,15 +1392,107 @@ proc findfiles {} {
 	set l 0
     }
     set ffileline $l
-    set finddidsel 0
     set findstartline $l
+    set diffsneeded {}
+    set fdiffsneeded {}
+    while 1 {
+	set id $lineid($l)
+	if {$findmergefiles || $nparents($id) == 1} {
+	    foreach p $parents($id) {
+		if {![info exists treediffs([list $id $p])]} {
+		    append diffsneeded "$id $p\n"
+		    lappend fdiffsneeded [list $id $p]
+		}
+	    }
+	}
+	if {[incr l] >= $numcommits} {
+	    set l 0
+	}
+	if {$l == $findstartline} break
+    }
+
+    # start off a git-diff-tree process if needed
+    if {$diffsneeded ne {}} {
+	if {[catch {
+	    set df [open [list | git-diff-tree -r --stdin << $diffsneeded] r]
+	} err ]} {
+	    error_popup "Error starting search process: $err"
+	    return
+	}
+	catch {unset fdiffids}
+	set fdiffpos 0
+	fconfigure $df -blocking 0
+	fileevent $df readable [list readfilediffs $df]
+    }
+
+    set finddidsel 0
+    set findinsertpos end
     set id $lineid($l)
     set p [lindex $parents($id) 0]
     . config -cursor watch
     $ctext config -cursor watch
     set findinprogress 1
-    update
     findcont [list $id $p]
+    update
+}
+
+proc readfilediffs {df} {
+    global findids fdiffids fdiffs
+
+    set n [gets $df line]
+    if {$n < 0} {
+	if {[eof $df]} {
+	    donefilediff
+	    if {[catch {close $df} err]} {
+		stopfindproc
+		bell
+		error_popup "Error in git-diff-tree: $err"
+	    } elseif {[info exists findids]} {
+		set ids $findids
+		stopfindproc
+		bell
+		error_popup "Couldn't find diffs for {$ids}"
+	    }
+	}
+	return
+    }
+    if {[regexp {^([0-9a-f]{40}) \(from ([0-9a-f]{40})\)} $line match id p]} {
+	# start of a new string of diffs
+	donefilediff
+	set fdiffids [list $id $p]
+	set fdiffs {}
+    } elseif {[string match ":*" $line]} {
+	lappend fdiffs [lindex $line 5]
+    }
+}
+
+proc donefilediff {} {
+    global fdiffids fdiffs treediffs findids
+    global fdiffsneeded fdiffpos
+
+    if {[info exists fdiffids]} {
+	while {[lindex $fdiffsneeded $fdiffpos] ne $fdiffids
+	       && $fdiffpos < [llength $fdiffsneeded]} {
+	    # git-diff-tree doesn't output anything for a commit
+	    # which doesn't change anything
+	    set nullids [lindex $fdiffsneeded $fdiffpos]
+	    set treediffs($nullids) {}
+	    if {[info exists findids] && $nullids eq $findids} {
+		unset findids
+		findcont $nullids
+	    }
+	    incr fdiffpos
+	}
+	incr fdiffpos
+
+	if {![info exists treediffs($fdiffids)]} {
+	    set treediffs($fdiffids) $fdiffs
+	}
+	if {[info exists findids] && $fdiffids eq $findids} {
+	    unset findids
+	    findcont $fdiffids
+	}
+    }
 }
 
 proc findcont {ids} {
@@ -1397,9 +1510,6 @@ proc findcont {ids} {
 	    if {![info exists treediffs($ids)]} {
 		set findids $ids
 		set ffileline $l
-		if {![info exists treepending]} {
-		    gettreediffs $ids
-		}
 		return
 	    }
 	    set doesmatch 0
@@ -1411,12 +1521,7 @@ proc findcont {ids} {
 		}
 	    }
 	    if {$doesmatch} {
-		lappend matchinglines $l
-		markheadline $l $id
-		if {!$finddidsel} {
-		    findselectline $l
-		    set finddidsel 1
-		}
+		insertmatch $l $id
 		set pi $nparents($id)
 	    }
 	} else {
@@ -1496,7 +1601,7 @@ proc selectline {l} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
     global canvy0 linespc parents nparents
-    global cflist currentid sha1entry diffids
+    global cflist currentid sha1entry
     global commentend seenfile idtags
     $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
@@ -1550,7 +1655,6 @@ proc selectline {l} {
 
     set id $lineid($l)
     set currentid $id
-    set diffids [concat $id $parents($id)]
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     $sha1entry selection from 0
@@ -1581,20 +1685,21 @@ proc selectline {l} {
     $cflist delete 0 end
     $cflist insert end "Comments"
     if {$nparents($id) == 1} {
-	startdiff
+	startdiff [concat $id $parents($id)]
     }
     catch {unset seenfile}
 }
 
-proc startdiff {} {
+proc startdiff {ids} {
     global treediffs diffids treepending
 
-    if {![info exists treediffs($diffids)]} {
+    if {![info exists treediffs($ids)]} {
+	set diffids $ids
 	if {![info exists treepending]} {
-	    gettreediffs $diffids
+	    gettreediffs $ids
 	}
     } else {
-	addtocflist $diffids
+	addtocflist $ids
     }
 }
 
@@ -1626,7 +1731,7 @@ proc gettreediffs {ids} {
 }
 
 proc gettreediffline {gdtf ids} {
-    global treediffs treepending diffids findids
+    global treediffs treepending diffids
     set n [gets $gdtf line]
     if {$n < 0} {
 	if {![eof $gdtf]} return
@@ -1636,16 +1741,8 @@ proc gettreediffline {gdtf ids} {
 	    if {$ids != $diffids} {
 		gettreediffs $diffids
 	    } else {
+		unset diffids
 		addtocflist $ids
-	    }
-	}
-	if {[info exists findids]} {
-	    if {$ids != $findids} {
-		if {![info exists treepending]} {
-		    gettreediffs $findids
-		}
-	    } else {
-		findcont $ids
 	    }
 	}
 	return
@@ -1655,7 +1752,7 @@ proc gettreediffline {gdtf ids} {
 }
 
 proc getblobdiffs {ids} {
-    global diffopts blobdifffd env curdifftag curtagstart
+    global diffopts blobdifffd blobdiffids env curdifftag curtagstart
     global diffindex difffilestart nextupdate
 
     set id [lindex $ids 0]
@@ -1666,6 +1763,7 @@ proc getblobdiffs {ids} {
 	return
     }
     fconfigure $bdf -blocking 0
+    set blobdiffids $ids
     set blobdifffd($ids) $bdf
     set curdifftag Comments
     set curtagstart 0.0
@@ -1676,7 +1774,7 @@ proc getblobdiffs {ids} {
 }
 
 proc getblobdiffline {bdf ids} {
-    global diffids blobdifffd ctext curdifftag curtagstart seenfile
+    global blobdiffids blobdifffd ctext curdifftag curtagstart seenfile
     global diffnexthead diffnextnote diffindex difffilestart
     global nextupdate
 
@@ -1684,17 +1782,14 @@ proc getblobdiffline {bdf ids} {
     if {$n < 0} {
 	if {[eof $bdf]} {
 	    close $bdf
-	    if {[info exists diffids] && $ids == $diffids
-		&& $bdf == $blobdifffd($ids)} {
+	    if {$ids == $blobdiffids && $bdf == $blobdifffd($ids)} {
 		$ctext tag add $curdifftag $curtagstart end
 		set seenfile($curdifftag) 1
-		unset diffids
 	    }
 	}
 	return
     }
-    if {![info exists diffids] || $ids != $diffids
-	|| $bdf != $blobdifffd($ids)} {
+    if {$ids != $blobdiffids || $bdf != $blobdifffd($ids)} {
 	return
     }
     $ctext conf -state normal
@@ -2009,7 +2104,7 @@ proc rowmenu {x y id} {
 proc diffvssel {dirn} {
     global rowmenuid selectedline lineid
     global ctext cflist
-    global diffids commitinfo
+    global commitinfo
 
     if {![info exists selectedline]} return
     if {$dirn} {
@@ -2033,8 +2128,7 @@ proc diffvssel {dirn} {
     $ctext conf -state disabled
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
-    set diffids [list $newid $oldid]
-    startdiff
+    startdiff [list $newid $oldid]
 }
 
 proc mkpatch {} {
