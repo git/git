@@ -1602,7 +1602,7 @@ proc selectline {l} {
     global lineid linehtag linentag linedtag
     global canvy0 linespc parents nparents
     global cflist currentid sha1entry
-    global commentend seenfile idtags
+    global commentend idtags
     $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
@@ -1689,12 +1689,11 @@ proc selectline {l} {
 
 proc startdiff {id vs} {
     global diffpending diffpindex
-    global diffindex difffilestart seenfile
+    global diffindex difffilestart
     global curdifftag curtagstart
 
     set diffpending $vs
     set diffpindex 0
-    catch {unset seenfile}
     set diffindex 0
     catch {unset difffilestart}
     set curdifftag Comments
@@ -1705,8 +1704,8 @@ proc startdiff {id vs} {
 proc contdiff {ids} {
     global treediffs diffids treepending
 
+    set diffids $ids
     if {![info exists treediffs($ids)]} {
-	set diffids $ids
 	if {![info exists treepending]} {
 	    gettreediffs $ids
 	}
@@ -1768,7 +1767,7 @@ proc gettreediffline {gdtf ids} {
 
 proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env
-    global nextupdate
+    global nextupdate diffinhdr
 
     set id [lindex $ids 0]
     set p [lindex $ids 1]
@@ -1777,6 +1776,7 @@ proc getblobdiffs {ids} {
 	puts "error getting diffs: $err"
 	return
     }
+    set diffinhdr 0
     fconfigure $bdf -blocking 0
     set blobdifffd($ids) $bdf
     fileevent $bdf readable [list getblobdiffline $bdf $ids]
@@ -1784,9 +1784,9 @@ proc getblobdiffs {ids} {
 }
 
 proc getblobdiffline {bdf ids} {
-    global diffids blobdifffd ctext curdifftag curtagstart seenfile
+    global diffids blobdifffd ctext curdifftag curtagstart
     global diffnexthead diffnextnote diffindex difffilestart
-    global nextupdate diffpending diffpindex
+    global nextupdate diffpending diffpindex diffinhdr
 
     set n [gets $bdf line]
     if {$n < 0} {
@@ -1794,7 +1794,6 @@ proc getblobdiffline {bdf ids} {
 	    close $bdf
 	    if {$ids == $diffids && $bdf == $blobdifffd($ids)} {
 		$ctext tag add $curdifftag $curtagstart end
-		set seenfile($curdifftag) 1
 		if {[incr diffpindex] < [llength $diffpending]} {
 		    set id [lindex $ids 0]
 		    set p [lindex $diffpending $diffpindex]
@@ -1808,18 +1807,12 @@ proc getblobdiffline {bdf ids} {
 	return
     }
     $ctext conf -state normal
-    if {[regexp {^---[ \t]+([^/])*/(.*)} $line match s1 fname]} {
+    if {[regexp {^diff --git a/(.*) b/} $line match fname]} {
 	# start of a new file
 	$ctext insert end "\n"
 	$ctext tag add $curdifftag $curtagstart end
-	set seenfile($curdifftag) 1
 	set curtagstart [$ctext index "end - 1c"]
 	set header $fname
-	if {[info exists diffnexthead]} {
-	    set fname $diffnexthead
-	    set header "$diffnexthead ($diffnextnote)"
-	    unset diffnexthead
-	}
 	set here [$ctext index "end - 1c"]
 	set difffilestart($diffindex) $here
 	incr diffindex
@@ -1831,27 +1824,15 @@ proc getblobdiffline {bdf ids} {
 	set l [expr {(78 - [string length $header]) / 2}]
 	set pad [string range "----------------------------------------" 1 $l]
 	$ctext insert end "$pad $header $pad\n" filesep
-    } elseif {[string range $line 0 2] == "+++"} {
-	# no need to do anything with this
-    } elseif {[regexp {^Created: (.*) \((mode: *[0-7]*)\)} $line match fn m]} {
-	set diffnexthead $fn
-	set diffnextnote "created, mode $m"
-    } elseif {[string range $line 0 8] == "Deleted: "} {
-	set diffnexthead [string range $line 9 end]
-	set diffnextnote "deleted"
-    } elseif {[regexp {^diff --git a/(.*) b/} $line match fn]} {
-	# save the filename in case the next thing is "new file mode ..."
-	set diffnexthead $fn
-	set diffnextnote "modified"
-    } elseif {[regexp {^new file mode ([0-7]+)} $line match m]} {
-	set diffnextnote "new file, mode $m"
-    } elseif {[string range $line 0 11] == "deleted file"} {
-	set diffnextnote "deleted"
+	set diffinhdr 1
+    } elseif {[regexp {^(---|\+\+\+)} $line]} {
+	set diffinhdr 0
     } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
 		   $line match f1l f1c f2l f2c rest]} {
 	$ctext insert end "\t" hunksep
 	$ctext insert end "    $f1l    " d0 "    $f2l    " d1
 	$ctext insert end "    $rest \n" hunksep
+	set diffinhdr 0
     } else {
 	set x [string range $line 0 0]
 	if {$x == "-" || $x == "+"} {
@@ -1861,7 +1842,7 @@ proc getblobdiffline {bdf ids} {
 	} elseif {$x == " "} {
 	    set line [string range $line 1 end]
 	    $ctext insert end "$line\n"
-	} elseif {$x == "\\"} {
+	} elseif {$diffinhdr || $x == "\\"} {
 	    # e.g. "\ No newline at end of file"
 	    $ctext insert end "$line\n" filesep
 	} else {
@@ -1869,7 +1850,6 @@ proc getblobdiffline {bdf ids} {
 	    if {$curdifftag != "Comments"} {
 		$ctext insert end "\n"
 		$ctext tag add $curdifftag $curtagstart end
-		set seenfile($curdifftag) 1
 		set curtagstart [$ctext index "end - 1c"]
 		set curdifftag Comments
 	    }
