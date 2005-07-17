@@ -1684,13 +1684,25 @@ proc selectline {l} {
 
     $cflist delete 0 end
     $cflist insert end "Comments"
-    if {$nparents($id) == 1} {
-	startdiff [concat $id $parents($id)]
-    }
-    catch {unset seenfile}
+    startdiff $id $parents($id)
 }
 
-proc startdiff {ids} {
+proc startdiff {id vs} {
+    global diffpending diffpindex
+    global diffindex difffilestart seenfile
+    global curdifftag curtagstart
+
+    set diffpending $vs
+    set diffpindex 0
+    catch {unset seenfile}
+    set diffindex 0
+    catch {unset difffilestart}
+    set curdifftag Comments
+    set curtagstart 0.0
+    contdiff [list $id [lindex $vs 0]]
+}
+
+proc contdiff {ids} {
     global treediffs diffids treepending
 
     if {![info exists treediffs($ids)]} {
@@ -1712,9 +1724,13 @@ proc selnextline {dir} {
 }
 
 proc addtocflist {ids} {
-    global treediffs cflist
+    global treediffs cflist diffpindex
+
+    set colors {black blue green red cyan magenta}
+    set color [lindex $colors [expr {$diffpindex % [llength $colors]}]]
     foreach f $treediffs($ids) {
 	$cflist insert end $f
+	$cflist itemconf end -foreground $color
     }
     getblobdiffs $ids
 }
@@ -1741,7 +1757,6 @@ proc gettreediffline {gdtf ids} {
 	    if {$ids != $diffids} {
 		gettreediffs $diffids
 	    } else {
-		unset diffids
 		addtocflist $ids
 	    }
 	}
@@ -1752,8 +1767,8 @@ proc gettreediffline {gdtf ids} {
 }
 
 proc getblobdiffs {ids} {
-    global diffopts blobdifffd blobdiffids env curdifftag curtagstart
-    global diffindex difffilestart nextupdate
+    global diffopts blobdifffd diffids env
+    global nextupdate
 
     set id [lindex $ids 0]
     set p [lindex $ids 1]
@@ -1763,33 +1778,33 @@ proc getblobdiffs {ids} {
 	return
     }
     fconfigure $bdf -blocking 0
-    set blobdiffids $ids
     set blobdifffd($ids) $bdf
-    set curdifftag Comments
-    set curtagstart 0.0
-    set diffindex 0
-    catch {unset difffilestart}
-    fileevent $bdf readable "getblobdiffline $bdf {$ids}"
+    fileevent $bdf readable [list getblobdiffline $bdf $ids]
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
 }
 
 proc getblobdiffline {bdf ids} {
-    global blobdiffids blobdifffd ctext curdifftag curtagstart seenfile
+    global diffids blobdifffd ctext curdifftag curtagstart seenfile
     global diffnexthead diffnextnote diffindex difffilestart
-    global nextupdate
+    global nextupdate diffpending diffpindex
 
     set n [gets $bdf line]
     if {$n < 0} {
 	if {[eof $bdf]} {
 	    close $bdf
-	    if {$ids == $blobdiffids && $bdf == $blobdifffd($ids)} {
+	    if {$ids == $diffids && $bdf == $blobdifffd($ids)} {
 		$ctext tag add $curdifftag $curtagstart end
 		set seenfile($curdifftag) 1
+		if {[incr diffpindex] < [llength $diffpending]} {
+		    set id [lindex $ids 0]
+		    set p [lindex $diffpending $diffpindex]
+		    contdiff [list $id $p]
+		}
 	    }
 	}
 	return
     }
-    if {$ids != $blobdiffids || $bdf != $blobdifffd($ids)} {
+    if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
 	return
     }
     $ctext conf -state normal
@@ -1882,7 +1897,7 @@ proc nextfile {} {
 }
 
 proc listboxsel {} {
-    global ctext cflist currentid treediffs seenfile
+    global ctext cflist currentid treediffs
     if {![info exists currentid]} return
     set sel [lsort [$cflist curselection]]
     if {$sel eq {}} return
