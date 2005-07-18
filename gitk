@@ -1949,18 +1949,35 @@ proc sha1change {n1 n2 op} {
 
 proc gotocommit {} {
     global sha1string currentid idline tagids
+    global lineid numcommits
+
     if {$sha1string == {}
 	|| ([info exists currentid] && $sha1string == $currentid)} return
     if {[info exists tagids($sha1string)]} {
 	set id $tagids($sha1string)
     } else {
 	set id [string tolower $sha1string]
+	if {[regexp {^[0-9a-f]{4,39}$} $id]} {
+	    set matches {}
+	    for {set l 0} {$l < $numcommits} {incr l} {
+		if {[string match $id* $lineid($l)]} {
+		    lappend matches $lineid($l)
+		}
+	    }
+	    if {$matches ne {}} {
+		if {[llength $matches] > 1} {
+		    error_popup "Short SHA1 id $id is ambiguous"
+		    return
+		}
+		set id [lindex $matches 0]
+	    }
+	}
     }
     if {[info exists idline($id)]} {
 	selectline $idline($id)
 	return
     }
-    if {[regexp {^[0-9a-fA-F]{40}$} $sha1string]} {
+    if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
 	set type "SHA1 id"
     } else {
 	set type "Tag"
