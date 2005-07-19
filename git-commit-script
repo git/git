@@ -9,6 +9,7 @@ usage () {
 	die 'git commit [-m existing-commit] [<path>...]'
 }
 
+files=()
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -19,13 +20,16 @@ do
 	   exit ;;
 	esac
 	;;
+    --all)
+	files=($(git-diff-files --name-only))\
+	;;
     *)  break
         ;;
     esac
     shift
 done
 
-git-update-cache -q --refresh -- "$@" || exit 1
+git-update-cache -q --refresh -- "$@" "${files[@]}" || exit 1
 PARENTS="-p HEAD"
 if [ ! -r "$GIT_DIR/HEAD" ]; then
 	if [ -z "$(git-ls-files)" ]; then
