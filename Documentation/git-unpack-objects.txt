@@ -4,7 +4,7 @@ v0.1, July 2005
 
 NAME
 ----
-git-unpack-objects - Create a packed archive of objects.
+git-unpack-objects - Unpack objects from a packed archive.
 
 
 SYNOPSIS
