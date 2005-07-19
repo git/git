@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "commit.h"
 #include "refs.h"
 #include "pkt-line.h"
 
@@ -6,6 +7,7 @@ static const char send_pack_usage[] =
 "git-send-pack [--exec=git-receive-pack] [host:]directory [heads]*";
 static const char *exec = "git-receive-pack";
 static int send_all = 0;
+static int force_update = 0;
 
 static int is_zero_sha1(const unsigned char *sha1)
 {
@@ -117,16 +119,26 @@ static int read_ref(const char *ref, unsigned char *sha1)
 
 static int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
 {
-	if (!has_sha1_file(old_sha1))
+	struct commit *new, *old;
+	struct commit_list *list;
+
+	if (force_update)
+		return 1;
+	old = lookup_commit_reference(old_sha1);
+	if (!old)
 		return 0;
-	/*
-	 * FIXME! It is not correct to say that the new one is newer
-	 * just because we don't have the old one!
-	 *
-	 * We should really see if we can reach the old_sha1 commit
-	 * from the new_sha1 one.
-	 */
-	return 1;
+	new = lookup_commit_reference(new_sha1);
+	if (!new)
+		return 0;
+	if (parse_commit(new) < 0)
+		return 0;
+	list = NULL;
+	commit_list_insert(new, &list);
+	while ((new = pop_most_recent_commit(&list, 1)) != NULL) {
+		if (new == old)
+			return 1;
+	}
+	return 0;
 }
 
 static int local_ref_nr_match;
@@ -190,7 +202,7 @@ static int send_pack(int in, int out, int nr_match, char **match)
 		}
 
 		if (!ref_newer(new_sha1, ref->old_sha1)) {
-			error("remote '%s' points to object I don't have", name);
+			error("remote '%s' isn't a strict parent of local", name);
 			continue;
 		}
 
@@ -250,6 +262,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--all")) {
 				send_all = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--force")) {
+				force_update = 1;
 				continue;
 			}
 			usage(send_pack_usage);
