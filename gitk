@@ -1861,7 +1861,7 @@ proc gettreediffline {gdtf ids} {
 
 proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env curdifftag curtagstart
-    global diffindex difffilestart nextupdate diffinhdr
+    global difffilestart nextupdate diffinhdr treediffs
 
     set id [lindex $ids 0]
     set p [lindex $ids 1]
@@ -1876,7 +1876,6 @@ proc getblobdiffs {ids} {
     set blobdifffd($ids) $bdf
     set curdifftag Comments
     set curtagstart 0.0
-    set diffindex 0
     catch {unset difffilestart}
     fileevent $bdf readable [list getblobdiffline $bdf $diffids]
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
@@ -1884,8 +1883,8 @@ proc getblobdiffs {ids} {
 
 proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdifftag curtagstart
-    global diffnexthead diffnextnote diffindex difffilestart
-    global nextupdate diffinhdr
+    global diffnexthead diffnextnote difffilestart
+    global nextupdate diffinhdr treediffs
     global gaudydiff
 
     set n [gets $bdf line]
@@ -1902,18 +1901,29 @@ proc getblobdiffline {bdf ids} {
 	return
     }
     $ctext conf -state normal
-    if {[regexp {^diff --git a/(.*) b/} $line match fname]} {
+    if {[regexp {^diff --git a/(.*) b/(.*)} $line match fname newname]} {
 	# start of a new file
 	$ctext insert end "\n"
 	$ctext tag add $curdifftag $curtagstart end
 	set curtagstart [$ctext index "end - 1c"]
-	set header $fname
+	set header $newname
 	set here [$ctext index "end - 1c"]
-	set difffilestart($diffindex) $here
-	incr diffindex
-	# start mark names at fmark.1 for first file
-	$ctext mark set fmark.$diffindex $here
-	$ctext mark gravity fmark.$diffindex left
+	set i [lsearch -exact $treediffs($diffids) $fname]
+	if {$i >= 0} {
+	    set difffilestart($i) $here
+	    incr i
+	    $ctext mark set fmark.$i $here
+	    $ctext mark gravity fmark.$i left
+	}
+	if {$newname != $fname} {
+	    set i [lsearch -exact $treediffs($diffids) $newname]
+	    if {$i >= 0} {
+		set difffilestart($i) $here
+		incr i
+		$ctext mark set fmark.$i $here
+		$ctext mark gravity fmark.$i left
+	    }
+	}
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
 	set l [expr {(78 - [string length $header]) / 2}]
@@ -1973,14 +1983,19 @@ proc nextfile {} {
     set here [$ctext index @0,0]
     for {set i 0} {[info exists difffilestart($i)]} {incr i} {
 	if {[$ctext compare $difffilestart($i) > $here]} {
-	    $ctext yview $difffilestart($i)
-	    break
+	    if {![info exists pos]
+		|| [$ctext compare $difffilestart($i) < $pos]} {
+		set pos $difffilestart($i)
+	    }
 	}
+    }
+    if {[info exists pos]} {
+	$ctext yview $pos
     }
 }
 
 proc listboxsel {} {
-    global ctext cflist currentid treediffs
+    global ctext cflist currentid
     if {![info exists currentid]} return
     set sel [lsort [$cflist curselection]]
     if {$sel eq {}} return
