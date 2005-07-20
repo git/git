@@ -1504,7 +1504,7 @@ proc donefilediff {} {
 }
 
 proc findcont {ids} {
-    global findids treediffs parents nparents treepending
+    global findids treediffs parents nparents
     global ffileline findstartline finddidsel
     global lineid numcommits matchinglines findinprogress
     global findmergefiles
@@ -1692,33 +1692,10 @@ proc selectline {l} {
 
     $cflist delete 0 end
     $cflist insert end "Comments"
-    startdiff $id $parents($id)
-}
-
-proc startdiff {id vs} {
-    global diffpending diffpindex
-    global diffindex difffilestart
-    global curdifftag curtagstart
-
-    set diffpending $vs
-    set diffpindex 0
-    set diffindex 0
-    catch {unset difffilestart}
-    set curdifftag Comments
-    set curtagstart 0.0
-    contdiff [list $id [lindex $vs 0]]
-}
-
-proc contdiff {ids} {
-    global treediffs diffids treepending
-
-    set diffids $ids
-    if {![info exists treediffs($ids)]} {
-	if {![info exists treepending]} {
-	    gettreediffs $ids
-	}
-    } else {
-	addtocflist $ids
+    if {$nparents($id) == 1} {
+	startdiff [concat $id $parents($id)]
+    } elseif {$nparents($id) > 1} {
+	mergediff $id
     }
 }
 
@@ -1730,39 +1707,148 @@ proc selnextline {dir} {
     selectline $l
 }
 
-proc addtocflist {ids} {
-    global treediffs cflist diffpindex
+proc mergediff {id} {
+    global parents diffmergeid diffmergegca mergefilelist diffpindex
 
-    set colors {black blue green red cyan magenta}
-    set color [lindex $colors [expr {$diffpindex % [llength $colors]}]]
+    set diffmergeid $id
+    set diffpindex -1
+    set diffmergegca [findgca $parents($id)]
+    if {[info exists mergefilelist($id)]} {
+	showmergediff
+    } else {
+	contmergediff {}
+    }
+}
+
+proc findgca {ids} {
+    set gca {}
+    foreach id $ids {
+	if {$gca eq {}} {
+	    set gca $id
+	} else {
+	    if {[catch {
+		set gca [exec git-merge-base $gca $id]
+	    } err]} {
+		return {}
+	    }
+	}
+    }
+    return $gca
+}
+
+proc contmergediff {ids} {
+    global diffmergeid diffpindex parents nparents diffmergegca
+    global treediffs mergefilelist diffids
+
+    # diff the child against each of the parents, and diff
+    # each of the parents against the GCA.
+    while 1 {
+	if {[lindex $ids 0] == $diffmergeid && $diffmergegca ne {}} {
+	    set ids [list [lindex $ids 1] $diffmergegca]
+	} else {
+	    if {[incr diffpindex] >= $nparents($diffmergeid)} break
+	    set p [lindex $parents($diffmergeid) $diffpindex]
+	    set ids [list $diffmergeid $p]
+	}
+	if {![info exists treediffs($ids)]} {
+	    set diffids $ids
+	    gettreediffs $ids
+	    return
+	}
+    }
+
+    # If a file in some parent is different from the child and also
+    # different from the GCA, then it's interesting.
+    # If we don't have a GCA, then a file is interesting if it is
+    # different from the child in all the parents.
+    if {$diffmergegca ne {}} {
+	set files {}
+	foreach p $parents($diffmergeid) {
+	    set gcadiffs $treediffs([list $p $diffmergegca])
+	    foreach f $treediffs([list $diffmergeid $p]) {
+		if {[lsearch -exact $files $f] < 0
+		    && [lsearch -exact $gcadiffs $f] >= 0} {
+		    lappend files $f
+		}
+	    }
+	}
+	set files [lsort $files]
+    } else {
+	set p [lindex $parents($diffmergeid) 0]
+	set files $treediffs([list $diffmergeid $p])
+	for {set i 1} {$i < $nparents($diffmergeid) && $files ne {}} {incr i} {
+	    set p [lindex $parents($diffmergeid) $i]
+	    set df $treediffs([list $diffmergeid $p])
+	    set nf {}
+	    foreach f $files {
+		if {[lsearch -exact $df $f] >= 0} {
+		    lappend nf $f
+		}
+	    }
+	    set files $nf
+	}
+    }
+
+    set mergefilelist($diffmergeid) $files
+    showmergediff
+}
+
+proc showmergediff {} {
+    global cflist diffmergeid mergefilelist
+
+    set files $mergefilelist($diffmergeid)
+    foreach f $files {
+	$cflist insert end $f
+    }
+}
+
+proc startdiff {ids} {
+    global treediffs diffids treepending diffmergeid
+
+    set diffids $ids
+    catch {unset diffmergeid}
+    if {![info exists treediffs($ids)]} {
+	if {![info exists treepending]} {
+	    gettreediffs $ids
+	}
+    } else {
+	addtocflist $ids
+    }
+}
+
+proc addtocflist {ids} {
+    global treediffs cflist
     foreach f $treediffs($ids) {
 	$cflist insert end $f
-	$cflist itemconf end -foreground $color
     }
     getblobdiffs $ids
 }
 
 proc gettreediffs {ids} {
-    global treediffs parents treepending
+    global treediff parents treepending
     set treepending $ids
-    set treediffs($ids) {}
+    set treediff {}
     set id [lindex $ids 0]
     set p [lindex $ids 1]
     if [catch {set gdtf [open "|git-diff-tree -r $p $id" r]}] return
     fconfigure $gdtf -blocking 0
-    fileevent $gdtf readable "gettreediffline $gdtf {$ids}"
+    fileevent $gdtf readable [list gettreediffline $gdtf $ids]
 }
 
 proc gettreediffline {gdtf ids} {
-    global treediffs treepending diffids
+    global treediff treediffs treepending diffids diffmergeid
+
     set n [gets $gdtf line]
     if {$n < 0} {
 	if {![eof $gdtf]} return
 	close $gdtf
+	set treediffs($ids) $treediff
 	unset treepending
-	if {[info exists diffids]} {
-	    if {$ids != $diffids} {
-		gettreediffs $diffids
+	if {$ids != $diffids} {
+	    gettreediffs $diffids
+	} else {
+	    if {[info exists diffmergeid]} {
+		contmergediff $ids
 	    } else {
 		addtocflist $ids
 	    }
@@ -1770,31 +1856,36 @@ proc gettreediffline {gdtf ids} {
 	return
     }
     set file [lindex $line 5]
-    lappend treediffs($ids) $file
+    lappend treediff $file
 }
 
 proc getblobdiffs {ids} {
-    global diffopts blobdifffd diffids env
-    global nextupdate diffinhdr
+    global diffopts blobdifffd diffids env curdifftag curtagstart
+    global diffindex difffilestart nextupdate diffinhdr
 
     set id [lindex $ids 0]
     set p [lindex $ids 1]
     set env(GIT_DIFF_OPTS) $diffopts
-    if [catch {set bdf [open "|git-diff-tree -r -p $p $id" r]} err] {
+    set cmd [list | git-diff-tree -r -p -C $p $id]
+    if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
     }
     set diffinhdr 0
     fconfigure $bdf -blocking 0
     set blobdifffd($ids) $bdf
-    fileevent $bdf readable [list getblobdiffline $bdf $ids]
+    set curdifftag Comments
+    set curtagstart 0.0
+    set diffindex 0
+    catch {unset difffilestart}
+    fileevent $bdf readable [list getblobdiffline $bdf $diffids]
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
 }
 
 proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdifftag curtagstart
     global diffnexthead diffnextnote diffindex difffilestart
-    global nextupdate diffpending diffpindex diffinhdr
+    global nextupdate diffinhdr
     global gaudydiff
 
     set n [gets $bdf line]
@@ -1803,11 +1894,6 @@ proc getblobdiffline {bdf ids} {
 	    close $bdf
 	    if {$ids == $diffids && $bdf == $blobdifffd($ids)} {
 		$ctext tag add $curdifftag $curtagstart end
-		if {[incr diffpindex] < [llength $diffpending]} {
-		    set id [lindex $ids 0]
-		    set p [lindex $diffpending $diffpindex]
-		    contdiff [list $id $p]
-		}
 	    }
 	}
 	return
@@ -2157,7 +2243,7 @@ proc diffvssel {dirn} {
     $ctext conf -state disabled
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
-    startdiff [list $newid $oldid]
+    startdiff $newid [list $oldid]
 }
 
 proc mkpatch {} {
