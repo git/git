@@ -13,7 +13,7 @@
  * uses the working tree as a "branch" for a 3-way merge.
  */
 #include <ctype.h>
-
+#include <fnmatch.h>
 #include "cache.h"
 
 // We default to the merge behaviour, since that's what most people would
@@ -1345,9 +1345,9 @@ static void write_out_one_result(struct patch *patch)
 	create_file(patch);
 }
 
-static void write_out_results(struct patch *list)
+static void write_out_results(struct patch *list, int skipped_patch)
 {
-	if (!list)
+	if (!list && !skipped_patch)
 		die("No changes");
 
 	while (list) {
@@ -1358,12 +1358,30 @@ static void write_out_results(struct patch *list)
 
 static struct cache_file cache_file;
 
+static struct excludes {
+	struct excludes *next;
+	const char *path;
+} *excludes;
+
+static int use_patch(struct patch *p)
+{
+	const char *pathname = p->new_name ? : p->old_name;
+	struct excludes *x = excludes;
+	while (x) {
+		if (fnmatch(x->path, pathname, 0) == 0)
+			return 0;
+		x = x->next;
+	}
+	return 1;
+}
+
 static int apply_patch(int fd)
 {
 	int newfd;
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
 	struct patch *list = NULL, **listp = &list;
+	int skipped_patch = 0;
 
 	if (!buffer)
 		return -1;
@@ -1377,9 +1395,15 @@ static int apply_patch(int fd)
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
-		patch_stats(patch);
-		*listp = patch;
-		listp = &patch->next;
+		if (use_patch(patch)) {
+			patch_stats(patch);
+			*listp = patch;
+			listp = &patch->next;
+		} else {
+			/* perhaps free it a bit better? */
+			free(patch);
+			skipped_patch++;
+		}
 		offset += nr;
 		size -= nr;
 	}
@@ -1397,7 +1421,7 @@ static int apply_patch(int fd)
 		exit(1);
 
 	if (apply)
-		write_out_results(list);
+		write_out_results(list, skipped_patch);
 
 	if (write_index) {
 		if (write_cache(newfd, active_cache, active_nr) ||
@@ -1430,6 +1454,13 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "-")) {
 			apply_patch(0);
 			read_stdin = 0;
+			continue;
+		}
+		if (!strncmp(arg, "--exclude=", 10)) {
+			struct excludes *x = xmalloc(sizeof(*x));
+			x->path = arg + 10;
+			x->next = excludes;
+			excludes = x;
 			continue;
 		}
 		/* NEEDSWORK: this does not do anything at this moment. */
