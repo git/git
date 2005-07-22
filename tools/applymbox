@@ -9,20 +9,48 @@
 ## You give it a mbox-format collection of emails, and it will try to
 ## apply them to the kernel using "applypatch"
 ##
-## dotest [ -q ] mail_archive [Signoff_file]
+## applymbox [ -c .dotest/msg-number ] [ -q ] mail_archive [Signoff_file]"
 ##
-rm -rf .dotest
-mkdir .dotest
-case $1 in
+## The patch application may fail in the middle.  In which case:
+## (1) look at .dotest/patch and fix it up to apply
+## (2) re-run applymbox with -c .dotest/msg-number for the current one.
+## Pay a special attention to the commit log message if you do this and
+## use a Signoff_file, because applypatch wants to append the sign-off
+## message to msg-clean every time it is run.
 
-	-q)	touch .dotest/.query_apply
-		shift;;
-esac
-mailsplit $1 .dotest || exit 1
-for i in .dotest/*
+query_apply= continue= resume=t
+while case "$#" in 0) break ;; esac
 do
-	mailinfo .dotest/msg .dotest/patch < $i > .dotest/info || exit 1
-	git-stripspace < .dotest/msg > .dotest/msg-clean
+	case "$1" in
+	-q)	query_apply=t ;;
+	-c)	continue="$2"; resume=f; shift ;;
+	-*)	usage ;;
+	*)	break ;;
+	esac
+	shift
+done
+
+case "$continue" in
+'')
+	rm -rf .dotest
+	mkdir .dotest
+	mailsplit "$1" .dotest || exit 1
+esac
+
+case "$query_apply" in
+t)	touch .dotest/.query_apply
+esac
+
+for i in .dotest/0*
+do
+	case "$resume,$continue" in
+	f,$i)	resume=t;;
+	f,*)	continue;;
+	*)
+		mailinfo .dotest/msg .dotest/patch <$i >.dotest/info || exit 1
+		git-stripspace < .dotest/msg > .dotest/msg-clean
+		;;
+	esac
 	applypatch .dotest/msg-clean .dotest/patch .dotest/info "$2"
 	ret=$?
 	if [ $ret -ne 0 ]; then
