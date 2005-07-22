@@ -4,7 +4,7 @@
 #
 
 usage () {
-    echo >&2 "usage: $0"' [-n] [-o dir] [-<diff options>...] upstream [ our-head ]
+    echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [-<diff options>...] upstream [ our-head ]
 
 Prepare each commit with its patch since our-head forked from upstream,
 one file per patch, for e-mail submission.  Each output file is
@@ -16,6 +16,10 @@ the current working directory.
 
 When -n is specified, instead of "[PATCH] Subject", the first line is formatted
 as "[PATCH N/M] Subject", unless you have only one patch.
+
+When --mbox is specified, the output is formatted to resemble
+UNIX mailbox format, and can be concatenated together for processing
+with applymbox.
 '
     exit 1
 }
@@ -25,13 +29,19 @@ IFS='
 '
 LF='
 '
-outdir=./
 
+outdir=./
 while case "$#" in 0) break;; esac
 do
     case "$1" in
+    -a|--a|--au|--aut|--auth|--autho|--author)
+    author=t ;;
+    -c|--c|--ch|--che|--chec|--check)
+    check=t ;;
     -d|--d|--da|--dat|--date)
     date=t ;;
+    -m|--m|--mb|--mbo|--mbox)
+    date=t author=t mbox=t ;;
     -n|--n|--nu|--num|--numb|--numbe|--number|--numbere|--numbered)
     numbered=t ;;
     -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
@@ -71,6 +81,7 @@ trap 'rm -f $tmp-*' 0 1 2 3 15
 
 series=$tmp-series
 commsg=$tmp-commsg
+filelist=$tmp-files
 
 titleScript='
 	/./d
@@ -115,16 +126,27 @@ do
 
     file=`printf '%04d-%stxt' $i "$title"`
     i=`expr "$i" - 1`
-    echo "$file"
+    echo >&2 "* $file"
     {
 	mailScript='
 	/./d
 	/^$/n
-	s|^\[PATCH[^]]*\] *||
-	s|^|[PATCH'"$num"'] |'
+	s|^\[PATCH[^]]*\] *||'
+
+	case "$mbox" in
+	t)
+	    echo 'From nobody Mon Sep 17 00:00:00 2001' ;# UNIX "From" line
+	    mailScript="$mailScript"'
+	    s|^|Subject: [PATCH'"$num"'] |'
+	    ;;
+	*)
+	    mailScript="$mailScript"'
+	    s|^|[PATCH'"$num"'] |'
+	    ;;
+	esac
 
 	eval "$(sed -ne "$whosepatchScript" $commsg)"
-	test "$au" = "$me" || {
+	test "$author,$au" = ",$me" || {
 		mailScript="$mailScript"'
 	a\
 From: '"$au"
@@ -147,5 +169,20 @@ Date: '"$ad"
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
 	git-diff-tree -p $diff_opts "$commit" | sed -e "$stripCommitHead"
+
+	case "$mbox" in
+	t)
+		echo
+		;;
+	esac
     } >"$outdir$file"
+    case "$check" in
+    t)
+	# This is slightly modified from Andrew Morton's Perfect Patch.
+	# Lines you introduce should not have trailing whitespace.
+	# Also check for an indentation that has SP before a TAB.
+        grep -n '^+\([ 	]* 	.*\|.*[ 	]\)$' "$outdir$file"
+
+	: do not exit with non-zero because we saw no problem in the last one.
+    esac
 done <$series
