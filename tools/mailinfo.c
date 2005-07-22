@@ -220,8 +220,9 @@ static int eatspace(char *line)
 static void handle_body(void)
 {
 	int has_from = 0;
+	int has_date = 0;
 
-	/* First line of body can be a From: */
+	/* First lines of body can have From: and Date: */
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = eatspace(line);
 		if (!len)
@@ -229,6 +230,13 @@ static void handle_body(void)
 		if (!memcmp("From:", line, 5) && isspace(line[5])) {
 			if (!has_from && handle_from(line+6)) {
 				has_from = 1;
+				continue;
+			}
+		}
+		if (!memcmp("Date:", line, 5) && isspace(line[5])) {
+			if (!has_date) {
+				handle_date(line+6);
+				has_date = 1;
 				continue;
 			}
 		}

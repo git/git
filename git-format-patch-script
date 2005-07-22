@@ -30,6 +30,8 @@ outdir=./
 while case "$#" in 0) break;; esac
 do
     case "$1" in
+    -d|--d|--da|--dat|--date)
+    date=t ;;
     -n|--n|--nu|--num|--numb|--numbe|--number|--numbere|--numbered)
     numbered=t ;;
     -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
@@ -56,6 +58,8 @@ esac
 junio=`git-rev-parse --verify "$junio"`
 linus=`git-rev-parse --verify "$linus"`
 
+me=`git-var GIT_AUTHOR_IDENT | sed -e 's/>.*/>/'`
+
 case "$outdir" in
 */) ;;
 *) outdir="$outdir/" ;;
@@ -66,6 +70,7 @@ tmp=.tmp-series$$
 trap 'rm -f $tmp-*' 0 1 2 3 15
 
 series=$tmp-series
+commsg=$tmp-commsg
 
 titleScript='
 	/./d
@@ -82,6 +87,12 @@ titleScript='
 	q
 '
 
+whosepatchScript='
+/^author /{
+	s/author \(.*>\) \(.*\)$/au='\''\1'\'' ad='\''\2'\''/p
+	q
+}'
+
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
@@ -91,9 +102,8 @@ total=`wc -l <$series`
 i=$total
 while read commit
 do
-    title=`git-cat-file commit "$commit" |
-    git-stripspace |
-    sed -ne "$titleScript"`
+    git-cat-file commit "$commit" | git-stripspace >$commsg
+    title=`sed -ne "$titleScript" <$commsg`
     case "$numbered" in
     '') num= ;;
     *)
@@ -102,6 +112,7 @@ do
 	*) num=' '`printf "%d/%d" $i $total` ;;
 	esac
     esac
+
     file=`printf '%04d-%stxt' $i "$title"`
     i=`expr "$i" - 1`
     echo "$file"
@@ -109,15 +120,28 @@ do
 	mailScript='
 	/./d
 	/^$/n
-	s|^|[PATCH'"$num"'] |
+	s|^\[PATCH[^]]*\] *||
+	s|^|[PATCH'"$num"'] |'
+
+	eval "$(sed -ne "$whosepatchScript" $commsg)"
+	test "$au" = "$me" || {
+		mailScript="$mailScript"'
+	a\
+From: '"$au"
+	}
+	test "$date,$au" = ",$me" || {
+		mailScript="$mailScript"'
+	a\
+Date: '"$ad"
+	}
+
+	mailScript="$mailScript"'
 	: body
 	p
 	n
 	b body'
 
-	git-cat-file commit "$commit" |
-	git-stripspace |
-	sed -ne "$mailScript"
+	sed -ne "$mailScript" <$commsg
 	echo '---'
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
