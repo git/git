@@ -679,6 +679,13 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			break;
 		}
 	}
+	/* If a fragment ends with an incomplete line, we failed to include
+	 * it in the above loop because we hit oldlines == newlines == 0
+	 * before seeing it.
+	 */
+	if (12 < size && !memcmp(line, "\\ No newline", 12))
+		offset += linelen(line, size);
+
 	patch->lines_added += added;
 	patch->lines_deleted += deleted;
 	return offset;
@@ -900,7 +907,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 		 * last one (which is the newline, of course).
 		 */
 		plen = len-1;
-		if (len > size && patch[len] == '\\')
+		if (len < size && patch[len] == '\\')
 			plen--;
 		switch (*patch) {
 		case ' ':
