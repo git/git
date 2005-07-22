@@ -21,8 +21,8 @@ DESTDIR  := $(CURDIR)/debian/tmp
 DOC_DESTDIR := $(DESTDIR)/usr/share/doc/git-core/
 MAN_DESTDIR := $(DESTDIR)/$(MANDIR)
 
-build: build-stamp
-build-stamp:
+build: debian/build-stamp
+debian/build-stamp:
 	dh_testdir
 	$(MAKE) all doc
 	touch debian/build-stamp
@@ -36,7 +36,7 @@ debian-clean:
 clean: debian-clean
 	$(MAKE) clean
 
-install: debian/build-stamp
+install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
@@ -47,9 +47,9 @@ install: debian/build-stamp
 	mkdir -p $(DOC_DESTDIR)
 	find $(DOC) '(' -name '*.txt' -o -name '*.html' ')' -exec install {} $(DOC_DESTDIR) ';'
 
-	dh_install --sourcedir=$(DESTDIR)
+	dh_install --list-missing --sourcedir=$(DESTDIR)
 
-binary:
+binary: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs
