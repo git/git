@@ -41,8 +41,10 @@ Issues of note:
 	  can avoid the bignum support by excising git-rev-list support
 	  for "--merge-order" (by hand).
 
-	- "libcurl".  git-http-pull uses this.  You can disable building of
-	  that program if you just want to get started. 
+	- "libcurl" and "curl" executable.  git-http-pull and
+	  git-fetch-script use them.  If you do not use http
+	  transfer, you are probabaly OK if you do not have
+	  them.
 
 	- "GNU diff" to generate patches.  Of course, you don't _have_ to
 	  generate patches if you don't want to, but let's face it, you'll
