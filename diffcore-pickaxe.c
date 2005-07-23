@@ -5,19 +5,30 @@
 #include "diff.h"
 #include "diffcore.h"
 
-static int contains(struct diff_filespec *one,
-		    const char *needle, unsigned long len)
+static unsigned int contains(struct diff_filespec *one,
+			     const char *needle, unsigned long len)
 {
+	unsigned int cnt;
 	unsigned long offset, sz;
 	const char *data;
 	if (diff_populate_filespec(one, 0))
 		return 0;
+
 	sz = one->size;
 	data = one->data;
-	for (offset = 0; offset + len <= sz; offset++)
-		     if (!strncmp(needle, data + offset, len))
-			     return 1;
-	return 0;
+	cnt = 0;
+
+	/* Yes, I've heard of strstr(), but the thing is *data may
+	 * not be NUL terminated.  Sue me.
+	 */
+	for (offset = 0; offset + len <= sz; offset++) {
+		/* we count non-overlapping occurrences of needle */
+		if (!memcmp(needle, data + offset, len)) {
+			offset += len - 1;
+			cnt++;
+		}
+	}
+	return cnt;
 }
 
 void diffcore_pickaxe(const char *needle, int opts)
