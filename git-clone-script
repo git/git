@@ -20,12 +20,12 @@ upload_pack=
 while
 	case "$#,$1" in
 	0,*) break ;;
-        *,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
+	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
 	*,-q|*,--quiet) quiet=-q ;;
-	1,-u|*,--upload-pack) usage ;;
+	1,-u|1,--upload-pack) usage ;;
 	*,-u|*,--upload-pack)
 		shift
-		upload_pack="--exec=$2" ;;
+		upload_pack="--exec=$1" ;;
 	*,-*) usage ;;
 	*) break ;;
 	esac
@@ -81,23 +81,28 @@ yes,yes)
 		HEAD=HEAD
 	fi
 	tar Ccf "$repo" - refs $HEAD | tar Cxf "$D/.git" - || exit 1
-	exit 0
-	;;
-esac
-
-case "$repo" in
-rsync://*)
-	rsync $quiet -avz --ignore-existing "$repo/objects/" "$D/.git/objects/" &&
-	rsync $quiet -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
-	;;
-http://*)
-	echo "Somebody should add http fetch" >&2
-	exit 1
 	;;
 *)
-	cd "$D" && case "$upload_pack" in
-	'') git-clone-pack $quiet "$repo" ;;
-	*) git-clone-pack $quiet "$upload_pack" "$repo" ;;
+	case "$repo" in
+	rsync://*)
+		rsync $quiet -avz --ignore-existing "$repo/objects/" "$D/.git/objects/" &&
+		rsync $quiet -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
+		;;
+	http://*)
+		echo "Somebody should add http fetch" >&2
+		exit 1
+		;;
+	*)
+		cd "$D" && case "$upload_pack" in
+		'') git-clone-pack $quiet "$repo" ;;
+		*) git-clone-pack $quiet "$upload_pack" "$repo" ;;
+		esac
+		;;
 	esac
 	;;
 esac
+
+# Update origin.
+mkdir -p "$D/.git/branches/" &&
+rm -f "$D/.git/branches/origin" &&
+echo "$repo" >"$D/.git/branches/origin"
