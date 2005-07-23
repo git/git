@@ -7,7 +7,9 @@ Standards-Version: 3.6.1
 
 Package: git-core
 Architecture: any
-Depends: ${misc:Depends}, shellutils, diff, rsync, rcs
+Depends: ${shlibs:Depends}, ${misc:Depends}, patch, diff, rcs
+Recommends: rsync, curl, ssh
+Conflicts: git
 Description: The git content addressable filesystem
  GIT comes in two layers. The bottom layer is merely an extremely fast
  and flexible filesystem-based database designed to store directory trees

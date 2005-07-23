@@ -1,3 +1,13 @@
+git-core (0.99-2) unstable; urgency=low
+
+  * Conflict with the GNU Interactive Tools package, which also installs
+    /usr/bin/git.
+  * Use the Mozilla SHA1 code and/or the PPC assembly in preference to
+    OpenSSL.  This is only a partial fix for the license issues with OpenSSL.
+  * Minor tweaks to the Depends.
+
+ -- Ryan Anderson <ryan@michonline.com>  Sat, 23 Jul 2005 14:15:00 -0400
+
 git-core (0.99-1) unstable; urgency=low
 
   * Update deb package support to build correctly. 

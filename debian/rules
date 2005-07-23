@@ -12,6 +12,20 @@ else
 endif
 export CFLAGS
 
+#
+# On PowerPC we compile against the hand-crafted assembly, on all
+# other architectures we compile against GPL'ed sha1 code lifted
+# from Mozilla.  OpenSSL is strangely licensed and best avoided
+# in Debian.
+#
+HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
+ifeq (${HOST_ARCH},powerpc)
+	export PPC_SHA1=YesPlease
+else
+	export MOZILLA_SHA1=YesPlease
+endif
+
+
 PREFIX := /usr
 MANDIR := /usr/share/man/
 
