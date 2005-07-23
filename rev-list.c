@@ -241,14 +241,38 @@ static void mark_parents_uninteresting(struct commit *commit)
 	}
 }
 
-static int everybody_uninteresting(struct commit_list *list)
+static int everybody_uninteresting(struct commit_list *orig)
 {
+	struct commit_list *list = orig;
 	while (list) {
 		struct commit *commit = list->item;
 		list = list->next;
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 		return 0;
+	}
+
+	/*
+	 * Ok, go back and mark all the edge trees uninteresting,
+	 * since otherwise we can have situations where a parent
+	 * that was marked uninteresting (and we never even had
+	 * to look at) had lots of objects that we don't want to
+	 * include.
+	 *
+	 * NOTE! This still doesn't mean that the object list is
+	 * "correct", since we may end up listing objects that
+	 * even older commits (that we don't list) do actually
+	 * reference, but it gets us to a minimal list (or very
+	 * close) in practice.
+	 */
+	if (!tree_objects)
+		return 1;
+
+	while (orig) {
+		struct commit *commit = orig->item;
+		if (!parse_commit(commit) && commit->tree)
+			mark_tree_uninteresting(commit->tree);
+		orig = orig->next;
 	}
 	return 1;
 }
