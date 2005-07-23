@@ -195,12 +195,16 @@ test: all
 doc:
 	$(MAKE) -C Documentation all
 
+install-tools:
+	$(MAKE) -C tools install
+
 install-doc:
 	$(MAKE) -C Documentation install
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
 	rm -f git-core-*.tar.gz git-core.spec
+	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
 
 backup: clean
