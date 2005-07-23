@@ -119,8 +119,10 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 		end = host;
 	colon = strchr(end, ':');
 
-	if (colon)
+	if (colon) {
+		*colon = 0;
 		port = colon + 1;
+	}
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_STREAM;
