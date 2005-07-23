@@ -472,10 +472,11 @@ A "light" tag is technically nothing more than a branch, except we put
 it in the ".git/refs/tags/" subdirectory instead of calling it a "head".
 So the simplest form of tag involves nothing more than
 
-	cat .git/HEAD > .git/refs/tags/my-first-tag
+	git tag my-first-tag
 
-after which point you can use this symbolic name for that particular
-state. You can, for example, do
+which just writes the current HEAD into the .git/refs/tags/my-first-tag
+file, after which point you can then use this symbolic name for that
+particular state.  You can, for example, do
 
 	git diff my-first-tag
 
@@ -487,9 +488,9 @@ since you tagged it.
 A "signed tag" is actually a real git object, and contains not only a
 pointer to the state you want to tag, but also a small tag name and
 message, along with a PGP signature that says that yes, you really did
-that tag. You create these signed tags with
+that tag. You create these signed tags with the "-s" flag to "git tag":
 
-	git tag <tagname>
+	git tag -s <tagname>
 
 which will sign the current HEAD (but you can also give it another
 argument that specifies the thing to tag, ie you could have tagged the
@@ -620,7 +621,7 @@ repository, and checked it out.
 	---------------------
 
 Branches in git are really nothing more than pointers into the git
-object space from within the ",git/refs/" subdirectory, and as we
+object space from within the ".git/refs/" subdirectory, and as we
 already discussed, the HEAD branch is nothing but a symlink to one of
 these object pointers. 
 
@@ -632,35 +633,44 @@ want (and indeed, subdirectories), but the convention is that the
 and nothing enforces it. 
 
 To show that as an example, let's go back to the git-tutorial archive we
-used earlier, and create a branch in it.  You literally do that by just
-creating a new SHA1 reference file, and switch to it by just making the
-HEAD pointer point to it:
+used earlier, and create a branch in it. You do that by simply just
+saying that you want to check out a new branch:
 
-	cat .git/HEAD > .git/refs/heads/mybranch
-	ln -sf refs/heads/mybranch .git/HEAD
+	git checkout -b mybranch
 
-and you're done.
+will create a new branch based at the current HEAD position, and switch
+to it. 
 
-Now, if you make the decision to start your new branch at some other
-point in the history than the current HEAD, you usually also want to
-actually switch the contents of your working directory to that point
-when you switch the head, and "git checkout" will do that for you:
-instead of switching the branch by hand with "ln -sf", you can just do
+[ Side note: if you make the decision to start your new branch at some
+  other point in the history than the current HEAD, you can do so by
+  just telling "git checkout" what the base of the checkout would be. 
+  In other words, if you have an earlier tag or branch, you'd just do
 
-	git checkout mybranch
+	git checkout -b mybranch earlier-branch
 
-which will basically "jump" to the branch specified, update your working
-directory to that state, and also make it become the new default HEAD. 
+  and it would create the new branch "mybranch" at the earlier point,
+  and check out the state at that time. ]
 
 You can always just jump back to your original "master" branch by doing
 
 	git checkout master
 
-and if you forget which branch you happen to be on, a simple
+(or any other branch-name, for that matter) and if you forget which
+branch you happen to be on, a simple
 
 	ls -l .git/HEAD
 
 will tell you where it's pointing.
+
+NOTE! Sometimes you may wish to create a new branch _without_ actually
+checking it out and switching to it. If so, just use the command
+
+	git branch <branchname> [startingpoint]
+
+which will simply _create_ the branch, but will not do anything further. 
+You can then later - once you decide that you want to actually develop
+on that branch - switch to that branch with a regular "git checkout"
+with the branchname as the argument.
 
 
 	Merging two branches
