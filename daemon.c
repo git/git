@@ -3,8 +3,8 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
 static const char daemon_usage[] = "git-daemon [--inetd | --port=n]";
 
@@ -79,15 +79,15 @@ static unsigned int children_deleted = 0;
 
 struct child {
 	pid_t pid;
-	int addrlen;
-	struct sockaddr_in address;
+	socklen_t addrlen;
+	struct sockaddr_storage address;
 } live_child[MAX_CHILDREN];
 
-static void add_child(int idx, pid_t pid, struct sockaddr_in *addr, int addrlen)
+static void add_child(int idx, pid_t pid, struct sockaddr *addr, socklen_t addrlen)
 {
 	live_child[idx].pid = pid;
 	live_child[idx].addrlen = addrlen;
-	live_child[idx].address = *addr;
+	memcpy(&live_child[idx].address, addr, addrlen);
 }
 
 /*
@@ -177,7 +177,7 @@ static void check_max_connections(void)
 	}
 }
 
-static void handle(int incoming, struct sockaddr_in *addr, int addrlen)
+static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 {
 	pid_t pid = fork();
 
@@ -219,37 +219,106 @@ static void child_handler(int signo)
 
 static int serve(int port)
 {
-	int sockfd;
-	struct sockaddr_in addr;
+	struct addrinfo hints, *ai0, *ai;
+	int gai;
+	int socknum = 0, *socklist = NULL;
+	int maxfd = -1;
+	fd_set fds_init, fds;
+	char pbuf[NI_MAXSERV];
 
 	signal(SIGCHLD, child_handler);
-	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
-	if (sockfd < 0)
-		die("unable to open socket (%s)", strerror(errno));
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_port = htons(port);
-	addr.sin_family = AF_INET;
-	if (bind(sockfd, (void *)&addr, sizeof(addr)) < 0)
-		die("unable to bind to port %d (%s)", port, strerror(errno));
-	if (listen(sockfd, 5) < 0)
-		die("unable to listen to port %d (%s)", port, strerror(errno));
+
+	sprintf(pbuf, "%d", port);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE;
+
+	gai = getaddrinfo(NULL, pbuf, &hints, &ai0);
+	if (gai)
+		die("getaddrinfo() failed: %s\n", gai_strerror(gai));
+
+	FD_ZERO(&fds_init);
+
+	for (ai = ai0; ai; ai = ai->ai_next) {
+		int sockfd;
+		int *newlist;
+
+		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (sockfd < 0)
+			continue;
+		if (sockfd >= FD_SETSIZE) {
+			error("too large socket descriptor.");
+			close(sockfd);
+			continue;
+		}
+
+#ifdef IPV6_V6ONLY
+		if (ai->ai_family == AF_INET6) {
+			int on = 1;
+			setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY,
+				   &on, sizeof(on));
+			/* Note: error is not fatal */
+		}
+#endif
+
+		if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+			close(sockfd);
+			continue;	/* not fatal */
+		}
+		if (listen(sockfd, 5) < 0) {
+			close(sockfd);
+			continue;	/* not fatal */
+		}
+
+		newlist = realloc(socklist, sizeof(int) * (socknum + 1));
+		if (!newlist)
+			die("memory allocation failed: %s", strerror(errno));
+
+		socklist = newlist;
+		socklist[socknum++] = sockfd;
+
+		FD_SET(sockfd, &fds_init);
+		if (maxfd < sockfd)
+			maxfd = sockfd;
+	}
+
+	freeaddrinfo(ai0);
+
+	if (socknum == 0)
+		die("unable to allocate any listen sockets on port %u", port);
 
 	for (;;) {
-		struct sockaddr_in in;
-		socklen_t addrlen = sizeof(in);
-		int incoming = accept(sockfd, (void *)&in, &addrlen);
+		int i;
+		fds = fds_init;
+		
+		if (select(maxfd + 1, &fds, NULL, NULL, NULL) < 0) {
+			error("select failed, resuming: %s", strerror(errno));
+			sleep(1);
+			continue;
+		}
 
-		if (incoming < 0) {
-			switch (errno) {
-			case EAGAIN:
-			case EINTR:
-			case ECONNABORTED:
-				continue;
-			default:
-				die("accept returned %s", strerror(errno));
+		for (i = 0; i < socknum; i++) {
+			int sockfd = socklist[i];
+
+			if (FD_ISSET(sockfd, &fds)) {
+				struct sockaddr_storage ss;
+				socklen_t sslen = sizeof(ss);
+				int incoming = accept(sockfd, (struct sockaddr *)&ss, &sslen);
+				if (incoming < 0) {
+					switch (errno) {
+					case EAGAIN:
+					case EINTR:
+					case ECONNABORTED:
+						continue;
+					default:
+						die("accept returned %s", strerror(errno));
+					}
+				}
+				handle(incoming, (struct sockaddr *)&ss, sslen);
 			}
 		}
-		handle(incoming, &in, addrlen);
 	}
 }
 
