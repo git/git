@@ -1042,7 +1042,8 @@ A recommended work cycle for a "subsystem maintainer" that works
 on that project and has own "public repository" goes like this:
 
  (1) Prepare your work repository, by "git clone" the public
-     repository of the "project lead".
+     repository of the "project lead".  The URL used for the
+     initial cloning is stored in .git/branches/origin.
 
  (2) Prepare a public repository accessible to others.
 
@@ -1051,7 +1052,7 @@ on that project and has own "public repository" goes like this:
      currently not automated.
 
  (4) Push into the public repository from your primary
-     repository.  Run "git repack" (and possibly "git
+     repository.  Run "git repack", and possibly "git
      prune-packed" if the transport used for pulling from your
      repository supports packed repositories.
 
@@ -1076,30 +1077,25 @@ A recommended work cycle for an "individual developer" who does
 not have a "public" repository is somewhat different.  It goes
 like this:
 
- (1) Prepare your work repositories, by "git clone" the public
-     repository of the "project lead" (or "subsystem
-     maintainer", if you work on a subsystem).
+ (1) Prepare your work repository, by "git clone" the public
+     repository of the "project lead" (or a "subsystem
+     maintainer", if you work on a subsystem).  The URL used for
+     the initial cloning is stored in .git/branches/origin.
 
- (2) Copy .git/refs/master to .git/refs/upstream.
+ (2) Do your work there.  Make commits.
 
- (3) Do your work there.  Make commits.
+ (3) Run "git fetch origin" from the public repository of your
+     upstream every once in a while.  This does only the first
+     half of "git pull" but does not merge.  The head of the
+     public repository is stored in .git/refs/heads/origin.
 
- (4) Run "git fetch" from the public repository of your upstream
-     every once in a while.  This does only the first half of
-     "git pull" but does not merge.  The head of the public
-     repository is stored in .git/FETCH_HEAD.  Copy it in
-     .git/refs/heads/upstream.
+ (4) Use "git cherry origin" to see which ones of your patches
+     were accepted, and/or use "git rebase origin" to port your
+     unmerged changes forward to the updated upstream.
 
- (5) Use "git cherry" to see which ones of your patches were
-     accepted, and/or use "git rebase" to port your unmerged
-     changes forward to the updated upstream.
-
- (6) Use "git format-patch upstream" to prepare patches for
-     e-mail submission to your upstream and send it out.
-     Go back to step (3) and continue. 
-
-[Side Note: I think Cogito calls this upstream "origin".
- Somebody care to confirm or deny?  ]
+ (5) Use "git format-patch origin" to prepare patches for e-mail
+     submission to your upstream and send it out.  Go back to
+     step (2) and continue.
 
 
 [ to be continued.. cvsimports ]
