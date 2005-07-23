@@ -84,7 +84,9 @@ test_ok_ () {
 test_failure_ () {
 	test_count=$(expr "$test_count" + 1)
 	test_failure=$(expr "$test_failure" + 1);
-	say "FAIL $test_count: $@"
+	say "FAIL $test_count: $1"
+	shift
+	echo "$@" | sed -e 's/^/	/'
 	test "$immediate" == "" || exit 1
 }
 
