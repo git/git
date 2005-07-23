@@ -89,45 +89,14 @@ static void handle_subject(char *line)
 	strcpy(subject, line);
 }
 
-static void add_subject_line(char *line)
-{
-	while (isspace(*line))
-		line++;
-	*--line = ' ';
-	strcat(subject, line);
-}
-
 static void check_line(char *line, int len)
 {
-	static int cont = -1;
-	if (!memcmp(line, "From:", 5) && isspace(line[5])) {
+	if (!memcmp(line, "From:", 5) && isspace(line[5]))
 		handle_from(line+6);
-		cont = 0;
-		return;
-	}
-	if (!memcmp(line, "Date:", 5) && isspace(line[5])) {
+	else if (!memcmp(line, "Date:", 5) && isspace(line[5]))
 		handle_date(line+6);
-		cont = 0;
-		return;
-	}
-	if (!memcmp(line, "Subject:", 8) && isspace(line[8])) {
+	else if (!memcmp(line, "Subject:", 8) && isspace(line[8]))
 		handle_subject(line+9);
-		cont = 1;
-		return;
-	}
-	if (isspace(*line)) {
-		switch (cont) {
-		case 0:
-			fprintf(stderr, "I don't do 'Date:' or 'From:' line continuations\n");
-			break;
-		case 1:
-			add_subject_line(line);
-			return;
-		default:
-			break;
-		}
-	}
-	cont = -1;
 }
 
 static char * cleanup_subject(char *subject)
@@ -246,9 +215,30 @@ static void handle_body(void)
 	}
 }
 
+static int read_one_header_line(char *line, int sz, FILE *in)
+{
+	int ofs = 0;
+	while (ofs < sz) {
+		int peek, len;
+		if (fgets(line + ofs, sz - ofs, in) == NULL)
+			return ofs;
+		len = eatspace(line + ofs);
+		if (len == 0)
+			return ofs;
+		peek = fgetc(in); ungetc(peek, in);
+		if (peek == ' ' || peek == '\t') {
+			/* Yuck, 2822 header "folding" */
+			ofs += len;
+			continue;
+		}
+		return ofs + len;
+	}
+	return ofs;
+}
+
 static void usage(void)
 {
-	fprintf(stderr, "mailinfo msg-file path-file < email\n");
+	fprintf(stderr, "mailinfo msg-file patch-file < email\n");
 	exit(1);
 }
 
@@ -266,8 +256,8 @@ int main(int argc, char ** argv)
 		perror(argv[2]);
 		exit(1);
 	}
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = eatspace(line);
+	while (1) {
+		int len = read_one_header_line(line, sizeof(line), stdin);
 		if (!len) {
 			handle_body();
 			break;
