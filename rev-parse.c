@@ -15,6 +15,7 @@ static int do_rev_argument = 1;
 static int output_revs = 0;
 static int flags_only = 0;
 static int no_flags = 0;
+static int output_sq = 0;
 
 #define NORMAL 0
 #define REVERSED 1
@@ -49,19 +50,42 @@ static int is_rev_argument(const char *arg)
 	}
 }
 
+static void show(const char *arg)
+{
+	if (output_sq) {
+		int sq = '\'', ch;
+
+		putchar(sq);
+		while ((ch = *arg++)) {
+			if (ch == sq)
+				fputs("'\\'", stdout);
+			putchar(ch);
+		}
+		putchar(sq);
+		putchar(' ');
+	}
+	else
+		puts(arg);
+}
+
 static void show_rev(int type, const unsigned char *sha1)
 {
 	if (no_revs)
 		return;
 	output_revs++;
-	printf("%s%s\n", type == show_type ? "" : "^", sha1_to_hex(sha1));
+
+	/* Hexadecimal string plus possibly a carret;
+	 * this does not have to be quoted even under output_sq.
+	 */
+	printf("%s%s%c", type == show_type ? "" : "^", sha1_to_hex(sha1),
+	       output_sq ? ' ' : '\n');
 }
 
 static void show_rev_arg(char *rev)
 {
 	if (no_revs)
 		return;
-	puts(rev);
+	show(rev);
 }
 
 static void show_norev(char *norev)
@@ -70,7 +94,7 @@ static void show_norev(char *norev)
 		return;
 	if (revs_only)
 		return;
-	puts(norev);
+	show(norev);
 }
 
 static void show_arg(char *arg)
@@ -326,6 +350,10 @@ int main(int argc, char **argv)
 				revs_only = 1;
 				do_rev_argument = 0;
 				single_rev = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--sq")) {
+				output_sq = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--not")) {
