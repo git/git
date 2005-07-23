@@ -11,11 +11,11 @@ upstream tree.'
 : ${GIT_DIR=.git}
 
 case "$#" in
-1) linus=`git-rev-parse "$1"` &&
-   junio=`git-rev-parse HEAD` || exit
+1) linus=`git-rev-parse --verify "$1"` &&
+   junio=`git-rev-parse --verify HEAD` || exit
    ;;
-2) linus=`git-rev-parse "$1"` &&
-   junio=`git-rev-parse "$2"` || exit
+2) linus=`git-rev-parse --verify "$1"` &&
+   junio=`git-rev-parse --verify "$2"` || exit
    ;;
 *) echo >&2 "$usage"; exit 1 ;;
 esac

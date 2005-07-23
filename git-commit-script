@@ -16,7 +16,7 @@ do
     -m) shift
         case "$#" in
 	0) usage ;;
-	*) use_commit=`git-rev-parse "$1"` ||
+	*) use_commit=`git-rev-parse --verify "$1"` ||
 	   exit ;;
 	esac
 	;;
