@@ -131,12 +131,12 @@ link:git-clone-pack.html[git-clone-pack]::
 	Clones a repository into the current repository (engine
 	for ssh and local transport)
 
-link:git-fetch-script.html[git-pull-script]::
-	Pull from a repote repository via various protocols
+link:git-fetch-script.html[git-fetch-script]::
+	Download from a remote repository via various protocols
 	(user interface).
 
 link:git-pull-script.html[git-pull-script]::
-	Fetch from and merge with a repote repository via
+	Fetch from and merge with a remote repository via
 	various protocols (user interface).
 
 link:git-http-pull.html[git-http-pull]::
@@ -159,6 +159,9 @@ link:git-clone-pack.html[git-clone-pack]::
 
 link:git-fetch-pack.html[git-fetch-pack]::
 	Updates from a remote repository.
+
+link:git-peek-remote.html[git-peek-remote]::
+	Lists references on a remote repository using upload-pack protocol.
 
 link:git-upload-pack.html[git-upload-pack]::
 	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
