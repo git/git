@@ -10,8 +10,11 @@ prefix=$(HOME)
 bin=$(prefix)/bin
 # dest=
 
-PROGRAMS=mailsplit mailinfo
-SCRIPTS=applymbox applypatch
+PROGRAMS=git-mailsplit git-mailinfo
+SCRIPTS=git-applymbox git-applypatch
+
+git-%: %.c
+	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^)
 
 all: $(PROGRAMS)
 
