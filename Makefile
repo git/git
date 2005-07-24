@@ -49,7 +49,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-diff-stages git-rev-parse git-patch-id git-pack-objects \
 	git-unpack-objects git-verify-pack git-receive-pack git-send-pack \
 	git-prune-packed git-fetch-pack git-upload-pack git-clone-pack \
-	git-show-index git-daemon git-var
+	git-show-index git-daemon git-var git-peek-remote
 
 all: $(PROG)
 
@@ -150,6 +150,7 @@ git-send-pack: send-pack.c
 git-prune-packed: prune-packed.c
 git-fetch-pack: fetch-pack.c
 git-var: var.c
+git-peek-remote: peek-remote.c
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += -lssl
