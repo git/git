@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+. git-sh-setup-script || die "Not a git archive"
+
+usage () {
+    echo >&2 "usage: $0 [--heads] [--tags] [--overwrite | --store] repo"
+    exit 1;
+}
+
+while case "$#" in 0) break;; esac
+do
+  case "$1" in
+  -h|--h|--he|--hea|--head|--heads)
+  heads=heads; shift ;;
+  -o|--o|--ov|--ove|--over|--overw|--overwr|--overwri|--overwrit|--overwrite)
+  overwrite=overwrite; shift ;;
+  -s|--s|--st|--sto|--stor|--store)
+  store=store; shift ;;
+  -t|--t|--ta|--tag|--tags)
+  tags=tags; shift ;;
+  --)
+  shift; break ;;
+  -*)
+  usage ;;
+  *)
+  break ;;
+  esac
+done
+
+case "$#" in 1) ;; *) usage ;; esac
+case ",$store,$overwrite," in *,,*) ;; *) usage ;; esac
+
+case ",$heads,$tags," in
+,,,) heads=heads tags=tags other=other ;;
+esac
+
+. git-parse-remote "$@"
+peek_repo="$_remote_repo"
+
+tmp=.ls-remote-$$
+trap "rm -fr $tmp-*" 0 1 2 3 15
+tmpdir=$tmp-d
+
+case "$peek_repo" in
+http://* | https://* )
+        if [ -n "$GIT_SSL_NO_VERIFY" ]; then
+            curl_extra_args="-k"
+        fi
+	curl -ns $curl_extra_args "$peek_repo/info/refs" || exit 1
+	;;
+
+rsync://* )
+	mkdir $tmpdir
+	rsync -rq "$peek_repo/refs" $tmpdir || exit 1
+	(cd $tmpdir && find refs -type f) |
+	while read path
+	do
+		cat "$tmpdir/$path" | tr -d '\012'
+		echo "	$path"
+	done &&
+	rm -fr $tmpdir
+	;;
+
+* )
+	git-peek-remote "$peek_repo"
+	;;
+esac |
+
+while read sha1 path
+do
+	case "$path" in
+	refs/heads/*)
+		group=heads ;;
+	refs/tags/*)
+		group=tags ;;
+	*)
+		group=other ;;
+	esac
+	case ",$heads,$tags,$other," in
+	*,$group,*)
+		;;
+	*)
+		continue;;
+	esac
+
+	echo "$sha1	$path"
+
+	case "$path,$store,$overwrite," in
+	*,,, | HEAD,*) continue ;;
+	esac
+
+	if test -f "$GIT_DIR/$path" && test "$overwrite" == ""
+	then
+		continue
+	fi
+
+	# Be careful.  We may not have that object yet!
+	if git-cat-file -t "$sha1" >/dev/null 2>&1
+	then
+		echo "$sha1" >"$GIT_DIR/$path"
+	else
+		echo >&2 "* You have not fetched updated $path ($sha1)."
+	fi
+done
