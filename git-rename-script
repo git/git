@@ -1,0 +1,7 @@
+#!/bin/sh
+
+. git-sh-setup-script || die "Not a git archive"
+
+[ -f "$1" ] || [ -h "$1" ] || die "git rename: bad source"
+[ -e "$2" ] && die "git rename: destination already exists"
+mv -- "$1" "$2" && git-update-cache --add --remove -- "$1" "$2"
