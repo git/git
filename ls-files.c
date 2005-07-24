@@ -25,20 +25,31 @@ static const char *tag_removed = "";
 static const char *tag_other = "";
 static const char *tag_killed = "";
 
+static char *exclude_per_dir = NULL;
 static int nr_excludes;
-static const char **excludes;
 static int excludes_alloc;
+static struct exclude {
+	const char *pattern;
+	const char *base;
+	int baselen;
+} **excludes;
 
-static void add_exclude(const char *string)
+static void add_exclude(const char *string, const char *base, int baselen)
 {
+	struct exclude *x = xmalloc(sizeof (*x));
+
+	x->pattern = string;
+	x->base = base;
+	x->baselen = baselen;
 	if (nr_excludes == excludes_alloc) {
 		excludes_alloc = alloc_nr(excludes_alloc);
 		excludes = realloc(excludes, excludes_alloc*sizeof(char *));
 	}
-	excludes[nr_excludes++] = string;
+	excludes[nr_excludes++] = x;
 }
 
-static void add_excludes_from_file(const char *fname)
+static int add_excludes_from_file_1(const char *fname,
+				    const char *base, int baselen)
 {
 	int fd, i;
 	long size;
@@ -53,7 +64,7 @@ static void add_excludes_from_file(const char *fname)
 	lseek(fd, 0, SEEK_SET);
 	if (size == 0) {
 		close(fd);
-		return;
+		return 0;
 	}
 	buf = xmalloc(size);
 	if (read(fd, buf, size) != size)
@@ -63,28 +74,89 @@ static void add_excludes_from_file(const char *fname)
 	entry = buf;
 	for (i = 0; i < size; i++) {
 		if (buf[i] == '\n') {
-			if (entry != buf + i) {
+			if (entry != buf + i && entry[0] != '#') {
 				buf[i] = 0;
-				add_exclude(entry);
+				add_exclude(entry, base, baselen);
 			}
 			entry = buf + i + 1;
 		}
 	}
-	return;
+	return 0;
 
-err:	perror(fname);
-	exit(1);
+ err:
+	if (0 <= fd)
+		close(fd);
+	return -1;
+}
+
+static void add_excludes_from_file(const char *fname)
+{
+	if (add_excludes_from_file_1(fname, "", 0) < 0)
+		die("cannot use %s as an exclude file", fname);
+}
+
+static int push_exclude_per_directory(const char *base, int baselen)
+{
+	char exclude_file[PATH_MAX];
+	int current_nr = nr_excludes;
+
+	if (exclude_per_dir) {
+		memcpy(exclude_file, base, baselen);
+		strcpy(exclude_file + baselen, exclude_per_dir);
+		add_excludes_from_file_1(exclude_file, base, baselen);
+	}
+	return current_nr;
+}
+
+static void pop_exclude_per_directory(int stk)
+{
+	while (stk < nr_excludes)
+		free(excludes[--nr_excludes]);
 }
 
 static int excluded(const char *pathname)
 {
 	int i;
+
 	if (nr_excludes) {
-		const char *basename = strrchr(pathname, '/');
-		basename = (basename) ? basename+1 : pathname;
-		for (i = 0; i < nr_excludes; i++)
-			if (fnmatch(excludes[i], basename, 0) == 0)
-				return 1;
+		int pathlen = strlen(pathname);
+
+		for (i = 0; i < nr_excludes; i++) {
+			struct exclude *x = excludes[i];
+			const char *exclude = x->pattern;
+			int to_exclude = 1;
+
+			if (*exclude == '!') {
+				to_exclude = 0;
+				exclude++;
+			}
+
+			if (!strchr(exclude, '/')) {
+				/* match basename */
+				const char *basename = strrchr(pathname, '/');
+				basename = (basename) ? basename+1 : pathname;
+				if (fnmatch(exclude, basename, 0) == 0)
+					return to_exclude;
+			}
+			else {
+				/* match with FNM_PATHNAME:
+				 * exclude has base (baselen long) inplicitly
+				 * in front of it.
+				 */
+				int baselen = x->baselen;
+				if (*exclude == '/')
+					exclude++;
+
+				if (pathlen < baselen ||
+				    (baselen && pathname[baselen-1] != '/') ||
+				    strncmp(pathname, x->base, baselen))
+				    continue;
+
+				if (fnmatch(exclude, pathname+baselen,
+					    FNM_PATHNAME) == 0)
+					return to_exclude;
+			}
+		}
 	}
 	return 0;
 }
@@ -121,7 +193,7 @@ static void add_name(const char *pathname, int len)
  * doesn't handle them at all yet. Maybe that will change some
  * day.
  *
- * Also, we currently ignore all names starting with a dot.
+ * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
  */
 static void read_directory(const char *path, const char *base, int baselen)
@@ -129,9 +201,12 @@ static void read_directory(const char *path, const char *base, int baselen)
 	DIR *dir = opendir(path);
 
 	if (dir) {
+		int exclude_stk;
 		struct dirent *de;
 		char fullname[MAXPATHLEN + 1];
 		memcpy(fullname, base, baselen);
+
+		exclude_stk = push_exclude_per_directory(base, baselen);
 
 		while ((de = readdir(dir)) != NULL) {
 			int len;
@@ -141,10 +216,10 @@ static void read_directory(const char *path, const char *base, int baselen)
 			     !strcmp(de->d_name + 1, ".") ||
 			     !strcmp(de->d_name + 1, "git")))
 				continue;
-			if (excluded(de->d_name) != show_ignored)
-				continue;
 			len = strlen(de->d_name);
 			memcpy(fullname + baselen, de->d_name, len+1);
+			if (excluded(fullname) != show_ignored)
+				continue;
 
 			switch (DTYPE(de)) {
 			struct stat st;
@@ -170,6 +245,8 @@ static void read_directory(const char *path, const char *base, int baselen)
 			add_name(fullname, baselen + len);
 		}
 		closedir(dir);
+
+		pop_exclude_per_directory(exclude_stk);
 	}
 }
 
@@ -287,7 +364,9 @@ static void show_files(void)
 
 static const char *ls_files_usage =
 	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed])* "
-	"[ --ignored [--exclude=<pattern>] [--exclude-from=<file>) ]";
+	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
+	"[ --exclude-per-directory=<filename> ]";
+;
 
 int main(int argc, char **argv)
 {
@@ -323,13 +402,15 @@ int main(int argc, char **argv)
 			show_stage = 1;
 			show_unmerged = 1;
 		} else if (!strcmp(arg, "-x") && i+1 < argc) {
-			add_exclude(argv[++i]);
+			add_exclude(argv[++i], "", 0);
 		} else if (!strncmp(arg, "--exclude=", 10)) {
-			add_exclude(arg+10);
+			add_exclude(arg+10, "", 0);
 		} else if (!strcmp(arg, "-X") && i+1 < argc) {
 			add_excludes_from_file(argv[++i]);
 		} else if (!strncmp(arg, "--exclude-from=", 15)) {
 			add_excludes_from_file(arg+15);
+		} else if (!strncmp(arg, "--exclude-per-directory=", 24)) {
+			exclude_per_dir = arg + 24;
 		} else
 			usage(ls_files_usage);
 	}
