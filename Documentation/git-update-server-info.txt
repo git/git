@@ -1,0 +1,42 @@
+git-update-server-info(1)
+=========================
+v0.1, July 2005
+
+NAME
+----
+git-update-server-info - Update auxiliary info file to help dumb servers
+
+
+SYNOPSIS
+--------
+'git-update-server-info' [--force]
+
+DESCRIPTION
+-----------
+A dumb server that does not do on-the-fly pack generations can
+have some auxiliary information files in $GIT_DIR/info and
+$GIT_OBJECT_DIRECTORY/info directories to help clients discover
+what references and packs the server has and make an optimized
+pull decisions.  This command generates such auxiliary files.
+
+
+OPTIONS
+-------
+
+--force::
+	Update the info files even when they do not appear
+	stale.
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

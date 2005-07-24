@@ -167,6 +167,10 @@ link:git-upload-pack.html[git-upload-pack]::
 	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
 	what are asked for.
 
+link:git-update-server-info.html[git-update-server-info]::
+	Updates auxiliary information on a dumb server to help
+	clients discover references and packs on it.
+
 
 Ancilliary Commands
 -------------------
