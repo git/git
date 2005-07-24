@@ -34,7 +34,7 @@ case "$continue" in
 '')
 	rm -rf .dotest
 	mkdir .dotest
-	mailsplit "$1" .dotest || exit 1
+	git-mailsplit "$1" .dotest || exit 1
 esac
 
 case "$query_apply" in
@@ -47,11 +47,11 @@ do
 	f,$i)	resume=t;;
 	f,*)	continue;;
 	*)
-		mailinfo .dotest/msg .dotest/patch <$i >.dotest/info || exit 1
+		git-mailinfo .dotest/msg .dotest/patch <$i >.dotest/info || exit 1
 		git-stripspace < .dotest/msg > .dotest/msg-clean
 		;;
 	esac
-	applypatch .dotest/msg-clean .dotest/patch .dotest/info "$2"
+	git-applypatch .dotest/msg-clean .dotest/patch .dotest/info "$2"
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		# 2 is a special exit code from applypatch to indicate that
