@@ -110,6 +110,7 @@ static void execute_commands(void)
 		update(cmd->ref_name, cmd->old_sha1, cmd->new_sha1);
 		cmd = cmd->next;
 	}
+	update_server_info(0);
 }
 
 static void read_head_info(void)

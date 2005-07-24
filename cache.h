@@ -308,4 +308,7 @@ extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struc
 extern void *unpack_entry_gently(struct pack_entry *, char *, unsigned long *);
 extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long *, unsigned long *, int *, unsigned char *);
 
+/* Dumb servers support */
+extern int update_server_info(int);
+
 #endif /* CACHE_H */
