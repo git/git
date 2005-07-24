@@ -89,8 +89,17 @@ yes,yes)
 		rsync $quiet -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
 		;;
 	http://*)
-		echo "Somebody should add http fetch" >&2
-		exit 1
+		git-clone-dumb-http "$repo" "$D"
+		case "$?" in
+		2)
+			echo "Somebody should define smarter http server protocol" >&2
+			exit 1
+			;;
+		0)
+			;;
+		*)
+			exit
+		esac
 		;;
 	*)
 		cd "$D" && case "$upload_pack" in
