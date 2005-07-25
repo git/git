@@ -3,16 +3,29 @@
 
 . git-sh-setup-script || die "Not a git archive"
 
+usage () {
+    echo >&2 "Usage: git-tag-script [-a | -s] [-f] tagname"
+    exit 1
+}
+
+annotate=
 signed=
 force=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
+    -a)
+	annotate=1
+	;;
     -s)
+	annotate=1
 	signed=1
 	;;
     -f)
 	force=1
+	;;
+    -*)
+        usage
 	;;
     *)
 	break
@@ -22,16 +35,19 @@ do
 done
 
 name="$1"
-[ "$name" ] || die "I need a tag-name"
-[ -e "$GIT_DIR/refs/tags/$name" ] &&
-	[ "$force" ] || die "tag '$name' already exists"
+[ "$name" ] || usage
+if [ -e "$GIT_DIR/refs/tags/$name" -a -z "$force" ]; then
+    die "tag '$name' already exists"
+fi
 shift
 
 object=$(git-rev-parse --verify --revs-only --default HEAD "$@") || exit 1
 type=$(git-cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 
-if [ "$signed" ]; then
+trap 'rm -f .tmp-tag* .tagmsg .editmsg' 0
+
+if [ "$annotate" ]; then
     ( echo "#"
       echo "# Write a tag message"
       echo "#" ) > .editmsg
@@ -43,9 +59,13 @@ if [ "$signed" ]; then
 
     ( echo -e "object $object\ntype $type\ntag $name\ntagger $tagger\n"; cat .tagmsg ) > .tmp-tag
     rm -f .tmp-tag.asc .tagmsg
-    gpg -bsa .tmp-tag && cat .tmp-tag.asc >> .tmp-tag
+    if [ "$signed" ]; then
+	me=$(expr "$tagger" : '\(.*>\)') &&
+	gpg -bsa -u "$me" .tmp-tag &&
+	cat .tmp-tag.asc >>.tmp-tag ||
+	die "failed to sign the tag with GPG."
+    fi
     object=$(git-mktag < .tmp-tag)
-    rm -f .tmp-tag .tmp-tag.sig
 fi
 
 mkdir -p "$GIT_DIR/refs/tags"
