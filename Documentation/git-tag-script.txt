@@ -4,18 +4,25 @@ v0.1, May 2005
 
 NAME
 ----
-git-tag-script - An example script to create a tag object signed with GPG
+git-tag-script -  Create a tag object signed with GPG
 
 
 
 SYNOPSIS
 --------
-'git-tag-script'
+'git-tag-script' [-s | -a] [-f] <name>
 
 DESCRIPTION
 -----------
-This is an example script that uses "git-mktag" to create a tag object
-signed with GPG.
+Adds a "tag" reference in .git/refs/tags/
+
+Unless "-f" is given, the tag must not yet exist in ".git/refs/tags"
+
+If "-s" or "-a" is passed, the user will be prompted for a tag message.
+and a tag object is created.  Otherwise just the SHA1 object
+name of the commit object is written.
+
+A GnuPG signed tag object will be created when "-s" is used.
 
 
 Author
@@ -29,4 +36,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the link:git.html[git] suite
-
