@@ -617,7 +617,7 @@ static void run_diff(struct diff_filepair *p)
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
 	one = p->one; two = p->two;
 	switch (p->status) {
-	case 'C':
+	case DIFF_STATUS_COPIED:
 		sprintf(msg_,
 			"similarity index %d%%\n"
 			"copy from %s\n"
@@ -626,7 +626,7 @@ static void run_diff(struct diff_filepair *p)
 			name, other);
 		xfrm_msg = msg_;
 		break;
-	case 'R':
+	case DIFF_STATUS_RENAMED:
 		sprintf(msg_,
 			"similarity index %d%%\n"
 			"rename from %s\n"
@@ -635,7 +635,7 @@ static void run_diff(struct diff_filepair *p)
 			name, other);
 		xfrm_msg = msg_;
 		break;
-	case 'M':
+	case DIFF_STATUS_MODIFIED:
 		if (p->score) {
 			sprintf(msg_,
 				"dissimilarity index %d%%",
@@ -796,10 +796,12 @@ static void diff_flush_raw(struct diff_filepair *p,
 		status[1] = 0;
 	}
 	switch (p->status) {
-	case 'C': case 'R':
+	case DIFF_STATUS_COPIED:
+	case DIFF_STATUS_RENAMED:
 		two_paths = 1;
 		break;
-	case 'N': case 'D':
+	case DIFF_STATUS_ADDED:
+	case DIFF_STATUS_DELETED:
 		two_paths = 0;
 		break;
 	default:
@@ -928,13 +930,13 @@ static void diff_resolve_rename_copy(void)
 		p = q->queue[i];
 		p->status = 0; /* undecided */
 		if (DIFF_PAIR_UNMERGED(p))
-			p->status = 'U';
+			p->status = DIFF_STATUS_UNMERGED;
 		else if (!DIFF_FILE_VALID(p->one))
-			p->status = 'N';
+			p->status = DIFF_STATUS_ADDED;
 		else if (!DIFF_FILE_VALID(p->two))
-			p->status = 'D';
+			p->status = DIFF_STATUS_DELETED;
 		else if (DIFF_PAIR_TYPE_CHANGED(p))
-			p->status = 'T';
+			p->status = DIFF_STATUS_TYPE_CHANGED;
 
 		/* from this point on, we are dealing with a pair
 		 * whose both sides are valid and of the same type, i.e.
@@ -942,7 +944,7 @@ static void diff_resolve_rename_copy(void)
 		 */
 		else if (DIFF_PAIR_RENAME(p)) {
 			if (p->source_stays) {
-				p->status = 'C';
+				p->status = DIFF_STATUS_COPIED;
 				continue;
 			}
 			/* See if there is some other filepair that
@@ -956,22 +958,22 @@ static void diff_resolve_rename_copy(void)
 				if (!DIFF_PAIR_RENAME(pp))
 					continue; /* not a rename/copy */
 				/* pp is a rename/copy from the same source */
-				p->status = 'C';
+				p->status = DIFF_STATUS_COPIED;
 				break;
 			}
 			if (!p->status)
-				p->status = 'R';
+				p->status = DIFF_STATUS_RENAMED;
 		}
 		else if (memcmp(p->one->sha1, p->two->sha1, 20) ||
 			 p->one->mode != p->two->mode)
-			p->status = 'M';
+			p->status = DIFF_STATUS_MODIFIED;
 		else {
 			/* This is a "no-change" entry and should not
 			 * happen anymore, but prepare for broken callers.
 			 */
 			error("feeding unmodified %s to diffcore",
 			      p->one->path);
-			p->status = 'X';
+			p->status = DIFF_STATUS_UNKNOWN;
 		}
 	}
 	diff_debug_queue("resolve-rename-copy done", q);
@@ -989,7 +991,7 @@ void diff_flush(int diff_output_style, int line_termination)
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		if ((diff_output_style == DIFF_FORMAT_NO_OUTPUT) ||
-		    (p->status == 'X'))
+		    (p->status == DIFF_STATUS_UNKNOWN))
 			continue;
 		if (p->status == 0)
 			die("internal error in diff-resolve-rename-copy");
@@ -1024,15 +1026,17 @@ static void diffcore_apply_filter(const char *filter)
 	if (!filter)
 		return;
 
-	if (strchr(filter, 'A')) {
-		/* All-or-none */
+	if (strchr(filter, DIFF_STATUS_FILTER_AON)) {
 		int found;
 		for (i = found = 0; !found && i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if (((p->status == 'M') &&
-			     ((p->score && strchr(filter, 'B')) ||
-			      (!p->score && strchr(filter, 'M')))) ||
-			    ((p->status != 'M') && strchr(filter, p->status)))
+			if (((p->status == DIFF_STATUS_MODIFIED) &&
+			     ((p->score &&
+			       strchr(filter, DIFF_STATUS_FILTER_BROKEN)) ||
+			      (!p->score &&
+			       strchr(filter, DIFF_STATUS_MODIFIED)))) ||
+			    ((p->status != DIFF_STATUS_MODIFIED) &&
+			     strchr(filter, p->status)))
 				found++;
 		}
 		if (found)
@@ -1050,10 +1054,14 @@ static void diffcore_apply_filter(const char *filter)
 		/* Only the matching ones */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if (((p->status == 'M') &&
-			     ((p->score && strchr(filter, 'B')) ||
-			      (!p->score && strchr(filter, 'M')))) ||
-			    ((p->status != 'M') && strchr(filter, p->status)))
+
+			if (((p->status == DIFF_STATUS_MODIFIED) &&
+			     ((p->score &&
+			       strchr(filter, DIFF_STATUS_FILTER_BROKEN)) ||
+			      (!p->score &&
+			       strchr(filter, DIFF_STATUS_MODIFIED)))) ||
+			    ((p->status != DIFF_STATUS_MODIFIED) &&
+			     strchr(filter, p->status)))
 				diff_q(&outq, p);
 			else
 				diff_free_filepair(p);

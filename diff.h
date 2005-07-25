@@ -82,4 +82,20 @@ extern int diff_queue_is_empty(void);
 
 extern void diff_flush(int output_style, int line_terminator);
 
+/* diff-raw status letters */
+#define DIFF_STATUS_ADDED		'N'
+#define DIFF_STATUS_COPIED		'C'
+#define DIFF_STATUS_DELETED		'D'
+#define DIFF_STATUS_MODIFIED		'M'
+#define DIFF_STATUS_RENAMED		'R'
+#define DIFF_STATUS_TYPE_CHANGED	'T'
+#define DIFF_STATUS_UNKNOWN		'X'
+#define DIFF_STATUS_UNMERGED		'U'
+
+/* these are not diff-raw status letters proper, but used by
+ * diffcore-filter insn to specify additional restrictions.
+ */
+#define DIFF_STATUS_FILTER_AON		'A'
+#define DIFF_STATUS_FILTER_BROKEN	'B'
+
 #endif /* DIFF_H */

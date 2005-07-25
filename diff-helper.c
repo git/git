@@ -94,7 +94,8 @@ int main(int ac, const char **av) {
 			if (!strchr("MCRNDU", status))
 				break;
 			two_paths = score = 0;
-			if (status == 'R' || status == 'C')
+			if (status == DIFF_STATUS_RENAMED ||
+			    status == DIFF_STATUS_COPIED)
 				two_paths = 1;
 
 			/* pick up score if exists */
