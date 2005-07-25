@@ -83,7 +83,7 @@ extern int diff_queue_is_empty(void);
 extern void diff_flush(int output_style, int line_terminator);
 
 /* diff-raw status letters */
-#define DIFF_STATUS_ADDED		'N'
+#define DIFF_STATUS_ADDED		'A'
 #define DIFF_STATUS_COPIED		'C'
 #define DIFF_STATUS_DELETED		'D'
 #define DIFF_STATUS_MODIFIED		'M'
