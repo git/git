@@ -294,8 +294,11 @@ static int serve(int port)
 		fds = fds_init;
 		
 		if (select(maxfd + 1, &fds, NULL, NULL, NULL) < 0) {
-			error("select failed, resuming: %s", strerror(errno));
-			sleep(1);
+			if (errno != EINTR) {
+				error("select failed, resuming: %s",
+				      strerror(errno));
+				sleep(1);
+			}
 			continue;
 		}
 
