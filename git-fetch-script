@@ -13,9 +13,29 @@ http://* | https://*)
         if [ -n "$GIT_SSL_NO_VERIFY" ]; then
             curl_extra_args="-k"
         fi
-	head=$(curl -ns $curl_extra_args "$merge_repo/$merge_head") || exit 1
+	_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]' &&
+	_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40" &&
+	head=$(curl -ns $curl_extra_args "$merge_repo/$merge_head") &&
+	expr "$head" : "$_x40\$" >/dev/null || {
+		echo >&2 "Failed to fetch $merge_head from $merge_repo"
+	        exit 1
+	}
+	git-fetch-dumb-http "$head" "$@"
+	case "$?" in
+	0) ;;
+	2) no_dumb_http_support=1 ;;
+	*) exit;;
+	esac
 	echo Fetching "$merge_head" using http
-	git-http-pull -v -a "$head" "$merge_repo/"
+	git-http-pull -v -a "$head" "$merge_repo/" || {
+	    case "$no_dumb_http_support" in
+	    1)
+		echo >&2 "* This could be because the $merge_repo is packed without"
+		echo >&2 "  preparing dumb server support files."
+		;;
+	    esac
+	    exit 1
+	}
 	;;
 rsync://*)
 	rsync -L "$merge_repo/$merge_head" "$TMP_HEAD" || exit 1
