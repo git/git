@@ -6,31 +6,30 @@
 
 usage()
 {
-	echo "$0 <commit> <filename> <url>"
-	echo "  Summarizes the changes since <commit>, stores them in <filename>"
+	echo "$0 <commit> <url> [ <head> ]"
+	echo "  Summarizes the changes since <commit> to the standard output,"
 	echo "  and includes <url> in the message generated."
 	exit 1
 }
 
-
 revision=$1
-filename=$2
-url=$3
+url=$2
+head=${3-HEAD}
 
 [ "$revision" ] || usage
-[ "$filename" ] || usage
 [ "$url" ] || usage
 
-baserev=`git-rev-parse $revision`
+baserev=`git-rev-parse --verify $revision^0` &&
+headrev=`git-rev-parse --verify $head^0` || exit
 
-(
-	echo "The git repository at:" 
-	echo "    $url"
-	echo "contains the following changes since commit $baserev"
-	echo ""
-	git log $revision.. | git-shortlog ;
-	git diff $revision.. | diffstat ;
-) | tee $filename
+echo "The following changes since commit $baserev:"
+git log --max-count=1 --pretty=short "$baserev" |
+git-shortlog | sed -e 's/^\(.\)/  \1/'
 
-echo "The above message is also stored in $filename"
+echo "are found in the git repository at:" 
+echo
+echo "  $url"
+echo
 
+git log  $baserev..$headrev | git-shortlog ;
+git diff $baserev..$headrev | git-apply --stat --summary
