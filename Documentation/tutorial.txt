@@ -763,7 +763,7 @@ which will very loudly warn you that you're now committing a merge
 message about your adventures in git-merge-land. 
 
 After you're done, start up "gitk --all" to see graphically what the
-history looks like.  Notive that "mybranch" still exists, and you can
+history looks like.  Notice that "mybranch" still exists, and you can
 switch to it, and continue to work with it if you want to.  The
 "mybranch" branch will not contain the merge, but next time you merge it
 from the "master" branch, git will know how you merged it, so you'll not
