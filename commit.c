@@ -93,22 +93,28 @@ static unsigned long parse_commit_date(const char *buf)
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 {
-	void *bufptr = buffer;
+	char *bufptr = buffer;
 	unsigned char parent[20];
 	struct commit_list **pptr;
 
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
-	get_sha1_hex(bufptr + 5, parent);
+	if (memcmp(bufptr, "tree ", 5))
+		return error("bogus commit object %s", sha1_to_hex(item->object.sha1));
+	if (get_sha1_hex(bufptr + 5, parent) < 0)
+		return error("bad tree pointer in commit %s\n", sha1_to_hex(item->object.sha1));
 	item->tree = lookup_tree(parent);
 	if (item->tree)
 		add_ref(&item->object, &item->tree->object);
 	bufptr += 46; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
-	while (!memcmp(bufptr, "parent ", 7) &&
-	       !get_sha1_hex(bufptr + 7, parent)) {
-		struct commit *new_parent = lookup_commit(parent);
+	while (!memcmp(bufptr, "parent ", 7)) {
+		struct commit *new_parent;
+
+		if (get_sha1_hex(bufptr + 7, parent) || bufptr[47] != '\n')
+			return error("bad parents in commit %s", sha1_to_hex(item->object.sha1));
+		new_parent = lookup_commit(parent);
 		if (new_parent) {
 			pptr = &commit_list_insert(new_parent, pptr)->next;
 			add_ref(&item->object, &new_parent->object);
