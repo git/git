@@ -16,6 +16,7 @@ static int show_tags = 0;
 static int show_unreachable = 0;
 static int standalone = 0;
 static int check_full = 0;
+static int check_strict = 0;
 static int keep_cache_objects = 0; 
 static unsigned char head_sha1[20];
 
@@ -131,7 +132,8 @@ static int fsck_tree(struct tree *item)
 		 * bits..
 		 */
 		case S_IFREG | 0664:
-			break;
+			if (!check_strict)
+				break;
 		default:
 			printf("tree %s has entry %o %s\n",
 				sha1_to_hex(item->object.sha1),
@@ -168,6 +170,21 @@ static int fsck_tree(struct tree *item)
 
 static int fsck_commit(struct commit *commit)
 {
+	char *buffer = commit->buffer;
+	unsigned char sha1[20];
+
+	if (memcmp(buffer, "tree ", 5))
+		return -1;
+	if (get_sha1_hex(buffer+5, sha1) || buffer[45] != '\n')
+		return -1;
+	buffer += 46;
+	while (!memcmp(buffer, "parent ", 7)) {
+		if (get_sha1_hex(buffer+7, sha1) || buffer[47] != '\n')
+			return -1;
+		buffer += 48;
+	}
+	if (memcmp(buffer, "author ", 7))
+		return -1;
 	free(commit->buffer);
 	commit->buffer = NULL;
 	if (!commit->tree)
@@ -398,6 +415,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--full")) {
 			check_full = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--strict")) {
+			check_strict = 1;
 			continue;
 		}
 		if (*arg == '-')
