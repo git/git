@@ -10,6 +10,7 @@ struct tree_entry_list {
 	unsigned directory : 1;
 	unsigned executable : 1;
 	unsigned symlink : 1;
+	unsigned zeropad : 1;
 	unsigned int mode;
 	char *name;
 	union {

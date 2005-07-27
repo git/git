@@ -167,6 +167,7 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 		entry->directory = S_ISDIR(mode) != 0;
 		entry->executable = (mode & S_IXUSR) != 0;
 		entry->symlink = S_ISLNK(mode) != 0;
+		entry->zeropad = *(char *)bufptr == '0';
 		entry->mode = mode;
 		entry->next = NULL;
 

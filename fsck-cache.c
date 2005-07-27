@@ -109,13 +109,19 @@ static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
 
 static int fsck_tree(struct tree *item)
 {
+	int retval;
 	int has_full_path = 0;
+	int has_zero_pad = 0;
+	int has_bad_modes = 0;
+	int has_dup_entries = 0;
+	int not_properly_sorted = 0;
 	struct tree_entry_list *entry, *last;
 
 	last = NULL;
 	for (entry = item->entries; entry; entry = entry->next) {
 		if (strchr(entry->name, '/'))
 			has_full_path = 1;
+		has_zero_pad |= entry->zeropad;
 
 		switch (entry->mode) {
 		/*
@@ -135,22 +141,17 @@ static int fsck_tree(struct tree *item)
 			if (!check_strict)
 				break;
 		default:
-			printf("tree %s has entry %o %s\n",
-				sha1_to_hex(item->object.sha1),
-				entry->mode, entry->name);
+			has_bad_modes = 1;
 		}
 
 		if (last) {
 			switch (verify_ordered(last, entry)) {
 			case TREE_UNORDERED:
-				fprintf(stderr, "tree %s not ordered\n",
-					sha1_to_hex(item->object.sha1));
-				return -1;
+				not_properly_sorted = 1;
+				break;
 			case TREE_HAS_DUPS:
-				fprintf(stderr, "tree %s has duplicate entries for '%s'\n",
-					sha1_to_hex(item->object.sha1),
-					entry->name);
-				return -1;
+				has_dup_entries = 1;
+				break;
 			default:
 				break;
 			}
@@ -159,13 +160,35 @@ static int fsck_tree(struct tree *item)
 		last = entry;
 	}
 
+	retval = 0;
 	if (has_full_path) {
 		fprintf(stderr, "warning: git-fsck-cache: tree %s "
 			"has full pathnames in it\n", 
 			sha1_to_hex(item->object.sha1));
 	}
-
-	return 0;
+	if (has_zero_pad) {
+		fprintf(stderr, "warning: git-fsck-cache: tree %s "
+			"has zero-padded file modes in it\n",
+			sha1_to_hex(item->object.sha1));
+	}
+	if (has_bad_modes) {
+		fprintf(stderr, "warning: git-fsck-cache: tree %s "
+			"has bad file modes in it\n",
+			sha1_to_hex(item->object.sha1));
+	}
+	if (has_dup_entries) {
+		fprintf(stderr, "error: git-fsck-cache: tree %s "
+			"has duplicate file entries\n",
+			sha1_to_hex(item->object.sha1));
+		retval = -1;
+	}
+	if (not_properly_sorted) {
+		fprintf(stderr, "error: git-fsck-cache: tree %s "
+			"is not properly sorted\n",
+			sha1_to_hex(item->object.sha1));
+		retval = -1;
+	}
+	return retval;
 }
 
 static int fsck_commit(struct commit *commit)
