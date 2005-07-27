@@ -18,7 +18,7 @@ report () {
     T ) echo "#	typechange: $name";;
     C*) echo "#	copied: $name -> $newname";;
     R*) echo "#	renamed: $name -> $newname";;
-    N*) echo "#	new file: $name";;
+    A*) echo "#	new file: $name";;
     U ) echo "#	unmerged: $name";;
     esac
   done
