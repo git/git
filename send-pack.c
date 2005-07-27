@@ -134,7 +134,8 @@ static int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha
 		return 0;
 	list = NULL;
 	commit_list_insert(new, &list);
-	while ((new = pop_most_recent_commit(&list, 1)) != NULL) {
+	while (list) {
+		new = pop_most_recent_commit(&list, 1);
 		if (new == old)
 			return 1;
 	}
