@@ -60,9 +60,19 @@ static void convert_ascii_sha1(void *buffer)
 	struct entry *entry;
 
 	if (get_sha1_hex(buffer, sha1))
-		die("bad sha1");
+		die("expected sha1, got '%s'", buffer);
 	entry = convert_entry(sha1);
 	memcpy(buffer, sha1_to_hex(entry->new_sha1), 40);
+}
+
+static unsigned int convert_mode(unsigned int mode)
+{
+	unsigned int newmode;
+
+	newmode = mode & S_IFMT;
+	if (S_ISREG(mode))
+		newmode |= (mode & 0100) ? 0755 : 0644;
+	return newmode;
 }
 
 static int write_subdirectory(void *buffer, unsigned long size, const char *base, int baselen, unsigned char *result_sha1)
@@ -81,6 +91,7 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 
 		if (!path || sscanf(buffer, "%o", &mode) != 1)
 			die("bad tree conversion");
+		mode = convert_mode(mode);
 		path++;
 		if (memcmp(path, base, baselen))
 			break;
@@ -116,34 +127,6 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 	return used;
 }
 
-static int convert_mode(char *buffer)
-{
-	char *end;
-	unsigned short mode = strtoul(buffer, &end, 8);
-	unsigned short newmode;
-	char num[10];
-	int len;
-
-	if (*end != ' ')
-		die("corrupt tree object");
-	switch (mode) {
-	case S_IFREG | 0644:
-	case S_IFREG | 0755:
-	case S_IFLNK:
-	case S_IFDIR:
-		return 0;
-	}
-	newmode = 0;
-	if (S_ISREG(mode))
-		newmode = (mode & 0100) ? 0755 : 0644;
-	newmode |= mode & S_IFMT;
-	len = sprintf(num, "%o", newmode);
-	if (len != end - buffer)
-		return error("unable to convert tree entry mode %o to %o", mode, newmode);
-	memcpy(buffer, num, len);
-	return 0;
-}
-
 static void convert_tree(void *buffer, unsigned long size, unsigned char *result_sha1)
 {
 	void *orig_buffer = buffer;
@@ -152,7 +135,6 @@ static void convert_tree(void *buffer, unsigned long size, unsigned char *result
 	while (size) {
 		int len = 1+strlen(buffer);
 
-		convert_mode(buffer);
 		convert_binary_sha1(buffer + len);
 
 		len += 20;
@@ -289,6 +271,8 @@ static void convert_commit(void *buffer, unsigned long size, unsigned char *resu
 	void *orig_buffer = buffer;
 	unsigned long orig_size = size;
 
+	if (memcmp(buffer, "tree ", 5))
+		die("Bad commit '%s'", buffer);
 	convert_ascii_sha1(buffer+5);
 	buffer += 46;    /* "tree " + "hex sha1" + "\n" */
 	while (!memcmp(buffer, "parent ", 7)) {
@@ -324,6 +308,7 @@ static struct entry * convert_entry(unsigned char *sha1)
 		die("unknown object type '%s' in %s", type, sha1_to_hex(sha1));
 	entry->converted = 1;
 	free(buffer);
+	free(data);
 	return entry;
 }
 
