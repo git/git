@@ -9,7 +9,7 @@
 # BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
 # break unless your underlying filesystem supports those sub-second times
 # (my ext3 doesn't).
-GIT_VERSION=0.99.1
+GIT_VERSION=0.99.2
 
 COPTS=-O2
 CFLAGS=-g $(COPTS) -Wall
