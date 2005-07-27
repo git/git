@@ -11,7 +11,7 @@
 #define SHOWN		(1u << 3)
 
 static const char rev_list_usage[] =
-	"usage: git-rev-list [OPTION] commit-id <commit-id>\n"
+	"git-rev-list [OPTION] commit-id <commit-id>\n"
 		      "  --max-count=nr\n"
 		      "  --max-age=epoch\n"
 		      "  --min-age=epoch\n"

@@ -1,6 +1,6 @@
 #include "cache.h"
 
-static const char prune_packed_usage[] = "git-prune-packed: usage: git-prune-packed";
+static const char prune_packed_usage[] = "git-prune-packed (no arguments)";
 
 static void prune_dir(int i, DIR *dir, char *pathname, int len)
 {
