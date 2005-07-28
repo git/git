@@ -7,17 +7,22 @@ exec wish "$0" -- "${1+$@}"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
+proc gitdir {} {
+    global env
+    if {[info exists env(GIT_DIR)]} {
+	return $env(GIT_DIR)
+    } else {
+	return ".git"
+    }
+}
+
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont env
     global startmsecs nextupdate
     global ctext maincursor textcursor leftover
 
     # check that we can find a .git directory somewhere...
-    if {[info exists env(GIT_DIR)]} {
-	set gitdir $env(GIT_DIR)
-    } else {
-	set gitdir ".git"
-    }
+    set gitdir [gitdir]
     if {![file isdirectory $gitdir]} {
 	error_popup "Cannot find the git directory \"$gitdir\"."
 	exit 1
@@ -212,7 +217,7 @@ proc parsecommit {id contents listed} {
 
 proc readrefs {} {
     global tagids idtags headids idheads
-    set tags [glob -nocomplain -types f .git/refs/tags/*]
+    set tags [glob -nocomplain -types f [gitdir]/refs/tags/*]
     foreach f $tags {
 	catch {
 	    set fd [open $f r]
@@ -241,7 +246,7 @@ proc readrefs {} {
 	    close $fd
 	}
     }
-    set heads [glob -nocomplain -types f .git/refs/heads/*]
+    set heads [glob -nocomplain -types f [gitdir]/refs/heads/*]
     foreach f $heads {
 	catch {
 	    set fd [open $f r]
@@ -2752,10 +2757,7 @@ proc domktag {} {
 	return
     }
     if {[catch {
-	set dir ".git"
-	if {[info exists env(GIT_DIR)]} {
-	    set dir $env(GIT_DIR)
-	}
+	set dir [gitdir]
 	set fname [file join $dir "refs/tags" $tag]
 	set f [open $fname w]
 	puts $f $id
