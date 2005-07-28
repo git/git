@@ -37,7 +37,7 @@ proc getcommits {rargs} {
 	set parsed_args $rargs
     }
     if [catch {
-	set commfd [open "|git-rev-list --header --merge-order $parsed_args" r]
+	set commfd [open "|git-rev-list --header --topo-order $parsed_args" r]
     } err] {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
@@ -475,7 +475,8 @@ proc click {w} {
 
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont
-    global stuffsaved
+    global stuffsaved findmergefiles gaudydiff
+
     if {$stuffsaved} return
     if {![winfo viewable .]} return
     catch {
