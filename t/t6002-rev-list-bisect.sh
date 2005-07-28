@@ -11,8 +11,12 @@ bc_expr()
 {
 bc <<EOF
 scale=1
-define abs(x) { if (x>=0) { return x; } else { return -x; } }
-define floor(x) { save=scale; scale=0; result=x/1; scale=save; return result; }
+define abs(x) {
+	if (x>=0) { return (x); } else { return (-x); }
+}
+define floor(x) {
+	save=scale; scale=0; result=x/1; scale=save; return (result);
+}
 $*
 EOF
 }
