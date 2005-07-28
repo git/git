@@ -20,6 +20,6 @@ sed -ne '/unreachable /{
     s|\(..\)|\1/|p
 }' | {
 	cd "$GIT_OBJECT_DIRECTORY" || exit
-	xargs -r $dryrun rm -f
+	xargs $dryrun rm -f
 }
 
