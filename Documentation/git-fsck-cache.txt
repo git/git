@@ -9,7 +9,7 @@ git-fsck-cache - Verifies the connectivity and validity of the objects in the da
 
 SYNOPSIS
 --------
-'git-fsck-cache' [--tags] [--root] [--unreachable] [--cache] [--standalone | --full] [<object>*]
+'git-fsck-cache' [--tags] [--root] [--unreachable] [--cache] [--standalone | --full] [--strict] [<object>*]
 
 DESCRIPTION
 -----------
@@ -52,6 +52,14 @@ OPTIONS
 	and in packed GIT archives found in .git/objects/pack
 	and corresponding pack subdirectories in alternate
 	object pools; cannot be used with --standalone.
+
+--strict::
+	Enable more strict checking, namely to catch a file mode
+	recorded with g+w bit set, which was created by older
+	versions of GIT.  Existing repositories, including the
+	Linux kernel, GIT itself, and sparse repository have old
+	objects that triggers this check, but it is recommended
+	to check new projects with this flag.
 
 It tests SHA1 and general object sanity, and it does full tracking of
 the resulting reachability and everything else. It prints out any
