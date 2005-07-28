@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "object.h"
 #include "commit.h"
+#include "tag.h"
 #include "rev-cache.h"
 
 /* refs */
@@ -518,10 +519,16 @@ static int update_info_packs(int force)
 /* rev-cache */
 static int record_rev_cache_ref(const char *path, const unsigned char *sha1)
 {
-	struct commit *commit;
-	if (!(commit = lookup_commit_reference(sha1)))
-		return error("not a commit: %s", sha1_to_hex(sha1));
-	return record_rev_cache(commit->object.sha1, NULL);
+	struct object *obj = parse_object(sha1);
+
+	if (!obj)
+		return error("ref %s has bad sha %s", path, sha1_to_hex(sha1));
+	while (obj && obj->type == tag_type)
+		obj = parse_object(((struct tag *)obj)->tagged->sha1);
+	if (!obj || obj->type != commit_type)
+		/* tag pointing at a non-commit */
+		return 0;
+	return record_rev_cache(obj->sha1, NULL);
 }
 
 static int update_info_revs(int force)
