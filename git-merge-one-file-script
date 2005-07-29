@@ -22,11 +22,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 "$1.." | "$1.$1" | "$1$1.")
 	echo "Removing $4"
-	if test -f "$4"
-	then
+	if test -f "$4"; then
 		rm -f -- "$4"
 	fi &&
-	exec git-update-cache --remove -- "$4"
+		exec git-update-cache --remove -- "$4"
 	;;
 
 #
@@ -62,7 +61,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	# We reset the index to the first branch, making
 	# git-diff-file useful
-	git-update-cache --add --cacheinfo "$6" "$2" "$4" 
+	git-update-cache --add --cacheinfo "$6" "$2" "$4"
 		git-checkout-cache -u -f -- "$4" &&
 		merge "$4" "$orig" "$src2"
 	ret=$?

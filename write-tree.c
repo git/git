@@ -89,14 +89,14 @@ int main(int argc, char **argv)
 	int entries = read_cache();
 	unsigned char sha1[20];
 	
-	if (argc==2) {
+	if (argc == 2) {
 		if (!strcmp(argv[1], "--missing-ok"))
 			missing_ok = 1;
 		else
 			die("unknown option %s", argv[1]);
 	}
 	
-	if (argc>2)
+	if (argc > 2)
 		die("too many options");
 
 	if (entries < 0)

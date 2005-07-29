@@ -9,8 +9,7 @@ git-write-tree - Creates a tree from the current cache
 
 SYNOPSIS
 --------
-'git-write-tree'
-		[--missing-ok]
+'git-write-tree' [--missing-ok]
 
 DESCRIPTION
 -----------
