@@ -137,13 +137,14 @@ CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
 all: $(PROG)
 
 
-git-%: %.c $(LIB_FILE)
-	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
+.PRECIOUS: %.o
+git-%: %.o $(LIB_FILE)
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
-git-http-pull: pull.c
-git-local-pull: pull.c
-git-ssh-pull: rsh.c pull.c
-git-ssh-push: rsh.c
+git-http-pull: pull.o
+git-local-pull: pull.o
+git-ssh-pull: rsh.o pull.o
+git-ssh-push: rsh.o
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += -lssl
