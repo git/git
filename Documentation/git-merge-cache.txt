@@ -9,7 +9,7 @@ git-merge-cache - Runs a merge for files needing merging
 
 SYNOPSIS
 --------
-'git-merge-cache' [-o] <merge-program> (-a | -- | <file>\*) 
+'git-merge-cache' [-o] [-q] <merge-program> (-a | -- | <file>\*) 
 
 DESCRIPTION
 -----------
@@ -32,6 +32,11 @@ OPTIONS
 	returned errors, and only return the error code after all the
 	merges are over.
 
+-q::
+	Do not complain about failed merge program (the merge program
+	failure usually indicates conflicts during merge). This is for
+	porcelains which might want to emit custom messages.
+
 If "git-merge-cache" is called with multiple <file>s (or -a) then it
 processes them in turn only stopping if merge returns a non-zero exit
 code.
@@ -40,7 +45,7 @@ Typically this is run with the a script calling the merge command from
 the RCS package.
 
 A sample script called "git-merge-one-file-script" is included in the
-ditribution.
+distribution.
 
 ALERT ALERT ALERT! The git "merge object order" is different from the
 RCS "merge" program merge object order. In the above ordering, the

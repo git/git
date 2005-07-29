@@ -5,7 +5,7 @@
 
 static const char *pgm = NULL;
 static const char *arguments[8];
-static int one_shot;
+static int one_shot, quiet;
 static int err;
 
 static void run_program(void)
@@ -27,10 +27,13 @@ static void run_program(void)
 		die("unable to execute '%s'", pgm);
 	}
 	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status)) {
-		if (one_shot)
+		if (one_shot) {
 			err++;
-		else
-			die("merge program failed");
+		} else {
+			if (quiet)
+				die("merge program failed");
+			exit(1);
+		}
 	}
 }
 
@@ -97,13 +100,17 @@ int main(int argc, char **argv)
 	int i, force_file = 0;
 
 	if (argc < 3)
-		usage("git-merge-cache [-o] <merge-program> (-a | <filename>*)");
+		usage("git-merge-cache [-o] [-q] <merge-program> (-a | <filename>*)");
 
 	read_cache();
 
 	i = 1;
-	if (!strcmp(argv[1], "-o")) {
+	if (!strcmp(argv[i], "-o")) {
 		one_shot = 1;
+		i++;
+	}
+	if (!strcmp(argv[i], "-q")) {
+		quiet = 1;
 		i++;
 	}
 	pgm = argv[i++];
@@ -122,7 +129,7 @@ int main(int argc, char **argv)
 		}
 		merge_file(arg);
 	}
-	if (err)
+	if (err && quiet)
 		die("merge program failed");
-	return 0;
+	return err;
 }
