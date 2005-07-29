@@ -115,14 +115,14 @@ An exclude pattern file used by (2) and (3) contains one pattern
 per line.  A line that starts with a '#' can be used as comment
 for readability.
 
-The list of patterns that is in effect at a given time is
-built and ordered in the following way:
+There are three lists of patterns that are in effect at a given
+time.  They are built and ordered in the following way:
 
- * --exclude=<pattern> and lines read from --exclude-from=<file>
-   come at the beginning of the list of patterns, in the order
-   given on the command line.  Patterns that come from the file
-   specified with --exclude-from are ordered in the same order
-   as they appear in the file.
+ * --exclude=<pattern> from the command line; patterns are
+   ordered in the same order as they appear on the command line.
+
+ * lines read from --exclude-from=<file>; patterns are ordered
+   in the same order as they appear in the file.
 
  * When --exclude-per-directory=<name> is specified, upon
    entering a directory that has such a file, its contents are
@@ -130,11 +130,12 @@ built and ordered in the following way:
    are popped off when leaving the directory.
 
 Each pattern in the pattern list specifies "a match pattern" and
-optionally the fate --- either a file that matches the pattern
-is considered excluded or included.  By default, this being
-"exclude" mechanism, the fate is "excluded".  A filename is
-examined against the patterns in the list, and the first match
-determines its fate.
+optionally the fate;n either a file that matches the pattern is
+considered excluded or included.  A filename is matched against
+the patterns in the three lists; the --exclude-from list is
+checked first, then the --exclude-per-directory list, and then
+finally the --exclude list. The last match determines its fate.
+If there is no match in the three lists, the fate is "included".
 
 A pattern specified on the command line with --exclude or read
 from the file specified with --exclude-from is relative to the
@@ -168,9 +169,9 @@ An example:
     *.[oa]
     $ cat Documentation/.gitignore
     # ignore generated html files,
+    *.html
     # except foo.html which is maintained by hand
     !foo.html
-    *.html
     $ git-ls-files --ignored \
         --exclude='Documentation/*.[0-9]' \
         --exclude-from=.git/ignore \
