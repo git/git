@@ -548,9 +548,13 @@ int main(int argc, char **argv)
 			sort_in_topological_order(&list);
 		show_commit_list(list);
 	} else {
+#ifndef NO_OPENSSL
 		if (sort_list_in_merge_order(list, &process_commit)) {
-			  die("merge order sort failed\n");
+			die("merge order sort failed\n");
 		}
+#else
+		die("merge order sort unsupported, OpenSSL not linked");
+#endif
 	}
 
 	return 0;
