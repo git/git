@@ -6,6 +6,16 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#if LIBCURL_VERSION_NUM < 0x070704
+#define curl_global_cleanup() do { /* nothing */ } while(0)
+#endif
+#if LIBCURL_VERSION_NUM < 0x070800
+#define curl_global_init(a) do { /* nothing */ } while(0)
+#endif
+#if LIBCURL_VERSION_NUM < 0x070907
+#define curl_easy_setopt(a, b, c) do { /* nothing */ } while(0)
+#endif
+
 static CURL *curl;
 
 static char *base;
