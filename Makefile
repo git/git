@@ -1,33 +1,53 @@
-# -DCOLLISION_CHECK if you believe that SHA1's
+# Define MOZILLA_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
+# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
+# choice) has very fast version optimized for i586.
+#
+# Define NO_OPENSSL environment variable if you do not have OpenSSL. You will
+# miss out git-rev-list --merge-order. This also implies MOZILLA_SHA1.
+#
+# Define PPC_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine optimized for PowerPC.
+
+
+# Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
-#
-# -DUSE_NSEC if you want git to care about sub-second file mtimes and ctimes.
-# -DUSE_STDEV if you want git to care about st_dev changing
-#
-# Note that you need some new glibc (at least >2.2.4) for this, and it will
-# BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
-# break unless your underlying filesystem supports those sub-second times
-# (my ext3 doesn't).
+# sufficient guarantee that no collisions between objects will ever happen.
+
+# DEFINES += -DCOLLISION_CHECK
+
+# Define USE_NSEC below if you want git to care about sub-second file mtimes
+# and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
+# it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
+# randomly break unless your underlying filesystem supports those sub-second
+# times (my ext3 doesn't).
+
+# DEFINES += -DUSE_NSEC
+
+# Define USE_STDEV below if you want git to care about the underlying device
+# change being considered an inode change from the update-cache perspective.
+
+# DEFINES += -DUSE_STDEV
+
 GIT_VERSION=0.99.2
 
-COPTS=-O2
-CFLAGS=-g $(COPTS) -Wall
+COPTS?=-g -O2
+CFLAGS+=$(COPTS) -Wall $(DEFINES)
 
 prefix=$(HOME)
-bin=$(prefix)/bin
+bindir=$(prefix)/bin
 # dest=
 
-CC=gcc
-AR=ar
-INSTALL=install
-RPMBUILD=rpmbuild
+CC?=gcc
+AR?=ar
+INSTALL?=install
+RPMBUILD?=rpmbuild
 
 #
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
 #
-SPARSE_FLAGS=-D__BIG_ENDIAN__ -D__powerpc__
+SPARSE_FLAGS?=-D__BIG_ENDIAN__ -D__powerpc__
 
 SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
@@ -57,7 +77,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 all: $(PROG)
 
 install: $(PROG) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(dest)$(bin)
+	$(INSTALL) -m755 -d $(dest)$(bindir)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
