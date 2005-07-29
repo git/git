@@ -2054,7 +2054,6 @@ proc processgroup {} {
     set pnum 0
     foreach p $parents($id) {
 	set startline [expr {$grouplinestart + $diffoffset($p)}]
-	set offset($p) $diffoffset($p)
 	set ol $startline
 	set nl $grouplinestart
 	if {[info exists grouphunks($p)]} {
@@ -2098,9 +2097,8 @@ proc processgroup {} {
     set events [lsort -integer -index 0 $events]
     set nevents [llength $events]
     set nmerge $nparents($diffmergeid)
-    set i 0
     set l $grouplinestart
-    while {$i < $nevents} {
+    for {set i 0} {$i < $nevents} {set i $j} {
 	set nl [lindex $events $i 0]
 	while {$l < $nl} {
 	    $ctext insert end " $filelines($id,$f,$l)\n"
@@ -2129,7 +2127,9 @@ proc processgroup {} {
 	}
 	set nlc [expr {$enl - $l}]
 	set ncol mresult
+	set bestpn -1
 	if {[llength $active] == $nmerge - 1} {
+	    # no diff for one of the parents, i.e. it's identical
 	    for {set pnum 0} {$pnum < $nmerge} {incr pnum} {
 		if {![info exists delta($pnum)]} {
 		    if {$pnum < $mergemax} {
@@ -2140,11 +2140,25 @@ proc processgroup {} {
 		    break
 		}
 	    }
+	} elseif {[llength $active] == $nmerge} {
+	    # all parents are different, see if one is very similar
+	    set bestsim 30
+	    for {set pnum 0} {$pnum < $nmerge} {incr pnum} {
+		set sim [similarity $pnum $l $nlc $f \
+			     [lrange $events $i [expr {$j-1}]]]
+		if {$sim > $bestsim} {
+		    set bestsim $sim
+		    set bestpn $pnum
+		}
+	    }
+	    if {$bestpn >= 0} {
+		lappend ncol m$bestpn
+	    }
 	}
 	set pnum -1
 	foreach p $parents($id) {
 	    incr pnum
-	    if {![info exists delta($pnum)]} continue
+	    if {![info exists delta($pnum)] || $pnum == $bestpn} continue
 	    set olc [expr {$nlc + $delta($pnum)}]
 	    set ol [expr {$l + $diffoffset($p)}]
 	    incr diffoffset($p) $delta($pnum)
@@ -2154,17 +2168,80 @@ proc processgroup {} {
 		incr ol
 	    }
 	}
-	for {} {$nlc > 0} {incr nlc -1} {
-	    $ctext insert end "+$filelines($id,$f,$l)\n" $ncol
-	    incr l
+	set endl [expr {$l + $nlc}]
+	if {$bestpn >= 0} {
+	    # show this pretty much as a normal diff
+	    set p [lindex $parents($id) $bestpn]
+	    set ol [expr {$l + $diffoffset($p)}]
+	    incr diffoffset($p) $delta($bestpn)
+	    unset delta($bestpn)
+	    for {set k $i} {$k < $j} {incr k} {
+		set e [lindex $events $k]
+		if {[lindex $e 2] != $bestpn} continue
+		set nl [lindex $e 0]
+		set ol [expr {$ol + $nl - $l}]
+		for {} {$l < $nl} {incr l} {
+		    $ctext insert end "+$filelines($id,$f,$l)\n" $ncol
+		}
+		set c [lindex $e 3]
+		for {} {$c > 0} {incr c -1} {
+		    $ctext insert end "-$filelines($p,$f,$ol)\n" m$bestpn
+		    incr ol
+		}
+		set nl [lindex $e 1]
+		for {} {$l < $nl} {incr l} {
+		    $ctext insert end "+$filelines($id,$f,$l)\n" mresult
+		}
+	    }
 	}
-	set i $j
+	for {} {$l < $endl} {incr l} {
+	    $ctext insert end "+$filelines($id,$f,$l)\n" $ncol
+	}
     }
     while {$l < $grouplineend} {
 	$ctext insert end " $filelines($id,$f,$l)\n"
 	incr l
     }
     $ctext conf -state disabled
+}
+
+proc similarity {pnum l nlc f events} {
+    global diffmergeid parents diffoffset filelines
+
+    set id $diffmergeid
+    set p [lindex $parents($id) $pnum]
+    set ol [expr {$l + $diffoffset($p)}]
+    set endl [expr {$l + $nlc}]
+    set same 0
+    set diff 0
+    foreach e $events {
+	if {[lindex $e 2] != $pnum} continue
+	set nl [lindex $e 0]
+	set ol [expr {$ol + $nl - $l}]
+	for {} {$l < $nl} {incr l} {
+	    incr same [string length $filelines($id,$f,$l)]
+	    incr same
+	}
+	set oc [lindex $e 3]
+	for {} {$oc > 0} {incr oc -1} {
+	    incr diff [string length $filelines($p,$f,$ol)]
+	    incr diff
+	    incr ol
+	}
+	set nl [lindex $e 1]
+	for {} {$l < $nl} {incr l} {
+	    incr diff [string length $filelines($id,$f,$l)]
+	    incr diff
+	}
+    }
+    for {} {$l < $endl} {incr l} {
+	incr same [string length $filelines($id,$f,$l)]
+	incr same
+    }
+    if {$same == 0} {
+	return 0
+    }
+    return [expr {200 * $same / (2 * $same + $diff)}]
 }
 
 proc startdiff {ids} {
