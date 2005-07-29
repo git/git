@@ -9,7 +9,7 @@
 ## You give it a mbox-format collection of emails, and it will try to
 ## apply them to the kernel using "applypatch"
 ##
-## applymbox [ -c .dotest/msg-number ] [ -q ] mail_archive [Signoff_file]"
+## applymbox [ -q ] (-c .dotest/msg-number | mail_archive) [Signoff_file]"
 ##
 ## The patch application may fail in the middle.  In which case:
 ## (1) look at .dotest/patch and fix it up to apply
@@ -35,29 +35,55 @@ case "$continue" in
 	rm -rf .dotest
 	mkdir .dotest
 	git-mailsplit "$1" .dotest || exit 1
+	shift
 esac
 
 case "$query_apply" in
 t)	touch .dotest/.query_apply
 esac
 
-for i in .dotest/0*
+signoff="$1"
+set x .dotest/0*
+shift
+while case "$#" in 0) break;; esac
 do
-	case "$resume,$continue" in
-	f,$i)	resume=t;;
-	f,*)	continue;;
-	*)
-		git-mailinfo .dotest/msg .dotest/patch <$i >.dotest/info || exit 1
-		git-stripspace < .dotest/msg > .dotest/msg-clean
-		;;
-	esac
-	git-applypatch .dotest/msg-clean .dotest/patch .dotest/info "$2"
-	ret=$?
-	if [ $ret -ne 0 ]; then
+    i="$1" 
+    case "$resume,$continue" in
+    f,$i)	resume=t;;
+    f,*)	continue;;
+    *)
+	    git-mailinfo .dotest/msg .dotest/patch <$i >.dotest/info || exit 1
+	    git-stripspace < .dotest/msg > .dotest/msg-clean
+	    ;;
+    esac
+    while :; # for fixing up and retry
+    do
+	git-applypatch .dotest/msg-clean .dotest/patch .dotest/info "$signoff"
+	case "$?" in
+	0 | 2 )
 		# 2 is a special exit code from applypatch to indicate that
 	    	# the patch wasn't applied, but continue anyway 
-		[ $ret -ne 2 ] && exit $ret
-	fi
+		;;
+	*)
+		ret=$?
+		if test -f .dotest/.query_apply
+		then
+			echo >&2 "* Patch failed."
+			echo >&2 "* You could fix it up in your editor and"
+			echo >&2 "  retry.  If you want to do so, say yes here"
+			echo >&2 "  AFTER fixing .dotest/patch up."
+			echo >&2 -n "Retry [y/N]? "
+			read yesno
+			case "$yesno" in
+			[Yy]*)
+				continue ;;
+		        esac
+		fi
+		exit $ret
+	esac
+	break
+    done
+    shift
 done
 # return to pristine
 rm -fr .dotest
