@@ -737,6 +737,7 @@ static const char minuses[]= "--------------------------------------------------
 
 static void show_stats(struct patch *patch)
 {
+	const char *prefix = "";
 	char *name = patch->new_name;
 	int len, max, add, del, total;
 
@@ -750,8 +751,15 @@ static void show_stats(struct patch *patch)
 	max = max_len;
 	if (max > 50)
 		max = 50;
-	if (len > max)
+	if (len > max) {
+		char *slash;
+		prefix = "...";
+		max -= 3;
 		name += len - max;
+		slash = strchr(name, '/');
+		if (slash)
+			name = slash;
+	}
 	len = max;
 
 	/*
@@ -770,7 +778,7 @@ static void show_stats(struct patch *patch)
 		add = (add * max + max_change / 2) / max_change;
 		del = total - add;
 	}
-	printf(" %-*s |%5d %.*s%.*s\n",
+	printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
 		len, name, patch->lines_added + patch->lines_deleted,
 		add, pluses, del, minuses);
 }
