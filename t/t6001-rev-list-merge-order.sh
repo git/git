@@ -8,6 +8,13 @@ test_description='Tests git-rev-list --merge-order functionality'
 . ./test-lib.sh
 . ../t6000lib.sh # t6xxx specific functions
 
+if git-rev-list --merge-order 2>&1 | grep 'OpenSSL not linked' >/dev/null
+then
+    test_expect_success 'skipping merge-order test' :
+    test_done
+    exit
+fi    
+
 # test-case specific test function
 check_adjacency()
 {
