@@ -43,11 +43,15 @@ AR?=ar
 INSTALL?=install
 RPMBUILD?=rpmbuild
 
-#
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
-#
 SPARSE_FLAGS?=-D__BIG_ENDIAN__ -D__powerpc__
+
+
+
+### --- END CONFIGURATION SECTION ---
+
+
 
 SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
@@ -74,18 +78,12 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-show-index git-daemon git-var git-peek-remote \
 	git-update-server-info git-show-rev-cache git-build-rev-cache
 
-all: $(PROG)
-
-install: $(PROG) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(dest)$(bindir)
-	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
-
-LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
-	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o path.o \
-	 epoch.o refs.o csum-file.o pack-check.o pkt-line.o connect.o ident.o
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h \
 	pack.h pkt-line.h refs.h
+LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
+	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o path.o \
+	 epoch.o refs.o csum-file.o pack-check.o pkt-line.o connect.o ident.o
 
 LIB_H += rev-cache.h
 LIB_OBJS += rev-cache.o
@@ -126,17 +124,12 @@ endif
 
 CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
-$(LIB_FILE): $(LIB_OBJS)
-	$(AR) rcs $@ $(LIB_OBJS)
 
-check:
-	for i in *.c; do sparse $(CFLAGS) $(SPARSE_FLAGS) $$i; done
 
-test-date: test-date.c date.o
-	$(CC) $(CFLAGS) -o $@ test-date.c date.o
+### Build rules
 
-test-delta: test-delta.c diff-delta.o patch-delta.o
-	$(CC) $(CFLAGS) -o $@ $^
+all: $(PROG)
+
 
 git-%: %.c $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LIBS)
@@ -151,6 +144,47 @@ git-rev-list: LIBS += -lssl
 
 $(LIB_OBJS): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
+
+$(LIB_FILE): $(LIB_OBJS)
+	$(AR) rcs $@ $(LIB_OBJS)
+
+doc:
+	$(MAKE) -C Documentation all
+
+
+
+### Testing rules
+
+test: all
+	$(MAKE) -C t/ all
+
+test-date: test-date.c date.o
+	$(CC) $(CFLAGS) -o $@ test-date.c date.o
+
+test-delta: test-delta.c diff-delta.o patch-delta.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+check:
+	for i in *.c; do sparse $(CFLAGS) $(SPARSE_FLAGS) $$i; done
+
+
+
+### Installation rules
+
+install: $(PROG) $(SCRIPTS)
+	$(INSTALL) -m755 -d $(dest)$(bindir)
+	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
+
+install-tools:
+	$(MAKE) -C tools install
+
+install-doc:
+	$(MAKE) -C Documentation install
+
+
+
+
+### Maintainer's dist rules
 
 git-core.spec: git-core.spec.in Makefile
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
@@ -167,23 +201,16 @@ dist: git-core.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta git-core-$(GIT_VERSION).tar.gz
 
-test: all
-	$(MAKE) -C t/ all
 
-doc:
-	$(MAKE) -C Documentation all
+backup: clean
+	cd .. ; tar czvf dircache.tar.gz dir-cache
 
-install-tools:
-	$(MAKE) -C tools install
 
-install-doc:
-	$(MAKE) -C Documentation install
+
+### Cleaning rules
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
 	rm -f git-core-*.tar.gz git-core.spec
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
-
-backup: clean
-	cd .. ; tar czvf dircache.tar.gz dir-cache
