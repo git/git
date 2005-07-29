@@ -26,30 +26,45 @@ static const char *tag_other = "";
 static const char *tag_killed = "";
 
 static char *exclude_per_dir = NULL;
-static int nr_excludes;
-static int excludes_alloc;
-static struct exclude {
-	const char *pattern;
-	const char *base;
-	int baselen;
-} **excludes;
 
-static void add_exclude(const char *string, const char *base, int baselen)
+/* We maintain three exclude pattern lists:
+ * EXC_CMDL lists patterns explicitly given on the command line.
+ * EXC_DIRS lists patterns obtained from per-directory ignore files.
+ * EXC_FILE lists patterns from fallback ignore files.
+ */
+#define EXC_CMDL 0
+#define EXC_DIRS 1
+#define EXC_FILE 2
+static struct exclude_list {
+	int nr;
+	int alloc;
+	struct exclude {
+		const char *pattern;
+		const char *base;
+		int baselen;
+	} **excludes;
+} exclude_list[3];
+
+static void add_exclude(const char *string, const char *base,
+			int baselen, struct exclude_list *which)
 {
 	struct exclude *x = xmalloc(sizeof (*x));
 
 	x->pattern = string;
 	x->base = base;
 	x->baselen = baselen;
-	if (nr_excludes == excludes_alloc) {
-		excludes_alloc = alloc_nr(excludes_alloc);
-		excludes = realloc(excludes, excludes_alloc*sizeof(char *));
+	if (which->nr == which->alloc) {
+		which->alloc = alloc_nr(which->alloc);
+		which->excludes = realloc(which->excludes,
+					  which->alloc * sizeof(x));
 	}
-	excludes[nr_excludes++] = x;
+	which->excludes[which->nr++] = x;
 }
 
 static int add_excludes_from_file_1(const char *fname,
-				    const char *base, int baselen)
+				    const char *base,
+				    int baselen,
+				    struct exclude_list *which)
 {
 	int fd, i;
 	long size;
@@ -76,7 +91,7 @@ static int add_excludes_from_file_1(const char *fname,
 		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i] = 0;
-				add_exclude(entry, base, baselen);
+				add_exclude(entry, base, baselen, which);
 			}
 			entry = buf + i + 1;
 		}
@@ -91,38 +106,45 @@ static int add_excludes_from_file_1(const char *fname,
 
 static void add_excludes_from_file(const char *fname)
 {
-	if (add_excludes_from_file_1(fname, "", 0) < 0)
+	if (add_excludes_from_file_1(fname, "", 0,
+				     &exclude_list[EXC_FILE]) < 0)
 		die("cannot use %s as an exclude file", fname);
 }
 
 static int push_exclude_per_directory(const char *base, int baselen)
 {
 	char exclude_file[PATH_MAX];
-	int current_nr = nr_excludes;
+	struct exclude_list *el = &exclude_list[EXC_DIRS];
+	int current_nr = el->nr;
 
 	if (exclude_per_dir) {
 		memcpy(exclude_file, base, baselen);
 		strcpy(exclude_file + baselen, exclude_per_dir);
-		add_excludes_from_file_1(exclude_file, base, baselen);
+		add_excludes_from_file_1(exclude_file, base, baselen, el);
 	}
 	return current_nr;
 }
 
 static void pop_exclude_per_directory(int stk)
 {
-	while (stk < nr_excludes)
-		free(excludes[--nr_excludes]);
+	struct exclude_list *el = &exclude_list[EXC_DIRS];
+
+	while (stk < el->nr)
+		free(el->excludes[--el->nr]);
 }
 
-static int excluded(const char *pathname)
+/* Scan the list and let the last match determines the fate.
+ * Return 1 for exclude, 0 for include and -1 for undecided.
+ */
+static int excluded_1(const char *pathname,
+		      int pathlen,
+		      struct exclude_list *el)
 {
 	int i;
 
-	if (nr_excludes) {
-		int pathlen = strlen(pathname);
-
-		for (i = 0; i < nr_excludes; i++) {
-			struct exclude *x = excludes[i];
+	if (el->nr) {
+		for (i = el->nr - 1; 0 <= i; i--) {
+			struct exclude *x = el->excludes[i];
 			const char *exclude = x->pattern;
 			int to_exclude = 1;
 
@@ -156,6 +178,22 @@ static int excluded(const char *pathname)
 					    FNM_PATHNAME) == 0)
 					return to_exclude;
 			}
+		}
+	}
+	return -1; /* undecided */
+}
+
+static int excluded(const char *pathname)
+{
+	int pathlen = strlen(pathname);
+	int st;
+
+	for (st = EXC_CMDL; st <= EXC_FILE; st++) {
+		switch (excluded_1(pathname, pathlen, &exclude_list[st])) {
+		case 0:
+			return 0;
+		case 1:
+			return 1;
 		}
 	}
 	return 0;
@@ -371,6 +409,7 @@ static const char *ls_files_usage =
 int main(int argc, char **argv)
 {
 	int i;
+	int exc_given = 0;
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
@@ -402,20 +441,25 @@ int main(int argc, char **argv)
 			show_stage = 1;
 			show_unmerged = 1;
 		} else if (!strcmp(arg, "-x") && i+1 < argc) {
-			add_exclude(argv[++i], "", 0);
+			exc_given = 1;
+			add_exclude(argv[++i], "", 0, &exclude_list[EXC_CMDL]);
 		} else if (!strncmp(arg, "--exclude=", 10)) {
-			add_exclude(arg+10, "", 0);
+			exc_given = 1;
+			add_exclude(arg+10, "", 0, &exclude_list[EXC_CMDL]);
 		} else if (!strcmp(arg, "-X") && i+1 < argc) {
+			exc_given = 1;
 			add_excludes_from_file(argv[++i]);
 		} else if (!strncmp(arg, "--exclude-from=", 15)) {
+			exc_given = 1;
 			add_excludes_from_file(arg+15);
 		} else if (!strncmp(arg, "--exclude-per-directory=", 24)) {
+			exc_given = 1;
 			exclude_per_dir = arg + 24;
 		} else
 			usage(ls_files_usage);
 	}
 
-	if (show_ignored && !nr_excludes) {
+	if (show_ignored && !exc_given) {
 		fprintf(stderr, "%s: --ignored needs some exclude pattern\n",
 			argv[0]);
 		exit(1);
