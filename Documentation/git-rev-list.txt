@@ -9,13 +9,34 @@ git-rev-list - Lists commit objects in reverse chronological order
 
 SYNOPSIS
 --------
-'git-rev-list' [ *--max-count*=number ] [ *--max-age*=timestamp ] [ *--min-age*=timestamp ] [ *--merge-order* [ *--show-breaks* ] ] <commit>
+'git-rev-list' [ *--max-count*=number ] [ *--max-age*=timestamp ] [ *--min-age*=timestamp ] [ *--bisect* ] [ *--pretty* ] [ *--objects* ] [ *--merge-order* [ *--show-breaks* ] ] <commit> [ <commit> ...] [ ^<commit> ...]
 
 DESCRIPTION
 -----------
 Lists commit objects in reverse chronological order starting at the
-given commit, taking ancestry relationship into account.  This is
+given commit(s), taking ancestry relationship into account.  This is
 useful to produce human-readable log output.
+
+Commits which are stated with a preceding '^' cause listing to stop at
+that point. Their parents are implied. "git-rev-list foo bar ^baz" thus
+means "list all the commits which are included in 'foo' and 'bar', but
+not in 'baz'".
+
+If *--pretty* is specified, print the contents of the commit changesets
+in human-readable form.
+
+The *--objects* flag causes 'git-rev-list' to print the object IDs of
+any object referenced by the listed commits. 'git-rev-list --objects foo
+^bar' thus means "send me all object IDs which I need to download if
+I have the commit object 'bar', but not 'foo'".
+
+The *--bisect* flag limits output to the one commit object which is
+roughly halfway between the included and excluded commits. Thus,
+if "git-rev-list --bisect foo ^bar ^baz" outputs 'midpoint', the output
+of "git-rev-list foo ^midpoint" and "git-rev-list midpoint ^bar ^baz"
+would be of roughly the same length. Finding the change which introduces
+a regression is thus reduced to a binary search: repeatedly generate and
+test new 'midpoint's until the commit chain is of length one.
 
 If *--merge-order* is specified, the commit history is decomposed into a
 unique sequence of minimal, non-linear epochs and maximal, linear epochs.
