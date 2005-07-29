@@ -510,7 +510,7 @@ static int read_cache_unmerged(void)
 	return deleted;
 }
 
-static char *read_tree_usage = "git-read-tree (<sha> | -m [-u] <sha1> [<sha2> [<sha3>]])";
+static const char read_tree_usage[] = "git-read-tree (<sha> | -m [-u] <sha1> [<sha2> [<sha3>]])";
 
 static struct cache_file cache_file;
 

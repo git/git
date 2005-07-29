@@ -17,7 +17,7 @@ static int diff_break_opt = -1;
 static const char *orderfile = NULL;
 static const char *diff_filter = NULL;
 
-static char *diff_stages_usage =
+static const char diff_stages_usage[] =
 "git-diff-stages [<common diff options>] <stage1> <stage2> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 

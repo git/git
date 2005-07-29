@@ -17,7 +17,7 @@
 #define EXT_HEADER_PATH		1
 #define EXT_HEADER_LINKPATH	2
 
-static const char *tar_tree_usage = "git-tar-tree <key> [basedir]";
+static const char tar_tree_usage[] = "git-tar-tree <key> [basedir]";
 
 static char block[BLOCKSIZE];
 static unsigned long offset;

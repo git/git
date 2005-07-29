@@ -20,7 +20,7 @@ static void flush_them(int ac, const char **av)
 	diff_flush(DIFF_FORMAT_PATCH, '\n');
 }
 
-static const char *diff_helper_usage =
+static const char diff_helper_usage[] =
 "git-diff-helper [-z] [-O<orderfile>] [-S<string>] [--pickaxe-all] [<path>...]";
 
 int main(int ac, const char **av) {

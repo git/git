@@ -21,7 +21,7 @@ static void hash_object(const char *path, const char *type, int write_object)
 	printf("%s\n", sha1_to_hex(sha1));
 }
 
-static const char *hash_object_usage =
+static const char hash_object_usage[] =
 "git-hash-object [-t <type>] [-w] <file>...";
 
 int main(int argc, char **argv)

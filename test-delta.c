@@ -17,7 +17,7 @@
 #include <sys/mman.h>
 #include "delta.h"
 
-static const char *usage =
+static const char usage[] =
 	"test-delta (-d|-p) <from_file> <data_file> <out_file>";
 
 int main(int argc, char *argv[])

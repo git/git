@@ -6,7 +6,7 @@
 #include "cache.h"
 #include "diff.h"
 
-static const char *diff_files_usage =
+static const char diff_files_usage[] =
 "git-diff-files [-q] "
 "[<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;

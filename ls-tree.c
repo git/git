@@ -208,7 +208,7 @@ static int list(char **path)
 	return err;
 }
 
-static const char *ls_tree_usage =
+static const char ls_tree_usage[] =
 	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
 
 int main(int argc, char **argv)

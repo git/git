@@ -395,7 +395,7 @@ static int diff_tree_stdin(char *line)
 	return diff_tree_commit(commit, line);
 }
 
-static char *diff_tree_usage =
+static const char diff_tree_usage[] =
 "git-diff-tree [--stdin] [-m] [-s] [-v] [--pretty] [-t] "
 "[<common diff options>] <tree-ish> <tree-ish>"
 COMMON_DIFF_OPTIONS_HELP;

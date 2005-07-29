@@ -27,7 +27,7 @@ static int verify_one_pack(char *arg, int verbose)
 	return verify_pack(g, verbose);
 }
 
-static const char *verify_pack_usage = "git-verify-pack [-v] <pack>...";
+static const char verify_pack_usage[] = "git-verify-pack [-v] <pack>...";
 
 int main(int ac, char **av)
 {

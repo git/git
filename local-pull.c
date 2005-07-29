@@ -101,7 +101,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	return 0;
 }
 
-static const char *local_pull_usage = 
+static const char local_pull_usage[] =
 "git-local-pull [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path";
 
 /* 

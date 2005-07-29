@@ -400,11 +400,10 @@ static void show_files(void)
 	}
 }
 
-static const char *ls_files_usage =
+static const char ls_files_usage[] =
 	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
 	"[ --exclude-per-directory=<filename> ]";
-;
 
 int main(int argc, char **argv)
 {

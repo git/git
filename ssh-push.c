@@ -96,7 +96,7 @@ static void service(int fd_in, int fd_out) {
 	} while (1);
 }
 
-static const char *ssh_push_usage =
+static const char ssh_push_usage[] =
 	"git-ssh-push [-c] [-t] [-a] [-w ref] commit-id url";
 
 int main(int argc, char **argv)

@@ -163,7 +163,7 @@ static void mark_merge_entries(void)
 	}
 }
 
-static char *diff_cache_usage =
+static const char diff_cache_usage[] =
 "git-diff-cache [-m] [--cached] "
 "[<common diff options>] <tree-ish> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;

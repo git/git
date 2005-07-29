@@ -75,7 +75,7 @@ static int checkout_all(void)
 	return 0;
 }
 
-static const char *checkout_cache_usage =
+static const char checkout_cache_usage[] =
 "git-checkout-cache [-u] [-q] [-a] [-f] [-n] [--prefix=<string>] [--] <file>...";
 
 int main(int argc, char **argv)

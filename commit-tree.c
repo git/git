@@ -64,7 +64,7 @@ static void check_valid(unsigned char *sha1, const char *expect)
 #define MAXPARENT (16)
 static unsigned char parent_sha1[MAXPARENT][20];
 
-static char *commit_tree_usage = "git-commit-tree <sha1> [-p <sha1>]* < changelog";
+static const char commit_tree_usage[] = "git-commit-tree <sha1> [-p <sha1>]* < changelog";
 
 static int new_parent(int idx)
 {
