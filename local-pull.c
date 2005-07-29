@@ -54,7 +54,7 @@ int fetch(unsigned char *sha1)
 		}
 		map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, ifd, 0);
 		close(ifd);
-		if (-1 == (int)(long)map) {
+		if (map == MAP_FAILED) {
 			fprintf(stderr, "cannot mmap %s\n", filename);
 			return -1;
 		}

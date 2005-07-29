@@ -116,8 +116,9 @@ int main(int argc, char **argv)
 	}
 	size = st.st_size;
 	map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (-1 == (int)(long)map) {
+	if (map == MAP_FAILED) {
 		perror("mmap");
+		close(fd);
 		exit(1);
 	}
 	close(fd);

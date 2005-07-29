@@ -518,7 +518,7 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 	}
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (-1 == (int)(long)map)
+	if (map == MAP_FAILED)
 		return NULL;
 	*size = st.st_size;
 	return map;
@@ -1363,7 +1363,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	if (size)
 		buf = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if ((int)(long)buf == -1)
+	if (buf == MAP_FAILED)
 		return -1;
 
 	if (!type)

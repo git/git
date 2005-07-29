@@ -28,7 +28,7 @@ static void prepare_order(const char *orderfile)
 	}
 	map = mmap(NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (-1 == (int)(long)map)
+	if (map == MAP_FAILED)
 		return;
 	endp = map + st.st_size;
 	for (pass = 0; pass < 2; pass++) {

@@ -377,8 +377,10 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		if (fd < 0)
 			goto err_empty;
 		s->data = mmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
-		s->should_munmap = 1;
 		close(fd);
+		if (s->data == MAP_FAILED)
+			goto err_empty;
+		s->should_munmap = 1;
 	}
 	else {
 		char type[20];

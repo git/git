@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 	from_buf = mmap(NULL, from_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (from_buf == MAP_FAILED) {
 		perror(argv[2]);
+		close(fd);
 		return 1;
 	}
 	close(fd);
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
 	data_buf = mmap(NULL, data_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (data_buf == MAP_FAILED) {
 		perror(argv[3]);
+		close(fd);
 		return 1;
 	}
 	close(fd);

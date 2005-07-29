@@ -392,7 +392,7 @@ int read_cache(void)
 		return (errno == ENOENT) ? 0 : error("open failed");
 
 	size = 0; // avoid gcc warning
-	map = (void *)-1;
+	map = MAP_FAILED;
 	if (!fstat(fd, &st)) {
 		size = st.st_size;
 		errno = EINVAL;
@@ -400,7 +400,7 @@ int read_cache(void)
 			map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	}
 	close(fd);
-	if (-1 == (int)(long)map)
+	if (map == MAP_FAILED)
 		return error("mmap failed");
 
 	hdr = map;

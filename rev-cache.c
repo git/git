@@ -212,11 +212,9 @@ int read_rev_cache(const char *path, FILE *dumpfile, int dry_run)
 		return -1;
 	}
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (map == MAP_FAILED) {
-		close(fd);
-		return -1;
-	}
 	close(fd);
+	if (map == MAP_FAILED)
+		return -1;
 
 	memset(last_sha1, 0, 20);
 	ofs = 0;
