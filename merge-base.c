@@ -2,54 +2,50 @@
 #include "cache.h"
 #include "commit.h"
 
-static struct commit *process_list(struct commit_list **list_p, int this_mark,
-				   int other_mark)
-{
-	struct commit *item = (*list_p)->item;
-
-	if (item->object.flags & other_mark) {
-		return item;
-	} else {
-		pop_most_recent_commit(list_p, this_mark);
-	}
-	return NULL;
-}
-
 static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 {
-	struct commit_list *rev1list = NULL;
-	struct commit_list *rev2list = NULL;
+	struct commit_list *list = NULL;
+	struct commit_list *result = NULL;
 
-	commit_list_insert(rev1, &rev1list);
-	rev1->object.flags |= 0x1;
-	commit_list_insert(rev2, &rev2list);
-	rev2->object.flags |= 0x2;
+	if (rev1 == rev2)
+		return rev1;
 
 	parse_commit(rev1);
 	parse_commit(rev2);
 
-	while (rev1list || rev2list) {
-		struct commit *ret;
-		if (!rev1list) {
-			// process 2
-			ret = process_list(&rev2list, 0x2, 0x1);
-		} else if (!rev2list) {
-			// process 1
-			ret = process_list(&rev1list, 0x1, 0x2);
-		} else if (rev1list->item->date < rev2list->item->date) {
-			// process 2
-			ret = process_list(&rev2list, 0x2, 0x1);
-		} else {
-			// process 1
-			ret = process_list(&rev1list, 0x1, 0x2);
+	rev1->object.flags |= 1;
+	rev2->object.flags |= 2;
+	insert_by_date(rev1, &list);
+	insert_by_date(rev2, &list);
+
+	while (list) {
+		struct commit *commit = list->item;
+		struct commit_list *tmp = list, *parents;
+		int flags = commit->object.flags & 3;
+
+		list = list->next;
+		free(tmp);
+		switch (flags) {
+		case 3:
+			insert_by_date(commit, &result);
+			continue;
+		case 0:
+			die("git-merge-base: commit without either parent?");
 		}
-		if (ret) {
-			free_commit_list(rev1list);
-			free_commit_list(rev2list);
-			return ret;
+		parents = commit->parents;
+		while (parents) {
+			struct commit *p = parents->item;
+			parents = parents->next;
+			if ((p->object.flags & flags) == flags)
+				continue;
+			parse_commit(p);
+			p->object.flags |= flags;
+			insert_by_date(p, &list);
 		}
 	}
-	return NULL;
+	if (!result)
+		return NULL;
+	return result->item;
 }
 
 int main(int argc, char **argv)
@@ -64,6 +60,8 @@ int main(int argc, char **argv)
 	}
 	rev1 = lookup_commit_reference(rev1key);
 	rev2 = lookup_commit_reference(rev2key);
+	if (!rev1 || !rev2)
+		return 1;
 	ret = common_ancestor(rev1, rev2);
 	if (!ret)
 		return 1;
