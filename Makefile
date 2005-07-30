@@ -180,7 +180,7 @@ check:
 
 install: $(PROG) $(SCRIPTS)
 	$(INSTALL) -m755 -d $(dest)$(bindir)
-	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bin)
+	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bindir)
 
 install-tools:
 	$(MAKE) -C tools install
