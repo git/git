@@ -107,9 +107,11 @@ LIBS += -lz
 
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
+	OPENSSL_LIBSSL=-lssl
 else
 	CFLAGS += '-DNO_OPENSSL'
 	MOZILLA_SHA1=1
+	OPENSSL_LIBSSL=
 endif
 ifdef MOZILLA_SHA1
   SHA1_HEADER="mozilla-sha1/sha1.h"
@@ -147,7 +149,7 @@ git-ssh-pull: rsh.o pull.o
 git-ssh-push: rsh.o
 
 git-http-pull: LIBS += -lcurl
-git-rev-list: LIBS += -lssl
+git-rev-list: LIBS += $(OPENSSL_LIBSSL)
 
 $(LIB_OBJS): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
