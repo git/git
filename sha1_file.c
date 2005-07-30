@@ -61,7 +61,8 @@ static int get_sha1_file(const char *path, unsigned char *result)
 	return get_sha1_hex(buffer, result);
 }
 
-static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir;
+static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
+	*git_graft_file;
 static void setup_git_env(void)
 {
 	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
@@ -79,6 +80,9 @@ static void setup_git_env(void)
 		git_index_file = xmalloc(strlen(git_dir) + 7);
 		sprintf(git_index_file, "%s/index", git_dir);
 	}
+	git_graft_file = gitenv(GRAFT_ENVIRONMENT);
+	if (!git_graft_file)
+		git_graft_file = strdup(git_path("info/grafts"));
 }
 
 char *get_object_directory(void)
@@ -100,6 +104,13 @@ char *get_index_file(void)
 	if (!git_index_file)
 		setup_git_env();
 	return git_index_file;
+}
+
+char *get_graft_file(void)
+{
+	if (!git_graft_file)
+		setup_git_env();
+	return git_graft_file;
 }
 
 int safe_create_leading_directories(char *path)

@@ -91,11 +91,108 @@ static unsigned long parse_commit_date(const char *buf)
 	return date;
 }
 
+static struct commit_graft {
+	unsigned char sha1[20];
+	int nr_parent;
+	unsigned char parent[0][20]; /* more */
+} **commit_graft;
+static int commit_graft_alloc, commit_graft_nr;
+
+static int commit_graft_pos(const unsigned char *sha1)
+{
+	int lo, hi;
+	lo = 0;
+	hi = commit_graft_nr;
+	while (lo < hi) {
+		int mi = (lo + hi) / 2;
+		struct commit_graft *graft = commit_graft[mi];
+		int cmp = memcmp(sha1, graft->sha1, 20);
+		if (!cmp)
+			return mi;
+		if (cmp < 0)
+			hi = mi;
+		else
+			lo = mi + 1;
+	}
+	return -lo - 1;
+}
+
+static void prepare_commit_graft(void)
+{
+	char *graft_file = get_graft_file();
+	FILE *fp = fopen(graft_file, "r");
+	char buf[1024];
+	if (!fp) {
+		commit_graft = (struct commit_graft **) "hack";
+		return;
+	}
+	while (fgets(buf, sizeof(buf), fp)) {
+		/* The format is just "Commit Parent1 Parent2 ...\n" */
+		int len = strlen(buf);
+		int i;
+		struct commit_graft *graft = NULL;
+
+		if (buf[len-1] == '\n')
+			buf[--len] = 0;
+		if (buf[0] == '#')
+			continue;
+		if ((len + 1) % 41) {
+		bad_graft_data:
+			error("bad graft data: %s", buf);
+			free(graft);
+			continue;
+		}
+		i = (len + 1) / 41 - 1;
+		graft = xmalloc(sizeof(*graft) + 20 * i);
+		graft->nr_parent = i;
+		if (get_sha1_hex(buf, graft->sha1))
+			goto bad_graft_data;
+		for (i = 40; i < len; i += 41) {
+			if (buf[i] != ' ')
+				goto bad_graft_data;
+			if (get_sha1_hex(buf + i + 1, graft->parent[i/41]))
+				goto bad_graft_data;
+		}
+		i = commit_graft_pos(graft->sha1);
+		if (0 <= i) {
+			error("duplicate graft data: %s", buf);
+			free(graft);
+			continue;
+		}
+		i = -i - 1;
+		if (commit_graft_alloc <= ++commit_graft_nr) {
+			commit_graft_alloc = alloc_nr(commit_graft_alloc);
+			commit_graft = xrealloc(commit_graft,
+						sizeof(*commit_graft) *
+						commit_graft_alloc);
+		}
+		if (i < commit_graft_nr)
+			memmove(commit_graft + i + 1,
+				commit_graft + i,
+				(commit_graft_nr - i - 1) *
+				sizeof(*commit_graft));
+		commit_graft[i] = graft;
+	}
+	fclose(fp);
+}
+
+static struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
+{
+	int pos;
+	if (!commit_graft)
+		prepare_commit_graft();
+	pos = commit_graft_pos(sha1);
+	if (pos < 0)
+		return NULL;
+	return commit_graft[pos];
+}
+
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 {
 	char *bufptr = buffer;
 	unsigned char parent[20];
 	struct commit_list **pptr;
+	struct commit_graft *graft;
 
 	if (item->object.parsed)
 		return 0;
@@ -109,17 +206,32 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		add_ref(&item->object, &item->tree->object);
 	bufptr += 46; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
+
+	graft = lookup_commit_graft(item->object.sha1);
 	while (!memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
 		if (get_sha1_hex(bufptr + 7, parent) || bufptr[47] != '\n')
 			return error("bad parents in commit %s", sha1_to_hex(item->object.sha1));
+		bufptr += 48;
+		if (graft)
+			continue;
 		new_parent = lookup_commit(parent);
 		if (new_parent) {
 			pptr = &commit_list_insert(new_parent, pptr)->next;
 			add_ref(&item->object, &new_parent->object);
 		}
-		bufptr += 48;
+	}
+	if (graft) {
+		int i;
+		struct commit *new_parent;
+		for (i = 0; i < graft->nr_parent; i++) {
+			new_parent = lookup_commit(graft->parent[i]);
+			if (!new_parent)
+				continue;
+			pptr = &commit_list_insert(new_parent, pptr)->next;
+			add_ref(&item->object, &new_parent->object);
+		}
 	}
 	item->date = parse_commit_date(bufptr);
 	return 0;
