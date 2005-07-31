@@ -12,9 +12,6 @@
 #if LIBCURL_VERSION_NUM < 0x070800
 #define curl_global_init(a) do { /* nothing */ } while(0)
 #endif
-#if LIBCURL_VERSION_NUM < 0x070907
-#define curl_easy_setopt(a, b, c) do { /* nothing */ } while(0)
-#endif
 
 static CURL *curl;
 
@@ -187,7 +184,9 @@ int main(int argc, char **argv)
 
 	curl_ssl_verify = gitenv("GIT_SSL_NO_VERIFY") ? 0 : 1;
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, curl_ssl_verify);
+#if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(curl, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+#endif
 
 	base = url;
 
