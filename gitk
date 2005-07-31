@@ -1729,7 +1729,9 @@ proc mergediff {id} {
     set diffpindex -1
     set diffmergegca [findgca $parents($id)]
     if {[info exists mergefilelist($id)]} {
-	showmergediff
+	if {$mergefilelist($id) ne {}} {
+	    showmergediff
+	}
     } else {
 	contmergediff {}
     }
@@ -1753,7 +1755,7 @@ proc findgca {ids} {
 
 proc contmergediff {ids} {
     global diffmergeid diffpindex parents nparents diffmergegca
-    global treediffs mergefilelist diffids
+    global treediffs mergefilelist diffids treepending
 
     # diff the child against each of the parents, and diff
     # each of the parents against the GCA.
@@ -1814,8 +1816,8 @@ proc contmergediff {ids} {
 
 proc showmergediff {} {
     global cflist diffmergeid mergefilelist parents
-    global diffopts diffinhunk currentfile diffblocked
-    global groupfilelast mergefds
+    global diffopts diffinhunk currentfile currenthunk filelines
+    global diffblocked groupfilelast mergefds groupfilenum grouphunks
 
     set files $mergefilelist($diffmergeid)
     foreach f $files {
@@ -1826,6 +1828,8 @@ proc showmergediff {} {
     catch {unset currentfile}
     catch {unset currenthunk}
     catch {unset filelines}
+    catch {unset groupfilenum}
+    catch {unset grouphunks}
     set groupfilelast -1
     foreach p $parents($diffmergeid) {
 	set cmd [list | git-diff-tree -p $p $diffmergeid]
@@ -2700,7 +2704,7 @@ proc diffvssel {dirn} {
     $ctext conf -state disabled
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
-    startdiff $newid [list $oldid]
+    startdiff [list $newid $oldid]
 }
 
 proc mkpatch {} {
