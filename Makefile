@@ -6,6 +6,9 @@
 # Define NO_OPENSSL environment variable if you do not have OpenSSL. You will
 # miss out git-rev-list --merge-order. This also implies MOZILLA_SHA1.
 #
+# Define NO_CURL if you do not have curl installed.  git-http-pull is not
+# built, and you cannot use http:// and https:// transports.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 
@@ -69,7 +72,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-checkout-cache git-diff-tree git-rev-tree git-ls-files \
 	git-check-files git-ls-tree git-merge-base git-merge-cache \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
-	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
+	git-ssh-push git-ssh-pull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-hash-object \
 	git-get-tar-commit-id git-apply git-stripspace \
 	git-diff-stages git-rev-parse git-patch-id git-pack-objects \
@@ -77,6 +80,10 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-prune-packed git-fetch-pack git-upload-pack git-clone-pack \
 	git-show-index git-daemon git-var git-peek-remote \
 	git-update-server-info git-show-rev-cache git-build-rev-cache
+
+ifndef NO_CURL
+PROG+= git-http-pull
+endif
 
 LIB_FILE=libgit.a
 LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h \
