@@ -7,7 +7,7 @@ CFLAGS=-g $(COPTS) -Wall
 INSTALL=install
 HOME=$(shell echo $$HOME)
 prefix=$(HOME)
-bin=$(prefix)/bin
+bindir=$(prefix)/bin
 # dest=
 
 PROGRAMS=git-mailsplit git-mailinfo
@@ -19,8 +19,8 @@ git-%: %.c
 all: $(PROGRAMS)
 
 install: $(PROGRAMS) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(dest)$(bin)
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(dest)$(bin)
+	$(INSTALL) -m755 -d $(dest)$(bindir)
+	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(dest)$(bindir)
 
 clean:
 	rm -f $(PROGRAMS) *.o
