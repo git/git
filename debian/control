@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: git-core
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, patch, diff, rcs
-Recommends: rsync, curl, ssh
+Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl
 Conflicts: git
 Description: The git content addressable filesystem
  GIT comes in two layers. The bottom layer is merely an extremely fast
