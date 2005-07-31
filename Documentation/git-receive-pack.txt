@@ -22,6 +22,55 @@ program pair is meant to be used to push updates to remote
 repository.  For pull operations, see 'git-fetch-pack' and
 'git-clone-pack'.
 
+The command allows for creation and fast forwarding of sha1 refs
+(heads/tags) on the remote end (strictly speaking, it is the
+local end receive-pack runs, but to the user who is sitting at
+the send-pack end, it is updating the remote.  Confused?)
+
+Before each ref is updated, if $GIT_DIR/hooks/update file exists
+and executable, it is called with three parameters:
+
+       $GIT_DIR/hooks/update refname sha1-old sha1-new
+
+The refname parameter is relative to $GIT_DIR; e.g. for the
+master head this is "refs/heads/master".  Two sha1 are the
+object names for the refname before and after the update.  Note
+that the hook is called before the refname is updated, so either
+sha1-old is 0{40} (meaning there is no such ref yet), or it
+should match what is recorded in refname.
+
+The hook should exit with non-zero status if it wants to
+disallow updating the named ref.  Otherwise it should exit with
+zero.
+
+The same hook is also called with an empty string as refname and
+no other arguments just before git-receive-pack exits.  This can
+be used to implement repository wide cleanup task if needed.
+The exit code from this hook invocation is ignored; the only
+thing left for git-receive-pack to do at that point is to exit
+itself anyway.
+
+Using this hook, it is easy to generate mails on updates to
+the local repository. This example script sends a mail with
+the commits pushed to the repository:
+
+	#!/bin/sh
+	case "$#,$1" in
+	1,) # help packed repository pulled via dumb protocol.
+	    git-update-server-info
+	    ;;
+	*)  # mail out commit update information.
+	    if expr "$2" : '0*$' >/dev/null
+	    then
+		echo "Created now ref."
+		git-rev-list --pretty "$2"
+	    else
+		echo "New commits"
+		git-rev-list --pretty "$3" "^$2"
+	    fi |
+	    mail -s "Changes to ref $1" commit-list@mydomain
+        esac
+	exit 0
 
 OPTIONS
 -------

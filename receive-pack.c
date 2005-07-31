@@ -1,11 +1,12 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "run-command.h"
 #include <sys/wait.h>
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
-static const char *unpacker = "git-unpack-objects";
+static const char unpacker[] = "git-unpack-objects";
 
 static int show_ref(const char *path, const unsigned char *sha1)
 {
@@ -55,6 +56,38 @@ static int verify_old_ref(const char *name, char *hex_contents)
 	return 0;
 }
 
+static char update_hook[] = "hooks/update";
+
+static int run_update_hook(const char *refname,
+			   char *old_hex, char *new_hex)
+{
+	int code;
+
+	if (access(update_hook, X_OK) < 0)
+		return 0;
+	code = run_command(update_hook, refname, old_hex, new_hex, NULL);
+	switch (code) {
+	case 0:
+		return 0;
+	case -ERR_RUN_COMMAND_FORK:
+		die("hook fork failed");
+	case -ERR_RUN_COMMAND_EXEC:
+		die("hook execute failed");
+	case -ERR_RUN_COMMAND_WAITPID:
+		die("waitpid failed");
+	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
+		die("waitpid is confused");
+	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
+		fprintf(stderr, "%s died of signal", update_hook);
+		return -1;
+	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
+		die("%s died strangely", update_hook);
+	default:
+		error("%s exited with error code %d", update_hook, -code);
+		return -code;
+	}
+}
+
 static void update(const char *name, unsigned char *old_sha1, unsigned char *new_sha1)
 {
 	char new_hex[60], *old_hex, *lock_name;
@@ -90,11 +123,16 @@ static void update(const char *name, unsigned char *old_sha1, unsigned char *new
 		unlink(lock_name);
 		die("%s changed during push", name);
 	}
-	if (rename(lock_name, name) < 0) {
+	if (run_update_hook(name, old_hex, new_hex)) {
+		unlink(lock_name);
+		fprintf(stderr, "hook declined to update %s\n", name);
+	}
+	else if (rename(lock_name, name) < 0) {
 		unlink(lock_name);
 		die("unable to replace %s", name);
 	}
-	fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
+	else
+		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
 }
 
 
@@ -110,7 +148,7 @@ static void execute_commands(void)
 		update(cmd->ref_name, cmd->old_sha1, cmd->new_sha1);
 		cmd = cmd->next;
 	}
-	update_server_info(0);
+	run_update_hook("", NULL, NULL);
 }
 
 static void read_head_info(void)
@@ -145,34 +183,24 @@ static void read_head_info(void)
 
 static void unpack(void)
 {
-	pid_t pid = fork();
-
-	if (pid < 0)
+	int code = run_command(unpacker, NULL);
+	switch (code) {
+	case 0:
+		return 0;
+	case -ERR_RUN_COMMAND_FORK:
 		die("unpack fork failed");
-	if (!pid) {
-		execlp(unpacker, unpacker, NULL);
+	case -ERR_RUN_COMMAND_EXEC:
 		die("unpack execute failed");
-	}
-
-	for (;;) {
-		int status, code;
-		int retval = waitpid(pid, &status, 0);
-
-		if (retval < 0) {
-			if (errno == EINTR)
-				continue;
-			die("waitpid failed (%s)", strerror(retval));
-		}
-		if (retval != pid)
-			die("waitpid is confused");
-		if (WIFSIGNALED(status))
-			die("%s died of signal %d", unpacker, WTERMSIG(status));
-		if (!WIFEXITED(status))
-			die("%s died out of really strange complications", unpacker);
-		code = WEXITSTATUS(status);
-		if (code)
-			die("%s exited with error code %d", unpacker, code);
-		return;
+	case -ERR_RUN_COMMAND_WAITPID:
+		die("waitpid failed");
+	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
+		die("waitpid is confused");
+	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
+		die("%s died of signal", unpacker);
+	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
+		die("%s died strangely", unpacker);
+	default:
+		die("%s exited with error code %d", unpacker, -code);
 	}
 }
 

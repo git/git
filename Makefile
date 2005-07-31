@@ -98,6 +98,9 @@ LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 LIB_H += rev-cache.h
 LIB_OBJS += rev-cache.o
 
+LIB_H += run-command.h
+LIB_OBJS += run-command.o
+
 LIB_H += strbuf.h
 LIB_OBJS += strbuf.o
 
