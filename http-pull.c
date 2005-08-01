@@ -33,7 +33,8 @@ struct buffer
 };
 
 static size_t fwrite_buffer(void *ptr, size_t eltsize, size_t nmemb,
-                            struct buffer *buffer) {
+                            struct buffer *buffer)
+{
         size_t size = eltsize * nmemb;
         if (size > buffer->size - buffer->posn)
                 size = buffer->size - buffer->posn;
@@ -42,8 +43,9 @@ static size_t fwrite_buffer(void *ptr, size_t eltsize, size_t nmemb,
         return size;
 }
 
-static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb, 
-			       void *data) {
+static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
+			       void *data)
+{
 	unsigned char expn[4096];
 	size_t size = eltsize * nmemb;
 	int posn = 0;
@@ -65,6 +67,168 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
+static int got_indices = 0;
+
+static struct packed_git *packs = NULL;
+
+static int fetch_index(unsigned char *sha1)
+{
+	char *filename;
+	char *url;
+
+	FILE *indexfile;
+
+	if (has_pack_index(sha1))
+		return 0;
+
+	if (get_verbosely)
+		fprintf(stderr, "Getting index for pack %s\n",
+			sha1_to_hex(sha1));
+	
+	url = xmalloc(strlen(base) + 64);
+	sprintf(url, "%s/objects/pack/pack-%s.idx",
+		base, sha1_to_hex(sha1));
+	
+	filename = sha1_pack_index_name(sha1);
+	indexfile = fopen(filename, "w");
+	if (!indexfile)
+		return error("Unable to open local file %s for pack index",
+			     filename);
+
+	curl_easy_setopt(curl, CURLOPT_FILE, indexfile);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	
+	if (curl_easy_perform(curl)) {
+		fclose(indexfile);
+		return error("Unable to get pack index %s", url);
+	}
+
+	fclose(indexfile);
+	return 0;
+}
+
+static int setup_index(unsigned char *sha1)
+{
+	struct packed_git *new_pack;
+	if (has_pack_file(sha1))
+		return 0; // don't list this as something we can get
+
+	if (fetch_index(sha1))
+		return -1;
+
+	new_pack = parse_pack_index(sha1);
+	new_pack->next = packs;
+	packs = new_pack;
+	return 0;
+}
+
+static int fetch_indices(void)
+{
+	unsigned char sha1[20];
+	char *url;
+	struct buffer buffer;
+	char *data;
+	int i = 0;
+
+	if (got_indices)
+		return 0;
+
+	data = xmalloc(4096);
+	buffer.size = 4096;
+	buffer.posn = 0;
+	buffer.buffer = data;
+
+	if (get_verbosely)
+		fprintf(stderr, "Getting pack list\n");
+	
+	url = xmalloc(strlen(base) + 21);
+	sprintf(url, "%s/objects/info/packs", base);
+
+	curl_easy_setopt(curl, CURLOPT_FILE, &buffer);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	
+	if (curl_easy_perform(curl)) {
+		return error("Unable to get pack index %s", url);
+	}
+
+	do {
+		switch (data[i]) {
+		case 'P':
+			i++;
+			if (i + 52 < buffer.posn &&
+			    !strncmp(data + i, " pack-", 6) &&
+			    !strncmp(data + i + 46, ".pack\n", 6)) {
+				get_sha1_hex(data + i + 6, sha1);
+				setup_index(sha1);
+				i += 51;
+				break;
+			}
+		default:
+			while (data[i] != '\n')
+				i++;
+		}
+		i++;
+	} while (i < buffer.posn);
+
+	got_indices = 1;
+	return 0;
+}
+
+static int fetch_pack(unsigned char *sha1)
+{
+	char *url;
+	struct packed_git *target;
+	struct packed_git **lst;
+	FILE *packfile;
+	char *filename;
+
+	if (fetch_indices())
+		return -1;
+	target = find_sha1_pack(sha1, packs);
+	if (!target)
+		return error("Couldn't get %s: not separate or in any pack",
+			     sha1_to_hex(sha1));
+
+	if (get_verbosely) {
+		fprintf(stderr, "Getting pack %s\n",
+			sha1_to_hex(target->sha1));
+		fprintf(stderr, " which contains %s\n",
+			sha1_to_hex(sha1));
+	}
+
+	url = xmalloc(strlen(base) + 65);
+	sprintf(url, "%s/objects/pack/pack-%s.pack",
+		base, sha1_to_hex(target->sha1));
+
+	filename = sha1_pack_name(target->sha1);
+	packfile = fopen(filename, "w");
+	if (!packfile)
+		return error("Unable to open local file %s for pack",
+			     filename);
+
+	curl_easy_setopt(curl, CURLOPT_FILE, packfile);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	
+	if (curl_easy_perform(curl)) {
+		fclose(packfile);
+		return error("Unable to get pack file %s", url);
+	}
+
+	fclose(packfile);
+
+	lst = &packs;
+	while (*lst != target)
+		lst = &((*lst)->next);
+	*lst = (*lst)->next;
+
+	install_packed_git(target);
+
+	return 0;
+}
+
 int fetch(unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
@@ -76,7 +240,7 @@ int fetch(unsigned char *sha1)
 	local = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 
 	if (local < 0)
-		return error("Couldn't open %s\n", filename);
+		return error("Couldn't open local object %s\n", filename);
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -84,6 +248,7 @@ int fetch(unsigned char *sha1)
 
 	SHA1_Init(&c);
 
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 	curl_easy_setopt(curl, CURLOPT_FILE, NULL);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 
@@ -99,8 +264,12 @@ int fetch(unsigned char *sha1)
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
-	if (curl_easy_perform(curl))
-		return error("Couldn't get %s for %s\n", url, hex);
+	if (curl_easy_perform(curl)) {
+		unlink(filename);
+		if (fetch_pack(sha1))
+			return error("Tried %s", url);
+		return 0;
+	}
 
 	close(local);
 	inflateEnd(&stream);
