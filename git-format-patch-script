@@ -109,7 +109,7 @@ _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
 
 git-rev-list --merge-order "$junio" "^$linus" >$series
-total=`wc -l <$series`
+total=`wc -l <$series | tr -dc "[0-9]"`
 i=$total
 while read commit
 do
