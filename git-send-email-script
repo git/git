@@ -4,17 +4,17 @@
 # Copyright 2005 Ryan Anderson <ryan@michonline.com>
 #
 # GPL v2 (See COPYING)
-# 
+#
 # Ported to support git "mbox" format files by Ryan Anderson <ryan@michonline.com>
 #
 # Sends a collection of emails to the given email addresses, disturbingly fast.
-# 
+#
 # Supports two formats:
 # 1. mbox format files (ignoring most headers and MIME formatting - this is designed for sending patches)
 # 2. The original format support by Greg's script:
-#    first line of the message is who to CC, 
+#    first line of the message is who to CC,
 #    and second line is the subject of the message.
-# 
+#
 
 use strict;
 use warnings;
@@ -83,7 +83,7 @@ if (!defined $from) {
 
 if (!@to) {
 	do {
-		$_ = $term->readline("Who should the emails be sent to? ", 
+		$_ = $term->readline("Who should the emails be sent to? ",
 				"");
 	} while (!defined $_);
 	my $to = $_;
@@ -92,7 +92,7 @@ if (!@to) {
 
 if (!defined $initial_subject) {
 	do {
-		$_ = $term->readline("What subject should the emails start with? ", 
+		$_ = $term->readline("What subject should the emails start with? ",
 			$initial_subject);
 	} while (!defined $_);
 	$initial_subject = $_;
@@ -100,7 +100,7 @@ if (!defined $initial_subject) {
 
 if (!defined $initial_reply_to) {
 	do {
-		$_= $term->readline("Message-ID to be used as In-Reply-To? ", 
+		$_= $term->readline("Message-ID to be used as In-Reply-To? ",
 			$initial_reply_to);
 	} while (!defined $_);
 
@@ -119,7 +119,7 @@ for my $f (@ARGV) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
-		push @files, grep { -f $_ } map { +$f . "/" . $_ } 
+		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
 
 	} elsif (-f $f) {
@@ -137,12 +137,12 @@ if (@files) {
 git-send-email-script [options] <file | directory> [... file | directory ]
 Options:
    --from         Specify the "From:" line of the email to be sent.
-   --to	          Specify the primary "To:" line of the email.
+   --to           Specify the primary "To:" line of the email.
    --subject      Specify the initial "Subject:" line.
    --in-reply-to  Specify the first "In-Reply-To:" header line.
    --chain-reply-to If set, the replies will all be to the previous
-   		  email sent, rather than to the first email sent.
-		  Defaults to on.
+                  email sent, rather than to the first email sent.
+                  Defaults to on.
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
@@ -249,7 +249,7 @@ foreach my $t (@files) {
 					$subject = $_;
 				}
 			}
-			
+
 			# A whitespace line will terminate the headers
 			if (m/^\s*$/) {
 				$header_done = 1;
@@ -276,7 +276,6 @@ foreach my $t (@files) {
 		$reply_to = $message_id;
 	}
 	make_message_id();
-#	$subject = "Re: ".$initial_subject;
 }
 
 
@@ -291,6 +290,3 @@ sub unique_email_list(@) {
 	}
 	return @emails;
 }
-
-
-
