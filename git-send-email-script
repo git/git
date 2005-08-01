@@ -27,6 +27,9 @@ use Email::Valid;
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from);
 
+# Behavior modification variables
+my ($chain_reply_to) = (1);
+
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
 
@@ -39,6 +42,7 @@ my $rc = GetOptions("from=s" => \$from,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
+		    "chain-reply-to!" => \$chain_reply_to,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:
@@ -90,6 +94,7 @@ if (!defined $initial_reply_to) {
 		$term->readline("Message-ID to be used as In-Reply-To? ", 
 			$initial_reply_to)));
 	$initial_reply_to = $_;
+	$initial_reply_to =~ s/(^\s+|\s+$)//g;
 }
 
 # Now that all the defaults are set, process the rest of the command line
@@ -119,6 +124,8 @@ Options:
    --to	          Specify the primary "To:" line of the email.
    --subject      Specify the initial "Subject:" line.
    --in-reply-to  Specify the first "In-Reply-To:" header line.
+   --chain-reply-to If set, the replies will all be to the first
+   		  email sent, rather than to the last email sent.
 
 Error: Please specify a file or a directory on the command line.
 EOT
@@ -247,7 +254,9 @@ foreach my $t (@files) {
 	send_message();
 
 	# set up for the next message
-	$reply_to = $message_id;
+	if ($chain_reply_to || length($reply_to) == 0) {
+		$reply_to = $message_id;
+	}
 	make_message_id();
 #	$subject = "Re: ".$initial_subject;
 }
