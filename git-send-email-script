@@ -73,7 +73,7 @@ if (!defined $from) {
 	do {
 		$_ = $term->readline("Who should the emails appear to be from? ",
 			$from);
-	while (!defined $_);
+	} while (!defined $_);
 
 	$from = $_;
 	print "Emails will be sent from: ", $from, "\n";
@@ -117,7 +117,7 @@ for my $f (@ARGV) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
-		push @files, map { +$f . "/" . $_ } grep { -f $_ }
+		push @files, grep { -f $_ } map { +$f . "/" . $_ } 
 				sort readdir(DH);
 
 	} elsif (-f $f) {
