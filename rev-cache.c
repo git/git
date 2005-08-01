@@ -5,7 +5,7 @@
 struct rev_cache **rev_cache;
 int nr_revs, alloc_revs;
 
-struct rev_list_elem *rle_free;
+static struct rev_list_elem *rle_free;
 
 #define BATCH_SIZE 512
 

@@ -71,13 +71,13 @@ static int max_connections = 25;
 
 /* These are updated by the signal handler */
 static volatile unsigned int children_reaped = 0;
-pid_t dead_child[MAX_CHILDREN];
+static pid_t dead_child[MAX_CHILDREN];
 
 /* These are updated by the main loop */
 static unsigned int children_spawned = 0;
 static unsigned int children_deleted = 0;
 
-struct child {
+static struct child {
 	pid_t pid;
 	socklen_t addrlen;
 	struct sockaddr_storage address;

@@ -62,7 +62,7 @@ static int update_info_refs(int force)
 }
 
 /* packs */
-struct pack_info {
+static struct pack_info {
 	unsigned long latest;
 	struct packed_git *p;
 	int old_num;
