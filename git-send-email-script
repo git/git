@@ -1,21 +1,19 @@
 #!/usr/bin/perl -w
-# horrible hack of a script to send off a large number of email messages, one after
-# each other, all chained together.  This is useful for large numbers of patches.
 #
-# Use at your own risk!!!!
-#
-# greg kroah-hartman Jan 8, 2002
-# <greg@kroah.com>
+# Copyright 2002,2005 Greg Kroah-Hartman <greg@kroah.com>
+# Copyright 2005 Ryan Anderson <ryan@michonline.com>
 #
 # GPL v2 (See COPYING)
 # 
 # Ported to support git "mbox" format files by Ryan Anderson <ryan@michonline.com>
 #
-# Sends emails to the email listed on the command line.
+# Sends a collection of emails to the given email addresses, disturbingly fast.
 # 
-# updated to give a valid subject and CC the owner of the patch - Jan 2005
-# first line of the message is who to CC, 
-# and second line is the subject of the message.
+# Supports two formats:
+# 1. mbox format files (ignoring most headers and MIME formatting - this is designed for sending patches)
+# 2. The original format support by Greg's script:
+#    first line of the message is who to CC, 
+#    and second line is the subject of the message.
 # 
 
 use strict;
