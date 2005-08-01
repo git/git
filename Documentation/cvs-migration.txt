@@ -111,16 +111,14 @@ repository of this person public, and make every team member
 pull regularly from it.
 
 2. Set up a public repository with read/write access for every team
-member. Use "git pull/push" as you used "cvs update/commit". Beware!
-Linus says that "git push" does no locking, since it was not meant
-for multi-user repositories!
+member. Use "git pull/push" as you used "cvs update/commit".  Be
+sure that your repository is up to date before pushing, just
+like you used to do with "cvs commit"; your push will fail if
+what you are pushing is not up to date.
 
 3. Make the repository of every team member public. It is the
 responsibility of each single member to pull from every other
 team member.
-
-4. Read Documentation/tutorial.txt and admit that the described work
-flow is the best.
 
 
 CVS annotate
