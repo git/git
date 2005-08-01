@@ -69,30 +69,38 @@ close(GITVAR);
 
 if (!defined $from) {
 	$from = $author || $committer;
-	1 while (!defined ($_ = $term->readline("Who should the emails appear to be from? ", 
-				$from)));
+	do {
+		$_ = $term->readline("Who should the emails appear to be from? ",
+			$from);
+	while (!defined $_);
+
 	$from = $_;
 	print "Emails will be sent from: ", $from, "\n";
 }
 
 if (!@to) {
-	1 while (!defined ($_ = $term->readline("Who should the emails be sent to? ", 
-				"")));
+	do {
+		$_ = $term->readline("Who should the emails be sent to? ", 
+				"");
+	} while (!defined $_);
 	my $to = $_;
 	push @to, split /,/, $to;
 }
 
 if (!defined $initial_subject) {
-	1 while (!defined ($_ = 
-		$term->readline("What subject should the emails start with? ", 
-			$initial_subject)));
+	do {
+		$_ = $term->readline("What subject should the emails start with? ", 
+			$initial_subject);
+	} while (!defined $_);
 	$initial_subject = $_;
 }
 
 if (!defined $initial_reply_to) {
-	1 while (!defined ($_ = 
-		$term->readline("Message-ID to be used as In-Reply-To? ", 
-			$initial_reply_to)));
+	do {
+		$_= $term->readline("Message-ID to be used as In-Reply-To? ", 
+			$initial_reply_to);
+	} while (!defined $_);
+
 	$initial_reply_to = $_;
 	$initial_reply_to =~ s/(^\s+|\s+$)//g;
 }
@@ -104,8 +112,9 @@ for my $f (@ARGV) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
-		push @files, map { +$f . "/" . $_ } grep !/^\.{1,2}$/,
-			sort readdir(DH);
+		push @files, map { +$f . "/" . $_ } grep { -f $_ }
+				sort readdir(DH);
+
 	} elsif (-f $f) {
 		push @files, $f;
 
@@ -142,13 +151,18 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 # of seconds since the beginning of Unix time and tacking on
 # a random number to the end, in case we are called quicker than
 # 1 second since the last time we were called.
+
+# We'll setup a template for the message id, using the "from" address:
+my $message_id_from = Email::Valid->address($from);
+my $message_id_template = "<%s-git-send-email-$from>";
+
 sub make_message_id
 {
 	my $date = `date "+\%s"`;
 	chomp($date);
 	my $pseudo_rand = int (rand(4200));
-	$message_id = "<$date$pseudo_rand\@foobar.com>";
-	print "new message id = $message_id\n";
+	$message_id = sprintf $message_id_template, "$date$pseudo_rand";
+	#print "new message id = $message_id\n"; # Was useful for debugging
 }
 
 
