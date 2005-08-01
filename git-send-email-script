@@ -28,7 +28,7 @@ use Email::Valid;
 my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from);
 
 # Behavior modification variables
-my ($chain_reply_to) = (1);
+my ($chain_reply_to, $smtp_server) = (1, "localhost");
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -43,6 +43,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
 		    "chain-reply-to!" => \$chain_reply_to,
+		    "smtp-server=s" => \$smtp_server,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:
@@ -105,6 +106,10 @@ if (!defined $initial_reply_to) {
 	$initial_reply_to =~ s/(^\s+|\s+$)//g;
 }
 
+if (!defined $smtp_server) {
+	$smtp_server = "localhost";
+}
+
 # Now that all the defaults are set, process the rest of the command line
 # arguments and collect up the files that need to be processed.
 for my $f (@ARGV) {
@@ -135,6 +140,8 @@ Options:
    --in-reply-to  Specify the first "In-Reply-To:" header line.
    --chain-reply-to If set, the replies will all be to the first
    		  email sent, rather than to the last email sent.
+   --smtp-server  If set, specifies the outgoing SMTP server to use.
+                  Defaults to localhost.
 
 Error: Please specify a file or a directory on the command line.
 EOT
@@ -187,7 +194,7 @@ sub send_message
 			'X-Mailer'	=>	"git-send-email-script",
 		);
 
-	$mail{smtp} = 'localhost';
+	$mail{smtp} = $smtp_server;
 	$mailcfg{mime} = 0;
 
 	#print Data::Dumper->Dump([\%mail],[qw(*mail)]);
