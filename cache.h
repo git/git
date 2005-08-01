@@ -174,6 +174,8 @@ extern void rollback_index_file(struct cache_file *);
 extern char *mkpath(const char *fmt, ...);
 extern char *git_path(const char *fmt, ...);
 extern char *sha1_file_name(const unsigned char *sha1);
+extern char *sha1_pack_name(const unsigned char *sha1);
+extern char *sha1_pack_index_name(const unsigned char *sha1);
 
 int safe_create_leading_directories(char *path);
 
@@ -201,6 +203,9 @@ extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 extern int has_sha1_file(const unsigned char *sha1);
+
+extern int has_pack_file(const unsigned char *sha1);
+extern int has_pack_index(const unsigned char *sha1);
 
 /* Convert to/from hex/sha1 representation */
 extern int get_sha1(const char *str, unsigned char *sha1);
@@ -278,6 +283,7 @@ extern struct packed_git {
 	void *pack_base;
 	unsigned int pack_last_used;
 	unsigned int pack_use_cnt;
+	unsigned char sha1[20];
 	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
 } *packed_git;
 
@@ -300,7 +306,14 @@ extern int path_match(const char *path, int nr, char **match);
 extern int get_ack(int fd, unsigned char *result_sha1);
 extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match);
 
+extern struct packed_git *parse_pack_index(unsigned char *sha1);
+
 extern void prepare_packed_git(void);
+extern void install_packed_git(struct packed_git *pack);
+
+extern struct packed_git *find_sha1_pack(const unsigned char *sha1, 
+					 struct packed_git *packs);
+
 extern int use_packed_git(struct packed_git *);
 extern void unuse_packed_git(struct packed_git *);
 extern struct packed_git *add_packed_git(char *, int);
