@@ -186,7 +186,7 @@ static void unpack(void)
 	int code = run_command(unpacker, NULL);
 	switch (code) {
 	case 0:
-		return 0;
+		return;
 	case -ERR_RUN_COMMAND_FORK:
 		die("unpack fork failed");
 	case -ERR_RUN_COMMAND_EXEC:
