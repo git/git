@@ -90,7 +90,7 @@ from CVS.
 You can merge those updates (or, in fact, a different CVS branch) into
 your main branch:
 
-	cg-merge <branch>
+	git resolve HEAD origin "merge with current CVS HEAD"
 
 The HEAD revision from CVS is named "origin", not "HEAD", because git
 already uses "HEAD". (If you don't like 'origin', use cvsimport's
@@ -101,10 +101,26 @@ Emulating CVS behaviour
 -----------------------
 
 
-FIXME! Talk about setting up several repositories, and pulling and
-pushing between them. Talk about merging, and branches. Some of this
-needs to be in the tutorial too.
+So, by now you are convinced you absolutely want to work with git, but
+at the same time you absolutely have to have a central repository.
+Step back and think again. Okay, you still need a single central
+repository? There are several ways to go about that:
 
+1. Designate a person responsible to pull all branches. Make the
+repository of this person public, and make every team member
+pull regularly from it.
+
+2. Set up a public repository with read/write access for every team
+member. Use "git pull/push" as you used "cvs update/commit". Beware!
+Linus says that "git push" does no locking, since it was not meant
+for multi-user repositories!
+
+3. Make the repository of every team member public. It is the
+responsibility of each single member to pull from every other
+team member.
+
+4. Read Documentation/tutorial.txt and admit that the described work
+flow is the best.
 
 
 CVS annotate
@@ -157,7 +173,7 @@ modifications that are not related to the piece of code you are
 interested in.  You would see many log messages and patches that
 do not have anything to do with the piece of code you are
 interested in.  As an example, assuming that you have this piece
-code that you are interested in in the HEAD version:
+of code that you are interested in in the HEAD version:
 
 	if (frotz) {
 		nitfol();
@@ -207,7 +223,7 @@ in the current HEAD commit, even if the file was originally
 called "o-file.c" and then renamed in an earlier commit, or if
 the file was created by copying an existing "o-file.c" in an
 earlier commit, you will not lose track.  If the "if" statement
-did not change across such rename or copy, then the commit that
+did not change across such a rename or copy, then the commit that
 does rename or copy would not show in the output, and if the
 "if" statement was modified while the file was still called
 "o-file.c", it would find the commit that changed the statement
