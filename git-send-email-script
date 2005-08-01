@@ -21,7 +21,7 @@
 use strict;
 use warnings;
 use Term::ReadLine;
-use Mail::Sendmail;
+use Mail::Sendmail qw(sendmail %mailcfg);
 use Getopt::Long;
 use Data::Dumper;
 use Email::Valid;
@@ -29,19 +29,8 @@ use Email::Valid;
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from);
 
-# Example of them
-# modify these options each time you run the script
-#$to = 'torvalds@osdl.org,git@vger.kernel.org';
+# Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
-#$initial_subject = "[PATCH] Deb package build fixes";
-#@files = (qw(
-#0001-Make-debian-rules-executable-and-correct-the-spelling-of-rsync-in.txt
-#0002-Debian-packages-should-include-the-binaries.txt
-#0003-The-deb-package-building-needs-these-two-new-files-to-work-correctly.txt
-#));
-
-# change this to your email address.
-#$from = "Ryan Anderson <ryan\@michonline.com>";
 
 my $term = new Term::ReadLine 'git-send-email';
 
@@ -180,6 +169,7 @@ sub send_message
 		);
 
 	$mail{smtp} = 'localhost';
+	$mailcfg{mime} = 0;
 
 	#print Data::Dumper->Dump([\%mail],[qw(*mail)]);
 
