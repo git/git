@@ -90,7 +90,7 @@ sub shortlog_output {
 
 		# output author's 1-line summaries
 		$obj = $map{$key};
-		foreach $desc (@$obj) {
+		foreach $desc (reverse @$obj) {
 			print "  $desc\n";
 			$n_output++;
 		}
