@@ -4,7 +4,8 @@
 #include "pkt-line.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--exec=git-receive-pack] [host:]directory [heads]*";
+"git-send-pack [--all] [--exec=git-receive-pack] <remote> [<head>...]\n"
+"  --all and explicit <head> specification are mutually exclusive.";
 static const char *exec = "git-receive-pack";
 static int send_all = 0;
 static int force_update = 0;
@@ -214,7 +215,7 @@ static int send_pack(int in, int out, int nr_match, char **match)
 	/*
 	 * See if we have any refs that the other end didn't have
 	 */
-	if (nr_match) {
+	if (nr_match || send_all) {
 		local_ref_nr_match = nr_match;
 		local_ref_match = match;
 		local_ref_list = ref_list;
@@ -280,6 +281,8 @@ int main(int argc, char **argv)
 		break;
 	}
 	if (!dest)
+		usage(send_pack_usage);
+	if (heads && send_all)
 		usage(send_pack_usage);
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
