@@ -39,6 +39,8 @@ CFLAGS+=$(COPTS) -Wall $(DEFINES)
 
 prefix=$(HOME)
 bindir=$(prefix)/bin
+etcdir=$(prefix)/etc
+etcgitdir=$(etcdir)/git-core
 # dest=
 
 CC?=gcc
@@ -144,6 +146,7 @@ endif
 endif
 
 CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
+CFLAGS += '-DDEFAULT_GIT_TEMPLATE_ENVIRONMENT="$(etcgitdir)/templates"'
 
 
 
@@ -196,6 +199,7 @@ check:
 install: $(PROG) $(SCRIPTS)
 	$(INSTALL) -m755 -d $(dest)$(bindir)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bindir)
+	$(MAKE) -C templates install
 
 install-tools:
 	$(MAKE) -C tools install
@@ -236,4 +240,5 @@ clean:
 	rm -f git-core-*.tar.gz git-core.spec
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
+	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
