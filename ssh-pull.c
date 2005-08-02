@@ -10,6 +10,10 @@ static int fd_out;
 static unsigned char remote_version = 0;
 static unsigned char local_version = 1;
 
+void prefetch(unsigned char *sha1)
+{
+}
+
 int fetch(unsigned char *sha1)
 {
 	int ret;

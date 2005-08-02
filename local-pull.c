@@ -11,6 +11,10 @@ static int use_filecopy = 1;
 
 static char *path; /* "Remote" git repository */
 
+void prefetch(unsigned char *sha1)
+{
+}
+
 int fetch(unsigned char *sha1)
 {
 	static int object_name_start = -1;

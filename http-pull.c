@@ -67,6 +67,10 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
+void prefetch(unsigned char *sha1)
+{
+}
+
 static int got_indices = 0;
 
 static struct packed_git *packs = NULL;
