@@ -2,7 +2,7 @@
 #include "run-command.h"
 #include <sys/wait.h>
 
-static int run_external_command(int argc, const char **argv)
+int run_command_v(int argc, char **argv)
 {
 	pid_t pid = fork();
 
@@ -10,7 +10,7 @@ static int run_external_command(int argc, const char **argv)
 		return -ERR_RUN_COMMAND_FORK;
 	if (!pid) {
 		execvp(argv[0], (char *const*) argv);
-		return -ERR_RUN_COMMAND_EXEC;
+		die("exec %s failed.", argv[0]);
 	}
 	for (;;) {
 		int status, code;
@@ -39,14 +39,12 @@ static int run_external_command(int argc, const char **argv)
 int run_command(const char *cmd, ...)
 {
 	int argc;
-	const char *argv[MAX_RUN_COMMAND_ARGS];
+	char *argv[MAX_RUN_COMMAND_ARGS];
 	const char *arg;
 	va_list param;
 
-	fprintf(stderr, "run-command %s (%d)\n", cmd, ERR_RUN_COMMAND_EXEC);
-
 	va_start(param, cmd);
-	argv[0] = cmd;
+	argv[0] = (char*) cmd;
 	argc = 1;
 	while (argc < MAX_RUN_COMMAND_ARGS) {
 		arg = argv[argc++] = va_arg(param, char *);
@@ -56,5 +54,5 @@ int run_command(const char *cmd, ...)
 	va_end(param);
 	if (MAX_RUN_COMMAND_ARGS <= argc)
 		return error("too many args to run %s", cmd);
-	return run_external_command(argc, argv);
+	return run_command_v(argc, argv);
 }

@@ -11,6 +11,7 @@ enum {
 	ERR_RUN_COMMAND_WAITPID_NOEXIT,
 };
 
+int run_command_v(int argc, char **argv);
 int run_command(const char *cmd, ...);
 
 #endif

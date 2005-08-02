@@ -43,34 +43,34 @@ The hook should exit with non-zero status if it wants to
 disallow updating the named ref.  Otherwise it should exit with
 zero.
 
-The same hook is also called with an empty string as refname and
-no other arguments just before git-receive-pack exits.  This can
-be used to implement repository wide cleanup task if needed.
-The exit code from this hook invocation is ignored; the only
-thing left for git-receive-pack to do at that point is to exit
-itself anyway.
-
 Using this hook, it is easy to generate mails on updates to
 the local repository. This example script sends a mail with
 the commits pushed to the repository:
 
 	#!/bin/sh
-	case "$#,$1" in
-	1,) # help packed repository pulled via dumb protocol.
-	    git-update-server-info
-	    ;;
-	*)  # mail out commit update information.
-	    if expr "$2" : '0*$' >/dev/null
-	    then
-		echo "Created now ref."
+	# mail out commit update information.
+	if expr "$2" : '0*$' >/dev/null
+	then
+		echo "Created a new ref, with the following commits:"
 		git-rev-list --pretty "$2"
-	    else
-		echo "New commits"
+	else
+		echo "New commits:"
 		git-rev-list --pretty "$3" "^$2"
-	    fi |
-	    mail -s "Changes to ref $1" commit-list@mydomain
-        esac
+	fi |
+	mail -s "Changes to ref $1" commit-list@mydomain
 	exit 0
+
+Another hook $GIT_DIR/hooks/post-update, if exists and
+executable, is called with the list of refs that have been
+updated.  This can be used to implement repository wide cleanup
+task if needed.  The exit code from this hook invocation is
+ignored; the only thing left for git-receive-pack to do at that
+point is to exit itself anyway.  This hook can be used, for
+example, to run "git-update-server-info" if the repository is
+packed and is served via a dumb transport.
+
+	#!/bin/sh
+	exec git-update-server-info
 
 OPTIONS
 -------

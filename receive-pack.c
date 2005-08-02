@@ -21,6 +21,7 @@ static void write_head_info(void)
 
 struct command {
 	struct command *next;
+	unsigned char updated;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
 	char ref_name[0];
@@ -88,7 +89,8 @@ static int run_update_hook(const char *refname,
 	}
 }
 
-static void update(const char *name, unsigned char *old_sha1, unsigned char *new_sha1)
+static int update(const char *name,
+		  unsigned char *old_sha1, unsigned char *new_sha1)
 {
 	char new_hex[60], *old_hex, *lock_name;
 	int newfd, namelen, written;
@@ -101,11 +103,13 @@ static void update(const char *name, unsigned char *old_sha1, unsigned char *new
 	strcpy(new_hex, sha1_to_hex(new_sha1));
 	old_hex = sha1_to_hex(old_sha1);
 	if (!has_sha1_file(new_sha1))
-		die("unpack should have generated %s, but I can't find it!", new_hex);
+		return error("unpack should have generated %s, "
+			     "but I can't find it!", new_hex);
 
 	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (newfd < 0)
-		die("unable to create %s (%s)", lock_name, strerror(errno));
+		return error("unable to create %s (%s)",
+			     lock_name, strerror(errno));
 
 	/* Write the ref with an ending '\n' */
 	new_hex[40] = '\n';
@@ -117,24 +121,54 @@ static void update(const char *name, unsigned char *old_sha1, unsigned char *new
 	close(newfd);
 	if (written != 41) {
 		unlink(lock_name);
-		die("unable to write %s", lock_name);
+		return error("unable to write %s", lock_name);
 	}
 	if (verify_old_ref(name, old_hex) < 0) {
 		unlink(lock_name);
-		die("%s changed during push", name);
+		return error("%s changed during push", name);
 	}
 	if (run_update_hook(name, old_hex, new_hex)) {
 		unlink(lock_name);
-		fprintf(stderr, "hook declined to update %s\n", name);
+		return error("hook declined to update %s\n", name);
 	}
 	else if (rename(lock_name, name) < 0) {
 		unlink(lock_name);
-		die("unable to replace %s", name);
+		return error("unable to replace %s", name);
 	}
-	else
+	else {
 		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
+		return 0;
+	}
 }
 
+static char update_post_hook[] = "hooks/post-update";
+
+static void run_update_post_hook(struct command *cmd)
+{
+	struct command *cmd_p;
+	int argc;
+	char **argv;
+
+	if (access(update_post_hook, X_OK) < 0)
+		return;
+	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
+		if (!cmd_p->updated)
+			continue;
+		argc++;
+	}
+	argv = xmalloc(sizeof(*argv) * (1 + argc));
+	argv[0] = update_post_hook;
+
+	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
+		if (!cmd_p->updated)
+			continue;
+		argv[argc] = xmalloc(strlen(cmd_p->ref_name) + 1);
+		strcpy(argv[argc], cmd_p->ref_name);
+		argc++;
+	}
+	argv[argc] = NULL;
+	run_command_v(argc, argv);
+}
 
 /*
  * This gets called after(if) we've successfully
@@ -145,10 +179,11 @@ static void execute_commands(void)
 	struct command *cmd = commands;
 
 	while (cmd) {
-		update(cmd->ref_name, cmd->old_sha1, cmd->new_sha1);
+		cmd->updated = !update(cmd->ref_name,
+				       cmd->old_sha1, cmd->new_sha1);
 		cmd = cmd->next;
 	}
-	run_update_hook("", NULL, NULL);
+	run_update_post_hook(commands);
 }
 
 static void read_head_info(void)
