@@ -10,24 +10,49 @@ static int fd_out;
 static unsigned char remote_version = 0;
 static unsigned char local_version = 1;
 
+ssize_t force_write(int fd, void *buffer, size_t length)
+{
+	ssize_t ret = 0;
+	while (ret < length) {
+		ssize_t size = write(fd, buffer + ret, length - ret);
+		if (size < 0) {
+			return size;
+		}
+		if (size == 0) {
+			return ret;
+		}
+		ret += size;
+	}
+	return ret;
+}
+
 void prefetch(unsigned char *sha1)
 {
+	char type = 'o';
+	force_write(fd_out, &type, 1);
+	force_write(fd_out, sha1, 20);
+	//memcpy(requested + 20 * prefetches++, sha1, 20);
 }
+
+static char conn_buf[4096];
+static size_t conn_buf_posn = 0;
 
 int fetch(unsigned char *sha1)
 {
 	int ret;
 	signed char remote;
-	char type = 'o';
-	if (has_sha1_file(sha1))
-		return 0;
-	write(fd_out, &type, 1);
-	write(fd_out, sha1, 20);
-	if (read(fd_in, &remote, 1) < 1)
-		return -1;
+
+	if (conn_buf_posn) {
+		remote = conn_buf[0];
+		memmove(conn_buf, conn_buf + 1, --conn_buf_posn);
+	} else {
+		if (read(fd_in, &remote, 1) < 1)
+			return -1;
+	}
+	//fprintf(stderr, "Got %d\n", remote);
 	if (remote < 0)
 		return remote;
-	ret = write_sha1_from_fd(sha1, fd_in);
+	ret = write_sha1_from_fd(sha1, fd_in, conn_buf, 4096, &conn_buf_posn);
 	if (!ret)
 		pull_say("got %s\n", sha1_to_hex(sha1));
 	return ret;

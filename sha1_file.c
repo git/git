@@ -1389,14 +1389,14 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 	return 0;
 }
 
-int write_sha1_from_fd(const unsigned char *sha1, int fd)
+int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
+		       size_t bufsize, size_t *bufposn)
 {
 	char *filename = sha1_file_name(sha1);
 
 	int local;
 	z_stream stream;
 	unsigned char real_sha1[20];
-	unsigned char buf[4096];
 	unsigned char discard[4096];
 	int ret;
 	SHA_CTX c;
@@ -1414,7 +1414,24 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd)
 
 	do {
 		ssize_t size;
-		size = read(fd, buf, 4096);
+		if (*bufposn) {
+			stream.avail_in = *bufposn;
+			stream.next_in = buffer;
+			do {
+				stream.next_out = discard;
+				stream.avail_out = sizeof(discard);
+				ret = inflate(&stream, Z_SYNC_FLUSH);
+				SHA1_Update(&c, discard, sizeof(discard) -
+					    stream.avail_out);
+			} while (stream.avail_in && ret == Z_OK);
+			write(local, buffer, *bufposn - stream.avail_in);
+			memmove(buffer, buffer + *bufposn - stream.avail_in,
+				stream.avail_in);
+			*bufposn = stream.avail_in;
+			if (ret != Z_OK)
+				break;
+		}
+		size = read(fd, buffer + *bufposn, bufsize - *bufposn);
 		if (size <= 0) {
 			close(local);
 			unlink(filename);
@@ -1423,18 +1440,8 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd)
 			perror("Reading from connection");
 			return -1;
 		}
-		write(local, buf, size);
-		stream.avail_in = size;
-		stream.next_in = buf;
-		do {
-			stream.next_out = discard;
-			stream.avail_out = sizeof(discard);
-			ret = inflate(&stream, Z_SYNC_FLUSH);
-			SHA1_Update(&c, discard, sizeof(discard) -
-				    stream.avail_out);
-		} while (stream.avail_in && ret == Z_OK);
-		
-	} while (ret == Z_OK);
+		*bufposn += size;
+	} while (1);
 	inflateEnd(&stream);
 
 	close(local);
