@@ -99,7 +99,9 @@ void mark_reachable(struct object *obj, unsigned int mask)
 
 struct object *lookup_object_type(const unsigned char *sha1, const char *type)
 {
-	if (!strcmp(type, blob_type)) {
+	if (!type) {
+		return lookup_unknown_object(sha1);
+	} else if (!strcmp(type, blob_type)) {
 		return &lookup_blob(sha1)->object;
 	} else if (!strcmp(type, tree_type)) {
 		return &lookup_tree(sha1)->object;
@@ -111,6 +113,27 @@ struct object *lookup_object_type(const unsigned char *sha1, const char *type)
 		error("Unknown type %s", type);
 		return NULL;
 	}
+}
+
+union any_object {
+	struct object object;
+	struct commit commit;
+	struct tree tree;
+	struct blob blob;
+	struct tag tag;
+};
+
+struct object *lookup_unknown_object(const unsigned char *sha1)
+{
+	struct object *obj = lookup_object(sha1);
+	if (!obj) {
+		union any_object *ret = xmalloc(sizeof(*ret));
+		memset(ret, 0, sizeof(*ret));
+		created_object(sha1, &ret->object);
+		ret->object.type = NULL;
+		return &ret->object;
+	}
+	return obj;
 }
 
 struct object *parse_object(const unsigned char *sha1)
@@ -149,4 +172,34 @@ struct object *parse_object(const unsigned char *sha1)
 		return obj;
 	}
 	return NULL;
+}
+
+struct object_list *object_list_insert(struct object *item,
+				       struct object_list **list_p)
+{
+	struct object_list *new_list = xmalloc(sizeof(struct object_list));
+        new_list->item = item;
+        new_list->next = *list_p;
+        *list_p = new_list;
+        return new_list;
+}
+
+unsigned object_list_length(struct object_list *list)
+{
+	unsigned ret = 0;
+	while (list) {
+		list = list->next;
+		ret++;
+	}
+	return ret;
+}
+
+int object_list_contains(struct object_list *list, struct object *obj)
+{
+	while (list) {
+		if (list->item == obj)
+			return 1;
+		list = list->next;
+	}
+	return 0;
 }

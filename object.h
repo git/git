@@ -31,8 +31,18 @@ void created_object(const unsigned char *sha1, struct object *obj);
 /** Returns the object, having parsed it to find out what it is. **/
 struct object *parse_object(const unsigned char *sha1);
 
+/** Returns the object, with potentially excess memory allocated. **/
+struct object *lookup_unknown_object(const unsigned  char *sha1);
+
 void add_ref(struct object *refer, struct object *target);
 
 void mark_reachable(struct object *obj, unsigned int mask);
+
+struct object_list *object_list_insert(struct object *item, 
+				       struct object_list **list_p);
+
+unsigned object_list_length(struct object_list *list);
+
+int object_list_contains(struct object_list *list, struct object *obj);
 
 #endif /* OBJECT_H */

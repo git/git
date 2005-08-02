@@ -14,6 +14,7 @@ struct tree_entry_list {
 	unsigned int mode;
 	char *name;
 	union {
+		struct object *any;
 		struct tree *tree;
 		struct blob *blob;
 	} item;
