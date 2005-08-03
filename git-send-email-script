@@ -24,6 +24,8 @@ use Getopt::Long;
 use Data::Dumper;
 use Email::Valid;
 
+sub unique_email_list(@);
+
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from);
 
@@ -138,8 +140,9 @@ Options:
    --to	          Specify the primary "To:" line of the email.
    --subject      Specify the initial "Subject:" line.
    --in-reply-to  Specify the first "In-Reply-To:" header line.
-   --chain-reply-to If set, the replies will all be to the first
-   		  email sent, rather than to the last email sent.
+   --chain-reply-to If set, the replies will all be to the previous
+   		  email sent, rather than to the first email sent.
+		  Defaults to on.
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
@@ -161,7 +164,7 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 
 # We'll setup a template for the message id, using the "from" address:
 my $message_id_from = Email::Valid->address($from);
-my $message_id_template = "<%s-git-send-email-$from>";
+my $message_id_template = "<%s-git-send-email-$message_id_from>";
 
 sub make_message_id
 {
@@ -178,10 +181,7 @@ $cc = "";
 
 sub send_message
 {
-	my %to;
-	$to{lc(Email::Valid->address($_))}++ for (@to);
-
-	my $to = join(",", keys %to);
+	my $to = join (", ", unique_email_list(@to));
 
 	%mail = (	To	=>	$to,
 			From	=>	$from,
@@ -267,10 +267,7 @@ foreach my $t (@files) {
 	}
 	close F;
 
-	my %clean_ccs;
-	$clean_ccs{lc(Email::Valid->address($_))}++ for @cc;
-
-	$cc = join(",", keys %clean_ccs);
+	$cc = join(", ", unique_email_list(@cc));
 
 	send_message();
 
@@ -281,3 +278,19 @@ foreach my $t (@files) {
 	make_message_id();
 #	$subject = "Re: ".$initial_subject;
 }
+
+
+sub unique_email_list(@) {
+	my %seen;
+	my @emails;
+
+	foreach my $entry (@_) {
+		my $clean = Email::Valid->address($entry);
+		next if $seen{$clean}++;
+		push @emails, $entry;
+	}
+	return @emails;
+}
+
+
+
