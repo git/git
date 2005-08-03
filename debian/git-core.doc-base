@@ -5,8 +5,8 @@ Abstract: This manual describes git
 Section: Devel
 
 Format: HTML
-Index: /usr/share/doc/git-core/html/git.html
-Files: /usr/share/doc/git-core/html/*.html
+Index: /usr/share/doc/git-core/git.html
+Files: /usr/share/doc/git-core/*.html
 
 Format: text
 Files: /usr/share/doc/git-core/git-core.txt
