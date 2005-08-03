@@ -106,6 +106,8 @@ static int update(const char *name,
 		return error("unpack should have generated %s, "
 			     "but I can't find it!", new_hex);
 
+	safe_create_leading_directories(lock_name);
+
 	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (newfd < 0)
 		return error("unable to create %s (%s)",
