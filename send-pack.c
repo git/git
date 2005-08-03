@@ -43,7 +43,8 @@ static void exec_rev_list(struct ref *refs)
 		char *buf = malloc(100);
 		if (i > 900)
 			die("git-rev-list environment overflow");
-		if (!is_zero_sha1(refs->old_sha1)) {
+		if (!is_zero_sha1(refs->old_sha1) &&
+		    has_sha1_file(refs->old_sha1)) {
 			args[i++] = buf;
 			snprintf(buf, 50, "^%s", sha1_to_hex(refs->old_sha1));
 			buf += 50;
@@ -200,6 +201,12 @@ static int send_pack(int in, int out, int nr_match, char **match)
 
 		if (!memcmp(ref->old_sha1, new_sha1, 20)) {
 			fprintf(stderr, "'%s' unchanged\n", name);
+			continue;
+		}
+
+		if (!has_sha1_file(ref->old_sha1)) {
+			error("remote '%s' object %s does not exist on local",
+			      name, sha1_to_hex(ref->old_sha1));
 			continue;
 		}
 
