@@ -104,21 +104,6 @@ static int pack_objects(int fd, struct ref *refs)
 	return 0;
 }
 
-static int read_ref(const char *ref, unsigned char *sha1)
-{
-	int fd, ret;
-	char buffer[60];
-
-	fd = open(git_path("%s", ref), O_RDONLY);
-	if (fd < 0)
-		return -1;
-	ret = -1;
-	if (read(fd, buffer, sizeof(buffer)) >= 40)
-		ret = get_sha1_hex(buffer, sha1);
-	close(fd);
-	return ret;
-}
-
 static int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
 {
 	struct commit *new, *old;
@@ -144,113 +129,91 @@ static int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha
 	return 0;
 }
 
-static int local_ref_nr_match;
-static char **local_ref_match;
-static struct ref *local_ref_list;
-static struct ref **local_last_ref;
+static struct ref *local_refs, **local_tail;
+static struct ref *remote_refs, **remote_tail;
 
-static int try_to_match(const char *refname, const unsigned char *sha1)
+static int one_local_ref(const char *refname, const unsigned char *sha1)
 {
 	struct ref *ref;
-	int len;
-
-	if (!path_match(refname, local_ref_nr_match, local_ref_match)) {
-		if (!send_all)
-			return 0;
-
-		/* If we have it listed already, skip it */
-		for (ref = local_ref_list ; ref ; ref = ref->next) {
-			if (!strcmp(ref->name, refname))
-				return 0;
-		}
-	}
-
-	len = strlen(refname)+1;
-	ref = xmalloc(sizeof(*ref) + len);
-	memset(ref->old_sha1, 0, 20);
+	int len = strlen(refname) + 1;
+	ref = xcalloc(1, sizeof(*ref) + len);
 	memcpy(ref->new_sha1, sha1, 20);
 	memcpy(ref->name, refname, len);
-	ref->next = NULL;
-	*local_last_ref = ref;
-	local_last_ref = &ref->next;
+	*local_tail = ref;
+	local_tail = &ref->next;
 	return 0;
 }
 
-static int send_pack(int in, int out, int nr_match, char **match)
+static void get_local_heads(void)
 {
-	struct ref *ref_list, **last_ref;
+	local_tail = &local_refs;
+	for_each_ref(one_local_ref);
+}
+
+static int send_pack(int in, int out, int nr_refspec, char **refspec)
+{
 	struct ref *ref;
 	int new_refs;
 
-	/* First we get all heads, whether matching or not.. */
-	last_ref = get_remote_heads(in, &ref_list, 0, NULL);
+	/* No funny business with the matcher */
+	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL);
+	get_local_heads();
 
-	/*
-	 * Go through the refs, see if we want to update
-	 * any of them..
-	 */
-	for (ref = ref_list; ref; ref = ref->next) {
-		unsigned char new_sha1[20];
-		char *name = ref->name;
-
-		if (nr_match && !path_match(name, nr_match, match))
-			continue;
-
-		if (read_ref(name, new_sha1) < 0)
-			continue;
-
-		if (!memcmp(ref->old_sha1, new_sha1, 20)) {
-			fprintf(stderr, "'%s' unchanged\n", name);
-			continue;
-		}
-
-		if (!has_sha1_file(ref->old_sha1)) {
-			error("remote '%s' object %s does not exist on local",
-			      name, sha1_to_hex(ref->old_sha1));
-			continue;
-		}
-
-		if (!ref_newer(new_sha1, ref->old_sha1)) {
-			error("remote '%s' isn't a strict parent of local", name);
-			continue;
-		}
-
-		/* Ok, mark it for update */
-		memcpy(ref->new_sha1, new_sha1, 20);
-	}
-
-	/*
-	 * See if we have any refs that the other end didn't have
-	 */
-	if (nr_match || send_all) {
-		local_ref_nr_match = nr_match;
-		local_ref_match = match;
-		local_ref_list = ref_list;
-		local_last_ref = last_ref;
-		for_each_ref(try_to_match);
-	}
-
+	/* match them up */
+	if (!remote_tail)
+		remote_tail = &remote_refs;
+	if (match_refs(local_refs, remote_refs, &remote_tail,
+		       nr_refspec, refspec, send_all))
+		return -1;
 	/*
 	 * Finally, tell the other end!
 	 */
 	new_refs = 0;
-	for (ref = ref_list; ref; ref = ref->next) {
+	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
-		if (is_zero_sha1(ref->new_sha1))
+		if (!ref->peer_ref)
 			continue;
+		if (!is_zero_sha1(ref->old_sha1)) {
+			if (!has_sha1_file(ref->old_sha1)) {
+				error("remote '%s' object %s does not "
+				      "exist on local",
+				      ref->name, sha1_to_hex(ref->old_sha1));
+				continue;
+			}
+			if (!ref_newer(ref->peer_ref->new_sha1,
+				       ref->old_sha1)) {
+				error("remote ref '%s' is not a strict "
+				      "subset of local ref '%s'.", ref->name,
+				      ref->peer_ref->name);
+				continue;
+			}
+		}
+		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
+			fprintf(stderr, "'%s': up-to-date\n", ref->name);
+			continue;
+		}
+		memcpy(ref->new_sha1, ref->peer_ref->new_sha1, 20);
+		if (is_zero_sha1(ref->new_sha1)) {
+			error("cannot happen anymore");
+			continue;
+		}
 		new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 		packet_write(out, "%s %s %s", old_hex, new_hex, ref->name);
-		fprintf(stderr, "'%s': updating from %s to %s\n", ref->name, old_hex, new_hex);
+		fprintf(stderr, "updating '%s'", ref->name);
+		if (strcmp(ref->name, ref->peer_ref->name))
+			fprintf(stderr, " using '%s'", ref->peer_ref->name);
+		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
 	}
-	
+
 	packet_flush(out);
 	if (new_refs)
-		pack_objects(out, ref_list);
+		pack_objects(out, remote_refs);
 	close(out);
 	return 0;
 }
+
 
 int main(int argc, char **argv)
 {
