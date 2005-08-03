@@ -235,3 +235,4 @@ clean:
 	rm -f git-core-*.tar.gz git-core.spec
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
+	$(MAKE) -C t/ clean
