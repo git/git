@@ -382,8 +382,15 @@ int git_connect(int fd[2], char *url, const char *prog)
 		close(pipefd[0][1]);
 		close(pipefd[1][0]);
 		close(pipefd[1][1]);
-		if (protocol == PROTO_SSH)
-			execlp("ssh", "ssh", host, command, NULL);
+		if (protocol == PROTO_SSH) {
+			const char *ssh = getenv("GIT_SSH") ? : "ssh";
+			const char *ssh_basename = strrchr(ssh, '/');
+			if (!ssh_basename)
+				ssh_basename = ssh;
+			else
+				ssh_basename++;
+			execlp(ssh, ssh_basename, host, command, NULL);
+		}
 		else
 			execlp("sh", "sh", "-c", command, NULL);
 		die("exec failed");
