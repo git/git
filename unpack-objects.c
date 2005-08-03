@@ -75,6 +75,7 @@ static void *get_data(unsigned long size)
 		stream.next_in = fill(1);
 		stream.avail_in = len;
 	}
+	inflateEnd(&stream);
 	return buf;
 }
 
@@ -167,6 +168,7 @@ static int unpack_delta_entry(unsigned long delta_size)
 	unsigned long base_size;
 	char type[20];
 	unsigned char base_sha1[20];
+	int result;
 
 	memcpy(base_sha1, fill(20), 20);
 	use(20);
@@ -184,7 +186,9 @@ static int unpack_delta_entry(unsigned long delta_size)
 	base = read_sha1_file(base_sha1, type, &base_size);
 	if (!base)
 		die("failed to read delta-pack base object %s", sha1_to_hex(base_sha1));
-	return resolve_delta(type, base, base_size, delta_data, delta_size);
+	result = resolve_delta(type, base, base_size, delta_data, delta_size);
+	free(base);
+	return result;
 }
 
 static void unpack_one(unsigned nr, unsigned total)
