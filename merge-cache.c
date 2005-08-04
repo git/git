@@ -30,7 +30,7 @@ static void run_program(void)
 		if (one_shot) {
 			err++;
 		} else {
-			if (quiet)
+			if (!quiet)
 				die("merge program failed");
 			exit(1);
 		}
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 		}
 		merge_file(arg);
 	}
-	if (err && quiet)
+	if (err && !quiet)
 		die("merge program failed");
 	return err;
 }
