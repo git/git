@@ -41,11 +41,13 @@ static const char *external_diff(void)
 	return external_diff_cmd;
 }
 
+#define TEMPFILE_PATH_LEN		50
+
 static struct diff_tempfile {
 	const char *name; /* filename external diff should read from */
 	char hex[41];
 	char mode[10];
-	char tmp_path[50];
+	char tmp_path[TEMPFILE_PATH_LEN];
 } diff_temp[2];
 
 static int count_lines(const char *filename)
@@ -421,8 +423,7 @@ static void prep_temp_blob(struct diff_tempfile *temp,
 {
 	int fd;
 
-	strcpy(temp->tmp_path, ".diff_XXXXXX");
-	fd = mkstemp(temp->tmp_path);
+	fd = git_mkstemp(temp->tmp_path, TEMPFILE_PATH_LEN, ".diff_XXXXXX");
 	if (fd < 0)
 		die("unable to create temp-file");
 	if (write(fd, blob, size) != size)
