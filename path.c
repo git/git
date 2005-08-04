@@ -58,3 +58,29 @@ char *git_path(const char *fmt, ...)
 		return bad_path;
 	return cleanup_path(pathname);
 }
+
+
+/* git_mkstemp() - create tmp file honoring TMPDIR variable */
+int git_mkstemp(char *path, size_t len, const char *template)
+{
+	char *env, *pch = path;
+
+	if ((env = getenv("TMPDIR")) == NULL) {
+		strcpy(pch, "/tmp/");
+		len -= 5;
+	} else
+		len -= snprintf(pch, len, "%s/", env);
+
+	safe_strncpy(pch, template, len);
+
+	return mkstemp(path);
+}
+
+
+char *safe_strncpy(char *dest, const char *src, size_t n)
+{
+	strncpy(dest, src, n);
+	dest[n - 1] = '\0';
+
+	return dest;
+}
