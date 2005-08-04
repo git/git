@@ -9,7 +9,7 @@ git-send-pack - Push missing objects packed.
 
 SYNOPSIS
 --------
-'git-send-pack' [--exec=<git-receive-pack>] [<host>:]<directory> [<head>...]
+'git-send-pack' [--all] [--exec=<git-receive-pack>] [<host>:]<directory> [<head>...]
 
 DESCRIPTION
 -----------
@@ -25,6 +25,10 @@ OPTIONS
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
 
+--all::
+	Instead of explicitly specifying which refs to update,
+	update all refs that locally exist.
+
 <host>::
 	A remote host to house the repository.  When this
 	part is specified, 'git-receive-pack' is invoked via
@@ -32,6 +36,48 @@ OPTIONS
 
 <directory>::
 	The repository to update.
+
+<head>...:
+	The remote refs to update.
+
+
+Specifying the Refs
+-------------------
+
+There are three ways to specify which refs to update on the
+remote end.
+
+With '--all' flag, all refs that exist locally are transfered to
+the remote side.  You cannot specify any '<head>' if you use
+this flag.
+
+Without '--all' and without any '<head>', the refs that exist
+both on the local side and on the remote side are updated.
+
+When '<head>'s are specified explicitly, it can be either a
+single pattern, or a pair of such pattern separated by a colon
+':' (this means that a ref name cannot have a colon in it).  A
+single pattern '<name>' is just a shorthand for '<name>:<name>'.
+Each pattern pair consists of the source side (before the colon)
+and the destination side (after the colon).  The ref that is
+pushed is determined by finding a match that matches the source
+side, and where it is pushed is determined by using the
+destination side.
+
+ - It is an error if <src> does not match exactly one of local
+   refs.
+
+ - It is an error if <dst> matches more than one remote refs.
+
+ - If <dst> does not match any remote ref, either
+
+   - it has to start with "refs/"; <dst> is used as the
+     destination literally in this case.
+
+   - <src> == <dst> and the ref that matched the <src> must not
+     exist in the set of remote refs; the ref matched <src>
+     locally is used as the name of the destination.
+
 
 Author
 ------
