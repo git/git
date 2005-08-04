@@ -457,6 +457,15 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 	die("%s is unknown object", name);
 }
 
+static void handle_one_commit(struct commit *com, struct commit_list **lst)
+{
+	if (!com || com->object.flags & SEEN)
+		return;
+	com->object.flags |= SEEN;
+	commit_list_insert(com, lst);
+}
+
+
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;
@@ -465,6 +474,7 @@ int main(int argc, char **argv)
 	for (i = 1 ; i < argc; i++) {
 		int flags;
 		char *arg = argv[i];
+		char *dotdot;
 		struct commit *commit;
 
 		if (!strncmp(arg, "--max-count=", 12)) {
@@ -523,21 +533,33 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		if (show_breaks && !merge_order)
+			usage(rev_list_usage);
+
 		flags = 0;
+		dotdot = strstr(arg, "..");
+		if (dotdot) {
+			char *next = dotdot + 2;
+			struct commit *exclude = NULL;
+			struct commit *include = NULL;
+			*dotdot = 0;
+			exclude = get_commit_reference(arg, UNINTERESTING);
+			include = get_commit_reference(next, 0);
+			if (exclude && include) {
+				limited = 1;
+				handle_one_commit(exclude, &list);
+				handle_one_commit(include, &list);
+				continue;
+			}
+			*next = '.';
+		}
 		if (*arg == '^') {
 			flags = UNINTERESTING;
 			arg++;
 			limited = 1;
 		}
-		if (show_breaks && !merge_order)
-			usage(rev_list_usage);
 		commit = get_commit_reference(arg, flags);
-		if (!commit)
-			continue;
-		if (commit->object.flags & SEEN)
-			continue;
-		commit->object.flags |= SEEN;
-		commit_list_insert(commit, &list);
+		handle_one_commit(commit, &list);
 	}
 
 	if (!merge_order) {		
