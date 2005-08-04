@@ -87,7 +87,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-update-server-info git-show-rev-cache git-build-rev-cache
 
 ifndef NO_CURL
-PROG+= git-http-pull
+	PROG+= git-http-pull
 endif
 
 LIB_FILE=libgit.a
@@ -130,20 +130,20 @@ else
 	OPENSSL_LIBSSL=
 endif
 ifdef MOZILLA_SHA1
-  SHA1_HEADER="mozilla-sha1/sha1.h"
-  LIB_OBJS += mozilla-sha1/sha1.o
+	SHA1_HEADER="mozilla-sha1/sha1.h"
+	LIB_OBJS += mozilla-sha1/sha1.o
 else
-ifdef PPC_SHA1
-  SHA1_HEADER="ppc/sha1.h"
-  LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
-else
-  SHA1_HEADER=<openssl/sha.h>
-ifeq ($(shell uname -s),Darwin)
-  LIBS += -lcrypto -lssl
-else
-  LIBS += -lcrypto
-endif
-endif
+	ifdef PPC_SHA1
+		SHA1_HEADER="ppc/sha1.h"
+		LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+	else
+		SHA1_HEADER=<openssl/sha.h>
+		ifeq ($(shell uname -s),Darwin)
+			LIBS += -lcrypto -lssl
+		else
+			LIBS += -lcrypto
+		endif
+	endif
 endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
