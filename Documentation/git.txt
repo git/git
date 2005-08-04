@@ -72,9 +72,6 @@ Interrogation commands
 link:git-cat-file.html[git-cat-file]::
 	Provide content or type information for repository objects
 
-link:git-check-files.html[git-check-files]::
-	Verify a list of files are up-to-date
-
 link:git-diff-cache.html[git-diff-cache]::
 	Compares content and mode of blobs between the cache and repository
 
