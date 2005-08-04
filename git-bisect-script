@@ -107,8 +107,8 @@ bisect_next() {
 	rev=$(eval "git-rev-list --bisect $good $bad") || exit
 	nr=$(eval "git-rev-list $rev $good" | wc -l) || exit
 	if [ "$nr" -le "1" ]; then
-	    echo "$bad is first bad commit"
-	    git-diff-tree --pretty $bad
+	    echo "$rev is first bad commit"
+	    git-diff-tree --pretty $rev
 	    exit 0
 	fi
 	echo "Bisecting: $nr revisions left to test after this"
