@@ -46,21 +46,6 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-static int get_sha1_file(const char *path, unsigned char *result)
-{
-	char buffer[60];
-	int fd = open(path, O_RDONLY);
-	int len;
-
-	if (fd < 0)
-		return -1;
-	len = read(fd, buffer, sizeof(buffer));
-	close(fd);
-	if (len < 40)
-		return -1;
-	return get_sha1_hex(buffer, result);
-}
-
 static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
 	*git_graft_file;
 static void setup_git_env(void)
@@ -130,30 +115,6 @@ int safe_create_leading_directories(char *path)
 		*pos++ = '/';
 	}
 	return 0;
-}
-
-int get_sha1(const char *str, unsigned char *sha1)
-{
-	static const char *prefix[] = {
-		"",
-		"refs",
-		"refs/tags",
-		"refs/heads",
-		"refs/snap",
-		NULL
-	};
-	const char **p;
-
-	if (!get_sha1_hex(str, sha1))
-		return 0;
-
-	for (p = prefix; *p; p++) {
-		char * pathname = git_path("%s/%s", *p, str);
-		if (!get_sha1_file(pathname, sha1))
-			return 0;
-	}
-
-	return -1;
 }
 
 char * sha1_to_hex(const unsigned char *sha1)

@@ -21,8 +21,6 @@ static int output_sq = 0;
 #define REVERSED 1
 static int show_type = NORMAL;
 
-static int get_extended_sha1(char *name, unsigned char *sha1);
-
 /*
  * Some arguments are relevant "revision" arguments,
  * others are about output format or other details.
@@ -107,182 +105,6 @@ static void show_arg(char *arg)
 		show_norev(arg);
 }
 
-static int get_parent(char *name, unsigned char *result, int idx)
-{
-	unsigned char sha1[20];
-	int ret = get_extended_sha1(name, sha1);
-	struct commit *commit;
-	struct commit_list *p;
-
-	if (ret)
-		return ret;
-	commit = lookup_commit_reference(sha1);
-	if (!commit)
-		return -1;
-	if (parse_commit(commit))
-		return -1;
-	if (!idx) {
-		memcpy(result, commit->object.sha1, 20);
-		return 0;
-	}
-	p = commit->parents;
-	while (p) {
-		if (!--idx) {
-			memcpy(result, p->item->object.sha1, 20);
-			return 0;
-		}
-		p = p->next;
-	}
-	return -1;
-}
-
-static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
-{
-	static char dirname[PATH_MAX];
-	char hex[40];
-	DIR *dir;
-	int found;
-
-	snprintf(dirname, sizeof(dirname), "%s/%.2s", get_object_directory(), name);
-	dir = opendir(dirname);
-	sprintf(hex, "%.2s", name);
-	found = 0;
-	if (dir) {
-		struct dirent *de;
-		while ((de = readdir(dir)) != NULL) {
-			if (strlen(de->d_name) != 38)
-				continue;
-			if (memcmp(de->d_name, name + 2, len-2))
-				continue;
-			memcpy(hex + 2, de->d_name, 38);
-			if (++found > 1)
-				break;
-		}
-		closedir(dir);
-	}
-	if (found == 1)
-		return get_sha1_hex(hex, sha1) == 0;
-	return 0;
-}
-
-static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)
-{
-	do {
-		if (*a != *b)
-			return 0;
-		a++;
-		b++;
-		len -= 2;
-	} while (len > 1);
-	if (len)
-		if ((*a ^ *b) & 0xf0)
-			return 0;
-	return 1;
-}
-
-static int find_short_packed_object(int len, const unsigned char *match, unsigned char *sha1)
-{
-	struct packed_git *p;
-
-	prepare_packed_git();
-	for (p = packed_git; p; p = p->next) {
-		unsigned num = num_packed_objects(p);
-		unsigned first = 0, last = num;
-		while (first < last) {
-			unsigned mid = (first + last) / 2;
-			unsigned char now[20];
-			int cmp;
-
-			nth_packed_object_sha1(p, mid, now);
-			cmp = memcmp(match, now, 20);
-			if (!cmp) {
-				first = mid;
-				break;
-			}
-			if (cmp > 0) {
-				first = mid+1;
-				continue;
-			}
-			last = mid;
-		}
-		if (first < num) {
-			unsigned char now[20], next[20];
-			nth_packed_object_sha1(p, first, now);
-			if (match_sha(len, match, now)) {
-				if (nth_packed_object_sha1(p, first+1, next) || !match_sha(len, match, next)) {
-					memcpy(sha1, now, 20);
-					return 1;
-				}
-			}
-		}	
-	}
-	return 0;
-}
-
-static int get_short_sha1(char *name, unsigned char *sha1)
-{
-	int i;
-	char canonical[40];
-	unsigned char res[20];
-
-	memset(res, 0, 20);
-	memset(canonical, 'x', 40);
-	for (i = 0;;i++) {
-		unsigned char c = name[i];
-		unsigned char val;
-		if (!c || i > 40)
-			break;
-		if (c >= '0' && c <= '9')
-			val = c - '0';
-		else if (c >= 'a' && c <= 'f')
-			val = c - 'a' + 10;
-		else if (c >= 'A' && c <='F') {
-			val = c - 'A' + 10;
-			c -= 'A' - 'a';
-		}
-		else
-			return -1;
-		canonical[i] = c;
-		if (!(i & 1))
-			val <<= 4;
-		res[i >> 1] |= val;
-	}
-	if (i < 4)
-		return -1;
-	if (find_short_object_filename(i, canonical, sha1))
-		return 0;
-	if (find_short_packed_object(i, res, sha1))
-		return 0;
-	return -1;
-}
-
-/*
- * This is like "get_sha1()", except it allows "sha1 expressions",
- * notably "xyz^" for "parent of xyz"
- */
-static int get_extended_sha1(char *name, unsigned char *sha1)
-{
-	int parent, ret;
-	int len = strlen(name);
-
-	parent = 1;
-	if (len > 2 && name[len-1] >= '0' && name[len-1] <= '9') {
-		parent = name[len-1] - '0';
-		len--;
-	}
-	if (len > 1 && name[len-1] == '^') {
-		name[len-1] = 0;
-		ret = get_parent(name, sha1, parent);
-		name[len-1] = '^';
-		if (!ret)
-			return 0;
-	}
-	ret = get_sha1(name, sha1);
-	if (!ret)
-		return 0;
-	return get_short_sha1(name, sha1);
-}
-
 static void show_default(void)
 {
 	char *s = def;
@@ -291,7 +113,7 @@ static void show_default(void)
 		unsigned char sha1[20];
 
 		def = NULL;
-		if (!get_extended_sha1(s, sha1)) {
+		if (!get_sha1(s, sha1)) {
 			show_rev(NORMAL, sha1);
 			return;
 		}
@@ -372,10 +194,10 @@ int main(int argc, char **argv)
 			unsigned char end[20];
 			char *n = dotdot+2;
 			*dotdot = 0;
-			if (!get_extended_sha1(arg, sha1)) {
+			if (!get_sha1(arg, sha1)) {
 				if (!*n)
 					n = "HEAD";
-				if (!get_extended_sha1(n, end)) {
+				if (!get_sha1(n, end)) {
 					if (no_revs)
 						continue;
 					def = NULL;
@@ -386,14 +208,14 @@ int main(int argc, char **argv)
 			}
 			*dotdot = '.';
 		}
-		if (!get_extended_sha1(arg, sha1)) {
+		if (!get_sha1(arg, sha1)) {
 			if (no_revs)
 				continue;
 			def = NULL;
 			show_rev(NORMAL, sha1);
 			continue;
 		}
-		if (*arg == '^' && !get_extended_sha1(arg+1, sha1)) {
+		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
 			if (no_revs)
 				continue;
 			def = NULL;
