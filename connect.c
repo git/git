@@ -230,11 +230,9 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		if (src->peer_ref)
 			continue;
 		dst_peer = find_ref_by_name(dst, src->name);
-		if (dst_peer && dst_peer->peer_ref)
+		if ((dst_peer && dst_peer->peer_ref) || (!dst_peer && !all))
 			continue;
 		if (!dst_peer) {
-			if (!all)
-				continue;
 			/* Create a new one and link it */
 			int len = strlen(src->name) + 1;
 			dst_peer = xcalloc(1, sizeof(*dst_peer) + len);

@@ -152,13 +152,13 @@ static void cleanup_space(char *buf)
 
 static void handle_rest(void)
 {
+	FILE *out = cmitmsg;
 	char *sub = cleanup_subject(subject);
 	cleanup_space(name);
 	cleanup_space(date);
 	cleanup_space(email);
 	cleanup_space(sub);
 	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n", name, email, sub, date);
-	FILE *out = cmitmsg;
 
 	do {
 		if (!memcmp("diff -", line, 6) ||

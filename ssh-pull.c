@@ -10,7 +10,7 @@ static int fd_out;
 static unsigned char remote_version = 0;
 static unsigned char local_version = 1;
 
-ssize_t force_write(int fd, void *buffer, size_t length)
+static ssize_t force_write(int fd, void *buffer, size_t length)
 {
 	ssize_t ret = 0;
 	while (ret < length) {
