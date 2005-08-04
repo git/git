@@ -480,7 +480,7 @@ proc click {w} {
 
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont
-    global stuffsaved findmergefiles gaudydiff
+    global stuffsaved findmergefiles gaudydiff maxgraphpct
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -490,6 +490,7 @@ proc savestuff {w} {
 	puts $f [list set textfont $textfont]
 	puts $f [list set findmergefiles $findmergefiles]
 	puts $f [list set gaudydiff $gaudydiff]
+	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr [winfo width $canv]-2]"
@@ -694,7 +695,7 @@ proc bindline {t id} {
 
 proc drawcommitline {level} {
     global parents children nparents nchildren todo
-    global canv canv2 canv3 mainfont namefont canvx0 canvy linespc
+    global canv canv2 canv3 mainfont namefont canvy linespc
     global lineid linehtag linentag linedtag commitinfo
     global colormap numcommits currentparents dupparents
     global oldlevel oldnlines oldtodo
@@ -728,7 +729,7 @@ proc drawcommitline {level} {
 	    }
 	}
     }
-    set x [expr $canvx0 + $level * $linespc]
+    set x [xcoord $level $level $lineno]
     set y1 $canvy
     set canvy [expr $canvy + $linespc]
     allcanvs conf -scrollregion \
@@ -756,7 +757,7 @@ proc drawcommitline {level} {
 	       -fill $ofill -outline black -width 1]
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
-    set xt [expr $canvx0 + [llength $todo] * $linespc]
+    set xt [xcoord [llength $todo] $level $lineno]
     if {[llength $currentparents] > 2} {
 	set xt [expr {$xt + ([llength $currentparents] - 2) * $linespc}]
     }
@@ -832,8 +833,8 @@ proc drawtags {id x xt y1} {
 proc updatetodo {level noshortcut} {
     global currentparents ncleft todo
     global mainline oldlevel oldtodo oldnlines
-    global canvx0 canvy linespc mainline
-    global commitinfo
+    global canvy linespc mainline
+    global commitinfo lineno xspc1
 
     set oldlevel $level
     set oldtodo $todo
@@ -842,10 +843,11 @@ proc updatetodo {level noshortcut} {
 	set p [lindex $currentparents 0]
 	if {$ncleft($p) == 1 && [lsearch -exact $todo $p] < 0} {
 	    set ncleft($p) 0
-	    set x [expr $canvx0 + $level * $linespc]
+	    set x [xcoord $level $level $lineno]
 	    set y [expr $canvy - $linespc]
 	    set mainline($p) [list $x $y]
 	    set todo [lreplace $todo $level $level $p]
+	    set xspc1([expr {$lineno + 1}]) $xspc1($lineno)
 	    return 0
 	}
     }
@@ -891,28 +893,54 @@ proc notecrossings {id lo hi corner} {
     }
 }
 
-proc drawslants {} {
-    global canv mainline sidelines canvx0 canvy linespc
-    global oldlevel oldtodo todo currentparents dupparents
-    global lthickness linespc canvy colormap
+proc xcoord {i level ln} {
+    global canvx0 xspc1 xspc2
 
+    set x [expr {$canvx0 + $i * $xspc1($ln)}]
+    if {$i > 0 && $i == $level} {
+	set x [expr {$x + 0.5 * ($xspc2 - $xspc1($ln))}]
+    } elseif {$i > $level} {
+	set x [expr {$x + $xspc2 - $xspc1($ln)}]
+    }
+    return $x
+}
+
+proc drawslants {level} {
+    global canv mainline sidelines canvx0 canvy xspc1 xspc2 lthickness
+    global oldlevel oldtodo todo currentparents dupparents
+    global lthickness linespc canvy colormap lineno geometry
+    global maxgraphpct
+
+    # decide on the line spacing for the next line
+    set lj [expr {$lineno + 1}]
+    set maxw [expr {$maxgraphpct * $geometry(canv1) / 100}]
+    set n [llength $todo]
+    if {$n <= 1 || $canvx0 + $n * $xspc2 <= $maxw} {
+	set xspc1($lj) $xspc2
+    } else {
+	set xspc1($lj) [expr {($maxw - $canvx0 - $xspc2) / ($n - 1)}]
+	if {$xspc1($lj) < $lthickness} {
+	    set xspc1($lj) $lthickness
+	}
+    }
+    
     set y1 [expr $canvy - $linespc]
     set y2 $canvy
     set i -1
     foreach id $oldtodo {
 	incr i
 	if {$id == {}} continue
-	set xi [expr {$canvx0 + $i * $linespc}]
+	set xi [xcoord $i $oldlevel $lineno]
 	if {$i == $oldlevel} {
 	    foreach p $currentparents {
 		set j [lsearch -exact $todo $p]
 		set coords [list $xi $y1]
-		set xj [expr {$canvx0 + $j * $linespc}]
-		if {$j < $i - 1} {
-		    lappend coords [expr $xj + $linespc] $y1
+		set xj [xcoord $j $level $lj]
+		if {$xj < $xi - $linespc} {
+		    lappend coords [expr {$xj + $linespc}] $y1
 		    notecrossings $p $j $i [expr {$j + 1}]
-		} elseif {$j > $i + 1} {
-		    lappend coords [expr $xj - $linespc] $y1
+		} elseif {$xj > $xi + $linespc} {
+		    lappend coords [expr {$xj - $linespc}] $y1
 		    notecrossings $p $i $j [expr {$j - 1}]
 		}
 		if {[lsearch -exact $dupparents $p] >= 0} {
@@ -924,28 +952,48 @@ proc drawslants {} {
 		    }
 		} else {
 		    # normal case, no parent duplicated
+		    set yb $y2
+		    set dx [expr {abs($xi - $xj)}]
+		    if {0 && $dx < $linespc} {
+			set yb [expr {$y1 + $dx}]
+		    }
 		    if {![info exists mainline($p)]} {
-			if {$i != $j} {
-			    lappend coords $xj $y2
+			if {$xi != $xj} {
+			    lappend coords $xj $yb
 			}
 			set mainline($p) $coords
 		    } else {
-			lappend coords $xj $y2
+			lappend coords $xj $yb
+			if {$yb < $y2} {
+			    lappend coords $xj $y2
+			}
 			lappend sidelines($p) [list $coords 1]
 		    }
 		}
 	    }
-	} elseif {[lindex $todo $i] != $id} {
-	    set j [lsearch -exact $todo $id]
-	    set xj [expr {$canvx0 + $j * $linespc}]
-	    lappend mainline($id) $xi $y1 $xj $y2
+	} else {
+	    set j $i
+	    if {[lindex $todo $i] != $id} {
+		set j [lsearch -exact $todo $id]
+	    }
+	    if {$j != $i || $xspc1($lineno) != $xspc1($lj)
+		|| ($oldlevel <= $i && $i <= $level)
+		|| ($level <= $i && $i <= $oldlevel)} {
+		set xj [xcoord $j $level $lj]
+		set dx [expr {abs($xi - $xj)}]
+		set yb $y2
+		if {0 && $dx < $linespc} {
+		    set yb [expr {$y1 + $dx}]
+		}
+		lappend mainline($id) $xi $y1 $xj $yb
+	    }
 	}
     }
 }
 
 proc decidenext {{noread 0}} {
     global parents children nchildren ncleft todo
-    global canv canv2 canv3 mainfont namefont canvx0 canvy linespc
+    global canv canv2 canv3 mainfont namefont canvy linespc
     global datemode cdate
     global commitinfo
     global currentparents oldlevel oldnlines oldtodo
@@ -1036,7 +1084,7 @@ proc drawcommit {id} {
 	    return
 	}
 	while 1 {
-	    drawslants
+	    drawslants $level
 	    drawcommitline $level
 	    if {[updatetodo $level $datemode]} {
 		set level [decidenext 1]
@@ -1065,8 +1113,8 @@ proc finishcommits {} {
 	    -font $mainfont -tags textitems
 	set phase {}
     } else {
-	drawslants
 	set level [decidenext]
+	drawslants $level
 	drawrest $level [llength $startcommits]
     }
     . config -cursor $maincursor
@@ -1114,7 +1162,7 @@ proc drawrest {level startix} {
 	    if {$hard} {
 		set level [decidenext]
 		if {$level < 0} break
-		drawslants
+		drawslants $level
 	    }
 	    if {[clock clicks -milliseconds] >= $nextupdate} {
 		update
@@ -2451,10 +2499,14 @@ proc listboxsel {} {
 
 proc setcoords {} {
     global linespc charspc canvx0 canvy0 mainfont
+    global xspc1 xspc2
+
     set linespc [font metrics $mainfont -linespace]
     set charspc [font measure $mainfont "m"]
     set canvy0 [expr 3 + 0.5 * $linespc]
     set canvx0 [expr 3 + 0.5 * $linespc]
+    set xspc1(0) $linespc
+    set xspc2 $linespc
 }
 
 proc redisplay {} {
@@ -2941,6 +2993,7 @@ set mainfont {Helvetica 9}
 set textfont {Courier 9}
 set findmergefiles 0
 set gaudydiff 0
+set maxgraphpct 50
 
 set colors {green red blue magenta darkgrey brown orange}
 
