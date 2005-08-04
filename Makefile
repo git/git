@@ -40,7 +40,7 @@ ALL_CFLAGS = $(CFLAGS) $(DEFINES)
 prefix = $(HOME)
 bindir = $(prefix)/bin
 template_dir = $(prefix)/share/git-core/templates/
-# dest=
+# DESTDIR=
 
 CC = gcc
 AR = ar
@@ -209,8 +209,8 @@ check:
 ### Installation rules
 
 install: $(PROG) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(dest)$(bindir)
-	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bindir)
+	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(PROG) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
 
 install-tools:

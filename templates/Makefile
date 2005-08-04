@@ -3,7 +3,7 @@
 INSTALL=install
 prefix=$(HOME)
 template_dir=$(prefix)/share/git-core/templates/
-# dest=
+# DESTDIR=
 
 all: boilerplates custom
 	find blt
@@ -34,5 +34,5 @@ clean:
 	rm -rf blt
 
 install: all
-	$(INSTALL) -d -m755 $(dest)$(template_dir)
-	tar Ccf blt - . | tar Cxf $(dest)$(template_dir) -
+	$(INSTALL) -d -m755 $(DESTDIR)$(template_dir)
+	tar Ccf blt - . | tar Cxf $(DESTDIR)$(template_dir) -

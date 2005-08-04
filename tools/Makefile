@@ -7,7 +7,7 @@ ALL_CFLAGS = $(CFLAGS)
 INSTALL=install
 prefix=$(HOME)
 bindir=$(prefix)/bin
-# dest=
+# DESTDIR=
 
 PROGRAMS=git-mailsplit git-mailinfo
 SCRIPTS=git-applymbox git-applypatch
@@ -19,7 +19,7 @@ all: $(PROGRAMS)
 
 install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -m755 -d $(dest)$(bindir)
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(dest)$(bindir)
+	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
 
 clean:
 	rm -f $(PROGRAMS) *.o
