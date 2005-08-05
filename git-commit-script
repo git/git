@@ -6,7 +6,7 @@
 . git-sh-setup-script || die "Not a git archive"
 
 usage () {
-	die 'git commit [-m existing-commit] [<path>...]'
+	die 'git commit [--all] [-m existing-commit] [<path>...]'
 }
 
 files=()
@@ -86,7 +86,7 @@ else
 	fi >.editmsg
 	git-status-script >>.editmsg
 fi
-if [ "$?" != "0" ]
+if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]
 then
 	cat .editmsg
 	rm .editmsg
