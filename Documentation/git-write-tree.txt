@@ -4,7 +4,7 @@ v0.1, May 2005
 
 NAME
 ----
-git-write-tree - Creates a tree from the current cache
+git-write-tree - Creates a tree object from the current cache
 
 
 SYNOPSIS

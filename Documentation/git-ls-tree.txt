@@ -19,7 +19,7 @@ in the current working directory.
 OPTIONS
 -------
 <tree-ish>::
-	Id of a tree.
+	Id of a tree-ish.
 
 -d::
 	show only the named tree entry itself, not its children
@@ -31,7 +31,7 @@ OPTIONS
 	\0 line termination on output
 
 paths::
-	When paths are given, shows them.  Otherwise implicitly
+	When paths are given, show them.  Otherwise implicitly
 	uses the root level of the tree as the sole path argument.
 
 

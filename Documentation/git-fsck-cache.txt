@@ -39,17 +39,17 @@ OPTIONS
 
 --standalone::
 	Limit checks to the contents of GIT_OBJECT_DIRECTORY
-	(.git/objects), making sure that it is consistent and
+	($GIT_DIR/objects), making sure that it is consistent and
 	complete without referring to objects found in alternate
 	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES,
-	nor packed GIT archives found in .git/objects/pack;
+	nor packed GIT archives found in $GIT_DIR/objects/pack;
 	cannot be used with --full.
 
 --full::
 	Check not just objects in GIT_OBJECT_DIRECTORY
-	(.git/objects), but also the ones found in alternate
+	($GIT_DIR/objects), but also the ones found in alternate
 	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES,
-	and in packed GIT archives found in .git/objects/pack
+	and in packed GIT archives found in $GIT_DIR/objects/pack
 	and corresponding pack subdirectories in alternate
 	object pools; cannot be used with --standalone.
 
@@ -69,11 +69,7 @@ that aren't readable from any of the specified head nodes.
 
 So for example
 
-	git-fsck-cache --unreachable $(cat .git/HEAD)
-
-or, for Cogito users:
-
-	git-fsck-cache --unreachable $(cat .git/refs/heads/*)
+	git-fsck-cache --unreachable $(cat .git/HEAD .git/refs/heads/*)
 
 will do quite a _lot_ of verification on the tree. There are a few
 extra validity tests to be added (make sure that tree objects are
@@ -122,18 +118,18 @@ sha1 mismatch <object>::
 	The database has an object who's sha1 doesn't match the
 	database value.
 	This indicates a serious data integrity problem.
-	(note: this error occured during early git development when
-	the database format changed.)
 
 Environment Variables
 ---------------------
 
 GIT_OBJECT_DIRECTORY::
-	used to specify the object database root (usually .git/objects)
+	used to specify the object database root (usually $GIT_DIR/objects)
 
 GIT_INDEX_FILE::
-	used to specify the cache
+	used to specify the index file of the cache
 
+GIT_ALTERNATE_OBJECT_DIRECTORIES:
+	used to specify additional object database roots (usually unset)
 
 Author
 ------

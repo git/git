@@ -86,7 +86,7 @@ Or if you are searching for what changed in just `kernel/sched.c`, just do
 and it will ignore all differences to other files.
 
 The pattern is always the prefix, and is matched exactly.  There are no
-wildcards.  Even stricter, it has to match complete path comonent.
+wildcards.  Even stricter, it has to match a complete path component.
 I.e. "foo" does not pick up `foobar.h`.  "foo" does match `foo/bar.h`
 so it can be used to name subdirectories.
 

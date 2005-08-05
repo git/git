@@ -87,7 +87,7 @@ detailed information on unmerged paths.
 For an unmerged path, instead of recording a single mode/SHA1 pair,
 the dircache records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
-the user (or Cogito) to see what should eventually be recorded at the
+the user (or the porcelain) to see what should eventually be recorded at the
 path. (see read-cache for more information on state)
 
 
@@ -130,7 +130,7 @@ time.  They are built and ordered in the following way:
    are popped off when leaving the directory.
 
 Each pattern in the pattern list specifies "a match pattern" and
-optionally the fate;n either a file that matches the pattern is
+optionally the fate; either a file that matches the pattern is
 considered excluded or included.  A filename is matched against
 the patterns in the three lists; the --exclude-from list is
 checked first, then the --exclude-per-directory list, and then

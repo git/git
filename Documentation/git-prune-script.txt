@@ -14,8 +14,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This runs "git-fsck-cache --unreachable" program using the heads specified
-on the command line (or `.git/refs/heads/\*` and `.git/refs/tags/\*` if none is
-specified), and prunes all unreachable objects from the object database.
+on the command line (or `$GIT_DIR/refs/heads/\*` and `$GIT_DIR/refs/tags/\*`
+if none is specified), and prunes all unreachable objects from the object
+database.
 
 
 Author

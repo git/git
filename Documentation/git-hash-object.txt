@@ -21,6 +21,14 @@ This is used by "git-cvsimport-script" to update the cache
 without modifying files in the work tree.  When <type> is not
 specified, it defaults to "blob". 
 
+OPTIONS
+-------
+
+-t <type>::
+	Specify the type (default: "blob").
+
+-w::
+	Actually write the object into the object database.
 
 Author
 ------

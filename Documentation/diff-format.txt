@@ -62,7 +62,7 @@ customization also applies to "git-diff-helper".
 1. When the environment variable 'GIT_EXTERNAL_DIFF' is not set,
    these commands internally invoke "diff" like this:
 
-      diff -L a/<path> -L a/<path> -pu <old> <new>
+      diff -L a/<path> -L b/<path> -pu <old> <new>
 +
 For added files, `/dev/null` is used for <old>.  For removed
 files, `/dev/null` is used for <new>
@@ -101,7 +101,7 @@ For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
 parameter, <path>.
 
 
-Git specific extention to diff format
+Git specific extension to diff format
 -------------------------------------
 
 What -p option produces is slightly different from the

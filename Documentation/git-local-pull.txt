@@ -25,8 +25,9 @@ OPTIONS
 	Get all the objects.
 -v::
 	Report what is downloaded.
--w::
-        Writes the commit-id into the filename under $GIT_DIR/refs/ on
+
+-w <filename>::
+        Writes the commit-id into the filename under $GIT_DIR/refs/<filename> on
         the local end after the transfer is complete.
 
 Author

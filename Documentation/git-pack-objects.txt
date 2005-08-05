@@ -29,7 +29,7 @@ one-object" format; this is typically done by the smart-pull
 commands when a pack is created on-the-fly for efficient network
 transport by their peers.
 
-Placing both in pack subdirectory of $GIT_OBJECT_DIRECTORY (or
+Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
 enables GIT to read from such an archive.
 

@@ -41,7 +41,7 @@ OPTIONS
 
 Merging
 -------
-If '-m' is specified, "git-read-tree" can performs 3 kinds of
+If '-m' is specified, "git-read-tree" can perform 3 kinds of
 merge, a single tree merge if only 1 tree is given, a
 fast-forward merge with 2 trees, or a 3-way merge if 3 trees are
 provided.
@@ -51,9 +51,9 @@ Single Tree Merge
 ~~~~~~~~~~~~~~~~~
 If only 1 tree is specified, git-read-tree operates as if the user did not
 specify '-m', except that if the original cache has an entry for a
-given pathname; and the contents of the path matches with the tree
+given pathname, and the contents of the path matches with the tree
 being read, the stat info from the cache is used. (In other words, the
-cache's stat()s take precedence over the merged tree's)
+cache's stat()s take precedence over the merged tree's).
 
 That means that if you do a "git-read-tree -m <newtree>" followed by a
 "git-checkout-cache -f -u -a", the "git-checkout-cache" only checks out
@@ -184,7 +184,7 @@ populated.  Here is an outline of how the algorithm works:
   automatically collapse to "merged" state by git-read-tree.
 
 - a file that has _any_ difference what-so-ever in the three trees
-  will stay as separate entries in the index. It's up to "script
+  will stay as separate entries in the index. It's up to "porcelain
   policy" to determine how to remove the non-0 stages, and insert a
   merged version.
 

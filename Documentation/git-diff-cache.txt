@@ -50,13 +50,13 @@ Cached Mode
 -----------
 If '--cached' is specified, it allows you to ask:
 
-	show me the differences between HEAD and the current index
+	show me the differences between HEAD and the current cache
 	contents (the ones I'd write with a "git-write-tree")
 
-For example, let's say that you have worked on your index file, and are
-ready to commit. You want to see eactly *what* you are going to commit is
-without having to write a new tree object and compare it that way, and to
-do that, you just do
+For example, let's say that you have worked on your working directory, updated
+some files in the cache and are ready to commit. You want to see eactly
+*what* you are going to commit is without having to write a new tree
+object and compare it that way, and to do that, you just do
 
 	git-diff-cache --cached $(cat .git/HEAD)
 

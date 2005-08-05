@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Creates a tar archive containing the tree structure for the named tree.
-When <base> is specified it is added as a leading path as the files in the
+When <base> is specified it is added as a leading path to the files in the
 generated tar archive.
 
 git-tar-tree behaves differently when given a tree ID versus when given

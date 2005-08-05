@@ -5,9 +5,9 @@
 	Synonym for "-p".
 
 -r::
-	Look recursivelly in subdirectories; this flag does not
+	Look recursively in subdirectories; this flag does not
 	mean anything to commands other than "git-diff-tree";
-	other commands always looks at all the subdirectories.
+	other diff commands always look at all the subdirectories.
 
 -z::
 	\0 line termination on output
