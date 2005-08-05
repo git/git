@@ -189,6 +189,7 @@ static void create_default_files(const char *git_dir)
 			exit(1);
 		}
 	}
+	path[len] = 0;
 	copy_templates(path);
 }
 
