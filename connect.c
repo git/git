@@ -169,7 +169,7 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 				/* pushing "master:master" when
 				 * remote does not have master yet.
 				 */
-				int len = strlen(matched_src->name);
+				int len = strlen(matched_src->name) + 1;
 				matched_dst = xcalloc(1, sizeof(*dst) + len);
 				memcpy(matched_dst->name, matched_src->name,
 				       len);
