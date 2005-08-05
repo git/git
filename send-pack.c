@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "commit.h"
+#include "tag.h"
 #include "refs.h"
 #include "pkt-line.h"
 
@@ -104,19 +105,26 @@ static int pack_objects(int fd, struct ref *refs)
 	return 0;
 }
 
-static int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
+static int ref_newer(const unsigned char *new_sha1,
+		     const unsigned char *old_sha1)
 {
-	struct commit *new, *old;
+	struct object *o;
+	struct commit *old, *new;
 	struct commit_list *list;
 
-	if (force_update)
-		return 1;
-	old = lookup_commit_reference(old_sha1);
-	if (!old)
+	/* Both new and old must be commit-ish and new is descendant of
+	 * old.  Otherwise we require --force.
+	 */
+	o = deref_tag(parse_object(old_sha1));
+	if (!o || o->type != commit_type)
 		return 0;
-	new = lookup_commit_reference(new_sha1);
-	if (!new)
+	old = (struct commit *) o;
+
+	o = deref_tag(parse_object(new_sha1));
+	if (!o || o->type != commit_type)
 		return 0;
+	new = (struct commit *) o;
+
 	if (parse_commit(new) < 0)
 		return 0;
 	list = NULL;
@@ -173,13 +181,38 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		char old_hex[60], *new_hex;
 		if (!ref->peer_ref)
 			continue;
-		if (!is_zero_sha1(ref->old_sha1)) {
+		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
+			fprintf(stderr, "'%s': up-to-date\n", ref->name);
+			continue;
+		}
+
+		/* This part determines what can overwrite what.
+		 * The rules are:
+		 *
+		 * (0) you can always use --force.
+		 *
+		 * (1) if the old thing does not exist, it is OK.
+		 *
+		 * (2) if you do not have the old thing, you are not allowed
+		 *     to overwrite it; you would not know what you are losing
+		 *     otherwise.
+		 *
+		 * (3) if both new and old are commit-ish, and new is a
+		 *     descendant of old, it is OK.
+		 */
+
+		if (!force_update && !is_zero_sha1(ref->old_sha1)) {
 			if (!has_sha1_file(ref->old_sha1)) {
 				error("remote '%s' object %s does not "
 				      "exist on local",
 				      ref->name, sha1_to_hex(ref->old_sha1));
 				continue;
 			}
+			/* We assume that local is fsck-clean.  Otherwise
+			 * you _could_ have a old tag which points at
+			 * something you do not have which may or may not
+			 * be a commit.
+			 */
 			if (!ref_newer(ref->peer_ref->new_sha1,
 				       ref->old_sha1)) {
 				error("remote ref '%s' is not a strict "
@@ -187,10 +220,6 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 				      ref->peer_ref->name);
 				continue;
 			}
-		}
-		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
-			fprintf(stderr, "'%s': up-to-date\n", ref->name);
-			continue;
 		}
 		memcpy(ref->new_sha1, ref->peer_ref->new_sha1, 20);
 		if (is_zero_sha1(ref->new_sha1)) {

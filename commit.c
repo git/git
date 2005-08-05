@@ -48,13 +48,10 @@ static struct commit *check_commit(struct object *obj, const unsigned char *sha1
 
 struct commit *lookup_commit_reference(const unsigned char *sha1)
 {
-	struct object *obj = parse_object(sha1);
+	struct object *obj = deref_tag(parse_object(sha1));
 
 	if (!obj)
 		return NULL;
-	while (obj->type == tag_type)
-		obj = parse_object(((struct tag *)obj)->tagged->sha1);
-
 	return check_commit(obj, sha1);
 }
 

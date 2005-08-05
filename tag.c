@@ -3,6 +3,13 @@
 
 const char *tag_type = "tag";
 
+struct object *deref_tag(struct object *o)
+{
+	while (o && o->type == tag_type)
+		o = parse_object(((struct tag *)o)->tagged->sha1);
+	return o;
+}
+
 struct tag *lookup_tag(const unsigned char *sha1)
 {
         struct object *obj = lookup_object(sha1);
