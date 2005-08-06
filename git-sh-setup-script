@@ -12,6 +12,6 @@ die() {
 }
 
 [ -d "$GIT_DIR" ] &&
-[ -d "$GIT_DIR/refs" ]
+[ -d "$GIT_DIR/refs" ] &&
 [ -d "$GIT_OBJECT_DIRECTORY" ] &&
 [ -d "$GIT_OBJECT_DIRECTORY/00" ]
