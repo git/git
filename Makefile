@@ -32,24 +32,24 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION=0.99.4
+GIT_VERSION = 0.99.4
 
-COPTS?=-g -O2
-CFLAGS+=$(COPTS) -Wall $(DEFINES)
+CFLAGS = -g -O2 -Wall
+ALL_CFLAGS = $(CFLAGS) $(DEFINES)
 
-prefix=$(HOME)
-bindir=$(prefix)/bin
-template_dir=$(prefix)/share/git-core/templates/
+prefix = $(HOME)
+bindir = $(prefix)/bin
+template_dir = $(prefix)/share/git-core/templates/
 # dest=
 
-CC?=gcc
-AR?=ar
-INSTALL?=install
-RPMBUILD?=rpmbuild
+CC = gcc
+AR = ar
+INSTALL = install
+RPMBUILD = rpmbuild
 
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
-SPARSE_FLAGS?=-D__BIG_ENDIAN__ -D__powerpc__
+SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 
 
@@ -125,7 +125,7 @@ ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL=-lssl
 else
-	CFLAGS += '-DNO_OPENSSL'
+	DEFINES += '-DNO_OPENSSL'
 	MOZILLA_SHA1=1
 	OPENSSL_LIBSSL=
 endif
@@ -146,7 +146,7 @@ endif
 endif
 endif
 
-CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
+DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
 
 
@@ -156,12 +156,15 @@ all: $(PROG)
 
 all:
 	$(MAKE) -C templates
+	$(MAKE) -C tools
 
-.SECONDARY: %.o
-.c.o:
-	$(CC) $(CFLAGS) -o $*.o -c $*.c
+%.o: %.c
+	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+%.o: %.S
+	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+
 git-%: %.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
 git-http-pull: pull.o
 git-local-pull: pull.o
@@ -172,7 +175,8 @@ git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
-	$(CC) -c $(CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
+	$(CC) -c $(ALL_CFLAGS) \
+		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
 $(patsubst git-%,%.o,$(PROG)): $(LIB_H)
@@ -192,13 +196,13 @@ test: all
 	$(MAKE) -C t/ all
 
 test-date: test-date.c date.o
-	$(CC) $(CFLAGS) -o $@ test-date.c date.o
+	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
 
 test-delta: test-delta.c diff-delta.o patch-delta.o
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(ALL_CFLAGS) -o $@ $^
 
 check:
-	for i in *.c; do sparse $(CFLAGS) $(SPARSE_FLAGS) $$i; done
+	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i; done
 
 
 

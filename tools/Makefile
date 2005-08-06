@@ -2,10 +2,9 @@
 # Make Linus git-tools
 #
 CC=gcc
-COPTS=-O2
-CFLAGS=-g $(COPTS) -Wall
+CFLAGS = -O2 -g -Wall
+ALL_CFLAGS = $(CFLAGS)
 INSTALL=install
-HOME=$(shell echo $$HOME)
 prefix=$(HOME)
 bindir=$(prefix)/bin
 # dest=
@@ -14,7 +13,7 @@ PROGRAMS=git-mailsplit git-mailinfo
 SCRIPTS=git-applymbox git-applypatch
 
 git-%: %.c
-	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^)
+	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.c,$^)
 
 all: $(PROGRAMS)
 
