@@ -32,7 +32,7 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION=0.99.3
+GIT_VERSION=0.99.4
 
 COPTS?=-g -O2
 CFLAGS+=$(COPTS) -Wall $(DEFINES)
@@ -156,7 +156,9 @@ all: $(PROG)
 all:
 	$(MAKE) -C templates
 
-.PRECIOUS: %.o
+.SECONDARY: %.o
+.c.o:
+	$(CC) $(CFLAGS) -o $*.o -c $*.c
 git-%: %.o $(LIB_FILE)
 	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
@@ -231,17 +233,17 @@ dist: git-core.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta git-core-$(GIT_VERSION).tar.gz
 
-
-backup: clean
-	cd .. ; tar czvf dircache.tar.gz dir-cache
-
-
+deb: dist
+	rm -rf git-core-$(GIT_VERSION)
+	tar zxf git-core-$(GIT_VERSION).tar.gz
+	cd git-core-$(GIT_VERSION) && fakeroot debian/rules binary
 
 ### Cleaning rules
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
-	rm -f git-core-*.tar.gz git-core.spec
+	rm -f git-core-*.tar.gz git-core.spec git-core-$(GIT_VERSION)-*.deb
+	rm -rf git-core-$(GIT_VERSION)
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates/ clean

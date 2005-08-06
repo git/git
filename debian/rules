@@ -38,7 +38,7 @@ MAN_DESTDIR := $(DESTDIR)/$(MANDIR)
 build: debian/build-stamp
 debian/build-stamp:
 	dh_testdir
-	$(MAKE) all doc
+	$(MAKE) prefix=$(PREFIX) all doc
 	touch debian/build-stamp
 
 debian-clean:
