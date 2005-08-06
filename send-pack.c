@@ -105,12 +105,23 @@ static int pack_objects(int fd, struct ref *refs)
 	return 0;
 }
 
+static void unmark_and_free(struct commit_list *list, unsigned int mark)
+{
+	while (list) {
+		struct commit_list *temp = list;
+		temp->item->object.flags &= ~mark;
+		list = temp->next;
+		free(temp);
+	}
+}
+
 static int ref_newer(const unsigned char *new_sha1,
 		     const unsigned char *old_sha1)
 {
 	struct object *o;
 	struct commit *old, *new;
-	struct commit_list *list;
+	struct commit_list *list, *used;
+	int found = 0;
 
 	/* Both new and old must be commit-ish and new is descendant of
 	 * old.  Otherwise we require --force.
@@ -127,14 +138,20 @@ static int ref_newer(const unsigned char *new_sha1,
 
 	if (parse_commit(new) < 0)
 		return 0;
-	list = NULL;
+
+	used = list = NULL;
 	commit_list_insert(new, &list);
 	while (list) {
 		new = pop_most_recent_commit(&list, 1);
-		if (new == old)
-			return 1;
+		commit_list_insert(new, &used);
+		if (new == old) {
+			found = 1;
+			break;
+		}
 	}
-	return 0;
+	unmark_and_free(list, 1);
+	unmark_and_free(used, 1);
+	return found;
 }
 
 static struct ref *local_refs, **local_tail;
