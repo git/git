@@ -1,19 +1,38 @@
-# make
+# make and install sample templates
 
 INSTALL=install
 prefix=$(HOME)
-etcdir=$(prefix)/etc
-etcgitdir=$(etcdir)/git-core
-templatedir=$(etcgitdir)/templates
+template_dir=$(prefix)/share/git-core/templates/
 # dest=
 
-all:
-clean:
+all: boilerplates custom
+	find blt
 
-install:
-	$(INSTALL) -d -m755 $(dest)$(templatedir)/hooks/
-	$(foreach s,$(wildcard hooks--*),\
-		$(INSTALL) -m644 $s \
-		$(dest)$(templatedir)/hooks/$(patsubst hooks--%,%,$s);)
-	$(INSTALL) -d -m755 $(dest)$(templatedir)/info
-	$(INSTALL) -d -m755 $(dest)$(templatedir)/branches
+# Put templates that can be copied straight from the source
+# in a file direc--tory--file in the source.  They will be
+# just copied to the destination.
+boilerplates:
+	ls *--* 2>/dev/null | \
+	while read boilerplate; \
+	do \
+		case "$$boilerplate" in *~) continue ;; esac && \
+		dst=`echo "$$boilerplate" | sed -e 's|^this|.|;s|--|/|g'` && \
+		dir=`expr "$$dst" : '\(.*\)/'` && \
+		mkdir -p blt/$$dir && \
+		case "$$boilerplate" in \
+		*--) ;; \
+		*) cp $$boilerplate blt/$$dst ;; \
+		esac || exit; \
+	done || exit
+
+# If you need build-tailored templates, build them into blt/
+# directory yourself here.
+custom:
+	: no custom templates yet
+
+clean:
+	rm -rf blt
+
+install: all
+	$(INSTALL) -d -m755 $(dest)$(template_dir)
+	tar Ccf blt - . | tar Cxf $(dest)$(template_dir) -

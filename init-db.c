@@ -5,6 +5,10 @@
  */
 #include "cache.h"
 
+#ifndef DEFAULT_GIT_TEMPLATE_DIR
+#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
+#endif
+
 static void safe_create_dir(const char *dir)
 {
 	if (mkdir(dir, 0777) < 0) {
@@ -127,36 +131,37 @@ static void copy_templates_1(char *path, int baselen,
 	}
 }
 
-static void copy_templates(const char *git_dir)
+static void copy_templates(const char *git_dir, int len, char *template_dir)
 {
 	char path[PATH_MAX];
 	char template_path[PATH_MAX];
-	char *template_dir;
-	int len, template_len;
+	int template_len;
 	DIR *dir;
 
-	strcpy(path, git_dir);
-	len = strlen(path);
-	template_dir = gitenv(TEMPLATE_DIR_ENVIRONMENT);
 	if (!template_dir)
-		template_dir = DEFAULT_GIT_TEMPLATE_ENVIRONMENT;
+		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
 	if (template_path[template_len-1] != '/') {
 		template_path[template_len++] = '/';
 		template_path[template_len] = 0;
 	}
-
 	dir = opendir(template_path);
-	if (!dir)
+	if (!dir) {
+		fprintf(stderr, "warning: templates not found %s\n",
+			template_dir);
 		return;
+	}
+
+	memcpy(path, git_dir, len);
 	copy_templates_1(path, len,
 			 template_path, template_len,
 			 dir);
 	closedir(dir);
 }
 
-static void create_default_files(const char *git_dir)
+static void create_default_files(const char *git_dir,
+				 char *template_path)
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
@@ -189,9 +194,11 @@ static void create_default_files(const char *git_dir)
 			exit(1);
 		}
 	}
-	path[len] = 0;
-	copy_templates(path);
+	copy_templates(path, len, template_path);
 }
+
+static const char init_db_usage[] =
+"git-init-db [--template=<template-directory>]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.
@@ -203,8 +210,18 @@ int main(int argc, char **argv)
 {
 	const char *git_dir;
 	const char *sha1_dir;
-	char *path;
+	char *path, *template_dir = NULL;
 	int len, i;
+
+	for (i = 1; i < argc; i++, argv++) {
+		char *arg = argv[1];
+		if (arg[0] != '-')
+			break;
+		else if (!strncmp(arg, "--template=", 11))
+			template_dir = arg+11;
+		else
+			die(init_db_usage);
+	}
 
 	/*
 	 * Set up the default .git directory contents
@@ -215,7 +232,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "defaulting to local storage area\n");
 	}
 	safe_create_dir(git_dir);
-	create_default_files(git_dir);
+	create_default_files(git_dir, template_dir);
 
 	/*
 	 * And set up the object store.

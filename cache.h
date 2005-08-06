@@ -128,10 +128,6 @@ extern unsigned int active_nr, active_alloc, active_cache_changed;
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
-#define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIRECTORY"
-#ifndef DEFAULT_GIT_TEMPLATE_ENVIRONMENT
-#define DEFAULT_GIT_TEMPLATE_ENVIRONMENT "/etc/git-core/templates"
-#endif
 
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);

@@ -39,8 +39,7 @@ CFLAGS+=$(COPTS) -Wall $(DEFINES)
 
 prefix=$(HOME)
 bindir=$(prefix)/bin
-etcdir=$(prefix)/etc
-etcgitdir=$(etcdir)/git-core
+template_dir=$(prefix)/share/git-core/templates/
 # dest=
 
 CC?=gcc
@@ -147,7 +146,6 @@ endif
 endif
 
 CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
-CFLAGS += '-DDEFAULT_GIT_TEMPLATE_ENVIRONMENT="$(etcgitdir)/templates"'
 
 
 
@@ -155,6 +153,8 @@ CFLAGS += '-DDEFAULT_GIT_TEMPLATE_ENVIRONMENT="$(etcgitdir)/templates"'
 
 all: $(PROG)
 
+all:
+	$(MAKE) -C templates
 
 .PRECIOUS: %.o
 git-%: %.o $(LIB_FILE)
@@ -167,6 +167,9 @@ git-ssh-push: rsh.o
 
 git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += $(OPENSSL_LIBSSL)
+
+init-db.o: init-db.c
+	$(CC) -c $(CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
