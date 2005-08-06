@@ -339,6 +339,30 @@ proc makewindow {} {
     entry $sha1entry -width 40 -font $textfont -textvariable sha1string
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
+
+    image create bitmap bm-left -data {
+	#define left_width 16
+	#define left_height 16
+	static unsigned char left_bits[] = {
+	0x00, 0x00, 0xc0, 0x01, 0xe0, 0x00, 0x70, 0x00, 0x38, 0x00, 0x1c, 0x00,
+	0x0e, 0x00, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x0e, 0x00, 0x1c, 0x00,
+	0x38, 0x00, 0x70, 0x00, 0xe0, 0x00, 0xc0, 0x01};
+    }
+    image create bitmap bm-right -data {
+	#define right_width 16
+	#define right_height 16
+	static unsigned char right_bits[] = {
+	0x00, 0x00, 0xc0, 0x01, 0x80, 0x03, 0x00, 0x07, 0x00, 0x0e, 0x00, 0x1c,
+	0x00, 0x38, 0xff, 0x7f, 0xff, 0x7f, 0xff, 0x7f, 0x00, 0x38, 0x00, 0x1c,
+	0x00, 0x0e, 0x00, 0x07, 0x80, 0x03, 0xc0, 0x01};
+    }
+    button .ctop.top.bar.leftbut -image bm-left -command goback \
+	-state disabled -width 26
+    pack .ctop.top.bar.leftbut -side left -fill y
+    button .ctop.top.bar.rightbut -image bm-right -command goforw \
+	-state disabled -width 26
+    pack .ctop.top.bar.rightbut -side left -fill y
+
     button .ctop.top.bar.findbut -text "Find" -command dofind
     pack .ctop.top.bar.findbut -side left
     set findstring {}
@@ -1175,7 +1199,7 @@ proc drawrest {level startix} {
     #puts "overall $drawmsecs ms for $numcommits commits"
     if {$redisplaying} {
 	if {$stopped == 0 && [info exists selectedline]} {
-	    selectline $selectedline
+	    selectline $selectedline 0
 	}
 	if {$stopped == 1} {
 	    set stopped 0
@@ -1274,7 +1298,7 @@ proc dofind {} {
 
 proc findselectline {l} {
     global findloc commentend ctext
-    selectline $l
+    selectline $l 1
     if {$findloc == "All fields" || $findloc == "Comments"} {
 	# highlight the matches in the comments
 	set f [$ctext get 1.0 $commentend]
@@ -1665,15 +1689,17 @@ proc selcanvline {w x y} {
 	if {![info exists rowtextx($l)] || $x < $rowtextx($l)} return
     }
     unmarkmatches
-    selectline $l
+    selectline $l 1
 }
 
-proc selectline {l} {
+proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
     global canvy0 linespc parents nparents
     global cflist currentid sha1entry
-    global commentend idtags
+    global commentend idtags idline
+    global history historyindex
+
     $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
@@ -1722,6 +1748,22 @@ proc selectline {l} {
 	}
 	allcanvs yview moveto [expr $newtop * 1.0 / $ymax]
     }
+
+    if {$isnew && (![info exists selectedline] || $selectedline != $l)} {
+	if {$historyindex < [llength $history]} {
+	    set history [lreplace $history $historyindex end $l]
+	} else {
+	    lappend history $l
+	}
+	incr historyindex
+	if {$historyindex > 1} {
+	    .ctop.top.bar.leftbut conf -state normal
+	} else {
+	    .ctop.top.bar.leftbut conf -state disabled
+	}
+	.ctop.top.bar.rightbut conf -state disabled
+    }
+
     set selectedline $l
 
     set id $lineid($l)
@@ -1746,8 +1788,25 @@ proc selectline {l} {
 	$ctext insert end "\n"
     }
     $ctext insert end "\n"
-    $ctext insert end [lindex $info 5]
+    set commentstart [$ctext index "end - 1c"]
+    set comment [lindex $info 5]
+    $ctext insert end $comment
     $ctext insert end "\n"
+
+    # make anything that looks like a SHA1 ID be a clickable link
+    set links [regexp -indices -all -inline {[0-9a-f]{40}} $comment]
+    set i 0
+    foreach l $links {
+	set s [lindex $l 0]
+	set e [lindex $l 1]
+	set linkid [string range $comment $s $e]
+	if {![info exists idline($linkid)]} continue
+	incr e
+	$ctext tag conf link$i -foreground blue -underline 1
+	$ctext tag add link$i "$commentstart + $s c" "$commentstart + $e c"
+	$ctext tag bind link$i <1> [list selectline $idline($linkid) 1]
+    }
+
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
     $ctext conf -state disabled
@@ -1767,7 +1826,34 @@ proc selnextline {dir} {
     if {![info exists selectedline]} return
     set l [expr $selectedline + $dir]
     unmarkmatches
-    selectline $l
+    selectline $l 1
+}
+
+proc goback {} {
+    global history historyindex
+
+    if {$historyindex > 1} {
+	incr historyindex -1
+	selectline [lindex $history [expr {$historyindex - 1}]] 0
+	.ctop.top.bar.rightbut conf -state normal
+    }
+    if {$historyindex <= 1} {
+	.ctop.top.bar.leftbut conf -state disabled
+    }
+}
+
+proc goforw {} {
+    global history historyindex
+
+    if {$historyindex < [llength $history]} {
+	set l [lindex $history $historyindex]
+	incr historyindex
+	selectline $l 0
+	.ctop.top.bar.leftbut conf -state normal
+    }
+    if {$historyindex >= [llength $history]} {
+	.ctop.top.bar.rightbut conf -state disabled
+    }
 }
 
 proc mergediff {id} {
@@ -2590,7 +2676,7 @@ proc gotocommit {} {
 	}
     }
     if {[info exists idline($id)]} {
-	selectline $idline($id)
+	selectline $idline($id) 1
 	return
     }
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
@@ -2702,7 +2788,7 @@ proc lineclick {x y id} {
 proc selbyid {id} {
     global idline
     if {[info exists idline($id)]} {
-	selectline $idline($id)
+	selectline $idline($id) 1
     }
 }
 
@@ -2906,7 +2992,7 @@ proc domktag {} {
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($idline($id)) $xt [lindex $idpos($id) 2]
     if {[info exists selectedline] && $selectedline == $idline($id)} {
-	selectline $selectedline
+	selectline $selectedline 0
     }
 }
 
@@ -3015,6 +3101,9 @@ foreach arg $argv {
 	}
     }
 }
+
+set history {}
+set historyindex 0
 
 set stopped 0
 set redisplaying 0
