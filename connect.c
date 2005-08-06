@@ -190,13 +190,6 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 		}
 		if (errs)
 			continue;
-		if (matched_src->peer_ref) {
-			errs = 1;
-			error("src ref %s is sent to more than one dst.",
-			      matched_src->name);
-		}
-		else
-			matched_src->peer_ref = matched_dst;
 		if (matched_dst->peer_ref) {
 			errs = 1;
 			error("dst ref %s receives from more than one src.",
