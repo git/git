@@ -133,6 +133,20 @@ static void link_dst_tail(struct ref *ref, struct ref ***tail)
 	**tail = NULL;
 }
 
+static struct ref *try_explicit_object_name(const char *name)
+{
+	unsigned char sha1[20];
+	struct ref *ref;
+	int len;
+	if (get_sha1(name, sha1))
+		return NULL;
+	len = strlen(name) + 1;
+	ref = xcalloc(1, sizeof(*ref) + len);
+	memcpy(ref->name, name, len);
+	memcpy(ref->new_sha1, sha1, 20);
+	return ref;
+}
+
 static int match_explicit_refs(struct ref *src, struct ref *dst,
 			       struct ref ***dst_tail, struct refspec *rs)
 {
@@ -145,6 +159,12 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 		case 1:
 			break;
 		case 0:
+			/* The source could be in the get_sha1() format
+			 * not a reference name.
+			 */
+			matched_src = try_explicit_object_name(rs[i].src);
+			if (matched_src)
+				break;
 			errs = 1;
 			error("src refspec %s does not match any.");
 			break;
