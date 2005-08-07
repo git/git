@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"163";
+my $version =		"164";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -335,8 +335,11 @@ sub git_read_commit {
 			$co{'author'} = $1;
 			$co{'author_epoch'} = $2;
 			$co{'author_tz'} = $3;
-			$co{'author_name'} = $co{'author'};
-			$co{'author_name'} =~ s/ <.*//;
+			if ($co{'author'} =~ m/^([^<]+) </) {
+				$co{'author_name'} = $1;
+			} else {
+				$co{'author_name'} = $co{'author'};
+			}
 		} elsif ($line =~ m/^committer (.*) ([0-9]+) (.*)$/) {
 			$co{'committer'} = $1;
 			$co{'committer_epoch'} = $2;
@@ -353,11 +356,7 @@ sub git_read_commit {
 	$co{'parent'} = $parents[0];
 	my (@comment) = map { chomp; $_ } <$fd>;
 	$co{'comment'} = \@comment;
-	$comment[0] =~ m/^(.{0,50}[^ \/\-_:\.]{0,10})/;
-	$co{'title'} = $1;
-	if ($comment[0] ne $co{'title'}) {
-		$co{'title'} .= " ...";
-	}
+	$co{'title'} = chop_str($comment[0], 50);
 	close $fd || return;
 
 	my $age = time - $co{'committer_epoch'};
@@ -465,6 +464,18 @@ sub mode_str {
 	} else {
 		return '----------';
 	}
+}
+
+sub chop_str {
+	my $str = shift;
+	my $len = shift;
+
+	$str =~ m/^(.{0,$len}[^ \/\-_:\.@]{0,10})/;
+	my $chopped = $1;
+	if ($chopped ne $str) {
+		$chopped .= " ...";
+	}
+	return $chopped;
 }
 
 sub file_type {
@@ -614,6 +625,7 @@ sub git_project_list {
 			next;
 		}
 		my $descr = git_read_description($proj{'path'}) || "";
+		$descr = chop_str($descr, 30);
 		# get directory owner if not already specified
 		if (!defined $proj{'owner'}) {
 			$proj{'owner'} = get_file_owner("$projectroot/$proj{'path'}") || "";
@@ -626,7 +638,7 @@ sub git_project_list {
 		$alternate ^= 1;
 		print "<td>" . $cgi->a({-href => "$my_uri?p=$proj{'path'};a=summary", -class => "list"}, escapeHTML($proj{'path'})) . "</td>\n" .
 		      "<td>$descr</td>\n" .
-		      "<td><i>$proj{'owner'}</i></td>\n";
+		      "<td><i>" . chop_str($proj{'owner'}, 20) . "</i></td>\n";
 		my $colored_age;
 		if ($co{'age'} < 60*60*2) {
 			$colored_age = "<span style =\"color: #009900;\"><b><i>$co{'age_string'}</i></b></span>";
@@ -742,7 +754,7 @@ sub git_summary {
 		$alternate ^= 1;
 		if (--$i > 0) {
 			print "<td><i>$co{'age_string'}</i></td>\n" .
-			      "<td><i>$co{'author_name'}</i></td>\n" .
+			      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" . escapeHTML($co{'title'}) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
@@ -1499,7 +1511,7 @@ sub git_history {
 			}
 			$alternate ^= 1;
 			print "<td><i>$co{'age_string'}</i></td>\n" .
-			      "<td><i>$co{'author_name'}</i></td>\n" .
+			      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" . escapeHTML($co{'title'}) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
