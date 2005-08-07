@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"152";
+my $version =		"154";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -359,7 +359,7 @@ sub git_read_commit {
 	$co{'parent'} = $parents[0];
 	my (@comment) = map { chomp; $_ } <$fd>;
 	$co{'comment'} = \@comment;
-	$comment[0] =~ m/^(.{0,60}[^ ]*)/;
+	$comment[0] =~ m/^(.{0,60}[^ \/]*)/;
 	$co{'title'} = $1;
 	if ($comment[0] ne $co{'title'}) {
 		$co{'title'} .= " ...";
@@ -744,6 +744,10 @@ sub git_summary {
 			print "<td>$co{'age_string'}</td>\n" .
 			      "<td>$co{'author_name'}</td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, escapeHTML($co{'title'})) . "</td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "commitdiff") .
+			      "</td>\n" .
 			      "</tr>";
 		} else {
 			print "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=log"}, "...") . "</td>\n" .
@@ -1334,10 +1338,11 @@ sub git_commitdiff {
 	my $empty = 0;
 	my $signed = 0;
 	my @log = @$comment;
+	# remove first and empty lines after that
 	shift @log;
-	#while ($log[0] eq "") {
-	#	shift @log;
-	#}
+	while (defined $log[0] && $log[0] eq "") {
+		shift @log;
+	}
 	foreach my $line (@log) {
 		if ($line =~ m/^(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
 			next;
