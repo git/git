@@ -73,7 +73,7 @@ EOF
 	print "<a href=\"http://kernel.org/pub/software/scm/git/\"><img src=\"git_logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	print $cgi->a({-href => "$myself"}, "projects");
 	if ($project ne "") {
-		print " / " . $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24}, $project);
+		print " / " . $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24}, $project);
 	}
 	if ($action ne "") {
 		print " / $action";
@@ -120,19 +120,19 @@ sub git_diff {
 		close $fd2;
 		close $fd;
 		$tmp_new = "$gittmp/$new";
-		$new_label = "a/$new_name";
+		$new_label = "b/$new_name";
 	}
 
 	open my $fd, "-|", "/usr/bin/diff", "-L", $old_label, "-L", $new_label, "-u", "-p", $tmp_old, $tmp_new;
 	print '<div class="diff_head">===== ';
 	if ($old ne "") {
-		print $cgi->a({-href => "$myself?project=$project&action=blob&hash=$old"}, $old);
+		print $cgi->a({-href => "$myself?project=$project;action=blob;hash=$old"}, $old);
 	} else {
 		print $old_name;
 	}
 	print " vs ";
 	if ($new ne "") {
-		print $cgi->a({-href => "$myself?project=$project&action=blob&hash=$new"}, $new);
+		print $cgi->a({-href => "$myself?project=$project;action=blob;hash=$new"}, $new);
 	} else {
 		print $new_name;
 	}
@@ -167,7 +167,7 @@ if ($project eq "") {
 }
 
 if ($action eq "") {
-	print $cgi->redirect("$myself?project=$project&action=log&view_back=$view_back");
+	print $cgi->redirect("$myself?project=$project;action=log;view_back=$view_back");
 	exit;
 }
 
@@ -206,9 +206,9 @@ if ($action eq "blob") {
 		my $t_hash = $3;
 		my $t_name = $4;
 		if ($t_type eq "blob") {
-			print "BLOB\t" . $cgi->a({-href => "$myself?project=$project&action=blob&hash=$3"}, $4) . "\n";
+			print "BLOB\t" . $cgi->a({-href => "$myself?project=$project;action=blob;hash=$3"}, $4) . "\n";
 		} elsif ($t_type eq "tree") {
-			print "TREE\t" . $cgi->a({-href => "$myself?project=$project&action=tree&hash=$3"}, $4) . "\n";
+			print "TREE\t" . $cgi->a({-href => "$myself?project=$project;action=tree;hash=$3"}, $4) . "\n";
 		}
 	}
 	print "</pre>\n";
@@ -225,11 +225,11 @@ if ($action eq "blob") {
 	git_header();
 	print "<div class=\"head2\">\n";
 	print "view  ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24}, "last day") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24*7}, "week") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24*30}, "month") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24*365}, "year") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=-1"}, "all") . "<br/>\n";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24}, "last day") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24*7}, "week") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24*30}, "month") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24*365}, "year") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=-1"}, "all") . "<br/>\n";
 	print "<br/><br/>\n";
 	print "</div>\n";
 	print "<table cellspacing=\"0\" class=\"log\">\n";
@@ -302,13 +302,13 @@ if ($action eq "blob") {
 		}
 		print "<tr>\n";
 		print "<td class=\"head1\">" . $age_string . "</td>\n";
-		print "<td class=\"head1\"><a href=\"$myself?project=$project&amp;action=commit&amp;hash=$commit&amp;parent=$parent\">" . $shortlog . "</a></td>";
+		print "<td class=\"head1\">" . $cgi->a({-href => "$myself?project=$project;action=commit;hash=$commit;parent=$parent"}, $shortlog) . "</td>";
 		print "</tr>\n";
 		print "<tr>\n";
 		print "<td class=\"head3\">";
-		print $cgi->a({-href => "$myself?project=$project&action=diffs&hash=$commit&parent=$parent"}, "view diff") . "<br/>\n";
-		print $cgi->a({-href => "$myself?project=$project&action=commit&hash=$commit&parent=$parent"}, "view commit") . "<br/>\n";
-		print $cgi->a({-href => "$myself?project=$project&action=tree&hash=$tree"}, "view tree") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=diffs;hash=$commit;parent=$parent"}, "view diff") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=commit;hash=$commit;parent=$parent"}, "view commit") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=tree;hash=$tree"}, "view tree") . "<br/>\n";
 		print "</td>\n";
 		print "<td class=\"head2\">\n";
 		print "author &nbsp; &nbsp;" . escapeHTML($author) . " [" . gmtime($author_time) . " " . $author_timezone . "]<br/>\n";
@@ -335,7 +335,8 @@ if ($action eq "blob") {
 	close $fd;
 
 	git_header();
-	print "<br/><br/><div class=\"main\">\n";
+	print "<div class=\"head2\">\n";
+	print "view " . $cgi->a({-href => "$myself?project=$project;action=diffs;hash=$hash;parent=$parent"}, "diff") . "<br/><br/>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
@@ -348,14 +349,14 @@ if ($action eq "blob") {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "NEW\t" . $cgi->a({-href => "$myself?project=$project&action=blob&hash=$id"}, $file) . "\n";
+				print "NEW\t" . $cgi->a({-href => "$myself?project=$project;action=blob;hash=$id"}, $file) . "\n";
 			} elsif ($op eq "-") {
-				print "DEL\t" . $cgi->a({-href => "$myself?project=$project&action=blob&hash=$id"}, $file) . "\n";
+				print "DEL\t" . $cgi->a({-href => "$myself?project=$project;action=blob;hash=$id"}, $file) . "\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $old = $1;
 				my $new = $2;
-				print "CHANGED\t" . $cgi->a({-href => "$myself?project=$project&action=diff&hash=$old&parent=$new"}, $file) . "\n";
+				print "CHANGED\t" . $cgi->a({-href => "$myself?project=$project;action=diff;hash=$old;parent=$new"}, $file) . "\n";
 			}
 		}
 	}
@@ -376,7 +377,8 @@ if ($action eq "blob") {
 	close $fd;
 
 	git_header();
-	print "<br/><br/><div class=\"main\">\n";
+	print "<div class=\"head2\">\n";
+	print "view " . $cgi->a({-href => "$myself?project=$project;action=commit;hash=$hash;parent=$parent"}, "commit") . "<br/><br/>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
@@ -398,7 +400,6 @@ if ($action eq "blob") {
 		}
 	}
 	print "</pre>\n";
-	print "<br/></div>";
 	print "<br/></div>";
 	git_footer();
 } else {
