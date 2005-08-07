@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"149";
+my $version =		"150";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -120,6 +120,9 @@ if (defined $time_back) {
 
 if ($action eq "summary") {
 	git_summary();
+	exit;
+} elsif ($action eq "branches") {
+	git_branches();
 	exit;
 } elsif ($action eq "tags") {
 	git_tags();
@@ -382,10 +385,10 @@ sub git_read_commit {
 		$co{'age_string'} .= " hours ago";
 	} elsif ($age > 60*2) {
 		$co{'age_string'} = int $age/60;
-		$co{'age_string'} .= " minutes ago";
+		$co{'age_string'} .= " min ago";
 	} elsif ($age > 2) {
 		$co{'age_string'} = int $age;
-		$co{'age_string'} .= " seconds ago";
+		$co{'age_string'} .= " sec ago";
 	} else {
 		$co{'age_string'} .= " right now";
 	}
@@ -646,14 +649,15 @@ sub git_project_list {
 	git_footer_html();
 }
 
-sub git_read_tags {
+sub git_read_refs {
+	my $ref_dir = shift;
 	my @taglist;
 
-	opendir my $dh, "$projectroot/$project/refs/tags";
+	opendir my $dh, "$projectroot/$project/$ref_dir";
 	my @tags = grep !m/^\./, readdir $dh;
 	closedir($dh);
 	foreach my $tag_file (@tags) {
-		my $tag_id = git_read_hash("$project/refs/tags/$tag_file");
+		my $tag_id = git_read_hash("$project/$ref_dir/$tag_file");
 		my $type = git_get_type($tag_id) || next;
 		my %tag_item;
 		my %co;
@@ -669,6 +673,7 @@ sub git_read_tags {
 			%co = git_read_commit($tag_id);
 			$tag_item{'type'} = "commit";
 			$tag_item{'name'} = $tag_file;
+			$tag_item{'title'} = $co{'title'};
 			$tag_item{'id'} = $tag_id;
 		}
 		$tag_item{'epoch'} = $co{'author_epoch'} || 0;
@@ -726,7 +731,7 @@ sub git_summary {
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=log", -class => "title"}, "recent commits") .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log", -class => "title"}, "commits") .
 	      "</div>\n";
 	my $i = 10;
 	print  "<div class=\"page_body\">\n" .
@@ -749,10 +754,10 @@ sub git_summary {
 	print "</table\n>" .
 	      "</div>\n";
 
-	my $taglist = git_read_tags();
+	my $taglist = git_read_refs("refs/tags");
 	if (defined @$taglist) {
 		print "<div>\n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=tags", -class => "title"}, "recent tags") .
+		      $cgi->a({-href => "$my_uri?p=$project;a=tags", -class => "title"}, "tags") .
 		      "</div>\n";
 		my $i = 10;
 		print  "<div class=\"page_body\">\n" .
@@ -773,6 +778,31 @@ sub git_summary {
 		print "</table\n>" .
 		      "</div>\n";
 	}
+
+	my $branchlist = git_read_refs("refs/heads");
+	if (defined @$branchlist) {
+		print "<div>\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=branches", -class => "title"}, "branches") .
+		      "</div>\n";
+		my $i = 10;
+		print  "<div class=\"page_body\">\n" .
+		       "<table cellspacing=\"0\">\n";
+		foreach my $entry (@$branchlist) {
+			my %tag = %$entry;
+			print "<tr>\n";
+			if (--$i > 0) {
+				print "<td>$tag{'age'}</td>\n" .
+				      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, escapeHTML($tag{'name'})) . "</td>\n" .
+				      "</tr>";
+			} else {
+				print "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=branches"}, "...") . "</td>\n" .
+				"</tr>";
+				last;
+			}
+		}
+		print "</table\n>" .
+		      "</div>\n";
+	}
 	git_footer_html();
 }
 
@@ -785,7 +815,7 @@ sub git_tags {
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree"}, "tree") .
 	      "<br/><br/>\n" .
 	      "</div>\n";
-	my $taglist = git_read_tags();
+	my $taglist = git_read_refs("refs/tags");
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary", -class => "title"}, "tags") .
 	      "</div>\n";
@@ -794,6 +824,32 @@ sub git_tags {
 			my %tag = %$entry;
 			print "<div class=\"list\">\n" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"},
+			      "<span class=\"age\">$tag{'age'}</span>" .  escapeHTML($tag{'name'})) . "\n" .
+			      "</div>\n";
+		}
+	}
+	print "<div class=\"list\"><br/></div>\n";
+	git_footer_html();
+}
+
+sub git_branches {
+	my $head = git_read_hash("$project/HEAD");
+	git_header_html();
+	print "<div class=\"page_nav\">\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log"}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$head"}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree"}, "tree") .
+	      "<br/><br/>\n" .
+	      "</div>\n";
+	my $taglist = git_read_refs("refs/heads");
+	print "<div>\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=summary", -class => "title"}, "branches") .
+	      "</div>\n";
+	if (defined @$taglist) {
+		foreach my $entry (@$taglist) {
+			my %tag = %$entry;
+			print "<div class=\"list\">\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"},
 			      "<span class=\"age\">$tag{'age'}</span>" .  escapeHTML($tag{'name'})) . "\n" .
 			      "</div>\n";
 		}
@@ -979,7 +1035,9 @@ sub git_rss {
 }
 
 sub git_log {
-	my $head = git_read_hash("$project/HEAD");
+	if (!defined $hash) {
+		$hash = git_read_hash("$project/HEAD");
+	}
 	my $limit_option = "";
 	if (!defined $time_back) {
 		$limit_option = "--max-count=10";
@@ -987,7 +1045,7 @@ sub git_log {
 		my $date = time - $time_back*24*60*60;
 		$limit_option = "--max-age=$date";
 	}
-	open my $fd, "-|", "$gitbin/git-rev-list $limit_option $head" || die_error(undef, "Open failed.");
+	open my $fd, "-|", "$gitbin/git-rev-list $limit_option $hash" || die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd || die_error(undef, "Reading rev-list failed.");
 
@@ -1003,7 +1061,7 @@ sub git_log {
 	      "</div>\n";
 
 	if (!@revlist) {
-		my %co = git_read_commit($head);
+		my %co = git_read_commit($hash);
 		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
 	}
 
@@ -1272,6 +1330,24 @@ sub git_commitdiff {
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 	      "</div>\n";
 	print "<div class=\"page_body\">\n";
+	my $comment = $co{'comment'};
+	my $empty = 0;
+	my $signed = 0;
+	foreach my $line (@$comment) {
+		if ($line =~ m/^(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
+			next;
+		}
+		if ($line eq "") {
+			if ($empty) {
+				next;
+			}
+			$empty = 1;
+		} else {
+			$empty = 0;
+		}
+		print escapeHTML($line) . "<br/>\n";
+	}
+	print "<br/>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
 		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
