@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 014
+# Version 016
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -25,39 +25,40 @@ my $hash = "";
 my $hash_parent = "";
 my $view_back;
 my $myself = $cgi->url(-absolute => 1);
-my $url_path = $cgi->url(-path => 1);
+my $url_parm = $cgi->url(-path => 1);
+$url_parm =~ s/.*$myself//;
 
 # get values from url
-if ($url_path =~ m#/([^/]+)/commit/([0-9a-fA-F]+)$#) {
+if ($url_parm =~ m#/([^/]+)/commit/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "commit";
 	$hash = $2;
-} elsif ($url_path =~ m#/([^/]+)/treediff/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/([^/]+)/treediff/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "treediff";
 	$hash = $2;
-} elsif ($url_path =~ m#/([^/]+)/diff/([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/([^/]+)/diff/([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "diff";
 	$hash = $2;
 	$hash_parent = $3;
-} elsif ($url_path =~ m#/([^/]+)/blob/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/([^/]+)/blob/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "blob";
 	$hash = $2;
-} elsif ($url_path =~ m#/([^/]+)/tree/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/([^/]+)/tree/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "tree";
 	$hash = $2;
-} elsif ($url_path =~ m#/([^/]+)/log/([0-9]+)$#) {
+} elsif ($url_parm =~ m#/([^/]+)/log/([0-9]+)$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = $2;
-} elsif ($url_path =~ m#/([^/]+)/log$#) {
+} elsif ($url_parm =~ m#/([^/]+)/log$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = 1;
-} elsif ($url_path =~ m#/git-logo.png$#) {
+} elsif ($url_parm =~ m#/git-logo.png$#) {
 	print $cgi->header(-type => 'image/png');
 	print	"\211\120\116\107\015\012\032\012\000\000\000\015\111\110\104\122".
 		"\000\000\000\110\000\000\000\033\004\003\000\000\000\055\331\324".
@@ -73,6 +74,10 @@ if ($url_path =~ m#/([^/]+)/commit/([0-9a-fA-F]+)$#) {
 		"\047\101\202\100\205\301\105\211\040\160\001\000\244\075\041\305".
 		"\022\034\232\376\000\000\000\000\111\105\116\104\256\102\140\202";
 	exit;
+} elsif ($url_parm =~ m#/([^/]+)$#) {
+	$project = $1;
+	$action = "log";
+	$view_back = 1;
 }
 
 # sanitize input
@@ -102,6 +107,7 @@ print <<EOF;
 		div.head2 a:hover { color:#880000; }
 		div.head2 a:active { color:#880000; }
 		div.main { padding:8px; font-family: sans-serif; font-size: 12px; }
+		div.shortlog { padding:8px; background-color: #D9D8D1; font-weight:bold; }
 		table { padding:0px; margin:0px; width:100%; }
 		tr { vertical-align:top; }
 		td { padding:8px; margin:0px; font-family: sans-serif; font-size: 12px; }
@@ -111,11 +117,7 @@ print <<EOF;
 		td.head1 a:visited { color:#000000; }
 		td.head2 { background-color: #EDECE6; font-family: monospace; font-size:12px; }
 		td.head3 { background-color: #EDECE6; font-size:10px; }
-		div.add { color: #008800; }
-		div.subtract { color: #CC0000; }
-		div.diff_head { color: #000099; }
-		div.diff_head a:visited { color:#0000cc; }
-		div.diff_line { color: #990099; }
+		div.signed_off { color: #a9a8a1; }
 		a { color:#0000cc; }
 		a:hover { color:#880000; }
 		a:visited { color:#880000; }
@@ -180,7 +182,7 @@ sub git_diff {
 	}
 
 	open my $fd, "-|", "/usr/bin/diff", "-L", $old_label, "-L", $new_label, "-u", "-p", $tmp_old, $tmp_new;
-	print '<div class="diff_head">===== ';
+	print "<span style =\"color: #000099;\">===== ";
 	if ($old ne "") {
 		print $cgi->a({-href => "$myself/$project/blob/$old"}, $old);
 	} else {
@@ -192,14 +194,14 @@ sub git_diff {
 	} else {
 		print $new_name;
 	}
-	print ' =====</div>';
+	print " =====</span>\n";
 	while (my $line = <$fd>) {
 		my $char = substr($line,0,1);
-		print '<div class="add">' if $char eq '+';
-		print '<div class="subtract">' if $char eq '-';
-		print '<div class="diff_line">' if $char eq '@';
+		print '<span style ="color: #008800;">' if $char eq '+';
+		print '<span style ="color: #CC0000;">' if $char eq '-';
+		print '<span style ="color: #990099;">' if $char eq '@';
 		print escapeHTML($line);
-		print '</div>' if $char eq '+' or $char eq '-' or $char eq '@';
+		print '</span>' if $char eq '+' or $char eq '-' or $char eq '@';
 	}
 	close $fd;
 	unlink("$gittmp/$new");
@@ -324,7 +326,11 @@ if ($action eq "blob") {
 		$comment = $shortlog . "<br/>";
 		while (my $line = <$fd>) {
 				chomp($line);
-				$comment .= escapeHTML($line) . "<br/>\n";
+				if ($line =~ m/signed-off-by:/i) {
+					$comment .= '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
+				} else {
+					$comment .= escapeHTML($line) . "<br/>\n";
+				}
 		}
 		close $fd;
 		my $age = time-$committer_time;
@@ -400,7 +406,7 @@ if ($action eq "blob") {
 	git_header();
 	print "<div class=\"main\">\n";
 	print "view " . $cgi->a({-href => "$myself/$project/treediff/$hash"}, "diff") . "<br/><br/><br/>\n";
-	print "$shortlog<br/>\n";
+	print "<div class=\"shortlog\">$shortlog<br/></div>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
@@ -413,14 +419,14 @@ if ($action eq "blob") {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "NEW\t" . $cgi->a({-href => "$myself/$project/blob/$id"}, $file) . "\n";
+				print "added\t" . $cgi->a({-href => "$myself/$project/blob/$id"}, $file) . "\n";
 			} elsif ($op eq "-") {
-				print "DEL\t" . $cgi->a({-href => "$myself/$project/blob/$id"}, $file) . "\n";
+				print "removed\t" . $cgi->a({-href => "$myself/$project/blob/$id"}, $file) . "\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $old = $1;
 				my $new = $2;
-				print "CHANGED\t" . $cgi->a({-href => "$myself/$project/diff/$old/$new"}, $file) . "\n";
+				print "changed\t" . $cgi->a({-href => "$myself/$project/diff/$old/$new"}, $file) . "\n";
 			}
 		}
 	}
@@ -456,7 +462,7 @@ if ($action eq "blob") {
 	git_header();
 	print "<div class=\"main\">\n";
 	print "view " . $cgi->a({-href => "$myself/$project/commit/$hash"}, "commit") . "<br/><br/><br/>\n";
-	print "$shortlog<br/>\n";
+	print "<div class=\"shortlog\">$shortlog<br/></div>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
