@@ -113,13 +113,12 @@ sub git_header_html {
 	}
 	span.log_age { position:relative; float:left; width:142px; }
 	div.log_link { font-size:10px; font-family:sans-serif; position:relative; float:left; width:142px; }
-	div.list {
-		display:block; margin:0px 25px; padding:2px 8px 0px; border:solid #d9d8d1; border-width:1px 1px 0px 1px;
-		font-weight:bold; text-decoration:none; color:#000000; 
+	a.list {
+		display:block; margin:0px 25px; padding:4px; border:solid #d9d8d1; border-width:0px 1px;
+		font-weight:bold; background-color: #edece6; text-decoration:none; color:#000000;
 	}
-	div.list a { color:#000000; text-decoration:none; }
-	div.link { font-weight:normal; font-family:sans-serif; font-size:10px; border:solid #d9d8d1; border-width:1px 1px 0px 1px; }
-	a.view { display:inline; font-size:24px; }
+	a.list:hover { background-color: #d9d8d1; }
+	div.link { margin:0px 25px; padding:4px 8px; border:solid #d9d8d1; border-width:0px 1px; font-family:sans-serif; font-size:10px; }
 	a.xml_logo { float:right; border:1px solid;
 		line-height:15px;
 		border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
@@ -580,7 +579,7 @@ if ($action eq "blob") {
 			if ($op eq "+") {
 				print "<div>\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id", -class => "list"},
-				      escapeHTML($file) . " <span style=\"color: #008000;\">[new]</span>") . "\n" .
+				      escapeHTML($file) . " <span style=\"color: #33cc33;\">[new]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -589,7 +588,7 @@ if ($action eq "blob") {
 			} elsif ($op eq "-") {
 				print "<div>\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id", -class => "list"},
-				      escapeHTML($file) .  " <span style=\"color: #c00000;\">[removed]</span>") . "\n" .
+				      escapeHTML($file) .  " <span style=\"color: #cc5555;\">[removed]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -714,14 +713,14 @@ if ($action eq "blob") {
 			}
 		}
 		if ($found) {
-			print "<div class=\"list\">\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"},
+			print "<div>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev", -class => "list"},
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
-			      "<div class=\"link\">\n" .
+			      "</div>\n";
+			print "<div class=\"link\">\n" .
 			      "view " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, "commit") . " | " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$rev"}, "tree") . "<br/><br/>\n" . 
-			      "</div>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$rev"}, "tree") . "<br/><br/>\n" .
 			      "</div>\n";
 		}
 	}
