@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 025
+# Version 026
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -316,8 +316,8 @@ if ($action eq "blob") {
 	print "<br/>";
 	git_footer_html();
 } elsif ($action eq "log" || $action eq "rss") {
-	open my $fd, "-|", "$gitbin/rev-tree", git_head();
-	my (@revtree) = reverse sort map { chomp; $_ } <$fd>;
+	open my $fd, "-|", "$gitbin/rev-list", git_head();
+	my (@revtree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	if ($action eq "log") {
@@ -344,12 +344,7 @@ if ($action eq "blob") {
 	}
 
 	for (my $i = 0; $i <= $#revtree; $i++) {
-		my $rev = $revtree[$i];
-		# '1114106118 755e3010ee10dadf42a8a80770e1b115fb038d9b:1 2af17b4854036a1c2ec6c101d93c8dd1ed80d24e:1'
-		last if !($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/);
-		my $time = $1;
-		my $commit = $2;
-		my $parent = $3;
+		my $commit = $revtree[$i];
 
 		my %co = git_commit($commit);
 		my $age = time - $co{'committer_time'};
