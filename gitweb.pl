@@ -157,6 +157,47 @@ sub git_head {
 	return $head;
 }
 
+sub git_commit {
+	my $commit = shift;
+	my %co;
+	my @parents;
+
+	open my $fd, "-|", "$gitbin/cat-file", "commit", $commit;
+	while (my $line = <$fd>) {
+		chomp($line);
+		last if $line eq "";
+		if ($line =~ m/^tree (.*)$/) {
+			$co{'tree'} = $1;
+		} elsif ($line =~ m/^parent (.*)$/) {
+			push @parents, $1;
+		} elsif ($line =~ m/^committer (.*>) ([0-9]+) (.*)$/) {
+			$co{'committer'} = $1;
+			$co{'committer_time'} = $2;
+			$co{'committer_timezone'} = $3;
+		} elsif ($line =~ m/^author (.*>) ([0-9]+) (.*)$/) {
+			$co{'$author'} = $1;
+			$co{'$author_time'} = $2;
+			$co{'$author_timezone'} = $3;
+		}
+	}
+	my $shortlog = <$fd>;
+	chomp($shortlog);
+	$co{'shortlog'} = escapeHTML($shortlog);
+	my $comment = $shortlog . "<br/>";
+	while (my $line = <$fd>) {
+			chomp($line);
+			if ($line =~ m/signed-off-by:/i) {
+				$comment .= '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
+			} else {
+				$comment .= escapeHTML($line) . "<br/>\n";
+			}
+	}
+	$co{'comment'} = $comment;
+	close $fd;
+
+	return %co;
+}
+
 sub git_diff {
 	my $old_name = shift || "/dev/null";
 	my $new_name = shift || "/dev/null";
@@ -408,11 +449,10 @@ if ($action eq "blob") {
 			print "</td>";
 			print "</tr>\n";
 		} elsif ($action eq "rss") {
-			if ($i < 12) {
-				print "<item>\n\t<title>$age_string: $shortlog</title>\n";
-				print "\t<link> " . $cgi->url() . "/$project/commit/$commit</link>\n";
-				print "</item>\n";
-			}
+			last if ($i >= 12);
+			print "<item>\n\t<title>$age_string: $shortlog</title>\n";
+			print "\t<link> " . $cgi->url() . "/$project/commit/$commit</link>\n";
+			print "</item>\n";
 		}
 	}
 	if ($action eq "log") {
