@@ -14,9 +14,6 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-# !! This devel-version uses a modified git-rev-list binary !!
-# The git changes are expected to show up upstream soon.
-
 # begin config
 my $projectroot =	"/pub/scm";
 $projectroot =	"/home/kay/public_html/pub/scm";
@@ -28,7 +25,7 @@ my $logo_link =		"/pub/software/scm/cogito";
 $logo_link =		"/~kay/pub/software/scm/cogito";
 # end config
 
-my $version =		"088-devel";
+my $version =		"089";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -97,7 +94,7 @@ a { color:#0000cc; }
 a:hover { color:#880000; }
 a:visited { color:#880000; }
 a:active { color:#880000; }
-div.page_header {
+div.page_header\{
 	margin:15px 25px 0px; height:25px; padding:8px;
 	font-size:18px; font-weight:bold; background-color:#d9d8d1;
 }
@@ -132,14 +129,15 @@ div.link {
 	font-family:sans-serif; font-size:10px;
 }
 td.key { padding-right:10px;  }
-a.xml_logo { float:right; border:1px solid;
+span.diff_info { color:#000099; background-color:#eeeeee; font-style:italic; }
+a.rss_logo { float:right; border:1px solid;
 	line-height:15px;
 	border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
 	color:#ffffff; background-color:#ff6600;
 	font-weight:bold; font-family:sans-serif; text-align:center;
 	font-size:10px; display:block; text-decoration:none;
 }
-a.xml_logo:hover { background-color:#ee5500; }
+a.rss_logo:hover { background-color:#ee5500; }
 </style>
 </head>
 <body>
@@ -166,7 +164,7 @@ sub git_footer_html {
 			print "<div class=\"page_footer_text\">" . escapeHTML($descr) . "</div>\n";
 			close $fd;
 		}
-		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "xml_logo"}, "RSS") . "\n";
+		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "rss_logo"}, "RSS") . "\n";
 	}
 	print "</div>\n" .
 	      "</body>\n" .
@@ -257,15 +255,13 @@ sub git_commit {
 }
 
 sub git_diff_html {
-	my $from_name = shift || "/dev/null";
-	my $to_name = shift || "/dev/null";
 	my $from = shift;
+	my $from_name = shift;
 	my $to = shift;
+	my $to_name = shift;
 
 	my $from_tmp = "/dev/null";
 	my $to_tmp = "/dev/null";
-	my $from_label = "/dev/null";
-	my $to_label = "/dev/null";
 	my $pid = $$;
 
 	# create tmp from-file
@@ -277,7 +273,6 @@ sub git_diff_html {
 		print $fd2 @file;
 		close $fd2;
 		close $fd;
-		$from_label = "a/$from_name";
 	}
 
 	# create tmp to-file
@@ -289,25 +284,14 @@ sub git_diff_html {
 		print $fd2 @file;
 		close $fd2;
 		close $fd;
-		$to_label = "b/$to_name";
 	}
 
-	open my $fd, "-|", "/usr/bin/diff -u -p -L $from_label -L $to_label $from_tmp $to_tmp";
-	print "<span style=\"color: #000099;\">===== ";
-	if ($from ne "") {
-		print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$from"}, $from);
-	} else {
-		print $from_name;
-	}
-	print " vs ";
-	if ($to ne "") {
-		print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to"}, $to);
-	} else {
-		print $to_name;
-	}
-	print " =====</span>\n";
+	open my $fd, "-|", "/usr/bin/diff -u -p -L $from_name -L $to_name $from_tmp $to_tmp";
 	while (my $line = <$fd>) {
 		my $char = substr($line,0,1);
+		# skip errors
+		next if $char eq '\\';
+		# color the diff
 		print '<span style="color: #008800;">' if $char eq '+';
 		print '<span style="color: #CC0000;">' if $char eq '-';
 		print '<span style="color: #990099;">' if $char eq '@';
@@ -317,27 +301,48 @@ sub git_diff_html {
 	close $fd;
 
 	if ($from ne "") {
-		unlink("$from_tmp");
+		unlink($from_tmp);
 	}
 	if ($to ne "") {
-		unlink("$to_tmp");
+		unlink($to_tmp);
 	}
 }
 
 sub mode_str {
-	my $perms = oct shift;
+	my $mode = oct shift;
+
 	my $modestr;
-	if ($perms & 040000) {
-		$modestr .= 'drwxr-xr-x';
-	} else {
+	if (($mode & 00170000) == 0040000 ) {
+		$modestr = 'drwxr-xr-x';
+	} elsif (($mode & 00170000) == 0120000 ) {
+		$modestr = 'lrwxrwxrwx';
+	} elsif (($mode & 00170000) == 0100000 ) {
 		# git cares only about the executable bit
-		if ($perms & 0100) {
-			$modestr .= '-rwxr-xr-x';
+		if ($mode & 0100) {
+			$modestr = '-rwxr-xr-x';
 		} else {
-			$modestr .= '-rw-r--r--';
+			$modestr = '-rw-r--r--';
 		};
 	}
 	return $modestr;
+}
+
+sub file_type {
+	my $mode = oct shift;
+
+	if (($mode & 0170000) == 0040000 ) {
+		return "directory";
+	} elsif (($mode & 0170000) == 0120000 ) {
+		return "symlink";
+	} elsif (($mode & 0170000) == 0100000 ) {
+		if ($mode & 0100) {
+			return "executable file";
+		} else {
+			return "file";
+		}
+	} else {
+		return "unknown";
+	}
 }
 
 sub date_str {
@@ -447,7 +452,14 @@ if ($action eq "blob") {
 		my $t_hash = $3;
 		my $t_name = $4;
 		if ($t_type eq "blob") {
-			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash"}, $t_name) . "\n";
+			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash"}, $t_name);
+			if (((oct $t_mode) & 0170000) == 0120000) {
+				open my $fd, "-|", "$gitbin/git-cat-file blob $t_hash";
+				my $target = <$fd>;
+				close $fd;
+				print "\t -> $target";
+			}
+			print "\n";
 		} elsif ($t_type eq "tree") {
 			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash"}, $t_name) . "\n";
 		}
@@ -614,7 +626,7 @@ if ($action eq "blob") {
 			if ($op eq "+") {
 				print "<div class=\"list\">\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"},
-				      escapeHTML($file) . " <span style=\"color: #008000;\">[new]</span>") . "\n" .
+				      escapeHTML($file) . " <span style=\"color: #008000;\">[new " . file_type($mode) . "]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -623,7 +635,7 @@ if ($action eq "blob") {
 			} elsif ($op eq "-") {
 				print "<div class=\"list\">\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"},
-				      escapeHTML($file) .  " <span style=\"color: #c00000;\">[removed]</span>") . "\n" .
+				      escapeHTML($file) .  " <span style=\"color: #c00000;\">[deleted " . file_type($mode) . "]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -638,8 +650,8 @@ if ($action eq "blob") {
 				my $from_mode = $1;
 				my $to_mode = $2;
 				my $mode_chnge = "";
-				if ($from_mode != $to_mode) {
-					$mode_chnge = " <span style=\"color: #888888;\"> [chmod $mode]</span>\n";
+				if (((oct $from_mode) & 0170100) != ((oct $to_mode) & 0170100)) {
+					$mode_chnge = " <span style=\"color: #888888;\">[changed from " . file_type($from_mode) . " to " . file_type($to_mode) . "]</span>\n";
 				}
 				print "<div class=\"list\">\n";
 				if ($to_id ne $from_id) {
@@ -670,7 +682,12 @@ if ($action eq "blob") {
 	print "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	print "<div class=\"page_body\">\n" .
 	      "<pre>\n";
-	git_diff_html($hash_parent, $hash, $hash_parent, $hash);
+	print "<span class=\"diff_info\">blob:" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$hash_parent"}, $hash_parent) .
+	      " -> blob:" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$hash"}, $hash) .
+	      "</span>\n";
+	git_diff_html($hash_parent, $hash_parent, $hash, $hash);
 	print "</pre>\n" .
 	      "<br/></div>";
 	git_footer_html();
@@ -704,13 +721,29 @@ if ($action eq "blob") {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				git_diff_html("", $file, "", $id);
+				print "<span class=\"diff_info\">new " .  file_type($mode) . ":" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $id) .
+				      "</span>\n";
+				git_diff_html("", "/dev/null", $id, "b/$file");
 			} elsif ($op eq "-") {
-				git_diff_html($file, "", $id, "");
+				print "<span class=\"diff_info\">deleted " . file_type($mode) . ":" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $id) .
+				      "</span>\n";
+				git_diff_html($id, "a/$file", "", "/dev/null");
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
-				if ($1 ne $2) {
-					git_diff_html($file, $file, $1, $2);
+				my $from_id = $1;
+				my $to_id = $2;
+				$mode =~ m/([0-7]+)->([0-7]+)/;
+				my $from_mode = $1;
+				my $to_mode = $2;
+				if ($from_id ne $to_id) {
+					print "<span class=\"diff_info\">" .
+					      file_type($from_mode) . ":" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$from_id"}, $from_id) .
+					      " -> " .
+					      file_type($to_mode) . ":" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id"}, $to_id);
+					print "</span>\n";
+					git_diff_html($from_id, "a/$file",  $to_id, "b/$file");
 				}
 			}
 		}
