@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"070";
+my $version =		"071";
 my $projectroot =	"/pub/scm";
 my $home_link =		"/git";
 my $gitbin =		"/usr/bin";
@@ -657,7 +657,8 @@ if ($action eq "blob") {
 	print "<br/><br/></div>\n";
 	print "<div class=\"title\">". escapeHTML($file_name) . "</div>\n";
 	print "<div class=\"page_body\">\n" .
-	      "<pre>\n";
+	      "<br/>\n" .
+	      "</div>\n";
 	foreach my $rev (@revlist) {
 		my %co = git_commit($rev);
 		my $parents  = $co{'parents'};
@@ -677,12 +678,16 @@ if ($action eq "blob") {
 			}
 		}
 		if ($found) {
-			print $co{'age_string'} . "\t " . $co{'author_name'} . "  - " . $co{'title'} . " " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev", -class => "link"}, "view") ."\n";
+			print "<div class=\"list\">\n" .
+			      $co{'age_string'} . "" . $co{'title'} . "\n" .
+			      "</div>";
+			print "<div class=\"link\">\n" .
+			      "view " .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, "commit") . " | " .
+			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$rev"}, "tree") . "<br/><br/>\n" .
+			      "</div>\n";
 		}
 	}
-	print "<br/></pre>\n";
-	print "</div>";
 	git_footer_html();
 } else {
 	die_error("", "unknown action");
