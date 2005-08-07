@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"236";
+my $version =		"237";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -1069,7 +1069,11 @@ sub git_tag {
 	      "</div>\n";
 	print "<div class=\"title_text\">\n" .
 	      "<table cellspacing=\"0\">\n" .
-	      "<tr><td>$tag{'type'}</td><td>" . $cgi->a({-class => "text", -href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'object'}"}, $tag{'object'}) . "</td></tr>\n";
+	      "<tr>\n" .
+	      "<td>object</td>\n" .
+	      "<td>" . $cgi->a({-class => "list", -href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'object'}"}, $tag{'object'}) . "</td>\n" .
+	      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'object'}"}, $tag{'type'}) . "</td>\n" .
+	      "</tr>\n";
 	if (defined($tag{'author'})) {
 		my %ad = date_str($tag{'epoch'}, $tag{'tz'});
 		print "<tr><td>author</td><td>" . escapeHTML($tag{'author'}) . "</td></tr>\n";
