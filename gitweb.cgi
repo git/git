@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# gitweb.pl - simple web interface to track changes in git repositories
+# gitweb - simple web interface to track changes in git repositories
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"206";
+my $version =		"220";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -48,6 +48,9 @@ if (defined $action) {
 	}
 	if ($action eq "git-logo.png") {
 		git_logo();
+		exit;
+	} elsif ($action eq "opml") {
+		git_opml();
 		exit;
 	}
 } else {
@@ -198,6 +201,8 @@ sub git_header_html {
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
 <!-- git web interface v$version, (C) 2005, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke <ch\@gierke.de> -->
 <head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 $rss_link
 <style type="text/css">
@@ -228,16 +233,20 @@ div.log_link {
 }
 div.list_head { padding:6px 8px 4px; border:solid #d9d8d1; border-width:1px 0px 0px; font-style:italic; }
 a.list { text-decoration:none; color:#000000; }
-a.list:hover { color:#880000; }
+a.list:hover { text-decoration:underline; color:#880000; }
 table { padding:8px 4px; }
 th { padding:2px 5px; font-size:12px; text-align:left; }
+tr.light:hover { background-color:#edece6; }
+tr.dark { background-color:#f6f6f0; }
+tr.dark:hover { background-color:#edece6; }
 td { padding:2px 5px; font-size:12px; vertical-align:top; }
 td.link { padding:2px 5px; font-family:sans-serif; font-size:10px; }
 div.pre { font-family:monospace; font-size:12px; white-space:pre; }
 div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
 div.index_include { border:solid #d9d8d1; border-width:0px 0px 1px; padding:12px 8px; }
-input.search { margin:4px 8px; position:absolute; top:56px; right:12px }
-a.rss_logo { float:right; padding:3px 0px; width:35px; line-height:10px;
+div.search { margin:4px 8px; position:absolute; top:56px; right:12px }
+a.rss_logo {
+	float:right; padding:3px 0px; width:35px; line-height:10px;
 	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
 	color:#ffffff; background-color:#ff6600;
 	font-weight:bold; font-family:sans-serif; font-size:10px;
@@ -249,7 +258,7 @@ a.rss_logo:hover { background-color:#ee5500; }
 <body>
 EOF
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\">" .
+	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
 	print $cgi->a({-href => $home_link}, "projects") . " / ";
@@ -263,13 +272,13 @@ EOF
 			$searchtext = "";
 		}
 		$cgi->param("a", "search");
-		# post search form, but fake get parameter in browser
-		#print $cgi->startform(-name => "search", -action => "$my_uri",
-		#      -onsubmit => "document.search.action='?p=$project;a=search;s='+document.search.s.value") .
-		#      $cgi->hidden(-name => "p") . "\n" .
-		#      $cgi->hidden(-name => "a") . "\n" .
-		#      $cgi->textfield(-name => "s", -value => $searchtext, -class => "search") .
-		#      $cgi->end_form() . "\n";
+		print $cgi->startform(-method => "get", -action => "$my_uri") .
+		      "<div class=\"search\">\n" .
+		      $cgi->hidden(-name => "p") . "\n" .
+		      $cgi->hidden(-name => "a") . "\n" .
+		      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
+		      "</div>" .
+		      $cgi->end_form() . "\n";
 	}
 	print "</div>\n";
 }
@@ -282,6 +291,8 @@ sub git_footer_html {
 			print "<div class=\"page_footer_text\">" . escapeHTML($descr) . "</div>\n";
 		}
 		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "rss_logo"}, "RSS") . "\n";
+	} else {
+		print $cgi->a({-href => "$my_uri?a=opml", -class => "rss_logo"}, "RSS") . "\n";
 	}
 	print "</div>\n" .
 	      "</body>\n" .
@@ -630,7 +641,7 @@ sub get_file_owner {
 	return $owner;
 }
 
-sub git_project_list {
+sub git_read_projects {
 	my @list;
 
 	if (-d $projects_list) {
@@ -670,12 +681,15 @@ sub git_project_list {
 		}
 		close $fd;
 	}
+	@list = sort {$a->{'path'} cmp $b->{'path'}} @list;
+	return @list;
+}
 
+sub git_project_list {
+	my @list = git_read_projects();
 	if (!@list) {
 		die_error(undef, "No project found.");
 	}
-	@list = sort {$a->{'path'} cmp $b->{'path'}} @list;
-
 	git_header_html();
 	if (-f $home_text) {
 		print "<div class=\"index_include\">\n";
@@ -711,9 +725,9 @@ sub git_project_list {
 			$proj{'owner'} = get_file_owner("$projectroot/$proj{'path'}") || "";
 		}
 		if ($alternate) {
-			print "<tr style=\"background-color:#f6f5ed\">\n";
+			print "<tr class=\"dark\">\n";
 		} else {
-			print "<tr>\n";
+			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
 		print "<td>" . $cgi->a({-href => "$my_uri?p=$proj{'path'};a=summary", -class => "list"}, escapeHTML($proj{'path'})) . "</td>\n" .
@@ -830,9 +844,9 @@ sub git_summary {
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
-			print "<tr style=\"background-color:#f6f5ed\">\n";
+			print "<tr class=\"dark\">\n";
 		} else {
-			print "<tr>\n";
+			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
 		if ($i-- > 0) {
@@ -866,9 +880,9 @@ sub git_summary {
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
 			if ($alternate) {
-				print "<tr style=\"background-color:#f6f5ed\">\n";
+				print "<tr class=\"dark\">\n";
 			} else {
-				print "<tr>\n";
+				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
 			if ($i-- > 0) {
@@ -905,9 +919,9 @@ sub git_summary {
 		foreach my $entry (@$branchlist) {
 			my %tag = %$entry;
 			if ($alternate) {
-				print "<tr style=\"background-color:#f6f5ed\">\n";
+				print "<tr class=\"dark\">\n";
 			} else {
-				print "<tr>\n";
+				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
 			if ($i-- > 0) {
@@ -954,9 +968,9 @@ sub git_tags {
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
 			if ($alternate) {
-				print "<tr style=\"background-color:#f6f5ed\">\n";
+				print "<tr class=\"dark\">\n";
 			} else {
-				print "<tr>\n";
+				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
@@ -1000,9 +1014,9 @@ sub git_branches {
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
 			if ($alternate) {
-				print "<tr style=\"background-color:#f6f5ed\">\n";
+				print "<tr class=\"dark\">\n";
 			} else {
-				print "<tr>\n";
+				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
@@ -1162,17 +1176,17 @@ sub git_tree {
 		my $t_name = $4;
 		$file_key = ";f=$base$t_name";
 		if ($alternate) {
-			print "<tr style=\"background-color:#f6f5ed\">\n";
+			print "<tr class=\"dark\">\n";
 		} else {
-			print "<tr>\n";
+			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
 		print "<td style=\"font-family:monospace\">" . mode_str($t_mode) . "</td>\n";
 		if ($t_type eq "blob") {
 			print "<td class=\"list\">" .
-			$cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key, -class => "list"}, $t_name) .
-			"</td>\n";
-			print "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key, -class => "list"}, $t_name) .
+			      "</td>\n" .
+			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key}, "blob") .
 			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash_base" . $file_key}, "history") .
 			      "</td>\n";
@@ -1180,7 +1194,9 @@ sub git_tree {
 			print "<td class=\"list\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key}, $t_name) .
 			      "</td>\n" .
-			      "<td></td>\n";
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key}, "tree") .
+			      "</td>\n";
 		}
 		print "</tr>\n";
 	}
@@ -1227,6 +1243,40 @@ sub git_rss {
 	print "</channel></rss>";
 }
 
+sub git_opml {
+	my @list = git_read_projects();
+
+	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
+	      "<opml version=\"1.0\">\n".
+	      "<head>".
+	      "  <title>Git OPML Export</title>\n".
+	      "</head>\n".
+	      "<body>\n".
+	      "<outline text=\"git RSS feeds\">\n";
+
+	foreach my $pr (@list) {
+		my %proj = %$pr;
+		my $head = git_read_hash("$proj{'path'}/HEAD");
+		if (!defined $head) {
+			next;
+		}
+		$ENV{'GIT_OBJECT_DIRECTORY'} = "$projectroot/$proj{'path'}/objects";
+		my %co = git_read_commit($head);
+		if (!%co) {
+			next;
+		}
+
+		my $path = escapeHTML(chop_str($proj{'path'}, 25, 5));
+		my $rss =  "$my_url?p=$proj{'path'};a=rss";
+		my $html =  "$my_url?p=$proj{'path'};a=log";
+		print "<outline type=\"rss\" text=\"$path\" title=\"$path\" xmlUrl=\"$rss\" htmlUrl=\"$html\"/>\n";
+	}
+	print "</outline>\n".
+	      "</body>\n".
+	      "</opml>\n";
+}
+
 sub git_log {
 	my $head = git_read_hash("$project/HEAD");
 	if (!defined $hash) {
@@ -1250,17 +1300,19 @@ sub git_log {
 	close $fd;
 
 	if ($hash ne $head || $page) {
-		print $cgi->a({-href => "$my_uri?p=$project;a=shortlog"}, "HEAD");
+		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "HEAD");
 	} else {
 		print "HEAD";
 	}
 	if ($page > 0) {
-		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page-1), -accesskey => "p"}, "prev");
+		print " &sdot; " .
+		$cgi->a({-href => "$my_uri?p=$project;a=log;h=$hash;pg=" . ($page-1), -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		print " &sdot; prev";
 	}
 	if ($#revlist >= (100 * ($page+1)-1)) {
-		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1), -accesskey => "n"}, "next");
+		print " &sdot; " .
+		$cgi->a({-href => "$my_uri?p=$project;a=log;h=$hash;pg=" . ($page+1), -accesskey => "n", -title => "Alt-n"}, "next");
 	} else {
 		print " &sdot; next";
 	}
@@ -1273,7 +1325,8 @@ sub git_log {
 		my %co = git_read_commit($hash);
 		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
 	}
-	foreach my $commit (@revlist) {
+	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
+		my $commit = $revlist[$i];
 		my %co = git_read_commit($commit);
 		next if !%co;
 		my %ad = date_str($co{'author_epoch'});
@@ -1429,9 +1482,9 @@ sub git_commit {
 		my $file = $7;
 		#print "$line ($status)<br/>\n";
 		if ($alternate) {
-			print "<tr style=\"background-color:#f6f5ed\">\n";
+			print "<tr class=\"dark\">\n";
 		} else {
-			print "<tr>\n";
+			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
 		if ($status eq "N") {
@@ -1641,7 +1694,18 @@ sub git_commitdiff_plain {
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
+	my %co = git_read_commit($hash);
+	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
+	my $comment = $co{'comment'};
+	print "Author: $co{'author'}\n" .
+	      "Date: $ad{'rfc2822'} ($ad{'tz_local'})\n".
+	      "Source: $my_url?p=$project;a=commitdiff;h=$hash\n" .
+	      "\n";
+	foreach my $line (@$comment) {;
+		print "  $line\n";
+	}
+	print "\n";
 	foreach my $line (@difftree) {
 		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/;
 		my $from_id = $3;
@@ -1696,9 +1760,9 @@ sub git_history {
 				next;
 			}
 			if ($alternate) {
-				print "<tr style=\"background-color:#f6f5ed\">\n";
+				print "<tr class=\"dark\">\n";
 			} else {
-				print "<tr>\n";
+				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
 			print "<td><i>$co{'age_string'}</i></td>\n" .
@@ -1711,7 +1775,9 @@ sub git_history {
 			my $blob = git_get_hash_by_path($hash, $file_name);
 			my $blob_parent = git_get_hash_by_path($commit, $file_name);
 			if (defined $blob && defined $blob_parent && $blob ne $blob_parent) {
-				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file_name"}, "diff to current");
+				print " | " .
+				$cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file_name"},
+				"diff to current");
 			}
 			print "</td>\n" .
 			      "</tr>\n";
@@ -1734,6 +1800,20 @@ sub git_search {
 	if (!%co) {
 		die_error(undef, "Unknown commit object.");
 	}
+	# pickaxe may take all resources of your box and run for several minutes
+	# with every query - so decide by yourself how public you make this feature :)
+	my $commit_search = 1;
+	my $author_search = 0;
+	my $committer_search = 0;
+	my $pickaxe_search = 0;
+	if ($searchtext =~ s/^author\\://i) {
+		$author_search = 1;
+	} elsif ($searchtext =~ s/^committer\\://i) {
+		$committer_search = 1;
+	} elsif ($searchtext =~ s/^pickaxe\\://i) {
+		$commit_search = 0;
+		$pickaxe_search = 1;
+	}
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary;h=$hash"}, "summary") .
@@ -1749,98 +1829,109 @@ sub git_search {
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 	      "</div>\n";
 	print "<table cellspacing=\"0\">\n";
-	$/ = "\0";
-	open my $fd, "-|", "$gitbin/git-rev-list --header $hash";
 	my $alternate = 0;
-	while (my $commit_text = <$fd>) {
-		if (!grep m/$searchtext/, $commit_text) {
-			next;
-		}
-		my @commit_lines = split "\n", $commit_text;
-		my $commit = shift @commit_lines;
-		my %co = git_read_commit($commit, \@commit_lines);
-		if (!%co) {
-			next;
-		}
-		if ($alternate) {
-			print "<tr style=\"background-color:#f6f5ed\">\n";
-		} else {
-			print "<tr>\n";
-		}
-		$alternate ^= 1;
-		print "<td><i>$co{'age_string'}</i></td>\n" .
-		      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
-		      "<td>" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" . escapeHTML(chop_str($co{'title'}, 50)) . "</b><br/>");
-		my $comment = $co{'comment'};
-		foreach my $line (@$comment) {
-			if ($line =~ m/^(.*)($searchtext)(.*)$/) {
-				my $lead = escapeHTML($1) || "";
-				$lead = chop_str($lead, 30, 10);
-				my $match = escapeHTML($2) || "";
-				my $trail = escapeHTML($3) || "";
-				$trail = chop_str($trail, 30, 10);
-				my $text = "$lead<span style=\"color:#e00000\">$match</span>$trail";
-				print chop_str($text, 80, 5) . "<br/>\n";
-			}
-		}
-		print "</td>\n" .
-		      "<td class=\"link\">" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
-		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$commit"}, "tree");
-		print "</td>\n" .
-		      "</tr>\n";
-	}
-	close $fd;
-
-	$/ = "\n";
-	open $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -S$searchtext";
-	undef %co;
-	my @files;
-	while (my $line = <$fd>) {
-		if (%co && $line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
-			my %set;
-			$set{'file'} = $6;
-			$set{'from_id'} = $3;
-			$set{'to_id'} = $4;
-			$set{'id'} = $set{'to_id'};
-			if ($set{'id'} =~ m/0{40}/) {
-				$set{'id'} = $set{'from_id'};
-			}
-			if ($set{'id'} =~ m/0{40}/) {
+	if ($commit_search) {
+		$/ = "\0";
+		open my $fd, "-|", "$gitbin/git-rev-list --header $hash";
+		while (my $commit_text = <$fd>) {
+			if (!grep m/$searchtext/i, $commit_text) {
 				next;
 			}
-			push @files, \%set;
-		} elsif ($line =~ m/^([0-9a-fA-F]{40}) /){
-			if (%co) {
-				if ($alternate) {
-					print "<tr style=\"background-color:#f6f5ed\">\n";
-				} else {
-					print "<tr>\n";
-				}
-				$alternate ^= 1;
-				print "<td><i>$co{'age_string'}</i></td>\n" .
-				      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
-				      "<td>" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$co{'id'}", -class => "list"}, "<b>" .
-				      escapeHTML(chop_str($co{'title'}, 50)) . "</b><br/>");
-				while (my $setref = shift @files) {
-					my %set = %$setref;
-					print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$set{'id'};hb=$co{'id'};f=$set{'file'}", class => "list"},
-					escapeHTML($set{'file'})) . "<br/>\n";
-				}
-				print "</td>\n" .
-				      "<td class=\"link\">" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$co{'id'}"}, "commit") .
-				      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$co{'id'}"}, "tree");
-				print "</td>\n" .
-				      "</tr>\n";
+			if ($author_search && !grep m/\nauthor .*$searchtext/i, $commit_text) {
+				next;
 			}
-			%co = git_read_commit($1);
+			if ($committer_search && !grep m/\ncommitter .*$searchtext/i, $commit_text) {
+				next;
+			}
+			my @commit_lines = split "\n", $commit_text;
+			my $commit = shift @commit_lines;
+			my %co = git_read_commit($commit, \@commit_lines);
+			if (!%co) {
+				next;
+			}
+			if ($alternate) {
+				print "<tr class=\"dark\">\n";
+			} else {
+				print "<tr class=\"light\">\n";
+			}
+			$alternate ^= 1;
+			print "<td><i>$co{'age_string'}</i></td>\n" .
+			      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
+			      "<td>" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" . escapeHTML(chop_str($co{'title'}, 50)) . "</b><br/>");
+			my $comment = $co{'comment'};
+			foreach my $line (@$comment) {
+				if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
+					my $lead = escapeHTML($1) || "";
+					$lead = chop_str($lead, 30, 10);
+					my $match = escapeHTML($2) || "";
+					my $trail = escapeHTML($3) || "";
+					$trail = chop_str($trail, 30, 10);
+					my $text = "$lead<span style=\"color:#e00000\">$match</span>$trail";
+					print chop_str($text, 80, 5) . "<br/>\n";
+				}
+			}
+			print "</td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$commit"}, "tree");
+			print "</td>\n" .
+			      "</tr>\n";
 		}
+		close $fd;
+	}
+
+	if ($pickaxe_search) {
+		$/ = "\n";
+		open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -S$searchtext";
+		undef %co;
+		my @files;
+		while (my $line = <$fd>) {
+			if (%co && $line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
+				my %set;
+				$set{'file'} = $6;
+				$set{'from_id'} = $3;
+				$set{'to_id'} = $4;
+				$set{'id'} = $set{'to_id'};
+				if ($set{'id'} =~ m/0{40}/) {
+					$set{'id'} = $set{'from_id'};
+				}
+				if ($set{'id'} =~ m/0{40}/) {
+					next;
+				}
+				push @files, \%set;
+			} elsif ($line =~ m/^([0-9a-fA-F]{40}) /){
+				if (%co) {
+					if ($alternate) {
+						print "<tr class=\"dark\">\n";
+					} else {
+						print "<tr class=\"light\">\n";
+					}
+					$alternate ^= 1;
+					print "<td><i>$co{'age_string'}</i></td>\n" .
+					      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
+					      "<td>" .
+					      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$co{'id'}", -class => "list"}, "<b>" .
+					      escapeHTML(chop_str($co{'title'}, 50)) . "</b><br/>");
+					while (my $setref = shift @files) {
+						my %set = %$setref;
+						print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$set{'id'};hb=$co{'id'};f=$set{'file'}", class => "list"},
+						      "<span style=\"color:#e00000\">" . escapeHTML($set{'file'}) . "</span>") .
+						      "<br/>\n";
+					}
+					print "</td>\n" .
+					      "<td class=\"link\">" .
+					      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$co{'id'}"}, "commit") .
+					      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$co{'id'}"}, "tree");
+					print "</td>\n" .
+					      "</tr>\n";
+				}
+				%co = git_read_commit($1);
+			}
+		}
+		close $fd;
 	}
 	print "</table>\n";
-	close $fd;
 	git_footer_html();
 }
 
@@ -1872,12 +1963,14 @@ sub git_shortlog {
 		print "HEAD";
 	}
 	if ($page > 0) {
-		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page-1), -accesskey => "p"}, "prev");
+		print " &sdot; " .
+		$cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page-1), -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		print " &sdot; prev";
 	}
 	if ($#revlist >= (100 * ($page+1)-1)) {
-		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1), -accesskey => "n"}, "next");
+		print " &sdot; " .
+		$cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1), -accesskey => "n", -title => "Alt-n"}, "next");
 	} else {
 		print " &sdot; next";
 	}
@@ -1893,9 +1986,9 @@ sub git_shortlog {
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
-			print "<tr style=\"background-color:#f6f5ed\">\n";
+			print "<tr class=\"dark\">\n";
 		} else {
-			print "<tr>\n";
+			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
 		print "<td><i>$co{'age_string'}</i></td>\n" .
@@ -1907,6 +2000,13 @@ sub git_shortlog {
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "commitdiff") .
 		      "</td>\n" .
 		      "</tr>";
+	}
+	if ($#revlist >= (100 * ($page+1)-1)) {
+		print "<tr>\n" .
+		      "<td>" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1), -title => "Alt-n"}, "next") .
+		      "</td>\n" .
+		      "</tr>\n";
 	}
 	print "</table\n>";
 	git_footer_html();
