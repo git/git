@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"073";
+my $version =		"078";
 my $projectroot =	"/pub/scm";
 my $home_link =		"/git";
 my $gitbin =		"/usr/bin";
@@ -81,43 +81,45 @@ sub git_header_html {
 	a:active { color:#880000; }
 	div.page_header {
 		margin:15px 25px 0px; height:25px; padding:8px;
-		font-size:18px; clear:both; font-weight:bold; background-color: #d9d8d1;
+		font-size:18px; font-weight:bold; background-color:#d9d8d1;
 	}
 	div.page_header a:visited { color:#0000cc; }
-	div.page_nav { margin:0px 25px; padding:8px; clear:both; border:solid #d9d8d1; border-width:0px 1px; }
+	div.page_header a:hover { color:#880000; }
+	div.page_nav { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
 	div.page_nav a:visited { color:#0000cc; }
 	div.page_footer {
 		margin:0px 25px 15px; height:17px; padding:4px; padding-left:8px;
-		clear:both; background-color: #d9d8d1;
+		background-color: #d9d8d1;
 	}
 	div.page_footer_text { float:left; color:#888888; font-size:10px;}
-	div.page_body { margin:0px 25px; padding:8px; clear:both; border:solid #d9d8d1; border-width:0px 1px; }
+	div.page_body { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
 	div.title {
-		display:block; margin:0px 25px; padding:8px; clear:both;
-		font-weight:bold; background-color: #d9d8d1; color:#000000;
+		display:block; margin:0px 25px; padding:8px;
+		font-weight:bold; background-color:#d9d8d1; color:#000000;
 	}
 	a.log_title {
-		display:block; margin:0px 25px; padding:6px; clear:both;
-		font-weight:bold; background-color: #d9d8d1; text-decoration:none; color:#000000;
+		display:block; margin:0px 25px; padding:6px;
+		font-weight:bold; background-color:#d9d8d1; text-decoration:none; color:#000000;
 	}
 	a.log_title:hover { background-color: #c9c8c1; }
 	div.log_head {
-		margin:0px 25px; padding:8px; clear:both;
+		margin:0px 25px; padding:8px;
 		border: solid #d9d8d1; border-width:0px 1px; font-family:monospace;
 		background-color: #edece6;
 	}
 	div.log_body {
-		margin:0px 25px; padding:8px; padding-left:150px; clear:both;
+		margin:0px 25px; padding:8px; padding-left:150px;
 		border:solid #d9d8d1; border-width:0px 1px;
 	}
 	span.log_age { position:relative; float:left; width:142px; }
 	div.log_link { font-size:10px; font-family:sans-serif; position:relative; float:left; width:142px; }
-	a.list {
-		display:block; margin:0px 25px; padding:4px; border:solid #d9d8d1; border-width:0px 1px;
-		font-weight:bold; background-color: #edece6; text-decoration:none; color:#000000;
+	div.list {
+		display:block; margin:0px 25px; padding:2px 8px 0px; border:solid #d9d8d1; border-width:1px 1px 0px 1px;
+		font-weight:bold; text-decoration:none; color:#000000; 
 	}
-	a.list:hover { background-color: #d9d8d1; }
-	div.link { margin:0px 25px; padding:4px 8px; border:solid #d9d8d1; border-width:0px 1px; font-family:sans-serif; font-size:10px; }
+	div.list a { color:#000000; text-decoration:none; }
+	div.link { font-weight:normal; font-family:sans-serif; font-size:10px; border:solid #d9d8d1; border-width:1px 1px 0px 1px; }
+	a.view { display:inline; font-size:24px; }
 	a.xml_logo { float:right; border:1px solid;
 		line-height:15px;
 		border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
@@ -135,7 +137,7 @@ EOF
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	print $cgi->a({-href => "$my_uri"}, "projects") . " / ";
 	if ($project ne "") {
-		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, $project);
+		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, escapeHTML($project));
 	}
 	if ($action ne "") {
 		print " / $action";
@@ -205,7 +207,9 @@ sub git_commit {
 			$co{'committer_name'} =~ s/ <.*//;
 		}
 	}
-	if (!defined($co{'tree'})) { die_error("", "Invalid commit object."); }
+	if (!defined($co{'tree'})) {
+		return;
+	}
 	$co{'parents'} = \@parents;
 	$co{'parent'} = $parents[0];
 	my (@comment) = map { chomp; $_ } <$fd>;
@@ -400,10 +404,23 @@ if ($action eq "blob") {
 	open my $fd, "-|", "$gitbin/git-ls-tree $hash";
 	my (@entries) = map { chomp; $_ } <$fd>;
 	close $fd;
+
 	git_header_html();
-	print "<div class=\"page_nav\">\n";
-	print "<br/><br/></div>\n";
-	print "<div class=\"title\">$hash</div>\n";
+	my %co = git_commit($hash);
+	if (defined(%co)) {
+		print "<div class=\"page_nav\"> view\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
+		      "<br/><br/></div>\n";
+		print "<div>\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, escapeHTML($co{'title'})) . "\n" .
+		      "</div>\n";
+	} else {
+		print "<div class=\"page_nav\">\n";
+		print "<br/><br/></div>\n";
+		print "<div class=\"title\">$hash</div>\n";
+	}
 	print "<div class=\"page_body\">\n";
 	print "<br/><pre>\n";
 	foreach my $line (@entries) {
@@ -500,6 +517,9 @@ if ($action eq "blob") {
 	}
 } elsif ($action eq "commit") {
 	my %co = git_commit($hash);
+	if (!defined(%co)) {
+		die_error("", "Unknown commit object.");
+	}
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
 	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
@@ -527,7 +547,7 @@ if ($action eq "blob") {
 	printf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'});
 	print "<br/>\n";
 	print "commit &nbsp &nbsp; &nbsp;$hash<br/>\n";
-	print "tree &nbsp; &nbsp; &nbsp; &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'}"}, $co{'tree'}) . "<br/>\n";
+	print "tree &nbsp; &nbsp; &nbsp; &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, $co{'tree'}) . "<br/>\n";
 	my $parents  = $co{'parents'};
 	foreach my $par (@$parents) {
 		print "parent &nbsp; &nbsp &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "<br/>\n";
@@ -558,16 +578,18 @@ if ($action eq "blob") {
 		my $mode_chng = "";
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "<div class=\"list\">\n" .
-				      "$file <span style=\"color: #33cc33;\">[new]</span>\n" .
+				print "<div>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id", -class => "list"},
+				      escapeHTML($file) . " <span style=\"color: #008000;\">[new]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/><br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "-") {
-				print "<div class=\"list\">\n" .
-				      "$file <span style=\"color: #cc5555;\">[removed]</span>\n" .
+				print "<div>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id", -class => "list"},
+				      escapeHTML($file) .  " <span style=\"color: #c00000;\">[removed]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -581,12 +603,14 @@ if ($action eq "blob") {
 				$mode =~ m/^([0-7]{6})->([0-7]{6})$/;
 				my $from_mode = $1;
 				my $to_mode = $2;
-				print "<div>\n" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id", -class => "list"}, $file) . "\n";
+				my $mode_chnge = "";
 				if ($from_mode != $to_mode) {
-					print "<span style=\"color: #555555;\"> [chmod $mode]</span>";
+					$mode_chnge = " <span style=\"color: #555555;\"> [chmod $mode]</span>\n";
 				}
-				print "\n</div>\n";
+				print "<div>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id", -class => "list"},
+				      escapeHTML($file) . $mode_chnge) . "\n" .
+				      "</div>\n";
 				print "<div class=\"link\">\n" .
 				      "view ";
 				if ($to_id ne $from_id) {
@@ -612,6 +636,9 @@ if ($action eq "blob") {
 	git_footer_html();
 } elsif ($action eq "commitdiff") {
 	my %co = git_commit($hash);
+	if (!defined(%co)) {
+		die_error("", "Unknown commit object.");
+	}
 	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -662,7 +689,9 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
 	print "<br/><br/></div>\n";
-	print "<div class=\"title\">". escapeHTML($file_name) . "</div>\n";
+	print "<div>\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, escapeHTML($file_name)) . "\n" .
+	      "</div>\n";
 	print "<div class=\"page_body\">\n" .
 	      "<br/>\n" .
 	      "</div>\n";
@@ -685,14 +714,14 @@ if ($action eq "blob") {
 			}
 		}
 		if ($found) {
-			print "<div>\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev", -class => "list"},
+			print "<div class=\"list\">\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"},
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
-			      "</div>\n";
-			print "<div class=\"link\">\n" .
+			      "<div class=\"link\">\n" .
 			      "view " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, "commit") . " | " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$rev"}, "tree") . "<br/><br/>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$rev"}, "tree") . "<br/><br/>\n" . 
+			      "</div>\n" .
 			      "</div>\n";
 		}
 	}
