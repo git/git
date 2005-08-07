@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 016
+# Version 020
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -14,9 +14,10 @@ use warnings;
 use CGI qw(:standard :escapeHTML);
 use CGI::Carp qw(fatalsToBrowser);
 
-my $gitbin = "/home/kay/bin/git";		# path to the git executables
-my $gitroot = "/home/kay/public_html";		# path to the git repositories
-my $gittmp = "/tmp";				# temporary files location
+my $projectroot =	"/home/kay/public_html";
+my $defaultprojects =	".";
+my $gitbin =		"/home/kay/bin/git";
+my $gittmp =		"/tmp";
 
 my $cgi = new CGI;
 my $project = "";
@@ -29,32 +30,32 @@ my $url_parm = $cgi->url(-path => 1);
 $url_parm =~ s/.*$myself//;
 
 # get values from url
-if ($url_parm =~ m#/([^/]+)/commit/([0-9a-fA-F]+)$#) {
+if ($url_parm =~ m#/(.+)/commit/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "commit";
 	$hash = $2;
-} elsif ($url_parm =~ m#/([^/]+)/treediff/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/(.+)/treediff/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "treediff";
 	$hash = $2;
-} elsif ($url_parm =~ m#/([^/]+)/diff/([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/(.+)/diff/([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "diff";
 	$hash = $2;
 	$hash_parent = $3;
-} elsif ($url_parm =~ m#/([^/]+)/blob/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/(.+)/blob/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "blob";
 	$hash = $2;
-} elsif ($url_parm =~ m#/([^/]+)/tree/([0-9a-fA-F]+)$#) {
+} elsif ($url_parm =~ m#/(.+)/tree/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "tree";
 	$hash = $2;
-} elsif ($url_parm =~ m#/([^/]+)/log/([0-9]+)$#) {
+} elsif ($url_parm =~ m#/(.+)/log/([0-9]+)$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = $2;
-} elsif ($url_parm =~ m#/([^/]+)/log$#) {
+} elsif ($url_parm =~ m#/(.+)/log$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = 1;
@@ -74,19 +75,16 @@ if ($url_parm =~ m#/([^/]+)/commit/([0-9a-fA-F]+)$#) {
 		"\047\101\202\100\205\301\105\211\040\160\001\000\244\075\041\305".
 		"\022\034\232\376\000\000\000\000\111\105\116\104\256\102\140\202";
 	exit;
-} elsif ($url_parm =~ m#/([^/]+)$#) {
+} elsif ($url_parm =~ m#/(.+)$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = 1;
 }
 
 # sanitize input
-$hash =~ s/[^0-9a-fA-F]//g;
-$hash_parent =~ s/[^0-9a-fA-F]//g;
-$project =~ s/[^0-9a-zA-Z\-\._]//g;
+$project =~ s#\/\.+##g;
 
-my $projectroot = "$gitroot/$project";
-$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/.git/objects";
+$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/.git/objects";
 
 sub git_header {
 	print $cgi->header(-type => 'text/html; charset: utf-8');
@@ -129,9 +127,11 @@ EOF
 	print "<div class=\"body\">\n";
 	print "<div class=\"head1\">";
 	print "<a href=\"http://kernel.org/pub/software/scm/git/\"><img src=\"$myself/git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
-	print $cgi->a({-href => "$myself"}, "projects");
+	if ($defaultprojects ne "") {
+		print $cgi->a({-href => "$myself"}, "projects") . " / ";
+	}
 	if ($project ne "") {
-		print " / " . $cgi->a({-href => "$myself/$project/log"}, $project);
+		print $cgi->a({-href => "$myself/$project/log"}, $project);
 	}
 	if ($action ne "") {
 		print " / $action";
@@ -209,23 +209,18 @@ sub git_diff {
 }
 
 if ($project eq "") {
-	opendir(my $fd, $gitroot);
+	opendir(my $fd, "$projectroot/$defaultprojects");
 	my (@path) = grep(!/^\./, readdir($fd));
 	closedir($fd);
 	git_header();
 	print "<br/><br/><div class=\"main\">\n";
 	foreach my $line (@path) {
-		if (-e "$gitroot/$line/.git/HEAD") {
-			print $cgi->a({-href => "$myself/$line/log"}, $line) . "<br/>\n";
+		if (-e "$projectroot/$defaultprojects/$line/.git/HEAD") {
+			print $cgi->a({-href => "$myself/$defaultprojects/$line/log"}, $line) . "<br/>\n";
 		}
 	}
 	print "<br/></div>";
 	git_footer();
-	exit;
-}
-
-if ($action eq "") {
-	print $cgi->redirect("$myself/$project/log/$view_back");
 	exit;
 }
 
@@ -245,7 +240,7 @@ if ($action eq "blob") {
 	git_footer();
 } elsif ($action eq "tree") {
 	if ($hash eq "") {
-		open my $fd, "$projectroot/.git/HEAD";
+		open my $fd, "$projectroot/$project/.git/HEAD";
 		my $head = <$fd>;
 		chomp $head;
 		close $fd;
@@ -273,12 +268,12 @@ if ($action eq "blob") {
 	print "<br/></div>";
 	git_footer();
 } elsif ($action eq "log") {
-	open my $fd, "$projectroot/.git/HEAD";
+	open my $fd, "$projectroot/$project/.git/HEAD";
 	my $head = <$fd>;
 	chomp $head;
 	close $fd;
 	open $fd, "-|", "$gitbin/rev-tree", $head;
-	my (@revtree) = map { chomp; $_ } <$fd>;
+	my (@revtree) = reverse sort map { chomp; $_ } <$fd>;
 	close $fd;
 	git_header();
 	print "<div class=\"head2\">\n";
@@ -291,7 +286,9 @@ if ($action eq "blob") {
 	print "<br/><br/>\n";
 	print "</div>\n";
 	print "<table cellspacing=\"0\" class=\"log\">\n";
-	foreach my $rev (reverse sort @revtree) {
+	for (my $i = 0; $i <= $#revtree; $i++) {
+		my $rev = $revtree[$i];
+	#foreach my $rev (@revtree) {
 		# '1114106118 755e3010ee10dadf42a8a80770e1b115fb038d9b:1 2af17b4854036a1c2ec6c101d93c8dd1ed80d24e:1'
 		last if !($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/);
 		my $time = $1;
@@ -333,9 +330,8 @@ if ($action eq "blob") {
 				}
 		}
 		close $fd;
-		my $age = time-$committer_time;
-		last if ($view_back > 0 && $age > $view_back*60*60*24);
 
+		my $age = time-$committer_time;
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
 			$age_string = int $age/60/60/24/365;
@@ -355,6 +351,14 @@ if ($action eq "blob") {
 		} elsif ($age > 60*2) {
 			$age_string = int $age/60;
 			$age_string .= " minutes ago";
+		}
+		if ($view_back > 0 && $age > $view_back*60*60*24) {
+			if ($i == 0) {
+			print "<tr>\n";
+			print "<td class=\"head1\"> Last change $age_string. </td>\n";
+			print "</tr>\n";
+			}
+			last;
 		}
 		print "<tr>\n";
 		print "<td class=\"head1\">" . $age_string . "</td>\n";
