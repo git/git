@@ -715,7 +715,7 @@ proc bindline {t id} {
     $canv bind $t <Enter> "lineenter %x %y $id"
     $canv bind $t <Motion> "linemotion %x %y $id"
     $canv bind $t <Leave> "lineleave $id"
-    $canv bind $t <Button-1> "lineclick %x %y $id"
+    $canv bind $t <Button-1> "lineclick %x %y $id 1"
 }
 
 proc drawcommitline {level} {
@@ -1687,7 +1687,7 @@ proc unmarkmatches {} {
 }
 
 proc selcanvline {w x y} {
-    global canv canvy0 ctext linespc selectedline
+    global canv canvy0 ctext linespc
     global lineid linehtag linentag linedtag rowtextx
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax == {}} return
@@ -1710,7 +1710,6 @@ proc selectline {l isnew} {
     global canvy0 linespc parents nparents
     global cflist currentid sha1entry
     global commentend idtags idline
-    global history historyindex
 
     $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
@@ -1761,19 +1760,8 @@ proc selectline {l isnew} {
 	allcanvs yview moveto [expr $newtop * 1.0 / $ymax]
     }
 
-    if {$isnew && (![info exists selectedline] || $selectedline != $l)} {
-	if {$historyindex < [llength $history]} {
-	    set history [lreplace $history $historyindex end $l]
-	} else {
-	    lappend history $l
-	}
-	incr historyindex
-	if {$historyindex > 1} {
-	    .ctop.top.bar.leftbut conf -state normal
-	} else {
-	    .ctop.top.bar.leftbut conf -state disabled
-	}
-	.ctop.top.bar.rightbut conf -state disabled
+    if {$isnew} {
+	addtohistory [list selectline $l 0]
     }
 
     set selectedline $l
@@ -1857,12 +1845,42 @@ proc selnextline {dir} {
     selectline $l 1
 }
 
+proc unselectline {} {
+    global selectedline
+
+    catch {unset selectedline}
+    allcanvs delete secsel
+}
+
+proc addtohistory {cmd} {
+    global history historyindex
+
+    if {$historyindex > 0
+	&& [lindex $history [expr {$historyindex - 1}]] == $cmd} {
+	return
+    }
+
+    if {$historyindex < [llength $history]} {
+	set history [lreplace $history $historyindex end $cmd]
+    } else {
+	lappend history $cmd
+    }
+    incr historyindex
+    if {$historyindex > 1} {
+	.ctop.top.bar.leftbut conf -state normal
+    } else {
+	.ctop.top.bar.leftbut conf -state disabled
+    }
+    .ctop.top.bar.rightbut conf -state disabled
+}
+
 proc goback {} {
     global history historyindex
 
     if {$historyindex > 1} {
 	incr historyindex -1
-	selectline [lindex $history [expr {$historyindex - 1}]] 0
+	set cmd [lindex $history [expr {$historyindex - 1}]]
+	eval $cmd
 	.ctop.top.bar.rightbut conf -state normal
     }
     if {$historyindex <= 1} {
@@ -1874,9 +1892,9 @@ proc goforw {} {
     global history historyindex
 
     if {$historyindex < [llength $history]} {
-	set l [lindex $history $historyindex]
+	set cmd [lindex $history $historyindex]
 	incr historyindex
-	selectline $l 0
+	eval $cmd
 	.ctop.top.bar.leftbut conf -state normal
     }
     if {$historyindex >= [llength $history]} {
@@ -2624,7 +2642,7 @@ proc setcoords {} {
 }
 
 proc redisplay {} {
-    global selectedline stopped redisplaying phase
+    global stopped redisplaying phase
     if {$stopped > 1} return
     if {$phase == "getcommits"} return
     set redisplaying 1
@@ -2636,7 +2654,7 @@ proc redisplay {} {
 }
 
 proc incrfont {inc} {
-    global mainfont namefont textfont selectedline ctext canv phase
+    global mainfont namefont textfont ctext canv phase
     global stopped entries
     unmarkmatches
     set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
@@ -2778,34 +2796,40 @@ proc linehover {} {
     $canv raise $t
 }
 
-proc lineclick {x y id} {
+proc lineclick {x y id isnew} {
     global ctext commitinfo children cflist canv
 
     unmarkmatches
+    unselectline
+    if {$isnew} {
+	addtohistory [list lineclick $x $x $id 0]
+    }
     $canv delete hover
     # fill the details pane with info about this line
     $ctext conf -state normal
     $ctext delete 0.0 end
-    $ctext insert end "Parent:\n "
-    catch {destroy $ctext.$id}
-    button $ctext.$id -text "Go:" -command "selbyid $id" \
-	-padx 4 -pady 0
-    $ctext window create end -window $ctext.$id -align center
+    $ctext tag conf link -foreground blue -underline 1
+    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
+    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+    $ctext insert end "Parent:\t"
+    $ctext insert end $id [list link link0]
+    $ctext tag bind link0 <1> [list selbyid $id]
     set info $commitinfo($id)
-    $ctext insert end "\t[lindex $info 0]\n"
+    $ctext insert end "\n\t[lindex $info 0]\n"
     $ctext insert end "\tAuthor:\t[lindex $info 1]\n"
     $ctext insert end "\tDate:\t[lindex $info 2]\n"
-    $ctext insert end "\tID:\t$id\n"
     if {[info exists children($id)]} {
 	$ctext insert end "\nChildren:"
+	set i 0
 	foreach child $children($id) {
-	    $ctext insert end "\n "
-	    catch {destroy $ctext.$child}
-	    button $ctext.$child -text "Go:" -command "selbyid $child" \
-		-padx 4 -pady 0
-	    $ctext window create end -window $ctext.$child -align center
+	    incr i
 	    set info $commitinfo($child)
-	    $ctext insert end "\t[lindex $info 0]"
+	    $ctext insert end "\n\t"
+	    $ctext insert end $child [list link link$i]
+	    $ctext tag bind link$i <1> [list selbyid $child]
+	    $ctext insert end "\n\t[lindex $info 0]"
+	    $ctext insert end "\n\tAuthor:\t[lindex $info 1]"
+	    $ctext insert end "\n\tDate:\t[lindex $info 2]\n"
 	}
     }
     $ctext conf -state disabled
@@ -2845,8 +2869,6 @@ proc rowmenu {x y id} {
 
 proc diffvssel {dirn} {
     global rowmenuid selectedline lineid
-    global ctext cflist
-    global commitinfo
 
     if {![info exists selectedline]} return
     if {$dirn} {
@@ -2856,15 +2878,32 @@ proc diffvssel {dirn} {
 	set oldid $rowmenuid
 	set newid $lineid($selectedline)
     }
+    addtohistory [list doseldiff $oldid $newid]
+    doseldiff $oldid $newid
+}
+
+proc doseldiff {oldid newid} {
+    global ctext cflist
+    global commitinfo
+
     $ctext conf -state normal
     $ctext delete 0.0 end
     $ctext mark set fmark.0 0.0
     $ctext mark gravity fmark.0 left
     $cflist delete 0 end
     $cflist insert end "Top"
-    $ctext insert end "From $oldid\n     "
+    $ctext insert end "From "
+    $ctext tag conf link -foreground blue -underline 1
+    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
+    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+    $ctext tag bind link0 <1> [list selbyid $oldid]
+    $ctext insert end $oldid [list link link0]
+    $ctext insert end "\n     "
     $ctext insert end [lindex $commitinfo($oldid) 0]
-    $ctext insert end "\n\nTo   $newid\n     "
+    $ctext insert end "\n\nTo   "
+    $ctext tag bind link1 <1> [list selbyid $newid]
+    $ctext insert end $newid [list link link1]
+    $ctext insert end "\n     "
     $ctext insert end [lindex $commitinfo($newid) 0]
     $ctext insert end "\n"
     $ctext conf -state disabled
