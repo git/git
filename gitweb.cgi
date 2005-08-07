@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"121";
+my $version =		"125";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -200,11 +200,13 @@ div.list_head {
 div.list a { text-decoration:none; color:#000000; }
 div.list a:hover { color:#880000; }
 div.link {
-	margin:0px 15px; padding:0px 6px 8px; border:solid #d9d8d1; border-width:0px 1px 1px;
+	margin:0px 15px; padding:4px 6px 6px; border:solid #d9d8d1; border-width:0px 1px 1px;
 	font-family:sans-serif; font-size:10px;
 }
 td { padding:5px 15px 0px 0px; font-size:12px; }
 th { padding-right:10px; font-size:12px; text-align:left; }
+td.link { font-family:sans-serif; font-size:10px; }
+td.pre { font-family:monospace; font-size:12px; white-space:pre; padding:2px 15px 0px 0px; }
 span.diff_info { color:#000099; background-color:#edece6; font-style:italic; }
 a.rss_logo { float:right; padding:3px 0px; width:35px; line-height:10px;
 	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
@@ -255,6 +257,16 @@ sub die_error {
 	print "<br/></div>\n";
 	git_footer_html();
 	exit;
+}
+
+sub git_get_type {
+	my $hash = shift;
+
+	open my $fd, "-|", "$gitbin/git-cat-file -t $hash" || return;
+	my $type = <$fd>;
+	close $fd;
+	chomp $type;
+	return $type;
 }
 
 sub git_read_head {
@@ -312,7 +324,11 @@ sub git_read_commit {
 	$co{'parent'} = $parents[0];
 	my (@comment) = map { chomp; $_ } <$fd>;
 	$co{'comment'} = \@comment;
-	$co{'title'} = $comment[0];
+	$comment[0] =~ m/^(.{0,60}[^ ]*)/;
+	$co{'title'} = $1;
+	if ($comment[0] ne $co{'title'}) {
+		$co{'title'} .= " [...]";
+	}
 	close $fd || return;
 	if (!defined $co{'tree'}) {
 		return undef
@@ -564,7 +580,7 @@ sub git_get_hash_by_path {
 	while (my $part = shift @parts) {
 		open my $fd, "-|", "$gitbin/git-ls-tree $tree" || die_error(undef, "Open git-ls-tree failed.");
 		my (@entries) = map { chomp; $_ } <$fd>;
-		close $fd || die_error(undef, "Reading tree failed.");
+		close $fd || return undef;
 		foreach my $line (@entries) {
 			#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 			$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
@@ -594,9 +610,9 @@ sub git_blob {
 	my $base = $file_name || "";
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
-		print "<div class=\"page_nav\"> view\n" .
+		print "<div class=\"page_nav\">\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base"}, "commit") .
-		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "diffs") .
+		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "commitdiff") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=$hash_base"}, "tree");
 		if (defined $file_name) {
 			print " | " . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash_base;f=$file_name"}, "history");
@@ -643,9 +659,9 @@ sub git_tree {
 	my $base = "";
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		$base_key = ";hb=$hash_base";
-		print "<div class=\"page_nav\"> view\n" .
+		print "<div class=\"page_nav\">\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base"}, "commit") . " | " .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "diffs") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "commitdiff") . " | " .
 		      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=$hash_base"}, "tree") .
 		      "<br/><br/>\n" .
 		      "</div>\n";
@@ -664,7 +680,7 @@ sub git_tree {
 		print "<div class=\"page_path\">/</div>\n";
 	}
 	print "<div class=\"page_body\">\n";
-	print "<pre>\n";
+	print "<table cellspacing=\"0\">\n";
 	foreach my $line (@entries) {
 		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 		$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
@@ -673,21 +689,23 @@ sub git_tree {
 		my $t_hash = $3;
 		my $t_name = $4;
 		$file_key = ";f=$base$t_name";
+		print "<tr>\n" .
+		      "<td class=\"pre\">" . mode_str($t_mode) . "</td>\n";
 		if ($t_type eq "blob") {
-			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key}, $t_name);
-			if (S_ISLNK(oct $t_mode)) {
-				open my $fd, "-|", "$gitbin/git-cat-file blob $t_hash";
-				my $target = <$fd>;
-				close $fd;
-				print "\t -> $target";
-			}
-			print "\n";
+			print "<td class=\"pre\">$t_name</td>\n";
+			print "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key}, "file") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash_base" . $file_key}, "history") .
+			      "</td>\n";
 		} elsif ($t_type eq "tree") {
-			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key}, $t_name) . "\n";
+			print "<td class=\"pre\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key}, $t_name) .
+			      "</td>\n";
 		}
+		print "</tr>\n";
 	}
-	print "</pre>\n";
-	print "</div>";
+	print "</table>\n" .
+	      "</div>";
 	git_footer_html();
 }
 
@@ -737,7 +755,6 @@ sub git_log {
 
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
-	print "view  ";
 	print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last 10") . " | " .
 	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=1"}, "day") . " | " .
 	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | " .
@@ -762,8 +779,8 @@ sub git_log {
 		      "</div>\n";
 		print "<div class=\"title_text\">\n" .
 		      "<div class=\"log_link\">\n" .
-		      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
-		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "commitdiff") .
 		      "<br/>\n" .
 		      "</div>\n" .
 		      "<i>" . escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]</i><br/>\n" .
@@ -772,7 +789,7 @@ sub git_log {
 		my $comment = $co{'comment'};
 		my $empty = 0;
 		foreach my $line (@$comment) {
-			if ($line =~ m/^(signed.off|acked).by/i) {
+			if ($line =~ m/^(signed[ \-]off[\-]by[ :]|acked[\-]by[ \:]|cc[ :])/i) {
 				next;
 			}
 			if ($line eq "") {
@@ -813,10 +830,12 @@ sub git_commit {
 		close $fd || die_error(undef, "Reading ls-tree failed.");
 	}
 	git_header_html();
-	print "<div class=\"page_nav\"> view\n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=$hash"}, "tree") . "\n" .
+	print "<div class=\"page_nav\">\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit");
+	if (defined $co{'parent'}) {
+		print " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "commitdiff");
+	}
+	print " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	if (defined $co{'parent'}) {
 		print "<div>\n" .
@@ -838,8 +857,7 @@ sub git_commit {
 	}
 	print "</td></tr>\n";
 	print "<tr><td>committer</td><td>" . escapeHTML($co{'committer'}) . "</td></tr>\n";
-	print "<tr><td></td><td> " . $cd{'rfc2822'} .
-	      sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</td></tr>\n";
+	print "<tr><td></td><td> " . $cd{'rfc2822'} . sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</td></tr>\n";
 	print "<tr><td>commit</td><td style=\"font-family: monospace;\">$hash</td></tr>\n";
 	print "<tr><td>tree</td><td style=\"font-family: monospace;\">" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=" . $hash}, $co{'tree'}) . "</td></tr>\n";
@@ -864,7 +882,7 @@ sub git_commit {
 		} else {
 			$empty = 0;
 		}
-		if ($line =~ m/(signed.off|acked).by/i) {
+		if ($line =~ m/^(signed[ \-]off[\-]by[ :]|acked[\-]by[ \:]|cc[ :])/i) {
 			$signed = 1;
 			print "<span style=\"color: #888888\">" . escapeHTML($line) . "</span><br/>\n";
 		} else {
@@ -900,8 +918,7 @@ sub git_commit {
 				      escapeHTML($file) . " <span style=\"color: #008000;\">[new " . file_type($mode) . $mode_chng . "]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
-				      "view " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "file") . "<br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "blob") . "<br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "-") {
 				print "<div class=\"list\">\n" .
@@ -909,8 +926,7 @@ sub git_commit {
 				      escapeHTML($file) .  " <span style=\"color: #c00000;\">[deleted " . file_type($mode) . "]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
-				      "view " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "file") . " | " .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "blob") . " | " .
 				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "*") {
@@ -945,12 +961,11 @@ sub git_commit {
 					      escapeHTML($file) . $mode_chnge) . "\n" .
 					      "</div>\n";
 				}
-				print "<div class=\"link\">\n" .
-				      "view ";
+				print "<div class=\"link\">\n";
 				if ($to_id ne $from_id) {
 					print $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"}, "diff") . " | ";
 				}
-				print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"}, "file") . " | " .
+				print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"}, "blob") . " | " .
 				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/>\n" .
 				      "</div>\n";
 			}
@@ -963,9 +978,9 @@ sub git_blobdiff {
 	mkdir($gittmp, 0700);
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
-		print "<div class=\"page_nav\"> view\n" .
+		print "<div class=\"page_nav\">\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base"}, "commit") .
-		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "diffs") .
+		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "commitdiff") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=$hash_base"}, "tree");
 			if (defined $file_name) {
 				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash_base;f=$file_name"}, "history");
@@ -1009,9 +1024,9 @@ sub git_commitdiff {
 	close $fd || die_error(undef, "Reading diff-tree failed.");
 
 	git_header_html();
-	print "<div class=\"page_nav\"> view\n" .
+	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "commitdiff") . " | \n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" .  $co{'tree'} . ";hb=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<div>\n" .
@@ -1070,9 +1085,9 @@ sub git_history {
 		die_error(undef, "Unknown commit object.");
 	}
 	git_header_html();
-	print "<div class=\"page_nav\"> view\n" .
+	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | " .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | " .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "commitdiff") . " | " .
 	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" . $co{'tree'} . ";hb=$hash"}, "tree") .
 	      "<br/><br/>\n" .
 	      "</div>\n";
@@ -1104,11 +1119,15 @@ sub git_history {
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
 			      "</div>\n";
 			print "<div class=\"link\">\n" .
-			      "view " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
 			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" .  $co{'tree'} . ";hb=$commit"}, "tree") .
-			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=blob;hb=$commit;f=" . $file}, "file") .
-			      "<br/><br/>\n" .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=blob;hb=$commit;f=" . $file}, "blob");
+			my $blob = git_get_hash_by_path($hash, $file_name);
+			my $blob_parent = git_get_hash_by_path($commit, $file_name);
+			if (defined $blob && defined $blob_parent && $blob ne $blob_parent) {
+				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=" . $file}, "diff");
+			}
+			print "<br/>\n" .
 			      "</div>\n";
 			undef $commit;
 		}
