@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"157";
+my $version =		"160";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -194,23 +194,21 @@ div.title, a.title {
 	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
 }
 a.title:hover { background-color: #d9d8d1; }
-div.title_text { padding:6px 8px; border: solid #d9d8d1; border-width:0px 0px 1px; }
+div.title_text { padding:6px 0px; border: solid #d9d8d1; border-width:0px 0px 1px; }
 div.log_body { padding:8px 8px 8px 150px; }
 span.age { position:relative; float:left; width:142px; font-style:italic; }
 div.log_link {
+	padding:0px 8px;
 	font-size:10px; font-family:sans-serif; font-style:normal;
-	position:relative; float:left; width:142px;
+	position:relative; float:left; width:136px;
 }
-div.list_head {
-	display:block; padding:6px 6px 4px; border:solid #d9d8d1;
-	border-width:1px 0px 0px; font-style:italic;
-}
+div.list_head { padding:6px 8px 4px; border:solid #d9d8d1; border-width:1px 0px 0px; font-style:italic; }
 a.list { text-decoration:none; color:#000000; }
 a.list:hover { color:#880000; }
-td { padding:5px 15px 0px 0px; font-size:12px; }
-th { padding-right:10px; font-size:12px; text-align:left; }
-td.link { font-family:sans-serif; font-size:10px; }
-td.pre { font-family:monospace; font-size:12px; white-space:pre; padding:2px 15px 0px 0px; }
+table { padding:8px 4px; }
+th { padding:2px 5px; font-size:12px; text-align:left; }
+td { padding:2px 5px; font-size:12px; }
+td.link { padding:2px 5px; font-family:sans-serif; font-size:10px; }
 div.pre { font-family:monospace; font-size:12px; white-space:pre; }
 div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
 div.index_include { border:solid #d9d8d1; border-width:0px 0px 1px; padding:12px 8px; }
@@ -592,8 +590,7 @@ sub git_project_list {
 		close $fd;
 		print "</div>\n";
 	}
-	print "<div class=\"page_body\"><br/>\n" .
-	      "<table cellspacing=\"0\">\n" .
+	print "<table cellspacing=\"0\">\n" .
 	      "<tr>\n" .
 	      "<th>Project</th>\n" .
 	      "<th>Description</th>\n" .
@@ -601,6 +598,7 @@ sub git_project_list {
 	      "<th>last change</th>\n" .
 	      "<th></th>\n" .
 	      "</tr>\n";
+	my $alternate = 0;
 	foreach my $pr (@list) {
 		my %proj = %$pr;
 		my $head = git_read_hash("$proj{'path'}/HEAD");
@@ -618,8 +616,13 @@ sub git_project_list {
 		if (!defined $proj{'owner'}) {
 			$proj{'owner'} = get_file_owner("$projectroot/$proj{'path'}") || "";
 		}
-		print "<tr>\n" .
-		      "<td>" . $cgi->a({-href => "$my_uri?p=$proj{'path'};a=summary", -class => "list"}, escapeHTML($proj{'path'})) . "</td>\n" .
+		if ($alternate) {
+			print "<tr style=\"background-color:#f6f5ed\">\n";
+		} else {
+			print "<tr>\n";
+		}
+		$alternate ^= 1;
+		print "<td>" . $cgi->a({-href => "$my_uri?p=$proj{'path'};a=summary", -class => "list"}, escapeHTML($proj{'path'})) . "</td>\n" .
 		      "<td>$descr</td>\n" .
 		      "<td><i>$proj{'owner'}</i></td>\n";
 		my $colored_age;
@@ -638,8 +641,7 @@ sub git_project_list {
 		      "</tr>\n";
 	}
 	print "</table>\n" .
-	      "<br/>\n" .
-	      "</div>\n";
+	      "<br/>\n";
 	git_footer_html();
 }
 
@@ -714,26 +716,29 @@ sub git_summary {
 	      "<br/><br/>\n" .
 	      "</div>\n";
 	print "<div class=\"title\">project</div>\n";
-	print "<div class=\"page_body\">\n" .
-	      "<table cellspacing=\"0\">\n" .
+	print "<table cellspacing=\"0\">\n" .
 	      "<tr><td>description</td><td>" . escapeHTML($descr) . "</td></tr>\n" .
 	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
 	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n" .
-	      "</table>\n" .
-	      "<br/></div>\n";
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=11 " . git_read_hash("$project/HEAD") || die_error(undef, "Open failed.");
+	      "</table>\n";
+	open my $fd, "-|", "$gitbin/git-rev-list --max-count=16 " . git_read_hash("$project/HEAD") || die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=log", -class => "title"}, "commits") .
 	      "</div>\n";
-	my $i = 10;
-	print  "<div class=\"page_body\">\n" .
-	       "<table cellspacing=\"0\">\n";
+	my $i = 15;
+	print "<table cellspacing=\"0\">\n";
+	my $alternate = 0;
 	foreach my $commit (@revlist) {
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
-		print "<tr>\n";
+		if ($alternate) {
+			print "<tr style=\"background-color:#f6f5ed\">\n";
+		} else {
+			print "<tr>\n";
+		}
+		$alternate ^= 1;
 		if (--$i > 0) {
 			print "<td><i>$co{'age_string'}</i></td>\n" .
 			      "<td><i>$co{'author_name'}</i></td>\n" .
@@ -749,20 +754,24 @@ sub git_summary {
 			last;
 		}
 	}
-	print "</table\n>" .
-	      "</div>\n";
+	print "</table\n>";
 
 	my $taglist = git_read_refs("refs/tags");
 	if (defined @$taglist) {
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=tags", -class => "title"}, "tags") .
 		      "</div>\n";
-		my $i = 10;
-		print  "<div class=\"page_body\">\n" .
-		       "<table cellspacing=\"0\">\n";
+		my $i = 15;
+		print "<table cellspacing=\"0\">\n";
+		my $alternate = 0;
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
-			print "<tr>\n";
+			if ($alternate) {
+				print "<tr style=\"background-color:#f6f5ed\">\n";
+			} else {
+				print "<tr>\n";
+			}
+			$alternate ^= 1;
 			if (--$i > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}", -class => "list"}, "<b>" . escapeHTML($tag{'name'}) . "</b>") . "</td>\n" .
@@ -774,8 +783,7 @@ sub git_summary {
 				last;
 			}
 		}
-		print "</table\n>" .
-		      "</div>\n";
+		print "</table\n>";
 	}
 
 	my $branchlist = git_read_refs("refs/heads");
@@ -783,12 +791,17 @@ sub git_summary {
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=branches", -class => "title"}, "branches") .
 		      "</div>\n";
-		my $i = 10;
-		print  "<div class=\"page_body\">\n" .
-		       "<table cellspacing=\"0\">\n";
+		my $i = 15;
+		print "<table cellspacing=\"0\">\n";
+		my $alternate = 0;
 		foreach my $entry (@$branchlist) {
 			my %tag = %$entry;
-			print "<tr>\n";
+			if ($alternate) {
+				print "<tr style=\"background-color:#f6f5ed\">\n";
+			} else {
+				print "<tr>\n";
+			}
+			$alternate ^= 1;
 			if (--$i > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}", -class => "list"}, "<b>" . escapeHTML($tag{'name'}) . "</b>") . "</td>\n" .
@@ -800,8 +813,7 @@ sub git_summary {
 				last;
 			}
 		}
-		print "</table\n>" .
-		      "</div>\n";
+		print "</table\n>";
 	}
 	git_footer_html();
 }
@@ -819,20 +831,24 @@ sub git_tags {
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary", -class => "title"}, "tags") .
 	      "</div>\n";
-	print  "<div class=\"page_body\">\n" .
-	       "<table cellspacing=\"0\">\n";
+	print "<table cellspacing=\"0\">\n";
+	my $alternate = 0;
 	if (defined @$taglist) {
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
-			print "<tr>\n" .
-			      "<td><i>$tag{'age'}</i></td>\n" .
+			if ($alternate) {
+				print "<tr style=\"background-color:#f6f5ed\">\n";
+			} else {
+				print "<tr>\n";
+			}
+			$alternate ^= 1;
+			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}", -class => "list"}, "<b>" . escapeHTML($tag{'name'}) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'}) . "</td>\n" .
 			      "</tr>";
 		}
 	}
-	print "</table\n>" .
-	      "</div>\n";
+	print "</table\n>";
 	git_footer_html();
 }
 
@@ -849,20 +865,24 @@ sub git_branches {
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary", -class => "title"}, "branches") .
 	      "</div>\n";
-	print  "<div class=\"page_body\">\n" .
-	       "<table cellspacing=\"0\">\n";
+	print "<table cellspacing=\"0\">\n";
+	my $alternate = 0;
 	if (defined @$taglist) {
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
-			print "<tr>\n" .
-			      "<td><i>$tag{'age'}</i></td>\n" .
+			if ($alternate) {
+				print "<tr style=\"background-color:#f6f5ed\">\n";
+			} else {
+				print "<tr>\n";
+			}
+			$alternate ^= 1;
+			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}", -class => "list"}, "<b>" . escapeHTML($tag{'name'}) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log") . "</td>\n" .
 			      "</tr>";
 		}
 	}
-	print "</table\n>" .
-	      "</div>\n";
+	print "</table\n>";
 	git_footer_html();
 }
 
@@ -983,6 +1003,7 @@ sub git_tree {
 	}
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
+	my $alternate = 0;
 	foreach my $line (@entries) {
 		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 		$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
@@ -991,8 +1012,13 @@ sub git_tree {
 		my $t_hash = $3;
 		my $t_name = $4;
 		$file_key = ";f=$base$t_name";
-		print "<tr>\n" .
-		      "<td style=\"font-family:monospace\">" . mode_str($t_mode) . "</td>\n";
+		if ($alternate) {
+			print "<tr style=\"background-color:#f6f5ed\">\n";
+		} else {
+			print "<tr>\n";
+		}
+		$alternate ^= 1;
+		print "<td style=\"font-family:monospace\">" . mode_str($t_mode) . "</td>\n";
 		if ($t_type eq "blob") {
 			print "<td class=\"list\">" .
 			$cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key, -class => "list"}, $t_name) .
@@ -1004,7 +1030,8 @@ sub git_tree {
 		} elsif ($t_type eq "tree") {
 			print "<td class=\"list\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key}, $t_name) .
-			      "</td>\n";
+			      "</td>\n" .
+			      "<td></td>\n";
 		}
 		print "</tr>\n";
 	}
@@ -1156,22 +1183,34 @@ sub git_commit {
 	print "<div class=\"title_text\">\n" .
 	      "<table cellspacing=\"0\">\n";
 	print "<tr><td>author</td><td>" . escapeHTML($co{'author'}) . "</td></tr>\n".
-	      "<tr><td></td><td> $ad{'rfc2822'}";
+	      "<tr>" .
+	      "<td></td><td> $ad{'rfc2822'}";
 	if ($ad{'hour_local'} < 6) {
 		printf(" (<span style=\"color: #cc0000;\">%02d:%02d</span> %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
 	} else {
 		printf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
 	}
-	print "</td></tr>\n";
+	print "</td>" .
+	      "</tr>\n";
 	print "<tr><td>committer</td><td>" . escapeHTML($co{'committer'}) . "</td></tr>\n";
 	print "<tr><td></td><td> $cd{'rfc2822'}" . sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</td></tr>\n";
 	print "<tr><td>commit</td><td style=\"font-family:monospace\">$hash</td></tr>\n";
-	print "<tr><td>tree</td><td style=\"font-family:monospace\">" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash"}, $co{'tree'}) . "</td></tr>\n";
+	print "<tr>" .
+	      "<td>tree</td>" .
+	      "<td style=\"font-family:monospace\">" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash", class => "list"}, $co{'tree'}) . "</td>" .
+	      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash"}, "tree") .
+	      "</td>" .
+	      "</tr>\n";
 	my $parents  = $co{'parents'};
 	foreach my $par (@$parents) {
-		print "<tr><td>parent</td><td style=\"font-family:monospace\">" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "</td></tr>\n";
+		print "<tr>" .
+		      "<td>parent</td>" .
+		      "<td style=\"font-family:monospace\">" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par", class => "list"}, $par) . "</td>" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, "commit") .
+		      " |" . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash;hp=$par"}, "commitdiff") .
+		      "</td>" .
+		      "</tr>\n";
 	}
 	print "</table>". 
 	      "</div>\n";
@@ -1203,8 +1242,8 @@ sub git_commit {
 		print(($#difftree + 1) . " files changed:\n");
 	}
 	print "</div>\n";
-	print "<div class=\"page_body\">\n" .
-	      "<table cellspacing=\"0\">\n";
+	print "<table cellspacing=\"0\">\n";
+	my $alternate = 0;
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
 		# '+100644	blob	4a83ab6cd565d21ab0385bac6643826b83c2fcd4	arch/arm/lib/bitops.h'
@@ -1219,7 +1258,13 @@ sub git_commit {
 		if ($type ne "blob") {
 			next;
 		}
-		print "<tr>\n";
+		if ($alternate) {
+			print "<tr style=\"background-color:#f6f5ed\">\n";
+		} else {
+			print "<tr>\n";
+		}
+		$alternate ^= 1;
+		print "<tr$alternate>\n";
 		if ($op eq "+") {
 			my $mode_chng = "";
 			if (S_ISREG(oct $mode)) {
@@ -1277,8 +1322,7 @@ sub git_commit {
 		}
 		print "</tr>\n";
 	}
-	print "</table><br/>\n" .
-	      "</div>\n";
+	print "</table>\n";
 	git_footer_html();
 }
 
@@ -1326,7 +1370,10 @@ sub git_commitdiff {
 	if (!%co) {
 		die_error(undef, "Unknown commit object.");
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r $co{'parent'} $hash" || die_error(undef, "Open failed.");
+	if (!defined $hash_parent) {
+		$hash_parent = $co{'parent'};
+	}
+	open my $fd, "-|", "$gitbin/git-diff-tree -r $hash_parent $hash" || die_error(undef, "Open failed.");
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd || die_error(undef, "Reading diff-tree failed.");
 
@@ -1431,8 +1478,8 @@ sub git_history {
 
 	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin $file_name";
 	my $commit;
-	print "<div class=\"page_body\">\n" .
-	      "<table cellspacing=\"0\">\n";
+	print "<table cellspacing=\"0\">\n";
+	my $alternate = 0;
 	while (my $line = <$fd>) {
 		if ($line =~ m/^([0-9a-fA-F]{40}) /){
 			$commit = $1;
@@ -1448,8 +1495,13 @@ sub git_history {
 			if (!%co) {
 				next;
 			}
-			print "<tr>" .
-			      "<td><i>$co{'age_string'}</i></td>\n" .
+			if ($alternate) {
+				print "<tr style=\"background-color:#f6f5ed\">\n";
+			} else {
+				print "<tr>\n";
+			}
+			$alternate ^= 1;
+			print "<td><i>$co{'age_string'}</i></td>\n" .
 			      "<td><i>$co{'author_name'}</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" . escapeHTML($co{'title'}) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" .
@@ -1466,8 +1518,7 @@ sub git_history {
 			undef $commit;
 		}
 	}
-	print "</table><br/>\n" .
-	      "</div>\n";
+	print "</table>\n";
 	close $fd;
 	git_footer_html();
 }
