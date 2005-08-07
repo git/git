@@ -90,7 +90,7 @@ $project =~ s#\/\.+##g;
 
 $ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/.git/objects";
 
-sub git_header {
+sub git_header_html {
 	print $cgi->header(-type => 'text/html; charset: utf-8');
 print <<EOF;
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -144,9 +144,17 @@ EOF
 	print "</div>\n";
 }
 
-sub git_footer {
+sub git_footer_html {
 	print "</div>";
 	print $cgi->end_html();
+}
+
+sub git_head {
+	open my $fd, "$projectroot/$project/.git/HEAD";
+	my $head = <$fd>;
+	close $fd;
+	chomp $head;
+	return $head;
 }
 
 sub git_diff {
@@ -217,7 +225,7 @@ if ($project eq "") {
 	opendir(my $fd, "$projectroot/$defaultprojects");
 	my (@path) = grep(!/^\./, readdir($fd));
 	closedir($fd);
-	git_header();
+	git_header_html();
 	print "<div class=\"head2\">\n";
 	print "<br/><br/>\n";
 	foreach my $line (@path) {
@@ -226,12 +234,12 @@ if ($project eq "") {
 		}
 	}
 	print "</div><br/>";
-	git_footer();
+	git_footer_html();
 	exit;
 }
 
 if ($action eq "blob") {
-	git_header();
+	git_header_html();
 	print "<br/><br/>\n";
 	print "<pre>\n";
 	open my $fd, "-|", "$gitbin/cat-file", "blob", $hash;
@@ -243,19 +251,15 @@ if ($action eq "blob") {
 	close $fd;
 	print "</pre>\n";
 	print "<br/>";
-	git_footer();
+	git_footer_html();
 } elsif ($action eq "tree") {
 	if ($hash eq "") {
-		open my $fd, "$projectroot/$project/.git/HEAD";
-		my $head = <$fd>;
-		chomp $head;
-		close $fd;
-		$hash = $head;
+		$hash = git_head();
 	}
 	open my $fd, "-|", "$gitbin/ls-tree", $hash;
 	my (@entries) = map { chomp; $_ } <$fd>;
 	close $fd;
-	git_header();
+	git_header_html();
 	print "<br/><br/>\n";
 	print "<pre>\n";
 	foreach my $line (@entries) {
@@ -272,18 +276,14 @@ if ($action eq "blob") {
 	}
 	print "</pre>\n";
 	print "<br/>";
-	git_footer();
+	git_footer_html();
 } elsif ($action eq "log" || $action eq "rss") {
-	open my $fd, "$projectroot/$project/.git/HEAD";
-	my $head = <$fd>;
-	chomp $head;
-	close $fd;
-	open $fd, "-|", "$gitbin/rev-tree", $head;
+	open my $fd, "-|", "$gitbin/rev-tree", git_head();
 	my (@revtree) = reverse sort map { chomp; $_ } <$fd>;
 	close $fd;
 
 	if ($action eq "log") {
-		git_header();
+		git_header_html();
 		print "<div class=\"head2\">\n";
 		print "view  ";
 		print $cgi->a({-href => "$myself/$project/log"}, "last day") . " | ";
@@ -417,7 +417,7 @@ if ($action eq "blob") {
 	}
 	if ($action eq "log") {
 		print "</table>\n";
-		git_footer();
+		git_footer_html();
 	} elsif ($action eq "rss") {
 		print "</channel></rss>";
 	}
@@ -439,7 +439,7 @@ if ($action eq "blob") {
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	git_header();
+	git_header_html();
 	print "<div class=\"head2\">\n";
 	print "view " . $cgi->a({-href => "$myself/$project/commitdiff/$hash"}, "diff") . "</div><br/><br/>\n";
 	print "<div class=\"shortlog\">$shortlog<br/></div>\n";
@@ -468,15 +468,15 @@ if ($action eq "blob") {
 	}
 	print "</pre>\n";
 	print "<br/>";
-	git_footer();
+	git_footer_html();
 } elsif ($action eq "blobdiff") {
-	git_header();
+	git_header_html();
 	print "<br/><br/>\n";
 	print "<pre>\n";
 	git_diff($hash, $hash_parent, $hash, $hash_parent);
 	print "</pre>\n";
 	print "<br/>";
-	git_footer();
+	git_footer_html();
 } elsif ($action eq "commitdiff") {
 	my $parent = "";
 	open my $fd, "-|", "$gitbin/cat-file", "commit", $hash;
@@ -495,7 +495,7 @@ if ($action eq "blob") {
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	git_header();
+	git_header_html();
 	print "<div class=\"head2\">\n";
 	print "view " . $cgi->a({-href => "$myself/$project/commit/$hash"}, "commit") . "</div><br/><br/>\n";
 	print "<div class=\"shortlog\">$shortlog<br/></div>\n";
@@ -521,5 +521,5 @@ if ($action eq "blob") {
 	}
 	print "</pre>\n";
 	print "<br/>";
-	git_footer();
+	git_footer_html();
 }
