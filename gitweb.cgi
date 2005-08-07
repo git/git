@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"234";
+my $version =		"235";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -192,6 +192,9 @@ if (!defined $action || $action eq "summary") {
 } elsif ($action eq "shortlog") {
 	git_shortlog();
 	exit;
+} elsif ($action eq "tag") {
+	git_tag();
+	exit;
 } else {
 	undef $action;
 	die_error(undef, "Unknown action.");
@@ -248,6 +251,9 @@ div.log_link {
 div.list_head { padding:6px 8px 4px; border:solid #d9d8d1; border-width:1px 0px 0px; font-style:italic; }
 a.list { text-decoration:none; color:#000000; }
 a.list:hover { text-decoration:underline; color:#880000; }
+a.text { text-decoration:none; color:#0000cc; }
+a.text:visited { text-decoration:none; color:#880000; }
+a.text:hover { text-decoration:underline; color:#880000; }
 table { padding:8px 4px; }
 th { padding:2px 5px; font-size:12px; text-align:left; }
 tr.light:hover { background-color:#edece6; }
@@ -333,7 +339,7 @@ sub git_get_type {
 
 	open my $fd, "-|", "$gitbin/git-cat-file -t $hash" or return;
 	my $type = <$fd>;
-	close $fd;
+	close $fd or return;
 	chomp $type;
 	return $type;
 }
@@ -363,8 +369,10 @@ sub git_read_description {
 sub git_read_tag {
 	my $tag_id = shift;
 	my %tag;
+	my @comment;
 
 	open my $fd, "-|", "$gitbin/git-cat-file tag $tag_id" or return;
+	$tag{'id'} = $tag_id;
 	while (my $line = <$fd>) {
 		chomp $line;
 		if ($line =~ m/^object ([0-9a-fA-F]{40})$/) {
@@ -373,8 +381,19 @@ sub git_read_tag {
 			$tag{'type'} = $1;
 		} elsif ($line =~ m/^tag (.+)$/) {
 			$tag{'name'} = $1;
+		} elsif ($line =~ m/^tagger (.*) ([0-9]+) (.*)$/) {
+			$tag{'author'} = $1;
+			$tag{'epoch'} = $2;
+			$tag{'tz'} = $3;
+		} elsif ($line =~ m/--BEGIN/) {
+			push @comment, $line;
+			last;
+		} elsif ($line eq "") {
+			last;
 		}
 	}
+	push @comment, <$fd>;
+	$tag{'comment'} = \@comment;
 	close $fd or return;
 	if (!defined $tag{'name'}) {
 		return
@@ -615,7 +634,7 @@ sub format_log_line_html {
 	if ($line =~ m/([0-9a-fA-F]{40})/) {
 		my $hash_text = $1;
 		if (git_get_type($hash_text) eq "commit") {
-			my $link = $cgi->a({-class => "list", -href => "$my_uri?p=$project;a=commit;h=$hash_text"}, $hash_text);
+			my $link = $cgi->a({-class => "text", -href => "$my_uri?p=$project;a=commit;h=$hash_text"}, $hash_text);
 			$line =~ s/$hash_text/$link/;
 		}
 	}
@@ -818,20 +837,23 @@ sub git_read_refs {
 		my $type = git_get_type($ref_id) || next;
 		my %ref_item;
 		my %co;
+		$ref_item{'type'} = $type;
+		$ref_item{'id'} = $ref_id;
 		if ($type eq "tag") {
 			my %tag = git_read_tag($ref_id);
+			$ref_item{'comment'} = $tag{'comment'};
 			if ($tag{'type'} eq "commit") {
 				%co = git_read_commit($tag{'object'});
 			}
-			$ref_item{'type'} = $tag{'type'};
+			$ref_item{'reftype'} = $tag{'type'};
 			$ref_item{'name'} = $tag{'name'};
-			$ref_item{'id'} = $tag{'object'};
+			$ref_item{'refid'} = $tag{'object'};
 		} elsif ($type eq "commit"){
 			%co = git_read_commit($ref_id);
-			$ref_item{'type'} = "commit";
+			$ref_item{'reftype'} = "commit";
 			$ref_item{'name'} = $ref_file;
 			$ref_item{'title'} = $co{'title'};
-			$ref_item{'id'} = $ref_id;
+			$ref_item{'refid'} = $ref_id;
 		}
 		$ref_item{'epoch'} = $co{'committer_epoch'} || 0;
 		$ref_item{'age'} = $co{'age_string'} || "unknown";
@@ -932,6 +954,11 @@ sub git_summary {
 		my $alternate = 0;
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
+			my $comment_lines = $tag{'comment'};
+			my $comment = shift @$comment_lines;
+			if (defined($comment)) {
+				$comment = chop_str($comment, 30, 5);
+			}
 			if ($alternate) {
 				print "<tr class=\"dark\">\n";
 			} else {
@@ -941,14 +968,22 @@ sub git_summary {
 			if ($i-- > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}", -class => "list"}, "<b>" .
-				      escapeHTML($tag{'name'}) . "</b>") .
+				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}", -class => "list"},
+				      "<b>" . escapeHTML($tag{'name'}) . "</b>") .
 				      "</td>\n" .
-				      "<td class=\"link\">" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'});
-				if ($tag{'type'} eq "commit") {
-				      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}"}, "shortlog") .
-				            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log");
+				      "<td>";
+				if (defined($comment)) {
+				      print $cgi->a({-class => "list", -href => "$my_uri?p=$project;a=tag;h=$tag{'id'}"}, $comment);
+				}
+				print "</td>\n" .
+				      "<td class=\"link\">";
+				if ($tag{'type'} eq "tag") {
+				      print $cgi->a({-href => "$my_uri?p=$project;a=tag;h=$tag{'id'}"}, "tag") . " | ";
+				}
+				print $cgi->a({-href => "$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}"}, $tag{'reftype'});
+				if ($tag{'reftype'} eq "commit") {
+				      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
+				            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'refid'}"}, "log");
 				}
 				print "</td>\n" .
 				      "</tr>";
@@ -999,6 +1034,41 @@ sub git_summary {
 	git_footer_html();
 }
 
+sub git_tag {
+	my $head = git_read_hash("$project/HEAD");
+	git_header_html();
+	print "<div class=\"page_nav\">\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=summary"}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog"}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=log"}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$head"}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$head"}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;hb=$head"}, "tree") . "<br/>\n" .
+	      "<br/>\n" .
+	      "</div>\n";
+	my %tag = git_read_tag($hash);
+	print "<div>\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($tag{'name'})) . "\n" .
+	      "</div>\n";
+	print "<div class=\"title_text\">\n" .
+	      "<table cellspacing=\"0\">\n" .
+	      "<tr><td>$tag{'type'}</td><td>" . $cgi->a({-class => "text", -href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'object'}"}, $tag{'object'}) . "</td></tr>\n";
+	if (defined($tag{'author'})) {
+		my %ad = date_str($tag{'epoch'}, $tag{'tz'});
+		print "<tr><td>author</td><td>" . escapeHTML($tag{'author'}) . "</td></tr>\n";
+		print "<tr><td></td><td>" . $ad{'rfc2822'} . sprintf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'}) . "</td></tr>\n";
+	}
+	print "</table>\n\n" .
+	      "</div>\n";
+	print "<div class=\"page_body\">";
+	my $comment = $tag{'comment'};
+	foreach my $line (@$comment) {
+		print escapeHTML($line) . "<br/>\n";
+	}
+	print "</div>\n";
+	git_footer_html();
+}
+
 sub git_tags {
 	my $head = git_read_hash("$project/HEAD");
 	git_header_html();
@@ -1020,6 +1090,11 @@ sub git_tags {
 	if (defined @$taglist) {
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
+			my $comment_lines = $tag{'comment'};
+			my $comment = shift @$comment_lines;
+			if (defined($comment)) {
+				$comment = chop_str($comment, 30, 5);
+			}
 			if ($alternate) {
 				print "<tr class=\"dark\">\n";
 			} else {
@@ -1028,14 +1103,22 @@ sub git_tags {
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}", -class => "list"},
+			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}", -class => "list"},
 			      "<b>" . escapeHTML($tag{'name'}) . "</b>") .
 			      "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'});
-			if ($tag{'type'} eq "commit") {
+			      "<td>";
+			if (defined($comment)) {
+			      print $cgi->a({-class => "list", -href => "$my_uri?p=$project;a=tag;h=$tag{'id'}"}, $comment);
+			}
+			print "</td>\n" .
+			      "<td class=\"link\">";
+			if ($tag{'type'} eq "tag") {
+			      print $cgi->a({-href => "$my_uri?p=$project;a=tag;h=$tag{'id'}"}, "tag") . " | ";
+			}
+			print $cgi->a({-href => "$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}"}, $tag{'reftype'});
+			if ($tag{'reftype'} eq "commit") {
 			      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
-			            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log");
+			            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'refid'}"}, "log");
 			}
 			print "</td>\n" .
 			      "</tr>";
@@ -1430,10 +1513,12 @@ sub git_commit {
 
 	my @difftree;
 	my $root = "";
-	if (!defined $co{'parent'}) {
+	my $parent = $co{'parent'};
+	if (!defined $parent) {
 		$root = " --root";
+		$parent = "";
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r -M $root $co{'parent'} $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$gitbin/git-diff-tree -r -M $root $parent $hash" or die_error(undef, "Open failed.");
 	@difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 	git_header_html();
@@ -1525,7 +1610,9 @@ sub git_commit {
 	foreach my $line (@difftree) {
 		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
 		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M      rev-tree.c'
-		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/;
+		if (!($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/)) {
+			next;
+		}
 		my $from_mode = $1;
 		my $to_mode = $2;
 		my $from_id = $3;
@@ -1533,7 +1620,6 @@ sub git_commit {
 		my $status = $5;
 		my $similarity = $6;
 		my $file = $7;
-		#print "$line ($status)<br/>\n";
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -1753,7 +1839,7 @@ sub git_commitdiff_plain {
 	my $tags = git_read_refs("refs/tags");
 	foreach my $entry (@$tags) {
 		my %tag = %$entry;
-		$taghash{$tag{'id'}} = $tag{'name'};
+		$taghash{$tag{'refid'}} = $tag{'name'};
 	}
 	open $fd, "-|", "$gitbin/git-rev-list HEAD";
 	while (my $commit = <$fd>) {
