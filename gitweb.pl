@@ -125,14 +125,18 @@ sub git_commit {
 			$co{'tree'} = $1;
 		} elsif ($line =~ m/^parent (.*)$/) {
 			push @parents, $1;
-		} elsif ($line =~ m/^committer (.*) ([0-9]+) (.*)$/) {
-			$co{'committer'} = $1;
-			$co{'committer_time'} = $2;
-			$co{'committer_timezone'} = $3;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
-			$co{'author_time'} = $2;
+			$co{'author_time_utc'} = $2;
 			$co{'author_timezone'} = $3;
+			$co{'author_timezone'} =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
+			$co{'author_time_local'} = $co{'author_time_utc'} + (($1 + ($2/60)) * 3600);
+		} elsif ($line =~ m/^committer (.*) ([0-9]+) (.*)$/) {
+			$co{'committer'} = $1;
+			$co{'committer_time_utc'} = $2;
+			$co{'committer_timezone'} = $3;
+			$co{'committer_timezone'} =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
+			$co{'committer_time_local'} = $co{'committer_time_utc'} + (($1 + ($2/60)) * 3600);
 		}
 	}
 	$co{'parents'} = \@parents;
@@ -226,6 +230,20 @@ sub mode_str {
 		};
 	}
 	return $modestr;
+}
+
+sub date_str {
+	my $date_utc = shift;
+	my $format = shift || "date-time";
+
+	my @months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
+	my @days = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($date_utc);
+	if ($format eq "date-time") {
+		return sprintf "%s, %d %s %4d %02d:%02d:%02d", $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec;
+	} elsif ($format eq "day-time") {
+		return sprintf "%d %s %02d:%02d", $mday, $months[$mon], $hour ,$min;
+	}
 }
 
 if ($action eq "git-logo.png") {
@@ -335,7 +353,7 @@ if ($action eq "blob") {
 	for (my $i = 0; $i <= $#revtree; $i++) {
 		my $commit = $revtree[$i];
 		my %co = git_commit($commit);
-		my $age = time - $co{'committer_time'};
+		my $age = time - $co{'committer_time_utc'};
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
 			$age_string = int $age/60/60/24/365;
@@ -375,8 +393,8 @@ if ($action eq "blob") {
 			print $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "view diff") . "<br/>\n";
 			print "</td>\n";
 			print "<td class=\"head2\">\n";
-			print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) . " [" . gmtime($co{'author_time'}) . " " . $co{'author_timezone'} . "]<br/>\n";
-			print "committer " . escapeHTML($co{'committer'}) . " [" . gmtime($co{'committer_time'}) . " " . $co{'committer_timezone'} . "]<br/>\n";
+			print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) .  " [" . date_str($co{'author_time_utc'}) . "]<br/>\n";
+			print "committer " . escapeHTML($co{'committer'}) .  " [" . date_str($co{'committer_time_utc'}) . "]<br/>\n";
 			print "</td>";
 			print "</tr>\n";
 			print "<tr>\n";
@@ -395,11 +413,7 @@ if ($action eq "blob") {
 			print "</tr>\n";
 		} elsif ($action eq "rss") {
 			last if ($i >= 20);
-			my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday) = gmtime($co{'author_time'});
-			my @months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
-			print "<item>\n\t<title>";
-			printf("%s %02d, %02d:%02d - ", $months[$mon], $mday, $hour, $min);
-			print escapeHTML($co{'title'}) . "</title>\n";
+			print "<item>\n\t<title>" . date_str($co{'author_time_utc'}, "day-time") . " - " . escapeHTML($co{'title'}) . "</title>\n";
 			print "\t<link> " . $my_url . "/$project/commit/$commit</link>\n";
 			print "\t<description>";
 			my $comment = $co{'comment'};
@@ -431,8 +445,14 @@ if ($action eq "blob") {
 	print "<table cellspacing=\"0\" class=\"log\">\n";
 	print "<tr>\n";
 	print "<td class=\"head2\">";
-	print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) . " [" . gmtime($co{'author_time'}) . " " . $co{'author_timezone'} . "]<br/>\n";
-	print "committer " . escapeHTML($co{'committer'}) . " [" . gmtime($co{'committer_time'}) . " " . $co{'committer_timezone'} . "]<br/>\n";
+	print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) .  " [" . date_str($co{'author_time_utc'}) . "]<br/>\n";
+
+	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($co{'author_time_local'});
+	if ($hour < 7 ) { print "<span style=\"color: #990000;\">"; }
+	print "localtime " . date_str($co{'author_time_local'}) . " " . $co{'author_timezone'} . "<br/>\n";
+	if ($hour < 7 ) { print "</span>"; }
+	print "committer " . escapeHTML($co{'committer'}) .  " [" . date_str($co{'committer_time_utc'}) . "]<br/>\n";
+	print "localtime " . date_str($co{'committer_time_local'}) . " " . $co{'committer_timezone'} . "<br/>\n";
 	print "commit &nbsp; &nbsp;$hash<br/>\n";
 	print "tree &nbsp; &nbsp; &nbsp;" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'}"}, $co{'tree'}) . "<br/>\n";
 	my $parents  = $co{'parents'};
