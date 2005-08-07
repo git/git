@@ -48,13 +48,13 @@ proc getcommits {rargs} {
 	exit 1
     }
     set leftover {}
-    fconfigure $commfd -blocking 0 -translation binary
+    fconfigure $commfd -blocking 0 -translation lf
     fileevent $commfd readable "getcommitlines $commfd"
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
     . config -cursor watch
-    $ctext config -cursor watch
+    settextcursor watch
 }
 
 proc getcommitlines {commfd}  {
@@ -277,7 +277,7 @@ proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
-    global maincursor textcursor
+    global maincursor textcursor curtextcursor
     global rowctxmenu gaudydiff mergemax
 
     menu .bar
@@ -465,6 +465,7 @@ proc makewindow {} {
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
+    set curtextcursor $textcursor
 
     set rowctxmenu .rowctxmenu
     menu $rowctxmenu -tearoff 0
@@ -1142,7 +1143,18 @@ proc finishcommits {} {
 	drawrest $level [llength $startcommits]
     }
     . config -cursor $maincursor
-    $ctext config -cursor $textcursor
+    settextcursor $textcursor
+}
+
+# Don't change the text pane cursor if it is currently the hand cursor,
+# showing that we are over a sha1 ID link.
+proc settextcursor {c} {
+    global ctext curtextcursor
+
+    if {[$ctext cget -cursor] == $curtextcursor} {
+	$ctext config -cursor $c
+    }
+    set curtextcursor $c
 }
 
 proc drawgraph {} {
@@ -1377,7 +1389,7 @@ proc stopfindproc {{done 0}} {
 	unset findinprogress
 	if {$phase != "incrdraw"} {
 	    . config -cursor $maincursor
-	    $ctext config -cursor $textcursor
+	    settextcursor $textcursor
 	}
     }
 }
@@ -1420,7 +1432,7 @@ proc findpatches {} {
     fileevent $f readable readfindproc
     set finddidsel 0
     . config -cursor watch
-    $ctext config -cursor watch
+    settextcursor watch
     set findinprogress 1
 }
 
@@ -1525,7 +1537,7 @@ proc findfiles {} {
     set id $lineid($l)
     set p [lindex $parents($id) 0]
     . config -cursor watch
-    $ctext config -cursor watch
+    settextcursor watch
     set findinprogress 1
     findcont [list $id $p]
     update
@@ -1802,10 +1814,14 @@ proc selectline {l isnew} {
 	set linkid [string range $comment $s $e]
 	if {![info exists idline($linkid)]} continue
 	incr e
-	$ctext tag conf link$i -foreground blue -underline 1
+	$ctext tag add link "$commentstart + $s c" "$commentstart + $e c"
 	$ctext tag add link$i "$commentstart + $s c" "$commentstart + $e c"
 	$ctext tag bind link$i <1> [list selectline $idline($linkid) 1]
+	incr i
     }
+    $ctext tag conf link -foreground blue -underline 1
+    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
+    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
 
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
