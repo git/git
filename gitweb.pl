@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 027
+# Version 031
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -32,40 +32,40 @@ my $hash_parent = "";
 my $view_back = 1;
 
 # get values from url
-if ($my_url_parm =~ m#/(.+)/commit/([0-9a-fA-F]+)$#) {
+if ($my_url_parm =~ m#/+(.+)/+commit/+([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "commit";
 	$hash = $2;
-} elsif ($my_url_parm =~ m#/(.+)/commitdiff/([0-9a-fA-F]+)$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/+commitdiff/+([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "commitdiff";
 	$hash = $2;
-} elsif ($my_url_parm =~ m#/(.+)/blobdiff/([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/+blobdiff/+([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "blobdiff";
 	$hash = $2;
 	$hash_parent = $3;
-} elsif ($my_url_parm =~ m#/(.+)/blob/([0-9a-fA-F]+)$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/+blob/+([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "blob";
 	$hash = $2;
-} elsif ($my_url_parm =~ m#/(.+)/tree/([0-9a-fA-F]+)$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/+tree/+([0-9a-fA-F]+)$#) {
 	$project = $1;
 	$action = "tree";
 	$hash = $2;
-} elsif ($my_url_parm =~ m#/(.+)/log/([0-9]+)$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/+log/+([0-9]+)$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = $2;
-} elsif ($my_url_parm =~ m#/(.+)/log$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/+log$#) {
 	$project = $1;
 	$action = "log";
 	$view_back = 1;
-} elsif ($my_url_parm =~ m#/(.+)/rss$#) {
+} elsif ($my_url_parm =~ m#/+(.+)/rss$#) {
 	$project = $1;
 	$action = "rss";
 	$view_back = 1;
-} elsif ($my_url_parm =~ m#/git-logo.png$#) {
+} elsif ($my_url_parm =~ m#/+git-logo.png$#) {
 	print $cgi->header(-type => 'image/png', -expires => '+1d');
 	print	"\211\120\116\107\015\012\032\012\000\000\000\015\111\110\104\122".
 		"\000\000\000\110\000\000\000\033\004\003\000\000\000\055\331\324".
@@ -151,8 +151,8 @@ EOF
 }
 
 sub git_footer_html {
-	print "</div>";
-	print $cgi->end_html();
+	print "</div>\n";
+	print "</body>\n</html>";
 }
 
 sub git_head {
@@ -263,6 +263,20 @@ sub git_diff_html {
 	}
 }
 
+sub mode_str {
+	my $perms = oct shift;
+	my $modestr;
+	if ($perms & 040000) { $modestr .= 'd' } else { $modestr .= '-' };
+	for (my $i = 0; $i < 3; $i++) {
+		if ($perms & 0400) { $modestr .= 'r' } else { $modestr .= '-' };
+		if ($perms & 0200) { $modestr .= 'w' } else { $modestr .= '-' };
+		if ($perms & 0100) { $modestr .= 'x' } else { $modestr .= '-' };
+		$perms <<= 3;
+	}
+	return $modestr;
+}
+
+# show list of default projects
 if ($project eq "") {
 	opendir(my $fd, "$projectroot/$defaultprojects");
 	my (@path) = grep(!/^\./, readdir($fd));
@@ -307,13 +321,14 @@ if ($action eq "blob") {
 	foreach my $line (@entries) {
 		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 		$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
+		my $t_mode = $1;
 		my $t_type = $2;
 		my $t_hash = $3;
 		my $t_name = $4;
 		if ($t_type eq "blob") {
-			print "BLOB\t" . $cgi->a({-href => "$my_uri/$project/blob/$3"}, $4) . "\n";
+			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri/$project/blob/$t_hash"}, $t_name) . "\n";
 		} elsif ($t_type eq "tree") {
-			print "TREE\t" . $cgi->a({-href => "$my_uri/$project/tree/$3"}, $4) . "\n";
+			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri/$project/tree/$t_hash"}, $t_name) . "\n";
 		}
 	}
 	print "</pre>\n";
@@ -400,7 +415,7 @@ if ($action eq "blob") {
 			print "<td>\n";
 			my $comment = $co{'comment'};
 			foreach my $line (@$comment) {
-				if ($line =~ m/signed-off-by:/i) {
+				if ($line =~ m/^(signed-off|acked)-by:/i) {
 					print '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
 				} else {
 					print escapeHTML($line) . "<br/>\n";
@@ -461,7 +476,7 @@ if ($action eq "blob") {
 	print "<td>\n";
 	my $comment = $co{'comment'};
 	foreach my $line (@$comment) {
-		if ($line =~ m/signed-off-by:/i) {
+		if ($line =~ m/(signed-off|acked)-by:/i) {
 			print '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
 		} else {
 			print escapeHTML($line) . "<br/>\n";
@@ -482,16 +497,18 @@ if ($action eq "blob") {
 		my $type = $3;
 		my $id = $4;
 		my $file = $5;
+		$mode =~ m/^([0-7]{6})/;
+		my $modestr = mode_str($1);
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "added\t" . $cgi->a({-href => "$my_uri/$project/blob/$id"}, $file) . "\n";
+				print "added\t$modestr " . $cgi->a({-href => "$my_uri/$project/blob/$id"}, $file) . "\n";
 			} elsif ($op eq "-") {
-				print "removed\t" . $cgi->a({-href => "$my_uri/$project/blob/$id"}, $file) . "\n";
+				print "removed\t$modestr " . $cgi->a({-href => "$my_uri/$project/blob/$id"}, $file) . "\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $old = $1;
 				my $new = $2;
-				print "changed\t" . $cgi->a({-href => "$my_uri/$project/blobdiff/$old/$new"}, $file) . "\n";
+				print "changed\t$modestr " . $cgi->a({-href => "$my_uri/$project/blobdiff/$old/$new"}, $file) . "\n";
 			}
 		}
 	}
