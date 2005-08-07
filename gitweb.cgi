@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"125";
+my $version =		"133";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -29,6 +29,7 @@ my $gitbin =		"/usr/bin";
 my $gittmp =		"/tmp/gitweb";
 
 # target of the home link on top of all pages
+#my $home_link =		$my_uri;
 my $home_link =		"/git";
 
 # source of projects list
@@ -163,51 +164,47 @@ sub git_header_html {
 <title>$title</title>
 $rss_link
 <style type="text/css">
-body { font-family: sans-serif; font-size: 12px; margin:0px; }
+body { font-family: sans-serif; font-size: 12px; margin:0px; border:solid #d9d8d1; border-width:1px; margin:10px; }
 a { color:#0000cc; }
-a:hover { color:#880000; }
-a:visited { color:#880000; }
-a:active { color:#880000; }
-div.page_header {
-	margin:15px 15px 0px; height:25px; padding:8px;
-	font-size:18px; font-weight:bold; background-color:#d9d8d1;
-}
+a:hover, a:visited, a:active { color:#880000; }
+div.page_header { height:25px; padding:8px; font-size:18px; font-weight:bold; background-color:#d9d8d1; }
 div.page_header a:visited { color:#0000cc; }
 div.page_header a:hover { color:#880000; }
-div.page_nav { margin:0px 15px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
+div.page_nav { padding:8px; }
 div.page_nav a:visited { color:#0000cc; }
-div.page_path { font-weight:bold; margin:0px 15px; padding:8px; border:solid #d9d8d1; border-width:0px 1px 1px}
-div.page_footer { margin:0px 15px 15px; height:17px; padding:4px; padding-left:8px; background-color: #d9d8d1; }
+div.page_path { font-weight:bold; padding:8px; border:solid #d9d8d1; border-width:0px 0px 1px}
+div.page_footer { height:17px; padding:4px 8px; background-color: #d9d8d1; }
 div.page_footer_text { float:left; color:#555555; font-style:italic; }
-div.page_body { margin:0px 15px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
+div.page_body { padding:8px; }
 div.title, a.title {
-	display:block; margin:0px 15px; padding:6px 8px;
+	display:block; padding:6px 8px;
 	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
 }
 a.title:hover { background-color: #d9d8d1; }
-div.title_text { margin:0px 15px; padding:6px 8px; border: solid #d9d8d1; border-width:0px 1px 1px; }
-div.log_body { margin:0px 15px; padding:8px; padding-left:150px; border:solid #d9d8d1; border-width:0px 1px; }
+div.title_text { padding:6px 8px; border: solid #d9d8d1; border-width:0px 0px 1px; }
+div.log_body { padding:8px 8px 8px 150px; }
 span.log_age { position:relative; float:left; width:142px; font-style:italic; }
-div.log_link { font-size:10px; font-family:sans-serif; font-style:normal; position:relative; float:left; width:142px; }
-div.list {
-	display:block; margin:0px 15px; padding:4px 6px 2px; border:solid #d9d8d1; border-width:0px 1px;
-	font-weight:bold;
+div.log_link {
+	font-size:10px; font-family:sans-serif; font-style:normal;
+	position:relative; float:left; width:142px;
 }
+div.list { display:block; padding:4px 8px 2px; font-weight:bold; }
 div.list_head {
-	display:block; margin:0px 15px; padding:6px 6px 4px; border:solid #d9d8d1; border-width:0px 1px 1px;
-	font-style:italic;
+	display:block; padding:6px 6px 4px; border:solid #d9d8d1;
+	border-width:0px 0px 1px; font-style:italic;
 }
 div.list a { text-decoration:none; color:#000000; }
 div.list a:hover { color:#880000; }
 div.link {
-	margin:0px 15px; padding:4px 6px 6px; border:solid #d9d8d1; border-width:0px 1px 1px;
+	padding:4px 8px 6px; border:solid #d9d8d1; border-width:0px 0px 1px;
 	font-family:sans-serif; font-size:10px;
 }
 td { padding:5px 15px 0px 0px; font-size:12px; }
 th { padding-right:10px; font-size:12px; text-align:left; }
 td.link { font-family:sans-serif; font-size:10px; }
 td.pre { font-family:monospace; font-size:12px; white-space:pre; padding:2px 15px 0px 0px; }
-span.diff_info { color:#000099; background-color:#edece6; font-style:italic; }
+div.pre { font-family:monospace; font-size:12px; white-space:pre; }
+div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
 a.rss_logo { float:right; padding:3px 0px; width:35px; line-height:10px;
 	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
 	color:#ffffff; background-color:#ff6600;
@@ -397,15 +394,20 @@ sub git_diff_html {
 
 	open my $fd, "-|", "/usr/bin/diff -u -p -L $from_name -L $to_name $from_tmp $to_tmp";
 	while (my $line = <$fd>) {
-		my $char = substr($line,0,1);
-		# skip errors
-		next if $char eq '\\';
-		# color the diff
-		print '<span style="color: #008800;">' if $char eq '+';
-		print '<span style="color: #CC0000;">' if $char eq '-';
-		print '<span style="color: #990099;">' if $char eq '@';
-		print escapeHTML($line);
-		print '</span>' if $char eq '+' or $char eq '-' or $char eq '@';
+		chomp($line);
+		my $char = substr($line, 0, 1);
+		my $color = "";
+		if ($char eq '+') {
+			$color = " style=\"color:#008800;\"";
+		} elsif ($char eq '-') {
+			$color = " style=\"color:#cc0000;\"";
+		} elsif ($char eq '@') {
+			$color = " style=\"color:#990099;\"";
+		} elsif ($char eq '\\') {
+			# skip errors
+			next;
+		}
+		print "<div class=\"pre\"$color>" . escapeHTML($line) . "</div>\n";
 	}
 	close $fd;
 
@@ -494,6 +496,19 @@ sub git_logo {
 		"\x12\x1c\x9a\xfe\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82";
 }
 
+sub get_file_owner {
+	my $path = shift;
+
+	my ($dev, $ino, $mode, $nlink, $st_uid, $st_gid, $rdev, $size) = stat($path);
+	my ($name, $passwd, $uid, $gid, $quota, $comment, $gcos, $dir, $shell) = getpwuid($st_uid);
+	if (!defined $gcos) {
+		return undef;
+	}
+	my $owner = $gcos;
+	$owner =~ s/[,;].*$//;
+	return $owner;
+}
+
 sub git_project_list {
 	my $project_list = shift;
 	my @list;
@@ -504,17 +519,30 @@ sub git_project_list {
 		opendir my $dh, $dir || return undef;
 		while (my $dir = readdir($dh)) {
 			if (-e "$projectroot/$dir/HEAD") {
-				push @list, $dir;
+				my $pr = {
+					path => $dir,
+				};
+				push @list, $pr
 			}
 		}
 		closedir($dh);
 	} elsif (-e $project_list) {
 		# read from file
+		# 'git/git.git:Linus Torvalds'
+		# 'linux/hotplug/udev.git'
 		open my $fd , $project_list || return undef;
 		while (my $line = <$fd>) {
 			chomp $line;
-			if (-e "$projectroot/$line/HEAD") {
-				push @list, $line;
+			my ($path, $owner) = split ':', $line;
+			if (!defined $path) {
+				next;
+			}
+			if (-e "$projectroot/$path/HEAD") {
+				my $pr = {
+					path => $path,
+					owner => $owner,
+				};
+				push @list, $pr
 			}
 		}
 		close $fd;
@@ -523,7 +551,7 @@ sub git_project_list {
 	if (!@list) {
 		die_error(undef, "No project found.");
 	}
-	@list = sort @list;
+	@list = sort {$a->{'path'} cmp $b->{'path'}} @list;
 
 	git_header_html();
 	print "<div class=\"page_body\"><br/>\n";
@@ -534,34 +562,32 @@ sub git_project_list {
 	      "<th>Owner</th>\n" .
 	      "<th>last change</th>\n" .
 	      "</tr>\n";
-	foreach my $proj (@list) {
-		my $head = git_read_head($proj);
+	foreach my $pr (@list) {
+		my %proj = %$pr;
+		my $head = git_read_head($proj{'path'});
 		if (!defined $head) {
 			next;
 		}
-		$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$proj/objects";
+		$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$proj{'path'}/objects";
 		my %co = git_read_commit($head);
 		if (!%co) {
 			next;
 		}
-		my $descr = git_read_description($proj) || "";
-		my $owner = "";
-		my ($dev, $ino, $mode, $nlink, $st_uid, $st_gid, $rdev, $size) = stat("$projectroot/$proj");
-		my ($name, $passwd, $uid, $gid, $quota, $comment, $gcos, $dir, $shell) = getpwuid($st_uid);
-		if (defined $gcos) {
-			$owner = $gcos;
-			$owner =~ s/[,;].*$//;
+		my $descr = git_read_description($proj{'path'}) || "";
+		# get directory owner if not already specified
+		if (!defined $proj{'owner'}) {
+			$proj{'owner'} = get_file_owner("$projectroot/$proj{'path'}") || "";
 		}
 		print "<tr>\n" .
-		      "<td>" . $cgi->a({-href => "$my_uri?p=$proj;a=log"}, escapeHTML($proj)) . "</td>\n" .
+		      "<td>" . $cgi->a({-href => "$my_uri?p=" . $proj{'path'} . ";a=log"}, escapeHTML($proj{'path'})) . "</td>\n" .
 		      "<td>$descr</td>\n" .
-		      "<td><i>$owner</i></td>\n";
+		      "<td><i>$proj{'owner'}</i></td>\n";
 		if ($co{'age'} < 60*60*2) {
-			print "<td><span style =\"color: #009900;\"><b><i>" . $co{'age_string'} . "</i></b></span></td>\n";
+			print "<td><span style =\"color: #009900;\"><b><i>$co{'age_string'}</i></b></span></td>\n";
 		} elsif ($co{'age'} < 60*60*24*2) {
-			print "<td><span style =\"color: #009900;\"><i>" . $co{'age_string'} . "</i></span></td>\n";
+			print "<td><span style =\"color: #009900;\"><i>$co{'age_string'}</i></span></td>\n";
 		} else {
-			print "<td><i>" . $co{'age_string'} . "</i></td>\n";
+			print "<td><i>$co{'age_string'}</i></td>\n";
 		}
 		print "</tr>\n";
 	}
@@ -619,8 +645,9 @@ sub git_blob {
 		}
 		print "<br/><br/>\n" .
 		      "</div>\n";
-		print "<div>\n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base", -class => "title"}, escapeHTML($co{'title'})) . "\n";
+		print "<div>" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base", -class => "title"}, escapeHTML($co{'title'})) .
+		      "</div>\n";
 	} else {
 		print "<div class=\"page_nav\">\n" .
 		      "<br/><br/></div>\n" .
@@ -629,14 +656,16 @@ sub git_blob {
 	if (defined $file_name) {
 		print "<div class=\"page_path\">/$file_name</div>\n";
 	}
-	print "<div class=\"page_body\"><pre>\n";
+	print "<div class=\"page_body\">\n";
 	my $nr;
 	while (my $line = <$fd>) {
+		chomp $line;
 		$nr++;
-		printf "<span style =\"color: #999999;\">%4i\t</span>%s", $nr, escapeHTML($line);;
+		print "<div class=\"pre\">";
+		printf "<span style=\"color:#999999;\">%4i</span>", $nr;
+		print " " .escapeHTML($line) . "</div>\n";
 	}
 	close $fd || print "Reading blob failed.\n";
-	print "</pre>\n";
 	print "</div>";
 	git_footer_html();
 }
@@ -694,7 +723,7 @@ sub git_tree {
 		if ($t_type eq "blob") {
 			print "<td class=\"pre\">$t_name</td>\n";
 			print "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key}, "file") .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key}, "blob") .
 			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash_base" . $file_key}, "history") .
 			      "</td>\n";
 		} elsif ($t_type eq "tree") {
@@ -916,9 +945,9 @@ sub git_commit {
 				print "<div class=\"list\">\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"},
 				      escapeHTML($file) . " <span style=\"color: #008000;\">[new " . file_type($mode) . $mode_chng . "]</span>") . "\n" .
-				      "</div>";
+				      "</div>\n";
 				print "<div class=\"link\">\n" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "blob") . "<br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "blob") . "\n" .
 				      "</div>\n";
 			} elsif ($op eq "-") {
 				print "<div class=\"list\">\n" .
@@ -927,7 +956,7 @@ sub git_commit {
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, "blob") . " | " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "\n" .
 				      "</div>\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
@@ -966,7 +995,7 @@ sub git_commit {
 					print $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"}, "diff") . " | ";
 				}
 				print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"}, "blob") . " | " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "\n" .
 				      "</div>\n";
 			}
 		}
@@ -1001,15 +1030,13 @@ sub git_blobdiff {
 		      "</div>\n";
 	}
 	print "<div class=\"page_body\">\n" .
-	      "<pre>\n";
-	print "<span class=\"diff_info\">blob:" .
+	      "<div class=\"diff_info\">blob:" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$hash_parent;hb=$hash_base;f=$file_name"}, $hash_parent) .
 	      " -> blob:" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name"}, $hash) .
-	      "</span>\n";
+	      "</div>\n";
 	git_diff_html($hash_parent, $file_name || $hash_parent, $hash, $file_name || $hash);
-	print "</pre>\n" .
-	      "</div>";
+	print "</div>";
 	git_footer_html();
 }
 
@@ -1032,8 +1059,7 @@ sub git_commitdiff {
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 	      "</div>\n";
-	print "<div class=\"page_body\">\n" .
-	      "<pre>\n";
+	print "<div class=\"page_body\">\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
 		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
@@ -1044,14 +1070,14 @@ sub git_commitdiff {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "<span class=\"diff_info\">" .  file_type($mode) . ":" .
+				print "<div class=\"diff_info\">" .  file_type($mode) . ":" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, $id) . "(new)" .
-				      "</span>\n";
+				      "</div>\n";
 				git_diff_html(undef, "/dev/null", $id, "b/$file");
 			} elsif ($op eq "-") {
-				print "<span class=\"diff_info\">" . file_type($mode) . ":" .
+				print "<div class=\"diff_info\">" . file_type($mode) . ":" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id;hb=$hash;f=$file"}, $id) . "(deleted)" .
-				      "</span>\n";
+				      "</div>\n";
 				git_diff_html($id, "a/$file", undef, "/dev/null");
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
@@ -1061,18 +1087,18 @@ sub git_commitdiff {
 				my $from_mode = $1;
 				my $to_mode = $2;
 				if ($from_id ne $to_id) {
-					print "<span class=\"diff_info\">" .
+					print "<div class=\"diff_info\">" .
 					      file_type($from_mode) . ":" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$file"}, $from_id) .
 					      " -> " .
 					      file_type($to_mode) . ":" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"}, $to_id);
-					print "</span>\n";
+					print "</div>\n";
 					git_diff_html($from_id, "a/$file",  $to_id, "b/$file");
 				}
 			}
 		}
 	}
-	print "</pre><br/>\n";
-	print "</div>";
+	print "<br/>\n" .
+	      "</div>";
 	git_footer_html();
 }
 
