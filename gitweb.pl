@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 035
+# Version 041
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -27,12 +27,14 @@ my $project = $cgi->param('p');
 my $action = $cgi->param('a');
 my $hash = $cgi->param('h');
 my $hash_parent = $cgi->param('hp');
-my $time_back = $cgi->param('t');
+my $time_back = $cgi->param('t') || 1;
 $ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/.git/objects";
 
 # sanitize input
 $action =~ s/[^0-9a-zA-Z\.\-]//g;
 $project =~ s/\/\.//g;
+$project =~ s/^\/+//g;
+$project =~ s/\/+$//g;
 $project =~ s/|//g;
 $hash =~ s/[^0-9a-fA-F]//g;
 $hash_parent =~ s/[^0-9a-fA-F]//g;
@@ -45,11 +47,11 @@ print <<EOF;
 <html>
 <head>
 	<title>git - $project $action</title>
-	<link rel="alternate" title="$project log" href="$my_uri/$project/rss" type="application/rss+xml"/>
+	<link rel="alternate" title="$project log" href="$my_uri?p=$project;a=rss" type="application/rss+xml"/>
 	<style type="text/css">
 		body { font-family: sans-serif; font-size: 12px; margin:25px; }
 		div.body { border-width:1px; border-style:solid; border-color:#D9D8D1; }
-		div.head1 { font-size:20px; padding:8px; background-color: #D9D8D1; font-weight:bold; }
+		div.head1 { font-size:18px; padding:8px; background-color: #D9D8D1; font-weight:bold; }
 		div.head1 a:visited { color:#0000cc; }
 		div.head1 a:hover { color:#880000; }
 		div.head1 a:active { color:#880000; }
@@ -102,7 +104,8 @@ sub git_footer_html {
 }
 
 sub git_head {
-	open my $fd, "$projectroot/$project/.git/HEAD";
+	my $path = shift;
+	open my $fd, "$projectroot/$path/.git/HEAD";
 	my $head = <$fd>;
 	close $fd;
 	chomp $head;
@@ -178,7 +181,7 @@ sub git_diff_html {
 	}
 
 	open my $fd, "-|", "/usr/bin/diff", "-L", $from_label, "-L", $to_label, "-u", "-p", $from_tmp, $to_tmp;
-	print "<span style =\"color: #000099;\">===== ";
+	print "<span style=\"color: #000099;\">===== ";
 	if ($from ne "") {
 		print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$from"}, $from);
 	} else {
@@ -193,9 +196,9 @@ sub git_diff_html {
 	print " =====</span>\n";
 	while (my $line = <$fd>) {
 		my $char = substr($line,0,1);
-		print '<span style ="color: #008800;">' if $char eq '+';
-		print '<span style ="color: #CC0000;">' if $char eq '-';
-		print '<span style ="color: #990099;">' if $char eq '@';
+		print '<span style="color: #008800;">' if $char eq '+';
+		print '<span style="color: #CC0000;">' if $char eq '-';
+		print '<span style="color: #990099;">' if $char eq '@';
 		print escapeHTML($line);
 		print '</span>' if $char eq '+' or $char eq '-' or $char eq '@';
 	}
@@ -209,15 +212,18 @@ sub git_diff_html {
 	}
 }
 
+# git cares only about the executable bit
 sub mode_str {
 	my $perms = oct shift;
 	my $modestr;
-	if ($perms & 040000) { $modestr .= 'd' } else { $modestr .= '-' };
-	for (my $i = 0; $i < 3; $i++) {
-		if ($perms & 0400) { $modestr .= 'r' } else { $modestr .= '-' };
-		if ($perms & 0200) { $modestr .= 'w' } else { $modestr .= '-' };
-		if ($perms & 0100) { $modestr .= 'x' } else { $modestr .= '-' };
-		$perms <<= 3;
+	if ($perms & 040000) {
+		$modestr .= 'drwxrwxr-x';
+	} else {
+		if ($perms & 0100) {
+			$modestr .= '-rwxrwxr-x';
+		} else {
+			$modestr .= '-rw-rw-r--';
+		};
 	}
 	return $modestr;
 }
@@ -243,7 +249,7 @@ if ($action eq "git-logo.png") {
 # show list of default projects
 if ($project eq "") {
 	opendir(my $fd, "$projectroot/$defaultprojects");
-	my (@path) = grep(!/^\./, readdir($fd));
+	my (@path) = sort grep(!/^\./, readdir($fd));
 	closedir($fd);
 	git_header_html();
 	print "<div class=\"head2\">\n";
@@ -274,7 +280,7 @@ if ($action eq "blob") {
 	git_footer_html();
 } elsif ($action eq "tree") {
 	if ($hash eq "") {
-		$hash = git_head();
+		$hash = git_head($project);
 	}
 	open my $fd, "-|", "$gitbin/ls-tree", $hash;
 	my (@entries) = map { chomp; $_ } <$fd>;
@@ -299,7 +305,7 @@ if ($action eq "blob") {
 	print "<br/>";
 	git_footer_html();
 } elsif ($action eq "log" || $action eq "rss") {
-	open my $fd, "-|", "$gitbin/rev-list", git_head();
+	open my $fd, "-|", "$gitbin/rev-list", git_head($project);
 	my (@revtree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -464,14 +470,14 @@ if ($action eq "blob") {
 		my $modestr = mode_str($1);
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "added\t$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $file) . "\n";
+				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$id"}, $file) . " (new)\n";
 			} elsif ($op eq "-") {
-				print "removed\t$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $file) . "\n";
+				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;hp=$id"}, $file) . " (removed)\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
-				my $old = $1;
-				my $new = $2;
-				print "changed\t$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$old;hp=$new"}, $file) . "\n";
+				my $from = $1;
+				my $to = $2;
+				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to;hp=$from"}, $file) . "\n";
 			}
 		}
 	}
@@ -482,7 +488,7 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<br/><br/>\n";
 	print "<pre>\n";
-	git_diff_html($hash, $hash_parent, $hash, $hash_parent);
+	git_diff_html($hash_parent, $hash, $hash_parent, $hash);
 	print "</pre>\n";
 	print "<br/>";
 	git_footer_html();
