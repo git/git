@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"232";
+my $version =		"233";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -1496,7 +1496,9 @@ sub git_commit {
 			print "<span style=\"color: #888888\">" . escapeHTML($line) . "</span><br/>\n";
 		} else {
 			$signed = 0;
-			print escapeHTML($line) . "<br/>\n";
+			$line = escapeHTML($line);
+			$line =~ s/ /&nbsp;/g;
+			print "$line<br/>\n";
 		}
 	}
 	print "</div>\n";
@@ -1525,7 +1527,7 @@ sub git_commit {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		if ($status eq "N") {
+		if ($status eq "A") {
 			my $mode_chng = "";
 			if (S_ISREG(oct $to_mode)) {
 				$mode_chng = sprintf(" with mode: %04o", (oct $to_mode) & 0777);
@@ -1687,7 +1689,9 @@ sub git_commitdiff {
 		} else {
 			$empty = 0;
 		}
-		print escapeHTML($line) . "<br/>\n";
+		$line = escapeHTML($line);
+		$line =~ s/ /&nbsp;/g;
+		print "$line<br/>\n";
 	}
 	print "<br/>\n";
 	foreach my $line (@difftree) {
@@ -1700,7 +1704,7 @@ sub git_commitdiff {
 		my $to_id = $4;
 		my $status = $5;
 		my $file = $6;
-		if ($status eq "N") {
+		if ($status eq "A") {
 			print "<div class=\"diff_info\">" .  file_type($to_mode) . ":" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"}, $to_id) . "(new)" .
 			      "</div>\n";
@@ -1776,7 +1780,7 @@ sub git_commitdiff_plain {
 		my $to_id = $4;
 		my $status = $5;
 		my $file = $6;
-		if ($status eq "N") {
+		if ($status eq "A") {
 			git_diff_print(undef, "/dev/null", $to_id, "b/$file", "plain");
 		} elsif ($status eq "D") {
 			git_diff_print($from_id, "a/$file", undef, "/dev/null", "plain");
