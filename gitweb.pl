@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version = "048";
+my $version = "049";
 my $projectroot =	"/";
 my $defaultprojects =	"home/kay/public_html";
 my $gitbin =		"/home/kay/bin/git";
@@ -130,14 +130,14 @@ sub git_commit {
 			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
-			$co{'author_time_epoch'} = $2;
-			$co{'author_timezone'} = $3;
+			$co{'author_epoch'} = $2;
+			$co{'author_tz'} = $3;
 			$co{'author_name'} = $co{'author'};
 			$co{'author_name'} =~ s/ <.*//;
 		} elsif ($line =~ m/^committer (.*) ([0-9]+) (.*)$/) {
 			$co{'committer'} = $1;
-			$co{'committer_time_epoch'} = $2;
-			$co{'committer_timezone'} = $3;
+			$co{'committer_epoch'} = $2;
+			$co{'committer_tz'} = $3;
 			$co{'committer_name'} = $co{'committer'};
 			$co{'committer_name'} =~ s/ <.*//;
 		}
@@ -254,7 +254,9 @@ sub date_str {
 	$tz =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
 	my $local = $epoch + (($1 + ($2/60)) * 3600);
 	($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($local);
-	$date{'rfc2822_local'} = sprintf "%s, %d %s %4d %02d:%02d:%02d %s", $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec, $tz;
+	$date{'hour_local'} = $hour;
+	$date{'minute_local'} = $min;
+	$date{'tz_local'} = $tz;
 	return %date;
 }
 
@@ -367,8 +369,8 @@ if ($action eq "blob") {
 	for (my $i = 0; $i <= $#revtree; $i++) {
 		my $commit = $revtree[$i];
 		my %co = git_commit($commit);
-		my %ad = date_str($co{'author_time_epoch'});
-		my $age = time - $co{'committer_time_epoch'};
+		my %ad = date_str($co{'author_epoch'});
+		my $age = time - $co{'committer_epoch'};
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
 			$age_string = int $age/60/60/24/365;
@@ -438,8 +440,8 @@ if ($action eq "blob") {
 	}
 } elsif ($action eq "commit") {
 	my %co = git_commit($hash);
-	my %ad = date_str($co{'author_time_epoch'}, $co{'author_time_zone'});
-	my %cd = date_str($co{'committer_time_epoch'}, $co{'committer_time_zone'});
+	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
+	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
 	open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -450,16 +452,22 @@ if ($action eq "blob") {
 	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diff") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<a class=\"log_title\" href=\"$my_uri?p=$project;a=commitdiff;h=$hash\">$co{'title'}</a>\n";
-	print "<div class=\"log_head\">" .
-	      "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) .  " [" . $ad{'rfc2822'} . "]<br/>\n";
-	if ($ad{'hour'} < 7 ) { print "<span style=\"color: #990000;\">"; }
-	if ($ad{'hour'} < 7 ) { print "</span>"; }
-	print "committer " . escapeHTML($co{'committer'}) .  " [" . $cd{'rfc2822'} . "]<br/>\n" .
-	      "commit &nbsp; &nbsp;$hash<br/>\n" .
-	      "tree &nbsp; &nbsp; &nbsp;" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'}"}, $co{'tree'}) . "<br/>\n";
+	print "<div class=\"log_head\">\n";
+	print "author &nbsp; &nbsp; &nbsp;" . escapeHTML($co{'author'}) . "<br/>\n";
+	print "author-time " . $ad{'rfc2822'};
+	if ($ad{'hour_local'} < 6) { print "<span style=\"color: #cc0000;\">"; }
+	printf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
+	if ($ad{'hour_local'} < 6 ) { print "</span>"; }
+	print "<br/>\n";
+	print "committer &nbsp; " . escapeHTML($co{'committer'}) . "<br/>\n";
+	print "commit-time " . $ad{'rfc2822'};
+	printf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'});
+	print "<br/>\n";
+	print "commit &nbsp &nbsp; &nbsp;$hash<br/>\n";
+	print "tree &nbsp; &nbsp; &nbsp; &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'}"}, $co{'tree'}) . "<br/>\n";
 	my $parents  = $co{'parents'};
 	foreach my $par (@$parents) {
-		print "parent &nbsp; &nbsp;" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "<br/>\n";
+		print "parent &nbsp; &nbsp &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "<br/>\n";
 	}
 	print "</div>\n";
 	print "<div class=\"page_body\">\n";
