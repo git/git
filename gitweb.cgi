@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"063";
+my $version =		"064";
 my $projectroot =	"/pub/scm";
 my $defaultprojects =	"linux/kernel/git";
 my $gitbin =		"/usr/bin";
@@ -142,6 +142,9 @@ sub git_footer_html {
 sub die_error {
 	my $status = shift || "403 Forbidden";
 	my $error = shift || "Malformed query, file missing or permission denied"; 
+
+	$project = "";
+	$action = "";
 	git_header_html($status);
 	print "<div class=\"page_body\">\n" .
 	      "<br/><br/>\n";
@@ -522,7 +525,7 @@ if ($action eq "blob") {
 	if ($ad{'hour_local'} < 6 ) { print "</span>"; }
 	print "<br/>\n";
 	print "committer &nbsp; " . escapeHTML($co{'committer'}) . "<br/>\n";
-	print "commit-time " . $ad{'rfc2822'};
+	print "commit-time " . $cd{'rfc2822'};
 	printf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'});
 	print "<br/>\n";
 	print "commit &nbsp &nbsp; &nbsp;$hash<br/>\n";
