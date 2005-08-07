@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"055";
+my $version =		"056";
 my $projectroot =	"/home/kay/public_html/pub/scm";
 my $defaultprojects =	"linux/kernel/git";
 my $gitbin =		"/home/kay/bin/git";
@@ -31,19 +31,19 @@ $ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
 
 # validate input
 if (defined($project) && $project =~ /(^|\/)(|\.|\.\.)($|\/)/) {
-	error_page("403 Permission denied", "Invalid project parameter.");
+	die_error("", "Invalid project parameter.");
 }
 if (defined($action) && !$action =~ m/^[0-9a-zA-Z\.\-]+$/) {
-	error_page("403 Permission denied", "Invalid action parameter.");
+	die_error("", "Invalid action parameter.");
 }
 if (defined($hash) && !($hash =~ m/^[0-9a-fA-F]{40}$/)) {
-	error_page("403 Permission denied", "Invalid hash parameter.");
+	die_error("", "Invalid hash parameter.");
 }
 if (defined($hash_parent) && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
-	error_page("403 Permission denied", "Invalid parent hash parameter.");
+	die_error("", "Invalid parent hash parameter.");
 }
 if (defined($time_back) && !($time_back =~ m/^[0-9]+$/)) {
-	error_page("403 Permission denied", "Invalid time parameter.");
+	die_error("", "Invalid time parameter.");
 } else {
 	$time_back = 1;
 }
@@ -131,8 +131,8 @@ sub git_footer_html {
 	print "</body>\n</html>";
 }
 
-sub error_page {
-	my $status = shift || "403 Permission denied";
+sub die_error {
+	my $status = shift || "403 Forbidden";
 	my $error = shift || "Malformed query, file missing or permission denied"; 
 	git_header_html($status);
 	print "<div class=\"page_body\">\n" .
@@ -145,7 +145,7 @@ sub error_page {
 
 sub git_head {
 	my $path = shift;
-	open my $fd, "$projectroot/$path/HEAD";
+	open(my $fd, "$projectroot/$path/HEAD") || die_error("", "Invalid project directory.");;
 	my $head = <$fd>;
 	close $fd;
 	chomp $head;
@@ -179,6 +179,7 @@ sub git_commit {
 			$co{'committer_name'} =~ s/ <.*//;
 		}
 	}
+	if (!defined($co{'tree'})) { die_error("", "Invalid commit object."); }
 	$co{'parents'} = \@parents;
 	$co{'parent'} = $parents[0];
 	my (@comment) = map { chomp; $_ } <$fd>;
@@ -203,7 +204,7 @@ sub git_diff_html {
 	# create tmp from-file
 	if ($from ne "") {
 		$from_tmp = "$gittmp/gitweb_" . $$ . "_from";
-		open my $fd2, "> $from_tmp";
+		open(my $fd2, "> $from_tmp");
 		open my $fd, "-|", "$gitbin/cat-file blob $from";
 		my @file = <$fd>;
 		print $fd2 @file;
@@ -317,7 +318,7 @@ if ($action eq "git-logo.png") {
 
 # show list of default projects
 if ($project eq "") {
-	opendir(my $fd, "$projectroot/$defaultprojects");
+	opendir(my $fd, "$projectroot/$defaultprojects") || die_error("", "No projects found.");
 	my (@users) = sort grep(!/^\./, readdir($fd));
 	closedir($fd);
 	git_header_html();
@@ -345,7 +346,7 @@ if ($action eq "") {
 if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"page_body\"><pre><br/><br/>\n";
-	open my $fd, "-|", "$gitbin/cat-file blob $hash";
+	open(my $fd, "-|", "$gitbin/cat-file blob $hash");
 	my $nr;
 	while (my $line = <$fd>) {
 		$nr++;
@@ -595,5 +596,5 @@ if ($action eq "blob") {
 	print "</div>";
 	git_footer_html();
 } else {
-	error_page("403 Forbidden", "unknown action");
+	die_error("", "unknown action");
 }
