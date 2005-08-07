@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"150";
+my $version =		"152";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -651,39 +651,39 @@ sub git_project_list {
 
 sub git_read_refs {
 	my $ref_dir = shift;
-	my @taglist;
+	my @reflist;
 
 	opendir my $dh, "$projectroot/$project/$ref_dir";
-	my @tags = grep !m/^\./, readdir $dh;
+	my @refs = grep !m/^\./, readdir $dh;
 	closedir($dh);
-	foreach my $tag_file (@tags) {
-		my $tag_id = git_read_hash("$project/$ref_dir/$tag_file");
-		my $type = git_get_type($tag_id) || next;
-		my %tag_item;
+	foreach my $ref_file (@refs) {
+		my $ref_id = git_read_hash("$project/$ref_dir/$ref_file");
+		my $type = git_get_type($ref_id) || next;
+		my %ref_item;
 		my %co;
 		if ($type eq "tag") {
-			my %tag = git_read_tag($tag_id);
+			my %tag = git_read_tag($ref_id);
 			if ($tag{'type'} eq "commit") {
 				%co = git_read_commit($tag{'object'});
 			}
-			$tag_item{'type'} = $tag{'type'};
-			$tag_item{'name'} = $tag{'name'};
-			$tag_item{'id'} = $tag{'object'};
+			$ref_item{'type'} = $tag{'type'};
+			$ref_item{'name'} = $tag{'name'};
+			$ref_item{'id'} = $tag{'object'};
 		} elsif ($type eq "commit"){
-			%co = git_read_commit($tag_id);
-			$tag_item{'type'} = "commit";
-			$tag_item{'name'} = $tag_file;
-			$tag_item{'title'} = $co{'title'};
-			$tag_item{'id'} = $tag_id;
+			%co = git_read_commit($ref_id);
+			$ref_item{'type'} = "commit";
+			$ref_item{'name'} = $ref_file;
+			$ref_item{'title'} = $co{'title'};
+			$ref_item{'id'} = $ref_id;
 		}
-		$tag_item{'epoch'} = $co{'author_epoch'} || 0;
-		$tag_item{'age'} = $co{'age_string'} || "unknown";
+		$ref_item{'epoch'} = $co{'committer_epoch'} || 0;
+		$ref_item{'age'} = $co{'age_string'} || "unknown";
 
-		push @taglist, \%tag_item;
+		push @reflist, \%ref_item;
 	}
 	# sort tags by age
-	@taglist = sort {$b->{'epoch'} <=> $a->{'epoch'}} @taglist;
-	return \@taglist;
+	@reflist = sort {$b->{'epoch'} <=> $a->{'epoch'}} @reflist;
+	return \@reflist;
 }
 
 sub git_summary {
@@ -1333,7 +1333,12 @@ sub git_commitdiff {
 	my $comment = $co{'comment'};
 	my $empty = 0;
 	my $signed = 0;
-	foreach my $line (@$comment) {
+	my @log = @$comment;
+	shift @log;
+	#while ($log[0] eq "") {
+	#	shift @log;
+	#}
+	foreach my $line (@log) {
 		if ($line =~ m/^(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
 			next;
 		}
