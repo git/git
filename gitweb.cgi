@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"082";
+my $version =		"085";
 my $projectroot =	"/pub/scm";
 my $home_link =		"/git";
 my $gitbin =		"/usr/bin";
@@ -22,107 +22,116 @@ my $gittmp =		"/tmp/gitweb";
 my $logo_link =		"/pub/software/scm/cogito";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
+my $rss_link = "";
 
-mkdir($gittmp, 0700);
 my $project = $cgi->param('p');
-my $action = $cgi->param('a');
-my $hash = $cgi->param('h');
-my $hash_parent = $cgi->param('hp');
-my $file_name = $cgi->param('f');
-my $time_back = $cgi->param('t');
-$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
-
-# validate input
 if (defined($project)) {
 	if ($project =~ /(^|\/)(|\.|\.\.)($|\/)/) {
+		$project = "";
 		die_error("", "Invalid project parameter.");
 	}
 	if (!(-d "$projectroot/$project")) {
+		$project = "";
 		die_error("", "No such project.");
 	}
+	$rss_link = "<link rel=\"alternate\" title=\"$project log\" href=\"$my_uri?p=$project;a=rss\" type=\"application/rss+xml\"/>";
 }
+
+my $file_name = $cgi->param('f');
 if (defined($file_name) && $file_name =~ /(^|\/)(|\.|\.\.)($|\/)/) {
+	$file_name = "";
 	die_error("", "Invalid file parameter.");
 }
-if (defined($action) && !$action =~ m/^[0-9a-zA-Z\.\-]+$/) {
+
+my $action = $cgi->param('a');
+if (defined($action) && $action =~ m/[^0-9a-zA-Z\.\-]+$/) {
+	$action = "";
 	die_error("", "Invalid action parameter.");
 }
+
+my $hash = $cgi->param('h');
 if (defined($hash) && !($hash =~ m/^[0-9a-fA-F]{40}$/)) {
+	$hash = "";
 	die_error("", "Invalid hash parameter.");
 }
+
+my $hash_parent = $cgi->param('hp');
 if (defined($hash_parent) && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
+	$hash_parent = "";
 	die_error("", "Invalid parent hash parameter.");
 }
+
+my $time_back = $cgi->param('t');
 if (defined($time_back) && !($time_back =~ m/^[0-9]+$/)) {
+	$time_back = "";
 	die_error("", "Invalid time parameter.");
 }
+
+$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
+mkdir($gittmp, 0700);
 
 sub git_header_html {
 	my $status = shift || "200 OK";
 
 	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status);
 	print <<EOF;
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- git web interface v$version, (C) 2005, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke <ch\@gierke.de> -->
 <html>
 <head>
-	<title>git - $project $action</title>
-	<link rel="alternate" title="$project log" href="$my_uri?p=$project;a=rss" type="application/rss+xml"/>
-	<style type="text/css">
-	body { font-family: sans-serif; font-size: 12px; margin:0px; }
-	a { color:#0000cc; }
-	a:hover { color:#880000; }
-	a:visited { color:#880000; }
-	a:active { color:#880000; }
-	div.page_header {
-		margin:15px 25px 0px; height:25px; padding:8px;
-		font-size:18px; font-weight:bold; background-color:#d9d8d1;
-	}
-	div.page_header a:visited { color:#0000cc; }
-	div.page_header a:hover { color:#880000; }
-	div.page_nav { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
-	div.page_nav a:visited { color:#0000cc; }
-	div.page_footer {
-		margin:0px 25px 15px; height:17px; padding:4px; padding-left:8px;
-		background-color: #d9d8d1;
-	}
-	div.page_footer_text { float:left; color:#888888; font-size:10px;}
-	div.page_body { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
-	div.title {
-		display:block; margin:0px 25px; padding:8px;
-		font-weight:bold; background-color:#d9d8d1; color:#000000;
-	}
-	a.title {
-		display:block; margin:0px 25px; padding:6px 8px;
-		font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
-	}
-	a.title:hover { background-color: #d9d8d1; }
-	div.title2 {
-		margin:0px 25px; padding:6px 8px;
-		border: solid #d9d8d1; border-width:0px 1px 1px; 
-	}
-	div.log_body {
-		margin:0px 25px; padding:8px; padding-left:150px;
-		border:solid #d9d8d1; border-width:0px 1px;
-	}
-	span.log_age { position:relative; float:left; width:142px; font-style:italic; }
-	div.log_link { font-size:10px; font-family:sans-serif; font-style:normal; position:relative; float:left; width:142px; }
-	div.list {
-		display:block; margin:0px 25px; padding:4px 6px 0px; border:solid #d9d8d1; border-width:1px 1px 0px;
-		font-weight:bold; 
-	}
-	div.list a { text-decoration:none; color:#000000; }
-	div.list a:hover { color:#880000; }
-	div.link { margin:0px 25px; padding:0px 6px; border:solid #d9d8d1; border-width:0px 1px; font-family:sans-serif; font-size:10px; }
-	td.key { padding-right:10px;  }
-	a.xml_logo { float:right; border:1px solid;
-		line-height:15px;
-		border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
-		color:#ffffff; background-color:#ff6600;
-		font-weight:bold; font-family:sans-serif; text-align:center;
-		font-size:10px; display:block; text-decoration:none;
-	}
-	a.xml_logo:hover { background-color:#ee5500; }
-	</style>
+<title>git - $project</title>
+$rss_link
+<style type="text/css">
+body { font-family: sans-serif; font-size: 12px; margin:0px; }
+a { color:#0000cc; }
+a:hover { color:#880000; }
+a:visited { color:#880000; }
+a:active { color:#880000; }
+div.page_header {
+	margin:15px 25px 0px; height:25px; padding:8px;
+	font-size:18px; font-weight:bold; background-color:#d9d8d1;
+}
+div.page_header a:visited { color:#0000cc; }
+div.page_header a:hover { color:#880000; }
+div.page_nav { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
+div.page_nav a:visited { color:#0000cc; }
+div.page_footer { margin:0px 25px 15px; height:17px; padding:4px; padding-left:8px; background-color: #d9d8d1; }
+div.page_footer_text { float:left; color:#555555; font-style:italic; }
+div.page_body { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
+div.title, a.title {
+	display:block; margin:0px 25px; padding:6px 8px;
+	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
+}
+a.title:hover { background-color: #d9d8d1; }
+div.title_text { margin:0px 25px; padding:6px 8px; border: solid #d9d8d1; border-width:0px 1px 1px; }
+div.log_body { margin:0px 25px; padding:8px; padding-left:150px; border:solid #d9d8d1; border-width:0px 1px; }
+span.log_age { position:relative; float:left; width:142px; font-style:italic; }
+div.log_link { font-size:10px; font-family:sans-serif; font-style:normal; position:relative; float:left; width:142px; }
+div.list {
+	display:block; margin:0px 25px; padding:4px 6px 2px; border:solid #d9d8d1; border-width:1px 1px 0px;
+	font-weight:bold;
+}
+div.list_head {
+	display:block; margin:0px 25px; padding:4px 6px 4px; border:solid #d9d8d1; border-width:1px 1px 0px;
+	font-style:italic;
+}
+div.list a { text-decoration:none; color:#000000; }
+div.list a:hover { color:#880000; }
+div.link {
+	margin:0px 25px; padding:0px 6px 8px; border:solid #d9d8d1; border-width:0px 1px;
+	font-family:sans-serif; font-size:10px;
+}
+td.key { padding-right:10px;  }
+a.xml_logo { float:right; border:1px solid;
+	line-height:15px;
+	border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
+	color:#ffffff; background-color:#ff6600;
+	font-weight:bold; font-family:sans-serif; text-align:center;
+	font-size:10px; display:block; text-decoration:none;
+}
+a.xml_logo:hover { background-color:#ee5500; }
+</style>
 </head>
 <body>
 EOF
@@ -140,13 +149,18 @@ EOF
 }
 
 sub git_footer_html {
-	print "<div class=\"page_footer\">";
-	print "<div class=\"page_footer_text\">version $version</div>";
-	if ($project ne '') {
+	print "<div class=\"page_footer\">\n";
+	if ($project ne "") {
+		if (-e "$projectroot/$project/description") {
+			open(my $fd, "$projectroot/$project/description");
+			my $descr = <$fd>;
+			print "<div class=\"page_footer_text\">" . escapeHTML($descr) . "</div>\n";
+			close $fd;
+		}
 		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "xml_logo"}, "XML") . "\n";
 	}
-	print "</div>" .
-	      "</body>" .
+	print "</div>\n" .
+	      "</body>\n" .
 	      "</html>";
 }
 
@@ -154,12 +168,10 @@ sub die_error {
 	my $status = shift || "403 Forbidden";
 	my $error = shift || "Malformed query, file missing or permission denied"; 
 
-	$project = "";
-	$action = "";
 	git_header_html($status);
 	print "<div class=\"page_body\">\n" .
 	      "<br/><br/>\n";
-	print "$error\n";
+	print "$status - $error\n";
 	print "<br/></div>\n";
 	git_footer_html();
 	exit 0;
@@ -167,7 +179,7 @@ sub die_error {
 
 sub git_head {
 	my $path = shift;
-	open(my $fd, "$projectroot/$path/HEAD") || die_error("", "Invalid project directory.");;
+	open(my $fd, "$projectroot/$path/HEAD") || die_error("", "Invalid project directory.");
 	my $head = <$fd>;
 	close $fd;
 	chomp $head;
@@ -403,10 +415,11 @@ if ($action eq "blob") {
 	my %co = git_commit($hash);
 	if (defined(%co)) {
 		print "<div class=\"page_nav\"> view\n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
-		      "<br/><br/></div>\n";
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") .
+		      "<br/><br/>\n" .
+		      "</div>\n";
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 		      "</div>\n";
@@ -442,10 +455,10 @@ if ($action eq "blob") {
 		git_header_html();
 		print "<div class=\"page_nav\">\n";
 		print "view  ";
-		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last day") . " | \n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | \n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=31"}, "month") . " | \n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=365"}, "year") . " | \n" .
+		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last day") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=31"}, "month") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=365"}, "year") . " | " .
 		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=0"}, "all") . "<br/>\n";
 		print "<br/><br/>\n" .
 		      "</div>\n";
@@ -475,7 +488,7 @@ if ($action eq "blob") {
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "title"}, 
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
 			      "</div>\n";
-			print "<div class=\"title2\">\n" .
+			print "<div class=\"title_text\">\n" .
 			      "<div class=\"log_link\">\n" .
 			      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") . "<br/>\n" .
@@ -516,10 +529,18 @@ if ($action eq "blob") {
 	}
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
-	open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
-	my (@difftree) = map { chomp; $_ } <$fd>;
-	close $fd;
 
+	my @difftree;
+	if (defined($co{'parent'})) {
+		open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
+		@difftree = map { chomp; $_ } <$fd>;
+		close $fd;
+	} else {
+		# fake git-diff-tree output for initial revision
+		open my $fd, "-|", "$gitbin/ls-tree -r $hash";
+		@difftree = map { chomp;  "+" . $_ } <$fd>;
+		close $fd;
+	}
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
@@ -529,7 +550,7 @@ if ($action eq "blob") {
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 	      "</div>\n";
-	print "<div class=\"title2\">\n" .
+	print "<div class=\"title_text\">\n" .
 	      "<table cellspacing=\"0\">";
 	print "<tr><td class=\"key\">author</td><td>" . escapeHTML($co{'author'}) . "</td><tr><td></td><td>" .
 	      " " . $ad{'rfc2822'};
@@ -562,6 +583,9 @@ if ($action eq "blob") {
 		}
 	}
 	print "</div>\n";
+	if ($#difftree > 10) {
+		print "<div class=\"list_head\">" . ($#difftree + 1) . " files changed:<br/></div>\n";
+	}
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
 		# '+100644	blob	4a83ab6cd565d21ab0385bac6643826b83c2fcd4	arch/arm/lib/bitops.h'
@@ -582,7 +606,7 @@ if ($action eq "blob") {
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/><br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "-") {
 				print "<div class=\"list\">\n" .
@@ -592,7 +616,7 @@ if ($action eq "blob") {
 				print "<div class=\"link\">\n" .
 				      "view " .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . " | " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/><br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
@@ -621,7 +645,7 @@ if ($action eq "blob") {
 					print $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id"}, "diff") . " | ";
 				}
 				print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id"}, "file") . " | " .
-				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/><br/>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/>\n" .
 				      "</div>\n";
 			}
 		}
@@ -728,5 +752,6 @@ if ($action eq "blob") {
 	}
 	git_footer_html();
 } else {
+	$action = "";
 	die_error("", "Unknown action.");
 }
