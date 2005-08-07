@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"203";
+my $version =		"205";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -1323,7 +1323,7 @@ sub git_commit {
 	if (!defined $co{'parent'}) {
 		$root = " --root";
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r $root $co{'parent'} $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$gitbin/git-diff-tree -r -M $root $co{'parent'} $hash" or die_error(undef, "Open failed.");
 	@difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 	git_header_html();
@@ -1376,7 +1376,7 @@ sub git_commit {
 		      "<td style=\"font-family:monospace\">" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par", class => "list"}, $par) . "</td>" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, "commit") .
-		      " |" . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash;hp=$par"}, "commitdiff") .
+		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash;hp=$par"}, "commitdiff") .
 		      "</td>" .
 		      "</tr>\n";
 	}
@@ -1415,13 +1415,14 @@ sub git_commit {
 	foreach my $line (@difftree) {
 		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
 		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M      rev-tree.c'
-		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/;
+		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/;
 		my $from_mode = $1;
 		my $to_mode = $2;
 		my $from_id = $3;
 		my $to_id = $4;
 		my $status = $5;
-		my $file = $6;
+		my $percentage = int $6;
+		my $file = $7;
 		#print "$line ($status)<br/>\n";
 		if ($alternate) {
 			print "<tr style=\"background-color:#f6f5ed\">\n";
@@ -1476,6 +1477,23 @@ sub git_commit {
 				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"}, "diff");
 			}
 			print " | " . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "\n";
+			print "</td>\n";
+		} elsif ($status eq "R") {
+			my ($from_file, $to_file) = split "\t", $file;
+			my $mode_chng = "";
+			if ($from_mode != $to_mode) {
+				$mode_chng = sprintf(", mode: %04o", (oct $to_mode) & 0777);
+			}
+			print "<td>" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file", -class => "list"}, escapeHTML($to_file)) . "</td>\n" .
+			      "<td><span style=\"color: #777777;\">[moved from " .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file", -class => "list"}, escapeHTML($from_file)) .
+			      " with $percentage% similarity$mode_chng]</span></td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"}, "blob");
+			if ($to_id ne $from_id) {
+				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file"}, "diff");
+			}
 			print "</td>\n";
 		}
 		print "</tr>\n";
