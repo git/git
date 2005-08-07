@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"227";
+my $version =		"229";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -94,13 +94,24 @@ if (defined $file_name) {
 
 my $hash = $cgi->param('h');
 if (defined $hash) {
-	if ($hash =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
-		undef $hash;
-		die_error(undef, "Non-canonical hash parameter.");
-	}
-	if ($hash =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~\:\!]/) {
-		undef $hash;
-		die_error(undef, "Invalid character in hash parameter.");
+	if (!($hash =~ m/^[0-9a-fA-F]{40}$/)) {
+		if ($hash =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
+			undef $hash;
+			die_error(undef, "Non-canonical hash parameter.");
+		}
+		if ($hash =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~\:\!]/) {
+			undef $hash;
+			die_error(undef, "Invalid character in hash parameter.");
+		}
+		# replace branch-name with hash
+		my $branchlist = git_read_refs("refs/heads");
+		foreach my $entry (@$branchlist) {
+			my %branch = %$entry;
+			if ($branch{'name'} eq $hash) {
+				$hash = $branch{'id'};
+				last;
+			}
+		}
 	}
 }
 
@@ -915,14 +926,14 @@ sub git_summary {
 			if ($i-- > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'name'}", -class => "list"}, "<b>" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}", -class => "list"}, "<b>" .
 				      escapeHTML($tag{'name'}) . "</b>") .
 				      "</td>\n" .
 				      "<td class=\"link\">" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'name'}"}, $tag{'type'});
+				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'});
 				if ($tag{'type'} eq "commit") {
-				      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
-				            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'name'}"}, "log");
+				      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}"}, "shortlog") .
+				            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log");
 				}
 				print "</td>\n" .
 				      "</tr>";
@@ -1002,14 +1013,14 @@ sub git_tags {
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}", -class => "list"},
+			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}", -class => "list"},
 			      "<b>" . escapeHTML($tag{'name'}) . "</b>") .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'name'}"}, $tag{'type'});
+			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'});
 			if ($tag{'type'} eq "commit") {
 			      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
-			            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'name'}"}, "log");
+			            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log");
 			}
 			print "</td>\n" .
 			      "</tr>";
@@ -1777,7 +1788,7 @@ sub git_history {
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
 	while (my $line = <$fd>) {
-		if ($line =~ m/^([0-9a-fA-F]{40}) /){
+		if ($line =~ m/^([0-9a-fA-F]{40})/){
 			$commit = $1;
 			next;
 		}
