@@ -14,13 +14,16 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version = "049";
-my $projectroot =	"/";
-my $defaultprojects =	"home/kay/public_html";
-my $gitbin =		"/home/kay/bin/git";
-my $gittmp =		"/tmp";
+my $version =		"053";
+my $projectroot =	"/pub/scm";
+my $defaultprojects =	"linux/kernel/git";
+my $gitbin =		"/usr/bin";
+my $gittmp =		"/tmp/gitweb";
+my $giturl =            "/pub/software/scm/cogito";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
+
+mkdir($gittmp, 0700);
 
 my $project = $cgi->param('p');
 my $action = $cgi->param('a');
@@ -30,17 +33,19 @@ my $time_back = $cgi->param('t');
 if (!(defined($time_back))) {
 	$time_back = 1;
 }
-$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/.git/objects";
+$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
 
 # sanitize input
 $action =~ s/[^0-9a-zA-Z\.\-]//g;
-$project =~ s/\/\.//g;
-$project =~ s/^\/+//g;
-$project =~ s/\/+$//g;
-$project =~ s/|//g;
 $hash =~ s/[^0-9a-fA-F]//g;
 $hash_parent =~ s/[^0-9a-fA-F]//g;
 $time_back =~ s/[^0-9]+//g;
+if (defined($project) && $project =~ /(^|\/)(|\.|\.\.)($|\/)/) {
+	print $cgi->header(-type=>'text/plain', -status=>'403 Permission denied');
+	print "Malformed query, file missing or permission denied\n";
+	exit 0;
+}
+$project =~ s/|//g;
 
 sub git_header_html {
 	print $cgi->header(-type => 'text/html', -charset => 'utf-8');
@@ -51,38 +56,55 @@ print <<EOF;
 	<title>git - $project $action</title>
 	<link rel="alternate" title="$project log" href="$my_uri?p=$project;a=rss" type="application/rss+xml"/>
 	<style type="text/css">
-		body { font-family: sans-serif; font-size: 12px; margin:0px; }
-		a { color:#0000cc; }
-		a:hover { color:#880000; }
-		a:visited { color:#880000; }
-		a:active { color:#880000; }
-		div.page_header { margin:15px 25px 0px; height:25px; padding:8px; font-size:18px; clear:both; font-weight:bold; background-color: #d9d8d1; }
-		div.page_header a:visited { color:#0000cc; }
-		div.page_nav { margin:0px 25px; padding:8px; clear:both; border: solid #d9d8d1; border-width:0px 1px; }
-		div.page_nav a:visited { color:#0000cc; }
-		div.page_footer { margin:0px 25px 15px; height:17px; padding:4px; padding-left:8px; clear:both; background-color: #d9d8d1; }
-		div.page_footer_text { float:left; color:#888888; font-size:10px;}
-		div.page_body { margin:0px 25px; padding:8px; clear:both; border: solid #d9d8d1; border-width:0px 1px; }
-		a.log_title { display:block; margin:0px 25px; padding:8px; clear:both; font-weight:bold; background-color: #d9d8d1; text-decoration:none; color:#000000; }
-		a.log_title:hover { background-color: #c9c8c1; }
-		a.xml_logo { float:right; border:1px solid;
-			border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px; color:#ffffff; background-color:#ff6600;
-			font-weight:bold; font-family:sans-serif; text-align:center; font-size:11px; display:block; text-decoration:none;
-		}
-		a.xml_logo:hover { background-color:#ee5500; }
-		div.log_head { margin:0px 25px; min-height: 30px; padding:8px; clear:both;
-			border: solid #d9d8d1; border-width:0px 1px; font-family:monospace; background-color: #edece6;
-		}
-		div.log_body { margin:0px 25px; padding:8px; padding-left:150px; clear:both; border: solid #d9d8d1; border-width:0px 1px; }
-		span.log_age { position:relative; float:left; width:142px; }
-		div.log_functions { font-size:10px; font-family:sans-serif; position:relative; float:left; width:142px; }
-		div.signed_off { color: #a9a8a1; }
+	body { font-family: sans-serif; font-size: 12px; margin:0px; }
+	a { color:#0000cc; }
+	a:hover { color:#880000; }
+	a:visited { color:#880000; }
+	a:active { color:#880000; }
+	div.page_header {
+		margin:15px 25px 0px; height:25px; padding:8px;
+		font-size:18px; clear:both; font-weight:bold; background-color: #d9d8d1;
+	}
+	div.page_header a:visited { color:#0000cc; }
+	div.page_nav { margin:0px 25px; padding:8px; clear:both; border:solid #d9d8d1; border-width:0px 1px; }
+	div.page_nav a:visited { color:#0000cc; }
+	div.page_footer {
+		margin:0px 25px 15px; height:17px; padding:4px; padding-left:8px;
+		clear:both; background-color: #d9d8d1;
+	}
+	div.page_footer_text { float:left; color:#888888; font-size:10px;}
+	div.page_body { margin:0px 25px; padding:8px; clear:both; border: solid #d9d8d1; border-width:0px 1px; }
+	a.log_title {
+		display:block; margin:0px 25px; padding:8px; clear:both;
+		font-weight:bold; background-color: #d9d8d1; text-decoration:none; color:#000000;
+	}
+	a.log_title:hover { background-color: #c9c8c1; }
+	a.xml_logo { float:right; border:1px solid;
+		line-height:15px;
+		border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
+		color:#ffffff; background-color:#ff6600;
+		font-weight:bold; font-family:sans-serif; text-align:center;
+		font-size:11px; display:block; text-decoration:none;
+	}
+	a.xml_logo:hover { background-color:#ee5500; }
+	div.log_head {
+		margin:0px 25px; min-height: 30px; padding:8px; clear:both;
+		border: solid #d9d8d1; border-width:0px 1px; font-family:monospace;
+		background-color: #edece6;
+	}
+	div.log_body {
+		margin:0px 25px; padding:8px; padding-left:150px; clear:both;
+		border:solid #d9d8d1; border-width:0px 1px;
+	}
+	span.log_age { position:relative; float:left; width:142px; }
+	div.log_functions { font-size:10px; font-family:sans-serif; position:relative; float:left; width:142px; }
+	div.signed_off { color: #a9a8a1; }
 	</style>
 </head>
 <body>
 EOF
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"http://kernel.org/pub/software/scm/git/\">" .
+	      "<a href=\"$giturl\">" .
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	if ($defaultprojects ne "") {
 		print $cgi->a({-href => "$my_uri"}, "projects") . " / ";
@@ -108,7 +130,7 @@ sub git_footer_html {
 
 sub git_head {
 	my $path = shift;
-	open my $fd, "$projectroot/$path/.git/HEAD";
+	open my $fd, "$projectroot/$path/HEAD";
 	my $head = <$fd>;
 	close $fd;
 	chomp $head;
@@ -281,14 +303,19 @@ if ($action eq "git-logo.png") {
 # show list of default projects
 if ($project eq "") {
 	opendir(my $fd, "$projectroot/$defaultprojects");
-	my (@path) = sort grep(!/^\./, readdir($fd));
+	my (@users) = sort grep(!/^\./, readdir($fd));
 	closedir($fd);
 	git_header_html();
 	print "<div class=\"page_body\">\n";
 	print "<br/><br/>\n";
-	foreach my $line (@path) {
-		if (-e "$projectroot/$defaultprojects/$line/.git/HEAD") {
-			print $cgi->a({-href => "$my_uri?p=$defaultprojects/$line;a=log"}, "$defaultprojects/$line") . "<br/>\n";
+	foreach my $user (@users) {
+		opendir($fd, "$projectroot/$defaultprojects/$user");
+		my (@repos) = sort grep(/\.git$/, readdir($fd));
+		closedir($fd);
+		foreach my $repo (@repos) {
+			if (-e "$projectroot/$defaultprojects/$user/$repo/HEAD") {
+				print $cgi->a({-href => "$my_uri?p=$defaultprojects/$user/$repo;a=log"}, "$defaultprojects/$user/$repo") . "<br/>\n";
+			}
 		}
 	}
 	print "<br/></div>";
@@ -506,7 +533,7 @@ if ($action eq "blob") {
 		}
 	}
 	print "</pre>\n" .
-	      "<br/></div>";
+	      "<br/></div>\n";
 	git_footer_html();
 } elsif ($action eq "blobdiff") {
 	git_header_html();
