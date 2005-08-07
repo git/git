@@ -1802,7 +1802,6 @@ proc selectline {l isnew} {
 	set linkid [string range $comment $s $e]
 	if {![info exists idline($linkid)]} continue
 	incr e
-	incr i
 	$ctext tag conf link$i -foreground blue -underline 1
 	$ctext tag add link$i "$commentstart + $s c" "$commentstart + $e c"
 	$ctext tag bind link$i <1> [list selectline $idline($linkid) 1]
