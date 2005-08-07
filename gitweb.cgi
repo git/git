@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"071";
+my $version =		"073";
 my $projectroot =	"/pub/scm";
 my $home_link =		"/git";
 my $gitbin =		"/usr/bin";
@@ -112,17 +112,18 @@ sub git_header_html {
 	}
 	span.log_age { position:relative; float:left; width:142px; }
 	div.log_link { font-size:10px; font-family:sans-serif; position:relative; float:left; width:142px; }
-	div.list {
-		display:block; margin:0px 25px; padding:2px 8px; border:solid #d9d8d1; border-width:0px 1px;
-		font-family:monospace; background-color: #edece6;
+	a.list {
+		display:block; margin:0px 25px; padding:4px; border:solid #d9d8d1; border-width:0px 1px;
+		font-weight:bold; background-color: #edece6; text-decoration:none; color:#000000;
 	}
+	a.list:hover { background-color: #d9d8d1; }
 	div.link { margin:0px 25px; padding:4px 8px; border:solid #d9d8d1; border-width:0px 1px; font-family:sans-serif; font-size:10px; }
 	a.xml_logo { float:right; border:1px solid;
 		line-height:15px;
 		border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
 		color:#ffffff; background-color:#ff6600;
 		font-weight:bold; font-family:sans-serif; text-align:center;
-		font-size:11px; display:block; text-decoration:none;
+		font-size:10px; display:block; text-decoration:none;
 	}
 	a.xml_logo:hover { background-color:#ee5500; }
 	</style>
@@ -413,9 +414,9 @@ if ($action eq "blob") {
 		my $t_hash = $3;
 		my $t_name = $4;
 		if ($t_type eq "blob") {
-			print mode_str($t_mode). " $t_name " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash", -class => "link"}, "view") . "\n";
+			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash"}, $t_name) . "\n";
 		} elsif ($t_type eq "tree") {
-			print mode_str($t_mode). " $t_name " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash", -class => "link"}, "view") . "\n";
+			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash"}, $t_name) . "\n";
 		}
 	}
 	print "</pre>\n";
@@ -508,7 +509,8 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . "\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash", -class => "log_title"}, escapeHTML($co{'title'})) . "\n" .
@@ -557,17 +559,20 @@ if ($action eq "blob") {
 		if ($type eq "blob") {
 			if ($op eq "+") {
 				print "<div class=\"list\">\n" .
-				      "$file <span style=\"color: #55cc55;\">[new]</span>\n" .
+				      "$file <span style=\"color: #33cc33;\">[new]</span>\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
-				      "view " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/><br/>\n" .
+				      "view " .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/><br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "-") {
 				print "<div class=\"list\">\n" .
 				      "$file <span style=\"color: #cc5555;\">[removed]</span>\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
-				      "view " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/><br/>\n" .
+				      "view " .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . " | " .
+				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/><br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
@@ -576,18 +581,19 @@ if ($action eq "blob") {
 				$mode =~ m/^([0-7]{6})->([0-7]{6})$/;
 				my $from_mode = $1;
 				my $to_mode = $2;
-				print "<div class=\"list\">\n";
-				print $file;
+				print "<div>\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id", -class => "list"}, $file) . "\n";
 				if ($from_mode != $to_mode) {
 					print "<span style=\"color: #555555;\"> [chmod $mode]</span>";
 				}
 				print "\n</div>\n";
 				print "<div class=\"link\">\n" .
-				      "view " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id"}, "file") . " | ";
+				      "view ";
 				if ($to_id ne $from_id) {
 					print $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id"}, "diff") . " | ";
 				}
-				print $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/><br/>\n" .
+				print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id"}, "file") . " | " .
+				      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . "<br/><br/>\n" .
 				      "</div>\n";
 			}
 		}
@@ -613,7 +619,8 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . "\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, escapeHTML($co{'title'})) . "\n" .
@@ -678,9 +685,10 @@ if ($action eq "blob") {
 			}
 		}
 		if ($found) {
-			print "<div class=\"list\">\n" .
-			      $co{'age_string'} . "" . $co{'title'} . "\n" .
-			      "</div>";
+			print "<div>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev", -class => "list"},
+			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
+			      "</div>\n";
 			print "<div class=\"link\">\n" .
 			      "view " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, "commit") . " | " .
