@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"205";
+my $version =		"206";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -109,11 +109,11 @@ if (defined $hash_base && !($hash_base =~ m/^[0-9a-fA-F]{40}$/)) {
 	die_error(undef, "Invalid parent hash parameter.");
 }
 
-my $time_back = $cgi->param('t');
-if (defined $time_back) {
-	if ($time_back =~ m/^[^0-9]+$/) {
-		undef $time_back;
-		die_error(undef, "Invalid time parameter.");
+my $page = $cgi->param('pg');
+if (defined $page) {
+	if ($page =~ m/^[^0-9]+$/) {
+		undef $page;
+		die_error(undef, "Invalid page parameter.");
 	}
 }
 
@@ -1232,17 +1232,9 @@ sub git_log {
 	if (!defined $hash) {
 		$hash = $head;
 	}
-	my $limit_option = "";
-	if (!defined $time_back) {
-		$limit_option = "--max-count=100";
-	} elsif ($time_back > 0) {
-		my $date = time - $time_back*24*60*60;
-		$limit_option = "--max-age=$date";
+	if (!defined $page) {
+		$page = 0;
 	}
-	open my $fd, "-|", "$gitbin/git-rev-list $limit_option $hash" or die_error(undef, "Open failed.");
-	my (@revlist) = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading rev-list failed.");
-
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
 	print $cgi->a({-href => "$my_uri?p=$project;a=summary"}, "summary") .
@@ -1251,15 +1243,27 @@ sub git_log {
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") .
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "commitdiff") .
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash;hb=$hash"}, "tree") . "<br/>\n";
-	if ($hash ne $head) {
-		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "HEAD") . " &sdot; ";
+
+	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
+	open my $fd, "-|", "$gitbin/git-rev-list $limit $hash" or die_error(undef, "Open failed.");
+	my (@revlist) = map { chomp; $_ } <$fd>;
+	close $fd;
+
+	if ($hash ne $head || $page) {
+		print $cgi->a({-href => "$my_uri?p=$project;a=shortlog"}, "HEAD");
+	} else {
+		print "HEAD";
 	}
-	print $cgi->a({-href => "$my_uri?p=$project;a=log;h=$hash"}, "100") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=1;h=$hash"}, "day") .
-	      " &sdot; " .$cgi->a({-href => "$my_uri?p=$project;a=log;t=7;h=$hash"}, "week") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=31;h=$hash"}, "month") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=365;h=$hash"}, "year") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=0;h=$hash"}, "all");
+	if ($page > 0) {
+		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page-1), -accesskey => "p"}, "prev");
+	} else {
+		print " &sdot; prev";
+	}
+	if ($#revlist >= (100 * ($page+1)-1)) {
+		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1), -accesskey => "n"}, "next");
+	} else {
+		print " &sdot; next";
+	}
 	print "<br/>\n" .
 	      "</div>\n";
 	if (!@revlist) {
@@ -1421,7 +1425,7 @@ sub git_commit {
 		my $from_id = $3;
 		my $to_id = $4;
 		my $status = $5;
-		my $percentage = int $6;
+		my $similarity = $6;
 		my $file = $7;
 		#print "$line ($status)<br/>\n";
 		if ($alternate) {
@@ -1488,7 +1492,7 @@ sub git_commit {
 			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file", -class => "list"}, escapeHTML($to_file)) . "</td>\n" .
 			      "<td><span style=\"color: #777777;\">[moved from " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file", -class => "list"}, escapeHTML($from_file)) .
-			      " with $percentage% similarity$mode_chng]</span></td>\n" .
+			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"}, "blob");
 			if ($to_id ne $from_id) {
@@ -1845,7 +1849,9 @@ sub git_shortlog {
 	if (!defined $hash) {
 		$hash = $head;
 	}
-
+	if (!defined $page) {
+		$page = 0;
+	}
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary"}, "summary") .
@@ -1854,38 +1860,36 @@ sub git_shortlog {
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") .
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "commitdiff") .
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash;hb=$hash"}, "tree") . "<br/>\n";
-	if ($hash ne $head) {
-		print $cgi->a({-href => "$my_uri?p=$project;a=shortlog"}, "HEAD") . " &sdot; ";
-	}
-	print $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash"}, "100") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;t=1;h=$hash"}, "day") .
-	      " &sdot; " .$cgi->a({-href => "$my_uri?p=$project;a=shortlog;t=7;h=$hash"}, "week") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;t=31;h=$hash"}, "month") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;t=365;h=$hash"}, "year") .
-	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;t=0;h=$hash"}, "all") .
-	      "<br/>\n" .
-	      "</div>\n";
-	my $limit = "";
-	if (defined $time_back) {
-		if ($time_back) {
-			$limit = sprintf(" --max-age=%i", time - 60*60*24*$time_back);
-		}
-	} else {
-		$limit = " --max-count=100";
-	}
+
+	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", "$gitbin/git-rev-list $limit $hash" or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
+
+	if ($hash ne $head || $page) {
+		print $cgi->a({-href => "$my_uri?p=$project;a=shortlog"}, "HEAD");
+	} else {
+		print "HEAD";
+	}
+	if ($page > 0) {
+		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page-1), -accesskey => "p"}, "prev");
+	} else {
+		print " &sdot; prev";
+	}
+	if ($#revlist >= (100 * ($page+1)-1)) {
+		print " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1), -accesskey => "n"}, "next");
+	} else {
+		print " &sdot; next";
+	}
+	print "<br/>\n" .
+	      "</div>\n";
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary", -class => "title"}, "&nbsp;") .
 	      "</div>\n";
 	print "<table cellspacing=\"0\">\n";
-	if (!@revlist) {
-		my %co = git_read_commit($hash);
-		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
-	}
 	my $alternate = 0;
-	foreach my $commit (@revlist) {
+	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
+		my $commit = $revlist[$i];
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
