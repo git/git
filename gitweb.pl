@@ -95,6 +95,7 @@ sub git_diff {
 	my $tmp_old = "/dev/null";
 	my $tmp_new = "/dev/null";
 
+	# create temp from-file
 	if ($old ne "") {
 		open my $fd2, "> $gittmp/$old";
 		open my $fd, "-|", "$gitbin/cat-file", "blob", $old;
@@ -107,6 +108,7 @@ sub git_diff {
 		$label_old = "a/$old_name";
 	}
 
+	# create tmp to-file
 	if ($new ne "") {
 		open my $fd2, "> $gittmp/$new";
 		open my $fd, "-|", "$gitbin/cat-file", "blob", $new;
@@ -174,12 +176,7 @@ if ($action eq "blob") {
 		my $head = <$fd>;
 		chomp $head;
 		close $fd;
-		open $fd, "-|", "$gitbin/cat-file", "commit", $head;
-		my $tree = <$fd>;
-		chomp $tree;
-		$tree =~ s/tree //;
-		close $fd;
-		$hash = $tree;
+		$hash = $head;
 	}
 	open my $fd, "-|", "$gitbin/ls-tree", $hash;
 	my (@entries) = map { chomp; $_ } <$fd>;
@@ -221,9 +218,7 @@ if ($action eq "blob") {
 	print "</div>\n";
 	print "<table cellspacing=\"0\" class=\"log\">\n";
 	foreach my $rev (reverse sort @revtree) {
-		if (!($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/)) {
-			last;
-		}
+		last if !($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/);
 		my $time = $1;
 		my $commit = $2;
 		my $parent = $3;
@@ -241,9 +236,7 @@ if ($action eq "blob") {
 		open my $fd, "-|", "$gitbin/cat-file", "commit", $commit;
 		while (my $line = <$fd>) {
 			chomp($line);
-			if ($line eq "") {
-				last;
-			}
+			last if $line eq "";
 			if ($line =~ m/^tree (.*)$/) {
 				$tree = $1;
 			} elsif ($line =~ m/^parent (.*)$/) {
@@ -268,10 +261,8 @@ if ($action eq "blob") {
 				$comment .= escapeHTML($line) . "<br/>\n";
 		}
 		close $fd;
-		my $age = time-$author_time;
-		if ($view_back > 0 && $age > $view_back) {
-			last;
-		}
+		my $age = time-$committer_time;
+		last if ($view_back > 0 && $age > $view_back);
 
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
@@ -323,19 +314,7 @@ if ($action eq "blob") {
 	print "</table>\n";
 	git_footer();
 } elsif ($action eq "commit") {
-	open my $fd, "-|", "$gitbin/cat-file", "commit", $hash;
-	my $tree = <$fd>;
-	chomp $tree;
-	$tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/cat-file", "commit", $parent;
-	my $parent_tree = <$fd>;
-	chomp $parent_tree;
-	$parent_tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/diff-tree", "-r", $parent_tree, $tree;
+	open my $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -374,19 +353,7 @@ if ($action eq "blob") {
 	print "<br/></div>";
 	git_footer();
 } elsif ($action eq "diffs") {
-	open my $fd, "-|", "$gitbin/cat-file", "commit", $hash;
-	my $tree = <$fd>;
-	chomp $tree;
-	$tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/cat-file", "commit", $parent;
-	my $parent_tree = <$fd>;
-	chomp $parent_tree;
-	$parent_tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/diff-tree", "-r", $parent_tree, $tree;
+	open my $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
