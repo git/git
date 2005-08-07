@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"056";
+my $version =		"057";
 my $projectroot =	"/home/kay/public_html/pub/scm";
 my $defaultprojects =	"linux/kernel/git";
 my $gitbin =		"/home/kay/bin/git";
@@ -26,12 +26,16 @@ my $project = $cgi->param('p');
 my $action = $cgi->param('a');
 my $hash = $cgi->param('h');
 my $hash_parent = $cgi->param('hp');
+my $file_name = $cgi->param('f');
 my $time_back = $cgi->param('t');
 $ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
 
 # validate input
 if (defined($project) && $project =~ /(^|\/)(|\.|\.\.)($|\/)/) {
 	die_error("", "Invalid project parameter.");
+}
+if (defined($file_name) && $file_name =~ /(^|\/)(|\.|\.\.)($|\/)/) {
+	die_error("", "Invalid file parameter.");
 }
 if (defined($action) && !$action =~ m/^[0-9a-zA-Z\.\-]+$/) {
 	die_error("", "Invalid action parameter.");
@@ -44,8 +48,6 @@ if (defined($hash_parent) && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
 }
 if (defined($time_back) && !($time_back =~ m/^[0-9]+$/)) {
 	die_error("", "Invalid time parameter.");
-} else {
-	$time_back = 1;
 }
 
 sub git_header_html {
@@ -339,8 +341,12 @@ if ($project eq "") {
 	exit;
 }
 
-if ($action eq "") {
+if (!defined($action)) {
 	$action = "log";
+}
+
+if (!defined($time_back)) {
+	$time_back = 1;
 }
 
 if ($action eq "blob") {
@@ -384,7 +390,7 @@ if ($action eq "blob") {
 	git_footer_html();
 } elsif ($action eq "log" || $action eq "rss") {
 	open my $fd, "-|", "$gitbin/rev-list " . git_head($project);
-	my (@revtree) = map { chomp; $_ } <$fd>;
+	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	if ($action eq "log") {
@@ -409,8 +415,8 @@ if ($action eq "blob") {
 		      "<language>en</language>\n";
 	}
 
-	for (my $i = 0; $i <= $#revtree; $i++) {
-		my $commit = $revtree[$i];
+	for (my $i = 0; $i <= $#revlist; $i++) {
+		my $commit = $revlist[$i];
 		my %co = git_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		my $age = time - $co{'committer_epoch'};
@@ -466,7 +472,7 @@ if ($action eq "blob") {
 			last if ($i >= 20);
 			print "<item>\n" .
 			      "\t<title>" . sprintf("%d %s %02d:%02d", $ad{'mday'}, $ad{'month'}, $ad{'hour'}, $ad{'min'}) . " - " . escapeHTML($co{'title'}) . "</title>\n" .
-			      "\t<link> " . $my_url . "?p=$project;a==commit;h=$commit</link>\n" .
+			      "\t<link> " . $my_url . "?p=$project;a=commit;h=$commit</link>\n" .
 			      "\t<description>";
 			my $comment = $co{'comment'};
 			foreach my $line (@$comment) {
@@ -544,7 +550,8 @@ if ($action eq "blob") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $from = $1;
 				my $to = $2;
-				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to;hp=$from"}, $file) . "\n";
+				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to;hp=$from"}, $file) . " (" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=filerevision;h=$hash;f=$file"}, "history") . ")\n";
 			}
 		}
 	}
@@ -589,6 +596,35 @@ if ($action eq "blob") {
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				git_diff_html($file, $file, $1, $2);
+			}
+		}
+	}
+	print "<br/></pre>\n";
+	print "</div>";
+	git_footer_html();
+} elsif ($action eq "filerevision") {
+	open my $fd, "-|", "$gitbin/rev-list $hash";
+	my (@revlist) = map { chomp; $_ } <$fd>;
+	close $fd;
+
+	git_header_html();
+	print "<div class=\"page_body\">\n" .
+	      "<pre>\n";
+	foreach my $rev (@revlist) {
+		my %co = git_commit($rev);
+		my $parents  = $co{'parents'};
+		foreach my $parent (@$parents) {
+			open $fd, "-|", "$gitbin/diff-tree -r $parent $rev $file_name";
+			my (@difftree) = map { chomp; $_ } <$fd>;
+			close $fd;
+
+			foreach my $line (@difftree) {
+				$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
+				my $file = $5;
+				if ($file eq $file_name) {
+					print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, $rev) . " (" . $co{'title'} .")\n";
+					last;
+				}
 			}
 		}
 	}
