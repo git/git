@@ -57,7 +57,9 @@ print <<EOF;
 		td.head3 { background-color: #EDECE6; font-size:10px; }
 		div.add { color: #008800; }
 		div.subtract { color: #CC0000; }
-		div.diff_head { color: #990099; }
+		div.diff_head { color: #000099; }
+		div.diff_head a:visited { color:#0000cc; }
+		div.diff_line { color: #990099; }
 		a { color:#0000cc; }
 		a:hover { color:#880000; }
 		a:visited { color:#880000; }
@@ -85,15 +87,15 @@ sub git_footer {
 }
 
 sub git_diff {
-	my $old_name = shift;
-	my $new_name = shift;
+	my $old_name = shift || "/dev/null";
+	my $new_name = shift || "/dev/null";
 	my $old = shift;
 	my $new = shift;
 
-	my $label_old = "/dev/null";
-	my $label_new = "/dev/null";
 	my $tmp_old = "/dev/null";
 	my $tmp_new = "/dev/null";
+	my $old_label = "/dev/null";
+	my $new_label = "/dev/null";
 
 	# create temp from-file
 	if ($old ne "") {
@@ -105,7 +107,7 @@ sub git_diff {
 		close $fd2;
 		close $fd;
 		$tmp_old = "$gittmp/$old";
-		$label_old = "a/$old_name";
+		$old_label = "a/$old_name";
 	}
 
 	# create tmp to-file
@@ -118,21 +120,34 @@ sub git_diff {
 		close $fd2;
 		close $fd;
 		$tmp_new = "$gittmp/$new";
-		$label_new = "b/$new_name";
+		$new_label = "a/$new_name";
 	}
 
-	open my $fd, "-|", "/usr/bin/diff", "-L", $label_old, "-L", $label_new, "-u", "-p", $tmp_old, $tmp_new;
+	open my $fd, "-|", "/usr/bin/diff", "-L", $old_label, "-L", $new_label, "-u", "-p", $tmp_old, $tmp_new;
+	print '<div class="diff_head">===== ';
+	if ($old ne "") {
+		print $cgi->a({-href => "$myself?project=$project&action=blob&hash=$old"}, $old);
+	} else {
+		print $old_name;
+	}
+	print " vs ";
+	if ($new ne "") {
+		print $cgi->a({-href => "$myself?project=$project&action=blob&hash=$new"}, $new);
+	} else {
+		print $new_name;
+	}
+	print ' =====</div>';
 	while (my $line = <$fd>) {
 		my $char = substr($line,0,1);
 		print '<div class="add">' if $char eq '+';
 		print '<div class="subtract">' if $char eq '-';
-		print '<div class="diff_head">' if $char eq '@';
+		print '<div class="diff_line">' if $char eq '@';
 		print escapeHTML($line);
 		print '</div>' if $char eq '+' or $char eq '-' or $char eq '@';
 	}
 	close $fd;
-	#unlink("$gittmp/$new");
-	#unlink("$gittmp/$old");
+	unlink("$gittmp/$new");
+	unlink("$gittmp/$old");
 }
 
 if ($project eq "") {
@@ -185,6 +200,7 @@ if ($action eq "blob") {
 	print "<br/><br/><div class=\"main\">\n";
 	print "<pre>\n";
 	foreach my $line (@entries) {
+		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 		$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
 		my $t_type = $2;
 		my $t_hash = $3;
@@ -322,6 +338,8 @@ if ($action eq "blob") {
 	print "<br/><br/><div class=\"main\">\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
+		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
+		# '+100644	blob	4a83ab6cd565d21ab0385bac6643826b83c2fcd4	arch/arm/lib/bitops.h'
 		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
 		my $op = $1;
 		my $mode = $2;
@@ -361,6 +379,7 @@ if ($action eq "blob") {
 	print "<br/><br/><div class=\"main\">\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
+		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
 		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
 		my $op = $1;
 		my $mode = $2;
@@ -377,7 +396,6 @@ if ($action eq "blob") {
 				git_diff($file, $file, $1, $2);
 			}
 		}
-		print "<br/>\n";
 	}
 	print "</pre>\n";
 	print "<br/></div>";
