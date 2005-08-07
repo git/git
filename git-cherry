@@ -3,6 +3,8 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
+. git-sh-setup-script || die "Not a git archive."
+
 usage="usage: $0 "'<upstream> [<head>]
 
              __*__*__*__*__> <upstream>
@@ -18,8 +20,8 @@ upstream, it is shown on the standard output.
 The output is intended to be used as:
 
     OLD_HEAD=$(git-rev-parse HEAD)
-    git-rev-parse linus >${GIT_DIR-.}/HEAD
-    git-cherry linus OLD_HEAD |
+    git-rev-parse upstream >${GIT_DIR-.}/HEAD
+    git-cherry upstream $OLD_HEAD |
     while read commit
     do
         GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p "$commit" &&
@@ -27,20 +29,27 @@ The output is intended to be used as:
     done
 '
 
+case "$#,$1" in
+1,*..*)
+    upstream=$(expr "$1" : '\(.*\)\.\.') ours=$(expr "$1" : '.*\.\.\(.*\)$')
+    set x "$upstream" "$ours"
+    shift ;;
+esac
+
 case "$#" in
-1) linus=`git-rev-parse --verify "$1"` &&
-   junio=`git-rev-parse --verify HEAD` || exit
+1) upstream=`git-rev-parse --verify "$1"` &&
+   ours=`git-rev-parse --verify HEAD` || exit
    ;;
-2) linus=`git-rev-parse --verify "$1"` &&
-   junio=`git-rev-parse --verify "$2"` || exit
+2) upstream=`git-rev-parse --verify "$1"` &&
+   ours=`git-rev-parse --verify "$2"` || exit
    ;;
 *) echo >&2 "$usage"; exit 1 ;;
 esac
 
 # Note that these list commits in reverse order;
 # not that the order in inup matters...
-inup=`git-rev-list ^$junio $linus` &&
-ours=`git-rev-list $junio ^$linus` || exit
+inup=`git-rev-list ^$ours $upstream` &&
+ours=`git-rev-list $ours ^$upstream` || exit
 
 tmp=.cherry-tmp$$
 patch=$tmp-patch
