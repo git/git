@@ -109,7 +109,7 @@ print <<EOF;
 		div.head2 a:visited { color:#0000cc; }
 		div.head2 a:hover { color:#880000; }
 		div.head2 a:active { color:#880000; }
-		div.shortlog { padding:8px; background-color: #D9D8D1; font-weight:bold; }
+		div.title { padding:8px; background-color: #D9D8D1; font-weight:bold; }
 		table { padding:0px; margin:0px; width:100%; }
 		tr { vertical-align:top; }
 		td { padding:8px; margin:0px; font-family: sans-serif; font-size: 12px; }
@@ -175,26 +175,16 @@ sub git_commit {
 			$co{'committer_time'} = $2;
 			$co{'committer_timezone'} = $3;
 		} elsif ($line =~ m/^author (.*>) ([0-9]+) (.*)$/) {
-			$co{'$author'} = $1;
-			$co{'$author_time'} = $2;
-			$co{'$author_timezone'} = $3;
+			$co{'author'} = $1;
+			$co{'author_time'} = $2;
+			$co{'author_timezone'} = $3;
 		}
 	}
-	my $shortlog = <$fd>;
-	chomp($shortlog);
-	$co{'shortlog'} = escapeHTML($shortlog);
-	my $comment = $shortlog . "<br/>";
-	while (my $line = <$fd>) {
-			chomp($line);
-			if ($line =~ m/signed-off-by:/i) {
-				$comment .= '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
-			} else {
-				$comment .= escapeHTML($line) . "<br/>\n";
-			}
-	}
-	$co{'comment'} = $comment;
+	$co{'parents'} = \@parents;
+	my (@comment) = map { chomp; $_ } <$fd>;
+	$co{'comment'} = \@comment;
+	$co{'title'} = $comment[0];
 	close $fd;
-
 	return %co;
 }
 
@@ -354,45 +344,9 @@ if ($action eq "blob") {
 		my $time = $1;
 		my $commit = $2;
 		my $parent = $3;
-		my @parents;
-		my ($author, $author_time, $author_timezone);
-		my ($committer, $committer_time, $committer_timezone);
-		my $tree;
-		my $comment;
-		my $shortlog;
-		open my $fd, "-|", "$gitbin/cat-file", "commit", $commit;
-		while (my $line = <$fd>) {
-			chomp($line);
-			last if $line eq "";
-			if ($line =~ m/^tree (.*)$/) {
-				$tree = $1;
-			} elsif ($line =~ m/^parent (.*)$/) {
-				push @parents, $1;
-			} elsif ($line =~ m/^committer (.*>) ([0-9]+) (.*)$/) {
-				$committer = $1;
-				$committer_time = $2;
-				$committer_timezone = $3;
-			} elsif ($line =~ m/^author (.*>) ([0-9]+) (.*)$/) {
-				$author = $1;
-				$author_time = $2;
-				$author_timezone = $3;
-			}
-		}
-		$shortlog = <$fd>;
-		chomp($shortlog);
-		$shortlog = escapeHTML($shortlog);
-		$comment = $shortlog . "<br/>";
-		while (my $line = <$fd>) {
-				chomp($line);
-				if ($line =~ m/signed-off-by:/i) {
-					$comment .= '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
-				} else {
-					$comment .= escapeHTML($line) . "<br/>\n";
-				}
-		}
-		close $fd;
 
-		my $age = time-$committer_time;
+		my %co = git_commit($commit);
+		my $age = time - $co{'committer_time'};
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
 			$age_string = int $age/60/60/24/365;
@@ -424,20 +378,21 @@ if ($action eq "blob") {
 			}
 			print "<tr>\n";
 			print "<td class=\"head1\">" . $age_string . "</td>\n";
-			print "<td class=\"head1\">" . $cgi->a({-href => "$myself/$project/commit/$commit"}, $shortlog) . "</td>";
+			print "<td class=\"head1\">" . $cgi->a({-href => "$myself/$project/commit/$commit"}, $co{'title'}) . "</td>";
 			print "</tr>\n";
 			print "<tr>\n";
 			print "<td class=\"head3\">";
 			print $cgi->a({-href => "$myself/$project/commitdiff/$commit"}, "view diff") . "<br/>\n";
 			print $cgi->a({-href => "$myself/$project/commit/$commit"}, "view commit") . "<br/>\n";
-			print $cgi->a({-href => "$myself/$project/tree/$tree"}, "view tree") . "<br/>\n";
+			print $cgi->a({-href => "$myself/$project/tree/$co{'tree'}"}, "view tree") . "<br/>\n";
 			print "</td>\n";
 			print "<td class=\"head2\">\n";
-			print "author &nbsp; &nbsp;" . escapeHTML($author) . " [" . gmtime($author_time) . " " . $author_timezone . "]<br/>\n";
-			print "committer " . escapeHTML($committer) . " [" . gmtime($committer_time) . " " . $committer_timezone . "]<br/>\n";
+			print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) . " [" . gmtime($co{'author_time'}) . " " . $co{'author_timezone'} . "]<br/>\n";
+			print "committer " . escapeHTML($co{'committer'}) . " [" . gmtime($co{'committer_time'}) . " " . $co{'committer_timezone'} . "]<br/>\n";
 			print "commit &nbsp; &nbsp;$commit<br/>\n";
-			print "tree &nbsp; &nbsp; &nbsp;$tree<br/>\n";
-			foreach my $par (@parents) {
+			print "tree &nbsp; &nbsp; &nbsp;$co{'tree'}<br/>\n";
+			my $parents  = $co{'parents'};
+			foreach my $par (@$parents) {
 				print "parent &nbsp; &nbsp;$par<br/>\n";
 			}
 			print "</td>";
@@ -445,12 +400,20 @@ if ($action eq "blob") {
 			print "<tr>\n";
 			print "<td></td>\n";
 			print "<td>\n";
-			print "$comment<br/><br/>\n";
+			my $comment = $co{'comment'};
+			foreach my $line (@$comment) {
+				if ($line =~ m/signed-off-by:/i) {
+					print '<div class="signed_off">' . escapeHTML($line) . "<br/></div>\n";
+				} else {
+					print escapeHTML($line) . "<br/>\n";
+				}
+			}
+			print "<br/><br/>\n";
 			print "</td>";
 			print "</tr>\n";
 		} elsif ($action eq "rss") {
 			last if ($i >= 12);
-			print "<item>\n\t<title>$age_string: $shortlog</title>\n";
+			print "<item>\n\t<title>$age_string: " . escapeHTML($co{'title'}) . "</title>\n";
 			print "\t<link> " . $cgi->url() . "/$project/commit/$commit</link>\n";
 			print "</item>\n";
 		}
@@ -471,8 +434,8 @@ if ($action eq "blob") {
 			$parent = $1;
 		}
 	}
-	my $shortlog = <$fd>;
-	$shortlog = escapeHTML($shortlog);
+	my $title = <$fd>;
+	$title = escapeHTML($title);
 	close $fd;
 
 	open $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
@@ -482,7 +445,7 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"head2\">\n";
 	print "view " . $cgi->a({-href => "$myself/$project/commitdiff/$hash"}, "diff") . "</div><br/><br/>\n";
-	print "<div class=\"shortlog\">$shortlog<br/></div>\n";
+	print "<div class=\"title\">$title<br/></div>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
@@ -527,8 +490,8 @@ if ($action eq "blob") {
 			$parent = $1;
 		}
 	}
-	my $shortlog = <$fd>;
-	$shortlog = escapeHTML($shortlog);
+	my $title = <$fd>;
+	$title = escapeHTML($title);
 	close $fd;
 
 	open $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
@@ -538,7 +501,7 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"head2\">\n";
 	print "view " . $cgi->a({-href => "$myself/$project/commit/$hash"}, "commit") . "</div><br/><br/>\n";
-	print "<div class=\"shortlog\">$shortlog<br/></div>\n";
+	print "<div class=\"title\">$title<br/></div>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
