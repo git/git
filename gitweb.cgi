@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"220";
+my $version =		"225";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -245,6 +245,7 @@ div.pre { font-family:monospace; font-size:12px; white-space:pre; }
 div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
 div.index_include { border:solid #d9d8d1; border-width:0px 0px 1px; padding:12px 8px; }
 div.search { margin:4px 8px; position:absolute; top:56px; right:12px }
+a.linenr { color:#999999; text-decoration:none }
 a.rss_logo {
 	float:right; padding:3px 0px; width:35px; line-height:10px;
 	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
@@ -462,6 +463,14 @@ sub git_read_commit {
 		$co{'age_string'} .= " sec ago";
 	} else {
 		$co{'age_string'} .= " right now";
+	}
+	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($co{'committer_epoch'});
+	if ($age > 60*60*24*7*2) {
+		$co{'age_string_date'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon, $mday;
+		$co{'age_string_age'} = $co{'age_string'};
+	} else {
+		$co{'age_string_date'} = $co{'age_string'};
+		$co{'age_string_age'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon, $mday;
 	}
 	return %co;
 }
@@ -1104,7 +1113,7 @@ sub git_blob {
 				$line =~ s/\t/$spaces/;
 			}
 		}
-		printf "<div class=\"pre\"><span style=\"color:#999999;\">%4i</span> %s</div>\n", $nr, escapeHTML($line);
+		printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n", $nr, $nr, $nr, escapeHTML($line);
 	}
 	close $fd or print "Reading blob failed.\n";
 	print "</div>";
@@ -1216,7 +1225,7 @@ sub git_rss {
 	      "<rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n";
 	print "<channel>\n";
 	print "<title>$project</title>\n".
-	      "<link>" . escapeHTML("$my_url/$project/log") . "</link>\n".
+	      "<link>" . escapeHTML("$my_url?p=$project;a=summary") . "</link>\n".
 	      "<description>$project log</description>\n".
 	      "<language>en</language>\n";
 
@@ -1269,7 +1278,7 @@ sub git_opml {
 
 		my $path = escapeHTML(chop_str($proj{'path'}, 25, 5));
 		my $rss =  "$my_url?p=$proj{'path'};a=rss";
-		my $html =  "$my_url?p=$proj{'path'};a=log";
+		my $html =  "$my_url?p=$proj{'path'};a=summary";
 		print "<outline type=\"rss\" text=\"$path\" title=\"$path\" xmlUrl=\"$rss\" htmlUrl=\"$html\"/>\n";
 	}
 	print "</outline>\n".
@@ -1765,7 +1774,7 @@ sub git_history {
 				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
-			print "<td><i>$co{'age_string'}</i></td>\n" .
+			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 			      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 3)) . "</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" .
 			      escapeHTML(chop_str($co{'title'}, 50)) . "</b>") . "</td>\n" .
@@ -1855,7 +1864,7 @@ sub git_search {
 				print "<tr class=\"light\">\n";
 			}
 			$alternate ^= 1;
-			print "<td><i>$co{'age_string'}</i></td>\n" .
+			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 			      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
 			      "<td>" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" . escapeHTML(chop_str($co{'title'}, 50)) . "</b><br/>");
@@ -1908,7 +1917,7 @@ sub git_search {
 						print "<tr class=\"light\">\n";
 					}
 					$alternate ^= 1;
-					print "<td><i>$co{'age_string'}</i></td>\n" .
+					print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 					      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
 					      "<td>" .
 					      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$co{'id'}", -class => "list"}, "<b>" .
@@ -1991,7 +2000,7 @@ sub git_shortlog {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td><i>$co{'age_string'}</i></td>\n" .
+		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 		      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" .
 		      escapeHTML($co{'title_short'}) . "</b>") . "</td>\n" .
