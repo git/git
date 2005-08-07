@@ -5,39 +5,79 @@
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
 #
-# This file is licensed under the GPL v2, or a later version
+# This program is licensed under the GPL v2, or a later version
 
 use strict;
 use warnings;
 use CGI qw(:standard :escapeHTML);
 use CGI::Carp qw(fatalsToBrowser);
+use Fcntl ':mode';
 
 my $cgi = new CGI;
-
-# begin config
-my $projectroot =	"/pub/scm";
-$projectroot =	"/home/kay/public_html/pub/scm";
-my $home_link =		"/git";
-$home_link =		"/~kay/git";
-my $gitbin =		"/usr/bin";
-my $gittmp =		"/tmp/gitweb";
-my $logo_link =		"/pub/software/scm/cogito";
-$logo_link =		"/~kay/pub/software/scm/cogito";
-# end config
-
-my $version =		"089";
+my $version =		"107";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
 
+# absolute fs-path which will be prepended to the project path
+my $projectroot =	"/pub/scm";
+
+# location of the git-core binaries
+my $gitbin =		"/usr/bin";
+
+# location for temporary files needed for diffs
+my $gittmp =		"/tmp/gitweb";
+
+# target of the home link on top of all pages
+my $home_link =		$my_uri;
+$home_link =		"/git";
+
+# handler to return the list of projects
+sub get_projects_list {
+	my @list;
+
+	# search in directory
+#	my $dir = $projectroot;
+#	opendir my $dh, $dir || return undef;
+#	while (my $dir = readdir($dh)) {
+#		if (-e "$projectroot/$dir/HEAD") {
+#			push @list, $dir;
+#		}
+#	}
+#	closedir($dh);
+
+	# read from file
+	my $file = "index/index.txt";
+	open my $fd , $file || return undef;
+	while (my $line = <$fd>) {
+		chomp $line;
+		if (-e "$projectroot/$line/HEAD") {
+			push @list, $line;
+		}
+	}
+	close $fd;
+
+	@list = sort @list;
+	return \@list;
+}
+
+# input validation
 my $project = $cgi->param('p');
-if (defined($project)) {
-	if ($project =~ /(^|\/)(|\.|\.\.)($|\/)/) {
-		$project = "";
-		die_error("", "Invalid project parameter.");
+if (defined $project) {
+	if ($project =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
+		undef $project;
+		die_error("", "Non-canonical project parameter.");
+	}
+	if ($project =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~]/) {
+		undef $project;
+		die_error("", "Invalid character in project parameter.");
 	}
 	if (!(-d "$projectroot/$project")) {
-		$project = "";
+		undef $project;
+		die_error("", "No such directory.");
+	}
+	if (!(-e "$projectroot/$project/HEAD")) {
+		undef $project;
 		die_error("", "No such project.");
 	}
 	$rss_link = "<link rel=\"alternate\" title=\"$project log\" href=\"$my_uri?p=$project;a=rss\" type=\"application/rss+xml\"/>";
@@ -45,40 +85,57 @@ if (defined($project)) {
 }
 
 my $file_name = $cgi->param('f');
-if (defined($file_name) && $file_name =~ /(^|\/)(|\.|\.\.)($|\/)/) {
-	$file_name = "";
-	die_error("", "Invalid file parameter.");
+if (defined $file_name) {
+	if ($file_name =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
+		undef $file_name;
+		die_error("", "Non-canonical file parameter.");
+	}
+	if ($file_name =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~]/) {
+		undef $file_name;
+		die_error("", "Invalid character in file parameter.");
+	}
 }
 
 my $action = $cgi->param('a');
-if (defined($action) && $action =~ m/[^0-9a-zA-Z\.\-]+$/) {
-	$action = "";
-	die_error("", "Invalid action parameter.");
+if (defined $action) {
+	if ($action =~ m/[^0-9a-zA-Z\.\-]+/) {
+		undef $action;
+		die_error("", "Invalid action parameter.");
+	}
+} else {
+	$action = "log";
 }
 
 my $hash = $cgi->param('h');
-if (defined($hash) && !($hash =~ m/^[0-9a-fA-F]{40}$/)) {
-	$hash = "";
+if (defined $hash && !($hash =~ m/^[0-9a-fA-F]{40}$/)) {
+	undef $hash;
 	die_error("", "Invalid hash parameter.");
 }
 
 my $hash_parent = $cgi->param('hp');
-if (defined($hash_parent) && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
-	$hash_parent = "";
+if (defined $hash_parent && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
+	undef $hash_parent;
 	die_error("", "Invalid parent hash parameter.");
 }
 
 my $time_back = $cgi->param('t');
-if (defined($time_back) && !($time_back =~ m/^[0-9]+$/)) {
-	$time_back = "";
-	die_error("", "Invalid time parameter.");
+if (defined $time_back) {
+	if ($time_back =~ m/^[^0-9]+$/) {
+		undef $time_back;
+		die_error("", "Invalid time parameter.");
+	}
 }
-
-mkdir($gittmp, 0700);
 
 sub git_header_html {
 	my $status = shift || "200 OK";
 
+	my $title = "git";
+	if (defined $project) {
+		$title .= " - $project";
+		if (defined $action) {
+			$title .= "/$action";
+		}
+	}
 	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status);
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
@@ -86,7 +143,7 @@ sub git_header_html {
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
 <!-- git web interface v$version, (C) 2005, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke <ch\@gierke.de> -->
 <head>
-<title>git - $project</title>
+<title>$title</title>
 $rss_link
 <style type="text/css">
 body { font-family: sans-serif; font-size: 12px; margin:0px; }
@@ -94,47 +151,47 @@ a { color:#0000cc; }
 a:hover { color:#880000; }
 a:visited { color:#880000; }
 a:active { color:#880000; }
-div.page_header\{
-	margin:15px 25px 0px; height:25px; padding:8px;
+div.page_header {
+	margin:15px 15px 0px; height:25px; padding:8px;
 	font-size:18px; font-weight:bold; background-color:#d9d8d1;
 }
 div.page_header a:visited { color:#0000cc; }
 div.page_header a:hover { color:#880000; }
-div.page_nav { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
+div.page_nav { margin:0px 15px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
 div.page_nav a:visited { color:#0000cc; }
-div.page_footer { margin:0px 25px 15px; height:17px; padding:4px; padding-left:8px; background-color: #d9d8d1; }
+div.page_footer { margin:0px 15px 15px; height:17px; padding:4px; padding-left:8px; background-color: #d9d8d1; }
 div.page_footer_text { float:left; color:#555555; font-style:italic; }
-div.page_body { margin:0px 25px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
+div.page_body { margin:0px 15px; padding:8px; border:solid #d9d8d1; border-width:0px 1px; }
 div.title, a.title {
-	display:block; margin:0px 25px; padding:6px 8px;
+	display:block; margin:0px 15px; padding:6px 8px;
 	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
 }
 a.title:hover { background-color: #d9d8d1; }
-div.title_text { margin:0px 25px; padding:6px 8px; border: solid #d9d8d1; border-width:0px 1px 1px; }
-div.log_body { margin:0px 25px; padding:8px; padding-left:150px; border:solid #d9d8d1; border-width:0px 1px; }
+div.title_text { margin:0px 15px; padding:6px 8px; border: solid #d9d8d1; border-width:0px 1px 1px; }
+div.log_body { margin:0px 15px; padding:8px; padding-left:150px; border:solid #d9d8d1; border-width:0px 1px; }
 span.log_age { position:relative; float:left; width:142px; font-style:italic; }
 div.log_link { font-size:10px; font-family:sans-serif; font-style:normal; position:relative; float:left; width:142px; }
 div.list {
-	display:block; margin:0px 25px; padding:4px 6px 2px; border:solid #d9d8d1; border-width:1px 1px 0px;
+	display:block; margin:0px 15px; padding:4px 6px 2px; border:solid #d9d8d1; border-width:1px 1px 0px;
 	font-weight:bold;
 }
 div.list_head {
-	display:block; margin:0px 25px; padding:4px 6px 4px; border:solid #d9d8d1; border-width:1px 1px 0px;
+	display:block; margin:0px 15px; padding:4px 6px 4px; border:solid #d9d8d1; border-width:1px 1px 0px;
 	font-style:italic;
 }
 div.list a { text-decoration:none; color:#000000; }
 div.list a:hover { color:#880000; }
 div.link {
-	margin:0px 25px; padding:0px 6px 8px; border:solid #d9d8d1; border-width:0px 1px;
+	margin:0px 15px; padding:0px 6px 8px; border:solid #d9d8d1; border-width:0px 1px;
 	font-family:sans-serif; font-size:10px;
 }
-td.key { padding-right:10px;  }
-span.diff_info { color:#000099; background-color:#eeeeee; font-style:italic; }
-a.rss_logo { float:right; border:1px solid;
-	line-height:15px;
+td { padding:5px 15px 0px 0px; font-size:12px; }
+th { padding-right:10px; font-size:12px; text-align:left; }
+span.diff_info { color:#000099; background-color:#edece6; font-style:italic; }
+a.rss_logo { float:right; border:1px solid; line-height:15px;
 	border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
 	color:#ffffff; background-color:#ff6600;
-	font-weight:bold; font-family:sans-serif; text-align:center;
+	font-weight:bold; font-family:sans-serif; text-align:center; vertical-align:middle;
 	font-size:10px; display:block; text-decoration:none;
 }
 a.rss_logo:hover { background-color:#ee5500; }
@@ -143,26 +200,24 @@ a.rss_logo:hover { background-color:#ee5500; }
 <body>
 EOF
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"$logo_link\">" .
+	      "<a href=\"http://kernel.org/pub/software/scm/cogito\">" .
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
-	print $cgi->a({-href => "$my_uri"}, "projects") . " / ";
-	if ($project ne "") {
+	print $cgi->a({-href => $home_link}, "projects") . " / ";
+	if (defined $project) {
 		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, escapeHTML($project));
-	}
-	if ($action ne "") {
-		print " / $action";
+		if (defined $action) {
+			print " / $action";
+		}
 	}
 	print "</div>\n";
 }
 
 sub git_footer_html {
 	print "<div class=\"page_footer\">\n";
-	if ($project ne "") {
-		if (-e "$projectroot/$project/description") {
-			open(my $fd, "$projectroot/$project/description");
-			my $descr = <$fd>;
+	if (defined $project) {
+		my $descr = git_description($project);
+		if (defined $descr) {
 			print "<div class=\"page_footer_text\">" . escapeHTML($descr) . "</div>\n";
-			close $fd;
 		}
 		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "rss_logo"}, "RSS") . "\n";
 	}
@@ -186,11 +241,24 @@ sub die_error {
 
 sub git_head {
 	my $path = shift;
-	open(my $fd, "$projectroot/$path/HEAD") || die_error("", "Invalid project directory.");
+	open my $fd, "$projectroot/$path/HEAD" || return undef;
 	my $head = <$fd>;
 	close $fd;
 	chomp $head;
-	return $head;
+	if ($head =~ m/^[0-9a-fA-F]{40}$/) {
+		return $head;
+	} else {
+		return undef;
+	}
+}
+
+sub git_description {
+	my $path = shift;
+	open my $fd, "$projectroot/$path/description" || return undef;
+	my $descr = <$fd>;
+	close $fd;
+	chomp $descr;
+	return $descr;
 }
 
 sub git_commit {
@@ -198,10 +266,10 @@ sub git_commit {
 	my %co;
 	my @parents;
 
-	open my $fd, "-|", "$gitbin/git-cat-file commit $commit";
+	open my $fd, "-|", "$gitbin/git-cat-file commit $commit" || return;
 	while (my $line = <$fd>) {
-		chomp($line);
-		last if $line eq "";
+		last if $line eq "\n";
+		chomp $line;
 		if ($line =~ m/^tree (.*)$/) {
 			$co{'tree'} = $1;
 		} elsif ($line =~ m/^parent (.*)$/) {
@@ -220,15 +288,15 @@ sub git_commit {
 			$co{'committer_name'} =~ s/ <.*//;
 		}
 	}
-	if (!defined($co{'tree'})) {
-		return;
-	}
 	$co{'parents'} = \@parents;
 	$co{'parent'} = $parents[0];
 	my (@comment) = map { chomp; $_ } <$fd>;
 	$co{'comment'} = \@comment;
 	$co{'title'} = $comment[0];
-	close $fd;
+	close $fd || return;
+	if (!defined $co{'tree'}) {
+		return undef
+	};
 
 	my $age = time - $co{'committer_epoch'};
 	$co{'age'} = $age;
@@ -250,6 +318,11 @@ sub git_commit {
 	} elsif ($age > 60*2) {
 		$co{'age_string'} = int $age/60;
 		$co{'age_string'} .= " minutes ago";
+	} elsif ($age > 2) {
+		$co{'age_string'} = int $age;
+		$co{'age_string'} .= " seconds ago";
+	} else {
+		$co{'age_string'} .= " right now";
 	}
 	return %co;
 }
@@ -265,9 +338,9 @@ sub git_diff_html {
 	my $pid = $$;
 
 	# create tmp from-file
-	if ($from ne "") {
+	if (defined $from) {
 		$from_tmp = "$gittmp/gitweb_" . $$ . "_from";
-		open(my $fd2, "> $from_tmp");
+		open my $fd2, "> $from_tmp";
 		open my $fd, "-|", "$gitbin/git-cat-file blob $from";
 		my @file = <$fd>;
 		print $fd2 @file;
@@ -276,7 +349,7 @@ sub git_diff_html {
 	}
 
 	# create tmp to-file
-	if ($to ne "") {
+	if (defined $to) {
 		$to_tmp = "$gittmp/gitweb_" . $$ . "_to";
 		open my $fd2, "> $to_tmp";
 		open my $fd, "-|", "$gitbin/git-cat-file blob $to";
@@ -300,10 +373,10 @@ sub git_diff_html {
 	}
 	close $fd;
 
-	if ($from ne "") {
+	if (defined $from) {
 		unlink($from_tmp);
 	}
-	if ($to ne "") {
+	if (defined $to) {
 		unlink($to_tmp);
 	}
 }
@@ -311,35 +384,31 @@ sub git_diff_html {
 sub mode_str {
 	my $mode = oct shift;
 
-	my $modestr;
-	if (($mode & 00170000) == 0040000 ) {
-		$modestr = 'drwxr-xr-x';
-	} elsif (($mode & 00170000) == 0120000 ) {
-		$modestr = 'lrwxrwxrwx';
-	} elsif (($mode & 00170000) == 0100000 ) {
+	if (S_ISDIR($mode & S_IFMT)) {
+		return 'drwxr-xr-x';
+	} elsif (S_ISLNK($mode)) {
+		return 'lrwxrwxrwx';
+	} elsif (S_ISREG($mode)) {
 		# git cares only about the executable bit
-		if ($mode & 0100) {
-			$modestr = '-rwxr-xr-x';
+		if ($mode & S_IXUSR) {
+			return '-rwxr-xr-x';
 		} else {
-			$modestr = '-rw-r--r--';
+			return '-rw-r--r--';
 		};
+	} else {
+		return '----------';
 	}
-	return $modestr;
 }
 
 sub file_type {
 	my $mode = oct shift;
 
-	if (($mode & 0170000) == 0040000 ) {
+	if (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
-	} elsif (($mode & 0170000) == 0120000 ) {
+	} elsif (S_ISLNK($mode)) {
 		return "symlink";
-	} elsif (($mode & 0170000) == 0100000 ) {
-		if ($mode & 0100) {
-			return "executable file";
-		} else {
-			return "file";
-		}
+	} elsif (S_ISREG($mode)) {
+		return "file";
 	} else {
 		return "unknown";
 	}
@@ -370,60 +439,102 @@ sub date_str {
 	return %date;
 }
 
-if (defined($action) && $action eq "git-logo.png") {
+# git-logo (cached in browser for one day)
+if (defined $action && $action eq "git-logo.png") {
 	print $cgi->header(-type => 'image/png', -expires => '+1d');
-	print	"\211\120\116\107\015\012\032\012\000\000\000\015\111\110\104\122".
-		"\000\000\000\110\000\000\000\033\004\003\000\000\000\055\331\324".
-		"\055\000\000\000\030\120\114\124\105\377\377\377\140\140\135\260".
-		"\257\252\000\200\000\316\315\307\300\000\000\350\350\346\367\367".
-		"\366\225\014\247\107\000\000\000\163\111\104\101\124\050\317\143".
-		"\110\147\040\004\112\134\030\012\010\052\142\123\141\040\002\010".
-		"\015\151\105\254\241\241\001\060\014\223\140\066\046\122\221\261".
-		"\001\021\326\341\125\144\154\154\314\154\154\014\242\014\160\052".
-		"\142\006\052\301\142\035\263\001\002\123\244\010\350\000\003\030".
-		"\046\126\021\324\341\040\227\033\340\264\016\065\044\161\051\202".
-		"\231\060\270\223\012\021\271\105\210\301\215\240\242\104\041\006".
-		"\047\101\202\100\205\301\105\211\040\160\001\000\244\075\041\305".
-		"\022\034\232\376\000\000\000\000\111\105\116\104\256\102\140\202";
+	# cat git-logo.png | hexdump -e '16/1 " %02x"  "\n"' | sed 's/ /\\x/g'
+	print	"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" .
+		"\x00\x00\x00\x48\x00\x00\x00\x1b\x04\x03\x00\x00\x00\x2d\xd9\xd4" .
+		"\x2d\x00\x00\x00\x18\x50\x4c\x54\x45\xff\xff\xff\x60\x60\x5d\xb0" .
+		"\xaf\xaa\x00\x80\x00\xce\xcd\xc7\xc0\x00\x00\xe8\xe8\xe6\xf7\xf7" .
+		"\xf6\x95\x0c\xa7\x47\x00\x00\x00\x73\x49\x44\x41\x54\x28\xcf\x63" .
+		"\x48\x67\x20\x04\x4a\x5c\x18\x0a\x08\x2a\x62\x53\x61\x20\x02\x08" .
+		"\x0d\x69\x45\xac\xa1\xa1\x01\x30\x0c\x93\x60\x36\x26\x52\x91\xb1" .
+		"\x01\x11\xd6\xe1\x55\x64\x6c\x6c\xcc\x6c\x6c\x0c\xa2\x0c\x70\x2a" .
+		"\x62\x06\x2a\xc1\x62\x1d\xb3\x01\x02\x53\xa4\x08\xe8\x00\x03\x18" .
+		"\x26\x56\x11\xd4\xe1\x20\x97\x1b\xe0\xb4\x0e\x35\x24\x71\x29\x82" .
+		"\x99\x30\xb8\x93\x0a\x11\xb9\x45\x88\xc1\x8d\xa0\xa2\x44\x21\x06" .
+		"\x27\x41\x82\x40\x85\xc1\x45\x89\x20\x70\x01\x00\xa4\x3d\x21\xc5" .
+		"\x12\x1c\x9a\xfe\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82";
 	exit;
 }
 
-if (!defined($project)) {
-	print $cgi->redirect($home_link);
+# project browser
+if (!defined $project) {
+	my $projects = get_projects_list();
+	git_header_html();
+	print "<div class=\"page_body\">\n";
+	print "<table cellspacing=\"0\">\n";
+	print "<tr>\n" .
+	      "<th>Project</th>\n" .
+	      "<th>Description</th>\n" .
+	      "<th>Owner</th>\n" .
+	      "<th>last change</th>\n" .
+	      "</tr>\n" .
+	      "<br/>";
+	foreach my $proj (@$projects) {
+		my $head = git_head($proj);
+		if (!defined $head) {
+			next;
+		}
+		$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$proj/objects";
+		my %co = git_commit($head);
+		if (!%co) {
+			next;
+		}
+		my $descr = git_description($proj) || "";
+		my $owner = "";
+		my ($dev, $ino, $mode, $nlink, $st_uid, $st_gid, $rdev, $size) = stat("$projectroot/$proj");
+		my ($name, $passwd, $uid, $gid, $quota, $comment, $gcos, $dir, $shell) = getpwuid($st_uid);
+		if (defined $gcos) {
+			$owner = $gcos;
+			$owner =~ s/[,;].*$//;
+		}
+		print "<tr>\n" .
+		      "<td>" . $cgi->a({-href => "$my_uri?p=$proj;a=log"}, escapeHTML($proj)) . "</td>\n" .
+		      "<td>$descr</td>\n" .
+		      "<td><i>$owner</i></td>\n";
+		if ($co{'age'} < 60*60*2) {
+			print "<td><span style =\"color: #009900;\"><b><i>" . $co{'age_string'} . "</i></b></span></td>\n";
+		} elsif ($co{'age'} < 60*60*24*2) {
+			print "<td><span style =\"color: #009900;\"><i>" . $co{'age_string'} . "</i></span></td>\n";
+		} else {
+			print "<td><i>" . $co{'age_string'} . "</i></td>\n";
+		}
+		print "</tr>\n";
+		undef %co;
+	}
+	print "</table>\n" .
+	      "<br/>\n" .
+	      "</div>\n";
+	git_footer_html();
 	exit;
 }
 
-if (!defined($action)) {
-	$action = "log";
-}
-
-if (!defined($time_back)) {
-	$time_back = 1;
-}
-
+# action dispatch
 if ($action eq "blob") {
+	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" || die_error("", "Open failed.");
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
 	print "<br/><br/></div>\n";
 	print "<div class=\"title\">$hash</div>\n";
 	print "<div class=\"page_body\"><pre>\n";
-	open(my $fd, "-|", "$gitbin/git-cat-file blob $hash");
 	my $nr;
 	while (my $line = <$fd>) {
 		$nr++;
 		printf "<span style =\"color: #999999;\">%4i\t</span>%s", $nr, escapeHTML($line);;
 	}
-	close $fd;
-	print "<br/></pre>\n";
+	close $fd || print "Reading blob failed.\n";
+	print "</pre><br/>\n";
 	print "</div>";
 	git_footer_html();
 } elsif ($action eq "tree") {
-	if ($hash eq "") {
+	if (!defined $hash) {
 		$hash = git_head($project);
 	}
-	open my $fd, "-|", "$gitbin/git-ls-tree $hash";
+	open my $fd, "-|", "$gitbin/git-ls-tree $hash" || die_error("", "Open failed.");
 	my (@entries) = map { chomp; $_ } <$fd>;
-	close $fd;
+	close $fd || die_error("", "Reading tree failed.");
 
 	git_header_html();
 	my %co = git_commit($hash);
@@ -453,7 +564,7 @@ if ($action eq "blob") {
 		my $t_name = $4;
 		if ($t_type eq "blob") {
 			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash"}, $t_name);
-			if (((oct $t_mode) & 0170000) == 0120000) {
+			if (S_ISLNK(oct $t_mode)) {
 				open my $fd, "-|", "$gitbin/git-cat-file blob $t_hash";
 				my $target = <$fd>;
 				close $fd;
@@ -468,9 +579,9 @@ if ($action eq "blob") {
 	print "<br/></div>";
 	git_footer_html();
 } elsif ($action eq "rss") {
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=20 " . git_head($project);
+	open my $fd, "-|", "$gitbin/git-rev-list --max-count=20 " . git_head($project) || die_error("", "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
-	close $fd;
+	close $fd || die_error("", "Reading rev-list failed.");
 
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
@@ -494,22 +605,28 @@ if ($action eq "blob") {
 		}
 		print "\t</description>\n" .
 		      "</item>\n";
+		undef %ad;
+		undef %co;
 	}
 	print "</channel></rss>";
 } elsif ($action eq "log") {
-	my $date = 0;
-	if ($time_back > 0) {
-		$date = time - $time_back*24*60*60;
-	}
 	my $head = git_head($project);
-	open my $fd, "-|", "$gitbin/git-rev-list --max-age=$date $head";
+	my $limit_option = "";
+	if (!defined $time_back) {
+		$limit_option = "--max-count=10";
+	} elsif ($time_back > 0) {
+		my $date = time - $time_back*24*60*60;
+		$limit_option = "--max-age=$date";
+	}
+	open my $fd, "-|", "$gitbin/git-rev-list $limit_option $head" || die_error("", "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
-	close $fd;
+	close $fd || die_error("", "Reading rev-list failed.");
 
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
 	print "view  ";
-	print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last day") . " | " .
+	print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last 10") . " | " .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=1"}, "day") . " | " .
 	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | " .
 	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=31"}, "month") . " | " .
 	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=365"}, "year") . " | " .
@@ -517,13 +634,14 @@ if ($action eq "blob") {
 	print "<br/><br/>\n" .
 	      "</div>\n";
 
-	if (!(@revlist)) {
+	if (!@revlist) {
 		my %co = git_commit($head);
 		print "<div class=\"page_body\"> Last change " . $co{'age_string'} . ".<br/><br/></div>\n";
 	}
 
 	foreach my $commit (@revlist) {
 		my %co = git_commit($commit);
+		next if !%co;
 		my %ad = date_str($co{'author_epoch'});
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "title"}, 
@@ -544,6 +662,8 @@ if ($action eq "blob") {
 		}
 		print "<br/>\n" .
 		      "</div>\n";
+		undef %ad;
+		undef %co;
 	}
 	git_footer_html();
 } elsif ($action eq "commit") {
@@ -555,15 +675,15 @@ if ($action eq "blob") {
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
 
 	my @difftree;
-	if (defined($co{'parent'})) {
-		open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
+	if (defined $co{'parent'}) {
+		open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash" || die_error("", "Open failed.");
 		@difftree = map { chomp; $_ } <$fd>;
-		close $fd;
+		close $fd || die_error("", "Reading diff-tree failed.");
 	} else {
 		# fake git-diff-tree output for initial revision
-		open my $fd, "-|", "$gitbin/git-ls-tree -r $hash";
+		open my $fd, "-|", "$gitbin/git-ls-tree -r $hash" || die_error("", "Open failed.");
 		@difftree = map { chomp;  "+" . $_ } <$fd>;
-		close $fd;
+		close $fd || die_error("", "Reading ls-tree failed.");
 	}
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
@@ -571,32 +691,38 @@ if ($action eq "blob") {
 	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | \n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
-	print "<div>\n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
-	      "</div>\n";
+	if (defined $co{'parent'}) {
+		print "<div>\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
+		      "</div>\n";
+	} else {
+		print "<div>\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
+		      "</div>\n";
+	}
 	print "<div class=\"title_text\">\n" .
-	      "<table cellspacing=\"0\">";
-	print "<tr><td class=\"key\">author</td><td>" . escapeHTML($co{'author'}) . "</td><tr><td></td><td>" .
-	      " " . $ad{'rfc2822'};
+	      "<table cellspacing=\"0\">\n";
+	print "<tr><td>author</td><td>" . escapeHTML($co{'author'}) . "</td></tr>\n".
+	      "<tr><td></td><td> " . $ad{'rfc2822'};
 	if ($ad{'hour_local'} < 6) {
-		print "<span style=\"color: #cc0000;\">";
+		printf(" (<span style=\"color: #cc0000;\">%02d:%02d</span> %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
+	} else {
+		printf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
 	}
-	printf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
-	if ($ad{'hour_local'} < 6 ) {
-		print "</span>";
-	}
-	print "</i>\n" .
-	      "</td></tr>\n";
-	print "<tr><td class=\"key\">committer</td><td>" . escapeHTML($co{'committer'}) . "</td><tr><td></td><td>" .
-	      " " . $cd{'rfc2822'} . sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</i>\n" .
-	      "</td></tr>\n";
-	print "<tr><td class=\"key\">commit</td><td style=\"font-family: monospace;\">$hash</td></tr>\n";
-	print "<tr><td class=\"key\">tree</td><td style=\"font-family: monospace;\">" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, $co{'tree'}) . "</td></tr>\n";
+	print "</td></tr>\n";
+	print "<tr><td>committer</td><td>" . escapeHTML($co{'committer'}) . "</td></tr>\n";
+	print "<tr><td></td><td> " . $cd{'rfc2822'} .
+	      sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</td></tr>\n";
+	print "<tr><td>commit</td><td style=\"font-family: monospace;\">$hash</td></tr>\n";
+	print "<tr><td>tree</td><td style=\"font-family: monospace;\">" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, $co{'tree'}) . "</td></tr>\n";
 	my $parents  = $co{'parents'};
 	foreach my $par (@$parents) {
-		print "<tr><td class=\"key\">parent</td><td style=\"font-family: monospace;\">" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "</td></tr>\n";
+		print "<tr><td>parent</td><td style=\"font-family: monospace;\">" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "</td></tr>\n";
 	}
-	print "</table></div>\n";
+	print "</table>". 
+	      "</div>\n";
 	print "<div class=\"page_body\">\n";
 	my $comment = $co{'comment'};
 	foreach my $line (@$comment) {
@@ -621,12 +747,15 @@ if ($action eq "blob") {
 		my $type = $3;
 		my $id = $4;
 		my $file = $5;
-		my $mode_chng = "";
 		if ($type eq "blob") {
 			if ($op eq "+") {
+				my $mode_chng = "";
+				if (S_ISREG(oct $mode)) {
+					$mode_chng = sprintf(" with mode: %04o", (oct $mode) & 0777);
+				}
 				print "<div class=\"list\">\n" .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"},
-				      escapeHTML($file) . " <span style=\"color: #008000;\">[new " . file_type($mode) . "]</span>") . "\n" .
+				      escapeHTML($file) . " <span style=\"color: #008000;\">[new " . file_type($mode) . $mode_chng . "]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -650,8 +779,19 @@ if ($action eq "blob") {
 				my $from_mode = $1;
 				my $to_mode = $2;
 				my $mode_chnge = "";
-				if (((oct $from_mode) & 0170100) != ((oct $to_mode) & 0170100)) {
-					$mode_chnge = " <span style=\"color: #888888;\">[changed from " . file_type($from_mode) . " to " . file_type($to_mode) . "]</span>\n";
+				if ($from_mode != $to_mode) {
+					$mode_chnge = " <span style=\"color: #888888;\">[changed";
+					if (((oct $from_mode) & S_IFMT) != ((oct $to_mode) & S_IFMT)) {
+						$mode_chnge .= " from " . file_type($from_mode) . " to " . file_type($to_mode);
+					}
+					if (((oct $from_mode) & 0777) != ((oct $to_mode) & 0777)) {
+						if (S_ISREG($from_mode) && S_ISREG($to_mode)) {
+							$mode_chnge .= sprintf(" mode: %04o->%04o", (oct $from_mode) & 0777, (oct $to_mode) & 0777);
+						} elsif (S_ISREG($to_mode)) {
+							$mode_chnge .= sprintf(" mode: %04o", (oct $to_mode) & 0777);
+						}
+					}
+					$mode_chnge .= "]</span>\n";
 				}
 				print "<div class=\"list\">\n";
 				if ($to_id ne $from_id) {
@@ -676,6 +816,7 @@ if ($action eq "blob") {
 	}
 	git_footer_html();
 } elsif ($action eq "blobdiff") {
+	mkdir($gittmp, 0700);
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
 	print "<br/><br/></div>\n";
@@ -692,13 +833,14 @@ if ($action eq "blob") {
 	      "<br/></div>";
 	git_footer_html();
 } elsif ($action eq "commitdiff") {
+	mkdir($gittmp, 0700);
 	my %co = git_commit($hash);
 	if (!%co) {
 		die_error("", "Unknown commit object.");
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
+	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash" || die_error("", "Open failed.");
 	my (@difftree) = map { chomp; $_ } <$fd>;
-	close $fd;
+	close $fd || die_error("", "Reading diff-tree failed.");
 
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
@@ -721,15 +863,15 @@ if ($action eq "blob") {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "<span class=\"diff_info\">new " .  file_type($mode) . ":" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $id) .
+				print "<span class=\"diff_info\">" .  file_type($mode) . ":" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $id) . "(new)" .
 				      "</span>\n";
-				git_diff_html("", "/dev/null", $id, "b/$file");
+				git_diff_html(undef, "/dev/null", $id, "b/$file");
 			} elsif ($op eq "-") {
-				print "<span class=\"diff_info\">deleted " . file_type($mode) . ":" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $id) .
+				print "<span class=\"diff_info\">" . file_type($mode) . ":" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, $id) . "(deleted)" .
 				      "</span>\n";
-				git_diff_html($id, "a/$file", "", "/dev/null");
+				git_diff_html($id, "a/$file", undef, "/dev/null");
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $from_id = $1;
@@ -748,55 +890,52 @@ if ($action eq "blob") {
 			}
 		}
 	}
-	print "<br/></pre>\n";
+	print "</pre><br/>\n";
 	print "</div>";
 	git_footer_html();
 } elsif ($action eq "history") {
-	if (!(defined($hash))) {
+	if (!defined $hash) {
 		$hash = git_head($project);
 	}
-	open my $fd, "-|", "$gitbin/git-rev-list $hash";
-	my (@revlist) = map { chomp; $_ } <$fd>;
-	close $fd;
-
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
 	print "<br/><br/></div>\n";
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($file_name)) . "\n" .
 	      "</div>\n";
-	foreach my $rev (@revlist) {
-		my %co = git_commit($rev);
-		my $parents  = $co{'parents'};
-		my $found = 0;
-		foreach my $parent (@$parents) {
-			open $fd, "-|", "$gitbin/git-diff-tree -r $parent $rev $file_name";
-			my (@difftree) = map { chomp; $_ } <$fd>;
-			close $fd;
-
-			foreach my $line (@difftree) {
-				$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
-				my $file = $5;
-				if ($file eq $file_name) {
-					$found = 1;
-					last;
-				}
-			}
+	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin $file_name";
+	my $commit;
+	while (my $line = <$fd>) {
+		if ($line =~ m/^([0-9a-fA-F]{40}) /){
+			$commit = $1;
+			next;
 		}
-		if ($found) {
+		if ($line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/ && (defined $commit)) {
+			my $type = $3;
+			my $file = $5;
+			if ($file ne $file_name || $type ne "blob") {
+				next;
+			}
+			my %co = git_commit($commit);
+			if (!%co) {
+				next;
+			}
 			print "<div class=\"list\">\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"},
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"},
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
 			      "</div>\n";
 			print "<div class=\"link\">\n" .
 			      "view " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, "commit") . " | " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$rev"}, "tree") . "<br/><br/>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
+			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$commit"}, "tree") . "<br/><br/>\n" .
 			      "</div>\n";
+			undef %co;
+			undef $commit;
 		}
 	}
+	close $fd;
 	git_footer_html();
 } else {
-	$action = "";
+	undef $action;
 	die_error("", "Unknown action.");
 }
