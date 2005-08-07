@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 005
+# Version 006
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -19,13 +19,38 @@ my $gitbin = "/home/kay/bin/git";
 my $gitroot = "/home/kay/public_html";
 my $gittmp = "/tmp";
 my $myself = $cgi->url(-relative => 1);
+my $url_path = $cgi->url(-path => 1);
 
 my $project = $cgi->param("project") || "";
 my $action = $cgi->param("action") || "";
 my $hash = $cgi->param("hash") || "";
 my $hash_parent = $cgi->param("hash_parent") || "";
 my $view_back = $cgi->param("view_back") || 60*60*24;
+
+if ($url_path =~ m#/([^/]+)/commit/([0-9a-fA-F]+)$#) {
+	$project = $1;
+	$action = "commit";
+	$hash = $2;
+} elsif ($url_path =~ m#/([^/]+)/treediff/([0-9a-fA-F]+)$#) {
+	$project = $1;
+	$action = "treediff";
+	$hash = $2;
+} elsif ($url_path =~ m#/([^/]+)/diff/([0-9a-fA-F]+)/([0-9a-fA-F]+)$#) {
+	$project = $1;
+	$action = "treediff";
+	$hash = $2;
+	$hash_parent = $3;
+} elsif ($url_path =~ m#/([^/]+)/log/([0-9]+)$#) {
+	$project = $1;
+	$action = "log";
+	$view_back = $2;
+} elsif ($url_path =~ m#/([^/]+)/log#) {
+	$project = $1;
+	$action = "log";
+	$view_back = 60*60*24;
+}
 my $projectroot = "$gitroot/$project";
+
 $hash =~ s/[^0-9a-fA-F]//g;
 $hash_parent =~ s/[^0-9a-fA-F]//g;
 $project =~ s/[^0-9a-zA-Z\-\._]//g;
@@ -271,8 +296,6 @@ if ($action eq "blob") {
 				$author = $1;
 				$author_time = $2;
 				$author_timezone = $3;
-				$author =~ m/^(.*) </;
-				$author_name = $1;
 			}
 		}
 		$shortlog = <$fd>;
