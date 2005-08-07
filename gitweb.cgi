@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"160";
+my $version =		"163";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -256,9 +256,10 @@ sub die_error {
 
 	git_header_html($status);
 	print "<div class=\"page_body\">\n" .
-	      "<br/><br/>\n";
-	print "$status - $error\n";
-	print "<br/></div>\n";
+	      "<br/><br/>\n" .
+	      "$status - $error\n" .
+	      "<br/>\n" .
+	      "</div>\n";
 	git_footer_html();
 	exit;
 }
@@ -304,9 +305,9 @@ sub git_read_tag {
 		chomp $line;
 		if ($line =~ m/^object ([0-9a-fA-F]{40})$/) {
 			$tag{'object'} = $1;
-		} elsif ($line =~ m/^type (.*)$/) {
+		} elsif ($line =~ m/^type (.+)$/) {
 			$tag{'type'} = $1;
-		} elsif ($line =~ m/^tag (.*)$/) {
+		} elsif ($line =~ m/^tag (.+)$/) {
 			$tag{'name'} = $1;
 		}
 	}
@@ -326,9 +327,9 @@ sub git_read_commit {
 	while (my $line = <$fd>) {
 		last if $line eq "\n";
 		chomp $line;
-		if ($line =~ m/^tree (.*)$/) {
+		if ($line =~ m/^tree ([0-9a-fA-F]{40})$/) {
 			$co{'tree'} = $1;
-		} elsif ($line =~ m/^parent (.*)$/) {
+		} elsif ($line =~ m/^parent ([0-9a-fA-F]{40})$/) {
 			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
@@ -554,9 +555,10 @@ sub git_project_list {
 		}
 		closedir($dh);
 	} elsif (-f $projects_list) {
-		# read from file:
-		# 'git/git.git:Linus Torvalds'
-		# 'linux/hotplug/udev.git'
+		# read from file(url-encoded):
+		# 'git%2Fgit.git Linus+Torvalds'
+		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
+		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
 		open my $fd , $projects_list || return undef;
 		while (my $line = <$fd>) {
 			chomp $line;
@@ -640,8 +642,7 @@ sub git_project_list {
 		      "</td>\n" .
 		      "</tr>\n";
 	}
-	print "</table>\n" .
-	      "<br/>\n";
+	print "</table>\n";
 	git_footer_html();
 }
 
@@ -898,7 +899,7 @@ sub git_get_hash_by_path {
 		close $fd || return undef;
 		foreach my $line (@entries) {
 			#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-			$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
+			$line =~ m/^([0-9]+)\t(.+)\t([0-9a-fA-F]{40})\t(.+)$/;
 			my $t_mode = $1;
 			my $t_type = $2;
 			my $t_hash = $3;
@@ -1006,7 +1007,7 @@ sub git_tree {
 	my $alternate = 0;
 	foreach my $line (@entries) {
 		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-		$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
+		$line =~ m/^([0-9]+)\t(.+)\t([0-9a-fA-F]{40})\t(.+)$/;
 		my $t_mode = $1;
 		my $t_type = $2;
 		my $t_hash = $3;
@@ -1030,8 +1031,10 @@ sub git_tree {
 		} elsif ($t_type eq "tree") {
 			print "<td class=\"list\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key}, $t_name) .
-			      "</td>\n" .
-			      "<td></td>\n";
+			      "</td>\n";
+			print "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash_base" . $file_key}, "history") .
+			      "</td>\n";
 		}
 		print "</tr>\n";
 	}
@@ -1249,7 +1252,7 @@ sub git_commit {
 		# '+100644	blob	4a83ab6cd565d21ab0385bac6643826b83c2fcd4	arch/arm/lib/bitops.h'
 		# '*100664->100644	blob	b1a8e3dd5556b61dd771d32307c6ee5d7150fa43->b1a8e3dd5556b61dd771d32307c6ee5d7150fa43	show-files.c'
 		# '*100664->100644	blob	d08e895238bac36d8220586fdc28c27e1a7a76d3->d08e895238bac36d8220586fdc28c27e1a7a76d3	update-cache.c'
-		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
+		$line =~ m/^(.)(.+)\t(.+)\t([0-9a-fA-F]{40}|[0-9a-fA-F]{40}->[0-9a-fA-F]{40})\t(.+)$/;
 		my $op = $1;
 		my $mode = $2;
 		my $type = $3;
@@ -1264,7 +1267,6 @@ sub git_commit {
 			print "<tr>\n";
 		}
 		$alternate ^= 1;
-		print "<tr$alternate>\n";
 		if ($op eq "+") {
 			my $mode_chng = "";
 			if (S_ISREG(oct $mode)) {
@@ -1414,7 +1416,7 @@ sub git_commitdiff {
 	print "<br/>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
-		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
+		$line =~ m/^(.)(.+)\t(.+)\t([0-9a-fA-F]{40}|[0-9a-fA-F]{40}->[0-9a-fA-F]{40})\t(.+)$/;
 		my $op = $1;
 		my $mode = $2;
 		my $type = $3;
@@ -1485,12 +1487,7 @@ sub git_history {
 			$commit = $1;
 			next;
 		}
-		if ($line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/ && (defined $commit)) {
-			my $type = $3;
-			my $file = $5;
-			if ($file ne $file_name || $type ne "blob") {
-				next;
-			}
+		if ($line =~ m/^(.)(.+)\t(.+)\t([0-9a-fA-F]{40}->[0-9a-fA-F]{40})\t(.+)$/ && (defined $commit)) {
 			my %co = git_read_commit($commit);
 			if (!%co) {
 				next;
@@ -1507,11 +1504,11 @@ sub git_history {
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
 			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" .  $co{'tree'} . ";hb=$commit"}, "tree") .
-			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=blob;hb=$commit;f=$file"}, "blob");
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=blob;hb=$commit;f=$file_name"}, "blob");
 			my $blob = git_get_hash_by_path($hash, $file_name);
 			my $blob_parent = git_get_hash_by_path($commit, $file_name);
 			if (defined $blob && defined $blob_parent && $blob ne $blob_parent) {
-				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file"}, "diff");
+				print " | " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file_name"}, "diff");
 			}
 			print "</td>\n" .
 			      "</tr>\n";
