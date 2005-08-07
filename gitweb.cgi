@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"078";
+my $version =		"080";
 my $projectroot =	"/pub/scm";
 my $home_link =		"/git";
 my $gitbin =		"/usr/bin";
@@ -97,28 +97,29 @@ sub git_header_html {
 		display:block; margin:0px 25px; padding:8px;
 		font-weight:bold; background-color:#d9d8d1; color:#000000;
 	}
-	a.log_title {
-		display:block; margin:0px 25px; padding:6px;
-		font-weight:bold; background-color:#d9d8d1; text-decoration:none; color:#000000;
+	a.title {
+		display:block; margin:0px 25px; padding:6px 8px;
+		font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
 	}
-	a.log_title:hover { background-color: #c9c8c1; }
-	div.log_head {
-		margin:0px 25px; padding:8px;
-		border: solid #d9d8d1; border-width:0px 1px; font-family:monospace;
-		background-color: #edece6;
+	a.title:hover { background-color: #d9d8d1; }
+	div.title2 {
+		margin:0px 25px; padding:6px 8px;
+		border: solid #d9d8d1; border-width:0px 1px 1px; 
 	}
 	div.log_body {
 		margin:0px 25px; padding:8px; padding-left:150px;
 		border:solid #d9d8d1; border-width:0px 1px;
 	}
-	span.log_age { position:relative; float:left; width:142px; }
-	div.log_link { font-size:10px; font-family:sans-serif; position:relative; float:left; width:142px; }
-	a.list {
-		display:block; margin:0px 25px; padding:4px; border:solid #d9d8d1; border-width:0px 1px;
-		font-weight:bold; background-color: #edece6; text-decoration:none; color:#000000;
+	span.log_age { position:relative; float:left; width:142px; font-style:italic; }
+	div.log_link { font-size:10px; font-family:sans-serif; font-style:normal; position:relative; float:left; width:142px; }
+	div.list {
+		display:block; margin:0px 25px; padding:4px 6px 0px; border:solid #d9d8d1; border-width:1px 1px 0px;
+		font-weight:bold; 
 	}
-	a.list:hover { background-color: #d9d8d1; }
-	div.link { margin:0px 25px; padding:4px 8px; border:solid #d9d8d1; border-width:0px 1px; font-family:sans-serif; font-size:10px; }
+	div.list a { text-decoration:none; color:#000000; }
+	div.list a:hover { color:#880000; }
+	div.link { margin:0px 25px; padding:0px 6px; border:solid #d9d8d1; border-width:0px 1px; font-family:sans-serif; font-size:10px; }
+	td.key { padding-right:10px;  }
 	a.xml_logo { float:right; border:1px solid;
 		line-height:15px;
 		border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e; width:35px;
@@ -413,7 +414,7 @@ if ($action eq "blob") {
 		      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
 		      "<br/><br/></div>\n";
 		print "<div>\n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, escapeHTML($co{'title'})) . "\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 		      "</div>\n";
 	} else {
 		print "<div class=\"page_nav\">\n";
@@ -477,15 +478,15 @@ if ($action eq "blob") {
 				last;
 			}
 			print "<div>\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "log_title"}, 
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "title"}, 
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
 			      "</div>\n";
-			print "<div class=\"log_head\">\n" .
+			print "<div class=\"title2\">\n" .
 			      "<div class=\"log_link\">\n" .
 			      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") . "<br/>\n" .
 			      "</div>\n" .
-			      escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]<br/>\n" .
+			      "<i>" . escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]</i><br/>\n" .
 			      "</div>\n" .
 			      "<div class=\"log_body\">\n";
 			my $comment = $co{'comment'};
@@ -532,37 +533,41 @@ if ($action eq "blob") {
 	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<div>\n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash", -class => "log_title"}, escapeHTML($co{'title'})) . "\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 	      "</div>\n";
-	print "<div class=\"log_head\">\n";
-	print "author &nbsp; &nbsp; &nbsp;" . escapeHTML($co{'author'}) . "<br/>\n";
-	print "author-time " . $ad{'rfc2822'};
-	if ($ad{'hour_local'} < 6) { print "<span style=\"color: #cc0000;\">"; }
+	print "<div class=\"title2\">\n" .
+	      "<table cellspacing=\"0\">";
+	print "<tr><td class=\"key\">author</td><td>" . escapeHTML($co{'author'}) . "</td><tr><td></td><td>" .
+	      " " . $ad{'rfc2822'};
+	if ($ad{'hour_local'} < 6) {
+		print "<span style=\"color: #cc0000;\">";
+	}
 	printf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
-	if ($ad{'hour_local'} < 6 ) { print "</span>"; }
-	print "<br/>\n";
-	print "committer &nbsp; " . escapeHTML($co{'committer'}) . "<br/>\n";
-	print "commit-time " . $cd{'rfc2822'};
-	printf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'});
-	print "<br/>\n";
-	print "commit &nbsp &nbsp; &nbsp;$hash<br/>\n";
-	print "tree &nbsp; &nbsp; &nbsp; &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, $co{'tree'}) . "<br/>\n";
+	if ($ad{'hour_local'} < 6 ) {
+		print "</span>";
+	}
+	print "</i>\n" .
+	      "</td></tr>\n";
+	print "<tr><td class=\"key\">committer</td><td>" . escapeHTML($co{'committer'}) . "</td><tr><td></td><td>" .
+	      " " . $cd{'rfc2822'} . sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</i>\n" .
+	      "</td></tr>\n";
+	print "<tr><td class=\"key\">commit</td><td style=\"font-family: monospace;\">$hash</td></tr>\n";
+	print "<tr><td class=\"key\">tree</td><td style=\"font-family: monospace;\">" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, $co{'tree'}) . "</td></tr>\n";
 	my $parents  = $co{'parents'};
 	foreach my $par (@$parents) {
-		print "parent &nbsp; &nbsp &nbsp" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "<br/>\n";
+		print "<tr><td class=\"key\">parent</td><td style=\"font-family: monospace;\">" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$par"}, $par) . "</td></tr>\n";
 	}
-	print "</div>\n";
+	print "</table></div>\n";
 	print "<div class=\"page_body\">\n";
 	my $comment = $co{'comment'};
 	foreach my $line (@$comment) {
 		if ($line =~ m/(signed-off|acked)-by:/i) {
-			print "<span style=\"color: #a9a8a1\">" . escapeHTML($line) . "</span><br/>\n";
+			print "<span style=\"color: #888888\">" . escapeHTML($line) . "</span><br/>\n";
 		} else {
 			print escapeHTML($line) . "<br/>\n";
 		}
 	}
-	print "<br/><br/>\n" .
-	      "</div>\n";
+	print "</div>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
 		# '+100644	blob	4a83ab6cd565d21ab0385bac6643826b83c2fcd4	arch/arm/lib/bitops.h'
@@ -577,18 +582,18 @@ if ($action eq "blob") {
 		my $mode_chng = "";
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "<div>\n" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id", -class => "list"},
-				      escapeHTML($file) . " <span style=\"color: #33cc33;\">[new]</span>") . "\n" .
+				print "<div class=\"list\">\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"},
+				      escapeHTML($file) . " <span style=\"color: #008000;\">[new]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
 				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "file") . "<br/><br/>\n" .
 				      "</div>\n";
 			} elsif ($op eq "-") {
-				print "<div>\n" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id", -class => "list"},
-				      escapeHTML($file) .  " <span style=\"color: #cc5555;\">[removed]</span>") . "\n" .
+				print "<div class=\"list\">\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"},
+				      escapeHTML($file) .  " <span style=\"color: #c00000;\">[removed]</span>") . "\n" .
 				      "</div>";
 				print "<div class=\"link\">\n" .
 				      "view " .
@@ -604,10 +609,10 @@ if ($action eq "blob") {
 				my $to_mode = $2;
 				my $mode_chnge = "";
 				if ($from_mode != $to_mode) {
-					$mode_chnge = " <span style=\"color: #555555;\"> [chmod $mode]</span>\n";
+					$mode_chnge = " <span style=\"color: #888888;\"> [chmod $mode]</span>\n";
 				}
-				print "<div>\n" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id", -class => "list"},
+				print "<div class=\"list\">\n" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id"},
 				      escapeHTML($file) . $mode_chnge) . "\n" .
 				      "</div>\n";
 				print "<div class=\"link\">\n" .
@@ -649,7 +654,7 @@ if ($action eq "blob") {
 	      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$hash"}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<div>\n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, escapeHTML($co{'title'})) . "\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($co{'title'})) . "\n" .
 	      "</div>\n";
 	print "<div class=\"page_body\">\n" .
 	      "<pre>\n";
@@ -689,10 +694,7 @@ if ($action eq "blob") {
 	print "<div class=\"page_nav\">\n";
 	print "<br/><br/></div>\n";
 	print "<div>\n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, escapeHTML($file_name)) . "\n" .
-	      "</div>\n";
-	print "<div class=\"page_body\">\n" .
-	      "<br/>\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "title"}, escapeHTML($file_name)) . "\n" .
 	      "</div>\n";
 	foreach my $rev (@revlist) {
 		my %co = git_commit($rev);
@@ -713,8 +715,8 @@ if ($action eq "blob") {
 			}
 		}
 		if ($found) {
-			print "<div>\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev", -class => "list"},
+			print "<div class=\"list\">\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"},
 			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
 			      "</div>\n";
 			print "<div class=\"link\">\n" .
