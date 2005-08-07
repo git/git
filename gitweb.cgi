@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"229";
+my $version =		"232";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -480,11 +480,11 @@ sub git_read_commit {
 	}
 	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($co{'committer_epoch'});
 	if ($age > 60*60*24*7*2) {
-		$co{'age_string_date'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon, $mday;
+		$co{'age_string_date'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon+1, $mday;
 		$co{'age_string_age'} = $co{'age_string'};
 	} else {
 		$co{'age_string_date'} = $co{'age_string'};
-		$co{'age_string_age'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon, $mday;
+		$co{'age_string_age'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon+1, $mday;
 	}
 	return %co;
 }
@@ -1732,18 +1732,44 @@ sub git_commitdiff_plain {
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
+	# try to figure out the next tag after this commit
+	my $tagname;
+	my %taghash;
+	my $tags = git_read_refs("refs/tags");
+	foreach my $entry (@$tags) {
+		my %tag = %$entry;
+		$taghash{$tag{'id'}} = $tag{'name'};
+	}
+	open $fd, "-|", "$gitbin/git-rev-list HEAD";
+	while (my $commit = <$fd>) {
+		chomp $commit;
+		if ($taghash{$commit}) {
+			$tagname = $taghash{$commit};
+		}
+		if ($commit eq $hash) {
+			last;
+		}
+	}
+	close $fd;
+
+	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
 	my %co = git_read_commit($hash);
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
 	my $comment = $co{'comment'};
-	print "Author: $co{'author'}\n" .
+	print "From: $co{'author'}\n" .
 	      "Date: $ad{'rfc2822'} ($ad{'tz_local'})\n".
-	      "Source: $my_url?p=$project;a=commitdiff;h=$hash\n" .
+	      "Subject: $co{'title'}\n";
+	if (defined $tagname) {
+	      print "X-Git-Tag: $tagname\n";
+	}
+	print "X-Git-Url: $my_url?p=$project;a=commitdiff;h=$hash\n" .
 	      "\n";
+
 	foreach my $line (@$comment) {;
 		print "  $line\n";
 	}
-	print "\n";
+	print "---\n\n";
+
 	foreach my $line (@difftree) {
 		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/;
 		my $from_id = $3;
