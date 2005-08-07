@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"057";
+my $version =		"062";
 my $projectroot =	"/home/kay/public_html/pub/scm";
 my $defaultprojects =	"linux/kernel/git";
 my $gitbin =		"/home/kay/bin/git";
@@ -79,6 +79,10 @@ sub git_header_html {
 	}
 	div.page_footer_text { float:left; color:#888888; font-size:10px;}
 	div.page_body { margin:0px 25px; padding:8px; clear:both; border: solid #d9d8d1; border-width:0px 1px; }
+	div.title {
+		display:block; margin:0px 25px; padding:8px; clear:both;
+		font-weight:bold; background-color: #d9d8d1; color:#000000;
+	}
 	a.log_title {
 		display:block; margin:0px 25px; padding:8px; clear:both;
 		font-weight:bold; background-color: #d9d8d1; text-decoration:none; color:#000000;
@@ -188,6 +192,28 @@ sub git_commit {
 	$co{'comment'} = \@comment;
 	$co{'title'} = $comment[0];
 	close $fd;
+
+	my $age = time - $co{'committer_epoch'};
+	$co{'age'} = $age;
+	if ($age > 60*60*24*365*2) {
+		$co{'age_string'} = (int $age/60/60/24/365);
+		$co{'age_string'} .= " years ago";
+	} elsif ($age > 60*60*24*365/12*2) {
+		$co{'age_string'} = int $age/60/60/24/365/12;
+		$co{'age_string'} .= " months ago";
+	} elsif ($age > 60*60*24*7*2) {
+		$co{'age_string'} = int $age/60/60/24/7;
+		$co{'age_string'} .= " weeks ago";
+	} elsif ($age > 60*60*24*2) {
+		$co{'age_string'} = int $age/60/60/24;
+		$co{'age_string'} .= " days ago";
+	} elsif ($age > 60*60*2) {
+		$co{'age_string'} = int $age/60/60;
+		$co{'age_string'} .= " hours ago";
+	} elsif ($age > 60*2) {
+		$co{'age_string'} = int $age/60;
+		$co{'age_string'} .= " minutes ago";
+	}
 	return %co;
 }
 
@@ -351,6 +377,9 @@ if (!defined($time_back)) {
 
 if ($action eq "blob") {
 	git_header_html();
+	print "<div class=\"page_nav\">\n";
+	print "<br/><br/></div>\n";
+	print "<div class=\"title\">$hash</div>\n";
 	print "<div class=\"page_body\"><pre><br/><br/>\n";
 	open(my $fd, "-|", "$gitbin/cat-file blob $hash");
 	my $nr;
@@ -370,6 +399,9 @@ if ($action eq "blob") {
 	my (@entries) = map { chomp; $_ } <$fd>;
 	close $fd;
 	git_header_html();
+	print "<div class=\"page_nav\">\n";
+	print "<br/><br/></div>\n";
+	print "<div class=\"title\">$hash</div>\n";
 	print "<div class=\"page_body\">\n";
 	print "<br/><pre>\n";
 	foreach my $line (@entries) {
@@ -380,9 +412,9 @@ if ($action eq "blob") {
 		my $t_hash = $3;
 		my $t_name = $4;
 		if ($t_type eq "blob") {
-			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash"}, $t_name) . "\n";
+			print mode_str($t_mode). " $t_name (" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$t_hash"}, "view") . ")\n";
 		} elsif ($t_type eq "tree") {
-			print mode_str($t_mode). " " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash"}, $t_name) . "\n";
+			print mode_str($t_mode). " $t_name (" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$t_hash"}, "view") . ")\n";
 		}
 	}
 	print "</pre>\n";
@@ -419,36 +451,15 @@ if ($action eq "blob") {
 		my $commit = $revlist[$i];
 		my %co = git_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
-		my $age = time - $co{'committer_epoch'};
-		my $age_string;
-		if ($age > 60*60*24*365*2) {
-			$age_string = int $age/60/60/24/365;
-			$age_string .= " years ago";
-		} elsif ($age > 60*60*24*365/12*2) {
-			$age_string = int $age/60/60/24/365/12;
-			$age_string .= " months ago";
-		} elsif ($age > 60*60*24*7*2) {
-			$age_string = int $age/60/60/24/7;
-			$age_string .= " weeks ago";
-		} elsif ($age > 60*60*24*2) {
-			$age_string = int $age/60/60/24;
-			$age_string .= " days ago";
-		} elsif ($age > 60*60*2) {
-			$age_string = int $age/60/60;
-			$age_string .= " hours ago";
-		} elsif ($age > 60*2) {
-			$age_string = int $age/60;
-			$age_string .= " minutes ago";
-		}
 		if ($action eq "log") {
-		if ($time_back > 0 && $age > $time_back*60*60*24) {
+		if ($time_back > 0 && $co{'age'} > $time_back*60*60*24) {
 				if ($i == 0) {
-					print "<div class=\"page_body\"> Last change $age_string.<br/><br/></div>\n";
+					print "<div class=\"page_body\"> Last change " . $co{'age_string'} . ".<br/><br/></div>\n";
 				}
 				last;
 			}
 			print "<div><a href=\"$my_uri?p=$project;a=commit;h=$commit\" class=\"log_title\">\n" .
-			      "<span class=\"log_age\">" . $age_string . "</span>\n" . escapeHTML($co{'title'}) . "</a>\n" .
+			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>\n" . escapeHTML($co{'title'}) . "</a>\n" .
 			      "</div>\n";
 			print "<div class=\"log_head\">\n" .
 			      "<div class=\"log_functions\">\n" .
@@ -498,7 +509,7 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diff") . "\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . "\n" .
 	      "<br/><br/></div>\n";
 	print "<a class=\"log_title\" href=\"$my_uri?p=$project;a=commitdiff;h=$hash\">$co{'title'}</a>\n";
 	print "<div class=\"log_head\">\n";
@@ -543,15 +554,19 @@ if ($action eq "blob") {
 		my $modestr = mode_str($1);
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$id"}, $file) . " (new)\n";
+				print "$modestr $file" . "[new] " .
+				      "(" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "view") . ")\n";
 			} elsif ($op eq "-") {
-				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;hp=$id"}, $file) . " (removed)\n";
+				print "$modestr $file" . "[removed] " .
+				      "(" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$id"}, "view") . ")\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $from = $1;
 				my $to = $2;
-				print "$modestr " . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to;hp=$from"}, $file) . " (" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=filerevision;h=$hash;f=$file"}, "history") . ")\n";
+				print "$modestr $file " .
+				      "(" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to"}, "view") . ")" .
+				      "(" . $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to;hp=$from"}, "diff") . ")" .
+				      "(" . $cgi->a({-href => "$my_uri?p=$project;a=history;h=$hash;f=$file"}, "history") . ")\n";
 			}
 		}
 	}
@@ -560,6 +575,9 @@ if ($action eq "blob") {
 	git_footer_html();
 } elsif ($action eq "blobdiff") {
 	git_header_html();
+	print "<div class=\"page_nav\">\n";
+	print "<br/><br/></div>\n";
+	print "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	print "<div class=\"page_body\"><br/><br/>\n" .
 	      "<pre>\n";
 	git_diff_html($hash_parent, $hash, $hash_parent, $hash);
@@ -575,7 +593,7 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<div class=\"page_nav\"> view\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | \n" .
-	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diff") . "\n" .
+	      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . "\n" .
 	      "<br/><br/></div>\n";
 	print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash", -class => "log_title"}, $co{'title'}) ."\n";
 	print "<div class=\"page_body\">\n" .
@@ -602,17 +620,24 @@ if ($action eq "blob") {
 	print "<br/></pre>\n";
 	print "</div>";
 	git_footer_html();
-} elsif ($action eq "filerevision") {
+} elsif ($action eq "history") {
+	if (!(defined($hash))) {
+		$hash = git_head($project);
+	}
 	open my $fd, "-|", "$gitbin/rev-list $hash";
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	git_header_html();
+	print "<div class=\"page_nav\">\n";
+	print "<br/><br/></div>\n";
+	print "<div class=\"title\">$file_name</div>\n";
 	print "<div class=\"page_body\">\n" .
 	      "<pre>\n";
 	foreach my $rev (@revlist) {
 		my %co = git_commit($rev);
 		my $parents  = $co{'parents'};
+		my $found = 0;
 		foreach my $parent (@$parents) {
 			open $fd, "-|", "$gitbin/diff-tree -r $parent $rev $file_name";
 			my (@difftree) = map { chomp; $_ } <$fd>;
@@ -622,10 +647,14 @@ if ($action eq "blob") {
 				$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
 				my $file = $5;
 				if ($file eq $file_name) {
-					print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, $rev) . " (" . $co{'title'} .")\n";
+					$found = 1;
 					last;
 				}
 			}
+		}
+		if ($found) {
+			print $co{'age_string'} . "\t " . $co{'author_name'} . "  - " . $co{'title'} .
+			      " (" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$rev"}, "view") .")\n";
 		}
 	}
 	print "<br/></pre>\n";
