@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"164";
+my $version =		"165";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -1103,12 +1103,13 @@ sub git_log {
 
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
-	print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last 10") . " | " .
-	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=1"}, "day") . " | " .
-	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | " .
-	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=31"}, "month") . " | " .
-	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=365"}, "year") . " | " .
-	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=0"}, "all") . "<br/>\n";
+	print $cgi->a({-href => "$my_uri?p=$project;a=log;h=$hash"}, "last 10") .
+	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=1;h=$hash"}, "day") .
+	      " &sdot; " .$cgi->a({-href => "$my_uri?p=$project;a=log;t=7;h=$hash"}, "week") .
+	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=31;h=$hash"}, "month") .
+	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=365;h=$hash"}, "year") .
+	      " &sdot; " . $cgi->a({-href => "$my_uri?p=$project;a=log;t=0;h=$hash"}, "all") .
+	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;hb=$hash"}, "tree") . "<br/>\n";
 	print "<br/>\n" .
 	      "</div>\n";
 
