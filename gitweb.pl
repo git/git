@@ -10,7 +10,7 @@ use CGI qw(:standard :escapeHTML);
 use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
-my $gitbin = "/home/kay/bin";
+my $gitbin = "/home/kay/bin/git";
 my $gitroot = "/home/kay/public_html";
 my $gittmp = "/tmp";
 my $myself = $cgi->url(-relative => 1);
@@ -33,7 +33,7 @@ print <<EOF;
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-	<title>GIT</title>
+	<title>git - $project $action</title>
 	<style type="text/css">
 		body { font-family: sans-serif; font-size: 12px; margin:25px; }
 		div.body { border-width:1px; border-style:solid; border-color:#D9D8D1; }
@@ -57,7 +57,9 @@ print <<EOF;
 		td.head3 { background-color: #EDECE6; font-size:10px; }
 		div.add { color: #008800; }
 		div.subtract { color: #CC0000; }
-		div.diff_head { color: #990099; }
+		div.diff_head { color: #000099; }
+		div.diff_head a:visited { color:#0000cc; }
+		div.diff_line { color: #990099; }
 		a { color:#0000cc; }
 		a:hover { color:#880000; }
 		a:visited { color:#880000; }
@@ -71,10 +73,10 @@ EOF
 	print "<a href=\"http://kernel.org/pub/software/scm/git/\"><img src=\"git_logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	print $cgi->a({-href => "$myself"}, "projects");
 	if ($project ne "") {
-		print " / " . $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24}, $project);
+		print " / " . $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24}, $project);
 	}
 	if ($action ne "") {
-		print " / " . $action . " " . $hash;
+		print " / $action";
 	}
 	print "</div>\n";
 }
@@ -85,16 +87,17 @@ sub git_footer {
 }
 
 sub git_diff {
-	my $old_name = shift;
-	my $new_name = shift;
+	my $old_name = shift || "/dev/null";
+	my $new_name = shift || "/dev/null";
 	my $old = shift;
 	my $new = shift;
 
-	my $label_old = "/dev/null";
-	my $label_new = "/dev/null";
 	my $tmp_old = "/dev/null";
 	my $tmp_new = "/dev/null";
+	my $old_label = "/dev/null";
+	my $new_label = "/dev/null";
 
+	# create temp from-file
 	if ($old ne "") {
 		open my $fd2, "> $gittmp/$old";
 		open my $fd, "-|", "$gitbin/cat-file", "blob", $old;
@@ -104,9 +107,10 @@ sub git_diff {
 		close $fd2;
 		close $fd;
 		$tmp_old = "$gittmp/$old";
-		$label_old = "a/$old_name";
+		$old_label = "a/$old_name";
 	}
 
+	# create tmp to-file
 	if ($new ne "") {
 		open my $fd2, "> $gittmp/$new";
 		open my $fd, "-|", "$gitbin/cat-file", "blob", $new;
@@ -116,21 +120,34 @@ sub git_diff {
 		close $fd2;
 		close $fd;
 		$tmp_new = "$gittmp/$new";
-		$label_new = "b/$new_name";
+		$new_label = "a/$new_name";
 	}
 
-	open my $fd, "-|", "/usr/bin/diff", "-L", $label_old, "-L", $label_new, "-u", "-p", $tmp_old, $tmp_new;
+	open my $fd, "-|", "/usr/bin/diff", "-L", $old_label, "-L", $new_label, "-u", "-p", $tmp_old, $tmp_new;
+	print '<div class="diff_head">===== ';
+	if ($old ne "") {
+		print $cgi->a({-href => "$myself?project=$project;action=blob;hash=$old"}, $old);
+	} else {
+		print $old_name;
+	}
+	print " vs ";
+	if ($new ne "") {
+		print $cgi->a({-href => "$myself?project=$project;action=blob;hash=$new"}, $new);
+	} else {
+		print $new_name;
+	}
+	print ' =====</div>';
 	while (my $line = <$fd>) {
 		my $char = substr($line,0,1);
 		print '<div class="add">' if $char eq '+';
 		print '<div class="subtract">' if $char eq '-';
-		print '<div class="diff_head">' if $char eq '@';
+		print '<div class="diff_line">' if $char eq '@';
 		print escapeHTML($line);
 		print '</div>' if $char eq '+' or $char eq '-' or $char eq '@';
 	}
 	close $fd;
-	#unlink("$gittmp/$new");
-	#unlink("$gittmp/$old");
+	unlink("$gittmp/$new");
+	unlink("$gittmp/$old");
 }
 
 if ($project eq "") {
@@ -150,11 +167,11 @@ if ($project eq "") {
 }
 
 if ($action eq "") {
-	print $cgi->redirect("$myself?project=$project&action=log&view_back=$view_back");
+	print $cgi->redirect("$myself?project=$project;action=log;view_back=$view_back");
 	exit;
 }
 
-if ($action eq "file") {
+if ($action eq "blob") {
 	git_header();
 	print "<br/><br/><div class=\"main\">\n";
 	print "<pre>\n";
@@ -174,12 +191,7 @@ if ($action eq "file") {
 		my $head = <$fd>;
 		chomp $head;
 		close $fd;
-		open $fd, "-|", "$gitbin/cat-file", "commit", $head;
-		my $tree = <$fd>;
-		chomp $tree;
-		$tree =~ s/tree //;
-		close $fd;
-		$hash = $tree;
+		$hash = $head;
 	}
 	open my $fd, "-|", "$gitbin/ls-tree", $hash;
 	my (@entries) = map { chomp; $_ } <$fd>;
@@ -188,14 +200,15 @@ if ($action eq "file") {
 	print "<br/><br/><div class=\"main\">\n";
 	print "<pre>\n";
 	foreach my $line (@entries) {
+		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 		$line =~ m/^([0-9]+)\t(.*)\t(.*)\t(.*)$/;
 		my $t_type = $2;
 		my $t_hash = $3;
 		my $t_name = $4;
 		if ($t_type eq "blob") {
-			print "FILE\t" . $cgi->a({-href => "$myself?project=$project&action=file&hash=$3"}, $4) . "\n";
+			print "BLOB\t" . $cgi->a({-href => "$myself?project=$project;action=blob;hash=$3"}, $4) . "\n";
 		} elsif ($t_type eq "tree") {
-			print "DIR\t" . $cgi->a({-href => "$myself?project=$project&action=tree&hash=$3"}, $4) . "\n";
+			print "TREE\t" . $cgi->a({-href => "$myself?project=$project;action=tree;hash=$3"}, $4) . "\n";
 		}
 	}
 	print "</pre>\n";
@@ -212,18 +225,16 @@ if ($action eq "file") {
 	git_header();
 	print "<div class=\"head2\">\n";
 	print "view  ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24}, "last day") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24*7}, "week") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24*30}, "month") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=" . 60*60*24*365}, "year") . " | ";
-	print $cgi->a({-href => "$myself?project=$project&action=log&view_back=-1"}, "all") . "<br/>\n";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24}, "last day") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24*7}, "week") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24*30}, "month") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=" . 60*60*24*365}, "year") . " | ";
+	print $cgi->a({-href => "$myself?project=$project;action=log;view_back=-1"}, "all") . "<br/>\n";
 	print "<br/><br/>\n";
 	print "</div>\n";
 	print "<table cellspacing=\"0\" class=\"log\">\n";
 	foreach my $rev (reverse sort @revtree) {
-		if (!($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/)) {
-			last;
-		}
+		last if !($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/);
 		my $time = $1;
 		my $commit = $2;
 		my $parent = $3;
@@ -241,9 +252,7 @@ if ($action eq "file") {
 		open my $fd, "-|", "$gitbin/cat-file", "commit", $commit;
 		while (my $line = <$fd>) {
 			chomp($line);
-			if ($line eq "") {
-				last;
-			}
+			last if $line eq "";
 			if ($line =~ m/^tree (.*)$/) {
 				$tree = $1;
 			} elsif ($line =~ m/^parent (.*)$/) {
@@ -268,10 +277,8 @@ if ($action eq "file") {
 				$comment .= escapeHTML($line) . "<br/>\n";
 		}
 		close $fd;
-		my $age = time-$author_time;
-		if ($view_back > 0 && $age > $view_back) {
-			last;
-		}
+		my $age = time-$committer_time;
+		last if ($view_back > 0 && $age > $view_back);
 
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
@@ -295,13 +302,13 @@ if ($action eq "file") {
 		}
 		print "<tr>\n";
 		print "<td class=\"head1\">" . $age_string . "</td>\n";
-		print "<td class=\"head1\"><a href=\"$myself?project=$project&amp;action=commit&amp;hash=$commit&amp;parent=$parent\">" . $shortlog . "</a></td>";
+		print "<td class=\"head1\">" . $cgi->a({-href => "$myself?project=$project;action=commit;hash=$commit;parent=$parent"}, $shortlog) . "</td>";
 		print "</tr>\n";
 		print "<tr>\n";
 		print "<td class=\"head3\">";
-		print $cgi->a({-href => "$myself?project=$project&action=diffs&hash=$commit&parent=$parent"}, "view diff") . "<br/>\n";
-		print $cgi->a({-href => "$myself?project=$project&action=commit&hash=$commit&parent=$parent"}, "view commit") . "<br/>\n";
-		print $cgi->a({-href => "$myself?project=$project&action=tree&hash=$tree"}, "view tree") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=diffs;hash=$commit;parent=$parent"}, "view diff") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=commit;hash=$commit;parent=$parent"}, "view commit") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=tree;hash=$tree"}, "view tree") . "<br/>\n";
 		print "</td>\n";
 		print "<td class=\"head2\">\n";
 		print "author &nbsp; &nbsp;" . escapeHTML($author) . " [" . gmtime($author_time) . " " . $author_timezone . "]<br/>\n";
@@ -323,26 +330,17 @@ if ($action eq "file") {
 	print "</table>\n";
 	git_footer();
 } elsif ($action eq "commit") {
-	open my $fd, "-|", "$gitbin/cat-file", "commit", $hash;
-	my $tree = <$fd>;
-	chomp $tree;
-	$tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/cat-file", "commit", $parent;
-	my $parent_tree = <$fd>;
-	chomp $parent_tree;
-	$parent_tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/diff-tree", "-r", $parent_tree, $tree;
+	open my $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	git_header();
-	print "<br/><br/><div class=\"main\">\n";
+	print "<div class=\"head2\">\n";
+	print "view " . $cgi->a({-href => "$myself?project=$project;action=diffs;hash=$hash;parent=$parent"}, "diff") . "<br/><br/>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
+		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
+		# '+100644	blob	4a83ab6cd565d21ab0385bac6643826b83c2fcd4	arch/arm/lib/bitops.h'
 		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
 		my $op = $1;
 		my $mode = $2;
@@ -351,14 +349,14 @@ if ($action eq "file") {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				print "NEW\t" . $cgi->a({-href => "$myself?project=$project&action=file&hash=$id"}, $file) . "\n";
+				print "NEW\t" . $cgi->a({-href => "$myself?project=$project;action=blob;hash=$id"}, $file) . "\n";
 			} elsif ($op eq "-") {
-				print "DEL\t" . $cgi->a({-href => "$myself?project=$project&action=file&hash=$id"}, $file) . "\n";
+				print "DEL\t" . $cgi->a({-href => "$myself?project=$project;action=blob;hash=$id"}, $file) . "\n";
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
 				my $old = $1;
 				my $new = $2;
-				print "DIFF\t" . $cgi->a({-href => "$myself?project=$project&action=diff&hash=$old&parent=$new"}, $file) . "\n";
+				print "CHANGED\t" . $cgi->a({-href => "$myself?project=$project;action=diff;hash=$old;parent=$new"}, $file) . "\n";
 			}
 		}
 	}
@@ -374,26 +372,16 @@ if ($action eq "file") {
 	print "<br/></div>";
 	git_footer();
 } elsif ($action eq "diffs") {
-	open my $fd, "-|", "$gitbin/cat-file", "commit", $hash;
-	my $tree = <$fd>;
-	chomp $tree;
-	$tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/cat-file", "commit", $parent;
-	my $parent_tree = <$fd>;
-	chomp $parent_tree;
-	$parent_tree =~ s/tree //;
-	close $fd;
-
-	open $fd, "-|", "$gitbin/diff-tree", "-r", $parent_tree, $tree;
+	open my $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	git_header();
-	print "<br/><br/><div class=\"main\">\n";
+	print "<div class=\"head2\">\n";
+	print "view " . $cgi->a({-href => "$myself?project=$project;action=commit;hash=$hash;parent=$parent"}, "commit") . "<br/><br/>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
+		# '*100644->100644	blob	8e5f9bbdf4de94a1bc4b4da8cb06677ce0a57716->8da3a306d0c0c070d87048d14a033df02f40a154	Makefile'
 		$line =~ m/^(.)(.*)\t(.*)\t(.*)\t(.*)$/;
 		my $op = $1;
 		my $mode = $2;
@@ -410,10 +398,8 @@ if ($action eq "file") {
 				git_diff($file, $file, $1, $2);
 			}
 		}
-		print "<br/>\n";
 	}
 	print "</pre>\n";
-	print "<br/></div>";
 	print "<br/></div>";
 	git_footer();
 } else {
