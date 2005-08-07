@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"133";
+my $version =		"136";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -31,6 +31,9 @@ my $gittmp =		"/tmp/gitweb";
 # target of the home link on top of all pages
 #my $home_link =		$my_uri;
 my $home_link =		"/git";
+
+# html text to include at home page
+my $home_text =		"indextext.html";
 
 # source of projects list
 #my $projects_list = $projectroot;
@@ -205,6 +208,7 @@ td.link { font-family:sans-serif; font-size:10px; }
 td.pre { font-family:monospace; font-size:12px; white-space:pre; padding:2px 15px 0px 0px; }
 div.pre { font-family:monospace; font-size:12px; white-space:pre; }
 div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
+div.index_include { border:solid #d9d8d1; border-width:0px 0px 1px; padding:12px 8px; }
 a.rss_logo { float:right; padding:3px 0px; width:35px; line-height:10px;
 	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
 	color:#ffffff; background-color:#ff6600;
@@ -217,7 +221,7 @@ a.rss_logo:hover { background-color:#ee5500; }
 <body>
 EOF
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"http://kernel.org/pub/software/scm/cogito\">" .
+	      "<a href=\"http://kernel.org/pub/software/scm/git/docs/\">" .
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	print $cgi->a({-href => $home_link}, "projects") . " / ";
 	if (defined $project) {
@@ -554,9 +558,16 @@ sub git_project_list {
 	@list = sort {$a->{'path'} cmp $b->{'path'}} @list;
 
 	git_header_html();
-	print "<div class=\"page_body\"><br/>\n";
-	print "<table cellspacing=\"0\">\n";
-	print "<tr>\n" .
+	if (-f $home_text) {
+		print "<div class=\"index_include\">\n";
+		open my $fd, $home_text;
+		print <$fd>;
+		close $fd;
+		print "</div>\n";
+	}
+	print "<div class=\"page_body\"><br/>\n" .
+	      "<table cellspacing=\"0\">\n" .
+	      "<tr>\n" .
 	      "<th>Project</th>\n" .
 	      "<th>Description</th>\n" .
 	      "<th>Owner</th>\n" .
