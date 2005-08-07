@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 026
+# Version 027
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -195,55 +195,54 @@ sub git_commit {
 	return %co;
 }
 
-sub git_diff {
-	my $old_name = shift || "/dev/null";
-	my $new_name = shift || "/dev/null";
-	my $old = shift;
-	my $new = shift;
+sub git_diff_html {
+	my $from_name = shift || "/dev/null";
+	my $to_name = shift || "/dev/null";
+	my $from = shift;
+	my $to = shift;
 
-	my $tmp_old = "/dev/null";
-	my $tmp_new = "/dev/null";
-	my $old_label = "/dev/null";
-	my $new_label = "/dev/null";
+	my $from_tmp = "/dev/null";
+	my $to_tmp = "/dev/null";
+	my $from_label = "/dev/null";
+	my $to_label = "/dev/null";
+	my $pid = $$;
 
 	# create temp from-file
-	if ($old ne "") {
-		open my $fd2, "> $gittmp/$old";
-		open my $fd, "-|", "$gitbin/cat-file", "blob", $old;
-		while (my $line = <$fd>) {
-			print $fd2 $line;
-		}
+	if ($from ne "") {
+		$from_tmp = "$gittmp/gitweb_" . $$ . "_from";
+		open my $fd2, "> $from_tmp";
+		open my $fd, "-|", "$gitbin/cat-file", "blob", $from;
+		my @file = <$fd>;
+		print $fd2 @file;
 		close $fd2;
 		close $fd;
-		$tmp_old = "$gittmp/$old";
-		$old_label = "a/$old_name";
+		$from_label = "a/$from_name";
 	}
 
 	# create tmp to-file
-	if ($new ne "") {
-		open my $fd2, "> $gittmp/$new";
-		open my $fd, "-|", "$gitbin/cat-file", "blob", $new;
-		while (my $line = <$fd>) {
-			print $fd2 $line;
-		}
+	if ($to ne "") {
+		$to_tmp = "$gittmp/gitweb_" . $$ . "_to";
+		open my $fd2, "> $to_tmp";
+		open my $fd, "-|", "$gitbin/cat-file", "blob", $to;
+		my @file = <$fd>;
+		print $fd2 @file;
 		close $fd2;
 		close $fd;
-		$tmp_new = "$gittmp/$new";
-		$new_label = "b/$new_name";
+		$to_label = "b/$to_name";
 	}
 
-	open my $fd, "-|", "/usr/bin/diff", "-L", $old_label, "-L", $new_label, "-u", "-p", $tmp_old, $tmp_new;
+	open my $fd, "-|", "/usr/bin/diff", "-L", $from_label, "-L", $to_label, "-u", "-p", $from_tmp, $to_tmp;
 	print "<span style =\"color: #000099;\">===== ";
-	if ($old ne "") {
-		print $cgi->a({-href => "$my_uri/$project/blob/$old"}, $old);
+	if ($from ne "") {
+		print $cgi->a({-href => "$my_uri/$project/blob/$from"}, $from);
 	} else {
-		print $old_name;
+		print $from_name;
 	}
 	print " vs ";
-	if ($new ne "") {
-		print $cgi->a({-href => "$my_uri/$project/blob/$new"}, $new);
+	if ($to ne "") {
+		print $cgi->a({-href => "$my_uri/$project/blob/$to"}, $to);
 	} else {
-		print $new_name;
+		print $to_name;
 	}
 	print " =====</span>\n";
 	while (my $line = <$fd>) {
@@ -255,8 +254,13 @@ sub git_diff {
 		print '</span>' if $char eq '+' or $char eq '-' or $char eq '@';
 	}
 	close $fd;
-	unlink("$gittmp/$new");
-	unlink("$gittmp/$old");
+
+	if ($from ne "") {
+		unlink("$from_tmp");
+	}
+	if ($to ne "") {
+		unlink("$to_tmp");
+	}
 }
 
 if ($project eq "") {
@@ -498,7 +502,7 @@ if ($action eq "blob") {
 	git_header_html();
 	print "<br/><br/>\n";
 	print "<pre>\n";
-	git_diff($hash, $hash_parent, $hash, $hash_parent);
+	git_diff_html($hash, $hash_parent, $hash, $hash_parent);
 	print "</pre>\n";
 	print "<br/>";
 	git_footer_html();
@@ -525,12 +529,12 @@ if ($action eq "blob") {
 		my $file = $5;
 		if ($type eq "blob") {
 			if ($op eq "+") {
-				git_diff("", $file, "", $id);
+				git_diff_html("", $file, "", $id);
 			} elsif ($op eq "-") {
-				git_diff($file, "", $id, "");
+				git_diff_html($file, "", $id, "");
 			} elsif ($op eq "*") {
 				$id =~ m/([0-9a-fA-F]+)->([0-9a-fA-F]+)/;
-				git_diff($file, $file, $1, $2);
+				git_diff_html($file, $file, $1, $2);
 			}
 		}
 	}
