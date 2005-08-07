@@ -10,11 +10,12 @@
 use strict;
 use warnings;
 use CGI qw(:standard :escapeHTML);
+use CGI::Util qw(unescape);
 use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"145";
+my $version =		"148";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -36,7 +37,7 @@ my $home_text =		"indextext.html";
 
 # source of projects list
 #my $projects_list = $projectroot;
-my $projects_list = "index/index.txt";
+my $projects_list = "index/index.aux";
 
 # input validation and dispatch
 my $action = $cgi->param('a');
@@ -563,7 +564,9 @@ sub git_project_list {
 		open my $fd , $projects_list || return undef;
 		while (my $line = <$fd>) {
 			chomp $line;
-			my ($path, $owner) = split ':', $line;
+			my ($path, $owner) = split ' ', $line;
+			$path = unescape($path);
+			$owner = unescape($owner);
 			if (!defined $path) {
 				next;
 			}
@@ -691,7 +694,9 @@ sub git_summary {
 		open (my $fd , $projects_list);
 		while (my $line = <$fd>) {
 			chomp $line;
-			my ($pr, $ow) = split ':', $line;
+			my ($pr, $ow) = split ' ', $line;
+			$pr = unescape($pr);
+			$ow = unescape($ow);
 			if ($pr eq $project) {
 				$owner = $ow;
 				last;
