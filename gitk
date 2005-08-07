@@ -1799,9 +1799,21 @@ proc selectline {l isnew} {
 	}
 	$ctext insert end "\n"
     }
-    $ctext insert end "\n"
+ 
     set commentstart [$ctext index "end - 1c"]
-    set comment [lindex $info 5]
+    set comment {}
+    foreach p $parents($id) {
+	set l "..."
+	if {[info exists commitinfo($p)]} {
+	    set l [lindex $commitinfo($p) 0]
+	    if {[string length $l] > 32} {
+		set l "[string range $l 0 28] ..."
+	    }
+	}
+	append comment "Parent: $p  ($l)\n"
+    }
+    append comment "\n"
+    append comment [lindex $info 5]
     $ctext insert end $comment
     $ctext insert end "\n"
 
