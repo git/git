@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+# gitweb.pl - simple web interface to track changes in git repositories
+#
+# Version 004
+#
 # This file is licensed under the GPL v2, or a later version
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -234,6 +238,7 @@ if ($action eq "blob") {
 	print "</div>\n";
 	print "<table cellspacing=\"0\" class=\"log\">\n";
 	foreach my $rev (reverse sort @revtree) {
+		# '1114106118 755e3010ee10dadf42a8a80770e1b115fb038d9b:1 2af17b4854036a1c2ec6c101d93c8dd1ed80d24e:1'
 		last if !($rev =~ m/^([0-9]+) ([0-9a-fA-F]+).* ([0-9a-fA-F]+)/);
 		my $time = $1;
 		my $commit = $2;
@@ -306,7 +311,7 @@ if ($action eq "blob") {
 		print "</tr>\n";
 		print "<tr>\n";
 		print "<td class=\"head3\">";
-		print $cgi->a({-href => "$myself?project=$project;action=diffs;hash=$commit;parent=$parent"}, "view diff") . "<br/>\n";
+		print $cgi->a({-href => "$myself?project=$project;action=treediff;hash=$commit;parent=$parent"}, "view diff") . "<br/>\n";
 		print $cgi->a({-href => "$myself?project=$project;action=commit;hash=$commit;parent=$parent"}, "view commit") . "<br/>\n";
 		print $cgi->a({-href => "$myself?project=$project;action=tree;hash=$tree"}, "view tree") . "<br/>\n";
 		print "</td>\n";
@@ -336,7 +341,7 @@ if ($action eq "blob") {
 
 	git_header();
 	print "<div class=\"head2\">\n";
-	print "view " . $cgi->a({-href => "$myself?project=$project;action=diffs;hash=$hash;parent=$parent"}, "diff") . "<br/><br/>\n";
+	print "view " . $cgi->a({-href => "$myself?project=$project;action=treediff;hash=$hash;parent=$parent"}, "diff") . "<br/><br/>\n";
 	print "<pre>\n";
 	foreach my $line (@difftree) {
 		# '*100644->100644	blob	9f91a116d91926df3ba936a80f020a6ab1084d2b->bb90a0c3a91eb52020d0db0e8b4f94d30e02d596	net/ipv4/route.c'
@@ -371,7 +376,7 @@ if ($action eq "blob") {
 	print "</pre>\n";
 	print "<br/></div>";
 	git_footer();
-} elsif ($action eq "diffs") {
+} elsif ($action eq "treediff") {
 	open my $fd, "-|", "$gitbin/diff-tree", "-r", $parent, $hash;
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
