@@ -15,13 +15,14 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"235";
+my $version =		"236";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
 
 # absolute fs-path which will be prepended to the project path
 my $projectroot =	"/pub/scm";
+$projectroot = "/home/kay/public_html/pub/scm";
 
 # location of the git-core binaries
 my $gitbin =		"/usr/bin";
@@ -401,6 +402,37 @@ sub git_read_tag {
 	return %tag
 }
 
+sub age_string {
+	my $age = shift;
+	my $age_str;
+
+	if ($age > 60*60*24*365*2) {
+		$age_str = (int $age/60/60/24/365);
+		$age_str .= " years ago";
+	} elsif ($age > 60*60*24*(365/12)*2) {
+		$age_str = int $age/60/60/24/(365/12);
+		$age_str .= " months ago";
+	} elsif ($age > 60*60*24*7*2) {
+		$age_str = int $age/60/60/24/7;
+		$age_str .= " weeks ago";
+	} elsif ($age > 60*60*24*2) {
+		$age_str = int $age/60/60/24;
+		$age_str .= " days ago";
+	} elsif ($age > 60*60*2) {
+		$age_str = int $age/60/60;
+		$age_str .= " hours ago";
+	} elsif ($age > 60*2) {
+		$age_str = int $age/60;
+		$age_str .= " min ago";
+	} elsif ($age > 2) {
+		$age_str = int $age;
+		$age_str .= " sec ago";
+	} else {
+		$age_str .= " right now";
+	}
+	return $age_str;
+}
+
 sub git_read_commit {
 	my $commit_id = shift;
 	my $commit_text = shift;
@@ -473,30 +505,7 @@ sub git_read_commit {
 
 	my $age = time - $co{'committer_epoch'};
 	$co{'age'} = $age;
-	if ($age > 60*60*24*365*2) {
-		$co{'age_string'} = (int $age/60/60/24/365);
-		$co{'age_string'} .= " years ago";
-	} elsif ($age > 60*60*24*(365/12)*2) {
-		$co{'age_string'} = int $age/60/60/24/(365/12);
-		$co{'age_string'} .= " months ago";
-	} elsif ($age > 60*60*24*7*2) {
-		$co{'age_string'} = int $age/60/60/24/7;
-		$co{'age_string'} .= " weeks ago";
-	} elsif ($age > 60*60*24*2) {
-		$co{'age_string'} = int $age/60/60/24;
-		$co{'age_string'} .= " days ago";
-	} elsif ($age > 60*60*2) {
-		$co{'age_string'} = int $age/60/60;
-		$co{'age_string'} .= " hours ago";
-	} elsif ($age > 60*2) {
-		$co{'age_string'} = int $age/60;
-		$co{'age_string'} .= " min ago";
-	} elsif ($age > 2) {
-		$co{'age_string'} = int $age;
-		$co{'age_string'} .= " sec ago";
-	} else {
-		$co{'age_string'} .= " right now";
-	}
+	$co{'age_string'} = age_string($age);
 	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($co{'committer_epoch'});
 	if ($age > 60*60*24*7*2) {
 		$co{'age_string_date'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon+1, $mday;
@@ -839,11 +848,19 @@ sub git_read_refs {
 		my %co;
 		$ref_item{'type'} = $type;
 		$ref_item{'id'} = $ref_id;
+		$ref_item{'epoch'} = 0;
+		$ref_item{'age'} = "unknown";
 		if ($type eq "tag") {
 			my %tag = git_read_tag($ref_id);
 			$ref_item{'comment'} = $tag{'comment'};
 			if ($tag{'type'} eq "commit") {
 				%co = git_read_commit($tag{'object'});
+				$ref_item{'epoch'} = $co{'committer_epoch'};
+				$ref_item{'age'} = $co{'age_string'};
+			} elsif (defined($tag{'epoch'})) {
+				my $age = time - $tag{'epoch'};
+				$ref_item{'epoch'} = $tag{'epoch'};
+				$ref_item{'age'} = age_string($age);
 			}
 			$ref_item{'reftype'} = $tag{'type'};
 			$ref_item{'name'} = $tag{'name'};
@@ -854,9 +871,9 @@ sub git_read_refs {
 			$ref_item{'name'} = $ref_file;
 			$ref_item{'title'} = $co{'title'};
 			$ref_item{'refid'} = $ref_id;
+			$ref_item{'epoch'} = $co{'committer_epoch'};
+			$ref_item{'age'} = $co{'age_string'};
 		}
-		$ref_item{'epoch'} = $co{'committer_epoch'} || 0;
-		$ref_item{'age'} = $co{'age_string'} || "unknown";
 
 		push @reflist, \%ref_item;
 	}
