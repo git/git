@@ -1,5 +1,7 @@
 #!/bin/sh
 . git-sh-setup-script || die "Not a git archive"
-git-read-tree --reset HEAD
+rev=$(git-rev-parse --revs-only --verify --default HEAD "$@") || exit
+rev=$(git-rev-parse --revs-only --verify $rev^0) || exit
+git-read-tree --reset "$rev" && echo "$rev" > "$GIT_DIR/HEAD"
 git-update-cache --refresh
 rm -f "$GIT_DIR/MERGE_HEAD"
