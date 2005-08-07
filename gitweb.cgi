@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"233";
+my $version =		"234";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -605,6 +605,21 @@ sub file_type {
 	} else {
 		return "unknown";
 	}
+}
+
+sub format_log_line_html {
+	my $line = shift;
+
+	$line = escapeHTML($line);
+	$line =~ s/ /&nbsp;/g;
+	if ($line =~ m/([0-9a-fA-F]{40})/) {
+		my $hash_text = $1;
+		if (git_get_type($hash_text) eq "commit") {
+			my $link = $cgi->a({-class => "list", -href => "$my_uri?p=$project;a=commit;h=$hash_text"}, $hash_text);
+			$line =~ s/$hash_text/$link/;
+		}
+	}
+	return $line;
 }
 
 sub date_str {
@@ -1395,7 +1410,7 @@ sub git_log {
 			} else {
 				$empty = 0;
 			}
-			print escapeHTML($line) . "<br/>\n";
+			print format_log_line_html($line) . "<br/>\n";
 		}
 		if (!$empty) {
 			print "<br/>\n";
@@ -1496,9 +1511,7 @@ sub git_commit {
 			print "<span style=\"color: #888888\">" . escapeHTML($line) . "</span><br/>\n";
 		} else {
 			$signed = 0;
-			$line = escapeHTML($line);
-			$line =~ s/ /&nbsp;/g;
-			print "$line<br/>\n";
+			print format_log_line_html($line) . "<br/>\n";
 		}
 	}
 	print "</div>\n";
@@ -1689,9 +1702,7 @@ sub git_commitdiff {
 		} else {
 			$empty = 0;
 		}
-		$line = escapeHTML($line);
-		$line =~ s/ /&nbsp;/g;
-		print "$line<br/>\n";
+		print format_log_line_html($line) . "<br/>\n";
 	}
 	print "<br/>\n";
 	foreach my $line (@difftree) {
