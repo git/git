@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"080";
+my $version =		"082";
 my $projectroot =	"/pub/scm";
 my $home_link =		"/git";
 my $gitbin =		"/usr/bin";
@@ -22,12 +22,6 @@ my $gittmp =		"/tmp/gitweb";
 my $logo_link =		"/pub/software/scm/cogito";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
-
-# remove #
-my $projectroot =	"/home/kay/public_html/pub/scm";
-my $home_link =		"/~kay/git";
-my $logo_link =		"/~kay/pub/software/scm/cogito";
-# remove #
 
 mkdir($gittmp, 0700);
 my $project = $cgi->param('p');
@@ -185,7 +179,7 @@ sub git_commit {
 	my %co;
 	my @parents;
 
-	open my $fd, "-|", "$gitbin/git-cat-file commit $commit";
+	open my $fd, "-|", "$gitbin/cat-file commit $commit";
 	while (my $line = <$fd>) {
 		chomp($line);
 		last if $line eq "";
@@ -257,7 +251,7 @@ sub git_diff_html {
 	if ($from ne "") {
 		$from_tmp = "$gittmp/gitweb_" . $$ . "_from";
 		open(my $fd2, "> $from_tmp");
-		open my $fd, "-|", "$gitbin/git-cat-file blob $from";
+		open my $fd, "-|", "$gitbin/cat-file blob $from";
 		my @file = <$fd>;
 		print $fd2 @file;
 		close $fd2;
@@ -269,7 +263,7 @@ sub git_diff_html {
 	if ($to ne "") {
 		$to_tmp = "$gittmp/gitweb_" . $$ . "_to";
 		open my $fd2, "> $to_tmp";
-		open my $fd, "-|", "$gitbin/git-cat-file blob $to";
+		open my $fd, "-|", "$gitbin/cat-file blob $to";
 		my @file = <$fd>;
 		print $fd2 @file;
 		close $fd2;
@@ -387,7 +381,7 @@ if ($action eq "blob") {
 	print "<br/><br/></div>\n";
 	print "<div class=\"title\">$hash</div>\n";
 	print "<div class=\"page_body\"><pre>\n";
-	open(my $fd, "-|", "$gitbin/git-cat-file blob $hash");
+	open(my $fd, "-|", "$gitbin/cat-file blob $hash");
 	my $nr;
 	while (my $line = <$fd>) {
 		$nr++;
@@ -401,7 +395,7 @@ if ($action eq "blob") {
 	if ($hash eq "") {
 		$hash = git_head($project);
 	}
-	open my $fd, "-|", "$gitbin/git-ls-tree $hash";
+	open my $fd, "-|", "$gitbin/ls-tree $hash";
 	my (@entries) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -440,7 +434,7 @@ if ($action eq "blob") {
 	print "<br/></div>";
 	git_footer_html();
 } elsif ($action eq "log" || $action eq "rss") {
-	open my $fd, "-|", "$gitbin/git-rev-list " . git_head($project);
+	open my $fd, "-|", "$gitbin/rev-list " . git_head($project);
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -522,7 +516,7 @@ if ($action eq "blob") {
 	}
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
-	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
+	open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -611,10 +605,16 @@ if ($action eq "blob") {
 				if ($from_mode != $to_mode) {
 					$mode_chnge = " <span style=\"color: #888888;\"> [chmod $mode]</span>\n";
 				}
-				print "<div class=\"list\">\n" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id"},
-				      escapeHTML($file) . $mode_chnge) . "\n" .
-				      "</div>\n";
+				print "<div class=\"list\">\n";
+				if ($to_id ne $from_id) {
+					print $cgi->a({-href => "$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id"},
+					      escapeHTML($file) . $mode_chnge) . "\n" .
+					      "</div>\n";
+				} else {
+					print $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id"},
+					      escapeHTML($file) . $mode_chnge) . "\n" .
+					      "</div>\n";
+				}
 				print "<div class=\"link\">\n" .
 				      "view ";
 				if ($to_id ne $from_id) {
@@ -643,7 +643,7 @@ if ($action eq "blob") {
 	if (!defined(%co)) {
 		die_error("", "Unknown commit object.");
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
+	open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -686,7 +686,7 @@ if ($action eq "blob") {
 	if (!(defined($hash))) {
 		$hash = git_head($project);
 	}
-	open my $fd, "-|", "$gitbin/git-rev-list $hash";
+	open my $fd, "-|", "$gitbin/rev-list $hash";
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -701,7 +701,7 @@ if ($action eq "blob") {
 		my $parents  = $co{'parents'};
 		my $found = 0;
 		foreach my $parent (@$parents) {
-			open $fd, "-|", "$gitbin/git-diff-tree -r $parent $rev $file_name";
+			open $fd, "-|", "$gitbin/diff-tree -r $parent $rev $file_name";
 			my (@difftree) = map { chomp; $_ } <$fd>;
 			close $fd;
 
@@ -728,5 +728,5 @@ if ($action eq "blob") {
 	}
 	git_footer_html();
 } else {
-	die_error("", "unknown action");
+	die_error("", "Unknown action.");
 }
