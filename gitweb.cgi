@@ -14,12 +14,21 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"085";
+# !! This devel-version uses a modified git-rev-list binary !!
+# The git changes are expected to show up upstream soon.
+
+# begin config
 my $projectroot =	"/pub/scm";
+$projectroot =	"/home/kay/public_html/pub/scm";
 my $home_link =		"/git";
+$home_link =		"/~kay/git";
 my $gitbin =		"/usr/bin";
 my $gittmp =		"/tmp/gitweb";
 my $logo_link =		"/pub/software/scm/cogito";
+$logo_link =		"/~kay/pub/software/scm/cogito";
+# end config
+
+my $version =		"088-devel";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -35,6 +44,7 @@ if (defined($project)) {
 		die_error("", "No such project.");
 	}
 	$rss_link = "<link rel=\"alternate\" title=\"$project log\" href=\"$my_uri?p=$project;a=rss\" type=\"application/rss+xml\"/>";
+	$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
 }
 
 my $file_name = $cgi->param('f');
@@ -67,7 +77,6 @@ if (defined($time_back) && !($time_back =~ m/^[0-9]+$/)) {
 	die_error("", "Invalid time parameter.");
 }
 
-$ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
 mkdir($gittmp, 0700);
 
 sub git_header_html {
@@ -77,8 +86,8 @@ sub git_header_html {
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
 <!-- git web interface v$version, (C) 2005, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke <ch\@gierke.de> -->
-<html>
 <head>
 <title>git - $project</title>
 $rss_link
@@ -157,7 +166,7 @@ sub git_footer_html {
 			print "<div class=\"page_footer_text\">" . escapeHTML($descr) . "</div>\n";
 			close $fd;
 		}
-		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "xml_logo"}, "XML") . "\n";
+		print $cgi->a({-href => "$my_uri?p=$project;a=rss", -class => "xml_logo"}, "RSS") . "\n";
 	}
 	print "</div>\n" .
 	      "</body>\n" .
@@ -191,7 +200,7 @@ sub git_commit {
 	my %co;
 	my @parents;
 
-	open my $fd, "-|", "$gitbin/cat-file commit $commit";
+	open my $fd, "-|", "$gitbin/git-cat-file commit $commit";
 	while (my $line = <$fd>) {
 		chomp($line);
 		last if $line eq "";
@@ -263,7 +272,7 @@ sub git_diff_html {
 	if ($from ne "") {
 		$from_tmp = "$gittmp/gitweb_" . $$ . "_from";
 		open(my $fd2, "> $from_tmp");
-		open my $fd, "-|", "$gitbin/cat-file blob $from";
+		open my $fd, "-|", "$gitbin/git-cat-file blob $from";
 		my @file = <$fd>;
 		print $fd2 @file;
 		close $fd2;
@@ -275,7 +284,7 @@ sub git_diff_html {
 	if ($to ne "") {
 		$to_tmp = "$gittmp/gitweb_" . $$ . "_to";
 		open my $fd2, "> $to_tmp";
-		open my $fd, "-|", "$gitbin/cat-file blob $to";
+		open my $fd, "-|", "$gitbin/git-cat-file blob $to";
 		my @file = <$fd>;
 		print $fd2 @file;
 		close $fd2;
@@ -347,8 +356,8 @@ sub date_str {
 	$date{'rfc2822'} = sprintf "%s, %d %s %4d %02d:%02d:%02d +0000", $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec;
 	$date{'mday-time'} = sprintf "%d %s %02d:%02d", $mday, $months[$mon], $hour ,$min;
 
-	$tz =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
-	my $local = $epoch + (($1 + ($2/60)) * 3600);
+	$tz =~ m/^([+\-][0-9][0-9])([0-9][0-9])$/;
+	my $local = $epoch + ((int $1 + ($2/60)) * 3600);
 	($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($local);
 	$date{'hour_local'} = $hour;
 	$date{'minute_local'} = $min;
@@ -356,7 +365,7 @@ sub date_str {
 	return %date;
 }
 
-if ($action eq "git-logo.png") {
+if (defined($action) && $action eq "git-logo.png") {
 	print $cgi->header(-type => 'image/png', -expires => '+1d');
 	print	"\211\120\116\107\015\012\032\012\000\000\000\015\111\110\104\122".
 		"\000\000\000\110\000\000\000\033\004\003\000\000\000\055\331\324".
@@ -393,7 +402,7 @@ if ($action eq "blob") {
 	print "<br/><br/></div>\n";
 	print "<div class=\"title\">$hash</div>\n";
 	print "<div class=\"page_body\"><pre>\n";
-	open(my $fd, "-|", "$gitbin/cat-file blob $hash");
+	open(my $fd, "-|", "$gitbin/git-cat-file blob $hash");
 	my $nr;
 	while (my $line = <$fd>) {
 		$nr++;
@@ -407,13 +416,13 @@ if ($action eq "blob") {
 	if ($hash eq "") {
 		$hash = git_head($project);
 	}
-	open my $fd, "-|", "$gitbin/ls-tree $hash";
+	open my $fd, "-|", "$gitbin/git-ls-tree $hash";
 	my (@entries) = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	git_header_html();
 	my %co = git_commit($hash);
-	if (defined(%co)) {
+	if (%co) {
 		print "<div class=\"page_nav\"> view\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash"}, "commit") . " | " .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash"}, "diffs") . " | " .
@@ -446,85 +455,88 @@ if ($action eq "blob") {
 	print "</pre>\n";
 	print "<br/></div>";
 	git_footer_html();
-} elsif ($action eq "log" || $action eq "rss") {
-	open my $fd, "-|", "$gitbin/rev-list " . git_head($project);
+} elsif ($action eq "rss") {
+	open my $fd, "-|", "$gitbin/git-rev-list --max-count=20 " . git_head($project);
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	if ($action eq "log") {
-		git_header_html();
-		print "<div class=\"page_nav\">\n";
-		print "view  ";
-		print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last day") . " | " .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | " .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=31"}, "month") . " | " .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=365"}, "year") . " | " .
-		      $cgi->a({-href => "$my_uri?p=$project;a=log;t=0"}, "all") . "<br/>\n";
-		print "<br/><br/>\n" .
-		      "</div>\n";
-	} elsif ($action eq "rss") {
-		print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
-		print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
-		      "<rss version=\"0.91\">\n";
-		print "<channel>\n";
-		print "<title>$project</title>\n".
-		      "<link> " . $my_url . "/$project/log</link>\n".
-		      "<description>$project log</description>\n".
-		      "<language>en</language>\n";
-	}
+	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
+	      "<rss version=\"0.91\">\n";
+	print "<channel>\n";
+	print "<title>$project</title>\n".
+	      "<link> " . $my_url . "/$project/log</link>\n".
+	      "<description>$project log</description>\n".
+	      "<language>en</language>\n";
 
-	for (my $i = 0; $i <= $#revlist; $i++) {
-		my $commit = $revlist[$i];
+	foreach my $commit (@revlist) {
 		my %co = git_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
-		if ($action eq "log") {
-		if ($time_back > 0 && $co{'age'} > $time_back*60*60*24) {
-				if ($i == 0) {
-					print "<div class=\"page_body\"> Last change " . $co{'age_string'} . ".<br/><br/></div>\n";
-				}
-				last;
-			}
-			print "<div>\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "title"}, 
-			      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
-			      "</div>\n";
-			print "<div class=\"title_text\">\n" .
-			      "<div class=\"log_link\">\n" .
-			      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") . "<br/>\n" .
-			      "</div>\n" .
-			      "<i>" . escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]</i><br/>\n" .
-			      "</div>\n" .
-			      "<div class=\"log_body\">\n";
-			my $comment = $co{'comment'};
-			foreach my $line (@$comment) {
-				last if ($line =~ m/^(signed-off|acked)-by:/i);
-				print escapeHTML($line) . "<br/>\n";
-			}
-			print "<br/>\n" .
-			      "</div>\n";
-		} elsif ($action eq "rss") {
-			last if ($i >= 20);
-			print "<item>\n" .
-			      "\t<title>" . sprintf("%d %s %02d:%02d", $ad{'mday'}, $ad{'month'}, $ad{'hour'}, $ad{'min'}) . " - " . escapeHTML($co{'title'}) . "</title>\n" .
-			      "\t<link> " . $my_url . "?p=$project;a=commit;h=$commit</link>\n" .
-			      "\t<description>";
-			my $comment = $co{'comment'};
-			foreach my $line (@$comment) {
-				print escapeHTML($line) . "\n";
-			}
-			print "\t</description>\n" .
-			      "</item>\n";
+		print "<item>\n" .
+		      "\t<title>" . sprintf("%d %s %02d:%02d", $ad{'mday'}, $ad{'month'}, $ad{'hour'}, $ad{'min'}) . " - " . escapeHTML($co{'title'}) . "</title>\n" .
+		      "\t<link> " . $my_url . "?p=$project;a=commit;h=$commit</link>\n" .
+		      "\t<description>";
+		my $comment = $co{'comment'};
+		foreach my $line (@$comment) {
+			print escapeHTML($line) . "<br/>\n";
 		}
+		print "\t</description>\n" .
+		      "</item>\n";
 	}
-	if ($action eq "log") {
-		git_footer_html();
-	} elsif ($action eq "rss") {
-		print "</channel></rss>";
+	print "</channel></rss>";
+} elsif ($action eq "log") {
+	my $date = 0;
+	if ($time_back > 0) {
+		$date = time - $time_back*24*60*60;
 	}
+	my $head = git_head($project);
+	open my $fd, "-|", "$gitbin/git-rev-list --max-age=$date $head";
+	my (@revlist) = map { chomp; $_ } <$fd>;
+	close $fd;
+
+	git_header_html();
+	print "<div class=\"page_nav\">\n";
+	print "view  ";
+	print $cgi->a({-href => "$my_uri?p=$project;a=log"}, "last day") . " | " .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=7"}, "week") . " | " .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=31"}, "month") . " | " .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=365"}, "year") . " | " .
+	      $cgi->a({-href => "$my_uri?p=$project;a=log;t=0"}, "all") . "<br/>\n";
+	print "<br/><br/>\n" .
+	      "</div>\n";
+
+	if (!(@revlist)) {
+		my %co = git_commit($head);
+		print "<div class=\"page_body\"> Last change " . $co{'age_string'} . ".<br/><br/></div>\n";
+	}
+
+	foreach my $commit (@revlist) {
+		my %co = git_commit($commit);
+		my %ad = date_str($co{'author_epoch'});
+		print "<div>\n" .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "title"}, 
+		      "<span class=\"log_age\">" . $co{'age_string'} . "</span>" . escapeHTML($co{'title'})) . "\n" .
+		      "</div>\n";
+		print "<div class=\"title_text\">\n" .
+		      "<div class=\"log_link\">\n" .
+		      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
+		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") . "<br/>\n" .
+		      "</div>\n" .
+		      "<i>" . escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]</i><br/>\n" .
+		      "</div>\n" .
+		      "<div class=\"log_body\">\n";
+		my $comment = $co{'comment'};
+		foreach my $line (@$comment) {
+			last if ($line =~ m/^(signed-off|acked)-by:/i);
+				print escapeHTML($line) . "<br/>\n";
+		}
+		print "<br/>\n" .
+		      "</div>\n";
+	}
+	git_footer_html();
 } elsif ($action eq "commit") {
 	my %co = git_commit($hash);
-	if (!defined(%co)) {
+	if (!%co) {
 		die_error("", "Unknown commit object.");
 	}
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
@@ -532,12 +544,12 @@ if ($action eq "blob") {
 
 	my @difftree;
 	if (defined($co{'parent'})) {
-		open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
+		open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
 		@difftree = map { chomp; $_ } <$fd>;
 		close $fd;
 	} else {
 		# fake git-diff-tree output for initial revision
-		open my $fd, "-|", "$gitbin/ls-tree -r $hash";
+		open my $fd, "-|", "$gitbin/git-ls-tree -r $hash";
 		@difftree = map { chomp;  "+" . $_ } <$fd>;
 		close $fd;
 	}
@@ -664,10 +676,10 @@ if ($action eq "blob") {
 	git_footer_html();
 } elsif ($action eq "commitdiff") {
 	my %co = git_commit($hash);
-	if (!defined(%co)) {
+	if (!%co) {
 		die_error("", "Unknown commit object.");
 	}
-	open my $fd, "-|", "$gitbin/diff-tree -r " . $co{'parent'} . " $hash";
+	open my $fd, "-|", "$gitbin/git-diff-tree -r " . $co{'parent'} . " $hash";
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -710,7 +722,7 @@ if ($action eq "blob") {
 	if (!(defined($hash))) {
 		$hash = git_head($project);
 	}
-	open my $fd, "-|", "$gitbin/rev-list $hash";
+	open my $fd, "-|", "$gitbin/git-rev-list $hash";
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -725,7 +737,7 @@ if ($action eq "blob") {
 		my $parents  = $co{'parents'};
 		my $found = 0;
 		foreach my $parent (@$parents) {
-			open $fd, "-|", "$gitbin/diff-tree -r $parent $rev $file_name";
+			open $fd, "-|", "$gitbin/git-diff-tree -r $parent $rev $file_name";
 			my (@difftree) = map { chomp; $_ } <$fd>;
 			close $fd;
 
