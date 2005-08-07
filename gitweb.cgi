@@ -14,14 +14,16 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"062";
-my $projectroot =	"/home/kay/public_html/pub/scm";
+my $version =		"063";
+my $projectroot =	"/pub/scm";
 my $defaultprojects =	"linux/kernel/git";
-my $gitbin =		"/home/kay/bin/git";
-my $gittmp =		"/tmp";
+my $gitbin =		"/usr/bin";
+my $gittmp =		"/tmp/gitweb";
+my $giturl =		"/pub/software/scm/cogito";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 
+mkdir($gittmp, 0700);
 my $project = $cgi->param('p');
 my $action = $cgi->param('a');
 my $hash = $cgi->param('h');
@@ -113,7 +115,7 @@ sub git_header_html {
 <body>
 EOF
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"http://kernel.org/pub/software/scm/git/\">" .
+	      "<a href=\"$giturl\">" .
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	if ($defaultprojects ne "") {
 		print $cgi->a({-href => "$my_uri"}, "projects") . " / ";
