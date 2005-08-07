@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"148";
+my $version =		"149";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -193,7 +193,7 @@ div.title, a.title {
 a.title:hover { background-color: #d9d8d1; }
 div.title_text { padding:6px 8px; border: solid #d9d8d1; border-width:0px 0px 1px; }
 div.log_body { padding:8px 8px 8px 150px; }
-span.log_age { position:relative; float:left; width:142px; font-style:italic; }
+span.age { position:relative; float:left; width:142px; font-style:italic; }
 div.log_link {
 	font-size:10px; font-family:sans-serif; font-style:normal;
 	position:relative; float:left; width:142px;
@@ -729,19 +729,25 @@ sub git_summary {
 	      $cgi->a({-href => "$my_uri?p=$project;a=log", -class => "title"}, "recent commits") .
 	      "</div>\n";
 	my $i = 10;
+	print  "<div class=\"page_body\">\n" .
+	       "<table cellspacing=\"0\">\n";
 	foreach my $commit (@revlist) {
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
-		print "<div class=\"list\">\n" .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"},
-		      "<span class=\"log_age\">$co{'age_string'}</span>" . escapeHTML($co{'title'})) . "\n" .
-		      "</div>\n";
-		if (--$i == 0) {
-			print "<div class=\"list\">" . $cgi->a({-href => "$my_uri?p=$project;a=log"}, "...") . "</div>\n";
+		print "<tr>\n";
+		if (--$i > 0) {
+			print "<td>$co{'age_string'}</td>\n" .
+			      "<td>$co{'author_name'}</td>\n" .
+			      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, escapeHTML($co{'title'})) . "</td>\n" .
+			      "</tr>";
+		} else {
+			print "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=log"}, "...") . "</td>\n" .
+			"</tr>";
 			last;
 		}
 	}
-	print "<div class=\"list\"><br/></div>\n";
+	print "</table\n>" .
+	      "</div>\n";
 
 	my $taglist = git_read_tags();
 	if (defined @$taglist) {
@@ -749,18 +755,23 @@ sub git_summary {
 		      $cgi->a({-href => "$my_uri?p=$project;a=tags", -class => "title"}, "recent tags") .
 		      "</div>\n";
 		my $i = 10;
+		print  "<div class=\"page_body\">\n" .
+		       "<table cellspacing=\"0\">\n";
 		foreach my $entry (@$taglist) {
 			my %tag = %$entry;
-			print "<div class=\"list\">\n" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"},
-			      "<span class=\"log_age\">$tag{'age'}</span>" .  escapeHTML($tag{'name'})) . "\n" .
-			      "</div>\n";
-			if (--$i == 0) {
-				print "<div class=\"list\">" . $cgi->a({-href => "$my_uri?p=$project;a=tags"}, "...") . "</div>\n";
+			print "<tr>\n";
+			if (--$i > 0) {
+				print "<td>$tag{'age'}</td>\n" .
+				      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, escapeHTML($tag{'name'})) . "</td>\n" .
+				      "</tr>";
+			} else {
+				print "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=tags"}, "...") . "</td>\n" .
+				"</tr>";
 				last;
 			}
 		}
-		print "<div class=\"list\"><br/></div>\n";
+		print "</table\n>" .
+		      "</div>\n";
 	}
 	git_footer_html();
 }
@@ -783,7 +794,7 @@ sub git_tags {
 			my %tag = %$entry;
 			print "<div class=\"list\">\n" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"},
-			      "<span class=\"log_age\">$tag{'age'}</span>" .  escapeHTML($tag{'name'})) . "\n" .
+			      "<span class=\"age\">$tag{'age'}</span>" .  escapeHTML($tag{'name'})) . "\n" .
 			      "</div>\n";
 		}
 	}
@@ -1002,7 +1013,7 @@ sub git_log {
 		my %ad = date_str($co{'author_epoch'});
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "title"},
-		      "<span class=\"log_age\">$co{'age_string'}</span>" . escapeHTML($co{'title'})) . "\n" .
+		      "<span class=\"age\">$co{'age_string'}</span>" . escapeHTML($co{'title'})) . "\n" .
 		      "</div>\n";
 		print "<div class=\"title_text\">\n" .
 		      "<div class=\"log_link\">\n" .
@@ -1343,7 +1354,7 @@ sub git_history {
 			}
 			print "<div class=\"list\">\n" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"},
-			      "<span class=\"log_age\">$co{'age_string'}</span>" . escapeHTML($co{'title'})) . "\n" .
+			      "<span class=\"age\">$co{'age_string'}</span>" . escapeHTML($co{'title'})) . "\n" .
 			      "</div>\n";
 			print "<div class=\"list_link\">\n" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
