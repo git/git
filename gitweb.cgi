@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"225";
+my $version =		"227";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -53,8 +53,6 @@ if (defined $action) {
 		git_opml();
 		exit;
 	}
-} else {
-	$action = "summary";
 }
 
 my $project = $cgi->param('p');
@@ -76,7 +74,7 @@ if (defined $project) {
 		die_error(undef, "No such project.");
 	}
 	$rss_link = "<link rel=\"alternate\" title=\"$project log\" href=\"$my_uri?p=$project;a=rss\" type=\"application/rss+xml\"/>";
-	$ENV{'GIT_OBJECT_DIRECTORY'} = "$projectroot/$project/objects";
+	$ENV{'GIT_DIR'} = "$projectroot/$project";
 } else {
 	git_project_list();
 	exit;
@@ -95,9 +93,15 @@ if (defined $file_name) {
 }
 
 my $hash = $cgi->param('h');
-if (defined $hash && !($hash =~ m/^[0-9a-fA-F]{40}$/)) {
-	undef $hash;
-	die_error(undef, "Invalid hash parameter.");
+if (defined $hash) {
+	if ($hash =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
+		undef $hash;
+		die_error(undef, "Non-canonical hash parameter.");
+	}
+	if ($hash =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~\:\!]/) {
+		undef $hash;
+		die_error(undef, "Invalid character in hash parameter.");
+	}
 }
 
 my $hash_parent = $cgi->param('hp');
@@ -120,7 +124,6 @@ if (defined $page) {
 	}
 }
 
-
 my $searchtext = $cgi->param('s');
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
@@ -130,7 +133,7 @@ if (defined $searchtext) {
 	$searchtext = quotemeta $searchtext;
 }
 
-if ($action eq "summary") {
+if (!defined $action || $action eq "summary") {
 	git_summary();
 	exit;
 } elsif ($action eq "branches") {
@@ -722,7 +725,7 @@ sub git_project_list {
 		if (!defined $head) {
 			next;
 		}
-		$ENV{'GIT_OBJECT_DIRECTORY'} = "$projectroot/$proj{'path'}/objects";
+		$ENV{'GIT_DIR'} = "$projectroot/$proj{'path'}";
 		my %co = git_read_commit($head);
 		if (!%co) {
 			next;
@@ -766,8 +769,23 @@ sub git_read_refs {
 	my $ref_dir = shift;
 	my @reflist;
 
+	my @refs;
 	opendir my $dh, "$projectroot/$project/$ref_dir";
-	my @refs = grep !m/^\./, readdir $dh;
+	while (my $dir = readdir($dh)) {
+		if ($dir =~ m/^\./) {
+			next;
+		}
+		if (-d "$projectroot/$project/$ref_dir/$dir") {
+			opendir my $dh2, "$projectroot/$project/$ref_dir/$dir";
+			my @subdirs = grep !m/^\./, readdir $dh2;
+			closedir($dh2);
+			foreach my $subdir (@subdirs) {
+				push @refs, "$dir/$subdir"
+			}
+			next;
+		}
+		push @refs, $dir;
+	}
 	closedir($dh);
 	foreach my $ref_file (@refs) {
 		my $ref_id = git_read_hash("$project/$ref_dir/$ref_file");
@@ -897,14 +915,14 @@ sub git_summary {
 			if ($i-- > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}", -class => "list"}, "<b>" .
+				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'name'}", -class => "list"}, "<b>" .
 				      escapeHTML($tag{'name'}) . "</b>") .
 				      "</td>\n" .
 				      "<td class=\"link\">" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'});
+				      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'name'}"}, $tag{'type'});
 				if ($tag{'type'} eq "commit") {
-				      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}"}, "shortlog") .
-				            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log");
+				      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
+				            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'name'}"}, "log");
 				}
 				print "</td>\n" .
 				      "</tr>";
@@ -936,12 +954,12 @@ sub git_summary {
 			if ($i-- > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}", -class => "list"},
+				      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}", -class => "list"},
 				      "<b>" . escapeHTML($tag{'name'}) . "</b>") .
 				      "</td>\n" .
 				      "<td class=\"link\">" .
-				      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}"}, "shortlog") .
-				      " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log") .
+				      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
+				      " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'name'}"}, "log") .
 				      "</td>\n" .
 				      "</tr>";
 			} else {
@@ -984,14 +1002,14 @@ sub git_tags {
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}", -class => "list"},
+			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}", -class => "list"},
 			      "<b>" . escapeHTML($tag{'name'}) . "</b>") .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'id'}"}, $tag{'type'});
+			      $cgi->a({-href => "$my_uri?p=$project;a=$tag{'type'};h=$tag{'name'}"}, $tag{'type'});
 			if ($tag{'type'} eq "commit") {
-			      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}"}, "shortlog") .
-			            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log");
+			      print " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
+			            " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'name'}"}, "log");
 			}
 			print "</td>\n" .
 			      "</tr>";
@@ -1030,11 +1048,11 @@ sub git_branches {
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}", -class => "list"}, "<b>" . escapeHTML($tag{'name'}) . "</b>") .
+			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}", -class => "list"}, "<b>" . escapeHTML($tag{'name'}) . "</b>") .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'id'}"}, "shortog") .
-			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'id'}"}, "log") .
+			      $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$tag{'name'}"}, "shortlog") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=log;h=$tag{'name'}"}, "log") .
 			      "</td>\n" .
 			      "</tr>";
 		}
@@ -1270,7 +1288,7 @@ sub git_opml {
 		if (!defined $head) {
 			next;
 		}
-		$ENV{'GIT_OBJECT_DIRECTORY'} = "$projectroot/$proj{'path'}/objects";
+		$ENV{'GIT_DIR'} = "$projectroot/$proj{'path'}";
 		my %co = git_read_commit($head);
 		if (!%co) {
 			next;
