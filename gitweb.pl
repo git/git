@@ -2,7 +2,7 @@
 
 # gitweb.pl - simple web interface to track changes in git repositories
 #
-# Version 041
+# Version 042
 #
 # (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke <ch@gierke.de>
@@ -127,16 +127,16 @@ sub git_commit {
 			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
-			$co{'author_time_utc'} = $2;
+			$co{'author_time_epoch'} = $2;
 			$co{'author_timezone'} = $3;
-			$co{'author_timezone'} =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
-			$co{'author_time_local'} = $co{'author_time_utc'} + (($1 + ($2/60)) * 3600);
+			$co{'author_name'} = $co{'author'};
+			$co{'author_name'} =~ s/ <.*//;
 		} elsif ($line =~ m/^committer (.*) ([0-9]+) (.*)$/) {
 			$co{'committer'} = $1;
-			$co{'committer_time_utc'} = $2;
+			$co{'committer_time_epoch'} = $2;
 			$co{'committer_timezone'} = $3;
-			$co{'committer_timezone'} =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
-			$co{'committer_time_local'} = $co{'committer_time_utc'} + (($1 + ($2/60)) * 3600);
+			$co{'committer_name'} = $co{'committer'};
+			$co{'committer_name'} =~ s/ <.*//;
 		}
 	}
 	$co{'parents'} = \@parents;
@@ -216,13 +216,13 @@ sub git_diff_html {
 	}
 }
 
-# git cares only about the executable bit
 sub mode_str {
 	my $perms = oct shift;
 	my $modestr;
 	if ($perms & 040000) {
 		$modestr .= 'drwxrwxr-x';
 	} else {
+		# git cares only about the executable bit
 		if ($perms & 0100) {
 			$modestr .= '-rwxrwxr-x';
 		} else {
@@ -233,17 +233,22 @@ sub mode_str {
 }
 
 sub date_str {
-	my $date_utc = shift;
-	my $format = shift || "date-time";
+	my $epoch = shift;
+	my $tz = shift || "-0000";
 
+	my %date;
 	my @months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
 	my @days = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
-	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($date_utc);
-	if ($format eq "date-time") {
-		return sprintf "%s, %d %s %4d %02d:%02d:%02d", $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec;
-	} elsif ($format eq "day-time") {
-		return sprintf "%d %s %02d:%02d", $mday, $months[$mon], $hour ,$min;
-	}
+	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($epoch);
+	$date{'hour'} = $hour;
+	$date{'rfc2822'} = sprintf "%s, %d %s %4d %02d:%02d:%02d +0000", $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec;
+	$date{'mday-time'} = sprintf "%d %s %02d:%02d", $mday, $months[$mon], $hour ,$min;
+
+	$tz =~ m/((-|\+)[0-9][0-9])([0-9][0-9])/;
+	my $local = $epoch + (($1 + ($2/60)) * 3600);
+	($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($local);
+	$date{'rfc2822_local'} = sprintf "%s, %d %s %4d %02d:%02d:%02d %s", $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec, $tz;
+	return %date;
 }
 
 if ($action eq "git-logo.png") {
@@ -353,7 +358,8 @@ if ($action eq "blob") {
 	for (my $i = 0; $i <= $#revtree; $i++) {
 		my $commit = $revtree[$i];
 		my %co = git_commit($commit);
-		my $age = time - $co{'committer_time_utc'};
+		my %ad = date_str($co{'author_time_epoch'});
+		my $age = time - $co{'committer_time_epoch'};
 		my $age_string;
 		if ($age > 60*60*24*365*2) {
 			$age_string = int $age/60/60/24/365;
@@ -393,8 +399,7 @@ if ($action eq "blob") {
 			print $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "view diff") . "<br/>\n";
 			print "</td>\n";
 			print "<td class=\"head2\">\n";
-			print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) .  " [" . date_str($co{'author_time_utc'}) . "]<br/>\n";
-			print "committer " . escapeHTML($co{'committer'}) .  " [" . date_str($co{'committer_time_utc'}) . "]<br/>\n";
+			print escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]<br/>\n";
 			print "</td>";
 			print "</tr>\n";
 			print "<tr>\n";
@@ -413,7 +418,7 @@ if ($action eq "blob") {
 			print "</tr>\n";
 		} elsif ($action eq "rss") {
 			last if ($i >= 20);
-			print "<item>\n\t<title>" . date_str($co{'author_time_utc'}, "day-time") . " - " . escapeHTML($co{'title'}) . "</title>\n";
+			print "<item>\n\t<title>" . $ad{'mday-time'} . " - " . escapeHTML($co{'title'}) . "</title>\n";
 			print "\t<link> " . $my_url . "/$project/commit/$commit</link>\n";
 			print "\t<description>";
 			my $comment = $co{'comment'};
@@ -432,6 +437,8 @@ if ($action eq "blob") {
 	}
 } elsif ($action eq "commit") {
 	my %co = git_commit($hash);
+	my %ad = date_str($co{'author_time_epoch'}, $co{'author_time_zone'});
+	my %cd = date_str($co{'committer_time_epoch'}, $co{'committer_time_zone'});
 	open my $fd, "-|", "$gitbin/diff-tree", "-r", $co{'parent'}, $hash;
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -445,14 +452,11 @@ if ($action eq "blob") {
 	print "<table cellspacing=\"0\" class=\"log\">\n";
 	print "<tr>\n";
 	print "<td class=\"head2\">";
-	print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) .  " [" . date_str($co{'author_time_utc'}) . "]<br/>\n";
-
-	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($co{'author_time_local'});
-	if ($hour < 7 ) { print "<span style=\"color: #990000;\">"; }
-	print "localtime " . date_str($co{'author_time_local'}) . " " . $co{'author_timezone'} . "<br/>\n";
-	if ($hour < 7 ) { print "</span>"; }
-	print "committer " . escapeHTML($co{'committer'}) .  " [" . date_str($co{'committer_time_utc'}) . "]<br/>\n";
-	print "localtime " . date_str($co{'committer_time_local'}) . " " . $co{'committer_timezone'} . "<br/>\n";
+	print "author &nbsp; &nbsp;" . escapeHTML($co{'author'}) .  " [" . $ad{'rfc2822'} . "]<br/>\n";
+	if ($ad{'hour'} < 7 ) { print "<span style=\"color: #990000;\">"; }
+	print "localtime " . $ad{'rfc2822_local'} . "<br/>\n";
+	if ($ad{'hour'} < 7 ) { print "</span>"; }
+	print "committer " . escapeHTML($co{'committer'}) .  " [" . $cd{'rfc2822'} . "]<br/>\n";
 	print "commit &nbsp; &nbsp;$hash<br/>\n";
 	print "tree &nbsp; &nbsp; &nbsp;" . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'}"}, $co{'tree'}) . "<br/>\n";
 	my $parents  = $co{'parents'};
