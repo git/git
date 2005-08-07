@@ -14,42 +14,45 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $cgi = new CGI;
 
-my $version =		"053";
-my $projectroot =	"/pub/scm";
+my $version =		"055";
+my $projectroot =	"/home/kay/public_html/pub/scm";
 my $defaultprojects =	"linux/kernel/git";
-my $gitbin =		"/usr/bin";
-my $gittmp =		"/tmp/gitweb";
-my $giturl =            "/pub/software/scm/cogito";
+my $gitbin =		"/home/kay/bin/git";
+my $gittmp =		"/tmp";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
-
-mkdir($gittmp, 0700);
 
 my $project = $cgi->param('p');
 my $action = $cgi->param('a');
 my $hash = $cgi->param('h');
 my $hash_parent = $cgi->param('hp');
 my $time_back = $cgi->param('t');
-if (!(defined($time_back))) {
-	$time_back = 1;
-}
 $ENV{'SHA1_FILE_DIRECTORY'} = "$projectroot/$project/objects";
 
-# sanitize input
-$action =~ s/[^0-9a-zA-Z\.\-]//g;
-$hash =~ s/[^0-9a-fA-F]//g;
-$hash_parent =~ s/[^0-9a-fA-F]//g;
-$time_back =~ s/[^0-9]+//g;
+# validate input
 if (defined($project) && $project =~ /(^|\/)(|\.|\.\.)($|\/)/) {
-	print $cgi->header(-type=>'text/plain', -status=>'403 Permission denied');
-	print "Malformed query, file missing or permission denied\n";
-	exit 0;
+	error_page("403 Permission denied", "Invalid project parameter.");
 }
-$project =~ s/|//g;
+if (defined($action) && !$action =~ m/^[0-9a-zA-Z\.\-]+$/) {
+	error_page("403 Permission denied", "Invalid action parameter.");
+}
+if (defined($hash) && !($hash =~ m/^[0-9a-fA-F]{40}$/)) {
+	error_page("403 Permission denied", "Invalid hash parameter.");
+}
+if (defined($hash_parent) && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
+	error_page("403 Permission denied", "Invalid parent hash parameter.");
+}
+if (defined($time_back) && !($time_back =~ m/^[0-9]+$/)) {
+	error_page("403 Permission denied", "Invalid time parameter.");
+} else {
+	$time_back = 1;
+}
 
 sub git_header_html {
-	print $cgi->header(-type => 'text/html', -charset => 'utf-8');
-print <<EOF;
+	my $status = shift || "200 OK";
+
+	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status);
+	print <<EOF;
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
@@ -104,7 +107,7 @@ print <<EOF;
 <body>
 EOF
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"$giturl\">" .
+	      "<a href=\"http://kernel.org/pub/software/scm/git/\">" .
 	      "<img src=\"$my_uri?a=git-logo.png\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/></a>";
 	if ($defaultprojects ne "") {
 		print $cgi->a({-href => "$my_uri"}, "projects") . " / ";
@@ -126,6 +129,18 @@ sub git_footer_html {
 	}
 	print "</div>";
 	print "</body>\n</html>";
+}
+
+sub error_page {
+	my $status = shift || "403 Permission denied";
+	my $error = shift || "Malformed query, file missing or permission denied"; 
+	git_header_html($status);
+	print "<div class=\"page_body\">\n" .
+	      "<br/><br/>\n";
+	print "$error\n";
+	print "<br/></div>\n";
+	git_footer_html();
+	exit 0;
 }
 
 sub git_head {
@@ -580,10 +595,5 @@ if ($action eq "blob") {
 	print "</div>";
 	git_footer_html();
 } else {
-	git_header_html();
-	print "<div class=\"page_body\">\n" .
-	      "<br/><br/>\n";
-	print "unknown action\n";
-	print "<br/></div>\n";
-	git_footer_html();
+	error_page("403 Forbidden", "unknown action");
 }
