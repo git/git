@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"142";
+my $version =		"143";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -634,7 +634,8 @@ sub git_project_list {
 		      $cgi->a({-href => "$my_uri?p=$proj{'path'};a=summary"}, "summary") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$proj{'path'};a=log"}, "log") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$proj{'path'};a=tree"}, "tree") .
-		      "</td>\n";
+		      "</td>\n" .
+		      "</tr>\n";
 	}
 	print "</table>\n" .
 	      "<br/>\n" .
@@ -715,7 +716,7 @@ sub git_summary {
 	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
 	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n" .
 	      "</table>\n" .
-	      "</div><br/>\n";
+	      "<br/></div>\n";
 	open my $fd, "-|", "$gitbin/git-rev-list --max-count=11 " . git_read_hash("$project/HEAD") || die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -735,7 +736,7 @@ sub git_summary {
 			last;
 		}
 	}
-	print "<br/>\n";
+	print "<div class=\"list\"><br/></div>\n";
 
 	my $taglist = git_read_tags();
 	if (defined @$taglist) {
@@ -754,8 +755,8 @@ sub git_summary {
 				last;
 			}
 		}
+		print "<div class=\"list\"><br/></div>\n";
 	}
-	print "<br/>\n";
 	git_footer_html();
 }
 
@@ -781,7 +782,7 @@ sub git_tags {
 			      "</div>\n";
 		}
 	}
-	print "<br/>\n";
+	print "<div class=\"list\"><br/></div>\n";
 	git_footer_html();
 }
 
