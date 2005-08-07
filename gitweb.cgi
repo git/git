@@ -14,7 +14,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"118";
+my $version =		"121";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -460,7 +460,7 @@ sub date_str {
 }
 
 # git-logo (cached in browser for one day)
-sub git_logo() {
+sub git_logo {
 	print $cgi->header(-type => 'image/png', -expires => '+1d');
 	# cat git-logo.png | hexdump -e '16/1 " %02x"  "\n"' | sed 's/ /\\x/g'
 	print	"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" .
@@ -510,15 +510,14 @@ sub git_project_list {
 	@list = sort @list;
 
 	git_header_html();
-	print "<div class=\"page_body\">\n";
+	print "<div class=\"page_body\"><br/>\n";
 	print "<table cellspacing=\"0\">\n";
 	print "<tr>\n" .
 	      "<th>Project</th>\n" .
 	      "<th>Description</th>\n" .
 	      "<th>Owner</th>\n" .
 	      "<th>last change</th>\n" .
-	      "</tr>\n" .
-	      "<br/>";
+	      "</tr>\n";
 	foreach my $proj (@list) {
 		my $head = git_read_head($proj);
 		if (!defined $head) {
@@ -614,7 +613,7 @@ sub git_blob {
 	if (defined $file_name) {
 		print "<div class=\"page_path\">/$file_name</div>\n";
 	}
-	print "<div class=\"page_body\"><pre>\n" .
+	print "<div class=\"page_body\"><pre>\n";
 	my $nr;
 	while (my $line = <$fd>) {
 		$nr++;
@@ -710,7 +709,7 @@ sub git_rss {
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		print "<item>\n" .
-		      "\t<title>" . sprintf("%d %s %02d:%02d", $ad{'mday'}, $ad{'month'}, $ad{'hour'}, $ad{'min'}) . " - " . escapeHTML($co{'title'}) . "</title>\n" .
+		      "\t<title>" . sprintf("%d %s %02d:%02d", $ad{'mday'}, $ad{'month'}, $ad{'hour'}, $ad{'minute'}) . " - " . escapeHTML($co{'title'}) . "</title>\n" .
 		      "\t<link> " . $my_url . "?p=$project;a=commit;h=$commit</link>\n" .
 		      "\t<description>";
 		my $comment = $co{'comment'};
@@ -763,8 +762,9 @@ sub git_log {
 		      "</div>\n";
 		print "<div class=\"title_text\">\n" .
 		      "<div class=\"log_link\">\n" .
-		      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
-		      $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") . "<br/>\n" .
+		      "view " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "diff") .
+		      "<br/>\n" .
 		      "</div>\n" .
 		      "<i>" . escapeHTML($co{'author_name'}) .  " [" . $ad{'rfc2822'} . "]</i><br/>\n" .
 		      "</div>\n" .
@@ -1105,8 +1105,10 @@ sub git_history {
 			      "</div>\n";
 			print "<div class=\"link\">\n" .
 			      "view " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") . " | " .
-			      $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" .  $co{'tree'} . ";hb=$commit"}, "tree") . "<br/><br/>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=" .  $co{'tree'} . ";hb=$commit"}, "tree") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=blob;hb=$commit;f=" . $file}, "file") .
+			      "<br/><br/>\n" .
 			      "</div>\n";
 			undef $commit;
 		}
