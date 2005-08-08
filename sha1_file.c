@@ -1297,8 +1297,11 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 	ssize_t size;
 	unsigned long objsize;
 	int posn = 0;
-	void *buf = map_sha1_file_internal(sha1, &objsize);
+	void *map = map_sha1_file_internal(sha1, &objsize);
+	void *buf = map;
+	void *temp_obj = NULL;
 	z_stream stream;
+
 	if (!buf) {
 		unsigned char *unpacked;
 		unsigned long len;
@@ -1314,7 +1317,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 		memset(&stream, 0, sizeof(stream));
 		deflateInit(&stream, Z_BEST_COMPRESSION);
 		size = deflateBound(&stream, len + hdrlen);
-		buf = xmalloc(size);
+		temp_obj = buf = xmalloc(size);
 
 		/* Compress it */
 		stream.next_out = buf;
@@ -1332,6 +1335,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 		while (deflate(&stream, Z_FINISH) == Z_OK)
 			/* nothing */;
 		deflateEnd(&stream);
+		free(unpacked);
 		
 		objsize = stream.total_out;
 	}
@@ -1348,6 +1352,12 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 		}
 		posn += size;
 	} while (posn < objsize);
+
+	if (map)
+		munmap(map, objsize);
+	if (temp_obj)
+		free(temp_obj);
+
 	return 0;
 }
 
