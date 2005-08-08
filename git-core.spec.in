@@ -2,7 +2,7 @@
 Name: 		git-core
 Version: 	@@VERSION@@
 Release: 	1
-Vendor: 	Linus Torvalds <torvalds@osdl.org>
+Vendor: 	Junio C Hamano <junkio@cox.net>
 Summary:  	Git core and tools
 License: 	GPL
 Group: 		Development/Tools
@@ -13,22 +13,23 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-root
 Prereq: 	sh-utils, diffutils, rsync, rcs, mktemp >= 1.5
 
 %description
-GIT comes in two layers. The bottom layer is merely an extremely fast
-and flexible filesystem-based database designed to store directory trees
-with regard to their history. The top layer is a SCM-like tool which
-enables human beings to work with the database in a manner to a degree
-similar to other SCM tools (like CVS, BitKeeper or Monotone).
+This is a stupid (but extremely fast) directory content manager.  It
+doesn't do a whole lot, but what it _does_ do is track directory
+contents efficiently. It is intended to be the base of an efficient,
+distributed source code management system. This package includes
+rudimentary tools that can be used as a SCM, but you should look
+elsewhere for tools for ordinary humans layered on top of this.
 
 %prep
 %setup -q
 
 %build
-
 make prefix=%{_prefix} all %{!?_without_docs: doc}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make dest=$RPM_BUILD_ROOT prefix=%{_prefix} mandir=%{_mandir} install install-tools %{!?_without_docs: install-doc}
+make dest=$RPM_BUILD_ROOT prefix=%{_prefix} mandir=%{_mandir} \
+     install install-tools %{!?_without_docs: install-doc}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -43,7 +44,13 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %{_mandir}/man7/*.7.gz}
 
 %changelog
+* Sun Aug 07 2005 Horst H. von Brand <vonbrand@inf.utfsm.cl>
+- Redid the description
+- Cut overlong make line, loosened changelog a bit
+- I think Junio (or perhaps OSDL?) should be vendor...
+
 * Thu Jul 14 2005 Eric Biederman <ebiederm@xmission.com>
 - Add the man pages, and the --without docs build option
+
 * Wed Jul 7 2005 Chris Wright <chris@osdl.org>
 - initial git spec file
