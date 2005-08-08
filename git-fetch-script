@@ -15,7 +15,7 @@ http://* | https://*)
         fi
 	_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]' &&
 	_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40" &&
-	head=$(curl -ns $curl_extra_args "$merge_repo/$merge_head") &&
+	head=$(curl -nsf $curl_extra_args "$merge_repo/$merge_head") &&
 	expr "$head" : "$_x40\$" >/dev/null || {
 		echo >&2 "Failed to fetch $merge_head from $merge_repo"
 	        exit 1
