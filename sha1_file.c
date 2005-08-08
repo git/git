@@ -1165,6 +1165,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 			free(buffer);
 			return NULL;
 		}
+		free(buffer);
 		/* Now we have the ID of the referred-to object in
 		 * actual_sha1.  Check again. */
 	}
