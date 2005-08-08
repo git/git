@@ -1,7 +1,7 @@
 Source: git-core
 Section: devel
 Priority: optional
-Maintainer: Linus Torvalds <torvalds@osdl.org>
+Maintainer: Junio C Hamano <junkio@cox.net>
 Build-Depends-Indep: libz-dev, libssl-dev, libcurl3-dev, asciidoc > 6.0.3, xmlto, debhelper (>= 4.0.0)
 Standards-Version: 3.6.1
 
