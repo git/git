@@ -68,8 +68,13 @@ int git_mkstemp(char *path, size_t len, const char *template)
 	if ((env = getenv("TMPDIR")) == NULL) {
 		strcpy(pch, "/tmp/");
 		len -= 5;
-	} else
-		len -= snprintf(pch, len, "%s/", env);
+		pch += 5;
+	} else {
+		size_t n = snprintf(pch, len, "%s/", env);
+
+		len -= n;
+		pch += n;
+	}
 
 	safe_strncpy(pch, template, len);
 
