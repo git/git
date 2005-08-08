@@ -3,7 +3,7 @@
 . git-sh-setup-script || die "Not a git archive"
 
 usage () {
-    echo >&2 "usage: $0 [--heads] [--tags] [--overwrite | --store] repo"
+    echo >&2 "usage: $0 [--heads] [--tags] <repository> <refs>..."
     exit 1;
 }
 
@@ -12,10 +12,6 @@ do
   case "$1" in
   -h|--h|--he|--hea|--head|--heads)
   heads=heads; shift ;;
-  -o|--o|--ov|--ove|--over|--overw|--overwr|--overwri|--overwrit|--overwrite)
-  overwrite=overwrite; shift ;;
-  -s|--s|--st|--sto|--stor|--store)
-  store=store; shift ;;
   -t|--t|--ta|--tag|--tags)
   tags=tags; shift ;;
   --)
@@ -27,15 +23,15 @@ do
   esac
 done
 
-case "$#" in 1) ;; *) usage ;; esac
-case ",$store,$overwrite," in *,,*) ;; *) usage ;; esac
+case "$#" in 0) usage ;; esac
 
 case ",$heads,$tags," in
 ,,,) heads=heads tags=tags other=other ;;
 esac
 
-. git-parse-remote "$@"
+. git-parse-remote "$1"
 peek_repo="$_remote_repo"
+shift
 
 tmp=.ls-remote-$$
 trap "rm -fr $tmp-*" 0 1 2 3 15
@@ -65,7 +61,7 @@ rsync://* )
 	git-peek-remote "$peek_repo"
 	;;
 esac |
-
+sort -t '	' -k 2 |
 while read sha1 path
 do
 	case "$path" in
@@ -82,23 +78,23 @@ do
 	*)
 		continue;;
 	esac
-
-	echo "$sha1	$path"
-
-	case "$path,$store,$overwrite," in
-	*,,, | HEAD,*) continue ;;
+	case "$#" in
+	0)
+		match=yes ;;
+	*)
+		match=no
+		for pat
+		do
+			case "/$path" in
+			*/$pat )
+				match=yes
+				break ;;
+			esac
+		done
 	esac
-
-	if test -f "$GIT_DIR/$path" && test "$overwrite" == ""
-	then
-		continue
-	fi
-
-	# Be careful.  We may not have that object yet!
-	if git-cat-file -t "$sha1" >/dev/null 2>&1
-	then
-		echo "$sha1" >"$GIT_DIR/$path"
-	else
-		echo >&2 "* You have not fetched updated $path ($sha1)."
-	fi
+	case "$match" in
+	no)
+		continue ;;
+	esac
+	echo "$sha1	$path"
 done
