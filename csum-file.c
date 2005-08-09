@@ -45,6 +45,7 @@ int sha1close(struct sha1file *f, unsigned char *result, int update)
 		sha1flush(f, 20);
 	if (close(f->fd))
 		die("%s: sha1 file error on close (%s)", f->name, strerror(errno));
+	free(f);
 	return 0;
 }
 

@@ -46,7 +46,7 @@ http://* | https://* )
         if [ -n "$GIT_SSL_NO_VERIFY" ]; then
             curl_extra_args="-k"
         fi
-	curl -ns $curl_extra_args "$peek_repo/info/refs" || exit 1
+	curl -nsf $curl_extra_args "$peek_repo/info/refs" || exit 1
 	;;
 
 rsync://* )

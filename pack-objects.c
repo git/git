@@ -382,6 +382,10 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		if (idx >= window)
 			idx = 0;
 	}
+
+	for (i = 0; i < window; ++i)
+		free(array[i].data);
+	free(array);
 }
 
 int main(int argc, char **argv)

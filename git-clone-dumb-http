@@ -14,7 +14,7 @@ if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 fi
 http_fetch () {
 	# $1 = Remote, $2 = Local
-	curl -ns $curl_extra_args "$1" >"$2"
+	curl -nsf $curl_extra_args "$1" >"$2"
 }
 
 cd "$D" && 
