@@ -325,8 +325,8 @@ static void write_header(const unsigned char *sha1, char typeflag, const char *b
 	memcpy(&header[257], "ustar", 6);
 	memcpy(&header[263], "00", 2);
 
-	printf(&header[329], "%07o", 0);	/* devmajor */
-	printf(&header[337], "%07o", 0);	/* devminor */
+	sprintf(&header[329], "%07o", 0);	/* devmajor */
+	sprintf(&header[337], "%07o", 0);	/* devminor */
 
 	memset(&header[148], ' ', 8);
 	for (i = 0; i < RECORDSIZE; i++)

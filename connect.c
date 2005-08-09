@@ -166,7 +166,8 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 			if (matched_src)
 				break;
 			errs = 1;
-			error("src refspec %s does not match any.");
+			error("src refspec %s does not match any.",
+			      rs[i].src);
 			break;
 		default:
 			errs = 1;

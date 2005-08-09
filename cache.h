@@ -40,6 +40,10 @@
 #define NORETURN
 #endif
 
+#ifndef __attribute__
+#define __attribute(x)
+#endif
+
 /*
  * Intensive research over the course of many years has shown that
  * port 9418 is totally unused by anything else. Or
@@ -171,8 +175,8 @@ extern void rollback_index_file(struct cache_file *);
 #define TYPE_CHANGED    0x0040
 
 /* Return a statically allocated filename matching the sha1 signature */
-extern char *mkpath(const char *fmt, ...);
-extern char *git_path(const char *fmt, ...);
+extern char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern char *sha1_file_name(const unsigned char *sha1);
 extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
@@ -218,8 +222,8 @@ extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 
 /* General helper functions */
 extern void usage(const char *err) NORETURN;
-extern void die(const char *err, ...) NORETURN;
-extern int error(const char *err, ...);
+extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1, 2)));
+extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
