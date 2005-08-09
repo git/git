@@ -63,7 +63,11 @@ static void show_commit(struct commit *commit)
 			parents = parents->next;
 		}
 	}
-	putchar('\n');
+	if (commit_format == CMIT_FMT_ONELINE)
+		putchar(' ');
+	else
+		putchar('\n');
+
 	if (verbose_header) {
 		static char pretty_header[16384];
 		pretty_print_commit(commit_format, commit->buffer, ~0, pretty_header, sizeof(pretty_header));
@@ -503,7 +507,10 @@ int main(int argc, char **argv)
 			commit_format = get_commit_format(arg+8);
 			verbose_header = 1;
 			hdr_termination = '\n';
-			prefix = "commit ";
+			if (commit_format == CMIT_FMT_ONELINE)
+				prefix = "";
+			else
+				prefix = "commit ";
 			continue;
 		}
 		if (!strncmp(arg, "--no-merges", 11)) {

@@ -40,6 +40,7 @@ enum cmit_fmt {
 	CMIT_FMT_DEFAULT = CMIT_FMT_MEDIUM,
 	CMIT_FMT_SHORT,
 	CMIT_FMT_FULL,
+	CMIT_FMT_ONELINE,
 };
 
 extern enum cmit_fmt get_commit_format(const char *arg);
