@@ -4,13 +4,14 @@
 . git-sh-setup-script || die "Not a git archive"
 
 usage () {
-    echo >&2 "Usage: git-tag-script [-a | -s] [-f] tagname"
+    echo >&2 "Usage: git-tag-script [-a | -s] [-f] [-m "tag message"] tagname"
     exit 1
 }
 
 annotate=
 signed=
 force=
+message=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -23,6 +24,11 @@ do
 	;;
     -f)
 	force=1
+	;;
+    -m)
+    	annotate=1
+	shift
+	message="$1"
 	;;
     -*)
         usage
@@ -48,10 +54,14 @@ tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 trap 'rm -f .tmp-tag* .tagmsg .editmsg' 0
 
 if [ "$annotate" ]; then
-    ( echo "#"
-      echo "# Write a tag message"
-      echo "#" ) > .editmsg
-    ${VISUAL:-${EDITOR:-vi}} .editmsg || exit
+    if [ -z "$message" ]; then
+        ( echo "#"
+          echo "# Write a tag message"
+          echo "#" ) > .editmsg
+        ${VISUAL:-${EDITOR:-vi}} .editmsg || exit
+    else
+        echo "$message" > .editmsg
+    fi
 
     grep -v '^#' < .editmsg | git-stripspace > .tagmsg
 
