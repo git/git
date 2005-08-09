@@ -37,7 +37,7 @@ do
 	esac
 	S=`cat "$GIT_DIR/HEAD"` &&
         GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p $commit &&
-	git-commit-script -m "$commit" || {
+	git-commit-script -C "$commit" || {
 		echo $commit >>$fail
 		git-read-tree --reset -u $S
 	}

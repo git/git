@@ -23,7 +23,7 @@ The output is intended to be used as:
     while read commit
     do
         GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p "$commit" &&
-	git-commit-script -m "$commit"
+	git-commit-script -C "$commit"
     done
 '
 
