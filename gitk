@@ -387,7 +387,7 @@ proc makewindow {} {
     set ctext .ctop.cdet.left.ctext
     text $ctext -bg white -state disabled -font $textfont \
 	-width $geometry(ctextw) -height $geometry(ctexth) \
-	-yscrollcommand ".ctop.cdet.left.sb set"
+	-yscrollcommand ".ctop.cdet.left.sb set" -wrap none
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
@@ -1704,10 +1704,19 @@ proc selcanvline {w x y} {
     selectline $l 1
 }
 
+proc commit_descriptor {p} {
+    global commitinfo
+    set l "..."
+    if {[info exists commitinfo($p)]} {
+	set l [lindex $commitinfo($p) 0]
+    }
+    return "$p ($l)"
+}
+
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
-    global canvy0 linespc parents nparents
+    global canvy0 linespc parents nparents children nchildren
     global cflist currentid sha1entry
     global commentend idtags idline
 
@@ -1790,15 +1799,15 @@ proc selectline {l isnew} {
  
     set commentstart [$ctext index "end - 1c"]
     set comment {}
-    foreach p $parents($id) {
-	set l "..."
-	if {[info exists commitinfo($p)]} {
-	    set l [lindex $commitinfo($p) 0]
-	    if {[string length $l] > 32} {
-		set l "[string range $l 0 28] ..."
-	    }
+    if {[info exists parents($id)]} {
+	foreach p $parents($id) {
+	    append comment "Parent: [commit_descriptor $p]\n"
 	}
-	append comment "Parent: $p  ($l)\n"
+    }
+    if {[info exists children($id)]} {
+	foreach c $children($id) {
+	    append comment "Child:  [commit_descriptor $c]\n"
+	}
     }
     append comment "\n"
     append comment [lindex $info 5]
