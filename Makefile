@@ -174,6 +174,7 @@ init-db.o: init-db.c
 	$(CC) -c $(CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
+$(patsubst git-%,%.o,$(PROG)): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
