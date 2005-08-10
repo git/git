@@ -117,7 +117,8 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
 
-git-rev-list --merge-order $(git-rev-parse --revs-only "$revpair") >$series
+git-rev-list --no-merges --merge-order \
+	$(git-rev-parse --revs-only "$revpair") >$series
 total=`wc -l <$series | tr -dc "[0-9]"`
 i=$total
 while read commit
