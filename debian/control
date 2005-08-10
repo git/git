@@ -7,7 +7,7 @@ Standards-Version: 3.6.1
 
 Package: git-core
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, patch, diff, rcs
+Depends: ${shlibs:Depends}, ${misc:Depends}, patch, rcs
 Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl
 Conflicts: git
 Description: The git content addressable filesystem
@@ -15,5 +15,11 @@ Description: The git content addressable filesystem
  and flexible filesystem-based database designed to store directory trees
  with regard to their history. The top layer is a SCM-like tool which
  enables human beings to work with the database in a manner to a degree
- similar to other SCM tools (like CVS, BitKeeper or Monotone).
+ similar to other SCM tools.
+
+Package: git-tk
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, git-core, tk8.4
+Description: The git content addressable filesystem, GUI add-on
+ This package contains 'gitk', the git revision tree visualizer.
 
