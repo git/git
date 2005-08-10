@@ -77,7 +77,7 @@ static int parse_email(const void *map, unsigned long size)
 
 	/*
 	 * Search for a line beginning with "From ", and 
-	 * having smething that looks like a date format.
+	 * having something that looks like a date format.
 	 */
 	do {
 		int len = linelen(map, size);
