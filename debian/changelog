@@ -1,3 +1,9 @@
+git-core (0.99.4-2) unstable; urgency=low
+
+  * Git 0.99.4 official release.
+
+ -- Junio C Hamano <junkio@cox.net>  Wed, 10 Aug 2005 15:00:00 -0700
+
 git-core (0.99.4-1) unstable; urgency=low
 
   * Pass prefix down to the submake when building.
