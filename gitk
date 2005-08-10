@@ -18,7 +18,7 @@ proc gitdir {} {
 
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont env
-    global startmsecs nextupdate
+    global startmsecs nextupdate ncmupdate
     global ctext maincursor textcursor leftover
 
     # check that we can find a .git directory somewhere...
@@ -31,6 +31,7 @@ proc getcommits {rargs} {
     set phase getcommits
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr $startmsecs + 100]
+    set ncmupdate 0
     if [catch {
 	set parse_args [concat --default HEAD $rargs]
 	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
@@ -49,7 +50,7 @@ proc getcommits {rargs} {
     }
     set leftover {}
     fconfigure $commfd -blocking 0 -translation lf
-    fileevent $commfd readable "getcommitlines $commfd"
+    fileevent $commfd readable [list getcommitlines $commfd]
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
@@ -61,6 +62,7 @@ proc getcommitlines {commfd}  {
     global commits parents cdate children nchildren
     global commitlisted phase commitinfo nextupdate
     global stopped redisplaying leftover
+    global numcommits ncmupdate
 
     set stuff [read $commfd]
     if {$stuff == {}} {
@@ -108,8 +110,10 @@ to allow selection of commits to be displayed.)}
 	set commitlisted($id) 1
 	parsecommit $id $cmit 1
 	drawcommit $id
-	if {[clock clicks -milliseconds] >= $nextupdate} {
+	if {[clock clicks -milliseconds] >= $nextupdate
+	    && $numcommits >= $ncmupdate + 100} {
 	    doupdate
+	    set ncmupdate $numcommits
 	}
 	while {$redisplaying} {
 	    set redisplaying 0
@@ -119,8 +123,10 @@ to allow selection of commits to be displayed.)}
 		foreach id $commits {
 		    drawcommit $id
 		    if {$stopped} break
-		    if {[clock clicks -milliseconds] >= $nextupdate} {
+		    if {[clock clicks -milliseconds] >= $nextupdate
+			&& $numcommits >= $ncmupdate + 100} {
 			doupdate
+			set ncmupdate $numcommits
 		    }
 		}
 	    }
@@ -134,7 +140,7 @@ proc doupdate {} {
     incr nextupdate 100
     fileevent $commfd readable {}
     update
-    fileevent $commfd readable "getcommitlines $commfd"
+    fileevent $commfd readable [list getcommitlines $commfd]
 }
 
 proc readcommit {id} {
@@ -1090,7 +1096,7 @@ proc decidenext {{noread 0}} {
 
 proc drawcommit {id} {
     global phase todo nchildren datemode nextupdate
-    global startcommits
+    global startcommits numcommits ncmupdate
 
     if {$phase != "incrdraw"} {
 	set phase incrdraw
@@ -1119,8 +1125,10 @@ proc drawcommit {id} {
 	    if {![info exists commitlisted($id)]} {
 		break
 	    }
-	    if {[clock clicks -milliseconds] >= $nextupdate} {
+	    if {[clock clicks -milliseconds] >= $nextupdate
+		&& $numcommits >= $ncmupdate} {
 		doupdate
+		set ncmupdate $numcommits
 		if {$stopped} break
 	    }
 	}
@@ -1158,11 +1166,12 @@ proc settextcursor {c} {
 }
 
 proc drawgraph {} {
-    global nextupdate startmsecs startcommits todo
+    global nextupdate startmsecs startcommits todo ncmupdate
 
     if {$startcommits == {}} return
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr $startmsecs + 100]
+    set ncmupdate 0
     initgraph
     set todo [lindex $startcommits 0]
     drawrest 0 1
@@ -1171,7 +1180,7 @@ proc drawgraph {} {
 proc drawrest {level startix} {
     global phase stopped redisplaying selectedline
     global datemode currentparents todo
-    global numcommits
+    global numcommits ncmupdate
     global nextupdate startmsecs startcommits idline
 
     if {$level >= 0} {
@@ -1200,9 +1209,11 @@ proc drawrest {level startix} {
 		if {$level < 0} break
 		drawslants $level
 	    }
-	    if {[clock clicks -milliseconds] >= $nextupdate} {
+	    if {[clock clicks -milliseconds] >= $nextupdate
+	        && $numcommits >= $ncmupdate + 100} {
 		update
 		incr nextupdate 100
+		set ncmupdate $numcommits
 	    }
 	}
     }
