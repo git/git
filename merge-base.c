@@ -2,6 +2,22 @@
 #include "cache.h"
 #include "commit.h"
 
+#define PARENT1 1
+#define PARENT2 2
+#define UNINTERESTING 4
+
+static int interesting(struct commit_list *list)
+{
+	while (list) {
+		struct commit *commit = list->item;
+		list = list->next;
+		if (commit->object.flags & UNINTERESTING)
+			continue;
+		return 1;
+	}
+	return 0;
+}
+
 static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 {
 	struct commit_list *list = NULL;
@@ -18,19 +34,18 @@ static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 	insert_by_date(rev1, &list);
 	insert_by_date(rev2, &list);
 
-	while (list) {
+	while (interesting(list)) {
 		struct commit *commit = list->item;
 		struct commit_list *tmp = list, *parents;
-		int flags = commit->object.flags & 3;
+		int flags = commit->object.flags & 7;
 
 		list = list->next;
 		free(tmp);
-		switch (flags) {
-		case 3:
+		if (flags == 3) {
 			insert_by_date(commit, &result);
-			continue;
-		case 0:
-			die("git-merge-base: commit without either parent?");
+
+			/* Mark children of a found merge uninteresting */
+			flags |= UNINTERESTING;
 		}
 		parents = commit->parents;
 		while (parents) {
