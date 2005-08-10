@@ -134,8 +134,8 @@ static void builtin_diff(const char *name_a,
 			 int complete_rewrite)
 {
 	int i, next_at, cmd_size;
-	const char *diff_cmd = "diff -L%s%s -L%s%s";
-	const char *diff_arg  = "%s %s||:"; /* "||:" is to return 0 */
+	const char *const diff_cmd = "diff -L%s%s -L%s%s";
+	const char *const diff_arg  = "%s %s||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
 	const char *path0[2];
 	const char *path1[2];
@@ -782,7 +782,8 @@ static void diff_flush_raw(struct diff_filepair *p,
 	char status[10];
 
 	if (line_termination) {
-		const char *err = "path %s cannot be expressed without -z";
+		const char *const err =
+			"path %s cannot be expressed without -z";
 		if (strchr(p->one->path, line_termination) ||
 		    strchr(p->one->path, inter_name_termination))
 			die(err, p->one->path);

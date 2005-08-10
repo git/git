@@ -34,6 +34,10 @@ the repository, the cache and the working fileset, those that
 interrogate and compare them, and those that moves objects and
 references between repositories.
 
+In addition, git itself comes with a spartan set of porcelain
+commands.  They are usable but are not meant to compete with real
+Porcelains.
+
 There are also some ancilliary programs that can be viewed as useful
 aids for using the core commands but which are unlikely to be used by
 SCMs layered over git.
@@ -128,14 +132,6 @@ link:git-clone-pack.html[git-clone-pack]::
 	Clones a repository into the current repository (engine
 	for ssh and local transport)
 
-link:git-fetch-script.html[git-fetch-script]::
-	Download from a remote repository via various protocols
-	(user interface).
-
-link:git-pull-script.html[git-pull-script]::
-	Fetch from and merge with a remote repository via
-	various protocols (user interface).
-
 link:git-http-pull.html[git-http-pull]::
 	Downloads a remote GIT repository via HTTP
 
@@ -167,6 +163,18 @@ link:git-upload-pack.html[git-upload-pack]::
 link:git-update-server-info.html[git-update-server-info]::
 	Updates auxiliary information on a dumb server to help
 	clients discover references and packs on it.
+
+
+Porcelainish Commands
+---------------------
+link:git-fetch-script.html[git-fetch-script]::
+	Download from a remote repository via various protocols.
+
+link:git-pull-script.html[git-pull-script]::
+	Fetch from and merge with a remote repository.
+
+link:git-commit-script.html[git-commit-script]::
+	Record changes to the repository.
 
 
 Ancilliary Commands

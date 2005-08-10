@@ -3,25 +3,32 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
+. git-sh-setup-script || die "Not a git archive."
+
 usage="usage: $0 "'<upstream> [<head>]
 
 Uses output from git-cherry to rebase local commits to the new head of
 upstream tree.'
 
-: ${GIT_DIR=.git}
+case "$#,$1" in
+1,*..*)
+    upstream=$(expr "$1" : '\(.*\)\.\.') ours=$(expr "$1" : '.*\.\.\(.*\)$')
+    set x "$upstream" "$ours"
+    shift ;;
+esac
 
 case "$#" in
-1) linus=`git-rev-parse --verify "$1"` &&
-   junio=`git-rev-parse --verify HEAD` || exit
+1) upstream=`git-rev-parse --verify "$1"` &&
+   ours=`git-rev-parse --verify HEAD` || exit
    ;;
-2) linus=`git-rev-parse --verify "$1"` &&
-   junio=`git-rev-parse --verify "$2"` || exit
+2) upstream=`git-rev-parse --verify "$1"` &&
+   ours=`git-rev-parse --verify "$2"` || exit
    ;;
 *) echo >&2 "$usage"; exit 1 ;;
 esac
 
-git-read-tree -m -u $junio $linus &&
-echo "$linus" >"$GIT_DIR/HEAD" || exit
+git-read-tree -m -u $ours $upstream &&
+echo "$upstream" >"$GIT_DIR/HEAD" || exit
 
 tmp=.rebase-tmp$$
 fail=$tmp-fail
@@ -29,7 +36,7 @@ trap "rm -rf $tmp-*" 0 1 2 3 15
 
 >$fail
 
-git-cherry $linus $junio |
+git-cherry $upstream $ours |
 while read sign commit
 do
 	case "$sign" in
@@ -37,7 +44,7 @@ do
 	esac
 	S=`cat "$GIT_DIR/HEAD"` &&
         GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p $commit &&
-	git-commit-script -m "$commit" || {
+	git-commit-script -C "$commit" || {
 		echo $commit >>$fail
 		git-read-tree --reset -u $S
 	}

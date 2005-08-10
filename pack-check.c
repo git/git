@@ -15,7 +15,7 @@ static int verify_packfile(struct packed_git *p)
 	/* Header consistency check */
 	hdr = p->pack_base;
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
-		return error("Packfile signature mismatch", p->pack_name);
+		return error("Packfile %s signature mismatch", p->pack_name);
 	if (hdr->hdr_version != htonl(PACK_VERSION))
 		return error("Packfile version %d different from ours %d",
 			     ntohl(hdr->hdr_version), PACK_VERSION);

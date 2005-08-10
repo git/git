@@ -6,7 +6,7 @@
 static int read_ref(const char *refname, unsigned char *sha1)
 {
 	int ret = -1;
-	int fd = open(git_path(refname), O_RDONLY);
+	int fd = open(git_path("%s", refname), O_RDONLY);
 
 	if (fd >= 0) {
 		char buffer[60];
@@ -20,7 +20,7 @@ static int read_ref(const char *refname, unsigned char *sha1)
 static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1))
 {
 	int retval = 0;
-	DIR *dir = opendir(git_path(base));
+	DIR *dir = opendir(git_path("%s", base));
 
 	if (dir) {
 		struct dirent *de;
@@ -46,7 +46,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			if (namelen > 255)
 				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
-			if (lstat(git_path(path), &st) < 0)
+			if (lstat(git_path("%s", path), &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
 				retval = do_for_each_ref(path, fn);

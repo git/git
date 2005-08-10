@@ -1388,7 +1388,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		ssize_t size;
 		if (*bufposn) {
 			stream.avail_in = *bufposn;
-			stream.next_in = buffer;
+			stream.next_in = (unsigned char *) buffer;
 			do {
 				stream.next_out = discard;
 				stream.avail_out = sizeof(discard);

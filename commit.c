@@ -33,6 +33,8 @@ enum cmit_fmt get_commit_format(const char *arg)
 		return CMIT_FMT_SHORT;
 	if (!strcmp(arg, "=full"))
 		return CMIT_FMT_FULL;
+	if (!strcmp(arg, "=oneline"))
+		return CMIT_FMT_ONELINE;
 	die("invalid --pretty format");
 }
 
@@ -350,6 +352,8 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	unsigned long time;
 	int tz, ret;
 
+	if (fmt == CMIT_FMT_ONELINE)
+		return 0;
 	date = strchr(line, '>');
 	if (!date)
 		return 0;
@@ -373,6 +377,9 @@ static int is_empty_line(const char *line, int len)
 static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int parents)
 {
 	int offset = 0;
+
+	if (fmt == CMIT_FMT_ONELINE)
+		return offset;
 	switch (parents) {
 	case 1:
 		break;
@@ -393,6 +400,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
 	int parents = 0;
+	int indent = (fmt == CMIT_FMT_ONELINE) ? 0 : 4;
 
 	for (;;) {
 		const char *line = msg;
@@ -416,7 +424,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 		if (hdr) {
 			if (linelen == 1) {
 				hdr = 0;
-				buf[offset++] = '\n';
+				if (fmt != CMIT_FMT_ONELINE)
+					buf[offset++] = '\n';
 				continue;
 			}
 			if (fmt == CMIT_FMT_RAW) {
@@ -446,13 +455,23 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 		} else {
 			body = 1;
 		}
-		memset(buf + offset, ' ', 4);
-		memcpy(buf + offset + 4, line, linelen);
-		offset += linelen + 4;
+
+		memset(buf + offset, ' ', indent);
+		memcpy(buf + offset + indent, line, linelen);
+		offset += linelen + indent;
+		if (fmt == CMIT_FMT_ONELINE)
+			break;
 	}
-	/* Make sure there is an EOLN */
-	if (buf[offset - 1] != '\n')
-		buf[offset++] = '\n';
+	if (fmt == CMIT_FMT_ONELINE) {
+		/* We do not want the terminating newline */
+		if (buf[offset - 1] == '\n')
+			offset--;
+	}
+	else {
+		/* Make sure there is an EOLN */
+		if (buf[offset - 1] != '\n')
+			buf[offset++] = '\n';
+	}
 	buf[offset] = '\0';
 	return offset;
 }

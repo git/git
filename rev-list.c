@@ -15,12 +15,15 @@ static const char rev_list_usage[] =
 		      "  --max-count=nr\n"
 		      "  --max-age=epoch\n"
 		      "  --min-age=epoch\n"
+		      "  --parents\n"
 		      "  --bisect\n"
 		      "  --objects\n"
 		      "  --unpacked\n"
 		      "  --header\n"
 		      "  --pretty\n"
-		      "  --merge-order [ --show-breaks ]";
+		      "  --no-merges\n"
+		      "  --merge-order [ --show-breaks ]\n"
+		      "  --topo-order";
 
 static int unpacked = 0;
 static int bisect_list = 0;
@@ -39,6 +42,7 @@ static int merge_order = 0;
 static int show_breaks = 0;
 static int stop_traversal = 0;
 static int topo_order = 0;
+static int no_merges = 0;
 
 static void show_commit(struct commit *commit)
 {
@@ -59,7 +63,11 @@ static void show_commit(struct commit *commit)
 			parents = parents->next;
 		}
 	}
-	putchar('\n');
+	if (commit_format == CMIT_FMT_ONELINE)
+		putchar(' ');
+	else
+		putchar('\n');
+
 	if (verbose_header) {
 		static char pretty_header[16384];
 		pretty_print_commit(commit_format, commit->buffer, ~0, pretty_header, sizeof(pretty_header));
@@ -82,6 +90,8 @@ static int filter_commit(struct commit * commit)
 	}
 	if (max_count != -1 && !max_count--)
 		return STOP;
+	if (no_merges && (commit->parents && commit->parents->next))
+		return CONTINUE;
 	return DO;
 }
 
@@ -497,7 +507,14 @@ int main(int argc, char **argv)
 			commit_format = get_commit_format(arg+8);
 			verbose_header = 1;
 			hdr_termination = '\n';
-			prefix = "commit ";
+			if (commit_format == CMIT_FMT_ONELINE)
+				prefix = "";
+			else
+				prefix = "commit ";
+			continue;
+		}
+		if (!strncmp(arg, "--no-merges", 11)) {
+			no_merges = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--parents")) {

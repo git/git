@@ -563,7 +563,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			struct fragment dummy;
 			if (parse_fragment_header(line, len, &dummy) < 0)
 				continue;
-			error("patch fragment without header at line %d: %.*s", linenr, len-1, line);
+			error("patch fragment without header at line %d: %.*s", linenr, (int)len-1, line);
 		}
 
 		if (size < len + 6)
@@ -968,7 +968,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 
 	while (frag) {
 		if (apply_one_fragment(desc, frag) < 0)
-			return error("patch failed: %s:%d", patch->old_name, frag->oldpos);
+			return error("patch failed: %s:%ld", patch->old_name, frag->oldpos);
 		frag = frag->next;
 	}
 	return 0;

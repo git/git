@@ -1,3 +1,64 @@
 #!/bin/sh
 . git-sh-setup-script || die "Not a git archive"
-git-send-pack "$@"
+
+# Parse out parameters and then stop at remote, so that we can
+# translate it using .git/branches information
+has_all=
+has_force=
+has_exec=
+remote=
+
+while case "$#" in 0) break ;; esac
+do
+	case "$1" in
+	--all)
+		has_all=--all ;;
+	--force)
+		has_force=--force ;;
+	--exec=*)
+		has_exec="$1" ;;
+	-*)
+		die "Unknown parameter $1" ;;
+        *)
+		remote="$1"
+		shift
+		set x "$@"
+		shift
+		break ;;
+	esac
+	shift
+done
+
+case "$remote" in
+*:* | /* | ../* | ./* )
+	# An URL, host:/path/to/git, absolute and relative paths.
+	;;
+* )
+	# Shorthand
+	if expr "$remote" : '..*/..*' >/dev/null
+	then
+		# a short-hand followed by a trailing path
+		shorthand=$(expr "$remote" : '\([^/]*\)')
+		remainder=$(expr "$remote" : '[^/]*\(/.*\)$')
+	else
+		shorthand="$remote"
+		remainder=
+	fi
+	remote=$(sed -e 's/#.*//' "$GIT_DIR/branches/$remote") &&
+	expr "$remote" : '..*:' >/dev/null &&
+	remote="$remote$remainder" ||
+	die "Cannot parse remote $remote"
+	;;
+esac
+
+case "$remote" in
+http://* | https://* | git://* | rsync://* )
+	die "Cannot push to $remote" ;;
+esac
+
+set x "$remote" "$@"; shift
+test "$has_all" && set x "$has_all" "$@" && shift
+test "$has_force" && set x "$has_force" "$@" && shift
+test "$has_exec" && set x "$has_exec" "$@" && shift
+
+exec git-send-pack "$@"

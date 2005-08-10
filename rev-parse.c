@@ -33,6 +33,9 @@ static int is_rev_argument(const char *arg)
 		"--max-age=",
 		"--min-age=",
 		"--merge-order",
+		"--topo-order",
+		"--bisect",
+		"--no-merges",
 		NULL
 	};
 	const char **p = rev_args;

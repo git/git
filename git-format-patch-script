@@ -3,6 +3,8 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+. git-sh-setup-script || die "Not a git archive."
+
 usage () {
     echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [-<diff options>...] upstream [ our-head ]
 
@@ -60,13 +62,20 @@ do
     shift
 done
 
+revpair=
 case "$#" in
-2)    linus="$1" junio="$2" ;;
-1)    linus="$1" junio=HEAD ;;
-*)    usage ;;
+2)
+    revpair="$1..$2" ;;
+1)
+    case "$1" in
+    *..*)
+    	revpair="$1";;
+    *)
+	revpair="$1..HEAD";;
+    esac ;;
+*)
+    usage ;;
 esac
-junio=`git-rev-parse --verify "$junio"`
-linus=`git-rev-parse --verify "$linus"`
 
 me=`git-var GIT_AUTHOR_IDENT | sed -e 's/>.*/>/'`
 
@@ -108,7 +117,8 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
 
-git-rev-list --merge-order "$junio" "^$linus" >$series
+git-rev-list --no-merges --merge-order \
+	$(git-rev-parse --revs-only "$revpair") >$series
 total=`wc -l <$series | tr -dc "[0-9]"`
 i=$total
 while read commit

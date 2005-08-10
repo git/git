@@ -60,7 +60,7 @@ static void convert_ascii_sha1(void *buffer)
 	struct entry *entry;
 
 	if (get_sha1_hex(buffer, sha1))
-		die("expected sha1, got '%s'", buffer);
+		die("expected sha1, got '%s'", (char*) buffer);
 	entry = convert_entry(sha1);
 	memcpy(buffer, sha1_to_hex(entry->new_sha1), 40);
 }
@@ -272,7 +272,7 @@ static void convert_commit(void *buffer, unsigned long size, unsigned char *resu
 	unsigned long orig_size = size;
 
 	if (memcmp(buffer, "tree ", 5))
-		die("Bad commit '%s'", buffer);
+		die("Bad commit '%s'", (char*) buffer);
 	convert_ascii_sha1(buffer+5);
 	buffer += 46;    /* "tree " + "hex sha1" + "\n" */
 	while (!memcmp(buffer, "parent ", 7)) {

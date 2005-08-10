@@ -30,7 +30,7 @@ static int is_master(struct ref *ref)
 
 static void write_one_ref(struct ref *ref)
 {
-	char *path = git_path(ref->name);
+	char *path = git_path("%s", ref->name);
 	int fd;
 	char *hex;
 
