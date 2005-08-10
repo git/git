@@ -1,0 +1,37 @@
+#!/bin/sh
+. git-sh-setup-script || die "Not a git archive"
+
+# We want a clean tree and clean index to be able to revert.
+status=$(git status)
+case "$status" in
+'nothing to commit') ;;
+*)
+	echo "$status"
+	die "Your working tree is dirty; cannot revert a previous patch." ;;
+esac
+
+rev=$(git-rev-parse --no-flags --verify --revs-only "$@") &&
+commit=$(git-rev-parse --verify "$rev^0") || exit
+if git-diff-tree -R -M -p $commit | git-apply --index &&
+   msg=$(git-rev-list --pretty=oneline --max-count=1 $commit)
+then
+        {
+                echo "$msg" | sed -e '
+			s/^[^ ]* /Revert "/
+			s/$/"/'
+                echo
+                echo "This reverts $commit commit."
+                test "$rev" = "$commit" ||
+                echo "(original 'git revert' arguments: $@)"
+        } | git commit -F -
+else
+        # Now why did it fail?
+        parents=`git-cat-file commit "$commit" 2>/dev/null |
+                sed -ne '/^$/q;/^parent /p' |
+                wc -l`
+        case $parents in
+        0) die "Cannot revert the root commit nor non commit-ish." ;;
+        1) die "The patch does not apply." ;;
+        *) die "Cannot revert a merge commit." ;;
+        esac
+fi
