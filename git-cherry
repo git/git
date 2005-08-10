@@ -5,7 +5,7 @@
 
 . git-sh-setup-script || die "Not a git archive."
 
-usage="usage: $0 "'<upstream> [<head>]
+usage="usage: $0 "'[-v] <upstream> [<head>]
 
              __*__*__*__*__> <upstream>
             /
@@ -28,6 +28,8 @@ The output is intended to be used as:
 	git-commit-script -C "$commit"
     done
 '
+
+case "$1" in -v) verbose=t; shift ;; esac 
 
 case "$#,$1" in
 1,*..*)
@@ -83,6 +85,10 @@ do
 		else
 			sign=+
 		fi
+		case "$verbose" in
+		t)
+			c=$(git-rev-list --pretty=oneline --max-count=1 $c)
+		esac
 		case "$O" in
 		'')	O="$sign $c" ;;
 		*)	O="$sign $c$LF$O" ;;
