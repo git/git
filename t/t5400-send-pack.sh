@@ -52,3 +52,5 @@ test_expect_success \
 	git-send-pack --force ./victim/.git/ master &&
 	cmp victim/.git/refs/heads/master .git/refs/heads/master
 '
+
+test_done

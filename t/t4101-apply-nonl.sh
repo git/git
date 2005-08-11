@@ -30,3 +30,5 @@ do
 	"git-apply <diff.$i-$j && diff frotz.$j frotz"
   done
 done
+
+test_done

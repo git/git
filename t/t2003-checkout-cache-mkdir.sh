@@ -93,3 +93,4 @@ test_expect_success \
      test -d tmp-path1 &&
      test -f tmp-path1/file1'
 
+test_done
