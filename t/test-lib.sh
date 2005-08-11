@@ -5,8 +5,9 @@
 
 # For repeatability, reset the environment to known value.
 LANG=C
+PAGER=cat
 TZ=UTC
-export LANG TZ
+export LANG PAGER TZ
 unset AUTHOR_DATE
 unset AUTHOR_EMAIL
 unset AUTHOR_NAME
