@@ -87,16 +87,16 @@ test_failure_ () {
 	say "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
-	test "$immediate" == "" || exit 1
+	test "$immediate" = "" || exit 1
 }
 
 
 test_debug () {
-	test "$debug" == "" || eval "$1"
+	test "$debug" = "" || eval "$1"
 }
 
 test_expect_failure () {
-	test "$#" == 2 ||
+	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-failure"
 	say >&3 "expecting failure: $2"
 	if eval >&3 2>&4 "$2"
@@ -108,7 +108,7 @@ test_expect_failure () {
 }
 
 test_expect_success () {
-	test "$#" == 2 ||
+	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-success"
 	say >&3 "expecting success: $2"
 	if eval >&3 2>&4 "$2"
