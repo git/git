@@ -1,3 +1,9 @@
+git-core (0.99.5-0) unstable; urgency=low
+
+  * GIT 0.99.5
+
+ -- Junio C Hamano <junkio@cox.net>  Wed, 10 Aug 2005 22:05:00 -0700
+
 git-core (0.99.4-2) unstable; urgency=low
 
   * Git 0.99.4 official release.
