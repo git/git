@@ -36,6 +36,7 @@ unset SHA1_FILE_DIRECTORY
 
 error () {
 	echo "* error: $*"
+	trap - exit
 	exit 1
 }
 
@@ -74,6 +75,8 @@ fi
 test_failure=0
 test_count=0
 
+trap 'echo >&5 "FATAL: Unexpected exit with code $?"; exit 1' exit
+
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.
@@ -89,7 +92,7 @@ test_failure_ () {
 	say "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
-	test "$immediate" = "" || exit 1
+	test "$immediate" = "" || { trap - exit; exit 1; }
 }
 
 
@@ -98,10 +101,8 @@ test_debug () {
 }
 
 test_run_ () {
-	trap 'echo >&5 "FATAL: Unexpected exit with code $?"; exit 1' exit
 	eval >&3 2>&4 "$1"
 	eval_ret="$?"
-	trap - exit
 	return 0
 }
 
@@ -132,6 +133,7 @@ test_expect_success () {
 }
 
 test_done () {
+	trap - exit
 	case "$test_failure" in
 	0)	
 		# We could:
