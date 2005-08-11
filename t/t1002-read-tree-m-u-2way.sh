@@ -73,7 +73,7 @@ test_expect_success \
     'rm -f .git/index &&
      git-update-cache --add yomin &&
      git-read-tree -m -u $treeH $treeM &&
-     git-ls-files --stage >4.out || exit
+     git-ls-files --stage >4.out || return 1
      diff --unified=0 M.out 4.out >4diff.out
      compare_change 4diff.out expected &&
      check_cache_at yomin clean &&
@@ -90,7 +90,7 @@ test_expect_success \
      git-update-cache --add yomin &&
      echo yomin yomin >yomin &&
      git-read-tree -m -u $treeH $treeM &&
-     git-ls-files --stage >5.out || exit
+     git-ls-files --stage >5.out || return 1
      diff --unified=0 M.out 5.out >5diff.out
      compare_change 5diff.out expected &&
      check_cache_at yomin dirty &&
@@ -192,7 +192,7 @@ test_expect_success \
      echo nitfol nitfol >nitfol &&
      git-update-cache --add nitfol &&
      git-read-tree -m -u $treeH $treeM &&
-     git-ls-files --stage >14.out || exit
+     git-ls-files --stage >14.out || return 1
      diff --unified=0 M.out 14.out >14diff.out
      compare_change 14diff.out expected &&
      sum bozbar frotz >actual14.sum &&
@@ -212,7 +212,7 @@ test_expect_success \
      git-update-cache --add nitfol &&
      echo nitfol nitfol nitfol >nitfol &&
      git-read-tree -m -u $treeH $treeM &&
-     git-ls-files --stage >15.out || exit
+     git-ls-files --stage >15.out || return 1
      diff --unified=0 M.out 15.out >15diff.out
      compare_change 15diff.out expected &&
      check_cache_at nitfol dirty &&

@@ -100,7 +100,7 @@ test_expect_success \
      git-checkout-cache -u -f -q -a &&
      git-update-cache --add yomin &&
      read_tree_twoway $treeH $treeM &&
-     git-ls-files --stage >4.out || exit
+     git-ls-files --stage >4.out || return 1
      diff -u M.out 4.out >4diff.out
      compare_change 4diff.out expected &&
      check_cache_at yomin clean'
@@ -114,7 +114,7 @@ test_expect_success \
      git-update-cache --add yomin &&
      echo yomin yomin >yomin &&
      read_tree_twoway $treeH $treeM &&
-     git-ls-files --stage >5.out || exit
+     git-ls-files --stage >5.out || return 1
      diff -u M.out 5.out >5diff.out
      compare_change 5diff.out expected &&
      check_cache_at yomin dirty'
@@ -215,7 +215,7 @@ test_expect_success \
      echo nitfol nitfol >nitfol &&
      git-update-cache --add nitfol &&
      read_tree_twoway $treeH $treeM &&
-     git-ls-files --stage >14.out || exit
+     git-ls-files --stage >14.out || return 1
      diff -u M.out 14.out >14diff.out
      compare_change 14diff.out expected &&
      check_cache_at nitfol clean'
@@ -229,7 +229,7 @@ test_expect_success \
      git-update-cache --add nitfol &&
      echo nitfol nitfol nitfol >nitfol &&
      read_tree_twoway $treeH $treeM &&
-     git-ls-files --stage >15.out || exit
+     git-ls-files --stage >15.out || return 1
      diff -u M.out 15.out >15diff.out
      compare_change 15diff.out expected &&
      check_cache_at nitfol dirty'

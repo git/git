@@ -18,7 +18,7 @@ test_expect_success setup '
 	do
 	    sleep 1 &&
 	    commit=$(echo "Commit #$i" | git-commit-tree $tree -p $parent) &&
-	    parent=$commit || exit
+	    parent=$commit || return 1
 	done &&
 	echo "$commit" >.git/HEAD &&
 	git clone -l ./. victim &&
@@ -31,7 +31,7 @@ test_expect_success setup '
 	do
 	    sleep 1 &&
 	    commit=$(echo "Rebase #$i" | git-commit-tree $tree -p $parent) &&
-	    parent=$commit || exit
+	    parent=$commit || return 1
 	done &&
 	echo "$commit" >.git/HEAD &&
 	echo Rebase &&

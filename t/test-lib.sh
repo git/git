@@ -63,6 +63,7 @@ do
 	esac
 done
 
+exec 5>&1
 if test "$verbose" = "t"
 then
 	exec 4>&2 3>&1
@@ -96,15 +97,24 @@ test_debug () {
 	test "$debug" = "" || eval "$1"
 }
 
+test_run_ () {
+	trap 'echo >&5 "FATAL: Unexpected exit with code $?"; exit 1' exit
+	eval >&3 2>&4 "$1"
+	eval_ret="$?"
+	trap - exit
+	return 0
+}
+
 test_expect_failure () {
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-failure"
 	say >&3 "expecting failure: $2"
-	if eval >&3 2>&4 "$2"
+	test_run_ "$2"
+	if [ "$?" = 0 -a "$eval_ret" != 0 ]
 	then
-		test_failure_ "$@"
-	else
 		test_ok_ "$1"
+	else
+		test_failure_ "$@"
 	fi
 }
 
@@ -112,7 +122,8 @@ test_expect_success () {
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-success"
 	say >&3 "expecting success: $2"
-	if eval >&3 2>&4 "$2"
+	test_run_ "$2"
+	if [ "$?" = 0 -a "$eval_ret" = 0 ]
 	then
 		test_ok_ "$1"
 	else
