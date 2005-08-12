@@ -6,7 +6,7 @@
 #include <sys/time.h>
 
 static int dry_run, quiet;
-static const char unpack_usage[] = "git-unpack-objects < pack-file";
+static const char unpack_usage[] = "git-unpack-objects [-q] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
