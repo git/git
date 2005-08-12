@@ -56,7 +56,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs 
 
-	make dest=$(DESTDIR) prefix=$(PREFIX) mandir=$(MANDIR) install install-tools install-doc
+	make dest=$(DESTDIR) prefix=$(PREFIX) mandir=$(MANDIR) \
+		install install-doc
 
 	mkdir -p $(DOC_DESTDIR)
 	find $(DOC) '(' -name '*.txt' -o -name '*.html' ')' -exec install {} $(DOC_DESTDIR) ';'

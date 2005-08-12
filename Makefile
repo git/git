@@ -212,8 +212,6 @@ install: $(PROG) $(SCRIPTS)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
-
-install-tools:
 	$(MAKE) -C tools install
 
 install-doc:
