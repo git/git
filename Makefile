@@ -244,7 +244,8 @@ deb: dist
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
-	rm -f $(GIT_TARNAME).tar.gz git-core.spec git-core_$(GIT_VERSION)-*.deb
+	rm -f $(GIT_TARNAME).tar.gz git-core.spec
+	rm -f git-core_$(GIT_VERSION)-*.deb git-tk_$(GIT_VERSION)-*.deb
 	rm -rf $(GIT_TARNAME)
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
