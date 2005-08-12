@@ -1,3 +1,9 @@
+git-core (0.99.4-4) unstable; urgency=low
+
+  * Mark git-tk as architecture neutral.
+
+ -- Junio C Hamano <junkio@cox.net>  Fri, 12 Aug 2005 13:25:00 -0700
+
 git-core (0.99.4-3) unstable; urgency=low
 
   * Split off gitk.
