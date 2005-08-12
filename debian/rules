@@ -56,7 +56,7 @@ install: build
 	dh_clean -k 
 	dh_installdirs 
 
-	make dest=$(DESTDIR) prefix=$(PREFIX) mandir=$(MANDIR) \
+	make DESTDIR=$(DESTDIR) prefix=$(PREFIX) mandir=$(MANDIR) \
 		install install-doc
 
 	mkdir -p $(DOC_DESTDIR)
