@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"239";
+my $version =		"240";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -2134,7 +2134,7 @@ sub git_search {
 					next;
 				}
 				push @files, \%set;
-			} elsif ($line =~ m/^([0-9a-fA-F]{40}) /){
+			} elsif ($line =~ m/^([0-9a-fA-F]{40})$/){
 				if (%co) {
 					if ($alternate) {
 						print "<tr class=\"dark\">\n";
