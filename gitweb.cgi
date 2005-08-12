@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"238";
+my $version =		"239";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -236,7 +236,7 @@ body { font-family: sans-serif; font-size: 12px; margin:0px; border:solid #d9d8d
 a { color:#0000cc; }
 a:hover, a:visited, a:active { color:#880000; }
 div.page_header { height:25px; padding:8px; font-size:18px; font-weight:bold; background-color:#d9d8d1; }
-div.page_header a:visited { color:#0000cc; }
+div.page_header a:visited, a.header { color:#0000cc; }
 div.page_header a:hover { color:#880000; }
 div.page_nav { padding:8px; }
 div.page_nav a:visited { color:#0000cc; }
@@ -795,24 +795,29 @@ sub git_project_list {
 	}
 	print "<table cellspacing=\"0\">\n" .
 	      "<tr>\n";
-	if (defined($order) && ($order eq "project")) {
+	if (!defined($order) || (defined($order) && ($order eq "project"))) {
 		@projects = sort {$a->{'path'} cmp $b->{'path'}} @projects;
 		print "<th>Project</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "list", -href => "$my_uri?o=project"}, "Project") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?o=project"}, "Project") . "</th>\n";
 	}
-	print "<th>Description</th>\n";
+	if (defined($order) && ($order eq "descr")) {
+		@projects = sort {$a->{'descr'} cmp $b->{'descr'}} @projects;
+		print "<th>Description</th>\n";
+	} else {
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?o=descr"}, "Description") . "</th>\n";
+	}
 	if (defined($order) && ($order eq "owner")) {
 		@projects = sort {$a->{'owner'} cmp $b->{'owner'}} @projects;
 		print "<th>Owner</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "list", -href => "$my_uri?o=owner"}, "Owner") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?o=owner"}, "Owner") . "</th>\n";
 	}
 	if (defined($order) && ($order eq "age")) {
 		@projects = sort {$a->{'commit'}{'age'} <=> $b->{'commit'}{'age'}} @projects;
-		print "<th>last change</th>\n";
+		print "<th>Last Change</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "list", -href => "$my_uri?o=age"}, "last change") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?o=age"}, "Last Change") . "</th>\n";
 	}
 	print "<th></th>\n" .
 	      "</tr>\n";
@@ -1392,10 +1397,9 @@ sub git_tree {
 
 sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=20 " . git_read_hash("$project/HEAD") or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$gitbin/git-rev-list --max-count=150 " . git_read_hash("$project/HEAD") or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading rev-list failed.");
-
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
 	      "<rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n";
@@ -1405,9 +1409,17 @@ sub git_rss {
 	      "<description>$project log</description>\n".
 	      "<language>en</language>\n";
 
-	foreach my $commit (@revlist) {
+	for (my $i = 0; $i <= $#revlist; $i++) {
+		my $commit = $revlist[$i];
 		my %co = git_read_commit($commit);
+		# we read 150, we always show 30 and the ones more recent than 48 hours
+		if (($i >= 20) && ((time - $co{'committer_epoch'}) > 48*60*60)) {
+			last;
+		}
 		my %cd = date_str($co{'committer_epoch'});
+		open $fd, "-|", "$gitbin/git-diff-tree -r $co{'parent'} $co{'id'}" or next;
+		my @difftree = map { chomp; $_ } <$fd>;
+		close $fd or next;
 		print "<item>\n" .
 		      "<title>" .
 		      sprintf("%d %s %02d:%02d", $cd{'mday'}, $cd{'month'}, $cd{'hour'}, $cd{'minute'}) . " - " . escapeHTML($co{'title'}) .
@@ -1420,6 +1432,14 @@ sub git_rss {
 		my $comment = $co{'comment'};
 		foreach my $line (@$comment) {
 			print "$line<br/>\n";
+		}
+		print "<br/>\n";
+		foreach my $line (@difftree) {
+			if (!($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/)) {
+				next;
+			}
+			my $file = $7;
+			print "$file<br/>\n";
 		}
 		print "]]>\n" .
 		      "</content:encoded>\n" .
