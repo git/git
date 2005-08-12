@@ -5,8 +5,9 @@
 
 # For repeatability, reset the environment to known value.
 LANG=C
+PAGER=cat
 TZ=UTC
-export LANG TZ
+export LANG PAGER TZ
 unset AUTHOR_DATE
 unset AUTHOR_EMAIL
 unset AUTHOR_NAME
@@ -35,6 +36,7 @@ unset SHA1_FILE_DIRECTORY
 
 error () {
 	echo "* error: $*"
+	trap - exit
 	exit 1
 }
 
@@ -62,6 +64,7 @@ do
 	esac
 done
 
+exec 5>&1
 if test "$verbose" = "t"
 then
 	exec 4>&2 3>&1
@@ -71,6 +74,8 @@ fi
 
 test_failure=0
 test_count=0
+
+trap 'echo >&5 "FATAL: Unexpected exit with code $?"; exit 1' exit
 
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
@@ -87,31 +92,39 @@ test_failure_ () {
 	say "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
-	test "$immediate" == "" || exit 1
+	test "$immediate" = "" || { trap - exit; exit 1; }
 }
 
 
 test_debug () {
-	test "$debug" == "" || eval "$1"
+	test "$debug" = "" || eval "$1"
+}
+
+test_run_ () {
+	eval >&3 2>&4 "$1"
+	eval_ret="$?"
+	return 0
 }
 
 test_expect_failure () {
-	test "$#" == 2 ||
+	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-failure"
 	say >&3 "expecting failure: $2"
-	if eval >&3 2>&4 "$2"
+	test_run_ "$2"
+	if [ "$?" = 0 -a "$eval_ret" != 0 ]
 	then
-		test_failure_ "$@"
-	else
 		test_ok_ "$1"
+	else
+		test_failure_ "$@"
 	fi
 }
 
 test_expect_success () {
-	test "$#" == 2 ||
+	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-success"
 	say >&3 "expecting success: $2"
-	if eval >&3 2>&4 "$2"
+	test_run_ "$2"
+	if [ "$?" = 0 -a "$eval_ret" = 0 ]
 	then
 		test_ok_ "$1"
 	else
@@ -120,6 +133,7 @@ test_expect_success () {
 }
 
 test_done () {
+	trap - exit
 	case "$test_failure" in
 	0)	
 		# We could:

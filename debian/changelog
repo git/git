@@ -4,6 +4,14 @@ git-core (0.99.5-0) unstable; urgency=low
 
  -- Junio C Hamano <junkio@cox.net>  Wed, 10 Aug 2005 22:05:00 -0700
 
+git-core (0.99.4-3) unstable; urgency=low
+
+  * Split off gitk.
+  * Do not depend on diff which is an essential package.
+  * Use dh_movefiles, not dh_install, to stage two subpackages.
+
+ -- Matthias Urlichs <smurf@debian.org>  Thu, 11 Aug 2005 01:43:24 +0200
+
 git-core (0.99.4-2) unstable; urgency=low
 
   * Git 0.99.4 official release.

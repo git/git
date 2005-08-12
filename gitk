@@ -31,7 +31,7 @@ proc getcommits {rargs} {
     set phase getcommits
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr $startmsecs + 100]
-    set ncmupdate 0
+    set ncmupdate 1
     if [catch {
 	set parse_args [concat --default HEAD $rargs]
 	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
@@ -62,7 +62,6 @@ proc getcommitlines {commfd}  {
     global commits parents cdate children nchildren
     global commitlisted phase commitinfo nextupdate
     global stopped redisplaying leftover
-    global numcommits ncmupdate
 
     set stuff [read $commfd]
     if {$stuff == {}} {
@@ -110,10 +109,8 @@ to allow selection of commits to be displayed.)}
 	set commitlisted($id) 1
 	parsecommit $id $cmit 1
 	drawcommit $id
-	if {[clock clicks -milliseconds] >= $nextupdate
-	    && $numcommits >= $ncmupdate + 100} {
-	    doupdate
-	    set ncmupdate $numcommits
+	if {[clock clicks -milliseconds] >= $nextupdate} {
+	    doupdate 1
 	}
 	while {$redisplaying} {
 	    set redisplaying 0
@@ -123,10 +120,8 @@ to allow selection of commits to be displayed.)}
 		foreach id $commits {
 		    drawcommit $id
 		    if {$stopped} break
-		    if {[clock clicks -milliseconds] >= $nextupdate
-			&& $numcommits >= $ncmupdate + 100} {
-			doupdate
-			set ncmupdate $numcommits
+		    if {[clock clicks -milliseconds] >= $nextupdate} {
+			doupdate 1
 		    }
 		}
 	    }
@@ -134,13 +129,24 @@ to allow selection of commits to be displayed.)}
     }
 }
 
-proc doupdate {} {
-    global commfd nextupdate
+proc doupdate {reading} {
+    global commfd nextupdate numcommits ncmupdate
 
-    incr nextupdate 100
-    fileevent $commfd readable {}
+    if {$reading} {
+	fileevent $commfd readable {}
+    }
     update
-    fileevent $commfd readable [list getcommitlines $commfd]
+    set nextupdate [expr {[clock clicks -milliseconds] + 100}]
+    if {$numcommits < 100} {
+	set ncmupdate [expr {$numcommits + 1}]
+    } elseif {$numcommits < 10000} {
+	set ncmupdate [expr {$numcommits + 10}]
+    } else {
+	set ncmupdate [expr {$numcommits + 100}]
+    }
+    if {$reading} {
+	fileevent $commfd readable [list getcommitlines $commfd]
+    }
 }
 
 proc readcommit {id} {
@@ -1127,8 +1133,7 @@ proc drawcommit {id} {
 	    }
 	    if {[clock clicks -milliseconds] >= $nextupdate
 		&& $numcommits >= $ncmupdate} {
-		doupdate
-		set ncmupdate $numcommits
+		doupdate 1
 		if {$stopped} break
 	    }
 	}
@@ -1171,7 +1176,7 @@ proc drawgraph {} {
     if {$startcommits == {}} return
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr $startmsecs + 100]
-    set ncmupdate 0
+    set ncmupdate 1
     initgraph
     set todo [lindex $startcommits 0]
     drawrest 0 1
@@ -1210,10 +1215,8 @@ proc drawrest {level startix} {
 		drawslants $level
 	    }
 	    if {[clock clicks -milliseconds] >= $nextupdate
-	        && $numcommits >= $ncmupdate + 100} {
-		update
-		incr nextupdate 100
-		set ncmupdate $numcommits
+	        && $numcommits >= $ncmupdate} {
+		doupdate 0
 	    }
 	}
     }

@@ -66,3 +66,5 @@ test_expect_success \
        --exclude-from=.git/ignore \
        >output &&
      diff -u expect output'
+
+test_done

@@ -61,7 +61,9 @@ install: build
 	mkdir -p $(DOC_DESTDIR)
 	find $(DOC) '(' -name '*.txt' -o -name '*.html' ')' -exec install {} $(DOC_DESTDIR) ';'
 
-	dh_install --list-missing --sourcedir=$(DESTDIR)
+	dh_movefiles -p git-tk
+	dh_movefiles -p git-core
+	find debian/tmp -type d -o -print | sed -e 's/^/? /'
 
 binary: build install
 	dh_testdir

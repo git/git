@@ -98,12 +98,39 @@ static int process_tag(struct tag *tag)
 static struct object_list *process_queue = NULL;
 static struct object_list **process_queue_end = &process_queue;
 
+static int process_object(struct object *obj)
+{
+	if (obj->type == commit_type) {
+		if (process_commit((struct commit *)obj))
+			return -1;
+		return 0;
+	}
+	if (obj->type == tree_type) {
+		if (process_tree((struct tree *)obj))
+			return -1;
+		return 0;
+	}
+	if (obj->type == blob_type) {
+		return 0;
+	}
+	if (obj->type == tag_type) {
+		if (process_tag((struct tag *)obj))
+			return -1;
+		return 0;
+	}
+	return error("Unable to determine requirements "
+		     "of type %s for %s",
+		     obj->type, sha1_to_hex(obj->sha1));
+}
+
 static int process(unsigned char *sha1, const char *type)
 {
-	struct object *obj;
-	if (has_sha1_file(sha1))
-		return 0;
-	obj = lookup_object_type(sha1, type);
+	struct object *obj = lookup_object_type(sha1, type);
+	if (has_sha1_file(sha1)) {
+		parse_object(sha1);
+		/* We already have it, so we should scan it now. */
+		return process_object(obj);
+	}
 	if (object_list_contains(process_queue, obj))
 		return 0;
 	object_list_insert(obj, process_queue_end);
@@ -134,27 +161,8 @@ static int loop(void)
 			return -1;
 		if (!obj->type)
 			parse_object(obj->sha1);
-		if (obj->type == commit_type) {
-			if (process_commit((struct commit *)obj))
-				return -1;
-			continue;
-		}
-		if (obj->type == tree_type) {
-			if (process_tree((struct tree *)obj))
-				return -1;
-			continue;
-		}
-		if (obj->type == blob_type) {
-			continue;
-		}
-		if (obj->type == tag_type) {
-			if (process_tag((struct tag *)obj))
-				return -1;
-			continue;
-		}
-		return error("Unable to determine requirements "
-			     "of type %s for %s",
-			     obj->type, sha1_to_hex(obj->sha1));
+		if (process_object(obj))
+			return -1;
 	}
 	return 0;
 }

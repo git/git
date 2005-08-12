@@ -16,7 +16,7 @@ test_expect_success \
      for i in a b c
      do
 	     dd if=/dev/zero bs=4k count=1 | tr "\\0" $i >$i &&
-	     git-update-cache --add $i || exit
+	     git-update-cache --add $i || return 1
      done &&
      cat c >d && echo foo >>d && git-update-cache --add d &&
      tree=`git-write-tree` &&
@@ -29,7 +29,7 @@ test_expect_success \
 	 while read object
 	 do
 	    t=`git-cat-file -t $object` &&
-	    git-cat-file $t $object || exit 1
+	    git-cat-file $t $object || return 1
 	 done <obj-list
      } >expect'
 
@@ -58,7 +58,7 @@ test_expect_success \
      do
          cmp $path ../.git/$path || {
 	     echo $path differs.
-	     exit 1
+	     return 1
 	 }
      done'
 cd $TRASH
@@ -88,7 +88,7 @@ test_expect_success \
      do
          cmp $path ../.git/$path || {
 	     echo $path differs.
-	     exit 1
+	     return 1
 	 }
      done'
 cd $TRASH
@@ -106,7 +106,7 @@ test_expect_success \
 	 while read object
 	 do
 	    t=`git-cat-file -t $object` &&
-	    git-cat-file $t $object || exit 1
+	    git-cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
     diff expect current'
@@ -122,7 +122,7 @@ test_expect_success \
 	 while read object
 	 do
 	    t=`git-cat-file -t $object` &&
-	    git-cat-file $t $object || exit 1
+	    git-cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
     diff expect current'
