@@ -238,15 +238,18 @@ rpm: dist
 deb: dist
 	rm -rf $(GIT_TARNAME)
 	tar zxf $(GIT_TARNAME).tar.gz
+	dpkg-source -b $(GIT_TARNAME)
 	cd $(GIT_TARNAME) && fakeroot debian/rules binary
 
 ### Cleaning rules
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
-	rm -f $(GIT_TARNAME).tar.gz git-core.spec
-	rm -f git-core_$(GIT_VERSION)-*.deb git-tk_$(GIT_VERSION)-*.deb
+	rm -f git-core.spec
 	rm -rf $(GIT_TARNAME)
+	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
+	rm -f git-tk_$(GIT_VERSION)-*.deb
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates/ clean
