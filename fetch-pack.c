@@ -4,10 +4,13 @@
 #include <sys/wait.h>
 
 static int quiet;
-static const char fetch_pack_usage[] = "git-fetch-pack [-q] [--exec=upload-pack] [host:]directory [heads]* < mycommitlist";
+static int verbose;
+static const char fetch_pack_usage[] =
+"git-fetch-pack [-q] [-v] [--exec=upload-pack] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
-static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *remote)
+static int find_common(int fd[2], unsigned char *result_sha1,
+		       struct ref *refs)
 {
 	static char line[1000];
 	int count = 0, flushes = 0, retval;
@@ -16,7 +19,16 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 	revs = popen("git-rev-list $(git-rev-parse --all)", "r");
 	if (!revs)
 		die("unable to run 'git-rev-list'");
-	packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
+
+	while (refs) {
+		unsigned char *remote = refs->old_sha1;
+		if (verbose)
+			fprintf(stderr,
+				"want %s (%s)\n", sha1_to_hex(remote),
+				refs->name);
+		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
+		refs = refs->next;
+	}
 	packet_flush(fd[1]);
 	flushes = 1;
 	retval = -1;
@@ -25,6 +37,8 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 		if (get_sha1_hex(line, sha1))
 			die("git-fetch-pack: expected object name, got crud");
 		packet_write(fd[1], "have %s\n", sha1_to_hex(sha1));
+		if (verbose)
+			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
 		if (!(31 & ++count)) {
 			packet_flush(fd[1]);
 			flushes++;
@@ -38,6 +52,8 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 			if (get_ack(fd[0], result_sha1)) {
 				flushes = 0;
 				retval = 0;
+				if (verbose)
+					fprintf(stderr, "got ack\n");
 				break;
 			}
 			flushes--;
@@ -45,19 +61,19 @@ static int find_common(int fd[2], unsigned char *result_sha1, unsigned char *rem
 	}
 	pclose(revs);
 	packet_write(fd[1], "done\n");
+	if (verbose)
+		fprintf(stderr, "done\n");
 	while (flushes) {
 		flushes--;
-		if (get_ack(fd[0], result_sha1))
+		if (get_ack(fd[0], result_sha1)) {
+			if (verbose)
+				fprintf(stderr, "got ack\n");
 			return 0;
+		}
 	}
 	return retval;
 }
 
-/*
- * Eventually we'll want to be able to fetch multiple heads.
- *
- * Right now we'll just require a single match.
- */
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
 	struct ref *ref;
@@ -70,12 +86,8 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		packet_flush(fd[1]);
 		die("no matching remote head");
 	}
-	if (ref->next) {
-		packet_flush(fd[1]);
-		die("multiple remote heads");
-	}
-	if (find_common(fd, sha1, ref->old_sha1) < 0)
-		die("git-fetch-pack: no common commits");
+	if (find_common(fd, sha1, ref) < 0)
+		fprintf(stderr, "warning: no common commits\n");
 	pid = fork();
 	if (pid < 0)
 		die("git-fetch-pack: unable to fork off git-unpack-objects");
@@ -97,7 +109,11 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		int code = WEXITSTATUS(status);
 		if (code)
 			die("git-unpack-objects died with error code %d", code);
-		puts(sha1_to_hex(ref->old_sha1));
+		while (ref) {
+			printf("%s %s\n",
+			       sha1_to_hex(ref->old_sha1), ref->name);
+			ref = ref->next;
+		}
 		return 0;
 	}
 	if (WIFSIGNALED(status)) {
@@ -122,6 +138,14 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strncmp("--exec=", arg, 7)) {
 				exec = arg + 7;
+				continue;
+			}
+			if (!strcmp("-q", arg)) {
+				quiet = 1;
+				continue;
+			}
+			if (!strcmp("-v", arg)) {
+				verbose = 1;
 				continue;
 			}
 			usage(fetch_pack_usage);
