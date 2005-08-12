@@ -127,6 +127,7 @@ static int process(unsigned char *sha1, const char *type)
 {
 	struct object *obj = lookup_object_type(sha1, type);
 	if (has_sha1_file(sha1)) {
+		parse_object(sha1);
 		/* We already have it, so we should scan it now. */
 		return process_object(obj);
 	}
