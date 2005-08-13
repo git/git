@@ -148,7 +148,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	};
 	const char **p;
 
-	if (!get_sha1_hex(str, sha1))
+	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
 	for (p = prefix; *p; p++) {
