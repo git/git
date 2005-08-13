@@ -9,7 +9,7 @@ usage () {
 	die 'git commit [-a]  [-m <message>] [-F <logfile>] [(-C|-c) <commit>] [<path>...]'
 }
 
-all= logfile= use_commit= no_edit= log_given= log_message=
+all= logfile= use_commit= no_edit= log_given= log_message= verify= signoff=
 while case "$#" in 0) break;; esac
 do
   case "$1" in
@@ -64,6 +64,12 @@ do
     use_commit="$1"
     no_edit=t
     shift ;;
+  -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
+    signoff=t
+    shift ;;
+  -v|--v|--ve|--ver|--veri|--verif|--verify)
+    verify=t
+    shift ;;
   --)
     shift
     break ;;
@@ -85,6 +91,60 @@ t)
 	xargs -0 git-update-cache -q -- || exit 1 ;;
 esac
 git-update-cache -q --refresh -- "$@" || exit 1
+
+case "$verify" in
+t)
+	# This is slightly modified from Andrew Morton's Perfect Patch.
+	# Lines you introduce should not have trailing whitespace.
+	# Also check for an indentation that has SP before a TAB.
+	perl -e '
+	    my $fh;
+	    my $found_bad = 0;
+	    my $filename;
+	    my $reported_filename = "";
+	    my $lineno;
+	    sub bad_line {
+		my ($why, $line) = @_;
+		if (!$found_bad) {
+		    print "*\n";
+		    print "* You have some suspicious patch lines:\n";
+		    print "*\n";
+		    $found_bad = 1;
+		}
+		if ($reported_filename ne $filename) {
+		    print "* In $filename\n";
+		    $reported_filename = $filename;
+		}
+		print "* $why (line $lineno)\n$line\n";
+	    }
+	    open $fh, "-|", qw(git-diff-cache -p -M --cached HEAD);
+	    while (<$fh>) {
+		if (m|^diff --git a/(.*) b/\1$|) {
+		    $filename = $1;
+		    next;
+		}
+		if (/^@@ -\S+ \+(\d+)/) {
+		    $lineno = $1 - 1;
+		    next;
+		}
+		if (/^ /) {
+		    $lineno++;
+		    next;
+		}
+		if (s/^\+//) {
+		    $lineno++;
+		    chomp;
+		    if (/\s$/) {
+			bad_line("trailing whitespace", $_);
+		    }
+		    if (/^\s* 	/) {
+			bad_line("indent SP followed by a TAB", $_);
+		    }
+		}
+	    }
+	    exit($found_bad);
+	' || exit ;;
+esac
 
 PARENTS="-p HEAD"
 if [ ! -r "$GIT_DIR/HEAD" ]; then
@@ -161,7 +221,14 @@ else
 		export GIT_AUTHOR_DATE
 		git-cat-file commit "$use_commit" |
 		sed -e '1,/^$/d'
-	fi >.editmsg
+	fi |
+	git-stripspace >.editmsg
+	case "$signoff" in
+	t)
+		git-var GIT_COMMITTER_IDENT | sed -e '
+			s/>.*/>/
+			s/^/Signed-off-by: /' >>.editmsg ;;
+	esac
 	git-status-script >>.editmsg
 fi
 if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]
@@ -176,7 +243,8 @@ case "$no_edit" in
 	;;
 esac
 grep -v '^#' < .editmsg | git-stripspace > .cmitmsg
-if test -s .cmitmsg
+grep -v -i '^Signed-off-by' .cmitmsg >.cmitchk
+if test -s .cmitchk
 then
 	tree=$(git-write-tree) &&
 	commit=$(cat .cmitmsg | git-commit-tree $tree $PARENTS) &&
@@ -187,5 +255,5 @@ else
 	false
 fi
 ret="$?"
-rm -f .cmitmsg .editmsg
+rm -f .cmitmsg .editmsg .cmitchk
 exit "$ret"
