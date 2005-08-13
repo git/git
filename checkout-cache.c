@@ -78,10 +78,11 @@ static int checkout_all(void)
 static const char checkout_cache_usage[] =
 "git-checkout-cache [-u] [-q] [-a] [-f] [-n] [--prefix=<string>] [--] <file>...";
 
+static struct cache_file cache_file;
+
 int main(int argc, char **argv)
 {
 	int i, force_filename = 0;
-	struct cache_file cache_file;
 	int newfd = -1;
 
 	if (read_cache() < 0) {
