@@ -6,7 +6,7 @@
 . git-sh-setup-script || die "Not a git archive."
 
 usage () {
-    echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [-<diff options>...] upstream [ our-head ]
+    echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [--sign] [-<diff options>...] upstream [ our-head ]
 
 Prepare each commit with its patch since our-head forked from upstream,
 one file per patch, for e-mail submission.  Each output file is
@@ -46,6 +46,8 @@ do
     date=t author=t mbox=t ;;
     -n|--n|--nu|--num|--numb|--numbe|--number|--numbere|--numbered)
     numbered=t ;;
+    -s|--s|--si|--sig|--sign)
+    signoff=t ;;
     -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
     --output-d=*|--output-di=*|--output-dir=*|--output-dire=*|\
     --output-direc=*|--output-direct=*|--output-directo=*|\
@@ -174,6 +176,14 @@ Date: '"$ad"
 	b body'
 
 	sed -ne "$mailScript" <$commsg
+
+	test "$signoff" = "t" && {
+		offsigner=`git-var GIT_COMMITTER_IDENT | sed -e 's/>.*/>/'`
+		echo
+		echo "Signed-off-by: $offsigner"
+		echo
+	}
+
 	echo '---'
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary

@@ -32,24 +32,24 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION=0.99.5
+GIT_VERSION = 0.99.5
 
-COPTS?=-g -O2
-CFLAGS+=$(COPTS) -Wall $(DEFINES)
+CFLAGS = -g -O2 -Wall
+ALL_CFLAGS = $(CFLAGS) $(DEFINES)
 
-prefix=$(HOME)
-bindir=$(prefix)/bin
-template_dir=$(prefix)/share/git-core/templates/
-# dest=
+prefix = $(HOME)
+bindir = $(prefix)/bin
+template_dir = $(prefix)/share/git-core/templates/
+# DESTDIR=
 
-CC?=gcc
-AR?=ar
-INSTALL?=install
-RPMBUILD?=rpmbuild
+CC = gcc
+AR = ar
+INSTALL = install
+RPMBUILD = rpmbuild
 
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
-SPARSE_FLAGS?=-D__BIG_ENDIAN__ -D__powerpc__
+SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 
 
@@ -87,7 +87,7 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-update-server-info git-show-rev-cache git-build-rev-cache
 
 ifndef NO_CURL
-PROG+= git-http-pull
+	PROG+= git-http-pull
 endif
 
 LIB_FILE=libgit.a
@@ -125,28 +125,28 @@ ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL=-lssl
 else
-	CFLAGS += '-DNO_OPENSSL'
+	DEFINES += '-DNO_OPENSSL'
 	MOZILLA_SHA1=1
 	OPENSSL_LIBSSL=
 endif
 ifdef MOZILLA_SHA1
-  SHA1_HEADER="mozilla-sha1/sha1.h"
-  LIB_OBJS += mozilla-sha1/sha1.o
+	SHA1_HEADER="mozilla-sha1/sha1.h"
+	LIB_OBJS += mozilla-sha1/sha1.o
 else
-ifdef PPC_SHA1
-  SHA1_HEADER="ppc/sha1.h"
-  LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
-else
-  SHA1_HEADER=<openssl/sha.h>
-ifeq ($(shell uname -s),Darwin)
-  LIBS += -lcrypto -lssl
-else
-  LIBS += -lcrypto
-endif
-endif
+	ifdef PPC_SHA1
+		SHA1_HEADER="ppc/sha1.h"
+		LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+	else
+		SHA1_HEADER=<openssl/sha.h>
+		ifeq ($(shell uname -s),Darwin)
+			LIBS += -lcrypto -lssl
+		else
+			LIBS += -lcrypto
+		endif
+	endif
 endif
 
-CFLAGS += '-DSHA1_HEADER=$(SHA1_HEADER)'
+DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
 
 
@@ -156,12 +156,15 @@ all: $(PROG)
 
 all:
 	$(MAKE) -C templates
+	$(MAKE) -C tools
 
-.SECONDARY: %.o
-.c.o:
-	$(CC) $(CFLAGS) -o $*.o -c $*.c
+%.o: %.c
+	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+%.o: %.S
+	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+
 git-%: %.o $(LIB_FILE)
-	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
 git-http-pull: pull.o
 git-local-pull: pull.o
@@ -172,7 +175,8 @@ git-http-pull: LIBS += -lcurl
 git-rev-list: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
-	$(CC) -c $(CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
+	$(CC) -c $(ALL_CFLAGS) \
+		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
 $(patsubst git-%,%.o,$(PROG)): $(LIB_H)
@@ -192,24 +196,22 @@ test: all
 	$(MAKE) -C t/ all
 
 test-date: test-date.c date.o
-	$(CC) $(CFLAGS) -o $@ test-date.c date.o
+	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
 
 test-delta: test-delta.c diff-delta.o patch-delta.o
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(ALL_CFLAGS) -o $@ $^
 
 check:
-	for i in *.c; do sparse $(CFLAGS) $(SPARSE_FLAGS) $$i; done
+	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i; done
 
 
 
 ### Installation rules
 
 install: $(PROG) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(dest)$(bindir)
-	$(INSTALL) $(PROG) $(SCRIPTS) $(dest)$(bindir)
+	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(PROG) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
-
-install-tools:
 	$(MAKE) -C tools install
 
 install-doc:
@@ -238,15 +240,18 @@ rpm: dist
 deb: dist
 	rm -rf $(GIT_TARNAME)
 	tar zxf $(GIT_TARNAME).tar.gz
+	dpkg-source -b $(GIT_TARNAME)
 	cd $(GIT_TARNAME) && fakeroot debian/rules binary
 
 ### Cleaning rules
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROG) $(LIB_FILE)
-	rm -f $(GIT_TARNAME).tar.gz git-core.spec
-	rm -f git-core_$(GIT_VERSION)-*.deb git-tk_$(GIT_VERSION)-*.deb
+	rm -f git-core.spec
 	rm -rf $(GIT_TARNAME)
+	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
+	rm -f git-tk_$(GIT_VERSION)-*.deb
 	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates/ clean

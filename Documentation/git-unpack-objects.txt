@@ -9,7 +9,7 @@ git-unpack-objects - Unpack objects from a packed archive.
 
 SYNOPSIS
 --------
-'git-unpack-objects' < pack-file
+'git-unpack-objects' [-q] <pack-file
 
 
 DESCRIPTION
@@ -17,6 +17,12 @@ DESCRIPTION
 Reads a packed archive (.pack) from the standard input, and
 expands the objects contained in the pack into "one-file
 one-object" format in $GIT_OBJECT_DIRECTORY.
+
+OPTIONS
+-------
+-q::
+	The command usually shows percentage progress.  This
+	flag suppresses it.
 
 
 Author

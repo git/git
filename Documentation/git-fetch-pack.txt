@@ -9,19 +9,19 @@ git-fetch-pack - Receive missing objects from another repository.
 
 SYNOPSIS
 --------
-git-fetch-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...] < <commit-list>
+git-fetch-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<refs>...]
 
 DESCRIPTION
 -----------
 Invokes 'git-upload-pack' on a potentially remote repository,
 and asks it to send objects missing from this repository, to
 update the named heads.  The list of commits available locally
-is fed from the standard input, to be sent to 'git-upload-pack'
-running on the other end.
+is found out by scanning local $GIT_DIR/refs/ and sent to
+'git-upload-pack' running on the other end.
 
-This command can be used only when the local side has a common
-(ancestor) commit with the remote head that is being pulled
-from.  Use 'git-clone-pack' for that.
+This command degenerates to download everything to complete the
+asked refs from the remote side when the local side does not
+have a common ancestor commit.
 
 
 OPTIONS
@@ -50,14 +50,10 @@ OPTIONS
 <directory>::
 	The repository to sync from.
 
-<head>...::
+<refs>...::
 	The remote heads to update from. This is relative to
 	$GIT_DIR (e.g. "HEAD", "refs/heads/master").  When
 	unspecified, update from all heads the remote side has.
-
-	However the program refuses to work if more than one
-	remote head matches the specified heads.  I am not sure
-	what this means... Help!!!!!
 
 
 Author

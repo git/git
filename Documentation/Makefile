@@ -11,6 +11,7 @@ bin=$(prefix)/bin
 mandir=$(prefix)/man
 man1=$(mandir)/man1
 man7=$(mandir)/man7
+# DESTDIR=
 
 INSTALL=install
 
@@ -33,9 +34,9 @@ man1: $(DOC_MAN1)
 man7: $(DOC_MAN7)
 
 install:
-	$(INSTALL) -m755 -d $(dest)/$(man1) $(dest)/$(man7)
-	$(INSTALL) $(DOC_MAN1) $(dest)/$(man1)
-	$(INSTALL) $(DOC_MAN7) $(dest)/$(man7)
+	$(INSTALL) -m755 -d $(DESTDIR)/$(man1) $(DESTDIR)/$(man7)
+	$(INSTALL) $(DOC_MAN1) $(DESTDIR)/$(man1)
+	$(INSTALL) $(DOC_MAN7) $(DESTDIR)/$(man7)
 
 # 'include' dependencies
 git-diff-%.txt: diff-format.txt diff-options.txt

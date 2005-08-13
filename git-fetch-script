@@ -31,6 +31,10 @@ rsync://*)
 	;;
 *)
 	head=$(git-fetch-pack "$merge_repo" "$merge_head")
+	if h=`expr "$head" : '\([^ ][^ ]*\) '`
+	then
+	    head=$h
+	fi
 	;;
 esac || exit 1
 
