@@ -208,13 +208,9 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	} else
 		parent = -1;
 
-	if (0 <= parent) {
-		ret = get_parent(name, len, sha1, parent);
-		if (!ret)
-			return 0;
-		else if(parent>0)
-			return ret;
-	}
+	if (parent >= 0)
+		return get_parent(name, len, sha1, parent);
+
 	ret = get_sha1_basic(name, len, sha1);
 	if (!ret)
 		return 0;
