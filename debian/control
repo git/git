@@ -7,7 +7,7 @@ Standards-Version: 3.6.1
 
 Package: git-core
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, patch, rcs
+Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, patch, rcs
 Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl
 Conflicts: git
 Description: The git content addressable filesystem
