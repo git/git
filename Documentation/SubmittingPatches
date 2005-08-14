@@ -1,0 +1,130 @@
+I started reading over the SubmittingPatches document for Linux
+kernel, primarily because I wanted to have a document similar to
+it for the core GIT to make sure people understand what they are
+doing when they write "Signed-off-by" line.
+
+But the patch submission requirements are a lot more relaxed
+here, because the core GIT is thousand times smaller ;-).  So
+here is only the relevant bits.
+
+
+(1) Make separate commits for logically separate changes.
+
+Unless your patch is really trivial, you should not be sending
+out a patch that was generated between your working tree and
+your commit head.  Instead, always make a commit with complete
+commit message and generate a series of patches from your
+repository.  It is a good discipline.
+
+Describe the technical detail of the change(s).
+
+If your description starts to get long, that's a sign that you
+probably need to split up your commit to finer grained pieces.
+
+
+(2) Generate your patch using git/cogito out of your commits.
+
+git diff tools generate unidiff which is the preferred format.
+You do not have to be afraid to use -M option to "git diff" or
+"git format-patch", if your patch involves file renames.  The
+receiving end can handle them just fine.
+
+Please make sure your patch does not include any extra files
+which do not belong in a patch submission.  Make sure to review
+your patch after generating it, to ensure accuracy.  Before
+sending out, please make sure it cleanly applies to the "master"
+branch head.
+
+
+(3) Sending your patches.
+
+People on the git mailing list needs to be able to read and
+comment on the changes you are submitting.  It is important for
+a developer to be able to "quote" your changes, using standard
+e-mail tools, so that they may comment on specific portions of
+your code.  For this reason, all patches should be submitting
+e-mail "inline".  WARNING: Be wary of your MUAs word-wrap
+corrupting your patch.  Do not cut-n-paste your patch.
+
+It is common convention to prefix your subject line with
+[PATCH].  This lets people easily distinguish patches from other
+e-mail discussions.
+
+"git format-patch" command follows the best current practice to
+format the body of an e-mail message.  At the beginning of the
+patch should come your commit message, ending with the
+Signed-off-by: lines, and a line that consists of three dashes,
+followed by the diffstat information and the patch itself.  If
+you are forwarding a patch from somebody else, optionally, at
+the beginning of the e-mail message just before the commit
+message starts, you can put a "From: " line to name that person.
+
+You often want to add additional explanation about the patch,
+other than the commit message itself.  Place such "cover letter"
+material between the three dash lines and the diffstat.
+
+Do not attach the patch as a MIME attachment, compressed or not.
+Do not let your e-mail client send quoted-printable.  Many
+popular e-mail applications will not always transmit a MIME
+attachment as plain text, making it impossible to comment on
+your code.  A MIME attachment also takes a bit more time to
+process.  This does not decrease the likelihood of your
+MIME-attached change being accepted, but it makes it more likely
+that it will be postponed.
+
+Exception:  If your mailer is mangling patches then someone may ask
+you to re-send them using MIME.
+
+Note that your maintainer does not subscribe to the git mailing
+list (he reads it via mail-to-news gateway).  If your patch is
+for discussion first, send it "To:" the mailing list, and
+optoinally "cc:" him.  If it is trivially correct or after list
+discussion reached consensus, send it "To:" the maintainer and
+optionally "cc:" the list.
+
+
+(6) Sign your work
+
+To improve tracking of who did what, we've borrowed the
+"sign-off" procedure from the Linux kernel project on patches
+that are being emailed around.  Although core GIT is a lot
+smaller project it is a good discipline to follow it.
+
+The sign-off is a simple line at the end of the explanation for
+the patch, which certifies that you wrote it or otherwise have
+the right to pass it on as a open-source patch.  The rules are
+pretty simple: if you can certify the below:
+
+        Developer's Certificate of Origin 1.1
+
+        By making a contribution to this project, I certify that:
+
+        (a) The contribution was created in whole or in part by me and I
+            have the right to submit it under the open source license
+            indicated in the file; or
+
+        (b) The contribution is based upon previous work that, to the best
+            of my knowledge, is covered under an appropriate open source
+            license and I have the right under that license to submit that
+            work with modifications, whether created in whole or in part
+            by me, under the same open source license (unless I am
+            permitted to submit under a different license), as indicated
+            in the file; or
+
+        (c) The contribution was provided directly to me by some other
+            person who certified (a), (b) or (c) and I have not modified
+            it.
+
+	(d) I understand and agree that this project and the contribution
+	    are public and that a record of the contribution (including all
+	    personal information I submit with it, including my sign-off) is
+	    maintained indefinitely and may be redistributed consistent with
+	    this project or the open source license(s) involved.
+
+then you just add a line saying
+
+	Signed-off-by: Random J Developer <random@developer.example.org>
+
+Some people also put extra tags at the end.  They'll just be ignored for
+now, but you can do this to mark internal company procedures or just
+point out some special detail about the sign-off.

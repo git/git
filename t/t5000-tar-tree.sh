@@ -41,7 +41,7 @@ test_expect_success \
      find a -type l | xargs git-update-cache --add &&
      treeid=`git-write-tree` &&
      echo $treeid >treeid &&
-     TZ= GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
+     TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
      git-commit-tree $treeid </dev/null >.git/HEAD'
 
 test_expect_success \
@@ -50,7 +50,7 @@ test_expect_success \
 
 test_expect_success \
     'validate file modification time' \
-    'TZ= tar tvf b.tar a/a |
+    'TZ=GMT tar tvf b.tar a/a |
      awk \{print\ \$4,\ \(length\(\$5\)\<7\)\ ?\ \$5\":00\"\ :\ \$5\} \
      >b.mtime &&
      echo "2005-05-27 22:00:00" >expected.mtime &&

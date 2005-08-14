@@ -405,14 +405,13 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	return 0;
 }
 
-void diff_free_filespec_data(struct diff_filespec *s)
+void diff_free_filespec(struct diff_filespec *s)
 {
 	if (s->should_free)
 		free(s->data);
 	else if (s->should_munmap)
 		munmap(s->data, s->size);
-	s->should_free = s->should_munmap = 0;
-	s->data = NULL;
+	free(s);
 }
 
 static void prep_temp_blob(struct diff_tempfile *temp,
@@ -769,8 +768,8 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 
 void diff_free_filepair(struct diff_filepair *p)
 {
-	diff_free_filespec_data(p->one);
-	diff_free_filespec_data(p->two);
+	diff_free_filespec(p->one);
+	diff_free_filespec(p->two);
 	free(p);
 }
 

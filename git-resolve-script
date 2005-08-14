@@ -6,8 +6,8 @@
 #
 . git-sh-setup-script || die "Not a git archive"
 
-head=$(git-rev-parse --verify "$1")
-merge=$(git-rev-parse --verify "$2")
+head=$(git-rev-parse --verify "$1"^0) || exit
+merge=$(git-rev-parse --verify "$2"^0) || exit
 merge_msg="$3"
 
 dropheads() {

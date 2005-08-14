@@ -231,8 +231,8 @@ static void merge_broken(struct diff_filepair *p,
 
 	dp = diff_queue(outq, d->one, c->two);
 	dp->score = p->score;
-	diff_free_filespec_data(d->two);
-	diff_free_filespec_data(c->one);
+	diff_free_filespec(d->two);
+	diff_free_filespec(c->one);
 	free(d);
 	free(c);
 }
