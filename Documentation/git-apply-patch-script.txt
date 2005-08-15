@@ -1,6 +1,6 @@
 git-apply-patch-script(1)
 =========================
-v0.1, May 2005
+v0.99.4, May 2005
 
 NAME
 ----
@@ -20,7 +20,7 @@ family of commands report to the current work tree.
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Junio C Hamano <junkio@cox.net>
 
 Documentation
 --------------

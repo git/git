@@ -1,6 +1,6 @@
 git-tag-script(1)
 =================
-v0.1, May 2005
+v0.99.4, Aug 2005
 
 NAME
 ----
@@ -27,7 +27,8 @@ A GnuPG signed tag object will be created when "-s" is used.
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Linus Torvalds <torvalds@osdl.org>,
+Junio C Hamano <junkio@cox.net> and Chris Wright <chrisw@osdl.org>.
 
 Documentation
 --------------

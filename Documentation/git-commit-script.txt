@@ -8,7 +8,7 @@ git-commit-script - Record your changes
 
 SYNOPSIS
 --------
-'git commit' [-a] [(-c | -C) <commit> | -F <file> | -m <msg>] <file>...
+'git commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] <file>...
 
 DESCRIPTION
 -----------
@@ -36,13 +36,26 @@ OPTIONS
 -m <msg>::
 	Use the given <msg> as the commit message.
 
+-s::
+	Add Signed-off-by line at the end of the commit message.
+
+-v::
+	Look for suspicious lines the commit introduces, and
+	abort committing if there is one.  The definition of
+	'suspicious lines' is currently the lines that has
+	trailing whitespaces, and the lines whose indentation
+	has a SP character immediately followed by a TAB
+	character.
+
 <file>...::
 	Update specified paths in the index file.
 
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Linus Torvalds <torvalds@osdl.org> and
+Junio C Hamano <junkio@cox.net>
+
 
 GIT
 ---

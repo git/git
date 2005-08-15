@@ -1,6 +1,6 @@
 git(7)
 ======
-May 2005
+v0.99.4, Aug 2005
 
 NAME
 ----
@@ -165,8 +165,20 @@ link:git-update-server-info.html[git-update-server-info]::
 	clients discover references and packs on it.
 
 
-Porcelainish Commands
----------------------
+Porcelain-ish Commands
+----------------------
+link:git-whatchanged.html[git-whatchanged]::
+	Shows commit logs and differences they introduce.
+
+link:git-log-script.html[git-log-script]::
+	Shows commit logs.
+
+link:git-shortlog.html[git-shortlog]::
+	Summarizes 'git log' output.
+
+link:git-status-script.html[git-status-script]::
+	Shows the working tree status.
+
 link:git-fetch-script.html[git-fetch-script]::
 	Download from a remote repository via various protocols.
 
