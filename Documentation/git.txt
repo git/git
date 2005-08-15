@@ -38,7 +38,7 @@ In addition, git itself comes with a spartan set of porcelain
 commands.  They are usable but are not meant to compete with real
 Porcelains.
 
-There are also some ancilliary programs that can be viewed as useful
+There are also some ancillary programs that can be viewed as useful
 aids for using the core commands but which are unlikely to be used by
 SCMs layered over git.
 
@@ -191,8 +191,8 @@ link:git-commit-script.html[git-commit-script]::
 link:git-show-branches-script.html[git-show-branches-script]::
 	Show branches and their commits.
 
-Ancilliary Commands
--------------------
+Ancillary Commands
+------------------
 Manipulators:
 
 link:git-apply-patch-script.html[git-apply-patch-script]::
@@ -214,7 +214,7 @@ link:git-tag-script.html[git-tag-script]::
 	An example script to create a tag object signed with GPG
 
 
-Interogators:
+Interrogators:
 
 link:git-diff-helper.html[git-diff-helper]::
 	Generates patch format output for git-diff-*
@@ -254,7 +254,7 @@ Identifier Terminology
 
 Symbolic Identifiers
 --------------------
-Any git comand accepting any <object> can also use the following
+Any git command accepting any <object> can also use the following
 symbolic notation:
 
 HEAD::
@@ -325,7 +325,7 @@ git so take care if using Cogito etc
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
 	Due to the immutable nature of git objects, old objects can be
 	archived into shared, read-only directories. This variable
-	specifies a ":" seperated list of git object directories which
+	specifies a ":" separated list of git object directories which
 	can be used to search for git objects. New objects will not be
 	written to these directories.
 
