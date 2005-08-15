@@ -188,6 +188,8 @@ link:git-pull-script.html[git-pull-script]::
 link:git-commit-script.html[git-commit-script]::
 	Record changes to the repository.
 
+link:git-show-branches-script.html[git-show-branches-script]::
+	Show branches and their commits.
 
 Ancilliary Commands
 -------------------
