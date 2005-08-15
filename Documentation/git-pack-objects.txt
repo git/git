@@ -74,6 +74,10 @@ Documentation
 -------------
 Documentation by Junio C Hamano
 
+See-Also
+--------
+git-repack-script(1) git-prune-packed(1)
+
 GIT
 ---
 Part of the link:git.html[git] suite

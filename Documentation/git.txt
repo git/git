@@ -71,6 +71,13 @@ link:git-hash-object.html[git-hash-object]::
 link:git-write-tree.html[git-write-tree]::
 	Creates a tree from the current cache
 
+link:git-pack-objects.html[git-pack-objects]::
+	Creates a packed archive of objects.
+
+link:git-prune-packed.html[git-prune-packed]::
+	Remove extra objects that are already in pack files.
+
+
 Interrogation commands
 ~~~~~~~~~~~~~~~~~~~~~~
 link:git-cat-file.html[git-cat-file]::
@@ -190,6 +197,10 @@ link:git-commit-script.html[git-commit-script]::
 
 link:git-show-branches-script.html[git-show-branches-script]::
 	Show branches and their commits.
+
+link:git-repack-script.html[git-repack-script]::
+	Pack unpacked objects in a repository.
+
 
 Ancillary Commands
 ------------------

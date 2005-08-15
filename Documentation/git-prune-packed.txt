@@ -1,0 +1,42 @@
+git-prune-packed(1)
+=====================
+v0.1, August 2005
+
+NAME
+----
+git-prune-packed - Program used to remove the extra object files that are now
+residing in a pack file.
+
+
+SYNOPSIS
+--------
+'git-prune-packed'
+
+DESCRIPTION
+-----------
+This program search the GIT_OBJECT_DIR for all objects that currently exist in
+a pack file as well as the independent object directories.
+
+All such extra objects are removed.
+
+A pack is a collection of objects, individually compressed, with delta
+compression applied, stored in a single file, with an associated index file.
+
+Packs are used to reduce the load on mirror systems, backup engines, disk storage, etc.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Ryan Anderson <ryan@michonline.com>
+
+See-Also
+--------
+git-pack-objects(1) git-repack-script(1)
+
+GIT
+---
+Part of the link:git.html[git] suite
+
