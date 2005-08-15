@@ -167,6 +167,7 @@ if [ ! -r "$GIT_DIR/HEAD" ]; then
 	no_edit=
 else
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+		{
 		echo "#"
 		echo "# It looks like your may be committing a MERGE."
 		echo "# If this is not correct, please remove the file"
@@ -177,10 +178,13 @@ else
 		   no_edit= 
 		esac
 		echo "#"
+		} |
+		git-stripspace >.editmsg
 		PARENTS="-p HEAD -p MERGE_HEAD"
 	elif test "$log_message" != ''
 	then
-		echo "$log_message"
+		echo "$log_message" |
+		git-stripspace >.editmsg
 	elif test "$logfile" != ""
 	then
 		if test "$logfile" = -
@@ -190,7 +194,8 @@ else
 			cat
 		else
 			cat <"$logfile"
-		fi
+		fi |
+		git-stripspace >.editmsg
 	elif test "$use_commit" != ""
 	then
 		pick_author_script='
@@ -220,9 +225,10 @@ else
 		export GIT_AUTHOR_EMAIL
 		export GIT_AUTHOR_DATE
 		git-cat-file commit "$use_commit" |
-		sed -e '1,/^$/d'
-	fi |
-	git-stripspace >.editmsg
+		sed -e '1,/^$/d' |
+		git-stripspace >.editmsg
+	fi
+
 	case "$signoff" in
 	t)
 		git-var GIT_COMMITTER_IDENT | sed -e '
