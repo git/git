@@ -1,6 +1,6 @@
 git-merge-one-file-script(1)
 ============================
-v0.1, May 2005
+v0.99.4, Aug 2005
 
 NAME
 ----
@@ -18,7 +18,8 @@ to resolve a merge after the trivial merge done with "git-read-tree -m".
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Linus Torvalds <torvalds@osdl.org>,
+Junio C Hamano <junkio@cox.net> and Petr Baudis <pasky@suse.cz>.
 
 Documentation
 --------------

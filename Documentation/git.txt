@@ -1,6 +1,6 @@
 git(7)
 ======
-May 2005
+v0.99.4, Aug 2005
 
 NAME
 ----
@@ -38,7 +38,7 @@ In addition, git itself comes with a spartan set of porcelain
 commands.  They are usable but are not meant to compete with real
 Porcelains.
 
-There are also some ancilliary programs that can be viewed as useful
+There are also some ancillary programs that can be viewed as useful
 aids for using the core commands but which are unlikely to be used by
 SCMs layered over git.
 
@@ -70,6 +70,13 @@ link:git-hash-object.html[git-hash-object]::
 
 link:git-write-tree.html[git-write-tree]::
 	Creates a tree from the current cache
+
+link:git-pack-objects.html[git-pack-objects]::
+	Creates a packed archive of objects.
+
+link:git-prune-packed.html[git-prune-packed]::
+	Remove extra objects that are already in pack files.
+
 
 Interrogation commands
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -165,8 +172,20 @@ link:git-update-server-info.html[git-update-server-info]::
 	clients discover references and packs on it.
 
 
-Porcelainish Commands
----------------------
+Porcelain-ish Commands
+----------------------
+link:git-whatchanged.html[git-whatchanged]::
+	Shows commit logs and differences they introduce.
+
+link:git-log-script.html[git-log-script]::
+	Shows commit logs.
+
+link:git-shortlog.html[git-shortlog]::
+	Summarizes 'git log' output.
+
+link:git-status-script.html[git-status-script]::
+	Shows the working tree status.
+
 link:git-fetch-script.html[git-fetch-script]::
 	Download from a remote repository via various protocols.
 
@@ -176,9 +195,15 @@ link:git-pull-script.html[git-pull-script]::
 link:git-commit-script.html[git-commit-script]::
 	Record changes to the repository.
 
+link:git-show-branches-script.html[git-show-branches-script]::
+	Show branches and their commits.
 
-Ancilliary Commands
--------------------
+link:git-repack-script.html[git-repack-script]::
+	Pack unpacked objects in a repository.
+
+
+Ancillary Commands
+------------------
 Manipulators:
 
 link:git-apply-patch-script.html[git-apply-patch-script]::
@@ -200,7 +225,7 @@ link:git-tag-script.html[git-tag-script]::
 	An example script to create a tag object signed with GPG
 
 
-Interogators:
+Interrogators:
 
 link:git-diff-helper.html[git-diff-helper]::
 	Generates patch format output for git-diff-*
@@ -240,7 +265,7 @@ Identifier Terminology
 
 Symbolic Identifiers
 --------------------
-Any git comand accepting any <object> can also use the following
+Any git command accepting any <object> can also use the following
 symbolic notation:
 
 HEAD::
@@ -311,7 +336,7 @@ git so take care if using Cogito etc
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
 	Due to the immutable nature of git objects, old objects can be
 	archived into shared, read-only directories. This variable
-	specifies a ":" seperated list of git object directories which
+	specifies a ":" separated list of git object directories which
 	can be used to search for git objects. New objects will not be
 	written to these directories.
 

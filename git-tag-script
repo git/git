@@ -47,7 +47,7 @@ if [ -e "$GIT_DIR/refs/tags/$name" -a -z "$force" ]; then
 fi
 shift
 
-object=$(git-rev-parse --verify --revs-only --default HEAD "$@") || exit 1
+object=$(git-rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git-cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 

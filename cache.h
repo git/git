@@ -278,9 +278,10 @@ struct checkout {
 extern int checkout_entry(struct cache_entry *ce, struct checkout *state);
 
 extern struct alternate_object_database {
-	char *base;
+	struct alternate_object_database *next;
 	char *name;
-} *alt_odb;
+	char base[0]; /* more */
+} *alt_odb_list;
 extern void prepare_alt_odb(void);
 
 extern struct packed_git {

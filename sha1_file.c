@@ -222,84 +222,100 @@ char *sha1_pack_index_name(const unsigned char *sha1)
 	return base;
 }
 
-struct alternate_object_database *alt_odb;
+struct alternate_object_database *alt_odb_list;
+static struct alternate_object_database **alt_odb_tail;
 
 /*
  * Prepare alternate object database registry.
- * alt_odb points at an array of struct alternate_object_database.
- * This array is terminated with an element that has both its base
- * and name set to NULL.  alt_odb[n] comes from n'th non-empty
- * element from colon separated ALTERNATE_DB_ENVIRONMENT environment
- * variable, and its base points at a statically allocated buffer
- * that contains "/the/directory/corresponding/to/.git/objects/...",
- * while its name points just after the slash at the end of
- * ".git/objects/" in the example above, and has enough space to hold
- * 40-byte hex SHA1, an extra slash for the first level indirection,
- * and the terminating NUL.
- * This function allocates the alt_odb array and all the strings
- * pointed by base fields of the array elements with one xmalloc();
- * the string pool immediately follows the array.
+ *
+ * The variable alt_odb_list points at the list of struct
+ * alternate_object_database.  The elements on this list come from
+ * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
+ * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
+ * whose contents is exactly in the same format as that environment
+ * variable.  Its base points at a statically allocated buffer that
+ * contains "/the/directory/corresponding/to/.git/objects/...", while
+ * its name points just after the slash at the end of ".git/objects/"
+ * in the example above, and has enough space to hold 40-byte hex
+ * SHA1, an extra slash for the first level indirection, and the
+ * terminating NUL.
  */
+static void link_alt_odb_entries(const char *alt, const char *ep)
+{
+	const char *cp, *last;
+	struct alternate_object_database *ent;
+
+	last = alt;
+	do {
+		for (cp = last; cp < ep && *cp != ':'; cp++)
+			;
+		if (last != cp) {
+			/* 43 = 40-byte + 2 '/' + terminating NUL */
+			int pfxlen = cp - last;
+			int entlen = pfxlen + 43;
+
+			ent = xmalloc(sizeof(*ent) + entlen);
+			*alt_odb_tail = ent;
+			alt_odb_tail = &(ent->next);
+			ent->next = NULL;
+
+			memcpy(ent->base, last, pfxlen);
+			ent->name = ent->base + pfxlen + 1;
+			ent->base[pfxlen] = ent->base[pfxlen + 3] = '/';
+			ent->base[entlen-1] = 0;
+		}
+		while (cp < ep && *cp == ':')
+			cp++;
+		last = cp;
+	} while (cp < ep);
+}
+
 void prepare_alt_odb(void)
 {
-	int pass, totlen, i;
-	const char *cp, *last;
-	char *op = NULL;
-	const char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
+	char path[PATH_MAX];
+	char *map, *ep;
+	int fd;
+	struct stat st;
+	char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
 
-	if (alt_odb)
+	sprintf(path, "%s/info/alternates", get_object_directory());
+	if (alt_odb_tail)
 		return;
-	/* The first pass counts how large an area to allocate to
-	 * hold the entire alt_odb structure, including array of
-	 * structs and path buffers for them.  The second pass fills
-	 * the structure and prepares the path buffers for use by
-	 * fill_sha1_path().
-	 */
-	for (totlen = pass = 0; pass < 2; pass++) {
-		last = alt;
-		i = 0;
-		do {
-			cp = strchr(last, ':') ? : last + strlen(last);
-			if (last != cp) {
-				/* 43 = 40-byte + 2 '/' + terminating NUL */
-				int pfxlen = cp - last;
-				int entlen = pfxlen + 43;
-				if (pass == 0)
-					totlen += entlen;
-				else {
-					alt_odb[i].base = op;
-					alt_odb[i].name = op + pfxlen + 1;
-					memcpy(op, last, pfxlen);
-					op[pfxlen] = op[pfxlen + 3] = '/';
-					op[entlen-1] = 0;
-					op += entlen;
-				}
-				i++;
-			}
-			while (*cp && *cp == ':')
-				cp++;
-			last = cp;
-		} while (*cp);
-		if (pass)
-			break;
-		alt_odb = xmalloc(sizeof(*alt_odb) * (i + 1) + totlen);
-		alt_odb[i].base = alt_odb[i].name = NULL;
-		op = (char*)(&alt_odb[i+1]);
+	alt_odb_tail = &alt_odb_list;
+	link_alt_odb_entries(alt, alt + strlen(alt));
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return;
+	if (fstat(fd, &st) || (st.st_size == 0)) {
+		close(fd);
+		return;
 	}
+	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
+	if (map == MAP_FAILED)
+		return;
+
+	/* Remove the trailing newline */
+	for (ep = map + st.st_size - 1; map < ep && ep[-1] == '\n'; ep--)
+		;
+	link_alt_odb_entries(map, ep);
+	munmap(map, st.st_size);
 }
 
 static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 {
-	int i;
 	char *name = sha1_file_name(sha1);
+	struct alternate_object_database *alt;
 
 	if (!stat(name, st))
 		return name;
 	prepare_alt_odb();
-	for (i = 0; (name = alt_odb[i].name) != NULL; i++) {
+	for (alt = alt_odb_list; alt; alt = alt->next) {
+		name = alt->name;
 		fill_sha1_path(name, sha1);
-		if (!stat(alt_odb[i].base, st))
-			return alt_odb[i].base;
+		if (!stat(alt->base, st))
+			return alt->base;
 	}
 	return NULL;
 }
@@ -522,18 +538,18 @@ static void prepare_packed_git_one(char *objdir)
 
 void prepare_packed_git(void)
 {
-	int i;
 	static int run_once = 0;
+	struct alternate_object_database *alt;
 
-	if (run_once++)
+	if (run_once)
 		return;
-
 	prepare_packed_git_one(get_object_directory());
 	prepare_alt_odb();
-	for (i = 0; alt_odb[i].base != NULL; i++) {
-		alt_odb[i].name[0] = 0;
-		prepare_packed_git_one(alt_odb[i].base);
+	for (alt = alt_odb_list; alt; alt = alt->next) {
+		alt->name[0] = 0;
+		prepare_packed_git_one(alt->base);
 	}
+	run_once = 1;
 }
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)

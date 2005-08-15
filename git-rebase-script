@@ -28,7 +28,7 @@ case "$#" in
 esac
 
 git-read-tree -m -u $ours $upstream &&
-echo "$upstream" >"$GIT_DIR/HEAD" || exit
+git-rev-parse --verify "$upstream^0" >"$GIT_DIR/HEAD" || exit
 
 tmp=.rebase-tmp$$
 fail=$tmp-fail

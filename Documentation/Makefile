@@ -53,3 +53,4 @@ clean:
 
 %.xml : %.txt
 	asciidoc -b docbook -d manpage $<
+

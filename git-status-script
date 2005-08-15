@@ -1,4 +1,6 @@
 #!/bin/sh
+. git-sh-setup-script || die "Not a git archive"
+
 report () {
   header="#
 # $1:
@@ -26,7 +28,7 @@ report () {
   [ "$header" ]
 }
 
-git-update-cache --refresh >& /dev/null
+git-update-cache --refresh >/dev/null 2>&1
 git-diff-cache -M --cached HEAD | sed 's/^://' | report "Updated but not checked in" "will commit"
 committable="$?"
 git-diff-files | sed 's/^://' | report "Changed but not updated" "use git-update-cache to mark for commit"
@@ -35,4 +37,10 @@ then
 	echo "nothing to commit"
 	exit 1
 fi
+branch=`readlink "$GIT_DIR/HEAD"`
+case "$branch" in
+refs/heads/master) ;;
+*)	echo "#
+# On branch $branch" ;;
+esac
 exit 0

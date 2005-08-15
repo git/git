@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# Show refs and their recent commits.
+#
+
+. git-sh-setup-script || die "Not a git repository"
+
+headref=`readlink $GIT_DIR/HEAD`
+case "$#" in
+0)
+	set x `cd $GIT_DIR/refs &&
+	    find heads -type f -print |
+	    sed -e 's|heads/||' |
+	    sort`
+	shift ;;
+esac
+
+hh= in=
+for ref
+do
+	case "/$headref" in
+	*/"$ref") H='*' ;;
+	*) H='!' ;;
+	esac
+	h=`git-rev-parse --verify "$ref^0"` || exit
+	l=`git-log-script --max-count=1 --pretty=oneline "$h" |
+		sed -e 's/^[^ ]* //'`
+	hh="$hh $h"
+	echo "$in$H [$ref] $l"
+	in="$in "
+done
+set x $hh
+shift
+
+git-rev-list --pretty=oneline "$@" |
+while read v l
+do
+	in=''
+	for h
+	do
+		b=`git-merge-base $h $v`
+		case "$b" in
+		$v) in="$in+" ;;
+		*)  in="$in " ;;
+		esac
+	done
+
+	echo "$in $l"
+	case "$in" in
+	*' '*) ;;
+	*) break ;;
+	esac
+done
