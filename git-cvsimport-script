@@ -190,7 +190,7 @@ sub conn {
 	$self->{'socketo'}->write("Root $repo\n");
 
 	# Trial and error says that this probably is the minimum set
-	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E F Checked-in Created Updated Merged Removed\n");
+	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E Checked-in Created Updated Merged Removed\n");
 
 	$self->{'socketo'}->write("valid-requests\n");
 	$self->{'socketo'}->flush();
@@ -702,7 +702,7 @@ while(<CVS>) {
 			push(@new,[$mode, $sha, $fn]); # may be resurrected!
 		}
 		unlink($tmpname);
-	} elsif($state == 9 and /^\s+(.+?):\d(?:\.\d+)+->(\d(?:\.\d+)+)\(DEAD\)\s*$/) {
+	} elsif($state == 9 and /^\s+(.+?):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)\(DEAD\)\s*$/) {
 		my $fn = $1;
 		$fn =~ s#^/+##;
 		push(@old,$fn);

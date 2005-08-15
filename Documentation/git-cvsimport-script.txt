@@ -29,6 +29,10 @@ OPTIONS
 	currently, only the :local:, :ext: and :pserver: access methods 
 	are supported.
 
+-C <target-dir>::
+        The GIT repository to import to.  If the directory doesn't
+        exist, it will be created.  Default is the current directory.
+
 -i::
 	Import-only: don't perform a checkout after importing.  This option
 	ensures the working directory and cache remain untouched and will
@@ -44,7 +48,7 @@ OPTIONS
 
 -p <options-for-cvsps>::
 	Additional options for cvsps.
-	The options '-x' and '-A' are implicit and should not be used here.
+	The options '-u' and '-A' are implicit and should not be used here.
 
 	If you need to pass multiple options, separate them with a comma.
 
@@ -56,6 +60,9 @@ OPTIONS
 
 -h::
 	Print a short usage message and exit.
+
+-z <fuzz>::
+        Pass the timestamp fuzz factor to cvsps.
 
 OUTPUT
 ------
