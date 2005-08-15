@@ -456,13 +456,13 @@ int main(int argc, char **argv)
 	fsck_head_link();
 	fsck_object_dir(get_object_directory());
 	if (check_full) {
-		int j;
+		struct alternate_object_database *alt;
 		struct packed_git *p;
 		prepare_alt_odb();
-		for (j = 0; alt_odb[j].base; j++) {
+		for (alt = alt_odb_list; alt; alt = alt->next) {
 			char namebuf[PATH_MAX];
-			int namelen = alt_odb[j].name - alt_odb[j].base;
-			memcpy(namebuf, alt_odb[j].base, namelen);
+			int namelen = alt->name - alt->base;
+			memcpy(namebuf, alt->base, namelen);
 			namebuf[namelen - 1] = 0;
 			fsck_object_dir(namebuf);
 		}
