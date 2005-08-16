@@ -46,7 +46,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			if (namelen > 255)
 				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
-			if (lstat(git_path("%s", path), &st) < 0)
+			if (stat(git_path("%s", path), &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
 				retval = do_for_each_ref(path, fn);
