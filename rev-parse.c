@@ -16,6 +16,7 @@ static int output_revs = 0;
 static int flags_only = 0;
 static int no_flags = 0;
 static int output_sq = 0;
+static int symbolic = 0;
 
 #define NORMAL 0
 #define REVERSED 1
@@ -69,17 +70,18 @@ static void show(const char *arg)
 		puts(arg);
 }
 
-static void show_rev(int type, const unsigned char *sha1)
+static void show_rev(int type, const unsigned char *sha1, const char *name)
 {
 	if (no_revs)
 		return;
 	output_revs++;
 
-	/* Hexadecimal string plus possibly a carret;
-	 * this does not have to be quoted even under output_sq.
-	 */
-	printf("%s%s%c", type == show_type ? "" : "^", sha1_to_hex(sha1),
-	       output_sq ? ' ' : '\n');
+	if (type != show_type)
+		putchar('^');
+	if (symbolic && name)
+		show(name);
+	else
+		show(sha1_to_hex(sha1));
 }
 
 static void show_rev_arg(char *rev)
@@ -117,7 +119,7 @@ static void show_default(void)
 
 		def = NULL;
 		if (!get_sha1(s, sha1)) {
-			show_rev(NORMAL, sha1);
+			show_rev(NORMAL, sha1, s);
 			return;
 		}
 		show_arg(s);
@@ -126,7 +128,7 @@ static void show_default(void)
 
 static int show_reference(const char *refname, const unsigned char *sha1)
 {
-	show_rev(NORMAL, sha1);
+	show_rev(NORMAL, sha1, refname);
 	return 0;
 }
 
@@ -186,6 +188,10 @@ int main(int argc, char **argv)
 				show_type ^= REVERSED;
 				continue;
 			}
+			if (!strcmp(arg, "--symbolic")) {
+				symbolic = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference);
 				continue;
@@ -209,8 +215,8 @@ int main(int argc, char **argv)
 					if (no_revs)
 						continue;
 					def = NULL;
-					show_rev(NORMAL, end);
-					show_rev(REVERSED, sha1);
+					show_rev(NORMAL, end, n);
+					show_rev(REVERSED, sha1, arg);
 					continue;
 				}
 			}
@@ -220,14 +226,14 @@ int main(int argc, char **argv)
 			if (no_revs)
 				continue;
 			def = NULL;
-			show_rev(NORMAL, sha1);
+			show_rev(NORMAL, sha1, arg);
 			continue;
 		}
 		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
 			if (no_revs)
 				continue;
 			def = NULL;
-			show_rev(REVERSED, sha1);
+			show_rev(REVERSED, sha1, arg+1);
 			continue;
 		}
 		show_default();
