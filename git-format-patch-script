@@ -6,7 +6,7 @@
 . git-sh-setup-script || die "Not a git archive."
 
 usage () {
-    echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [--signoff] [-<diff options>...] upstream [ our-head ]
+    echo >&2 "usage: $0"' [-n] [-o dir] [--keep-subject] [--mbox] [--check] [--signoff] [-<diff options>...] upstream [ our-head ]
 
 Prepare each commit with its patch since our-head forked from upstream,
 one file per patch, for e-mail submission.  Each output file is
@@ -44,6 +44,9 @@ do
     date=t ;;
     -m|--m|--mb|--mbo|--mbox)
     date=t author=t mbox=t ;;
+    -k|--k|--ke|--kee|--keep|--keep-|--keep-s|--keep-su|--keep-sub|\
+    --keep-subj|--keep-subje|--keep-subjec|--keep-subject)
+    keep_subject=t ;;
     -n|--n|--nu|--num|--numb|--numbe|--number|--numbere|--numbered)
     numbered=t ;;
     -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
@@ -63,6 +66,11 @@ do
     esac
     shift
 done
+
+case "$keep_subject$numbered" in
+tt)
+	die '--keep-subject and --numbered are incompatible.' ;;
+esac
 
 revpair=
 case "$#" in
@@ -142,21 +150,22 @@ do
     {
 	mailScript='
 	/./d
-	/^$/n
-	s|^\[PATCH[^]]*\] *||'
-
-	case "$mbox" in
-	t)
-	    echo 'From nobody Mon Sep 17 00:00:00 2001' ;# UNIX "From" line
-	    mailScript="$mailScript"'
-	    s|^|Subject: [PATCH'"$num"'] |'
-	    ;;
+	/^$/n'
+	case "$keep_subject" in
+	t)  ;;
 	*)
 	    mailScript="$mailScript"'
+	    s|^\[PATCH[^]]*\] *||
 	    s|^|[PATCH'"$num"'] |'
 	    ;;
 	esac
-
+	mailScript="$mailScript"'
+	s|^|Subject: |'
+	case "$mbox" in
+	t)
+	    echo 'From nobody Mon Sep 17 00:00:00 2001' ;# UNIX "From" line
+	    ;;
+	esac
 	eval "$(sed -ne "$whosepatchScript" $commsg)"
 	test "$author,$au" = ",$me" || {
 		mailScript="$mailScript"'
