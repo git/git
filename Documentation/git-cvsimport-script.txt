@@ -11,7 +11,7 @@ SYNOPSIS
 --------
 'git-cvsimport-script' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
-			[ -C <GIT_repository> ] [ -i ] [ <CVS_module> ]
+			[ -C <GIT_repository> ] [ -i ] [ -k ] [ <CVS_module> ]
 
 
 DESCRIPTION
@@ -37,6 +37,11 @@ OPTIONS
 	Import-only: don't perform a checkout after importing.  This option
 	ensures the working directory and cache remain untouched and will
 	not create them if they do not exist.
+
+-k::
+	Kill keywords: will extract files with -kk from the CVS archive
+	to avoid noisy changesets. Highly recommended, but off by default
+	to preserve compatibility with early imported trees. 
 
 -o <branch-for-HEAD>::
 	The 'HEAD' branch from CVS is imported to the 'origin' branch within

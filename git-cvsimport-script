@@ -28,19 +28,19 @@ use POSIX qw(strftime dup2);
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
        [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
-       [ -i ] [ CVS_module ]
+       [ -i ] [ -k ] [ CVS_module ]
 END
 	exit(1);
 }
 
-getopts("hivo:d:p:C:z:") or usage();
+getopts("hivko:d:p:C:z:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -218,8 +218,10 @@ sub _file {
 	my($self,$fn,$rev) = @_;
 	$self->{'socketo'}->write("Argument -N\n") or return undef;
 	$self->{'socketo'}->write("Argument -P\n") or return undef;
-	# $self->{'socketo'}->write("Argument -ko\n") or return undef;
-	# -ko: Linus' version doesn't use it
+	# -kk: Linus' version doesn't use it - defaults to off
+	if ($opt_k) {
+	    $self->{'socketo'}->write("Argument -kk\n") or return undef;
+	}
 	$self->{'socketo'}->write("Argument -r\n") or return undef;
 	$self->{'socketo'}->write("Argument $rev\n") or return undef;
 	$self->{'socketo'}->write("Argument --\n") or return undef;
