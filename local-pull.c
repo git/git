@@ -15,14 +15,122 @@ void prefetch(unsigned char *sha1)
 {
 }
 
-int fetch(unsigned char *sha1)
+static struct packed_git *packs = NULL;
+
+void setup_index(unsigned char *sha1)
+{
+	struct packed_git *new_pack;
+	char filename[PATH_MAX];
+	strcpy(filename, path);
+	strcat(filename, "/objects/pack/pack-");
+	strcat(filename, sha1_to_hex(sha1));
+	strcat(filename, ".idx");
+	new_pack = parse_pack_index_file(sha1, filename);
+	new_pack->next = packs;
+	packs = new_pack;
+}
+
+int setup_indices()
+{
+	DIR *dir;
+	struct dirent *de;
+	char filename[PATH_MAX];
+	unsigned char sha1[20];
+	sprintf(filename, "%s/objects/pack/", path);
+	dir = opendir(filename);
+	while ((de = readdir(dir)) != NULL) {
+		int namelen = strlen(de->d_name);
+		if (namelen != 50 || 
+		    strcmp(de->d_name + namelen - 5, ".pack"))
+			continue;
+		get_sha1_hex(sha1, de->d_name + 5);
+		setup_index(sha1);
+	}
+	return 0;
+}
+
+int copy_file(const char *source, const char *dest, const char *hex)
+{
+	if (use_link) {
+		if (!link(source, dest)) {
+			pull_say("link %s\n", hex);
+			return 0;
+		}
+		/* If we got ENOENT there is no point continuing. */
+		if (errno == ENOENT) {
+			fprintf(stderr, "does not exist %s\n", source);
+			return -1;
+		}
+	}
+	if (use_symlink && !symlink(source, dest)) {
+		pull_say("symlink %s\n", hex);
+		return 0;
+	}
+	if (use_filecopy) {
+		int ifd, ofd, status;
+		struct stat st;
+		void *map;
+		ifd = open(source, O_RDONLY);
+		if (ifd < 0 || fstat(ifd, &st) < 0) {
+			close(ifd);
+			fprintf(stderr, "cannot open %s\n", source);
+			return -1;
+		}
+		map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, ifd, 0);
+		close(ifd);
+		if (map == MAP_FAILED) {
+			fprintf(stderr, "cannot mmap %s\n", source);
+			return -1;
+		}
+		ofd = open(dest, O_WRONLY | O_CREAT | O_EXCL, 0666);
+		status = ((ofd < 0) ||
+			  (write(ofd, map, st.st_size) != st.st_size));
+		munmap(map, st.st_size);
+		close(ofd);
+		if (status)
+			fprintf(stderr, "cannot write %s\n", dest);
+		else
+			pull_say("copy %s\n", hex);
+		return status;
+	}
+	fprintf(stderr, "failed to copy %s with given copy methods.\n", hex);
+	return -1;
+}
+
+int fetch_pack(unsigned char *sha1)
+{
+	struct packed_git *target;
+	char filename[PATH_MAX];
+	if (setup_indices())
+		return -1;
+	target = find_sha1_pack(sha1, packs);
+	if (!target)
+		return error("Couldn't find %s: not separate or in any pack", 
+			     sha1_to_hex(sha1));
+	if (get_verbosely) {
+		fprintf(stderr, "Getting pack %s\n",
+			sha1_to_hex(target->sha1));
+		fprintf(stderr, " which contains %s\n",
+			sha1_to_hex(sha1));
+	}
+	sprintf(filename, "%s/objects/pack/pack-%s.pack", 
+		path, sha1_to_hex(sha1));
+	copy_file(filename, sha1_pack_name(sha1), sha1_to_hex(sha1));
+	sprintf(filename, "%s/objects/pack/pack-%s.idx", 
+		path, sha1_to_hex(sha1));
+	copy_file(filename, sha1_pack_index_name(sha1), sha1_to_hex(sha1));
+	install_packed_git(target);
+	return 0;
+}
+
+int fetch_file(unsigned char *sha1)
 {
 	static int object_name_start = -1;
 	static char filename[PATH_MAX];
 	char *hex = sha1_to_hex(sha1);
 	const char *dest_filename = sha1_file_name(sha1);
 
-	if (object_name_start < 0) {
+ 	if (object_name_start < 0) {
 		strcpy(filename, path); /* e.g. git.git */
 		strcat(filename, "/objects/");
 		object_name_start = strlen(filename);
@@ -31,50 +139,12 @@ int fetch(unsigned char *sha1)
 	filename[object_name_start+1] = hex[1];
 	filename[object_name_start+2] = '/';
 	strcpy(filename + object_name_start + 3, hex + 2);
-	if (use_link) {
-		if (!link(filename, dest_filename)) {
-			pull_say("link %s\n", hex);
-			return 0;
-		}
-		/* If we got ENOENT there is no point continuing. */
-		if (errno == ENOENT) {
-			fprintf(stderr, "does not exist %s\n", filename);
-			return -1;
-		}
-	}
-	if (use_symlink && !symlink(filename, dest_filename)) {
-		pull_say("symlink %s\n", hex);
-		return 0;
-	}
-	if (use_filecopy) {
-		int ifd, ofd, status;
-		struct stat st;
-		void *map;
-		ifd = open(filename, O_RDONLY);
-		if (ifd < 0 || fstat(ifd, &st) < 0) {
-			close(ifd);
-			fprintf(stderr, "cannot open %s\n", filename);
-			return -1;
-		}
-		map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, ifd, 0);
-		close(ifd);
-		if (map == MAP_FAILED) {
-			fprintf(stderr, "cannot mmap %s\n", filename);
-			return -1;
-		}
-		ofd = open(dest_filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-		status = ((ofd < 0) ||
-			  (write(ofd, map, st.st_size) != st.st_size));
-		munmap(map, st.st_size);
-		close(ofd);
-		if (status)
-			fprintf(stderr, "cannot write %s\n", dest_filename);
-		else
-			pull_say("copy %s\n", hex);
-		return status;
-	}
-	fprintf(stderr, "failed to copy %s with given copy methods.\n", hex);
-	return -1;
+	return copy_file(filename, dest_filename, hex);
+}
+
+int fetch(unsigned char *sha1)
+{
+	return fetch_file(sha1) && fetch_pack(sha1);
 }
 
 int fetch_ref(char *ref, unsigned char *sha1)
