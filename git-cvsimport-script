@@ -579,7 +579,7 @@ my $commit = sub {
 		foreach my $rx (@mergerx) {
 			if ($logmsg =~ $rx) {
 				my $mparent = $1;
-				if ($mparent eq 'HEAD') { $mparent = 'origin'};
+				if ($mparent eq 'HEAD') { $mparent = $opt_o };
 				if ( -e "$git_dir/refs/heads/$mparent") {
 					$mparent = get_headref($mparent, $git_dir);
 					push @par, '-p', $mparent;
