@@ -5,15 +5,23 @@
 
 . git-sh-setup-script || die "Not a git repository"
 
+usage () {
+    die "usage: $0 <ref>..."
+}
+
 headref=`readlink $GIT_DIR/HEAD`
-case "$#" in
-0)
-	set x `cd $GIT_DIR/refs &&
-	    find heads -type f -print |
-	    sed -e 's|heads/||' |
-	    sort`
+
+case "$(git-rev-parse --no-revs)" in '') ;; *) usage ;; esac
+revs=$(git-rev-parse --revs-only --symbolic --no-flags "$@")
+flags=$(git-rev-parse --revs-only --flags "$@")
+case "$revs" in
+'')
+	revs=$(git-rev-parse --symbolic --all | sed -ne 's|^refs/heads/||p' |
+	       sort)
 	shift ;;
 esac
+set x $revs
+shift
 
 hh= in=
 for ref
@@ -22,7 +30,7 @@ do
 	*/"$ref") H='*' ;;
 	*) H='!' ;;
 	esac
-	h=`git-rev-parse --verify "$ref^0"` || exit
+	h=`git-rev-parse --verify "$ref^0" 2>/dev/null` || continue
 	l=`git-log-script --max-count=1 --pretty=oneline "$h" |
 		sed -e 's/^[^ ]* //'`
 	hh="$hh $h"
@@ -32,7 +40,7 @@ done
 set x $hh
 shift
 
-git-rev-list --pretty=oneline "$@" |
+git-rev-list --pretty=oneline $flags $@ |
 while read v l
 do
 	in=''
