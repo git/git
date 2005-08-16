@@ -6,7 +6,7 @@
 . git-sh-setup-script || die "Not a git archive."
 
 usage () {
-    echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [--sign] [-<diff options>...] upstream [ our-head ]
+    echo >&2 "usage: $0"' [-n] [-o dir] [--mbox] [--check] [--signoff] [-<diff options>...] upstream [ our-head ]
 
 Prepare each commit with its patch since our-head forked from upstream,
 one file per patch, for e-mail submission.  Each output file is
@@ -46,7 +46,7 @@ do
     date=t author=t mbox=t ;;
     -n|--n|--nu|--num|--numb|--numbe|--number|--numbere|--numbered)
     numbered=t ;;
-    -s|--s|--si|--sig|--sign)
+    -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
     signoff=t ;;
     -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
     --output-d=*|--output-di=*|--output-dir=*|--output-dire=*|\
@@ -179,9 +179,12 @@ Date: '"$ad"
 
 	test "$signoff" = "t" && {
 		offsigner=`git-var GIT_COMMITTER_IDENT | sed -e 's/>.*/>/'`
-		echo
-		echo "Signed-off-by: $offsigner"
-		echo
+		line="Signed-off-by: $offsigner"
+		grep -q "^$line\$" $commsg || {
+			echo
+			echo "$line"
+			echo
+		}
 	}
 
 	echo '---'

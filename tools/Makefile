@@ -18,7 +18,7 @@ git-%: %.c
 all: $(PROGRAMS)
 
 install: $(PROGRAMS) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(dest)$(bindir)
+	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
 
 clean:

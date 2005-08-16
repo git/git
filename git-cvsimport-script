@@ -28,19 +28,19 @@ use POSIX qw(strftime dup2);
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
        [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
-       [ -i ] [ CVS_module ]
+       [ -i ] [ -k ] [ CVS_module ]
 END
 	exit(1);
 }
 
-getopts("hivo:d:p:C:z:") or usage();
+getopts("hivko:d:p:C:z:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -190,7 +190,7 @@ sub conn {
 	$self->{'socketo'}->write("Root $repo\n");
 
 	# Trial and error says that this probably is the minimum set
-	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E F Checked-in Created Updated Merged Removed\n");
+	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E Checked-in Created Updated Merged Removed\n");
 
 	$self->{'socketo'}->write("valid-requests\n");
 	$self->{'socketo'}->flush();
@@ -218,8 +218,10 @@ sub _file {
 	my($self,$fn,$rev) = @_;
 	$self->{'socketo'}->write("Argument -N\n") or return undef;
 	$self->{'socketo'}->write("Argument -P\n") or return undef;
-	# $self->{'socketo'}->write("Argument -ko\n") or return undef;
-	# -ko: Linus' version doesn't use it
+	# -kk: Linus' version doesn't use it - defaults to off
+	if ($opt_k) {
+	    $self->{'socketo'}->write("Argument -kk\n") or return undef;
+	}
 	$self->{'socketo'}->write("Argument -r\n") or return undef;
 	$self->{'socketo'}->write("Argument $rev\n") or return undef;
 	$self->{'socketo'}->write("Argument --\n") or return undef;
@@ -294,6 +296,12 @@ sub _line {
 				return $res;
 			} elsif($line =~ s/^E //) {
 				# print STDERR "S: $line\n";
+			} elsif($line =~ /^Remove-entry /i) {
+				$line = $self->readline(); # filename
+				$line = $self->readline(); # OK
+				chomp $line;
+				die "Unknown: $line" if $line ne "ok";
+				return -1;
 			} else {
 				die "Unknown: $line\n";
 			}
@@ -561,7 +569,7 @@ my $commit = sub {
 		or die "Error writing to git-commit-tree: $!\n";
 	$pw->close();
 
-	print "Committed patch $patchset ($branch)\n" if $opt_v;
+	print "Committed patch $patchset ($branch ".strftime("%Y-%m-%d %H:%M:%S",gmtime($date)).")\n" if $opt_v;
 	chomp(my $cid = <$pr>);
 	length($cid) == 40
 		or die "Cannot get commit id ($cid): $!\n";
@@ -675,26 +683,32 @@ while(<CVS>) {
 		$state = 9;
 	} elsif($state == 8) {
 		$logmsg .= "$_\n";
-	} elsif($state == 9 and /^\s+(\S+):(INITIAL|\d+(?:\.\d+)+)->(\d+(?:\.\d+)+)\s*$/) {
+	} elsif($state == 9 and /^\s+(.+?):(INITIAL|\d+(?:\.\d+)+)->(\d+(?:\.\d+)+)\s*$/) {
 #	VERSION:1.96->1.96.2.1
 		my $init = ($2 eq "INITIAL");
 		my $fn = $1;
 		my $rev = $3;
 		$fn =~ s#^/+##;
 		my ($tmpname, $size) = $cvs->file($fn,$rev);
-		print "".($init ? "New" : "Update")." $fn: $size bytes.\n" if $opt_v;
-		open my $F, '-|', "git-hash-object -w $tmpname"
-			or die "Cannot create object: $!\n";
-		my $sha = <$F>;
-		chomp $sha;
-		close $F;
+		if($size == -1) {
+			push(@old,$fn);
+			print "Drop $fn\n" if $opt_v;
+		} else {
+			print "".($init ? "New" : "Update")." $fn: $size bytes\n" if $opt_v;
+			open my $F, '-|', "git-hash-object -w $tmpname"
+				or die "Cannot create object: $!\n";
+			my $sha = <$F>;
+			chomp $sha;
+			close $F;
+			my $mode = pmode($cvs->{'mode'});
+			push(@new,[$mode, $sha, $fn]); # may be resurrected!
+		}
 		unlink($tmpname);
-		my $mode = pmode($cvs->{'mode'});
-		push(@new,[$mode, $sha, $fn]); # may be resurrected!
-	} elsif($state == 9 and /^\s+(\S+):\d(?:\.\d+)+->(\d(?:\.\d+)+)\(DEAD\)\s*$/) {
+	} elsif($state == 9 and /^\s+(.+?):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)\(DEAD\)\s*$/) {
 		my $fn = $1;
 		$fn =~ s#^/+##;
 		push(@old,$fn);
+		print "Delete $fn\n" if $opt_v;
 	} elsif($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif(($state == 9 or $state == 10) and /^-+$/) {

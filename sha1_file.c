@@ -476,12 +476,18 @@ struct packed_git *add_packed_git(char *path, int path_len)
 
 struct packed_git *parse_pack_index(unsigned char *sha1)
 {
+	char *path = sha1_pack_index_name(sha1);
+	return parse_pack_index_file(sha1, path);
+}
+
+struct packed_git *parse_pack_index_file(unsigned char *sha1, char *idx_path)
+{
 	struct packed_git *p;
 	unsigned long idx_size;
 	void *idx_map;
-	char *path = sha1_pack_index_name(sha1);
+	char *path;
 
-	if (check_packed_git_idx(path, &idx_size, &idx_map))
+	if (check_packed_git_idx(idx_path, &idx_size, &idx_map))
 		return NULL;
 
 	path = sha1_pack_name(sha1);

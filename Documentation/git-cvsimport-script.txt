@@ -11,7 +11,7 @@ SYNOPSIS
 --------
 'git-cvsimport-script' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
-			[ -C <GIT_repository> ] [ -i ] [ <CVS_module> ]
+			[ -C <GIT_repository> ] [ -i ] [ -k ] [ <CVS_module> ]
 
 
 DESCRIPTION
@@ -29,10 +29,19 @@ OPTIONS
 	currently, only the :local:, :ext: and :pserver: access methods 
 	are supported.
 
+-C <target-dir>::
+        The GIT repository to import to.  If the directory doesn't
+        exist, it will be created.  Default is the current directory.
+
 -i::
 	Import-only: don't perform a checkout after importing.  This option
 	ensures the working directory and cache remain untouched and will
 	not create them if they do not exist.
+
+-k::
+	Kill keywords: will extract files with -kk from the CVS archive
+	to avoid noisy changesets. Highly recommended, but off by default
+	to preserve compatibility with early imported trees. 
 
 -o <branch-for-HEAD>::
 	The 'HEAD' branch from CVS is imported to the 'origin' branch within
@@ -44,7 +53,7 @@ OPTIONS
 
 -p <options-for-cvsps>::
 	Additional options for cvsps.
-	The options '-x' and '-A' are implicit and should not be used here.
+	The options '-u' and '-A' are implicit and should not be used here.
 
 	If you need to pass multiple options, separate them with a comma.
 
@@ -56,6 +65,9 @@ OPTIONS
 
 -h::
 	Print a short usage message and exit.
+
+-z <fuzz>::
+        Pass the timestamp fuzz factor to cvsps.
 
 OUTPUT
 ------

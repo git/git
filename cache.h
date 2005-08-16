@@ -319,6 +319,8 @@ extern int get_ack(int fd, unsigned char *result_sha1);
 extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1);
+extern struct packed_git *parse_pack_index_file(unsigned char *sha1, 
+						char *idx_path);
 
 extern void prepare_packed_git(void);
 extern void install_packed_git(struct packed_git *pack);
