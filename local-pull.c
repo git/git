@@ -43,7 +43,7 @@ int setup_indices()
 		if (namelen != 50 || 
 		    strcmp(de->d_name + namelen - 5, ".pack"))
 			continue;
-		get_sha1_hex(sha1, de->d_name + 5);
+		get_sha1_hex(de->d_name + 5, sha1);
 		setup_index(sha1);
 	}
 	return 0;
@@ -114,11 +114,13 @@ int fetch_pack(unsigned char *sha1)
 			sha1_to_hex(sha1));
 	}
 	sprintf(filename, "%s/objects/pack/pack-%s.pack", 
-		path, sha1_to_hex(sha1));
-	copy_file(filename, sha1_pack_name(sha1), sha1_to_hex(sha1));
+		path, sha1_to_hex(target->sha1));
+	copy_file(filename, sha1_pack_name(target->sha1),
+		  sha1_to_hex(target->sha1));
 	sprintf(filename, "%s/objects/pack/pack-%s.idx", 
-		path, sha1_to_hex(sha1));
-	copy_file(filename, sha1_pack_index_name(sha1), sha1_to_hex(sha1));
+		path, sha1_to_hex(target->sha1));
+	copy_file(filename, sha1_pack_index_name(target->sha1),
+		  sha1_to_hex(target->sha1));
 	install_packed_git(target);
 	return 0;
 }
