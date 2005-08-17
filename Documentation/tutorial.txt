@@ -891,7 +891,7 @@ an empty directory:
 	mkdir my-git.git
 
 Then, make that directory into a GIT repository by running
-git-init-db, but this time, since it's name is not the usual
+git-init-db, but this time, since its name is not the usual
 ".git", we do things slightly differently:
 
 	GIT_DIR=my-git.git git-init-db
