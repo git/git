@@ -71,8 +71,8 @@ tag)
 	'')
 		_remote_head=HEAD ;;
 	*)
-		_remote_head="refs/heads/$_remote_head"
 		_remote_name="head '$_remote_head' of $_remote_name"
+		_remote_head="refs/heads/$_remote_head"
 		;;
 	esac
 	;;

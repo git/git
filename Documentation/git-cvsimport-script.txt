@@ -11,7 +11,8 @@ SYNOPSIS
 --------
 'git-cvsimport-script' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
-			[ -C <GIT_repository> ] [ -i ] [ -k ] [ <CVS_module> ]
+			[ -C <GIT_repository> ] [ -i ] [ -k ]
+			[ -s <subst> ] [ <CVS_module> ]
 
 
 DESCRIPTION
@@ -68,6 +69,9 @@ OPTIONS
 
 -z <fuzz>::
         Pass the timestamp fuzz factor to cvsps.
+
+-s <subst>::
+	Substitute the character "/" in branch names with <subst>
 
 OUTPUT
 ------

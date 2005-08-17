@@ -1,0 +1,198 @@
+object::
+	The unit of storage in GIT. It is uniquely identified by
+	the SHA1 of its contents. Consequently, an object can not
+	be changed.
+
+SHA1::
+	A 20-byte sequence (or 41-byte file containing the hex
+	representation and a newline). It is calculated from the
+	contents of an object by the Secure Hash Algorithm 1.
+
+object database::
+	Stores a set of "objects", and an individial object is identified
+	by its SHA1 (its ref). The objects are either stored as single
+	files, or live inside of packs.
+
+object name::
+	Synonym for SHA1.
+
+blob object::
+	Untyped object, i.e. the contents of a file.
+
+tree object::
+	An object containing a list of blob and/or tree objects.
+	(A tree usually corresponds to a directory without
+	subdirectories).
+
+tree::
+	Either a working tree, or a tree object together with the
+	dependent blob and tree objects (i.e. a stored representation
+	of a working tree).
+
+cache::
+	A collection of files whose contents are stored as objects.
+	The cache is a stored version of your working tree. Well, can
+	also contain a second, and even a third version of a working
+	tree, which are used when merging.
+
+cache entry::
+	The information regarding a particular file, stored in the index.
+	A cache entry can be unmerged, if a merge was started, but not
+	yet finished (i.e. if the cache contains multiple versions of
+	that file).
+
+index::
+	Contains information about the cache contents, in particular
+	timestamps and mode flags ("stat information") for the files
+	stored in the cache. An unmerged index is an index which contains
+	unmerged cache entries.
+
+working tree::
+	The set of files and directories currently being worked on.
+	Think "ls -laR"
+
+directory::
+	The list you get with "ls" :-)
+
+checkout::
+	The action of updating the working tree to a revision which was
+	stored in the object database.
+
+revision::
+	A particular state of files and directories which was stored in
+	the object database. It is referenced by a commit object.
+
+commit::
+	The action of storing the current state of the cache in the
+	object database. The result is a revision.
+
+commit object::
+	An object which contains the information about a particular
+	revision, such as parents, committer, author, date and the
+	tree object which corresponds to the top directory of the
+	stored revision.
+
+changeset::
+	BitKeeper/cvsps speak for "commit". Since git does not store
+	changes, but states, it really does not make sense to use
+	the term "changesets" with git.
+
+ent::
+	Favorite synonym to "tree-ish" by some total geeks.
+
+clean::
+	A working tree is clean, if it corresponds to the revision
+	referenced by the current head.
+
+dirty::
+	A working tree is said to be dirty if it contains modifications
+	which have not been committed to the current branch.
+
+head::
+	The top of a branch. It contains a ref to the corresponding
+	commit object.
+
+branch::
+	A non-cyclical graph of revisions, i.e. the complete history of
+	a particular revision, which does not (yet) have children, which
+	is called the branch head. The branch heads are stored in
+	$GIT_DIR/refs/heads/.
+
+ref::
+	A 40-byte hex representation of a SHA1 pointing to a particular
+	object. These are stored in $GIT_DIR/refs/.
+
+head ref::
+	A ref pointing to a head. Often, this is abbreviated to "head".
+	Head refs are stored in $GIT_DIR/refs/heads/.
+
+tree-ish::
+	A ref pointing to either a commit object, a tree object, or a
+	tag object pointing to a commit or tree object.
+
+tag object::
+	An object containing a ref pointing to another object. It can
+	contain a (PGP) signature, in which case it is called "signed
+	tag object".
+
+tag::
+	A ref pointing to a tag or commit object. In contrast to a head,
+	a tag is not changed by a commit. Tags (not tag objects) are
+	stored in $GIT_DIR/refs/tags/. A git tag has nothing to do with
+	a Lisp tag (which is called object type in git's context).
+
+merge::
+	To merge branches means to try to accumulate the changes since a
+	common ancestor and apply them to the first branch. An automatic
+	merge uses heuristics to accomplish that. Evidently, an automatic
+	merge can fail.
+
+resolve::
+	The action of fixing up manually what a failed automatic merge
+	left behind.
+
+repository::
+	A collection of refs together with an object database containing
+	all objects, which are reachable from the refs. A repository can
+	share an object database with other repositories.
+
+alternate object database::
+	Via the alternates mechanism, a repository can inherit part of its
+	object database from another object database, which is called
+	"alternate".
+
+reachable::
+	An object is reachable from a ref/commit/tree/tag, if there is a
+	chain leading from the latter to the former.
+
+chain::
+	A list of objects, where each object in the list contains a
+	reference to its successor (for example, the successor of a commit
+	could be one of its parents).
+
+parent::
+	A commit object contains a (possibly empty) list of the logical
+	predecessor(s) in the line of development, i.e. its parents.
+
+fetch::
+	Fetching a branch means to get the branch's head ref from a
+	remote repository, to find out which objects are missing from
+	the local object database, and to get them, too.
+
+pull::
+	Pulling a branch means to fetch it and merge it.
+
+push::
+	Pushing a branch means to get the branch's head ref from a remote
+	repository, find out if it is an ancestor to the branch's local
+	head ref is a direct, and in that case, putting all objects, which
+	are reachable from the local head ref, and which are missing from
+	the remote repository, into the remote object database, and updating
+	the remote head ref. If the remote head is not an ancestor to the
+	local head, the push fails.
+
+pack::
+	A set of objects which have been compressed into one file (to save
+	space or to transmit them efficiently).
+
+pack index::
+	Contains offsets into a pack, so the pack can be used instead of
+	the unpacked objects.
+
+plumbing::
+	Cute name for core git.
+
+porcelain::
+	Cute name for programs and program suites depending on core git,
+	presenting a high level access to core git. Porcelains expose
+	more of a SCM interface than the plumbing.
+
+object type:
+	One of the identifiers "commit","tree","tag" and "blob" describing
+	the type of an object.
+
+SCM::
+	Source code management (tool).
+
+dircache::
+	You are *waaaaay* behind.

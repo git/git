@@ -98,12 +98,12 @@ contents").
 In particular, since the blob is entirely defined by its data, if two
 files in a directory tree (or in multiple different versions of the
 repository) have the same contents, they will share the same blob
-object. The object is totally independent of it's location in the
+object. The object is totally independent of its location in the
 directory tree, and renaming a file does not change the object that
 file is associated with in any way.
 
 A blob is typically created when link:git-update-cache.html[git-update-cache]
-is run, and it's data can be accessed by link:git-cat-file.html[git-cat-file].
+is run, and its data can be accessed by link:git-cat-file.html[git-cat-file].
 
 Tree Object
 ~~~~~~~~~~~
@@ -142,7 +142,7 @@ noticing that the blob stayed the same.  However, renames with data
 changes need a smarter "diff" implementation.
 
 A tree is created with link:git-write-tree.html[git-write-tree] and
-it's data can be accessed by link:git-ls-tree.html[git-ls-tree]
+its data can be accessed by link:git-ls-tree.html[git-ls-tree]
 
 Commit Object
 ~~~~~~~~~~~~~
@@ -167,7 +167,7 @@ of the parents), and describing that makes no sense in this idiotic
 file manager.
 
 A commit is created with link:git-commit-tree.html[git-commit-tree] and
-it's data can be accessed by link:git-cat-file.html[git-cat-file]
+its data can be accessed by link:git-cat-file.html[git-cat-file]
 
 Trust
 ~~~~~
@@ -213,7 +213,7 @@ integrity; the trust framework (and signature provision and
 verification) has to come from outside.
 
 A tag is created with link:git-mktag.html[git-mktag] and
-it's data can be accessed by link:git-cat-file.html[git-cat-file]
+its data can be accessed by link:git-cat-file.html[git-cat-file]
 
 
 The "index" aka "Current Directory Cache"

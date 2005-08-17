@@ -1043,8 +1043,12 @@ static int check_patch(struct patch *patch)
 			return error("%s: already exists in working directory", new_name);
 		if (errno != ENOENT)
 			return error("%s: %s", new_name, strerror(errno));
-		if (!patch->new_mode)
-			patch->new_mode = S_IFREG | 0644;
+		if (!patch->new_mode) {
+			if (patch->is_new)
+				patch->new_mode = S_IFREG | 0644;
+			else
+				patch->new_mode = patch->old_mode;
+		}
 	}
 
 	if (new_name && old_name) {

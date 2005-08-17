@@ -88,9 +88,14 @@ esac
 case "$all" in
 t)
 	git-diff-files --name-only -z |
-	xargs -0 git-update-cache -q -- || exit 1 ;;
-esac
-git-update-cache -q --refresh -- "$@" || exit 1
+	xargs -0 git-update-cache -q --
+	;;
+*)
+	git-diff-files --name-only -z "$@" |
+	xargs -0 git-update-cache -q --
+	;;
+esac || exit 1
+git-update-cache -q --refresh || exit 1
 
 case "$verify" in
 t)
