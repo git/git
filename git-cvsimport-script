@@ -28,19 +28,19 @@ use POSIX qw(strftime dup2);
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_s);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
        [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
-       [ -i ] [ -k ] [ CVS_module ]
+       [ -i ] [ -k ] [-s subst] [ CVS_module ]
 END
 	exit(1);
 }
 
-getopts("hivko:d:p:C:z:") or usage();
+getopts("hivko:d:p:C:z:s:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -59,6 +59,7 @@ if($opt_d) {
 	die "CVSROOT needs to be set";
 }
 $opt_o ||= "origin";
+$opt_s ||= "-";
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
@@ -621,6 +622,7 @@ while(<CVS>) {
 		$state = 4;
 	} elsif($state == 4 and s/^Branch:\s+//) {
 		s/\s+$//;
+		s/[\/]/$opt_s/g;
 		$branch = $_;
 		$state = 5;
 	} elsif($state == 5 and s/^Ancestor branch:\s+//) {
