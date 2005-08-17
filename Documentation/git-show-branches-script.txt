@@ -37,15 +37,17 @@ otherwise it shows a space.
 The following example shows three branches, "pu", "master" and
 "rc":
 
-	* [pu] Add cheap local clone '-s' flag to git-clone-script
-	 ! [master] Documentation updates.
-	  ! [rc] Merge master into rc
-	+   Add cheap local clone '-s' flag to git-clone-script
-	+   Alternate object pool mechanism updates.
-	+   Audit rev-parse users.
-	++  Documentation updates.
-	  + Merge master into rc
-	+++ [PATCH] plug memory leak in diff.c::diff_free_filepair()
+------------------------------------------------
+* [pu] Add cheap local clone '-s' flag to git-clone-script
+ ! [master] Documentation updates.
+  ! [rc] Merge master into rc
++   Add cheap local clone '-s' flag to git-clone-script
++   Alternate object pool mechanism updates.
++   Audit rev-parse users.
+++  Documentation updates.
+  + Merge master into rc
++++ [PATCH] plug memory leak in diff.c::diff_free_filepair()
+------------------------------------------------
 
 These three branches all forked from a common commit, "[PATCH]
 plug memory leak...", and "rc" has one commit ahead of it.  The
