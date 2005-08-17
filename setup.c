@@ -81,10 +81,9 @@ const char *setup_git_directory(void)
 	offset = len = strlen(cwd);
 	for (;;) {
 		/*
-		 * We always want to see a .git/HEAD and a .git/refs/
-		 * subdirectory
+		 * We always want to see a .git/refs/ subdirectory
 		 */
-		if (!access(".git/HEAD", R_OK) && !access(".git/refs/", X_OK)) {
+		if (!access(".git/refs/", X_OK)) {
 			/*
 			 * Then we need either a GIT_OBJECT_DIRECTORY define
 			 * or a .git/objects/ directory
