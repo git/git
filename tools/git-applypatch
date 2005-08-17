@@ -16,6 +16,7 @@ final=.dotest/final-commit
 ## If this file exists, we ask before applying
 ##
 query_apply=.dotest/.query_apply
+keep_subject=.dotest/.keep_subject
 MSGFILE=$1
 PATCHFILE=$2
 INFO=$3
@@ -30,8 +31,10 @@ export SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' .dotest/info)"
 if [ -n "$signoff" -a -f "$signoff" ]; then
 	cat $signoff >> $MSGFILE
 fi
+patch_header=
+test -f "$keep_subject" || patch_header='[PATCH] '
 
-(echo "[PATCH] $SUBJECT" ; if [ -s $MSGFILE ]; then echo ; cat $MSGFILE; fi ) > $final
+(echo "$patch_header$SUBJECT" ; if [ -s $MSGFILE ]; then echo ; cat $MSGFILE; fi ) > $final
 
 f=0
 [ -f $query_apply ] || f=1

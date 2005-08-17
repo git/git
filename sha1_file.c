@@ -240,14 +240,21 @@ static struct alternate_object_database **alt_odb_tail;
  * SHA1, an extra slash for the first level indirection, and the
  * terminating NUL.
  */
-static void link_alt_odb_entries(const char *alt, const char *ep)
+static void link_alt_odb_entries(const char *alt, const char *ep, int sep)
 {
 	const char *cp, *last;
 	struct alternate_object_database *ent;
 
 	last = alt;
-	do {
-		for (cp = last; cp < ep && *cp != ':'; cp++)
+	while (last < ep) {
+		cp = last;
+		if (cp < ep && *cp == '#') {
+			while (cp < ep && *cp != sep)
+				cp++;
+			last = cp + 1;
+			continue;
+		}
+		for ( ; cp < ep && *cp != sep; cp++)
 			;
 		if (last != cp) {
 			/* 43 = 40-byte + 2 '/' + terminating NUL */
@@ -264,16 +271,16 @@ static void link_alt_odb_entries(const char *alt, const char *ep)
 			ent->base[pfxlen] = ent->base[pfxlen + 3] = '/';
 			ent->base[entlen-1] = 0;
 		}
-		while (cp < ep && *cp == ':')
+		while (cp < ep && *cp == sep)
 			cp++;
 		last = cp;
-	} while (cp < ep);
+	}
 }
 
 void prepare_alt_odb(void)
 {
 	char path[PATH_MAX];
-	char *map, *ep;
+	char *map;
 	int fd;
 	struct stat st;
 	char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
@@ -282,7 +289,7 @@ void prepare_alt_odb(void)
 	if (alt_odb_tail)
 		return;
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(alt, alt + strlen(alt));
+	link_alt_odb_entries(alt, alt + strlen(alt), ':');
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
@@ -296,10 +303,7 @@ void prepare_alt_odb(void)
 	if (map == MAP_FAILED)
 		return;
 
-	/* Remove the trailing newline */
-	for (ep = map + st.st_size - 1; map < ep && ep[-1] == '\n'; ep--)
-		;
-	link_alt_odb_entries(map, ep);
+	link_alt_odb_entries(map, map + st.st_size, '\n');
 	munmap(map, st.st_size);
 }
 

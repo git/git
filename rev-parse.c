@@ -134,7 +134,8 @@ int main(int argc, char **argv)
 {
 	int i, as_is = 0;
 	unsigned char sha1[20];
-
+	const char *prefix = setup_git_directory();
+	
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 		char *dotdot;
@@ -187,6 +188,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference);
+				continue;
+			}
+			if (!strcmp(arg, "--show-prefix")) {
+				puts(prefix);
 				continue;
 			}
 			show_arg(arg);

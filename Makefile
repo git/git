@@ -97,7 +97,7 @@ LIB_H=cache.h object.h blob.h tree.h commit.h tag.h delta.h epoch.h csum-file.h 
 LIB_OBJS=read-cache.o sha1_file.o usage.o object.o commit.o tree.o blob.o \
 	 tag.o date.o index.o diff-delta.o patch-delta.o entry.o path.o \
 	 refs.o csum-file.o pack-check.o pkt-line.o connect.o ident.o \
-	 sha1_name.o
+	 sha1_name.o setup.o
 
 LIB_H += rev-cache.h
 LIB_OBJS += rev-cache.o

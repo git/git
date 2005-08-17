@@ -191,6 +191,8 @@ int ce_path_match(const struct cache_entry *ce, const char **pathspec)
 			return 1;
 		if (name[matchlen] == '/' || !name[matchlen])
 			return 1;
+		if (!matchlen)
+			return 1;
 	}
 	return 0;
 }

@@ -395,16 +395,25 @@ static int diff_tree_stdin(char *line)
 	return diff_tree_commit(commit, line);
 }
 
+static int count_paths(const char **paths)
+{
+	int i = 0;
+	while (*paths++)
+		i++;
+	return i;
+}
+
 static const char diff_tree_usage[] =
 "git-diff-tree [--stdin] [-m] [-s] [-v] [--pretty] [-t] "
 "[<common diff options>] <tree-ish> <tree-ish>"
 COMMON_DIFF_OPTIONS_HELP;
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 	int nr_sha1;
 	char line[1000];
 	unsigned char sha1[2][20];
+	const char *prefix = setup_git_directory();
 
 	nr_sha1 = 0;
 	for (;;) {
@@ -523,11 +532,11 @@ int main(int argc, const char **argv)
 	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
 		usage(diff_tree_usage);
 
-	if (argc > 0) {
+	paths = get_pathspec(prefix, argv);
+	if (paths) {
 		int i;
 
-		paths = argv;
-		nr_paths = argc;
+		nr_paths = count_paths(paths);
 		pathlens = xmalloc(nr_paths * sizeof(int));
 		for (i=0; i<nr_paths; i++)
 			pathlens[i] = strlen(paths[i]);

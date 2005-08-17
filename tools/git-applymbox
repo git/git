@@ -9,7 +9,7 @@
 ## You give it a mbox-format collection of emails, and it will try to
 ## apply them to the kernel using "applypatch"
 ##
-## applymbox [ -q ] (-c .dotest/msg-number | mail_archive) [Signoff_file]"
+## applymbox [ -k ] [ -q ] (-c .dotest/msg-number | mail_archive) [Signoff_file]"
 ##
 ## The patch application may fail in the middle.  In which case:
 ## (1) look at .dotest/patch and fix it up to apply
@@ -18,10 +18,11 @@
 ## use a Signoff_file, because applypatch wants to append the sign-off
 ## message to msg-clean every time it is run.
 
-query_apply= continue= resume=t
+keep_subject= query_apply= continue= resume=t
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
+	-k)	keep_subject=-k ;;
 	-q)	query_apply=t ;;
 	-c)	continue="$2"; resume=f; shift ;;
 	-*)	usage ;;
@@ -41,6 +42,9 @@ esac
 case "$query_apply" in
 t)	touch .dotest/.query_apply
 esac
+case "$keep_subject" in
+-k)	: >.dotest/.keep_subject
+esac
 
 signoff="$1"
 set x .dotest/0*
@@ -52,7 +56,8 @@ do
     f,$i)	resume=t;;
     f,*)	continue;;
     *)
-	    git-mailinfo .dotest/msg .dotest/patch <$i >.dotest/info || exit 1
+	    git-mailinfo $keep_subject \
+		.dotest/msg .dotest/patch <$i >.dotest/info || exit 1
 	    git-stripspace < .dotest/msg > .dotest/msg-clean
 	    ;;
     esac

@@ -29,6 +29,8 @@ static int matches_pathspec(const char *name, struct path_spec *s, int cnt)
 		    name[len] == 0 ||
 		    name[len] == '/')
 			return 1;
+		if (!len)
+			return 1;
 	}
 	return 0;
 }

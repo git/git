@@ -140,6 +140,9 @@ extern char *get_graft_file(void);
 
 #define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
+extern const char **get_pathspec(const char *prefix, char **pathspec);
+extern const char *setup_git_directory(void);
+
 #define alloc_nr(x) (((x)+16)*3/2)
 
 /* Initialize and use the cache information */
