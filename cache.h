@@ -142,6 +142,7 @@ extern char *get_graft_file(void);
 
 extern const char **get_pathspec(const char *prefix, char **pathspec);
 extern const char *setup_git_directory(void);
+extern char *prefix_path(const char *prefix, int len, char *path);
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
