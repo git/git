@@ -17,15 +17,18 @@ case "$#,$1" in
     shift ;;
 esac
 
+git-update-cache --refresh || exit
+
 case "$#" in
-1) upstream=`git-rev-parse --verify "$1"` &&
-   ours=`git-rev-parse --verify HEAD` || exit
-   ;;
-2) upstream=`git-rev-parse --verify "$1"` &&
-   ours=`git-rev-parse --verify "$2"` || exit
-   ;;
-*) echo >&2 "$usage"; exit 1 ;;
+1) ours_symbolic=HEAD ;;
+2) ours_symbolic="$2" ;;
+*) die "$usage" ;;
 esac
+
+upstream=`git-rev-parse --verify "$1"` &&
+ours=`git-rev-parse --verify "$ours_symbolic^` || exit
+test "$(git-diff-cache --cached "$ours")" = "" || 
+die "Your working tree does not match $ours_symbolic."
 
 git-read-tree -m -u $ours $upstream &&
 git-rev-parse --verify "$upstream^0" >"$GIT_DIR/HEAD" || exit
