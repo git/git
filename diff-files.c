@@ -41,12 +41,12 @@ static void show_modified(int oldmode, int mode,
 	diff_change(oldmode, mode, old_sha1, sha1, path, NULL);
 }
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 	static const unsigned char null_sha1[20] = { 0, };
 	const char **pathspec;
-	int entries = read_cache();
-	int i;
+	const char *prefix = setup_git_directory();
+	int entries, i;
 
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-p") || !strcmp(argv[1], "-u"))
@@ -95,8 +95,9 @@ int main(int argc, const char **argv)
 		argv++; argc--;
 	}
 
-	/* Do we have a pathspec? */
-	pathspec = (argc > 1) ? argv + 1 : NULL;
+	/* Find the directory, and set up the pathspec */
+	pathspec = get_pathspec(prefix, argv + 1);
+	entries = read_cache();
 
 	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
 		usage(diff_files_usage);

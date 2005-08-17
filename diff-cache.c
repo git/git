@@ -168,10 +168,11 @@ static const char diff_cache_usage[] =
 "[<common diff options>] <tree-ish> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 	const char *tree_name = NULL;
 	unsigned char sha1[20];
+	const char *prefix = setup_git_directory();
 	const char **pathspec = NULL;
 	void *tree;
 	unsigned long size;
@@ -179,15 +180,12 @@ int main(int argc, const char **argv)
 	int allow_options = 1;
 	int i;
 
-	read_cache();
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (!allow_options || *arg != '-') {
-			if (tree_name) {
-				pathspec = argv + i;
+			if (tree_name)
 				break;
-			}
 			tree_name = arg;
 			continue;
 		}
@@ -265,11 +263,15 @@ int main(int argc, const char **argv)
 		usage(diff_cache_usage);
 	}
 
+	pathspec = get_pathspec(prefix, argv + i);
+
 	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
 		usage(diff_cache_usage);
 
 	if (!tree_name || get_sha1(tree_name, sha1))
 		usage(diff_cache_usage);
+
+	read_cache();
 
 	/* The rest is for paths restriction. */
 	diff_setup(diff_setup_opt);
