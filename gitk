@@ -156,6 +156,7 @@ proc readcommit {id} {
 
 proc parsecommit {id contents listed} {
     global commitinfo children nchildren parents nparents cdate ncleft
+    global grafts
 
     set inhdr 1
     set comment {}
@@ -171,13 +172,32 @@ proc parsecommit {id contents listed} {
     }
     set parents($id) {}
     set nparents($id) 0
+    set grafted 0
+    if {[info exists grafts($id)]} {
+	set grafted 1
+	set parents($id) $grafts($id)
+	set nparents($id) [llength $grafts($id)]
+	if {$listed} {
+	    foreach p $grafts($id) {
+		if {![info exists nchildren($p)]} {
+		    set children($p) [list $id]
+		    set nchildren($p) 1
+		    set ncleft($p) 1
+		} elseif {[lsearch -exact $children($p) $id] < 0} {
+		    lappend children($p) $id
+		    incr nchildren($p)
+		    incr ncleft($p)
+		}
+	    }
+	}
+    }
     foreach line [split $contents "\n"] {
 	if {$inhdr} {
 	    if {$line == {}} {
 		set inhdr 0
 	    } else {
 		set tag [lindex $line 0]
-		if {$tag == "parent"} {
+		if {$tag == "parent" && !$grafted} {
 		    set p [lindex $line 1]
 		    if {![info exists nchildren($p)]} {
 			set children($p) {}
@@ -270,6 +290,32 @@ proc readrefs {} {
 	    }
 	    close $fd
 	}
+    }
+}
+
+proc readgrafts {} {
+    global grafts env
+    catch {
+	set graftfile info/grafts
+	if {[info exists env(GIT_GRAFT_FILE)]} {
+	    set graftfile $env(GIT_GRAFT_FILE)
+	}
+	set fd [open [gitdir]/$graftfile r]
+	while {[gets $fd line] >= 0} {
+	    if {[string match "#*" $line]} continue
+	    set ok 1
+	    foreach x $line {
+		if {![regexp {^[0-9a-f]{40}$} $x]} {
+		    set ok 0
+		    break
+		}
+	    }
+	    if {$ok} {
+		set id [lindex $line 0]
+		set grafts($id) [lrange $line 1 end]
+	    }
+	}
+	close $fd
     }
 }
 
@@ -3202,4 +3248,5 @@ set patchnum 0
 setcoords
 makewindow
 readrefs
+readgrafts
 getcommits $revtreeargs
