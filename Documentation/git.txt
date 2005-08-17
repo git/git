@@ -74,8 +74,15 @@ link:git-write-tree.html[git-write-tree]::
 link:git-pack-objects.html[git-pack-objects]::
 	Creates a packed archive of objects.
 
+link:git-unpack-objects.html[git-unpack-objects]::
+	Unpacks objects out of a packed archive.
+
 link:git-prune-packed.html[git-prune-packed]::
 	Remove extra objects that are already in pack files.
+
+link:git-apply.html[git-apply]::
+	Reads a "diff -up1" or git generated patch file and
+	applies it to the working tree.
 
 
 Interrogation commands
@@ -91,6 +98,9 @@ link:git-diff-files.html[git-diff-files]::
 
 link:git-diff-tree.html[git-diff-tree]::
 	Compares the content and mode of blobs found via two tree objects
+
+link:git-diff-stages.html[git-diff-stages]::
+	Compares two "merge stages" in the index file.
 
 link:git-export.html[git-export]::
 	Exports each commit and a diff against each of its parents
@@ -121,6 +131,9 @@ link:git-unpack-file.html[git-unpack-file]::
 
 link:git-var.html[git-var]::
 	Displays a git logical variable
+
+link:git-show-index.html[git-show-index]::
+	Displays contents of a pack idx file.
 
 link:git-verify-pack.html[git-verify-pack]::
 	Validates packed GIT archive files
@@ -201,6 +214,12 @@ link:git-show-branches-script.html[git-show-branches-script]::
 link:git-repack-script.html[git-repack-script]::
 	Pack unpacked objects in a repository.
 
+link:git-rename-script.html[git-rename]::
+	Rename files and directories.
+
+link:git-ls-remote-script.html[git-ls-remote-script]::
+	Shows references in a remote or local repository.
+
 
 Ancillary Commands
 ------------------
@@ -224,6 +243,9 @@ link:git-resolve-script.html[git-resolve-script]::
 link:git-tag-script.html[git-tag-script]::
 	An example script to create a tag object signed with GPG
 
+link:git-cvsimport-script.html[git-cvsimport-script]::
+	Salvage your data out of another SCM people love to hate.
+
 
 Interrogators:
 
@@ -233,6 +255,8 @@ link:git-diff-helper.html[git-diff-helper]::
 link:git-ssh-push.html[git-ssh-push]::
 	Helper "server-side" program used by git-ssh-pull
 
+link:git-send-email-script.html[git-send-email]::
+	Send patch e-mails out of "format-patch --mbox" output.
 
 
 Identifier Terminology
