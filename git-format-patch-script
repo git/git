@@ -146,7 +146,7 @@ do
 
     file=`printf '%04d-%stxt' $i "$title"`
     i=`expr "$i" - 1`
-    echo >&2 "* $file"
+    echo "* $file"
     {
 	mailScript='
 	/./d
