@@ -81,7 +81,11 @@ yes,yes)
 	    ;;
 	yes)
 	    mkdir -p "$D/.git/objects/info"
-	    echo "$repo/objects" >"$D/.git/objects/info/alternates"
+	    {
+		test -f "$repo/objects/info/alternates" &&
+		cat "$repo/objects/info/alternates";
+		echo "$repo/objects"
+	    } >"$D/.git/objects/info/alternates"
 	    ;;
 	esac
 
