@@ -1,23 +1,60 @@
 #include "cache.h"
 
+static char *prefix_path(const char *prefix, int len, char *path)
+{
+	char *orig = path;
+	for (;;) {
+		char c;
+		if (*path != '.')
+			break;
+		c = path[1];
+		/* "." */
+		if (!c) {
+			path++;
+			break;
+		}
+		/* "./" */
+		if (c == '/') {
+			path += 2;
+			continue;
+		}
+		if (c != '.')
+			break;
+		c = path[2];
+		if (!c)
+			path += 2;
+		else if (c == '/')
+			path += 3;
+		else
+			break;
+		/* ".." and "../" */
+		/* Remove last component of the prefix */
+		do {
+			if (!len)
+				die("'%s' is outside repository", orig);
+			len--;
+		} while (len && prefix[len-1] != '/');
+		continue;
+	}
+	if (len) {
+		int speclen = strlen(path);
+		char *n = xmalloc(speclen + len + 1);
+	
+		memcpy(n, prefix, len);
+		memcpy(n + len, path, speclen+1);
+		path = n;
+	}
+	return path;
+}
+
 const char **get_pathspec(const char *prefix, char **pathspec)
 {
 	char *entry = *pathspec;
 	char **p;
 	int prefixlen;
 
-	if (!prefix) {
-		char **p;
-		if (!entry)
-			return NULL;
-		p = pathspec;
-		do {
-			if (*entry != '.')
-				continue;
-			/* fixup ? */
-		} while ((entry = *++p) != NULL);
-		return (const char **) pathspec;
-	}
+	if (!prefix && !entry)
+		return NULL;
 
 	if (!entry) {
 		static const char *spec[2];
@@ -27,38 +64,10 @@ const char **get_pathspec(const char *prefix, char **pathspec)
 	}
 
 	/* Otherwise we have to re-write the entries.. */
-	prefixlen = strlen(prefix);
 	p = pathspec;
+	prefixlen = prefix ? strlen(prefix) : 0;
 	do {
-		int speclen, len = prefixlen;
-		char *n;
-
-		for (;;) {
-			if (!strcmp(entry, ".")) {
-				entry++;
-				break;
-			}
-			if (!strncmp(entry, "./", 2)) {
-				entry += 2;
-				continue;
-			}
-			if (!strncmp(entry, "../", 3)) {
-				do {
-					if (!len)
-						die("'%s' is outside repository", *p);
-					len--;
-				} while (len && prefix[len-1] != '/');
-				entry += 3;
-				continue;
-			}
-			break;
-		}
-		speclen = strlen(entry);
-		n = xmalloc(speclen + len + 1);
-		
-		memcpy(n, prefix, len);
-		memcpy(n + len, entry, speclen+1);
-		*p = n;
+		*p = prefix_path(prefix, prefixlen, entry);
 	} while ((entry = *++p) != NULL);
 	return (const char **) pathspec;
 }
