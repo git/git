@@ -28,19 +28,19 @@ use POSIX qw(strftime dup2);
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_s);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_s,$opt_m,$opt_M);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
        [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
-       [ -i ] [ -k ] [-s subst] [ CVS_module ]
+       [ -i ] [ -k ] [-s subst] [ -m ] [ -M regex] [ CVS_module ]
 END
 	exit(1);
 }
 
-getopts("hivko:d:p:C:z:s:") or usage();
+getopts("hivmko:d:p:C:z:s:M:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -71,9 +71,17 @@ if ($#ARGV == 0) {
 	    die 'Failed to open CVS/Repository';
 	$cvs_tree = <$f>;
 	chomp $cvs_tree;
-	close $f
+	close $f;
 } else {
 	usage();
+}
+
+our @mergerx = ();
+if ($opt_m) {
+	@mergerx = ( qr/\W(?:from|of|merge|merging|merged) (\w+)/i );
+}
+if ($opt_M) {
+	push (@mergerx, qr/$opt_M/);
 }
 
 select(STDERR); $|=1; select(STDOUT);
@@ -375,6 +383,22 @@ sub getwd() {
 	return $pwd;
 }
 
+
+sub get_headref($$) {
+    my $name    = shift;
+    my $git_dir = shift; 
+    my $sha;
+    
+    if (open(C,"$git_dir/refs/heads/$name")) {
+	chomp($sha = <C>);
+	close(C);
+	length($sha) == 40
+	    or die "Cannot get head id for $name ($sha): $!\n";
+    }
+    return $sha;
+}
+
+
 -d $git_tree
 	or mkdir($git_tree,0777)
 	or die "Could not create $git_tree: $!";
@@ -549,6 +573,22 @@ my $commit = sub {
 
 		my @par = ();
 		@par = ("-p",$parent) if $parent;
+
+		# loose detection of merges
+		# based on the commit msg
+		foreach my $rx (@mergerx) {
+			if ($logmsg =~ $rx) {
+				my $mparent = $1;
+				if ($mparent eq 'HEAD') { $mparent = $opt_o };
+				if ( -e "$git_dir/refs/heads/$mparent") {
+					$mparent = get_headref($mparent, $git_dir);
+					push @par, '-p', $mparent;
+					# printing here breaks import # 
+					# # print "Merge parent branch: $mparent\n" if $opt_v;
+				}
+		    	} 
+		}
+
 		exec("env",
 			"GIT_AUTHOR_NAME=$author",
 			"GIT_AUTHOR_EMAIL=$author",

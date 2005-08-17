@@ -85,10 +85,12 @@ tt*)
   die "Only one of -c/-C/-F/-m can be used." ;;
 esac
 
-case "$all" in
-t)
+case "$all,$#" in
+t,*)
 	git-diff-files --name-only -z |
 	xargs -0 git-update-cache -q --
+	;;
+,0)
 	;;
 *)
 	git-diff-files --name-only -z "$@" |

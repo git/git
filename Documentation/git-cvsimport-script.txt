@@ -12,7 +12,7 @@ SYNOPSIS
 'git-cvsimport-script' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
 			[ -C <GIT_repository> ] [ -i ] [ -k ]
-			[ -s <subst> ] [ <CVS_module> ]
+			[ -s <subst> ] [ -m ] [ -M regex ] [ <CVS_module> ]
 
 
 DESCRIPTION
@@ -57,6 +57,16 @@ OPTIONS
 	The options '-u' and '-A' are implicit and should not be used here.
 
 	If you need to pass multiple options, separate them with a comma.
+
+-m::    
+	Attempt to detect merges based on the commit message. This option
+	will enable default regexes that try to capture the name source 
+	branch name from the commit message. 
+
+-M <regex>::
+	Attempt to detect merges based on the commit message with a custom
+	regex. It can be used with -m to also see the default regexes. 
+	You must escape forward slashes. 
 
 -v::
 	Verbosity: let 'cvsimport' report what it is doing.

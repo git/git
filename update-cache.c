@@ -321,6 +321,7 @@ int main(int argc, char **argv)
 {
 	int i, newfd, entries, has_errors = 0;
 	int allow_options = 1;
+	const char *prefix = setup_git_directory();
 
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (newfd < 0)
@@ -381,6 +382,7 @@ int main(int argc, char **argv)
 			}
 			die("unknown option %s", path);
 		}
+		path = prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 		if (!verify_path(path)) {
 			fprintf(stderr, "Ignoring path %s\n", argv[i]);
 			continue;

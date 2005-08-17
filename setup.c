@@ -1,6 +1,6 @@
 #include "cache.h"
 
-static char *prefix_path(const char *prefix, int len, char *path)
+char *prefix_path(const char *prefix, int len, char *path)
 {
 	char *orig = path;
 	for (;;) {
