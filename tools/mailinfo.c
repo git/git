@@ -9,6 +9,7 @@
 
 static FILE *cmitmsg, *patchfile;
 
+static int keep_subject = 0;
 static char line[1000];
 static char date[1000];
 static char name[1000];
@@ -101,6 +102,8 @@ static void check_line(char *line, int len)
 
 static char * cleanup_subject(char *subject)
 {
+	if (keep_subject)
+		return subject;
 	for (;;) {
 		char *p;
 		int len, remove;
@@ -242,8 +245,20 @@ static void usage(void)
 	exit(1);
 }
 
+static const char mailinfo_usage[] =
+"git-mailinfo [-k] msg patch <mail >info";
 int main(int argc, char ** argv)
 {
+	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "-k"))
+			keep_subject = 1;
+		else {
+			fprintf(stderr, "usage: %s\n", mailinfo_usage);
+			exit(1);
+		}
+		argc--; argv++;
+	}
+
 	if (argc != 3)
 		usage();
 	cmitmsg = fopen(argv[1], "w");
