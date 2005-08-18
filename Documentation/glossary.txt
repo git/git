@@ -3,21 +3,27 @@ object::
 	the SHA1 of its contents. Consequently, an object can not
 	be changed.
 
+object name::
+	The unique identifier of an object. The hash of the object's contents
+	using the Secure Hash Algorithm 1 and usually represented by the 40
+	character hexadecimal encoding of the hash of the object (possibly
+	followed by a white space).
+
 SHA1::
-	A 20-byte sequence (or 41-byte file containing the hex
-	representation and a newline). It is calculated from the
-	contents of an object by the Secure Hash Algorithm 1.
+	Synonym for object name.
+
+object identifier::
+	Synonym for object name.
+
+hash::
+	In git's context, synonym to object name.
 
 object database::
 	Stores a set of "objects", and an individial object is identified
-	by its SHA1 (its ref). The objects are either stored as single
-	files, or live inside of packs.
-
-object name::
-	Synonym for SHA1.
+	by its object name. The object usually live in $GIT_DIR/objects/.
 
 blob object::
-	Untyped object, i.e. the contents of a file.
+	Untyped object, e.g. the contents of a file.
 
 tree object::
 	An object containing a list of blob and/or tree objects.
@@ -29,42 +35,43 @@ tree::
 	dependent blob and tree objects (i.e. a stored representation
 	of a working tree).
 
-cache::
-	A collection of files whose contents are stored as objects.
-	The cache is a stored version of your working tree. Well, can
-	also contain a second, and even a third version of a working
-	tree, which are used when merging.
+index::
+	A collection of files with stat information, whose contents are
+	stored as objects. The cache is a stored version of your working
+	tree. Truth be told, it can also contain a second, and even a third
+	version of a working tree, which are used when merging.
 
-cache entry::
+index entry::
 	The information regarding a particular file, stored in the index.
-	A cache entry can be unmerged, if a merge was started, but not
+	An index entry can be unmerged, if a merge was started, but not
 	yet finished (i.e. if the cache contains multiple versions of
 	that file).
 
-index::
-	Contains information about the cache contents, in particular
-	timestamps and mode flags ("stat information") for the files
-	stored in the cache. An unmerged index is an index which contains
-	unmerged cache entries.
+unmerged index:
+	An index which contains unmerged index entries.
+
+cache::
+	Obsolete for: index.
 
 working tree::
-	The set of files and directories currently being worked on.
-	Think "ls -laR"
+	The set of files and directories currently being worked on,
+	i.e. you can work in your working tree without using git at all.
 
 directory::
 	The list you get with "ls" :-)
-
-checkout::
-	The action of updating the working tree to a revision which was
-	stored in the object database.
 
 revision::
 	A particular state of files and directories which was stored in
 	the object database. It is referenced by a commit object.
 
+checkout::
+	The action of updating the working tree to a revision which was
+	stored in the object database.
+
 commit::
-	The action of storing the current state of the cache in the
+	As a verb: The action of storing the current state of the cache in the
 	object database. The result is a revision.
+	As a noun: Short hand for commit object.
 
 commit object::
 	An object which contains the information about a particular
@@ -72,13 +79,14 @@ commit object::
 	tree object which corresponds to the top directory of the
 	stored revision.
 
+parent::
+	A commit object contains a (possibly empty) list of the logical
+	predecessor(s) in the line of development, i.e. its parents.
+
 changeset::
 	BitKeeper/cvsps speak for "commit". Since git does not store
 	changes, but states, it really does not make sense to use
 	the term "changesets" with git.
-
-ent::
-	Favorite synonym to "tree-ish" by some total geeks.
 
 clean::
 	A working tree is clean, if it corresponds to the revision
@@ -94,13 +102,12 @@ head::
 
 branch::
 	A non-cyclical graph of revisions, i.e. the complete history of
-	a particular revision, which does not (yet) have children, which
-	is called the branch head. The branch heads are stored in
-	$GIT_DIR/refs/heads/.
+	a particular revision, which is called the branch head. The
+	branch heads are stored in $GIT_DIR/refs/heads/.
 
 ref::
 	A 40-byte hex representation of a SHA1 pointing to a particular
-	object. These are stored in $GIT_DIR/refs/.
+	object. These may be stored in $GIT_DIR/refs/.
 
 head ref::
 	A ref pointing to a head. Often, this is abbreviated to "head".
@@ -108,7 +115,10 @@ head ref::
 
 tree-ish::
 	A ref pointing to either a commit object, a tree object, or a
-	tag object pointing to a commit or tree object.
+	tag object pointing to a tag or commit or tree object.
+
+ent::
+	Favorite synonym to "tree-ish" by some total geeks.
 
 tag object::
 	An object containing a ref pointing to another object. It can
@@ -120,6 +130,8 @@ tag::
 	a tag is not changed by a commit. Tags (not tag objects) are
 	stored in $GIT_DIR/refs/tags/. A git tag has nothing to do with
 	a Lisp tag (which is called object type in git's context).
+	A tag is most typically used to mark a particular point in the
+	commit ancestry chain.
 
 merge::
 	To merge branches means to try to accumulate the changes since a
@@ -133,8 +145,17 @@ resolve::
 
 repository::
 	A collection of refs together with an object database containing
-	all objects, which are reachable from the refs. A repository can
+	all objects, which are reachable from the refs, possibly accompanied
+	by meta data from one or more porcelains. A repository can
 	share an object database with other repositories.
+
+git archive::
+	Synonym for repository (for arch people).
+
+file system::
+	Linus Torvalds originally designed git to be a user space file
+	system, i.e. the infrastructure to hold files and directories.
+	That ensured the efficiency and speed of git.
 
 alternate object database::
 	Via the alternates mechanism, a repository can inherit part of its
@@ -149,10 +170,6 @@ chain::
 	A list of objects, where each object in the list contains a
 	reference to its successor (for example, the successor of a commit
 	could be one of its parents).
-
-parent::
-	A commit object contains a (possibly empty) list of the logical
-	predecessor(s) in the line of development, i.e. its parents.
 
 fetch::
 	Fetching a branch means to get the branch's head ref from a
@@ -176,8 +193,8 @@ pack::
 	space or to transmit them efficiently).
 
 pack index::
-	Contains offsets into a pack, so the pack can be used instead of
-	the unpacked objects.
+	The list of identifiers, and other information, of the objects in a
+	pack, to assist in efficiently accessing the contents of a pack. 
 
 plumbing::
 	Cute name for core git.
@@ -196,3 +213,4 @@ SCM::
 
 dircache::
 	You are *waaaaay* behind.
+
