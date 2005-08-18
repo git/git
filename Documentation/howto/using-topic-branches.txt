@@ -70,8 +70,8 @@ them too:
 Now create the branches in which you are going to work, these start
 out at the current tip of the linus branch.
 
- $ git checkout -b test linus
- $ git checkout -b release linus
+ $ git branch test linus
+ $ git branch release linus
 
 These can be easily kept up to date by merging from the "linus" branch:
 
@@ -144,6 +144,11 @@ is empty.  At this point the branch can be deleted:
 
  $ rm .git/refs/heads/branchname
 
+Some changes are so trivial that it is not necessary to create a separate
+branch and then merge into each of the test and release branches.  For
+these changes, just apply directly to the "release" branch, and then
+merge that into the "test" branch.
+
 To create diffstat and shortlog summaries of changes to include in a "please
 pull" request to Linus you can use:
 
@@ -151,3 +156,109 @@ pull" request to Linus you can use:
 and
  $ git-whatchanged release ^linus | git-shortlog
 
+
+Here are some of the scripts that I use to simplify all this even further.
+
+==== update script ====
+# Update a branch in my GIT tree.  If the branch to be updated
+# is "linus", then pull from kernel.org.  Otherwise merge local
+# linus branch into test|release branch
+
+case "$1" in
+test|release)
+	git checkout $1 && git resolve $1 linus "Auto-update from upstream"
+	;;
+linus)
+	before=$(cat .git/HEAD)
+	git checkout linus && git pull linus
+	after=$(cat .git/HEAD)
+	if [ $before != $after ]
+	then
+		git-whatchanged $after ^$before | git-shortlog
+	fi
+	;;
+*)
+	echo "Usage: $0 linus|test|release" 1>&2
+	exit 1
+	;;
+esac
+
+==== merge script ====
+# Merge a branch into either the test or release branch
+
+pname=$0
+
+usage()
+{
+	echo "Usage: $pname branch test|release" 1>&2
+	exit 1
+}
+
+if [ ! -f .git/refs/heads/"$1" ]
+then
+	echo "Can't see branch <$1>" 1>&2
+	usage
+fi
+
+case "$2" in
+test|release)
+	if [ $(git-rev-list $1 ^$2 | wc -c) -eq 0 ]
+	then
+		echo $1 already merged into $2 1>&2
+		exit 1
+	fi
+	git checkout $2 && git resolve $2 $1 "Pull $1 into $2 branch"
+	;;
+*)
+	usage
+	;;
+esac
+
+==== status script ====
+# report on status of my ia64 GIT tree
+
+gb=$(tput setab 2)
+rb=$(tput setab 1)
+restore=$(tput setab 9)
+
+if [ `git-rev-tree release ^test | wc -c` -gt 0 ]
+then
+	echo $rb Warning: commits in release that are not in test $restore
+	git-whatchanged release ^test
+fi
+
+for branch in `ls .git/refs/heads`
+do
+	if [ $branch = linus -o $branch = test -o $branch = release ]
+	then
+		continue
+	fi
+
+	echo -n $gb ======= $branch ====== $restore " "
+	status=
+	for ref in test release linus
+	do
+		if [ `git-rev-tree $branch ^$ref | wc -c` -gt 0 ]
+		then
+			status=$status${ref:0:1}
+		fi
+	done
+	case $status in
+	trl)
+		echo $rb Need to pull into test $restore
+		;;
+	rl)
+		echo "In test"
+		;;
+	l)
+		echo "Waiting for linus"
+		;;
+	"")
+		echo $rb All done $restore
+		;;
+	*)
+		echo $rb "<$status>" $restore
+		;;
+	esac
+	git-whatchanged $branch ^linus | git-shortlog
+done
