@@ -26,9 +26,9 @@ blob object::
 	Untyped object, e.g. the contents of a file.
 
 tree object::
-	An object containing a list of blob and/or tree objects.
-	(A tree usually corresponds to a directory without
-	subdirectories).
+	An object containing a list of file names and modes along with refs
+	to the associated blob and/or tree objects. A tree object is
+	equivalent to a directory.
 
 tree::
 	Either a working tree, or a tree object together with the
@@ -118,11 +118,14 @@ tree-ish::
 	tag object pointing to a tag or commit or tree object.
 
 ent::
-	Favorite synonym to "tree-ish" by some total geeks.
+	Favorite synonym to "tree-ish" by some total geeks. See
+	http://en.wikipedia.org/wiki/Ent_(Middle-earth) for an in-depth
+	explanation.
 
 tag object::
-	An object containing a ref pointing to another object. It can
-	contain a (PGP) signature, in which case it is called "signed
+	An object containing a ref pointing to another object, which can
+	contain a message just like a commit object. It can also
+	contain a (PGP) signature, in which case it is called a "signed
 	tag object".
 
 tag::
@@ -142,6 +145,15 @@ merge::
 resolve::
 	The action of fixing up manually what a failed automatic merge
 	left behind.
+
+rewind::
+	To throw away part of the development, i.e. to assign the head to
+	an earlier revision.
+
+rebase::
+	To clean a branch by starting from the head of the main line of
+	development ("master"), and reapply the (possibly cherry-picked)
+	changes from that branch.
 
 repository::
 	A collection of refs together with an object database containing
@@ -195,6 +207,10 @@ pack::
 pack index::
 	The list of identifiers, and other information, of the objects in a
 	pack, to assist in efficiently accessing the contents of a pack. 
+
+core git::
+	Fundamental data structures and utilities of git. Exposes only
+	limited source code management tools.
 
 plumbing::
 	Cute name for core git.
