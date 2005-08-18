@@ -27,7 +27,9 @@ esac
 
 upstream=`git-rev-parse --verify "$1"` &&
 ours=`git-rev-parse --verify "$ours_symbolic"` || exit
-test "$(git-diff-cache --cached "$ours")" = "" || 
+different1=$(git-diff-cache --name-only --cached "$ours") &&
+different2=$(git-diff-cache --name-only "$ours") &&
+test "$different1$different2" = "" ||
 die "Your working tree does not match $ours_symbolic."
 
 git-read-tree -m -u $ours $upstream &&
