@@ -43,7 +43,7 @@ proc getcommits {rargs} {
 	set parsed_args $rargs
     }
     if [catch {
-	set commfd [open "|git-rev-list --header --topo-order $parsed_args" r]
+	set commfd [open "|git-rev-list --header --topo-order --parents $parsed_args" r]
     } err] {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
@@ -96,7 +96,19 @@ to allow selection of commits to be displayed.)}
 	    set leftover {}
 	}
 	set start [expr {$i + 1}]
-	if {![regexp {^([0-9a-f]{40})\n} $cmit match id]} {
+	set j [string first "\n" $cmit]
+	set ok 0
+	if {$j >= 0} {
+	    set ids [string range $cmit 0 [expr {$j - 1}]]
+	    set ok 1
+	    foreach id $ids {
+		if {![regexp {^[0-9a-f]{40}$} $id]} {
+		    set ok 0
+		    break
+		}
+	    }
+	}
+	if {!$ok} {
 	    set shortcmit $cmit
 	    if {[string length $shortcmit] > 80} {
 		set shortcmit "[string range $shortcmit 0 80]..."
@@ -104,10 +116,12 @@ to allow selection of commits to be displayed.)}
 	    error_popup "Can't parse git-rev-list output: {$shortcmit}"
 	    exit 1
 	}
-	set cmit [string range $cmit 41 end]
+	set id [lindex $ids 0]
+	set olds [lrange $ids 1 end]
+	set cmit [string range $cmit [expr {$j + 1}] end]
 	lappend commits $id
 	set commitlisted($id) 1
-	parsecommit $id $cmit 1
+	parsecommit $id $cmit 1 [lrange $ids 1 end]
 	drawcommit $id
 	if {[clock clicks -milliseconds] >= $nextupdate} {
 	    doupdate 1
@@ -151,12 +165,11 @@ proc doupdate {reading} {
 
 proc readcommit {id} {
     if [catch {set contents [exec git-cat-file commit $id]}] return
-    parsecommit $id $contents 0
+    parsecommit $id $contents 0 {}
 }
 
-proc parsecommit {id contents listed} {
+proc parsecommit {id contents listed olds} {
     global commitinfo children nchildren parents nparents cdate ncleft
-    global grafts
 
     set inhdr 1
     set comment {}
@@ -170,25 +183,17 @@ proc parsecommit {id contents listed} {
 	set nchildren($id) 0
 	set ncleft($id) 0
     }
-    set parents($id) {}
-    set nparents($id) 0
-    set grafted 0
-    if {[info exists grafts($id)]} {
-	set grafted 1
-	set parents($id) $grafts($id)
-	set nparents($id) [llength $grafts($id)]
-	if {$listed} {
-	    foreach p $grafts($id) {
-		if {![info exists nchildren($p)]} {
-		    set children($p) [list $id]
-		    set nchildren($p) 1
-		    set ncleft($p) 1
-		} elseif {[lsearch -exact $children($p) $id] < 0} {
-		    lappend children($p) $id
-		    incr nchildren($p)
-		    incr ncleft($p)
-		}
-	    }
+    set parents($id) $olds
+    set nparents($id) [llength $olds]
+    foreach p $olds {
+	if {![info exists nchildren($p)]} {
+	    set children($p) [list $id]
+	    set nchildren($p) 1
+	    set ncleft($p) 1
+	} elseif {[lsearch -exact $children($p) $id] < 0} {
+	    lappend children($p) $id
+	    incr nchildren($p)
+	    incr ncleft($p)
 	}
     }
     foreach line [split $contents "\n"] {
@@ -197,22 +202,7 @@ proc parsecommit {id contents listed} {
 		set inhdr 0
 	    } else {
 		set tag [lindex $line 0]
-		if {$tag == "parent" && !$grafted} {
-		    set p [lindex $line 1]
-		    if {![info exists nchildren($p)]} {
-			set children($p) {}
-			set nchildren($p) 0
-			set ncleft($p) 0
-		    }
-		    lappend parents($id) $p
-		    incr nparents($id)
-		    # sometimes we get a commit that lists a parent twice...
-		    if {$listed && [lsearch -exact $children($p) $id] < 0} {
-			lappend children($p) $id
-			incr nchildren($p)
-			incr ncleft($p)
-		    }
-		} elseif {$tag == "author"} {
+		if {$tag == "author"} {
 		    set x [expr {[llength $line] - 2}]
 		    set audate [lindex $line $x]
 		    set auname [lrange $line 1 [expr {$x - 1}]]
@@ -290,32 +280,6 @@ proc readrefs {} {
 	    }
 	    close $fd
 	}
-    }
-}
-
-proc readgrafts {} {
-    global grafts env
-    catch {
-	set graftfile info/grafts
-	if {[info exists env(GIT_GRAFT_FILE)]} {
-	    set graftfile $env(GIT_GRAFT_FILE)
-	}
-	set fd [open [gitdir]/$graftfile r]
-	while {[gets $fd line] >= 0} {
-	    if {[string match "#*" $line]} continue
-	    set ok 1
-	    foreach x $line {
-		if {![regexp {^[0-9a-f]{40}$} $x]} {
-		    set ok 0
-		    break
-		}
-	    }
-	    if {$ok} {
-		set id [lindex $line 0]
-		set grafts($id) [lrange $line 1 end]
-	    }
-	}
-	close $fd
     }
 }
 
@@ -3495,5 +3459,4 @@ set patchnum 0
 setcoords
 makewindow
 readrefs
-readgrafts
 getcommits $revtreeargs
