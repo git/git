@@ -1424,7 +1424,9 @@ sub git_rss {
 		      "<title>" .
 		      sprintf("%d %s %02d:%02d", $cd{'mday'}, $cd{'month'}, $cd{'hour'}, $cd{'minute'}) . " - " . escapeHTML($co{'title'}) .
 		      "</title>\n" .
+		      "<author>" . escapeHTML($co{'author'}) . "</author>\n" .
 		      "<pubDate>$cd{'rfc2822'}</pubDate>\n" .
+		      "<guid isPermaLink=\"true\">" . escapeHTML("$my_url?p=$project;a=commit;h=$commit") . "</guid>\n" .
 		      "<link>" . escapeHTML("$my_url?p=$project;a=commit;h=$commit") . "</link>\n" .
 		      "<description>" . escapeHTML($co{'title'}) . "</description>\n" .
 		      "<content:encoded>" .
