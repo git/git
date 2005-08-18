@@ -26,7 +26,7 @@ case "$#" in
 esac
 
 upstream=`git-rev-parse --verify "$1"` &&
-ours=`git-rev-parse --verify "$ours_symbolic^` || exit
+ours=`git-rev-parse --verify "$ours_symbolic"` || exit
 test "$(git-diff-cache --cached "$ours")" = "" || 
 die "Your working tree does not match $ours_symbolic."
 
