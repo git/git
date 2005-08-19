@@ -1019,6 +1019,7 @@ proc drawslants {id needonscreen nohs} {
     }
     if {$onscreen($id) == 0} {
 	lappend displist $id
+	set onscreen($id) 1
     }
 
     # remove the null entry if present
@@ -1186,15 +1187,10 @@ proc drawslants {id needonscreen nohs} {
 		set j [lsearch -exact $displist $id]
 	    }
 	    if {$j != $i || $xspc1($lineno) != $xspc1($lj)
-		|| ($olddlevel <= $i && $i <= $dlevel)
-		|| ($dlevel <= $i && $i <= $olddlevel)} {
+		|| ($olddlevel < $i && $i < $dlevel)
+		|| ($dlevel < $i && $i < $olddlevel)} {
 		set xj [xcoord $j $dlevel $lj]
-		set dx [expr {abs($xi - $xj)}]
-		set yb $y2
-		if {0 && $dx < $linespc} {
-		    set yb [expr {$y1 + $dx}]
-		}
-		lappend mainline($id) $xi $y1 $xj $yb
+		lappend mainline($id) $xi $y1 $xj $y2
 	    }
 	}
     }
