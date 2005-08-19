@@ -195,7 +195,7 @@ Date: '"$ad"
 			echo
 		}
 	}
-
+	echo
 	echo '---'
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
