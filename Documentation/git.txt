@@ -328,12 +328,7 @@ GIT_DIR.
 
 Terminology
 -----------
-Each line contains terms which you may see used interchangeably
-
- object database, .git directory
- directory cache, index
- id, sha1, sha1-id, sha1 hash
- type, tag
+Please see link:glossary.html[glossary] document.
 
 
 Environment Variables

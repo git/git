@@ -18,6 +18,8 @@
 ## use a Signoff_file, because applypatch wants to append the sign-off
 ## message to msg-clean every time it is run.
 
+. git-sh-setup-script || die "Not a git archive"
+
 keep_subject= query_apply= continue= resume=t
 while case "$#" in 0) break ;; esac
 do
@@ -38,6 +40,12 @@ case "$continue" in
 	git-mailsplit "$1" .dotest || exit 1
 	shift
 esac
+
+files=$(git-diff-cache --cached --name-only HEAD) || exit
+if [ "$files" ]; then
+   echo "Dirty index: cannot apply patches (dirty: $files)" >&2
+   exit 1
+fi
 
 case "$query_apply" in
 t)	touch .dotest/.query_apply
