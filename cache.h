@@ -38,10 +38,9 @@
 #define NORETURN __attribute__((__noreturn__))
 #else
 #define NORETURN
-#endif
-
 #ifndef __attribute__
 #define __attribute__(x)
+#endif
 #endif
 
 /*
