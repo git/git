@@ -238,7 +238,8 @@ proc parsecommit {id contents listed olds} {
 }
 
 proc readrefs {} {
-    global tagids idtags headids idheads
+    global tagids idtags headids idheads tagcontents
+
     set tags [glob -nocomplain -types f [gitdir]/refs/tags/*]
     foreach f $tags {
 	catch {
@@ -248,7 +249,8 @@ proc readrefs {} {
 		set direct [file tail $f]
 		set tagids($direct) $id
 		lappend idtags($id) $direct
-		set contents [split [exec git-cat-file tag $id] "\n"]
+		set tagblob [exec git-cat-file tag $id]
+		set contents [split $tagblob "\n"]
 		set obj {}
 		set type {}
 		set tag {}
@@ -263,6 +265,7 @@ proc readrefs {} {
 		if {$obj != {} && $type == "commit" && $tag != {}} {
 		    set tagids($tag) $obj
 		    lappend idtags($obj) $tag
+		    set tagcontents($tag) $tagblob
 		}
 	    }
 	    close $fd
@@ -872,7 +875,7 @@ proc drawcommitline {level} {
 proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs
     global linespc lthickness
-    global canv mainfont
+    global canv mainfont idline rowtextx
 
     set marks {}
     set ntags 0
@@ -911,9 +914,11 @@ proc drawtags {id x xt y1} {
 	set xr [expr $x + $delta + $wid + $lthickness]
 	if {[incr ntags -1] >= 0} {
 	    # draw a tag
-	    $canv create polygon $x [expr $yt + $delta] $xl $yt\
-		$xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
-		-width 1 -outline black -fill yellow -tags tag.$id
+	    set t [$canv create polygon $x [expr $yt + $delta] $xl $yt \
+		       $xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
+		       -width 1 -outline black -fill yellow -tags tag.$id]
+	    $canv bind $t <1> [list showtag $tag 1]
+	    set rowtextx($idline($id)) [expr {$xr + $linespc}]
 	} else {
 	    # draw a head or other ref
 	    if {[incr nheads -1] >= 0} {
@@ -925,8 +930,11 @@ proc drawtags {id x xt y1} {
 	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
 		-width 1 -outline black -fill $col -tags tag.$id
 	}
-	$canv create text $xl $y1 -anchor w -text $tag \
-	    -font $mainfont -tags tag.$id
+	set t [$canv create text $xl $y1 -anchor w -text $tag \
+		   -font $mainfont -tags tag.$id]
+	if {$ntags >= 0} {
+	    $canv bind $t <1> [list showtag $tag 1]
+	}
     }
     return $xt
 }
@@ -1496,7 +1504,7 @@ proc drawrest {} {
     global phase stopped redisplaying selectedline
     global datemode todo displayorder
     global numcommits ncmupdate
-    global nextupdate startmsecs idline
+    global nextupdate startmsecs
 
     set level [decidenext]
     if {$level >= 0} {
@@ -2018,12 +2026,37 @@ proc commit_descriptor {p} {
     return "$p ($l)"
 }
 
+# append some text to the ctext widget, and make any SHA1 ID
+# that we know about be a clickable link.
+proc appendwithlinks {text} {
+    global ctext idline linknum
+
+    set start [$ctext index "end - 1c"]
+    $ctext insert end $text
+    $ctext insert end "\n"
+    set links [regexp -indices -all -inline {[0-9a-f]{40}} $text]
+    foreach l $links {
+	set s [lindex $l 0]
+	set e [lindex $l 1]
+	set linkid [string range $text $s $e]
+	if {![info exists idline($linkid)]} continue
+	incr e
+	$ctext tag add link "$start + $s c" "$start + $e c"
+	$ctext tag add link$linknum "$start + $s c" "$start + $e c"
+	$ctext tag bind link$linknum <1> [list selectline $idline($linkid) 1]
+	incr linknum
+    }
+    $ctext tag conf link -foreground blue -underline 1
+    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
+    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+}
+
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global lineid linehtag linentag linedtag
     global canvy0 linespc parents nparents children
     global cflist currentid sha1entry
-    global commentend idtags idline
+    global commentend idtags idline linknum
 
     $canv delete hover
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
@@ -2089,6 +2122,7 @@ proc selectline {l isnew} {
 
     $ctext conf -state normal
     $ctext delete 0.0 end
+    set linknum 0
     $ctext mark set fmark.0 0.0
     $ctext mark gravity fmark.0 left
     set info $commitinfo($id)
@@ -2102,7 +2136,6 @@ proc selectline {l isnew} {
 	$ctext insert end "\n"
     }
  
-    set commentstart [$ctext index "end - 1c"]
     set comment {}
     if {[info exists parents($id)]} {
 	foreach p $parents($id) {
@@ -2116,26 +2149,9 @@ proc selectline {l isnew} {
     }
     append comment "\n"
     append comment [lindex $info 5]
-    $ctext insert end $comment
-    $ctext insert end "\n"
 
     # make anything that looks like a SHA1 ID be a clickable link
-    set links [regexp -indices -all -inline {[0-9a-f]{40}} $comment]
-    set i 0
-    foreach l $links {
-	set s [lindex $l 0]
-	set e [lindex $l 1]
-	set linkid [string range $comment $s $e]
-	if {![info exists idline($linkid)]} continue
-	incr e
-	$ctext tag add link "$commentstart + $s c" "$commentstart + $e c"
-	$ctext tag add link$i "$commentstart + $s c" "$commentstart + $e c"
-	$ctext tag bind link$i <1> [list selectline $idline($linkid) 1]
-	incr i
-    }
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+    appendwithlinks $comment
 
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
@@ -3492,6 +3508,25 @@ proc rereadrefs {} {
 	    redrawtags $id
 	}
     }
+}
+
+proc showtag {tag isnew} {
+    global ctext cflist tagcontents tagids linknum
+
+    if {$isnew} {
+	addtohistory [list showtag $tag 0]
+    }
+    $ctext conf -state normal
+    $ctext delete 0.0 end
+    set linknum 0
+    if {[info exists tagcontents($tag)]} {
+	set text $tagcontents($tag)
+    } else {
+	set text "Tag: $tag\nId:  $tagids($tag)"
+    }
+    appendwithlinks $text
+    $ctext conf -state disabled
+    $cflist delete 0 end
 }
 
 proc doquit {} {
