@@ -281,6 +281,32 @@ proc readrefs {} {
 	    close $fd
 	}
     }
+    readotherrefs refs {} {tags heads}
+}
+
+proc readotherrefs {base dname excl} {
+    global otherrefids idotherrefs
+
+    set git [gitdir]
+    set files [glob -nocomplain -types f [file join $git $base *]]
+    foreach f $files {
+	catch {
+	    set fd [open $f r]
+	    set line [read $fd 40]
+	    if {[regexp {^[0-9a-f]{40}} $line id]} {
+		set name "$dname[file tail $f]"
+		set otherrefids($name) $id
+		lappend idotherrefs($id) $name
+	    }
+	    close $fd
+	}
+    }
+    set dirs [glob -nocomplain -types d [file join $git $base *]]
+    foreach d $dirs {
+	set dir [file tail $d]
+	if {[lsearch -exact $excl $dir] >= 0} continue
+	readotherrefs [file join $base $dir] "$dname$dir/" {}
+    }
 }
 
 proc error_popup msg {
@@ -305,6 +331,7 @@ proc makewindow {} {
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
     menu .bar.file
+    .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
@@ -751,7 +778,7 @@ proc drawcommitline {level} {
     global canv canv2 canv3 mainfont namefont canvy linespc
     global lineid linehtag linentag linedtag commitinfo
     global colormap numcommits currentparents dupparents
-    global idtags idline idheads
+    global idtags idline idheads idotherrefs
     global lineno lthickness mainline mainlinearrow sidelines
     global commitlisted rowtextx idpos lastuse displist
     global oldnlines olddlevel olddisplist
@@ -822,7 +849,8 @@ proc drawcommitline {level} {
     }
     set rowtextx($lineno) $xt
     set idpos($id) [list $x $xt $y1]
-    if {[info exists idtags($id)] || [info exists idheads($id)]} {
+    if {[info exists idtags($id)] || [info exists idheads($id)]
+	|| [info exists idotherrefs($id)]} {
 	set xt [drawtags $id $x $xt $y1]
     }
     set headline [lindex $commitinfo($id) 0]
@@ -842,18 +870,23 @@ proc drawcommitline {level} {
 }
 
 proc drawtags {id x xt y1} {
-    global idtags idheads
+    global idtags idheads idotherrefs
     global linespc lthickness
     global canv mainfont
 
     set marks {}
     set ntags 0
+    set nheads 0
     if {[info exists idtags($id)]} {
 	set marks $idtags($id)
 	set ntags [llength $marks]
     }
     if {[info exists idheads($id)]} {
 	set marks [concat $marks $idheads($id)]
+	set nheads [llength $idheads($id)]
+    }
+    if {[info exists idotherrefs($id)]} {
+	set marks [concat $marks $idotherrefs($id)]
     }
     if {$marks eq {}} {
 	return $xt
@@ -882,10 +915,15 @@ proc drawtags {id x xt y1} {
 		$xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
 		-width 1 -outline black -fill yellow -tags tag.$id
 	} else {
-	    # draw a head
+	    # draw a head or other ref
+	    if {[incr nheads -1] >= 0} {
+		set col green
+	    } else {
+		set col "#ddddff"
+	    }
 	    set xl [expr $xl - $delta/2]
 	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
-		-width 1 -outline black -fill green -tags tag.$id
+		-width 1 -outline black -fill $col -tags tag.$id
 	}
 	$canv create text $xl $y1 -anchor w -text $tag \
 	    -font $mainfont -tags tag.$id
@@ -3307,7 +3345,6 @@ proc mktag {} {
 
 proc domktag {} {
     global mktagtop env tagids idtags
-    global idpos idline linehtag canv selectedline
 
     set id [$mktagtop.sha1 get]
     set tag [$mktagtop.tag get]
@@ -3332,6 +3369,13 @@ proc domktag {} {
 
     set tagids($tag) $id
     lappend idtags($id) $tag
+    redrawtags $id
+}
+
+proc redrawtags {id} {
+    global canv linehtag idline idpos selectedline
+
+    if {![info exists idline($id)]} return
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($idline($id)) $xt [lindex $idpos($id) 2]
@@ -3405,6 +3449,49 @@ proc wrcomcan {} {
 
     catch {destroy $wrcomtop}
     unset wrcomtop
+}
+
+proc listrefs {id} {
+    global idtags idheads idotherrefs
+
+    set x {}
+    if {[info exists idtags($id)]} {
+	set x $idtags($id)
+    }
+    set y {}
+    if {[info exists idheads($id)]} {
+	set y $idheads($id)
+    }
+    set z {}
+    if {[info exists idotherrefs($id)]} {
+	set z $idotherrefs($id)
+    }
+    return [list $x $y $z]
+}
+
+proc rereadrefs {} {
+    global idtags idheads idotherrefs
+    global tagids headids otherrefids
+
+    set refids [concat [array names idtags] \
+		    [array names idheads] [array names idotherrefs]]
+    foreach id $refids {
+	if {![info exists ref($id)]} {
+	    set ref($id) [listrefs $id]
+	}
+    }
+    foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
+	catch {unset $v}
+    }
+    readrefs
+    set refids [lsort -unique [concat $refids [array names idtags] \
+			[array names idheads] [array names idotherrefs]]]
+    foreach id $refids {
+	set v [listrefs $id]
+	if {![info exists ref($id)] || $ref($id) != $v} {
+	    redrawtags $id
+	}
+    }
 }
 
 proc doquit {} {
