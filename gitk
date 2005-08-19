@@ -528,6 +528,7 @@ proc click {w} {
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont
     global stuffsaved findmergefiles gaudydiff maxgraphpct
+    global maxwidth
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -538,6 +539,7 @@ proc savestuff {w} {
 	puts $f [list set findmergefiles $findmergefiles]
 	puts $f [list set gaudydiff $gaudydiff]
 	puts $f [list set maxgraphpct $maxgraphpct]
+	puts $f [list set maxwidth $maxwidth]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr [winfo width $canv]-2]"
