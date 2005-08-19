@@ -41,7 +41,7 @@
 #endif
 
 #ifndef __attribute__
-#define __attribute(x)
+#define __attribute__(x)
 #endif
 
 /*
