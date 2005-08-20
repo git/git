@@ -8,7 +8,10 @@ _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 append=
 case "$#" in
 0)
-	die "Where do you want to fetch from?" ;;
+	test -f "$GIT_DIR/branches/origin" ||
+		test -f "$GIT_DIR/remotes/origin" ||
+			die "Where do you want to fetch from?"
+	set origin ;;
 *)
 	case "$1" in
 	-a|--a|--ap|--app|--appe|--appen|--append)
