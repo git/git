@@ -3,10 +3,11 @@
 . git-sh-setup-script || die "Not a git archive"
 
 dryrun=
+echo=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
-    -n) dryrun=echo ;;
+    -n) dryrun=-n echo=echo ;;
     --) break ;;
     -*) echo >&2 "usage: git-prune-script [ -n ] [ heads... ]"; exit 1 ;;
     *)  break ;;
@@ -20,6 +21,7 @@ sed -ne '/unreachable /{
     s|\(..\)|\1/|p
 }' | {
 	cd "$GIT_OBJECT_DIRECTORY" || exit
-	xargs $dryrun rm -f
+	xargs $echo rm -f
 }
 
+git-prune-packed $dryrun
