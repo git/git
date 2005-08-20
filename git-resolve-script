@@ -6,21 +6,25 @@
 #
 . git-sh-setup-script || die "Not a git archive"
 
-head=$(git-rev-parse --verify "$1"^0) || exit
-merge=$(git-rev-parse --verify "$2"^0) || exit
-merge_msg="$3"
+usage () {
+	die "git-resolve-script <head> <remote> <merge-message>"
+}
 
 dropheads() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" \
 		"$GIT_DIR/LAST_MERGE" || exit 1
 }
 
+head=$(git-rev-parse --verify "$1"^0) &&
+merge=$(git-rev-parse --verify "$2"^0) &&
+merge_msg="$3" || usage
+
 #
 # The remote name is just used for the message,
 # but we do want it.
 #
 if [ -z "$head" -o -z "$merge" -o -z "$merge_msg" ]; then
-	die "git-resolve-script <head> <remote> <merge-message>"
+	usage
 fi
 
 dropheads
