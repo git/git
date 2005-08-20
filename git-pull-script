@@ -1,12 +1,16 @@
 #!/bin/sh
 #
 . git-sh-setup-script || die "Not a git archive"
-. git-parse-remote "$@"
-merge_name="$_remote_name"
-
 git-fetch-script "$@" || exit 1
+merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
+merge_name=$(sed -e 's/^[0-9a-f]*	//' "$GIT_DIR"/FETCH_HEAD |
+	 tr '\012' ' ')
+
+case "$merge_head" in
+'' | *' '?*) die "Cannot resolve multiple heads at the same time (yet)." ;;
+esac
+
 
 git-resolve-script \
 	"$(cat "$GIT_DIR"/HEAD)" \
-	"$(cat "$GIT_DIR"/FETCH_HEAD)" \
-	"Merge $merge_name"
+	$merge_head "Merge $merge_name"
