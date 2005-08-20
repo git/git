@@ -71,6 +71,7 @@ SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 SCRIPTS += git-count-objects-script
 # SCRIPTS += git-send-email-script
 SCRIPTS += git-revert-script
+SCRIPTS += git-octopus-script
 
 PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-read-tree git-commit-tree git-cat-file git-fsck-cache \

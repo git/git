@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# Copyright (c) 2005 Junio C Hamano
+#
+# Resolve two or more trees recorded in $GIT_DIR/FETCH_HEAD.
+#
+. git-sh-setup-script || die "Not a git archive"
+
+usage () {
+    die "usage: git octopus"
+}
+
+# Sanity check the heads early.
+while read SHA1 REPO
+do
+	test $(git-cat-file -t $SHA1) = "commit" ||
+		die "$REPO given to octopus is not a commit"
+done <"$GIT_DIR/FETCH_HEAD"
+
+head=$(git-rev-parse --verify HEAD) || exit
+
+git-update-cache --refresh ||
+	die "Your working tree is dirty."
+test "$(git-diff-cache --cached "$head")" = "" ||
+	die "Your working tree does not match HEAD."
+
+# MRC is the current "merge reference commit"
+# MRT is the current "merge result tree"
+
+MRC=$head MSG= PARENT="-p $head"
+MRT=$(git-write-tree)
+CNT=1 ;# counting our head
+NON_FF_MERGE=0
+while read SHA1 REPO
+do
+	common=$(git-merge-base $MRC $SHA1) ||
+		die "Unable to find common commit with $SHA1 from $REPO"
+
+	if test "$common" = $SHA1
+	then
+		echo "Already up-to-date: $REPO"
+		continue
+	fi
+
+	CNT=`expr $CNT + 1`
+	PARENT="$PARENT -p $SHA1"
+	MSG="$MSG
+	$REPO"
+
+	if test "$common,$NON_FF_MERGE" = "$MRC,0"
+	then
+		# The first head being merged was a fast-forward.
+		# Advance MRC to the head being merged, and use that
+		# tree as the intermediate result of the merge.
+		# We still need to count this as part of the parent set.
+
+		echo "Fast forwarding to: $REPO"
+		git-read-tree -u -m $head $SHA1 || exit
+		MRC=$SHA1 MRT=$(git-write-tree)
+		continue
+	fi
+
+	NON_FF_MERGE=1
+
+	echo "Trying simple merge with $REPO"
+	git-read-tree -u -m $common $MRT $SHA1 || exit
+	next=$(git-write-tree 2>/dev/null)
+	if test $? -ne 0
+	then
+		echo "Simple merge did not work, trying automatic merge."
+		git-merge-cache -o git-merge-one-file-script -a || {
+		git-read-tree --reset "$head"
+		git-checkout-cache -f -q -u -a
+		die "Automatic merge failed; should not be doing Octopus"
+		}
+		next=$(git-write-tree 2>/dev/null)
+	fi
+	MRC=$common
+	MRT=$next
+done <"$GIT_DIR/FETCH_HEAD"
+
+# Just to be careful in case the user feeds nonsense to us.
+case "$CNT" in
+1)
+	echo "No changes."
+	exit 0 ;;
+2)
+	echo "Not an Octopus; making an ordinary commit."
+	MSG="Merge "`expr "$MSG" : '.	\(.*\)'` ; # remove LF and TAB
+	;;
+*)
+	# In an octopus, the original head is just one of the equals,
+	# so we should list it as such.
+	HEAD_LINK=`readlink "$GIT_DIR/HEAD"`
+	MSG="Octopus merge of the following:
+
+	$HEAD_LINK from .$MSG"
+	;;
+esac
+result_commit=$(echo "$MSG" | git-commit-tree $MRT $PARENT)
+echo "Committed merge $result_commit"
+echo $result_commit >"$GIT_DIR"/HEAD
+git-diff-tree -p $head $result_commit | git-apply --stat
