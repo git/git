@@ -28,7 +28,8 @@ perl -e '
 	    print "* In $filename\n";
 	    $reported_filename = $filename;
 	}
-	print "* $why (line $lineno)\n$line\n";
+	print "* $why (line $lineno)\n";
+	print "$filename:$lineno:$line\n";
     }
     open $fh, "-|", qw(git-diff-cache -p -M --cached HEAD);
     while (<$fh>) {
