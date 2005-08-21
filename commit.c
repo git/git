@@ -38,23 +38,32 @@ enum cmit_fmt get_commit_format(const char *arg)
 	die("invalid --pretty format");
 }
 
-static struct commit *check_commit(struct object *obj, const unsigned char *sha1)
+static struct commit *check_commit(struct object *obj,
+				   const unsigned char *sha1,
+				   int quiet)
 {
 	if (obj->type != commit_type) {
-		error("Object %s is a %s, not a commit", 
-		      sha1_to_hex(sha1), obj->type);
+		if (!quiet)
+			error("Object %s is a %s, not a commit",
+			      sha1_to_hex(sha1), obj->type);
 		return NULL;
 	}
 	return (struct commit *) obj;
 }
 
-struct commit *lookup_commit_reference(const unsigned char *sha1)
+struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
+					      int quiet)
 {
 	struct object *obj = deref_tag(parse_object(sha1));
 
 	if (!obj)
 		return NULL;
-	return check_commit(obj, sha1);
+	return check_commit(obj, sha1, quiet);
+}
+
+struct commit *lookup_commit_reference(const unsigned char *sha1)
+{
+	return lookup_commit_reference_gently(sha1, 0);
 }
 
 struct commit *lookup_commit(const unsigned char *sha1)
@@ -69,7 +78,7 @@ struct commit *lookup_commit(const unsigned char *sha1)
 	}
 	if (!obj->type)
 		obj->type = commit_type;
-	return check_commit(obj, sha1);
+	return check_commit(obj, sha1, 0);
 }
 
 static unsigned long parse_commit_date(const char *buf)
