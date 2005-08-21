@@ -249,5 +249,7 @@ int main(int argc, char **argv)
 	}
 	strcpy(path+len, "/pack");
 	safe_create_dir(path);
+	strcpy(path+len, "/info");
+	safe_create_dir(path);
 	return 0;
 }

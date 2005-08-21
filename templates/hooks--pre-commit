@@ -19,17 +19,17 @@ perl -e '
     sub bad_line {
 	my ($why, $line) = @_;
 	if (!$found_bad) {
-	    print "*\n";
-	    print "* You have some suspicious patch lines:\n";
-	    print "*\n";
+	    print STDERR "*\n";
+	    print STDERR "* You have some suspicious patch lines:\n";
+	    print STDERR "*\n";
 	    $found_bad = 1;
 	}
 	if ($reported_filename ne $filename) {
-	    print "* In $filename\n";
+	    print STDERR "* In $filename\n";
 	    $reported_filename = $filename;
 	}
-	print "* $why (line $lineno)\n";
-	print "$filename:$lineno:$line\n";
+	print STDERR "* $why (line $lineno)\n";
+	print STDERR "$filename:$lineno:$line\n";
     }
     open $fh, "-|", qw(git-diff-cache -p -M --cached HEAD);
     while (<$fh>) {
