@@ -191,9 +191,29 @@ static int get_parent(const char *name, int len,
 	return -1;
 }
 
+static int get_nth_ancestor(const char *name, int len,
+			    unsigned char *result, int generation)
+{
+	unsigned char sha1[20];
+	int ret = get_sha1_1(name, len, sha1);
+	if (ret)
+		return ret;
+
+	while (generation--) {
+		struct commit *commit = lookup_commit_reference(sha1);
+
+		if (!commit || parse_commit(commit) || !commit->parents)
+			return -1;
+		memcpy(sha1, commit->parents->item->object.sha1, 20);
+	}
+	memcpy(result, sha1, 20);
+	return 0;
+}
+
 static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 {
 	int parent, ret;
+	const char *cp;
 
 	/* foo^[0-9] or foo^ (== foo^1); we do not do more than 9 parents. */
 	if (len > 2 && name[len-2] == '^' &&
@@ -209,6 +229,27 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 
 	if (parent >= 0)
 		return get_parent(name, len, sha1, parent);
+
+	/* "name~3" is "name^^^",
+	 * "name~12" is "name^^^^^^^^^^^^", and
+	 * "name~" and "name~0" are name -- not "name^0"!
+	 */
+	parent = 0;
+	for (cp = name + len - 1; name <= cp; cp--) {
+		int ch = *cp;
+		if ('0' <= ch && ch <= '9')
+			continue;
+		if (ch != '~')
+			parent = -1;
+		break;
+	}
+	if (!parent && *cp == '~') {
+		int len1 = cp - name;
+		cp++;
+		while (cp < name + len)
+			parent = parent * 10 + *cp++ - '0';
+		return get_nth_ancestor(name, len1, sha1, parent);
+	}
 
 	ret = get_sha1_basic(name, len, sha1);
 	if (!ret)
