@@ -1010,9 +1010,8 @@ void diff_flush(int diff_output_style, int line_termination)
 			diff_flush_name(p, line_termination);
 			break;
 		}
-	}
-	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
+	}
 	free(q->queue);
 	q->queue = NULL;
 	q->nr = q->alloc = 0;
