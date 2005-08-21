@@ -19,6 +19,10 @@ static int show_unmerged = 0;
 static int show_killed = 0;
 static int line_terminator = '\n';
 
+static int prefix_len = 0, prefix_offset = 0;
+static const char *prefix = NULL;
+static const char *glob = NULL;
+
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
 static const char *tag_removed = "";
@@ -222,6 +226,7 @@ static void add_name(const char *pathname, int len)
 	ent = xmalloc(sizeof(*ent) + len + 1);
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
+	ent->name[len] = 0;
 	dir[nr_dir++] = ent;
 }
 
@@ -297,6 +302,20 @@ static int cmp_name(const void *p1, const void *p2)
 				  e2->name, e2->len);
 }
 
+static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
+{
+	int len = prefix_len;
+	int offset = prefix_offset;
+
+	if (len >= ent->len)
+		die("git-ls-files: internal error - directory entry not superset of prefix");
+
+	if (glob && fnmatch(glob, ent->name + len, 0))
+		return;
+
+	printf("%s%s%c", tag, ent->name + offset, line_terminator);
+}
+
 static void show_killed_files(void)
 {
 	int i;
@@ -342,10 +361,30 @@ static void show_killed_files(void)
 			}
 		}
 		if (killed)
-			printf("%s%.*s%c", tag_killed,
-			       dir[i]->len, dir[i]->name,
-			       line_terminator);
+			show_dir_entry(tag_killed, dir[i]);
 	}
+}
+
+static void show_ce_entry(const char *tag, struct cache_entry *ce)
+{
+	int len = prefix_len;
+	int offset = prefix_offset;
+
+	if (len >= ce_namelen(ce))
+		die("git-ls-files: internal error - cache entry not superset of prefix");
+
+	if (glob && fnmatch(glob, ce->name + len, 0))
+		return;
+
+	if (!show_stage)
+		printf("%s%s%c", tag, ce->name + offset, line_terminator);
+	else
+		printf("%s%06o %s %d\t%s%c",
+		       tag,
+		       ntohl(ce->ce_mode),
+		       sha1_to_hex(ce->sha1),
+		       ce_stage(ce),
+		       ce->name + offset, line_terminator); 
 }
 
 static void show_files(void)
@@ -354,13 +393,16 @@ static void show_files(void)
 
 	/* For cached/deleted files we don't need to even do the readdir */
 	if (show_others || show_killed) {
-		read_directory(".", "", 0);
+		const char *path = ".", *base = "";
+		int baselen = prefix_len;
+
+		if (baselen)
+			path = base = prefix;
+		read_directory(path, base, baselen);
 		qsort(dir, nr_dir, sizeof(struct nond_on_fs *), cmp_name);
 		if (show_others)
 			for (i = 0; i < nr_dir; i++)
-				printf("%s%.*s%c", tag_other,
-				       dir[i]->len, dir[i]->name,
-				       line_terminator);
+				show_dir_entry(tag_other, dir[i]);
 		if (show_killed)
 			show_killed_files();
 	}
@@ -371,19 +413,7 @@ static void show_files(void)
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
-			if (!show_stage)
-				printf("%s%s%c",
-				       ce_stage(ce) ? tag_unmerged :
-				       tag_cached,
-				       ce->name, line_terminator);
-			else
-				printf("%s%06o %s %d\t%s%c",
-				       ce_stage(ce) ? tag_unmerged :
-				       tag_cached,
-				       ntohl(ce->ce_mode),
-				       sha1_to_hex(ce->sha1),
-				       ce_stage(ce),
-				       ce->name, line_terminator); 
+			show_ce_entry(ce_stage(ce) ? tag_unmerged : tag_cached, ce);
 		}
 	}
 	if (show_deleted) {
@@ -394,9 +424,66 @@ static void show_files(void)
 				continue;
 			if (!lstat(ce->name, &st))
 				continue;
-			printf("%s%s%c", tag_removed, ce->name,
-			       line_terminator);
+			show_ce_entry(tag_removed, ce);
 		}
+	}
+}
+
+/*
+ * Prune the index to only contain stuff starting with "prefix"
+ */
+static void prune_cache(void)
+{
+	int pos = cache_name_pos(prefix, prefix_len);
+	unsigned int first, last;
+
+	if (pos < 0)
+		pos = -pos-1;
+	active_cache += pos;
+	active_nr -= pos;
+	first = 0;
+	last = active_nr;
+	while (last > first) {
+		int next = (last + first) >> 1;
+		struct cache_entry *ce = active_cache[next];
+		if (!strncmp(ce->name, prefix, prefix_len)) {
+			first = next+1;
+			continue;
+		}
+		last = next;
+	}
+	active_nr = last;
+}
+
+/*
+ * If the glob starts with a subdirectory, append it to
+ * the prefix instead, for more efficient operation.
+ *
+ * But we do not update the "prefix_offset", which tells
+ * how much of the name to ignore at printout.
+ */
+static void extend_prefix(void)
+{
+	const char *p, *slash;
+	char c;
+
+	p = glob;
+	slash = NULL;
+	while ((c = *p++) != '\0') {
+		if (c == '*')
+			break;
+		if (c == '/')
+			slash = p;
+	}
+	if (slash) {
+		int len = slash - glob;
+		char *newprefix = xmalloc(len + prefix_len + 1);
+		memcpy(newprefix, prefix, prefix_len);
+		memcpy(newprefix + prefix_len, glob, len);
+		prefix_len += len;
+		newprefix[prefix_len] = 0;
+		prefix = newprefix;
+		glob = *slash ? slash : NULL;
 	}
 }
 
@@ -410,53 +497,93 @@ int main(int argc, char **argv)
 	int i;
 	int exc_given = 0;
 
+	prefix = setup_git_directory();
+	if (prefix)
+		prefix_offset = prefix_len = strlen(prefix);
+
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
 		if (!strcmp(arg, "-z")) {
 			line_terminator = 0;
-		} else if (!strcmp(arg, "-t")) {
+			continue;
+		}
+		if (!strcmp(arg, "-t")) {
 			tag_cached = "H ";
 			tag_unmerged = "M ";
 			tag_removed = "R ";
 			tag_other = "? ";
 			tag_killed = "K ";
-		} else if (!strcmp(arg, "-c") || !strcmp(arg, "--cached")) {
+			continue;
+		}
+		if (!strcmp(arg, "-c") || !strcmp(arg, "--cached")) {
 			show_cached = 1;
-		} else if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
+			continue;
+		}
+		if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
 			show_deleted = 1;
-		} else if (!strcmp(arg, "-o") || !strcmp(arg, "--others")) {
+			continue;
+		}
+		if (!strcmp(arg, "-o") || !strcmp(arg, "--others")) {
 			show_others = 1;
-		} else if (!strcmp(arg, "-i") || !strcmp(arg, "--ignored")) {
+			continue;
+		}
+		if (!strcmp(arg, "-i") || !strcmp(arg, "--ignored")) {
 			show_ignored = 1;
-		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--stage")) {
+			continue;
+		}
+		if (!strcmp(arg, "-s") || !strcmp(arg, "--stage")) {
 			show_stage = 1;
-		} else if (!strcmp(arg, "-k") || !strcmp(arg, "--killed")) {
+			continue;
+		}
+		if (!strcmp(arg, "-k") || !strcmp(arg, "--killed")) {
 			show_killed = 1;
-		} else if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
+			continue;
+		}
+		if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
 			/* There's no point in showing unmerged unless
 			 * you also show the stage information.
 			 */
 			show_stage = 1;
 			show_unmerged = 1;
-		} else if (!strcmp(arg, "-x") && i+1 < argc) {
+			continue;
+		}
+		if (!strcmp(arg, "-x") && i+1 < argc) {
 			exc_given = 1;
 			add_exclude(argv[++i], "", 0, &exclude_list[EXC_CMDL]);
-		} else if (!strncmp(arg, "--exclude=", 10)) {
+			continue;
+		}
+		if (!strncmp(arg, "--exclude=", 10)) {
 			exc_given = 1;
 			add_exclude(arg+10, "", 0, &exclude_list[EXC_CMDL]);
-		} else if (!strcmp(arg, "-X") && i+1 < argc) {
+			continue;
+		}
+		if (!strcmp(arg, "-X") && i+1 < argc) {
 			exc_given = 1;
 			add_excludes_from_file(argv[++i]);
-		} else if (!strncmp(arg, "--exclude-from=", 15)) {
+			continue;
+		}
+		if (!strncmp(arg, "--exclude-from=", 15)) {
 			exc_given = 1;
 			add_excludes_from_file(arg+15);
-		} else if (!strncmp(arg, "--exclude-per-directory=", 24)) {
+			continue;
+		}
+		if (!strncmp(arg, "--exclude-per-directory=", 24)) {
 			exc_given = 1;
 			exclude_per_dir = arg + 24;
-		} else
+			continue;
+		}
+		if (!strcmp(arg, "--full-name")) {
+			prefix_offset = 0;
+			continue;
+		}
+		if (glob || *arg == '-')
 			usage(ls_files_usage);
+		glob = arg;
 	}
+
+	if (glob)
+		extend_prefix();
 
 	if (show_ignored && !exc_given) {
 		fprintf(stderr, "%s: --ignored needs some exclude pattern\n",
@@ -469,6 +596,8 @@ int main(int argc, char **argv)
 		show_cached = 1;
 
 	read_cache();
+	if (prefix)
+		prune_cache();
 	show_files();
 	return 0;
 }
