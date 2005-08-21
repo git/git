@@ -143,7 +143,6 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		"refs",
 		"refs/tags",
 		"refs/heads",
-		"refs/snap",
 		NULL
 	};
 	const char **p;
