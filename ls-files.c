@@ -21,7 +21,7 @@ static int line_terminator = '\n';
 
 static int prefix_len = 0, prefix_offset = 0;
 static const char *prefix = NULL;
-static const char *glob = NULL;
+static const char **pathspec = NULL;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -302,6 +302,33 @@ static int cmp_name(const void *p1, const void *p2)
 				  e2->name, e2->len);
 }
 
+/*
+ * Match a pathspec against a filename. The first "len" characters
+ * are the common prefix
+ */
+static int match(const char **spec, const char *filename, int len)
+{
+	const char *m;
+
+	while ((m = *spec++) != NULL) {
+		int matchlen = strlen(m + len);
+
+		if (!matchlen)
+			return 1;
+		if (!strncmp(m + len, filename + len, matchlen)) {
+			if (m[len + matchlen - 1] == '/')
+				return 1;
+			switch (filename[len + matchlen]) {
+			case '/': case '\0':
+				return 1;
+			}
+		}
+		if (!fnmatch(m + len, filename + len, 0))
+			return 1;
+	}
+	return 0;
+}
+
 static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
 {
 	int len = prefix_len;
@@ -310,7 +337,7 @@ static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
 	if (len >= ent->len)
 		die("git-ls-files: internal error - directory entry not superset of prefix");
 
-	if (glob && fnmatch(glob, ent->name + len, 0))
+	if (pathspec && !match(pathspec, ent->name, len))
 		return;
 
 	printf("%s%s%c", tag, ent->name + offset, line_terminator);
@@ -373,7 +400,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (len >= ce_namelen(ce))
 		die("git-ls-files: internal error - cache entry not superset of prefix");
 
-	if (glob && fnmatch(glob, ce->name + len, 0))
+	if (pathspec && !match(pathspec, ce->name, len))
 		return;
 
 	if (!show_stage)
@@ -455,36 +482,44 @@ static void prune_cache(void)
 	active_nr = last;
 }
 
-/*
- * If the glob starts with a subdirectory, append it to
- * the prefix instead, for more efficient operation.
- *
- * But we do not update the "prefix_offset", which tells
- * how much of the name to ignore at printout.
- */
-static void extend_prefix(void)
+static void verify_pathspec(void)
 {
-	const char *p, *slash;
-	char c;
+	const char **p, *n, *prev;
+	char *real_prefix;
+	unsigned long max;
 
-	p = glob;
-	slash = NULL;
-	while ((c = *p++) != '\0') {
-		if (c == '*')
-			break;
-		if (c == '/')
-			slash = p;
+	prev = NULL;
+	max = PATH_MAX;
+	for (p = pathspec; (n = *p) != NULL; p++) {
+		int i, len = 0;
+		for (i = 0; i < max; i++) {
+			char c = n[i];
+			if (prev && prev[i] != c)
+				break;
+			if (c == '*' || c == '?')
+				break;
+			if (c == '/')
+				len = i+1;
+		}
+		prev = n;
+		if (len < max) {
+			max = len;
+			if (!max)
+				break;
+		}
 	}
-	if (slash) {
-		int len = slash - glob;
-		char *newprefix = xmalloc(len + prefix_len + 1);
-		memcpy(newprefix, prefix, prefix_len);
-		memcpy(newprefix + prefix_len, glob, len);
-		prefix_len += len;
-		newprefix[prefix_len] = 0;
-		prefix = newprefix;
-		glob = *slash ? slash : NULL;
+
+	if (prefix_offset > max || memcmp(prev, prefix, prefix_offset))
+		die("git-ls-files: cannot generate relative filenames containing '..'");
+
+	real_prefix = NULL;
+	prefix_len = max;
+	if (max) {
+		real_prefix = xmalloc(max + 1);
+		memcpy(real_prefix, prev, max);
+		real_prefix[max] = 0;
 	}
+	prefix = real_prefix;
 }
 
 static const char ls_files_usage[] =
@@ -499,7 +534,7 @@ int main(int argc, char **argv)
 
 	prefix = setup_git_directory();
 	if (prefix)
-		prefix_offset = prefix_len = strlen(prefix);
+		prefix_offset = strlen(prefix);
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
@@ -577,13 +612,16 @@ int main(int argc, char **argv)
 			prefix_offset = 0;
 			continue;
 		}
-		if (glob || *arg == '-')
+		if (*arg == '-')
 			usage(ls_files_usage);
-		glob = arg;
+		break;
 	}
 
-	if (glob)
-		extend_prefix();
+	pathspec = get_pathspec(prefix, argv + i);
+
+	/* Verify that the pathspec matches the prefix */
+	if (pathspec)
+		verify_pathspec();
 
 	if (show_ignored && !exc_given) {
 		fprintf(stderr, "%s: --ignored needs some exclude pattern\n",
