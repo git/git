@@ -104,8 +104,8 @@ fast_forward_local () {
 		;;
 	    esac || {
 		echo >&2 "* $1: does not fast forward to $4"
-		case "$force" in
-		t)
+		case "$force,$single_force" in
+		t,* | *,t)
 			echo >&2 "  from $3; forcing update."
 			;;
 		*)
@@ -130,6 +130,13 @@ do
 
     # These are relative path from $GIT_DIR, typically starting at refs/
     # but may be HEAD
+    if expr "$ref" : '\+' >/dev/null
+    then
+	single_force=t
+	ref=$(expr "$ref" : '\+\(.*\)')
+    else
+	single_force=
+    fi
     remote_name=$(expr "$ref" : '\([^:]*\):')
     local_name=$(expr "$ref" : '[^:]*:\(.*\)')
 
@@ -175,9 +182,14 @@ http://* | https://* | rsync://* )
     while read sha1 remote_name
     do
 	found=
+	single_force=
 	for ref in $refs
 	do
 	    case "$ref" in
+	    +$remote_name:*)
+		single_force=t
+		found="$ref"
+		break ;;
 	    $remote_name:*)
 		found="$ref"
 		break ;;
@@ -185,7 +197,7 @@ http://* | https://* | rsync://* )
 	done
 
 	local_name=$(expr "$found" : '[^:]*:\(.*\)')
-        append_fetch_head "$sha1" "$remote" "$remote_name" "$remote_nick" "$local_name"
+	append_fetch_head "$sha1" "$remote" "$remote_name" "$remote_nick" "$local_name"
     done
     ;;
 esac

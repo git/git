@@ -5,7 +5,7 @@
 get_data_source () {
 	case "$1" in
 	*/*)
-		# Not so fast.  This could be the partial URL shorthand...
+		# Not so fast.	This could be the partial URL shorthand...
 		token=$(expr "$1" : '\([^/]*\)/')
 		remainder=$(expr "$1" : '[^/]*/\(.*\)')
 		if test -f "$GIT_DIR/branches/$token"
@@ -69,6 +69,13 @@ get_remote_default_refs_for_push () {
 canon_refs_list_for_fetch () {
 	for ref
 	do
+		force=
+		case "$ref" in
+		+*)
+			ref=$(expr "$ref" : '\+\(.*\)')
+			force=+
+			;;
+		esac
 		expr "$ref" : '.*:' >/dev/null || ref="${ref}:"
 		remote=$(expr "$ref" : '\([^:]*\):')
 		local=$(expr "$ref" : '[^:]*:\(.*\)')
@@ -80,7 +87,7 @@ canon_refs_list_for_fetch () {
 		'') local= ;;
 		*) local="refs/heads/$local" ;;
 		esac
-		echo "${remote}:${local}"
+		echo "${force}${remote}:${local}"
 	done
 }
 
@@ -132,12 +139,12 @@ get_remote_refs_for_fetch () {
 		else
 		    case "$ref" in
 		    tag)
-		        tag_just_seen=yes
+			tag_just_seen=yes
 			continue
 			;;
 		    esac
 		fi
-	        canon_refs_list_for_fetch "$ref"
+		canon_refs_list_for_fetch "$ref"
 	    done
 	    ;;
 	esac
