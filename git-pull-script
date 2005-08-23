@@ -1,5 +1,9 @@
 #!/bin/sh
 #
+# Copyright (c) 2005 Junio C Hamano
+#
+# Fetch one or more remote refs and merge it/them into the current HEAD.
+
 . git-sh-setup-script || die "Not a git archive"
 git-fetch-script "$@" || exit 1
 merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
@@ -7,9 +11,15 @@ merge_name=$(sed -e 's/^[0-9a-f]*	//' "$GIT_DIR"/FETCH_HEAD |
 	 tr '\012' ' ')
 
 case "$merge_head" in
-'' | *' '?*) die "Cannot resolve multiple heads at the same time (yet)." ;;
+'')
+	echo >&2 "No changes."
+	exit 0
+	;;
+*' '?*)
+	echo >&2 "Pulling more than one heads; making an Octopus."
+	exec git-octopus-script
+	;;
 esac
-
 
 git-resolve-script \
 	"$(cat "$GIT_DIR"/HEAD)" \
