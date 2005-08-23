@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	chdir(".git");
 	if (access("objects", X_OK) || access("refs", X_OK))
 		die("git-upload-pack: %s doesn't seem to be a git archive", dir);
-	setenv("GIT_DIR", ".", 1);
+	putenv("GIT_DIR=.");
 	upload_pack();
 	return 0;
 }

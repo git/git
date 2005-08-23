@@ -454,7 +454,7 @@ int main(int argc, char **argv)
 	if (standalone && check_full)
 		die("Only one of --standalone or --full can be used.");
 	if (standalone)
-		unsetenv("GIT_ALTERNATE_OBJECT_DIRECTORIES");
+		putenv("GIT_ALTERNATE_OBJECT_DIRECTORIES=");
 
 	fsck_head_link();
 	fsck_object_dir(get_object_directory());
