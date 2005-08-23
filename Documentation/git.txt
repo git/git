@@ -208,7 +208,7 @@ link:git-pull-script.html[git-pull-script]::
 link:git-commit-script.html[git-commit-script]::
 	Record changes to the repository.
 
-link:git-show-branches-script.html[git-show-branches-script]::
+link:git-show-branch.html[git-show-branch]::
 	Show branches and their commits.
 
 link:git-repack-script.html[git-repack-script]::

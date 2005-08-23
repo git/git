@@ -1,0 +1,107 @@
+git-show-branch(1)
+==================
+v0.99.4, Aug 2005
+
+NAME
+----
+git-show-branch - Show branches and their commits.
+
+SYNOPSIS
+--------
+'git show-branch [--all] [--heads] [--tags] [--more=<n>] [--merge-base] <reference>...'
+
+DESCRIPTION
+-----------
+Shows the head commits from the named <reference> (or all refs under
+$GIT_DIR/refs/heads), and displays concise list of commit logs
+to show their relationship semi-visually.
+
+OPTIONS
+-------
+<reference>::
+	Name of the reference under $GIT_DIR/refs/.
+
+--all --heads --tags::
+	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
+	and $GIT_DIR/refs/tags, respectively.
+
+--more=<n>::
+	Usually the command stops output upon showing the commit
+	that is the common ancestor of all the branches.  This
+	flag tells the command to go <n> commits beyond that.
+
+--merge-base::
+	Instead of showing the commit list, just act like the
+	'git-merge-base' command except that it can accept more
+	than two heads.
+
+
+OUTPUT
+------
+Given N <references>, the first N lines are the one-line
+description from their commit message.  The branch head that is
+pointed at by $GIT_DIR/HEAD is prefixed with an asterisk '*'
+character while other heads are prefixed with a '!' character.
+
+Following these N lines, one-line log for each commit is
+displayed, indented N places.  If a commit is on the I-th
+branch, the I-th indentation character shows a '+' sign;
+otherwise it shows a space.  Each commit shows a short name that
+can be used as an exended SHA1 to name that commit.
+
+The following example shows three branches, "master", "fixes"
+and "mhf":
+
+------------------------------------------------
+$ git show-branch master fixes mhf
+! [master] Add 'git show-branch'.
+ ! [fixes] Introduce "reset type" flag to "git reset"
+  ! [mhf] Allow "+remote:local" refspec to cause --force when fetching.
+---
+  + [mhf] Allow "+remote:local" refspec to cause --force when fetching.
+  + [mhf~1] Use git-octopus when pulling more than one heads.
+ +  [fixes] Introduce "reset type" flag to "git reset"
+  + [mhf~2] "git fetch --force".
+  + [mhf~3] Use .git/remote/origin, not .git/branches/origin.
+  + [mhf~4] Make "git pull" and "git fetch" default to origin
+  + [mhf~5] Infamous 'octopus merge'
+  + [mhf~6] Retire git-parse-remote.
+  + [mhf~7] Multi-head fetch.
+  + [mhf~8] Start adding the $GIT_DIR/remotes/ support.
++++ [master] Add 'git show-branch'.
+------------------------------------------------
+
+These three branches all forked from a common commit, [master],
+whose commit message is "Add 'git show-branch'.  "fixes" branch
+adds one commit 'Introduce "reset type"'.  "mhf" branch has many
+other commits.
+
+When only one head is given, the output format changes slightly
+to conserve space.  The '+' sign to show which commit is
+reachable from which head and the first N lines to show the list
+of heads being displayed are both meaningless so they are
+omitted.  Also the label given to each commit does not repeat
+the name of the branch because it is obvious.
+
+------------------------------------------------
+$ git show-branch --more=4 master
+[master] Add 'git show-branch'.
+[~1] Add a new extended SHA1 syntax <name>~<num>
+[~2] Fix "git-diff-script A B"
+[~3] git-ls-files: generalized pathspecs
+[~4] Make "git-ls-files" work in subdirectories
+------------------------------------------------
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+
+Documentation
+--------------
+Documentation by Junio C Hamano.
+
+
+GIT
+---
+Part of the link:git.html[git] suite

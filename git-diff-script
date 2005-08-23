@@ -8,8 +8,14 @@ case "${#rev[*]}" in
 1)
 	git-diff-cache -M -p "$@";;
 2)
-	begin=$(echo "${rev[1]}" | tr -d '^')
-	end="${rev[0]}"
+	case "${rev[1]}" in
+	^?*)
+		begin=$(echo "${rev[1]}" | tr -d '^')
+		end="${rev[0]}" ;;
+	*)
+		begin="${rev[0]}"
+		end="${rev[1]}"	;;
+	esac
 	git-diff-tree -M -p $flags $begin $end $files;;
 *)
 	echo "I don't understand"
