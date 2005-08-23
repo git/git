@@ -1,5 +1,4 @@
 #!/bin/sh
-. git-sh-setup-script || die "Not a git archive"
-revs=$(git-rev-parse --revs-only --default HEAD "$@")
+revs=$(git-rev-parse --revs-only --default HEAD "$@") || exit
 [ "$revs" ] || die "No HEAD ref"
 git-rev-list --pretty $(git-rev-parse --default HEAD "$@") | LESS=-S ${PAGER:-less}
