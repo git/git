@@ -1377,7 +1377,7 @@ static struct excludes {
 
 static int use_patch(struct patch *p)
 {
-	const char *pathname = p->new_name ? : p->old_name;
+	const char *pathname = p->new_name ? p->new_name : p->old_name;
 	struct excludes *x = excludes;
 	while (x) {
 		if (fnmatch(x->path, pathname, 0) == 0)

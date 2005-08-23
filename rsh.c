@@ -56,8 +56,10 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 		return error("Couldn't create socket");
 	}
 	if (!fork()) {
-		const char *ssh = getenv("GIT_SSH") ? : "ssh";
-		const char *ssh_basename = strrchr(ssh, '/');
+		const char *ssh, *ssh_basename;
+		ssh = getenv("GIT_SSH");
+		if (!ssh) ssh = "ssh";
+		ssh_basename = strrchr(ssh, '/');
 		if (!ssh_basename)
 			ssh_basename = ssh;
 		else

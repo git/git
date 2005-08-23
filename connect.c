@@ -383,8 +383,10 @@ int git_connect(int fd[2], char *url, const char *prog)
 		close(pipefd[1][0]);
 		close(pipefd[1][1]);
 		if (protocol == PROTO_SSH) {
-			const char *ssh = getenv("GIT_SSH") ? : "ssh";
-			const char *ssh_basename = strrchr(ssh, '/');
+			const char *ssh, *ssh_basename;
+			ssh = getenv("GIT_SSH");
+			if (!ssh) ssh = "ssh";
+			ssh_basename = strrchr(ssh, '/');
 			if (!ssh_basename)
 				ssh_basename = ssh;
 			else
