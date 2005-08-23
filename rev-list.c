@@ -481,6 +481,7 @@ static void handle_one_commit(struct commit *com, struct commit_list **lst)
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;
+	const char *prefix = setup_git_directory();
 	int i, limited = 0;
 
 	for (i = 1 ; i < argc; i++) {

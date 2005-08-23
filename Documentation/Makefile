@@ -1,8 +1,9 @@
 MAN1_TXT=$(wildcard git-*.txt)
 MAN7_TXT=git.txt
 
-DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT)) glossary.html
-
+DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
+DOC_HTML += glossary.html
+DOC_HTML += tutorial.html
 DOC_MAN1=$(patsubst %.txt,%.1,$(MAN1_TXT))
 DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 
@@ -59,3 +60,5 @@ glossary.html : glossary.txt sort_glossary.pl
 	perl sort_glossary.pl | \
 	asciidoc -b xhtml11 - > glossary.html
 
+tutorial.html : tutorial.txt
+	asciidoc -b xhtml11 tutorial.txt
