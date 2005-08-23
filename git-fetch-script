@@ -6,19 +6,32 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
 append=
+force=
+while case "$#" in 0) break ;; esac
+do
+	case "$1" in
+	-a|--a|--ap|--app|--appe|--appen|--append)
+		append=t
+		shift
+		;;
+	-f|--f|--fo|--for|--forc|--force)
+		force=t
+		shift
+		;;
+	*)
+		break
+		;;
+	esac
+done
+
 case "$#" in
 0)
 	test -f "$GIT_DIR/branches/origin" ||
 		test -f "$GIT_DIR/remotes/origin" ||
 			die "Where do you want to fetch from?"
 	set origin ;;
-*)
-	case "$1" in
-	-a|--a|--ap|--app|--appe|--appen|--append)
-		append=t
-		shift ;;
-	esac
 esac
+
 remote_nick="$1"
 remote=$(get_remote_url "$@")
 refs=
@@ -60,7 +73,16 @@ fast_forward_local () {
     refs/tags/*)
 	# Tags need not be pointing at commits so there
 	# is no way to guarantee "fast-forward" anyway.
+	if test -f "$GIT_DIR/$1"
+	then
+		echo >&2 "* $1: updating with $4"
+		echo >&2 "  from $3."
+	else
+		echo >&2 "* $1: storing $4"
+		echo >&2 "  from $3."
+	fi
 	echo "$2" >"$GIT_DIR/$1" ;;
+
     refs/heads/*)
 	# NEEDSWORK: use the same cmpxchg protocol here.
 	echo "$2" >"$GIT_DIR/$1.lock"
@@ -81,9 +103,16 @@ fast_forward_local () {
 		false
 		;;
 	    esac || {
-		mv "$GIT_DIR/$1.lock" "$GIT_DIR/$1.remote"
 		echo >&2 "* $1: does not fast forward to $4"
-		echo >&2 "  from $3; leaving it in '$1.remote'"
+		case "$force" in
+		t)
+			echo >&2 "  from $3; forcing update."
+			;;
+		*)
+			mv "$GIT_DIR/$1.lock" "$GIT_DIR/$1.remote"
+			echo >&2 "  from $3; leaving it in '$1.remote'"
+			;;
+		esac
 	    }
 	else
 		echo >&2 "* $1: storing $4"
