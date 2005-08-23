@@ -223,6 +223,7 @@ int main(int ac, char **av)
 	int head_path_len;
 	unsigned char head_sha1[20];
 	int merge_base = 0;
+	char **label;
 
 	while (1 < ac && av[1][0] == '-') {
 		char *arg = av[1];
@@ -297,7 +298,8 @@ int main(int ac, char **av)
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
 
-	if (1 < num_rev)
+	/* Show list */
+	if (1 < num_rev) {
 		for (i = 0; i < num_rev; i++) {
 			int j;
 			int is_head = rev_is_head(head_path,
@@ -310,16 +312,28 @@ int main(int ac, char **av)
 			printf("%c [%s] ", is_head ? '*' : '!', ref_name[i]);
 			show_one_commit(rev[i], NULL);
 		}
+		for (i = 0; i < num_rev; i++)
+			putchar('-');
+		putchar('\n');
+	}
+
+	label = ref_name;
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
 		int this_flag = commit->object.flags;
+		static char *obvious[] = { "" };
+
 		if ((this_flag & UNINTERESTING) && (--extra < 0))
 			break;
-		for (i = 0; i < num_rev; i++)
-			putchar((this_flag & (1u << (i + REV_SHIFT)))
-				? '+' : ' ');
-		putchar(' ');
-		show_one_commit(commit, ref_name);
+		if (1 < num_rev) {
+			for (i = 0; i < num_rev; i++)
+				putchar((this_flag & (1u << (i + REV_SHIFT)))
+					? '+' : ' ');
+			putchar(' ');
+		}
+		show_one_commit(commit, label);
+		if (num_rev == 1)
+			label = obvious;
 	}
 	return 0;
 }
