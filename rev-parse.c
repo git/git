@@ -107,7 +107,7 @@ static void show_arg(char *arg)
 	if (do_rev_argument && is_rev_argument(arg))
 		show_rev_arg(arg);
 	else
-		show_norev(arg);
+		show(arg);
 }
 
 static void show_default(void)
@@ -122,7 +122,7 @@ static void show_default(void)
 			show_rev(NORMAL, sha1, s);
 			return;
 		}
-		show_arg(s);
+		show_norev(s);
 	}
 }
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strcmp(arg, "--")) {
 				show_default();
-				if (revs_only)
+				if (revs_only || flags_only)
 					break;
 				as_is = 1;
 			}
