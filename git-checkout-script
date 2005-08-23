@@ -72,4 +72,6 @@ if [ "$?" -eq 0 ]; then
 	fi
 	[ "$branch" ] && ln -sf "refs/heads/$branch" "$GIT_DIR/HEAD"
 	rm -f "$GIT_DIR/MERGE_HEAD"
+else
+	exit 1
 fi
