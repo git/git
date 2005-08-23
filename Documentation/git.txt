@@ -205,7 +205,7 @@ link:git-fetch-script.html[git-fetch-script]::
 link:git-pull-script.html[git-pull-script]::
 	Fetch from and merge with a remote repository.
 
-link:git-commit-script.html[git-commit-script]::
+ulink:git-commit-script.html[git-commit-script]::
 	Record changes to the repository.
 
 link:git-show-branch.html[git-show-branch]::
@@ -257,6 +257,97 @@ link:git-ssh-push.html[git-ssh-push]::
 
 link:git-send-email-script.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
+
+
+Commands not yet documented
+---------------------------
+
+link:git-applymbox.html[git-applymbox]::
+	git-applymbox.
+
+link:git-applypatch.html[git-applypatch]::
+	git-applypatch.
+
+link:git-mailinfo.html[git-mailinfo]::
+	git-mailinfo.
+
+link:git-mailsplit.html[git-mailsplit]::
+	git-mailsplit.
+
+link:git-add-script.html[git-add-script]::
+	git-add-script.
+
+link:git-bisect-script.html[git-bisect-script]::
+	git-bisect-script.
+
+link:git-branch-script.html[git-branch-script]::
+	git-branch-script.
+
+link:git-build-rev-cache.html[git-build-rev-cache]::
+	git-build-rev-cache.
+
+link:git-checkout-script.html[git-checkout-script]::
+	git-checkout-script.
+
+link:git-cherry.html[git-cherry]::
+	git-cherry.
+
+link:git-clone-dumb-http.html[git-clone-dumb-http]::
+	git-clone-dumb-http.
+
+link:git-count-objects-script.html[git-count-objects-script]::
+	git-count-objects-script.
+
+link:git-daemon.html[git-daemon]::
+	git-daemon.
+
+link:git-diff-script.html[git-diff-script]::
+	git-diff-script.
+
+link:git-format-patch-script.html[git-format-patch-script]::
+	git-format-patch-script.
+
+link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
+	git-get-tar-commit-id.
+
+link:git-patch-id.html[git-patch-id]::
+	git-patch-id.
+
+link:git-push-script.html[git-push-script]::
+	git-push-script.
+
+link:git-rebase-script.html[git-rebase-script]::
+	git-rebase-script.
+
+link:git-relink-script.html[git-relink-script]::
+	git-relink-script.
+
+link:git-request-pull-script.html[git-request-pull-script]::
+	git-request-pull-script.
+
+link:git-reset-script.html[git-reset-script]::
+	git-reset-script.
+
+link:git-rev-parse.html[git-rev-parse]::
+	git-rev-parse.
+
+link:git-revert-script.html[git-revert-script]::
+	git-revert-script.
+
+link:git-sh-setup-script.html[git-sh-setup-script]::
+	git-sh-setup-script.
+
+link:git-show-rev-cache.html[git-show-rev-cache]::
+	git-show-rev-cache.
+
+link:git-stripspace.html[git-stripspace]::
+	git-stripspace.
+
+link:git-verify-tag-script.html[git-verify-tag-script]::
+	git-verify-tag-script.
+
+link:gitk.html[gitk]::
+	gitk.
 
 
 Identifier Terminology

@@ -1,0 +1,38 @@
+git-cherry(1)
+=============
+
+NAME
+----
+git-cherry - Some git command not yet documented.
+
+
+SYNOPSIS
+--------
+'git-cherry' [ --option ] <args>...
+
+DESCRIPTION
+-----------
+Does something not yet documented.
+
+
+OPTIONS
+-------
+--option::
+	Some option not yet documented.
+
+<args>...::
+	Some argument not yet documented.
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+
