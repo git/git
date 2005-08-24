@@ -1,6 +1,6 @@
 git-fetch-script(1)
 ===================
-v0.99.4, Aug 2005
+v0.99.5, Aug 2005
 
 NAME
 ----
@@ -9,24 +9,17 @@ git-fetch-script - Download objects and a head from another repository.
 
 SYNOPSIS
 --------
-'git-fetch-script' <repository> [ <head> | tag <tag> ]
+'git-fetch-script' <repository> <refspec>...
 
 
 DESCRIPTION
 -----------
-Fetches a named head or a tag from another repository, along
-with the objects necessary to complete that head or tag.  The
-head to pull defaults to HEAD if unspecified.  The head or tag
-fetched from the remote repository is stored in
-$GIT_DIR/FETCH_HEAD.
+Fetches named heads or tags from another repository, along with
+the objects necessary to complete them.
 
-When a <tag> is specified, the <tag> fetched from the remote is
-also copied to the local $GIT_DIR/tags/<tag> file.  When no
-<head> nor <tag> is specified, and <repository> was specified
-with the short-hand notation (i.e. naming a file under the
-$GIT_DIR/branches directory), the head fetched from the remote
-repository is also copied to the local $GIT_DIR/heads/<repository>
-file.
+The ref names and their object names of fetched refs are stored
+in $GIT_DIR/FETCH_HEAD.  This information is left for a later merge
+operation done by "git resolve" or "git octopus".
 
 
 OPTIONS

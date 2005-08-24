@@ -9,13 +9,16 @@ git-pull-script - Pull and merge from another repository.
 
 SYNOPSIS
 --------
-'git-pull-script' <repository> [ <head> | tag <tag> ]
+'git-pull-script' <repository> <refspec>...
 
 
 DESCRIPTION
 -----------
-Runs 'git-fetch-script' with the given parameters, then
-'git-resolve-script' to merge the local HEAD and FETCH_HEAD.
+Runs 'git-fetch-script' with the given parameters.
+
+When only one ref is downloaded, runs 'git resolve' to merge it
+into the local HEAD.  Otherwise uses 'git octopus' to merge them
+into the local HEAD.
 
 
 OPTIONS
