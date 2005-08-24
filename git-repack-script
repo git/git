@@ -1,6 +1,20 @@
 #!/bin/sh
+#
+# Copyright (c) 2005 Linus Torvalds
+#
+
 . git-sh-setup-script || die "Not a git archive"
 	
+no_update_info=
+while case "$#" in 0) break ;; esac
+do
+	case "$1" in
+	-n)	no_update_info=t ;;
+	*)	break ;;
+	esac
+	shift
+done
+
 rm -f .tmp-pack-*
 packname=$(git-rev-list --unpacked --objects $(git-rev-parse --all) |
 	git-pack-objects --non-empty --incremental .tmp-pack) ||
@@ -9,6 +23,11 @@ if [ -z "$packname" ]; then
 	echo Nothing new to pack
 	exit 0
 fi
+
 mkdir -p "$GIT_OBJECT_DIRECTORY/pack" &&
 mv .tmp-pack-$packname.pack "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.pack" &&
-mv .tmp-pack-$packname.idx  "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.idx"
+mv .tmp-pack-$packname.idx  "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.idx" &&
+case "$no_update_info" in
+t) : ;;
+*) git-update-server-info ;;
+esac
