@@ -496,7 +496,7 @@ static void verify_pathspec(void)
 			char c = n[i];
 			if (prev && prev[i] != c)
 				break;
-			if (c == '*' || c == '?')
+			if (!c || c == '*' || c == '?')
 				break;
 			if (c == '/')
 				len = i+1;
