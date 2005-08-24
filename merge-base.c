@@ -82,13 +82,17 @@ static struct commit *interesting(struct commit_list *list)
  * commit B.
  */
 
-static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
+static int show_all = 0;
+
+static int merge_base(struct commit *rev1, struct commit *rev2)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
 
-	if (rev1 == rev2)
-		return rev1;
+	if (rev1 == rev2) {
+		printf("%s\n", sha1_to_hex(rev1->object.sha1));
+		return 0;
+	}
 
 	parse_commit(rev1);
 	parse_commit(rev2);
@@ -108,7 +112,7 @@ static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 		if (flags == 3) {
 			insert_by_date(commit, &result);
 
-			/* Mark children of a found merge uninteresting */
+			/* Mark parents of a found merge uninteresting */
 			flags |= UNINTERESTING;
 		}
 		parents = commit->parents;
@@ -122,26 +126,46 @@ static struct commit *common_ancestor(struct commit *rev1, struct commit *rev2)
 			insert_by_date(p, &list);
 		}
 	}
-	return interesting(result);
+
+	if (!result)
+		return 1;
+
+	while (result) {
+		struct commit *commit = result->item;
+		result = result->next;
+		if (commit->object.flags & UNINTERESTING)
+			continue;
+		printf("%s\n", sha1_to_hex(commit->object.sha1));
+		if (!show_all)
+			return 0;
+		commit->object.flags |= UNINTERESTING;
+	}
+	return 0;
 }
+
+static const char merge_base_usage[] =
+"git-merge-base [--all] <commit-id> <commit-id>";
 
 int main(int argc, char **argv)
 {
-	struct commit *rev1, *rev2, *ret;
+	struct commit *rev1, *rev2;
 	unsigned char rev1key[20], rev2key[20];
 
+	while (1 < argc && argv[1][0] == '-') {
+		char *arg = argv[1];
+		if (!strcmp(arg, "-a") || !strcmp(arg, "--all"))
+			show_all = 1;
+		else
+			usage(merge_base_usage);
+		argc--; argv++;
+	}
 	if (argc != 3 ||
 	    get_sha1(argv[1], rev1key) ||
-	    get_sha1(argv[2], rev2key)) {
-		usage("git-merge-base <commit-id> <commit-id>");
-	}
+	    get_sha1(argv[2], rev2key))
+		usage(merge_base_usage);
 	rev1 = lookup_commit_reference(rev1key);
 	rev2 = lookup_commit_reference(rev2key);
 	if (!rev1 || !rev2)
 		return 1;
-	ret = common_ancestor(rev1, rev2);
-	if (!ret)
-		return 1;
-	printf("%s\n", sha1_to_hex(ret->object.sha1));
-	return 0;
+	return merge_base(rev1, rev2);
 }
