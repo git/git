@@ -16,6 +16,9 @@ DESCRIPTION
 
 This is reference information for the core git commands.
 
+Before reading this cover to cover, you may want to take a look
+at the link:tutorial.html[tutorial] document.
+
 The Discussion section below contains much useful definition and
 clarification info - read that first.  And of the commands, I suggest
 reading link:git-update-cache.html[git-update-cache] and
