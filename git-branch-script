@@ -25,7 +25,7 @@ case "$#" in
 	head="$2^0" ;;
 esac
 branchname="$1"
-rev=$(git-rev-parse --revs-only --verify "$head") || exit
+rev=$(git-rev-parse --verify "$head") || exit
 
 [ -e "$GIT_DIR/refs/heads/$branchname" ] && die "$branchname already exists"
 

@@ -10,7 +10,7 @@ case "$status" in
 	die "Your working tree is dirty; cannot revert a previous patch." ;;
 esac
 
-rev=$(git-rev-parse --no-flags --verify --revs-only "$@") &&
+rev=$(git-rev-parse --verify "$@") &&
 commit=$(git-rev-parse --verify "$rev^0") || exit
 if git-diff-tree -R -M -p $commit | git-apply --index &&
    msg=$(git-rev-list --pretty=oneline --max-count=1 $commit)
