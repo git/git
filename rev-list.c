@@ -33,7 +33,7 @@ static int blob_objects = 0;
 static int verbose_header = 0;
 static int show_parents = 0;
 static int hdr_termination = 0;
-static const char *prefix = "";
+static const char *commit_prefix = "";
 static unsigned long max_age = -1;
 static unsigned long min_age = -1;
 static int max_count = -1;
@@ -48,14 +48,14 @@ static void show_commit(struct commit *commit)
 {
 	commit->object.flags |= SHOWN;
 	if (show_breaks) {
-		prefix = "| ";
+		commit_prefix = "| ";
 		if (commit->object.flags & DISCONTINUITY) {
-			prefix = "^ ";     
+			commit_prefix = "^ ";     
 		} else if (commit->object.flags & BOUNDARY) {
-			prefix = "= ";
+			commit_prefix = "= ";
 		} 
         }        		
-	printf("%s%s", prefix, sha1_to_hex(commit->object.sha1));
+	printf("%s%s", commit_prefix, sha1_to_hex(commit->object.sha1));
 	if (show_parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
@@ -481,9 +481,9 @@ static void handle_one_commit(struct commit *com, struct commit_list **lst)
 int main(int argc, char **argv)
 {
 	struct commit_list *list = NULL;
-	const char *prefix = setup_git_directory();
 	int i, limited = 0;
 
+	setup_git_directory();
 	for (i = 1 ; i < argc; i++) {
 		int flags;
 		char *arg = argv[i];
@@ -511,9 +511,9 @@ int main(int argc, char **argv)
 			verbose_header = 1;
 			hdr_termination = '\n';
 			if (commit_format == CMIT_FMT_ONELINE)
-				prefix = "";
+				commit_prefix = "";
 			else
-				prefix = "commit ";
+				commit_prefix = "commit ";
 			continue;
 		}
 		if (!strncmp(arg, "--no-merges", 11)) {
