@@ -309,6 +309,7 @@ struct ref {
 	struct ref *next;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
+	unsigned char force;
 	struct ref *peer_ref; /* when renaming */
 	char name[0];
 };

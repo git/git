@@ -206,7 +206,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		/* This part determines what can overwrite what.
 		 * The rules are:
 		 *
-		 * (0) you can always use --force.
+		 * (0) you can always use --force or +A:B notation to
+		 *     selectively force individual ref pairs.
 		 *
 		 * (1) if the old thing does not exist, it is OK.
 		 *
@@ -218,16 +219,19 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		 *     descendant of old, it is OK.
 		 */
 
-		if (!force_update && !is_zero_sha1(ref->old_sha1)) {
+		if (!force_update &&
+		    !is_zero_sha1(ref->old_sha1) &&
+		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1)) {
 				error("remote '%s' object %s does not "
 				      "exist on local",
 				      ref->name, sha1_to_hex(ref->old_sha1));
 				continue;
 			}
+
 			/* We assume that local is fsck-clean.  Otherwise
-			 * you _could_ have a old tag which points at
-			 * something you do not have which may or may not
+			 * you _could_ have an old tag which points at
+			 * something you do not have, which may or may not
 			 * be a commit.
 			 */
 			if (!ref_newer(ref->peer_ref->new_sha1,
