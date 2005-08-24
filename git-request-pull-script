@@ -19,8 +19,8 @@ head=${3-HEAD}
 [ "$revision" ] || usage
 [ "$url" ] || usage
 
-baserev=`git-rev-parse --verify $revision^0` &&
-headrev=`git-rev-parse --verify $head^0` || exit
+baserev=`git-rev-parse --verify "$revision"^0` &&
+headrev=`git-rev-parse --verify "$head"^0` || exit
 
 echo "The following changes since commit $baserev:"
 git log --max-count=1 --pretty=short "$baserev" |

@@ -20,8 +20,6 @@ do
 	-*)
 		die "Unknown parameter $1" ;;
         *)
-		remote="$1"
-		shift
 		set x "$@"
 		shift
 		break ;;
@@ -29,27 +27,13 @@ do
 	shift
 done
 
-case "$remote" in
-*:* | /* | ../* | ./* )
-	# An URL, host:/path/to/git, absolute and relative paths.
-	;;
-* )
-	# Shorthand
-	if expr "$remote" : '..*/..*' >/dev/null
-	then
-		# a short-hand followed by a trailing path
-		shorthand=$(expr "$remote" : '\([^/]*\)')
-		remainder=$(expr "$remote" : '[^/]*\(/.*\)$')
-	else
-		shorthand="$remote"
-		remainder=
-	fi
-	remote=$(sed -e 's/#.*//' "$GIT_DIR/branches/$remote") &&
-	expr "$remote" : '..*:' >/dev/null &&
-	remote="$remote$remainder" ||
-	die "Cannot parse remote $remote"
-	;;
+. git-parse-remote-script
+remote=$(get_remote_url "$@")
+case "$has_all" in
+--all) set x ;;
+'')    set x $(get_remote_refs_for_push "$@") ;;
 esac
+shift
 
 case "$remote" in
 http://* | https://* | git://* | rsync://* )

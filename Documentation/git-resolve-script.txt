@@ -1,19 +1,25 @@
 git-resolve-script(1)
 =====================
-v0.99.4, Aug 2005
+v0.99.5, Aug 2005
 
 NAME
 ----
-git-resolve-script - Script used to merge two trees
+git-resolve-script - Merge two commits
 
 
 SYNOPSIS
 --------
-'git-resolve-script'
+'git resolve' <current> <merged> <message>
 
 DESCRIPTION
 -----------
-This script is used by Linus to merge two trees.
+Given two commits and a merge message, merge the <merged> commit
+into <current> commit, with the commit log message <message>.
+
+When <current> is a descendant of <merged>, or <current> is an
+ancestor of <merged>, no new commit is created and the <message>
+is ignored.  The former is informally called "already up to
+date", and the latter is often called "fast forward".
 
 
 Author

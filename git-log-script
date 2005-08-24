@@ -1,4 +1,4 @@
 #!/bin/sh
-revs=$(git-rev-parse --revs-only --default HEAD "$@") || exit
+revs=$(git-rev-parse --revs-only --no-flags --default HEAD "$@") || exit
 [ "$revs" ] || die "No HEAD ref"
 git-rev-list --pretty $(git-rev-parse --default HEAD "$@") | LESS=-S ${PAGER:-less}

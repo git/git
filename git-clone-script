@@ -127,6 +127,8 @@ yes,yes)
 esac
 
 # Update origin.
-mkdir -p "$D/.git/branches/" &&
-rm -f "$D/.git/branches/origin" &&
-echo "$repo" >"$D/.git/branches/origin"
+mkdir -p "$D/.git/remotes/" &&
+rm -f "$D/.git/remotes/origin" &&
+echo >"$D/.git/remotes/origin" \
+"URL: $repo
+Pull: master:origin"

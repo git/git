@@ -58,7 +58,7 @@ bisect_start() {
 bisect_bad() {
 	bisect_autostart
         case "$#" in 0 | 1) ;; *) usage ;; esac
-	rev=$(git-rev-parse --revs-only --verify --default HEAD "$@") || exit
+	rev=$(git-rev-parse --verify --default HEAD "$@") || exit
 	echo "$rev" > "$GIT_DIR/refs/bisect/bad"
 	bisect_auto_next
 }
@@ -67,7 +67,7 @@ bisect_good() {
 	bisect_autostart
         case "$#" in
 	0)    revs=$(git-rev-parse --verify HEAD) || exit ;;
-	*)    revs=$(git-rev-parse --revs-only "$@") || exit ;;
+	*)    revs=$(git-rev-parse --revs-only --no-flags "$@") || exit ;;
 	esac
 	for rev in $revs
 	do

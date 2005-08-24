@@ -82,15 +82,26 @@ int path_match(const char *path, int nr, char **match)
 struct refspec {
 	char *src;
 	char *dst;
+	char force;
 };
 
+/*
+ * A:B means fast forward remote B with local A.
+ * +A:B means overwrite remote B with local A.
+ * +A is a shorthand for +A:A.
+ * A is a shorthand for A:A.
+ */
 static struct refspec *parse_ref_spec(int nr_refspec, char **refspec)
 {
 	int i;
-	struct refspec *rs = xmalloc(sizeof(*rs) * (nr_refspec + 1));
+	struct refspec *rs = xcalloc(sizeof(*rs), (nr_refspec + 1));
 	for (i = 0; i < nr_refspec; i++) {
 		char *sp, *dp, *ep;
 		sp = refspec[i];
+		if (*sp == '+') {
+			rs[i].force = 1;
+			sp++;
+		}
 		ep = strchr(sp, ':');
 		if (ep) {
 			dp = ep + 1;
@@ -216,8 +227,10 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 			error("dst ref %s receives from more than one src.",
 			      matched_dst->name);
 		}
-		else
+		else {
 			matched_dst->peer_ref = matched_src;
+			matched_dst->force = rs[i].force;
+		}
 	}
 	return -errs;
 }

@@ -892,18 +892,26 @@ pull from:
 
 It is likely that you will be pulling from the same remote
 repository from time to time. As a short hand, you can store
-the remote repository URL in a file under .git/branches/
+the remote repository URL in a file under .git/remotes/
 directory, like this:
 
-	mkdir -p .git/branches
-	echo rsync://kernel.org/pub/scm/git/git.git/ \
-	    >.git/branches/linus
+------------------------------------------------
+mkdir -p .git/remotes/
+cat >.git/remotes/linus <<\EOF
+URL: http://www.kernel.org/pub/scm/git/git.git/
+EOF
+------------------------------------------------
 
 and use the filename to "git pull" instead of the full URL.
-The contents of a file under .git/branches can even be a prefix
+The URL specified in such file can even be a prefix
 of a full URL, like this:
 
-	echo rsync://kernel.org/pub/.../jgarzik/ >.git/branches/jgarzik
+------------------------------------------------
+cat >.git/remotes/jgarzik <<\EOF
+URL: http://www.kernel.org/pub/scm/linux/git/jgarzik/
+EOF
+------------------------------------------------
+
 
 Examples.
 
@@ -913,9 +921,9 @@ Examples.
 
 the above are equivalent to:
 
-	(1) git pull rsync://kernel.org/pub/scm/git/git.git/ HEAD
-	(2) git pull rsync://kernel.org/pub/scm/git/git.git/ tag v0.99.1
-	(3) git pull rsync://kernel.org/pub/.../jgarzik/netdev-2.6.git e100
+	(1) git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD
+	(2) git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1
+	(3) git pull http://www.kernel.org/pub/.../jgarzik/netdev-2.6.git e100
 
 
 Publishing your work
@@ -1169,18 +1177,43 @@ Working with Others, Shared Repository Style
 If you are coming from CVS background, the style of cooperation
 suggested in the previous section may be new to you. You do not
 have to worry. git supports "shared public repository" style of
-cooperation you are more familiar with as well.
+cooperation you are probably more familiar with as well.
 
-For this, you should set up a public repository on a machine
-that are reachable via SSH by people with "commit privileges".
-Put them in the same user group and make the repository writable
-by that group. Then, each committer would first merge with the
-head of the branch of choice, and run "git push" to update the
-branch at the public repository. "git push" refuses to update
-if the reference on the remote side is not an ancestor of the
-commit you are pushing, to prevent you from overwriting changes
-made by somebody else.
+For this, set up a public repository on a machine that is
+reachable via SSH by people with "commit privileges".  Put the
+committers in the same user group and make the repository
+writable by that group.
 
+Each committer would then:
+
+	- clone the shared repository to a local repository,
+
+------------------------------------------------
+$ git clone repo.shared.xz:/pub/scm/project.git/ my-project
+$ cd my-project
+$ hack away
+------------------------------------------------
+
+	- merge the work others might have done while you were
+          hacking away.
+
+------------------------------------------------
+$ git pull origin
+$ test the merge result
+------------------------------------------------
+
+	- push your work as the new head of the shared
+          repository.
+
+------------------------------------------------
+$ git push origin master
+------------------------------------------------
+
+If somebody else pushed into the same shared repository while
+you were working locally, the last step "git push" would
+complain, telling you that the remote "master" head does not
+fast forward.  You need to pull and merge those other changes
+back before you push your work when it happens.
 
 
 [ to be continued.. cvsimports ]

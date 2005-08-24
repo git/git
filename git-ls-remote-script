@@ -29,8 +29,8 @@ case ",$heads,$tags," in
 ,,,) heads=heads tags=tags other=other ;;
 esac
 
-. git-parse-remote "$1"
-peek_repo="$_remote_repo"
+. git-parse-remote-script
+peek_repo="$(get_remote_url "$@")"
 shift
 
 tmp=.ls-remote-$$

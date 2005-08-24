@@ -3,25 +3,23 @@ git-push-script(1)
 
 NAME
 ----
-git-push-script - Some git command not yet documented.
+git-push-script - Update remote refs along with associated objects.
 
 
 SYNOPSIS
 --------
-'git-push-script' [ --option ] <args>...
+'git-push-script' [--all] [--force] <repository> <refspec>...
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+
+Updates remote refs using local refs, while sending objects
+necessary to complete the given refs.
 
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
+include::pull-fetch-param.txt[]
 
 
 Author
