@@ -53,8 +53,8 @@ append_fetch_head () {
     # 2.6.11-tree tag would not be happy to be fed to resolve.
     if git-cat-file commit "$head_" >/dev/null 2>&1
     then
-	head_=$(git-rev-parse --verify "$head_^0") || exit
-	note_="$head_	$remote_name_ from $remote_nick_"
+	headc_=$(git-rev-parse --verify "$head_^0") || exit
+	note_="$headc_	$remote_name_ from $remote_nick_"
 	echo "$note_" >>$GIT_DIR/FETCH_HEAD
 	echo >&2 "* committish: $note_"
     else
