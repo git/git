@@ -27,13 +27,19 @@ blob object::
 
 tree object::
 	An object containing a list of file names and modes along with refs
-	to the associated blob and/or tree objects. A tree object is
-	equivalent to a directory.
+	to the associated blob and/or tree objects. A tree is equivalent
+	to a directory.
 
 tree::
 	Either a working tree, or a tree object together with the
 	dependent blob and tree objects (i.e. a stored representation
 	of a working tree).
+
+DAG::
+	Directed acyclic graph. The commit objects form a directed acyclic
+	graph, because they have parents (directed), and the graph of commit
+	objects is acyclic (there is no chain which begins and ends with the
+	same object).
 
 index::
 	A collection of files with stat information, whose contents are
@@ -141,6 +147,10 @@ merge::
 	common ancestor and apply them to the first branch. An automatic
 	merge uses heuristics to accomplish that. Evidently, an automatic
 	merge can fail.
+
+octopus::
+	To merge more than two branches. Also denotes an intelligent
+	predator.
 
 resolve::
 	The action of fixing up manually what a failed automatic merge
