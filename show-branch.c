@@ -141,6 +141,18 @@ static void show_one_commit(struct commit *commit, char **head_name)
 static char *ref_name[MAX_REVS + 1];
 static int ref_name_cnt;
 
+static int compare_ref_name(const void *a_, const void *b_)
+{
+	const char * const*a = a_, * const*b = b_;
+	return strcmp(*a, *b);
+}
+
+static void sort_ref_range(int bottom, int top)
+{
+	qsort(ref_name + bottom, top - bottom, sizeof(ref_name[0]),
+	      compare_ref_name);
+}
+
 static int append_ref(const char *refname, const unsigned char *sha1)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
@@ -161,7 +173,7 @@ static int append_head_ref(const char *refname, const unsigned char *sha1)
 {
 	if (strncmp(refname, "refs/heads/", 11))
 		return 0;
-	return append_ref(refname + 5, sha1);
+	return append_ref(refname + 11, sha1);
 }
 
 static int append_tag_ref(const char *refname, const unsigned char *sha1)
@@ -173,10 +185,16 @@ static int append_tag_ref(const char *refname, const unsigned char *sha1)
 
 static void snarf_refs(int head, int tag)
 {
-	if (head)
+	if (head) {
+		int orig_cnt = ref_name_cnt;
 		for_each_ref(append_head_ref);
-	if (tag)
+		sort_ref_range(orig_cnt, ref_name_cnt);
+	}
+	if (tag) {
+		int orig_cnt = ref_name_cnt;
 		for_each_ref(append_tag_ref);
+		sort_ref_range(orig_cnt, ref_name_cnt);
+	}
 }
 
 static int rev_is_head(char *head_path, int headlen,
