@@ -69,7 +69,6 @@ SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
 	git-request-pull-script git-bisect-script
 
 SCRIPTS += git-count-objects-script
-# SCRIPTS += git-send-email-script
 SCRIPTS += git-revert-script
 SCRIPTS += git-octopus-script
 
@@ -86,6 +85,10 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-prune-packed git-fetch-pack git-upload-pack git-clone-pack \
 	git-show-index git-daemon git-var git-peek-remote git-show-branch \
 	git-update-server-info git-show-rev-cache git-build-rev-cache
+
+ifdef WITH_SEND_EMAIL
+SCRIPTS += git-send-email-script
+endif
 
 ifndef NO_CURL
 	PROG+= git-http-pull

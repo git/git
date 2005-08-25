@@ -1,3 +1,10 @@
+git-core (0.99.5-1) unstable; urgency=low
+
+  * Enable git-send-email-script on Debian.  There is no reason to shy
+    away from it, since we have the necessary Perl modules available.
+
+ -- Junio C Hamano <junkio@cox.net>  Thu, 25 Aug 2005 14:16:59 -0700
+
 git-core (0.99.5-0) unstable; urgency=low
 
   * GIT 0.99.5

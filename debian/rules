@@ -25,6 +25,9 @@ else
 	export MOZILLA_SHA1=YesPlease
 endif
 
+# We do have the requisite perl modules in the mainline, and
+# have no reason to shy away from this script.
+export WITH_SEND_EMAIL=YesPlease
 
 PREFIX := /usr
 MANDIR := /usr/share/man/
