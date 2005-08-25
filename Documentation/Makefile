@@ -44,7 +44,7 @@ git-diff-%.txt: diff-format.txt diff-options.txt
 	touch $@
 
 clean:
-	rm -f *.xml *.html *.1 *.7
+	rm -f *.xml *.html *.1 *.7 howto-index.txt
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d manpage $<
@@ -62,3 +62,16 @@ glossary.html : glossary.txt sort_glossary.pl
 
 tutorial.html : tutorial.txt
 	asciidoc -b xhtml11 tutorial.txt
+
+howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
+	rm -f $@+ $@
+	sh ./howto-index.sh $(wildcard howto/*.txt) >$@+
+	mv $@+ $@
+
+howto-index.html: howto-index.txt
+	asciidoc -b xhtml11 howto-index.txt
+
+WEBDOC_DEST = /pub/software/scm/git/docs
+
+install-webdoc : html
+	sh ./install-webdoc.sh $(WEBDOC_DEST)
