@@ -49,7 +49,7 @@
 
 <refspec>::
 	The canonical format of a <refspec> parameter is
-	+?<src>:<dst>; that is, an optional plus '+', followed
+	'+?<src>:<dst>'; that is, an optional plus '+', followed
 	by the source ref, followed by a colon ':', followed by
 	the destination ref.
 
