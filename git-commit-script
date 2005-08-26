@@ -195,8 +195,8 @@ else
 fi
 if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]
 then
-	sed -ne '/^#/p' .editmsg
-	rm .editmsg
+	rm -f .editmsg
+	git-status-script
 	exit 1
 fi
 case "$no_edit" in

@@ -28,6 +28,11 @@ report () {
   [ "$header" ]
 }
 
+branch=`readlink "$GIT_DIR/HEAD"`
+case "$branch" in
+refs/heads/master) ;;
+*)	echo "# On branch $branch" ;;
+esac
 git-update-cache --refresh >/dev/null 2>&1
 git-diff-cache -M --cached HEAD | sed 's/^://' | report "Updated but not checked in" "will commit"
 committable="$?"
@@ -37,10 +42,4 @@ then
 	echo "nothing to commit"
 	exit 1
 fi
-branch=`readlink "$GIT_DIR/HEAD"`
-case "$branch" in
-refs/heads/master) ;;
-*)	echo "#
-# On branch $branch" ;;
-esac
 exit 0
