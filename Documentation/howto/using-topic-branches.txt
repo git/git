@@ -5,11 +5,9 @@ Subject: Some tutorial text (was git/cogito workshop/bof at linuxconf au?)
 Here's something that I've been putting together on how I'm using
 GIT as a Linux subsystem maintainer.
 
-I suspect that I'm a bit slap-happy with the "git checkout" commands in
-the examples below, and perhaps missing some of the _true-git_ ways of
-doing things.
-
 -Tony
+
+Last updated w.r.t. GIT 0.99.5
 
 Linux subsystem maintenance using GIT
 -------------------------------------
@@ -48,24 +46,38 @@ Change directory into the cloned tree you just created
 
  $ cd work
 
-Make a GIT branch named "linus", and rename the "origin" branch as linus too:
+Set up a remotes file so that you can fetch the latest from Linus' master
+branch into a local branch named "linus":
 
- $ git checkout -b linus
- $ mv .git/branches/origin .git/branches/linus
+ $ cat > .git/remotes/linus
+ URL: rsync://rsync.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+ Pull: master:linus
+ ^D
+
+and create the linus branch:
+
+ $ git branch linus
 
 The "linus" branch will be used to track the upstream kernel.  To update it,
 you simply run:
 
- $ git checkout linus && git pull linus
+ $ git fetch linus
 
-you can do this frequently (as long as you don't have any uncommited work
-in your tree).
+you can do this frequently (and it should be safe to do so with pending
+work in your tree, but perhaps not if you are in mid-merge).
 
-If you need to keep track of other public trees, you can add branches for
-them too:
+If you need to keep track of other public trees, you can add remote branches
+for them too:
 
- $ git checkout -b another linus
- $ echo URL-for-another-public-tree > .git/branches/another
+ $ git branch another
+ $ cat > .git/remotes/another
+ URL: ... insert URL here ...
+ Pull: name-of-branch-in-this-remote-tree:another
+ ^D
+
+and run:
+
+ $ git fetch another
 
 Now create the branches in which you are going to work, these start
 out at the current tip of the linus branch.
@@ -78,15 +90,25 @@ These can be easily kept up to date by merging from the "linus" branch:
  $ git checkout test && git resolve test linus "Auto-update from upstream"
  $ git checkout release && git resolve release linus "Auto-update from upstream"
 
-Set up so that you can push upstream to your public tree:
+Set up so that you can push upstream to your public tree (you need to
+log-in to the remote system and create an empty tree there before the
+first push).
 
- $ echo master.kernel.org:/ftp/pub/scm/linux/kernel/git/aegl/linux-2.6.git > .git/branches/origin
+ $ cat > .git/remotes/mytree
+ URL: master.kernel.org:/pub/scm/linux/kernel/git/aegl/linux-2.6.git
+ Push: release
+ Push: test
+ ^D
 
-and then push each of the test and release branches using:
+and the push both the test and release trees using:
 
- $ git push origin test
-and
- $ git push origin release
+ $ git push mytree
+
+or push just one of the test and release branches using:
+
+ $ git push mytree test
+or
+ $ git push mytree release
 
 Now to apply some patches from the community.  Think of a short
 snappy name for a branch to hold this patch (or related group of
@@ -169,9 +191,9 @@ test|release)
 	git checkout $1 && git resolve $1 linus "Auto-update from upstream"
 	;;
 linus)
-	before=$(cat .git/HEAD)
-	git checkout linus && git pull linus
-	after=$(cat .git/HEAD)
+	before=$(cat .git/refs/heads/linus)
+	git fetch linus
+	after=$(cat .git/refs/heads/linus)
 	if [ $before != $after ]
 	then
 		git-whatchanged $after ^$before | git-shortlog
