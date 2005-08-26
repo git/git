@@ -46,6 +46,12 @@ Technical (heavier)
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
 
+* We might want to optimize cloning with GIT native transport
+  not to explode the pack, and store it in objects/pack instead.
+  We would need a tool to generate an idx file out of a pack
+  file for this.  Also this itself may turn out to be a bad
+  idea, making the set of packs in repositories everybody has
+  different from each other.
 
 Technical (milder)
 ------------------
@@ -66,6 +72,7 @@ Technical (milder)
   we discussed some time ago.
 
 * Bug Ryan and work with him to update send-email easier to use.
+  [Resurrected it for Debian build.]
 
 * Look at portability fixes from Jason Riedy
 
@@ -95,10 +102,28 @@ Technical (milder)
 * A tool to detect, show and prune already merged topic
   branches.
 
-* Perhaps "git branch -d" to delete a branch.
+* Set up an automated documentation rebuilding procedure at
+  kernel.org, using update hook mechanism. [Almost, but not quite.]
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
   git.git repository.
 
+
+Technical (trivial)
+-------------------
+
+* Perhaps "git branch -d" to delete a branch.
+
 * Remove "git clone-dumb-http".
+
+* We would want test scripts for the relative directory path
+  stuff Linus has been working on.  So far, the following
+  commands should be usable with relative directory paths:
+
+    update-cache
+    ls-files
+    diff-files
+    diff-cache
+    diff-tree
+    rev-list
