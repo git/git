@@ -14,6 +14,8 @@ Documentation
   migration and update the cvs-migration documentation.
   Link the documentation from the main git.txt page.
 
+* Link howto docs from the git.txt page. [DONE]
+
 * Update the SubmittingPatches document to add MUA specific
   hints on how to disable unwanted MIME and flowed-text by
   collecting past list postings.  Accept patches from people who
@@ -53,12 +55,12 @@ Technical (milder)
   (e.g. somebody pushed into your repository, or you ran "git
   fetch" to update the ref your working tree is on), "git
   checkout" without -f gets confused.  Figure out a good way to
-  handle this.
+  handle this. [DONE - waiting for response]
 
 * "git commit -m" should work for initial commits and perhaps
   merge commits as well.  Warning about merge is still a good
   thing to do, while -m is useful in scripted non-interactive
-  use, so we need to be careful.
+  use, so we need to be careful. [DONE - waiting for response]
 
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
@@ -69,11 +71,16 @@ Technical (milder)
 
     http://www.cs.berkeley.edu/~ejr/gits/git.git#portable 
 
+  [Looked at it.  Maybe promising.  Maybe not.]
+
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
 
 * Perhaps accept patches to introduce the concept of "patch flow
   expressed as ref mappings" Josef has been advocating about.
+
+* Perhaps accept patches to do undo/redo, but I am reluctant to
+  add commands to cover very limited use cases right now.
 
 * MIMEified applymbox to grok B and Q encodings in headers and
   turn them into UTF-8; unwrap QP; explode multipart.
@@ -82,6 +89,8 @@ Technical (milder)
   introduces in its ancestry chain, possibly using the 3-way
   merge machinery; update rebase using the cherry-pick command.
   Carl's redo/undo might fall out naturally from this.
+
+* Redo "git revert" using 3-way merge machinery. [Done.]
 
 * A tool to detect, show and prune already merged topic
   branches.
