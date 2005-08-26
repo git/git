@@ -1,4 +1,4 @@
-MAN1_TXT=$(wildcard git-*.txt)
+MAN1_TXT=$(wildcard git-*.txt) gitk.txt
 MAN7_TXT=git.txt
 
 DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
