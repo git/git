@@ -1,0 +1,95 @@
+What to expect after 0.99.5
+===========================
+
+This is written in a form of to-do list for me, so if I say
+"accept patch", it means I do not currently plan to do that
+myself.  People interested in seeing it materialize please take
+a hint.
+
+
+Documentation
+-------------
+
+* Accept patches from people who actually have done CVS
+  migration and update the cvs-migration documentation.
+  Link the documentation from the main git.txt page.
+
+* Update the SubmittingPatches document to add MUA specific
+  hints on how to disable unwanted MIME and flowed-text by
+  collecting past list postings.  Accept patches from people who
+  was hit by shiny blue bat to update the same.
+
+* Talk about using rsync just once at the beginning when
+  initializing a remote repository so that local packs do not
+  need to be expanded.  I personally do not think we need tool
+  support for this.
+
+* Update tutorial to cover shared repository style a bit more,
+  maybe with a toy project that involves two or three
+  repositories.
+
+* Update tutorial to cover setting up repository hooks to do
+  common tasks.
+
+* Get help to properly use asciidoc in tutorial.
+
+* Maybe justify and demonstrate an Octopus in the tutorial.  Add
+  it to the glossary.
+
+
+Technical (heavier)
+-------------------
+
+* Tony Luck reported an unfortunate glitch in the 3-way merge.
+  Encourage discussions to come up with a not-so-expensive way
+  to catch the kind of ambiguities that led to his misery.
+
+
+Technical (milder)
+------------------
+
+* When the branch head pointed by $GIT_DIR/HEAD changes while
+  the index file and working tree are looking the other way
+  (e.g. somebody pushed into your repository, or you ran "git
+  fetch" to update the ref your working tree is on), "git
+  checkout" without -f gets confused.  Figure out a good way to
+  handle this.
+
+* "git commit -m" should work for initial commits and perhaps
+  merge commits as well.  Warning about merge is still a good
+  thing to do, while -m is useful in scripted non-interactive
+  use, so we need to be careful.
+
+* Encourage concrete proposals to commit log message templates
+  we discussed some time ago.
+
+* Bug Ryan and work with him to update send-email easier to use.
+
+* Look at portability fixes from Jason Riedy
+
+    http://www.cs.berkeley.edu/~ejr/gits/git.git#portable 
+
+* Accept patches to cause "read-tree -u" delete a directory when
+  it makes it empty.
+
+* Perhaps accept patches to introduce the concept of "patch flow
+  expressed as ref mappings" Josef has been advocating about.
+
+* MIMEified applymbox to grok B and Q encodings in headers and
+  turn them into UTF-8; unwrap QP; explode multipart.
+
+* "git cherry-pick" that applies the patch an existing commit
+  introduces in its ancestry chain, possibly using the 3-way
+  merge machinery; update rebase using the cherry-pick command.
+  Carl's redo/undo might fall out naturally from this.
+
+* A tool to detect, show and prune already merged topic
+  branches.
+
+* Perhaps "git branch -d" to delete a branch.
+
+* Enhance "git repack" to not always use --all; this would be
+  handy if the repository contains wagging heads like "pu" in
+  git.git repository.
+
+* Remove "git clone-dumb-http".
