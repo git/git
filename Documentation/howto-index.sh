@@ -20,8 +20,30 @@ do
 		s/[ 	]*$//
 		s/^/by /
 		p
+	}
+	' "$txt"`
+
+	abstract=`sed -ne '
+	/^Abstract:[ 	]/{
+		s/^[^ 	]*//
+		x
+		s/.*//
+		x
+		: again
+		/^[ 	]/{
+			s/^[ 	]*//
+			H
+			n
+			b again
+		}
+		x
+		p
+		q
 	}' "$txt"`
-	echo "
-	* link:$txt[$title] $from"
+
+	echo "* link:$txt[$title] $from
+$abstract
+
+"
 
 done

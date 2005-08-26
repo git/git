@@ -3,6 +3,11 @@ To:	git@vger.kernel.org
 Cc:	Petr Baudis <pasky@suse.cz>, Linus Torvalds <torvalds@osdl.org>
 Subject: Re: sending changesets from the middle of a git tree
 Date:	Sun, 14 Aug 2005 18:37:39 -0700
+Abstract: In this article, JC talks about how he rebases the
+ public "pu" branch using the core GIT tools when he updates
+ the "master" branch, and how "rebase" works.  Also discussed
+ is how this applies to individual developers who sends patches
+ upstream.
 
 Petr Baudis <pasky@suse.cz> writes:
 

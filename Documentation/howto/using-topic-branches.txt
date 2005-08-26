@@ -1,6 +1,8 @@
 Date: Mon, 15 Aug 2005 12:17:41 -0700
 From: tony.luck@intel.com
 Subject: Some tutorial text (was git/cogito workshop/bof at linuxconf au?)
+Abstract: In this article, Tony Luck discusses how he uses GIT
+ as a Linux subsystem maintainer.
 
 Here's something that I've been putting together on how I'm using
 GIT as a Linux subsystem maintainer.
