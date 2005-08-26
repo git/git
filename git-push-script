@@ -26,6 +26,10 @@ do
 	esac
 	shift
 done
+case "$#" in
+0)
+	die "Where would you want to push today?" ;;
+esac
 
 . git-parse-remote-script
 remote=$(get_remote_url "$@")
