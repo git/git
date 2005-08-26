@@ -9,7 +9,8 @@ Package: git-core
 Architecture: any
 Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, patch, rcs
 Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl
-Conflicts: git
+Suggests: cogito
+Conflicts: git, cogito (<< 0.13)
 Description: The git content addressable filesystem
  GIT comes in two layers. The bottom layer is merely an extremely fast
  and flexible filesystem-based database designed to store directory trees
