@@ -260,9 +260,6 @@ Manipulators:
 link:git-relink-script.html[git-relink-script]::
 	Hardlink common objects in local repositories.
 
-link:git-apply-patch-script.html[git-apply-patch-script]::
-	Sample script to apply the diffs from git-diff-*
-
 link:git-convert-cache.html[git-convert-cache]::
 	Converts old-style GIT repository
 

@@ -57,7 +57,7 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 
 
-SCRIPTS=git git-apply-patch-script git-merge-one-file-script git-prune-script \
+SCRIPTS=git git-merge-one-file-script git-prune-script \
 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
 	git-fetch-script git-status-script git-commit-script \
 	git-log-script git-shortlog git-cvsimport-script git-diff-script \
