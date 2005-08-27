@@ -1,6 +1,6 @@
 git(7)
 ======
-v0.99.4, Aug 2005
+v0.99.5, Aug 2005
 
 NAME
 ----
@@ -195,6 +195,18 @@ link:git-update-server-info.html[git-update-server-info]::
 
 Porcelain-ish Commands
 ----------------------
+link:git-revert-script.html[git-revert-script]::
+	Revert an existing commit.
+
+link:git-rebase-script.html[git-rebase-script]::
+	Rebase local commits to new upstream head.
+
+link:git-add-script.html[git-add-script]::
+	Add paths to the index file.
+
+link:git-branch-script.html[git-branch-script]::
+	Create and Show branches.
+
 link:git-whatchanged.html[git-whatchanged]::
 	Shows commit logs and differences they introduce.
 
@@ -237,10 +249,16 @@ link:git-rename-script.html[git-rename]::
 link:git-ls-remote-script.html[git-ls-remote-script]::
 	Shows references in a remote or local repository.
 
+link:git-verify-tag-script.html[git-verify-tag-script]::
+	Check the GPG signature of tag.
+
 
 Ancillary Commands
 ------------------
 Manipulators:
+
+link:git-relink-script.html[git-relink-script]::
+	Hardlink common objects in local repositories.
 
 link:git-apply-patch-script.html[git-apply-patch-script]::
 	Sample script to apply the diffs from git-diff-*
@@ -263,6 +281,15 @@ link:git-cvsimport-script.html[git-cvsimport-script]::
 
 Interrogators:
 
+link:git-patch-id.html[git-patch-id]::
+	Compute unique ID for a patch.
+
+link:git-count-objects-script.html[git-count-objects-script]::
+	Count unpacked number of objects and their disk consumption.
+
+link:git-cherry.html[git-cherry]::
+	Find commits not merged upstream.
+
 link:git-diff-helper.html[git-diff-helper]::
 	Generates patch format output for git-diff-*
 
@@ -271,6 +298,9 @@ link:git-ssh-push.html[git-ssh-push]::
 
 link:git-send-email-script.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
+
+link:git-sh-setup-script.html[git-sh-setup-script]::
+	Common git shell script setup code.
 
 
 Commands not yet documented
@@ -288,14 +318,8 @@ link:git-mailinfo.html[git-mailinfo]::
 link:git-mailsplit.html[git-mailsplit]::
 	git-mailsplit.
 
-link:git-add-script.html[git-add-script]::
-	git-add-script.
-
 link:git-bisect-script.html[git-bisect-script]::
 	git-bisect-script.
-
-link:git-branch-script.html[git-branch-script]::
-	git-branch-script.
 
 link:git-build-rev-cache.html[git-build-rev-cache]::
 	git-build-rev-cache.
@@ -303,14 +327,8 @@ link:git-build-rev-cache.html[git-build-rev-cache]::
 link:git-checkout-script.html[git-checkout-script]::
 	git-checkout-script.
 
-link:git-cherry.html[git-cherry]::
-	git-cherry.
-
 link:git-clone-dumb-http.html[git-clone-dumb-http]::
 	git-clone-dumb-http.
-
-link:git-count-objects-script.html[git-count-objects-script]::
-	git-count-objects-script.
 
 link:git-daemon.html[git-daemon]::
 	git-daemon.
@@ -324,15 +342,6 @@ link:git-format-patch-script.html[git-format-patch-script]::
 link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
 	git-get-tar-commit-id.
 
-link:git-patch-id.html[git-patch-id]::
-	git-patch-id.
-
-link:git-rebase-script.html[git-rebase-script]::
-	git-rebase-script.
-
-link:git-relink-script.html[git-relink-script]::
-	git-relink-script.
-
 link:git-request-pull-script.html[git-request-pull-script]::
 	git-request-pull-script.
 
@@ -342,20 +351,11 @@ link:git-reset-script.html[git-reset-script]::
 link:git-rev-parse.html[git-rev-parse]::
 	git-rev-parse.
 
-link:git-revert-script.html[git-revert-script]::
-	git-revert-script.
-
-link:git-sh-setup-script.html[git-sh-setup-script]::
-	git-sh-setup-script.
-
 link:git-show-rev-cache.html[git-show-rev-cache]::
 	git-show-rev-cache.
 
 link:git-stripspace.html[git-stripspace]::
 	git-stripspace.
-
-link:git-verify-tag-script.html[git-verify-tag-script]::
-	git-verify-tag-script.
 
 link:gitk.html[gitk]::
 	gitk.

@@ -3,26 +3,20 @@ git-verify-tag-script(1)
 
 NAME
 ----
-git-verify-tag-script - Some git command not yet documented.
-
+git-verify-tag-script - Check the GPG signature of tag.
 
 SYNOPSIS
 --------
-'git-verify-tag-script' [ --option ] <args>...
+'git-verify-tag-script' <tag>
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Validates the gpg signature created by git-tag-script.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
-
+<tag>::
+	SHA1 identifier of a git tag object.
 
 Author
 ------

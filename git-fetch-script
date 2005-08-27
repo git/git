@@ -7,28 +7,33 @@ _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
 append=
 force=
+update_head_ok=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
 	-a|--a|--ap|--app|--appe|--appen|--append)
 		append=t
-		shift
 		;;
 	-f|--f|--fo|--for|--forc|--force)
 		force=t
-		shift
+		;;
+	-u|--u|--up|--upd|--upda|--updat|--update|--update-|--update-h|\
+	--update-he|--update-hea|--update-head|--update-head-|\
+	--update-head-o|--update-head-ok)
+		update_head_ok=t
 		;;
 	*)
 		break
 		;;
 	esac
+	shift
 done
 
 case "$#" in
 0)
 	test -f "$GIT_DIR/branches/origin" ||
 		test -f "$GIT_DIR/remotes/origin" ||
-			die "Where do you want to fetch from?"
+			die "Where do you want to fetch from today?"
 	set origin ;;
 esac
 
@@ -124,6 +129,12 @@ fast_forward_local () {
     esac
 }
 
+case "$update_head_ok" in
+'')
+	orig_head=$(cat "$GIT_DIR/HEAD" 2>/dev/null)
+	;;
+esac
+
 for ref in $(get_remote_refs_for_fetch "$@")
 do
     refs="$refs $ref"
@@ -150,7 +161,7 @@ do
 	fi
 	head=$(curl -nsf $curl_extra_args "$remote/$remote_name") &&
 	expr "$head" : "$_x40\$" >/dev/null ||
-	    die "Failed to fetch $remote_name from $remote"
+		die "Failed to fetch $remote_name from $remote"
 	echo Fetching "$remote_name from $remote" using http
 	git-http-pull -v -a "$head" "$remote/" || exit
 	;;
@@ -200,4 +211,19 @@ http://* | https://* | rsync://* )
 	append_fetch_head "$sha1" "$remote" "$remote_name" "$remote_nick" "$local_name"
     done
     ;;
+esac
+
+# If the original head was empty (i.e. no "master" yet), or
+# if we were told not to worry, we do not have to check.
+case ",$update_head_ok,$orig_head," in
+*,, | t,* )
+	;;
+*)
+	curr_head=$(cat "$GIT_DIR/HEAD" 2>/dev/null)
+	if test "$curr_head" != "$orig_head"
+	then
+		echo "$orig_head" >$GIT_DIR/HEAD
+		die "Cannot fetch into the current branch."
+	fi
+	;;
 esac

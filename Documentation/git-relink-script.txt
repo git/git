@@ -3,26 +3,25 @@ git-relink-script(1)
 
 NAME
 ----
-git-relink-script - Some git command not yet documented.
-
+git-relink-script - Hardlink common objects in local repositories.
 
 SYNOPSIS
 --------
-'git-relink-script' [ --option ] <args>...
+'git-relink-script' [--safe] <dir> <dir> [<dir>]\*
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+This will scan 2 or more object repositories and look for common objects, check
+if they are hardlinked, and replace one with a hardlink to the other if not.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+--safe::
+	Stops if two objects with the same hash exist but have different sizes.
+	Default is to warn and continue.
 
-<args>...::
-	Some argument not yet documented.
-
+<dir>::
+	Directories containing a .git/objects/ subdirectory.
 
 Author
 ------
