@@ -18,8 +18,8 @@ Documentation
 
 * Update the SubmittingPatches document to add MUA specific
   hints on how to disable unwanted MIME and flowed-text by
-  collecting past list postings.  Accept patches from people who
-  was hit by shiny blue bat to update the same. [NEEDSWORK]
+  collecting past list postings [DONE].  Accept patches from
+  people who was hit by shiny blue bat to update the same.
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -69,7 +69,7 @@ Technical (milder)
   We still have the same issue with "git fetch".  Fetching into
   the branch one is on _may_ need to do the same thing as
   fetching into anonymous head and then do the resolve.  At
-  least it needs a warning. [NEEDSWORK]
+  least it needs a warning. [DONE]
 
 * "git commit -m" should work for initial commits and perhaps
   merge commits as well.  Warning about merge is still a good
@@ -125,6 +125,8 @@ Technical (milder)
   workflow, and document it in howto form if it does.
 
 * Add names to all nodes in show-branch.
+
+* Option to limit rename detection for more than N paths.
 
 
 Technical (trivial)
