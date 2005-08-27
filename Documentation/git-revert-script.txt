@@ -3,26 +3,22 @@ git-revert-script(1)
 
 NAME
 ----
-git-revert-script - Some git command not yet documented.
-
+git-revert-script - Revert an existing commit.
 
 SYNOPSIS
 --------
-'git-revert-script' [ --option ] <args>...
+'git-revert-script' <commit>
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Given one existing commit, revert the change the patch introduces, and record a
+new commit that records it.  This requires your working tree to be clean (no
+modifications from the HEAD commit).
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
-
+<commit>::
+	Commit to revert.
 
 Author
 ------

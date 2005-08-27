@@ -3,26 +3,21 @@ git-add-script(1)
 
 NAME
 ----
-git-add-script - Some git command not yet documented.
-
+git-add-script - Add files to the cache.
 
 SYNOPSIS
 --------
-'git-add-script' [ --option ] <args>...
+'git-add-script' [<file>]\+
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+A simple wrapper to git-update-cache to add files to the cache for people used
+to do "cvs add".
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
-
+<file>::
+	Files to add to the cache.
 
 Author
 ------

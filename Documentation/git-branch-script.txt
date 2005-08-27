@@ -3,26 +3,27 @@ git-branch-script(1)
 
 NAME
 ----
-git-branch-script - Some git command not yet documented.
-
+git-branch-script - Create a new branch.
 
 SYNOPSIS
 --------
-'git-branch-script' [ --option ] <args>...
+'git-branch-script' [<branchname> [start-point]]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+If no argument is provided, show available branches and mark current
+branch with star. Otherwise, create a new branch of name <branchname>.
 
+If a starting point is also specified, that will be where the branch is
+created, otherwise it will be created at the current HEAD.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+<branchname>::
+	The name of the branch to create.
 
-<args>...::
-	Some argument not yet documented.
-
+start-point::
+	Where to make the branch; defaults to HEAD.
 
 Author
 ------

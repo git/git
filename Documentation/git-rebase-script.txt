@@ -3,26 +3,23 @@ git-rebase-script(1)
 
 NAME
 ----
-git-rebase-script - Some git command not yet documented.
-
+git-rebase-script - Rebase local commits to new upstream head.
 
 SYNOPSIS
 --------
-'git-rebase-script' [ --option ] <args>...
+'git-rebase-script' <upstream> [<head>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Rebases local commits to the new head of the upstream tree.'
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+<upstream>::
+	Upstream branch to compare against.
 
-<args>...::
-	Some argument not yet documented.
-
+<head>::
+	Working branch; defaults to HEAD.
 
 Author
 ------

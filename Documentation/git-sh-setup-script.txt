@@ -3,26 +3,22 @@ git-sh-setup-script(1)
 
 NAME
 ----
-git-sh-setup-script - Some git command not yet documented.
-
+git-sh-setup-script - Common git shell script setup code.
 
 SYNOPSIS
 --------
-'git-sh-setup-script' [ --option ] <args>...
+'git-sh-setup-script'
 
 DESCRIPTION
 -----------
-Does something not yet documented.
 
+Sets up the normal git environment variables and a few helper functions
+(currently just "die()"), and returns ok if it all looks like a git archive.
+So use it something like
 
-OPTIONS
--------
---option::
-	Some option not yet documented.
+	. git-sh-setup-script || die "Not a git archive"
 
-<args>...::
-	Some argument not yet documented.
-
+to make the rest of the git scripts more careful and readable.
 
 Author
 ------

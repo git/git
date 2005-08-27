@@ -3,26 +3,16 @@ git-count-objects-script(1)
 
 NAME
 ----
-git-count-objects-script - Some git command not yet documented.
-
+git-count-objects-script - Reports on unpacked objects.
 
 SYNOPSIS
 --------
-'git-count-objects-script' [ --option ] <args>...
+'git-count-objects-script'
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
-
-OPTIONS
--------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
-
+This counts the number of unpacked object files and disk space consumed by
+them, to help you decide when it is a good time to repack.
 
 Author
 ------

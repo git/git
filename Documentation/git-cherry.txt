@@ -3,26 +3,30 @@ git-cherry(1)
 
 NAME
 ----
-git-cherry - Some git command not yet documented.
-
+git-cherry - Find commits not merged upstream.
 
 SYNOPSIS
 --------
-'git-cherry' [ --option ] <args>...
+'git-cherry' [-v] <upstream> [<head>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Each commit between the fork-point and <head> is examined, and compared against
+the change each commit between the fork-point and <upstream> introduces.
+Commits already included in upstream are prefixed with '-' (meaning "drop from
+my local pull"), while commits missing from upstream are prefixed with '+'
+(meaning "add to the updated upstream").
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+-v::
+	Verbose.
 
-<args>...::
-	Some argument not yet documented.
+<upstream>::
+	Upstream branch to compare against.
 
+<head>::
+	Working branch; defaults to HEAD.
 
 Author
 ------
