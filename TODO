@@ -19,7 +19,7 @@ Documentation
 * Update the SubmittingPatches document to add MUA specific
   hints on how to disable unwanted MIME and flowed-text by
   collecting past list postings.  Accept patches from people who
-  was hit by shiny blue bat to update the same.
+  was hit by shiny blue bat to update the same. [NEEDSWORK]
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -31,7 +31,7 @@ Documentation
   repositories.
 
 * Update tutorial to cover setting up repository hooks to do
-  common tasks.
+  common tasks. [IN PROGRESS]
 
 * Get help to properly use asciidoc in tutorial.
 
@@ -45,6 +45,8 @@ Technical (heavier)
 * Tony Luck reported an unfortunate glitch in the 3-way merge.
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
+  [Underway.  Thanks Daniel and Fredrik for taking an
+  initiative.]
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -52,6 +54,7 @@ Technical (heavier)
   file for this.  Also this itself may turn out to be a bad
   idea, making the set of packs in repositories everybody has
   different from each other.
+
 
 Technical (milder)
 ------------------
@@ -61,7 +64,12 @@ Technical (milder)
   (e.g. somebody pushed into your repository, or you ran "git
   fetch" to update the ref your working tree is on), "git
   checkout" without -f gets confused.  Figure out a good way to
-  handle this. [DONE - waiting for response]
+  handle this. [DONE]
+
+  We still have the same issue with "git fetch".  Fetching into
+  the branch one is on _may_ need to do the same thing as
+  fetching into anonymous head and then do the resolve.  At
+  least it needs a warning. [NEEDSWORK]
 
 * "git commit -m" should work for initial commits and perhaps
   merge commits as well.  Warning about merge is still a good
@@ -86,32 +94,43 @@ Technical (milder)
 * Perhaps accept patches to introduce the concept of "patch flow
   expressed as ref mappings" Josef has been advocating about.
 
-* Perhaps accept patches to do undo/redo, but I am reluctant to
-  add commands to cover very limited use cases right now.
+* Perhaps accept patches to do undo/redo.
 
 * MIMEified applymbox to grok B and Q encodings in headers and
   turn them into UTF-8; unwrap QP; explode multipart.
 
 * "git cherry-pick" that applies the patch an existing commit
   introduces in its ancestry chain, possibly using the 3-way
-  merge machinery; update rebase using the cherry-pick command.
-  Carl's redo/undo might fall out naturally from this.
+  merge machinery. [Done.  Needs documentation.]
 
-* Redo "git revert" using 3-way merge machinery. [Done.]
+* Update rebase using the cherry-pick command. [Done]
+
+* Redo "git revert" using 3-way merge machinery. [Done]
 
 * A tool to detect, show and prune already merged topic
   branches.
 
 * Set up an automated documentation rebuilding procedure at
-  kernel.org, using update hook mechanism. [Almost, but not quite.]
+  kernel.org, using update hook mechanism. [Almost, but not
+  quite.]  Describe it in a howto form [Done].
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
   git.git repository.
 
+* Internally split the project into non-doc and doc parts; add
+  an extra root for the doc part and merge from it; move the
+  internal doc source to a separate repository, like the +Meta
+  repository; experiment if this results in a reasonable
+  workflow, and document it in howto form if it does.
+
+* Add names to all nodes in show-branch.
+
 
 Technical (trivial)
 -------------------
+
+* Look at and merge Debian fixes from Tommi [Done].
 
 * Perhaps "git branch -d" to delete a branch.
 
@@ -127,3 +146,8 @@ Technical (trivial)
     diff-cache
     diff-tree
     rev-list
+
+
+Local Variables:
+mode: text
+End:
