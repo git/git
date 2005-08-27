@@ -11,7 +11,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Rebases local commits to the new head of the upstream tree.'
+Rebases local commits to the new head of the upstream tree.
 
 OPTIONS
 -------

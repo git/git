@@ -7,7 +7,7 @@ git-add-script - Add files to the cache.
 
 SYNOPSIS
 --------
-'git-add-script' [<file>]\+
+'git-add-script' <file>...
 
 DESCRIPTION
 -----------
@@ -16,7 +16,7 @@ to do "cvs add".
 
 OPTIONS
 -------
-<file>::
+<file>...::
 	Files to add to the cache.
 
 Author
