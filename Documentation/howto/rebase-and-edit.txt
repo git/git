@@ -3,6 +3,9 @@ From:	Linus Torvalds <torvalds@osdl.org>
 To:	Steve French <smfrench@austin.rr.com>
 cc:	git@vger.kernel.org
 Subject: Re: sending changesets from the middle of a git tree
+Abstract: In this article, Linus demonstrates how a broken commit
+ in a sequence of commits can be removed by rewinding the head and
+ reapplying selected changes.
 
 On Sat, 13 Aug 2005, Linus Torvalds wrote:
 

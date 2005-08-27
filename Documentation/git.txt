@@ -24,6 +24,11 @@ clarification info - read that first.  And of the commands, I suggest
 reading link:git-update-cache.html[git-update-cache] and
 link:git-read-tree.html[git-read-tree] first - I wish I had!
 
+After you get the general feel from the tutorial and this
+overview page, you may want to take a look at the
+link:howto-index.html[howto] documents.
+
+
 David Greaves <david@dgreaves.com>
 08/05/05
 

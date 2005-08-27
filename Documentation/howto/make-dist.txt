@@ -3,6 +3,11 @@ From: Linus Torvalds <torvalds@osdl.org>
 To: Dave Jones <davej@redhat.com>
 cc: git@vger.kernel.org
 Subject: Re: Fwd: Re: git checkout -f branch doesn't remove extra files
+Abstract: In this article, Linus talks about building a tarball,
+ incremental patch, and ChangeLog, given a base release and two
+ rc releases, following the convention of giving the patch from
+ the base release and the latest rc, with ChangeLog between the
+ last rc and the latest rc.
 
 On Sat, 13 Aug 2005, Dave Jones wrote:
 >
