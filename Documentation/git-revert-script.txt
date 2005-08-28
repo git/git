@@ -7,7 +7,7 @@ git-revert-script - Revert an existing commit.
 
 SYNOPSIS
 --------
-'git-revert-script' <commit>
+'git-revert-script' [-n] <commit>
 
 DESCRIPTION
 -----------
@@ -19,6 +19,20 @@ OPTIONS
 -------
 <commit>::
 	Commit to revert.
+
+-n::
+	Usually the command automatically creates a commit with
+	a commit log message stating which commit was reverted.
+	This flag applies the change necessary to revert the
+	named commit to your working tree, but does not make the
+	commit.  In addition, when this option is used, your
+	working tree does not have to match the HEAD commit.
+	The revert is done against the beginning state of your
+	working tree.
+
+	This is useful when reverting more than one commits'
+	effect to your working tree in a row.
+
 
 Author
 ------

@@ -198,6 +198,9 @@ Porcelain-ish Commands
 link:git-revert-script.html[git-revert-script]::
 	Revert an existing commit.
 
+link:git-cherry-pick-script.html[git-cherry-pick-script]::
+	Cherry-pick the effect of an existing commit.
+
 link:git-rebase-script.html[git-rebase-script]::
 	Rebase local commits to new upstream head.
 
