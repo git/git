@@ -19,7 +19,7 @@ Documentation
 * Update the SubmittingPatches document to add MUA specific
   hints on how to disable unwanted MIME and flowed-text by
   collecting past list postings [DONE].  Accept patches from
-  people who was hit by shiny blue bat to update the same.
+  people who were hit by shiny blue bat to update the same.
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -86,7 +86,8 @@ Technical (milder)
 
     http://www.cs.berkeley.edu/~ejr/gits/git.git#portable 
 
-  [Looked at it.  Maybe promising.  Maybe not.]
+  [Looked at it.  Maybe promising.  Maybe not.  I am not sure
+  what the goals are.  Need to respond to Jason.]
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -97,7 +98,7 @@ Technical (milder)
 * Perhaps accept patches to do undo/redo.
 
 * MIMEified applymbox to grok B and Q encodings in headers and
-  turn them into UTF-8; unwrap QP; explode multipart.
+  turn them into UTF-8; unwrap QP; explode multipart. [IN PROGRESS]
 
 * "git cherry-pick" that applies the patch an existing commit
   introduces in its ancestry chain, possibly using the 3-way
@@ -117,6 +118,9 @@ Technical (milder)
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
   git.git repository.
+
+* Accept and apply "git repack --all" patch, except the part
+  that removes the existing packs.
 
 * Internally split the project into non-doc and doc parts; add
   an extra root for the doc part and merge from it; move the
