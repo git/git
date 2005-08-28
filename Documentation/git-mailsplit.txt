@@ -3,26 +3,24 @@ git-mailsplit(1)
 
 NAME
 ----
-git-mailsplit - Some git command not yet documented.
-
+git-mailsplit - Totally braindamaged mbox splitter program.
 
 SYNOPSIS
 --------
-'git-mailsplit' [ --option ] <args>...
+'git-mailsplit' <mbox> <directory>
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Splits a mbox file into a list of files: "0001" "0002" ..  in the specified
+directory so you can process them further from there.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+<mbox>::
+	Mbox file to split.
 
-<args>...::
-	Some argument not yet documented.
-
+<directory>::
+	Directory in which to place the individual messages.
 
 Author
 ------
