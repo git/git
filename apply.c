@@ -387,7 +387,7 @@ static char *git_header_name(char *line)
 		default:
 			continue;
 		case '\n':
-			break;
+			return NULL;
 		case '\t': case ' ':
 			second = name+len;
 			for (;;) {
