@@ -19,7 +19,8 @@ Documentation
 * Update the SubmittingPatches document to add MUA specific
   hints on how to disable unwanted MIME and flowed-text by
   collecting past list postings [DONE].  Accept patches from
-  people who were hit by shiny blue bat to update the same.
+  people who were hit by shiny blue bat to update the same [IN
+  PROGRESS].
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -55,6 +56,11 @@ Technical (heavier)
   idea, making the set of packs in repositories everybody has
   different from each other.
 
+* Maybe a pack optimizer.  I am not convinced that packing all
+  objects into a single pack and removing all the existing pack
+  is the right way to go, since that would work against people
+  who already have those packs.
+
 
 Technical (milder)
 ------------------
@@ -74,7 +80,7 @@ Technical (milder)
 * "git commit -m" should work for initial commits and perhaps
   merge commits as well.  Warning about merge is still a good
   thing to do, while -m is useful in scripted non-interactive
-  use, so we need to be careful. [DONE - waiting for response]
+  use, so we need to be careful. [DONE]
 
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
@@ -86,8 +92,7 @@ Technical (milder)
 
     http://www.cs.berkeley.edu/~ejr/gits/git.git#portable 
 
-  [Looked at it.  Maybe promising.  Maybe not.  I am not sure
-  what the goals are.  Need to respond to Jason.]
+  [Looked at it. Still undecided.]
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -98,29 +103,30 @@ Technical (milder)
 * Perhaps accept patches to do undo/redo.
 
 * MIMEified applymbox to grok B and Q encodings in headers and
-  turn them into UTF-8; unwrap QP; explode multipart. [IN PROGRESS]
+  turn them into UTF-8; unwrap QP; explode multipart.
+  [DONE. waiting for a bug to happen ;-) ]
 
 * "git cherry-pick" that applies the patch an existing commit
   introduces in its ancestry chain, possibly using the 3-way
-  merge machinery. [Done.  Needs documentation.]
+  merge machinery. [DONE]
 
-* Update rebase using the cherry-pick command. [Done]
+* Update rebase using the cherry-pick command. [DONE]
 
-* Redo "git revert" using 3-way merge machinery. [Done]
+* Redo "git revert" using 3-way merge machinery. [DONE]
 
 * A tool to detect, show and prune already merged topic
   branches.
 
 * Set up an automated documentation rebuilding procedure at
-  kernel.org, using update hook mechanism. [Almost, but not
-  quite.]  Describe it in a howto form [Done].
+  kernel.org, using update hook mechanism. [DONE]  Describe it
+  in a howto form [DONE].
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
   git.git repository.
 
 * Accept and apply "git repack --all" patch, except the part
-  that removes the existing packs.
+  that removes the existing packs. [Undecided]
 
 * Internally split the project into non-doc and doc parts; add
   an extra root for the doc part and merge from it; move the
