@@ -191,7 +191,7 @@ Thunderbird
 (A Large Angry SCM)
 
 Here are some hints on how to successfully submit patches inline using
-Thunderbird.
+Thunderbird. [*3*]
 
 This recipe appears to work with the current [*1*] Thunderbird from Suse.
 
@@ -236,5 +236,7 @@ settings but I haven't tried, yet.
 	mail.identity.default.compose_html	=> false
 	mail.identity.id?.compose_html		=> false
 
-
+*3* Even after following these hints, Thunderbird will still trim
+trailing whitespace from each line. I currently have no work around for
+for this issue.
 
