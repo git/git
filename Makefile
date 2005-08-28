@@ -215,6 +215,7 @@ check:
 install: $(PROG) $(SCRIPTS)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(DESTDIR)$(bindir)
+	$(INSTALL) git-revert-script $(DESTDIR)$(bindir)/git-cherry-pick-script
 	$(MAKE) -C templates install
 	$(MAKE) -C tools install
 
