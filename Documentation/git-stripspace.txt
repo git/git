@@ -3,26 +3,21 @@ git-stripspace(1)
 
 NAME
 ----
-git-stripspace - Some git command not yet documented.
+git-stripspace - Fileter out empty lines.
 
 
 SYNOPSIS
 --------
-'git-stripspace' [ --option ] <args>...
+'git-stripspace' < <stream>
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Remove multiple empty lines, and empty lines at beginning and end.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
-
+<stream>::
+	Byte stream to act on.
 
 Author
 ------

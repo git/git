@@ -73,14 +73,25 @@ MIME-attached change being accepted, but it makes it more likely
 that it will be postponed.
 
 Exception:  If your mailer is mangling patches then someone may ask
-you to re-send them using MIME.
+you to re-send them using MIME, that is OK.
 
-Note that your maintainer does not subscribe to the git mailing
-list (he reads it via mail-to-news gateway).  If your patch is
-for discussion first, send it "To:" the mailing list, and
-optoinally "cc:" him.  If it is trivially correct or after list
-discussion reached consensus, send it "To:" the maintainer and
-optionally "cc:" the list.
+Do not PGP sign your patch, at least for now.  Most likely, your
+maintainer or other people on the list would not have your PGP
+key and would not bother obtaining it anyway.  Your patch is not
+judged by who you are; a good patch from an unknown origin has a
+far better chance of being accepted than a patch from a known,
+respected origin that is done poorly or does incorrect things.
+
+If you really really really really want to do a PGP signed
+patch, format it as "multipart/signed", not a text/plain message
+that starts with '-----BEGIN PGP SIGNED MESSAGE-----'.  That is
+not a text/plain, it's something else.
+
+Note that your maintainer does not necessarily read everything
+on the git mailing list.  If your patch is for discussion first,
+send it "To:" the mailing list, and optionally "cc:" him.  If it
+is trivially correct or after the list reached a consensus, send
+it "To:" the maintainer and optionally "cc:" the list.
 
 
 (6) Sign your work
@@ -128,3 +139,152 @@ then you just add a line saying
 Some people also put extra tags at the end.  They'll just be ignored for
 now, but you can do this to mark internal company procedures or just
 point out some special detail about the sign-off.
+
+
+------------------------------------------------
+MUA specific hints
+
+Some of patches I receive or pick up from the list share common
+patterns of breakage.  Please make sure your MUA is set up
+properly not to corrupt whitespaces.  Here are two common ones
+I have seen:
+
+* Empty context lines that do not have _any_ whitespace.
+
+* Non empty context lines that have one extra whitespace at the
+  beginning.
+
+One test you could do yourself if your MUA is set up correctly is:
+
+* Send the patch to yourself, exactly the way you would, except
+  To: and Cc: lines, which would not contain the list and
+  maintainer address.
+
+* Save that patch to a file in UNIX mailbox format.  Call it say
+  a.patch.
+
+* Try to apply to the tip of the "master" branch from the
+  git.git public repository:
+
+    $ git fetch http://kernel.org/pub/scm/git/git.git master:test-apply
+    $ git checkout test-apply
+    $ git reset --hard
+    $ git applymbox a.patch
+
+If it does not apply correctly, there can be various reasons.
+
+* Your patch itself does not apply cleanly.  That is _bad_ but
+  does not have much to do with your MUA.  Please rebase the
+  patch appropriately.
+
+* Your MUA corrupted your patch; applymbox would complain that
+  the patch does not apply.  Look at .dotest/ subdirectory and
+  see what 'patch' file contains and check for the common
+  corruption patterns mentioned above.
+
+* While you are at it, check what are in 'info' and
+  'final-commit' files as well.  If what is in 'final-commit' is
+  not exactly what you would want to see in the commit log
+  message, it is very likely that your maintainer would end up
+  hand editing the log message when he applies your patch.
+  Things like "Hi, this is my first patch.\n", if you really
+  want to put in the patch e-mail, should come after the
+  three-dash line that signals the end of the commit message.
+
+
+Pine
+----
+
+(Johannes Schindelin)
+
+I don't know how many people still use pine, but for those poor
+souls it may be good to mention that the quell-flowed-text is
+needed for recent versions.
+
+... the "no-strip-whitespace-before-send" option, too. AFAIK it
+was introduced in 4.60.
+
+(Linus Torvalds)
+
+And 4.58 needs at least this.
+
+---
+diff-tree 8326dd8350be64ac7fc805f6563a1d61ad10d32c (from e886a61f76edf5410573e92e38ce22974f9c40f1)
+Author: Linus Torvalds <torvalds@g5.osdl.org>
+Date:   Mon Aug 15 17:23:51 2005 -0700
+
+    Fix pine whitespace-corruption bug
+
+    There's no excuse for unconditionally removing whitespace from
+    the pico buffers on close.
+
+diff --git a/pico/pico.c b/pico/pico.c
+--- a/pico/pico.c
++++ b/pico/pico.c
+@@ -219,7 +219,9 @@ PICO *pm;
+ 	    switch(pico_all_done){	/* prepare for/handle final events */
+ 	      case COMP_EXIT :		/* already confirmed */
+ 		packheader();
++#if 0
+ 		stripwhitespace();
++#endif
+ 		c |= COMP_EXIT;
+ 		break;
+ 
+
+
+Thunderbird
+-----------
+
+(A Large Angry SCM)
+
+Here are some hints on how to successfully submit patches inline using
+Thunderbird. [*3*]
+
+This recipe appears to work with the current [*1*] Thunderbird from Suse.
+
+The following Thunderbird extensions are needed:
+	AboutConfig 0.5
+		http://aboutconfig.mozdev.org/
+	External Editor 0.5.4
+		http://extensionroom.mozdev.org/more-info/exteditor
+
+1) Prepare the patch as a text file using your method of choice.
+
+2) Before opening a compose window, use Edit->Account Settings to
+uncheck the "Compose messages in HTML format" setting in the
+"Composition & Addressing" panel of the account to be used to send the
+patch. [*2*]
+
+3) In the main Thunderbird window, _before_ you open the compose window
+for the patch, use Tools->about:config to set the following to the
+indicated values:
+	mailnews.send_plaintext_flowed	=> false
+	mailnews.wraplength		=> 999
+
+4) Open a compose window and click the external editor icon.
+
+5) In the external editor window, read in the patch file and exit the
+editor normally.
+
+6) Back in the compose window: Add whatever other text you wish to the
+message, complete the addressing and subject fields, and press send.
+
+7) Optionally, undo the about:config/account settings changes made in
+steps 2 & 3.
+
+
+[Footnotes]
+*1* Version 1.0 (20041207) from the MozillaThunderbird-1.0-5 rpm of Suse
+9.3 professional updates.
+
+*2* It may be possible to do this with about:config and the following
+settings but I haven't tried, yet.
+	mail.html_compose			=> false
+	mail.identity.default.compose_html	=> false
+	mail.identity.id?.compose_html		=> false
+
+*3* Even after following these hints, Thunderbird will still trim
+trailing whitespace from each line. I currently have no work around for
+for this issue.
+

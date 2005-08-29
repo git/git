@@ -72,6 +72,24 @@ const char **get_pathspec(const char *prefix, char **pathspec)
 	return (const char **) pathspec;
 }
 
+/*
+ * Test it it looks like we're at the top
+ * level git directory. We want to see a
+ *
+ *  - a HEAD symlink and a refs/ directory under ".git"
+ *  - either a .git/objects/ directory _or_ the proper
+ *    GIT_OBJECT_DIRECTORY environment variable
+ */
+static int is_toplevel_directory(void)
+{
+	struct stat st;
+
+	return	!lstat(".git/HEAD", &st) &&
+		S_ISLNK(st.st_mode) &&
+		!access(".git/refs/", X_OK) &&
+		(gitenv(DB_ENVIRONMENT) || !access(".git/objects/", X_OK));
+}
+
 const char *setup_git_directory(void)
 {
 	static char cwd[PATH_MAX+1];
@@ -89,17 +107,8 @@ const char *setup_git_directory(void)
 
 	offset = len = strlen(cwd);
 	for (;;) {
-		/*
-		 * We always want to see a .git/refs/ subdirectory
-		 */
-		if (!access(".git/refs/", X_OK)) {
-			/*
-			 * Then we need either a GIT_OBJECT_DIRECTORY define
-			 * or a .git/objects/ directory
-			 */
-			if (gitenv(DB_ENVIRONMENT) || !access(".git/objects/", X_OK))
-				break;
-		}
+		if (is_toplevel_directory())
+			break;
 		chdir("..");
 		do {
 			if (!offset)
