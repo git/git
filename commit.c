@@ -102,7 +102,7 @@ static unsigned long parse_commit_date(const char *buf)
 static struct commit_graft {
 	unsigned char sha1[20];
 	int nr_parent;
-	unsigned char parent[0][20]; /* more */
+	unsigned char parent[][20]; /* more */
 } **commit_graft;
 static int commit_graft_alloc, commit_graft_nr;
 

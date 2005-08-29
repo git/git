@@ -283,7 +283,10 @@ void prepare_alt_odb(void)
 	char *map;
 	int fd;
 	struct stat st;
-	char *alt = gitenv(ALTERNATE_DB_ENVIRONMENT) ? : "";
+	char *alt;
+
+	alt = gitenv(ALTERNATE_DB_ENVIRONMENT);
+	if (!alt) alt = "";
 
 	sprintf(path, "%s/info/alternates", get_object_directory());
 	if (alt_odb_tail)

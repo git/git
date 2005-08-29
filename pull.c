@@ -156,7 +156,7 @@ static int loop(void)
 
 		//fprintf(stderr, "fetch %s\n", sha1_to_hex(obj->sha1));
 		
-		if (make_sure_we_have_it(obj->type ?: "object", 
+		if (make_sure_we_have_it(obj->type ? obj->type : "object", 
 					 obj->sha1))
 			return -1;
 		if (!obj->type)

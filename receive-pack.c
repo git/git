@@ -24,7 +24,7 @@ struct command {
 	unsigned char updated;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
-	char ref_name[0];
+	char ref_name[];
 };
 
 static struct command *commands = NULL;
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 
 	/* If we have a ".git" directory, chdir to it */
 	chdir(".git");
-	setenv("GIT_DIR", ".", 1);
+	putenv("GIT_DIR=.");
 
 	if (access("objects", X_OK) < 0 || access("refs/heads", X_OK) < 0)
 		die("%s doesn't appear to be a git directory", dir);
