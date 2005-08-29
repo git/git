@@ -19,6 +19,7 @@ static const char *external_diff(void)
 {
 	static const char *external_diff_cmd = NULL;
 	static int done_preparing = 0;
+	const char *env_diff_opts;
 
 	if (done_preparing)
 		return external_diff_cmd;
@@ -31,11 +32,11 @@ static const char *external_diff(void)
 	 *
 	 * GIT_DIFF_OPTS="-c";
 	 */
-	if (gitenv("GIT_EXTERNAL_DIFF"))
-		external_diff_cmd = gitenv("GIT_EXTERNAL_DIFF");
+	external_diff_cmd = gitenv("GIT_EXTERNAL_DIFF");
 
 	/* In case external diff fails... */
-	diff_opts = gitenv("GIT_DIFF_OPTS") ? : diff_opts;
+	env_diff_opts = gitenv("GIT_DIFF_OPTS");
+	if (env_diff_opts) diff_opts = env_diff_opts;
 
 	done_preparing = 1;
 	return external_diff_cmd;
@@ -530,10 +531,12 @@ static void run_external_diff(const char *pgm,
 	pid_t pid;
 	int status;
 	static int atexit_asked = 0;
+	const char *othername;
 
+	othername = (other? other : name);
 	if (one && two) {
 		prepare_temp_file(name, &temp[0], one);
-		prepare_temp_file(other ? : name, &temp[1], two);
+		prepare_temp_file(othername, &temp[1], two);
 		if (! atexit_asked &&
 		    (temp[0].name == temp[0].tmp_path ||
 		     temp[1].name == temp[1].tmp_path)) {
@@ -574,7 +577,7 @@ static void run_external_diff(const char *pgm,
 		 * otherwise we use the built-in one.
 		 */
 		if (one && two)
-			builtin_diff(name, other ? : name, temp, xfrm_msg,
+			builtin_diff(name, othername, temp, xfrm_msg,
 				     complete_rewrite);
 		else
 			printf("* Unmerged path %s\n", name);
@@ -889,13 +892,13 @@ int diff_queue_is_empty(void)
 void diff_debug_filespec(struct diff_filespec *s, int x, const char *one)
 {
 	fprintf(stderr, "queue[%d] %s (%s) %s %06o %s\n",
-		x, one ? : "",
+		x, one ? one : "",
 		s->path,
 		DIFF_FILE_VALID(s) ? "valid" : "invalid",
 		s->mode,
 		s->sha1_valid ? sha1_to_hex(s->sha1) : "");
 	fprintf(stderr, "queue[%d] %s size %lu flags %d\n",
-		x, one ? : "",
+		x, one ? one : "",
 		s->size, s->xfrm_flags);
 }
 
@@ -904,7 +907,7 @@ void diff_debug_filepair(const struct diff_filepair *p, int i)
 	diff_debug_filespec(p->one, i, "one");
 	diff_debug_filespec(p->two, i, "two");
 	fprintf(stderr, "score %d, status %c stays %d broken %d\n",
-		p->score, p->status ? : '?',
+		p->score, p->status ? p->status : '?',
 		p->source_stays, p->broken_pair);
 }
 

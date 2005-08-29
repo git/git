@@ -105,10 +105,12 @@ int main(int argc, char **argv)
         char *commit_id;
         char *url;
 	int fd_in, fd_out;
-	const char *prog = getenv("GIT_SSH_PULL") ? : "git-ssh-pull";
+	const char *prog;
 	unsigned char sha1[20];
 	char hex[41];
 
+	prog = getenv("GIT_SSH_PULL");
+	if (!prog) prog = "git-ssh-pull";
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 'w')
 			arg++;

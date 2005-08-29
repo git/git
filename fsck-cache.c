@@ -390,7 +390,10 @@ static int fsck_head_link(void)
 	char hex[40];
 	unsigned char sha1[20];
 	static char path[PATH_MAX], link[PATH_MAX];
-	const char *git_dir = gitenv(GIT_DIR_ENVIRONMENT) ? : DEFAULT_GIT_DIR_ENVIRONMENT;
+	const char *git_dir;
+
+	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
+	if (!git_dir) git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 
 	snprintf(path, sizeof(path), "%s/HEAD", git_dir);
 	if (readlink(path, link, sizeof(link)) < 0)
@@ -451,7 +454,7 @@ int main(int argc, char **argv)
 	if (standalone && check_full)
 		die("Only one of --standalone or --full can be used.");
 	if (standalone)
-		unsetenv("GIT_ALTERNATE_OBJECT_DIRECTORIES");
+		putenv("GIT_ALTERNATE_OBJECT_DIRECTORIES=");
 
 	fsck_head_link();
 	fsck_object_dir(get_object_directory());

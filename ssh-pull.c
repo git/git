@@ -87,7 +87,10 @@ int main(int argc, char **argv)
 	char *commit_id;
 	char *url;
 	int arg = 1;
-	const char *prog = getenv("GIT_SSH_PUSH") ? : "git-ssh-push";
+	const char *prog;
+
+	prog = getenv("GIT_SSH_PUSH");
+	if (!prog) prog = "git-ssh-push";
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
