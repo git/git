@@ -671,6 +671,7 @@ you have, you can say
 	git branch
 
 which is nothing more than a simple script around "ls .git/refs/heads".
+There will be asterisk in front of the branch you are currently on.
 
 Sometimes you may wish to create a new branch _without_ actually
 checking it out and switching to it. If so, just use the command
