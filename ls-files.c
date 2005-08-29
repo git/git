@@ -205,7 +205,7 @@ static int excluded(const char *pathname)
 
 struct nond_on_fs {
 	int len;
-	char name[];
+	char name[0];
 };
 
 static struct nond_on_fs **dir;

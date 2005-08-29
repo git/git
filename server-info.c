@@ -70,7 +70,7 @@ static struct pack_info {
 	int nr_alloc;
 	int nr_heads;
 	unsigned char (*head)[20];
-	char dep[]; /* more */
+	char dep[0]; /* more */
 } **info;
 static int num_pack;
 static const char *objdir;
