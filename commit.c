@@ -357,7 +357,7 @@ static int get_one_line(const char *msg, unsigned long len)
 static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const char *line)
 {
 	char *date;
-	unsigned int namelen;
+	int namelen;
 	unsigned long time;
 	int tz, ret;
 
