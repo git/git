@@ -41,7 +41,14 @@ do
 		q
 	}' "$txt"`
 
-	echo "* link:$txt[$title] $from
+	if grep 'Content-type: text/asciidoc' >/dev/null $txt
+	then
+		file=`expr "$txt" : '\(.*\)\.txt$'`.html
+	else
+		file="$txt"
+	fi
+
+	echo "* link:$file[$title] $from
 $abstract
 
 "
