@@ -105,12 +105,16 @@ bisect_next() {
 	good=$(git-rev-parse --sq --revs-only --not \
 		$(cd "$GIT_DIR" && ls refs/bisect/good-*)) &&
 	rev=$(eval "git-rev-list --bisect $good $bad") || exit
-	nr=$(eval "git-rev-list $rev $good" | wc -l) || exit
-	if [ "$nr" -le "1" ]; then
+	if [ -z "$rev" ]; then
+	    echo "$bad was both good and bad"
+	    exit 1
+	fi
+	if [ "$rev" = "$bad" ]; then
 	    echo "$rev is first bad commit"
 	    git-diff-tree --pretty $rev
 	    exit 0
 	fi
+	nr=$(eval "git-rev-list $rev $good" | wc -l) || exit
 	echo "Bisecting: $nr revisions left to test after this"
 	echo "$rev" > "$GIT_DIR/refs/heads/new-bisect"
 	git checkout new-bisect || exit
