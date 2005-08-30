@@ -3,26 +3,66 @@ git-applymbox(1)
 
 NAME
 ----
-git-applymbox - Some git command not yet documented.
+git-applymbox - Apply a series of patches in a mailbox
 
 
 SYNOPSIS
 --------
-'git-applymbox' [ --option ] <args>...
+'git-applymbox' [-u] [-k] [-q] ( -c .dotest/<num> | <mbox> ) [ <signoff> ]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Splits mail messages in a mailbox into commit log message,
+authorship information and patches, and applies them to the
+current branch.
 
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+-q::
+	Apply patches interactively.  The user will be given
+	opportunity to edit the log message and the patch before
+	attempting to apply patch in each e-mail message.
 
-<args>...::
-	Some argument not yet documented.
+-k::
+	Usually the program 'cleans up' the Subject: header line
+	to extract the title line for the commit log message,
+	among which (1) remove 'Re:' or 're:', (2) leading
+	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
+	then prepends "[PATCH] ".  This flag forbids this
+	munging, and is most useful when used to read back 'git
+	format-patch --mbox' output.
 
+-u::
+	By default, the commit log message, author name and
+	author email are taken from the e-mail without any
+	charset conversion, after minimally decoding MIME
+	transfer encoding.  This flag causes the resulting
+	commit to be encoded in utf-8 by transliterating them.
+	Note that the patch is always used as is without charset
+	conversion, even with this flag.
+
+-c .dotest/<num>::
+	When the patch contained in an e-mail does not cleanly
+	apply, the command exits with an error message. The
+	patch and extracted message are found in .dotest/, and
+	you could re-run 'git applymbox' with '-c .dotest/<num>'
+	flag to restart the process after inspecting and fixing
+	them.
+
+<mbox>::
+	The name of the file that contains the e-mail messages
+	with patches.  This file should be in the UNIX mailbox
+	format.  See 'SubmittingPatches' document to learn about
+	the formatting convention for e-mail submission.
+
+<signoff>::
+	The name of the file that contains your "Signed-off-by"
+	line.  See 'SubmittingPatches' document to learn what
+	"Signed-off-by" line means.  You can also just say
+	'yes', 'true', 'me', or 'please' to use an automatically
+	generated "Signed-off-by" line based on your committer
+	identity.
 
 Author
 ------
