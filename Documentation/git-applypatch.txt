@@ -3,25 +3,33 @@ git-applypatch(1)
 
 NAME
 ----
-git-applypatch - Some git command not yet documented.
+git-applypatch - Apply one patch extracted from an e-mail.
 
 
 SYNOPSIS
 --------
-'git-applypatch' [ --option ] <args>...
+'git-applypatch' <msg> <patch> <info> [<signoff>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Takes three files <msg>, <patch>, and <info> prepared from an
+e-mail message by 'git-mailinfo', and creates a commit.  It is
+usually not necessary to use this command directly.
 
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+<msg>::
+	Commit log message (sans the first line, which comes
+	from e-mail Subject stored in <info>).
 
-<args>...::
-	Some argument not yet documented.
+<patch>::
+	The patch to apply.
+
+<info>:
+	Author and subject information extracted from e-mail,
+	used on "author" line and as the first line of the
+	commit log message.
 
 
 Author

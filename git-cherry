@@ -14,19 +14,9 @@ usage="usage: $0 "'[-v] <upstream> [<head>]
 
 Each commit between the fork-point and <head> is examined, and
 compared against the change each commit between the fork-point and
-<upstream> introduces.  If the change does not seem to be in the
-upstream, it is shown on the standard output.
-
-The output is intended to be used as:
-
-    OLD_HEAD=$(git-rev-parse HEAD)
-    git-rev-parse upstream >${GIT_DIR-.}/HEAD
-    git-cherry upstream $OLD_HEAD |
-    while read commit
-    do
-        GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p "$commit" &&
-	git-commit-script -C "$commit"
-    done
+<upstream> introduces.  If the change seems to be in the upstream,
+it is shown on the standard output with prefix "+".  Otherwise
+it is shown with prefix "-".
 '
 
 case "$1" in -v) verbose=t; shift ;; esac 

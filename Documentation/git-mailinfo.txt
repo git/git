@@ -3,30 +3,57 @@ git-mailinfo(1)
 
 NAME
 ----
-git-mailinfo - Some git command not yet documented.
+git-mailinfo - Extracts patch from a single e-mail message.
 
 
 SYNOPSIS
 --------
-'git-mailinfo' [ --option ] <args>...
+'git-mailinfo' [-k] [-u] <msg> <patch>
+
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Reading a single e-mail message from the standard input, and
+writes the commit log message in <msg> file, and the patches in
+<patch> file.  The author name, e-mail and e-mail subject are
+written out to the standard output to be used by git-applypatch
+to create a commit.  It is usually not necessary to use this
+command directly.
 
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+-k::
+	Usually the program 'cleans up' the Subject: header line
+	to extract the title line for the commit log message,
+	among which (1) remove 'Re:' or 're:', (2) leading
+	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
+	then prepends "[PATCH] ".  This flag forbids this
+	munging, and is most useful when used to read back 'git
+	format-patch --mbox' output.
 
-<args>...::
-	Some argument not yet documented.
+-u::
+	By default, the commit log message, author name and
+	author email are taken from the e-mail without any
+	charset conversion, after minimally decoding MIME
+	transfer encoding.  This flag causes the resulting
+	commit to be encoded in utf-8 by transliterating them.
+	Note that the patch is always used as is without charset
+	conversion, even with this flag.
+
+<msg>::
+	The commit log message extracted from e-mail, usually
+	except the title line which comes from e-mail Subject.
+
+<patch>::
+	The patch extracted from e-mail.
 
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Written by Linus Torvalds <torvalds@osdl.org> and
+Junio C Hamano <junkio@cox.net>
+
 
 Documentation
 --------------

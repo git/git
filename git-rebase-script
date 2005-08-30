@@ -37,25 +37,32 @@ git-rev-parse --verify "$upstream^0" >"$GIT_DIR/HEAD" || exit
 
 tmp=.rebase-tmp$$
 fail=$tmp-fail
-trap "rm -rf $tmp-*" 0 1 2 3 15
+trap "rm -rf $tmp-*" 1 2 3 15
 
 >$fail
 
-git-cherry $upstream $ours |
-while read sign commit
+git-cherry -v $upstream $ours |
+while read sign commit msg
 do
 	case "$sign" in
-	-) continue ;;
+	-)
+		echo >&2 "* Already applied: $msg"
+		continue ;;
 	esac
+	echo >&2 "* Applying: $msg"
 	S=`cat "$GIT_DIR/HEAD"` &&
-        GIT_EXTERNAL_DIFF=git-apply-patch-script git-diff-tree -p $commit &&
-	git-commit-script -C "$commit" || {
+	git-cherry-pick-script --replay $commit || {
+		echo >&2 "* Not applying the patch and continuing."
 		echo $commit >>$fail
-		git-read-tree --reset -u $S
+		git-reset-script --hard $S
 	}
 done
 if test -s $fail
 then
-	echo Some commits could not be rebased, check by hand:
-	cat $fail
+	echo >&2 Some commits could not be rebased, check by hand:
+	cat >&2 $fail
+	echo >&2 "(the same list of commits are found in $tmp)"
+	exit 1
+else
+	rm -f $fail
 fi

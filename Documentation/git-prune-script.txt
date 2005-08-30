@@ -1,6 +1,6 @@
 git-prune-script(1)
 ===================
-v0.1, May 2005
+v0.99.5, Aug 2005
 
 NAME
 ----
@@ -9,14 +9,24 @@ git-prune-script - Prunes all unreachable objects from the object database
 
 SYNOPSIS
 --------
-'git-prune-script'
+'git-prune-script' [-n]
 
 DESCRIPTION
 -----------
-This runs "git-fsck-cache --unreachable" program using the heads specified
-on the command line (or `$GIT_DIR/refs/heads/\*` and `$GIT_DIR/refs/tags/\*`
-if none is specified), and prunes all unreachable objects from the object
-database.
+
+This runs `git-fsck-cache --unreachable` using the heads
+specified on the command line (or `$GIT_DIR/refs/heads/\*` and
+`$GIT_DIR/refs/tags/\*` if none is specified), and prunes all
+unreachable objects from the object database.  In addition, it
+prunes the unpacked objects that are also found in packs by
+running `git prune-packed`.
+
+OPTIONS
+-------
+
+-n::
+	Do not remove anything; just report what it would
+	remove.
 
 
 Author

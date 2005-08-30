@@ -1,6 +1,6 @@
 git-show-branch(1)
 ==================
-v0.99.4, Aug 2005
+v0.99.5, Aug 2005
 
 NAME
 ----
@@ -28,7 +28,8 @@ OPTIONS
 --more=<n>::
 	Usually the command stops output upon showing the commit
 	that is the common ancestor of all the branches.  This
-	flag tells the command to go <n> commits beyond that.
+	flag tells the command to go <n> more common commits
+	beyond that.
 
 --merge-base::
 	Instead of showing the commit list, just act like the

@@ -38,7 +38,7 @@ ancestry graph looked like this:
 So I started from master, made a bunch of edits, and committed:
 
     $ git checkout master
-    $ cd Documentation; ed git.txt git-apply-patch-script.txt ...
+    $ cd Documentation; ed git.txt ...
     $ cd ..; git add Documentation/*.txt
     $ git commit -s -v
 

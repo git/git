@@ -2,19 +2,31 @@
  * Another stupid program, this one parsing the headers of an
  * email to figure out authorship and subject
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <iconv.h>
 
 static FILE *cmitmsg, *patchfile;
 
 static int keep_subject = 0;
+static int metainfo_utf8 = 0;
 static char line[1000];
 static char date[1000];
 static char name[1000];
 static char email[1000];
 static char subject[1000];
+
+static enum  {
+	TE_DONTCARE, TE_QP, TE_BASE64,
+} transfer_encoding;
+static char charset[256];
+
+static char multipart_boundary[1000];
+static int multipart_boundary_len;
+static int patch_lines = 0;
 
 static char *sanity_check(char *name, char *email)
 {
@@ -40,67 +52,188 @@ static int handle_from(char *line)
 	if (*email && strchr(at+1, '@'))
 		return 0;
 
+	/* Pick up the string around '@', possibly delimited with <>
+	 * pair; that is the email part.  White them out while copying.
+	 */
 	while (at > line) {
 		char c = at[-1];
-		if (isspace(c) || c == '<')
+		if (isspace(c))
 			break;
+		if (c == '<') {
+			at[-1] = ' ';
+			break;
+		}
 		at--;
 	}
 	dst = email;
 	for (;;) {
 		unsigned char c = *at;
-		if (!c || c == '>' || isspace(c))
+		if (!c || c == '>' || isspace(c)) {
+			if (c == '>')
+				*at = ' ';
 			break;
+		}
 		*at++ = ' ';
 		*dst++ = c;
 	}
 	*dst++ = 0;
 
+	/* The remainder is name.  It could be "John Doe <john.doe@xz>"
+	 * or "john.doe@xz (John Doe)", but we have whited out the
+	 * email part, so trim from both ends, possibly removing
+	 * the () pair at the end.
+	 */
 	at = line + strlen(line);
 	while (at > line) {
 		unsigned char c = *--at;
-		if (isalnum(c))
+		if (!isspace(c)) {
+			at[(c == ')') ? 0 : 1] = 0;
 			break;
-		*at = 0;
+		}
 	}
 
 	at = line;
 	for (;;) {
 		unsigned char c = *at;
-		if (!c)
+		if (!c || !isspace(c)) {
+			if (c == '(')
+				at++;
 			break;
-		if (isalnum(c))
-			break;
+		}
 		at++;
 	}
-
 	at = sanity_check(at, email);
-	
 	strcpy(name, at);
 	return 1;
 }
 
-static void handle_date(char *line)
+static int handle_date(char *line)
 {
 	strcpy(date, line);
+	return 0;
 }
 
-static void handle_subject(char *line)
+static int handle_subject(char *line)
 {
 	strcpy(subject, line);
+	return 0;
 }
 
-static void check_line(char *line, int len)
+/* NOTE NOTE NOTE.  We do not claim we do full MIME.  We just attempt
+ * to have enough heuristics to grok MIME encoded patches often found
+ * on our mailing lists.  For example, we do not even treat header lines
+ * case insensitively.
+ */
+
+static int slurp_attr(const char *line, const char *name, char *attr)
 {
-	if (!memcmp(line, "From:", 5) && isspace(line[5]))
-		handle_from(line+6);
-	else if (!memcmp(line, "Date:", 5) && isspace(line[5]))
-		handle_date(line+6);
-	else if (!memcmp(line, "Subject:", 8) && isspace(line[8]))
-		handle_subject(line+9);
+	char *ends, *ap = strcasestr(line, name);
+	size_t sz;
+
+	if (!ap) {
+		*attr = 0;
+		return 0;
+	}
+	ap += strlen(name);
+	if (*ap == '"') {
+		ap++;
+		ends = "\"";
+	}
+	else
+		ends = "; \t";
+	sz = strcspn(ap, ends);
+	memcpy(attr, ap, sz);
+	attr[sz] = 0;
+	return 1;
 }
 
-static char * cleanup_subject(char *subject)
+static int handle_subcontent_type(char *line)
+{
+	/* We do not want to mess with boundary.  Note that we do not
+	 * handle nested multipart.
+	 */
+	slurp_attr(line, "charset=", charset);
+	if (*charset) {
+		int i, c;
+		for (i = 0; (c = charset[i]) != 0; i++)
+			charset[i] = tolower(c);
+	}
+	return 0;
+}
+
+static int handle_content_type(char *line)
+{
+	*multipart_boundary = 0;
+	if (slurp_attr(line, "boundary=", multipart_boundary + 2)) {
+		memcpy(multipart_boundary, "--", 2);
+		multipart_boundary_len = strlen(multipart_boundary);
+	}
+	slurp_attr(line, "charset=", charset);
+	return 0;
+}
+
+static int handle_content_transfer_encoding(char *line)
+{
+	if (strcasestr(line, "base64"))
+		transfer_encoding = TE_BASE64;
+	else if (strcasestr(line, "quoted-printable"))
+		transfer_encoding = TE_QP;
+	else
+		transfer_encoding = TE_DONTCARE;
+	return 0;
+}
+
+static int is_multipart_boundary(const char *line)
+{
+	return (!memcmp(line, multipart_boundary, multipart_boundary_len));
+}
+
+static int eatspace(char *line)
+{
+	int len = strlen(line);
+	while (len > 0 && isspace(line[len-1]))
+		line[--len] = 0;
+	return len;
+}
+
+#define SEEN_FROM 01
+#define SEEN_DATE 02
+#define SEEN_SUBJECT 04
+
+/* First lines of body can have From:, Date:, and Subject: */
+static int handle_inbody_header(int *seen, char *line)
+{
+	if (!memcmp("From:", line, 5) && isspace(line[5])) {
+		if (!(*seen & SEEN_FROM) && handle_from(line+6)) {
+			*seen |= SEEN_FROM;
+			return 1;
+		}
+	}
+	if (!memcmp("Date:", line, 5) && isspace(line[5])) {
+		if (!(*seen & SEEN_DATE)) {
+			handle_date(line+6);
+			*seen |= SEEN_DATE;
+			return 1;
+		}
+	}
+	if (!memcmp("Subject:", line, 8) && isspace(line[8])) {
+		if (!(*seen & SEEN_SUBJECT)) {
+			handle_subject(line+9);
+			*seen |= SEEN_SUBJECT;
+			return 1;
+		}
+	}
+	if (!memcmp("[PATCH]", line, 7) && isspace(line[7])) {
+		if (!(*seen & SEEN_SUBJECT)) {
+			handle_subject(line);
+			*seen |= SEEN_SUBJECT;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static char *cleanup_subject(char *subject)
 {
 	if (keep_subject)
 		return subject;
@@ -153,69 +286,53 @@ static void cleanup_space(char *buf)
 	}
 }
 
-static void handle_rest(void)
+typedef int (*header_fn_t)(char *);
+struct header_def {
+	const char *name;
+	header_fn_t func;
+	int namelen;
+};
+
+static void check_header(char *line, int len, struct header_def *header)
 {
-	FILE *out = cmitmsg;
-	char *sub = cleanup_subject(subject);
-	cleanup_space(name);
-	cleanup_space(date);
-	cleanup_space(email);
-	cleanup_space(sub);
-	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n", name, email, sub, date);
+	int i;
 
-	do {
-		if (!memcmp("diff -", line, 6) ||
-		    !memcmp("---", line, 3) ||
-		    !memcmp("Index: ", line, 7))
-			out = patchfile;
-
-		fputs(line, out);
-	} while (fgets(line, sizeof(line), stdin) != NULL);
-
-	if (out == cmitmsg) {
-		fprintf(stderr, "No patch found\n");
-		exit(1);
+	if (header[0].namelen <= 0) {
+		for (i = 0; header[i].name; i++)
+			header[i].namelen = strlen(header[i].name);
 	}
-
-	fclose(cmitmsg);
-	fclose(patchfile);
+	for (i = 0; header[i].name; i++) {
+		int len = header[i].namelen;
+		if (!strncasecmp(line, header[i].name, len) &&
+		    line[len] == ':' && isspace(line[len + 1])) {
+			header[i].func(line + len + 2);
+			break;
+		}
+	}
 }
 
-static int eatspace(char *line)
+static void check_subheader_line(char *line, int len)
 {
-	int len = strlen(line);
-	while (len > 0 && isspace(line[len-1]))
-		line[--len] = 0;
-	return len;
+	static struct header_def header[] = {
+		{ "Content-Type", handle_subcontent_type },
+		{ "Content-Transfer-Encoding",
+		  handle_content_transfer_encoding },
+		{ NULL },
+	};
+	check_header(line, len, header);
 }
-
-static void handle_body(void)
+static void check_header_line(char *line, int len)
 {
-	int has_from = 0;
-	int has_date = 0;
-
-	/* First lines of body can have From: and Date: */
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = eatspace(line);
-		if (!len)
-			continue;
-		if (!memcmp("From:", line, 5) && isspace(line[5])) {
-			if (!has_from && handle_from(line+6)) {
-				has_from = 1;
-				continue;
-			}
-		}
-		if (!memcmp("Date:", line, 5) && isspace(line[5])) {
-			if (!has_date) {
-				handle_date(line+6);
-				has_date = 1;
-				continue;
-			}
-		}
-		line[len] = '\n';
-		handle_rest();
-		break;
-	}
+	static struct header_def header[] = {
+		{ "From", handle_from },
+		{ "Date", handle_date },
+		{ "Subject", handle_subject },
+		{ "Content-Type", handle_content_type },
+		{ "Content-Transfer-Encoding",
+		  handle_content_transfer_encoding },
+		{ NULL },
+	};
+	check_header(line, len, header);
 }
 
 static int read_one_header_line(char *line, int sz, FILE *in)
@@ -239,23 +356,365 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 	return ofs;
 }
 
-static void usage(void)
+static unsigned hexval(int c)
 {
-	fprintf(stderr, "mailinfo msg-file patch-file < email\n");
-	exit(1);
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	return ~0;
+}
+
+static int decode_q_segment(char *in, char *ot, char *ep)
+{
+	int c;
+	while ((c = *in++) != 0 && (in <= ep)) {
+		if (c == '=') {
+			int d = *in++;
+			if (d == '\n' || !d)
+				break; /* drop trailing newline */
+			*ot++ = ((hexval(d) << 4) | hexval(*in++));
+		}
+		else
+			*ot++ = c;
+	}
+	*ot = 0;
+	return 0;
+}
+
+static int decode_b_segment(char *in, char *ot, char *ep)
+{
+	/* Decode in..ep, possibly in-place to ot */
+	int c, pos = 0, acc = 0;
+
+	while ((c = *in++) != 0 && (in <= ep)) {
+		if (c == '+')
+			c = 62;
+		else if (c == '/')
+			c = 63;
+		else if ('A' <= c && c <= 'Z')
+			c -= 'A';
+		else if ('a' <= c && c <= 'z')
+			c -= 'a' - 26;
+		else if ('0' <= c && c <= '9')
+			c -= '0' - 52;
+		else if (c == '=') {
+			/* padding is almost like (c == 0), except we do
+			 * not output NUL resulting only from it;
+			 * for now we just trust the data.
+			 */
+			c = 0;
+		}
+		else
+			continue; /* garbage */
+		switch (pos++) {
+		case 0:
+			acc = (c << 2);
+			break;
+		case 1:
+			*ot++ = (acc | (c >> 4));
+			acc = (c & 15) << 4;
+			break;
+		case 2:
+			*ot++ = (acc | (c >> 2));
+			acc = (c & 3) << 6;
+			break;
+		case 3:
+			*ot++ = (acc | c);
+			acc = pos = 0;
+			break;
+		}
+	}
+	*ot = 0;
+	return 0;
+}
+
+static void convert_to_utf8(char *line, char *charset)
+{
+	if (*charset) {
+		char *in, *out;
+		size_t insize, outsize, nrc;
+		char outbuf[4096]; /* cheat */
+		iconv_t conv = iconv_open("utf-8", charset);
+
+		if (conv == (iconv_t) -1) {
+			fprintf(stderr, "cannot convert from %s to utf-8\n",
+				charset);
+			*charset = 0;
+			return;
+		}
+		in = line;
+		insize = strlen(in);
+		out = outbuf;
+		outsize = sizeof(outbuf);
+		nrc = iconv(conv, &in, &insize, &out, &outsize);
+		iconv_close(conv);
+		if (nrc == (size_t) -1)
+			return;
+		*out = 0;
+		strcpy(line, outbuf);
+	}
+}
+
+static void decode_header_bq(char *it)
+{
+	char *in, *out, *ep, *cp, *sp;
+	char outbuf[1000];
+
+	in = it;
+	out = outbuf;
+	while ((ep = strstr(in, "=?")) != NULL) {
+		int sz, encoding;
+		char charset_q[256], piecebuf[256];
+		if (in != ep) {
+			sz = ep - in;
+			memcpy(out, in, sz);
+			out += sz;
+			in += sz;
+		}
+		/* E.g.
+		 * ep : "=?iso-2022-jp?B?GyR...?= foo"
+		 * ep : "=?ISO-8859-1?Q?Foo=FCbar?= baz"
+		 */
+		ep += 2;
+		cp = strchr(ep, '?');
+		if (!cp)
+			return; /* no munging */
+		for (sp = ep; sp < cp; sp++)
+			charset_q[sp - ep] = tolower(*sp);
+		charset_q[cp - ep] = 0;
+		encoding = cp[1];
+		if (!encoding || cp[2] != '?')
+			return; /* no munging */
+		ep = strstr(cp + 3, "?=");
+		if (!ep)
+			return; /* no munging */
+		switch (tolower(encoding)) {
+		default:
+			return; /* no munging */
+		case 'b':
+			sz = decode_b_segment(cp + 3, piecebuf, ep);
+			break;
+		case 'q':
+			sz = decode_q_segment(cp + 3, piecebuf, ep);
+			break;
+		}
+		if (sz < 0)
+			return;
+		if (metainfo_utf8)
+			convert_to_utf8(piecebuf, charset_q);
+		strcpy(out, piecebuf);
+		out += strlen(out);
+		in = ep + 2;
+	}
+	strcpy(out, in);
+	strcpy(it, outbuf);
+}
+
+static void decode_transfer_encoding(char *line)
+{
+	char *ep;
+
+	switch (transfer_encoding) {
+	case TE_QP:
+		ep = line + strlen(line);
+		decode_q_segment(line, line, ep);
+		break;
+	case TE_BASE64:
+		ep = line + strlen(line);
+		decode_b_segment(line, line, ep);
+		break;
+	case TE_DONTCARE:
+		break;
+	}
+}
+
+static void handle_info(void)
+{
+	char *sub;
+	static int done_info = 0;
+
+	if (done_info)
+		return;
+
+	done_info = 1;
+	sub = cleanup_subject(subject);
+	cleanup_space(name);
+	cleanup_space(date);
+	cleanup_space(email);
+	cleanup_space(sub);
+
+	/* Unwrap inline B and Q encoding, and optionally
+	 * normalize the meta information to utf8.
+	 */
+	decode_header_bq(name);
+	decode_header_bq(date);
+	decode_header_bq(email);
+	decode_header_bq(sub);
+	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n",
+	       name, email, sub, date);
+}
+
+/* We are inside message body and have read line[] already.
+ * Spit out the commit log.
+ */
+static int handle_commit_msg(void)
+{
+	if (!cmitmsg)
+		return 0;
+	do {
+		if (!memcmp("diff -", line, 6) ||
+		    !memcmp("---", line, 3) ||
+		    !memcmp("Index: ", line, 7))
+			break;
+		if ((multipart_boundary[0] && is_multipart_boundary(line))) {
+			/* We come here when the first part had only
+			 * the commit message without any patch.  We
+			 * pretend we have not seen this line yet, and
+			 * go back to the loop.
+			 */
+			return 1;
+		}
+
+		/* Unwrap transfer encoding and optionally
+		 * normalize the log message to UTF-8.
+		 */
+		decode_transfer_encoding(line);
+		if (metainfo_utf8)
+			convert_to_utf8(line, charset);
+		fputs(line, cmitmsg);
+	} while (fgets(line, sizeof(line), stdin) != NULL);
+	fclose(cmitmsg);
+	cmitmsg = NULL;
+	return 0;
+}
+
+/* We have done the commit message and have the first
+ * line of the patch in line[].
+ */
+static void handle_patch(void)
+{
+	do {
+		if (multipart_boundary[0] && is_multipart_boundary(line))
+			break;
+		/* Only unwrap transfer encoding but otherwise do not
+		 * do anything.  We do *NOT* want UTF-8 conversion
+		 * here; we are dealing with the user payload.
+		 */
+		decode_transfer_encoding(line);
+		fputs(line, patchfile);
+		patch_lines++;
+	} while (fgets(line, sizeof(line), stdin) != NULL);
+}
+
+/* multipart boundary and transfer encoding are set up for us, and we
+ * are at the end of the sub header.  do equivalent of handle_body up
+ * to the next boundary without closing patchfile --- we will expect
+ * that the first part to contain commit message and a patch, and
+ * handle other parts as pure patches.
+ */
+static int handle_multipart_one_part(void)
+{
+	int seen = 0;
+	int n = 0;
+	int len;
+
+	while (fgets(line, sizeof(line), stdin) != NULL) {
+	again:
+		len = eatspace(line);
+		n++;
+		if (!len)
+			continue;
+		if (is_multipart_boundary(line))
+			break;
+		if (0 <= seen && handle_inbody_header(&seen, line))
+			continue;
+		seen = -1; /* no more inbody headers */
+		line[len] = '\n';
+		handle_info();
+		if (handle_commit_msg())
+			goto again;
+		handle_patch();
+		break;
+	}
+	if (n == 0)
+		return -1;
+	return 0;
+}
+
+static void handle_multipart_body(void)
+{
+	int part_num = 0;
+
+	/* Skip up to the first boundary */
+	while (fgets(line, sizeof(line), stdin) != NULL)
+		if (is_multipart_boundary(line)) {
+			part_num = 1;
+			break;
+		}
+	if (!part_num)
+		return;
+	/* We are on boundary line.  Start slurping the subhead. */
+	while (1) {
+		int len = read_one_header_line(line, sizeof(line), stdin);
+		if (!len) {
+			if (handle_multipart_one_part() < 0)
+				return;
+		}
+		else
+			check_subheader_line(line, len);
+	}
+	fclose(patchfile);
+	if (!patch_lines) {
+		fprintf(stderr, "No patch found\n");
+		exit(1);
+	}
+}
+
+/* Non multipart message */
+static void handle_body(void)
+{
+	int seen = 0;
+
+	while (fgets(line, sizeof(line), stdin) != NULL) {
+		int len = eatspace(line);
+		if (!len)
+			continue;
+		if (0 <= seen && handle_inbody_header(&seen, line))
+			continue;
+		seen = -1; /* no more inbody headers */
+		line[len] = '\n';
+		handle_info();
+		handle_commit_msg();
+		handle_patch();
+		break;
+	}
+	fclose(patchfile);
+	if (!patch_lines) {
+		fprintf(stderr, "No patch found\n");
+		exit(1);
+	}
 }
 
 static const char mailinfo_usage[] =
-"git-mailinfo [-k] msg patch <mail >info";
-int main(int argc, char ** argv)
+	"git-mailinfo [-k] [-u] msg patch <mail >info";
+
+static void usage(void) {
+	fprintf(stderr, "%s\n", mailinfo_usage);
+	exit(1);
+}
+
+int main(int argc, char **argv)
 {
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
-		else {
-			fprintf(stderr, "usage: %s\n", mailinfo_usage);
-			exit(1);
-		}
+		else if (!strcmp(argv[1], "-u"))
+			metainfo_utf8 = 1;
+		else
+			usage();
 		argc--; argv++;
 	}
 
@@ -274,10 +733,13 @@ int main(int argc, char ** argv)
 	while (1) {
 		int len = read_one_header_line(line, sizeof(line), stdin);
 		if (!len) {
-			handle_body();
+			if (multipart_boundary[0])
+				handle_multipart_body();
+			else
+				handle_body();
 			break;
 		}
-		check_line(line, len);
+		check_header_line(line, len);
 	}
 	return 0;
 }

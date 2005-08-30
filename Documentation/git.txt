@@ -52,49 +52,50 @@ SCMs layered over git.
 
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
+link:git-apply.html[git-apply]::
+	Reads a "diff -up1" or git generated patch file and
+	applies it to the working tree.
+
 link:git-checkout-cache.html[git-checkout-cache]::
 	Copy files from the cache to the working directory
 
 link:git-commit-tree.html[git-commit-tree]::
 	Creates a new commit object
 
+link:git-hash-object.html[git-hash-object]::
+	Computes the object ID from a file.
+
 link:git-init-db.html[git-init-db]::
 	Creates an empty git object database
 
-link:git-merge-base.html[git-merge-base]::
-	Finds as good a common ancestor as possible for a merge
+link:git-merge-cache.html[git-merge-cache]::
+	Runs a merge for files needing merging
 
 link:git-mktag.html[git-mktag]::
 	Creates a tag object
 
-link:git-read-tree.html[git-read-tree]::
-	Reads tree information into the directory cache
-
-link:git-update-cache.html[git-update-cache]::
-	Modifies the index or directory cache
-
-link:git-hash-object.html[git-hash-object]::
-	Computes the object ID from a file.
-
-link:git-write-tree.html[git-write-tree]::
-	Creates a tree from the current cache
-
 link:git-pack-objects.html[git-pack-objects]::
 	Creates a packed archive of objects.
-
-link:git-unpack-objects.html[git-unpack-objects]::
-	Unpacks objects out of a packed archive.
 
 link:git-prune-packed.html[git-prune-packed]::
 	Remove extra objects that are already in pack files.
 
-link:git-apply.html[git-apply]::
-	Reads a "diff -up1" or git generated patch file and
-	applies it to the working tree.
+link:git-read-tree.html[git-read-tree]::
+	Reads tree information into the directory cache
+
+link:git-unpack-objects.html[git-unpack-objects]::
+	Unpacks objects out of a packed archive.
+
+link:git-update-cache.html[git-update-cache]::
+	Modifies the index or directory cache
+
+link:git-write-tree.html[git-write-tree]::
+	Creates a tree from the current cache
 
 
 Interrogation commands
 ~~~~~~~~~~~~~~~~~~~~~~
+
 link:git-cat-file.html[git-cat-file]::
 	Provide content or type information for repository objects
 
@@ -104,11 +105,11 @@ link:git-diff-cache.html[git-diff-cache]::
 link:git-diff-files.html[git-diff-files]::
 	Compares files in the working tree and the cache
 
-link:git-diff-tree.html[git-diff-tree]::
-	Compares the content and mode of blobs found via two tree objects
-
 link:git-diff-stages.html[git-diff-stages]::
 	Compares two "merge stages" in the index file.
+
+link:git-diff-tree.html[git-diff-tree]::
+	Compares the content and mode of blobs found via two tree objects
 
 link:git-export.html[git-export]::
 	Exports each commit and a diff against each of its parents
@@ -122,14 +123,17 @@ link:git-ls-files.html[git-ls-files]::
 link:git-ls-tree.html[git-ls-tree]::
 	Displays a tree object in human readable form
 
-link:git-merge-cache.html[git-merge-cache]::
-	Runs a merge for files needing merging
+link:git-merge-base.html[git-merge-base]::
+	Finds as good a common ancestor as possible for a merge
 
 link:git-rev-list.html[git-rev-list]::
 	Lists commit objects in reverse chronological order
 
 link:git-rev-tree.html[git-rev-tree]::
 	Provides the revision tree for one or more commits
+
+link:git-show-index.html[git-show-index]::
+	Displays contents of a pack idx file.
 
 link:git-tar-tree.html[git-tar-tree]::
 	Creates a tar archive of the files in the named tree
@@ -139,9 +143,6 @@ link:git-unpack-file.html[git-unpack-file]::
 
 link:git-var.html[git-var]::
 	Displays a git logical variable
-
-link:git-show-index.html[git-show-index]::
-	Displays contents of a pack idx file.
 
 link:git-verify-pack.html[git-verify-pack]::
 	Validates packed GIT archive files
@@ -153,12 +154,12 @@ touch the working file set - but in general they don't
 Synching repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
-link:git-clone-script.html[git-clone-script]::
-	Clones a repository into the current repository (user interface)
-
 link:git-clone-pack.html[git-clone-pack]::
 	Clones a repository into the current repository (engine
 	for ssh and local transport)
+
+link:git-fetch-pack.html[git-fetch-pack]::
+	Updates from a remote repository.
 
 link:git-http-pull.html[git-http-pull]::
 	Downloads a remote GIT repository via HTTP
@@ -166,105 +167,115 @@ link:git-http-pull.html[git-http-pull]::
 link:git-local-pull.html[git-local-pull]::
 	Duplicates another GIT repository on a local system
 
-link:git-ssh-pull.html[git-ssh-pull]::
-	Pulls from a remote repository over ssh connection
-
-link:git-send-pack.html[git-send-pack]::
-	Pushes to a remote repository, intelligently.
+link:git-peek-remote.html[git-peek-remote]::
+	Lists references on a remote repository using upload-pack protocol.
 
 link:git-receive-pack.html[git-receive-pack]::
 	Invoked by 'git-send-pack' to receive what is pushed to it.
 
-link:git-clone-pack.html[git-clone-pack]::
-	Clones from a remote repository.
+link:git-send-pack.html[git-send-pack]::
+	Pushes to a remote repository, intelligently.
 
-link:git-fetch-pack.html[git-fetch-pack]::
-	Updates from a remote repository.
+link:git-ssh-pull.html[git-ssh-pull]::
+	Pulls from a remote repository over ssh connection
 
-link:git-peek-remote.html[git-peek-remote]::
-	Lists references on a remote repository using upload-pack protocol.
-
-link:git-upload-pack.html[git-upload-pack]::
-	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
-	what are asked for.
+link:git-ssh-push.html[git-ssh-push]::
+	Helper "server-side" program used by git-ssh-pull
 
 link:git-update-server-info.html[git-update-server-info]::
 	Updates auxiliary information on a dumb server to help
 	clients discover references and packs on it.
 
+link:git-upload-pack.html[git-upload-pack]::
+	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
+	what are asked for.
+
 
 Porcelain-ish Commands
 ----------------------
-link:git-revert-script.html[git-revert-script]::
-	Revert an existing commit.
-
-link:git-rebase-script.html[git-rebase-script]::
-	Rebase local commits to new upstream head.
 
 link:git-add-script.html[git-add-script]::
 	Add paths to the index file.
 
+link:git-applymbox.html[git-applymbox]::
+	Apply patches from a mailbox.
+
+link:git-bisect-script.html[git-bisect-script]::
+	Find the change that introduced a bug.
+
 link:git-branch-script.html[git-branch-script]::
 	Create and Show branches.
 
-link:git-whatchanged.html[git-whatchanged]::
-	Shows commit logs and differences they introduce.
+link:git-cherry-pick-script.html[git-cherry-pick-script]::
+	Cherry-pick the effect of an existing commit.
 
-link:git-log-script.html[git-log-script]::
-	Shows commit logs.
-
-link:git-shortlog.html[git-shortlog]::
-	Summarizes 'git log' output.
-
-link:git-status-script.html[git-status-script]::
-	Shows the working tree status.
-
-link:git-fetch-script.html[git-fetch-script]::
-	Download from a remote repository via various protocols.
-
-link:git-pull-script.html[git-pull-script]::
-	Fetch from and merge with a remote repository.
-
-link:git-resolve-script.html[git-resolve-script]::
-	Merge two commits.
-
-link:git-octopus-script.html[git-octopus-script]::
-	Merge more than two commits.
-
-link:git-push-script.html[git-push-script]::
-	Update remote refs along with associated objects.
+link:git-clone-script.html[git-clone-script]::
+	Clones a repository into a new directory.
 
 link:git-commit-script.html[git-commit-script]::
 	Record changes to the repository.
 
-link:git-show-branch.html[git-show-branch]::
-	Show branches and their commits.
+link:git-fetch-script.html[git-fetch-script]::
+	Download from a remote repository via various protocols.
 
-link:git-repack-script.html[git-repack-script]::
-	Pack unpacked objects in a repository.
-
-link:git-rename-script.html[git-rename]::
-	Rename files and directories.
+link:git-log-script.html[git-log-script]::
+	Shows commit logs.
 
 link:git-ls-remote-script.html[git-ls-remote-script]::
 	Shows references in a remote or local repository.
 
+link:git-octopus-script.html[git-octopus-script]::
+	Merge more than two commits.
+
+link:git-pull-script.html[git-pull-script]::
+	Fetch from and merge with a remote repository.
+
+link:git-push-script.html[git-push-script]::
+	Update remote refs along with associated objects.
+
+link:git-rebase-script.html[git-rebase-script]::
+	Rebase local commits to new upstream head.
+
+link:git-rename-script.html[git-rename]::
+	Rename files and directories.
+
+link:git-repack-script.html[git-repack-script]::
+	Pack unpacked objects in a repository.
+
+link:git-resolve-script.html[git-resolve-script]::
+	Merge two commits.
+
+link:git-revert-script.html[git-revert-script]::
+	Revert an existing commit.
+
+link:git-shortlog.html[git-shortlog]::
+	Summarizes 'git log' output.
+
+link:git-show-branch.html[git-show-branch]::
+	Show branches and their commits.
+
+link:git-status-script.html[git-status-script]::
+	Shows the working tree status.
+
 link:git-verify-tag-script.html[git-verify-tag-script]::
 	Check the GPG signature of tag.
+
+link:git-whatchanged.html[git-whatchanged]::
+	Shows commit logs and differences they introduce.
 
 
 Ancillary Commands
 ------------------
 Manipulators:
 
-link:git-relink-script.html[git-relink-script]::
-	Hardlink common objects in local repositories.
-
-link:git-apply-patch-script.html[git-apply-patch-script]::
-	Sample script to apply the diffs from git-diff-*
+link:git-applypatch.html[git-applypatch]::
+	Apply one patch extracted from an e-mail.
 
 link:git-convert-cache.html[git-convert-cache]::
 	Converts old-style GIT repository
+
+link:git-cvsimport-script.html[git-cvsimport-script]::
+	Salvage your data out of another SCM people love to hate.
 
 link:git-merge-one-file-script.html[git-merge-one-file-script]::
 	The standard helper program to use with "git-merge-cache"
@@ -272,54 +283,42 @@ link:git-merge-one-file-script.html[git-merge-one-file-script]::
 link:git-prune-script.html[git-prune-script]::
 	Prunes all unreachable objects from the object database
 
-link:git-tag-script.html[git-tag-script]::
-	An example script to create a tag object signed with GPG
-
-link:git-cvsimport-script.html[git-cvsimport-script]::
-	Salvage your data out of another SCM people love to hate.
-
-
-Interrogators:
-
-link:git-patch-id.html[git-patch-id]::
-	Compute unique ID for a patch.
-
-link:git-count-objects-script.html[git-count-objects-script]::
-	Count unpacked number of objects and their disk consumption.
-
-link:git-cherry.html[git-cherry]::
-	Find commits not merged upstream.
-
-link:git-diff-helper.html[git-diff-helper]::
-	Generates patch format output for git-diff-*
-
-link:git-ssh-push.html[git-ssh-push]::
-	Helper "server-side" program used by git-ssh-pull
-
-link:git-send-email-script.html[git-send-email]::
-	Send patch e-mails out of "format-patch --mbox" output.
+link:git-relink-script.html[git-relink-script]::
+	Hardlink common objects in local repositories.
 
 link:git-sh-setup-script.html[git-sh-setup-script]::
 	Common git shell script setup code.
 
+link:git-tag-script.html[git-tag-script]::
+	An example script to create a tag object signed with GPG
 
-Commands not yet documented
----------------------------
 
-link:git-applymbox.html[git-applymbox]::
-	git-applymbox.
+Interrogators:
 
-link:git-applypatch.html[git-applypatch]::
-	git-applypatch.
+link:git-cherry.html[git-cherry]::
+	Find commits not merged upstream.
+
+link:git-count-objects-script.html[git-count-objects-script]::
+	Count unpacked number of objects and their disk consumption.
+
+link:git-diff-helper.html[git-diff-helper]::
+	Generates patch format output for git-diff-*
 
 link:git-mailinfo.html[git-mailinfo]::
-	git-mailinfo.
+	Extracts patch from a single e-mail message.
 
 link:git-mailsplit.html[git-mailsplit]::
 	git-mailsplit.
 
-link:git-bisect-script.html[git-bisect-script]::
-	git-bisect-script.
+link:git-patch-id.html[git-patch-id]::
+	Compute unique ID for a patch.
+
+link:git-send-email-script.html[git-send-email]::
+	Send patch e-mails out of "format-patch --mbox" output.
+
+
+Commands not yet documented
+---------------------------
 
 link:git-build-rev-cache.html[git-build-rev-cache]::
 	git-build-rev-cache.
