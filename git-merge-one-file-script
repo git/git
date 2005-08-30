@@ -21,7 +21,9 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Deleted in both or deleted in one and unchanged in the other
 #
 "$1.." | "$1.$1" | "$1$1.")
-	echo "Removing $4"
+	if [ "$2" ]; then
+		echo "Removing $4"
+	fi
 	if test -f "$4"; then
 		rm -f -- "$4"
 	fi &&
