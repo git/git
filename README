@@ -15,7 +15,7 @@
  - "goddamn idiotic truckload of sh*t": when it breaks
 
 This is a stupid (but extremely fast) directory content manager.  It
-doesn't do a whole lot, but what it _does_ do is track directory
+doesn't do a whole lot, but what it 'does' do is track directory
 contents efficiently. 
 
 There are two object abstractions: the "object database", and the
@@ -66,9 +66,11 @@ Regardless of object type, all objects share the following
 characteristics: they are all deflated with zlib, and have a header
 that not only specifies their tag, but also provides size information
 about the data in the object.  It's worth noting that the SHA1 hash
-that is used to name the object is the hash of the original data.
+that is used to name the object is the hash of the original data
+plus this header, so `sha1sum` 'file' does not match the object name
+for 'file'.
 (Historical note: in the dawn of the age of git the hash
-was the sha1 of the _compressed_ object)
+was the sha1 of the 'compressed' object.)
 
 As a result, the general consistency of an object can always be tested
 independently of the contents or the type of the object: all objects can
@@ -79,7 +81,7 @@ size> + <byte\0> + <binary object data>.
 
 The structured objects can further have their structure and
 connectivity to other objects verified. This is generally done with
-the "git-fsck-cache" program, which generates a full dependency graph
+the `git-fsck-cache` program, which generates a full dependency graph
 of all objects, and verifies their internal consistency (in addition
 to just verifying their superficial consistency through the hash).
 
@@ -89,7 +91,7 @@ Blob Object
 ~~~~~~~~~~~
 A "blob" object is nothing but a binary blob of data, and doesn't
 refer to anything else.  There is no signature or any other
-verification of the data, so while the object is consistent (it _is_
+verification of the data, so while the object is consistent (it 'is'
 indexed by its sha1 hash, so the data itself is certainly correct), it
 has absolutely no other attributes.  No name associations, no
 permissions.  It is purely a blob of data (i.e. normally "file
@@ -125,7 +127,7 @@ trust that the tree is immutable and its contents never change.
 
 So you can trust the contents of a tree to be valid, the same way you
 can trust the contents of a blob, but you don't know where those
-contents _came_ from.
+contents 'came' from.
 
 Side note on trees: since a "tree" object is a sorted list of
 "filename+content", you can create a diff between two trees without
@@ -142,7 +144,8 @@ noticing that the blob stayed the same.  However, renames with data
 changes need a smarter "diff" implementation.
 
 A tree is created with link:git-write-tree.html[git-write-tree] and
-its data can be accessed by link:git-ls-tree.html[git-ls-tree]
+its data can be accessed by link:git-ls-tree.html[git-ls-tree].
+Two trees can be compared with link:git-diff-tree.html[git-diff-tree].
 
 Commit Object
 ~~~~~~~~~~~~~
@@ -161,19 +164,19 @@ The parents do not have to actually have any relationship with the
 result, for example.
 
 Note on commits: unlike real SCM's, commits do not contain
-rename information or file mode chane information.  All of that is
+rename information or file mode change information.  All of that is
 implicit in the trees involved (the result tree, and the result trees
 of the parents), and describing that makes no sense in this idiotic
 file manager.
 
 A commit is created with link:git-commit-tree.html[git-commit-tree] and
-its data can be accessed by link:git-cat-file.html[git-cat-file]
+its data can be accessed by link:git-cat-file.html[git-cat-file].
 
 Trust
 ~~~~~
 An aside on the notion of "trust". Trust is really outside the scope
 of "git", but it's worth noting a few things.  First off, since
-everything is hashed with SHA1, you _can_ trust that an object is
+everything is hashed with SHA1, you 'can' trust that an object is
 intact and has not been messed with by external sources.  So the name
 of an object uniquely identifies a known state - just not a state that
 you may want to trust.
@@ -185,7 +188,7 @@ of history, with full contents.  You can't later fake any step of the
 way once you have the name of a commit.
 
 So to introduce some real trust in the system, the only thing you need
-to do is to digitally sign just _one_ special note, which includes the
+to do is to digitally sign just 'one' special note, which includes the
 name of a top-level commit.  Your digital signature shows others
 that you trust that commit, and the immutability of the history of
 commits tells others that they can trust the whole history.
@@ -212,8 +215,10 @@ Note that despite the tag features, "git" itself only handles content
 integrity; the trust framework (and signature provision and
 verification) has to come from outside.
 
-A tag is created with link:git-mktag.html[git-mktag] and
-its data can be accessed by link:git-cat-file.html[git-cat-file]
+A tag is created with link:git-mktag.html[git-mktag],
+its data can be accessed by link:git-cat-file.html[git-cat-file],
+and the signature can be verified by
+link:git-verify-tag-script.html[git-verify-tag].
 
 
 The "index" aka "Current Directory Cache"
@@ -228,7 +233,7 @@ meaning, and can be partially updated at any time.
 
 In particular, the index certainly does not need to be consistent with
 the current directory contents (in fact, most operations will depend on
-different ways to make the index _not_ be consistent with the directory
+different ways to make the index 'not' be consistent with the directory
 hierarchy), but it has three very important attributes:
 
 '(a) it can re-generate the full state it caches (not just the
@@ -259,7 +264,7 @@ developed.  If you blow the directory cache away entirely, you generally
 haven't lost any information as long as you have the name of the tree
 that it described. 
 
-At the same time, the directory index is at the same time also the
+At the same time, the index is at the same time also the
 staging area for creating new trees, and creating a new tree always
 involves a controlled modification of the index file.  In particular,
 the index file can have the representation of an intermediate tree that
@@ -293,18 +298,18 @@ i.e. it will normally just update existing cache entries.
 
 To tell git that yes, you really do realize that certain files no
 longer exist in the archive, or that new files should be added, you
-should use the "--remove" and "--add" flags respectively.
+should use the `--remove` and `--add` flags respectively.
 
-NOTE! A "--remove" flag does _not_ mean that subsequent filenames will
+NOTE! A `--remove` flag does 'not' mean that subsequent filenames will
 necessarily be removed: if the files still exist in your directory
 structure, the index will be updated with their new status, not
-removed. The only thing "--remove" means is that update-cache will be
+removed. The only thing `--remove` means is that update-cache will be
 considering a removed file to be a valid thing, and if the file really
 does not exist any more, it will update the index accordingly.
 
-As a special case, you can also do "git-update-cache --refresh", which
+As a special case, you can also do `git-update-cache --refresh`, which
 will refresh the "stat" information of each index to match the current
-stat information. It will _not_ update the object status itself, and
+stat information. It will 'not' update the object status itself, and
 it will only update the fields that are used to quickly test whether
 an object still matches its old backing store object.
 
@@ -332,7 +337,7 @@ index.  Normal operation is just
 		git-read-tree <sha1 of tree>
 
 and your index file will now be equivalent to the tree that you saved
-earlier. However, that is only your _index_ file: your working
+earlier. However, that is only your 'index' file: your working
 directory contents have not been modified.
 
 4) index -> working directory
@@ -342,20 +347,21 @@ You update your working directory from the index by "checking out"
 files. This is not a very common operation, since normally you'd just
 keep your files updated, and rather than write to your working
 directory, you'd tell the index files about the changes in your
-working directory (i.e. "git-update-cache").
+working directory (i.e. `git-update-cache`).
 
 However, if you decide to jump to a new version, or check out somebody
 else's version, or just restore a previous tree, you'd populate your
 index file with read-tree, and then you need to check out the result
 with
+
 		git-checkout-cache filename
 
-or, if you want to check out all of the index, use "-a".
+or, if you want to check out all of the index, use `-a`.
 
 NOTE! git-checkout-cache normally refuses to overwrite old files, so
 if you have an old version of the tree already checked out, you will
-need to use the "-f" flag (_before_ the "-a" flag or the filename) to
-_force_ the checkout.
+need to use the "-f" flag ('before' the "-a" flag or the filename) to
+'force' the checkout.
 
 
 Finally, there are a few odds and ends which are not purely moving
@@ -388,9 +394,9 @@ redirection from a pipe or file, or by just typing it at the tty).
 
 git-commit-tree will return the name of the object that represents
 that commit, and you should save it away for later use. Normally,
-you'd commit a new "HEAD" state, and while git doesn't care where you
+you'd commit a new `HEAD` state, and while git doesn't care where you
 save the note about that state, in practice we tend to just write the
-result to the file ".git/HEAD", so that we can always see what the
+result to the file `.git/HEAD`, so that we can always see what the
 last committed state was.
 
 6) Examining the data
@@ -406,16 +412,16 @@ object:
 shows the type of the object, and once you have the type (which is
 usually implicit in where you find the object), you can use
 
-		git-cat-file blob|tree|commit <objectname>
+		git-cat-file blob|tree|commit|tag <objectname>
 
 to show its contents. NOTE! Trees have binary content, and as a result
 there is a special helper for showing that content, called
-"git-ls-tree", which turns the binary content into a more easily
+`git-ls-tree`, which turns the binary content into a more easily
 readable form.
 
 It's especially instructive to look at "commit" objects, since those
 tend to be small and fairly self-explanatory. In particular, if you
-follow the convention of having the top commit name in ".git/HEAD",
+follow the convention of having the top commit name in `.git/HEAD`,
 you can do
 
 		git-cat-file commit $(cat .git/HEAD)
@@ -453,30 +459,88 @@ object.
 Once you know the three trees you are going to merge (the one
 "original" tree, aka the common case, and the two "result" trees, aka
 the branches you want to merge), you do a "merge" read into the
-index. This will throw away your old index contents, so you should
+index. This will complain if it has to throw away your old index contents, so you should
 make sure that you've committed those - in fact you would normally
 always do a merge against your last commit (which should thus match
 what you have in your current index anyway).
 
 To do the merge, do
 
-		git-read-tree -m <origtree> <target1tree> <target2tree>
+		git-read-tree -m -u <origtree> <yourtree> <targettree>
 
 which will do all trivial merge operations for you directly in the
 index file, and you can just write the result out with
-"git-write-tree".
+`git-write-tree`.
 
-NOTE! Because the merge is done in the index file, and not in your
-working directory, your working directory will no longer match your
-index. You can use "git-checkout-cache -f -a" to make the effect of
-the merge be seen in your working directory.
+Historical note.  We did not have `-u` facility when this
+section was first written, so we used to warn that
+the merge is done in the index file, not in your
+working directory, and your working directory will no longer match your
+index.
 
-NOTE2! Sadly, many merges aren't trivial. If there are files that have
+
+8) Merging multiple trees, continued
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sadly, many merges aren't trivial. If there are files that have
 been added.moved or removed, or if both branches have modified the
 same file, you will be left with an index tree that contains "merge
-entries" in it. Such an index tree can _NOT_ be written out to a tree
+entries" in it. Such an index tree can 'NOT' be written out to a tree
 object, and you will have to resolve any such merge clashes using
 other tools before you can write out the result.
 
+You can examine such index state with `git-ls-files --unmerged`
+command.  An example:
 
-[ fixme: talk about resolving merges here ]
+------------------------------------------------
+$ git-read-tree -m $orig HEAD $target
+$ git-ls-files --unmerged
+100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello.c
+100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello.c
+100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello.c
+------------------------------------------------
+
+Each line of the `git-ls-files --unmerged` output begins with
+the blob mode bits, blob SHA1, 'stage number', and the
+filename.  The 'stage number' is git's way to say which tree it
+came from: stage 1 corresponds to `$orig` tree, stage 2 `HEAD`
+tree, and stage3 `$target` tree.
+
+Earlier we said that trivial merges are done inside
+`git-read-tree -m`.  For example, if the file did not change
+from `$orig` to `HEAD` nor `$target`, or if the file changed
+from `$orig` to `HEAD` and `$orig` to `$target` the same way,
+obviously the final outcome is what is in `HEAD`.  What the
+above example shows is that file `hello.c` was changed from
+`$orig` to `HEAD` and `$orig` to `$target` in a different way.
+You could resolve this by running your favorite 3-way merge
+program, e.g.  `diff3` or `merge`, on the blob objects from
+these three stages yourself, like this:
+
+------------------------------------------------
+$ git-cat-file blob 263414f... >hello.c~1
+$ git-cat-file blob 06fa6a2... >hello.c~2
+$ git-cat-file blob cc44c73... >hello.c~3
+$ merge hello.c~2 hello.c~1 hello.c~3
+------------------------------------------------
+
+This would leave the merge result in `hello.c~2` file, along
+with conflict markers if there are conflicts.  After verifying
+the merge result makes sense, you can tell git what the final
+merge result for this file is by:
+
+	mv -f hello.c~2 hello.c
+	git-update-cache hello.c
+
+When a path is in unmerged state, running `git-update-cache` for
+that path tells git to mark the path resolved.
+
+The above is the description of a git merge at the lowest level,
+to help you understand what conceptually happens under the hood.
+In practice, nobody, not even git itself, uses three `git-cat-file`
+for this.  There is `git-merge-cache` program that extracts the
+stages to temporary files and calls a `merge` script on it
+
+	git-merge-cache git-merge-one-file-script hello.c
+
+and that is what higher level `git resolve` is implemented with.

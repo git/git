@@ -12,6 +12,8 @@ SYNOPSIS
 'git bisect' bad <rev>
 'git bisect' good <rev>
 'git bisect' reset [<branch>]
+'git bisect' visualize
+
 
 DESCRIPTION
 -----------
@@ -66,6 +68,12 @@ to get back to the master branch, instead of being in one of the bisection
 branches ("git bisect start" will do that for you too, actually: it will
 reset the bisection state, and before it does that it checks that you're
 not using some old bisection branch).
+
+During the bisection process, you can say
+
+	git bisect visualize
+
+to see the currently remaining suspects in `gitk`.
 
 
 Author

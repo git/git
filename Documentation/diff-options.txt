@@ -51,3 +51,5 @@
 	Swap two inputs; that is, show differences from cache or
 	on-disk file to tree contents.
 
+For more detailed explanation on these common options, see also
+link:diffcore.html[diffcore documentation].

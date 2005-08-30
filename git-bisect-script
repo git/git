@@ -2,12 +2,13 @@
 . git-sh-setup-script || dir "Not a git archive"
 
 usage() {
-    echo >&2 'usage: git bisect [start | bad | good | next | reset]
+    echo >&2 'usage: git bisect [start|bad|good|next|reset|visualize]
 git bisect start		reset bisect state and start bisection.
 git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
 git bisect next			find next bisection to test and check it out.
-git bisect reset [<branch>]	finish bisection search and go back to branch.'
+git bisect reset [<branch>]	finish bisection search and go back to branch.
+git bisect visualize            show bisect status in gitk.'
     exit 1
 }
 
@@ -57,8 +58,14 @@ bisect_start() {
 
 bisect_bad() {
 	bisect_autostart
-        case "$#" in 0 | 1) ;; *) usage ;; esac
-	rev=$(git-rev-parse --verify --default HEAD "$@") || exit
+	case "$#" in
+	0)
+		rev=$(git-rev-parse --verify HEAD) ;;
+	1)
+		rev=$(git-rev-parse --verify "$1") ;;
+	*)
+		usage ;;
+	esac || exit
 	echo "$rev" > "$GIT_DIR/refs/bisect/bad"
 	bisect_auto_next
 }
@@ -67,11 +74,13 @@ bisect_good() {
 	bisect_autostart
         case "$#" in
 	0)    revs=$(git-rev-parse --verify HEAD) || exit ;;
-	*)    revs=$(git-rev-parse --revs-only --no-flags "$@") || exit ;;
+	*)    revs=$(git-rev-parse --revs-only --no-flags "$@") &&
+		test '' != "$revs" || die "Bad rev input: $@" ;;
 	esac
 	for rev in $revs
 	do
-	    echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
+		rev=$(git-rev-parse --verify "$rev") || exit
+		echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
 	done
 	bisect_auto_next
 }
@@ -105,17 +114,26 @@ bisect_next() {
 	good=$(git-rev-parse --sq --revs-only --not \
 		$(cd "$GIT_DIR" && ls refs/bisect/good-*)) &&
 	rev=$(eval "git-rev-list --bisect $good $bad") || exit
-	nr=$(eval "git-rev-list $rev $good" | wc -l) || exit
-	if [ "$nr" -le "1" ]; then
+	if [ -z "$rev" ]; then
+	    echo "$bad was both good and bad"
+	    exit 1
+	fi
+	if [ "$rev" = "$bad" ]; then
 	    echo "$rev is first bad commit"
 	    git-diff-tree --pretty $rev
 	    exit 0
 	fi
+	nr=$(eval "git-rev-list $rev $good" | wc -l) || exit
 	echo "Bisecting: $nr revisions left to test after this"
 	echo "$rev" > "$GIT_DIR/refs/heads/new-bisect"
 	git checkout new-bisect || exit
 	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
 	ln -sf refs/heads/bisect "$GIT_DIR/HEAD"
+}
+
+bisect_visualize() {
+	bisect_next_check fail
+	gitk bisect/bad --not `cd "$GIT_DIR/refs" && echo bisect/good-*`
 }
 
 bisect_reset() {
@@ -150,6 +168,8 @@ case "$#" in
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;
+    visualize)
+	bisect_visualize "$@" ;;
     reset)
         bisect_reset "$@" ;;
     *)

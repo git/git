@@ -1,5 +1,5 @@
 The output format from "git-diff-cache", "git-diff-tree" and
-"git-diff-files" is very similar.
+"git-diff-files" are very similar.
 
 These commands all compare two sets of things; what are
 compared are different:
@@ -19,35 +19,41 @@ git-diff-files [<pattern>...]::
 
 An output line is formatted this way:
 
+------------------------------------------------
 in-place edit  :100644 100644 bcd1234... 0123456... M file0
 copy-edit      :100644 100644 abcd123... 1234567... C68 file1 file2
 rename-edit    :100644 100644 abcd123... 1234567... R86 file1 file3
-create         :000000 100644 0000000... 1234567... N file4
+create         :000000 100644 0000000... 1234567... A file4
 delete         :100644 000000 1234567... 0000000... D file5
 unmerged       :000000 000000 0000000... 0000000... U file6
+------------------------------------------------
 
 That is, from the left to the right:
 
-  (1) a colon.
-  (2) mode for "src"; 000000 if creation or unmerged.
-  (3) a space.
-  (4) mode for "dst"; 000000 if deletion or unmerged.
-  (5) a space.
-  (6) sha1 for "src"; 0{40} if creation or unmerged.
-  (7) a space.
-  (8) sha1 for "dst"; 0{40} if creation, unmerged or "look at work tree".
-  (9) a space.
- (10) status, followed by optional "score" number.
- (11) a tab or a NUL when '-z' option is used.
- (12) path for "src"
- (13) a tab or a NUL when '-z' option is used; only exists for C or R.
- (14) path for "dst"; only exists for C or R.
- (15) an LF or a NUL when '-z' option is used, to terminate the record.
+. a colon.
+. mode for "src"; 000000 if creation or unmerged.
+. a space.
+. mode for "dst"; 000000 if deletion or unmerged.
+. a space.
+. sha1 for "src"; 0\{40\} if creation or unmerged.
+. a space.
+. sha1 for "dst"; 0\{40\} if creation, unmerged or "look at work tree".
+. a space.
+. status, followed by optional "score" number.
+. a tab or a NUL when '-z' option is used.
+. path for "src"
+. a tab or a NUL when '-z' option is used; only exists for C or R.
+. path for "dst"; only exists for C or R.
+. an LF or a NUL when '-z' option is used, to terminate the record.
 
 <sha1> is shown as all 0's if new is a file on the filesystem
-and it is out of sync with the cache.  Example:
+and it is out of sync with the cache.
 
-  :100644 100644 5be4a4...... 000000...... M file.c
+Example:
+
+------------------------------------------------
+:100644 100644 5be4a4...... 000000...... M file.c
+------------------------------------------------
 
 Generating patches with -p
 --------------------------
@@ -107,20 +113,20 @@ Git specific extension to diff format
 What -p option produces is slightly different from the
 traditional diff format.
 
- (1) It is preceeded with a "git diff" header, that looks like
+1.   It is preceeded with a "git diff" header, that looks like
      this:
 
      diff --git a/file1 b/file2
++
+The `a/` and `b/` filenames are the same unless rename/copy is
+involved.  Especially, even for a creation or a deletion,
+`/dev/null` is _not_ used in place of `a/` or `b/` filenames.
++
+When rename/copy is involved, `file1` and `file2` shows the
+name of the source file of the rename/copy and the name of
+the file that rename/copy produces, respectively.
 
-     The a/ and b/ filenames are the same unless rename/copy is
-     involved.  Especially, even for a creation or a deletion,
-     /dev/null is _not_ used in place of a/ or b/ filename.
-
-     When rename/copy is involved, file1 and file2 shows the
-     name of the source file of the rename/copy and the name of
-     the file that rename/copy produces, respectively.
-
- (2) It is followed by extended header lines that are one or
+2.   It is followed by extended header lines that are one or
      more of:
 
        old mode <mode>
