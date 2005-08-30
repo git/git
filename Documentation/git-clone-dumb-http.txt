@@ -3,26 +3,24 @@ git-clone-dumb-http(1)
 
 NAME
 ----
-git-clone-dumb-http - Some git command not yet documented.
-
+git-clone-dumb-http - Client to clone a repository via HTTP.
 
 SYNOPSIS
 --------
-'git-clone-dumb-http' [ --option ] <args>...
+'git-clone-dumb-http' <remote-repo> <local-dir>
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Client to clone, via HTTP, a repository that has been prepared with
+update-server-info.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+<remote-repo>::
+	Remote repository to clone from.
 
-<args>...::
-	Some argument not yet documented.
-
+<local-dir>::
+	Directory to clone to.
 
 Author
 ------
