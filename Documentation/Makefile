@@ -5,6 +5,8 @@ DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
 DOC_HTML += glossary.html
 DOC_HTML += tutorial.html
 DOC_HTML += howto-index.html
+DOC_HTML += howto/revert-branch-rebase.html
+
 DOC_MAN1=$(patsubst %.txt,%.1,$(MAN1_TXT))
 DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 
@@ -73,8 +75,6 @@ howto-index.html: howto-index.txt
 	asciidoc -b xhtml11 howto-index.txt
 
 WEBDOC_DEST = /pub/software/scm/git/docs
-
-DOC_HTML += howto/revert-branch-rebase.html
 
 $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 	rm -f $@+ $@
