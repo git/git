@@ -35,25 +35,25 @@ static struct commit *pop_one_commit(struct commit_list **list_p)
 }
 
 struct commit_name {
-	int head_rev;	/* which head's ancestor? */
-	int generation;	/* how many parents away from head_rev */
+	const char *head_name; /* which head's ancestor? */
+	int generation; /* how many parents away from head_name */
 };
 
-/* Name the commit as nth generation ancestor of head_rev;
+/* Name the commit as nth generation ancestor of head_name;
  * we count only the first-parent relationship for naming purposes.
  */
-static void name_commit(struct commit *commit, int head_rev, int nth)
+static void name_commit(struct commit *commit, const char *head_name, int nth)
 {
 	struct commit_name *name;
 	if (!commit->object.util)
 		commit->object.util = xmalloc(sizeof(struct commit_name));
 	name = commit->object.util;
-	name->head_rev = head_rev;
+	name->head_name = head_name;
 	name->generation = nth;
 }
 
 /* Parent is the first parent of the commit.  We may name it
- * as (n+1)th generation ancestor of the same head_rev as
+ * as (n+1)th generation ancestor of the same head_name as
  * commit is nth generation ancestore of, if that generation
  * number is better than the name it already has.
  */
@@ -65,8 +65,86 @@ static void name_parent(struct commit *commit, struct commit *parent)
 		return;
 	if (!parent_name ||
 	    commit_name->generation + 1 < parent_name->generation)
-		name_commit(parent, commit_name->head_rev,
+		name_commit(parent, commit_name->head_name,
 			    commit_name->generation + 1);
+}
+
+static int name_first_parent_chain(struct commit *c)
+{
+	int i = 0;
+	while (c) {
+		struct commit *p;
+		if (!c->object.util)
+			break;
+		if (!c->parents)
+			break;
+		p = c->parents->item;
+		if (!p->object.util) {
+			name_parent(c, p);
+			i++;
+		}
+		c = p;
+	}
+	return i;
+}
+
+static void name_commits(struct commit_list *list,
+			 struct commit **rev,
+			 char **ref_name,
+			 int num_rev)
+{
+	struct commit_list *cl;
+	struct commit *c;
+	int i;
+
+	/* First give names to the given heads */
+	for (cl = list; cl; cl = cl->next) {
+		c = cl->item;
+		if (c->object.util)
+			continue;
+		for (i = 0; i < num_rev; i++) {
+			if (rev[i] == c) {
+				name_commit(c, ref_name[i], 0);
+				break;
+			}
+		}
+	}
+
+	/* Then commits on the first parent ancestry chain */
+	do {
+		i = 0;
+		for (cl = list; cl; cl = cl->next) {
+			i += name_first_parent_chain(cl->item);
+		}
+	} while (i);
+
+	/* Finally, any unnamed commits */
+	do {
+		i = 0;
+		for (cl = list; cl; cl = cl->next) {
+			struct commit_list *parents;
+			struct commit_name *n;
+			int nth;
+			c = cl->item;
+			if (!c->object.util)
+				continue;
+			n = c->object.util;
+			parents = c->parents;
+			nth = 0;
+			while (parents) {
+				struct commit *p = parents->item;
+				char newname[1000];
+				parents = parents->next;
+				nth++;
+				if (p->object.util)
+					continue;
+				sprintf(newname, "%s^%d", n->head_name, nth);
+				name_commit(p, strdup(newname), 0);
+				i++;
+				name_first_parent_chain(p);
+			}
+		}
+	} while (i);
 }
 
 static int mark_seen(struct commit *commit, struct commit_list **seen_p)
@@ -89,7 +167,6 @@ static void join_revs(struct commit_list **list_p,
 		struct commit_list *parents;
 		struct commit *commit = pop_one_commit(list_p);
 		int flags = commit->object.flags & all_mask;
-		int nth_parent = 0;
 		int still_interesting = !!interesting(*list_p);
 
 		if (!still_interesting && extra < 0)
@@ -104,10 +181,6 @@ static void join_revs(struct commit_list **list_p,
 			struct commit *p = parents->item;
 			int this_flag = p->object.flags;
 			parents = parents->next;
-			nth_parent++;
-			if (nth_parent == 1)
-				name_parent(commit, p);
-
 			if ((this_flag & flags) == flags)
 				continue;
 			parse_commit(p);
@@ -119,7 +192,7 @@ static void join_revs(struct commit_list **list_p,
 	}
 }
 
-static void show_one_commit(struct commit *commit, char **head_name)
+static void show_one_commit(struct commit *commit)
 {
 	char pretty[128], *cp;
 	struct commit_name *name = commit->object.util;
@@ -129,8 +202,8 @@ static void show_one_commit(struct commit *commit, char **head_name)
 		cp = pretty + 8;
 	else
 		cp = pretty;
-	if (name && head_name) {
-		printf("[%s", head_name[name->head_rev]);
+	if (name && name->head_name) {
+		printf("[%s", name->head_name);
 		if (name->generation)
 			printf("~%d", name->generation);
 		printf("] ");
@@ -237,6 +310,7 @@ int main(int ac, char **av)
 	struct commit_list *list = NULL, *seen = NULL;
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_tags = 0;
+	int all_mask, all_revs, shown_merge_point;
 	char head_path[128];
 	int head_path_len;
 	unsigned char head_sha1[20];
@@ -293,8 +367,6 @@ int main(int ac, char **av)
 			die("cannot find commit %s (%s)",
 			    ref_name[num_rev], revkey);
 		parse_commit(commit);
-		if (!commit->object.util)
-			name_commit(commit, num_rev, 0);
 		mark_seen(commit, &seen);
 
 		/* rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,
@@ -328,30 +400,44 @@ int main(int ac, char **av)
 			for (j = 0; j < i; j++)
 				putchar(' ');
 			printf("%c [%s] ", is_head ? '*' : '!', ref_name[i]);
-			show_one_commit(rev[i], NULL);
+			show_one_commit(rev[i]);
 		}
 		for (i = 0; i < num_rev; i++)
 			putchar('-');
 		putchar('\n');
 	}
 
-	label = ref_name;
+	/* Sort topologically */
+	sort_in_topological_order(&seen);
+
+	/* Give names to commits */
+	name_commits(seen, rev, ref_name, num_rev);
+
+	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
+	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
+	shown_merge_point = 0;
+
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
 		int this_flag = commit->object.flags;
+		int is_merge_point = (this_flag & all_revs) == all_revs;
 		static char *obvious[] = { "" };
 
-		if ((this_flag & UNINTERESTING) && (--extra < 0))
-			break;
+		if (is_merge_point)
+			shown_merge_point = 1;
+
 		if (1 < num_rev) {
 			for (i = 0; i < num_rev; i++)
 				putchar((this_flag & (1u << (i + REV_SHIFT)))
 					? '+' : ' ');
 			putchar(' ');
 		}
-		show_one_commit(commit, label);
+		show_one_commit(commit);
 		if (num_rev == 1)
 			label = obvious;
+		if (shown_merge_point && is_merge_point)
+			if (--extra < 0)
+				break;
 	}
 	return 0;
 }
