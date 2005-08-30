@@ -775,6 +775,32 @@ proc bindline {t id} {
     $canv bind $t <Button-1> "lineclick %x %y $id 1"
 }
 
+proc drawlines {id xtra} {
+    global mainline mainlinearrow sidelines lthickness colormap canv
+
+    $canv delete lines.$id
+    if {[info exists mainline($id)]} {
+	set t [$canv create line $mainline($id) \
+		   -width [expr {($xtra + 1) * $lthickness}] \
+		   -fill $colormap($id) -tags lines.$id \
+		   -arrow $mainlinearrow($id)]
+	$canv lower $t
+	bindline $t $id
+    }
+    if {[info exists sidelines($id)]} {
+	foreach ls $sidelines($id) {
+	    set coords [lindex $ls 0]
+	    set thick [lindex $ls 1]
+	    set arrow [lindex $ls 2]
+	    set t [$canv create line $coords -fill $colormap($id) \
+		       -width [expr {($thick + $xtra) * $lthickness}] \
+		       -arrow $arrow -tags lines.$id]
+	    $canv lower $t
+	    bindline $t $id
+	}
+    }
+}
+
 # level here is an index in displist
 proc drawcommitline {level} {
     global parents children nparents displist
@@ -823,23 +849,8 @@ proc drawcommitline {level} {
 	if {$mainlinearrow($id) ne "none"} {
 	    set mainline($id) [trimdiagstart $mainline($id)]
 	}
-	set t [$canv create line $mainline($id) \
-		   -width $lthickness -fill $colormap($id) \
-		   -arrow $mainlinearrow($id)]
-	$canv lower $t
-	bindline $t $id
     }
-    if {[info exists sidelines($id)]} {
-	foreach ls $sidelines($id) {
-	    set coords [lindex $ls 0]
-	    set thick [lindex $ls 1]
-	    set arrow [lindex $ls 2]
-	    set t [$canv create line $coords -fill $colormap($id) \
-		       -width [expr {$thick * $lthickness}] -arrow $arrow]
-	    $canv lower $t
-	    bindline $t $id
-	}
-    }
+    drawlines $id 0
     set orad [expr {$linespc / 3}]
     set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
 	       [expr $x + $orad - 1] [expr $y1 + $orad - 1] \
@@ -2059,6 +2070,7 @@ proc selectline {l isnew} {
     global commentend idtags idline linknum
 
     $canv delete hover
+    normalline
     if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
     $canv delete secsel
     set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
@@ -3127,15 +3139,102 @@ proc linehover {} {
     $canv raise $t
 }
 
+proc clickisonarrow {id y} {
+    global mainline mainlinearrow sidelines lthickness
+
+    set thresh [expr {2 * $lthickness + 6}]
+    if {[info exists mainline($id)]} {
+	if {$mainlinearrow($id) ne "none"} {
+	    if {abs([lindex $mainline($id) 1] - $y) < $thresh} {
+		return "up"
+	    }
+	}
+    }
+    if {[info exists sidelines($id)]} {
+	foreach ls $sidelines($id) {
+	    set coords [lindex $ls 0]
+	    set arrow [lindex $ls 2]
+	    if {$arrow eq "first" || $arrow eq "both"} {
+		if {abs([lindex $coords 1] - $y) < $thresh} {
+		    return "up"
+		}
+	    }
+	    if {$arrow eq "last" || $arrow eq "both"} {
+		if {abs([lindex $coords end] - $y) < $thresh} {
+		    return "down"
+		}
+	    }
+	}
+    }
+    return {}
+}
+
+proc arrowjump {id dirn y} {
+    global mainline sidelines canv
+
+    set yt {}
+    if {$dirn eq "down"} {
+	if {[info exists mainline($id)]} {
+	    set y1 [lindex $mainline($id) 1]
+	    if {$y1 > $y} {
+		set yt $y1
+	    }
+	}
+	if {[info exists sidelines($id)]} {
+	    foreach ls $sidelines($id) {
+		set y1 [lindex $ls 0 1]
+		if {$y1 > $y && ($yt eq {} || $y1 < $yt)} {
+		    set yt $y1
+		}
+	    }
+	}
+    } else {
+	if {[info exists sidelines($id)]} {
+	    foreach ls $sidelines($id) {
+		set y1 [lindex $ls 0 end]
+		if {$y1 < $y && ($yt eq {} || $y1 > $yt)} {
+		    set yt $y1
+		}
+	    }
+	}
+    }
+    if {$yt eq {}} return
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    if {$ymax eq {} || $ymax <= 0} return
+    set view [$canv yview]
+    set yspan [expr {[lindex $view 1] - [lindex $view 0]}]
+    set yfrac [expr {$yt / $ymax - $yspan / 2}]
+    if {$yfrac < 0} {
+	set yfrac 0
+    }
+    $canv yview moveto $yfrac
+}
+
 proc lineclick {x y id isnew} {
-    global ctext commitinfo children cflist canv
+    global ctext commitinfo children cflist canv thickerline
 
     unmarkmatches
     unselectline
-    if {$isnew} {
-	addtohistory [list lineclick $x $x $id 0]
-    }
+    normalline
     $canv delete hover
+    # draw this line thicker than normal
+    drawlines $id 1
+    set thickerline $id
+    if {$isnew} {
+	set ymax [lindex [$canv cget -scrollregion] 3]
+	if {$ymax eq {}} return
+	set yfrac [lindex [$canv yview] 0]
+	set y [expr {$y + $yfrac * $ymax}]
+    }
+    set dirn [clickisonarrow $id $y]
+    if {$dirn ne {}} {
+	arrowjump $id $dirn $y
+	return
+    }
+
+    if {$isnew} {
+	addtohistory [list lineclick $x $y $id 0]
+    }
     # fill the details pane with info about this line
     $ctext conf -state normal
     $ctext delete 0.0 end
@@ -3166,6 +3265,14 @@ proc lineclick {x y id isnew} {
     $ctext conf -state disabled
 
     $cflist delete 0 end
+}
+
+proc normalline {} {
+    global thickerline
+    if {[info exists thickerline]} {
+	drawlines $thickerline 0
+	unset thickerline
+    }
 }
 
 proc selbyid {id} {
