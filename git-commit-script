@@ -64,6 +64,9 @@ do
     use_commit="$1"
     no_edit=t
     shift ;;
+  -e|--e|--ed|--edi|--edit)
+    no_edit=
+    shift ;;
   -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
     signoff=t
     shift ;;
