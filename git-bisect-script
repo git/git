@@ -2,12 +2,13 @@
 . git-sh-setup-script || dir "Not a git archive"
 
 usage() {
-    echo >&2 'usage: git bisect [start | bad | good | next | reset]
+    echo >&2 'usage: git bisect [start|bad|good|next|reset|visualize]
 git bisect start		reset bisect state and start bisection.
 git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
 git bisect next			find next bisection to test and check it out.
-git bisect reset [<branch>]	finish bisection search and go back to branch.'
+git bisect reset [<branch>]	finish bisection search and go back to branch.
+git bisect visualize            show bisect status in gitk.'
     exit 1
 }
 
@@ -57,8 +58,14 @@ bisect_start() {
 
 bisect_bad() {
 	bisect_autostart
-        case "$#" in 0 | 1) ;; *) usage ;; esac
-	rev=$(git-rev-parse --verify --default HEAD "$@") || exit
+	case "$#" in
+	0)
+		rev=$(git-rev-parse --verify HEAD) ;;
+	1)
+		rev=$(git-rev-parse --verify "$1") ;;
+	*)
+		usage ;;
+	esac || exit
 	echo "$rev" > "$GIT_DIR/refs/bisect/bad"
 	bisect_auto_next
 }
@@ -67,11 +74,13 @@ bisect_good() {
 	bisect_autostart
         case "$#" in
 	0)    revs=$(git-rev-parse --verify HEAD) || exit ;;
-	*)    revs=$(git-rev-parse --revs-only --no-flags "$@") || exit ;;
+	*)    revs=$(git-rev-parse --revs-only --no-flags "$@") &&
+		test '' != "$revs" || die "Bad rev input: $@" ;;
 	esac
 	for rev in $revs
 	do
-	    echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
+		rev=$(git-rev-parse --verify "$rev") || exit
+		echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
 	done
 	bisect_auto_next
 }
@@ -122,6 +131,11 @@ bisect_next() {
 	ln -sf refs/heads/bisect "$GIT_DIR/HEAD"
 }
 
+bisect_visualize() {
+	bisect_next_check fail
+	gitk bisect/bad --not `cd "$GIT_DIR/refs" && echo bisect/good-*`
+}
+
 bisect_reset() {
 	case "$#" in
 	0) branch=master ;;
@@ -154,6 +168,8 @@ case "$#" in
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;
+    visualize)
+	bisect_visualize "$@" ;;
     reset)
         bisect_reset "$@" ;;
     *)
