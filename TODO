@@ -27,6 +27,9 @@ Documentation
   need to be expanded.  I personally do not think we need tool
   support for this.
 
+* Review the existing docs and see if the repository
+  organization needs to be clarified further [NEXT].
+
 * Update tutorial to cover shared repository style a bit more,
   maybe with a toy project that involves two or three
   repositories.
@@ -92,7 +95,7 @@ Technical (milder)
 
     http://www.cs.berkeley.edu/~ejr/gits/git.git#portable 
 
-  [Looked at it. Still undecided.]
+  [Applied.  Burned by one of them and backed out.]
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -126,7 +129,7 @@ Technical (milder)
   git.git repository.
 
 * Accept and apply "git repack --all" patch, except the part
-  that removes the existing packs. [Undecided]
+  that removes the existing packs. [DONE]
 
 * Internally split the project into non-doc and doc parts; add
   an extra root for the doc part and merge from it; move the
@@ -134,7 +137,7 @@ Technical (milder)
   repository; experiment if this results in a reasonable
   workflow, and document it in howto form if it does.
 
-* Add names to all nodes in show-branch.
+* Add names to all nodes in show-branch [DONE].
 
 * Option to limit rename detection for more than N paths.
 
