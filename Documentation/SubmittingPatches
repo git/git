@@ -239,7 +239,7 @@ Thunderbird
 (A Large Angry SCM)
 
 Here are some hints on how to successfully submit patches inline using
-Thunderbird. [*3*]
+Thunderbird.
 
 This recipe appears to work with the current [*1*] Thunderbird from Suse.
 
@@ -260,7 +260,7 @@ patch. [*2*]
 for the patch, use Tools->about:config to set the following to the
 indicated values:
 	mailnews.send_plaintext_flowed	=> false
-	mailnews.wraplength		=> 999
+	mailnews.wraplength		=> 0
 
 4) Open a compose window and click the external editor icon.
 
@@ -283,8 +283,4 @@ settings but I haven't tried, yet.
 	mail.html_compose			=> false
 	mail.identity.default.compose_html	=> false
 	mail.identity.id?.compose_html		=> false
-
-*3* Even after following these hints, Thunderbird will still trim
-trailing whitespace from each line. I currently have no work around for
-for this issue.
 

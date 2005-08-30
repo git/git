@@ -3,26 +3,28 @@ git-request-pull-script(1)
 
 NAME
 ----
-git-request-pull-script - Some git command not yet documented.
-
+git-request-pull-script - Generates a summary of pending changes.
 
 SYNOPSIS
 --------
-'git-request-pull-script' [ --option ] <args>...
+'git-request-pull-script' <start> <url> [<end>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
 
+Summarizes the changes between two commits to the standard output, and includes
+the given URL in the generated summary.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+<start>::
+	Commit to start at.
 
-<args>...::
-	Some argument not yet documented.
+<url>::
+	URL to include in the summary.
 
+<end>::
+	Commit to send at; defaults to HEAD.
 
 Author
 ------

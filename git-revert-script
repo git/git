@@ -158,7 +158,7 @@ echo >&2 "Finished one $me."
 
 case "$no_commit" in
 '')
-	git commit -F .msg
+	git-commit-script -n -F .msg
 	rm -f .msg
 	;;
 esac

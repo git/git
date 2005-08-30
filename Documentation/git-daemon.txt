@@ -3,26 +3,34 @@ git-daemon(1)
 
 NAME
 ----
-git-daemon - Some git command not yet documented.
-
+git-daemon - A really simple server for GIT repositories.
 
 SYNOPSIS
 --------
-'git-daemon' [ --option ] <args>...
+'git-daemon' [--inetd | --port=n]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+A really simple TCP git daemon that normally listens on port "DEFAULT_GIT_PORT"
+aka 9418. It waits for a connection, and will just execute "git-upload-pack"
+when it gets one.
 
+It's careful in that there's a magic request-line that gives the command and
+what directory to upload, and it verifies that the directory is ok.
+
+It verifies that the directory has the magic file "git-daemon-export-ok", and
+it will refuse to export any git directory that hasn't explicitly been marked
+for export this way.
+
+This is ideally suited for read-only updates, ie pulling from git repositories.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+--inetd::
+	Have the server run as an inetd service.
 
-<args>...::
-	Some argument not yet documented.
-
+--port::
+	Listen on an alternative port.
 
 Author
 ------

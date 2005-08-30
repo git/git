@@ -704,7 +704,7 @@ static int parse_num(const char **cp_p)
 			scale *= 10;
 			num = num * 10 + ch - '0';
 		}
-		*cp++;
+		cp++;
 	}
 	*cp_p = cp;
 
