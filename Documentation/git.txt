@@ -19,10 +19,13 @@ This is reference information for the core git commands.
 Before reading this cover to cover, you may want to take a look
 at the link:tutorial.html[tutorial] document.
 
-The Discussion section below contains much useful definition and
+The <<Discussion>> section below contains much useful definition and
 clarification info - read that first.  And of the commands, I suggest
 reading link:git-update-cache.html[git-update-cache] and
 link:git-read-tree.html[git-read-tree] first - I wish I had!
+
+If you are migrating from CVS, link:cvs-migration.html[cvs migration]
+document may be helpful after you finish the tutorial.
 
 After you get the general feel from the tutorial and this
 overview page, you may want to take a look at the
@@ -483,8 +486,8 @@ git Diffs
 	link:git-diff-files.html[git-diff-files];
 	link:git-diff-tree.html[git-diff-tree]
 
-Discussion
-----------
+Discussion[[Discussion]]
+------------------------
 include::../README[]
 
 Author

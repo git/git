@@ -1,5 +1,6 @@
 Git for CVS users
 =================
+v0.99.5, Aug 2005
 
 Ok, so you're a CVS user. That's ok, it's a treatable condition, and the
 first step to recovery is admitting you have a problem. The fact that
@@ -8,12 +9,12 @@ already.
 
 The thing about CVS is that it absolutely sucks as a source control
 manager, and you'll thus be happy with almost anything else. Git,
-however, may be a bit _too_ different (read: "good") for your taste, and
+however, may be a bit 'too' different (read: "good") for your taste, and
 does a lot of things differently. 
 
 One particular suckage of CVS is very hard to work around: CVS is
-basically a tool for tracking _file_ history, while git is a tool for
-tracking _project_ history.  This sometimes causes problems if you are
+basically a tool for tracking 'file' history, while git is a tool for
+tracking 'project' history.  This sometimes causes problems if you are
 used to doing very strange things in CVS, in particular if you're doing
 things like making branches of just a subset of the project.  Git can't
 track that, since git never tracks things on the level of an individual
@@ -22,17 +23,18 @@ file, only on the whole project level.
 The good news is that most people don't do that, and in fact most sane
 people think it's a bug in CVS that makes it tag (and check in changes)
 one file at a time.  So most projects you'll ever see will use CVS
-_as_if_ it was sane.  In which case you'll find it very easy indeed to
+'as if' it was sane.  In which case you'll find it very easy indeed to
 move over to Git. 
 
-First off: this is not a git tutorial. See Documentation/tutorial.txt
-for how git actually works. This is more of a random collection of
-gotcha's and notes on converting from CVS to git.
+First off: this is not a git tutorial. See
+link:tutorial.html[Documentation/tutorial.txt] for how git
+actually works. This is more of a random collection of gotcha's
+and notes on converting from CVS to git.
 
 Second: CVS has the notion of a "repository" as opposed to the thing
 that you're actually working in (your working directory, or your
 "checked out tree").  Git does not have that notion at all, and all git
-working directories _are_ the repositories.  However, you can easily
+working directories 'are' the repositories.  However, you can easily
 emulate the CVS model by having one special "global repository", which
 people can synchronize with.  See details later, but in the meantime
 just keep in mind that with git, every checked out working tree will
@@ -55,7 +57,7 @@ will need the help of a program called "cvsps":
 
 which is not actually related to git at all, but which makes CVS usage
 look almost sane (ie you almost certainly want to have it even if you
-decide to stay with CVS). However, git will want at _least_ version 2.1
+decide to stay with CVS). However, git will want 'at least' version 2.1
 of cvsps (available at the address above), and in fact will currently
 refuse to work with anything else.
 
