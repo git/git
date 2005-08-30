@@ -12,6 +12,7 @@ int main(int argc, char **argv)
 	void *buf;
 	unsigned long size;
 
+	setup_git_directory();
 	if (argc != 3 || get_sha1(argv[2], sha1))
 		usage("git-cat-file [-t | -s | <type>] <sha1>");
 
