@@ -45,7 +45,7 @@ git-diff-%.txt: diff-format.txt diff-options.txt
 	touch $@
 
 clean:
-	rm -f *.xml *.html *.1 *.7 howto-index.txt
+	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d manpage $<
@@ -73,6 +73,13 @@ howto-index.html: howto-index.txt
 	asciidoc -b xhtml11 howto-index.txt
 
 WEBDOC_DEST = /pub/software/scm/git/docs
+
+DOC_HTML += howto/revert-branch-rebase.html
+
+$(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
+	rm -f $@+ $@
+	sed -e '1,/^$$/d' $? | asciidoc -b xhtml11 - >$@+
+	mv $@+ $@
 
 install-webdoc : html
 	sh ./install-webdoc.sh $(WEBDOC_DEST)
