@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"240";
+my $version =		"241";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -980,9 +980,14 @@ sub git_summary {
 		if ($i-- > 0) {
 			print "<td><i>$co{'age_string'}</i></td>\n" .
 			      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
-			      "<td>" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"},
-			      "<b>" . escapeHTML($co{'title_short'}) . "</b>") .
+			      "<td>";
+			if (length($co{'title_short'}) < length($co{'title'})) {
+				print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list", -title => "$co{'title'}"},
+			              "<b>" . escapeHTML($co{'title_short'}) . "</b>");
+			} else {
+				print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"},
+				      "<b>" . escapeHTML($co{'title'}) . "</b>");
+			}
 			      "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
@@ -2232,8 +2237,15 @@ sub git_shortlog {
 		$alternate ^= 1;
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . escapeHTML(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
-		      "<td>" . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"}, "<b>" .
-		      escapeHTML($co{'title_short'}) . "</b>") . "</td>\n" .
+		      "<td>";
+		if (length($co{'title_short'}) < length($co{'title'})) {
+			print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list", -title => "$co{'title'}"},
+			      "<b>" . escapeHTML($co{'title_short'}) . "</b>");
+		} else {
+			print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"},
+			      "<b>" . escapeHTML($co{'title_short'}) . "</b>");
+		}
+		print "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "commitdiff") .
