@@ -28,19 +28,21 @@ Documentation
   support for this.
 
 * Review the existing docs and see if the repository
-  organization needs to be clarified further [NEXT].
+  organization needs to be clarified further [STILL NEEDSWORK].
 
-* Update tutorial to cover shared repository style a bit more,
-  maybe with a toy project that involves two or three
+* Update tutorial to cover shared repository style a bit more
+  [DONE], maybe with a toy project that involves two or three
   repositories.
 
 * Update tutorial to cover setting up repository hooks to do
   common tasks. [IN PROGRESS]
 
-* Get help to properly use asciidoc in tutorial.
+* Get help to properly use asciidoc in tutorial [Heck, ended up
+  learning it myself, DONE].
 
-* Maybe justify and demonstrate an Octopus in the tutorial.  Add
-  it to the glossary.
+* Maybe justify and demonstrate an Octopus in the tutorial
+  [STILL NEEDSWORK].  Add it to the glossary [Thanks Johannes,
+  DONE].
 
 
 Technical (heavier)
@@ -49,8 +51,8 @@ Technical (heavier)
 * Tony Luck reported an unfortunate glitch in the 3-way merge.
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
-  [Underway.  Thanks Daniel and Fredrik for taking an
-  initiative.]
+  [Daniel's patch look promising, just by judging from how clean
+  the re-organization part of read-tree looks like.]
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -60,7 +62,7 @@ Technical (heavier)
   different from each other.
 
 * Maybe a pack optimizer.  I am not convinced that packing all
-  objects into a single pack and removing all the existing pack
+  objects into a single pack and removing all the existing panck
   is the right way to go, since that would work against people
   who already have those packs.
 
@@ -95,7 +97,8 @@ Technical (milder)
 
     http://www.cs.berkeley.edu/~ejr/gits/git.git#portable 
 
-  [Applied.  Burned by one of them and backed out.]
+  [Applied.  Burned by one of them and backed out, but otherwise
+  looks OK.]
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
