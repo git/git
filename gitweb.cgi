@@ -15,7 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"241";
+my $version =		"242";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
@@ -988,7 +988,7 @@ sub git_summary {
 				print $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit", -class => "list"},
 				      "<b>" . escapeHTML($co{'title'}) . "</b>");
 			}
-			      "</td>\n" .
+			print "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
 			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "commitdiff") .
