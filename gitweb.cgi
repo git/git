@@ -21,8 +21,8 @@ my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link = "";
 
 # absolute fs-path which will be prepended to the project path
-my $projectroot =	"/pub/scm";
-$projectroot = "/home/kay/public_html/pub/scm";
+#my $projectroot =	"/pub/scm";
+my $projectroot = "/home/kay/public_html/pub/scm";
 
 # location of the git-core binaries
 my $gitbin =		"/usr/bin";
@@ -621,12 +621,15 @@ sub chop_str {
 	my $len = shift;
 	my $add_len = shift || 10;
 
-	$str =~ m/^(.{0,$len}[^ \/\-_:\.@]{0,$add_len})/;
-	my $chopped = $1;
-	if ($chopped ne $str) {
-		$chopped .= " ...";
+	# allow only $len chars, but don't cut a word if it would fit in $add_len
+	# if it doesn't fit, cut it if it's still longer than the dots we would add
+	$str =~ m/^(.{0,$len}[^ \/\-_:\.@]{0,$add_len})(.*)/;
+	my $body = $1;
+	my $tail = $2;
+	if (length($tail) > 4) {
+		$tail = " ...";
 	}
-	return $chopped;
+	return "$body$tail";
 }
 
 sub file_type {
