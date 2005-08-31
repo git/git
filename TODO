@@ -165,6 +165,18 @@ Technical (trivial)
     diff-tree
     rev-list
 
+
+Initial repository Gotchas
+--------------------------
+
+* `git fetch foo:bar` works OK, but `git checkout bar`
+  afterwards does not (missing `.git/HEAD`)
+  
+* `git status` does not work well when missing `.git/HEAD` [DONE].
+
+* `git log` either; git-log-script uses die which does not exist
+  [DONE].
+
 
 Local Variables:
 mode: text
