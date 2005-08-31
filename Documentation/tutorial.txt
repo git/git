@@ -47,7 +47,7 @@ to which git will reply
 	defaulting to local storage area
 
 which is just git's way of saying that you haven't been doing anything
-strange, and that it will have created a local .git directory setup for
+strange, and that it will have created a local `.git` directory setup for
 your new project. You will now have a `.git` directory, and you can
 inspect that with `ls`. For your new empty project, it should show you
 three entries, among other things:
@@ -55,7 +55,7 @@ three entries, among other things:
  - a symlink called `HEAD`, pointing to `refs/heads/master`
 +
 Don't worry about the fact that the file that the `HEAD` link points to
-doesn't even exist yet - you haven't created the commit that will
+doesn't even exist yet -- you haven't created the commit that will
 start your `HEAD` development branch yet.
 
  - a subdirectory called `objects`, which will contain all the
@@ -84,13 +84,13 @@ branch. A number of the git tools will assume that `.git/HEAD` is
 valid, though.
 
 [NOTE]
-An "object" is identified by its 160-bit SHA1 hash, aka "name",
+An 'object' is identified by its 160-bit SHA1 hash, aka 'object name',
 and a reference to an object is always the 40-byte hex
-representation of that SHA1 name. The files in the "refs"
+representation of that SHA1 name. The files in the `refs`
 subdirectory are expected to contain these hex references
-(usually with a final '\n' at the end), and you should thus
+(usually with a final `\'\n\'` at the end), and you should thus
 expect to see a number of 41-byte files containing these
-references in this refs subdirectories when you actually start
+references in these `refs` subdirectories when you actually start
 populating your tree.
 
 You have now created your first git repository. Of course, since it's
@@ -112,10 +112,10 @@ echo "Hello World" >hello
 echo "Silly example" >example
 ------------------------------------------------
 
-you have now created two files in your working tree (aka "working directory"), but to
+you have now created two files in your working tree (aka 'working directory'), but to
 actually check in your hard work, you will have to go through two steps:
 
- - fill in the "index" file (aka "cache") with the information about your
+ - fill in the 'index' file (aka 'cache') with the information about your
    working tree state.
 
  - commit that index file as an object.
@@ -125,8 +125,8 @@ to your working tree, you use the `git-update-cache` program. That
 program normally just takes a list of filenames you want to update, but
 to avoid trivial mistakes, it refuses to add new entries to the cache
 (or remove existing ones) unless you explicitly tell it that you're
-adding a new entry with the `--add` flag (or removing an entry with the
-`--remove`) flag.
+adding a new entry with the `\--add` flag (or removing an entry with the
+`\--remove`) flag.
 
 So to populate the index with the two files you just created, you can do
 
@@ -150,25 +150,25 @@ and see two files:
 which correspond with the objects with names of 557db... and f24c7..
 respectively.
 
-If you want to, you can use "git-cat-file" to look at those objects, but
+If you want to, you can use `git-cat-file` to look at those objects, but
 you'll have to use the object name, not the filename of the object:
 
 	git-cat-file -t 557db03de997c86a4a028e1ebd3a1ceb225be238
 
-where the "-t" tells git-cat-file to tell you what the "type" of the
+where the `-t` tells `git-cat-file` to tell you what the "type" of the
 object is. Git will tell you that you have a "blob" object (ie just a
 regular file), and you can see the contents with
 
 	git-cat-file "blob" 557db03
 
 which will print out "Hello World". The object 557db03 is nothing
-more than the contents of your file "hello".
+more than the contents of your file `hello`.
 
 [NOTE]
-Don't confuse that object with the file "hello" itself. The
-object is literally just those specific _contents_ of the file, and
-however much you later change the contents in file "hello", the object we
-just looked at will never change. Objects are immutable.
+Don't confuse that object with the file `hello` itself. The
+object is literally just those specific *contents* of the file, and
+however much you later change the contents in file `hello`, the object
+we just looked at will never change. Objects are immutable.
 
 [NOTE]
 The second example demonstrates that you can
@@ -187,54 +187,57 @@ file. This is the index that describes your current working tree, and
 something you should be very aware of. Again, you normally never worry
 about the index file itself, but you should be aware of the fact that
 you have not actually really "checked in" your files into git so far,
-you've only _told_ git about them.
+you've only *told* git about them.
 
 However, since git knows about them, you can now start using some of the
 most basic git commands to manipulate the files or look at their status. 
 
 In particular, let's not even check in the two files into git yet, we'll
-start off by adding another line to "hello" first:
+start off by adding another line to `hello` first:
 
 ------------------------------------------------
 echo "It's a new day for git" >>hello
 ------------------------------------------------
 
-and you can now, since you told git about the previous state of "hello", ask
+and you can now, since you told git about the previous state of `hello`, ask
 git what has changed in the tree compared to your old index, using the
-"git-diff-files" command:
+`git-diff-files` command:
 
-	git-diff-files 
+------------
+git-diff-files
+------------
 
 Oops. That wasn't very readable. It just spit out its own internal
-version of a "diff", but that internal version really just tells you
+version of a `diff`, but that internal version really just tells you
 that it has noticed that "hello" has been modified, and that the old object
 contents it had have been replaced with something else.
 
 To make it readable, we can tell git-diff-files to output the
-differences as a patch, using the "-p" flag:
+differences as a patch, using the `-p` flag:
 
-	git-diff-files -p
+------------
+git-diff-files -p
+------------
 
 which will spit out
 
-	diff --git a/hello b/hello
-	--- a/hello
-	+++ b/hello
-	@@ -1 +1,2 @@
-	 Hello World
-	+It's a new day for git
+------------
+diff --git a/hello b/hello
+--- a/hello
++++ b/hello
+@@ -1 +1,2 @@
+ Hello World
++It's a new day for git
+----
 
-ie the diff of the change we caused by adding another line to "hello".
+i.e. the diff of the change we caused by adding another line to `hello`.
 
-In other words, git-diff-files always shows us the difference between
+In other words, `git-diff-files` always shows us the difference between
 what is recorded in the index, and what is currently in the working
 tree. That's very useful.
 
-A common shorthand for "git-diff-files -p" is to just write
-
-	git diff
-
-which will do the same thing. 
+A common shorthand for `git-diff-files -p` is to just write `git
+diff`, which will do the same thing.
 
 
 Committing git state
@@ -242,11 +245,11 @@ Committing git state
 
 Now, we want to go to the next stage in git, which is to take the files
 that git knows about in the index, and commit them as a real tree. We do
-that in two phases: creating a "tree" object, and committing that "tree"
-object as a "commit" object together with an explanation of what the
+that in two phases: creating a 'tree' object, and committing that 'tree'
+object as a 'commit' object together with an explanation of what the
 tree was all about, along with information of how we came to that state.
 
-Creating a tree object is trivial, and is done with "git-write-tree". 
+Creating a tree object is trivial, and is done with `git-write-tree`.
 There are no options or other input: git-write-tree will take the
 current index state, and write an object that describes that whole
 index. In other words, we're now tying together all the different
@@ -263,27 +266,28 @@ and this will just output the name of the resulting tree, in this case
 	8988da15d077d4829fc51d8544c097def6644dbb
 
 which is another incomprehensible object name. Again, if you want to,
-you can use "git-cat-file -t 8988d.." to see that this time the object
+you can use `git-cat-file -t 8988d\...` to see that this time the object
 is not a "blob" object, but a "tree" object (you can also use
-git-cat-file to actually output the raw object contents, but you'll see
+`git-cat-file` to actually output the raw object contents, but you'll see
 mainly a binary mess, so that's less interesting).
 
-However - normally you'd never use "git-write-tree" on its own, because
+However -- normally you'd never use `git-write-tree` on its own, because
 normally you always commit a tree into a commit object using the
-"git-commit-tree" command. In fact, it's easier to not actually use
-git-write-tree on its own at all, but to just pass its result in as an
-argument to "git-commit-tree".
+`git-commit-tree` command. In fact, it's easier to not actually use
+`git-write-tree` on its own at all, but to just pass its result in as an
+argument to `git-commit-tree`.
 
-"git-commit-tree" normally takes several arguments - it wants to know
-what the _parent_ of a commit was, but since this is the first commit
+`git-commit-tree` normally takes several arguments -- it wants to know
+what the 'parent' of a commit was, but since this is the first commit
 ever in this new repository, and it has no parents, we only need to pass in
-the object name of the tree. However, git-commit-tree also wants to get a commit message
+the object name of the tree. However, `git-commit-tree`
+also wants to get a commit message
 on its standard input, and it will write out the resulting object name for the
 commit to its standard output.
 
-And this is where we start using the .git/HEAD file. The HEAD file is
+And this is where we start using the `.git/HEAD` file. The `HEAD` file is
 supposed to contain the reference to the top-of-tree, and since that's
-exactly what git-commit-tree spits out, we can do this all with a simple
+exactly what `git-commit-tree` spits out, we can do this all with a simple
 shell pipeline:
 
 ------------------------------------------------
@@ -295,52 +299,49 @@ which will say:
 	Committing initial tree 8988da15d077d4829fc51d8544c097def6644dbb
 
 just to warn you about the fact that it created a totally new commit
-that is not related to anything else. Normally you do this only _once_
+that is not related to anything else. Normally you do this only *once*
 for a project ever, and all later commits will be parented on top of an
 earlier commit, and you'll never see this "Committing initial tree"
 message ever again.
 
 Again, normally you'd never actually do this by hand. There is a
-helpful script called "git commit" that will do all of this for you. So
-you could have just written
-
-	git commit
-
+helpful script called `git commit` that will do all of this for you. So
+you could have just written `git commit`
 instead, and it would have done the above magic scripting for you.
 
 
 Making a change
 ---------------
 
-Remember how we did the "git-update-cache" on file "hello" and then we
-changed "hello" afterward, and could compare the new state of "hello" with the
+Remember how we did the `git-update-cache` on file `hello` and then we
+changed `hello` afterward, and could compare the new state of `hello` with the
 state we saved in the index file? 
 
-Further, remember how I said that "git-write-tree" writes the contents
-of the _index_ file to the tree, and thus what we just committed was in
-fact the _original_ contents of the file "hello", not the new ones. We did
+Further, remember how I said that `git-write-tree` writes the contents
+of the *index* file to the tree, and thus what we just committed was in
+fact the *original* contents of the file `hello`, not the new ones. We did
 that on purpose, to show the difference between the index state, and the
 state in the working tree, and how they don't have to match, even
 when we commit things.
 
-As before, if we do "git-diff-files -p" in our git-tutorial project,
+As before, if we do `git-diff-files -p` in our git-tutorial project,
 we'll still see the same difference we saw last time: the index file
 hasn't changed by the act of committing anything. However, now that we
 have committed something, we can also learn to use a new command:
-"git-diff-cache".
+`git-diff-cache`.
 
-Unlike "git-diff-files", which showed the difference between the index
-file and the working tree, "git-diff-cache" shows the differences
-between a committed _tree_ and either the index file or the working
-tree. In other words, git-diff-cache wants a tree to be diffed
+Unlike `git-diff-files`, which showed the difference between the index
+file and the working tree, `git-diff-cache` shows the differences
+between a committed *tree* and either the index file or the working
+tree. In other words, `git-diff-cache` wants a tree to be diffed
 against, and before we did the commit, we couldn't do that, because we
 didn't have anything to diff against. 
 
-But now we can do 
+But now we can do
 
 	git-diff-cache -p HEAD
 
-(where "-p" has the same meaning as it did in git-diff-files), and it
+(where `-p` has the same meaning as it did in `git-diff-files`), and it
 will show us the same difference, but for a totally different reason. 
 Now we're comparing the working tree not against the index file,
 but against the tree we just wrote. It just so happens that those two
@@ -353,29 +354,31 @@ it with
 
 which ends up doing the above for you.
 
-In other words, "git-diff-cache" normally compares a tree against the
-working tree, but when given the "--cached" flag, it is told to
+In other words, `git-diff-cache` normally compares a tree against the
+working tree, but when given the `\--cached` flag, it is told to
 instead compare against just the index cache contents, and ignore the
 current working tree state entirely. Since we just wrote the index
-file to HEAD, doing "git-diff-cache --cached -p HEAD" should thus return
+file to HEAD, doing `git-diff-cache \--cached -p HEAD` should thus return
 an empty set of differences, and that's exactly what it does. 
 
 [NOTE]
-"git-diff-cache" really always uses the index for its
+================
+`git-diff-cache` really always uses the index for its
 comparisons, and saying that it compares a tree against the working
 tree is thus not strictly accurate. In particular, the list of
-files to compare (the "meta-data") _always_ comes from the index file,
-regardless of whether the --cached flag is used or not. The --cached
-flag really only determines whether the file _contents_ to be compared
+files to compare (the "meta-data") *always* comes from the index file,
+regardless of whether the `\--cached` flag is used or not. The `\--cached`
+flag really only determines whether the file *contents* to be compared
 come from the working tree or not.
-+
+
 This is not hard to understand, as soon as you realize that git simply
 never knows (or cares) about files that it is not told about
-explicitly. Git will never go _looking_ for files to compare, it
+explicitly. Git will never go *looking* for files to compare, it
 expects you to tell it what the files are, and that's what the index
 is there for.
+================
 
-However, our next step is to commit the _change_ we did, and again, to
+However, our next step is to commit the *change* we did, and again, to
 understand what's going on, keep in mind the difference between "working
 tree contents", "index file" and "committed tree". We have changes
 in the working tree that we want to commit, and we always have to
@@ -386,20 +389,20 @@ update the index cache:
 git-update-cache hello
 ------------------------------------------------
 
-(note how we didn't need the "--add" flag this time, since git knew
+(note how we didn't need the `\--add` flag this time, since git knew
 about the file already).
 
-Note what happens to the different git-diff-xxx versions here. After
-we've updated "hello" in the index, "git-diff-files -p" now shows no
-differences, but "git-diff-cache -p HEAD" still _does_ show that the
+Note what happens to the different `git-diff-\*` versions here. After
+we've updated `hello` in the index, `git-diff-files -p` now shows no
+differences, but `git-diff-cache -p HEAD` still *does* show that the
 current state is different from the state we committed. In fact, now
-"git-diff-cache" shows the same difference whether we use the "--cached"
+`git-diff-cache` shows the same difference whether we use the `--cached`
 flag or not, since now the index is coherent with the working tree.
 
-Now, since we've updated "hello" in the index, we can commit the new
+Now, since we've updated `hello` in the index, we can commit the new
 version. We could do it by writing the tree by hand again, and
-committing the tree (this time we'd have to use the "-p HEAD" flag to
-tell commit that the HEAD was the _parent_ of the new commit, and that
+committing the tree (this time we'd have to use the `-p HEAD` flag to
+tell commit that the HEAD was the *parent* of the new commit, and that
 this wasn't an initial commit any more), but you've done that once
 already, so let's just use the helpful script this time:
 
@@ -414,13 +417,14 @@ Write whatever message you want, and all the lines that start with '#'
 will be pruned out, and the rest will be used as the commit message for
 the change. If you decide you don't want to commit anything after all at
 this point (you can continue to edit things and update the cache), you
-can just leave an empty message. Otherwise git-commit-script will commit
+can just leave an empty message. Otherwise `git commit` will commit
 the change for you.
 
 You've now made your first real git commit. And if you're interested in
-looking at what git-commit-script really does, feel free to investigate:
+looking at what `git commit` really does, feel free to investigate:
 it's a few very simple shell scripts to generate the helpful (?) commit
-message headers, and a few one-liners that actually do the commit itself.
+message headers, and a few one-liners that actually do the
+commit itself (`git-commit-script`).
 
 
 Checking it out
@@ -428,9 +432,9 @@ Checking it out
 
 While creating changes is useful, it's even more useful if you can tell
 later what changed. The most useful command for this is another of the
-"diff" family, namely "git-diff-tree". 
+`diff` family, namely `git-diff-tree`.
 
-git-diff-tree can be given two arbitrary trees, and it will tell you the
+`git-diff-tree` can be given two arbitrary trees, and it will tell you the
 differences between them. Perhaps even more commonly, though, you can
 give it just a single commit object, and it will figure out the parent
 of that commit itself, and show the difference directly. Thus, to get
@@ -438,18 +442,18 @@ the same diff that we've already seen several times, we can now do
 
 	git-diff-tree -p HEAD
 
-(again, "-p" means to show the difference as a human-readable patch),
-and it will show what the last commit (in HEAD) actually changed.
+(again, `-p` means to show the difference as a human-readable patch),
+and it will show what the last commit (in `HEAD`) actually changed.
 
-More interestingly, you can also give git-diff-tree the "-v" flag, which
+More interestingly, you can also give `git-diff-tree` the `-v` flag, which
 tells it to also show the commit message and author and date of the
 commit, and you can tell it to show a whole series of diffs.
 Alternatively, you can tell it to be "silent", and not show the diffs at
 all, but just show the actual commit message.
 
-In fact, together with the "git-rev-list" program (which generates a
-list of revisions), git-diff-tree ends up being a veritable fount of
-changes. A trivial (but very useful) script called "git-whatchanged" is
+In fact, together with the `git-rev-list` program (which generates a
+list of revisions), `git-diff-tree` ends up being a veritable fount of
+changes. A trivial (but very useful) script called `git-whatchanged` is
 included with git which does exactly this, and shows a log of recent
 activities.
 
@@ -468,8 +472,8 @@ and you will see exactly what has changed in the repository over its
 short history. 
 
 [NOTE]
-The "--root" flag is a flag to git-diff-tree to tell it to
-show the initial aka "root" commit too. Normally you'd probably not
+The `\--root` flag is a flag to `git-diff-tree` to tell it to
+show the initial aka 'root' commit too. Normally you'd probably not
 want to see the initial import diff, but since the tutorial project
 was started from scratch and is so small, we use it to make the result
 a bit more interesting.
@@ -481,11 +485,11 @@ can explore on your own.
 Most likely, you are not directly using the core
 git Plumbing commands, but using Porcelain like Cogito on top
 of it. Cogito works a bit differently and you usually do not
-have to run "git-update-cache" yourself for changed files (you
+have to run `git-update-cache` yourself for changed files (you
 do tell underlying git about additions and removals via
-"cg-add" and "cg-rm" commands). Just before you make a commit
-with "cg-commit", Cogito figures out which files you modified,
-and runs "git-update-cache" on them for you.
+`cg-add` and `cg-rm` commands). Just before you make a commit
+with `cg-commit`, Cogito figures out which files you modified,
+and runs `git-update-cache` on them for you.
 
 
 Tagging a version
@@ -494,14 +498,14 @@ Tagging a version
 In git, there are two kinds of tags, a "light" one, and an "annotated tag".
 
 A "light" tag is technically nothing more than a branch, except we put
-it in the ".git/refs/tags/" subdirectory instead of calling it a "head".
+it in the `.git/refs/tags/` subdirectory instead of calling it a `head`.
 So the simplest form of tag involves nothing more than
 
 ------------------------------------------------
 git tag my-first-tag
 ------------------------------------------------
 
-which just writes the current HEAD into the .git/refs/tags/my-first-tag
+which just writes the current `HEAD` into the `.git/refs/tags/my-first-tag`
 file, after which point you can then use this symbolic name for that
 particular state. You can, for example, do
 
@@ -514,18 +518,20 @@ since you tagged it.
 
 An "annotated tag" is actually a real git object, and contains not only a
 pointer to the state you want to tag, but also a small tag name and
-message, along with optionally a PGP signature that says that yes, you really did
-that tag. You create these signed tags with either the "-a" or "-s" flag to "git tag":
+message, along with optionally a PGP signature that says that yes,
+you really did
+that tag. You create these annotated tags with either the `-a` or
+`-s` flag to `git tag`:
 
 	git tag -s <tagname>
 
-which will sign the current HEAD (but you can also give it another
+which will sign the current `HEAD` (but you can also give it another
 argument that specifies the thing to tag, ie you could have tagged the
-current "mybranch" point by using "git tag <tagname> mybranch").
+current `mybranch` point by using `git tag <tagname> mybranch`).
 
 You normally only do signed tags for major releases or things
 like that, while the light-weight tags are useful for any marking you
-want to do - any time you decide that you want to remember a certain
+want to do -- any time you decide that you want to remember a certain
 point, just create a private tag for it, and you have a nice symbolic
 name for the state at that point.
 
@@ -535,8 +541,8 @@ Copying repositories
 
 Git repositories are normally totally self-sufficient, and it's worth noting
 that unlike CVS, for example, there is no separate notion of
-"repository" and "working tree". A git repository normally _is_ the
-working tree, with the local git information hidden in the ".git"
+"repository" and "working tree". A git repository normally *is* the
+working tree, with the local git information hidden in the `.git`
 subdirectory. There is nothing else. What you see is what you got.
 
 [NOTE]
@@ -558,38 +564,38 @@ and it will be gone. There's no external repository, and there's no
 history outside the project you created.
 
  - if you want to move or duplicate a git repository, you can do so. There
-   is "git clone" command, but if all you want to do is just to
+   is `git clone` command, but if all you want to do is just to
    create a copy of your repository (with all the full history that
    went along with it), you can do so with a regular
-   "cp -a git-tutorial new-git-tutorial".
+   `cp -a git-tutorial new-git-tutorial`.
 +
 Note that when you've moved or copied a git repository, your git index
 file (which caches various information, notably some of the "stat"
 information for the files involved) will likely need to be refreshed.
-So after you do a "cp -a" to create a new copy, you'll want to do
+So after you do a `cp -a` to create a new copy, you'll want to do
 
 	git-update-cache --refresh
 +
 in the new repository to make sure that the index file is up-to-date.
 
 Note that the second point is true even across machines. You can
-duplicate a remote git repository with _any_ regular copy mechanism, be it
-"scp", "rsync" or "wget". 
+duplicate a remote git repository with *any* regular copy mechanism, be it
+`scp`, `rsync` or `wget`.
 
 When copying a remote repository, you'll want to at a minimum update the
 index cache when you do this, and especially with other peoples'
 repositories you often want to make sure that the index cache is in some
-known state (you don't know _what_ they've done and not yet checked in),
-so usually you'll precede the "git-update-cache" with a
+known state (you don't know *what* they've done and not yet checked in),
+so usually you'll precede the `git-update-cache` with a
 
 	git-read-tree --reset HEAD
 	git-update-cache --refresh
 
-which will force a total index re-build from the tree pointed to by HEAD.
-It resets the index contents to HEAD, and then the git-update-cache
+which will force a total index re-build from the tree pointed to by `HEAD`.
+It resets the index contents to `HEAD`, and then the `git-update-cache`
 makes sure to match up all index entries with the checked-out files.
 If the original repository had uncommitted changes in its
-working tree, "git-update-cache --refresh" notices them and
+working tree, `git-update-cache --refresh` notices them and
 tells you they need to be updated.
 
 The above can also be written as simply
@@ -597,21 +603,21 @@ The above can also be written as simply
 	git reset
 
 and in fact a lot of the common git command combinations can be scripted
-with the "git xyz" interfaces, and you can learn things by just looking
+with the `git xyz` interfaces, and you can learn things by just looking
 at what the `git-*-script` scripts do (`git reset` is the above two lines
-implemented in `git-reset-script`, but some things like "git status" and
+implemented in `git-reset-script`, but some things like `git status` and
 `git commit` are slightly more complex scripts around the basic git
 commands). 
 
 Many (most?) public remote repositories will not contain any of
-the checked out files or even an index file, and will 'only' contain the
+the checked out files or even an index file, and will *only* contain the
 actual core git files. Such a repository usually doesn't even have the
 `.git` subdirectory, but has all the git files directly in the
 repository. 
 
 To create your own local live copy of such a "raw" git repository, you'd
 first create your own subdirectory for the project, and then copy the
-raw repository contents into the ".git" directory. For example, to
+raw repository contents into the `.git` directory. For example, to
 create your own copy of the git repository, you'd do the following
 
 	mkdir my-git
@@ -629,11 +635,11 @@ those, you'd check them out with
 
 	git-checkout-cache -u -a
 
-where the "-u" flag means that you want the checkout to keep the index
+where the `-u` flag means that you want the checkout to keep the index
 up-to-date (so that you don't have to refresh it afterward), and the
-"-a" flag means "check out all files" (if you have a stale copy or an
-older version of a checked out tree you may also need to add the "-f"
-flag first, to tell git-checkout-cache to _force_ overwriting of any old
+`-a` flag means "check out all files" (if you have a stale copy or an
+older version of a checked out tree you may also need to add the `-f`
+flag first, to tell git-checkout-cache to *force* overwriting of any old
 files). 
 
 Again, this can all be simplified with
@@ -652,15 +658,15 @@ Creating a new branch
 ---------------------
 
 Branches in git are really nothing more than pointers into the git
-object database from within the ".git/refs/" subdirectory, and as we
-already discussed, the HEAD branch is nothing but a symlink to one of
+object database from within the `.git/refs/` subdirectory, and as we
+already discussed, the `HEAD` branch is nothing but a symlink to one of
 these object pointers. 
 
 You can at any time create a new branch by just picking an arbitrary
 point in the project history, and just writing the SHA1 name of that
-object into a file under .git/refs/heads/. You can use any filename you
+object into a file under `.git/refs/heads/`. You can use any filename you
 want (and indeed, subdirectories), but the convention is that the
-"normal" branch is called "master". That's just a convention, though,
+"normal" branch is called `master`. That's just a convention, though,
 and nothing enforces it. 
 
 To show that as an example, let's go back to the git-tutorial repository we
@@ -671,23 +677,23 @@ saying that you want to check out a new branch:
 git checkout -b mybranch
 ------------
 
-will create a new branch based at the current HEAD position, and switch
+will create a new branch based at the current `HEAD` position, and switch
 to it. 
 
 [NOTE]
 ================================================
 If you make the decision to start your new branch at some
-other point in the history than the current HEAD, you can do so by
-just telling "git checkout" what the base of the checkout would be.
+other point in the history than the current `HEAD`, you can do so by
+just telling `git checkout` what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 	git checkout -b mybranch earlier-commit
 
-and it would create the new branch "mybranch" at the earlier commit,
+and it would create the new branch `mybranch` at the earlier commit,
 and check out the state at that time.
 ================================================
 
-You can always just jump back to your original "master" branch by doing
+You can always just jump back to your original `master` branch by doing
 
 	git checkout master
 
@@ -710,8 +716,8 @@ checking it out and switching to it. If so, just use the command
 	git branch <branchname> [startingpoint]
 
 which will simply _create_ the branch, but will not do anything further. 
-You can then later - once you decide that you want to actually develop
-on that branch - switch to that branch with a regular "git checkout"
+You can then later -- once you decide that you want to actually develop
+on that branch -- switch to that branch with a regular `git checkout`
 with the branchname as the argument.
 
 
@@ -720,19 +726,19 @@ Merging two branches
 
 One of the ideas of having a branch is that you do some (possibly
 experimental) work in it, and eventually merge it back to the main
-branch. So assuming you created the above "mybranch" that started out
-being the same as the original "master" branch, let's make sure we're in
+branch. So assuming you created the above `mybranch` that started out
+being the same as the original `master` branch, let's make sure we're in
 that branch, and do some work there.
 
-------------
+------------------------------------------------
 git checkout mybranch
 echo "Work, work, work" >>hello
 git commit -m 'Some work.' hello
-------------
+------------------------------------------------
 
-Here, we just added another line to "hello", and we used a shorthand for
-both going a "git-update-cache hello" and "git commit" by just giving the
-filename directly to "git commit". The '-m' flag is to give the
+Here, we just added another line to `hello`, and we used a shorthand for
+both going a `git-update-cache hello` and `git commit` by just giving the
+filename directly to `git commit`. The `-m` flag is to give the
 commit log message from the command line.
 
 Now, to make it a bit more interesting, let's assume that somebody else
@@ -743,9 +749,9 @@ to the master branch, and editing the same file differently there:
 git checkout master
 ------------
 
-Here, take a moment to look at the contents of "hello", and notice how they
-don't contain the work we just did in "mybranch" - because that work
-hasn't happened in the "master" branch at all. Then do
+Here, take a moment to look at the contents of `hello`, and notice how they
+don't contain the work we just did in `mybranch` -- because that work
+hasn't happened in the `master` branch at all. Then do
 
 ------------
 echo "Play, play, play" >>hello
@@ -761,15 +767,15 @@ helps you view what's going on:
 
 	gitk --all
 
-will show you graphically both of your branches (that's what the "--all"
-means: normally it will just show you your current HEAD) and their
+will show you graphically both of your branches (that's what the `\--all`
+means: normally it will just show you your current `HEAD`) and their
 histories. You can also see exactly how they came to be from a common
 source. 
 
-Anyway, let's exit gitk (^Q or the File menu), and decide that we want
-to merge the work we did on the "mybranch" branch into the "master"
-branch (which is currently our HEAD too). To do that, there's a nice
-script called "git resolve", which wants to know which branches you want
+Anyway, let's exit `gitk` (`^Q` or the File menu), and decide that we want
+to merge the work we did on the `mybranch` branch into the `master`
+branch (which is currently our `HEAD` too). To do that, there's a nice
+script called `git resolve`, which wants to know which branches you want
 to resolve and what the merge is all about:
 
 ------------
@@ -781,8 +787,8 @@ the merge can be resolved automatically.
 
 Now, in this case we've intentionally created a situation where the
 merge will need to be fixed up by hand, though, so git will do as much
-of it as it can automatically (which in this case is just merge the "example"
-file, which had no differences in the "mybranch" branch), and say:
+of it as it can automatically (which in this case is just merge the `example`
+file, which had no differences in the `mybranch` branch), and say:
 
 	Simple merge failed, trying Automatic merge
 	Auto-merging hello.
@@ -793,12 +799,12 @@ file, which had no differences in the "mybranch" branch), and say:
 
 which is way too verbose, but it basically tells you that it failed the
 really trivial merge ("Simple merge") and did an "Automatic merge"
-instead, but that too failed due to conflicts in "hello".
+instead, but that too failed due to conflicts in `hello`.
 
-Not to worry. It left the (trivial) conflict in "hello" in the same form you
+Not to worry. It left the (trivial) conflict in `hello` in the same form you
 should already be well used to if you've ever used CVS, so let's just
-open "hello" in our editor (whatever that may be), and fix it up somehow.
-I'd suggest just making it so that "hello" contains all four lines:
+open `hello` in our editor (whatever that may be), and fix it up somehow.
+I'd suggest just making it so that `hello` contains all four lines:
 
 ------------
 Hello World
@@ -815,17 +821,17 @@ git commit hello
 
 which will very loudly warn you that you're now committing a merge
 (which is correct, so never mind), and you can write a small merge
-message about your adventures in git-merge-land. 
+message about your adventures in git-merge-land.
 
-After you're done, start up "gitk --all" to see graphically what the
-history looks like. Notice that "mybranch" still exists, and you can
+After you're done, start up `gitk --all` to see graphically what the
+history looks like. Notice that `mybranch` still exists, and you can
 switch to it, and continue to work with it if you want to. The
-"mybranch" branch will not contain the merge, but next time you merge it
-from the "master" branch, git will know how you merged it, so you'll not
+`mybranch` branch will not contain the merge, but next time you merge it
+from the `master` branch, git will know how you merged it, so you'll not
 have to do _that_ merge again.
 
 Another useful tool, especially if you do not always work in X-Window
-environment, is "git show-branch".
+environment, is `git show-branch`.
 
 ------------------------------------------------
 $ git show-branch master mybranch
@@ -839,20 +845,20 @@ $ git show-branch master mybranch
 
 The first two lines indicate that it is showing the two branches
 and the first line of the commit log message from their
-top-of-the-tree commits, you are currently on "master" branch
-(notice the asterisk "*" character), and the first column for
+top-of-the-tree commits, you are currently on `master` branch
+(notice the asterisk `*` character), and the first column for
 the later output lines is used to show commits contained in the
-"master" branch, and the second column for the "mybranch"
+`master` branch, and the second column for the `mybranch`
 branch. Three commits are shown along with their log messages.
-All of them have plus '+' characters in the first column, which
-means they are now part of the "master" branch. Only the "Some
-work" commit has the plus '+' character in the second column,
-because "mybranch" has not been merged to incorporate these
+All of them have plus `+` characters in the first column, which
+means they are now part of the `master` branch. Only the "Some
+work" commit has the plus `+` character in the second column,
+because `mybranch` has not been merged to incorporate these
 commits from the master branch.
 
 Now, let's pretend you are the one who did all the work in
-mybranch, and the fruit of your hard work has finally been merged
-to the master branch. Let's go back to "mybranch", and run
+`mybranch`, and the fruit of your hard work has finally been merged
+to the `master` branch. Let's go back to `mybranch`, and run
 resolve to get the "upstream changes" back to your branch.
 
 	git checkout mybranch
@@ -867,13 +873,13 @@ would be different)
 	 2 files changed, 2 insertions(+), 0 deletions(-)
 
 Because your branch did not contain anything more than what are
-already merged into the master branch, the resolve operation did
+already merged into the `master` branch, the resolve operation did
 not actually do a merge. Instead, it just updated the top of
-the tree of your branch to that of the "master" branch. This is
-often called "fast forward" merge.
+the tree of your branch to that of the `master` branch. This is
+often called 'fast forward' merge.
 
-You can run "gitk --all" again to see how the commit ancestry
-looks like, or run "show-branch", which tells you this.
+You can run `gitk --all` again to see how the commit ancestry
+looks like, or run `show-branch`, which tells you this.
 
 ------------------------------------------------
 $ git show-branch master mybranch
@@ -890,11 +896,86 @@ Merging external work
 It's usually much more common that you merge with somebody else than
 merging with your own branches, so it's worth pointing out that git
 makes that very easy too, and in fact, it's not that different from
-doing a "git resolve". In fact, a remote merge ends up being nothing
+doing a `git resolve`. In fact, a remote merge ends up being nothing
 more than "fetch the work from a remote repository into a temporary tag"
-followed by a "git resolve". 
+followed by a `git resolve`.
 
-It's such a common thing to do that it's called "git pull", and you can
+Fetching from a remote repository is done by, unsurprisingly,
+`git fetch`:
+
+	git fetch <remote-repository>
+
+One of the following transports can be used to name the
+repository to download from:
+
+Rsync::
+	`rsync://remote.machine/path/to/repo.git/`
++
+Rsync transport is usable for both uploading and downloading,
+but is completely unaware of what git does, and can produce
+unexpected results when you download from the public repository
+while the repository owner is uploading into it via `rsync`
+transport.  Most notably, it could update the files under
+`refs/` which holds the object name of the topmost commits
+before uploading the files in `objects/` -- the downloader would
+obtain head commit object name while that object itself is still
+not available in the repository.  For this reason, it is
+considered deprecated.
+
+SSH::
+	`remote.machine:/path/to/repo.git/` or
++
+`ssh://remote.machine/path/to/repo.git/`
++
+This transport can be used for both uploading and downloading,
+and requires you to have a log-in privilege over `ssh` to the
+remote machine.  It finds out the set of objects the other side
+lacks by exchanging the head commits both ends have and
+transfers (close to) minimum set of objects.  It is by far the
+most efficient way to exchange git objects between repositories.
+
+Local directory::
+	`/path/to/repo.git/`
++
+This transport is the same as SSH transport but uses `sh` to run
+both ends on the local machine instead of running other end on
+the remote machine via `ssh`.
+
+GIT Native::
+	`git://remote.machine/path/to/repo.git/`
++
+This transport was designed for anonymous downloading.  Like SSH
+transport, it finds out the set of objects the downstream side
+lacks and transfers (close to) minimum set of objects.
+
+HTTP(s)::
+	`http://remote.machine/path/to/repo.git/`
++
+HTTP and HTTPS transport are used only for downloading.  They
+first obtain the topmost commit object name from the remote site
+by looking at `repo.git/info/refs` file, tries to obtain the
+commit object by downloading from `repo.git/objects/xx/xxx\...`
+using the object name of that commit object.  Then it reads the
+commit object to find out its parent commits and the associate
+tree object; it repeats this process until it gets all the
+necessary objects.  Because of this behaviour, they are
+sometimes also called 'commit walkers'.
++
+The 'commit walkers' are sometimes also called 'dumb
+transports', because they do not require any GIT aware smart
+server like GIT Native transport does.  Any stock HTTP server
+would suffice.
++
+There are (confusingly enough) `git-ssh-pull` and `git-ssh-push`
+programs, which are 'commit walkers'; they outlived their
+usefulness when GIT Native and SSH transports were introduced,
+and not used by `git pull` or `git push` scripts.
+
+Once you fetch from the remote repository, you `resolve` that
+with your current branch.
+
+However -- it's such a common thing to `fetch` and then
+immediately `resolve`, that it's called `git pull`, and you can
 simply do
 
 	git pull <remote-repository>
@@ -902,31 +983,12 @@ simply do
 and optionally give a branch-name for the remote end as a second
 argument.
 
-The "remote" repository can even be on the same machine. One of
-the following notations can be used to name the repository to
-pull from:
-
-	Rsync URL
-		rsync://remote.machine/path/to/repo.git/
-
-	HTTP(s) URL
-		http://remote.machine/path/to/repo.git/
-
-	GIT URL
-		git://remote.machine/path/to/repo.git/
-
-	SSH URL
-		remote.machine:/path/to/repo.git/
-
-	Local directory
-		/path/to/repo.git/
-
 [NOTE]
 You could do without using any branches at all, by
 keeping as many local repositories as you would like to have
-branches, and merging between them with "git pull", just like
+branches, and merging between them with `git pull`, just like
 you merge between branches. The advantage of this approach is
-that it lets you keep set of files for each "branch" checked
+that it lets you keep set of files for each `branch` checked
 out and you may find it easier to switch back and forth if you
 juggle multiple lines of development simultaneously. Of
 course, you will pay the price of more disk usage to hold
@@ -934,7 +996,7 @@ multiple working trees, but disk space is cheap these days.
 
 [NOTE]
 You could even pull from your own repository by
-giving '.' as <remote-repository> parameter to "git pull".
+giving '.' as <remote-repository> parameter to `git pull`.
 
 It is likely that you will be pulling from the same remote
 repository from time to time. As a short hand, you can store
@@ -948,7 +1010,7 @@ URL: http://www.kernel.org/pub/scm/git/git.git/
 EOF
 ------------------------------------------------
 
-and use the filename to "git pull" instead of the full URL.
+and use the filename to `git pull` instead of the full URL.
 The URL specified in such file can even be a prefix
 of a full URL, like this:
 
@@ -961,42 +1023,42 @@ EOF
 
 Examples.
 
-. git pull linus
-. git pull linus tag v0.99.1
-. git pull jgarzik/netdev-2.6.git/ e100
+. `git pull linus`
+. `git pull linus tag v0.99.1`
+. `git pull jgarzik/netdev-2.6.git/ e100`
 
 the above are equivalent to:
 
-. git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD
-. git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1
-. git pull http://www.kernel.org/pub/.../jgarzik/netdev-2.6.git e100
+. `git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD`
+. `git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1`
+. `git pull http://www.kernel.org/pub/.../jgarzik/netdev-2.6.git e100`
 
 
 Publishing your work
 --------------------
 
 So we can use somebody else's work from a remote repository; but
-how can _you_ prepare a repository to let other people pull from
+how can *you* prepare a repository to let other people pull from
 it?
 
 Your do your real work in your working tree that has your
-primary repository hanging under it as its ".git" subdirectory.
-You _could_ make that repository accessible remotely and ask
+primary repository hanging under it as its `.git` subdirectory.
+You *could* make that repository accessible remotely and ask
 people to pull from it, but in practice that is not the way
 things are usually done. A recommended way is to have a public
 repository, make it reachable by other people, and when the
 changes you made in your primary working tree are in good shape,
 update the public repository from it. This is often called
-"pushing".
+'pushing'.
 
 [NOTE]
-This public repository could further be mirrored,
-and that is how kernel.org git repositories are done.
+This public repository could further be mirrored, and that is
+how git repositories at `kernel.org` are managed.
 
 Publishing the changes from your local (private) repository to
 your remote (public) repository requires a write privilege on
 the remote machine. You need to have an SSH account there to
-run a single command, "git-receive-pack".
+run a single command, `git-receive-pack`.
 
 First, you need to create an empty repository on the remote
 machine that will house your public repository. This empty
@@ -1005,37 +1067,36 @@ into it later. Obviously, this repository creation needs to be
 done only once.
 
 [NOTE]
-"git push" uses a pair of programs,
-"git-send-pack" on your local machine, and "git-receive-pack"
+`git push` uses a pair of programs,
+`git-send-pack` on your local machine, and `git-receive-pack`
 on the remote machine. The communication between the two over
 the network internally uses an SSH connection.
 
-Your private repository's GIT directory is usually .git, but
+Your private repository's GIT directory is usually `.git`, but
 your public repository is often named after the project name,
-i.e. "<project>.git". Let's create such a public repository for
-project "my-git". After logging into the remote machine, create
+i.e. `<project>.git`. Let's create such a public repository for
+project `my-git`. After logging into the remote machine, create
 an empty directory:
 
 	mkdir my-git.git
 
 Then, make that directory into a GIT repository by running
-git-init-db, but this time, since its name is not the usual
-".git", we do things slightly differently:
+`git init-db`, but this time, since its name is not the usual
+`.git`, we do things slightly differently:
 
 	GIT_DIR=my-git.git git-init-db
 
 Make sure this directory is available for others you want your
 changes to be pulled by via the transport of your choice. Also
-you need to make sure that you have the "git-receive-pack"
-program on the $PATH.
+you need to make sure that you have the `git-receive-pack`
+program on the `$PATH`.
 
 [NOTE]
-Many installations of sshd do not invoke your shell
-as the login shell when you directly run programs; what this
-means is that if your login shell is bash, only .bashrc is
-read and not .bash_profile. As a workaround, make
-sure .bashrc sets up $PATH so that you can run 'git-receive-pack'
-program.
+Many installations of sshd do not invoke your shell as the login
+shell when you directly run programs; what this means is that if
+your login shell is `bash`, only `.bashrc` is read and not
+`.bash_profile`. As a workaround, make sure `.bashrc` sets up
+`$PATH` so that you can run `git-receive-pack` program.
 
 Your "public repository" is now ready to accept your changes.
 Come back to the machine you have your private repository. From
@@ -1044,7 +1105,7 @@ there, run this command:
 	git push <public-host>:/path/to/my-git.git master
 
 This synchronizes your public repository to match the named
-branch head (i.e. "master" in this case) and objects reachable
+branch head (i.e. `master` in this case) and objects reachable
 from them in your current repository.
 
 As a real example, this is how I update my public git
@@ -1057,9 +1118,9 @@ propagation to other publicly visible machines:
 Packing your repository
 -----------------------
 
-Earlier, we saw that one file under .git/objects/??/ directory
+Earlier, we saw that one file under `.git/objects/??/` directory
 is stored for each git object you create. This representation
-is convenient and efficient to create atomically and safely, but
+is efficient to create atomically and safely, but
 not so convenient to transport over the network. Since git objects are
 immutable once they are created, there is a way to optimize the
 storage by "packing them together". The command
@@ -1067,21 +1128,21 @@ storage by "packing them together". The command
 	git repack
 
 will do it for you. If you followed the tutorial examples, you
-would have accumulated about 17 objects in .git/objects/??/
-directories by now. "git repack" tells you how many objects it
-packed, and stores the packed file in .git/objects/pack
+would have accumulated about 17 objects in `.git/objects/??/`
+directories by now. `git repack` tells you how many objects it
+packed, and stores the packed file in `.git/objects/pack`
 directory.
 
 [NOTE]
-You will see two files, pack-\*.pack and pack-\*.idx,
-in .git/objects/pack directory. They are closely related to
+You will see two files, `pack-\*.pack` and `pack-\*.idx`,
+in `.git/objects/pack` directory. They are closely related to
 each other, and if you ever copy them by hand to a different
 repository for whatever reason, you should make sure you copy
 them together. The former holds all the data from the objects
 in the pack, and the latter holds the index for random
 access.
 
-If you are paranoid, running "git-verify-pack" command would
+If you are paranoid, running `git-verify-pack` command would
 detect if you have a corrupt pack, but do not worry too much.
 Our programs are always perfect ;-).
 
@@ -1092,28 +1153,33 @@ unpacked objects that are contained in the pack file anymore.
 
 would remove them for you.
 
-You can try running "find .git/objects -type f" before and after
-you run "git prune-packed" if you are curious.
+You can try running `find .git/objects -type f` before and after
+you run `git prune-packed` if you are curious.  Also `git
+count-objects` would tell you how many unpacked objects are in
+your repository and how much space they are consuming.
 
 [NOTE]
-"git pull" is slightly cumbersome for HTTP transport,
-as a packed repository may contain relatively few objects in a
+`git pull` is slightly cumbersome for HTTP transport, as a
+packed repository may contain relatively few objects in a
 relatively large pack. If you expect many HTTP pulls from your
 public repository you might want to repack & prune often, or
 never.
 
-If you run "git repack" again at this point, it will say
+If you run `git repack` again at this point, it will say
 "Nothing to pack". Once you continue your development and
-accumulate the changes, running "git repack" again will create a
+accumulate the changes, running `git repack` again will create a
 new pack, that contains objects created since you packed your
 repository the last time. We recommend that you pack your project
 soon after the initial import (unless you are starting your
-project from scratch), and then run "git repack" every once in a
+project from scratch), and then run `git repack` every once in a
 while, depending on how active your project is.
 
-When a repository is synchronized via "git push" and "git pull",
+When a repository is synchronized via `git push` and `git pull`
 objects packed in the source repository are usually stored
 unpacked in the destination, unless rsync transport is used.
+While this allows you to use different packing strategies on
+both ends, it also means you may need to repack both
+repositories every once in a while.
 
 
 Working with Others
@@ -1123,13 +1189,12 @@ Although git is a truly distributed system, it is often
 convenient to organize your project with an informal hierarchy
 of developers. Linux kernel development is run this way. There
 is a nice illustration (page 17, "Merges to Mainline") in Randy
-Dunlap's presentation (http://tinyurl.com/a2jdg).
+Dunlap's presentation (`http://tinyurl.com/a2jdg`).
 
-It should be stressed that this hierarchy is purely "informal".
+It should be stressed that this hierarchy is purely *informal*.
 There is nothing fundamental in git that enforces the "chain of
 patch flow" this hierarchy implies. You do not have to pull
 from only one remote repository.
-
 
 A recommended workflow for a "project lead" goes like this:
 
@@ -1137,13 +1202,21 @@ A recommended workflow for a "project lead" goes like this:
    work is done there.
 
 2. Prepare a public repository accessible to others.
++
+If other people are pulling from your repository over dumb
+transport protocols, you need to keep this repository 'dumb
+transport friendly'.  After `git init-db`,
+`$GIT_DIR/hooks/post-update` copied from the standard templates
+would contain a call to `git-update-server-info` but the
+`post-update` hook itself is disabled by default -- enable it
+with `chmod +x post-update`.
 
 3. Push into the public repository from your primary
    repository.
 
-4. "git repack" the public repository. This establishes a big
+4. `git repack` the public repository. This establishes a big
    pack that contains the initial set of objects as the
-   baseline, and possibly "git prune-packed" if the transport
+   baseline, and possibly `git prune` if the transport
    used for pulling from your repository supports packed
    repositories.
 
@@ -1164,20 +1237,20 @@ You can repack this private repository whenever you feel like.
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by "git clone" the public
+1. Prepare your work repository, by `git clone` the public
    repository of the "project lead". The URL used for the
-   initial cloning is stored in .git/branches/origin.
+   initial cloning is stored in `.git/remotes/origin`.
 
-2. Prepare a public repository accessible to others.
+2. Prepare a public repository accessible to others, just like
+   the "project lead" person does.
 
 3. Copy over the packed files from "project lead" public
-   repository to your public repository by hand; preferrably
-   use rsync for that task.
+   repository to your public repository.
 
 4. Push into the public repository from your primary
-   repository. Run "git repack", and possibly "git
-   prune-packed" if the transport used for pulling from your
-   repository supports packed repositories.
+   repository. Run `git repack`, and possibly `git prune` if the
+   transport used for pulling from your repository supports
+   packed repositories.
 
 5. Keep working in your primary repository. Your changes
    include modifications of your own, patches you receive via
@@ -1192,7 +1265,7 @@ like.
    "project lead" and possibly your "sub-subsystem
    maintainers" to pull from it.
 
-7. Every once in a while, "git repack" the public repository.
+7. Every once in a while, `git repack` the public repository.
    Go back to step 5. and continue working.
 
 
@@ -1200,25 +1273,25 @@ A recommended work cycle for an "individual developer" who does
 not have a "public" repository is somewhat different. It goes
 like this:
 
-1. Prepare your work repository, by "git clone" the public
+1. Prepare your work repository, by `git clone` the public
    repository of the "project lead" (or a "subsystem
    maintainer", if you work on a subsystem). The URL used for
-   the initial cloning is stored in .git/branches/origin.
+   the initial cloning is stored in `.git/remotes/origin`.
 
-2. Do your work there. Make commits.
+2. Do your work in your repository on 'master' branch.
 
-3. Run "git fetch origin" from the public repository of your
+3. Run `git fetch origin` from the public repository of your
    upstream every once in a while. This does only the first
-   half of "git pull" but does not merge. The head of the
-   public repository is stored in .git/refs/heads/origin.
+   half of `git pull` but does not merge. The head of the
+   public repository is stored in `.git/refs/heads/origin`.
 
-4. Use "git cherry origin" to see which ones of your patches
-   were accepted, and/or use "git rebase origin" to port your
+4. Use `git cherry origin` to see which ones of your patches
+   were accepted, and/or use `git rebase origin` to port your
    unmerged changes forward to the updated upstream.
 
-5. Use "git format-patch origin" to prepare patches for e-mail
+5. Use `git format-patch origin` to prepare patches for e-mail
    submission to your upstream and send it out. Go back to
-   step (2) and continue.
+   step 2. and continue.
 
 
 Working with Others, Shared Repository Style
@@ -1234,34 +1307,40 @@ reachable via SSH by people with "commit privileges".  Put the
 committers in the same user group and make the repository
 writable by that group.
 
-Each committer would then:
+You, as an individual committer, then:
 
-	- clone the shared repository to a local repository,
-
+- First clone the shared repository to a local repository:
 ------------------------------------------------
 $ git clone repo.shared.xz:/pub/scm/project.git/ my-project
 $ cd my-project
 $ hack away
 ------------------------------------------------
 
-	- merge the work others might have done while you were
-          hacking away.
-
+- Merge the work others might have done while you were hacking
+  away:
 ------------------------------------------------
 $ git pull origin
 $ test the merge result
 ------------------------------------------------
+[NOTE]
+================================
+The first `git clone` would have placed the following in
+`my-project/.git/remotes/origin` file, and that's why this and
+the next step work.
+------------
+URL: repo.shared.xz:/pub/scm/project.git/ my-project
+Pull: master:origin
+------------
+================================
 
-	- push your work as the new head of the shared
-          repository.
-
+- push your work as the new head of the shared
+  repository.
 ------------------------------------------------
 $ git push origin master
 ------------------------------------------------
-
 If somebody else pushed into the same shared repository while
-you were working locally, the last step "git push" would
-complain, telling you that the remote "master" head does not
+you were working locally, `git push` in the last step would
+complain, telling you that the remote `master` head does not
 fast forward.  You need to pull and merge those other changes
 back before you push your work when it happens.
 

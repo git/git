@@ -317,6 +317,8 @@ int main(int ac, char **av)
 	int merge_base = 0;
 	char **label;
 
+	setup_git_directory();
+
 	while (1 < ac && av[1][0] == '-') {
 		char *arg = av[1];
 		if (!strcmp(arg, "--all"))
