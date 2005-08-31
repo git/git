@@ -488,7 +488,7 @@ sub git_read_commit {
 	$co{'comment'} = \@commit_lines;
 	foreach my $title (@commit_lines) {
 		if ($title ne "") {
-			$co{'title'} = chop_str($title, 80);
+			$co{'title'} = chop_str($title, 80, 5);
 			# remove leading stuff of merges to make the interesting part visible
 			if (length($title) > 50) {
 				$title =~ s/^Automatic //;
@@ -506,7 +506,7 @@ sub git_read_commit {
 					$title =~ s/\/pub\/scm//;
 				}
 			}
-			$co{'title_short'} = chop_str($title, 50);
+			$co{'title_short'} = chop_str($title, 50, 5);
 			last;
 		}
 	}
