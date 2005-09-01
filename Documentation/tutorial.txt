@@ -93,6 +93,11 @@ expect to see a number of 41-byte files containing these
 references in these `refs` subdirectories when you actually start
 populating your tree.
 
+[NOTE]
+An advanced user may want to take a look at the
+link:repository-layout.html[repository layout] document
+after finishing this tutorial.
+
 You have now created your first git repository. Of course, since it's
 empty, that's not very useful, so let's start populating it with data.
 

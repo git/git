@@ -412,23 +412,12 @@ HEAD::
 
 File/Directory Structure
 ------------------------
-The git-core manipulates the following areas in the directory:
 
- .git/	       The base (overridden with $GIT_DIR)
-   objects/    The object base (overridden with $GIT_OBJECT_DIRECTORY)
-     ??/       'First 2 chars of object' directories.
-     pack/     Packed archives.
-
-   refs/       Directories containing symbolic names for objects
-	       (each file contains the hex SHA1 + newline)
-     heads/    Commits which are heads of various sorts
-     tags/     Tags, by the tag name (or some local renaming of it)
-     */        Any other subdirectory of refs/ can be used to store
-	       files similar to what are under refs/heads/.
-   HEAD        Symlink to refs/heads/<current-branch-name>
+Please see link:repository-layout.html[repository layout] document.
 
 Higher level SCMs may provide and manage additional information in the
 GIT_DIR.
+
 
 Terminology
 -----------

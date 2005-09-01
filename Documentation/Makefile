@@ -3,7 +3,11 @@ MAN7_TXT=git.txt
 
 DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
 
-ARTICLES = tutorial cvs-migration diffcore howto-index
+ARTICLES = tutorial
+ARTICLES += cvs-migration
+ARTICLES += diffcore
+ARTICLES += howto-index
+ARTICLES += repository-layout
 # with their own formatting rules.
 SP_ARTICLES = glossary howto/revert-branch-rebase
 
