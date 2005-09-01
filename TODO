@@ -51,8 +51,7 @@ Technical (heavier)
 * Tony Luck reported an unfortunate glitch in the 3-way merge.
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
-  [Daniel's patch look promising, just by judging from how clean
-  the re-organization part of read-tree looks like.]
+  [STARTED TESTING PATCH FROM DANIEL]
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -172,6 +171,8 @@ Initial repository Gotchas
 * `git fetch foo:bar` works OK, but `git checkout bar`
   afterwards does not (missing `.git/HEAD`)
   
+* `git commit -s` did not add signoff for initial commit [DONE].
+
 * `git status` does not work well when missing `.git/HEAD` [DONE].
 
 * `git log` either; git-log-script uses die which does not exist
