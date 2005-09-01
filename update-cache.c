@@ -53,7 +53,11 @@ static int add_file_to_cache(char *path)
 			if (allow_remove)
 				return remove_file_from_cache(path);
 		}
-		return error("open(\"%s\"): %s", path, strerror(errno));
+		if (0 == status)
+			return error("%s: is a directory", path);
+		else
+			return error("lstat(\"%s\"): %s", path,
+				     strerror(errno));
 	}
 	namelen = strlen(path);
 	size = cache_entry_size(namelen);
@@ -393,7 +397,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (add_file_to_cache(path))
-			die("Unable to add %s to database", path);
+			die("Unable to add %s to database; maybe you want to use --add option?", path);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
