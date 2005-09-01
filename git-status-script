@@ -39,11 +39,23 @@ esac
 
 git-update-cache --refresh >/dev/null 2>&1
 
-git-diff-cache -M --cached HEAD |
-sed 's/^://' |
-report "Updated but not checked in" "will commit"
+if test -f "$GIT_DIR/HEAD"
+then
+	git-diff-cache -M --cached HEAD |
+	sed 's/^://' |
+	report "Updated but not checked in" "will commit"
 
-committable="$?"
+	committable="$?"
+else
+	echo '#
+# Initial commit
+#'
+	git-ls-files |
+	sed 's/^/o o o o A /' |
+	report "Updated but not checked in" "will commit"
+
+	committable="$?"
+fi
 
 git-diff-files |
 sed 's/^://' |
