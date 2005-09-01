@@ -232,6 +232,18 @@ diff --git a/pico/pico.c b/pico/pico.c
  		break;
  
 
+(Daniel Barkalow)
+
+> A patch to SubmittingPatches, MUA specific help section for
+> users of Pine 4.63 would be very much appreciated.
+
+Ah, it looks like a recent version changed the default behavior to do the
+right thing, and inverted the sense of the configuration option. (Either
+that or Gentoo did it.) So you need to set the
+"no-strip-whitespace-before-send" option, unless the option you have is
+"strip-whitespace-before-send", in which case you should avoid checking
+it.
+
 
 Thunderbird
 -----------

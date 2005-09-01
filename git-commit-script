@@ -113,21 +113,6 @@ t)
 	fi
 esac
 
-if [ ! -r "$GIT_DIR/HEAD" ]
-then
-	echo "#"
-	echo "# Initial commit"
-	echo "#"
-	git-ls-files | sed 's/^/# New file: /'
-	echo "#"
-elif [ -f "$GIT_DIR/MERGE_HEAD" ]; then
-	echo "#"
-	echo "# It looks like your may be committing a MERGE."
-	echo "# If this is not correct, please remove the file"
-	echo "#	$GIT_DIR/MERGE_HEAD"
-	echo "# and try again"
-	echo "#"
-fi >.editmsg
 if test "$log_message" != ''
 then
 	echo "$log_message"
@@ -144,7 +129,25 @@ then
 elif test "$use_commit" != ""
 then
 	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
-fi | git-stripspace >>.editmsg
+fi | git-stripspace >.editmsg
+
+case "$signoff" in
+t)
+	git-var GIT_COMMITTER_IDENT | sed -e '
+		s/>.*/>/
+		s/^/Signed-off-by: /
+	' >>.editmsg
+	;;
+esac
+
+if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+	echo "#"
+	echo "# It looks like your may be committing a MERGE."
+	echo "# If this is not correct, please remove the file"
+	echo "#	$GIT_DIR/MERGE_HEAD"
+	echo "# and try again"
+	echo "#"
+fi >>.editmsg
 
 PARENTS="-p HEAD"
 if [ ! -r "$GIT_DIR/HEAD" ]; then
@@ -186,16 +189,8 @@ else
 		export GIT_AUTHOR_EMAIL
 		export GIT_AUTHOR_DATE
 	fi
-	case "$signoff" in
-	t)
-		git-var GIT_COMMITTER_IDENT | sed -e '
-			s/>.*/>/
-			s/^/Signed-off-by: /
-		' >>.editmsg
-		;;
-	esac
-	git-status-script >>.editmsg
 fi
+git-status-script >>.editmsg
 if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]
 then
 	rm -f .editmsg
