@@ -1103,6 +1103,12 @@ your login shell is `bash`, only `.bashrc` is read and not
 `.bash_profile`. As a workaround, make sure `.bashrc` sets up
 `$PATH` so that you can run `git-receive-pack` program.
 
+[NOTE]
+If you plan to publish this repository to be accessed over http,
+you should do `chmod +x my-git.git/hooks/post-update` at this
+point.  This makes sure that every time you push into this
+repository, `git-update-server-info` is run.
+
 Your "public repository" is now ready to accept your changes.
 Come back to the machine you have your private repository. From
 there, run this command:
