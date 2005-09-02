@@ -16,10 +16,14 @@ then
 	git-rev-list --pretty "$3"
 else
 	$base=$(git-merge-base "$2" "$3")
-	if [ $base == "$2" ]; then
+	case "$base" in
+	"$2")
 		echo "New commits:"
-	else
+		;;
+	*)
 		echo "Rebased ref, commits from common ancestor:"
+		;;
+	esac
 fi
 git-rev-list --pretty "$3" "^$base"
 fi |
