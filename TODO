@@ -18,9 +18,10 @@ Documentation
 
 * Update the SubmittingPatches document to add MUA specific
   hints on how to disable unwanted MIME and flowed-text by
-  collecting past list postings [DONE].  Accept patches from
-  people who were hit by shiny blue bat to update the same [IN
-  PROGRESS].
+  collecting past list postings [DONE].
+
+* Accept patches from people who were hit by shiny blue bat to
+  update the SubmittingPatches [ONGOING].
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -31,18 +32,23 @@ Documentation
   organization needs to be clarified further [STILL NEEDSWORK].
 
 * Update tutorial to cover shared repository style a bit more
-  [DONE], maybe with a toy project that involves two or three
-  repositories.
+  [DONE].
+
+* Maybe update tutorial with a toy project that involves two or
+  three developers..
+
+* Document the hooks.
 
 * Update tutorial to cover setting up repository hooks to do
-  common tasks. [IN PROGRESS]
+  common tasks.
 
 * Get help to properly use asciidoc in tutorial [Heck, ended up
   learning it myself, DONE].
 
 * Maybe justify and demonstrate an Octopus in the tutorial
-  [STILL NEEDSWORK].  Add it to the glossary [Thanks Johannes,
-  DONE].
+  [STILL NEEDSWORK].
+
+* Add Octopus to the glossary [Thanks Johannes, DONE].
 
 
 Technical (heavier)
@@ -65,6 +71,8 @@ Technical (heavier)
   is the right way to go, since that would work against people
   who already have those packs.
 
+* Maybe an Emacs VC backend.
+
 
 Technical (milder)
 ------------------
@@ -76,7 +84,7 @@ Technical (milder)
   checkout" without -f gets confused.  Figure out a good way to
   handle this. [DONE]
 
-  We still have the same issue with "git fetch".  Fetching into
+* We still have the same issue with "git fetch".  Fetching into
   the branch one is on _may_ need to do the same thing as
   fetching into anonymous head and then do the resolve.  At
   least it needs a warning. [DONE]
@@ -88,6 +96,9 @@ Technical (milder)
 
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
+
+* Test apply.c patches from Robert Fitzsmons and have them
+  graduate to "master" branch.
 
 * Bug Ryan and work with him to update send-email easier to use.
   [Resurrected it for Debian build.]
@@ -111,6 +122,14 @@ Technical (milder)
   turn them into UTF-8; unwrap QP; explode multipart.
   [DONE. waiting for a bug to happen ;-) ]
 
+* Maybe grok PGP signed text/plain in applymbox as well.
+
+* Perhaps a tool to revert a single file to pre-modification
+  state?  git-cat-file blob `git-ls-files | grep foo` >foo or
+  git-cat-file blob `git-ls-tree HEAD foo` >foo?  What should
+  the command be called?  git-revert is taken so is
+  git-checkout.
+
 * "git cherry-pick" that applies the patch an existing commit
   introduces in its ancestry chain, possibly using the 3-way
   merge machinery. [DONE]
@@ -123,8 +142,10 @@ Technical (milder)
   branches.
 
 * Set up an automated documentation rebuilding procedure at
-  kernel.org, using update hook mechanism. [DONE]  Describe it
-  in a howto form [DONE].
+  kernel.org, using update hook mechanism. [DONE]
+
+* Describe automated documentation rebuilding in a howto form
+  [DONE].
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
