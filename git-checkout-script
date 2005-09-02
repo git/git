@@ -37,7 +37,6 @@ while [ "$#" != "0" ]; do
 		fi
 		;;
     esac
-    i=$(($i+1))
 done
 [ -z "$new" ] && new=$old
 
