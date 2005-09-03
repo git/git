@@ -8,7 +8,7 @@ git-commit-script - Record your changes
 
 SYNOPSIS
 --------
-'git commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] <file>...
+'git commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] [-e] <file>...
 
 DESCRIPTION
 -----------
@@ -16,6 +16,10 @@ Updates the index file for given paths, or all modified files if
 '-a' is specified, and makes a commit object.  The command
 VISUAL and EDITOR environment variables to edit the commit log
 message.
+
+This command can run `commit-msg`, `pre-commit`, and
+`post-commit` hooks.  See link:hooks.html[hooks] for more
+information.
 
 OPTIONS
 -------
@@ -47,8 +51,14 @@ OPTIONS
 	has a SP character immediately followed by a TAB
 	character.
 
+-e::
+	The message taken from file with `-F`, command line with
+	`-m`, and from file with `-C` are usually used as the
+	commit log message unmodified.  This option lets you
+	further edit the message taken from these sources.
+
 <file>...::
-	Update specified paths in the index file.
+	Update specified paths in the index file before committing.
 
 
 Author

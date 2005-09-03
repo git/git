@@ -64,6 +64,12 @@ OPTIONS
 	generated "Signed-off-by" line based on your committer
 	identity.
 
+
+SEE ALSO
+--------
+link:git-applypatch.html[git-applypatch].
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
