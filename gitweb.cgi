@@ -43,7 +43,7 @@ my $projects_list = "index/index.aux";
 # input validation and dispatch
 my $action = $cgi->param('a');
 if (defined $action) {
-	if ($action =~ m/[^0-9a-zA-Z\.\-_]+/) {
+	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
 		undef $action;
 		die_error(undef, "Invalid action parameter.");
 	}
@@ -58,7 +58,7 @@ if (defined $action) {
 
 my $order = $cgi->param('o');
 if (defined $order) {
-	if ($order =~ m/[^a-zA-Z0-9_]/) {
+	if ($order =~ m/[^0-9a-zA-Z_]/) {
 		undef $order;
 		die_error(undef, "Invalid order parameter.");
 	}
@@ -66,13 +66,9 @@ if (defined $order) {
 
 my $project = $cgi->param('p');
 if (defined $project) {
-	if ($project =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
-		undef $project;
-		die_error(undef, "Non-canonical project parameter.");
-	}
-	if ($project =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~]/) {
-		undef $project;
-		die_error(undef, "Invalid character in project parameter.");
+	$project = validate_input($project);
+	if (!defined($project)) {
+		die_error(undef, "Invalid project parameter.");
 	}
 	if (!(-d "$projectroot/$project")) {
 		undef $project;
@@ -91,54 +87,39 @@ if (defined $project) {
 
 my $file_name = $cgi->param('f');
 if (defined $file_name) {
-	if ($file_name =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
-		undef $file_name;
-		die_error(undef, "Non-canonical file parameter.");
-	}
-	if ($file_name =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~\:\!]/) {
-		undef $file_name;
-		die_error(undef, "Invalid character in file parameter.");
+	$file_name = validate_input($file_name);
+	if (!defined($file_name)) {
+		die_error(undef, "Invalid file parameter.");
 	}
 }
 
 my $hash = $cgi->param('h');
 if (defined $hash) {
-	if (!($hash =~ m/^[0-9a-fA-F]{40}$/)) {
-		if ($hash =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
-			undef $hash;
-			die_error(undef, "Non-canonical hash parameter.");
-		}
-		if ($hash =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~\:\!]/) {
-			undef $hash;
-			die_error(undef, "Invalid character in hash parameter.");
-		}
-		# replace branch-name with hash
-		my $branchlist = git_read_refs("refs/heads");
-		foreach my $entry (@$branchlist) {
-			my %branch = %$entry;
-			if ($branch{'name'} eq $hash) {
-				$hash = $branch{'id'};
-				last;
-			}
-		}
+	$hash = validate_input($hash);
+	if (!defined($hash)) {
+		die_error(undef, "Invalid hash parameter.");
 	}
 }
 
 my $hash_parent = $cgi->param('hp');
-if (defined $hash_parent && !($hash_parent =~ m/^[0-9a-fA-F]{40}$/)) {
-	undef $hash_parent;
-	die_error(undef, "Invalid hash_parent parameter.");
+if (defined $hash_parent) {
+	$hash_parent = validate_input($hash_parent);
+	if (!defined($hash_parent)) {
+		die_error(undef, "Invalid hash parent parameter.");
+	}
 }
 
 my $hash_base = $cgi->param('hb');
-if (defined $hash_base && !($hash_base =~ m/^[0-9a-fA-F]{40}$/)) {
-	undef $hash_base;
-	die_error(undef, "Invalid parent hash parameter.");
+if (defined $hash_base) {
+	$hash_base = validate_input($hash_base);
+	if (!defined($hash_base)) {
+		die_error(undef, "Invalid hash base parameter.");
+	}
 }
 
 my $page = $cgi->param('pg');
 if (defined $page) {
-	if ($page =~ m/^[^0-9]+$/) {
+	if ($page =~ m/[^0-9]$/) {
 		undef $page;
 		die_error(undef, "Invalid page parameter.");
 	}
@@ -151,6 +132,21 @@ if (defined $searchtext) {
 		die_error(undef, "Invalid search parameter.");
 	}
 	$searchtext = quotemeta $searchtext;
+}
+
+sub validate_input {
+	my $input = shift;
+
+	if ($input =~ m/^[0-9a-fA-F]{40}$/) {
+		return $input;
+	}
+	if ($input =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
+		return undef;
+	}
+	if ($input =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~]/) {
+		return undef;
+	}
+	return $input;
 }
 
 if (!defined $action || $action eq "summary") {
