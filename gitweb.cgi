@@ -478,7 +478,16 @@ sub git_read_commit {
 	if (!defined $co{'tree'}) {
 		return undef
 	};
-	$co{'id'} = $commit_id;
+	if (!($commit_id =~ m/^[0-9a-fA-F]{40}$/)) {
+		# lookup hash by textual id
+		open my $fd, "-|", "$gitbin/git-rev-parse --verify $commit_id" or return;
+		my $hash_id = <$fd>;
+		close $fd or return;
+		chomp $hash_id;
+		$co{'id'} = $hash_id
+	} else {
+		$co{'id'} = $commit_id;
+	}
 	$co{'parents'} = \@parents;
 	$co{'parent'} = $parents[0];
 	$co{'comment'} = \@commit_lines;
@@ -1630,7 +1639,7 @@ sub git_commit {
 	      "</tr>\n";
 	print "<tr><td>committer</td><td>" . escapeHTML($co{'committer'}) . "</td></tr>\n";
 	print "<tr><td></td><td> $cd{'rfc2822'}" . sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</td></tr>\n";
-	print "<tr><td>commit</td><td style=\"font-family:monospace\">$hash</td></tr>\n";
+	print "<tr><td>commit</td><td style=\"font-family:monospace\">$co{'id'}</td></tr>\n";
 	print "<tr>" .
 	      "<td>tree</td>" .
 	      "<td style=\"font-family:monospace\">" .
