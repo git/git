@@ -26,10 +26,10 @@ Documentation
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
   need to be expanded.  I personally do not think we need tool
-  support for this.
+  support for this (but see below).
 
 * Review the existing docs and see if the repository
-  organization needs to be clarified further [STILL NEEDSWORK].
+  organization needs to be clarified further [DONE].
 
 * Update tutorial to cover shared repository style a bit more
   [DONE].
@@ -37,7 +37,7 @@ Documentation
 * Maybe update tutorial with a toy project that involves two or
   three developers..
 
-* Document the hooks.
+* Document the hooks [DONE].
 
 * Update tutorial to cover setting up repository hooks to do
   common tasks.
@@ -58,6 +58,13 @@ Technical (heavier)
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
   [STARTED TESTING PATCH FROM DANIEL]
+
+* HPA has two projects, klibc and klibc-kbuild, that have large
+  set of overlapping files in different paths (i.e. one has many
+  renames from the other).  There currently is no way for git to
+  help keep these two trees in sync, merging criss-cross between
+  them.  The merge logic should be able to take advantage of
+  rename/copy detection smarts git-diff-* family has.
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
