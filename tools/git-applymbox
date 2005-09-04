@@ -68,7 +68,8 @@ do
     i="$1" 
     case "$resume,$continue" in
     f,$i)	resume=t;;
-    f,*)	continue;;
+    f,*)	shift
+		continue;;
     *)
 	    git-mailinfo $keep_subject $utf8 \
 		.dotest/msg .dotest/patch <$i >.dotest/info || exit 1
