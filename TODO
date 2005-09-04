@@ -105,7 +105,10 @@ Technical (milder)
   we discussed some time ago.
 
 * Test apply.c patches from Robert Fitzsmons and have them
-  graduate to "master" branch.
+  graduate to "master" branch [IN PROGRESS].
+
+* Test read-tree reorganization patches from Daniel and have
+  them graduate to "master" branch [TESTED].
 
 * Bug Ryan and work with him to update send-email easier to use.
   [Resurrected it for Debian build.]
