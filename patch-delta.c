@@ -34,9 +34,10 @@ void *patch_delta(void *src_buf, unsigned long src_size,
 
 	/* now the result size */
 	size = get_delta_hdr_size(&data);
-	dst_buf = malloc(size);
+	dst_buf = malloc(size + 1);
 	if (!dst_buf)
 		return NULL;
+	dst_buf[size] = 0;
 
 	out = dst_buf;
 	while (data < top) {
