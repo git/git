@@ -487,7 +487,7 @@ struct packed_git *parse_pack_index(unsigned char *sha1)
 	return parse_pack_index_file(sha1, path);
 }
 
-struct packed_git *parse_pack_index_file(unsigned char *sha1, char *idx_path)
+struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_path)
 {
 	struct packed_git *p;
 	unsigned long idx_size;

@@ -77,6 +77,12 @@ OPTIONS
 <directory>::
 	The repository to sync into.
 
+
+SEE ALSO
+--------
+link:git-send-pack.html[git-send-pack]
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>

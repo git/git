@@ -17,7 +17,7 @@ void prefetch(unsigned char *sha1)
 
 static struct packed_git *packs = NULL;
 
-void setup_index(unsigned char *sha1)
+static void setup_index(unsigned char *sha1)
 {
 	struct packed_git *new_pack;
 	char filename[PATH_MAX];
@@ -30,7 +30,7 @@ void setup_index(unsigned char *sha1)
 	packs = new_pack;
 }
 
-int setup_indices()
+static int setup_indices(void)
 {
 	DIR *dir;
 	struct dirent *de;
@@ -49,7 +49,7 @@ int setup_indices()
 	return 0;
 }
 
-int copy_file(const char *source, const char *dest, const char *hex)
+static int copy_file(const char *source, const char *dest, const char *hex)
 {
 	if (use_link) {
 		if (!link(source, dest)) {
@@ -97,7 +97,7 @@ int copy_file(const char *source, const char *dest, const char *hex)
 	return -1;
 }
 
-int fetch_pack(unsigned char *sha1)
+static int fetch_pack(const unsigned char *sha1)
 {
 	struct packed_git *target;
 	char filename[PATH_MAX];
@@ -125,7 +125,7 @@ int fetch_pack(unsigned char *sha1)
 	return 0;
 }
 
-int fetch_file(unsigned char *sha1)
+static int fetch_file(const unsigned char *sha1)
 {
 	static int object_name_start = -1;
 	static char filename[PATH_MAX];

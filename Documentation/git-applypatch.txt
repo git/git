@@ -16,6 +16,10 @@ Takes three files <msg>, <patch>, and <info> prepared from an
 e-mail message by 'git-mailinfo', and creates a commit.  It is
 usually not necessary to use this command directly.
 
+This command can run `applypatch-msg`, `pre-applypatch`, and
+`post-applypatch` hooks.  See link:hooks.html[hooks] for more
+information.
+
 
 OPTIONS
 -------
