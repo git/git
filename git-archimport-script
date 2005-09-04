@@ -49,12 +49,12 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_v, $opt_T,
-    $opt_C,$opt_t, $opt_i);
+    $opt_C,$opt_t);
 
 sub usage() {
     print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from Arch
-       [ -h ] [ -v ] [ -i ] [ -T ] 
+       [ -h ] [ -v ] [ -T ] 
        [ -C GIT_repository ] [ -t tempdir ] 
        repository/arch-branch [ repository/arch-branch] ...
 END
@@ -173,21 +173,19 @@ foreach my $root (@arch_roots) {
 ## TODO cleanup irrelevant patches
 ##      and put an initial import
 ##      or a full tag
-
-if ($opt_i) {                   # initial import 
+my $import = 0;
+unless (-d '.git') { # initial import
     if ($psets[0]{type} eq 'i' || $psets[0]{type} eq 't') {
         print "Starting import from $psets[0]{id}\n";
+	`git-init-db`;
+	die $! if $?;
+	$import = 1;
     } else {
         die "Need to start from an import or a tag -- cannot use $psets[0]{id}";
     }
-    `git-init-db`;
-    die $! if $?;
 }
 
-# process
-my $lastbranch = branchname($psets[0]{id}); # only good for initial import
-my $importseen = $opt_i ? 0 : 1; # start at 1 if opt_i
-
+# process patchsets
 foreach my $ps (@psets) {
 
     $ps->{branch} =  branchname($ps->{id});
@@ -201,14 +199,22 @@ foreach my $ps (@psets) {
     }
     die $! if $?;
 
+    #
+    # skip commits already in repo
+    #
+    if (ptag($ps->{id})) {
+      $opt_v && print "Skipping already imported: $ps->{id}\n";
+      next;
+    }
+
     # 
     # create the branch if needed
     #
-    if ($ps->{type} eq 'i' && $importseen) {
-        die "Should not have more than one 'Initial import' per GIT import";
+    if ($ps->{type} eq 'i' && !$import) {
+        die "Should not have more than one 'Initial import' per GIT import: $ps->{id}";
     }
 
-    unless ($opt_i && !$importseen) { # skip for first commit
+    unless ($import) { # skip for import
         if ( -e ".git/refs/heads/$ps->{branch}") {
             # we know about this branch
             `git checkout    $ps->{branch}`;
@@ -225,13 +231,12 @@ foreach my $ps (@psets) {
         die $! if $?;
     } 
 
-        
     #
     # Apply the import/changeset/merge into the working tree
     # 
     if ($ps->{type} eq 'i' || $ps->{type} eq 't') {
-        $importseen = 1;
         apply_import($ps) or die $!;
+        $import=0;
     } elsif ($ps->{type} eq 's') {
         apply_cset($ps);
     }
@@ -577,8 +582,6 @@ sub ptag {
     } else {                    # read
         # if the tag isn't there, return 0
         unless ( -s ".git/archimport/tags/$tag") {
-            warn "Could not find tag $tag -- perhaps it isn't in the repos we have?\n" 
-                if $opt_v;
             return 0;
         }
         open(C,"<.git/archimport/tags/$tag")
