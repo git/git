@@ -672,9 +672,13 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			added++;
 			newlines--;
 			break;
-		/* We allow "\ No newline at end of file" */
+
+                /* We allow "\ No newline at end of file". Depending
+                 * on locale settings when the patch was produced we
+                 * don't know what this line looks like. The only
+                 * thing we do know is that it begins with "\ ". */
 		case '\\':
-			if (len < 12 || memcmp(line, "\\ No newline", 12))
+			if (len < 12 || memcmp(line, "\\ ", 2))
 				return -1;
 			break;
 		}
@@ -683,7 +687,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	 * it in the above loop because we hit oldlines == newlines == 0
 	 * before seeing it.
 	 */
-	if (12 < size && !memcmp(line, "\\ No newline", 12))
+	if (12 < size && !memcmp(line, "\\ ", 2))
 		offset += linelen(line, size);
 
 	patch->lines_added += added;
