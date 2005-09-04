@@ -24,8 +24,27 @@ OPTIONS
 -------
 
 --force::
-	Update the info files even when they do not appear
-	stale.
+	Update the info files from scratch.
+
+
+OUTPUT
+------
+
+Currently the command updates the following files.  Please see
+link:repository-layout.html[repository-layout] for description
+of what they are for:
+
+* objects/info/packs
+
+* info/refs
+
+* info/rev-cache
+
+
+BUGS
+----
+When you remove an existing ref, the command fails to update
+info/refs file unless `--force` flag is given.
 
 
 Author
