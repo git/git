@@ -227,6 +227,14 @@ foreach my $ps (@psets) {
             
             # find where we are supposed to branch from
             `git checkout -b $ps->{branch} $branchpoint`;
+
+            # If we trust Arch with the fact that this is just 
+            # a tag, and it does not affect the state of the tree
+            # then we just tag and move on
+            tag($ps->{id}, $branchpoint);
+            ptag($ps->{id}, $branchpoint);
+            print " * Tagged $ps->{id} at $branchpoint\n";
+            next;
         } 
         die $! if $?;
     } 
