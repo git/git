@@ -36,12 +36,13 @@ int setup_ident(void)
 	memcpy(real_email, pw->pw_name, len);
 	real_email[len++] = '@';
 	gethostname(real_email + len, sizeof(real_email) - len);
+#ifndef NO_GETDOMAINNAME
 	if (!strchr(real_email+len, '.')) {
 		len = strlen(real_email);
 		real_email[len++] = '.';
 		getdomainname(real_email+len, sizeof(real_email)-len);
 	}
-
+#endif
 	/* And set the default date */
 	datestamp(real_date, sizeof(real_date));
 	return 0;

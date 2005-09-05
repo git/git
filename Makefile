@@ -13,8 +13,14 @@
 # a bundled SHA1 routine optimized for PowerPC.
 #
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
+#
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
-
+#
+# Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
+# Patrick Mauritz).
+#
+# Define NO_GETDOMAINNAME if your library lack it (SunOS, Patrick Mauritz).
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -37,7 +43,7 @@
 GIT_VERSION = 0.99.6
 
 CFLAGS = -g -O2 -Wall
-ALL_CFLAGS = $(CFLAGS) $(DEFINES)
+ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
@@ -131,6 +137,10 @@ ifeq ($(shell uname -s),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 endif
+ifeq ($(shell uname -s),SunOS)
+	NEEDS_SOCKET = YesPlease
+	PLATFORM_DEFINES += -DNO_GETDOMAINNAME=1
+endif
 
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
@@ -161,6 +171,10 @@ else
 		SHA1_HEADER = <openssl/sha.h>
 		LIBS += $(LIB_4_CRYPTO)
 	endif
+endif
+ifdef NEEDS_SOCKET
+	LIBS += -lsocket
+	SIMPLE_LIB += -lsocket
 endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
