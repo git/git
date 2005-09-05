@@ -25,9 +25,13 @@ use Data::Dumper;
 use Email::Valid;
 
 sub unique_email_list(@);
+sub cleanup_compose_files();
+
+# Constants (essentially)
+my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from);
+my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
 
 # Behavior modification variables
 my ($chain_reply_to, $smtp_server) = (1, "localhost");
@@ -46,6 +50,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "to=s" => \@to,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
+		    "compose" => \$compose,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:
@@ -69,7 +74,7 @@ while(<GITVAR>) {
 }
 close(GITVAR);
 
-
+my $prompting = 0;
 if (!defined $from) {
 	$from = $author || $committer;
 	do {
@@ -79,6 +84,7 @@ if (!defined $from) {
 
 	$from = $_;
 	print "Emails will be sent from: ", $from, "\n";
+	$prompting++;
 }
 
 if (!@to) {
@@ -88,19 +94,21 @@ if (!@to) {
 	} while (!defined $_);
 	my $to = $_;
 	push @to, split /,/, $to;
+	$prompting++;
 }
 
-if (!defined $initial_subject) {
+if (!defined $initial_subject && $compose) {
 	do {
 		$_ = $term->readline("What subject should the emails start with? ",
 			$initial_subject);
 	} while (!defined $_);
 	$initial_subject = $_;
+	$prompting++;
 }
 
-if (!defined $initial_reply_to) {
+if (!defined $initial_reply_to && $prompting) {
 	do {
-		$_= $term->readline("Message-ID to be used as In-Reply-To? ",
+		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ",
 			$initial_reply_to);
 	} while (!defined $_);
 
@@ -111,6 +119,52 @@ if (!defined $initial_reply_to) {
 if (!defined $smtp_server) {
 	$smtp_server = "localhost";
 }
+
+if ($compose) {
+	# Note that this does not need to be secure, but we will make a small
+	# effort to have it be unique
+	open(C,">",$compose_filename)
+		or die "Failed to open for writing $compose_filename: $!";
+	print C "From \n";
+	printf C "Subject: %s\n\n", $initial_subject;
+	printf C <<EOT;
+GIT: Please enter your email below.
+GIT: Lines beginning in "GIT: " will be removed.
+GIT: Consider including an overall diffstat or table of contents
+GIT: for the patch you are writing.
+
+EOT
+	close(C);
+
+	my $editor = $ENV{EDITOR};
+	$editor = 'vi' unless defined $editor;
+	system($editor, $compose_filename);
+
+	open(C2,">",$compose_filename . ".final")
+		or die "Failed to open $compose_filename.final : " . $!;
+
+	open(C,"<",$compose_filename)
+		or die "Failed to open $compose_filename : " . $!;
+
+	while(<C>) {
+		next if m/^GIT: /;
+		print C2 $_;
+	}
+	close(C);
+	close(C2);
+
+	do {
+		$_ = $term->readline("Send this email? (y|n) ");
+	} while (!defined $_);
+
+	if (uc substr($_,0,1) ne 'Y') {
+		cleanup_compose_files();
+		exit(0);
+	}
+
+	@files = ($compose_filename . ".final");
+}
+
 
 # Now that all the defaults are set, process the rest of the command line
 # arguments and collect up the files that need to be processed.
@@ -137,12 +191,24 @@ if (@files) {
 git-send-email-script [options] <file | directory> [... file | directory ]
 Options:
    --from         Specify the "From:" line of the email to be sent.
+
    --to           Specify the primary "To:" line of the email.
+
+   --compose      Use \$EDITOR to edit an introductory message for the
+                  patch series.
+
    --subject      Specify the initial "Subject:" line.
+                  Only necessary if --compose is also set.  If --compose
+		  is not set, this will be prompted for.
+
    --in-reply-to  Specify the first "In-Reply-To:" header line.
+                  Only used if --compose is also set.  If --compose is not
+		  set, this will be prompted for.
+
    --chain-reply-to If set, the replies will all be to the previous
                   email sent, rather than to the first email sent.
                   Defaults to on.
+
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
@@ -277,6 +343,16 @@ foreach my $t (@files) {
 	}
 	make_message_id();
 }
+
+if ($compose) {
+	cleanup_compose_files();
+}
+
+sub cleanup_compose_files() {
+	unlink($compose_filename, $compose_filename . ".final");
+
+}
+
 
 
 sub unique_email_list(@) {
