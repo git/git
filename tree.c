@@ -1,5 +1,7 @@
 #include "tree.h"
 #include "blob.h"
+#include "commit.h"
+#include "tag.h"
 #include "cache.h"
 #include <stdlib.h>
 
@@ -211,4 +213,23 @@ int parse_tree(struct tree *item)
 	ret = parse_tree_buffer(item, buffer, size);
 	free(buffer);
 	return ret;
+}
+
+struct tree *parse_tree_indirect(const unsigned char *sha1)
+{
+	struct object *obj = parse_object(sha1);
+	do {
+		if (!obj)
+			return NULL;
+		if (obj->type == tree_type)
+			return (struct tree *) obj;
+		else if (obj->type == commit_type)
+			obj = &(((struct commit *) obj)->tree->object);
+		else if (obj->type == tag_type)
+			obj = ((struct tag *) obj)->tagged;
+		else
+			return NULL;
+		if (!obj->parsed)
+			parse_object(obj->sha1);
+	} while (1);
 }
