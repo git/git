@@ -33,16 +33,21 @@ The options available are:
 	the value GIT_COMMITTER_IDENT, as returned by "git-var -l".
 	The user will still be prompted to confirm this entry.
 
+   --compose
+	Use \$EDITOR to edit an introductory message for the
+	patch series.
+
    --subject
    	Specify the initial subject of the email thread.
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
 
    --in-reply-to
 	Specify the contents of the first In-Reply-To header.
 	Subsequent emails will refer to the previous email 
-	instead of this.
-	When overriding on the command line, it may be necessary
-	to set this to a space.  For example
-		--in-reply-to=" "
+	instead of this if --chain-reply-to is set (the default)
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
 
    --chain-reply-to, --no-chain-reply-to
 	If this is set, each email will be sent as a reply to the previous

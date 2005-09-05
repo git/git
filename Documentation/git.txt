@@ -329,9 +329,6 @@ link:git-build-rev-cache.html[git-build-rev-cache]::
 link:git-checkout-script.html[git-checkout-script]::
 	git-checkout-script.
 
-link:git-clone-dumb-http.html[git-clone-dumb-http]::
-	git-clone-dumb-http.
-
 link:git-daemon.html[git-daemon]::
 	git-daemon.
 
