@@ -47,6 +47,8 @@ static int entcmp(char *name1, int dir1, char *name2, int dir2)
 	return ret;
 }
 
+#define DBRT_DEBUG 0
+
 static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			    const char *base, merge_fn_t fn, int *indpos)
 {
@@ -99,13 +101,16 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			}
 		}
 
+#if DBRT_DEBUG
 		if (first)
 			printf("index %s\n", first);
-
+#endif
 		for (i = 0; i < len; i++) {
 			if (!posns[i] || posns[i] == &df_conflict_list)
 				continue;
+#if DBRT_DEBUG
 			printf("%d %s\n", i + 1, posns[i]->name);
+#endif
 			if (!first || entcmp(first, firstdir,
 					     posns[i]->name, 
 					     posns[i]->directory) > 0) {
@@ -183,6 +188,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			if (merge) {
 				int ret;
 
+#if DBRT_DEBUG
 				printf("%s:\n", first);
 				for (i = 0; i < src_size; i++) {
 					printf(" %d ", i);
@@ -191,11 +197,12 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 					else
 						printf("\n");
 				}
-
+#endif
 				ret = fn(src);
 				
+#if DBRT_DEBUG
 				printf("Added %d entries\n", ret);
-
+#endif
 				*indpos += ret;
 			} else {
 				for (i = 0; i < src_size; i++) {
