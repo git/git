@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2005 Rene Scharfe
+ */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
