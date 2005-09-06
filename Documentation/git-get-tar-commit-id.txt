@@ -3,25 +3,24 @@ git-get-tar-commit-id(1)
 
 NAME
 ----
-git-get-tar-commit-id - Some git command not yet documented.
+git-get-tar-commit-id - Extract commit ID from an archive created using git-tar-tree.
 
 
 SYNOPSIS
 --------
-'git-get-tar-commit-id' [ --option ] <args>...
+'git-get-tar-commit-id' < <tarfile>
+
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Acts as a filter, extracting the commit ID stored in archives created by
+git-tar-tree.  It reads only the first 1024 bytes of input, thus its
+runtime is not influenced by the size of <tarfile> very much.
 
-
-OPTIONS
--------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
+If no commit ID is found, git-get-tar-commit-id quietly exists with a
+return code of 1.  This can happen if <tarfile> had not been created
+using git-tar-tree or if the first parameter of git-tar-tree had been
+a tree ID instead of a commit ID or tag.
 
 
 Author

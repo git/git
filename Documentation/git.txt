@@ -319,6 +319,8 @@ link:git-patch-id.html[git-patch-id]::
 link:git-send-email-script.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
 
+link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
+	Extract commit ID from an archive created using git-tar-tree.
 
 Commands not yet documented
 ---------------------------
@@ -337,9 +339,6 @@ link:git-diff-script.html[git-diff-script]::
 
 link:git-format-patch-script.html[git-format-patch-script]::
 	git-format-patch-script.
-
-link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
-	git-get-tar-commit-id.
 
 link:git-request-pull-script.html[git-request-pull-script]::
 	git-request-pull-script.

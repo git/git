@@ -44,6 +44,9 @@ OPTIONS
 	to avoid noisy changesets. Highly recommended, but off by default
 	to preserve compatibility with early imported trees. 
 
+-u::
+	Convert underscores in tag and branch names to dots.
+
 -o <branch-for-HEAD>::
 	The 'HEAD' branch from CVS is imported to the 'origin' branch within
 	the git repository, as 'HEAD' already has a special meaning for git.
