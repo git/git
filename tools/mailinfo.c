@@ -152,6 +152,10 @@ static int handle_subcontent_type(char *line)
 	/* We do not want to mess with boundary.  Note that we do not
 	 * handle nested multipart.
 	 */
+	if (strcasestr(line, "boundary=")) {
+		fprintf(stderr, "Not handling nested multipart message.\n");
+		exit(1);
+	}
 	slurp_attr(line, "charset=", charset);
 	if (*charset) {
 		int i, c;
