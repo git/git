@@ -218,6 +218,9 @@ currently implemented.
                                            or (2) match B.
  ------------------------------------------------------------------
  15  exists  O==A    O==B      take B      must match A if exists.
+ ------------------------------------------------------------------
+ 16  exists  O==A    O==B      barf        must match A if exists.
+     *multi* in one  in another
 -------------------------------------------------------------------
 
 Note: if we want to implement 2ALT and 3ALT we need to be careful.
@@ -513,5 +516,18 @@ test_expect_failure \
      echo extra >>NN &&
      git-update-index --add NN &&
      git-read-tree -m $tree_O $tree_A $tree_B"
+
+# #16
+test_expect_success \
+    '16 - A matches in one and B matches in another.' \
+    'rm -f .git/index F16 &&
+    echo F16 >F16 &&
+    git-update-index --add F16 &&
+    tree0=`git-write-tree` &&
+    echo E16 >F16 &&
+    git-update-index F16 &&
+    tree1=`git-write-tree` &&
+    git-read-tree -m $tree0 $tree1 $tree1 $tree0 &&
+    git-ls-files --stage'
 
 test_done

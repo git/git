@@ -3,6 +3,8 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define DBRT_DEBUG 1
+
 #include "cache.h"
 
 #include "object.h"
@@ -46,8 +48,6 @@ static int entcmp(char *name1, int dir1, char *name2, int dir2)
 		ret = len1 - len2;
 	return ret;
 }
-
-#define DBRT_DEBUG 0
 
 static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			    const char *base, merge_fn_t fn, int *indpos)
@@ -101,14 +101,14 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			}
 		}
 
-#if DBRT_DEBUG
+#if DBRT_DEBUG > 1
 		if (first)
 			printf("index %s\n", first);
 #endif
 		for (i = 0; i < len; i++) {
 			if (!posns[i] || posns[i] == &df_conflict_list)
 				continue;
-#if DBRT_DEBUG
+#if DBRT_DEBUG > 1
 			printf("%d %s\n", i + 1, posns[i]->name);
 #endif
 			if (!first || entcmp(first, firstdir,
@@ -188,7 +188,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			if (merge) {
 				int ret;
 
-#if DBRT_DEBUG
+#if DBRT_DEBUG > 1
 				printf("%s:\n", first);
 				for (i = 0; i < src_size; i++) {
 					printf(" %d ", i);
@@ -200,7 +200,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 #endif
 				ret = fn(src);
 				
-#if DBRT_DEBUG
+#if DBRT_DEBUG > 1
 				printf("Added %d entries\n", ret);
 #endif
 				*indpos += ret;
@@ -353,6 +353,19 @@ static int keep_entry(struct cache_entry *ce)
 	return 1;
 }
 
+#if DBRT_DEBUG
+static void show_stage_entry(FILE *o,
+			     const char *label, const struct cache_entry *ce)
+{
+	fprintf(stderr, "%s%06o %s %d\t%s\n",
+		label,
+		ntohl(ce->ce_mode),
+		sha1_to_hex(ce->sha1),
+		ce_stage(ce),
+		ce->name);
+}
+#endif
+
 static int threeway_merge(struct cache_entry **stages)
 {
 	struct cache_entry *index;
@@ -392,10 +405,10 @@ static int threeway_merge(struct cache_entry **stages)
 	if (!same(remote, head)) {
 		for (i = 1; i < head_idx; i++) {
 			if (same(stages[i], head)) {
-				head_match = 1;
+				head_match = i;
 			}
 			if (same(stages[i], remote)) {
-				remote_match = 1;
+				remote_match = i;
 			}
 		}
 	}
@@ -450,6 +463,13 @@ static int threeway_merge(struct cache_entry **stages)
 			}
 		}
 	}
+#if DBRT_DEBUG
+	else {
+		fprintf(stderr, "read-tree: warning #16 detected\n");
+		show_stage_entry(stderr, "head   ", stages[head_match]);
+		show_stage_entry(stderr, "remote ", stages[remote_match]);
+	}
+#endif
 	if (head) { count += keep_entry(head); }
 	if (remote) { count += keep_entry(remote); }
 	return count;
