@@ -24,23 +24,24 @@ use Time::Local;
 use IO::Socket;
 use IO::Pipe;
 use POSIX qw(strftime dup2);
+use IPC::Open2;
 
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_s,$opt_m,$opt_M);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_s,$opt_m,$opt_M);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
-       [ -o branch-for-HEAD ] [ -h ] [ -v ] [ -d CVSROOT ]
-       [ -p opts-for-cvsps ] [ -C GIT_repository ] [ -z fuzz ]
-       [ -i ] [ -k ] [-s subst] [ -m ] [ -M regex] [ CVS_module ]
+       [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT]
+       [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz]
+       [-i] [-k] [-u] [-s subst] [-m] [-M regex] [CVS_module]
 END
 	exit(1);
 }
 
-getopts("hivmko:d:p:C:z:s:M:") or usage();
+getopts("hivmkuo:d:p:C:z:s:M:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -628,13 +629,37 @@ my $commit = sub {
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if($tag) {
-		open(C,">$git_dir/refs/tags/$tag")
-			or die "Cannot create tag $tag: $!\n";
-		print C "$cid\n"
-			or die "Cannot write tag $branch: $!\n";
+		my($in, $out) = ('','');
+	        my($xtag) = $tag;
+		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
+		$xtag =~ tr/_/\./ if ( $opt_u );
+		
+		my $pid = open2($in, $out, 'git-mktag');
+		print $out "object $cid\n".
+		    "type commit\n".
+		    "tag $xtag\n".
+		    "tagger $author <$author>\n"
+		    or die "Cannot create tag object $xtag: $!\n";
+		close($out)
+		    or die "Cannot create tag object $xtag: $!\n";
+
+		my $tagobj = <$in>;
+		chomp $tagobj;
+
+		if ( !close($in) or waitpid($pid, 0) != $pid or
+		     $? != 0 or $tagobj !~ /^[0123456789abcdef]{40}$/ ) {
+		    die "Cannot create tag object $xtag: $!\n";
+	        }
+		
+
+		open(C,">$git_dir/refs/tags/$xtag")
+			or die "Cannot create tag $xtag: $!\n";
+		print C "$tagobj\n"
+			or die "Cannot write tag $xtag: $!\n";
 		close(C)
-			or die "Cannot write tag $branch: $!\n";
-		print "Created tag '$tag' on '$branch'\n" if $opt_v;
+			or die "Cannot write tag $xtag: $!\n";
+
+		print "Created tag '$xtag' on '$branch'\n" if $opt_v;
 	}
 };
 
