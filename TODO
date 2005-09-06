@@ -26,7 +26,7 @@ Documentation
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
   need to be expanded.  I personally do not think we need tool
-  support for this (but see below).
+  support for this (but see below about optimized cloning).
 
 * Review the existing docs and see if the repository
   organization needs to be clarified further [DONE].
@@ -57,14 +57,15 @@ Technical (heavier)
 * Tony Luck reported an unfortunate glitch in the 3-way merge.
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
-  [STARTED TESTING PATCH FROM DANIEL]
+  [Daniel's patch looks quite promising.]
 
 * HPA has two projects, klibc and klibc-kbuild, that have large
   set of overlapping files in different paths (i.e. one has many
   renames from the other).  There currently is no way for git to
   help keep these two trees in sync, merging criss-cross between
   them.  The merge logic should be able to take advantage of
-  rename/copy detection smarts git-diff-* family has.
+  rename/copy detection smarts git-diff-* family has [Discussion
+  ongoing].
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -111,7 +112,8 @@ Technical (milder)
   them graduate to "master" branch [TESTED].
 
 * Bug Ryan and work with him to update send-email easier to use.
-  [Resurrected it for Debian build.]
+  [Ryan's patch pushed into "master".  Will see how well it is
+  accepted.]
 
 * Look at portability fixes from Jason Riedy
 
@@ -129,8 +131,7 @@ Technical (milder)
 * Perhaps accept patches to do undo/redo.
 
 * MIMEified applymbox to grok B and Q encodings in headers and
-  turn them into UTF-8; unwrap QP; explode multipart.
-  [DONE. waiting for a bug to happen ;-) ]
+  turn them into UTF-8; unwrap QP; explode multipart. [DONE]
 
 * Maybe grok PGP signed text/plain in applymbox as well.
 
@@ -174,6 +175,10 @@ Technical (milder)
 
 * Option to limit rename detection for more than N paths.
 
+* Tool renames. [Discussion almost concluded, scheduled to
+  happen 0.99.7 with backward compatibility links, removing them
+  in 0.99.8.]
+
 
 Technical (trivial)
 -------------------
@@ -182,7 +187,7 @@ Technical (trivial)
 
 * Perhaps "git branch -d" to delete a branch.
 
-* Remove "git clone-dumb-http".
+* Remove "git clone-dumb-http" [DONE].
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  So far, the following
@@ -194,13 +199,14 @@ Technical (trivial)
     diff-cache
     diff-tree
     rev-list
+    rev-parse
 
 
 Initial repository Gotchas
 --------------------------
 
 * `git fetch foo:bar` works OK, but `git checkout bar`
-  afterwards does not (missing `.git/HEAD`)
+  afterwards does not (missing `.git/HEAD`).
   
 * `git commit -s` did not add signoff for initial commit [DONE].
 
