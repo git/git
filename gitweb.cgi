@@ -1716,7 +1716,7 @@ sub git_commit {
 				$mode_chng = sprintf(" with mode: %04o", (oct $to_mode) & 0777);
 			}
 			print "<td>" .
-			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hp=$hash;f=$file", -class => "list"}, escapeHTML($file)) . "</td>\n" .
+			      $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file", -class => "list"}, escapeHTML($file)) . "</td>\n" .
 			      "<td><span style=\"color: #008000;\">[new " . file_type($to_mode) . "$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"}, "blob") . "</td>\n";
 		} elsif ($status eq "D") {
