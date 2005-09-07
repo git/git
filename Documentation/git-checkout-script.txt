@@ -3,26 +3,31 @@ git-checkout-script(1)
 
 NAME
 ----
-git-checkout-script - Some git command not yet documented.
-
+git-checkout-script - Checkout and switch to a branch.
 
 SYNOPSIS
 --------
-'git-checkout-script' [ --option ] <args>...
+'git-checkout-script' [-f] [-b <new_branch>] [<branch>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Updates the index and working tree to reflect the specified branch,
+<branch>. Updates HEAD to be <branch> or, if specified, <new_branch>.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+-f::
+	Force an re-read of everything.
 
-<args>...::
-	Some argument not yet documented.
+-b::
+	Create a new branch and start it at <branch>.
 
+<new_branch>::
+	Name for the new branch.
+
+<branch>::
+	Branch to checkout; may be any object ID that resolves to a
+	commit. Defaults to HEAD.
 
 Author
 ------
