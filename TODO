@@ -4,7 +4,54 @@ What to expect after 0.99.6
 This is written in a form of to-do list for me, so if I say
 "accept patch", it means I do not currently plan to do that
 myself.  People interested in seeing it materialize please take
-a hint.
+a hint.  The latest copy of this document is found at 
+
+    http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
+
+Tool Renames Plan
+-----------------
+
+ - All non-binary commands will lose -script suffix in
+   $(bindir).  The source to git-foo will be either git-foo.sh
+   or git-foo.perl in the source tree, and the documentation
+   will be in Documentation/git-foo.txt.
+
+ - The commands whose names have 'cache' to mean 'index file'
+   will get 'cache' in their names replaced with 'index'. For
+   git-fsck-cache and git-convert-cache, 'cache' will be
+   replaced with 'objects'.
+
+ - The commit walkers will have 'pull' in their names replaced
+   with 'fetch'.  'git-ssh-push' will become 'git-ssh-upload'.
+
+ - We continue to follow the convention to name the C source
+   file that contains the main program of 'git-foo' command
+   'foo.c'.  That means we will have 'fsck-objects.c', for
+   example.
+
+ - At this moment, I am not planning to rename the symbols used
+   in programs, nor any library sources.  "cache.h" will stay
+   "cache.h", so does "read-cache.c".  "struct cache_entry"  and
+   "ce_match_stat()" will keep their names.  We _might_ want to
+   rename them in later rounds but not right now.
+
+ - In 0.99.7, all renamed commands will have symbolic links in
+   $(bindir) so that old names continue to work.  These backward
+   compatible symlinks will not be present in documentation,
+   though.  Especially, the main documentation, git(7) will talk
+   about the new names.  Old environment names defined in
+   gitenv() will also be removed in this release.
+
+   Tentatively we aim to do this on Sep 17th.
+
+ - In 0.99.8, we do not install these backward compatible
+   symbolic links in $(bindir) anymore.  The Makefile will have
+   a target to remove old symlinks from $(DESTDIR)$(bindir) you
+   can run manually to help you clean things up.
+
+   The timeframe for this is around Oct 1st, but I could be
+   talked into delaying the symlink removal if Porcelain people
+   find this schedule too tight.
 
 
 Documentation
