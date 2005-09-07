@@ -11,7 +11,9 @@
 #
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
-
+#
+# Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
+# Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
@@ -66,13 +68,20 @@ SCRIPTS=git git-merge-one-file-script git-prune-script \
 	git-format-patch-script git-sh-setup-script git-push-script \
 	git-branch-script git-parse-remote-script git-verify-tag-script \
 	git-ls-remote-script git-rename-script \
-	git-request-pull-script git-bisect-script
+	git-request-pull-script git-bisect-script \
+	git-applymbox git-applypatch
 
 SCRIPTS += git-count-objects-script
 SCRIPTS += git-revert-script
 SCRIPTS += git-octopus-script
 SCRIPTS += git-archimport-script
 
+# The ones that do not have to link with lcrypto nor lz.
+SIMPLE_PROGRAMS = \
+	git-get-tar-commit-id git-mailinfo git-mailsplit git-stripspace \
+	git-daemon git-var
+
+# ... and all the rest
 PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
 	git-checkout-cache git-diff-tree git-rev-tree git-ls-files \
@@ -80,12 +89,13 @@ PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
 	git-unpack-file git-export git-diff-cache git-convert-cache \
 	git-ssh-push git-ssh-pull git-rev-list git-mktag \
 	git-diff-helper git-tar-tree git-local-pull git-hash-object \
-	git-get-tar-commit-id git-apply git-stripspace \
+	git-apply \
 	git-diff-stages git-rev-parse git-patch-id git-pack-objects \
 	git-unpack-objects git-verify-pack git-receive-pack git-send-pack \
 	git-prune-packed git-fetch-pack git-upload-pack git-clone-pack \
-	git-show-index git-daemon git-var git-peek-remote git-show-branch \
-	git-update-server-info git-show-rev-cache git-build-rev-cache
+	git-show-index git-peek-remote git-show-branch \
+	git-update-server-info git-show-rev-cache git-build-rev-cache \
+	$(SIMPLE_PROGRAMS)
 
 ifdef WITH_SEND_EMAIL
 SCRIPTS += git-send-email-script
@@ -126,6 +136,11 @@ LIB_OBJS += server-info.o
 LIBS = $(LIB_FILE)
 LIBS += -lz
 
+ifeq ($(shell uname -s),Darwin)
+	NEEDS_SSL_WITH_CRYPTO = YesPlease
+	NEEDS_LIBICONV = YesPlease
+endif
+
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL=-lssl
@@ -133,6 +148,16 @@ else
 	DEFINES += '-DNO_OPENSSL'
 	MOZILLA_SHA1=1
 	OPENSSL_LIBSSL=
+endif
+ifdef NEEDS_SSL_WITH_CRYPTO
+	LIB_4_CRYPTO = -lcrypto -lssl
+else
+	LIB_4_CRYPTO = -lcrypto
+endif
+ifdef NEEDS_LIBICONV
+	LIB_4_ICONV = -liconv
+else
+	LIB_4_ICONV =
 endif
 ifdef MOZILLA_SHA1
 	SHA1_HEADER="mozilla-sha1/sha1.h"
@@ -143,11 +168,7 @@ else
 		LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
 	else
 		SHA1_HEADER=<openssl/sha.h>
-		ifeq ($(shell uname -s),Darwin)
-			LIBS += -lcrypto -lssl
-		else
-			LIBS += -lcrypto
-		endif
+		LIBS += $(LIB_4_CRYPTO)
 	endif
 endif
 
@@ -161,7 +182,6 @@ all: $(PROG)
 
 all:
 	$(MAKE) -C templates
-	$(MAKE) -C tools
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
@@ -170,6 +190,11 @@ all:
 
 git-%: %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
+
+git-mailinfo : SIMPLE_LIB += $(LIB_4_ICONV)
+$(SIMPLE_PROGRAMS) : $(LIB_FILE)
+$(SIMPLE_PROGRAMS) : git-% : %.o
+	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIB_FILE) $(SIMPLE_LIB)
 
 git-http-pull: pull.o
 git-local-pull: pull.o
@@ -218,7 +243,6 @@ install: $(PROG) $(SCRIPTS)
 	$(INSTALL) $(PROG) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(INSTALL) git-revert-script $(DESTDIR)$(bindir)/git-cherry-pick-script
 	$(MAKE) -C templates install
-	$(MAKE) -C tools install
 
 install-doc:
 	$(MAKE) -C Documentation install
@@ -258,7 +282,6 @@ clean:
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
 	rm -f git-tk_$(GIT_VERSION)-*.deb
-	$(MAKE) -C tools/ clean
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
