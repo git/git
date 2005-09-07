@@ -3,26 +3,33 @@ git-reset-script(1)
 
 NAME
 ----
-git-reset-script - Some git command not yet documented.
-
+git-reset-script - Reset current HEAD to the specified state.
 
 SYNOPSIS
 --------
-'git-reset-script' [ --option ] <args>...
+'git-reset-script' [--mixed | --soft | --hard] [<commit-ish>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Sets the current head to the specified commit and optionally resets the
+index and working tree to match.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+--mixed::
+	Like --soft but reports what has not been updated. This is the
+	default action.
 
-<args>...::
-	Some argument not yet documented.
+--soft::
+	Does not touch the index file nor the working tree at all, but
+	requires them in a good order.
 
+--hard::
+	Matches the working tree and index to that of the tree being
+	switched to.
+
+<commit-ish>::
+	Commit to make the current HEAD.
 
 Author
 ------
