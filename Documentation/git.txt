@@ -209,6 +209,9 @@ link:git-bisect-script.html[git-bisect-script]::
 link:git-branch-script.html[git-branch-script]::
 	Create and Show branches.
 
+link:git-checkout-script.html[git-checkout-script]::
+	Checkout and switch to a branch.
+
 link:git-cherry-pick-script.html[git-cherry-pick-script]::
 	Cherry-pick the effect of an existing commit.
 
@@ -244,6 +247,9 @@ link:git-rename-script.html[git-rename]::
 
 link:git-repack-script.html[git-repack-script]::
 	Pack unpacked objects in a repository.
+
+link:git-reset-script.html[git-reset-script]::
+	Reset current HEAD to the specified state.
 
 link:git-resolve-script.html[git-resolve-script]::
 	Merge two commits.
@@ -301,6 +307,9 @@ link:git-tag-script.html[git-tag-script]::
 
 Interrogators:
 
+link:git-build-rev-cache.html[git-build-rev-cache]::
+	Create or update a rev-cache file.
+
 link:git-cherry.html[git-cherry]::
 	Find commits not merged upstream.
 
@@ -337,26 +346,17 @@ link:git-rev-parse.html[git-rev-parse]::
 link:git-send-email-script.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
 
+link:git-show-rev-cache.html[git-show-rev-cache]::
+	Show the contents of a rev-cache file.
+
 Commands not yet documented
 ---------------------------
-
-link:git-build-rev-cache.html[git-build-rev-cache]::
-	git-build-rev-cache.
-
-link:git-checkout-script.html[git-checkout-script]::
-	git-checkout-script.
 
 link:git-diff-script.html[git-diff-script]::
 	git-diff-script.
 
 link:git-format-patch-script.html[git-format-patch-script]::
 	git-format-patch-script.
-
-link:git-reset-script.html[git-reset-script]::
-	git-reset-script.
-
-link:git-show-rev-cache.html[git-show-rev-cache]::
-	git-show-rev-cache.
 
 link:git-stripspace.html[git-stripspace]::
 	git-stripspace.
