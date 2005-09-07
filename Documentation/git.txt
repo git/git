@@ -274,6 +274,9 @@ Manipulators:
 link:git-applypatch.html[git-applypatch]::
 	Apply one patch extracted from an e-mail.
 
+link:git-archimport-script.html[git-archimport-script]::
+	Import an arch repository into git.
+
 link:git-convert-cache.html[git-convert-cache]::
 	Converts old-style GIT repository
 
@@ -304,8 +307,14 @@ link:git-cherry.html[git-cherry]::
 link:git-count-objects-script.html[git-count-objects-script]::
 	Count unpacked number of objects and their disk consumption.
 
+link:git-daemon.html[git-daemon]::
+	A really simple server for GIT repositories.
+
 link:git-diff-helper.html[git-diff-helper]::
 	Generates patch format output for git-diff-*
+
+link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
+	Extract commit ID from an archive created using git-tar-tree.
 
 link:git-mailinfo.html[git-mailinfo]::
 	Extracts patch from a single e-mail message.
@@ -316,11 +325,17 @@ link:git-mailsplit.html[git-mailsplit]::
 link:git-patch-id.html[git-patch-id]::
 	Compute unique ID for a patch.
 
+link:git-parse-remote-script.html[git-parse-remote-script]::
+	Routines to help parsing $GIT_DIR/remotes/
+
+link:git-request-pull-script.html[git-request-pull-script]::
+	git-request-pull-script.
+
+link:git-rev-parse.html[git-rev-parse]::
+	Pick out and massage parameters.
+
 link:git-send-email-script.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
-
-link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
-	Extract commit ID from an archive created using git-tar-tree.
 
 Commands not yet documented
 ---------------------------
@@ -331,23 +346,14 @@ link:git-build-rev-cache.html[git-build-rev-cache]::
 link:git-checkout-script.html[git-checkout-script]::
 	git-checkout-script.
 
-link:git-daemon.html[git-daemon]::
-	git-daemon.
-
 link:git-diff-script.html[git-diff-script]::
 	git-diff-script.
 
 link:git-format-patch-script.html[git-format-patch-script]::
 	git-format-patch-script.
 
-link:git-request-pull-script.html[git-request-pull-script]::
-	git-request-pull-script.
-
 link:git-reset-script.html[git-reset-script]::
 	git-reset-script.
-
-link:git-rev-parse.html[git-rev-parse]::
-	git-rev-parse.
 
 link:git-show-rev-cache.html[git-show-rev-cache]::
 	git-show-rev-cache.

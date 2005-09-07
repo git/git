@@ -3,7 +3,7 @@ git-rev-parse(1)
 
 NAME
 ----
-git-rev-parse - Some git command not yet documented.
+git-rev-parse - Pick out and massage parameters.
 
 
 SYNOPSIS
@@ -12,21 +12,74 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+
+Many git Porcelainish commands take mixture of flags
+(i.e. parameters that begin with a dash '-') and parameters
+meant for underlying `git-rev-list` command they use internally
+and flags and parameters for other commands they use as the
+downstream of `git-rev-list`.  This command is used to
+distinguish between them.
 
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+--revs-only::
+	Do not output flags and parameters not meant for
+	`git-rev-list` command.
+
+--no-revs::
+	Do not output flags and parameters meant for
+	`git-rev-list` command.
+
+--flags::
+	Do not output non-flag parameters.
+
+--no-flags::
+	Do not output flag parameters.
+
+--default <arg>::
+	If there is no parameter given by the user, use `<arg>`
+	instead.
+
+--verify::
+	The parameter given must be usable as a single, valid
+	object name.  Otherwise barf and abort.
+
+--sq::
+	Usually the output is made one line per flag and
+	parameter.  This option makes output a single line,
+	properly quoted for consumption by shell.  Useful when
+	you expect your parameter to contain whitespaces and
+	newlines (e.g. when using pickaxe `-S` with
+	`git-diff-\*`).
+
+--not::
+	When showing object names, prefix them with '^' and
+	strip '^' prefix from the object names that already have
+	one.
+
+--symbolic::
+	Usually the object names are output in SHA1 form (with
+	possible '^' prefix); this option makes them output in a
+	form as close to the original input as possible.
+
+
+--all::
+	Show all refs found in `$GIT_DIR/refs`.
+
+--show-prefix::
+	When the command is invoked from a directory show the
+	path of the current directory relative to the top-level
+	directory.
 
 <args>...::
-	Some argument not yet documented.
+	Flags and parameters to be parsed.
 
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
+Written by Linus Torvalds <torvalds@osdl.org> and
+Junio C Hamano <junkio@cox.net>
 
 Documentation
 --------------
