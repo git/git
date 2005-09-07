@@ -3,26 +3,25 @@ git-show-rev-cache(1)
 
 NAME
 ----
-git-show-rev-cache - Some git command not yet documented.
-
+git-show-rev-cache - Show the contents of a rev-cache file.
 
 SYNOPSIS
 --------
-'git-show-rev-cache' [ --option ] <args>...
+'git-show-rev-cache' <rev-cache-file>
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Show the contents of <rev-cache-file>.
 
+A rev-cache file describes the commit ancestry reachable from references
+supplied as input to get-build-rev-cache. This file is in an
+append-only binary format to make the server side friendly to rsync
+mirroring scheme.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
-
-<args>...::
-	Some argument not yet documented.
-
+<rev-cache-file>::
+	Rev-cache file to display.
 
 Author
 ------
