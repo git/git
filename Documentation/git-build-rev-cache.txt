@@ -3,26 +3,26 @@ git-build-rev-cache(1)
 
 NAME
 ----
-git-build-rev-cache - Some git command not yet documented.
-
+git-build-rev-cache - Create or update a rev-cache file.
 
 SYNOPSIS
 --------
-'git-build-rev-cache' [ --option ] <args>...
+'git-build-rev-cache' [-v] <rev-cache-file> < list-of-heads
 
 DESCRIPTION
 -----------
-Does something not yet documented.
-
+Creates or updates a file that describes the commit ancestry reachable
+from the list-of-head read from stdin. This file is in an append-only
+binary format to make the server side friendly to rsync mirroring
+scheme, and can be read by the git-show-rev-cache command.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+-v::
+	Verbose.
 
-<args>...::
-	Some argument not yet documented.
-
+<rev-cache-file>::
+	The rev-cache to operate on.
 
 Author
 ------
