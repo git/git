@@ -33,8 +33,8 @@ OPTIONS
 
 --merge-base::
 	Instead of showing the commit list, just act like the
-	'git-merge-base' command except that it can accept more
-	than two heads.
+	'git-merge-base -a' command, except that it can accept
+	more than two heads.
 
 
 OUTPUT

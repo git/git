@@ -4,7 +4,7 @@
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--all] [--heads] [--tags] [--more=count] [<refs>...]";
+"git-show-branch [--all] [--heads] [--tags] [--more=count] [--merge-base] [<refs>...]";
 
 #define UNINTERESTING	01
 
@@ -291,6 +291,7 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
+	int exit_status = 1;
 
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
@@ -298,10 +299,11 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 		if (!(flags & UNINTERESTING) &&
 		    ((flags & all_revs) == all_revs)) {
 			puts(sha1_to_hex(commit->object.sha1));
-			return 0;
+			exit_status = 0;
+			commit->object.flags |= UNINTERESTING;
 		}
 	}
-	return 1;
+	return exit_status;
 }
 
 int main(int ac, char **av)
