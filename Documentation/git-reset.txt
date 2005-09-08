@@ -1,0 +1,45 @@
+git-reset(1)
+============
+
+NAME
+----
+git-reset - Reset current HEAD to the specified state.
+
+SYNOPSIS
+--------
+'git-reset' [--mixed | --soft | --hard] [<commit-ish>]
+
+DESCRIPTION
+-----------
+Sets the current head to the specified commit and optionally resets the
+index and working tree to match.
+
+OPTIONS
+-------
+--mixed::
+	Like --soft but reports what has not been updated. This is the
+	default action.
+
+--soft::
+	Does not touch the index file nor the working tree at all, but
+	requires them in a good order.
+
+--hard::
+	Matches the working tree and index to that of the tree being
+	switched to.
+
+<commit-ish>::
+	Commit to make the current HEAD.
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net> and Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

@@ -1,0 +1,126 @@
+git-update-index(1)
+===================
+v0.1, May 2005
+
+NAME
+----
+git-update-index - Modifies the index or directory cache
+
+
+SYNOPSIS
+--------
+'git-update-index'
+	     [--add] [--remove] [--refresh] [--replace]
+	     [--ignore-missing]
+	     [--force-remove]
+	     [--cacheinfo <mode> <object> <file>]\*
+	     [--info-only]
+	     [--] [<file>]\*
+
+DESCRIPTION
+-----------
+Modifies the index or directory cache. Each file mentioned is updated
+into the cache and any 'unmerged' or 'needs updating' state is
+cleared.
+
+The way "git-update-index" handles files it is told about can be modified
+using the various options:
+
+OPTIONS
+-------
+--add::
+	If a specified file isn't in the cache already then it's
+	added.
+	Default behaviour is to ignore new files.
+
+--remove::
+	If a specified file is in the cache but is missing then it's
+	removed.
+	Default behaviour is to ignore removed file.
+
+--refresh::
+	Looks at the current cache and checks to see if merges or
+	updates are needed by checking stat() information.
+
+--ignore-missing::
+	Ignores missing files during a --refresh
+
+--cacheinfo <mode> <object> <path>::
+	Directly insert the specified info into the cache.
+	
+--info-only::
+	Do not create objects in the object database for all
+	<file> arguments that follow this flag; just insert
+	their object IDs into the cache.
+
+--force-remove::
+	Remove the file from the index even when the working directory
+	still has such a file. (Implies --remove.)
+
+--replace::
+	By default, when a file `path` exists in the index,
+	git-update-index refuses an attempt to add `path/file`.
+	Similarly if a file `path/file` exists, a file `path`
+	cannot be added.  With --replace flag, existing entries
+	that conflicts with the entry being added are
+	automatically removed with warning messages.
+
+--::
+	Do not interpret any more arguments as options.
+
+<file>::
+	Files to act on.
+	Note that files begining with '.' are discarded. This includes
+	`./file` and `dir/./file`. If you don't want this, then use	
+	cleaner names.
+	The same applies to directories ending '/' and paths with '//'
+
+Using --refresh
+---------------
+'--refresh' does not calculate a new sha1 file or bring the cache
+up-to-date for mode/content changes. But what it *does* do is to
+"re-match" the stat information of a file with the cache, so that you
+can refresh the cache for a file that hasn't been changed but where
+the stat entry is out of date.
+
+For example, you'd want to do this after doing a "git-read-tree", to link
+up the stat cache details with the proper files.
+
+Using --cacheinfo or --info-only
+--------------------------------
+'--cacheinfo' is used to register a file that is not in the
+current working directory.  This is useful for minimum-checkout
+merging.
+
+  To pretend you have a file with mode and sha1 at path, say:
+
+   $ git-update-index --cacheinfo mode sha1 path
+
+'--info-only' is used to register files without placing them in the object
+database.  This is useful for status-only repositories.
+
+Both '--cacheinfo' and '--info-only' behave similarly: the index is updated
+but the object database isn't.  '--cacheinfo' is useful when the object is
+in the database but the file isn't available locally.  '--info-only' is
+useful when the file is available, but you do not wish to update the
+object database.
+
+Examples
+--------
+To update and refresh only the files already checked out:
+
+   git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

@@ -37,8 +37,8 @@ test_expect_success \
 
 test_expect_success \
     'add files to repository' \
-    'find a -type f | xargs git-update-cache --add &&
-     find a -type l | xargs git-update-cache --add &&
+    'find a -type f | xargs git-update-index --add &&
+     find a -type l | xargs git-update-index --add &&
      treeid=`git-write-tree` &&
      echo $treeid >treeid &&
      TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \

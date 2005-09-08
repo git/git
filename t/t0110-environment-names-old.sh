@@ -54,8 +54,8 @@ test_expect_success \
 
 date >path0
 test_expect_success \
-    'using GIT_DIR in git-update-cache' \
-    'git-update-cache --add path0 && test -f .svn/index'
+    'using GIT_DIR in git-update-index' \
+    'git-update-index --add path0 && test -f .svn/index'
 
 sedScript='s|\(..\)|.svn/objects/\1/|'
 

@@ -76,7 +76,7 @@ Documentation by Junio C Hamano
 
 See-Also
 --------
-git-repack-script(1) git-prune-packed(1)
+git-repack(1) git-prune-packed(1)
 
 GIT
 ---

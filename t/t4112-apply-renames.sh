@@ -139,7 +139,7 @@ rename to include/arch/m32r/klibc/archsetjmp.h
 +#endif /* _KLIBC_ARCHSETJMP_H */
 EOF
 
-find include klibc -type f -print | xargs git-update-cache --add --
+find include klibc -type f -print | xargs git-update-index --add --
 
 test_expect_success 'check rename/copy patch' 'git-apply --check patch'
 

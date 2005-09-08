@@ -45,7 +45,7 @@ grep_stderr()
 }
 
 date >path0
-git-update-cache --add path0
+git-update-index --add path0
 save_tag tree git-write-tree
 on_committer_date "1971-08-16 00:00:00" hide_error save_tag root unique_commit root tree
 on_committer_date "1971-08-16 00:00:01" save_tag l0 unique_commit l0 tree -p root

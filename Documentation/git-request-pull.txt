@@ -1,0 +1,40 @@
+git-request-pull(1)
+===================
+
+NAME
+----
+git-request-pull - Generates a summary of pending changes.
+
+SYNOPSIS
+--------
+'git-request-pull' <start> <url> [<end>]
+
+DESCRIPTION
+-----------
+
+Summarizes the changes between two commits to the standard output, and includes
+the given URL in the generated summary.
+
+OPTIONS
+-------
+<start>::
+	Commit to start at.
+
+<url>::
+	URL to include in the summary.
+
+<end>::
+	Commit to send at; defaults to HEAD.
+
+Author
+------
+Written by Ryan Anderson <ryan@michonline.com> and Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

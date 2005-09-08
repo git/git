@@ -1,2 +1,0 @@
-#!/bin/sh
-git-update-cache --add -- "$@"

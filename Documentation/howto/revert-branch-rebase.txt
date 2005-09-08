@@ -182,10 +182,10 @@ And the final repository status looks like this:
 ------------------------------------------------
 $ git show-branch --more=1 master pu rc
 ! [master] Revert "Replace zero-length array decls with []."
- ! [pu] git-repack-script: Add option to repack all objects.
+ ! [pu] git-repack: Add option to repack all objects.
   * [rc] Merge refs/heads/master from .
 ---
- +  [pu] git-repack-script: Add option to repack all objects.
+ +  [pu] git-repack: Add option to repack all objects.
  +  [pu~1] More documentation updates.
  +  [pu~2] Show commits in topo order and name all commits.
  +  [pu~3] mailinfo and applymbox updates

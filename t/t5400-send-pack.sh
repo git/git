@@ -21,9 +21,9 @@ test_expect_success setup '
 	    parent=$commit || return 1
 	done &&
 	echo "$commit" >.git/HEAD &&
-	git clone -l ./. victim &&
+	git-clone.sh -l ./. victim &&
 	cd victim &&
-	git log &&
+	git-log.sh &&
 	cd .. &&
 	echo $zero >.git/HEAD &&
 	parent=$zero &&
@@ -35,7 +35,7 @@ test_expect_success setup '
 	done &&
 	echo "$commit" >.git/HEAD &&
 	echo Rebase &&
-	git log'
+	git-log.sh'
 
 test_expect_success \
         'pushing rewound head should not barf but require --force' ' 

@@ -1,0 +1,79 @@
+git-send-email(1)
+=================
+v0.1, July 2005
+
+NAME
+----
+git-send-email - Send a collection of patches as emails
+
+
+SYNOPSIS
+--------
+'git-send-email' [options] <file|directory> [... file|directory]
+
+
+
+DESCRIPTION
+-----------
+Takes the patches given on the command line and emails them out.
+
+The header of the email is configurable by command line options.  If not
+specified on the command line, the user will be prompted with a ReadLine
+enabled interface to provide the necessary information.
+
+The options available are:
+
+  --to
+	Specify the primary recipient of the emails generated.
+	Generally, this will be the upstream maintainer of the
+	project involved.
+
+   --from
+	Specify the sender of the emails.  This will default to
+	the value GIT_COMMITTER_IDENT, as returned by "git-var -l".
+	The user will still be prompted to confirm this entry.
+
+   --compose
+	Use \$EDITOR to edit an introductory message for the
+	patch series.
+
+   --subject
+   	Specify the initial subject of the email thread.
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
+
+   --in-reply-to
+	Specify the contents of the first In-Reply-To header.
+	Subsequent emails will refer to the previous email 
+	instead of this if --chain-reply-to is set (the default)
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
+
+   --chain-reply-to, --no-chain-reply-to
+	If this is set, each email will be sent as a reply to the previous
+	email sent.  If disabled with "--no-chain-reply-to", all emails after
+	the first will be sent as replies to the first email sent.  When using
+	this, it is recommended that the first file given be an overview of the
+	entire patch series.
+	Default is --chain-reply-to
+
+   --smtp-server
+	If set, specifies the outgoing SMTP server to use.  Defaults to
+	localhost.
+
+
+Author
+------
+Written by Ryan Anderson <ryan@michonline.com>
+
+git-send-email is originally based upon
+send_lots_of_email.pl by Greg Kroah-Hartman.
+
+Documentation
+--------------
+Documentation by Ryan Anderson
+
+GIT
+---
+Part of the link:git.html[git] suite
+

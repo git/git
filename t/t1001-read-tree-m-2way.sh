@@ -68,13 +68,13 @@ test_expect_success \
      cat bozbar-old >bozbar &&
      echo rezrov >rezrov &&
      echo yomin >yomin &&
-     git-update-cache --add nitfol bozbar rezrov &&
+     git-update-index --add nitfol bozbar rezrov &&
      treeH=`git-write-tree` &&
      echo treeH $treeH &&
      git-ls-tree $treeH &&
 
      cat bozbar-new >bozbar &&
-     git-update-cache --add frotz bozbar --force-remove rezrov &&
+     git-update-index --add frotz bozbar --force-remove rezrov &&
      git-ls-files --stage >M.out &&
      treeM=`git-write-tree` &&
      echo treeM $treeM &&
@@ -97,8 +97,8 @@ test_expect_success \
     '4 - carry forward local addition.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
-     git-update-cache --add yomin &&
+     git-checkout-index -u -f -q -a &&
+     git-update-index --add yomin &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >4.out || return 1
      diff -u M.out 4.out >4diff.out
@@ -109,9 +109,9 @@ test_expect_success \
     '5 - carry forward local addition.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo yomin >yomin &&
-     git-update-cache --add yomin &&
+     git-update-index --add yomin &&
      echo yomin yomin >yomin &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >5.out || return 1
@@ -123,8 +123,8 @@ test_expect_success \
     '6 - local addition already has the same.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
-     git-update-cache --add frotz &&
+     git-checkout-index -u -f -q -a &&
+     git-update-index --add frotz &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >6.out &&
      diff -u M.out 6.out &&
@@ -134,9 +134,9 @@ test_expect_success \
     '7 - local addition already has the same.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo frotz >frotz &&
-     git-update-cache --add frotz &&
+     git-update-index --add frotz &&
      echo frotz frotz >frotz &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >7.out &&
@@ -147,18 +147,18 @@ test_expect_success \
     '8 - conflicting addition.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo frotz frotz >frotz &&
-     git-update-cache --add frotz &&
+     git-update-index --add frotz &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
 test_expect_success \
     '9 - conflicting addition.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo frotz frotz >frotz &&
-     git-update-cache --add frotz &&
+     git-update-index --add frotz &&
      echo frotz >frotz &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
@@ -166,9 +166,9 @@ test_expect_success \
     '10 - path removed.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo rezrov >rezrov &&
-     git-update-cache --add rezrov &&
+     git-update-index --add rezrov &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >10.out &&
      diff -u M.out 10.out'
@@ -177,9 +177,9 @@ test_expect_success \
     '11 - dirty path removed.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo rezrov >rezrov &&
-     git-update-cache --add rezrov &&
+     git-update-index --add rezrov &&
      echo rezrov rezrov >rezrov &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
@@ -187,18 +187,18 @@ test_expect_success \
     '12 - unmatching local changes being removed.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo rezrov rezrov >rezrov &&
-     git-update-cache --add rezrov &&
+     git-update-index --add rezrov &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
 test_expect_success \
     '13 - unmatching local changes being removed.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo rezrov rezrov >rezrov &&
-     git-update-cache --add rezrov &&
+     git-update-index --add rezrov &&
      echo rezrov >rezrov &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
@@ -211,9 +211,9 @@ test_expect_success \
     '14 - unchanged in two heads.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo nitfol nitfol >nitfol &&
-     git-update-cache --add nitfol &&
+     git-update-index --add nitfol &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >14.out || return 1
      diff -u M.out 14.out >14diff.out
@@ -224,9 +224,9 @@ test_expect_success \
     '15 - unchanged in two heads.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo nitfol nitfol >nitfol &&
-     git-update-cache --add nitfol &&
+     git-update-index --add nitfol &&
      echo nitfol nitfol nitfol >nitfol &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >15.out || return 1
@@ -238,18 +238,18 @@ test_expect_success \
     '16 - conflicting local change.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo bozbar bozbar >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
 test_expect_success \
     '17 - conflicting local change.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      echo bozbar bozbar >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      echo bozbar bozbar bozbar >bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
@@ -257,9 +257,9 @@ test_expect_success \
     '18 - local change already having a good result.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      cat bozbar-new >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >18.out &&
      diff -u M.out 18.out &&
@@ -269,9 +269,9 @@ test_expect_success \
     '19 - local change already having a good result, further modified.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      cat bozbar-new >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      echo gnusto gnusto >bozbar &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >19.out &&
@@ -282,9 +282,9 @@ test_expect_success \
     '20 - no local change, use new tree.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      cat bozbar-old >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      read_tree_twoway $treeH $treeM &&
      git-ls-files --stage >20.out &&
      diff -u M.out 20.out &&
@@ -294,9 +294,9 @@ test_expect_success \
     '21 - no local change, dirty cache.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      cat bozbar-old >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      echo gnusto gnusto >bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
@@ -305,9 +305,9 @@ test_expect_success \
     '22 - local change cache updated.' \
     'rm -f .git/index &&
      git-read-tree $treeH &&
-     git-checkout-cache -u -f -q -a &&
+     git-checkout-index -u -f -q -a &&
      sed -e "s/such as/SUCH AS/" bozbar-old >bozbar &&
-     git-update-cache --add bozbar &&
+     git-update-index --add bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
 # Also make sure we did not break DF vs DF/DF case.
@@ -315,7 +315,7 @@ test_expect_success \
     'DF vs DF/DF case setup.' \
     'rm -f .git/index &&
      echo DF >DF &&
-     git-update-cache --add DF &&
+     git-update-index --add DF &&
      treeDF=`git-write-tree` &&
      echo treeDF $treeDF &&
      git-ls-tree $treeDF &&
@@ -323,7 +323,7 @@ test_expect_success \
      rm -f DF &&
      mkdir DF &&
      echo DF/DF >DF/DF &&
-     git-update-cache --add --remove DF DF/DF &&
+     git-update-index --add --remove DF DF/DF &&
      treeDFDF=`git-write-tree` &&
      echo treeDFDF $treeDFDF &&
      git-ls-tree $treeDFDF &&
@@ -334,7 +334,7 @@ test_expect_success \
     'rm -f .git/index &&
      rm -fr DF &&
      echo DF >DF &&
-     git-update-cache --add DF &&
+     git-update-index --add DF &&
      read_tree_twoway $treeDF $treeDFDF &&
      git-ls-files --stage >DFDFcheck.out &&
      diff -u DFDF.out DFDFcheck.out &&

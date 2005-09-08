@@ -32,7 +32,7 @@ This is my crappy "release-script":
         stable="$1"
         last="$2"
         new="$3"
-        echo "# git-tag-script v$new"
+        echo "# git-tag v$new"
         echo "git-tar-tree v$new linux-$new | gzip -9 > ../linux-$new.tar.gz"
         echo "git-diff-tree -p v$stable v$new | gzip -9 > ../patch-$new.gz"
         echo "git-rev-list --pretty v$new ^v$last > ../ChangeLog-$new"

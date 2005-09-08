@@ -18,7 +18,7 @@ Issues of note:
    Tough.  Either don't use the wrapper script, or delete the old GNU
    interactive tools.  None of the core git stuff needs the wrapper,
    it's just a convenient shorthand and while it is documented in some
-   places, you can always replace "git commit" with "git-commit-script"
+   places, you can always replace "git commit" with "git-commit"
    instead. 
 
    But let's face it, most of us don't have GNU interactive tools, and
@@ -41,8 +41,8 @@ Issues of note:
 	  can avoid the bignum support by excising git-rev-list support
 	  for "--merge-order" (by hand).
 
-	- "libcurl" and "curl" executable.  git-http-pull and
-	  git-fetch-script use them.  If you do not use http
+	- "libcurl" and "curl" executable.  git-http-fetch and
+	  git-fetch use them.  If you do not use http
 	  transfer, you are probabaly OK if you do not have
 	  them.
 

@@ -88,7 +88,7 @@ the name of the branch because it is obvious.
 $ git show-branch --more=4 master
 [master] Add 'git show-branch'.
 [~1] Add a new extended SHA1 syntax <name>~<num>
-[~2] Fix "git-diff-script A B"
+[~2] Fix "git-diff A B"
 [~3] git-ls-files: generalized pathspecs
 [~4] Make "git-ls-files" work in subdirectories
 ------------------------------------------------

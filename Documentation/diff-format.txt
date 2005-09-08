@@ -1,13 +1,13 @@
-The output format from "git-diff-cache", "git-diff-tree" and
+The output format from "git-diff-index", "git-diff-tree" and
 "git-diff-files" are very similar.
 
 These commands all compare two sets of things; what are
 compared are different:
 
-git-diff-cache <tree-ish>::
+git-diff-index <tree-ish>::
         compares the <tree-ish> and the files on the filesystem.
 
-git-diff-cache --cached <tree-ish>::
+git-diff-index --cached <tree-ish>::
         compares the <tree-ish> and the cache.
 
 git-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
@@ -58,7 +58,7 @@ Example:
 Generating patches with -p
 --------------------------
 
-When "git-diff-cache", "git-diff-tree", or "git-diff-files" are run
+When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
 with a '-p' option, they do not produce the output described above;
 instead they produce a patch file.
 
@@ -77,7 +77,7 @@ The "diff" formatting options can be customized via the
 environment variable 'GIT_DIFF_OPTS'.  For example, if you
 prefer context diff:
 
-      GIT_DIFF_OPTS=-c git-diff-cache -p $(cat .git/HEAD)
+      GIT_DIFF_OPTS=-c git-diff-index -p $(cat .git/HEAD)
 
 
 2. When the environment variable 'GIT_EXTERNAL_DIFF' is set, the

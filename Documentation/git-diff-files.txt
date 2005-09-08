@@ -16,7 +16,7 @@ DESCRIPTION
 Compares the files in the working tree and the cache.  When paths
 are specified, compares only those named paths.  Otherwise all
 entries in the cache are compared.  The output format is the
-same as "git-diff-cache" and "git-diff-tree".
+same as "git-diff-index" and "git-diff-tree".
 
 OPTIONS
 -------

@@ -16,7 +16,7 @@ DESCRIPTION
 -----------
 Reads the tree information given by <tree-ish> into the directory cache,
 but does not actually *update* any of the files it "caches". (see:
-git-checkout-cache)
+git-checkout-index)
 
 Optionally, it can merge a tree into the cache, perform a
 fast-forward (i.e. 2-way) merge, or a 3-way merge, with the -m
@@ -56,7 +56,7 @@ being read, the stat info from the cache is used. (In other words, the
 cache's stat()s take precedence over the merged tree's).
 
 That means that if you do a "git-read-tree -m <newtree>" followed by a
-"git-checkout-cache -f -u -a", the "git-checkout-cache" only checks out
+"git-checkout-index -f -u -a", the "git-checkout-index" only checks out
 the stuff that really changed.
 
 This is used to avoid unnecessary false hits when "git-diff-files" is
@@ -126,13 +126,13 @@ operating under the -u flag.
 
 When this form of git-read-tree returns successfully, you can
 see what "local changes" you made are carried forward by running
-"git-diff-cache --cached $M".  Note that this does not
-necessarily match "git-diff-cache --cached $H" would have
+"git-diff-index --cached $M".  Note that this does not
+necessarily match "git-diff-index --cached $H" would have
 produced before such a two tree merge.  This is because of cases
 18 and 19 --- if you already had the changes in $M (e.g. maybe
-you picked it up via e-mail in a patch form), "git-diff-cache
+you picked it up via e-mail in a patch form), "git-diff-index
 --cached $H" would have told you about the change before this
-merge, but it would not show in "git-diff-cache --cached $M"
+merge, but it would not show in "git-diff-index --cached $M"
 output after two-tree merge.
 
 
@@ -205,8 +205,8 @@ populated.  Here is an outline of how the algorithm works:
     matching "stage1" entry if it exists too.  .. all the normal
     trivial rules ..
 
-You would normally use "git-merge-cache" with supplied
-"git-merge-one-file-script" to do this last step.  The script
+You would normally use "git-merge-index" with supplied
+"git-merge-one-file" to do this last step.  The script
 does not touch the files in the work tree, and the entire merge
 happens in the index file.  In other words, there is no need to
 worry about what is in the working directory, since it is never
@@ -225,13 +225,13 @@ changes.  To illustrate, suppose you start from what has been
 commited last to your repository:
 
     $ JC=`cat .git/HEAD`
-    $ git-checkout-cache -f -u -a $JC
+    $ git-checkout-index -f -u -a $JC
 
-You do random edits, without running git-update-cache.  And then
+You do random edits, without running git-update-index.  And then
 you notice that the tip of your "upstream" tree has advanced
 since you pulled from him:
 
-    $ git-fetch-script rsync://.... linus
+    $ git-fetch rsync://.... linus
     $ LT=`cat .git/MERGE_HEAD`
 
 Your work tree is still based on your HEAD ($JC), but you have
@@ -240,7 +240,7 @@ added or modified cache entries since $JC, and if you haven't,
 then does the right thing.  So with the following sequence:
 
     $ git-read-tree -m -u `git-merge-base $JC $LT` $JC $LT
-    $ git-merge-cache git-merge-one-file-script -a
+    $ git-merge-index git-merge-one-file -a
     $ echo "Merge with Linus" | \
       git-commit-tree `git-write-tree` -p $JC -p $LT
 

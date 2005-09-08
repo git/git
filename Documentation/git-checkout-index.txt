@@ -1,0 +1,106 @@
+git-checkout-index(1)
+=====================
+v0.1, May 2005
+
+NAME
+----
+git-checkout-index - Copy files from the cache to the working directory
+
+
+SYNOPSIS
+--------
+'git-checkout-index' [-u] [-q] [-a] [-f] [-n] [--prefix=<string>]
+	           [--] <file>...
+
+DESCRIPTION
+-----------
+Will copy all files listed from the cache to the working directory
+(not overwriting existing files).
+
+OPTIONS
+-------
+-u::
+	update stat information for the checked out entries in
+	the cache file.
+
+-q::
+	be quiet if files exist or are not in the cache
+
+-f::
+	forces overwrite of existing files
+
+-a::
+	checks out all files in the cache (will then continue to
+	process listed files).
+
+-n::
+	Don't checkout new files, only refresh files already checked
+	out.
+
+--prefix=<string>::
+	When creating files, prepend <string> (usually a directory
+	including a trailing /)
+
+--::
+	Do not interpret any more arguments as options.
+
+Note that the order of the flags matters:
+
+     git-checkout-index -a -f file.c
+
+will first check out all files listed in the cache (but not overwrite
+any old ones), and then force-checkout `file.c` a second time (ie that
+one *will* overwrite any old contents with the same filename).
+
+Also, just doing "git-checkout-index" does nothing. You probably meant
+"git-checkout-index -a". And if you want to force it, you want
+"git-checkout-index -f -a".
+
+Intuitiveness is not the goal here. Repeatability is. The reason for
+the "no arguments means no work" thing is that from scripts you are
+supposed to be able to do things like:
+
+	find . -name '*.h' -print0 | xargs -0 git-checkout-index -f --
+
+which will force all existing `*.h` files to be replaced with their
+cached copies. If an empty command line implied "all", then this would
+force-refresh everything in the cache, which was not the point.
+
+To update and refresh only the files already checked out:
+
+        git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
+
+Oh, and the "--" is just a good idea when you know the rest will be
+filenames. Just so that you wouldn't have a filename of "-a" causing
+problems (not possible in the above example, but get used to it in
+scripting!).
+
+The prefix ability basically makes it trivial to use
+git-checkout-index as an "export as tree" function. Just read the
+desired tree into the index, and do a
+  
+        git-checkout-index --prefix=git-export-dir/ -a
+  
+and git-checkout-index will "export" the cache into the specified
+directory.
+  
+NOTE The final "/" is important. The exported name is literally just
+prefixed with the specified string, so you can also do something like
+
+    git-checkout-index --prefix=.merged- Makefile
+
+to check out the currently cached copy of `Makefile` into the file
+`.merged-Makefile`
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

@@ -1,0 +1,33 @@
+git-rename(1)
+=============
+v0.1, May 2005
+
+NAME
+----
+git-rename - Script used to rename a file, directory or symlink.
+
+
+SYNOPSIS
+--------
+'git-rename' <source> <destination>
+
+DESCRIPTION
+-----------
+This script is used to rename a file, directory or symlink.
+
+The index is updated after successful completion, but the change must still be
+committed.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+Rewritten by Ryan Anderson <ryan@michonline.com>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

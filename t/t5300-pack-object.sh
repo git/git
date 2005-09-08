@@ -16,9 +16,9 @@ test_expect_success \
      for i in a b c
      do
 	     dd if=/dev/zero bs=4k count=1 | tr "\\0" $i >$i &&
-	     git-update-cache --add $i || return 1
+	     git-update-index --add $i || return 1
      done &&
-     cat c >d && echo foo >>d && git-update-cache --add d &&
+     cat c >d && echo foo >>d && git-update-index --add d &&
      tree=`git-write-tree` &&
      commit=`git-commit-tree $tree </dev/null` && {
 	 echo $tree &&

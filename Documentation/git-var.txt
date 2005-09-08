@@ -44,7 +44,7 @@ Your sysadmin must hate you!::
 See Also
 --------
 link:git-commit-tree.html[git-commit-tree]
-link:git-tag-script.html[git-tag-script]
+link:git-tag.html[git-tag]
 
 Author
 ------

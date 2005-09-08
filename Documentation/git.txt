@@ -21,7 +21,7 @@ at the link:tutorial.html[tutorial] document.
 
 The <<Discussion>> section below contains much useful definition and
 clarification info - read that first.  And of the commands, I suggest
-reading link:git-update-cache.html[git-update-cache] and
+reading link:git-update-index.html[git-update-index] and
 link:git-read-tree.html[git-read-tree] first - I wish I had!
 
 If you are migrating from CVS, link:cvs-migration.html[cvs migration]
@@ -59,8 +59,9 @@ link:git-apply.html[git-apply]::
 	Reads a "diff -up1" or git generated patch file and
 	applies it to the working tree.
 
-link:git-checkout-cache.html[git-checkout-cache]::
+link:git-checkout-index.html[git-checkout-index]::
 	Copy files from the cache to the working directory
+	Previously this command was known as git-checkout-cache.
 
 link:git-commit-tree.html[git-commit-tree]::
 	Creates a new commit object
@@ -71,8 +72,9 @@ link:git-hash-object.html[git-hash-object]::
 link:git-init-db.html[git-init-db]::
 	Creates an empty git object database
 
-link:git-merge-cache.html[git-merge-cache]::
+link:git-merge-index.html[git-merge-index]::
 	Runs a merge for files needing merging
+	Previously this command was known as git-merge-cache.
 
 link:git-mktag.html[git-mktag]::
 	Creates a tag object
@@ -89,8 +91,9 @@ link:git-read-tree.html[git-read-tree]::
 link:git-unpack-objects.html[git-unpack-objects]::
 	Unpacks objects out of a packed archive.
 
-link:git-update-cache.html[git-update-cache]::
+link:git-update-index.html[git-update-index]::
 	Modifies the index or directory cache
+	Previously this command was known as git-update-cache.
 
 link:git-write-tree.html[git-write-tree]::
 	Creates a tree from the current cache
@@ -102,8 +105,9 @@ Interrogation commands
 link:git-cat-file.html[git-cat-file]::
 	Provide content or type information for repository objects
 
-link:git-diff-cache.html[git-diff-cache]::
+link:git-diff-index.html[git-diff-index]::
 	Compares content and mode of blobs between the cache and repository
+	Previously this command was known as git-diff-cache.
 
 link:git-diff-files.html[git-diff-files]::
 	Compares files in the working tree and the cache
@@ -117,8 +121,9 @@ link:git-diff-tree.html[git-diff-tree]::
 link:git-export.html[git-export]::
 	Exports each commit and a diff against each of its parents
 
-link:git-fsck-cache.html[git-fsck-cache]::
+link:git-fsck-objects.html[git-fsck-objects]::
 	Verifies the connectivity and validity of the objects in the database
+	Previously this command was known as git-fsck-cache.
 
 link:git-ls-files.html[git-ls-files]::
 	Information about files in the cache/working directory
@@ -164,11 +169,13 @@ link:git-clone-pack.html[git-clone-pack]::
 link:git-fetch-pack.html[git-fetch-pack]::
 	Updates from a remote repository.
 
-link:git-http-pull.html[git-http-pull]::
+link:git-http-fetch.html[git-http-fetch]::
 	Downloads a remote GIT repository via HTTP
+	Previously this command was known as git-http-pull.
 
-link:git-local-pull.html[git-local-pull]::
+link:git-local-fetch.html[git-local-fetch]::
 	Duplicates another GIT repository on a local system
+	Previously this command was known as git-local-pull.
 
 link:git-peek-remote.html[git-peek-remote]::
 	Lists references on a remote repository using upload-pack protocol.
@@ -179,11 +186,13 @@ link:git-receive-pack.html[git-receive-pack]::
 link:git-send-pack.html[git-send-pack]::
 	Pushes to a remote repository, intelligently.
 
-link:git-ssh-pull.html[git-ssh-pull]::
+link:git-ssh-fetch.html[git-ssh-fetch]::
 	Pulls from a remote repository over ssh connection
+	Previously this command was known as git-ssh-pull.
 
-link:git-ssh-push.html[git-ssh-push]::
-	Helper "server-side" program used by git-ssh-pull
+link:git-ssh-upload.html[git-ssh-upload]::
+	Helper "server-side" program used by git-ssh-fetch
+	Previously this command was known as git-ssh-push.
 
 link:git-update-server-info.html[git-update-server-info]::
 	Updates auxiliary information on a dumb server to help
@@ -197,65 +206,84 @@ link:git-upload-pack.html[git-upload-pack]::
 Porcelain-ish Commands
 ----------------------
 
-link:git-add-script.html[git-add-script]::
+link:git-add.html[git-add]::
 	Add paths to the index file.
+	Previously this command was known as git-add-script.
 
 link:git-applymbox.html[git-applymbox]::
 	Apply patches from a mailbox.
 
-link:git-bisect-script.html[git-bisect-script]::
+link:git-bisect.html[git-bisect]::
 	Find the change that introduced a bug.
+	Previously this command was known as git-bisect-script.
 
-link:git-branch-script.html[git-branch-script]::
+link:git-branch.html[git-branch]::
 	Create and Show branches.
+	Previously this command was known as git-branch-script.
 
-link:git-checkout-script.html[git-checkout-script]::
+link:git-checkout.html[git-checkout]::
 	Checkout and switch to a branch.
+	Previously this command was known as git-checkout-script.
 
-link:git-cherry-pick-script.html[git-cherry-pick-script]::
+link:git-cherry-pick.html[git-cherry-pick]::
 	Cherry-pick the effect of an existing commit.
+	Previously this command was known as git-cherry-pick-script.
 
-link:git-clone-script.html[git-clone-script]::
+link:git-clone.html[git-clone]::
 	Clones a repository into a new directory.
+	Previously this command was known as git-clone-script.
 
-link:git-commit-script.html[git-commit-script]::
+link:git-commit.html[git-commit]::
 	Record changes to the repository.
+	Previously this command was known as git-commit-script.
 
-link:git-fetch-script.html[git-fetch-script]::
+link:git-fetch.html[git-fetch]::
 	Download from a remote repository via various protocols.
+	Previously this command was known as git-fetch-script.
 
-link:git-log-script.html[git-log-script]::
+link:git-log.html[git-log]::
 	Shows commit logs.
+	Previously this command was known as git-log-script.
 
-link:git-ls-remote-script.html[git-ls-remote-script]::
+link:git-ls-remote.html[git-ls-remote]::
 	Shows references in a remote or local repository.
+	Previously this command was known as git-ls-remote-script.
 
-link:git-octopus-script.html[git-octopus-script]::
+link:git-octopus.html[git-octopus]::
 	Merge more than two commits.
+	Previously this command was known as git-octopus-script.
 
-link:git-pull-script.html[git-pull-script]::
+link:git-pull.html[git-pull]::
 	Fetch from and merge with a remote repository.
+	Previously this command was known as git-pull-script.
 
-link:git-push-script.html[git-push-script]::
+link:git-push.html[git-push]::
 	Update remote refs along with associated objects.
+	Previously this command was known as git-push-script.
 
-link:git-rebase-script.html[git-rebase-script]::
+link:git-rebase.html[git-rebase]::
 	Rebase local commits to new upstream head.
+	Previously this command was known as git-rebase-script.
 
-link:git-rename-script.html[git-rename]::
+link:git-rename.html[git-rename]::
 	Rename files and directories.
+	Previously this command was known as git-rename-script.
 
-link:git-repack-script.html[git-repack-script]::
+link:git-repack.html[git-repack]::
 	Pack unpacked objects in a repository.
+	Previously this command was known as git-repack-script.
 
-link:git-reset-script.html[git-reset-script]::
+link:git-reset.html[git-reset]::
 	Reset current HEAD to the specified state.
+	Previously this command was known as git-reset-script.
 
-link:git-resolve-script.html[git-resolve-script]::
+link:git-resolve.html[git-resolve]::
 	Merge two commits.
+	Previously this command was known as git-resolve-script.
 
-link:git-revert-script.html[git-revert-script]::
+link:git-revert.html[git-revert]::
 	Revert an existing commit.
+	Previously this command was known as git-revert-script.
 
 link:git-shortlog.html[git-shortlog]::
 	Summarizes 'git log' output.
@@ -263,11 +291,13 @@ link:git-shortlog.html[git-shortlog]::
 link:git-show-branch.html[git-show-branch]::
 	Show branches and their commits.
 
-link:git-status-script.html[git-status-script]::
+link:git-status.html[git-status]::
 	Shows the working tree status.
+	Previously this command was known as git-status-script.
 
-link:git-verify-tag-script.html[git-verify-tag-script]::
+link:git-verify-tag.html[git-verify-tag]::
 	Check the GPG signature of tag.
+	Previously this command was known as git-verify-tag-script.
 
 link:git-whatchanged.html[git-whatchanged]::
 	Shows commit logs and differences they introduce.
@@ -280,29 +310,37 @@ Manipulators:
 link:git-applypatch.html[git-applypatch]::
 	Apply one patch extracted from an e-mail.
 
-link:git-archimport-script.html[git-archimport-script]::
+link:git-archimport.html[git-archimport]::
 	Import an arch repository into git.
+	Previously this command was known as git-archimport-script.
 
-link:git-convert-cache.html[git-convert-cache]::
+link:git-convert-objects.html[git-convert-objects]::
 	Converts old-style GIT repository
+	Previously this command was known as git-convert-cache.
 
-link:git-cvsimport-script.html[git-cvsimport-script]::
+link:git-cvsimport.html[git-cvsimport]::
 	Salvage your data out of another SCM people love to hate.
+	Previously this command was known as git-cvsimport-script.
 
-link:git-merge-one-file-script.html[git-merge-one-file-script]::
-	The standard helper program to use with "git-merge-cache"
+link:git-merge-one-file.html[git-merge-one-file]::
+	The standard helper program to use with "git-merge-index"
+	Previously this command was known as git-merge-one-file-script.
 
-link:git-prune-script.html[git-prune-script]::
+link:git-prune.html[git-prune]::
 	Prunes all unreachable objects from the object database
+	Previously this command was known as git-prune-script.
 
-link:git-relink-script.html[git-relink-script]::
+link:git-relink.html[git-relink]::
 	Hardlink common objects in local repositories.
+	Previously this command was known as git-relink-script.
 
-link:git-sh-setup-script.html[git-sh-setup-script]::
+link:git-sh-setup.html[git-sh-setup]::
 	Common git shell script setup code.
+	Previously this command was known as git-sh-setup-script.
 
-link:git-tag-script.html[git-tag-script]::
+link:git-tag.html[git-tag]::
 	An example script to create a tag object signed with GPG
+	Previously this command was known as git-tag-script.
 
 
 Interrogators:
@@ -313,8 +351,9 @@ link:git-build-rev-cache.html[git-build-rev-cache]::
 link:git-cherry.html[git-cherry]::
 	Find commits not merged upstream.
 
-link:git-count-objects-script.html[git-count-objects-script]::
+link:git-count-objects.html[git-count-objects]::
 	Count unpacked number of objects and their disk consumption.
+	Previously this command was known as git-count-objects-script.
 
 link:git-daemon.html[git-daemon]::
 	A really simple server for GIT repositories.
@@ -334,17 +373,20 @@ link:git-mailsplit.html[git-mailsplit]::
 link:git-patch-id.html[git-patch-id]::
 	Compute unique ID for a patch.
 
-link:git-parse-remote-script.html[git-parse-remote-script]::
+link:git-parse-remote.html[git-parse-remote]::
 	Routines to help parsing $GIT_DIR/remotes/
+	Previously this command was known as git-parse-remote-script.
 
-link:git-request-pull-script.html[git-request-pull-script]::
-	git-request-pull-script.
+link:git-request-pull.html[git-request-pull]::
+	git-request-pull.
+	Previously this command was known as git-request-pull-script.
 
 link:git-rev-parse.html[git-rev-parse]::
 	Pick out and massage parameters.
 
-link:git-send-email-script.html[git-send-email]::
+link:git-send-email.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
+	Previously this command was known as git-send-email-script.
 
 link:git-show-rev-cache.html[git-show-rev-cache]::
 	Show the contents of a rev-cache file.
@@ -352,11 +394,13 @@ link:git-show-rev-cache.html[git-show-rev-cache]::
 Commands not yet documented
 ---------------------------
 
-link:git-diff-script.html[git-diff-script]::
-	git-diff-script.
+link:git-diff.html[git-diff]::
+	git-diff.
+	Previously this command was known as git-diff-script.
 
-link:git-format-patch-script.html[git-format-patch-script]::
-	git-format-patch-script.
+link:git-format-patch.html[git-format-patch]::
+	git-format-patch.
+	Previously this command was known as git-format-patch-script.
 
 link:git-stripspace.html[git-stripspace]::
 	git-stripspace.
@@ -473,7 +517,7 @@ git Diffs
 'GIT_DIFF_OPTS'::
 'GIT_EXTERNAL_DIFF'::
 	see the "generating patches" section in :
-	link:git-diff-cache.html[git-diff-cache];
+	link:git-diff-index.html[git-diff-index];
 	link:git-diff-files.html[git-diff-files];
 	link:git-diff-tree.html[git-diff-tree]
 

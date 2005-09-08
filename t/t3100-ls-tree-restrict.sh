@@ -27,7 +27,7 @@ test_expect_success \
      ln -s ../path1 path2/bazbo &&
      echo Mi >path2/baz/b &&
      find path? \( -type f -o -type l \) -print |
-     xargs git-update-cache --add &&
+     xargs git-update-index --add &&
      tree=`git-write-tree` &&
      echo $tree'
 

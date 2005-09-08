@@ -1,0 +1,33 @@
+git-add(1)
+==========
+
+NAME
+----
+git-add - Add files to the cache.
+
+SYNOPSIS
+--------
+'git-add' <file>...
+
+DESCRIPTION
+-----------
+A simple wrapper to git-update-index to add files to the cache for people used
+to do "cvs add".
+
+OPTIONS
+-------
+<file>...::
+	Files to add to the cache.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

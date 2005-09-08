@@ -126,7 +126,7 @@ actually check in your hard work, you will have to go through two steps:
  - commit that index file as an object.
 
 The first step is trivial: when you want to tell git about any changes
-to your working tree, you use the `git-update-cache` program. That
+to your working tree, you use the `git-update-index` program. That
 program normally just takes a list of filenames you want to update, but
 to avoid trivial mistakes, it refuses to add new entries to the cache
 (or remove existing ones) unless you explicitly tell it that you're
@@ -136,7 +136,7 @@ adding a new entry with the `\--add` flag (or removing an entry with the
 So to populate the index with the two files you just created, you can do
 
 ------------------------------------------------
-git-update-cache --add hello example
+git-update-index --add hello example
 ------------------------------------------------
 
 and you have now told git to track those two files.
@@ -183,7 +183,7 @@ hexadecimal digits in most places.
 Anyway, as we mentioned previously, you normally never actually take a
 look at the objects themselves, and typing long 40-character hex
 names is not something you'd normally want to do. The above digression
-was just to show that `git-update-cache` did something magical, and
+was just to show that `git-update-index` did something magical, and
 actually saved away the contents of your files into the git object
 database.
 
@@ -318,7 +318,7 @@ instead, and it would have done the above magic scripting for you.
 Making a change
 ---------------
 
-Remember how we did the `git-update-cache` on file `hello` and then we
+Remember how we did the `git-update-index` on file `hello` and then we
 changed `hello` afterward, and could compare the new state of `hello` with the
 state we saved in the index file? 
 
@@ -333,18 +333,18 @@ As before, if we do `git-diff-files -p` in our git-tutorial project,
 we'll still see the same difference we saw last time: the index file
 hasn't changed by the act of committing anything. However, now that we
 have committed something, we can also learn to use a new command:
-`git-diff-cache`.
+`git-diff-index`.
 
 Unlike `git-diff-files`, which showed the difference between the index
-file and the working tree, `git-diff-cache` shows the differences
+file and the working tree, `git-diff-index` shows the differences
 between a committed *tree* and either the index file or the working
-tree. In other words, `git-diff-cache` wants a tree to be diffed
+tree. In other words, `git-diff-index` wants a tree to be diffed
 against, and before we did the commit, we couldn't do that, because we
 didn't have anything to diff against. 
 
 But now we can do
 
-	git-diff-cache -p HEAD
+	git-diff-index -p HEAD
 
 (where `-p` has the same meaning as it did in `git-diff-files`), and it
 will show us the same difference, but for a totally different reason. 
@@ -359,16 +359,16 @@ it with
 
 which ends up doing the above for you.
 
-In other words, `git-diff-cache` normally compares a tree against the
+In other words, `git-diff-index` normally compares a tree against the
 working tree, but when given the `\--cached` flag, it is told to
 instead compare against just the index cache contents, and ignore the
 current working tree state entirely. Since we just wrote the index
-file to HEAD, doing `git-diff-cache \--cached -p HEAD` should thus return
+file to HEAD, doing `git-diff-index \--cached -p HEAD` should thus return
 an empty set of differences, and that's exactly what it does. 
 
 [NOTE]
 ================
-`git-diff-cache` really always uses the index for its
+`git-diff-index` really always uses the index for its
 comparisons, and saying that it compares a tree against the working
 tree is thus not strictly accurate. In particular, the list of
 files to compare (the "meta-data") *always* comes from the index file,
@@ -391,7 +391,7 @@ work through the index file, so the first thing we need to do is to
 update the index cache:
 
 ------------------------------------------------
-git-update-cache hello
+git-update-index hello
 ------------------------------------------------
 
 (note how we didn't need the `\--add` flag this time, since git knew
@@ -399,9 +399,9 @@ about the file already).
 
 Note what happens to the different `git-diff-\*` versions here. After
 we've updated `hello` in the index, `git-diff-files -p` now shows no
-differences, but `git-diff-cache -p HEAD` still *does* show that the
+differences, but `git-diff-index -p HEAD` still *does* show that the
 current state is different from the state we committed. In fact, now
-`git-diff-cache` shows the same difference whether we use the `--cached`
+`git-diff-index` shows the same difference whether we use the `--cached`
 flag or not, since now the index is coherent with the working tree.
 
 Now, since we've updated `hello` in the index, we can commit the new
@@ -429,7 +429,7 @@ You've now made your first real git commit. And if you're interested in
 looking at what `git commit` really does, feel free to investigate:
 it's a few very simple shell scripts to generate the helpful (?) commit
 message headers, and a few one-liners that actually do the
-commit itself (`git-commit-script`).
+commit itself (`git-commit`).
 
 
 Checking it out
@@ -490,11 +490,11 @@ can explore on your own.
 Most likely, you are not directly using the core
 git Plumbing commands, but using Porcelain like Cogito on top
 of it. Cogito works a bit differently and you usually do not
-have to run `git-update-cache` yourself for changed files (you
+have to run `git-update-index` yourself for changed files (you
 do tell underlying git about additions and removals via
 `cg-add` and `cg-rm` commands). Just before you make a commit
 with `cg-commit`, Cogito figures out which files you modified,
-and runs `git-update-cache` on them for you.
+and runs `git-update-index` on them for you.
 
 
 Tagging a version
@@ -579,7 +579,7 @@ file (which caches various information, notably some of the "stat"
 information for the files involved) will likely need to be refreshed.
 So after you do a `cp -a` to create a new copy, you'll want to do
 
-	git-update-cache --refresh
+	git-update-index --refresh
 +
 in the new repository to make sure that the index file is up-to-date.
 
@@ -591,16 +591,16 @@ When copying a remote repository, you'll want to at a minimum update the
 index cache when you do this, and especially with other peoples'
 repositories you often want to make sure that the index cache is in some
 known state (you don't know *what* they've done and not yet checked in),
-so usually you'll precede the `git-update-cache` with a
+so usually you'll precede the `git-update-index` with a
 
 	git-read-tree --reset HEAD
-	git-update-cache --refresh
+	git-update-index --refresh
 
 which will force a total index re-build from the tree pointed to by `HEAD`.
-It resets the index contents to `HEAD`, and then the `git-update-cache`
+It resets the index contents to `HEAD`, and then the `git-update-index`
 makes sure to match up all index entries with the checked-out files.
 If the original repository had uncommitted changes in its
-working tree, `git-update-cache --refresh` notices them and
+working tree, `git-update-index --refresh` notices them and
 tells you they need to be updated.
 
 The above can also be written as simply
@@ -610,7 +610,7 @@ The above can also be written as simply
 and in fact a lot of the common git command combinations can be scripted
 with the `git xyz` interfaces, and you can learn things by just looking
 at what the `git-*-script` scripts do (`git reset` is the above two lines
-implemented in `git-reset-script`, but some things like `git status` and
+implemented in `git-reset`, but some things like `git status` and
 `git commit` are slightly more complex scripts around the basic git
 commands). 
 
@@ -638,13 +638,13 @@ you have all the git internal files, but you will notice that you don't
 actually have any of the working tree files to work on. To get
 those, you'd check them out with
 
-	git-checkout-cache -u -a
+	git-checkout-index -u -a
 
 where the `-u` flag means that you want the checkout to keep the index
 up-to-date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
-flag first, to tell git-checkout-cache to *force* overwriting of any old
+flag first, to tell git-checkout-index to *force* overwriting of any old
 files). 
 
 Again, this can all be simplified with
@@ -742,7 +742,7 @@ git commit -m 'Some work.' hello
 ------------------------------------------------
 
 Here, we just added another line to `hello`, and we used a shorthand for
-both going a `git-update-cache hello` and `git commit` by just giving the
+both going a `git-update-index hello` and `git commit` by just giving the
 filename directly to `git commit`. The `-m` flag is to give the
 commit log message from the command line.
 
@@ -971,7 +971,7 @@ transports', because they do not require any GIT aware smart
 server like GIT Native transport does.  Any stock HTTP server
 would suffice.
 +
-There are (confusingly enough) `git-ssh-pull` and `git-ssh-push`
+There are (confusingly enough) `git-ssh-fetch` and `git-ssh-upload`
 programs, which are 'commit walkers'; they outlived their
 usefulness when GIT Native and SSH transports were introduced,
 and not used by `git pull` or `git push` scripts.

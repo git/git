@@ -1,0 +1,39 @@
+git-branch(1)
+=============
+
+NAME
+----
+git-branch - Create a new branch.
+
+SYNOPSIS
+--------
+'git-branch' [<branchname> [start-point]]
+
+DESCRIPTION
+-----------
+If no argument is provided, show available branches and mark current
+branch with star. Otherwise, create a new branch of name <branchname>.
+
+If a starting point is also specified, that will be where the branch is
+created, otherwise it will be created at the current HEAD.
+
+OPTIONS
+-------
+<branchname>::
+	The name of the branch to create.
+
+start-point::
+	Where to make the branch; defaults to HEAD.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

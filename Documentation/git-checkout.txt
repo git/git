@@ -1,0 +1,43 @@
+git-checkout(1)
+===============
+
+NAME
+----
+git-checkout - Checkout and switch to a branch.
+
+SYNOPSIS
+--------
+'git-checkout' [-f] [-b <new_branch>] [<branch>]
+
+DESCRIPTION
+-----------
+Updates the index and working tree to reflect the specified branch,
+<branch>. Updates HEAD to be <branch> or, if specified, <new_branch>.
+
+OPTIONS
+-------
+-f::
+	Force an re-read of everything.
+
+-b::
+	Create a new branch and start it at <branch>.
+
+<new_branch>::
+	Name for the new branch.
+
+<branch>::
+	Branch to checkout; may be any object ID that resolves to a
+	commit. Defaults to HEAD.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

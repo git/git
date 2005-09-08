@@ -27,7 +27,7 @@ Line 15
 
 test_expect_success \
     'update-cache --add a file.' \
-    'git-update-cache --add path0'
+    'git-update-index --add path0'
 
 test_expect_success \
     'write that tree.' \
@@ -37,11 +37,11 @@ sed -e 's/line/Line/' <path0 >path1
 rm -f path0
 test_expect_success \
     'renamed and edited the file.' \
-    'git-update-cache --add --remove path0 path1'
+    'git-update-index --add --remove path0 path1'
 
 test_expect_success \
-    'git-diff-cache -p -M after rename and editing.' \
-    'git-diff-cache -p -M $tree >current'
+    'git-diff-index -p -M after rename and editing.' \
+    'git-diff-index -p -M $tree >current'
 cat >expected <<\EOF
 diff --git a/path0 b/path1
 rename from path0

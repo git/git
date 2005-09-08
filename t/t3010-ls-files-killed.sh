@@ -33,8 +33,8 @@ mkdir path2 path3
 date >path2/file2
 date >path3/file3
 test_expect_success \
-    'git-update-cache --add to add various paths.' \
-    "git-update-cache --add -- path0 path1 path?/file?"
+    'git-update-index --add to add various paths.' \
+    "git-update-index --add -- path0 path1 path?/file?"
 
 rm -fr path?
 date >path2

@@ -1,0 +1,109 @@
+git-cvsimport(1)
+================
+v0.1, July 2005
+
+NAME
+----
+git-cvsimport - Import a CVS repository into git
+
+
+SYNOPSIS
+--------
+'git-cvsimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
+			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
+			[ -C <GIT_repository> ] [ -i ] [ -k ]
+			[ -s <subst> ] [ -m ] [ -M regex ] [ <CVS_module> ]
+
+
+DESCRIPTION
+-----------
+Imports a CVS repository into git. It will either create a new
+repository, or incrementally import into an existing one.
+
+Splitting the CVS log into patch sets is done by 'cvsps'.
+At least version 2.1 is required.
+
+OPTIONS
+-------
+-d <CVSROOT>::
+	The root of the CVS archive. May be local (a simple path) or remote;
+	currently, only the :local:, :ext: and :pserver: access methods 
+	are supported.
+
+-C <target-dir>::
+        The GIT repository to import to.  If the directory doesn't
+        exist, it will be created.  Default is the current directory.
+
+-i::
+	Import-only: don't perform a checkout after importing.  This option
+	ensures the working directory and cache remain untouched and will
+	not create them if they do not exist.
+
+-k::
+	Kill keywords: will extract files with -kk from the CVS archive
+	to avoid noisy changesets. Highly recommended, but off by default
+	to preserve compatibility with early imported trees. 
+
+-u::
+	Convert underscores in tag and branch names to dots.
+
+-o <branch-for-HEAD>::
+	The 'HEAD' branch from CVS is imported to the 'origin' branch within
+	the git repository, as 'HEAD' already has a special meaning for git.
+	Use this option if you want to import into a different branch.
+
+	Use '-o master' for continuing an import that was initially done by
+	the old cvs2git tool.
+
+-p <options-for-cvsps>::
+	Additional options for cvsps.
+	The options '-u' and '-A' are implicit and should not be used here.
+
+	If you need to pass multiple options, separate them with a comma.
+
+-m::    
+	Attempt to detect merges based on the commit message. This option
+	will enable default regexes that try to capture the name source 
+	branch name from the commit message. 
+
+-M <regex>::
+	Attempt to detect merges based on the commit message with a custom
+	regex. It can be used with -m to also see the default regexes. 
+	You must escape forward slashes. 
+
+-v::
+	Verbosity: let 'cvsimport' report what it is doing.
+
+<CVS_module>::
+	The CVS module you want to import. Relative to <CVSROOT>.
+
+-h::
+	Print a short usage message and exit.
+
+-z <fuzz>::
+        Pass the timestamp fuzz factor to cvsps.
+
+-s <subst>::
+	Substitute the character "/" in branch names with <subst>
+
+OUTPUT
+------
+If '-v' is specified, the script reports what it is doing.
+
+Otherwise, success is indicated the Unix way, i.e. by simply exiting with
+a zero exit status.
+
+
+Author
+------
+Written by Matthias Urlichs <smurf@smurf.noris.de>, with help from
+various participants of the git-list <git@vger.kernel.org>.
+
+Documentation
+--------------
+Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

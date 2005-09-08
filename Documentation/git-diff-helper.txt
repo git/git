@@ -13,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads output from "git-diff-cache", "git-diff-tree" and "git-diff-files" and
+Reads output from "git-diff-index", "git-diff-tree" and "git-diff-files" and
 generates patch format output.
 
 OPTIONS
@@ -35,7 +35,7 @@ OPTIONS
 
 See Also
 --------
-The section on generating patches in link:git-diff-cache.html[git-diff-cache]
+The section on generating patches in link:git-diff-index.html[git-diff-index]
 
 
 Author

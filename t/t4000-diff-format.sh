@@ -16,7 +16,7 @@ chmod +x path1
 
 test_expect_success \
     'update-cache --add two files with and without +x.' \
-    'git-update-cache --add path0 path1'
+    'git-update-index --add path0 path1'
 
 mv path0 path0-
 sed -e 's/line/Line/' <path0- >path0

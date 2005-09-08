@@ -34,7 +34,7 @@ export_them () {
 }
 
 date >path0
-git-update-cache --add path0
+git-update-index --add path0
 tree=$(git-write-tree)
 
 AUTHOR_DATE='Wed May 11 23:55:18 2005'

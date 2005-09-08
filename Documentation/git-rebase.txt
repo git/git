@@ -1,0 +1,35 @@
+git-rebase(1)
+=============
+
+NAME
+----
+git-rebase - Rebase local commits to new upstream head.
+
+SYNOPSIS
+--------
+'git-rebase' <upstream> [<head>]
+
+DESCRIPTION
+-----------
+Rebases local commits to the new head of the upstream tree.
+
+OPTIONS
+-------
+<upstream>::
+	Upstream branch to compare against.
+
+<head>::
+	Working branch; defaults to HEAD.
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

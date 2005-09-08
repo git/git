@@ -93,7 +93,7 @@ so it can be used to name subdirectories.
 An example of normal usage is:
 
   torvalds@ppc970:~/git> git-diff-tree 5319e4......
-  *100664->100664 blob    ac348b.......->a01513.......      git-fsck-cache.c
+  *100664->100664 blob    ac348b.......->a01513.......      git-fsck-objects.c
 
 which tells you that the last commit changed just one file (it's from
 this one:
@@ -104,7 +104,7 @@ this one:
   author Linus Torvalds <torvalds@ppc970.osdl.org> Sat Apr 9 12:02:30 2005
   committer Linus Torvalds <torvalds@ppc970.osdl.org> Sat Apr 9 12:02:30 2005
 
-  Make "git-fsck-cache" print out all the root commits it finds.
+  Make "git-fsck-objects" print out all the root commits it finds.
 
   Once I do the reference tracking, I'll also make it print out all the
   HEAD commits it finds, which is even more interesting.

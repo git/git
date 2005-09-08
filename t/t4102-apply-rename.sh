@@ -26,7 +26,7 @@ echo 'This is foo' >foo
 chmod +x foo
 
 test_expect_success setup \
-    'git-update-cache --add foo'
+    'git-update-index --add foo'
 
 test_expect_success apply \
     'git-apply --index --stat --summary --apply test-patch'

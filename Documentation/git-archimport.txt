@@ -1,0 +1,42 @@
+git-archimport(1)
+=================
+
+NAME
+----
+git-archimport - Import an arch repository into git
+
+
+SYNOPSIS
+--------
+`git-archimport` [--option...] <args>
+
+DESCRIPTION
+-----------
+The script expects you to provide the key roots where it can start the
+import from an 'initial import' or 'tag' type of Arch commit. It will
+then follow all the branching and tagging within the provided roots.
+
+It will die if it sees branches that have different roots.
+
+
+OPTIONS
+-------
+--option::
+	Some option not yet documented.
+
+<args>...::
+	Some argument not yet documented.
+
+
+Author
+------
+Written by Martin Langhoff <martin@catalyst.net.nz>.
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

@@ -76,7 +76,7 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 	if (!new || strcmp(type, "blob")) {
 		if (new)
 			free(new);
-		return error("git-checkout-cache: unable to read sha1 file of %s (%s)",
+		return error("git-checkout-index: unable to read sha1 file of %s (%s)",
 			path, sha1_to_hex(ce->sha1));
 	}
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
@@ -84,28 +84,28 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 		fd = create_file(path, ntohl(ce->ce_mode));
 		if (fd < 0) {
 			free(new);
-			return error("git-checkout-cache: unable to create file %s (%s)",
+			return error("git-checkout-index: unable to create file %s (%s)",
 				path, strerror(errno));
 		}
 		wrote = write(fd, new, size);
 		close(fd);
 		free(new);
 		if (wrote != size)
-			return error("git-checkout-cache: unable to write file %s", path);
+			return error("git-checkout-index: unable to write file %s", path);
 		break;
 	case S_IFLNK:
 		memcpy(target, new, size);
 		target[size] = '\0';
 		if (symlink(target, path)) {
 			free(new);
-			return error("git-checkout-cache: unable to create symlink %s (%s)",
+			return error("git-checkout-index: unable to create symlink %s (%s)",
 				path, strerror(errno));
 		}
 		free(new);
 		break;
 	default:
 		free(new);
-		return error("git-checkout-cache: unknown file mode for %s", path);
+		return error("git-checkout-index: unknown file mode for %s", path);
 	}
 
 	if (state->refresh_cache) {
@@ -131,7 +131,7 @@ int checkout_entry(struct cache_entry *ce, struct checkout *state)
 			return 0;
 		if (!state->force) {
 			if (!state->quiet)
-				fprintf(stderr, "git-checkout-cache: %s already exists\n", path);
+				fprintf(stderr, "git-checkout-index: %s already exists\n", path);
 			return 0;
 		}
 

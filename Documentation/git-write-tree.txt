@@ -20,7 +20,7 @@ The cache must be merged.
 Conceptually, "git-write-tree" sync()s the current directory cache contents
 into a set of tree files.
 In order to have that match what is actually in your directory right
-now, you need to have done a "git-update-cache" phase before you did the
+now, you need to have done a "git-update-index" phase before you did the
 "git-write-tree".
 
 OPTIONS

@@ -111,7 +111,7 @@ prepare #2 and #3 for e-mail submission.
 
 This creates two files, 0001-XXXX.txt and 0002-XXXX.txt.  Send
 them out "To: " your project maintainer and "Cc: " your mailing
-list.  You could use contributed script git-send-email-script if
+list.  You could use contributed script git-send-email if
 your host has necessary perl modules for this, but your usual
 MUA would do as long as it does not corrupt whitespaces in the
 patch.

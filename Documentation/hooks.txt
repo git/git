@@ -56,11 +56,11 @@ the outcome of `git-applypatch`.
 pre-commit
 ----------
 
-This hook is invoked by `git-commit-script`, and can be bypassed
+This hook is invoked by `git-commit`, and can be bypassed
 with `--no-verify` option.  It takes no parameter, and is
 invoked before obtaining the proposed commit log message and
 making a commit.  Exiting with non-zero status from this script
-causes the `git-commit-script` to abort.
+causes the `git-commit` to abort.
 
 The default pre-commit hook, when enabled, catches introduction
 of lines with trailing whitespaces and aborts the commit when
@@ -69,10 +69,10 @@ a such line is found.
 commit-msg
 ----------
 
-This hook is invoked by `git-commit-script`, and can be bypassed
+This hook is invoked by `git-commit`, and can be bypassed
 with `--no-verify` option.  It takes a single parameter, the
 name of the file that holds the proposed commit log message.
-Exiting with non-zero status causes the `git-commit-script` to
+Exiting with non-zero status causes the `git-commit` to
 abort.
 
 The hook is allowed to edit the message file in place, and can
@@ -86,11 +86,11 @@ Signed-off-by: lines, and aborts the commit when one is found.
 post-commit
 -----------
 
-This hook is invoked by `git-commit-script`.  It takes no
+This hook is invoked by `git-commit`.  It takes no
 parameter, and is invoked after a commit is made.
 
 This hook is meant primarily for notification, and cannot affect
-the outcome of `git-commit-script`.
+the outcome of `git-commit`.
 
 The default post-commit hook, when enabled, demonstrates how to
 send out a commit notification e-mail.

@@ -9,7 +9,7 @@ test_description='Test git-rev-parse with different parent options'
 . ../t6000lib.sh # t6xxx specific functions
 
 date >path0
-git-update-cache --add path0
+git-update-index --add path0
 save_tag tree git-write-tree
 hide_error save_tag start unique_commit "start" tree
 save_tag second unique_commit "second" tree -p start

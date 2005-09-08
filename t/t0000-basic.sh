@@ -40,13 +40,13 @@ test_expect_success \
 
 # updating a new file without --add should fail.
 test_expect_failure \
-    'git-update-cache without --add should fail adding.' \
-    'git-update-cache should-be-empty'
+    'git-update-index without --add should fail adding.' \
+    'git-update-index should-be-empty'
 
 # and with --add it should succeed, even if it is empty (it used to fail).
 test_expect_success \
-    'git-update-cache with --add should succeed.' \
-    'git-update-cache --add should-be-empty'
+    'git-update-index with --add should succeed.' \
+    'git-update-index --add should-be-empty'
 
 test_expect_success \
     'writing tree out with git-write-tree' \
@@ -60,12 +60,12 @@ test_expect_success \
 # Removing paths.
 rm -f should-be-empty full-of-directories
 test_expect_failure \
-    'git-update-cache without --remove should fail removing.' \
-    'git-update-cache should-be-empty'
+    'git-update-index without --remove should fail removing.' \
+    'git-update-index should-be-empty'
 
 test_expect_success \
-    'git-update-cache with --remove should be able to remove.' \
-    'git-update-cache --remove should-be-empty'
+    'git-update-index with --remove should be able to remove.' \
+    'git-update-index --remove should-be-empty'
 
 # Empty tree can be written with recent write-tree.
 test_expect_success \
@@ -84,8 +84,8 @@ do
     ln -s "hello $p" ${p}sym
 done
 test_expect_success \
-    'adding various types of objects with git-update-cache --add.' \
-    'find path* ! -type d -print0 | xargs -0 git-update-cache --add'
+    'adding various types of objects with git-update-index --add.' \
+    'find path* ! -type d -print0 | xargs -0 git-update-index --add'
 
 # Show them and see that matches what we expect.
 test_expect_success \
@@ -170,11 +170,11 @@ test_expect_success \
     'git-diff-files >current && diff >/dev/null -b current expected'
 
 test_expect_success \
-    'git-update-cache --refresh should succeed.' \
-    'git-update-cache --refresh'
+    'git-update-index --refresh should succeed.' \
+    'git-update-index --refresh'
 
 test_expect_success \
-    'no diff after checkout and git-update-cache --refresh.' \
+    'no diff after checkout and git-update-index --refresh.' \
     'git-diff-files >current && cmp -s current /dev/null'
 
 test_done

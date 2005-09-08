@@ -81,7 +81,7 @@ size> + <byte\0> + <binary object data>.
 
 The structured objects can further have their structure and
 connectivity to other objects verified. This is generally done with
-the `git-fsck-cache` program, which generates a full dependency graph
+the `git-fsck-objects` program, which generates a full dependency graph
 of all objects, and verifies their internal consistency (in addition
 to just verifying their superficial consistency through the hash).
 
@@ -104,7 +104,7 @@ object. The object is totally independent of its location in the
 directory tree, and renaming a file does not change the object that
 file is associated with in any way.
 
-A blob is typically created when link:git-update-cache.html[git-update-cache]
+A blob is typically created when link:git-update-index.html[git-update-index]
 is run, and its data can be accessed by link:git-cat-file.html[git-cat-file].
 
 Tree Object
@@ -218,7 +218,7 @@ verification) has to come from outside.
 A tag is created with link:git-mktag.html[git-mktag],
 its data can be accessed by link:git-cat-file.html[git-cat-file],
 and the signature can be verified by
-link:git-verify-tag-script.html[git-verify-tag].
+link:git-verify-tag.html[git-verify-tag].
 
 
 The "index" aka "Current Directory Cache"
@@ -286,11 +286,11 @@ main combinations:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You update the index with information from the working directory with
-the link:git-update-cache.html[git-update-cache] command.  You
+the link:git-update-index.html[git-update-index] command.  You
 generally update the index information by just specifying the filename
 you want to update, like so:
 
-	git-update-cache filename
+	git-update-index filename
 
 but to avoid common mistakes with filename globbing etc, the command
 will not normally add totally new entries or remove old entries,
@@ -307,7 +307,7 @@ removed. The only thing `--remove` means is that update-cache will be
 considering a removed file to be a valid thing, and if the file really
 does not exist any more, it will update the index accordingly.
 
-As a special case, you can also do `git-update-cache --refresh`, which
+As a special case, you can also do `git-update-index --refresh`, which
 will refresh the "stat" information of each index to match the current
 stat information. It will 'not' update the object status itself, and
 it will only update the fields that are used to quickly test whether
@@ -347,18 +347,18 @@ You update your working directory from the index by "checking out"
 files. This is not a very common operation, since normally you'd just
 keep your files updated, and rather than write to your working
 directory, you'd tell the index files about the changes in your
-working directory (i.e. `git-update-cache`).
+working directory (i.e. `git-update-index`).
 
 However, if you decide to jump to a new version, or check out somebody
 else's version, or just restore a previous tree, you'd populate your
 index file with read-tree, and then you need to check out the result
 with
 
-		git-checkout-cache filename
+		git-checkout-index filename
 
 or, if you want to check out all of the index, use `-a`.
 
-NOTE! git-checkout-cache normally refuses to overwrite old files, so
+NOTE! git-checkout-index normally refuses to overwrite old files, so
 if you have an old version of the tree already checked out, you will
 need to use the "-f" flag ('before' the "-a" flag or the filename) to
 'force' the checkout.
@@ -530,17 +530,17 @@ the merge result makes sense, you can tell git what the final
 merge result for this file is by:
 
 	mv -f hello.c~2 hello.c
-	git-update-cache hello.c
+	git-update-index hello.c
 
-When a path is in unmerged state, running `git-update-cache` for
+When a path is in unmerged state, running `git-update-index` for
 that path tells git to mark the path resolved.
 
 The above is the description of a git merge at the lowest level,
 to help you understand what conceptually happens under the hood.
 In practice, nobody, not even git itself, uses three `git-cat-file`
-for this.  There is `git-merge-cache` program that extracts the
+for this.  There is `git-merge-index` program that extracts the
 stages to temporary files and calls a `merge` script on it
 
-	git-merge-cache git-merge-one-file-script hello.c
+	git-merge-index git-merge-one-file hello.c
 
 and that is what higher level `git resolve` is implemented with.

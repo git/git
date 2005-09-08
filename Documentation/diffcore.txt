@@ -6,7 +6,7 @@ June 2005
 Introduction
 ------------
 
-The diff commands git-diff-cache, git-diff-files, and
+The diff commands git-diff-index, git-diff-files, and
 git-diff-tree can be told to manipulate differences they find
 in unconventional ways before showing diff(1) output.  The
 manipulation is collectively called "diffcore transformation".
@@ -21,7 +21,7 @@ The chain of operation
 The git-diff-* family works by first comparing two sets of
 files:
 
- - git-diff-cache compares contents of a "tree" object and the
+ - git-diff-index compares contents of a "tree" object and the
    working directory (when '--cached' flag is not used) or a
    "tree" object and the index file (when '--cached' flag is
    used);

@@ -34,7 +34,7 @@ Documentation by Ryan Anderson <ryan@michonline.com>
 
 See-Also
 --------
-git-pack-objects(1) git-repack-script(1)
+git-pack-objects(1) git-repack(1)
 
 GIT
 ---

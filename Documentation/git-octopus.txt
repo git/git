@@ -1,0 +1,39 @@
+git-octopus(1)
+==============
+v0.99.5, Aug 2005
+
+NAME
+----
+git-octopus - Merge more than two commits.
+
+
+SYNOPSIS
+--------
+'git-octopus'
+
+DESCRIPTION
+-----------
+After running 'git fetch', $GIT_DIR/FETCH_HEAD contains the
+following information, one line per remote ref:
+
+------------------------------------------------
+<object name>	<ref name> from <repository>
+------------------------------------------------
+
+Using this information, create and commit an Octopus merge on
+top of the current HEAD.
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

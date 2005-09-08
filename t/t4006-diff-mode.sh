@@ -11,15 +11,15 @@ test_description='Test mode change diffs.
 test_expect_success \
     'setup' \
     'echo frotz >rezrov &&
-     git-update-cache --add rezrov &&
+     git-update-index --add rezrov &&
      tree=`git-write-tree` &&
      echo $tree'
 
 test_expect_success \
     'chmod' \
     'chmod +x rezrov &&
-     git-update-cache rezrov &&
-     git-diff-cache $tree >current'
+     git-update-index rezrov &&
+     git-diff-index $tree >current'
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
