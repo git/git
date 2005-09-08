@@ -3,25 +3,39 @@ git-diff(1)
 
 NAME
 ----
-git-diff - Some git command not yet documented.
+git-diff - Show changes between commits, commit and working tree, etc.
 
 
 SYNOPSIS
 --------
-'git-diff' [ --option ] <args>...
+'git-diff' [ --diff-options ] <ent>{0,2} [<path>...]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Show changes between two ents, an ent and the working tree, an
+ent and the index file, or the index file and the working tree.
+The combination of what is compared with what is determined by
+the number of ents given to the command.
 
+`----------------`--------`-----------------------------`------------------
+Number of ents    Options  What's Compared               Underlying command
+---------------------------------------------------------------------------
+0                 -        index file and working tree   git-diff-files
+1                 --cached ent and index file            git-diff-index
+1                 -        ent and working tree          git-diff-index
+2                 -        two ents                      git-diff-tree
+---------------------------------------------------------------------------
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+--diff-options::
+	'--diff-options' are passed to the `git-diff-files`,
+	`git-diff-index`, and `git-diff-tree` commands.  See the
+	documentation for these commands for description.
 
-<args>...::
-	Some argument not yet documented.
+<path>...::
+	The <path> arguments are also passed to `git-diff-\*`
+	commands.
 
 
 Author

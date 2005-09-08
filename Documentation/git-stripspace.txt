@@ -3,7 +3,7 @@ git-stripspace(1)
 
 NAME
 ----
-git-stripspace - Fileter out empty lines.
+git-stripspace - Filter out empty lines.
 
 
 SYNOPSIS

@@ -3,25 +3,56 @@ git-format-patch(1)
 
 NAME
 ----
-git-format-patch - Some git command not yet documented.
+git-format-patch - Prepare patches for e-mail submission.
 
 
 SYNOPSIS
 --------
-'git-format-patch' [ --option ] <args>...
+'git-format-patch' [-n][-o <dir>][-k][--mbox][--diff-options] <his> [<mine>]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Prepare each commit with its patch since <mine> head forked from
+<his> head, one file per patch, for e-mail submission.  Each
+output file is numbered sequentially from 1, and uses the first
+line of the commit message (massaged for pathname safety) as the
+filename.
+
+When -o is specified, output files are created in that
+directory; otherwise in the current working directory.
+
+When -n is specified, instead of "[PATCH] Subject", the first
+line is formatted as "[PATCH N/M] Subject", unless you have only
+one patch.
+
+When --mbox is specified, the output is formatted to resemble
+UNIX mailbox format, and can be concatenated together for
+processing with applymbox.
 
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+-o <dir>::
+	Use <dir> to store the resulting files, instead of the
+	current working directory.
 
-<args>...::
-	Some argument not yet documented.
+-n::
+	Name output in '[PATCH n/m]' format.
+
+-k::
+	Do not strip/add '[PATCH]' from the first line of the
+	commit log message.
+
+--author, --date::
+	Output From: and Date: headers for commits made by
+	yourself as well.  Usually these are output only for
+	commits made by people other than yourself.
+
+--mbox::
+	Format the output files for closer to mbox format by
+	adding a phony Unix "From " line, so they can be
+	concatenated together and fed to `git-applymbox`.
+	Implies --author and --date.
 
 
 Author

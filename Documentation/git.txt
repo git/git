@@ -237,9 +237,17 @@ link:git-commit.html[git-commit]::
 	Record changes to the repository.
 	Previously this command was known as git-commit-script.
 
+link:git-diff.html[git-diff]::
+	git-diff.
+	Previously this command was known as git-diff-script.
+
 link:git-fetch.html[git-fetch]::
 	Download from a remote repository via various protocols.
 	Previously this command was known as git-fetch-script.
+
+link:git-format-patch.html[git-format-patch]::
+	git-format-patch.
+	Previously this command was known as git-format-patch-script.
 
 link:git-log.html[git-log]::
 	Shows commit logs.
@@ -391,19 +399,12 @@ link:git-send-email.html[git-send-email]::
 link:git-show-rev-cache.html[git-show-rev-cache]::
 	Show the contents of a rev-cache file.
 
+link:git-stripspace.html[git-stripspace]::
+	Filter out empty lines.
+
+
 Commands not yet documented
 ---------------------------
-
-link:git-diff.html[git-diff]::
-	git-diff.
-	Previously this command was known as git-diff-script.
-
-link:git-format-patch.html[git-format-patch]::
-	git-format-patch.
-	Previously this command was known as git-format-patch-script.
-
-link:git-stripspace.html[git-stripspace]::
-	git-stripspace.
 
 link:gitk.html[gitk]::
 	gitk.
