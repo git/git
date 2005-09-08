@@ -107,10 +107,7 @@ Technical (heavier)
   idea, making the set of packs in repositories everybody has
   different from each other.
 
-* Maybe a pack optimizer.  I am not convinced that packing all
-  objects into a single pack and removing all the existing panck
-  is the right way to go, since that would work against people
-  who already have those packs.
+* Maybe a pack optimizer.
 
 * Maybe an Emacs VC backend.
 
@@ -118,7 +115,7 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Tool renames [STARTED].
+* Tool renames.  Give fixup patch for at least Cogito and StGIT.
 
 * Have Daniel's read-tree graduate from "pu" after plugging leaks.
 
@@ -134,8 +131,7 @@ Technical (milder)
 
 * Bug Martin for archimport script documentation.
 
-* More portability.  I dropped a SunOS patch on the floor by
-  somebody.
+* More portability.
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -155,6 +151,8 @@ Technical (milder)
 
 * A tool to detect, show and prune already merged topic
   branches.
+
+* "Lost and Found".
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
@@ -178,13 +176,13 @@ Technical (trivial)
   stuff Linus has been working on.  So far, the following
   commands should be usable with relative directory paths:
 
-    update-cache
-    ls-files
-    diff-files
-    diff-cache
-    diff-tree
-    rev-list
-    rev-parse
+    git-update-index
+    git-ls-files
+    git-diff-files
+    git-diff-index
+    git-diff-tree
+    git-rev-list
+    git-rev-parse
 
 * In a freashly created empty repository, `git fetch foo:bar`
   works OK, but `git checkout bar` afterwards does not (missing
