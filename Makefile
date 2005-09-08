@@ -73,7 +73,8 @@ SCRIPT_SH = \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
-	git-applymbox.sh git-applypatch.sh
+	git-applymbox.sh git-applypatch.sh \
+	git-merge.sh git-merge-resolve.sh git-merge-octopus.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \

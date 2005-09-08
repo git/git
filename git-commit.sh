@@ -158,7 +158,7 @@ if [ ! -r "$GIT_DIR/HEAD" ]; then
 	PARENTS=""
 else
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
-		PARENTS="-p HEAD -p MERGE_HEAD"
+		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
 	fi
 	if test "$use_commit" != ""
 	then
