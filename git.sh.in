@@ -6,6 +6,11 @@ case "$#" in
 0)	;;
 *)	cmd="$1"
 	shift
+	case "$cmd" in
+	-v|--v|--ve|--ver|--vers|--versi|--versio|--version)
+		echo "git version @@GIT_VERSION@@"
+		exit 0 ;;
+	esac
 	test -x $path/git-$cmd && exec $path/git-$cmd "$@" ;;
 esac
 

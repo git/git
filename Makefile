@@ -183,10 +183,16 @@ SCRIPTS = $(SCRIPT_SH) $(SCRIPT_PERL) gitk
 
 ### Build rules
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) git.sh
 
 all:
 	$(MAKE) -C templates
+
+git.sh: git.sh.in Makefile
+	rm -f $@+ $@
+	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.in >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
@@ -293,7 +299,7 @@ deb: dist
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROGRAMS) $(LIB_FILE)
-	rm -f git-core.spec
+	rm -f git-core.spec git.sh
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
