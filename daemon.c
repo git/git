@@ -353,8 +353,10 @@ int main(int argc, char **argv)
 		usage(daemon_usage);
 	}
 
-	if (inetd_mode)
+	if (inetd_mode) {
+		fclose(stderr); //FIXME: workaround
 		return execute();
+	}
 
 	return serve(port);
 }
