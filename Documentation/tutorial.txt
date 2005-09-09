@@ -608,11 +608,11 @@ The above can also be written as simply
 	git reset
 
 and in fact a lot of the common git command combinations can be scripted
-with the `git xyz` interfaces, and you can learn things by just looking
-at what the `git-*-script` scripts do (`git reset` is the above two lines
-implemented in `git-reset`, but some things like `git status` and
-`git commit` are slightly more complex scripts around the basic git
-commands). 
+with the `git xyz` interfaces.  You can learn things by just looking
+at what the various git scripts do.  For example, `git reset` is the
+above two lines implemented in `git-reset`, but some things like
+`git status` and `git commit` are slightly more complex scripts around
+the basic git commands.
 
 Many (most?) public remote repositories will not contain any of
 the checked out files or even an index file, and will *only* contain the
