@@ -77,7 +77,7 @@ SCRIPT_SH = \
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-rename.perl git-send-email.perl git-shortlog.perl
+	git-rename.perl git-shortlog.perl
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
