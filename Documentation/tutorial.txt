@@ -742,7 +742,7 @@ git commit -m 'Some work.' hello
 ------------------------------------------------
 
 Here, we just added another line to `hello`, and we used a shorthand for
-both going a `git-update-index hello` and `git commit` by just giving the
+doing both `git-update-index hello` and `git commit` by just giving the
 filename directly to `git commit`. The `-m` flag is to give the
 commit log message from the command line.
 
