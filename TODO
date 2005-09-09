@@ -180,6 +180,11 @@ Technical (milder)
 
 * Option to limit rename detection for more than N paths.
 
+* Make rebase restartable; instead of skipping what cannot be
+  automatically forward ported, leave the conflicts in the work
+  tree, have the user resolve it, and then restart from where it
+  left off.
+
 
 Technical (trivial)
 -------------------
