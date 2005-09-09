@@ -25,7 +25,7 @@ In the test, these paths are used:
 read_tree_twoway () {
     git-read-tree --emu23 "$1" "$2" &&
     git-ls-files --stage &&
-    git-merge-index ../../git-merge-one-file.sh -a &&
+    git-merge-index git-merge-one-file -a &&
     git-ls-files --stage
 }
 

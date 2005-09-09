@@ -13,12 +13,12 @@ handled.  Specifically, that a bogus branch is not created.
 test_expect_success \
     'prepare an trivial repository' \
     'echo Hello > A &&
-     ../../git-update-index --add A &&
-     ../../git-commit.sh -m "Initial commit."'
+     git-update-index --add A &&
+     git-commit -m "Initial commit."'
 
 test_expect_failure \
     'git branch --help should return error code' \
-    '../../git-branch.sh --help'
+    'git-branch --help'
 
 test_expect_failure \
     'git branch --help should not have created a bogus branch' \

@@ -142,6 +142,13 @@ ifeq ($(shell uname -s),SunOS)
 	PLATFORM_DEFINES += -DNO_GETDOMAINNAME=1
 endif
 
+ifndef SHELL_PATH
+	SHELL_PATH = /bin/sh
+endif
+ifndef PERL_PATH
+	PERL_PATH = /usr/bin/perl
+endif
+
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL = -lssl
@@ -179,20 +186,31 @@ endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
-SCRIPTS = $(SCRIPT_SH) $(SCRIPT_PERL) gitk
+SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
+	  $(patsubst %.perl,%,$(SCRIPT_PERL)) gitk
 
 ### Build rules
 
-all: $(PROGRAMS) git.sh
+all: $(PROGRAMS) $(SCRIPTS)
 
 all:
 	$(MAKE) -C templates
 
-git.sh: git.sh.in Makefile
+git: git.sh Makefile
 	rm -f $@+ $@
-	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.in >$@+
+	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
+
+$(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
+	rm -f $@
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' $@.sh >$@
+	chmod +x $@
+
+$(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
+	rm -f $@
+	sed -e '1s|#!.*perl|#!$(PERL_PATH)|' $@.perl >$@
+	chmod +x $@
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
@@ -250,19 +268,8 @@ check:
 
 install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
-	$(INSTALL) $(PROGRAMS) $(DESTDIR)$(bindir)
-	@for s in $(SCRIPTS); \
-	do \
-		case "$$s" in \
-		*.*) \
-			e=`expr "$$s" : '\(.*\)\.[^.]*$$'` ;; \
-		*) \
-			e="$$s" ;; \
-		esac && \
-		echo ": install $$s $(DESTDIR)$(bindir)/$$e" && \
-		$(INSTALL) $$s $(DESTDIR)$(bindir)/$$e || exit; \
-	done
-	$(INSTALL) git-revert.sh $(DESTDIR)$(bindir)/git-cherry-pick
+	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
+	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
 	sh ./cmd-rename.sh $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
 
@@ -299,7 +306,8 @@ deb: dist
 
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o $(PROGRAMS) $(LIB_FILE)
-	rm -f git-core.spec git.sh
+	rm -f $(filter-out gitk,$(SCRIPTS))
+	rm -f git-core.spec
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
