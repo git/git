@@ -84,7 +84,7 @@ case "$reset_type" in
 				print "$_\0";
 			}
 		}
-	' $tmp-exists | xargs -0 rm -v -f --
+	' $tmp-exists | xargs -0 rm -f --
 	;;
 --soft )
 	;; # Nothing else to do
