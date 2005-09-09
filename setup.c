@@ -87,7 +87,7 @@ static int is_toplevel_directory(void)
 	return	!lstat(".git/HEAD", &st) &&
 		S_ISLNK(st.st_mode) &&
 		!access(".git/refs/", X_OK) &&
-		(gitenv(DB_ENVIRONMENT) || !access(".git/objects/", X_OK));
+		(getenv(DB_ENVIRONMENT) || !access(".git/objects/", X_OK));
 }
 
 const char *setup_git_directory(void)
@@ -99,7 +99,7 @@ const char *setup_git_directory(void)
 	 * If GIT_DIR is set explicitly, we're not going
 	 * to do any discovery
 	 */
-	if (gitenv(GIT_DIR_ENVIRONMENT))
+	if (getenv(GIT_DIR_ENVIRONMENT))
 		return NULL;
 
 	if (!getcwd(cwd, sizeof(cwd)) || cwd[0] != '/')

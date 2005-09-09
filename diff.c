@@ -32,10 +32,10 @@ static const char *external_diff(void)
 	 *
 	 * GIT_DIFF_OPTS="-c";
 	 */
-	external_diff_cmd = gitenv("GIT_EXTERNAL_DIFF");
+	external_diff_cmd = getenv("GIT_EXTERNAL_DIFF");
 
 	/* In case external diff fails... */
-	env_diff_opts = gitenv("GIT_DIFF_OPTS");
+	env_diff_opts = getenv("GIT_DIFF_OPTS");
 	if (env_diff_opts) diff_opts = env_diff_opts;
 
 	done_preparing = 1;

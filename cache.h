@@ -54,17 +54,6 @@
 #define DEFAULT_GIT_PORT 9418
 
 /*
- * Environment variables transition.
- * We accept older names for now but warn.
- */
-extern char *gitenv_bc(const char *);
-#ifdef __GNUC__
-#define gitenv(e) (getenv(e) ? : gitenv_bc(e))
-#else
-#define gitenv(e) (getenv(e) ? getenv(e) : gitenv_bc(e))
-#endif
-
-/*
  * Basic data structures for the directory cache
  */
 

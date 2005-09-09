@@ -392,7 +392,7 @@ static int fsck_head_link(void)
 	static char path[PATH_MAX], link[PATH_MAX];
 	const char *git_dir;
 
-	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
+	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	if (!git_dir) git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 
 	snprintf(path, sizeof(path), "%s/HEAD", git_dir);

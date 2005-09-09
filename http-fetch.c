@@ -355,7 +355,7 @@ int main(int argc, char **argv)
 
 	curl = curl_easy_init();
 
-	curl_ssl_verify = gitenv("GIT_SSL_NO_VERIFY") ? 0 : 1;
+	curl_ssl_verify = getenv("GIT_SSL_NO_VERIFY") ? 0 : 1;
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, curl_ssl_verify);
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(curl, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);

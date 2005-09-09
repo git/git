@@ -124,7 +124,7 @@ DIFF_OBJS = \
 
 LIB_OBJS = \
 	blob.o commit.o connect.o count-delta.o csum-file.o \
-	date.o diff-delta.o entry.o gitenv.o ident.o index.o \
+	date.o diff-delta.o entry.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o rev-cache.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \

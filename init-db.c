@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 	/*
 	 * Set up the default .git directory contents
 	 */
-	git_dir = gitenv(GIT_DIR_ENVIRONMENT);
+	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	if (!git_dir) {
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 		fprintf(stderr, "defaulting to local storage area\n");
