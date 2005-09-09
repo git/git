@@ -4,7 +4,7 @@ T="$1"
 
 for h in *.html howto/*.txt howto/*.html
 do
-	diff -u "$T/$h" "$h" || {
+	diff -u -I'Last updated [0-9][0-9]-[A-Z][a-z][a-z]-' "$T/$h" "$h" || {
 		echo >&2 "# install $h $T/$h"
 		rm -f "$T/$h"
 		mkdir -p `dirname "$T/$h"`
