@@ -4,7 +4,7 @@
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--all] [--heads] [--tags] [--more=count] [--merge-base] [<refs>...]";
+"git-show-branch [--all] [--heads] [--tags] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
 
 #define UNINTERESTING	01
 
@@ -306,10 +306,29 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 	return exit_status;
 }
 
+static int show_independent(struct commit **rev,
+			    int num_rev,
+			    char **ref_name,
+			    unsigned int *rev_mask)
+{
+	int i;
+
+	for (i = 0; i < num_rev; i++) {
+		struct commit *commit = rev[i];
+		unsigned int flag = rev_mask[i];
+
+		if (commit->object.flags == flag)
+			puts(sha1_to_hex(commit->object.sha1));
+		commit->object.flags |= UNINTERESTING;
+	}
+	return 0;
+}
+
 int main(int ac, char **av)
 {
 	struct commit *rev[MAX_REVS], *commit;
 	struct commit_list *list = NULL, *seen = NULL;
+	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_tags = 0;
 	int all_mask, all_revs, shown_merge_point;
@@ -317,6 +336,7 @@ int main(int ac, char **av)
 	int head_path_len;
 	unsigned char head_sha1[20];
 	int merge_base = 0;
+	int independent = 0;
 	char **label;
 
 	setup_git_directory();
@@ -331,18 +351,23 @@ int main(int ac, char **av)
 			all_tags = 1;
 		else if (!strcmp(arg, "--more"))
 			extra = 1;
-		else if (!strncmp(arg, "--more=", 7)) {
+		else if (!strcmp(arg, "--list"))
+			extra = -1;
+		else if (!strncmp(arg, "--more=", 7))
 			extra = atoi(arg + 7);
-			if (extra < 0)
-				usage(show_branch_usage);
-		}
 		else if (!strcmp(arg, "--merge-base"))
 			merge_base = 1;
+		else if (!strcmp(arg, "--independent"))
+			independent = 1;
 		else
 			usage(show_branch_usage);
 		ac--; av++;
 	}
 	ac--; av++;
+
+	/* Only one of these is allowed */
+	if (1 < independent + merge_base + (extra != 0))
+		usage(show_branch_usage);
 
 	if (all_heads + all_tags)
 		snarf_refs(all_heads, all_tags);
@@ -361,6 +386,7 @@ int main(int ac, char **av)
 
 	for (num_rev = 0; ref_name[num_rev]; num_rev++) {
 		unsigned char revkey[20];
+		unsigned int flag = 1u << (num_rev + REV_SHIFT);
 
 		if (MAX_REVS <= num_rev)
 			die("cannot handle more than %d revs.", MAX_REVS);
@@ -377,11 +403,16 @@ int main(int ac, char **av)
 		 * and so on.  REV_SHIFT bits from bit 0 are used for
 		 * internal bookkeeping.
 		 */
-		commit->object.flags |= 1u << (num_rev + REV_SHIFT);
-		insert_by_date(commit, &list);
+		commit->object.flags |= flag;
+		if (commit->object.flags == flag)
+			insert_by_date(commit, &list);
 		rev[num_rev] = commit;
 	}
-	join_revs(&list, &seen, num_rev, extra);
+	for (i = 0; i < num_rev; i++)
+		rev_mask[i] = rev[i]->object.flags;
+
+	if (0 <= extra)
+		join_revs(&list, &seen, num_rev, extra);
 
 	head_path_len = readlink(".git/HEAD", head_path, sizeof(head_path)-1);
 	if ((head_path_len < 0) || get_sha1("HEAD", head_sha1))
@@ -392,7 +423,10 @@ int main(int ac, char **av)
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
 
-	/* Show list */
+	if (independent)
+		return show_independent(rev, num_rev, ref_name, rev_mask);
+
+	/* Show list; --more=-1 means list-only */
 	if (1 < num_rev) {
 		for (i = 0; i < num_rev; i++) {
 			int j;
@@ -401,15 +435,25 @@ int main(int ac, char **av)
 						  ref_name[i],
 						  head_sha1,
 						  rev[i]->object.sha1);
-			for (j = 0; j < i; j++)
-				putchar(' ');
-			printf("%c [%s] ", is_head ? '*' : '!', ref_name[i]);
+			if (extra < 0)
+				printf("%c [%s] ",
+				       is_head ? '*' : ' ', ref_name[i]);
+			else {
+				for (j = 0; j < i; j++)
+					putchar(' ');
+				printf("%c [%s] ",
+				       is_head ? '*' : '!', ref_name[i]);
+			}
 			show_one_commit(rev[i]);
 		}
-		for (i = 0; i < num_rev; i++)
-			putchar('-');
-		putchar('\n');
+		if (0 <= extra) {
+			for (i = 0; i < num_rev; i++)
+				putchar('-');
+			putchar('\n');
+		}
 	}
+	if (extra < 0)
+		exit(0);
 
 	/* Sort topologically */
 	sort_in_topological_order(&seen);

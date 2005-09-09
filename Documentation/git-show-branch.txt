@@ -8,7 +8,7 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git show-branch [--all] [--heads] [--tags] [--more=<n>] [--merge-base] <reference>...'
+'git show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] <reference>...'
 
 DESCRIPTION
 -----------
@@ -29,12 +29,24 @@ OPTIONS
 	Usually the command stops output upon showing the commit
 	that is the common ancestor of all the branches.  This
 	flag tells the command to go <n> more common commits
-	beyond that.
+	beyond that.  When <n> is negative, display only the
+	<reference>s given, without showing the commit ancestry
+	tree.
+
+--list::
+	Synomym to `--more=-1`
 
 --merge-base::
 	Instead of showing the commit list, just act like the
 	'git-merge-base -a' command, except that it can accept
 	more than two heads.
+
+--independent::
+	Among the <reference>s given, display only the ones that
+	cannot be reached from any other <reference>.
+
+Note that --more, --list, --independent and --merge-base options
+are mutually exclusive.
 
 
 OUTPUT
