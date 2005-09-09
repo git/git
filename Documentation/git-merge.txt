@@ -1,0 +1,52 @@
+git-merge(1)
+============
+v0.99.6, Sep 2005
+
+NAME
+----
+git-merge - Grand Unified Merge Driver
+
+
+SYNOPSIS
+--------
+'git-merge' [-n] [-s <strategy>]... <msg> <head> <remote> <remote>...
+
+
+DESCRIPTION
+-----------
+This is the top-level user interface to the merge machinery
+which drives multiple merge strategy scripts.
+
+
+OPTIONS
+-------
+-n::
+	Do not show diffstat at the end of the merge.
+
+-s <strategy>::
+	use that merge strategy; can be given more than once to
+	specify them in the order they should be tried.  If
+	there is no `-s` option, built-in list of strategies is
+	used instead.
+
+<head>::
+	our branch head commit.
+
+<remote>::
+	other branch head merged into our branch.  You need at
+	least one <remote>.  Specifying more than one <remote>
+	obviously means you are trying an Octopus.
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite

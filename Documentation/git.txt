@@ -257,6 +257,9 @@ link:git-ls-remote.html[git-ls-remote]::
 	Shows references in a remote or local repository.
 	Previously this command was known as git-ls-remote-script.
 
+link:git-merge.html[git-merge]::
+	Grand unified merge driver.
+
 link:git-octopus.html[git-octopus]::
 	Merge more than two commits.
 	Previously this command was known as git-octopus-script.
