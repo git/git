@@ -55,12 +55,12 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 /* Table of rename/copy src files */
 static struct diff_rename_src {
 	struct diff_filespec *one;
-	unsigned src_stays : 1;
+	unsigned src_path_left : 1;
 } *rename_src;
 static int rename_src_nr, rename_src_alloc;
 
 static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
-						   int src_stays)
+						   int src_path_left)
 {
 	int first, last;
 
@@ -90,7 +90,7 @@ static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
 		memmove(rename_src + first + 1, rename_src + first,
 			(rename_src_nr - first - 1) * sizeof(*rename_src));
 	rename_src[first].one = one;
-	rename_src[first].src_stays = src_stays;
+	rename_src[first].src_path_left = src_path_left;
 	return &(rename_src[first]);
 }
 
@@ -220,7 +220,7 @@ static void record_rename_pair(struct diff_queue_struct *renq,
 
 	dp = diff_queue(renq, one, two);
 	dp->score = score;
-	dp->source_stays = rename_src[src_index].src_stays;
+	dp->source_stays = rename_src[src_index].src_path_left;
 	rename_dst[dst_index].pair = dp;
 }
 
@@ -232,6 +232,21 @@ static int score_compare(const void *a_, const void *b_)
 {
 	const struct diff_score *a = a_, *b = b_;
 	return b->score - a->score;
+}
+
+static int compute_stays(struct diff_queue_struct *q,
+			 struct diff_filespec *one)
+{
+	int i;
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		if (strcmp(one->path, p->two->path))
+			continue;
+		if (DIFF_PAIR_RENAME(p)) {
+			return 0; /* something else is renamed into this */
+		}
+	}
+	return 1;
 }
 
 void diffcore_rename(int detect_rename, int minimum_score)
@@ -405,6 +420,23 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	free(q->queue);
 	*q = outq;
 	diff_debug_queue("done collapsing", q);
+
+	/* We need to see which rename source really stays here;
+	 * earlier we only checked if the path is left in the result,
+	 * but even if a path remains in the result, if that is coming
+	 * from copying something else on top of it, then the original
+	 * source is lost and does not stay.
+	 */
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		if (DIFF_PAIR_RENAME(p) && p->source_stays) {
+			/* If one appears as the target of a rename-copy,
+			 * then mark p->source_stays = 0; otherwise
+			 * leave it as is.
+			 */
+			p->source_stays = compute_stays(q, p->one);
+		}
+	}
 
 	free(rename_dst);
 	rename_dst = NULL;

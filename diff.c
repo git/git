@@ -955,7 +955,9 @@ static void diff_resolve_rename_copy(void)
 			}
 			/* See if there is some other filepair that
 			 * copies from the same source as us.  If so
-			 * we are a copy.  Otherwise we are a rename.
+			 * we are a copy.  Otherwise we are either a
+			 * copy if the path stays, or a rename if it
+			 * does not, but we already handled "stays" case.
 			 */
 			for (j = i + 1; j < q->nr; j++) {
 				pp = q->queue[j];
