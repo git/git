@@ -8,7 +8,9 @@ git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
 git bisect next			find next bisection to test and check it out.
 git bisect reset [<branch>]	finish bisection search and go back to branch.
-git bisect visualize            show bisect status in gitk.'
+git bisect visualize            show bisect status in gitk.
+git bisect replay <logfile>	replay bisection log
+git bisect log			show bisect log.'
     exit 1
 }
 
@@ -54,6 +56,7 @@ bisect_start() {
 	rm -f "$GIT_DIR/refs/heads/bisect"
 	rm -rf "$GIT_DIR/refs/bisect/"
 	mkdir "$GIT_DIR/refs/bisect"
+	echo "git-bisect start" >"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_bad() {
@@ -66,7 +69,9 @@ bisect_bad() {
 	*)
 		usage ;;
 	esac || exit
-	echo "$rev" > "$GIT_DIR/refs/bisect/bad"
+	echo "$rev" >"$GIT_DIR/refs/bisect/bad"
+	echo "# bad: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+	echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
 }
 
@@ -81,6 +86,8 @@ bisect_good() {
 	do
 		rev=$(git-rev-parse --verify "$rev") || exit
 		echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
+		echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 	done
 	bisect_auto_next
 }
@@ -129,6 +136,7 @@ bisect_next() {
 	git checkout new-bisect || exit
 	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
 	ln -sf refs/heads/bisect "$GIT_DIR/HEAD"
+	git-show-branch "$rev"
 }
 
 bisect_visualize() {
@@ -149,7 +157,39 @@ bisect_reset() {
 	esac
 	git checkout "$branch" &&
 	rm -fr "$GIT_DIR/refs/bisect"
-	rm -f "$GIT_DIR/refs/reads/bisect"
+	rm -f "$GIT_DIR/refs/heads/bisect"
+	rm -f "$GIT_DIR/BISECT_LOG"
+}
+
+bisect_replay () {
+	test -r "$1" || {
+		echo >&2 "cannot read $1 for replaying"
+		exit 1
+	}
+	bisect_reset
+	while read bisect command rev
+	do
+		test "$bisect" = "git-bisect" || continue
+		case "$command" in
+		start)
+			bisect_start
+			;;
+		good)
+			echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
+			echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+			echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
+			;;
+		bad)
+			echo "$rev" >"$GIT_DIR/refs/bisect/bad"
+			echo "# bad: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+			echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
+			;;
+		*)
+			echo >&2 "?? what are you talking about?"
+			exit 1 ;;
+		esac
+	done <"$1"
+	bisect_auto_next
 }
 
 case "$#" in
@@ -172,6 +212,10 @@ case "$#" in
 	bisect_visualize "$@" ;;
     reset)
         bisect_reset "$@" ;;
+    replay)
+	bisect_replay "$@" ;;
+    log)
+	cat "$GIT_DIR/BISECT_LOG" ;;
     *)
         usage ;;
     esac
