@@ -94,6 +94,7 @@ append_fetch_head () {
 }
 
 fast_forward_local () {
+    mkdir -p "$(dirname "$GIT_DIR/$1")"
     case "$1" in
     refs/tags/*)
 	# Tags need not be pointing at commits so there
