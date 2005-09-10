@@ -185,7 +185,7 @@ Technical (milder)
 
 * Marking copy seems to be broken when A,B => B,C rename
   happens; we incorrectly say B stays, which makes the new B
-  copy of old A, not rename.
+  copy of old A, not rename [DONE].
 
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
@@ -199,6 +199,9 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
+
+* Make 'git bisect' easier to use by logging the earlier
+  good/bad choices and make it replayable [DONE].
 
 * Perhaps "git branch -d" to delete a branch.  We probably need
   some way to say "delete this branch because everything in this
