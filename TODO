@@ -62,7 +62,7 @@ Documentation
   Link the documentation from the main git.txt page.
 
 * Accept patches from people who were hit by shiny blue bat to
-  update the SubmittingPatches [ONGOING].
+  update the SubmittingPatches.
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -98,8 +98,7 @@ Technical (heavier)
 
 * To make it easier to experiment with different merge
   strategies, make git-merge driver that will run merge backends
-  for the best merge [Illustration of concept patch sent out,
-  untested yet].
+  for the best merge [tested and in proposed updates].
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -117,13 +116,18 @@ Technical (milder)
 ------------------
 
 * Tool renames.  Give fixup patch for at least Cogito and StGIT.
-  [As of this writing 2005-09-08 evening US/Pacific, the
-  "master" has what should go in 0.99.7 except gitenv() removal].
-
+  [As of 2005-09-09 evening US/Pacific, the "master" branch has
+  what should go in 0.99.7 including gitenv() removal].
 
 * Have Daniel's read-tree graduate from "pu" after plugging leaks.
 
-* Implement a merge backend using Daniel's read-tree.
+* Implement a merge backend using Daniel's read-tree [DONE].
+
+* Rename 'git-merge-resolve' to 'git-merge-stupid' and
+  'git-merge-multibase' to 'git-merge-resolve'; the former is
+  for historical curiosity and comparison purposes only and not
+  to be used in real applications so remove it from the default
+  strategies list [DONE].
 
 * Accept Fredrik merge after renaming it (I want to name the
   driver 'git merge').  Suggest where to place *.py stuff --
@@ -159,14 +163,13 @@ Technical (milder)
 * A tool to detect, show and prune already merged topic
   branches.
 
-* "Lost and Found"; find the minimum number of dangling commits
-  from the fsck-objects output to make everybody not dangling,
-  and link them under $GIT_DIR/refs/lost-found/.  Then
-  show-branch or gitk can be used to find any lost commit.
+* "Lost and Found"; link dangling commits found by fsck-objects
+  under $GIT_DIR/refs/lost-found/.  Then show-branch or gitk can
+  be used to find any lost commit.
 
   Do not name it /lost+found/; that would probably confuse
-  things that incorrectly assumes that is a mount point (not our
-  code but somebody else's).
+  things that mistake it a mount point (not our code but
+  somebody else's).
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
@@ -180,16 +183,27 @@ Technical (milder)
 
 * Option to limit rename detection for more than N paths.
 
+* Marking copy seems to be broken when A,B => B,C rename
+  happens; we incorrectly say B stays, which makes the new B
+  copy of old A, not rename.
+
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
   left off.
 
+* Output full path in the "git-rev-list --objects" output, not
+  just the basename, and see the improved clustering results in
+  better packing.
+
 
 Technical (trivial)
 -------------------
 
-* Perhaps "git branch -d" to delete a branch.
+* Perhaps "git branch -d" to delete a branch.  We probably need
+  some way to say "delete this branch because everything in this
+  should be merged in the master branch" and refuse the removal
+  if it is not true.
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  So far, the following
