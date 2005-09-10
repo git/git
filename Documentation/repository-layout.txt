@@ -131,6 +131,6 @@ info/exclude::
 	commands.
 
 remotes::
-	Stoers shorthands to be used to give URL and default
+	Stores shorthands to be used to give URL and default
 	refnames to interact with remote repository to `git
 	fetch`, `git pull` and `git push` commands.
