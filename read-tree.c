@@ -221,6 +221,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			if (unpack_trees_rec(subposns, len, newbase, fn,
 					     indpos))
 				return -1;
+			free(newbase);
 		}
 		free(subposns);
 		free(src);
