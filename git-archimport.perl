@@ -23,7 +23,6 @@ See man (1) git-archimport for more details.
 
  - create tag objects instead of ref tags
  - audit shell-escaping of filenames
- - better handling of temp directories
  - hide our private tags somewhere smarter
  - find a way to make "cat *patches | patch" safe even when patchfiles are missing newlines  
 
@@ -37,7 +36,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Spec;
-use File::Temp qw(tempfile);
+use File::Temp qw(tempfile tempdir);
 use File::Path qw(mkpath);
 use File::Basename qw(basename dirname);
 use String::ShellQuote;
@@ -72,9 +71,10 @@ usage if $opt_h;
 @ARGV >= 1 or usage();
 my @arch_roots = @ARGV;
 
-my $tmp = $opt_t;
-$tmp ||= '/tmp';
-$tmp .= '/git-archimport/';
+my ($tmpdir, $tmpdirname) = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+my $tmp = $opt_t || 1;
+$tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+$opt_v && print "+ Using $tmp as temporary directory\n";
 
 my @psets  = ();                # the collection
 my %psets  = ();                # the collection, by name
