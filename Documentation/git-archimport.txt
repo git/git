@@ -3,7 +3,7 @@ git-archimport(1)
 
 NAME
 ----
-git-archimport - Import an arch repository into git
+git-archimport - Import an Arch repository into GIT
 
 
 SYNOPSIS
@@ -16,8 +16,8 @@ DESCRIPTION
 Imports a project from one or more Arch repositories. It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
 parameters suppplied. If it cannot find the remote branch a merge comes from
-it will just import it as a regular merge. If it can find it, it will perform
-a merge whenever possible. 
+it will just import it as a regular commit. If it can find it, it will mark it 
+as a merge whenever possible (see discussion below). 
 
 The script expects you to provide the key roots where it can start the import 
 from an 'initial import' or 'tag' type of Arch commit. It will follow and import 
@@ -34,8 +34,9 @@ know about the repositories you pass to `git-archimport`.
 For the initial import `git-archimport` expects to find itself in an empty 
 directory. To follow the development of a project that uses Arch, rerun 
 `git-archimport` with the same parameters as the initial import to perform incremental imports.
-of a project using Arch.
 
+MERGES
+------
 Patch merge data from Arch is used to mark merges in GIT as well. GIT 
 does not care much about tracking patches, and only considers a merge when a
 branch incorporates all the commits since the point they forked. The end result
