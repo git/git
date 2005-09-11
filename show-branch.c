@@ -427,7 +427,7 @@ int main(int ac, char **av)
 		return show_independent(rev, num_rev, ref_name, rev_mask);
 
 	/* Show list; --more=-1 means list-only */
-	if (1 < num_rev) {
+	if (1 < num_rev || extra < 0) {
 		for (i = 0; i < num_rev; i++) {
 			int j;
 			int is_head = rev_is_head(head_path,
