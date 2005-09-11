@@ -462,6 +462,13 @@ static int ce_flush(SHA_CTX *context, int fd)
 		SHA1_Update(context, write_buffer, left);
 	}
 
+	/* Flush first if not enough space for SHA1 signature */
+	if (left + 20 > WRITE_BUFFER_SIZE) {
+		if (write(fd, write_buffer, left) != left)
+			return -1;
+		left = 0;
+	}
+
 	/* Append the SHA1 signature at the end */
 	SHA1_Final(write_buffer + left, context);
 	left += 20;
