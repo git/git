@@ -6,23 +6,27 @@
 # The basic idea is to walk the output of tla abrowse, 
 # fetch the changesets and apply them. 
 #
+
 =head1 Invocation
 
-    git-archimport -i <archive>/<branch> [<archive>/<branch>]
-    [ <archive>/<branch> ]
+    git-archimport [ -h ] [ -v ] [ -T ] [ -t tempdir ] <archive>/<branch> [ <archive>/<branch> ]
 
-    The script expects you to provide the key roots where it can start the
-    import from an 'initial import' or 'tag' type of Arch commit. It will
-    then follow all the branching and tagging within the provided roots.
+Imports a project from one or more Arch repositories. It will follow branches
+and repositories within the namespaces defined by the <archive/branch>
+parameters suppplied. If it cannot find the remote branch a merge comes from
+it will just import it as a regular commit. If it can find it, it will mark it 
+as a merge whenever possible.
 
-    It will die if it sees branches that have different roots. 
+See man (1) git-archimport for more details.
 
-=head2 TODO
+=head1 TODO
 
- - keep track of merged patches, and mark a git merge when it happens
- - smarter rules to parse the archive history "up" and "down"
- - be able to continue an import where we left off
+ - create tag objects instead of ref tags
  - audit shell-escaping of filenames
+ - better handling of temp directories
+ - use GIT_DIR instead of hardcoded ".git"
+ - hide our private tags somewhere smarter
+ - find a way to make "cat *patches | patch" safe even when patchfiles are missing newlines  
 
 =head1 Devel tricks
 
@@ -54,14 +58,13 @@ our($opt_h,$opt_v, $opt_T,
 sub usage() {
     print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from Arch
-       [ -h ] [ -v ] [ -T ] 
-       [ -C GIT_repository ] [ -t tempdir ] 
+       [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
        repository/arch-branch [ repository/arch-branch] ...
 END
     exit(1);
 }
 
-getopts("ThviC:t:") or usage();
+getopts("Thvt:") or usage();
 usage if $opt_h;
 
 @ARGV >= 1 or usage();
@@ -70,10 +73,6 @@ my @arch_roots = @ARGV;
 my $tmp = $opt_t;
 $tmp ||= '/tmp';
 $tmp .= '/git-archimport/';
-
-my $git_tree = $opt_C;
-$git_tree ||= ".";
-
 
 my @psets  = ();                # the collection
 my %psets  = ();                # the collection, by name
