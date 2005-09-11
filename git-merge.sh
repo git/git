@@ -12,10 +12,10 @@ usage () {
     die "git-merge [-n] [-s <strategy>]... <merge-message> <head> <remote>+"
 }
 
-# all_strategies='resolve multibase fredrik octopus'
+# all_strategies='resolve fredrik stupid octopus'
 
-all_strategies='resolve multibase octopus'
-default_strategies='resolve multibase octopus'
+all_strategies='resolve octopus stupid'
+default_strategies='resolve octopus'
 use_strategies=
 
 dropheads() {
