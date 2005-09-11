@@ -55,6 +55,7 @@ then
     git-read-tree --reset $new &&
 	git-checkout-index -q -f -u -a
 else
+    git-update-index --refresh >/dev/null
     git-read-tree -m -u $old $new
 fi
 
