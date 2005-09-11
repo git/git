@@ -12,6 +12,7 @@
 
 static int merge = 0;
 static int update = 0;
+static int index_only = 0;
 
 static int head_idx = -1;
 static int merge_size = 0;
@@ -306,6 +307,9 @@ static void verify_uptodate(struct cache_entry *ce)
 {
 	struct stat st;
 
+	if (index_only)
+		return;
+
 	if (!lstat(ce->name, &st)) {
 		unsigned changed = ce_match_stat(ce, &st);
 		if (!changed)
@@ -576,7 +580,7 @@ static int read_cache_unmerged(void)
 	return deleted;
 }
 
-static const char read_tree_usage[] = "git-read-tree (<sha> | -m [-u] <sha1> [<sha2> [<sha3>]])";
+static const char read_tree_usage[] = "git-read-tree (<sha> | -m [-u | -i] <sha1> [<sha2> [<sha3>]])";
 
 static struct cache_file cache_file;
 
@@ -595,9 +599,19 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
-		/* "-u" means "update", meaning that a merge will update the working directory */
+		/* "-u" means "update", meaning that a merge will update
+		 * the working tree.
+		 */
 		if (!strcmp(arg, "-u")) {
 			update = 1;
+			continue;
+		}
+
+		/* "-i" means "index only", meaning that a merge will
+		 * not even look at the working tree.
+		 */
+		if (!strcmp(arg, "-i")) {
+			index_only = 1;
 			continue;
 		}
 
@@ -627,6 +641,10 @@ int main(int argc, char **argv)
 			merge = 1;
 			continue;
 		}
+
+		/* using -u and -i at the same time makes no sense */
+		if (1 < index_only + update)
+			usage(read_tree_usage);
 
 		if (get_sha1(arg, sha1) < 0)
 			usage(read_tree_usage);

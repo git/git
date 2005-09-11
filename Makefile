@@ -48,6 +48,7 @@ ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
 prefix = $(HOME)
 bindir = $(prefix)/bin
 template_dir = $(prefix)/share/git-core/templates/
+GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
 CC = gcc
@@ -81,6 +82,9 @@ SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-rename.perl git-shortlog.perl
 
+SCRIPT_PYTHON = \
+	git-merge-fredrik.py
+
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id git-mailinfo git-mailsplit git-stripspace \
@@ -104,6 +108,9 @@ PROGRAMS = \
 	git-unpack-objects git-update-index git-update-server-info \
 	git-upload-pack git-verify-pack git-write-tree \
 	$(SIMPLE_PROGRAMS)
+
+PYMODULES = \
+	gitMergeCommon.py
 
 ifdef WITH_SEND_EMAIL
 	SCRIPT_PERL += git-send-email.perl
@@ -150,6 +157,9 @@ endif
 ifndef PERL_PATH
 	PERL_PATH = /usr/bin/perl
 endif
+ifndef PYTHON_PATH
+	PYTHON_PATH = /usr/bin/python
+endif
 
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
@@ -189,7 +199,9 @@ endif
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
-	  $(patsubst %.perl,%,$(SCRIPT_PERL)) gitk
+	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
+	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
+	  gitk
 
 ### Build rules
 
@@ -212,6 +224,13 @@ $(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	rm -f $@
 	sed -e '1s|#!.*perl|#!$(PERL_PATH)|' $@.perl >$@
+	chmod +x $@
+
+$(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
+	rm -f $@
+	sed -e '1s|#!.*python|#!$(PYTHON_PATH)|' \
+	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR)|g' \
+		$@.py >$@
 	chmod +x $@
 
 %.o: %.c
@@ -274,6 +293,8 @@ install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
 	sh ./cmd-rename.sh $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
+	$(INSTALL) -m755 -d $(DESTDIR)$(GIT_PYTHON_DIR)
+	$(INSTALL) $(PYMODULES) $(DESTDIR)$(GIT_PYTHON_DIR)
 
 install-doc:
 	$(MAKE) -C Documentation install

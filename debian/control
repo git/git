@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: git-core
 Architecture: any
 Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, patch, rcs
-Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl
+Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl, python (>= 2.4.0)
 Suggests: cogito
 Conflicts: git, cogito (<< 0.13)
 Description: The git content addressable filesystem

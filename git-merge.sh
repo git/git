@@ -14,7 +14,7 @@ usage () {
 
 # all_strategies='resolve fredrik stupid octopus'
 
-all_strategies='resolve octopus stupid'
+all_strategies='fredrik octopus resolve stupid'
 default_strategies='resolve octopus'
 use_strategies=
 

@@ -43,6 +43,7 @@ git-mailinfo
 git-mailsplit
 git-merge
 git-merge-base
+git-merge-fredrik
 git-merge-index
 git-merge-octopus
 git-merge-one-file

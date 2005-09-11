@@ -41,7 +41,7 @@ MAN_DESTDIR := $(DESTDIR)/$(MANDIR)
 build: debian/build-stamp
 debian/build-stamp:
 	dh_testdir
-	$(MAKE) prefix=$(PREFIX) all doc
+	$(MAKE) prefix=$(PREFIX) PYTHON_PATH=/usr/bin/python2.4 all doc
 	touch debian/build-stamp
 
 debian-clean:
