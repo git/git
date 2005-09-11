@@ -80,11 +80,11 @@ static unsigned int children_deleted = 0;
 
 static struct child {
 	pid_t pid;
-	socklen_t addrlen;
+	int addrlen;
 	struct sockaddr_storage address;
 } live_child[MAX_CHILDREN];
 
-static void add_child(int idx, pid_t pid, struct sockaddr *addr, socklen_t addrlen)
+static void add_child(int idx, pid_t pid, struct sockaddr *addr, int addrlen)
 {
 	live_child[idx].pid = pid;
 	live_child[idx].addrlen = addrlen;
@@ -178,7 +178,7 @@ static void check_max_connections(void)
 	}
 }
 
-static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
+static void handle(int incoming, struct sockaddr *addr, int addrlen)
 {
 	pid_t pid = fork();
 
@@ -308,7 +308,7 @@ static int serve(int port)
 
 			if (FD_ISSET(sockfd, &fds)) {
 				struct sockaddr_storage ss;
-				socklen_t sslen = sizeof(ss);
+				int sslen = sizeof(ss);
 				int incoming = accept(sockfd, (struct sockaddr *)&ss, &sslen);
 				if (incoming < 0) {
 					switch (errno) {
