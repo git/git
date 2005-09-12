@@ -91,7 +91,7 @@ int main(int ac, const char **av) {
 			if (*cp++ != ' ')
 				break;
 			status = *cp++;
-			if (!strchr("MCRNDU", status))
+			if (!strchr("AMCRDU", status))
 				break;
 			two_paths = score = 0;
 			if (status == DIFF_STATUS_RENAMED ||
