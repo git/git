@@ -151,7 +151,8 @@ ifeq ($(shell uname -s),Darwin)
 endif
 ifeq ($(shell uname -s),SunOS)
 	NEEDS_SOCKET = YesPlease
-	PLATFORM_DEFINES += -DNO_GETDOMAINNAME=1
+	NEEDS_NSL = YesPlease
+	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
 
 ifndef SHELL_PATH
@@ -197,6 +198,10 @@ endif
 ifdef NEEDS_SOCKET
 	LIBS += -lsocket
 	SIMPLE_LIB += -lsocket
+endif
+ifdef NEEDS_NSL
+	LIBS += -lnsl
+	SIMPLE_LIB += -lnsl
 endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
