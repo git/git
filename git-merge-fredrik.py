@@ -60,7 +60,7 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
                                  branch1Name, branch2Name,
                                  cleanCache, updateWd)
 
-    if clean or alwaysWriteTree:
+    if clean or cleanCache:
         res = Commit(None, [h1, h2], tree=shaRes)
         graph.addNode(res)
     else:
