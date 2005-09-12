@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, math, random, os, re, signal, tempfile, stat, errno
+import sys, math, random, os, re, signal, tempfile, stat, errno, traceback
 from heapq import heappush, heappop
 from sets import Set
 
@@ -409,15 +409,20 @@ for nextArg in xrange(1, len(sys.argv)):
         break
 
 print 'Merging', h1, 'with', h2
-h1 = runProgram(['git-rev-parse', '--verify', h1 + '^0']).rstrip()
-h2 = runProgram(['git-rev-parse', '--verify', h2 + '^0']).rstrip()
 
-graph = buildGraph([h1, h2])
+try:
+    h1 = runProgram(['git-rev-parse', '--verify', h1 + '^0']).rstrip()
+    h2 = runProgram(['git-rev-parse', '--verify', h2 + '^0']).rstrip()
 
-[res, clean] = merge(graph.shaMap[h1], graph.shaMap[h2],
-                     firstBranch, secondBranch, graph)
+    graph = buildGraph([h1, h2])
 
-print ''
+    [res, clean] = merge(graph.shaMap[h1], graph.shaMap[h2],
+                         firstBranch, secondBranch, graph)
+
+    print ''
+except:
+    traceback.print_exc(None, sys.stderr)
+    sys.exit(2)
 
 if clean:
     sys.exit(0)
