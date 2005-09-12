@@ -7,6 +7,11 @@ while :; do
     flags="$flags $pattern"
     shift
     ;;
+  -e)
+    pattern="$2"
+    shift
+    break
+    ;;
   -*)
     echo "unknown flag $pattern" >&2
     exit 1
@@ -17,4 +22,4 @@ while :; do
   esac
 done
 shift
-git-ls-files -z "$@" | xargs -0 grep $flags "$pattern"
+git-ls-files -z "$@" | xargs -0 grep $flags -e "$pattern"
