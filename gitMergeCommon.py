@@ -46,6 +46,9 @@ class ProgramError(Exception):
         self.progStr = progStr
         self.error = error
 
+    def __str__(self):
+        return self.progStr + ': ' + self.error
+
 addDebug('runProgram')
 def runProgram(prog, input=None, returnCode=False, env=None, pipeOutput=True):
     debug('runProgram prog:', str(prog), 'input:', str(input))
