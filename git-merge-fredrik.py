@@ -392,6 +392,9 @@ def usage():
 # This strategy module figures out merge bases itself, so we only
 # get heads.
 
+if len(sys.argv) < 4:
+    usage()
+
 for nextArg in xrange(1, len(sys.argv)):
     if sys.argv[nextArg] == '--':
         if len(sys.argv) != nextArg + 3:
