@@ -828,7 +828,7 @@ which will very loudly warn you that you're now committing a merge
 (which is correct, so never mind), and you can write a small merge
 message about your adventures in git-merge-land.
 
-After you're done, start up `gitk --all` to see graphically what the
+After you're done, start up `gitk \--all` to see graphically what the
 history looks like. Notice that `mybranch` still exists, and you can
 switch to it, and continue to work with it if you want to. The
 `mybranch` branch will not contain the merge, but next time you merge it
@@ -883,7 +883,7 @@ not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast forward' merge.
 
-You can run `gitk --all` again to see how the commit ancestry
+You can run `gitk \--all` again to see how the commit ancestry
 looks like, or run `show-branch`, which tells you this.
 
 ------------------------------------------------

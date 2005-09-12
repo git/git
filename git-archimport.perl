@@ -6,23 +6,25 @@
 # The basic idea is to walk the output of tla abrowse, 
 # fetch the changesets and apply them. 
 #
+
 =head1 Invocation
 
-    git-archimport -i <archive>/<branch> [<archive>/<branch>]
-    [ <archive>/<branch> ]
+    git-archimport [ -h ] [ -v ] [ -T ] [ -t tempdir ] <archive>/<branch> [ <archive>/<branch> ]
 
-    The script expects you to provide the key roots where it can start the
-    import from an 'initial import' or 'tag' type of Arch commit. It will
-    then follow all the branching and tagging within the provided roots.
+Imports a project from one or more Arch repositories. It will follow branches
+and repositories within the namespaces defined by the <archive/branch>
+parameters suppplied. If it cannot find the remote branch a merge comes from
+it will just import it as a regular commit. If it can find it, it will mark it 
+as a merge whenever possible.
 
-    It will die if it sees branches that have different roots. 
+See man (1) git-archimport for more details.
 
-=head2 TODO
+=head1 TODO
 
- - keep track of merged patches, and mark a git merge when it happens
- - smarter rules to parse the archive history "up" and "down"
- - be able to continue an import where we left off
+ - create tag objects instead of ref tags
  - audit shell-escaping of filenames
+ - hide our private tags somewhere smarter
+ - find a way to make "cat *patches | patch" safe even when patchfiles are missing newlines  
 
 =head1 Devel tricks
 
@@ -34,7 +36,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Spec;
-use File::Temp qw(tempfile);
+use File::Temp qw(tempfile tempdir);
 use File::Path qw(mkpath);
 use File::Basename qw(basename dirname);
 use String::ShellQuote;
@@ -48,32 +50,31 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
+my $git_dir = $ENV{"GIT_DIR"} || ".git";
+$ENV{"GIT_DIR"} = $git_dir;
+
 our($opt_h,$opt_v, $opt_T,
     $opt_C,$opt_t);
 
 sub usage() {
     print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from Arch
-       [ -h ] [ -v ] [ -T ] 
-       [ -C GIT_repository ] [ -t tempdir ] 
+       [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
        repository/arch-branch [ repository/arch-branch] ...
 END
     exit(1);
 }
 
-getopts("ThviC:t:") or usage();
+getopts("Thvt:") or usage();
 usage if $opt_h;
 
 @ARGV >= 1 or usage();
 my @arch_roots = @ARGV;
 
-my $tmp = $opt_t;
-$tmp ||= '/tmp';
-$tmp .= '/git-archimport/';
-
-my $git_tree = $opt_C;
-$git_tree ||= ".";
-
+my ($tmpdir, $tmpdirname) = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+my $tmp = $opt_t || 1;
+$tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+$opt_v && print "+ Using $tmp as temporary directory\n";
 
 my @psets  = ();                # the collection
 my %psets  = ();                # the collection, by name
@@ -180,7 +181,7 @@ foreach my $root (@arch_roots) {
 ##      and put an initial import
 ##      or a full tag
 my $import = 0;
-unless (-d '.git') { # initial import
+unless (-d $git_dir) { # initial import
     if ($psets[0]{type} eq 'i' || $psets[0]{type} eq 't') {
         print "Starting import from $psets[0]{id}\n";
 	`git-init-db`;
@@ -191,11 +192,11 @@ unless (-d '.git') { # initial import
     }
 } else {    # progressing an import
     # load the rptags
-    opendir(DIR, ".git/archimport/tags")
+    opendir(DIR, "$git_dir/archimport/tags")
 	|| die "can't opendir: $!";
     while (my $file = readdir(DIR)) {
 	# skip non-interesting-files
-	next unless -f ".git/archimport/tags/$file";
+	next unless -f "$git_dir/archimport/tags/$file";
 	next if     $file =~ m/--base-0$/; # don't care for base-0
 	my $sha = ptag($file);
 	chomp $sha;
@@ -239,7 +240,7 @@ foreach my $ps (@psets) {
     }
 
     unless ($import) { # skip for import
-        if ( -e ".git/refs/heads/$ps->{branch}") {
+        if ( -e "$git_dir/refs/heads/$ps->{branch}") {
             # we know about this branch
             `git checkout    $ps->{branch}`;
         } else {
@@ -292,7 +293,7 @@ foreach my $ps (@psets) {
     # imports don't give us good info
     # on added files. Shame on them
     if ($ps->{type} eq 'i' || $ps->{type} eq 't') { 
-        `find . -type f -print0 | grep -zv '^./.git' | xargs -0 -l100 git-update-index --add`;
+        `find . -type f -print0 | grep -zv '^./$git_dir' | xargs -0 -l100 git-update-index --add`;
         `git-ls-files --deleted -z | xargs --no-run-if-empty -0 -l100 git-update-index --remove`;
     }
 
@@ -356,8 +357,8 @@ foreach my $ps (@psets) {
     # Who's your daddy?
     #
     my @par;
-    if ( -e ".git/refs/heads/$ps->{branch}") {
-        if (open HEAD, "<.git/refs/heads/$ps->{branch}") {
+    if ( -e "$git_dir/refs/heads/$ps->{branch}") {
+        if (open HEAD, "<$git_dir/refs/heads/$ps->{branch}") {
             my $p = <HEAD>;
             close HEAD;
             chomp $p;
@@ -404,11 +405,11 @@ foreach my $ps (@psets) {
     #
     # Update the branch
     # 
-    open  HEAD, ">.git/refs/heads/$ps->{branch}";
+    open  HEAD, ">$git_dir/refs/heads/$ps->{branch}";
     print HEAD $commitid;
     close HEAD;
-    unlink ('.git/HEAD');
-    symlink("refs/heads/$ps->{branch}",".git/HEAD");
+    unlink ("$git_dir/HEAD");
+    symlink("refs/heads/$ps->{branch}","$git_dir/HEAD");
 
     # tag accordingly
     ptag($ps->{id}, $commitid); # private tag
@@ -437,7 +438,7 @@ sub apply_import {
 
     `tla get -s --no-pristine -A $ps->{repo} $ps->{id} $tmp/import`;
     die "Cannot get import: $!" if $?;    
-    `rsync -v --archive --delete --exclude '.git' --exclude '.arch-ids' --exclude '{arch}' $tmp/import/* ./`;
+    `rsync -v --archive --delete --exclude '$git_dir' --exclude '.arch-ids' --exclude '{arch}' $tmp/import/* ./`;
     die "Cannot rsync import:$!" if $?;
     
     `rm -fr $tmp/import`;
@@ -483,7 +484,7 @@ sub apply_cset {
     }
 
     # bring in new files
-    `rsync --archive --exclude '.git' --exclude '.arch-ids' --exclude '{arch}' $tmp/changeset/new-files-archive/* ./`;
+    `rsync --archive --exclude '$git_dir' --exclude '.arch-ids' --exclude '{arch}' $tmp/changeset/new-files-archive/* ./`;
 
     # deleted files are hinted from the commitlog processing
 
@@ -578,7 +579,7 @@ sub tag {
     $tag = shell_quote($tag);
     
     if ($commit) {
-        open(C,">.git/refs/tags/$tag")
+        open(C,">$git_dir/refs/tags/$tag")
             or die "Cannot create tag $tag: $!\n";
         print C "$commit\n"
             or die "Cannot write tag $tag: $!\n";
@@ -586,7 +587,7 @@ sub tag {
             or die "Cannot write tag $tag: $!\n";
         print " * Created tag ' $tag' on '$commit'\n" if $opt_v;
     } else {                    # read
-        open(C,"<.git/refs/tags/$tag")
+        open(C,"<$git_dir/refs/tags/$tag")
             or die "Cannot read tag $tag: $!\n";
         $commit = <C>;
         chomp $commit;
@@ -604,12 +605,12 @@ sub ptag {
     $tag =~ s|/|--|g; 
     $tag = shell_quote($tag);
     
-    unless (-d '.git/archimport/tags') {
-        mkpath('.git/archimport/tags');
+    unless (-d "$git_dir/archimport/tags") {
+        mkpath("$git_dir/archimport/tags");
     }
 
     if ($commit) {              # write
-        open(C,">.git/archimport/tags/$tag")
+        open(C,">$git_dir/archimport/tags/$tag")
             or die "Cannot create tag $tag: $!\n";
         print C "$commit\n"
             or die "Cannot write tag $tag: $!\n";
@@ -619,10 +620,10 @@ sub ptag {
 	    unless $tag =~ m/--base-0$/;
     } else {                    # read
         # if the tag isn't there, return 0
-        unless ( -s ".git/archimport/tags/$tag") {
+        unless ( -s "$git_dir/archimport/tags/$tag") {
             return 0;
         }
-        open(C,"<.git/archimport/tags/$tag")
+        open(C,"<$git_dir/archimport/tags/$tag")
             or die "Cannot read tag $tag: $!\n";
         $commit = <C>;
         chomp $commit;

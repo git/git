@@ -57,7 +57,7 @@ pre-commit
 ----------
 
 This hook is invoked by `git-commit`, and can be bypassed
-with `--no-verify` option.  It takes no parameter, and is
+with `\--no-verify` option.  It takes no parameter, and is
 invoked before obtaining the proposed commit log message and
 making a commit.  Exiting with non-zero status from this script
 causes the `git-commit` to abort.
@@ -70,7 +70,7 @@ commit-msg
 ----------
 
 This hook is invoked by `git-commit`, and can be bypassed
-with `--no-verify` option.  It takes a single parameter, the
+with `\--no-verify` option.  It takes a single parameter, the
 name of the file that holds the proposed commit log message.
 Exiting with non-zero status causes the `git-commit` to
 abort.
