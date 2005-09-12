@@ -200,6 +200,8 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
+* Teach 'git format-patch' about 'git cherry' [DONE].
+
 * Make 'git bisect' easier to use by logging the earlier
   good/bad choices and make it replayable [DONE].
 
