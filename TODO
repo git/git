@@ -84,8 +84,7 @@ Technical (heavier)
 * Tony Luck reported an unfortunate glitch in the 3-way merge.
   Encourage discussions to come up with a not-so-expensive way
   to catch the kind of ambiguities that led to his misery.
-  [Daniel's patch looks quite promising, so is the one from
-  Fredrik.]
+  [Deathmatch between Daniel's and Fredrik's ongoing.]
 
 * HPA has two projects, klibc and klibc-kbuild, that have large
   set of overlapping files in different paths (i.e. one has many
@@ -98,7 +97,7 @@ Technical (heavier)
 
 * To make it easier to experiment with different merge
   strategies, make git-merge driver that will run merge backends
-  for the best merge [tested and in proposed updates].
+  for the best merge [DONE].
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -119,7 +118,8 @@ Technical (milder)
   [As of 2005-09-09 evening US/Pacific, the "master" branch has
   what should go in 0.99.7 including gitenv() removal].
 
-* Have Daniel's read-tree graduate from "pu" after plugging leaks.
+* Have Daniel's read-tree graduate from "pu" after plugging
+  leaks [DONE].
 
 * Implement a merge backend using Daniel's read-tree [DONE].
 
@@ -132,14 +132,14 @@ Technical (milder)
 * Accept Fredrik merge after renaming it (I want to name the
   driver 'git merge').  Suggest where to place *.py stuff --
   probably in $(share)/git-core/ and add Makefile entry for
-  installation.
+  installation [DONE].
 
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
 
-* Bug Martin for archimport script documentation.
+* Bug Martin for archimport script documentation [DONE].
 
-* More portability.
+* More portability [IN PROGRESS].
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -194,7 +194,7 @@ Technical (milder)
 
 * Output full path in the "git-rev-list --objects" output, not
   just the basename, and see the improved clustering results in
-  better packing.
+  better packing [Tried, but did not work out well].
 
 
 Technical (trivial)
