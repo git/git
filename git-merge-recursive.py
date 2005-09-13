@@ -10,6 +10,22 @@ from gitMergeCommon import *
 # The actual merge code
 # ---------------------
 
+originalIndexFile = os.environ.get('GIT_INDEX_FILE',
+                                   os.environ.get('GIT_DIR', '.git') + '/index')
+temporaryIndexFile = os.environ.get('GIT_DIR', '.git') + \
+                     '/merge-recursive-tmp-index'
+def setupIndex(temporary):
+    try:
+        os.unlink(temporaryIndexFile)
+    except OSError:
+        pass
+    if temporary:
+        newIndex = temporaryIndexFile
+        os.environ
+    else:
+        newIndex = originalIndexFile
+    os.environ['GIT_INDEX_FILE'] = newIndex
+
 def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
     '''Merge the commits h1 and h2, return the resulting virtual
     commit object and a flag indicating the cleaness of the merge.'''
@@ -39,13 +55,10 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
         assert(isinstance(Ms, Commit))
 
     if callDepth == 0:
-        if len(ca) > 1:
-            runProgram(['git-read-tree', h1.tree()])
-            runProgram(['git-update-index', '-q', '--refresh'])
-        # Use the original index if we only have one common ancestor
-        
+        setupIndex(False)
         cleanCache = False
     else:
+        setupIndex(True)
         runProgram(['git-read-tree', h1.tree()])
         cleanCache = True
 
