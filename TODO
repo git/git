@@ -114,11 +114,12 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Define semantics for relative pathnames in
-  objects/info/alternates.  Either relative to 'objects', or
-  relative to the parent directory of .git/ (the latter is
-  consistent with GIT_ALTERNATE_OBJECT_DIRECTORIES).  Perhaps
-  would end up doing the former.
+* Define semantics for relative pathnames in objects/info/alternates.
+  Either relative to 'objects', or relative to the top of project tree
+  ;the latter is consistent with GIT_ALTERNATE_OBJECT_DIRECTORIES.
+  Perhaps would end up doing the former because we would want to be
+  consistent between a naked repository and a repository with working
+  tree [RFC-PATCH issued].
 
 * Tool renames.  Give fixup patch for at least Cogito and StGIT
   [DONE].
@@ -205,7 +206,7 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
-* Deal with CDPATH.
+* Deal with CDPATH [DONE].
 
 * Teach 'git format-patch' about 'git cherry' [DONE].
 
