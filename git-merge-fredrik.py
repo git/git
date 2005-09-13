@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, math, random, os, re, signal, tempfile, stat, errno
+import sys, math, random, os, re, signal, tempfile, stat, errno, traceback
 from heapq import heappush, heappop
 from sets import Set
 
@@ -60,7 +60,7 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
                                  branch1Name, branch2Name,
                                  cleanCache, updateWd)
 
-    if clean or alwaysWriteTree:
+    if clean or cleanCache:
         res = Commit(None, [h1, h2], tree=shaRes)
         graph.addNode(res)
     else:
@@ -120,9 +120,8 @@ def unmergedCacheEntries():
             e.stages[stage].mode = mode
             e.stages[stage].sha1 = sha1
         else:
-            print 'Error: Merge program failed: Unexpected output from', \
-                  'git-ls-files:', l
-            sys.exit(2)
+            die('Error: Merge program failed: Unexpected output from', \
+                'git-ls-files:', l)
     return res
 
 def mergeTrees(head, merge, common, branch1Name, branch2Name,
@@ -381,26 +380,25 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs,
         os.unlink(src1)
         os.unlink(src2)
     else:
-        print 'ERROR: Fatal merge failure.'
-        print "ERROR: Shouldn't happen"
-        sys.exit(2)
+        die("ERROR: Fatal merge failure, shouldn't happen.")
 
     return cleanMerge
 
 def usage():
-    print 'Usage:', sys.argv[0], ' <base>... -- <head> <remote>..'
-    sys.exit(2)
+    die('Usage:', sys.argv[0], ' <base>... -- <head> <remote>..')
 
 # main entry point as merge strategy module
 # The first parameters up to -- are merge bases, and the rest are heads.
 # This strategy module figures out merge bases itself, so we only
 # get heads.
 
+if len(sys.argv) < 4:
+    usage()
+
 for nextArg in xrange(1, len(sys.argv)):
     if sys.argv[nextArg] == '--':
         if len(sys.argv) != nextArg + 3:
-            print 'Not handling anything other than two heads merge.'
-            sys.exit(2)
+            die('Not handling anything other than two heads merge.')
         try:
             h1 = firstBranch = sys.argv[nextArg + 1]
             h2 = secondBranch = sys.argv[nextArg + 2]
@@ -409,15 +407,20 @@ for nextArg in xrange(1, len(sys.argv)):
         break
 
 print 'Merging', h1, 'with', h2
-h1 = runProgram(['git-rev-parse', '--verify', h1 + '^0']).rstrip()
-h2 = runProgram(['git-rev-parse', '--verify', h2 + '^0']).rstrip()
 
-graph = buildGraph([h1, h2])
+try:
+    h1 = runProgram(['git-rev-parse', '--verify', h1 + '^0']).rstrip()
+    h2 = runProgram(['git-rev-parse', '--verify', h2 + '^0']).rstrip()
 
-[res, clean] = merge(graph.shaMap[h1], graph.shaMap[h2],
-                     firstBranch, secondBranch, graph)
+    graph = buildGraph([h1, h2])
 
-print ''
+    [res, clean] = merge(graph.shaMap[h1], graph.shaMap[h2],
+                         firstBranch, secondBranch, graph)
+
+    print ''
+except:
+    traceback.print_exc(None, sys.stderr)
+    sys.exit(2)
 
 if clean:
     sys.exit(0)

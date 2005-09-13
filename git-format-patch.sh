@@ -27,8 +27,6 @@ with applymbox.
 }
 
 diff_opts=
-IFS='
-'
 LF='
 '
 
@@ -61,7 +59,10 @@ do
     --output-directo|--output-director|--output-directory)
     case "$#" in 1) usage ;; esac; shift
     outdir="$1" ;;
-    -*)	diff_opts="$diff_opts$LF$1" ;;
+    -*' '* | -*"$LF"* | -*'	'*)
+	# Ignore diff option that has whitespace for now.
+	;;
+    -*)	diff_opts="$diff_opts$1 " ;;
     *) break ;;
     esac
     shift
@@ -72,16 +73,20 @@ tt)
 	die '--keep-subject and --numbered are incompatible.' ;;
 esac
 
-revpair=
+rev1= rev2=
 case "$#" in
 2)
-    revpair="$1..$2" ;;
+    rev1="$1" rev2="$2" ;;
 1)
     case "$1" in
     *..*)
-    	revpair="$1";;
+	rev1=`expr "$1" : '\(.*\)\.\.'`
+	rev2=`expr "$1" : '.*\.\.\(.*\)'`
+	;;
     *)
-	revpair="$1..HEAD";;
+        rev1="$1"
+	rev2="HEAD"
+	;;
     esac ;;
 *)
     usage ;;
@@ -127,10 +132,21 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
 
-git-rev-list --no-merges --merge-order \
-	$(git-rev-parse --revs-only "$revpair") >$series
+git-cherry -v "$rev1" "$rev2" |
+while read sign rev comment
+do
+	case "$sign" in
+	'-')
+		echo >&2 "Merged already: $comment"
+		;;
+	*)
+		echo $rev
+		;;
+	esac
+done >$series
+
 total=`wc -l <$series | tr -dc "[0-9]"`
-i=$total
+i=1
 while read commit
 do
     git-cat-file commit "$commit" | git-stripspace >$commsg
@@ -145,7 +161,7 @@ do
     esac
 
     file=`printf '%04d-%stxt' $i "$title"`
-    i=`expr "$i" - 1`
+    i=`expr "$i" + 1`
     echo "* $file"
     {
 	mailScript='

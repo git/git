@@ -10,6 +10,10 @@ if sys.version_info[0] < 2 or \
 
 import subprocess
 
+def die(*args):
+    printList(args, sys.stderr)
+    sys.exit(2)
+
 # Debugging machinery
 # -------------------
 
@@ -28,11 +32,11 @@ def debug(*args):
         if funcName in functionsToDebug:
             printList(args)
 
-def printList(list):
+def printList(list, file=sys.stdout):
     for x in list:
-        sys.stdout.write(str(x))
-        sys.stdout.write(' ')
-    sys.stdout.write('\n')
+        file.write(str(x))
+        file.write(' ')
+    file.write('\n')
 
 # Program execution
 # -----------------
@@ -41,6 +45,9 @@ class ProgramError(Exception):
     def __init__(self, progStr, error):
         self.progStr = progStr
         self.error = error
+
+    def __str__(self):
+        return self.progStr + ': ' + self.error
 
 addDebug('runProgram')
 def runProgram(prog, input=None, returnCode=False, env=None, pipeOutput=True):

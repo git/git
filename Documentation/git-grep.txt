@@ -1,0 +1,47 @@
+git-grep(1)
+===========
+v0.99.6, Sep 2005
+
+NAME
+----
+git-grep - print lines matching a pattern
+
+
+SYNOPSIS
+--------
+'git-grep' <option>... <pattern> <path>...
+
+DESCRIPTION
+-----------
+Searches list of files `git-ls-files` produces for lines
+containing a match to the given pattern.
+
+
+OPTIONS
+-------
+<option>...::
+	Either an option to pass to `grep` or `git-ls-files`.
+	Some `grep` options, such as `-C` and `-m`, that take
+	parameters are known to `git-grep`.
+
+<pattern>::
+	The pattern to look for.
+
+<path>...::
+
+	Optional paths to limit the set of files to be searched;
+	passed to `git-ls-files`.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

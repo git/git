@@ -1,6 +1,6 @@
 git(7)
 ======
-v0.99.5, Aug 2005
+v0.99.6, Sep 2005
 
 NAME
 ----
@@ -238,7 +238,7 @@ link:git-commit.html[git-commit]::
 	Previously this command was known as git-commit-script.
 
 link:git-diff.html[git-diff]::
-	git-diff.
+	Show changes between commits, commit and working tree, etc.
 	Previously this command was known as git-diff-script.
 
 link:git-fetch.html[git-fetch]::
@@ -246,8 +246,11 @@ link:git-fetch.html[git-fetch]::
 	Previously this command was known as git-fetch-script.
 
 link:git-format-patch.html[git-format-patch]::
-	git-format-patch.
+	Prepare patches for e-mail submission.
 	Previously this command was known as git-format-patch-script.
+
+link:git-grep.html[git-grep]::
+	Print lines matching a pattern
 
 link:git-log.html[git-log]::
 	Shows commit logs.

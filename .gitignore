@@ -31,6 +31,7 @@ git-fetch-pack
 git-format-patch
 git-fsck-objects
 git-get-tar-commit-id
+git-grep
 git-hash-object
 git-http-fetch
 git-init-db

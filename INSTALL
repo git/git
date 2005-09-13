@@ -64,3 +64,8 @@ Issues of note:
 	  You'll only need the merge program if you do development using
 	  git, and if you only use git to track other peoples work you'll
 	  never notice the lack of it. 
+
+        - "wish", the TCL/Tk windowing shell is used in gitk to show the
+          history graphically
+
+	- "ssh" is used to push and pull over the net
