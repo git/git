@@ -41,7 +41,7 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
     if callDepth == 0:
         if len(ca) > 1:
             runProgram(['git-read-tree', h1.tree()])
-            runProgram(['git-update-cache', '-q', '--refresh'])
+            runProgram(['git-update-index', '-q', '--refresh'])
         # Use the original index if we only have one common ancestor
         
         cleanCache = False
@@ -205,14 +205,14 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs, cleanCache):
                 assert(False)
 
         if updateWd and updateCache:
-            runProgram(['git-update-cache', '--add', '--', path])
+            runProgram(['git-update-index', '--add', '--', path])
         elif updateCache:
-            runProgram(['git-update-cache', '--add', '--cacheinfo',
+            runProgram(['git-update-index', '--add', '--cacheinfo',
                         '0%o' % mode, sha, path])
 
     def removeFile(clean, path):
         if cleanCache or (not cleanCache and clean):
-            runProgram(['git-update-cache', '--force-remove', '--', path])
+            runProgram(['git-update-index', '--force-remove', '--', path])
 
         if not cleanCache and clean:
             try:
