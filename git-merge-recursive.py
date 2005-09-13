@@ -7,8 +7,6 @@ from sets import Set
 sys.path.append('@@GIT_PYTHON_PATH@@')
 from gitMergeCommon import *
 
-alwaysWriteTree = False
-
 # The actual merge code
 # ---------------------
 
@@ -46,19 +44,14 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
             runProgram(['git-update-cache', '-q', '--refresh'])
         # Use the original index if we only have one common ancestor
         
-        updateWd = True
-        if alwaysWriteTree:
-            cleanCache = True
-        else:
-            cleanCache = False
+        cleanCache = False
     else:
         runProgram(['git-read-tree', h1.tree()])
-        updateWd = False
         cleanCache = True
 
     [shaRes, clean] = mergeTrees(h1.tree(), h2.tree(), Ms.tree(),
                                  branch1Name, branch2Name,
-                                 cleanCache, updateWd)
+                                 cleanCache)
 
     if clean or cleanCache:
         res = Commit(None, [h1, h2], tree=shaRes)
@@ -125,7 +118,7 @@ def unmergedCacheEntries():
     return res
 
 def mergeTrees(head, merge, common, branch1Name, branch2Name,
-               cleanCache, updateWd):
+               cleanCache):
     '''Merge the trees 'head' and 'merge' with the common ancestor
     'common'. The name of the head branch is 'branch1Name' and the name of
     the merge branch is 'branch2Name'. Return a tuple (tree, cleanMerge)
@@ -138,10 +131,11 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name,
         print 'Already uptodate!'
         return [head, True]
 
-    if updateWd:
-        updateArg = '-u'
-    else:
+    if cleanCache:
         updateArg = '-i'
+    else:
+        updateArg = '-u'
+
     runProgram(['git-read-tree', updateArg, '-m', common, head, merge])
     cleanMerge = True
 
@@ -157,7 +151,7 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name,
         entries = unmergedCacheEntries()
         for name in entries:
             if not processEntry(entries[name], branch1Name, branch2Name,
-                                files, dirs, cleanCache, updateWd):
+                                files, dirs, cleanCache):
                 cleanMerge = False
                 
         if cleanMerge or cleanCache:
@@ -169,29 +163,25 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name,
 
     return [tree, cleanMerge]
 
-def processEntry(entry, branch1Name, branch2Name, files, dirs,
-                 cleanCache, updateWd):
+def processEntry(entry, branch1Name, branch2Name, files, dirs, cleanCache):
     '''Merge one cache entry. 'files' is a Set with the files in both of
     the heads that we are going to merge. 'dirs' contains the
     corresponding data for directories. If 'cleanCache' is True no
     non-zero stages will be left in the cache for the path
     corresponding to the entry 'entry'.'''
 
-# cleanCache == True  => Don't leave any non-stage 0 entries in the cache.
-#               False => Leave unmerged entries
-
-# updateWd  == True  => Update the working directory to correspond to the cache
-#              False => Leave the working directory unchanged
+# cleanCache == True  => Don't leave any non-stage 0 entries in the cache and
+#                        don't update the working directory
+#               False => Leave unmerged entries and update the working directory
 
 # clean     == True  => non-conflict case
 #              False => conflict case
 
 # If cleanCache == False then the cache shouldn't be updated if clean == False
 
-    def updateFile(clean, sha, mode, path):
-        if cleanCache or (not cleanCache and clean):
-            runProgram(['git-update-cache', '--add', '--cacheinfo',
-                        '0%o' % mode, sha, path])
+    def updateFile(clean, sha, mode, path, onlyWd=False):
+        updateCache = not onlyWd and (cleanCache or (not cleanCache and clean))
+        updateWd = onlyWd or (not cleanCache and clean)
 
         if updateWd:
             prog = ['git-cat-file', 'blob', sha]
@@ -213,13 +203,18 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs,
                 os.symlink(linkTarget, path)
             else:
                 assert(False)
-            runProgram(['git-update-cache', '--', path])
+
+        if updateWd and updateCache:
+            runProgram(['git-update-cache', '--add', '--', path])
+        elif updateCache:
+            runProgram(['git-update-cache', '--add', '--cacheinfo',
+                        '0%o' % mode, sha, path])
 
     def removeFile(clean, path):
         if cleanCache or (not cleanCache and clean):
             runProgram(['git-update-cache', '--force-remove', '--', path])
 
-        if updateWd:
+        if not cleanCache and clean:
             try:
                 os.unlink(path)
             except OSError, e:
@@ -235,8 +230,7 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs,
         files.add(newPath)
         return newPath
 
-    debug('processing', entry.path, 'clean cache:', cleanCache,
-          'wd:', updateWd)
+    debug('processing', entry.path, 'clean cache:', cleanCache)
 
     cleanMerge = True
 
@@ -327,9 +321,9 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs,
             if aMode != bMode:
                 cleanMerge = False
                 print 'CONFLICT: File "' + path + \
-                      '" added identically in both branches,'
-                print 'CONFLICT: but permissions conflict', '0%o' % aMode, \
-                      '->', '0%o' % bMode
+                      '" added identically in both branches,', \
+                      'but permissions conflict', '0%o' % aMode, '->', \
+                      '0%o' % bMode
                 print 'CONFLICT: adding with permission:', '0%o' % aMode
 
                 updateFile(False, aSha, aMode, path)
@@ -341,8 +335,7 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs,
             newPath1 = uniquePath(path, branch1Name)
             newPath2 = uniquePath(path, branch2Name)
             print 'CONFLICT (add/add): File "' + path + \
-                  '" added non-identically in both branches.', \
-                  'Adding "' + newPath1 + '" and "' + newPath2 + '" instead.'
+                  '" added non-identically in both branches.'
             removeFile(False, path)
             updateFile(False, aSha, aMode, newPath1)
             updateFile(False, bSha, bMode, newPath2)
@@ -372,7 +365,12 @@ def processEntry(entry, branch1Name, branch2Name, files, dirs,
         if ret != 0:
             cleanMerge = False
             print 'CONFLICT (content): Merge conflict in "' + path + '".'
-            updateFile(False, sha, mode, path)
+
+            if cleanCache:
+                updateFile(False, sha, mode, path)
+            else:
+                updateFile(True, aSha, aMode, path)
+                updateFile(False, sha, mode, path, True)
         else:
             updateFile(True, sha, mode, path)
 
