@@ -114,9 +114,14 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Tool renames.  Give fixup patch for at least Cogito and StGIT.
-  [As of 2005-09-09 evening US/Pacific, the "master" branch has
-  what should go in 0.99.7 including gitenv() removal].
+* Define semantics for relative pathnames in
+  objects/info/alternates.  Either relative to 'objects', or
+  relative to the parent directory of .git/ (the latter is
+  consistent with GIT_ALTERNATE_OBJECT_DIRECTORIES).  Perhaps
+  would end up doing the former.
+
+* Tool renames.  Give fixup patch for at least Cogito and StGIT
+  [DONE].
 
 * Have Daniel's read-tree graduate from "pu" after plugging
   leaks [DONE].
@@ -199,6 +204,8 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
+
+* Deal with CDPATH.
 
 * Teach 'git format-patch' about 'git cherry' [DONE].
 
