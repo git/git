@@ -14,6 +14,7 @@
 #endif
 
 static CURL *curl;
+static struct curl_slist *no_pragma_header;
 
 static char *base;
 
@@ -102,6 +103,7 @@ static int fetch_index(unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_FILE, indexfile);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	
 	if (curl_easy_perform(curl)) {
 		fclose(indexfile);
@@ -152,6 +154,7 @@ static int fetch_indices(void)
 	curl_easy_setopt(curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
 	
 	if (curl_easy_perform(curl)) {
 		return error("Unable to get pack index %s", url);
@@ -215,6 +218,7 @@ static int fetch_pack(unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_FILE, packfile);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	
 	if (curl_easy_perform(curl)) {
 		fclose(packfile);
@@ -255,6 +259,7 @@ int fetch(unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 	curl_easy_setopt(curl, CURLOPT_FILE, NULL);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
 	url = xmalloc(strlen(base) + 50);
 	strcpy(url, base);
@@ -303,6 +308,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         
         curl_easy_setopt(curl, CURLOPT_FILE, &buffer);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
 
         url = xmalloc(strlen(base) + 6 + strlen(ref));
         strcpy(url, base);
@@ -354,6 +360,7 @@ int main(int argc, char **argv)
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	curl = curl_easy_init();
+	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 	curl_ssl_verify = getenv("GIT_SSL_NO_VERIFY") ? 0 : 1;
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, curl_ssl_verify);
@@ -366,6 +373,7 @@ int main(int argc, char **argv)
 	if (pull(commit_id))
 		return 1;
 
+	curl_slist_free_all(no_pragma_header);
 	curl_global_cleanup();
 	return 0;
 }
