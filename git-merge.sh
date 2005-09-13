@@ -43,7 +43,7 @@ do
 		case "$#,$1" in
 		*,*=*)
 			strategy=`expr "$1" : '-[^=]*=\(.*\)'` ;;
-		0,*)
+		1,*)
 			usage ;;
 		*)
 			strategy="$2"
