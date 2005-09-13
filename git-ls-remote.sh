@@ -42,12 +42,16 @@ http://* | https://* )
         if [ -n "$GIT_SSL_NO_VERIFY" ]; then
             curl_extra_args="-k"
         fi
-	curl -nsf $curl_extra_args "$peek_repo/info/refs" || exit 1
+	curl -nsf $curl_extra_args "$peek_repo/info/refs" ||
+		echo "failed	slurping"
 	;;
 
 rsync://* )
 	mkdir $tmpdir
-	rsync -rq "$peek_repo/refs" $tmpdir || exit 1
+	rsync -rq "$peek_repo/refs" $tmpdir || {
+		echo "failed	slurping"
+		exit
+	}
 	(cd $tmpdir && find refs -type f) |
 	while read path
 	do
@@ -58,12 +62,17 @@ rsync://* )
 	;;
 
 * )
-	git-peek-remote "$peek_repo"
+	git-peek-remote "$peek_repo" ||
+		echo "failed	slurping"
 	;;
 esac |
 sort -t '	' -k 2 |
 while read sha1 path
 do
+	case "$sha1" in
+	failed)
+		die "Failed to find remote refs"
+	esac
 	case "$path" in
 	refs/heads/*)
 		group=heads ;;
