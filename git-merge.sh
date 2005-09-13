@@ -12,9 +12,9 @@ usage () {
     die "git-merge [-n] [-s <strategy>]... <merge-message> <head> <remote>+"
 }
 
-# all_strategies='resolve fredrik stupid octopus'
+# all_strategies='resolve recursive stupid octopus'
 
-all_strategies='fredrik octopus resolve stupid'
+all_strategies='recursive octopus resolve stupid'
 default_strategies='resolve octopus'
 use_strategies=
 
