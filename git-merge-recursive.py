@@ -423,5 +423,4 @@ except:
 if clean:
     sys.exit(0)
 else:
-    print 'Automatic merge failed, fix up by hand'
     sys.exit(1)
