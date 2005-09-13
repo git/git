@@ -205,9 +205,16 @@ case "$remote" in
 http://* | https://* | rsync://* )
     ;; # we are already done.
 *)
-    git-fetch-pack "$remote" $rref |
+    (
+	git-fetch-pack "$remote" $rref || echo failed "$remote"
+    ) |
     while read sha1 remote_name
     do
+	case "$sha1" in
+	failed)
+		echo >&2 "Fetch failure: $remote"
+		exit 1 ;;
+	esac
 	found=
 	single_force=
 	for ref in $refs
@@ -225,7 +232,7 @@ http://* | https://* | rsync://* )
 
 	local_name=$(expr "$found" : '[^:]*:\(.*\)')
 	append_fetch_head "$sha1" "$remote" "$remote_name" "$remote_nick" "$local_name"
-    done
+    done || exit
     ;;
 esac
 
