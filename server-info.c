@@ -6,16 +6,6 @@
 
 /* refs */
 static FILE *info_ref_fp;
-static unsigned long info_ref_time;
-static int info_ref_is_stale = 0;
-
-static int stat_ref(const char *path, const unsigned char *sha1)
-{
-	struct stat st;
-	if (!stat(path, &st) && info_ref_time < st.st_mtime)
-		info_ref_is_stale = 1;
-	return 0;
-}
 
 static int add_info_ref(const char *path, const unsigned char *sha1)
 {
@@ -25,28 +15,12 @@ static int add_info_ref(const char *path, const unsigned char *sha1)
 
 static int update_info_refs(int force)
 {
-	struct stat st;
 	char *path0 = strdup(git_path("info/refs"));
 	int len = strlen(path0);
 	char *path1 = xmalloc(len + 2);
 
 	strcpy(path1, path0);
 	strcpy(path1 + len, "+");
-
-	if (!force) {
-		if (stat(path0, &st)) {
-			if (errno == ENOENT)
-				info_ref_is_stale = 1;
-			else
-				return error("cannot stat %s", path0);
-		}
-		else {
-			info_ref_time = st.st_mtime;
-			for_each_ref(stat_ref);
-		}
-		if (!info_ref_is_stale)
-			return 0;
-	}
 
 	safe_create_leading_directories(path0);
 	info_ref_fp = fopen(path1, "w");
