@@ -99,6 +99,9 @@ Technical (heavier)
   strategies, make git-merge driver that will run merge backends
   for the best merge [DONE].
 
+* Sort out the mess objects/info/alternates introduces on the
+  client end.  Both rsync and commit walkers are broken.
+
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
   We would need a tool to generate an idx file out of a pack
