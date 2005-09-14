@@ -24,9 +24,11 @@ then
 		die "You need to first update your working tree."
 fi
 
-merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
-merge_name=$(sed -e 's/^[0-9a-f]*	//' "$GIT_DIR"/FETCH_HEAD |
-	 tr '\012' ' ')
+merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD)
+merge_name=$(
+    perl -e 'print join("; ", map { chomp; s/^[0-9a-f]*	//; $_ } <>)' \
+    "$GIT_DIR"/FETCH_HEAD
+)
 
 case "$merge_head" in
 '')
