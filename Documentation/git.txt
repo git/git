@@ -359,9 +359,6 @@ link:git-tag.html[git-tag]::
 
 Interrogators:
 
-link:git-build-rev-cache.html[git-build-rev-cache]::
-	Create or update a rev-cache file.
-
 link:git-cherry.html[git-cherry]::
 	Find commits not merged upstream.
 
@@ -401,9 +398,6 @@ link:git-rev-parse.html[git-rev-parse]::
 link:git-send-email.html[git-send-email]::
 	Send patch e-mails out of "format-patch --mbox" output.
 	Previously this command was known as git-send-email-script.
-
-link:git-show-rev-cache.html[git-show-rev-cache]::
-	Show the contents of a rev-cache file.
 
 link:git-stripspace.html[git-stripspace]::
 	Filter out empty lines.

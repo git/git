@@ -3,7 +3,6 @@
 #include "object.h"
 #include "commit.h"
 #include "tag.h"
-#include "rev-cache.h"
 
 /* refs */
 static FILE *info_ref_fp;
@@ -516,45 +515,6 @@ static int update_info_packs(int force)
 	return 0;
 }
 
-/* rev-cache */
-static int record_rev_cache_ref(const char *path, const unsigned char *sha1)
-{
-	struct object *obj = parse_object(sha1);
-
-	if (!obj)
-		return error("ref %s has bad sha %s", path, sha1_to_hex(sha1));
-	while (obj && obj->type == tag_type)
-		obj = parse_object(((struct tag *)obj)->tagged->sha1);
-	if (!obj || obj->type != commit_type)
-		/* tag pointing at a non-commit */
-		return 0;
-	return record_rev_cache(obj->sha1, NULL);
-}
-
-static int update_info_revs(int force)
-{
-	char *path0 = strdup(git_path("info/rev-cache"));
-	int len = strlen(path0);
-	char *path1 = xmalloc(len + 2);
-
-	strcpy(path1, path0);
-	strcpy(path1 + len, "+");
-
-	/* read existing rev-cache */
-	if (!force)
-		read_rev_cache(path0, NULL, 0);
-	safe_create_leading_directories(path0);
-
-	for_each_ref(record_rev_cache_ref);
-
-	/* update the rev-cache database */
-	write_rev_cache(path1, force ? "/dev/null" : path0);
-	rename(path1, path0);
-	free(path1);
-	free(path0);
-	return 0;
-}
-
 /* public */
 int update_server_info(int force)
 {
@@ -566,7 +526,6 @@ int update_server_info(int force)
 
 	errs = errs | update_info_refs(force);
 	errs = errs | update_info_packs(force);
-	errs = errs | update_info_revs(force);
 
 	return errs;
 }

@@ -6,7 +6,6 @@ git-applypatch
 git-archimport
 git-bisect
 git-branch
-git-build-rev-cache
 git-cat-file
 git-checkout
 git-checkout-index
@@ -78,7 +77,6 @@ git-sh-setup
 git-shortlog
 git-show-branch
 git-show-index
-git-show-rev-cache
 git-ssh-fetch
 git-ssh-upload
 git-status

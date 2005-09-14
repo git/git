@@ -92,7 +92,7 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest
 PROGRAMS = \
-	git-apply git-build-rev-cache git-cat-file \
+	git-apply git-cat-file \
 	git-checkout-index git-clone-pack git-commit-tree \
 	git-convert-objects git-diff-files \
 	git-diff-helper git-diff-index git-diff-stages \
@@ -103,7 +103,7 @@ PROGRAMS = \
 	git-peek-remote git-prune-packed git-read-tree \
 	git-receive-pack git-rev-list git-rev-parse \
 	git-rev-tree git-send-pack git-show-branch \
-	git-show-index git-show-rev-cache git-ssh-fetch \
+	git-show-index git-ssh-fetch \
 	git-ssh-upload git-tar-tree git-unpack-file \
 	git-unpack-objects git-update-index git-update-server-info \
 	git-upload-pack git-verify-pack git-write-tree \
@@ -125,7 +125,7 @@ LIB_FILE=libgit.a
 LIB_H = \
 	blob.h cache.h commit.h count-delta.h csum-file.h delta.h \
 	diff.h epoch.h object.h pack.h pkt-line.h quote.h refs.h \
-	rev-cache.h run-command.h strbuf.h tag.h tree.h
+	run-command.h strbuf.h tag.h tree.h
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
@@ -135,7 +135,7 @@ LIB_OBJS = \
 	blob.o commit.o connect.o count-delta.o csum-file.o \
 	date.o diff-delta.o entry.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
-	quote.o read-cache.o refs.o rev-cache.o run-command.o \
+	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o $(DIFF_OBJS)
 
