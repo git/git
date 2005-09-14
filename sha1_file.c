@@ -240,10 +240,12 @@ static struct alternate_object_database **alt_odb_tail;
  * SHA1, an extra slash for the first level indirection, and the
  * terminating NUL.
  */
-static void link_alt_odb_entries(const char *alt, const char *ep, int sep)
+static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
+				 const char *relative_base)
 {
 	const char *cp, *last;
 	struct alternate_object_database *ent;
+	int base_len = -1;
 
 	last = alt;
 	while (last < ep) {
@@ -261,12 +263,25 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep)
 			int pfxlen = cp - last;
 			int entlen = pfxlen + 43;
 
+			if (*last != '/' && relative_base) {
+				/* Relative alt-odb */
+				if (base_len < 0)
+					base_len = strlen(relative_base) + 1;
+				entlen += base_len;
+				pfxlen += base_len;
+			}
 			ent = xmalloc(sizeof(*ent) + entlen);
 			*alt_odb_tail = ent;
 			alt_odb_tail = &(ent->next);
 			ent->next = NULL;
-
-			memcpy(ent->base, last, pfxlen);
+			if (*last != '/' && relative_base) {
+				memcpy(ent->base, relative_base, base_len - 1);
+				ent->base[base_len - 1] = '/';
+				memcpy(ent->base + base_len,
+				       last, cp - last);
+			}
+			else
+				memcpy(ent->base, last, pfxlen);
 			ent->name = ent->base + pfxlen + 1;
 			ent->base[pfxlen] = ent->base[pfxlen + 3] = '/';
 			ent->base[entlen-1] = 0;
@@ -288,12 +303,12 @@ void prepare_alt_odb(void)
 	alt = getenv(ALTERNATE_DB_ENVIRONMENT);
 	if (!alt) alt = "";
 
-	sprintf(path, "%s/info/alternates", get_object_directory());
 	if (alt_odb_tail)
 		return;
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(alt, alt + strlen(alt), ':');
+	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL);
 
+	sprintf(path, "%s/info/alternates", get_object_directory());
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return;
@@ -306,7 +321,8 @@ void prepare_alt_odb(void)
 	if (map == MAP_FAILED)
 		return;
 
-	link_alt_odb_entries(map, map + st.st_size, '\n');
+	link_alt_odb_entries(map, map + st.st_size, '\n',
+			     get_object_directory());
 	munmap(map, st.st_size);
 }
 

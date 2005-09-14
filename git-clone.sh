@@ -5,6 +5,9 @@
 # 
 # Clone a repository into a different directory that does not yet exist.
 
+# See git-sh-setup why.
+unset CDPATH
+
 usage() {
 	echo >&2 "* git clone [-l [-s]] [-q] [-u <upload-pack>] <repo> <dir>"
 	exit 1

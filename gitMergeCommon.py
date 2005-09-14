@@ -1,18 +1,23 @@
 import sys, re, os, traceback
 from sets import Set
 
-if sys.version_info[0] < 2 or \
-       (sys.version_info[0] == 2 and sys.version_info[1] < 4):
-    print 'Python version 2.4 required, found', \
-          str(sys.version_info[0])+'.'+str(sys.version_info[1])+'.'+ \
-          str(sys.version_info[2])
-    sys.exit(1)
-
-import subprocess
-
 def die(*args):
     printList(args, sys.stderr)
     sys.exit(2)
+
+def printList(list, file=sys.stdout):
+    for x in list:
+        file.write(str(x))
+        file.write(' ')
+    file.write('\n')
+
+if sys.version_info[0] < 2 or \
+       (sys.version_info[0] == 2 and sys.version_info[1] < 4):
+    die('Python version 2.4 required, found', \
+        str(sys.version_info[0])+'.'+str(sys.version_info[1])+'.'+ \
+        str(sys.version_info[2]))
+
+import subprocess
 
 # Debugging machinery
 # -------------------
@@ -31,12 +36,6 @@ def debug(*args):
         funcName = traceback.extract_stack()[-2][2]
         if funcName in functionsToDebug:
             printList(args)
-
-def printList(list, file=sys.stdout):
-    for x in list:
-        file.write(str(x))
-        file.write(' ')
-    file.write('\n')
 
 # Program execution
 # -----------------

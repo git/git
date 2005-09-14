@@ -83,7 +83,7 @@ SCRIPT_PERL = \
 	git-rename.perl git-shortlog.perl
 
 SCRIPT_PYTHON = \
-	git-merge-fredrik.py
+	git-merge-recursive.py
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
