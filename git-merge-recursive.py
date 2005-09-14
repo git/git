@@ -74,7 +74,7 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
 
     return [res, clean]
 
-getFilesRE = re.compile('([0-9]+) ([a-z0-9]+) ([0-9a-f]{40})\t(.*)')
+getFilesRE = re.compile(r'^([0-7]+) (\S+) ([0-9a-f]{40})\t(.*)$', re.S)
 def getFilesAndDirs(tree):
     files = Set()
     dirs = Set()
@@ -99,7 +99,7 @@ class CacheEntry:
         self.stages = [Stage(), Stage(), Stage()]
         self.path = path
 
-unmergedRE = re.compile('^([0-9]+) ([0-9a-f]{40}) ([1-3])\t(.*)$')
+unmergedRE = re.compile(r'^([0-7]+) ([0-9a-f]{40}) ([1-3])\t(.*)$', re.S)
 def unmergedCacheEntries():
     '''Create a dictionary mapping file names to CacheEntry
     objects. The dictionary contains one entry for every path with a
