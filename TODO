@@ -119,7 +119,7 @@ Technical (milder)
   ;the latter is consistent with GIT_ALTERNATE_OBJECT_DIRECTORIES.
   Perhaps would end up doing the former because we would want to be
   consistent between a naked repository and a repository with working
-  tree [RFC-PATCH issued].
+  tree [DONE].
 
 * Tool renames.  Give fixup patch for at least Cogito and StGIT
   [DONE].
