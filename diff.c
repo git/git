@@ -214,14 +214,10 @@ struct diff_filespec *alloc_filespec(const char *path)
 {
 	int namelen = strlen(path);
 	struct diff_filespec *spec = xmalloc(sizeof(*spec) + namelen + 1);
+
+	memset(spec, 0, sizeof(*spec));
 	spec->path = (char *)(spec + 1);
-	strcpy(spec->path, path);
-	spec->should_free = spec->should_munmap = 0;
-	spec->xfrm_flags = 0;
-	spec->size = 0;
-	spec->data = NULL;
-	spec->mode = 0;
-	memset(spec->sha1, 0, 20);
+	memcpy(spec->path, path, namelen+1);
 	return spec;
 }
 
