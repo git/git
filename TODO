@@ -100,7 +100,9 @@ Technical (heavier)
   for the best merge [DONE].
 
 * Sort out the mess objects/info/alternates introduces on the
-  client end.  Both rsync and commit walkers are broken.
+  client end.  Both rsync and commit walkers are broken
+  [Daniel already started some, need to describe the current
+  situation first.]
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -126,6 +128,9 @@ Technical (milder)
 
 * Tool renames.  Give fixup patch for at least Cogito and StGIT
   [DONE].
+
+* Massage ssh-fetch and ssh-upload to be more backward
+  compatible.
 
 * Have Daniel's read-tree graduate from "pu" after plugging
   leaks [DONE].
@@ -170,7 +175,8 @@ Technical (milder)
   git-checkout.
 
 * A tool to detect, show and prune already merged topic
-  branches.
+  branches [DONE; 'branch -d' to prune; users can do gitk for
+  deciding].
 
 * "Lost and Found"; link dangling commits found by fsck-objects
   under $GIT_DIR/refs/lost-found/.  Then show-branch or gitk can
@@ -191,6 +197,9 @@ Technical (milder)
   workflow, and document it in howto form if it does.
 
 * Option to limit rename detection for more than N paths.
+
+* diffcore-rename leak reintroduced because the 'fix' was
+  broken.  Need to take a look into this.
 
 * Marking copy seems to be broken when A,B => B,C rename
   happens; we incorrectly say B stays, which makes the new B
@@ -219,7 +228,7 @@ Technical (trivial)
 * Perhaps "git branch -d" to delete a branch.  We probably need
   some way to say "delete this branch because everything in this
   should be merged in the master branch" and refuse the removal
-  if it is not true.
+  if it is not true [DONE].
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  So far, the following
