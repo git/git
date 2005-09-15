@@ -207,6 +207,7 @@ int pull(char *target)
 	unsigned char sha1[20];
 	int fd = -1;
 
+	save_commit_buffer = 0;
 	if (write_ref && current_ref) {
 		fd = lock_ref_sha1(write_ref, current_ref);
 		if (fd < 0)
