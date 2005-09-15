@@ -3,6 +3,8 @@
 #include "commit.h"
 #include "cache.h"
 
+int save_commit_buffer = 1;
+
 struct sort_node
 {
 	/*
@@ -264,7 +266,7 @@ int parse_commit(struct commit *item)
 			     sha1_to_hex(item->object.sha1));
 	}
 	ret = parse_commit_buffer(item, buffer, size);
-	if (!ret) {
+	if (save_commit_buffer && !ret) {
 		item->buffer = buffer;
 		return 0;
 	}

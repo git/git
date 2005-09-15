@@ -582,6 +582,8 @@ int main(int argc, char **argv)
 		handle_one_commit(commit, &list);
 	}
 
+	save_commit_buffer = verbose_header;
+
 	if (!merge_order) {		
 		sort_by_date(&list);
 	        if (limited)
