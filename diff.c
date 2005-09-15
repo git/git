@@ -762,7 +762,8 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	dp->status = 0;
 	dp->source_stays = 0;
 	dp->broken_pair = 0;
-	diff_q(queue, dp);
+	if (queue)
+		diff_q(queue, dp);
 	return dp;
 }
 
@@ -770,6 +771,8 @@ void diff_free_filepair(struct diff_filepair *p)
 {
 	diff_free_filespec_data(p->one);
 	diff_free_filespec_data(p->two);
+	free(p->one);
+	free(p->two);
 	free(p);
 }
 
