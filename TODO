@@ -100,9 +100,10 @@ Technical (heavier)
   for the best merge [DONE].
 
 * Sort out the mess objects/info/alternates introduces on the
-  client end.  Both rsync and commit walkers are broken
-  [Daniel already started some, need to describe the current
-  situation first.]
+  client end.  Both rsync and commit walkers are broken.
+  * describe current situation [DONE]
+  * http [Daniel started]
+  * rsync
 
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
@@ -199,7 +200,7 @@ Technical (milder)
 * Option to limit rename detection for more than N paths.
 
 * diffcore-rename leak reintroduced because the 'fix' was
-  broken.  Need to take a look into this.
+  broken [DONE].
 
 * Marking copy seems to be broken when A,B => B,C rename
   happens; we incorrectly say B stays, which makes the new B
@@ -214,9 +215,17 @@ Technical (milder)
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
+* Allow 'git apply' to accept GNU diff 2.7 output that forgets
+  to say '\No newline' if both input ends with incomplete
+  lines.
+
 
 Technical (trivial)
 -------------------
+
+* Add simple globbing rules for git-show-branch so that I can
+  say 'git show-branch --heads "ko-*"' (ko-master, ko-pu, and
+  ko-rc are in refs/tags/).
 
 * Deal with CDPATH [DONE].
 
