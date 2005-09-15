@@ -78,6 +78,8 @@ git-shortlog
 git-show-branch
 git-show-index
 git-ssh-fetch
+git-ssh-pull
+git-ssh-push
 git-ssh-upload
 git-status
 git-stripspace

@@ -109,6 +109,9 @@ PROGRAMS = \
 	git-upload-pack git-verify-pack git-write-tree \
 	$(SIMPLE_PROGRAMS)
 
+# Backward compatibility -- to be removed in 0.99.8
+PROGRAMS += git-ssh-pull git-ssh-push
+
 PYMODULES = \
 	gitMergeCommon.py
 
@@ -250,6 +253,8 @@ git-http-fetch: fetch.o
 git-local-fetch: fetch.o
 git-ssh-fetch: rsh.o fetch.o
 git-ssh-upload: rsh.o
+git-ssh-pull: rsh.o fetch.o
+git-ssh-push: rsh.o
 
 git-http-fetch: LIBS += -lcurl
 git-rev-list: LIBS += $(OPENSSL_LIBSSL)

@@ -42,12 +42,14 @@ git-tag-script	git-tag
 git-verify-tag-script	git-verify-tag
 git-http-pull	git-http-fetch
 git-local-pull	git-local-fetch
-git-ssh-pull	git-ssh-fetch
 git-checkout-cache	git-checkout-index
 git-diff-cache	git-diff-index
 git-merge-cache	git-merge-index
 git-update-cache	git-update-index
-git-ssh-push	git-ssh-upload
 git-convert-cache	git-convert-objects
 git-fsck-cache	git-fsck-objects
 EOF
+
+# These two are a bit more than symlinks now.
+# git-ssh-push	git-ssh-upload
+# git-ssh-pull	git-ssh-fetch
