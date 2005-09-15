@@ -231,8 +231,6 @@ static void mark_parents_uninteresting(struct commit *commit)
 {
 	struct commit_list *parents = commit->parents;
 
-	if (tree_objects)
-		mark_tree_uninteresting(commit->tree);
 	while (parents) {
 		struct commit *commit = parents->item;
 		commit->object.flags |= UNINTERESTING;
@@ -271,29 +269,6 @@ static int everybody_uninteresting(struct commit_list *orig)
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 		return 0;
-	}
-
-	/*
-	 * Ok, go back and mark all the edge trees uninteresting,
-	 * since otherwise we can have situations where a parent
-	 * that was marked uninteresting (and we never even had
-	 * to look at) had lots of objects that we don't want to
-	 * include.
-	 *
-	 * NOTE! This still doesn't mean that the object list is
-	 * "correct", since we may end up listing objects that
-	 * even older commits (that we don't list) do actually
-	 * reference, but it gets us to a minimal list (or very
-	 * close) in practice.
-	 */
-	if (!tree_objects)
-		return 1;
-
-	while (orig) {
-		struct commit *commit = orig->item;
-		if (!parse_commit(commit) && commit->tree)
-			mark_tree_uninteresting(commit->tree);
-		orig = orig->next;
 	}
 	return 1;
 }
@@ -370,6 +345,19 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	return best;
 }
 
+static void mark_edges_uninteresting(struct commit_list *list)
+{
+	for ( ; list; list = list->next) {
+		struct commit_list *parents = list->item->parents;
+
+		for ( ; parents; parents = parents->next) {
+			struct commit *commit = parents->item;
+			if (commit->object.flags & UNINTERESTING)
+				mark_tree_uninteresting(commit->tree);
+		}
+	}
+}
+
 static struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
@@ -388,6 +376,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 		}
 		p = &commit_list_insert(commit, p)->next;
 	}
+	if (tree_objects)
+		mark_edges_uninteresting(newlist);
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
