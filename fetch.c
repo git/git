@@ -62,10 +62,20 @@ static int process_tree(struct tree *tree)
 	return 0;
 }
 
+struct commit_list *complete = NULL;
+
 static int process_commit(struct commit *commit)
 {
 	if (parse_commit(commit))
 		return -1;
+
+	while (complete && complete->item->date >= commit->date) {
+		pop_most_recent_commit(&complete, 1);
+	}
+		
+
+	if (commit->object.flags & 1)
+		return 0;
 
 	memcpy(current_commit_sha1, commit->object.sha1, 20);
 
@@ -78,8 +88,6 @@ static int process_commit(struct commit *commit)
 	if (get_history) {
 		struct commit_list *parents = commit->parents;
 		for (; parents; parents = parents->next) {
-			if (has_sha1_file(parents->item->object.sha1))
-				continue;
 			if (process(parents->item->object.sha1,
 				    commit_type))
 				return -1;
@@ -126,6 +134,7 @@ static int process_object(struct object *obj)
 static int process(unsigned char *sha1, const char *type)
 {
 	struct object *obj = lookup_object_type(sha1, type);
+
 	if (has_sha1_file(sha1)) {
 		parse_object(sha1);
 		/* We already have it, so we should scan it now. */
@@ -179,6 +188,19 @@ static int interpret_target(char *target, unsigned char *sha1)
 	return -1;
 }
 
+static int mark_complete(const char *path, const unsigned char *sha1)
+{
+	struct object *obj = parse_object(sha1);
+	while (obj->type == tag_type) {
+		obj = ((struct tag *) obj)->tagged;
+		parse_object(obj->sha1);
+	}
+	if (obj->type == commit_type) {
+		obj->flags |= 1;
+		insert_by_date((struct commit *) obj, &complete);
+	}
+	return 0;
+}
 
 int pull(char *target)
 {
@@ -190,6 +212,8 @@ int pull(char *target)
 		if (fd < 0)
 			return -1;
 	}
+
+	for_each_ref(mark_complete);
 
 	if (interpret_target(target, sha1))
 		return error("Could not interpret %s as something to pull",
