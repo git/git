@@ -10,7 +10,7 @@ URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
 BuildRequires:	zlib-devel, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-root
-Requires: 	sh-utils, curl, diffutils, rsync, rcs, openssh-clients, perl, python >= 2.4, tk
+Requires: 	sh-utils, curl, diffutils, less, rsync, rcs, openssh-clients, perl, python >= 2.4, tk
 
 %description
 This is a stupid (but extremely fast) directory content manager.  It
@@ -44,6 +44,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %{_mandir}/man7/*.7*}
 
 %changelog
+* Fri Sep 16 2005 Horst H. von Brand <vonbrand@inf.utfsm.cl>
+- Linus noticed that less is required, added to the dependencies
+
 * Sun Sep 11 2005 Horst H. von Brand <vonbrand@inf.utfsm.cl>
 - Updated dependencies
 - Don't assume manpages are gzipped
