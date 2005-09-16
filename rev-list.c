@@ -581,6 +581,7 @@ int main(int argc, char **argv)
 	}
 
 	save_commit_buffer = verbose_header;
+	track_object_refs = 0;
 
 	if (!merge_order) {		
 		sort_by_date(&list);

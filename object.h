@@ -17,6 +17,7 @@ struct object {
 	void *util;
 };
 
+extern int track_object_refs;
 extern int nr_objs;
 extern struct object **objs;
 
