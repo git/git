@@ -32,8 +32,11 @@ I have the commit object 'bar', but not 'foo'".
 
 The *--bisect* flag limits output to the one commit object which is
 roughly halfway between the included and excluded commits. Thus,
-if 'git-rev-list --bisect foo ^bar ^baz' outputs 'midpoint', the output
-of 'git-rev-list foo ^midpoint' and 'git-rev-list midpoint ^bar ^baz'
+if 'git-rev-list --bisect foo ^bar
+^baz' outputs 'midpoint', the output
+of 'git-rev-list foo ^midpoint' and 'git-rev-list midpoint
+^bar
+^baz'
 would be of roughly the same length. Finding the change which introduces
 a regression is thus reduced to a binary search: repeatedly generate and
 test new 'midpoint's until the commit chain is of length one.
