@@ -62,7 +62,8 @@ static int process_tree(struct tree *tree)
 	return 0;
 }
 
-struct commit_list *complete = NULL;
+#define COMPLETE	1U
+static struct commit_list *complete = NULL;
 
 static int process_commit(struct commit *commit)
 {
@@ -70,11 +71,11 @@ static int process_commit(struct commit *commit)
 		return -1;
 
 	while (complete && complete->item->date >= commit->date) {
-		pop_most_recent_commit(&complete, 1);
+		pop_most_recent_commit(&complete, COMPLETE);
 	}
 		
 
-	if (commit->object.flags & 1)
+	if (commit->object.flags & COMPLETE)
 		return 0;
 
 	memcpy(current_commit_sha1, commit->object.sha1, 20);
@@ -190,14 +191,10 @@ static int interpret_target(char *target, unsigned char *sha1)
 
 static int mark_complete(const char *path, const unsigned char *sha1)
 {
-	struct object *obj = parse_object(sha1);
-	while (obj->type == tag_type) {
-		obj = ((struct tag *) obj)->tagged;
-		parse_object(obj->sha1);
-	}
-	if (obj->type == commit_type) {
-		obj->flags |= 1;
-		insert_by_date((struct commit *) obj, &complete);
+	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	if (commit) {
+		commit->object.flags |= COMPLETE;
+		insert_by_date(commit, &complete);
 	}
 	return 0;
 }
