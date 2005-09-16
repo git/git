@@ -147,11 +147,16 @@ static struct object_list **process_tree(struct tree *tree, struct object_list *
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
 	p = add_object(obj, p, name);
-	for (entry = tree->entries ; entry ; entry = entry->next) {
+	entry = tree->entries;
+	tree->entries = NULL;
+	while (entry) {
+		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
 			p = process_tree(entry->item.tree, p, entry->name);
 		else
 			p = process_blob(entry->item.blob, p, entry->name);
+		free(entry);
+		entry = next;
 	}
 	return p;
 }
@@ -218,12 +223,15 @@ static void mark_tree_uninteresting(struct tree *tree)
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
 	entry = tree->entries;
+	tree->entries = NULL;
 	while (entry) {
+		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
 			mark_tree_uninteresting(entry->item.tree);
 		else
 			mark_blob_uninteresting(entry->item.blob);
-		entry = entry->next;
+		free(entry);
+		entry = next;
 	}
 }
 
