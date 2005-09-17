@@ -561,6 +561,8 @@ int main(int argc, char **argv)
 			struct commit *exclude = NULL;
 			struct commit *include = NULL;
 			*dotdot = 0;
+			if (!*next)
+				next = "HEAD";
 			exclude = get_commit_reference(arg, UNINTERESTING);
 			include = get_commit_reference(next, 0);
 			if (exclude && include) {
@@ -569,7 +571,7 @@ int main(int argc, char **argv)
 				handle_one_commit(include, &list);
 				continue;
 			}
-			*next = '.';
+			*dotdot = '.';
 		}
 		if (*arg == '^') {
 			flags = UNINTERESTING;
