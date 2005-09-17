@@ -11,7 +11,7 @@ There is the head (called H) and another commit (called M), which is
 simply ahead of H.  The index and the work tree contains a state that
 is derived from H, but may also have local changes.  This test checks
 all the combinations described in the two-tree merge "carry forward"
-rules, found in <Documentation/git-rev-tree.txt>.
+rules, found in <Documentation/git-read-tree.txt>.
 
 In the test, these paths are used:
         bozbar  - in H, stays in M, modified from bozbar to gnusto
