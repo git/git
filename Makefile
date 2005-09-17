@@ -109,7 +109,7 @@ PROGRAMS = \
 	git-merge-index git-mktag git-pack-objects git-patch-id \
 	git-peek-remote git-prune-packed git-read-tree \
 	git-receive-pack git-rev-list git-rev-parse \
-	git-rev-tree git-send-pack git-show-branch \
+	git-send-pack git-show-branch \
 	git-show-index git-ssh-fetch \
 	git-ssh-upload git-tar-tree git-unpack-file \
 	git-unpack-objects git-update-index git-update-server-info \

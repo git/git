@@ -245,7 +245,7 @@ gb=$(tput setab 2)
 rb=$(tput setab 1)
 restore=$(tput setab 9)
 
-if [ `git-rev-tree release ^test | wc -c` -gt 0 ]
+if [ `git-rev-list release ^test | wc -c` -gt 0 ]
 then
 	echo $rb Warning: commits in release that are not in test $restore
 	git-whatchanged release ^test
@@ -262,7 +262,7 @@ do
 	status=
 	for ref in test release linus
 	do
-		if [ `git-rev-tree $branch ^$ref | wc -c` -gt 0 ]
+		if [ `git-rev-list $branch ^$ref | wc -c` -gt 0 ]
 		then
 			status=$status${ref:0:1}
 		fi

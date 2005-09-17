@@ -134,9 +134,6 @@ gitlink:git-merge-base[1]::
 gitlink:git-rev-list[1]::
 	Lists commit objects in reverse chronological order
 
-gitlink:git-rev-tree[1]::
-	Provides the revision tree for one or more commits
-
 gitlink:git-show-index[1]::
 	Displays contents of a pack idx file.
 

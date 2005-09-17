@@ -69,7 +69,6 @@ git-reset
 git-resolve
 git-rev-list
 git-rev-parse
-git-rev-tree
 git-revert
 git-send-email
 git-send-pack
