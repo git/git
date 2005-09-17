@@ -153,3 +153,24 @@ get_remote_refs_for_fetch () {
 	    ;;
 	esac
 }
+
+resolve_alternates () {
+	# original URL (xxx.git)
+	top_=`expr "$1" : '\([^:]*:/*[^/]*\)/'`
+	while read path
+	do
+		case "$path" in
+		\#* | '')
+			continue ;;
+		/*)
+			echo "$top_$path/" ;;
+		../*)
+			# relative -- ugly but seems to work.
+			echo "$1/objects/$path/" ;;
+		*)
+			# exit code may not be caught by the reader.
+			echo "bad alternate: $path"
+			exit 1 ;;
+		esac
+	done
+}

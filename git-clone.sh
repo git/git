@@ -144,8 +144,32 @@ yes,yes)
 *)
 	case "$repo" in
 	rsync://*)
-		rsync $quiet -avz --ignore-existing "$repo/objects/" "$D/.git/objects/" &&
-		rsync $quiet -avz --ignore-existing "$repo/refs/" "$D/.git/refs/"
+		rsync $quiet -av --ignore-existing  \
+			--exclude info "$repo/objects/" "$D/.git/objects/" &&
+		rsync $quiet -av --ignore-existing  \
+			--exclude info "$repo/refs/" "$D/.git/refs/" || exit
+
+		# Look at objects/info/alternates for rsync -- http will
+		# support it natively and git native ones will do it on the
+		# remote end.  Not having that file is not a crime.
+		rsync -q "$repo/objects/info/alternates" "$D/.git/TMP_ALT" ||
+			rm -f "$D/.git/TMP_ALT"
+		if test -f "$D/.git/TMP_ALT"
+		then
+		    ( cd $D &&
+		      . git-parse-remote &&
+		      resolve_alternates "$repo" <"./.git/TMP_ALT" ) |
+		    while read alt
+		    do
+			case "$alt" in 'bad alternate: '*) die "$alt";; esac
+			case "$quiet" in
+			'')	echo >&2 "Getting alternate: $alt" ;;
+			esac
+			rsync $quiet -av --ignore-existing  \
+			    --exclude info "$alt" "$D/.git/objects" || exit
+		    done
+		    rm -f "$D/.git/TMP_ALT"
+		fi
 		;;
 	http://*)
 		clone_dumb_http "$repo" "$D"
