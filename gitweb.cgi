@@ -297,11 +297,19 @@ EOF
 		if (!defined $searchtext) {
 			$searchtext = "";
 		}
+		my $search_hash;
+		if (defined $hash) {
+			$search_hash = $hash;
+		} else {
+			$search_hash  = "HEAD";
+		}
 		$cgi->param("a", "search");
+		$cgi->param("h", $search_hash);
 		print $cgi->startform(-method => "get", -action => "$my_uri") .
 		      "<div class=\"search\">\n" .
 		      $cgi->hidden(-name => "p") . "\n" .
 		      $cgi->hidden(-name => "a") . "\n" .
+		      $cgi->hidden(-name => "h") . "\n" .
 		      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
 		      "</div>" .
 		      $cgi->end_form() . "\n";
