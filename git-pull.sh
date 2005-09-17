@@ -6,6 +6,38 @@
 
 . git-sh-setup || die "Not a git archive"
 
+usage () {
+    die "git pull [-n] [-s strategy]... <repo> <head>..."
+}
+
+strategy_args= no_summary=
+while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
+do
+	case "$1" in
+	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
+		--no-summa|--no-summar|--no-summary)
+		no_summary=-n ;;
+	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
+		--strateg=*|--strategy=*|\
+	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
+		case "$#,$1" in
+		*,*=*)
+			strategy=`expr "$1" : '-[^=]*=\(.*\)'` ;;
+		1,*)
+			usage ;;
+		*)
+			strategy="$2"
+			shift ;;
+		esac
+		strategy_args="${strategy_args}-s $strategy "
+		;;
+	-*)
+		usage
+		;;
+	esac
+	shift
+done
+
 orig_head=$(cat "$GIT_DIR/HEAD") || die "Pulling into a black hole?"
 git-fetch --update-head-ok "$@" || exit 1
 
@@ -35,12 +67,6 @@ case "$merge_head" in
 	echo >&2 "No changes."
 	exit 0
 	;;
-*' '?*)
-	echo >&2 "Pulling more than one heads; making an Octopus."
-	exec git-octopus
-	;;
 esac
 
-git-resolve \
-	"$(cat "$GIT_DIR"/HEAD)" \
-	$merge_head "Merge $merge_name"
+git-merge $no_summary $strategy_args "Merge $merge_name" HEAD $merge_head
