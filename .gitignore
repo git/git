@@ -24,7 +24,6 @@ git-diff-helper
 git-diff-index
 git-diff-stages
 git-diff-tree
-git-export
 git-fetch
 git-fetch-pack
 git-format-patch

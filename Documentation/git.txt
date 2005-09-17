@@ -118,9 +118,6 @@ gitlink:git-diff-stages[1]::
 gitlink:git-diff-tree[1]::
 	Compares the content and mode of blobs found via two tree objects
 
-gitlink:git-export[1]::
-	Exports each commit and a diff against each of its parents
-
 gitlink:git-fsck-objects[1]::
 	Verifies the connectivity and validity of the objects in the database
 	Previously this command was known as git-fsck-cache.
