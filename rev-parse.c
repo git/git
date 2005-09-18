@@ -191,6 +191,22 @@ int main(int argc, char **argv)
 					puts(prefix);
 				continue;
 			}
+			if (!strcmp(arg, "--git-dir")) {
+				const char *gitdir = getenv(GIT_DIR_ENVIRONMENT);
+				static char cwd[PATH_MAX];
+				if (gitdir) {
+					puts(gitdir);
+					continue;
+				}
+				if (!prefix) {
+					puts(".git");
+					continue;
+				}
+				if (!getcwd(cwd, PATH_MAX))
+					die("unable to get current working directory");
+				printf("%s/.git\n", cwd);
+				continue;
+			}
 			if (verify)
 				die("Needed a single revision");
 			show_flag(arg);
