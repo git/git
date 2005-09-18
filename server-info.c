@@ -3,20 +3,9 @@
 #include "object.h"
 #include "commit.h"
 #include "tag.h"
-#include "rev-cache.h"
 
 /* refs */
 static FILE *info_ref_fp;
-static unsigned long info_ref_time;
-static int info_ref_is_stale = 0;
-
-static int stat_ref(const char *path, const unsigned char *sha1)
-{
-	struct stat st;
-	if (!stat(path, &st) && info_ref_time < st.st_mtime)
-		info_ref_is_stale = 1;
-	return 0;
-}
 
 static int add_info_ref(const char *path, const unsigned char *sha1)
 {
@@ -26,28 +15,12 @@ static int add_info_ref(const char *path, const unsigned char *sha1)
 
 static int update_info_refs(int force)
 {
-	struct stat st;
 	char *path0 = strdup(git_path("info/refs"));
 	int len = strlen(path0);
 	char *path1 = xmalloc(len + 2);
 
 	strcpy(path1, path0);
 	strcpy(path1 + len, "+");
-
-	if (!force) {
-		if (stat(path0, &st)) {
-			if (errno == ENOENT)
-				info_ref_is_stale = 1;
-			else
-				return error("cannot stat %s", path0);
-		}
-		else {
-			info_ref_time = st.st_mtime;
-			for_each_ref(stat_ref);
-		}
-		if (!info_ref_is_stale)
-			return 0;
-	}
 
 	safe_create_leading_directories(path0);
 	info_ref_fp = fopen(path1, "w");
@@ -516,45 +489,6 @@ static int update_info_packs(int force)
 	return 0;
 }
 
-/* rev-cache */
-static int record_rev_cache_ref(const char *path, const unsigned char *sha1)
-{
-	struct object *obj = parse_object(sha1);
-
-	if (!obj)
-		return error("ref %s has bad sha %s", path, sha1_to_hex(sha1));
-	while (obj && obj->type == tag_type)
-		obj = parse_object(((struct tag *)obj)->tagged->sha1);
-	if (!obj || obj->type != commit_type)
-		/* tag pointing at a non-commit */
-		return 0;
-	return record_rev_cache(obj->sha1, NULL);
-}
-
-static int update_info_revs(int force)
-{
-	char *path0 = strdup(git_path("info/rev-cache"));
-	int len = strlen(path0);
-	char *path1 = xmalloc(len + 2);
-
-	strcpy(path1, path0);
-	strcpy(path1 + len, "+");
-
-	/* read existing rev-cache */
-	if (!force)
-		read_rev_cache(path0, NULL, 0);
-	safe_create_leading_directories(path0);
-
-	for_each_ref(record_rev_cache_ref);
-
-	/* update the rev-cache database */
-	write_rev_cache(path1, force ? "/dev/null" : path0);
-	rename(path1, path0);
-	free(path1);
-	free(path0);
-	return 0;
-}
-
 /* public */
 int update_server_info(int force)
 {
@@ -566,7 +500,6 @@ int update_server_info(int force)
 
 	errs = errs | update_info_refs(force);
 	errs = errs | update_info_packs(force);
-	errs = errs | update_info_revs(force);
 
 	return errs;
 }

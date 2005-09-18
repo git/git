@@ -214,14 +214,10 @@ struct diff_filespec *alloc_filespec(const char *path)
 {
 	int namelen = strlen(path);
 	struct diff_filespec *spec = xmalloc(sizeof(*spec) + namelen + 1);
+
+	memset(spec, 0, sizeof(*spec));
 	spec->path = (char *)(spec + 1);
-	strcpy(spec->path, path);
-	spec->should_free = spec->should_munmap = 0;
-	spec->xfrm_flags = 0;
-	spec->size = 0;
-	spec->data = NULL;
-	spec->mode = 0;
-	memset(spec->sha1, 0, 20);
+	memcpy(spec->path, path, namelen+1);
 	return spec;
 }
 
@@ -406,13 +402,14 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	return 0;
 }
 
-void diff_free_filespec(struct diff_filespec *s)
+void diff_free_filespec_data(struct diff_filespec *s)
 {
 	if (s->should_free)
 		free(s->data);
 	else if (s->should_munmap)
 		munmap(s->data, s->size);
-	free(s);
+	s->should_free = s->should_munmap = 0;
+	s->data = NULL;
 }
 
 static void prep_temp_blob(struct diff_tempfile *temp,
@@ -765,14 +762,17 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 	dp->status = 0;
 	dp->source_stays = 0;
 	dp->broken_pair = 0;
-	diff_q(queue, dp);
+	if (queue)
+		diff_q(queue, dp);
 	return dp;
 }
 
 void diff_free_filepair(struct diff_filepair *p)
 {
-	diff_free_filespec(p->one);
-	diff_free_filespec(p->two);
+	diff_free_filespec_data(p->one);
+	diff_free_filespec_data(p->two);
+	free(p->one);
+	free(p->two);
 	free(p);
 }
 

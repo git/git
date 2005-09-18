@@ -1,3 +1,13 @@
+#ifndef COUNTERPART_ENV_NAME
+#define COUNTERPART_ENV_NAME "GIT_SSH_FETCH"
+#endif
+#ifndef COUNTERPART_PROGRAM_NAME
+#define COUNTERPART_PROGRAM_NAME "git-ssh-fetch"
+#endif
+#ifndef MY_PROGRAM_NAME
+#define MY_PROGRAM_NAME "git-ssh-upload"
+#endif
+
 #include "cache.h"
 #include "rsh.h"
 #include "refs.h"
@@ -97,7 +107,7 @@ static void service(int fd_in, int fd_out) {
 }
 
 static const char ssh_push_usage[] =
-	"git-ssh-upload [-c] [-t] [-a] [-w ref] commit-id url";
+	MY_PROGRAM_NAME " [-c] [-t] [-a] [-w ref] commit-id url";
 
 int main(int argc, char **argv)
 {
@@ -109,8 +119,8 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 	char hex[41];
 
-	prog = getenv("GIT_SSH_PULL");
-	if (!prog) prog = "git-ssh-fetch";
+	prog = getenv(COUNTERPART_ENV_NAME);
+	if (!prog) prog = COUNTERPART_PROGRAM_NAME;
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 'w')
 			arg++;

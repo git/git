@@ -6,7 +6,6 @@ git-applypatch
 git-archimport
 git-bisect
 git-branch
-git-build-rev-cache
 git-cat-file
 git-checkout
 git-checkout-index
@@ -73,13 +72,15 @@ git-rev-list
 git-rev-parse
 git-rev-tree
 git-revert
+git-send-email
 git-send-pack
 git-sh-setup
 git-shortlog
 git-show-branch
 git-show-index
-git-show-rev-cache
 git-ssh-fetch
+git-ssh-pull
+git-ssh-push
 git-ssh-upload
 git-status
 git-stripspace

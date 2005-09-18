@@ -17,6 +17,7 @@ struct commit {
 	char *buffer;
 };
 
+extern int save_commit_buffer;
 extern const char *commit_type;
 
 struct commit *lookup_commit(const unsigned char *sha1);

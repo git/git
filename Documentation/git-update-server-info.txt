@@ -38,8 +38,6 @@ of what they are for:
 
 * info/refs
 
-* info/rev-cache
-
 
 BUGS
 ----

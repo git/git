@@ -370,6 +370,7 @@ static int diff_tree_commit(const unsigned char *commit, const char *name)
 		}
 		offset += 48;
 	}
+	free(buf);
 	return 0;
 }
 

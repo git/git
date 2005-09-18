@@ -47,7 +47,8 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 	if (first < rename_dst_nr)
 		memmove(rename_dst + first + 1, rename_dst + first,
 			(rename_dst_nr - first - 1) * sizeof(*rename_dst));
-	rename_dst[first].two = two;
+	rename_dst[first].two = alloc_filespec(two->path);
+	fill_filespec(rename_dst[first].two, two->sha1, two->mode);
 	rename_dst[first].pair = NULL;
 	return &(rename_dst[first]);
 }
@@ -201,8 +202,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	return score;
 }
 
-static void record_rename_pair(struct diff_queue_struct *renq,
-			       int dst_index, int src_index, int score)
+static void record_rename_pair(int dst_index, int src_index, int score)
 {
 	struct diff_filespec *one, *two, *src, *dst;
 	struct diff_filepair *dp;
@@ -218,7 +218,7 @@ static void record_rename_pair(struct diff_queue_struct *renq,
 	two = alloc_filespec(dst->path);
 	fill_filespec(two, dst->sha1, dst->mode);
 
-	dp = diff_queue(renq, one, two);
+	dp = diff_queue(NULL, one, two);
 	dp->score = score;
 	dp->source_stays = rename_src[src_index].src_path_left;
 	rename_dst[dst_index].pair = dp;
@@ -252,15 +252,14 @@ static int compute_stays(struct diff_queue_struct *q,
 void diffcore_rename(int detect_rename, int minimum_score)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct diff_queue_struct renq, outq;
+	struct diff_queue_struct outq;
 	struct diff_score *mx;
-	int i, j;
+	int i, j, rename_count;
 	int num_create, num_src, dst_cnt;
 
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
-	renq.queue = NULL;
-	renq.nr = renq.alloc = 0;
+	rename_count = 0;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -292,19 +291,19 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			struct diff_filespec *one = rename_src[j].one;
 			if (!is_exact_match(one, two))
 				continue;
-			record_rename_pair(&renq, i, j, MAX_SCORE);
+			record_rename_pair(i, j, MAX_SCORE);
+			rename_count++;
 			break; /* we are done with this entry */
 		}
 	}
-	diff_debug_queue("done detecting exact", &renq);
 
 	/* Have we run out the created file pool?  If so we can avoid
 	 * doing the delta matrix altogether.
 	 */
-	if (renq.nr == rename_dst_nr)
+	if (rename_count == rename_dst_nr)
 		goto cleanup;
 
-	num_create = (rename_dst_nr - renq.nr);
+	num_create = (rename_dst_nr - rename_count);
 	num_src = rename_src_nr;
 	mx = xmalloc(sizeof(*mx) * num_create * num_src);
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
@@ -330,14 +329,14 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			continue; /* already done, either exact or fuzzy. */
 		if (mx[i].score < minimum_score)
 			break; /* there is no more usable pair. */
-		record_rename_pair(&renq, mx[i].dst, mx[i].src, mx[i].score);
+		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
+		rename_count++;
 	}
 	free(mx);
-	diff_debug_queue("done detecting fuzzy", &renq);
 
  cleanup:
 	/* At this point, we have found some renames and copies and they
-	 * are kept in renq.  The original list is still in *q.
+	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
 	outq.queue = NULL;
 	outq.nr = outq.alloc = 0;
@@ -372,9 +371,9 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			 *
 			 * (1) this is a broken delete and the counterpart
 			 *     broken create remains in the output; or
-			 * (2) this is not a broken delete, and renq does
-			 *     not have a rename/copy to move p->one->path
-			 *     out.
+			 * (2) this is not a broken delete, and rename_dst
+			 *     does not have a rename/copy to move p->one->path
+			 *     out of existence.
 			 *
 			 * Otherwise, the counterpart broken create
 			 * has been turned into a rename-edit; or
@@ -390,11 +389,16 @@ void diffcore_rename(int detect_rename, int minimum_score)
 					pair_to_free = p;
 			}
 			else {
-				for (j = 0; j < renq.nr; j++)
-					if (!strcmp(renq.queue[j]->one->path,
-						    p->one->path))
-						break;
-				if (j < renq.nr)
+				for (j = 0; j < rename_dst_nr; j++) {
+					if (!rename_dst[j].pair)
+						continue;
+					if (strcmp(rename_dst[j].pair->
+						   one->path,
+						   p->one->path))
+						continue;
+					break;
+				}
+				if (j < rename_dst_nr)
 					/* this path remains */
 					pair_to_free = p;
 			}
@@ -416,7 +420,6 @@ void diffcore_rename(int detect_rename, int minimum_score)
 	}
 	diff_debug_queue("done copying original", &outq);
 
-	free(renq.queue);
 	free(q->queue);
 	*q = outq;
 	diff_debug_queue("done collapsing", q);
@@ -436,6 +439,11 @@ void diffcore_rename(int detect_rename, int minimum_score)
 			 */
 			p->source_stays = compute_stays(q, p->one);
 		}
+	}
+
+	for (i = 0; i < rename_dst_nr; i++) {
+		diff_free_filespec_data(rename_dst[i].two);
+		free(rename_dst[i].two);
 	}
 
 	free(rename_dst);

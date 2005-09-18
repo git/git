@@ -1,5 +1,4 @@
 #define _XOPEN_SOURCE /* glibc2 needs this */
-#define __EXTENSIONS__ /* solaris needs this */
 #include <time.h>
 #include <ctype.h>
 #include "cache.h"

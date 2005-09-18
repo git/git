@@ -1,16 +1,15 @@
 # Pass --without docs to rpmbuild if you don't want the documetnation
 Name: 		git-core
 Version: 	@@VERSION@@
-Release: 	1
-Vendor: 	Junio C Hamano <junkio@cox.net>
+Release: 	1%{?dist}
 Summary:  	Git core and tools
 License: 	GPL
 Group: 		Development/Tools
 URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
 BuildRequires:	zlib-devel, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
-BuildRoot:	%{_tmppath}/%{name}-%{version}-root
-Requires: 	sh-utils, curl, diffutils, rsync, rcs, openssh-clients, perl, python >= 2.4, tk
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Requires:	rsync, rcs, curl, less, openssh-clients, python >= 2.4, tk
 
 %description
 This is a stupid (but extremely fast) directory content manager.  It
@@ -24,7 +23,7 @@ elsewhere for tools for ordinary humans layered on top of this.
 %setup -q
 
 %build
-make prefix=%{_prefix} all %{!?_without_docs: doc}
+make COPTS="$RPM_OPT_FLAGS" prefix=%{_prefix} all %{!?_without_docs: doc}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -37,16 +36,34 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %{_bindir}/*
-%{_datadir}/git-core/templates/*
+%{_datadir}/git-core/
 %doc README COPYING Documentation/*.txt
 %{!?_without_docs: %doc Documentation/*.html }
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man7/*.7*}
 
 %changelog
+* Fri Sep 16 2005 Chris Wright <chrisw@osdl.org> 0.99.6-1
+- update to 0.99.6
+
+* Fri Sep 16 2005 Horst H. von Brand <vonbrand@inf.utfsm.cl>
+- Linus noticed that less is required, added to the dependencies
+
 * Sun Sep 11 2005 Horst H. von Brand <vonbrand@inf.utfsm.cl>
 - Updated dependencies
 - Don't assume manpages are gzipped
+
+* Thu Aug 18 2005 Chris Wright <chrisw@osdl.org> 0.99.4-4
+- drop sh_utils, sh-utils, diffutils, mktemp, and openssl Requires
+- use RPM_OPT_FLAGS in spec file, drop patch0
+
+* Wed Aug 17 2005 Tom "spot" Callaway <tcallawa@redhat.com> 0.99.4-3
+- use dist tag to differentiate between branches
+- use rpm optflags by default (patch0)
+- own %{_datadir}/git-core/
+
+* Mon Aug 15 2005 Chris Wright <chrisw@osdl.org>
+- update spec file to fix Buildroot, Requires, and drop Vendor
 
 * Sun Aug 07 2005 Horst H. von Brand <vonbrand@inf.utfsm.cl>
 - Redid the description

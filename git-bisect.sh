@@ -110,7 +110,7 @@ bisect_next_check() {
 }
 
 bisect_auto_next() {
-	bisect_next_check && bisect_next
+	bisect_next_check && bisect_next || :
 }
 
 bisect_next() {

@@ -1,3 +1,13 @@
+#ifndef COUNTERPART_ENV_NAME
+#define COUNTERPART_ENV_NAME "GIT_SSH_UPLOAD"
+#endif
+#ifndef COUNTERPART_PROGRAM_NAME
+#define COUNTERPART_PROGRAM_NAME "git-ssh-upload"
+#endif
+#ifndef MY_PROGRAM_NAME
+#define MY_PROGRAM_NAME "git-ssh-fetch"
+#endif
+
 #include "cache.h"
 #include "commit.h"
 #include "rsh.h"
@@ -82,6 +92,9 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	return 0;
 }
 
+static const char ssh_fetch_usage[] =
+  MY_PROGRAM_NAME
+  " [-c] [-t] [-a] [-v] [-d] [--recover] [-w ref] commit-id url";
 int main(int argc, char **argv)
 {
 	char *commit_id;
@@ -110,7 +123,7 @@ int main(int argc, char **argv)
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("git-ssh-fetch [-c] [-t] [-a] [-v] [-d] [--recover] [-w ref] commit-id url");
+		usage(ssh_fetch_usage);
 		return 1;
 	}
 	commit_id = argv[arg];

@@ -183,12 +183,30 @@ do
 	;;
     rsync://*)
 	TMP_HEAD="$GIT_DIR/TMP_HEAD"
-	rsync -L "$remote/$remote_name" "$TMP_HEAD" || exit 1
+	rsync -L -q "$remote/$remote_name" "$TMP_HEAD" || exit 1
 	head=$(git-rev-parse TMP_HEAD)
 	rm -f "$TMP_HEAD"
 	test "$rsync_slurped_objects" || {
-	    rsync -avz --ignore-existing "$remote/objects/" \
-		"$GIT_OBJECT_DIRECTORY/" || exit
+	    rsync -av --ignore-existing --exclude info \
+		"$remote/objects/" "$GIT_OBJECT_DIRECTORY/" || exit
+
+	    # Look at objects/info/alternates for rsync -- http will
+	    # support it natively and git native ones will do it on the remote
+	    # end.  Not having that file is not a crime.
+	    rsync -q "$remote/objects/info/alternates" "$GIT_DIR/TMP_ALT" ||
+		    rm -f "$GIT_DIR/TMP_ALT"
+	    if test -f "$GIT_DIR/TMP_ALT"
+	    then
+		resolve_alternates "$remote" <"$GIT_DIR/TMP_ALT" |
+		while read alt
+		do
+		    case "$alt" in 'bad alternate: '*) die "$alt";; esac
+		    echo >&2 "Getting alternate: $alt"
+		    rsync -av --ignore-existing --exclude info \
+		    "$alt" "$GIT_OBJECT_DIRECTORY/" || exit
+		done
+		rm -f "$GIT_DIR/TMP_ALT"
+	    fi
 	    rsync_slurped_objects=t
 	}
 	;;

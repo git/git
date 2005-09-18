@@ -9,6 +9,8 @@ struct object **objs;
 int nr_objs;
 static int obj_allocs;
 
+int track_object_refs = 1;
+
 static int find_object(const unsigned char *sha1)
 {
 	int first = 0, last = nr_objs;
@@ -67,9 +69,12 @@ void created_object(const unsigned char *sha1, struct object *obj)
 
 void add_ref(struct object *refer, struct object *target)
 {
-	struct object_list **pp = &refer->refs;
-	struct object_list *p;
-	
+	struct object_list **pp, *p;
+
+	if (!track_object_refs)
+		return;
+
+	pp = &refer->refs;
 	while ((p = *pp) != NULL) {
 		if (p->item == target)
 			return;
@@ -87,6 +92,8 @@ void mark_reachable(struct object *obj, unsigned int mask)
 {
 	struct object_list *p = obj->refs;
 
+	if (!track_object_refs)
+		die("cannot do reachability with object refs turned off");
 	/* If we've been here already, don't bother */
 	if (obj->flags & mask)
 		return;

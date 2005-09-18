@@ -147,11 +147,16 @@ static struct object_list **process_tree(struct tree *tree, struct object_list *
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
 	p = add_object(obj, p, name);
-	for (entry = tree->entries ; entry ; entry = entry->next) {
+	entry = tree->entries;
+	tree->entries = NULL;
+	while (entry) {
+		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
 			p = process_tree(entry->item.tree, p, entry->name);
 		else
 			p = process_blob(entry->item.blob, p, entry->name);
+		free(entry);
+		entry = next;
 	}
 	return p;
 }
@@ -218,12 +223,15 @@ static void mark_tree_uninteresting(struct tree *tree)
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
 	entry = tree->entries;
+	tree->entries = NULL;
 	while (entry) {
+		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
 			mark_tree_uninteresting(entry->item.tree);
 		else
 			mark_blob_uninteresting(entry->item.blob);
-		entry = entry->next;
+		free(entry);
+		entry = next;
 	}
 }
 
@@ -231,8 +239,6 @@ static void mark_parents_uninteresting(struct commit *commit)
 {
 	struct commit_list *parents = commit->parents;
 
-	if (tree_objects)
-		mark_tree_uninteresting(commit->tree);
 	while (parents) {
 		struct commit *commit = parents->item;
 		commit->object.flags |= UNINTERESTING;
@@ -271,29 +277,6 @@ static int everybody_uninteresting(struct commit_list *orig)
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 		return 0;
-	}
-
-	/*
-	 * Ok, go back and mark all the edge trees uninteresting,
-	 * since otherwise we can have situations where a parent
-	 * that was marked uninteresting (and we never even had
-	 * to look at) had lots of objects that we don't want to
-	 * include.
-	 *
-	 * NOTE! This still doesn't mean that the object list is
-	 * "correct", since we may end up listing objects that
-	 * even older commits (that we don't list) do actually
-	 * reference, but it gets us to a minimal list (or very
-	 * close) in practice.
-	 */
-	if (!tree_objects)
-		return 1;
-
-	while (orig) {
-		struct commit *commit = orig->item;
-		if (!parse_commit(commit) && commit->tree)
-			mark_tree_uninteresting(commit->tree);
-		orig = orig->next;
 	}
 	return 1;
 }
@@ -370,6 +353,19 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	return best;
 }
 
+static void mark_edges_uninteresting(struct commit_list *list)
+{
+	for ( ; list; list = list->next) {
+		struct commit_list *parents = list->item->parents;
+
+		for ( ; parents; parents = parents->next) {
+			struct commit *commit = parents->item;
+			if (commit->object.flags & UNINTERESTING)
+				mark_tree_uninteresting(commit->tree);
+		}
+	}
+}
+
 static struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
@@ -388,6 +384,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 		}
 		p = &commit_list_insert(commit, p)->next;
 	}
+	if (tree_objects)
+		mark_edges_uninteresting(newlist);
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
@@ -563,6 +561,8 @@ int main(int argc, char **argv)
 			struct commit *exclude = NULL;
 			struct commit *include = NULL;
 			*dotdot = 0;
+			if (!*next)
+				next = "HEAD";
 			exclude = get_commit_reference(arg, UNINTERESTING);
 			include = get_commit_reference(next, 0);
 			if (exclude && include) {
@@ -571,7 +571,7 @@ int main(int argc, char **argv)
 				handle_one_commit(include, &list);
 				continue;
 			}
-			*next = '.';
+			*dotdot = '.';
 		}
 		if (*arg == '^') {
 			flags = UNINTERESTING;
@@ -581,6 +581,9 @@ int main(int argc, char **argv)
 		commit = get_commit_reference(arg, flags);
 		handle_one_commit(commit, &list);
 	}
+
+	save_commit_buffer = verbose_header;
+	track_object_refs = 0;
 
 	if (!merge_order) {		
 		sort_by_date(&list);

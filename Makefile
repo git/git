@@ -92,7 +92,7 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest
 PROGRAMS = \
-	git-apply git-build-rev-cache git-cat-file \
+	git-apply git-cat-file \
 	git-checkout-index git-clone-pack git-commit-tree \
 	git-convert-objects git-diff-files \
 	git-diff-helper git-diff-index git-diff-stages \
@@ -103,11 +103,14 @@ PROGRAMS = \
 	git-peek-remote git-prune-packed git-read-tree \
 	git-receive-pack git-rev-list git-rev-parse \
 	git-rev-tree git-send-pack git-show-branch \
-	git-show-index git-show-rev-cache git-ssh-fetch \
+	git-show-index git-ssh-fetch \
 	git-ssh-upload git-tar-tree git-unpack-file \
 	git-unpack-objects git-update-index git-update-server-info \
 	git-upload-pack git-verify-pack git-write-tree \
 	$(SIMPLE_PROGRAMS)
+
+# Backward compatibility -- to be removed in 0.99.8
+PROGRAMS += git-ssh-pull git-ssh-push
 
 PYMODULES = \
 	gitMergeCommon.py
@@ -125,7 +128,7 @@ LIB_FILE=libgit.a
 LIB_H = \
 	blob.h cache.h commit.h count-delta.h csum-file.h delta.h \
 	diff.h epoch.h object.h pack.h pkt-line.h quote.h refs.h \
-	rev-cache.h run-command.h strbuf.h tag.h tree.h
+	run-command.h strbuf.h tag.h tree.h
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
@@ -135,7 +138,7 @@ LIB_OBJS = \
 	blob.o commit.o connect.o count-delta.o csum-file.o \
 	date.o diff-delta.o entry.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
-	quote.o read-cache.o refs.o rev-cache.o run-command.o \
+	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o $(DIFF_OBJS)
 
@@ -148,7 +151,8 @@ ifeq ($(shell uname -s),Darwin)
 endif
 ifeq ($(shell uname -s),SunOS)
 	NEEDS_SOCKET = YesPlease
-	PLATFORM_DEFINES += -DNO_GETDOMAINNAME=1
+	NEEDS_NSL = YesPlease
+	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
 
 ifndef SHELL_PATH
@@ -194,6 +198,10 @@ endif
 ifdef NEEDS_SOCKET
 	LIBS += -lsocket
 	SIMPLE_LIB += -lsocket
+endif
+ifdef NEEDS_NSL
+	LIBS += -lnsl
+	SIMPLE_LIB += -lnsl
 endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
@@ -250,6 +258,8 @@ git-http-fetch: fetch.o
 git-local-fetch: fetch.o
 git-ssh-fetch: rsh.o fetch.o
 git-ssh-upload: rsh.o
+git-ssh-pull: rsh.o fetch.o
+git-ssh-push: rsh.o
 
 git-http-fetch: LIBS += -lcurl
 git-rev-list: LIBS += $(OPENSSL_LIBSSL)
@@ -288,12 +298,12 @@ check:
 ### Installation rules
 
 install: $(PROGRAMS) $(SCRIPTS)
-	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d -m755 $(DESTDIR)$(bindir)
 	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
 	sh ./cmd-rename.sh $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
-	$(INSTALL) -m755 -d $(DESTDIR)$(GIT_PYTHON_DIR)
+	$(INSTALL) -d -m755 $(DESTDIR)$(GIT_PYTHON_DIR)
 	$(INSTALL) $(PYMODULES) $(DESTDIR)$(GIT_PYTHON_DIR)
 
 install-doc:

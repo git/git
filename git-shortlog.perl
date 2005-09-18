@@ -108,7 +108,7 @@ sub changelog_input {
 		if ($pstate == 1) {
 			my ($email);
 
-			next unless /^Author: (.*)<(.*)>.*$/;
+			next unless /^[Aa]uthor:? (.*)<(.*)>.*$/;
 	
 			$n_records++;
 	

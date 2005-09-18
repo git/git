@@ -58,7 +58,15 @@ then
 	# all-into-one is used.
 	if test "$all_into_one" != '' && test "$existing" != ''
 	then
-		( cd "$PACKDIR" && rm -f $existing )
+		( cd "$PACKDIR" &&
+		  for e in $existing
+		  do
+			case "$e" in
+			./pack-$name.pack | ./pack-$name.idx) ;;
+			*)	rm -f $e ;;
+			esac
+		  done
+		)
 	fi
 fi
 
