@@ -144,10 +144,11 @@ static int fetch_alternates(char *base)
 	char *url;
 	char *data;
 	int i = 0;
+	int http_specific = 1;
 	if (got_alternates)
 		return 0;
 	data = xmalloc(4096);
-	buffer.size = 4096;
+	buffer.size = 4095;
 	buffer.posn = 0;
 	buffer.buffer = data;
 
@@ -162,6 +163,8 @@ static int fetch_alternates(char *base)
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	if (curl_easy_perform(curl) || !buffer.posn) {
+		http_specific = 0;
+
 		sprintf(url, "%s/objects/info/alternates", base);
 		
 		curl_easy_setopt(curl, CURLOPT_FILE, &buffer);
@@ -173,17 +176,45 @@ static int fetch_alternates(char *base)
 		}
 	}
 
+	data[buffer.posn] = '\0';
+
 	while (i < buffer.posn) {
 		int posn = i;
 		while (posn < buffer.posn && data[posn] != '\n')
 			posn++;
 		if (data[posn] == '\n') {
+			int okay = 0;
+			int serverlen = 0;
+			struct alt_base *newalt;
+			char *target = NULL;
 			if (data[i] == '/') {
-				int serverlen = strchr(base + 8, '/') - base;
-				// skip 'objects' at end
-				char *target = 
-					xmalloc(serverlen + posn - i - 6);
-				struct alt_base *newalt;
+				serverlen = strchr(base + 8, '/') - base;
+				okay = 1;
+			} else if (!memcmp(data + i, "../", 3)) {
+				i += 3;
+				serverlen = strlen(base);
+				while (i + 2 < posn && 
+				       !memcmp(data + i, "../", 3)) {
+					do {
+						serverlen--;
+					} while (serverlen &&
+						 base[serverlen - 1] != '/');
+					i += 3;
+				}
+				// If the server got removed, give up.
+				okay = strchr(base, ':') - base + 3 < 
+					serverlen;
+			} else if (http_specific) {
+				char *colon = strchr(data + i, ':');
+				char *slash = strchr(data + i, '/');
+				if (colon && slash && colon < data + posn &&
+				    slash < data + posn && colon < slash) {
+					okay = 1;
+				}
+			}
+			// skip 'objects' at end
+			if (okay) {
+				target = xmalloc(serverlen + posn - i - 6);
 				strncpy(target, base, serverlen);
 				strncpy(target + serverlen, data + i,
 					posn - i - 7);
@@ -235,7 +266,7 @@ static int fetch_indices(struct alt_base *repo)
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
 	
 	if (curl_easy_perform(curl)) {
-		return error("Unable to get pack index %s", url);
+		return -1;
 	}
 
 	while (i < buffer.posn) {
