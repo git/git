@@ -50,11 +50,20 @@ static int add_file_to_cache(char *path)
 		 * case just fine without --force-remove.
 		 */
 		if (status == 0 || (errno == ENOENT || errno == ENOTDIR)) {
-			if (allow_remove)
-				return remove_file_from_cache(path);
+			if (allow_remove) {
+				if (remove_file_from_cache(path))
+					return error("%s: cannot remove from the index",
+					             path);
+				else
+					return 0;
+			} else if (status < 0) {
+				return error("%s: does not exist and --remove not passed",
+				             path);
+			}
 		}
 		if (0 == status)
-			return error("%s: is a directory", path);
+			return error("%s: is a directory - add files inside instead",
+			             path);
 		else
 			return error("lstat(\"%s\"): %s", path,
 				     strerror(errno));
@@ -71,15 +80,17 @@ static int add_file_to_cache(char *path)
 	case S_IFREG:
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
-			return -1;
+			return error("open(\"%s\"): %s", path, strerror(errno));
 		if (index_fd(ce->sha1, fd, &st, !info_only, NULL) < 0)
-			return -1;
+			return error("%s: failed to insert into database", path);
 		break;
 	case S_IFLNK:
 		target = xmalloc(st.st_size+1);
 		if (readlink(path, target, st.st_size+1) != st.st_size) {
+			char *errstr = strerror(errno);
 			free(target);
-			return -1;
+			return error("readlink(\"%s\"): %s", path,
+			             errstr);
 		}
 		if (info_only) {
 			unsigned char hdr[50];
@@ -87,15 +98,18 @@ static int add_file_to_cache(char *path)
 			write_sha1_file_prepare(target, st.st_size, "blob",
 						ce->sha1, hdr, &hdrlen);
 		} else if (write_sha1_file(target, st.st_size, "blob", ce->sha1))
-			return -1;
+			return error("%s: failed to insert into database", path);
 		free(target);
 		break;
 	default:
-		return -1;
+		return error("%s: unsupported file type", path);
 	}
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
-	return add_cache_entry(ce, option);
+	if (add_cache_entry(ce, option))
+		return error("%s: cannot add to the index - missing --add option?",
+			     path);
+	return 0;
 }
 
 static int compare_data(struct cache_entry *ce, struct stat *st)
@@ -393,11 +407,11 @@ int main(int argc, char **argv)
 		}
 		if (force_remove) {
 			if (remove_file_from_cache(path))
-				die("git-update-index: --force-remove cannot remove %s", path);
+				die("git-update-index: unable to remove %s", path);
 			continue;
 		}
 		if (add_file_to_cache(path))
-			die("Unable to add %s to database; maybe you want to use --add option?", path);
+			die("Unable to process file %s", path);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
