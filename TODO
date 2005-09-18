@@ -1,15 +1,13 @@
-What to expect after 0.99.6
-===========================
+The GIT To-Do File
+==================
 
-This is written in a form of to-do list for me, so if I say
-"accept patch", it means I do not currently plan to do that
-myself.  People interested in seeing it materialize please take
-a hint.  The latest copy of this document is found at 
+  The latest copy of this document is found at 
 
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
 
+
 Tool Renames Plan
------------------
+=================
 
  - All non-binary commands will lose -script suffix in
    $(bindir).  The source to git-foo will be either git-foo.sh
@@ -37,12 +35,10 @@ Tool Renames Plan
 
  - In 0.99.7, all renamed commands will have symbolic links in
    $(bindir) so that old names continue to work.  These backward
-   compatible symlinks will not be present in documentation,
-   though.  Especially, the main documentation, git(7) will talk
-   about the new names.  Old environment names defined in
-   gitenv() will also be removed in this release.
-
-   Tentatively we aim to do this on Sep 17th.
+   compatible names will not appear in documentation.  The main
+   documentation, git(7) will talk about the new names but would
+   mention their old names as historical notes.  Old environment
+   names defined in gitenv() will also be removed in this release.
 
  - In 0.99.8, we do not install these backward compatible
    symbolic links in $(bindir) anymore.  The Makefile will have
@@ -52,6 +48,15 @@ Tool Renames Plan
    The timeframe for this is around Oct 1st, but I could be
    talked into delaying the symlink removal if Porcelain people
    find this schedule too tight.
+
+
+What to expect after 0.99.7
+===========================
+
+This is written in a form of to-do list for me, so if I say
+"accept patch", it means I do not currently plan to do that
+myself.  People interested in seeing it materialize please take
+a hint.
 
 
 Documentation
@@ -95,22 +100,16 @@ Technical (heavier)
   me, and Daniel outlined a smarter merge strategy for this.
   Try them out.
 
-* To make it easier to experiment with different merge
-  strategies, make git-merge driver that will run merge backends
-  for the best merge [DONE].
-
-* Sort out the mess objects/info/alternates introduces on the
-  client end.  Both rsync and commit walkers are broken.
-  * describe current situation [DONE]
-  * http [Daniel started]
-  * rsync
-
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
   We would need a tool to generate an idx file out of a pack
   file for this.  Also this itself may turn out to be a bad
   idea, making the set of packs in repositories everybody has
   different from each other.
+
+* Libification.  There are many places "run once" mentality is
+  ingrained in the management of basic data structures, which
+  need to be fixed.
 
 * Maybe a pack optimizer.
 
@@ -120,41 +119,18 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Define semantics for relative pathnames in objects/info/alternates.
-  Either relative to 'objects', or relative to the top of project tree
-  ;the latter is consistent with GIT_ALTERNATE_OBJECT_DIRECTORIES.
-  Perhaps would end up doing the former because we would want to be
-  consistent between a naked repository and a repository with working
-  tree [DONE].
-
-* Tool renames.  Give fixup patch for at least Cogito and StGIT
-  [DONE].
-
-* Massage ssh-fetch and ssh-upload to be more backward
-  compatible.
-
-* Have Daniel's read-tree graduate from "pu" after plugging
-  leaks [DONE].
-
-* Implement a merge backend using Daniel's read-tree [DONE].
-
-* Rename 'git-merge-resolve' to 'git-merge-stupid' and
-  'git-merge-multibase' to 'git-merge-resolve'; the former is
-  for historical curiosity and comparison purposes only and not
-  to be used in real applications so remove it from the default
-  strategies list [DONE].
-
-* Accept Fredrik merge after renaming it (I want to name the
-  driver 'git merge').  Suggest where to place *.py stuff --
-  probably in $(share)/git-core/ and add Makefile entry for
-  installation [DONE].
+* The recent commit walker safety patch may be too cautious and
+  appears to take forever when cloning.  This may even be
+  infinitely looping in the code lifted from the old rev-list --
+  needs to be taken a look at [DONE INITIAL CUT].
 
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
 
-* Bug Martin for archimport script documentation [DONE].
+* Accept patches for more portability.
 
-* More portability [IN PROGRESS].
+  * strcasestr() in mailinfo.  We may need compat/strcasestr.c;
+    this is bugging OpenBSD folks.
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -167,6 +143,10 @@ Technical (milder)
 * Perhaps accept patch to optionally allow '--fuzz' in
   'git-apply'.
 
+* Allow 'git apply' to accept GNU diff 2.7 output that forgets
+  to say '\No newline' if both input ends with incomplete
+  lines.
+
 * Maybe grok PGP signed text/plain in applymbox as well.
 
 * Perhaps a tool to revert a single file to pre-modification
@@ -174,18 +154,6 @@ Technical (milder)
   git-cat-file blob `git-ls-tree HEAD foo` >foo?  What should
   the command be called?  git-revert is taken so is
   git-checkout.
-
-* A tool to detect, show and prune already merged topic
-  branches [DONE; 'branch -d' to prune; users can do gitk for
-  deciding].
-
-* "Lost and Found"; link dangling commits found by fsck-objects
-  under $GIT_DIR/refs/lost-found/.  Then show-branch or gitk can
-  be used to find any lost commit.
-
-  Do not name it /lost+found/; that would probably confuse
-  things that mistake it a mount point (not our code but
-  somebody else's).
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
@@ -197,15 +165,6 @@ Technical (milder)
   repository; experiment if this results in a reasonable
   workflow, and document it in howto form if it does.
 
-* Option to limit rename detection for more than N paths.
-
-* diffcore-rename leak reintroduced because the 'fix' was
-  broken [DONE].
-
-* Marking copy seems to be broken when A,B => B,C rename
-  happens; we incorrectly say B stays, which makes the new B
-  copy of old A, not rename [DONE].
-
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
@@ -215,29 +174,32 @@ Technical (milder)
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
-* Allow 'git apply' to accept GNU diff 2.7 output that forgets
-  to say '\No newline' if both input ends with incomplete
-  lines.
+* Remove obsolete commands [READY].
+
+* Option to limit rename detection for more than N paths [READY].
+
+* Option to show only status and name from diff [READY].
 
 
 Technical (trivial)
 -------------------
 
-* Add simple globbing rules for git-show-branch so that I can
+* 'git add --recursive'?
+
+* 'git merge-projects'?
+
+* 'git lost-and-found'?  Link dangling commits found by
+  fsck-objects under $GIT_DIR/refs/lost-found/.  Then
+  show-branch or gitk can be used to find any lost commit. [A
+  feeler patch sent out. Very underwhelming response X-<.]
+
+  Do not name it /lost+found/; that would probably confuse
+  things that mistake it a mount point (not our code but
+  somebody else's).
+
+* Add simple globbing rules to git-show-branch so that I can
   say 'git show-branch --heads "ko-*"' (ko-master, ko-pu, and
   ko-rc are in refs/tags/).
-
-* Deal with CDPATH [DONE].
-
-* Teach 'git format-patch' about 'git cherry' [DONE].
-
-* Make 'git bisect' easier to use by logging the earlier
-  good/bad choices and make it replayable [DONE].
-
-* Perhaps "git branch -d" to delete a branch.  We probably need
-  some way to say "delete this branch because everything in this
-  should be merged in the master branch" and refuse the removal
-  if it is not true [DONE].
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  So far, the following
