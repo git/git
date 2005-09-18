@@ -76,6 +76,40 @@ OPTIONS
 	Flags and parameters to be parsed.
 
 
+SPECIFYING REVISIONS
+--------------------
+
+A revision parameter typically names a commit object.  They use
+what is called an 'extended SHA1' syntax.
+
+* The full SHA1 object name (40-byte hexadecimal string), or
+  a substring of such that is unique within the repository.
+  E.g. dae86e1950b1277e545cee180551750029cfe735 and dae86e both
+  name the same commit object if there are no other object in
+  your repository whose object name starts with dae86e.
+
+* A symbolic ref name.  E.g. 'master' typically means the commit
+  object referenced by $GIT_DIR/refs/heads/master.  If you
+  happen to have both heads/master and tags/master, you can
+  explicitly say 'heads/master' to tell GIT which one you mean.
+
+* A suffix '^' to a revision parameter means the first parent of
+  that commit object.  '^<n>' means the <n>th parent (i.e. 'rev^'
+  is equivalent to 'rev^1').  As a special rule,
+  'rev^0' means the commit itself and is used when 'rev' is the
+  object name of a tag object that refers to a commit object.
+
+* A suffix '~<n>' to a revision parameter means the commit
+  object that is the <n>th generation grand-parent of the named
+  commit object, following only the first parent.  I.e. rev~3 is
+  equivalent to rev^^^ which is equivalent to rev^1^1^1.
+
+'git-rev-parse' also accepts a prefix '^' to revision parameter,
+which is passed to 'git-rev-list'.  Two revision parameters
+concatenated with '..' is a short-hand for writing a range
+between them.  I.e. 'r1..r2' is equivalent to saying '^r1 r2'
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
