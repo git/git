@@ -94,7 +94,8 @@ what is called an 'extended SHA1' syntax.
   explicitly say 'heads/master' to tell GIT which one you mean.
 
 * A suffix '^' to a revision parameter means the first parent of
-  that commit object.  '^<n>' means the <n>th parent (i.e. 'rev^'
+  that commit object.  '^<n>' means the <n>th parent (i.e.
+  'rev^'
   is equivalent to 'rev^1').  As a special rule,
   'rev^0' means the commit itself and is used when 'rev' is the
   object name of a tag object that refers to a commit object.
