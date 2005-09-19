@@ -4,7 +4,9 @@ test -d "$d" || exit
 while read old new
 do
 	rm -f "$d/$old"
+	if [ -x "$d/$new" ]; then
 	ln -s "$new" "$d/$old"
+	fi
 done <<\EOF
 git-add-script	git-add
 git-archimport-script	git-archimport
