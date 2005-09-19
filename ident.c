@@ -15,6 +15,40 @@ static char real_email[1000];
 static char real_name[1000];
 static char real_date[50];
 
+static void copy_gecos(struct passwd *w, char *name, int sz)
+{
+	char *src, *dst;
+	int len, nlen;
+
+	nlen = strlen(w->pw_name);
+
+	/* Traditionally GECOS field had office phone numbers etc, separated
+	 * with commas.  Also & stands for capitalized form of the login name.
+	 */
+
+	for (len = 0, dst = name, src = w->pw_gecos; len < sz; src++) {
+		int ch = *src;
+		if (ch != '&') {
+			*dst++ = ch;
+			if (ch == 0 || ch == ',')
+				break;
+			len++;
+			continue;
+		}
+		if (len + nlen < sz) {
+			/* Sorry, Mr. McDonald... */
+			*dst++ = toupper(*w->pw_name);
+			memcpy(dst, w->pw_name + 1, nlen - 1);
+			dst += nlen - 1;
+		}
+	}
+	if (len < sz)
+		name[len] = 0;
+	else
+		die("Your parents must have hated you!");
+
+}
+
 int setup_ident(void)
 {
 	int len;
@@ -24,10 +58,7 @@ int setup_ident(void)
 		die("You don't exist. Go away!");
 
 	/* Get the name ("gecos") */
-	len = strlen(pw->pw_gecos);
-	if (len >= sizeof(real_name))
-		die("Your parents must have hated you!");
-	memcpy(real_name, pw->pw_gecos, len+1);
+	copy_gecos(pw, real_name, sizeof(real_name));
 
 	/* Make up a fake email address (name + '@' + hostname [+ '.' + domainname]) */
 	len = strlen(pw->pw_name);
