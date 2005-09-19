@@ -21,8 +21,8 @@ at the link:tutorial.html[tutorial] document.
 
 The <<Discussion>> section below contains much useful definition and
 clarification info - read that first.  And of the commands, I suggest
-reading link:git-update-index.html[git-update-index] and
-link:git-read-tree.html[git-read-tree] first - I wish I had!
+reading gitlink:git-update-index[1] and
+gitlink:git-read-tree[1] first - I wish I had!
 
 If you are migrating from CVS, link:cvs-migration.html[cvs migration]
 document may be helpful after you finish the tutorial.
@@ -55,104 +55,104 @@ SCMs layered over git.
 
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
-link:git-apply.html[git-apply]::
+gitlink:git-apply[1]::
 	Reads a "diff -up1" or git generated patch file and
 	applies it to the working tree.
 
-link:git-checkout-index.html[git-checkout-index]::
+gitlink:git-checkout-index[1]::
 	Copy files from the cache to the working directory
 	Previously this command was known as git-checkout-cache.
 
-link:git-commit-tree.html[git-commit-tree]::
+gitlink:git-commit-tree[1]::
 	Creates a new commit object
 
-link:git-hash-object.html[git-hash-object]::
+gitlink:git-hash-object[1]::
 	Computes the object ID from a file.
 
-link:git-init-db.html[git-init-db]::
+gitlink:git-init-db[1]::
 	Creates an empty git object database
 
-link:git-merge-index.html[git-merge-index]::
+gitlink:git-merge-index[1]::
 	Runs a merge for files needing merging
 	Previously this command was known as git-merge-cache.
 
-link:git-mktag.html[git-mktag]::
+gitlink:git-mktag[1]::
 	Creates a tag object
 
-link:git-pack-objects.html[git-pack-objects]::
+gitlink:git-pack-objects[1]::
 	Creates a packed archive of objects.
 
-link:git-prune-packed.html[git-prune-packed]::
+gitlink:git-prune-packed[1]::
 	Remove extra objects that are already in pack files.
 
-link:git-read-tree.html[git-read-tree]::
+gitlink:git-read-tree[1]::
 	Reads tree information into the directory cache
 
-link:git-unpack-objects.html[git-unpack-objects]::
+gitlink:git-unpack-objects[1]::
 	Unpacks objects out of a packed archive.
 
-link:git-update-index.html[git-update-index]::
+gitlink:git-update-index[1]::
 	Modifies the index or directory cache
 	Previously this command was known as git-update-cache.
 
-link:git-write-tree.html[git-write-tree]::
+gitlink:git-write-tree[1]::
 	Creates a tree from the current cache
 
 
 Interrogation commands
 ~~~~~~~~~~~~~~~~~~~~~~
 
-link:git-cat-file.html[git-cat-file]::
+gitlink:git-cat-file[1]::
 	Provide content or type information for repository objects
 
-link:git-diff-index.html[git-diff-index]::
+gitlink:git-diff-index[1]::
 	Compares content and mode of blobs between the cache and repository
 	Previously this command was known as git-diff-cache.
 
-link:git-diff-files.html[git-diff-files]::
+gitlink:git-diff-files[1]::
 	Compares files in the working tree and the cache
 
-link:git-diff-stages.html[git-diff-stages]::
+gitlink:git-diff-stages[1]::
 	Compares two "merge stages" in the index file.
 
-link:git-diff-tree.html[git-diff-tree]::
+gitlink:git-diff-tree[1]::
 	Compares the content and mode of blobs found via two tree objects
 
-link:git-export.html[git-export]::
+gitlink:git-export[1]::
 	Exports each commit and a diff against each of its parents
 
-link:git-fsck-objects.html[git-fsck-objects]::
+gitlink:git-fsck-objects[1]::
 	Verifies the connectivity and validity of the objects in the database
 	Previously this command was known as git-fsck-cache.
 
-link:git-ls-files.html[git-ls-files]::
+gitlink:git-ls-files[1]::
 	Information about files in the cache/working directory
 
-link:git-ls-tree.html[git-ls-tree]::
+gitlink:git-ls-tree[1]::
 	Displays a tree object in human readable form
 
-link:git-merge-base.html[git-merge-base]::
+gitlink:git-merge-base[1]::
 	Finds as good a common ancestor as possible for a merge
 
-link:git-rev-list.html[git-rev-list]::
+gitlink:git-rev-list[1]::
 	Lists commit objects in reverse chronological order
 
-link:git-rev-tree.html[git-rev-tree]::
+gitlink:git-rev-tree[1]::
 	Provides the revision tree for one or more commits
 
-link:git-show-index.html[git-show-index]::
+gitlink:git-show-index[1]::
 	Displays contents of a pack idx file.
 
-link:git-tar-tree.html[git-tar-tree]::
+gitlink:git-tar-tree[1]::
 	Creates a tar archive of the files in the named tree
 
-link:git-unpack-file.html[git-unpack-file]::
+gitlink:git-unpack-file[1]::
 	Creates a temporary file with a blob's contents
 
-link:git-var.html[git-var]::
+gitlink:git-var[1]::
 	Displays a git logical variable
 
-link:git-verify-pack.html[git-verify-pack]::
+gitlink:git-verify-pack[1]::
 	Validates packed GIT archive files
 
 The interrogate commands may create files - and you can force them to
@@ -162,43 +162,43 @@ touch the working file set - but in general they don't
 Synching repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
-link:git-clone-pack.html[git-clone-pack]::
+gitlink:git-clone-pack[1]::
 	Clones a repository into the current repository (engine
 	for ssh and local transport)
 
-link:git-fetch-pack.html[git-fetch-pack]::
+gitlink:git-fetch-pack[1]::
 	Updates from a remote repository.
 
-link:git-http-fetch.html[git-http-fetch]::
+gitlink:git-http-fetch[1]::
 	Downloads a remote GIT repository via HTTP
 	Previously this command was known as git-http-pull.
 
-link:git-local-fetch.html[git-local-fetch]::
+gitlink:git-local-fetch[1]::
 	Duplicates another GIT repository on a local system
 	Previously this command was known as git-local-pull.
 
-link:git-peek-remote.html[git-peek-remote]::
+gitlink:git-peek-remote[1]::
 	Lists references on a remote repository using upload-pack protocol.
 
-link:git-receive-pack.html[git-receive-pack]::
+gitlink:git-receive-pack[1]::
 	Invoked by 'git-send-pack' to receive what is pushed to it.
 
-link:git-send-pack.html[git-send-pack]::
+gitlink:git-send-pack[1]::
 	Pushes to a remote repository, intelligently.
 
-link:git-ssh-fetch.html[git-ssh-fetch]::
+gitlink:git-ssh-fetch[1]::
 	Pulls from a remote repository over ssh connection
 	Previously this command was known as git-ssh-pull.
 
-link:git-ssh-upload.html[git-ssh-upload]::
+gitlink:git-ssh-upload[1]::
 	Helper "server-side" program used by git-ssh-fetch
 	Previously this command was known as git-ssh-push.
 
-link:git-update-server-info.html[git-update-server-info]::
+gitlink:git-update-server-info[1]::
 	Updates auxiliary information on a dumb server to help
 	clients discover references and packs on it.
 
-link:git-upload-pack.html[git-upload-pack]::
+gitlink:git-upload-pack[1]::
 	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
 	what are asked for.
 
@@ -206,114 +206,114 @@ link:git-upload-pack.html[git-upload-pack]::
 Porcelain-ish Commands
 ----------------------
 
-link:git-add.html[git-add]::
+gitlink:git-add[1]::
 	Add paths to the index file.
 	Previously this command was known as git-add-script.
 
-link:git-applymbox.html[git-applymbox]::
+gitlink:git-applymbox[1]::
 	Apply patches from a mailbox.
 
-link:git-bisect.html[git-bisect]::
+gitlink:git-bisect[1]::
 	Find the change that introduced a bug.
 	Previously this command was known as git-bisect-script.
 
-link:git-branch.html[git-branch]::
+gitlink:git-branch[1]::
 	Create and Show branches.
 	Previously this command was known as git-branch-script.
 
-link:git-checkout.html[git-checkout]::
+gitlink:git-checkout[1]::
 	Checkout and switch to a branch.
 	Previously this command was known as git-checkout-script.
 
-link:git-cherry-pick.html[git-cherry-pick]::
+gitlink:git-cherry-pick[1]::
 	Cherry-pick the effect of an existing commit.
 	Previously this command was known as git-cherry-pick-script.
 
-link:git-clone.html[git-clone]::
+gitlink:git-clone[1]::
 	Clones a repository into a new directory.
 	Previously this command was known as git-clone-script.
 
-link:git-commit.html[git-commit]::
+gitlink:git-commit[1]::
 	Record changes to the repository.
 	Previously this command was known as git-commit-script.
 
-link:git-diff.html[git-diff]::
+gitlink:git-diff[1]::
 	Show changes between commits, commit and working tree, etc.
 	Previously this command was known as git-diff-script.
 
-link:git-fetch.html[git-fetch]::
+gitlink:git-fetch[1]::
 	Download from a remote repository via various protocols.
 	Previously this command was known as git-fetch-script.
 
-link:git-format-patch.html[git-format-patch]::
+gitlink:git-format-patch[1]::
 	Prepare patches for e-mail submission.
 	Previously this command was known as git-format-patch-script.
 
-link:git-grep.html[git-grep]::
+gitlink:git-grep[1]::
 	Print lines matching a pattern
 
-link:git-log.html[git-log]::
+gitlink:git-log[1]::
 	Shows commit logs.
 	Previously this command was known as git-log-script.
 
-link:git-ls-remote.html[git-ls-remote]::
+gitlink:git-ls-remote[1]::
 	Shows references in a remote or local repository.
 	Previously this command was known as git-ls-remote-script.
 
-link:git-merge.html[git-merge]::
+gitlink:git-merge[1]::
 	Grand unified merge driver.
 
-link:git-octopus.html[git-octopus]::
+gitlink:git-octopus[1]::
 	Merge more than two commits.
 	Previously this command was known as git-octopus-script.
 
-link:git-pull.html[git-pull]::
+gitlink:git-pull[1]::
 	Fetch from and merge with a remote repository.
 	Previously this command was known as git-pull-script.
 
-link:git-push.html[git-push]::
+gitlink:git-push[1]::
 	Update remote refs along with associated objects.
 	Previously this command was known as git-push-script.
 
-link:git-rebase.html[git-rebase]::
+gitlink:git-rebase[1]::
 	Rebase local commits to new upstream head.
 	Previously this command was known as git-rebase-script.
 
-link:git-rename.html[git-rename]::
+gitlink:git-rename[1]::
 	Rename files and directories.
 	Previously this command was known as git-rename-script.
 
-link:git-repack.html[git-repack]::
+gitlink:git-repack[1]::
 	Pack unpacked objects in a repository.
 	Previously this command was known as git-repack-script.
 
-link:git-reset.html[git-reset]::
+gitlink:git-reset[1]::
 	Reset current HEAD to the specified state.
 	Previously this command was known as git-reset-script.
 
-link:git-resolve.html[git-resolve]::
+gitlink:git-resolve[1]::
 	Merge two commits.
 	Previously this command was known as git-resolve-script.
 
-link:git-revert.html[git-revert]::
+gitlink:git-revert[1]::
 	Revert an existing commit.
 	Previously this command was known as git-revert-script.
 
-link:git-shortlog.html[git-shortlog]::
+gitlink:git-shortlog[1]::
 	Summarizes 'git log' output.
 
-link:git-show-branch.html[git-show-branch]::
+gitlink:git-show-branch[1]::
 	Show branches and their commits.
 
-link:git-status.html[git-status]::
+gitlink:git-status[1]::
 	Shows the working tree status.
 	Previously this command was known as git-status-script.
 
-link:git-verify-tag.html[git-verify-tag]::
+gitlink:git-verify-tag[1]::
 	Check the GPG signature of tag.
 	Previously this command was known as git-verify-tag-script.
 
-link:git-whatchanged.html[git-whatchanged]::
+gitlink:git-whatchanged[1]::
 	Shows commit logs and differences they introduce.
 
 
@@ -321,92 +321,92 @@ Ancillary Commands
 ------------------
 Manipulators:
 
-link:git-applypatch.html[git-applypatch]::
+gitlink:git-applypatch[1]::
 	Apply one patch extracted from an e-mail.
 
-link:git-archimport.html[git-archimport]::
+gitlink:git-archimport[1]::
 	Import an arch repository into git.
 	Previously this command was known as git-archimport-script.
 
-link:git-convert-objects.html[git-convert-objects]::
+gitlink:git-convert-objects[1]::
 	Converts old-style GIT repository
 	Previously this command was known as git-convert-cache.
 
-link:git-cvsimport.html[git-cvsimport]::
+gitlink:git-cvsimport[1]::
 	Salvage your data out of another SCM people love to hate.
 	Previously this command was known as git-cvsimport-script.
 
-link:git-merge-one-file.html[git-merge-one-file]::
+gitlink:git-merge-one-file[1]::
 	The standard helper program to use with "git-merge-index"
 	Previously this command was known as git-merge-one-file-script.
 
-link:git-prune.html[git-prune]::
+gitlink:git-prune[1]::
 	Prunes all unreachable objects from the object database
 	Previously this command was known as git-prune-script.
 
-link:git-relink.html[git-relink]::
+gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.
 	Previously this command was known as git-relink-script.
 
-link:git-sh-setup.html[git-sh-setup]::
+gitlink:git-sh-setup[1]::
 	Common git shell script setup code.
 	Previously this command was known as git-sh-setup-script.
 
-link:git-tag.html[git-tag]::
+gitlink:git-tag[1]::
 	An example script to create a tag object signed with GPG
 	Previously this command was known as git-tag-script.
 
 
 Interrogators:
 
-link:git-cherry.html[git-cherry]::
+gitlink:git-cherry[1]::
 	Find commits not merged upstream.
 
-link:git-count-objects.html[git-count-objects]::
+gitlink:git-count-objects[1]::
 	Count unpacked number of objects and their disk consumption.
 	Previously this command was known as git-count-objects-script.
 
-link:git-daemon.html[git-daemon]::
+gitlink:git-daemon[1]::
 	A really simple server for GIT repositories.
 
-link:git-diff-helper.html[git-diff-helper]::
+gitlink:git-diff-helper[1]::
 	Generates patch format output for git-diff-*
 
-link:git-get-tar-commit-id.html[git-get-tar-commit-id]::
+gitlink:git-get-tar-commit-id[1]::
 	Extract commit ID from an archive created using git-tar-tree.
 
-link:git-mailinfo.html[git-mailinfo]::
+gitlink:git-mailinfo[1]::
 	Extracts patch from a single e-mail message.
 
-link:git-mailsplit.html[git-mailsplit]::
+gitlink:git-mailsplit[1]::
 	git-mailsplit.
 
-link:git-patch-id.html[git-patch-id]::
+gitlink:git-patch-id[1]::
 	Compute unique ID for a patch.
 
-link:git-parse-remote.html[git-parse-remote]::
+gitlink:git-parse-remote[1]::
 	Routines to help parsing $GIT_DIR/remotes/
 	Previously this command was known as git-parse-remote-script.
 
-link:git-request-pull.html[git-request-pull]::
+gitlink:git-request-pull[1]::
 	git-request-pull.
 	Previously this command was known as git-request-pull-script.
 
-link:git-rev-parse.html[git-rev-parse]::
+gitlink:git-rev-parse[1]::
 	Pick out and massage parameters.
 
-link:git-send-email.html[git-send-email]::
+gitlink:git-send-email[1]::
 	Send patch e-mails out of "format-patch --mbox" output.
 	Previously this command was known as git-send-email-script.
 
-link:git-stripspace.html[git-stripspace]::
+gitlink:git-stripspace[1]::
 	Filter out empty lines.
 
 
 Commands not yet documented
 ---------------------------
 
-link:gitk.html[gitk]::
+gitlink:gitk[1]::
 	gitk.
 
 
@@ -511,16 +511,16 @@ git Commits
 'GIT_AUTHOR_DATE'::
 'GIT_COMMITTER_NAME'::
 'GIT_COMMITTER_EMAIL'::
-	see link:git-commit-tree.html[git-commit-tree]
+	see gitlink:git-commit-tree[1]
 
 git Diffs
 ~~~~~~~~~
 'GIT_DIFF_OPTS'::
 'GIT_EXTERNAL_DIFF'::
 	see the "generating patches" section in :
-	link:git-diff-index.html[git-diff-index];
-	link:git-diff-files.html[git-diff-files];
-	link:git-diff-tree.html[git-diff-tree]
+	gitlink:git-diff-index[1];
+	gitlink:git-diff-files[1];
+	gitlink:git-diff-tree[1]
 
 Discussion[[Discussion]]
 ------------------------
@@ -536,5 +536,5 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the link:git.html[git] suite
+Part of the gitlink:git[7] suite
 

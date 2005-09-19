@@ -75,7 +75,7 @@ Your sysadmin must hate you!::
 
 See Also
 --------
-link:git-write-tree.html[git-write-tree]
+gitlink:git-write-tree[1]
 
 
 Author
@@ -88,5 +88,5 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the link:git.html[git] suite
+Part of the gitlink:git[7] suite
 

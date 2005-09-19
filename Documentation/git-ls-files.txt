@@ -180,7 +180,7 @@ An example:
 
 See Also
 --------
-link:git-read-tree.html[git-read-tree]
+gitlink:git-read-tree[1]
 
 
 Author
@@ -193,5 +193,5 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the link:git.html[git] suite
+Part of the gitlink:git[7] suite
 

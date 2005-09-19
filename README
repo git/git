@@ -104,8 +104,8 @@ object. The object is totally independent of its location in the
 directory tree, and renaming a file does not change the object that
 file is associated with in any way.
 
-A blob is typically created when link:git-update-index.html[git-update-index]
-is run, and its data can be accessed by link:git-cat-file.html[git-cat-file].
+A blob is typically created when gitlink:git-update-index[1]
+is run, and its data can be accessed by gitlink:git-cat-file[1].
 
 Tree Object
 ~~~~~~~~~~~
@@ -143,9 +143,9 @@ involved), you can see trivial renames or permission changes by
 noticing that the blob stayed the same.  However, renames with data
 changes need a smarter "diff" implementation.
 
-A tree is created with link:git-write-tree.html[git-write-tree] and
-its data can be accessed by link:git-ls-tree.html[git-ls-tree].
-Two trees can be compared with link:git-diff-tree.html[git-diff-tree].
+A tree is created with gitlink:git-write-tree[1] and
+its data can be accessed by gitlink:git-ls-tree[1].
+Two trees can be compared with gitlink:git-diff-tree[1].
 
 Commit Object
 ~~~~~~~~~~~~~
@@ -169,8 +169,8 @@ implicit in the trees involved (the result tree, and the result trees
 of the parents), and describing that makes no sense in this idiotic
 file manager.
 
-A commit is created with link:git-commit-tree.html[git-commit-tree] and
-its data can be accessed by link:git-cat-file.html[git-cat-file].
+A commit is created with gitlink:git-commit-tree[1] and
+its data can be accessed by gitlink:git-cat-file[1].
 
 Trust
 ~~~~~
@@ -215,10 +215,10 @@ Note that despite the tag features, "git" itself only handles content
 integrity; the trust framework (and signature provision and
 verification) has to come from outside.
 
-A tag is created with link:git-mktag.html[git-mktag],
-its data can be accessed by link:git-cat-file.html[git-cat-file],
+A tag is created with gitlink:git-mktag[1],
+its data can be accessed by gitlink:git-cat-file[1],
 and the signature can be verified by
-link:git-verify-tag.html[git-verify-tag].
+gitlink:git-verify-tag[1].
 
 
 The "index" aka "Current Directory Cache"
@@ -286,7 +286,7 @@ main combinations:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You update the index with information from the working directory with
-the link:git-update-index.html[git-update-index] command.  You
+the gitlink:git-update-index[1] command.  You
 generally update the index information by just specifying the filename
 you want to update, like so:
 
@@ -404,7 +404,7 @@ last committed state was.
 
 You can examine the data represented in the object database and the
 index with various helper tools. For every object, you can use
-link:git-cat-file.html[git-cat-file] to examine details about the
+gitlink:git-cat-file[1] to examine details about the
 object:
 
 		git-cat-file -t <objectname>

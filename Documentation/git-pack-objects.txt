@@ -80,5 +80,5 @@ git-repack(1) git-prune-packed(1)
 
 GIT
 ---
-Part of the link:git.html[git] suite
+Part of the gitlink:git[7] suite
 

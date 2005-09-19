@@ -44,5 +44,5 @@ Documentation by Daniel Barkalow
 
 GIT
 ---
-Part of the link:git.html[git] suite
+Part of the gitlink:git[7] suite
 
