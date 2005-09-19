@@ -16,6 +16,7 @@ static int show_others = 0;
 static int show_ignored = 0;
 static int show_stage = 0;
 static int show_unmerged = 0;
+static int show_modified = 0;
 static int show_killed = 0;
 static int line_terminator = '\n';
 
@@ -28,6 +29,7 @@ static const char *tag_unmerged = "";
 static const char *tag_removed = "";
 static const char *tag_other = "";
 static const char *tag_killed = "";
+static const char *tag_modified = "";
 
 static char *exclude_per_dir = NULL;
 
@@ -443,15 +445,18 @@ static void show_files(void)
 			show_ce_entry(ce_stage(ce) ? tag_unmerged : tag_cached, ce);
 		}
 	}
-	if (show_deleted) {
+	if (show_deleted | show_modified) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			struct stat st;
+			int err;
 			if (excluded(ce->name) != show_ignored)
 				continue;
-			if (!lstat(ce->name, &st))
-				continue;
-			show_ce_entry(tag_removed, ce);
+			err = lstat(ce->name, &st);
+			if (show_deleted && err)
+				show_ce_entry(tag_removed, ce);
+			if (show_modified && ce_modified(ce, &st))
+				show_ce_entry(tag_modified, ce);
 		}
 	}
 }
@@ -523,7 +528,7 @@ static void verify_pathspec(void)
 }
 
 static const char ls_files_usage[] =
-	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed])* "
+	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
 	"[ --exclude-per-directory=<filename> ]";
 
@@ -547,6 +552,7 @@ int main(int argc, char **argv)
 			tag_cached = "H ";
 			tag_unmerged = "M ";
 			tag_removed = "R ";
+			tag_modified = "C ";
 			tag_other = "? ";
 			tag_killed = "K ";
 			continue;
@@ -557,6 +563,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
 			show_deleted = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-m") || !strcmp(arg, "--modified")) {
+			show_modified = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-o") || !strcmp(arg, "--others")) {
@@ -630,7 +640,8 @@ int main(int argc, char **argv)
 	}
 
 	/* With no flags, we default to showing the cached files */
-	if (!(show_stage | show_deleted | show_others | show_unmerged | show_killed))
+	if (!(show_stage | show_deleted | show_others | show_unmerged |
+	      show_killed | show_modified))
 		show_cached = 1;
 
 	read_cache();

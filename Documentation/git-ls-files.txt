@@ -1,6 +1,5 @@
 git-ls-files(1)
 ===============
-v0.1, May 2005
 
 NAME
 ----
@@ -10,8 +9,8 @@ git-ls-files - Information about files in the cache/working directory
 SYNOPSIS
 --------
 'git-ls-files' [-z] [-t]
-		(--[cached|deleted|others|ignored|stage|unmerged|killed])\*
-		(-[c|d|o|i|s|u|k])\*
+		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
+		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
@@ -32,6 +31,9 @@ OPTIONS
 
 -d|--deleted::
 	Show deleted files in the output
+
+-m|--modified::
+	Show modified files in the output
 
 -o|--others::
 	Show other files in the output
@@ -71,6 +73,7 @@ OPTIONS
 	H	cached
 	M	unmerged
 	R	removed/deleted
+	C	modifed/changed
 	K	to be killed
 	?	other
 

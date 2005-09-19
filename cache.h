@@ -161,6 +161,7 @@ extern int remove_cache_entry_at(int pos);
 extern int remove_file_from_cache(char *path);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st);
+extern int ce_modified(struct cache_entry *ce, struct stat *st);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);

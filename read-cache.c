@@ -83,6 +83,83 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
+static int ce_compare_data(struct cache_entry *ce, struct stat *st)
+{
+	int match = -1;
+	int fd = open(ce->name, O_RDONLY);
+
+	if (fd >= 0) {
+		unsigned char sha1[20];
+		if (!index_fd(sha1, fd, st, 0, NULL))
+			match = memcmp(sha1, ce->sha1, 20);
+		close(fd);
+	}
+	return match;
+}
+
+static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
+{
+	int match = -1;
+	char *target;
+	void *buffer;
+	unsigned long size;
+	char type[10];
+	int len;
+
+	target = xmalloc(expected_size);
+	len = readlink(ce->name, target, expected_size);
+	if (len != expected_size) {
+		free(target);
+		return -1;
+	}
+	buffer = read_sha1_file(ce->sha1, type, &size);
+	if (!buffer) {
+		free(target);
+		return -1;
+	}
+	if (size == expected_size)
+		match = memcmp(buffer, target, size);
+	free(buffer);
+	free(target);
+	return match;
+}
+
+int ce_modified(struct cache_entry *ce, struct stat *st)
+{
+	int changed;
+	changed = ce_match_stat(ce, st);
+	if (!changed)
+		return 0;
+
+	/*
+	 * If the mode or type has changed, there's no point in trying
+	 * to refresh the entry - it's not going to match
+	 */
+	if (changed & (MODE_CHANGED | TYPE_CHANGED))
+		return changed;
+
+	/* Immediately after read-tree or update-index --cacheinfo,
+	 * the length field is zero.  For other cases the ce_size
+	 * should match the SHA1 recorded in the index entry.
+	 */
+	if ((changed & DATA_CHANGED) && ce->ce_size != htonl(0))
+		return changed;
+
+	switch (st->st_mode & S_IFMT) {
+	case S_IFREG:
+		if (ce_compare_data(ce, st))
+			return changed | DATA_CHANGED;
+		break;
+	case S_IFLNK:
+		if (ce_compare_link(ce, st->st_size))
+			return changed | DATA_CHANGED;
+		break;
+	default:
+		return changed | TYPE_CHANGED;
+	}
+	return 0;
+}
+
 int base_name_compare(const char *name1, int len1, int mode1,
 		      const char *name2, int len2, int mode2)
 {
