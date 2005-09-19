@@ -84,19 +84,19 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 	return 0;
 }
 
-static int get_short_sha1(const char *name, unsigned char *sha1)
+static int get_short_sha1(const char *name, int len, unsigned char *sha1)
 {
 	int i;
 	char canonical[40];
 	unsigned char res[20];
 
+	if (len < 4)
+		return -1;
 	memset(res, 0, 20);
 	memset(canonical, 'x', 40);
-	for (i = 0;;i++) {
+	for (i = 0; i < len ;i++) {
 		unsigned char c = name[i];
 		unsigned char val;
-		if (!c || i > 40)
-			break;
 		if (c >= '0' && c <= '9')
 			val = c - '0';
 		else if (c >= 'a' && c <= 'f')
@@ -112,8 +112,6 @@ static int get_short_sha1(const char *name, unsigned char *sha1)
 			val <<= 4;
 		res[i >> 1] |= val;
 	}
-	if (i < 4)
-		return -1;
 	if (find_short_object_filename(i, canonical, sha1))
 		return 0;
 	if (find_short_packed_object(i, res, sha1))
@@ -254,7 +252,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	ret = get_sha1_basic(name, len, sha1);
 	if (!ret)
 		return 0;
-	return get_short_sha1(name, sha1);
+	return get_short_sha1(name, len, sha1);
 }
 
 /*
