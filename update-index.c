@@ -184,6 +184,13 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	if (changed & (MODE_CHANGED | TYPE_CHANGED))
 		return ERR_PTR(-EINVAL);
 
+	/* Immediately after read-tree or update-index --cacheinfo,
+	 * the length field is zero.  For other cases the ce_size
+	 * should match the SHA1 recorded in the index entry.
+	 */
+	if ((changed & DATA_CHANGED) && ce->ce_size != htonl(0))
+		return ERR_PTR(-EINVAL);
+
 	switch (st.st_mode & S_IFMT) {
 	case S_IFREG:
 		if (compare_data(ce, &st))
