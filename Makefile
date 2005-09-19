@@ -9,6 +9,9 @@
 # Define NO_CURL if you do not have curl installed.  git-http-pull is not
 # built, and you cannot use http:// and https:// transports.
 #
+# Define CURLDIR=/foo/bar if your curl header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define PPC_SHA1 environment variable when running make to make use of
@@ -131,6 +134,13 @@ ifdef WITH_SEND_EMAIL
 endif
 
 ifndef NO_CURL
+	ifdef CURLDIR
+		# This is still problematic -- gcc does not want -R.
+		CFLAGS += -I$(CURLDIR)/include
+		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
+	else
+		CURL_LIBCURL = -lcurl
+	endif
 	PROGRAMS += git-http-fetch
 endif
 
@@ -285,7 +295,7 @@ git-ssh-upload: rsh.o
 git-ssh-pull: rsh.o fetch.o
 git-ssh-push: rsh.o
 
-git-http-fetch: LIBS += -lcurl
+git-http-fetch: LIBS += $(CURL_LIBCURL)
 git-rev-list: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
