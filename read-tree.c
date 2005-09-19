@@ -655,7 +655,7 @@ int main(int argc, char **argv)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}
-	if (update && !merge)
+	if ((update||index_only) && !merge)
 		usage(read_tree_usage);
 	if (merge && !fn) {
 		if (stage < 2)

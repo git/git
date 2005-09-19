@@ -9,7 +9,7 @@ git-read-tree - Reads tree information into the directory cache
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [-m [-u]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [-m [-u|-i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -34,6 +34,16 @@ OPTIONS
 -u::
 	After a successful merge, update the files in the work
 	tree with the result of the merge.
+
+-i::
+	Usually a merge requires the index file as well as the
+	files in the working tree are up to date with the
+	current head commit, in order not to lose local
+	changes.  This flag disables the check with the working
+	tree and is meant to be used when creating a merge of
+	trees that are not directly related to the current
+	working tree status into a temporary index file.
+
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
