@@ -388,7 +388,7 @@ static int match_tz(const char *date, int *offp)
 
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
-void parse_date(const char *date, char *result, int maxlen)
+int parse_date(const char *date, char *result, int maxlen)
 {
 	struct tm tm;
 	int offset, sign, tm_gmt;
@@ -431,7 +431,7 @@ void parse_date(const char *date, char *result, int maxlen)
 		offset = (then - mktime(&tm)) / 60;
 
 	if (then == -1)
-		return;
+		return -1;
 
 	if (!tm_gmt)
 		then -= offset * 60;
@@ -442,7 +442,7 @@ void parse_date(const char *date, char *result, int maxlen)
 		sign = '-';
 	}
 
-	snprintf(result, maxlen, "%lu %c%02d%02d", then, sign, offset/60, offset % 60);
+	return snprintf(result, maxlen, "%lu %c%02d%02d", then, sign, offset/60, offset % 60);
 }
 
 void datestamp(char *buf, int bufsize)
