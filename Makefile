@@ -9,6 +9,8 @@
 # Define NO_CURL if you do not have curl installed.  git-http-pull is not
 # built, and you cannot use http:// and https:// transports.
 #
+# Define NO_STRCASESTR if you don't have strcasestr.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -202,6 +204,10 @@ endif
 ifdef NEEDS_NSL
 	LIBS += -lnsl
 	SIMPLE_LIB += -lnsl
+endif
+ifdef NO_STRCASESTR
+	DEFINES += -Dstrcasestr=gitstrcasestr
+	LIB_OBJS += compat/strcasestr.o
 endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
