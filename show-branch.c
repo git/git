@@ -196,8 +196,11 @@ static void show_one_commit(struct commit *commit)
 {
 	char pretty[128], *cp;
 	struct commit_name *name = commit->object.util;
-	pretty_print_commit(CMIT_FMT_ONELINE, commit->buffer, ~0,
-			    pretty, sizeof(pretty));
+	if (commit->object.parsed)
+		pretty_print_commit(CMIT_FMT_ONELINE, commit->buffer, ~0,
+				    pretty, sizeof(pretty));
+	else
+		strcpy(pretty, "(unavailable)");
 	if (!strncmp(pretty, "[PATCH] ", 8))
 		cp = pretty + 8;
 	else
