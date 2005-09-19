@@ -57,10 +57,81 @@ then
 fi
 
 merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
-merge_name=$(
-    perl -e 'print join("; ", map { chomp; s/^[0-9a-f]*	//; $_ } <>)' \
-    "$GIT_DIR"/FETCH_HEAD
-)
+
+case "$merge_head" in
+?*' '?*)
+	merge_name="Octopus merge of "$(
+	    perl -e '
+	    my @src;
+	    my %src;
+
+	    sub andjoin {
+		my ($label, $labels, $stuff, $src) = @_;
+		my $l = scalar @$stuff;
+		my $m = "";
+		if ($l == 0) {
+		    return "";
+		}
+		if ($l == 1) {
+		    $m = "$label $stuff->[0]";
+		}
+		else {
+		    $m = ("$labels " .
+			  join (", ", @{$stuff}[0..$l-2]) .
+			  " and $stuff->[-1]");
+		}
+		if ($src ne ".") {
+		    $m .= " from $src";
+		}
+		return $m;
+	    }
+
+	    while (<>) {
+		my ($bname, $tname, $gname, $src);
+		s/^[0-9a-f]*	//;
+		if (s/ of (.*)$//) {
+		    $src = $1;
+		} else {
+		    $src = ".";
+		}
+		if (! exists $src{$src}) {
+		    push @src, $src;
+		    $src{$src} = { BRANCH => [], TAG => [], GENERIC => [] };
+		}
+		if (/^branch (.*)$/) {
+		    push @{$src{$src}{BRANCH}}, $1;
+		}
+		elsif (/^tag (.*)$/) {
+		    push @{$src{$src}{TAG}}, $1;
+		}
+		else {
+		    push @{$src{$src}{GENERIC}}, $1;
+		}
+	    }
+	    my @msg;
+	    for my $src (@src) {
+		my $bag = $src{$src}{BRANCH};
+		if (@{$bag}) {
+		    push @msg, andjoin("branch", "branches", $bag, $src);
+		}
+		$bag = $src{$src}{TAG};
+		if (@{$bag}) {
+		    push @msg, andjoin("tag", "tags", $bag, $src);
+		}
+		$bag = $src{$src}{GENERIC};
+		if (@{$bag}) {
+		    push @msg, andjoin("commit", "commits", $bag, $src);
+		}
+	    }
+	    print join("; ", @msg);
+	    ' "$GIT_DIR"/FETCH_HEAD
+	)
+	;;
+*)
+	merge_name="Merge "$(sed -e 's/^[0-9a-f]*	//' \
+		"$GIT_DIR"/FETCH_HEAD)
+	;;
+esac
 
 case "$merge_head" in
 '')
@@ -69,4 +140,4 @@ case "$merge_head" in
 	;;
 esac
 
-git-merge $no_summary $strategy_args "Merge $merge_name" HEAD $merge_head
+git-merge $no_summary $strategy_args "$merge_name" HEAD $merge_head
