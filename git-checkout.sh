@@ -23,7 +23,7 @@ while [ "$#" != "0" ]; do
 		;;
 	*)
 		rev=$(git-rev-parse --verify "$arg^0" 2>/dev/null) ||
-			die "hey dummy, branch '$arg' doesn't exist."
+			die "I don't know any '$arg'."
 		if [ -z "$rev" ]; then
 			echo "unknown flag $arg"
 			exit 1
