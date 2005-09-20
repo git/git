@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "refs.h"
+#include "quote.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -125,6 +126,30 @@ static int show_reference(const char *refname, const unsigned char *sha1)
 	return 0;
 }
 
+static void show_datestring(const char *flag, const char *datestr)
+{
+	FILE *date;
+	static char buffer[100];
+	static char cmd[1000];
+	int len;
+
+	/* date handling requires both flags and revs */
+	if ((filter & (DO_FLAGS | DO_REVS)) != (DO_FLAGS | DO_REVS))
+		return;
+	len = strlen(flag);
+	memcpy(buffer, flag, len);
+
+	snprintf(cmd, sizeof(cmd), "date --date=%s +%%s", sq_quote(datestr));
+	date = popen(cmd, "r");
+	if (!date || !fgets(buffer + len, sizeof(buffer) - len, date))
+		die("git-rev-list: bad date string");
+	pclose(date);
+	len = strlen(buffer);
+	if (buffer[len-1] == '\n')
+		buffer[--len] = 0;
+	show(buffer);
+}
+
 int main(int argc, char **argv)
 {
 	int i, as_is = 0, verify = 0;
@@ -205,6 +230,22 @@ int main(int argc, char **argv)
 				if (!getcwd(cwd, PATH_MAX))
 					die("unable to get current working directory");
 				printf("%s/.git\n", cwd);
+				continue;
+			}
+			if (!strncmp(arg, "--since=", 8)) {
+				show_datestring("--max-age=", arg+8);
+				continue;
+			}
+			if (!strncmp(arg, "--after=", 8)) {
+				show_datestring("--max-age=", arg+8);
+				continue;
+			}
+			if (!strncmp(arg, "--before=", 9)) {
+				show_datestring("--min-age=", arg+9);
+				continue;
+			}
+			if (!strncmp(arg, "--until=", 8)) {
+				show_datestring("--min-age=", arg+8);
 				continue;
 			}
 			if (verify)
