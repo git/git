@@ -14,6 +14,9 @@
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
+# Define ARM_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine optimized for ARM.
+#
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
@@ -162,6 +165,9 @@ ifeq ($(shell uname -s),SunOS)
 	NEEDS_NSL = YesPlease
 	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
+ifneq (,$(findstring arm,$(shell uname -m)))
+	ARM_SHA1 = YesPlease
+endif
 
 ifndef SHELL_PATH
 	SHELL_PATH = /bin/sh
@@ -191,18 +197,6 @@ ifdef NEEDS_LIBICONV
 else
 	LIB_4_ICONV =
 endif
-ifdef MOZILLA_SHA1
-	SHA1_HEADER = "mozilla-sha1/sha1.h"
-	LIB_OBJS += mozilla-sha1/sha1.o
-else
-	ifdef PPC_SHA1
-		SHA1_HEADER = "ppc/sha1.h"
-		LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
-	else
-		SHA1_HEADER = <openssl/sha.h>
-		LIBS += $(LIB_4_CRYPTO)
-	endif
-endif
 ifdef NEEDS_SOCKET
 	LIBS += -lsocket
 	SIMPLE_LIB += -lsocket
@@ -214,6 +208,24 @@ endif
 ifdef NO_STRCASESTR
 	DEFINES += -Dstrcasestr=gitstrcasestr
 	LIB_OBJS += compat/strcasestr.o
+endif
+
+ifdef PPC_SHA1
+	SHA1_HEADER = "ppc/sha1.h"
+	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+else
+ifdef ARM_SHA1
+	SHA1_HEADER = "arm/sha1.h"
+	LIB_OBJS += arm/sha1.o arm/sha1_arm.o
+else
+ifdef MOZILLA_SHA1
+	SHA1_HEADER = "mozilla-sha1/sha1.h"
+	LIB_OBJS += mozilla-sha1/sha1.o
+else
+	SHA1_HEADER = <openssl/sha.h>
+	LIBS += $(LIB_4_CRYPTO)
+endif
+endif
 endif
 
 DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
