@@ -154,6 +154,7 @@ static void copy_templates(const char *git_dir, int len, char *template_dir)
 	}
 
 	memcpy(path, git_dir, len);
+	path[len] = 0;
 	copy_templates_1(path, len,
 			 template_path, template_len,
 			 dir);
