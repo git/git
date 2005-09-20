@@ -23,6 +23,8 @@
 #
 # Define NO_GETDOMAINNAME if your library lack it (SunOS, Patrick Mauritz).
 #
+# Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -116,6 +118,10 @@ PROGRAMS += git-ssh-pull git-ssh-push
 
 PYMODULES = \
 	gitMergeCommon.py
+
+ifdef WITH_OWN_SUBPROCESS_PY
+	PYMODULES += compat/subprocess.py
+endif
 
 ifdef WITH_SEND_EMAIL
 	SCRIPT_PERL += git-send-email.perl

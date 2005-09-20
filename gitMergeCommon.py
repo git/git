@@ -11,12 +11,6 @@ def printList(list, file=sys.stdout):
         file.write(' ')
     file.write('\n')
 
-if sys.version_info[0] < 2 or \
-       (sys.version_info[0] == 2 and sys.version_info[1] < 4):
-    die('Python version 2.4 required, found', \
-        str(sys.version_info[0])+'.'+str(sys.version_info[1])+'.'+ \
-        str(sys.version_info[2]))
-
 import subprocess
 
 # Debugging machinery
