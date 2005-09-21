@@ -249,8 +249,11 @@ static int compute_stays(struct diff_queue_struct *q,
 	return 1;
 }
 
-void diffcore_rename(int detect_rename, int minimum_score)
+void diffcore_rename(struct diff_options *options)
 {
+	int detect_rename = options->detect_rename;
+	int minimum_score = options->rename_score;
+	int rename_limit = options->rename_limit;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
 	struct diff_score *mx;
@@ -279,7 +282,8 @@ void diffcore_rename(int detect_rename, int minimum_score)
 		else if (detect_rename == DIFF_DETECT_COPY)
 			register_rename_src(p->one, 1);
 	}
-	if (rename_dst_nr == 0)
+	if (rename_dst_nr == 0 ||
+	    (0 <= rename_limit && rename_limit < rename_dst_nr))
 		goto cleanup; /* nothing to do */
 
 	/* We really want to cull the candidates list early

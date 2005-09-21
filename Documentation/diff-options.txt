@@ -35,6 +35,13 @@
 	copy.  This is a very expensive operation for large
 	projects, so use it with caution.
 
+-l<num>::
+	-M and -C options require O(n^2) processing time where n
+	in the number of potential rename/copy targets.  This
+	option prevents rename/copy detection from running if
+	the number of rename/copy targets exceed the specified
+	number.
+
 -S<string>::
 	Look for differences that contains the change in <string>.
 

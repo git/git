@@ -674,11 +674,12 @@ void diff_setup(struct diff_options *options)
 	options->output_format = DIFF_FORMAT_RAW;
 	options->line_termination = '\n';
 	options->break_opt = -1;
+	options->rename_limit = -1;
 }
 
 int diff_setup_done(struct diff_options *options)
 {
-	if (options->find_copies_harder &&
+	if ((options->find_copies_harder || 0 <= options->rename_limit) &&
 	    options->detect_rename != DIFF_DETECT_COPY)
 		return -1;
 	if (options->setup & DIFF_SETUP_USE_CACHE) {
@@ -704,6 +705,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format = DIFF_FORMAT_PATCH;
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
+	else if (!strncmp(arg, "-l", 2))
+		options->rename_limit = strtoul(arg+2, NULL, 10);
 	else if (!strcmp(arg, "--name-only"))
 		options->output_format = DIFF_FORMAT_NAME;
 	else if (!strcmp(arg, "-R"))
@@ -1141,7 +1144,7 @@ void diffcore_std(struct diff_options *options)
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
 	if (options->detect_rename)
-		diffcore_rename(options->detect_rename, options->rename_score);
+		diffcore_rename(options);
 	if (options->break_opt != -1)
 		diffcore_merge_broken();
 	if (options->pickaxe)
