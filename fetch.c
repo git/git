@@ -138,18 +138,15 @@ static int process(struct object *obj)
 		/* We already have it, so we should scan it now. */
 		if (obj->flags & TO_SCAN)
 			return 0;
-		object_list_insert(obj, process_queue_end);
-		process_queue_end = &(*process_queue_end)->next;
 		obj->flags |= TO_SCAN;
-		return 0;
+	} else {
+		if (obj->flags & COMPLETE)
+			return 0;
+		prefetch(obj->sha1);
 	}
-	if (obj->flags & COMPLETE)
-		return 0;
+		
 	object_list_insert(obj, process_queue_end);
 	process_queue_end = &(*process_queue_end)->next;
-
-	prefetch(obj->sha1);
-		
 	return 0;
 }
 
