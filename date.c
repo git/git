@@ -386,12 +386,23 @@ static int match_tz(const char *date, int *offp)
 	return end - date;
 }
 
+static int date_string(unsigned long date, int offset, char *buf, int len)
+{
+	int sign = '+';
+
+	if (offset < 0) {
+		offset = -offset;
+		sign = '-';
+	}
+	return snprintf(buf, len, "%lu %c%02d%02d", date, sign, offset / 60, offset % 60);
+}
+
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
 int parse_date(const char *date, char *result, int maxlen)
 {
 	struct tm tm;
-	int offset, sign, tm_gmt;
+	int offset, tm_gmt;
 	time_t then;
 
 	memset(&tm, 0, sizeof(tm));
@@ -435,14 +446,7 @@ int parse_date(const char *date, char *result, int maxlen)
 
 	if (!tm_gmt)
 		then -= offset * 60;
-
-	sign = '+';
-	if (offset < 0) {
-		offset = -offset;
-		sign = '-';
-	}
-
-	return snprintf(result, maxlen, "%lu %c%02d%02d", then, sign, offset/60, offset % 60);
+	return date_string(then, offset, result, maxlen);
 }
 
 void datestamp(char *buf, int bufsize)
@@ -455,5 +459,5 @@ void datestamp(char *buf, int bufsize)
 	offset = my_mktime(localtime(&now)) - now;
 	offset /= 60;
 
-	snprintf(buf, bufsize, "%lu %+05d", now, offset/60*100 + offset%60);
+	date_string(now, offset, buf, bufsize);
 }
