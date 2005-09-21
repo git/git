@@ -44,14 +44,16 @@ man: man1 man7
 man1: $(DOC_MAN1)
 man7: $(DOC_MAN7)
 
-install:
+install: man
 	$(INSTALL) -d -m755 $(DESTDIR)/$(man1) $(DESTDIR)/$(man7)
 	$(INSTALL) $(DOC_MAN1) $(DESTDIR)/$(man1)
 	$(INSTALL) $(DOC_MAN7) $(DESTDIR)/$(man7)
 
 # 'include' dependencies
-git-diff-%.txt: diff-format.txt diff-options.txt
-	touch $@
+$(patsubst %.txt,%.1,$(wildcard git-diff-*.txt)): \
+	diff-format.txt diff-options.txt
+$(patsubst %,%.1,git-fetch git-pull git-push): pull-fetch-param.txt
+git.7: ../README
 
 clean:
 	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html
