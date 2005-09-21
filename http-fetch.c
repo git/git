@@ -350,13 +350,18 @@ int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	char *hex = sha1_to_hex(sha1);
 	char *filename = sha1_file_name(sha1);
 	unsigned char real_sha1[20];
+	char tmpfile[PATH_MAX];
+	int ret;
 	char *url;
 	char *posn;
 
-	local = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX",
+		 get_object_directory());
 
+	local = mkstemp(tmpfile);
 	if (local < 0)
-		return error("Couldn't open local object %s\n", filename);
+		return error("Couldn't create temporary file %s for %s: %s\n",
+			     tmpfile, filename, strerror(errno));
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -386,18 +391,32 @@ int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		return -1;
 	}
 
+	fchmod(local, 0444);
 	close(local);
 	inflateEnd(&stream);
 	SHA1_Final(real_sha1, &c);
 	if (zret != Z_STREAM_END) {
-		unlink(filename);
+		unlink(tmpfile);
 		return error("File %s (%s) corrupt\n", hex, url);
 	}
 	if (memcmp(sha1, real_sha1, 20)) {
-		unlink(filename);
+		unlink(tmpfile);
 		return error("File %s has bad hash\n", hex);
 	}
-	
+	ret = link(tmpfile, filename);
+	if (ret < 0) {
+		/* Same Coda hack as in write_sha1_file(sha1_file.c) */
+		ret = errno;
+		if (ret == EXDEV && !rename(tmpfile, filename))
+			goto out;
+	}
+	unlink(tmpfile);
+	if (ret) {
+		if (ret != EEXIST)
+			return error("unable to write sha1 filename %s: %s",
+				     filename, strerror(ret));
+	}
+ out:
 	pull_say("got %s\n", hex);
 	return 0;
 }
