@@ -33,7 +33,7 @@ static void report_missing(const char *what, const unsigned char *missing)
 		what, missing_hex, sha1_to_hex(current_commit_sha1));
 }
 
-static int process(unsigned char *sha1, const char *type);
+static int process(struct object *obj);
 
 static int process_tree(struct tree *tree)
 {
@@ -46,8 +46,7 @@ static int process_tree(struct tree *tree)
 	tree->entries = NULL;
 	while (entry) {
 		struct tree_entry_list *next = entry->next;
-		if (process(entry->item.any->sha1,
-			    entry->directory ? tree_type : blob_type))
+		if (process(entry->item.any))
 			return -1;
 		free(entry);
 		entry = next;
@@ -79,7 +78,7 @@ static int process_commit(struct commit *commit)
 	pull_say("walk %s\n", sha1_to_hex(commit->object.sha1));
 
 	if (get_tree) {
-		if (process(commit->tree->object.sha1, tree_type))
+		if (process(&commit->tree->object))
 			return -1;
 		if (!get_all)
 			get_tree = 0;
@@ -87,7 +86,7 @@ static int process_commit(struct commit *commit)
 	if (get_history) {
 		struct commit_list *parents = commit->parents;
 		for (; parents; parents = parents->next) {
-			if (process(parents->item->object.sha1, commit_type))
+			if (process(&parents->item->object))
 				return -1;
 		}
 	}
@@ -98,7 +97,7 @@ static int process_tag(struct tag *tag)
 {
 	if (parse_tag(tag))
 		return -1;
-	return process(tag->tagged->sha1, NULL);
+	return process(tag->tagged);
 }
 
 static struct object_list *process_queue = NULL;
@@ -133,12 +132,10 @@ static int process_object(struct object *obj)
 		     obj->type, sha1_to_hex(obj->sha1));
 }
 
-static int process(unsigned char *sha1, const char *type)
+static int process(struct object *obj)
 {
-	struct object *obj = lookup_object_type(sha1, type);
-
-	if (has_sha1_file(sha1)) {
-		parse_object(sha1);
+	if (has_sha1_file(obj->sha1)) {
+		parse_object(obj->sha1);
 		/* We already have it, so we should scan it now. */
 		if (obj->flags & (SCANNED | TO_SCAN))
 			return 0;
@@ -153,7 +150,7 @@ static int process(unsigned char *sha1, const char *type)
 	process_queue_end = &(*process_queue_end)->next;
 	obj->flags |= TO_FETCH;
 
-	prefetch(sha1);
+	prefetch(obj->sha1);
 		
 	return 0;
 }
@@ -228,7 +225,7 @@ int pull(char *target)
 	if (interpret_target(target, sha1))
 		return error("Could not interpret %s as something to pull",
 			     target);
-	if (process(sha1, NULL))
+	if (process(lookup_unknown_object(sha1)))
 		return -1;
 	if (loop())
 		return -1;
