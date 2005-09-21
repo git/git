@@ -40,38 +40,6 @@ test_expect_success \
     'validate output from rename/copy detection (#1)' \
     'compare_diff_raw current expected'
 
-# make sure diff-helper can grok it.
-mv expected diff-raw
-GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
-cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.1
-copy from COPYING
-copy to COPYING.1
---- a/COPYING
-+++ b/COPYING.1
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ However, in order to allow a migration to GPLv3 if that seems like
-diff --git a/COPYING b/COPYING.2
-rename from COPYING
-rename to COPYING.2
---- a/COPYING
-+++ b/COPYING.2
-@@ -2 +2 @@
-- Note that the only valid version of the GPL as far as this project
-+ Note that the only valid version of the G.P.L as far as this project
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ HOWEVER, in order to allow a migration to G.P.Lv3 if that seems like
-@@ -12 +12 @@
--	This file is licensed under the GPL v2, or a later version
-+	This file is licensed under the G.P.L v2, or a later version
-EOF
-
-test_expect_success \
-    'validate output from diff-helper (#1)' \
-    'compare_diff_patch current expected'
-
 ################################################################
 
 test_expect_success \
@@ -94,36 +62,6 @@ test_expect_success \
     'validate output from rename/copy detection (#2)' \
     'compare_diff_raw current expected'
 
-# make sure diff-helper can grok it.
-mv expected diff-raw
-GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
-cat >expected <<\EOF
-diff --git a/COPYING b/COPYING
---- a/COPYING
-+++ b/COPYING
-@@ -2 +2 @@
-- Note that the only valid version of the GPL as far as this project
-+ Note that the only valid version of the G.P.L as far as this project
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ HOWEVER, in order to allow a migration to G.P.Lv3 if that seems like
-@@ -12 +12 @@
--	This file is licensed under the GPL v2, or a later version
-+	This file is licensed under the G.P.L v2, or a later version
-diff --git a/COPYING b/COPYING.1
-copy from COPYING
-copy to COPYING.1
---- a/COPYING
-+++ b/COPYING.1
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ However, in order to allow a migration to GPLv3 if that seems like
-EOF
-
-test_expect_success \
-    'validate output from diff-helper (#2)' \
-    'compare_diff_patch current expected'
-
 ################################################################
 
 # tree has COPYING and rezrov.  work tree has the same COPYING and
@@ -144,23 +82,5 @@ EOF
 test_expect_success \
     'validate output from rename/copy detection (#3)' \
     'compare_diff_raw current expected'
-
-# make sure diff-helper can grok it.
-mv expected diff-raw
-GIT_DIFF_OPTS=--unified=0 git-diff-helper <diff-raw >current
-cat >expected <<\EOF
-diff --git a/COPYING b/COPYING.1
-copy from COPYING
-copy to COPYING.1
---- a/COPYING
-+++ b/COPYING.1
-@@ -6 +6 @@
-- HOWEVER, in order to allow a migration to GPLv3 if that seems like
-+ However, in order to allow a migration to GPLv3 if that seems like
-EOF
-
-test_expect_success \
-    'validate output from diff-helper (#3)' \
-    'compare_diff_patch current expected'
 
 test_done

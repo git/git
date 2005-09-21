@@ -102,7 +102,7 @@ PROGRAMS = \
 	git-apply git-cat-file \
 	git-checkout-index git-clone-pack git-commit-tree \
 	git-convert-objects git-diff-files \
-	git-diff-helper git-diff-index git-diff-stages \
+	git-diff-index git-diff-stages \
 	git-diff-tree git-fetch-pack git-fsck-objects \
 	git-hash-object git-init-db \
 	git-local-fetch git-ls-files git-ls-tree git-merge-base \

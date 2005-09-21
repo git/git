@@ -19,15 +19,6 @@ extern void diff_change(unsigned mode1, unsigned mode2,
 			     const unsigned char *sha2,
 			     const char *base, const char *path);
 
-extern void diff_helper_input(unsigned mode1,
-			      unsigned mode2,
-			      const unsigned char *sha1,
-			      const unsigned char *sha2,
-			      const char *path1,
-			      int status,
-			      int score,
-			      const char *path2);
-
 extern void diff_unmerge(const char *path);
 
 extern int diff_scoreopt_parse(const char *opt);

@@ -363,9 +363,6 @@ gitlink:git-count-objects[1]::
 gitlink:git-daemon[1]::
 	A really simple server for GIT repositories.
 
-gitlink:git-diff-helper[1]::
-	Generates patch format output for git-diff-*
-
 gitlink:git-get-tar-commit-id[1]::
 	Extract commit ID from an archive created using git-tar-tree.
 

@@ -1152,29 +1152,6 @@ void diff_addremove(int addremove, unsigned mode,
 	diff_queue(&diff_queued_diff, one, two);
 }
 
-void diff_helper_input(unsigned old_mode,
-		       unsigned new_mode,
-		       const unsigned char *old_sha1,
-		       const unsigned char *new_sha1,
-		       const char *old_path,
-		       int status,
-		       int score,
-		       const char *new_path)
-{
-	struct diff_filespec *one, *two;
-	struct diff_filepair *dp;
-
-	one = alloc_filespec(old_path);
-	two = alloc_filespec(new_path);
-	if (old_mode)
-		fill_filespec(one, old_sha1, old_mode);
-	if (new_mode)
-		fill_filespec(two, new_sha1, new_mode);
-	dp = diff_queue(&diff_queued_diff, one, two);
-	dp->score = score * MAX_SCORE / 100;
-	dp->status = status;
-}
-
 void diff_change(unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,

@@ -62,8 +62,7 @@ When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
 with a '-p' option, they do not produce the output described above;
 instead they produce a patch file.
 
-The patch generation can be customized at two levels.  This
-customization also applies to "git-diff-helper".
+The patch generation can be customized at two levels.
 
 1. When the environment variable 'GIT_EXTERNAL_DIFF' is not set,
    these commands internally invoke "diff" like this:

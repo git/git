@@ -20,7 +20,6 @@ git-cvsimport
 git-daemon
 git-diff
 git-diff-files
-git-diff-helper
 git-diff-index
 git-diff-stages
 git-diff-tree
