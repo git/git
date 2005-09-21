@@ -54,9 +54,9 @@ static int process_tree(struct tree *tree)
 	return 0;
 }
 
-#define COMPLETE	1U
-#define TO_SCAN		4U
-#define SEEN		16U
+#define COMPLETE	(1U << 0)
+#define SEEN		(1U << 1)
+#define TO_SCAN		(1U << 2)
 
 static struct commit_list *complete = NULL;
 
