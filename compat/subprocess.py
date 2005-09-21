@@ -24,6 +24,9 @@
 # OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# Use of this file within git is permitted under GPLv2.
+#
 
 r"""subprocess - Subprocesses with accessible I/O streams
 
