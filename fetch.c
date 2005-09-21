@@ -58,6 +58,7 @@ static int process_tree(struct tree *tree)
 #define TO_FETCH	2U
 #define TO_SCAN		4U
 #define SCANNED		8U
+#define SEEN		16U
 
 static struct commit_list *complete = NULL;
 
@@ -134,6 +135,10 @@ static int process_object(struct object *obj)
 
 static int process(struct object *obj)
 {
+	if (obj->flags & SEEN)
+		return 0;
+	obj->flags |= SEEN;
+
 	if (has_sha1_file(obj->sha1)) {
 		parse_object(obj->sha1);
 		/* We already have it, so we should scan it now. */
