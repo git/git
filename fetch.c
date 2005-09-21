@@ -134,7 +134,6 @@ static int process(struct object *obj)
 	obj->flags |= SEEN;
 
 	if (has_sha1_file(obj->sha1)) {
-		parse_object(obj->sha1);
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
 	} else {
