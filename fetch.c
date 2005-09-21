@@ -55,7 +55,6 @@ static int process_tree(struct tree *tree)
 }
 
 #define COMPLETE	1U
-#define TO_FETCH	2U
 #define TO_SCAN		4U
 #define SEEN		16U
 
@@ -144,11 +143,10 @@ static int process(struct object *obj)
 		obj->flags |= TO_SCAN;
 		return 0;
 	}
-	if (obj->flags & (COMPLETE | TO_FETCH))
+	if (obj->flags & COMPLETE)
 		return 0;
 	object_list_insert(obj, process_queue_end);
 	process_queue_end = &(*process_queue_end)->next;
-	obj->flags |= TO_FETCH;
 
 	prefetch(obj->sha1);
 		
