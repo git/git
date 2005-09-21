@@ -1,8 +1,8 @@
 #include "cache.h"
 
-char *prefix_path(const char *prefix, int len, char *path)
+const char *prefix_path(const char *prefix, int len, const char *path)
 {
-	char *orig = path;
+	const char *orig = path;
 	for (;;) {
 		char c;
 		if (*path != '.')
@@ -47,10 +47,10 @@ char *prefix_path(const char *prefix, int len, char *path)
 	return path;
 }
 
-const char **get_pathspec(const char *prefix, char **pathspec)
+const char **get_pathspec(const char *prefix, const char **pathspec)
 {
-	char *entry = *pathspec;
-	char **p;
+	const char *entry = *pathspec;
+	const char **p;
 	int prefixlen;
 
 	if (!prefix && !entry)

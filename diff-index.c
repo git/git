@@ -2,26 +2,20 @@
 #include "diff.h"
 
 static int cached_only = 0;
-static int diff_output_format = DIFF_FORMAT_RAW;
-static int diff_line_termination = '\n';
 static int match_nonexisting = 0;
-static int detect_rename = 0;
-static int find_copies_harder = 0;
-static int diff_setup_opt = 0;
-static int diff_score_opt = 0;
-static const char *pickaxe = NULL;
-static int pickaxe_opts = 0;
-static int diff_break_opt = -1;
-static const char *orderfile = NULL;
-static const char *diff_filter = NULL;
+static struct diff_options diff_options;
 
 /* A file entry went away or appeared */
-static void show_file(const char *prefix, struct cache_entry *ce, unsigned char *sha1, unsigned int mode)
+static void show_file(const char *prefix,
+		      struct cache_entry *ce,
+		      unsigned char *sha1, unsigned int mode)
 {
-	diff_addremove(prefix[0], ntohl(mode), sha1, ce->name, NULL);
+	diff_addremove(&diff_options, prefix[0], ntohl(mode),
+		       sha1, ce->name, NULL);
 }
 
-static int get_stat_data(struct cache_entry *ce, unsigned char **sha1p, unsigned int *modep)
+static int get_stat_data(struct cache_entry *ce,
+			 unsigned char **sha1p, unsigned int *modep)
 {
 	unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
@@ -77,13 +71,13 @@ static int show_modified(struct cache_entry *old,
 
 	oldmode = old->ce_mode;
 	if (mode == oldmode && !memcmp(sha1, old->sha1, 20) &&
-	    !find_copies_harder)
+	    !diff_options.find_copies_harder)
 		return 0;
 
 	mode = ntohl(mode);
 	oldmode = ntohl(oldmode);
 
-	diff_change(oldmode, mode,
+	diff_change(&diff_options, oldmode, mode,
 		    old->sha1, sha1, old->name, NULL);
 	return 0;
 }
@@ -127,7 +121,7 @@ static int diff_cache(struct cache_entry **ac, int entries, const char **pathspe
 				break;
 			/* fallthru */
 		case 3:
-			diff_unmerge(ce->name);
+			diff_unmerge(&diff_options, ce->name);
 			break;
 
 		default:
@@ -168,7 +162,7 @@ static const char diff_cache_usage[] =
 "[<common diff options>] <tree-ish> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	const char *tree_name = NULL;
 	unsigned char sha1[20];
@@ -180,8 +174,10 @@ int main(int argc, char **argv)
 	int allow_options = 1;
 	int i;
 
+	diff_setup(&diff_options);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
+		int diff_opt_cnt;
 
 		if (!allow_options || *arg != '-') {
 			if (tree_name)
@@ -198,60 +194,15 @@ int main(int argc, char **argv)
 			/* We accept the -r flag just to look like git-diff-tree */
 			continue;
 		}
-		/* We accept the -u flag as a synonym for "-p" */
-		if (!strcmp(arg, "-p") || !strcmp(arg, "-u")) {
-			diff_output_format = DIFF_FORMAT_PATCH;
+		diff_opt_cnt = diff_opt_parse(&diff_options, argv + i,
+					      argc - i);
+		if (diff_opt_cnt < 0)
+			usage(diff_cache_usage);
+		else if (diff_opt_cnt) {
+			i += diff_opt_cnt - 1;
 			continue;
 		}
-		if (!strncmp(arg, "-B", 2)) {
-			if ((diff_break_opt = diff_scoreopt_parse(arg)) == -1)
-				usage(diff_cache_usage);
-			continue;
-		}
-		if (!strncmp(arg, "-M", 2)) {
-			detect_rename = DIFF_DETECT_RENAME;
-			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
-				usage(diff_cache_usage);
-			continue;
-		}
-		if (!strncmp(arg, "-C", 2)) {
-			detect_rename = DIFF_DETECT_COPY;
-			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
-				usage(diff_cache_usage);
-			continue;
-		}
-		if (!strcmp(arg, "--find-copies-harder")) {
-			find_copies_harder = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-z")) {
-			diff_line_termination = 0;
-			continue;
-		}
-		if (!strcmp(arg, "--name-only")) {
-			diff_output_format = DIFF_FORMAT_NAME;
-			continue;
-		}
-		if (!strcmp(arg, "-R")) {
-			diff_setup_opt |= DIFF_SETUP_REVERSE;
-			continue;
-		}
-		if (!strncmp(arg, "-S", 2)) {
-			pickaxe = arg + 2;
-			continue;
-		}
-		if (!strncmp(arg, "--diff-filter=", 14)) {
-			diff_filter = arg + 14;
-			continue;
-		}
-		if (!strncmp(arg, "-O", 2)) {
-			orderfile = arg + 2;
-			continue;
-		}
-		if (!strcmp(arg, "--pickaxe-all")) {
-			pickaxe_opts = DIFF_PICKAXE_ALL;
-			continue;
-		}
+
 		if (!strcmp(arg, "-m")) {
 			match_nonexisting = 1;
 			continue;
@@ -265,16 +216,13 @@ int main(int argc, char **argv)
 
 	pathspec = get_pathspec(prefix, argv + i);
 
-	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
+	if (diff_setup_done(&diff_options) < 0)
 		usage(diff_cache_usage);
 
 	if (!tree_name || get_sha1(tree_name, sha1))
 		usage(diff_cache_usage);
 
 	read_cache();
-
-	/* The rest is for paths restriction. */
-	diff_setup(diff_setup_opt);
 
 	mark_merge_entries();
 
@@ -286,11 +234,7 @@ int main(int argc, char **argv)
 
 	ret = diff_cache(active_cache, active_nr, pathspec);
 
-	diffcore_std(pathspec,
-		     detect_rename, diff_score_opt,
-		     pickaxe, pickaxe_opts,
-		     diff_break_opt,
-		     orderfile, diff_filter);
-	diff_flush(diff_output_format, diff_line_termination);
+	diffcore_std(&diff_options);
+	diff_flush(&diff_options);
 	return ret;
 }

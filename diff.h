@@ -8,18 +8,37 @@
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
 
-extern void diff_addremove(int addremove,
+struct diff_options {
+	const char **paths;
+	const char *filter;
+	const char *orderfile;
+	const char *pickaxe;
+	int break_opt;
+	int detect_rename;
+	int find_copies_harder;
+	int line_termination;
+	int output_format;
+	int pickaxe_opts;
+	int rename_score;
+	int reverse_diff;
+	int setup;
+};
+
+extern void diff_addremove(struct diff_options *,
+			   int addremove,
 			   unsigned mode,
 			   const unsigned char *sha1,
 			   const char *base,
 			   const char *path);
 
-extern void diff_change(unsigned mode1, unsigned mode2,
-			     const unsigned char *sha1,
-			     const unsigned char *sha2,
-			     const char *base, const char *path);
+extern void diff_change(struct diff_options *,
+			unsigned mode1, unsigned mode2,
+			const unsigned char *sha1,
+			const unsigned char *sha2,
+			const char *base, const char *path);
 
-extern void diff_unmerge(const char *path);
+extern void diff_unmerge(struct diff_options *,
+			 const char *path);
 
 extern int diff_scoreopt_parse(const char *opt);
 
@@ -27,22 +46,18 @@ extern int diff_scoreopt_parse(const char *opt);
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
-extern void diff_setup(int flags);
+extern void diff_setup(struct diff_options *);
+extern int diff_opt_parse(struct diff_options *, const char **, int);
+extern int diff_setup_done(struct diff_options *);
 
 #define DIFF_DETECT_RENAME	1
 #define DIFF_DETECT_COPY	2
 
 #define DIFF_PICKAXE_ALL	1
 
-extern void diffcore_std(const char **paths,
-			 int detect_rename, int rename_score,
-			 const char *pickaxe, int pickaxe_opts,
-			 int break_opt,
-			 const char *orderfile, const char *filter);
+extern void diffcore_std(struct diff_options *);
 
-extern void diffcore_std_no_resolve(const char **paths,
-				    const char *pickaxe, int pickaxe_opts,
-				    const char *orderfile, const char *filter);
+extern void diffcore_std_no_resolve(struct diff_options *);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
@@ -71,7 +86,7 @@ extern int diff_queue_is_empty(void);
 #define DIFF_FORMAT_NO_OUTPUT	3
 #define DIFF_FORMAT_NAME	4
 
-extern void diff_flush(int output_style, int line_terminator);
+extern void diff_flush(struct diff_options*);
 
 /* diff-raw status letters */
 #define DIFF_STATUS_ADDED		'A'

@@ -31,7 +31,7 @@ static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
 
-static char *exclude_per_dir = NULL;
+static const char *exclude_per_dir = NULL;
 
 /* We maintain three exclude pattern lists:
  * EXC_CMDL lists patterns explicitly given on the command line.
@@ -532,7 +532,7 @@ static const char ls_files_usage[] =
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
 	"[ --exclude-per-directory=<filename> ]";
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	int i;
 	int exc_given = 0;
@@ -542,7 +542,7 @@ int main(int argc, char **argv)
 		prefix_offset = strlen(prefix);
 
 	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+		const char *arg = argv[i];
 
 		if (!strcmp(arg, "-z")) {
 			line_terminator = 0;

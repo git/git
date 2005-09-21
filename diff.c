@@ -12,7 +12,6 @@
 static const char *diff_opts = "-pu";
 static unsigned char null_sha1[20] = { 0, };
 
-static int reverse_diff;
 static int use_size_cache;
 
 static const char *external_diff(void)
@@ -669,11 +668,20 @@ static void run_diff(struct diff_filepair *p)
 				  complete_rewrite);
 }
 
-void diff_setup(int flags)
+void diff_setup(struct diff_options *options)
 {
-	if (flags & DIFF_SETUP_REVERSE)
-		reverse_diff = 1;
-	if (flags & DIFF_SETUP_USE_CACHE) {
+	memset(options, 0, sizeof(*options));
+	options->output_format = DIFF_FORMAT_RAW;
+	options->line_termination = '\n';
+	options->break_opt = -1;
+}
+
+int diff_setup_done(struct diff_options *options)
+{
+	if (options->find_copies_harder &&
+	    options->detect_rename != DIFF_DETECT_COPY)
+		return -1;
+	if (options->setup & DIFF_SETUP_USE_CACHE) {
 		if (!active_cache)
 			/* read-cache does not die even when it fails
 			 * so it is safe for us to do this here.  Also
@@ -683,9 +691,55 @@ void diff_setup(int flags)
 			 */
 			read_cache();
 	}
-	if (flags & DIFF_SETUP_USE_SIZE_CACHE)
+	if (options->setup & DIFF_SETUP_USE_SIZE_CACHE)
 		use_size_cache = 1;
-	
+
+	return 0;
+}
+
+int diff_opt_parse(struct diff_options *options, const char **av, int ac)
+{
+	const char *arg = av[0];
+	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
+		options->output_format = DIFF_FORMAT_PATCH;
+	else if (!strcmp(arg, "-z"))
+		options->line_termination = 0;
+	else if (!strcmp(arg, "--name-only"))
+		options->output_format = DIFF_FORMAT_NAME;
+	else if (!strcmp(arg, "-R"))
+		options->reverse_diff = 1;
+	else if (!strncmp(arg, "-S", 2))
+		options->pickaxe = arg + 2;
+	else if (!strcmp(arg, "-s"))
+		options->output_format = DIFF_FORMAT_NO_OUTPUT;
+	else if (!strncmp(arg, "-O", 2))
+		options->orderfile = arg + 2;
+	else if (!strncmp(arg, "--diff-filter=", 14))
+		options->filter = arg + 14;
+	else if (!strcmp(arg, "--pickaxe-all"))
+		options->pickaxe_opts = DIFF_PICKAXE_ALL;
+	else if (!strncmp(arg, "-B", 2)) {
+		if ((options->break_opt =
+		     diff_scoreopt_parse(arg)) == -1)
+			return -1;
+	}
+	else if (!strncmp(arg, "-M", 2)) {
+		if ((options->rename_score =
+		     diff_scoreopt_parse(arg)) == -1)
+			return -1;
+		options->detect_rename = DIFF_DETECT_RENAME;
+	}
+	else if (!strncmp(arg, "-C", 2)) {
+		if ((options->rename_score =
+		     diff_scoreopt_parse(arg)) == -1)
+			return -1;
+		options->detect_rename = DIFF_DETECT_COPY;
+	}
+	else if (!strcmp(arg, "--find-copies-harder"))
+		options->find_copies_harder = 1;
+	else
+		return 0;
+	return 1;
 }
 
 static int parse_num(const char **cp_p)
@@ -987,23 +1041,25 @@ static void diff_resolve_rename_copy(void)
 	diff_debug_queue("resolve-rename-copy done", q);
 }
 
-void diff_flush(int diff_output_style, int line_termination)
+void diff_flush(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
 	int inter_name_termination = '\t';
+	int diff_output_format = options->output_format;
+	int line_termination = options->line_termination;
 
 	if (!line_termination)
 		inter_name_termination = 0;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if ((diff_output_style == DIFF_FORMAT_NO_OUTPUT) ||
+		if ((diff_output_format == DIFF_FORMAT_NO_OUTPUT) ||
 		    (p->status == DIFF_STATUS_UNKNOWN))
 			continue;
 		if (p->status == 0)
 			die("internal error in diff-resolve-rename-copy");
-		switch (diff_output_style) {
+		switch (diff_output_format) {
 		case DIFF_FORMAT_PATCH:
 			diff_flush_patch(p);
 			break;
@@ -1078,45 +1134,36 @@ static void diffcore_apply_filter(const char *filter)
 	*q = outq;
 }
 
-void diffcore_std(const char **paths,
-		  int detect_rename, int rename_score,
-		  const char *pickaxe, int pickaxe_opts,
-		  int break_opt,
-		  const char *orderfile,
-		  const char *filter)
+void diffcore_std(struct diff_options *options)
 {
-	if (paths && paths[0])
-		diffcore_pathspec(paths);
-	if (break_opt != -1)
-		diffcore_break(break_opt);
-	if (detect_rename)
-		diffcore_rename(detect_rename, rename_score);
-	if (break_opt != -1)
+	if (options->paths && options->paths[0])
+		diffcore_pathspec(options->paths);
+	if (options->break_opt != -1)
+		diffcore_break(options->break_opt);
+	if (options->detect_rename)
+		diffcore_rename(options->detect_rename, options->rename_score);
+	if (options->break_opt != -1)
 		diffcore_merge_broken();
-	if (pickaxe)
-		diffcore_pickaxe(pickaxe, pickaxe_opts);
-	if (orderfile)
-		diffcore_order(orderfile);
+	if (options->pickaxe)
+		diffcore_pickaxe(options->pickaxe, options->pickaxe_opts);
+	if (options->orderfile)
+		diffcore_order(options->orderfile);
 	diff_resolve_rename_copy();
-	diffcore_apply_filter(filter);
+	diffcore_apply_filter(options->filter);
 }
 
 
-void diffcore_std_no_resolve(const char **paths,
-			     const char *pickaxe, int pickaxe_opts,
-			     const char *orderfile,
-			     const char *filter)
+void diffcore_std_no_resolve(struct diff_options *options)
 {
-	if (paths && paths[0])
-		diffcore_pathspec(paths);
-	if (pickaxe)
-		diffcore_pickaxe(pickaxe, pickaxe_opts);
-	if (orderfile)
-		diffcore_order(orderfile);
-	diffcore_apply_filter(filter);
+	if (options->pickaxe)
+		diffcore_pickaxe(options->pickaxe, options->pickaxe_opts);
+	if (options->orderfile)
+		diffcore_order(options->orderfile);
+	diffcore_apply_filter(options->filter);
 }
 
-void diff_addremove(int addremove, unsigned mode,
+void diff_addremove(struct diff_options *options,
+		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
 		    const char *base, const char *path)
 {
@@ -1135,7 +1182,7 @@ void diff_addremove(int addremove, unsigned mode,
 	 * Before the final output happens, they are pruned after
 	 * merged into rename/copy pairs as appropriate.
 	 */
-	if (reverse_diff)
+	if (options->reverse_diff)
 		addremove = (addremove == '+' ? '-' :
 			     addremove == '-' ? '+' : addremove);
 
@@ -1152,7 +1199,8 @@ void diff_addremove(int addremove, unsigned mode,
 	diff_queue(&diff_queued_diff, one, two);
 }
 
-void diff_change(unsigned old_mode, unsigned new_mode,
+void diff_change(struct diff_options *options,
+		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
 		 const char *base, const char *path) 
@@ -1160,7 +1208,7 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
 
-	if (reverse_diff) {
+	if (options->reverse_diff) {
 		unsigned tmp;
 		const unsigned char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
@@ -1176,7 +1224,8 @@ void diff_change(unsigned old_mode, unsigned new_mode,
 	diff_queue(&diff_queued_diff, one, two);
 }
 
-void diff_unmerge(const char *path)
+void diff_unmerge(struct diff_options *options,
+		  const char *path)
 {
 	struct diff_filespec *one, *two;
 	one = alloc_filespec(path);

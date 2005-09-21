@@ -31,7 +31,7 @@ static inline long IS_ERR(const void *ptr)
 	return (unsigned long)ptr > (unsigned long)-1000L;
 }
 
-static int add_file_to_cache(char *path)
+static int add_file_to_cache(const char *path)
 {
 	int size, namelen, option, status;
 	struct cache_entry *ce;
@@ -221,7 +221,7 @@ static int verify_dotfile(const char *rest)
 	return 1;
 }
 
-static int verify_path(char *path)
+static int verify_path(const char *path)
 {
 	char c;
 
@@ -247,7 +247,7 @@ inside:
 	}
 }
 
-static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
+static int add_cacheinfo(const char *arg1, const char *arg2, const char *arg3)
 {
 	int size, len, option;
 	unsigned int mode;
@@ -277,7 +277,7 @@ static int add_cacheinfo(char *arg1, char *arg2, char *arg3)
 
 static struct cache_file cache_file;
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	int i, newfd, entries, has_errors = 0;
 	int allow_options = 1;
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 		die("cache corrupted");
 
 	for (i = 1 ; i < argc; i++) {
-		char *path = argv[i];
+		const char *path = argv[i];
 
 		if (allow_options && *path == '-') {
 			if (!strcmp(path, "--")) {

@@ -232,7 +232,7 @@ int remove_cache_entry_at(int pos)
 	return 1;
 }
 
-int remove_file_from_cache(char *path)
+int remove_file_from_cache(const char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
 	if (pos < 0)

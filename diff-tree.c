@@ -9,17 +9,9 @@ static int ignore_merges = 1;
 static int recursive = 0;
 static int show_tree_entry_in_recursive = 0;
 static int read_stdin = 0;
-static int diff_output_format = DIFF_FORMAT_RAW;
-static int diff_line_termination = '\n';
-static int detect_rename = 0;
-static int find_copies_harder = 0;
-static int diff_setup_opt = 0;
-static int diff_score_opt = 0;
-static const char *pickaxe = NULL;
-static int pickaxe_opts = 0;
-static int diff_break_opt = -1;
-static const char *orderfile = NULL;
-static const char *diff_filter = NULL;
+
+static struct diff_options diff_options;
+
 static const char *header = NULL;
 static const char *header_prefix = "";
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
@@ -94,7 +86,7 @@ static void show_file(const char *prefix, void *tree, unsigned long size, const 
 		return;
 	}
 
-	diff_addremove(prefix[0], mode, sha1, base, path);
+	diff_addremove(&diff_options, prefix[0], mode, sha1, base, path);
 }
 
 static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, unsigned long size2, const char *base)
@@ -118,7 +110,8 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		show_file("+", tree2, size2, base);
 		return 1;
 	}
-	if (!find_copies_harder && !memcmp(sha1, sha2, 20) && mode1 == mode2)
+	if (!diff_options.find_copies_harder &&
+	    !memcmp(sha1, sha2, 20) && mode1 == mode2)
 		return 0;
 
 	/*
@@ -135,13 +128,14 @@ static int compare_tree_entry(void *tree1, unsigned long size1, void *tree2, uns
 		int retval;
 		char *newbase = malloc_base(base, path1, pathlen1);
 		if (show_tree_entry_in_recursive)
-			diff_change(mode1, mode2, sha1, sha2, base, path1);
+			diff_change(&diff_options, mode1, mode2,
+				    sha1, sha2, base, path1);
 		retval = diff_tree_sha1(sha1, sha2, newbase);
 		free(newbase);
 		return retval;
 	}
 
-	diff_change(mode1, mode2, sha1, sha2, base, path1);
+	diff_change(&diff_options, mode1, mode2, sha1, sha2, base, path1);
 	return 0;
 }
 
@@ -263,28 +257,26 @@ static int diff_tree_sha1(const unsigned char *old, const unsigned char *new, co
 	return retval;
 }
 
-static void call_diff_setup(void)
+static void call_diff_setup_done(void)
 {
-	diff_setup(diff_setup_opt);
+	diff_setup_done(&diff_options);
 }
 
 static int call_diff_flush(void)
 {
-	diffcore_std(NULL,
-		     detect_rename, diff_score_opt,
-		     pickaxe, pickaxe_opts,
-		     diff_break_opt,
-		     orderfile,
-		     diff_filter);
+	diffcore_std(&diff_options);
 	if (diff_queue_is_empty()) {
-		diff_flush(DIFF_FORMAT_NO_OUTPUT, diff_line_termination);
+		int saved_fmt = diff_options.output_format;
+		diff_options.output_format = DIFF_FORMAT_NO_OUTPUT;
+		diff_flush(&diff_options);
+		diff_options.output_format = saved_fmt;
 		return 0;
 	}
 	if (header) {
-		printf("%s%c", header, diff_line_termination);
+		printf("%s%c", header, diff_options.line_termination);
 		header = NULL;
 	}
-	diff_flush(diff_output_format, diff_line_termination);
+	diff_flush(&diff_options);
 	return 1;
 }
 
@@ -293,7 +285,7 @@ static int diff_tree_sha1_top(const unsigned char *old,
 {
 	int ret;
 
-	call_diff_setup();
+	call_diff_setup_done();
 	ret = diff_tree_sha1(old, new, base);
 	call_diff_flush();
 	return ret;
@@ -305,7 +297,7 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	void *tree;
 	unsigned long size;
 
-	call_diff_setup();
+	call_diff_setup_done();
 	tree = read_object_with_reference(new, "tree", &size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
@@ -409,7 +401,7 @@ static const char diff_tree_usage[] =
 "[<common diff options>] <tree-ish> <tree-ish>"
 COMMON_DIFF_OPTIONS_HELP;
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	int nr_sha1;
 	char line[1000];
@@ -417,7 +409,10 @@ int main(int argc, char **argv)
 	const char *prefix = setup_git_directory();
 
 	nr_sha1 = 0;
+	diff_setup(&diff_options);
+
 	for (;;) {
+		int diff_opt_cnt;
 		const char *arg;
 
 		argv++;
@@ -434,6 +429,16 @@ int main(int argc, char **argv)
 			break;
 		}
 
+		diff_opt_cnt = diff_opt_parse(&diff_options, argv, argc);
+		if (diff_opt_cnt < 0)
+			usage(diff_tree_usage);
+		else if (diff_opt_cnt) {
+			argv += diff_opt_cnt - 1;
+			argc -= diff_opt_cnt - 1;
+			continue;
+		}
+
+
 		if (!strcmp(arg, "--")) {
 			argv++;
 			argc--;
@@ -447,66 +452,8 @@ int main(int argc, char **argv)
 			recursive = show_tree_entry_in_recursive = 1;
 			continue;
 		}
-		if (!strcmp(arg, "-R")) {
-			diff_setup_opt |= DIFF_SETUP_REVERSE;
-			continue;
-		}
-		if (!strcmp(arg, "-p") || !strcmp(arg, "-u")) {
-			diff_output_format = DIFF_FORMAT_PATCH;
-			recursive = 1;
-			continue;
-		}
-		if (!strncmp(arg, "-S", 2)) {
-			pickaxe = arg + 2;
-			continue;
-		}
-		if (!strncmp(arg, "-O", 2)) {
-			orderfile = arg + 2;
-			continue;
-		}
-		if (!strncmp(arg, "--diff-filter=", 14)) {
-			diff_filter = arg + 14;
-			continue;
-		}
-		if (!strcmp(arg, "--pickaxe-all")) {
-			pickaxe_opts = DIFF_PICKAXE_ALL;
-			continue;
-		}
-		if (!strncmp(arg, "-M", 2)) {
-			detect_rename = DIFF_DETECT_RENAME;
-			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
-				usage(diff_tree_usage);
-			continue;
-		}
-		if (!strncmp(arg, "-C", 2)) {
-			detect_rename = DIFF_DETECT_COPY;
-			if ((diff_score_opt = diff_scoreopt_parse(arg)) == -1)
-				usage(diff_tree_usage);
-			continue;
-		}
-		if (!strncmp(arg, "-B", 2)) {
-			if ((diff_break_opt = diff_scoreopt_parse(arg)) == -1)
-				usage(diff_tree_usage);
-			continue;
-		}
-		if (!strcmp(arg, "--find-copies-harder")) {
-			find_copies_harder = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--name-only")) {
-			diff_output_format = DIFF_FORMAT_NAME;
-			continue;
-		}
-		if (!strcmp(arg, "-z")) {
-			diff_line_termination = 0;
-			continue;
-		}
 		if (!strcmp(arg, "-m")) {
 			ignore_merges = 0;
-			continue;
-		}
-		if (!strcmp(arg, "-s")) {
-			diff_output_format = DIFF_FORMAT_NO_OUTPUT;
 			continue;
 		}
 		if (!strcmp(arg, "-v")) {
@@ -530,8 +477,8 @@ int main(int argc, char **argv)
 		}
 		usage(diff_tree_usage);
 	}
-	if (find_copies_harder && detect_rename != DIFF_DETECT_COPY)
-		usage(diff_tree_usage);
+	if (diff_options.output_format == DIFF_FORMAT_PATCH)
+		recursive = 1;
 
 	paths = get_pathspec(prefix, argv);
 	if (paths) {
@@ -559,9 +506,9 @@ int main(int argc, char **argv)
 	if (!read_stdin)
 		return 0;
 
-	if (detect_rename)
-		diff_setup_opt |= (DIFF_SETUP_USE_SIZE_CACHE |
-				   DIFF_SETUP_USE_CACHE);
+	if (diff_options.detect_rename)
+		diff_options.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
+				       DIFF_SETUP_USE_CACHE);
 	while (fgets(line, sizeof(line), stdin))
 		diff_tree_stdin(line);
 

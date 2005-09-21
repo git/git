@@ -143,9 +143,9 @@ extern char *get_graft_file(void);
 
 #define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
-extern const char **get_pathspec(const char *prefix, char **pathspec);
+extern const char **get_pathspec(const char *prefix, const char **pathspec);
 extern const char *setup_git_directory(void);
-extern char *prefix_path(const char *prefix, int len, char *path);
+extern const char *prefix_path(const char *prefix, int len, const char *path);
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
@@ -158,7 +158,7 @@ extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
 extern int add_cache_entry(struct cache_entry *ce, int option);
 extern int remove_cache_entry_at(int pos);
-extern int remove_file_from_cache(char *path);
+extern int remove_file_from_cache(const char *path);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st);
 extern int ce_modified(struct cache_entry *ce, struct stat *st);
