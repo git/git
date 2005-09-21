@@ -57,7 +57,6 @@ static int process_tree(struct tree *tree)
 #define COMPLETE	1U
 #define TO_FETCH	2U
 #define TO_SCAN		4U
-#define SCANNED		8U
 #define SEEN		16U
 
 static struct commit_list *complete = NULL;
@@ -106,10 +105,6 @@ static struct object_list **process_queue_end = &process_queue;
 
 static int process_object(struct object *obj)
 {
-	if (obj->flags & SCANNED)
-		return 0;
-	obj->flags |= SCANNED;
-
 	if (obj->type == commit_type) {
 		if (process_commit((struct commit *)obj))
 			return -1;
@@ -142,7 +137,7 @@ static int process(struct object *obj)
 	if (has_sha1_file(obj->sha1)) {
 		parse_object(obj->sha1);
 		/* We already have it, so we should scan it now. */
-		if (obj->flags & (SCANNED | TO_SCAN))
+		if (obj->flags & TO_SCAN)
 			return 0;
 		object_list_insert(obj, process_queue_end);
 		process_queue_end = &(*process_queue_end)->next;
