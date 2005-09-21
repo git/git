@@ -859,7 +859,12 @@ All of them have plus `+` characters in the first column, which
 means they are now part of the `master` branch. Only the "Some
 work" commit has the plus `+` character in the second column,
 because `mybranch` has not been merged to incorporate these
-commits from the master branch.
+commits from the master branch.  The string inside brackets
+before the commit log message is a short name you can use to
+name the commit.  In the above example, 'master' and 'mybranch'
+are branch heads.  'master~1' is the first parent of 'master'
+branch head.  Please see 'git-rev-parse' documentation if you
+see more complex cases.
 
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged
@@ -1355,5 +1360,102 @@ complain, telling you that the remote `master` head does not
 fast forward.  You need to pull and merge those other changes
 back before you push your work when it happens.
 
+
+Bundling your work together
+---------------------------
+
+It is likely that you will be working on more than one thing at
+a time.  It is easy to use those more-or-less independent tasks
+using branches with git.
+
+We have already seen how branches work in a previous example,
+with "fun and work" example using two branches.  The idea is the
+same if there are more than two branches.  Let's say you started
+out from "master" head, and have some new code in the "master"
+branch, and two independent fixes in the "commit-fix" and
+"diff-fix" branches:
+
+------------
+$ git show-branch
+! [commit-fix] Fix commit message normalization.
+ ! [diff-fix] Fix rename detection.
+  * [master] Release candidate #1
+---
+ +  [diff-fix] Fix rename detection.
+ +  [diff-fix~1] Better common substring algorithm.
++   [commit-fix] Fix commit message normalization.
+  + [master] Release candidate #1
++++ [diff-fix~2] Pretty-print messages.
+------------
+
+Both fixes are tested well, and at this point, you want to merge
+in both of them.  You could merge in 'diff-fix' first and then
+'commit-fix' next, like this:
+
+------------
+$ git resolve master diff-fix 'Merge fix in diff-fix'
+$ git resolve master commit-fix 'Merge fix in commit-fix'
+------------
+
+Which would result in:
+
+------------
+$ git show-branch
+! [commit-fix] Fix commit message normalization.
+ ! [diff-fix] Fix rename detection.
+  * [master] Merge fix in commit-fix
+---
+  + [master] Merge fix in commit-fix
++ + [commit-fix] Fix commit message normalization.
+  + [master~1] Merge fix in diff-fix
+ ++ [diff-fix] Fix rename detection.
+ ++ [diff-fix~1] Better common substring algorithm.
+  + [master~2] Release candidate #1
++++ [master~3] Pretty-print messages.
+------------
+
+However, there is no particular reason to merge in one branch
+first and the other next, when what you have are a set of truly
+independent changes (if the order mattered, then they are not
+independent by definition).  You could instead merge those two
+branches into the current branch at once.  First let's undo what
+we just did and start over.  We would want to get the master
+branch before these two merges by resetting it to 'master~2':
+
+------------
+$ git reset --hard master~2
+------------
+
+You can make sure 'git show-branch' matches the state before
+those two 'git resolve' you just did.  Then, instead of running
+two 'git resolve' commands in a row, you would pull these two
+branch heads (this is known as 'making an Octopus'):
+
+------------
+$ git pull . commit-fix diff-fix
+$ git show-branch
+! [commit-fix] Fix commit message normalization.
+ ! [diff-fix] Fix rename detection.
+  * [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
+---
+  + [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
++ + [commit-fix] Fix commit message normalization.
+ ++ [diff-fix] Fix rename detection.
+ ++ [diff-fix~1] Better common substring algorithm.
+  + [master~1] Release candidate #1
++++ [master~2] Pretty-print messages.
+------------
+
+Note that you should not do Octopus because you can.  An octopus
+is a valid thing to do and often makes it easier to view the
+commit history if you are pulling more than two independent
+changes at the same time.  However, if you have merge conflicts
+with any of the branches you are merging in and need to hand
+resolve, that is an indication that the development happened in
+those branches were not independent after all, and you should
+merge two at a time, documenting how you resolved the conflicts,
+and the reason why you preferred changes made in one side over
+the other.  Otherwise it would make the project history harder
+to follow, not easier.
 
 [ to be continued.. cvsimports ]
