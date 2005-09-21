@@ -67,6 +67,7 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  -p            output patch format.\n" \
 "  -u            synonym for -p.\n" \
 "  --name-only   show only names of changed files.\n" \
+"  --name-status show names and status of changed files.\n" \
 "  -R            swap input file pairs.\n" \
 "  -B            detect complete rewrites.\n" \
 "  -M            detect renames.\n" \
@@ -85,6 +86,7 @@ extern int diff_queue_is_empty(void);
 #define DIFF_FORMAT_PATCH	2
 #define DIFF_FORMAT_NO_OUTPUT	3
 #define DIFF_FORMAT_NAME	4
+#define DIFF_FORMAT_NAME_STATUS	5
 
 extern void diff_flush(struct diff_options*);
 

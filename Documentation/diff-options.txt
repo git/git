@@ -15,8 +15,8 @@
 --name-only::
 	Show only names of changed files.
 
---name-only-z::
-	Same as --name-only, but terminate lines with NUL.
+--name-status::
+	Show only names and status of changed files.
 
 -B::
 	Break complete rewrite changes into pairs of delete and create.

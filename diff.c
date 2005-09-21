@@ -709,6 +709,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->rename_limit = strtoul(arg+2, NULL, 10);
 	else if (!strcmp(arg, "--name-only"))
 		options->output_format = DIFF_FORMAT_NAME;
+	else if (!strcmp(arg, "--name-status"))
+		options->output_format = DIFF_FORMAT_NAME_STATUS;
 	else if (!strcmp(arg, "-R"))
 		options->reverse_diff = 1;
 	else if (!strncmp(arg, "-S", 2))
@@ -835,7 +837,8 @@ void diff_free_filepair(struct diff_filepair *p)
 
 static void diff_flush_raw(struct diff_filepair *p,
 			   int line_termination,
-			   int inter_name_termination)
+			   int inter_name_termination,
+			   int output_format)
 {
 	int two_paths;
 	char status[10];
@@ -871,13 +874,12 @@ static void diff_flush_raw(struct diff_filepair *p,
 		two_paths = 0;
 		break;
 	}
-	printf(":%06o %06o %s ",
-	       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
-	printf("%s %s%c%s",
-	       sha1_to_hex(p->two->sha1),
-	       status,
-	       inter_name_termination,
-	       p->one->path);
+	if (output_format != DIFF_FORMAT_NAME_STATUS) {
+		printf(":%06o %06o %s ",
+		       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
+		printf("%s ", sha1_to_hex(p->two->sha1));
+	}
+	printf("%s%c%s",status, inter_name_termination, p->one->path);
 	if (two_paths)
 		printf("%c%s", inter_name_termination, p->two->path);
 	putchar(line_termination);
@@ -1067,8 +1069,10 @@ void diff_flush(struct diff_options *options)
 			diff_flush_patch(p);
 			break;
 		case DIFF_FORMAT_RAW:
+		case DIFF_FORMAT_NAME_STATUS:
 			diff_flush_raw(p, line_termination,
-				       inter_name_termination);
+				       inter_name_termination,
+				       diff_output_format);
 			break;
 		case DIFF_FORMAT_NAME:
 			diff_flush_name(p, line_termination);
