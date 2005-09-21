@@ -86,7 +86,7 @@ static int filter_commit(struct commit * commit)
 		return CONTINUE;
 	if (max_age != -1 && (commit->date < max_age)) {
 		stop_traversal=1;
-		return merge_order?CONTINUE:STOP;
+		return CONTINUE;
 	}
 	if (max_count != -1 && !max_count--)
 		return STOP;
@@ -374,6 +374,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 		struct object *obj = &commit->object;
 
+		if (max_age != -1 && (commit->date < max_age))
+			obj->flags |= UNINTERESTING;
 		if (unpacked && has_sha1_pack(obj->sha1))
 			obj->flags |= UNINTERESTING;
 		if (obj->flags & UNINTERESTING) {
@@ -382,6 +384,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 				break;
 			continue;
 		}
+		if (min_age != -1 && (commit->date > min_age))
+			continue;
 		p = &commit_list_insert(commit, p)->next;
 	}
 	if (tree_objects)
@@ -494,10 +498,12 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--max-age=", 10)) {
 			max_age = atoi(arg + 10);
+			limited = 1;
 			continue;
 		}
 		if (!strncmp(arg, "--min-age=", 10)) {
 			min_age = atoi(arg + 10);
+			limited = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--header")) {
