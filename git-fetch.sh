@@ -58,25 +58,21 @@ append_fetch_head () {
     # remote-nick is the URL given on the command line (or a shorthand)
     # remote-name is the $GIT_DIR relative refs/ path we computed
     # for this refspec.
-    remote_1_=$(expr "$remote_" : '\(.*\)\.git/*$') &&
-	remote_="$remote_1_"
-    case "$remote_" in
-    . | ./) where_= ;;
-    *) where_=" of $remote_" ;;
-    esac
     case "$remote_name_" in
     HEAD)
 	note_= ;;
     refs/heads/*)
 	note_="$(expr "$remote_name_" : 'refs/heads/\(.*\)')"
-	note_="branch '$note_'" ;;
+	note_="branch '$note_' of " ;;
     refs/tags/*)
 	note_="$(expr "$remote_name_" : 'refs/tags/\(.*\)')"
-	note_="tag '$note_'" ;;
+	note_="tag '$note_' of " ;;
     *)
-	note_="$remote_name" ;;
+	note_="$remote_name of " ;;
     esac
-    note_="$note_$where_"
+    remote_1_=$(expr "$remote_" : '\(.*\)\.git/*$') &&
+	remote_="$remote_1_"
+    note_="$note_$remote_"
 
     # 2.6.11-tree tag would not be happy to be fed to resolve.
     if git-cat-file commit "$head_" >/dev/null 2>&1
