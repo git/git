@@ -6,13 +6,70 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
-static const char daemon_usage[] = "git-daemon [--inetd | --port=n]";
+static int verbose;
+
+static const char daemon_usage[] = "git-daemon [--verbose] [--inetd | --port=n]";
+
+
+static void logreport(const char *err, va_list params)
+{
+	/* We should do a single write so that it is atomic and output
+	 * of several processes do not get intermingled. */
+	char buf[1024];
+	int buflen;
+	int maxlen, msglen;
+
+	/* sizeof(buf) should be big enough for "[pid] \n" */
+	buflen = snprintf(buf, sizeof(buf), "[%d] ", getpid());
+
+	maxlen = sizeof(buf) - buflen - 1; /* -1 for our own LF */
+	msglen = vsnprintf(buf + buflen, maxlen, err, params);
+
+	/* maxlen counted our own LF but also counts space given to
+	 * vsnprintf for the terminating NUL.  We want to make sure that
+	 * we have space for our own LF and NUL after the "meat" of the
+	 * message, so truncate it at maxlen - 1.
+	 */
+	if (msglen > maxlen - 1)
+		msglen = maxlen - 1;
+	else if (msglen < 0)
+		msglen = 0; /* Protect against weird return values. */
+	buflen += msglen;
+
+	buf[buflen++] = '\n';
+	buf[buflen] = '\0';
+
+	write(2, buf, buflen);
+}
+
+void logerror(const char *err, ...)
+{
+	va_list params;
+	va_start(params, err);
+	logreport(err, params);
+	va_end(params);
+}
+
+void lognotice(const char *err, ...)
+{
+	va_list params;
+	if (!verbose)
+		return;
+	va_start(params, err);
+	logreport(err, params);
+	va_end(params);
+}
+
 
 static int upload(char *dir, int dirlen)
 {
-	if (chdir(dir) < 0)
+	lognotice("Request for '%s'", dir);
+	if (chdir(dir) < 0) {
+		logerror("Cannot chdir('%s'): %s", dir, strerror(errno));
 		return -1;
+	}
 	chdir(".git");
 
 	/*
@@ -24,8 +81,10 @@ static int upload(char *dir, int dirlen)
 	 */
 	if (access("git-daemon-export-ok", F_OK) ||
 	    access("objects/00", X_OK) ||
-	    access("HEAD", R_OK))
+	    access("HEAD", R_OK)) {
+		logerror("Not a valid gitd-enabled repository: '%s'", dir);
 		return -1;
+	}
 
 	/*
 	 * We'll ignore SIGTERM from now on, we have a
@@ -51,7 +110,7 @@ static int execute(void)
 	if (!strncmp("git-upload-pack /", line, 17))
 		return upload(line + 16, len - 16);
 
-	fprintf(stderr, "got bad connection '%s'\n", line);
+	logerror("Protocol error: '%s'", line);
 	return -1;
 }
 
@@ -181,6 +240,8 @@ static void check_max_connections(void)
 static void handle(int incoming, struct sockaddr *addr, int addrlen)
 {
 	pid_t pid = fork();
+	char addrbuf[256] = "";
+	int port = -1;
 
 	if (pid) {
 		unsigned idx;
@@ -200,6 +261,24 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 	dup2(incoming, 0);
 	dup2(incoming, 1);
 	close(incoming);
+
+	if (addr->sa_family == AF_INET) {
+		struct sockaddr_in *sin_addr = (void *) addr;
+		inet_ntop(AF_INET, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
+		port = sin_addr->sin_port;
+
+	} else if (addr->sa_family == AF_INET6) {
+		struct sockaddr_in6 *sin6_addr = (void *) addr;
+
+		char *buf = addrbuf;
+		*buf++ = '['; *buf = '\0'; /* stpcpy() is cool */
+		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(addrbuf) - 1);
+		strcat(buf, "]");
+
+		port = sin6_addr->sin6_port;
+	}
+	lognotice("Connection from %s:%d", addrbuf, port);
+
 	exit(execute());
 }
 
@@ -212,6 +291,9 @@ static void child_handler(int signo)
 			unsigned reaped = children_reaped;
 			dead_child[reaped % MAX_CHILDREN] = pid;
 			children_reaped = reaped + 1;
+			/* XXX: Custom logging, since we don't wanna getpid() */
+			if (verbose)
+				fprintf(stderr, "[%d] Disconnected\n", pid);
 			continue;
 		}
 		break;
@@ -347,6 +429,10 @@ int main(int argc, char **argv)
 
 		if (!strcmp(arg, "--inetd")) {
 			inetd_mode = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--verbose")) {
+			verbose = 1;
 			continue;
 		}
 
