@@ -432,8 +432,8 @@ message headers, and a few one-liners that actually do the
 commit itself (`git-commit`).
 
 
-Checking it out
----------------
+Inspecting Changes
+------------------
 
 While creating changes is useful, it's even more useful if you can tell
 later what changed. The most useful command for this is another of the
