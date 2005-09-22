@@ -25,10 +25,6 @@ then
 fi
 
 merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
-merge_name=$(
-    perl -e 'print join("; ", map { chomp; s/^[0-9a-f]*	//; $_ } <>)' \
-    "$GIT_DIR"/FETCH_HEAD
-)
 
 case "$merge_head" in
 '')
@@ -41,6 +37,5 @@ case "$merge_head" in
 	;;
 esac
 
-git-resolve \
-	"$(cat "$GIT_DIR"/HEAD)" \
-	$merge_head "Merge $merge_name"
+merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD")
+git-resolve "$(cat "$GIT_DIR"/HEAD)" $merge_head "$merge_name"

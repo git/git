@@ -27,7 +27,7 @@ test "$(git-diff-index --cached "$head")" = "" ||
 # MRC is the current "merge reference commit"
 # MRT is the current "merge result tree"
 
-MRC=$head MSG= PARENT="-p $head"
+MRC=$head PARENT="-p $head"
 MRT=$(git-write-tree)
 CNT=1 ;# counting our head
 NON_FF_MERGE=0
@@ -44,8 +44,6 @@ do
 
 	CNT=`expr $CNT + 1`
 	PARENT="$PARENT -p $SHA1"
-	MSG="$MSG
-	$REPO"
 
 	if test "$common,$NON_FF_MERGE" = "$MRC,0"
 	then
@@ -84,20 +82,9 @@ case "$CNT" in
 1)
 	echo "No changes."
 	exit 0 ;;
-2)
-	echo "Not an Octopus; making an ordinary commit."
-	MSG="Merge "`expr "$MSG" : '.	\(.*\)'` ; # remove LF and TAB
-	;;
-*)
-	# In an octopus, the original head is just one of the equals,
-	# so we should list it as such.
-	HEAD_LINK=`readlink "$GIT_DIR/HEAD"`
-	MSG="Octopus merge of the following:
-
-	$HEAD_LINK from .$MSG"
-	;;
 esac
-result_commit=$(echo "$MSG" | git-commit-tree $MRT $PARENT)
+result_commit=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD" |
+		git-commit-tree $MRT $PARENT)
 echo "Committed merge $result_commit"
 echo $result_commit >"$GIT_DIR"/HEAD
 git-diff-tree -p $head $result_commit | git-apply --stat
