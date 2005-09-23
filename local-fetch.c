@@ -65,9 +65,17 @@ static int copy_file(const char *source, const char *dest, const char *hex)
 			return -1;
 		}
 	}
-	if (use_symlink && !symlink(source, dest)) {
-		pull_say("symlink %s\n", hex);
-		return 0;
+	if (use_symlink) {
+		struct stat st;
+		if (stat(source, &st)) {
+			fprintf(stderr, "cannot stat %s: %s\n", source,
+				strerror(errno));
+			return -1;
+		}
+		if (!symlink(source, dest)) {
+			pull_say("symlink %s\n", hex);
+			return 0;
+		}
 	}
 	if (use_filecopy) {
 		int ifd, ofd, status;
