@@ -53,6 +53,7 @@ static int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
 	char *p = *ptrp;
 	int size = *sizep;
 	int oc;
+	int err = 0;
 
 	if ( quote ) {
 		oc = shell_quote(p, size, str);
@@ -62,15 +63,14 @@ static int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
 	}
 
 	if ( oc >= size ) {
-		p[size-1] = '\0';
-		*ptrp += size-1;
-		*sizep = 1;
-		return 1;	/* Overflow, string unusable */
+		err = 1;
+		oc = size-1;
 	}
 
 	*ptrp  += oc;
+	**ptrp  = '\0';
 	*sizep -= oc;
-	return 0;
+	return err;
 }
 
 int setup_connection(int *fd_in, int *fd_out, const char *remote_prog, 
