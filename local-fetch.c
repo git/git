@@ -38,6 +38,8 @@ static int setup_indices(void)
 	unsigned char sha1[20];
 	sprintf(filename, "%s/objects/pack/", path);
 	dir = opendir(filename);
+	if (!dir)
+		return -1;
 	while ((de = readdir(dir)) != NULL) {
 		int namelen = strlen(de->d_name);
 		if (namelen != 50 || 
@@ -46,6 +48,7 @@ static int setup_indices(void)
 		get_sha1_hex(de->d_name + 5, sha1);
 		setup_index(sha1);
 	}
+	closedir(dir);
 	return 0;
 }
 
