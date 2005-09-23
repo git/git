@@ -206,6 +206,7 @@ int pull(char *target)
 	int fd = -1;
 
 	save_commit_buffer = 0;
+	track_object_refs = 0;
 	if (write_ref && current_ref) {
 		fd = lock_ref_sha1(write_ref, current_ref);
 		if (fd < 0)
