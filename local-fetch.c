@@ -75,7 +75,8 @@ static int copy_file(const char *source, const char *dest, const char *hex)
 		void *map;
 		ifd = open(source, O_RDONLY);
 		if (ifd < 0 || fstat(ifd, &st) < 0) {
-			close(ifd);
+			if (ifd >= 0)
+				close(ifd);
 			fprintf(stderr, "cannot open %s\n", source);
 			return -1;
 		}
@@ -89,7 +90,8 @@ static int copy_file(const char *source, const char *dest, const char *hex)
 		status = ((ofd < 0) ||
 			  (write(ofd, map, st.st_size) != st.st_size));
 		munmap(map, st.st_size);
-		close(ofd);
+		if (ofd >= 0)
+			close(ofd);
 		if (status)
 			fprintf(stderr, "cannot write %s\n", dest);
 		else
