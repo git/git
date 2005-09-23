@@ -48,6 +48,7 @@ static int process_tree(struct tree *tree)
 		struct tree_entry_list *next = entry->next;
 		if (process(entry->item.any))
 			return -1;
+		free(entry->name);
 		free(entry);
 		entry = next;
 	}
