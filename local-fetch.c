@@ -52,7 +52,8 @@ static int setup_indices(void)
 	return 0;
 }
 
-static int copy_file(const char *source, const char *dest, const char *hex)
+static int copy_file(const char *source, const char *dest, const char *hex,
+		     int warn_if_not_exists)
 {
 	if (use_link) {
 		if (!link(source, dest)) {
@@ -61,13 +62,16 @@ static int copy_file(const char *source, const char *dest, const char *hex)
 		}
 		/* If we got ENOENT there is no point continuing. */
 		if (errno == ENOENT) {
-			fprintf(stderr, "does not exist %s\n", source);
+			if (warn_if_not_exists)
+				fprintf(stderr, "does not exist %s\n", source);
 			return -1;
 		}
 	}
 	if (use_symlink) {
 		struct stat st;
 		if (stat(source, &st)) {
+			if (!warn_if_not_exists && errno == ENOENT)
+				return -1;
 			fprintf(stderr, "cannot stat %s: %s\n", source,
 				strerror(errno));
 			return -1;
@@ -83,8 +87,11 @@ static int copy_file(const char *source, const char *dest, const char *hex)
 		void *map;
 		ifd = open(source, O_RDONLY);
 		if (ifd < 0 || fstat(ifd, &st) < 0) {
+			int err = errno;
 			if (ifd >= 0)
 				close(ifd);
+			if (!warn_if_not_exists && err == ENOENT)
+				return -1;
 			fprintf(stderr, "cannot open %s\n", source);
 			return -1;
 		}
@@ -129,11 +136,11 @@ static int fetch_pack(const unsigned char *sha1)
 	sprintf(filename, "%s/objects/pack/pack-%s.pack", 
 		path, sha1_to_hex(target->sha1));
 	copy_file(filename, sha1_pack_name(target->sha1),
-		  sha1_to_hex(target->sha1));
+		  sha1_to_hex(target->sha1), 1);
 	sprintf(filename, "%s/objects/pack/pack-%s.idx", 
 		path, sha1_to_hex(target->sha1));
 	copy_file(filename, sha1_pack_index_name(target->sha1),
-		  sha1_to_hex(target->sha1));
+		  sha1_to_hex(target->sha1), 1);
 	install_packed_git(target);
 	return 0;
 }
@@ -154,7 +161,7 @@ static int fetch_file(const unsigned char *sha1)
 	filename[object_name_start+1] = hex[1];
 	filename[object_name_start+2] = '/';
 	strcpy(filename + object_name_start + 3, hex + 2);
-	return copy_file(filename, dest_filename, hex);
+	return copy_file(filename, dest_filename, hex, 0);
 }
 
 int fetch(unsigned char *sha1)
