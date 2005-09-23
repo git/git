@@ -139,7 +139,8 @@ yes,yes)
 	then
 		HEAD=HEAD
 	fi
-	tar Ccf "$repo" - refs $HEAD | tar Cxf "$D/.git" - || exit 1
+	(cd "$repo" && tar cf - refs $HEAD) |
+	(cd "$D/.git" && tar xf -) || exit 1
 	;;
 *)
 	case "$repo" in

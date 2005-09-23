@@ -1,8 +1,9 @@
 # make and install sample templates
 
-INSTALL=install
-prefix=$(HOME)
-template_dir=$(prefix)/share/git-core/templates/
+INSTALL ?= install
+TAR ?= tar
+prefix ?= $(HOME)
+template_dir ?= $(prefix)/share/git-core/templates/
 # DESTDIR=
 
 all: boilerplates custom
@@ -35,4 +36,5 @@ clean:
 
 install: all
 	$(INSTALL) -d -m755 $(DESTDIR)$(template_dir)
-	tar Ccf blt - . | tar Cxf $(DESTDIR)$(template_dir) -
+	(cd blt && $(TAR) cf - .) | \
+	(cd $(DESTDIR)$(template_dir) && $(TAR) xf -)

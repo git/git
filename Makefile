@@ -27,8 +27,6 @@
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
-# Define NO_GETDOMAINNAME if your library lack it (SunOS, Patrick Mauritz).
-#
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
 #
 # Define COLLISION_CHECK below if you believe that SHA1's
@@ -63,6 +61,7 @@ GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 
 CC = gcc
 AR = ar
+TAR = tar
 INSTALL = install
 RPMBUILD = rpmbuild
 
@@ -133,17 +132,6 @@ ifdef WITH_SEND_EMAIL
 	SCRIPT_PERL += git-send-email.perl
 endif
 
-ifndef NO_CURL
-	ifdef CURLDIR
-		# This is still problematic -- gcc does not want -R.
-		CFLAGS += -I$(CURLDIR)/include
-		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
-	else
-		CURL_LIBCURL = -lcurl
-	endif
-	PROGRAMS += git-http-fetch
-endif
-
 LIB_FILE=libgit.a
 
 LIB_H = \
@@ -166,6 +154,9 @@ LIB_OBJS = \
 LIBS = $(LIB_FILE)
 LIBS += -lz
 
+#
+# Platform specific tweaks
+#
 ifeq ($(shell uname -s),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
@@ -173,10 +164,26 @@ endif
 ifeq ($(shell uname -s),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
+	SHELL_PATH = /bin/bash
+	NO_STRCASESTR = YesPlease
+	CURLDIR = /opt/sfw
+	INSTALL = ginstall
+	TAR = gtar
 	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
+endif
+
+ifndef NO_CURL
+	ifdef CURLDIR
+		# This is still problematic -- gcc does not want -R.
+		CFLAGS += -I$(CURLDIR)/include
+		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
+	else
+		CURL_LIBCURL = -lcurl
+	endif
+	PROGRAMS += git-http-fetch
 endif
 
 ifndef SHELL_PATH
@@ -245,6 +252,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  gitk
 
+export TAR INSTALL DESTDIR
 ### Build rules
 
 all: $(PROGRAMS) $(SCRIPTS)
@@ -254,7 +262,8 @@ all:
 
 git: git.sh Makefile
 	rm -f $@+ $@
-	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.sh >$@+
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
 
@@ -356,7 +365,7 @@ dist: git-core.spec git-tar-tree
 	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
 	@cp git-core.spec $(GIT_TARNAME)
-	tar rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git-core.spec
+	$(TAR) rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git-core.spec
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
@@ -365,7 +374,7 @@ rpm: dist
 
 deb: dist
 	rm -rf $(GIT_TARNAME)
-	tar zxf $(GIT_TARNAME).tar.gz
+	$(TAR) zxf $(GIT_TARNAME).tar.gz
 	dpkg-source -b $(GIT_TARNAME)
 	cd $(GIT_TARNAME) && fakeroot debian/rules binary
 
@@ -380,5 +389,5 @@ clean:
 	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
 	rm -f git-tk_$(GIT_VERSION)-*.deb
 	$(MAKE) -C Documentation/ clean
-	$(MAKE) -C templates/ clean
+	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean
