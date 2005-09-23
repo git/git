@@ -152,7 +152,8 @@ yes,yes)
 		# Look at objects/info/alternates for rsync -- http will
 		# support it natively and git native ones will do it on the
 		# remote end.  Not having that file is not a crime.
-		rsync -q "$repo/objects/info/alternates" "$D/.git/TMP_ALT" ||
+		rsync -q "$repo/objects/info/alternates" \
+			"$D/.git/TMP_ALT" 2>/dev/null ||
 			rm -f "$D/.git/TMP_ALT"
 		if test -f "$D/.git/TMP_ALT"
 		then
