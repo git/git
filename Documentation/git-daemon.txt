@@ -7,7 +7,7 @@ git-daemon - A really simple server for GIT repositories.
 
 SYNOPSIS
 --------
-'git-daemon' [--inetd | --port=n]
+'git-daemon' [--verbose] [--inetd | --port=n]
 
 DESCRIPTION
 -----------
@@ -31,6 +31,9 @@ OPTIONS
 
 --port::
 	Listen on an alternative port.
+
+--verbose::
+	Log details about the incoming connections and requested files.
 
 Author
 ------
