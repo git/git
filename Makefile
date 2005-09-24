@@ -253,7 +253,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  gitk
 
-export TAR INSTALL DESTDIR
+export TAR INSTALL DESTDIR SHELL_PATH
 ### Build rules
 
 all: $(PROGRAMS) $(SCRIPTS)

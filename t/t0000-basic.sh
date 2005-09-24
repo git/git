@@ -85,7 +85,7 @@ do
 done
 test_expect_success \
     'adding various types of objects with git-update-index --add.' \
-    'find path* ! -type d -print0 | xargs -0 git-update-index --add'
+    'find path* ! -type d -print | xargs git-update-index --add'
 
 # Show them and see that matches what we expect.
 test_expect_success \
