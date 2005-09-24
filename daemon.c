@@ -59,7 +59,7 @@ void logerror(const char *err, ...)
 	va_end(params);
 }
 
-void lognotice(const char *err, ...)
+void loginfo(const char *err, ...)
 {
 	va_list params;
 	if (!verbose)
@@ -72,7 +72,7 @@ void lognotice(const char *err, ...)
 
 static int upload(char *dir, int dirlen)
 {
-	lognotice("Request for '%s'", dir);
+	loginfo("Request for '%s'", dir);
 	if (chdir(dir) < 0) {
 		logerror("Cannot chdir('%s'): %s", dir, strerror(errno));
 		return -1;
@@ -284,7 +284,7 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 
 		port = sin6_addr->sin6_port;
 	}
-	lognotice("Connection from %s:%d", addrbuf, port);
+	loginfo("Connection from %s:%d", addrbuf, port);
 
 	exit(execute());
 }
