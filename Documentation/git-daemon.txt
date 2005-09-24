@@ -7,7 +7,7 @@ git-daemon - A really simple server for GIT repositories.
 
 SYNOPSIS
 --------
-'git-daemon' [--verbose] [--inetd | --port=n]
+'git-daemon' [--verbose] [--syslog] [--inetd | --port=n]
 
 DESCRIPTION
 -----------
@@ -31,6 +31,10 @@ OPTIONS
 
 --port::
 	Listen on an alternative port.
+
+--syslog::
+	Log to syslog instead of stderr. Note that this option does not imply
+	--verbose, thus by default only error conditions will be logged.
 
 --verbose::
 	Log details about the incoming connections and requested files.

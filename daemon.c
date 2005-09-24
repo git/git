@@ -7,13 +7,15 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <syslog.h>
 
+static int log_syslog;
 static int verbose;
 
-static const char daemon_usage[] = "git-daemon [--verbose] [--inetd | --port=n]";
+static const char daemon_usage[] = "git-daemon [--verbose] [--syslog] [--inetd | --port=n]";
 
 
-static void logreport(const char *err, va_list params)
+static void logreport(int priority, const char *err, va_list params)
 {
 	/* We should do a single write so that it is atomic and output
 	 * of several processes do not get intermingled. */
@@ -26,6 +28,11 @@ static void logreport(const char *err, va_list params)
 
 	maxlen = sizeof(buf) - buflen - 1; /* -1 for our own LF */
 	msglen = vsnprintf(buf + buflen, maxlen, err, params);
+
+	if (log_syslog) {
+		syslog(priority, "%s", buf);
+		return;
+	}
 
 	/* maxlen counted our own LF but also counts space given to
 	 * vsnprintf for the terminating NUL.  We want to make sure that
@@ -48,7 +55,7 @@ void logerror(const char *err, ...)
 {
 	va_list params;
 	va_start(params, err);
-	logreport(err, params);
+	logreport(LOG_ERR, err, params);
 	va_end(params);
 }
 
@@ -58,7 +65,7 @@ void lognotice(const char *err, ...)
 	if (!verbose)
 		return;
 	va_start(params, err);
-	logreport(err, params);
+	logreport(LOG_INFO, err, params);
 	va_end(params);
 }
 
@@ -285,15 +292,23 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 static void child_handler(int signo)
 {
 	for (;;) {
-		pid_t pid = waitpid(-1, NULL, WNOHANG);
+		int status;
+		pid_t pid = waitpid(-1, &status, WNOHANG);
 
 		if (pid > 0) {
 			unsigned reaped = children_reaped;
 			dead_child[reaped % MAX_CHILDREN] = pid;
 			children_reaped = reaped + 1;
 			/* XXX: Custom logging, since we don't wanna getpid() */
-			if (verbose)
-				fprintf(stderr, "[%d] Disconnected\n", pid);
+			if (verbose) {
+				char *dead = "";
+				if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
+					dead = " (with error)";
+				if (log_syslog)
+					syslog(LOG_INFO, "[%d] Disconnected%s", pid, dead);
+				else
+					fprintf(stderr, "[%d] Disconnected%s\n", pid, dead);
+			}
 			continue;
 		}
 		break;
@@ -433,6 +448,11 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--verbose")) {
 			verbose = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--syslog")) {
+			log_syslog = 1;
+			openlog("git-daemon", 0, LOG_DAEMON);
 			continue;
 		}
 
