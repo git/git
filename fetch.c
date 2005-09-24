@@ -48,6 +48,7 @@ static int process_tree(struct tree *tree)
 		struct tree_entry_list *next = entry->next;
 		if (process(entry->item.any))
 			return -1;
+		free(entry->name);
 		free(entry);
 		entry = next;
 	}
@@ -206,6 +207,7 @@ int pull(char *target)
 	int fd = -1;
 
 	save_commit_buffer = 0;
+	track_object_refs = 0;
 	if (write_ref && current_ref) {
 		fd = lock_ref_sha1(write_ref, current_ref);
 		if (fd < 0)
