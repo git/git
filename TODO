@@ -106,6 +106,9 @@ Technical (heavier)
 
 * 'git split-projects'?  This requires updated 'git-rev-list' to
   skip irrelevant commits.
+  Message-ID: <Pine.LNX.4.63.0509221617300.23242@iabervon.org>
+
+* Look at libified GNU diff CVS seems to use.
 
 
 Technical (milder)
@@ -129,7 +132,11 @@ Technical (milder)
 * Accept patches for more portability.
 
   * strcasestr() in mailinfo.  We may need compat/strcasestr.c;
-    this is bugging OpenBSD folks [DONE].
+    this is bugging OpenBSD folks [DONE, thanks to Linus and
+    others].
+
+  * Solaris portability [ONGOING, thanks to Patrick Mauritz,
+    Peter Eriksen and Sean from sympatico].
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -179,9 +186,25 @@ Technical (milder)
 
 * Option to show only status and name from diff [READY].
 
+* What to name the 'master' version between 0.99.7 and 0.99.8
+  and still not break binary distribution folks?  0.99.7z?
+
 
 Technical (trivial)
 -------------------
+
+* show-branch naming heads is buggy.
+
+  git show-branch --more=2
+  ! [linus] Input: check switch bitmap when matching handlers
+   * [master] Input: check switch bitmap when matching handlers
+  --
+  ++ [linus] Input: check switch bitmap when matching handlers
+  ++ [linus~1] Merge branch 'upstream' from master.kernel.org:/pub/scm/linux/kernel/git/jgarzik/libata-dev
+  ++ [linus^2] Merge /spare/repo/linux-2.6/
+
+  The last one should be linus~2 or something; linus head does
+  not have three parents!
 
 * Stop installing the old-name symlinks.
 
