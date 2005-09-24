@@ -93,3 +93,7 @@ git-verify-pack
 git-verify-tag
 git-whatchanged
 git-write-tree
+#*.tar.gz
+#*.dsc
+#*.deb
+#git-core.spec

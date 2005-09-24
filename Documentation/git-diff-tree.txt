@@ -9,11 +9,14 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 
 SYNOPSIS
 --------
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--pretty] [-t] [<common diff options>] <tree-ish> <tree-ish> [<path>...]
+'git-diff-tree' [--stdin] [-m] [-s] [-v] [--pretty] [-t] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
 -----------
 Compares the content and mode of the blobs found via two tree objects.
+
+If there is only one <tree-ish> given, the commit is compared with its parents
+(see --stdin below).
 
 Note that "git-diff-tree" can use the tree encapsulated in a commit object.
 
