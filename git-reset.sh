@@ -81,10 +81,12 @@ case "$reset_type" in
 		while (<$fh>) {
 			chomp;
 			if (! exists $keep{$_}) {
-				print "$_\0";
+				# it is ok if this fails -- it may already
+				# have been culled by checkout-index.
+				unlink $_;
 			}
 		}
-	' $tmp-exists | xargs -0 rm -f --
+	' $tmp-exists
 	;;
 --soft )
 	;; # Nothing else to do
