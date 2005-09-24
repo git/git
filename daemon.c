@@ -22,7 +22,7 @@ static void logreport(const char *err, va_list params)
 	int maxlen, msglen;
 
 	/* sizeof(buf) should be big enough for "[pid] \n" */
-	buflen = snprintf(buf, sizeof(buf), "[%d] ", getpid());
+	buflen = snprintf(buf, sizeof(buf), "[%ld] ", (long) getpid());
 
 	maxlen = sizeof(buf) - buflen - 1; /* -1 for our own LF */
 	msglen = vsnprintf(buf + buflen, maxlen, err, params);
