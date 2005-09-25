@@ -118,7 +118,7 @@ Technical (milder)
   choose the best one", since what is best is not ill defined to
   begin with.  This would make it a lot straightforward to
   loosen the tree cleanliness requirements to the acceptable
-  level.
+  level [DONE].
 
 * The recent commit walker safety patch may be too cautious and
   appears to take forever when cloning.  This may even be
@@ -188,25 +188,15 @@ Technical (milder)
 
 * What to name the 'master' version between 0.99.7 and 0.99.8
   and still not break binary distribution folks?  0.99.7z?
+  Pasky gave me a good one: 0.99.7.GIT [DONE]
 
 
 Technical (trivial)
 -------------------
 
-* show-branch naming heads is buggy.
+* show-branch naming heads is buggy [FIXED].
 
-  git show-branch --more=2
-  ! [linus] Input: check switch bitmap when matching handlers
-   * [master] Input: check switch bitmap when matching handlers
-  --
-  ++ [linus] Input: check switch bitmap when matching handlers
-  ++ [linus~1] Merge branch 'upstream' from master.kernel.org:/pub/scm/linux/kernel/git/jgarzik/libata-dev
-  ++ [linus^2] Merge /spare/repo/linux-2.6/
-
-  The last one should be linus~2 or something; linus head does
-  not have three parents!
-
-* Stop installing the old-name symlinks.
+* Stop installing the old-name symlinks [DONE].
 
 * 'git add --recursive' [DONE]
 
