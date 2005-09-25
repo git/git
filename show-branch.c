@@ -138,7 +138,20 @@ static void name_commits(struct commit_list *list,
 				nth++;
 				if (p->object.util)
 					continue;
-				sprintf(newname, "%s^%d", n->head_name, nth);
+				switch (n->generation) {
+				case 0:
+					sprintf(newname, "%s^%d",
+						n->head_name, nth);
+					break;
+				case 1:
+					sprintf(newname, "%s^^%d",
+						n->head_name, nth);
+					break;
+				default:
+					sprintf(newname, "%s~%d^%d",
+						n->head_name, n->generation,
+						nth);
+				}
 				name_commit(p, strdup(newname), 0);
 				i++;
 				name_first_parent_chain(p);
