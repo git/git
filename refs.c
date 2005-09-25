@@ -2,17 +2,43 @@
 #include "cache.h"
 
 #include <errno.h>
+#include <ctype.h>
 
-static int read_ref(const char *refname, unsigned char *sha1)
+/* We allow "recursive" symbolic refs. Only within reason, though */
+#define MAXDEPTH 5
+
+int read_ref(const char *filename, unsigned char *sha1)
 {
-	int ret = -1;
-	int fd = open(git_path("%s", refname), O_RDONLY);
+	int depth = 0;
+	int ret = -1, fd;
 
-	if (fd >= 0) {
-		char buffer[60];
-		if (read(fd, buffer, sizeof(buffer)) >= 40)
-			ret = get_sha1_hex(buffer, sha1);
+	while ((fd = open(filename, O_RDONLY)) >= 0) {
+		char buffer[256];
+		int len = read(fd, buffer, sizeof(buffer)-1);
+
 		close(fd);
+		if (len < 0)
+			break;
+
+		buffer[len] = 0;
+		while (len && isspace(buffer[len-1]))
+			buffer[--len] = 0;
+
+		if (!strncmp(buffer, "ref:", 4)) {
+			char *buf;
+			if (depth > MAXDEPTH)
+				break;
+			depth++;
+			buf = buffer + 4;
+			len -= 4;
+			while (len && isspace(*buf))
+				buf++, len--;
+			filename = git_path("%.*s", len, buf);
+			continue;
+		}
+		if (len >= 40)
+			ret = get_sha1_hex(buffer, sha1);
+		break;
 	}
 	return ret;
 }
@@ -54,7 +80,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 					break;
 				continue;
 			}
-			if (read_ref(path, sha1) < 0)
+			if (read_ref(git_path("%s", path), sha1) < 0)
 				continue;
 			if (!has_sha1_file(sha1))
 				continue;
@@ -71,7 +97,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
 	unsigned char sha1[20];
-	if (!read_ref("HEAD", sha1))
+	if (!read_ref(git_path("HEAD"), sha1))
 		return fn("HEAD", sha1);
 	return 0;
 }
@@ -101,33 +127,14 @@ static char *ref_lock_file_name(const char *ref)
 	return ret;
 }
 
-static int read_ref_file(const char *filename, unsigned char *sha1) {
-	int fd = open(filename, O_RDONLY);
-	char hex[41];
-	if (fd < 0) {
-		return error("Couldn't open %s\n", filename);
-	}
-	if ((read(fd, hex, 41) < 41) ||
-	    (hex[40] != '\n') ||
-	    get_sha1_hex(hex, sha1)) {
-		error("Couldn't read a hash from %s\n", filename);
-		close(fd);
-		return -1;
-	}
-	close(fd);
-	return 0;
-}
-
 int get_ref_sha1(const char *ref, unsigned char *sha1)
 {
-	char *filename;
-	int retval;
+	const char *filename;
+
 	if (check_ref_format(ref))
 		return -1;
-	filename = ref_file_name(ref);
-	retval = read_ref_file(filename, sha1);
-	free(filename);
-	return retval;
+	filename = git_path("refs/%s", ref);
+	return read_ref(filename, sha1);
 }
 
 static int lock_ref_file(const char *filename, const char *lock_filename,
@@ -140,7 +147,7 @@ static int lock_ref_file(const char *filename, const char *lock_filename,
 		return error("Couldn't open lock file for %s: %s",
 			     filename, strerror(errno));
 	}
-	retval = read_ref_file(filename, current_sha1);
+	retval = read_ref(filename, current_sha1);
 	if (old_sha1) {
 		if (retval) {
 			close(fd);

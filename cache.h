@@ -229,6 +229,7 @@ extern int has_pack_index(const unsigned char *sha1);
 extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
+extern int read_ref(const char *filename, unsigned char *sha1);
 
 /* General helper functions */
 extern void usage(const char *err) NORETURN;

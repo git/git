@@ -119,21 +119,6 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1)
 	return -1;
 }
 
-static int get_sha1_file(const char *path, unsigned char *result)
-{
-	char buffer[60];
-	int fd = open(path, O_RDONLY);
-	int len;
-
-	if (fd < 0)
-		return -1;
-	len = read(fd, buffer, sizeof(buffer));
-	close(fd);
-	if (len < 40)
-		return -1;
-	return get_sha1_hex(buffer, result);
-}
-
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
 	static const char *prefix[] = {
@@ -150,7 +135,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	for (p = prefix; *p; p++) {
 		char *pathname = git_path("%s/%.*s", *p, len, str);
-		if (!get_sha1_file(pathname, sha1))
+		if (!read_ref(pathname, sha1))
 			return 0;
 	}
 
