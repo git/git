@@ -40,4 +40,4 @@ while : ; do
 	shift
 done
 git-ls-files -z "${git_flags[@]}" "$@" |
-	xargs -0 grep "${flags[@]}" "$pattern"
+	xargs -0 grep "${flags[@]}" -e "$pattern"
