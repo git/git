@@ -19,7 +19,7 @@ default_strategies='resolve octopus'
 use_strategies=
 
 dropsave() {
-	rm -f -- "$GIT_DIR/MERGE_HEAD" \
+	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
 		 "$GIT_DIR/MERGE_SAVE" || exit 1
 }
 
@@ -28,9 +28,12 @@ savestate() {
 }
 
 restorestate() {
-	git reset --hard $head
-	cpio -iuv <"$GIT_DIR/MERGE_SAVE"
-	git-update-index --refresh >/dev/null
+        if test -f "$GIT_DIR/MERGE_SAVE"
+	then
+		git reset --hard $head
+		cpio -iuv <"$GIT_DIR/MERGE_SAVE"
+		git-update-index --refresh >/dev/null
+	fi
 }
 
 summary() {
@@ -160,6 +163,7 @@ case "$use_strategies" in
     single_strategy=no
     ;;
 *)
+    rm -f "$GIT_DIR/MERGE_SAVE"
     single_strategy=yes
     ;;
 esac
@@ -242,4 +246,6 @@ for remote
 do
 	echo $remote
 done >"$GIT_DIR/MERGE_HEAD"
+echo $merge_msg >"$GIT_DIR/MERGE_MSG"
+
 die "Automatic merge failed; fix up by hand"

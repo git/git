@@ -141,6 +141,9 @@ t)
 esac
 
 if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+
+	test -f "$GIT_DIR/MERGE_MSG" && cat "$GIT_DIR/MERGE_MSG"
+
 	echo "#"
 	echo "# It looks like your may be committing a MERGE."
 	echo "# If this is not correct, please remove the file"
