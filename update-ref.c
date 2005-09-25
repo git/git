@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "refs.h"
+#include <ctype.h>
 
 static const char git_update_ref_usage[] = "git-update-ref <refname> <value> [<oldval>]";
 
@@ -50,6 +51,19 @@ const char *resolve_ref(const char *path, unsigned char *sha1)
 	return path;
 }
 
+static int re_verify(const char *path, unsigned char *oldsha1, unsigned char *currsha1)
+{
+	char buf[40];
+	int fd = open(path, O_RDONLY), nr;
+	if (fd < 0)
+		return -1;
+	nr = read(fd, buf, 40);
+	close(fd);
+	if (nr != 40 || get_sha1_hex(buf, currsha1) < 0)
+		return -1;
+	return memcmp(oldsha1, currsha1, 20) ? -1 : 0;
+}
+
 int main(int argc, char **argv)
 {
 	char *hex;
@@ -97,12 +111,16 @@ int main(int argc, char **argv)
 	}
 
 	/*
-	 * FIXME!
-	 *
-	 * We should re-read the old ref here, and re-verify that it
-	 * matches "oldsha1". Otherwise there's a small race.
+	 * Re-read the ref after getting the lock to verify
 	 */
+	if (oldval && re_verify(path, oldsha1, currsha1) < 0) {
+		unlink(lockpath);
+		die("Ref lock failed");
+	}
 
+	/*
+	 * Finally, replace the old ref with the new one
+	 */
 	if (rename(lockpath, path) < 0) {
 		unlink(lockpath);
 		die("Unable to create %s", path);
