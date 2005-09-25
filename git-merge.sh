@@ -71,6 +71,7 @@ test "$#" -le 2 && usage ;# we need at least two heads.
 
 merge_msg="$1"
 shift
+head_arg="$1"
 head=$(git-rev-parse --verify "$1"^0) || usage
 shift
 
@@ -86,7 +87,7 @@ echo "$head" >"$GIT_DIR/ORIG_HEAD"
 
 case "$#,$common" in
 *,'')
-	die "Unable to find common commit between $head and $*"
+	die "Unable to find common commit between $head_arg and $*"
 	;;
 1,"$1")
 	# If head can reach all the merge then we are up to date.
@@ -147,7 +148,7 @@ do
     }
     echo "Trying merge strategy $strategy..."
     wt_strategy=$strategy
-    git-merge-$strategy $common -- $head "$@" || {
+    git-merge-$strategy $common -- $head_arg "$@" || {
 
 	# The backend exits with 1 when conflicts are left to be resolved,
 	# with 2 when it does not handle the given merge at all.
@@ -202,7 +203,7 @@ case "$best_strategy" in
 	echo "Rewinding the tree to pristine..."
 	git reset --hard $head
 	echo "Using the $best_strategy to prepare resolving by hand."
-	git-merge-$best_strategy $common -- $head "$@"
+	git-merge-$best_strategy $common -- $head_arg "$@"
 	;;
 esac
 for remote
