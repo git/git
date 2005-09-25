@@ -116,6 +116,7 @@ PROGRAMS = \
 	git-ssh-upload git-tar-tree git-unpack-file \
 	git-unpack-objects git-update-index git-update-server-info \
 	git-upload-pack git-verify-pack git-write-tree \
+	git-update-ref \
 	$(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed in 0.99.8
