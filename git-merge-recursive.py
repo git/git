@@ -149,7 +149,10 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name,
     else:
         updateArg = '-u'
 
-    runProgram(['git-read-tree', updateArg, '-m', common, head, merge])
+    [out, code] = runProgram(['git-read-tree', updateArg, '-m', common, head, merge], returnCode = True)
+    if code != 0:
+        die('git-read-tree:', out)
+
     cleanMerge = True
 
     [tree, code] = runProgram('git-write-tree', returnCode=True)
@@ -430,8 +433,11 @@ try:
 
     print ''
 except:
-    traceback.print_exc(None, sys.stderr)
-    sys.exit(2)
+    if isinstance(sys.exc_info()[1], SystemExit):
+        raise
+    else:
+        traceback.print_exc(None, sys.stderr)
+        sys.exit(2)
 
 if clean:
     sys.exit(0)
