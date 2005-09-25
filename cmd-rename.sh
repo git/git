@@ -1,12 +1,15 @@
 #!/bin/sh
+#
+# This is for people who installed previous GIT by hand and would want
+# to remove the backward compatible links:
+#
+# ./cmd-rename.sh $bindir
+#
 d="$1"
 test -d "$d" || exit
 while read old new
 do
 	rm -f "$d/$old"
-	if [ -x "$d/$new" ]; then
-	ln -s "$new" "$d/$old"
-	fi
 done <<\EOF
 git-add-script	git-add
 git-archimport-script	git-archimport
