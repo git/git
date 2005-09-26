@@ -13,6 +13,7 @@ static const char *resolve_ref(const char *path, unsigned char *sha1)
 
 	for (;;) {
 		struct stat st;
+		char *buf;
 		int fd;
 
 		if (--depth < 0)
@@ -44,7 +45,19 @@ static const char *resolve_ref(const char *path, unsigned char *sha1)
 			return NULL;
 		len = read(fd, buffer, sizeof(buffer)-1);
 		close(fd);
-		break;
+
+		/*
+		 * Is it a symbolic ref?
+		 */
+		if (len < 4 || memcmp("ref:", buffer, 4))
+			break;
+		buf = buffer + 4;
+		len -= 4;
+		while (len && isspace(*buf))
+			buf++, len--;
+		while (len && isspace(buf[len-1]))
+			buf[--len] = 0;
+		path = git_path("%.*s", len, buf);
 	}
 	if (len < 40 || get_sha1_hex(buffer, sha1))
 		return NULL;
