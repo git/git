@@ -24,7 +24,9 @@ then
 		die "You need to first update your working tree."
 fi
 
-merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
+merge_head=$(sed -e '/	not-for-merge	/d' \
+	-e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | \
+	tr '\012' ' ')
 
 case "$merge_head" in
 '')

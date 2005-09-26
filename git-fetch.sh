@@ -54,6 +54,10 @@ append_fetch_head () {
     remote_name_="$3"
     remote_nick_="$4"
     local_name_="$5"
+    case "$6" in
+    t) not_for_merge_='not-for-merge' ;;
+    '') not_for_merge_= ;;
+    esac
 
     # remote-nick is the URL given on the command line (or a shorthand)
     # remote-name is the $GIT_DIR relative refs/ path we computed
@@ -78,10 +82,11 @@ append_fetch_head () {
     if git-cat-file commit "$head_" >/dev/null 2>&1
     then
 	headc_=$(git-rev-parse --verify "$head_^0") || exit
-	echo "$headc_	$note_" >>$GIT_DIR/FETCH_HEAD
+	echo "$headc_	$not_for_merge_	$note_" >>$GIT_DIR/FETCH_HEAD
 	echo >&2 "* committish: $head_"
 	echo >&2 "  $note_"
     else
+	echo "$head_	not-for-merge	$note_" >>$GIT_DIR/FETCH_HEAD
 	echo >&2 "* non-commit: $head_"
 	echo >&2 "  $note_"
     fi
@@ -157,6 +162,13 @@ do
 
     # These are relative path from $GIT_DIR, typically starting at refs/
     # but may be HEAD
+    if expr "$ref" : '\.' >/dev/null
+    then
+	not_for_merge=t
+	ref=$(expr "$ref" : '\.\(.*\)')
+    else
+	not_for_merge=
+    fi
     if expr "$ref" : '\+' >/dev/null
     then
 	single_force=t
@@ -216,7 +228,8 @@ do
 	continue ;;
     esac
 
-    append_fetch_head "$head" "$remote" "$remote_name" "$remote_nick" "$local_name"
+    append_fetch_head "$head" "$remote" \
+    	"$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
 
 done
 
@@ -241,16 +254,27 @@ http://* | https://* | rsync://* )
 	    case "$ref" in
 	    +$remote_name:*)
 		single_force=t
+		not_for_merge=
+		found="$ref"
+		break ;;
+	    .+$remote_name:*)
+		single_force=t
+		not_for_merge=t
+		found="$ref"
+		break ;;
+	    .$remote_name:*)
+	        not_for_merge=t
 		found="$ref"
 		break ;;
 	    $remote_name:*)
+	    	not_for_merge=
 		found="$ref"
 		break ;;
 	    esac
 	done
-
 	local_name=$(expr "$found" : '[^:]*:\(.*\)')
-	append_fetch_head "$sha1" "$remote" "$remote_name" "$remote_nick" "$local_name"
+	append_fetch_head "$sha1" "$remote" \
+		"$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
     done || exit
     ;;
 esac
