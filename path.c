@@ -41,12 +41,10 @@ char *mkpath(const char *fmt, ...)
 
 char *git_path(const char *fmt, ...)
 {
-	const char *git_dir;
+	const char *git_dir = get_git_dir();
 	va_list args;
 	unsigned len;
 
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir) git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	len = strlen(git_dir);
 	if (len > PATH_MAX-100)
 		return bad_path;

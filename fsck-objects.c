@@ -406,10 +406,7 @@ static int fsck_head_link(void)
 	char hex[40];
 	unsigned char sha1[20];
 	static char path[PATH_MAX], link[PATH_MAX];
-	const char *git_dir;
-
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir) git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+	const char *git_dir = get_git_dir();
 
 	snprintf(path, sizeof(path), "%s/HEAD", git_dir);
 	if (readlink(path, link, sizeof(link)) < 0)

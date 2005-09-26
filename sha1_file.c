@@ -70,6 +70,13 @@ static void setup_git_env(void)
 		git_graft_file = strdup(git_path("info/grafts"));
 }
 
+char *get_git_dir(void)
+{
+	if (!git_dir)
+		setup_git_env();
+	return git_dir;
+}
+
 char *get_object_directory(void)
 {
 	if (!git_object_dir)
