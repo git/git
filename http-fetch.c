@@ -15,6 +15,7 @@
 
 static CURL *curl;
 static struct curl_slist *no_pragma_header;
+static char curl_errorstr[CURL_ERROR_SIZE];
 
 static char *initial_base;
 
@@ -112,10 +113,12 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 	
 	if (curl_easy_perform(curl)) {
 		fclose(indexfile);
-		return error("Unable to get pack index %s", url);
+		return error("Unable to get pack index %s\n%s", url,
+			     curl_errorstr);
 	}
 
 	fclose(indexfile);
@@ -264,10 +267,10 @@ static int fetch_indices(struct alt_base *repo)
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 	
-	if (curl_easy_perform(curl)) {
-		return -1;
-	}
+	if (curl_easy_perform(curl))
+		return error("%s", curl_errorstr);
 
 	while (i < buffer.posn) {
 		switch (data[i]) {
@@ -327,10 +330,12 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_pragma_header);
-	
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+
 	if (curl_easy_perform(curl)) {
 		fclose(packfile);
-		return error("Unable to get pack file %s", url);
+		return error("Unable to get pack file %s\n%s", url,
+			     curl_errorstr);
 	}
 
 	fclose(packfile);
@@ -373,6 +378,7 @@ int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(curl, CURLOPT_FILE, NULL);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 
 	url = xmalloc(strlen(repo->base) + 50);
 	strcpy(url, repo->base);
@@ -388,7 +394,7 @@ int fetch_object(struct alt_base *repo, unsigned char *sha1)
 
 	if (curl_easy_perform(curl)) {
 		unlink(filename);
-		return -1;
+		return error("%s", curl_errorstr);
 	}
 
 	fchmod(local, 0444);
@@ -453,6 +459,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         curl_easy_setopt(curl, CURLOPT_FILE, &buffer);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 
         url = xmalloc(strlen(base) + 6 + strlen(ref));
         strcpy(url, base);
@@ -464,7 +471,8 @@ int fetch_ref(char *ref, unsigned char *sha1)
         curl_easy_setopt(curl, CURLOPT_URL, url);
 
         if (curl_easy_perform(curl))
-                return error("Couldn't get %s for %s\n", url, ref);
+                return error("Couldn't get %s for %s\n%s",
+			     url, ref, curl_errorstr);
 
         hex[40] = '\0';
         get_sha1_hex(hex, sha1);
