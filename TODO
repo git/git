@@ -108,11 +108,17 @@ Technical (heavier)
   skip irrelevant commits.
   Message-ID: <Pine.LNX.4.63.0509221617300.23242@iabervon.org>
 
-* Look at libified GNU diff CVS seems to use.
+* Look at libified GNU diff CVS seems to use, or libxdiff.
 
 
 Technical (milder)
 ------------------
+
+* Use 'git-update-ref' in the scripts.
+
+* Use symbolic refs in .git/HEAD.  Should we do that everywhere
+  while honoring the symlinked HEAD in the existing repositories
+  for backward compatibility, or just only when 'ln -s' fails?
 
 * Revisit 'git-merge'.  It probably was a mistake to "loop to
   choose the best one", since what is best is not ill defined to
@@ -182,25 +188,37 @@ Technical (milder)
 
 * Remove obsolete commands [DONE].
 
-* Option to limit rename detection for more than N paths [READY].
+* Option to limit rename detection for more than N paths [DONE].
 
-* Option to show only status and name from diff [READY].
+* Option to show only status and name from diff [DONE].
 
 * What to name the 'master' version between 0.99.7 and 0.99.8
   and still not break binary distribution folks?  0.99.7z?
   Pasky gave me a good one: 0.99.7.GIT [DONE]
 
+* Listing more than one head on the Pull: line of .git/remotes/
+  allows you to make Octopus -- is it useful?  Probabaly not.
+  Either adopt "only the first head is used for the merge by
+  default if taken from .git/remotes/ file", or "list heads to
+  merge on a separate Merge: line" proposal.  I already have the
+  code to do the former, so...
+
 
 Technical (trivial)
 -------------------
 
-* show-branch naming heads is buggy [FIXED].
+* Usher SSL enhancements to http-fetch from Nick Hengeveld into
+  a shape acceptable by everybody.
+
+* Require tk 2.4 in the spec file.
+
+* show-branch naming heads is buggy [DONE].
 
 * Stop installing the old-name symlinks [DONE].
 
-* 'git add --recursive' [DONE]
-
 * 'git merge-projects'?
+
+* 'git clone' does not check things out.  Should it?
 
 * 'git lost-and-found'?  Link dangling commits found by
   fsck-objects under $GIT_DIR/refs/lost-found/.  Then
