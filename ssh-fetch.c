@@ -119,6 +119,8 @@ int main(int argc, char **argv)
 		} else if (argv[arg][1] == 'w') {
 			write_ref = argv[arg + 1];
 			arg++;
+		} else if (!strcmp(argv[arg], "--recover")) {
+			get_recover = 1;
 		}
 		arg++;
 	}

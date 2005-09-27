@@ -40,6 +40,9 @@ extern int get_all;
 /* Set to be verbose */
 extern int get_verbosely;
 
+/* Set to check on all reachable objects. */
+extern int get_recover;
+
 /* Report what we got under get_verbosely */
 extern void pull_say(const char *, const char *);
 

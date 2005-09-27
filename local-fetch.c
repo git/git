@@ -231,6 +231,8 @@ int main(int argc, char **argv)
 			get_verbosely = 1;
 		else if (argv[arg][1] == 'w')
 			write_ref = argv[++arg];
+		else if (!strcmp(argv[arg], "--recover"))
+			get_recover = 1;
 		else
 			usage(local_pull_usage);
 		arg++;
