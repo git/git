@@ -1,6 +1,6 @@
 #!/bin/sh
 # Tcl ignores the next line -*- tcl -*- \
-exec wish "$0" -- "${1+$@}"
+exec wish "$0" -- "$@"
 
 # Copyright (C) 2005 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
@@ -486,6 +486,8 @@ proc makewindow {} {
     bindall <B2-Motion> "allcanvs scan dragto 0 %y"
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
+    bind . <Key-Right> "goforw"
+    bind . <Key-Left> "goback"
     bind . <Key-Prior> "allcanvs yview scroll -1 pages"
     bind . <Key-Next> "allcanvs yview scroll 1 pages"
     bindkey <Key-Delete> "$ctext yview scroll -1 pages"
@@ -493,6 +495,12 @@ proc makewindow {} {
     bindkey <Key-space> "$ctext yview scroll 1 pages"
     bindkey p "selnextline -1"
     bindkey n "selnextline 1"
+    bindkey z "goback"
+    bindkey x "goforw"
+    bindkey i "selnextline -1"
+    bindkey k "selnextline 1"
+    bindkey j "goback"
+    bindkey l "goforw"
     bindkey b "$ctext yview scroll -1 pages"
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
