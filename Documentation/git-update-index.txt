@@ -1,6 +1,5 @@
 git-update-index(1)
 ===================
-v0.1, May 2005
 
 NAME
 ----
@@ -15,6 +14,7 @@ SYNOPSIS
 	     [--force-remove]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--info-only]
+	     [-z] [--stdin]
 	     [--] [<file>]\*
 
 DESCRIPTION
@@ -64,6 +64,15 @@ OPTIONS
 	cannot be added.  With --replace flag, existing entries
 	that conflicts with the entry being added are
 	automatically removed with warning messages.
+
+--stdin::
+	Instead of taking list of paths from the command line,
+	read list of paths from the standard input.  Paths are
+	separated by LF (i.e. one path per line) by default.
+
+-z::
+	Only meaningful with `--stdin`; paths are separated with
+	NUL character instead of LF.
 
 --::
 	Do not interpret any more arguments as options.
