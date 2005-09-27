@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "strbuf.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -277,11 +278,30 @@ static int add_cacheinfo(const char *arg1, const char *arg2, const char *arg3)
 
 static struct cache_file cache_file;
 
+
+static void update_one(const char *path, const char *prefix, int prefix_length)
+{
+	const char *p = prefix_path(prefix, prefix_length, path);
+	if (!verify_path(p)) {
+		fprintf(stderr, "Ignoring path %s\n", path);
+		return;
+	}
+	if (force_remove) {
+		if (remove_file_from_cache(p))
+			die("git-update-index: unable to remove %s", path);
+		return;
+	}
+	if (add_file_to_cache(p))
+		die("Unable to process file %s", path);
+}
+
 int main(int argc, const char **argv)
 {
-	int i, newfd, entries, has_errors = 0;
+	int i, newfd, entries, has_errors = 0, line_termination = '\n';
 	int allow_options = 1;
+	int read_from_stdin = 0;
 	const char *prefix = setup_git_directory();
+	int prefix_length = prefix ? strlen(prefix) : 0;
 
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (newfd < 0)
@@ -335,25 +355,33 @@ int main(int argc, const char **argv)
 				force_remove = 1;
 				continue;
 			}
-
+			if (!strcmp(path, "-z")) {
+				line_termination = 0;
+				continue;
+			}
+			if (!strcmp(path, "--stdin")) {
+				if (i != argc - 1)
+					die("--stdin must be at the end");
+				read_from_stdin = 1;
+				break;
+			}
 			if (!strcmp(path, "--ignore-missing")) {
 				not_new = 1;
 				continue;
 			}
 			die("unknown option %s", path);
 		}
-		path = prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
-		if (!verify_path(path)) {
-			fprintf(stderr, "Ignoring path %s\n", argv[i]);
-			continue;
+		update_one(path, prefix, prefix_length);
+	}
+	if (read_from_stdin) {
+		struct strbuf buf;
+		strbuf_init(&buf);
+		while (1) {
+			read_line(&buf, stdin, line_termination);
+			if (buf.eof)
+				break;
+			update_one(buf.buf, prefix, prefix_length);
 		}
-		if (force_remove) {
-			if (remove_file_from_cache(path))
-				die("git-update-index: unable to remove %s", path);
-			continue;
-		}
-		if (add_file_to_cache(path))
-			die("Unable to process file %s", path);
 	}
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
