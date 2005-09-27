@@ -94,13 +94,13 @@ esac
 case "$all,$#" in
 t,*)
 	git-diff-files --name-only -z |
-	xargs -0 git-update-index -q --remove --
+	git-update-index --remove -z --stdin
 	;;
 ,0)
 	;;
 *)
 	git-diff-files --name-only -z "$@" |
-	xargs -0 git-update-index -q --remove --
+	git-update-index --remove -z --stdin
 	;;
 esac || exit 1
 git-update-index -q --refresh || exit 1
