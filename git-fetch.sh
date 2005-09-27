@@ -178,7 +178,7 @@ do
 	head=$(curl -nsf $curl_extra_args "$remote/$remote_name") &&
 	expr "$head" : "$_x40\$" >/dev/null ||
 		die "Failed to fetch $remote_name from $remote"
-	echo Fetching "$remote_name from $remote" using http
+	echo >&2 Fetching "$remote_name from $remote" using http
 	git-http-fetch -v -a "$head" "$remote/" || exit
 	;;
     rsync://*)

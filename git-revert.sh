@@ -56,9 +56,12 @@ t)
 		die "Your index file is unmerged."
 	;;
 *)
-	check_clean_tree || die "Cannot run $me from a dirty tree."
 	head=$(git-rev-parse --verify HEAD) ||
 		die "You do not have a valid HEAD"
+	files=$(git-diff-index --cached --name-only $head) || exit
+	if [ "$files" ]; then
+		die "Dirty index: cannot $me (dirty: $files)"
+	fi
 	;;
 esac
 

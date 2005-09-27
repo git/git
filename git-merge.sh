@@ -18,8 +18,22 @@ all_strategies='recursive octopus resolve stupid'
 default_strategies='resolve octopus'
 use_strategies=
 
-dropheads() {
-	rm -f -- "$GIT_DIR/MERGE_HEAD" || exit 1
+dropsave() {
+	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
+		 "$GIT_DIR/MERGE_SAVE" || exit 1
+}
+
+savestate() {
+	git diff -r -z --name-only $head | cpio -0 -o >"$GIR_DIR/MERGE_SAVE"
+}
+
+restorestate() {
+        if test -f "$GIT_DIR/MERGE_SAVE"
+	then
+		git reset --hard $head
+		cpio -iuv <"$GIT_DIR/MERGE_SAVE"
+		git-update-index --refresh >/dev/null
+	fi
 }
 
 summary() {
@@ -93,7 +107,7 @@ case "$#,$common" in
 	# If head can reach all the merge then we are up to date.
 	# but first the most common case of merging one remote
 	echo "Already up-to-date. Yeeah!"
-	dropheads
+	dropsave
 	exit 0
 	;;
 1,"$head")
@@ -103,7 +117,7 @@ case "$#,$common" in
 	git-read-tree -u -m $head "$1" || exit 1
 	git-rev-parse --verify "$1^0" > "$GIT_DIR/HEAD"
 	summary "$1"
-	dropheads
+	dropsave
 	exit 0
 	;;
 1,*)
@@ -125,30 +139,52 @@ case "$#,$common" in
 	if test "$up_to_date" = t
 	then
 		echo "Already up-to-date. Yeeah!"
-		dropheads
+		dropsave
 		exit 0
 	fi
 	;;
 esac
 
-# At this point we need a real merge.  Require that the tree matches
-# exactly our head.
+# At this point, we need a real merge.  No matter what strategy
+# we use, it would operate on the index, possibly affecting the
+# working tree, and when resolved cleanly, have the desired tree
+# in the index -- this means that the index must be in sync with
+# the $head commit.
+files=$(git-diff-index --cached --name-only $head) || exit
+if [ "$files" ]; then
+   echo >&2 "Dirty index: cannot merge (dirty: $files)"
+   exit 1
+fi
 
-git-update-index --refresh &&
-test '' = "`git-diff-index --cached --name-only $head`" || {
-	die "Need real merge but the working tree has local changes."
-}
+case "$use_strategies" in
+?*' '?*)
+    # Stash away the local changes so that we can try more than one.
+    savestate
+    single_strategy=no
+    ;;
+*)
+    rm -f "$GIT_DIR/MERGE_SAVE"
+    single_strategy=yes
+    ;;
+esac
 
 result_tree= best_cnt=-1 best_strategy= wt_strategy=
 for strategy in $use_strategies
 do
     test "$wt_strategy" = '' || {
 	echo "Rewinding the tree to pristine..."
-	git reset --hard $head
+	restorestate
     }
-    echo "Trying merge strategy $strategy..."
+    case "$single_strategy" in
+    no)
+	echo "Trying merge strategy $strategy..."
+	;;
+    esac
+
+    # Remember which strategy left the state in the working tree
     wt_strategy=$strategy
-    git-merge-$strategy $common -- $head_arg "$@" || {
+
+    git-merge-$strategy $common -- "$head_arg" "$@" || {
 
 	# The backend exits with 1 when conflicts are left to be resolved,
 	# with 2 when it does not handle the given merge at all.
@@ -186,14 +222,14 @@ then
     echo "Committed merge $result_commit, made by $wt_strategy."
     echo $result_commit >"$GIT_DIR/HEAD"
     summary $result_commit
-    dropheads
+    dropsave
     exit 0
 fi
 
 # Pick the result from the best strategy and have the user fix it up.
 case "$best_strategy" in
 '')
-	git reset --hard $head
+	restorestate
 	die "No merge strategy handled the merge."
 	;;
 "$wt_strategy")
@@ -201,13 +237,15 @@ case "$best_strategy" in
 	;;
 *)
 	echo "Rewinding the tree to pristine..."
-	git reset --hard $head
+	restorestate
 	echo "Using the $best_strategy to prepare resolving by hand."
-	git-merge-$best_strategy $common -- $head_arg "$@"
+	git-merge-$best_strategy $common -- "$head_arg" "$@"
 	;;
 esac
 for remote
 do
 	echo $remote
 done >"$GIT_DIR/MERGE_HEAD"
+echo $merge_msg >"$GIT_DIR/MERGE_MSG"
+
 die "Automatic merge failed; fix up by hand"
