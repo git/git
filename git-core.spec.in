@@ -23,7 +23,7 @@ elsewhere for tools for ordinary humans layered on top of this.
 %setup -q
 
 %build
-make %{_smp_mflags} COPTS="$RPM_OPT_FLAGS" WITH_OWN_SUBPROCESS_PY=YesPlease \
+make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" WITH_OWN_SUBPROCESS_PY=YesPlease \
      prefix=%{_prefix} all %{!?_without_docs: doc}
 
 %install
@@ -47,6 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Tue Sep 27 2005 H. Peter Anvin <hpa@zytor.com>
 - parallelize build
+- COPTS -> CFLAGS
 
 * Fri Sep 16 2005 Chris Wright <chrisw@osdl.org> 0.99.6-1
 - update to 0.99.6
