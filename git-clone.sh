@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "* git clone [-l [-s]] [-q] [-u <upload-pack>] <repo> <dir>"
+	echo >&2 "* git clone [-l [-s]] [-q] [-u <upload-pack>] [-n] <repo> <dir>"
 	exit 1
 }
 
@@ -61,10 +61,12 @@ Perhaps git-update-server-info needs to be run there?"
 quiet=
 use_local=no
 local_shared=no
+no_checkout=
 upload_pack=
 while
 	case "$#,$1" in
 	0,*) break ;;
+	*,-n) no_checkout=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes ;;
@@ -186,9 +188,16 @@ yes,yes)
 	;;
 esac
 
-# Update origin.
-mkdir -p "$D/.git/remotes/" &&
-rm -f "$D/.git/remotes/origin" &&
-echo >"$D/.git/remotes/origin" \
-"URL: $repo
+cd $D || exit
+
+if test -f ".git/HEAD"
+then
+	mkdir -p .git/remotes || exit
+	echo >.git/remotes/origin \
+	"URL: $repo
 Pull: master:origin"
+	case "$no_checkout" in
+	'')
+		git checkout
+	esac
+fi
