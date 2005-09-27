@@ -131,6 +131,8 @@ static int upload(char *dir, int dirlen)
 		return -1;
 	}
 
+	chdir(".git");
+
 	/*
 	 * Security on the cheap.
 	 *
