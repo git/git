@@ -9,7 +9,7 @@ URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
 BuildRequires:	zlib-devel, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires:	rsync, rcs, curl, less, openssh-clients, python >= 2.3, tk
+Requires:	rsync, rcs, curl, less, openssh-clients, python >= 2.3, tk >= 2.4
 
 %description
 This is a stupid (but extremely fast) directory content manager.  It
