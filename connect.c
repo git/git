@@ -290,7 +290,7 @@ static enum protocol get_protocol(const char *name)
 #define STR_(s)	# s
 #define STR(s)	STR_(s)
 
-#ifndef __CYGWIN__
+#ifndef NO_IPV6
 
 static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 {
@@ -348,7 +348,7 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 	return 0;
 }
 
-#else /* __CYGWIN__ */
+#else /* NO_IPV6 */
 
 static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 {
@@ -417,7 +417,7 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 	return 0;
 }
 
-#endif /* __CYGWIN__ */
+#endif /* NO_IPV6 */
 
 /*
  * Yeah, yeah, fixme. Need to pass in the heads etc.

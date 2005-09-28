@@ -29,6 +29,8 @@
 #
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
 #
+# Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -97,7 +99,11 @@ SCRIPT_PYTHON = \
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id git-mailinfo git-mailsplit git-stripspace \
-	git-daemon git-var
+	git-var
+ifndef NO_IPV6
+# Not supported to IPv6-challenged platforms yet
+SIMPLE_PROGRAMS += git-daemon
+endif
 
 # ... and all the rest
 PROGRAMS = \
@@ -175,6 +181,7 @@ endif
 ifeq ($(shell uname -o),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	NO_IPV6 = YesPlease
 endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
@@ -230,6 +237,9 @@ endif
 ifdef NO_STRCASESTR
 	DEFINES += -Dstrcasestr=gitstrcasestr
 	LIB_OBJS += compat/strcasestr.o
+endif
+ifdef NO_IPV6
+	DEFINES += -DNO_IPV6
 endif
 
 ifdef PPC_SHA1
