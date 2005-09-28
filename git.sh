@@ -12,6 +12,7 @@ case "$#" in
 		exit 0 ;;
 	esac
 	test -x $path/git-$cmd && exec $path/git-$cmd "$@" ;;
+	test -x $path/git-$cmd.exe && exec $path/git-$cmd.exe "$@" ;;
 esac
 
 echo "Usage: git COMMAND [OPTIONS] [TARGET]"
