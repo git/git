@@ -172,6 +172,10 @@ ifeq ($(shell uname -s),SunOS)
 	TAR = gtar
 	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
+ifeq ($(shell uname -o),Cygwin)
+	NO_STRCASESTR = YesPlease
+	NEEDS_LIBICONV = YesPlease
+endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
 endif
