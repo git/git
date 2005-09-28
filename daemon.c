@@ -12,7 +12,13 @@
 static int log_syslog;
 static int verbose;
 
-static const char daemon_usage[] = "git-daemon [--verbose] [--syslog] [--inetd | --port=n]";
+static const char daemon_usage[] = "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all] [directory...]";
+
+/* List of acceptable pathname prefixes */
+static char **ok_paths = NULL;
+
+/* If this is set, git-daemon-export-ok is not required */
+static int export_all_trees = 0;
 
 
 static void logreport(int priority, const char *err, va_list params)
@@ -69,14 +75,62 @@ void loginfo(const char *err, ...)
 	va_end(params);
 }
 
+static int path_ok(const char *dir)
+{
+	const char *p = dir;
+	char **pp;
+	int sl = 1, ndot = 0;
+
+	for (;;) {
+		if ( *p == '.' ) {
+			ndot++;
+		} else if ( *p == '/' || *p == '\0' ) {
+			if ( sl && ndot > 0 && ndot < 3 )
+				return 0; /* . or .. in path */
+			sl = 1;
+			if ( *p == '\0' )
+				break; /* End of string and all is good */
+		} else {
+			sl = ndot = 0;
+		}
+		p++;
+	}
+
+	if ( ok_paths && *ok_paths ) {
+		int ok = 0;
+		int dirlen = strlen(dir); /* read_packet_line can return embedded \0 */
+
+		for ( pp = ok_paths ; *pp ; pp++ ) {
+			int len = strlen(*pp);
+			if ( len <= dirlen &&
+			     !strncmp(*pp, dir, len) &&
+			     (dir[len] == '/' || dir[len] == '\0') ) {
+				ok = 1;
+				break;
+			}
+		}
+
+		if ( !ok )
+			return 0; /* Path not in whitelist */
+	}
+
+	return 1;		/* Path acceptable */
+}
 
 static int upload(char *dir, int dirlen)
 {
 	loginfo("Request for '%s'", dir);
+
+	if (!path_ok(dir)) {
+		logerror("Forbidden directory: %s\n", dir);
+		return -1;
+	}
+
 	if (chdir(dir) < 0) {
 		logerror("Cannot chdir('%s'): %s", dir, strerror(errno));
 		return -1;
 	}
+
 	chdir(".git");
 
 	/*
@@ -86,10 +140,10 @@ static int upload(char *dir, int dirlen)
 	 * a "git-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
 	 */
-	if (access("git-daemon-export-ok", F_OK) ||
+	if ((!export_all_trees && access("git-daemon-export-ok", F_OK)) ||
 	    access("objects/00", X_OK) ||
 	    access("HEAD", R_OK)) {
-		logerror("Not a valid gitd-enabled repository: '%s'", dir);
+		logerror("Not a valid git-daemon-enabled repository: '%s'", dir);
 		return -1;
 	}
 
@@ -441,7 +495,6 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
-
 		if (!strcmp(arg, "--inetd")) {
 			inetd_mode = 1;
 			continue;
@@ -454,6 +507,17 @@ int main(int argc, char **argv)
 			log_syslog = 1;
 			openlog("git-daemon", 0, LOG_DAEMON);
 			continue;
+		}
+		if (!strcmp(arg, "--export-all")) {
+			export_all_trees = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--")) {
+			ok_paths = &argv[i+1];
+			break;
+		} else if (arg[0] != '-') {
+			ok_paths = &argv[i];
+			break;
 		}
 
 		usage(daemon_usage);
