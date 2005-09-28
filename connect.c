@@ -290,6 +290,8 @@ static enum protocol get_protocol(const char *name)
 #define STR_(s)	# s
 #define STR(s)	STR_(s)
 
+#ifndef __CYGWIN__
+
 static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 {
 	int sockfd = -1;
@@ -345,6 +347,77 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 	packet_write(sockfd, "%s %s\n", prog, path);
 	return 0;
 }
+
+#else /* __CYGWIN__ */
+
+static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
+{
+	int sockfd = -1;
+	char *colon, *end;
+	char *port = STR(DEFAULT_GIT_PORT), *ep;
+	struct hostent *he;
+	struct sockaddr_in sa;
+	char **ap;
+	unsigned int nport;
+
+	if (host[0] == '[') {
+		end = strchr(host + 1, ']');
+		if (end) {
+			*end = 0;
+			end++;
+			host++;
+		} else
+			end = host;
+	} else
+		end = host;
+	colon = strchr(end, ':');
+
+	if (colon) {
+		*colon = 0;
+		port = colon + 1;
+	}
+
+
+	he = gethostbyname(host);
+	if (!he)
+		die("Unable to look up %s (%s)", host, hstrerror(h_errno));
+	nport = strtoul(port, &ep, 10);
+	if ( ep == port || *ep ) {
+		/* Not numeric */
+		struct servent *se = getservbyname(port,"tcp");
+		if ( !se )
+			die("Unknown port %s\n", port);
+		nport = se->s_port;
+	}
+
+	for (ap = he->h_addr_list; *ap; ap++) {
+		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
+		if (sockfd < 0)
+			continue;
+
+		memset(&sa, 0, sizeof sa);
+		sa.sin_family = he->h_addrtype;
+		sa.sin_port = nport;
+		memcpy(&sa.sin_addr, ap, he->h_length);
+
+		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+			close(sockfd);
+			sockfd = -1;
+			continue;
+		}
+		break;
+	}
+
+	if (sockfd < 0)
+		die("unable to connect a socket (%s)", strerror(errno));
+
+	fd[0] = sockfd;
+	fd[1] = sockfd;
+	packet_write(sockfd, "%s %s\n", prog, path);
+	return 0;
+}
+
+#endif /* __CYGWIN__ */
 
 /*
  * Yeah, yeah, fixme. Need to pass in the heads etc.
