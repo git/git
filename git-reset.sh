@@ -60,7 +60,7 @@ then
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-echo "$rev" >"$GIT_DIR/HEAD"
+git-update-ref HEAD "$rev"
 
 case "$reset_type" in
 --hard )

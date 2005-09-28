@@ -33,7 +33,8 @@ test "$different1$different2" = "" ||
 die "Your working tree does not match $ours_symbolic."
 
 git-read-tree -m -u $ours $upstream &&
-git-rev-parse --verify "$upstream^0" >"$GIT_DIR/HEAD" || exit
+new_head=$(git-rev-parse --verify "$upstream^0") &&
+git-update-ref HEAD "$new_head" || exit
 
 tmp=.rebase-tmp$$
 fail=$tmp-fail
@@ -50,7 +51,7 @@ do
 		continue ;;
 	esac
 	echo >&2 "* Applying: $msg"
-	S=`cat "$GIT_DIR/HEAD"` &&
+	S=$(git-rev-parse --verify HEAD) &&
 	git-cherry-pick --replay $commit || {
 		echo >&2 "* Not applying the patch and continuing."
 		echo $commit >>$fail

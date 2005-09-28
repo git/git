@@ -108,9 +108,10 @@ fi
 
 tree=$(git-write-tree) || exit 1
 echo Wrote tree $tree
-commit=$(git-commit-tree $tree -p $(cat "$GIT_DIR"/HEAD) < "$final") || exit 1
+parent=$(git-rev-parse --verify HEAD) &&
+commit=$(git-commit-tree $tree -p $parent <"$final") || exit 1
 echo Committed: $commit
-echo $commit > "$GIT_DIR"/HEAD
+git-update-ref HEAD $commit $parent || exit
 
 if test -x "$GIT_DIR"/hooks/post-applypatch
 then

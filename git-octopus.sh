@@ -86,5 +86,5 @@ esac
 result_commit=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD" |
 		git-commit-tree $MRT $PARENT)
 echo "Committed merge $result_commit"
-echo $result_commit >"$GIT_DIR"/HEAD
+git-update-ref HEAD $result_commit $head
 git-diff-tree -p $head $result_commit | git-apply --stat

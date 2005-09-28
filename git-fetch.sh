@@ -110,14 +110,16 @@ fast_forward_local () {
 	else
 		echo >&2 "* $1: storing $3"
 	fi
-	echo "$2" >"$GIT_DIR/$1" ;;
+	git-update-ref "$1" "$2" 
+	;;
 
     refs/heads/*)
-	# NEEDSWORK: use the same cmpxchg protocol here.
-	echo "$2" >"$GIT_DIR/$1.lock"
-	if test -f "$GIT_DIR/$1"
+	# $1 is the ref being updated.
+	# $2 is the new value for the ref.
+	local=$(git-rev-parse --verify "$1^0" 2>/dev/null)
+	if test "$local"
 	then
-	    local=$(git-rev-parse --verify "$1^0") &&
+	    # Require fast-forward.
 	    mb=$(git-merge-base "$local" "$2") &&
 	    case "$2,$mb" in
 	    $local,*)
@@ -125,34 +127,34 @@ fast_forward_local () {
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
+		git-update-ref "$1" "$2" "$local"
 		;;
 	    *)
 		false
 		;;
 	    esac || {
 		echo >&2 "* $1: does not fast forward to $3;"
-		case "$force,$single_force" in
-		t,* | *,t)
+		case ",$force,$single_force," in
+		*,t,*)
 			echo >&2 "  forcing update."
+			git-update-ref "$1" "$2" "$local"
 			;;
 		*)
-			mv "$GIT_DIR/$1.lock" "$GIT_DIR/$1.remote"
-			echo >&2 "  leaving it in '$1.remote'"
+			echo >&2 "  not updating."
 			;;
 		esac
 	    }
 	else
-		echo >&2 "* $1: storing $3"
+	    echo >&2 "* $1: storing $3"
+	    git-update-ref "$1" "$2"
 	fi
-	test -f "$GIT_DIR/$1.lock" &&
-	    mv "$GIT_DIR/$1.lock" "$GIT_DIR/$1"
 	;;
     esac
 }
 
 case "$update_head_ok" in
 '')
-	orig_head=$(cat "$GIT_DIR/HEAD" 2>/dev/null)
+	orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 	;;
 esac
 
@@ -196,7 +198,7 @@ do
     rsync://*)
 	TMP_HEAD="$GIT_DIR/TMP_HEAD"
 	rsync -L -q "$remote/$remote_name" "$TMP_HEAD" || exit 1
-	head=$(git-rev-parse TMP_HEAD)
+	head=$(git-rev-parse --verify TMP_HEAD)
 	rm -f "$TMP_HEAD"
 	test "$rsync_slurped_objects" || {
 	    rsync -av --ignore-existing --exclude info \
@@ -285,10 +287,10 @@ case ",$update_head_ok,$orig_head," in
 *,, | t,* )
 	;;
 *)
-	curr_head=$(cat "$GIT_DIR/HEAD" 2>/dev/null)
+	curr_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 	if test "$curr_head" != "$orig_head"
 	then
-		echo "$orig_head" >$GIT_DIR/HEAD
+	    	git-update-ref HEAD "$orig_head"
 		die "Cannot fetch into the current branch."
 	fi
 	;;
