@@ -24,7 +24,9 @@ dropsave() {
 }
 
 savestate() {
-	git diff -r -z --name-only $head | cpio -0 -o >"$GIR_DIR/MERGE_SAVE"
+	# Stash away any local modifications.
+	git-diff-index -r -z --name-only $head |
+	cpio -0 -o >"$GIR_DIR/MERGE_SAVE"
 }
 
 restorestate() {
@@ -149,12 +151,7 @@ esac
 # we use, it would operate on the index, possibly affecting the
 # working tree, and when resolved cleanly, have the desired tree
 # in the index -- this means that the index must be in sync with
-# the $head commit.
-files=$(git-diff-index --cached --name-only $head) || exit
-if [ "$files" ]; then
-   echo >&2 "Dirty index: cannot merge (dirty: $files)"
-   exit 1
-fi
+# the $head commit.  The strategies are responsible to ensure this.
 
 case "$use_strategies" in
 ?*' '?*)
