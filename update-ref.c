@@ -6,7 +6,7 @@ static const char git_update_ref_usage[] = "git-update-ref <refname> <value> [<o
 
 #define MAXDEPTH 5
 
-const char *resolve_ref(const char *path, unsigned char *sha1)
+static const char *resolve_ref(const char *path, unsigned char *sha1)
 {
 	int depth = MAXDEPTH, len;
 	char buffer[256];

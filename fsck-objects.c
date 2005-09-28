@@ -30,7 +30,7 @@ static void objreport(struct object *obj, const char *severity,
 	fputs("\n", stderr);
 }
 
-int objerror(struct object *obj, const char *err, ...)
+static int objerror(struct object *obj, const char *err, ...)
 {
 	va_list params;
 	va_start(params, err);
@@ -39,7 +39,7 @@ int objerror(struct object *obj, const char *err, ...)
 	return -1;
 }
 
-int objwarning(struct object *obj, const char *err, ...)
+static int objwarning(struct object *obj, const char *err, ...)
 {
 	va_list params;
 	va_start(params, err);

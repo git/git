@@ -27,7 +27,7 @@ struct alt_base
 	struct alt_base *next;
 };
 
-struct alt_base *alt = NULL;
+static struct alt_base *alt = NULL;
 
 static SHA_CTX c;
 static z_stream stream;
@@ -354,7 +354,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	return 0;
 }
 
-int fetch_object(struct alt_base *repo, unsigned char *sha1)
+static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
 	char *filename = sha1_file_name(sha1);
