@@ -397,7 +397,7 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 
 		memset(&sa, 0, sizeof sa);
 		sa.sin_family = he->h_addrtype;
-		sa.sin_port = nport;
+		sa.sin_port = htons(nport);
 		memcpy(&sa.sin_addr, ap, he->h_length);
 
 		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {

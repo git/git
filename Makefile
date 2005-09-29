@@ -239,7 +239,7 @@ ifdef NO_STRCASESTR
 	LIB_OBJS += compat/strcasestr.o
 endif
 ifdef NO_IPV6
-	DEFINES += -DNO_IPV6
+	DEFINES += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
 endif
 
 ifdef PPC_SHA1
