@@ -99,11 +99,7 @@ SCRIPT_PYTHON = \
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id git-mailinfo git-mailsplit git-stripspace \
-	git-var
-ifndef NO_IPV6
-# Not supported to IPv6-challenged platforms yet
-SIMPLE_PROGRAMS += git-daemon
-endif
+	git-var git-daemon
 
 # ... and all the rest
 PROGRAMS = \
@@ -182,6 +178,7 @@ ifeq ($(shell uname -o),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_IPV6 = YesPlease
+	X = .exe
 endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
@@ -267,10 +264,13 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  gitk
 
+PROGRAMS_X = $(patsubst %,%$(X),$(PROGRAMS))
+SIMPLE_PROGRAMS_X = $(patsubst %,%$(X),$(SIMPLE_PROGRAMS))
+
 export TAR INSTALL DESTDIR SHELL_PATH
 ### Build rules
 
-all: $(PROGRAMS) $(SCRIPTS)
+all: $(PROGRAMS_X) $(SCRIPTS)
 
 all:
 	$(MAKE) -C templates
@@ -304,30 +304,30 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
-git-%: %.o $(LIB_FILE)
+git-%$(X): %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
-git-mailinfo : SIMPLE_LIB += $(LIB_4_ICONV)
-$(SIMPLE_PROGRAMS) : $(LIB_FILE)
-$(SIMPLE_PROGRAMS) : git-% : %.o
+git-mailinfo$(X) : SIMPLE_LIB += $(LIB_4_ICONV)
+$(SIMPLE_PROGRAMS_X) : $(LIB_FILE)
+$(SIMPLE_PROGRAMS_X) : git-%$(X) : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIB_FILE) $(SIMPLE_LIB)
 
-git-http-fetch: fetch.o
-git-local-fetch: fetch.o
-git-ssh-fetch: rsh.o fetch.o
-git-ssh-upload: rsh.o
-git-ssh-pull: rsh.o fetch.o
-git-ssh-push: rsh.o
+git-http-fetch$(X): fetch.o
+git-local-fetch$(X): fetch.o
+git-ssh-fetch$(X): rsh.o fetch.o
+git-ssh-upload$(X): rsh.o
+git-ssh-pull$(X): rsh.o fetch.o
+git-ssh-push$(X): rsh.o
 
-git-http-fetch: LIBS += $(CURL_LIBCURL)
-git-rev-list: LIBS += $(OPENSSL_LIBSSL)
+git-http-fetch$(X): LIBS += $(CURL_LIBCURL)
+git-rev-list$(X): LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
 		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
-$(patsubst git-%,%.o,$(PROGRAMS)): $(LIB_H)
+$(patsubst git-%$(X),%.o,$(PROGRAMS_X)): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
@@ -342,10 +342,10 @@ doc:
 test: all
 	$(MAKE) -C t/ all
 
-test-date: test-date.c date.o
+test-date$(X): test-date.c date.o
 	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
 
-test-delta: test-delta.c diff-delta.o patch-delta.o
+test-delta$(X): test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $^
 
 check:
@@ -355,9 +355,9 @@ check:
 
 ### Installation rules
 
-install: $(PROGRAMS) $(SCRIPTS)
+install: $(PROGRAMS_X) $(SCRIPTS)
 	$(INSTALL) -d -m755 $(DESTDIR)$(bindir)
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
+	$(INSTALL) $(PROGRAMS_X) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(DESTDIR)$(GIT_PYTHON_DIR)
@@ -395,7 +395,7 @@ deb: dist
 ### Cleaning rules
 
 clean:
-	rm -f *.o *.exe mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS) $(LIB_FILE)
+	rm -f *.o mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS_X) $(LIB_FILE)
 	rm -f $(filter-out gitk,$(SCRIPTS))
 	rm -f git-core.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
