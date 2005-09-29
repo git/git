@@ -98,31 +98,29 @@ SCRIPT_PYTHON = \
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
-	git-get-tar-commit-id git-mailinfo git-mailsplit git-stripspace \
-	git-var git-daemon
+	git-get-tar-commit-id$(X) git-mailinfo$(X) git-mailsplit$(X) \
+	git-stripspace$(X) git-var$(X) git-daemon$(X)
 
 # ... and all the rest
 PROGRAMS = \
-	git-apply git-cat-file \
-	git-checkout-index git-clone-pack git-commit-tree \
-	git-convert-objects git-diff-files \
-	git-diff-index git-diff-stages \
-	git-diff-tree git-fetch-pack git-fsck-objects \
-	git-hash-object git-init-db \
-	git-local-fetch git-ls-files git-ls-tree git-merge-base \
-	git-merge-index git-mktag git-pack-objects git-patch-id \
-	git-peek-remote git-prune-packed git-read-tree \
-	git-receive-pack git-rev-list git-rev-parse \
-	git-send-pack git-show-branch \
-	git-show-index git-ssh-fetch \
-	git-ssh-upload git-tar-tree git-unpack-file \
-	git-unpack-objects git-update-index git-update-server-info \
-	git-upload-pack git-verify-pack git-write-tree \
-	git-update-ref \
-	$(SIMPLE_PROGRAMS)
+	git-apply$(X) git-cat-file$(X) git-checkout-index$(X)		\
+	git-clone-pack$(X) git-commit-tree$(X) git-convert-objects$(X)	\
+	git-diff-files$(X) git-diff-index$(X) git-diff-stages$(X)	\
+	git-diff-tree$(X) git-fetch-pack$(X) git-fsck-objects$(X)	\
+	git-hash-object$(X) git-init-db$(X) git-local-fetch$(X)		\
+	git-ls-files$(X) git-ls-tree$(X) git-merge-base$(X)		\
+	git-merge-index$(X) git-mktag$(X) git-pack-objects$(X)		\
+	git-patch-id$(X) git-peek-remote$(X) git-prune-packed$(X)	\
+	git-read-tree$(X) git-receive-pack$(X) git-rev-list$(X)		\
+	git-rev-parse$(X) git-send-pack$(X) git-show-branch$(X)		\
+	git-show-index$(X) git-ssh-fetch$(X) git-ssh-upload$(X)		\
+	git-tar-tree$(X) git-unpack-file$(X) git-unpack-objects$(X)	\
+	git-update-index$(X) git-update-server-info$(X)			\
+	git-upload-pack$(X) git-verify-pack$(X) git-write-tree$(X)	\
+	git-update-ref$(X) $(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed in 0.99.8
-PROGRAMS += git-ssh-pull git-ssh-push
+PROGRAMS += git-ssh-pull$(X) git-ssh-push$(X)
 
 PYMODULES = \
 	gitMergeCommon.py
@@ -264,13 +262,10 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  gitk
 
-PROGRAMS_X = $(patsubst %,%$(X),$(PROGRAMS))
-SIMPLE_PROGRAMS_X = $(patsubst %,%$(X),$(SIMPLE_PROGRAMS))
-
 export TAR INSTALL DESTDIR SHELL_PATH
 ### Build rules
 
-all: $(PROGRAMS_X) $(SCRIPTS)
+all: $(PROGRAMS) $(SCRIPTS)
 
 all:
 	$(MAKE) -C templates
@@ -308,8 +303,8 @@ git-%$(X): %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
 git-mailinfo$(X) : SIMPLE_LIB += $(LIB_4_ICONV)
-$(SIMPLE_PROGRAMS_X) : $(LIB_FILE)
-$(SIMPLE_PROGRAMS_X) : git-%$(X) : %.o
+$(SIMPLE_PROGRAMS) : $(LIB_FILE)
+$(SIMPLE_PROGRAMS) : git-%$(X) : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIB_FILE) $(SIMPLE_LIB)
 
 git-http-fetch$(X): fetch.o
@@ -327,7 +322,7 @@ init-db.o: init-db.c
 		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
-$(patsubst git-%$(X),%.o,$(PROGRAMS_X)): $(LIB_H)
+$(patsubst git-%$(X),%.o,$(PROGRAMS)): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
@@ -355,9 +350,9 @@ check:
 
 ### Installation rules
 
-install: $(PROGRAMS_X) $(SCRIPTS)
+install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -d -m755 $(DESTDIR)$(bindir)
-	$(INSTALL) $(PROGRAMS_X) $(SCRIPTS) $(DESTDIR)$(bindir)
+	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(DESTDIR)$(GIT_PYTHON_DIR)
@@ -395,7 +390,7 @@ deb: dist
 ### Cleaning rules
 
 clean:
-	rm -f *.o mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS_X) $(LIB_FILE)
+	rm -f *.o mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS) $(LIB_FILE)
 	rm -f $(filter-out gitk,$(SCRIPTS))
 	rm -f git-core.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
