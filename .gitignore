@@ -100,3 +100,4 @@ git-core-*/?*
 *.dsc
 *.deb
 git-core.spec
+*.exe
