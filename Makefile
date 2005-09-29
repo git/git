@@ -395,7 +395,7 @@ deb: dist
 ### Cleaning rules
 
 clean:
-	rm -f *.o mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS) $(LIB_FILE)
+	rm -f *.o *.exe mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS) $(LIB_FILE)
 	rm -f $(filter-out gitk,$(SCRIPTS))
 	rm -f git-core.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
