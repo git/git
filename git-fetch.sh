@@ -5,6 +5,7 @@
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
+tags=
 append=
 force=
 update_head_ok=
@@ -16,6 +17,9 @@ do
 		;;
 	-f|--f|--fo|--for|--forc|--force)
 		force=t
+		;;
+	-t|--t|--ta|--tag|--tags)
+		tags=t
 		;;
 	-u|--u|--up|--upd|--upda|--updat|--update|--update-|--update-h|\
 	--update-he|--update-hea|--update-head|--update-head-|\
@@ -158,7 +162,26 @@ case "$update_head_ok" in
 	;;
 esac
 
-for ref in $(get_remote_refs_for_fetch "$@")
+# If --tags (and later --heads or --all) is specified, then we are
+# not talking about defaults stored in Pull: line of remotes or
+# branches file, and just fetch those and refspecs explicitly given.
+# Otherwise we do what we always did.
+
+reflist=$(get_remote_refs_for_fetch "$@")
+if test "$tags"
+then
+	taglist=$(git-ls-remote --tags "$remote" | awk '{ print "."$2":"$2 }')
+	if test "$#" -gt 1
+	then
+		# remote URL plus explicit refspecs; we need to merge them.
+		reflist="$reflist $taglist"
+	else
+		# No explicit refspecs; fetch tags only.
+		reflist=$taglist
+	fi
+fi
+
+for ref in $reflist
 do
     refs="$refs $ref"
 
