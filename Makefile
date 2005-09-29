@@ -190,7 +190,7 @@ ifndef NO_CURL
 	else
 		CURL_LIBCURL = -lcurl
 	endif
-	PROGRAMS += git-http-fetch
+	PROGRAMS += git-http-fetch$(X)
 endif
 
 ifndef SHELL_PATH
