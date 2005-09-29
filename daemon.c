@@ -379,7 +379,6 @@ static int socksetup(int port, int **socklist_p)
 {
 	int socknum = 0, *socklist = NULL;
 	int maxfd = -1;
-	fd_set fds_init, fds;
 	char pbuf[NI_MAXSERV];
 
 	struct addrinfo hints, *ai0, *ai;
@@ -395,8 +394,6 @@ static int socksetup(int port, int **socklist_p)
 	gai = getaddrinfo(NULL, pbuf, &hints, &ai0);
 	if (gai)
 		die("getaddrinfo() failed: %s\n", gai_strerror(gai));
-
-	FD_ZERO(&fds_init);
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
@@ -436,7 +433,6 @@ static int socksetup(int port, int **socklist_p)
 		socklist = newlist;
 		socklist[socknum++] = sockfd;
 
-		FD_SET(sockfd, &fds_init);
 		if (maxfd < sockfd)
 			maxfd = sockfd;
 	}
