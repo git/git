@@ -57,7 +57,7 @@ static void logreport(int priority, const char *err, va_list params)
 	write(2, buf, buflen);
 }
 
-void logerror(const char *err, ...)
+static void logerror(const char *err, ...)
 {
 	va_list params;
 	va_start(params, err);
@@ -65,7 +65,7 @@ void logerror(const char *err, ...)
 	va_end(params);
 }
 
-void loginfo(const char *err, ...)
+static void loginfo(const char *err, ...)
 {
 	va_list params;
 	if (!verbose)
