@@ -159,7 +159,9 @@ if [ ! -r "$GIT_DIR/HEAD" ]; then
 		exit 1
 	fi
 	PARENTS=""
+	current=
 else
+	current=$(git-rev-parse --verify HEAD)
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
 	fi
@@ -220,7 +222,7 @@ if test -s .cmitchk
 then
 	tree=$(git-write-tree) &&
 	commit=$(cat .cmitmsg | git-commit-tree $tree $PARENTS) &&
-	echo $commit > "$GIT_DIR/HEAD" &&
+	git-update-ref HEAD $commit $current &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD"
 else
 	echo >&2 "* no commit message?  aborting commit."

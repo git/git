@@ -45,7 +45,7 @@ case "$common" in
 "$head")
 	echo "Updating from $head to $merge."
 	git-read-tree -u -m $head $merge || exit 1
-	echo $merge > "$GIT_DIR"/HEAD
+	git-update-ref HEAD "$merge" "$head"
 	git-diff-tree -p $head $merge | git-apply --stat
 	dropheads
 	exit 0
@@ -99,6 +99,6 @@ if [ $? -ne 0 ]; then
 fi
 result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
 echo "Committed merge $result_commit"
-echo $result_commit > "$GIT_DIR"/HEAD
+git-update-ref HEAD "$result_commit" "$head"
 git-diff-tree -p $head $result_commit | git-apply --stat
 dropheads

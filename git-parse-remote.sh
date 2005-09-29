@@ -65,8 +65,11 @@ get_remote_default_refs_for_push () {
 	esac
 }
 
-# Subroutine to canonicalize remote:local notation
+# Subroutine to canonicalize remote:local notation.
 canon_refs_list_for_fetch () {
+	# Leave only the first one alone; add prefix . to the rest
+	# to prevent the secondary branches to be merged by default.
+	dot_prefix=
 	for ref
 	do
 		force=
@@ -91,7 +94,8 @@ canon_refs_list_for_fetch () {
 		heads/* | tags/* ) local="refs/$local" ;;
 		*) local="refs/heads/$local" ;;
 		esac
-		echo "${force}${remote}:${local}"
+		echo "${dot_prefix}${force}${remote}:${local}"
+		dot_prefix=.
 	done
 }
 
@@ -107,6 +111,9 @@ get_remote_default_refs_for_fetch () {
 		echo "refs/heads/${remote_branch}:refs/heads/$1"
 		;;
 	remotes)
+		# This prefixes the second and later default refspecs
+		# with a '.', to signal git-fetch to mark them
+		# not-for-merge.
 		canon_refs_list_for_fetch $(sed -ne '/^Pull: */{
 						s///p
 					}' "$GIT_DIR/remotes/$1")

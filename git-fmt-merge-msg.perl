@@ -31,6 +31,8 @@ while (<>) {
 	my ($bname, $tname, $gname, $src);
 	chomp;
 	s/^[0-9a-f]*	//;
+	next if (/^not-for-merge/);
+	s/^	//;
 	if (s/ of (.*)$//) {
 		$src = $1;
 	} else {
@@ -86,7 +88,7 @@ for my $src (@src) {
 			    $src{$src}{GENERIC});
 	my $this = join(', ', @this);
 	if ($src ne '.') {
-		$this .= " from $src";
+		$this .= " of $src";
 	}
 	push @msg, $this;
 }

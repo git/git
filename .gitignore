@@ -25,6 +25,7 @@ git-diff-stages
 git-diff-tree
 git-fetch
 git-fetch-pack
+git-fmt-merge-msg
 git-format-patch
 git-fsck-objects
 git-get-tar-commit-id
@@ -86,6 +87,7 @@ git-tar-tree
 git-unpack-file
 git-unpack-objects
 git-update-index
+git-update-ref
 git-update-server-info
 git-upload-pack
 git-var

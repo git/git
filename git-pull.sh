@@ -6,10 +6,10 @@
 
 . git-sh-setup || die "Not a git archive"
 
-orig_head=$(cat "$GIT_DIR/HEAD") || die "Pulling into a black hole?"
+orig_head=$(git-rev-parse --verify HEAD) || die "Pulling into a black hole?"
 git-fetch --update-head-ok "$@" || exit 1
 
-curr_head=$(cat "$GIT_DIR/HEAD")
+curr_head=$(git-rev-parse --verify HEAD)
 if test "$curr_head" != "$orig_head"
 then
 	# The fetch involved updating the current branch.
@@ -24,7 +24,9 @@ then
 		die "You need to first update your working tree."
 fi
 
-merge_head=$(sed -e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | tr '\012' ' ')
+merge_head=$(sed -e '/	not-for-merge	/d' \
+	-e 's/	.*//' "$GIT_DIR"/FETCH_HEAD | \
+	tr '\012' ' ')
 
 case "$merge_head" in
 '')
@@ -38,4 +40,4 @@ case "$merge_head" in
 esac
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD")
-git-resolve "$(cat "$GIT_DIR"/HEAD)" $merge_head "$merge_name"
+git-resolve "$curr_head" $merge_head "$merge_name"

@@ -27,7 +27,7 @@ struct alt_base
 	struct alt_base *next;
 };
 
-struct alt_base *alt = NULL;
+static struct alt_base *alt = NULL;
 
 static SHA_CTX c;
 static z_stream stream;
@@ -36,6 +36,10 @@ static int local;
 static int zret;
 
 static int curl_ssl_verify;
+static char *ssl_cert;
+static char *ssl_key;
+static char *ssl_capath;
+static char *ssl_cainfo;
 
 struct buffer
 {
@@ -350,7 +354,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	return 0;
 }
 
-int fetch_object(struct alt_base *repo, unsigned char *sha1)
+static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
 	char *filename = sha1_file_name(sha1);
@@ -521,6 +525,21 @@ int main(int argc, char **argv)
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(curl, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 #endif
+
+	if ((ssl_cert = getenv("GIT_SSL_CERT")) != NULL) {
+		curl_easy_setopt(curl, CURLOPT_SSLCERT, ssl_cert);
+	}
+	if ((ssl_key = getenv("GIT_SSL_KEY")) != NULL) {
+		curl_easy_setopt(curl, CURLOPT_SSLKEY, ssl_key);
+	}
+#if LIBCURL_VERSION_NUM >= 0x070908
+	if ((ssl_capath = getenv("GIT_SSL_CAPATH")) != NULL) {
+		curl_easy_setopt(curl, CURLOPT_CAPATH, ssl_capath);
+	}
+#endif
+	if ((ssl_cainfo = getenv("GIT_SSL_CAINFO")) != NULL) {
+		curl_easy_setopt(curl, CURLOPT_CAINFO, ssl_cainfo);
+	}
 
 	alt = xmalloc(sizeof(*alt));
 	alt->base = url;

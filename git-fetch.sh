@@ -54,6 +54,10 @@ append_fetch_head () {
     remote_name_="$3"
     remote_nick_="$4"
     local_name_="$5"
+    case "$6" in
+    t) not_for_merge_='not-for-merge' ;;
+    '') not_for_merge_= ;;
+    esac
 
     # remote-nick is the URL given on the command line (or a shorthand)
     # remote-name is the $GIT_DIR relative refs/ path we computed
@@ -78,10 +82,11 @@ append_fetch_head () {
     if git-cat-file commit "$head_" >/dev/null 2>&1
     then
 	headc_=$(git-rev-parse --verify "$head_^0") || exit
-	echo "$headc_	$note_" >>$GIT_DIR/FETCH_HEAD
+	echo "$headc_	$not_for_merge_	$note_" >>$GIT_DIR/FETCH_HEAD
 	echo >&2 "* committish: $head_"
 	echo >&2 "  $note_"
     else
+	echo "$head_	not-for-merge	$note_" >>$GIT_DIR/FETCH_HEAD
 	echo >&2 "* non-commit: $head_"
 	echo >&2 "  $note_"
     fi
@@ -105,14 +110,16 @@ fast_forward_local () {
 	else
 		echo >&2 "* $1: storing $3"
 	fi
-	echo "$2" >"$GIT_DIR/$1" ;;
+	git-update-ref "$1" "$2" 
+	;;
 
     refs/heads/*)
-	# NEEDSWORK: use the same cmpxchg protocol here.
-	echo "$2" >"$GIT_DIR/$1.lock"
-	if test -f "$GIT_DIR/$1"
+	# $1 is the ref being updated.
+	# $2 is the new value for the ref.
+	local=$(git-rev-parse --verify "$1^0" 2>/dev/null)
+	if test "$local"
 	then
-	    local=$(git-rev-parse --verify "$1^0") &&
+	    # Require fast-forward.
 	    mb=$(git-merge-base "$local" "$2") &&
 	    case "$2,$mb" in
 	    $local,*)
@@ -120,34 +127,34 @@ fast_forward_local () {
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
+		git-update-ref "$1" "$2" "$local"
 		;;
 	    *)
 		false
 		;;
 	    esac || {
 		echo >&2 "* $1: does not fast forward to $3;"
-		case "$force,$single_force" in
-		t,* | *,t)
+		case ",$force,$single_force," in
+		*,t,*)
 			echo >&2 "  forcing update."
+			git-update-ref "$1" "$2" "$local"
 			;;
 		*)
-			mv "$GIT_DIR/$1.lock" "$GIT_DIR/$1.remote"
-			echo >&2 "  leaving it in '$1.remote'"
+			echo >&2 "  not updating."
 			;;
 		esac
 	    }
 	else
-		echo >&2 "* $1: storing $3"
+	    echo >&2 "* $1: storing $3"
+	    git-update-ref "$1" "$2"
 	fi
-	test -f "$GIT_DIR/$1.lock" &&
-	    mv "$GIT_DIR/$1.lock" "$GIT_DIR/$1"
 	;;
     esac
 }
 
 case "$update_head_ok" in
 '')
-	orig_head=$(cat "$GIT_DIR/HEAD" 2>/dev/null)
+	orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 	;;
 esac
 
@@ -157,6 +164,13 @@ do
 
     # These are relative path from $GIT_DIR, typically starting at refs/
     # but may be HEAD
+    if expr "$ref" : '\.' >/dev/null
+    then
+	not_for_merge=t
+	ref=$(expr "$ref" : '\.\(.*\)')
+    else
+	not_for_merge=
+    fi
     if expr "$ref" : '\+' >/dev/null
     then
 	single_force=t
@@ -184,7 +198,7 @@ do
     rsync://*)
 	TMP_HEAD="$GIT_DIR/TMP_HEAD"
 	rsync -L -q "$remote/$remote_name" "$TMP_HEAD" || exit 1
-	head=$(git-rev-parse TMP_HEAD)
+	head=$(git-rev-parse --verify TMP_HEAD)
 	rm -f "$TMP_HEAD"
 	test "$rsync_slurped_objects" || {
 	    rsync -av --ignore-existing --exclude info \
@@ -216,7 +230,8 @@ do
 	continue ;;
     esac
 
-    append_fetch_head "$head" "$remote" "$remote_name" "$remote_nick" "$local_name"
+    append_fetch_head "$head" "$remote" \
+    	"$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
 
 done
 
@@ -241,16 +256,27 @@ http://* | https://* | rsync://* )
 	    case "$ref" in
 	    +$remote_name:*)
 		single_force=t
+		not_for_merge=
+		found="$ref"
+		break ;;
+	    .+$remote_name:*)
+		single_force=t
+		not_for_merge=t
+		found="$ref"
+		break ;;
+	    .$remote_name:*)
+	        not_for_merge=t
 		found="$ref"
 		break ;;
 	    $remote_name:*)
+	    	not_for_merge=
 		found="$ref"
 		break ;;
 	    esac
 	done
-
 	local_name=$(expr "$found" : '[^:]*:\(.*\)')
-	append_fetch_head "$sha1" "$remote" "$remote_name" "$remote_nick" "$local_name"
+	append_fetch_head "$sha1" "$remote" \
+		"$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
     done || exit
     ;;
 esac
@@ -261,10 +287,10 @@ case ",$update_head_ok,$orig_head," in
 *,, | t,* )
 	;;
 *)
-	curr_head=$(cat "$GIT_DIR/HEAD" 2>/dev/null)
+	curr_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 	if test "$curr_head" != "$orig_head"
 	then
-		echo "$orig_head" >$GIT_DIR/HEAD
+	    	git-update-ref HEAD "$orig_head"
 		die "Cannot fetch into the current branch."
 	fi
 	;;

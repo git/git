@@ -24,7 +24,9 @@ dropsave() {
 }
 
 savestate() {
-	git diff -r -z --name-only $head | cpio -0 -o >"$GIR_DIR/MERGE_SAVE"
+	# Stash away any local modifications.
+	git-diff-index -r -z --name-only $head |
+	cpio -0 -o >"$GIR_DIR/MERGE_SAVE"
 }
 
 restorestate() {
@@ -114,8 +116,9 @@ case "$#,$common" in
 	# Again the most common case of merging one remote.
 	echo "Updating from $head to $1."
 	git-update-index --refresh 2>/dev/null
-	git-read-tree -u -m $head "$1" || exit 1
-	git-rev-parse --verify "$1^0" > "$GIT_DIR/HEAD"
+	git-read-tree -u -m $head "$1" &&
+	new_head=$(git-rev-parse --verify "$1^0") &&
+	git-update-ref HEAD "$new_head" "$head" || exit 1
 	summary "$1"
 	dropsave
 	exit 0
@@ -149,12 +152,7 @@ esac
 # we use, it would operate on the index, possibly affecting the
 # working tree, and when resolved cleanly, have the desired tree
 # in the index -- this means that the index must be in sync with
-# the $head commit.
-files=$(git-diff-index --cached --name-only $head) || exit
-if [ "$files" ]; then
-   echo >&2 "Dirty index: cannot merge (dirty: $files)"
-   exit 1
-fi
+# the $head commit.  The strategies are responsible to ensure this.
 
 case "$use_strategies" in
 ?*' '?*)
@@ -218,9 +216,9 @@ then
     do
         parents="$parents -p $remote"
     done
-    result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree $parents)
+    result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree $parents) || exit
     echo "Committed merge $result_commit, made by $wt_strategy."
-    echo $result_commit >"$GIT_DIR/HEAD"
+    git-update-ref HEAD $result_commit $head
     summary $result_commit
     dropsave
     exit 0

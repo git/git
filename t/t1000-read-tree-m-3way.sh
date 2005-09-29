@@ -158,49 +158,33 @@ test_expect_success \
 
 We have so far tested only empty index and clean-and-matching-A index
 case which are trivial.  Make sure index requirements are also
-checked.  The table also lists alternative semantics which is not
-currently implemented.
+checked.
 
-"git-diff-tree -m O A B"
+"git-read-tree -m O A B"
 
      O       A       B         result      index requirements
 -------------------------------------------------------------------
   1  missing missing missing   -           must not exist.
  ------------------------------------------------------------------
-  2  missing missing exists    no merge    must not exist.
-                               ------------------------------------
-    (ALT)                      take B*     must match B, if exists.
+  2  missing missing exists    take B*     must match B, if exists.
  ------------------------------------------------------------------
-  3  missing exists  missing   no merge    must match A and be
-                                           up-to-date, if exists.
-                               ------------------------------------
-    (ALT)                      take A*     must match A, if exists.
+  3  missing exists  missing   take A*     must match A, if exists.
  ------------------------------------------------------------------
   4  missing exists  A!=B      no merge    must match A and be
                                            up-to-date, if exists.
  ------------------------------------------------------------------
-  5  missing exists  A==B      no merge    must match A and be
-                                           up-to-date, if exists.
-                               ------------------------------------
-    (ALT)                      take A      must match A, if exists.
+  5  missing exists  A==B      take A      must match A, if exists.
  ------------------------------------------------------------------
-  6  exists  missing missing   no merge    must not exist.
-                               ------------------------------------
-    (ALT)                      remove      must not exist.
+  6  exists  missing missing   remove      must not exist.
  ------------------------------------------------------------------
   7  exists  missing O!=B      no merge    must not exist.
  ------------------------------------------------------------------
-  8  exists  missing O==B      no merge    must not exist.
-                               ------------------------------------
-    (ALT)                      remove      must not exist.
+  8  exists  missing O==B      remove      must not exist.
  ------------------------------------------------------------------
   9  exists  O!=A    missing   no merge    must match A and be
                                            up-to-date, if exists.
  ------------------------------------------------------------------
- 10  exists  O==A    missing   no merge    must match A and be
-                                           up-to-date, if exists.
-                               ------------------------------------
-    (ALT)                      remove      ditto
+ 10  exists  O==A    missing   remove      ditto
  ------------------------------------------------------------------
  11  exists  O!=A    O!=B      no merge    must match A and be
                      A!=B                  up-to-date, if exists.
@@ -210,10 +194,7 @@ currently implemented.
  ------------------------------------------------------------------
  13  exists  O!=A    O==B      take A      must match A, if exists.
  ------------------------------------------------------------------
- 14  exists  O==A    O!=B      take B      must match A and be
-                                           be up-to-date, if exists.
-                               ------------------------------------
-    (ALT)                      take B      if exists, must either (1)
+ 14  exists  O==A    O!=B      take B      if exists, must either (1)
                                            match A and be up-to-date,
                                            or (2) match B.
  ------------------------------------------------------------------
@@ -223,9 +204,9 @@ currently implemented.
      *multi* in one  in another
 -------------------------------------------------------------------
 
-Note: if we want to implement 2ALT and 3ALT we need to be careful.
-The tree A may contain DF (file) when tree B require DF to be a
-directory by having DF/DF (file).
+Note: we need to be careful in case 2 and 3.  The tree A may contain
+DF (file) when tree B require DF to be a directory by having DF/DF
+(file).
 
 END_OF_CASE_TABLE
 
