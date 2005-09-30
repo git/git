@@ -11,11 +11,17 @@ case "$#" in
 		echo "git version @@GIT_VERSION@@"
 		exit 0 ;;
 	esac
-
-	test -x $path/git-$cmd && exec $path/git-$cmd "$@" ;;
-
-	# In case we're running on Cygwin...
-	test -x $path/git-$cmd.exe && exec $path/git-$cmd.exe "$@" ;;
+	
+	test -x $path/git-$cmd && exec $path/git-$cmd "$@"
+	
+	case '@@X@@' in
+	    '')
+		;;
+	    *)
+		test -x $path/git-$cmd@@X@@ && exec $path/git-$cmd@@X@@ "$@"
+		;;
+	esac
+	;;
 esac
 
 echo "Usage: git COMMAND [OPTIONS] [TARGET]"

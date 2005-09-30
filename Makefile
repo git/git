@@ -273,7 +273,8 @@ all:
 git: git.sh Makefile
 	rm -f $@+ $@
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
-	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.sh >$@+
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    -e 's/@@X@@/$(X)/g' <$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
 
