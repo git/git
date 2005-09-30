@@ -550,7 +550,6 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	curl_result = curl_easy_perform(curl);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, no_range_header);
 	if (curl_result != 0) {
-		unlink(tmpfile);
 		return error("%s", curl_errorstr);
 	}
 
