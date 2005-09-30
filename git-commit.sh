@@ -153,15 +153,8 @@ if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 fi >>.editmsg
 
 PARENTS="-p HEAD"
-if [ ! -r "$GIT_DIR/HEAD" ]; then
-	if [ -z "$(git-ls-files)" ]; then
-		echo Nothing to commit 1>&2
-		exit 1
-	fi
-	PARENTS=""
-	current=
-else
-	current=$(git-rev-parse --verify HEAD)
+if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
+then
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
 	fi
@@ -194,6 +187,12 @@ else
 		export GIT_AUTHOR_EMAIL
 		export GIT_AUTHOR_DATE
 	fi
+else
+	if [ -z "$(git-ls-files)" ]; then
+		echo Nothing to commit 1>&2
+		exit 1
+	fi
+	PARENTS=""
 fi
 git-status >>.editmsg
 if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]

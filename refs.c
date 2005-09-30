@@ -7,6 +7,50 @@
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
+#ifndef USE_SYMLINK_HEAD
+#define USE_SYMLINK_HEAD 1
+#endif
+
+int validate_symref(const char *path)
+{
+	struct stat st;
+	char *buf, buffer[256];
+	int len, fd;
+
+	if (lstat(path, &st) < 0)
+		return -1;
+
+	/* Make sure it is a "refs/.." symlink */
+	if (S_ISLNK(st.st_mode)) {
+		len = readlink(path, buffer, sizeof(buffer)-1);
+		if (len >= 5 && !memcmp("refs/", buffer, 5))
+			return 0;
+		return -1;
+	}
+
+	/*
+	 * Anything else, just open it and try to see if it is a symbolic ref.
+	 */
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	len = read(fd, buffer, sizeof(buffer)-1);
+	close(fd);
+
+	/*
+	 * Is it a symbolic ref?
+	 */
+	if (len < 4 || memcmp("ref:", buffer, 4))
+		return -1;
+	buf = buffer + 4;
+	len -= 4;
+	while (len && isspace(*buf))
+		buf++, len--;
+	if (len >= 5 && !memcmp("refs/", buffer, 5))
+		return 0;
+	return -1;
+}
+
 const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 {
 	int depth = MAXDEPTH, len;
@@ -69,6 +113,39 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 	if (len < 40 || get_sha1_hex(buffer, sha1))
 		return NULL;
 	return path;
+}
+
+int create_symref(const char *git_HEAD, const char *refs_heads_master)
+{
+#if USE_SYMLINK_HEAD
+	unlink(git_HEAD);
+	return symlink(refs_heads_master, git_HEAD);
+#else
+	const char *lockpath;
+	char ref[1000];
+	int fd, len, written;
+
+	len = snprintf(ref, sizeof(ref), "ref: %s\n", refs_heads_master);
+	if (sizeof(ref) <= len) {
+		error("refname too long: %s", refs_heads_master);
+		return -1;
+	}
+	lockpath = mkpath("%s.lock", git_HEAD);
+	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);	
+	written = write(fd, ref, len);
+	close(fd);
+	if (written != len) {
+		unlink(lockpath);
+		error("Unable to write to %s", lockpath);
+		return -2;
+	}
+	if (rename(lockpath, git_HEAD) < 0) {
+		unlink(lockpath);
+		error("Unable to create %s", git_HEAD);
+		return -3;
+	}
+	return 0;
+#endif
 }
 
 int read_ref(const char *filename, unsigned char *sha1)

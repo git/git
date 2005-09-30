@@ -31,7 +31,7 @@ report () {
   [ "$header" ]
 }
 
-branch=`readlink "$GIT_DIR/HEAD"`
+branch=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD)
 case "$branch" in
 refs/heads/master) ;;
 *)	echo "# On branch $branch" ;;
@@ -39,7 +39,7 @@ esac
 
 git-update-index --refresh >/dev/null 2>&1
 
-if test -f "$GIT_DIR/HEAD"
+if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
 then
 	git-diff-index -M --cached HEAD |
 	sed 's/^://' |

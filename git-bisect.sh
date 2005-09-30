@@ -38,7 +38,8 @@ bisect_start() {
 	# Verify HEAD. If we were bisecting before this, reset to the
 	# top-of-line master first!
 	#
-	head=$(readlink $GIT_DIR/HEAD) || die "Bad HEAD - I need a symlink"
+	head=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD) ||
+	die "Bad HEAD - I need a symbolic ref"
 	case "$head" in
 	refs/heads/bisect*)
 		git checkout master || exit
@@ -46,7 +47,7 @@ bisect_start() {
 	refs/heads/*)
 		;;
 	*)
-		die "Bad HEAD - strange symlink"
+		die "Bad HEAD - strange symbolic ref"
 		;;
 	esac
 
@@ -135,7 +136,7 @@ bisect_next() {
 	echo "$rev" > "$GIT_DIR/refs/heads/new-bisect"
 	git checkout new-bisect || exit
 	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
-	ln -sf refs/heads/bisect "$GIT_DIR/HEAD"
+	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD refs/heads/bisect
 	git-show-branch "$rev"
 }
 

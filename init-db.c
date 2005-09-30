@@ -166,6 +166,7 @@ static void create_default_files(const char *git_dir,
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
+	unsigned char sha1[20];
 
 	if (len > sizeof(path)-50)
 		die("insane git directory %s", git_dir);
@@ -186,15 +187,14 @@ static void create_default_files(const char *git_dir,
 
 	/*
 	 * Create the default symlink from ".git/HEAD" to the "master"
-	 * branch
+	 * branch, if it does not exist yet.
 	 */
 	strcpy(path + len, "HEAD");
-	if (symlink("refs/heads/master", path) < 0) {
-		if (errno != EEXIST) {
-			perror(path);
+	if (read_ref(path, sha1) < 0) {
+		if (create_symref(path, "refs/heads/master") < 0)
 			exit(1);
-		}
 	}
+	path[len] = 0;
 	copy_templates(path, len, template_path);
 }
 

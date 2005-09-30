@@ -13,10 +13,13 @@
 unset CDPATH
 
 die() {
-	echo "$@" >&2
+	echo >&2 "$@"
 	exit 1
 }
 
-[ -h "$GIT_DIR/HEAD" ] &&
+case "$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD 2>/dev/null)" in
+refs/*)	: ;;
+*)	false ;;
+esac &&
 [ -d "$GIT_DIR/refs" ] &&
 [ -d "$GIT_OBJECT_DIRECTORY/00" ]
