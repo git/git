@@ -463,9 +463,7 @@ static int socksetup(int port, int **socklist_p)
 		return 0;
 	}
 
-	*socklist_p = malloc(sizeof(int));
-	if ( !*socklist_p )
-		die("memory allocation failed: %s", strerror(errno));
+	*socklist_p = xmalloc(sizeof(int));
 	**socklist_p = sockfd;
 }
 
@@ -476,9 +474,7 @@ static int service_loop(int socknum, int *socklist)
 	struct pollfd *pfd;
 	int i;
 
-	pfd = calloc(socknum, sizeof(struct pollfd));
-	if (!pfd)
-		die("memory allocation failed: %s", strerror(errno));
+	pfd = xcalloc(socknum, sizeof(struct pollfd));
 
 	for (i = 0; i < socknum; i++) {
 		pfd[i].fd = socklist[i];
