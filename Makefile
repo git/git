@@ -200,18 +200,32 @@ endif
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL = -lssl
+	ifdef OPENSSLDIR
+		# Again this may be problematic -- gcc does not always want -R.
+		CFLAGS += -I$(OPENSSLDIR)/include
+		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
+	else
+		OPENSSL_LINK =
+	endif
 else
 	DEFINES += '-DNO_OPENSSL'
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
 ifdef NEEDS_SSL_WITH_CRYPTO
-	LIB_4_CRYPTO = -lcrypto -lssl
+	LIB_4_CRYPTO = $(OPENSSL_LINK) -lcrypto -lssl
 else
-	LIB_4_CRYPTO = -lcrypto
+	LIB_4_CRYPTO = $(OPENSSL_LINK) -lcrypto
 endif
 ifdef NEEDS_LIBICONV
-	LIB_4_ICONV = -liconv
+	ifdef ICONVDIR
+		# Again this may be problematic -- gcc does not always want -R.
+		CFLAGS += -I$(ICONVDIR)/include
+		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
+	else
+		ICONV_LINK =
+	endif
+	LIB_4_ICONV = $(ICONV_LINK) -liconv
 else
 	LIB_4_ICONV =
 endif

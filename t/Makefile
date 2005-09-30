@@ -5,6 +5,7 @@
 
 #GIT_TEST_OPTS=--verbose --debug
 SHELL_PATH ?= $(SHELL)
+TAR ?= $(TAR)
 
 T = $(wildcard t[0-9][0-9][0-9][0-9]-*.sh)
 
