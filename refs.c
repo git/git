@@ -7,40 +7,75 @@
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
+const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
+{
+	int depth = MAXDEPTH, len;
+	char buffer[256];
+
+	for (;;) {
+		struct stat st;
+		char *buf;
+		int fd;
+
+		if (--depth < 0)
+			return NULL;
+
+		/* Special case: non-existing file.
+		 * Not having the refs/heads/new-branch is OK
+		 * if we are writing into it, so is .git/HEAD
+		 * that points at refs/heads/master still to be
+		 * born.  It is NOT OK if we are resolving for
+		 * reading.
+		 */
+		if (lstat(path, &st) < 0) {
+			if (reading || errno != ENOENT)
+				return NULL;
+			memset(sha1, 0, 20);
+			return path;
+		}
+
+		/* Follow "normalized" - ie "refs/.." symlinks by hand */
+		if (S_ISLNK(st.st_mode)) {
+			len = readlink(path, buffer, sizeof(buffer)-1);
+			if (len >= 5 && !memcmp("refs/", buffer, 5)) {
+				path = git_path("%.*s", len, buffer);
+				continue;
+			}
+		}
+
+		/*
+		 * Anything else, just open it and try to use it as
+		 * a ref
+		 */
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			return NULL;
+		len = read(fd, buffer, sizeof(buffer)-1);
+		close(fd);
+
+		/*
+		 * Is it a symbolic ref?
+		 */
+		if (len < 4 || memcmp("ref:", buffer, 4))
+			break;
+		buf = buffer + 4;
+		len -= 4;
+		while (len && isspace(*buf))
+			buf++, len--;
+		while (len && isspace(buf[len-1]))
+			buf[--len] = 0;
+		path = git_path("%.*s", len, buf);
+	}
+	if (len < 40 || get_sha1_hex(buffer, sha1))
+		return NULL;
+	return path;
+}
+
 int read_ref(const char *filename, unsigned char *sha1)
 {
-	int depth = 0;
-	int ret = -1, fd;
-
-	while ((fd = open(filename, O_RDONLY)) >= 0) {
-		char buffer[256];
-		int len = read(fd, buffer, sizeof(buffer)-1);
-
-		close(fd);
-		if (len < 0)
-			break;
-
-		buffer[len] = 0;
-		while (len && isspace(buffer[len-1]))
-			buffer[--len] = 0;
-
-		if (!strncmp(buffer, "ref:", 4)) {
-			char *buf;
-			if (depth > MAXDEPTH)
-				break;
-			depth++;
-			buf = buffer + 4;
-			len -= 4;
-			while (len && isspace(*buf))
-				buf++, len--;
-			filename = git_path("%.*s", len, buf);
-			continue;
-		}
-		if (len >= 40)
-			ret = get_sha1_hex(buffer, sha1);
-		break;
-	}
-	return ret;
+	if (resolve_ref(filename, sha1, 1))
+		return 0;
+	return -1;
 }
 
 static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1))
