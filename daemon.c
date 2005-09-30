@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "pkt-line.h"
-#include <alloca.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
