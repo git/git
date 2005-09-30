@@ -480,6 +480,8 @@ static int service_loop(int socknum, int *socklist)
 		pfd[i].fd = socklist[i];
 		pfd[i].events = POLLIN;
 	}
+
+	signal(SIGCHLD, child_handler);
 	
 	for (;;) {
 		int i;
@@ -517,8 +519,6 @@ static int service_loop(int socknum, int *socklist)
 static int serve(int port)
 {
 	int socknum, *socklist;
-	
-	signal(SIGCHLD, child_handler);
 	
 	socknum = socksetup(port, &socklist);
 	if (socknum == 0)
