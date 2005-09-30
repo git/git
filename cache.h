@@ -189,6 +189,7 @@ extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)
 extern char *sha1_file_name(const unsigned char *sha1);
 extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
+extern const unsigned char null_sha1[20];
 
 int git_mkstemp(char *path, size_t n, const char *template);
 

@@ -34,7 +34,6 @@ static void show_modified(int oldmode, int mode,
 
 int main(int argc, const char **argv)
 {
-	static const unsigned char null_sha1[20] = { 0, };
 	const char **pathspec;
 	const char *prefix = setup_git_directory();
 	int entries, i;
