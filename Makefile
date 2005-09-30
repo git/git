@@ -98,29 +98,29 @@ SCRIPT_PYTHON = \
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
-	git-get-tar-commit-id$(X) git-mailinfo$(X) git-mailsplit$(X) \
-	git-stripspace$(X) git-var$(X) git-daemon$(X)
+	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
+	git-stripspace$X git-var$X git-daemon$X
 
 # ... and all the rest
 PROGRAMS = \
-	git-apply$(X) git-cat-file$(X) git-checkout-index$(X)		\
-	git-clone-pack$(X) git-commit-tree$(X) git-convert-objects$(X)	\
-	git-diff-files$(X) git-diff-index$(X) git-diff-stages$(X)	\
-	git-diff-tree$(X) git-fetch-pack$(X) git-fsck-objects$(X)	\
-	git-hash-object$(X) git-init-db$(X) git-local-fetch$(X)		\
-	git-ls-files$(X) git-ls-tree$(X) git-merge-base$(X)		\
-	git-merge-index$(X) git-mktag$(X) git-pack-objects$(X)		\
-	git-patch-id$(X) git-peek-remote$(X) git-prune-packed$(X)	\
-	git-read-tree$(X) git-receive-pack$(X) git-rev-list$(X)		\
-	git-rev-parse$(X) git-send-pack$(X) git-show-branch$(X)		\
-	git-show-index$(X) git-ssh-fetch$(X) git-ssh-upload$(X)		\
-	git-tar-tree$(X) git-unpack-file$(X) git-unpack-objects$(X)	\
-	git-update-index$(X) git-update-server-info$(X)			\
-	git-upload-pack$(X) git-verify-pack$(X) git-write-tree$(X)	\
-	git-update-ref$(X) $(SIMPLE_PROGRAMS)
+	git-apply$X git-cat-file$X git-checkout-index$X		\
+	git-clone-pack$X git-commit-tree$X git-convert-objects$X	\
+	git-diff-files$X git-diff-index$X git-diff-stages$X	\
+	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X	\
+	git-hash-object$X git-init-db$X git-local-fetch$X		\
+	git-ls-files$X git-ls-tree$X git-merge-base$X		\
+	git-merge-index$X git-mktag$X git-pack-objects$X		\
+	git-patch-id$X git-peek-remote$X git-prune-packed$X	\
+	git-read-tree$X git-receive-pack$X git-rev-list$X		\
+	git-rev-parse$X git-send-pack$X git-show-branch$X		\
+	git-show-index$X git-ssh-fetch$X git-ssh-upload$X		\
+	git-tar-tree$X git-unpack-file$X git-unpack-objects$X	\
+	git-update-index$X git-update-server-info$X			\
+	git-upload-pack$X git-verify-pack$X git-write-tree$X	\
+	git-update-ref$X $(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
-PROGRAMS += git-ssh-pull$(X) git-ssh-push$(X)
+PROGRAMS += git-ssh-pull$X git-ssh-push$X
 
 PYMODULES = \
 	gitMergeCommon.py
@@ -190,7 +190,7 @@ ifndef NO_CURL
 	else
 		CURL_LIBCURL = -lcurl
 	endif
-	PROGRAMS += git-http-fetch$(X)
+	PROGRAMS += git-http-fetch$X
 endif
 
 ifndef SHELL_PATH
@@ -299,30 +299,30 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
-git-%$(X): %.o $(LIB_FILE)
+git-%$X: %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
-git-mailinfo$(X) : SIMPLE_LIB += $(LIB_4_ICONV)
+git-mailinfo$X : SIMPLE_LIB += $(LIB_4_ICONV)
 $(SIMPLE_PROGRAMS) : $(LIB_FILE)
-$(SIMPLE_PROGRAMS) : git-%$(X) : %.o
+$(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIB_FILE) $(SIMPLE_LIB)
 
-git-http-fetch$(X): fetch.o
-git-local-fetch$(X): fetch.o
-git-ssh-fetch$(X): rsh.o fetch.o
-git-ssh-upload$(X): rsh.o
-git-ssh-pull$(X): rsh.o fetch.o
-git-ssh-push$(X): rsh.o
+git-http-fetch$X: fetch.o
+git-local-fetch$X: fetch.o
+git-ssh-fetch$X: rsh.o fetch.o
+git-ssh-upload$X: rsh.o
+git-ssh-pull$X: rsh.o fetch.o
+git-ssh-push$X: rsh.o
 
-git-http-fetch$(X): LIBS += $(CURL_LIBCURL)
-git-rev-list$(X): LIBS += $(OPENSSL_LIBSSL)
+git-http-fetch$X: LIBS += $(CURL_LIBCURL)
+git-rev-list$X: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
 		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
-$(patsubst git-%$(X),%.o,$(PROGRAMS)): $(LIB_H)
+$(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
@@ -337,10 +337,10 @@ doc:
 test: all
 	$(MAKE) -C t/ all
 
-test-date$(X): test-date.c date.o
+test-date$X: test-date.c date.o
 	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
 
-test-delta$(X): test-delta.c diff-delta.o patch-delta.o
+test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $^
 
 check:
