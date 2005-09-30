@@ -114,11 +114,12 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Use 'git-update-ref' in the scripts.
+* Use 'git-update-ref' in the scripts [DONE].
 
 * Use symbolic refs in .git/HEAD.  Should we do that everywhere
   while honoring the symlinked HEAD in the existing repositories
   for backward compatibility, or just only when 'ln -s' fails?
+  [DONE].
 
 * Revisit 'git-merge'.  It probably was a mistake to "loop to
   choose the best one", since what is best is not ill defined to
@@ -201,16 +202,17 @@ Technical (milder)
   Either adopt "only the first head is used for the merge by
   default if taken from .git/remotes/ file", or "list heads to
   merge on a separate Merge: line" proposal.  I already have the
-  code to do the former, so...
+  code to do the former, so... [DONE, open for improvement
+  patches but not just suggestions nor complaints.]
 
 
 Technical (trivial)
 -------------------
 
 * Usher SSL enhancements to http-fetch from Nick Hengeveld into
-  a shape acceptable by everybody.
+  a shape acceptable by everybody [DONE].
 
-* Require tk 2.4 in the spec file.
+* Require tk 2.4 in the spec file [DONE].
 
 * show-branch naming heads is buggy [DONE].
 
@@ -218,7 +220,7 @@ Technical (trivial)
 
 * 'git merge-projects'?
 
-* 'git clone' does not check things out.  Should it?
+* 'git clone' does not check things out [DONE].
 
 * 'git lost-and-found'?  Link dangling commits found by
   fsck-objects under $GIT_DIR/refs/lost-found/.  Then
