@@ -871,7 +871,8 @@ void packed_object_info_detail(struct pack_entry *e,
 		strcpy(type, "tag");
 		break;
 	default:
-		die("corrupted pack file");
+		die("corrupted pack file %s containing object of kind %d",
+		    p->pack_name, kind);
 	}
 	*store_size = 0; /* notyet */
 }
@@ -910,7 +911,8 @@ static int packed_object_info(struct pack_entry *entry,
 		strcpy(type, "tag");
 		break;
 	default:
-		die("corrupted pack file");
+		die("corrupted pack file %s containing object of kind %d",
+		    p->pack_name, kind);
 	}
 	if (sizep)
 		*sizep = size;
@@ -1010,7 +1012,7 @@ static void *unpack_entry(struct pack_entry *entry,
 	retval = unpack_entry_gently(entry, type, sizep);
 	unuse_packed_git(p);
 	if (!retval)
-		die("corrupted pack file");
+		die("corrupted pack file %s", p->pack_name);
 	return retval;
 }
 

@@ -529,9 +529,11 @@ int main(int argc, char **argv)
 	if ((ssl_cert = getenv("GIT_SSL_CERT")) != NULL) {
 		curl_easy_setopt(curl, CURLOPT_SSLCERT, ssl_cert);
 	}
+#if LIBCURL_VERSION_NUM >= 0x070902
 	if ((ssl_key = getenv("GIT_SSL_KEY")) != NULL) {
 		curl_easy_setopt(curl, CURLOPT_SSLKEY, ssl_key);
 	}
+#endif
 #if LIBCURL_VERSION_NUM >= 0x070908
 	if ((ssl_capath = getenv("GIT_SSL_CAPATH")) != NULL) {
 		curl_easy_setopt(curl, CURLOPT_CAPATH, ssl_capath);
