@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "commit.h"
-
+#include "pack.h"
 #include "fetch.h"
 
 #include <curl/curl.h>
@@ -431,6 +431,8 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
+	if (verify_pack(target, 0))
+		return -1;
 	install_packed_git(target);
 
 	return 0;
@@ -456,9 +458,13 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 
 	snprintf(tmpfile, sizeof(tmpfile), "%s.temp", filename);
 	snprintf(prevfile, sizeof(prevfile), "%s.prev", filename);
-	unlink(prevfile);
-	rename(tmpfile, prevfile);
-	unlink(tmpfile);
+
+	if (unlink(prevfile) && (errno != ENOENT))
+		return error("Failed to unlink %s (%s)",
+			     prevfile, strerror(errno));
+	if (rename(tmpfile, prevfile) && (errno != ENOENT))
+		return error("Failed to rename %s to %s (%s)",
+			     tmpfile, prevfile, strerror(errno));
 
 	local = open(tmpfile, O_WRONLY | O_CREAT | O_EXCL, 0666);
 
@@ -523,6 +529,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		if (prev_posn>0) {
 			prev_posn = 0;
 			lseek(local, SEEK_SET, 0);
+			ftruncate(local, 0);
 		}
 	}
 
