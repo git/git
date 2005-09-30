@@ -119,7 +119,7 @@ PROGRAMS = \
 	git-update-ref \
 	$(SIMPLE_PROGRAMS)
 
-# Backward compatibility -- to be removed in 0.99.8
+# Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull git-ssh-push
 
 PYMODULES = \
@@ -345,6 +345,7 @@ install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -d -m755 $(DESTDIR)$(bindir)
 	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
 	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
+	sh ./cmd-rename.sh $(DESTDIR)$(bindir)
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(DESTDIR)$(GIT_PYTHON_DIR)
 	$(INSTALL) $(PYMODULES) $(DESTDIR)$(GIT_PYTHON_DIR)

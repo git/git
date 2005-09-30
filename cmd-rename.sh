@@ -1,15 +1,13 @@
 #!/bin/sh
-#
-# This is for people who installed previous GIT by hand and would want
-# to remove the backward compatible links:
-#
-# ./cmd-rename.sh $bindir
-#
 d="$1"
 test -d "$d" || exit
 while read old new
 do
 	rm -f "$d/$old"
+	if test -f "$d/$new"
+	then
+		ln -s "$new" "$d/$old" || exit
+	fi
 done <<\EOF
 git-add-script	git-add
 git-archimport-script	git-archimport
@@ -54,7 +52,3 @@ git-update-cache	git-update-index
 git-convert-cache	git-convert-objects
 git-fsck-cache	git-fsck-objects
 EOF
-
-# These two are a bit more than symlinks now.
-# git-ssh-push	git-ssh-upload
-# git-ssh-pull	git-ssh-fetch
