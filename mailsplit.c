@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 		unsigned long len = parse_email(map, size);
 		assert(len <= size);
 		sprintf(name, "%04d", ++nr);
-		fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0600);
+		fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 		if (fd < 0) {
 			perror(name);
 			exit(1);
