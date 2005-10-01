@@ -723,6 +723,16 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 	return offset;
 }
 
+static inline int metadata_changes(struct patch *patch)
+{
+	return	patch->is_rename > 0 ||
+		patch->is_copy > 0 ||
+		patch->is_new > 0 ||
+		patch->is_delete ||
+		(patch->old_mode && patch->new_mode &&
+		 patch->old_mode != patch->new_mode);
+}
+
 static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 {
 	int hdrsize, patchsize;
@@ -732,6 +742,9 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 		return offset;
 
 	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
+
+	if (!patchsize && !metadata_changes(patch))
+		die("patch with only garbage at line %d", linenr);
 
 	return offset + hdrsize + patchsize;
 }
