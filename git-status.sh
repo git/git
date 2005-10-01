@@ -37,7 +37,7 @@ refs/heads/master) ;;
 *)	echo "# On branch $branch" ;;
 esac
 
-git-update-index --refresh >/dev/null 2>&1
+git-update-index -q --unmerged --refresh || exit
 
 if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
 then

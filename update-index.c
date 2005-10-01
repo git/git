@@ -13,7 +13,7 @@
  * like "git-update-index *" and suddenly having all the object
  * files be revision controlled.
  */
-static int allow_add = 0, allow_remove = 0, allow_replace = 0, not_new = 0, quiet = 0, info_only = 0;
+static int allow_add = 0, allow_remove = 0, allow_replace = 0, allow_unmerged = 0, not_new = 0, quiet = 0, info_only = 0;
 static int force_remove;
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
@@ -135,7 +135,7 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 
 	changed = ce_match_stat(ce, &st);
 	if (!changed)
-		return ce;
+		return NULL;
 
 	if (ce_modified(ce, &st))
 		return ERR_PTR(-EINVAL);
@@ -156,16 +156,20 @@ static int refresh_cache(void)
 		struct cache_entry *ce, *new;
 		ce = active_cache[i];
 		if (ce_stage(ce)) {
-			printf("%s: needs merge\n", ce->name);
-			has_errors = 1;
 			while ((i < active_nr) &&
 			       ! strcmp(active_cache[i]->name, ce->name))
 				i++;
 			i--;
+			if (allow_unmerged)
+				continue;
+			printf("%s: needs merge\n", ce->name);
+			has_errors = 1;
 			continue;
 		}
 
 		new = refresh_entry(ce);
+		if (!new)
+			continue;
 		if (IS_ERR(new)) {
 			if (not_new && PTR_ERR(new) == -ENOENT)
 				continue;
@@ -333,6 +337,10 @@ int main(int argc, const char **argv)
 			}
 			if (!strcmp(path, "--remove")) {
 				allow_remove = 1;
+				continue;
+			}
+			if (!strcmp(path, "--unmerged")) {
+				allow_unmerged = 1;
 				continue;
 			}
 			if (!strcmp(path, "--refresh")) {
