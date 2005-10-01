@@ -391,9 +391,11 @@ int main(int argc, const char **argv)
 			update_one(buf.buf, prefix, prefix_length);
 		}
 	}
-	if (write_cache(newfd, active_cache, active_nr) ||
-	    commit_index_file(&cache_file))
-		die("Unable to write new cachefile");
+	if (active_cache_changed) {
+		if (write_cache(newfd, active_cache, active_nr) ||
+		    commit_index_file(&cache_file))
+			die("Unable to write new cachefile");
+	}
 
 	return has_errors ? 1 : 0;
 }
