@@ -175,6 +175,10 @@ endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
 endif
+ifeq ($(shell uname -s),OpenBSD)
+	NEEDS_LIBICONV = YesPlease
+	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
+endif
 
 ifndef NO_CURL
 	ifdef CURLDIR
