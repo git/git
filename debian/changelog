@@ -1,3 +1,9 @@
+git-core (0.99.8-0) unstable; urgency=low
+
+  * GIT 0.99.8
+
+ -- Junio C Hamano <junkio@cox.net>  Sun,  2 Oct 2005 12:54:26 -0700
+
 git-core (0.99.7-0) unstable; urgency=low
 
   * GIT 0.99.7
