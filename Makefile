@@ -122,6 +122,8 @@ PROGRAMS = \
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull git-ssh-push
 
+GIT_LIST_TWEAK =
+
 PYMODULES = \
 	gitMergeCommon.py
 
@@ -131,6 +133,8 @@ endif
 
 ifdef WITH_SEND_EMAIL
 	SCRIPT_PERL += git-send-email.perl
+else
+	GIT_LIST_TWEAK += -e '/^send-email$$/d'
 endif
 
 LIB_FILE=libgit.a
@@ -282,7 +286,8 @@ all:
 git: git.sh Makefile
 	rm -f $@+ $@
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
-	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' <$@.sh >$@+
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $(GIT_LIST_TWEAK) <$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
 
