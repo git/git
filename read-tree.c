@@ -629,11 +629,6 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (!strcmp(arg, "--head")) {
-			head_idx = stage - 1;
-			fn = threeway_merge;
-		}
-
 		/* "-m" stands for "merge", meaning we start in stage 1 */
 		if (!strcmp(arg, "-m")) {
 			if (stage || merge)
@@ -657,7 +652,8 @@ int main(int argc, char **argv)
 	}
 	if ((update||index_only) && !merge)
 		usage(read_tree_usage);
-	if (merge && !fn) {
+
+	if (merge) {
 		if (stage < 2)
 			die("just how do you expect me to merge %d trees?", stage-1);
 		switch (stage - 1) {
@@ -674,9 +670,7 @@ int main(int argc, char **argv)
 			fn = threeway_merge;
 			break;
 		}
-	}
 
-	if (head_idx < 0) {
 		if (stage - 1 >= 3)
 			head_idx = stage - 2;
 		else
