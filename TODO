@@ -9,29 +9,17 @@ The GIT To-Do File
 Tool Renames Plan
 =================
 
- - In 0.99.7, all renamed commands have symbolic links in
-   $(bindir) so that old names continue to work.  These backward
-   compatible names will not appear in documentation.  The main
-   documentation, git(7) will talk about the new names but would
-   mention their old names as historical notes.  Old environment
-   names defined in gitenv() will also be removed in this release.
+ - In 0.99.8, we will still install the backward compatible
+   symbolic links in $(bindir).  These will however be removed
+   before 1.0 happens.
 
- - In 0.99.8, we will not install these backward compatible
-   symbolic links in $(bindir) anymore.  The Makefile will have
-   a target to remove old symlinks from $(DESTDIR)$(bindir) you
-   can run manually to help you clean things up.
-
-   As a notable exception, git-ssh-push and git-ssh-pull pair is
-   not going away within this timeframe, if ever.  Each of these
-   old-name commands continues to invoke its old-name
-   counterpart on the other end.  Updating to 0.99.8 on one end
-   of the connection does not requier the other end to update at
-   the same time.
-
-   The timeframe for this is around Oct 1st.
+   git-ssh-push and git-ssh-pull pair is not going away within
+   this timeframe, if ever.  Each of these old-name commands
+   continues to invoke its old-name counterpart on the other
+   end.
 
 
-What to expect after 0.99.7
+What to expect after 0.99.8
 ===========================
 
 This is written in a form of to-do list for me, so if I say
@@ -47,9 +35,6 @@ Documentation
   migration and update the cvs-migration documentation.
   Link the documentation from the main git.txt page.
 
-* Accept patches from people who were hit by shiny blue bat to
-  update the SubmittingPatches.
-
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
   need to be expanded.  I personally do not think we need tool
@@ -57,8 +42,6 @@ Documentation
 
 * Maybe update tutorial with a toy project that involves two or
   three developers..
-
-* Document octopus [Linus prodded me again; DONE].
 
 * Update tutorial to cover setting up repository hooks to do
   common tasks.
@@ -75,26 +58,20 @@ Documentation
 Technical (heavier)
 -------------------
 
-* Tony Luck reported an unfortunate glitch in the 3-way merge.
-  Encourage discussions to come up with a not-so-expensive way
-  to catch the kind of ambiguities that led to his misery.
-  [Deathmatch between Daniel's and Fredrik's ongoing.]
-
-* HPA has two projects, klibc and klibc-kbuild, that have large
-  set of overlapping files in different paths (i.e. one has many
-  renames from the other).  There currently is no way for git to
-  help keep these two trees in sync, merging criss-cross between
-  them.  The merge logic should be able to take advantage of
-  rename/copy detection smarts git-diff-* family has.  Linus,
-  me, and Daniel outlined a smarter merge strategy for this.
-  Try them out.
-
 * We might want to optimize cloning with GIT native transport
   not to explode the pack, and store it in objects/pack instead.
   We would need a tool to generate an idx file out of a pack
   file for this.  Also this itself may turn out to be a bad
   idea, making the set of packs in repositories everybody has
   different from each other.
+
+* Git daemon, when deployed at kernel.org, might turn out to be
+  quite a burden, since it needs to generate customized packs
+  every time a new request comes in.  It may be worthwhile to
+  precompute some packs for popular sets of heads downloaders
+  have and serve that, even if that could give more than the
+  client asks for in some cases.  We will know about this soon
+  enough.
 
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
@@ -114,36 +91,8 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Use 'git-update-ref' in the scripts [DONE].
-
-* Use symbolic refs in .git/HEAD.  Should we do that everywhere
-  while honoring the symlinked HEAD in the existing repositories
-  for backward compatibility, or just only when 'ln -s' fails?
-  [DONE].
-
-* Revisit 'git-merge'.  It probably was a mistake to "loop to
-  choose the best one", since what is best is not ill defined to
-  begin with.  This would make it a lot straightforward to
-  loosen the tree cleanliness requirements to the acceptable
-  level [DONE].
-
-* The recent commit walker safety patch may be too cautious and
-  appears to take forever when cloning.  This may even be
-  infinitely looping in the code lifted from the old rev-list --
-  needs to be taken a look at [DONE -- and redone very nicely by
-  Sergey].
-
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
-
-* Accept patches for more portability.
-
-  * strcasestr() in mailinfo.  We may need compat/strcasestr.c;
-    this is bugging OpenBSD folks [DONE, thanks to Linus and
-    others].
-
-  * Solaris portability [ONGOING, thanks to Patrick Mauritz,
-    Peter Eriksen and Sean from sympatico].
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
@@ -187,40 +136,21 @@ Technical (milder)
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
-* Remove obsolete commands [DONE].
-
-* Option to limit rename detection for more than N paths [DONE].
-
-* Option to show only status and name from diff [DONE].
-
-* What to name the 'master' version between 0.99.7 and 0.99.8
-  and still not break binary distribution folks?  0.99.7z?
-  Pasky gave me a good one: 0.99.7.GIT [DONE]
-
-* Listing more than one head on the Pull: line of .git/remotes/
-  allows you to make Octopus -- is it useful?  Probabaly not.
-  Either adopt "only the first head is used for the merge by
-  default if taken from .git/remotes/ file", or "list heads to
-  merge on a separate Merge: line" proposal.  I already have the
-  code to do the former, so... [DONE, open for improvement
-  patches but not just suggestions nor complaints.]
+* Updated git-changes-script Jeff Garzik needs [Inquiry for
+  external spec sent out with a quick hack.  Will know if that
+  is what he needs soon enough].
 
 
 Technical (trivial)
 -------------------
 
-* Usher SSL enhancements to http-fetch from Nick Hengeveld into
-  a shape acceptable by everybody [DONE].
+* short SHA1 naming is not enforcing uniqueness.  Should fix.
 
-* Require tk 2.4 in the spec file [DONE].
+* 'git repack' can be DOSed.  Should fix.
 
-* show-branch naming heads is buggy [DONE].
-
-* Stop installing the old-name symlinks [DONE].
+* Stop installing the old-name symlinks [POSTPONED].
 
 * 'git merge-projects'?
-
-* 'git clone' does not check things out [DONE].
 
 * 'git lost-and-found'?  Link dangling commits found by
   fsck-objects under $GIT_DIR/refs/lost-found/.  Then
