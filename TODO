@@ -79,6 +79,14 @@ Technical (heavier)
 
 * Maybe a pack optimizer.
 
+    Given a set of objects and a set of refs (probably a handful
+    branch heads and point release tags), find a set of packs to
+    allow reasonably minimum download for all of these classes of
+    people: (1) somebody cloning the repository from scratch, (2)
+    somebody who tends to follow the master branch head reasonably
+    closely, (3) somebody who tends to follow only the point
+    releases.
+
 * Maybe an Emacs VC backend.
 
 * 'git split-projects'?  This requires updated 'git-rev-list' to
@@ -127,6 +135,12 @@ Technical (milder)
   repository; experiment if this results in a reasonable
   workflow, and document it in howto form if it does.
 
+  The point is to make it possible to fork that part off to
+  somebody else; then I do not have to maintain Documentation
+  directory myself anymore, just like I simply slurp the latest
+  gitk from Paul and not worry about it ;-).
+
+
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
@@ -144,13 +158,18 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
-* short SHA1 naming is not enforcing uniqueness.  Should fix.
+* short SHA1 naming is not enforcing uniqueness.  Should fix [DONE].
 
-* 'git repack' can be DOSed.  Should fix.
+* 'git repack' can be DOSed.  Should fix [DONE].
 
 * Stop installing the old-name symlinks [POSTPONED].
 
 * 'git merge-projects'?
+
+  Subject: Re: Merges without bases
+  References: <1125004228.4110.20.camel@localhost.localdomain>
+  Date: Thu, 25 Aug 2005 15:26:36 -0700
+  Message-ID: <7vvf1tps9v.fsf@assigned-by-dhcp.cox.net>
 
 * 'git lost-and-found'?  Link dangling commits found by
   fsck-objects under $GIT_DIR/refs/lost-found/.  Then
