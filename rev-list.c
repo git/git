@@ -194,7 +194,17 @@ static void show_commit_list(struct commit_list *list)
 		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
 	}
 	while (objects) {
-		printf("%s %s\n", sha1_to_hex(objects->item->sha1), objects->name);
+		/* An object with name "foo\n0000000000000000000000000000000000000000"
+		 * can be used confuse downstream git-pack-objects very badly.
+		 */
+		const char *ep = strchr(objects->name, '\n');
+		if (ep) {
+			printf("%s %.*s\n", sha1_to_hex(objects->item->sha1),
+			       (int) (ep - objects->name),
+			       objects->name);
+		}
+		else
+			printf("%s %s\n", sha1_to_hex(objects->item->sha1), objects->name);
 		objects = objects->next;
 	}
 }
