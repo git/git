@@ -3,31 +3,49 @@
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
-	static char dirname[PATH_MAX];
+	struct alternate_object_database *alt;
 	char hex[40];
-	DIR *dir;
-	int found;
+	int found = 0;
+	static struct alternate_object_database *fakeent;
 
-	snprintf(dirname, sizeof(dirname), "%s/%.2s", get_object_directory(), name);
-	dir = opendir(dirname);
+	if (!fakeent) {
+		const char *objdir = get_object_directory();
+		int objdir_len = strlen(objdir);
+		int entlen = objdir_len + 43;
+		fakeent = xmalloc(sizeof(*fakeent) + entlen);
+		memcpy(fakeent->base, objdir, objdir_len);
+		fakeent->name = fakeent->base + objdir_len + 1;
+		fakeent->name[-1] = '/';
+	}
+	fakeent->next = alt_odb_list;
+
 	sprintf(hex, "%.2s", name);
-	found = 0;
-	if (dir) {
+	for (alt = fakeent; alt && found < 2; alt = alt->next) {
 		struct dirent *de;
+		DIR *dir;
+		sprintf(alt->name, "%.2s/", name);
+		dir = opendir(alt->base);
+		if (!dir)
+			continue;
 		while ((de = readdir(dir)) != NULL) {
 			if (strlen(de->d_name) != 38)
 				continue;
-			if (memcmp(de->d_name, name + 2, len-2))
+			if (memcmp(de->d_name, name + 2, len - 2))
 				continue;
-			memcpy(hex + 2, de->d_name, 38);
-			if (++found > 1)
+			if (!found) {
+				memcpy(hex + 2, de->d_name, 38);
+				found++;
+			}
+			else if (memcmp(hex + 2, de->d_name, 38)) {
+				found = 2;
 				break;
+			}
 		}
 		closedir(dir);
 	}
 	if (found == 1)
 		return get_sha1_hex(hex, sha1) == 0;
-	return 0;
+	return found;
 }
 
 static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)
@@ -48,9 +66,11 @@ static int match_sha(unsigned len, const unsigned char *a, const unsigned char *
 static int find_short_packed_object(int len, const unsigned char *match, unsigned char *sha1)
 {
 	struct packed_git *p;
+	unsigned char found_sha1[20];
+	int found = 0;
 
 	prepare_packed_git();
-	for (p = packed_git; p; p = p->next) {
+	for (p = packed_git; p && found < 2; p = p->next) {
 		unsigned num = num_packed_objects(p);
 		unsigned first = 0, last = num;
 		while (first < last) {
@@ -71,16 +91,45 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 			last = mid;
 		}
 		if (first < num) {
-			unsigned char now[20], next[20];
+			unsigned char now[20];
 			nth_packed_object_sha1(p, first, now);
 			if (match_sha(len, match, now)) {
-				if (nth_packed_object_sha1(p, first+1, next) || !match_sha(len, match, next)) {
-					memcpy(sha1, now, 20);
-					return 1;
+				if (!found) {
+					memcpy(found_sha1, now, 20);
+					found++;
+				}
+				else if (memcmp(found_sha1, now, 20)) {
+					found = 2;
+					break;
 				}
 			}
 		}
 	}
+	if (found == 1)
+		memcpy(sha1, found_sha1, 20);
+	return found;
+}
+
+static int find_unique_short_object(int len, char *canonical,
+				    unsigned char *res, unsigned char *sha1)
+{
+	int has_unpacked, has_packed;
+	unsigned char unpacked_sha1[20], packed_sha1[20];
+
+	has_unpacked = find_short_object_filename(len, canonical, unpacked_sha1);
+	has_packed = find_short_packed_object(len, res, packed_sha1);
+	if (!has_unpacked && !has_packed)
+		return -1;
+	if (1 < has_unpacked || 1 < has_packed)
+		return -1;
+	if (has_unpacked != has_packed) {
+		memcpy(sha1, (has_packed ? packed_sha1 : unpacked_sha1), 20);
+		return 0;
+	}
+	/* Both have unique ones -- do they match? */
+	if (memcmp(packed_sha1, unpacked_sha1, 20))
+		return -1;
+	memcpy(sha1, packed_sha1, 20);
 	return 0;
 }
 
@@ -112,11 +161,8 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1)
 			val <<= 4;
 		res[i >> 1] |= val;
 	}
-	if (find_short_object_filename(i, canonical, sha1))
-		return 0;
-	if (find_short_packed_object(i, res, sha1))
-		return 0;
-	return -1;
+
+	return find_unique_short_object(i, canonical, res, sha1);
 }
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
@@ -246,5 +292,6 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
  */
 int get_sha1(const char *name, unsigned char *sha1)
 {
+	prepare_alt_odb();
 	return get_sha1_1(name, strlen(name), sha1);
 }
