@@ -91,14 +91,23 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 			last = mid;
 		}
 		if (first < num) {
-			unsigned char now[20];
+			unsigned char now[20], next[20];
 			nth_packed_object_sha1(p, first, now);
 			if (match_sha(len, match, now)) {
-				if (!found) {
-					memcpy(found_sha1, now, 20);
-					found++;
+				if (nth_packed_object_sha1(p, first+1, next) ||
+				    !match_sha(len, match, next)) {
+					/* unique within this pack */
+					if (!found) {
+						memcpy(found_sha1, now, 20);
+						found++;
+					}
+					else if (memcmp(found_sha1, now, 20)) {
+						found = 2;
+						break;
+					}
 				}
-				else if (memcmp(found_sha1, now, 20)) {
+				else {
+					/* not even unique within this pack */
 					found = 2;
 					break;
 				}
@@ -121,7 +130,7 @@ static int find_unique_short_object(int len, char *canonical,
 	if (!has_unpacked && !has_packed)
 		return -1;
 	if (1 < has_unpacked || 1 < has_packed)
-		return -1;
+		return error("short SHA1 %.*s is ambiguous.", len, canonical);
 	if (has_unpacked != has_packed) {
 		memcpy(sha1, (has_packed ? packed_sha1 : unpacked_sha1), 20);
 		return 0;
