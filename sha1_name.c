@@ -128,7 +128,7 @@ static int find_unique_short_object(int len, char *canonical,
 	}
 	/* Both have unique ones -- do they match? */
 	if (memcmp(packed_sha1, unpacked_sha1, 20))
-		return -1;
+		return error("short SHA1 %.*s is ambiguous.", len, canonical);
 	memcpy(sha1, packed_sha1, 20);
 	return 0;
 }
