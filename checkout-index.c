@@ -63,15 +63,20 @@ static int checkout_file(const char *name)
 
 static int checkout_all(void)
 {
-	int i;
+	int i, errs = 0;
 
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce))
 			continue;
 		if (checkout_entry(ce, &state) < 0)
-			return -1;
+			errs++;
 	}
+	if (errs)
+		/* we have already done our error reporting.
+		 * exit with the same code as die().
+		 */
+		exit(128);
 	return 0;
 }
 
