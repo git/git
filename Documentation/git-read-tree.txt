@@ -84,10 +84,10 @@ fast forward situation).
 When two trees are specified, the user is telling git-read-tree
 the following:
 
-    (1) The current index and work tree is derived from $H, but
+     1. The current index and work tree is derived from $H, but
         the user may have local changes in them since $H;
 
-    (2) The user wants to fast-forward to $M.
+     2. The user wants to fast-forward to $M.
 
 In this case, the "git-read-tree -m $H $M" command makes sure
 that no local change is lost as the result of this "merge".

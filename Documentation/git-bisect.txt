@@ -91,7 +91,7 @@ Author
 Written by Linus Torvalds <torvalds@osdl.org>
 
 Documentation
---------------
+-------------
 Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
