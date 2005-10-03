@@ -29,9 +29,9 @@ OPTIONS
 	working tree does not have to match the HEAD commit.
 	The revert is done against the beginning state of your
 	working tree.
-
-	This is useful when reverting more than one commits'
-	effect to your working tree in a row.
++
+This is useful when reverting more than one commits'
+effect to your working tree in a row.
 
 
 Author

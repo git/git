@@ -213,7 +213,7 @@ def buildGraph(heads):
 
 # Write the empty tree to the object database and return its SHA1
 def writeEmptyTree():
-    tmpIndex = os.environ['GIT_DIR'] + '/merge-tmp-index'
+    tmpIndex = os.environ.get('GIT_DIR', '.git') + '/merge-tmp-index'
     def delTmpIndex():
         try:
             os.unlink(tmpIndex)

@@ -58,11 +58,11 @@ following environment variables.
 	GIT_COMMITTER_NAME
 	GIT_COMMITTER_EMAIL
 
-(nb <,> and '\n's are stripped)
+(nb "<", ">" and "\n"s are stripped)
 
 A commit comment is read from stdin (max 999 chars). If a changelog
-entry is not provided via '<' redirection, "git-commit-tree" will just wait
-for one to be entered and terminated with ^D
+entry is not provided via "<" redirection, "git-commit-tree" will just wait
+for one to be entered and terminated with ^D.
 
 Diagnostics
 -----------

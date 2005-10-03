@@ -25,15 +25,19 @@ OPTIONS
 
 -v::
 	After verifying the pack, show list of objects contained
-	in the pack.  The format used is:
+	in the pack.
 
-		SHA1 type size offset-in-packfile
+OUTPUT FORMAT
+-------------
+When specifying the -v option the format used is:
 
-	for objects that are not deltified in the pack, and
+	SHA1 type size offset-in-packfile
 
-		SHA1 type size offset-in-packfile depth base-SHA1
+for objects that are not deltified in the pack, and
 
-	for objects that are deltified.
+	SHA1 type size offset-in-packfile depth base-SHA1
+
+for objects that are deltified.
 
 Author
 ------

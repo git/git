@@ -32,7 +32,8 @@ do
 		strategy_args="${strategy_args}-s $strategy "
 		;;
 	-*)
-		usage
+		# Pass thru anything that is meant for fetch.
+		break
 		;;
 	esac
 	shift

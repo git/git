@@ -39,7 +39,7 @@ Written by Linus Torvalds <torvalds@osdl.org> and
 Junio C Hamano <junkio@cox.net>
 
 Documentation
---------------
+-------------
 Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT

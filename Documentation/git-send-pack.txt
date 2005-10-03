@@ -61,9 +61,9 @@ this flag.
 Without '--all' and without any '<ref>', the refs that exist
 both on the local side and on the remote side are updated.
 
-When '<ref>'s are specified explicitly, it can be either a
+When one or more '<ref>' are specified explicitly, it can be either a
 single pattern, or a pair of such pattern separated by a colon
-':' (this means that a ref name cannot have a colon in it).  A
+":" (this means that a ref name cannot have a colon in it).  A
 single pattern '<name>' is just a shorthand for '<name>:<name>'.
 
 Each pattern pair consists of the source side (before the colon)
@@ -79,10 +79,10 @@ destination side.
 
  - If <dst> does not match any remote ref, either
 
-   - it has to start with "refs/"; <dst> is used as the
+   * it has to start with "refs/"; <dst> is used as the
      destination literally in this case.
 
-   - <src> == <dst> and the ref that matched the <src> must not
+   * <src> == <dst> and the ref that matched the <src> must not
      exist in the set of remote refs; the ref matched <src>
      locally is used as the name of the destination.
 

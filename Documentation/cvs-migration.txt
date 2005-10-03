@@ -229,10 +229,10 @@ does rename or copy would not show in the output, and if the
 "o-file.c", it would find the commit that changed the statement
 when it was in "o-file.c".
 
-[ BTW, the current versions of "git-diff-tree -C" is not eager
+NOTE: The current versions of "git-diff-tree -C" is not eager
   enough to find copies, and it will miss the fact that a-file.c
   was created by copying o-file.c unless o-file.c was somehow
-  changed in the same commit.]
+  changed in the same commit.
 
 You can use the --pickaxe-all flag in addition to the -S flag.
 This causes the differences from all the files contained in
@@ -243,6 +243,6 @@ that contain this changed "if" statement:
 		nitfol();
 	}' --pickaxe-all
 
-[ Side note.  This option is called "--pickaxe-all" because -S
+NOTE: This option is called "--pickaxe-all" because -S
   option is internally called "pickaxe", a tool for software
-  archaeologists.]
+  archaeologists.

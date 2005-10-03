@@ -51,15 +51,15 @@ OPTIONS
 	The 'HEAD' branch from CVS is imported to the 'origin' branch within
 	the git repository, as 'HEAD' already has a special meaning for git.
 	Use this option if you want to import into a different branch.
-
-	Use '-o master' for continuing an import that was initially done by
-	the old cvs2git tool.
++
+Use '-o master' for continuing an import that was initially done by
+the old cvs2git tool.
 
 -p <options-for-cvsps>::
 	Additional options for cvsps.
 	The options '-u' and '-A' are implicit and should not be used here.
-
-	If you need to pass multiple options, separate them with a comma.
++
+If you need to pass multiple options, separate them with a comma.
 
 -m::    
 	Attempt to detect merges based on the commit message. This option
