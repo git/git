@@ -26,7 +26,7 @@ dropsave() {
 savestate() {
 	# Stash away any local modifications.
 	git-diff-index -r -z --name-only $head |
-	cpio -0 -o >"$GIR_DIR/MERGE_SAVE"
+	cpio -0 -o >"$GIT_DIR/MERGE_SAVE"
 }
 
 restorestate() {
@@ -103,7 +103,7 @@ echo "$head" >"$GIT_DIR/ORIG_HEAD"
 
 case "$#,$common" in
 *,'')
-	die "Unable to find common commit between $head_arg and $*"
+	# No common ancestors found. We need a real merge.
 	;;
 1,"$1")
 	# If head can reach all the merge then we are up to date.
