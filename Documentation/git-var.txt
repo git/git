@@ -15,21 +15,23 @@ DESCRIPTION
 -----------
 Prints a git logical variable.
 
--l causes the logical variables to be listed.
+OPTIONS
+-------
+-l::
+	Cause the logical variables to be listed.
 
 EXAMPLE
 --------
-$git-var GIT_AUTHOR_IDENT
-
-Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
+	$ git-var GIT_AUTHOR_IDENT
+	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
 
 
 VARIABLES
 ----------
-GIT_AUTHOR_IDENT
+GIT_AUTHOR_IDENT::
     The author of a piece of code.
 
-GIT_COMMITTER_IDENT
+GIT_COMMITTER_IDENT::
     The person who put a piece of code into git.
 
 Diagnostics

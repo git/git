@@ -30,7 +30,7 @@ OPTIONS
 <patch>::
 	The patch to apply.
 
-<info>:
+<info>::
 	Author and subject information extracted from e-mail,
 	used on "author" line and as the first line of the
 	commit log message.

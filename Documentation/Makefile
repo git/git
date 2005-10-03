@@ -53,6 +53,9 @@ install: man
 $(patsubst %.txt,%.1,$(wildcard git-diff-*.txt)): \
 	diff-format.txt diff-options.txt
 $(patsubst %,%.1,git-fetch git-pull git-push): pull-fetch-param.txt
+$(patsubst %.txt,%.html,$(wildcard git-diff-*.txt)): \
+	diff-format.txt diff-options.txt
+$(patsubst %,%.html,git-fetch git-pull git-push): pull-fetch-param.txt
 git.7: ../README
 
 clean:

@@ -51,7 +51,8 @@ Documentation by Ryan Anderson <ryan@michonline.com>
 
 See-Also
 --------
-git-pack-objects(1) git-prune-packed(1)
+gitlink:git-pack-objects[1]
+gitlink:git-prune-packed[1]
 
 GIT
 ---

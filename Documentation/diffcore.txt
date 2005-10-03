@@ -254,11 +254,11 @@ As an example, typical orderfile for the core GIT probably
 would look like this:
 
 ------------------------------------------------
-    README
-    Makefile
-    Documentation
-    *.h
-    *.c
-    t
+README
+Makefile
+Documentation
+*.h
+*.c
+t
 ------------------------------------------------
 
