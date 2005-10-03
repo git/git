@@ -676,7 +676,10 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
                 /* We allow "\ No newline at end of file". Depending
                  * on locale settings when the patch was produced we
                  * don't know what this line looks like. The only
-                 * thing we do know is that it begins with "\ ". */
+                 * thing we do know is that it begins with "\ ".
+		 * Checking for 12 is just for sanity check -- any
+		 * l10n of "\ No newline..." is at least that long.
+		 */
 		case '\\':
 			if (len < 12 || memcmp(line, "\\ ", 2))
 				return -1;
@@ -1030,17 +1033,39 @@ static int check_patch(struct patch *patch)
 
 	if (old_name) {
 		int changed;
+		int stat_ret = lstat(old_name, &st);
 
-		if (lstat(old_name, &st) < 0)
-			return error("%s: %s", old_name, strerror(errno));
 		if (check_index) {
 			int pos = cache_name_pos(old_name, strlen(old_name));
 			if (pos < 0)
-				return error("%s: does not exist in index", old_name);
+				return error("%s: does not exist in index",
+					     old_name);
+			if (stat_ret < 0) {
+				struct checkout costate;
+				if (errno != ENOENT)
+					return error("%s: %s", old_name,
+						     strerror(errno));
+				/* checkout */
+				costate.base_dir = "";
+				costate.base_dir_len = 0;
+				costate.force = 0;
+				costate.quiet = 0;
+				costate.not_new = 0;
+				costate.refresh_cache = 1;
+				if (checkout_entry(active_cache[pos],
+						   &costate) ||
+				    lstat(old_name, &st))
+					return -1;
+			}
+
 			changed = ce_match_stat(active_cache[pos], &st);
 			if (changed)
-				return error("%s: does not match index", old_name);
+				return error("%s: does not match index",
+					     old_name);
 		}
+		else if (stat_ret < 0)
+			return error("%s: %s", old_name, strerror(errno));
+
 		if (patch->is_new < 0)
 			patch->is_new = 0;
 		st.st_mode = ntohl(create_ce_mode(st.st_mode));
