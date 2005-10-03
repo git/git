@@ -50,7 +50,7 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION = 0.99.7.GIT
+GIT_VERSION = 0.99.8.GIT
 
 CFLAGS = -g -O2 -Wall
 ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
@@ -103,24 +103,28 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest
 PROGRAMS = \
-	git-apply$X git-cat-file$X git-checkout-index$X		\
-	git-clone-pack$X git-commit-tree$X git-convert-objects$X	\
-	git-diff-files$X git-diff-index$X git-diff-stages$X	\
-	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X	\
-	git-hash-object$X git-init-db$X git-local-fetch$X		\
-	git-ls-files$X git-ls-tree$X git-merge-base$X		\
-	git-merge-index$X git-mktag$X git-pack-objects$X		\
-	git-patch-id$X git-peek-remote$X git-prune-packed$X	\
-	git-read-tree$X git-receive-pack$X git-rev-list$X		\
-	git-rev-parse$X git-send-pack$X git-show-branch$X		\
-	git-show-index$X git-ssh-fetch$X git-ssh-upload$X		\
-	git-tar-tree$X git-unpack-file$X git-unpack-objects$X	\
-	git-update-index$X git-update-server-info$X			\
-	git-upload-pack$X git-verify-pack$X git-write-tree$X	\
-	git-update-ref$X $(SIMPLE_PROGRAMS)
+	git-apply$X git-cat-file$X \
+	git-checkout-index$X git-clone-pack$X git-commit-tree$X \
+	git-convert-objects$X git-diff-files$X \
+	git-diff-index$X git-diff-stages$X \
+	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
+	git-hash-object$X git-init-db$X \
+	git-local-fetch$X git-ls-files$X git-ls-tree$X git-merge-base$X \
+	git-merge-index$X git-mktag$X git-pack-objects$X git-patch-id$X \
+	git-peek-remote$X git-prune-packed$X git-read-tree$X \
+	git-receive-pack$X git-rev-list$X git-rev-parse$X \
+	git-send-pack$X git-show-branch$X \
+	git-show-index$X git-ssh-fetch$X \
+	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
+	git-unpack-objects$X git-update-index$X git-update-server-info$X \
+	git-upload-pack$X git-verify-pack$X git-write-tree$X \
+	git-update-ref$X git-symbolic-ref$X \
+	$(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
+
+GIT_LIST_TWEAK =
 
 PYMODULES = \
 	gitMergeCommon.py
@@ -131,6 +135,8 @@ endif
 
 ifdef WITH_SEND_EMAIL
 	SCRIPT_PERL += git-send-email.perl
+else
+	GIT_LIST_TWEAK += -e '/^send-email$$/d'
 endif
 
 LIB_FILE=libgit.a
@@ -181,6 +187,10 @@ endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
 endif
+ifeq ($(shell uname -s),OpenBSD)
+	NEEDS_LIBICONV = YesPlease
+	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
+endif
 
 ifndef NO_CURL
 	ifdef CURLDIR
@@ -206,18 +216,32 @@ endif
 ifndef NO_OPENSSL
 	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL = -lssl
+	ifdef OPENSSLDIR
+		# Again this may be problematic -- gcc does not always want -R.
+		CFLAGS += -I$(OPENSSLDIR)/include
+		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
+	else
+		OPENSSL_LINK =
+	endif
 else
 	DEFINES += '-DNO_OPENSSL'
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
 ifdef NEEDS_SSL_WITH_CRYPTO
-	LIB_4_CRYPTO = -lcrypto -lssl
+	LIB_4_CRYPTO = $(OPENSSL_LINK) -lcrypto -lssl
 else
-	LIB_4_CRYPTO = -lcrypto
+	LIB_4_CRYPTO = $(OPENSSL_LINK) -lcrypto
 endif
 ifdef NEEDS_LIBICONV
-	LIB_4_ICONV = -liconv
+	ifdef ICONVDIR
+		# Again this may be problematic -- gcc does not always want -R.
+		CFLAGS += -I$(ICONVDIR)/include
+		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
+	else
+		ICONV_LINK =
+	endif
+	LIB_4_ICONV = $(ICONV_LINK) -liconv
 else
 	LIB_4_ICONV =
 endif
@@ -273,8 +297,13 @@ all:
 git: git.sh Makefile
 	rm -f $@+ $@
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+<<<<<<< Makefile
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@X@@/$(X)/g' <$@.sh >$@+
+=======
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $(GIT_LIST_TWEAK) <$@.sh >$@+
+>>>>>>> .merge_file_3QHyD4
 	chmod +x $@+
 	mv $@+ $@
 

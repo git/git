@@ -13,6 +13,8 @@
 static int merge = 0;
 static int update = 0;
 static int index_only = 0;
+static int nontrivial_merge = 0;
+static int trivial_merges_only = 0;
 
 static int head_idx = -1;
 static int merge_size = 0;
@@ -275,6 +277,9 @@ static int unpack_trees(merge_fn_t fn)
 	if (unpack_trees_rec(posns, len, "", fn, &indpos))
 		return -1;
 
+	if (trivial_merges_only && nontrivial_merge)
+		die("Merge requires file-level merging");
+
 	check_updates(active_cache, active_nr);
 	return 0;
 }
@@ -460,6 +465,8 @@ static int threeway_merge(struct cache_entry **stages)
 		verify_uptodate(index);
 	}
 
+	nontrivial_merge = 1;
+
 	/* #2, #3, #4, #6, #7, #9, #11. */
 	count = 0;
 	if (!head_match || !remote_match) {
@@ -629,9 +636,9 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (!strcmp(arg, "--head")) {
-			head_idx = stage - 1;
-			fn = threeway_merge;
+		if (!strcmp(arg, "--trivial")) {
+			trivial_merges_only = 1;
+			continue;
 		}
 
 		/* "-m" stands for "merge", meaning we start in stage 1 */
@@ -657,7 +664,8 @@ int main(int argc, char **argv)
 	}
 	if ((update||index_only) && !merge)
 		usage(read_tree_usage);
-	if (merge && !fn) {
+
+	if (merge) {
 		if (stage < 2)
 			die("just how do you expect me to merge %d trees?", stage-1);
 		switch (stage - 1) {
@@ -674,9 +682,7 @@ int main(int argc, char **argv)
 			fn = threeway_merge;
 			break;
 		}
-	}
 
-	if (head_idx < 0) {
 		if (stage - 1 >= 3)
 			head_idx = stage - 2;
 		else

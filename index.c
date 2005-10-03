@@ -29,7 +29,7 @@ int hold_index_file_for_update(struct cache_file *cf, const char *path)
 		signal(SIGINT, remove_lock_file_on_signal);
 		atexit(remove_lock_file);
 	}
-	return open(cf->lockfile, O_RDWR | O_CREAT | O_EXCL, 0600);
+	return open(cf->lockfile, O_RDWR | O_CREAT | O_EXCL, 0666);
 }
 
 int commit_index_file(struct cache_file *cf)

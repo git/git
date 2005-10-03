@@ -14,7 +14,8 @@ If two arguments, create a new branch <branchname> based off of <start-point>.
 
 delete_branch () {
     option="$1" branch_name="$2"
-    headref=$(readlink "$GIT_DIR/HEAD" | sed -e 's|^refs/heads/||')
+    headref=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD |
+    	       sed -e 's|^refs/heads/||')
     case ",$headref," in
     ",$branch_name,")
 	die "Cannot delete the branch you are on." ;;
@@ -67,7 +68,8 @@ done
 
 case "$#" in
 0)
-	headref=$(readlink "$GIT_DIR/HEAD" | sed -e 's|^refs/heads/||')
+	headref=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD |
+		  sed -e 's|^refs/heads/||')
 	git-rev-parse --symbolic --all |
 	sed -ne 's|^refs/heads/||p' |
 	sort |

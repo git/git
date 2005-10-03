@@ -13,7 +13,7 @@ SYNOPSIS
 		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
-		[--exclude-per-directory=<file>]
+		[--exclude-per-directory=<file>] [--] [<file>]\*
 
 DESCRIPTION
 -----------
@@ -76,6 +76,13 @@ OPTIONS
 	C	modifed/changed
 	K	to be killed
 	?	other
+
+--::
+	Do not interpret any more arguments as options.
+
+<file>::
+	Files to show. If no files are given all files which match the other
+	specified criteria are shown.
 
 Output
 ------

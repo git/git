@@ -20,12 +20,12 @@ test_expect_success setup '
 	    commit=$(echo "Commit #$i" | git-commit-tree $tree -p $parent) &&
 	    parent=$commit || return 1
 	done &&
-	echo "$commit" >.git/HEAD &&
+	git-update-ref HEAD "$commit" &&
 	git-clone -l ./. victim &&
 	cd victim &&
 	git-log &&
 	cd .. &&
-	echo $zero >.git/HEAD &&
+	git-update-ref HEAD "$zero" &&
 	parent=$zero &&
 	for i in $cnt
 	do
@@ -33,7 +33,7 @@ test_expect_success setup '
 	    commit=$(echo "Rebase #$i" | git-commit-tree $tree -p $parent) &&
 	    parent=$commit || return 1
 	done &&
-	echo "$commit" >.git/HEAD &&
+	git-update-ref HEAD "$commit" &&
 	echo Rebase &&
 	git-log'
 

@@ -10,7 +10,6 @@
 #include "diffcore.h"
 
 static const char *diff_opts = "-pu";
-static unsigned char null_sha1[20] = { 0, };
 
 static int use_size_cache;
 
@@ -414,7 +413,7 @@ void diff_free_filespec_data(struct diff_filespec *s)
 static void prep_temp_blob(struct diff_tempfile *temp,
 			   void *blob,
 			   unsigned long size,
-			   unsigned char *sha1,
+			   const unsigned char *sha1,
 			   int mode)
 {
 	int fd;

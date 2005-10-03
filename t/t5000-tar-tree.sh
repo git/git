@@ -50,7 +50,7 @@ test_expect_success \
 
 test_expect_success \
     'validate file modification time' \
-    'TZ=GMT tar tvf b.tar a/a |
+    'TZ=GMT $TAR tvf b.tar a/a |
      awk \{print\ \$4,\ \(length\(\$5\)\<7\)\ ?\ \$5\":00\"\ :\ \$5\} \
      >b.mtime &&
      echo "2005-05-27 22:00:00" >expected.mtime &&
@@ -63,7 +63,7 @@ test_expect_success \
 
 test_expect_success \
     'extract tar archive' \
-    '(cd b && tar xf -) <b.tar'
+    '(cd b && $TAR xf -) <b.tar'
 
 test_expect_success \
     'validate filenames' \
@@ -80,7 +80,7 @@ test_expect_success \
 
 test_expect_success \
     'extract tar archive with prefix' \
-    '(cd c && tar xf -) <c.tar'
+    '(cd c && $TAR xf -) <c.tar'
 
 test_expect_success \
     'validate filenames with prefix' \

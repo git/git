@@ -464,11 +464,15 @@ int read_cache(void)
 
 	errno = EBUSY;
 	if (active_cache)
-		return error("more than one cachefile");
+		return active_nr;
+
 	errno = ENOENT;
 	fd = open(get_index_file(), O_RDONLY);
-	if (fd < 0)
-		return (errno == ENOENT) ? 0 : error("open failed");
+	if (fd < 0) {
+		if (errno == ENOENT)
+			return 0;
+		die("index file open failed (%s)", strerror(errno));
+	}
 
 	size = 0; // avoid gcc warning
 	map = MAP_FAILED;
@@ -480,7 +484,7 @@ int read_cache(void)
 	}
 	close(fd);
 	if (map == MAP_FAILED)
-		return error("mmap failed");
+		die("index file mmap failed (%s)", strerror(errno));
 
 	hdr = map;
 	if (verify_hdr(hdr, size) < 0)
@@ -501,7 +505,7 @@ int read_cache(void)
 unmap:
 	munmap(map, size);
 	errno = EINVAL;
-	return error("verify header failed");
+	die("index file corrupt");
 }
 
 #define WRITE_BUFFER_SIZE 8192

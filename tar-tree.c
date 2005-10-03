@@ -353,6 +353,8 @@ static void traverse_tree(void *buffer, unsigned long size,
 
 		if (size < namelen + 20 || sscanf(buffer, "%o", &mode) != 1)
 			die("corrupt 'tree' file");
+		if (S_ISDIR(mode) || S_ISREG(mode))
+			mode |= (mode & 0100) ? 0777 : 0666;
 		buffer = sha1 + 20;
 		size -= namelen + 20;
 

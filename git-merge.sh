@@ -123,9 +123,29 @@ case "$#,$common" in
 	dropsave
 	exit 0
 	;;
-1,*)
+1,?*"$LF"?*)
 	# We are not doing octopus and not fast forward.  Need a
 	# real merge.
+	;;
+1,*)
+	# We are not doing octopus, not fast forward, and have only
+	# one common.  See if it is really trivial.
+	echo "Trying really trivial in-index merge..."
+	git-update-index --refresh 2>/dev/null
+	if git-read-tree --trivial -m -u $common $head "$1" &&
+	   result_tree=$(git-write-tree)
+	then
+	    echo "Wonderful."
+	    result_commit=$(
+	        echo "$merge_msg" |
+	        git-commit-tree $result_tree -p HEAD -p "$1"
+	    ) || exit
+	    git-update-ref HEAD $result_commit $head
+	    summary $result_commit
+	    dropsave
+	    exit 0
+	fi
+	echo "Nope."
 	;;
 *)
 	# An octopus.  If we can reach all the remote we are up to date.

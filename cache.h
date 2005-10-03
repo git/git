@@ -189,6 +189,7 @@ extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)
 extern char *sha1_file_name(const unsigned char *sha1);
 extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
+extern const unsigned char null_sha1[20];
 
 int git_mkstemp(char *path, size_t n, const char *template);
 
@@ -228,6 +229,10 @@ extern int has_pack_index(const unsigned char *sha1);
 extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
+extern int read_ref(const char *filename, unsigned char *sha1);
+extern const char *resolve_ref(const char *path, unsigned char *sha1, int);
+extern int create_symref(const char *git_HEAD, const char *refs_heads_master);
+extern int validate_symref(const char *git_HEAD);
 
 /* General helper functions */
 extern void usage(const char *err) NORETURN;

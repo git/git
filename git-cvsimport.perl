@@ -510,7 +510,7 @@ unless($pid) {
 
 my $state = 0;
 
-my($patchset,$date,$author,$branch,$ancestor,$tag,$logmsg);
+my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
 my(@old,@new);
 my $commit = sub {
 	my $pid;
@@ -591,11 +591,11 @@ my $commit = sub {
 		}
 
 		exec("env",
-			"GIT_AUTHOR_NAME=$author",
-			"GIT_AUTHOR_EMAIL=$author",
+			"GIT_AUTHOR_NAME=$author_name",
+			"GIT_AUTHOR_EMAIL=$author_email",
 			"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-			"GIT_COMMITTER_NAME=$author",
-			"GIT_COMMITTER_EMAIL=$author",
+			"GIT_COMMITTER_NAME=$author_name",
+			"GIT_COMMITTER_EMAIL=$author_email",
 			"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
 			"git-commit-tree", $tree,@par);
 		die "Cannot exec git-commit-tree: $!\n";
@@ -638,7 +638,7 @@ my $commit = sub {
 		print $out "object $cid\n".
 		    "type commit\n".
 		    "tag $xtag\n".
-		    "tagger $author <$author>\n"
+		    "tagger $author_name <$author_email>\n"
 		    or die "Cannot create tag object $xtag: $!\n";
 		close($out)
 		    or die "Cannot create tag object $xtag: $!\n";
@@ -683,7 +683,11 @@ while(<CVS>) {
 		$state=3;
 	} elsif($state == 3 and s/^Author:\s+//) {
 		s/\s+$//;
-		$author = $_;
+		if (/^(.*?)\s+<(.*)>/) {
+		    ($author_name, $author_email) = ($1, $2);
+		} else {
+		    $author_name = $author_email = $_;
+		}
 		$state = 4;
 	} elsif($state == 4 and s/^Branch:\s+//) {
 		s/\s+$//;

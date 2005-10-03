@@ -228,9 +228,11 @@ foreach my $ps (@psets) {
     # skip commits already in repo
     #
     if (ptag($ps->{id})) {
-      $opt_v && print "Skipping already imported: $ps->{id}\n";
+      $opt_v && print " * Skipping already imported: $ps->{id}\n";
       next;
     }
+
+    print " * Starting to work on $ps->{id}\n";
 
     # 
     # create the branch if needed
@@ -675,6 +677,10 @@ sub find_parents {
     # that branch.
     #
     foreach my $branch (keys %branches) {
+
+	# check that we actually know about the branch
+	next unless -e "$git_dir/refs/heads/$branch";
+
 	my $mergebase = `git-merge-base $branch $ps->{branch}`;
 	die "Cannot find merge base for $branch and $ps->{branch}" if $?;
 	chomp $mergebase;

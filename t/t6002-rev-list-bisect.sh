@@ -7,20 +7,6 @@ test_description='Tests git-rev-list --bisect functionality'
 . ./test-lib.sh
 . ../t6000lib.sh # t6xxx specific functions
 
-bc_expr()
-{
-bc <<EOF
-scale=1
-define abs(x) {
-	if (x>=0) { return (x); } else { return (-x); }
-}
-define floor(x) {
-	save=scale; scale=0; result=x/1; scale=save; return (result);
-}
-$*
-EOF
-}
-
 # usage: test_bisection max-diff bisect-option head ^prune...
 #
 # e.g. test_bisection 1 --bisect l1 ^l0
@@ -35,8 +21,19 @@ test_bisection_diff()
         _head=$1
 	shift 1
 	_bisection_size=$(git-rev-list $_bisection "$@" | wc -l)
-	[ -n "$_list_size" -a -n "$_bisection_size" ] || error "test_bisection_diff failed"
-	test_expect_success "bisection diff $_bisect_option $_head $* <= $_max_diff" "[ $(bc_expr "floor(abs($_list_size/2)-$_bisection_size)") -le $_max_diff ]"
+	[ -n "$_list_size" -a -n "$_bisection_size" ] ||
+	error "test_bisection_diff failed"
+
+	# Test if bisection size is close to half of list size within
+	# tolerance.
+	# 
+	_bisect_err=`expr $_list_size - $_bisection_size \* 2`
+	test "$_bisect_err" -lt 0 && _bisect_err=`expr 0 - $_bisect_err`
+	_bisect_err=`expr $_bisect_err / 2` ; # floor
+
+	test_expect_success \
+	"bisection diff $_bisect_option $_head $* <= $_max_diff" \
+	'test $_bisect_err -le $_max_diff'
 }
 
 date >path0

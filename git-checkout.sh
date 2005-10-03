@@ -71,7 +71,8 @@ if [ "$?" -eq 0 ]; then
 		echo $new > "$GIT_DIR/refs/heads/$newbranch"
 		branch="$newbranch"
 	fi
-	[ "$branch" ] && ln -sf "refs/heads/$branch" "$GIT_DIR/HEAD"
+	[ "$branch" ] &&
+	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
 	rm -f "$GIT_DIR/MERGE_HEAD"
 else
 	exit 1

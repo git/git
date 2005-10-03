@@ -349,6 +349,7 @@ int main(int ac, char **av)
 	int all_heads = 0, all_tags = 0;
 	int all_mask, all_revs, shown_merge_point;
 	char head_path[128];
+	const char *head_path_p;
 	int head_path_len;
 	unsigned char head_sha1[20];
 	int merge_base = 0;
@@ -430,11 +431,15 @@ int main(int ac, char **av)
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
 
-	head_path_len = readlink(".git/HEAD", head_path, sizeof(head_path)-1);
-	if ((head_path_len < 0) || get_sha1("HEAD", head_sha1))
+	head_path_p = resolve_ref(git_path("HEAD"), head_sha1, 1);
+	if (head_path_p) {
+		head_path_len = strlen(head_path_p);
+		memcpy(head_path, head_path_p, head_path_len + 1);
+	}
+	else {
+		head_path_len = 0;
 		head_path[0] = 0;
-	else
-		head_path[head_path_len] = 0;
+	}
 
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
