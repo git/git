@@ -29,10 +29,10 @@ INFO=$3
 SIGNOFF=$4
 EDIT=${VISUAL:-${EDITOR:-vi}}
 
-export GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' .dotest/info)"
-export GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' .dotest/info)"
-export GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' .dotest/info)"
-export SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' .dotest/info)"
+export GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$INFO")"
+export GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$INFO")"
+export GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$INFO")"
+export SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$INFO")"
 
 if test '' != "$SIGNOFF"
 then
@@ -54,8 +54,10 @@ then
 			sed -ne '/^Signed-off-by: /p' "$MSGFILE" |
 			tail -n 1
 		`
-		test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" ||
-		echo "$SIGNOFF" >>"$MSGFILE"
+		test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {
+		    test '' = "$LAST_SIGNED_OFF_BY" && echo
+		    echo "$SIGNOFF"
+		} >>"$MSGFILE"
 	fi
 fi
 
@@ -99,7 +101,12 @@ echo
 echo Applying "'$SUBJECT'"
 echo
 
-git-apply --index "$PATCHFILE" || exit 1
+git-apply --index "$PATCHFILE" || {
+	# Here if we know which revision the patch applies to,
+	# we create a temporary working tree and index, apply the
+	# patch, and attempt 3-way merge with the resulting tree.
+	exit 1
+}
 
 if test -x "$GIT_DIR"/hooks/pre-applypatch
 then
