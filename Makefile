@@ -183,6 +183,7 @@ ifeq ($(shell uname -o),Cygwin)
 	NEEDS_LIBICONV = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
+	PLATFORM_DEFINES += -DUSE_SYMLINK_HEAD=0
 endif
 ifneq (,$(findstring arm,$(shell uname -m)))
 	ARM_SHA1 = YesPlease
