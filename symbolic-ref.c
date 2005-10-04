@@ -3,7 +3,7 @@
 static const char git_symbolic_ref_usage[] =
 "git-symbolic-ref name [ref]";
 
-static int check_symref(const char *HEAD)
+static void check_symref(const char *HEAD)
 {
 	unsigned char sha1[20];
 	const char *git_HEAD = strdup(git_path("%s", HEAD));
