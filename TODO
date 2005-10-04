@@ -25,7 +25,9 @@ What to expect after 0.99.8
 This is written in a form of to-do list for me, so if I say
 "accept patch", it means I do not currently plan to do that
 myself.  People interested in seeing it materialize please take
-a hint.
+a hint.  Also whatever I marked "Perhaps" do not have to happen
+if ever -- only if somebody cares enough and submits a clean
+patch, perhaps ;-).
 
 
 Documentation
@@ -75,17 +77,19 @@ Technical (heavier)
 
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
-  need to be fixed.
+  need to be fixed.  [Matthias Urlichs is already working on
+  this: <pan.2005.10.03.20.48.52.132570@smurf.noris.de>; Post
+  1.0].
 
 * Maybe a pack optimizer.
 
-    Given a set of objects and a set of refs (probably a handful
-    branch heads and point release tags), find a set of packs to
-    allow reasonably minimum download for all of these classes of
-    people: (1) somebody cloning the repository from scratch, (2)
-    somebody who tends to follow the master branch head reasonably
-    closely, (3) somebody who tends to follow only the point
-    releases.
+  Given a set of objects and a set of refs (probably a handful
+  branch heads and point release tags), find a set of packs to
+  allow reasonably minimum download for all of these classes of
+  people: (1) somebody cloning the repository from scratch, (2)
+  somebody who tends to follow the master branch head reasonably
+  closely, (3) somebody who tends to follow only the point
+  releases.
 
 * Maybe an Emacs VC backend.
 
@@ -94,6 +98,13 @@ Technical (heavier)
   Message-ID: <Pine.LNX.4.63.0509221617300.23242@iabervon.org>
 
 * Look at libified GNU diff CVS seems to use, or libxdiff.
+  [Daniel has his own diff tool almost ready to start
+  integrating and testing; Post 1.0]
+
+* Accept patches to fetch multiple objects by HTTP in parallel.
+  [Preferably before 1.0]
+
+* Plug-in file-level merges [Post 1.0].
 
 
 Technical (milder)
@@ -104,9 +115,6 @@ Technical (milder)
 
 * Accept patches to cause "read-tree -u" delete a directory when
   it makes it empty.
-
-* Perhaps accept patches to introduce the concept of "patch flow
-  expressed as ref mappings" Josef has been advocating about.
 
 * Perhaps accept patches to do undo/redo.
 
@@ -162,7 +170,7 @@ Technical (trivial)
 
 * 'git repack' can be DOSed.  Should fix [DONE].
 
-* Stop installing the old-name symlinks [POSTPONED].
+* Stop installing the old-name symlinks [POSTPONED, but before 1.0].
 
 * 'git merge-projects'?
 
