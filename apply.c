@@ -5,26 +5,16 @@
  *
  * This applies patches on top of some (arbitrary) version of the SCM.
  *
- * NOTE! It does all its work in the index file, and only cares about
- * the files in the working directory if you tell it to "merge" the
- * patch apply.
- *
- * Even when merging it always takes the source from the index, and
- * uses the working tree as a "branch" for a 3-way merge.
  */
 #include <ctype.h>
 #include <fnmatch.h>
 #include "cache.h"
 
-// We default to the merge behaviour, since that's what most people would
-// expect.
-//
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
 //  --show-files shows the directory changes
 //
-static int merge_patch = 1;
 static int check_index = 0;
 static int write_index = 0;
 static int diffstat = 0;
@@ -33,7 +23,7 @@ static int check = 0;
 static int apply = 1;
 static int show_files = 0;
 static const char apply_usage[] =
-"git-apply [--no-merge] [--stat] [--summary] [--check] [--index] [--apply] [--show-files] <patch>...";
+"git-apply [--stat] [--summary] [--check] [--index] [--apply] [--show-files] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -1515,11 +1505,6 @@ int main(int argc, char **argv)
 			x->path = arg + 10;
 			x->next = excludes;
 			excludes = x;
-			continue;
-		}
-		/* NEEDSWORK: this does not do anything at this moment. */
-		if (!strcmp(arg, "--no-merge")) {
-			merge_patch = 0;
 			continue;
 		}
 		if (!strcmp(arg, "--stat")) {

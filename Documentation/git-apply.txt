@@ -9,7 +9,7 @@ git-apply - Apply patch on a GIT index file and a work tree
 
 SYNOPSIS
 --------
-'git-apply' [--no-merge] [--stat] [--summary] [--check] [--index] [--show-files] [--apply] [<patch>...]
+'git-apply' [--stat] [--summary] [--check] [--index] [--show-files] [--apply] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -21,11 +21,6 @@ OPTIONS
 <patch>...::
 	The files to read patch from.  '-' can be used to read
 	from the standard input.
-
---no-merge::
-	The default mode of operation is the merge behaviour
-	which is not implemented yet.  This flag explicitly
-	tells the program not to use the merge behaviour.
 
 --stat::
 	Instead of applying the patch, output diffstat for the
