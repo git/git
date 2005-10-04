@@ -306,19 +306,24 @@ git: git.sh Makefile
 
 $(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
 	rm -f $@
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' $@.sh >$@
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $@.sh >$@
 	chmod +x $@
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	rm -f $@
-	sed -e '1s|#!.*perl|#!$(PERL_PATH)|' $@.perl >$@
+	sed -e '1s|#!.*perl|#!$(PERL_PATH)|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $@.perl >$@
 	chmod +x $@
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	rm -f $@
 	sed -e '1s|#!.*python|#!$(PYTHON_PATH)|' \
 	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR)|g' \
-		$@.py >$@
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $@.py >$@
 	chmod +x $@
 
 %.o: %.c
