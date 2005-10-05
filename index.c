@@ -22,14 +22,16 @@ static void remove_lock_file_on_signal(int signo)
 
 int hold_index_file_for_update(struct cache_file *cf, const char *path)
 {
+	int fd;
 	sprintf(cf->lockfile, "%s.lock", path);
-	cf->next = cache_file_list;
-	cache_file_list = cf;
-	if (!cf->next) {
+	fd = open(cf->lockfile, O_RDWR | O_CREAT | O_EXCL, 0666);
+	if (fd >=0 && !cf->next) {
+		cf->next = cache_file_list;
+		cache_file_list = cf;
 		signal(SIGINT, remove_lock_file_on_signal);
 		atexit(remove_lock_file);
 	}
-	return open(cf->lockfile, O_RDWR | O_CREAT | O_EXCL, 0666);
+	return fd;
 }
 
 int commit_index_file(struct cache_file *cf)
