@@ -46,7 +46,7 @@ int validate_symref(const char *path)
 	len -= 4;
 	while (len && isspace(*buf))
 		buf++, len--;
-	if (len >= 5 && !memcmp("refs/", buffer, 5))
+	if (len >= 5 && !memcmp("refs/", buf, 5))
 		return 0;
 	return -1;
 }
