@@ -198,7 +198,7 @@ else
 	PARENTS=""
 fi
 git-status >>.editmsg
-if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]
+if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f .editmsg
 	git-status
