@@ -36,7 +36,7 @@ OPTIONS
 	An existing tree object
 
 -p <parent commit>::
-	Each '-p' indicates a the id of a parent commit object.
+	Each '-p' indicates the id of a parent commit object.
 	
 
 Commit Information

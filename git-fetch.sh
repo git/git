@@ -49,7 +49,7 @@ rsync_slurped_objects=
 
 if test "" = "$append"
 then
-	: >$GIT_DIR/FETCH_HEAD
+	: >"$GIT_DIR/FETCH_HEAD"
 fi
 
 append_fetch_head () {
@@ -86,11 +86,11 @@ append_fetch_head () {
     if git-cat-file commit "$head_" >/dev/null 2>&1
     then
 	headc_=$(git-rev-parse --verify "$head_^0") || exit
-	echo "$headc_	$not_for_merge_	$note_" >>$GIT_DIR/FETCH_HEAD
+	echo "$headc_	$not_for_merge_	$note_" >>"$GIT_DIR/FETCH_HEAD"
 	echo >&2 "* committish: $head_"
 	echo >&2 "  $note_"
     else
-	echo "$head_	not-for-merge	$note_" >>$GIT_DIR/FETCH_HEAD
+	echo "$head_	not-for-merge	$note_" >>"$GIT_DIR/FETCH_HEAD"
 	echo >&2 "* non-commit: $head_"
 	echo >&2 "  $note_"
     fi

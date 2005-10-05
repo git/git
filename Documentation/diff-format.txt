@@ -1,8 +1,8 @@
 The output format from "git-diff-index", "git-diff-tree" and
 "git-diff-files" are very similar.
 
-These commands all compare two sets of things; what are
-compared are different:
+These commands all compare two sets of things; what is 
+compared differs:
 
 git-diff-index <tree-ish>::
         compares the <tree-ish> and the files on the filesystem.
@@ -46,7 +46,7 @@ That is, from the left to the right:
 . path for "dst"; only exists for C or R.
 . an LF or a NUL when '-z' option is used, to terminate the record.
 
-<sha1> is shown as all 0's if new is a file on the filesystem
+<sha1> is shown as all 0's if a file is new on the filesystem
 and it is out of sync with the cache.
 
 Example:
@@ -91,7 +91,7 @@ For a path that is added, removed, or modified,
 where:
 
      <old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
-		      contents of <old|ne>,
+		      contents of <old|new>,
      <old|new>-hex:: are the 40-hexdigit SHA1 hashes,
      <old|new>-mode:: are the octal representation of the file modes.
 
@@ -121,12 +121,11 @@ The `a/` and `b/` filenames are the same unless rename/copy is
 involved.  Especially, even for a creation or a deletion,
 `/dev/null` is _not_ used in place of `a/` or `b/` filenames.
 +
-When rename/copy is involved, `file1` and `file2` shows the
+When rename/copy is involved, `file1` and `file2` show the
 name of the source file of the rename/copy and the name of
 the file that rename/copy produces, respectively.
 
-2.   It is followed by extended header lines that are one or
-     more of:
+2.   It is followed by one or more extended header lines:
 
        old mode <mode>
        new mode <mode>

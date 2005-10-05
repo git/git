@@ -5,9 +5,8 @@
 	Synonym for "-p".
 
 -r::
-	Look recursively in subdirectories; this flag does not
-	mean anything to commands other than "git-diff-tree";
-	other diff commands always look at all the subdirectories.
+	Look recursively in subdirectories; only used by "git-diff-tree";
+	other diff commands always work recursively.
 
 -z::
 	\0 line termination on output
@@ -28,26 +27,26 @@
 	Detect copies as well as renames.
 
 --find-copies-harder::
-	By default, -C option finds copies only if the original
-	file of the copy was modified in the same changeset for
-	performance reasons.  This flag makes the command
+	For performance reasons, by default, -C option finds copies only 
+	if the original file of the copy was modified in the same 
+	changeset.  This flag makes the command
 	inspect unmodified files as candidates for the source of
 	copy.  This is a very expensive operation for large
 	projects, so use it with caution.
 
 -l<num>::
 	-M and -C options require O(n^2) processing time where n
-	in the number of potential rename/copy targets.  This
+	is the number of potential rename/copy targets.  This
 	option prevents rename/copy detection from running if
-	the number of rename/copy targets exceed the specified
+	the number of rename/copy targets exceeds the specified
 	number.
 
 -S<string>::
-	Look for differences that contains the change in <string>.
+	Look for differences that contain the change in <string>.
 
 --pickaxe-all::
 	When -S finds a change, show all the changes in that
-	changeset, not just the files that contains the change
+	changeset, not just the files that contain the change
 	in <string>.
 
 -O<orderfile>::

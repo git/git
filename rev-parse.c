@@ -32,6 +32,7 @@ static int revs_count = 0;
 static int is_rev_argument(const char *arg)
 {
 	static const char *rev_args[] = {
+		"--all",
 		"--bisect",
 		"--header",
 		"--max-age=",

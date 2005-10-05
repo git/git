@@ -177,7 +177,7 @@ diffcore-merge-broken
 ---------------------
 
 This transformation is used to merge filepairs broken by
-diffcore-break, and were not transformed into rename/copy by
+diffcore-break, and not transformed into rename/copy by
 diffcore-rename, back into a single modification.  This always
 runs when diffcore-break is used.
 
@@ -206,10 +206,10 @@ like these:
 * -B/60 (the same as above, since diffcore-break defaults to 50%).
 
 Note that earlier implementation left a broken pair as a separate
-creation and deletion patches.  This was unnecessary hack and
+creation and deletion patches.  This was an unnecessary hack and
 the latest implementation always merges all the broken pairs
 back into modifications, but the resulting patch output is
-formatted differently to still let the reviewing easier for such
+formatted differently for easier review in case of such
 a complete rewrite by showing the entire contents of old version
 prefixed with '-', followed by the entire contents of new
 version prefixed with '+'.

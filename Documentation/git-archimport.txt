@@ -20,20 +20,23 @@ it will just import it as a regular commit. If it can find it, it will mark it
 as a merge whenever possible (see discussion below). 
 
 The script expects you to provide the key roots where it can start the import 
-from an 'initial import' or 'tag' type of Arch commit. It will follow and import 
-new branches within the provided roots. 
+from an 'initial import' or 'tag' type of Arch commit. It will follow and 
+import new branches within the provided roots. 
 
 It expects to be dealing with one project only. If it sees 
-branches that have different roots, it will refuse to run. In that case, edit your
-<archive/branch> parameters to define clearly the scope of the import. 
+branches that have different roots, it will refuse to run. In that case, 
+edit your <archive/branch> parameters to define clearly the scope of the 
+import. 
 
-`git-archimport` uses `tla` extensively in the background to access the Arch repository.
+`git-archimport` uses `tla` extensively in the background to access the 
+Arch repository.
 Make sure you have a recent version of `tla` available in the path. `tla` must
 know about the repositories you pass to `git-archimport`. 
 
 For the initial import `git-archimport` expects to find itself in an empty 
 directory. To follow the development of a project that uses Arch, rerun 
-`git-archimport` with the same parameters as the initial import to perform incremental imports.
+`git-archimport` with the same parameters as the initial import to perform 
+incremental imports.
 
 MERGES
 ------

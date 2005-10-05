@@ -30,10 +30,18 @@ static void create_pack_file(void)
 
 	if (!pid) {
 		int i;
-		int args = nr_has + nr_needs + 5;
-		char **argv = xmalloc(args * sizeof(char *));
-		char *buf = xmalloc(args * 45);
-		char **p = argv;
+		int args;
+		char **argv;
+		char *buf;
+		char **p;
+
+		if (MAX_NEEDS <= nr_needs)
+			args = nr_has + 10;
+		else
+			args = nr_has + nr_needs + 5;
+		argv = xmalloc(args * sizeof(char *));
+		buf = xmalloc(args * 45);
+		p = argv;
 
 		dup2(fd[1], 1);
 		close(0);
@@ -41,10 +49,14 @@ static void create_pack_file(void)
 		close(fd[1]);
 		*p++ = "git-rev-list";
 		*p++ = "--objects";
-		for (i = 0; i < nr_needs; i++) {
-			*p++ = buf;
-			memcpy(buf, sha1_to_hex(needs_sha1[i]), 41);
-			buf += 41;
+		if (MAX_NEEDS <= nr_needs)
+			*p++ = "--all";
+		else {
+			for (i = 0; i < nr_needs; i++) {
+				*p++ = buf;
+				memcpy(buf, sha1_to_hex(needs_sha1[i]), 41);
+				buf += 41;
+			}
 		}
 		for (i = 0; i < nr_has; i++) {
 			*p++ = buf;
@@ -129,18 +141,24 @@ static int receive_needs(void)
 
 	needs = 0;
 	for (;;) {
+		unsigned char dummy[20], *sha1_buf;
 		len = packet_read_line(0, line, sizeof(line));
 		if (!len)
 			return needs;
 
-		/*
-		 * This is purely theoretical right now: git-fetch-pack only
-		 * ever asks for a single HEAD
-		 */
-		if (needs >= MAX_NEEDS)
-			die("I'm only doing a max of %d requests", MAX_NEEDS);
-		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, needs_sha1[needs]))
-			die("git-upload-pack: protocol error, expected to get sha, not '%s'", line);
+		sha1_buf = dummy;
+		if (needs == MAX_NEEDS) {
+			fprintf(stderr,
+				"warning: supporting only a max of %d requests. "
+				"sending everything instead.\n",
+				MAX_NEEDS);
+		}
+		else if (needs < MAX_NEEDS)
+			sha1_buf = needs_sha1[needs];
+
+		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, sha1_buf))
+			die("git-upload-pack: protocol error, "
+			    "expected to get sha, not '%s'", line);
 		needs++;
 	}
 }
