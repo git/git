@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"
@@ -489,6 +490,22 @@ static void handle_one_commit(struct commit *com, struct commit_list **lst)
 	commit_list_insert(com, lst);
 }
 
+/* for_each_ref() callback does not allow user data -- Yuck. */
+static struct commit_list **global_lst;
+
+static int include_one_commit(const char *path, const unsigned char *sha1)
+{
+	struct commit *com = get_commit_reference(path, 0);
+	handle_one_commit(com, global_lst);
+	return 0;
+}
+
+static void handle_all(struct commit_list **lst)
+{
+	global_lst = lst;
+	for_each_ref(include_one_commit);
+	global_lst = NULL;
+}
 
 int main(int argc, char **argv)
 {
@@ -540,6 +557,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--bisect")) {
 			bisect_list = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--all")) {
+			handle_all(&list);
 			continue;
 		}
 		if (!strcmp(arg, "--objects")) {
