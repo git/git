@@ -36,12 +36,26 @@ static ssize_t force_write(int fd, void *buffer, size_t length)
 	return ret;
 }
 
+static int prefetches = 0;
+
+static struct object_list *in_transit = NULL;
+static struct object_list **end_of_transit = &in_transit;
+
 void prefetch(unsigned char *sha1)
 {
 	char type = 'o';
+	struct object_list *node;
+	if (prefetches > 100) {
+		fetch(in_transit->item->sha1);
+	}
+	node = xmalloc(sizeof(struct object_list));
+	node->next = NULL;
+	node->item = lookup_unknown_object(sha1);
+	*end_of_transit = node;
+	end_of_transit = &node->next;
 	force_write(fd_out, &type, 1);
 	force_write(fd_out, sha1, 20);
-	//memcpy(requested + 20 * prefetches++, sha1, 20);
+	prefetches++;
 }
 
 static char conn_buf[4096];
@@ -51,6 +65,18 @@ int fetch(unsigned char *sha1)
 {
 	int ret;
 	signed char remote;
+	struct object_list *temp;
+
+	if (memcmp(sha1, in_transit->item->sha1, 20)) {
+		// we must have already fetched it to clean the queue
+		return has_sha1_file(sha1) ? 0 : -1;
+	}
+	prefetches--;
+	temp = in_transit;
+	in_transit = in_transit->next;
+	if (!in_transit)
+		end_of_transit = &in_transit;
+	free(temp);
 
 	if (conn_buf_posn) {
 		remote = conn_buf[0];
