@@ -22,7 +22,7 @@ OPTIONS
 -q::
 	Apply patches interactively.  The user will be given
 	opportunity to edit the log message and the patch before
-	attempting to apply patch in each e-mail message.
+	attempting to apply it.
 
 -k::
 	Usually the program 'cleans up' the Subject: header line

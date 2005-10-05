@@ -23,7 +23,7 @@ OPTIONS
 	The name of the branch to create.
 
 start-point::
-	Where to make the branch; defaults to HEAD.
+	Where to create the branch; defaults to HEAD.
 
 Author
 ------

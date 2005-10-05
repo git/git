@@ -76,7 +76,7 @@ During the bisection process, you can say
 
 to see the currently remaining suspects in `gitk`.
 
-The good/bad you told the command is logged, and `git bisect
+The good/bad input is logged, and `git bisect
 log` shows what you have done so far.  You can truncate its
 output somewhere and save it in a file, and run
 

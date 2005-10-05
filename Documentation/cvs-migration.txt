@@ -24,7 +24,7 @@ The good news is that most people don't do that, and in fact most sane
 people think it's a bug in CVS that makes it tag (and check in changes)
 one file at a time.  So most projects you'll ever see will use CVS
 'as if' it was sane.  In which case you'll find it very easy indeed to
-move over to Git. 
+move over to git. 
 
 First off: this is not a git tutorial. See
 link:tutorial.html[Documentation/tutorial.txt] for how git
@@ -229,7 +229,7 @@ does rename or copy would not show in the output, and if the
 "o-file.c", it would find the commit that changed the statement
 when it was in "o-file.c".
 
-NOTE: The current versions of "git-diff-tree -C" is not eager
+NOTE: The current version of "git-diff-tree -C" is not eager
   enough to find copies, and it will miss the fact that a-file.c
   was created by copying o-file.c unless o-file.c was somehow
   changed in the same commit.

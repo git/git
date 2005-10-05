@@ -32,7 +32,7 @@ OPTIONS
 
 <type>::
 	Typically this matches the real type of <object> but asking
-	for a type that can trivially dereferenced from the given
+	for a type that can trivially be dereferenced from the given
 	<object> is also permitted.  An example is to ask for a
 	"tree" with <object> being a commit object that contains it,
 	or to ask for a "blob" with <object> being a tag object that
