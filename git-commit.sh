@@ -133,10 +133,13 @@ fi | git-stripspace >.editmsg
 
 case "$signoff" in
 t)
-	git-var GIT_COMMITTER_IDENT | sed -e '
-		s/>.*/>/
-		s/^/Signed-off-by: /
-	' >>.editmsg
+	{
+		echo
+		git-var GIT_COMMITTER_IDENT | sed -e '
+			s/>.*/>/
+			s/^/Signed-off-by: /
+		'
+	} >>.editmsg
 	;;
 esac
 
@@ -195,7 +198,7 @@ else
 	PARENTS=""
 fi
 git-status >>.editmsg
-if [ "$?" != "0" -a ! -f $GIT_DIR/MERGE_HEAD ]
+if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f .editmsg
 	git-status

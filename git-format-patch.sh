@@ -128,10 +128,6 @@ whosepatchScript='
 	q
 }'
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-stripCommitHead='/^'"$_x40"' (from '"$_x40"')$/d'
-
 git-cherry -v "$rev1" "$rev2" |
 while read sign rev comment
 do
@@ -216,7 +212,7 @@ Date: '"$ad"
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
-	git-diff-tree -p $diff_opts "$commit" | sed -e "$stripCommitHead"
+	git-diff-tree -p $diff_opts "$commit"
 
 	case "$mbox" in
 	t)

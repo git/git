@@ -22,7 +22,7 @@ OPTIONS
 	Commit to cherry-pick.
 
 -r::
-	Usuall the command appends which commit was
+	Usually the command appends which commit was
 	cherry-picked after the original commit message when
 	making a commit.  This option, '--replay', causes it to
 	use the original commit message intact.  This is useful

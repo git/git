@@ -51,6 +51,7 @@ static void write_refs(struct ref *ref)
 	struct ref *head = NULL, *head_ptr, *master_ref;
 	char *head_path;
 
+	/* Upload-pack must report HEAD first */
 	if (!strcmp(ref->name, "HEAD")) {
 		head = ref;
 		ref = ref->next;
@@ -60,17 +61,21 @@ static void write_refs(struct ref *ref)
 	while (ref) {
 		if (is_master(ref))
 			master_ref = ref;
-		if (head && !memcmp(ref->old_sha1, head->old_sha1, 20)) {
-			if (!head_ptr || ref == master_ref)
-				head_ptr = ref;
-		}
+		if (head &&
+		    !memcmp(ref->old_sha1, head->old_sha1, 20) &&
+		    !strncmp(ref->name, "refs/heads/",11) &&
+		    (!head_ptr || ref == master_ref))
+			head_ptr = ref;
+
 		write_one_ref(ref);
 		ref = ref->next;
 	}
-	if (!head)
+	if (!head) {
+		fprintf(stderr, "No HEAD in remote.\n");
 		return;
+	}
 
-	head_path = git_path("HEAD");
+	head_path = strdup(git_path("HEAD"));
 	if (!head_ptr) {
 		/*
 		 * If we had a master ref, and it wasn't HEAD, we need to undo the
@@ -82,6 +87,7 @@ static void write_refs(struct ref *ref)
 			unlink(head_path);
 		}
 		write_one_ref(head);
+		free(head_path);
 		return;
 	}
 
@@ -89,13 +95,15 @@ static void write_refs(struct ref *ref)
 	if (master_ref)
 		return;
 
+	fprintf(stderr, "Setting HEAD to %s\n", head_ptr->name);
+
 	/*
 	 * Uhhuh. Other end didn't have master. We start HEAD off with
 	 * the first branch with the same value.
 	 */
-	unlink(head_path);
-	if (symlink(head_ptr->name, head_path) < 0)
+	if (create_symref(head_path, head_ptr->name) < 0)
 		die("unable to link HEAD to %s", head_ptr->name);
+	free(head_path);
 }
 
 static int clone_pack(int fd[2], int nr_match, char **match)

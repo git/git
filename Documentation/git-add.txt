@@ -11,7 +11,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A simple wrapper to git-update-index to add files to the cache for people used
+A simple wrapper for git-update-index to add files to the cache for people used
 to do "cvs add".
 
 OPTIONS
