@@ -82,7 +82,11 @@ do
     do
 	git-applypatch .dotest/msg-clean .dotest/patch .dotest/info "$signoff"
 	case "$?" in
-	0 | 2 )
+	0)
+		# Remove the cleanly applied one to reduce clutter.
+		rm -f .dotest/$i
+		;;
+	2)
 		# 2 is a special exit code from applypatch to indicate that
 	    	# the patch wasn't applied, but continue anyway 
 		;;
