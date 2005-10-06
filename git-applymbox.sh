@@ -9,8 +9,6 @@
 ## You give it a mbox-format collection of emails, and it will try to
 ## apply them to the kernel using "applypatch"
 ##
-## applymbox [-u] [-k] [-q] (-c .dotest/msg-number | mail_archive) [Signoff_file]"
-##
 ## The patch application may fail in the middle.  In which case:
 ## (1) look at .dotest/patch and fix it up to apply
 ## (2) re-run applymbox with -c .dotest/msg-number for the current one.
@@ -21,7 +19,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    echo >&2 "applymbox [-u] [-k] [-q] (-c .dotest/<num> | mbox) [signoff]"
+    echo >&2 "applymbox [-u] [-k] [-q] [-m] (-c .dotest/<num> | mbox) [signoff]"
     exit 1
 }
 
@@ -33,6 +31,7 @@ do
 	-k)	keep_subject=-k ;;
 	-q)	query_apply=t ;;
 	-c)	continue="$2"; resume=f; shift ;;
+	-m)	fallback_3way=t ;;
 	-*)	usage ;;
 	*)	break ;;
 	esac
@@ -55,6 +54,9 @@ fi
 
 case "$query_apply" in
 t)	touch .dotest/.query_apply
+esac
+case "$fall_back_3way" in
+t)	: >.dotest/.3way
 esac
 case "$keep_subject" in
 -k)	: >.dotest/.keep_subject

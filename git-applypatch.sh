@@ -22,6 +22,8 @@ query_apply=.dotest/.query_apply
 ## if this file exists.
 keep_subject=.dotest/.keep_subject
 
+## We do not attempt the 3-way merge fallback unless this file exists.
+fall_back_3way=.dotest/.3way
 
 MSGFILE=$1
 PATCHFILE=$2
@@ -102,10 +104,79 @@ echo Applying "'$SUBJECT'"
 echo
 
 git-apply --index "$PATCHFILE" || {
+
+	# git-apply exits with status 1 when the patch does not apply,
+	# but it die()s with other failures, most notably upon corrupt
+	# patch.  In the latter case, there is no point to try applying
+	# it to another tree and do 3-way merge.
+	test $? = 1 || exit 1
+
+	test -f "$fall_back_3way" || exit 1
+
 	# Here if we know which revision the patch applies to,
 	# we create a temporary working tree and index, apply the
 	# patch, and attempt 3-way merge with the resulting tree.
-	exit 1
+
+	O_OBJECT=`cd "$GIT_OBJECT_DIRECTORY" && pwd`
+	rm -fr .patch-merge-*
+
+	(
+		N=10
+
+		# if the patch records the base tree...
+		sed -ne '
+			/^diff /q
+			/^applies-to: \([0-9a-f]*\)$/{
+				s//\1/p
+				q
+			}
+		' "$PATCHFILE"
+
+		# or hoping the patch is against our recent commits...
+		git-rev-list --max-count=$N HEAD
+
+		# or hoping the patch is against known tags...
+		git-ls-remote --tags .
+	) |
+	while read base junk
+	do
+		# Try it if we have it as a tree.
+		git-cat-file tree "$base" >/dev/null 2>&1 || continue
+
+		rm -fr .patch-merge-tmp-* &&
+		mkdir .patch-merge-tmp-dir || break
+		(
+			cd .patch-merge-tmp-dir &&
+			GIT_INDEX_FILE=../.patch-merge-tmp-index &&
+			GIT_OBJECT_DIRECTORY="$O_OBJECT" &&
+			export GIT_INDEX_FILE GIT_OBJECT_DIRECTORY &&
+			git-read-tree "$base" &&
+			git-apply --index &&
+			mv ../.patch-merge-tmp-index ../.patch-merge-index &&
+			echo "$base" >../.patch-merge-base
+		) <"$PATCHFILE"  2>/dev/null && break
+	done
+
+	test -f .patch-merge-index &&
+	his_tree=$(GIT_INDEX_FILE=.patch-merge-index git-write-tree) &&
+	orig_tree=$(cat .patch-merge-base) &&
+	rm -fr .patch-merge-* || exit 1
+
+	echo Falling back to patching base and 3-way merge using $orig_tree...
+
+	# This is not so wrong.  Depending on which base we picked,
+	# orig_tree may be wildly different from ours, but his_tree
+	# has the same set of wildly different changes in parts the
+	# patch did not touch, so resolve ends up cancelling them,
+	# saying that we reverted all those changes.
+
+	if git-merge-resolve $orig_tree -- HEAD $his_tree
+	then
+		echo Done.
+	else
+		echo Failed to merge in the changes.
+		exit 1
+	fi
 }
 
 if test -x "$GIT_DIR"/hooks/pre-applypatch
