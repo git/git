@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 get_data_source () {
 	case "$1" in
