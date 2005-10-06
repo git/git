@@ -42,7 +42,8 @@ case "$continue" in
 '')
 	rm -rf .dotest
 	mkdir .dotest
-	git-mailsplit "$1" .dotest || exit 1
+	num_msgs=$(git-mailsplit "$1" .dotest) || exit 1
+	echo "$num_msgs patch(es) to process."
 	shift
 esac
 

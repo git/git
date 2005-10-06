@@ -17,7 +17,7 @@
 
 static int usage(void)
 {
-	fprintf(stderr, "mailsplit <mbox> <directory>\n");
+	fprintf(stderr, "git-mailsplit [-d<prec>] <mbox> <directory>\n");
 	exit(1);
 }
 
@@ -96,11 +96,17 @@ corrupt:
 
 int main(int argc, char **argv)
 {
-	int fd, nr;
+	int fd, nr, nr_prec = 4;
 	struct stat st;
 	unsigned long size;
 	void *map;
 
+	if (argc == 4 && !strncmp(argv[1], "-d", 2)) {
+		nr_prec = strtol(argv[1] + 2, NULL, 10);
+		if (nr_prec < 3 || 10 <= nr_prec)
+			usage();
+		argc--; argv++;
+	}
 	if (argc != 3)
 		usage();
 	fd = open(argv[1], O_RDONLY);
@@ -127,7 +133,7 @@ int main(int argc, char **argv)
 		char name[10];
 		unsigned long len = parse_email(map, size);
 		assert(len <= size);
-		sprintf(name, "%04d", ++nr);
+		sprintf(name, "%0*d", nr_prec, ++nr);
 		fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 		if (fd < 0) {
 			perror(name);
@@ -141,5 +147,6 @@ int main(int argc, char **argv)
 		map += len;
 		size -= len;
 	} while (size > 0);
+	printf("%d\n", nr);
 	return 0;
 }
