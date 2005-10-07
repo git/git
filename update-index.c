@@ -272,6 +272,54 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 		die("Unable to process file %s", path);
 }
 
+static void read_index_info(int line_termination)
+{
+	struct strbuf buf;
+	strbuf_init(&buf);
+	while (1) {
+		char *ptr;
+		unsigned char sha1[20];
+		unsigned int mode;
+
+		read_line(&buf, stdin, line_termination);
+		if (buf.eof)
+			break;
+
+		mode = strtoul(buf.buf, &ptr, 8);
+		if (ptr == buf.buf || *ptr != ' ' ||
+		    get_sha1_hex(ptr + 1, sha1) ||
+		    ptr[41] != '\t')
+			goto bad_line;
+
+		ptr += 42;
+		if (!verify_path(ptr)) {
+			fprintf(stderr, "Ignoring path %s\n", ptr);
+			continue;
+		}
+
+		if (!mode) {
+			/* mode == 0 means there is no such path -- remove */
+			if (remove_file_from_cache(ptr))
+				die("git-update-index: unable to remove %s",
+				    ptr);
+		}
+		else {
+			/* mode ' ' sha1 '\t' name
+			 * ptr[-1] points at tab,
+			 * ptr[-41] is at the beginning of sha1
+			 */
+			ptr[-42] = ptr[-1] = 0;
+			if (add_cacheinfo(buf.buf, ptr-41, ptr))
+				die("git-update-index: unable to update %s",
+				    ptr);
+		}
+		continue;
+
+	bad_line:
+		die("malformed index info %s", buf.buf);
+	}
+}
+
 int main(int argc, const char **argv)
 {
 	int i, newfd, entries, has_errors = 0, line_termination = '\n';
@@ -345,6 +393,11 @@ int main(int argc, const char **argv)
 					die("--stdin must be at the end");
 				read_from_stdin = 1;
 				break;
+			}
+			if (!strcmp(path, "--index-info")) {
+				allow_add = allow_replace = allow_remove = 1;
+				read_index_info(line_termination);
+				continue;
 			}
 			if (!strcmp(path, "--ignore-missing")) {
 				not_new = 1;
