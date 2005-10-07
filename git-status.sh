@@ -42,7 +42,15 @@ git-update-index -q --unmerged --refresh || exit
 if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
 then
 	git-diff-index -M --cached HEAD |
-	sed 's/^://' |
+	sed -e '
+		s/^:// 
+		h
+		s/^[^\t]*//
+		s/ /\\ /g
+		x
+		s/\t.*$//
+		G
+		s/\n/ /' |
 	report "Updated but not checked in" "will commit"
 
 	committable="$?"
@@ -51,14 +59,24 @@ else
 # Initial commit
 #'
 	git-ls-files |
-	sed 's/^/o o o o A /' |
+	sed -e '
+		s/ /\\ /g
+		s/^/o o o o A /' |
 	report "Updated but not checked in" "will commit"
 
 	committable="$?"
 fi
 
 git-diff-files |
-sed 's/^://' |
+sed -e '
+	s/^:// 
+	h
+	s/^[^\t]*//
+	s/ /\\ /g
+	x
+	s/\t.*$//
+	G
+	s/\n/ /' |
 report "Changed but not updated" "use git-update-index to mark for commit"
 
 if grep -v '^#' "$GIT_DIR/info/exclude" >/dev/null 2>&1
