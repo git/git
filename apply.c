@@ -14,6 +14,7 @@
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
 //  --show-files shows the directory changes
+//  --show-index-info shows the old and new index info for paths if available.
 //
 static int check_index = 0;
 static int write_index = 0;
@@ -22,8 +23,9 @@ static int summary = 0;
 static int check = 0;
 static int apply = 1;
 static int show_files = 0;
+static int show_index_info = 0;
 static const char apply_usage[] =
-"git-apply [--stat] [--summary] [--check] [--index] [--apply] [--show-files] <patch>...";
+"git-apply [--stat] [--summary] [--check] [--index] [--apply] [--show-files] [--show-index-info] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -56,6 +58,8 @@ struct patch {
 	struct fragment *fragments;
 	char *result;
 	unsigned long resultsize;
+	char old_sha1_prefix[41];
+	char new_sha1_prefix[41];
 	struct patch *next;
 };
 
@@ -334,6 +338,38 @@ static int gitdiff_dissimilarity(const char *line, struct patch *patch)
 	return 0;
 }
 
+static int gitdiff_index(const char *line, struct patch *patch)
+{
+	/* index line is N hexadecimal, "..", N hexadecimal,
+	 * and optional space with octal mode.
+	 */
+	const char *ptr, *eol;
+	int len;
+
+	ptr = strchr(line, '.');
+	if (!ptr || ptr[1] != '.' || 40 <= ptr - line)
+		return 0;
+	len = ptr - line;
+	memcpy(patch->old_sha1_prefix, line, len);
+	patch->old_sha1_prefix[len] = 0;
+
+	line = ptr + 2;
+	ptr = strchr(line, ' ');
+	eol = strchr(line, '\n');
+
+	if (!ptr || eol < ptr)
+		ptr = eol;
+	len = ptr - line;
+
+	if (40 <= len)
+		return 0;
+	memcpy(patch->new_sha1_prefix, line, len);
+	patch->new_sha1_prefix[len] = 0;
+	if (*ptr == ' ')
+		patch->new_mode = patch->old_mode = strtoul(ptr+1, NULL, 8);
+	return 0;
+}
+
 /*
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
@@ -438,6 +474,7 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 			{ "rename to ", gitdiff_renamedst },
 			{ "similarity index ", gitdiff_similarity },
 			{ "dissimilarity index ", gitdiff_dissimilarity },
+			{ "index ", gitdiff_index },
 			{ "", gitdiff_unrecognized },
 		};
 		int i;
@@ -1136,6 +1173,36 @@ static void show_file_list(struct patch *patch)
 	}
 }
 
+static inline int is_null_sha1(const unsigned char *sha1)
+{
+	return !memcmp(sha1, null_sha1, 20);
+}
+
+static void show_index_list(struct patch *list)
+{
+	struct patch *patch;
+
+	/* Once we start supporting the reverse patch, it may be
+	 * worth showing the new sha1 prefix, but until then...
+	 */
+	for (patch = list; patch; patch = patch->next) {
+		const unsigned char *sha1_ptr;
+		unsigned char sha1[20];
+		const char *name;
+
+		name = patch->old_name ? patch->old_name : patch->new_name;
+		if (patch->is_new)
+			sha1_ptr = null_sha1;
+		else if (get_sha1(patch->old_sha1_prefix, sha1))
+			die("sha1 information is lacking or useless (%s).",
+			    name);
+		else
+			sha1_ptr = sha1;
+		printf("%06o %s	%s\n",patch->old_mode,
+		       sha1_to_hex(sha1_ptr), name);
+	}
+}
+
 static void stat_patch_list(struct patch *patch)
 {
 	int files, adds, dels;
@@ -1476,6 +1543,9 @@ static int apply_patch(int fd)
 	if (show_files)
 		show_file_list(list);
 
+	if (show_index_info)
+		show_index_list(list);
+
 	if (diffstat)
 		stat_patch_list(list);
 
@@ -1532,6 +1602,11 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--show-files")) {
 			show_files = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--show-index-info")) {
+			apply = 0;
+			show_index_info = 1;
 			continue;
 		}
 		fd = open(arg, O_RDONLY);
