@@ -1545,3 +1545,42 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 		munmap(buf, size);
 	return ret;
 }
+
+int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object)
+{
+	int fd;
+	char *target;
+
+	switch (st->st_mode & S_IFMT) {
+	case S_IFREG:
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			return error("open(\"%s\"): %s", path,
+				     strerror(errno));
+		if (index_fd(sha1, fd, st, write_object, NULL) < 0)
+			return error("%s: failed to insert into database",
+				     path);
+		break;
+	case S_IFLNK:
+		target = xmalloc(st->st_size+1);
+		if (readlink(path, target, st->st_size+1) != st->st_size) {
+			char *errstr = strerror(errno);
+			free(target);
+			return error("readlink(\"%s\"): %s", path,
+			             errstr);
+		}
+		if (!write_object) {
+			unsigned char hdr[50];
+			int hdrlen;
+			write_sha1_file_prepare(target, st->st_size, "blob",
+						sha1, hdr, &hdrlen);
+		} else if (write_sha1_file(target, st->st_size, "blob", sha1))
+			return error("%s: failed to insert into database",
+				     path);
+		free(target);
+		break;
+	default:
+		return error("%s: unsupported file type", path);
+	}
+	return 0;
+}

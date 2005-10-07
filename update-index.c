@@ -37,8 +37,6 @@ static int add_file_to_cache(const char *path)
 	int size, namelen, option, status;
 	struct cache_entry *ce;
 	struct stat st;
-	int fd;
-	char *target;
 
 	status = lstat(path, &st);
 	if (status < 0 || S_ISDIR(st.st_mode)) {
@@ -77,34 +75,9 @@ static int add_file_to_cache(const char *path)
 	fill_stat_cache_info(ce, &st);
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	ce->ce_flags = htons(namelen);
-	switch (st.st_mode & S_IFMT) {
-	case S_IFREG:
-		fd = open(path, O_RDONLY);
-		if (fd < 0)
-			return error("open(\"%s\"): %s", path, strerror(errno));
-		if (index_fd(ce->sha1, fd, &st, !info_only, NULL) < 0)
-			return error("%s: failed to insert into database", path);
-		break;
-	case S_IFLNK:
-		target = xmalloc(st.st_size+1);
-		if (readlink(path, target, st.st_size+1) != st.st_size) {
-			char *errstr = strerror(errno);
-			free(target);
-			return error("readlink(\"%s\"): %s", path,
-			             errstr);
-		}
-		if (info_only) {
-			unsigned char hdr[50];
-			int hdrlen;
-			write_sha1_file_prepare(target, st.st_size, "blob",
-						ce->sha1, hdr, &hdrlen);
-		} else if (write_sha1_file(target, st.st_size, "blob", ce->sha1))
-			return error("%s: failed to insert into database", path);
-		free(target);
-		break;
-	default:
-		return error("%s: unsupported file type", path);
-	}
+
+	if (index_path(ce->sha1, path, &st, !info_only))
+		return -1;
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option))

@@ -596,15 +596,31 @@ static void run_external_diff(const char *pgm,
 	remove_tempfile();
 }
 
+static void diff_fill_sha1_info(struct diff_filespec *one)
+{
+	if (DIFF_FILE_VALID(one)) {
+		if (!one->sha1_valid) {
+			struct stat st;
+			if (stat(one->path, &st) < 0)
+				die("stat %s", one->path);
+			if (index_path(one->sha1, one->path, &st, 0))
+				die("cannot hash %s\n", one->path);
+		}
+	}
+	else
+		memset(one->sha1, 0, 20);
+}
+
 static void run_diff(struct diff_filepair *p)
 {
 	const char *pgm = external_diff();
-	char msg_[PATH_MAX*2+200], *xfrm_msg;
+	char msg[PATH_MAX*2+300], *xfrm_msg;
 	struct diff_filespec *one;
 	struct diff_filespec *two;
 	const char *name;
 	const char *other;
 	int complete_rewrite = 0;
+	int len;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
@@ -616,38 +632,59 @@ static void run_diff(struct diff_filepair *p)
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
 	one = p->one; two = p->two;
+
+	diff_fill_sha1_info(one);
+	diff_fill_sha1_info(two);
+
+	len = 0;
 	switch (p->status) {
 	case DIFF_STATUS_COPIED:
-		sprintf(msg_,
-			"similarity index %d%%\n"
-			"copy from %s\n"
-			"copy to %s",
-			(int)(0.5 + p->score * 100.0/MAX_SCORE),
-			name, other);
-		xfrm_msg = msg_;
+		len += snprintf(msg + len, sizeof(msg) - len,
+				"similarity index %d%%\n"
+				"copy from %s\n"
+				"copy to %s\n",
+				(int)(0.5 + p->score * 100.0/MAX_SCORE),
+				name, other);
 		break;
 	case DIFF_STATUS_RENAMED:
-		sprintf(msg_,
-			"similarity index %d%%\n"
-			"rename from %s\n"
-			"rename to %s",
-			(int)(0.5 + p->score * 100.0/MAX_SCORE),
-			name, other);
-		xfrm_msg = msg_;
+		len += snprintf(msg + len, sizeof(msg) - len,
+				"similarity index %d%%\n"
+				"rename from %s\n"
+				"rename to %s\n",
+				(int)(0.5 + p->score * 100.0/MAX_SCORE),
+				name, other);
 		break;
 	case DIFF_STATUS_MODIFIED:
 		if (p->score) {
-			sprintf(msg_,
-				"dissimilarity index %d%%",
-				(int)(0.5 + p->score * 100.0/MAX_SCORE));
-			xfrm_msg = msg_;
+			len += snprintf(msg + len, sizeof(msg) - len,
+					"dissimilarity index %d%%\n",
+					(int)(0.5 + p->score *
+					      100.0/MAX_SCORE));
 			complete_rewrite = 1;
 			break;
 		}
 		/* fallthru */
 	default:
-		xfrm_msg = NULL;
+		/* nothing */
+		;
 	}
+
+	if (memcmp(one->sha1, two->sha1, 20)) {
+		char one_sha1[41];
+		memcpy(one_sha1, sha1_to_hex(one->sha1), 41);
+
+		len += snprintf(msg + len, sizeof(msg) - len,
+				"index %.7s..%.7s", one_sha1,
+				sha1_to_hex(two->sha1));
+		if (one->mode == two->mode)
+			len += snprintf(msg + len, sizeof(msg) - len,
+					" %06o", one->mode);
+		len += snprintf(msg + len, sizeof(msg) - len, "\n");
+	}
+
+	if (len)
+		msg[--len] = 0;
+	xfrm_msg = len ? msg : NULL;
 
 	if (!pgm &&
 	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
