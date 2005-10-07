@@ -54,11 +54,13 @@ static int prepare_children(struct tree_entry_list *elem)
 	return 0;
 }
 
-static struct tree_entry_list *find_entry(const char *path)
+static struct tree_entry_list *find_entry(const char *path, char *pathbuf)
 {
 	const char *next, *slash;
 	int len;
-	struct tree_entry_list *elem = &root_entry;
+	struct tree_entry_list *elem = &root_entry, *oldelem = NULL;
+
+	*(pathbuf) = '\0';
 
 	/* Find tree element, descending from root, that
 	 * corresponds to the named path, lazily expanding
@@ -86,6 +88,10 @@ static struct tree_entry_list *find_entry(const char *path)
 			len = slash - path;
 		}
 		if (len) {
+			if (oldelem) {
+				pathbuf += sprintf(pathbuf, "%s/", oldelem->name);
+			}
+
 			/* (len == 0) if the original path was "drivers/char/"
 			 * and we have run already two rounds, having elem
 			 * pointing at the drivers/char directory.
@@ -101,24 +107,13 @@ static struct tree_entry_list *find_entry(const char *path)
 			}
 			if (!elem)
 				return NULL;
+
+			oldelem = elem;
 		}
 		path = next;
 	}
 
 	return elem;
-}
-
-static void show_entry_name(struct tree_entry_list *e)
-{
-	/* This is yucky.  The root level is there for
-	 * our convenience but we really want to do a
-	 * forest.
-	 */
-	if (e->parent && e->parent != &root_entry) {
-		show_entry_name(e->parent);
-		putchar('/');
-	}
-	printf("%s", e->name);
 }
 
 static const char *entry_type(struct tree_entry_list *e)
@@ -134,28 +129,35 @@ static const char *entry_hex(struct tree_entry_list *e)
 }
 
 /* forward declaration for mutually recursive routines */
-static int show_entry(struct tree_entry_list *, int);
+static int show_entry(struct tree_entry_list *, int, char *pathbuf);
 
-static int show_children(struct tree_entry_list *e, int level)
+static int show_children(struct tree_entry_list *e, int level, char *pathbuf)
 {
+	int oldlen = strlen(pathbuf);
+
+	if (e != &root_entry)
+		sprintf(pathbuf + oldlen, "%s/", e->name);
+
 	if (prepare_children(e))
 		die("internal error: ls-tree show_children called with non tree");
 	e = e->item.tree->entries;
 	while (e) {
-		show_entry(e, level);
+		show_entry(e, level, pathbuf);
 		e = e->next;
 	}
+
+	pathbuf[oldlen] = '\0';
+
 	return 0;
 }
 
-static int show_entry(struct tree_entry_list *e, int level)
+static int show_entry(struct tree_entry_list *e, int level, char *pathbuf)
 {
 	int err = 0; 
 
 	if (e != &root_entry) {
-		printf("%06o %s %s	", e->mode, entry_type(e),
-		       entry_hex(e));
-		show_entry_name(e);
+		printf("%06o %s %s	%s%s", e->mode, entry_type(e),
+		       entry_hex(e), pathbuf, e->name);
 		putchar(line_termination);
 	}
 
@@ -176,10 +178,10 @@ static int show_entry(struct tree_entry_list *e, int level)
 		 */
 		if (level == 0 && !(ls_options & LS_TREE_ONLY))
 			/* case (1)-a and (1)-b */
-			err = err | show_children(e, level+1);
+			err = err | show_children(e, level+1, pathbuf);
 		else if (level && ls_options & LS_RECURSIVE)
 			/* case (2)-b */
-			err = err | show_children(e, level+1);
+			err = err | show_children(e, level+1, pathbuf);
 	}
 	return err;
 }
@@ -187,7 +189,8 @@ static int show_entry(struct tree_entry_list *e, int level)
 static int list_one(const char *path)
 {
 	int err = 0;
-	struct tree_entry_list *e = find_entry(path);
+	char pathbuf[MAXPATHLEN + 1];
+	struct tree_entry_list *e = find_entry(path, pathbuf);
 	if (!e) {
 		/* traditionally ls-tree does not complain about
 		 * missing path.  We may change this later to match
@@ -195,7 +198,7 @@ static int list_one(const char *path)
 		 */
 		return err;
 	}
-	err = err | show_entry(e, 0);
+	err = err | show_entry(e, 0, pathbuf);
 	return err;
 }
 
