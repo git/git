@@ -85,7 +85,7 @@ SCRIPT_SH = \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
-	git-applymbox.sh git-applypatch.sh \
+	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-grep.sh
 
