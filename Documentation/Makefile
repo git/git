@@ -17,14 +17,14 @@ DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 DOC_MAN1=$(patsubst %.txt,%.1,$(MAN1_TXT))
 DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 
-prefix=$(HOME)
+prefix?=$(HOME)
 bin=$(prefix)/bin
 mandir=$(prefix)/man
 man1=$(mandir)/man1
 man7=$(mandir)/man7
 # DESTDIR=
 
-INSTALL=install
+INSTALL?=install
 
 #
 # Please note that there is a minor bug in asciidoc.
