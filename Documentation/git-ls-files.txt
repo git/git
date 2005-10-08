@@ -50,7 +50,7 @@ OPTIONS
 
 -k|--killed::
 	Show files on the filesystem that need to be removed due
-	to file/directory conflicts for checkout-cache to
+	to file/directory conflicts for checkout-index to
 	succeed.
 
 -z::
