@@ -33,6 +33,9 @@ patch, perhaps ;-).
 Documentation
 -------------
 
+* Help Jon Loeliger to find place in the documentation to place
+  his drawing.
+
 * Accept patches from people who actually have done CVS
   migration and update the cvs-migration documentation.
   Link the documentation from the main git.txt page.
@@ -110,6 +113,22 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* Review the Makefile variables and exporting rules for them,
+  while looking at prefix passing by Kai Ruemmler.
+
+* Review the 'sparce object database' change by Linus and move
+  the first phase of it to the "master" branch.
+
+* Decide on mmap().  I am inclined to just stick to mmap
+  replacement by Johannes Schindelin and do nothing else right
+  now.
+
+* Revisit Santi's patch to move commit temorary files out of the
+  working tree toplevel.  More generally, review the use of
+  temporary files again.  Assuming $GIT_DIR is writable is
+  more acceptable, but the working tree toplevel may not be in
+  a rare usage pattern.
+
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
 
@@ -124,6 +143,9 @@ Technical (milder)
 * Allow 'git apply' to accept GNU diff 2.7 output that forgets
   to say '\No newline' if both input ends with incomplete
   lines.
+
+* What to do with TABs and LFs in pathnames without breaking GNU
+  patch? 
 
 * Maybe grok PGP signed text/plain in applymbox as well.
 
