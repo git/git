@@ -27,6 +27,8 @@
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
+# Define NO_MMAP if you want to avoid mmap.
+#
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
@@ -257,6 +259,10 @@ endif
 ifdef NO_STRCASESTR
 	DEFINES += -Dstrcasestr=gitstrcasestr
 	LIB_OBJS += compat/strcasestr.o
+endif
+ifdef NO_MMAP
+	DEFINES += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
+	LIB_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
 	DEFINES += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in

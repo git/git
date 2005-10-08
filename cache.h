@@ -11,7 +11,9 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#ifndef NO_MMAP
 #include <sys/mman.h>
+#endif
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -355,5 +357,19 @@ extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long
 
 /* Dumb servers support */
 extern int update_server_info(int);
+
+#ifdef NO_MMAP
+
+#ifndef PROT_READ
+#define PROT_READ 1
+#define PROT_WRITE 2
+#define MAP_PRIVATE 1
+#define MAP_FAILED ((void*)-1)
+#endif
+
+extern void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset);
+extern int gitfakemunmap(void *start, size_t length);
+
+#endif
 
 #endif /* CACHE_H */
