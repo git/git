@@ -129,6 +129,14 @@ Technical (milder)
   more acceptable, but the working tree toplevel may not be in
   a rare usage pattern.
 
+* Perhaps accept more "want"s in upload-pack and do something
+  intelligent about it.
+
+* Perhaps detect cloning request in upload-pack and cache the
+  result for next cloning request until any of our refs change.
+
+* Perhaps send less "want"s from fetch-pack.
+
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
 
@@ -169,7 +177,6 @@ Technical (milder)
   somebody else; then I do not have to maintain Documentation
   directory myself anymore, just like I simply slurp the latest
   gitk from Paul and not worry about it ;-).
-
 
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
