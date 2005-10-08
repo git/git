@@ -329,9 +329,8 @@ static int fsck_dir(int i, char *path)
 	DIR *dir = opendir(path);
 	struct dirent *de;
 
-	if (!dir) {
-		return error("missing sha1 directory '%s'", path);
-	}
+	if (!dir)
+		return 0;
 
 	while ((de = readdir(dir)) != NULL) {
 		char name[100];

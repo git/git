@@ -1248,6 +1248,73 @@ char *write_sha1_file_prepare(void *buf,
 	return sha1_file_name(sha1);
 }
 
+/*
+ * Link the tempfile to the final place, possibly creating the
+ * last directory level as you do so.
+ *
+ * Returns the errno on failure, 0 on success.
+ */
+static int link_temp_to_file(const char *tmpfile, char *filename)
+{
+	int ret;
+
+	if (!link(tmpfile, filename))
+		return 0;
+
+	/*
+	 * Try to mkdir the last path component if that failed
+	 * with an ENOENT.
+	 *
+	 * Re-try the "link()" regardless of whether the mkdir
+	 * succeeds, since a race might mean that somebody
+	 * else succeeded.
+	 */
+	ret = errno;
+	if (ret == ENOENT) {
+		char *dir = strrchr(filename, '/');
+		if (dir) {
+			*dir = 0;
+			mkdir(filename, 0777);
+			*dir = '/';
+			if (!link(tmpfile, filename))
+				return 0;
+			ret = errno;
+		}
+	}
+	return ret;
+}
+
+/*
+ * Move the just written object into its final resting place
+ */
+static int move_temp_to_file(const char *tmpfile, char *filename)
+{
+	int ret = link_temp_to_file(tmpfile, filename);
+	if (ret) {
+		/*
+		 * Coda hack - coda doesn't like cross-directory links,
+		 * so we fall back to a rename, which will mean that it
+		 * won't be able to check collisions, but that's not a
+		 * big deal.
+		 *
+		 * When this succeeds, we just return 0. We have nothing
+		 * left to unlink.
+		 */
+		if (ret == EXDEV && !rename(tmpfile, filename))
+			return 0;
+	}
+	unlink(tmpfile);
+	if (ret) {
+		if (ret != EEXIST) {
+			fprintf(stderr, "unable to write sha1 filename %s: %s", filename, strerror(ret));
+			return -1;
+		}
+		/* FIXME!!! Collision check here ? */
+	}
+
+	return 0;
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
@@ -1257,7 +1324,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	char *filename;
 	static char tmpfile[PATH_MAX];
 	unsigned char hdr[50];
-	int fd, hdrlen, ret;
+	int fd, hdrlen;
 
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
@@ -1320,32 +1387,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	close(fd);
 	free(compressed);
 
-	ret = link(tmpfile, filename);
-	if (ret < 0) {
-		ret = errno;
-
-		/*
-		 * Coda hack - coda doesn't like cross-directory links,
-		 * so we fall back to a rename, which will mean that it
-		 * won't be able to check collisions, but that's not a
-		 * big deal.
-		 *
-		 * When this succeeds, we just return 0. We have nothing
-		 * left to unlink.
-		 */
-		if (ret == EXDEV && !rename(tmpfile, filename))
-			return 0;
-	}
-	unlink(tmpfile);
-	if (ret) {
-		if (ret != EEXIST) {
-			fprintf(stderr, "unable to write sha1 filename %s: %s", filename, strerror(ret));
-			return -1;
-		}
-		/* FIXME!!! Collision check here ? */
-	}
-
-	return 0;
+	return move_temp_to_file(tmpfile, filename);
 }
 
 int write_sha1_to_fd(int fd, const unsigned char *sha1)
@@ -1420,8 +1462,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		       size_t bufsize, size_t *bufposn)
 {
-	char *filename = sha1_file_name(sha1);
-
+	char tmpfile[PATH_MAX];
 	int local;
 	z_stream stream;
 	unsigned char real_sha1[20];
@@ -1429,10 +1470,11 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	int ret;
 	SHA_CTX c;
 
-	local = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
 
+	local = mkstemp(tmpfile);
 	if (local < 0)
-		return error("Couldn't open %s\n", filename);
+		return error("Couldn't open %s for %s\n", tmpfile, sha1_to_hex(sha1));
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -1462,7 +1504,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		size = read(fd, buffer + *bufposn, bufsize - *bufposn);
 		if (size <= 0) {
 			close(local);
-			unlink(filename);
+			unlink(tmpfile);
 			if (!size)
 				return error("Connection closed?");
 			perror("Reading from connection");
@@ -1475,15 +1517,15 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	close(local);
 	SHA1_Final(real_sha1, &c);
 	if (ret != Z_STREAM_END) {
-		unlink(filename);
+		unlink(tmpfile);
 		return error("File %s corrupted", sha1_to_hex(sha1));
 	}
 	if (memcmp(sha1, real_sha1, 20)) {
-		unlink(filename);
+		unlink(tmpfile);
 		return error("File %s has bad hash\n", sha1_to_hex(sha1));
 	}
-	
-	return 0;
+
+	return move_temp_to_file(tmpfile, sha1_file_name(sha1));
 }
 
 int has_pack_index(const unsigned char *sha1)

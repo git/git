@@ -142,7 +142,7 @@ static int upload(char *dir, int dirlen)
 	 * is ok with us doing this.
 	 */
 	if ((!export_all_trees && access("git-daemon-export-ok", F_OK)) ||
-	    access("objects/00", X_OK) ||
+	    access("objects/", X_OK) ||
 	    access("HEAD", R_OK)) {
 		logerror("Not a valid git-daemon-enabled repository: '%s'", dir);
 		return -1;

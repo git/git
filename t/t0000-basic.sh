@@ -28,7 +28,7 @@ test_expect_success \
     '.git/objects should be empty after git-init-db in an empty repo.' \
     'cmp -s /dev/null should-be-empty' 
 
-# also it should have 258 subdirectories; 256 fan-out, pack, and info.
+# also it should have 258 subdirectories; 256 fan-out anymore, pack, and info.
 # 259 is counting "objects" itself
 find .git/objects -type d -print >full-of-directories
 test_expect_success \
