@@ -54,13 +54,13 @@ OPTIONS
 	`git-diff-\*`).
 
 --not::
-	When showing object names, prefix them with '^' and
-	strip '^' prefix from the object names that already have
+	When showing object names, prefix them with '{caret}' and
+	strip '{caret}' prefix from the object names that already have
 	one.
 
 --symbolic::
 	Usually the object names are output in SHA1 form (with
-	possible '^' prefix); this option makes them output in a
+	possible '{caret}' prefix); this option makes them output in a
 	form as close to the original input as possible.
 
 
@@ -93,22 +93,23 @@ what is called an 'extended SHA1' syntax.
   happen to have both heads/master and tags/master, you can
   explicitly say 'heads/master' to tell GIT which one you mean.
 
-* A suffix '^' to a revision parameter means the first parent of
-  that commit object.  '^<n>' means the <n>th parent (i.e.
-  'rev^'
-  is equivalent to 'rev^1').  As a special rule,
-  'rev^0' means the commit itself and is used when 'rev' is the
+* A suffix '{caret}' to a revision parameter means the first parent of
+  that commit object.  '{caret}<n>' means the <n>th parent (i.e.
+  'rev{caret}'
+  is equivalent to 'rev{caret}1').  As a special rule,
+  'rev{caret}0' means the commit itself and is used when 'rev' is the
   object name of a tag object that refers to a commit object.
 
 * A suffix '~<n>' to a revision parameter means the commit
   object that is the <n>th generation grand-parent of the named
   commit object, following only the first parent.  I.e. rev~3 is
-  equivalent to rev^^^ which is equivalent to rev^1^1^1.
+  equivalent to rev{caret}{caret}{caret} which is equivalent to\
+  rev{caret}1{caret}1{caret}1.
 
-'git-rev-parse' also accepts a prefix '^' to revision parameter,
+'git-rev-parse' also accepts a prefix '{caret}' to revision parameter,
 which is passed to 'git-rev-list'.  Two revision parameters
 concatenated with '..' is a short-hand for writing a range
-between them.  I.e. 'r1..r2' is equivalent to saying '^r1 r2'
+between them.  I.e. 'r1..r2' is equivalent to saying '{caret}r1 r2'
 
 
 Author
