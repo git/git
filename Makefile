@@ -166,11 +166,19 @@ LIBS += -lz
 #
 # Platform specific tweaks
 #
-ifeq ($(shell uname -s),Darwin)
+
+# We choose to avoid "if .. else if .. else .. endif endif"
+# because maintaining the nesting to match is a pain.  If
+# we had "elif" things would have been much nicer...
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+
+ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 endif
-ifeq ($(shell uname -s),SunOS)
+ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
@@ -180,19 +188,19 @@ ifeq ($(shell uname -s),SunOS)
 	TAR = gtar
 	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
-ifeq ($(shell uname -o),Cygwin)
+ifeq ($(uname_O),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
 	PLATFORM_DEFINES += -DUSE_SYMLINK_HEAD=0
 endif
-ifneq (,$(findstring arm,$(shell uname -m)))
-	ARM_SHA1 = YesPlease
-endif
-ifeq ($(shell uname -s),OpenBSD)
+ifeq ($(uname_S),OpenBSD)
 	NEEDS_LIBICONV = YesPlease
 	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
+endif
+ifneq (,$(findstring arm,$(uname_M)))
+	ARM_SHA1 = YesPlease
 endif
 
 ifndef NO_CURL
