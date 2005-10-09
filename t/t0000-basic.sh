@@ -28,12 +28,12 @@ test_expect_success \
     '.git/objects should be empty after git-init-db in an empty repo.' \
     'cmp -s /dev/null should-be-empty' 
 
-# also it should have 258 subdirectories; 256 fan-out anymore, pack, and info.
-# 259 is counting "objects" itself
+# also it should have 2 subdirectories; no fan-out anymore, pack, and info.
+# 3 is counting "objects" itself
 find .git/objects -type d -print >full-of-directories
 test_expect_success \
-    '.git/objects should have 258 subdirectories.' \
-    'test $(wc -l < full-of-directories) = 259'
+    '.git/objects should have 3 subdirectories.' \
+    'test $(wc -l < full-of-directories) = 3'
 
 ################################################################
 # Basics of the basics

@@ -281,10 +281,6 @@ int main(int argc, char **argv)
 	memcpy(path, sha1_dir, len);
 
 	safe_create_dir(sha1_dir);
-	for (i = 0; i < 256; i++) {
-		sprintf(path+len, "/%02x", i);
-		safe_create_dir(path);
-	}
 	strcpy(path+len, "/pack");
 	safe_create_dir(path);
 	strcpy(path+len, "/info");
