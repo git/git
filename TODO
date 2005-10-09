@@ -109,25 +109,28 @@ Technical (heavier)
 
 * Plug-in file-level merges [Post 1.0].
 
+* Per-repository configuration mechanism.
+
 
 Technical (milder)
 ------------------
 
 * Review the Makefile variables and exporting rules for them,
-  while looking at prefix passing by Kai Ruemmler.
+  while looking at prefix passing by Kai Ruemmler [DONE].
 
 * Review the 'sparce object database' change by Linus and move
-  the first phase of it to the "master" branch.
+  the first phase of it to the "master" branch [DONE].
 
 * Decide on mmap().  I am inclined to just stick to mmap
   replacement by Johannes Schindelin and do nothing else right
-  now.
+  now, except perhaps drop the writing-back support [DONE].
 
 * Revisit Santi's patch to move commit temorary files out of the
-  working tree toplevel.  More generally, review the use of
-  temporary files again.  Assuming $GIT_DIR is writable is
-  more acceptable, but the working tree toplevel may not be in
-  a rare usage pattern.
+  working tree toplevel [DONE].
+
+* More generally, review the use of temporary files again.
+  Assuming $GIT_DIR is writable is more acceptable, but the
+  working tree toplevel may not be in a rare usage pattern.
 
 * Perhaps accept more "want"s in upload-pack and do something
   intelligent about it.
@@ -190,6 +193,8 @@ Technical (milder)
 * Updated git-changes-script Jeff Garzik needs [Inquiry for
   external spec sent out with a quick hack.  Will know if that
   is what he needs soon enough].
+
+* An mechanism to ignore filesystem mode bits altogether.
 
 
 Technical (trivial)
