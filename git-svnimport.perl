@@ -296,6 +296,7 @@ sub get_file($$$) {
 	my $sha = <$F>;
 	chomp $sha;
 	close $F;
+	unlink $name;
 	my $mode = "0644"; # SV does not seem to store any file modes
 	return [$mode, $sha, $path];
 }
