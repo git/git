@@ -407,141 +407,146 @@ sub commit {
 		$last_rev = $rev;
 	}
 
-	while(my($path,$action) = each %$changed_paths) {
-		if ($action->[0] eq "A") {
-			my $f = get_file($revision,$branch,$path);
-			push(@new,$f) if $f;
-		} elsif ($action->[0] eq "D") {
-			push(@old,$path);
-		} elsif ($action->[0] eq "M") {
-			my $f = get_file($revision,$branch,$path);
-			push(@new,$f) if $f;
-		} elsif ($action->[0] eq "R") {
-			# refer to a file/tree in an earlier commit
-			push(@old,$path); # remove any old stuff
+	my $cid;
+	if($tag and not %$changed_paths) {
+		$cid = $rev;
+	} else {
+		while(my($path,$action) = each %$changed_paths) {
+			if ($action->[0] eq "A") {
+				my $f = get_file($revision,$branch,$path);
+				push(@new,$f) if $f;
+			} elsif ($action->[0] eq "D") {
+				push(@old,$path);
+			} elsif ($action->[0] eq "M") {
+				my $f = get_file($revision,$branch,$path);
+				push(@new,$f) if $f;
+			} elsif ($action->[0] eq "R") {
+				# refer to a file/tree in an earlier commit
+				push(@old,$path); # remove any old stuff
 
-			# ... and add any new stuff
-			my($b,$p) = split_path($revision,$action->[1]);
-			open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $p;
+				# ... and add any new stuff
+				my($b,$p) = split_path($revision,$action->[1]);
+				open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $p;
+				local $/ = '\0';
+				while(<$F>) {
+					chomp;
+					my($m,$p) = split(/\t/,$_,2);
+					my($mode,$type,$sha1) = split(/ /,$m);
+					next if $type ne "blob";
+					push(@new,[$mode,$sha1,$p]);
+				}
+			} else {
+				die "$revision: unknown action '".$action->[0]."' for $path\n";
+			}
+		}
+
+		if(@old) {
+			open my $F, "-|", "git-ls-files", "-z", @old or die $!;
+			@old = ();
 			local $/ = '\0';
 			while(<$F>) {
 				chomp;
-				my($m,$p) = split(/\t/,$_,2);
-				my($mode,$type,$sha1) = split(/ /,$m);
-				next if $type ne "blob";
-				push(@new,[$mode,$sha1,$p]);
+				push(@old,$_);
 			}
-		} else {
-			die "$revision: unknown action '".$action->[0]."' for $path\n";
-		}
-	}
+			close($F);
 
-	if(@old) {
-		open my $F, "-|", "git-ls-files", "-z", @old or die $!;
-		@old = ();
-		local $/ = '\0';
-		while(<$F>) {
-			chomp;
-			push(@old,$_);
+			while(@old) {
+				my @o2;
+				if(@old > 55) {
+					@o2 = splice(@old,0,50);
+				} else {
+					@o2 = @old;
+					@old = ();
+				}
+				system("git-update-index","--force-remove","--",@o2);
+				die "Cannot remove files: $?\n" if $?;
+			}
 		}
-		close($F);
-
-		while(@old) {
-			my @o2;
-			if(@old > 55) {
-				@o2 = splice(@old,0,50);
+		while(@new) {
+			my @n2;
+			if(@new > 12) {
+				@n2 = splice(@new,0,10);
 			} else {
-				@o2 = @old;
-				@old = ();
+				@n2 = @new;
+				@new = ();
 			}
-			system("git-update-index","--force-remove","--",@o2);
-			die "Cannot remove files: $?\n" if $?;
+			system("git-update-index","--add",
+				(map { ('--cacheinfo', @$_) } @n2));
+			die "Cannot add files: $?\n" if $?;
 		}
-	}
-	while(@new) {
-		my @n2;
-		if(@new > 12) {
-			@n2 = splice(@new,0,10);
-		} else {
-			@n2 = @new;
-			@new = ();
+
+		my $pid = open(C,"-|");
+		die "Cannot fork: $!" unless defined $pid;
+		unless($pid) {
+			exec("git-write-tree");
+			die "Cannot exec git-write-tree: $!\n";
 		}
-		system("git-update-index","--add",
-			(map { ('--cacheinfo', @$_) } @n2));
-		die "Cannot add files: $?\n" if $?;
-	}
+		chomp(my $tree = <C>);
+		length($tree) == 40
+			or die "Cannot get tree id ($tree): $!\n";
+		close(C)
+			or die "Error running git-write-tree: $?\n";
+		print "Tree ID $tree\n" if $opt_v;
 
-	my $pid = open(C,"-|");
-	die "Cannot fork: $!" unless defined $pid;
-	unless($pid) {
-		exec("git-write-tree");
-		die "Cannot exec git-write-tree: $!\n";
-	}
-	chomp(my $tree = <C>);
-	length($tree) == 40
-		or die "Cannot get tree id ($tree): $!\n";
-	close(C)
-		or die "Error running git-write-tree: $?\n";
-	print "Tree ID $tree\n" if $opt_v;
+		my $pr = IO::Pipe->new() or die "Cannot open pipe: $!\n";
+		my $pw = IO::Pipe->new() or die "Cannot open pipe: $!\n";
+		$pid = fork();
+		die "Fork: $!\n" unless defined $pid;
+		unless($pid) {
+			$pr->writer();
+			$pw->reader();
+			open(OUT,">&STDOUT");
+			dup2($pw->fileno(),0);
+			dup2($pr->fileno(),1);
+			$pr->close();
+			$pw->close();
 
-	my $pr = IO::Pipe->new() or die "Cannot open pipe: $!\n";
-	my $pw = IO::Pipe->new() or die "Cannot open pipe: $!\n";
-	$pid = fork();
-	die "Fork: $!\n" unless defined $pid;
-	unless($pid) {
-		$pr->writer();
-		$pw->reader();
-		open(OUT,">&STDOUT");
-		dup2($pw->fileno(),0);
-		dup2($pr->fileno(),1);
-		$pr->close();
+			my @par = ();
+			@par = ("-p",$rev) if defined $rev;
+
+			# loose detection of merges
+			# based on the commit msg
+			foreach my $rx (@mergerx) {
+				if ($message =~ $rx) {
+					my $mparent = $1;
+					if ($mparent eq 'HEAD') { $mparent = $opt_o };
+					if ( -e "$git_dir/refs/heads/$mparent") {
+						$mparent = get_headref($mparent, $git_dir);
+						push @par, '-p', $mparent;
+						print OUT "Merge parent branch: $mparent\n" if $opt_v;
+					}
+				} 
+			}
+
+			exec("env",
+				"GIT_AUTHOR_NAME=$author_name",
+				"GIT_AUTHOR_EMAIL=$author_email",
+				"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
+				"GIT_COMMITTER_NAME=$author_name",
+				"GIT_COMMITTER_EMAIL=$author_email",
+				"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
+				"git-commit-tree", $tree,@par);
+			die "Cannot exec git-commit-tree: $!\n";
+		}
+		$pw->writer();
+		$pr->reader();
+
+		$message =~ s/[\s\n]+\z//;
+
+		print $pw "$message\n"
+			or die "Error writing to git-commit-tree: $!\n";
 		$pw->close();
 
-		my @par = ();
-		@par = ("-p",$rev) if defined $rev;
+		print "Committed change $revision:$branch ".strftime("%Y-%m-%d %H:%M:%S",gmtime($date)).")\n" if $opt_v;
+		chomp($cid = <$pr>);
+		length($cid) == 40
+			or die "Cannot get commit id ($cid): $!\n";
+		print "Commit ID $cid\n" if $opt_v;
+		$pr->close();
 
-		# loose detection of merges
-		# based on the commit msg
-		foreach my $rx (@mergerx) {
-			if ($message =~ $rx) {
-				my $mparent = $1;
-				if ($mparent eq 'HEAD') { $mparent = $opt_o };
-				if ( -e "$git_dir/refs/heads/$mparent") {
-					$mparent = get_headref($mparent, $git_dir);
-					push @par, '-p', $mparent;
-					print OUT "Merge parent branch: $mparent\n" if $opt_v;
-				}
-			} 
-		}
-
-		exec("env",
-			"GIT_AUTHOR_NAME=$author_name",
-			"GIT_AUTHOR_EMAIL=$author_email",
-			"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-			"GIT_COMMITTER_NAME=$author_name",
-			"GIT_COMMITTER_EMAIL=$author_email",
-			"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-			"git-commit-tree", $tree,@par);
-		die "Cannot exec git-commit-tree: $!\n";
+		waitpid($pid,0);
+		die "Error running git-commit-tree: $?\n" if $?;
 	}
-	$pw->writer();
-	$pr->reader();
-
-	$message =~ s/[\s\n]+\z//;
-
-	print $pw "$message\n"
-		or die "Error writing to git-commit-tree: $!\n";
-	$pw->close();
-
-	print "Committed change $revision:$branch ".strftime("%Y-%m-%d %H:%M:%S",gmtime($date)).")\n" if $opt_v;
-	chomp(my $cid = <$pr>);
-	length($cid) == 40
-		or die "Cannot get commit id ($cid): $!\n";
-	print "Commit ID $cid\n" if $opt_v;
-	$pr->close();
-
-	waitpid($pid,0);
-	die "Error running git-commit-tree: $?\n" if $?;
 
 	if(not defined $dest) {
 		print "... no known parent\n" if $opt_v;
