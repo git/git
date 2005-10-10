@@ -408,6 +408,7 @@ int main(int argc, const char **argv)
 	unsigned char sha1[2][20];
 	const char *prefix = setup_git_directory();
 
+	git_config(git_default_config);
 	nr_sha1 = 0;
 	diff_setup(&diff_options);
 

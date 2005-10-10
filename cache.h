@@ -178,6 +178,8 @@ extern int hold_index_file_for_update(struct cache_file *, const char *path);
 extern int commit_index_file(struct cache_file *);
 extern void rollback_index_file(struct cache_file *);
 
+extern int trust_executable_bit;
+
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
 #define OWNER_CHANGED	0x0004
@@ -371,5 +373,11 @@ extern void *gitfakemmap(void *start, size_t length, int prot , int flags, int f
 extern int gitfakemunmap(void *start, size_t length);
 
 #endif
+
+typedef int (*config_fn_t)(const char *, const char *);
+extern int git_default_config(const char *, const char *);
+extern int git_config(config_fn_t fn);
+extern int git_config_int(const char *, const char *);
+extern int git_config_bool(const char *, const char *);
 
 #endif /* CACHE_H */

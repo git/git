@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 
+int trust_executable_bit = 1;
 struct cache_entry **active_cache = NULL;
 unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
 
