@@ -623,7 +623,7 @@ sub commit_all {
 	}
 }
 
-while(++$current_rev < $svn->{'maxrev'}) {
+while(++$current_rev <= $svn->{'maxrev'}) {
 	$svn->{'svn'}->get_log("/",$current_rev,$current_rev,$current_rev,1,1,\&_commit_all,"");
 	commit_all();
 	if($opt_l and not --$opt_l) {
