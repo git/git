@@ -55,6 +55,10 @@ static void generate_id_list(void)
 		if (!patchlen && memcmp(line, "diff ", 5))
 			continue;
 
+		/* Ignore git-diff index header */
+		if (!memcmp(line, "index ", 6))
+			continue;
+
 		/* Ignore line numbers when computing the SHA1 of the patch */
 		if (!memcmp(line, "@@ -", 4))
 			continue;

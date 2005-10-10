@@ -4,7 +4,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    echo >&2 "Usage: git-tag [-a | -s] [-f] [-m "tag message"] tagname"
+    echo >&2 "Usage: git-tag [-a | -s] [-f] [-m "tag message"] tagname [head]"
     exit 1
 }
 

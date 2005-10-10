@@ -6,13 +6,15 @@ prefix ?= $(HOME)
 template_dir ?= $(prefix)/share/git-core/templates/
 # DESTDIR=
 
-all: boilerplates custom
+all: boilerplates.made custom
 	find blt
 
 # Put templates that can be copied straight from the source
 # in a file direc--tory--file in the source.  They will be
 # just copied to the destination.
-boilerplates:
+
+bpsrc = $(filter-out %~,$(wildcard *--*))
+boilerplates.made : $(bpsrc)
 	ls *--* 2>/dev/null | \
 	while read boilerplate; \
 	do \
@@ -25,6 +27,7 @@ boilerplates:
 		*) cp $$boilerplate blt/$$dst ;; \
 		esac || exit; \
 	done || exit
+	date >$@
 
 # If you need build-tailored templates, build them into blt/
 # directory yourself here.
@@ -32,7 +35,7 @@ custom:
 	: no custom templates yet
 
 clean:
-	rm -rf blt
+	rm -rf blt boilerplates.made
 
 install: all
 	$(INSTALL) -d -m755 $(DESTDIR)$(template_dir)

@@ -246,7 +246,7 @@ ifdef NEEDS_NSL
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_STRCASESTR
-	DEFINES += -Dstrcasestr=gitstrcasestr
+	DEFINES += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
 	LIB_OBJS += compat/strcasestr.o
 endif
 
