@@ -110,7 +110,6 @@ sub conn {
 
 	die "SVN connection to $repo: $!\n" unless defined $s;
 	$self->{'svn'} = $s;
-	print STDERR "*** SVN *** $s ***\n";
 	$self->{'repo'} = $repo;
 	$self->{'maxrev'} = $s->get_latest_revnum();
 }
@@ -124,7 +123,6 @@ sub file {
 
 	print "... $rev $path ...\n" if $opt_v;
 	my $s = $self->{'svn'};
-	print STDERR "*** GET *** $s ***\n";
 	eval { $s->get_file($path,$rev,$fh); };
 	if ($@ and $@ !~ /Attempted to get checksum/) {
 	    # retry
