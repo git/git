@@ -346,9 +346,9 @@ sub commit {
 	$dest = $parent;
 
 	my $prev = $changed_paths->{"/"};
-	if($prev and $prev->action eq "A") {
+	if($prev and $prev->[0] eq "A") {
 		delete $changed_paths->{"/"};
-		my $oldpath = $prev->copyfrom_path;
+		my $oldpath = $prev->[1];
 		my $rev;
 		if(defined $oldpath) {
 			my $p;
@@ -385,7 +385,7 @@ sub commit {
 		$rev = undef;
 	}
 
-#	if($prev and $prev->action eq "A") {
+#	if($prev and $prev->[0] eq "A") {
 #		if(not $tag) {
 #			unless(open(H,"> $git_dir/refs/heads/$branch")) {
 #				print STDERR "$revision: Could not create branch $branch: $!\n";
@@ -408,21 +408,21 @@ sub commit {
 	}
 
 	while(my($path,$action) = each %$changed_paths) {
-		if ($action->action eq "A") {
+		if ($action->[0] eq "A") {
 			my $f = get_file($revision,$branch,$path);
 			push(@new,$f) if $f;
-		} elsif ($action->action eq "D") {
+		} elsif ($action->[0] eq "D") {
 			push(@old,$path);
-		} elsif ($action->action eq "M") {
+		} elsif ($action->[0] eq "M") {
 			my $f = get_file($revision,$branch,$path);
 			push(@new,$f) if $f;
-		} elsif ($action->action eq "R") {
+		} elsif ($action->[0] eq "R") {
 			# refer to a file/tree in an earlier commit
 			push(@old,$path); # remove any old stuff
 
 			# ... and add any new stuff
-			my($b,$p) = split_path($revision,$action->oldpath);
-			open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->oldrev}, $p;
+			my($b,$p) = split_path($revision,$action->[1]);
+			open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $p;
 			local $/ = '\0';
 			while(<$F>) {
 				chomp;
@@ -432,7 +432,7 @@ sub commit {
 				push(@new,[$mode,$sha1,$p]);
 			}
 		} else {
-			die "$revision: unknown action '".$action->action."' for $path\n";
+			die "$revision: unknown action '".$action->[0]."' for $path\n";
 		}
 	}
 
@@ -596,7 +596,13 @@ sub commit {
 my ($changed_paths, $revision, $author, $date, $message, $pool) = @_;
 sub _commit_all {
 	($changed_paths, $revision, $author, $date, $message, $pool) = @_;
+	my %p;
+	while(my($path,$action) = each %$changed_paths) {
+		$p{$path} = [ $action->action,$action->copyfrom_path, $action->copyfrom_rev ];
+	}
+	$changed_paths = \%p;
 }
+
 sub commit_all {
 	my %done;
 	my @col;
