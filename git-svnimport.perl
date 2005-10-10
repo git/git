@@ -31,19 +31,19 @@ die "Need CVN:COre 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b);
+our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_s);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
-       [-i] [-u] [-s subst] [-m] [-M regex] [SVN_URL]
+       [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("b:C:hivmM:o:t:T:u") or usage();
+getopts("b:C:hivmM:o:s:t:T:u") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -192,7 +192,7 @@ $ENV{GIT_INDEX_FILE} = $git_index;
 my $maxnum = 0;
 my $last_rev = "";
 my $last_branch;
-my $current_rev = 0;
+my $current_rev = $opt_s ? ($opt_s-1) : 0;
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
@@ -364,7 +364,7 @@ sub commit {
 	}
 
 	my $rev;
-	if(defined $parent) {
+	if($revision > $opt_s and defined $parent) {
 		open(H,"git-rev-parse --verify $parent |");
 		$rev = <H>;
 		close(H) or do {
@@ -377,7 +377,7 @@ sub commit {
 			return;
 		}
 		$rev = $branches{($parent eq $opt_o) ? "/" : $parent}{"LAST"};
-		if($revision != 1 and not $rev) {
+		if($revision != $opt_s and not $rev) {
 			print STDERR "$revision: do not know ancestor for '$parent'!\n";
 			return;
 		}
