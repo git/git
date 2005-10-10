@@ -121,12 +121,15 @@ sub file {
 	my ($fh, $name) = tempfile('gitsvn.XXXXXX', 
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
-	$self->{'svn'}->get_file($path,$rev,$fh) or do {
+	print "... $rev $path ...\n" if $opt_v;
+	eval { $self->{'svn'}->get_file($path,$rev,$fh); };
+	if (defined $@ and $@ !~ /Attempted to get checksum/) {
 	    # retry
 	    $self->conn();
-		$self->{'svn'}->get_file($path,$rev,$fh)
-		    or die "$rev: No file $path at $rev\n";
+		eval { $self->{'svn'}->get_file($path,$rev,$fh); };
 	};
+	return () if defined $@ and $@ !~ /Attempted to get checksum/;
+	die $@ if $@;
 	close ($fh);
 
 	return ($name, $res);
@@ -308,7 +311,8 @@ sub get_file($$$) {
 	}
 
 	# now get it
-	my ($name, $res) = $svn->file($svnpath,$rev);
+	my ($name, $res) = eval { $svn->file($svnpath,$rev); };
+	return () unless defined $name;
 
 	open my $F, '-|', "git-hash-object -w $name"
 		or die "Cannot create object: $!\n";
@@ -343,7 +347,9 @@ sub commit {
 	my($author_name,$author_email,$dest);
 	my(@old,@new);
 
-	if ($author =~ /^(.*?)\s+<(.*)>$/) {
+	if (not defined $author) {
+		$author_name = $author_email = "unknown";
+	} elsif ($author =~ /^(.*?)\s+<(.*)>$/) {
 		($author_name, $author_email) = ($1, $2);
 	} else {
 		$author =~ s/^<(.*)>$/$1/;
