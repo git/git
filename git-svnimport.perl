@@ -122,8 +122,7 @@ sub file {
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	print "... $rev $path ...\n" if $opt_v;
-	my $s = $self->{'svn'};
-	eval { $s->get_file($path,$rev,$fh); };
+	eval { $self->{'svn'}->get_file($path,$rev,$fh); };
 	if ($@ and $@ !~ /Attempted to get checksum/) {
 	    # retry
 	    $self->conn();
@@ -544,14 +543,14 @@ sub commit {
 	waitpid($pid,0);
 	die "Error running git-commit-tree: $?\n" if $?;
 
-	if(defined $dest) {
+	if(not defined $dest) {
+		print "... no known parent\n" if $opt_v;
+	} elsif(not $tag) {
 		print "Writing to refs/heads/$dest\n" if $opt_v;
 		open(C,">$git_dir/refs/heads/$dest") and 
 		print C ("$cid\n") and
 		close(C)
 			or die "Cannot write branch $dest for update: $!\n";
-	} else {
-		print "... no known parent\n" if $opt_v;
 	}
 	$branches{$branch}{"LAST"} = $cid;
 	$branches{$branch}{$revision} = $cid;
@@ -564,33 +563,30 @@ sub commit {
 		$last_rev = "-" if %$changed_paths;
 		# the tag was 'complex', i.e. did not refer to a "real" revision
 		
-		$tag =~ tr/_/\./ if $opt_u;
+		$dest =~ tr/_/\./ if $opt_u;
 
 		my $pid = open2($in, $out, 'git-mktag');
 		print $out ("object $cid\n".
 		    "type commit\n".
-		    "tag $tag\n".
+		    "tag $dest\n".
 		    "tagger $author_name <$author_email>\n") and
 		close($out)
-		    or die "Cannot create tag object $tag: $!\n";
+		    or die "Cannot create tag object $dest: $!\n";
 
 		my $tagobj = <$in>;
 		chomp $tagobj;
 
 		if ( !close($in) or waitpid($pid, 0) != $pid or
 				$? != 0 or $tagobj !~ /^[0123456789abcdef]{40}$/ ) {
-			die "Cannot create tag object $tag: $!\n";
+			die "Cannot create tag object $dest: $!\n";
 		}
-		
 
-		open(C,">$git_dir/refs/tags/$tag")
-			or die "Cannot create tag $tag: $!\n";
-		print C "$tagobj\n"
-			or die "Cannot write tag $tag: $!\n";
+		open(C,">$git_dir/refs/tags/$dest") and
+		print C ("$tagobj\n") and
 		close(C)
-			or die "Cannot write tag $tag: $!\n";
+			or die "Cannot create tag $branch: $!\n";
 
-		print "Created tag '$tag' on '$branch'\n" if $opt_v;
+		print "Created tag '$dest' on '$branch'\n" if $opt_v;
 	}
 }
 
