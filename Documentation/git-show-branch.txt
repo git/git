@@ -7,7 +7,7 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] <reference>...'
+'git-show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] <reference>...'
 
 DESCRIPTION
 -----------
