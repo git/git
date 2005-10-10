@@ -3,7 +3,7 @@ git-convert-objects(1)
 
 NAME
 ----
-git-convert-objects - Converts old-style GIT repository
+git-convert-objects - Converts old-style git repository
 
 
 SYNOPSIS
@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Converts old-style GIT repository to the latest format
+Converts old-style git repository to the latest format
 
 
 Author

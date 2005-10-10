@@ -1,4 +1,4 @@
-Hooks used by GIT
+Hooks used by git
 =================
 
 Hooks are little scripts you can place in `$GIT_DIR/hooks`

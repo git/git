@@ -30,7 +30,7 @@ transport by their peers.
 
 Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
-enables GIT to read from such an archive.
+enables git to read from such an archive.
 
 
 OPTIONS

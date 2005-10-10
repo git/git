@@ -91,7 +91,7 @@ what is called an 'extended SHA1' syntax.
 * A symbolic ref name.  E.g. 'master' typically means the commit
   object referenced by $GIT_DIR/refs/heads/master.  If you
   happen to have both heads/master and tags/master, you can
-  explicitly say 'heads/master' to tell GIT which one you mean.
+  explicitly say 'heads/master' to tell git which one you mean.
 
 * A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.

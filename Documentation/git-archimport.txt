@@ -3,7 +3,7 @@ git-archimport(1)
 
 NAME
 ----
-git-archimport - Import an Arch repository into GIT
+git-archimport - Import an Arch repository into git
 
 
 SYNOPSIS
@@ -40,14 +40,14 @@ incremental imports.
 
 MERGES
 ------
-Patch merge data from Arch is used to mark merges in GIT as well. GIT 
+Patch merge data from Arch is used to mark merges in git as well. git 
 does not care much about tracking patches, and only considers a merge when a
 branch incorporates all the commits since the point they forked. The end result
-is that GIT will have a good idea of how far branches have diverged. So the 
+is that git will have a good idea of how far branches have diverged. So the 
 import process does lose some patch-trading metadata.
 
 Fortunately, when you try and merge branches imported from Arch, 
-GIT will find a good merge base, and it has a good chance of identifying 
+git will find a good merge base, and it has a good chance of identifying 
 patches that have been traded out-of-sequence between the branches. 
 
 OPTIONS

@@ -106,7 +106,7 @@ For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
 parameter, <path>.
 
 
-Git specific extension to diff format
+git specific extension to diff format
 -------------------------------------
 
 What -p option produces is slightly different from the

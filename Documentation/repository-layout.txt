@@ -1,4 +1,4 @@
-GIT repository layout
+git repository layout
 =====================
 
 You may find these things in your git repository (`.git`
@@ -119,7 +119,7 @@ info/grafts::
 info/exclude::
 	This file, by convention among Porcelains, stores the
 	exclude pattern list.  `git status` looks at it, but
-	otherwise it is not looked at by any of the core GIT
+	otherwise it is not looked at by any of the core git
 	commands.
 
 remotes::

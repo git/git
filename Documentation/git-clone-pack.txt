@@ -28,7 +28,7 @@ OPTIONS
 	remote side, if it is not found on your $PATH.
 	Installations of sshd ignore the user's environment
 	setup scripts for login shells (e.g. .bash_profile) and
-	your privately installed GIT may not be found on the system
+	your privately installed git may not be found on the system
 	default $PATH.  Another workaround suggested is to set
 	up your $PATH in ".bashrc", but this flag is for people
 	who do not want to pay the overhead for non-interactive

@@ -3,7 +3,7 @@ git-verify-pack(1)
 
 NAME
 ----
-git-verify-pack - Validate packed GIT archive files.
+git-verify-pack - Validate packed git archive files.
 
 
 SYNOPSIS
@@ -13,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads given idx file for packed GIT archive created with
+Reads given idx file for packed git archive created with
 git-pack-objects command and verifies idx file and the
 corresponding pack file.
 

@@ -6,7 +6,7 @@
 ===============================================================
 - Rsync URL:		rsync://remote.machine/path/to/repo.git/
 - HTTP(s) URL:		http://remote.machine/path/to/repo.git/
-- GIT URL:		git://remote.machine/path/to/repo.git/
+- git URL:		git://remote.machine/path/to/repo.git/
 			or remote.machine:/path/to/repo.git/
 - Local directory:	/path/to/repo.git/
 ===============================================================

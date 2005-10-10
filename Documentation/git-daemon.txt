@@ -3,7 +3,7 @@ git-daemon(1)
 
 NAME
 ----
-git-daemon - A really simple server for GIT repositories.
+git-daemon - A really simple server for git repositories.
 
 SYNOPSIS
 --------
