@@ -1,6 +1,5 @@
 git-diff-stages(1)
 ==================
-v0.1, June 2005
 
 NAME
 ----

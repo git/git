@@ -1,6 +1,5 @@
 git-fsck-objects(1)
 ===================
-v0.1, May 2005
 
 NAME
 ----

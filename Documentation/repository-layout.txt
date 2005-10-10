@@ -1,6 +1,5 @@
 GIT repository layout
 =====================
-v0.99.5, Sep 2005
 
 You may find these things in your git repository (`.git`
 directory for a repository associated with your working tree, or

@@ -1,6 +1,5 @@
 Git for CVS users
 =================
-v0.99.5, Aug 2005
 
 Ok, so you're a CVS user. That's ok, it's a treatable condition, and the
 first step to recovery is admitting you have a problem. The fact that

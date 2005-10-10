@@ -1,6 +1,5 @@
 git-peek-remote(1)
 ==================
-v0.1, July 2005
 
 NAME
 ----

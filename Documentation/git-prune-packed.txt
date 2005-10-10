@@ -1,6 +1,5 @@
 git-prune-packed(1)
 =====================
-v0.1, August 2005
 
 NAME
 ----
