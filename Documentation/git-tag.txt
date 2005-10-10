@@ -1,16 +1,14 @@
 git-tag(1)
 ==========
-v0.99.4, Aug 2005
 
 NAME
 ----
 git-tag -  Create a tag object signed with GPG
 
 
-
 SYNOPSIS
 --------
-'git-tag' [-a | -s | -u <key-id>] [-f] [-m <msg>] <name>
+'git-tag' [-a | -s | -u <key-id>] [-f] [-m <msg>] <name> [<head>]
 
 DESCRIPTION
 -----------
