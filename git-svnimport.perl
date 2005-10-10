@@ -100,8 +100,6 @@ sub new {
 	$self->{'fullrep'} = $repo;
 	$self->conn();
 
-	$self->{'lines'} = undef;
-
 	return $self;
 }
 
@@ -112,6 +110,7 @@ sub conn {
 
 	die "SVN connection to $repo: $!\n" unless defined $s;
 	$self->{'svn'} = $s;
+	print STDERR "*** SVN *** $s ***\n";
 	$self->{'repo'} = $repo;
 	$self->{'maxrev'} = $s->get_latest_revnum();
 }
@@ -124,13 +123,15 @@ sub file {
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	print "... $rev $path ...\n" if $opt_v;
-	eval { $self->{'svn'}->get_file($path,$rev,$fh); };
-	if (defined $@ and $@ !~ /Attempted to get checksum/) {
+	my $s = $self->{'svn'};
+	print STDERR "*** GET *** $s ***\n";
+	eval { $s->get_file($path,$rev,$fh); };
+	if ($@ and $@ !~ /Attempted to get checksum/) {
 	    # retry
 	    $self->conn();
 		eval { $self->{'svn'}->get_file($path,$rev,$fh); };
 	};
-	return () if defined $@ and $@ !~ /Attempted to get checksum/;
+	return () if $@ and $@ !~ /Attempted to get checksum/;
 	die $@ if $@;
 	close ($fh);
 
