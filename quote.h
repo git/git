@@ -1,10 +1,12 @@
 #ifndef QUOTE_H
 #define QUOTE_H
 
+#include <stddef.h>
 
 /* Help to copy the thing properly quoted for the shell safety.
- * any single quote is replaced with '\'', and the whole thing
- * is enclosed in a single quote pair.
+ * any single quote is replaced with '\'', any exclamation point
+ * is replaced with '\!', and the whole thing is enclosed in a
+ * single quote pair.
  *
  * For example, if you are passing the result to system() as an
  * argument:
@@ -19,8 +21,13 @@
  *
  * Note that the above examples leak memory!  Remember to free result from
  * sq_quote() in a real application.
+ *
+ * sq_quote_buf() writes to an existing buffer of specified size; it
+ * will return the number of characters that would have been written
+ * excluding the final null regardless of the buffer size.
  */
 
 char *sq_quote(const char *src);
+size_t sq_quote_buf(char *dst, size_t n, const char *src);
 
 #endif

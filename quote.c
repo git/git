@@ -2,40 +2,52 @@
 #include "quote.h"
 
 /* Help to copy the thing properly quoted for the shell safety.
- * any single quote is replaced with '\'', and the caller is
- * expected to enclose the result within a single quote pair.
+ * any single quote is replaced with '\'', any exclamation point
+ * is replaced with '\!', and the whole thing is enclosed in a
  *
  * E.g.
  *  original     sq_quote     result
  *  name     ==> name      ==> 'name'
  *  a b      ==> a b       ==> 'a b'
  *  a'b      ==> a'\''b    ==> 'a'\''b'
+ *  a!b      ==> a'\!'b    ==> 'a'\!'b'
  */
-char *sq_quote(const char *src)
+#define EMIT(x) ( (++len < n) && (*bp++ = (x)) )
+
+size_t sq_quote_buf(char *dst, size_t n, const char *src)
 {
-	static char *buf = NULL;
-	int cnt, c;
-	const char *cp;
-	char *bp;
+	char c;
+	char *bp = dst;
+	size_t len = 0;
 
-	/* count bytes needed to store the quoted string. */
-	for (cnt = 3, cp = src; *cp; cnt++, cp++)
-		if (*cp == '\'')
-			cnt += 3;
-
-	buf = xmalloc(cnt);
-	bp = buf;
-	*bp++ = '\'';
+	EMIT('\'');
 	while ((c = *src++)) {
-		if (c != '\'')
-			*bp++ = c;
-		else {
-			bp = strcpy(bp, "'\\''");
-			bp += 4;
+		if (c == '\'' || c == '!') {
+			EMIT('\'');
+			EMIT('\\');
+			EMIT(c);
+			EMIT('\'');
+		} else {
+			EMIT(c);
 		}
 	}
-	*bp++ = '\'';
-	*bp = 0;
+	EMIT('\'');
+
+	if ( n )
+		*bp = 0;
+
+	return len;
+}
+
+char *sq_quote(const char *src)
+{
+	char *buf;
+	size_t cnt;
+
+	cnt = sq_quote_buf(NULL, 0, src) + 1;
+	buf = xmalloc(cnt);
+	sq_quote_buf(buf, cnt, src);
+
 	return buf;
 }
 
