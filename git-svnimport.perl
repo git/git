@@ -31,19 +31,19 @@ die "Need CVN:COre 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_s);
+our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_s,$opt_l);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
-       [-o branch-for-HEAD] [-h] [-v]
+       [-o branch-for-HEAD] [-h] [-v] [-l max_num_changes]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("b:C:hivmM:o:s:t:T:u") or usage();
+getopts("b:C:hil:mM:o:s:t:T:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -53,6 +53,7 @@ my $branch_name = $opt_b || "branches";
 @ARGV <= 1 or usage();
 
 $opt_o ||= "origin";
+$opt_l = 100 unless defined $opt_l;
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
@@ -624,6 +625,10 @@ sub commit_all {
 while(++$current_rev < $svn->{'maxrev'}) {
 	$svn->{'svn'}->get_log("/",$current_rev,$current_rev,$current_rev,1,1,\&_commit_all,"");
 	commit_all();
+	if($opt_l and not --$opt_l) {
+		print STDERR "Exiting due to a memory leak. Repeat, please.\n";
+		last;
+	}
 }
 
 
@@ -637,7 +642,7 @@ if (defined $orig_git_index) {
 
 # Now switch back to the branch we were in before all of this happened
 if($orig_branch) {
-	print "DONE\n" if $opt_v;
+	print "DONE\n" if $opt_v and (not defined $opt_l or $opt_l > 0);
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		if $forward_master;
 	unless ($opt_i) {
@@ -646,7 +651,7 @@ if($orig_branch) {
 	}
 } else {
 	$orig_branch = "master";
-	print "DONE; creating $orig_branch branch\n" if $opt_v;
+	print "DONE; creating $orig_branch branch\n" if $opt_v and (not defined $opt_l or $opt_l > 0);
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		unless -f "$git_dir/refs/heads/master";
 	unlink("$git_dir/HEAD");
