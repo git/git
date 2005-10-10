@@ -129,7 +129,7 @@ then
 elif test "$use_commit" != ""
 then
 	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
-fi | git-stripspace >.editmsg
+fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
 t)
@@ -139,7 +139,7 @@ t)
 			s/>.*/>/
 			s/^/Signed-off-by: /
 		'
-	} >>.editmsg
+	} >>"$GIT_DIR"/COMMIT_EDITMSG
 	;;
 esac
 
@@ -153,7 +153,7 @@ if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 	echo "#	$GIT_DIR/MERGE_HEAD"
 	echo "# and try again"
 	echo "#"
-fi >>.editmsg
+fi >>"$GIT_DIR"/COMMIT_EDITMSG
 
 PARENTS="-p HEAD"
 if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
@@ -197,16 +197,16 @@ else
 	fi
 	PARENTS=""
 fi
-git-status >>.editmsg
+git-status >>"$GIT_DIR"/COMMIT_EDITMSG
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
-	rm -f .editmsg
+	rm -f "$GIT_DIR/COMMIT_EDITMSG"
 	git-status
 	exit 1
 fi
 case "$no_edit" in
 '')
-	${VISUAL:-${EDITOR:-vi}} .editmsg
+	${VISUAL:-${EDITOR:-vi}} "$GIT_DIR/COMMIT_EDITMSG"
 	;;
 esac
 
@@ -214,16 +214,20 @@ case "$verify" in
 t)
 	if test -x "$GIT_DIR"/hooks/commit-msg
 	then
-		"$GIT_DIR"/hooks/commit-msg .editmsg || exit
+		"$GIT_DIR"/hooks/commit-msg "$GIT_DIR"/COMMIT_EDITMSG || exit
 	fi
 esac
 
-grep -v '^#' < .editmsg | git-stripspace > .cmitmsg
-grep -v -i '^Signed-off-by' .cmitmsg >.cmitchk
-if test -s .cmitchk
+grep -v '^#' < "$GIT_DIR"/COMMIT_EDITMSG |
+git-stripspace > "$GIT_DIR"/COMMIT_MSG
+
+if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
+	git-stripspace |
+	wc -l` &&
+   test 0 -lt $cnt
 then
 	tree=$(git-write-tree) &&
-	commit=$(cat .cmitmsg | git-commit-tree $tree $PARENTS) &&
+	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
 	git-update-ref HEAD $commit $current &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD"
 else
@@ -231,7 +235,7 @@ else
 	false
 fi
 ret="$?"
-rm -f .cmitmsg .editmsg .cmitchk
+rm -f "$GIT_DIR/COMMIT_MSG" "$GIT_DIR/COMMIT_EDITMSG"
 
 if test -x "$GIT_DIR"/hooks/post-commit && test "$ret" = 0
 then
