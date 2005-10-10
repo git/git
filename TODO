@@ -105,7 +105,7 @@ Technical (heavier)
   integrating and testing; Post 1.0]
 
 * Accept patches to fetch multiple objects by HTTP in parallel.
-  [Preferably before 1.0]
+  [DONE]
 
 * Plug-in file-level merges [Post 1.0].
 
@@ -114,6 +114,10 @@ Technical (heavier)
 
 Technical (milder)
 ------------------
+
+* Funny tag names and curl library.
+
+  curl 'http://locke.catalyst.net.nz/git/moodle.git/refs/tags/MOODLE_15_MERGED **INVALID**'
 
 * Review the Makefile variables and exporting rules for them,
   while looking at prefix passing by Kai Ruemmler [DONE].
@@ -129,7 +133,7 @@ Technical (milder)
   working tree toplevel [DONE].
 
 * More generally, review the use of temporary files again.
-  Assuming $GIT_DIR is writable is more acceptable, but the
+  Assuming writable $GIT_DIR is more acceptable, but the
   working tree toplevel may not be in a rare usage pattern.
 
 * Perhaps accept more "want"s in upload-pack and do something
@@ -156,7 +160,7 @@ Technical (milder)
   lines.
 
 * What to do with TABs and LFs in pathnames without breaking GNU
-  patch? 
+  patch?  [Discussion started.]
 
 * Maybe grok PGP signed text/plain in applymbox as well.
 
