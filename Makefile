@@ -163,6 +163,12 @@ LIB_OBJS = \
 LIBS = $(LIB_FILE)
 LIBS += -lz
 
+# Shell quote;
+# Result of this needs to be placed inside ''
+shq = $(subst ','\'',$(1))
+# This has surrounding ''
+shellquote = '$(call shq,$(1))'
+
 #
 # Platform specific tweaks
 #
@@ -235,7 +241,7 @@ ifndef NO_OPENSSL
 		OPENSSL_LINK =
 	endif
 else
-	DEFINES += '-DNO_OPENSSL'
+	DEFINES += -DNO_OPENSSL
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
@@ -294,7 +300,7 @@ endif
 endif
 endif
 
-DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
+DEFINES += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
@@ -311,7 +317,7 @@ all:
 
 git: git.sh Makefile
 	rm -f $@+ $@
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@X@@/$(X)/g' \
 	    $(GIT_LIST_TWEAK) <$@.sh >$@+
@@ -320,22 +326,22 @@ git: git.sh Makefile
 
 $(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
 	rm -f $@
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.sh >$@
 	chmod +x $@
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	rm -f $@
-	sed -e '1s|#!.*perl|#!$(PERL_PATH)|' \
+	sed -e '1s|#!.*perl|#!$(call shq,$(PERL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@
 	chmod +x $@
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	rm -f $@
-	sed -e '1s|#!.*python|#!$(PYTHON_PATH)|' \
-	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR)|g' \
+	sed -e '1s|#!.*python|#!$(call shq,$(PYTHON_PATH))|' \
+	    -e 's|@@GIT_PYTHON_PATH@@|$(call shq,$(GIT_PYTHON_DIR))|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.py >$@
 	chmod +x $@
@@ -365,7 +371,7 @@ git-rev-list$X: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
-		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
+		-DDEFAULT_GIT_TEMPLATE_DIR=$(call shellquote,"$(template_dir)") $*.c
 
 $(LIB_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H)
@@ -397,13 +403,13 @@ check:
 ### Installation rules
 
 install: $(PROGRAMS) $(SCRIPTS)
-	$(INSTALL) -d -m755 $(DESTDIR)$(bindir)
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
-	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
-	sh ./cmd-rename.sh $(DESTDIR)$(bindir)
+	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) git-revert $(call shellquote,$(DESTDIR)$(bindir)/git-cherry-pick)
+	sh ./cmd-rename.sh $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
-	$(INSTALL) -d -m755 $(DESTDIR)$(GIT_PYTHON_DIR)
-	$(INSTALL) $(PYMODULES) $(DESTDIR)$(GIT_PYTHON_DIR)
+	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
+	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 
 install-doc:
 	$(MAKE) -C Documentation install
