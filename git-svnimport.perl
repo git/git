@@ -440,7 +440,7 @@ sub commit {
 	}
 
 	if(@old) {
-		open my $F, "-│", "git-ls-files", "-z", @old or die $!;
+		open my $F, "-|", "git-ls-files", "-z", @old or die $!;
 		@old = ();
 		local $/ = '\0';
 		while(<$F>) {
