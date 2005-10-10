@@ -45,10 +45,10 @@ then
 	sed -e '
 		s/^:// 
 		h
-		s/^[^\t]*//
+		s/^[^	]*//
 		s/ /\\ /g
 		x
-		s/\t.*$//
+		s/	.*$//
 		G
 		s/\n/ /' |
 	report "Updated but not checked in" "will commit"
@@ -71,10 +71,10 @@ git-diff-files |
 sed -e '
 	s/^:// 
 	h
-	s/^[^\t]*//
+	s/^[^	]*//
 	s/ /\\ /g
 	x
-	s/\t.*$//
+	s/	.*$//
 	G
 	s/\n/ /' |
 report "Changed but not updated" "use git-update-index to mark for commit"
