@@ -8,6 +8,9 @@ test_description='See why rewinding head breaks send-pack
 '
 . ./test-lib.sh
 
+touch cpio-test
+test_expect_success 'working cpio' 'echo cpio-test | cpio -o > /dev/null'
+
 cnt='1'
 test_expect_success setup '
 	tree=$(git-write-tree) &&
