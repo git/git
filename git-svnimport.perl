@@ -290,7 +290,7 @@ sub get_file($$$) {
 	my ($name, $res) = eval { $svn->file($svnpath,$rev); };
 	return () unless defined $name;
 
-	open my $F, '-|', "git-hash-object -w $name"
+	open my $F, '-|', "git-hash-object", "-w", $name
 		or die "Cannot create object: $!\n";
 	my $sha = <$F>;
 	chomp $sha;
@@ -437,14 +437,14 @@ sub commit {
 	}
 
 	if(@old) {
-		open F, "-│", "git-ls-files", "-z", @old or die $!;
+		open my $F, "-│", "git-ls-files", "-z", @old or die $!;
 		@old = ();
 		local $/ = '\0';
-		while(<F>) {
+		while(<$F>) {
 			chomp;
 			push(@old,$_);
 		}
-		close(F);
+		close($F);
 
 		while(@old) {
 			my @o2;
