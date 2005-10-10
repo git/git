@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cmd=
-path=$(dirname $0)
+path=$(dirname "$0")
 case "$#" in
 0)	;;
 *)	cmd="$1"
@@ -12,13 +12,14 @@ case "$#" in
 		exit 0 ;;
 	esac
 	
-	test -x $path/git-$cmd && exec $path/git-$cmd "$@"
+	test -x "$path/git-$cmd" && exec "$path/git-$cmd" "$@"
 	
 	case '@@X@@' in
 	    '')
 		;;
 	    *)
-		test -x $path/git-$cmd@@X@@ && exec $path/git-$cmd@@X@@ "$@"
+		test -x "$path/git-$cmd@@X@@" &&
+		exec "$path/git-$cmd@@X@@" "$@"
 		;;
 	esac
 	;;

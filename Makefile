@@ -202,6 +202,7 @@ ifeq ($(uname_O),Cygwin)
 	PLATFORM_DEFINES += -DUSE_SYMLINK_HEAD=0
 endif
 ifeq ($(uname_S),OpenBSD)
+	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
 endif
