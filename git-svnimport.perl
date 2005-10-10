@@ -149,30 +149,6 @@ sub pdate($) {
 	return timegm($6||0,$5,$4,$3,$2-1,$y);
 }
 
-sub pmode($) {
-	my($mode) = @_;
-	my $m = 0;
-	my $mm = 0;
-	my $um = 0;
-	for my $x(split(//,$mode)) {
-		if($x eq ",") {
-			$m |= $mm&$um;
-			$mm = 0;
-			$um = 0;
-		} elsif($x eq "u") { $um |= 0700;
-		} elsif($x eq "g") { $um |= 0070;
-		} elsif($x eq "o") { $um |= 0007;
-		} elsif($x eq "r") { $mm |= 0444;
-		} elsif($x eq "w") { $mm |= 0222;
-		} elsif($x eq "x") { $mm |= 0111;
-		} elsif($x eq "=") { # do nothing
-		} else { die "Unknown mode: $mode\n";
-		}
-	}
-	$m |= $mm&$um;
-	return $m;
-}
-
 sub getwd() {
 	my $pwd = `pwd`;
 	chomp $pwd;
@@ -319,7 +295,6 @@ sub get_file($$$) {
 	my $sha = <$F>;
 	chomp $sha;
 	close $F;
-	# my $mode = pmode($cvs->{'mode'});
 	my $mode = "0644"; # SV does not seem to store any file modes
 	return [$mode, $sha, $path];
 }
