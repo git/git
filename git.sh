@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cmd=
-path=$(dirname $0)
+path=$(dirname "$0")
 case "$#" in
 0)	;;
 *)	cmd="$1"
@@ -11,7 +11,7 @@ case "$#" in
 		echo "git version @@GIT_VERSION@@"
 		exit 0 ;;
 	esac
-	test -x $path/git-$cmd && exec $path/git-$cmd "$@" ;;
+	test -x "$path/git-$cmd" && exec "$path/git-$cmd" "$@" ;;
 esac
 
 echo "Usage: git COMMAND [OPTIONS] [TARGET]"
