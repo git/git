@@ -244,7 +244,7 @@ EOM
 		my($num,$branch,$ref) = split;
 		$branches{$branch}{$num} = $ref;
 		$branches{$branch}{"LAST"} = $ref;
-		$current_rev = $num+1 if $current_rev < $num+1;
+		$current_rev = $num if $current_rev < $num;
 	}
 	close($B);
 }
@@ -557,11 +557,6 @@ sub commit {
 		close(C)
 			or die "Cannot write branch $dest for update: $!\n";
 	}
-	$branches{$branch}{"LAST"} = $cid;
-	$branches{$branch}{$revision} = $cid;
-	$last_rev = $cid;
-	print BRANCHES "$revision $branch $cid\n";
-	print "DONE: $revision $dest $cid\n" if $opt_v;
 
 	if($tag) {
 		my($in, $out) = ('','');
@@ -593,6 +588,11 @@ sub commit {
 
 		print "Created tag '$dest' on '$branch'\n" if $opt_v;
 	}
+	$branches{$branch}{"LAST"} = $cid;
+	$branches{$branch}{$revision} = $cid;
+	$last_rev = $cid;
+	print BRANCHES "$revision $branch $cid\n";
+	print "DONE: $revision $dest $cid\n" if $opt_v;
 }
 
 my ($changed_paths, $revision, $author, $date, $message, $pool) = @_;
