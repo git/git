@@ -109,8 +109,7 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	posn = command;
 	of = 0;
 	of |= add_to_string(&posn, &sizen, "env ", 0);
-	of |= add_to_string(&posn, &sizen, GIT_DIR_ENVIRONMENT, 0);
-	of |= add_to_string(&posn, &sizen, "=", 0);
+	of |= add_to_string(&posn, &sizen, GIT_DIR_ENVIRONMENT "=", 0);
 	of |= add_to_string(&posn, &sizen, path, 1);
 	of |= add_to_string(&posn, &sizen, " ", 0);
 	of |= add_to_string(&posn, &sizen, remote_prog, 1);
