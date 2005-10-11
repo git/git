@@ -210,6 +210,8 @@ ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
 
+-include config.mak
+
 ifndef NO_CURL
 	ifdef CURLDIR
 		# This is still problematic -- gcc does not want -R.
