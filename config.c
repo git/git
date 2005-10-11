@@ -64,7 +64,12 @@ static char *parse_value(void)
 			case 'n':
 				c = '\n';
 				break;
-			return NULL;
+			/* Some characters escape as themselves */
+			case '\\': case '"':
+				break;
+			/* Reject unknown escape sequences */
+			default:
+				return NULL;
 			}
 			value[len++] = c;
 			continue;
