@@ -9,10 +9,11 @@ git-svnimport - Import a SVN repository into git
 
 SYNOPSIS
 --------
-'git-svnimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
+'git-svnimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ] [ -d | -D ]
 			[ -C <GIT_repository> ] [ -i ] [ -u ] [-l limit_nr_changes]
 			[ -b branch_subdir ] [ -t trunk_subdir ] [ -T tag_subdir ]
-			[ -s start_chg ] [ -m ] [ -M regex ] [ <SVN_repository_URL> ]
+			[ -s start_chg ] [ -m ] [ -M regex ]
+			<SVN_repository_URL> [ <path> ]
 
 
 DESCRIPTION
@@ -82,9 +83,32 @@ When importing incementally, you might need to edit the .git/svn2git file.
 -v::
 	Verbosity: let 'svnimport' report what it is doing.
 
+-d::
+	Use direct HTTP requests if possible. The "<path>" argument is used
+	only for retrieving the SVN logs; the path to the contents is
+	included in the SVN log.
+
+-D::
+	Use direct HTTP requests if possible. The "<path>" argument is used
+	for retrieving the logs, as well as for the contents.
++
+There's no safe way to automatically find out which of these options to
+use, so you need to try both. Usually, the one that's wrong will die
+with a 40x error pretty quickly.
+
 <SVN_repository_URL>::
 	The URL of the SVN module you want to import. For local
 	repositories, use "file:///absolute/path".
++
+If you're using the "-d" or "-D" option, this is the URL of the SVN
+repository itself; it usually ends in "/svn".
+
+<SVN_repository_URL>::
+	The URL of the SVN module you want to import. For local
+	repositories, use "file:///absolute/path".
+
+<path>
+	The path to the module you want to check out.
 
 -h::
 	Print a short usage message and exit.

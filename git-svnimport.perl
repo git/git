@@ -30,26 +30,26 @@ die "Need CVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_s,$opt_l);
+our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_s,$opt_l,$opt_d,$opt_D);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-l max_num_changes]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
-       [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
+       [-d|-D] [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("b:C:hil:mM:o:s:t:T:uv") or usage();
+getopts("b:C:dDhil:mM:o:s:t:T:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
 my $trunk_name = $opt_T || "trunk";
 my $branch_name = $opt_b || "branches";
 
-@ARGV == 1 or usage();
+@ARGV == 1 or @ARGV == 2 or usage();
 
 $opt_o ||= "origin";
 $opt_s ||= 1;
@@ -58,6 +58,7 @@ my $git_tree = $opt_C;
 $git_tree ||= ".";
 
 my $svn_url = $ARGV[0];
+my $svn_dir = $ARGV[1];
 
 our @mergerx = ();
 if ($opt_m) {
@@ -106,30 +107,44 @@ sub conn {
 
 sub file {
 	my($self,$path,$rev) = @_;
-	my $res;
 
 	my ($fh, $name) = tempfile('gitsvn.XXXXXX', 
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	print "... $rev $path ...\n" if $opt_v;
 	eval { $self->{'svn'}->get_file($path,$rev,$fh); };
-	if ($@ and $@ !~ /Attempted to get checksum/) {
-	    # retry
-	    $self->conn();
-		eval { $self->{'svn'}->get_file($path,$rev,$fh); };
-	};
-	return () if $@ and $@ !~ /Attempted to get checksum/;
-	die $@ if $@;
+	if($@) {
+		return undef if $@ =~ /Attempted to get checksum/;
+		die $@;
+	}
 	close ($fh);
 
-	return ($name, $res);
+	return $name;
 }
 
-
 package main;
+use URI;
 
-my $svn = SVNconn->new($svn_url);
+my $svn = $svn_url;
+$svn .= "/$svn_dir" if defined $svn_dir;
+$svn = SVNconn->new($svn);
 
+my $lwp_ua;
+if($opt_d or $opt_D) {
+	$svn_url = URI->new($svn_url)->canonical;
+	if($opt_D) {
+		$svn_dir =~ s#/*$#/#;
+	} else {
+		$svn_dir = "";
+	}
+	if ($svn_url->scheme eq "http") {
+		use LWP::UserAgent;
+		$lwp_ua = LWP::UserAgent->new(keep_alive => 1, requests_redirectable => []);
+	} else {
+		print STDERR "Warning: not HTTP; turning off direct file access\n";
+		$opt_d=0;
+	}
+}
 
 sub pdate($) {
 	my($d) = @_;
@@ -258,8 +273,30 @@ sub get_file($$$) {
 	}
 
 	# now get it
-	my ($name, $res) = eval { $svn->file($svnpath,$rev); };
-	return () unless defined $name;
+	my $name;
+	if($opt_d) {
+		my($req,$res);
+
+		# /svn/!svn/bc/2/django/trunk/django-docs/build.py
+		my $url=$svn_url->clone();
+		$url->path($url->path."/!svn/bc/$rev/$svn_dir$svnpath");
+		print "Fetching $url...\n" if $opt_v;
+		$req = HTTP::Request->new(GET => $url);
+		$res = $lwp_ua->request($req);
+		if ($res->is_success) {
+			my $fh;
+			($fh, $name) = tempfile('gitsvn.XXXXXX', 
+		    	DIR => File::Spec->tmpdir(), UNLINK => 1);
+			print $fh $res->content;
+			close($fh) or die "Could not write $name: $!\n";
+		} else {
+			return undef if $res->code == 301; # directory?
+			die $res->status_line." at $url\n";
+		}
+	} else {
+		$name = $svn->file($svnpath,$rev);
+		return undef unless defined $name;
+	}
 
 	open my $F, '-|', "git-hash-object", "-w", $name
 		or die "Cannot create object: $!\n";
