@@ -969,9 +969,54 @@ int fetch(unsigned char *sha1)
 		     alt->base);
 }
 
+static inline int needs_quote(int ch)
+{
+	switch (ch) {
+	case '/': case '-': case '.':
+	case 'A'...'Z':	case 'a'...'z':	case '0'...'9':
+		return 0;
+	default:
+		return 1;
+	}
+}
+
+static inline int hex(int v)
+{
+	if (v < 10) return '0' + v;
+	else return 'A' + v - 10;
+}
+
+static char *quote_ref_url(const char *base, const char *ref)
+{
+	const char *cp;
+	char *dp, *qref;
+	int len, baselen, ch;
+
+	baselen = strlen(base);
+	len = baselen + 6; /* "refs/" + NUL */
+	for (cp = ref; (ch = *cp) != 0; cp++, len++)
+		if (needs_quote(ch))
+			len += 2; /* extra two hex plus replacement % */
+	qref = xmalloc(len);
+	memcpy(qref, base, baselen);
+	memcpy(qref + baselen, "refs/", 5);
+	for (cp = ref, dp = qref + baselen + 5; (ch = *cp) != 0; cp++) {
+		if (needs_quote(ch)) {
+			*dp++ = '%';
+			*dp++ = hex((ch >> 4) & 0xF);
+			*dp++ = hex(ch & 0xF);
+		}
+		else
+			*dp++ = ch;
+	}
+	*dp = 0;
+
+	return qref;
+}
+
 int fetch_ref(char *ref, unsigned char *sha1)
 {
-        char *url, *posn;
+        char *url;
         char hex[42];
         struct buffer buffer;
 	char *base = alt->base;
@@ -981,13 +1026,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         buffer.buffer = hex;
         hex[41] = '\0';
         
-        url = xmalloc(strlen(base) + 6 + strlen(ref));
-        strcpy(url, base);
-        posn = url + strlen(base);
-        strcpy(posn, "refs/");
-        posn += 5;
-        strcpy(posn, ref);
-
+	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
