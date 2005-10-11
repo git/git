@@ -237,6 +237,35 @@ static void reject_merge(struct cache_entry *ce)
 	    ce->name);
 }
 
+/* Unlink the last component and attempt to remove leading
+ * directories, in case this unlink is the removal of the
+ * last entry in the directory -- empty directories are removed.
+ */
+static void unlink_entry(char *name)
+{
+	char *cp, *prev;
+
+	if (unlink(name))
+		return;
+	prev = NULL;
+	while (1) {
+		int status;
+		cp = strrchr(name, '/');
+		if (prev)
+			*prev = '/';
+		if (!cp)
+			break;
+
+		*cp = 0;
+		status = rmdir(name);
+		if (status) {
+			*cp = '/';
+			break;
+		}
+		prev = cp;
+	}
+}
+
 static void check_updates(struct cache_entry **src, int nr)
 {
 	static struct checkout state = {
@@ -250,7 +279,7 @@ static void check_updates(struct cache_entry **src, int nr)
 		struct cache_entry *ce = *src++;
 		if (!ce->ce_mode) {
 			if (update)
-				unlink(ce->name);
+				unlink_entry(ce->name);
 			continue;
 		}
 		if (ce->ce_flags & mask) {
