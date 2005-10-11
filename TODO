@@ -109,7 +109,7 @@ Technical (heavier)
 
 * Plug-in file-level merges [Post 1.0].
 
-* Per-repository configuration mechanism.
+* Per-repository configuration mechanism [DONE by Linus].
 
 
 Technical (milder)
@@ -119,10 +119,13 @@ Technical (milder)
 
   curl 'http://locke.catalyst.net.nz/git/moodle.git/refs/tags/MOODLE_15_MERGED **INVALID**'
 
+  Quote the URL so that libcurl's metecharacter mechanism would
+  not kick in [DONE].
+
 * Review the Makefile variables and exporting rules for them,
   while looking at prefix passing by Kai Ruemmler [DONE].
 
-* Review the 'sparce object database' change by Linus and move
+* Review the 'sparse object database' change by Linus and move
   the first phase of it to the "master" branch [DONE].
 
 * Decide on mmap().  I am inclined to just stick to mmap
@@ -148,7 +151,7 @@ Technical (milder)
   we discussed some time ago.
 
 * Accept patches to cause "read-tree -u" delete a directory when
-  it makes it empty.
+  it makes it empty [DONE].
 
 * Perhaps accept patches to do undo/redo.
 
@@ -160,7 +163,7 @@ Technical (milder)
   lines.
 
 * What to do with TABs and LFs in pathnames without breaking GNU
-  patch?  [Discussion started.]
+  patch?  [Have patch in proposed updates.]
 
 * Maybe grok PGP signed text/plain in applymbox as well.
 
@@ -196,7 +199,7 @@ Technical (milder)
 
 * Updated git-changes-script Jeff Garzik needs [Inquiry for
   external spec sent out with a quick hack.  Will know if that
-  is what he needs soon enough].
+  is what he needs hopefully soon].
 
 * An mechanism to ignore filesystem mode bits altogether.
 
