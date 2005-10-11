@@ -26,7 +26,7 @@ use IPC::Open2;
 use SVN::Core;
 use SVN::Ra;
 
-die "Need CVN:COre 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
+die "Need CVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
