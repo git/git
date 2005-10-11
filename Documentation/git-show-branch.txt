@@ -7,7 +7,7 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git-show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] <reference>...'
+'git-show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] <reference>...'
 
 DESCRIPTION
 -----------
@@ -43,6 +43,15 @@ OPTIONS
 --independent::
 	Among the <reference>s given, display only the ones that
 	cannot be reached from any other <reference>.
+
+--no-name::
+	Do not show naming strings for each commit.
+
+--sha1-name::
+	Instead of naming the commits using the path to reach
+	them from heads (e.g. "master~2" to mean the grandparent
+	of "master"), name them with the unique prefix of their
+	object names.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
@@ -88,21 +97,6 @@ whose commit message is "Add 'git show-branch'.  "fixes" branch
 adds one commit 'Introduce "reset type"'.  "mhf" branch has many
 other commits.
 
-When only one head is given, the output format changes slightly
-to conserve space.  The '+' sign to show which commit is
-reachable from which head and the first N lines to show the list
-of heads being displayed are both meaningless so they are
-omitted.  Also the label given to each commit does not repeat
-the name of the branch because it is obvious.
-
-------------------------------------------------
-$ git show-branch --more=4 master
-[master] Add 'git show-branch'.
-[~1] Add a new extended SHA1 syntax <name>~<num>
-[~2] Fix "git-diff A B"
-[~3] git-ls-files: generalized pathspecs
-[~4] Make "git-ls-files" work in subdirectories
-------------------------------------------------
 
 Author
 ------

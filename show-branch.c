@@ -133,25 +133,28 @@ static void name_commits(struct commit_list *list,
 			nth = 0;
 			while (parents) {
 				struct commit *p = parents->item;
-				char newname[1000];
+				char newname[1000], *en;
 				parents = parents->next;
 				nth++;
 				if (p->object.util)
 					continue;
+				en = newname;
 				switch (n->generation) {
 				case 0:
-					sprintf(newname, "%s^%d",
-						n->head_name, nth);
+					en += sprintf(en, "%s", n->head_name);
 					break;
 				case 1:
-					sprintf(newname, "%s^^%d",
-						n->head_name, nth);
+					en += sprintf(en, "%s^", n->head_name);
 					break;
 				default:
-					sprintf(newname, "%s~%d^%d",
-						n->head_name, n->generation,
-						nth);
+					en += sprintf(en, "%s~%d",
+						n->head_name, n->generation);
+					break;
 				}
+				if (nth == 1)
+					en += sprintf(en, "^");
+				else
+					en += sprintf(en, "^%d", nth);
 				name_commit(p, strdup(newname), 0);
 				i++;
 				name_first_parent_chain(p);
@@ -205,7 +208,7 @@ static void join_revs(struct commit_list **list_p,
 	}
 }
 
-static void show_one_commit(struct commit *commit)
+static void show_one_commit(struct commit *commit, int no_name)
 {
 	char pretty[128], *cp;
 	struct commit_name *name = commit->object.util;
@@ -218,11 +221,21 @@ static void show_one_commit(struct commit *commit)
 		cp = pretty + 8;
 	else
 		cp = pretty;
-	if (name && name->head_name) {
-		printf("[%s", name->head_name);
-		if (name->generation)
-			printf("~%d", name->generation);
-		printf("] ");
+
+	if (!no_name) {
+		if (name && name->head_name) {
+			printf("[%s", name->head_name);
+			if (name->generation) {
+				if (name->generation == 1)
+					printf("^");
+				else
+					printf("~%d", name->generation);
+			}
+			printf("] ");
+		}
+		else
+			printf("[%s] ",
+			       find_unique_abbrev(commit->object.sha1, 7));
 	}
 	puts(cp);
 }
@@ -354,7 +367,8 @@ int main(int ac, char **av)
 	unsigned char head_sha1[20];
 	int merge_base = 0;
 	int independent = 0;
-	char **label;
+	int no_name = 0;
+	int sha1_name = 0;
 
 	setup_git_directory();
 
@@ -370,6 +384,10 @@ int main(int ac, char **av)
 			extra = 1;
 		else if (!strcmp(arg, "--list"))
 			extra = -1;
+		else if (!strcmp(arg, "--no-name"))
+			no_name = 1;
+		else if (!strcmp(arg, "--sha1-name"))
+			sha1_name = 1;
 		else if (!strncmp(arg, "--more=", 7))
 			extra = atoi(arg + 7);
 		else if (!strcmp(arg, "--merge-base"))
@@ -465,7 +483,8 @@ int main(int ac, char **av)
 				printf("%c [%s] ",
 				       is_head ? '*' : '!', ref_name[i]);
 			}
-			show_one_commit(rev[i]);
+			/* header lines never need name */
+			show_one_commit(rev[i], 1);
 		}
 		if (0 <= extra) {
 			for (i = 0; i < num_rev; i++)
@@ -480,7 +499,8 @@ int main(int ac, char **av)
 	sort_in_topological_order(&seen);
 
 	/* Give names to commits */
-	name_commits(seen, rev, ref_name, num_rev);
+	if (!sha1_name && !no_name)
+		name_commits(seen, rev, ref_name, num_rev);
 
 	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
@@ -490,7 +510,6 @@ int main(int ac, char **av)
 		struct commit *commit = pop_one_commit(&seen);
 		int this_flag = commit->object.flags;
 		int is_merge_point = (this_flag & all_revs) == all_revs;
-		static char *obvious[] = { "" };
 
 		if (is_merge_point)
 			shown_merge_point = 1;
@@ -501,9 +520,7 @@ int main(int ac, char **av)
 					? '+' : ' ');
 			putchar(' ');
 		}
-		show_one_commit(commit);
-		if (num_rev == 1)
-			label = obvious;
+		show_one_commit(commit, no_name);
 		if (shown_merge_point && is_merge_point)
 			if (--extra < 0)
 				break;
