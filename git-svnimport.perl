@@ -5,8 +5,7 @@
 #
 # The basic idea is to pull and analyze SVN changes.
 #
-# Checking out the files is done by a single long-running CVS connection
-# / server process.
+# Checking out the files is done by a single long-running SVN connection.
 #
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
@@ -50,7 +49,7 @@ my $tag_name = $opt_t || "tags";
 my $trunk_name = $opt_T || "trunk";
 my $branch_name = $opt_b || "branches";
 
-@ARGV <= 1 or usage();
+@ARGV == 1 or usage();
 
 $opt_o ||= "origin";
 $opt_s ||= 1;
@@ -58,18 +57,7 @@ $opt_l = 100 unless defined $opt_l;
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
-my $cvs_tree;
-if ($#ARGV == 0) {
-	$cvs_tree = $ARGV[0];
-} elsif (-f 'CVS/Repository') {
-	open my $f, '<', 'CVS/Repository' or 
-	    die 'Failed to open CVS/Repository';
-	$cvs_tree = <$f>;
-	chomp $cvs_tree;
-	close $f;
-} else {
-	usage();
-}
+my $svn_url = $ARGV[0];
 
 our @mergerx = ();
 if ($opt_m) {
@@ -140,7 +128,7 @@ sub file {
 
 package main;
 
-my $svn = SVNconn->new($cvs_tree);
+my $svn = SVNconn->new($svn_url);
 
 
 sub pdate($) {
@@ -254,25 +242,6 @@ EOM
 	or die "Could not create git subdir ($git_dir).\n";
 
 open BRANCHES,">>", "$git_dir/svn2git";
-
-
-## cvsps output:
-#---------------------
-#PatchSet 314
-#Date: 1999/09/18 13:03:59
-#Author: wkoch
-#Branch: STABLE-BRANCH-1-0
-#Ancestor branch: HEAD
-#Tag: (none)
-#Log:
-#    See ChangeLog: Sat Sep 18 13:03:28 CEST 1999  Werner Koch
-#Members:
-#	README:1.57->1.57.2.1
-#	VERSION:1.96->1.96.2.1
-#
-#---------------------
-
-my $state = 0;
 
 sub get_file($$$) {
 	my($rev,$branch,$path) = @_;
