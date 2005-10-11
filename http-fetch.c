@@ -489,7 +489,10 @@ void process_request_queue()
 
 	while (active_requests < max_requests && request != NULL) {
 		if (request->state == WAITING) {
-			start_request(request);
+			if (has_sha1_file(request->sha1))
+				release_request(request);
+			else
+				start_request(request);
 			curl_multi_perform(curlm, &num_transfers);
 		}
 		request = request->next;
@@ -889,6 +892,11 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		request = request->next;
 	if (request == NULL)
 		return error("Couldn't find request for %s in the queue", hex);
+
+	if (has_sha1_file(request->sha1)) {
+		release_request(request);
+		return 0;
+	}
 
 #ifdef USE_CURL_MULTI
 	int num_transfers;

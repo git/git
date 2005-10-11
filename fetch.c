@@ -165,7 +165,7 @@ static int loop(void)
 		 * the queue because we needed to fetch it first.
 		 */
 		if (! (obj->flags & TO_SCAN)) {
-			if (!has_sha1_file(obj->sha1) && fetch(obj->sha1)) {
+			if (fetch(obj->sha1)) {
 				report_missing(obj->type
 					       ? obj->type
 					       : "object", obj->sha1);

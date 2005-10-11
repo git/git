@@ -166,7 +166,10 @@ static int fetch_file(const unsigned char *sha1)
 
 int fetch(unsigned char *sha1)
 {
-	return fetch_file(sha1) && fetch_pack(sha1);
+	if (has_sha1_file(sha1))
+		return 0;
+	else
+		return fetch_file(sha1) && fetch_pack(sha1);
 }
 
 int fetch_ref(char *ref, unsigned char *sha1)
