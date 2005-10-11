@@ -53,6 +53,7 @@ my $branch_name = $opt_b || "branches";
 @ARGV <= 1 or usage();
 
 $opt_o ||= "origin";
+$opt_s ||= 1;
 $opt_l = 100 unless defined $opt_l;
 my $git_tree = $opt_C;
 $git_tree ||= ".";
@@ -193,7 +194,7 @@ $ENV{GIT_INDEX_FILE} = $git_index;
 my $maxnum = 0;
 my $last_rev = "";
 my $last_branch;
-my $current_rev = $opt_s ? ($opt_s-1) : 0;
+my $current_rev = $opt_s-1;
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
