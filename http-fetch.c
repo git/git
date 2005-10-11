@@ -29,6 +29,7 @@ static int max_requests = DEFAULT_MAX_REQUESTS;
 static CURLM *curlm;
 #endif
 static CURL *curl_default;
+static struct curl_slist *pragma_header;
 static struct curl_slist *no_pragma_header;
 static struct curl_slist *no_range_header;
 static char curl_errorstr[CURL_ERROR_SIZE];
@@ -203,7 +204,7 @@ struct active_request_slot *get_active_slot()
 	slot->in_use = 1;
 	slot->done = 0;
 	slot->local = NULL;
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_range_header);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 
@@ -358,6 +359,7 @@ void start_request(struct transfer_request *request)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, request->errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
 	/* If we have successfully processed data from a previous fetch
 	   attempt, only fetch the data we don't already have. */
@@ -568,6 +570,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, indexfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	slot->local = indexfile;
 
 	/* If there is data present from a previous transfer attempt,
@@ -837,6 +840,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, packfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	slot->local = packfile;
 
 	/* If there is data present from a previous transfer attempt,
@@ -1067,6 +1071,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 #endif
+	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 	no_range_header = curl_slist_append(no_range_header, "Range:");
 
@@ -1106,6 +1111,7 @@ int main(int argc, char **argv)
 	if (pull(commit_id))
 		return 1;
 
+	curl_slist_free_all(pragma_header);
 	curl_slist_free_all(no_pragma_header);
 	curl_slist_free_all(no_range_header);
 	curl_easy_cleanup(curl_default);
