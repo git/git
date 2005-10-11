@@ -529,8 +529,6 @@ void prefetch(unsigned char *sha1)
 #endif
 }
 
-static int got_alternates = 0;
-
 static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
@@ -622,8 +620,7 @@ static int fetch_alternates(char *base)
 	struct alt_base *tail = alt;
 
 	struct active_request_slot *slot;
-	if (got_alternates)
-		return 0;
+
 	data = xmalloc(4096);
 	buffer.size = 4095;
 	buffer.posn = 0;
@@ -721,7 +718,6 @@ static int fetch_alternates(char *base)
 		}
 		i = posn + 1;
 	}
-	got_alternates = 1;
 	
 	return ret;
 }
