@@ -265,11 +265,11 @@ sub get_file($$$) {
 	my $svnpath;
 	$path = "" if $path eq "/"; # this should not happen, but ...
 	if($branch eq "/") {
-		$svnpath = "/$trunk_name/$path";
+		$svnpath = "$trunk_name/$path";
 	} elsif($branch =~ m#^/#) {
-		$svnpath = "/$tag_name$branch/$path";
+		$svnpath = "$tag_name$branch/$path";
 	} else {
-		$svnpath = "/$branch_name/$branch/$path";
+		$svnpath = "$branch_name/$branch/$path";
 	}
 
 	# now get it
@@ -280,7 +280,7 @@ sub get_file($$$) {
 		# /svn/!svn/bc/2/django/trunk/django-docs/build.py
 		my $url=$svn_url->clone();
 		$url->path($url->path."/!svn/bc/$rev/$svn_dir$svnpath");
-		print "Fetching $url...\n" if $opt_v;
+		print "... $path...\n" if $opt_v;
 		$req = HTTP::Request->new(GET => $url);
 		$res = $lwp_ua->request($req);
 		if ($res->is_success) {
@@ -294,7 +294,7 @@ sub get_file($$$) {
 			die $res->status_line." at $url\n";
 		}
 	} else {
-		$name = $svn->file($svnpath,$rev);
+		$name = $svn->file("/$svnpath",$rev);
 		return undef unless defined $name;
 	}
 
@@ -324,6 +324,36 @@ sub split_path($$) {
 	}
 	$path = "/" if $path eq "";
 	return ($branch,$path);
+}
+
+sub copy_subdir($$$$$$) {
+	# Somebody copied a whole subdirectory.
+	# We need to find the index entries from the old version which the
+	# SVN log entry points to, and add them to the new place.
+
+	my($newrev,$newbranch,$path,$oldpath,$rev,$new) = @_;
+	my($branch,$srcpath) = split_path($rev,$oldpath);
+
+	my $gitrev = $branches{$branch}{$rev};
+	unless($gitrev) {
+		print STDERR "$newrev:$newbranch: could not find $oldpath \@ $rev\n";
+		return;
+	}
+	print "$newrev:$newbranch:$path: copying from $branch:$srcpath @ $rev\n" if $opt_v;
+	$srcpath =~ s#/*$#/#;
+	open my $f,"-|","git-ls-tree","-r","-z",$gitrev,$srcpath;
+	local $/ = "\0";
+	while(<$f>) {
+		chomp;
+		my($m,$p) = split(/\t/,$_,2);
+		my($mode,$type,$sha1) = split(/ /,$m);
+		next if $type ne "blob";
+		$p = substr($p,length($srcpath)-1);
+		print "... found $path$p ...\n" if $opt_v;
+		push(@$new,[$mode,$sha1,$path.$p]);
+	}
+	close($f) or 
+		print STDERR "$newrev:$newbranch: could not list files in $oldpath \@ $rev\n";
 }
 
 sub commit {
@@ -420,10 +450,20 @@ sub commit {
 	if($tag and not %$changed_paths) {
 		$cid = $rev;
 	} else {
-		while(my($path,$action) = each %$changed_paths) {
+		my @paths = sort keys %$changed_paths;
+		foreach my $path(@paths) {
+			my $action = $changed_paths->{$path};
+
 			if ($action->[0] eq "A") {
 				my $f = get_file($revision,$branch,$path);
-				push(@new,$f) if $f;
+				if($f) {
+					push(@new,$f) if $f;
+				} elsif($action->[1]) {
+					copy_subdir($revision,$branch,$path,$action->[1],$action->[2],\@new);
+				} else {
+					my $opath = $action->[3];
+					print STDERR "$revision: $branch: could not fetch '$opath'\n";
+				}
 			} elsif ($action->[0] eq "D") {
 				push(@old,$path);
 			} elsif ($action->[0] eq "M") {
@@ -434,16 +474,19 @@ sub commit {
 				push(@old,$path); # remove any old stuff
 
 				# ... and add any new stuff
-				my($b,$p) = split_path($revision,$action->[1]);
-				open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $p;
-				local $/ = '\0';
+				my($b,$srcpath) = split_path($revision,$action->[1]);
+				$srcpath =~ s#/*$#/#;
+				open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $srcpath;
+				local $/ = "\0";
 				while(<$F>) {
 					chomp;
 					my($m,$p) = split(/\t/,$_,2);
 					my($mode,$type,$sha1) = split(/ /,$m);
 					next if $type ne "blob";
-					push(@new,[$mode,$sha1,$p]);
+					$p = substr($p,length($srcpath)-1);
+					push(@new,[$mode,$sha1,$path.$p]);
 				}
+				close($F);
 			} else {
 				die "$revision: unknown action '".$action->[0]."' for $path\n";
 			}
@@ -452,7 +495,7 @@ sub commit {
 		if(@old) {
 			open my $F, "-|", "git-ls-files", "-z", @old or die $!;
 			@old = ();
-			local $/ = '\0';
+			local $/ = "\0";
 			while(<$F>) {
 				chomp;
 				push(@old,$_);
@@ -609,7 +652,7 @@ sub _commit_all {
 	($changed_paths, $revision, $author, $date, $message, $pool) = @_;
 	my %p;
 	while(my($path,$action) = each %$changed_paths) {
-		$p{$path} = [ $action->action,$action->copyfrom_path, $action->copyfrom_rev ];
+		$p{$path} = [ $action->action,$action->copyfrom_path, $action->copyfrom_rev, $path ];
 	}
 	$changed_paths = \%p;
 }
