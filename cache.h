@@ -223,6 +223,7 @@ extern int read_tree(void *buffer, unsigned long size, int stage, const char **p
 extern int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 			      size_t bufsize, size_t *bufposn);
 extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
+extern int move_temp_to_file(const char *tmpfile, char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 extern int has_sha1_file(const unsigned char *sha1);

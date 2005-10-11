@@ -138,25 +138,6 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
-int relink_or_rename(char *old, char *new) {
-	int ret;
-
-	ret = link(old, new);
-	if (ret < 0) {
-		/* Same Coda hack as in write_sha1_file(sha1_file.c) */
-		ret = errno;
-		if (ret == EXDEV && !rename(old, new))
-			return 0;
-	}
-	unlink(old);
-	if (ret) {
-		if (ret != EEXIST)
-			return ret;
-	}
-
-	return 0;
-}
-
 #ifdef USE_CURL_MULTI
 void process_curl_messages();
 void process_request_queue();
@@ -295,6 +276,20 @@ void start_request(struct transfer_request *request)
 
 	request->local = open(request->tmpfile,
 			      O_WRONLY | O_CREAT | O_EXCL, 0666);
+	/* This could have failed due to the "lazy directory creation";
+	 * try to mkdir the last path component.
+	 */
+	if (request->local < 0 && errno == ENOENT) {
+		char *dir = strrchr(request->tmpfile, '/');
+		if (dir) {
+			*dir = 0;
+			mkdir(request->tmpfile, 0777);
+			*dir = '/';
+		}
+		request->local = open(request->tmpfile,
+				      O_WRONLY | O_CREAT | O_EXCL, 0666);
+	}
+
 	if (request->local < 0) {
 		request->state = ABORTED;
 		error("Couldn't create temporary file %s for %s: %s\n",
@@ -408,7 +403,7 @@ void finish_request(struct transfer_request *request)
 		return;
 	}
 	request->rename =
-		relink_or_rename(request->tmpfile, request->filename);
+		move_temp_to_file(request->tmpfile, request->filename);
 
 	if (request->rename == 0)
 		pull_say("got %s\n", sha1_to_hex(request->sha1));
@@ -542,7 +537,6 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	char *filename;
 	char *url;
 	char tmpfile[PATH_MAX];
-	int ret;
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
@@ -599,12 +593,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 
 	fclose(indexfile);
 
-	ret = relink_or_rename(tmpfile, filename);
-	if (ret)
-		return error("unable to write index filename %s: %s",
-			     filename, strerror(ret));
-
-	return 0;
+	return move_temp_to_file(tmpfile, filename);
 }
 
 static int setup_index(struct alt_base *repo, unsigned char *sha1)
@@ -869,10 +858,9 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 
 	fclose(packfile);
 
-	ret = relink_or_rename(tmpfile, filename);
+	ret = move_temp_to_file(tmpfile, filename);
 	if (ret)
-		return error("unable to write pack filename %s: %s",
-			     filename, strerror(ret));
+		return ret;
 
 	lst = &repo->packs;
 	while (*lst != target)

@@ -1287,7 +1287,7 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 /*
  * Move the just written object into its final resting place
  */
-static int move_temp_to_file(const char *tmpfile, char *filename)
+int move_temp_to_file(const char *tmpfile, char *filename)
 {
 	int ret = link_temp_to_file(tmpfile, filename);
 	if (ret) {
