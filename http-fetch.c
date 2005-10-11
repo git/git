@@ -1034,22 +1034,11 @@ int main(int argc, char **argv)
 			arg++;
 		} else if (!strcmp(argv[arg], "--recover")) {
 			get_recover = 1;
-#ifdef USE_CURL_MULTI
-		} else if (argv[arg][1] == 'r') {
-			max_requests = atoi(argv[arg + 1]);
-			if (max_requests < 1)
-				max_requests = DEFAULT_MAX_REQUESTS;
-			arg++;
-#endif
 		}
 		arg++;
 	}
 	if (argc < arg + 2) {
-#ifdef USE_CURL_MULTI
-		usage("git-http-fetch [-c] [-t] [-a] [-d] [-v] [-r concurrent-request-limit] [--recover] [-w ref] commit-id url");
-#else
 		usage("git-http-fetch [-c] [-t] [-a] [-d] [-v] [--recover] [-w ref] commit-id url");
-#endif
 		return 1;
 	}
 	commit_id = argv[arg];
@@ -1058,6 +1047,12 @@ int main(int argc, char **argv)
 	curl_global_init(CURL_GLOBAL_ALL);
 
 #ifdef USE_CURL_MULTI
+	char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
+	if (http_max_requests != NULL)
+		max_requests = atoi(http_max_requests);
+	if (max_requests < 1)
+		max_requests = DEFAULT_MAX_REQUESTS;
+
 	curlm = curl_multi_init();
 	if (curlm == NULL) {
 		fprintf(stderr, "Error creating curl multi handle.\n");
