@@ -81,7 +81,7 @@ int main(int argc, const char **argv)
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
-		unsigned int oldmode;
+		unsigned int oldmode, newmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 
@@ -111,7 +111,13 @@ int main(int argc, const char **argv)
 		if (!changed && !diff_options.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);
-		show_modified(oldmode, DIFF_FILE_CANON_MODE(st.st_mode),
+
+		newmode = DIFF_FILE_CANON_MODE(st.st_mode);
+		if (!trust_executable_bit &&
+		    S_ISREG(newmode) && S_ISREG(oldmode) &&
+		    ((newmode ^ oldmode) == 0111))
+			newmode = oldmode;
+		show_modified(oldmode, newmode,
 			      ce->sha1, (changed ? null_sha1 : ce->sha1),
 			      ce->name);
 	}

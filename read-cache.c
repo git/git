@@ -36,8 +36,11 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
 	case S_IFREG:
 		changed |= !S_ISREG(st->st_mode) ? TYPE_CHANGED : 0;
-		/* We consider only the owner x bit to be relevant for "mode changes" */
-		if (0100 & (ntohl(ce->ce_mode) ^ st->st_mode))
+		/* We consider only the owner x bit to be relevant for
+		 * "mode changes"
+		 */
+		if (trust_executable_bit &&
+		    (0100 & (ntohl(ce->ce_mode) ^ st->st_mode)))
 			changed |= MODE_CHANGED;
 		break;
 	case S_IFLNK:
@@ -393,7 +396,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 	pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 
-	/* existing match? Just replace it */
+	/* existing match? Just replace it. */
 	if (pos >= 0) {
 		active_cache_changed = 1;
 		active_cache[pos] = ce;
@@ -416,7 +419,8 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (!ok_to_add)
 		return -1;
 
-	if (!skip_df_check && check_file_directory_conflict(ce, pos, ok_to_replace)) {
+	if (!skip_df_check &&
+	    check_file_directory_conflict(ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
 			return -1;
 		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));

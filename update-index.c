@@ -67,13 +67,23 @@ static int add_file_to_cache(const char *path)
 			return error("lstat(\"%s\"): %s", path,
 				     strerror(errno));
 	}
+
 	namelen = strlen(path);
 	size = cache_entry_size(namelen);
 	ce = xmalloc(size);
 	memset(ce, 0, size);
 	memcpy(ce->name, path, namelen);
 	fill_stat_cache_info(ce, &st);
+
 	ce->ce_mode = create_ce_mode(st.st_mode);
+	if (!trust_executable_bit) {
+		/* If there is an existing entry, pick the mode bits
+		 * from it.
+		 */
+		int pos = cache_name_pos(path, namelen);
+		if (0 <= pos)
+			ce->ce_mode = active_cache[pos]->ce_mode;
+	}
 	ce->ce_flags = htons(namelen);
 
 	if (index_path(ce->sha1, path, &st, !info_only))
@@ -253,8 +263,32 @@ static int add_cacheinfo(const char *arg1, const char *arg2, const char *arg3)
 	return add_cache_entry(ce, option);
 }
 
-static struct cache_file cache_file;
+static int chmod_path(int flip, const char *path)
+{
+	int pos;
+	struct cache_entry *ce;
+	unsigned int mode;
 
+	pos = cache_name_pos(path, strlen(path));
+	if (pos < 0)
+		return -1;
+	ce = active_cache[pos];
+	mode = ntohl(ce->ce_mode);
+	if (!S_ISREG(mode))
+		return -1;
+	switch (flip) {
+	case '+':
+		ce->ce_mode |= htonl(0111); break;
+	case '-':
+		ce->ce_mode &= htonl(~0111); break;
+	default:
+		return -1;
+	}
+	active_cache_changed = 1;
+	return 0;
+}
+
+static struct cache_file cache_file;
 
 static void update_one(const char *path, const char *prefix, int prefix_length)
 {
@@ -328,6 +362,8 @@ int main(int argc, const char **argv)
 	const char *prefix = setup_git_directory();
 	int prefix_length = prefix ? strlen(prefix) : 0;
 
+	git_config(git_default_config);
+
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (newfd < 0)
 		die("unable to create new cachefile");
@@ -374,6 +410,14 @@ int main(int argc, const char **argv)
 				if (add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
 					die("git-update-index: --cacheinfo cannot add %s", argv[i+3]);
 				i += 3;
+				continue;
+			}
+			if (!strcmp(path, "--chmod=-x") ||
+			    !strcmp(path, "--chmod=+x")) {
+				if (argc <= i+1)
+					die("git-update-index: %s <path>", path);
+				if (chmod_path(path[8], argv[++i]))
+					die("git-update-index: %s cannot chmod %s", path, argv[i]);
 				continue;
 			}
 			if (!strcmp(path, "--info-only")) {
