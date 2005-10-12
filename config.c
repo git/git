@@ -207,6 +207,16 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "user.name")) {
+		strncpy(git_default_name, value, sizeof(git_default_name));
+		return 0;
+	}
+
+	if (!strcmp(var, "user.email")) {
+		strncpy(git_default_email, value, sizeof(git_default_email));
+		return 0;
+	}
+
 	/* Add other config variables here.. */
 	return 0;
 }

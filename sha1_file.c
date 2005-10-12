@@ -48,65 +48,6 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
-	*git_graft_file;
-static void setup_git_env(void)
-{
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir)
-		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
-	git_object_dir = getenv(DB_ENVIRONMENT);
-	if (!git_object_dir) {
-		git_object_dir = xmalloc(strlen(git_dir) + 9);
-		sprintf(git_object_dir, "%s/objects", git_dir);
-	}
-	git_refs_dir = xmalloc(strlen(git_dir) + 6);
-	sprintf(git_refs_dir, "%s/refs", git_dir);
-	git_index_file = getenv(INDEX_ENVIRONMENT);
-	if (!git_index_file) {
-		git_index_file = xmalloc(strlen(git_dir) + 7);
-		sprintf(git_index_file, "%s/index", git_dir);
-	}
-	git_graft_file = getenv(GRAFT_ENVIRONMENT);
-	if (!git_graft_file)
-		git_graft_file = strdup(git_path("info/grafts"));
-}
-
-char *get_git_dir(void)
-{
-	if (!git_dir)
-		setup_git_env();
-	return git_dir;
-}
-
-char *get_object_directory(void)
-{
-	if (!git_object_dir)
-		setup_git_env();
-	return git_object_dir;
-}
-
-char *get_refs_directory(void)
-{
-	if (!git_refs_dir)
-		setup_git_env();
-	return git_refs_dir;
-}
-
-char *get_index_file(void)
-{
-	if (!git_index_file)
-		setup_git_env();
-	return git_index_file;
-}
-
-char *get_graft_file(void)
-{
-	if (!git_graft_file)
-		setup_git_env();
-	return git_graft_file;
-}
-
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path;

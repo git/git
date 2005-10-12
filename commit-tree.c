@@ -89,6 +89,9 @@ int main(int argc, char **argv)
 	char *buffer;
 	unsigned int size;
 
+	setup_ident();
+	git_config(git_default_config);
+
 	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
 		usage(commit_tree_usage);
 
@@ -104,7 +107,6 @@ int main(int argc, char **argv)
 	}
 	if (!parents)
 		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
-	setup_ident();
 
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
