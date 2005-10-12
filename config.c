@@ -168,7 +168,7 @@ static int git_parse_file(config_fn_t fn)
 		}
 		if (!isalpha(c))
 			break;
-		var[baselen] = c;
+		var[baselen] = tolower(c);
 		if (get_value(fn, var, baselen+1) < 0)
 			break;
 	}
