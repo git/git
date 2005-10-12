@@ -487,7 +487,10 @@ unless($pid) {
 	my @opt;
 	@opt = split(/,/,$opt_p) if defined $opt_p;
 	unshift @opt, '-z', $opt_z if defined $opt_z;
-	exec("cvsps",@opt,"-u","-A","--cvs-direct",'--root',$opt_d,$cvs_tree);
+	unless ($opt_p =~ m/--no-cvs-direct/) {
+		push @opt, '--cvs-direct';
+	}
+	exec("cvsps",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
 	die "Could not start cvsps: $!\n";
 }
 
