@@ -393,6 +393,7 @@ int main(int argc, char **argv)
 	SHA_CTX ctx;
 	char line[PATH_MAX + 20];
 	int window = 10, depth = 10, pack_to_stdout = 0;
+	struct object_entry **list;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -435,7 +436,6 @@ int main(int argc, char **argv)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
-	SHA1_Init(&ctx);
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned int hash;
 		char *p;
@@ -451,10 +451,8 @@ int main(int argc, char **argv)
 				continue;
 			hash = hash * 11 + c;
 		}
-		if (add_object_entry(sha1, hash))
-			SHA1_Update(&ctx, sha1, 20);
+		add_object_entry(sha1, hash);
 	}
-	SHA1_Final(object_list_sha1, &ctx);
 	if (non_empty && !nr_objects)
 		return 0;
 	get_object_details();
@@ -462,6 +460,14 @@ int main(int argc, char **argv)
 	fprintf(stderr, "Packing %d objects\n", nr_objects);
 
 	sorted_by_sha = create_sorted_list(sha1_sort);
+	SHA1_Init(&ctx);
+	list = sorted_by_sha;
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *entry = *list++;
+		SHA1_Update(&ctx, entry->sha1, 20);
+	}
+	SHA1_Final(object_list_sha1, &ctx);
+
 	sorted_by_type = create_sorted_list(type_size_sort);
 	if (window && depth)
 		find_deltas(sorted_by_type, window+1, depth);

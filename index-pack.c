@@ -349,7 +349,7 @@ static int sha1_compare(const void *_a, const void *_b)
 	return memcmp(a->sha1, b->sha1, 20);
 }
 
-static void write_index_file(const char *index_name)
+static void write_index_file(const char *index_name, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct object_entry **sorted_by_sha =
@@ -358,6 +358,7 @@ static void write_index_file(const char *index_name)
 	struct object_entry **last = sorted_by_sha + nr_objects;
 	unsigned int array[256];
 	int i;
+	SHA_CTX ctx;
 
 	for (i = 0; i < nr_objects; ++i)
 		sorted_by_sha[i] = &objects[i];
@@ -385,6 +386,11 @@ static void write_index_file(const char *index_name)
 	}
 	sha1write(f, array, 256 * sizeof(int));
 
+	/* recompute the SHA1 hash of sorted object names.
+	 * currently pack-objects does not do this, but that
+	 * can be fixed.
+	 */
+	SHA1_Init(&ctx);
 	/*
 	 * Write the actual SHA1 entries..
 	 */
@@ -394,10 +400,12 @@ static void write_index_file(const char *index_name)
 		unsigned int offset = htonl(obj->offset);
 		sha1write(f, &offset, 4);
 		sha1write(f, obj->sha1, 20);
+		SHA1_Update(&ctx, obj->sha1, 20);
 	}
 	sha1write(f, pack_base + pack_size - 20, 20);
 	sha1close(f, NULL, 1);
 	free(sorted_by_sha);
+	SHA1_Final(sha1, &ctx);
 }
 
 int main(int argc, char **argv)
@@ -405,6 +413,7 @@ int main(int argc, char **argv)
 	int i;
 	char *index_name = NULL;
 	char *index_name_buf = NULL;
+	unsigned char sha1[20];
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -443,9 +452,11 @@ int main(int argc, char **argv)
 	deltas = xcalloc(nr_objects, sizeof(struct delta_entry));
 	parse_pack_objects();
 	free(deltas);
-	write_index_file(index_name);
+	write_index_file(index_name, sha1);
 	free(objects);
 	free(index_name_buf);
+
+	printf("%s\n", sha1_to_hex(sha1));
 
 	return 0;
 }
