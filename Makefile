@@ -310,7 +310,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  gitk
 
-export prefix TAR INSTALL DESTDIR SHELL_PATH
+export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
 all: $(PROGRAMS) $(SCRIPTS)
