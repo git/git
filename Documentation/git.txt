@@ -68,6 +68,9 @@ gitlink:git-commit-tree[1]::
 gitlink:git-hash-object[1]::
 	Computes the object ID from a file.
 
+gitlink:git-index-pack.html[1]::
+	Build pack index file for an existing packed archive.
+
 gitlink:git-init-db[1]::
 	Creates an empty git object database
 

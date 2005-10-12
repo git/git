@@ -1,0 +1,44 @@
+git-index-pack(1)
+=================
+
+NAME
+----
+git-index-pack - Build pack index file for an existing packed archive
+
+
+SYNOPSIS
+--------
+'git-index-pack' [-o <index-file>] <pack-file>
+
+
+DESCRIPTION
+-----------
+Reads a packed archive (.pack) from the specified file, and
+builds a pack index file (.idx) for it.  The packed archive
+together with the pack index can then be placed in the
+objects/pack/ directory of a git repository.
+
+
+OPTIONS
+-------
+-o <index-file>::
+	Write the generated pack index into the specified
+	file.  Without this option the name of pack index
+	file is constructed from the name of packed archive
+	file by replacing .pack with .idx (and the program
+	fails if the name of packed archive does not end
+	with .pack).
+
+
+Author
+------
+Written by Sergey Vlasov <vsu@altlinux.ru>
+
+Documentation
+-------------
+Documentation by Sergey Vlasov
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

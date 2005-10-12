@@ -110,7 +110,7 @@ PROGRAMS = \
 	git-convert-objects$X git-diff-files$X \
 	git-diff-index$X git-diff-stages$X \
 	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
-	git-hash-object$X git-init-db$X \
+	git-hash-object$X git-index-pack$X git-init-db$X \
 	git-local-fetch$X git-ls-files$X git-ls-tree$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-read-tree$X \

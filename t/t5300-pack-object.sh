@@ -165,4 +165,22 @@ test_expect_success \
 
      :'
 
+test_expect_success \
+    'build pack index for an existing pack' \
+    'cp test-1-${packname_1}.pack test-3.pack &&
+     git-index-pack -o tmp.idx test-3.pack &&
+     cmp tmp.idx test-1-${packname_1}.idx &&
+
+     git-index-pack test-3.pack &&
+     cmp test-3.idx test-1-${packname_1}.idx &&
+
+     cp test-2-${packname_2}.pack test-3.pack &&
+     git-index-pack -o tmp.idx test-2-${packname_2}.pack &&
+     cmp tmp.idx test-2-${packname_2}.idx &&
+
+     git-index-pack test-3.pack &&
+     cmp test-3.idx test-2-${packname_2}.idx &&
+
+     :'
+
 test_done
