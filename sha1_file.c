@@ -416,7 +416,7 @@ int use_packed_git(struct packed_git *p)
 	return 0;
 }
 
-struct packed_git *add_packed_git(char *path, int path_len)
+struct packed_git *add_packed_git(char *path, int path_len, int local)
 {
 	struct stat st;
 	struct packed_git *p;
@@ -444,6 +444,7 @@ struct packed_git *add_packed_git(char *path, int path_len)
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
+	p->pack_local = local;
 	return p;
 }
 
@@ -484,7 +485,7 @@ void install_packed_git(struct packed_git *pack)
 	packed_git = pack;
 }
 
-static void prepare_packed_git_one(char *objdir)
+static void prepare_packed_git_one(char *objdir, int local)
 {
 	char path[PATH_MAX];
 	int len;
@@ -506,7 +507,7 @@ static void prepare_packed_git_one(char *objdir)
 
 		/* we have .idx.  Is it a file we can map? */
 		strcpy(path + len, de->d_name);
-		p = add_packed_git(path, len + namelen);
+		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
 		p->next = packed_git;
@@ -522,11 +523,11 @@ void prepare_packed_git(void)
 
 	if (run_once)
 		return;
-	prepare_packed_git_one(get_object_directory());
+	prepare_packed_git_one(get_object_directory(), 1);
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		alt->name[0] = 0;
-		prepare_packed_git_one(alt->base);
+		prepare_packed_git_one(alt->base, 0);
 	}
 	run_once = 1;
 }
