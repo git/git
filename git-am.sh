@@ -172,7 +172,6 @@ else
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
-	echo "$threeway" >"$dotest/3way"
 	echo 1 >"$dotest/next"
 fi
 
@@ -193,7 +192,6 @@ then
 else
 	SIGNOFF=
 fi
-threeway=$(cat "$dotest/3way")
 
 last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
@@ -256,6 +254,8 @@ do
 
 	if test "$interactive" = t
 	then
+	    test -t 0 ||
+	    die "cannot be interactive without stdin connected to a terminal."
 	    action=again
 	    while test "$action" = again
 	    do
