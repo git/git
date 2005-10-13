@@ -7,7 +7,6 @@
 
 #include <pwd.h>
 #include <time.h>
-#include <ctype.h>
 
 #define BLOCKING (1ul << 14)
 

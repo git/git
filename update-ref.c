@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "refs.h"
-#include <ctype.h>
 
 static const char git_update_ref_usage[] = "git-update-ref <refname> <value> [<oldval>]";
 

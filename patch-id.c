@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include "cache.h"
 
 static void flush_current_id(int patchlen, unsigned char *id, SHA_CTX *c)

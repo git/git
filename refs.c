@@ -2,7 +2,6 @@
 #include "cache.h"
 
 #include <errno.h>
-#include <ctype.h>
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5

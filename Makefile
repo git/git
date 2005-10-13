@@ -159,7 +159,8 @@ LIB_OBJS = \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
-	tag.o tree.o usage.o config.o environment.o $(DIFF_OBJS)
+	tag.o tree.o usage.o config.o environment.o ctype.o \
+	$(DIFF_OBJS)
 
 LIBS = $(LIB_FILE)
 LIBS += -lz

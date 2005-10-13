@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include "cache.h"
 #include "diff.h"
 #include "commit.h"
