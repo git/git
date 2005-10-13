@@ -5,7 +5,7 @@
 #include "pack.h"
 #include "csum-file.h"
 
-static const char pack_usage[] = "git-pack-objects [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
+static const char pack_usage[] = "git-pack-objects [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -20,6 +20,7 @@ struct object_entry {
 
 static unsigned char object_list_sha1[20];
 static int non_empty = 0;
+static int local = 0;
 static int incremental = 0;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
 static struct object_entry *objects = NULL;
@@ -195,8 +196,20 @@ static int add_object_entry(unsigned char *sha1, unsigned int hash)
 	unsigned int idx = nr_objects;
 	struct object_entry *entry;
 
-	if (incremental && has_sha1_pack(sha1))
-		return 0;
+	if (incremental || local) {
+		struct packed_git *p;
+
+		for (p = packed_git; p; p = p->next) {
+			struct pack_entry e;
+
+			if (find_pack_entry_one(sha1, &e, p)) {
+				if (incremental)
+					return 0;
+				if (local && !p->pack_local)
+					return 0;
+			}
+		}
+	}
 
 	if (idx >= nr_alloc) {
 		unsigned int needed = (idx + 1024) * 3 / 2;
@@ -404,6 +417,10 @@ int main(int argc, char **argv)
 				non_empty = 1;
 				continue;
 			}
+			if (!strcmp("--local", arg)) {
+				local = 1;
+				continue;
+			}
 			if (!strcmp("--incremental", arg)) {
 				incremental = 1;
 				continue;
@@ -436,6 +453,7 @@ int main(int argc, char **argv)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
+	prepare_packed_git();
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned int hash;
 		char *p;
