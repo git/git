@@ -296,15 +296,19 @@ do
 	git-apply --index "$dotest/patch"; apply_status=$?
 	if test $apply_status = 1 && test "$threeway" = t
 	then
-		(fall_back_3way) || stop_here $this
-
-		# Applying the patch to an earlier tree and merging the
-		# result may have produced the same tree as ours.
-		if test '' = "$(git-diff-index --cached --name-only -z HEAD)"
+		if (fall_back_3way)
 		then
-			echo No changes -- Patch already applied.
-			go_next
-			continue
+		    # Applying the patch to an earlier tree and merging the
+		    # result may have produced the same tree as ours.
+		    changed="$(git-diff-index --cached --name-only -z HEAD)"
+		    if test '' = "$changed"
+		    then
+			    echo No changes -- Patch already applied.
+			    go_next
+			    continue
+		    fi
+		    # clear apply_status -- we have successfully merged.
+		    apply_status=0
 		fi
 	fi
 	if test $apply_status != 0
