@@ -293,14 +293,16 @@ also wants to get a commit message
 on its standard input, and it will write out the resulting object name for the
 commit to its standard output.
 
-And this is where we create the `.git/refs/heads/master` file. This file is
-supposed to contain the reference to the top-of-tree, and since that's
-exactly what `git-commit-tree` spits out, we can do this all with a simple
-shell pipeline:
+And this is where we create the `.git/refs/heads/master` file
+which is pointed at by `HEAD`. This file is supposed to contain
+the reference to the top-of-tree of the master branch, and since
+that's exactly what `git-commit-tree` spits out, we can do this
+all with a sequence of simple shell commands:
 
 ------------------------------------------------
-echo "Initial commit" | \
-	git-commit-tree $(git-write-tree) > .git/refs/heads/master
+tree=$(git-write-tree)
+commit=$(echo 'Initial commit' | git-commit-tree $tree)
+git-update-ref HEAD $(commit)
 ------------------------------------------------
 
 which will say:
