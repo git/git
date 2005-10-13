@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 
 static int quiet;
+static int keep_pack;
 static const char clone_pack_usage[] = "git-clone-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
 static const char *exec = "git-upload-pack";
 
@@ -106,18 +107,11 @@ static void write_refs(struct ref *ref)
 	free(head_path);
 }
 
-static int clone_pack(int fd[2], int nr_match, char **match)
+static int clone_by_unpack(int fd[2])
 {
-	struct ref *refs;
 	int status;
 	pid_t pid;
 
-	get_remote_heads(fd[0], &refs, nr_match, match);
-	if (!refs) {
-		packet_flush(fd[1]);
-		die("no matching remote head");
-	}
-	clone_handshake(fd, refs);
 	pid = fork();
 	if (pid < 0)
 		die("git-clone-pack: unable to fork off git-unpack-objects");
@@ -139,7 +133,6 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 		int code = WEXITSTATUS(status);
 		if (code)
 			die("git-unpack-objects died with error code %d", code);
-		write_refs(refs);
 		return 0;
 	}
 	if (WIFSIGNALED(status)) {
@@ -149,6 +142,178 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 	die("Sherlock Holmes! git-unpack-objects died of unnatural causes %d!", status);
 }
 
+static int finish_pack(const char *pack_tmp_name)
+{
+	int pipe_fd[2];
+	pid_t pid;
+	char idx[PATH_MAX];
+	char final[PATH_MAX];
+	char hash[41];
+	unsigned char sha1[20];
+	char *cp;
+	int err = 0;
+
+	if (pipe(pipe_fd) < 0)
+		die("git-clone-pack: unable to set up pipe");
+
+	strcpy(idx, pack_tmp_name); /* ".git/objects/pack-XXXXXX" */
+	cp = strrchr(idx, '/');
+	memcpy(cp, "/pidx", 5);
+
+	pid = fork();
+	if (pid < 0)
+		die("git-clone-pack: unable to fork off git-index-pack");
+	if (!pid) {
+		close(0);
+		dup2(pipe_fd[1], 1);
+		close(pipe_fd[0]);
+		close(pipe_fd[1]);
+		execlp("git-index-pack","git-index-pack",
+		       "-o", idx, pack_tmp_name, NULL);
+		error("cannot exec git-index-pack <%s> <%s>",
+		      idx, pack_tmp_name);
+		exit(1);
+	}
+	close(pipe_fd[1]);
+	if (read(pipe_fd[0], hash, 40) != 40) {
+		error("git-clone-pack: unable to read from git-index-pack");
+		err = 1;
+	}
+	close(pipe_fd[0]);
+
+	for (;;) {
+		int status, code;
+		int retval = waitpid(pid, &status, 0);
+
+		if (retval < 0) {
+			if (errno == EINTR)
+				continue;
+			error("waitpid failed (%s)", strerror(retval));
+			goto error_die;
+		}
+		if (WIFSIGNALED(status)) {
+			int sig = WTERMSIG(status);
+			error("git-index-pack died of signal %d", sig);
+			goto error_die;
+		}
+		if (!WIFEXITED(status)) {
+			error("git-index-pack died of unnatural causes %d",
+			      status);
+			goto error_die;
+		}
+		code = WEXITSTATUS(status);
+		if (code) {
+			error("git-index-pack died with error code %d", code);
+			goto error_die;
+		}
+		if (err)
+			goto error_die;
+		break;
+	}
+	hash[40] = 0;
+	if (get_sha1_hex(hash, sha1)) {
+		error("git-index-pack reported nonsense '%s'", hash);
+		goto error_die;
+	}
+	/* Now we have pack in pack_tmp_name[], and
+	 * idx in idx[]; rename them to their final names.
+	 */
+	snprintf(final, sizeof(final),
+		 "%s/pack/pack-%s.pack", get_object_directory(), hash);
+	move_temp_to_file(pack_tmp_name, final);
+	snprintf(final, sizeof(final),
+		 "%s/pack/pack-%s.idx", get_object_directory(), hash);
+	move_temp_to_file(idx, final);
+	return 0;
+
+ error_die:
+	unlink(idx);
+	unlink(pack_tmp_name);
+	exit(1);
+}
+
+static int clone_without_unpack(int fd[2])
+{
+	char tmpfile[PATH_MAX];
+	int ofd, ifd;
+
+	ifd = fd[0];
+	snprintf(tmpfile, sizeof(tmpfile),
+		 "%s/pack-XXXXXX", get_object_directory());
+	ofd = mkstemp(tmpfile);
+	if (ofd < 0)
+		return error("unable to create temporary file %s", tmpfile);
+
+	while (1) {
+		char buf[8192];
+		ssize_t sz, wsz, pos;
+		sz = read(ifd, buf, sizeof(buf));
+		if (sz == 0)
+			break;
+		if (sz < 0) {
+			error("error reading pack (%s)", strerror(errno));
+			close(ofd);
+			unlink(tmpfile);
+			return -1;
+		}
+		pos = 0;
+		while (pos < sz) {
+			wsz = write(ofd, buf + pos, sz - pos);
+			if (wsz < 0) {
+				error("error writing pack (%s)",
+				      strerror(errno));
+				close(ofd);
+				unlink(tmpfile);
+				return -1;
+			}
+			pos += wsz;
+		}
+	}
+	close(ofd);
+	return finish_pack(tmpfile);
+}
+
+static int clone_pack(int fd[2], int nr_match, char **match)
+{
+	struct ref *refs;
+	int status;
+
+	get_remote_heads(fd[0], &refs, nr_match, match);
+	if (!refs) {
+		packet_flush(fd[1]);
+		die("no matching remote head");
+	}
+	clone_handshake(fd, refs);
+
+	if (keep_pack)
+		status = clone_without_unpack(fd);
+	else
+		status = clone_by_unpack(fd);
+
+	if (!status)
+		write_refs(refs);
+	return status;
+}
+
+static int clone_options(const char *var, const char *value)
+{
+	if (!strcmp("clone.keeppack", var)) {
+		keep_pack = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp("clone.quiet", var)) {
+		quiet = git_config_bool(var, value);
+		return 0;
+	}
+	/*
+	 * Put other local option parsing for this program
+	 * here ...
+	 */
+
+	/* Fall back on the default ones */
+	return git_default_config(var, value);
+}
+
 int main(int argc, char **argv)
 {
 	int i, ret, nr_heads;
@@ -156,6 +321,7 @@ int main(int argc, char **argv)
 	int fd[2];
 	pid_t pid;
 
+	git_config(clone_options);
 	nr_heads = 0;
 	heads = NULL;
 	for (i = 1; i < argc; i++) {
@@ -168,6 +334,10 @@ int main(int argc, char **argv)
 			}
 			if (!strncmp("--exec=", arg, 7)) {
 				exec = arg + 7;
+				continue;
+			}
+			if (!strcmp("--keep", arg)) {
+				keep_pack = 1;
 				continue;
 			}
 			usage(clone_pack_usage);
