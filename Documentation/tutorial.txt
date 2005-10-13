@@ -52,7 +52,9 @@ your new project. You will now have a `.git` directory, and you can
 inspect that with `ls`. For your new empty project, it should show you
 three entries, among other things:
 
- - a symlink called `HEAD`, pointing to `refs/heads/master`
+ - a symlink called `HEAD`, pointing to `refs/heads/master` (if your
+   platform does not have native symlinks, it is a file containing the
+   line "ref: refs/heads/master")
 +
 Don't worry about the fact that the file that the `HEAD` link points to
 doesn't even exist yet -- you haven't created the commit that will
@@ -228,6 +230,7 @@ which will spit out
 
 ------------
 diff --git a/hello b/hello
+index 557db03..263414f 100644
 --- a/hello
 +++ b/hello
 @@ -1 +1,2 @@
@@ -290,13 +293,14 @@ also wants to get a commit message
 on its standard input, and it will write out the resulting object name for the
 commit to its standard output.
 
-And this is where we start using the `.git/HEAD` file. The `HEAD` file is
+And this is where we create the `.git/refs/heads/master` file. This file is
 supposed to contain the reference to the top-of-tree, and since that's
 exactly what `git-commit-tree` spits out, we can do this all with a simple
 shell pipeline:
 
 ------------------------------------------------
-echo "Initial commit" | git-commit-tree $(git-write-tree) > .git/HEAD
+echo "Initial commit" | \
+	git-commit-tree $(git-write-tree) > .git/refs/heads/master
 ------------------------------------------------
 
 which will say:
@@ -692,7 +696,9 @@ other point in the history than the current `HEAD`, you can do so by
 just telling `git checkout` what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
-	git checkout -b mybranch earlier-commit
+------------
+git checkout -b mybranch earlier-commit
+------------
 
 and it would create the new branch `mybranch` at the earlier commit,
 and check out the state at that time.
@@ -700,17 +706,29 @@ and check out the state at that time.
 
 You can always just jump back to your original `master` branch by doing
 
-	git checkout master
+------------
+git checkout master
+------------
 
 (or any other branch-name, for that matter) and if you forget which
 branch you happen to be on, a simple
 
-	ls -l .git/HEAD
+------------
+ls -l .git/HEAD
+------------
 
-will tell you where it's pointing. To get the list of branches
-you have, you can say
+will tell you where it's pointing (Note that on platforms with bad or no
+symlink support, you have to execute
 
-	git branch
+------------
+cat .git/HEAD
+------------
+
+instead). To get the list of branches you have, you can say
+
+------------
+git branch
+------------
 
 which is nothing more than a simple script around `ls .git/refs/heads`.
 There will be asterisk in front of the branch you are currently on.
@@ -718,7 +736,9 @@ There will be asterisk in front of the branch you are currently on.
 Sometimes you may wish to create a new branch _without_ actually
 checking it out and switching to it. If so, just use the command
 
-	git branch <branchname> [startingpoint]
+------------
+git branch <branchname> [startingpoint]
+------------
 
 which will simply _create_ the branch, but will not do anything further. 
 You can then later -- once you decide that you want to actually develop
@@ -844,7 +864,6 @@ $ git show-branch master mybranch
  ! [mybranch] Some work.
 --
 +  [master] Merged "mybranch" changes.
-+  [master~1] Some fun.
 ++ [mybranch] Some work.
 ------------------------------------------------
 
@@ -871,8 +890,10 @@ Now, let's pretend you are the one who did all the work in
 to the `master` branch. Let's go back to `mybranch`, and run
 resolve to get the "upstream changes" back to your branch.
 
-	git checkout mybranch
-	git resolve HEAD master "Merge upstream changes."
+------------
+git checkout mybranch
+git resolve HEAD master "Merge upstream changes."
+------------
 
 This outputs something like this (the actual commit object names
 would be different)
@@ -1088,13 +1109,17 @@ i.e. `<project>.git`. Let's create such a public repository for
 project `my-git`. After logging into the remote machine, create
 an empty directory:
 
-	mkdir my-git.git
+------------
+mkdir my-git.git
+------------
 
 Then, make that directory into a GIT repository by running
 `git init-db`, but this time, since its name is not the usual
 `.git`, we do things slightly differently:
 
-	GIT_DIR=my-git.git git-init-db
+------------
+GIT_DIR=my-git.git git-init-db
+------------
 
 Make sure this directory is available for others you want your
 changes to be pulled by via the transport of your choice. Also
@@ -1118,7 +1143,9 @@ Your "public repository" is now ready to accept your changes.
 Come back to the machine you have your private repository. From
 there, run this command:
 
-	git push <public-host>:/path/to/my-git.git master
+------------
+git push <public-host>:/path/to/my-git.git master
+------------
 
 This synchronizes your public repository to match the named
 branch head (i.e. `master` in this case) and objects reachable
@@ -1128,7 +1155,9 @@ As a real example, this is how I update my public git
 repository. Kernel.org mirror network takes care of the
 propagation to other publicly visible machines:
 
-	git push master.kernel.org:/pub/scm/git/git.git/ 
+------------
+git push master.kernel.org:/pub/scm/git/git.git/ 
+------------
 
 
 Packing your repository
@@ -1141,7 +1170,9 @@ not so convenient to transport over the network. Since git objects are
 immutable once they are created, there is a way to optimize the
 storage by "packing them together". The command
 
-	git repack
+------------
+git repack
+------------
 
 will do it for you. If you followed the tutorial examples, you
 would have accumulated about 17 objects in `.git/objects/??/`
@@ -1165,7 +1196,9 @@ Our programs are always perfect ;-).
 Once you have packed objects, you do not need to leave the
 unpacked objects that are contained in the pack file anymore.
 
-	git prune-packed
+------------
+git prune-packed
+------------
 
 would remove them for you.
 
