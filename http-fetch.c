@@ -110,6 +110,22 @@ static size_t fwrite_buffer(void *ptr, size_t eltsize, size_t nmemb,
         return size;
 }
 
+static size_t fwrite_buffer_dynamic(const void *ptr, size_t eltsize,
+				    size_t nmemb, struct buffer *buffer)
+{
+	size_t size = eltsize * nmemb;
+	if (size > buffer->size - buffer->posn) {
+		buffer->size = buffer->size * 3 / 2;
+		if (buffer->size < buffer->posn + size)
+			buffer->size = buffer->posn + size;
+		buffer->buffer = xrealloc(buffer->buffer, buffer->size);
+	}
+	memcpy(buffer->buffer + buffer->posn, ptr, size);
+	buffer->posn += size;
+	data_received++;
+	return size;
+}
+
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)
 {
@@ -618,11 +634,12 @@ static int fetch_alternates(char *base)
 	int i = 0;
 	int http_specific = 1;
 	struct alt_base *tail = alt;
+	static const char null_byte = '\0';
 
 	struct active_request_slot *slot;
 
 	data = xmalloc(4096);
-	buffer.size = 4095;
+	buffer.size = 4096;
 	buffer.posn = 0;
 	buffer.buffer = data;
 
@@ -634,7 +651,8 @@ static int fetch_alternates(char *base)
 
 	slot = get_active_slot();
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
+			 fwrite_buffer_dynamic);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
@@ -646,20 +664,24 @@ static int fetch_alternates(char *base)
 			slot = get_active_slot();
 			curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-					 fwrite_buffer);
+					 fwrite_buffer_dynamic);
 			curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 			if (start_active_slot(slot)) {
 				run_active_slot(slot);
 				if (slot->curl_result != CURLE_OK) {
+					free(buffer.buffer);
 					return 0;
 				}
 			}
 		}
 	} else {
+		free(buffer.buffer);
 		return 0;
 	}
 
-	data[buffer.posn] = '\0';
+	fwrite_buffer_dynamic(&null_byte, 1, 1, &buffer);
+	buffer.posn--;
+	data = buffer.buffer;
 
 	while (i < buffer.posn) {
 		int posn = i;
@@ -718,7 +740,8 @@ static int fetch_alternates(char *base)
 		}
 		i = posn + 1;
 	}
-	
+
+	free(buffer.buffer);
 	return ret;
 }
 
@@ -748,17 +771,22 @@ static int fetch_indices(struct alt_base *repo)
 
 	slot = get_active_slot();
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
+			 fwrite_buffer_dynamic);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK)
+		if (slot->curl_result != CURLE_OK) {
+			free(buffer.buffer);
 			return error("%s", curl_errorstr);
+		}
 	} else {
+		free(buffer.buffer);
 		return error("Unable to start request");
 	}
 
+	data = buffer.buffer;
 	while (i < buffer.posn) {
 		switch (data[i]) {
 		case 'P':
@@ -778,6 +806,7 @@ static int fetch_indices(struct alt_base *repo)
 		i++;
 	}
 
+	free(buffer.buffer);
 	repo->got_indices = 1;
 	return 0;
 }
