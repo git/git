@@ -8,7 +8,7 @@ git-clone-pack - Clones a repository by receiving packed objects.
 
 SYNOPSIS
 --------
-'git-clone-pack' [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...]
+'git-clone-pack' [-q] [--keep] [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...]
 
 DESCRIPTION
 -----------
@@ -22,6 +22,11 @@ OPTIONS
 -q::
 	Pass '-q' flag to 'git-unpack-objects'; this makes the
 	cloning process less verbose.
+
+--keep::
+	Do not invoke 'git-unpack-objects' on received data, but
+	create a single packfile out of it instead, and store it
+	in the object database.
 
 --exec=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the

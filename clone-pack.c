@@ -5,7 +5,8 @@
 
 static int quiet;
 static int keep_pack;
-static const char clone_pack_usage[] = "git-clone-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
+static const char clone_pack_usage[] =
+"git-clone-pack [-q] [--keep] [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
 static const char *exec = "git-upload-pack";
 
 static void clone_handshake(int fd[2], struct ref *ref)
@@ -221,9 +222,11 @@ static int finish_pack(const char *pack_tmp_name)
 	snprintf(final, sizeof(final),
 		 "%s/pack/pack-%s.pack", get_object_directory(), hash);
 	move_temp_to_file(pack_tmp_name, final);
+	chmod(final, 0444);
 	snprintf(final, sizeof(final),
 		 "%s/pack/pack-%s.idx", get_object_directory(), hash);
 	move_temp_to_file(idx, final);
+	chmod(final, 0444);
 	return 0;
 
  error_die:
