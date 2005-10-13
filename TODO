@@ -68,7 +68,8 @@ Technical (heavier)
   We would need a tool to generate an idx file out of a pack
   file for this.  Also this itself may turn out to be a bad
   idea, making the set of packs in repositories everybody has
-  different from each other.
+  different from each other. [DONE; git-index-pack by Sergey,
+  tweaking clone by me]
 
 * Git daemon, when deployed at kernel.org, might turn out to be
   quite a burden, since it needs to generate customized packs
@@ -115,11 +116,7 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Funny tag names and curl library.
-
-  curl 'http://locke.catalyst.net.nz/git/moodle.git/refs/tags/MOODLE_15_MERGED **INVALID**'
-
-  Quote the URL so that libcurl's metecharacter mechanism would
+* Quote the URL so that libcurl's metecharacter mechanism would
   not kick in [DONE].
 
 * Review the Makefile variables and exporting rules for them,
@@ -163,7 +160,8 @@ Technical (milder)
   lines.
 
 * What to do with TABs and LFs in pathnames without breaking GNU
-  patch?  [Have patch in proposed updates.]
+  patch?  [Have patch in proposed updates.  Discussion still
+  ongoing with Paul.]
 
 * Maybe grok PGP signed text/plain in applymbox as well.
 
@@ -191,7 +189,7 @@ Technical (milder)
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
-  left off.
+  left off [mechanism mostly done].
 
 * Output full path in the "git-rev-list --objects" output, not
   just the basename, and see the improved clustering results in
@@ -201,11 +199,16 @@ Technical (milder)
   external spec sent out with a quick hack.  Will know if that
   is what he needs hopefully soon].
 
-* An mechanism to ignore filesystem mode bits altogether.
+* An mechanism to ignore filesystem mode bits altogether [DONE].
 
 
 Technical (trivial)
 -------------------
+
+* Disallow [\001-\040\177] byte values from ref names.  Also we
+  need to disallow ':' (used in refspec), '^' and '~' (postfix
+  "peel the onion" operators) and leading '+' (again used in
+  refspec, as prefix "force update" operator) [DONE].
 
 * short SHA1 naming is not enforcing uniqueness.  Should fix [DONE].
 
