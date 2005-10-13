@@ -104,7 +104,7 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	if (!path) {
 		return error("Bad URL: %s", url);
 	}
-	/* $GIT_RSH <host> "env GIR_DIR=<path> <remote_prog> <args...>" */
+	/* $GIT_RSH <host> "env GIT_DIR=<path> <remote_prog> <args...>" */
 	sizen = COMMAND_SIZE;
 	posn = command;
 	of = 0;
