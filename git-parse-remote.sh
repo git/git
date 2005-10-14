@@ -94,6 +94,12 @@ canon_refs_list_for_fetch () {
 		heads/* | tags/* ) local="refs/$local" ;;
 		*) local="refs/heads/$local" ;;
 		esac
+
+		if local_ref_name=$(expr "$local" : 'refs/\(.*\)')
+		then
+		   git-check-ref-format "$local_ref_name" ||
+		   die "* refusing to create funny ref '$local_ref_name' locally"
+		fi
 		echo "${dot_prefix}${force}${remote}:${local}"
 		dot_prefix=.
 	done
