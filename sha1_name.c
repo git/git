@@ -1,5 +1,8 @@
 #include "cache.h"
+#include "tag.h"
 #include "commit.h"
+#include "tree.h"
+#include "blob.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
@@ -274,6 +277,82 @@ static int get_nth_ancestor(const char *name, int len,
 	return 0;
 }
 
+static int peel_onion(const char *name, int len, unsigned char *sha1)
+{
+	unsigned char outer[20];
+	const char *sp;
+	const char *type_string = NULL;
+	struct object *o;
+
+	/*
+	 * "ref^{type}" dereferences ref repeatedly until you cannot
+	 * dereference anymore, or you get an object of given type,
+	 * whichever comes first.  "ref^{}" means just dereference
+	 * tags until you get a non-tag.  "ref^0" is a shorthand for
+	 * "ref^{commit}".  "commit^{tree}" could be used to find the
+	 * top-level tree of the given commit.
+	 */
+	if (len < 4 || name[len-1] != '}')
+		return -1;
+
+	for (sp = name + len - 1; name <= sp; sp--) {
+		int ch = *sp;
+		if (ch == '{' && name < sp && sp[-1] == '^')
+			break;
+	}
+	if (sp <= name)
+		return -1;
+
+	sp++; /* beginning of type name, or closing brace for empty */
+	if (!strncmp(commit_type, sp, 6) && sp[6] == '}')
+		type_string = commit_type;
+	else if (!strncmp(tree_type, sp, 4) && sp[4] == '}')
+		type_string = tree_type;
+	else if (!strncmp(blob_type, sp, 4) && sp[4] == '}')
+		type_string = blob_type;
+	else if (sp[0] == '}')
+		type_string = NULL;
+	else
+		return -1;
+
+	if (get_sha1_1(name, sp - name - 2, outer))
+		return -1;
+
+	o = parse_object(outer);
+	if (!o)
+		return -1;
+	if (!type_string) {
+		o = deref_tag(o);
+		memcpy(sha1, o->sha1, 20);
+	}
+	else {
+		/* At this point, the syntax look correct, so
+		 * if we do not get the needed object, we should
+		 * barf.
+		 */
+
+		while (1) {
+			if (!o)
+				return -1;
+			if (o->type == type_string) {
+				memcpy(sha1, o->sha1, 20);
+				return 0;
+			}
+			if (o->type == tag_type)
+				o = ((struct tag*) o)->tagged;
+			else if (o->type == commit_type)
+				o = &(((struct commit *) o)->tree->object);
+			else
+				return error("%.*s: expected %s type, but the object dereferences to %s type",
+					     len, name, type_string,
+					     o->type);
+			if (!o->parsed)
+				parse_object(o->sha1);
+		}
+	}
+	return 0;
+}
+
 static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 {
 	int parent, ret;
@@ -314,6 +393,10 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 			parent = parent * 10 + *cp++ - '0';
 		return get_nth_ancestor(name, len1, sha1, parent);
 	}
+
+	ret = peel_onion(name, len, sha1);
+	if (!ret)
+		return 0;
 
 	ret = get_sha1_basic(name, len, sha1);
 	if (!ret)
