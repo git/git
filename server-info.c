@@ -9,7 +9,14 @@ static FILE *info_ref_fp;
 
 static int add_info_ref(const char *path, const unsigned char *sha1)
 {
+	struct object *o = parse_object(sha1);
+
 	fprintf(info_ref_fp, "%s	%s\n", sha1_to_hex(sha1), path);
+	if (o->type == tag_type) {
+		o = deref_tag(o);
+		fprintf(info_ref_fp, "%s	%s^{}\n",
+			sha1_to_hex(o->sha1), path);
+	}
 	return 0;
 }
 

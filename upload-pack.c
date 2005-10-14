@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "tag.h"
+#include "object.h"
 
 static const char upload_pack_usage[] = "git-upload-pack <dir>";
 
@@ -165,7 +167,13 @@ static int receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
+	struct object *o = parse_object(sha1);
+
 	packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
+	if (o->type == tag_type) {
+		o = deref_tag(o);
+		packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
+	}
 	return 0;
 }
 
