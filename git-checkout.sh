@@ -17,6 +17,8 @@ while [ "$#" != "0" ]; do
 			die "git checkout: -b needs a branch name"
 		[ -e "$GIT_DIR/refs/heads/$newbranch" ] &&
 			die "git checkout: branch $newbranch already exists"
+		git-check-ref-format "heads/$newbranch" ||
+			die "we do not like '$newbranch' as a branch name."
 		;;
 	"-f")
 		force=1

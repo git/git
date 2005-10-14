@@ -121,7 +121,7 @@ PROGRAMS = \
 	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
-	git-update-ref$X git-symbolic-ref$X \
+	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
 	$(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
