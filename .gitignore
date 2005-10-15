@@ -1,5 +1,6 @@
 git
 git-add
+git-am
 git-apply
 git-applymbox
 git-applypatch
@@ -25,6 +26,7 @@ git-diff-stages
 git-diff-tree
 git-fetch
 git-fetch-pack
+git-findtags
 git-fmt-merge-msg
 git-format-patch
 git-fsck-objects
@@ -32,6 +34,7 @@ git-get-tar-commit-id
 git-grep
 git-hash-object
 git-http-fetch
+git-index-pack
 git-init-db
 git-local-fetch
 git-log
