@@ -13,6 +13,46 @@ static const char *diff_opts = "-pu";
 
 static int use_size_cache;
 
+static char *quote_one(const char *str)
+{
+	int needlen;
+	char *xp;
+
+	if (!str)
+		return NULL;
+	needlen = quote_c_style(str, NULL, NULL, 0);
+	if (!needlen)
+		return strdup(str);
+	xp = xmalloc(needlen + 1);
+	quote_c_style(str, xp, NULL, 0);
+	return xp;
+}
+
+static char *quote_two(const char *one, const char *two)
+{
+	int need_one = quote_c_style(one, NULL, NULL, 1);
+	int need_two = quote_c_style(two, NULL, NULL, 1);
+	char *xp;
+
+	if (need_one + need_two) {
+		if (!need_one) need_one = strlen(one);
+		if (!need_two) need_one = strlen(two);
+
+		xp = xmalloc(need_one + need_two + 3);
+		xp[0] = '"';
+		quote_c_style(one, xp + 1, NULL, 1);
+		quote_c_style(two, xp + need_one + 1, NULL, 1);
+		strcpy(xp + need_one + need_two + 1, "\"");
+		return xp;
+	}
+	need_one = strlen(one);
+	need_two = strlen(two);
+	xp = xmalloc(need_one + need_two + 1);
+	strcpy(xp, one);
+	strcpy(xp + need_one, two);
+	return xp;
+}
+
 static const char *external_diff(void)
 {
 	static const char *external_diff_cmd = NULL;
@@ -133,55 +173,52 @@ static void builtin_diff(const char *name_a,
 			 int complete_rewrite)
 {
 	int i, next_at, cmd_size;
-	const char *const diff_cmd = "diff -L%s%s -L%s%s";
+	const char *const diff_cmd = "diff -L%s -L%s";
 	const char *const diff_arg  = "%s %s||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
-	const char *path0[2];
-	const char *path1[2];
-	const char *name_sq[2];
+	const char *label_path[2];
 	char *cmd;
 
-	name_sq[0] = sq_quote(name_a);
-	name_sq[1] = sq_quote(name_b);
-
-	/* diff_cmd and diff_arg have 6 %s in total which makes
-	 * the sum of these strings 12 bytes larger than required.
+	/* diff_cmd and diff_arg have 4 %s in total which makes
+	 * the sum of these strings 8 bytes larger than required.
 	 * we use 2 spaces around diff-opts, and we need to count
-	 * terminating NUL, so we subtract 9 here.
+	 * terminating NUL; we used to subtract 5 here, but we do not
+	 * care about small leaks in this subprocess that is about
+	 * to exec "diff" anymore.
 	 */
-	cmd_size = (strlen(diff_cmd) + strlen(diff_opts) +
-			strlen(diff_arg) - 9);
+	cmd_size = (strlen(diff_cmd) + strlen(diff_opts) + strlen(diff_arg)
+		    + 128);
+
 	for (i = 0; i < 2; i++) {
 		input_name_sq[i] = sq_quote(temp[i].name);
-		if (!strcmp(temp[i].name, "/dev/null")) {
-			path0[i] = "/dev/null";
-			path1[i] = "";
-		} else {
-			path0[i] = i ? "b/" : "a/";
-			path1[i] = name_sq[i];
-		}
-		cmd_size += (strlen(path0[i]) + strlen(path1[i]) +
-			     strlen(input_name_sq[i]));
+		if (!strcmp(temp[i].name, "/dev/null"))
+			label_path[i] = "/dev/null";
+		else if (!i)
+			label_path[i] = sq_quote(quote_two("a/", name_a));
+		else
+			label_path[i] = sq_quote(quote_two("b/", name_b));
+		cmd_size += (strlen(label_path[i]) + strlen(input_name_sq[i]));
 	}
 
 	cmd = xmalloc(cmd_size);
 
 	next_at = 0;
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
-			    diff_cmd,
-			    path0[0], path1[0], path0[1], path1[1]);
+			    diff_cmd, label_path[0], label_path[1]);
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    " %s ", diff_opts);
 	next_at += snprintf(cmd+next_at, cmd_size-next_at,
 			    diff_arg, input_name_sq[0], input_name_sq[1]);
 
-	printf("diff --git a/%s b/%s\n", name_a, name_b);
-	if (!path1[0][0]) {
+	printf("diff --git %s %s\n",
+	       quote_two("a/", name_a), quote_two("b/", name_b));
+	if (label_path[0][0] == '/') {
+		/* dev/null */
 		printf("new file mode %s\n", temp[1].mode);
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
 	}
-	else if (!path1[1][0]) {
+	else if (label_path[1][0] == '/') {
 		printf("deleted file mode %s\n", temp[0].mode);
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
@@ -619,6 +656,7 @@ static void run_diff(struct diff_filepair *p)
 	struct diff_filespec *two;
 	const char *name;
 	const char *other;
+	char *name_munged, *other_munged;
 	int complete_rewrite = 0;
 	int len;
 
@@ -631,6 +669,8 @@ static void run_diff(struct diff_filepair *p)
 
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	name_munged = quote_one(name);
+	other_munged = quote_one(other);
 	one = p->one; two = p->two;
 
 	diff_fill_sha1_info(one);
@@ -644,7 +684,7 @@ static void run_diff(struct diff_filepair *p)
 				"copy from %s\n"
 				"copy to %s\n",
 				(int)(0.5 + p->score * 100.0/MAX_SCORE),
-				name, other);
+				name_munged, other_munged);
 		break;
 	case DIFF_STATUS_RENAMED:
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -652,7 +692,7 @@ static void run_diff(struct diff_filepair *p)
 				"rename from %s\n"
 				"rename to %s\n",
 				(int)(0.5 + p->score * 100.0/MAX_SCORE),
-				name, other);
+				name_munged, other_munged);
 		break;
 	case DIFF_STATUS_MODIFIED:
 		if (p->score) {
@@ -702,6 +742,9 @@ static void run_diff(struct diff_filepair *p)
 	else
 		run_external_diff(pgm, name, other, one, two, xfrm_msg,
 				  complete_rewrite);
+
+	free(name_munged);
+	free(other_munged);
 }
 
 void diff_setup(struct diff_options *options)
@@ -878,16 +921,13 @@ static void diff_flush_raw(struct diff_filepair *p,
 {
 	int two_paths;
 	char status[10];
+	const char *path_one, *path_two;
 
+	path_one = p->one->path;
+	path_two = p->two->path;
 	if (line_termination) {
-		const char *const err =
-			"path %s cannot be expressed without -z";
-		if (strchr(p->one->path, line_termination) ||
-		    strchr(p->one->path, inter_name_termination))
-			die(err, p->one->path);
-		if (strchr(p->two->path, line_termination) ||
-		    strchr(p->two->path, inter_name_termination))
-			die(err, p->two->path);
+		path_one = quote_one(path_one);
+		path_two = quote_one(path_two);
 	}
 
 	if (p->score)
@@ -915,16 +955,29 @@ static void diff_flush_raw(struct diff_filepair *p,
 		       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
 		printf("%s ", sha1_to_hex(p->two->sha1));
 	}
-	printf("%s%c%s",status, inter_name_termination, p->one->path);
+	printf("%s%c%s", status, inter_name_termination, path_one);
 	if (two_paths)
-		printf("%c%s", inter_name_termination, p->two->path);
+		printf("%c%s", inter_name_termination, path_two);
 	putchar(line_termination);
+	if (path_one != p->one->path)
+		free((void*)path_one);
+	if (path_two != p->two->path)
+		free((void*)path_two);
 }
 
 static void diff_flush_name(struct diff_filepair *p,
+			    int inter_name_termination,
 			    int line_termination)
 {
-	printf("%s%c", p->two->path, line_termination);
+	char *path = p->two->path;
+
+	if (line_termination)
+		path = quote_one(p->two->path);
+	else
+		path = p->two->path;
+	printf("%s%c", path, line_termination);
+	if (p->two->path != path)
+		free(path);
 }
 
 int diff_unmodified_pair(struct diff_filepair *p)
@@ -1111,7 +1164,9 @@ void diff_flush(struct diff_options *options)
 				       diff_output_format);
 			break;
 		case DIFF_FORMAT_NAME:
-			diff_flush_name(p, line_termination);
+			diff_flush_name(p,
+					inter_name_termination,
+					line_termination);
 			break;
 		}
 		diff_free_filepair(q->queue[i]);
