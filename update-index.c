@@ -13,8 +13,15 @@
  * like "git-update-index *" and suddenly having all the object
  * files be revision controlled.
  */
-static int allow_add = 0, allow_remove = 0, allow_replace = 0, allow_unmerged = 0, not_new = 0, quiet = 0, info_only = 0;
+static int allow_add;
+static int allow_remove;
+static int allow_replace;
+static int allow_unmerged; /* --refresh needing merge is not error */
+static int not_new; /* --refresh not having working tree files is not error */
+static int quiet; /* --refresh needing update is not error */
+static int info_only;
 static int force_remove;
+static int verbose;
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
 static inline void *ERR_PTR(long error)
@@ -30,6 +37,19 @@ static inline long PTR_ERR(const void *ptr)
 static inline long IS_ERR(const void *ptr)
 {
 	return (unsigned long)ptr > (unsigned long)-1000L;
+}
+
+static void report(const char *fmt, ...)
+{
+	va_list vp;
+
+	if (!verbose)
+		return;
+
+	va_start(vp, fmt);
+	vprintf(fmt, vp);
+	putchar('\n');
+	va_end(vp);
 }
 
 static int add_file_to_cache(const char *path)
@@ -260,7 +280,11 @@ static int add_cacheinfo(const char *arg1, const char *arg2, const char *arg3)
 	ce->ce_mode = create_ce_mode(mode);
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
-	return add_cache_entry(ce, option);
+	if (add_cache_entry(ce, option))
+		return error("%s: cannot add to the index - missing --add option?",
+			     arg3);
+	report("add '%s'", arg3);
+	return 0;
 }
 
 static int chmod_path(int flip, const char *path)
@@ -300,10 +324,12 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 	if (force_remove) {
 		if (remove_file_from_cache(p))
 			die("git-update-index: unable to remove %s", path);
+		report("remove '%s'", path);
 		return;
 	}
 	if (add_file_to_cache(p))
 		die("Unable to process file %s", path);
+	report("add '%s'", path);
 }
 
 static void read_index_info(int line_termination)
@@ -445,6 +471,10 @@ int main(int argc, const char **argv)
 			}
 			if (!strcmp(path, "--ignore-missing")) {
 				not_new = 1;
+				continue;
+			}
+			if (!strcmp(path, "--verbose")) {
+				verbose = 1;
 				continue;
 			}
 			die("unknown option %s", path);
