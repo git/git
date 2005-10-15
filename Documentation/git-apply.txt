@@ -8,7 +8,7 @@ git-apply - Apply patch on a git index file and a work tree
 
 SYNOPSIS
 --------
-'git-apply' [--stat] [--summary] [--check] [--index] [--show-files] [--apply] [<patch>...]
+'git-apply' [--stat] [--summary] [--check] [--index] [--apply] [--show-files] [--index-info] [-z] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -47,6 +47,20 @@ OPTIONS
 
 --show-files::
 	Show summary of files that are affected by the patch.
+
+--index-info::
+	Newer git-diff output has embedded 'index information'
+	for each blob to help identify the original version that
+	the patch applies to.  When this flag is given, and if
+	the original version of the blob is available locally,
+	outputs information about them to the standard output.
+
+-z::
+	When showing the index information, do not munge paths,
+	but use NUL terminated machine readable format.  Without
+	this flag, the pathnames output will have TAB, LF, and
+	backslash characters replaced with `\t`, `\n`, and `\\`,
+	respectively.
 
 --apply::
 	If you use any of the options marked ``Turns off

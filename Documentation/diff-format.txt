@@ -55,6 +55,11 @@ Example:
 :100644 100644 5be4a4...... 000000...... M file.c
 ------------------------------------------------
 
+When `-z` option is not used, TAB, LF, and backslash characters
+in pathnames are represented as `\t`, `\n`, and `\\`,
+respectively.
+
+
 Generating patches with -p
 --------------------------
 
@@ -137,3 +142,7 @@ the file that rename/copy produces, respectively.
        rename to <path>
        similarity index <number>
        dissimilarity index <number>
+       index <hash>..<hash> <mode>
+
+3.  TAB, LF, and backslash characters in pathnames are
+    represented as `\t`, `\n`, and `\\`, respectively.

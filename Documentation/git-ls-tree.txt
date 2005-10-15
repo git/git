@@ -38,6 +38,10 @@ Output Format
 -------------
         <mode> SP <type> SP <object> TAB <file>
 
+When `-z` option is not used, TAB, LF, and backslash characters
+in pathnames are represented as `\t`, `\n`, and `\\`,
+respectively.
+
 
 Author
 ------
