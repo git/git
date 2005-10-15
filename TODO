@@ -33,6 +33,8 @@ patch, perhaps ;-).
 Documentation
 -------------
 
+* Document the ref naming restrictions.
+
 * Help Jon Loeliger to find place in the documentation to place
   his drawing.
 
@@ -116,6 +118,12 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* Decide the notation of "peeling the onion" operator, and
+  implement it in sha1_name.c.  Perhaps postfix "^{}" to mean
+  "peel and expect anything", "^{blob}" to mean "peel and barf
+  unless blob".  The current "^0" becomes shorthand for
+  "^{commit}". [DONE]
+
 * Quote the URL so that libcurl's metecharacter mechanism would
   not kick in [DONE].
 
@@ -160,8 +168,12 @@ Technical (milder)
   lines.
 
 * What to do with TABs and LFs in pathnames without breaking GNU
-  patch?  [Have patch in proposed updates.  Discussion still
-  ongoing with Paul.]
+  patch?  [DONE -- go with GNU patch extension proposed by Paul].
+
+* Adjust apply.c to proposed GNU patch extension that quotes \n
+  and \t in C style, inside "". [DONE]
+
+* Adjust diff.c to the same. [DONE]
 
 * Maybe grok PGP signed text/plain in applymbox as well.
 
@@ -207,8 +219,16 @@ Technical (trivial)
 
 * Disallow [\001-\040\177] byte values from ref names.  Also we
   need to disallow ':' (used in refspec), '^' and '~' (postfix
-  "peel the onion" operators) and leading '+' (again used in
-  refspec, as prefix "force update" operator) [DONE].
+  "peel the onion" operators), and '..' ("ref1..ref2" notation
+  becomes ambiguous otherwise) [DONE].
+
+* Update fetch-pack and clone-pack to ignore funny refs from the
+  other end, while making sure peek-remote does not discard them.
+  [DONE]
+
+* Update upload-pack to send tag^{}.  This would hopefully help
+  Pasky's automated tag tracking, and also Martin's findtags.
+  [DONE]
 
 * short SHA1 naming is not enforcing uniqueness.  Should fix [DONE].
 
