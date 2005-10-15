@@ -9,6 +9,7 @@
 #include <fnmatch.h>
 
 #include "cache.h"
+#include "quote.h"
 
 static int show_deleted = 0;
 static int show_cached = 0;
@@ -342,7 +343,9 @@ static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
 	if (pathspec && !match(pathspec, ent->name, len))
 		return;
 
-	printf("%s%s%c", tag, ent->name + offset, line_terminator);
+	fputs(tag, stdout);
+	write_name_quoted("", ent->name + offset, line_terminator, stdout);
+	putchar(line_terminator);
 }
 
 static void show_killed_files(void)
@@ -405,15 +408,20 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (pathspec && !match(pathspec, ce->name, len))
 		return;
 
-	if (!show_stage)
-		printf("%s%s%c", tag, ce->name + offset, line_terminator);
-	else
-		printf("%s%06o %s %d\t%s%c",
+	if (!show_stage) {
+		fputs(tag, stdout);
+		write_name_quoted("", ce->name + offset, line_terminator, stdout);
+		putchar(line_terminator);
+	}
+	else {
+		printf("%s%06o %s %d\t",
 		       tag,
 		       ntohl(ce->ce_mode),
 		       sha1_to_hex(ce->sha1),
-		       ce_stage(ce),
-		       ce->name + offset, line_terminator); 
+		       ce_stage(ce));
+		write_name_quoted("", ce->name + offset, line_terminator, stdout);
+		putchar(line_terminator);
+	}
 }
 
 static void show_files(void)
