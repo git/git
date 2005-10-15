@@ -35,10 +35,10 @@ fall_back_3way () {
     mkdir "$dotest/patch-merge-tmp-dir"
 
     # First see if the patch records the index info that we can use.
-    if git-apply --show-index-info "$dotest/patch" \
+    if git-apply -z --index-info "$dotest/patch" \
 	>"$dotest/patch-merge-index-info" 2>/dev/null &&
 	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git-update-index --index-info <"$dotest/patch-merge-index-info" &&
+	git-update-index -z --index-info <"$dotest/patch-merge-index-info" &&
 	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
 	git-write-tree >"$dotest/patch-merge-base+" &&
 	# index has the base tree now.
