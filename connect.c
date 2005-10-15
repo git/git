@@ -284,6 +284,10 @@ static enum protocol get_protocol(const char *name)
 		return PROTO_SSH;
 	if (!strcmp(name, "git"))
 		return PROTO_GIT;
+	if (!strcmp(name, "git+ssh"))
+		return PROTO_SSH;
+	if (!strcmp(name, "ssh+git"))
+		return PROTO_SSH;
 	die("I don't handle protocol '%s'", name);
 }
 
