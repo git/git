@@ -95,6 +95,10 @@ static int update(const char *name,
 	char new_hex[60], *old_hex, *lock_name;
 	int newfd, namelen, written;
 
+	if (!strncmp(name, "refs/", 5) && check_ref_format(name + 5))
+		return error("refusing to create funny ref '%s' locally",
+			     name);
+
 	namelen = strlen(name);
 	lock_name = xmalloc(namelen + 10);
 	memcpy(lock_name, name, namelen);

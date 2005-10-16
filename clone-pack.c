@@ -34,6 +34,12 @@ static void write_one_ref(struct ref *ref)
 	int fd;
 	char *hex;
 
+	if (!strncmp(ref->name, "refs/", 5) &&
+	    check_ref_format(ref->name + 5)) {
+		error("refusing to create funny ref '%s' locally", ref->name);
+		return;
+	}
+
 	if (safe_create_leading_directories(path))
 		die("unable to create leading directory for %s", ref->name);
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0666);
