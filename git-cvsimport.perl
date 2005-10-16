@@ -570,6 +570,7 @@ my $commit = sub {
 	unless($pid) {
 		$pr->writer();
 		$pw->reader();
+		open(OUT,">&STDOUT");
 		dup2($pw->fileno(),0);
 		dup2($pr->fileno(),1);
 		$pr->close();
@@ -587,10 +588,9 @@ my $commit = sub {
 				if ( -e "$git_dir/refs/heads/$mparent") {
 					$mparent = get_headref($mparent, $git_dir);
 					push @par, '-p', $mparent;
-					# printing here breaks import # 
-					# # print "Merge parent branch: $mparent\n" if $opt_v;
+					print OUT "Merge parent branch: $mparent\n" if $opt_v;
 				}
-		    	} 
+			}
 		}
 
 		exec("env",
