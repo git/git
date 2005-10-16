@@ -219,11 +219,11 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 }
 
 #ifdef USE_CURL_MULTI
-void process_curl_messages();
-void process_request_queue();
+static void process_curl_messages(void);
+static void process_request_queue(void);
 #endif
 
-static CURL* get_curl_handle()
+static CURL* get_curl_handle(void)
 {
 	CURL* result = curl_easy_init();
 
@@ -249,7 +249,7 @@ static CURL* get_curl_handle()
 	return result;
 }
 
-struct active_request_slot *get_active_slot()
+static struct active_request_slot *get_active_slot(void)
 {
 	struct active_request_slot *slot = active_queue_head;
 	struct active_request_slot *newslot;
@@ -302,7 +302,7 @@ struct active_request_slot *get_active_slot()
 	return slot;
 }
 
-int start_active_slot(struct active_request_slot *slot)
+static int start_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
 	CURLMcode curlm_result = curl_multi_add_handle(curlm, slot->curl);
@@ -317,7 +317,7 @@ int start_active_slot(struct active_request_slot *slot)
 	return 1;
 }
 
-void run_active_slot(struct active_request_slot *slot)
+static void run_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
 	int num_transfers;
@@ -365,7 +365,7 @@ void run_active_slot(struct active_request_slot *slot)
 #endif
 }
 
-void start_request(struct transfer_request *request)
+static void start_request(struct transfer_request *request)
 {
 	char *hex = sha1_to_hex(request->sha1);
 	char prevfile[PATH_MAX];
@@ -491,7 +491,7 @@ void start_request(struct transfer_request *request)
 	request->state = ACTIVE;
 }
 
-void finish_request(struct transfer_request *request)
+static void finish_request(struct transfer_request *request)
 {
 	fchmod(request->local, 0444);
 	close(request->local);
@@ -519,7 +519,7 @@ void finish_request(struct transfer_request *request)
 		pull_say("got %s\n", sha1_to_hex(request->sha1));
 }
 
-void release_request(struct transfer_request *request)
+static void release_request(struct transfer_request *request)
 {
 	struct transfer_request *entry = request_queue_head;
 
@@ -537,7 +537,7 @@ void release_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
-void process_curl_messages()
+void process_curl_messages(void)
 {
 	int num_messages;
 	struct active_request_slot *slot;
@@ -589,7 +589,7 @@ void process_curl_messages()
 	}
 }
 
-void process_request_queue()
+void process_request_queue(void)
 {
 	struct transfer_request *request = request_queue_head;
 	int num_transfers;
@@ -1010,8 +1010,8 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	}
 
 #ifdef USE_CURL_MULTI
-	int num_transfers;
 	while (request->state == WAITING) {
+		int num_transfers;
 		curl_multi_perform(curlm, &num_transfers);
 		if (num_transfers < active_requests) {
 			process_curl_messages();
@@ -1207,9 +1207,11 @@ int main(int argc, char **argv)
 	curl_global_init(CURL_GLOBAL_ALL);
 
 #ifdef USE_CURL_MULTI
-	char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
-	if (http_max_requests != NULL)
-		max_requests = atoi(http_max_requests);
+	{
+		char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
+		if (http_max_requests != NULL)
+			max_requests = atoi(http_max_requests);
+	}
 
 	curlm = curl_multi_init();
 	if (curlm == NULL) {
