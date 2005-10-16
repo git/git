@@ -335,17 +335,54 @@ int write_ref_sha1(const char *ref, int fd, const unsigned char *sha1)
 	return retval;
 }
 
+/*
+ * Make sure "ref" is something reasonable to have under ".git/refs/";
+ * We do not like it if:
+ *
+ * - any path component of it begins with ".", or
+ * - it has double dots "..", or
+ * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
+ * - it ends with a "/".
+ */
+
+static inline int bad_ref_char(int ch)
+{
+	return (((unsigned) ch) <= ' ' ||
+		ch == '~' || ch == '^' || ch == ':');
+}
+
 int check_ref_format(const char *ref)
 {
-	char *middle;
-	if (ref[0] == '.' || ref[0] == '/')
-		return -1;
-	middle = strchr(ref, '/');
-	if (!middle || !middle[1])
-		return -1;
-	if (strchr(middle + 1, '/'))
-		return -1;
-	return 0;
+	int ch, level;
+	const char *cp = ref;
+
+	level = 0;
+	while (1) {
+		while ((ch = *cp++) == '/')
+			; /* tolerate duplicated slashes */
+		if (!ch)
+			return -1; /* should not end with slashes */
+
+		/* we are at the beginning of the path component */
+		if (ch == '.' || bad_ref_char(ch))
+			return -1;
+
+		/* scan the rest of the path component */
+		while ((ch = *cp++) != 0) {
+			if (bad_ref_char(ch))
+				return -1;
+			if (ch == '/')
+				break;
+			if (ch == '.' && *cp == '.')
+				return -1;
+		}
+		level++;
+		if (!ch) {
+			if (level < 2)
+				return -1; /* at least of form "heads/blah" */
+			return 0;
+		}
+	}
 }
 
 int write_ref_sha1_unlocked(const char *ref, const unsigned char *sha1)

@@ -46,6 +46,8 @@ if [ -e "$GIT_DIR/refs/tags/$name" -a -z "$force" ]; then
     die "tag '$name' already exists"
 fi
 shift
+git-check-ref-format "tags/$name" ||
+	die "we do not like '$name' as a tag name."
 
 object=$(git-rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git-cat-file -t $object) || exit 1
