@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "strbuf.h"
+#include "quote.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -338,6 +339,7 @@ static void read_index_info(int line_termination)
 	strbuf_init(&buf);
 	while (1) {
 		char *ptr;
+		char *path_name;
 		unsigned char sha1[20];
 		unsigned int mode;
 
@@ -352,14 +354,22 @@ static void read_index_info(int line_termination)
 			goto bad_line;
 
 		ptr += 42;
-		if (!verify_path(ptr)) {
-			fprintf(stderr, "Ignoring path %s\n", ptr);
+
+		if (line_termination && ptr[0] == '"')
+			path_name = unquote_c_style(ptr, NULL);
+		else
+			path_name = ptr;
+
+		if (!verify_path(path_name)) {
+			fprintf(stderr, "Ignoring path %s\n", path_name);
+			if (path_name != ptr)
+				free(path_name);
 			continue;
 		}
 
 		if (!mode) {
 			/* mode == 0 means there is no such path -- remove */
-			if (remove_file_from_cache(ptr))
+			if (remove_file_from_cache(path_name))
 				die("git-update-index: unable to remove %s",
 				    ptr);
 		}
@@ -369,10 +379,12 @@ static void read_index_info(int line_termination)
 			 * ptr[-41] is at the beginning of sha1
 			 */
 			ptr[-42] = ptr[-1] = 0;
-			if (add_cacheinfo(buf.buf, ptr-41, ptr))
+			if (add_cacheinfo(buf.buf, ptr-41, path_name))
 				die("git-update-index: unable to update %s",
-				    ptr);
+				    path_name);
 		}
+		if (path_name != ptr)
+			free(path_name);
 		continue;
 
 	bad_line:
