@@ -170,7 +170,11 @@ esac
 reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
-	taglist=$(git-ls-remote --tags "$remote" | awk '{ print "."$2":"$2 }')
+	taglist=$(git-ls-remote --tags "$remote" |
+		sed -e '
+			/\^{}$/d
+			s/^[^	]*	//
+			s/.*/&:&/')
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.
