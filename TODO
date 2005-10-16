@@ -9,9 +9,9 @@ The GIT To-Do File
 Tool Renames Plan
 =================
 
- - In 0.99.8, we will still install the backward compatible
-   symbolic links in $(bindir).  These will however be removed
-   before 1.0 happens.
+ - In 0.99.8, we still install the backward compatible symbolic
+   links in $(bindir).  These will however be removed before 1.0
+   happens.
 
    git-ssh-push and git-ssh-pull pair is not going away within
    this timeframe, if ever.  Each of these old-name commands
@@ -57,7 +57,8 @@ Documentation
 * Update tutorial to cover setting up repository hooks to do
   common tasks.
 
-* Accept patches to finish missing docs.
+* Do we still have missing docs?  If so accept patches to finish
+  them.
 
 * Accept patches to talk about "Whoops, it broke.  What's
   next?".
@@ -128,8 +129,16 @@ Technical (milder)
   the later core features?  Zack Brown's "cg-seek leaving empty
   directories" problem is a good example of this.
 
+* Perhaps detect cloning request in upload-pack and cache the
+  result for next cloning request until any of our refs change.
+
+* Perhaps accept more "want"s in upload-pack and do something
+  intelligent about it.
+
+* Perhaps send less "want"s from fetch-pack.
+
 * Look at svn importer Smurf has.  There is a small cvsimport
-  update in his tree as well.
+  update in his tree as well [DONE].
 
 * Decide the notation of "peeling the onion" operator, and
   implement it in sha1_name.c.  Perhaps postfix "^{}" to mean
@@ -156,14 +165,6 @@ Technical (milder)
 * More generally, review the use of temporary files again.
   Assuming writable $GIT_DIR is more acceptable, but the
   working tree toplevel may not be in a rare usage pattern.
-
-* Perhaps accept more "want"s in upload-pack and do something
-  intelligent about it.
-
-* Perhaps detect cloning request in upload-pack and cache the
-  result for next cloning request until any of our refs change.
-
-* Perhaps send less "want"s from fetch-pack.
 
 * Encourage concrete proposals to commit log message templates
   we discussed some time ago.
@@ -248,13 +249,13 @@ Technical (trivial)
   Pasky's automated tag tracking, and also Martin's findtags.
   [DONE]
 
-* Adjust update-index to quoted --index-info.
+* Adjust update-index to quoted --index-info [DONE].
 
-* Prepare apply.c changes for maint branch (0.99.8e).
+* Prepare apply.c changes for maint branch (0.99.8e) [READY].
 
-* Show ^{commit}, ^{tree} instead of ^{} from ls-remote.
+* Perhaps show ^{commit}, ^{tree} instead of ^{} from ls-remote?
 
-* Readjust maint branch for the above (0.99.8e).
+* Re-adjust maint branch for the above if we did so.
 
 * short SHA1 naming is not enforcing uniqueness.  Should fix [DONE].
 
