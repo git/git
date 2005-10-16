@@ -81,7 +81,7 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	int status;
 	pid_t pid;
 
-	get_remote_heads(fd[0], &ref, nr_match, match);
+	get_remote_heads(fd[0], &ref, nr_match, match, 1);
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");

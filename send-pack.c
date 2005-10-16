@@ -181,7 +181,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	int new_refs;
 
 	/* No funny business with the matcher */
-	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL);
+	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, 1);
 	get_local_heads();
 
 	/* match them up */

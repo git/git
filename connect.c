@@ -10,7 +10,8 @@
 /*
  * Read all the refs from the other end
  */
-struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match)
+struct ref **get_remote_heads(int in, struct ref **list,
+			      int nr_match, char **match, int ignore_funny)
 {
 	*list = NULL;
 	for (;;) {
@@ -29,6 +30,11 @@ struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **ma
 		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
 			die("protocol error: expected sha/ref, got '%s'", buffer);
 		name = buffer + 41;
+
+		if (ignore_funny && 45 < len && !memcmp(name, "refs/", 5) &&
+		    check_ref_format(name + 5))
+			continue;
+
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
 		ref = xcalloc(1, sizeof(*ref) + len - 40);

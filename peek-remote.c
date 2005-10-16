@@ -11,7 +11,7 @@ static int peek_remote(int fd[2])
 {
 	struct ref *ref;
 
-	get_remote_heads(fd[0], &ref, 0, NULL);
+	get_remote_heads(fd[0], &ref, 0, NULL, 0);
 	packet_flush(fd[1]);
 
 	while (ref) {
