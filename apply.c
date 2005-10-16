@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <fnmatch.h>
 #include "cache.h"
+#include "quote.h"
 
 // We default to the merge behaviour, since that's what most people would
 // expect.
@@ -142,6 +143,35 @@ static char * find_name(const char *line, char *def, int p_value, int terminate)
 	const char *start = line;
 	char *name;
 
+	if (*line == '"') {
+		/* Proposed "new-style" GNU patch/diff format; see
+		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
+		 */
+		name = unquote_c_style(line, NULL);
+		if (name) {
+			char *cp = name;
+			while (p_value) {
+				cp = strchr(name, '/');
+				if (!cp)
+					break;
+				cp++;
+				p_value--;
+			}
+			if (cp) {
+				/* name can later be freed, so we need
+				 * to memmove, not just return cp
+				 */
+				memmove(name, cp, strlen(cp) + 1);
+				free(def);
+				return name;
+			}
+			else {
+				free(name);
+				name = NULL;
+			}
+		}
+	}
+
 	for (;;) {
 		char c = *line;
 
@@ -231,37 +261,29 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
  */
 static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
 {
-	int len;
-	const char *name;
-
 	if (!orig_name && !isnull)
 		return find_name(line, NULL, 1, 0);
 
-	name = "/dev/null";
-	len = 9;
 	if (orig_name) {
+		int len;
+		const char *name;
+		char *another;
 		name = orig_name;
 		len = strlen(name);
 		if (isnull)
 			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
-	}
-
-	if (*name == '/')
-		goto absolute_path;
-
-	for (;;) {
-		char c = *line++;
-		if (c == '\n')
-			break;
-		if (c != '/')
-			continue;
-absolute_path:
-		if (memcmp(line, name, len) || line[len] != '\n')
-			break;
+		another = find_name(line, NULL, 1, 0);
+		if (!another || memcmp(another, name, len))
+			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
+		free(another);
 		return orig_name;
 	}
-	die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
-	return NULL;
+	else {
+		/* expect "/dev/null" */
+		if (memcmp("/dev/null", line, 9) || line[9] != '\n')
+			die("git-apply: bad git-diff - expected /dev/null on line %d", linenr);
+		return NULL;
+	}
 }
 
 static int gitdiff_oldname(const char *line, struct patch *patch)
@@ -353,28 +375,123 @@ static int gitdiff_unrecognized(const char *line, struct patch *patch)
 	return -1;
 }
 
-static char *git_header_name(char *line)
+static const char *stop_at_slash(const char *line, int llen)
+{
+	int i;
+
+	for (i = 0; i < llen; i++) {
+		int ch = line[i];
+		if (ch == '/')
+			return line + i;
+	}
+	return NULL;
+}
+
+/* This is to extract the same name that appears on "diff --git"
+ * line.  We do not find and return anything if it is a rename
+ * patch, and it is OK because we will find the name elsewhere.
+ * We need to reliably find name only when it is mode-change only,
+ * creation or deletion of an empty file.  In any of these cases,
+ * both sides are the same name under a/ and b/ respectively.
+ */
+static char *git_header_name(char *line, int llen)
 {
 	int len;
-	char *name, *second;
+	const char *name;
+	const char *second = NULL;
 
-	/*
-	 * Find the first '/'
-	 */
-	name = line;
-	for (;;) {
-		char c = *name++;
-		if (c == '\n')
+	line += strlen("diff --git ");
+	llen -= strlen("diff --git ");
+
+	if (*line == '"') {
+		const char *cp;
+		char *first = unquote_c_style(line, &second);
+		if (!first)
 			return NULL;
-		if (c == '/')
-			break;
+
+		/* advance to the first slash */
+		cp = stop_at_slash(first, strlen(first));
+		if (!cp || cp == first) {
+			/* we do not accept absolute paths */
+		free_first_and_fail:
+			free(first);
+			return NULL;
+		}
+		len = strlen(cp+1);
+		memmove(first, cp+1, len+1); /* including NUL */
+
+		/* second points at one past closing dq of name.
+		 * find the second name.
+		 */
+		while ((second < line + llen) && isspace(*second))
+			second++;
+
+		if (line + llen <= second)
+			goto free_first_and_fail;
+		if (*second == '"') {
+			char *sp = unquote_c_style(second, NULL);
+			if (!sp)
+				goto free_first_and_fail;
+			cp = stop_at_slash(sp, strlen(sp));
+			if (!cp || cp == sp) {
+			free_both_and_fail:
+				free(sp);
+				goto free_first_and_fail;
+			}
+			/* They must match, otherwise ignore */
+			if (strcmp(cp+1, first))
+				goto free_both_and_fail;
+			free(sp);
+			return first;
+		}
+
+		/* unquoted second */
+		cp = stop_at_slash(second, line + llen - second);
+		if (!cp || cp == second)
+			goto free_first_and_fail;
+		cp++;
+		if (line + llen - cp != len + 1 ||
+		    memcmp(first, cp, len))
+			goto free_first_and_fail;
+		return first;
 	}
 
-	/*
-	 * We don't accept absolute paths (/dev/null) as possibly valid
-	 */
-	if (name == line+1)
+	/* unquoted first name */
+	name = stop_at_slash(line, llen);
+	if (!name || name == line)
 		return NULL;
+
+	name++;
+
+	/* since the first name is unquoted, a dq if exists must be
+	 * the beginning of the second name.
+	 */
+	for (second = name; second < line + llen; second++) {
+		if (*second == '"') {
+			const char *cp = second;
+			const char *np;
+			char *sp = unquote_c_style(second, NULL);
+
+			if (!sp)
+				return NULL;
+			np = stop_at_slash(sp, strlen(sp));
+			if (!np || np == sp) {
+			free_second_and_fail:
+				free(sp);
+				return NULL;
+			}
+			np++;
+			len = strlen(np);
+			if (len < cp - name &&
+			    !strncmp(np, name, len) &&
+			    isspace(name[len])) {
+				/* Good */
+				memmove(sp, np, len + 1);
+				return sp;
+			}
+			goto free_second_and_fail;
+		}
+	}
 
 	/*
 	 * Accept a name only if it shows up twice, exactly the same
@@ -423,7 +540,7 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	 * or removing or adding empty files), so we get
 	 * the default name from the header.
 	 */
-	patch->def_name = git_header_name(line + strlen("diff --git "));
+	patch->def_name = git_header_name(line, len);
 
 	line += len;
 	size -= len;
@@ -756,10 +873,17 @@ static void show_stats(struct patch *patch)
 {
 	const char *prefix = "";
 	char *name = patch->new_name;
+	char *qname = NULL;
 	int len, max, add, del, total;
 
 	if (!name)
 		name = patch->old_name;
+
+	if (0 < (len = quote_c_style(name, NULL, NULL, 0))) {
+		qname = xmalloc(len + 1);
+		quote_c_style(name, qname, NULL, 0);
+		name = qname;
+	}
 
 	/*
 	 * "scale" the filename
@@ -798,6 +922,8 @@ static void show_stats(struct patch *patch)
 	printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
 		len, name, patch->lines_added + patch->lines_deleted,
 		add, pluses, del, minuses);
+	if (qname)
+		free(qname);
 }
 
 static int read_old_data(struct stat *st, const char *path, void *buf, unsigned long size)
@@ -1220,12 +1346,16 @@ static void patch_stats(struct patch *patch)
 	if (lines > max_change)
 		max_change = lines;
 	if (patch->old_name) {
-		int len = strlen(patch->old_name);
+		int len = quote_c_style(patch->old_name, NULL, NULL, 0);
+		if (!len)
+			len = strlen(patch->old_name);
 		if (len > max_len)
 			max_len = len;
 	}
 	if (patch->new_name) {
-		int len = strlen(patch->new_name);
+		int len = quote_c_style(patch->new_name, NULL, NULL, 0);
+		if (!len)
+			len = strlen(patch->new_name);
 		if (len > max_len)
 			max_len = len;
 	}
