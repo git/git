@@ -1,6 +1,7 @@
 #ifndef QUOTE_H
 #define QUOTE_H
 
+#include <stdio.h>
 
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', and the whole thing
@@ -21,6 +22,12 @@
  * sq_quote() in a real application.
  */
 
-char *sq_quote(const char *src);
+extern char *sq_quote(const char *src);
 
+extern int quote_c_style(const char *name, char *outbuf, FILE *outfp,
+			 int nodq);
+extern char *unquote_c_style(const char *quoted, const char **endp);
+
+extern void write_name_quoted(const char *prefix, const char *name,
+			      int quote, FILE *out);
 #endif
