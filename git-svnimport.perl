@@ -677,7 +677,8 @@ while(++$current_rev <= $svn->{'maxrev'}) {
 	$svn->{'svn'}->get_log("/",$current_rev,$current_rev,$current_rev,1,1,\&_commit_all,"");
 	commit_all();
 	if($opt_l and not --$opt_l) {
-		print STDERR "Exiting due to a memory leak. Repeat, please.\n";
+		print STDERR "Stopping, because there is a memory leak (in the SVN library).\n";
+		print STDERR "Please repeat this command; it will continue safely\n";
 		last;
 	}
 }
