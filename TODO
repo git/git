@@ -35,6 +35,10 @@ Documentation
 
 * Document the ref naming restrictions.
 
+* David Ho's report suggests whatchanged documentation should
+  mention -m as "commonly used options".  Steal Linus'
+  response [DONE].
+
 * Help Jon Loeliger to find place in the documentation to place
   his drawing.
 
@@ -117,6 +121,15 @@ Technical (heavier)
 
 Technical (milder)
 ------------------
+
+* Merlyn reports trouble with http fetch.
+
+* Maybe look at Cogito and see if I can help Pasky to adjust to
+  the later core features?  Zack Brown's "cg-seek leaving empty
+  directories" problem is a good example of this.
+
+* Look at svn importer Smurf has.  There is a small cvsimport
+  update in his tree as well.
 
 * Decide the notation of "peeling the onion" operator, and
   implement it in sha1_name.c.  Perhaps postfix "^{}" to mean
@@ -217,6 +230,11 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
+* Peter Hagervall's sparse fix [DONE].
+
+* Alex Riesen reported that hooks are in effect in tests.
+  Should fix [DONE].
+
 * Disallow [\001-\040\177] byte values from ref names.  Also we
   need to disallow ':' (used in refspec), '^' and '~' (postfix
   "peel the onion" operators), and '..' ("ref1..ref2" notation
@@ -229,6 +247,14 @@ Technical (trivial)
 * Update upload-pack to send tag^{}.  This would hopefully help
   Pasky's automated tag tracking, and also Martin's findtags.
   [DONE]
+
+* Adjust update-index to quoted --index-info.
+
+* Prepare apply.c changes for maint branch (0.99.8e).
+
+* Show ^{commit}, ^{tree} instead of ^{} from ls-remote.
+
+* Readjust maint branch for the above (0.99.8e).
 
 * short SHA1 naming is not enforcing uniqueness.  Should fix [DONE].
 
