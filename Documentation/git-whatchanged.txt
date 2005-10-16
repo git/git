@@ -44,6 +44,13 @@ OPTIONS
 	<format> can be one of 'raw', 'medium', 'short', 'full',
 	and 'oneline'.
 
+-m::
+	By default, differences for merge commits are not shown.
+	With this flag, show differences to that commit from all
+	of its parents.
+
+	However, it is not very useful in general, although it
+	*is* useful on a file-by-file basis.
 
 Author
 ------
