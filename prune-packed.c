@@ -27,7 +27,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len)
 			error("unable to unlink %s", pathname);
 	}
 	pathname[len] = 0;
-	if (rmdir(pathname))
+	if (!rmdir(pathname))
 		mkdir(pathname, 0777);
 }
 
