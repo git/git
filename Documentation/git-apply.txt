@@ -8,7 +8,7 @@ git-apply - Apply patch on a git index file and a work tree
 
 SYNOPSIS
 --------
-'git-apply' [--stat] [--summary] [--check] [--index] [--apply] [--show-files] [--index-info] [-z] [<patch>...]
+'git-apply' [--stat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -44,9 +44,6 @@ OPTIONS
 	the file to be patched in the work tree is not
 	up-to-date, it is flagged as an error.  This flag also
 	causes the index file to be updated.
-
---show-files::
-	Show summary of files that are affected by the patch.
 
 --index-info::
 	Newer git-diff output has embedded 'index information'

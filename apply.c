@@ -13,7 +13,6 @@
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
-//  --show-files shows the directory changes
 //  --index-info shows the old and new index info for paths if available.
 //
 static int check_index = 0;
@@ -22,11 +21,10 @@ static int diffstat = 0;
 static int summary = 0;
 static int check = 0;
 static int apply = 1;
-static int show_files = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--stat] [--summary] [--check] [--index] [--apply] [--show-files] [--index-info] [-z] <patch>...";
+"git-apply [--stat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -1270,35 +1268,6 @@ static int check_patch_list(struct patch *patch)
 	return error;
 }
 
-static void show_file(int c, unsigned int mode, const char *name)
-{
-	printf("%c %o %s\n", c, mode, name);
-}
-
-static void show_file_list(struct patch *patch)
-{
-	for (;patch ; patch = patch->next) {
-		if (patch->is_rename) {
-			show_file('-', patch->old_mode, patch->old_name);
-			show_file('+', patch->new_mode, patch->new_name);
-			continue;
-		}
-		if (patch->is_copy || patch->is_new) {
-			show_file('+', patch->new_mode, patch->new_name);
-			continue;
-		}
-		if (patch->is_delete) {
-			show_file('-', patch->old_mode, patch->old_name);
-			continue;
-		}
-		if (patch->old_mode && patch->new_mode && patch->old_mode != patch->new_mode) {
-			printf("M %o:%o %s\n", patch->old_mode, patch->new_mode, patch->old_name);
-			continue;
-		}
-		printf("M %o %s\n", patch->old_mode, patch->old_name);
-	}
-}
-
 static inline int is_null_sha1(const unsigned char *sha1)
 {
 	return !memcmp(sha1, null_sha1, 20);
@@ -1675,9 +1644,6 @@ static int apply_patch(int fd)
 			die("Unable to write new cachefile");
 	}
 
-	if (show_files)
-		show_file_list(list);
-
 	if (show_index_info)
 		show_index_list(list);
 
@@ -1733,10 +1699,6 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--apply")) {
 			apply = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--show-files")) {
-			show_files = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--index-info")) {
