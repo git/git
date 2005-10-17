@@ -88,8 +88,8 @@ int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
 		EMIT('"');
 	for (sp = name; (ch = *sp++); ) {
 
-		if ((ch <= ' ') || (ch == '"') ||
-		    (ch == '\\') || (ch == 0177)) {
+		if ((ch < ' ') || (ch == '"') || (ch == '\\') ||
+		    (ch == 0177)) {
 			needquote = 1;
 			switch (ch) {
 			case '\a': EMITQ(); ch = 'a'; break;
