@@ -8,6 +8,7 @@ git-archimport
 git-bisect
 git-branch
 git-cat-file
+git-check-ref-format
 git-checkout
 git-checkout-index
 git-cherry
