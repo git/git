@@ -13,6 +13,7 @@ tree, index, and tree objects.
 
 p0='no-funny'
 p1='tabs	and spaces'
+p2='just space'
 
 cat >"$p0" <<\EOF
 1. A quick brown fox jumps over the lazy cat, oops dog.
@@ -21,24 +22,28 @@ cat >"$p0" <<\EOF
 EOF
 
 cat >"$p1" "$p0"
+echo 'Foo Bar Baz' >"$p2"
 
-echo 'no-funny' >expected
+echo 'just space
+no-funny' >expected
 test_expect_success 'git-ls-files no-funny' \
-	'git-update-index --add "$p0" &&
+	'git-update-index --add "$p0" "$p2" &&
 	git-ls-files >current &&
 	diff -u expected current'
 
 t0=`git-write-tree`
 echo "$t0" >t0
 
-echo 'no-funny
+echo 'just space
+no-funny
 "tabs\tand spaces"' >expected
 test_expect_success 'git-ls-files with-funny' \
 	'git-update-index --add "$p1" &&
 	git-ls-files >current &&
 	diff -u expected current'
 
-echo 'no-funny
+echo 'just space
+no-funny
 tabs	and spaces' >expected
 test_expect_success 'git-ls-files -z with-funny' \
 	'git-ls-files -z | tr \\0 \\012 >current &&
@@ -47,7 +52,8 @@ test_expect_success 'git-ls-files -z with-funny' \
 t1=`git-write-tree`
 echo "$t1" >t1
 
-echo 'no-funny
+echo 'just space
+no-funny
 "tabs\tand spaces"' >expected
 test_expect_success 'git-ls-tree with funny' \
 	'git-ls-tree -r $t1 | sed -e "s/^[^	]*	//" >current &&
