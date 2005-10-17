@@ -1281,7 +1281,6 @@ sub git_blob {
 		$hash = git_get_hash_by_path($base, $file_name, "blob");
 	}
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
-	my $base = $file_name || "";
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		print "<div class=\"page_nav\">\n" .
@@ -1291,9 +1290,13 @@ sub git_blob {
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base"}, "commit") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$hash_base"}, "commitdiff") .
 		      " | " . $cgi->a({-href => "$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash_base"}, "tree") . "<br/>\n";
-		print $cgi->a({-href => "$my_uri?p=$project;a=blob_plain;h=$hash"}, "plain") . "<br/>\n" .
-		      "</div>\n";
-		print "<div>" .
+		if (defined $file_name) {
+			print $cgi->a({-href => "$my_uri?p=$project;a=blob_plain;h=$hash;f=$file_name"}, "plain") . "<br/>\n";
+		} else {
+			print $cgi->a({-href => "$my_uri?p=$project;a=blob_plain;h=$hash"}, "plain") . "<br/>\n";
+		}
+		print "</div>\n".
+		       "<div>" .
 		      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$hash_base", -class => "title"}, escapeHTML($co{'title'})) .
 		      "</div>\n";
 	} else {
@@ -1323,7 +1326,11 @@ sub git_blob {
 }
 
 sub git_blob_plain {
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
+	my $save_as = "$hash.txt";
+	if (defined $file_name) {
+		$save_as = $file_name;
+	}
+	print $cgi->header(-type => "text/plain", -charset => 'utf-8', '-content-disposition' => "inline; filename=\"$save_as\"");
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
 	undef $/;
 	print <$fd>;
@@ -1945,7 +1952,7 @@ sub git_commitdiff_plain {
 	}
 	close $fd;
 
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
+	print $cgi->header(-type => "text/plain", -charset => 'utf-8', '-content-disposition' => "inline; filename=\"git-$hash.patch\"");
 	my %co = git_read_commit($hash);
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my $comment = $co{'comment'};
