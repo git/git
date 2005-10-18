@@ -174,7 +174,7 @@ static void builtin_diff(const char *name_a,
 {
 	int i, next_at, cmd_size;
 	const char *const diff_cmd = "diff -L%s -L%s";
-	const char *const diff_arg  = "%s %s||:"; /* "||:" is to return 0 */
+	const char *const diff_arg  = "-- %s %s||:"; /* "||:" is to return 0 */
 	const char *input_name_sq[2];
 	const char *label_path[2];
 	char *cmd;
