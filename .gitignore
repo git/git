@@ -86,6 +86,7 @@ git-ssh-push
 git-ssh-upload
 git-status
 git-stripspace
+git-svnimport
 git-symbolic-ref
 git-tag
 git-tar-tree
@@ -106,3 +107,5 @@ git-core-*/?*
 *.deb
 git-core.spec
 *.exe
+libgit.a
+*.o
