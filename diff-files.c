@@ -41,6 +41,11 @@ int main(int argc, const char **argv)
 	git_config(git_default_config);
 	diff_setup(&diff_options);
 	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "--")) {
+			argv++;
+			argc--;
+			break;
+		}
 		if (!strcmp(argv[1], "-q"))
 			silent = 1;
 		else if (!strcmp(argv[1], "-r"))
