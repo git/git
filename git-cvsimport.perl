@@ -487,7 +487,7 @@ unless($pid) {
 	my @opt;
 	@opt = split(/,/,$opt_p) if defined $opt_p;
 	unshift @opt, '-z', $opt_z if defined $opt_z;
-	unless ($opt_p =~ m/--no-cvs-direct/) {
+	unless (defined($opt_p) && $opt_p =~ m/--no-cvs-direct/) {
 		push @opt, '--cvs-direct';
 	}
 	exec("cvsps",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
