@@ -30,8 +30,8 @@ OPTIONS
 	forces overwrite of existing files
 
 -a::
-	checks out all files in the cache (will then continue to
-	process listed files).
+	checks out all files in the cache.  Cannot be used
+	together with explicit filenames.
 
 -n::
 	Don't checkout new files, only refresh files already checked
@@ -44,15 +44,9 @@ OPTIONS
 --::
 	Do not interpret any more arguments as options.
 
-Note that the order of the flags matters:
+The order of the flags used to matter, but not anymore.
 
-     git-checkout-index -a -f file.c
-
-will first check out all files listed in the cache (but not overwrite
-any old ones), and then force-checkout `file.c` a second time (ie that
-one *will* overwrite any old contents with the same filename).
-
-Also, just doing "git-checkout-index" does nothing. You probably meant
+Just doing "git-checkout-index" does nothing. You probably meant
 "git-checkout-index -a". And if you want to force it, you want
 "git-checkout-index -f -a".
 
@@ -78,12 +72,12 @@ scripting!).
 The prefix ability basically makes it trivial to use
 git-checkout-index as an "export as tree" function. Just read the
 desired tree into the index, and do a
-  
+
         git-checkout-index --prefix=git-export-dir/ -a
-  
+
 and git-checkout-index will "export" the cache into the specified
 directory.
-  
+
 NOTE The final "/" is important. The exported name is literally just
 prefixed with the specified string, so you can also do something like
 
