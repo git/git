@@ -9,6 +9,9 @@ This test tries pathnames with funny characters in the working
 tree, index, and tree objects.
 '
 
+# since FAT/NTFS does not allow tabs in filenames, skip this test
+test "$(uname -o 2>/dev/null)" = Cygwin && exit 0
+
 . ./test-lib.sh
 
 p0='no-funny'
