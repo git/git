@@ -53,7 +53,11 @@ Perhaps git-update-server-info needs to be run there?"
 	while read sha1 refname
 	do
 		name=`expr "$refname" : 'refs/\(.*\)'` &&
-		git-http-fetch -v -a -w "$name" "$name" "$1/" || exit 1
+		case "$name" in
+		*^*)	;;
+		*)
+			git-http-fetch -v -a -w "$name" "$name" "$1/" || exit 1
+		esac
 	done <"$clone_tmp/refs"
 	rm -fr "$clone_tmp"
 }
