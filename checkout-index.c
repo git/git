@@ -82,8 +82,9 @@ static struct cache_file cache_file;
 
 int main(int argc, char **argv)
 {
-	int i, force_filename = 0;
+	int i;
 	int newfd = -1;
+	int all = 0;
 
 	if (read_cache() < 0) {
 		die("invalid cache");
@@ -91,57 +92,69 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (!force_filename) {
-			if (!strcmp(arg, "-a")) {
-				checkout_all();
-				continue;
-			}
-			if (!strcmp(arg, "--")) {
-				force_filename = 1;
-				continue;
-			}
-			if (!strcmp(arg, "-f")) {
-				state.force = 1;
-				continue;
-			}
-			if (!strcmp(arg, "-q")) {
-				state.quiet = 1;
-				continue;
-			}
-			if (!strcmp(arg, "-n")) {
-				state.not_new = 1;
-				continue;
-			}
-			if (!strcmp(arg, "-u")) {
-				state.refresh_cache = 1;
-				if (newfd < 0)
-					newfd = hold_index_file_for_update
-						(&cache_file,
-						 get_index_file());
-				if (newfd < 0)
-					die("cannot open index.lock file.");
-				continue;
-			}
-			if (!memcmp(arg, "--prefix=", 9)) {
-				state.base_dir = arg+9;
-				state.base_dir_len = strlen(state.base_dir);
-				continue;
-			}
-			if (arg[0] == '-')
-				usage(checkout_cache_usage);
+
+		if (!strcmp(arg, "--")) {
+			i++;
+			break;
 		}
-		if (state.base_dir_len) {
-			/* when --prefix is specified we do not
-			 * want to update cache.
-			 */
-			if (state.refresh_cache) {
-				close(newfd); newfd = -1;
-				rollback_index_file(&cache_file);
-			}
-			state.refresh_cache = 0;
+		if (!strcmp(arg, "-a") || !strcmp(arg, "--all")) {
+			all = 1;
+			continue;
 		}
+		if (!strcmp(arg, "-f") || !strcmp(arg, "--force")) {
+			state.force = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-q") || !strcmp(arg, "--quiet")) {
+			state.quiet = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-n") || !strcmp(arg, "--no-create")) {
+			state.not_new = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-u") || !strcmp(arg, "--index")) {
+			state.refresh_cache = 1;
+			if (newfd < 0)
+				newfd = hold_index_file_for_update
+					(&cache_file,
+					 get_index_file());
+			if (newfd < 0)
+				die("cannot open index.lock file.");
+			continue;
+		}
+		if (!memcmp(arg, "--prefix=", 9)) {
+			state.base_dir = arg+9;
+			state.base_dir_len = strlen(state.base_dir);
+			continue;
+		}
+		if (arg[0] == '-')
+			usage(checkout_cache_usage);
+		break;
+	}
+
+	if (state.base_dir_len) {
+		/* when --prefix is specified we do not
+		 * want to update cache.
+		 */
+		if (state.refresh_cache) {
+			close(newfd); newfd = -1;
+			rollback_index_file(&cache_file);
+		}
+		state.refresh_cache = 0;
+	}
+
+	/* Check out named files first */
+	for ( ; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (all)
+			die("git-checkout-index: don't mix '--all' and explicit filenames");
 		checkout_file(arg);
 	}
+
+	if (all)
+		checkout_all();
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||
