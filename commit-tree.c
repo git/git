@@ -5,9 +5,6 @@
  */
 #include "cache.h"
 
-#include <pwd.h>
-#include <time.h>
-
 #define BLOCKING (1ul << 14)
 
 /*

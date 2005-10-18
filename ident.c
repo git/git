@@ -8,7 +8,6 @@
 #include "cache.h"
 
 #include <pwd.h>
-#include <time.h>
 
 static char git_default_date[50];
 
