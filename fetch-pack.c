@@ -12,6 +12,7 @@ static const char *exec = "git-upload-pack";
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
+	int fetching;
 	static char line[1000];
 	int count = 0, flushes = 0, retval;
 	FILE *revs;
@@ -20,16 +21,19 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	if (!revs)
 		die("unable to run 'git-rev-list'");
 
-	while (refs) {
+	fetching = 0;
+	for ( ; refs ; refs = refs->next) {
 		unsigned char *remote = refs->old_sha1;
-		if (verbose)
-			fprintf(stderr,
-				"want %s (%s)\n", sha1_to_hex(remote),
-				refs->name);
+		unsigned char *local = refs->new_sha1;
+
+		if (!memcmp(remote, local, 20))
+			continue;
 		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
-		refs = refs->next;
+		fetching++;
 	}
 	packet_flush(fd[1]);
+	if (!fetching)
+		return 1;
 	flushes = 1;
 	retval = -1;
 	while (fgets(line, sizeof(line), revs) != NULL) {
@@ -74,6 +78,35 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	return retval;
 }
 
+static int everything_local(struct ref *refs)
+{
+	int retval;
+
+	for (retval = 1; refs ; refs = refs->next) {
+		const unsigned char *remote = refs->old_sha1;
+		unsigned char local[20];
+
+		if (read_ref(git_path("%s", refs->name), local) < 0 ||
+		    memcmp(remote, local, 20)) {
+			retval = 0;
+			if (!verbose)
+				continue;
+			fprintf(stderr,
+				"want %s (%s)\n", sha1_to_hex(remote),
+				refs->name);
+			continue;
+		}
+
+		memcpy(refs->new_sha1, local, 20);
+		if (!verbose)
+			continue;
+		fprintf(stderr,
+			"already have %s (%s)\n", sha1_to_hex(remote),
+			refs->name);
+	}
+	return retval;
+}
+
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
 	struct ref *ref;
@@ -85,6 +118,10 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
+	}
+	if (everything_local(ref)) {
+		packet_flush(fd[1]);
+		goto all_done;
 	}
 	if (find_common(fd, sha1, ref) < 0)
 		fprintf(stderr, "warning: no common commits\n");
@@ -109,6 +146,7 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		int code = WEXITSTATUS(status);
 		if (code)
 			die("git-unpack-objects died with error code %d", code);
+all_done:
 		while (ref) {
 			printf("%s %s\n",
 			       sha1_to_hex(ref->old_sha1), ref->name);
