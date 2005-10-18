@@ -99,7 +99,7 @@ t,*)
 ,0)
 	;;
 *)
-	git-diff-files --name-only -z "$@" |
+	git-diff-files --name-only -z -- "$@" |
 	git-update-index --remove -z --stdin
 	;;
 esac || exit 1

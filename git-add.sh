@@ -23,10 +23,10 @@ if test -f "$GIT_DIR/info/exclude"
 then
 	git-ls-files -z \
 	--exclude-from="$GIT_DIR/info/exclude" \
-	--others --exclude-per-directory=.gitignore "$@"
+	--others --exclude-per-directory=.gitignore -- "$@"
 else
 	git-ls-files -z \
-	--others --exclude-per-directory=.gitignore "$@"
+	--others --exclude-per-directory=.gitignore -- "$@"
 fi |
 case "$show_only" in
 true)
