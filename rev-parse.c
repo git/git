@@ -151,6 +151,12 @@ static void show_datestring(const char *flag, const char *datestr)
 	show(buffer);
 }
 
+static void show_file(const char *arg)
+{
+	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV))
+		show(arg);
+}
+
 int main(int argc, char **argv)
 {
 	int i, as_is = 0, verify = 0;
@@ -162,7 +168,7 @@ int main(int argc, char **argv)
 		char *dotdot;
 	
 		if (as_is) {
-			show(arg);
+			show_file(arg);
 			continue;
 		}
 		if (*arg == '-') {
@@ -282,9 +288,7 @@ int main(int argc, char **argv)
 		}
 		if (verify)
 			die("Needed a single revision");
-		if ((filter & (DO_NONFLAGS|DO_NOREV)) ==
-		    (DO_NONFLAGS|DO_NOREV))
-			show(arg);
+		show_file(arg);
 	}
 	show_default();
 	if (verify && revs_count != 1)
