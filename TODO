@@ -33,7 +33,7 @@ patch, perhaps ;-).
 Documentation
 -------------
 
-* Document the ref naming restrictions.
+* Document the ref naming restrictions [DONE].
 
 * David Ho's report suggests whatchanged documentation should
   mention -m as "commonly used options".  Steal Linus'
@@ -195,7 +195,7 @@ Technical (milder)
   state?  People with BK background know this operation as
   'clean'.  'git checkout [-f] ent [path...]' was suggested by
   Matthias Urlichs which sounds a natural extention to what the
-  command currently does.
+  command currently does [DONE with a prodding by Linus].
 
 * Enhance "git repack" to not always use --all; this would be
   handy if the repository contains wagging heads like "pu" in
