@@ -54,9 +54,9 @@ Perhaps git-update-server-info needs to be run there?"
 	do
 		name=`expr "$refname" : 'refs/\(.*\)'` &&
 		case "$name" in
-		*^{}) ;;
+		*^*)	;;
 		*)
-			git-http-fetch -v -a -w "$name" "$name" "$1/" || exit 1 ;;
+			git-http-fetch -v -a -w "$name" "$name" "$1/" || exit 1
 		esac
 	done <"$clone_tmp/refs"
 	rm -fr "$clone_tmp"

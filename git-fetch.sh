@@ -172,7 +172,7 @@ if test "$tags"
 then
 	taglist=$(git-ls-remote --tags "$remote" |
 		sed -e '
-			/\^{}$/d
+			/\^/d
 			s/^[^	]*	//
 			s/.*/&:&/')
 	if test "$#" -gt 1
