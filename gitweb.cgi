@@ -208,6 +208,7 @@ if (!defined $action || $action eq "summary") {
 
 sub git_header_html {
 	my $status = shift || "200 OK";
+	my $expires = shift;
 
 	my $title = "git";
 	if (defined $project) {
@@ -216,7 +217,7 @@ sub git_header_html {
 			$title .= "/$action";
 		}
 	}
-	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status);
+	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status, -expires => $expires);
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -1620,7 +1621,13 @@ sub git_commit {
 	open my $fd, "-|", "$gitbin/git-diff-tree -r -M $root $parent $hash" or die_error(undef, "Open failed.");
 	@difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
-	git_header_html();
+
+	# non-textual hash id's can be cached
+	my $expires;
+	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		$expires = "+1d";
+	}
+	git_header_html(undef, $expires);
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary"}, "summary") .
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash"}, "shortlog") .
@@ -1852,7 +1859,12 @@ sub git_commitdiff {
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
-	git_header_html();
+	# non-textual hash id's can be cached
+	my $expires;
+	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		$expires = "+1d";
+	}
+	git_header_html(undef, $expires);
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?p=$project;a=summary"}, "summary") .
 	      " | " . $cgi->a({-href => "$my_uri?p=$project;a=shortlog;h=$hash"}, "shortlog") .
