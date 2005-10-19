@@ -3,10 +3,8 @@
 #include "pkt-line.h"
 #include <sys/wait.h>
 
-static int quiet;
-static int keep_pack;
 static const char clone_pack_usage[] =
-"git-clone-pack [-q] [--keep] [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
+"git-clone-pack [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
 static const char *exec = "git-upload-pack";
 
 static void clone_handshake(int fd[2], struct ref *ref)
@@ -112,41 +110,6 @@ static void write_refs(struct ref *ref)
 	if (create_symref(head_path, head_ptr->name) < 0)
 		die("unable to link HEAD to %s", head_ptr->name);
 	free(head_path);
-}
-
-static int clone_by_unpack(int fd[2])
-{
-	int status;
-	pid_t pid;
-
-	pid = fork();
-	if (pid < 0)
-		die("git-clone-pack: unable to fork off git-unpack-objects");
-	if (!pid) {
-		dup2(fd[0], 0);
-		close(fd[0]);
-		close(fd[1]);
-		execlp("git-unpack-objects", "git-unpack-objects",
-			quiet ? "-q" : NULL, NULL);
-		die("git-unpack-objects exec failed");
-	}
-	close(fd[0]);
-	close(fd[1]);
-	while (waitpid(pid, &status, 0) < 0) {
-		if (errno != EINTR)
-			die("waiting for git-unpack-objects: %s", strerror(errno));
-	}
-	if (WIFEXITED(status)) {
-		int code = WEXITSTATUS(status);
-		if (code)
-			die("git-unpack-objects died with error code %d", code);
-		return 0;
-	}
-	if (WIFSIGNALED(status)) {
-		int sig = WTERMSIG(status);
-		die("git-unpack-objects died of signal %d", sig);
-	}
-	die("Sherlock Holmes! git-unpack-objects died of unnatural causes %d!", status);
 }
 
 static int finish_pack(const char *pack_tmp_name)
@@ -294,33 +257,11 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 	}
 	clone_handshake(fd, refs);
 
-	if (keep_pack)
-		status = clone_without_unpack(fd);
-	else
-		status = clone_by_unpack(fd);
+	status = clone_without_unpack(fd);
 
 	if (!status)
 		write_refs(refs);
 	return status;
-}
-
-static int clone_options(const char *var, const char *value)
-{
-	if (!strcmp("clone.keeppack", var)) {
-		keep_pack = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp("clone.quiet", var)) {
-		quiet = git_config_bool(var, value);
-		return 0;
-	}
-	/*
-	 * Put other local option parsing for this program
-	 * here ...
-	 */
-
-	/* Fall back on the default ones */
-	return git_default_config(var, value);
 }
 
 int main(int argc, char **argv)
@@ -330,25 +271,20 @@ int main(int argc, char **argv)
 	int fd[2];
 	pid_t pid;
 
-	git_config(clone_options);
 	nr_heads = 0;
 	heads = NULL;
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!strcmp("-q", arg)) {
-				quiet = 1;
+			if (!strcmp("-q", arg))
 				continue;
-			}
 			if (!strncmp("--exec=", arg, 7)) {
 				exec = arg + 7;
 				continue;
 			}
-			if (!strcmp("--keep", arg)) {
-				keep_pack = 1;
+			if (!strcmp("--keep", arg))
 				continue;
-			}
 			usage(clone_pack_usage);
 		}
 		dest = arg;
