@@ -624,6 +624,11 @@ int main(int argc, char **argv)
 
 	if (!merge_order) {		
 		sort_by_date(&list);
+		if (list && !limited && max_count == 1 &&
+		    !tag_objects && !tree_objects && !blob_objects) {
+			show_commit(list->item);
+			return 0;
+		}
 	        if (limited)
 			list = limit_list(list);
 		if (topo_order)
