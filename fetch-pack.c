@@ -1,6 +1,9 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "commit.h"
+#include "tag.h"
+#include <time.h>
 #include <sys/wait.h>
 
 static int quiet;
@@ -78,16 +81,73 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	return retval;
 }
 
+#define COMPLETE	(1U << 0)
+static struct commit_list *complete = NULL;
+
+static int mark_complete(const char *path, const unsigned char *sha1)
+{
+	struct object *o = parse_object(sha1);
+
+	while (o && o->type == tag_type) {
+		o->flags |= COMPLETE;
+		o = parse_object(((struct tag *)o)->tagged->sha1);
+	}
+	if (o->type == commit_type) {
+		struct commit *commit = (struct commit *)o;
+		commit->object.flags |= COMPLETE;
+		insert_by_date(commit, &complete);
+	}
+	return 0;
+}
+
+static void mark_recent_complete_commits(unsigned long cutoff)
+{
+	while (complete && cutoff <= complete->item->date) {
+		if (verbose)
+			fprintf(stderr, "Marking %s as complete\n",
+				sha1_to_hex(complete->item->object.sha1));
+		pop_most_recent_commit(&complete, COMPLETE);
+	}
+}
+
 static int everything_local(struct ref *refs)
 {
+	struct ref *ref;
 	int retval;
+	unsigned long cutoff = 0;
+
+	track_object_refs = 0;
+	save_commit_buffer = 0;
+
+	for (ref = refs; ref; ref = ref->next) {
+		struct object *o;
+
+		o = parse_object(ref->old_sha1);
+		if (!o)
+			continue;
+
+		/* We already have it -- which may mean that we were
+		 * in sync with the other side at some time after
+		 * that (it is OK if we guess wrong here).
+		 */
+		if (o->type == commit_type) {
+			struct commit *commit = (struct commit *)o;
+			if (!cutoff || cutoff < commit->date)
+				cutoff = commit->date;
+		}
+	}
+
+	for_each_ref(mark_complete);
+	if (cutoff)
+		mark_recent_complete_commits(cutoff);
 
 	for (retval = 1; refs ; refs = refs->next) {
 		const unsigned char *remote = refs->old_sha1;
 		unsigned char local[20];
+		struct object *o;
 
-		if (read_ref(git_path("%s", refs->name), local) < 0 ||
-		    memcmp(remote, local, 20)) {
+		o = parse_object(remote);
+		if (!o || !(o->flags & COMPLETE)) {
 			retval = 0;
 			if (!verbose)
 				continue;
