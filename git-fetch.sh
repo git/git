@@ -114,7 +114,12 @@ fast_forward_local () {
 	# is no way to guarantee "fast-forward" anyway.
 	if test -f "$GIT_DIR/$1"
 	then
-		echo >&2 "* $1: updating with $3"
+		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
+		then
+			echo >&2 "* $1: same as $3"
+		else
+			echo >&2 "* $1: updating with $3"
+		fi
 	else
 		echo >&2 "* $1: storing $3"
 	fi
