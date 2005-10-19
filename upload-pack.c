@@ -4,13 +4,19 @@
 #include "tag.h"
 #include "object.h"
 
-static const char upload_pack_usage[] = "git-upload-pack <dir>";
+static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
 #define MAX_HAS (16)
 #define MAX_NEEDS (256)
 static int nr_has = 0, nr_needs = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
+static unsigned int timeout = 0;
+
+static void reset_timeout(void)
+{
+	alarm(timeout);
+}
 
 static int strip(char *line, int len)
 {
@@ -100,6 +106,7 @@ static int get_common_commits(void)
 
 	for(;;) {
 		len = packet_read_line(0, line, sizeof(line));
+		reset_timeout();
 
 		if (!len) {
 			packet_write(1, "NAK\n");
@@ -122,6 +129,7 @@ static int get_common_commits(void)
 
 	for (;;) {
 		len = packet_read_line(0, line, sizeof(line));
+		reset_timeout();
 		if (!len)
 			continue;
 		len = strip(line, len);
@@ -145,6 +153,7 @@ static int receive_needs(void)
 	for (;;) {
 		unsigned char dummy[20], *sha1_buf;
 		len = packet_read_line(0, line, sizeof(line));
+		reset_timeout();
 		if (!len)
 			return needs;
 
@@ -179,6 +188,7 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 
 static int upload_pack(void)
 {
+	reset_timeout();
 	head_ref(send_ref);
 	for_each_ref(send_ref);
 	packet_flush(1);
@@ -193,18 +203,43 @@ static int upload_pack(void)
 int main(int argc, char **argv)
 {
 	const char *dir;
-	if (argc != 2)
+	int i;
+	int strict = 0;
+
+	for (i = 1; i < argc; i++) {
+		char *arg = argv[i];
+
+		if (arg[0] != '-')
+			break;
+		if (!strcmp(arg, "--strict")) {
+			strict = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--timeout=", 10)) {
+			timeout = atoi(arg+10);
+			continue;
+		}
+		if (!strcmp(arg, "--")) {
+			i++;
+			break;
+		}
+	}
+	
+	if (i != argc-1)
 		usage(upload_pack_usage);
-	dir = argv[1];
+	dir = argv[i];
 
 	/* chdir to the directory. If that fails, try appending ".git" */
 	if (chdir(dir) < 0) {
-		if (chdir(mkpath("%s.git", dir)) < 0)
+		if (strict || chdir(mkpath("%s.git", dir)) < 0)
 			die("git-upload-pack unable to chdir to %s", dir);
 	}
-	chdir(".git");
+	if (!strict)
+		chdir(".git");
+
 	if (access("objects", X_OK) || access("refs", X_OK))
 		die("git-upload-pack: %s doesn't seem to be a git archive", dir);
+
 	putenv("GIT_DIR=.");
 	upload_pack();
 	return 0;
