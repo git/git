@@ -12,31 +12,49 @@ static const char fetch_pack_usage[] =
 "git-fetch-pack [-q] [-v] [--exec=upload-pack] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
+#define COMPLETE	(1U << 0)
+
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
 	int fetching;
 	static char line[1000];
-	int count = 0, flushes = 0, retval;
+	static char rev_command[1024];
+	int count = 0, flushes = 0, retval, rev_command_len;
 	FILE *revs;
 
-	revs = popen("git-rev-list $(git-rev-parse --all)", "r");
-	if (!revs)
-		die("unable to run 'git-rev-list'");
-
+	strcpy(rev_command, "git-rev-list $(git-rev-parse --all)");
+	rev_command_len = strlen(rev_command);
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
 		unsigned char *remote = refs->old_sha1;
-		unsigned char *local = refs->new_sha1;
 
-		if (!memcmp(remote, local, 20))
+		/*
+		   If that object is complete (i.e. it is a descendant of a
+		   local ref), we don't want it, nor its descendants.
+		*/
+		if (has_sha1_file(remote)
+				&& parse_object(remote)->flags & COMPLETE) {
+			if (rev_command_len + 44 < sizeof(rev_command)) {
+				snprintf(rev_command + rev_command_len, 44,
+					" ^%s^", sha1_to_hex(remote));
+				rev_command_len += 43;
+			}
+
 			continue;
+		}
+
 		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
+
+	revs = popen(rev_command, "r");
+	if (!revs)
+		die("unable to run 'git-rev-list'");
+
 	flushes = 1;
 	retval = -1;
 	while (fgets(line, sizeof(line), revs) != NULL) {
@@ -81,7 +99,6 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	return retval;
 }
 
-#define COMPLETE	(1U << 0)
 static struct commit_list *complete = NULL;
 
 static int mark_complete(const char *path, const unsigned char *sha1)
