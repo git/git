@@ -12,7 +12,9 @@
 static int log_syslog;
 static int verbose;
 
-static const char daemon_usage[] = "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all] [directory...]";
+static const char daemon_usage[] =
+"git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
+"           [--timeout=n] [--init-timeout=n] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths = NULL;
@@ -20,6 +22,9 @@ static char **ok_paths = NULL;
 /* If this is set, git-daemon-export-ok is not required */
 static int export_all_trees = 0;
 
+/* Timeout, and initial timeout */
+static unsigned int timeout = 0;
+static unsigned int init_timeout = 0;
 
 static void logreport(int priority, const char *err, va_list params)
 {
@@ -169,6 +174,8 @@ static int upload(char *dir)
 	/* Enough for the longest path above including final null */
 	int buflen = strlen(dir)+10;
 	char *dirbuf = xmalloc(buflen);
+	/* Timeout as string */
+	char timeout_buf[64];
 
 	loginfo("Request for '%s'", dir);
 
@@ -189,8 +196,10 @@ static int upload(char *dir)
 	 */
 	signal(SIGTERM, SIG_IGN);
 
+	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
+
 	/* git-upload-pack only ever reads stuff, so this is safe */
-	execlp("git-upload-pack", "git-upload-pack", ".", NULL);
+	execlp("git-upload-pack", "git-upload-pack", "--strict", timeout_buf, ".", NULL);
 	return -1;
 }
 
@@ -199,7 +208,9 @@ static int execute(void)
 	static char line[1000];
 	int len;
 
+	alarm(init_timeout ? init_timeout : timeout);
 	len = packet_read_line(0, line, sizeof(line));
+	alarm(0);
 
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
@@ -547,6 +558,12 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "--export-all")) {
 			export_all_trees = 1;
 			continue;
+		}
+		if (!strncmp(arg, "--timeout=", 10)) {
+			timeout = atoi(arg+10);
+		}
+		if (!strncmp(arg, "--init-timeout=", 10)) {
+			init_timeout = atoi(arg+15);
 		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
