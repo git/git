@@ -84,7 +84,7 @@ Technical (heavier)
   precompute some packs for popular sets of heads downloaders
   have and serve that, even if that could give more than the
   client asks for in some cases.  We will know about this soon
-  enough.
+  enough [Deployed and fixes and enhancement continuing].
 
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
@@ -135,7 +135,7 @@ Technical (milder)
 * Perhaps accept more "want"s in upload-pack and do something
   intelligent about it.
 
-* Perhaps send less "want"s from fetch-pack.
+* Perhaps send less "want"s from fetch-pack [DONE by JS].
 
 * Look at svn importer Smurf has.  There is a small cvsimport
   update in his tree as well [DONE].
