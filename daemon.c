@@ -79,17 +79,30 @@ static int path_ok(const char *dir)
 {
 	const char *p = dir;
 	char **pp;
-	int sl = 1, ndot = 0;
+	int sl, ndot;
+
+	/* The pathname here should be an absolute path. */
+	if ( *p++ != '/' )
+		return 0;
+
+	sl = 1;  ndot = 0;
 
 	for (;;) {
 		if ( *p == '.' ) {
 			ndot++;
-		} else if ( *p == '/' || *p == '\0' ) {
+		} else if ( *p == '\0' ) {
+			/* Reject "." and ".." at the end of the path */
 			if ( sl && ndot > 0 && ndot < 3 )
-				return 0; /* . or .. in path */
+				return 0;
+
+			/* Otherwise OK */
+			break;
+		} else if ( *p == '/' ) {
+			/* Refuse "", "." or ".." */
+			if ( sl && ndot < 3 )
+				return 0;
 			sl = 1;
-			if ( *p == '\0' )
-				break; /* End of string and all is good */
+			ndot = 0;
 		} else {
 			sl = ndot = 0;
 		}
@@ -98,7 +111,7 @@ static int path_ok(const char *dir)
 
 	if ( ok_paths && *ok_paths ) {
 		int ok = 0;
-		int dirlen = strlen(dir); /* read_packet_line can return embedded \0 */
+		int dirlen = strlen(dir);
 
 		for ( pp = ok_paths ; *pp ; pp++ ) {
 			int len = strlen(*pp);
@@ -117,22 +130,16 @@ static int path_ok(const char *dir)
 	return 1;		/* Path acceptable */
 }
 
-static int upload(char *dir, int dirlen)
+static int set_dir(const char *dir)
 {
-	loginfo("Request for '%s'", dir);
-
 	if (!path_ok(dir)) {
-		logerror("Forbidden directory: %s\n", dir);
+		errno = EACCES;
 		return -1;
 	}
 
-	if (chdir(dir) < 0) {
-		logerror("Cannot chdir('%s'): %s", dir, strerror(errno));
+	if ( chdir(dir) )
 		return -1;
-	}
-
-	chdir(".git");
-
+	
 	/*
 	 * Security on the cheap.
 	 *
@@ -140,10 +147,39 @@ static int upload(char *dir, int dirlen)
 	 * a "git-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
 	 */
-	if ((!export_all_trees && access("git-daemon-export-ok", F_OK)) ||
-	    access("objects/00", X_OK) ||
-	    access("HEAD", R_OK)) {
-		logerror("Not a valid git-daemon-enabled repository: '%s'", dir);
+	if (!export_all_trees && access("git-daemon-export-ok", F_OK)) {
+		errno = EACCES;
+		return -1;
+	}
+
+	if (access("objects/", X_OK) || access("HEAD", R_OK)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* If all this passed, we're OK */
+	return 0;
+}
+
+static int upload(char *dir)
+{
+	/* Try paths in this order */
+	static const char *paths[] = { "%s", "%s/.git", "%s.git", "%s.git/.git", NULL };
+	const char **pp;
+	/* Enough for the longest path above including final null */
+	int buflen = strlen(dir)+10;
+	char *dirbuf = xmalloc(buflen);
+
+	loginfo("Request for '%s'", dir);
+
+	for ( pp = paths ; *pp ; pp++ ) {
+		snprintf(dirbuf, buflen, *pp, dir);
+		if ( !set_dir(dirbuf) )
+			break;
+	}
+
+	if ( !*pp ) {
+		logerror("Cannot set directory '%s': %s", dir, strerror(errno));
 		return -1;
 	}
 
@@ -169,7 +205,7 @@ static int execute(void)
 		line[--len] = 0;
 
 	if (!strncmp("git-upload-pack /", line, 17))
-		return upload(line + 16, len - 16);
+		return upload(line+16);
 
 	logerror("Protocol error: '%s'", line);
 	return -1;
