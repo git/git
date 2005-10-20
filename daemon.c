@@ -533,7 +533,7 @@ static int service_loop(int socknum, int *socklist)
 	for (;;) {
 		int i;
 
-		if (poll(pfd, socknum, 0) < 0) {
+		if (poll(pfd, socknum, -1) < 0) {
 			if (errno != EINTR) {
 				error("poll failed, resuming: %s",
 				      strerror(errno));
