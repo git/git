@@ -35,9 +35,12 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		 * local ref), we tell them we have it but do not have to
 		 * tell them about its ancestors, which they already know
 		 * about.
+		 *
+		 * We use lookup_object here because we are only
+		 * interested in the case we *know* the object is
+		 * reachable and we have already scanned it.
 		 */
-		if (has_sha1_file(remote) &&
-		    ((o = parse_object(remote)) != NULL) &&
+		if (((o = lookup_object(remote)) != NULL) &&
 		    (o->flags & COMPLETE)) {
 			struct commit_list *p;
 			struct commit *commit =
@@ -120,10 +123,13 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 	struct object *o = parse_object(sha1);
 
 	while (o && o->type == tag_type) {
+		struct tag *t = (struct tag *) o;
+		if (!t->tagged)
+			break; /* broken repository */
 		o->flags |= COMPLETE;
-		o = parse_object(((struct tag *)o)->tagged->sha1);
+		o = parse_object(t->tagged->sha1);
 	}
-	if (o->type == commit_type) {
+	if (o && o->type == commit_type) {
 		struct commit *commit = (struct commit *)o;
 		commit->object.flags |= COMPLETE;
 		insert_by_date(commit, &complete);
