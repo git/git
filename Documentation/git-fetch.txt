@@ -25,6 +25,11 @@ OPTIONS
 -------
 include::pull-fetch-param.txt[]
 
+-a, \--append::
+	Append ref names and object names of fetched refs to the
+	existing contents of $GIT_DIR/FETCH_HEAD.  Without this
+	option old data in $GIT_DIR/FETCH_HEAD will be overwritten.
+
 -u, \--update-head-ok::
 	By default 'git-fetch' refuses to update the head which
 	corresponds to the current branch.  This flag disables the
