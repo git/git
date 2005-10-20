@@ -28,22 +28,36 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
 		unsigned char *remote = refs->old_sha1;
+		struct object *o;
 
 		/*
-		   If that object is complete (i.e. it is a descendant of a
-		   local ref), we don't want it, nor its descendants.
-		*/
-		if (has_sha1_file(remote)
-				&& parse_object(remote)->flags & COMPLETE) {
-			if (rev_command_len + 44 < sizeof(rev_command)) {
+		 * If that object is complete (i.e. it is an ancestor of a
+		 * local ref), we tell them we have it but do not have to
+		 * tell them about its ancestors, which they already know
+		 * about.
+		 */
+		if (has_sha1_file(remote) &&
+		    ((o = parse_object(remote)) != NULL) &&
+		    (o->flags & COMPLETE)) {
+			struct commit_list *p;
+			struct commit *commit =
+				(struct commit *) (o = deref_tag(o));
+			if (!o)
+				goto repair;
+			if (o->type != commit_type)
+				continue;
+			p = commit->parents;
+			while (p &&
+			       rev_command_len + 44 < sizeof(rev_command)) {
 				snprintf(rev_command + rev_command_len, 44,
-					" ^%s^", sha1_to_hex(remote));
+					 " ^%s",
+					 sha1_to_hex(p->item->object.sha1));
 				rev_command_len += 43;
+				p = p->next;
 			}
-
 			continue;
 		}
-
+	repair:
 		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
