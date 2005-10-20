@@ -310,7 +310,7 @@ DEFINES += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  gitk
+	  gitk git-cherry-pick
 
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
@@ -350,6 +350,9 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.py >$@
 	chmod +x $@
+
+git-cherry-pick: git-revert
+	cp $< $@
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
@@ -410,7 +413,6 @@ check:
 install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
 	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) git-revert $(call shellquote,$(DESTDIR)$(bindir)/git-cherry-pick)
 	sh ./cmd-rename.sh $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))

@@ -12,6 +12,7 @@ git-check-ref-format
 git-checkout
 git-checkout-index
 git-cherry
+git-cherry-pick
 git-clone
 git-clone-pack
 git-commit
