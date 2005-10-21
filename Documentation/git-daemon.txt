@@ -7,7 +7,8 @@ git-daemon - A really simple server for git repositories.
 
 SYNOPSIS
 --------
-'git-daemon' [--verbose] [--syslog] [--inetd | --port=n]
+'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
+             [--timeout=n] [--init-timeout=n] [directory...]
 
 DESCRIPTION
 -----------
@@ -20,17 +21,34 @@ what directory to upload, and it verifies that the directory is ok.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any git directory that hasn't explicitly been marked
-for export this way.
+for export this way (unless the '--export-all' parameter is specified). If you
+pass some directory paths as 'git-daemon' arguments, you can further restrict
+the offers to a whitelist comprising of those.
 
 This is ideally suited for read-only updates, ie pulling from git repositories.
 
 OPTIONS
 -------
+--export-all::
+	Allow pulling from all directories that look like GIT repositories
+	(have the 'objects' subdirectory and a 'HEAD' file), even if they
+	do not have the 'git-daemon-export-ok' file.
+
 --inetd::
 	Have the server run as an inetd service.
 
 --port::
 	Listen on an alternative port.
+
+--init-timeout::
+	Timeout between the moment the connection is established and the
+	client request is received (typically a rather low value, since
+	that should be basically immediate).
+
+--timeout::
+	Timeout for specific client sub-requests. This includes the time
+	it takes for the server to process the sub-request and time spent
+	waiting for next client's request.
 
 --syslog::
 	Log to syslog instead of stderr. Note that this option does not imply
