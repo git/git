@@ -8,6 +8,7 @@
 #include "cache.h"
 
 #include <pwd.h>
+#include <netdb.h>
 
 static char git_default_date[50];
 
@@ -64,9 +65,16 @@ int setup_ident(void)
 	git_default_email[len++] = '@';
 	gethostname(git_default_email + len, sizeof(git_default_email) - len);
 	if (!strchr(git_default_email+len, '.')) {
+		struct hostent *he = gethostbyname(git_default_email + len);
+		char *domainname;
+
 		len = strlen(git_default_email);
 		git_default_email[len++] = '.';
-		getdomainname(git_default_email+len, sizeof(git_default_email)-len);
+		if (he && (domainname = strchr(he->h_name, '.')))
+			strncpy(git_default_email + len, domainname + 1, sizeof(git_default_email) - len);
+		else
+			strncpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
+		git_default_email[sizeof(git_default_email) - 1] = 0;
 	}
 	/* And set the default date */
 	datestamp(git_default_date, sizeof(git_default_date));
