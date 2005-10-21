@@ -224,6 +224,7 @@ do
 	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
 	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
 	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 
 	case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
 	if test '' != "$SIGNOFF"
