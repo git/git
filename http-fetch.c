@@ -1095,9 +1095,12 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	}
 
 	if (request->curl_result != CURLE_OK && request->http_code != 416) {
-		ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",
-			    request->errorstr, request->curl_result,
-			    request->http_code, hex);
+		if (request->http_code == 404)
+			ret = -1; /* Be silent, it is probably in a pack. */
+		else
+			ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",
+				    request->errorstr, request->curl_result,
+				    request->http_code, hex);
 		release_request(request);
 		return ret;
 	}
