@@ -612,7 +612,7 @@ int main(int argc, char **argv)
 		if (!strncmp(arg, "--timeout=", 10)) {
 			timeout = atoi(arg+10);
 		}
-		if (!strncmp(arg, "--init-timeout=", 10)) {
+		if (!strncmp(arg, "--init-timeout=", 15)) {
 			init_timeout = atoi(arg+15);
 		}
 		if (!strcmp(arg, "--")) {
