@@ -25,6 +25,7 @@
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
 
+static int got_alternates = 0;
 static int active_requests = 0;
 static int data_received;
 
@@ -85,6 +86,7 @@ struct active_request_slot
 	int in_use;
 	int done;
 	CURLcode curl_result;
+	long http_code;
 	struct active_request_slot *next;
 };
 
@@ -235,6 +237,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 static void process_curl_messages(void);
 static void process_request_queue(void);
 #endif
+static int fetch_alternates(char *base);
 
 static CURL* get_curl_handle(void)
 {
@@ -580,6 +583,9 @@ void process_curl_messages(void)
 				slot->done = 1;
 				slot->in_use = 0;
 				slot->curl_result = curl_message->data.result;
+				curl_easy_getinfo(slot->curl,
+						  CURLINFO_HTTP_CODE,
+						  &slot->http_code);
 				request = request_queue_head;
 				while (request != NULL &&
 				       request->slot != slot)
@@ -590,19 +596,20 @@ void process_curl_messages(void)
 			if (request != NULL) {
 				request->curl_result =
 					curl_message->data.result;
-				curl_easy_getinfo(slot->curl,
-						  CURLINFO_HTTP_CODE,
-						  &request->http_code);
+				request->http_code = slot->http_code;
 				request->slot = NULL;
+				request->state = COMPLETE;
 
 				/* Use alternates if necessary */
-				if (request->http_code == 404 &&
-				    request->repo->next != NULL) {
-					request->repo = request->repo->next;
-					start_request(request);
+				if (request->http_code == 404) {
+					fetch_alternates(alt->base);
+					if (request->repo->next != NULL) {
+						request->repo =
+							request->repo->next;
+						start_request(request);
+					}
 				} else {
 					finish_request(request);
-					request->state = COMPLETE;
 				}
 			}
 		} else {
@@ -765,6 +772,9 @@ static int fetch_alternates(char *base)
 
 	struct active_request_slot *slot;
 
+	if (got_alternates)
+		return 0;
+
 	data = xmalloc(4096);
 	buffer.size = 4096;
 	buffer.posn = 0;
@@ -797,6 +807,8 @@ static int fetch_alternates(char *base)
 				run_active_slot(slot);
 				if (slot->curl_result != CURLE_OK) {
 					free(buffer.buffer);
+					if (slot->http_code == 404)
+						got_alternates = 1;
 					return 0;
 				}
 			}
@@ -868,6 +880,7 @@ static int fetch_alternates(char *base)
 		i = posn + 1;
 	}
 
+	got_alternates = 1;
 	free(buffer.buffer);
 	return ret;
 }
@@ -1059,16 +1072,16 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		run_active_slot(request->slot);
 #ifndef USE_CURL_MULTI
 		request->curl_result = request->slot->curl_result;
-		curl_easy_getinfo(request->slot->curl,
-				  CURLINFO_HTTP_CODE,
-				  &request->http_code);
+		request->http_code = request->slot->http_code;
 		request->slot = NULL;
 
 		/* Use alternates if necessary */
-		if (request->http_code == 404 &&
-		    request->repo->next != NULL) {
-			request->repo = request->repo->next;
-			start_request(request);
+		if (request->http_code == 404) {
+			fetch_alternates(alt->base);
+			if (request->repo->next != NULL) {
+				request->repo = request->repo->next;
+				start_request(request);
+			}
 		} else {
 			finish_request(request);
 			request->state = COMPLETE;
@@ -1121,6 +1134,7 @@ int fetch(unsigned char *sha1)
 	while (altbase) {
 		if (!fetch_pack(altbase, sha1))
 			return 0;
+		fetch_alternates(alt->base);
 		altbase = altbase->next;
 	}
 	return error("Unable to find %s under %s\n", sha1_to_hex(sha1), 
@@ -1297,7 +1311,6 @@ int main(int argc, char **argv)
 	alt->got_indices = 0;
 	alt->packs = NULL;
 	alt->next = NULL;
-	fetch_alternates(alt->base);
 
 	if (pull(commit_id))
 		return 1;
