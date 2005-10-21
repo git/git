@@ -8,7 +8,7 @@ git-am - Apply a series of patches in a mailbox
 
 SYNOPSIS
 --------
-'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--3way] <mbox>
+'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--3way] <mbox>...
 'git-am' [--skip]
 
 DESCRIPTION
@@ -17,17 +17,56 @@ Splits mail messages in a mailbox into commit log message,
 authorship information and patches, and applies them to the
 current branch.
 
-This is the replacement for the 'git-applymbox' script.
-Unlike git-applymbox, it can take more than one mailbox file from
-the command line, as well as reading from the standard input when
-'-' is specified. Other differences include changed parameter names
-and less descriptive command name.
+OPTIONS
+-------
+--signoff::
+	Add `Signed-off-by:` line to the commit message, using
+	the committer identity of yourself.
+
+--dotest=<dir>::
+	Instead of `.dotest` directory, use <dir> as a working
+	area to store extracted patches.
+
+--utf8, --keep::
+	Pass `--utf8` and `--keep` flags to `git-mailinfo` (see
+	gitlink:git-mailinfo[1]).
+
+--3way::
+	When the patch does not apply cleanly, fall back on
+	3-way merge, if the patch records the identity of blobs
+	it is supposed to apply to, and we have those blobs
+	locally.
+
+--skip::
+	Skip the current patch.  This is only meaningful when
+	restarting an aborted patch.
+
+--interactive::
+	Run interactively, just like git-applymbox.
 
 
-When initially invoking it, you give it name of the mailbox to crunch.
-The usage hints that it might get interrupted and you will want to
-resume the last round of applying - to do that, pass it no mailbox
-name, and optionally the mysterious '--skip' parameter.
+DISCUSSION
+----------
+
+When initially invoking it, you give it names of the mailboxes
+to crunch.  Upon seeing the first patch that does not apply, it
+aborts in the middle, just like 'git-applymbox' does.  You can
+recover from this in one of two ways:
+
+. skip the current one by re-running the command with '--skip'
+  option.
+
+. hand resolve the conflict in the working directory, run 'git
+  diff HEAD' to extract the merge result into a patch form and
+  replacing the patch part of the message in .dotest directory.
+  After doing this, run `git-reset --hard HEAD` to bring the
+  working tree to the state before half-applying the patch, then
+  re-run the command without any options.
+
+The command refuses to process new mailboxes while `.dotest`
+directory exists, so if you decide to start over from scratch,
+run `rm -f .dotest` before running the command with mailbox
+names.
 
 
 SEE ALSO
