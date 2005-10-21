@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "blob.h"
 #include "epoch.h"
+#include "diff.h"
 
 #define SEEN		(1u << 0)
 #define INTERESTING	(1u << 1)
@@ -44,6 +45,7 @@ static int show_breaks = 0;
 static int stop_traversal = 0;
 static int topo_order = 0;
 static int no_merges = 0;
+static const char **paths = NULL;
 
 static void show_commit(struct commit *commit)
 {
@@ -377,18 +379,129 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
+static int is_different = 0;
+
+static void file_add_remove(struct diff_options *options,
+		    int addremove, unsigned mode,
+		    const unsigned char *sha1,
+		    const char *base, const char *path)
+{
+	is_different = 1;
+}
+
+static void file_change(struct diff_options *options,
+		 unsigned old_mode, unsigned new_mode,
+		 const unsigned char *old_sha1,
+		 const unsigned char *new_sha1,
+		 const char *base, const char *path)
+{
+	is_different = 1;
+}
+
+static struct diff_options diff_opt = {
+	.recursive = 1,
+	.add_remove = file_add_remove,
+	.change = file_change,
+};
+
+static struct commit *try_to_simplify_merge(struct commit *commit, struct commit_list *parent)
+{
+	if (!commit->tree)
+		return NULL;
+
+	while (parent) {
+		struct commit *p = parent->item;
+		parent = parent->next;
+		parse_commit(p);
+		if (!p->tree)
+			continue;
+		is_different = 0;
+		if (diff_tree_sha1(commit->tree->object.sha1,
+				   p->tree->object.sha1, "", &diff_opt) < 0)
+			continue;
+		if (!is_different)
+			return p;
+	}
+	return NULL;
+}
+
+static void add_parents_to_list(struct commit *commit, struct commit_list **list)
+{
+	struct commit_list *parent = commit->parents;
+
+	/*
+	 * If the commit is uninteresting, don't try to
+	 * prune parents - we want the maximal uninteresting
+	 * set.
+	 *
+	 * Normally we haven't parsed the parent
+	 * yet, so we won't have a parent of a parent
+	 * here. However, it may turn out that we've
+	 * reached this commit some other way (where it
+	 * wasn't uninteresting), in which case we need
+	 * to mark its parents recursively too..
+	 */
+	if (commit->object.flags & UNINTERESTING) {
+		while (parent) {
+			struct commit *p = parent->item;
+			parent = parent->next;
+			parse_commit(p);
+			p->object.flags |= UNINTERESTING;
+			if (p->parents)
+				mark_parents_uninteresting(p);
+			if (p->object.flags & SEEN)
+				continue;
+			p->object.flags |= SEEN;
+			insert_by_date(p, list);
+		}
+		return;
+	}
+
+	/*
+	 * Ok, the commit wasn't uninteresting. If it
+	 * is a merge, try to find the parent that has
+	 * no differences in the path set if one exists.
+	 */
+	if (paths && parent && parent->next) {
+		struct commit *preferred;
+
+		preferred = try_to_simplify_merge(commit, parent);
+		if (preferred) {
+			parent->item = preferred;
+			parent->next = NULL;
+		}
+	}
+
+	while (parent) {
+		struct commit *p = parent->item;
+
+		parent = parent->next;
+
+		parse_commit(p);
+		if (p->object.flags & SEEN)
+			continue;
+		p->object.flags |= SEEN;
+		insert_by_date(p, list);
+	}
+}
+
 static struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
 	while (list) {
-		struct commit *commit = pop_most_recent_commit(&list, SEEN);
+		struct commit_list *entry = list;
+		struct commit *commit = list->item;
 		struct object *obj = &commit->object;
+
+		list = list->next;
+		free(entry);
 
 		if (max_age != -1 && (commit->date < max_age))
 			obj->flags |= UNINTERESTING;
 		if (unpacked && has_sha1_pack(obj->sha1))
 			obj->flags |= UNINTERESTING;
+		add_parents_to_list(commit, &list);
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
 			if (everybody_uninteresting(list))
@@ -507,15 +620,15 @@ static void handle_all(struct commit_list **lst)
 	global_lst = NULL;
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
+	const char *prefix = setup_git_directory();
 	struct commit_list *list = NULL;
 	int i, limited = 0;
 
-	setup_git_directory();
 	for (i = 1 ; i < argc; i++) {
 		int flags;
-		char *arg = argv[i];
+		const char *arg = argv[i];
 		char *dotdot;
 		struct commit *commit;
 
@@ -586,6 +699,14 @@ int main(int argc, char **argv)
 		        topo_order = 1;
 		        limited = 1;
 			continue;
+		}
+		if (!strcmp(arg, "--")) {
+			paths = get_pathspec(prefix, argv + i + 1);
+			if (paths) {
+				limited = 1;
+				diff_tree_setup_paths(paths);
+			}
+			break;
 		}
 
 		if (show_breaks && !merge_order)
