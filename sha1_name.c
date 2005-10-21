@@ -323,6 +323,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		return -1;
 	if (!type_string) {
 		o = deref_tag(o);
+		if (!o || (!o->parsed && !parse_object(o->sha1)))
+			return -1;
 		memcpy(sha1, o->sha1, 20);
 	}
 	else {
@@ -332,7 +334,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		 */
 
 		while (1) {
-			if (!o)
+			if (!o || (!o->parsed && !parse_object(o->sha1)))
 				return -1;
 			if (o->type == type_string) {
 				memcpy(sha1, o->sha1, 20);

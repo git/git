@@ -75,13 +75,3 @@ Some short-cut notations are also supported.
   pushing.  That is, do not store it locally if
   fetching, and update the same name if pushing.
 
--a, \--append::
-	Append ref names and object names of fetched refs to the
-	existing contents of $GIT_DIR/FETCH_HEAD.  Without this
-	option old data in $GIT_DIR/FETCH_HEAD will be overwritten.
-
--f, \--force::
-	Usually, the command refuses to update a local ref that is
-	not an ancestor of the remote ref used to overwrite it.
-	This flag disables the check.  What this means is that the
-	local repository can lose commits; use it with care.

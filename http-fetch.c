@@ -100,6 +100,8 @@ static char *ssl_key = NULL;
 static char *ssl_capath = NULL;
 #endif
 static char *ssl_cainfo = NULL;
+static long curl_low_speed_limit = -1;
+static long curl_low_speed_time = -1;
 
 struct buffer
 {
@@ -157,6 +159,17 @@ static int http_options(const char *var, const char *value)
 		return 0;
 	}
 #endif
+
+	if (!strcmp("http.lowspeedlimit", var)) {
+		if (curl_low_speed_limit == -1)
+			curl_low_speed_limit = (long)git_config_int(var, value);
+		return 0;
+	}
+	if (!strcmp("http.lowspeedtime", var)) {
+		if (curl_low_speed_time == -1)
+			curl_low_speed_time = (long)git_config_int(var, value);
+		return 0;
+	}
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value);
@@ -245,6 +258,13 @@ static CURL* get_curl_handle(void)
 	if (ssl_cainfo != NULL)
 		curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
 	curl_easy_setopt(result, CURLOPT_FAILONERROR, 1);
+
+	if (curl_low_speed_limit > 0 && curl_low_speed_time > 0) {
+		curl_easy_setopt(result, CURLOPT_LOW_SPEED_LIMIT,
+				 curl_low_speed_limit);
+		curl_easy_setopt(result, CURLOPT_LOW_SPEED_TIME,
+				 curl_low_speed_time);
+	}
 
 	return result;
 }
@@ -1177,6 +1197,8 @@ int main(int argc, char **argv)
 	char *url;
 	int arg = 1;
 	struct active_request_slot *slot;
+	char *low_speed_limit;
+	char *low_speed_time;
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -1231,6 +1253,13 @@ int main(int argc, char **argv)
 	ssl_capath = getenv("GIT_SSL_CAPATH");
 #endif
 	ssl_cainfo = getenv("GIT_SSL_CAINFO");
+
+	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
+	if (low_speed_limit != NULL)
+		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
+	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
+	if (low_speed_time != NULL)
+		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
 
 	git_config(http_options);
 

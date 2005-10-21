@@ -12,31 +12,66 @@ static const char fetch_pack_usage[] =
 "git-fetch-pack [-q] [-v] [--exec=upload-pack] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
+#define COMPLETE	(1U << 0)
+
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
 	int fetching;
 	static char line[1000];
-	int count = 0, flushes = 0, retval;
+	static char rev_command[1024];
+	int count = 0, flushes = 0, retval, rev_command_len;
 	FILE *revs;
 
-	revs = popen("git-rev-list $(git-rev-parse --all)", "r");
-	if (!revs)
-		die("unable to run 'git-rev-list'");
-
+	strcpy(rev_command, "git-rev-list $(git-rev-parse --all)");
+	rev_command_len = strlen(rev_command);
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
 		unsigned char *remote = refs->old_sha1;
-		unsigned char *local = refs->new_sha1;
+		struct object *o;
 
-		if (!memcmp(remote, local, 20))
+		/*
+		 * If that object is complete (i.e. it is an ancestor of a
+		 * local ref), we tell them we have it but do not have to
+		 * tell them about its ancestors, which they already know
+		 * about.
+		 *
+		 * We use lookup_object here because we are only
+		 * interested in the case we *know* the object is
+		 * reachable and we have already scanned it.
+		 */
+		if (((o = lookup_object(remote)) != NULL) &&
+		    (o->flags & COMPLETE)) {
+			struct commit_list *p;
+			struct commit *commit =
+				(struct commit *) (o = deref_tag(o));
+			if (!o)
+				goto repair;
+			if (o->type != commit_type)
+				continue;
+			p = commit->parents;
+			while (p &&
+			       rev_command_len + 44 < sizeof(rev_command)) {
+				snprintf(rev_command + rev_command_len, 44,
+					 " ^%s",
+					 sha1_to_hex(p->item->object.sha1));
+				rev_command_len += 43;
+				p = p->next;
+			}
 			continue;
+		}
+	repair:
 		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
+
+	revs = popen(rev_command, "r");
+	if (!revs)
+		die("unable to run 'git-rev-list'");
+
 	flushes = 1;
 	retval = -1;
 	while (fgets(line, sizeof(line), revs) != NULL) {
@@ -81,7 +116,6 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	return retval;
 }
 
-#define COMPLETE	(1U << 0)
 static struct commit_list *complete = NULL;
 
 static int mark_complete(const char *path, const unsigned char *sha1)
@@ -89,10 +123,13 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 	struct object *o = parse_object(sha1);
 
 	while (o && o->type == tag_type) {
+		struct tag *t = (struct tag *) o;
+		if (!t->tagged)
+			break; /* broken repository */
 		o->flags |= COMPLETE;
-		o = parse_object(((struct tag *)o)->tagged->sha1);
+		o = parse_object(t->tagged->sha1);
 	}
-	if (o->type == commit_type) {
+	if (o && o->type == commit_type) {
 		struct commit *commit = (struct commit *)o;
 		commit->object.flags |= COMPLETE;
 		insert_by_date(commit, &complete);
