@@ -11,6 +11,7 @@
 #define INTERESTING	(1u << 1)
 #define COUNTED		(1u << 2)
 #define SHOWN		(1u << 3)
+#define TREECHANGE	(1u << 4)
 
 static const char rev_list_usage[] =
 	"git-rev-list [OPTION] commit-id <commit-id>\n"
@@ -27,6 +28,7 @@ static const char rev_list_usage[] =
 		      "  --merge-order [ --show-breaks ]\n"
 		      "  --topo-order";
 
+static int dense = 0;
 static int unpacked = 0;
 static int bisect_list = 0;
 static int tag_objects = 0;
@@ -79,6 +81,26 @@ static void show_commit(struct commit *commit)
 	fflush(stdout);
 }
 
+static void rewrite_one(struct commit **pp)
+{
+	for (;;) {
+		struct commit *p = *pp;
+		if (p->object.flags & (TREECHANGE | UNINTERESTING))
+			return;
+		/* Only single-parent commits don't have TREECHANGE */
+		*pp = p->parents->item;
+	}
+}
+
+static void rewrite_parents(struct commit *commit)
+{
+	struct commit_list *parent = commit->parents;
+	while (parent) {
+		rewrite_one(&parent->item);
+		parent = parent->next;
+	}
+}
+
 static int filter_commit(struct commit * commit)
 {
 	if (stop_traversal && (commit->object.flags & BOUNDARY))
@@ -95,6 +117,11 @@ static int filter_commit(struct commit * commit)
 		return STOP;
 	if (no_merges && (commit->parents && commit->parents->next))
 		return CONTINUE;
+	if (paths && dense) {
+		if (!(commit->object.flags & TREECHANGE))
+			return CONTINUE;
+		rewrite_parents(commit);
+	}
 	return DO;
 }
 
@@ -404,6 +431,14 @@ static struct diff_options diff_opt = {
 	.change = file_change,
 };
 
+static int same_tree(struct tree *t1, struct tree *t2)
+{
+	is_different = 0;
+	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "", &diff_opt) < 0)
+		return 0;
+	return !is_different;
+}
+
 static struct commit *try_to_simplify_merge(struct commit *commit, struct commit_list *parent)
 {
 	if (!commit->tree)
@@ -415,11 +450,7 @@ static struct commit *try_to_simplify_merge(struct commit *commit, struct commit
 		parse_commit(p);
 		if (!p->tree)
 			continue;
-		is_different = 0;
-		if (diff_tree_sha1(commit->tree->object.sha1,
-				   p->tree->object.sha1, "", &diff_opt) < 0)
-			continue;
-		if (!is_different)
+		if (same_tree(commit->tree, p->tree))
 			return p;
 	}
 	return NULL;
@@ -485,6 +516,27 @@ static void add_parents_to_list(struct commit *commit, struct commit_list **list
 	}
 }
 
+static void compress_list(struct commit_list *list)
+{
+	while (list) {
+		struct commit *commit = list->item;
+		struct commit_list *parent = commit->parents;
+		list = list->next;
+
+		/*
+		 * Exactly one parent? Check if it leaves the tree
+		 * unchanged
+		 */
+		if (parent && !parent->next) {
+			struct tree *t1 = commit->tree;
+			struct tree *t2 = parent->item->tree;
+			if (!t1 || !t2 || same_tree(t1, t2))
+				continue;
+		}
+		commit->object.flags |= TREECHANGE;
+	}
+}
+
 static struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
@@ -514,6 +566,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 	}
 	if (tree_objects)
 		mark_edges_uninteresting(newlist);
+	if (paths && dense)
+		compress_list(newlist);
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
@@ -698,6 +752,10 @@ int main(int argc, const char **argv)
 		if (!strcmp(arg, "--topo-order")) {
 		        topo_order = 1;
 		        limited = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--dense")) {
+			dense = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
