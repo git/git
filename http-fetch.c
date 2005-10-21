@@ -291,11 +291,7 @@ static struct active_request_slot *get_active_slot(void)
 	}
 	if (slot == NULL) {
 		newslot = xmalloc(sizeof(*newslot));
-#ifdef NO_CURL_EASY_DUPHANDLE
-		newslot->curl = get_curl_handle();
-#else
-		newslot->curl = curl_easy_duphandle(curl_default);
-#endif
+		newslot->curl = NULL;
 		newslot->in_use = 0;
 		newslot->next = NULL;
 
@@ -309,6 +305,14 @@ static struct active_request_slot *get_active_slot(void)
 			slot->next = newslot;
 		}
 		slot = newslot;
+	}
+
+	if (slot->curl == NULL) {
+#ifdef NO_CURL_EASY_DUPHANDLE
+		slot->curl = get_curl_handle();
+#else
+		slot->curl = curl_easy_duphandle(curl_default);
+#endif
 	}
 
 	active_requests++;
@@ -612,6 +616,7 @@ void process_curl_messages(void)
 void process_request_queue(void)
 {
 	struct transfer_request *request = request_queue_head;
+	struct active_request_slot *slot = active_queue_head;
 	int num_transfers;
 
 	while (active_requests < max_requests && request != NULL) {
@@ -624,6 +629,14 @@ void process_request_queue(void)
 		}
 		request = request->next;
 	}
+
+	while (slot != NULL) {
+		if (!slot->in_use && slot->curl != NULL) {
+			curl_easy_cleanup(slot->curl);
+			slot->curl = NULL;
+		}
+		slot = slot->next;
+	}				
 }
 #endif
 
@@ -1297,7 +1310,8 @@ int main(int argc, char **argv)
 #endif
 	slot = active_queue_head;
 	while (slot != NULL) {
-		curl_easy_cleanup(slot->curl);
+		if (slot->curl != NULL)
+			curl_easy_cleanup(slot->curl);
 		slot = slot->next;
 	}
 #ifdef USE_CURL_MULTI
