@@ -754,6 +754,9 @@ void diff_setup(struct diff_options *options)
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
+
+	options->change = diff_change;
+	options->add_remove = diff_addremove;
 }
 
 int diff_setup_done(struct diff_options *options)

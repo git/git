@@ -8,11 +8,31 @@
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
 
+struct tree_desc {
+	void *buf;
+	unsigned long size;
+};
+
+struct diff_options;
+
+typedef void (*change_fn_t)(struct diff_options *options,
+		 unsigned old_mode, unsigned new_mode,
+		 const unsigned char *old_sha1,
+		 const unsigned char *new_sha1,
+		 const char *base, const char *path);
+
+typedef void (*add_remove_fn_t)(struct diff_options *options,
+		    int addremove, unsigned mode,
+		    const unsigned char *sha1,
+		    const char *base, const char *path);
+
 struct diff_options {
 	const char **paths;
 	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
+	unsigned recursive:1,
+		 tree_in_recursive:1;
 	int break_opt;
 	int detect_rename;
 	int find_copies_harder;
@@ -23,7 +43,16 @@ struct diff_options {
 	int reverse_diff;
 	int rename_limit;
 	int setup;
+
+	change_fn_t change;
+	add_remove_fn_t add_remove;
 };
+
+extern void diff_tree_setup_paths(const char **paths);
+extern int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
+		     const char *base, struct diff_options *opt);
+extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
+			  const char *base, struct diff_options *opt);
 
 extern void diff_addremove(struct diff_options *,
 			   int addremove,

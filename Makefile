@@ -151,7 +151,7 @@ LIB_H = \
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
-	diffcore-pickaxe.o diffcore-rename.o
+	diffcore-pickaxe.o diffcore-rename.o tree-diff.o
 
 LIB_OBJS = \
 	blob.o commit.o connect.o count-delta.o csum-file.o \
