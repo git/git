@@ -145,11 +145,11 @@ static int set_dir(const char *dir)
 
 	if ( chdir(dir) )
 		return -1;
-	
+
 	/*
 	 * Security on the cheap.
 	 *
-	 * We want a readable HEAD, usable "objects" directory, and 
+	 * We want a readable HEAD, usable "objects" directory, and
 	 * a "git-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
 	 */
@@ -529,7 +529,7 @@ static int service_loop(int socknum, int *socklist)
 	}
 
 	signal(SIGCHLD, child_handler);
-	
+
 	for (;;) {
 		int i;
 
@@ -566,13 +566,13 @@ static int service_loop(int socknum, int *socklist)
 static int serve(int port)
 {
 	int socknum, *socklist;
-	
+
 	socknum = socksetup(port, &socklist);
 	if (socknum == 0)
 		die("unable to allocate any listen sockets on port %u", port);
-	
+
 	return service_loop(socknum, socklist);
-}	
+}
 
 int main(int argc, char **argv)
 {
