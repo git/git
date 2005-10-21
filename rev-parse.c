@@ -174,6 +174,10 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strcmp(arg, "--")) {
 				as_is = 1;
+				show_default();
+				/* Pass on the "--" if we show anything but files.. */
+				if (filter & (DO_FLAGS | DO_REVS))
+					show_file(arg);
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
