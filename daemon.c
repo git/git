@@ -148,7 +148,7 @@ static int set_dir(const char *dir)
 	/*
 	 * Security on the cheap.
 	 *
-	 * We want a readable HEAD, usable "objects" directory, and 
+	 * We want a readable HEAD, usable "objects" directory, and
 	 * a "git-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
 	 */
@@ -491,7 +491,7 @@ static int serve(int port)
 	for (;;) {
 		int i;
 		fds = fds_init;
-		
+
 		if (select(maxfd + 1, &fds, NULL, NULL, NULL) < 0) {
 			if (errno != EINTR) {
 				error("select failed, resuming: %s",
