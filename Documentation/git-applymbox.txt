@@ -75,7 +75,7 @@ OPTIONS
 
 SEE ALSO
 --------
-gitlink:git-applypatch[1].
+gitlink:git-am[1], gitlink:git-applypatch[1].
 
 
 Author

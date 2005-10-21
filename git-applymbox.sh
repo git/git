@@ -15,6 +15,8 @@
 ## Pay a special attention to the commit log message if you do this and
 ## use a Signoff_file, because applypatch wants to append the sign-off
 ## message to msg-clean every time it is run.
+##
+## git-am is supposed to be the newer and better tool for this job.
 
 . git-sh-setup || die "Not a git archive"
 

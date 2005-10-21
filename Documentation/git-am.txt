@@ -1,0 +1,51 @@
+git-am(1)
+================
+
+NAME
+----
+git-am - Apply a series of patches in a mailbox
+
+
+SYNOPSIS
+--------
+'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--3way] <mbox>
+'git-am' [--skip]
+
+DESCRIPTION
+-----------
+Splits mail messages in a mailbox into commit log message,
+authorship information and patches, and applies them to the
+current branch.
+
+This is the replacement for the 'git-applymbox' script.
+Unlike git-applymbox, it can take more than one mailbox file from
+the command line, as well as reading from the standard input when
+'-' is specified. Other differences include changed parameter names
+and less descriptive command name.
+
+
+When initially invoking it, you give it name of the mailbox to crunch.
+The usage hints that it might get interrupted and you will want to
+resume the last round of applying - to do that, pass it no mailbox
+name, and optionally the mysterious '--skip' parameter.
+
+
+SEE ALSO
+--------
+gitlink:git-applymbox[1], gitlink:git-applypatch[1].
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+This manual page is a stub. You can help the git documentation by expanding it.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
