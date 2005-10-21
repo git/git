@@ -1226,6 +1226,8 @@ int main(int argc, char **argv)
 	struct active_request_slot *slot;
 	char *low_speed_limit;
 	char *low_speed_time;
+	char *wait_url;
+	int rc = 0;
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -1313,7 +1315,7 @@ int main(int argc, char **argv)
 	alt->next = NULL;
 
 	if (pull(commit_id))
-		return 1;
+		rc = 1;
 
 	curl_slist_free_all(pragma_header);
 	curl_slist_free_all(no_pragma_header);
@@ -1323,6 +1325,15 @@ int main(int argc, char **argv)
 #endif
 	slot = active_queue_head;
 	while (slot != NULL) {
+		if (slot->in_use) {
+			if (get_verbosely) {
+				curl_easy_getinfo(slot->curl,
+						  CURLINFO_EFFECTIVE_URL,
+						  &wait_url);
+				fprintf(stderr, "Waiting for %s\n", wait_url);
+			}
+			run_active_slot(slot);
+		}
 		if (slot->curl != NULL)
 			curl_easy_cleanup(slot->curl);
 		slot = slot->next;
@@ -1331,5 +1342,5 @@ int main(int argc, char **argv)
 	curl_multi_cleanup(curlm);
 #endif
 	curl_global_cleanup();
-	return 0;
+	return rc;
 }
