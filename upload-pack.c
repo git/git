@@ -6,8 +6,8 @@
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
-#define MAX_HAS (16)
-#define MAX_NEEDS (256)
+#define MAX_HAS 256
+#define MAX_NEEDS 256
 static int nr_has = 0, nr_needs = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
