@@ -38,10 +38,20 @@ restorestate() {
 	fi
 }
 
-summary() {
+finish () {
+	test '' = "$2" || echo "$2"
+	case "$merge_msg" in
+	'')
+		echo "No merge message -- not updating HEAD"
+		;;
+	*)
+		git-update-ref HEAD "$1" "$head" || exit 1
+		;;
+	esac
+
 	case "$no_summary" in
 	'')
-		git-diff-tree -p -M $head "$1" |
+		git-diff-tree -p -M "$head" "$1" |
 		git-apply --stat --summary
 		;;
 	esac
@@ -108,7 +118,7 @@ case "$#,$common" in
 1,"$1")
 	# If head can reach all the merge then we are up to date.
 	# but first the most common case of merging one remote
-	echo "Already up-to-date. Yeeah!"
+	echo "Already up-to-date."
 	dropsave
 	exit 0
 	;;
@@ -116,10 +126,9 @@ case "$#,$common" in
 	# Again the most common case of merging one remote.
 	echo "Updating from $head to $1."
 	git-update-index --refresh 2>/dev/null
-	git-read-tree -u -m $head "$1" &&
 	new_head=$(git-rev-parse --verify "$1^0") &&
-	git-update-ref HEAD "$new_head" "$head" || exit 1
-	summary "$1"
+	git-read-tree -u -m $head "$new_head" &&
+	finish "$new_head" "Fast forward"
 	dropsave
 	exit 0
 	;;
@@ -140,8 +149,7 @@ case "$#,$common" in
 	        echo "$merge_msg" |
 	        git-commit-tree $result_tree -p HEAD -p "$1"
 	    ) || exit
-	    git-update-ref HEAD $result_commit $head
-	    summary $result_commit
+	    finish "$result_commit" "In-index merge"
 	    dropsave
 	    exit 0
 	fi
@@ -237,9 +245,7 @@ then
         parents="$parents -p $remote"
     done
     result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree $parents) || exit
-    echo "Committed merge $result_commit, made by $wt_strategy."
-    git-update-ref HEAD $result_commit $head
-    summary $result_commit
+    finish "$result_commit" "Merge $result_commit, made by $wt_strategy."
     dropsave
     exit 0
 fi
