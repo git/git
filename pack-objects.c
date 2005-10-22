@@ -400,6 +400,71 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	free(array);
 }
 
+static void prepare_pack(int window, int depth)
+{
+	get_object_details();
+
+	fprintf(stderr, "Packing %d objects\n", nr_objects);
+
+	sorted_by_type = create_sorted_list(type_size_sort);
+	if (window && depth)
+		find_deltas(sorted_by_type, window+1, depth);
+	write_pack_file();
+}
+
+static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
+{
+	static const char cache[] = "pack-cache/pack-%s.%s";
+	char *cached_pack, *cached_idx;
+	int ifd, ofd, ifd_ix = -1;
+
+	cached_pack = git_path(cache, sha1_to_hex(sha1), "pack");
+	ifd = open(cached_pack, O_RDONLY);
+	if (ifd < 0)
+		return 0;
+
+	if (!pack_to_stdout) {
+		cached_idx = git_path(cache, sha1_to_hex(sha1), "idx");
+		ifd_ix = open(cached_idx, O_RDONLY);
+		if (ifd_ix < 0) {
+			close(ifd);
+			return 0;
+		}
+	}
+
+	fprintf(stderr, "Reusing %d objects pack %s\n", nr_objects,
+		sha1_to_hex(sha1));
+
+	if (pack_to_stdout) {
+		if (copy_fd(ifd, 1))
+			exit(1);
+		close(ifd);
+	}
+	else {
+		char name[PATH_MAX];
+		snprintf(name, sizeof(name),
+			 "%s-%s.%s", base_name, sha1_to_hex(sha1), "pack");
+		ofd = open(name, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (ofd < 0)
+			die("unable to open %s (%s)", name, strerror(errno));
+		if (copy_fd(ifd, ofd))
+			exit(1);
+		close(ifd);
+
+		snprintf(name, sizeof(name),
+			 "%s-%s.%s", base_name, sha1_to_hex(sha1), "idx");
+		ofd = open(name, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (ofd < 0)
+			die("unable to open %s (%s)", name, strerror(errno));
+		if (copy_fd(ifd_ix, ofd))
+			exit(1);
+		close(ifd_ix);
+		puts(sha1_to_hex(sha1));
+	}
+
+	return 1;
+}
+
 int main(int argc, char **argv)
 {
 	SHA_CTX ctx;
@@ -472,9 +537,6 @@ int main(int argc, char **argv)
 	}
 	if (non_empty && !nr_objects)
 		return 0;
-	get_object_details();
-
-	fprintf(stderr, "Packing %d objects\n", nr_objects);
 
 	sorted_by_sha = create_sorted_list(sha1_sort);
 	SHA1_Init(&ctx);
@@ -485,14 +547,14 @@ int main(int argc, char **argv)
 	}
 	SHA1_Final(object_list_sha1, &ctx);
 
-	sorted_by_type = create_sorted_list(type_size_sort);
-	if (window && depth)
-		find_deltas(sorted_by_type, window+1, depth);
-
-	write_pack_file();
-	if (!pack_to_stdout) {
-		write_index_file();
-		puts(sha1_to_hex(object_list_sha1));
+	if (reuse_cached_pack(object_list_sha1, pack_to_stdout))
+		;
+	else {
+		prepare_pack(window, depth);
+		if (!pack_to_stdout) {
+			write_index_file();
+			puts(sha1_to_hex(object_list_sha1));
+		}
 	}
 	return 0;
 }

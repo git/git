@@ -413,4 +413,5 @@ static inline int sane_case(int x, int high)
 	return x;
 }
 
+extern int copy_fd(int ifd, int ofd);
 #endif /* CACHE_H */
