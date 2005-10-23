@@ -93,7 +93,9 @@ static int got_sha1(char *hex, unsigned char *sha1)
 		return 0;
 	if (nr_has < MAX_HAS) {
 		struct object *o = lookup_object(sha1);
-		if (!o || (!o->parsed && !parse_object(sha1)))
+		if (!(o && o->parsed))
+			o = parse_object(sha1);
+		if (!o)
 			die("oops (%s)", sha1_to_hex(sha1));
 		if (o->type == commit_type) {
 			struct commit_list *parents;
