@@ -3,9 +3,11 @@
 #include "pkt-line.h"
 #include "tag.h"
 #include "object.h"
+#include "commit.h"
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
+#define THEY_HAVE (1U << 0)
 #define MAX_HAS 256
 #define MAX_NEEDS 256
 static int nr_has = 0, nr_needs = 0;
@@ -85,15 +87,25 @@ static void create_pack_file(void)
 
 static int got_sha1(char *hex, unsigned char *sha1)
 {
-	int nr;
 	if (get_sha1_hex(hex, sha1))
 		die("git-upload-pack: expected SHA1 object, got '%s'", hex);
 	if (!has_sha1_file(sha1))
 		return 0;
-	nr = nr_has;
-	if (nr < MAX_HAS) {
-		memcpy(has_sha1[nr], sha1, 20);
-		nr_has = nr+1;
+	if (nr_has < MAX_HAS) {
+		struct object *o = lookup_object(sha1);
+		if (!o || (!o->parsed && !parse_object(sha1)))
+			die("oops (%s)", sha1_to_hex(sha1));
+		if (o->type == commit_type) {
+			struct commit_list *parents;
+			if (o->flags & THEY_HAVE)
+				return 0;
+			o->flags |= THEY_HAVE;
+			for (parents = ((struct commit*)o)->parents;
+			     parents;
+			     parents = parents->next)
+				parents->item->object.flags |= THEY_HAVE;
+		}
+		memcpy(has_sha1[nr_has++], sha1, 20);
 	}
 	return 1;
 }
@@ -103,6 +115,9 @@ static int get_common_commits(void)
 	static char line[1000];
 	unsigned char sha1[20];
 	int len;
+
+	track_object_refs = 0;
+	save_commit_buffer = 0;
 
 	for(;;) {
 		len = packet_read_line(0, line, sizeof(line));
