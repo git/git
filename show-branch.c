@@ -260,7 +260,7 @@ static int append_ref(const char *refname, const unsigned char *sha1)
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (!commit)
 		return 0;
-	if (MAX_REVS < ref_name_cnt) {
+	if (MAX_REVS <= ref_name_cnt) {
 		fprintf(stderr, "warning: ignoring %s; "
 			"cannot handle more than %d refs",
 			refname, MAX_REVS);
