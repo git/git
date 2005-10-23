@@ -125,7 +125,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
 	int fetching;
-	int count = 0, flushes = 0, retval;
+	int count = 0, flushes = 0, multi_ack = 0, retval;
 	const unsigned char *sha1;
 
 	for_each_ref(rev_list_append_sha1);
@@ -156,20 +156,22 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			continue;
 		}
 
-		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
+		packet_write(fd[1], "want %s multi_ack\n", sha1_to_hex(remote));
 		fetching++;
 	}
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
 
-	flushes = 1;
+	flushes = 0;
 	retval = -1;
 	while ((sha1 = get_rev())) {
 		packet_write(fd[1], "have %s\n", sha1_to_hex(sha1));
 		if (verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
 		if (!(31 & ++count)) {
+			int ack;
+
 			packet_flush(fd[1]);
 			flushes++;
 
@@ -179,26 +181,48 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			 */
 			if (count == 32)
 				continue;
-			if (get_ack(fd[0], result_sha1)) {
-				flushes = 0;
-				retval = 0;
-				if (verbose)
-					fprintf(stderr, "got ack\n");
-				break;
-			}
+
+			do {
+				ack = get_ack(fd[0], result_sha1);
+				if (verbose && ack)
+					fprintf(stderr, "got ack %d %s\n", ack,
+							sha1_to_hex(result_sha1));
+				if (ack == 1) {
+					if (!multi_ack)
+						flushes = 0;
+					retval = 0;
+					goto done;
+				} else if (ack == 2) {
+					multi_ack = 1;
+					mark_common((struct commit *)
+							lookup_object(result_sha1));
+					retval = 0;
+				}
+			} while(ack);
 			flushes--;
 		}
+	}
+done:
+	if (multi_ack) {
+		packet_flush(fd[1]);
+		flushes++;
 	}
 	packet_write(fd[1], "done\n");
 	if (verbose)
 		fprintf(stderr, "done\n");
+	if (retval != 0)
+		flushes++;
 	while (flushes) {
-		flushes--;
 		if (get_ack(fd[0], result_sha1)) {
 			if (verbose)
-				fprintf(stderr, "got ack\n");
-			return 0;
+				fprintf(stderr, "got ack %s\n",
+					sha1_to_hex(result_sha1));
+			if (!multi_ack)
+				return 0;
+			retval = 0;
+			continue;
 		}
+		flushes--;
 	}
 	return retval;
 }

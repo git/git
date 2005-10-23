@@ -59,8 +59,11 @@ int get_ack(int fd, unsigned char *result_sha1)
 	if (!strcmp(line, "NAK"))
 		return 0;
 	if (!strncmp(line, "ACK ", 3)) {
-		if (!get_sha1_hex(line+4, result_sha1))
+		if (!get_sha1_hex(line+4, result_sha1)) {
+			if (strstr(line+45, "continue"))
+				return 2;
 			return 1;
+		}
 	}
 	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
 }
