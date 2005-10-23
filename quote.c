@@ -15,6 +15,11 @@
 #undef EMIT
 #define EMIT(x) ( (++len < n) && (*bp++ = (x)) )
 
+static inline int need_bs_quote(char c)
+{
+	return (c == '\'' || c == '!');
+}
+
 size_t sq_quote_buf(char *dst, size_t n, const char *src)
 {
 	char c;
@@ -23,7 +28,7 @@ size_t sq_quote_buf(char *dst, size_t n, const char *src)
 
 	EMIT('\'');
 	while ((c = *src++)) {
-		if (c == '\'' || c == '!') {
+		if (need_bs_quote(c)) {
 			EMIT('\'');
 			EMIT('\\');
 			EMIT(c);
@@ -50,6 +55,40 @@ char *sq_quote(const char *src)
 	sq_quote_buf(buf, cnt, src);
 
 	return buf;
+}
+
+char *sq_dequote(char *arg)
+{
+	char *dst = arg;
+	char *src = arg;
+	char c;
+
+	if (*src != '\'')
+		return NULL;
+	for (;;) {
+		c = *++src;
+		if (!c)
+			return NULL;
+		if (c != '\'') {
+			*dst++ = c;
+			continue;
+		}
+		/* We stepped out of sq */
+		switch (*++src) {
+		case '\0':
+			*dst = 0;
+			return arg;
+		case '\\':
+			c = *++src;
+			if (need_bs_quote(c) && *++src == '\'') {
+				*dst++ = c;
+				continue;
+			}
+		/* Fallthrough */
+		default:
+			return NULL;
+		}
+	}
 }
 
 /*
