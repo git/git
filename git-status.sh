@@ -90,7 +90,7 @@ perl -e '$/ = "\0";
 		s|\n|\\n|g;
 		s/^/#	/;
 		if (!$shown) {
-			print "#\n# Ignored files:\n";
+			print "#\n# Untracked files:\n";
 			print "#   (use \"git add\" to add to commit)\n#\n";
 			$shown = 1;
 		}
