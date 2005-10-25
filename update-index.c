@@ -392,6 +392,9 @@ static void read_index_info(int line_termination)
 	}
 }
 
+static const char update_index_usage[] =
+"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--cacheinfo] [--chmod=(+|-)x] [--info-only] [--force-remove] [--stdin] [--index-info] [--ignore-missing] [-z] [--version] [--] <file>...";
+
 int main(int argc, const char **argv)
 {
 	int i, newfd, entries, has_errors = 0, line_termination = '\n';
@@ -489,6 +492,8 @@ int main(int argc, const char **argv)
 				verbose = 1;
 				continue;
 			}
+			if (!strcmp(path, "-h") || !strcmp(path, "--help"))
+				usage(update_index_usage);
 			die("unknown option %s", path);
 		}
 		update_one(path, prefix, prefix_length);
