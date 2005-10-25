@@ -6,9 +6,11 @@
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
+#define OUR_REF (1U << 1)
+#define WANTED (1U << 2)
 #define MAX_HAS 256
 #define MAX_NEEDS 256
-static int nr_has = 0, nr_needs = 0;
+static int nr_has = 0, nr_needs = 0, nr_our_refs = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
 static unsigned int timeout = 0;
@@ -29,6 +31,7 @@ static void create_pack_file(void)
 {
 	int fd[2];
 	pid_t pid;
+	int create_full_pack = (nr_our_refs == nr_needs && !nr_has);
 
 	if (pipe(fd) < 0)
 		die("git-upload-pack: unable to create pipe");
@@ -43,8 +46,8 @@ static void create_pack_file(void)
 		char *buf;
 		char **p;
 
-		if (MAX_NEEDS <= nr_needs)
-			args = nr_has + 10;
+		if (create_full_pack)
+			args = 10;
 		else
 			args = nr_has + nr_needs + 5;
 		argv = xmalloc(args * sizeof(char *));
@@ -151,6 +154,7 @@ static int receive_needs(void)
 
 	needs = 0;
 	for (;;) {
+		struct object *o;
 		unsigned char dummy[20], *sha1_buf;
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
@@ -170,7 +174,22 @@ static int receive_needs(void)
 		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
-		needs++;
+
+		/* We have sent all our refs already, and the other end
+		 * should have chosen out of them; otherwise they are
+		 * asking for nonsense.
+		 *
+		 * Hmph.  We may later want to allow "want" line that
+		 * asks for something like "master~10" (symbolic)...
+		 * would it make sense?  I don't know.
+		 */
+		o = lookup_object(sha1_buf);
+		if (!o || !(o->flags & OUR_REF))
+			die("git-upload-pack: not our ref %s", line+5);
+		if (!(o->flags & WANTED)) {
+			o->flags |= WANTED;
+			needs++;
+		}
 	}
 }
 
@@ -179,6 +198,10 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 	struct object *o = parse_object(sha1);
 
 	packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
+	if (!(o->flags & OUR_REF)) {
+		o->flags |= OUR_REF;
+		nr_our_refs++;
+	}
 	if (o->type == tag_type) {
 		o = deref_tag(o);
 		packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
