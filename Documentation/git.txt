@@ -209,6 +209,9 @@ gitlink:git-add[1]::
 	Add paths to the index file.
 	Previously this command was known as git-add-script.
 
+gitlink:git-am[1]::
+	Apply patches from a mailbox, but cooler.
+
 gitlink:git-applymbox[1]::
 	Apply patches from a mailbox.
 
@@ -261,6 +264,9 @@ gitlink:git-ls-remote[1]::
 
 gitlink:git-merge[1]::
 	Grand unified merge driver.
+
+gitlink:git-mv[1]::
+	Move or rename a file, a directory, or a symlink.
 
 gitlink:git-octopus[1]::
 	Merge more than two commits.
@@ -347,6 +353,9 @@ gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.
 	Previously this command was known as git-relink-script.
 
+gitlink:git-svnimport[1]::
+	Import a SVN repository into git.
+
 gitlink:git-sh-setup[1]::
 	Common git shell script setup code.
 	Previously this command was known as git-sh-setup-script.
@@ -355,8 +364,14 @@ gitlink:git-tag[1]::
 	An example script to create a tag object signed with GPG
 	Previously this command was known as git-tag-script.
 
+gitlink:git-update-ref[1]::
+	Update the object name stored in a ref safely.
+
 
 Interrogators:
+
+gitlink:git-check-ref-format[1]::
+	Make sure ref name is well formed.
 
 gitlink:git-cherry[1]::
 	Find commits not merged upstream.
@@ -394,6 +409,9 @@ gitlink:git-rev-parse[1]::
 gitlink:git-send-email[1]::
 	Send patch e-mails out of "format-patch --mbox" output.
 	Previously this command was known as git-send-email-script.
+
+gitlink:git-symbolic-refs[1]::
+	Read and modify symbolic refs.
 
 gitlink:git-stripspace[1]::
 	Filter out empty lines.
