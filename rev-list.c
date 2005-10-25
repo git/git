@@ -81,23 +81,28 @@ static void show_commit(struct commit *commit)
 	fflush(stdout);
 }
 
-static void rewrite_one(struct commit **pp)
+static int rewrite_one(struct commit **pp)
 {
 	for (;;) {
 		struct commit *p = *pp;
 		if (p->object.flags & (TREECHANGE | UNINTERESTING))
-			return;
-		/* Only single-parent commits don't have TREECHANGE */
+			return 0;
+		if (!p->parents)
+			return -1;
 		*pp = p->parents->item;
 	}
 }
 
 static void rewrite_parents(struct commit *commit)
 {
-	struct commit_list *parent = commit->parents;
-	while (parent) {
-		rewrite_one(&parent->item);
-		parent = parent->next;
+	struct commit_list **pp = &commit->parents;
+	while (*pp) {
+		struct commit_list *parent = *pp;
+		if (rewrite_one(&parent->item) < 0) {
+			*pp = parent->next;
+			continue;
+		}
+		pp = &parent->next;
 	}
 }
 
@@ -439,6 +444,30 @@ static int same_tree(struct tree *t1, struct tree *t2)
 	return !is_different;
 }
 
+static int same_tree_as_empty(struct tree *t1)
+{
+	int retval;
+	void *tree;
+	struct tree_desc empty, real;
+
+	if (!t1)
+		return 0;
+
+	tree = read_object_with_reference(t1->object.sha1, "tree", &real.size, NULL);
+	if (!tree)
+		return 0;
+	real.buf = tree;
+
+	empty.buf = "";
+	empty.size = 0;
+
+	is_different = 0;
+	retval = diff_tree(&empty, &real, "", &diff_opt);
+	free(tree);
+
+	return retval >= 0 && !is_different;
+}
+
 static struct commit *try_to_simplify_merge(struct commit *commit, struct commit_list *parent)
 {
 	if (!commit->tree)
@@ -523,11 +552,17 @@ static void compress_list(struct commit_list *list)
 		struct commit_list *parent = commit->parents;
 		list = list->next;
 
+		if (!parent) {
+			if (!same_tree_as_empty(commit->tree))
+				commit->object.flags |= TREECHANGE;
+			continue;
+		}
+
 		/*
 		 * Exactly one parent? Check if it leaves the tree
 		 * unchanged
 		 */
-		if (parent && !parent->next) {
+		if (!parent->next) {
 			struct tree *t1 = commit->tree;
 			struct tree *t2 = parent->item->tree;
 			if (!t1 || !t2 || same_tree(t1, t2))
