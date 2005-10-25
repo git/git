@@ -3,14 +3,12 @@
 #include "pkt-line.h"
 #include "tag.h"
 #include "object.h"
-#include "commit.h"
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
-#define THEY_HAVE (1U << 0)
 #define MAX_HAS 256
 #define MAX_NEEDS 256
-static int nr_has = 0, nr_needs = 0, multi_ack = 0;
+static int nr_has = 0, nr_needs = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
 static unsigned int timeout = 0;
@@ -87,27 +85,15 @@ static void create_pack_file(void)
 
 static int got_sha1(char *hex, unsigned char *sha1)
 {
+	int nr;
 	if (get_sha1_hex(hex, sha1))
 		die("git-upload-pack: expected SHA1 object, got '%s'", hex);
 	if (!has_sha1_file(sha1))
 		return 0;
-	if (nr_has < MAX_HAS) {
-		struct object *o = lookup_object(sha1);
-		if (!(o && o->parsed))
-			o = parse_object(sha1);
-		if (!o)
-			die("oops (%s)", sha1_to_hex(sha1));
-		if (o->type == commit_type) {
-			struct commit_list *parents;
-			if (o->flags & THEY_HAVE)
-				return 0;
-			o->flags |= THEY_HAVE;
-			for (parents = ((struct commit*)o)->parents;
-			     parents;
-			     parents = parents->next)
-				parents->item->object.flags |= THEY_HAVE;
-		}
-		memcpy(has_sha1[nr_has++], sha1, 20);
+	nr = nr_has;
+	if (nr < MAX_HAS) {
+		memcpy(has_sha1[nr], sha1, 20);
+		nr_has = nr+1;
 	}
 	return 1;
 }
@@ -118,36 +104,44 @@ static int get_common_commits(void)
 	unsigned char sha1[20];
 	int len;
 
-	track_object_refs = 0;
-	save_commit_buffer = 0;
-
 	for(;;) {
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 
 		if (!len) {
-			if (multi_ack || nr_has == 0)
-				packet_write(1, "NAK\n");
+			packet_write(1, "NAK\n");
 			continue;
 		}
 		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
-			if (got_sha1(line+5, sha1) &&
-					(multi_ack || nr_has == 1))
-				packet_write(1, "ACK %s%s\n",
-					sha1_to_hex(sha1),
-					multi_ack && nr_has < MAX_HAS ?
-					" continue" : "");
+			if (got_sha1(line+5, sha1)) {
+				packet_write(1, "ACK %s\n", sha1_to_hex(sha1));
+				break;
+			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
-			if (nr_has > 0)
-				return 0;
 			packet_write(1, "NAK\n");
 			return -1;
 		}
 		die("git-upload-pack: expected SHA1 list, got '%s'", line);
 	}
+
+	for (;;) {
+		len = packet_read_line(0, line, sizeof(line));
+		reset_timeout();
+		if (!len)
+			continue;
+		len = strip(line, len);
+		if (!strncmp(line, "have ", 5)) {
+			got_sha1(line+5, sha1);
+			continue;
+		}
+		if (!strcmp(line, "done"))
+			break;
+		die("git-upload-pack: expected SHA1 list, got '%s'", line);
+	}
+	return 0;
 }
 
 static int receive_needs(void)
@@ -176,10 +170,6 @@ static int receive_needs(void)
 		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
-
-		if (strstr(line+45, "multi_ack"))
-			multi_ack = 1;
-
 		needs++;
 	}
 }
