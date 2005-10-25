@@ -116,13 +116,16 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 
 int create_symref(const char *git_HEAD, const char *refs_heads_master)
 {
-#if USE_SYMLINK_HEAD
-	unlink(git_HEAD);
-	return symlink(refs_heads_master, git_HEAD);
-#else
 	const char *lockpath;
 	char ref[1000];
 	int fd, len, written;
+
+#if USE_SYMLINK_HEAD
+	unlink(git_HEAD);
+	if (!symlink(refs_heads_master, git_HEAD))
+		return 0;
+	fprintf(stderr, "no symlink - falling back to symbolic ref\n");
+#endif
 
 	len = snprintf(ref, sizeof(ref), "ref: %s\n", refs_heads_master);
 	if (sizeof(ref) <= len) {
@@ -144,7 +147,6 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 		return -3;
 	}
 	return 0;
-#endif
 }
 
 int read_ref(const char *filename, unsigned char *sha1)
