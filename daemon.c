@@ -1,5 +1,3 @@
-#include "cache.h"
-#include "pkt-line.h"
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -9,6 +7,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <syslog.h>
+#include "pkt-line.h"
+#include "cache.h"
 
 static int log_syslog;
 static int verbose;
