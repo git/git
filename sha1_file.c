@@ -1239,11 +1239,14 @@ int move_temp_to_file(const char *tmpfile, char *filename)
 		 * won't be able to check collisions, but that's not a
 		 * big deal.
 		 *
+		 * The same holds for FAT formatted media.
+		 *
 		 * When this succeeds, we just return 0. We have nothing
 		 * left to unlink.
 		 */
-		if (ret == EXDEV && !rename(tmpfile, filename))
+		if ((ret == EXDEV || ret == ENOTSUP) && !rename(tmpfile, filename))
 			return 0;
+		ret = errno;
 	}
 	unlink(tmpfile);
 	if (ret) {

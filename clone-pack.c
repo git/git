@@ -211,7 +211,7 @@ static int clone_without_unpack(int fd[2])
 
 	ifd = fd[0];
 	snprintf(tmpfile, sizeof(tmpfile),
-		 "%s/pack-XXXXXX", get_object_directory());
+		 "%s/pack/tmp-XXXXXX", get_object_directory());
 	ofd = mkstemp(tmpfile);
 	if (ofd < 0)
 		return error("unable to create temporary file %s", tmpfile);
