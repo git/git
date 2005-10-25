@@ -77,7 +77,7 @@ else {
 
 my (@allfiles,@srcfiles,@dstfiles);
 my $safesrc;
-my %overwritten;
+my (%overwritten, %srcForDst);
 
 $/ = "\0";
 open(F,"-|","git-ls-files","-z")
@@ -121,6 +121,16 @@ while(scalar @srcArgs > 0) {
         if (scalar @srcfiles == 0) {
 	    $bad = "'$src' not under version control";
 	}
+    }
+
+    if ($bad eq "") {
+       if (defined $srcForDst{$dst}) {
+           $bad = "can not move '$src' to '$dst'; already target of ";
+           $bad .= "'".$srcForDst{$dst}."'";
+       }
+       else {
+           $srcForDst{$dst} = $src;
+       }
     }
 
     if ($bad ne "") {
