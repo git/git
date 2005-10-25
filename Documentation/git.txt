@@ -182,6 +182,9 @@ gitlink:git-receive-pack[1]::
 gitlink:git-send-pack[1]::
 	Pushes to a remote repository, intelligently.
 
+gitlink:git-shell[1]::
+	Restricted shell for GIT-only SSH access.
+
 gitlink:git-ssh-fetch[1]::
 	Pulls from a remote repository over ssh connection
 	Previously this command was known as git-ssh-pull.
