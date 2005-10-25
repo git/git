@@ -28,7 +28,7 @@ static const char rev_list_usage[] =
 		      "  --merge-order [ --show-breaks ]\n"
 		      "  --topo-order";
 
-static int dense = 0;
+static int dense = 1;
 static int unpacked = 0;
 static int bisect_list = 0;
 static int tag_objects = 0;
@@ -619,7 +619,7 @@ static struct commit *get_commit_reference(const char *name, unsigned int flags)
 	struct object *object;
 
 	if (get_sha1(name, sha1))
-		usage(rev_list_usage);
+		return NULL;
 	object = parse_object(sha1);
 	if (!object)
 		die("bad object %s", name);
@@ -793,12 +793,12 @@ int main(int argc, const char **argv)
 			dense = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--sparse")) {
+			dense = 0;
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
-			paths = get_pathspec(prefix, argv + i + 1);
-			if (paths) {
-				limited = 1;
-				diff_tree_setup_paths(paths);
-			}
+			i++;
 			break;
 		}
 
@@ -830,7 +830,18 @@ int main(int argc, const char **argv)
 			limited = 1;
 		}
 		commit = get_commit_reference(arg, flags);
+		if (!commit)
+			break;
 		handle_one_commit(commit, &list);
+	}
+
+	if (!list)
+		usage(rev_list_usage);
+
+	paths = get_pathspec(prefix, argv + i);
+	if (paths) {
+		limited = 1;
+		diff_tree_setup_paths(paths);
 	}
 
 	save_commit_buffer = verbose_header;

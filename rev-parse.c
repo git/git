@@ -153,6 +153,7 @@ static void show_datestring(const char *flag, const char *datestr)
 
 static void show_file(const char *arg)
 {
+	show_default();
 	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV))
 		show(arg);
 }
@@ -174,7 +175,6 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strcmp(arg, "--")) {
 				as_is = 1;
-				show_default();
 				/* Pass on the "--" if we show anything but files.. */
 				if (filter & (DO_FLAGS | DO_REVS))
 					show_file(arg);
