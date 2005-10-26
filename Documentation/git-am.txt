@@ -58,10 +58,10 @@ recover from this in one of two ways:
 
 . hand resolve the conflict in the working directory, run 'git
   diff HEAD' to extract the merge result into a patch form and
-  replacing the patch part of the message in .dotest directory.
-  After doing this, run `git-reset --hard HEAD` to bring the
-  working tree to the state before half-applying the patch, then
-  re-run the command without any options.
+  replacing the patch in .dotest/patch file.  After doing this,
+  run `git-reset --hard HEAD` to bring the working tree to the
+  state before half-applying the patch, then re-run the command
+  without any options.
 
 The command refuses to process new mailboxes while `.dotest`
 directory exists, so if you decide to start over from scratch,

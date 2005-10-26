@@ -153,6 +153,7 @@ if test -d "$dotest"
 then
 	test ",$#," = ",0," ||
 	die "previous dotest directory $dotest still exists but mbox given."
+	resume=yes
 else
 	# Make sure we are not given --skip
 	test ",$skip," = ,, ||
@@ -215,10 +216,15 @@ do
 		go_next
 		continue
 	}
-	git-mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
-		<"$dotest/$msgnum" >"$dotest/info" ||
-		stop_here $this
-	git-stripspace < "$dotest/msg" > "$dotest/msg-clean"
+	case "$resume" in
+	'')
+		git-mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
+			<"$dotest/$msgnum" >"$dotest/info" ||
+			stop_here $this
+		git-stripspace < "$dotest/msg" > "$dotest/msg-clean"
+		;;
+	esac
+	resume=
 
 	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
 	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
