@@ -60,7 +60,7 @@ static void create_pack_file(void)
 		close(fd[1]);
 		*p++ = "git-rev-list";
 		*p++ = "--objects";
-		if (MAX_NEEDS <= nr_needs)
+		if (create_full_pack || MAX_NEEDS <= nr_needs)
 			*p++ = "--all";
 		else {
 			for (i = 0; i < nr_needs; i++) {
@@ -69,12 +69,13 @@ static void create_pack_file(void)
 				buf += 41;
 			}
 		}
-		for (i = 0; i < nr_has; i++) {
-			*p++ = buf;
-			*buf++ = '^';
-			memcpy(buf, sha1_to_hex(has_sha1[i]), 41);
-			buf += 41;
-		}
+		if (!create_full_pack)
+			for (i = 0; i < nr_has; i++) {
+				*p++ = buf;
+				*buf++ = '^';
+				memcpy(buf, sha1_to_hex(has_sha1[i]), 41);
+				buf += 41;
+			}
 		*p++ = NULL;
 		execvp("git-rev-list", argv);
 		die("git-upload-pack: unable to exec git-rev-list");
