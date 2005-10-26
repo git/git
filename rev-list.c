@@ -613,13 +613,10 @@ static void add_pending_object(struct object *obj, const char *name)
 	add_object(obj, &pending_objects, name);
 }
 
-static struct commit *get_commit_reference(const char *name, unsigned int flags)
+static struct commit *get_commit_reference(const char *name, const unsigned char *sha1, unsigned int flags)
 {
-	unsigned char sha1[20];
 	struct object *object;
 
-	if (get_sha1(name, sha1))
-		return NULL;
 	object = parse_object(sha1);
 	if (!object)
 		die("bad object %s", name);
@@ -697,7 +694,7 @@ static struct commit_list **global_lst;
 
 static int include_one_commit(const char *path, const unsigned char *sha1)
 {
-	struct commit *com = get_commit_reference(path, 0);
+	struct commit *com = get_commit_reference(path, sha1, 0);
 	handle_one_commit(com, global_lst);
 	return 0;
 }
@@ -720,6 +717,7 @@ int main(int argc, const char **argv)
 		const char *arg = argv[i];
 		char *dotdot;
 		struct commit *commit;
+		unsigned char sha1[20];
 
 		if (!strncmp(arg, "--max-count=", 12)) {
 			max_count = atoi(arg + 12);
@@ -808,15 +806,19 @@ int main(int argc, const char **argv)
 		flags = 0;
 		dotdot = strstr(arg, "..");
 		if (dotdot) {
+			unsigned char from_sha1[20];
 			char *next = dotdot + 2;
-			struct commit *exclude = NULL;
-			struct commit *include = NULL;
 			*dotdot = 0;
 			if (!*next)
 				next = "HEAD";
-			exclude = get_commit_reference(arg, UNINTERESTING);
-			include = get_commit_reference(next, 0);
-			if (exclude && include) {
+			if (!get_sha1(arg, from_sha1) && !get_sha1(next, sha1)) {
+				struct commit *exclude;
+				struct commit *include;
+				
+				exclude = get_commit_reference(arg, from_sha1, UNINTERESTING);
+				include = get_commit_reference(next, sha1, 0);
+				if (!exclude || !include)
+					die("Invalid revision range %s..%s", arg, next);
 				limited = 1;
 				handle_one_commit(exclude, &list);
 				handle_one_commit(include, &list);
@@ -829,9 +831,9 @@ int main(int argc, const char **argv)
 			arg++;
 			limited = 1;
 		}
-		commit = get_commit_reference(arg, flags);
-		if (!commit)
+		if (get_sha1(arg, sha1) < 0)
 			break;
+		commit = get_commit_reference(arg, sha1, flags);
 		handle_one_commit(commit, &list);
 	}
 
