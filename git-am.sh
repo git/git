@@ -270,14 +270,17 @@ do
 		echo "--------------------------"
 		cat "$dotest/final-commit"
 		echo "--------------------------"
-		echo -n "Apply? [y]es/[n]o/[e]dit/[a]ccept all "
+		echo -n "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 		read reply
 		case "$reply" in
-		y*|Y*) action=yes ;;
-		a*|A*) action=yes interactive= ;;
-		n*|N*) action=skip ;;
-		e*|E*) "${VISUAL:-${EDITOR:-vi}}" "$dotest/final-commit"
+		[yY]*) action=yes ;;
+		[aA]*) action=yes interactive= ;;
+		[nN]*) action=skip ;;
+		[eE]*) "${VISUAL:-${EDITOR:-vi}}" "$dotest/final-commit"
 		       action=again ;;
+		[vV]*) action=again
+		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
+		*)     action=again ;;
 		esac
 	    done
 	else
