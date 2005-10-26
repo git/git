@@ -1232,19 +1232,20 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 int move_temp_to_file(const char *tmpfile, char *filename)
 {
 	int ret = link_temp_to_file(tmpfile, filename);
-	if (ret) {
-		/*
-		 * Coda hack - coda doesn't like cross-directory links,
-		 * so we fall back to a rename, which will mean that it
-		 * won't be able to check collisions, but that's not a
-		 * big deal.
-		 *
-		 * The same holds for FAT formatted media.
-		 *
-		 * When this succeeds, we just return 0. We have nothing
-		 * left to unlink.
-		 */
-		if ((ret == EXDEV || ret == ENOTSUP) && !rename(tmpfile, filename))
+
+	/*
+	 * Coda hack - coda doesn't like cross-directory links,
+	 * so we fall back to a rename, which will mean that it
+	 * won't be able to check collisions, but that's not a
+	 * big deal.
+	 *
+	 * The same holds for FAT formatted media.
+	 *
+	 * When this succeeds, we just return 0. We have nothing
+	 * left to unlink.
+	 */
+	if (ret && ret != EEXIST) {
+		if (!rename(tmpfile, filename))
 			return 0;
 		ret = errno;
 	}
