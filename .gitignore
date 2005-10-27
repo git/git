@@ -54,6 +54,8 @@ git-merge-recursive
 git-merge-resolve
 git-merge-stupid
 git-mktag
+git-name-rev
+git-mv
 git-octopus
 git-pack-objects
 git-parse-remote
@@ -78,6 +80,7 @@ git-revert
 git-send-email
 git-send-pack
 git-sh-setup
+git-shell
 git-shortlog
 git-show-branch
 git-show-index
