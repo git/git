@@ -133,6 +133,9 @@ gitlink:git-ls-tree[1]::
 gitlink:git-merge-base[1]::
 	Finds as good a common ancestor as possible for a merge
 
+gitlink:git-name-rev[1]::
+	Find symbolic names for given revs
+
 gitlink:git-rev-list[1]::
 	Lists commit objects in reverse chronological order
 
@@ -359,6 +362,9 @@ gitlink:git-svnimport[1]::
 gitlink:git-sh-setup[1]::
 	Common git shell script setup code.
 	Previously this command was known as git-sh-setup-script.
+
+gitlink:git-symbolic-ref[1]::
+	Read and modify symbolic refs
 
 gitlink:git-tag[1]::
 	An example script to create a tag object signed with GPG
