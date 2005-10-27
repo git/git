@@ -9,14 +9,12 @@ The GIT To-Do File
 Tool Renames Plan
 =================
 
- - In 0.99.8, we still install the backward compatible symbolic
-   links in $(bindir).  These will however be removed before 1.0
-   happens.
+ - In 0.99.9, the backward compatible symbolic links in
+   $(bindir) will be removed.
 
-   git-ssh-push and git-ssh-pull pair is not going away within
-   this timeframe, if ever.  Each of these old-name commands
-   continues to invoke its old-name counterpart on the other
-   end.
+   git-ssh-push and git-ssh-pull pair is not going away if ever.
+   Each of these old-name commands continues to invoke its
+   old-name counterpart on the other end.
 
 
 What to expect after 0.99.8
@@ -84,7 +82,8 @@ Technical (heavier)
   precompute some packs for popular sets of heads downloaders
   have and serve that, even if that could give more than the
   client asks for in some cases.  We will know about this soon
-  enough [Deployed and fixes and enhancement continuing].
+  enough [DONE part to allow using precomputed pack, but not
+  dynamic caching part].
 
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
@@ -123,7 +122,8 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* Merlyn reports trouble with http fetch.
+* Merlyn reports trouble with http fetch [Hopefully solved by
+  Nick's updates].
 
 * Maybe look at Cogito and see if I can help Pasky to adjust to
   the later core features?  Zack Brown's "cg-seek leaving empty
@@ -133,7 +133,7 @@ Technical (milder)
   result for next cloning request until any of our refs change.
 
 * Perhaps accept more "want"s in upload-pack and do something
-  intelligent about it.
+  intelligent about it [Ongoing, by Johannes].
 
 * Perhaps send less "want"s from fetch-pack [DONE by JS].
 
@@ -201,17 +201,6 @@ Technical (milder)
   handy if the repository contains wagging heads like "pu" in
   git.git repository.
 
-* Internally split the project into non-doc and doc parts; add
-  an extra root for the doc part and merge from it; move the
-  internal doc source to a separate repository, like the +Meta
-  repository; experiment if this results in a reasonable
-  workflow, and document it in howto form if it does.
-
-  The point is to make it possible to fork that part off to
-  somebody else; then I do not have to maintain Documentation
-  directory myself anymore, just like I simply slurp the latest
-  gitk from Paul and not worry about it ;-).
-
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
@@ -251,17 +240,17 @@ Technical (trivial)
 
 * Adjust update-index to quoted --index-info [DONE].
 
-* Prepare apply.c changes for maint branch (0.99.8e) [READY].
+* Prepare apply.c changes for maint branch (0.99.8e) [DONE].
 
-* Perhaps show ^{commit}, ^{tree} instead of ^{} from ls-remote?
+* Perhaps show ^{commit}, ^{tree} instead of ^{} from ls-remote? [NO]
 
-* Re-adjust maint branch for the above if we did so.
+* Re-adjust maint branch for the above if we did so. [NOT NEEDED]
 
 * short SHA1 naming is not enforcing uniqueness.  Should fix [DONE].
 
 * 'git repack' can be DOSed.  Should fix [DONE].
 
-* Stop installing the old-name symlinks [POSTPONED, but before 1.0].
+* Stop installing the old-name symlinks [IN 0.99.9].
 
 * 'git merge-projects'?
 
