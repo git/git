@@ -212,11 +212,15 @@ static int receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
-	static char *capabilities = "\0multi_ack";
+	static char *capabilities = "multi_ack";
 	struct object *o = parse_object(sha1);
 
-	packet_write(1, "%s %s%s\n", sha1_to_hex(sha1), refname, capabilities);
-	capabilities = "";
+	if (capabilities)
+		packet_write(1, "%s %s%c%s\n", sha1_to_hex(sha1), refname,
+			0, capabilities);
+	else
+		packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
+	capabilities = NULL;
 	if (!(o->flags & OUR_REF)) {
 		o->flags |= OUR_REF;
 		nr_our_refs++;

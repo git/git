@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-static char *server_capabilities = "";
+static char *server_capabilities = NULL;
 
 /*
  * Read all the refs from the other end
@@ -58,7 +58,8 @@ struct ref **get_remote_heads(int in, struct ref **list,
 
 int server_supports(const char *feature)
 {
-	return strstr(feature, server_capabilities) != NULL;
+	return server_capabilities &&
+		strstr(server_capabilities, feature) != NULL;
 }
 
 int get_ack(int fd, unsigned char *result_sha1)
