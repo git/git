@@ -62,6 +62,7 @@ then
 	# all-into-one is used.
 	if test "$all_into_one" != '' && test "$existing" != ''
 	then
+		sync
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do

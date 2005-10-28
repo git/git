@@ -71,6 +71,7 @@ int main(int argc, char **argv)
 		/* Handle arguments here .. */
 		usage(prune_packed_usage);
 	}
+	sync();
 	prune_packed_objects();
 	return 0;
 }

@@ -15,6 +15,7 @@ do
     shift;
 done
 
+sync
 git-fsck-objects --full --cache --unreachable "$@" |
 sed -ne '/unreachable /{
     s/unreachable [^ ][^ ]* //
