@@ -203,6 +203,29 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 	return NULL;
 }
 
+static int ambiguous_path(const char *path)
+{
+	int slash = 1;
+
+	for (;;) {
+		switch (*path++) {
+		case '\0':
+			break;
+		case '/':
+			if (slash)
+				break;
+			slash = 1;
+			continue;
+		case '.':
+			continue;
+		default:
+			slash = 0;
+			continue;
+		}
+		return slash;
+	}
+}
+
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
 	static const char *prefix[] = {
@@ -216,6 +239,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
+
+	/* Accept only unambiguous ref paths. */
+	if (ambiguous_path(str))
+		return -1;
 
 	for (p = prefix; *p; p++) {
 		char *pathname = git_path("%s/%.*s", *p, len, str);

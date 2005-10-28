@@ -292,6 +292,7 @@ int main(int argc, char **argv)
 		}
 		if (verify)
 			die("Needed a single revision");
+		as_is = 1;
 		show_file(arg);
 	}
 	show_default();
