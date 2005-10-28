@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+static char *server_capabilities = "";
+
 /*
  * Read all the refs from the other end
  */
@@ -20,7 +22,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		unsigned char old_sha1[20];
 		static char buffer[1000];
 		char *name;
-		int len;
+		int len, name_len;
 
 		len = packet_read_line(in, buffer, sizeof(buffer));
 		if (!len)
@@ -36,6 +38,13 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		    check_ref_format(name + 5))
 			continue;
 
+		name_len = strlen(name);
+		if (len != name_len + 41) {
+			if (server_capabilities)
+				free(server_capabilities);
+			server_capabilities = strdup(name + name_len + 1);
+		}
+
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
 		ref = xcalloc(1, sizeof(*ref) + len - 40);
@@ -45,6 +54,11 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		list = &ref->next;
 	}
 	return list;
+}
+
+int server_supports(const char *feature)
+{
+	return strstr(feature, server_capabilities) != NULL;
 }
 
 int get_ack(int fd, unsigned char *result_sha1)
