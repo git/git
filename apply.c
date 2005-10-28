@@ -13,18 +13,20 @@
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
+//  --numstat does numeric diffstat, and doesn't actually apply
 //  --index-info shows the old and new index info for paths if available.
 //
 static int check_index = 0;
 static int write_index = 0;
 static int diffstat = 0;
+static int numstat = 0;
 static int summary = 0;
 static int check = 0;
 static int apply = 1;
 static int show_index_info = 0;
 static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--stat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -1317,6 +1319,20 @@ static void stat_patch_list(struct patch *patch)
 	printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
 }
 
+static void numstat_patch_list(struct patch *patch)
+{
+	for ( ; patch; patch = patch->next) {
+		const char *name;
+		name = patch->old_name ? patch->old_name : patch->new_name;
+		printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		if (line_termination && quote_c_style(name, NULL, NULL, 0))
+			quote_c_style(name, NULL, stdout, 0);
+		else
+			fputs(name, stdout);
+		putchar('\n');
+	}
+}
+
 static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
 {
 	if (mode)
@@ -1650,6 +1666,9 @@ static int apply_patch(int fd)
 	if (diffstat)
 		stat_patch_list(list);
 
+	if (numstat)
+		numstat_patch_list(list);
+
 	if (summary)
 		summary_patch_list(list);
 
@@ -1681,6 +1700,11 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "--stat")) {
 			apply = 0;
 			diffstat = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--numstat")) {
+			apply = 0;
+			numstat = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--summary")) {
