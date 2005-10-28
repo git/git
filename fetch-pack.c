@@ -13,18 +13,130 @@ static const char fetch_pack_usage[] =
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
+#define COMMON		(1U << 1)
+#define COMMON_REF	(1U << 2)
+#define SEEN		(1U << 3)
+#define POPPED		(1U << 4)
+
+static struct commit_list *rev_list = NULL;
+static int non_common_revs = 0;
+
+static void rev_list_push(struct commit *commit, int mark)
+{
+	if (!(commit->object.flags & mark)) {
+		commit->object.flags |= mark;
+
+		if (!(commit->object.parsed))
+			parse_commit(commit);
+
+		insert_by_date(commit, &rev_list);
+
+		if (!(commit->object.flags & COMMON))
+			non_common_revs++;
+	}
+}
+
+static int rev_list_insert_ref(const char *path, const unsigned char *sha1)
+{
+	struct object *o = deref_tag(parse_object(sha1));
+
+	if (o->type == commit_type)
+		rev_list_push((struct commit *)o, SEEN);
+
+	return 0;
+}
+
+/*
+   This function marks a rev and its ancestors as common.
+   In some cases, it is desirable to mark only the ancestors (for example
+   when only the server does not yet know that they are common).
+*/
+
+static void mark_common(struct commit *commit,
+		int ancestors_only, int dont_parse)
+{
+	if (commit != NULL && !(commit->object.flags & COMMON)) {
+		struct object *o = (struct object *)commit;
+
+		if (!ancestors_only)
+			o->flags |= COMMON;
+
+		if (!(o->flags & SEEN))
+			rev_list_push(commit, SEEN);
+		else {
+			struct commit_list *parents;
+
+			if (!ancestors_only && !(o->flags & POPPED))
+				non_common_revs--;
+			if (!o->parsed && !dont_parse)
+				parse_commit(commit);
+
+			for (parents = commit->parents;
+					parents;
+					parents = parents->next)
+				mark_common(parents->item, 0, dont_parse);
+		}
+	}
+}
+
+/*
+  Get the next rev to send, ignoring the common.
+*/
+
+static const unsigned char* get_rev()
+{
+	struct commit *commit = NULL;
+
+	while (commit == NULL) {
+		unsigned int mark;
+		struct commit_list* parents;
+
+		if (rev_list == NULL || non_common_revs == 0)
+			return NULL;
+
+		commit = rev_list->item;
+		if (!(commit->object.parsed))
+			parse_commit(commit);
+		commit->object.flags |= POPPED;
+		if (!(commit->object.flags & COMMON))
+			non_common_revs--;
+	
+		parents = commit->parents;
+
+		if (commit->object.flags & COMMON) {
+			/* do not send "have", and ignore ancestors */
+			commit = NULL;
+			mark = COMMON | SEEN;
+		} else if (commit->object.flags & COMMON_REF)
+			/* send "have", and ignore ancestors */
+			mark = COMMON | SEEN;
+		else
+			/* send "have", also for its ancestors */
+			mark = SEEN;
+
+		while (parents) {
+			if (!(parents->item->object.flags & SEEN))
+				rev_list_push(parents->item, mark);
+			if (mark & COMMON)
+				mark_common(parents->item, 1, 0);
+			parents = parents->next;
+		}
+
+		rev_list = rev_list->next;
+	}
+
+	return commit->object.sha1;
+}
 
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
 	int fetching;
-	static char line[1000];
-	static char rev_command[1024];
-	int count = 0, flushes = 0, retval, rev_command_len;
-	FILE *revs;
+	int count = 0, flushes = 0, retval;
+	const unsigned char *sha1;
 
-	strcpy(rev_command, "git-rev-list $(git-rev-parse --all)");
-	rev_command_len = strlen(rev_command);
+	for_each_ref(rev_list_insert_ref);
+
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
 		unsigned char *remote = refs->old_sha1;
@@ -42,25 +154,18 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		 */
 		if (((o = lookup_object(remote)) != NULL) &&
 		    (o->flags & COMPLETE)) {
-			struct commit_list *p;
-			struct commit *commit =
-				(struct commit *) (o = deref_tag(o));
-			if (!o)
-				goto repair;
-			if (o->type != commit_type)
-				continue;
-			p = commit->parents;
-			while (p &&
-			       rev_command_len + 44 < sizeof(rev_command)) {
-				snprintf(rev_command + rev_command_len, 44,
-					 " ^%s",
-					 sha1_to_hex(p->item->object.sha1));
-				rev_command_len += 43;
-				p = p->next;
+			o = deref_tag(o);
+
+			if (o->type == commit_type) {
+				struct commit *commit = (struct commit *)o;
+
+				rev_list_push(commit, COMMON_REF | SEEN);
+
+				mark_common(commit, 1, 1);
 			}
 			continue;
 		}
-	repair:
+
 		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
@@ -68,16 +173,9 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	if (!fetching)
 		return 1;
 
-	revs = popen(rev_command, "r");
-	if (!revs)
-		die("unable to run 'git-rev-list'");
-
-	flushes = 1;
+	flushes = 0;
 	retval = -1;
-	while (fgets(line, sizeof(line), revs) != NULL) {
-		unsigned char sha1[20];
-		if (get_sha1_hex(line, sha1))
-			die("git-fetch-pack: expected object name, got crud");
+	while ((sha1 = get_rev())) {
 		packet_write(fd[1], "have %s\n", sha1_to_hex(sha1));
 		if (verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
@@ -101,10 +199,12 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			flushes--;
 		}
 	}
-	pclose(revs);
+
 	packet_write(fd[1], "done\n");
 	if (verbose)
 		fprintf(stderr, "done\n");
+	if (retval != 0)
+		flushes++;
 	while (flushes) {
 		flushes--;
 		if (get_ack(fd[0], result_sha1)) {
