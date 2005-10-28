@@ -49,7 +49,7 @@ test_expect_success \
      git-unpack-objects <test-1-${packname_1}.pack"
 
 unset GIT_OBJECT_DIRECTORY
-cd $TRASH/.git2
+cd "$TRASH/.git2"
 
 test_expect_success \
     'check unpack without delta' \
@@ -61,7 +61,7 @@ test_expect_success \
 	     return 1
 	 }
      done'
-cd $TRASH
+cd "$TRASH"
 
 test_expect_success \
     'pack with delta' \
@@ -80,7 +80,7 @@ test_expect_success \
      git-unpack-objects <test-2-${packname_2}.pack'
 
 unset GIT_OBJECT_DIRECTORY
-cd $TRASH/.git2
+cd "$TRASH/.git2"
 test_expect_success \
     'check unpack with delta' \
     '(cd ../.git && find objects -type f -print) |
@@ -91,7 +91,7 @@ test_expect_success \
 	     return 1
 	 }
      done'
-cd $TRASH
+cd "$TRASH"
 
 rm -fr .git2
 mkdir .git2
