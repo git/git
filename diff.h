@@ -91,7 +91,6 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
-"  -r            diff recursively (only meaningful in diff-tree)\n" \
 "  -z            output diff-raw with lines terminated with NUL.\n" \
 "  -p            output patch format.\n" \
 "  -u            synonym for -p.\n" \

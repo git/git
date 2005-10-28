@@ -25,7 +25,7 @@ dropsave() {
 
 savestate() {
 	# Stash away any local modifications.
-	git-diff-index -r -z --name-only $head |
+	git-diff-index -z --name-only $head |
 	cpio -0 -o >"$GIT_DIR/MERGE_SAVE"
 }
 
