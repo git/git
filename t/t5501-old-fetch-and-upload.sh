@@ -8,7 +8,7 @@
 
 cd $(dirname $0) || exit 1
 
-tmp=$(mktemp tmp-XXXX)
+tmp=$(mktemp /tmp/tmp-XXXXXXXX)
 
 retval=0
 
@@ -25,7 +25,7 @@ for i in $list; do
 	both) pgm="old-git-upload-pack"; replace="old-git-fetch-pack --exec=$pgm";;
 	esac
 
-	if which $pgm; then
+	if which $pgm 2>/dev/null; then
 		echo "Testing with $pgm"
 		sed -e "s/git-fetch-pack/$replace/g" \
 			-e "s/# old fails/warn/" < t5500-fetch-pack.sh > $tmp
