@@ -19,7 +19,7 @@ static const char *exec = "git-upload-pack";
 #define POPPED		(1U << 4)
 
 static struct commit_list *rev_list = NULL;
-static int non_common_revs = 0;
+static int non_common_revs = 0, multi_ack = 0;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -157,7 +157,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			continue;
 		}
 
-		packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
+		packet_write(fd[1], "want %s%s\n", sha1_to_hex(remote),
+			multi_ack ? " multi_ack" : "");
 		fetching++;
 	}
 	packet_flush(fd[1]);
@@ -171,6 +172,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		if (verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
 		if (!(31 & ++count)) {
+			int ack;
+
 			packet_flush(fd[1]);
 			flushes++;
 
@@ -180,29 +183,47 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			 */
 			if (count == 32)
 				continue;
-			if (get_ack(fd[0], result_sha1)) {
-				flushes = 0;
-				retval = 0;
-				if (verbose)
-					fprintf(stderr, "got ack\n");
-				break;
-			}
+
+			do {
+				ack = get_ack(fd[0], result_sha1);
+				if (verbose && ack)
+					fprintf(stderr, "got ack %d %s\n", ack,
+							sha1_to_hex(result_sha1));
+				if (ack == 1) {
+					flushes = 0;
+					multi_ack = 0;
+					retval = 0;
+					goto done;
+				} else if (ack == 2) {
+					struct commit *commit =
+						lookup_commit(result_sha1);
+					mark_common(commit, 0, 1);
+					retval = 0;
+				}
+			} while (ack);
 			flushes--;
 		}
 	}
-
+done:
 	packet_write(fd[1], "done\n");
 	if (verbose)
 		fprintf(stderr, "done\n");
-	if (retval != 0)
+	if (retval != 0) {
+		multi_ack = 0;
 		flushes++;
-	while (flushes) {
-		flushes--;
-		if (get_ack(fd[0], result_sha1)) {
+	}
+	while (flushes || multi_ack) {
+		int ack = get_ack(fd[0], result_sha1);
+		if (ack) {
 			if (verbose)
-				fprintf(stderr, "got ack\n");
-			return 0;
+				fprintf(stderr, "got ack (%d) %s\n", ack,
+					sha1_to_hex(result_sha1));
+			if (ack == 1)
+				return 0;
+			multi_ack = 1;
+			continue;
 		}
+		flushes--;
 	}
 	return retval;
 }
@@ -344,6 +365,11 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	pid_t pid;
 
 	get_remote_heads(fd[0], &ref, 0, NULL, 0);
+	if (server_supports("multi_ack")) {
+		if (verbose)
+			fprintf(stderr, "Server supports multi_ack\n");
+		multi_ack = 1;
+	}
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
