@@ -153,16 +153,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		 * reachable and we have already scanned it.
 		 */
 		if (((o = lookup_object(remote)) != NULL) &&
-		    (o->flags & COMPLETE)) {
-			o = deref_tag(o);
-
-			if (o->type == commit_type) {
-				struct commit *commit = (struct commit *)o;
-
-				rev_list_push(commit, COMMON_REF | SEEN);
-
-				mark_common(commit, 1, 1);
-			}
+				(o->flags & COMPLETE)) {
 			continue;
 		}
 
@@ -247,7 +238,29 @@ static void mark_recent_complete_commits(unsigned long cutoff)
 	}
 }
 
-static int everything_local(struct ref *refs)
+static void filter_refs(struct ref **refs, int nr_match, char **match)
+{
+	struct ref *prev, *current, *next;
+
+	if (!nr_match)
+		return;
+
+	for (prev = NULL, current = *refs; current; current = next) {
+		next = current->next;
+		if ((!memcmp(current->name, "refs/", 5) &&
+					check_ref_format(current->name + 5)) ||
+				!path_match(current->name, nr_match, match)) {
+			if (prev == NULL)
+				*refs = next;
+			else
+				prev->next = next;
+			free(current);
+		} else
+			prev = current;
+	}
+}
+
+static int everything_local(struct ref **refs, int nr_match, char **match)
 {
 	struct ref *ref;
 	int retval;
@@ -256,7 +269,7 @@ static int everything_local(struct ref *refs)
 	track_object_refs = 0;
 	save_commit_buffer = 0;
 
-	for (ref = refs; ref; ref = ref->next) {
+	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
 		o = parse_object(ref->old_sha1);
@@ -278,28 +291,47 @@ static int everything_local(struct ref *refs)
 	if (cutoff)
 		mark_recent_complete_commits(cutoff);
 
-	for (retval = 1; refs ; refs = refs->next) {
-		const unsigned char *remote = refs->old_sha1;
+	/*
+	 * Mark all complete remote refs as common refs.
+	 * Don't mark them common yet; the server has to be told so first.
+	 */
+	for (ref = *refs; ref; ref = ref->next) {
+		struct object *o = deref_tag(lookup_object(ref->old_sha1));
+
+		if (!o || o->type != commit_type || !(o->flags & COMPLETE))
+			continue;
+
+		if (!(o->flags & SEEN)) {
+			rev_list_push((struct commit *)o, COMMON_REF | SEEN);
+
+			mark_common((struct commit *)o, 1, 1);
+		}
+	}
+
+	filter_refs(refs, nr_match, match);
+
+	for (retval = 1, ref = *refs; ref ; ref = ref->next) {
+		const unsigned char *remote = ref->old_sha1;
 		unsigned char local[20];
 		struct object *o;
 
-		o = parse_object(remote);
+		o = lookup_object(remote);
 		if (!o || !(o->flags & COMPLETE)) {
 			retval = 0;
 			if (!verbose)
 				continue;
 			fprintf(stderr,
 				"want %s (%s)\n", sha1_to_hex(remote),
-				refs->name);
+				ref->name);
 			continue;
 		}
 
-		memcpy(refs->new_sha1, local, 20);
+		memcpy(ref->new_sha1, local, 20);
 		if (!verbose)
 			continue;
 		fprintf(stderr,
 			"already have %s (%s)\n", sha1_to_hex(remote),
-			refs->name);
+			ref->name);
 	}
 	return retval;
 }
@@ -311,12 +343,12 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	int status;
 	pid_t pid;
 
-	get_remote_heads(fd[0], &ref, nr_match, match, 1);
+	get_remote_heads(fd[0], &ref, 0, NULL, 0);
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
 	}
-	if (everything_local(ref)) {
+	if (everything_local(&ref, nr_match, match)) {
 		packet_flush(fd[1]);
 		goto all_done;
 	}
