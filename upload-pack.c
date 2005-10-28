@@ -12,7 +12,7 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define WANTED (1U << 2)
 #define MAX_HAS 256
 #define MAX_NEEDS 256
-static int nr_has = 0, nr_needs = 0, nr_our_refs = 0;
+static int nr_has = 0, nr_needs = 0, multi_ack = 0, nr_our_refs = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
 static unsigned int timeout = 0;
@@ -119,7 +119,7 @@ static int got_sha1(char *hex, unsigned char *sha1)
 static int get_common_commits(void)
 {
 	static char line[1000];
-	unsigned char sha1[20];
+	unsigned char sha1[20], last_sha1[20];
 	int len;
 
 	track_object_refs = 0;
@@ -130,39 +130,36 @@ static int get_common_commits(void)
 		reset_timeout();
 
 		if (!len) {
-			packet_write(1, "NAK\n");
+			if (nr_has == 0 || multi_ack)
+				packet_write(1, "NAK\n");
 			continue;
 		}
 		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
-			if (got_sha1(line+5, sha1)) {
-				packet_write(1, "ACK %s\n", sha1_to_hex(sha1));
-				break;
+			if (got_sha1(line+5, sha1) &&
+					(multi_ack || nr_has == 1)) {
+				if (nr_has >= MAX_HAS)
+					multi_ack = 0;
+				packet_write(1, "ACK %s%s\n",
+					sha1_to_hex(sha1),
+					multi_ack ?  " continue" : "");
+				if (multi_ack)
+					memcpy(last_sha1, sha1, 20);
 			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
+			if (nr_has > 0) {
+				if (multi_ack)
+					packet_write(1, "ACK %s\n",
+							sha1_to_hex(last_sha1));
+				return 0;
+			}
 			packet_write(1, "NAK\n");
 			return -1;
 		}
 		die("git-upload-pack: expected SHA1 list, got '%s'", line);
 	}
-
-	for (;;) {
-		len = packet_read_line(0, line, sizeof(line));
-		reset_timeout();
-		if (!len)
-			continue;
-		len = strip(line, len);
-		if (!strncmp(line, "have ", 5)) {
-			got_sha1(line+5, sha1);
-			continue;
-		}
-		if (!strcmp(line, "done"))
-			break;
-		die("git-upload-pack: expected SHA1 list, got '%s'", line);
-	}
-	return 0;
 }
 
 static int receive_needs(void)
@@ -192,6 +189,8 @@ static int receive_needs(void)
 		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
+		if (strstr(line+45, "multi_ack"))
+			multi_ack = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -213,9 +212,11 @@ static int receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
+	static char *capabilities = "\0multi_ack";
 	struct object *o = parse_object(sha1);
 
-	packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
+	packet_write(1, "%s %s%s\n", sha1_to_hex(sha1), refname, capabilities);
+	capabilities = "";
 	if (!(o->flags & OUR_REF)) {
 		o->flags |= OUR_REF;
 		nr_our_refs++;
