@@ -9,15 +9,13 @@ git-update-index - Modifies the index or directory cache
 SYNOPSIS
 --------
 'git-update-index'
-	     [--add] [--remove] [--unmerged] [--refresh] [--replace]
+	     [--add] [--remove | --force-remove] [--replace] 
+	     [--refresh [-q] [--unmerged] [--ignore-missing]]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
-	     [--info-only]
-	     [--force-remove]
-	     [--stdin]
-	     [--index-info]
-	     [--ignore-missing]
-	     [-z]
+	     [--info-only] [--index-info]
+	     [-z] [--stdin]
+	     [--verbose]
 	     [--] [<file>]\*
 
 DESCRIPTION
@@ -45,12 +43,28 @@ OPTIONS
 	Looks at the current cache and checks to see if merges or
 	updates are needed by checking stat() information.
 
+-q::
+        Quiet.  If --refresh finds that the cache needs an update, the
+        default behavior is to error out.  This option makes
+        git-update-index continue anyway.
+
+--unmerged::
+        If --refresh finds unmerged changes in the cache, the default 
+        behavior is to error out.  This option makes git-update-index 
+        continue anyway.
+
 --ignore-missing::
 	Ignores missing files during a --refresh
 
 --cacheinfo <mode> <object> <path>::
 	Directly insert the specified info into the cache.
 	
+--index-info::
+        Read index info from stdin.
+
+--chmod=(+|-)x::
+        Set the execute permissions on the updated files.        
+
 --info-only::
 	Do not create objects in the object database for all
 	<file> arguments that follow this flag; just insert
@@ -72,6 +86,9 @@ OPTIONS
 	Instead of taking list of paths from the command line,
 	read list of paths from the standard input.  Paths are
 	separated by LF (i.e. one path per line) by default.
+
+--verbose::
+        Report what is being added and removed from index.
 
 -z::
 	Only meaningful with `--stdin`; paths are separated with
