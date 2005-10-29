@@ -430,6 +430,37 @@ gitlink:gitk[1]::
 	gitk.
 
 
+Configuration Mechanism
+-----------------------
+
+Starting from 0.99.9 (actually mid 0.99.8.GIT), .git/config file
+is used to hold per-repository configuration options.  It is a
+simple text file modelled after `.ini` format familiar to some
+people.  Here is an example:
+
+------------
+#
+# This is the config file, and
+# a '#' or ';' character indicates
+# a comment
+#
+
+; core variables
+[core]
+	; Don't trust file modes
+	filemode = false
+
+; user identity
+[user]
+	name = "Junio C Hamano"
+	email = "junkio@twinsun.com"
+
+------------
+
+Various commands read from the configuration file and adjust
+their operation accordingly.
+
+
 Identifier Terminology
 ----------------------
 <object>::
