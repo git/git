@@ -6,7 +6,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-	die 'git commit [-a] [-v | --no-verify]  [-m <message>] [-F <logfile>] [(-C|-c) <commit>] [<path>...]'
+	die 'git commit [-a] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [<path>...]'
 }
 
 all= logfile= use_commit= no_edit= log_given= log_message= verify=t signoff=
