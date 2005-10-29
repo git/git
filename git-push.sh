@@ -28,7 +28,8 @@ do
 done
 case "$#" in
 0)
-	die "Where would you want to push today?" ;;
+	echo "Where would you want to push today?"
+        usage ;;
 esac
 
 . git-parse-remote
