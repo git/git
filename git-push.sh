@@ -1,6 +1,11 @@
 #!/bin/sh
 . git-sh-setup || die "Not a git archive"
 
+usage () {
+    die "Usage: git push [--all] [--force] <repository> [<refspec>]"
+}
+
+
 # Parse out parameters and then stop at remote, so that we can
 # translate it using .git/branches information
 has_all=
@@ -18,7 +23,7 @@ do
 	--exec=*)
 		has_exec="$1" ;;
 	-*)
-		die "Unknown parameter $1" ;;
+                usage ;;
         *)
 		set x "$@"
 		shift
@@ -41,8 +46,10 @@ esac
 shift
 
 case "$remote" in
-http://* | https://* | git://* | rsync://* )
-	die "Cannot push to $remote" ;;
+http://* | https://* | git://*)
+	die "Cannot use READ-ONLY transport to push to $remote" ;;
+rsync://*)
+        die "Pushing with rsync transport is deprecated" ;;
 esac
 
 set x "$remote" "$@"; shift
