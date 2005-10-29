@@ -68,7 +68,7 @@ diff-patch format.
 
 
 diffcore-pathspec: For Ignoring Files Outside Our Consideration
------------------
+---------------------------------------------------------------
 
 The first transformation in the chain is diffcore-pathspec, and
 is controlled by giving the pathname parameters to the
@@ -92,7 +92,7 @@ use diffcore-pathspec, but the end result is the same.
 
 
 diffcore-break: For Splitting Up "Complete Rewrites"
---------------
+----------------------------------------------------
 
 The second transformation in the chain is diffcore-break, and is
 controlled by the -B option to the git-diff-* commands.  This is
@@ -127,7 +127,7 @@ after "-B" option (e.g. "-B75" to tell it to use 75%).
 
 
 diffcore-rename: For Detection Renames and Copies
----------------
+-------------------------------------------------
 
 This transformation is used to detect renames and copies, and is
 controlled by the -M option (to detect renames) and the -C option
@@ -185,7 +185,7 @@ copied happened to have been modified in the same changeset.
 
 
 diffcore-merge-broken: For Putting "Complete Rewrites" Back Together
----------------------
+--------------------------------------------------------------------
 
 This transformation is used to merge filepairs broken by
 diffcore-break, and not transformed into rename/copy by
@@ -227,7 +227,7 @@ version prefixed with '+'.
 
 
 diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
-----------------
+---------------------------------------------------------------------
 
 This transformation is used to find filepairs that represent
 changes that touch a specified string, and is controlled by the
@@ -250,7 +250,7 @@ changeset easier.
 
 
 diffcore-order: For Sorting the Output Based on Filenames
---------------
+---------------------------------------------------------
 
 This is used to reorder the filepairs according to the user's
 (or project's) taste, and is controlled by the -O option to the
