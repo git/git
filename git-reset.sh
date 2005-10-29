@@ -1,6 +1,10 @@
 #!/bin/sh
 . git-sh-setup || die "Not a git archive"
 
+usage () {
+	die 'Usage: git reset [--mixed | --soft | --hard]  [<commit-ish>]'
+}
+
 tmp=/var/tmp/reset.$$
 trap 'rm -f $tmp-*' 0 1 2 3 15
 
@@ -10,6 +14,8 @@ case "$1" in
 	reset_type="$1"
 	shift
 	;;
+-*)
+        usage ;;
 esac
 
 rev=$(git-rev-parse --verify --default HEAD "$@") || exit
