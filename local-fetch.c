@@ -83,31 +83,23 @@ static int copy_file(const char *source, char *dest, const char *hex,
 		}
 	}
 	if (use_filecopy) {
-		int ifd, ofd, status;
-		struct stat st;
-		void *map;
+		int ifd, ofd, status = 0;
+
 		ifd = open(source, O_RDONLY);
-		if (ifd < 0 || fstat(ifd, &st) < 0) {
-			int err = errno;
-			if (ifd >= 0)
-				close(ifd);
-			if (!warn_if_not_exists && err == ENOENT)
+		if (ifd < 0) {
+			if (!warn_if_not_exists && errno == ENOENT)
 				return -1;
 			fprintf(stderr, "cannot open %s\n", source);
 			return -1;
 		}
-		map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, ifd, 0);
-		close(ifd);
-		if (map == MAP_FAILED) {
-			fprintf(stderr, "cannot mmap %s\n", source);
+		ofd = open(dest, O_WRONLY | O_CREAT | O_EXCL, 0666);
+		if (ofd < 0) {
+			fprintf(stderr, "cannot open %s\n", dest);
+			close(ifd);
 			return -1;
 		}
-		ofd = open(dest, O_WRONLY | O_CREAT | O_EXCL, 0666);
-		status = ((ofd < 0) ||
-			  (write(ofd, map, st.st_size) != st.st_size));
-		munmap(map, st.st_size);
-		if (ofd >= 0)
-			close(ofd);
+		status = copy_fd(ifd, ofd);
+		close(ofd);
 		if (status)
 			fprintf(stderr, "cannot write %s\n", dest);
 		else
