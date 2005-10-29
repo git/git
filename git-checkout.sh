@@ -1,6 +1,10 @@
 #!/bin/sh
 . git-sh-setup || die "Not a git archive"
 
+usage () {
+    die "usage: git checkout [-f] [-b <new_branch>] [<branch>] [<paths>...]"
+}
+
 old=$(git-rev-parse HEAD)
 new=
 force=
@@ -25,6 +29,9 @@ while [ "$#" != "0" ]; do
 		;;
 	--)
 		break
+		;;
+	-*)
+		usage
 		;;
 	*)
 		if rev=$(git-rev-parse --verify "$arg^0" 2>/dev/null)
