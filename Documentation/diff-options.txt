@@ -4,10 +4,6 @@
 -u::
 	Synonym for "-p".
 
--r::
-	Look recursively in subdirectories; only used by "git-diff-tree";
-	other diff commands always work recursively.
-
 -z::
 	\0 line termination on output
 
