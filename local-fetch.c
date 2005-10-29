@@ -52,9 +52,10 @@ static int setup_indices(void)
 	return 0;
 }
 
-static int copy_file(const char *source, const char *dest, const char *hex,
+static int copy_file(const char *source, char *dest, const char *hex,
 		     int warn_if_not_exists)
 {
+	safe_create_leading_directories(dest);
 	if (use_link) {
 		if (!link(source, dest)) {
 			pull_say("link %s\n", hex);
@@ -150,7 +151,7 @@ static int fetch_file(const unsigned char *sha1)
 	static int object_name_start = -1;
 	static char filename[PATH_MAX];
 	char *hex = sha1_to_hex(sha1);
-	const char *dest_filename = sha1_file_name(sha1);
+	char *dest_filename = sha1_file_name(sha1);
 
  	if (object_name_start < 0) {
 		strcpy(filename, path); /* e.g. git.git */
