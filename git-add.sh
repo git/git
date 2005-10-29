@@ -1,5 +1,9 @@
 #!/bin/sh
 
+usage() {
+    die "usage: git add [-n] [-v] <file>..."
+}
+
 show_only=
 verbose=
 while : ; do
@@ -9,6 +13,9 @@ while : ; do
 	;;
     -v)
 	verbose=--verbose
+	;;
+    -*)
+	usage
 	;;
     *)
 	break
