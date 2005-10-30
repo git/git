@@ -8,7 +8,7 @@ git-pack-objects - Create a packed archive of objects.
 
 SYNOPSIS
 --------
-'git-pack-objects' [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list
+'git-pack-objects' [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list
 
 
 DESCRIPTION
@@ -64,6 +64,11 @@ base-name::
 	This flag causes an object already in a pack ignored
 	even if it appears in the standard input.
 
+--local::
+	This flag is similar to `--incremental`; instead of
+	ignoring all packed objects, it only ignores objects
+	that are packed and not in the local object store
+	(i.e. borrowed from an alternate).
 
 Author
 ------
