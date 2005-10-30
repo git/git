@@ -8,7 +8,18 @@ git-rev-list - Lists commit objects in reverse chronological order
 
 SYNOPSIS
 --------
-'git-rev-list' [ *--max-count*=number ] [ *--max-age*=timestamp ] [ *--min-age*=timestamp ] [ *--bisect* ] [ *--pretty* ] [ *--objects* ] [ *--merge-order* [ *--show-breaks* ] ] <commit> [ <commit> ...] [ ^<commit> ...]
+'git-rev-list' [ \--max-count=number ]
+	[ \--max-age=timestamp ]
+	[ \--min-age=timestamp ]
+	[ \--sparse ]
+	[ \--no-merges ]
+	[ \--all ]
+	[ [ \--merge-order [ \--show-breaks ] ] | [ \--topo-order ] | ]
+	[ \--parents ]
+	[ \--objects [ \--unpacked ] ]
+	[ \--pretty | \--header | ]
+	[ \--bisect ]
+	<commit>... [ \-- <paths>... ]
 
 DESCRIPTION
 -----------
@@ -16,21 +27,33 @@ Lists commit objects in reverse chronological order starting at the
 given commit(s), taking ancestry relationship into account.  This is
 useful to produce human-readable log output.
 
-Commits which are stated with a preceding '^' cause listing to stop at
-that point. Their parents are implied. "git-rev-list foo bar ^baz" thus
+Commits which are stated with a preceding '{caret}' cause listing to stop at
+that point. Their parents are implied. "git-rev-list foo bar {caret}baz" thus
 means "list all the commits which are included in 'foo' and 'bar', but
 not in 'baz'".
+
+A special notation <commit1>..<commit2> can be used as a
+short-hand for {caret}<commit1> <commit2>.
+
 
 OPTIONS
 -------
 --pretty::
 	Print the contents of the commit changesets in human-readable form.
 
+--header::
+	Print the contents of the commit in raw-format; each
+	record is separated with a NUL character.
+
 --objects::
 	Print the object IDs of any object referenced by the listed commits.
 	'git-rev-list --objects foo ^bar' thus means "send me all object IDs
 	which I need to download if I have the commit object 'bar', but
 	not 'foo'".
+
+--unpacked::
+	Only useful with `--objects`; print the object IDs that
+	are not in packs.
 
 --bisect::
 	Limit output to the one commit object which is roughly halfway
@@ -41,6 +64,29 @@ OPTIONS
 	which introduces a regression is thus reduced to a binary search:
 	repeatedly generate and test new 'midpoint's until the commit chain
 	is of length one.
+
+--max-count::
+	Limit the number of commits output.
+
+--max-age=timestamp, --min-age=timestamp::
+	Limit the commits output to specified time range.
+
+--sparse::
+	When optional paths are given, the command outputs only
+	the commits that changes at least one of them.  This
+	flag makes the command ignore the paths, outputting all
+	eligible commits (still subject to count and age
+	limitation).
+
+--all::
+	Pretend as if all the refs in `$GIT_DIR/refs/` are
+	listed on the command line as <commit>.
+
+--topo-order::
+	By default, the commits are shown in reverse
+	chronological order.  This option makes them appear in
+	topological order (i.e. descendant commits are shown
+	before their parents).
 
 --merge-order::
 	When specified the commit history is decomposed into a unique
@@ -84,7 +130,8 @@ Commits marked with (^) are not parents of the immediately preceding commit.
 These "breaks" represent necessary discontinuities implied by trying to
 represent an arbtirary DAG in a linear form.
 +
-*--show-breaks* is only valid if *--merge-order* is also specified.
+`--show-breaks` is only valid if `--merge-order` is also specified.
+
 
 Author
 ------

@@ -14,19 +14,25 @@
 #define TREECHANGE	(1u << 4)
 
 static const char rev_list_usage[] =
-	"git-rev-list [OPTION] commit-id <commit-id>\n"
-		      "  --max-count=nr\n"
-		      "  --max-age=epoch\n"
-		      "  --min-age=epoch\n"
-		      "  --parents\n"
-		      "  --bisect\n"
-		      "  --objects\n"
-		      "  --unpacked\n"
-		      "  --header\n"
-		      "  --pretty\n"
-		      "  --no-merges\n"
-		      "  --merge-order [ --show-breaks ]\n"
-		      "  --topo-order";
+"git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
+"  limiting output:\n"
+"    --max-count=nr\n"
+"    --max-age=epoch\n"
+"    --min-age=epoch\n"
+"    --sparse\n"
+"    --no-merges\n"
+"    --all\n"
+"  ordering output:\n"
+"    --merge-order [ --show-breaks ]\n"
+"    --topo-order\n"
+"  formatting output:\n"
+"    --parents\n"
+"    --objects\n"
+"    --unpacked\n"
+"    --header | --pretty\n"
+"  special purpose:\n"
+"    --bisect"
+;
 
 static int dense = 1;
 static int unpacked = 0;
