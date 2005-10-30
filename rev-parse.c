@@ -34,6 +34,7 @@ static int is_rev_argument(const char *arg)
 	static const char *rev_args[] = {
 		"--all",
 		"--bisect",
+		"--dense",
 		"--header",
 		"--max-age=",
 		"--max-count=",
@@ -44,6 +45,7 @@ static int is_rev_argument(const char *arg)
 		"--parents",
 		"--pretty",
 		"--show-breaks",
+		"--sparse",
 		"--topo-order",
 		"--unpacked",
 		NULL
