@@ -10,7 +10,7 @@
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
 
-require v5.8.0; # for shell-safe open("-|",LIST)
+require 5.008; # for shell-safe open("-|",LIST)
 use strict;
 use warnings;
 use Getopt::Std;
