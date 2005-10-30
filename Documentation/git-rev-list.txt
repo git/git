@@ -73,10 +73,11 @@ OPTIONS
 
 --sparse::
 	When optional paths are given, the command outputs only
-	the commits that changes at least one of them.  This
-	flag makes the command ignore the paths, outputting all
-	eligible commits (still subject to count and age
-	limitation).
+	the commits that changes at least one of them, and also
+	ignores merges that do not touch the given paths.  This
+	flag makes the command output all eligible commits
+	(still subject to count and age limitation), but apply
+	merge simplification nevertheless.
 
 --all::
 	Pretend as if all the refs in `$GIT_DIR/refs/` are
