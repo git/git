@@ -3125,7 +3125,7 @@ proc linehover {} {
     set t [$canv create rectangle $x0 $y0 $x1 $y1 \
 	       -fill \#ffff80 -outline black -width 1 -tags hover]
     $canv raise $t
-    set t [$canv create text $x $y -anchor nw -text $text -tags hover]
+    set t [$canv create text $x $y -anchor nw -text $text -tags hover -font $mainfont]
     $canv raise $t
 }
 
