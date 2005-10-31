@@ -5,6 +5,10 @@
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
+LF='
+'
+IFS="$LF"
+
 tags=
 append=
 force=
@@ -110,7 +114,12 @@ fast_forward_local () {
 	# is no way to guarantee "fast-forward" anyway.
 	if test -f "$GIT_DIR/$1"
 	then
-		echo >&2 "* $1: updating with $3"
+		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
+		then
+			echo >&2 "* $1: same as $3"
+		else
+			echo >&2 "* $1: updating with $3"
+		fi
 	else
 		echo >&2 "* $1: storing $3"
 	fi
@@ -178,7 +187,7 @@ then
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.
-		reflist="$reflist $taglist"
+		reflist="$reflist$LF$taglist"
 	else
 		# No explicit refspecs; fetch tags only.
 		reflist=$taglist
@@ -187,7 +196,7 @@ fi
 
 for ref in $reflist
 do
-    refs="$refs $ref"
+    refs="$refs$LF$ref"
 
     # These are relative path from $GIT_DIR, typically starting at refs/
     # but may be HEAD
@@ -208,7 +217,7 @@ do
     remote_name=$(expr "$ref" : '\([^:]*\):')
     local_name=$(expr "$ref" : '[^:]*:\(.*\)')
 
-    rref="$rref $remote_name"
+    rref="$rref$LF$remote_name"
 
     # There are transports that can fetch only one head at a time...
     case "$remote" in
@@ -216,7 +225,12 @@ do
 	if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	    curl_extra_args="-k"
 	fi
-	head=$(curl -nsf $curl_extra_args "$remote/$remote_name") &&
+	remote_name_quoted=$(perl -e '
+	    my $u = $ARGV[0];
+	    $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
+	    print "$u";
+	' "$remote_name")
+	head=$(curl -nsf $curl_extra_args "$remote/$remote_name_quoted") &&
 	expr "$head" : "$_x40\$" >/dev/null ||
 		die "Failed to fetch $remote_name from $remote"
 	echo >&2 Fetching "$remote_name from $remote" using http
@@ -266,6 +280,7 @@ case "$remote" in
 http://* | https://* | rsync://* )
     ;; # we are already done.
 *)
+    IFS=" 	$LF"
     (
 	git-fetch-pack "$remote" $rref || echo failed "$remote"
     ) |

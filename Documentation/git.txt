@@ -1,6 +1,5 @@
 git(7)
 ======
-v0.99.6, Sep 2005
 
 NAME
 ----
@@ -69,6 +68,9 @@ gitlink:git-commit-tree[1]::
 gitlink:git-hash-object[1]::
 	Computes the object ID from a file.
 
+gitlink:git-index-pack.html[1]::
+	Build pack index file for an existing packed archive.
+
 gitlink:git-init-db[1]::
 	Creates an empty git object database
 
@@ -131,6 +133,9 @@ gitlink:git-ls-tree[1]::
 gitlink:git-merge-base[1]::
 	Finds as good a common ancestor as possible for a merge
 
+gitlink:git-name-rev[1]::
+	Find symbolic names for given revs
+
 gitlink:git-rev-list[1]::
 	Lists commit objects in reverse chronological order
 
@@ -147,7 +152,7 @@ gitlink:git-var[1]::
 	Displays a git logical variable
 
 gitlink:git-verify-pack[1]::
-	Validates packed GIT archive files
+	Validates packed git archive files
 
 The interrogate commands may create files - and you can force them to
 touch the working file set - but in general they don't
@@ -164,11 +169,11 @@ gitlink:git-fetch-pack[1]::
 	Updates from a remote repository.
 
 gitlink:git-http-fetch[1]::
-	Downloads a remote GIT repository via HTTP
+	Downloads a remote git repository via HTTP
 	Previously this command was known as git-http-pull.
 
 gitlink:git-local-fetch[1]::
-	Duplicates another GIT repository on a local system
+	Duplicates another git repository on a local system
 	Previously this command was known as git-local-pull.
 
 gitlink:git-peek-remote[1]::
@@ -179,6 +184,9 @@ gitlink:git-receive-pack[1]::
 
 gitlink:git-send-pack[1]::
 	Pushes to a remote repository, intelligently.
+
+gitlink:git-shell[1]::
+	Restricted shell for GIT-only SSH access.
 
 gitlink:git-ssh-fetch[1]::
 	Pulls from a remote repository over ssh connection
@@ -203,6 +211,9 @@ Porcelain-ish Commands
 gitlink:git-add[1]::
 	Add paths to the index file.
 	Previously this command was known as git-add-script.
+
+gitlink:git-am[1]::
+	Apply patches from a mailbox, but cooler.
 
 gitlink:git-applymbox[1]::
 	Apply patches from a mailbox.
@@ -256,6 +267,9 @@ gitlink:git-ls-remote[1]::
 
 gitlink:git-merge[1]::
 	Grand unified merge driver.
+
+gitlink:git-mv[1]::
+	Move or rename a file, a directory, or a symlink.
 
 gitlink:git-octopus[1]::
 	Merge more than two commits.
@@ -323,7 +337,7 @@ gitlink:git-archimport[1]::
 	Previously this command was known as git-archimport-script.
 
 gitlink:git-convert-objects[1]::
-	Converts old-style GIT repository
+	Converts old-style git repository
 	Previously this command was known as git-convert-cache.
 
 gitlink:git-cvsimport[1]::
@@ -342,16 +356,28 @@ gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.
 	Previously this command was known as git-relink-script.
 
+gitlink:git-svnimport[1]::
+	Import a SVN repository into git.
+
 gitlink:git-sh-setup[1]::
 	Common git shell script setup code.
 	Previously this command was known as git-sh-setup-script.
+
+gitlink:git-symbolic-ref[1]::
+	Read and modify symbolic refs
 
 gitlink:git-tag[1]::
 	An example script to create a tag object signed with GPG
 	Previously this command was known as git-tag-script.
 
+gitlink:git-update-ref[1]::
+	Update the object name stored in a ref safely.
+
 
 Interrogators:
+
+gitlink:git-check-ref-format[1]::
+	Make sure ref name is well formed.
 
 gitlink:git-cherry[1]::
 	Find commits not merged upstream.
@@ -361,7 +387,7 @@ gitlink:git-count-objects[1]::
 	Previously this command was known as git-count-objects-script.
 
 gitlink:git-daemon[1]::
-	A really simple server for GIT repositories.
+	A really simple server for git repositories.
 
 gitlink:git-get-tar-commit-id[1]::
 	Extract commit ID from an archive created using git-tar-tree.
@@ -390,6 +416,9 @@ gitlink:git-send-email[1]::
 	Send patch e-mails out of "format-patch --mbox" output.
 	Previously this command was known as git-send-email-script.
 
+gitlink:git-symbolic-refs[1]::
+	Read and modify symbolic refs.
+
 gitlink:git-stripspace[1]::
 	Filter out empty lines.
 
@@ -399,6 +428,37 @@ Commands not yet documented
 
 gitlink:gitk[1]::
 	gitk.
+
+
+Configuration Mechanism
+-----------------------
+
+Starting from 0.99.9 (actually mid 0.99.8.GIT), .git/config file
+is used to hold per-repository configuration options.  It is a
+simple text file modelled after `.ini` format familiar to some
+people.  Here is an example:
+
+------------
+#
+# This is the config file, and
+# a '#' or ';' character indicates
+# a comment
+#
+
+; core variables
+[core]
+	; Don't trust file modes
+	filemode = false
+
+; user identity
+[user]
+	name = "Junio C Hamano"
+	email = "junkio@twinsun.com"
+
+------------
+
+Various commands read from the configuration file and adjust
+their operation accordingly.
 
 
 Identifier Terminology

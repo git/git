@@ -1,52 +1,16 @@
-#include "rsh.h"
-
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "rsh.h"
+#include "quote.h"
 #include "cache.h"
 
 #define COMMAND_SIZE 4096
 
 /*
- * Write a shell-quoted version of a string into a buffer, and
- * return bytes that ought to be output excluding final null.
- */
-static int shell_quote(char *buf, int nmax, const char *str)
-{
-	char ch;
-	int nq;
-	int oc = 0;
-
-	while ( (ch = *str++) ) {
-		nq = 0;
-		if ( strchr(" !\"#$%&\'()*;<=>?[\\]^`{|}", ch) )
-			nq = 1;
-
-		if ( nq ) {
-			if ( nmax > 1 ) {
-				*buf++ = '\\';
-				nmax--;
-			}
-			oc++;
-		}
-
-		if ( nmax > 1 ) {
-			*buf++ = ch;
-			nmax--;
-		}
-		oc++;
-	}
-
-	if ( nmax )
-		*buf = '\0';
-
-	return oc;
-}
-			
-/*
- * Append a string to a string buffer, with or without quoting.  Return true
- * if the buffer overflowed.
+ * Append a string to a string buffer, with or without shell quoting.
+ * Return true if the buffer overflowed.
  */
 static int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
 {
@@ -56,7 +20,7 @@ static int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
 	int err = 0;
 
 	if ( quote ) {
-		oc = shell_quote(p, size, str);
+		oc = sq_quote_buf(p, size, str);
 	} else {
 		oc = strlen(str);
 		memcpy(p, str, (oc >= size) ? size-1 : oc);
@@ -109,8 +73,7 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	posn = command;
 	of = 0;
 	of |= add_to_string(&posn, &sizen, "env ", 0);
-	of |= add_to_string(&posn, &sizen, GIT_DIR_ENVIRONMENT, 0);
-	of |= add_to_string(&posn, &sizen, "=", 0);
+	of |= add_to_string(&posn, &sizen, GIT_DIR_ENVIRONMENT "=", 0);
 	of |= add_to_string(&posn, &sizen, path, 1);
 	of |= add_to_string(&posn, &sizen, " ", 0);
 	of |= add_to_string(&posn, &sizen, remote_prog, 1);

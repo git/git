@@ -1,15 +1,14 @@
 git-apply(1)
 ============
-v0.1, June 2005
 
 NAME
 ----
-git-apply - Apply patch on a GIT index file and a work tree
+git-apply - Apply patch on a git index file and a work tree
 
 
 SYNOPSIS
 --------
-'git-apply' [--no-merge] [--stat] [--summary] [--check] [--index] [--show-files] [--apply] [<patch>...]
+'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -22,14 +21,15 @@ OPTIONS
 	The files to read patch from.  '-' can be used to read
 	from the standard input.
 
---no-merge::
-	The default mode of operation is the merge behaviour
-	which is not implemented yet.  This flag explicitly
-	tells the program not to use the merge behaviour.
-
 --stat::
 	Instead of applying the patch, output diffstat for the
 	input.  Turns off "apply".
+
+--numstat::
+	Similar to \--stat, but shows number of added and
+	deleted lines in decimal notation and pathname without
+	abbreviation, to make it more machine friendly.  Turns
+	off "apply".
 
 --summary::
 	Instead of applying the patch, output a condensed
@@ -51,8 +51,19 @@ OPTIONS
 	up-to-date, it is flagged as an error.  This flag also
 	causes the index file to be updated.
 
---show-files::
-	Show summary of files that are affected by the patch.
+--index-info::
+	Newer git-diff output has embedded 'index information'
+	for each blob to help identify the original version that
+	the patch applies to.  When this flag is given, and if
+	the original version of the blob is available locally,
+	outputs information about them to the standard output.
+
+-z::
+	When showing the index information, do not munge paths,
+	but use NUL terminated machine readable format.  Without
+	this flag, the pathnames output will have TAB, LF, and
+	backslash characters replaced with `\t`, `\n`, and `\\`,
+	respectively.
 
 --apply::
 	If you use any of the options marked ``Turns off

@@ -8,12 +8,9 @@
 #include "cache.h"
 
 #include <pwd.h>
-#include <time.h>
-#include <ctype.h>
+#include <netdb.h>
 
-static char real_email[1000];
-static char real_name[1000];
-static char real_date[50];
+static char git_default_date[50];
 
 static void copy_gecos(struct passwd *w, char *name, int sz)
 {
@@ -58,22 +55,29 @@ int setup_ident(void)
 		die("You don't exist. Go away!");
 
 	/* Get the name ("gecos") */
-	copy_gecos(pw, real_name, sizeof(real_name));
+	copy_gecos(pw, git_default_name, sizeof(git_default_name));
 
 	/* Make up a fake email address (name + '@' + hostname [+ '.' + domainname]) */
 	len = strlen(pw->pw_name);
-	if (len > sizeof(real_email)/2)
+	if (len > sizeof(git_default_email)/2)
 		die("Your sysadmin must hate you!");
-	memcpy(real_email, pw->pw_name, len);
-	real_email[len++] = '@';
-	gethostname(real_email + len, sizeof(real_email) - len);
-	if (!strchr(real_email+len, '.')) {
-		len = strlen(real_email);
-		real_email[len++] = '.';
-		getdomainname(real_email+len, sizeof(real_email)-len);
+	memcpy(git_default_email, pw->pw_name, len);
+	git_default_email[len++] = '@';
+	gethostname(git_default_email + len, sizeof(git_default_email) - len);
+	if (!strchr(git_default_email+len, '.')) {
+		struct hostent *he = gethostbyname(git_default_email + len);
+		char *domainname;
+
+		len = strlen(git_default_email);
+		git_default_email[len++] = '.';
+		if (he && (domainname = strchr(he->h_name, '.')))
+			strncpy(git_default_email + len, domainname + 1, sizeof(git_default_email) - len);
+		else
+			strncpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
+		git_default_email[sizeof(git_default_email) - 1] = 0;
 	}
 	/* And set the default date */
-	datestamp(real_date, sizeof(real_date));
+	datestamp(git_default_date, sizeof(git_default_date));
 	return 0;
 }
 
@@ -159,10 +163,10 @@ char *get_ident(const char *name, const char *email, const char *date_str)
 	int i;
 
 	if (!name)
-		name = real_name;
+		name = git_default_name;
 	if (!email)
-		email = real_email;
-	strcpy(date, real_date);
+		email = git_default_email;
+	strcpy(date, git_default_date);
 	if (date_str)
 		parse_date(date_str, date, sizeof(date));
 

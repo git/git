@@ -1,6 +1,5 @@
 git-commit(1)
 =============
-v0.99.4, Aug 2005
 
 NAME
 ----
@@ -8,7 +7,7 @@ git-commit - Record your changes
 
 SYNOPSIS
 --------
-'git commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] [-e] <file>...
+'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] [-e] <file>...
 
 DESCRIPTION
 -----------

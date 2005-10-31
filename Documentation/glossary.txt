@@ -1,5 +1,5 @@
 object::
-	The unit of storage in GIT. It is uniquely identified by
+	The unit of storage in git. It is uniquely identified by
 	the SHA1 of its contents. Consequently, an object can not
 	be changed.
 

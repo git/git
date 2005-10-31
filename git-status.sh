@@ -11,7 +11,7 @@ report () {
 #
 "
   trailer=""
-  while read oldmode mode oldsha sha status name newname
+  while read status name newname
   do
     echo -n "$header"
     header=""
@@ -41,16 +41,11 @@ git-update-index -q --unmerged --refresh || exit
 
 if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
 then
-	git-diff-index -M --cached HEAD |
+	git-diff-index -M --cached --name-status HEAD |
 	sed -e '
-		s/^:// 
-		h
-		s/^[^	]*//
+		s/\\/\\\\/g
 		s/ /\\ /g
-		x
-		s/	.*$//
-		G
-		s/\n/ /' |
+	' |
 	report "Updated but not checked in" "will commit"
 
 	committable="$?"
@@ -60,40 +55,48 @@ else
 #'
 	git-ls-files |
 	sed -e '
+		s/\\/\\\\/g
 		s/ /\\ /g
-		s/^/o o o o A /' |
+		s/^/A /
+	' |
 	report "Updated but not checked in" "will commit"
 
 	committable="$?"
 fi
 
-git-diff-files |
+git-diff-files  --name-status |
 sed -e '
-	s/^:// 
-	h
-	s/^[^	]*//
+	s/\\/\\\\/g
 	s/ /\\ /g
-	x
-	s/	.*$//
-	G
-	s/\n/ /' |
+' |
 report "Changed but not updated" "use git-update-index to mark for commit"
 
-if grep -v '^#' "$GIT_DIR/info/exclude" >/dev/null 2>&1
+
+if test -f "$GIT_DIR/info/exclude"
 then
-	git-ls-files --others \
-	    --exclude-from="$GIT_DIR/info/exclude" \
-	    --exclude-per-directory=.gitignore |
-	sed -e '
-	1i\
-#\
-# Ignored files:\
-#   (use "git add" to add to commit)\
-#
-	s/^/#	/
-	$a\
-#'
-fi
+    git-ls-files -z --others \
+	--exclude-from="$GIT_DIR/info/exclude" \
+        --exclude-per-directory=.gitignore
+else
+    git-ls-files -z --others \
+        --exclude-per-directory=.gitignore
+fi |
+perl -e '$/ = "\0";
+	my $shown = 0;
+	while (<>) {
+		chomp;
+		s|\\|\\\\|g;
+		s|\t|\\t|g;
+		s|\n|\\n|g;
+		s/^/#	/;
+		if (!$shown) {
+			print "#\n# Untracked files:\n";
+			print "#   (use \"git add\" to add to commit)\n#\n";
+			$shown = 1;
+		}
+		print "$_\n";
+	}
+'
 
 case "$committable" in
 0)

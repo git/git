@@ -4,7 +4,6 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 
-#include <ctype.h>
 #include <time.h>
 
 #include "cache.h"

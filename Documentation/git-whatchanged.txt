@@ -1,6 +1,5 @@
 git-whatchanged(1)
 ==================
-v0.99.4, Aug 2005
 
 NAME
 ----
@@ -9,7 +8,7 @@ git-whatchanged - Show logs with difference each commit introduces.
 
 SYNOPSIS
 --------
-'git whatchanged' <option>...
+'git-whatchanged' <option>...
 
 DESCRIPTION
 -----------

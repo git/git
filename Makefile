@@ -27,7 +27,11 @@
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
+# Define NO_MMAP if you want to avoid mmap.
+#
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
+#
+# Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
@@ -48,7 +52,7 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION = 0.99.8g
+GIT_VERSION = 0.99.9a
 
 CFLAGS = -g -O2 -Wall
 ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
@@ -83,44 +87,45 @@ SCRIPT_SH = \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
-	git-applymbox.sh git-applypatch.sh \
+	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-grep.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-rename.perl git-shortlog.perl git-fmt-merge-msg.perl
+	git-rename.perl git-shortlog.perl git-fmt-merge-msg.perl \
+	git-findtags.perl git-svnimport.perl git-mv.perl
 
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
-	git-get-tar-commit-id git-mailinfo git-mailsplit git-stripspace \
-	git-daemon git-var
+	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
+	git-stripspace$X git-var$X git-daemon$X
 
 # ... and all the rest
 PROGRAMS = \
-	git-apply git-cat-file \
-	git-checkout-index git-clone-pack git-commit-tree \
-	git-convert-objects git-diff-files \
-	git-diff-index git-diff-stages \
-	git-diff-tree git-fetch-pack git-fsck-objects \
-	git-hash-object git-init-db \
-	git-local-fetch git-ls-files git-ls-tree git-merge-base \
-	git-merge-index git-mktag git-pack-objects git-patch-id \
-	git-peek-remote git-prune-packed git-read-tree \
-	git-receive-pack git-rev-list git-rev-parse \
-	git-send-pack git-show-branch \
-	git-show-index git-ssh-fetch \
-	git-ssh-upload git-tar-tree git-unpack-file \
-	git-unpack-objects git-update-index git-update-server-info \
-	git-upload-pack git-verify-pack git-write-tree \
-	git-update-ref git-symbolic-ref git-check-ref-format \
-	$(SIMPLE_PROGRAMS)
+	git-apply$X git-cat-file$X \
+	git-checkout-index$X git-clone-pack$X git-commit-tree$X \
+	git-convert-objects$X git-diff-files$X \
+	git-diff-index$X git-diff-stages$X \
+	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
+	git-hash-object$X git-index-pack$X git-init-db$X \
+	git-local-fetch$X git-ls-files$X git-ls-tree$X git-merge-base$X \
+	git-merge-index$X git-mktag$X git-pack-objects$X git-patch-id$X \
+	git-peek-remote$X git-prune-packed$X git-read-tree$X \
+	git-receive-pack$X git-rev-list$X git-rev-parse$X \
+	git-send-pack$X git-show-branch$X git-shell$X \
+	git-show-index$X git-ssh-fetch$X \
+	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
+	git-unpack-objects$X git-update-index$X git-update-server-info$X \
+	git-upload-pack$X git-verify-pack$X git-write-tree$X \
+	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
+	git-name-rev$X $(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
-PROGRAMS += git-ssh-pull git-ssh-push
+PROGRAMS += git-ssh-pull$X git-ssh-push$X
 
 GIT_LIST_TWEAK =
 
@@ -146,7 +151,7 @@ LIB_H = \
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
-	diffcore-pickaxe.o diffcore-rename.o
+	diffcore-pickaxe.o diffcore-rename.o tree-diff.o
 
 LIB_OBJS = \
 	blob.o commit.o connect.o count-delta.o csum-file.o \
@@ -154,19 +159,34 @@ LIB_OBJS = \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
-	tag.o tree.o usage.o $(DIFF_OBJS)
+	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
+	$(DIFF_OBJS)
 
 LIBS = $(LIB_FILE)
 LIBS += -lz
 
+# Shell quote;
+# Result of this needs to be placed inside ''
+shq = $(subst ','\'',$(1))
+# This has surrounding ''
+shellquote = '$(call shq,$(1))'
+
 #
 # Platform specific tweaks
 #
-ifeq ($(shell uname -s),Darwin)
+
+# We choose to avoid "if .. else if .. else .. endif endif"
+# because maintaining the nesting to match is a pain.  If
+# we had "elif" things would have been much nicer...
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+
+ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 endif
-ifeq ($(shell uname -s),SunOS)
+ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
@@ -176,14 +196,23 @@ ifeq ($(shell uname -s),SunOS)
 	TAR = gtar
 	PLATFORM_DEFINES += -D__EXTENSIONS__
 endif
-ifneq (,$(findstring arm,$(shell uname -m)))
-	ARM_SHA1 = YesPlease
+ifeq ($(uname_O),Cygwin)
+	NO_STRCASESTR = YesPlease
+	NEEDS_LIBICONV = YesPlease
+	NO_IPV6 = YesPlease
+	X = .exe
+	PLATFORM_DEFINES += -DUSE_SYMLINK_HEAD=0
 endif
-ifeq ($(shell uname -s),OpenBSD)
+ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
 endif
+ifneq (,$(findstring arm,$(uname_M)))
+	ARM_SHA1 = YesPlease
+endif
+
+-include config.mak
 
 ifndef NO_CURL
 	ifdef CURLDIR
@@ -193,7 +222,7 @@ ifndef NO_CURL
 	else
 		CURL_LIBCURL = -lcurl
 	endif
-	PROGRAMS += git-http-fetch
+	PROGRAMS += git-http-fetch$X
 endif
 
 ifndef SHELL_PATH
@@ -217,7 +246,7 @@ ifndef NO_OPENSSL
 		OPENSSL_LINK =
 	endif
 else
-	DEFINES += '-DNO_OPENSSL'
+	DEFINES += -DNO_OPENSSL
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
@@ -250,6 +279,13 @@ ifdef NO_STRCASESTR
 	DEFINES += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
 	LIB_OBJS += compat/strcasestr.o
 endif
+ifdef NO_MMAP
+	DEFINES += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
+	LIB_OBJS += compat/mmap.o
+endif
+ifdef NO_IPV6
+	DEFINES += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
+endif
 
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
@@ -269,14 +305,14 @@ endif
 endif
 endif
 
-DEFINES += '-DSHA1_HEADER=$(SHA1_HEADER)'
+DEFINES += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  gitk
+	  gitk git-cherry-pick
 
-export TAR INSTALL DESTDIR SHELL_PATH
+export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
 all: $(PROGRAMS) $(SCRIPTS)
@@ -286,58 +322,67 @@ all:
 
 git: git.sh Makefile
 	rm -f $@+ $@
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    -e 's/@@X@@/$(X)/g' \
 	    $(GIT_LIST_TWEAK) <$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
 
 $(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
 	rm -f $@
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' $@.sh >$@
+	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $@.sh >$@
 	chmod +x $@
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	rm -f $@
-	sed -e '1s|#!.*perl|#!$(PERL_PATH)|' $@.perl >$@
+	sed -e '1s|#!.*perl|#!$(call shq,$(PERL_PATH))|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $@.perl >$@
 	chmod +x $@
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	rm -f $@
-	sed -e '1s|#!.*python|#!$(PYTHON_PATH)|' \
-	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR)|g' \
-		$@.py >$@
+	sed -e '1s|#!.*python|#!$(call shq,$(PYTHON_PATH))|' \
+	    -e 's|@@GIT_PYTHON_PATH@@|$(call shq,$(GIT_PYTHON_DIR))|g' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $@.py >$@
 	chmod +x $@
+
+git-cherry-pick: git-revert
+	cp $< $@
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
-git-%: %.o $(LIB_FILE)
+git-%$X: %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
 
-git-mailinfo : SIMPLE_LIB += $(LIB_4_ICONV)
+git-mailinfo$X : SIMPLE_LIB += $(LIB_4_ICONV)
 $(SIMPLE_PROGRAMS) : $(LIB_FILE)
-$(SIMPLE_PROGRAMS) : git-% : %.o
+$(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIB_FILE) $(SIMPLE_LIB)
 
-git-http-fetch: fetch.o
-git-local-fetch: fetch.o
-git-ssh-fetch: rsh.o fetch.o
-git-ssh-upload: rsh.o
-git-ssh-pull: rsh.o fetch.o
-git-ssh-push: rsh.o
+git-http-fetch$X: fetch.o
+git-local-fetch$X: fetch.o
+git-ssh-fetch$X: rsh.o fetch.o
+git-ssh-upload$X: rsh.o
+git-ssh-pull$X: rsh.o fetch.o
+git-ssh-push$X: rsh.o
 
-git-http-fetch: LIBS += $(CURL_LIBCURL)
-git-rev-list: LIBS += $(OPENSSL_LIBSSL)
+git-http-fetch$X: LIBS += $(CURL_LIBCURL)
+git-rev-list$X: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
-		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir)"' $*.c
+		-DDEFAULT_GIT_TEMPLATE_DIR=$(call shellquote,"$(template_dir)") $*.c
 
 $(LIB_OBJS): $(LIB_H)
-$(patsubst git-%,%.o,$(PROGRAMS)): $(LIB_H)
+$(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
@@ -352,10 +397,10 @@ doc:
 test: all
 	$(MAKE) -C t/ all
 
-test-date: test-date.c date.o
+test-date$X: test-date.c date.o
 	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
 
-test-delta: test-delta.c diff-delta.o patch-delta.o
+test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $^
 
 check:
@@ -366,13 +411,12 @@ check:
 ### Installation rules
 
 install: $(PROGRAMS) $(SCRIPTS)
-	$(INSTALL) -d -m755 $(DESTDIR)$(bindir)
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(DESTDIR)$(bindir)
-	$(INSTALL) git-revert $(DESTDIR)$(bindir)/git-cherry-pick
-	sh ./cmd-rename.sh $(DESTDIR)$(bindir)
+	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
+	sh ./cmd-rename.sh $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
-	$(INSTALL) -d -m755 $(DESTDIR)$(GIT_PYTHON_DIR)
-	$(INSTALL) $(PYMODULES) $(DESTDIR)$(GIT_PYTHON_DIR)
+	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
+	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 
 install-doc:
 	$(MAKE) -C Documentation install

@@ -1,6 +1,5 @@
 git-resolve(1)
 ==============
-v0.99.5, Aug 2005
 
 NAME
 ----
@@ -9,7 +8,7 @@ git-resolve - Merge two commits
 
 SYNOPSIS
 --------
-'git resolve' <current> <merged> <message>
+'git-resolve' <current> <merged> <message>
 
 DESCRIPTION
 -----------

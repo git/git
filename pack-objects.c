@@ -1,11 +1,10 @@
-#include <ctype.h>
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
 #include "pack.h"
 #include "csum-file.h"
 
-static const char pack_usage[] = "git-pack-objects [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
+static const char pack_usage[] = "git-pack-objects [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -20,6 +19,7 @@ struct object_entry {
 
 static unsigned char object_list_sha1[20];
 static int non_empty = 0;
+static int local = 0;
 static int incremental = 0;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
 static struct object_entry *objects = NULL;
@@ -195,8 +195,20 @@ static int add_object_entry(unsigned char *sha1, unsigned int hash)
 	unsigned int idx = nr_objects;
 	struct object_entry *entry;
 
-	if (incremental && has_sha1_pack(sha1))
-		return 0;
+	if (incremental || local) {
+		struct packed_git *p;
+
+		for (p = packed_git; p; p = p->next) {
+			struct pack_entry e;
+
+			if (find_pack_entry_one(sha1, &e, p)) {
+				if (incremental)
+					return 0;
+				if (local && !p->pack_local)
+					return 0;
+			}
+		}
+	}
 
 	if (idx >= nr_alloc) {
 		unsigned int needed = (idx + 1024) * 3 / 2;
@@ -388,11 +400,77 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	free(array);
 }
 
+static void prepare_pack(int window, int depth)
+{
+	get_object_details();
+
+	fprintf(stderr, "Packing %d objects\n", nr_objects);
+
+	sorted_by_type = create_sorted_list(type_size_sort);
+	if (window && depth)
+		find_deltas(sorted_by_type, window+1, depth);
+	write_pack_file();
+}
+
+static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
+{
+	static const char cache[] = "pack-cache/pack-%s.%s";
+	char *cached_pack, *cached_idx;
+	int ifd, ofd, ifd_ix = -1;
+
+	cached_pack = git_path(cache, sha1_to_hex(sha1), "pack");
+	ifd = open(cached_pack, O_RDONLY);
+	if (ifd < 0)
+		return 0;
+
+	if (!pack_to_stdout) {
+		cached_idx = git_path(cache, sha1_to_hex(sha1), "idx");
+		ifd_ix = open(cached_idx, O_RDONLY);
+		if (ifd_ix < 0) {
+			close(ifd);
+			return 0;
+		}
+	}
+
+	fprintf(stderr, "Reusing %d objects pack %s\n", nr_objects,
+		sha1_to_hex(sha1));
+
+	if (pack_to_stdout) {
+		if (copy_fd(ifd, 1))
+			exit(1);
+		close(ifd);
+	}
+	else {
+		char name[PATH_MAX];
+		snprintf(name, sizeof(name),
+			 "%s-%s.%s", base_name, sha1_to_hex(sha1), "pack");
+		ofd = open(name, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (ofd < 0)
+			die("unable to open %s (%s)", name, strerror(errno));
+		if (copy_fd(ifd, ofd))
+			exit(1);
+		close(ifd);
+
+		snprintf(name, sizeof(name),
+			 "%s-%s.%s", base_name, sha1_to_hex(sha1), "idx");
+		ofd = open(name, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (ofd < 0)
+			die("unable to open %s (%s)", name, strerror(errno));
+		if (copy_fd(ifd_ix, ofd))
+			exit(1);
+		close(ifd_ix);
+		puts(sha1_to_hex(sha1));
+	}
+
+	return 1;
+}
+
 int main(int argc, char **argv)
 {
 	SHA_CTX ctx;
 	char line[PATH_MAX + 20];
 	int window = 10, depth = 10, pack_to_stdout = 0;
+	struct object_entry **list;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -401,6 +479,10 @@ int main(int argc, char **argv)
 		if (*arg == '-') {
 			if (!strcmp("--non-empty", arg)) {
 				non_empty = 1;
+				continue;
+			}
+			if (!strcmp("--local", arg)) {
+				local = 1;
 				continue;
 			}
 			if (!strcmp("--incremental", arg)) {
@@ -435,7 +517,7 @@ int main(int argc, char **argv)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
-	SHA1_Init(&ctx);
+	prepare_packed_git();
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned int hash;
 		char *p;
@@ -451,25 +533,28 @@ int main(int argc, char **argv)
 				continue;
 			hash = hash * 11 + c;
 		}
-		if (add_object_entry(sha1, hash))
-			SHA1_Update(&ctx, sha1, 20);
+		add_object_entry(sha1, hash);
 	}
-	SHA1_Final(object_list_sha1, &ctx);
 	if (non_empty && !nr_objects)
 		return 0;
-	get_object_details();
-
-	fprintf(stderr, "Packing %d objects\n", nr_objects);
 
 	sorted_by_sha = create_sorted_list(sha1_sort);
-	sorted_by_type = create_sorted_list(type_size_sort);
-	if (window && depth)
-		find_deltas(sorted_by_type, window+1, depth);
+	SHA1_Init(&ctx);
+	list = sorted_by_sha;
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *entry = *list++;
+		SHA1_Update(&ctx, entry->sha1, 20);
+	}
+	SHA1_Final(object_list_sha1, &ctx);
 
-	write_pack_file();
-	if (!pack_to_stdout) {
-		write_index_file();
-		puts(sha1_to_hex(object_list_sha1));
+	if (reuse_cached_pack(object_list_sha1, pack_to_stdout))
+		;
+	else {
+		prepare_pack(window, depth);
+		if (!pack_to_stdout) {
+			write_index_file();
+			puts(sha1_to_hex(object_list_sha1));
+		}
 	}
 	return 0;
 }

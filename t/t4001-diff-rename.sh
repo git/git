@@ -7,6 +7,7 @@ test_description='Test rename detection in diff engine.
 
 '
 . ./test-lib.sh
+. ../diff-lib.sh
 
 echo >path0 'Line 1
 Line 2
@@ -61,6 +62,6 @@ EOF
 
 test_expect_success \
     'validate the output.' \
-    'diff -I "similarity.*" >/dev/null current expected'
+    'compare_diff_patch current expected'
 
 test_done

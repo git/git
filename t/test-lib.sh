@@ -164,4 +164,8 @@ test=trash
 rm -fr "$test"
 mkdir "$test"
 cd "$test"
-git-init-db 2>/dev/null || error "cannot run git-init-db"
+git-init-db --template=../../templates/blt/ 2>/dev/null ||
+error "cannot run git-init-db"
+
+mv .git/hooks .git/hooks-disabled
+

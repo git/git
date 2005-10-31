@@ -15,7 +15,7 @@ sub usage($);
 my $GIT_DIR = $ENV{'GIT_DIR'} || ".git";
 
 unless ( -d $GIT_DIR && -d $GIT_DIR . "/objects" && 
-	-d $GIT_DIR . "/objects/00" && -d $GIT_DIR . "/refs") {
+	-d $GIT_DIR . "/objects/" && -d $GIT_DIR . "/refs") {
 	usage("Git repository not found.");
 }
 

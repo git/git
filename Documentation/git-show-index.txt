@@ -1,6 +1,5 @@
 git-show-index(1)
 =================
-v0.1, July 2005
 
 NAME
 ----
@@ -14,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads given idx file for packed GIT archive created with
+Reads given idx file for packed git archive created with
 git-pack-objects command, and dumps its contents.
 
 The information it outputs is subset of what you can get from

@@ -1,5 +1,6 @@
 git
 git-add
+git-am
 git-apply
 git-applymbox
 git-applypatch
@@ -7,9 +8,11 @@ git-archimport
 git-bisect
 git-branch
 git-cat-file
+git-check-ref-format
 git-checkout
 git-checkout-index
 git-cherry
+git-cherry-pick
 git-clone
 git-clone-pack
 git-commit
@@ -25,6 +28,7 @@ git-diff-stages
 git-diff-tree
 git-fetch
 git-fetch-pack
+git-findtags
 git-fmt-merge-msg
 git-format-patch
 git-fsck-objects
@@ -32,6 +36,7 @@ git-get-tar-commit-id
 git-grep
 git-hash-object
 git-http-fetch
+git-index-pack
 git-init-db
 git-local-fetch
 git-log
@@ -49,6 +54,8 @@ git-merge-recursive
 git-merge-resolve
 git-merge-stupid
 git-mktag
+git-name-rev
+git-mv
 git-octopus
 git-pack-objects
 git-parse-remote
@@ -73,6 +80,7 @@ git-revert
 git-send-email
 git-send-pack
 git-sh-setup
+git-shell
 git-shortlog
 git-show-branch
 git-show-index
@@ -82,6 +90,7 @@ git-ssh-push
 git-ssh-upload
 git-status
 git-stripspace
+git-svnimport
 git-symbolic-ref
 git-tag
 git-tar-tree
@@ -101,3 +110,6 @@ git-core-*/?*
 *.dsc
 *.deb
 git-core.spec
+*.exe
+libgit.a
+*.o

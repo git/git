@@ -42,6 +42,15 @@ static const char *read_var(const char *var)
 	return val;
 }
 
+static int show_config(const char *var, const char *value)
+{
+	if (value)
+		printf("%s=%s\n", var, value);
+	else
+		printf("%s\n", var);
+	return git_default_config(var, value);
+}
+
 int main(int argc, char **argv)
 {
 	const char *val;
@@ -52,9 +61,11 @@ int main(int argc, char **argv)
 	val = NULL;
 
 	if (strcmp(argv[1], "-l") == 0) {
+		git_config(show_config);
 		list_vars();
 		return 0;
 	}
+	git_config(git_default_config);
 	val = read_var(argv[1]);
 	if (!val)
 		usage(var_usage);

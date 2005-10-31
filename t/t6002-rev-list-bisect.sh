@@ -58,7 +58,7 @@ on_committer_date "1971-08-16 00:00:15" save_tag a4 unique_commit a4 tree -p a3 
 on_committer_date "1971-08-16 00:00:16" save_tag l3 unique_commit l3 tree -p a4
 on_committer_date "1971-08-16 00:00:17" save_tag l4 unique_commit l4 tree -p l3
 on_committer_date "1971-08-16 00:00:18" save_tag l5 unique_commit l5 tree -p l4
-tag l5 > .git/HEAD
+git-update-ref HEAD $(tag l5)
 
 
 #     E

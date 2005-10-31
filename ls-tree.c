@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "tree.h"
+#include "quote.h"
 
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
@@ -156,8 +157,9 @@ static int show_entry(struct tree_entry_list *e, int level, char *pathbuf)
 	int err = 0; 
 
 	if (e != &root_entry) {
-		printf("%06o %s %s	%s%s", e->mode, entry_type(e),
-		       entry_hex(e), pathbuf, e->name);
+		printf("%06o %s %s	",
+		       e->mode, entry_type(e), entry_hex(e));
+		write_name_quoted(pathbuf, e->name, line_termination, stdout);
 		putchar(line_termination);
 	}
 

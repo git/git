@@ -10,6 +10,7 @@ copy of symbolic links, but should not produce rename/copy followed
 by an edit for them.
 '
 . ./test-lib.sh
+. ../diff-lib.sh
 
 test_expect_success \
     'prepare reference tree' \
@@ -61,6 +62,6 @@ EOF
 
 test_expect_success \
     'validate diff output' \
-    'diff -u current expected'
+    'compare_diff_patch current expected'
 
 test_done

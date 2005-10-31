@@ -5,36 +5,28 @@
  *
  * This applies patches on top of some (arbitrary) version of the SCM.
  *
- * NOTE! It does all its work in the index file, and only cares about
- * the files in the working directory if you tell it to "merge" the
- * patch apply.
- *
- * Even when merging it always takes the source from the index, and
- * uses the working tree as a "branch" for a 3-way merge.
  */
-#include <ctype.h>
 #include <fnmatch.h>
 #include "cache.h"
 #include "quote.h"
 
-// We default to the merge behaviour, since that's what most people would
-// expect.
-//
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
-//  --show-files shows the directory changes
+//  --numstat does numeric diffstat, and doesn't actually apply
+//  --index-info shows the old and new index info for paths if available.
 //
-static int merge_patch = 1;
 static int check_index = 0;
 static int write_index = 0;
 static int diffstat = 0;
+static int numstat = 0;
 static int summary = 0;
 static int check = 0;
 static int apply = 1;
-static int show_files = 0;
+static int show_index_info = 0;
+static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--no-merge] [--stat] [--summary] [--check] [--index] [--apply] [--show-files] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -67,6 +59,8 @@ struct patch {
 	struct fragment *fragments;
 	char *result;
 	unsigned long resultsize;
+	char old_sha1_prefix[41];
+	char new_sha1_prefix[41];
 	struct patch *next;
 };
 
@@ -366,6 +360,38 @@ static int gitdiff_dissimilarity(const char *line, struct patch *patch)
 	return 0;
 }
 
+static int gitdiff_index(const char *line, struct patch *patch)
+{
+	/* index line is N hexadecimal, "..", N hexadecimal,
+	 * and optional space with octal mode.
+	 */
+	const char *ptr, *eol;
+	int len;
+
+	ptr = strchr(line, '.');
+	if (!ptr || ptr[1] != '.' || 40 <= ptr - line)
+		return 0;
+	len = ptr - line;
+	memcpy(patch->old_sha1_prefix, line, len);
+	patch->old_sha1_prefix[len] = 0;
+
+	line = ptr + 2;
+	ptr = strchr(line, ' ');
+	eol = strchr(line, '\n');
+
+	if (!ptr || eol < ptr)
+		ptr = eol;
+	len = ptr - line;
+
+	if (40 <= len)
+		return 0;
+	memcpy(patch->new_sha1_prefix, line, len);
+	patch->new_sha1_prefix[len] = 0;
+	if (*ptr == ' ')
+		patch->new_mode = patch->old_mode = strtoul(ptr+1, NULL, 8);
+	return 0;
+}
+
 /*
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
@@ -565,6 +591,7 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 			{ "rename to ", gitdiff_renamedst },
 			{ "similarity index ", gitdiff_similarity },
 			{ "dissimilarity index ", gitdiff_dissimilarity },
+			{ "index ", gitdiff_index },
 			{ "", gitdiff_unrecognized },
 		};
 		int i;
@@ -793,7 +820,10 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
                 /* We allow "\ No newline at end of file". Depending
                  * on locale settings when the patch was produced we
                  * don't know what this line looks like. The only
-                 * thing we do know is that it begins with "\ ". */
+                 * thing we do know is that it begins with "\ ".
+		 * Checking for 12 is just for sanity check -- any
+		 * l10n of "\ No newline..." is at least that long.
+		 */
 		case '\\':
 			if (len < 12 || memcmp(line, "\\ ", 2))
 				return -1;
@@ -1156,17 +1186,39 @@ static int check_patch(struct patch *patch)
 
 	if (old_name) {
 		int changed;
+		int stat_ret = lstat(old_name, &st);
 
-		if (lstat(old_name, &st) < 0)
-			return error("%s: %s", old_name, strerror(errno));
 		if (check_index) {
 			int pos = cache_name_pos(old_name, strlen(old_name));
 			if (pos < 0)
-				return error("%s: does not exist in index", old_name);
+				return error("%s: does not exist in index",
+					     old_name);
+			if (stat_ret < 0) {
+				struct checkout costate;
+				if (errno != ENOENT)
+					return error("%s: %s", old_name,
+						     strerror(errno));
+				/* checkout */
+				costate.base_dir = "";
+				costate.base_dir_len = 0;
+				costate.force = 0;
+				costate.quiet = 0;
+				costate.not_new = 0;
+				costate.refresh_cache = 1;
+				if (checkout_entry(active_cache[pos],
+						   &costate) ||
+				    lstat(old_name, &st))
+					return -1;
+			}
+
 			changed = ce_match_stat(active_cache[pos], &st);
 			if (changed)
-				return error("%s: does not match index", old_name);
+				return error("%s: does not match index",
+					     old_name);
 		}
+		else if (stat_ret < 0)
+			return error("%s: %s", old_name, strerror(errno));
+
 		if (patch->is_new < 0)
 			patch->is_new = 0;
 		st.st_mode = ntohl(create_ce_mode(st.st_mode));
@@ -1218,32 +1270,38 @@ static int check_patch_list(struct patch *patch)
 	return error;
 }
 
-static void show_file(int c, unsigned int mode, const char *name)
+static inline int is_null_sha1(const unsigned char *sha1)
 {
-	printf("%c %o %s\n", c, mode, name);
+	return !memcmp(sha1, null_sha1, 20);
 }
 
-static void show_file_list(struct patch *patch)
+static void show_index_list(struct patch *list)
 {
-	for (;patch ; patch = patch->next) {
-		if (patch->is_rename) {
-			show_file('-', patch->old_mode, patch->old_name);
-			show_file('+', patch->new_mode, patch->new_name);
-			continue;
-		}
-		if (patch->is_copy || patch->is_new) {
-			show_file('+', patch->new_mode, patch->new_name);
-			continue;
-		}
-		if (patch->is_delete) {
-			show_file('-', patch->old_mode, patch->old_name);
-			continue;
-		}
-		if (patch->old_mode && patch->new_mode && patch->old_mode != patch->new_mode) {
-			printf("M %o:%o %s\n", patch->old_mode, patch->new_mode, patch->old_name);
-			continue;
-		}
-		printf("M %o %s\n", patch->old_mode, patch->old_name);
+	struct patch *patch;
+
+	/* Once we start supporting the reverse patch, it may be
+	 * worth showing the new sha1 prefix, but until then...
+	 */
+	for (patch = list; patch; patch = patch->next) {
+		const unsigned char *sha1_ptr;
+		unsigned char sha1[20];
+		const char *name;
+
+		name = patch->old_name ? patch->old_name : patch->new_name;
+		if (patch->is_new)
+			sha1_ptr = null_sha1;
+		else if (get_sha1(patch->old_sha1_prefix, sha1))
+			die("sha1 information is lacking or useless (%s).",
+			    name);
+		else
+			sha1_ptr = sha1;
+
+		printf("%06o %s	",patch->old_mode, sha1_to_hex(sha1_ptr));
+		if (line_termination && quote_c_style(name, NULL, NULL, 0))
+			quote_c_style(name, NULL, stdout, 0);
+		else
+			fputs(name, stdout);
+		putchar(line_termination);
 	}
 }
 
@@ -1259,6 +1317,20 @@ static void stat_patch_list(struct patch *patch)
 	}
 
 	printf(" %d files changed, %d insertions(+), %d deletions(-)\n", files, adds, dels);
+}
+
+static void numstat_patch_list(struct patch *patch)
+{
+	for ( ; patch; patch = patch->next) {
+		const char *name;
+		name = patch->old_name ? patch->old_name : patch->new_name;
+		printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		if (line_termination && quote_c_style(name, NULL, NULL, 0))
+			quote_c_style(name, NULL, stdout, 0);
+		else
+			fputs(name, stdout);
+		putchar('\n');
+	}
 }
 
 static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
@@ -1588,11 +1660,14 @@ static int apply_patch(int fd)
 			die("Unable to write new cachefile");
 	}
 
-	if (show_files)
-		show_file_list(list);
+	if (show_index_info)
+		show_index_list(list);
 
 	if (diffstat)
 		stat_patch_list(list);
+
+	if (numstat)
+		numstat_patch_list(list);
 
 	if (summary)
 		summary_patch_list(list);
@@ -1622,14 +1697,14 @@ int main(int argc, char **argv)
 			excludes = x;
 			continue;
 		}
-		/* NEEDSWORK: this does not do anything at this moment. */
-		if (!strcmp(arg, "--no-merge")) {
-			merge_patch = 0;
-			continue;
-		}
 		if (!strcmp(arg, "--stat")) {
 			apply = 0;
 			diffstat = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--numstat")) {
+			apply = 0;
+			numstat = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--summary")) {
@@ -1650,8 +1725,13 @@ int main(int argc, char **argv)
 			apply = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--show-files")) {
-			show_files = 1;
+		if (!strcmp(arg, "--index-info")) {
+			apply = 0;
+			show_index_info = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-z")) {
+			line_termination = 0;
 			continue;
 		}
 		fd = open(arg, O_RDONLY);

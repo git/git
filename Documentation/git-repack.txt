@@ -1,6 +1,5 @@
 git-repack(1)
 =============
-v0.99.5, August 2005
 
 NAME
 ----

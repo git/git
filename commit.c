@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include "tag.h"
 #include "commit.h"
 #include "cache.h"

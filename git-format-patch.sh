@@ -6,7 +6,9 @@
 . git-sh-setup || die "Not a git archive."
 
 usage () {
-    echo >&2 "usage: $0"' [-n] [-o dir] [--keep-subject] [--mbox] [--check] [--signoff] [-<diff options>...] upstream [ our-head ]
+    echo >&2 "usage: $0"' [-n] [-o dir | --stdout] [--keep-subject] [--mbox]
+    [--check] [--signoff] [-<diff options>...]
+    ( from..to ... | upstream [ our-head ] )
 
 Prepare each commit with its patch since our-head forked from upstream,
 one file per patch, for e-mail submission.  Each output file is
@@ -49,6 +51,8 @@ do
     numbered=t ;;
     -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
     signoff=t ;;
+    --st|--std|--stdo|--stdou|--stdout)
+    stdout=t mbox=t date=t author=t ;;
     -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
     --output-d=*|--output-di=*|--output-dir=*|--output-dire=*|\
     --output-direc=*|--output-direct=*|--output-directo=*|\
@@ -73,24 +77,69 @@ tt)
 	die '--keep-subject and --numbered are incompatible.' ;;
 esac
 
-rev1= rev2=
-case "$#" in
-2)
-    rev1="$1" rev2="$2" ;;
-1)
-    case "$1" in
-    *..*)
-	rev1=`expr "$1" : '\(.*\)\.\.'`
-	rev2=`expr "$1" : '.*\.\.\(.*\)'`
+tmp=.tmp-series$$
+trap 'rm -f $tmp-*' 0 1 2 3 15
+
+series=$tmp-series
+commsg=$tmp-commsg
+filelist=$tmp-files
+
+# Backward compatible argument parsing hack.
+#
+# Historically, we supported:
+# 1. "rev1"		is equivalent to "rev1..HEAD"
+# 2. "rev1..rev2"
+# 3. "rev1" "rev2	is equivalent to "rev1..rev2"
+#
+# We want to take a sequence of "rev1..rev2" in general.
+
+case "$#,$1" in
+1,?*..?*)
+	# single "rev1..rev2"
 	;;
-    *)
-        rev1="$1"
-	rev2="HEAD"
+1,*)
+	# single rev1
+	set x "$1..HEAD"
+	shift
 	;;
-    esac ;;
-*)
-    usage ;;
+2,?*..?*)
+	# not traditional "rev1" "rev2"
+	;;
+2,*)
+	set x "$1..$2"
+	shift
+	;;
 esac
+
+# Now we have what we want in $@
+for revpair
+do
+	case "$revpair" in
+	?*..?*)
+		rev1=`expr "$revpair" : '\(.*\)\.\.'`
+		rev2=`expr "$revpair" : '.*\.\.\(.*\)'`
+		;;
+	*)
+		usage
+		;;
+	esac
+	git-rev-parse --verify "$rev1^0" >/dev/null 2>&1 ||
+		die "Not a valid rev $rev1 ($revpair)"
+	git-rev-parse --verify "$rev2^0" >/dev/null 2>&1 ||
+		die "Not a valid rev $rev2 ($revpair)"
+	git-cherry -v "$rev1" "$rev2" |
+	while read sign rev comment
+	do
+		case "$sign" in
+		'-')
+			echo >&2 "Merged already: $comment"
+			;;
+		*)
+			echo $rev
+			;;
+		esac
+	done
+done >$series
 
 me=`git-var GIT_AUTHOR_IDENT | sed -e 's/>.*/>/'`
 
@@ -99,13 +148,6 @@ case "$outdir" in
 *) outdir="$outdir/" ;;
 esac
 test -d "$outdir" || mkdir -p "$outdir" || exit
-
-tmp=.tmp-series$$
-trap 'rm -f $tmp-*' 0 1 2 3 15
-
-series=$tmp-series
-commsg=$tmp-commsg
-filelist=$tmp-files
 
 titleScript='
 	/./d
@@ -128,38 +170,7 @@ whosepatchScript='
 	q
 }'
 
-git-cherry -v "$rev1" "$rev2" |
-while read sign rev comment
-do
-	case "$sign" in
-	'-')
-		echo >&2 "Merged already: $comment"
-		;;
-	*)
-		echo $rev
-		;;
-	esac
-done >$series
-
-total=`wc -l <$series | tr -dc "[0-9]"`
-i=1
-while read commit
-do
-    git-cat-file commit "$commit" | git-stripspace >$commsg
-    title=`sed -ne "$titleScript" <$commsg`
-    case "$numbered" in
-    '') num= ;;
-    *)
-	case $total in
-	1) num= ;;
-	*) num=' '`printf "%d/%d" $i $total` ;;
-	esac
-    esac
-
-    file=`printf '%04d-%stxt' $i "$title"`
-    i=`expr "$i" + 1`
-    echo "* $file"
-    {
+process_one () {
 	mailScript='
 	/./d
 	/^$/n'
@@ -178,6 +189,7 @@ do
 	    echo 'From nobody Mon Sep 17 00:00:00 2001' ;# UNIX "From" line
 	    ;;
 	esac
+
 	eval "$(sed -ne "$whosepatchScript" $commsg)"
 	test "$author,$au" = ",$me" || {
 		mailScript="$mailScript"'
@@ -196,7 +208,9 @@ Date: '"$ad"
 	n
 	b body'
 
-	sed -ne "$mailScript" <$commsg
+	(cat $commsg ; echo; echo) |
+	sed -ne "$mailScript" |
+	git-stripspace
 
 	test "$signoff" = "t" && {
 		offsigner=`git-var GIT_COMMITTER_IDENT | sed -e 's/>.*/>/'`
@@ -212,21 +226,49 @@ Date: '"$ad"
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
+	git-cat-file commit "$commit^" | sed -e 's/^tree /applies-to: /' -e q
 	git-diff-tree -p $diff_opts "$commit"
+	echo "---"
+	echo "@@GIT_VERSION@@"
 
 	case "$mbox" in
 	t)
 		echo
 		;;
 	esac
-    } >"$outdir$file"
-    case "$check" in
-    t)
-	# This is slightly modified from Andrew Morton's Perfect Patch.
-	# Lines you introduce should not have trailing whitespace.
-	# Also check for an indentation that has SP before a TAB.
-        grep -n '^+\([ 	]* 	.*\|.*[ 	]\)$' "$outdir$file"
+}
 
-	: do not exit with non-zero because we saw no problem in the last one.
+total=`wc -l <$series | tr -dc "[0-9]"`
+i=1
+while read commit
+do
+    git-cat-file commit "$commit" | git-stripspace >$commsg
+    title=`sed -ne "$titleScript" <$commsg`
+    case "$numbered" in
+    '') num= ;;
+    *)
+	case $total in
+	1) num= ;;
+	*) num=' '`printf "%d/%d" $i $total` ;;
+	esac
     esac
+
+    file=`printf '%04d-%stxt' $i "$title"`
+    if test '' = "$stdout"
+    then
+	    echo "* $file"
+	    process_one >"$outdir$file"
+	    if test t = "$check"
+	    then
+		# This is slightly modified from Andrew Morton's Perfect Patch.
+		# Lines you introduce should not have trailing whitespace.
+		# Also check for an indentation that has SP before a TAB.
+		grep -n '^+\([ 	]* 	.*\|.*[ 	]\)$' "$outdir$file"
+		:
+	    fi
+    else
+	    echo >&2 "* $file"
+	    process_one
+    fi
+    i=`expr "$i" + 1`
 done <$series

@@ -1,0 +1,50 @@
+git-check-ref-format(1)
+=======================
+
+NAME
+----
+git-check-ref-format - Make sure ref name is well formed.
+
+SYNOPSIS
+--------
+'git-check-ref-format' <refname>
+
+DESCRIPTION
+-----------
+Checks if a given 'refname' is acceptable, and exits non-zero if
+it is not.
+
+A reference is used in git to specify branches and tags.  A
+branch head is stored under `$GIT_DIR/refs/heads` directory, and
+a tag is stored under `$GIT_DIR/refs/tags` directory.  git
+imposes the following rules on how refs are named:
+
+. It could be named hierarchically (i.e. separated with slash
+  `/`), but each of its component cannot begin with a dot `.`;
+
+. It cannot have two consecutive dots `..` anywhere;
+
+. It cannot have ASCII control character (i.e. bytes whose
+  values are lower than \040, or \177 `DEL`), space, tilde `~`,
+  caret `{caret}`, or colon `:` anywhere;
+
+. It cannot end with a slash `/`.
+
+These rules makes it easy for shell script based tools to parse
+refnames, and also avoids ambiguities in certain refname
+expressions (see gitlink:git-rev-parse[1]).  Namely:
+
+. double-dot `..` are often used as in `ref1..ref2`, and in some
+  context this notation means `{caret}ref1 ref2` (i.e. not in
+  ref1 and in ref2).
+
+. tilde `~` and caret `{caret}` are used to introduce postfix
+  'nth parent' and 'peel onion' operation.
+
+. colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
+  value and store it in dstref" in fetch and push operations.
+
+
+GIT
+---
+Part of the gitlink:git[7] suite

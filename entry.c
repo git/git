@@ -132,7 +132,7 @@ int checkout_entry(struct cache_entry *ce, struct checkout *state)
 		if (!state->force) {
 			if (!state->quiet)
 				fprintf(stderr, "git-checkout-index: %s already exists\n", path);
-			return 0;
+			return -1;
 		}
 
 		/*

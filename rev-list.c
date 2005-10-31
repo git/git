@@ -5,27 +5,36 @@
 #include "tree.h"
 #include "blob.h"
 #include "epoch.h"
+#include "diff.h"
 
 #define SEEN		(1u << 0)
 #define INTERESTING	(1u << 1)
 #define COUNTED		(1u << 2)
 #define SHOWN		(1u << 3)
+#define TREECHANGE	(1u << 4)
 
 static const char rev_list_usage[] =
-	"git-rev-list [OPTION] commit-id <commit-id>\n"
-		      "  --max-count=nr\n"
-		      "  --max-age=epoch\n"
-		      "  --min-age=epoch\n"
-		      "  --parents\n"
-		      "  --bisect\n"
-		      "  --objects\n"
-		      "  --unpacked\n"
-		      "  --header\n"
-		      "  --pretty\n"
-		      "  --no-merges\n"
-		      "  --merge-order [ --show-breaks ]\n"
-		      "  --topo-order";
+"git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
+"  limiting output:\n"
+"    --max-count=nr\n"
+"    --max-age=epoch\n"
+"    --min-age=epoch\n"
+"    --sparse\n"
+"    --no-merges\n"
+"    --all\n"
+"  ordering output:\n"
+"    --merge-order [ --show-breaks ]\n"
+"    --topo-order\n"
+"  formatting output:\n"
+"    --parents\n"
+"    --objects\n"
+"    --unpacked\n"
+"    --header | --pretty\n"
+"  special purpose:\n"
+"    --bisect"
+;
 
+static int dense = 1;
 static int unpacked = 0;
 static int bisect_list = 0;
 static int tag_objects = 0;
@@ -44,6 +53,7 @@ static int show_breaks = 0;
 static int stop_traversal = 0;
 static int topo_order = 0;
 static int no_merges = 0;
+static const char **paths = NULL;
 
 static void show_commit(struct commit *commit)
 {
@@ -77,6 +87,31 @@ static void show_commit(struct commit *commit)
 	fflush(stdout);
 }
 
+static int rewrite_one(struct commit **pp)
+{
+	for (;;) {
+		struct commit *p = *pp;
+		if (p->object.flags & (TREECHANGE | UNINTERESTING))
+			return 0;
+		if (!p->parents)
+			return -1;
+		*pp = p->parents->item;
+	}
+}
+
+static void rewrite_parents(struct commit *commit)
+{
+	struct commit_list **pp = &commit->parents;
+	while (*pp) {
+		struct commit_list *parent = *pp;
+		if (rewrite_one(&parent->item) < 0) {
+			*pp = parent->next;
+			continue;
+		}
+		pp = &parent->next;
+	}
+}
+
 static int filter_commit(struct commit * commit)
 {
 	if (stop_traversal && (commit->object.flags & BOUNDARY))
@@ -93,6 +128,11 @@ static int filter_commit(struct commit * commit)
 		return STOP;
 	if (no_merges && (commit->parents && commit->parents->next))
 		return CONTINUE;
+	if (paths && dense) {
+		if (!(commit->object.flags & TREECHANGE))
+			return CONTINUE;
+		rewrite_parents(commit);
+	}
 	return DO;
 }
 
@@ -377,18 +417,184 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
+static int is_different = 0;
+
+static void file_add_remove(struct diff_options *options,
+		    int addremove, unsigned mode,
+		    const unsigned char *sha1,
+		    const char *base, const char *path)
+{
+	is_different = 1;
+}
+
+static void file_change(struct diff_options *options,
+		 unsigned old_mode, unsigned new_mode,
+		 const unsigned char *old_sha1,
+		 const unsigned char *new_sha1,
+		 const char *base, const char *path)
+{
+	is_different = 1;
+}
+
+static struct diff_options diff_opt = {
+	.recursive = 1,
+	.add_remove = file_add_remove,
+	.change = file_change,
+};
+
+static int same_tree(struct tree *t1, struct tree *t2)
+{
+	is_different = 0;
+	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "", &diff_opt) < 0)
+		return 0;
+	return !is_different;
+}
+
+static int same_tree_as_empty(struct tree *t1)
+{
+	int retval;
+	void *tree;
+	struct tree_desc empty, real;
+
+	if (!t1)
+		return 0;
+
+	tree = read_object_with_reference(t1->object.sha1, "tree", &real.size, NULL);
+	if (!tree)
+		return 0;
+	real.buf = tree;
+
+	empty.buf = "";
+	empty.size = 0;
+
+	is_different = 0;
+	retval = diff_tree(&empty, &real, "", &diff_opt);
+	free(tree);
+
+	return retval >= 0 && !is_different;
+}
+
+static struct commit *try_to_simplify_merge(struct commit *commit, struct commit_list *parent)
+{
+	if (!commit->tree)
+		return NULL;
+
+	while (parent) {
+		struct commit *p = parent->item;
+		parent = parent->next;
+		parse_commit(p);
+		if (!p->tree)
+			continue;
+		if (same_tree(commit->tree, p->tree))
+			return p;
+	}
+	return NULL;
+}
+
+static void add_parents_to_list(struct commit *commit, struct commit_list **list)
+{
+	struct commit_list *parent = commit->parents;
+
+	/*
+	 * If the commit is uninteresting, don't try to
+	 * prune parents - we want the maximal uninteresting
+	 * set.
+	 *
+	 * Normally we haven't parsed the parent
+	 * yet, so we won't have a parent of a parent
+	 * here. However, it may turn out that we've
+	 * reached this commit some other way (where it
+	 * wasn't uninteresting), in which case we need
+	 * to mark its parents recursively too..
+	 */
+	if (commit->object.flags & UNINTERESTING) {
+		while (parent) {
+			struct commit *p = parent->item;
+			parent = parent->next;
+			parse_commit(p);
+			p->object.flags |= UNINTERESTING;
+			if (p->parents)
+				mark_parents_uninteresting(p);
+			if (p->object.flags & SEEN)
+				continue;
+			p->object.flags |= SEEN;
+			insert_by_date(p, list);
+		}
+		return;
+	}
+
+	/*
+	 * Ok, the commit wasn't uninteresting. If it
+	 * is a merge, try to find the parent that has
+	 * no differences in the path set if one exists.
+	 */
+	if (paths && parent && parent->next) {
+		struct commit *preferred;
+
+		preferred = try_to_simplify_merge(commit, parent);
+		if (preferred) {
+			parent->item = preferred;
+			parent->next = NULL;
+		}
+	}
+
+	while (parent) {
+		struct commit *p = parent->item;
+
+		parent = parent->next;
+
+		parse_commit(p);
+		if (p->object.flags & SEEN)
+			continue;
+		p->object.flags |= SEEN;
+		insert_by_date(p, list);
+	}
+}
+
+static void compress_list(struct commit_list *list)
+{
+	while (list) {
+		struct commit *commit = list->item;
+		struct commit_list *parent = commit->parents;
+		list = list->next;
+
+		if (!parent) {
+			if (!same_tree_as_empty(commit->tree))
+				commit->object.flags |= TREECHANGE;
+			continue;
+		}
+
+		/*
+		 * Exactly one parent? Check if it leaves the tree
+		 * unchanged
+		 */
+		if (!parent->next) {
+			struct tree *t1 = commit->tree;
+			struct tree *t2 = parent->item->tree;
+			if (!t1 || !t2 || same_tree(t1, t2))
+				continue;
+		}
+		commit->object.flags |= TREECHANGE;
+	}
+}
+
 static struct commit_list *limit_list(struct commit_list *list)
 {
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
 	while (list) {
-		struct commit *commit = pop_most_recent_commit(&list, SEEN);
+		struct commit_list *entry = list;
+		struct commit *commit = list->item;
 		struct object *obj = &commit->object;
+
+		list = list->next;
+		free(entry);
 
 		if (max_age != -1 && (commit->date < max_age))
 			obj->flags |= UNINTERESTING;
 		if (unpacked && has_sha1_pack(obj->sha1))
 			obj->flags |= UNINTERESTING;
+		add_parents_to_list(commit, &list);
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
 			if (everybody_uninteresting(list))
@@ -401,6 +607,8 @@ static struct commit_list *limit_list(struct commit_list *list)
 	}
 	if (tree_objects)
 		mark_edges_uninteresting(newlist);
+	if (paths && dense)
+		compress_list(newlist);
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
@@ -411,13 +619,10 @@ static void add_pending_object(struct object *obj, const char *name)
 	add_object(obj, &pending_objects, name);
 }
 
-static struct commit *get_commit_reference(const char *name, unsigned int flags)
+static struct commit *get_commit_reference(const char *name, const unsigned char *sha1, unsigned int flags)
 {
-	unsigned char sha1[20];
 	struct object *object;
 
-	if (get_sha1(name, sha1))
-		usage(rev_list_usage);
 	object = parse_object(sha1);
 	if (!object)
 		die("bad object %s", name);
@@ -495,7 +700,7 @@ static struct commit_list **global_lst;
 
 static int include_one_commit(const char *path, const unsigned char *sha1)
 {
-	struct commit *com = get_commit_reference(path, 0);
+	struct commit *com = get_commit_reference(path, sha1, 0);
 	handle_one_commit(com, global_lst);
 	return 0;
 }
@@ -507,17 +712,18 @@ static void handle_all(struct commit_list **lst)
 	global_lst = NULL;
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
+	const char *prefix = setup_git_directory();
 	struct commit_list *list = NULL;
 	int i, limited = 0;
 
-	setup_git_directory();
 	for (i = 1 ; i < argc; i++) {
 		int flags;
-		char *arg = argv[i];
+		const char *arg = argv[i];
 		char *dotdot;
 		struct commit *commit;
+		unsigned char sha1[20];
 
 		if (!strncmp(arg, "--max-count=", 12)) {
 			max_count = atoi(arg + 12);
@@ -587,6 +793,18 @@ int main(int argc, char **argv)
 		        limited = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--dense")) {
+			dense = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--sparse")) {
+			dense = 0;
+			continue;
+		}
+		if (!strcmp(arg, "--")) {
+			i++;
+			break;
+		}
 
 		if (show_breaks && !merge_order)
 			usage(rev_list_usage);
@@ -594,15 +812,19 @@ int main(int argc, char **argv)
 		flags = 0;
 		dotdot = strstr(arg, "..");
 		if (dotdot) {
+			unsigned char from_sha1[20];
 			char *next = dotdot + 2;
-			struct commit *exclude = NULL;
-			struct commit *include = NULL;
 			*dotdot = 0;
 			if (!*next)
 				next = "HEAD";
-			exclude = get_commit_reference(arg, UNINTERESTING);
-			include = get_commit_reference(next, 0);
-			if (exclude && include) {
+			if (!get_sha1(arg, from_sha1) && !get_sha1(next, sha1)) {
+				struct commit *exclude;
+				struct commit *include;
+				
+				exclude = get_commit_reference(arg, from_sha1, UNINTERESTING);
+				include = get_commit_reference(next, sha1, 0);
+				if (!exclude || !include)
+					die("Invalid revision range %s..%s", arg, next);
 				limited = 1;
 				handle_one_commit(exclude, &list);
 				handle_one_commit(include, &list);
@@ -615,8 +837,19 @@ int main(int argc, char **argv)
 			arg++;
 			limited = 1;
 		}
-		commit = get_commit_reference(arg, flags);
+		if (get_sha1(arg, sha1) < 0)
+			break;
+		commit = get_commit_reference(arg, sha1, flags);
 		handle_one_commit(commit, &list);
+	}
+
+	if (!list)
+		usage(rev_list_usage);
+
+	paths = get_pathspec(prefix, argv + i);
+	if (paths) {
+		limited = 1;
+		diff_tree_setup_paths(paths);
 	}
 
 	save_commit_buffer = verbose_header;

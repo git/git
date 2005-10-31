@@ -1,10 +1,9 @@
 git-local-fetch(1)
 ==================
-v0.1, May 2005
 
 NAME
 ----
-git-local-fetch - Duplicates another GIT repository on a local system
+git-local-fetch - Duplicates another git repository on a local system
 
 
 SYNOPSIS
@@ -13,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Duplicates another GIT repository on a local system.
+Duplicates another git repository on a local system.
 
 OPTIONS
 -------

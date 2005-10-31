@@ -34,6 +34,7 @@ static int is_rev_argument(const char *arg)
 	static const char *rev_args[] = {
 		"--all",
 		"--bisect",
+		"--dense",
 		"--header",
 		"--max-age=",
 		"--max-count=",
@@ -44,6 +45,7 @@ static int is_rev_argument(const char *arg)
 		"--parents",
 		"--pretty",
 		"--show-breaks",
+		"--sparse",
 		"--topo-order",
 		"--unpacked",
 		NULL
@@ -151,6 +153,13 @@ static void show_datestring(const char *flag, const char *datestr)
 	show(buffer);
 }
 
+static void show_file(const char *arg)
+{
+	show_default();
+	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV))
+		show(arg);
+}
+
 int main(int argc, char **argv)
 {
 	int i, as_is = 0, verify = 0;
@@ -162,12 +171,15 @@ int main(int argc, char **argv)
 		char *dotdot;
 	
 		if (as_is) {
-			show(arg);
+			show_file(arg);
 			continue;
 		}
 		if (*arg == '-') {
 			if (!strcmp(arg, "--")) {
 				as_is = 1;
+				/* Pass on the "--" if we show anything but files.. */
+				if (filter & (DO_FLAGS | DO_REVS))
+					show_file(arg);
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
@@ -282,9 +294,8 @@ int main(int argc, char **argv)
 		}
 		if (verify)
 			die("Needed a single revision");
-		if ((filter & (DO_NONFLAGS|DO_NOREV)) ==
-		    (DO_NONFLAGS|DO_NOREV))
-			show(arg);
+		as_is = 1;
+		show_file(arg);
 	}
 	show_default();
 	if (verify && revs_count != 1)

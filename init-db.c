@@ -196,6 +196,43 @@ static void create_default_files(const char *git_dir,
 	}
 	path[len] = 0;
 	copy_templates(path, len, template_path);
+
+	/*
+	 * Find out if we can trust the executable bit.
+	 */
+	safe_create_dir(path);
+	strcpy(path + len, "config");
+	if (access(path, R_OK) < 0) {
+		static const char contents[] =
+			"#\n"
+			"# This is the config file\n"
+			"#\n"
+			"\n"
+			"; core variables\n"
+			"[core]\n"
+			"	; Don't trust file modes\n"
+			"	filemode = false\n"
+			"\n";
+		FILE *config = fopen(path, "w");
+		struct stat st;
+
+		if (!config)
+			die("Can not write to %s?", path);
+
+		fwrite(contents, sizeof(contents)-1, 1, config);
+
+		fclose(config);
+
+		if (!lstat(path, &st)) {
+			struct stat st2;
+			if (!chmod(path, st.st_mode ^ S_IXUSR) &&
+					!lstat(path, &st2) &&
+					st.st_mode != st2.st_mode)
+				unlink(path);
+			else
+				fprintf(stderr, "Ignoring file modes\n");
+		}
+	}
 }
 
 static const char init_db_usage[] =
@@ -244,10 +281,6 @@ int main(int argc, char **argv)
 	memcpy(path, sha1_dir, len);
 
 	safe_create_dir(sha1_dir);
-	for (i = 0; i < 256; i++) {
-		sprintf(path+len, "/%02x", i);
-		safe_create_dir(path);
-	}
 	strcpy(path+len, "/pack");
 	safe_create_dir(path);
 	strcpy(path+len, "/info");

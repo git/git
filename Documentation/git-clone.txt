@@ -1,6 +1,5 @@
 git-clone(1)
 ============
-v0.1, July 2005
 
 NAME
 ----
@@ -9,7 +8,7 @@ git-clone - Clones a repository.
 
 SYNOPSIS
 --------
-'git clone' [-l [-s]] [-q] [-n] [-u <upload-pack>] <repository> <directory>
+'git-clone' [-l [-s]] [-q] [-n] [-u <upload-pack>] <repository> <directory>
 
 DESCRIPTION
 -----------

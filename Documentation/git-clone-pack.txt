@@ -1,6 +1,5 @@
 git-clone-pack(1)
 =================
-v0.1, July 2005
 
 NAME
 ----
@@ -9,27 +8,23 @@ git-clone-pack - Clones a repository by receiving packed objects.
 
 SYNOPSIS
 --------
-'git-clone-pack' [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...]
+'git-clone-pack' [--exec=<git-upload-pack>] [<host>:]<directory> [<head>...]
 
 DESCRIPTION
 -----------
 Clones a repository into the current repository by invoking
 'git-upload-pack', possibly on the remote host via ssh, in
-the named repository, and invoking 'git-unpack-objects' locally
-to receive the pack.
+the named repository, and stores the sent pack in the local
+repository.
 
 OPTIONS
 -------
--q::
-	Pass '-q' flag to 'git-unpack-objects'; this makes the
-	cloning process less verbose.
-
 --exec=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the
 	remote side, if it is not found on your $PATH.
 	Installations of sshd ignore the user's environment
 	setup scripts for login shells (e.g. .bash_profile) and
-	your privately installed GIT may not be found on the system
+	your privately installed git may not be found on the system
 	default $PATH.  Another workaround suggested is to set
 	up your $PATH in ".bashrc", but this flag is for people
 	who do not want to pay the overhead for non-interactive

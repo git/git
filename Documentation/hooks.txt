@@ -1,6 +1,5 @@
-Hooks used by GIT
+Hooks used by git
 =================
-v0.99.6, Sep 2005
 
 Hooks are little scripts you can place in `$GIT_DIR/hooks`
 directory to trigger action at certain points.  When

@@ -54,7 +54,7 @@ OPTIONS
 	succeed.
 
 -z::
-	\0 line termination on output
+	\0 line termination on output.
 
 -x|--exclude=<pattern>::
 	Skips files matching pattern.
@@ -99,6 +99,10 @@ the dircache records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
 the user (or the porcelain) to see what should eventually be recorded at the
 path. (see git-read-tree for more information on state)
+
+When `-z` option is not used, TAB, LF, and backslash characters
+in pathnames are represented as `\t`, `\n`, and `\\`,
+respectively.
 
 
 Exclude Patterns

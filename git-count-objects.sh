@@ -2,7 +2,7 @@
 
 . git-sh-setup
 
-echo $(find "$GIT_DIR/objects"/?? -type f -print | wc -l) objects, \
+echo $(find "$GIT_DIR/objects"/?? -type f -print 2>/dev/null | wc -l) objects, \
 $({
     echo 0
     # "no-such" is to help Darwin folks by not using xargs -r.

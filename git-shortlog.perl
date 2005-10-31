@@ -2,54 +2,12 @@
 
 use strict;
 
-#
-# Even with git, we don't always have name translations.
-# So have an email->real name table to translate the
-# (hopefully few) missing names
-#
-my %mailmap = (
-	'R.Marek@sh.cvut.cz' => 'Rudolf Marek',
-	'Ralf.Wildenhues@gmx.de' => 'Ralf Wildenhues',
-	'aherrman@de.ibm.com' => 'Andreas Herrmann',
-	'akpm@osdl.org' => 'Andrew Morton',
-	'andrew.vasquez@qlogic.com' => 'Andrew Vasquez',
-	'aquynh@gmail.com' => 'Nguyen Anh Quynh',
-	'axboe@suse.de' => 'Jens Axboe',
-	'blaisorblade@yahoo.it' => 'Paolo \'Blaisorblade\' Giarrusso',
-	'bunk@stusta.de' => 'Adrian Bunk',
-	'domen@coderock.org' => 'Domen Puncer',
-	'dougg@torque.net' => 'Douglas Gilbert',
-	'dwmw2@shinybook.infradead.org' => 'David Woodhouse',
-	'ecashin@coraid.com' => 'Ed L Cashin',
-	'felix@derklecks.de' => 'Felix Moeller',
-	'fzago@systemfabricworks.com' => 'Frank Zago',
-	'gregkh@suse.de' => 'Greg Kroah-Hartman',
-	'hch@lst.de' => 'Christoph Hellwig',
-	'htejun@gmail.com' => 'Tejun Heo',
-	'jejb@mulgrave.(none)' => 'James Bottomley',
-	'jejb@titanic.il.steeleye.com' => 'James Bottomley',
-	'jgarzik@pretzel.yyz.us' => 'Jeff Garzik',
-	'johnpol@2ka.mipt.ru' => 'Evgeniy Polyakov',
-	'kay.sievers@vrfy.org' => 'Kay Sievers',
-	'minyard@acm.org' => 'Corey Minyard',
-	'mshah@teja.com' => 'Mitesh shah',
-	'pj@ludd.ltu.se' => 'Peter A Jonsson',
-	'rmps@joel.ist.utl.pt' => 'Rui Saraiva',
-	'santtu.hyrkko@gmail.com' => 'Santtu Hyrkkö',
-	'simon@thekelleys.org.uk' => 'Simon Kelley',
-	'ssant@in.ibm.com' => 'Sachin P Sant',
-	'terra@gnome.org' => 'Morten Welinder',
-	'tony.luck@intel.com' => 'Tony Luck',
-	'welinder@anemone.rentec.com' => 'Morten Welinder',
-	'welinder@darter.rentec.com' => 'Morten Welinder',
-	'welinder@troll.com' => 'Morten Welinder',
-);
-
+my (%mailmap);
+my (%email);
 my (%map);
 my $pstate = 1;
 my $n_records = 0;
 my $n_output = 0;
-
 
 sub shortlog_entry($$) {
 	my ($name, $desc) = @_;
@@ -108,41 +66,35 @@ sub changelog_input {
 		if ($pstate == 1) {
 			my ($email);
 
-			next unless /^[Aa]uthor:? (.*)<(.*)>.*$/;
-	
+			next unless /^[Aa]uthor:?\s*(.*?)\s*<(.*)>/;
+
 			$n_records++;
-	
+
 			$author = $1;
 			$email = $2;
 			$desc = undef;
 
-			# trim trailing whitespace.
-			# why doesn't chomp work?
-			while ($author && ($author =~ /\s$/)) {
-				chop $author;
-			}
-	
 			# cset author fixups
 			if (exists $mailmap{$email}) {
 				$author = $mailmap{$email};
 			} elsif (exists $mailmap{$author}) {
 				$author = $mailmap{$author};
-			} elsif ((!$author) || ($author eq "")) {
+			} elsif (!$author) {
 				$author = $email;
 			}
-	
+			$email{$author}{$email}++;
 			$pstate++;
 		}
-	
+
 		# skip to blank line
 		elsif ($pstate == 2) {
 			next unless /^\s*$/;
 			$pstate++;
 		}
-	
+
 		# skip to non-blank line
 		elsif ($pstate == 3) {
-			next unless /^\s*(\S.*)$/;
+			next unless /^\s*?(.*)/;
 
 			# skip lines that are obviously not
 			# a 1-line cset description
@@ -150,9 +102,9 @@ sub changelog_input {
 
 			chomp;
 			$desc = $1;
-	
+
 			&shortlog_entry($author, $desc);
-	
+
 			$pstate = 1;
 		}
 	
@@ -162,16 +114,87 @@ sub changelog_input {
 	}
 }
 
+sub read_mailmap {
+	my ($fh, $mailmap) = @_;
+	while (<$fh>) {
+		chomp;
+		if (/^([^#].*?)\s*<(.*)>/) {
+			$mailmap->{$2} = $1;
+		}
+	}
+}
+
+sub setup_mailmap {
+	read_mailmap(\*DATA, \%mailmap);
+	if (-f '.mailmap') {
+		my $fh = undef;
+		open $fh, '<', '.mailmap';
+		read_mailmap($fh, \%mailmap);
+		close $fh;
+	}
+}
+
 sub finalize {
 	#print "\n$n_records records parsed.\n";
 
 	if ($n_records != $n_output) {
 		die "parse error: input records != output records\n";
 	}
+	if (0) {
+		for my $author (sort keys %email) {
+			my $e = $email{$author};
+			for my $email (sort keys %$e) {
+				print STDERR "$author <$email>\n";
+			}
+		}
+	}
 }
 
+&setup_mailmap;
 &changelog_input;
 &shortlog_output;
 &finalize;
 exit(0);
 
+
+__DATA__
+#
+# Even with git, we don't always have name translations.
+# So have an email->real name table to translate the
+# (hopefully few) missing names
+#
+Adrian Bunk <bunk@stusta.de>
+Andreas Herrmann <aherrman@de.ibm.com>
+Andrew Morton <akpm@osdl.org>
+Andrew Vasquez <andrew.vasquez@qlogic.com>
+Christoph Hellwig <hch@lst.de>
+Corey Minyard <minyard@acm.org>
+David Woodhouse <dwmw2@shinybook.infradead.org>
+Domen Puncer <domen@coderock.org>
+Douglas Gilbert <dougg@torque.net>
+Ed L Cashin <ecashin@coraid.com>
+Evgeniy Polyakov <johnpol@2ka.mipt.ru>
+Felix Moeller <felix@derklecks.de>
+Frank Zago <fzago@systemfabricworks.com>
+Greg Kroah-Hartman <gregkh@suse.de>
+James Bottomley <jejb@mulgrave.(none)>
+James Bottomley <jejb@titanic.il.steeleye.com>
+Jeff Garzik <jgarzik@pretzel.yyz.us>
+Jens Axboe <axboe@suse.de>
+Kay Sievers <kay.sievers@vrfy.org>
+Mitesh shah <mshah@teja.com>
+Morten Welinder <terra@gnome.org>
+Morten Welinder <welinder@anemone.rentec.com>
+Morten Welinder <welinder@darter.rentec.com>
+Morten Welinder <welinder@troll.com>
+Nguyen Anh Quynh <aquynh@gmail.com>
+Paolo 'Blaisorblade' Giarrusso <blaisorblade@yahoo.it>
+Peter A Jonsson <pj@ludd.ltu.se>
+Ralf Wildenhues <Ralf.Wildenhues@gmx.de>
+Rudolf Marek <R.Marek@sh.cvut.cz>
+Rui Saraiva <rmps@joel.ist.utl.pt>
+Sachin P Sant <ssant@in.ibm.com>
+Santtu Hyrkk,Av(B <santtu.hyrkko@gmail.com>
+Simon Kelley <simon@thekelleys.org.uk>
+Tejun Heo <htejun@gmail.com>
+Tony Luck <tony.luck@intel.com>

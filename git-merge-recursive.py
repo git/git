@@ -4,7 +4,7 @@ import sys, math, random, os, re, signal, tempfile, stat, errno, traceback
 from heapq import heappush, heappop
 from sets import Set
 
-sys.path.append('@@GIT_PYTHON_PATH@@')
+sys.path.append('''@@GIT_PYTHON_PATH@@''')
 from gitMergeCommon import *
 
 originalIndexFile = os.environ.get('GIT_INDEX_FILE',

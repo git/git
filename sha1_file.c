@@ -48,65 +48,6 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
-	*git_graft_file;
-static void setup_git_env(void)
-{
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir)
-		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
-	git_object_dir = getenv(DB_ENVIRONMENT);
-	if (!git_object_dir) {
-		git_object_dir = xmalloc(strlen(git_dir) + 9);
-		sprintf(git_object_dir, "%s/objects", git_dir);
-	}
-	git_refs_dir = xmalloc(strlen(git_dir) + 6);
-	sprintf(git_refs_dir, "%s/refs", git_dir);
-	git_index_file = getenv(INDEX_ENVIRONMENT);
-	if (!git_index_file) {
-		git_index_file = xmalloc(strlen(git_dir) + 7);
-		sprintf(git_index_file, "%s/index", git_dir);
-	}
-	git_graft_file = getenv(GRAFT_ENVIRONMENT);
-	if (!git_graft_file)
-		git_graft_file = strdup(git_path("info/grafts"));
-}
-
-char *get_git_dir(void)
-{
-	if (!git_dir)
-		setup_git_env();
-	return git_dir;
-}
-
-char *get_object_directory(void)
-{
-	if (!git_object_dir)
-		setup_git_env();
-	return git_object_dir;
-}
-
-char *get_refs_directory(void)
-{
-	if (!git_refs_dir)
-		setup_git_env();
-	return git_refs_dir;
-}
-
-char *get_index_file(void)
-{
-	if (!git_index_file)
-		setup_git_env();
-	return git_index_file;
-}
-
-char *get_graft_file(void)
-{
-	if (!git_graft_file)
-		setup_git_env();
-	return git_graft_file;
-}
-
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path;
@@ -475,7 +416,7 @@ int use_packed_git(struct packed_git *p)
 	return 0;
 }
 
-struct packed_git *add_packed_git(char *path, int path_len)
+struct packed_git *add_packed_git(char *path, int path_len, int local)
 {
 	struct stat st;
 	struct packed_git *p;
@@ -503,6 +444,7 @@ struct packed_git *add_packed_git(char *path, int path_len)
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
+	p->pack_local = local;
 	return p;
 }
 
@@ -543,7 +485,7 @@ void install_packed_git(struct packed_git *pack)
 	packed_git = pack;
 }
 
-static void prepare_packed_git_one(char *objdir)
+static void prepare_packed_git_one(char *objdir, int local)
 {
 	char path[PATH_MAX];
 	int len;
@@ -565,7 +507,7 @@ static void prepare_packed_git_one(char *objdir)
 
 		/* we have .idx.  Is it a file we can map? */
 		strcpy(path + len, de->d_name);
-		p = add_packed_git(path, len + namelen);
+		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
 		p->next = packed_git;
@@ -581,11 +523,11 @@ void prepare_packed_git(void)
 
 	if (run_once)
 		return;
-	prepare_packed_git_one(get_object_directory());
+	prepare_packed_git_one(get_object_directory(), 1);
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		alt->name[0] = 0;
-		prepare_packed_git_one(alt->base);
+		prepare_packed_git_one(alt->base, 0);
 	}
 	run_once = 1;
 }
@@ -1248,6 +1190,77 @@ char *write_sha1_file_prepare(void *buf,
 	return sha1_file_name(sha1);
 }
 
+/*
+ * Link the tempfile to the final place, possibly creating the
+ * last directory level as you do so.
+ *
+ * Returns the errno on failure, 0 on success.
+ */
+static int link_temp_to_file(const char *tmpfile, char *filename)
+{
+	int ret;
+
+	if (!link(tmpfile, filename))
+		return 0;
+
+	/*
+	 * Try to mkdir the last path component if that failed
+	 * with an ENOENT.
+	 *
+	 * Re-try the "link()" regardless of whether the mkdir
+	 * succeeds, since a race might mean that somebody
+	 * else succeeded.
+	 */
+	ret = errno;
+	if (ret == ENOENT) {
+		char *dir = strrchr(filename, '/');
+		if (dir) {
+			*dir = 0;
+			mkdir(filename, 0777);
+			*dir = '/';
+			if (!link(tmpfile, filename))
+				return 0;
+			ret = errno;
+		}
+	}
+	return ret;
+}
+
+/*
+ * Move the just written object into its final resting place
+ */
+int move_temp_to_file(const char *tmpfile, char *filename)
+{
+	int ret = link_temp_to_file(tmpfile, filename);
+
+	/*
+	 * Coda hack - coda doesn't like cross-directory links,
+	 * so we fall back to a rename, which will mean that it
+	 * won't be able to check collisions, but that's not a
+	 * big deal.
+	 *
+	 * The same holds for FAT formatted media.
+	 *
+	 * When this succeeds, we just return 0. We have nothing
+	 * left to unlink.
+	 */
+	if (ret && ret != EEXIST) {
+		if (!rename(tmpfile, filename))
+			return 0;
+		ret = errno;
+	}
+	unlink(tmpfile);
+	if (ret) {
+		if (ret != EEXIST) {
+			fprintf(stderr, "unable to write sha1 filename %s: %s", filename, strerror(ret));
+			return -1;
+		}
+		/* FIXME!!! Collision check here ? */
+	}
+
+	return 0;
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
@@ -1257,7 +1270,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	char *filename;
 	static char tmpfile[PATH_MAX];
 	unsigned char hdr[50];
-	int fd, hdrlen, ret;
+	int fd, hdrlen;
 
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
@@ -1320,32 +1333,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	close(fd);
 	free(compressed);
 
-	ret = link(tmpfile, filename);
-	if (ret < 0) {
-		ret = errno;
-
-		/*
-		 * Coda hack - coda doesn't like cross-directory links,
-		 * so we fall back to a rename, which will mean that it
-		 * won't be able to check collisions, but that's not a
-		 * big deal.
-		 *
-		 * When this succeeds, we just return 0. We have nothing
-		 * left to unlink.
-		 */
-		if (ret == EXDEV && !rename(tmpfile, filename))
-			return 0;
-	}
-	unlink(tmpfile);
-	if (ret) {
-		if (ret != EEXIST) {
-			fprintf(stderr, "unable to write sha1 filename %s: %s", filename, strerror(ret));
-			return -1;
-		}
-		/* FIXME!!! Collision check here ? */
-	}
-
-	return 0;
+	return move_temp_to_file(tmpfile, filename);
 }
 
 int write_sha1_to_fd(int fd, const unsigned char *sha1)
@@ -1420,8 +1408,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		       size_t bufsize, size_t *bufposn)
 {
-	char *filename = sha1_file_name(sha1);
-
+	char tmpfile[PATH_MAX];
 	int local;
 	z_stream stream;
 	unsigned char real_sha1[20];
@@ -1429,10 +1416,11 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	int ret;
 	SHA_CTX c;
 
-	local = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
 
+	local = mkstemp(tmpfile);
 	if (local < 0)
-		return error("Couldn't open %s\n", filename);
+		return error("Couldn't open %s for %s\n", tmpfile, sha1_to_hex(sha1));
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -1462,7 +1450,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		size = read(fd, buffer + *bufposn, bufsize - *bufposn);
 		if (size <= 0) {
 			close(local);
-			unlink(filename);
+			unlink(tmpfile);
 			if (!size)
 				return error("Connection closed?");
 			perror("Reading from connection");
@@ -1475,15 +1463,15 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	close(local);
 	SHA1_Final(real_sha1, &c);
 	if (ret != Z_STREAM_END) {
-		unlink(filename);
+		unlink(tmpfile);
 		return error("File %s corrupted", sha1_to_hex(sha1));
 	}
 	if (memcmp(sha1, real_sha1, 20)) {
-		unlink(filename);
+		unlink(tmpfile);
 		return error("File %s has bad hash\n", sha1_to_hex(sha1));
 	}
-	
-	return 0;
+
+	return move_temp_to_file(tmpfile, sha1_file_name(sha1));
 }
 
 int has_pack_index(const unsigned char *sha1)
@@ -1544,4 +1532,43 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	if (size)
 		munmap(buf, size);
 	return ret;
+}
+
+int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object)
+{
+	int fd;
+	char *target;
+
+	switch (st->st_mode & S_IFMT) {
+	case S_IFREG:
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			return error("open(\"%s\"): %s", path,
+				     strerror(errno));
+		if (index_fd(sha1, fd, st, write_object, NULL) < 0)
+			return error("%s: failed to insert into database",
+				     path);
+		break;
+	case S_IFLNK:
+		target = xmalloc(st->st_size+1);
+		if (readlink(path, target, st->st_size+1) != st->st_size) {
+			char *errstr = strerror(errno);
+			free(target);
+			return error("readlink(\"%s\"): %s", path,
+			             errstr);
+		}
+		if (!write_object) {
+			unsigned char hdr[50];
+			int hdrlen;
+			write_sha1_file_prepare(target, st->st_size, "blob",
+						sha1, hdr, &hdrlen);
+		} else if (write_sha1_file(target, st->st_size, "blob", sha1))
+			return error("%s: failed to insert into database",
+				     path);
+		free(target);
+		break;
+	default:
+		return error("%s: unsupported file type", path);
+	}
+	return 0;
 }

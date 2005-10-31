@@ -9,12 +9,13 @@ git-update-index - Modifies the index or directory cache
 SYNOPSIS
 --------
 'git-update-index'
-	     [--add] [--remove] [--refresh] [--replace]
-	     [--ignore-missing]
-	     [--force-remove]
+	     [--add] [--remove | --force-remove] [--replace] 
+	     [--refresh [-q] [--unmerged] [--ignore-missing]]
 	     [--cacheinfo <mode> <object> <file>]\*
-	     [--info-only]
+	     [--chmod=(+|-)x]
+	     [--info-only] [--index-info]
 	     [-z] [--stdin]
+	     [--verbose]
 	     [--] [<file>]\*
 
 DESCRIPTION
@@ -42,12 +43,28 @@ OPTIONS
 	Looks at the current cache and checks to see if merges or
 	updates are needed by checking stat() information.
 
+-q::
+        Quiet.  If --refresh finds that the cache needs an update, the
+        default behavior is to error out.  This option makes
+        git-update-index continue anyway.
+
+--unmerged::
+        If --refresh finds unmerged changes in the cache, the default 
+        behavior is to error out.  This option makes git-update-index 
+        continue anyway.
+
 --ignore-missing::
 	Ignores missing files during a --refresh
 
 --cacheinfo <mode> <object> <path>::
 	Directly insert the specified info into the cache.
 	
+--index-info::
+        Read index info from stdin.
+
+--chmod=(+|-)x::
+        Set the execute permissions on the updated files.        
+
 --info-only::
 	Do not create objects in the object database for all
 	<file> arguments that follow this flag; just insert
@@ -70,6 +87,9 @@ OPTIONS
 	read list of paths from the standard input.  Paths are
 	separated by LF (i.e. one path per line) by default.
 
+--verbose::
+        Report what is being added and removed from index.
+
 -z::
 	Only meaningful with `--stdin`; paths are separated with
 	NUL character instead of LF.
@@ -79,7 +99,7 @@ OPTIONS
 
 <file>::
 	Files to act on.
-	Note that files begining with '.' are discarded. This includes
+	Note that files beginning with '.' are discarded. This includes
 	`./file` and `dir/./file`. If you don't want this, then use	
 	cleaner names.
 	The same applies to directories ending '/' and paths with '//'
@@ -120,6 +140,17 @@ To update and refresh only the files already checked out:
 
    git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
 
+
+Configuration
+-------------
+
+The command honors `core.filemode` configuration variable.  If
+your repository is on an filesystem whose executable bits are
+unreliable, this should be set to 'false'.  This causes the
+command to ignore differences in file modes recorded in the
+index and the file mode on the filesystem if they differ only on
+executable bit.   On such an unfortunate filesystem, you may
+need to use `git-update-index --chmod=`.
 
 Author
 ------

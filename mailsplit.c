@@ -9,30 +9,13 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <string.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <assert.h>
+#include "cache.h"
 
-static int usage(void)
-{
-	fprintf(stderr, "mailsplit <mbox> <directory>\n");
-	exit(1);
-}
-
-static int linelen(const char *map, unsigned long size)
-{
-	int len = 0, c;
-
-	do {
-		c = *map;
-		map++;
-		size--;
-		len++;
-	} while (size && c != '\n');
-	return len;
-}
+static const char git_mailsplit_usage[] =
+"git-mailsplit [-d<prec>] [<mbox>] <directory>";
 
 static int is_from_line(const char *line, int len)
 {
@@ -65,81 +48,110 @@ static int is_from_line(const char *line, int len)
 	return 1;
 }
 
-static int parse_email(const void *map, unsigned long size)
-{
-	unsigned long offset;
+/* Could be as small as 64, enough to hold a Unix "From " line. */
+static char buf[4096];
 
-	if (size < 6 || memcmp("From ", map, 5))
+/* Called with the first line (potentially partial)
+ * already in buf[] -- normally that should begin with
+ * the Unix "From " line.  Write it into the specified
+ * file.
+ */
+static int split_one(FILE *mbox, const char *name)
+{
+	FILE *output = NULL;
+	int len = strlen(buf);
+	int fd;
+	int status = 0;
+
+	if (!is_from_line(buf, len))
 		goto corrupt;
 
-	/* Make sure we don't trigger on this first line */
-	map++; size--; offset=1;
+	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	if (fd < 0)
+		die("cannot open output file %s", name);
+	output = fdopen(fd, "w");
 
-	/*
-	 * Search for a line beginning with "From ", and 
-	 * having something that looks like a date format.
+	/* Copy it out, while searching for a line that begins with
+	 * "From " and having something that looks like a date format.
 	 */
-	do {
-		int len = linelen(map, size);
-		if (is_from_line(map, len))
-			return offset;
-		map += len;
-		size -= len;
-		offset += len;
-	} while (size);
-	return offset;
+	for (;;) {
+		int is_partial = (buf[len-1] != '\n');
 
-corrupt:
+		if (fputs(buf, output) == EOF)
+			die("cannot write output");
+
+		if (fgets(buf, sizeof(buf), mbox) == NULL) {
+			if (feof(mbox)) {
+				status = 1;
+				break;
+			}
+			die("cannot read mbox");
+		}
+		len = strlen(buf);
+		if (!is_partial && is_from_line(buf, len))
+			break; /* done with one message */
+	}
+	fclose(output);
+	return status;
+
+ corrupt:
+	if (output)
+		fclose(output);
+	unlink(name);
 	fprintf(stderr, "corrupt mailbox\n");
 	exit(1);
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
-	int fd, nr;
-	struct stat st;
-	unsigned long size;
-	void *map;
+	int i, nr, nr_prec = 4;
+	FILE *mbox = NULL;
 
-	if (argc != 3)
-		usage();
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0) {
-		perror(argv[1]);
-		exit(1);
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (arg[0] != '-')
+			break;
+		/* do flags here */
+		if (!strncmp(arg, "-d", 2)) {
+			nr_prec = strtol(arg + 2, NULL, 10);
+			if (nr_prec < 3 || 10 <= nr_prec)
+				usage(git_mailsplit_usage);
+			continue;
+		}
 	}
-	if (chdir(argv[2]) < 0)
-		usage();
-	if (fstat(fd, &st) < 0) {
-		perror("stat");
-		exit(1);
+
+	/* Either one remaining arg (dir), or two (mbox and dir) */
+	switch (argc - i) {
+	case 1:
+		mbox = stdin;
+		break;
+	case 2:
+		if ((mbox = fopen(argv[i], "r")) == NULL)
+			die("cannot open mbox %s for reading", argv[i]);
+		break;
+	default:
+		usage(git_mailsplit_usage);
 	}
-	size = st.st_size;
-	map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (map == MAP_FAILED) {
-		perror("mmap");
-		close(fd);
-		exit(1);
-	}
-	close(fd);
+	if (chdir(argv[argc - 1]) < 0)
+		usage(git_mailsplit_usage);
+
 	nr = 0;
-	do {
+	if (fgets(buf, sizeof(buf), mbox) == NULL)
+		die("cannot read mbox");
+
+	for (;;) {
 		char name[10];
-		unsigned long len = parse_email(map, size);
-		assert(len <= size);
-		sprintf(name, "%04d", ++nr);
-		fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
-		if (fd < 0) {
-			perror(name);
+
+		sprintf(name, "%0*d", nr_prec, ++nr);
+		switch (split_one(mbox, name)) {
+		case 0:
+			break;
+		case 1:
+			printf("%d\n", nr);
+			return 0;
+		default:
 			exit(1);
 		}
-		if (write(fd, map, len) != len) {
-			perror("write");
-			exit(1);
-		}
-		close(fd);
-		map += len;
-		size -= len;
-	} while (size > 0);
-	return 0;
+	}
 }

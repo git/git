@@ -22,4 +22,4 @@ refs/*)	: ;;
 *)	false ;;
 esac &&
 [ -d "$GIT_DIR/refs" ] &&
-[ -d "$GIT_OBJECT_DIRECTORY/00" ]
+[ -d "$GIT_OBJECT_DIRECTORY/" ]

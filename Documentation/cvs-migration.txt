@@ -1,6 +1,5 @@
-Git for CVS users
+git for CVS users
 =================
-v0.99.5, Aug 2005
 
 Ok, so you're a CVS user. That's ok, it's a treatable condition, and the
 first step to recovery is admitting you have a problem. The fact that
@@ -8,7 +7,7 @@ you are reading this file means that you may be well on that path
 already.
 
 The thing about CVS is that it absolutely sucks as a source control
-manager, and you'll thus be happy with almost anything else. Git,
+manager, and you'll thus be happy with almost anything else. git,
 however, may be a bit 'too' different (read: "good") for your taste, and
 does a lot of things differently. 
 
@@ -16,7 +15,7 @@ One particular suckage of CVS is very hard to work around: CVS is
 basically a tool for tracking 'file' history, while git is a tool for
 tracking 'project' history.  This sometimes causes problems if you are
 used to doing very strange things in CVS, in particular if you're doing
-things like making branches of just a subset of the project.  Git can't
+things like making branches of just a subset of the project.  git can't
 track that, since git never tracks things on the level of an individual
 file, only on the whole project level. 
 
@@ -33,7 +32,7 @@ and notes on converting from CVS to git.
 
 Second: CVS has the notion of a "repository" as opposed to the thing
 that you're actually working in (your working directory, or your
-"checked out tree").  Git does not have that notion at all, and all git
+"checked out tree").  git does not have that notion at all, and all git
 working directories 'are' the repositories.  However, you can easily
 emulate the CVS model by having one special "global repository", which
 people can synchronize with.  See details later, but in the meantime
@@ -50,7 +49,7 @@ gone through the git tutorial, and generally familiarized yourself with
 how to commit stuff etc in git) is to create a git'ified version of your
 CVS archive.
 
-Happily, that's very easy indeed. Git will do it for you, although git
+Happily, that's very easy indeed. git will do it for you, although git
 will need the help of a program called "cvsps":
 
 	http://www.cobite.com/cvsps/
@@ -136,7 +135,7 @@ technically possible, and there are at least two specialized scripts out
 there that can be used to get equivalent information (see the git
 mailing list archives for details). 
 
-Git has a couple of alternatives, though, that you may find sufficient
+git has a couple of alternatives, though, that you may find sufficient
 or even superior depending on your use.  One is called "git-whatchanged"
 (for obvious reasons) and the other one is called "pickaxe" ("a tool for
 the software archeologist"). 
@@ -209,7 +208,7 @@ show anything for commits that do not touch this "if" statement.
 Also, in the original context, the same statement might have
 appeared at first in a different file and later the file was
 renamed to "a-file.c".  CVS annotate would not help you to go
-back across such a rename, but GIT would still help you in such
+back across such a rename, but git would still help you in such
 a situation.  For that, you can give the -C flag to
 git-diff-tree, like this:
 

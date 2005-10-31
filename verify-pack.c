@@ -15,12 +15,12 @@ static int verify_one_pack(char *arg, int verbose)
 			len--;
 		}
 		/* Should name foo.idx now */
-		if ((g = add_packed_git(arg, len)))
+		if ((g = add_packed_git(arg, len, 1)))
 			break;
 		/* No?  did you name just foo? */
 		strcpy(arg + len, ".idx");
 		len += 4;
-		if ((g = add_packed_git(arg, len)))
+		if ((g = add_packed_git(arg, len, 1)))
 			break;
 		return error("packfile %s not found.", arg);
 	}

@@ -8,7 +8,7 @@ git-applymbox - Apply a series of patches in a mailbox
 
 SYNOPSIS
 --------
-'git-applymbox' [-u] [-k] [-q] ( -c .dotest/<num> | <mbox> ) [ <signoff> ]
+'git-applymbox' [-u] [-k] [-q] [-m] ( -c .dotest/<num> | <mbox> ) [ <signoff> ]
 
 DESCRIPTION
 -----------
@@ -32,6 +32,14 @@ OPTIONS
 	then prepends "[PATCH] ".  This flag forbids this
 	munging, and is most useful when used to read back 'git
 	format-patch --mbox' output.
+
+-m::
+	Patches are applied with `git-apply` command, and unless
+	it cleanly applies without fuzz, the processing fails.
+	With this flag, if a tree that the patch applies cleanly
+	is found in a repository, the patch is applied to the
+	tree and then a 3-way merge between the resulting tree
+	and the current tree.
 
 -u::
 	By default, the commit log message, author name and
@@ -67,7 +75,7 @@ OPTIONS
 
 SEE ALSO
 --------
-gitlink:git-applypatch[1].
+gitlink:git-am[1], gitlink:git-applypatch[1].
 
 
 Author

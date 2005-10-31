@@ -122,6 +122,9 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 	return found;
 }
 
+#define SHORT_NAME_NOT_FOUND (-1)
+#define SHORT_NAME_AMBIGUOUS (-2)
+
 static int find_unique_short_object(int len, char *canonical,
 				    unsigned char *res, unsigned char *sha1)
 {
@@ -131,23 +134,24 @@ static int find_unique_short_object(int len, char *canonical,
 	has_unpacked = find_short_object_filename(len, canonical, unpacked_sha1);
 	has_packed = find_short_packed_object(len, res, packed_sha1);
 	if (!has_unpacked && !has_packed)
-		return -1;
+		return SHORT_NAME_NOT_FOUND;
 	if (1 < has_unpacked || 1 < has_packed)
-		return error("short SHA1 %.*s is ambiguous.", len, canonical);
+		return SHORT_NAME_AMBIGUOUS;
 	if (has_unpacked != has_packed) {
 		memcpy(sha1, (has_packed ? packed_sha1 : unpacked_sha1), 20);
 		return 0;
 	}
 	/* Both have unique ones -- do they match? */
 	if (memcmp(packed_sha1, unpacked_sha1, 20))
-		return error("short SHA1 %.*s is ambiguous.", len, canonical);
+		return -2;
 	memcpy(sha1, packed_sha1, 20);
 	return 0;
 }
 
-static int get_short_sha1(const char *name, int len, unsigned char *sha1)
+static int get_short_sha1(const char *name, int len, unsigned char *sha1,
+			  int quietly)
 {
-	int i;
+	int i, status;
 	char canonical[40];
 	unsigned char res[20];
 
@@ -174,7 +178,52 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1)
 		res[i >> 1] |= val;
 	}
 
-	return find_unique_short_object(i, canonical, res, sha1);
+	status = find_unique_short_object(i, canonical, res, sha1);
+	if (!quietly && (status == SHORT_NAME_AMBIGUOUS))
+		return error("short SHA1 %.*s is ambiguous.", len, canonical);
+	return status;
+}
+
+const char *find_unique_abbrev(const unsigned char *sha1, int len)
+{
+	int status;
+	static char hex[41];
+	memcpy(hex, sha1_to_hex(sha1), 40);
+	while (len < 40) {
+		unsigned char sha1_ret[20];
+		status = get_short_sha1(hex, len, sha1_ret, 1);
+		if (!status) {
+			hex[len] = 0;
+			return hex;
+		}
+		if (status != SHORT_NAME_AMBIGUOUS)
+			return NULL;
+		len++;
+	}
+	return NULL;
+}
+
+static int ambiguous_path(const char *path)
+{
+	int slash = 1;
+
+	for (;;) {
+		switch (*path++) {
+		case '\0':
+			break;
+		case '/':
+			if (slash)
+				break;
+			slash = 1;
+			continue;
+		case '.':
+			continue;
+		default:
+			slash = 0;
+			continue;
+		}
+		return slash;
+	}
 }
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
@@ -190,6 +239,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
+
+	/* Accept only unambiguous ref paths. */
+	if (ambiguous_path(str))
+		return -1;
 
 	for (p = prefix; *p; p++) {
 		char *pathname = git_path("%s/%.*s", *p, len, str);
@@ -297,6 +350,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		return -1;
 	if (!type_string) {
 		o = deref_tag(o);
+		if (!o || (!o->parsed && !parse_object(o->sha1)))
+			return -1;
 		memcpy(sha1, o->sha1, 20);
 	}
 	else {
@@ -306,7 +361,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		 */
 
 		while (1) {
-			if (!o)
+			if (!o || (!o->parsed && !parse_object(o->sha1)))
 				return -1;
 			if (o->type == type_string) {
 				memcpy(sha1, o->sha1, 20);
@@ -375,7 +430,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	ret = get_sha1_basic(name, len, sha1);
 	if (!ret)
 		return 0;
-	return get_short_sha1(name, len, sha1);
+	return get_short_sha1(name, len, sha1, 0);
 }
 
 /*

@@ -11,7 +11,9 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#ifndef NO_MMAP
 #include <sys/mman.h>
+#endif
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -165,6 +167,7 @@ extern int ce_match_stat(struct cache_entry *ce, struct stat *st);
 extern int ce_modified(struct cache_entry *ce, struct stat *st);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type);
+extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
 struct cache_file {
@@ -174,6 +177,8 @@ struct cache_file {
 extern int hold_index_file_for_update(struct cache_file *, const char *path);
 extern int commit_index_file(struct cache_file *);
 extern void rollback_index_file(struct cache_file *);
+
+extern int trust_executable_bit;
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
@@ -189,6 +194,7 @@ extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)
 extern char *sha1_file_name(const unsigned char *sha1);
 extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
+extern const char *find_unique_abbrev(const unsigned char *sha1, int);
 extern const unsigned char null_sha1[20];
 
 int git_mkstemp(char *path, size_t n, const char *template);
@@ -218,6 +224,7 @@ extern int read_tree(void *buffer, unsigned long size, int stage, const char **p
 extern int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 			      size_t bufsize, size_t *bufposn);
 extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
+extern int move_temp_to_file(const char *tmpfile, char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 extern int has_sha1_file(const unsigned char *sha1);
@@ -306,6 +313,7 @@ extern struct packed_git {
 	void *pack_base;
 	unsigned int pack_last_used;
 	unsigned int pack_use_cnt;
+	int pack_local;
 	unsigned char sha1[20];
 	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
 } *packed_git;
@@ -332,6 +340,7 @@ extern int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		      int nr_refspec, char **refspec, int all);
 extern int get_ack(int fd, unsigned char *result_sha1);
 extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, int ignore_funny);
+extern int server_supports(const char *feature);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1);
 extern struct packed_git *parse_pack_index_file(const unsigned char *sha1,
@@ -345,7 +354,7 @@ extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 
 extern int use_packed_git(struct packed_git *);
 extern void unuse_packed_git(struct packed_git *);
-extern struct packed_git *add_packed_git(char *, int);
+extern struct packed_git *add_packed_git(char *, int, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struct packed_git *);
@@ -355,4 +364,55 @@ extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long
 /* Dumb servers support */
 extern int update_server_info(int);
 
+#ifdef NO_MMAP
+
+#ifndef PROT_READ
+#define PROT_READ 1
+#define PROT_WRITE 2
+#define MAP_PRIVATE 1
+#define MAP_FAILED ((void*)-1)
+#endif
+
+extern void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset);
+extern int gitfakemunmap(void *start, size_t length);
+
+#endif
+
+typedef int (*config_fn_t)(const char *, const char *);
+extern int git_default_config(const char *, const char *);
+extern int git_config(config_fn_t fn);
+extern int git_config_int(const char *, const char *);
+extern int git_config_bool(const char *, const char *);
+
+#define MAX_GITNAME (1000)
+extern char git_default_email[MAX_GITNAME];
+extern char git_default_name[MAX_GITNAME];
+
+/* Sane ctype - no locale, and works with signed chars */
+#undef isspace
+#undef isdigit
+#undef isalpha
+#undef isalnum
+#undef tolower
+#undef toupper
+extern unsigned char sane_ctype[256];
+#define GIT_SPACE 0x01
+#define GIT_DIGIT 0x02
+#define GIT_ALPHA 0x04
+#define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
+#define isspace(x) sane_istest(x,GIT_SPACE)
+#define isdigit(x) sane_istest(x,GIT_DIGIT)
+#define isalpha(x) sane_istest(x,GIT_ALPHA)
+#define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
+#define tolower(x) sane_case((unsigned char)(x), 0x20)
+#define toupper(x) sane_case((unsigned char)(x), 0)
+
+static inline int sane_case(int x, int high)
+{
+	if (sane_istest(x, GIT_ALPHA))
+		x = (x & ~0x20) | high;
+	return x;
+}
+
+extern int copy_fd(int ifd, int ofd);
 #endif /* CACHE_H */

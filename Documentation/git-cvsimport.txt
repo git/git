@@ -1,6 +1,5 @@
 git-cvsimport(1)
 ================
-v0.1, July 2005
 
 NAME
 ----
@@ -11,7 +10,7 @@ SYNOPSIS
 --------
 'git-cvsimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
-			[ -C <GIT_repository> ] [ -i ] [ -k ]
+			[ -C <git_repository> ] [ -i ] [ -k ]
 			[ -s <subst> ] [ -m ] [ -M regex ] [ <CVS_module> ]
 
 
@@ -31,7 +30,7 @@ OPTIONS
 	are supported.
 
 -C <target-dir>::
-        The GIT repository to import to.  If the directory doesn't
+        The git repository to import to.  If the directory doesn't
         exist, it will be created.  Default is the current directory.
 
 -i::

@@ -1,44 +1,14 @@
-git-core (0.99.8g-0) unstable; urgency=low
+git-core (0.99.9a-0) unstable; urgency=low
 
-  * GIT 0.99.8g
+  * GIT 0.99.9a
 
- -- Junio C Hamano <junkio@cox.net>  Sun, 23 Oct 2005 02:01:44 -0700
+ -- Junio C Hamano <junkio@cox.net>  Sun, 30 Oct 2005 15:03:32 -0800
 
-git-core (0.99.8f-0) unstable; urgency=low
+git-core (0.99.9-0) unstable; urgency=low
 
-  * GIT 0.99.8f
+  * GIT 0.99.9
 
- -- Junio C Hamano <junkio@cox.net>  Wed, 19 Oct 2005 02:29:24 -0700
-
-git-core (0.99.8e-0) unstable; urgency=low
-
-  * GIT 0.99.8e
-
- -- Junio C Hamano <junkio@cox.net>  Mon, 17 Oct 2005 17:45:08 -0700
-
-git-core (0.99.8d-0) unstable; urgency=low
-
-  * GIT 0.99.8d
-
- -- Junio C Hamano <junkio@cox.net>  Sat, 15 Oct 2005 17:22:58 -0700
-
-git-core (0.99.8c-0) unstable; urgency=low
-
-  * GIT 0.99.8c
-
- -- Junio C Hamano <junkio@cox.net>  Sun,  9 Oct 2005 19:19:16 -0700
-
-git-core (0.99.8b-0) unstable; urgency=low
-
-  * GIT 0.99.8b
-
- -- Junio C Hamano <junkio@cox.net>  Wed,  5 Oct 2005 15:41:24 -0700
-
-git-core (0.99.8a-0) unstable; urgency=low
-
-  * GIT 0.99.8a
-
- -- Junio C Hamano <junkio@cox.net>  Mon,  3 Oct 2005 16:27:32 -0700
+ -- Junio C Hamano <junkio@cox.net>  Sat, 29 Oct 2005 14:34:30 -0700
 
 git-core (0.99.8-0) unstable; urgency=low
 

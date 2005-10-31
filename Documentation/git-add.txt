@@ -7,7 +7,7 @@ git-add - Add files to the cache.
 
 SYNOPSIS
 --------
-'git-add' <file>...
+'git-add' [-n] [-v] <file>...
 
 DESCRIPTION
 -----------
@@ -18,6 +18,13 @@ OPTIONS
 -------
 <file>...::
 	Files to add to the cache.
+
+-n::
+        Don't actually add the file(s), just show if they exist.
+
+-v::
+        Be verbose.
+
 
 Author
 ------

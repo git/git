@@ -4,7 +4,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    echo >&2 "Usage: git-tag [-a | -s] [-f] [-m "tag message"] tagname [head]"
+    echo >&2 "Usage: git-tag [-a | -s | -u <key-id>] [-f] [-m <msg>] <tagname> [<head>]"
     exit 1
 }
 
@@ -12,6 +12,7 @@ annotate=
 signed=
 force=
 message=
+username=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -29,6 +30,12 @@ do
     	annotate=1
 	shift
 	message="$1"
+	;;
+    -u)
+	annotate=1
+	signed=1
+	shift
+	username="$1"
 	;;
     -*)
         usage
@@ -52,6 +59,7 @@ git-check-ref-format "tags/$name" ||
 object=$(git-rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git-cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
+: ${username:=$(expr "$tagger" : '\(.*>\)')}
 
 trap 'rm -f .tmp-tag* .tagmsg .editmsg' 0
 
@@ -67,13 +75,15 @@ if [ "$annotate" ]; then
 
     grep -v '^#' < .editmsg | git-stripspace > .tagmsg
 
-    [ -s .tagmsg ] || exit
+    [ -s .tagmsg ] || {
+	echo >&2 "No tag message?"
+	exit 1
+    }
 
     ( echo -e "object $object\ntype $type\ntag $name\ntagger $tagger\n"; cat .tagmsg ) > .tmp-tag
     rm -f .tmp-tag.asc .tagmsg
     if [ "$signed" ]; then
-	me=$(expr "$tagger" : '\(.*>\)') &&
-	gpg -bsa -u "$me" .tmp-tag &&
+	gpg -bsa -u "$username" .tmp-tag &&
 	cat .tmp-tag.asc >>.tmp-tag ||
 	die "failed to sign the tag with GPG."
     fi

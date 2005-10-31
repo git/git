@@ -7,7 +7,7 @@ git-mailsplit - Totally braindamaged mbox splitter program.
 
 SYNOPSIS
 --------
-'git-mailsplit' <mbox> <directory>
+'git-mailsplit' [-d<prec>] [<mbox>] <directory>
 
 DESCRIPTION
 -----------
@@ -17,14 +17,23 @@ directory so you can process them further from there.
 OPTIONS
 -------
 <mbox>::
-	Mbox file to split.
+	Mbox file to split.  If not given, the mbox is read from
+	the standard input.
 
 <directory>::
 	Directory in which to place the individual messages.
 
+-d<prec>::
+	Instead of the default 4 digits with leading zeros,
+	different precision can be specified for the generated
+	filenames.
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
+and Junio C Hamano <junkio@cox.net>
+
 
 Documentation
 --------------

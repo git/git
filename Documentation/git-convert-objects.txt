@@ -1,10 +1,9 @@
 git-convert-objects(1)
 ======================
-v0.1, May 2005
 
 NAME
 ----
-git-convert-objects - Converts old-style GIT repository
+git-convert-objects - Converts old-style git repository
 
 
 SYNOPSIS
@@ -13,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Converts old-style GIT repository to the latest format
+Converts old-style git repository to the latest format
 
 
 Author

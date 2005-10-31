@@ -1,13 +1,14 @@
-#include "cache.h"
-#include "pkt-line.h"
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <syslog.h>
+#include "pkt-line.h"
+#include "cache.h"
 
 static int log_syslog;
 static int verbose;
@@ -144,7 +145,7 @@ static int set_dir(const char *dir)
 
 	if ( chdir(dir) )
 		return -1;
-	
+
 	/*
 	 * Security on the cheap.
 	 *
@@ -375,6 +376,7 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 		inet_ntop(AF_INET, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
 		port = sin_addr->sin_port;
 
+#ifndef NO_IPV6
 	} else if (addr->sa_family == AF_INET6) {
 		struct sockaddr_in6 *sin6_addr = (void *) addr;
 
@@ -384,6 +386,7 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 		strcat(buf, "]");
 
 		port = sin6_addr->sin6_port;
+#endif
 	}
 	loginfo("Connection from %s:%d", addrbuf, port);
 
@@ -416,16 +419,16 @@ static void child_handler(int signo)
 	}
 }
 
-static int serve(int port)
+#ifndef NO_IPV6
+
+static int socksetup(int port, int **socklist_p)
 {
-	struct addrinfo hints, *ai0, *ai;
-	int gai;
 	int socknum = 0, *socklist = NULL;
 	int maxfd = -1;
-	fd_set fds_init, fds;
 	char pbuf[NI_MAXSERV];
 
-	signal(SIGCHLD, child_handler);
+	struct addrinfo hints, *ai0, *ai;
+	int gai;
 
 	sprintf(pbuf, "%d", port);
 	memset(&hints, 0, sizeof(hints));
@@ -437,8 +440,6 @@ static int serve(int port)
 	gai = getaddrinfo(NULL, pbuf, &hints, &ai0);
 	if (gai)
 		die("getaddrinfo() failed: %s\n", gai_strerror(gai));
-
-	FD_ZERO(&fds_init);
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
@@ -478,23 +479,63 @@ static int serve(int port)
 		socklist = newlist;
 		socklist[socknum++] = sockfd;
 
-		FD_SET(sockfd, &fds_init);
 		if (maxfd < sockfd)
 			maxfd = sockfd;
 	}
 
 	freeaddrinfo(ai0);
 
-	if (socknum == 0)
-		die("unable to allocate any listen sockets on port %u", port);
+	*socklist_p = socklist;
+	return socknum;
+}
+
+#else /* NO_IPV6 */
+
+static int socksetup(int port, int **socklist_p)
+{
+	struct sockaddr_in sin;
+	int sockfd;
+
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
+		return 0;
+
+	memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port = htons(port);
+
+	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
+		close(sockfd);
+		return 0;
+	}
+
+	*socklist_p = xmalloc(sizeof(int));
+	**socklist_p = sockfd;
+}
+
+#endif
+
+static int service_loop(int socknum, int *socklist)
+{
+	struct pollfd *pfd;
+	int i;
+
+	pfd = xcalloc(socknum, sizeof(struct pollfd));
+
+	for (i = 0; i < socknum; i++) {
+		pfd[i].fd = socklist[i];
+		pfd[i].events = POLLIN;
+	}
+
+	signal(SIGCHLD, child_handler);
 
 	for (;;) {
 		int i;
-		fds = fds_init;
 
-		if (select(maxfd + 1, &fds, NULL, NULL, NULL) < 0) {
+		if (poll(pfd, socknum, -1) < 0) {
 			if (errno != EINTR) {
-				error("select failed, resuming: %s",
+				error("poll failed, resuming: %s",
 				      strerror(errno));
 				sleep(1);
 			}
@@ -502,12 +543,10 @@ static int serve(int port)
 		}
 
 		for (i = 0; i < socknum; i++) {
-			int sockfd = socklist[i];
-
-			if (FD_ISSET(sockfd, &fds)) {
+			if (pfd[i].revents & POLLIN) {
 				struct sockaddr_storage ss;
-				int sslen = sizeof(ss);
-				int incoming = accept(sockfd, (struct sockaddr *)&ss, &sslen);
+				unsigned int sslen = sizeof(ss);
+				int incoming = accept(pfd[i].fd, (struct sockaddr *)&ss, &sslen);
 				if (incoming < 0) {
 					switch (errno) {
 					case EAGAIN:
@@ -522,6 +561,17 @@ static int serve(int port)
 			}
 		}
 	}
+}
+
+static int serve(int port)
+{
+	int socknum, *socklist;
+
+	socknum = socksetup(port, &socklist);
+	if (socknum == 0)
+		die("unable to allocate any listen sockets on port %u", port);
+
+	return service_loop(socknum, socklist);
 }
 
 int main(int argc, char **argv)
@@ -579,7 +629,7 @@ int main(int argc, char **argv)
 	if (inetd_mode) {
 		fclose(stderr); //FIXME: workaround
 		return execute();
+	} else {
+		return serve(port);
 	}
-
-	return serve(port);
 }

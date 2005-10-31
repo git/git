@@ -1,6 +1,5 @@
 git-pull(1)
 ===========
-v0.99.4, Aug 2005
 
 NAME
 ----
@@ -25,6 +24,10 @@ OPTIONS
 -------
 include::pull-fetch-param.txt[]
 
+-a, \--append::
+	Append ref names and object names of fetched refs to the
+	existing contents of $GIT_DIR/FETCH_HEAD.  Without this
+	option old data in $GIT_DIR/FETCH_HEAD will be overwritten.
 
 Author
 ------

@@ -49,7 +49,7 @@ test_expect_success \
      git-unpack-objects <test-1-${packname_1}.pack"
 
 unset GIT_OBJECT_DIRECTORY
-cd $TRASH/.git2
+cd "$TRASH/.git2"
 
 test_expect_success \
     'check unpack without delta' \
@@ -61,7 +61,7 @@ test_expect_success \
 	     return 1
 	 }
      done'
-cd $TRASH
+cd "$TRASH"
 
 test_expect_success \
     'pack with delta' \
@@ -80,7 +80,7 @@ test_expect_success \
      git-unpack-objects <test-2-${packname_2}.pack'
 
 unset GIT_OBJECT_DIRECTORY
-cd $TRASH/.git2
+cd "$TRASH/.git2"
 test_expect_success \
     'check unpack with delta' \
     '(cd ../.git && find objects -type f -print) |
@@ -91,7 +91,7 @@ test_expect_success \
 	     return 1
 	 }
      done'
-cd $TRASH
+cd "$TRASH"
 
 rm -fr .git2
 mkdir .git2
@@ -162,6 +162,24 @@ test_expect_success \
      then false
      else :;
      fi &&
+
+     :'
+
+test_expect_success \
+    'build pack index for an existing pack' \
+    'cp test-1-${packname_1}.pack test-3.pack &&
+     git-index-pack -o tmp.idx test-3.pack &&
+     cmp tmp.idx test-1-${packname_1}.idx &&
+
+     git-index-pack test-3.pack &&
+     cmp test-3.idx test-1-${packname_1}.idx &&
+
+     cp test-2-${packname_2}.pack test-3.pack &&
+     git-index-pack -o tmp.idx test-2-${packname_2}.pack &&
+     cmp tmp.idx test-2-${packname_2}.idx &&
+
+     git-index-pack test-3.pack &&
+     cmp test-3.idx test-2-${packname_2}.idx &&
 
      :'
 

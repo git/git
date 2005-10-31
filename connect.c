@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+static char *server_capabilities = NULL;
+
 /*
  * Read all the refs from the other end
  */
@@ -20,7 +22,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		unsigned char old_sha1[20];
 		static char buffer[1000];
 		char *name;
-		int len;
+		int len, name_len;
 
 		len = packet_read_line(in, buffer, sizeof(buffer));
 		if (!len)
@@ -36,6 +38,13 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		    check_ref_format(name + 5))
 			continue;
 
+		name_len = strlen(name);
+		if (len != name_len + 41) {
+			if (server_capabilities)
+				free(server_capabilities);
+			server_capabilities = strdup(name + name_len + 1);
+		}
+
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
 		ref = xcalloc(1, sizeof(*ref) + len - 40);
@@ -45,6 +54,12 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		list = &ref->next;
 	}
 	return list;
+}
+
+int server_supports(const char *feature)
+{
+	return server_capabilities &&
+		strstr(server_capabilities, feature) != NULL;
 }
 
 int get_ack(int fd, unsigned char *result_sha1)
@@ -59,8 +74,11 @@ int get_ack(int fd, unsigned char *result_sha1)
 	if (!strcmp(line, "NAK"))
 		return 0;
 	if (!strncmp(line, "ACK ", 3)) {
-		if (!get_sha1_hex(line+4, result_sha1))
+		if (!get_sha1_hex(line+4, result_sha1)) {
+			if (strstr(line+45, "continue"))
+				return 2;
 			return 1;
+		}
 	}
 	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
 }
@@ -291,11 +309,17 @@ static enum protocol get_protocol(const char *name)
 		return PROTO_SSH;
 	if (!strcmp(name, "git"))
 		return PROTO_GIT;
+	if (!strcmp(name, "git+ssh"))
+		return PROTO_SSH;
+	if (!strcmp(name, "ssh+git"))
+		return PROTO_SSH;
 	die("I don't handle protocol '%s'", name);
 }
 
 #define STR_(s)	# s
 #define STR(s)	STR_(s)
+
+#ifndef NO_IPV6
 
 static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 {
@@ -352,6 +376,77 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 	packet_write(sockfd, "%s %s\n", prog, path);
 	return 0;
 }
+
+#else /* NO_IPV6 */
+
+static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
+{
+	int sockfd = -1;
+	char *colon, *end;
+	char *port = STR(DEFAULT_GIT_PORT), *ep;
+	struct hostent *he;
+	struct sockaddr_in sa;
+	char **ap;
+	unsigned int nport;
+
+	if (host[0] == '[') {
+		end = strchr(host + 1, ']');
+		if (end) {
+			*end = 0;
+			end++;
+			host++;
+		} else
+			end = host;
+	} else
+		end = host;
+	colon = strchr(end, ':');
+
+	if (colon) {
+		*colon = 0;
+		port = colon + 1;
+	}
+
+
+	he = gethostbyname(host);
+	if (!he)
+		die("Unable to look up %s (%s)", host, hstrerror(h_errno));
+	nport = strtoul(port, &ep, 10);
+	if ( ep == port || *ep ) {
+		/* Not numeric */
+		struct servent *se = getservbyname(port,"tcp");
+		if ( !se )
+			die("Unknown port %s\n", port);
+		nport = se->s_port;
+	}
+
+	for (ap = he->h_addr_list; *ap; ap++) {
+		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
+		if (sockfd < 0)
+			continue;
+
+		memset(&sa, 0, sizeof sa);
+		sa.sin_family = he->h_addrtype;
+		sa.sin_port = htons(nport);
+		memcpy(&sa.sin_addr, ap, he->h_length);
+
+		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+			close(sockfd);
+			sockfd = -1;
+			continue;
+		}
+		break;
+	}
+
+	if (sockfd < 0)
+		die("unable to connect a socket (%s)", strerror(errno));
+
+	fd[0] = sockfd;
+	fd[1] = sockfd;
+	packet_write(sockfd, "%s %s\n", prog, path);
+	return 0;
+}
+
+#endif /* NO_IPV6 */
 
 /*
  * Yeah, yeah, fixme. Need to pass in the heads etc.

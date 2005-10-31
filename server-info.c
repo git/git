@@ -9,7 +9,14 @@ static FILE *info_ref_fp;
 
 static int add_info_ref(const char *path, const unsigned char *sha1)
 {
+	struct object *o = parse_object(sha1);
+
 	fprintf(info_ref_fp, "%s	%s\n", sha1_to_hex(sha1), path);
+	if (o->type == tag_type) {
+		o = deref_tag(o);
+		fprintf(info_ref_fp, "%s	%s^{}\n",
+			sha1_to_hex(o->sha1), path);
+	}
 	return 0;
 }
 
@@ -59,6 +66,16 @@ static struct object *parse_object_cheap(const unsigned char *sha1)
 		struct commit *commit = (struct commit *)o;
 		free(commit->buffer);
 		commit->buffer = NULL;
+	} else if (o->type == tree_type) {
+		struct tree *tree = (struct tree *)o;
+		struct tree_entry_list *e, *n;
+		for (e = tree->entries; e; e = n) {
+			free(e->name);
+			e->name = NULL;
+			n = e->next;
+			free(e);
+		}
+		tree->entries = NULL;
 	}
 	return o;
 }

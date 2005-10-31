@@ -38,8 +38,14 @@ int main(int argc, const char **argv)
 	const char *prefix = setup_git_directory();
 	int entries, i;
 
+	git_config(git_default_config);
 	diff_setup(&diff_options);
 	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "--")) {
+			argv++;
+			argc--;
+			break;
+		}
 		if (!strcmp(argv[1], "-q"))
 			silent = 1;
 		else if (!strcmp(argv[1], "-r"))
@@ -80,7 +86,7 @@ int main(int argc, const char **argv)
 
 	for (i = 0; i < entries; i++) {
 		struct stat st;
-		unsigned int oldmode;
+		unsigned int oldmode, newmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 
@@ -110,7 +116,13 @@ int main(int argc, const char **argv)
 		if (!changed && !diff_options.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);
-		show_modified(oldmode, DIFF_FILE_CANON_MODE(st.st_mode),
+
+		newmode = DIFF_FILE_CANON_MODE(st.st_mode);
+		if (!trust_executable_bit &&
+		    S_ISREG(newmode) && S_ISREG(oldmode) &&
+		    ((newmode ^ oldmode) == 0111))
+			newmode = oldmode;
+		show_modified(oldmode, newmode,
 			      ce->sha1, (changed ? null_sha1 : ce->sha1),
 			      ce->name);
 	}

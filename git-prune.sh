@@ -15,6 +15,7 @@ do
     shift;
 done
 
+sync
 git-fsck-objects --full --cache --unreachable "$@" |
 sed -ne '/unreachable /{
     s/unreachable [^ ][^ ]* //
@@ -22,6 +23,7 @@ sed -ne '/unreachable /{
 }' | {
 	cd "$GIT_OBJECT_DIRECTORY" || exit
 	xargs $echo rm -f
+	rmdir 2>/dev/null [0-9a-f][0-9a-f]
 }
 
 git-prune-packed $dryrun

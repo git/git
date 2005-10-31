@@ -28,16 +28,16 @@ case "$rev" in
 ?*' '^?*)
 	begin=$(expr "$rev" : '.*^.\([0-9a-f]*\).*') &&
 	end=$(expr "$rev" : '.\([0-9a-f]*\). .*') || exit
-	cmd="git-diff-tree $flags $begin $end $files"
+	cmd="git-diff-tree $flags $begin $end -- $files"
 	;;
 ?*' '?*)
-	cmd="git-diff-tree $flags $rev $files"
+	cmd="git-diff-tree $flags $rev -- $files"
 	;;
 ?*' ')
-	cmd="git-diff-index $flags $rev $files"
+	cmd="git-diff-index $flags $rev -- $files"
 	;;
 '')
-	cmd="git-diff-files $flags $files"
+	cmd="git-diff-files $flags -- $files"
 	;;
 *)
 	die "I don't understand $*"

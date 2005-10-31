@@ -7,6 +7,7 @@ test_description='Test built-in diff output engine.
 
 '
 . ./test-lib.sh
+. ../diff-lib.sh
 
 echo >path0 'Line 1
 Line 2
@@ -48,6 +49,6 @@ EOF
 
 test_expect_success \
     'validate git-diff-files -p output.' \
-    'cmp -s current expected'
+    'compare_diff_patch current expected'
 
 test_done

@@ -26,6 +26,8 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len)
 		else if (unlink(pathname) < 0)
 			error("unable to unlink %s", pathname);
 	}
+	pathname[len] = 0;
+	rmdir(pathname);
 }
 
 static void prune_packed_objects(void)
@@ -46,7 +48,7 @@ static void prune_packed_objects(void)
 		sprintf(pathname + len, "%02x/", i);
 		d = opendir(pathname);
 		if (!d)
-			die("unable to open %s", pathname);
+			continue;
 		prune_dir(i, d, pathname, len + 3);
 		closedir(d);
 	}
@@ -69,6 +71,7 @@ int main(int argc, char **argv)
 		/* Handle arguments here .. */
 		usage(prune_packed_usage);
 	}
+	sync();
 	prune_packed_objects();
 	return 0;
 }

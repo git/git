@@ -5,13 +5,14 @@
 
 . git-sh-setup || die "Not a git archive"
 	
-no_update_info= all_into_one= remove_redundant=
+no_update_info= all_into_one= remove_redundant= local=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
 	-d)	remove_redandant=t ;;
+	-l)	local=t ;;
 	*)	break ;;
 	esac
 	shift
@@ -37,6 +38,9 @@ case ",$all_into_one," in
 	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
+if [ "$local" ]; then
+	pack_objects="$pack_objects --local"
+fi
 name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
@@ -58,6 +62,7 @@ then
 	# all-into-one is used.
 	if test "$all_into_one" != '' && test "$existing" != ''
 	then
+		sync
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do

@@ -1,6 +1,5 @@
 git-diff-tree(1)
 ================
-v0.1, May 2005
 
 NAME
 ----
@@ -9,7 +8,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 
 SYNOPSIS
 --------
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--pretty] [-t] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
+'git-diff-tree' [--stdin] [-m] [-s] [-v] [--pretty] [-t] [-r] [--root] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
 -----------
@@ -33,6 +32,9 @@ include::diff-options.txt[]
 	ie file matches `/^<pattern1>|<pattern2>|.../`
 	Note that this parameter does not provide any wildcard or regexp
 	features.
+
+-r::
+        recurse into sub-trees
 
 -t::
 	show tree entry itself as well as subtrees.  Implies -r.
