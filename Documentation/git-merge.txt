@@ -28,6 +28,11 @@ OPTIONS
 	there is no `-s` option, built-in list of strategies is
 	used instead.
 
+<msg>::
+	The commit message to be used for the merge commit (in case
+	it is created). The `git-fmt-merge-msg` script can be used
+	to give a good default for automated `git-merge` invocations.
+
 <head>::
 	our branch head commit.
 
@@ -35,6 +40,11 @@ OPTIONS
 	other branch head merged into our branch.  You need at
 	least one <remote>.  Specifying more than one <remote>
 	obviously means you are trying an Octopus.
+
+
+SEE ALSO
+--------
+gitlink:git-fmt-merge-msg[1]
 
 
 Author
