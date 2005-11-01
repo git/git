@@ -30,6 +30,24 @@ OPTIONS
 	Show only commits between the named two commits.
 
 
+Examples
+--------
+git log --no-merges::
+
+	Show the whole commit history, but skip any merges
+
+git log v2.6.12.. include/scsi drivers/scsi::
+
+	Show all commits since version 'v2.6.12' that changed any file
+	in the include/scsi or drivers/scsi subdirectories
+
+git log --since="2 weeks ago" -- gitk::
+
+	Show the changes during the last two weeks to the file 'gitk'.
+	The "--" is necessary to avoid confusion with the *branch* named
+	'gitk'
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
