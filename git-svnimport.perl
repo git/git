@@ -365,12 +365,12 @@ sub branch_rev($$) {
 	return $therev;
 }
 
-sub copy_path($$$$$$$) {
+sub copy_path($$$$$$$$) {
 	# Somebody copied a whole subdirectory.
 	# We need to find the index entries from the old version which the
 	# SVN log entry points to, and add them to the new place.
 
-	my($newrev,$newbranch,$path,$oldpath,$rev,$node_kind,$new) = @_;
+	my($newrev,$newbranch,$path,$oldpath,$rev,$node_kind,$new,$parents) = @_;
 
 	my($srcbranch,$srcpath) = split_path($rev,$oldpath);
 	my $therev = branch_rev($srcbranch, $rev);
@@ -378,6 +378,9 @@ sub copy_path($$$$$$$) {
 	unless($gitrev) {
 		print STDERR "$newrev:$newbranch: could not find $oldpath \@ $rev\n";
 		return;
+	}
+	if ($srcbranch ne $newbranch) {
+		push(@$parents, $branches{$srcbranch}{'LAST'});
 	}
 	print "$newrev:$newbranch:$path: copying from $srcbranch:$srcpath @ $rev\n" if $opt_v;
 	if ($node_kind eq $SVN::Node::dir) {
@@ -405,7 +408,7 @@ sub copy_path($$$$$$$) {
 sub commit {
 	my($branch, $changed_paths, $revision, $author, $date, $message) = @_;
 	my($author_name,$author_email,$dest);
-	my(@old,@new);
+	my(@old,@new,@parents);
 
 	if (not defined $author) {
 		$author_name = $author_email = "unknown";
@@ -492,6 +495,8 @@ sub commit {
 		$last_rev = $rev;
 	}
 
+	push (@parents, $rev) if defined $rev;
+
 	my $cid;
 	if($tag and not %$changed_paths) {
 		$cid = $rev;
@@ -507,7 +512,7 @@ sub commit {
 			if(($action->[0] eq "A") || ($action->[0] eq "R")) {
 				my $node_kind = node_kind($branch,$path,$revision);
 				if($action->[1]) {
-					copy_path($revision,$branch,$path,$action->[1],$action->[2],$node_kind,\@new);
+					copy_path($revision,$branch,$path,$action->[1],$action->[2],$node_kind,\@new,\@parents);
 				} elsif ($node_kind eq $SVN::Node::file) {
 					my $f = get_file($revision,$branch,$path);
 					if ($f) {
@@ -592,7 +597,6 @@ sub commit {
 			$pw->close();
 
 			my @par = ();
-			@par = ("-p",$rev) if defined $rev;
 
 			# loose detection of merges
 			# based on the commit msg
@@ -602,10 +606,16 @@ sub commit {
 					if ($mparent eq 'HEAD') { $mparent = $opt_o };
 					if ( -e "$git_dir/refs/heads/$mparent") {
 						$mparent = get_headref($mparent, $git_dir);
-						push @par, '-p', $mparent;
+						push (@parents, $mparent);
 						print OUT "Merge parent branch: $mparent\n" if $opt_v;
 					}
 				}
+			}
+			my %seen_parents = ();
+			my @unique_parents = grep { ! $seen_parents{$_} ++ } @parents;
+			foreach my $bparent (@unique_parents) {
+				push @par, '-p', $bparent;
+				print OUT "Merge parent branch: $bparent\n" if $opt_v;
 			}
 
 			exec("env",
