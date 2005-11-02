@@ -336,7 +336,12 @@ sub split_path($$) {
 	} elsif($path =~ s#^/\Q$branch_name\E/([^/]+)/?##) {
 		$branch = $1;
 	} else {
-		print STDERR "$rev: Unrecognized path: $path\n";
+		my %no_error = (
+			"/" => 1,
+			"/$tag_name" => 1,
+			"/$branch_name" => 1
+		);
+		print STDERR "$rev: Unrecognized path: $path\n" unless (defined $no_error{$path});
 		return ()
 	}
 	$path = "/" if $path eq "";
