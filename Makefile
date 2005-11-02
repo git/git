@@ -397,8 +397,8 @@ doc:
 test: all
 	$(MAKE) -C t/ all
 
-test-date$X: test-date.c date.o
-	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
+test-date$X: test-date.c date.o ctype.o
+	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o ctype.o
 
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $^
