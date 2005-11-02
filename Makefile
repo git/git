@@ -413,7 +413,6 @@ check:
 install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
 	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
-	sh ./cmd-rename.sh $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))

@@ -1,13 +1,21 @@
 #!/bin/sh
+#
+# If you installed git by hand previously, you may find this
+# script useful to remove the symbolic links that we shipped
+# for backward compatibility.
+#
+# Running this script with the previous installation directory
+# like this:
+#
+# $ cmd-rename.sh /usr/local/bin/
+#
+# would clean them.
+
 d="$1"
 test -d "$d" || exit
 while read old new
 do
 	rm -f "$d/$old"
-	if test -f "$d/$new"
-	then
-		ln -s "$new" "$d/$old" || exit
-	fi
 done <<\EOF
 git-add-script	git-add
 git-archimport-script	git-archimport
