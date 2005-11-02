@@ -6,11 +6,15 @@
 # Define NO_OPENSSL environment variable if you do not have OpenSSL. You will
 # miss out git-rev-list --merge-order. This also implies MOZILLA_SHA1.
 #
-# Define NO_CURL if you do not have curl installed.  git-http-pull is not
-# built, and you cannot use http:// and https:// transports.
+# Define NO_CURL if you do not have curl installed.  git-http-pull and
+# git-http-push are not built, and you cannot use http:// and https://
+# transports.
 #
 # Define CURLDIR=/foo/bar if your curl header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
+#
+# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# not built, and you cannot push using http:// and https:// transports.
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
@@ -223,6 +227,10 @@ ifndef NO_CURL
 		CURL_LIBCURL = -lcurl
 	endif
 	PROGRAMS += git-http-fetch$X
+	ifndef NO_EXPAT
+		EXPAT_LIBEXPAT = -lexpat
+		PROGRAMS += git-http-push$X
+	endif
 endif
 
 ifndef SHELL_PATH
@@ -375,6 +383,7 @@ git-ssh-pull$X: rsh.o fetch.o
 git-ssh-push$X: rsh.o
 
 git-http-fetch$X: LIBS += $(CURL_LIBCURL)
+git-http-push$X: LIBS += $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 git-rev-list$X: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
