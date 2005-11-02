@@ -337,6 +337,10 @@ sub file {
 	}
 	close ($fh);
 
+	if ($res eq '') {
+	    die "Looks like the server has gone away while fetching $fn $rev -- exiting!";
+	}
+
 	return ($name, $res);
 }
 
