@@ -14,7 +14,7 @@ usage () {
 
 # all_strategies='resolve recursive stupid octopus'
 
-all_strategies='recursive octopus resolve stupid'
+all_strategies='recursive octopus resolve stupid ours'
 default_strategies='resolve octopus'
 use_strategies=
 

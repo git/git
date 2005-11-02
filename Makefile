@@ -89,7 +89,7 @@ SCRIPT_SH = \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
-	git-merge-resolve.sh git-grep.sh
+	git-merge-resolve.sh git-merge-ours.sh git-grep.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
