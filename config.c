@@ -13,6 +13,14 @@ static int get_next_char(void)
 	c = '\n';
 	if ((f = config_file) != NULL) {
 		c = fgetc(f);
+		if (c == '\r') {
+			/* DOS like systems */
+			c = fgetc(f);
+			if (c != '\n') {
+				ungetc(c, f);
+				c = '\r';
+			}
+		}
 		if (c == '\n')
 			config_linenr++;
 		if (c == EOF) {
