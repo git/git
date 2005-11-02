@@ -1,0 +1,39 @@
+git-fmt-merge-msg(1)
+====================
+
+NAME
+----
+git-fmt-merge-msg - Produce a merge commit message
+
+
+SYNOPSIS
+--------
+'git-fmt-merge-msg' <$GIT_DIR/FETCH_HEAD
+
+DESCRIPTION
+-----------
+Takes the list of merged objects on stdin and produces a suitable
+commit message to be used for the merge commit, usually to be
+passed as the '<merge-message>' argument of `git-merge`.
+
+This script is intended mostly for internal use by scripts
+automatically invoking `git-merge`.
+
+
+SEE ALSO
+--------
+gitlink:git-merge[1]
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

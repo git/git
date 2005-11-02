@@ -52,7 +52,7 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION = 0.99.9a
+GIT_VERSION = 0.99.9b
 
 CFLAGS = -g -O2 -Wall
 ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
@@ -94,7 +94,7 @@ SCRIPT_SH = \
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-rename.perl git-shortlog.perl git-fmt-merge-msg.perl \
-	git-findtags.perl git-svnimport.perl git-mv.perl
+	git-svnimport.perl git-mv.perl
 
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
@@ -413,7 +413,6 @@ check:
 install: $(PROGRAMS) $(SCRIPTS)
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
 	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
-	sh ./cmd-rename.sh $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))

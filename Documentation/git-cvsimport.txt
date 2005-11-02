@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 'git-cvsimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ]
 			[ -d <CVSROOT> ] [ -p <options-for-cvsps> ]
-			[ -C <git_repository> ] [ -i ] [ -k ]
+			[ -C <git_repository> ] [ -i ] [ -P <file> ] [ -k ]
 			[ -s <subst> ] [ -m ] [ -M regex ] [ <CVS_module> ]
 
 
@@ -59,6 +59,10 @@ the old cvs2git tool.
 	The options '-u' and '-A' are implicit and should not be used here.
 +
 If you need to pass multiple options, separate them with a comma.
+
+-P:: <cvsps-output-file>
+	Instead of calling cvsps, read the provided cvsps output file. Useful
+	for debugging or when cvsps is being handled outside cvsimport.
 
 -m::    
 	Attempt to detect merges based on the commit message. This option

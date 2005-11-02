@@ -1028,7 +1028,9 @@ multiple working trees, but disk space is cheap these days.
 
 [NOTE]
 You could even pull from your own repository by
-giving '.' as <remote-repository> parameter to `git pull`.
+giving '.' as <remote-repository> parameter to `git pull`.  This
+is useful when you want to merge a local branch (or more, if you
+are making an Octopus) into the current branch.
 
 It is likely that you will be pulling from the same remote
 repository from time to time. As a short hand, you can store

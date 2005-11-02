@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_s,$opt_m,$opt_M);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M);
 
 sub usage() {
 	print STDERR <<END;
@@ -41,7 +41,7 @@ END
 	exit(1);
 }
 
-getopts("hivmkuo:d:p:C:z:s:M:") or usage();
+getopts("hivmkuo:d:p:C:z:s:M:P:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -337,6 +337,10 @@ sub file {
 	}
 	close ($fh);
 
+	if ($res eq '') {
+	    die "Looks like the server has gone away while fetching $fn $rev -- exiting!";
+	}
+
 	return ($name, $res);
 }
 
@@ -487,11 +491,16 @@ unless($pid) {
 	my @opt;
 	@opt = split(/,/,$opt_p) if defined $opt_p;
 	unshift @opt, '-z', $opt_z if defined $opt_z;
+	unshift @opt, '-q'         unless defined $opt_v;
 	unless (defined($opt_p) && $opt_p =~ m/--no-cvs-direct/) {
 		push @opt, '--cvs-direct';
 	}
-	exec("cvsps",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
-	die "Could not start cvsps: $!\n";
+	if ($opt_P) {
+	    exec("cat", $opt_P);
+	} else {
+	    exec("cvsps",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
+	    die "Could not start cvsps: $!\n";
+	}
 }
 
 

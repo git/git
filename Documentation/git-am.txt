@@ -82,8 +82,6 @@ Documentation
 --------------
 Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
-This manual page is a stub. You can help the git documentation by expanding it.
-
 GIT
 ---
 Part of the gitlink:git[7] suite

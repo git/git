@@ -54,6 +54,8 @@ my ($src, $dst, $base, $dstDir);
 my $argCount = scalar @ARGV;
 if (-d $ARGV[$argCount-1]) {
 	$dstDir = $ARGV[$argCount-1];
+	# remove any trailing slash
+	$dstDir =~ s/\/$//;
 	@srcArgs = @ARGV[0..$argCount-2];
 	
 	foreach $src (@srcArgs) {
