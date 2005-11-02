@@ -10,13 +10,15 @@ usage () {
     die "git pull [-n] [-s strategy]... <repo> <head>..."
 }
 
-strategy_args= no_summary=
+strategy_args= no_summary= no_commit=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
 do
 	case "$1" in
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
 		no_summary=-n ;;
+	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
+		no_commit=--no-commit ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
@@ -81,4 +83,4 @@ case "$strategy_args" in
 esac
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD")
-git-merge $no_summary $strategy_args "$merge_name" HEAD $merge_head
+git-merge $no_summary $no_commit $strategy_args "$merge_name" HEAD $merge_head
