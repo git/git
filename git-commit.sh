@@ -129,6 +129,9 @@ then
 elif test "$use_commit" != ""
 then
 	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
+elif test -f "$GIT_DIR/MERGE_HEAD" && test -f "$GIT_DIR/MERGE_MSG"
+then
+	cat "$GIT_DIR/MERGE_MSG"
 fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
@@ -144,9 +147,6 @@ t)
 esac
 
 if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
-
-	test -f "$GIT_DIR/MERGE_MSG" && cat "$GIT_DIR/MERGE_MSG"
-
 	echo "#"
 	echo "# It looks like your may be committing a MERGE."
 	echo "# If this is not correct, please remove the file"
