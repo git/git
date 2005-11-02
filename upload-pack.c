@@ -226,7 +226,7 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 		nr_our_refs++;
 	}
 	if (o->type == tag_type) {
-		o = deref_tag(o);
+		o = deref_tag(o, refname, 0);
 		packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
 	}
 	return 0;

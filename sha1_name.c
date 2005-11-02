@@ -349,7 +349,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	if (!o)
 		return -1;
 	if (!type_string) {
-		o = deref_tag(o);
+		o = deref_tag(o, name, sp - name - 2);
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return -1;
 		memcpy(sha1, o->sha1, 20);

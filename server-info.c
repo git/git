@@ -13,9 +13,10 @@ static int add_info_ref(const char *path, const unsigned char *sha1)
 
 	fprintf(info_ref_fp, "%s	%s\n", sha1_to_hex(sha1), path);
 	if (o->type == tag_type) {
-		o = deref_tag(o);
-		fprintf(info_ref_fp, "%s	%s^{}\n",
-			sha1_to_hex(o->sha1), path);
+		o = deref_tag(o, path, 0);
+		if (o)
+			fprintf(info_ref_fp, "%s	%s^{}\n",
+				sha1_to_hex(o->sha1), path);
 	}
 	return 0;
 }
