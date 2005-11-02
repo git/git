@@ -189,9 +189,9 @@ endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
+	NEEDS_LIBICONV = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
-	CURLDIR = /opt/sfw
 	INSTALL = ginstall
 	TAR = gtar
 	PLATFORM_DEFINES += -D__EXTENSIONS__
