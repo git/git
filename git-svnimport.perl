@@ -348,21 +348,42 @@ sub split_path($$) {
 	return ($branch,$path);
 }
 
-sub copy_subdir($$$$$$) {
+sub branch_rev($$) {
+
+	my ($srcbranch,$uptorev) = @_;
+
+	my $bbranches = $branches{$srcbranch};
+	my @revs = reverse sort { ($a eq 'LAST' ? 0 : $a) <=> ($b eq 'LAST' ? 0 : $b) } keys %$bbranches;
+	my $therev;
+	foreach my $arev(@revs) {
+		next if  ($arev eq 'LAST');
+		if ($arev <= $uptorev) {
+			$therev = $arev;
+			last;
+		}
+	}
+	return $therev;
+}
+
+sub copy_path($$$$$$$) {
 	# Somebody copied a whole subdirectory.
 	# We need to find the index entries from the old version which the
 	# SVN log entry points to, and add them to the new place.
 
-	my($newrev,$newbranch,$path,$oldpath,$rev,$new) = @_;
-	my($branch,$srcpath) = split_path($rev,$oldpath);
+	my($newrev,$newbranch,$path,$oldpath,$rev,$node_kind,$new) = @_;
 
-	my $gitrev = $branches{$branch}{$rev};
+	my($srcbranch,$srcpath) = split_path($rev,$oldpath);
+	my $therev = branch_rev($srcbranch, $rev);
+	my $gitrev = $branches{$srcbranch}{$therev};
 	unless($gitrev) {
 		print STDERR "$newrev:$newbranch: could not find $oldpath \@ $rev\n";
 		return;
 	}
-	print "$newrev:$newbranch:$path: copying from $branch:$srcpath @ $rev\n" if $opt_v;
-	$srcpath =~ s#/*$#/#;
+	print "$newrev:$newbranch:$path: copying from $srcbranch:$srcpath @ $rev\n" if $opt_v;
+	if ($node_kind eq $SVN::Node::dir) {
+			$srcpath =~ s#/*$#/#;
+	}
+	
 	open my $f,"-|","git-ls-tree","-r","-z",$gitrev,$srcpath;
 	local $/ = "\0";
 	while(<$f>) {
@@ -370,9 +391,12 @@ sub copy_subdir($$$$$$) {
 		my($m,$p) = split(/\t/,$_,2);
 		my($mode,$type,$sha1) = split(/ /,$m);
 		next if $type ne "blob";
-		$p = substr($p,length($srcpath)-1);
-		print "... found $path$p ...\n" if $opt_v;
-		push(@$new,[$mode,$sha1,$path.$p]);
+		if ($node_kind eq $SVN::Node::dir) {
+			$p = $path . substr($p,length($srcpath)-1);
+		} else {
+			$p = $path;
+		}
+		push(@$new,[$mode,$sha1,$p]);	
 	}
 	close($f) or
 		print STDERR "$newrev:$newbranch: could not list files in $oldpath \@ $rev\n";
@@ -476,39 +500,31 @@ sub commit {
 		foreach my $path(@paths) {
 			my $action = $changed_paths->{$path};
 
-			if ($action->[0] eq "A") {
-				my $f = get_file($revision,$branch,$path);
-				if($f) {
-					push(@new,$f) if $f;
-				} elsif($action->[1]) {
-					copy_subdir($revision,$branch,$path,$action->[1],$action->[2],\@new);
-				} else {
-					my $opath = $action->[3];
-					print STDERR "$revision: $branch: could not fetch '$opath'\n";
+			if ($action->[0] eq "R") {
+				# refer to a file/tree in an earlier commit
+				push(@old,$path); # remove any old stuff
+			}
+			if(($action->[0] eq "A") || ($action->[0] eq "R")) {
+				my $node_kind = node_kind($branch,$path,$revision);
+				if($action->[1]) {
+					copy_path($revision,$branch,$path,$action->[1],$action->[2],$node_kind,\@new);
+				} elsif ($node_kind eq $SVN::Node::file) {
+					my $f = get_file($revision,$branch,$path);
+					if ($f) {
+						push(@new,$f) if $f;
+					} else {
+						my $opath = $action->[3];
+						print STDERR "$revision: $branch: could not fetch '$opath'\n";
+					}
 				}
 			} elsif ($action->[0] eq "D") {
 				push(@old,$path);
 			} elsif ($action->[0] eq "M") {
-				my $f = get_file($revision,$branch,$path);
-				push(@new,$f) if $f;
-			} elsif ($action->[0] eq "R") {
-				# refer to a file/tree in an earlier commit
-				push(@old,$path); # remove any old stuff
-
-				# ... and add any new stuff
-				my($b,$srcpath) = split_path($revision,$action->[1]);
-				$srcpath =~ s#/*$#/#;
-				open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $srcpath;
-				local $/ = "\0";
-				while(<$F>) {
-					chomp;
-					my($m,$p) = split(/\t/,$_,2);
-					my($mode,$type,$sha1) = split(/ /,$m);
-					next if $type ne "blob";
-					$p = substr($p,length($srcpath)-1);
-					push(@new,[$mode,$sha1,$path.$p]);
+				my $node_kind = node_kind($branch,$path,$revision);
+				if ($node_kind eq $SVN::Node::file) {
+					my $f = get_file($revision,$branch,$path);
+					push(@new,$f) if $f;
 				}
-				close($F);
 			} else {
 				die "$revision: unknown action '".$action->[0]."' for $path\n";
 			}
