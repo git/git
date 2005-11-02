@@ -67,4 +67,16 @@ test_expect_success \
        >output &&
      diff -u expect output'
 
+# Test \r\n (MSDOS-like systems)
+echo -ne '*.1\r\n/*.3\r\n!*.6\r\n' >.gitignore
+
+test_expect_success \
+    'git-ls-files --others with \r\n line endings.' \
+    'git-ls-files --others \
+       --exclude=\*.6 \
+       --exclude-per-directory=.gitignore \
+       --exclude-from=.git/ignore \
+       >output &&
+     diff -u expect output'
+
 test_done
