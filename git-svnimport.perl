@@ -260,10 +260,17 @@ EOM
 
 open BRANCHES,">>", "$git_dir/svn2git";
 
-sub get_file($$$) {
-	my($rev,$branch,$path) = @_;
+sub node_kind($$$) {
+	my ($branch, $path, $revision) = @_;
+	my $pool=SVN::Pool->new;
+	my $kind = $svn->{'svn'}->check_path(revert_split_path($branch,$path),$revision,$pool);
+	$pool->clear;
+	return $kind;
+}
 
-	# revert split_path(), below
+sub revert_split_path($$) {
+	my($branch,$path) = @_;
+
 	my $svnpath;
 	$path = "" if $path eq "/"; # this should not happen, but ...
 	if($branch eq "/") {
@@ -273,6 +280,14 @@ sub get_file($$$) {
 	} else {
 		$svnpath = "$branch_name/$branch/$path";
 	}
+
+	return $svnpath
+}
+
+sub get_file($$$) {
+	my($rev,$branch,$path) = @_;
+
+	my $svnpath = revert_split_path($branch,$path);
 
 	# now get it
 	my $name;
