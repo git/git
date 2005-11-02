@@ -126,7 +126,9 @@ fi
 #
 if [ "$?" -eq 0 ]; then
 	if [ "$newbranch" ]; then
-		echo $new > "$GIT_DIR/refs/heads/$newbranch"
+		leading=`expr "refs/heads/$newbranch" : '\(.*\)/'` &&
+		mkdir -p "$GIT_DIR/$leading" &&
+		echo $new >"$GIT_DIR/refs/heads/$newbranch" || exit
 		branch="$newbranch"
 	fi
 	[ "$branch" ] &&
