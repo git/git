@@ -648,6 +648,10 @@ sub commit {
 		die "Error running git-commit-tree: $?\n" if $?;
 	}
 
+	if (not defined $cid) {
+		$cid = $branches{"/"}{"LAST"};
+	}
+
 	if(not defined $dest) {
 		print "... no known parent\n" if $opt_v;
 	} elsif(not $tag) {
@@ -664,6 +668,7 @@ sub commit {
 		# the tag was 'complex', i.e. did not refer to a "real" revision
 
 		$dest =~ tr/_/\./ if $opt_u;
+		$branch = $dest;
 
 		my $pid = open2($in, $out, 'git-mktag');
 		print $out ("object $cid\n".
