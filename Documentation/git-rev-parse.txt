@@ -72,6 +72,14 @@ OPTIONS
 	path of the current directory relative to the top-level
 	directory.
 
+--since=datestring, --after=datestring::
+	Parses the date string, and outputs corresponding
+	--max-age= parameter for git-rev-list command.
+
+--until=datestring, --before=datestring::
+	Parses the date string, and outputs corresponding
+	--min-age= parameter for git-rev-list command.
+
 <args>...::
 	Flags and parameters to be parsed.
 
