@@ -126,12 +126,12 @@ static int ref_newer(const unsigned char *new_sha1,
 	/* Both new and old must be commit-ish and new is descendant of
 	 * old.  Otherwise we require --force.
 	 */
-	o = deref_tag(parse_object(old_sha1));
+	o = deref_tag(parse_object(old_sha1), NULL, 0);
 	if (!o || o->type != commit_type)
 		return 0;
 	old = (struct commit *) o;
 
-	o = deref_tag(parse_object(new_sha1));
+	o = deref_tag(parse_object(new_sha1), NULL, 0);
 	if (!o || o->type != commit_type)
 		return 0;
 	new = (struct commit *) o;

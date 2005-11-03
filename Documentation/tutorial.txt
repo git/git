@@ -455,6 +455,41 @@ the same diff that we've already seen several times, we can now do
 (again, `-p` means to show the difference as a human-readable patch),
 and it will show what the last commit (in `HEAD`) actually changed.
 
+[NOTE]
+============
+Here is an ASCII art by Jon Loeliger that illustrates how
+various diff-\* commands compare things.
+
+                      diff-tree
+                       +----+
+                       |    |
+                       |    |
+                       V    V
+                    +-----------+
+                    | Object DB |
+                    |  Backing  |
+                    |   Store   |
+                    +-----------+
+                      ^    ^
+                      |    |
+                      |    |  diff-index --cached
+                      |    |
+          diff-index  |    V
+                      |  +-----------+
+                      |  |   Index   |
+                      |  |  "cache"  |
+                      |  +-----------+
+                      |    ^
+                      |    |
+                      |    |  diff-files
+                      |    |
+                      V    V
+                    +-----------+
+                    |  Working  |
+                    | Directory |
+                    +-----------+
+============
+
 More interestingly, you can also give `git-diff-tree` the `-v` flag, which
 tells it to also show the commit message and author and date of the
 commit, and you can tell it to show a whole series of diffs.

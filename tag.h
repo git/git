@@ -15,6 +15,6 @@ struct tag {
 extern struct tag *lookup_tag(const unsigned char *sha1);
 extern int parse_tag_buffer(struct tag *item, void *data, unsigned long size);
 extern int parse_tag(struct tag *item);
-extern struct object *deref_tag(struct object *);
+extern struct object *deref_tag(struct object *, const char *, int);
 
 #endif /* TAG_H */

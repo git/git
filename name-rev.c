@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		o = deref_tag(parse_object(sha1));
+		o = deref_tag(parse_object(sha1), *argv, 0);
 		if (!o || o->type != commit_type) {
 			fprintf(stderr, "Could not get commit for %s. Skipping.\n",
 					*argv);

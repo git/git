@@ -38,9 +38,9 @@ static void rev_list_push(struct commit *commit, int mark)
 
 static int rev_list_insert_ref(const char *path, const unsigned char *sha1)
 {
-	struct object *o = deref_tag(parse_object(sha1));
+	struct object *o = deref_tag(parse_object(sha1), path, 0);
 
-	if (o->type == commit_type)
+	if (o && o->type == commit_type)
 		rev_list_push((struct commit *)o, SEEN);
 
 	return 0;
@@ -317,7 +317,8 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	 * Don't mark them common yet; the server has to be told so first.
 	 */
 	for (ref = *refs; ref; ref = ref->next) {
-		struct object *o = deref_tag(lookup_object(ref->old_sha1));
+		struct object *o = deref_tag(lookup_object(ref->old_sha1),
+					     NULL, 0);
 
 		if (!o || o->type != commit_type || !(o->flags & COMPLETE))
 			continue;

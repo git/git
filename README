@@ -399,6 +399,46 @@ save the note about that state, in practice we tend to just write the
 result to the file `.git/HEAD`, so that we can always see what the
 last committed state was.
 
+Here is an ASCII art by Jon Loeliger that illustrates how
+various pieces fit together.
+
+------------
+
+                     commit-tree
+                      commit obj
+                       +----+
+                       |    |
+                       |    |
+                       V    V
+                    +-----------+
+                    | Object DB |
+                    |  Backing  |
+                    |   Store   |
+                    +-----------+
+                       ^
+           write-tree  |     |
+             tree obj  |     |
+                       |     |  read-tree
+                       |     |  tree obj
+                             V
+                    +-----------+
+                    |   Index   |
+                    |  "cache"  |
+                    +-----------+
+         update-index  ^
+             blob obj  |     |
+                       |     |
+    checkout-index -u  |     |  checkout-index
+             stat      |     |  blob obj
+                             V
+                    +-----------+
+                    |  Working  |
+                    | Directory |
+                    +-----------+
+
+------------
+
+
 6) Examining the data
 ~~~~~~~~~~~~~~~~~~~~~
 

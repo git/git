@@ -50,6 +50,7 @@ git-merge-base
 git-merge-index
 git-merge-octopus
 git-merge-one-file
+git-merge-ours
 git-merge-recursive
 git-merge-resolve
 git-merge-stupid

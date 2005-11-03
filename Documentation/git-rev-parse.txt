@@ -72,6 +72,14 @@ OPTIONS
 	path of the current directory relative to the top-level
 	directory.
 
+--since=datestring, --after=datestring::
+	Parses the date string, and outputs corresponding
+	--max-age= parameter for git-rev-list command.
+
+--until=datestring, --before=datestring::
+	Parses the date string, and outputs corresponding
+	--min-age= parameter for git-rev-list command.
+
 <args>...::
 	Flags and parameters to be parsed.
 
@@ -123,6 +131,32 @@ syntax.
 which is passed to 'git-rev-list'.  Two revision parameters
 concatenated with '..' is a short-hand for writing a range
 between them.  I.e. 'r1..r2' is equivalent to saying '{caret}r1 r2'
+
+Here is an illustration, by Jon Loeliger.  Both node B and C are
+a commit parents of commit node A.  Parent commits are ordered
+left-to-right.
+
+    G   H   I   J
+     \ /     \ /
+      D   E   F
+       \  |  /
+        \ | /
+         \|/
+          B     C
+           \   /
+            \ /
+             A
+
+    A =      = A^0
+    B = A^   = A^1     = A~1
+    C = A^2  = A^2
+    D = A^^  = A^1^1   = A~2
+    E = B^2  = A^^2
+    F = B^3  = A^^3
+    G = A^^^ = A^1^1^1 = A~3
+    H = D^2  = B^^2    = A^^^2  = A~2^2
+    I = F^   = B^3^    = A^^3^
+    J = F^2  = B^3^2   = A^^3^2
 
 
 Author

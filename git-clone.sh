@@ -196,10 +196,17 @@ cd $D || exit
 
 if test -f ".git/HEAD"
 then
-	mkdir -p .git/remotes || exit
-	echo >.git/remotes/origin \
-	"URL: $repo
-Pull: master:origin"
+	head_points_at=`git-symbolic-ref HEAD`
+	case "$head_points_at" in
+	refs/heads/*)
+		head_points_at=`expr "$head_points_at" : 'refs/heads/\(.*\)'`
+		mkdir -p .git/remotes &&
+		echo >.git/remotes/origin \
+		"URL: $repo
+Pull: $head_points_at:origin"
+		cp ".git/refs/heads/$head_points_at" .git/refs/heads/origin
+	esac
+
 	case "$no_checkout" in
 	'')
 		git checkout

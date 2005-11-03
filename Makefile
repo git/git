@@ -52,7 +52,7 @@
 
 # DEFINES += -DUSE_STDEV
 
-GIT_VERSION = 0.99.9b
+GIT_VERSION = 0.99.9c
 
 CFLAGS = -g -O2 -Wall
 ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
@@ -89,7 +89,7 @@ SCRIPT_SH = \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
-	git-merge-resolve.sh git-grep.sh
+	git-merge-resolve.sh git-merge-ours.sh git-grep.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
@@ -189,9 +189,9 @@ endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
+	NEEDS_LIBICONV = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
-	CURLDIR = /opt/sfw
 	INSTALL = ginstall
 	TAR = gtar
 	PLATFORM_DEFINES += -D__EXTENSIONS__
@@ -397,8 +397,8 @@ doc:
 test: all
 	$(MAKE) -C t/ all
 
-test-date$X: test-date.c date.o
-	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o
+test-date$X: test-date.c date.o ctype.o
+	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o ctype.o
 
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $^

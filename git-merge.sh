@@ -9,12 +9,12 @@ LF='
 '
 
 usage () {
-    die "git-merge [-n] [-s <strategy>]... <merge-message> <head> <remote>+"
+    die "git-merge [-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+"
 }
 
 # all_strategies='resolve recursive stupid octopus'
 
-all_strategies='recursive octopus resolve stupid'
+all_strategies='recursive octopus resolve stupid ours'
 default_strategies='resolve octopus'
 use_strategies=
 
@@ -63,6 +63,8 @@ do
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
 		no_summary=t ;;
+	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
+		no_commit=t ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
@@ -111,18 +113,18 @@ done
 common=$(git-show-branch --merge-base $head "$@")
 echo "$head" >"$GIT_DIR/ORIG_HEAD"
 
-case "$#,$common" in
-*,'')
+case "$#,$common,$no_commit" in
+*,'',*)
 	# No common ancestors found. We need a real merge.
 	;;
-1,"$1")
+1,"$1",*)
 	# If head can reach all the merge then we are up to date.
 	# but first the most common case of merging one remote
 	echo "Already up-to-date."
 	dropsave
 	exit 0
 	;;
-1,"$head")
+1,"$head",*)
 	# Again the most common case of merging one remote.
 	echo "Updating from $head to $1."
 	git-update-index --refresh 2>/dev/null
@@ -132,11 +134,11 @@ case "$#,$common" in
 	dropsave
 	exit 0
 	;;
-1,?*"$LF"?*)
+1,?*"$LF"?*,*)
 	# We are not doing octopus and not fast forward.  Need a
 	# real merge.
 	;;
-1,*)
+1,*,)
 	# We are not doing octopus, not fast forward, and have only
 	# one common.  See if it is really trivial.
 	echo "Trying really trivial in-index merge..."
@@ -210,12 +212,18 @@ do
     # Remember which strategy left the state in the working tree
     wt_strategy=$strategy
 
-    git-merge-$strategy $common -- "$head_arg" "$@" || {
+    git-merge-$strategy $common -- "$head_arg" "$@"
+    exit=$?
+    if test "$no_commit" = t && test "$exit" = 0
+    then
+	exit=1 ;# pretend it left conflicts.
+    fi
+
+    test "$exit" = 0 || {
 
 	# The backend exits with 1 when conflicts are left to be resolved,
 	# with 2 when it does not handle the given merge at all.
 
-	exit=$?
 	if test "$exit" -eq 1
 	then
 	    cnt=`{
@@ -272,4 +280,4 @@ do
 done >"$GIT_DIR/MERGE_HEAD"
 echo $merge_msg >"$GIT_DIR/MERGE_MSG"
 
-die "Automatic merge failed; fix up by hand"
+die "Automatic merge failed/prevented; fix up by hand"
