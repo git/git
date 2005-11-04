@@ -448,6 +448,73 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 
 #endif /* NO_IPV6 */
 
+static char *git_proxy_command = NULL;
+
+static int git_proxy_command_options(const char *var, const char *value)
+{
+	if (git_proxy_command == NULL) {
+		if (!strcmp(var, "git.proxycommand")) {
+			git_proxy_command = xmalloc(strlen(value) + 1);
+			strcpy(git_proxy_command, value);
+			return 0;
+		}
+	}
+
+	return git_default_config(var, value);
+}
+
+static int git_use_proxy(void)
+{
+	git_proxy_command = getenv("GIT_PROXY_COMMAND");
+	git_config(git_proxy_command_options);
+	return git_proxy_command != NULL;
+}
+
+static int git_proxy_connect(int fd[2], const char *prog, char *host, char *path)
+{
+	char *port = STR(DEFAULT_GIT_PORT);
+	char *colon, *end;
+	int pipefd[2][2];
+	pid_t pid;
+
+	if (host[0] == '[') {
+		end = strchr(host + 1, ']');
+		if (end) {
+			*end = 0;
+			end++;
+			host++;
+		} else
+			end = host;
+	} else
+		end = host;
+	colon = strchr(end, ':');
+
+	if (colon) {
+		*colon = 0;
+		port = colon + 1;
+	}
+
+	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
+		die("unable to create pipe pair for communication");
+	pid = fork();
+	if (!pid) {
+		dup2(pipefd[1][0], 0);
+		dup2(pipefd[0][1], 1);
+		close(pipefd[0][0]);
+		close(pipefd[0][1]);
+		close(pipefd[1][0]);
+		close(pipefd[1][1]);
+		execlp(git_proxy_command, git_proxy_command, host, port, NULL);
+		die("exec failed");
+	}
+	fd[0] = pipefd[0][0];
+	fd[1] = pipefd[1][1];
+	close(pipefd[0][1]);
+	close(pipefd[1][0]);
+	packet_write(fd[1], "%s %s\n", prog, path);
+	return pid;
+}
+
 /*
  * Yeah, yeah, fixme. Need to pass in the heads etc.
  */
@@ -493,8 +560,11 @@ int git_connect(int fd[2], char *url, const char *prog)
 		*ptr = '\0';
 	}
 
-	if (protocol == PROTO_GIT)
+	if (protocol == PROTO_GIT) {
+		if (git_use_proxy())
+			return git_proxy_connect(fd, prog, host, path);
 		return git_tcp_connect(fd, prog, host, path);
+	}
 
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
