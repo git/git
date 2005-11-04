@@ -1,0 +1,13 @@
+-n, --no-summary::
+	Do not show diffstat at the end of the merge.
+
+--no-commit::
+	Perform the merge but pretend the merge failed and do
+	not autocommit.
+
+-s <strategy>::
+	use that merge strategy; can be given more than once to
+	specify them in the order they should be tried.  If
+	there is no `-s` option, built-in list of strategies is
+	used instead (`git-merge-resolve` when merging a single
+	head, `git-merge-octopus` otherwise).
