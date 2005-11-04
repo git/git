@@ -727,7 +727,6 @@ void process_waiting_requests(void)
 void add_request(unsigned char *sha1, char *lock_token)
 {
 	struct transfer_request *request = request_queue_head;
-	struct transfer_request *tail;
 	struct packed_git *target;
 	
 	while (request != NULL && memcmp(request->sha1, sha1, 20))
@@ -745,17 +744,8 @@ void add_request(unsigned char *sha1, char *lock_token)
 	request->lock_token = lock_token;
 	request->headers = NULL;
 	request->state = NEED_CHECK;
-	request->next = NULL;
-
-	if (request_queue_head == NULL) {
-		request_queue_head = request;
-	} else {
-		tail = request_queue_head;
-		while (tail->next != NULL) {
-			tail = tail->next;
-		}
-		tail->next = request;
-	}
+	request->next = request_queue_head;
+	request_queue_head = request;
 #ifdef USE_CURL_MULTI
 	process_request_queue();
 	process_curl_messages();
@@ -775,13 +765,29 @@ static int fetch_index(unsigned char *sha1)
 	FILE *indexfile;
 	struct active_request_slot *slot;
 
+	/* Don't use the index if the pack isn't there */
+	url = xmalloc(strlen(remote->url) + 65);
+	sprintf(url, "%s/objects/pack/pack-%s.pack", remote->url, hex);
+	slot = get_active_slot();
+	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
+	if (start_active_slot(slot)) {
+		run_active_slot(slot);
+		if (slot->curl_result != CURLE_OK) {
+			free(url);
+			return error("Unable to verify pack %s is available",
+				     hex);
+		}
+	} else {
+		return error("Unable to start request");
+	}
+
 	if (has_pack_index(sha1))
 		return 0;
 
 	if (push_verbosely)
 		fprintf(stderr, "Getting index for pack %s\n", hex);
 	
-	url = xmalloc(strlen(remote->url) + 64);
 	sprintf(url, "%s/objects/pack/pack-%s.idx", remote->url, hex);
 	
 	filename = sha1_pack_index_name(sha1);
@@ -792,6 +798,8 @@ static int fetch_index(unsigned char *sha1)
 			     filename);
 
 	slot = get_active_slot();
+	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, indexfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -833,8 +841,6 @@ static int fetch_index(unsigned char *sha1)
 static int setup_index(unsigned char *sha1)
 {
 	struct packed_git *new_pack;
-	if (has_pack_file(sha1))
-		return 0; // don't list this as something we can get
 
 	if (fetch_index(sha1))
 		return -1;
@@ -1610,7 +1616,6 @@ int main(int argc, char **argv)
 	while (request != NULL) {
 		next_request = request->next;
 		release_request(request);
-		free(request);
 		request = next_request;
 	}
 
