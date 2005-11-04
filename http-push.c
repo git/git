@@ -1066,11 +1066,43 @@ char *lock_remote(char *file, int timeout)
 	struct buffer out_buffer;
 	char *out_data;
 	char *url;
+	char *ep;
 	char timeout_header[25];
 	struct curl_slist *dav_headers = NULL;
 
 	if (lock_token != NULL)
 		free(lock_token);
+
+	url = xmalloc(strlen(remote->url) + strlen(file) + 1);
+	sprintf(url, "%s%s", remote->url, file);
+
+	/* Make sure leading directories exist for the remote ref */
+	ep = strchr(url + strlen(remote->url) + 11, '/');
+	while (ep) {
+		*ep = 0;
+		slot = get_active_slot();
+		curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
+		curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+		curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_MKCOL);
+		curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
+		if (start_active_slot(slot)) {
+			run_active_slot(slot);
+			if (slot->curl_result != CURLE_OK &&
+			    slot->http_code != 405) {
+				fprintf(stderr,
+					"Unable to create branch path %s\n",
+					url);
+				free(url);
+				return NULL;
+			}
+		} else {
+			fprintf(stderr, "Unable to start request\n");
+			free(url);
+			return NULL;
+		}
+		*ep = '/';
+		ep = strchr(ep + 1, '/');
+	}
 
 	out_buffer.size = strlen(LOCK_REQUEST) + strlen(git_default_email) - 2;
 	out_data = xmalloc(out_buffer.size + 1);
@@ -1079,8 +1111,6 @@ char *lock_remote(char *file, int timeout)
 	out_buffer.buffer = out_data;
 
 	sprintf(timeout_header, "Timeout: Second-%d", timeout);
-	url = xmalloc(strlen(remote->url) + strlen(file) + 1);
-	sprintf(url, "%s%s", remote->url, file);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
 
@@ -1098,15 +1128,21 @@ char *lock_remote(char *file, int timeout)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		free(out_data);
 		if (slot->curl_result != CURLE_OK) {
 			fprintf(stderr, "Got HTTP error %ld\n", slot->http_code);
+			free(url);
+			free(out_data);
 			return NULL;
 		}
 	} else {
+		free(url);
 		free(out_data);
 		fprintf(stderr, "Unable to start request\n");
+		return NULL;
 	}
+
+	free(url);
+	free(out_data);
 
 	return strdup(lock_token);
 }
