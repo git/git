@@ -25,7 +25,7 @@ use IPC::Open2;
 use SVN::Core;
 use SVN::Ra;
 
-die "Need CVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
+die "Need SVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
@@ -34,7 +34,7 @@ our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b
 
 sub usage() {
 	print STDERR <<END;
-Usage: ${\basename $0}     # fetch/update GIT from CVS
+Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_num_changes]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
