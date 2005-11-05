@@ -10,10 +10,13 @@ int copy_fd(int ifd, int ofd)
 		if (!len)
 			break;
 		if (len < 0) {
+			int read_error;
 			if (errno == EAGAIN)
 				continue;
+			read_error = errno;
+			close(ifd);
 			return error("copy-fd: read returned %s",
-				     strerror(errno));
+				     strerror(read_error));
 		}
 		while (1) {
 			int written = write(ofd, buf, len);
