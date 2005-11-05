@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: git-core
 Architecture: any
 Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, rcs
-Recommends: rsync, curl, ssh, libmail-sendmail-perl, libemail-valid-perl, libsvn-core-perl (>= 1.2.1), python (>= 2.4.0), less
+Recommends: rsync, curl, ssh, python (>= 2.4.0), less
 Suggests: cogito, patch
 Conflicts: git, cogito (<< 0.13)
 Description: The git content addressable filesystem
@@ -18,9 +18,46 @@ Description: The git content addressable filesystem
  enables human beings to work with the database in a manner to a degree
  similar to other SCM tools.
 
+Package: git-doc
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, git-core, tk8.4
+Description: The git content addressable filesystem, Documentation
+ This package contains documentation for GIT.
+
 Package: git-tk
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, git-core, tk8.4
 Description: The git content addressable filesystem, GUI add-on
  This package contains 'gitk', the git revision tree visualizer.
+
+Package: git-svn
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, git-core, libsvn-core-perl (>= 1.2.1)
+Suggests: subversion
+Description: The git content addressable filesystem, SVN interoperability
+ This package contains 'git-svnimport', to import development history from
+ SVN repositories.
+
+Package: git-arch
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, git-core
+Suggests: tla, bazaar
+Description: The git content addressable filesystem, GNUArch interoperability
+ This package contains 'git-archimport', to import development history from
+ GNUArch repositories.
+
+Package: git-cvs
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, git-core
+Suggests: cvs
+Description: The git content addressable filesystem, CVS interoperability
+ This package contains 'git-cvsimport', to import development history from
+ CVS repositories.
+
+Package: git-email
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, git-core, libmail-sendmail-perl, libemail-valid-perl
+Description: The git content addressable filesystem, e-mail add-on
+ This package contains 'git-send-email', to send a series of patch e-mails.
+
 

@@ -450,8 +450,8 @@ clean:
 	rm -f git-core.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
-	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
-	rm -f git-tk_$(GIT_VERSION)-*.deb
+	rm -f git-core_$(GIT_VERSION)-*.dsc
+	rm -f git-*_$(GIT_VERSION)-*.deb
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

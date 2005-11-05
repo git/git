@@ -41,7 +41,7 @@ MAN_DESTDIR := $(DESTDIR)/$(MANDIR)
 build: debian/build-stamp
 debian/build-stamp:
 	dh_testdir
-	$(MAKE) prefix=$(PREFIX) PYTHON_PATH=/usr/bin/python2.4 all doc test
+	$(MAKE) prefix=$(PREFIX) PYTHON_PATH=/usr/bin/python2.4 all test doc
 	touch debian/build-stamp
 
 debian-clean:
@@ -65,7 +65,12 @@ install: build
 	mkdir -p $(DOC_DESTDIR)
 	find $(DOC) '(' -name '*.txt' -o -name '*.html' ')' -exec install {} $(DOC_DESTDIR) ';'
 
+	dh_movefiles -p git-arch
+	dh_movefiles -p git-cvs
+	dh_movefiles -p git-svn
 	dh_movefiles -p git-tk
+	dh_movefiles -p git-email
+	dh_movefiles -p git-doc
 	dh_movefiles -p git-core
 	find debian/tmp -type d -o -print | sed -e 's/^/? /'
 
