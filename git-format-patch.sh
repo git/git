@@ -92,10 +92,17 @@ filelist=$tmp-files
 # 3. "rev1" "rev2	is equivalent to "rev1..rev2"
 #
 # We want to take a sequence of "rev1..rev2" in general.
+# Also, "rev1.." should mean "rev1..HEAD"; git-diff users are
+# familiar with that syntax.
 
 case "$#,$1" in
 1,?*..?*)
 	# single "rev1..rev2"
+	;;
+1,?*..)
+	# single "rev1.." should mean "rev1..HEAD"
+	set x "$1"HEAD"
+	shift
 	;;
 1,*)
 	# single rev1
