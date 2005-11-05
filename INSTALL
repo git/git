@@ -46,6 +46,9 @@ Issues of note:
 	  transfer, you are probabaly OK if you do not have
 	  them.
 
+	- expat library; git-http-push uses it for remote lock
+	  management over DAV.  Similar to "curl" above, this is optional.
+
 	- "GNU diff" to generate patches.  Of course, you don't _have_ to
 	  generate patches if you don't want to, but let's face it, you'll
 	  be wanting to. Or why did you get git in the first place?
