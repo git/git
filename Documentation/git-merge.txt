@@ -37,7 +37,7 @@ include::merge-pull-opts.txt[]
 
 SEE ALSO
 --------
-gitlink:git-fmt-merge-msg[1]
+gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1]
 
 
 Author

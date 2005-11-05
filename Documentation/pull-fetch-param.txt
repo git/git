@@ -17,12 +17,12 @@ file in `$GIT_DIR/remotes` directory can be given; the
 named file should be in the following format:
 +
 	URL: one of the above URL format
-	Push: <refspec>...
-	Pull: <refspec>...
+	Push: <refspec>
+	Pull: <refspec>
 +
 When such a short-hand is specified in place of
 <repository> without <refspec> parameters on the command
-line, <refspec>... specified on `Push:` lines or `Pull:`
+line, <refspec> specified on `Push:` lines or `Pull:`
 lines are used for `git-push` and `git-fetch`/`git-pull`,
 respectively.  Multiple `Push:` and and `Pull:` lines may
 be specified for additional branch mappings.
@@ -90,6 +90,22 @@ This leads to the common `Pull: master:origin` mapping of a
 remote `master` branch to a local `origin` branch, which
 is then merged to a local development branch, again typically
 named `master`.
++
+[NOTE]
+There is a difference between listing multiple <refspec>
+directly on `git-pull` command line and having multiple
+`Pull:` <refspec> lines for a <repository> and running
+`git-pull` command without any explicit <refspec> parameters.
+<refspec> listed explicitly on the command line are always
+merged into the current branch after fetching.  In other words,
+if you list more than one remote refs, you would be making
+an Octopus.  While `git-pull` run without any explicit <refspec>
+parameter takes default <refspec>s from `Pull:` lines, it
+merges only the first <refspec> found into the current branch,
+after fetching all the remote refs.  This is because making an
+Octopus from remote refs is rarely done, while keeping track
+of multiple remote heads in one-go by fetching more than one
+is often useful.
 +
 Some short-cut notations are also supported.
 +

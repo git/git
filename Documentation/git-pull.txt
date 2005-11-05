@@ -141,6 +141,11 @@ merge the remote `origin` head into the current,
 local `master` branch.
 
 
+SEE ALSO
+--------
+gitlink:git-fetch[1], gitlink:git-merge[1]
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
