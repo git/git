@@ -3,7 +3,8 @@
 
 --no-commit::
 	Perform the merge but pretend the merge failed and do
-	not autocommit.
+	not autocommit, to give the user a chance to inspect and
+	further tweak the merge result before committing.
 
 -s <strategy>::
 	use that merge strategy; can be given more than once to

@@ -7,7 +7,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    die "git pull [-n] [-s strategy]... <repo> <head>..."
+    die "git pull [-n] [--no-commit] [-s strategy]... <repo> <head>..."
 }
 
 strategy_args= no_summary= no_commit=
