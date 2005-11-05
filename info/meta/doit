@@ -1,0 +1,18 @@
+#!/bin/sh
+
+HERE=`dirname "$0"`
+REPO=`expr "$HERE" : '\(.*/\)info/meta'`
+
+case "$1" in
+compare | '')
+	diff -ru "$HERE/remotes" "$REPO.git/remotes"
+	;;
+save)
+	cp -a "$REPO.git/remotes" "$HERE"
+	;;
+restore)
+	cp -a "$HERE/remotes" "$REPO.git/."
+	;;
+*)
+	echo >&2 "usage: $0 [compare|save|restore]"
+esac

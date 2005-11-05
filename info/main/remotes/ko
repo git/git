@@ -1,0 +1,7 @@
+URL: master.kernel.org:/pub/scm/git/git.git/
+Pull: master:refs/tags/ko-master
+Pull: +pu:refs/tags/ko-pu
+Pull: maint:refs/tags/ko-maint
+Push: master
+Push: +pu
+Push: maint

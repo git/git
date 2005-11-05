@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# This is not for general consumption but just a simple script
+# I use on my private development environment and on kernel.org
+# machine to cut binary distribution material.
+
+V=${1?'version'}
+M=master.kernel.org
+case `hostname` in
+siamese)
+	scp $0 ${M}:./Distrib
+	cd /chroot/sarge/build/git &&
+	scp git-*_$V-*.deb git-core-$V.tar.gz ${M}:debian/.
+	exit
+	;;
+esac
+
+G=/pub/software/scm/git
+D=$G/debian
+
+set -x
+
+ln $HOME/debian/git-*_$V-* $D/.
+ln $HOME/debian/git-core-$V.tar.gz $G/.
+ln $HOME/rpms/RPMS/i386/git-*-$V-* $G/.
+ln $HOME/rpms/SRPMS/git-*-$V-* $G/.

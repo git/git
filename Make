@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# DDD=' -DUSE_SYMLINK_HEAD=0'
+
+PATH=/usr/bin:/bin
+LANG=C
+LC_CTYPE=C
+export PATH LANG LC_CTYPE
+
+#make prefix=/usr/local \
+make bindir=$HOME/bin/Linux \
+     PYTHON_PATH=/usr/bin/python2.4 \
+     CFLAGS='-O1 -Wall -g'"$DDD" \
+     WITH_SEND_EMAIL=YesPlease \
+     WITH_SVNIMPORT=YesPlease \
+     "$@"

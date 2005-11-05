@@ -1,0 +1,3 @@
+URL: master.kernel.org:/pub/scm/git/git.git/
+Pull: todo:ko-master
+Push: master:refs/heads/todo

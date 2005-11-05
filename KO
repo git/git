@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Not for general consumption; a script I used to make sure
+# I do not accidentally push a rewound master to public.
+
+git fetch ko
+mb=$(git-merge-base ko-master master)
+h=$(git-rev-parse $mb ko-master | sort -u | wc -l)
+if test "$h" != 1
+then
+	echo "OOOOOPPPPPPPPPPPPPPSSS! master is not ko-master fast forward."
+fi
+git show-branch ko-master master
+git show-branch ko-maint maint
+git show-branch ko-pu pu
