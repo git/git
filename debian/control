@@ -20,7 +20,7 @@ Description: The git content addressable filesystem
 
 Package: git-doc
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, git-core, tk8.4
+Depends: ${shlibs:Depends}, ${misc:Depends}, git-core
 Description: The git content addressable filesystem, Documentation
  This package contains documentation for GIT.
 

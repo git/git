@@ -62,8 +62,8 @@ install: build
 	make DESTDIR=$(DESTDIR) prefix=$(PREFIX) mandir=$(MANDIR) \
 		install install-doc
 
-	mkdir -p $(DOC_DESTDIR)
-	find $(DOC) '(' -name '*.txt' -o -name '*.html' ')' -exec install {} $(DOC_DESTDIR) ';'
+	make -C Documentation DESTDIR=$(DESTDIR) prefix=$(PREFIX) \
+		WEBDOC_DEST=$(DOC_DESTDIR) install-webdoc
 
 	dh_movefiles -p git-arch
 	dh_movefiles -p git-cvs
