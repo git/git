@@ -37,25 +37,21 @@
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
 
-# DEFINES += -DCOLLISION_CHECK
-
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
 # randomly break unless your underlying filesystem supports those sub-second
 # times (my ext3 doesn't).
 
-# DEFINES += -DUSE_NSEC
-
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-# DEFINES += -DUSE_STDEV
-
 GIT_VERSION = 0.99.9.GIT
 
+# CFLAGS is for the users to override from the command line.
+
 CFLAGS = -g -O2 -Wall
-ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
+ALL_CFLAGS = $(CFLAGS)
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
@@ -194,19 +190,19 @@ ifeq ($(uname_S),SunOS)
 	NO_STRCASESTR = YesPlease
 	INSTALL = ginstall
 	TAR = gtar
-	PLATFORM_DEFINES += -D__EXTENSIONS__
+	ALL_CFLAGS += -D__EXTENSIONS__
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
-	PLATFORM_DEFINES += -DUSE_SYMLINK_HEAD=0
+	ALL_CFLAGS += -DUSE_SYMLINK_HEAD=0
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
+	ALL_CFLAGS += -I/usr/local/include -L/usr/local/lib
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -217,7 +213,7 @@ endif
 ifndef NO_CURL
 	ifdef CURLDIR
 		# This is still problematic -- gcc does not want -R.
-		CFLAGS += -I$(CURLDIR)/include
+		ALL_CFLAGS += -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
 	else
 		CURL_LIBCURL = -lcurl
@@ -240,13 +236,13 @@ ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		CFLAGS += -I$(OPENSSLDIR)/include
+		ALL_CFLAGS += -I$(OPENSSLDIR)/include
 		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
 	else
 		OPENSSL_LINK =
 	endif
 else
-	DEFINES += -DNO_OPENSSL
+	ALL_CFLAGS += -DNO_OPENSSL
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
@@ -258,7 +254,7 @@ endif
 ifdef NEEDS_LIBICONV
 	ifdef ICONVDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		CFLAGS += -I$(ICONVDIR)/include
+		ALL_CFLAGS += -I$(ICONVDIR)/include
 		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
 	else
 		ICONV_LINK =
@@ -276,15 +272,15 @@ ifdef NEEDS_NSL
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_STRCASESTR
-	DEFINES += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
+	ALL_CFLAGS += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
 	LIB_OBJS += compat/strcasestr.o
 endif
 ifdef NO_MMAP
-	DEFINES += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
+	ALL_CFLAGS += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
 	LIB_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
-	DEFINES += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
+	ALL_CFLAGS += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
 endif
 
 ifdef PPC_SHA1
@@ -305,7 +301,7 @@ endif
 endif
 endif
 
-DEFINES += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
+ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
