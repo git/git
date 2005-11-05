@@ -10,7 +10,7 @@ Tool Renames Plan
 =================
 
  - Immedately after 0.99.9, the backward compatible symbolic
-   links in $(bindir) will be removed.
+   links in $(bindir) will be removed [DONE].
 
    git-ssh-push and git-ssh-pull pair is not going away if ever.
    Each of these old-name commands continues to invoke its
@@ -32,7 +32,7 @@ Documentation
 -------------
 
 * Help Jon Loeliger to find place in the documentation to place
-  his drawing.
+  his drawing [DONE].
 
 * Accept patches from people who actually have done CVS
   migration and update the cvs-migration documentation.
@@ -44,7 +44,7 @@ Documentation
   support for this (but see below about optimized cloning).
 
 * Maybe update tutorial with a toy project that involves two or
-  three developers..
+  three developers.
 
 * Update tutorial to cover setting up repository hooks to do
   common tasks.
@@ -53,7 +53,7 @@ Documentation
   them.
 
 * Accept patches to talk about "Whoops, it broke.  What's
-  next?".
+  next?" [Started].
 
 * Accept patches to make formatted tables in asciidoc to work
   well in both html and man pages (see git-diff(1)).
@@ -61,6 +61,15 @@ Documentation
 
 Technical (heavier)
 -------------------
+
+* Assess the side effects of "make the rest of the things
+  magically work from any subdirectory" change by Linus.  It is
+  a good change in principle and we would like to have that
+  behaviour but some tool implementations I am sure are assuming
+  to never run from anywhere other than the top.
+
+* Ref namespace management.  Perhaps use refs/local/ suggestion
+  by Linus.
 
 * Git daemon, when deployed at kernel.org, might turn out to be
   quite a burden, since it needs to generate customized packs
@@ -103,6 +112,9 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* Binary package split.  Plan laid out and discussion mostly
+  done.
+
 * Maybe look at Cogito and see if I can help Pasky to adjust to
   the later core features?  Zack Brown's "cg-seek leaving empty
   directories" problem is a good example of this.
@@ -141,11 +153,14 @@ Technical (milder)
   external spec sent out with a quick hack.  Will know if that
   is what he needs hopefully soon].
 
+* Make sure we do reasonable thing on binary files even in
+  cherry-pick and rebase.
+
 
 Technical (trivial)
 -------------------
 
-* Stop installing the old-name symlinks [IN 0.99.9].
+* Stop installing the old-name symlinks [DONE].
 
 * 'git merge-projects'?
 
