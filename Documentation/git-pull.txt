@@ -13,13 +13,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Runs 'git-fetch' with the given parameters.
+Runs `git-fetch` with the given parameters, and calls `git-merge`
+to merge the retrieved head(s) into the current branch.
 
-When only one ref is downloaded, runs 'git resolve' to merge it
-into the local HEAD.  Otherwise uses 'git octopus' to merge them
-into the local HEAD.
-
-Note that you can use '.' (current directory) as the
+Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
 when merging local branches into the current branch.
 
@@ -29,8 +26,8 @@ include::pull-fetch-param.txt[]
 
 -a, \--append::
 	Append ref names and object names of fetched refs to the
-	existing contents of $GIT_DIR/FETCH_HEAD.  Without this
-	option old data in $GIT_DIR/FETCH_HEAD will be overwritten.
+	existing contents of `$GIT_DIR/FETCH_HEAD`.  Without this
+	option old data in `$GIT_DIR/FETCH_HEAD` will be overwritten.
 
 include::merge-pull-opts.txt[]
 
@@ -97,6 +94,52 @@ You should refrain from abusing this option to sneak substantial
 changes into a merge commit.  Small fixups like bumping
 release/version name would be acceptable.
 
+Command line pull of multiple branches from one repository::
++
+------------------------------------------------
+$ cat .git/remotes/origin
+URL: git://git.kernel.org/pub/scm/git/git.git
+Pull: master:origin
+
+$ git checkout master
+$ git fetch origin master:origin +pu:pu maint:maint
+$ git pull . origin
+------------------------------------------------
++
+Here, a typical `$GIT_DIR/remotes/origin` file from a
+`git-clone` operation is used in combination with
+command line options to `git-fetch` to first update
+multiple branches of the local repository and then
+to merge the remote `origin` branch into the local
+`master` branch.  The local `pu` branch is updated
+even if it does not result in a fast forward update.
+Here, the pull can obtain its objects from the local
+repository using `.`, as the previous `git-fetch` is
+known to have already obtained and made available
+all the necessary objects.
+
+
+Pull of multiple branches from one repository using `$GIT_DIR/remotes` file::
++
+------------------------------------------------
+$ cat .git/remotes/origin
+URL: git://git.kernel.org/pub/scm/git/git.git
+Pull: master:origin
+Pull: +pu:pu
+Pull: maint:maint
+
+$ git checkout master
+$ git pull origin
+------------------------------------------------
++
+Here, a typical `$GIT_DIR/remotes/origin` file from a
+`git-clone` operation has been hand-modified to include
+the branch-mapping of additional remote and local
+heads directly.  A single `git-pull` operation while
+in the `master` branch will fetch multiple heads and
+merge the remote `origin` head into the current,
+local `master` branch.
+
 
 Author
 ------
@@ -105,7 +148,9 @@ and Junio C Hamano <junkio@cox.net>
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by Jon Loeliger,
+David Greaves,
+Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
