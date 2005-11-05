@@ -59,6 +59,26 @@ OPTIONS
 	standard output, instead of saving them into a file per
 	patch and implies --mbox.
 
+
+EXAMPLES
+--------
+
+git-format-patch -k --stdout R1..R2 | git-am -3 -k::
+	Extract commits between revisions R1 and R2, and apply
+	them on top of the current branch using `git-am` to
+	cherry-pick them.
+
+git-format-patch origin::
+	Extract commits the current branch accumulated since it
+	pulled from origin the last time in a patch form for
+	e-mail submission.
+
+
+See Also
+--------
+gitlink:git-am[1], gitlink:git-send-email
+
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net>
