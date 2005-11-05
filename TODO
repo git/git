@@ -115,6 +115,10 @@ Technical (milder)
 * Binary package split.  Plan laid out and discussion mostly
   done.
 
+* User-relative paths by Andreas Ericsson.
+
+* Proxing git:// connection by Paul Collins.
+
 * Maybe look at Cogito and see if I can help Pasky to adjust to
   the later core features?  Zack Brown's "cg-seek leaving empty
   directories" problem is a good example of this.
