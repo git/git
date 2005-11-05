@@ -3158,7 +3158,7 @@ proc clickisonarrow {id y} {
 }
 
 proc arrowjump {id dirn y} {
-    global mainline sidelines canv
+    global mainline sidelines canv canv2 canv3
 
     set yt {}
     if {$dirn eq "down"} {
@@ -3196,6 +3196,8 @@ proc arrowjump {id dirn y} {
 	set yfrac 0
     }
     $canv yview moveto $yfrac
+    $canv2 yview moveto $yfrac
+    $canv3 yview moveto $yfrac
 }
 
 proc lineclick {x y id isnew} {
