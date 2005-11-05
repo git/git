@@ -8,7 +8,7 @@ git-merge - Grand Unified Merge Driver
 
 SYNOPSIS
 --------
-'git-merge' [-n] [-s <strategy>]... <msg> <head> <remote> <remote>...
+'git-merge' [-n] [--no-commit] [-s <strategy>]... <msg> <head> <remote> <remote>...
 
 
 DESCRIPTION
@@ -19,14 +19,7 @@ which drives multiple merge strategy scripts.
 
 OPTIONS
 -------
--n::
-	Do not show diffstat at the end of the merge.
-
--s <strategy>::
-	use that merge strategy; can be given more than once to
-	specify them in the order they should be tried.  If
-	there is no `-s` option, built-in list of strategies is
-	used instead.
+include::merge-pull-opts.txt[]
 
 <msg>::
 	The commit message to be used for the merge commit (in case
@@ -44,7 +37,7 @@ OPTIONS
 
 SEE ALSO
 --------
-gitlink:git-fmt-merge-msg[1]
+gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1]
 
 
 Author

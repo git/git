@@ -520,12 +520,17 @@ static void start_request(struct transfer_request *request)
 
 static void finish_request(struct transfer_request *request)
 {
+	struct stat st;
+
 	fchmod(request->local, 0444);
 	close(request->local);
 
 	if (request->http_code == 416) {
 		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
 	} else if (request->curl_result != CURLE_OK) {
+		if (stat(request->tmpfile, &st) == 0)
+			if (st.st_size == 0)
+				unlink(request->tmpfile);
 		return;
 	}
 

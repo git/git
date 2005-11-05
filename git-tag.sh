@@ -61,33 +61,35 @@ type=$(git-cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 : ${username:=$(expr "$tagger" : '\(.*>\)')}
 
-trap 'rm -f .tmp-tag* .tagmsg .editmsg' 0
+trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0
 
 if [ "$annotate" ]; then
     if [ -z "$message" ]; then
         ( echo "#"
           echo "# Write a tag message"
-          echo "#" ) > .editmsg
-        ${VISUAL:-${EDITOR:-vi}} .editmsg || exit
+          echo "#" ) > "$GIT_DIR"/TAG_EDITMSG
+        ${VISUAL:-${EDITOR:-vi}} "$GIT_DIR"/TAG_EDITMSG || exit
     else
-        echo "$message" > .editmsg
+        echo "$message" >"$GIT_DIR"/TAG_EDITMSG
     fi
 
-    grep -v '^#' < .editmsg | git-stripspace > .tagmsg
+    grep -v '^#' <"$GIT_DIR"/TAG_EDITMSG |
+    git-stripspace >"$GIT_DIR"/TAG_FINALMSG
 
-    [ -s .tagmsg ] || {
+    [ -s "$GIT_DIR"/TAG_FINALMSG ] || {
 	echo >&2 "No tag message?"
 	exit 1
     }
 
-    ( echo -e "object $object\ntype $type\ntag $name\ntagger $tagger\n"; cat .tagmsg ) > .tmp-tag
-    rm -f .tmp-tag.asc .tagmsg
+    ( echo -e "object $object\ntype $type\ntag $name\ntagger $tagger\n";
+      cat "$GIT_DIR"/TAG_FINALMSG ) >"$GIT_DIR"/TAG_TMP
+    rm -f "$GIT_DIR"/TAG_TMP.asc "$GIT_DIR"/TAG_FINALMSG
     if [ "$signed" ]; then
-	gpg -bsa -u "$username" .tmp-tag &&
-	cat .tmp-tag.asc >>.tmp-tag ||
+	gpg -bsa -u "$username" "$GIT_DIR"/TAG_TMP &&
+	cat "$GIT_DIR"/TAG_TMP.asc >>"$GIT_DIR"/TAG_TMP ||
 	die "failed to sign the tag with GPG."
     fi
-    object=$(git-mktag < .tmp-tag)
+    object=$(git-mktag < "$GIT_DIR"/TAG_TMP)
 fi
 
 mkdir -p "$GIT_DIR/refs/tags"

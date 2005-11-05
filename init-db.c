@@ -21,7 +21,7 @@ static void safe_create_dir(const char *dir)
 
 static int copy_file(const char *dst, const char *src, int mode)
 {
-	int fdi, fdo;
+	int fdi, fdo, status;
 
 	mode = (mode & 0111) ? 0777 : 0666;
 	if ((fdi = open(src, O_RDONLY)) < 0)
@@ -30,30 +30,9 @@ static int copy_file(const char *dst, const char *src, int mode)
 		close(fdi);
 		return fdo;
 	}
-	while (1) {
-		char buf[BUFSIZ];
-		ssize_t leni, leno, ofs;
-		leni = read(fdi, buf, sizeof(buf));
-		if (leni < 0) {
-		error_return:
-			close(fdo);
-			close(fdi);
-			return -1;
-		}
-		if (!leni)
-			break;
-		ofs = 0;
-		do {
-			leno = write(fdo, buf+ofs, leni);
-			if (leno < 0)
-				goto error_return;
-			leni -= leno;
-			ofs += leno;
-		} while (0 < leni);
-	}
+	status = copy_fd(fdi, fdo);
 	close(fdo);
-	close(fdi);
-	return 0;
+	return status;
 }
 
 static void copy_templates_1(char *path, int baselen,

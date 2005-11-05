@@ -37,6 +37,11 @@ include::pull-fetch-param.txt[]
 	update the index and working directory, so use it with care.
 
 
+SEE ALSO
+--------
+gitlink:git-pull[1]
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and

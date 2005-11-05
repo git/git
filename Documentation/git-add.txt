@@ -3,7 +3,7 @@ git-add(1)
 
 NAME
 ----
-git-add - Add files to the cache.
+git-add - Add files to the index file.
 
 SYNOPSIS
 --------
@@ -11,19 +11,54 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A simple wrapper for git-update-index to add files to the cache for people used
-to do "cvs add".
+A simple wrapper for git-update-index to add files to the index,
+for people used to do "cvs add".
+
 
 OPTIONS
 -------
 <file>...::
-	Files to add to the cache.
+	Files to add to the index.
 
 -n::
         Don't actually add the file(s), just show if they exist.
 
 -v::
         Be verbose.
+
+
+DISCUSSION
+----------
+
+The list of <file> given to the command is fed to `git-ls-files`
+command to list files that are not registerd in the index and
+are not ignored/excluded by `$GIT_DIR/info/exclude` file or
+`.gitignore` file in each directory.  This means two things:
+
+. You can put the name of a directory on the command line, and
+  the command will add all files in it and its subdirectories;
+
+. Giving the name of a file that is already in index does not
+  run `git-update-index` on that path.
+
+
+EXAMPLES
+--------
+git-add Documentation/\\*.txt::
+
+	Adds all `\*.txt` files that are not in the index under
+	`Documentation` directory and its subdirectories.
++
+Note that the asterisk `\*` is quoted from the shell in this
+example; this lets the command to include the files from
+subdirectories of `Documentation/` directory.
+
+git-add git-*.sh::
+
+	Adds all git-*.sh scripts that are not in the index.
+	Because this example lets shell expand the asterisk
+	(i.e. you are listing the files explicitly), it does not
+	add `subdir/git-foo.sh` to the index.
 
 
 Author
