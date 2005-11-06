@@ -3,19 +3,17 @@
 # Rebuild "pu" from topic branches.
 #
 
-. git-sh-setup
-
-git-status && exit
-git-checkout pu &&
-git-reset --hard master &&
-ORIG_HEAD=`git-rev-parse ORIG_HEAD` || exit
+git status && exit
+git checkout pu &&
+git reset --hard master &&
+ORIG_HEAD=`git rev-parse ORIG_HEAD` || exit
 
 for H
 do
-	(IFS=",$IFS"; git-pull -n . $H) || exit
+	(IFS=",$IFS"; git pull -n . $H) || exit
 done
 
-(IFS=",$IFS"; git-show-branch master pu $* $ORIG_HEAD)
+(IFS=",$IFS"; git show-branch master pu $* $ORIG_HEAD)
 
 
 

@@ -9,6 +9,7 @@ export PATH LANG LC_CTYPE
 
 #make prefix=/usr/local \
 make bindir=$HOME/bin/Linux \
+     gitdir=$HOME/lib/gitbin \
      PYTHON_PATH=/usr/bin/python2.4 \
      CFLAGS='-O1 -Wall -g'"$DDD" \
      WITH_SEND_EMAIL=YesPlease \
