@@ -25,7 +25,8 @@ This is to help the typical workflow of working off of the
 remote `master` branch.  Every time `git pull` without argument
 is run, the progress on the remote `master` branch is tracked by
 copying it into the local `origin` branch, and merged into the
-branch you are currently working on.
+branch you are currently working on.  Remote branches other than
+`master` are also added there to be tracked.
 
 
 OPTIONS

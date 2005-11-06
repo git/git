@@ -202,8 +202,16 @@ then
 		mkdir -p .git/remotes &&
 		echo >.git/remotes/origin \
 		"URL: $repo
-Pull: $head_points_at:origin"
-		cp ".git/refs/heads/$head_points_at" .git/refs/heads/origin
+Pull: $head_points_at:origin" &&
+		cp ".git/refs/heads/$head_points_at" .git/refs/heads/origin &&
+		find .git/refs/heads -type f -print |
+		while read ref
+		do
+			head=`expr "$ref" : '.git/refs/heads/\(.*\)'` &&
+			test "$head_points_at" = "$head" ||
+			test "origin" = "$head" ||
+			echo "Pull: ${head}:${head}"
+		done >>.git/remotes/origin
 	esac
 
 	case "$no_checkout" in
