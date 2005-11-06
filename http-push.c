@@ -7,7 +7,7 @@
 
 #include <curl/curl.h>
 #include <curl/easy.h>
-#include "expat.h"
+#include <expat.h>
 
 static const char http_push_usage[] =
 "git-http-push [--complete] [--force] [--verbose] <url> <ref> [<ref>...]\n";
