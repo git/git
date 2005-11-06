@@ -185,6 +185,10 @@ uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	## fink
+	ALL_CFLAGS += -I/sw/include -L/sw/lib
+	## darwinports
+	ALL_CFLAGS += -I/opt/local/include -L/opt/local/lib
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
