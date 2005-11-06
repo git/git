@@ -34,6 +34,8 @@ include::merge-pull-opts.txt[]
 	least one <remote>.  Specifying more than one <remote>
 	obviously means you are trying an Octopus.
 
+include::merge-strategies.txt[]
+
 
 SEE ALSO
 --------
