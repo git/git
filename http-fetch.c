@@ -578,6 +578,7 @@ void process_curl_messages(void)
 
 	while (curl_message != NULL) {
 		if (curl_message->msg == CURLMSG_DONE) {
+			int curl_result = curl_message->data.result;
 			slot = active_queue_head;
 			while (slot != NULL &&
 			       slot->curl != curl_message->easy_handle)
@@ -587,7 +588,7 @@ void process_curl_messages(void)
 				active_requests--;
 				slot->done = 1;
 				slot->in_use = 0;
-				slot->curl_result = curl_message->data.result;
+				slot->curl_result = curl_result;
 				curl_easy_getinfo(slot->curl,
 						  CURLINFO_HTTP_CODE,
 						  &slot->http_code);
@@ -599,8 +600,7 @@ void process_curl_messages(void)
 				fprintf(stderr, "Received DONE message for unknown request!\n");
 			}
 			if (request != NULL) {
-				request->curl_result =
-					curl_message->data.result;
+				request->curl_result = curl_result;
 				request->http_code = slot->http_code;
 				request->slot = NULL;
 				request->state = COMPLETE;

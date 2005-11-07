@@ -2,7 +2,7 @@
 
 T="$1"
 
-for h in *.html howto/*.txt howto/*.html
+for h in *.html *.txt howto/*.txt howto/*.html
 do
 	diff -u -I'Last updated [0-9][0-9]-[A-Z][a-z][a-z]-' "$T/$h" "$h" || {
 		echo >&2 "# install $h $T/$h"
@@ -12,7 +12,7 @@ do
 	}
 done
 strip_leading=`echo "$T/" | sed -e 's|.|.|g'`
-for th in "$T"/*.html "$T"/howto/*.txt "$T"/howto/*.html
+for th in "$T"/*.html "$T"/*.txt "$T"/howto/*.txt "$T"/howto/*.html
 do
 	h=`expr "$th" : "$strip_leading"'\(.*\)'`
 	case "$h" in

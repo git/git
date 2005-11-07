@@ -51,6 +51,8 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path;
+	if (*pos == '/')
+		pos++;
 
 	while (pos) {
 		pos = strchr(pos, '/');

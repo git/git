@@ -12,7 +12,22 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Clones a repository into a newly created directory.
+Clones a repository into a newly created directory.  All remote
+branch heads are copied under `$GIT_DIR/refs/heads/`, except
+that the remote `master` is also copied to `origin` branch.
+
+In addition, `$GIT_DIR/remotes/origin` file is set up to have
+this line:
+
+	Pull: master:origin
+
+This is to help the typical workflow of working off of the
+remote `master` branch.  Every time `git pull` without argument
+is run, the progress on the remote `master` branch is tracked by
+copying it into the local `origin` branch, and merged into the
+branch you are currently working on.  Remote branches other than
+`master` are also added there to be tracked.
+
 
 OPTIONS
 -------
@@ -28,9 +43,10 @@ OPTIONS
 --shared::
 -s::
 	When the repository to clone is on the local machine,
-	instead of using hard links automatically setup
+	instead of using hard links, automatically setup
 	.git/objects/info/alternatives to share the objects
-	with the source repository
+	with the source repository.  The resulting repository
+	starts out without any object of its own.
 
 --quiet::
 -q::
@@ -49,13 +65,12 @@ OPTIONS
 
 <repository>::
 	The (possibly remote) repository to clone from.  It can
-	be an "rsync://host/dir" URL, an "http://host/dir" URL,
-	or [<host>:]/dir notation that is used by 'git-clone-pack'.
-	Currently http transport is not supported.
+	be any URL git-fetch supports.
 
 <directory>::
 	The name of a new directory to be cloned into.  It is an
 	error to specify an existing directory.
+
 
 Author
 ------

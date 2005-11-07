@@ -32,6 +32,6 @@ test_expect_success apply \
     'git-apply --index --stat --summary --apply test-patch'
 
 test_expect_success validate \
-    'test -f bar && ls -l bar | grep "^-..x..x..x"'
+    'test -f bar && ls -l bar | grep "^-..x......"'
 
 test_done

@@ -6,11 +6,15 @@
 # Define NO_OPENSSL environment variable if you do not have OpenSSL. You will
 # miss out git-rev-list --merge-order. This also implies MOZILLA_SHA1.
 #
-# Define NO_CURL if you do not have curl installed.  git-http-pull is not
-# built, and you cannot use http:// and https:// transports.
+# Define NO_CURL if you do not have curl installed.  git-http-pull and
+# git-http-push are not built, and you cannot use http:// and https://
+# transports.
 #
 # Define CURLDIR=/foo/bar if your curl header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
+#
+# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# not built, and you cannot push using http:// and https:// transports.
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
@@ -37,25 +41,20 @@
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
 
-# DEFINES += -DCOLLISION_CHECK
-
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
 # randomly break unless your underlying filesystem supports those sub-second
 # times (my ext3 doesn't).
 
-# DEFINES += -DUSE_NSEC
-
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-# DEFINES += -DUSE_STDEV
+GIT_VERSION = 0.99.9e
 
-GIT_VERSION = 0.99.9d
-
+# CFLAGS is for the users to override from the command line.
 CFLAGS = -g -O2 -Wall
-ALL_CFLAGS = $(CFLAGS) $(PLATFORM_DEFINES) $(DEFINES)
+ALL_CFLAGS = $(CFLAGS)
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
@@ -185,6 +184,10 @@ uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	## fink
+	ALL_CFLAGS += -I/sw/include -L/sw/lib
+	## darwinports
+	ALL_CFLAGS += -I/opt/local/include -L/opt/local/lib
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
@@ -194,19 +197,19 @@ ifeq ($(uname_S),SunOS)
 	NO_STRCASESTR = YesPlease
 	INSTALL = ginstall
 	TAR = gtar
-	PLATFORM_DEFINES += -D__EXTENSIONS__
+	ALL_CFLAGS += -D__EXTENSIONS__
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
-	PLATFORM_DEFINES += -DUSE_SYMLINK_HEAD=0
+	ALL_CFLAGS += -DUSE_SYMLINK_HEAD=0
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	PLATFORM_DEFINES += -I/usr/local/include -L/usr/local/lib
+	ALL_CFLAGS += -I/usr/local/include -L/usr/local/lib
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -217,12 +220,16 @@ endif
 ifndef NO_CURL
 	ifdef CURLDIR
 		# This is still problematic -- gcc does not want -R.
-		CFLAGS += -I$(CURLDIR)/include
+		ALL_CFLAGS += -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
 	else
 		CURL_LIBCURL = -lcurl
 	endif
 	PROGRAMS += git-http-fetch$X
+	ifndef NO_EXPAT
+		EXPAT_LIBEXPAT = -lexpat
+		PROGRAMS += git-http-push$X
+	endif
 endif
 
 ifndef SHELL_PATH
@@ -240,13 +247,13 @@ ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		CFLAGS += -I$(OPENSSLDIR)/include
+		ALL_CFLAGS += -I$(OPENSSLDIR)/include
 		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
 	else
 		OPENSSL_LINK =
 	endif
 else
-	DEFINES += -DNO_OPENSSL
+	ALL_CFLAGS += -DNO_OPENSSL
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
@@ -258,7 +265,7 @@ endif
 ifdef NEEDS_LIBICONV
 	ifdef ICONVDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		CFLAGS += -I$(ICONVDIR)/include
+		ALL_CFLAGS += -I$(ICONVDIR)/include
 		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
 	else
 		ICONV_LINK =
@@ -276,15 +283,15 @@ ifdef NEEDS_NSL
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_STRCASESTR
-	DEFINES += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
+	ALL_CFLAGS += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
 	LIB_OBJS += compat/strcasestr.o
 endif
 ifdef NO_MMAP
-	DEFINES += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
+	ALL_CFLAGS += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
 	LIB_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
-	DEFINES += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
+	ALL_CFLAGS += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
 endif
 
 ifdef PPC_SHA1
@@ -305,7 +312,7 @@ endif
 endif
 endif
 
-DEFINES += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
+ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
@@ -375,6 +382,7 @@ git-ssh-pull$X: rsh.o fetch.o
 git-ssh-push$X: rsh.o
 
 git-http-fetch$X: LIBS += $(CURL_LIBCURL)
+git-http-push$X: LIBS += $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 git-rev-list$X: LIBS += $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
@@ -454,8 +462,8 @@ clean:
 	rm -f git-core.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
-	rm -f git-core_$(GIT_VERSION)-*.deb git-core_$(GIT_VERSION)-*.dsc
-	rm -f git-tk_$(GIT_VERSION)-*.deb
+	rm -f git-core_$(GIT_VERSION)-*.dsc
+	rm -f git-*_$(GIT_VERSION)-*.deb
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

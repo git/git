@@ -41,7 +41,7 @@ git-update-index -q --unmerged --refresh || exit
 
 if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
 then
-	git-diff-index -M --cached --name-status HEAD |
+	git-diff-index -M --cached --name-status --diff-filter=MDTCRA HEAD |
 	sed -e '
 		s/\\/\\\\/g
 		s/ /\\ /g

@@ -1,3 +1,9 @@
+git-core (0.99.9e-0) unstable; urgency=low
+
+  * GIT 0.99.9e
+
+ -- Junio C Hamano <junkio@cox.net>  Sun,  6 Nov 2005 18:37:18 -0800
+
 git-core (0.99.9d-0) unstable; urgency=low
 
   * GIT 0.99.9d
@@ -21,6 +27,19 @@ git-core (0.99.9a-0) unstable; urgency=low
   * GIT 0.99.9a
 
  -- Junio C Hamano <junkio@cox.net>  Sun, 30 Oct 2005 15:03:32 -0800
+
+git-core (0.99.9.GIT-0) unstable; urgency=low
+
+  * Test Build.
+
+ -- Junio C Hamano <junkio@cox.net>  Sat,  5 Nov 2005 11:18:13 -0800
+
+git-core (0.99.9-1) unstable; urgency=low
+
+  * Split the git-core binary package into core, doc, and foreign SCM
+    interoperability modules.
+
+ -- Junio C Hamano <junkio@cox.net>  Sat,  5 Nov 2005 11:18:13 -0800
 
 git-core (0.99.9-0) unstable; urgency=low
 

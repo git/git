@@ -348,6 +348,29 @@ static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
 	putchar(line_terminator);
 }
 
+static void show_other_files(void)
+{
+	int i;
+	for (i = 0; i < nr_dir; i++) {
+		/* We should not have a matching entry, but we
+		 * may have an unmerged entry for this path.
+		 */
+		struct nond_on_fs *ent = dir[i];
+		int pos = cache_name_pos(ent->name, ent->len);
+		struct cache_entry *ce;
+		if (0 <= pos)
+			die("bug in show-other-files");
+		pos = -pos - 1;
+		if (pos < active_nr) { 
+			ce = active_cache[pos];
+			if (ce_namelen(ce) == ent->len &&
+			    !memcmp(ce->name, ent->name, ent->len))
+				continue; /* Yup, this one exists unmerged */
+		}
+		show_dir_entry(tag_other, ent);
+	}
+}
+
 static void show_killed_files(void)
 {
 	int i;
@@ -438,8 +461,7 @@ static void show_files(void)
 		read_directory(path, base, baselen);
 		qsort(dir, nr_dir, sizeof(struct nond_on_fs *), cmp_name);
 		if (show_others)
-			for (i = 0; i < nr_dir; i++)
-				show_dir_entry(tag_other, dir[i]);
+			show_other_files();
 		if (show_killed)
 			show_killed_files();
 	}

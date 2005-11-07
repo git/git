@@ -101,7 +101,7 @@ case "$#,$1" in
 	;;
 1,?*..)
 	# single "rev1.." should mean "rev1..HEAD"
-	set x "$1"HEAD"
+	set x "$1"HEAD
 	shift
 	;;
 1,*)
