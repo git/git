@@ -63,7 +63,7 @@ And then, you can just remove the broken branch if you decide you really
 don't want it:
 
 	# remove 'broken' branch
-	rm .git/refs/heads/broken
+	git branch -d broken
 
 	# Prune old objects if you're really really sure
 	git prune

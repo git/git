@@ -153,7 +153,8 @@ Everything is in the good order.  I do not need the temporary branch
 nor tag anymore, so remove them:
 
 ------------------------------------------------
-$ rm -f .git/refs/tags/pu-anchor .git/refs/heads/revert-c99
+$ rm -f .git/refs/tags/pu-anchor 
+$ git branch -d revert-c99
 ------------------------------------------------
 
 It was an emergency fix, so we might as well merge it into the
