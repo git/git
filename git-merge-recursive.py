@@ -162,10 +162,13 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name):
 # Low level file merging, update and removal
 # ------------------------------------------
 
+MERGE_NONE = 0
+MERGE_TRIVIAL = 1
+MERGE_3WAY = 2
 def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
               branch1Name, branch2Name):
 
-    merge = False
+    merge = MERGE_NONE
     clean = True
 
     if stat.S_IFMT(aMode) != stat.S_IFMT(bMode):
@@ -178,7 +181,7 @@ def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
             sha = bSha
     else:
         if aSha != oSha and bSha != oSha:
-            merge = True
+            merge = MERGE_TRIVIAL
 
         if aMode == oMode:
             mode = bMode
@@ -207,7 +210,8 @@ def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
             os.unlink(orig)
             os.unlink(src1)
             os.unlink(src2)
-            
+
+            merge = MERGE_3WAY
             clean = (code == 0)
         else:
             assert(stat.S_ISLNK(aMode) and stat.S_ISLNK(bMode))
@@ -577,14 +581,16 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 updateFile(False, ren1.dstSha, ren1.dstMode, dstName1)
                 updateFile(False, ren2.dstSha, ren2.dstMode, dstName2)
             else:
-                print 'Renaming', fmtRename(path, ren1.dstName)
                 [resSha, resMode, clean, merge] = \
                          mergeFile(ren1.srcName, ren1.srcSha, ren1.srcMode,
                                    ren1.dstName, ren1.dstSha, ren1.dstMode,
                                    ren2.dstName, ren2.dstSha, ren2.dstMode,
                                    branchName1, branchName2)
 
-                if merge:
+                if merge or not clean:
+                    print 'Renaming', fmtRename(path, ren1.dstName)
+
+                if merge == MERGE_3WAY:
                     print 'Auto-merging', ren1.dstName
 
                 if not clean:
@@ -653,14 +659,16 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 tryMerge = True
 
             if tryMerge:
-                print 'Renaming', fmtRename(ren1.srcName, ren1.dstName)
                 [resSha, resMode, clean, merge] = \
                          mergeFile(ren1.srcName, ren1.srcSha, ren1.srcMode,
                                    ren1.dstName, ren1.dstSha, ren1.dstMode,
                                    ren1.srcName, srcShaOtherBranch, srcModeOtherBranch,
                                    branchName1, branchName2)
 
-                if merge:
+                if merge or not clean:
+                    print 'Renaming', fmtRename(ren1.srcName, ren1.dstName)
+
+                if merge == MERGE_3WAY:
                     print 'Auto-merging', ren1.dstName
 
                 if not clean:
