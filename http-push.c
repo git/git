@@ -47,6 +47,7 @@ static int active_requests = 0;
 static int data_received;
 static int pushing = 0;
 static int aborted = 0;
+static char remote_dir_exists[256];
 
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
@@ -650,6 +651,7 @@ static void finish_request(struct transfer_request *request)
 		if (request->http_code == 404) {
 			request->state = NEED_PUSH;
 		} else if (request->curl_result == CURLE_OK) {
+			remote_dir_exists[request->sha1[0]] = 1;
 			request->state = COMPLETE;
 		} else {
 			fprintf(stderr, "HEAD %s failed, aborting (%d/%ld)\n",
@@ -661,6 +663,7 @@ static void finish_request(struct transfer_request *request)
 	} else if (request->state == RUN_MKCOL) {
 		if (request->curl_result == CURLE_OK ||
 		    request->http_code == 405) {
+			remote_dir_exists[request->sha1[0]] = 1;
 			start_put(request);
 		} else {
 			fprintf(stderr, "MKCOL %s failed, aborting (%d/%ld)\n",
@@ -767,7 +770,10 @@ void process_request_queue(void)
 			start_check(request);
 			curl_multi_perform(curlm, &num_transfers);
 		} else if (pushing && request->state == NEED_PUSH) {
-			start_mkcol(request);
+			if (remote_dir_exists[request->sha1[0]])
+				start_put(request);
+			else
+				start_mkcol(request);
 			curl_multi_perform(curlm, &num_transfers);
 		}
 		request = request->next;
@@ -1598,6 +1604,8 @@ int main(int argc, char **argv)
 		nr_refspec = argc - i;
 		break;
 	}
+
+	memset(remote_dir_exists, 0, 256);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
