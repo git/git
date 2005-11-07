@@ -301,7 +301,7 @@ all with a sequence of simple shell commands:
 ------------------------------------------------
 tree=$(git-write-tree)
 commit=$(echo 'Initial commit' | git-commit-tree $tree)
-git-update-ref HEAD $(commit)
+git-update-ref HEAD $commit
 ------------------------------------------------
 
 which will say:
@@ -836,14 +836,14 @@ source.
 Anyway, let's exit `gitk` (`^Q` or the File menu), and decide that we want
 to merge the work we did on the `mybranch` branch into the `master`
 branch (which is currently our `HEAD` too). To do that, there's a nice
-script called `git resolve`, which wants to know which branches you want
+script called `git merge`, which wants to know which branches you want
 to resolve and what the merge is all about:
 
 ------------
-git resolve HEAD mybranch "Merge work in mybranch"
+git merge "Merge work in mybranch" HEAD mybranch
 ------------
 
-where the third argument is going to be used as the commit message if
+where the first argument is going to be used as the commit message if
 the merge can be resolved automatically.
 
 Now, in this case we've intentionally created a situation where the
@@ -851,12 +851,14 @@ merge will need to be fixed up by hand, though, so git will do as much
 of it as it can automatically (which in this case is just merge the `example`
 file, which had no differences in the `mybranch` branch), and say:
 
-	Simple merge failed, trying Automatic merge
-	Auto-merging hello.
+	Trying really trivial in-index merge...
+	fatal: Merge requires file-level merging
+	Nope.
+	...
 	merge: warning: conflicts during merge
 	ERROR: Merge conflict in hello.
 	fatal: merge program failed
-	Automatic merge failed, fix up by hand
+	Automatic merge failed/prevented; fix up by hand
 
 which is way too verbose, but it basically tells you that it failed the
 really trivial merge ("Simple merge") and did an "Automatic merge"
@@ -928,7 +930,7 @@ resolve to get the "upstream changes" back to your branch.
 
 ------------
 git checkout mybranch
-git resolve HEAD master "Merge upstream changes."
+git merge "Merge upstream changes." HEAD master
 ------------
 
 This outputs something like this (the actual commit object names
@@ -1101,6 +1103,155 @@ the above are equivalent to:
 . `git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD`
 . `git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1`
 . `git pull http://www.kernel.org/pub/.../jgarzik/netdev-2.6.git e100`
+
+
+How does the merge work?
+------------------------
+
+We said this tutorial shows what plumbing does to help you cope
+with the porcelain that isn't flushing, but we so far did not
+talk about how the merge really works.  If you are following
+this tutorial the first time, I'd suggest to skip to "Publishing
+your work" section and come back here later.
+
+OK, still with me?  To give us an example to look at, let's go
+back to the earlier repository with "hello" and "example" file,
+and bring ourselves back to the pre-merge state:
+
+------------
+$ git show-branch --more=3 master mybranch
+! [master] Merge work in mybranch
+ * [mybranch] Merge work in mybranch
+--
+++ [master] Merge work in mybranch
+++ [master^2] Some work.
+++ [master^] Some fun.
+------------
+
+Remember, before running `git merge`, our `master` head was at
+"Some fun." commit, while our `mybranch` head was at "Some
+work." commit.
+
+------------
+$ git checkout mybranch
+$ git reset --hard master^2
+$ git checkout master
+$ git reset --hard master^
+------------
+
+After rewinding, the commit structure should look like this:
+
+------------
+$ git show-branch
+* [master] Some fun.
+ ! [mybranch] Some work.
+--
+ + [mybranch] Some work.
++  [master] Some fun.
+++ [mybranch^] New day.
+------------
+
+Now we are ready to experiment with the merge by hand.
+
+`git merge` command, when merging two branches, uses 3-way merge
+algorithm.  First, it finds the common ancestor between them.
+The command it uses is `git-merge-base`:
+
+------------
+$ mb=$(git-merge-base HEAD mybranch)
+------------
+
+The command writes the commit object name of the common ancestor
+to the standard output, so we captured its output to a variable,
+because we will be using it in the next step.  BTW, the common
+ancestor commit is the "New day." commit in this case.  You can
+tell it by:
+
+------------
+$ git-name-rev $mb
+my-first-tag
+------------
+
+After finding out a common ancestor commit, the second step is
+this:
+
+------------
+$ git-read-tree -m -u $mb HEAD mybranch
+------------
+
+This is the same `git-read-tree` command we have already seen,
+but it takes three trees, unlike previous examples.  This reads
+the contents of each tree into different 'stage' in the index
+file (the first tree goes to stage 1, the second stage 2,
+etc.).  After reading three trees into three stages, the paths
+that are the same in all three stages are 'collapsed' into stage
+0.  Also paths that are the same in two of three stages are
+collapsed into stage 0, taking the SHA1 from either stage 2 or
+stage 3, whichever is different from stage 1 (i.e. only one side
+changed from the common ancestor).
+
+After 'collapsing' operation, paths that are different in three
+trees are left in non-zero stages.  At this point, you can
+inspect the index file with this command:
+
+------------
+$ git-ls-files --stage
+100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
+100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
+100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
+------------
+
+In our example of only two files, we did not have unchanged
+files so only 'example' resulted in collapsing, but in real-life
+large projects, only small number of files change in one commit,
+and this 'collapsing' tends to trivially merge most of the paths
+fairly quickly, leaving only the real changes in non-zero stages.
+
+To look at only non-zero stages, use `\--unmerged` flag:
+
+------------
+$ git-ls-files --unmerged
+100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
+100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
+------------
+
+The next step of merging is to merge these three versions of the
+file, using 3-way merge.  This is done by giving
+`git-merge-one-file` command as one of the arguments to
+`git-merge-index` command:
+
+------------
+$ git-merge-index git-merge-one-file hello
+Auto-merging hello.
+merge: warning: conflicts during merge
+ERROR: Merge conflict in hello.
+fatal: merge program failed
+------------
+
+`git-merge-one-file` script is called with parameters to
+describe those three versions, and is responsible to leave the
+merge results in the working tree and register it in the index
+file.  It is a fairly straightforward shell script, and
+eventually calls `merge` program from RCS suite to perform the
+file-level 3-way merge.  In this case, `merge` detects
+conflicts, and the merge result with conflict marks is left in
+the working tree, while the index file is updated with the
+version from the current branch (this is to make `git diff`
+useful after this step).  This can be seen if you run `ls-files
+--stage` again at this point:
+
+------------
+$ git-ls-files --stage
+100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
+100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 0	hello
+------------
+
+As you can see, there is no unmerged paths in the index file.
+This is the state of the index file and the working file after
+`git merge` returns control back to you, leaving the conflicting
+merge for you to resolve.
 
 
 Publishing your work
