@@ -19,7 +19,7 @@ which drives multiple merge strategy scripts.
 
 OPTIONS
 -------
-include::merge-pull-opts.txt[]
+include::merge-options.txt[]
 
 <msg>::
 	The commit message to be used for the merge commit (in case

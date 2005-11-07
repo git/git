@@ -49,22 +49,25 @@ install: man
 	$(INSTALL) $(DOC_MAN1) $(DESTDIR)/$(man1)
 	$(INSTALL) $(DOC_MAN7) $(DESTDIR)/$(man7)
 
-# 'include' dependencies
-$(patsubst %.txt,%.1,$(wildcard git-diff-*.txt)): \
-	diff-format.txt diff-options.txt
-$(patsubst %.txt,%.html,$(wildcard git-diff-*.txt)): \
-	diff-format.txt diff-options.txt
 
-$(patsubst %,%.1,git-fetch git-pull git-push): pull-fetch-param.txt
-$(patsubst %,%.html,git-fetch git-pull git-push): pull-fetch-param.txt
+#
+# Determine "include::" file references in asciidoc files.
+#
+TEXTFILES = $(wildcard *.txt)
+DEPFILES = $(TEXTFILES:%.txt=%.dep)
 
-$(patsubst %,%.1,git-merge git-pull): merge-pull-opts.txt
-$(patsubst %,%.html,git-merge git-pull): merge-pull-opts.txt
+%.dep : %.txt
+	@rm -f $@
+	@$(foreach dep, $(shell grep include:: $< | sed -e 's/include::/ /' -e 's/\[\]//'), \
+		echo $(<:%.txt=%.html) $(<:%.txt=%.1) : $(dep) >> $@; )
+
+-include $(DEPFILES)
 
 git.7: ../README
 
+
 clean:
-	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html
+	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html *.dep
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<

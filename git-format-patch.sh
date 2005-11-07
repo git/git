@@ -8,6 +8,7 @@
 usage () {
     echo >&2 "usage: $0"' [-n] [-o dir | --stdout] [--keep-subject] [--mbox]
     [--check] [--signoff] [-<diff options>...]
+    [--help]
     ( from..to ... | upstream [ our-head ] )
 
 Prepare each commit with its patch since our-head forked from upstream,
@@ -63,6 +64,9 @@ do
     --output-directo|--output-director|--output-directory)
     case "$#" in 1) usage ;; esac; shift
     outdir="$1" ;;
+    -h|--h|--he|--hel|--help)
+        usage
+	;;
     -*' '* | -*"$LF"* | -*'	'*)
 	# Ignore diff option that has whitespace for now.
 	;;

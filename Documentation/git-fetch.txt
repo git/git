@@ -8,7 +8,7 @@ git-fetch - Download objects and a head from another repository.
 
 SYNOPSIS
 --------
-'git-fetch' <repository> <refspec>...
+'git-fetch' <options> <repository> <refspec>...
 
 
 DESCRIPTION
@@ -17,24 +17,16 @@ Fetches named heads or tags from another repository, along with
 the objects necessary to complete them.
 
 The ref names and their object names of fetched refs are stored
-in $GIT_DIR/FETCH_HEAD.  This information is left for a later merge
+in `.git/FETCH_HEAD`.  This information is left for a later merge
 operation done by "git resolve" or "git octopus".
 
 
 OPTIONS
 -------
+include::fetch-options.txt[]
+
 include::pull-fetch-param.txt[]
 
--a, \--append::
-	Append ref names and object names of fetched refs to the
-	existing contents of $GIT_DIR/FETCH_HEAD.  Without this
-	option old data in $GIT_DIR/FETCH_HEAD will be overwritten.
-
--u, \--update-head-ok::
-	By default 'git-fetch' refuses to update the head which
-	corresponds to the current branch.  This flag disables the
-	check.  Note that fetching into the current branch will not
-	update the index and working directory, so use it with care.
 
 
 SEE ALSO
