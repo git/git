@@ -7,7 +7,14 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    die "git pull [-n] [--no-commit] [-s strategy]... <repo> <head>..."
+    echo >&2 "usage: $0"' [-n] [--no-commit] [--no-summary] [--help]
+    [-s strategy]...
+    [<fetch-options>]
+    <repo> <head>...
+
+Fetch one or more remote refs and merge it/them into the current HEAD.
+'
+    exit 1
 }
 
 strategy_args= no_summary= no_commit=
@@ -32,6 +39,9 @@ do
 			shift ;;
 		esac
 		strategy_args="${strategy_args}-s $strategy "
+		;;
+	-h|--h|--he|--hel|--help)
+		usage
 		;;
 	-*)
 		# Pass thru anything that is meant for fetch.

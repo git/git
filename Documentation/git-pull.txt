@@ -20,19 +20,16 @@ Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
 when merging local branches into the current branch.
 
+
 OPTIONS
 -------
+include::merge-options.txt[]
+
+include::fetch-options.txt[]
+
 include::pull-fetch-param.txt[]
 
--a, \--append::
-	Append ref names and object names of fetched refs to the
-	existing contents of `$GIT_DIR/FETCH_HEAD`.  Without this
-	option old data in `$GIT_DIR/FETCH_HEAD` will be overwritten.
-
-include::merge-pull-opts.txt[]
-
 include::merge-strategies.txt[]
-
 
 
 EXAMPLES
@@ -72,7 +69,7 @@ $ git fetch origin master:origin +pu:pu maint:maint
 $ git pull . origin
 ------------------------------------------------
 +
-Here, a typical `$GIT_DIR/remotes/origin` file from a
+Here, a typical `.git/remotes/origin` file from a
 `git-clone` operation is used in combination with
 command line options to `git-fetch` to first update
 multiple branches of the local repository and then
@@ -85,7 +82,7 @@ known to have already obtained and made available
 all the necessary objects.
 
 
-Pull of multiple branches from one repository using `$GIT_DIR/remotes` file::
+Pull of multiple branches from one repository using `.git/remotes` file::
 +
 ------------------------------------------------
 $ cat .git/remotes/origin
@@ -98,7 +95,7 @@ $ git checkout master
 $ git pull origin
 ------------------------------------------------
 +
-Here, a typical `$GIT_DIR/remotes/origin` file from a
+Here, a typical `.git/remotes/origin` file from a
 `git-clone` operation has been hand-modified to include
 the branch-mapping of additional remote and local
 heads directly.  A single `git-pull` operation while
