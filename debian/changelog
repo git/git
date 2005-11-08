@@ -1,3 +1,9 @@
+git-core (0.99.9f-0) unstable; urgency=low
+
+  * GIT 0.99.9f
+
+ -- Junio C Hamano <junkio@cox.net>  Tue,  8 Nov 2005 01:21:52 -0800
+
 git-core (0.99.9e-0) unstable; urgency=low
 
   * GIT 0.99.9e
@@ -27,6 +33,14 @@ git-core (0.99.9a-0) unstable; urgency=low
   * GIT 0.99.9a
 
  -- Junio C Hamano <junkio@cox.net>  Sun, 30 Oct 2005 15:03:32 -0800
+
+git-core (0.99.9.GIT-1) unstable; urgency=low
+
+  * Do not scatter txt and html documentation into feature
+    subpackages.  Do place man pages into them.
+  * Capture more cvs stuff into git-cvs package.
+
+ -- Junio C Hamano <junkio@cox.net>  Tue,  8 Nov 2005 01:19:06 -0800
 
 git-core (0.99.9.GIT-0) unstable; urgency=low
 

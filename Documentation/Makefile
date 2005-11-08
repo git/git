@@ -53,8 +53,7 @@ install: man
 #
 # Determine "include::" file references in asciidoc files.
 #
-TEXTFILES = $(wildcard git-*.txt)
-doc.dep : $(TEXTFILES) build-docdep.perl
+doc.dep : $(wildcard *.txt) build-docdep.perl
 	rm -f $@+ $@
 	perl ./build-docdep.perl >$@+
 	mv $@+ $@

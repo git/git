@@ -6,6 +6,9 @@
 -f, \--force::
 
 -t, \--tags::
+	By default, the git core utilities will not fetch and store
+	tags under the same name as the remote repository;  ask it
+	to do so using `--tags`.
 
 -u, \--update-head-ok::
 	By default `git-fetch` refuses to update the head which

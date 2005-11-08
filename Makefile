@@ -50,9 +50,10 @@
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9e
+GIT_VERSION = 0.99.9f
 
 # CFLAGS is for the users to override from the command line.
+
 CFLAGS = -g -O2 -Wall
 ALL_CFLAGS = $(CFLAGS)
 

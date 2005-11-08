@@ -46,7 +46,7 @@ esac
 shift
 
 case "$remote" in
-http://* | https://* | git://*)
+git://*)
 	die "Cannot use READ-ONLY transport to push to $remote" ;;
 rsync://*)
         die "Pushing with rsync transport is deprecated" ;;
@@ -57,4 +57,9 @@ test "$has_all" && set x "$has_all" "$@" && shift
 test "$has_force" && set x "$has_force" "$@" && shift
 test "$has_exec" && set x "$has_exec" "$@" && shift
 
-exec git-send-pack "$@"
+case "$remote" in
+http://* | https://*)
+	exec git-http-push "$@";;
+*)
+	exec git-send-pack "$@";;
+esac
