@@ -965,9 +965,9 @@ Merging external work
 It's usually much more common that you merge with somebody else than
 merging with your own branches, so it's worth pointing out that git
 makes that very easy too, and in fact, it's not that different from
-doing a `git resolve`. In fact, a remote merge ends up being nothing
+doing a `git merge`. In fact, a remote merge ends up being nothing
 more than "fetch the work from a remote repository into a temporary tag"
-followed by a `git resolve`.
+followed by a `git merge`.
 
 Fetching from a remote repository is done by, unsurprisingly,
 `git fetch`:
@@ -1206,7 +1206,8 @@ In our example of only two files, we did not have unchanged
 files so only 'example' resulted in collapsing, but in real-life
 large projects, only small number of files change in one commit,
 and this 'collapsing' tends to trivially merge most of the paths
-fairly quickly, leaving only the real changes in non-zero stages.
+fairly quickly, leaving only a handful the real changes in non-zero
+stages.
 
 To look at only non-zero stages, use `\--unmerged` flag:
 
@@ -1615,8 +1616,8 @@ in both of them.  You could merge in 'diff-fix' first and then
 'commit-fix' next, like this:
 
 ------------
-$ git resolve master diff-fix 'Merge fix in diff-fix'
-$ git resolve master commit-fix 'Merge fix in commit-fix'
+$ git merge 'Merge fix in diff-fix' master diff-fix
+$ git merge 'Merge fix in commit-fix' master commit-fix
 ------------
 
 Which would result in:
@@ -1649,8 +1650,8 @@ $ git reset --hard master~2
 ------------
 
 You can make sure 'git show-branch' matches the state before
-those two 'git resolve' you just did.  Then, instead of running
-two 'git resolve' commands in a row, you would pull these two
+those two 'git merge' you just did.  Then, instead of running
+two 'git merge' commands in a row, you would pull these two
 branch heads (this is known as 'making an Octopus'):
 
 ------------
