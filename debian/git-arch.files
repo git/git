@@ -1,2 +1,2 @@
-/usr/bin/git-archimport
-/usr/share/doc/git-core/git-archimport.*
+/usr/bin/git-arch*
+/usr/share/man/*/git-arch*

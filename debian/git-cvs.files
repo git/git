@@ -1,2 +1,2 @@
-/usr/bin/git-cvsimport
-/usr/share/doc/git-core/git-cvsimport.*
+/usr/bin/git-cvs*
+/usr/share/man/*/git-cvs*

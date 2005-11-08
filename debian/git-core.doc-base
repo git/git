@@ -6,6 +6,8 @@ Section: Devel
 Format: HTML
 Index: /usr/share/doc/git-core/git.html
 Files: /usr/share/doc/git-core/*.html
+ /usr/share/doc/git-core/*/*.html
 
 Format: text
-Files: /usr/share/doc/git-core/git.txt*
+Files: /usr/share/doc/git-core/*.txt
+ /usr/share/doc/git-core/*/*.txt
