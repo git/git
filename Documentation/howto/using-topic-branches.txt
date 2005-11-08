@@ -166,7 +166,7 @@ output from:
 
 is empty.  At this point the branch can be deleted:
 
- $ rm .git/refs/heads/branchname
+ $ git branch -d branchname
 
 Some changes are so trivial that it is not necessary to create a separate
 branch and then merge into each of the test and release branches.  For

@@ -53,21 +53,19 @@ install: man
 #
 # Determine "include::" file references in asciidoc files.
 #
-TEXTFILES = $(wildcard *.txt)
-DEPFILES = $(TEXTFILES:%.txt=%.dep)
+TEXTFILES = $(wildcard git-*.txt)
+doc.dep : $(TEXTFILES) build-docdep.perl
+	rm -f $@+ $@
+	perl ./build-docdep.perl >$@+
+	mv $@+ $@
 
-%.dep : %.txt
-	@rm -f $@
-	@$(foreach dep, $(shell grep include:: $< | sed -e 's/include::/ /' -e 's/\[\]//'), \
-		echo $(<:%.txt=%.html) $(<:%.txt=%.1) : $(dep) >> $@; )
-
--include $(DEPFILES)
+-include doc.dep
 
 git.7: ../README
 
 
 clean:
-	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html *.dep
+	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html doc.dep
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<
