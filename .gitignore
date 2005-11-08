@@ -19,6 +19,7 @@ git-commit
 git-commit-tree
 git-convert-objects
 git-count-objects
+git-cvsexportcommit
 git-cvsimport
 git-daemon
 git-diff
@@ -36,6 +37,7 @@ git-get-tar-commit-id
 git-grep
 git-hash-object
 git-http-fetch
+git-http-push
 git-index-pack
 git-init-db
 git-local-fetch
@@ -107,6 +109,8 @@ git-verify-tag
 git-whatchanged
 git-write-tree
 git-core-*/?*
+test-date
+test-delta
 *.tar.gz
 *.dsc
 *.deb
