@@ -224,29 +224,33 @@ do
 		git-stripspace < "$dotest/msg" > "$dotest/msg-clean"
 		;;
 	esac
-	resume=
 
 	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
 	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
 	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
-	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
 	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 
+	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
 	case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
-	if test '' != "$SIGNOFF"
-	then
+
+	case "$resume" in
+	'')
+	    if test '' != "$SIGNOFF"
+	    then
 		LAST_SIGNED_OFF_BY=`
-			sed -ne '/^Signed-off-by: /p' "$dotest/msg-clean" |
-			tail -n 1
+		    sed -ne '/^Signed-off-by: /p' \
+		    "$dotest/msg-clean" |
+		    tail -n 1
 		`
-		ADD_SIGNOFF=$(test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {
+		ADD_SIGNOFF=`
+		    test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {
 		    test '' = "$LAST_SIGNED_OFF_BY" && echo
 		    echo "$SIGNOFF"
-		})
-	else
+		}`
+	    else
 		ADD_SIGNOFF=
-	fi
-	{
+	    fi
+	    {
 		echo "$SUBJECT"
 		if test -s "$dotest/msg-clean"
 		then
@@ -257,8 +261,11 @@ do
 		then
 			echo "$ADD_SIGNOFF"
 		fi
-	} >"$dotest/final-commit"
+	    } >"$dotest/final-commit"
+	    ;;
+	esac
 
+	resume=
 	if test "$interactive" = t
 	then
 	    test -t 0 ||
