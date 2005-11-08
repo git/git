@@ -13,7 +13,6 @@ shq = $(subst ','\'',$(1))
 shellquote = '$(call shq,$(1))'
 
 all: boilerplates.made custom
-	find blt
 
 # Put templates that can be copied straight from the source
 # in a file direc--tory--file in the source.  They will be

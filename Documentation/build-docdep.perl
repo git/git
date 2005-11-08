@@ -22,15 +22,11 @@ my $changed = 1;
 while ($changed) {
     $changed = 0;
     while (my ($text, $included) = each %include) {
-	print STDERR "Looking at $text...\n";
 	for my $i (keys %$included) {
-	    print STDERR "$text includes $i.\n";
 	    # $text has include::$i; if $i includes $j
 	    # $text indirectly includes $j.
 	    if (exists $include{$i}) {
-		print STDERR "$i includes something.\n";
 		for my $j (keys %{$include{$i}}) {
-		    print STDERR "$text includes $i include $j\n";
 		    if (!exists $include{$text}{$j}) {
 			$include{$text}{$j} = 1;
 			$included{$j} = 1;
