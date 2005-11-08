@@ -570,6 +570,7 @@ int main(int argc, const char **argv)
 	prefix = setup_git_directory();
 	if (prefix)
 		prefix_offset = strlen(prefix);
+	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

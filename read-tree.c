@@ -633,6 +633,8 @@ int main(int argc, char **argv)
 	if (newfd < 0)
 		die("unable to create new cachefile");
 
+	git_config(git_default_config);
+
 	merge = 0;
 	reset = 0;
 	for (i = 1; i < argc; i++) {
