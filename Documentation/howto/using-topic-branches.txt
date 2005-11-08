@@ -9,7 +9,7 @@ GIT as a Linux subsystem maintainer.
 
 -Tony
 
-Last updated w.r.t. GIT 0.99.5
+Last updated w.r.t. GIT 0.99.9f
 
 Linux subsystem maintenance using GIT
 -------------------------------------
@@ -89,8 +89,8 @@ out at the current tip of the linus branch.
 
 These can be easily kept up to date by merging from the "linus" branch:
 
- $ git checkout test && git resolve test linus "Auto-update from upstream"
- $ git checkout release && git resolve release linus "Auto-update from upstream"
+ $ git checkout test && git merge "Auto-update from upstream" test linus
+ $ git checkout release && git merge "Auto-update from upstream" release linus
 
 Set up so that you can push upstream to your public tree (you need to
 log-in to the remote system and create an empty tree there before the
@@ -128,7 +128,7 @@ commit to this branch.
 When you are happy with the state of this change, you can pull it into the
 "test" branch in preparation to make it public:
 
- $ git checkout test && git resolve test speed-up-spinlocks "Pull speed-up-spinlock changes"
+ $ git checkout test && git merge "Pull speed-up-spinlock changes" test speed-up-spinlocks
 
 It is unlikely that you would have any conflicts here ... but you might if you
 spent a while on this step and had also pulled new versions from upstream.
@@ -138,7 +138,7 @@ same branch into the "release" tree ready to go upstream.  This is where you
 see the value of keeping each patch (or patch series) in its own branch.  It
 means that the patches can be moved into the "release" tree in any order.
 
- $ git checkout release && git resolve release speed-up-spinlocks "Pull speed-up-spinlock changes"
+ $ git checkout release && git merge "Pull speed-up-spinlock changes" release speed-up-spinlocks
 
 After a while, you will have a number of branches, and despite the
 well chosen names you picked for each of them, you may forget what
@@ -190,7 +190,7 @@ Here are some of the scripts that I use to simplify all this even further.
 
 case "$1" in
 test|release)
-	git checkout $1 && git resolve $1 linus "Auto-update from upstream"
+	git checkout $1 && git merge "Auto-update from upstream" $1 linus
 	;;
 linus)
 	before=$(cat .git/refs/heads/linus)
@@ -231,7 +231,7 @@ test|release)
 		echo $1 already merged into $2 1>&2
 		exit 1
 	fi
-	git checkout $2 && git resolve $2 $1 "Pull $1 into $2 branch"
+	git checkout $2 && git merge "Pull $1 into $2 branch" $2 $1
 	;;
 *)
 	usage
