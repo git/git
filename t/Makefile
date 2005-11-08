@@ -15,9 +15,14 @@ shellquote = '$(call shq,$(1))'
 
 T = $(wildcard t[0-9][0-9][0-9][0-9]-*.sh)
 
-all:
-	@$(foreach t,$T,echo "*** $t ***"; $(call shellquote,$(SHELL_PATH)) $t $(GIT_TEST_OPTS) || exit; )
-	@rm -fr trash
+all: $(T) clean
+
+$(T):
+	@echo "*** $@ ***"; $(call shellquote,$(SHELL_PATH)) $@ $(GIT_TEST_OPTS)
 
 clean:
 	rm -fr trash
+
+.PHONY: $(T) clean
+.NOPARALLEL:
+
