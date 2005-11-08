@@ -1,28 +1,54 @@
 #!/usr/bin/perl
 
 my %include = ();
+my %included = ();
 
-for my $text (<git-*.txt>) {
+for my $text (<*.txt>) {
     open I, '<', $text || die "cannot read: $text";
-    (my $base = $text) =~ s/\.txt$//;
     while (<I>) {
 	if (/^include::/) {
 	    chomp;
 	    s/^include::\s*//;
 	    s/\[\]//;
-	    $include{$base}{$_} = 1;
+	    $include{$text}{$_} = 1;
+	    $included{$_} = 1;
 	}
     }
     close I;
 }
 
 # Do we care about chained includes???
-
-while (my ($base, $included) = each %include) {
-    my ($suffix) = '1';
-    if ($base eq 'git') {
-	$suffix = '7'; # yuck...
+my $changed = 1;
+while ($changed) {
+    $changed = 0;
+    while (my ($text, $included) = each %include) {
+	print STDERR "Looking at $text...\n";
+	for my $i (keys %$included) {
+	    print STDERR "$text includes $i.\n";
+	    # $text has include::$i; if $i includes $j
+	    # $text indirectly includes $j.
+	    if (exists $include{$i}) {
+		print STDERR "$i includes something.\n";
+		for my $j (keys %{$include{$i}}) {
+		    print STDERR "$text includes $i include $j\n";
+		    if (!exists $include{$text}{$j}) {
+			$include{$text}{$j} = 1;
+			$included{$j} = 1;
+			$changed = 1;
+		    }
+		}
+	    }
+	}
     }
-    print "$base.html $base.$suffix : ", join(" ", keys %$included), "\n";
 }
 
+while (my ($text, $included) = each %include) {
+    if (! exists $included{$text} &&
+	(my $base = $text) =~ s/\.txt$//) {
+	my ($suffix) = '1';
+	if ($base eq 'git') {
+	    $suffix = '7'; # yuck...
+	}
+	print "$base.html $base.$suffix : ", join(" ", keys %$included), "\n";
+    }
+}
