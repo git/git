@@ -8,7 +8,7 @@ git-tag -  Create a tag object signed with GPG
 
 SYNOPSIS
 --------
-'git-tag' [-a | -s | -u <key-id>] [-f] [-m <msg>] <name> [<head>]
+'git-tag' [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <name> [<head>]
 
 DESCRIPTION
 -----------
@@ -29,6 +29,8 @@ A GnuPG signed tag object will be created when `-s` or `-u
 <key-id>` is used.  When `-u <key-id>` is not used, the
 committer identity for the current user is used to find the
 GnuPG key for signing.
+
+`-d <tag>` deletes the tag.
 
 
 Author

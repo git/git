@@ -4,7 +4,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    echo >&2 "Usage: git-tag [-a | -s | -u <key-id>] [-f] [-m <msg>] <tagname> [<head>]"
+    echo >&2 "Usage: git-tag [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [<head>]"
     exit 1
 }
 
@@ -36,6 +36,13 @@ do
 	signed=1
 	shift
 	username="$1"
+	;;
+    -d)
+    	shift
+	tag_name="$1"
+	rm "$GIT_DIR/refs/tags/$tag_name" && \
+	        echo "Deleted tag $tag_name."
+	exit $?
 	;;
     -*)
         usage
