@@ -40,7 +40,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	;;
 
 #
-# Added in both (check for same permissions).
+# Added in both, identically (check for same permissions).
 #
 ".$3$2")
 	if [ "$6" != "$7" ]; then
@@ -56,9 +56,18 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 # Modified in both, but differently.
 #
-"$1$2$3")
-	echo "Auto-merging $4."
-	orig=`git-unpack-file $1`
+"$1$2$3" | ".$2$3")
+	case "$1" in
+	'')
+		echo "Added $4 in both, but differently."
+		orig=`git-unpack-file $2`
+		: >$orig
+		;;
+	*)
+		echo "Auto-merging $4."
+		orig=`git-unpack-file $1`
+		;;
+	esac
 	src2=`git-unpack-file $3`
 
 	# We reset the index to the first branch, making
@@ -71,6 +80,9 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	if [ "$6" != "$7" ]; then
 		echo "ERROR: Permissions conflict: $5->$6,$7."
+		ret=1
+	fi
+	if [ "$1" = '' ]; then
 		ret=1
 	fi
 
