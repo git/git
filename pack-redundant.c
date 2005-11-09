@@ -8,8 +8,8 @@
 
 #include "cache.h"
 
-static const char pack_intersect_usage[] =
-"git-pack-intersect [ -v ]  < -a | <.pack filename> ...>";
+static const char pack_redundant_usage[] =
+"git-pack-redundant [ -v ]  < -a | <.pack filename> ...>";
 
 int all = 0, verbose = 0;
 
@@ -522,8 +522,10 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if(!strcmp(arg, "--"))
+		if(!strcmp(arg, "--")) {
+			i++;
 			break;
+		}
 		if(!strcmp(arg, "-a")) {
 			all = 1;
 			continue;
@@ -533,7 +535,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if(*arg == '-')
-			usage(pack_intersect_usage);
+			usage(pack_redundant_usage);
 		else
 			break;
 	}

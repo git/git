@@ -1,14 +1,14 @@
-git-pack-intersect(1)
+git-pack-redundant(1)
 =====================
 
 NAME
 ----
-git-pack-intersect - Program used to find redundant pack files.
+git-pack-redundant - Program used to find redundant pack files.
 
 
 SYNOPSIS
 --------
-'git-pack-intersect [ -v ] < -a | .pack filename ... >'
+'git-pack-redundant [ -v ] < -a | .pack filename ... >'
 
 DESCRIPTION
 -----------
