@@ -1,0 +1,47 @@
+git-pack-intersect(1)
+=====================
+
+NAME
+----
+git-pack-intersect - Program used to find redundant pack files.
+
+
+SYNOPSIS
+--------
+'git-pack-intersect [ -v ] < -a | .pack filename ... >'
+
+DESCRIPTION
+-----------
+This program computes which packs in your repository
+are redundant. The output is suitable for piping to
+'xargs rm' if you are in the root of the repository.
+
+OPTIONS
+-------
+
+-v::
+	Verbose. Outputs some statistics to stderr.
+	Has a small performance penalty.
+
+-a::
+	All. Processes all the local packs. Any filenames on
+	the commandline are ignored.
+
+Author
+------
+Written by Lukas Sandström <lukass@etek.chalmers.se>
+
+Documentation
+--------------
+Documentation by Lukas Sandström <lukass@etek.chalmers.se>
+
+See-Also
+--------
+gitlink:git-pack-objects[1]
+gitlink:git-repack[1]
+gitlink:git-prune-packed[1]
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
