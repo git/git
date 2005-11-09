@@ -64,7 +64,7 @@ if ($parent) {
 	    last;
 	}; # found it
 	die "Did not find $parent in the parents for this commit!";
-s    }
+    }
 } else { # we don't have a parent from the cmdline...
     if (@parents == 1) { # it's safe to get it from the commit
 	$parent = $parents[0];
