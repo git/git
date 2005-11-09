@@ -5,10 +5,13 @@ Normally you can just do "make" followed by "make install", and that
 will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
-	make prefix=/usr install
+	$ make prefix=/usr ;# as yourself
+	# make prefix=/usr install ;# as root
 
-(or prefix=/usr/local, of course).  Some day somebody may send me a RPM
-spec file or something, and you can do "make rpm" or whatever.
+(or prefix=/usr/local, of course).  Just like any program suite
+that uses $prefix, the built results have some paths encoded,
+which are derived from $prefix, so "make all; make prefix=/usr
+install" would not work.
 
 Issues of note:
 
