@@ -424,6 +424,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	struct packed_git *p;
 	unsigned long idx_size;
 	void *idx_map;
+	char sha1[20];
 
 	if (check_packed_git_idx(path, &idx_size, &idx_map))
 		return NULL;
@@ -447,6 +448,8 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
 	p->pack_local = local;
+	if (!get_sha1_hex(path + path_len - 40 - 4, sha1))
+		memcpy(p->sha1, sha1, 20);
 	return p;
 }
 
