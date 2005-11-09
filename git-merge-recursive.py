@@ -295,6 +295,7 @@ def uniquePath(path, branch):
             else:
                 raise
 
+    branch = branch.replace('/', '_')
     newPath = path + '_' + branch
     suffix = 0
     while newPath in currentFileSet or \
