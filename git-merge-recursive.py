@@ -162,13 +162,10 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name):
 # Low level file merging, update and removal
 # ------------------------------------------
 
-MERGE_NONE = 0
-MERGE_TRIVIAL = 1
-MERGE_3WAY = 2
 def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
               branch1Name, branch2Name):
 
-    merge = MERGE_NONE
+    merge = False
     clean = True
 
     if stat.S_IFMT(aMode) != stat.S_IFMT(bMode):
@@ -181,7 +178,7 @@ def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
             sha = bSha
     else:
         if aSha != oSha and bSha != oSha:
-            merge = MERGE_TRIVIAL
+            merge = True
 
         if aMode == oMode:
             mode = bMode
@@ -211,7 +208,6 @@ def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
             os.unlink(src1)
             os.unlink(src2)
 
-            merge = MERGE_3WAY
             clean = (code == 0)
         else:
             assert(stat.S_ISLNK(aMode) and stat.S_ISLNK(bMode))
@@ -590,7 +586,7 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 if merge or not clean:
                     print 'Renaming', fmtRename(path, ren1.dstName)
 
-                if merge == MERGE_3WAY:
+                if merge:
                     print 'Auto-merging', ren1.dstName
 
                 if not clean:
@@ -668,7 +664,7 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 if merge or not clean:
                     print 'Renaming', fmtRename(ren1.srcName, ren1.dstName)
 
-                if merge == MERGE_3WAY:
+                if merge:
                     print 'Auto-merging', ren1.dstName
 
                 if not clean:
