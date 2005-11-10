@@ -57,18 +57,20 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Modified in both, but differently.
 #
 "$1$2$3" | ".$2$3")
+	src2=`git-unpack-file $3`
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
+		# This extracts OUR file in $orig, and uses git-apply to
+		# remove lines that are unique to ours.
 		orig=`git-unpack-file $2`
-		: >$orig
+		diff -u -La/$orig -Lb/$orig $orig $src2 | git-apply --no-add 
 		;;
 	*)
 		echo "Auto-merging $4."
 		orig=`git-unpack-file $1`
 		;;
 	esac
-	src2=`git-unpack-file $3`
 
 	# We reset the index to the first branch, making
 	# git-diff-file useful
