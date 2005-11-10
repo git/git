@@ -199,18 +199,58 @@ static void join_revs(struct commit_list **list_p,
 			parents = parents->next;
 			if ((this_flag & flags) == flags)
 				continue;
-			parse_commit(p);
+			if (!p->object.parsed)
+				parse_commit(p);
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
 			insert_by_date(p, list_p);
 		}
 	}
+
+	/*
+	 * Postprocess to complete well-poisoning.
+	 *
+	 * At this point we have all the commits we have seen in
+	 * seen_p list (which happens to be sorted chronologically but
+	 * it does not really matter).  Mark anything that can be
+	 * reached from uninteresting commits not interesting.
+	 */
+	for (;;) {
+		int changed = 0;
+		struct commit_list *s;
+		for (s = *seen_p; s; s = s->next) {
+			struct commit *c = s->item;
+			struct commit_list *parents;
+
+			if (((c->object.flags & all_revs) != all_revs) &&
+			    !(c->object.flags & UNINTERESTING))
+				continue;
+
+			/* The current commit is either a merge base or
+			 * already uninteresting one.  Mark its parents
+			 * as uninteresting commits _only_ if they are
+			 * already parsed.  No reason to find new ones
+			 * here.
+			 */
+			parents = c->parents;
+			while (parents) {
+				struct commit *p = parents->item;
+				parents = parents->next;
+				if (!(p->object.flags & UNINTERESTING)) {
+					p->object.flags |= UNINTERESTING;
+					changed = 1;
+				}
+			}
+		}
+		if (!changed)
+			break;
+	}
 }
 
 static void show_one_commit(struct commit *commit, int no_name)
 {
-	char pretty[128], *cp;
+	char pretty[256], *cp;
 	struct commit_name *name = commit->object.util;
 	if (commit->object.parsed)
 		pretty_print_commit(CMIT_FMT_ONELINE, commit->buffer, ~0,
@@ -360,7 +400,7 @@ int main(int ac, char **av)
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_tags = 0;
-	int all_mask, all_revs, shown_merge_point;
+	int all_mask, all_revs;
 	char head_path[128];
 	const char *head_path_p;
 	int head_path_len;
@@ -369,6 +409,8 @@ int main(int ac, char **av)
 	int independent = 0;
 	int no_name = 0;
 	int sha1_name = 0;
+	int shown_merge_point = 0;
+	int topo_order = 0;
 
 	setup_git_directory();
 
@@ -394,6 +436,8 @@ int main(int ac, char **av)
 			merge_base = 1;
 		else if (!strcmp(arg, "--independent"))
 			independent = 1;
+		else if (!strcmp(arg, "--topo-order"))
+			topo_order = 1;
 		else
 			usage(show_branch_usage);
 		ac--; av++;
@@ -496,7 +540,8 @@ int main(int ac, char **av)
 		exit(0);
 
 	/* Sort topologically */
-	sort_in_topological_order(&seen);
+	if (topo_order)
+		sort_in_topological_order(&seen);
 
 	/* Give names to commits */
 	if (!sha1_name && !no_name)
@@ -504,15 +549,12 @@ int main(int ac, char **av)
 
 	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
-	shown_merge_point = 0;
 
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
 		int this_flag = commit->object.flags;
-		int is_merge_point = (this_flag & all_revs) == all_revs;
 
-		if (is_merge_point)
-			shown_merge_point = 1;
+		shown_merge_point |= ((this_flag & all_revs) == all_revs);
 
 		if (1 < num_rev) {
 			for (i = 0; i < num_rev; i++)
@@ -521,9 +563,9 @@ int main(int ac, char **av)
 			putchar(' ');
 		}
 		show_one_commit(commit, no_name);
-		if (shown_merge_point && is_merge_point)
-			if (--extra < 0)
-				break;
+
+		if (shown_merge_point && --extra < 0)
+			break;
 	}
 	return 0;
 }
