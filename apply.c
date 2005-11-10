@@ -53,7 +53,7 @@ struct fragment {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete;
+	int is_rename, is_copy, is_new, is_delete, is_binary;
 	int lines_added, lines_deleted;
 	int score;
 	struct fragment *fragments;
@@ -890,8 +890,18 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 
 	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
 
-	if (!patchsize && !metadata_changes(patch))
-		die("patch with only garbage at line %d", linenr);
+	if (!patchsize && !metadata_changes(patch)) {
+		static const char binhdr[] = "Binary files ";
+
+		if (sizeof(binhdr) - 1 < size - offset - hdrsize &&
+		    !memcmp(binhdr, buffer + hdrsize, sizeof(binhdr)-1))
+			patch->is_binary = 1;
+
+		if (patch->is_binary && !apply && !check)
+			;
+		else
+			die("patch with only garbage at line %d", linenr);
+	}
 
 	return offset + hdrsize + patchsize;
 }
@@ -949,9 +959,12 @@ static void show_stats(struct patch *patch)
 		add = (add * max + max_change / 2) / max_change;
 		del = total - add;
 	}
-	printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
-		len, name, patch->lines_added + patch->lines_deleted,
-		add, pluses, del, minuses);
+	if (patch->is_binary)
+		printf(" %s%-*s |  Bin\n", prefix, len, name);
+	else
+		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
+		       len, name, patch->lines_added + patch->lines_deleted,
+		       add, pluses, del, minuses);
 	if (qname)
 		free(qname);
 }

@@ -25,6 +25,7 @@ commit id embedding:
 '
 
 . ./test-lib.sh
+TAR=${TAR:-tar}
 
 test_expect_success \
     'populate workdir' \

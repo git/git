@@ -595,7 +595,7 @@ static void start_move(struct transfer_request *request)
 	}
 }
 
-int refresh_lock(struct active_lock *lock)
+static int refresh_lock(struct active_lock *lock)
 {
 	struct active_request_slot *slot;
 	char *if_header;
@@ -726,7 +726,7 @@ static void release_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
-void process_curl_messages(void)
+static void process_curl_messages(void)
 {
 	int num_messages;
 	struct active_request_slot *slot;
@@ -766,7 +766,7 @@ void process_curl_messages(void)
 	}
 }
 
-void process_request_queue(void)
+static void process_request_queue(void)
 {
 	struct transfer_request *request = request_queue_head;
 	struct active_request_slot *slot = active_queue_head;
@@ -799,7 +799,7 @@ void process_request_queue(void)
 }
 #endif
 
-void process_waiting_requests(void)
+static void process_waiting_requests(void)
 {
 	struct active_request_slot *slot = active_queue_head;
 
@@ -812,7 +812,7 @@ void process_waiting_requests(void)
 		}
 }
 
-void add_request(unsigned char *sha1, struct active_lock *lock)
+static void add_request(unsigned char *sha1, struct active_lock *lock)
 {
 	struct transfer_request *request = request_queue_head;
 	struct packed_git *target;
@@ -939,7 +939,7 @@ static int setup_index(unsigned char *sha1)
 	return 0;
 }
 
-static int fetch_indices()
+static int fetch_indices(void)
 {
 	unsigned char sha1[20];
 	char *url;
@@ -1189,7 +1189,7 @@ end_lockprop_element(void *userData, const char *name)
 	}
 }
 
-struct active_lock *lock_remote(char *file, long timeout)
+static struct active_lock *lock_remote(char *file, long timeout)
 {
 	struct active_request_slot *slot;
 	struct buffer out_buffer;
@@ -1318,7 +1318,7 @@ struct active_lock *lock_remote(char *file, long timeout)
 	return new_lock;
 }
 
-int unlock_remote(struct active_lock *lock)
+static int unlock_remote(struct active_lock *lock)
 {
 	struct active_request_slot *slot;
 	char *lock_token_header;
@@ -1359,7 +1359,7 @@ int unlock_remote(struct active_lock *lock)
 	return rc;
 }
 
-int check_locking()
+static int check_locking(void)
 {
 	struct active_request_slot *slot;
 	struct buffer in_buffer;
@@ -1425,7 +1425,7 @@ int check_locking()
 		return 1;
 }
 
-int is_ancestor(unsigned char *sha1, struct commit *commit)
+static int is_ancestor(unsigned char *sha1, struct commit *commit)
 {
 	struct commit_list *parents;
 
@@ -1446,8 +1446,8 @@ int is_ancestor(unsigned char *sha1, struct commit *commit)
 	return 0;
 }
 
-void get_delta(unsigned char *sha1, struct object *obj,
-	       struct active_lock *lock)
+static void get_delta(unsigned char *sha1, struct object *obj,
+		      struct active_lock *lock)
 {
 	struct commit *commit;
 	struct commit_list *parents;
@@ -1503,7 +1503,7 @@ void get_delta(unsigned char *sha1, struct object *obj,
 	}
 }
 
-int update_remote(unsigned char *sha1, struct active_lock *lock)
+static int update_remote(unsigned char *sha1, struct active_lock *lock)
 {
 	struct active_request_slot *slot;
 	char *out_data;

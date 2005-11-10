@@ -569,7 +569,7 @@ static void release_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
-void process_curl_messages(void)
+static void process_curl_messages(void)
 {
 	int num_messages;
 	struct active_request_slot *slot;
@@ -625,7 +625,7 @@ void process_curl_messages(void)
 	}
 }
 
-void process_request_queue(void)
+static void process_request_queue(void)
 {
 	struct transfer_request *request = request_queue_head;
 	struct active_request_slot *slot = active_queue_head;

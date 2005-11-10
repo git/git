@@ -110,7 +110,14 @@ do
 	    die "$remote - not something we can merge"
 done
 
-common=$(git-show-branch --merge-base $head "$@")
+case "$#" in
+1)
+	common=$(git-merge-base --all $head "$@")
+	;;
+*)
+	common=$(git-show-branch --merge-base $head "$@")
+	;;
+esac
 echo "$head" >"$GIT_DIR/ORIG_HEAD"
 
 case "$#,$common,$no_commit" in
@@ -162,7 +169,7 @@ case "$#,$common,$no_commit" in
 	up_to_date=t
 	for remote
 	do
-		common_one=$(git-merge-base $head $remote)
+		common_one=$(git-merge-base --all $head $remote)
 		if test "$common_one" != "$remote"
 		then
 			up_to_date=f

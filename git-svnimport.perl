@@ -25,7 +25,7 @@ use IPC::Open2;
 use SVN::Core;
 use SVN::Ra;
 
-die "Need CVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
+die "Need SVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
@@ -34,7 +34,7 @@ our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b
 
 sub usage() {
 	print STDERR <<END;
-Usage: ${\basename $0}     # fetch/update GIT from CVS
+Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_num_changes]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
@@ -53,7 +53,6 @@ my $branch_name = $opt_b || "branches";
 
 $opt_o ||= "origin";
 $opt_s ||= 1;
-$opt_l = 100 unless defined $opt_l;
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
@@ -112,7 +111,9 @@ sub file {
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	print "... $rev $path ...\n" if $opt_v;
-	eval { $self->{'svn'}->get_file($path,$rev,$fh); };
+	my $pool = SVN::Pool->new();
+	eval { $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
+	$pool->clear;
 	if($@) {
 		return undef if $@ =~ /Attempted to get checksum/;
 		die $@;
@@ -258,10 +259,17 @@ EOM
 
 open BRANCHES,">>", "$git_dir/svn2git";
 
-sub get_file($$$) {
-	my($rev,$branch,$path) = @_;
+sub node_kind($$$) {
+	my ($branch, $path, $revision) = @_;
+	my $pool=SVN::Pool->new;
+	my $kind = $svn->{'svn'}->check_path(revert_split_path($branch,$path),$revision,$pool);
+	$pool->clear;
+	return $kind;
+}
 
-	# revert split_path(), below
+sub revert_split_path($$) {
+	my($branch,$path) = @_;
+
 	my $svnpath;
 	$path = "" if $path eq "/"; # this should not happen, but ...
 	if($branch eq "/") {
@@ -271,6 +279,14 @@ sub get_file($$$) {
 	} else {
 		$svnpath = "$branch_name/$branch/$path";
 	}
+
+	return $svnpath
+}
+
+sub get_file($$$) {
+	my($rev,$branch,$path) = @_;
+
+	my $svnpath = revert_split_path($branch,$path);
 
 	# now get it
 	my $name;
@@ -319,28 +335,57 @@ sub split_path($$) {
 	} elsif($path =~ s#^/\Q$branch_name\E/([^/]+)/?##) {
 		$branch = $1;
 	} else {
-		print STDERR "$rev: Unrecognized path: $path\n";
+		my %no_error = (
+			"/" => 1,
+			"/$tag_name" => 1,
+			"/$branch_name" => 1
+		);
+		print STDERR "$rev: Unrecognized path: $path\n" unless (defined $no_error{$path});
 		return ()
 	}
 	$path = "/" if $path eq "";
 	return ($branch,$path);
 }
 
-sub copy_subdir($$$$$$) {
+sub branch_rev($$) {
+
+	my ($srcbranch,$uptorev) = @_;
+
+	my $bbranches = $branches{$srcbranch};
+	my @revs = reverse sort { ($a eq 'LAST' ? 0 : $a) <=> ($b eq 'LAST' ? 0 : $b) } keys %$bbranches;
+	my $therev;
+	foreach my $arev(@revs) {
+		next if  ($arev eq 'LAST');
+		if ($arev <= $uptorev) {
+			$therev = $arev;
+			last;
+		}
+	}
+	return $therev;
+}
+
+sub copy_path($$$$$$$$) {
 	# Somebody copied a whole subdirectory.
 	# We need to find the index entries from the old version which the
 	# SVN log entry points to, and add them to the new place.
 
-	my($newrev,$newbranch,$path,$oldpath,$rev,$new) = @_;
-	my($branch,$srcpath) = split_path($rev,$oldpath);
+	my($newrev,$newbranch,$path,$oldpath,$rev,$node_kind,$new,$parents) = @_;
 
-	my $gitrev = $branches{$branch}{$rev};
+	my($srcbranch,$srcpath) = split_path($rev,$oldpath);
+	my $therev = branch_rev($srcbranch, $rev);
+	my $gitrev = $branches{$srcbranch}{$therev};
 	unless($gitrev) {
 		print STDERR "$newrev:$newbranch: could not find $oldpath \@ $rev\n";
 		return;
 	}
-	print "$newrev:$newbranch:$path: copying from $branch:$srcpath @ $rev\n" if $opt_v;
-	$srcpath =~ s#/*$#/#;
+	if ($srcbranch ne $newbranch) {
+		push(@$parents, $branches{$srcbranch}{'LAST'});
+	}
+	print "$newrev:$newbranch:$path: copying from $srcbranch:$srcpath @ $rev\n" if $opt_v;
+	if ($node_kind eq $SVN::Node::dir) {
+			$srcpath =~ s#/*$#/#;
+	}
+	
 	open my $f,"-|","git-ls-tree","-r","-z",$gitrev,$srcpath;
 	local $/ = "\0";
 	while(<$f>) {
@@ -348,9 +393,12 @@ sub copy_subdir($$$$$$) {
 		my($m,$p) = split(/\t/,$_,2);
 		my($mode,$type,$sha1) = split(/ /,$m);
 		next if $type ne "blob";
-		$p = substr($p,length($srcpath)-1);
-		print "... found $path$p ...\n" if $opt_v;
-		push(@$new,[$mode,$sha1,$path.$p]);
+		if ($node_kind eq $SVN::Node::dir) {
+			$p = $path . substr($p,length($srcpath)-1);
+		} else {
+			$p = $path;
+		}
+		push(@$new,[$mode,$sha1,$p]);	
 	}
 	close($f) or
 		print STDERR "$newrev:$newbranch: could not list files in $oldpath \@ $rev\n";
@@ -359,7 +407,7 @@ sub copy_subdir($$$$$$) {
 sub commit {
 	my($branch, $changed_paths, $revision, $author, $date, $message) = @_;
 	my($author_name,$author_email,$dest);
-	my(@old,@new);
+	my(@old,@new,@parents);
 
 	if (not defined $author) {
 		$author_name = $author_email = "unknown";
@@ -446,6 +494,8 @@ sub commit {
 		$last_rev = $rev;
 	}
 
+	push (@parents, $rev) if defined $rev;
+
 	my $cid;
 	if($tag and not %$changed_paths) {
 		$cid = $rev;
@@ -454,39 +504,31 @@ sub commit {
 		foreach my $path(@paths) {
 			my $action = $changed_paths->{$path};
 
-			if ($action->[0] eq "A") {
-				my $f = get_file($revision,$branch,$path);
-				if($f) {
-					push(@new,$f) if $f;
-				} elsif($action->[1]) {
-					copy_subdir($revision,$branch,$path,$action->[1],$action->[2],\@new);
-				} else {
-					my $opath = $action->[3];
-					print STDERR "$revision: $branch: could not fetch '$opath'\n";
+			if ($action->[0] eq "R") {
+				# refer to a file/tree in an earlier commit
+				push(@old,$path); # remove any old stuff
+			}
+			if(($action->[0] eq "A") || ($action->[0] eq "R")) {
+				my $node_kind = node_kind($branch,$path,$revision);
+				if($action->[1]) {
+					copy_path($revision,$branch,$path,$action->[1],$action->[2],$node_kind,\@new,\@parents);
+				} elsif ($node_kind eq $SVN::Node::file) {
+					my $f = get_file($revision,$branch,$path);
+					if ($f) {
+						push(@new,$f) if $f;
+					} else {
+						my $opath = $action->[3];
+						print STDERR "$revision: $branch: could not fetch '$opath'\n";
+					}
 				}
 			} elsif ($action->[0] eq "D") {
 				push(@old,$path);
 			} elsif ($action->[0] eq "M") {
-				my $f = get_file($revision,$branch,$path);
-				push(@new,$f) if $f;
-			} elsif ($action->[0] eq "R") {
-				# refer to a file/tree in an earlier commit
-				push(@old,$path); # remove any old stuff
-
-				# ... and add any new stuff
-				my($b,$srcpath) = split_path($revision,$action->[1]);
-				$srcpath =~ s#/*$#/#;
-				open my $F,"-|","git-ls-tree","-r","-z", $branches{$b}{$action->[2]}, $srcpath;
-				local $/ = "\0";
-				while(<$F>) {
-					chomp;
-					my($m,$p) = split(/\t/,$_,2);
-					my($mode,$type,$sha1) = split(/ /,$m);
-					next if $type ne "blob";
-					$p = substr($p,length($srcpath)-1);
-					push(@new,[$mode,$sha1,$path.$p]);
+				my $node_kind = node_kind($branch,$path,$revision);
+				if ($node_kind eq $SVN::Node::file) {
+					my $f = get_file($revision,$branch,$path);
+					push(@new,$f) if $f;
 				}
-				close($F);
 			} else {
 				die "$revision: unknown action '".$action->[0]."' for $path\n";
 			}
@@ -554,7 +596,6 @@ sub commit {
 			$pw->close();
 
 			my @par = ();
-			@par = ("-p",$rev) if defined $rev;
 
 			# loose detection of merges
 			# based on the commit msg
@@ -564,10 +605,16 @@ sub commit {
 					if ($mparent eq 'HEAD') { $mparent = $opt_o };
 					if ( -e "$git_dir/refs/heads/$mparent") {
 						$mparent = get_headref($mparent, $git_dir);
-						push @par, '-p', $mparent;
+						push (@parents, $mparent);
 						print OUT "Merge parent branch: $mparent\n" if $opt_v;
 					}
 				}
+			}
+			my %seen_parents = ();
+			my @unique_parents = grep { ! $seen_parents{$_} ++ } @parents;
+			foreach my $bparent (@unique_parents) {
+				push @par, '-p', $bparent;
+				print OUT "Merge parent branch: $bparent\n" if $opt_v;
 			}
 
 			exec("env",
@@ -600,6 +647,10 @@ sub commit {
 		die "Error running git-commit-tree: $?\n" if $?;
 	}
 
+	if (not defined $cid) {
+		$cid = $branches{"/"}{"LAST"};
+	}
+
 	if(not defined $dest) {
 		print "... no known parent\n" if $opt_v;
 	} elsif(not $tag) {
@@ -616,6 +667,7 @@ sub commit {
 		# the tag was 'complex', i.e. did not refer to a "real" revision
 
 		$dest =~ tr/_/\./ if $opt_u;
+		$branch = $dest;
 
 		my $pid = open2($in, $out, 'git-mktag');
 		print $out ("object $cid\n".
@@ -674,13 +726,16 @@ sub commit_all {
 }
 
 while(++$current_rev <= $svn->{'maxrev'}) {
-	$svn->{'svn'}->get_log("/",$current_rev,$current_rev,$current_rev,1,1,\&_commit_all,"");
-	commit_all();
-	if($opt_l and not --$opt_l) {
-		print STDERR "Stopping, because there is a memory leak (in the SVN library).\n";
-		print STDERR "Please repeat this command; it will continue safely\n";
-		last;
+	if (defined $opt_l) {
+		$opt_l--;
+		if ($opt_l < 0) {
+			last;
+		}
 	}
+	my $pool=SVN::Pool->new;
+	$svn->{'svn'}->get_log("/",$current_rev,$current_rev,1,1,1,\&_commit_all,$pool);
+	$pool->clear;
+	commit_all();
 }
 
 
