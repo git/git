@@ -8,7 +8,7 @@ git-clone - Clones a repository.
 
 SYNOPSIS
 --------
-'git-clone' [-l [-s]] [-q] [-n] [-u <upload-pack>] <repository> <directory>
+'git-clone' [-l [-s]] [-q] [-n] [-u <upload-pack>] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -68,9 +68,11 @@ OPTIONS
 	be any URL git-fetch supports.
 
 <directory>::
-	The name of a new directory to be cloned into.  It is an
-	error to specify an existing directory.
-
+	The name of a new directory to clone into.  The	"humanish"
+	part of the source repository is used if no directory is
+	explicitly given ("repo" for "/path/to/repo.git" and "foo"
+	for "host.xz:foo/.git").  Cloning into an existing directory
+	is not allowed.
 
 Author
 ------
@@ -78,7 +80,7 @@ Written by Linus Torvalds <torvalds@osdl.org>
 
 Documentation
 --------------
-Documentation by Junio C Hamano.
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 
 GIT
