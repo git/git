@@ -98,7 +98,8 @@ fi
 dir="$2"
 # Try using "humanish" part of source repo if user didn't specify one
 [ -z "$dir" ] && dir=$(echo "$repo" | sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*/||g')
-mkdir "$dir" &&
+[ -e "$dir" ] && $(echo "$dir already exists."; usage)
+mkdir -p "$dir" &&
 D=$(
 	(cd "$dir" && git-init-db && pwd)
 ) &&
