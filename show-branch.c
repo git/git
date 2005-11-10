@@ -181,11 +181,11 @@ static void join_revs(struct commit_list **list_p,
 
 	while (*list_p) {
 		struct commit_list *parents;
+		int still_interesting = !!interesting(*list_p);
 		struct commit *commit = pop_one_commit(list_p);
 		int flags = commit->object.flags & all_mask;
-		int still_interesting = !!interesting(*list_p);
 
-		if (!still_interesting && extra < 0)
+		if (!still_interesting && extra <= 0)
 			break;
 
 		mark_seen(commit, seen_p);
