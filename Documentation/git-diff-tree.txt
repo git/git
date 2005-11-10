@@ -8,7 +8,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 
 SYNOPSIS
 --------
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--pretty] [-t] [-r] [--root] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
+'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty] [-t] [-r] [--root] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
 -----------
@@ -73,6 +73,10 @@ separated with a single space are given.
 	This is used to control "pretty printing" format of the
 	commit message.  Without "=<style>", it defaults to
 	medium.
+
+--no-commit-id::
+	git-diff-tree outputs a line with the commit ID when
+	applicable.  This flag suppressed the commit ID output.
 
 
 Limiting Output
