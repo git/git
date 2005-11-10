@@ -22,20 +22,21 @@ elsewhere for tools for ordinary humans layered on top of this.
 %package svn
 Summary:        Git tools for importing Subversion repositories.
 Group:          Development/Tools
-Requires:       subversion
+Requires:       git-core, subversion
 %description svn
 Git tools for importing Subversion repositories.
 
 %package cvs
 Summary:        Git tools for importing CVS repositories.
 Group:          Development/Tools
-Requires:       cvs
+Requires:       git-core, cvs, cvsps
 %description cvs
 Git tools for importing CVS repositories.
 
 %package email
 Summary:        Git tools for sending email.
 Group:          Development/Tools
+Requires:       git-core
 %description email
 Git tools for sending email.
 
