@@ -34,6 +34,8 @@ enum cmit_fmt get_commit_format(const char *arg)
 		return CMIT_FMT_SHORT;
 	if (!strcmp(arg, "=full"))
 		return CMIT_FMT_FULL;
+	if (!strcmp(arg, "=fuller"))
+		return CMIT_FMT_FULLER;
 	if (!strcmp(arg, "=oneline"))
 		return CMIT_FMT_ONELINE;
 	die("invalid --pretty format");
@@ -361,6 +363,7 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	int namelen;
 	unsigned long time;
 	int tz, ret;
+	const char *filler = "    ";
 
 	if (fmt == CMIT_FMT_ONELINE)
 		return 0;
@@ -371,9 +374,20 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	time = strtoul(date, &date, 10);
 	tz = strtol(date, NULL, 10);
 
-	ret = sprintf(buf, "%s: %.*s\n", what, namelen, line);
-	if (fmt == CMIT_FMT_MEDIUM)
+	ret = sprintf(buf, "%s: %.*s%.*s\n", what,
+		      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
+		      filler, namelen, line);
+	switch (fmt) {
+	case CMIT_FMT_MEDIUM:
 		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
+		break;
+	case CMIT_FMT_FULLER:
+		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz));
+		break;
+	default:
+		/* notin' */
+		break;
+	}
 	return ret;
 }
 
@@ -448,12 +462,21 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 					die("bad parent line in commit");
 				offset += add_parent_info(fmt, buf + offset, line, ++parents);
 			}
+
+			/*
+			 * MEDIUM == DEFAULT shows only author with dates.
+			 * FULL shows both authors but not dates.
+			 * FULLER shows both authors and dates.
+			 */
 			if (!memcmp(line, "author ", 7))
-				offset += add_user_info("Author", fmt, buf + offset, line + 7);
-			if (fmt == CMIT_FMT_FULL) {
-				if (!memcmp(line, "committer ", 10))
-					offset += add_user_info("Commit", fmt, buf + offset, line + 10);
-			}
+				offset += add_user_info("Author", fmt,
+							buf + offset,
+							line + 7);
+			if (!memcmp(line, "committer ", 10) &&
+			    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER))
+				offset += add_user_info("Commit", fmt,
+							buf + offset,
+							line + 10);
 			continue;
 		}
 
