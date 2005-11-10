@@ -269,6 +269,8 @@ static CURL* get_curl_handle(void)
 				 curl_low_speed_time);
 	}
 
+	curl_easy_setopt(result, CURLOPT_FOLLOWLOCATION, 1);
+
 	return result;
 }
 

@@ -23,7 +23,7 @@ fi
 
 http_fetch () {
 	# $1 = Remote, $2 = Local
-	curl -nsf $curl_extra_args "$1" >"$2"
+	curl -nsfL $curl_extra_args "$1" >"$2"
 }
 
 clone_dumb_http () {
