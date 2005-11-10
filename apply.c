@@ -27,7 +27,7 @@ static int no_add = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [-z] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
