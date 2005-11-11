@@ -122,7 +122,7 @@ cat > show-branch.expect << EOF
 ++ [mybranch] Some work.
 EOF
 
-git show-branch master mybranch > show-branch.output
+git show-branch --topo-order master mybranch > show-branch.output
 test_expect_success 'git show-branch' 'cmp show-branch.expect show-branch.output'
 
 git checkout mybranch
@@ -145,7 +145,7 @@ cat > show-branch2.expect << EOF
 ++ [master] Merged "mybranch" changes.
 EOF
 
-git show-branch master mybranch > show-branch2.output
+git show-branch --topo-order master mybranch > show-branch2.output
 test_expect_success 'git show-branch' 'cmp show-branch2.expect show-branch2.output'
 
 # TODO: test git fetch
