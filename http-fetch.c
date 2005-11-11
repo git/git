@@ -425,6 +425,8 @@ static void start_request(struct transfer_request *request)
 	rename(request->tmpfile, prevfile);
 	unlink(request->tmpfile);
 
+	if (request->local != -1)
+		error("fd leakage in start: %d", request->local);
 	request->local = open(request->tmpfile,
 			      O_WRONLY | O_CREAT | O_EXCL, 0666);
 	/* This could have failed due to the "lazy directory creation";
@@ -523,7 +525,7 @@ static void start_request(struct transfer_request *request)
 	/* Try to get the request started, abort the request on error */
 	if (!start_active_slot(slot)) {
 		request->state = ABORTED;
-		close(request->local);
+		close(request->local); request->local = -1;
 		free(request->url);
 		return;
 	}
@@ -537,7 +539,7 @@ static void finish_request(struct transfer_request *request)
 	struct stat st;
 
 	fchmod(request->local, 0444);
-	close(request->local);
+	close(request->local); request->local = -1;
 
 	if (request->http_code == 416) {
 		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
@@ -569,6 +571,8 @@ static void release_request(struct transfer_request *request)
 {
 	struct transfer_request *entry = request_queue_head;
 
+	if (request->local != -1)
+		error("fd leakage in release: %d", request->local);
 	if (request == request_queue_head) {
 		request_queue_head = request->next;
 	} else {
@@ -631,6 +635,8 @@ static void process_curl_messages(void)
 					if (request->repo->next != NULL) {
 						request->repo =
 							request->repo->next;
+						close(request->local);
+							request->local = -1;
 						start_request(request);
 					} else {
 						finish_request(request);
@@ -763,6 +769,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 				     curl_errorstr);
 		}
 	} else {
+		fclose(indexfile);
 		return error("Unable to start request");
 	}
 
@@ -1083,6 +1090,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 				     curl_errorstr);
 		}
 	} else {
+		fclose(packfile);
 		return error("Unable to start request");
 	}
 
@@ -1145,6 +1153,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 			fetch_alternates(alt->base);
 			if (request->repo->next != NULL) {
 				request->repo = request->repo->next;
+				close(request->local); request->local = -1;
 				start_request(request);
 			}
 		} else {
@@ -1152,6 +1161,9 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 			request->state = COMPLETE;
 		}
 #endif
+	}
+	if (request->local != -1) {
+		close(request->local); request->local = -1;
 	}
 
 	if (request->state == ABORTED) {
