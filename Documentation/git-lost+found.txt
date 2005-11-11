@@ -12,9 +12,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Finds dangling commits and tags from the object database, and
-creates refs to them in .git/lost+found/ directory.  Commits and
-tags that dereference to commits go to .git/lost+found/commit
-and others are stored in .git/lost+found/other directory.
+creates refs to them in .git/lost-found/ directory.  Commits and
+tags that dereference to commits go to .git/lost-found/commit
+and others are stored in .git/lost-found/other directory.
 
 
 OUTPUT
@@ -40,7 +40,7 @@ Also you can use gitk to browse how they relate to each other
 and existing (probably old) tags.
 
 ------------
-$ gitk $(cd .git/lost+found/commit && echo ??*)
+$ gitk $(cd .git/lost-found/commit && echo ??*)
 ------------
 
 After making sure that it is the object you are looking for, you

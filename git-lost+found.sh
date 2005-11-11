@@ -2,7 +2,7 @@
 
 . git-sh-setup || die "Not a git archive."
 
-laf="$GIT_DIR/lost+found"
+laf="$GIT_DIR/lost-found"
 rm -fr "$laf" && mkdir -p "$laf/commit" "$laf/other" || exit
 
 git fsck-objects |
