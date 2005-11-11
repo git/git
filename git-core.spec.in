@@ -36,7 +36,7 @@ Git tools for importing CVS repositories.
 %package arch
 Summary:        Git tools for importing Arch repositories
 Group:          Development/Tools
-Requires:       git-core = %{version}-%{release}
+Requires:       git-core = %{version}-%{release}, tla
 %description arch
 Git tools for importing Arch repositories.
 
