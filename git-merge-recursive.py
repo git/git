@@ -304,13 +304,13 @@ def uniquePath(path, branch):
                 raise
 
     branch = branch.replace('/', '_')
-    newPath = path + '_' + branch
+    newPath = path + '~' + branch
     suffix = 0
     while newPath in currentFileSet or \
           newPath in currentDirectorySet  or \
           fileExists(newPath):
         suffix += 1
-        newPath = path + '_' + branch + '_' + str(suffix)
+        newPath = path + '~' + branch + '_' + str(suffix)
     currentFileSet.add(newPath)
     return newPath
 
