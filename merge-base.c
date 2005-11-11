@@ -123,6 +123,47 @@ static struct commit *interesting(struct commit_list *list)
 
 static int show_all = 0;
 
+static void mark_reachable_commits(struct commit_list *result,
+				   struct commit_list *list)
+{
+	struct commit_list *tmp;
+
+	/*
+	 * Postprocess to fully contaminate the well.
+	 */
+	for (tmp = result; tmp; tmp = tmp->next) {
+		struct commit *c = tmp->item;
+		/* Reinject uninteresting ones to list,
+		 * so we can scan their parents.
+		 */
+		if (c->object.flags & UNINTERESTING)
+			commit_list_insert(c, &list);
+	}
+	while (list) {
+		struct commit *c = list->item;
+		struct commit_list *parents;
+
+		tmp = list;
+		list = list->next;
+		free(tmp);
+
+		/* Anything taken out of the list is uninteresting, so
+		 * mark all its parents uninteresting.  We do not
+		 * parse new ones (we already parsed all the relevant
+		 * ones).
+		 */
+		parents = c->parents;
+		while (parents) {
+			struct commit *p = parents->item;
+			parents = parents->next;
+			if (!(p->object.flags & UNINTERESTING)) {
+				p->object.flags |= UNINTERESTING;
+				commit_list_insert(p, &list);
+			}
+		}
+	}
+}
+
 static int merge_base(struct commit *rev1, struct commit *rev2)
 {
 	struct commit_list *list = NULL;
@@ -171,40 +212,8 @@ static int merge_base(struct commit *rev1, struct commit *rev2)
 	if (!result)
 		return 1;
 
-	/*
-	 * Postprocess to fully contaminate the well.
-	 */
-	for (tmp = result; tmp; tmp = tmp->next) {
-		struct commit *c = tmp->item;
-		/* Reinject uninteresting ones to list,
-		 * so we can scan their parents.
-		 */
-		if (c->object.flags & UNINTERESTING)
-			commit_list_insert(c, &list);
-	}
-	while (list) {
-		struct commit *c = list->item;
-		struct commit_list *parents;
-
-		tmp = list;
-		list = list->next;
-		free(tmp);
-
-		/* Anything taken out of the list is uninteresting, so
-		 * mark all its parents uninteresting.  We do not
-		 * parse new ones (we already parsed all the relevant
-		 * ones).
-		 */
-		parents = c->parents;
-		while (parents) {
-			struct commit *p = parents->item;
-			parents = parents->next;
-			if (!(p->object.flags & UNINTERESTING)) {
-				p->object.flags |= UNINTERESTING;
-				commit_list_insert(p, &list);
-			}
-		}
-	}
+	if (result->next && list)
+		mark_reachable_commits(result, list);
 
 	while (result) {
 		struct commit *commit = result->item;
