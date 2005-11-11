@@ -9,9 +9,9 @@
 #include "cache.h"
 
 static const char pack_redundant_usage[] =
-"git-pack-redundant [ -v ]  < -a | <.pack filename> ...>";
+"git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
 
-int all = 0, verbose = 0;
+int load_all_packs = 0, verbose = 0, alt_odb = 0;
 
 struct llist_item {
 	struct llist_item *next;
@@ -21,14 +21,14 @@ struct llist {
 	struct llist_item *front;
 	struct llist_item *back;
 	size_t size;
-} *all_objects;
+} *all_objects; /* all objects which must be present in local packfiles */
 
 struct pack_list {
 	struct pack_list *next;
 	struct packed_git *pack;
 	struct llist *unique_objects;
 	struct llist *all_objects;
-} *pack_list;
+} *local_packs = NULL, *altodb_packs = NULL;
 
 struct pll {
 	struct pll *next;
@@ -128,32 +128,35 @@ inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
 }
 
 /* computes A\B */
-struct llist * llist_sorted_difference(struct llist_item *A,
-				       struct llist_item *B)
+void llist_sorted_difference_inplace(struct llist *A,
+				     struct llist *B)
 {
-	struct llist *ret;
-	llist_init(&ret);
+	struct llist_item *prev, *a, *b, *x;
 
-	while (A != NULL && B != NULL) {
-		int cmp = memcmp(A->sha1, B->sha1, 20);
+	prev = a = A->front;
+	b = B->front;
+
+	while (a != NULL && b != NULL) {
+		int cmp = memcmp(a->sha1, b->sha1, 20);
 		if (!cmp) {
-			A = A->next;
-			B = B->next;
-			continue;
-		}
-		if(cmp > 0) { /* we'll never find this B */
-			B = B->next;
-			continue;
-		}
-		/* A has the object, B doesn't */
-		llist_insert_back(ret, A->sha1);
-		A = A->next;
+			x = a;
+			if (a == A->front)
+				A->front = a->next;
+			a = prev->next = a->next;
+
+			if (a == NULL) /* end of list */
+				A->back = prev;
+			A->size--;
+			free(x);
+			b = b->next;
+		} else
+			if (cmp > 0)
+				b = b->next;
+			else {
+				prev = a;
+				a = a->next;
+			}
 	}
-	while (A != NULL) {
-		llist_insert_back(ret, A->sha1);
-		A = A->next;
-	}
-	return ret;
 }
 
 /* returns a pointer to an item in front of sha1 */
@@ -199,6 +202,16 @@ inline struct pack_list * pack_list_insert(struct pack_list **pl,
 	p->next = *pl;
 	*pl = p;
 	return p;
+}
+
+inline size_t pack_list_size(struct pack_list *pl)
+{
+	size_t ret = 0;
+	while(pl) {
+		ret++;
+		pl = pl->next;
+	}
+	return ret;
 }
 
 struct pack_list * pack_list_difference(struct pack_list *A,
@@ -294,15 +307,13 @@ struct pll * get_all_permutations(struct pack_list *list)
 
 int is_superset(struct pack_list *pl, struct llist *list)
 {
-	struct llist *diff, *old;
+	struct llist *diff;
 
 	diff = llist_copy(list);
 
 	while (pl) {
-		old = diff;
-		diff = llist_sorted_difference(diff->front,
-					       pl->all_objects->front);
-		llist_free(old);
+		llist_sorted_difference_inplace(diff,
+						pl->all_objects);
 		if (diff->size == 0) { /* we're done */
 			llist_free(diff);
 			return 1;
@@ -347,6 +358,10 @@ size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 size_t get_pack_redundancy(struct pack_list *pl)
 {
 	struct pack_list *subset;
+
+	if (pl == NULL)
+		return 0;
+
 	size_t ret = 0;
 	while ((subset = pl->next)) {
 		while(subset) {
@@ -374,10 +389,10 @@ void minimize(struct pack_list **min)
 	struct pack_list *pl, *unique = NULL,
 		*non_unique = NULL, *min_perm = NULL;
 	struct pll *perm, *perm_all, *perm_ok = NULL, *new_perm;
-	struct llist *missing, *old;
+	struct llist *missing;
 	size_t min_perm_size = (size_t)-1, perm_size;
 
-	pl = pack_list;
+	pl = local_packs;
 	while (pl) {
 		if(pl->unique_objects->size)
 			pack_list_insert(&unique, pl);
@@ -389,13 +404,12 @@ void minimize(struct pack_list **min)
 	missing = llist_copy(all_objects);
 	pl = unique;
 	while (pl) {
-		old = missing;
-		missing = llist_sorted_difference(missing->front,
-						  pl->all_objects->front);
-		llist_free(old);
+		llist_sorted_difference_inplace(missing,
+						pl->all_objects);
 		pl = pl->next;
 	}
 
+	/* return if there are no objects missing from the unique set */
 	if (missing->size == 0) {
 		*min = unique;
 		return;
@@ -437,7 +451,7 @@ void minimize(struct pack_list **min)
 
 void load_all_objects()
 {
-	struct pack_list *pl = pack_list;
+	struct pack_list *pl = local_packs;
 	struct llist_item *hint, *l;
 	int i;
 
@@ -454,17 +468,34 @@ void load_all_objects()
 		}
 		pl = pl->next;
 	}
+	/* remove objects present in remote packs */
+	pl = altodb_packs;
+	while (pl) {
+		llist_sorted_difference_inplace(all_objects, pl->all_objects);
+		pl = pl->next;
+	}
 }
 
 /* this scales like O(n^2) */
 void cmp_packs()
 {
-	struct pack_list *subset, *curr = pack_list;
+	struct pack_list *subset, *pl = local_packs;
 
-	while ((subset = curr)) {
+	while ((subset = pl)) {
 		while((subset = subset->next))
-			cmp_two_packs(curr, subset);
-		curr = curr->next;
+			cmp_two_packs(pl, subset);
+		pl = pl->next;
+	}
+
+	pl = altodb_packs;
+	while (pl) {
+		subset = local_packs;
+		while (subset) {
+			llist_sorted_difference_inplace(subset->unique_objects,
+							pl->all_objects);
+			subset = subset->next;
+		}
+		pl = pl->next;
 	}
 }
 
@@ -485,7 +516,10 @@ struct pack_list * add_pack(struct packed_git *p)
 	}
 	/* this list will be pruned in cmp_two_packs later */
 	l.unique_objects = llist_copy(l.all_objects);
-	return pack_list_insert(&pack_list, &l);
+	if (p->pack_local)
+		return pack_list_insert(&local_packs, &l);
+	else
+		return alt_odb ? pack_list_insert(&altodb_packs, &l) : NULL;
 }
 
 struct pack_list * add_pack_file(char *filename)
@@ -497,7 +531,6 @@ struct pack_list * add_pack_file(char *filename)
 
 	while (p) {
 		if (strstr(p->pack_name, filename))
-			/* this will silently ignore packs in alt-odb */
 			return add_pack(p);
 		p = p->next;
 	}
@@ -509,8 +542,7 @@ void load_all()
 	struct packed_git *p = packed_git;
 
 	while (p) {
-		if (p->pack_local) /* ignore alt-odb for now */
-			add_pack(p);
+		add_pack(p);
 		p = p->next;
 	}
 }
@@ -526,12 +558,16 @@ int main(int argc, char **argv)
 			i++;
 			break;
 		}
-		if(!strcmp(arg, "-a")) {
-			all = 1;
+		if(!strcmp(arg, "--all")) {
+			load_all_packs = 1;
 			continue;
 		}
-		if(!strcmp(arg, "-v")) {
+		if(!strcmp(arg, "--verbose")) {
 			verbose = 1;
+			continue;
+		}
+		if(!strcmp(arg, "--alt-odb")) {
+			alt_odb = 1;
 			continue;
 		}
 		if(*arg == '-')
@@ -542,13 +578,13 @@ int main(int argc, char **argv)
 
 	prepare_packed_git();
 
-	if(all)
+	if (load_all_packs)
 		load_all();
 	else
 		while (*(argv + i) != NULL)
 			add_pack_file(*(argv + i++));
 
-	if (pack_list == NULL)
+	if (local_packs == NULL)
 		die("Zero packs found!\n");
 
 	cmp_packs();
@@ -557,6 +593,8 @@ int main(int argc, char **argv)
 
 	minimize(&min);
 	if (verbose) {
+		fprintf(stderr, "There are %ld packs available in alt-odbs.\n",
+			pack_list_size(altodb_packs));
 		fprintf(stderr, "The smallest (bytewise) set of packs is:\n");
 		pl = min;
 		while (pl) {
@@ -566,12 +604,15 @@ int main(int argc, char **argv)
 		fprintf(stderr, "containing %ld duplicate objects "
 				"with a total size of %ldkb.\n",
 			get_pack_redundancy(min), pack_set_bytecount(min)/1024);
+		fprintf(stderr, "A total of %ld unique objects were considered.\n",
+			all_objects->size);
 		fprintf(stderr, "Redundant packs (with indexes):\n");
 	}
-	pl = red = pack_list_difference(pack_list, min);
+	pl = red = pack_list_difference(local_packs, min);
 	while (pl) {
 		printf("%s\n%s\n",
-		       sha1_pack_index_name(pl->pack->sha1), pl->pack->pack_name);
+		       sha1_pack_index_name(pl->pack->sha1),
+		       pl->pack->pack_name);
 		pl = pl->next;
 	}
 

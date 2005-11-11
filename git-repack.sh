@@ -45,7 +45,7 @@ if [ -z "$name" ]; then
 	if test "$remove_redandant" = t ; then
 		echo "Removing redundant packs."
 		sync
-		redundant=$(git-pack-redundant -a)
+		redundant=$(git-pack-redundant --all)
 		if test "$redundant" != "" ; then
 			echo $redundant | xargs rm
 		fi
@@ -63,7 +63,7 @@ exit
 if test "$remove_redandant" = t
 then
 	sync
-	redundant=$(git-pack-redundant -a)
+	redundant=$(git-pack-redundant --all)
 	if test "$redundant" != "" ; then
 		echo $redundant | xargs rm
 	fi

@@ -8,7 +8,7 @@ git-pack-redundant - Program used to find redundant pack files.
 
 SYNOPSIS
 --------
-'git-pack-redundant [ -v ] < -a | .pack filename ... >'
+'git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | .pack filename ... >'
 
 DESCRIPTION
 -----------
@@ -19,13 +19,16 @@ are redundant. The output is suitable for piping to
 OPTIONS
 -------
 
--v::
-	Verbose. Outputs some statistics to stderr.
-	Has a small performance penalty.
 
--a::
-	All. Processes all the local packs. Any filenames on
-	the commandline are ignored.
+--all::
+	Processes all packs. Any filenames on the commandline are ignored.
+
+--alt-odb::
+	Don't require objects present in packs from alternate object
+	directories to be present in local packs.
+
+--verbose::
+	Outputs some statistics to stderr. Has a small performance penalty.
 
 Author
 ------
