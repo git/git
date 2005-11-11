@@ -565,6 +565,11 @@ sub parselog {
             next if $t =~ m!\{arch\}/!;
             next if $t =~ m!\.arch-ids/!;
             next if $t =~ m!\.arch-inventory$!;
+           # tla cat-archive-log will give us filenames with spaces as file\(sp)name - why?
+           # we can assume that any filename with \ indicates some pika escaping that we want to get rid of.
+           if  ($t =~ /\\/ ){
+               $t = `tla escape --unescaped '$t'`;
+           }
             push (@tmp, shell_quote($t));
         }
         @$ref = @tmp;
