@@ -163,7 +163,7 @@ yes,yes)
 			rm -f "$D/.git/TMP_ALT"
 		if test -f "$D/.git/TMP_ALT"
 		then
-		    ( cd $D &&
+		    ( cd "$D" &&
 		      . git-parse-remote &&
 		      resolve_alternates "$repo" <"./.git/TMP_ALT" ) |
 		    while read alt
@@ -191,7 +191,7 @@ yes,yes)
 	;;
 esac
 
-cd $D || exit
+cd "$D" || exit
 
 if test -f ".git/HEAD"
 then
