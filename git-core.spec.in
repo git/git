@@ -1,4 +1,4 @@
-# Pass --without docs to rpmbuild if you don't want the documetnation
+# Pass --without docs to rpmbuild if you don't want the documentation
 Name: 		git-core
 Version: 	@@VERSION@@
 Release: 	1%{?dist}
@@ -7,7 +7,7 @@ License: 	GPL
 Group: 		Development/Tools
 URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
-BuildRequires:	zlib-devel, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
+BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires:	zlib >= 1.2, rsync, rcs, curl, less, openssh-clients, python >= 2.3, tk >= 8.4
 
@@ -20,23 +20,30 @@ rudimentary tools that can be used as a SCM, but you should look
 elsewhere for tools for ordinary humans layered on top of this.
 
 %package svn
-Summary:        Git tools for importing Subversion repositories.
+Summary:        Git tools for importing Subversion repositories
 Group:          Development/Tools
-Requires:       git-core, subversion
+Requires:       git-core = %{version}-%{release}, subversion
 %description svn
 Git tools for importing Subversion repositories.
 
 %package cvs
-Summary:        Git tools for importing CVS repositories.
+Summary:        Git tools for importing CVS repositories
 Group:          Development/Tools
-Requires:       git-core, cvs, cvsps
+Requires:       git-core = %{version}-%{release}, cvs, cvsps
 %description cvs
 Git tools for importing CVS repositories.
 
-%package email
-Summary:        Git tools for sending email.
+%package arch
+Summary:        Git tools for importing Arch repositories
 Group:          Development/Tools
-Requires:       git-core
+Requires:       git-core = %{version}-%{release}
+%description arch
+Git tools for importing Arch repositories.
+
+%package email
+Summary:        Git tools for sending email
+Group:          Development/Tools
+Requires:	git-core = %{version}-%{release} 
 %description email
 Git tools for sending email.
 
@@ -53,33 +60,54 @@ make %{_smp_mflags} DESTDIR=$RPM_BUILD_ROOT WITH_OWN_SUBPROCESS_PY=YesPlease WIT
      prefix=%{_prefix} mandir=%{_mandir} \
      install %{!?_without_docs: install-doc}
 
-(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "svn|cvs|email" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-files
+(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "arch|svn|cvs|email" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
 %if %{!?_without_docs:1}0
-(find $RPM_BUILD_ROOT%{_mandir} -type f | grep -vE "svn|cvs|email" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-files
+(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "arch|svn|git-cvs|email" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
 %endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files svn
+%defattr(-,root,root)
 %{_bindir}/*svn*
+%doc Documentation/*svn*.txt
 %{!?_without_docs: %{_mandir}/man1/*svn*.1*}
+%{!?_without_docs: %doc Documentation/*svn*.html }
 
 %files cvs
+%defattr(-,root,root)
+%doc Documentation/*git-cvs*.txt
 %{_bindir}/*cvs*
 %{!?_without_docs: %{_mandir}/man1/*cvs*.1*}
+%{!?_without_docs: %doc Documentation/*git-cvs*.html }
+
+%files arch
+%defattr(-,root,root)
+%doc Documentation/*arch*.txt
+%{_bindir}/*arch*
+%{!?_without_docs: %{_mandir}/man1/*arch*.1*}
+%{!?_without_docs: %doc Documentation/*arch*.html }
 
 %files email
+%defattr(-,root,root)
+%doc Documentation/*email*.txt
 %{_bindir}/*email*
 %{!?_without_docs: %{_mandir}/man1/*email*.1*}
+%{!?_without_docs: %doc Documentation/*email*.html }
 
-%files -f bin-man-files
+%files -f bin-man-doc-files
 %defattr(-,root,root)
 %{_datadir}/git-core/
 %doc README COPYING Documentation/*.txt
 %{!?_without_docs: %doc Documentation/*.html }
 
 %changelog
+* Thu Nov 10 2005 Chris Wright <chrisw@osdl.org> 0.99.9g-1
+- zlib dependency fix
+- Minor cleanups from split
+- Move arch import to separate package as well
+
 * Tue Sep 27 2005 Jim Radford <radford@blackbean.org>
 - Move programs with non-standard dependencies (svn, cvs, email)
   into separate packages
