@@ -201,7 +201,7 @@ process_one () {
 	    ;;
 	esac
 
-	eval "$(sed -ne "$whosepatchScript" $commsg)"
+	eval "$(LANG=C LC_ALL=C sed -ne "$whosepatchScript" $commsg)"
 	test "$author,$au" = ",$me" || {
 		mailScript="$mailScript"'
 	a\
