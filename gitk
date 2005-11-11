@@ -2787,8 +2787,7 @@ proc gettreediffs {ids} {
     set treepending $ids
     set treediff {}
     set id [lindex $ids 0]
-    set p [lindex $ids 1]
-    if [catch {set gdtf [open "|git-diff-tree -r $id" r]}] return
+    if [catch {set gdtf [open "|git-diff-tree --no-commit-id -r $id" r]}] return
     fconfigure $gdtf -blocking 0
     fileevent $gdtf readable [list gettreediffline $gdtf $ids]
 }
@@ -2822,9 +2821,8 @@ proc getblobdiffs {ids} {
     global difffilestart nextupdate diffinhdr treediffs
 
     set id [lindex $ids 0]
-    set p [lindex $ids 1]
     set env(GIT_DIFF_OPTS) $diffopts
-    set cmd [list | git-diff-tree -r -p -C $id]
+    set cmd [list | git-diff-tree --no-commit-id -r -p -C $id]
     if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
