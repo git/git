@@ -80,6 +80,45 @@ static struct commit *interesting(struct commit_list *list)
  * Now, list does not have any interesting commit.  So we find the newest
  * commit from the result list that is not marked uninteresting.  Which is
  * commit B.
+ *
+ *
+ * Another pathological example how this thing can fail to mark an ancestor
+ * of a merge base as UNINTERESTING without the postprocessing phase.
+ *
+ *		  2
+ *		  H
+ *	    1    / \
+ *	    G   A   \
+ *	    |\ /     \ 
+ *	    | B       \
+ *	    |  \       \
+ *	     \  C       F
+ *	      \  \     / 
+ *	       \  D   /   
+ *		\ |  /
+ *		 \| /
+ *		  E
+ *
+ *	 list			A B C D E F G H
+ *	 G1 H2			- - - - - - 1 2
+ *	 H2 E1 B1		- 1 - - 1 - 1 2
+ *	 F2 E1 B1 A2		2 1 - - 1 2 1 2
+ *	 E3 B1 A2		2 1 - - 3 2 1 2
+ *	 B1 A2			2 1 - - 3 2 1 2
+ *	 C1 A2			2 1 1 - 3 2 1 2
+ *	 D1 A2			2 1 1 1 3 2 1 2
+ *	 A2			2 1 1 1 3 2 1 2
+ *	 B3			2 3 1 1 3 2 1 2
+ *	 C7			2 3 7 1 3 2 1 2
+ *
+ * At this point, unfortunately, everybody in the list is
+ * uninteresting, so we fail to complete the following two
+ * steps to fully marking uninteresting commits.
+ *
+ *	 D7			2 3 7 7 3 2 1 2
+ *	 E7			2 3 7 7 7 2 1 2
+ *
+ * and we end up showing E as an interesting merge base.
  */
 
 static int show_all = 0;
@@ -88,6 +127,7 @@ static int merge_base(struct commit *rev1, struct commit *rev2)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
+	struct commit_list *tmp = NULL;
 
 	if (rev1 == rev2) {
 		printf("%s\n", sha1_to_hex(rev1->object.sha1));
@@ -104,9 +144,10 @@ static int merge_base(struct commit *rev1, struct commit *rev2)
 
 	while (interesting(list)) {
 		struct commit *commit = list->item;
-		struct commit_list *tmp = list, *parents;
+		struct commit_list *parents;
 		int flags = commit->object.flags & 7;
 
+		tmp = list;
 		list = list->next;
 		free(tmp);
 		if (flags == 3) {
@@ -129,6 +170,41 @@ static int merge_base(struct commit *rev1, struct commit *rev2)
 
 	if (!result)
 		return 1;
+
+	/*
+	 * Postprocess to fully contaminate the well.
+	 */
+	for (tmp = result; tmp; tmp = tmp->next) {
+		struct commit *c = tmp->item;
+		/* Reinject uninteresting ones to list,
+		 * so we can scan their parents.
+		 */
+		if (c->object.flags & UNINTERESTING)
+			commit_list_insert(c, &list);
+	}
+	while (list) {
+		struct commit *c = list->item;
+		struct commit_list *parents;
+
+		tmp = list;
+		list = list->next;
+		free(tmp);
+
+		/* Anything taken out of the list is uninteresting, so
+		 * mark all its parents uninteresting.  We do not
+		 * parse new ones (we already parsed all the relevant
+		 * ones).
+		 */
+		parents = c->parents;
+		while (parents) {
+			struct commit *p = parents->item;
+			parents = parents->next;
+			if (!(p->object.flags & UNINTERESTING)) {
+				p->object.flags |= UNINTERESTING;
+				commit_list_insert(p, &list);
+			}
+		}
+	}
 
 	while (result) {
 		struct commit *commit = result->item;
