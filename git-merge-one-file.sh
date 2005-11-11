@@ -64,7 +64,13 @@ case "${1:-.}${2:-.}${3:-.}" in
 		# This extracts OUR file in $orig, and uses git-apply to
 		# remove lines that are unique to ours.
 		orig=`git-unpack-file $2`
+		sz0=`wc -c <"$orig"`
 		diff -u -La/$orig -Lb/$orig $orig $src2 | git-apply --no-add 
+		sz1=`wc -c <"$orig"`
+
+		# If we do not have enough common material, it is not
+		# worth trying two-file merge using common subsections.
+		expr "$sz0" \< "$sz1" \* 2 >/dev/null || : >$orig
 		;;
 	*)
 		echo "Auto-merging $4."
