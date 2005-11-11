@@ -35,7 +35,7 @@ OPTIONS
 
 -i::
 	Import-only: don't perform a checkout after importing.  This option
-	ensures the working directory and cache remain untouched and will
+	ensures the working directory and index remain untouched and will
 	not create them if they do not exist.
 
 -k::

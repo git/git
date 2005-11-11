@@ -131,7 +131,7 @@ actually check in your hard work, you will have to go through two steps:
 The first step is trivial: when you want to tell git about any changes
 to your working tree, you use the `git-update-index` program. That
 program normally just takes a list of filenames you want to update, but
-to avoid trivial mistakes, it refuses to add new entries to the cache
+to avoid trivial mistakes, it refuses to add new entries to the index
 (or remove existing ones) unless you explicitly tell it that you're
 adding a new entry with the `\--add` flag (or removing an entry with the
 `\--remove`) flag.
@@ -199,7 +199,7 @@ was just to show that `git-update-index` did something magical, and
 actually saved away the contents of your files into the git object
 database.
 
-Updating the cache did something else too: it created a `.git/index`
+Updating the index did something else too: it created a `.git/index`
 file. This is the index that describes your current working tree, and
 something you should be very aware of. Again, you normally never worry
 about the index file itself, but you should be aware of the fact that
@@ -440,7 +440,7 @@ a bit about what you have done.
 Write whatever message you want, and all the lines that start with '#'
 will be pruned out, and the rest will be used as the commit message for
 the change. If you decide you don't want to commit anything after all at
-this point (you can continue to edit things and update the cache), you
+this point (you can continue to edit things and update the index), you
 can just leave an empty message. Otherwise `git commit` will commit
 the change for you.
 

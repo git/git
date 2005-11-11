@@ -33,7 +33,7 @@ index file and all SHA1 references in .git/refs/* as heads.
 	Report tags.
 
 --cache::
-	Consider any object recorded in the cache also as a head node for
+	Consider any object recorded in the index also as a head node for
 	an unreachability trace.
 
 --standalone::
@@ -125,7 +125,7 @@ GIT_OBJECT_DIRECTORY::
 	used to specify the object database root (usually $GIT_DIR/objects)
 
 GIT_INDEX_FILE::
-	used to specify the index file of the cache
+	used to specify the index file of the index
 
 GIT_ALTERNATE_OBJECT_DIRECTORIES::
 	used to specify additional object database roots (usually unset)

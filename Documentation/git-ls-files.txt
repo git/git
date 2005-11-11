@@ -3,7 +3,7 @@ git-ls-files(1)
 
 NAME
 ----
-git-ls-files - Information about files in the cache/working directory
+git-ls-files - Information about files in the index/working directory
 
 
 SYNOPSIS

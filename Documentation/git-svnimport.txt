@@ -44,7 +44,7 @@ When importing incementally, you might need to edit the .git/svn2git file.
 
 -i::
 	Import-only: don't perform a checkout after importing.  This option
-	ensures the working directory and cache remain untouched and will
+	ensures the working directory and index remain untouched and will
 	not create them if they do not exist.
 
 -t <trunk_subdir>::

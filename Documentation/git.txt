@@ -40,7 +40,7 @@ reflect recent changes.
 Commands Overview
 -----------------
 The git commands can helpfully be split into those that manipulate
-the repository, the cache and the working fileset, those that
+the repository, the index and the working fileset, those that
 interrogate and compare them, and those that moves objects and
 references between repositories.
 
@@ -59,7 +59,7 @@ gitlink:git-apply[1]::
 	applies it to the working tree.
 
 gitlink:git-checkout-index[1]::
-	Copy files from the cache to the working directory
+	Copy files from the index to the working directory
 
 gitlink:git-commit-tree[1]::
 	Creates a new commit object
@@ -86,7 +86,7 @@ gitlink:git-prune-packed[1]::
 	Remove extra objects that are already in pack files.
 
 gitlink:git-read-tree[1]::
-	Reads tree information into the directory cache
+	Reads tree information into the directory index
 
 gitlink:git-unpack-objects[1]::
 	Unpacks objects out of a packed archive.
@@ -95,7 +95,7 @@ gitlink:git-update-index[1]::
 	Modifies the index or directory cache
 
 gitlink:git-write-tree[1]::
-	Creates a tree from the current cache
+	Creates a tree from the current index
 
 
 Interrogation commands
@@ -105,10 +105,10 @@ gitlink:git-cat-file[1]::
 	Provide content or type information for repository objects
 
 gitlink:git-diff-index[1]::
-	Compares content and mode of blobs between the cache and repository
+	Compares content and mode of blobs between the index and repository
 
 gitlink:git-diff-files[1]::
-	Compares files in the working tree and the cache
+	Compares files in the working tree and the index
 
 gitlink:git-diff-stages[1]::
 	Compares two "merge stages" in the index file.
@@ -120,7 +120,7 @@ gitlink:git-fsck-objects[1]::
 	Verifies the connectivity and validity of the objects in the database
 
 gitlink:git-ls-files[1]::
-	Information about files in the cache/working directory
+	Information about files in the index/working directory
 
 gitlink:git-ls-tree[1]::
 	Displays a tree object in human readable form
@@ -490,8 +490,8 @@ git so take care if using Cogito etc
 
 'GIT_INDEX_FILE'::
 	This environment allows the specification of an alternate
-	cache/index file. If not specified, the default of
-	`$GIT_DIR/index` is used.
+	index file. If not specified, the default of `$GIT_DIR/index`
+	is used.
 
 'GIT_OBJECT_DIRECTORY'::
 	If the object storage directory is specified via this

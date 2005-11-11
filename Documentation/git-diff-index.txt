@@ -3,7 +3,7 @@ git-diff-index(1)
 
 NAME
 ----
-git-diff-index - Compares content and mode of blobs between the cache and repository
+git-diff-index - Compares content and mode of blobs between the index and repository
 
 
 SYNOPSIS
@@ -13,10 +13,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Compares the content and mode of the blobs found via a tree
-object with the content of the current cache and, optionally
+object with the content of the current index and, optionally
 ignoring the stat state of the file on disk.  When paths are
 specified, compares only those named paths.  Otherwise all
-entries in the cache are compared.
+entries in the index are compared.
 
 OPTIONS
 -------
@@ -49,11 +49,11 @@ Cached Mode
 -----------
 If '--cached' is specified, it allows you to ask:
 
-	show me the differences between HEAD and the current cache
+	show me the differences between HEAD and the current index
 	contents (the ones I'd write with a "git-write-tree")
 
 For example, let's say that you have worked on your working directory, updated
-some files in the cache and are ready to commit. You want to see eactly
+some files in the index and are ready to commit. You want to see eactly
 *what* you are going to commit is without having to write a new tree
 object and compare it that way, and to do that, you just do
 
@@ -92,7 +92,7 @@ which is obviously a very useful question too, since that tells you what
 you *could* commit. Again, the output matches the "git-diff-tree -r"
 output to a tee, but with a twist.
 
-The twist is that if some file doesn't match the cache, we don't have
+The twist is that if some file doesn't match the index, we don't have
 a backing store thing for it, and we use the magic "all-zero" sha1 to
 show that. So let's say that you have edited `kernel/sched.c`, but
 have not actually done a "git-update-index" on it yet - there is no
@@ -110,7 +110,7 @@ NOTE: As with other commands of this type, "git-diff-index" does not
 actually look at the contents of the file at all. So maybe
 `kernel/sched.c` hasn't actually changed, and it's just that you
 touched it. In either case, it's a note that you need to
-"git-upate-cache" it to make the cache be in sync.
+"git-upate-index" it to make the index be in sync.
 
 NOTE: You can have a mixture of files show up as "has been updated"
 and "is still dirty in the working directory" together. You can always

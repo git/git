@@ -8,13 +8,13 @@ git-diff-index <tree-ish>::
         compares the <tree-ish> and the files on the filesystem.
 
 git-diff-index --cached <tree-ish>::
-        compares the <tree-ish> and the cache.
+        compares the <tree-ish> and the index.
 
 git-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
         compares the trees named by the two arguments.
 
 git-diff-files [<pattern>...]::
-        compares the cache and the files on the filesystem.
+        compares the index and the files on the filesystem.
 
 
 An output line is formatted this way:
@@ -47,7 +47,7 @@ That is, from the left to the right:
 . an LF or a NUL when '-z' option is used, to terminate the record.
 
 <sha1> is shown as all 0's if a file is new on the filesystem
-and it is out of sync with the cache.
+and it is out of sync with the index.
 
 Example:
 
@@ -104,7 +104,7 @@ where:
 The file parameters can point at the user's working file
 (e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
 when a new file is added), or a temporary file (e.g. `old-file` in the
-cache).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
+index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
 temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
 
 For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1

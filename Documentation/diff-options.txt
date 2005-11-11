@@ -50,7 +50,7 @@
 	<orderfile>, which has one shell glob pattern per line.
 
 -R::
-	Swap two inputs; that is, show differences from cache or
+	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
 
 For more detailed explanation on these common options, see also

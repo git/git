@@ -3,7 +3,7 @@ git-checkout-index(1)
 
 NAME
 ----
-git-checkout-index - Copy files from the cache to the working directory
+git-checkout-index - Copy files from the index to the working directory
 
 
 SYNOPSIS
@@ -13,23 +13,23 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Will copy all files listed from the cache to the working directory
+Will copy all files listed from the index to the working directory
 (not overwriting existing files).
 
 OPTIONS
 -------
 -u::
 	update stat information for the checked out entries in
-	the cache file.
+	the index file.
 
 -q::
-	be quiet if files exist or are not in the cache
+	be quiet if files exist or are not in the index
 
 -f::
 	forces overwrite of existing files
 
 -a::
-	checks out all files in the cache.  Cannot be used
+	checks out all files in the index.  Cannot be used
 	together with explicit filenames.
 
 -n::
@@ -57,7 +57,7 @@ supposed to be able to do things like:
 
 which will force all existing `*.h` files to be replaced with their
 cached copies. If an empty command line implied "all", then this would
-force-refresh everything in the cache, which was not the point.
+force-refresh everything in the index, which was not the point.
 
 To update and refresh only the files already checked out:
 
@@ -74,7 +74,7 @@ desired tree into the index, and do a
 
         git-checkout-index --prefix=git-export-dir/ -a
 
-and git-checkout-index will "export" the cache into the specified
+and git-checkout-index will "export" the index into the specified
 directory.
 
 NOTE The final "/" is important. The exported name is literally just
