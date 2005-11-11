@@ -1,4 +1,7 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2005 Fredrik Kuivinen
+#
 
 import sys, math, random, os, re, signal, tempfile, stat, errno, traceback
 from heapq import heappush, heappop
