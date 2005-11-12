@@ -48,7 +48,7 @@ Description: The git content addressable filesystem, GNUArch interoperability
 
 Package: git-cvs
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, git-core
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}, git-core, cvsps (>= 2.1)
 Suggests: cvs
 Description: The git content addressable filesystem, CVS interoperability
  This package contains 'git-cvsimport', to import development history from
