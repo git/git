@@ -52,6 +52,7 @@ $ENV{'TZ'}="UTC";
 
 my $git_dir = $ENV{"GIT_DIR"} || ".git";
 $ENV{"GIT_DIR"} = $git_dir;
+my $ptag_dir = "$git_dir/archimport/tags";
 
 our($opt_h,$opt_v, $opt_T,
     $opt_C,$opt_t);
@@ -195,16 +196,19 @@ unless (-d $git_dir) { # initial import
     opendir(DIR, "$git_dir/archimport/tags")
 	|| die "can't opendir: $!";
     while (my $file = readdir(DIR)) {
-	# skip non-interesting-files
-	next unless -f "$git_dir/archimport/tags/$file";
-	next if     $file =~ m/--base-0$/; # don't care for base-0
+        # skip non-interesting-files
+        next unless -f "$ptag_dir/$file";
+   
+        # convert first '--' to '/' from old git-archimport to use
+        # as an archivename/c--b--v private tag
+        if ($file !~ m!,!) {
+            my $oldfile = $file;
+            $file =~ s!--!,!;
+            print STDERR "converting old tag $oldfile to $file\n";
+            rename("$ptag_dir/$oldfile", "$ptag_dir/$file") or die $!;
+        }
 	my $sha = ptag($file);
 	chomp $sha;
-	# reconvert the 3rd '--' sequence from the end
-	# into a slash
-	# $file = reverse $file;
-	# $file =~ s!^(.+?--.+?--.+?--.+?)--(.+)$!$1/$2!;
-	# $file = reverse $file;
 	$rptags{$sha} = $file;
     }
     closedir DIR;
@@ -581,19 +585,20 @@ sub parselog {
 # write/read a tag
 sub tag {
     my ($tag, $commit) = @_;
-    $tag =~ s|/|--|g; 
-    $tag = shell_quote($tag);
+ 
+    # don't use subdirs for tags yet, it could screw up other porcelains
+    $tag =~ s|/|,|;
     
     if ($commit) {
-        open(C,">$git_dir/refs/tags/$tag")
+        open(C,">","$git_dir/refs/tags/$tag")
             or die "Cannot create tag $tag: $!\n";
         print C "$commit\n"
             or die "Cannot write tag $tag: $!\n";
         close(C)
             or die "Cannot write tag $tag: $!\n";
-        print " * Created tag ' $tag' on '$commit'\n" if $opt_v;
+        print " * Created tag '$tag' on '$commit'\n" if $opt_v;
     } else {                    # read
-        open(C,"<$git_dir/refs/tags/$tag")
+        open(C,"<","$git_dir/refs/tags/$tag")
             or die "Cannot read tag $tag: $!\n";
         $commit = <C>;
         chomp $commit;
@@ -608,15 +613,16 @@ sub tag {
 # reads fail softly if the tag isn't there
 sub ptag {
     my ($tag, $commit) = @_;
-    $tag =~ s|/|--|g; 
-    $tag = shell_quote($tag);
+
+    # don't use subdirs for tags yet, it could screw up other porcelains
+    $tag =~ s|/|,|g; 
     
-    unless (-d "$git_dir/archimport/tags") {
-        mkpath("$git_dir/archimport/tags");
-    }
+    my $tag_file = "$ptag_dir/$tag";
+    my $tag_branch_dir = dirname($tag_file);
+    mkpath($tag_branch_dir) unless (-d $tag_branch_dir);
 
     if ($commit) {              # write
-        open(C,">$git_dir/archimport/tags/$tag")
+        open(C,">",$tag_file)
             or die "Cannot create tag $tag: $!\n";
         print C "$commit\n"
             or die "Cannot write tag $tag: $!\n";
@@ -626,10 +632,10 @@ sub ptag {
 	    unless $tag =~ m/--base-0$/;
     } else {                    # read
         # if the tag isn't there, return 0
-        unless ( -s "$git_dir/archimport/tags/$tag") {
+        unless ( -s $tag_file) {
             return 0;
         }
-        open(C,"<$git_dir/archimport/tags/$tag")
+        open(C,"<",$tag_file)
             or die "Cannot read tag $tag: $!\n";
         $commit = <C>;
         chomp $commit;
@@ -779,12 +785,7 @@ sub commitid2pset {
     chomp $commitid;
     my $name = $rptags{$commitid} 
 	|| die "Cannot find reverse tag mapping for $commitid";
-    # the keys in %rptag  are slightly munged; unmunge
-    # reconvert the 3rd '--' sequence from the end
-    # into a slash
-    $name = reverse $name;
-    $name =~ s!^(.+?--.+?--.+?--.+?)--(.+)$!$1/$2!;
-    $name = reverse $name;
+    $name =~ s|,|/|;
     my $ps   = $psets{$name} 
 	|| (print Dumper(sort keys %psets)) && die "Cannot find patchset for $name";
     return $ps;
