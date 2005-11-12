@@ -692,7 +692,13 @@ sub find_parents {
 	next unless -e "$git_dir/refs/heads/$branch";
 
 	my $mergebase = `git-merge-base $branch $ps->{branch}`;
-	die "Cannot find merge base for $branch and $ps->{branch}" if $?;
+ 	if ($?) { 
+ 	    # Don't die here, Arch supports one-way cherry-picking
+ 	    # between branches with no common base (or any relationship
+ 	    # at all beforehand)
+ 	    warn "Cannot find merge base for $branch and $ps->{branch}";
+ 	    next;
+ 	}
 	chomp $mergebase;
 
 	# now walk up to the mergepoint collecting what patches we have
