@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
 	if (oldval) {
 		if (memcmp(currsha1, oldsha1, 20))
-			die("Ref %s changed to %s", refname, sha1_to_hex(currsha1));
+			die("Ref %s is at %s but expected %s", refname, sha1_to_hex(currsha1), sha1_to_hex(oldsha1));
 		/* Nothing to do? */
 		if (!memcmp(oldsha1, sha1, 20))
 			exit(0);

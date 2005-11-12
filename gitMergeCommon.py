@@ -1,3 +1,7 @@
+#
+# Copyright (C) 2005 Fredrik Kuivinen
+#
+
 import sys, re, os, traceback
 from sets import Set
 

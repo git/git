@@ -50,7 +50,7 @@
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9g
+GIT_VERSION = 0.99.9h
 
 # CFLAGS is for the users to override from the command line.
 
@@ -89,7 +89,8 @@ SCRIPT_SH = \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
-	git-merge-resolve.sh git-merge-ours.sh git-grep.sh
+	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
+	git-lost+found.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
@@ -122,7 +123,7 @@ PROGRAMS = \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
-	git-name-rev$X $(SIMPLE_PROGRAMS)
+	git-name-rev$X git-pack-redundant$X $(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X

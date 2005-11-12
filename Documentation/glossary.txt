@@ -43,14 +43,14 @@ DAG::
 
 index::
 	A collection of files with stat information, whose contents are
-	stored as objects. The cache is a stored version of your working
+	stored as objects. The index is a stored version of your working
 	tree. Truth be told, it can also contain a second, and even a third
 	version of a working tree, which are used when merging.
 
 index entry::
 	The information regarding a particular file, stored in the index.
 	An index entry can be unmerged, if a merge was started, but not
-	yet finished (i.e. if the cache contains multiple versions of
+	yet finished (i.e. if the index contains multiple versions of
 	that file).
 
 unmerged index:
@@ -75,7 +75,7 @@ checkout::
 	stored in the object database.
 
 commit::
-	As a verb: The action of storing the current state of the cache in the
+	As a verb: The action of storing the current state of the index in the
 	object database. The result is a revision.
 	As a noun: Short hand for commit object.
 

@@ -42,6 +42,7 @@ git-index-pack
 git-init-db
 git-local-fetch
 git-log
+git-lost+found
 git-ls-files
 git-ls-remote
 git-ls-tree
@@ -60,6 +61,7 @@ git-mktag
 git-name-rev
 git-mv
 git-octopus
+git-pack-redundant
 git-pack-objects
 git-parse-remote
 git-patch-id

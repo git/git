@@ -3,7 +3,7 @@ git-diff-files(1)
 
 NAME
 ----
-git-diff-files - Compares files in the working tree and the cache
+git-diff-files - Compares files in the working tree and the index
 
 
 SYNOPSIS
@@ -12,9 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Compares the files in the working tree and the cache.  When paths
+Compares the files in the working tree and the index.  When paths
 are specified, compares only those named paths.  Otherwise all
-entries in the cache are compared.  The output format is the
+entries in the index are compared.  The output format is the
 same as "git-diff-index" and "git-diff-tree".
 
 OPTIONS

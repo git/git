@@ -3,6 +3,7 @@
 #include "commit.h"
 
 static int show_root_diff = 0;
+static int no_commit_id = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
 static int read_stdin = 0;
@@ -29,7 +30,8 @@ static int call_diff_flush(void)
 		return 0;
 	}
 	if (header) {
-		printf("%s%c", header, diff_options.line_termination);
+		if (!no_commit_id)
+			printf("%s%c", header, diff_options.line_termination);
 		header = NULL;
 	}
 	diff_flush(&diff_options);
@@ -229,6 +231,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--root")) {
 			show_root_diff = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--no-commit-id")) {
+			no_commit_id = 1;
 			continue;
 		}
 		usage(diff_tree_usage);

@@ -21,7 +21,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Modifies the index or directory cache. Each file mentioned is updated
-into the cache and any 'unmerged' or 'needs updating' state is
+into the index and any 'unmerged' or 'needs updating' state is
 cleared.
 
 The way "git-update-index" handles files it is told about can be modified
@@ -30,26 +30,26 @@ using the various options:
 OPTIONS
 -------
 --add::
-	If a specified file isn't in the cache already then it's
+	If a specified file isn't in the index already then it's
 	added.
 	Default behaviour is to ignore new files.
 
 --remove::
-	If a specified file is in the cache but is missing then it's
+	If a specified file is in the index but is missing then it's
 	removed.
 	Default behaviour is to ignore removed file.
 
 --refresh::
-	Looks at the current cache and checks to see if merges or
+	Looks at the current index and checks to see if merges or
 	updates are needed by checking stat() information.
 
 -q::
-        Quiet.  If --refresh finds that the cache needs an update, the
+        Quiet.  If --refresh finds that the index needs an update, the
         default behavior is to error out.  This option makes
         git-update-index continue anyway.
 
 --unmerged::
-        If --refresh finds unmerged changes in the cache, the default 
+        If --refresh finds unmerged changes in the index, the default
         behavior is to error out.  This option makes git-update-index 
         continue anyway.
 
@@ -57,7 +57,7 @@ OPTIONS
 	Ignores missing files during a --refresh
 
 --cacheinfo <mode> <object> <path>::
-	Directly insert the specified info into the cache.
+	Directly insert the specified info into the index.
 	
 --index-info::
         Read index info from stdin.
@@ -68,7 +68,7 @@ OPTIONS
 --info-only::
 	Do not create objects in the object database for all
 	<file> arguments that follow this flag; just insert
-	their object IDs into the cache.
+	their object IDs into the index.
 
 --force-remove::
 	Remove the file from the index even when the working directory
@@ -106,14 +106,14 @@ OPTIONS
 
 Using --refresh
 ---------------
-'--refresh' does not calculate a new sha1 file or bring the cache
+'--refresh' does not calculate a new sha1 file or bring the index
 up-to-date for mode/content changes. But what it *does* do is to
-"re-match" the stat information of a file with the cache, so that you
-can refresh the cache for a file that hasn't been changed but where
+"re-match" the stat information of a file with the index, so that you
+can refresh the index for a file that hasn't been changed but where
 the stat entry is out of date.
 
 For example, you'd want to do this after doing a "git-read-tree", to link
-up the stat cache details with the proper files.
+up the stat index details with the proper files.
 
 Using --cacheinfo or --info-only
 --------------------------------

@@ -1,4 +1,7 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2005 Fredrik Kuivinen
+#
 
 import sys, math, random, os, re, signal, tempfile, stat, errno, traceback
 from heapq import heappush, heappop
@@ -6,6 +9,11 @@ from sets import Set
 
 sys.path.append('''@@GIT_PYTHON_PATH@@''')
 from gitMergeCommon import *
+
+outputIndent = 0
+def output(*args):
+    sys.stdout.write('  '*outputIndent)
+    printList(args)
 
 originalIndexFile = os.environ.get('GIT_INDEX_FILE',
                                    os.environ.get('GIT_DIR', '.git') + '/index')
@@ -41,27 +49,27 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
     assert(isinstance(h1, Commit) and isinstance(h2, Commit))
     assert(isinstance(graph, Graph))
 
-    def infoMsg(*args):
-        sys.stdout.write('  '*callDepth)
-        printList(args)
+    global outputIndent
 
-    infoMsg('Merging:')
-    infoMsg(h1)
-    infoMsg(h2)
+    output('Merging:')
+    output(h1)
+    output(h2)
     sys.stdout.flush()
 
     ca = getCommonAncestors(graph, h1, h2)
-    infoMsg('found', len(ca), 'common ancestor(s):')
+    output('found', len(ca), 'common ancestor(s):')
     for x in ca:
-        infoMsg(x)
+        output(x)
     sys.stdout.flush()
 
     mergedCA = ca[0]
     for h in ca[1:]:
+        outputIndent = callDepth+1
         [mergedCA, dummy] = merge(mergedCA, h,
-                                  'Temporary shared merge branch 1',
-                                  'Temporary shared merge branch 2',
+                                  'Temporary merge branch 1',
+                                  'Temporary merge branch 2',
                                   graph, callDepth+1)
+        outputIndent = callDepth
         assert(isinstance(mergedCA, Commit))
 
     global cacheOnly
@@ -116,7 +124,7 @@ def mergeTrees(head, merge, common, branch1Name, branch2Name):
     assert(isSha(head) and isSha(merge) and isSha(common))
 
     if common == merge:
-        print 'Already uptodate!'
+        output('Already uptodate!')
         return [head, True]
 
     if cacheOnly:
@@ -296,13 +304,13 @@ def uniquePath(path, branch):
                 raise
 
     branch = branch.replace('/', '_')
-    newPath = path + '_' + branch
+    newPath = path + '~' + branch
     suffix = 0
     while newPath in currentFileSet or \
           newPath in currentDirectorySet  or \
           fileExists(newPath):
         suffix += 1
-        newPath = path + '_' + branch + '_' + str(suffix)
+        newPath = path + '~' + branch + '_' + str(suffix)
     currentFileSet.add(newPath)
     return newPath
 
@@ -554,23 +562,24 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
             ren2.processed = True
 
             if ren1.dstName != ren2.dstName:
-                print 'CONFLICT (rename/rename): Rename', \
-                      fmtRename(path, ren1.dstName), 'in branch', branchName1, \
-                      'rename', fmtRename(path, ren2.dstName), 'in', branchName2
+                output('CONFLICT (rename/rename): Rename',
+                       fmtRename(path, ren1.dstName), 'in branch', branchName1,
+                       'rename', fmtRename(path, ren2.dstName), 'in',
+                       branchName2)
                 cleanMerge = False
 
                 if ren1.dstName in currentDirectorySet:
                     dstName1 = uniquePath(ren1.dstName, branchName1)
-                    print ren1.dstName, 'is a directory in', branchName2, \
-                          'adding as', dstName1, 'instead.'
+                    output(ren1.dstName, 'is a directory in', branchName2,
+                           'adding as', dstName1, 'instead.')
                     removeFile(False, ren1.dstName)
                 else:
                     dstName1 = ren1.dstName
 
                 if ren2.dstName in currentDirectorySet:
                     dstName2 = uniquePath(ren2.dstName, branchName2)
-                    print ren2.dstName, 'is a directory in', branchName1, \
-                          'adding as', dstName2, 'instead.'
+                    output(ren2.dstName, 'is a directory in', branchName1,
+                           'adding as', dstName2, 'instead.')
                     removeFile(False, ren2.dstName)
                 else:
                     dstName2 = ren1.dstName
@@ -585,13 +594,14 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                                    branchName1, branchName2)
 
                 if merge or not clean:
-                    print 'Renaming', fmtRename(path, ren1.dstName)
+                    output('Renaming', fmtRename(path, ren1.dstName))
 
                 if merge:
-                    print 'Auto-merging', ren1.dstName
+                    output('Auto-merging', ren1.dstName)
 
                 if not clean:
-                    print 'CONFLICT (content): merge conflict in', ren1.dstName
+                    output('CONFLICT (content): merge conflict in',
+                           ren1.dstName)
                     cleanMerge = False
 
                     if not cacheOnly:
@@ -615,25 +625,25 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
             
             if ren1.dstName in currentDirectorySet:
                 newPath = uniquePath(ren1.dstName, branchName1)
-                print 'CONFLICT (rename/directory): Rename', \
-                      fmtRename(ren1.srcName, ren1.dstName), 'in', branchName1,\
-                      'directory', ren1.dstName, 'added in', branchName2
-                print 'Renaming', ren1.srcName, 'to', newPath, 'instead'
+                output('CONFLICT (rename/directory): Rename',
+                       fmtRename(ren1.srcName, ren1.dstName), 'in', branchName1,
+                       'directory', ren1.dstName, 'added in', branchName2)
+                output('Renaming', ren1.srcName, 'to', newPath, 'instead')
                 cleanMerge = False
                 removeFile(False, ren1.dstName)
                 updateFile(False, ren1.dstSha, ren1.dstMode, newPath)
             elif srcShaOtherBranch == None:
-                print 'CONFLICT (rename/delete): Rename', \
-                      fmtRename(ren1.srcName, ren1.dstName), 'in', \
-                      branchName1, 'and deleted in', branchName2
+                output('CONFLICT (rename/delete): Rename',
+                       fmtRename(ren1.srcName, ren1.dstName), 'in',
+                       branchName1, 'and deleted in', branchName2)
                 cleanMerge = False
                 updateFile(False, ren1.dstSha, ren1.dstMode, ren1.dstName)
             elif dstShaOtherBranch:
                 newPath = uniquePath(ren1.dstName, branchName2)
-                print 'CONFLICT (rename/add): Rename', \
-                      fmtRename(ren1.srcName, ren1.dstName), 'in', \
-                      branchName1 + '.', ren1.dstName, 'added in', branchName2
-                print 'Adding as', newPath, 'instead'
+                output('CONFLICT (rename/add): Rename',
+                       fmtRename(ren1.srcName, ren1.dstName), 'in',
+                       branchName1 + '.', ren1.dstName, 'added in', branchName2)
+                output('Adding as', newPath, 'instead')
                 updateFile(False, dstShaOtherBranch, dstModeOtherBranch, newPath)
                 cleanMerge = False
                 tryMerge = True
@@ -641,12 +651,12 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 dst2 = renames2.getDst(ren1.dstName)
                 newPath1 = uniquePath(ren1.dstName, branchName1)
                 newPath2 = uniquePath(dst2.dstName, branchName2)
-                print 'CONFLICT (rename/rename): Rename', \
-                      fmtRename(ren1.srcName, ren1.dstName), 'in', \
-                      branchName1+'. Rename', \
-                      fmtRename(dst2.srcName, dst2.dstName), 'in', branchName2
-                print 'Renaming', ren1.srcName, 'to', newPath1, 'and', \
-                      dst2.srcName, 'to', newPath2, 'instead'
+                output('CONFLICT (rename/rename): Rename',
+                       fmtRename(ren1.srcName, ren1.dstName), 'in',
+                       branchName1+'. Rename',
+                       fmtRename(dst2.srcName, dst2.dstName), 'in', branchName2)
+                output('Renaming', ren1.srcName, 'to', newPath1, 'and',
+                       dst2.srcName, 'to', newPath2, 'instead')
                 removeFile(False, ren1.dstName)
                 updateFile(False, ren1.dstSha, ren1.dstMode, newPath1)
                 updateFile(False, dst2.dstSha, dst2.dstMode, newPath2)
@@ -663,13 +673,14 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                                    branchName1, branchName2)
 
                 if merge or not clean:
-                    print 'Renaming', fmtRename(ren1.srcName, ren1.dstName)
+                    output('Renaming', fmtRename(ren1.srcName, ren1.dstName))
 
                 if merge:
-                    print 'Auto-merging', ren1.dstName
+                    output('Auto-merging', ren1.dstName)
 
                 if not clean:
-                    print 'CONFLICT (rename/modify): Merge conflict in', ren1.dstName
+                    output('CONFLICT (rename/modify): Merge conflict in',
+                           ren1.dstName)
                     cleanMerge = False
 
                     if not cacheOnly:
@@ -714,21 +725,21 @@ def processEntry(entry, branch1Name, branch2Name):
            (not aSha     and bSha == oSha):
     # Deleted in both or deleted in one and unchanged in the other
             if aSha:
-                print 'Removing', path
+                output('Removing', path)
             removeFile(True, path)
         else:
     # Deleted in one and changed in the other
             cleanMerge = False
             if not aSha:
-                print 'CONFLICT (delete/modify):', path, 'deleted in', \
-                      branch1Name, 'and modified in', branch2Name + '.', \
-                      'Version', branch2Name, 'of', path, 'left in tree.'
+                output('CONFLICT (delete/modify):', path, 'deleted in',
+                       branch1Name, 'and modified in', branch2Name + '.',
+                       'Version', branch2Name, 'of', path, 'left in tree.')
                 mode = bMode
                 sha = bSha
             else:
-                print 'CONFLICT (modify/delete):', path, 'deleted in', \
-                      branch2Name, 'and modified in', branch1Name + '.', \
-                      'Version', branch1Name, 'of', path, 'left in tree.'
+                output('CONFLICT (modify/delete):', path, 'deleted in',
+                       branch2Name, 'and modified in', branch1Name + '.',
+                       'Version', branch1Name, 'of', path, 'left in tree.')
                 mode = aMode
                 sha = aSha
 
@@ -755,14 +766,14 @@ def processEntry(entry, branch1Name, branch2Name):
         if path in currentDirectorySet:
             cleanMerge = False
             newPath = uniquePath(path, addBranch)
-            print 'CONFLICT (' + conf + '):', \
-                  'There is a directory with name', path, 'in', \
-                  otherBranch + '. Adding', path, 'as', newPath
+            output('CONFLICT (' + conf + '):',
+                   'There is a directory with name', path, 'in',
+                   otherBranch + '. Adding', path, 'as', newPath)
 
             removeFile(False, path)
             updateFile(False, sha, mode, newPath)
         else:
-            print 'Adding', path
+            output('Adding', path)
             updateFile(True, sha, mode, path)
     
     elif not oSha and aSha and bSha:
@@ -772,10 +783,10 @@ def processEntry(entry, branch1Name, branch2Name):
         if aSha == bSha:
             if aMode != bMode:
                 cleanMerge = False
-                print 'CONFLICT: File', path, \
-                      'added identically in both branches, but permissions', \
-                      'conflict', '0%o' % aMode, '->', '0%o' % bMode
-                print 'CONFLICT: adding with permission:', '0%o' % aMode
+                output('CONFLICT: File', path,
+                       'added identically in both branches, but permissions',
+                       'conflict', '0%o' % aMode, '->', '0%o' % bMode)
+                output('CONFLICT: adding with permission:', '0%o' % aMode)
 
                 updateFile(False, aSha, aMode, path)
             else:
@@ -785,9 +796,9 @@ def processEntry(entry, branch1Name, branch2Name):
             cleanMerge = False
             newPath1 = uniquePath(path, branch1Name)
             newPath2 = uniquePath(path, branch2Name)
-            print 'CONFLICT (add/add): File', path, \
-                  'added non-identically in both branches. Adding as', \
-                  newPath1, 'and', newPath2, 'instead.'
+            output('CONFLICT (add/add): File', path,
+                   'added non-identically in both branches. Adding as',
+                   newPath1, 'and', newPath2, 'instead.')
             removeFile(False, path)
             updateFile(False, aSha, aMode, newPath1)
             updateFile(False, bSha, bMode, newPath2)
@@ -796,7 +807,7 @@ def processEntry(entry, branch1Name, branch2Name):
     #
     # case D: Modified in both, but differently.
     #
-        print 'Auto-merging', path
+        output('Auto-merging', path)
         [sha, mode, clean, dummy] = \
               mergeFile(path, oSha, oMode,
                         path, aSha, aMode,
@@ -806,7 +817,7 @@ def processEntry(entry, branch1Name, branch2Name):
             updateFile(True, sha, mode, path)
         else:
             cleanMerge = False
-            print 'CONFLICT (content): Merge conflict in', path
+            output('CONFLICT (content): Merge conflict in', path)
 
             if cacheOnly:
                 updateFile(False, sha, mode, path)

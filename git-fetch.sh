@@ -230,7 +230,7 @@ do
 	    $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
 	    print "$u";
 	' "$remote_name")
-	head=$(curl -nsf $curl_extra_args "$remote/$remote_name_quoted") &&
+	head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted") &&
 	expr "$head" : "$_x40\$" >/dev/null ||
 		die "Failed to fetch $remote_name from $remote"
 	echo >&2 Fetching "$remote_name from $remote" using http

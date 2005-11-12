@@ -5,6 +5,9 @@
 # Resolve two or more trees.
 #
 
+LF='
+'
+
 # The first parameters up to -- are merge bases; the rest are heads.
 bases= head= remotes= sep_seen=
 for arg
@@ -42,14 +45,18 @@ CNT=1 ;# counting our head
 NON_FF_MERGE=0
 for SHA1 in $remotes
 do
-	common=$(git-merge-base $MRC $SHA1) ||
+	common=$(git-merge-base --all $MRC $SHA1) ||
 		die "Unable to find common commit with $SHA1"
 
-	if test "$common" = $SHA1
-	then
+	case "$common" in
+	?*"$LF"?*)
+		die "Not trivially mergeable."
+		;;
+	$SHA1)
 		echo "Already up-to-date with $SHA1"
 		continue
-	fi
+		;;
+	esac
 
 	CNT=`expr $CNT + 1`
 	PARENT="$PARENT -p $SHA1"
@@ -79,7 +86,15 @@ do
 		exit 2 ; # Automatic merge failed; should not be doing Octopus
 		next=$(git-write-tree 2>/dev/null)
 	fi
-	MRC=$common
+
+	# We have merged the other branch successfully.  Ideally
+	# we could implement OR'ed heads in merge-base, and keep
+	# a list of commits we have merged so far in MRC to feed
+	# them to merge-base, but we approximate it by keep using
+	# the current MRC.  We used to update it to $common, which
+	# was incorrectly doing AND'ed merge-base here, which was
+	# unneeded.
+
 	MRT=$next
 done
 

@@ -3,7 +3,7 @@ git-read-tree(1)
 
 NAME
 ----
-git-read-tree - Reads tree information into the directory cache
+git-read-tree - Reads tree information into the index
 
 
 SYNOPSIS
@@ -13,11 +13,11 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads the tree information given by <tree-ish> into the directory cache,
+Reads the tree information given by <tree-ish> into the index,
 but does not actually *update* any of the files it "caches". (see:
 git-checkout-index)
 
-Optionally, it can merge a tree into the cache, perform a
+Optionally, it can merge a tree into the index, perform a
 fast-forward (i.e. 2-way) merge, or a 3-way merge, with the -m
 flag.  When used with -m, the -u flag causes it to also update
 the files in the work tree with the result of the merge.
@@ -59,10 +59,10 @@ provided.
 Single Tree Merge
 ~~~~~~~~~~~~~~~~~
 If only 1 tree is specified, git-read-tree operates as if the user did not
-specify '-m', except that if the original cache has an entry for a
+specify '-m', except that if the original index has an entry for a
 given pathname, and the contents of the path matches with the tree
-being read, the stat info from the cache is used. (In other words, the
-cache's stat()s take precedence over the merged tree's).
+being read, the stat info from the index is used. (In other words, the
+index's stat()s take precedence over the merged tree's).
 
 That means that if you do a "git-read-tree -m <newtree>" followed by a
 "git-checkout-index -f -u -a", the "git-checkout-index" only checks out
@@ -96,7 +96,7 @@ Here are the "carry forward" rules:
        -------------------------------------------------------
       0 nothing             nothing  nothing  (does not happen)
       1 nothing             nothing  exists   use M
-      2 nothing             exists   nothing  remove path from cache
+      2 nothing             exists   nothing  remove path from index
       3 nothing             exists   exists   use M
 
         clean I==H  I==M
@@ -109,7 +109,7 @@ Here are the "carry forward" rules:
       8 yes   N/A   no      nothing  exists   fail
       9 no    N/A   no      nothing  exists   fail
 
-     10 yes   yes   N/A     exists   nothing  remove path from cache
+     10 yes   yes   N/A     exists   nothing  remove path from index
      11 no    yes   N/A     exists   nothing  fail
      12 yes   no    N/A     exists   nothing  fail
      13 no    no    N/A     exists   nothing  fail
@@ -128,7 +128,7 @@ Here are the "carry forward" rules:
      20 yes   yes   no      exists   exists   use M
      21 no    yes   no      exists   exists   fail
 
-In all "keep index" cases, the cache entry stays as in the
+In all "keep index" cases, the index entry stays as in the
 original index file.  If the entry were not up to date,
 git-read-tree keeps the copy in the work tree intact when
 operating under the -u flag.
@@ -245,7 +245,7 @@ since you pulled from him:
 
 Your work tree is still based on your HEAD ($JC), but you have
 some edits since.  Three-way merge makes sure that you have not
-added or modified cache entries since $JC, and if you haven't,
+added or modified index entries since $JC, and if you haven't,
 then does the right thing.  So with the following sequence:
 
     $ git-read-tree -m -u `git-merge-base $JC $LT` $JC $LT

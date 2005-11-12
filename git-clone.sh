@@ -23,7 +23,7 @@ fi
 
 http_fetch () {
 	# $1 = Remote, $2 = Local
-	curl -nsf $curl_extra_args "$1" >"$2"
+	curl -nsfL $curl_extra_args "$1" >"$2"
 }
 
 clone_dumb_http () {
@@ -96,7 +96,10 @@ if base=$(get_repo_base "$repo"); then
 fi
 
 dir="$2"
-mkdir "$dir" &&
+# Try using "humanish" part of source repo if user didn't specify one
+[ -z "$dir" ] && dir=$(echo "$repo" | sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*/||g')
+[ -e "$dir" ] && $(echo "$dir already exists."; usage)
+mkdir -p "$dir" &&
 D=$(
 	(cd "$dir" && git-init-db && pwd)
 ) &&
@@ -163,7 +166,7 @@ yes,yes)
 			rm -f "$D/.git/TMP_ALT"
 		if test -f "$D/.git/TMP_ALT"
 		then
-		    ( cd $D &&
+		    ( cd "$D" &&
 		      . git-parse-remote &&
 		      resolve_alternates "$repo" <"./.git/TMP_ALT" ) |
 		    while read alt
@@ -191,7 +194,7 @@ yes,yes)
 	;;
 esac
 
-cd $D || exit
+cd "$D" || exit
 
 if test -f ".git/HEAD"
 then

@@ -1,0 +1,50 @@
+git-pack-redundant(1)
+=====================
+
+NAME
+----
+git-pack-redundant - Program used to find redundant pack files.
+
+
+SYNOPSIS
+--------
+'git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | .pack filename ... >'
+
+DESCRIPTION
+-----------
+This program computes which packs in your repository
+are redundant. The output is suitable for piping to
+'xargs rm' if you are in the root of the repository.
+
+OPTIONS
+-------
+
+
+--all::
+	Processes all packs. Any filenames on the commandline are ignored.
+
+--alt-odb::
+	Don't require objects present in packs from alternate object
+	directories to be present in local packs.
+
+--verbose::
+	Outputs some statistics to stderr. Has a small performance penalty.
+
+Author
+------
+Written by Lukas Sandström <lukass@etek.chalmers.se>
+
+Documentation
+--------------
+Documentation by Lukas Sandström <lukass@etek.chalmers.se>
+
+See-Also
+--------
+gitlink:git-pack-objects[1]
+gitlink:git-repack[1]
+gitlink:git-prune-packed[1]
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

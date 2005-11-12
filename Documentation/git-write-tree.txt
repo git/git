@@ -3,7 +3,7 @@ git-write-tree(1)
 
 NAME
 ----
-git-write-tree - Creates a tree object from the current cache
+git-write-tree - Creates a tree object from the current index
 
 
 SYNOPSIS
@@ -12,11 +12,11 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Creates a tree object using the current cache.
+Creates a tree object using the current index.
 
-The cache must be merged.
+The index must be merged.
 
-Conceptually, "git-write-tree" sync()s the current directory cache contents
+Conceptually, "git-write-tree" sync()s the current index contents
 into a set of tree files.
 In order to have that match what is actually in your directory right
 now, you need to have done a "git-update-index" phase before you did the

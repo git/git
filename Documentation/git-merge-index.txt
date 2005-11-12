@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This looks up the <file>(s) in the cache and, if there are any merge
+This looks up the <file>(s) in the index and, if there are any merge
 entries, passes the SHA1 hash for those files as arguments 1, 2, 3 (empty
 argument if no file), and <file> as argument 4.  File modes for the three
 files are passed as arguments 5, 6 and 7.
@@ -23,7 +23,7 @@ OPTIONS
 	Interpret all following arguments as filenames.
 
 -a::
-	Run merge against all files in the cache that need merging.
+	Run merge against all files in the index that need merging.
 
 -o::
 	Instead of stopping at the first failed merge, do all of them

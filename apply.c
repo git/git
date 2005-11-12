@@ -23,10 +23,11 @@ static int numstat = 0;
 static int summary = 0;
 static int check = 0;
 static int apply = 1;
+static int no_add = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--index-info] [-z] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [-z] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -1112,8 +1113,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			memcpy(new + newsize, patch + 1, plen);
-			newsize += plen;
+			if (*patch != '+' || !no_add) {
+				memcpy(new + newsize, patch + 1, plen);
+				newsize += plen;
+			}
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
@@ -1708,6 +1711,10 @@ int main(int argc, char **argv)
 			x->path = arg + 10;
 			x->next = excludes;
 			excludes = x;
+			continue;
+		}
+		if (!strcmp(arg, "--no-add")) {
+			no_add = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--stat")) {

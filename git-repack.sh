@@ -32,10 +32,6 @@ case ",$all_into_one," in
 	rev_list=
 	rev_parse='--all'
 	pack_objects=
-	# This part is a stop-gap until we have proper pack redundancy
-	# checker.
-	existing=`cd "$PACKDIR" && \
-	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
 if [ "$local" ]; then
@@ -46,6 +42,14 @@ name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) |
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
+	if test "$remove_redandant" = t ; then
+		echo "Removing redundant packs."
+		sync
+		redundant=$(git-pack-redundant --all)
+		if test "$redundant" != "" ; then
+			echo $redundant | xargs rm
+		fi
+	fi
 	exit 0
 fi
 echo "Pack pack-$name created."
@@ -58,20 +62,10 @@ exit
 
 if test "$remove_redandant" = t
 then
-	# We know $existing are all redandant only when
-	# all-into-one is used.
-	if test "$all_into_one" != '' && test "$existing" != ''
-	then
-		sync
-		( cd "$PACKDIR" &&
-		  for e in $existing
-		  do
-			case "$e" in
-			./pack-$name.pack | ./pack-$name.idx) ;;
-			*)	rm -f $e ;;
-			esac
-		  done
-		)
+	sync
+	redundant=$(git-pack-redundant --all)
+	if test "$redundant" != "" ; then
+		echo $redundant | xargs rm
 	fi
 fi
 

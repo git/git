@@ -184,7 +184,7 @@ then
 		}
 		'
 		set_author_env=`git-cat-file commit "$use_commit" |
-		sed -ne "$pick_author_script"`
+		LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 		eval "$set_author_env"
 		export GIT_AUTHOR_NAME
 		export GIT_AUTHOR_EMAIL
