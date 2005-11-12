@@ -32,11 +32,11 @@ OPTIONS
 
 Author
 ------
-Written by Lukas Sandström <lukass@etek.chalmers.se>
+Written by Lukas SandstrÃ¶m <lukass@etek.chalmers.se>
 
 Documentation
 --------------
-Documentation by Lukas Sandström <lukass@etek.chalmers.se>
+Documentation by Lukas SandstrÃ¶m <lukass@etek.chalmers.se>
 
 See-Also
 --------
