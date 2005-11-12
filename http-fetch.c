@@ -632,6 +632,8 @@ static void process_curl_messages(void)
 						request->repo =
 							request->repo->next;
 						start_request(request);
+					} else {
+						finish_request(request);
 					}
 				} else {
 					finish_request(request);
