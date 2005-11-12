@@ -30,6 +30,24 @@ See man (1) git-archimport for more details.
 
 Add print in front of the shell commands invoked via backticks. 
 
+=head1 Devel Notes
+
+There are several places where Arch and git terminology are intermixed
+and potentially confused.
+
+The notion of a "branch" in git is approximately equivalent to
+a "archive/category--branch--version" in Arch.  Also, it should be noted
+that the "--branch" portion of "archive/category--branch--version" is really
+optional in Arch although not many people (nor tools!) seem to know this.
+This means that "archive/category--version" is also a valid "branch"
+in git terms.
+
+We always refer to Arch names by their fully qualified variant (which
+means the "archive" name is prefixed.
+
+For people unfamiliar with Arch, an "archive" is the term for "repository",
+and can contain multiple, unrelated branches.
+
 =cut
 
 use strict;
@@ -215,9 +233,41 @@ unless (-d $git_dir) { # initial import
 }
 
 # process patchsets
-foreach my $ps (@psets) {
+# extract the Arch repository name (Arch "archive" in Arch-speak)
+sub extract_reponame {
+    my $fq_cvbr = shift; # archivename/[[[[category]branch]version]revision]
+    return (split(/\//, $fq_cvbr))[0];
+}
+ 
+sub extract_versionname {
+    my $name = shift;
+    $name =~ s/--(?:patch|version(?:fix)?|base)-\d+$//;
+    return $name;
+}
 
-    $ps->{branch} =  branchname($ps->{id});
+# convert a fully-qualified revision or version to a unique dirname:
+#   normalperson@yhbt.net-05/mpd--uclinux--1--patch-2 
+# becomes: normalperson@yhbt.net-05,mpd--uclinux--1
+#
+# the git notion of a branch is closer to
+# archive/category--branch--version than archive/category--branch, so we
+# use this to convert to git branch names.
+# Also, keep archive names but replace '/' with ',' since it won't require
+# subdirectories, and is safer than swapping '--' which could confuse
+# reverse-mapping when dealing with bastard branches that
+# are just archive/category--version  (no --branch)
+sub tree_dirname {
+    my $revision = shift;
+    my $name = extract_versionname($revision);
+    $name =~ s#/#,#;
+    return $name;
+}
+
+*git_branchname = *tree_dirname;
+
+# process patchsets
+foreach my $ps (@psets) {
+    $ps->{branch} = git_branchname($ps->{id});
 
     #
     # ensure we have a clean state 
@@ -428,16 +478,9 @@ foreach my $ps (@psets) {
     $opt_v && print "   + parents:  $par \n";
 }
 
-sub branchname {
-    my $id = shift;
-    $id =~ s#^.+?/##;
-    my @parts = split(m/--/, $id);
-    return join('--', @parts[0..1]);
-}
-
 sub apply_import {
     my $ps = shift;
-    my $bname = branchname($ps->{id});
+    my $bname = git_branchname($ps->{id});
 
     `mkdir -p $tmp`;
 
@@ -668,7 +711,7 @@ sub find_parents {
     # simple loop to split the merges
     # per branch
     foreach my $merge (@{$ps->{merges}}) {
-	my $branch = branchname($merge);
+	my $branch = git_branchname($merge);
 	unless (defined $branches{$branch} ){
 	    $branches{$branch} = [];
 	}
