@@ -788,7 +788,7 @@ static int fetch_alternates(char *base)
 	buffer.buffer = data;
 
 	if (get_verbosely)
-		fprintf(stderr, "Getting alternates list\n");
+		fprintf(stderr, "Getting alternates list for %s\n", base);
 	
 	url = xmalloc(strlen(base) + 31);
 	sprintf(url, "%s/objects/info/http-alternates", base);
@@ -911,7 +911,7 @@ static int fetch_indices(struct alt_base *repo)
 	buffer.buffer = data;
 
 	if (get_verbosely)
-		fprintf(stderr, "Getting pack list\n");
+		fprintf(stderr, "Getting pack list for %s\n", repo->base);
 	
 	url = xmalloc(strlen(repo->base) + 21);
 	sprintf(url, "%s/objects/info/packs", repo->base);
