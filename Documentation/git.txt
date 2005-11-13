@@ -309,7 +309,7 @@ gitlink:git-convert-objects[1]::
 gitlink:git-cvsimport[1]::
 	Salvage your data out of another SCM people love to hate.
 
-gitlink:git-lost+found[1]::
+gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.
 
 gitlink:git-merge-one-file[1]::
