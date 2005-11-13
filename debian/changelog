@@ -1,3 +1,9 @@
+git-core (0.99.9.GIT-2) unstable; urgency=low
+
+  * Build Dependency did not include libexpat-dev.
+
+ -- Junio C Hamano <junkio@cox.net>  Sun, 13 Nov 2005 01:55:34 -0800
+
 git-core (0.99.9.GIT-1) unstable; urgency=low
 
   * Do not scatter txt and html documentation into feature
