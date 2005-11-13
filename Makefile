@@ -96,7 +96,7 @@ SCRIPT_SH = \
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-rename.perl git-shortlog.perl git-fmt-merge-msg.perl \
+	git-shortlog.perl git-fmt-merge-msg.perl \
 	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl
 
 SCRIPT_PYTHON = \
