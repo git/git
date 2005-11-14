@@ -4,6 +4,7 @@ use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
+use File::Basename qw(basename);
 
 unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
@@ -206,8 +207,7 @@ if ($opt_c) {
 }
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.gi ${\basename $0}      # fetch/update GIT from CVS
-       [-h] [-p] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [ parent ] commit
 END
 	exit(1);
 }
