@@ -18,21 +18,21 @@ Will copy all files listed from the index to the working directory
 
 OPTIONS
 -------
--u::
+-u|--index::
 	update stat information for the checked out entries in
 	the index file.
 
--q::
+-q|--quiet::
 	be quiet if files exist or are not in the index
 
--f::
+-f|--force::
 	forces overwrite of existing files
 
--a::
+-a|--all::
 	checks out all files in the index.  Cannot be used
 	together with explicit filenames.
 
--n::
+-n|--no-create::
 	Don't checkout new files, only refresh files already checked
 	out.
 

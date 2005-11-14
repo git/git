@@ -30,6 +30,10 @@ OPTIONS
 -m::
 	Perform a merge, not just a read.
 
+--reset::
+
+        Same as -m except that unmerged entries will be silently ignored.
+
 -u::
 	After a successful merge, update the files in the work
 	tree with the result of the merge.
