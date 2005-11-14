@@ -2,7 +2,7 @@ Source: git-core
 Section: devel
 Priority: optional
 Maintainer: Junio C Hamano <junkio@cox.net>
-Build-Depends-Indep: libz-dev, libssl-dev, libcurl3-dev|libcurl3-gnutls-dev|libcurl3-openssl-dev, asciidoc (>= 6.0.3), xmlto, debhelper (>= 4.0.0), bc, libexpat1-dev
+Build-Depends-Indep: libz-dev, libssl-dev, libcurl3-dev|libcurl3-gnutls-dev|libcurl3-openssl-dev, asciidoc (>= 7), xmlto, debhelper (>= 4.0.0), bc, libexpat-dev
 Standards-Version: 3.6.1
 
 Package: git-core
