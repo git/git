@@ -280,7 +280,8 @@ sub revert_split_path($$) {
 		$svnpath = "$branch_name/$branch/$path";
 	}
 
-	return $svnpath
+	$svnpath =~ s#/+$##;
+	return $svnpath;
 }
 
 sub get_file($$$) {
@@ -372,6 +373,10 @@ sub copy_path($$$$$$$$) {
 	my($newrev,$newbranch,$path,$oldpath,$rev,$node_kind,$new,$parents) = @_;
 
 	my($srcbranch,$srcpath) = split_path($rev,$oldpath);
+	unless(defined $srcbranch) {
+		print "Path not found when copying from $oldpath @ $rev\n";
+		return;
+	}
 	my $therev = branch_rev($srcbranch, $rev);
 	my $gitrev = $branches{$srcbranch}{$therev};
 	unless($gitrev) {
