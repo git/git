@@ -102,6 +102,5 @@ rev=$(git-rev-parse --verify "$head") || exit
 git-check-ref-format "heads/$branchname" ||
 	die "we do not like '$branchname' as a branch name."
 
-leading=`expr "refs/heads/$branchname" : '\(.*\)/'` &&
-mkdir -p "$GIT_DIR/$leading" &&
-echo $rev > "$GIT_DIR/refs/heads/$branchname"
+git update-ref "refs/heads/$branchname" $rev
+
