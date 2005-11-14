@@ -12,7 +12,7 @@ unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
 
 our ($opt_h, $opt_p, $opt_v, $opt_c );
 
-getopt('hpvc');
+getopts('hpvc');
 
 $opt_h && usage();
 
