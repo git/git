@@ -628,8 +628,9 @@ int main(int argc, char **argv)
 
 	if (inetd_mode) {
 		fclose(stderr); //FIXME: workaround
+		log_syslog = 1;
 		return execute();
-	} else {
-		return serve(port);
 	}
+
+	return serve(port);
 }
