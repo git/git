@@ -60,7 +60,7 @@ OPTIONS
 	Directly insert the specified info into the index.
 	
 --index-info::
-        Read index info from stdin.
+        Read index information from stdin.
 
 --chmod=(+|-)x::
         Set the execute permissions on the updated files.        
