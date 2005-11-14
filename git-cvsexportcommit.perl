@@ -78,7 +78,7 @@ $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
 
 # grab the commit message
 `git-cat-file commit $commit | sed -e '1,/^\$/d' > .msg`;
-$? && die "Error extraction the commit message";
+$? && die "Error extracting the commit message";
 
 my (@afiles, @dfiles, @mfiles);
 my @files = `git-diff-tree -r $parent $commit`;
@@ -188,7 +188,7 @@ my $cmd = "cvs commit -F .msg $commitfiles";
 
 if ($dirtypatch) {
     print "NOTE: One or more hunks failed to apply cleanly.\n";
-    print "Resolve the conflicts and then commit using:n";
+    print "Resolve the conflicts and then commit using:\n";
     print "\n    $cmd\n\n";
     exit(1);
 }
