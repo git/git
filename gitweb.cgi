@@ -2047,6 +2047,7 @@ sub git_history {
 			      escapeHTML(chop_str($co{'title'}, 50)) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?p=$project;a=commit;h=$commit"}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=commitdiff;h=$commit"}, "commitdiff") .
 			      " | " . $cgi->a({-href => "$my_uri?p=$project;a=blob;hb=$commit;f=$file_name"}, "blob");
 			my $blob = git_get_hash_by_path($hash, $file_name);
 			my $blob_parent = git_get_hash_by_path($commit, $file_name);
