@@ -144,7 +144,7 @@ sub validate_input {
 	if ($input =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
 		return undef;
 	}
-	if ($input =~ m/[^a-zA-Z0-9_\.\/\-\+\#\~]/) {
+	if ($input =~ m/[^a-zA-Z0-9_ \.\/\-\+\#\~]/) {
 		return undef;
 	}
 	return $input;
@@ -209,8 +209,8 @@ if (!defined $action || $action eq "summary") {
 
 sub esc {
 	my $str = shift;
-	$str =~ s/ /\+/g;
-	$str =~ s/\+/%2b/g;
+	$str =~ s/ /%20/g;
+	$str =~ s/\+/%2B/g;
 	return $str;
 }
 
@@ -580,7 +580,7 @@ sub git_diff_print {
 		close $fd;
 	}
 
-	open my $fd, "-|", "/usr/bin/diff -u -p -L $from_name -L $to_name $from_tmp $to_tmp";
+	open my $fd, "-|", "/usr/bin/diff -u -p -L \'$from_name\' -L \'$to_name\' $from_tmp $to_tmp";
 	if ($format eq "plain") {
 		undef $/;
 		print <$fd>;
@@ -2029,7 +2029,7 @@ sub git_history {
 	      "</div>\n";
 	print "<div class=\"page_path\"><b>/$file_name</b><br/></div>\n";
 
-	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin $file_name";
+	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin \'$file_name\'";
 	my $commit;
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
