@@ -209,8 +209,8 @@ if (!defined $action || $action eq "summary") {
 
 sub esc {
 	my $str = shift;
-	$str =~ s/ /%20/g;
 	$str =~ s/\+/%2B/g;
+	$str =~ s/ /\+/g;
 	return $str;
 }
 
@@ -2167,7 +2167,7 @@ sub git_search {
 
 	if ($pickaxe_search) {
 		$/ = "\n";
-		open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -S$searchtext";
+		open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -S\'$searchtext\'";
 		undef %co;
 		my @files;
 		while (my $line = <$fd>) {
