@@ -190,7 +190,7 @@ if ($dirtypatch) {
     print "NOTE: One or more hunks failed to apply cleanly.\n";
     print "Resolve the conflicts and then commit using:n";
     print "\n    $cmd\n\n";
-    exit;
+    exit(1);
 }
 
 
