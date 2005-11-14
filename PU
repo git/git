@@ -8,13 +8,53 @@ git checkout pu &&
 git reset --hard master &&
 ORIG_HEAD=`git rev-parse ORIG_HEAD` || exit
 
+case "$#" in
+0)
+	# interactive ;-)
+	shift
+	HH=`cd .git/refs/heads && find -type f |
+	sed -e 's/^\.\///' -e '/^master$/d' -e '/^maint$/d' -e '/^pu$/d'`
+	while test "$HH"
+	do
+		I=0
+		echo "0: done"
+		for H in $HH
+		do
+			I=$(($I+1))
+			echo -n "$I: "
+			git-show-branch $H
+		done
+		echo -n "Merge which ones (0 to finish)? "
+		read ans
+		case "$ans" in
+		'' | 0)
+			break ;;
+		esac
+		I=0
+		UNUSE=
+		USE=
+		for H in $HH
+		do
+			I=$(($I+1))
+			case " $ans " in
+			*' '$I' '*)
+				USE="$USE$H "
+				;;
+			*)
+				UNUSE="$UNUSE$H "
+				;;
+			esac
+		done
+		git pull -n . $USE || exit
+		HH=$UNUSE
+	done
+	exit
+	;;
+esac
+
 for H
 do
 	(IFS=",$IFS"; git pull -n . $H) || exit
 done
 
 (IFS=",$IFS"; git show-branch master pu $* $ORIG_HEAD)
-
-
-
-
