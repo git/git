@@ -446,20 +446,20 @@ install-doc:
 
 ### Maintainer's dist rules
 
-git-core.spec: git-core.spec.in Makefile
+git.spec: git.spec.in Makefile
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
 
-GIT_TARNAME=git-core-$(GIT_VERSION)
-dist: git-core.spec git-tar-tree
+GIT_TARNAME=git-$(GIT_VERSION)
+dist: git.spec git-tar-tree
 	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
-	@cp git-core.spec $(GIT_TARNAME)
-	$(TAR) rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git-core.spec
+	@cp git.spec $(GIT_TARNAME)
+	$(TAR) rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git.spec
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
 rpm: dist
-	$(RPMBUILD) -ta git-core-$(GIT_VERSION).tar.gz
+	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
 deb: dist
 	rm -rf $(GIT_TARNAME)
@@ -472,7 +472,7 @@ deb: dist
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS) $(LIB_FILE)
 	rm -f $(filter-out gitk,$(SCRIPTS))
-	rm -f git-core.spec *.pyc *.pyo
+	rm -f *.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.dsc
