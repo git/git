@@ -5,6 +5,7 @@
  */
 
 #include <time.h>
+#include <sys/time.h>
 
 #include "cache.h"
 
@@ -459,4 +460,127 @@ void datestamp(char *buf, int bufsize)
 	offset /= 60;
 
 	date_string(now, offset, buf, bufsize);
+}
+
+static void update_tm(struct tm *tm, unsigned long sec)
+{
+	time_t n = mktime(tm) - sec;
+	localtime_r(&n, tm);
+}
+
+static const char *number_name[] = {
+	"zero", "one", "two", "three", "four",
+	"five", "six", "seven", "eight", "nine", "ten",
+};
+
+static struct typelen {
+	const char *type;
+	int length;
+} typelen[] = {
+	{ "seconds", 1 },
+	{ "minutes", 60 },
+	{ "hours", 60*60 },
+	{ "days", 24*60*60 },
+	{ "weeks", 7*24*60*60 },
+	{ NULL }
+};	
+
+static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
+{
+	struct typelen *tl;
+	const char *end = date;
+	int n = 1, i;
+
+	while (isalpha(*++end))
+		n++;
+
+	for (i = 0; i < 12; i++) {
+		int match = match_string(date, month_names[i]);
+		if (match >= 3) {
+			tm->tm_mon = i;
+			return end;
+		}
+	}
+
+	if (match_string(date, "yesterday") > 8) {
+		update_tm(tm, 24*60*60);
+		return end;
+	}
+
+	if (!*num) {
+		for (i = 1; i < 11; i++) {
+			int len = strlen(number_name[i]);
+			if (match_string(date, number_name[i]) == len) {
+				*num = i;
+				return end;
+			}
+		}
+		if (match_string(date, "last") == 4)
+			*num = 1;
+		return end;
+	}
+
+	tl = typelen;
+	while (tl->type) {
+		int len = strlen(tl->type);
+		if (match_string(date, tl->type) >= len-1) {
+			update_tm(tm, tl->length * *num);
+			*num = 0;
+			return end;
+		}
+		tl++;
+	}
+
+	if (match_string(date, "months") >= 5) {
+		int n = tm->tm_mon - *num;
+		*num = 0;
+		while (n < 0) {
+			n += 12;
+			tm->tm_year--;
+		}
+		tm->tm_mon = n;
+		return end;
+	}
+
+	if (match_string(date, "years") >= 4) {
+		tm->tm_year -= *num;
+		*num = 0;
+		return end;
+	}
+
+	return end;
+}
+
+unsigned long approxidate(const char *date)
+{
+	int number = 0;
+	struct tm tm, now;
+	struct timeval tv;
+	char buffer[50];
+
+	if (parse_date(date, buffer, sizeof(buffer)) > 0)
+		return strtoul(buffer, NULL, 10);
+
+	gettimeofday(&tv, NULL);
+	localtime_r(&tv.tv_sec, &tm);
+	now = tm;
+	for (;;) {
+		unsigned char c = *date;
+		if (!c)
+			break;
+		date++;
+		if (isdigit(c)) {
+			char *end;
+			number = strtoul(date-1, &end, 10);
+			date = end;
+			continue;
+		}
+		if (isalpha(c))
+			date = approxidate_alpha(date-1, &tm, &number);
+	}
+	if (number > 0 && number < 32)
+		tm.tm_mday = number;
+	if (tm.tm_mon > now.tm_mon)
+		tm.tm_year--;
+	return mktime(&tm);
 }

@@ -131,25 +131,12 @@ static int show_reference(const char *refname, const unsigned char *sha1)
 
 static void show_datestring(const char *flag, const char *datestr)
 {
-	FILE *date;
 	static char buffer[100];
-	static char cmd[1000];
-	int len;
 
 	/* date handling requires both flags and revs */
 	if ((filter & (DO_FLAGS | DO_REVS)) != (DO_FLAGS | DO_REVS))
 		return;
-	len = strlen(flag);
-	memcpy(buffer, flag, len);
-
-	snprintf(cmd, sizeof(cmd), "date --date=%s +%%s", sq_quote(datestr));
-	date = popen(cmd, "r");
-	if (!date || !fgets(buffer + len, sizeof(buffer) - len, date))
-		die("git-rev-list: bad date string");
-	pclose(date);
-	len = strlen(buffer);
-	if (buffer[len-1] == '\n')
-		buffer[--len] = 0;
+	snprintf(buffer, sizeof(buffer), "%s%lu", flag, approxidate(datestr));
 	show(buffer);
 }
 
