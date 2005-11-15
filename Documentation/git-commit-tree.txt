@@ -26,8 +26,9 @@ to get there.
 
 Normally a commit would identify a new "HEAD" state, and while git
 doesn't care where you save the note about that state, in practice we
-tend to just write the result to the file `.git/HEAD`, so that we can
-always see what the last committed state was.
+tend to just write the result to the file that is pointed at by
+`.git/HEAD`, so that we can always see what the last committed
+state was.
 
 OPTIONS
 -------

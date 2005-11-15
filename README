@@ -396,8 +396,8 @@ git-commit-tree will return the name of the object that represents
 that commit, and you should save it away for later use. Normally,
 you'd commit a new `HEAD` state, and while git doesn't care where you
 save the note about that state, in practice we tend to just write the
-result to the file `.git/HEAD`, so that we can always see what the
-last committed state was.
+result to the file pointed at by `.git/HEAD`, so that we can always see
+what the last committed state was.
 
 Here is an ASCII art by Jon Loeliger that illustrates how
 various pieces fit together.
@@ -464,7 +464,7 @@ tend to be small and fairly self-explanatory. In particular, if you
 follow the convention of having the top commit name in `.git/HEAD`,
 you can do
 
-		git-cat-file commit $(cat .git/HEAD)
+		git-cat-file commit HEAD
 
 to see what the top commit was.
 

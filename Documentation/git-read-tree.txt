@@ -237,7 +237,7 @@ This is done to prevent you from losing your work-in-progress
 changes.  To illustrate, suppose you start from what has been
 commited last to your repository:
 
-    $ JC=`cat .git/HEAD`
+    $ JC=`git-rev-parse --verify "HEAD^0"`
     $ git-checkout-index -f -u -a $JC
 
 You do random edits, without running git-update-index.  And then

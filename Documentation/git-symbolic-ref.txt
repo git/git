@@ -24,8 +24,8 @@ Traditionally, `.git/HEAD` is a symlink pointing at
 we did `ln -sf refs/heads/newbranch .git/HEAD`, and when we want
 to find out which branch we are on, we did `readlink .git/HEAD`.
 This was fine, and internally that is what still happens by
-default, but on platforms that does not have working symlinks,
-or that does not have the `readlink(1)` command, this was a bit
+default, but on platforms that do not have working symlinks,
+or that do not have the `readlink(1)` command, this was a bit
 cumbersome.  On some platforms, `ln -sf` does not even work as
 advertised (horrors).
 
