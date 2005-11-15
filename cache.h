@@ -179,6 +179,7 @@ extern int commit_index_file(struct cache_file *);
 extern void rollback_index_file(struct cache_file *);
 
 extern int trust_executable_bit;
+extern int only_use_symrefs;
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002

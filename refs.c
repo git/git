@@ -121,10 +121,12 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 	int fd, len, written;
 
 #if USE_SYMLINK_HEAD
-	unlink(git_HEAD);
-	if (!symlink(refs_heads_master, git_HEAD))
-		return 0;
-	fprintf(stderr, "no symlink - falling back to symbolic ref\n");
+	if (!only_use_symrefs) {
+		unlink(git_HEAD);
+		if (!symlink(refs_heads_master, git_HEAD))
+			return 0;
+		fprintf(stderr, "no symlink - falling back to symbolic ref\n");
+	}
 #endif
 
 	len = snprintf(ref, sizeof(ref), "ref: %s\n", refs_heads_master);
