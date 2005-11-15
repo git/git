@@ -6,10 +6,6 @@
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
-#ifndef USE_SYMLINK_HEAD
-#define USE_SYMLINK_HEAD 1
-#endif
-
 const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 {
 	int depth = MAXDEPTH, len;
@@ -80,7 +76,7 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 	char ref[1000];
 	int fd, len, written;
 
-#if USE_SYMLINK_HEAD
+#ifdef USE_SYMLINK_HEAD
 	if (!only_use_symrefs) {
 		unlink(git_HEAD);
 		if (!symlink(refs_heads_master, git_HEAD))
