@@ -127,38 +127,6 @@ inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
 	return llist_insert_back(list, sha1);
 }
 
-/* computes A\B */
-void llist_sorted_difference_inplace(struct llist *A,
-				     struct llist *B)
-{
-	struct llist_item *prev, *a, *b, *x;
-
-	prev = a = A->front;
-	b = B->front;
-
-	while (a != NULL && b != NULL) {
-		int cmp = memcmp(a->sha1, b->sha1, 20);
-		if (!cmp) {
-			x = a;
-			if (a == A->front)
-				A->front = a->next;
-			a = prev->next = a->next;
-
-			if (a == NULL) /* end of list */
-				A->back = prev;
-			A->size--;
-			free(x);
-			b = b->next;
-		} else
-			if (cmp > 0)
-				b = b->next;
-			else {
-				prev = a;
-				a = a->next;
-			}
-	}
-}
-
 /* returns a pointer to an item in front of sha1 */
 inline struct llist_item * llist_sorted_remove(struct llist *list, char *sha1,
 					       struct llist_item *hint)
@@ -192,6 +160,21 @@ redo_from_start:
 		l = l->next;
 	}
 	return prev;
+}
+
+/* computes A\B */
+void llist_sorted_difference_inplace(struct llist *A,
+				     struct llist *B)
+{
+	struct llist_item *hint, *b;
+
+	hint = NULL;
+	b = B->front;
+
+	while (b) {
+		hint = llist_sorted_remove(A, b->sha1, hint);
+		b = b->next;
+	}
 }
 
 inline struct pack_list * pack_list_insert(struct pack_list **pl,
