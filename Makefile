@@ -105,7 +105,7 @@ SCRIPT_PYTHON = \
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
-	git-stripspace$X git-var$X git-daemon$X
+	git-stripspace$X git-daemon$X
 
 # ... and all the rest
 PROGRAMS = \
@@ -125,7 +125,7 @@ PROGRAMS = \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
-	git-name-rev$X git-pack-redundant$X $(SIMPLE_PROGRAMS)
+	git-name-rev$X git-pack-redundant$X git-var$X $(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X

@@ -180,6 +180,7 @@ extern void rollback_index_file(struct cache_file *);
 
 extern int trust_executable_bit;
 extern int only_use_symrefs;
+extern int diff_rename_limit_default;
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002

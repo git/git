@@ -283,7 +283,7 @@ void diffcore_rename(struct diff_options *options)
 			register_rename_src(p->one, 1);
 	}
 	if (rename_dst_nr == 0 ||
-	    (0 <= rename_limit && rename_limit < rename_dst_nr))
+	    (0 < rename_limit && rename_limit < rename_dst_nr))
 		goto cleanup; /* nothing to do */
 
 	/* We really want to cull the candidates list early

@@ -13,6 +13,8 @@ static const char *diff_opts = "-pu";
 
 static int use_size_cache;
 
+int diff_rename_limit_default = -1;
+
 static char *quote_one(const char *str)
 {
 	int needlen;
@@ -761,9 +763,12 @@ void diff_setup(struct diff_options *options)
 
 int diff_setup_done(struct diff_options *options)
 {
-	if ((options->find_copies_harder || 0 <= options->rename_limit) &&
-	    options->detect_rename != DIFF_DETECT_COPY)
+	if ((options->find_copies_harder &&
+	     options->detect_rename != DIFF_DETECT_COPY) ||
+	    (0 <= options->rename_limit && !options->detect_rename))
 		return -1;
+	if (options->detect_rename && options->rename_limit < 0)
+		options->rename_limit = diff_rename_limit_default;
 	if (options->setup & DIFF_SETUP_USE_CACHE) {
 		if (!active_cache)
 			/* read-cache does not die even when it fails
