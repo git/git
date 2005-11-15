@@ -24,6 +24,8 @@ OPTIONS
 
 --help::
 	prints the synopsis and a list of available commands.
+	If a git command is named this option will bring up the
+	man-page for that command.
 
 --exec-path::
 	path to wherever your core git programs are installed.

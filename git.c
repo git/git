@@ -160,6 +160,26 @@ static void prepend_to_path(const char *dir, int len)
 	setenv("PATH", path, 1);
 }
 
+/* has anyone seen 'man' installed anywhere else than in /usr/bin? */
+#define PATH_TO_MAN "/usr/bin/man"
+static void show_man_page(char *git_cmd)
+{
+	char *page;
+
+	if (!strncmp(git_cmd, "git", 3))
+		page = git_cmd;
+	else {
+		int page_len = strlen(git_cmd) + 4;
+
+		page = malloc(page_len + 1);
+		strcpy(page, "git-");
+		strcpy(page + 4, git_cmd);
+		page[page_len] = 0;
+	}
+
+	execlp(PATH_TO_MAN, "man", page, NULL);
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char git_command[PATH_MAX + 1];
@@ -199,8 +219,12 @@ int main(int argc, char **argv, char **envp)
 			usage(NULL, NULL);
 	}
 
-	if (i >= argc || show_help)
-		usage(exec_path, NULL);
+	if (i >= argc || show_help) {
+		if (i >= argc)
+			usage(exec_path, NULL);
+
+		show_man_page(argv[i]);
+	}
 
 	/* allow relative paths, but run with exact */
 	if (chdir(exec_path)) {
