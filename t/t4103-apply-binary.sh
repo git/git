@@ -51,6 +51,14 @@ test_expect_failure 'check binary diff (copy) -- should fail.' \
 	'git-checkout master
 	 git-apply --check C.diff'
 
+test_expect_failure 'check incomplete binary diff with replacement -- should fail.' \
+	'git-checkout master
+	 git-apply --check --allow-binary-replacement B.diff'
+
+test_expect_failure 'check incomplete binary diff with replacement (copy) -- should fail.' \
+	'git-checkout master
+	 git-apply --check --allow-binary-replacement C.diff'
+
 # Now we start applying them.
 
 test_expect_failure 'apply binary diff -- should fail.' \

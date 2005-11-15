@@ -8,7 +8,7 @@ git-apply - Apply patch on a git index file and a work tree
 
 SYNOPSIS
 --------
-'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [-z] [<patch>...]
+'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -78,6 +78,17 @@ OPTIONS
 	two files by first running `diff` on them and applying
 	the result with this option, which would apply the
 	deletion part but not addition part.
+
+--allow-binary-replacement::
+	When applying a patch, which is a git-enhanced patch
+	that was prepared to record the pre- and post-image object
+	name in full, and the path being patched exactly matches
+	the object the patch applies to (i.e. "index" line's
+	pre-image object name is what is in the working tree),
+	and the post-image object is available in the object
+	database, use the post-image object as the patch
+	result.  This allows binary files to be patched in a
+	very limited way.
 
 Author
 ------
