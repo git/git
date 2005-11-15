@@ -424,7 +424,6 @@ static void find_pack_info_one(int pack_ix)
 {
 	unsigned char sha1[20];
 	struct object *o;
-	struct object_list *ref;
 	int i;
 	struct packed_git *p = info[pack_ix]->p;
 	int num = num_packed_objects(p);
@@ -437,8 +436,12 @@ static void find_pack_info_one(int pack_ix)
 			die("corrupt pack file %s?", p->pack_name);
 		if ((o = lookup_object(sha1)) == NULL)
 			die("cannot parse %s", sha1_to_hex(sha1));
-		for (ref = o->refs; ref; ref = ref->next)
-			ref->item->flags = 0;
+		if (o->refs) {
+			struct object_refs *refs = o->refs;
+			int j;
+			for (j = 0; j < refs->count; j++)
+				refs->ref[j]->flags = 0;
+		}
 		o->flags = 0;
 	}
 
@@ -448,8 +451,12 @@ static void find_pack_info_one(int pack_ix)
 			die("corrupt pack file %s?", p->pack_name);
 		if ((o = lookup_object(sha1)) == NULL)
 			die("cannot find %s", sha1_to_hex(sha1));
-		for (ref = o->refs; ref; ref = ref->next)
-			ref->item->flags |= REFERENCED;
+		if (o->refs) {
+			struct object_refs *refs = o->refs;
+			int j;
+			for (j = 0; j < refs->count; j++)
+				refs->ref[j]->flags |= REFERENCED;
+		}
 		o->flags |= INTERNAL;
 	}
 
@@ -460,8 +467,12 @@ static void find_pack_info_one(int pack_ix)
 			die("cannot find %s", sha1_to_hex(sha1));
 
 		show(o, pack_ix);
-		for (ref = o->refs; ref; ref = ref->next)
-			show(ref->item, pack_ix);
+		if (o->refs) {
+			struct object_refs *refs = o->refs;
+			int j;
+			for (j = 0; j < refs->count; j++)
+				show(refs->ref[j], pack_ix);
+		}
 	}
 
 }

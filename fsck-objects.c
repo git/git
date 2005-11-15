@@ -56,7 +56,6 @@ static void check_connectivity(void)
 	/* Look up all the requirements, warn about missing objects.. */
 	for (i = 0; i < nr_objs; i++) {
 		struct object *obj = objs[i];
-		struct object_list *refs;
 
 		if (!obj->parsed) {
 			if (!standalone && has_sha1_file(obj->sha1))
@@ -67,14 +66,19 @@ static void check_connectivity(void)
 			continue;
 		}
 
-		for (refs = obj->refs; refs; refs = refs->next) {
-			if (refs->item->parsed ||
-			    (!standalone && has_sha1_file(refs->item->sha1)))
-				continue;
-			printf("broken link from %7s %s\n",
-			       obj->type, sha1_to_hex(obj->sha1));
-			printf("              to %7s %s\n",
-			       refs->item->type, sha1_to_hex(refs->item->sha1));
+		if (obj->refs) {
+			const struct object_refs *refs = obj->refs;
+			unsigned j;
+			for (j = 0; j < refs->count; j++) {
+				struct object *ref = refs->ref[j];
+				if (ref->parsed ||
+				    (!standalone && has_sha1_file(ref->sha1)))
+					continue;
+				printf("broken link from %7s %s\n",
+				       obj->type, sha1_to_hex(obj->sha1));
+				printf("              to %7s %s\n",
+				       ref->type, sha1_to_hex(ref->sha1));
+			}
 		}
 
 		if (show_unreachable && !(obj->flags & REACHABLE)) {

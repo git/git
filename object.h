@@ -7,13 +7,18 @@ struct object_list {
 	const char *name;
 };
 
+struct object_refs {
+	unsigned count;
+	struct object *ref[0];
+};
+
 struct object {
 	unsigned parsed : 1;
 	unsigned used : 1;
 	unsigned int flags;
 	unsigned char sha1[20];
 	const char *type;
-	struct object_list *refs;
+	struct object_refs *refs;
 	void *util;
 };
 
@@ -35,7 +40,8 @@ struct object *parse_object(const unsigned char *sha1);
 /** Returns the object, with potentially excess memory allocated. **/
 struct object *lookup_unknown_object(const unsigned  char *sha1);
 
-void add_ref(struct object *refer, struct object *target);
+struct object_refs *alloc_object_refs(unsigned count);
+void set_object_refs(struct object *obj, struct object_refs *refs);
 
 void mark_reachable(struct object *obj, unsigned int mask);
 
