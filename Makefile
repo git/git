@@ -88,7 +88,7 @@ SCRIPT_SH = \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
-	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
+	git-tag.sh git-verify-tag.sh git-whatchanged.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
@@ -334,19 +334,15 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(PROGRAMS) $(SCRIPTS)
+all: $(PROGRAMS) $(SCRIPTS) git
 
 all:
 	$(MAKE) -C templates
 
-git: git.sh Makefile
-	rm -f $@+ $@
-	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
-	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    -e 's/@@X@@/$(X)/g' \
-	    $(GIT_LIST_TWEAK) <$@.sh >$@+
-	chmod +x $@+
-	mv $@+ $@
+# Only use $(CFLAGS). We don't need anything else.
+git: git.c Makefile
+	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
+		$(CFLAGS) $@.c -o $@
 
 $(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
 	rm -f $@
@@ -431,9 +427,9 @@ check:
 
 ### Installation rules
 
-install: $(PROGRAMS) $(SCRIPTS)
+install: $(PROGRAMS) $(SCRIPTS) git
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) git $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
