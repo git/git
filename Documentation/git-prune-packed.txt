@@ -23,6 +23,12 @@ compression applied, stored in a single file, with an associated index file.
 
 Packs are used to reduce the load on mirror systems, backup engines, disk storage, etc.
 
+OPTIONS
+-------
+-n::
+        Don't actually remove any objects, only show those that would have been
+        removed.
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>

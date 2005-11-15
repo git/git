@@ -25,7 +25,7 @@ on_committer_date "1971-08-16 00:00:05" save_tag a1 unique_commit a1 tree -p a0
 on_committer_date "1971-08-16 00:00:06" save_tag b1 unique_commit b1 tree -p a0
 on_committer_date "1971-08-16 00:00:07" save_tag c1 unique_commit c1 tree -p b1
 on_committer_date "1971-08-16 00:00:08" as_author foobar@example.com save_tag b2 unique_commit b2 tree -p b1
-on_committer_date "1971-08-16 00:00:09" save_tag b3 unique_commit b2 tree -p b2
+on_committer_date "1971-08-16 00:00:09" save_tag b3 unique_commit b3 tree -p b2
 on_committer_date "1971-08-16 00:00:10" save_tag c2 unique_commit c2 tree -p c1 -p b2
 on_committer_date "1971-08-16 00:00:11" save_tag c3 unique_commit c3 tree -p c2
 on_committer_date "1971-08-16 00:00:12" save_tag a2 unique_commit a2 tree -p a1
@@ -116,15 +116,15 @@ g0
 EOF
 
 test_output_expect_success 'multiple heads' 'git-rev-list --topo-order a3 b3 c3' <<EOF
-b3
-c3
-c2
-b2
-c1
-b1
 a3
 a2
 a1
+c3
+c2
+c1
+b3
+b2
+b1
 a0
 l2
 l1
@@ -133,26 +133,26 @@ root
 EOF
 
 test_output_expect_success 'multiple heads, prune at a1' 'git-rev-list --topo-order a3 b3 c3 ^a1' <<EOF
-b3
-c3
-c2
-b2
-c1
-b1
 a3
 a2
+c3
+c2
+c1
+b3
+b2
+b1
 EOF
 
 test_output_expect_success 'multiple heads, prune at l1' 'git-rev-list --topo-order a3 b3 c3 ^l1' <<EOF
-b3
-c3
-c2
-b2
-c1
-b1
 a3
 a2
 a1
+c3
+c2
+c1
+b3
+b2
+b1
 a0
 l2
 EOF

@@ -262,9 +262,6 @@ gitlink:git-push[1]::
 gitlink:git-rebase[1]::
 	Rebase local commits to new upstream head.
 
-gitlink:git-rename[1]::
-	Rename files and directories.
-
 gitlink:git-repack[1]::
 	Pack unpacked objects in a repository.
 
@@ -309,7 +306,7 @@ gitlink:git-convert-objects[1]::
 gitlink:git-cvsimport[1]::
 	Salvage your data out of another SCM people love to hate.
 
-gitlink:git-lost+found[1]::
+gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.
 
 gitlink:git-merge-one-file[1]::

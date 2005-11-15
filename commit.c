@@ -536,7 +536,7 @@ int count_parents(struct commit * commit)
 void sort_in_topological_order(struct commit_list ** list)
 {
 	struct commit_list * next = *list;
-	struct commit_list * work = NULL;
+	struct commit_list * work = NULL, **insert;
 	struct commit_list ** pptr = list;
 	struct sort_node * nodes;
 	struct sort_node * next_nodes;
@@ -580,11 +580,12 @@ void sort_in_topological_order(struct commit_list ** list)
          * the tips serve as a starting set for the work queue.
          */
 	next=*list;
+	insert = &work;
 	while (next) {
 		struct sort_node * node = (struct sort_node *)next->item->object.util;
 
 		if (node->indegree == 0) {
-			commit_list_insert(next->item, &work);
+			insert = &commit_list_insert(next->item, insert)->next;
 		}
 		next=next->next;
 	}

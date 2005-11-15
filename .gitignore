@@ -42,7 +42,7 @@ git-index-pack
 git-init-db
 git-local-fetch
 git-log
-git-lost+found
+git-lost-found
 git-ls-files
 git-ls-remote
 git-ls-tree
@@ -74,7 +74,6 @@ git-read-tree
 git-rebase
 git-receive-pack
 git-relink
-git-rename
 git-repack
 git-request-pull
 git-reset

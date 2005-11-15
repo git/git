@@ -19,7 +19,8 @@ static int re_verify(const char *path, unsigned char *oldsha1, unsigned char *cu
 int main(int argc, char **argv)
 {
 	char *hex;
-	const char *refname, *value, *oldval, *path, *lockpath;
+	const char *refname, *value, *oldval, *path;
+	char *lockpath;
 	unsigned char sha1[20], oldsha1[20], currsha1[20];
 	int fd, written;
 
@@ -49,6 +50,8 @@ int main(int argc, char **argv)
 	}
 	path = strdup(path);
 	lockpath = mkpath("%s.lock", path);
+	if (safe_create_leading_directories(lockpath) < 0)
+		die("Unable to create all of %s", lockpath);
 
 	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0)

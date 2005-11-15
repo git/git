@@ -24,4 +24,12 @@ test_expect_failure \
     'git branch --help should not have created a bogus branch' \
     'test -f .git/refs/heads/--help'
 
+test_expect_success \
+    'git branch abc should create a branch' \
+    'git-branch abc && test -f .git/refs/heads/abc'
+
+test_expect_success \
+    'git branch a/b/c should create a branch' \
+    'git-branch a/b/c && test -f .git/refs/heads/a/b/c'
+
 test_done

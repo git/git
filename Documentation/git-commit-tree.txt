@@ -8,7 +8,7 @@ git-commit-tree - Creates a new commit object
 
 SYNOPSIS
 --------
-'git-commit-tree' <tree> [-p <parent commit>]\   < changelog
+'git-commit-tree' <tree> [-p <parent commit>]\* < changelog
 
 DESCRIPTION
 -----------

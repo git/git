@@ -370,7 +370,7 @@ static int gitdiff_index(const char *line, struct patch *patch)
 	int len;
 
 	ptr = strchr(line, '.');
-	if (!ptr || ptr[1] != '.' || 40 <= ptr - line)
+	if (!ptr || ptr[1] != '.' || 40 < ptr - line)
 		return 0;
 	len = ptr - line;
 	memcpy(patch->old_sha1_prefix, line, len);
@@ -384,7 +384,7 @@ static int gitdiff_index(const char *line, struct patch *patch)
 		ptr = eol;
 	len = ptr - line;
 
-	if (40 <= len)
+	if (40 < len)
 		return 0;
 	memcpy(patch->new_sha1_prefix, line, len);
 	patch->new_sha1_prefix[len] = 0;
@@ -895,7 +895,8 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 		static const char binhdr[] = "Binary files ";
 
 		if (sizeof(binhdr) - 1 < size - offset - hdrsize &&
-		    !memcmp(binhdr, buffer + hdrsize, sizeof(binhdr)-1))
+		    !memcmp(binhdr, buffer + hdrsize + offset,
+			    sizeof(binhdr)-1))
 			patch->is_binary = 1;
 
 		if (patch->is_binary && !apply && !check)

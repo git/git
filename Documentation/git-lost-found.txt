@@ -1,13 +1,13 @@
-git-lost+found(1)
+git-lost-found(1)
 =================
 
 NAME
 ----
-git-lost+found - Recover lost refs that luckily have not yet been pruned.
+git-lost-found - Recover lost refs that luckily have not yet been pruned.
 
 SYNOPSIS
 --------
-'git-lost+found'
+'git-lost-found'
 
 DESCRIPTION
 -----------
@@ -31,7 +31,7 @@ The ref to your tag is overwritten, but until you run 'git
 prune', it is still there.
 
 ------------
-$ git lost+found
+$ git lost-found
 [1ef2b196d909eed523d4f3c9bf54b78cdd6843c6] GIT 0.99.9c
 ...
 ------------

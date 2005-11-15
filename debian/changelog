@@ -1,3 +1,9 @@
+git-core (0.99.9i-0) unstable; urgency=low
+
+  * GIT 0.99.9i aka 1.0rc2
+
+ -- Junio C Hamano <junkio@cox.net>  Mon, 14 Nov 2005 18:38:27 -0800
+
 git-core (0.99.9h-0) unstable; urgency=low
 
   * GIT 0.99.9h
@@ -45,6 +51,12 @@ git-core (0.99.9a-0) unstable; urgency=low
   * GIT 0.99.9a
 
  -- Junio C Hamano <junkio@cox.net>  Sun, 30 Oct 2005 15:03:32 -0800
+
+git-core (0.99.9.GIT-2) unstable; urgency=low
+
+  * Build Dependency did not include libexpat-dev.
+
+ -- Junio C Hamano <junkio@cox.net>  Sun, 13 Nov 2005 01:55:34 -0800
 
 git-core (0.99.9.GIT-1) unstable; urgency=low
 

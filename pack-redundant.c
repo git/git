@@ -593,19 +593,20 @@ int main(int argc, char **argv)
 
 	minimize(&min);
 	if (verbose) {
-		fprintf(stderr, "There are %ld packs available in alt-odbs.\n",
-			pack_list_size(altodb_packs));
+		fprintf(stderr, "There are %lu packs available in alt-odbs.\n",
+			(unsigned long)pack_list_size(altodb_packs));
 		fprintf(stderr, "The smallest (bytewise) set of packs is:\n");
 		pl = min;
 		while (pl) {
 			fprintf(stderr, "\t%s\n", pl->pack->pack_name);
 			pl = pl->next;
 		}
-		fprintf(stderr, "containing %ld duplicate objects "
-				"with a total size of %ldkb.\n",
-			get_pack_redundancy(min), pack_set_bytecount(min)/1024);
-		fprintf(stderr, "A total of %ld unique objects were considered.\n",
-			all_objects->size);
+		fprintf(stderr, "containing %lu duplicate objects "
+				"with a total size of %lukb.\n",
+			(unsigned long)get_pack_redundancy(min),
+			(unsigned long)pack_set_bytecount(min)/1024);
+		fprintf(stderr, "A total of %lu unique objects were considered.\n",
+			(unsigned long)all_objects->size);
 		fprintf(stderr, "Redundant packs (with indexes):\n");
 	}
 	pl = red = pack_list_difference(local_packs, min);

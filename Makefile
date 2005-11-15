@@ -50,12 +50,14 @@
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9h
+GIT_VERSION = 0.99.9i
 
-# CFLAGS is for the users to override from the command line.
+# CFLAGS and LDFLAGS are for the users to override from the command line.
 
 CFLAGS = -g -O2 -Wall
+LDFLAGS =
 ALL_CFLAGS = $(CFLAGS)
+ALL_LDFLAGS = $(LDFLAGS)
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
@@ -90,11 +92,11 @@ SCRIPT_SH = \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
-	git-lost+found.sh
+	git-lost-found.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-rename.perl git-shortlog.perl git-fmt-merge-msg.perl \
+	git-shortlog.perl git-fmt-merge-msg.perl \
 	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl
 
 SCRIPT_PYTHON = \
@@ -187,9 +189,11 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	## fink
-	ALL_CFLAGS += -I/sw/include -L/sw/lib
+	ALL_CFLAGS += -I/sw/include
+	ALL_LDFLAGS += -L/sw/lib
 	## darwinports
-	ALL_CFLAGS += -I/opt/local/include -L/opt/local/lib
+	ALL_CFLAGS += -I/opt/local/include
+	ALL_LDFLAGS += -L/opt/local/lib
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
@@ -211,7 +215,13 @@ endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	ALL_CFLAGS += -I/usr/local/include -L/usr/local/lib
+	ALL_CFLAGS += -I/usr/local/include
+	ALL_LDFLAGS += -L/usr/local/lib
+endif
+ifeq ($(uname_S),NetBSD)
+	NEEDS_LIBICONV = YesPlease
+	ALL_CFLAGS += -I/usr/pkg/include
+	ALL_LDFLAGS += -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -221,7 +231,7 @@ endif
 
 ifndef NO_CURL
 	ifdef CURLDIR
-		# This is still problematic -- gcc does not want -R.
+		# This is still problematic -- gcc does not always want -R.
 		ALL_CFLAGS += -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
 	else
@@ -369,12 +379,13 @@ git-cherry-pick: git-revert
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
 git-%$X: %.o $(LIB_FILE)
-	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 git-mailinfo$X : SIMPLE_LIB += $(LIB_4_ICONV)
 $(SIMPLE_PROGRAMS) : $(LIB_FILE)
 $(SIMPLE_PROGRAMS) : git-%$X : %.o
-	$(CC) $(ALL_CFLAGS) -o $@ $(filter %.o,$^) $(LIB_FILE) $(SIMPLE_LIB)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIB_FILE) $(SIMPLE_LIB)
 
 git-http-fetch$X: fetch.o
 git-local-fetch$X: fetch.o
@@ -408,10 +419,10 @@ test: all
 	$(MAKE) -C t/ all
 
 test-date$X: test-date.c date.o ctype.o
-	$(CC) $(ALL_CFLAGS) -o $@ test-date.c date.o ctype.o
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) test-date.c date.o ctype.o
 
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
-	$(CC) $(ALL_CFLAGS) -o $@ $^
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
 
 check:
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i; done

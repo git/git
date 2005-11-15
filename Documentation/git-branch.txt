@@ -3,11 +3,11 @@ git-branch(1)
 
 NAME
 ----
-git-branch - Create a new branch.
+git-branch - Create a new branch, or remove an old one.
 
 SYNOPSIS
 --------
-'git-branch' [<branchname> [start-point]]
+'git-branch' [-d | -D] [<branchname> [start-point]]
 
 DESCRIPTION
 -----------
@@ -19,11 +19,18 @@ created, otherwise it will be created at the current HEAD.
 
 OPTIONS
 -------
+-d::
+	Delete a branch. The branch must be fully merged.
+
+-D::
+	Delete a branch irrespective of its index status.
+
 <branchname>::
-	The name of the branch to create.
+	The name of the branch to create or delete.
 
 start-point::
-	Where to create the branch; defaults to HEAD.
+	Where to create the branch; defaults to HEAD. This
+	option has no meaning with -d and -D.
 
 Author
 ------

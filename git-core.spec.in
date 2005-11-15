@@ -7,9 +7,9 @@ License: 	GPL
 Group: 		Development/Tools
 URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
-BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
+BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel, expat-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires:	zlib >= 1.2, rsync, rcs, curl, less, openssh-clients, python >= 2.3, tk >= 8.4
+Requires:	zlib >= 1.2, rsync, rcs, curl, less, openssh-clients, python >= 2.3, expat
 
 %description
 This is a stupid (but extremely fast) directory content manager.  It
@@ -47,6 +47,13 @@ Requires:	git-core = %{version}-%{release}
 %description email
 Git tools for sending email.
 
+%package tk
+Summary:        Git revision tree visualiser ('gitk')
+Group:          Development/Tools
+Requires:       git-core = %{version}-%{release}, tk >= 8.4
+%description tk
+Git revision tree visualiser ('gitk')
+
 %prep
 %setup -q
 
@@ -60,9 +67,9 @@ make %{_smp_mflags} DESTDIR=$RPM_BUILD_ROOT WITH_OWN_SUBPROCESS_PY=YesPlease WIT
      prefix=%{_prefix} mandir=%{_mandir} \
      install %{!?_without_docs: install-doc}
 
-(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "arch|svn|cvs|email" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
+(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "arch|svn|cvs|email|gitk" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
 %if %{!?_without_docs:1}0
-(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "arch|svn|git-cvs|email" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
+(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "arch|svn|git-cvs|email|gitk" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
 %endif
 
 %clean
@@ -95,6 +102,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/*email*
 %{!?_without_docs: %{_mandir}/man1/*email*.1*}
 %{!?_without_docs: %doc Documentation/*email*.html }
+
+%files tk
+%defattr(-,root,root)
+%doc Documentation/*gitk*.txt
+%{_bindir}/*gitk*
+%{!?_without_docs: %{_mandir}/man1/*gitk*.1*}
+%{!?_without_docs: %doc Documentation/*gitk*.html }
 
 %files -f bin-man-doc-files
 %defattr(-,root,root)
