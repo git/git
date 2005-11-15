@@ -32,7 +32,8 @@ struct diff_options {
 	const char *orderfile;
 	const char *pickaxe;
 	unsigned recursive:1,
-		 tree_in_recursive:1;
+		 tree_in_recursive:1,
+		 full_index:1;
 	int break_opt;
 	int detect_rename;
 	int find_copies_harder;
@@ -96,6 +97,7 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  -u            synonym for -p.\n" \
 "  --name-only   show only names of changed files.\n" \
 "  --name-status show names and status of changed files.\n" \
+"  --full-index  show full object name on index ines.\n" \
 "  -R            swap input file pairs.\n" \
 "  -B            detect complete rewrites.\n" \
 "  -M            detect renames.\n" \

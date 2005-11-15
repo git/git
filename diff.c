@@ -650,7 +650,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		memset(one->sha1, 0, 20);
 }
 
-static void run_diff(struct diff_filepair *p)
+static void run_diff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *pgm = external_diff();
 	char msg[PATH_MAX*2+300], *xfrm_msg;
@@ -713,11 +713,11 @@ static void run_diff(struct diff_filepair *p)
 
 	if (memcmp(one->sha1, two->sha1, 20)) {
 		char one_sha1[41];
+		const char *index_fmt = o->full_index ? "index %s..%s" : "index %.7s..%.7s";
 		memcpy(one_sha1, sha1_to_hex(one->sha1), 41);
 
 		len += snprintf(msg + len, sizeof(msg) - len,
-				"index %.7s..%.7s", one_sha1,
-				sha1_to_hex(two->sha1));
+				index_fmt, one_sha1, sha1_to_hex(two->sha1));
 		if (one->mode == two->mode)
 			len += snprintf(msg + len, sizeof(msg) - len,
 					" %06o", one->mode);
@@ -794,6 +794,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->line_termination = 0;
 	else if (!strncmp(arg, "-l", 2))
 		options->rename_limit = strtoul(arg+2, NULL, 10);
+	else if (!strcmp(arg, "--full-index"))
+		options->full_index = 1;
 	else if (!strcmp(arg, "--name-only"))
 		options->output_format = DIFF_FORMAT_NAME;
 	else if (!strcmp(arg, "--name-status"))
@@ -1022,7 +1024,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	return 0;
 }
 
-static void diff_flush_patch(struct diff_filepair *p)
+static void diff_flush_patch(struct diff_filepair *p, struct diff_options *o)
 {
 	if (diff_unmodified_pair(p))
 		return;
@@ -1031,7 +1033,7 @@ static void diff_flush_patch(struct diff_filepair *p)
 	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
 		return; /* no tree diffs in patch format */ 
 
-	run_diff(p);
+	run_diff(p, o);
 }
 
 int diff_queue_is_empty(void)
@@ -1163,7 +1165,7 @@ void diff_flush(struct diff_options *options)
 			die("internal error in diff-resolve-rename-copy");
 		switch (diff_output_format) {
 		case DIFF_FORMAT_PATCH:
-			diff_flush_patch(p);
+			diff_flush_patch(p, options);
 			break;
 		case DIFF_FORMAT_RAW:
 		case DIFF_FORMAT_NAME_STATUS:
