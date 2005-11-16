@@ -410,8 +410,7 @@ foreach my $ps (@psets) {
     open  HEAD, ">$git_dir/refs/heads/$ps->{branch}";
     print HEAD $commitid;
     close HEAD;
-    unlink ("$git_dir/HEAD");
-    symlink("refs/heads/$ps->{branch}","$git_dir/HEAD");
+    system('git-update-ref', 'HEAD', "$ps->{branch}");
 
     # tag accordingly
     ptag($ps->{id}, $commitid); # private tag
