@@ -35,6 +35,9 @@ git-commit -m 'Second Version'
 git-diff-tree -p master binary >B.diff
 git-diff-tree -p -C master binary >C.diff
 
+git-diff-tree -p --full-index master binary >BF.diff
+git-diff-tree -p --full-index -C master binary >CF.diff
+
 test_expect_success 'stat binary diff -- should not fail.' \
 	'git-checkout master
 	 git-apply --stat --summary B.diff'
@@ -59,28 +62,54 @@ test_expect_failure 'check incomplete binary diff with replacement (copy) -- sho
 	'git-checkout master
 	 git-apply --check --allow-binary-replacement C.diff'
 
+test_expect_success 'check binary diff with replacement.' \
+	'git-checkout master
+	 git-apply --check --allow-binary-replacement BF.diff'
+
+test_expect_success 'check binary diff with replacement (copy).' \
+	'git-checkout master
+	 git-apply --check --allow-binary-replacement CF.diff'
+
 # Now we start applying them.
 
+do_reset () {
+	rm -f file?
+	git-reset --hard
+	git-checkout -f master
+}
+
 test_expect_failure 'apply binary diff -- should fail.' \
-	'git-checkout master
+	'do_reset
 	 git-apply B.diff'
 
-git-reset --hard
-
 test_expect_failure 'apply binary diff -- should fail.' \
-	'git-checkout master
+	'do_reset
 	 git-apply --index B.diff'
 
-git-reset --hard
-
 test_expect_failure 'apply binary diff (copy) -- should fail.' \
-	'git-checkout master
+	'do_reset
 	 git-apply C.diff'
 
-git-reset --hard
-
 test_expect_failure 'apply binary diff (copy) -- should fail.' \
-	'git-checkout master
+	'do_reset
 	 git-apply --index C.diff'
+
+test_expect_failure 'apply binary diff without replacement -- should fail.' \
+	'do_reset
+	 git-apply BF.diff'
+
+test_expect_failure 'apply binary diff without replacement (copy) -- should fail.' \
+	'do_reset
+	 git-apply CF.diff'
+
+test_expect_success 'apply binary diff.' \
+	'do_reset
+	 git-apply --allow-binary-replacement --index BF.diff &&
+	 test -z "$(git-diff --name-status binary)"'
+
+test_expect_success 'apply binary diff (copy).' \
+	'do_reset
+	 git-apply --allow-binary-replacement --index CF.diff &&
+	 test -z "$(git-diff --name-status binary)"'
 
 test_done
