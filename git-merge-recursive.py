@@ -3,11 +3,13 @@
 # Copyright (C) 2005 Fredrik Kuivinen
 #
 
-import sys, math, random, os, re, signal, tempfile, stat, errno, traceback
+import sys
+sys.path.append('''@@GIT_PYTHON_PATH@@''')
+
+import math, random, os, re, signal, tempfile, stat, errno, traceback
 from heapq import heappush, heappop
 from sets import Set
 
-sys.path.append('''@@GIT_PYTHON_PATH@@''')
 from gitMergeCommon import *
 
 outputIndent = 0
