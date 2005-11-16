@@ -39,5 +39,9 @@ while : ; do
 	esac
 	shift
 done
+[ "$pattern" ] || {
+	echo >&2 "usage: 'git grep <pattern> [pathspec*]'"
+	exit 1
+}
 git-ls-files -z "${git_flags[@]}" "$@" |
 	xargs -0 grep "${flags[@]}" -e "$pattern"
