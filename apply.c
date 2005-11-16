@@ -891,7 +891,7 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 
 	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
 
-	if (!patchsize && !metadata_changes(patch)) {
+	if (!patchsize) {
 		static const char binhdr[] = "Binary files ";
 
 		if (sizeof(binhdr) - 1 < size - offset - hdrsize &&
@@ -899,9 +899,12 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 			    sizeof(binhdr)-1))
 			patch->is_binary = 1;
 
-		if (patch->is_binary && !apply && !check)
-			;
-		else
+		/* Empty patch cannot be applied if:
+		 * - it is a binary patch or
+		 * - metadata does not change and is not a binary patch.
+		 */
+		if ((apply || check) &&
+		    (patch->is_binary || !metadata_changes(patch)))
 			die("patch with only garbage at line %d", linenr);
 	}
 
