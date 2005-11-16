@@ -3,16 +3,10 @@
 #
 . git-sh-setup || die "Not a git archive"
 
-files=$(git-diff-index --cached --name-only HEAD) || exit
-if [ "$files" ]; then
-   echo "Dirty index: cannot apply patches (dirty: $files)" >&2
-   exit 1
-fi
-
 usage () {
     echo >&2 "usage: $0 [--signoff] [--dotest=<dir>] [--utf8] [--3way] <mbox>"
     echo >&2 "	or, when resuming"
-    echo >&2 "	$0 [--skip]"
+    echo >&2 "	$0 [--skip | --resolved]"
     exit 1;
 }
 
@@ -104,7 +98,7 @@ fall_back_3way () {
 }
 
 prec=4
-dotest=.dotest sign= utf8= keep= skip= interactive=
+dotest=.dotest sign= utf8= keep= skip= interactive= resolved=
 
 while case "$#" in 0) break;; esac
 do
@@ -128,6 +122,9 @@ do
 	-k|--k|--ke|--kee|--keep)
 	keep=t; shift ;;
 
+	-r|--r|--re|--res|--reso|--resol|--resolv|--resolve|--resolved)
+	resolved=t; shift ;;
+
 	--sk|--ski|--skip)
 	skip=t; shift ;;
 
@@ -140,6 +137,8 @@ do
 	esac
 done
 
+# If the dotest directory exists, but we have finished applying all the
+# patches in them, clear it out.
 if test -d "$dotest" &&
    last=$(cat "$dotest/last") &&
    next=$(cat "$dotest/next") &&
@@ -155,9 +154,9 @@ then
 	die "previous dotest directory $dotest still exists but mbox given."
 	resume=yes
 else
-	# Make sure we are not given --skip
-	test ",$skip," = ,, ||
-	die "we are not resuming."
+	# Make sure we are not given --skip nor --resolved
+	test ",$skip,$resolved," = ,,, ||
+		die "we are not resuming."
 
 	# Start afresh.
 	mkdir -p "$dotest" || exit
@@ -170,11 +169,23 @@ else
 		exit 1
 	}
 
+	# -s, -u and -k flags are kept for the resuming session after
+	# a patch failure.
+	# -3 and -i can and must be given when resuming.
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
 	echo 1 >"$dotest/next"
 fi
+
+case "$resolved" in
+'')
+	files=$(git-diff-index --cached --name-only HEAD) || exit
+	if [ "$files" ]; then
+	   echo "Dirty index: cannot apply patches (dirty: $files)" >&2
+	   exit 1
+	fi
+esac
 
 if test "$(cat "$dotest/utf8")" = t
 then
@@ -216,6 +227,15 @@ do
 		go_next
 		continue
 	}
+
+	# If we are not resuming, parse and extract the patch information
+	# into separate files:
+	#  - info records the authorship and title
+	#  - msg is the rest of commit log message
+	#  - patch is the patch body.
+	#
+	# When we are resuming, these files are either already prepared
+	# by the user, or the user can tell us to do so by --resolved flag.
 	case "$resume" in
 	'')
 		git-mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
@@ -263,6 +283,13 @@ do
 		fi
 	    } >"$dotest/final-commit"
 	    ;;
+	*)
+		case "$resolved,$interactive" in
+		tt)
+			# This is used only for interactive view option.
+			git-diff-index -p --cached HEAD >"$dotest/patch"
+			;;
+		esac
 	esac
 
 	resume=
@@ -310,7 +337,21 @@ do
 	echo "Applying '$SUBJECT'"
 	echo
 
-	git-apply --index "$dotest/patch"; apply_status=$?
+	case "$resolved" in
+	'')
+		git-apply --index "$dotest/patch"
+		apply_status=$?
+		;;
+	t)
+		# Resolved means the user did all the hard work, and
+		# we do not have to do any patch application.  Just
+		# trust what the user has in the index file and the
+		# working tree.
+		resolved=
+		apply_status=0
+		;;
+	esac
+
 	if test $apply_status = 1 && test "$threeway" = t
 	then
 		if (fall_back_3way)
