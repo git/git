@@ -594,6 +594,7 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--inetd")) {
 			inetd_mode = 1;
+			log_syslog = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--verbose")) {
@@ -602,7 +603,6 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--syslog")) {
 			log_syslog = 1;
-			openlog("git-daemon", 0, LOG_DAEMON);
 			continue;
 		}
 		if (!strcmp(arg, "--export-all")) {
@@ -611,9 +611,11 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--timeout=", 10)) {
 			timeout = atoi(arg+10);
+			continue;
 		}
 		if (!strncmp(arg, "--init-timeout=", 15)) {
 			init_timeout = atoi(arg+15);
+			continue;
 		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
@@ -626,9 +628,11 @@ int main(int argc, char **argv)
 		usage(daemon_usage);
 	}
 
+	if (log_syslog)
+		openlog("git-daemon", 0, LOG_DAEMON);
+
 	if (inetd_mode) {
 		fclose(stderr); //FIXME: workaround
-		log_syslog = 1;
 		return execute();
 	}
 
