@@ -57,14 +57,14 @@ some files in the index and are ready to commit. You want to see eactly
 *what* you are going to commit is without having to write a new tree
 object and compare it that way, and to do that, you just do
 
-	git-diff-index --cached $(cat .git/HEAD)
+	git-diff-index --cached HEAD
 
 Example: let's say I had renamed `commit.c` to `git-commit.c`, and I had
 done an "git-update-index" to make that effective in the index file.
 "git-diff-files" wouldn't show anything at all, since the index file
 matches my working directory. But doing a "git-diff-index" does:
 
-  torvalds@ppc970:~/git> git-diff-index --cached $(cat .git/HEAD)
+  torvalds@ppc970:~/git> git-diff-index --cached HEAD
   -100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        commit.c
   +100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        git-commit.c
 
@@ -98,7 +98,7 @@ show that. So let's say that you have edited `kernel/sched.c`, but
 have not actually done a "git-update-index" on it yet - there is no
 "object" associated with the new state, and you get:
 
-  torvalds@ppc970:~/v2.6/linux> git-diff-index $(cat .git/HEAD )
+  torvalds@ppc970:~/v2.6/linux> git-diff-index HEAD
   *100644->100664 blob    7476bb......->000000......      kernel/sched.c
 
 ie it shows that the tree has changed, and that `kernel/sched.c` has is

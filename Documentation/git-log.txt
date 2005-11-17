@@ -20,7 +20,7 @@ This manual page describes only the most frequently used options.
 
 OPTIONS
 -------
---pretty=<format>:
+--pretty=<format>::
 	Controls the way the commit log is formatted.
 
 --max-count=<n>::

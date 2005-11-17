@@ -16,6 +16,7 @@
 //  --numstat does numeric diffstat, and doesn't actually apply
 //  --index-info shows the old and new index info for paths if available.
 //
+static int allow_binary_replacement = 0;
 static int check_index = 0;
 static int write_index = 0;
 static int diffstat = 0;
@@ -27,7 +28,7 @@ static int no_add = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [-z] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -891,7 +892,7 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 
 	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
 
-	if (!patchsize && !metadata_changes(patch)) {
+	if (!patchsize) {
 		static const char binhdr[] = "Binary files ";
 
 		if (sizeof(binhdr) - 1 < size - offset - hdrsize &&
@@ -899,9 +900,14 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 			    sizeof(binhdr)-1))
 			patch->is_binary = 1;
 
-		if (patch->is_binary && !apply && !check)
-			;
-		else
+		/* Empty patch cannot be applied if:
+		 * - it is a binary patch and we do not do binary_replace, or
+		 * - text patch without metadata change
+		 */
+		if ((apply || check) &&
+		    (patch->is_binary
+		     ? !allow_binary_replacement
+		     : !metadata_changes(patch)))
 			die("patch with only garbage at line %d", linenr);
 	}
 
@@ -1155,10 +1161,77 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
+	const char *name = patch->old_name ? patch->old_name : patch->new_name;
+
+	if (patch->is_binary) {
+		unsigned char sha1[20];
+
+		if (!allow_binary_replacement)
+			return error("cannot apply binary patch to '%s' "
+				     "without --allow-binary-replacement",
+				     name);
+
+		/* For safety, we require patch index line to contain
+		 * full 40-byte textual SHA1 for old and new, at least for now.
+		 */
+		if (strlen(patch->old_sha1_prefix) != 40 ||
+		    strlen(patch->new_sha1_prefix) != 40 ||
+		    get_sha1_hex(patch->old_sha1_prefix, sha1) ||
+		    get_sha1_hex(patch->new_sha1_prefix, sha1))
+			return error("cannot apply binary patch to '%s' "
+				     "without full index line", name);
+
+		if (patch->old_name) {
+			unsigned char hdr[50];
+			int hdrlen;
+
+			/* See if the old one matches what the patch
+			 * applies to.
+			 */
+			write_sha1_file_prepare(desc->buffer, desc->size,
+						"blob", sha1, hdr, &hdrlen);
+			if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
+				return error("the patch applies to '%s' (%s), "
+					     "which does not match the "
+					     "current contents.",
+					     name, sha1_to_hex(sha1));
+		}
+		else {
+			/* Otherwise, the old one must be empty. */
+			if (desc->size)
+				return error("the patch applies to an empty "
+					     "'%s' but it is not empty", name);
+		}
+
+		/* For now, we do not record post-image data in the patch,
+		 * and require the object already present in the recipient's
+		 * object database.
+		 */
+		if (desc->buffer) {
+			free(desc->buffer);
+			desc->alloc = desc->size = 0;
+		}
+		get_sha1_hex(patch->new_sha1_prefix, sha1);
+
+		if (memcmp(sha1, null_sha1, 20)) {
+			char type[10];
+			unsigned long size;
+
+			desc->buffer = read_sha1_file(sha1, type, &size);
+			if (!desc->buffer)
+				return error("the necessary postimage %s for "
+					     "'%s' does not exist",
+					     patch->new_sha1_prefix, name);
+			desc->alloc = desc->size = size;
+		}
+
+		return 0;
+	}
 
 	while (frag) {
 		if (apply_one_fragment(desc, frag) < 0)
-			return error("patch failed: %s:%ld", patch->old_name, frag->oldpos);
+			return error("patch failed: %s:%ld",
+				     name, frag->oldpos);
 		frag = frag->next;
 	}
 	return 0;
@@ -1200,6 +1273,7 @@ static int check_patch(struct patch *patch)
 	struct stat st;
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
+	const char *name = old_name ? old_name : new_name;
 
 	if (old_name) {
 		int changed;
@@ -1274,7 +1348,7 @@ static int check_patch(struct patch *patch)
 	}	
 
 	if (apply_data(patch, &st) < 0)
-		return error("%s: patch does not apply", old_name);
+		return error("%s: patch does not apply", name);
 	return 0;
 }
 
@@ -1721,6 +1795,10 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "--stat")) {
 			apply = 0;
 			diffstat = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--allow-binary-replacement")) {
+			allow_binary_replacement = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--numstat")) {

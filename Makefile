@@ -50,7 +50,7 @@
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9i
+GIT_VERSION = 0.99.9j
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -88,7 +88,7 @@ SCRIPT_SH = \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
-	git-tag.sh git-verify-tag.sh git-whatchanged.sh git.sh \
+	git-tag.sh git-verify-tag.sh git-whatchanged.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
@@ -105,7 +105,7 @@ SCRIPT_PYTHON = \
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
-	git-stripspace$X git-var$X git-daemon$X
+	git-stripspace$X git-daemon$X
 
 # ... and all the rest
 PROGRAMS = \
@@ -125,7 +125,7 @@ PROGRAMS = \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
-	git-name-rev$X git-pack-redundant$X $(SIMPLE_PROGRAMS)
+	git-name-rev$X git-pack-redundant$X git-var$X $(SIMPLE_PROGRAMS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -334,19 +334,15 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(PROGRAMS) $(SCRIPTS)
+all: $(PROGRAMS) $(SCRIPTS) git
 
 all:
 	$(MAKE) -C templates
 
-git: git.sh Makefile
-	rm -f $@+ $@
-	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
-	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    -e 's/@@X@@/$(X)/g' \
-	    $(GIT_LIST_TWEAK) <$@.sh >$@+
-	chmod +x $@+
-	mv $@+ $@
+# Only use $(CFLAGS). We don't need anything else.
+git: git.c Makefile
+	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
+		$(CFLAGS) $@.c -o $@
 
 $(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
 	rm -f $@
@@ -431,9 +427,9 @@ check:
 
 ### Installation rules
 
-install: $(PROGRAMS) $(SCRIPTS)
+install: $(PROGRAMS) $(SCRIPTS) git
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) git $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
@@ -446,20 +442,20 @@ install-doc:
 
 ### Maintainer's dist rules
 
-git-core.spec: git-core.spec.in Makefile
+git.spec: git.spec.in Makefile
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
 
-GIT_TARNAME=git-core-$(GIT_VERSION)
-dist: git-core.spec git-tar-tree
+GIT_TARNAME=git-$(GIT_VERSION)
+dist: git.spec git-tar-tree
 	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
-	@cp git-core.spec $(GIT_TARNAME)
-	$(TAR) rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git-core.spec
+	@cp git.spec $(GIT_TARNAME)
+	$(TAR) rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git.spec
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
 rpm: dist
-	$(RPMBUILD) -ta git-core-$(GIT_VERSION).tar.gz
+	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
 deb: dist
 	rm -rf $(GIT_TARNAME)
@@ -472,7 +468,7 @@ deb: dist
 clean:
 	rm -f *.o mozilla-sha1/*.o ppc/*.o compat/*.o $(PROGRAMS) $(LIB_FILE)
 	rm -f $(filter-out gitk,$(SCRIPTS))
-	rm -f git-core.spec *.pyc *.pyo
+	rm -f *.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.dsc

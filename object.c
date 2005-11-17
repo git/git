@@ -67,40 +67,66 @@ void created_object(const unsigned char *sha1, struct object *obj)
 	nr_objs++;
 }
 
-void add_ref(struct object *refer, struct object *target)
+struct object_refs *alloc_object_refs(unsigned count)
 {
-	struct object_list **pp, *p;
+	struct object_refs *refs;
+	size_t size = sizeof(*refs) + count*sizeof(struct object *);
 
-	if (!track_object_refs)
+	refs = xmalloc(size);
+	memset(refs, 0, size);
+	refs->count = count;
+	return refs;
+}
+
+static int compare_object_pointers(const void *a, const void *b)
+{
+	const struct object * const *pa = a;
+	const struct object * const *pb = b;
+	return *pa - *pb;
+}
+
+void set_object_refs(struct object *obj, struct object_refs *refs)
+{
+	unsigned int i, j;
+
+	/* Do not install empty list of references */
+	if (refs->count < 1) {
+		free(refs);
 		return;
-
-	pp = &refer->refs;
-	while ((p = *pp) != NULL) {
-		if (p->item == target)
-			return;
-		pp = &p->next;
 	}
 
-	target->used = 1;
-	p = xmalloc(sizeof(*p));
-	p->item = target;
-	p->next = NULL;
-	*pp = p;
+	/* Sort the list and filter out duplicates */
+	qsort(refs->ref, refs->count, sizeof(refs->ref[0]),
+	      compare_object_pointers);
+	for (i = j = 1; i < refs->count; i++) {
+		if (refs->ref[i] != refs->ref[i - 1])
+			refs->ref[j++] = refs->ref[i];
+	}
+	if (j < refs->count) {
+		/* Duplicates were found - reallocate list */
+		size_t size = sizeof(*refs) + j*sizeof(struct object *);
+		refs->count = j;
+		refs = xrealloc(refs, size);
+	}
+
+	for (i = 0; i < refs->count; i++)
+		refs->ref[i]->used = 1;
+	obj->refs = refs;
 }
 
 void mark_reachable(struct object *obj, unsigned int mask)
 {
-	struct object_list *p = obj->refs;
-
 	if (!track_object_refs)
 		die("cannot do reachability with object refs turned off");
 	/* If we've been here already, don't bother */
 	if (obj->flags & mask)
 		return;
 	obj->flags |= mask;
-	while (p) {
-		mark_reachable(p->item, mask);
-		p = p->next;
+	if (obj->refs) {
+		const struct object_refs *refs = obj->refs;
+		unsigned i;
+		for (i = 0; i < refs->count; i++)
+			mark_reachable(refs->ref[i], mask);
 	}
 }
 

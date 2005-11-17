@@ -148,6 +148,7 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 {
 	void *bufptr = buffer;
 	struct tree_entry_list **list_p;
+	int n_refs = 0;
 
 	if (item->object.parsed)
 		return 0;
@@ -184,11 +185,21 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 			obj = &entry->item.blob->object;
 		}
 		if (obj)
-			add_ref(&item->object, obj);
+			n_refs++;
 		entry->parent = NULL; /* needs to be filled by the user */
 		*list_p = entry;
 		list_p = &entry->next;
 	}
+
+	if (track_object_refs) {
+		struct tree_entry_list *entry;
+		unsigned i = 0;
+		struct object_refs *refs = alloc_object_refs(n_refs);
+		for (entry = item->entries; entry; entry = entry->next)
+			refs->ref[i++] = entry->item.any;
+		set_object_refs(&item->object, refs);
+	}
+
 	return 0;
 }
 

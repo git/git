@@ -437,7 +437,11 @@ unless(-d $git_dir) {
 		       "Either use the correct '-o branch' option,\n".
 		       "or import to a new repository.\n";
 
-	$last_branch = basename(readlink("$git_dir/HEAD"));
+	open(F, "git-symbolic-ref HEAD |") or
+		die "Cannot run git-symbolic-ref: $!\n";
+	chomp ($last_branch = <F>);
+	$last_branch = basename($last_branch);
+	close(F);
 	unless($last_branch) {
 		warn "Cannot read the last branch name: $! -- assuming 'master'\n";
 		$last_branch = "master";
@@ -829,8 +833,7 @@ if($orig_branch) {
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		unless -f "$git_dir/refs/heads/master";
-	unlink("$git_dir/HEAD");
-	symlink("refs/heads/$orig_branch","$git_dir/HEAD");
+	system('git-update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
 		system('git checkout');
 		die "checkout failed: $?\n" if $?;

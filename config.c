@@ -214,6 +214,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.symrefsonly")) {
+		only_use_symrefs = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "user.name")) {
 		strncpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
@@ -221,6 +226,11 @@ int git_default_config(const char *var, const char *value)
 
 	if (!strcmp(var, "user.email")) {
 		strncpy(git_default_email, value, sizeof(git_default_email));
+		return 0;
+	}
+
+	if (!strcmp(var, "diff.renamelimit")) {
+		diff_rename_limit_default = git_config_int(var, value);
 		return 0;
 	}
 

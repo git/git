@@ -35,7 +35,7 @@ OPTIONS
 	do not have the 'git-daemon-export-ok' file.
 
 --inetd::
-	Have the server run as an inetd service.
+	Have the server run as an inetd service. Implies --syslog.
 
 --port::
 	Listen on an alternative port.

@@ -68,7 +68,7 @@ that aren't readable from any of the specified head nodes.
 
 So for example
 
-	git-fsck-objects --unreachable $(cat .git/HEAD .git/refs/heads/*)
+	git-fsck-objects --unreachable HEAD $(cat .git/refs/heads/*)
 
 will do quite a _lot_ of verification on the tree. There are a few
 extra validity tests to be added (make sure that tree objects are

@@ -204,6 +204,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 	unsigned char parent[20];
 	struct commit_list **pptr;
 	struct commit_graft *graft;
+	unsigned n_refs = 0;
 
 	if (item->object.parsed)
 		return 0;
@@ -214,7 +215,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		return error("bad tree pointer in commit %s\n", sha1_to_hex(item->object.sha1));
 	item->tree = lookup_tree(parent);
 	if (item->tree)
-		add_ref(&item->object, &item->tree->object);
+		n_refs++;
 	bufptr += 46; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
 
@@ -230,7 +231,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		new_parent = lookup_commit(parent);
 		if (new_parent) {
 			pptr = &commit_list_insert(new_parent, pptr)->next;
-			add_ref(&item->object, &new_parent->object);
+			n_refs++;
 		}
 	}
 	if (graft) {
@@ -241,10 +242,22 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 			if (!new_parent)
 				continue;
 			pptr = &commit_list_insert(new_parent, pptr)->next;
-			add_ref(&item->object, &new_parent->object);
+			n_refs++;
 		}
 	}
 	item->date = parse_commit_date(bufptr);
+
+	if (track_object_refs) {
+		unsigned i = 0;
+		struct commit_list *p;
+		struct object_refs *refs = alloc_object_refs(n_refs);
+		if (item->tree)
+			refs->ref[i++] = &item->tree->object;
+		for (p = item->parents; p; p = p->next)
+			refs->ref[i++] = &p->item->object;
+		set_object_refs(&item->object, refs);
+	}
+
 	return 0;
 }
 

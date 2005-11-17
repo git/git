@@ -13,6 +13,11 @@
 --name-status::
 	Show only names and status of changed files.
 
+--full-index::
+	Instead of the first handful characters, show full
+	object name of pre- and post-image blob on the "index"
+	line when generating a patch format output.	
+
 -B::
 	Break complete rewrite changes into pairs of delete and create.
 

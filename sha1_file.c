@@ -424,7 +424,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	struct packed_git *p;
 	unsigned long idx_size;
 	void *idx_map;
-	char sha1[20];
+	unsigned char sha1[20];
 
 	if (check_packed_git_idx(path, &idx_size, &idx_map))
 		return NULL;

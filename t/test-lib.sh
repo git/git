@@ -158,6 +158,8 @@ test_done () {
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
+GIT_EXEC_PATH=$(pwd)/..
+export GIT_EXEC_PATH
 
 # Test repository
 test=trash

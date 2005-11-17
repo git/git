@@ -4,6 +4,7 @@ use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
+use File::Basename qw(basename);
 
 unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
@@ -11,7 +12,7 @@ unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
 
 our ($opt_h, $opt_p, $opt_v, $opt_c );
 
-getopt('hpvc');
+getopts('hpvc');
 
 $opt_h && usage();
 
@@ -77,7 +78,7 @@ $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
 
 # grab the commit message
 `git-cat-file commit $commit | sed -e '1,/^\$/d' > .msg`;
-$? && die "Error extraction the commit message";
+$? && die "Error extracting the commit message";
 
 my (@afiles, @dfiles, @mfiles);
 my @files = `git-diff-tree -r $parent $commit`;
@@ -187,9 +188,9 @@ my $cmd = "cvs commit -F .msg $commitfiles";
 
 if ($dirtypatch) {
     print "NOTE: One or more hunks failed to apply cleanly.\n";
-    print "Resolve the conflicts and then commit using:n";
+    print "Resolve the conflicts and then commit using:\n";
     print "\n    $cmd\n\n";
-    exit;
+    exit(1);
 }
 
 
@@ -206,8 +207,7 @@ if ($opt_c) {
 }
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.gi ${\basename $0}      # fetch/update GIT from CVS
-       [-h] [-p] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [ parent ] commit
 END
 	exit(1);
 }

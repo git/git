@@ -8,13 +8,33 @@ git - the stupid content tracker
 
 SYNOPSIS
 --------
-'git-<command>' <args>
+'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ARGS]
 
 DESCRIPTION
 -----------
+'git' is both a program and a directory content tracker system.
+The program 'git' is just a wrapper to reach the core git programs
+(or a potty if you like, as it's not exactly porcelain but still
+brings your stuff to the plumbing).
 
-This is reference information for the core git commands.
+OPTIONS
+-------
+--version::
+	prints the git suite version that the 'git' program came from.
 
+--help::
+	prints the synopsis and a list of available commands.
+	If a git command is named this option will bring up the
+	man-page for that command.
+
+--exec-path::
+	path to wherever your core git programs are installed.
+	This can also be controlled by setting the GIT_EXEC_PATH
+	environment variable. If no path is given 'git' will print
+	the current setting and then exit.
+
+CORE GIT COMMANDS
+-----------------
 Before reading this cover to cover, you may want to take a look
 at the link:tutorial.html[tutorial] document.
 
@@ -67,7 +87,7 @@ gitlink:git-commit-tree[1]::
 gitlink:git-hash-object[1]::
 	Computes the object ID from a file.
 
-gitlink:git-index-pack.html[1]::
+gitlink:git-index-pack[1]::
 	Build pack index file for an existing packed archive.
 
 gitlink:git-init-db[1]::
@@ -533,9 +553,12 @@ Discussion[[Discussion]]
 ------------------------
 include::../README[]
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and the git-list <git@vger.kernel.org>.
+Authors
+-------
+	git's founding father is Linus Torvalds <torvalds@osdl.org>.
+	The current git nurse is Junio C. Hamano <junkio@cox.net>.
+	The git potty was written by Andres Ericsson <ae@op5.se>.
+	General upbringing is handled by the git-list <git@vger.kernel.org>.
 
 Documentation
 --------------

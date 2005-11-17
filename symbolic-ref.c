@@ -20,6 +20,7 @@ static void check_symref(const char *HEAD)
 int main(int argc, const char **argv)
 {
 	setup_git_directory();
+	git_config(git_default_config);
 	switch (argc) {
 	case 2:
 		check_symref(argv[1]);
