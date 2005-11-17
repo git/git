@@ -208,6 +208,10 @@ endif
 ifeq ($(uname_O),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	# There are conflicting reports about this.
+	# On some boxes NO_MMAP is needed, and not so elsewhere.
+	# Try uncommenting this if you see things break -- YMMV.
+	# NO_MMAP = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
 	ALL_CFLAGS += -DUSE_SYMLINK_HEAD=0
