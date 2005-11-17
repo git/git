@@ -72,13 +72,12 @@ my $git_dir = $ENV{"GIT_DIR"} || ".git";
 $ENV{"GIT_DIR"} = $git_dir;
 my $ptag_dir = "$git_dir/archimport/tags";
 
-our($opt_h,$opt_v, $opt_T,
-    $opt_C,$opt_t);
+our($opt_h,$opt_v, $opt_T,$opt_t,$opt_o);
 
 sub usage() {
     print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from Arch
-       [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
+       [ -o ] [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
        repository/arch-branch [ repository/arch-branch] ...
 END
     exit(1);
@@ -263,7 +262,15 @@ sub tree_dirname {
     return $name;
 }
 
-*git_branchname = *tree_dirname;
+# old versions of git-archimport just use the <category--branch> part:
+sub old_style_branchname {
+    my $id = shift;
+    my $ret = safe_pipe_capture($TLA,'parse-package-name','-p',$id);
+    chomp $ret;
+    return $ret;
+}
+
+*git_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
 
 # process patchsets
 foreach my $ps (@psets) {
@@ -629,8 +636,12 @@ sub parselog {
 sub tag {
     my ($tag, $commit) = @_;
  
-    # don't use subdirs for tags yet, it could screw up other porcelains
-    $tag =~ s|/|,|;
+    if ($opt_o) {
+        $tag =~ s|/|--|g;
+    } else {
+        # don't use subdirs for tags yet, it could screw up other porcelains
+        $tag =~ s|/|,|g;
+    }
     
     if ($commit) {
         open(C,">","$git_dir/refs/tags/$tag")
