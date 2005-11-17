@@ -11,6 +11,7 @@
  * which is what it's designed for.
  */
 #include "cache.h"
+#include <pwd.h>
 
 static char pathname[PATH_MAX];
 static char bad_path[] = "/bad-path/";
@@ -88,4 +89,75 @@ char *safe_strncpy(char *dest, const char *src, size_t n)
 	dest[n - 1] = '\0';
 
 	return dest;
+}
+
+static char *current_dir()
+{
+	return getcwd(pathname, sizeof(pathname));
+}
+
+/* Take a raw path from is_git_repo() and canonicalize it using Linus'
+ * idea of a blind chdir() and getcwd(). */
+static const char *canonical_path(char *path, int strict)
+{
+	char *dir = path;
+
+	if(strict && *dir != '/')
+		return NULL;
+
+	if(*dir == '~') {		/* user-relative path */
+		struct passwd *pw;
+		char *slash = strchr(dir, '/');
+
+		dir++;
+		/* '~/' and '~' (no slash) means users own home-dir */
+		if(!*dir || *dir == '/')
+			pw = getpwuid(getuid());
+		else {
+			if (slash) {
+				*slash = '\0';
+				pw = getpwnam(dir);
+				*slash = '/';
+			}
+			else
+				pw = getpwnam(dir);
+		}
+
+		/* make sure we got something back that we can chdir() to */
+		if(!pw || chdir(pw->pw_dir) < 0)
+			return NULL;
+
+		if(!slash || !slash[1]) /* no path following username */
+			return current_dir();
+
+		dir = slash + 1;
+	}
+
+	/* ~foo/path/to/repo is now path/to/repo and we're in foo's homedir */
+	if(chdir(dir) < 0)
+		return NULL;
+
+	return current_dir();
+}
+
+char *enter_repo(char *path, int strict)
+{
+	if(!path)
+		return NULL;
+
+	if(!canonical_path(path, strict)) {
+		if(strict || !canonical_path(mkpath("%s.git", path), strict))
+			return NULL;
+	}
+
+	/* This is perfectly safe, and people tend to think of the directory
+	 * where they ran git-init-db as their repository, so humour them. */
+	(void)chdir(".git");
+
+	if(access("objects", X_OK) == 0 && access("refs", X_OK) == 0) {
+		putenv("GIT_DIR=.");
+		return current_dir();
+	}
+
+	return NULL;
 }
