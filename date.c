@@ -34,7 +34,7 @@ static const char *month_names[] = {
 };
 
 static const char *weekday_names[] = {
-	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+	"Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"
 };
 
 /*
@@ -529,6 +529,22 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 			return end;
 		}
 		tl++;
+	}
+
+	for (i = 0; i < 7; i++) {
+		int match = match_string(date, weekday_names[i]);
+		if (match >= 3) {
+			int diff, n = *num -1;
+			*num = 0;
+
+			diff = tm->tm_wday - i;
+			if (diff <= 0)
+				n++;
+			diff += 7*n;
+
+			update_tm(tm, diff * 24 * 60 * 60);
+			return end;
+		}
 	}
 
 	if (match_string(date, "months") >= 5) {
