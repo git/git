@@ -15,10 +15,11 @@ static int verbose;
 
 static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
-"           [--timeout=n] [--init-timeout=n] [directory...]";
+"           [--timeout=n] [--init-timeout=n] [--strict-paths] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths = NULL;
+static int strict_paths = 0;
 
 /* If this is set, git-daemon-export-ok is not required */
 static int export_all_trees = 0;
@@ -81,69 +82,56 @@ static void loginfo(const char *err, ...)
 	va_end(params);
 }
 
-static int path_ok(const char *dir)
+static char *path_ok(char *dir)
 {
-	const char *p = dir;
-	char **pp;
-	int sl, ndot;
+	char *path = enter_repo(dir, strict_paths);
 
-	/* The pathname here should be an absolute path. */
-	if ( *p++ != '/' )
-		return 0;
-
-	sl = 1;  ndot = 0;
-
-	for (;;) {
-		if ( *p == '.' ) {
-			ndot++;
-		} else if ( *p == '\0' ) {
-			/* Reject "." and ".." at the end of the path */
-			if ( sl && ndot > 0 && ndot < 3 )
-				return 0;
-
-			/* Otherwise OK */
-			break;
-		} else if ( *p == '/' ) {
-			/* Refuse "", "." or ".." */
-			if ( sl && ndot < 3 )
-				return 0;
-			sl = 1;
-			ndot = 0;
-		} else {
-			sl = ndot = 0;
-		}
-		p++;
+	if (!path) {
+		logerror("'%s': unable to chdir or not a git archive", dir);
+		return NULL;
 	}
 
 	if ( ok_paths && *ok_paths ) {
-		int ok = 0;
+		char **pp = NULL;
 		int dirlen = strlen(dir);
+		int pathlen = strlen(path);
 
 		for ( pp = ok_paths ; *pp ; pp++ ) {
 			int len = strlen(*pp);
-			if ( len <= dirlen &&
-			     !strncmp(*pp, dir, len) &&
-			     (dir[len] == '/' || dir[len] == '\0') ) {
-				ok = 1;
-				break;
+			/* because of symlinks we must match both what the
+			 * user passed and the canonicalized path, otherwise
+			 * the user can send a string matching either a whitelist
+			 * entry or an actual directory exactly and still not
+			 * get through */
+			if (len <= pathlen && !memcmp(*pp, path, len)) {
+				if (path[len] == '\0' || (!strict_paths && path[len] == '/'))
+					return path;
+			}
+			if (len <= dirlen && !memcmp(*pp, dir, len)) {
+				if (dir[len] == '\0' || (!strict_paths && dir[len] == '/'))
+					return path;
 			}
 		}
-
-		if ( !ok )
-			return 0; /* Path not in whitelist */
+	}
+	else {
+		/* be backwards compatible */
+		if (!strict_paths)
+			return path;
 	}
 
-	return 1;		/* Path acceptable */
+	logerror("'%s': not in whitelist", path);
+	return NULL;		/* Fallthrough. Deny by default */
 }
 
-static int set_dir(const char *dir)
+static int upload(char *dir)
 {
-	if (!path_ok(dir)) {
-		errno = EACCES;
-		return -1;
-	}
+	/* Timeout as string */
+	char timeout_buf[64];
+	const char *path;
 
-	if ( chdir(dir) )
+	loginfo("Request for '%s'", dir);
+
+	if (!(path = path_ok(dir)))
 		return -1;
 
 	/*
@@ -152,42 +140,14 @@ static int set_dir(const char *dir)
 	 * We want a readable HEAD, usable "objects" directory, and
 	 * a "git-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
+	 *
+	 * path_ok() uses enter_repo() and does whitelist checking.
+	 * We only need to make sure the repository is exported.
 	 */
+
 	if (!export_all_trees && access("git-daemon-export-ok", F_OK)) {
+		logerror("'%s': repository not exported.", path);
 		errno = EACCES;
-		return -1;
-	}
-
-	if (access("objects/", X_OK) || access("HEAD", R_OK)) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	/* If all this passed, we're OK */
-	return 0;
-}
-
-static int upload(char *dir)
-{
-	/* Try paths in this order */
-	static const char *paths[] = { "%s", "%s/.git", "%s.git", "%s.git/.git", NULL };
-	const char **pp;
-	/* Enough for the longest path above including final null */
-	int buflen = strlen(dir)+10;
-	char *dirbuf = xmalloc(buflen);
-	/* Timeout as string */
-	char timeout_buf[64];
-
-	loginfo("Request for '%s'", dir);
-
-	for ( pp = paths ; *pp ; pp++ ) {
-		snprintf(dirbuf, buflen, *pp, dir);
-		if ( !set_dir(dirbuf) )
-			break;
-	}
-
-	if ( !*pp ) {
-		logerror("Cannot set directory '%s': %s", dir, strerror(errno));
 		return -1;
 	}
 
@@ -200,7 +160,7 @@ static int upload(char *dir)
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 
 	/* git-upload-pack only ever reads stuff, so this is safe */
-	execlp("git-upload-pack", "git-upload-pack", "--strict", timeout_buf, ".", NULL);
+	execlp("git-upload-pack", "git-upload-pack", "--strict", timeout_buf, path, NULL);
 	return -1;
 }
 
@@ -216,7 +176,7 @@ static int execute(void)
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
 
-	if (!strncmp("git-upload-pack /", line, 17))
+	if (!strncmp("git-upload-pack ", line, 16))
 		return upload(line+16);
 
 	logerror("Protocol error: '%s'", line);
@@ -617,6 +577,10 @@ int main(int argc, char **argv)
 			init_timeout = atoi(arg+15);
 			continue;
 		}
+		if (!strcmp(arg, "--strict-paths")) {
+			strict_paths = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
 			break;
@@ -630,6 +594,14 @@ int main(int argc, char **argv)
 
 	if (log_syslog)
 		openlog("git-daemon", 0, LOG_DAEMON);
+
+	if (strict_paths && (!ok_paths || !*ok_paths)) {
+		if (!inetd_mode)
+			die("git-daemon: option --strict-paths requires a whitelist");
+
+		logerror("option --strict-paths requires a whitelist");
+		exit (1);
+	}
 
 	if (inetd_mode) {
 		fclose(stderr); //FIXME: workaround

@@ -9,15 +9,16 @@
 - http://host.xz/path/to/repo.git/
 - https://host.xz/path/to/repo.git/
 - git://host.xz/path/to/repo.git/
+- git://host.xz/~user/path/to/repo.git/
 - ssh://host.xz/path/to/repo.git/
 - ssh://host.xz/~user/path/to/repo.git/
 - ssh://host.xz/~/path/to/repo.git
 ===============================================================
 +
 	SSH Is the default transport protocol and also supports an
-	scp-like syntax.  Both syntaxes support username expansion.
-	The following three are identical to the last three above,
-	respectively:
+	scp-like syntax.  Both syntaxes support username expansion,
+	as does the native git protocol. The following three are
+	identical to the last three above, respectively:
 +
 ===============================================================
 - host.xz:/path/to/repo.git/
