@@ -259,6 +259,7 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 const char *show_date(unsigned long time, int timezone);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
+unsigned long approxidate(const char *);
 
 extern int setup_ident(void);
 extern char *get_ident(const char *name, const char *email, const char *date_str);

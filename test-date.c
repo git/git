@@ -15,6 +15,9 @@ int main(int argc, char **argv)
 		parse_date(argv[i], result, sizeof(result));
 		t = strtoul(result, NULL, 0);
 		printf("%s -> %s -> %s", argv[i], result, ctime(&t));
+
+		t = approxidate(argv[i]);
+		printf("%s -> %s\n", argv[i], ctime(&t));
 	}
 	return 0;
 }
