@@ -17,6 +17,7 @@ git-clone
 git-clone-pack
 git-commit
 git-commit-tree
+git-config-set
 git-convert-objects
 git-count-objects
 git-cvsexportcommit
