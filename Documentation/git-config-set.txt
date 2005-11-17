@@ -1,0 +1,108 @@
+git-config-set(1)
+===============
+
+NAME
+----
+git-config-set - Set options in .git/config.
+
+
+SYNOPSIS
+--------
+'git-config-set' ( name [value [value_regex]] | --unset name [value_regex] )
+
+DESCRIPTION
+-----------
+You can set/replace/unset options with this command. The name is actually
+the section and the key separated by a dot, and the value will be escaped.
+
+If you want to set/unset an option which can occor on multiple lines, you
+should provide a POSIX regex for the value.
+
+This command will fail if
+
+. .git/config is invalid,
+. .git/config can not be written to,
+. no section was provided,
+. the section or key is invalid,
+. you try to unset an option which does not exist, or
+. you try to unset/set an option for which multiple lines match.
+
+
+OPTIONS
+-------
+
+--unset::
+	Remove the given option from .git/config
+
+
+EXAMPLE
+-------
+
+Given a .git/config like this:
+
+	#
+	# This is the config file, and
+	# a '#' or ';' character indicates
+	# a comment
+	#
+
+	; core variables
+	[core]
+		; Don't trust file modes
+		filemode = false
+
+	; Our diff algorithm
+	[diff]
+		external = "/usr/local/bin/gnu-diff -u"
+		renames = true
+
+	; Proxy settings
+	[proxy]
+		command="ssh" for "ssh://kernel.org/"
+		command="proxy-command" for kernel.org
+		command="myprotocol-command" for "my://"
+
+you can set the filemode to true with
+
+------------
+% git config-set core.filemode true
+------------
+
+The hypothetic proxy command entries actually have a postfix to discern
+to what URL they apply. Here is how to change the entry for kernel.org
+to "ssh".
+
+------------
+% git config-set proxy.command '"ssh" for kernel.org' 'for kernel.org$'
+------------
+
+This makes sure that only the key/value pair for kernel.org is replaced.
+
+To delete the entry for renames, do
+
+------------
+% git config-set --unset diff.renames
+------------
+
+or just
+
+------------
+% git config-set diff.renames
+------------
+
+If you want to delete an entry for a multivar (like proxy.command above),
+you have to provide a regex matching the value of exactly one line.
+
+
+Author
+------
+Written by Johannes Schindelin <Johannes.Schindelin@gmx.de>
+
+Documentation
+--------------
+Documentation by Johannes Schindelin.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

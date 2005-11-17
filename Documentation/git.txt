@@ -84,6 +84,9 @@ gitlink:git-checkout-index[1]::
 gitlink:git-commit-tree[1]::
 	Creates a new commit object
 
+gitlink:git-config-set[1]::
+	Set options in .git/config.
+
 gitlink:git-hash-object[1]::
 	Computes the object ID from a file.
 
