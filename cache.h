@@ -386,6 +386,8 @@ extern int git_default_config(const char *, const char *);
 extern int git_config(config_fn_t fn);
 extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
+extern int git_config_set(const char *, const char *);
+extern int git_config_set_multivar(const char *, const char *, const char *);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
