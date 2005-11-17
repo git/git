@@ -30,6 +30,24 @@ See man (1) git-archimport for more details.
 
 Add print in front of the shell commands invoked via backticks. 
 
+=head1 Devel Notes
+
+There are several places where Arch and git terminology are intermixed
+and potentially confused.
+
+The notion of a "branch" in git is approximately equivalent to
+a "archive/category--branch--version" in Arch.  Also, it should be noted
+that the "--branch" portion of "archive/category--branch--version" is really
+optional in Arch although not many people (nor tools!) seem to know this.
+This means that "archive/category--version" is also a valid "branch"
+in git terms.
+
+We always refer to Arch names by their fully qualified variant (which
+means the "archive" name is prefixed.
+
+For people unfamiliar with Arch, an "archive" is the term for "repository",
+and can contain multiple, unrelated branches.
+
 =cut
 
 use strict;
@@ -52,14 +70,14 @@ $ENV{'TZ'}="UTC";
 
 my $git_dir = $ENV{"GIT_DIR"} || ".git";
 $ENV{"GIT_DIR"} = $git_dir;
+my $ptag_dir = "$git_dir/archimport/tags";
 
-our($opt_h,$opt_v, $opt_T,
-    $opt_C,$opt_t);
+our($opt_h,$opt_v, $opt_T,$opt_t,$opt_o);
 
 sub usage() {
     print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from Arch
-       [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
+       [ -o ] [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
        repository/arch-branch [ repository/arch-branch] ...
 END
     exit(1);
@@ -195,25 +213,68 @@ unless (-d $git_dir) { # initial import
     opendir(DIR, "$git_dir/archimport/tags")
 	|| die "can't opendir: $!";
     while (my $file = readdir(DIR)) {
-	# skip non-interesting-files
-	next unless -f "$git_dir/archimport/tags/$file";
-	next if     $file =~ m/--base-0$/; # don't care for base-0
+        # skip non-interesting-files
+        next unless -f "$ptag_dir/$file";
+   
+        # convert first '--' to '/' from old git-archimport to use
+        # as an archivename/c--b--v private tag
+        if ($file !~ m!,!) {
+            my $oldfile = $file;
+            $file =~ s!--!,!;
+            print STDERR "converting old tag $oldfile to $file\n";
+            rename("$ptag_dir/$oldfile", "$ptag_dir/$file") or die $!;
+        }
 	my $sha = ptag($file);
 	chomp $sha;
-	# reconvert the 3rd '--' sequence from the end
-	# into a slash
-	# $file = reverse $file;
-	# $file =~ s!^(.+?--.+?--.+?--.+?)--(.+)$!$1/$2!;
-	# $file = reverse $file;
 	$rptags{$sha} = $file;
     }
     closedir DIR;
 }
 
 # process patchsets
-foreach my $ps (@psets) {
+# extract the Arch repository name (Arch "archive" in Arch-speak)
+sub extract_reponame {
+    my $fq_cvbr = shift; # archivename/[[[[category]branch]version]revision]
+    return (split(/\//, $fq_cvbr))[0];
+}
+ 
+sub extract_versionname {
+    my $name = shift;
+    $name =~ s/--(?:patch|version(?:fix)?|base)-\d+$//;
+    return $name;
+}
 
-    $ps->{branch} =  branchname($ps->{id});
+# convert a fully-qualified revision or version to a unique dirname:
+#   normalperson@yhbt.net-05/mpd--uclinux--1--patch-2 
+# becomes: normalperson@yhbt.net-05,mpd--uclinux--1
+#
+# the git notion of a branch is closer to
+# archive/category--branch--version than archive/category--branch, so we
+# use this to convert to git branch names.
+# Also, keep archive names but replace '/' with ',' since it won't require
+# subdirectories, and is safer than swapping '--' which could confuse
+# reverse-mapping when dealing with bastard branches that
+# are just archive/category--version  (no --branch)
+sub tree_dirname {
+    my $revision = shift;
+    my $name = extract_versionname($revision);
+    $name =~ s#/#,#;
+    return $name;
+}
+
+# old versions of git-archimport just use the <category--branch> part:
+sub old_style_branchname {
+    my $id = shift;
+    my $ret = safe_pipe_capture($TLA,'parse-package-name','-p',$id);
+    chomp $ret;
+    return $ret;
+}
+
+*git_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
+
+# process patchsets
+foreach my $ps (@psets) {
+    $ps->{branch} = git_branchname($ps->{id});
 
     #
     # ensure we have a clean state 
@@ -424,16 +485,9 @@ foreach my $ps (@psets) {
     $opt_v && print "   + parents:  $par \n";
 }
 
-sub branchname {
-    my $id = shift;
-    $id =~ s#^.+?/##;
-    my @parts = split(m/--/, $id);
-    return join('--', @parts[0..1]);
-}
-
 sub apply_import {
     my $ps = shift;
-    my $bname = branchname($ps->{id});
+    my $bname = git_branchname($ps->{id});
 
     `mkdir -p $tmp`;
 
@@ -581,19 +635,24 @@ sub parselog {
 # write/read a tag
 sub tag {
     my ($tag, $commit) = @_;
-    $tag =~ s|/|--|g; 
-    $tag = shell_quote($tag);
+ 
+    if ($opt_o) {
+        $tag =~ s|/|--|g;
+    } else {
+        # don't use subdirs for tags yet, it could screw up other porcelains
+        $tag =~ s|/|,|g;
+    }
     
     if ($commit) {
-        open(C,">$git_dir/refs/tags/$tag")
+        open(C,">","$git_dir/refs/tags/$tag")
             or die "Cannot create tag $tag: $!\n";
         print C "$commit\n"
             or die "Cannot write tag $tag: $!\n";
         close(C)
             or die "Cannot write tag $tag: $!\n";
-        print " * Created tag ' $tag' on '$commit'\n" if $opt_v;
+        print " * Created tag '$tag' on '$commit'\n" if $opt_v;
     } else {                    # read
-        open(C,"<$git_dir/refs/tags/$tag")
+        open(C,"<","$git_dir/refs/tags/$tag")
             or die "Cannot read tag $tag: $!\n";
         $commit = <C>;
         chomp $commit;
@@ -608,15 +667,16 @@ sub tag {
 # reads fail softly if the tag isn't there
 sub ptag {
     my ($tag, $commit) = @_;
-    $tag =~ s|/|--|g; 
-    $tag = shell_quote($tag);
+
+    # don't use subdirs for tags yet, it could screw up other porcelains
+    $tag =~ s|/|,|g; 
     
-    unless (-d "$git_dir/archimport/tags") {
-        mkpath("$git_dir/archimport/tags");
-    }
+    my $tag_file = "$ptag_dir/$tag";
+    my $tag_branch_dir = dirname($tag_file);
+    mkpath($tag_branch_dir) unless (-d $tag_branch_dir);
 
     if ($commit) {              # write
-        open(C,">$git_dir/archimport/tags/$tag")
+        open(C,">",$tag_file)
             or die "Cannot create tag $tag: $!\n";
         print C "$commit\n"
             or die "Cannot write tag $tag: $!\n";
@@ -626,10 +686,10 @@ sub ptag {
 	    unless $tag =~ m/--base-0$/;
     } else {                    # read
         # if the tag isn't there, return 0
-        unless ( -s "$git_dir/archimport/tags/$tag") {
+        unless ( -s $tag_file) {
             return 0;
         }
-        open(C,"<$git_dir/archimport/tags/$tag")
+        open(C,"<",$tag_file)
             or die "Cannot read tag $tag: $!\n";
         $commit = <C>;
         chomp $commit;
@@ -662,7 +722,7 @@ sub find_parents {
     # simple loop to split the merges
     # per branch
     foreach my $merge (@{$ps->{merges}}) {
-	my $branch = branchname($merge);
+	my $branch = git_branchname($merge);
 	unless (defined $branches{$branch} ){
 	    $branches{$branch} = [];
 	}
@@ -686,7 +746,13 @@ sub find_parents {
 	next unless -e "$git_dir/refs/heads/$branch";
 
 	my $mergebase = `git-merge-base $branch $ps->{branch}`;
-	die "Cannot find merge base for $branch and $ps->{branch}" if $?;
+ 	if ($?) { 
+ 	    # Don't die here, Arch supports one-way cherry-picking
+ 	    # between branches with no common base (or any relationship
+ 	    # at all beforehand)
+ 	    warn "Cannot find merge base for $branch and $ps->{branch}";
+ 	    next;
+ 	}
 	chomp $mergebase;
 
 	# now walk up to the mergepoint collecting what patches we have
@@ -779,12 +845,7 @@ sub commitid2pset {
     chomp $commitid;
     my $name = $rptags{$commitid} 
 	|| die "Cannot find reverse tag mapping for $commitid";
-    # the keys in %rptag  are slightly munged; unmunge
-    # reconvert the 3rd '--' sequence from the end
-    # into a slash
-    $name = reverse $name;
-    $name =~ s!^(.+?--.+?--.+?--.+?)--(.+)$!$1/$2!;
-    $name = reverse $name;
+    $name =~ s|,|/|;
     my $ps   = $psets{$name} 
 	|| (print Dumper(sort keys %psets)) && die "Cannot find patchset for $name";
     return $ps;
