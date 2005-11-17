@@ -16,6 +16,10 @@ Tool Renames Plan
    Each of these old-name commands continues to invoke its
    old-name counterpart on the other end.
 
+ - There was a discussion to move bulk of the git-* programs out
+   of /usr/bin and use /usr/lib/git; the central mechanism was
+   done, but the actual move is postponed post 1.0.
+
 
 What to expect after 0.99.9
 ===========================
@@ -66,7 +70,7 @@ Technical (heavier)
   magically work from any subdirectory" change by Linus.  It is
   a good change in principle and we would like to have that
   behaviour but some tool implementations I am sure are assuming
-  to never run from anywhere other than the top.
+  to never run from anywhere other than the top. [Post 1.0]
 
 * Ref namespace management.  Perhaps use refs/local/ suggestion
   by Linus.
@@ -113,15 +117,14 @@ Technical (milder)
 ------------------
 
 * Binary package split.  Plan laid out and discussion mostly
-  done.
+  done. [RPM side done; Debian side delegated]
 
-* User-relative paths by Andreas Ericsson.
+* User-relative paths by Andreas Ericsson. [Need to ping]
 
-* Proxing git:// connection by Paul Collins.
+* Proxing git:// connection by Paul Collins. [Need to ping]
 
 * Maybe look at Cogito and see if I can help Pasky to adjust to
-  the later core features?  Zack Brown's "cg-seek leaving empty
-  directories" problem is a good example of this.
+  the later core features?
 
 * Perhaps detect cloning request in upload-pack and cache the
   result for next cloning request until any of our refs change.
@@ -147,7 +150,7 @@ Technical (milder)
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
-  left off [mechanism mostly done].
+  left off [mechanism DONE; in pu].
 
 * Output full path in the "git-rev-list --objects" output, not
   just the basename, and see the improved clustering results in
@@ -158,7 +161,10 @@ Technical (milder)
   is what he needs hopefully soon].
 
 * Make sure we do reasonable thing on binary files even in
-  cherry-pick and rebase.
+  cherry-pick and rebase. [mechanism DONE; rebase in pu]
+
+* Customizable init-db.  Personally I think template mechanism
+  is good enough.  Otherwise, maybe add hooks/post-init-db.
 
 
 Technical (trivial)
@@ -175,8 +181,8 @@ Technical (trivial)
 
 * 'git lost-and-found'?  Link dangling commits found by
   fsck-objects under $GIT_DIR/refs/lost-found/.  Then
-  show-branch or gitk can be used to find any lost commit. [A
-  feeler patch sent out. Very underwhelming response X-<.]
+  show-branch or gitk can be used to find any lost commit.
+  [DONE]
 
   Do not name it /lost+found/; that would probably confuse
   things that mistake it a mount point (not our code but
