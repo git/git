@@ -454,32 +454,43 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 int git_connect(int fd[2], char *url, const char *prog)
 {
 	char command[1024];
-	char *host, *path;
-	char *colon;
+	char *host, *path = url;
+	char *colon = NULL;
 	int pipefd[2][2];
 	pid_t pid;
-	enum protocol protocol;
+	enum protocol protocol = PROTO_LOCAL;
 
-	host = NULL;
-	path = url;
-	colon = strchr(url, ':');
-	protocol = PROTO_LOCAL;
-	if (colon) {
-		*colon = 0;
+	host = strstr(url, "://");
+	if(host) {
+		*host = '\0';
+		protocol = get_protocol(url);
+		host += 3;
+		path = strchr(host, '/');
+	}
+	else {
 		host = url;
-		path = colon+1;
-		protocol = PROTO_SSH;
-		if (!memcmp(path, "//", 2)) {
-			char *slash = strchr(path + 2, '/');
-			if (slash) {
-				int nr = slash - path - 2;
-				memmove(path, path+2, nr);
-				path[nr] = 0;
-				protocol = get_protocol(url);
-				host = path;
-				path = slash;
-			}
+		if ((colon = strchr(host, ':'))) {
+			protocol = PROTO_SSH;
+			*colon = '\0';
+			path = colon + 1;
 		}
+	}
+
+	if (!path || !*path)
+		die("No path specified. See 'man git-pull' for valid url syntax");
+
+	/*
+	 * null-terminate hostname and point path to ~ for URL's like this:
+	 *    ssh://host.xz/~user/repo
+	 */
+	if (protocol != PROTO_LOCAL && host != url) {
+		char *ptr = path;
+		if (path[1] == '~')
+			path++;
+		else
+			path = strdup(ptr);
+
+		*ptr = '\0';
 	}
 
 	if (protocol == PROTO_GIT)
