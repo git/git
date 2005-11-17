@@ -10,7 +10,7 @@ case `hostname` in
 siamese)
 	scp $0 ${M}:./Distrib
 	cd /chroot/sarge/build/git &&
-	scp git-*_$V[-.]* git-core-$V.tar.gz ${M}:debian/.
+	scp git-*_$V[-.]* git-$V.tar.gz ${M}:debian/.
 	exit
 	;;
 esac
