@@ -248,7 +248,7 @@ static int upload_pack(void)
 
 int main(int argc, char **argv)
 {
-	const char *dir;
+	char *dir;
 	int i;
 	int strict = 0;
 
@@ -275,18 +275,9 @@ int main(int argc, char **argv)
 		usage(upload_pack_usage);
 	dir = argv[i];
 
-	/* chdir to the directory. If that fails, try appending ".git" */
-	if (chdir(dir) < 0) {
-		if (strict || chdir(mkpath("%s.git", dir)) < 0)
-			die("git-upload-pack unable to chdir to %s", dir);
-	}
-	if (!strict)
-		chdir(".git");
+	if (!enter_repo(dir, strict))
+		die("'%s': unable to chdir or not a git archive", dir);
 
-	if (access("objects", X_OK) || access("refs", X_OK))
-		die("git-upload-pack: %s doesn't seem to be a git archive", dir);
-
-	putenv("GIT_DIR=.");
 	upload_pack();
 	return 0;
 }

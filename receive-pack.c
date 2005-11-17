@@ -248,11 +248,11 @@ static void unpack(void)
 int main(int argc, char **argv)
 {
 	int i;
-	const char *dir = NULL;
+	char *dir = NULL;
 
 	argv++;
 	for (i = 1; i < argc; i++) {
-		const char *arg = *argv++;
+		char *arg = *argv++;
 
 		if (*arg == '-') {
 			/* Do flag handling here */
@@ -265,18 +265,9 @@ int main(int argc, char **argv)
 	if (!dir)
 		usage(receive_pack_usage);
 
-	/* chdir to the directory. If that fails, try appending ".git" */
-	if (chdir(dir) < 0) {
-		if (chdir(mkpath("%s.git", dir)) < 0)
-			die("unable to cd to %s", dir);
-	}
+	if(!enter_repo(dir, 0))
+		die("'%s': unable to chdir or not a git archive", dir);
 
-	/* If we have a ".git" directory, chdir to it */
-	chdir(".git");
-	putenv("GIT_DIR=.");
-
-	if (access("objects", X_OK) < 0 || access("refs/heads", X_OK) < 0)
-		die("%s doesn't appear to be a git directory", dir);
 	write_head_info();
 
 	/* EOF */
