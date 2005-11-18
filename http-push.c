@@ -165,6 +165,7 @@ static void start_check(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -198,6 +199,7 @@ static void start_mkcol(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -244,8 +246,6 @@ static void start_put(struct transfer_request *request)
 	request->buffer.size = stream.total_out;
 	request->buffer.posn = 0;
 
-	if (request->url != NULL)
-		free(request->url);
 	request->url = xmalloc(strlen(remote->url) + 
 			       strlen(request->lock->token) + 51);
 	strcpy(request->url, remote->url);
@@ -281,6 +281,7 @@ static void start_put(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -306,6 +307,7 @@ static void start_move(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -370,6 +372,13 @@ static void finish_request(struct transfer_request *request)
 
 	if (request->headers != NULL)
 		curl_slist_free_all(request->headers);
+
+	/* URL is reused for MOVE after PUT */
+	if (request->state != RUN_PUT) {
+		free(request->url);
+		request->url = NULL;
+	}		
+
 	if (request->state == RUN_HEAD) {
 		if (request->http_code == 404) {
 			request->state = NEED_PUSH;
@@ -435,7 +444,8 @@ static void release_request(struct transfer_request *request)
 			entry->next = entry->next->next;
 	}
 
-	free(request->url);
+	if (request->url != NULL)
+		free(request->url);
 	free(request);
 }
 
@@ -575,6 +585,7 @@ static int fetch_index(unsigned char *sha1)
 		}
 	} else {
 		free(url);
+		fclose(indexfile);
 		return error("Unable to start request");
 	}
 
