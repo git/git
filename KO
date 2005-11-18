@@ -9,6 +9,7 @@ h=$(git rev-parse $mb ko-master | sort -u | wc -l)
 if test "$h" != 1
 then
 	echo "OOOOOPPPPPPPPPPPPPPSSS! master is not ko-master fast forward."
+	exit 1
 fi
 git show-branch ko-master master
 git show-branch ko-maint maint

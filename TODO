@@ -119,7 +119,11 @@ Technical (milder)
 * Binary package split.  Plan laid out and discussion mostly
   done. [RPM side done; Debian side delegated]
 
-* User-relative paths by Andreas Ericsson. [Need to ping]
+* User-relative paths by Andreas Ericsson. [STILL BREWING BUT
+  ALMOST DONE]
+
+* Accessing configuration variables from C and from scripts by
+  Johannes [STILL BREWING BUT ALMOST DONE].
 
 * Proxing git:// connection by Paul Collins. [Need to ping]
 
@@ -160,11 +164,19 @@ Technical (milder)
   external spec sent out with a quick hack.  Will know if that
   is what he needs hopefully soon].
 
+* Customizable init-db.  Personally I think template mechanism
+  is good enough.  Otherwise, maybe add hooks/post-init-db.
+
 * Make sure we do reasonable thing on binary files even in
   cherry-pick and rebase. [mechanism DONE; rebase in pu]
 
-* Customizable init-db.  Personally I think template mechanism
-  is good enough.  Otherwise, maybe add hooks/post-init-db.
+* Binary diff detection fails if locale set to non English; even
+  GNU diff 2.8.1 and 2.8.7 in C locale say different things.  At
+  least run diff under C locale (setenv LANG=C LC_ALL=C) for
+  1.0.  It might be better to have our own binary detection
+  logic, or even our own diff output without forking an external
+  diff.  [The former _might_ make sense for 1.0, but the latter
+  is post 1.0].
 
 
 Technical (trivial)
