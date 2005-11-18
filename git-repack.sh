@@ -11,7 +11,7 @@ do
 	case "$1" in
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
-	-d)	remove_redandant=t ;;
+	-d)	remove_redundant=t ;;
 	-l)	local=t ;;
 	*)	break ;;
 	esac
@@ -42,7 +42,7 @@ name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) |
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
-	if test "$remove_redandant" = t ; then
+	if test "$remove_redundant" = t ; then
 		echo "Removing redundant packs."
 		sync
 		redundant=$(git-pack-redundant --all)
@@ -60,7 +60,7 @@ mv .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
 mv .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" ||
 exit
 
-if test "$remove_redandant" = t
+if test "$remove_redundant" = t
 then
 	sync
 	redundant=$(git-pack-redundant --all)

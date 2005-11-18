@@ -4,7 +4,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    echo >&2 "usage: $0 [--signoff] [--dotest=<dir>] [--utf8] [--3way] <mbox>"
+    echo >&2 "usage: $0 [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>"
     echo >&2 "	or, when resuming"
     echo >&2 "	$0 [--skip | --resolved]"
     exit 1;
@@ -40,7 +40,7 @@ fall_back_3way () {
 	    cd "$dotest/patch-merge-tmp-dir" &&
 	    GIT_INDEX_FILE="../patch-merge-tmp-index" \
 	    GIT_OBJECT_DIRECTORY="$O_OBJECT" \
-	    git-apply --index <../patch
+	    git-apply $binary --index <../patch
         )
     then
 	echo Using index info to reconstruct a base tree...
@@ -71,7 +71,7 @@ fall_back_3way () {
 		GIT_OBJECT_DIRECTORY="$O_OBJECT" &&
 		export GIT_INDEX_FILE GIT_OBJECT_DIRECTORY &&
 		git-read-tree "$base" &&
-		git-apply --index &&
+		git-apply $binary --index &&
 		mv ../patch-merge-tmp-index ../patch-merge-index &&
 		echo "$base" >../patch-merge-base
 	    ) <"$dotest/patch"  2>/dev/null && break
@@ -98,7 +98,7 @@ fall_back_3way () {
 }
 
 prec=4
-dotest=.dotest sign= utf8= keep= skip= interactive= resolved=
+dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary=
 
 while case "$#" in 0) break;; esac
 do
@@ -112,6 +112,9 @@ do
 	-i|--i|--in|--int|--inte|--inter|--intera|--interac|--interact|\
 	--interacti|--interactiv|--interactive)
 	interactive=t; shift ;;
+
+	-b|--b|--bi|--bin|--bina|--binar|--binary)
+	binary=t; shift ;;
 
 	-3|--3|--3w|--3wa|--3way)
 	threeway=t; shift ;;
@@ -169,9 +172,10 @@ else
 		exit 1
 	}
 
-	# -s, -u and -k flags are kept for the resuming session after
+	# -b, -s, -u and -k flags are kept for the resuming session after
 	# a patch failure.
 	# -3 and -i can and must be given when resuming.
+	echo "$binary" >"$dotest/binary"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
@@ -187,6 +191,10 @@ case "$resolved" in
 	fi
 esac
 
+if test "$(cat "$dotest/binary")" = t
+then
+	binary=--allow-binary-replacement
+fi
 if test "$(cat "$dotest/utf8")" = t
 then
 	utf8=-u
@@ -339,7 +347,7 @@ do
 
 	case "$resolved" in
 	'')
-		git-apply --index "$dotest/patch"
+		git-apply $binary --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)
