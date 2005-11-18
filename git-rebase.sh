@@ -5,65 +5,25 @@
 
 . git-sh-setup || die "Not a git archive."
 
-usage="usage: $0 "'<upstream> [<head>]
+# The other head is given
+other=$(git-rev-parse --verify "$1^0") || exit
 
-Uses output from git-cherry to rebase local commits to the new head of
-upstream tree.'
-
-case "$#,$1" in
-1,*..*)
-    upstream=$(expr "$1" : '\(.*\)\.\.') ours=$(expr "$1" : '.*\.\.\(.*\)$')
-    set x "$upstream" "$ours"
-    shift ;;
-esac
-
+# The tree must be really really clean.
 git-update-index --refresh || exit
-
-case "$#" in
-1) ours_symbolic=HEAD ;;
-2) ours_symbolic="$2" ;;
-*) die "$usage" ;;
+diff=$(git-diff-index --cached --name-status -r HEAD)
+case "$different" in
+?*)	echo "$diff"
+	exit 1
+	;;
 esac
 
-upstream=`git-rev-parse --verify "$1"` &&
-ours=`git-rev-parse --verify "$ours_symbolic"` || exit
-different1=$(git-diff-index --name-only --cached "$ours") &&
-different2=$(git-diff-index --name-only "$ours") &&
-test "$different1$different2" = "" ||
-die "Your working tree does not match $ours_symbolic."
+# If the branch to rebase is given, first switch to it.
+case "$#" in
+2)
+	git-checkout "$2" || exit
+esac
 
-git-read-tree -m -u $ours $upstream &&
-new_head=$(git-rev-parse --verify "$upstream^0") &&
-git-update-ref HEAD "$new_head" || exit
-
-tmp=.rebase-tmp$$
-fail=$tmp-fail
-trap "rm -rf $tmp-*" 1 2 3 15
-
->$fail
-
-git-cherry -v $upstream $ours |
-while read sign commit msg
-do
-	case "$sign" in
-	-)
-		echo >&2 "* Already applied: $msg"
-		continue ;;
-	esac
-	echo >&2 "* Applying: $msg"
-	S=$(git-rev-parse --verify HEAD) &&
-	git-cherry-pick --replay $commit || {
-		echo >&2 "* Not applying the patch and continuing."
-		echo $commit >>$fail
-		git-reset --hard $S
-	}
-done
-if test -s $fail
-then
-	echo >&2 Some commits could not be rebased, check by hand:
-	cat >&2 $fail
-	echo >&2 "(the same list of commits are found in $tmp)"
-	exit 1
-else
-	rm -f $fail
-fi
+# Rewind the head to "$other"
+git-reset --hard "$other"
+git-format-patch -k --stdout --full-index "$other" ORIG_HEAD |
+git am --binary -3 -k
