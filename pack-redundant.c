@@ -291,6 +291,7 @@ struct pll * get_all_permutations(struct pack_list *list)
 		hint[0] = new_pll;
 		new_pll->next = NULL;
 		new_pll->pl = list;
+		new_pll->pl_size = 1;
 		return new_pll;
 	}
 
