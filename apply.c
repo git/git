@@ -893,12 +893,24 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
 
 	if (!patchsize) {
-		static const char binhdr[] = "Binary files ";
+		static const char *binhdr[] = {
+			"Binary files ",
+			"Files ",
+			NULL,
+		};
+		int i;
+		int hd = hdrsize + offset;
+		unsigned long llen = linelen(buffer + hd, size - hd);
 
-		if (sizeof(binhdr) - 1 < size - offset - hdrsize &&
-		    !memcmp(binhdr, buffer + hdrsize + offset,
-			    sizeof(binhdr)-1))
-			patch->is_binary = 1;
+		if (!memcmp(" differ\n", buffer + hd + llen - 8, 8))
+			for (i = 0; binhdr[i]; i++) {
+				int len = strlen(binhdr[i]);
+				if (len < size - hd &&
+				    !memcmp(binhdr[i], buffer + hd, len)) {
+					patch->is_binary = 1;
+					break;
+				}
+			}
 
 		/* Empty patch cannot be applied if:
 		 * - it is a binary patch and we do not do binary_replace, or
