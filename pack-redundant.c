@@ -439,7 +439,7 @@ void minimize(struct pack_list **min)
 			break; /* ignore all larger permutations */
 		if (is_superset(perm->pl, missing)) {
 			new_perm = xmalloc(sizeof(struct pll));
-			new_perm->pl = perm->pl;
+			memcpy(new_perm, perm, sizeof(struct pll));
 			new_perm->next = perm_ok;
 			perm_ok = new_perm;
 		}
