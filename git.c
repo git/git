@@ -59,7 +59,8 @@ static void add_cmdname(const char *name, int len)
 	if (!ent)
 		oom();
 	ent->len = len;
-	memcpy(ent->name, name, len+1);
+	memcpy(ent->name, name, len);
+	ent->name[len] = 0;
 	cmdname[cmdname_cnt++] = ent;
 }
 
@@ -132,6 +133,8 @@ static void list_commands(const char *exec_path, const char *pattern)
 			continue;
 
 		entlen = strlen(de->d_name);
+		if (4 < entlen && !strcmp(de->d_name + entlen - 4, ".exe"))
+			entlen -= 4;
 
 		if (longest < entlen)
 			longest = entlen;
