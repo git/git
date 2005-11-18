@@ -637,10 +637,18 @@ static int fetch_indices(struct alt_base *repo)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (slot->curl_result != CURLE_OK) {
-			free(buffer.buffer);
-			return error("%s", curl_errorstr);
+			if (slot->http_code == 404) {
+				repo->got_indices = 1;
+				free(buffer.buffer);
+				return 0;
+			} else {
+				repo->got_indices = 0;
+				free(buffer.buffer);
+				return error("%s", curl_errorstr);
+			}
 		}
 	} else {
+		repo->got_indices = 0;
 		free(buffer.buffer);
 		return error("Unable to start request");
 	}
