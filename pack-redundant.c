@@ -579,6 +579,8 @@ int main(int argc, char **argv)
 {
 	int i;
 	struct pack_list *min, *red, *pl;
+	struct llist *ignore;
+	char *sha1, buf[42]; /* 40 byte sha1 + \n + \0 */
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -621,6 +623,23 @@ int main(int argc, char **argv)
 	if (alt_odb)
 		scan_alt_odb_packs();
 
+	/* ignore objects given on stdin */
+	llist_init(&ignore);
+	if (!isatty(0)) {
+		while (fgets(buf, sizeof(buf), stdin)) {
+			sha1 = xmalloc(20);
+			if (get_sha1_hex(buf, sha1))
+				die("Bad sha1 on stdin: %s", buf);
+			llist_insert_sorted_unique(ignore, sha1, NULL);
+		}
+	}
+	llist_sorted_difference_inplace(all_objects, ignore);
+	pl = local_packs;
+	while (pl) {
+		llist_sorted_difference_inplace(pl->unique_objects, ignore);
+		pl = pl->next;
+	}
+
 	minimize(&min);
 
 	if (verbose) {
@@ -647,6 +666,8 @@ int main(int argc, char **argv)
 		       pl->pack->pack_name);
 		pl = pl->next;
 	}
+	if (verbose)
+		fprintf(stderr, "%luMB of redundant packs in total.\n", pack_set_bytecount(red)/(1024*1024));
 
 	return 0;
 }
