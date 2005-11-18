@@ -91,19 +91,54 @@ char *safe_strncpy(char *dest, const char *src, size_t n)
 	return dest;
 }
 
+int validate_symref(const char *path)
+{
+	struct stat st;
+	char *buf, buffer[256];
+	int len, fd;
+
+	if (lstat(path, &st) < 0)
+		return -1;
+
+	/* Make sure it is a "refs/.." symlink */
+	if (S_ISLNK(st.st_mode)) {
+		len = readlink(path, buffer, sizeof(buffer)-1);
+		if (len >= 5 && !memcmp("refs/", buffer, 5))
+			return 0;
+		return -1;
+	}
+
+	/*
+	 * Anything else, just open it and try to see if it is a symbolic ref.
+	 */
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	len = read(fd, buffer, sizeof(buffer)-1);
+	close(fd);
+
+	/*
+	 * Is it a symbolic ref?
+	 */
+	if (len < 4 || memcmp("ref:", buffer, 4))
+		return -1;
+	buf = buffer + 4;
+	len -= 4;
+	while (len && isspace(*buf))
+		buf++, len--;
+	if (len >= 5 && !memcmp("refs/", buf, 5))
+		return 0;
+	return -1;
+}
+
 static char *current_dir()
 {
 	return getcwd(pathname, sizeof(pathname));
 }
 
-/* Take a raw path from is_git_repo() and canonicalize it using Linus'
- * idea of a blind chdir() and getcwd(). */
-static const char *canonical_path(char *path, int strict)
+static int user_chdir(char *path)
 {
 	char *dir = path;
-
-	if(strict && *dir != '/')
-		return NULL;
 
 	if(*dir == '~') {		/* user-relative path */
 		struct passwd *pw;
@@ -125,19 +160,19 @@ static const char *canonical_path(char *path, int strict)
 
 		/* make sure we got something back that we can chdir() to */
 		if(!pw || chdir(pw->pw_dir) < 0)
-			return NULL;
+			return -1;
 
 		if(!slash || !slash[1]) /* no path following username */
-			return current_dir();
+			return 0;
 
 		dir = slash + 1;
 	}
 
 	/* ~foo/path/to/repo is now path/to/repo and we're in foo's homedir */
 	if(chdir(dir) < 0)
-		return NULL;
+		return -1;
 
-	return current_dir();
+	return 0;
 }
 
 char *enter_repo(char *path, int strict)
@@ -145,16 +180,24 @@ char *enter_repo(char *path, int strict)
 	if(!path)
 		return NULL;
 
-	if(!canonical_path(path, strict)) {
-		if(strict || !canonical_path(mkpath("%s.git", path), strict))
+	if (strict) {
+		if((path[0] != '/') || chdir(path) < 0)
 			return NULL;
 	}
+	else {
+		if (!*path)
+			; /* happy -- no chdir */
+		else if (!user_chdir(path))
+			; /* happy -- as given */
+		else if (!user_chdir(mkpath("%s.git", path)))
+			; /* happy -- uemacs --> uemacs.git */
+		else
+			return NULL;
+		(void)chdir(".git");
+	}
 
-	/* This is perfectly safe, and people tend to think of the directory
-	 * where they ran git-init-db as their repository, so humour them. */
-	(void)chdir(".git");
-
-	if(access("objects", X_OK) == 0 && access("refs", X_OK) == 0) {
+	if(access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
+	   validate_symref("HEAD") == 0) {
 		putenv("GIT_DIR=.");
 		return current_dir();
 	}
