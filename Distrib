@@ -21,6 +21,6 @@ D=$G/debian
 set -x
 
 ln $HOME/debian/git-*_$V[-.]* $D/.
-ln $HOME/debian/git-core-$V.tar.gz $G/.
+ln $HOME/debian/git-$V.tar.gz $G/.
 ln $HOME/rpms/RPMS/i386/git*-$V-* $G/.
 ln $HOME/rpms/SRPMS/git-$V-* $G/.
