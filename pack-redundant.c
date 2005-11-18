@@ -497,7 +497,7 @@ void load_all_objects()
 }
 
 /* this scales like O(n^2) */
-void cmp_packs()
+void cmp_local_packs()
 {
 	struct pack_list *subset, *pl = local_packs;
 
@@ -506,16 +506,21 @@ void cmp_packs()
 			cmp_two_packs(pl, subset);
 		pl = pl->next;
 	}
+}
 
-	pl = altodb_packs;
-	while (pl) {
-		subset = local_packs;
-		while (subset) {
-			llist_sorted_difference_inplace(subset->unique_objects,
-							pl->all_objects);
-			subset = subset->next;
+void scan_alt_odb_packs()
+{
+	struct pack_list *local, *alt;
+
+	alt = altodb_packs;
+	while (alt) {
+		local = local_packs;
+		while (local) {
+			llist_sorted_difference_inplace(local->unique_objects,
+							alt->all_objects);
+			local = local->next;
 		}
-		pl = pl->next;
+		alt = alt->next;
 	}
 }
 
@@ -525,6 +530,9 @@ struct pack_list * add_pack(struct packed_git *p)
 	size_t off;
 	void *base;
 
+	if (!p->pack_local && !(alt_odb || verbose))
+		return NULL;
+
 	l.pack = p;
 	llist_init(&l.all_objects);
 
@@ -532,14 +540,14 @@ struct pack_list * add_pack(struct packed_git *p)
 	base = (void *)p->index_base;
 	while (off <= p->index_size - 3 * 20) {
 		llist_insert_back(l.all_objects, base + off);
-		off+=24;
+		off += 24;
 	}
 	/* this list will be pruned in cmp_two_packs later */
 	l.unique_objects = llist_copy(l.all_objects);
 	if (p->pack_local)
 		return pack_list_insert(&local_packs, &l);
 	else
-		return alt_odb ? pack_list_insert(&altodb_packs, &l) : NULL;
+		return pack_list_insert(&altodb_packs, &l);
 }
 
 struct pack_list * add_pack_file(char *filename)
@@ -607,11 +615,14 @@ int main(int argc, char **argv)
 	if (local_packs == NULL)
 		die("Zero packs found!\n");
 
-	cmp_packs();
-
 	load_all_objects();
 
+	cmp_local_packs();
+	if (alt_odb)
+		scan_alt_odb_packs();
+
 	minimize(&min);
+
 	if (verbose) {
 		fprintf(stderr, "There are %lu packs available in alt-odbs.\n",
 			(unsigned long)pack_list_size(altodb_packs));
