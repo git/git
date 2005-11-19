@@ -16,7 +16,7 @@ use Encode;
 use Fcntl ':mode';
 
 my $cgi = new CGI;
-my $version =		"249";
+my $version =		"250";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link =		"";
