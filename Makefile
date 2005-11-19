@@ -242,9 +242,12 @@ ifndef NO_CURL
 		CURL_LIBCURL = -lcurl
 	endif
 	PROGRAMS += git-http-fetch$X
-	ifndef NO_EXPAT
-		EXPAT_LIBEXPAT = -lexpat
-		PROGRAMS += git-http-push$X
+	curl_check := $(shell (echo 070908; curl-config --vernum) | sort -r | sed -ne 2p)
+	ifeq "$(curl_check)" "070908"
+		ifndef NO_EXPAT
+			EXPAT_LIBEXPAT = -lexpat
+			PROGRAMS += git-http-push$X
+		endif
 	endif
 endif
 

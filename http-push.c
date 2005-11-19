@@ -6,8 +6,6 @@
 #include "blob.h"
 #include "http.h"
 
-#ifdef USE_CURL_MULTI
-
 #include <expat.h>
 
 static const char http_push_usage[] =
@@ -1426,10 +1424,3 @@ int main(int argc, char **argv)
 
 	return rc;
 }
-#else /* ifdef USE_CURL_MULTI */
-int main(int argc, char **argv)
-{
-	fprintf(stderr, "http-push requires curl 7.9.8 or higher.\n");
-	return 1;
-}
-#endif
