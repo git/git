@@ -238,77 +238,43 @@ proc parsecommit {id contents listed olds} {
 
 proc readrefs {} {
     global tagids idtags headids idheads tagcontents
-
-    set tags [glob -nocomplain -types f [gitdir]/refs/tags/*]
-    foreach f $tags {
-	catch {
-	    set fd [open $f r]
-	    set line [read $fd]
-	    if {[regexp {^[0-9a-f]{40}} $line id]} {
-		set direct [file tail $f]
-		set tagids($direct) $id
-		lappend idtags($id) $direct
-		set tagblob [exec git-cat-file tag $id]
-		set contents [split $tagblob "\n"]
-		set obj {}
-		set type {}
-		set tag {}
-		foreach l $contents {
-		    if {$l == {}} break
-		    switch -- [lindex $l 0] {
-			"object" {set obj [lindex $l 1]}
-			"type" {set type [lindex $l 1]}
-			"tag" {set tag [string range $l 4 end]}
-		    }
-		}
-		if {$obj != {} && $type == "commit" && $tag != {}} {
-		    set tagids($tag) $obj
-		    lappend idtags($obj) $tag
-		    set tagcontents($tag) $tagblob
-		}
-	    }
-	    close $fd
-	}
-    }
-    set heads [glob -nocomplain -types f [gitdir]/refs/heads/*]
-    foreach f $heads {
-	catch {
-	    set fd [open $f r]
-	    set line [read $fd 40]
-	    if {[regexp {^[0-9a-f]{40}} $line id]} {
-		set head [file tail $f]
-		set headids($head) $line
-		lappend idheads($line) $head
-	    }
-	    close $fd
-	}
-    }
-    readotherrefs refs {} {tags heads}
-}
-
-proc readotherrefs {base dname excl} {
     global otherrefids idotherrefs
 
-    set git [gitdir]
-    set files [glob -nocomplain -types f [file join $git $base *]]
-    foreach f $files {
-	catch {
-	    set fd [open $f r]
-	    set line [read $fd 40]
-	    if {[regexp {^[0-9a-f]{40}} $line id]} {
-		set name "$dname[file tail $f]"
-		set otherrefids($name) $id
-		lappend idotherrefs($id) $name
+    set refd [open [list | git-ls-remote [gitdir]] r]
+    while {0 <= [set n [gets $refd line]]} {
+	if {![regexp {^([0-9a-f]{40})	refs/([^^]*)$} $line \
+	    match id path]} {
+	    continue
+	}
+	if {![regexp {^(tags|heads)/(.*)$} $path match type name]} {
+	    set type others
+	    set name $path
+	}
+	if {$type == "tags"} {
+	    set tagids($name) $id
+	    lappend idtags($id) $name
+	    set obj {}
+	    set type {}
+	    set tag {}
+	    catch {
+		set commit [exec git-rev-parse "$id^0"]
+		if {"$commit" != "$id"} {
+		    set tagids($name) $commit
+		    lappend idtags($commit) $name
+		}
+	    }		
+	    catch {
+	        set tagcontents($name) [exec git-cat-file tag "$id"]
 	    }
-	    close $fd
+	} elseif { $type == "heads" } {
+	    set headids($name) $id
+	    lappend idheads($id) $name
+	} else {
+	    set otherrefids($name) $id
+	    lappend idotherrefs($id) $name
 	}
     }
-    set dirs [glob -nocomplain -types d [file join $git $base *]]
-    foreach d $dirs {
-	set dir [file tail $d]
-	if {[lsearch -exact $excl $dir] >= 0} continue
-	readotherrefs [file join $base $dir] "$dname$dir/" {}
-    }
+    close $refd
 }
 
 proc error_popup msg {
