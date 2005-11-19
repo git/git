@@ -12,6 +12,7 @@ IFS="$LF"
 tags=
 append=
 force=
+verbose=
 update_head_ok=
 while case "$#" in 0) break ;; esac
 do
@@ -29,6 +30,9 @@ do
 	--update-he|--update-hea|--update-head|--update-head-|\
 	--update-head-o|--update-head-ok)
 		update_head_ok=t
+		;;
+	-v|--verbose)
+		verbose=Yes
 		;;
 	*)
 		break
@@ -91,12 +95,12 @@ append_fetch_head () {
     then
 	headc_=$(git-rev-parse --verify "$head_^0") || exit
 	echo "$headc_	$not_for_merge_	$note_" >>"$GIT_DIR/FETCH_HEAD"
-	echo >&2 "* committish: $head_"
-	echo >&2 "  $note_"
+	[ "$verbose" ] && echo >&2 "* committish: $head_"
+	[ "$verbose" ] && echo >&2 "  $note_"
     else
 	echo "$head_	not-for-merge	$note_" >>"$GIT_DIR/FETCH_HEAD"
-	echo >&2 "* non-commit: $head_"
-	echo >&2 "  $note_"
+	[ "$verbose" ] && echo >&2 "* non-commit: $head_"
+	[ "$verbose" ] && echo >&2 "  $note_"
     fi
     if test "$local_name_" != ""
     then
@@ -116,7 +120,7 @@ fast_forward_local () {
 	then
 		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
 		then
-			echo >&2 "* $1: same as $3"
+			[ "$verbose" ] && echo >&2 "* $1: same as $3"
 		else
 			echo >&2 "* $1: updating with $3"
 		fi

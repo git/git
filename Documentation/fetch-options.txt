@@ -8,7 +8,9 @@
 -t, \--tags::
 	By default, the git core utilities will not fetch and store
 	tags under the same name as the remote repository;  ask it
-	to do so using `--tags`.
+	to do so using `--tags`.  Using this option will bound the
+	list of objects pulled to the remote tags.  Commits in branches
+	beyond the tags will be ignored.
 
 -u, \--update-head-ok::
 	By default `git-fetch` refuses to update the head which

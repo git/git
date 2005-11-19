@@ -63,9 +63,22 @@ exit
 if test "$remove_redundant" = t
 then
 	sync
-	redundant=$(git-pack-redundant --all)
-	if test "$redundant" != "" ; then
-		echo $redundant | xargs rm
+	if test "$all_into_one" = t
+	then
+		cd "$PACKDIR"
+		existing=`find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
+		for e in $existing
+		do
+			case "$e" in
+			./pack-$name.pack | ./pack-$name.idx) ;;
+			*)      rm -f $e ;;
+			esac
+		done
+	else
+		redundant=$(git-pack-redundant --all)
+		if test "$redundant" != "" ; then
+			echo $redundant | xargs rm
+		fi
 	fi
 fi
 

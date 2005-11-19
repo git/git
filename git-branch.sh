@@ -3,7 +3,7 @@
 . git-sh-setup || die "Not a git archive"
 
 usage () {
-    echo >&2 "usage: $(basename $0)"' [-d <branch>] | [<branch> [start-point]]
+    echo >&2 "usage: $(basename $0)"' [-d <branch>] | [[-f] <branch> [start-point]]
 
 If no arguments, show available branches and mark current branch with a star.
 If one argument, create a new branch <branchname> based off of current HEAD.
@@ -12,11 +12,12 @@ If two arguments, create a new branch <branchname> based off of <start-point>.
     exit 1
 }
 
+headref=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD |
+	sed -e 's|^refs/heads/||')
+
 delete_branch () {
     option="$1"
     shift
-    headref=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD |
-    	       sed -e 's|^refs/heads/||')
     for branch_name
     do
 	case ",$headref," in
@@ -52,12 +53,16 @@ delete_branch () {
     exit 0
 }
 
+force=
 while case "$#,$1" in 0,*) break ;; *,-*) ;; *) break ;; esac
 do
 	case "$1" in
 	-d | -D)
 		delete_branch "$@"
 		exit
+		;;
+	-f)
+		force="$1"
 		;;
 	--)
 		shift
@@ -72,8 +77,6 @@ done
 
 case "$#" in
 0)
-	headref=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD |
-		  sed -e 's|^refs/heads/||')
 	git-rev-parse --symbolic --all |
 	sed -ne 's|^refs/heads/||p' |
 	sort |
@@ -97,10 +100,18 @@ branchname="$1"
 
 rev=$(git-rev-parse --verify "$head") || exit
 
-[ -e "$GIT_DIR/refs/heads/$branchname" ] &&
-	die "$branchname already exists."
 git-check-ref-format "heads/$branchname" ||
 	die "we do not like '$branchname' as a branch name."
 
+if [ -e "$GIT_DIR/refs/heads/$branchname" ]
+then
+	if test '' = "$force"
+	then
+		die "$branchname already exists."
+	elif test "$branchname" = "$headref"
+	then
+		die "cannot force-update the current branch."
+	fi
+fi
 git update-ref "refs/heads/$branchname" $rev
 

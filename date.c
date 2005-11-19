@@ -468,12 +468,52 @@ static void update_tm(struct tm *tm, unsigned long sec)
 	localtime_r(&n, tm);
 }
 
+static void date_yesterday(struct tm *tm, int *num)
+{
+	update_tm(tm, 24*60*60);
+}
+
+static void date_time(struct tm *tm, int hour)
+{
+	if (tm->tm_hour < hour)
+		date_yesterday(tm, NULL);
+	tm->tm_hour = hour;
+	tm->tm_min = 0;
+	tm->tm_sec = 0;
+}
+
+static void date_midnight(struct tm *tm, int *num)
+{
+	date_time(tm, 0);
+}
+
+static void date_noon(struct tm *tm, int *num)
+{
+	date_time(tm, 12);
+}
+
+static void date_tea(struct tm *tm, int *num)
+{
+	date_time(tm, 17);
+}
+
+static const struct special {
+	const char *name;
+	void (*fn)(struct tm *, int *);
+} special[] = {
+	{ "yesterday", date_yesterday },
+	{ "noon", date_noon },
+	{ "midnight", date_midnight },
+	{ "tea", date_tea },
+	{ NULL }
+};
+
 static const char *number_name[] = {
 	"zero", "one", "two", "three", "four",
 	"five", "six", "seven", "eight", "nine", "ten",
 };
 
-static struct typelen {
+static const struct typelen {
 	const char *type;
 	int length;
 } typelen[] = {
@@ -487,7 +527,8 @@ static struct typelen {
 
 static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 {
-	struct typelen *tl;
+	const struct typelen *tl;
+	const struct special *s;
 	const char *end = date;
 	int n = 1, i;
 
@@ -502,9 +543,12 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 		}
 	}
 
-	if (match_string(date, "yesterday") > 8) {
-		update_tm(tm, 24*60*60);
-		return end;
+	for (s = special; s->name; s++) {
+		int len = strlen(s->name);
+		if (match_string(date, s->name) == len) {
+			s->fn(tm, num);
+			return end;
+		}
 	}
 
 	if (!*num) {

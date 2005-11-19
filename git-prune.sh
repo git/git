@@ -31,7 +31,7 @@ git-prune-packed $dryrun
 redundant=$(git-pack-redundant --all)
 if test "" != "$redundant"
 then
-	if test "" = $dryrun
+	if test "" = "$dryrun"
 	then
 		echo "$redundant" | xargs rm -f
 	else
