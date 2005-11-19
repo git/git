@@ -60,7 +60,7 @@ proc getcommits {rargs} {
 
 proc getcommitlines {commfd}  {
     global commits parents cdate children
-    global commitlisted phase commitinfo nextupdate
+    global commitlisted phase nextupdate
     global stopped redisplaying leftover
 
     set stuff [read $commfd]
@@ -196,42 +196,41 @@ proc parsecommit {id contents listed olds} {
 	    incr ncleft($p)
 	}
     }
-    foreach line [split $contents "\n"] {
-	if {$inhdr} {
-	    if {$line == {}} {
-		set inhdr 0
-	    } else {
-		set tag [lindex $line 0]
-		if {$tag == "author"} {
-		    set x [expr {[llength $line] - 2}]
-		    set audate [lindex $line $x]
-		    set auname [lrange $line 1 [expr {$x - 1}]]
-		} elseif {$tag == "committer"} {
-		    set x [expr {[llength $line] - 2}]
-		    set comdate [lindex $line $x]
-		    set comname [lrange $line 1 [expr {$x - 1}]]
-		}
-	    }
-	} else {
-	    if {$comment == {}} {
-		set headline [string trim $line]
-	    } else {
-		append comment "\n"
-	    }
-	    if {!$listed} {
-		# git-rev-list indents the comment by 4 spaces;
-		# if we got this via git-cat-file, add the indentation
-		append comment "    "
-	    }
-	    append comment $line
+    set hdrend [string first "\n\n" $contents]
+    if {$hdrend < 0} {
+	# should never happen...
+	set hdrend [string length $contents]
+    }
+    set header [string range $contents 0 [expr {$hdrend - 1}]]
+    set comment [string range $contents [expr {$hdrend + 2}] end]
+    foreach line [split $header "\n"] {
+	set tag [lindex $line 0]
+	if {$tag == "author"} {
+	    set audate [lindex $line end-1]
+	    set auname [lrange $line 1 end-2]
+	} elseif {$tag == "committer"} {
+	    set comdate [lindex $line end-1]
+	    set comname [lrange $line 1 end-2]
 	}
     }
-    if {$audate != {}} {
-	set audate [clock format $audate -format "%Y-%m-%d %H:%M:%S"]
+    set headline {}
+    # take the first line of the comment as the headline
+    set i [string first "\n" $comment]
+    if {$i >= 0} {
+	set headline [string trim [string range $comment 0 $i]]
+    }
+    if {!$listed} {
+	# git-rev-list indents the comment by 4 spaces;
+	# if we got this via git-cat-file, add the indentation
+	set newcomment {}
+	foreach line [split $comment "\n"] {
+	    append newcomment "    "
+	    append newcomment $line
+	}
+	set comment $newcomment
     }
     if {$comdate != {}} {
 	set cdate($id) $comdate
-	set comdate [clock format $comdate -format "%Y-%m-%d %H:%M:%S"]
     }
     set commitinfo($id) [list $headline $auname $audate \
 			     $comname $comdate $comment]
@@ -683,7 +682,7 @@ Use and redistribute under the terms of the GNU General Public License} \
 }
 
 proc assigncolor {id} {
-    global commitinfo colormap commcolors colors nextcolor
+    global colormap commcolors colors nextcolor
     global parents nparents children nchildren
     global cornercrossings crossings
 
@@ -783,10 +782,12 @@ proc bindline {t id} {
     $canv bind $t <Button-1> "lineclick %x %y $id 1"
 }
 
-proc drawlines {id xtra} {
+proc drawlines {id xtra delold} {
     global mainline mainlinearrow sidelines lthickness colormap canv
 
-    $canv delete lines.$id
+    if {$delold} {
+	$canv delete lines.$id
+    }
     if {[info exists mainline($id)]} {
 	set t [$canv create line $mainline($id) \
 		   -width [expr {($xtra + 1) * $lthickness}] \
@@ -858,7 +859,7 @@ proc drawcommitline {level} {
 	    set mainline($id) [trimdiagstart $mainline($id)]
 	}
     }
-    drawlines $id 0
+    drawlines $id 0 0
     set orad [expr {$linespc / 3}]
     set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
 	       [expr $x + $orad - 1] [expr $y1 + $orad - 1] \
@@ -878,6 +879,7 @@ proc drawcommitline {level} {
     set headline [lindex $commitinfo($id) 0]
     set name [lindex $commitinfo($id) 1]
     set date [lindex $commitinfo($id) 2]
+    set date [formatdate $date]
     set linehtag($lineno) [$canv create text $xt $y1 -anchor w \
 			       -text $headline -font $mainfont ]
     $canv bind $linehtag($lineno) <Button-3> "rowmenu %X %Y $id"
@@ -1446,8 +1448,8 @@ proc decidenext {{noread 0}} {
 }
 
 proc drawcommit {id} {
-    global phase todo nchildren datemode nextupdate
-    global numcommits ncmupdate displayorder todo onscreen
+    global phase todo nchildren datemode nextupdate revlistorder
+    global numcommits ncmupdate displayorder todo onscreen parents
 
     if {$phase != "incrdraw"} {
 	set phase incrdraw
@@ -1459,19 +1461,29 @@ proc drawcommit {id} {
 	lappend todo $id
 	set onscreen($id) 0
     }
-    set level [decidenext 1]
-    if {$level == {} || $id != [lindex $todo $level]} {
-	return
-    }
-    while 1 {
-	lappend displayorder [lindex $todo $level]
-	if {[updatetodo $level $datemode]} {
-	    set level [decidenext 1]
-	    if {$level == {}} break
+    if {$revlistorder} {
+	set level [lsearch -exact $todo $id]
+	if {$level < 0} {
+	    error_popup "oops, $id isn't in todo"
+	    return
 	}
-	set id [lindex $todo $level]
-	if {![info exists commitlisted($id)]} {
-	    break
+	lappend displayorder $id
+	updatetodo $level 0
+    } else {
+	set level [decidenext 1]
+	if {$level == {} || $id != [lindex $todo $level]} {
+	    return
+	}
+	while 1 {
+	    lappend displayorder [lindex $todo $level]
+	    if {[updatetodo $level $datemode]} {
+		set level [decidenext 1]
+		if {$level == {}} break
+	    }
+	    set id [lindex $todo $level]
+	    if {![info exists commitlisted($id)]} {
+		break
+	    }
 	}
     }
     drawmore 1
@@ -1523,21 +1535,23 @@ proc drawrest {} {
     global phase stopped redisplaying selectedline
     global datemode todo displayorder
     global numcommits ncmupdate
-    global nextupdate startmsecs
+    global nextupdate startmsecs revlistorder
 
-    set level [decidenext]
-    if {$level >= 0} {
-	set phase drawgraph
-	while 1 {
-	    lappend displayorder [lindex $todo $level]
-	    set hard [updatetodo $level $datemode]
-	    if {$hard} {
-		set level [decidenext]
-		if {$level < 0} break
+    if {!$revlistorder} {
+	set level [decidenext]
+	if {$level >= 0} {
+	    set phase drawgraph
+	    while 1 {
+		lappend displayorder [lindex $todo $level]
+		set hard [updatetodo $level $datemode]
+		if {$hard} {
+		    set level [decidenext]
+		    if {$level < 0} break
+		}
 	    }
 	}
-	drawmore 0
     }
+    drawmore 0
     set phase {}
     set drawmsecs [expr [clock clicks -milliseconds] - $startmsecs]
     #puts "overall $drawmsecs ms for $numcommits commits"
@@ -2146,8 +2160,10 @@ proc selectline {l isnew} {
     $ctext mark set fmark.0 0.0
     $ctext mark gravity fmark.0 left
     set info $commitinfo($id)
-    $ctext insert end "Author: [lindex $info 1]  [lindex $info 2]\n"
-    $ctext insert end "Committer: [lindex $info 3]  [lindex $info 4]\n"
+    set date [formatdate [lindex $info 2]]
+    $ctext insert end "Author: [lindex $info 1]  $date\n"
+    set date [formatdate [lindex $info 4]]
+    $ctext insert end "Committer: [lindex $info 3]  $date\n"
     if {[info exists idtags($id)]} {
 	$ctext insert end "Tags:"
 	foreach tag $idtags($id) {
@@ -3226,7 +3242,7 @@ proc lineclick {x y id isnew} {
     normalline
     $canv delete hover
     # draw this line thicker than normal
-    drawlines $id 1
+    drawlines $id 1 1
     set thickerline $id
     if {$isnew} {
 	set ymax [lindex [$canv cget -scrollregion] 3]
@@ -3255,7 +3271,8 @@ proc lineclick {x y id isnew} {
     set info $commitinfo($id)
     $ctext insert end "\n\t[lindex $info 0]\n"
     $ctext insert end "\tAuthor:\t[lindex $info 1]\n"
-    $ctext insert end "\tDate:\t[lindex $info 2]\n"
+    set date [formatdate [lindex $info 2]]
+    $ctext insert end "\tDate:\t$date\n"
     if {[info exists children($id)]} {
 	$ctext insert end "\nChildren:"
 	set i 0
@@ -3267,7 +3284,8 @@ proc lineclick {x y id isnew} {
 	    $ctext tag bind link$i <1> [list selbyid $child]
 	    $ctext insert end "\n\t[lindex $info 0]"
 	    $ctext insert end "\n\tAuthor:\t[lindex $info 1]"
-	    $ctext insert end "\n\tDate:\t[lindex $info 2]\n"
+	    set date [formatdate [lindex $info 2]]
+	    $ctext insert end "\n\tDate:\t$date\n"
 	}
     }
     $ctext conf -state disabled
@@ -3278,7 +3296,7 @@ proc lineclick {x y id isnew} {
 proc normalline {} {
     global thickerline
     if {[info exists thickerline]} {
-	drawlines $thickerline 0
+	drawlines $thickerline 0 1
 	unset thickerline
     }
 }
@@ -3650,6 +3668,20 @@ proc doquit {} {
     destroy .
 }
 
+proc formatdate {d} {
+    global hours nhours tfd
+
+    set hr [expr {$d / 3600}]
+    set ms [expr {$d % 3600}]
+    if {![info exists hours($hr)]} {
+	set hours($hr) [clock format $d -format "%Y-%m-%d %H"]
+	set nhours($hr) 0
+    }
+    incr nhours($hr)
+    set minsec [format "%.2d:%.2d" [expr {$ms/60}] [expr {$ms%60}]]
+    return "$hours($hr):$minsec"
+}
+
 # defaults...
 set datemode 0
 set boldnames 0
@@ -3662,6 +3694,7 @@ set findmergefiles 0
 set gaudydiff 0
 set maxgraphpct 50
 set maxwidth 16
+set revlistorder 0
 
 set colors {green red blue magenta darkgrey brown orange}
 
@@ -3678,6 +3711,7 @@ foreach arg $argv {
 	"^$" { }
 	"^-b" { set boldnames 1 }
 	"^-d" { set datemode 1 }
+	"^-r" { set revlistorder 1 }
 	default {
 	    lappend revtreeargs $arg
 	}
