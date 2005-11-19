@@ -449,25 +449,63 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 #endif /* NO_IPV6 */
 
 static char *git_proxy_command = NULL;
+static const char *rhost_name = NULL;
+static int rhost_len;
 
 static int git_proxy_command_options(const char *var, const char *value)
 {
-	if (git_proxy_command == NULL) {
-		if (!strcmp(var, "git.proxycommand")) {
-			git_proxy_command = xmalloc(strlen(value) + 1);
-			strcpy(git_proxy_command, value);
+	if (!strcmp(var, "core.gitproxy")) {
+		if (git_proxy_command)
 			return 0;
+		/* [core]
+		 * ;# matches www.kernel.org as well
+		 * gitproxy = netcatter-1 for kernel.org
+		 * gitproxy = netcatter-2 for sample.xz
+		 * gitproxy = netcatter-default
+		 */
+		const char *for_pos = strstr(value, " for ");
+		int matchlen = -1;
+		int hostlen;
+
+		if (!for_pos)
+			/* matches everybody */
+			matchlen = strlen(value);
+		else {
+			hostlen = strlen(for_pos + 5);
+			if (rhost_len < hostlen)
+				matchlen = -1;
+			else if (!strncmp(for_pos + 5,
+					  rhost_name + rhost_len - hostlen,
+					  hostlen) &&
+				 ((rhost_len == hostlen) ||
+				  rhost_name[rhost_len - hostlen -1] == '.'))
+				matchlen = for_pos - value;
+			else
+				matchlen = -1;
 		}
+		if (0 <= matchlen) {
+			/* core.gitproxy = none for kernel.org */
+			if (matchlen == 4 && 
+			    !memcmp(value, "none", 4))
+				matchlen = 0;
+			git_proxy_command = xmalloc(matchlen + 1);
+			memcpy(git_proxy_command, value, matchlen);
+			git_proxy_command[matchlen] = 0;
+		}
+		return 0;
 	}
 
 	return git_default_config(var, value);
 }
 
-static int git_use_proxy(void)
+static int git_use_proxy(const char *host)
 {
+	rhost_name = host;
+	rhost_len = strlen(host);
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
 	git_config(git_proxy_command_options);
-	return git_proxy_command != NULL;
+	rhost_name = NULL;
+	return (git_proxy_command && *git_proxy_command);
 }
 
 static int git_proxy_connect(int fd[2], const char *prog, char *host, char *path)
@@ -561,7 +599,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 	}
 
 	if (protocol == PROTO_GIT) {
-		if (git_use_proxy())
+		if (git_use_proxy(host))
 			return git_proxy_connect(fd, prog, host, path);
 		return git_tcp_connect(fd, prog, host, path);
 	}
