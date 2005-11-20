@@ -40,10 +40,7 @@ So I started from master, made a bunch of edits, and committed:
     $ git checkout master
     $ cd Documentation; ed git.txt ...
     $ cd ..; git add Documentation/*.txt
-    $ git commit -s -v
-
-NOTE.  The -v flag to commit is a handy way to make sure that
-your additions are not introducing bogusly formatted lines.
+    $ git commit -s
 
 After the commit, the ancestry graph would look like this:
 
@@ -98,7 +95,7 @@ to do cherrypicking using only the core GIT tools.
 Let's go back to the earlier picture, with different labels.
 
 You, as an individual developer, cloned upstream repository and
-amde a couple of commits on top of it.
+made a couple of commits on top of it.
 
                               *your "master" head
    upstream --> #1 --> #2 --> #3
