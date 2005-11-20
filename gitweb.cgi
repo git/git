@@ -1810,7 +1810,7 @@ sub git_commit {
 			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file"), -class => "list"}, esc_html($from_file)) .
 			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_uresc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
+			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
 			if ($to_id ne $from_id) {
 				print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file")}, "diff");
 			}
