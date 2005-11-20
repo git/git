@@ -218,6 +218,8 @@ proc parsecommit {id contents listed olds} {
     set i [string first "\n" $comment]
     if {$i >= 0} {
 	set headline [string trim [string range $comment 0 $i]]
+    } else {
+	set headline $comment
     }
     if {!$listed} {
 	# git-rev-list indents the comment by 4 spaces;
@@ -226,6 +228,7 @@ proc parsecommit {id contents listed olds} {
 	foreach line [split $comment "\n"] {
 	    append newcomment "    "
 	    append newcomment $line
+	    append newcomment "\n"
 	}
 	set comment $newcomment
     }
@@ -1503,17 +1506,15 @@ proc drawrest {} {
     global numcommits ncmupdate
     global nextupdate startmsecs revlistorder
 
-    if {!$revlistorder} {
-	set level [decidenext]
-	if {$level >= 0} {
-	    set phase drawgraph
-	    while 1 {
-		lappend displayorder [lindex $todo $level]
-		set hard [updatetodo $level $datemode]
-		if {$hard} {
-		    set level [decidenext]
-		    if {$level < 0} break
-		}
+    set level [decidenext]
+    if {$level >= 0} {
+	set phase drawgraph
+	while 1 {
+	    lappend displayorder [lindex $todo $level]
+	    set hard [updatetodo $level $datemode]
+	    if {$hard} {
+		set level [decidenext]
+		if {$level < 0} break
 	    }
 	}
     }
