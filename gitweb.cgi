@@ -1308,7 +1308,8 @@ sub git_blob {
 		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
 		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
 		if (defined $file_name) {
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") . "<br/>\n";
+			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") .
+			" | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;hb=HEAD;f=$file_name")}, "head") . "<br/>\n";
 		} else {
 			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob_plain;h=$hash")}, "plain") . "<br/>\n";
 		}
@@ -1430,7 +1431,7 @@ sub git_tree {
 			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key)}, $t_name) .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc("$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key)}, "tree") .
+			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key)}, "tree") .
 			      "</td>\n";
 		}
 		print "</tr>\n";
