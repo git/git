@@ -245,7 +245,7 @@ def updateFileExt(sha, mode, path, updateCache, updateWd):
 
             try:
                 createDir = not stat.S_ISDIR(os.lstat(p).st_mode)
-            except: 
+            except OSError:
                 createDir = True
             
             if createDir:
@@ -295,7 +295,7 @@ def removeFile(clean, path):
                 raise
         try:
             os.removedirs(os.path.dirname(path))
-        except:
+        except OSError:
             pass
 
 def uniquePath(path, branch):
