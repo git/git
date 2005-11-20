@@ -76,8 +76,43 @@ noIndent= sillyValue ; 'nother silly comment
 # empty line
 		; comment
 		haha   ="beta" # last silly comment
+haha = hello
+	haha = bello
 [nextSection] noNewline = ouch
 EOF
+
+cp .git/config .git/config2
+
+test_expect_success 'multiple unset' \
+	'git-config-set --unset-all beta.haha'
+
+cat > expect << EOF
+[beta] ; silly comment # another comment
+noIndent= sillyValue ; 'nother silly comment
+
+# empty line
+		; comment
+[nextSection] noNewline = ouch
+EOF
+
+test_expect_success 'multiple unset is correct' 'cmp .git/config expect'
+
+mv .git/config2 .git/config
+
+test_expect_success '--replace-all' \
+	'git-config-set --replace-all beta.haha gamma'
+
+cat > expect << EOF
+[beta] ; silly comment # another comment
+noIndent= sillyValue ; 'nother silly comment
+
+# empty line
+		; comment
+	haha = gamma
+[nextSection] noNewline = ouch
+EOF
+
+test_expect_success 'all replaced' 'cmp .git/config expect'
 
 git-config-set beta.haha alpha
 
@@ -108,7 +143,8 @@ EOF
 
 test_expect_success 'really really mean test' 'cmp .git/config expect'
 
-git-config-set beta.haha
+test_expect_success 'get value' 'test alpha = $(git-config-set beta.haha)'
+git-config-set --unset beta.haha
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -137,6 +173,12 @@ EOF
 
 test_expect_success 'multivar' 'cmp .git/config expect'
 
+test_expect_failure 'ambiguous get' \
+	'git-config-set --get nextsection.nonewline'
+
+test_expect_success 'get multivar' \
+	'git-config-set --get-all nextsection.nonewline'
+
 git-config-set nextsection.nonewline "wow3" "wow$"
 
 cat > expect << EOF
@@ -151,6 +193,8 @@ noIndent= sillyValue ; 'nother silly comment
 EOF
 
 test_expect_success 'multivar replace' 'cmp .git/config expect'
+
+test_expect_failure 'ambiguous value' 'git-config-set nextsection.nonewline'
 
 test_expect_failure 'ambiguous unset' \
 	'git-config-set --unset nextsection.nonewline'

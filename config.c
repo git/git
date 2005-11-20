@@ -263,11 +263,15 @@ int git_config(config_fn_t fn)
 /*
  * Find all the stuff for git_config_set() below.
  */
+
+#define MAX_MATCHES 512
+
 static struct {
 	int baselen;
 	char* key;
 	regex_t* value_regex;
-	off_t offset;
+	int multi_replace;
+	off_t offset[MAX_MATCHES];
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
 	int seen;
 } store;
@@ -279,12 +283,16 @@ static int store_aux(const char* key, const char* value)
 		if (!strcmp(key, store.key) &&
 				(store.value_regex == NULL ||
 				!regexec(store.value_regex, value, 0, NULL, 0))) {
-			if (store.seen == 1) {
+			if (store.seen == 1 && store.multi_replace == 0) {
 				fprintf(stderr,
 					"Warning: %s has multiple values\n",
 					key);
+			} else if (store.seen >= MAX_MATCHES) {
+				fprintf(stderr, "Too many matches\n");
+				return 1;
 			}
-			store.offset = ftell(config_file);
+
+			store.offset[store.seen] = ftell(config_file);
 			store.seen++;
 		}
 		break;
@@ -293,14 +301,15 @@ static int store_aux(const char* key, const char* value)
 			store.state = SECTION_END_SEEN;
 			break;
 		} else
-			store.offset = ftell(config_file);
+			/* do not increment matches: this is no match */
+			store.offset[store.seen] = ftell(config_file);
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:
 		if (!strcmp(key, store.key) &&
 				(store.value_regex == NULL ||
 				!regexec(store.value_regex, value, 0, NULL, 0))) {
-			store.offset = ftell(config_file);
+			store.offset[store.seen] = ftell(config_file);
 			store.state = KEY_SEEN;
 			store.seen++;
 		} else if(!strncmp(key, store.key, store.baselen))
@@ -334,14 +343,38 @@ static void store_write_pair(int fd, const char* key, const char* value)
 	write(fd, "\n", 1);
 }
 
+static int find_beginning_of_line(const char* contents, int size,
+	int offset_, int* found_bracket)
+{
+	int equal_offset = size, bracket_offset = size;
+	int offset;
+
+	for (offset = offset_-2; offset > 0 
+			&& contents[offset] != '\n'; offset--)
+		switch (contents[offset]) {
+			case '=': equal_offset = offset; break;
+			case ']': bracket_offset = offset; break;
+		}
+	if (bracket_offset < equal_offset) {
+		*found_bracket = 1;
+		offset = bracket_offset+1;
+	} else
+		offset++;
+
+	return offset;
+}
+
 int git_config_set(const char* key, const char* value)
 {
-	return git_config_set_multivar(key, value, NULL);
+	return git_config_set_multivar(key, value, NULL, 0);
 }
 
 /*
  * If value==NULL, unset in (remove from) config,
  * if value_regex!=NULL, disregard key/value pairs where value does not match.
+ * if multi_replace==0, nothing, or only one matching key/value is replaced,
+ *     else all matching key/values (regardless how many) are removed,
+ *     before the new pair is written.
  *
  * Returns 0 on success.
  *
@@ -360,13 +393,15 @@ int git_config_set(const char* key, const char* value)
  *
  */
 int git_config_set_multivar(const char* key, const char* value,
-	const char* value_regex)
+	const char* value_regex, int multi_replace)
 {
 	int i;
 	struct stat st;
 	int fd;
 	char* config_file = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
+
+	store.multi_replace = multi_replace;
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -431,7 +466,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	} else{
 		int in_fd;
 		char* contents;
-		int offset, new_line = 0;
+		int i, copy_begin, copy_end, new_line = 0;
 
 		if (value_regex == NULL)
 			store.value_regex = NULL;
@@ -446,7 +481,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			}
 		}
 
-		store.offset = 0;
+		store.offset[0] = 0;
 		store.state = START;
 		store.seen = 0;
 
@@ -472,51 +507,41 @@ int git_config_set_multivar(const char* key, const char* value,
 			free(store.value_regex);
 		}
 
-		/* if nothing to unset, error out */
-		if (store.seen == 0 && value == NULL) {
+		/* if nothing to unset, or too many matches, error out */
+		if ((store.seen == 0 && value == NULL) ||
+				(store.seen > 1 && multi_replace == 0)) {
 			close(fd);
 			unlink(lock_file);
 			return 5;
 		}
-
-		store.key = (char*)key;
 
 		in_fd = open(config_file, O_RDONLY, 0666);
 		contents = mmap(NULL, st.st_size, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);
 
-		if (store.offset == 0) {
-			store.offset = offset = st.st_size;
-		} else if (store.state != KEY_SEEN) {
-			offset = store.offset;
-		} else {
-			int equal_offset = st.st_size,
-				bracket_offset = st.st_size;
+		if (store.seen == 0)
+			store.seen = 1;
 
-			if (value == NULL && store.seen > 1) {
-				fprintf(stderr, "Cannot remove multivar (%s has %d values\n", key, store.seen);
-				close(fd);
-				unlink(lock_file);
-				return 7;
-			}
-			for (offset = store.offset-2; offset > 0 
-					&& contents[offset] != '\n'; offset--)
-				switch (contents[offset]) {
-				case '=': equal_offset = offset; break;
-				case ']': bracket_offset = offset; break;
-				}
-			if (bracket_offset < equal_offset) {
-				new_line = 1;
-				offset = bracket_offset+1;
+		for (i = 0, copy_begin = 0; i < store.seen; i++) {
+			if (store.offset[i] == 0) {
+				store.offset[i] = copy_end = st.st_size;
+			} else if (store.state != KEY_SEEN) {
+				copy_end = store.offset[i];
 			} else
-				offset++;
-		}
+				copy_end = find_beginning_of_line(
+					contents, st.st_size,
+					store.offset[i]-2, &new_line);
 
-		/* write the first part of the config */
-		write(fd, contents, offset);
-		if (new_line)
-			write(fd, "\n", 1);
+			/* write the first part of the config */
+			if (copy_end > copy_begin) {
+				write(fd, contents + copy_begin,
+				copy_end - copy_begin);
+				if (new_line)
+					write(fd, "\n", 1);
+			}
+			copy_begin = store.offset[i];
+		}
 
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
@@ -526,9 +551,9 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		/* write the rest of the config */
-		if (store.offset < st.st_size)
-			write(fd, contents + store.offset,
-				st.st_size - store.offset);
+		if (copy_begin < st.st_size)
+			write(fd, contents + copy_begin,
+				st.st_size - copy_begin);
 
 		munmap(contents, st.st_size);
 		unlink(config_file);
@@ -543,4 +568,5 @@ int git_config_set_multivar(const char* key, const char* value,
 
 	return 0;
 }
+
 

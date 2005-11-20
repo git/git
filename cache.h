@@ -192,7 +192,6 @@ extern int diff_rename_limit_default;
 
 /* Return a statically allocated filename matching the sha1 signature */
 extern char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern char *enter_repo(char *path, int strict);
 extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern char *sha1_file_name(const unsigned char *sha1);
 extern char *sha1_pack_name(const unsigned char *sha1);
@@ -388,7 +387,7 @@ extern int git_config(config_fn_t fn);
 extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
 extern int git_config_set(const char *, const char *);
-extern int git_config_set_multivar(const char *, const char *, const char *);
+extern int git_config_set_multivar(const char *, const char *, const char *, int);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];

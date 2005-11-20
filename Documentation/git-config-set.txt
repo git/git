@@ -8,12 +8,18 @@ git-config-set - Set options in .git/config.
 
 SYNOPSIS
 --------
-'git-config-set' ( name [value [value_regex]] | --unset name [value_regex] )
+'git-config-set' name [value [value_regex]]
+'git-config-set' --replace-all name [value [value_regex]]
+'git-config-set' --get name [value_regex]
+'git-config-set' --get-all name [value_regex]
+'git-config-set' --unset name [value_regex]
+'git-config-set' --unset-all name [value_regex]
 
 DESCRIPTION
 -----------
-You can set/replace/unset options with this command. The name is actually
-the section and the key separated by a dot, and the value will be escaped.
+You can query/set/replace/unset options with this command. The name is
+actually the section and the key separated by a dot, and the value will be
+escaped.
 
 If you want to set/unset an option which can occor on multiple lines, you
 should provide a POSIX regex for the value.
@@ -31,8 +37,23 @@ This command will fail if
 OPTIONS
 -------
 
+--replace-all::
+	Default behaviour is to replace at most one line. This replaces
+	all lines matching the key (and optionally the value_regex)
+
+--get::
+	Get the value for a given key (optionally filtered by a regex
+	matching the value).
+
+--get-all::
+	Like get, but does not fail if the number of values for the key
+	is not exactly one.
+
 --unset::
-	Remove the given option from .git/config
+	Remove the line matching the key from .git/config.
+
+--unset-all::
+	Remove all matching lines from .git/config.
 
 
 EXAMPLE
@@ -84,14 +105,39 @@ To delete the entry for renames, do
 % git config-set --unset diff.renames
 ------------
 
-or just
-
-------------
-% git config-set diff.renames
-------------
-
 If you want to delete an entry for a multivar (like proxy.command above),
 you have to provide a regex matching the value of exactly one line.
+
+To query the value for a given key, do
+
+------------
+% git config-set --get core.filemode
+------------
+
+or
+
+------------
+% git config-set core.filemode
+------------
+
+or, to query a multivar:
+
+------------
+% git config-set --get proxy.command "for kernel.org$"
+------------
+
+If you want to know all the values for a multivar, do:
+
+------------
+% git config-set --get-all proxy.command
+------------
+
+If you like to live dangerous, you can replace *all* proxy.commands by a
+new one with
+
+------------
+% git config-set --replace-all proxy.command ssh
+------------
 
 
 Author
