@@ -248,5 +248,24 @@ test_expect_failure 'invalid key' 'git-config-set inval.2key blabla'
 
 test_expect_success 'correct key' 'git-config-set 123456.a123 987'
 
+test_expect_success 'hierarchical section' \
+	'git-config-set 1.2.3.alpha beta'
+
+cat > expect << EOF
+[beta] ; silly comment # another comment
+noIndent= sillyValue ; 'nother silly comment
+
+# empty line
+		; comment
+[nextSection]
+	NoNewLine = wow2 for me
+[123456]
+	a123 = 987
+[1.2.3]
+	alpha = beta
+EOF
+
+test_expect_success 'hierarchical section value' 'cmp .git/config expect'
+
 test_done
 

@@ -143,7 +143,7 @@ static int get_base_var(char *name)
 			return -1;
 		if (c == ']')
 			return baselen;
-		if (!isalnum(c))
+		if (!isalnum(c) && c != '.')
 			return -1;
 		if (baselen > MAXNAME / 2)
 			return -1;
@@ -405,28 +405,29 @@ int git_config_set_multivar(const char* key, const char* value,
 	int fd;
 	char* config_file = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
-
-	store.multi_replace = multi_replace;
+	const char* last_dot = strrchr(key, '.');
 
 	/*
 	 * Since "key" actually contains the section name and the real
 	 * key name separated by a dot, we have to know where the dot is.
 	 */
-	for (store.baselen = 0;
-			key[store.baselen] != '.' && key[store.baselen];
-			store.baselen++);
-	if (!key[store.baselen] || !key[store.baselen+1]) {
+
+	if (last_dot == NULL) {	
 		fprintf(stderr, "key does not contain a section: %s\n", key);
 		return 2;
 	}
+	store.baselen = last_dot - key;
+
+	store.multi_replace = multi_replace;
 
 	/*
 	 * Validate the key and while at it, lower case it for matching.
 	 */
 	store.key = (char*)malloc(strlen(key)+1);
 	for (i = 0; key[i]; i++)
-		if (i != store.baselen && (!isalnum(key[i]) ||
-				(i == store.baselen+1 && !isalpha(key[i])))) {
+		if (i != store.baselen &&
+				((!isalnum(key[i]) && key[i] != '.') ||
+				 (i == store.baselen+1 && !isalpha(key[i])))) {
 			fprintf(stderr, "invalid key: %s\n", key);
 			free(store.key);
 			return 1;
