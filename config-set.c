@@ -8,13 +8,15 @@ static char* key = NULL;
 static char* value = NULL;
 static regex_t* regex = NULL;
 static int do_all = 0;
+static int do_not_match = 0;
 static int seen = 0;
 
 static int show_config(const char* key_, const char* value_)
 {
 	if (!strcmp(key_, key) &&
 			(regex == NULL ||
-			 !regexec(regex, value_, 0, NULL, 0))) {
+			 (do_not_match ^
+			  !regexec(regex, value_, 0, NULL, 0)))) {
 		if (do_all) {
 			printf("%s\n", value_);
 			return 0;
@@ -38,6 +40,11 @@ static int get_value(const char* key_, const char* regex_)
 		key[i] = tolower(key_[i]);
 
 	if (regex_) {
+		if (regex_[0] == '!') {
+			do_not_match = 1;
+			regex_++;
+		}
+
 		regex = (regex_t*)malloc(sizeof(regex_t));
 		if (regcomp(regex, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);

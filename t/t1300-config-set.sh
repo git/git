@@ -69,6 +69,28 @@ EOF
 
 test_expect_success 'similar section' 'cmp .git/config expect'
 
+test_expect_success 'replace with non-match' \
+	'git-config-set core.penguin kingpin !blue'
+
+test_expect_success 'replace with non-match (actually matching)' \
+	'git-config-set core.penguin "very blue" !kingpin'
+
+cat > expect << EOF
+#
+# This is the config file
+#
+
+[core]
+	penguin = very blue
+	Movie = BadPhysics
+	UPPERCASE = true
+	penguin = kingpin
+[Cores]
+	WhatEver = Second
+EOF
+
+test_expect_success 'non-match result' 'cmp .git/config expect'
+
 cat > .git/config << EOF
 [beta] ; silly comment # another comment
 noIndent= sillyValue ; 'nother silly comment
@@ -172,6 +194,12 @@ noIndent= sillyValue ; 'nother silly comment
 EOF
 
 test_expect_success 'multivar' 'cmp .git/config expect'
+
+test_expect_success 'non-match' \
+	'git-config-set --get nextsection.nonewline !for'
+
+test_expect_success 'non-match value' \
+	'test wow = $(git-config-set --get nextsection.nonewline !for)'
 
 test_expect_failure 'ambiguous get' \
 	'git-config-set --get nextsection.nonewline'

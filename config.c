@@ -269,6 +269,7 @@ int git_config(config_fn_t fn)
 static struct {
 	int baselen;
 	char* key;
+	int do_not_match;
 	regex_t* value_regex;
 	int multi_replace;
 	off_t offset[MAX_MATCHES];
@@ -276,13 +277,19 @@ static struct {
 	int seen;
 } store;
 
+static int matches(const char* key, const char* value)
+{
+	return !strcmp(key, store.key) &&
+		(store.value_regex == NULL ||
+		 (store.do_not_match ^
+		  !regexec(store.value_regex, value, 0, NULL, 0)));
+}
+
 static int store_aux(const char* key, const char* value)
 {
 	switch (store.state) {
 	case KEY_SEEN:
-		if (!strcmp(key, store.key) &&
-				(store.value_regex == NULL ||
-				!regexec(store.value_regex, value, 0, NULL, 0))) {
+		if (matches(key, value)) {
 			if (store.seen == 1 && store.multi_replace == 0) {
 				fprintf(stderr,
 					"Warning: %s has multiple values\n",
@@ -306,9 +313,7 @@ static int store_aux(const char* key, const char* value)
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:
-		if (!strcmp(key, store.key) &&
-				(store.value_regex == NULL ||
-				!regexec(store.value_regex, value, 0, NULL, 0))) {
+		if (matches(key, value)) {
 			store.offset[store.seen] = ftell(config_file);
 			store.state = KEY_SEEN;
 			store.seen++;
@@ -471,6 +476,12 @@ int git_config_set_multivar(const char* key, const char* value,
 		if (value_regex == NULL)
 			store.value_regex = NULL;
 		else {
+			if (value_regex[0] == '!') {
+				store.do_not_match = 1;
+				value_regex++;
+			} else
+				store.do_not_match = 0;
+
 			store.value_regex = (regex_t*)malloc(sizeof(regex_t));
 			if (regcomp(store.value_regex, value_regex,
 					REG_EXTENDED)) {

@@ -22,7 +22,9 @@ actually the section and the key separated by a dot, and the value will be
 escaped.
 
 If you want to set/unset an option which can occor on multiple lines, you
-should provide a POSIX regex for the value.
+should provide a POSIX regex for the value. If you want to handle the lines
+*not* matching the regex, just prepend a single exlamation mark in front
+(see EXAMPLES).
 
 This command will fail if
 
@@ -82,6 +84,7 @@ Given a .git/config like this:
 		command="ssh" for "ssh://kernel.org/"
 		command="proxy-command" for kernel.org
 		command="myprotocol-command" for "my://"
+		command=default-proxy ; for all the rest
 
 you can set the filemode to true with
 
@@ -137,6 +140,19 @@ new one with
 
 ------------
 % git config-set --replace-all proxy.command ssh
+------------
+
+However, if you really only want to replace the line for the default proxy,
+i.e. the one without a "for ..." postfix, do something like this:
+
+------------
+% git config-set proxy.command ssh '! for '
+------------
+
+To actually match only values with an exclamation mark, you have to
+
+------------
+% git config-set section.key value '[!]'
 ------------
 
 
