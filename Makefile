@@ -133,11 +133,26 @@ PROGRAMS += git-ssh-pull$X git-ssh-push$X
 
 GIT_LIST_TWEAK =
 
+# Set paths to tools early so that they can be used for version tests.
+ifndef SHELL_PATH
+	SHELL_PATH = /bin/sh
+endif
+ifndef PERL_PATH
+	PERL_PATH = /usr/bin/perl
+endif
+ifndef PYTHON_PATH
+	PYTHON_PATH = /usr/bin/python
+endif
+
 PYMODULES = \
 	gitMergeCommon.py
 
 ifdef WITH_OWN_SUBPROCESS_PY
 	PYMODULES += compat/subprocess.py
+else
+	ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
+		PYMODULES += compat/subprocess.py
+	endif
 endif
 
 ifdef WITH_SEND_EMAIL
@@ -250,16 +265,6 @@ ifndef NO_CURL
 			PROGRAMS += git-http-push$X
 		endif
 	endif
-endif
-
-ifndef SHELL_PATH
-	SHELL_PATH = /bin/sh
-endif
-ifndef PERL_PATH
-	PERL_PATH = /usr/bin/perl
-endif
-ifndef PYTHON_PATH
-	PYTHON_PATH = /usr/bin/python
 endif
 
 ifndef NO_OPENSSL
