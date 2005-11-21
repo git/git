@@ -181,7 +181,7 @@ char *enter_repo(char *path, int strict)
 		return NULL;
 
 	if (strict) {
-		if((path[0] != '/') || chdir(path) < 0)
+		if (chdir(path) < 0)
 			return NULL;
 	}
 	else {
