@@ -466,8 +466,14 @@ static int socksetup(int port, int **socklist_p)
 		return 0;
 	}
 
+	if (listen(sockfd, 5) < 0) {
+		close(sockfd);
+		return 0;
+	}
+
 	*socklist_p = xmalloc(sizeof(int));
 	**socklist_p = sockfd;
+	return 1;
 }
 
 #endif
