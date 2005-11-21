@@ -8,14 +8,14 @@
 # (2) make this file executable by "chmod +x update".
 #
 
-recipient="commit-list@mydomain.xz"
+recipient="commit-list@example.com"
 
 if expr "$2" : '0*$' >/dev/null
 then
 	echo "Created a new ref, with the following commits:"
 	git-rev-list --pretty "$3"
 else
-	$base=$(git-merge-base "$2" "$3")
+	base=$(git-merge-base "$2" "$3")
 	case "$base" in
 	"$2")
 		echo "New commits:"
@@ -24,8 +24,7 @@ else
 		echo "Rebased ref, commits from common ancestor:"
 		;;
 	esac
-fi
-git-rev-list --pretty "$3" "^$base"
+	git-rev-list --pretty "$3" "^$base"
 fi |
 mail -s "Changes to ref $1" "$recipient"
 exit 0
