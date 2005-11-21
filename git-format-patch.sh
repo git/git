@@ -99,7 +99,7 @@ filelist=$tmp-files
 # Also, "rev1.." should mean "rev1..HEAD"; git-diff users are
 # familiar with that syntax.
 
-case "$#,$1" in
+case "$#,$1$2" in
 1,?*..?*)
 	# single "rev1..rev2"
 	;;
@@ -131,7 +131,8 @@ do
 		rev2=`expr "$revpair" : '.*\.\.\(.*\)'`
 		;;
 	*)
-		usage
+		rev1="$revpair^"
+		rev2="$revpair"
 		;;
 	esac
 	git-rev-parse --verify "$rev1^0" >/dev/null 2>&1 ||
