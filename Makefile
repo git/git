@@ -102,6 +102,11 @@ SCRIPT_PERL = \
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
 
+SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
+	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
+	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
+	  gitk git-cherry-pick
+
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
@@ -125,8 +130,10 @@ PROGRAMS = \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
-	git-name-rev$X git-pack-redundant$X git-config-set$X git-var$X \
-	$(SIMPLE_PROGRAMS)
+	git-name-rev$X git-pack-redundant$X git-config-set$X git-var$X
+
+# what 'all' will build and 'install' will install.
+ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS) git$X
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -339,25 +346,20 @@ endif
 
 ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 
-SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
-	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  gitk git-cherry-pick
-
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(PROGRAMS) $(SCRIPTS) git
+all: $(ALL_PROGRAMS)
 
 all:
 	$(MAKE) -C templates
 
 # Only use $(CFLAGS). We don't need anything else.
-git: git.c Makefile
+git$(X): git.c Makefile
 	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $@.c -o $@
+		$(CFLAGS) $< -o $@
 
-$(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
+$(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
 	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
@@ -441,9 +443,9 @@ check:
 
 ### Installation rules
 
-install: $(PROGRAMS) $(SCRIPTS) git
+install: all
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) git $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) $(ALL_PROGRAMS) $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
