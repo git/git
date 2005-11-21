@@ -307,6 +307,9 @@ void diffcore_rename(struct diff_options *options)
 	if (rename_count == rename_dst_nr)
 		goto cleanup;
 
+	if (minimum_score == MAX_SCORE)
+		goto cleanup;
+
 	num_create = (rename_dst_nr - rename_count);
 	num_src = rename_src_nr;
 	mx = xmalloc(sizeof(*mx) * num_create * num_src);

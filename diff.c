@@ -853,6 +853,10 @@ static int parse_num(const char **cp_p)
 	}
 	*cp_p = cp;
 
+	/* special case: -M100 would mean 1.0 not 0.1 */
+	if (num == 100 && scale == 1000)
+		return MAX_SCORE;
+
 	/* user says num divided by scale and we say internally that
 	 * is MAX_SCORE * num / scale.
 	 */
