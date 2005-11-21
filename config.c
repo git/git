@@ -432,6 +432,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			return 1;
 		} else
 			store.key[i] = tolower(key[i]);
+	store.key[i] = 0;
 
 	/*
 	 * The lock_file serves a purpose in addition to locking: the new

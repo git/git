@@ -38,6 +38,7 @@ static int get_value(const char* key_, const char* regex_)
 	key = malloc(strlen(key_)+1);
 	for (i = 0; key_[i]; i++)
 		key[i] = tolower(key_[i]);
+	key[i] = 0;
 
 	if (regex_) {
 		if (regex_[0] == '!') {
