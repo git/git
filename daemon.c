@@ -92,25 +92,21 @@ static char *path_ok(char *dir)
 	}
 
 	if ( ok_paths && *ok_paths ) {
-		char **pp = NULL;
-		int dirlen = strlen(dir);
+		char **pp;
 		int pathlen = strlen(path);
 
+		/* The validation is done on the paths after enter_repo
+		 * canonicalization, so whitelist should be written in
+		 * terms of real pathnames (i.e. after ~user is expanded
+		 * and symlinks resolved).
+		 */
 		for ( pp = ok_paths ; *pp ; pp++ ) {
 			int len = strlen(*pp);
-			/* because of symlinks we must match both what the
-			 * user passed and the canonicalized path, otherwise
-			 * the user can send a string matching either a whitelist
-			 * entry or an actual directory exactly and still not
-			 * get through */
-			if (len <= pathlen && !memcmp(*pp, path, len)) {
-				if (path[len] == '\0' || (!strict_paths && path[len] == '/'))
-					return path;
-			}
-			if (len <= dirlen && !memcmp(*pp, dir, len)) {
-				if (dir[len] == '\0' || (!strict_paths && dir[len] == '/'))
-					return path;
-			}
+			if (len <= pathlen &&
+			    !memcmp(*pp, path, len) &&
+			    (path[len] == '\0' ||
+			     (!strict_paths && path[len] == '/')))
+				return path;
 		}
 	}
 	else {
@@ -160,7 +156,7 @@ static int upload(char *dir)
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 
 	/* git-upload-pack only ever reads stuff, so this is safe */
-	execlp("git-upload-pack", "git-upload-pack", "--strict", timeout_buf, path, NULL);
+	execlp("git-upload-pack", "git-upload-pack", "--strict", timeout_buf, ".", NULL);
 	return -1;
 }
 
