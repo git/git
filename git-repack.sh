@@ -41,7 +41,7 @@ esac
 if [ "$local" ]; then
 	pack_objects="$pack_objects --local"
 fi
-name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) |
+name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) 2>&1 |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
 if [ -z "$name" ]; then
