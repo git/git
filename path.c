@@ -131,7 +131,7 @@ int validate_symref(const char *path)
 	return -1;
 }
 
-static char *current_dir()
+static char *current_dir(void)
 {
 	return getcwd(pathname, sizeof(pathname));
 }

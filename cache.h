@@ -203,6 +203,7 @@ int git_mkstemp(char *path, size_t n, const char *template);
 
 int safe_create_leading_directories(char *path);
 char *safe_strncpy(char *, const char *, size_t);
+char *enter_repo(char *path, int strict);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size);

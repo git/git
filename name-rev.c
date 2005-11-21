@@ -230,8 +230,6 @@ int main(int argc, char **argv)
 				fwrite(p_start, p - p_start, 1, stdout);
 		}
 	} else if (all) {
-		extern struct object **objs;
-		extern int nr_objs;
 		int i;
 
 		for (i = 0; i < nr_objs; i++)
