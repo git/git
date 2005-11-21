@@ -1534,7 +1534,10 @@ on that project and has an own "public repository" goes like this:
    the "project lead" person does.
 
 3. Copy over the packed files from "project lead" public
-   repository to your public repository.
+   repository to your public repository, unless the "project
+   lead" repository lives on the same machine as yours.  In the
+   latter case, you can use `objects/info/alternates` file to
+   point at the repository you are borrowing from.
 
 4. Push into the public repository from your primary
    repository. Run `git repack`, and possibly `git prune` if the
