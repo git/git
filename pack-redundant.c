@@ -493,12 +493,10 @@ static void load_all_objects(void)
 {
 	struct pack_list *pl = local_packs;
 	struct llist_item *hint, *l;
-	int i;
 
 	llist_init(&all_objects);
 
 	while (pl) {
-		i = 0;
 		hint = NULL;
 		l = pl->all_objects->front;
 		while (l) {
