@@ -455,6 +455,10 @@ static int rhost_len;
 static int git_proxy_command_options(const char *var, const char *value)
 {
 	if (!strcmp(var, "core.gitproxy")) {
+		const char *for_pos;
+		int matchlen = -1;
+		int hostlen;
+
 		if (git_proxy_command)
 			return 0;
 		/* [core]
@@ -463,10 +467,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 		 * gitproxy = netcatter-2 for sample.xz
 		 * gitproxy = netcatter-default
 		 */
-		const char *for_pos = strstr(value, " for ");
-		int matchlen = -1;
-		int hostlen;
-
+		for_pos = strstr(value, " for ");
 		if (!for_pos)
 			/* matches everybody */
 			matchlen = strlen(value);
