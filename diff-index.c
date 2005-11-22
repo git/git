@@ -180,7 +180,7 @@ int main(int argc, const char **argv)
 	int allow_options = 1;
 	int i;
 
-	git_config(git_default_config);
+	git_config(git_diff_config);
 	diff_setup(&diff_options);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

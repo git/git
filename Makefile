@@ -482,7 +482,8 @@ deb: dist
 ### Cleaning rules
 
 clean:
-	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o git $(PROGRAMS) $(LIB_FILE)
+	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o $(LIB_FILE)
+	rm -f $(PROGRAMS) $(SIMPLE_PROGRAMS) git$X
 	rm -f $(filter-out gitk,$(SCRIPTS))
 	rm -f *.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)

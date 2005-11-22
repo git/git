@@ -15,6 +15,16 @@ static int use_size_cache;
 
 int diff_rename_limit_default = -1;
 
+int git_diff_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "diff.renamelimit")) {
+		diff_rename_limit_default = git_config_int(var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value);
+}
+
 static char *quote_one(const char *str)
 {
 	int needlen;

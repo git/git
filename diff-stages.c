@@ -55,6 +55,9 @@ int main(int ac, const char **av)
 {
 	int stage1, stage2;
 
+	setup_git_directory();
+
+	git_config(git_diff_config);
 	read_cache();
 	diff_setup(&diff_options);
 	while (1 < ac && av[1][0] == '-') {
