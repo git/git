@@ -149,8 +149,9 @@ static inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
 }
 
 /* returns a pointer to an item in front of sha1 */
-static inline struct llist_item * llist_sorted_remove(struct llist *list, char *sha1,
-					       struct llist_item *hint)
+static inline struct llist_item * llist_sorted_remove(struct llist *list,
+						      const char *sha1,
+						      struct llist_item *hint)
 {
 	struct llist_item *prev, *l;
 
@@ -218,10 +219,11 @@ static inline size_t pack_list_size(struct pack_list *pl)
 	return ret;
 }
 
-static struct pack_list * pack_list_difference(struct pack_list *A,
-					struct pack_list *B)
+static struct pack_list * pack_list_difference(const struct pack_list *A,
+					       const struct pack_list *B)
 {
-	struct pack_list *ret, *pl;
+	struct pack_list *ret;
+	const struct pack_list *pl;
 
 	if (A == NULL)
 		return NULL;
@@ -350,8 +352,7 @@ static int is_superset(struct pack_list *pl, struct llist *list)
 	diff = llist_copy(list);
 
 	while (pl) {
-		llist_sorted_difference_inplace(diff,
-						pl->all_objects);
+		llist_sorted_difference_inplace(diff, pl->all_objects);
 		if (diff->size == 0) { /* we're done */
 			llist_free(diff);
 			return 1;
