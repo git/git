@@ -82,7 +82,6 @@ then
 		# rescuing paths and is never meant to remove what
 		# is not in the named tree-ish.
 		git-ls-tree -r "$new" "$@" |
-		sed -ne 's/^\([0-7]*\) blob \(.*\)$/\1 \2/p' |
 		git-update-index --index-info || exit $?
 	fi
 	git-checkout-index -f -u -- "$@"
