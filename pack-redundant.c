@@ -36,11 +36,31 @@ struct pll {
 	size_t pl_size;
 };
 
-static inline void llist_free(struct llist *list)
+static struct llist_item *free_nodes = NULL;
+
+static inline struct llist_item *llist_item_get()
+{
+	struct llist_item *new;
+	if ( free_nodes ) {
+		new = free_nodes;
+		free_nodes = free_nodes->next;
+	} else
+		new = xmalloc(sizeof(struct llist_item));
+
+	return new;
+}
+
+static inline void llist_item_put(struct llist_item *item)
+{
+	item->next = free_nodes;
+	free_nodes = item;
+}
+
+static void llist_free(struct llist *list)
 {
 	while((list->back = list->front)) {
 		list->front = list->front->next;
-		free(list->back);
+		llist_item_put(list->back);
 	}
 	free(list);
 }
@@ -62,13 +82,13 @@ static struct llist * llist_copy(struct llist *list)
 	if ((ret->size = list->size) == 0)
 		return ret;
 
-	new = ret->front = xmalloc(sizeof(struct llist_item));
+	new = ret->front = llist_item_get();
 	new->sha1 = list->front->sha1;
 
 	old = list->front->next;
 	while (old) {
 		prev = new;
-		new = xmalloc(sizeof(struct llist_item));
+		new = llist_item_get();
 		prev->next = new;
 		new->sha1 = old->sha1;
 		old = old->next;
@@ -82,7 +102,7 @@ static struct llist * llist_copy(struct llist *list)
 static inline struct llist_item * llist_insert(struct llist *list,
 					struct llist_item *after, char *sha1)
 {
-	struct llist_item *new = xmalloc(sizeof(struct llist_item));
+	struct llist_item *new = llist_item_get();
 	new->sha1 = sha1;
 	new->next = NULL;
 
@@ -153,7 +173,7 @@ redo_from_start:
 				prev->next = l->next;
 			if (l == list->back)
 				list->back = prev;
-			free(l);
+			llist_item_put(l);
 			list->size--;
 			return prev;
 		}
