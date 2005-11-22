@@ -3636,8 +3636,11 @@ proc doquit {} {
 }
 
 proc formatdate {d} {
-    global hours nhours tfd
+    global hours nhours tfd fastdate
 
+    if {!$fastdate} {
+	return [clock format $d -format "%Y-%m-%d %H:%M:%S"]
+    }
     set hr [expr {$d / 3600}]
     set ms [expr {$d % 3600}]
     if {![info exists hours($hr)]} {
@@ -3662,6 +3665,7 @@ set gaudydiff 0
 set maxgraphpct 50
 set maxwidth 16
 set revlistorder 0
+set fastdate 0
 
 set colors {green red blue magenta darkgrey brown orange}
 
