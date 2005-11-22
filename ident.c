@@ -156,7 +156,8 @@ static int copy(char *buf, int size, int offset, const char *src)
 	return offset;
 }
 
-char *get_ident(const char *name, const char *email, const char *date_str)
+static const char *get_ident(const char *name, const char *email,
+			     const char *date_str)
 {
 	static char buffer[1000];
 	char date[50];
@@ -181,12 +182,16 @@ char *get_ident(const char *name, const char *email, const char *date_str)
 	return buffer;
 }
 
-char *git_author_info(void)
+const char *git_author_info(void)
 {
-	return get_ident(getenv("GIT_AUTHOR_NAME"), getenv("GIT_AUTHOR_EMAIL"), getenv("GIT_AUTHOR_DATE"));
+	return get_ident(getenv("GIT_AUTHOR_NAME"),
+			 getenv("GIT_AUTHOR_EMAIL"),
+			 getenv("GIT_AUTHOR_DATE"));
 }
 
-char *git_committer_info(void)
+const char *git_committer_info(void)
 {
-	return get_ident(getenv("GIT_COMMITTER_NAME"), getenv("GIT_COMMITTER_EMAIL"), getenv("GIT_COMMITTER_DATE"));
+	return get_ident(getenv("GIT_COMMITTER_NAME"),
+			 getenv("GIT_COMMITTER_EMAIL"),
+			 getenv("GIT_COMMITTER_DATE"));
 }

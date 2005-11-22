@@ -263,9 +263,8 @@ void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 
 extern int setup_ident(void);
-extern char *get_ident(const char *name, const char *email, const char *date_str);
-extern char *git_author_info(void);
-extern char *git_committer_info(void);
+extern const char *git_author_info(void);
+extern const char *git_committer_info(void);
 
 static inline void *xmalloc(size_t size)
 {
