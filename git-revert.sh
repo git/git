@@ -25,7 +25,7 @@ usage () {
 	esac
 }
 
-no_commit= replay=
+no_commit= replay= edit=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -35,6 +35,9 @@ do
 		;;
 	-r|--r|--re|--rep|--repl|--repla|--replay)
 		replay=t
+		;;
+	-e|--edit)
+		edit=t
 		;;
 	-*)
 		usage
@@ -161,6 +164,7 @@ echo >&2 "Finished one $me."
 # If we are revert, or if our cherry-pick results in a hand merge,
 # we had better say that the current user is responsible for that.
 
+[ "$edit" ] && ${EDITOR:-${VISUAL:-vi}} .msg
 case "$no_commit" in
 '')
 	git-commit -n -F .msg
