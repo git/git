@@ -103,13 +103,22 @@ while(scalar @srcArgs > 0) {
 	$bad = "bad source '$src'";
     }
 
+    $safesrc = quotemeta($src);
+    @srcfiles = grep /^$safesrc(\/|$)/, @allfiles;
+
     $overwritten{$dst} = 0;
     if (($bad eq "") && -e $dst) {
 	$bad = "destination '$dst' already exists";
-	if (-f $dst && $opt_f) {
-	    print "Warning: $bad; will overwrite!\n";
-	    $bad = "";
-	    $overwritten{$dst} = 1;
+	if ($opt_f) {
+	    # only files can overwrite each other: check both source and destination
+	    if (-f $dst && (scalar @srcfiles == 1)) {
+		print "Warning: $bad; will overwrite!\n";
+		$bad = "";
+		$overwritten{$dst} = 1;
+	    }
+	    else {
+		$bad = "Can not overwrite '$src' with '$dst'";
+	    }
 	}
     }
     
@@ -118,8 +127,6 @@ while(scalar @srcArgs > 0) {
     }
 
     if ($bad eq "") {
-	$safesrc = quotemeta($src);
-	@srcfiles = grep /^$safesrc(\/|$)/, @allfiles;
         if (scalar @srcfiles == 0) {
 	    $bad = "'$src' not under version control";
 	}
@@ -166,10 +173,12 @@ while(scalar @srcs > 0) {
 
     push @deletedfiles, @srcfiles;
     if (scalar @srcfiles == 1) {
+	# $dst can be a directory with 1 file inside
 	if ($overwritten{$dst} ==1) {
-	    push @changedfiles, $dst;
+	    push @changedfiles, $dstfiles[0];
+
 	} else {
-	    push @addedfiles, $dst;
+	    push @addedfiles, $dstfiles[0];
 	}
     }
     else {
