@@ -719,6 +719,7 @@ sub date_str {
 
 # git-logo (cached in browser for one day)
 sub git_logo {
+	binmode STDOUT, ':raw';
 	print $cgi->header(-type => 'image/png', -expires => '+1d');
 	# cat git-logo.png | hexdump -e '16/1 " %02x"  "\n"' | sed 's/ /\\x/g'
 	print	"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" .
