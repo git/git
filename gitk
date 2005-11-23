@@ -30,7 +30,7 @@ proc getcommits {rargs} {
     set commits {}
     set phase getcommits
     set startmsecs [clock clicks -milliseconds]
-    set nextupdate [expr $startmsecs + 100]
+    set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
     if [catch {
 	set parse_args [concat --default HEAD $rargs]
@@ -74,9 +74,9 @@ proc getcommitlines {commfd}  {
 	}
 	if {[string range $err 0 4] == "usage"} {
 	    set err \
-{Gitk: error reading commits: bad arguments to git-rev-list.
-(Note: arguments to gitk are passed to git-rev-list
-to allow selection of commits to be displayed.)}
+		"Gitk: error reading commits: bad arguments to git-rev-list.\
+		(Note: arguments to gitk are passed to git-rev-list\
+		to allow selection of commits to be displayed.)"
 	} else {
 	    set err "Error reading commits: $err"
 	}
@@ -310,10 +310,10 @@ proc makewindow {} {
     . configure -menu .bar
 
     if {![info exists geometry(canv1)]} {
-	set geometry(canv1) [expr 45 * $charspc]
-	set geometry(canv2) [expr 30 * $charspc]
-	set geometry(canv3) [expr 15 * $charspc]
-	set geometry(canvh) [expr 25 * $linespc + 4]
+	set geometry(canv1) [expr {45 * $charspc}]
+	set geometry(canv2) [expr {30 * $charspc}]
+	set geometry(canv3) [expr {15 * $charspc}]
+	set geometry(canvh) [expr {25 * $linespc + 4}]
 	set geometry(ctextw) 80
 	set geometry(ctexth) 30
 	set geometry(cflistw) 30
@@ -548,10 +548,10 @@ proc savestuff {w} {
 	puts $f [list set maxwidth $maxwidth]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
-	puts $f "set geometry(canv1) [expr [winfo width $canv]-2]"
-	puts $f "set geometry(canv2) [expr [winfo width $canv2]-2]"
-	puts $f "set geometry(canv3) [expr [winfo width $canv3]-2]"
-	puts $f "set geometry(canvh) [expr [winfo height $canv]-2]"
+	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
+	puts $f "set geometry(canv2) [expr {[winfo width $canv2]-2}]"
+	puts $f "set geometry(canv3) [expr {[winfo width $canv3]-2}]"
+	puts $f "set geometry(canvh) [expr {[winfo height $canv]-2}]"
 	set wid [expr {([winfo width $ctext] - 8) \
 			   / [font measure $textfont "0"]}]
 	puts $f "set geometry(ctextw) $wid"
@@ -580,12 +580,12 @@ proc resizeclistpanes {win w} {
 		set sash0 30
 	    }
 	    if {$sash1 < $sash0 + 20} {
-		set sash1 [expr $sash0 + 20]
+		set sash1 [expr {$sash0 + 20}]
 	    }
 	    if {$sash1 > $w - 10} {
-		set sash1 [expr $w - 10]
+		set sash1 [expr {$w - 10}]
 		if {$sash0 > $sash1 - 20} {
-		    set sash0 [expr $sash1 - 20]
+		    set sash0 [expr {$sash1 - 20}]
 		}
 	    }
 	}
@@ -608,7 +608,7 @@ proc resizecdetpanes {win w} {
 		set sash0 45
 	    }
 	    if {$sash0 > $w - 15} {
-		set sash0 [expr $w - 15]
+		set sash0 [expr {$w - 15}]
 	    }
 	}
 	$win sash place 0 $sash0 [lindex $s0 1]
@@ -819,9 +819,9 @@ proc drawcommitline {level} {
     }
     set x [xcoord $level $level $lineno]
     set y1 $canvy
-    set canvy [expr $canvy + $linespc]
+    set canvy [expr {$canvy + $linespc}]
     allcanvs conf -scrollregion \
-	[list 0 0 0 [expr $y1 + 0.5 * $linespc + 2]]
+	[list 0 0 0 [expr {$y1 + 0.5 * $linespc + 2}]]
     if {[info exists mainline($id)]} {
 	lappend mainline($id) $x $y1
 	if {$mainlinearrow($id) ne "none"} {
@@ -830,8 +830,8 @@ proc drawcommitline {level} {
     }
     drawlines $id 0 0
     set orad [expr {$linespc / 3}]
-    set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
-	       [expr $x + $orad - 1] [expr $y1 + $orad - 1] \
+    set t [$canv create oval [expr {$x - $orad}] [expr {$y1 - $orad}] \
+	       [expr {$x + $orad - 1}] [expr {$y1 + $orad - 1}] \
 	       -fill $ofill -outline black -width 1]
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
@@ -886,8 +886,8 @@ proc drawtags {id x xt y1} {
     }
 
     set delta [expr {int(0.5 * ($linespc - $lthickness))}]
-    set yt [expr $y1 - 0.5 * $linespc]
-    set yb [expr $yt + $linespc - 1]
+    set yt [expr {$y1 - 0.5 * $linespc}]
+    set yb [expr {$yt + $linespc - 1}]
     set xvals {}
     set wvals {}
     foreach tag $marks {
@@ -900,12 +900,12 @@ proc drawtags {id x xt y1} {
 	       -width $lthickness -fill black -tags tag.$id]
     $canv lower $t
     foreach tag $marks x $xvals wid $wvals {
-	set xl [expr $x + $delta]
-	set xr [expr $x + $delta + $wid + $lthickness]
+	set xl [expr {$x + $delta}]
+	set xr [expr {$x + $delta + $wid + $lthickness}]
 	if {[incr ntags -1] >= 0} {
 	    # draw a tag
-	    set t [$canv create polygon $x [expr $yt + $delta] $xl $yt \
-		       $xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
+	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
+		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
 		       -width 1 -outline black -fill yellow -tags tag.$id]
 	    $canv bind $t <1> [list showtag $tag 1]
 	    set rowtextx($idline($id)) [expr {$xr + $linespc}]
@@ -916,7 +916,7 @@ proc drawtags {id x xt y1} {
 	    } else {
 		set col "#ddddff"
 	    }
-	    set xl [expr $xl - $delta/2]
+	    set xl [expr {$xl - $delta/2}]
 	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
 		-width 1 -outline black -fill $col -tags tag.$id
 	}
@@ -1491,7 +1491,7 @@ proc drawgraph {} {
 
     if {$displayorder == {}} return
     set startmsecs [clock clicks -milliseconds]
-    set nextupdate [expr $startmsecs + 100]
+    set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
     initgraph
     foreach id $displayorder {
@@ -1520,7 +1520,7 @@ proc drawrest {} {
     }
     drawmore 0
     set phase {}
-    set drawmsecs [expr [clock clicks -milliseconds] - $startmsecs]
+    set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
     #puts "overall $drawmsecs ms for $numcommits commits"
     if {$redisplaying} {
 	if {$stopped == 0 && [info exists selectedline]} {
@@ -1548,8 +1548,8 @@ proc findmatches {f} {
 	set matches {}
 	set i 0
 	while {[set j [string first $foundstring $str $i]] >= 0} {
-	    lappend matches [list $j [expr $j+$foundstrlen-1]]
-	    set i [expr $j + $foundstrlen]
+	    lappend matches [list $j [expr {$j+$foundstrlen-1}]]
+	    set i [expr {$j + $foundstrlen}]
 	}
     }
     return $matches
@@ -1630,7 +1630,7 @@ proc findselectline {l} {
 	set matches [findmatches $f]
 	foreach match $matches {
 	    set start [lindex $match 0]
-	    set end [expr [lindex $match 1] + 1]
+	    set end [expr {[lindex $match 1] + 1}]
 	    $ctext tag add found "1.0 + $start c" "1.0 + $end c"
 	}
     }
@@ -1984,9 +1984,10 @@ proc markmatches {canv l str tag matches font} {
 	set start [lindex $match 0]
 	set end [lindex $match 1]
 	if {$start > $end} continue
-	set xoff [font measure $font [string range $str 0 [expr $start-1]]]
-	set xlen [font measure $font [string range $str 0 [expr $end]]]
-	set t [$canv create rect [expr $x0+$xoff] $y0 [expr $x0+$xlen+2] $y1 \
+	set xoff [font measure $font [string range $str 0 [expr {$start-1}]]]
+	set xlen [font measure $font [string range $str 0 [expr {$end}]]]
+	set t [$canv create rect [expr {$x0+$xoff}] $y0 \
+		   [expr {$x0+$xlen+2}] $y1 \
 		   -outline {} -tags matches -fill yellow]
 	$canv lower $t
     }
@@ -2078,8 +2079,8 @@ proc selectline {l isnew} {
     set ytop [expr {$y - $linespc - 1}]
     set ybot [expr {$y + $linespc + 1}]
     set wnow [$canv yview]
-    set wtop [expr [lindex $wnow 0] * $ymax]
-    set wbot [expr [lindex $wnow 1] * $ymax]
+    set wtop [expr {[lindex $wnow 0] * $ymax}]
+    set wbot [expr {[lindex $wnow 1] * $ymax}]
     set wh [expr {$wbot - $wtop}]
     set newtop $wtop
     if {$ytop < $wtop} {
@@ -2105,7 +2106,7 @@ proc selectline {l isnew} {
 	if {$newtop < 0} {
 	    set newtop 0
 	}
-	allcanvs yview moveto [expr $newtop * 1.0 / $ymax]
+	allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
     }
 
     if {$isnew} {
@@ -2173,7 +2174,7 @@ proc selectline {l isnew} {
 proc selnextline {dir} {
     global selectedline
     if {![info exists selectedline]} return
-    set l [expr $selectedline + $dir]
+    set l [expr {$selectedline + $dir}]
     unmarkmatches
     selectline $l 1
 }
@@ -2966,8 +2967,8 @@ proc setcoords {} {
 
     set linespc [font metrics $mainfont -linespace]
     set charspc [font measure $mainfont "m"]
-    set canvy0 [expr 3 + 0.5 * $linespc]
-    set canvx0 [expr 3 + 0.5 * $linespc]
+    set canvy0 [expr {3 + 0.5 * $linespc}]
+    set canvx0 [expr {3 + 0.5 * $linespc}]
     set lthickness [expr {int($linespc / 9) + 1}]
     set xspc1(0) $linespc
     set xspc2 $linespc
