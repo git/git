@@ -193,14 +193,27 @@ if ($opt_n) {
 	exit(1);
 }
 	
-my $rc;
-if (scalar @changedfiles >0) {
-	$rc = system("git-update-index","--",@changedfiles);
-	die "git-update-index failed to update changed files with code $?\n" if $rc;
+if (@changedfiles) {
+	open(H, "| git-update-index -z --stdin")
+		or die "git-update-index failed to update changed files with code $!\n";
+	foreach my $fileName (@changedfiles) {
+		print H "$fileName\0";
+	}
+	close(H);
 }
-if (scalar @addedfiles >0) {
-	$rc = system("git-update-index","--add","--",@addedfiles);
-	die "git-update-index failed to add new names with code $?\n" if $rc;
+if (@addedfiles) {
+	open(H, "| git-update-index --add -z --stdin")
+		or die "git-update-index failed to add new names with code $!\n";
+	foreach my $fileName (@addedfiles) {
+		print H "$fileName\0";
+	}
+	close(H);
 }
-$rc = system("git-update-index","--remove","--",@deletedfiles);
-die "git-update-index failed to remove old names with code $?\n" if $rc;
+if (@deletedfiles) {
+	open(H, "| git-update-index --remove -z --stdin")
+		or die "git-update-index failed to remove old names with code $!\n";
+	foreach my $fileName (@deletedfiles) {
+		print H "$fileName\0";
+	}
+	close(H);
+}
