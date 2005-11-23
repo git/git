@@ -14,9 +14,10 @@ use CGI::Util qw(unescape);
 use CGI::Carp qw(fatalsToBrowser);
 use Encode;
 use Fcntl ':mode';
+binmode STDOUT, ':utf8';
 
 my $cgi = new CGI;
-my $version =		"252";
+my $version =		"253";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link =		"";
@@ -217,8 +218,8 @@ sub esc_url {
 
 sub esc_html {
 	my $str = shift;
-	$str = escapeHTML($str);
 	$str = decode("utf8", $str, Encode::FB_DEFAULT);
+	$str = escapeHTML($str);
 	return $str;
 }
 
