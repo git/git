@@ -790,7 +790,7 @@ sub parselog {
     # skip Arch control files, unescape pika-escaped files
     foreach my $k (keys %want_headers) {
         next unless (defined $ps->{$k});
-        my @tmp;
+        my @tmp = ();
         foreach my $t (@{$ps->{$k}}) {
            next unless length ($t);
            next if $t =~ m!\{arch\}/!;
@@ -804,7 +804,7 @@ sub parselog {
            }
            push @tmp, $t;
         }
-        $ps->{$k} = \@tmp if scalar @tmp;
+        $ps->{$k} = \@tmp;
     }
 }
 
