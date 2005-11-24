@@ -12,10 +12,8 @@ usage () {
     die "git-merge [-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+"
 }
 
-# all_strategies='resolve recursive stupid octopus'
-
 all_strategies='recursive octopus resolve stupid ours'
-default_strategies='resolve octopus'
+default_strategies='recursive'
 use_strategies=
 
 dropsave() {
@@ -90,11 +88,6 @@ do
 	shift
 done
 
-case "$use_strategies" in
-'')
-	use_strategies=$default_strategies
-	;;
-esac
 test "$#" -le 2 && usage ;# we need at least two heads.
 
 merge_msg="$1"
@@ -182,6 +175,17 @@ case "$#,$common,$no_commit" in
 		dropsave
 		exit 0
 	fi
+	;;
+esac
+
+case "$use_strategies" in
+'')
+	case "$#" in
+	1)
+		use_strategies="$default_strategies" ;;
+	*)
+		use_strategies=octopus ;;
+	esac		
 	;;
 esac
 
