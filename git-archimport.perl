@@ -88,9 +88,8 @@ usage if $opt_h;
 @ARGV >= 1 or usage();
 my @arch_roots = @ARGV;
 
-my ($tmpdir, $tmpdirname) = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
-my $tmp = $opt_t || 1;
-$tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+$ENV{'TMPDIR'} = $opt_t if $opt_t; # $ENV{TMPDIR} will affect tempdir() calls:
+my $tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
 $opt_v && print "+ Using $tmp as temporary directory\n";
 
 my @psets  = ();                # the collection
