@@ -278,7 +278,7 @@ foreach my $ps (@psets) {
     #
     # ensure we have a clean state 
     # 
-    if (`git diff-files`) {
+    if (`git-diff-files`) {
         die "Unclean tree when about to process $ps->{id} " .
             " - did we fail to commit cleanly before?";
     }
