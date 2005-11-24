@@ -1426,7 +1426,6 @@ sub git_tree {
 		my $t_mode = $1;
 		my $t_type = $2;
 		my $t_hash = $3;
-		my $t_name = $4;
 		my $t_name = validate_input($4);
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
