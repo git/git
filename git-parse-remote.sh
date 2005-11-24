@@ -1,6 +1,8 @@
 #!/bin/sh
 
-. git-sh-setup
+# git-ls-remote could be called from outside a git managed repository;
+# this would fail in that case and would issue an error message.
+GIT_DIR=$(git-rev-parse --git-dir 2>/dev/null) || :;
 
 get_data_source () {
 	case "$1" in

@@ -1,6 +1,5 @@
 #!/bin/sh
 #
-. git-sh-setup
 
 usage () {
     echo >&2 "usage: $0 [--heads] [--tags] <repository> <refs>..."
