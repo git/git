@@ -1294,7 +1294,7 @@ sub git_get_hash_by_path {
 			my $t_mode = $1;
 			my $t_type = $2;
 			my $t_hash = $3;
-			my $t_name = $4;
+			my $t_name = validate_input(unquote($4));
 			if ($t_name eq $part) {
 				if (!(@parts)) {
 					return $t_hash;
@@ -1311,7 +1311,7 @@ sub git_get_hash_by_path {
 sub git_blob {
 	if (!defined $hash && defined $file_name) {
 		my $base = $hash_base || git_read_hash("$project/HEAD");
-		$hash = git_get_hash_by_path($base, $file_name, "blob");
+		$hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
 	}
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
 	git_header_html();
