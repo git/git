@@ -499,7 +499,7 @@ foreach my $ps (@psets) {
     #
     if (ptag($ps->{id})) {
       $opt_v && print " * Skipping already imported: $ps->{id}\n";
-      return 0;
+      next;
     }
 
     print " * Starting to work on $ps->{id}\n";
@@ -578,10 +578,6 @@ foreach my $ps (@psets) {
     print "   + commit $commitid\n";
     $opt_v && print "   + commit date is  $ps->{date} \n";
     $opt_v && print "   + parents:  ",join(' ',@par),"\n";
-    if (my $dirty = `git-diff-files`) {
-        die "22 Unclean tree when about to process $ps->{id} " .
-            " - did we fail to commit cleanly before?\n$dirty";
-    }
 }
 
 if ($opt_v) {
