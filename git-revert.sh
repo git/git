@@ -7,11 +7,13 @@
 
 case "$0" in
 *-revert* )
+	test -t 0 && edit=-e
 	me=revert ;;
 *-cherry-pick* )
+	edit=
 	me=cherry-pick ;;
 * )
-	die "What are ou talking about?" ;;
+	die "What are you talking about?" ;;
 esac
 
 usage () {
@@ -25,7 +27,7 @@ usage () {
 	esac
 }
 
-no_commit= replay= edit=
+no_commit= replay=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -33,11 +35,14 @@ do
 	    --no-commi|--no-commit)
 		no_commit=t
 		;;
+	-e|--e|--ed|--edi|--edit)
+		edit=-e
+		;;
+	-n|--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
+		edit=
+		;;
 	-r|--r|--re|--rep|--repl|--repla|--replay)
 		replay=t
-		;;
-	-e|--edit)
-		edit=t
 		;;
 	-*)
 		usage
@@ -164,10 +169,9 @@ echo >&2 "Finished one $me."
 # If we are revert, or if our cherry-pick results in a hand merge,
 # we had better say that the current user is responsible for that.
 
-[ "$edit" ] && ${EDITOR:-${VISUAL:-vi}} .msg
 case "$no_commit" in
 '')
-	git-commit -n -F .msg
+	git-commit -n -F .msg $edit
 	rm -f .msg
 	;;
 esac
