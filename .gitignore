@@ -17,7 +17,6 @@ git-clone
 git-clone-pack
 git-commit
 git-commit-tree
-git-config-set
 git-convert-objects
 git-count-objects
 git-cvsexportcommit
@@ -76,6 +75,7 @@ git-rebase
 git-receive-pack
 git-relink
 git-repack
+git-repo-config
 git-request-pull
 git-reset
 git-resolve

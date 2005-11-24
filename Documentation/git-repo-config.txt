@@ -1,19 +1,19 @@
-git-config-set(1)
-===============
+git-repo-config(1)
+==================
 
 NAME
 ----
-git-config-set - Set options in .git/config.
+git-repo-config - Get and set options in .git/config.
 
 
 SYNOPSIS
 --------
-'git-config-set' name [value [value_regex]]
-'git-config-set' --replace-all name [value [value_regex]]
-'git-config-set' --get name [value_regex]
-'git-config-set' --get-all name [value_regex]
-'git-config-set' --unset name [value_regex]
-'git-config-set' --unset-all name [value_regex]
+'git-repo-config' name [value [value_regex]]
+'git-repo-config' --replace-all name [value [value_regex]]
+'git-repo-config' --get name [value_regex]
+'git-repo-config' --get-all name [value_regex]
+'git-repo-config' --unset name [value_regex]
+'git-repo-config' --unset-all name [value_regex]
 
 DESCRIPTION
 -----------
@@ -89,7 +89,7 @@ Given a .git/config like this:
 you can set the filemode to true with
 
 ------------
-% git config-set core.filemode true
+% git repo-config core.filemode true
 ------------
 
 The hypothetic proxy command entries actually have a postfix to discern
@@ -97,7 +97,7 @@ to what URL they apply. Here is how to change the entry for kernel.org
 to "ssh".
 
 ------------
-% git config-set proxy.command '"ssh" for kernel.org' 'for kernel.org$'
+% git repo-config proxy.command '"ssh" for kernel.org' 'for kernel.org$'
 ------------
 
 This makes sure that only the key/value pair for kernel.org is replaced.
@@ -105,7 +105,7 @@ This makes sure that only the key/value pair for kernel.org is replaced.
 To delete the entry for renames, do
 
 ------------
-% git config-set --unset diff.renames
+% git repo-config --unset diff.renames
 ------------
 
 If you want to delete an entry for a multivar (like proxy.command above),
@@ -114,45 +114,45 @@ you have to provide a regex matching the value of exactly one line.
 To query the value for a given key, do
 
 ------------
-% git config-set --get core.filemode
+% git repo-config --get core.filemode
 ------------
 
 or
 
 ------------
-% git config-set core.filemode
+% git repo-config core.filemode
 ------------
 
 or, to query a multivar:
 
 ------------
-% git config-set --get proxy.command "for kernel.org$"
+% git repo-config --get proxy.command "for kernel.org$"
 ------------
 
 If you want to know all the values for a multivar, do:
 
 ------------
-% git config-set --get-all proxy.command
+% git repo-config --get-all proxy.command
 ------------
 
 If you like to live dangerous, you can replace *all* proxy.commands by a
 new one with
 
 ------------
-% git config-set --replace-all proxy.command ssh
+% git repo-config --replace-all proxy.command ssh
 ------------
 
 However, if you really only want to replace the line for the default proxy,
 i.e. the one without a "for ..." postfix, do something like this:
 
 ------------
-% git config-set proxy.command ssh '! for '
+% git repo-config proxy.command ssh '! for '
 ------------
 
 To actually match only values with an exclamation mark, you have to
 
 ------------
-% git config-set section.key value '[!]'
+% git repo-config section.key value '[!]'
 ------------
 
 

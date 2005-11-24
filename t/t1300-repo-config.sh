@@ -3,13 +3,13 @@
 # Copyright (c) 2005 Johannes Schindelin
 #
 
-test_description='Test git-config-set in different settings'
+test_description='Test git-repo-config in different settings'
 
 . ./test-lib.sh
 
 test -f .git/config && rm .git/config
 
-git-config-set core.penguin "little blue"
+git-repo-config core.penguin "little blue"
 
 cat > expect << EOF
 #
@@ -22,7 +22,7 @@ EOF
 
 test_expect_success 'initial' 'cmp .git/config expect'
 
-git-config-set Core.Movie BadPhysics
+git-repo-config Core.Movie BadPhysics
 
 cat > expect << EOF
 #
@@ -36,7 +36,7 @@ EOF
 
 test_expect_success 'mixed case' 'cmp .git/config expect'
 
-git-config-set Cores.WhatEver Second
+git-repo-config Cores.WhatEver Second
 
 cat > expect << EOF
 #
@@ -52,7 +52,7 @@ EOF
 
 test_expect_success 'similar section' 'cmp .git/config expect'
 
-git-config-set CORE.UPPERCASE true
+git-repo-config CORE.UPPERCASE true
 
 cat > expect << EOF
 #
@@ -70,10 +70,10 @@ EOF
 test_expect_success 'similar section' 'cmp .git/config expect'
 
 test_expect_success 'replace with non-match' \
-	'git-config-set core.penguin kingpin !blue'
+	'git-repo-config core.penguin kingpin !blue'
 
 test_expect_success 'replace with non-match (actually matching)' \
-	'git-config-set core.penguin "very blue" !kingpin'
+	'git-repo-config core.penguin "very blue" !kingpin'
 
 cat > expect << EOF
 #
@@ -106,7 +106,7 @@ EOF
 cp .git/config .git/config2
 
 test_expect_success 'multiple unset' \
-	'git-config-set --unset-all beta.haha'
+	'git-repo-config --unset-all beta.haha'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -122,7 +122,7 @@ test_expect_success 'multiple unset is correct' 'cmp .git/config expect'
 mv .git/config2 .git/config
 
 test_expect_success '--replace-all' \
-	'git-config-set --replace-all beta.haha gamma'
+	'git-repo-config --replace-all beta.haha gamma'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -136,7 +136,7 @@ EOF
 
 test_expect_success 'all replaced' 'cmp .git/config expect'
 
-git-config-set beta.haha alpha
+git-repo-config beta.haha alpha
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -150,7 +150,7 @@ EOF
 
 test_expect_success 'really mean test' 'cmp .git/config expect'
 
-git-config-set nextsection.nonewline wow
+git-repo-config nextsection.nonewline wow
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -165,8 +165,8 @@ EOF
 
 test_expect_success 'really really mean test' 'cmp .git/config expect'
 
-test_expect_success 'get value' 'test alpha = $(git-config-set beta.haha)'
-git-config-set --unset beta.haha
+test_expect_success 'get value' 'test alpha = $(git-repo-config beta.haha)'
+git-repo-config --unset beta.haha
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -180,7 +180,7 @@ EOF
 
 test_expect_success 'unset' 'cmp .git/config expect'
 
-git-config-set nextsection.NoNewLine "wow2 for me" "for me$"
+git-repo-config nextsection.NoNewLine "wow2 for me" "for me$"
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -196,18 +196,18 @@ EOF
 test_expect_success 'multivar' 'cmp .git/config expect'
 
 test_expect_success 'non-match' \
-	'git-config-set --get nextsection.nonewline !for'
+	'git-repo-config --get nextsection.nonewline !for'
 
 test_expect_success 'non-match value' \
-	'test wow = $(git-config-set --get nextsection.nonewline !for)'
+	'test wow = $(git-repo-config --get nextsection.nonewline !for)'
 
 test_expect_failure 'ambiguous get' \
-	'git-config-set --get nextsection.nonewline'
+	'git-repo-config --get nextsection.nonewline'
 
 test_expect_success 'get multivar' \
-	'git-config-set --get-all nextsection.nonewline'
+	'git-repo-config --get-all nextsection.nonewline'
 
-git-config-set nextsection.nonewline "wow3" "wow$"
+git-repo-config nextsection.nonewline "wow3" "wow$"
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -222,15 +222,15 @@ EOF
 
 test_expect_success 'multivar replace' 'cmp .git/config expect'
 
-test_expect_failure 'ambiguous value' 'git-config-set nextsection.nonewline'
+test_expect_failure 'ambiguous value' 'git-repo-config nextsection.nonewline'
 
 test_expect_failure 'ambiguous unset' \
-	'git-config-set --unset nextsection.nonewline'
+	'git-repo-config --unset nextsection.nonewline'
 
 test_expect_failure 'invalid unset' \
-	'git-config-set --unset somesection.nonewline'
+	'git-repo-config --unset somesection.nonewline'
 
-git-config-set --unset nextsection.nonewline "wow3$"
+git-repo-config --unset nextsection.nonewline "wow3$"
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -244,12 +244,12 @@ EOF
 
 test_expect_success 'multivar unset' 'cmp .git/config expect'
 
-test_expect_failure 'invalid key' 'git-config-set inval.2key blabla'
+test_expect_failure 'invalid key' 'git-repo-config inval.2key blabla'
 
-test_expect_success 'correct key' 'git-config-set 123456.a123 987'
+test_expect_success 'correct key' 'git-repo-config 123456.a123 987'
 
 test_expect_success 'hierarchical section' \
-	'git-config-set 1.2.3.alpha beta'
+	'git-repo-config 1.2.3.alpha beta'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment

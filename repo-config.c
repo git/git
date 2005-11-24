@@ -2,7 +2,7 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-config-set [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]]";
+"git-repo-config [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]]";
 
 static char* key = NULL;
 static char* value = NULL;

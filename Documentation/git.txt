@@ -84,9 +84,6 @@ gitlink:git-checkout-index[1]::
 gitlink:git-commit-tree[1]::
 	Creates a new commit object
 
-gitlink:git-config-set[1]::
-	Set options in .git/config.
-
 gitlink:git-hash-object[1]::
 	Computes the object ID from a file.
 
@@ -110,6 +107,9 @@ gitlink:git-prune-packed[1]::
 
 gitlink:git-read-tree[1]::
 	Reads tree information into the directory index
+
+gitlink:git-repo-config[1]::
+	Get and set options in .git/config.
 
 gitlink:git-unpack-objects[1]::
 	Unpacks objects out of a packed archive.
