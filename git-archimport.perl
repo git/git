@@ -55,9 +55,8 @@ use warnings;
 use Getopt::Std;
 use File::Spec;
 use File::Temp qw(tempfile tempdir);
-use File::Path qw(mkpath);
+use File::Path qw(mkpath rmtree);
 use File::Basename qw(basename dirname);
-use String::ShellQuote;
 use Time::Local;
 use IO::Socket;
 use IO::Pipe;
@@ -306,7 +305,7 @@ foreach my $ps (@psets) {
     unless ($import) { # skip for import
         if ( -e "$git_dir/refs/heads/$ps->{branch}") {
             # we know about this branch
-            `git checkout    $ps->{branch}`;
+            system('git-checkout',$ps->{branch});
         } else {
             # new branch! we need to verify a few things
             die "Branch on a non-tag!" unless $ps->{type} eq 't';
@@ -315,7 +314,7 @@ foreach my $ps (@psets) {
                 unless $branchpoint;
             
             # find where we are supposed to branch from
-            `git checkout -b $ps->{branch} $branchpoint`;
+            system('git-checkout','-b',$ps->{branch},$branchpoint);
 
             # If we trust Arch with the fact that this is just 
             # a tag, and it does not affect the state of the tree
@@ -344,7 +343,7 @@ foreach my $ps (@psets) {
     #
     my $tree;
     
-    my $commitlog = `tla cat-archive-log -A $ps->{repo} $ps->{id}`; 
+    my $commitlog = safe_pipe_capture($TLA,'cat-archive-log',$ps->{id}); 
     die "Error in cat-archive-log: $!" if $?;
         
     # parselog will git-add/rm files
@@ -422,7 +421,7 @@ foreach my $ps (@psets) {
     #
     my @par;
     if ( -e "$git_dir/refs/heads/$ps->{branch}") {
-        if (open HEAD, "<$git_dir/refs/heads/$ps->{branch}") {
+        if (open HEAD, "<","$git_dir/refs/heads/$ps->{branch}") {
             my $p = <HEAD>;
             close HEAD;
             chomp $p;
@@ -437,7 +436,6 @@ foreach my $ps (@psets) {
     if ($ps->{merges}) {
         push @par, find_parents($ps);
     }
-    my $par = join (' ', @par);
 
     #    
     # Commit, tag and clean state
@@ -454,7 +452,7 @@ foreach my $ps (@psets) {
     $commit_rh = 'commit_rh';
     $commit_wh = 'commit_wh';
     
-    $pid = open2(*READER, *WRITER, "git-commit-tree $tree $par") 
+    $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par) 
         or die $!;
     print WRITER $logmessage;   # write
     close WRITER;
@@ -469,7 +467,7 @@ foreach my $ps (@psets) {
     #
     # Update the branch
     # 
-    open  HEAD, ">$git_dir/refs/heads/$ps->{branch}";
+    open  HEAD, ">","$git_dir/refs/heads/$ps->{branch}";
     print HEAD $commitid;
     close HEAD;
     system('git-update-ref', 'HEAD', "$ps->{branch}");
@@ -483,21 +481,23 @@ foreach my $ps (@psets) {
     print "   + tree   $tree\n";
     print "   + commit $commitid\n";
     $opt_v && print "   + commit date is  $ps->{date} \n";
-    $opt_v && print "   + parents:  $par \n";
+    $opt_v && print "   + parents:  ",join(' ',@par),"\n";
 }
 
 sub apply_import {
     my $ps = shift;
     my $bname = git_branchname($ps->{id});
 
-    `mkdir -p $tmp`;
+    mkpath($tmp);
 
-    `tla get -s --no-pristine -A $ps->{repo} $ps->{id} $tmp/import`;
+    safe_pipe_capture($TLA,'get','-s','--no-pristine',$ps->{id},"$tmp/import");
     die "Cannot get import: $!" if $?;    
-    `rsync -v --archive --delete --exclude '$git_dir' --exclude '.arch-ids' --exclude '{arch}' $tmp/import/* ./`;
+    system('rsync','-aI','--delete', '--exclude',$git_dir,
+		'--exclude','.arch-ids','--exclude','{arch}',
+		"$tmp/import/", './');
     die "Cannot rsync import:$!" if $?;
     
-    `rm -fr $tmp/import`;
+    rmtree("$tmp/import");
     die "Cannot remove tempdir: $!" if $?;
     
 
@@ -507,10 +507,10 @@ sub apply_import {
 sub apply_cset {
     my $ps = shift;
 
-    `mkdir -p $tmp`;
+    mkpath($tmp);
 
     # get the changeset
-    `tla get-changeset  -A $ps->{repo} $ps->{id} $tmp/changeset`;
+    safe_pipe_capture($TLA,'get-changeset',$ps->{id},"$tmp/changeset");
     die "Cannot get changeset: $!" if $?;
     
     # apply patches
@@ -534,17 +534,20 @@ sub apply_cset {
             $orig =~ s/\.modified$//; # lazy
             $orig =~ s!^\Q$tmp\E/changeset/patches/!!;
             #print "rsync -p '$mod' '$orig'";
-            `rsync -p $mod ./$orig`;
+            system('rsync','-p',$mod,"./$orig");
             die "Problem applying binary changes! $!" if $?;
         }
     }
 
     # bring in new files
-    `rsync --archive --exclude '$git_dir' --exclude '.arch-ids' --exclude '{arch}' $tmp/changeset/new-files-archive/* ./`;
+    system('rsync','-aI','--exclude',$git_dir,
+    		'--exclude','.arch-ids',
+		'--exclude', '{arch}',
+		"$tmp/changeset/new-files-archive/",'./');
 
     # deleted files are hinted from the commitlog processing
 
-    `rm -fr $tmp/changeset`;
+    rmtree("$tmp/changeset");
 }
 
 
@@ -622,9 +625,9 @@ sub parselog {
            # tla cat-archive-log will give us filenames with spaces as file\(sp)name - why?
            # we can assume that any filename with \ indicates some pika escaping that we want to get rid of.
            if  ($t =~ /\\/ ){
-               $t = `tla escape --unescaped '$t'`;
+               $t = (safe_pipe_capture($TLA,'escape','--unescaped',$t))[0];
            }
-            push (@tmp, shell_quote($t));
+            push (@tmp, $t);
         }
         @$ref = @tmp;
     }
@@ -827,8 +830,10 @@ sub find_parents {
 	    }
 	}
     }
-    @parents = keys %parents;
-    @parents = map { " -p " . ptag($_) } @parents;
+    @parents = ();
+    foreach (keys %parents) {
+        push @parents, '-p', ptag($_);
+    }
     return @parents;
 }
 
