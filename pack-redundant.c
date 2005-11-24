@@ -15,7 +15,7 @@ static int load_all_packs = 0, verbose = 0, alt_odb = 0;
 
 struct llist_item {
 	struct llist_item *next;
-	char *sha1;
+	unsigned char *sha1;
 };
 static struct llist {
 	struct llist_item *front;
@@ -100,7 +100,8 @@ static struct llist * llist_copy(struct llist *list)
 }
 
 static inline struct llist_item * llist_insert(struct llist *list,
-					struct llist_item *after, char *sha1)
+					       struct llist_item *after,
+					       unsigned char *sha1)
 {
 	struct llist_item *new = llist_item_get();
 	new->sha1 = sha1;
@@ -122,13 +123,12 @@ static inline struct llist_item * llist_insert(struct llist *list,
 	return new;
 }
 
-static inline struct llist_item * llist_insert_back(struct llist *list, char *sha1)
+static inline struct llist_item *llist_insert_back(struct llist *list, unsigned char *sha1)
 {
 	return llist_insert(list, list->back, sha1);
 }
 
-static inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
-					char *sha1, struct llist_item *hint)
+static inline struct llist_item *llist_insert_sorted_unique(struct llist *list, unsigned char *sha1, struct llist_item *hint)
 {
 	struct llist_item *prev = NULL, *l;
 
@@ -149,9 +149,7 @@ static inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
 }
 
 /* returns a pointer to an item in front of sha1 */
-static inline struct llist_item * llist_sorted_remove(struct llist *list,
-						      const char *sha1,
-						      struct llist_item *hint)
+static inline struct llist_item * llist_sorted_remove(struct llist *list, const unsigned char *sha1, struct llist_item *hint)
 {
 	struct llist_item *prev, *l;
 
@@ -599,7 +597,8 @@ int main(int argc, char **argv)
 	int i;
 	struct pack_list *min, *red, *pl;
 	struct llist *ignore;
-	char *sha1, buf[42]; /* 40 byte sha1 + \n + \0 */
+	unsigned char *sha1;
+	char buf[42]; /* 40 byte sha1 + \n + \0 */
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -686,7 +685,8 @@ int main(int argc, char **argv)
 		pl = pl->next;
 	}
 	if (verbose)
-		fprintf(stderr, "%luMB of redundant packs in total.\n", pack_set_bytecount(red)/(1024*1024));
+		fprintf(stderr, "%luMB of redundant packs in total.\n",
+			(unsigned long)pack_set_bytecount(red)/(1024*1024));
 
 	return 0;
 }
