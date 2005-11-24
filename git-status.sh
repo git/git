@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2005 Linus Torvalds
 #
-. git-sh-setup || die "Not a git archive"
+GIT_DIR=$(git-rev-parse --git-dir) || exit
 
 report () {
   header="#

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     echo >&2 "usage: $0 [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>"

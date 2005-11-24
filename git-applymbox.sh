@@ -18,7 +18,7 @@
 ##
 ## git-am is supposed to be the newer and better tool for this job.
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     echo >&2 "applymbox [-u] [-k] [-q] [-m] (-c .dotest/<num> | mbox) [signoff]"

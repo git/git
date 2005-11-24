@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-. git-sh-setup || die "Not a git archive."
+. git-sh-setup
 
 # The other head is given
 other=$(git-rev-parse --verify "$1^0") || exit

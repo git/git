@@ -4,7 +4,7 @@
 #
 # Resolve two or more trees recorded in $GIT_DIR/FETCH_HEAD.
 #
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     die "usage: git octopus"

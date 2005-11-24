@@ -4,7 +4,7 @@
 #
 # Resolve two trees.
 #
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
 	die "git-resolve <head> <remote> <merge-message>"

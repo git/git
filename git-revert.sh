@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2005 Junio C Hamano
 #
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 case "$0" in
 *-revert* )

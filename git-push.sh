@@ -1,5 +1,5 @@
 #!/bin/sh
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     die "Usage: git push [--all] [--force] <repository> [<refspec>]"

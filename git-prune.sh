@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 dryrun=
 echo=

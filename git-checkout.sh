@@ -1,5 +1,5 @@
 #!/bin/sh
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     die "usage: git checkout [-f] [-b <new_branch>] [<branch>] [<paths>...]"

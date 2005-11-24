@@ -1,16 +1,18 @@
 #!/bin/sh
 #
-# Set up GIT_DIR and GIT_OBJECT_DIRECTORY
-# and return true if everything looks ok
-#
-: ${GIT_DIR=.git}
-: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+# This is included in commands that either have to be run from the toplevel
+# of the repository, or with GIT_DIR environment variable properly.
+# If the GIT_DIR does not look like the right correct git-repository,
+# it dies.
 
 # Having this variable in your environment would break scripts because
 # you would cause "cd" to be be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
 # exporting it.
 unset CDPATH
+
+: ${GIT_DIR=.git}
+: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
 
 die() {
 	echo >&2 "$@"
@@ -22,4 +24,5 @@ refs/*)	: ;;
 *)	false ;;
 esac &&
 [ -d "$GIT_DIR/refs" ] &&
-[ -d "$GIT_OBJECT_DIRECTORY/" ]
+[ -d "$GIT_OBJECT_DIRECTORY/" ] ||
+	die "Not a git repository."

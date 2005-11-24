@@ -10,7 +10,7 @@
 ##	$3 - "info" file with Author, email and subject
 ##	$4 - optional file containing signoff to add
 ##
-. git-sh-setup || die "Not a git archive."
+. git-sh-setup
 
 final=.dotest/final-commit
 ##

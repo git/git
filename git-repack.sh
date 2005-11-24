@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 	
 no_update_info= all_into_one= remove_redundant= local=
 while case "$#" in 0) break ;; esac

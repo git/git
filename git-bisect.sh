@@ -1,5 +1,5 @@
 #!/bin/sh
-. git-sh-setup || dir "Not a git archive"
+. git-sh-setup
 
 usage() {
     echo >&2 'usage: git bisect [start|bad|good|next|reset|visualize]

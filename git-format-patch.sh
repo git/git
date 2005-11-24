@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-. git-sh-setup || die "Not a git archive."
+. git-sh-setup
 
 usage () {
     echo >&2 "usage: $0"' [-n] [-o dir | --stdout] [--keep-subject] [--mbox]
