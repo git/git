@@ -146,7 +146,7 @@ sub validate_input {
 	if ($input =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
 		return undef;
 	}
-	if ($input =~ m/[^a-zA-Z0-9_\x80-\xff\ \.\/\-\+\#\~\%]/) {
+	if ($input =~ m/[^a-zA-Z0-9_\x80-\xff\ \t\.\/\-\+\#\~\%]/) {
 		return undef;
 	}
 	return $input;
