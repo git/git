@@ -99,6 +99,7 @@ my %psets  = ();                # the collection, by name
 
 my %rptags = ();                # my reverse private tags
                                 # to map a SHA1 to a commitid
+my $TLA = $ENV{'ARCH_CLIENT'} || 'tla';
 
 foreach my $root (@arch_roots) {
     my ($arepo, $abranch) = split(m!/!, $root);
@@ -850,3 +851,18 @@ sub commitid2pset {
 	|| (print Dumper(sort keys %psets)) && die "Cannot find patchset for $name";
     return $ps;
 }
+
+# an alterative to `command` that allows input to be passed as an array
+# to work around shell problems with weird characters in arguments
+sub safe_pipe_capture {
+    my @output;
+    if (my $pid = open my $child, '-|') {
+        @output = (<$child>);
+        close $child or die join(' ',@_).": $! $?";
+    } else {
+	exec(@_) or die $?; # exec() can fail the executable can't be found
+    }
+    return wantarray ? @output : join('',@output);
+}
+
+
