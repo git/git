@@ -57,6 +57,8 @@ int main(int argc, char **argv)
 	if (argc != 2) {
 		usage(var_usage);
 	}
+
+	setup_git_directory();
 	setup_ident();
 	val = NULL;
 
