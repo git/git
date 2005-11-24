@@ -80,8 +80,8 @@ if (defined $project) {
 		undef $project;
 		die_error(undef, "No such project.");
 	}
-	$rss_link = "<link rel=\"alternate\" title=\"" . esc_url($project) . " log\" href=\"" .
-		    esc_url("$my_uri?p=$project;a=rss") . "\" type=\"application/rss+xml\"/>";
+	$rss_link = "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
+		    "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>";
 	$ENV{'GIT_DIR'} = "$projectroot/$project";
 } else {
 	git_project_list();
@@ -146,7 +146,7 @@ sub validate_input {
 	if ($input =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
 		return undef;
 	}
-	if ($input =~ m/[^a-zA-Z0-9_ \.\/\-\+\#\~]/) {
+	if ($input =~ m/[^a-zA-Z0-9_\x80-\xff\ \.\/\-\+\#\~\%]/) {
 		return undef;
 	}
 	return $input;
@@ -209,17 +209,31 @@ if (!defined $action || $action eq "summary") {
 	exit;
 }
 
-sub esc_url {
+# quote unsafe chars, but keep the slash, even when it's not
+# correct, but quoted slashes look too horrible in bookmarks
+sub esc_param {
 	my $str = shift;
+	$str =~ s/([^A-Za-z0-9\-_.~();\/;?:@&=])/sprintf("%%%02X", ord($1))/eg;
 	$str =~ s/\+/%2B/g;
 	$str =~ s/ /\+/g;
 	return $str;
 }
 
+# replace invalid utf8 character with SUBSTITUTION sequence
 sub esc_html {
 	my $str = shift;
 	$str = decode("utf8", $str, Encode::FB_DEFAULT);
 	$str = escapeHTML($str);
+	return $str;
+}
+
+# git may return quoted and escaped filenames
+sub unquote {
+	my $str = shift;
+	if ($str =~ m/^"(.*)"$/) {
+		$str = $1;
+		$str =~ s/\\([0-7]{1,3})/chr(oct($1))/eg;
+	}
 	return $str;
 }
 
@@ -303,11 +317,11 @@ a.rss_logo:hover { background-color:#ee5500; }
 EOF
 	print "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
-	      "<img src=\"" . esc_url("$my_uri?a=git-logo.png") . "\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
+	      "<img src=\"$my_uri?" . esc_param("a=git-logo.png") . "\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
-	print $cgi->a({-href => esc_url($home_link)}, "projects") . " / ";
+	print $cgi->a({-href => esc_param($home_link)}, "projects") . " / ";
 	if (defined $project) {
-		print $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, esc_html($project));
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, esc_html($project));
 		if (defined $action) {
 			print " / $action";
 		}
@@ -342,9 +356,9 @@ sub git_footer_html {
 		if (defined $descr) {
 			print "<div class=\"page_footer_text\">" . esc_html($descr) . "</div>\n";
 		}
-		print $cgi->a({-href => esc_url("$my_uri?p=$project;a=rss"), -class => "rss_logo"}, "RSS") . "\n";
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=rss"), -class => "rss_logo"}, "RSS") . "\n";
 	} else {
-		print $cgi->a({-href => esc_url("$my_uri?a=opml"), -class => "rss_logo"}, "OPML") . "\n";
+		print $cgi->a({-href => "$my_uri?" . esc_param("a=opml"), -class => "rss_logo"}, "OPML") . "\n";
 	}
 	print "</div>\n" .
 	      "</body>\n" .
@@ -685,7 +699,7 @@ sub format_log_line_html {
 	if ($line =~ m/([0-9a-fA-F]{40})/) {
 		my $hash_text = $1;
 		if (git_get_type($hash_text) eq "commit") {
-			my $link = $cgi->a({-class => "text", -href => esc_url("$my_uri?p=$project;a=commit;h=$hash_text")}, $hash_text);
+			my $link = $cgi->a({-class => "text", -href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_text")}, $hash_text);
 			$line =~ s/$hash_text/$link/;
 		}
 	}
@@ -834,25 +848,25 @@ sub git_project_list {
 		@projects = sort {$a->{'path'} cmp $b->{'path'}} @projects;
 		print "<th>Project</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => esc_url("$my_uri?o=project")}, "Project") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=project")}, "Project") . "</th>\n";
 	}
 	if (defined($order) && ($order eq "descr")) {
 		@projects = sort {$a->{'descr'} cmp $b->{'descr'}} @projects;
 		print "<th>Description</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => esc_url("$my_uri?o=descr")}, "Description") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=descr")}, "Description") . "</th>\n";
 	}
 	if (defined($order) && ($order eq "owner")) {
 		@projects = sort {$a->{'owner'} cmp $b->{'owner'}} @projects;
 		print "<th>Owner</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => esc_url("$my_uri?o=owner")}, "Owner") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=owner")}, "Owner") . "</th>\n";
 	}
 	if (defined($order) && ($order eq "age")) {
 		@projects = sort {$a->{'commit'}{'age'} <=> $b->{'commit'}{'age'}} @projects;
 		print "<th>Last Change</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => esc_url("$my_uri?o=age")}, "Last Change") . "</th>\n";
+		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=age")}, "Last Change") . "</th>\n";
 	}
 	print "<th></th>\n" .
 	      "</tr>\n";
@@ -864,7 +878,7 @@ sub git_project_list {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td>" . $cgi->a({-href => esc_url("$my_uri?p=$pr->{'path'};a=summary"), -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
+		print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary"), -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
 		      "<td>$pr->{'descr'}</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
 		my $colored_age;
@@ -877,9 +891,9 @@ sub git_project_list {
 		}
 		print "<td>$colored_age</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$pr->{'path'};a=summary")}, "summary") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$pr->{'path'};a=shortlog")}, "shortlog") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$pr->{'path'};a=log")}, "log") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary")}, "summary") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=shortlog")}, "shortlog") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=log")}, "log") .
 		      "</td>\n" .
 		      "</tr>\n";
 	}
@@ -978,11 +992,11 @@ sub git_summary {
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 	      "summary".
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$head")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$head")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree")}, "tree") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$head")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$head")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree")}, "tree") .
 	      "<br/><br/>\n" .
 	      "</div>\n";
 	print "<div class=\"title\">&nbsp;</div>\n";
@@ -995,7 +1009,7 @@ sub git_summary {
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog"), -class => "title"}, "shortlog") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog"), -class => "title"}, "shortlog") .
 	      "</div>\n";
 	my $i = 16;
 	print "<table cellspacing=\"0\">\n";
@@ -1014,20 +1028,20 @@ sub git_summary {
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 			      "<td>";
 			if (length($co{'title_short'}) < length($co{'title'})) {
-				print $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
 			              "<b>" . esc_html($co{'title_short'}) . "</b>");
 			} else {
-				print $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit"), -class => "list"},
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"},
 				      "<b>" . esc_html($co{'title'}) . "</b>");
 			}
 			print "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit")}, "commit") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
 			      "</td>\n" .
 			      "</tr>";
 		} else {
-			print "<td>" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "...") . "</td>\n" .
+			print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "...") . "</td>\n" .
 			"</tr>";
 			last;
 		}
@@ -1037,7 +1051,7 @@ sub git_summary {
 	my $taglist = git_read_refs("refs/tags");
 	if (defined @$taglist) {
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tags"), -class => "title"}, "tags") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tags"), -class => "title"}, "tags") .
 		      "</div>\n";
 		my $i = 16;
 		print "<table cellspacing=\"0\">\n";
@@ -1058,27 +1072,27 @@ sub git_summary {
 			if ($i-- > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" .
-				      $cgi->a({-href => esc_url("$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}"), -class => "list"},
+				      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}"), -class => "list"},
 				      "<b>" . esc_html($tag{'name'}) . "</b>") .
 				      "</td>\n" .
 				      "<td>";
 				if (defined($comment)) {
-				      print $cgi->a({-class => "list", -href => esc_url("$my_uri?p=$project;a=tag;h=$tag{'id'}")}, $comment);
+				      print $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, $comment);
 				}
 				print "</td>\n" .
 				      "<td class=\"link\">";
 				if ($tag{'type'} eq "tag") {
-				      print $cgi->a({-href => esc_url("$my_uri?p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
+				      print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
 				}
-				print $cgi->a({-href => esc_url("$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
 				if ($tag{'reftype'} eq "commit") {
-				      print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-				            " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$tag{'refid'}")}, "log");
+				      print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
+				            " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
 				}
 				print "</td>\n" .
 				      "</tr>";
 			} else {
-				print "<td>" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tags")}, "...") . "</td>\n" .
+				print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tags")}, "...") . "</td>\n" .
 				"</tr>";
 				last;
 			}
@@ -1089,7 +1103,7 @@ sub git_summary {
 	my $headlist = git_read_refs("refs/heads");
 	if (defined @$headlist) {
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=heads"), -class => "title"}, "heads") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=heads"), -class => "title"}, "heads") .
 		      "</div>\n";
 		my $i = 16;
 		print "<table cellspacing=\"0\">\n";
@@ -1105,16 +1119,16 @@ sub git_summary {
 			if ($i-- > 0) {
 				print "<td><i>$tag{'age'}</i></td>\n" .
 				      "<td>" .
-				      $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$tag{'name'}"), -class => "list"},
+				      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}"), -class => "list"},
 				      "<b>" . esc_html($tag{'name'}) . "</b>") .
 				      "</td>\n" .
 				      "<td class=\"link\">" .
-				      $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-				      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$tag{'name'}")}, "log") .
+				      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
+				      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'name'}")}, "log") .
 				      "</td>\n" .
 				      "</tr>";
 			} else {
-				print "<td>" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=heads")}, "...") . "</td>\n" .
+				print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=heads")}, "...") . "</td>\n" .
 				"</tr>";
 				last;
 			}
@@ -1128,24 +1142,24 @@ sub git_tag {
 	my $head = git_read_hash("$project/HEAD");
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$head")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$head")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;hb=$head")}, "tree") . "<br/>\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$head")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$head")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;hb=$head")}, "tree") . "<br/>\n" .
 	      "<br/>\n" .
 	      "</div>\n";
 	my %tag = git_read_tag($hash);
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($tag{'name'})) . "\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($tag{'name'})) . "\n" .
 	      "</div>\n";
 	print "<div class=\"title_text\">\n" .
 	      "<table cellspacing=\"0\">\n" .
 	      "<tr>\n" .
 	      "<td>object</td>\n" .
-	      "<td>" . $cgi->a({-class => "list", -href => esc_url("$my_uri?p=$project;a=$tag{'type'};h=$tag{'object'}")}, $tag{'object'}) . "</td>\n" .
-	      "<td class=\"link\">" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=$tag{'type'};h=$tag{'object'}")}, $tag{'type'}) . "</td>\n" .
+	      "<td>" . $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=$tag{'type'};h=$tag{'object'}")}, $tag{'object'}) . "</td>\n" .
+	      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'type'};h=$tag{'object'}")}, $tag{'type'}) . "</td>\n" .
 	      "</tr>\n";
 	if (defined($tag{'author'})) {
 		my %ad = date_str($tag{'epoch'}, $tag{'tz'});
@@ -1167,17 +1181,17 @@ sub git_tags {
 	my $head = git_read_hash("$project/HEAD");
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$head")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$head")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;hb=$head")}, "tree") . "<br/>\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$head")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$head")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;hb=$head")}, "tree") . "<br/>\n" .
 	      "<br/>\n" .
 	      "</div>\n";
 	my $taglist = git_read_refs("refs/tags");
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary"), -class => "title"}, "&nbsp;") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary"), -class => "title"}, "&nbsp;") .
 	      "</div>\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -1197,22 +1211,22 @@ sub git_tags {
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}"), -class => "list"},
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}"), -class => "list"},
 			      "<b>" . esc_html($tag{'name'}) . "</b>") .
 			      "</td>\n" .
 			      "<td>";
 			if (defined($comment)) {
-			      print $cgi->a({-class => "list", -href => esc_url("$my_uri?p=$project;a=tag;h=$tag{'id'}")}, $comment);
+			      print $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, $comment);
 			}
 			print "</td>\n" .
 			      "<td class=\"link\">";
 			if ($tag{'type'} eq "tag") {
-			      print $cgi->a({-href => esc_url("$my_uri?p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
+			      print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
 			}
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
 			if ($tag{'reftype'} eq "commit") {
-			      print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-			            " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$tag{'refid'}")}, "log");
+			      print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
+			            " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
 			}
 			print "</td>\n" .
 			      "</tr>";
@@ -1226,17 +1240,17 @@ sub git_heads {
 	my $head = git_read_hash("$project/HEAD");
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$head")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$head")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;hb=$head")}, "tree") . "<br/>\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$head")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$head")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;hb=$head")}, "tree") . "<br/>\n" .
 	      "<br/>\n" .
 	      "</div>\n";
 	my $taglist = git_read_refs("refs/heads");
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary"), -class => "title"}, "&nbsp;") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary"), -class => "title"}, "&nbsp;") .
 	      "</div>\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -1251,11 +1265,11 @@ sub git_heads {
 			$alternate ^= 1;
 			print "<td><i>$tag{'age'}</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$tag{'name'}"), -class => "list"}, "<b>" . esc_html($tag{'name'}) . "</b>") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}"), -class => "list"}, "<b>" . esc_html($tag{'name'}) . "</b>") .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$tag{'name'}")}, "log") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'name'}")}, "log") .
 			      "</td>\n" .
 			      "</tr>";
 		}
@@ -1303,21 +1317,21 @@ sub git_blob {
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		print "<div class=\"page_nav\">\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash_base")}, "commit") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base")}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
 		if (defined $file_name) {
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") .
-			" | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;hb=HEAD;f=$file_name")}, "head") . "<br/>\n";
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") .
+			" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;hb=HEAD;f=$file_name")}, "head") . "<br/>\n";
 		} else {
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob_plain;h=$hash")}, "plain") . "<br/>\n";
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash")}, "plain") . "<br/>\n";
 		}
 		print "</div>\n".
 		       "<div>" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
 		      "</div>\n";
 	} else {
 		print "<div class=\"page_nav\">\n" .
@@ -1325,7 +1339,7 @@ sub git_blob {
 		      "<div class=\"title\">$hash</div>\n";
 	}
 	if (defined $file_name) {
-		print "<div class=\"page_path\"><b>$file_name</b></div>\n";
+		print "<div class=\"page_path\"><b>" . esc_html($file_name) . "</b></div>\n";
 	}
 	print "<div class=\"page_body\">\n";
 	my $nr;
@@ -1369,27 +1383,28 @@ sub git_tree {
 			$hash_base = git_read_hash("$project/HEAD");
 		}
 	}
-	open my $fd, "-|", "$gitbin/git-ls-tree $hash" or die_error(undef, "Open git-ls-tree failed.");
-	my (@entries) = map { chomp; $_ } <$fd>;
+	$/ = "\0";
+	open my $fd, "-|", "$gitbin/git-ls-tree -z $hash" or die_error(undef, "Open git-ls-tree failed.");
+	chomp (my (@entries) = <$fd>);
 	close $fd or die_error(undef, "Reading tree failed.");
+	$/ = "\n";
 
 	git_header_html();
 	my $base_key = "";
-	my $file_key = "";
 	my $base = "";
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		$base_key = ";hb=$hash_base";
 		print "<div class=\"page_nav\">\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash_base")}, "shortlog") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash_base")}, "log") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash_base")}, "commit") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash_base")}, "shortlog") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash_base")}, "log") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base")}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
 		      " | tree" .
 		      "<br/><br/>\n" .
 		      "</div>\n";
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 		      "</div>\n";
 	} else {
 		print "<div class=\"page_nav\">\n";
@@ -1397,8 +1412,8 @@ sub git_tree {
 		print "<div class=\"title\">$hash</div>\n";
 	}
 	if (defined $file_name) {
-		$base = "$file_name/";
-		print "<div class=\"page_path\"><b>/$file_name</b></div>\n";
+		$base = esc_html("$file_name/");
+		print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b></div>\n";
 	} else {
 		print "<div class=\"page_path\"><b>/</b></div>\n";
 	}
@@ -1412,7 +1427,7 @@ sub git_tree {
 		my $t_type = $2;
 		my $t_hash = $3;
 		my $t_name = $4;
-		$file_key = ";f=$base$t_name";
+		my $t_name = validate_input($4);
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -1422,18 +1437,18 @@ sub git_tree {
 		print "<td style=\"font-family:monospace\">" . mode_str($t_mode) . "</td>\n";
 		if ($t_type eq "blob") {
 			print "<td class=\"list\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key), -class => "list"}, $t_name) .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$t_hash$base_key;f=$base$t_name"), -class => "list"}, esc_html($t_name)) .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$t_hash" . $base_key . $file_key)}, "blob") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=history;h=$hash_base" . $file_key)}, "history") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$t_hash$base_key;f=$base$t_name")}, "blob") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash_base;f=$base$t_name")}, "history") .
 			      "</td>\n";
 		} elsif ($t_type eq "tree") {
 			print "<td class=\"list\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key)}, $t_name) .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$t_hash$base_key;f=$base$t_name")}, esc_html($t_name)) .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$t_hash" . $base_key . $file_key)}, "tree") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$t_hash$base_key;f=$base$t_name")}, "tree") .
 			      "</td>\n";
 		}
 		print "</tr>\n";
@@ -1489,7 +1504,8 @@ sub git_rss {
 			if (!($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/)) {
 				next;
 			}
-			my $file = $7;
+			my $file = validate_input(unquote($7));
+			$file = decode("utf8", $file, Encode::FB_DEFAULT);
 			print "$file<br/>\n";
 		}
 		print "]]>\n" .
@@ -1543,12 +1559,12 @@ sub git_log {
 	}
 	git_header_html();
 	print "<div class=\"page_nav\">\n";
-	print $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash")}, "shortlog") .
+	print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash")}, "shortlog") .
 	      " | log" .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", "$gitbin/git-rev-list $limit $hash" or die_error(undef, "Open failed.");
@@ -1556,19 +1572,19 @@ sub git_log {
 	close $fd;
 
 	if ($hash ne $head || $page) {
-		print $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "HEAD");
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "HEAD");
 	} else {
 		print "HEAD";
 	}
 	if ($page > 0) {
 		print " &sdot; " .
-		$cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash;pg=" . ($page-1)), -accesskey => "p", -title => "Alt-p"}, "prev");
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash;pg=" . ($page-1)), -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		print " &sdot; prev";
 	}
 	if ($#revlist >= (100 * ($page+1)-1)) {
 		print " &sdot; " .
-		$cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash;pg=" . ($page+1)), -accesskey => "n", -title => "Alt-n"}, "next");
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash;pg=" . ($page+1)), -accesskey => "n", -title => "Alt-n"}, "next");
 	} else {
 		print " &sdot; next";
 	}
@@ -1576,7 +1592,7 @@ sub git_log {
 	      "</div>\n";
 	if (!@revlist) {
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary"), -class => "title"}, "&nbsp;") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary"), -class => "title"}, "&nbsp;") .
 		      "</div>\n";
 		my %co = git_read_commit($hash);
 		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
@@ -1587,13 +1603,13 @@ sub git_log {
 		next if !%co;
 		my %ad = date_str($co{'author_epoch'});
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit"), -class => "title"},
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "title"},
 		      "<span class=\"age\">$co{'age_string'}</span>" . esc_html($co{'title'})) . "\n" .
 		      "</div>\n";
 		print "<div class=\"title_text\">\n" .
 		      "<div class=\"log_link\">\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit")}, "commit") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
 		      "<br/>\n" .
 		      "</div>\n" .
 		      "<i>" . esc_html($co{'author_name'}) .  " [$ad{'rfc2822'}]</i><br/>\n" .
@@ -1649,22 +1665,22 @@ sub git_commit {
 	}
 	git_header_html(undef, $expires);
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash")}, "log") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash")}, "log") .
 	      " | commit";
 	if (defined $co{'parent'}) {
-		print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash")}, "commitdiff");
+		print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff");
 	}
-	print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") . "\n" .
+	print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") . "\n" .
 	      "<br/><br/></div>\n";
 	if (defined $co{'parent'}) {
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 		      "</div>\n";
 	} else {
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 		      "</div>\n";
 	}
 	print "<div class=\"title_text\">\n" .
@@ -1685,19 +1701,19 @@ sub git_commit {
 	print "<tr>" .
 	      "<td>tree</td>" .
 	      "<td style=\"font-family:monospace\">" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash"), class => "list"}, $co{'tree'}) .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash"), class => "list"}, $co{'tree'}) .
 	      "</td>" .
-	      "<td class=\"link\">" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
+	      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
 	      "</td>" .
 	      "</tr>\n";
 	my $parents  = $co{'parents'};
 	foreach my $par (@$parents) {
 		print "<tr>" .
 		      "<td>parent</td>" .
-		      "<td style=\"font-family:monospace\">" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$par"), class => "list"}, $par) . "</td>" .
+		      "<td style=\"font-family:monospace\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$par"), class => "list"}, $par) . "</td>" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$par")}, "commit") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash;hp=$par")}, "commitdiff") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$par")}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash;hp=$par")}, "commitdiff") .
 		      "</td>" .
 		      "</tr>\n";
 	}
@@ -1745,7 +1761,7 @@ sub git_commit {
 		my $to_id = $4;
 		my $status = $5;
 		my $similarity = $6;
-		my $file = $7;
+		my $file = validate_input(unquote($7));
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -1758,16 +1774,16 @@ sub git_commit {
 				$mode_chng = sprintf(" with mode: %04o", (oct $to_mode) & 0777);
 			}
 			print "<td>" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
 			      "<td><span style=\"color: #008000;\">[new " . file_type($to_mode) . "$mode_chng]</span></td>\n" .
-			      "<td class=\"link\">" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob") . "</td>\n";
+			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob") . "</td>\n";
 		} elsif ($status eq "D") {
 			print "<td>" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
 			      "<td><span style=\"color: #c00000;\">[deleted " . file_type($from_mode). "]</span></td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, "blob") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=history;h=$hash;f=$file")}, "history") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, "blob") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash;f=$file")}, "history") .
 			      "</td>\n"
 		} elsif ($status eq "M" || $status eq "T") {
 			my $mode_chnge = "";
@@ -1787,18 +1803,18 @@ sub git_commit {
 			}
 			print "<td>";
 			if ($to_id ne $from_id) {
-				print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file));
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file));
 			} else {
-				print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file));
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file));
 			}
 			print "</td>\n" .
 			      "<td>$mode_chnge</td>\n" .
 			      "<td class=\"link\">";
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob");
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob");
 			if ($to_id ne $from_id) {
-				print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file")}, "diff");
+				print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file")}, "diff");
 			}
-			print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=history;h=$hash;f=$file")}, "history") . "\n";
+			print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash;f=$file")}, "history") . "\n";
 			print "</td>\n";
 		} elsif ($status eq "R") {
 			my ($from_file, $to_file) = split "\t", $file;
@@ -1807,14 +1823,14 @@ sub git_commit {
 				$mode_chng = sprintf(", mode: %04o", (oct $to_mode) & 0777);
 			}
 			print "<td>" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"), -class => "list"}, esc_html($to_file)) . "</td>\n" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"), -class => "list"}, esc_html($to_file)) . "</td>\n" .
 			      "<td><span style=\"color: #777777;\">[moved from " .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file"), -class => "list"}, esc_html($from_file)) .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file"), -class => "list"}, esc_html($from_file)) .
 			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
 			if ($to_id ne $from_id) {
-				print " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file")}, "diff");
+				print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file")}, "diff");
 			}
 			print "</td>\n";
 		}
@@ -1829,17 +1845,17 @@ sub git_blobdiff {
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		print "<div class=\"page_nav\">\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash_base")}, "commit") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base")}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") .
 		      "<br/>\n";
-		print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blobdiff_plain;h=$hash;hp=$hash_parent")}, "plain") .
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff_plain;h=$hash;hp=$hash_parent")}, "plain") .
 		      "</div>\n";
 		print "<div>\n" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 		      "</div>\n";
 	} else {
 		print "<div class=\"page_nav\">\n" .
@@ -1847,13 +1863,13 @@ sub git_blobdiff {
 		      "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	}
 	if (defined $file_name) {
-		print "<div class=\"page_path\"><b>/$file_name</b></div>\n";
+		print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b></div>\n";
 	}
 	print "<div class=\"page_body\">\n" .
 	      "<div class=\"diff_info\">blob:" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$hash_parent;hb=$hash_base;f=$file_name")}, $hash_parent) .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash_parent;hb=$hash_base;f=$file_name")}, $hash_parent) .
 	      " -> blob:" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, $hash) .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, $hash) .
 	      "</div>\n";
 	git_diff_print($hash_parent, $file_name || $hash_parent, $hash, $file_name || $hash);
 	print "</div>";
@@ -1886,16 +1902,16 @@ sub git_commitdiff {
 	}
 	git_header_html(undef, $expires);
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash")}, "commit") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash")}, "commit") .
 	      " | commitdiff" .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") . "<br/>\n";
-	print $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff_plain;h=$hash;hp=$hash_parent")}, "plain") . "\n" .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") . "<br/>\n";
+	print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff_plain;h=$hash;hp=$hash_parent")}, "plain") . "\n" .
 	      "</div>\n";
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 	      "</div>\n";
 	print "<div class=\"page_body\">\n";
 	my $comment = $co{'comment'};
@@ -1931,23 +1947,23 @@ sub git_commitdiff {
 		my $from_id = $3;
 		my $to_id = $4;
 		my $status = $5;
-		my $file = $6;
+		my $file = validate_input(unquote($6));
 		if ($status eq "A") {
 			print "<div class=\"diff_info\">" .  file_type($to_mode) . ":" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id) . "(new)" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id) . "(new)" .
 			      "</div>\n";
 			git_diff_print(undef, "/dev/null", $to_id, "b/$file");
 		} elsif ($status eq "D") {
 			print "<div class=\"diff_info\">" . file_type($from_mode) . ":" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, $from_id) . "(deleted)" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, $from_id) . "(deleted)" .
 			      "</div>\n";
 			git_diff_print($from_id, "a/$file", undef, "/dev/null");
 		} elsif ($status eq "M") {
 			if ($from_id ne $to_id) {
 				print "<div class=\"diff_info\">" .
-				      file_type($from_mode) . ":" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, $from_id) .
+				      file_type($from_mode) . ":" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, $from_id) .
 				      " -> " .
-				      file_type($to_mode) . ":" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id);
+				      file_type($to_mode) . ":" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id);
 				print "</div>\n";
 				git_diff_print($from_id, "a/$file",  $to_id, "b/$file");
 			}
@@ -2028,18 +2044,18 @@ sub git_history {
 	}
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
 	      "<br/><br/>\n" .
 	      "</div>\n";
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 	      "</div>\n";
-	print "<div class=\"page_path\"><b>/$file_name</b><br/></div>\n";
+	print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
 
 	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin \'$file_name\'";
 	my $commit;
@@ -2063,17 +2079,17 @@ sub git_history {
 			$alternate ^= 1;
 			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 3)) . "</i></td>\n" .
-			      "<td>" . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit"), -class => "list"}, "<b>" .
+			      "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"}, "<b>" .
 			      esc_html(chop_str($co{'title'}, 50)) . "</b>") . "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit")}, "commit") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;hb=$commit;f=$file_name")}, "blob");
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;hb=$commit;f=$file_name")}, "blob");
 			my $blob = git_get_hash_by_path($hash, $file_name);
 			my $blob_parent = git_get_hash_by_path($commit, $file_name);
 			if (defined $blob && defined $blob_parent && $blob ne $blob_parent) {
 				print " | " .
-				$cgi->a({-href => esc_url("$my_uri?p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file_name")},
+				$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file_name")},
 				"diff to current");
 			}
 			print "</td>\n" .
@@ -2113,17 +2129,17 @@ sub git_search {
 	}
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary;h=$hash")}, "summary") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "shortlog") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary;h=$hash")}, "summary") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
 	      "<br/><br/>\n" .
 	      "</div>\n";
 
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 	      "</div>\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -2154,7 +2170,7 @@ sub git_search {
 			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$co{'id'}"), -class => "list"}, "<b>" . esc_html(chop_str($co{'title'}, 50)) . "</b><br/>");
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$co{'id'}"), -class => "list"}, "<b>" . esc_html(chop_str($co{'title'}, 50)) . "</b><br/>");
 			my $comment = $co{'comment'};
 			foreach my $line (@$comment) {
 				if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
@@ -2169,8 +2185,8 @@ sub git_search {
 			}
 			print "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$co{'id'}")}, "commit") .
-			      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$co{'id'}")}, "tree");
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$co{'id'}")}, "commit") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$co{'id'}")}, "tree");
 			print "</td>\n" .
 			      "</tr>\n";
 		}
@@ -2207,18 +2223,18 @@ sub git_search {
 					print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 					      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
 					      "<td>" .
-					      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$co{'id'}"), -class => "list"}, "<b>" .
+					      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$co{'id'}"), -class => "list"}, "<b>" .
 					      esc_html(chop_str($co{'title'}, 50)) . "</b><br/>");
 					while (my $setref = shift @files) {
 						my %set = %$setref;
-						print $cgi->a({-href => esc_url("$my_uri?p=$project;a=blob;h=$set{'id'};hb=$co{'id'};f=$set{'file'}"), class => "list"},
+						print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$set{'id'};hb=$co{'id'};f=$set{'file'}"), class => "list"},
 						      "<span style=\"color:#e00000\">" . esc_html($set{'file'}) . "</span>") .
 						      "<br/>\n";
 					}
 					print "</td>\n" .
 					      "<td class=\"link\">" .
-					      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$co{'id'}")}, "commit") .
-					      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$co{'tree'};hb=$co{'id'}")}, "tree");
+					      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$co{'id'}")}, "commit") .
+					      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$co{'id'}")}, "tree");
 					print "</td>\n" .
 					      "</tr>\n";
 				}
@@ -2241,12 +2257,12 @@ sub git_shortlog {
 	}
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary")}, "summary") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
 	      " | shortlog" .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=log;h=$hash")}, "log") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$hash")}, "commit") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
-	      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash")}, "log") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash")}, "commit") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff") .
+	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", "$gitbin/git-rev-list $limit $hash" or die_error(undef, "Open failed.");
@@ -2254,26 +2270,26 @@ sub git_shortlog {
 	close $fd;
 
 	if ($hash ne $head || $page) {
-		print $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog")}, "HEAD");
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "HEAD");
 	} else {
 		print "HEAD";
 	}
 	if ($page > 0) {
 		print " &sdot; " .
-		$cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page-1)), -accesskey => "p", -title => "Alt-p"}, "prev");
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash;pg=" . ($page-1)), -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		print " &sdot; prev";
 	}
 	if ($#revlist >= (100 * ($page+1)-1)) {
 		print " &sdot; " .
-		$cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1)), -accesskey => "n", -title => "Alt-n"}, "next");
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash;pg=" . ($page+1)), -accesskey => "n", -title => "Alt-n"}, "next");
 	} else {
 		print " &sdot; next";
 	}
 	print "<br/>\n" .
 	      "</div>\n";
 	print "<div>\n" .
-	      $cgi->a({-href => esc_url("$my_uri?p=$project;a=summary"), -class => "title"}, "&nbsp;") .
+	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary"), -class => "title"}, "&nbsp;") .
 	      "</div>\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -2291,23 +2307,23 @@ sub git_shortlog {
 		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 		      "<td>";
 		if (length($co{'title_short'}) < length($co{'title'})) {
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
 			      "<b>" . esc_html($co{'title_short'}) . "</b>");
 		} else {
-			print $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit"), -class => "list"},
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"},
 			      "<b>" . esc_html($co{'title_short'}) . "</b>");
 		}
 		print "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=commit;h=$commit")}, "commit") .
-		      " | " . $cgi->a({-href => esc_url("$my_uri?p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
+		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
 		      "</td>\n" .
 		      "</tr>";
 	}
 	if ($#revlist >= (100 * ($page+1)-1)) {
 		print "<tr>\n" .
 		      "<td>" .
-		      $cgi->a({-href => esc_url("$my_uri?p=$project;a=shortlog;h=$hash;pg=" . ($page+1)), -title => "Alt-n"}, "next") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash;pg=" . ($page+1)), -title => "Alt-n"}, "next") .
 		      "</td>\n" .
 		      "</tr>\n";
 	}
