@@ -19,10 +19,5 @@ die() {
 	exit 1
 }
 
-case "$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD 2>/dev/null)" in
-refs/*)	: ;;
-*)	false ;;
-esac &&
-[ -d "$GIT_DIR/refs" ] &&
-[ -d "$GIT_OBJECT_DIRECTORY/" ] ||
-	die "Not a git repository."
+# Make sure we are in a valid repository of a vintage we understand.
+GIT_DIR="$GIT_DIR" git-var GIT_AUTHOR_IDENT >/dev/null || exit
