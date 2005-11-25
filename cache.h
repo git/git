@@ -182,6 +182,10 @@ extern int trust_executable_bit;
 extern int only_use_symrefs;
 extern int diff_rename_limit_default;
 
+#define GIT_REPO_VERSION 0
+extern int repository_format_version;
+extern int check_repository_format(void);
+
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
 #define OWNER_CHANGED	0x0004
@@ -388,6 +392,7 @@ extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
 extern int git_config_set(const char *, const char *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
+extern int check_repository_format_version(const char *var, const char *value);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];

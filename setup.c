@@ -154,6 +154,22 @@ static const char *setup_git_directory_1(void)
 	return cwd + offset;
 }
 
+int check_repository_format_version(const char *var, const char *value)
+{
+       if (strcmp(var, "core.repositoryformatversion") == 0)
+               repository_format_version = git_config_int(var, value);
+       return 0;
+}
+
+int check_repository_format(void)
+{
+	git_config(check_repository_format_version);
+	if (GIT_REPO_VERSION < repository_format_version)
+		die ("Expected git repo version <= %d, found %d",
+		     GIT_REPO_VERSION, repository_format_version);
+	return 0;
+}
+
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_1();
