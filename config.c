@@ -398,7 +398,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	int i;
 	struct stat st;
 	int fd;
-	char* config_file = strdup(git_path("config"));
+	char* config_filename = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
 	const char* last_dot = strrchr(key, '.');
 
@@ -444,7 +444,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	/*
 	 * If .git/config does not exist yet, write a minimal version.
 	 */
-	if (stat(config_file, &st)) {
+	if (stat(config_filename, &st)) {
 		static const char contents[] =
 			"#\n"
 			"# This is the config file\n"
@@ -523,7 +523,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			return 5;
 		}
 
-		in_fd = open(config_file, O_RDONLY, 0666);
+		in_fd = open(config_filename, O_RDONLY, 0666);
 		contents = mmap(NULL, st.st_size, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);
@@ -564,12 +564,12 @@ int git_config_set_multivar(const char* key, const char* value,
 				st.st_size - copy_begin);
 
 		munmap(contents, st.st_size);
-		unlink(config_file);
+		unlink(config_filename);
 	}
 
 	close(fd);
 
-	if (rename(lock_file, config_file) < 0) {
+	if (rename(lock_file, config_filename) < 0) {
 		fprintf(stderr, "Could not rename the lock file?\n");
 		return 4;
 	}
