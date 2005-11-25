@@ -199,6 +199,7 @@ char *enter_repo(char *path, int strict)
 	if(access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
 	   validate_symref("HEAD") == 0) {
 		putenv("GIT_DIR=.");
+		check_repository_format();
 		return current_dir();
 	}
 
