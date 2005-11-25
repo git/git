@@ -92,9 +92,12 @@ tt*)
 esac
 
 case "$all,$#" in
-t,*)
+t,0)
 	git-diff-files --name-only -z |
 	git-update-index --remove -z --stdin
+	;;
+t,*)
+	die "Cannot use -a and explicit files at the same time."
 	;;
 ,0)
 	;;
