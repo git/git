@@ -12,10 +12,6 @@ test -f .git/config && rm .git/config
 git-repo-config core.penguin "little blue"
 
 cat > expect << EOF
-#
-# This is the config file
-#
-
 [core]
 	penguin = little blue
 EOF
@@ -25,10 +21,6 @@ test_expect_success 'initial' 'cmp .git/config expect'
 git-repo-config Core.Movie BadPhysics
 
 cat > expect << EOF
-#
-# This is the config file
-#
-
 [core]
 	penguin = little blue
 	Movie = BadPhysics
@@ -39,10 +31,6 @@ test_expect_success 'mixed case' 'cmp .git/config expect'
 git-repo-config Cores.WhatEver Second
 
 cat > expect << EOF
-#
-# This is the config file
-#
-
 [core]
 	penguin = little blue
 	Movie = BadPhysics
@@ -55,10 +43,6 @@ test_expect_success 'similar section' 'cmp .git/config expect'
 git-repo-config CORE.UPPERCASE true
 
 cat > expect << EOF
-#
-# This is the config file
-#
-
 [core]
 	penguin = little blue
 	Movie = BadPhysics
@@ -76,10 +60,6 @@ test_expect_success 'replace with non-match (actually matching)' \
 	'git-repo-config core.penguin "very blue" !kingpin'
 
 cat > expect << EOF
-#
-# This is the config file
-#
-
 [core]
 	penguin = very blue
 	Movie = BadPhysics
