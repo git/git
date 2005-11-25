@@ -502,7 +502,7 @@ unless($pid) {
 	if ($opt_P) {
 	    exec("cat", $opt_P);
 	} else {
-	    exec("cvsps",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
+	    exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
 	    die "Could not start cvsps: $!\n";
 	}
 }
