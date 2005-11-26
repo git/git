@@ -407,6 +407,8 @@ int main(int argc, char **argv)
 	void *buffer;
 	unsigned long size;
 
+	setup_git_directory();
+
 	switch (argc) {
 	case 3:
 		basedir = argv[2];

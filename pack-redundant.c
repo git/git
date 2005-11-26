@@ -600,6 +600,8 @@ int main(int argc, char **argv)
 	unsigned char *sha1;
 	char buf[42]; /* 40 byte sha1 + \n + \0 */
 
+	setup_git_directory();
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if(!strcmp(arg, "--")) {

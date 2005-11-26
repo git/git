@@ -473,6 +473,8 @@ int main(int argc, char **argv)
 	struct object_entry **list;
 	int i;
 
+	setup_git_directory();
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
