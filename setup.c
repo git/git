@@ -173,5 +173,6 @@ int check_repository_format(void)
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_1();
+	check_repository_format();
 	return retval;
 }
