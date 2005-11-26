@@ -387,6 +387,7 @@ extern int gitfakemunmap(void *start, size_t length);
 
 typedef int (*config_fn_t)(const char *, const char *);
 extern int git_default_config(const char *, const char *);
+extern int git_config_from_file(config_fn_t fn, const char *);
 extern int git_config(config_fn_t fn);
 extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
