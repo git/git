@@ -1,0 +1,105 @@
+From: Junio C Hamano <junkio@cox.net>
+Subject: control access to branches.
+Date: Thu, 17 Nov 2005 23:55:32 -0800
+Message-ID: <7vfypumlu3.fsf@assigned-by-dhcp.cox.net>
+Abstract: An example hooks/update script is presented to
+ implement repository maintenance policies, such as who can push
+ into which branch and who can make a tag.
+
+When your developer runs git-push into the repository,
+git-receive-pack is run (either locally or over ssh) as that
+developer, so is hooks/update script.  Quoting from the relevant
+section of the documentation:
+
+    Before each ref is updated, if $GIT_DIR/hooks/update file exists
+    and executable, it is called with three parameters:
+
+           $GIT_DIR/hooks/update refname sha1-old sha1-new
+
+    The refname parameter is relative to $GIT_DIR; e.g. for the
+    master head this is "refs/heads/master".  Two sha1 are the
+    object names for the refname before and after the update.  Note
+    that the hook is called before the refname is updated, so either
+    sha1-old is 0{40} (meaning there is no such ref yet), or it
+    should match what is recorded in refname.
+
+So if your policy is (1) always require fast-forward push
+(i.e. never allow "git-push repo +branch:branch"), (2) you
+have a list of users allowed to update each branch, and (3) you
+do not let tags to be overwritten, then:
+
+	#!/bin/sh
+	# This is a sample hooks/update script, written by JC
+        # in his e-mail buffer, so naturally it is not tested
+        # but hopefully would convey the idea.
+
+	umask 002
+        case "$1" in
+        refs/tags/*)
+		# No overwriting an existing tag
+        	if test -f "$GIT_DIR/$1"
+                then
+                	exit 1
+		fi
+		;;
+	refs/heads/*)
+        	# No rebasing or rewinding
+                if expr "$2" : '0*$' >/dev/null
+                then
+                	# creating a new branch
+			;
+		else
+                	# updating -- make sure it is a fast forward
+        		mb=`git-merge-base "$2" "$3"`
+			case "$mb,$2" in
+                        "$2,$mb")
+                        	;; # fast forward -- happy
+			*)
+                        	exit 1 ;; # unhappy
+			esac
+		fi
+		;;
+	*)
+		# No funny refs allowed
+		exit 1
+		;;
+	esac
+
+	# Is the user allowed to update it?
+	me=`id -u -n` ;# e.g. "junio"
+	while read head_pattern users
+        do
+		if expr "$1" : "$head_pattern" >/dev/null
+		then
+			case " $users " in
+			*" $me "*)
+                        	exit 0 ;; # happy
+			' * ')
+                        	exit 0 ;; # anybody
+			esac
+		fi
+	done
+	exit 1
+
+For the sake of simplicity, I assumed that you keep something
+like this in $GIT_DIR/info/allowed-pushers file:
+
+	refs/heads/master	junio
+        refs/heads/cogito$	pasky
+	refs/heads/bw/		linus
+        refs/heads/tmp/		*
+        refs/tags/v[0-9]*	junio
+
+With this, Linus can push or create "bw/penguin" or "bw/zebra"
+or "bw/panda" branches, Pasky can do only "cogito", and I can do
+master branch and make versioned tags.  And anybody can do
+tmp/blah branches.  This assumes all the users are in a single
+group that can write into $GIT_DIR/ and underneath.
+
+
+
+
+
+
+
+

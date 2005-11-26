@@ -3,15 +3,17 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2005 Junio C Hamano
 #
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 case "$0" in
 *-revert* )
+	test -t 0 && edit=-e
 	me=revert ;;
 *-cherry-pick* )
+	edit=
 	me=cherry-pick ;;
 * )
-	die "What are ou talking about?" ;;
+	die "What are you talking about?" ;;
 esac
 
 usage () {
@@ -32,6 +34,12 @@ do
 	-n|--n|--no|--no-|--no-c|--no-co|--no-com|--no-comm|\
 	    --no-commi|--no-commit)
 		no_commit=t
+		;;
+	-e|--e|--ed|--edi|--edit)
+		edit=-e
+		;;
+	-n|--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
+		edit=
 		;;
 	-r|--r|--re|--rep|--repl|--repla|--replay)
 		replay=t
@@ -163,7 +171,7 @@ echo >&2 "Finished one $me."
 
 case "$no_commit" in
 '')
-	git-commit -n -F .msg
+	git-commit -n -F .msg $edit
 	rm -f .msg
 	;;
 esac

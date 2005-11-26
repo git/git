@@ -15,6 +15,16 @@ static int use_size_cache;
 
 int diff_rename_limit_default = -1;
 
+int git_diff_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "diff.renamelimit")) {
+		diff_rename_limit_default = git_config_int(var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value);
+}
+
 static char *quote_one(const char *str)
 {
 	int needlen;
@@ -838,16 +848,29 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 
 static int parse_num(const char **cp_p)
 {
-	int num, scale, ch, cnt;
+	unsigned long num, scale;
+	int ch, dot;
 	const char *cp = *cp_p;
 
-	cnt = num = 0;
+	num = 0;
 	scale = 1;
-	while ('0' <= (ch = *cp) && ch <= '9') {
-		if (cnt++ < 5) {
-			/* We simply ignore more than 5 digits precision. */
-			scale *= 10;
-			num = num * 10 + ch - '0';
+	dot = 0;
+	for(;;) {
+		ch = *cp;
+		if ( !dot && ch == '.' ) {
+			scale = 1;
+			dot = 1;
+		} else if ( ch == '%' ) {
+			scale = dot ? scale*100 : 100;
+			cp++;	/* % is always at the end */
+			break;
+		} else if ( ch >= '0' && ch <= '9' ) {
+			if ( scale < 100000 ) {
+				scale *= 10;
+				num = (num*10) + (ch-'0');
+			}
+		} else {
+			break;
 		}
 		cp++;
 	}
@@ -856,7 +879,7 @@ static int parse_num(const char **cp_p)
 	/* user says num divided by scale and we say internally that
 	 * is MAX_SCORE * num / scale.
 	 */
-	return (MAX_SCORE * num / scale);
+	return (num >= scale) ? MAX_SCORE : (MAX_SCORE * num / scale);
 }
 
 int diff_scoreopt_parse(const char *opt)

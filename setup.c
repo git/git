@@ -73,8 +73,8 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 }
 
 /*
- * Test it it looks like we're at the top
- * level git directory. We want to see a
+ * Test if it looks like we're at the top level git directory.
+ * We want to see:
  *
  *  - either a .git/objects/ directory _or_ the proper
  *    GIT_OBJECT_DIRECTORY environment variable
@@ -92,17 +92,43 @@ static int is_toplevel_directory(void)
 	return 1;
 }
 
-const char *setup_git_directory(void)
+static const char *setup_git_directory_1(void)
 {
 	static char cwd[PATH_MAX+1];
 	int len, offset;
 
 	/*
 	 * If GIT_DIR is set explicitly, we're not going
-	 * to do any discovery
+	 * to do any discovery, but we still do repository
+	 * validation.
 	 */
-	if (getenv(GIT_DIR_ENVIRONMENT))
+	if (getenv(GIT_DIR_ENVIRONMENT)) {
+		char path[PATH_MAX];
+		int len = strlen(getenv(GIT_DIR_ENVIRONMENT));
+		if (sizeof(path) - 40 < len)
+			die("'$%s' too big", GIT_DIR_ENVIRONMENT);
+		memcpy(path, getenv(GIT_DIR_ENVIRONMENT), len);
+		
+		strcpy(path + len, "/refs");
+		if (access(path, X_OK))
+			goto bad_dir_environ;
+		strcpy(path + len, "/HEAD");
+		if (validate_symref(path))
+			goto bad_dir_environ;
+		if (getenv(DB_ENVIRONMENT)) {
+			if (access(DB_ENVIRONMENT, X_OK))
+				goto bad_dir_environ;
+		}
+		else {
+			strcpy(path + len, "/objects");
+			if (access(path, X_OK))
+				goto bad_dir_environ;
+		}
 		return NULL;
+	bad_dir_environ:
+		path[len] = 0;
+		die("Not a git repository: '%s'", path);
+	}
 
 	if (!getcwd(cwd, sizeof(cwd)) || cwd[0] != '/')
 		die("Unable to read current working directory");
@@ -126,4 +152,10 @@ const char *setup_git_directory(void)
 	cwd[len++] = '/';
 	cwd[len] = 0;
 	return cwd + offset;
+}
+
+const char *setup_git_directory(void)
+{
+	const char *retval = setup_git_directory_1();
+	return retval;
 }

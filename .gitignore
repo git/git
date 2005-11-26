@@ -75,6 +75,7 @@ git-rebase
 git-receive-pack
 git-relink
 git-repack
+git-repo-config
 git-request-pull
 git-reset
 git-resolve

@@ -338,7 +338,7 @@ static void read_index_info(int line_termination)
 	struct strbuf buf;
 	strbuf_init(&buf);
 	while (1) {
-		char *ptr;
+		char *ptr, *tab;
 		char *path_name;
 		unsigned char sha1[20];
 		unsigned int mode;
@@ -348,12 +348,15 @@ static void read_index_info(int line_termination)
 			break;
 
 		mode = strtoul(buf.buf, &ptr, 8);
-		if (ptr == buf.buf || *ptr != ' ' ||
-		    get_sha1_hex(ptr + 1, sha1) ||
-		    ptr[41] != '\t')
+		if (ptr == buf.buf || *ptr != ' ')
 			goto bad_line;
 
-		ptr += 42;
+		tab = strchr(ptr, '\t');
+		if (!tab || tab - ptr < 41)
+			goto bad_line;
+		if (get_sha1_hex(tab - 40, sha1) || tab[-41] != ' ')
+			goto bad_line;
+		ptr = tab + 1;
 
 		if (line_termination && ptr[0] == '"')
 			path_name = unquote_c_style(ptr, NULL);

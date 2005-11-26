@@ -124,8 +124,6 @@ static int filter_commit(struct commit * commit)
 		stop_traversal=1;
 		return CONTINUE;
 	}
-	if (max_count != -1 && !max_count--)
-		return STOP;
 	if (no_merges && (commit->parents && commit->parents->next))
 		return CONTINUE;
 	if (paths && dense) {
@@ -147,6 +145,9 @@ static int process_commit(struct commit * commit)
 	if (action == CONTINUE) {
 		return CONTINUE;
 	}
+
+	if (max_count != -1 && !max_count--)
+		return STOP;
 
 	show_commit(commit);
 

@@ -2,44 +2,14 @@
 #include "commit.h"
 #include "pack.h"
 #include "fetch.h"
-
-#include <curl/curl.h>
-#include <curl/easy.h>
-
-#if LIBCURL_VERSION_NUM >= 0x070908
-#define USE_CURL_MULTI
-#define DEFAULT_MAX_REQUESTS 5
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070704
-#define curl_global_cleanup() do { /* nothing */ } while(0)
-#endif
-#if LIBCURL_VERSION_NUM < 0x070800
-#define curl_global_init(a) do { /* nothing */ } while(0)
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070c04
-#define NO_CURL_EASY_DUPHANDLE
-#endif
+#include "http.h"
 
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
 
 static int got_alternates = -1;
-static int active_requests = 0;
-static int data_received;
 
-#ifdef USE_CURL_MULTI
-static int max_requests = -1;
-static CURLM *curlm;
-#endif
-#ifndef NO_CURL_EASY_DUPHANDLE
-static CURL *curl_default;
-#endif
-static struct curl_slist *pragma_header;
 static struct curl_slist *no_pragma_header;
-static struct curl_slist *no_range_header;
-static char curl_errorstr[CURL_ERROR_SIZE];
 
 struct alt_base
 {
@@ -51,14 +21,14 @@ struct alt_base
 
 static struct alt_base *alt = NULL;
 
-enum transfer_state {
+enum object_request_state {
 	WAITING,
 	ABORTED,
 	ACTIVE,
 	COMPLETE,
 };
 
-struct transfer_request
+struct object_request
 {
 	unsigned char sha1[20];
 	struct alt_base *repo;
@@ -66,7 +36,7 @@ struct transfer_request
 	char filename[PATH_MAX];
 	char tmpfile[PATH_MAX];
 	int local;
-	enum transfer_state state;
+	enum object_request_state state;
 	CURLcode curl_result;
 	char errorstr[CURL_ERROR_SIZE];
 	long http_code;
@@ -76,23 +46,10 @@ struct transfer_request
 	int zret;
 	int rename;
 	struct active_request_slot *slot;
-	struct transfer_request *next;
+	struct object_request *next;
 };
 
-struct active_request_slot
-{
-	CURL *curl;
-	FILE *local;
-	int in_use;
-	int done;
-	CURLcode curl_result;
-	long http_code;
-	void *callback_data;
-	void (*callback_func)(void *data);
-	struct active_request_slot *next;
-};
-
-struct alt_request {
+struct alternates_request {
 	char *base;
 	char *url;
 	struct buffer *buffer;
@@ -100,120 +57,7 @@ struct alt_request {
 	int http_specific;
 };
 
-static struct transfer_request *request_queue_head = NULL;
-static struct active_request_slot *active_queue_head = NULL;
-
-static int curl_ssl_verify = -1;
-static char *ssl_cert = NULL;
-#if LIBCURL_VERSION_NUM >= 0x070902
-static char *ssl_key = NULL;
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-static char *ssl_capath = NULL;
-#endif
-static char *ssl_cainfo = NULL;
-static long curl_low_speed_limit = -1;
-static long curl_low_speed_time = -1;
-
-struct buffer
-{
-        size_t posn;
-        size_t size;
-        void *buffer;
-};
-
-static int http_options(const char *var, const char *value)
-{
-	if (!strcmp("http.sslverify", var)) {
-		if (curl_ssl_verify == -1) {
-			curl_ssl_verify = git_config_bool(var, value);
-		}
-		return 0;
-	}
-
-	if (!strcmp("http.sslcert", var)) {
-		if (ssl_cert == NULL) {
-			ssl_cert = xmalloc(strlen(value)+1);
-			strcpy(ssl_cert, value);
-		}
-		return 0;
-	}
-#if LIBCURL_VERSION_NUM >= 0x070902
-	if (!strcmp("http.sslkey", var)) {
-		if (ssl_key == NULL) {
-			ssl_key = xmalloc(strlen(value)+1);
-			strcpy(ssl_key, value);
-		}
-		return 0;
-	}
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-	if (!strcmp("http.sslcapath", var)) {
-		if (ssl_capath == NULL) {
-			ssl_capath = xmalloc(strlen(value)+1);
-			strcpy(ssl_capath, value);
-		}
-		return 0;
-	}
-#endif
-	if (!strcmp("http.sslcainfo", var)) {
-		if (ssl_cainfo == NULL) {
-			ssl_cainfo = xmalloc(strlen(value)+1);
-			strcpy(ssl_cainfo, value);
-		}
-		return 0;
-	}
-
-#ifdef USE_CURL_MULTI	
-	if (!strcmp("http.maxrequests", var)) {
-		if (max_requests == -1)
-			max_requests = git_config_int(var, value);
-		return 0;
-	}
-#endif
-
-	if (!strcmp("http.lowspeedlimit", var)) {
-		if (curl_low_speed_limit == -1)
-			curl_low_speed_limit = (long)git_config_int(var, value);
-		return 0;
-	}
-	if (!strcmp("http.lowspeedtime", var)) {
-		if (curl_low_speed_time == -1)
-			curl_low_speed_time = (long)git_config_int(var, value);
-		return 0;
-	}
-
-	/* Fall back on the default ones */
-	return git_default_config(var, value);
-}
-
-static size_t fwrite_buffer(void *ptr, size_t eltsize, size_t nmemb,
-                            struct buffer *buffer)
-{
-        size_t size = eltsize * nmemb;
-        if (size > buffer->size - buffer->posn)
-                size = buffer->size - buffer->posn;
-        memcpy(buffer->buffer + buffer->posn, ptr, size);
-        buffer->posn += size;
-	data_received++;
-        return size;
-}
-
-static size_t fwrite_buffer_dynamic(const void *ptr, size_t eltsize,
-				    size_t nmemb, struct buffer *buffer)
-{
-	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn) {
-		buffer->size = buffer->size * 3 / 2;
-		if (buffer->size < buffer->posn + size)
-			buffer->size = buffer->posn + size;
-		buffer->buffer = xrealloc(buffer->buffer, buffer->size);
-	}
-	memcpy(buffer->buffer + buffer->posn, ptr, size);
-	buffer->posn += size;
-	data_received++;
-	return size;
-}
+static struct object_request *object_queue_head = NULL;
 
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)
@@ -221,194 +65,35 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	unsigned char expn[4096];
 	size_t size = eltsize * nmemb;
 	int posn = 0;
-	struct transfer_request *request = (struct transfer_request *)data;
+	struct object_request *obj_req = (struct object_request *)data;
 	do {
-		ssize_t retval = write(request->local,
+		ssize_t retval = write(obj_req->local,
 				       ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
 		posn += retval;
 	} while (posn < size);
 
-	request->stream.avail_in = size;
-	request->stream.next_in = ptr;
+	obj_req->stream.avail_in = size;
+	obj_req->stream.next_in = ptr;
 	do {
-		request->stream.next_out = expn;
-		request->stream.avail_out = sizeof(expn);
-		request->zret = inflate(&request->stream, Z_SYNC_FLUSH);
-		SHA1_Update(&request->c, expn,
-			    sizeof(expn) - request->stream.avail_out);
-	} while (request->stream.avail_in && request->zret == Z_OK);
+		obj_req->stream.next_out = expn;
+		obj_req->stream.avail_out = sizeof(expn);
+		obj_req->zret = inflate(&obj_req->stream, Z_SYNC_FLUSH);
+		SHA1_Update(&obj_req->c, expn,
+			    sizeof(expn) - obj_req->stream.avail_out);
+	} while (obj_req->stream.avail_in && obj_req->zret == Z_OK);
 	data_received++;
 	return size;
 }
 
-#ifdef USE_CURL_MULTI
-static void process_curl_messages(void);
-static void process_request_queue(void);
-#endif
 static void fetch_alternates(char *base);
 
-static CURL* get_curl_handle(void)
+static void process_object_response(void *callback_data);
+
+static void start_object_request(struct object_request *obj_req)
 {
-	CURL* result = curl_easy_init();
-
-	curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, curl_ssl_verify);
-#if LIBCURL_VERSION_NUM >= 0x070907
-	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
-#endif
-
-	if (ssl_cert != NULL)
-		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
-#if LIBCURL_VERSION_NUM >= 0x070902
-	if (ssl_key != NULL)
-		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-	if (ssl_capath != NULL)
-		curl_easy_setopt(result, CURLOPT_CAPATH, ssl_capath);
-#endif
-	if (ssl_cainfo != NULL)
-		curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
-	curl_easy_setopt(result, CURLOPT_FAILONERROR, 1);
-
-	if (curl_low_speed_limit > 0 && curl_low_speed_time > 0) {
-		curl_easy_setopt(result, CURLOPT_LOW_SPEED_LIMIT,
-				 curl_low_speed_limit);
-		curl_easy_setopt(result, CURLOPT_LOW_SPEED_TIME,
-				 curl_low_speed_time);
-	}
-
-	curl_easy_setopt(result, CURLOPT_FOLLOWLOCATION, 1);
-
-	return result;
-}
-
-static struct active_request_slot *get_active_slot(void)
-{
-	struct active_request_slot *slot = active_queue_head;
-	struct active_request_slot *newslot;
-
-#ifdef USE_CURL_MULTI
-	int num_transfers;
-
-	/* Wait for a slot to open up if the queue is full */
-	while (active_requests >= max_requests) {
-		curl_multi_perform(curlm, &num_transfers);
-		if (num_transfers < active_requests) {
-			process_curl_messages();
-		}
-	}
-#endif
-
-	while (slot != NULL && slot->in_use) {
-		slot = slot->next;
-	}
-	if (slot == NULL) {
-		newslot = xmalloc(sizeof(*newslot));
-		newslot->curl = NULL;
-		newslot->in_use = 0;
-		newslot->next = NULL;
-
-		slot = active_queue_head;
-		if (slot == NULL) {
-			active_queue_head = newslot;
-		} else {
-			while (slot->next != NULL) {
-				slot = slot->next;
-			}
-			slot->next = newslot;
-		}
-		slot = newslot;
-	}
-
-	if (slot->curl == NULL) {
-#ifdef NO_CURL_EASY_DUPHANDLE
-		slot->curl = get_curl_handle();
-#else
-		slot->curl = curl_easy_duphandle(curl_default);
-#endif
-	}
-
-	active_requests++;
-	slot->in_use = 1;
-	slot->done = 0;
-	slot->local = NULL;
-	slot->callback_data = NULL;
-	slot->callback_func = NULL;
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_range_header);
-	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-
-	return slot;
-}
-
-static int start_active_slot(struct active_request_slot *slot)
-{
-#ifdef USE_CURL_MULTI
-	CURLMcode curlm_result = curl_multi_add_handle(curlm, slot->curl);
-
-	if (curlm_result != CURLM_OK &&
-	    curlm_result != CURLM_CALL_MULTI_PERFORM) {
-		active_requests--;
-		slot->in_use = 0;
-		return 0;
-	}
-#endif
-	return 1;
-}
-
-static void run_active_slot(struct active_request_slot *slot)
-{
-#ifdef USE_CURL_MULTI
-	int num_transfers;
-	long last_pos = 0;
-	long current_pos;
-	fd_set readfds;
-	fd_set writefds;
-	fd_set excfds;
-	int max_fd;
-	struct timeval select_timeout;
-	CURLMcode curlm_result;
-
-	while (!slot->done) {
-		data_received = 0;
-		do {
-			curlm_result = curl_multi_perform(curlm,
-							  &num_transfers);
-		} while (curlm_result == CURLM_CALL_MULTI_PERFORM);
-		if (num_transfers < active_requests) {
-			process_curl_messages();
-			process_request_queue();
-		}
-
-		if (!data_received && slot->local != NULL) {
-			current_pos = ftell(slot->local);
-			if (current_pos > last_pos)
-				data_received++;
-			last_pos = current_pos;
-		}
-
-		if (!slot->done && !data_received) {
-			max_fd = 0;
-			FD_ZERO(&readfds);
-			FD_ZERO(&writefds);
-			FD_ZERO(&excfds);
-			select_timeout.tv_sec = 0;
-			select_timeout.tv_usec = 50000;
-			select(max_fd, &readfds, &writefds,
-			       &excfds, &select_timeout);
-		}
-	}
-#else
-	slot->curl_result = curl_easy_perform(slot->curl);
-	active_requests--;
-#endif
-}
-
-static void start_request(struct transfer_request *request)
-{
-	char *hex = sha1_to_hex(request->sha1);
+	char *hex = sha1_to_hex(obj_req->sha1);
 	char prevfile[PATH_MAX];
 	char *url;
 	char *posn;
@@ -420,53 +105,53 @@ static void start_request(struct transfer_request *request)
 	struct curl_slist *range_header = NULL;
 	struct active_request_slot *slot;
 
-	snprintf(prevfile, sizeof(prevfile), "%s.prev", request->filename);
+	snprintf(prevfile, sizeof(prevfile), "%s.prev", obj_req->filename);
 	unlink(prevfile);
-	rename(request->tmpfile, prevfile);
-	unlink(request->tmpfile);
+	rename(obj_req->tmpfile, prevfile);
+	unlink(obj_req->tmpfile);
 
-	if (request->local != -1)
-		error("fd leakage in start: %d", request->local);
-	request->local = open(request->tmpfile,
+	if (obj_req->local != -1)
+		error("fd leakage in start: %d", obj_req->local);
+	obj_req->local = open(obj_req->tmpfile,
 			      O_WRONLY | O_CREAT | O_EXCL, 0666);
 	/* This could have failed due to the "lazy directory creation";
 	 * try to mkdir the last path component.
 	 */
-	if (request->local < 0 && errno == ENOENT) {
-		char *dir = strrchr(request->tmpfile, '/');
+	if (obj_req->local < 0 && errno == ENOENT) {
+		char *dir = strrchr(obj_req->tmpfile, '/');
 		if (dir) {
 			*dir = 0;
-			mkdir(request->tmpfile, 0777);
+			mkdir(obj_req->tmpfile, 0777);
 			*dir = '/';
 		}
-		request->local = open(request->tmpfile,
+		obj_req->local = open(obj_req->tmpfile,
 				      O_WRONLY | O_CREAT | O_EXCL, 0666);
 	}
 
-	if (request->local < 0) {
-		request->state = ABORTED;
+	if (obj_req->local < 0) {
+		obj_req->state = ABORTED;
 		error("Couldn't create temporary file %s for %s: %s\n",
-		      request->tmpfile, request->filename, strerror(errno));
+		      obj_req->tmpfile, obj_req->filename, strerror(errno));
 		return;
 	}
 
-	memset(&request->stream, 0, sizeof(request->stream));
+	memset(&obj_req->stream, 0, sizeof(obj_req->stream));
 
-	inflateInit(&request->stream);
+	inflateInit(&obj_req->stream);
 
-	SHA1_Init(&request->c);
+	SHA1_Init(&obj_req->c);
 
-	url = xmalloc(strlen(request->repo->base) + 50);
-	request->url = xmalloc(strlen(request->repo->base) + 50);
-	strcpy(url, request->repo->base);
-	posn = url + strlen(request->repo->base);
+	url = xmalloc(strlen(obj_req->repo->base) + 50);
+	obj_req->url = xmalloc(strlen(obj_req->repo->base) + 50);
+	strcpy(url, obj_req->repo->base);
+	posn = url + strlen(obj_req->repo->base);
 	strcpy(posn, "objects/");
 	posn += 8;
 	memcpy(posn, hex, 2);
 	posn += 2;
 	*(posn++) = '/';
 	strcpy(posn, hex + 2);
-	strcpy(request->url, url);
+	strcpy(obj_req->url, url);
 
 	/* If a previous temp file is present, process what was already
 	   fetched. */
@@ -478,7 +163,7 @@ static void start_request(struct transfer_request *request)
 				if (fwrite_sha1_file(prev_buf,
 						     1,
 						     prev_read,
-						     request) == prev_read) {
+						     obj_req) == prev_read) {
 					prev_posn += prev_read;
 				} else {
 					prev_read = -1;
@@ -492,20 +177,24 @@ static void start_request(struct transfer_request *request)
 	/* Reset inflate/SHA1 if there was an error reading the previous temp
 	   file; also rewind to the beginning of the local file. */
 	if (prev_read == -1) {
-		memset(&request->stream, 0, sizeof(request->stream));
-		inflateInit(&request->stream);
-		SHA1_Init(&request->c);
+		memset(&obj_req->stream, 0, sizeof(obj_req->stream));
+		inflateInit(&obj_req->stream);
+		SHA1_Init(&obj_req->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
-			lseek(request->local, SEEK_SET, 0);
-			ftruncate(request->local, 0);
+			lseek(obj_req->local, SEEK_SET, 0);
+			ftruncate(obj_req->local, 0);
 		}
 	}
 
 	slot = get_active_slot();
-	curl_easy_setopt(slot->curl, CURLOPT_FILE, request);
+	slot->callback_func = process_object_response;
+	slot->callback_data = obj_req;
+	obj_req->slot = slot;
+
+	curl_easy_setopt(slot->curl, CURLOPT_FILE, obj_req);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
-	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, request->errorstr);
+	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, obj_req->errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
@@ -523,151 +212,111 @@ static void start_request(struct transfer_request *request)
 	}
 
 	/* Try to get the request started, abort the request on error */
+	obj_req->state = ACTIVE;
 	if (!start_active_slot(slot)) {
-		request->state = ABORTED;
-		close(request->local); request->local = -1;
-		free(request->url);
+		obj_req->state = ABORTED;
+		obj_req->slot = NULL;
+		close(obj_req->local); obj_req->local = -1;
+		free(obj_req->url);
 		return;
 	}
 	
-	request->slot = slot;
-	request->state = ACTIVE;
 }
 
-static void finish_request(struct transfer_request *request)
+static void finish_object_request(struct object_request *obj_req)
 {
 	struct stat st;
 
-	fchmod(request->local, 0444);
-	close(request->local); request->local = -1;
+	fchmod(obj_req->local, 0444);
+	close(obj_req->local); obj_req->local = -1;
 
-	if (request->http_code == 416) {
+	if (obj_req->http_code == 416) {
 		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
-	} else if (request->curl_result != CURLE_OK) {
-		if (stat(request->tmpfile, &st) == 0)
+	} else if (obj_req->curl_result != CURLE_OK) {
+		if (stat(obj_req->tmpfile, &st) == 0)
 			if (st.st_size == 0)
-				unlink(request->tmpfile);
+				unlink(obj_req->tmpfile);
 		return;
 	}
 
-	inflateEnd(&request->stream);
-	SHA1_Final(request->real_sha1, &request->c);
-	if (request->zret != Z_STREAM_END) {
-		unlink(request->tmpfile);
+	inflateEnd(&obj_req->stream);
+	SHA1_Final(obj_req->real_sha1, &obj_req->c);
+	if (obj_req->zret != Z_STREAM_END) {
+		unlink(obj_req->tmpfile);
 		return;
 	}
-	if (memcmp(request->sha1, request->real_sha1, 20)) {
-		unlink(request->tmpfile);
+	if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
+		unlink(obj_req->tmpfile);
 		return;
 	}
-	request->rename =
-		move_temp_to_file(request->tmpfile, request->filename);
+	obj_req->rename =
+		move_temp_to_file(obj_req->tmpfile, obj_req->filename);
 
-	if (request->rename == 0)
-		pull_say("got %s\n", sha1_to_hex(request->sha1));
+	if (obj_req->rename == 0)
+		pull_say("got %s\n", sha1_to_hex(obj_req->sha1));
 }
 
-static void release_request(struct transfer_request *request)
+static void process_object_response(void *callback_data)
 {
-	struct transfer_request *entry = request_queue_head;
+	struct object_request *obj_req =
+		(struct object_request *)callback_data;
 
-	if (request->local != -1)
-		error("fd leakage in release: %d", request->local);
-	if (request == request_queue_head) {
-		request_queue_head = request->next;
+	obj_req->curl_result = obj_req->slot->curl_result;
+	obj_req->http_code = obj_req->slot->http_code;
+	obj_req->slot = NULL;
+	obj_req->state = COMPLETE;
+
+	/* Use alternates if necessary */
+	if (obj_req->http_code == 404) {
+		fetch_alternates(alt->base);
+		if (obj_req->repo->next != NULL) {
+			obj_req->repo =
+				obj_req->repo->next;
+			close(obj_req->local);
+			obj_req->local = -1;
+			start_object_request(obj_req);
+			return;
+		}
+	}
+
+	finish_object_request(obj_req);
+}
+
+static void release_object_request(struct object_request *obj_req)
+{
+	struct object_request *entry = object_queue_head;
+
+	if (obj_req->local != -1)
+		error("fd leakage in release: %d", obj_req->local);
+	if (obj_req == object_queue_head) {
+		object_queue_head = obj_req->next;
 	} else {
-		while (entry->next != NULL && entry->next != request)
+		while (entry->next != NULL && entry->next != obj_req)
 			entry = entry->next;
-		if (entry->next == request)
+		if (entry->next == obj_req)
 			entry->next = entry->next->next;
 	}
 
-	free(request->url);
-	free(request);
+	free(obj_req->url);
+	free(obj_req);
 }
 
 #ifdef USE_CURL_MULTI
-static void process_curl_messages(void)
+void fill_active_slots(void)
 {
-	int num_messages;
-	struct active_request_slot *slot;
-	struct transfer_request *request = NULL;
-	CURLMsg *curl_message = curl_multi_info_read(curlm, &num_messages);
-
-	while (curl_message != NULL) {
-		if (curl_message->msg == CURLMSG_DONE) {
-			int curl_result = curl_message->data.result;
-			slot = active_queue_head;
-			while (slot != NULL &&
-			       slot->curl != curl_message->easy_handle)
-				slot = slot->next;
-			if (slot != NULL) {
-				curl_multi_remove_handle(curlm, slot->curl);
-				active_requests--;
-				slot->done = 1;
-				slot->in_use = 0;
-				slot->curl_result = curl_result;
-				curl_easy_getinfo(slot->curl,
-						  CURLINFO_HTTP_CODE,
-						  &slot->http_code);
-				request = request_queue_head;
-				while (request != NULL &&
-				       request->slot != slot)
-					request = request->next;
-			} else {
-				fprintf(stderr, "Received DONE message for unknown request!\n");
-			}
-
-			/* Process slot callback if appropriate */
-			if (slot->callback_func != NULL) {
-				slot->callback_func(slot->callback_data);
-			}
-
-			if (request != NULL) {
-				request->curl_result = curl_result;
-				request->http_code = slot->http_code;
-				request->slot = NULL;
-				request->state = COMPLETE;
-
-				/* Use alternates if necessary */
-				if (request->http_code == 404) {
-					fetch_alternates(alt->base);
-					if (request->repo->next != NULL) {
-						request->repo =
-							request->repo->next;
-						close(request->local);
-							request->local = -1;
-						start_request(request);
-					} else {
-						finish_request(request);
-					}
-				} else {
-					finish_request(request);
-				}
-			}
-		} else {
-			fprintf(stderr, "Unknown CURL message received: %d\n",
-				(int)curl_message->msg);
-		}
-		curl_message = curl_multi_info_read(curlm, &num_messages);
-	}
-}
-
-static void process_request_queue(void)
-{
-	struct transfer_request *request = request_queue_head;
+	struct object_request *obj_req = object_queue_head;
 	struct active_request_slot *slot = active_queue_head;
 	int num_transfers;
 
-	while (active_requests < max_requests && request != NULL) {
-		if (request->state == WAITING) {
-			if (has_sha1_file(request->sha1))
-				release_request(request);
+	while (active_requests < max_requests && obj_req != NULL) {
+		if (obj_req->state == WAITING) {
+			if (has_sha1_file(obj_req->sha1))
+				release_object_request(obj_req);
 			else
-				start_request(request);
+				start_object_request(obj_req);
 			curl_multi_perform(curlm, &num_transfers);
 		}
-		request = request->next;
+		obj_req = obj_req->next;
 	}
 
 	while (slot != NULL) {
@@ -682,8 +331,8 @@ static void process_request_queue(void)
 
 void prefetch(unsigned char *sha1)
 {
-	struct transfer_request *newreq;
-	struct transfer_request *tail;
+	struct object_request *newreq;
+	struct object_request *tail;
 	char *filename = sha1_file_name(sha1);
 
 	newreq = xmalloc(sizeof(*newreq));
@@ -697,18 +346,19 @@ void prefetch(unsigned char *sha1)
 		 "%s.temp", filename);
 	newreq->next = NULL;
 
-	if (request_queue_head == NULL) {
-		request_queue_head = newreq;
+	if (object_queue_head == NULL) {
+		object_queue_head = newreq;
 	} else {
-		tail = request_queue_head;
+		tail = object_queue_head;
 		while (tail->next != NULL) {
 			tail = tail->next;
 		}
 		tail->next = newreq;
 	}
+
 #ifdef USE_CURL_MULTI
-	process_request_queue();
-	process_curl_messages();
+	fill_active_slots();
+	step_active_slots();
 #endif
 }
 
@@ -793,9 +443,10 @@ static int setup_index(struct alt_base *repo, unsigned char *sha1)
 	return 0;
 }
 
-static void process_alternates(void *callback_data)
+static void process_alternates_response(void *callback_data)
 {
-	struct alt_request *alt_req = (struct alt_request *)callback_data;
+	struct alternates_request *alt_req =
+		(struct alternates_request *)callback_data;
 	struct active_request_slot *slot = alt_req->slot;
 	struct alt_base *tail = alt;
 	char *base = alt_req->base;
@@ -815,12 +466,11 @@ static void process_alternates(void *callback_data)
 					 alt_req->url);
 			active_requests++;
 			slot->in_use = 1;
-			slot->done = 0;
 			if (start_active_slot(slot)) {
 				return;
 			} else {
 				got_alternates = -1;
-				slot->done = 1;
+				slot->in_use = 0;
 				return;
 			}
 		}
@@ -831,7 +481,7 @@ static void process_alternates(void *callback_data)
 		}
 	}
 
-	fwrite_buffer_dynamic(&null_byte, 1, 1, alt_req->buffer);
+	fwrite_buffer(&null_byte, 1, 1, alt_req->buffer);
 	alt_req->buffer->posn--;
 	data = alt_req->buffer->buffer;
 
@@ -901,17 +551,16 @@ static void fetch_alternates(char *base)
 	char *url;
 	char *data;
 	struct active_request_slot *slot;
-	static struct alt_request alt_req;
-	int num_transfers;
+	static struct alternates_request alt_req;
 
 	/* If another request has already started fetching alternates,
 	   wait for them to arrive and return to processing this request's
 	   curl message */
+#ifdef USE_CURL_MULTI
 	while (got_alternates == 0) {
-		curl_multi_perform(curlm, &num_transfers);
-		process_curl_messages();
-		process_request_queue();
+		step_active_slots();
 	}
+#endif
 
 	/* Nothing to do if they've already been fetched */
 	if (got_alternates == 1)
@@ -934,12 +583,11 @@ static void fetch_alternates(char *base)
 	/* Use a callback to process the result, since another request
 	   may fail and need to have alternates loaded before continuing */
 	slot = get_active_slot();
-	slot->callback_func = process_alternates;
+	slot->callback_func = process_alternates_response;
 	slot->callback_data = &alt_req;
 
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-			 fwrite_buffer_dynamic);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 
 	alt_req.base = base;
@@ -983,17 +631,24 @@ static int fetch_indices(struct alt_base *repo)
 
 	slot = get_active_slot();
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-			 fwrite_buffer_dynamic);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (slot->curl_result != CURLE_OK) {
-			free(buffer.buffer);
-			return error("%s", curl_errorstr);
+			if (slot->http_code == 404) {
+				repo->got_indices = 1;
+				free(buffer.buffer);
+				return 0;
+			} else {
+				repo->got_indices = 0;
+				free(buffer.buffer);
+				return error("%s", curl_errorstr);
+			}
 		}
 	} else {
+		repo->got_indices = 0;
 		free(buffer.buffer);
 		return error("Unable to start request");
 	}
@@ -1115,94 +770,56 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
-	int ret;
-	struct transfer_request *request = request_queue_head;
+	int ret = 0;
+	struct object_request *obj_req = object_queue_head;
 
-	while (request != NULL && memcmp(request->sha1, sha1, 20))
-		request = request->next;
-	if (request == NULL)
+	while (obj_req != NULL && memcmp(obj_req->sha1, sha1, 20))
+		obj_req = obj_req->next;
+	if (obj_req == NULL)
 		return error("Couldn't find request for %s in the queue", hex);
 
-	if (has_sha1_file(request->sha1)) {
-		release_request(request);
+	if (has_sha1_file(obj_req->sha1)) {
+		release_object_request(obj_req);
 		return 0;
 	}
 
 #ifdef USE_CURL_MULTI
-	while (request->state == WAITING) {
-		int num_transfers;
-		curl_multi_perform(curlm, &num_transfers);
-		if (num_transfers < active_requests) {
-			process_curl_messages();
-			process_request_queue();
-		}
+	while (obj_req->state == WAITING) {
+		step_active_slots();
 	}
 #else
-	start_request(request);
+	start_object_request(obj_req);
 #endif
 
-	while (request->state == ACTIVE) {
-		run_active_slot(request->slot);
-#ifndef USE_CURL_MULTI
-		request->curl_result = request->slot->curl_result;
-		request->http_code = request->slot->http_code;
-		request->slot = NULL;
-
-		/* Use alternates if necessary */
-		if (request->http_code == 404) {
-			fetch_alternates(alt->base);
-			if (request->repo->next != NULL) {
-				request->repo = request->repo->next;
-				close(request->local); request->local = -1;
-				start_request(request);
-			}
-		} else {
-			finish_request(request);
-			request->state = COMPLETE;
-		}
-#endif
+	while (obj_req->state == ACTIVE) {
+		run_active_slot(obj_req->slot);
 	}
-	if (request->local != -1) {
-		close(request->local); request->local = -1;
+	if (obj_req->local != -1) {
+		close(obj_req->local); obj_req->local = -1;
 	}
 
-	if (request->state == ABORTED) {
-		release_request(request);
-		return error("Request for %s aborted", hex);
-	}
-
-	if (request->curl_result != CURLE_OK && request->http_code != 416) {
-		if (request->http_code == 404)
+	if (obj_req->state == ABORTED) {
+		ret = error("Request for %s aborted", hex);
+	} else if (obj_req->curl_result != CURLE_OK &&
+		   obj_req->http_code != 416) {
+		if (obj_req->http_code == 404)
 			ret = -1; /* Be silent, it is probably in a pack. */
 		else
 			ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",
-				    request->errorstr, request->curl_result,
-				    request->http_code, hex);
-		release_request(request);
-		return ret;
-	}
-
-	if (request->zret != Z_STREAM_END) {
-		ret = error("File %s (%s) corrupt\n", hex, request->url);
-		release_request(request);
-		return ret;
-	}
-
-	if (memcmp(request->sha1, request->real_sha1, 20)) {
-		release_request(request);
-		return error("File %s has bad hash\n", hex);
-	}
-
-	if (request->rename < 0) {
+				    obj_req->errorstr, obj_req->curl_result,
+				    obj_req->http_code, hex);
+	} else if (obj_req->zret != Z_STREAM_END) {
+		ret = error("File %s (%s) corrupt\n", hex, obj_req->url);
+	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
+		ret = error("File %s has bad hash\n", hex);
+	} else if (obj_req->rename < 0) {
 		ret = error("unable to write sha1 filename %s: %s",
-			    request->filename,
-			    strerror(request->rename));
-		release_request(request);
-		return ret;
+			    obj_req->filename,
+			    strerror(obj_req->rename));
 	}
 
-	release_request(request);
-	return 0;
+	release_object_request(obj_req);
+	return ret;
 }
 
 int fetch(unsigned char *sha1)
@@ -1303,10 +920,6 @@ int main(int argc, char **argv)
 	char *commit_id;
 	char *url;
 	int arg = 1;
-	struct active_request_slot *slot;
-	char *low_speed_limit;
-	char *low_speed_time;
-	char *wait_url;
 	int rc = 0;
 
 	while (arg < argc && argv[arg][0] == '-') {
@@ -1335,58 +948,9 @@ int main(int argc, char **argv)
 	commit_id = argv[arg];
 	url = argv[arg + 1];
 
-	curl_global_init(CURL_GLOBAL_ALL);
+	http_init();
 
-#ifdef USE_CURL_MULTI
-	{
-		char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
-		if (http_max_requests != NULL)
-			max_requests = atoi(http_max_requests);
-	}
-
-	curlm = curl_multi_init();
-	if (curlm == NULL) {
-		fprintf(stderr, "Error creating curl multi handle.\n");
-		return 1;
-	}
-#endif
-
-	if (getenv("GIT_SSL_NO_VERIFY"))
-		curl_ssl_verify = 0;
-
-	ssl_cert = getenv("GIT_SSL_CERT");
-#if LIBCURL_VERSION_NUM >= 0x070902
-	ssl_key = getenv("GIT_SSL_KEY");
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-	ssl_capath = getenv("GIT_SSL_CAPATH");
-#endif
-	ssl_cainfo = getenv("GIT_SSL_CAINFO");
-
-	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
-	if (low_speed_limit != NULL)
-		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
-	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
-	if (low_speed_time != NULL)
-		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
-
-	git_config(http_options);
-
-	if (curl_ssl_verify == -1)
-		curl_ssl_verify = 1;
-
-#ifdef USE_CURL_MULTI
-	if (max_requests < 1)
-		max_requests = DEFAULT_MAX_REQUESTS;
-#endif
-
-	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
-	no_range_header = curl_slist_append(no_range_header, "Range:");
-
-#ifndef NO_CURL_EASY_DUPHANDLE
-	curl_default = get_curl_handle();
-#endif
 
 	alt = xmalloc(sizeof(*alt));
 	alt->base = url;
@@ -1397,30 +961,9 @@ int main(int argc, char **argv)
 	if (pull(commit_id))
 		rc = 1;
 
-	curl_slist_free_all(pragma_header);
 	curl_slist_free_all(no_pragma_header);
-	curl_slist_free_all(no_range_header);
-#ifndef NO_CURL_EASY_DUPHANDLE
-	curl_easy_cleanup(curl_default);
-#endif
-	slot = active_queue_head;
-	while (slot != NULL) {
-		if (slot->in_use) {
-			if (get_verbosely) {
-				curl_easy_getinfo(slot->curl,
-						  CURLINFO_EFFECTIVE_URL,
-						  &wait_url);
-				fprintf(stderr, "Waiting for %s\n", wait_url);
-			}
-			run_active_slot(slot);
-		}
-		if (slot->curl != NULL)
-			curl_easy_cleanup(slot->curl);
-		slot = slot->next;
-	}
-#ifdef USE_CURL_MULTI
-	curl_multi_cleanup(curlm);
-#endif
-	curl_global_cleanup();
+
+	http_cleanup();
+
 	return rc;
 }

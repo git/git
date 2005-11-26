@@ -273,7 +273,7 @@ int main(int argc, char **argv, char **envp)
 		while (!strncmp(exec_path, "./", 2)) {
 			exec_path += 2;
 			while (*exec_path == '/')
-				*exec_path++;
+				exec_path++;
 		}
 		snprintf(git_command + len, sizeof(git_command) - len,
 			 "/%s", exec_path);

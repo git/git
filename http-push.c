@@ -4,29 +4,12 @@
 #include "fetch.h"
 #include "tag.h"
 #include "blob.h"
+#include "http.h"
 
-#include <curl/curl.h>
-#include <curl/easy.h>
 #include <expat.h>
 
 static const char http_push_usage[] =
 "git-http-push [--complete] [--force] [--verbose] <url> <ref> [<ref>...]\n";
-
-#if LIBCURL_VERSION_NUM >= 0x070908
-#define USE_CURL_MULTI
-#define DEFAULT_MAX_REQUESTS 5
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070704
-#define curl_global_cleanup() do { /* nothing */ } while(0)
-#endif
-#if LIBCURL_VERSION_NUM < 0x070800
-#define curl_global_init(a) do { /* nothing */ } while(0)
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070c04
-#define NO_CURL_EASY_DUPHANDLE
-#endif
 
 #ifndef XML_STATUS_OK
 enum XML_Status {
@@ -39,46 +22,44 @@ enum XML_Status {
 
 #define RANGE_HEADER_SIZE 30
 
-/* DAV method names and request body templates */
+/* DAV methods */
 #define DAV_LOCK "LOCK"
 #define DAV_MKCOL "MKCOL"
 #define DAV_MOVE "MOVE"
 #define DAV_PROPFIND "PROPFIND"
 #define DAV_PUT "PUT"
 #define DAV_UNLOCK "UNLOCK"
+
+/* DAV lock flags */
+#define DAV_PROP_LOCKWR (1u << 0)
+#define DAV_PROP_LOCKEX (1u << 1)
+#define DAV_LOCK_OK (1u << 2)
+
+/* DAV XML properties */
+#define DAV_CTX_LOCKENTRY ".multistatus.response.propstat.prop.supportedlock.lockentry"
+#define DAV_CTX_LOCKTYPE_WRITE ".multistatus.response.propstat.prop.supportedlock.lockentry.locktype.write"
+#define DAV_CTX_LOCKTYPE_EXCLUSIVE ".multistatus.response.propstat.prop.supportedlock.lockentry.lockscope.exclusive"
+#define DAV_ACTIVELOCK_OWNER ".prop.lockdiscovery.activelock.owner.href"
+#define DAV_ACTIVELOCK_TIMEOUT ".prop.lockdiscovery.activelock.timeout"
+#define DAV_ACTIVELOCK_TOKEN ".prop.lockdiscovery.activelock.locktoken.href"
+
+/* DAV request body templates */
 #define PROPFIND_REQUEST "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:propfind xmlns:D=\"DAV:\">\n<D:prop xmlns:R=\"%s\">\n<D:supportedlock/>\n</D:prop>\n</D:propfind>"
 #define LOCK_REQUEST "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:lockinfo xmlns:D=\"DAV:\">\n<D:lockscope><D:exclusive/></D:lockscope>\n<D:locktype><D:write/></D:locktype>\n<D:owner>\n<D:href>mailto:%s</D:href>\n</D:owner>\n</D:lockinfo>"
 
 #define LOCK_TIME 600
 #define LOCK_REFRESH 30
 
-static int active_requests = 0;
-static int data_received;
 static int pushing = 0;
 static int aborted = 0;
 static char remote_dir_exists[256];
 
-#ifdef USE_CURL_MULTI
-static int max_requests = -1;
-static CURLM *curlm;
-#endif
-#ifndef NO_CURL_EASY_DUPHANDLE
-static CURL *curl_default;
-#endif
 static struct curl_slist *no_pragma_header;
 static struct curl_slist *default_headers;
-static char curl_errorstr[CURL_ERROR_SIZE];
 
 static int push_verbosely = 0;
 static int push_all = 0;
 static int force_all = 0;
-
-struct buffer
-{
-        size_t posn;
-        size_t size;
-        void *buffer;
-};
 
 struct repo
 {
@@ -122,40 +103,19 @@ struct transfer_request
 	struct transfer_request *next;
 };
 
-struct active_request_slot
-{
-	CURL *curl;
-	FILE *local;
-	int in_use;
-	int done;
-	CURLcode curl_result;
-	long http_code;
-	struct active_request_slot *next;
-};
-
 static struct transfer_request *request_queue_head = NULL;
-static struct active_request_slot *active_queue_head = NULL;
 
-static int curl_ssl_verify = -1;
-static char *ssl_cert = NULL;
-#if LIBCURL_VERSION_NUM >= 0x070902
-static char *ssl_key = NULL;
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-static char *ssl_capath = NULL;
-#endif
-static char *ssl_cainfo = NULL;
-static long curl_low_speed_limit = -1;
-static long curl_low_speed_time = -1;
+struct xml_ctx
+{
+	char *name;
+	int len;
+	char *cdata;
+	void (*userFunc)(struct xml_ctx *ctx, int tag_closed);
+	void *userData;
+};
 
 struct active_lock
 {
-	int ctx_activelock;
-	int ctx_owner;
-	int ctx_owner_href;
-	int ctx_timeout;
-	int ctx_locktoken;
-	int ctx_locktoken_href;
 	char *url;
 	char *owner;
 	char *token;
@@ -164,270 +124,14 @@ struct active_lock
 	int refreshing;
 };
 
-struct lockprop
+static void finish_request(struct transfer_request *request);
+
+static void process_response(void *callback_data)
 {
-	int supported_lock;
-	int lock_entry;
-	int lock_scope;
-	int lock_type;
-	int lock_exclusive;
-	int lock_exclusive_write;
-};
+	struct transfer_request *request =
+		(struct transfer_request *)callback_data;
 
-static int http_options(const char *var, const char *value)
-{
-	if (!strcmp("http.sslverify", var)) {
-		if (curl_ssl_verify == -1) {
-			curl_ssl_verify = git_config_bool(var, value);
-		}
-		return 0;
-	}
-
-	if (!strcmp("http.sslcert", var)) {
-		if (ssl_cert == NULL) {
-			ssl_cert = xmalloc(strlen(value)+1);
-			strcpy(ssl_cert, value);
-		}
-		return 0;
-	}
-#if LIBCURL_VERSION_NUM >= 0x070902
-	if (!strcmp("http.sslkey", var)) {
-		if (ssl_key == NULL) {
-			ssl_key = xmalloc(strlen(value)+1);
-			strcpy(ssl_key, value);
-		}
-		return 0;
-	}
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-	if (!strcmp("http.sslcapath", var)) {
-		if (ssl_capath == NULL) {
-			ssl_capath = xmalloc(strlen(value)+1);
-			strcpy(ssl_capath, value);
-		}
-		return 0;
-	}
-#endif
-	if (!strcmp("http.sslcainfo", var)) {
-		if (ssl_cainfo == NULL) {
-			ssl_cainfo = xmalloc(strlen(value)+1);
-			strcpy(ssl_cainfo, value);
-		}
-		return 0;
-	}
-
-#ifdef USE_CURL_MULTI	
-	if (!strcmp("http.maxrequests", var)) {
-		if (max_requests == -1)
-			max_requests = git_config_int(var, value);
-		return 0;
-	}
-#endif
-
-	if (!strcmp("http.lowspeedlimit", var)) {
-		if (curl_low_speed_limit == -1)
-			curl_low_speed_limit = (long)git_config_int(var, value);
-		return 0;
-	}
-	if (!strcmp("http.lowspeedtime", var)) {
-		if (curl_low_speed_time == -1)
-			curl_low_speed_time = (long)git_config_int(var, value);
-		return 0;
-	}
-
-	/* Fall back on the default ones */
-	return git_default_config(var, value);
-}
-
-static size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
-			   struct buffer *buffer)
-{
-	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn)
-		size = buffer->size - buffer->posn;
-	memcpy(ptr, buffer->buffer + buffer->posn, size);
-	buffer->posn += size;
-	return size;
-}
-
-static size_t fwrite_buffer_dynamic(const void *ptr, size_t eltsize,
-				    size_t nmemb, struct buffer *buffer)
-{
-	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn) {
-		buffer->size = buffer->size * 3 / 2;
-		if (buffer->size < buffer->posn + size)
-			buffer->size = buffer->posn + size;
-		buffer->buffer = xrealloc(buffer->buffer, buffer->size);
-	}
-	memcpy(buffer->buffer + buffer->posn, ptr, size);
-	buffer->posn += size;
-	data_received++;
-	return size;
-}
-
-static size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct buffer *buffer)
-{
-	data_received++;
-	return eltsize * nmemb;
-}
-
-#ifdef USE_CURL_MULTI
-static void process_curl_messages(void);
-static void process_request_queue(void);
-#endif
-
-static CURL* get_curl_handle(void)
-{
-	CURL* result = curl_easy_init();
-
-	curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, curl_ssl_verify);
-#if LIBCURL_VERSION_NUM >= 0x070907
-	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
-#endif
-
-	if (ssl_cert != NULL)
-		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
-#if LIBCURL_VERSION_NUM >= 0x070902
-	if (ssl_key != NULL)
-		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-	if (ssl_capath != NULL)
-		curl_easy_setopt(result, CURLOPT_CAPATH, ssl_capath);
-#endif
-	if (ssl_cainfo != NULL)
-		curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
-	curl_easy_setopt(result, CURLOPT_FAILONERROR, 1);
-
-	if (curl_low_speed_limit > 0 && curl_low_speed_time > 0) {
-		curl_easy_setopt(result, CURLOPT_LOW_SPEED_LIMIT,
-				 curl_low_speed_limit);
-		curl_easy_setopt(result, CURLOPT_LOW_SPEED_TIME,
-				 curl_low_speed_time);
-	}
-
-	return result;
-}
-
-static struct active_request_slot *get_active_slot(void)
-{
-	struct active_request_slot *slot = active_queue_head;
-	struct active_request_slot *newslot;
-
-#ifdef USE_CURL_MULTI
-	int num_transfers;
-
-	/* Wait for a slot to open up if the queue is full */
-	while (active_requests >= max_requests) {
-		curl_multi_perform(curlm, &num_transfers);
-		if (num_transfers < active_requests) {
-			process_curl_messages();
-		}
-	}
-#endif
-
-	while (slot != NULL && slot->in_use) {
-		slot = slot->next;
-	}
-	if (slot == NULL) {
-		newslot = xmalloc(sizeof(*newslot));
-		newslot->curl = NULL;
-		newslot->in_use = 0;
-		newslot->next = NULL;
-
-		slot = active_queue_head;
-		if (slot == NULL) {
-			active_queue_head = newslot;
-		} else {
-			while (slot->next != NULL) {
-				slot = slot->next;
-			}
-			slot->next = newslot;
-		}
-		slot = newslot;
-	}
-
-	if (slot->curl == NULL) {
-#ifdef NO_CURL_EASY_DUPHANDLE
-		slot->curl = get_curl_handle();
-#else
-		slot->curl = curl_easy_duphandle(curl_default);
-#endif
-	}
-
-	active_requests++;
-	slot->in_use = 1;
-	slot->done = 0;
-	slot->local = NULL;
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, default_headers);
-	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-
-	return slot;
-}
-
-static int start_active_slot(struct active_request_slot *slot)
-{
-#ifdef USE_CURL_MULTI
-	CURLMcode curlm_result = curl_multi_add_handle(curlm, slot->curl);
-
-	if (curlm_result != CURLM_OK &&
-	    curlm_result != CURLM_CALL_MULTI_PERFORM) {
-		active_requests--;
-		slot->in_use = 0;
-		return 0;
-	}
-#endif
-	return 1;
-}
-
-static void run_active_slot(struct active_request_slot *slot)
-{
-#ifdef USE_CURL_MULTI
-	int num_transfers;
-	long last_pos = 0;
-	long current_pos;
-	fd_set readfds;
-	fd_set writefds;
-	fd_set excfds;
-	int max_fd;
-	struct timeval select_timeout;
-	CURLMcode curlm_result;
-
-	while (!slot->done) {
-		data_received = 0;
-		do {
-			curlm_result = curl_multi_perform(curlm,
-							  &num_transfers);
-		} while (curlm_result == CURLM_CALL_MULTI_PERFORM);
-		if (num_transfers < active_requests) {
-			process_curl_messages();
-			process_request_queue();
-		}
-
-		if (!data_received && slot->local != NULL) {
-			current_pos = ftell(slot->local);
-			if (current_pos > last_pos)
-				data_received++;
-			last_pos = current_pos;
-		}
-
-		if (!slot->done && !data_received) {
-			max_fd = 0;
-			FD_ZERO(&readfds);
-			FD_ZERO(&writefds);
-			FD_ZERO(&excfds);
-			select_timeout.tv_sec = 0;
-			select_timeout.tv_usec = 50000;
-			select(max_fd, &readfds, &writefds,
-			       &excfds, &select_timeout);
-		}
-	}
-#else
-	slot->curl_result = curl_easy_perform(slot->curl);
-	active_requests--;
-#endif
+	finish_request(request);
 }
 
 static void start_check(struct transfer_request *request)
@@ -447,6 +151,8 @@ static void start_check(struct transfer_request *request)
 	strcpy(posn, hex + 2);
 
 	slot = get_active_slot();
+	slot->callback_func = process_response;
+	slot->callback_data = request;
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, request->errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, request->url);
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
@@ -457,6 +163,7 @@ static void start_check(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -476,6 +183,8 @@ static void start_mkcol(struct transfer_request *request)
 	strcpy(posn, "/");
 
 	slot = get_active_slot();
+	slot->callback_func = process_response;
+	slot->callback_data = request;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1); /* undo PUT setup */
 	curl_easy_setopt(slot->curl, CURLOPT_URL, request->url);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, request->errorstr);
@@ -488,6 +197,7 @@ static void start_mkcol(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -534,8 +244,6 @@ static void start_put(struct transfer_request *request)
 	request->buffer.size = stream.total_out;
 	request->buffer.posn = 0;
 
-	if (request->url != NULL)
-		free(request->url);
 	request->url = xmalloc(strlen(remote->url) + 
 			       strlen(request->lock->token) + 51);
 	strcpy(request->url, remote->url);
@@ -553,6 +261,8 @@ static void start_put(struct transfer_request *request)
 	strcpy(posn, request->lock->token);
 
 	slot = get_active_slot();
+	slot->callback_func = process_response;
+	slot->callback_data = request;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &request->buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, request->buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
@@ -569,6 +279,7 @@ static void start_put(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -578,6 +289,8 @@ static void start_move(struct transfer_request *request)
 	struct curl_slist *dav_headers = NULL;
 
 	slot = get_active_slot();
+	slot->callback_func = process_response;
+	slot->callback_data = request;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1); /* undo PUT setup */
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_MOVE);
 	dav_headers = curl_slist_append(dav_headers, request->dest);
@@ -592,6 +305,7 @@ static void start_move(struct transfer_request *request)
 	} else {
 		request->state = ABORTED;
 		free(request->url);
+		request->url = NULL;
 	}
 }
 
@@ -656,6 +370,13 @@ static void finish_request(struct transfer_request *request)
 
 	if (request->headers != NULL)
 		curl_slist_free_all(request->headers);
+
+	/* URL is reused for MOVE after PUT */
+	if (request->state != RUN_PUT) {
+		free(request->url);
+		request->url = NULL;
+	}		
+
 	if (request->state == RUN_HEAD) {
 		if (request->http_code == 404) {
 			request->state = NEED_PUSH;
@@ -721,52 +442,12 @@ static void release_request(struct transfer_request *request)
 			entry->next = entry->next->next;
 	}
 
-	free(request->url);
+	if (request->url != NULL)
+		free(request->url);
 	free(request);
 }
 
-#ifdef USE_CURL_MULTI
-static void process_curl_messages(void)
-{
-	int num_messages;
-	struct active_request_slot *slot;
-	struct transfer_request *request = NULL;
-	CURLMsg *curl_message = curl_multi_info_read(curlm, &num_messages);
-
-	while (curl_message != NULL) {
-		if (curl_message->msg == CURLMSG_DONE) {
-			slot = active_queue_head;
-			while (slot != NULL &&
-			       slot->curl != curl_message->easy_handle)
-				slot = slot->next;
-			if (slot != NULL) {
-				int curl_result = curl_message->data.result;
-				curl_multi_remove_handle(curlm, slot->curl);
-				active_requests--;
-				slot->done = 1;
-				slot->in_use = 0;
-				slot->curl_result = curl_result;
-				curl_easy_getinfo(slot->curl,
-						  CURLINFO_HTTP_CODE,
-						  &slot->http_code);
-				request = request_queue_head;
-				while (request != NULL &&
-				       request->slot != slot)
-					request = request->next;
-				if (request != NULL)
-					finish_request(request);
-			} else {
-				fprintf(stderr, "Received DONE message for unknown request!\n");
-			}
-		} else {
-			fprintf(stderr, "Unknown CURL message received: %d\n",
-				(int)curl_message->msg);
-		}
-		curl_message = curl_multi_info_read(curlm, &num_messages);
-	}
-}
-
-static void process_request_queue(void)
+void fill_active_slots(void)
 {
 	struct transfer_request *request = request_queue_head;
 	struct active_request_slot *slot = active_queue_head;
@@ -797,20 +478,6 @@ static void process_request_queue(void)
 		slot = slot->next;
 	}				
 }
-#endif
-
-static void process_waiting_requests(void)
-{
-	struct active_request_slot *slot = active_queue_head;
-
-	while (slot != NULL)
-		if (slot->in_use) {
-			run_active_slot(slot);
-			slot = active_queue_head;
-		} else {
-			slot = slot->next;
-		}
-}
 
 static void add_request(unsigned char *sha1, struct active_lock *lock)
 {
@@ -834,10 +501,9 @@ static void add_request(unsigned char *sha1, struct active_lock *lock)
 	request->state = NEED_CHECK;
 	request->next = request_queue_head;
 	request_queue_head = request;
-#ifdef USE_CURL_MULTI
-	process_request_queue();
-	process_curl_messages();
-#endif
+
+	fill_active_slots();
+	step_active_slots();
 }
 
 static int fetch_index(unsigned char *sha1)
@@ -917,6 +583,7 @@ static int fetch_index(unsigned char *sha1)
 		}
 	} else {
 		free(url);
+		fclose(indexfile);
 		return error("Unable to start request");
 	}
 
@@ -963,8 +630,7 @@ static int fetch_indices(void)
 
 	slot = get_active_slot();
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-			 fwrite_buffer_dynamic);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	if (start_active_slot(slot)) {
@@ -1068,8 +734,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-			 fwrite_buffer_dynamic);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
@@ -1086,107 +751,101 @@ int fetch_ref(char *ref, unsigned char *sha1)
         return 0;
 }
 
-static void
-start_activelock_element(void *userData, const char *name, const char **atts)
+static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
 {
-	struct active_lock *lock = (struct active_lock *)userData;
+	int *lock_flags = (int *)ctx->userData;
 
-	if (lock->ctx_activelock && !strcmp(name, "D:timeout"))
-		lock->ctx_timeout = 1;
-	else if (lock->ctx_owner && strstr(name, "href"))
-		lock->ctx_owner_href = 1;
-	else if (lock->ctx_activelock && strstr(name, "owner"))
-		lock->ctx_owner = 1;
-	else if (lock->ctx_locktoken && !strcmp(name, "D:href"))
-		lock->ctx_locktoken_href = 1;
-	else if (lock->ctx_activelock && !strcmp(name, "D:locktoken"))
-		lock->ctx_locktoken = 1;
-	else if (!strcmp(name, "D:activelock"))
-		lock->ctx_activelock = 1;
+	if (tag_closed) {
+		if (!strcmp(ctx->name, DAV_CTX_LOCKENTRY)) {
+			if ((*lock_flags & DAV_PROP_LOCKEX) &&
+			    (*lock_flags & DAV_PROP_LOCKWR)) {
+				*lock_flags |= DAV_LOCK_OK;
+			}
+			*lock_flags &= DAV_LOCK_OK;
+		} else if (!strcmp(ctx->name, DAV_CTX_LOCKTYPE_WRITE)) {
+			*lock_flags |= DAV_PROP_LOCKWR;
+		} else if (!strcmp(ctx->name, DAV_CTX_LOCKTYPE_EXCLUSIVE)) {
+			*lock_flags |= DAV_PROP_LOCKEX;
+		}
+	}
 }
 
-static void
-end_activelock_element(void *userData, const char *name)
+static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 {
-	struct active_lock *lock = (struct active_lock *)userData;
+	struct active_lock *lock = (struct active_lock *)ctx->userData;
 
-	if (lock->ctx_timeout && !strcmp(name, "D:timeout")) {
-		lock->ctx_timeout = 0;
-	} else if (lock->ctx_owner_href && strstr(name, "href")) {
-		lock->ctx_owner_href = 0;
-	} else if (lock->ctx_owner && strstr(name, "owner")) {
-		lock->ctx_owner = 0;
-	} else if (lock->ctx_locktoken_href && !strcmp(name, "D:href")) {
-		lock->ctx_locktoken_href = 0;
-	} else if (lock->ctx_locktoken && !strcmp(name, "D:locktoken")) {
-		lock->ctx_locktoken = 0;
-	} else if (lock->ctx_activelock && !strcmp(name, "D:activelock")) {
-		lock->ctx_activelock = 0;
+	if (tag_closed && ctx->cdata) {
+		if (!strcmp(ctx->name, DAV_ACTIVELOCK_OWNER)) {
+			lock->owner = xmalloc(strlen(ctx->cdata) + 1);
+			strcpy(lock->owner, ctx->cdata);
+		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TIMEOUT)) {
+			if (!strncmp(ctx->cdata, "Second-", 7))
+				lock->timeout =
+					strtol(ctx->cdata + 7, NULL, 10);
+		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
+			if (!strncmp(ctx->cdata, "opaquelocktoken:", 16)) {
+				lock->token = xmalloc(strlen(ctx->cdata - 15));
+				strcpy(lock->token, ctx->cdata + 16);
+			}
+		}
 	}
 }
 
 static void
-activelock_cdata(void *userData, const XML_Char *s, int len)
+xml_start_tag(void *userData, const char *name, const char **atts)
 {
-	struct active_lock *lock = (struct active_lock *)userData;
-	char *this = malloc(len+1);
-	strncpy(this, s, len);
+	struct xml_ctx *ctx = (struct xml_ctx *)userData;
+	const char *c = index(name, ':');
+	int new_len;
 
-	if (lock->ctx_owner_href) {
-		lock->owner = malloc(len+1);
-		strcpy(lock->owner, this);
-	} else if (lock->ctx_locktoken_href) {
-		if (!strncmp(this, "opaquelocktoken:", 16)) {
-			lock->token = malloc(len-15);
-			strcpy(lock->token, this+16);
-		}
-	} else if (lock->ctx_timeout) {
-		if (!strncmp(this, "Second-", 7))
-			lock->timeout = strtol(this+7, NULL, 10);
+	if (c == NULL)
+		c = name;
+	else
+		c++;
+
+	new_len = strlen(ctx->name) + strlen(c) + 2;
+
+	if (new_len > ctx->len) {
+		ctx->name = xrealloc(ctx->name, new_len);
+		ctx->len = new_len;
+	}
+	strcat(ctx->name, ".");
+	strcat(ctx->name, c);
+
+	if (ctx->cdata) {
+		free(ctx->cdata);
+		ctx->cdata = NULL;
 	}
 
-	free(this);
+	ctx->userFunc(ctx, 0);
 }
 
 static void
-start_lockprop_element(void *userData, const char *name, const char **atts)
+xml_end_tag(void *userData, const char *name)
 {
-	struct lockprop *prop = (struct lockprop *)userData;
+	struct xml_ctx *ctx = (struct xml_ctx *)userData;
+	const char *c = index(name, ':');
+	char *ep;
 
-	if (prop->lock_type && !strcmp(name, "D:write")) {
-		if (prop->lock_exclusive) {
-			prop->lock_exclusive_write = 1;
-		}
-	} else if (prop->lock_scope && !strcmp(name, "D:exclusive")) {
-		prop->lock_exclusive = 1;
-	} else if (prop->lock_entry) {
-		if (!strcmp(name, "D:lockscope")) {
-			prop->lock_scope = 1;
-		} else if (!strcmp(name, "D:locktype")) {
-			prop->lock_type = 1;
-		}
-	} else if (prop->supported_lock) {
-		if (!strcmp(name, "D:lockentry")) {
-			prop->lock_entry = 1;
-		}
-	} else if (!strcmp(name, "D:supportedlock")) {
-		prop->supported_lock = 1;
-	}
+	ctx->userFunc(ctx, 1);
+
+	if (c == NULL)
+		c = name;
+	else
+		c++;
+
+	ep = ctx->name + strlen(ctx->name) - strlen(c) - 1;
+	*ep = 0;
 }
 
 static void
-end_lockprop_element(void *userData, const char *name)
+xml_cdata(void *userData, const XML_Char *s, int len)
 {
-	struct lockprop *prop = (struct lockprop *)userData;
-
-	if (!strcmp(name, "D:lockentry")) {
-		prop->lock_entry = 0;
-		prop->lock_scope = 0;
-		prop->lock_type = 0;
-		prop->lock_exclusive = 0;
-	} else if (!strcmp(name, "D:supportedlock")) {
-		prop->supported_lock = 0;
-	}
+	struct xml_ctx *ctx = (struct xml_ctx *)userData;
+	if (ctx->cdata)
+		free(ctx->cdata);
+	ctx->cdata = xcalloc(len+1, 1);
+	strncpy(ctx->cdata, s, len);
 }
 
 static struct active_lock *lock_remote(char *file, long timeout)
@@ -1199,10 +858,11 @@ static struct active_lock *lock_remote(char *file, long timeout)
 	char *url;
 	char *ep;
 	char timeout_header[25];
-	struct active_lock *new_lock;
+	struct active_lock *new_lock = NULL;
 	XML_Parser parser = XML_ParserCreate(NULL);
 	enum XML_Status result;
 	struct curl_slist *dav_headers = NULL;
+	struct xml_ctx ctx;
 
 	url = xmalloc(strlen(remote->url) + strlen(file) + 1);
 	sprintf(url, "%s%s", remote->url, file);
@@ -1246,12 +906,6 @@ static struct active_lock *lock_remote(char *file, long timeout)
 	in_buffer.posn = 0;
 	in_buffer.buffer = in_data;
 
-	new_lock = xcalloc(1, sizeof(*new_lock));
-	new_lock->owner = NULL;
-	new_lock->token = NULL;
-	new_lock->timeout = -1;
-	new_lock->refreshing = 0;
-
 	sprintf(timeout_header, "Timeout: Second-%ld", timeout);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
@@ -1261,47 +915,47 @@ static struct active_lock *lock_remote(char *file, long timeout)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-			 fwrite_buffer_dynamic);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_LOCK);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
 
+	new_lock = xcalloc(1, sizeof(*new_lock));
+	new_lock->owner = NULL;
+	new_lock->token = NULL;
+	new_lock->timeout = -1;
+	new_lock->refreshing = 0;
+
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
-			fprintf(stderr, "Got HTTP error %ld\n", slot->http_code);
-			free(new_lock);
-			free(url);
-			free(out_data);
-			free(in_data);
-			return NULL;
+		if (slot->curl_result == CURLE_OK) {
+			ctx.name = xcalloc(10, 1);
+			ctx.len = 0;
+			ctx.cdata = NULL;
+			ctx.userFunc = handle_new_lock_ctx;
+			ctx.userData = new_lock;
+			XML_SetUserData(parser, &ctx);
+			XML_SetElementHandler(parser, xml_start_tag,
+					      xml_end_tag);
+			XML_SetCharacterDataHandler(parser, xml_cdata);
+			result = XML_Parse(parser, in_buffer.buffer,
+					   in_buffer.posn, 1);
+			free(ctx.name);
+			if (result != XML_STATUS_OK) {
+				fprintf(stderr, "XML error: %s\n",
+					XML_ErrorString(
+						XML_GetErrorCode(parser)));
+				new_lock->timeout = -1;
+			}
 		}
 	} else {
-		free(new_lock);
-		free(url);
-		free(out_data);
-		free(in_data);
 		fprintf(stderr, "Unable to start request\n");
-		return NULL;
 	}
 
+	curl_slist_free_all(dav_headers);
 	free(out_data);
-
-	XML_SetUserData(parser, new_lock);
-	XML_SetElementHandler(parser, start_activelock_element,
-				      end_activelock_element);
-	XML_SetCharacterDataHandler(parser, activelock_cdata);
-	result = XML_Parse(parser, in_buffer.buffer, in_buffer.posn, 1);
 	free(in_data);
-	if (result != XML_STATUS_OK) {
-		fprintf(stderr, "%s", XML_ErrorString(
-				XML_GetErrorCode(parser)));
-		free(url);
-		free(new_lock);
-		return NULL;
-	}
 
 	if (new_lock->token == NULL || new_lock->timeout <= 0) {
 		if (new_lock->token != NULL)
@@ -1310,11 +964,12 @@ static struct active_lock *lock_remote(char *file, long timeout)
 			free(new_lock->owner);
 		free(url);
 		free(new_lock);
-		return NULL;
+		new_lock = NULL;
+	} else {
+		new_lock->url = url;
+		new_lock->start_time = time(NULL);
 	}
 
-	new_lock->url = url;
-	new_lock->start_time = time(NULL);
 	return new_lock;
 }
 
@@ -1353,13 +1008,15 @@ static int unlock_remote(struct active_lock *lock)
 	if (lock->owner != NULL)
 		free(lock->owner);
 	free(lock->url);
+/* Freeing the token causes a segfault...
 	free(lock->token);
+*/
 	free(lock);
 
 	return rc;
 }
 
-static int check_locking(void)
+static int locking_available(void)
 {
 	struct active_request_slot *slot;
 	struct buffer in_buffer;
@@ -1368,8 +1025,9 @@ static int check_locking(void)
 	char *out_data;
 	XML_Parser parser = XML_ParserCreate(NULL);
 	enum XML_Status result;
-	struct lockprop supported_lock;
 	struct curl_slist *dav_headers = NULL;
+	struct xml_ctx ctx;
+	int lock_flags = 0;
 
 	out_buffer.size = strlen(PROPFIND_REQUEST) + strlen(remote->url) - 2;
 	out_data = xmalloc(out_buffer.size + 1);
@@ -1390,8 +1048,7 @@ static int check_locking(void)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
-			 fwrite_buffer_dynamic);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, remote->url);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PROPFIND);
@@ -1399,30 +1056,35 @@ static int check_locking(void)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		free(out_data);
-		if (slot->curl_result != CURLE_OK) {
-			free(in_buffer.buffer);
-			return -1;
-		}
+		if (slot->curl_result == CURLE_OK) {
+			ctx.name = xcalloc(10, 1);
+			ctx.len = 0;
+			ctx.cdata = NULL;
+			ctx.userFunc = handle_lockprop_ctx;
+			ctx.userData = &lock_flags;
+			XML_SetUserData(parser, &ctx);
+			XML_SetElementHandler(parser, xml_start_tag,
+					      xml_end_tag);
+			result = XML_Parse(parser, in_buffer.buffer,
+					   in_buffer.posn, 1);
+			free(ctx.name);
 
-		XML_SetUserData(parser, &supported_lock);
-		XML_SetElementHandler(parser, start_lockprop_element,
-				      end_lockprop_element);
-		result = XML_Parse(parser, in_buffer.buffer, in_buffer.posn, 1);
-		free(in_buffer.buffer);
-		if (result != XML_STATUS_OK)
-			return error("%s", XML_ErrorString(
-					     XML_GetErrorCode(parser)));
+			if (result != XML_STATUS_OK) {
+				fprintf(stderr, "XML error: %s\n",
+					XML_ErrorString(
+						XML_GetErrorCode(parser)));
+				lock_flags = 0;
+			}
+		}
 	} else {
-		free(out_data);
-		free(in_buffer.buffer);
-		return error("Unable to start request");
+		fprintf(stderr, "Unable to start request\n");
 	}
 
-	if (supported_lock.lock_exclusive_write)
-		return 0;
-	else
-		return 1;
+	free(out_data);
+	free(in_buffer.buffer);
+	curl_slist_free_all(dav_headers);
+
+	return lock_flags;
 }
 
 static int is_ancestor(unsigned char *sha1, struct commit *commit)
@@ -1560,8 +1222,6 @@ static int update_remote(unsigned char *sha1, struct active_lock *lock)
 
 int main(int argc, char **argv)
 {
-	struct active_request_slot *slot;
-	struct active_request_slot *next_slot;
 	struct transfer_request *request;
 	struct transfer_request *next_request;
 	int nr_refspec = 0;
@@ -1576,8 +1236,6 @@ int main(int argc, char **argv)
 	unsigned char remote_sha1[20];
 	struct active_lock *remote_lock;
 	char *remote_path = NULL;
-	char *low_speed_limit;
-	char *low_speed_time;
 	int rc = 0;
 	int i;
 
@@ -1617,50 +1275,7 @@ int main(int argc, char **argv)
 
 	memset(remote_dir_exists, 0, 256);
 
-	curl_global_init(CURL_GLOBAL_ALL);
-
-#ifdef USE_CURL_MULTI
-	{
-		char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
-		if (http_max_requests != NULL)
-			max_requests = atoi(http_max_requests);
-	}
-
-	curlm = curl_multi_init();
-	if (curlm == NULL) {
-		fprintf(stderr, "Error creating curl multi handle.\n");
-		return 1;
-	}
-#endif
-
-	if (getenv("GIT_SSL_NO_VERIFY"))
-		curl_ssl_verify = 0;
-
-	ssl_cert = getenv("GIT_SSL_CERT");
-#if LIBCURL_VERSION_NUM >= 0x070902
-	ssl_key = getenv("GIT_SSL_KEY");
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-	ssl_capath = getenv("GIT_SSL_CAPATH");
-#endif
-	ssl_cainfo = getenv("GIT_SSL_CAINFO");
-
-	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
-	if (low_speed_limit != NULL)
-		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
-	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
-	if (low_speed_time != NULL)
-		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
-
-	git_config(http_options);
-
-	if (curl_ssl_verify == -1)
-		curl_ssl_verify = 1;
-
-#ifdef USE_CURL_MULTI
-	if (max_requests < 1)
-		max_requests = DEFAULT_MAX_REQUESTS;
-#endif
+	http_init();
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 	default_headers = curl_slist_append(default_headers, "Range:");
@@ -1669,12 +1284,8 @@ int main(int argc, char **argv)
 	default_headers = curl_slist_append(default_headers,
 					    "Pragma: no-cache");
 
-#ifndef NO_CURL_EASY_DUPHANDLE
-	curl_default = get_curl_handle();
-#endif
-
 	/* Verify DAV compliance/lock support */
-	if (check_locking() != 0) {
+	if (!locking_available()) {
 		fprintf(stderr, "Error: no DAV locking support on remote repo %s\n", remote->url);
 		rc = 1;
 		goto cleanup;
@@ -1766,13 +1377,13 @@ int main(int argc, char **argv)
 			fetch_indices();
 		get_delta(push_all ? NULL : remote_sha1,
 			  local_object, remote_lock);
-		process_waiting_requests();
+		finish_all_active_slots();
 
 		/* Push missing objects to remote, this would be a
 		   convenient time to pack them first if appropriate. */
 		pushing = 1;
-		process_request_queue();
-		process_waiting_requests();
+		fill_active_slots();
+		finish_all_active_slots();
 
 		/* Update the remote branch if all went well */
 		if (do_remote_update) {
@@ -1802,14 +1413,7 @@ int main(int argc, char **argv)
 	curl_slist_free_all(no_pragma_header);
 	curl_slist_free_all(default_headers);
 
-	slot = active_queue_head;
-	while (slot != NULL) {
-		next_slot = slot->next;
-		if (slot->curl != NULL)
-			curl_easy_cleanup(slot->curl);
-		free(slot);
-		slot = next_slot;
-	}
+	http_cleanup();
 
 	request = request_queue_head;
 	while (request != NULL) {
@@ -1818,12 +1422,5 @@ int main(int argc, char **argv)
 		request = next_request;
 	}
 
-#ifndef NO_CURL_EASY_DUPHANDLE
-	curl_easy_cleanup(curl_default);
-#endif
-#ifdef USE_CURL_MULTI
-	curl_multi_cleanup(curlm);
-#endif
-	curl_global_cleanup();
 	return rc;
 }

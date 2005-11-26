@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
 	die 'git commit [-a] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [<path>...]'
@@ -92,9 +92,12 @@ tt*)
 esac
 
 case "$all,$#" in
-t,*)
+t,0)
 	git-diff-files --name-only -z |
 	git-update-index --remove -z --stdin
+	;;
+t,*)
+	die "Cannot use -a and explicit files at the same time."
 	;;
 ,0)
 	;;

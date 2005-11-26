@@ -11,19 +11,19 @@
 static const char pack_redundant_usage[] =
 "git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
 
-int load_all_packs = 0, verbose = 0, alt_odb = 0;
+static int load_all_packs = 0, verbose = 0, alt_odb = 0;
 
 struct llist_item {
 	struct llist_item *next;
-	char *sha1;
+	unsigned char *sha1;
 };
-struct llist {
+static struct llist {
 	struct llist_item *front;
 	struct llist_item *back;
 	size_t size;
 } *all_objects; /* all objects which must be present in local packfiles */
 
-struct pack_list {
+static struct pack_list {
 	struct pack_list *next;
 	struct packed_git *pack;
 	struct llist *unique_objects;
@@ -36,23 +36,43 @@ struct pll {
 	size_t pl_size;
 };
 
-inline void llist_free(struct llist *list)
+static struct llist_item *free_nodes = NULL;
+
+static inline struct llist_item *llist_item_get()
+{
+	struct llist_item *new;
+	if ( free_nodes ) {
+		new = free_nodes;
+		free_nodes = free_nodes->next;
+	} else
+		new = xmalloc(sizeof(struct llist_item));
+
+	return new;
+}
+
+static inline void llist_item_put(struct llist_item *item)
+{
+	item->next = free_nodes;
+	free_nodes = item;
+}
+
+static void llist_free(struct llist *list)
 {
 	while((list->back = list->front)) {
 		list->front = list->front->next;
-		free(list->back);
+		llist_item_put(list->back);
 	}
 	free(list);
 }
 
-inline void llist_init(struct llist **list)
+static inline void llist_init(struct llist **list)
 {
 	*list = xmalloc(sizeof(struct llist));
 	(*list)->front = (*list)->back = NULL;
 	(*list)->size = 0;
 }
 
-struct llist * llist_copy(struct llist *list)
+static struct llist * llist_copy(struct llist *list)
 {
 	struct llist *ret;
 	struct llist_item *new, *old, *prev;
@@ -62,13 +82,13 @@ struct llist * llist_copy(struct llist *list)
 	if ((ret->size = list->size) == 0)
 		return ret;
 
-	new = ret->front = xmalloc(sizeof(struct llist_item));
+	new = ret->front = llist_item_get();
 	new->sha1 = list->front->sha1;
 
 	old = list->front->next;
 	while (old) {
 		prev = new;
-		new = xmalloc(sizeof(struct llist_item));
+		new = llist_item_get();
 		prev->next = new;
 		new->sha1 = old->sha1;
 		old = old->next;
@@ -79,10 +99,11 @@ struct llist * llist_copy(struct llist *list)
 	return ret;
 }
 
-inline struct llist_item * llist_insert(struct llist *list,
-					struct llist_item *after, char *sha1)
+static inline struct llist_item * llist_insert(struct llist *list,
+					       struct llist_item *after,
+					       unsigned char *sha1)
 {
-	struct llist_item *new = xmalloc(sizeof(struct llist_item));
+	struct llist_item *new = llist_item_get();
 	new->sha1 = sha1;
 	new->next = NULL;
 
@@ -102,13 +123,12 @@ inline struct llist_item * llist_insert(struct llist *list,
 	return new;
 }
 
-inline struct llist_item * llist_insert_back(struct llist *list, char *sha1)
+static inline struct llist_item *llist_insert_back(struct llist *list, unsigned char *sha1)
 {
 	return llist_insert(list, list->back, sha1);
 }
 
-inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
-					char *sha1, struct llist_item *hint)
+static inline struct llist_item *llist_insert_sorted_unique(struct llist *list, unsigned char *sha1, struct llist_item *hint)
 {
 	struct llist_item *prev = NULL, *l;
 
@@ -129,8 +149,7 @@ inline struct llist_item * llist_insert_sorted_unique(struct llist *list,
 }
 
 /* returns a pointer to an item in front of sha1 */
-inline struct llist_item * llist_sorted_remove(struct llist *list, char *sha1,
-					       struct llist_item *hint)
+static inline struct llist_item * llist_sorted_remove(struct llist *list, const unsigned char *sha1, struct llist_item *hint)
 {
 	struct llist_item *prev, *l;
 
@@ -153,7 +172,7 @@ redo_from_start:
 				prev->next = l->next;
 			if (l == list->back)
 				list->back = prev;
-			free(l);
+			llist_item_put(l);
 			list->size--;
 			return prev;
 		}
@@ -164,7 +183,7 @@ redo_from_start:
 }
 
 /* computes A\B */
-void llist_sorted_difference_inplace(struct llist *A,
+static void llist_sorted_difference_inplace(struct llist *A,
 				     struct llist *B)
 {
 	struct llist_item *hint, *b;
@@ -178,7 +197,7 @@ void llist_sorted_difference_inplace(struct llist *A,
 	}
 }
 
-inline struct pack_list * pack_list_insert(struct pack_list **pl,
+static inline struct pack_list * pack_list_insert(struct pack_list **pl,
 					   struct pack_list *entry)
 {
 	struct pack_list *p = xmalloc(sizeof(struct pack_list));
@@ -188,7 +207,7 @@ inline struct pack_list * pack_list_insert(struct pack_list **pl,
 	return p;
 }
 
-inline size_t pack_list_size(struct pack_list *pl)
+static inline size_t pack_list_size(struct pack_list *pl)
 {
 	size_t ret = 0;
 	while(pl) {
@@ -198,10 +217,11 @@ inline size_t pack_list_size(struct pack_list *pl)
 	return ret;
 }
 
-struct pack_list * pack_list_difference(struct pack_list *A,
-					struct pack_list *B)
+static struct pack_list * pack_list_difference(const struct pack_list *A,
+					       const struct pack_list *B)
 {
-	struct pack_list *ret, *pl;
+	struct pack_list *ret;
+	const struct pack_list *pl;
 
 	if (A == NULL)
 		return NULL;
@@ -218,7 +238,7 @@ struct pack_list * pack_list_difference(struct pack_list *A,
 	return ret;
 }
 
-void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
+static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
 	int p1_off, p2_off;
 	void *p1_base, *p2_base;
@@ -250,7 +270,7 @@ void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	}
 }
 
-void pll_insert(struct pll **pll, struct pll **hint_table)
+static void pll_insert(struct pll **pll, struct pll **hint_table)
 {
 	struct pll *prev;
 	int i = (*pll)->pl_size - 1;
@@ -276,7 +296,7 @@ void pll_insert(struct pll **pll, struct pll **hint_table)
 /* all the permutations have to be free()d at the same time,
  * since they refer to each other
  */
-struct pll * get_all_permutations(struct pack_list *list)
+static struct pll * get_all_permutations(struct pack_list *list)
 {
 	struct pll *subset, *pll, *new_pll = NULL; /*silence warning*/
 	static struct pll **hint = NULL;
@@ -323,15 +343,14 @@ struct pll * get_all_permutations(struct pack_list *list)
 	return hint[0];
 }
 
-int is_superset(struct pack_list *pl, struct llist *list)
+static int is_superset(struct pack_list *pl, struct llist *list)
 {
 	struct llist *diff;
 
 	diff = llist_copy(list);
 
 	while (pl) {
-		llist_sorted_difference_inplace(diff,
-						pl->all_objects);
+		llist_sorted_difference_inplace(diff, pl->all_objects);
 		if (diff->size == 0) { /* we're done */
 			llist_free(diff);
 			return 1;
@@ -342,7 +361,7 @@ int is_superset(struct pack_list *pl, struct llist *list)
 	return 0;
 }
 
-size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
+static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
 	int p1_off, p2_off;
@@ -373,14 +392,14 @@ size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 }
 
 /* another O(n^2) function ... */
-size_t get_pack_redundancy(struct pack_list *pl)
+static size_t get_pack_redundancy(struct pack_list *pl)
 {
 	struct pack_list *subset;
+	size_t ret = 0;
 
 	if (pl == NULL)
 		return 0;
 
-	size_t ret = 0;
 	while ((subset = pl->next)) {
 		while(subset) {
 			ret += sizeof_union(pl->pack, subset->pack);
@@ -391,7 +410,7 @@ size_t get_pack_redundancy(struct pack_list *pl)
 	return ret;
 }
 
-inline size_t pack_set_bytecount(struct pack_list *pl)
+static inline size_t pack_set_bytecount(struct pack_list *pl)
 {
 	size_t ret = 0;
 	while (pl) {
@@ -402,7 +421,7 @@ inline size_t pack_set_bytecount(struct pack_list *pl)
 	return ret;
 }
 
-void minimize(struct pack_list **min)
+static void minimize(struct pack_list **min)
 {
 	struct pack_list *pl, *unique = NULL,
 		*non_unique = NULL, *min_perm = NULL;
@@ -469,16 +488,14 @@ void minimize(struct pack_list **min)
 	}
 }
 
-void load_all_objects()
+static void load_all_objects(void)
 {
 	struct pack_list *pl = local_packs;
 	struct llist_item *hint, *l;
-	int i;
 
 	llist_init(&all_objects);
 
 	while (pl) {
-		i = 0;
 		hint = NULL;
 		l = pl->all_objects->front;
 		while (l) {
@@ -497,7 +514,7 @@ void load_all_objects()
 }
 
 /* this scales like O(n^2) */
-void cmp_local_packs()
+static void cmp_local_packs(void)
 {
 	struct pack_list *subset, *pl = local_packs;
 
@@ -508,7 +525,7 @@ void cmp_local_packs()
 	}
 }
 
-void scan_alt_odb_packs()
+static void scan_alt_odb_packs(void)
 {
 	struct pack_list *local, *alt;
 
@@ -524,7 +541,7 @@ void scan_alt_odb_packs()
 	}
 }
 
-struct pack_list * add_pack(struct packed_git *p)
+static struct pack_list * add_pack(struct packed_git *p)
 {
 	struct pack_list l;
 	size_t off;
@@ -550,7 +567,7 @@ struct pack_list * add_pack(struct packed_git *p)
 		return pack_list_insert(&altodb_packs, &l);
 }
 
-struct pack_list * add_pack_file(char *filename)
+static struct pack_list * add_pack_file(char *filename)
 {
 	struct packed_git *p = packed_git;
 
@@ -565,7 +582,7 @@ struct pack_list * add_pack_file(char *filename)
 	die("Filename %s not found in packed_git\n", filename);
 }
 
-void load_all()
+static void load_all(void)
 {
 	struct packed_git *p = packed_git;
 
@@ -579,6 +596,9 @@ int main(int argc, char **argv)
 {
 	int i;
 	struct pack_list *min, *red, *pl;
+	struct llist *ignore;
+	unsigned char *sha1;
+	char buf[42]; /* 40 byte sha1 + \n + \0 */
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -621,6 +641,23 @@ int main(int argc, char **argv)
 	if (alt_odb)
 		scan_alt_odb_packs();
 
+	/* ignore objects given on stdin */
+	llist_init(&ignore);
+	if (!isatty(0)) {
+		while (fgets(buf, sizeof(buf), stdin)) {
+			sha1 = xmalloc(20);
+			if (get_sha1_hex(buf, sha1))
+				die("Bad sha1 on stdin: %s", buf);
+			llist_insert_sorted_unique(ignore, sha1, NULL);
+		}
+	}
+	llist_sorted_difference_inplace(all_objects, ignore);
+	pl = local_packs;
+	while (pl) {
+		llist_sorted_difference_inplace(pl->unique_objects, ignore);
+		pl = pl->next;
+	}
+
 	minimize(&min);
 
 	if (verbose) {
@@ -647,6 +684,9 @@ int main(int argc, char **argv)
 		       pl->pack->pack_name);
 		pl = pl->next;
 	}
+	if (verbose)
+		fprintf(stderr, "%luMB of redundant packs in total.\n",
+			(unsigned long)pack_set_bytecount(red)/(1024*1024));
 
 	return 0;
 }

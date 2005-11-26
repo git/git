@@ -8,7 +8,7 @@ git-daemon - A really simple server for git repositories.
 SYNOPSIS
 --------
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
-             [--timeout=n] [--init-timeout=n] [directory...]
+             [--timeout=n] [--init-timeout=n] [--strict-paths] [directory...]
 
 DESCRIPTION
 -----------
@@ -29,9 +29,15 @@ This is ideally suited for read-only updates, ie pulling from git repositories.
 
 OPTIONS
 -------
+--strict-paths::
+	Match paths exactly (i.e. don't allow "/foo/repo" when the real path is
+	"/foo/repo.git" or "/foo/repo/.git") and don't do user-relative paths.
+	git-daemon will refuse to start when this option is enabled and no
+	whitelist is specified.
+
 --export-all::
 	Allow pulling from all directories that look like GIT repositories
-	(have the 'objects' subdirectory and a 'HEAD' file), even if they
+	(have the 'objects' and 'refs' subdirectories), even if they
 	do not have the 'git-daemon-export-ok' file.
 
 --inetd::
@@ -57,9 +63,15 @@ OPTIONS
 --verbose::
 	Log details about the incoming connections and requested files.
 
+<directory>::
+	A directory to add to the whitelist of allowed directories. Unless
+	--strict-paths is specified this will also include subdirectories
+	of each named directory.
+
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org> and YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
+Written by Linus Torvalds <torvalds@osdl.org>, YOSHIFUJI Hideaki
+<yoshfuji@linux-ipv6.org> and the git-list <git@vger.kernel.org>
 
 Documentation
 --------------

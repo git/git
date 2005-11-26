@@ -50,7 +50,7 @@
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9j
+GIT_VERSION = 0.99.9k
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -102,6 +102,11 @@ SCRIPT_PERL = \
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
 
+SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
+	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
+	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
+	  gitk git-cherry-pick
+
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
@@ -125,18 +130,36 @@ PROGRAMS = \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
-	git-name-rev$X git-pack-redundant$X git-var$X $(SIMPLE_PROGRAMS)
+	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X
+
+# what 'all' will build and 'install' will install.
+ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS) git$X
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
 
 GIT_LIST_TWEAK =
 
+# Set paths to tools early so that they can be used for version tests.
+ifndef SHELL_PATH
+	SHELL_PATH = /bin/sh
+endif
+ifndef PERL_PATH
+	PERL_PATH = /usr/bin/perl
+endif
+ifndef PYTHON_PATH
+	PYTHON_PATH = /usr/bin/python
+endif
+
 PYMODULES = \
 	gitMergeCommon.py
 
 ifdef WITH_OWN_SUBPROCESS_PY
 	PYMODULES += compat/subprocess.py
+else
+	ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
+		PYMODULES += compat/subprocess.py
+	endif
 endif
 
 ifdef WITH_SEND_EMAIL
@@ -242,20 +265,13 @@ ifndef NO_CURL
 		CURL_LIBCURL = -lcurl
 	endif
 	PROGRAMS += git-http-fetch$X
-	ifndef NO_EXPAT
-		EXPAT_LIBEXPAT = -lexpat
-		PROGRAMS += git-http-push$X
+	curl_check := $(shell (echo 070908; curl-config --vernum) | sort -r | sed -ne 2p)
+	ifeq "$(curl_check)" "070908"
+		ifndef NO_EXPAT
+			EXPAT_LIBEXPAT = -lexpat
+			PROGRAMS += git-http-push$X
+		endif
 	endif
-endif
-
-ifndef SHELL_PATH
-	SHELL_PATH = /bin/sh
-endif
-ifndef PERL_PATH
-	PERL_PATH = /usr/bin/perl
-endif
-ifndef PYTHON_PATH
-	PYTHON_PATH = /usr/bin/python
 endif
 
 ifndef NO_OPENSSL
@@ -330,25 +346,20 @@ endif
 
 ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
 
-SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
-	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  gitk git-cherry-pick
-
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(PROGRAMS) $(SCRIPTS) git
+all: $(ALL_PROGRAMS)
 
 all:
 	$(MAKE) -C templates
 
 # Only use $(CFLAGS). We don't need anything else.
-git: git.c Makefile
+git$(X): git.c Makefile
 	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $@.c -o $@
+		$(CFLAGS) $< -o $@
 
-$(filter-out git,$(patsubst %.sh,%,$(SCRIPT_SH))) : % : %.sh
+$(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
 	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
@@ -387,7 +398,8 @@ $(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIB_FILE) $(SIMPLE_LIB)
 
-git-http-fetch$X: fetch.o
+git-http-fetch$X: fetch.o http.o
+git-http-push$X: http.o
 git-local-fetch$X: fetch.o
 git-ssh-fetch$X: rsh.o fetch.o
 git-ssh-upload$X: rsh.o
@@ -431,9 +443,9 @@ check:
 
 ### Installation rules
 
-install: $(PROGRAMS) $(SCRIPTS) git
+install: all
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) git $(PROGRAMS) $(SCRIPTS) $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) $(ALL_PROGRAMS) $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
@@ -470,7 +482,8 @@ deb: dist
 ### Cleaning rules
 
 clean:
-	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o git $(PROGRAMS) $(LIB_FILE)
+	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o $(LIB_FILE)
+	rm -f $(PROGRAMS) $(SIMPLE_PROGRAMS) git$X
 	rm -f $(filter-out gitk,$(SCRIPTS))
 	rm -f *.spec *.pyc *.pyo
 	rm -rf $(GIT_TARNAME)

@@ -524,7 +524,7 @@ int main(int argc, char **argv)
 		unsigned char sha1[20];
 
 		if (get_sha1_hex(line, sha1))
-			die("expected sha1, got garbage");
+			die("expected sha1, got garbage:\n %s", line);
 		hash = 0;
 		p = line+40;
 		while (*p) {

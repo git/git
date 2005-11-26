@@ -12,7 +12,7 @@ static const char var_usage[] = "git-var [-l | <variable>]";
 
 struct git_var {
 	const char *name;
-	char *(*read)(void);
+	const char *(*read)(void);
 };
 static struct git_var git_vars[] = {
 	{ "GIT_COMMITTER_IDENT", git_committer_info },
@@ -57,6 +57,8 @@ int main(int argc, char **argv)
 	if (argc != 2) {
 		usage(var_usage);
 	}
+
+	setup_git_directory();
 	setup_ident();
 	val = NULL;
 

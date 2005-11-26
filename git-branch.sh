@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     echo >&2 "usage: $(basename $0)"' [-d <branch>] | [[-f] <branch> [start-point]]

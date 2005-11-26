@@ -313,9 +313,16 @@ static int append_ref(const char *refname, const unsigned char *sha1)
 
 static int append_head_ref(const char *refname, const unsigned char *sha1)
 {
-	if (strncmp(refname, "refs/heads/", 11))
+	unsigned char tmp[20];
+	int ofs = 11;
+	if (strncmp(refname, "refs/heads/", ofs))
 		return 0;
-	return append_ref(refname + 11, sha1);
+	/* If both heads/foo and tags/foo exists, get_sha1 would
+	 * get confused.
+	 */
+	if (get_sha1(refname + ofs, tmp) || memcmp(tmp, sha1, 20))
+		ofs = 5;
+	return append_ref(refname + ofs, sha1);
 }
 
 static int append_tag_ref(const char *refname, const unsigned char *sha1)
@@ -470,7 +477,7 @@ int main(int ac, char **av)
 		if (MAX_REVS <= num_rev)
 			die("cannot handle more than %d revs.", MAX_REVS);
 		if (get_sha1(ref_name[num_rev], revkey))
-			usage(show_branch_usage);
+			die("'%s' is not a valid ref.\n", ref_name[num_rev]);
 		commit = lookup_commit_reference(revkey);
 		if (!commit)
 			die("cannot find commit %s (%s)",

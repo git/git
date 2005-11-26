@@ -14,19 +14,30 @@ DESCRIPTION
 Sets the current head to the specified commit and optionally resets the
 index and working tree to match.
 
+This command is useful if you notice some small error in a recent
+commit (or set of commits) and want to redo that part without showing
+the undo in the history.
+
+If you want to undo a commit other than the latest on a branch,
+gitlink:git-revert[1] is your friend.
+
 OPTIONS
 -------
 --mixed::
-	Like --soft but reports what has not been updated. This is the
-	default action.
+	Resets the index but not the working tree (ie, the changed files
+	are preserved but not marked for commit) and reports what has not
+	been updated. This is the default action.
 
 --soft::
 	Does not touch the index file nor the working tree at all, but
-	requires them in a good order.
+	requires them to be in a good order. This leaves all your changed
+	files "Updated but not checked in", as gitlink:git-status[1] would
+	put it.
 
 --hard::
 	Matches the working tree and index to that of the tree being
-	switched to.
+	switched to. Any changes to tracked files in the working tree
+	since <commit-ish> are lost.
 
 <commit-ish>::
 	Commit to make the current HEAD.

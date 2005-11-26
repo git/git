@@ -427,7 +427,7 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 		memset(&sa, 0, sizeof sa);
 		sa.sin_family = he->h_addrtype;
 		sa.sin_port = htons(nport);
-		memcpy(&sa.sin_addr, ap, he->h_length);
+		memcpy(&sa.sin_addr, *ap, he->h_length);
 
 		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
 			close(sockfd);
@@ -448,42 +448,162 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 
 #endif /* NO_IPV6 */
 
+static char *git_proxy_command = NULL;
+static const char *rhost_name = NULL;
+static int rhost_len;
+
+static int git_proxy_command_options(const char *var, const char *value)
+{
+	if (!strcmp(var, "core.gitproxy")) {
+		const char *for_pos;
+		int matchlen = -1;
+		int hostlen;
+
+		if (git_proxy_command)
+			return 0;
+		/* [core]
+		 * ;# matches www.kernel.org as well
+		 * gitproxy = netcatter-1 for kernel.org
+		 * gitproxy = netcatter-2 for sample.xz
+		 * gitproxy = netcatter-default
+		 */
+		for_pos = strstr(value, " for ");
+		if (!for_pos)
+			/* matches everybody */
+			matchlen = strlen(value);
+		else {
+			hostlen = strlen(for_pos + 5);
+			if (rhost_len < hostlen)
+				matchlen = -1;
+			else if (!strncmp(for_pos + 5,
+					  rhost_name + rhost_len - hostlen,
+					  hostlen) &&
+				 ((rhost_len == hostlen) ||
+				  rhost_name[rhost_len - hostlen -1] == '.'))
+				matchlen = for_pos - value;
+			else
+				matchlen = -1;
+		}
+		if (0 <= matchlen) {
+			/* core.gitproxy = none for kernel.org */
+			if (matchlen == 4 && 
+			    !memcmp(value, "none", 4))
+				matchlen = 0;
+			git_proxy_command = xmalloc(matchlen + 1);
+			memcpy(git_proxy_command, value, matchlen);
+			git_proxy_command[matchlen] = 0;
+		}
+		return 0;
+	}
+
+	return git_default_config(var, value);
+}
+
+static int git_use_proxy(const char *host)
+{
+	rhost_name = host;
+	rhost_len = strlen(host);
+	git_proxy_command = getenv("GIT_PROXY_COMMAND");
+	git_config(git_proxy_command_options);
+	rhost_name = NULL;
+	return (git_proxy_command && *git_proxy_command);
+}
+
+static int git_proxy_connect(int fd[2], const char *prog, char *host, char *path)
+{
+	char *port = STR(DEFAULT_GIT_PORT);
+	char *colon, *end;
+	int pipefd[2][2];
+	pid_t pid;
+
+	if (host[0] == '[') {
+		end = strchr(host + 1, ']');
+		if (end) {
+			*end = 0;
+			end++;
+			host++;
+		} else
+			end = host;
+	} else
+		end = host;
+	colon = strchr(end, ':');
+
+	if (colon) {
+		*colon = 0;
+		port = colon + 1;
+	}
+
+	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
+		die("unable to create pipe pair for communication");
+	pid = fork();
+	if (!pid) {
+		dup2(pipefd[1][0], 0);
+		dup2(pipefd[0][1], 1);
+		close(pipefd[0][0]);
+		close(pipefd[0][1]);
+		close(pipefd[1][0]);
+		close(pipefd[1][1]);
+		execlp(git_proxy_command, git_proxy_command, host, port, NULL);
+		die("exec failed");
+	}
+	fd[0] = pipefd[0][0];
+	fd[1] = pipefd[1][1];
+	close(pipefd[0][1]);
+	close(pipefd[1][0]);
+	packet_write(fd[1], "%s %s\n", prog, path);
+	return pid;
+}
+
 /*
  * Yeah, yeah, fixme. Need to pass in the heads etc.
  */
 int git_connect(int fd[2], char *url, const char *prog)
 {
 	char command[1024];
-	char *host, *path;
-	char *colon;
+	char *host, *path = url;
+	char *colon = NULL;
 	int pipefd[2][2];
 	pid_t pid;
-	enum protocol protocol;
+	enum protocol protocol = PROTO_LOCAL;
 
-	host = NULL;
-	path = url;
-	colon = strchr(url, ':');
-	protocol = PROTO_LOCAL;
-	if (colon) {
-		*colon = 0;
+	host = strstr(url, "://");
+	if(host) {
+		*host = '\0';
+		protocol = get_protocol(url);
+		host += 3;
+		path = strchr(host, '/');
+	}
+	else {
 		host = url;
-		path = colon+1;
-		protocol = PROTO_SSH;
-		if (!memcmp(path, "//", 2)) {
-			char *slash = strchr(path + 2, '/');
-			if (slash) {
-				int nr = slash - path - 2;
-				memmove(path, path+2, nr);
-				path[nr] = 0;
-				protocol = get_protocol(url);
-				host = path;
-				path = slash;
-			}
+		if ((colon = strchr(host, ':'))) {
+			protocol = PROTO_SSH;
+			*colon = '\0';
+			path = colon + 1;
 		}
 	}
 
-	if (protocol == PROTO_GIT)
+	if (!path || !*path)
+		die("No path specified. See 'man git-pull' for valid url syntax");
+
+	/*
+	 * null-terminate hostname and point path to ~ for URL's like this:
+	 *    ssh://host.xz/~user/repo
+	 */
+	if (protocol != PROTO_LOCAL && host != url) {
+		char *ptr = path;
+		if (path[1] == '~')
+			path++;
+		else
+			path = strdup(ptr);
+
+		*ptr = '\0';
+	}
+
+	if (protocol == PROTO_GIT) {
+		if (git_use_proxy(host))
+			return git_proxy_connect(fd, prog, host, path);
 		return git_tcp_connect(fd, prog, host, path);
+	}
 
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");

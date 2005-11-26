@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 . git-parse-remote
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"

@@ -1,3 +1,9 @@
+git-core (0.99.9k-0) unstable; urgency=low
+
+  * GIT 0.99.9k but not 1.0rc yet.
+
+ -- Junio C Hamano <junkio@cox.net>  Fri, 25 Nov 2005 16:33:11 -0800
+
 git-core (0.99.9j-0) unstable; urgency=low
 
   * GIT 0.99.9j aka 1.0rc3

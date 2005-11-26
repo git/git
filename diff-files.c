@@ -38,7 +38,7 @@ int main(int argc, const char **argv)
 	const char *prefix = setup_git_directory();
 	int entries, i;
 
-	git_config(git_default_config);
+	git_config(git_diff_config);
 	diff_setup(&diff_options);
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "--")) {

@@ -203,6 +203,7 @@ int git_mkstemp(char *path, size_t n, const char *template);
 
 int safe_create_leading_directories(char *path);
 char *safe_strncpy(char *, const char *, size_t);
+char *enter_repo(char *path, int strict);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size);
@@ -262,9 +263,8 @@ void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 
 extern int setup_ident(void);
-extern char *get_ident(const char *name, const char *email, const char *date_str);
-extern char *git_author_info(void);
-extern char *git_committer_info(void);
+extern const char *git_author_info(void);
+extern const char *git_committer_info(void);
 
 static inline void *xmalloc(size_t size)
 {
@@ -386,6 +386,8 @@ extern int git_default_config(const char *, const char *);
 extern int git_config(config_fn_t fn);
 extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
+extern int git_config_set(const char *, const char *);
+extern int git_config_set_multivar(const char *, const char *, const char *, int);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];

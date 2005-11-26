@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 	
 no_update_info= all_into_one= remove_redundant= local=
 while case "$#" in 0) break ;; esac
@@ -32,24 +32,20 @@ case ",$all_into_one," in
 	rev_list=
 	rev_parse='--all'
 	pack_objects=
+
+	# Redundancy check in all-into-one case is trivial.
+	existing=`cd "$PACKDIR" && \
+	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
 if [ "$local" ]; then
 	pack_objects="$pack_objects --local"
 fi
-name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) |
+name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) 2>&1 |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
-	if test "$remove_redundant" = t ; then
-		echo "Removing redundant packs."
-		sync
-		redundant=$(git-pack-redundant --all)
-		if test "$redundant" != "" ; then
-			echo $redundant | xargs rm
-		fi
-	fi
 	exit 0
 fi
 echo "Pack pack-$name created."
@@ -62,23 +58,20 @@ exit
 
 if test "$remove_redundant" = t
 then
-	sync
-	if test "$all_into_one" = t
+	# We know $existing are all redundant only when
+	# all-into-one is used.
+	if test "$all_into_one" != '' && test "$existing" != ''
 	then
-		cd "$PACKDIR"
-		existing=`find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
-		for e in $existing
-		do
+		sync
+		( cd "$PACKDIR" &&
+		  for e in $existing
+		  do
 			case "$e" in
 			./pack-$name.pack | ./pack-$name.idx) ;;
-			*)      rm -f $e ;;
+			*)	rm -f $e ;;
 			esac
-		done
-	else
-		redundant=$(git-pack-redundant --all)
-		if test "$redundant" != "" ; then
-			echo $redundant | xargs rm
-		fi
+		  done
+		)
 	fi
 fi
 

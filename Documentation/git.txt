@@ -108,6 +108,9 @@ gitlink:git-prune-packed[1]::
 gitlink:git-read-tree[1]::
 	Reads tree information into the directory index
 
+gitlink:git-repo-config[1]::
+	Get and set options in .git/config.
+
 gitlink:git-unpack-objects[1]::
 	Unpacks objects out of a packed archive.
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. git-sh-setup || die "Not a git archive."
+. git-sh-setup
 
 laf="$GIT_DIR/lost-found"
 rm -fr "$laf" && mkdir -p "$laf/commit" "$laf/other" || exit

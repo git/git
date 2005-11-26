@@ -4,7 +4,7 @@
 #
 # Fetch one or more remote refs and merge it/them into the current HEAD.
 
-. git-sh-setup || die "Not a git archive"
+. git-sh-setup
 
 usage () {
     echo >&2 "usage: $0"' [-n] [--no-commit] [--no-summary] [--help]
