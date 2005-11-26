@@ -9,9 +9,16 @@ const char *tree_type = "tree";
 
 static int read_one_entry(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
 {
-	int len = strlen(pathname);
-	unsigned int size = cache_entry_size(baselen + len);
-	struct cache_entry *ce = xmalloc(size);
+	int len;
+	unsigned int size;
+	struct cache_entry *ce;
+
+	if (S_ISDIR(mode))
+		return READ_TREE_RECURSIVE;
+
+	len = strlen(pathname);
+	size = cache_entry_size(baselen + len);
+	ce = xmalloc(size);
 
 	memset(ce, 0, size);
 
@@ -67,9 +74,10 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 	return 0;
 }
 
-static int read_tree_recursive(void *buffer, unsigned long size,
-			       const char *base, int baselen,
-			       int stage, const char **match)
+int read_tree_recursive(void *buffer, unsigned long size,
+			const char *base, int baselen,
+			int stage, const char **match,
+			read_tree_fn_t fn)
 {
 	while (size) {
 		int len = strlen(buffer)+1;
@@ -86,6 +94,14 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 		if (!match_tree_entry(base, baselen, path, mode, match))
 			continue;
 
+		switch (fn(sha1, base, baselen, path, mode, stage)) {
+		case 0:
+			continue;
+		case READ_TREE_RECURSIVE:
+			break;;
+		default:
+			return -1;
+		}
 		if (S_ISDIR(mode)) {
 			int retval;
 			int pathlen = strlen(path);
@@ -106,22 +122,20 @@ static int read_tree_recursive(void *buffer, unsigned long size,
 			retval = read_tree_recursive(eltbuf, eltsize,
 						     newbase,
 						     baselen + pathlen + 1,
-						     stage, match);
+						     stage, match, fn);
 			free(eltbuf);
 			free(newbase);
 			if (retval)
 				return -1;
 			continue;
 		}
-		if (read_one_entry(sha1, base, baselen, path, mode, stage) < 0)
-			return -1;
 	}
 	return 0;
 }
 
 int read_tree(void *buffer, unsigned long size, int stage, const char **match)
 {
-	return read_tree_recursive(buffer, size, "", 0, stage, match);
+	return read_tree_recursive(buffer, size, "", 0, stage, match, read_one_entry);
 }
 
 struct tree *lookup_tree(const unsigned char *sha1)
