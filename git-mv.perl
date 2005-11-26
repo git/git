@@ -19,15 +19,9 @@ EOT
 	exit(1);
 }
 
-# Sanity checks:
-my $GIT_DIR = $ENV{'GIT_DIR'} || ".git";
-
-unless ( -d $GIT_DIR && -d $GIT_DIR . "/objects" && 
-	-d $GIT_DIR . "/objects/" && -d $GIT_DIR . "/refs") {
-    print "Error: git repository not found.";
-    exit(1);
-}
-
+my $GIT_DIR = `git rev-parse --git-dir`;
+exit 1 if $?; # rev-parse would have given "not a git dir" message.
+chomp($GIT_DIR);
 
 our ($opt_n, $opt_f, $opt_h, $opt_k, $opt_v);
 getopts("hnfkv") || usage;
