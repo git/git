@@ -47,6 +47,21 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	return path;
 }
 
+/* 
+ * Unlike prefix_path, this should be used if the named file does
+ * not have to interact with index entry; i.e. name of a random file
+ * on the filesystem.
+ */
+const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
+{
+	static char path[PATH_MAX];
+	if (!pfx || !*pfx || arg[0] == '/')
+		return arg;
+	memcpy(path, pfx, pfx_len);
+	strcpy(path + pfx_len, arg);
+	return path;
+}
+
 const char **get_pathspec(const char *prefix, const char **pathspec)
 {
 	const char *entry = *pathspec;
@@ -92,7 +107,7 @@ static int is_toplevel_directory(void)
 	return 1;
 }
 
-static const char *setup_git_directory_1(void)
+const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static char cwd[PATH_MAX+1];
 	int len, offset;
@@ -139,8 +154,15 @@ static const char *setup_git_directory_1(void)
 			break;
 		chdir("..");
 		do {
-			if (!offset)
+			if (!offset) {
+				if (nongit_ok) {
+					if (chdir(cwd))
+						die("Cannot come back to cwd");
+					*nongit_ok = 1;
+					return NULL;
+				}
 				die("Not a git repository");
+			}
 		} while (cwd[--offset] != '/');
 	}
 
@@ -172,7 +194,7 @@ int check_repository_format(void)
 
 const char *setup_git_directory(void)
 {
-	const char *retval = setup_git_directory_1();
+	const char *retval = setup_git_directory_gently(NULL);
 	check_repository_format();
 	return retval;
 }
