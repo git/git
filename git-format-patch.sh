@@ -268,7 +268,7 @@ do
     file=`printf '%04d-%stxt' $i "$title"`
     if test '' = "$stdout"
     then
-	    echo "* $file"
+	    echo "$file"
 	    process_one >"$outdir$file"
 	    if test t = "$check"
 	    then
@@ -279,7 +279,7 @@ do
 		:
 	    fi
     else
-	    echo >&2 "* $file"
+	    echo >&2 "$file"
 	    process_one
     fi
     i=`expr "$i" + 1`
