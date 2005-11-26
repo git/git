@@ -206,7 +206,7 @@ static int list_one(const char *path)
 	return err;
 }
 
-static int list(char **path)
+static int list(const char **path)
 {
 	int i;
 	int err = 0;
@@ -218,11 +218,16 @@ static int list(char **path)
 static const char ls_tree_usage[] =
 	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
-	static char *path0[] = { "", NULL };
-	char **path;
+	static const char *path0[] = { "", NULL };
+	const char **path;
 	unsigned char sha1[20];
+	int nongit = 0;
+	const char *prefix = setup_git_directory_gently(&nongit);
+
+	if (prefix)
+		path0[0] = prefix;
 
 	while (1 < argc && argv[1][0] == '-') {
 		switch (argv[1][1]) {
@@ -246,7 +251,11 @@ int main(int argc, char **argv)
 	if (get_sha1(argv[1], sha1) < 0)
 		usage(ls_tree_usage);
 
-	path = (argc == 2) ? path0 : (argv + 2);
+	if (argc == 2)
+		path = path0;
+	else
+		path = get_pathspec(prefix, argv + 2);
+
 	prepare_root(sha1);
 	if (list(path) < 0)
 		die("list failed");
