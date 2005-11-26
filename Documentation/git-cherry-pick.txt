@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit.
 
 SYNOPSIS
 --------
-'git-cherry-pick' [-n] [-r] <commit>
+'git-cherry-pick' [--edit] [-n] [-r] <commit>
 
 DESCRIPTION
 -----------
@@ -19,6 +19,10 @@ OPTIONS
 -------
 <commit>::
 	Commit to cherry-pick.
+
+--edit::
+	With this option, `git-cherry-pick` will let you edit the commit
+	message prior committing.
 
 -r::
 	Usually the command appends which commit was
