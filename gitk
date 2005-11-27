@@ -2165,9 +2165,9 @@ proc selectline {l isnew} {
     $cflist delete 0 end
     $cflist insert end "Comments"
     if {$nparents($id) == 1} {
-	startdiff [concat $id $parents($id)]
+	startdiff [concat $id $parents($id)] 1
     } elseif {$nparents($id) > 1} {
-	mergediff $id
+	mergediff $id 1
     }
 }
 
@@ -2236,7 +2236,7 @@ proc goforw {} {
     }
 }
 
-proc mergediff {id} {
+proc mergediff {id singlecommit} {
     global parents diffmergeid diffmergegca mergefilelist diffpindex
 
     set diffmergeid $id
@@ -2247,7 +2247,7 @@ proc mergediff {id} {
 	    showmergediff
 	}
     } else {
-	contmergediff {}
+	contmergediff {} $singlecommit
     }
 }
 
@@ -2267,7 +2267,7 @@ proc findgca {ids} {
     return $gca
 }
 
-proc contmergediff {ids} {
+proc contmergediff {ids singlecommit} {
     global diffmergeid diffpindex parents nparents diffmergegca
     global treediffs mergefilelist diffids treepending
 
@@ -2284,7 +2284,7 @@ proc contmergediff {ids} {
 	if {![info exists treediffs($ids)]} {
 	    set diffids $ids
 	    if {![info exists treepending]} {
-		gettreediffs $ids
+		gettreediffs $ids $singlecommit
 	    }
 	    return
 	}
@@ -2762,39 +2762,45 @@ proc similarity {pnum l nlc f events} {
     return [expr {200 * $same / (2 * $same + $diff)}]
 }
 
-proc startdiff {ids} {
+proc startdiff {ids singlecommit} {
     global treediffs diffids treepending diffmergeid
 
     set diffids $ids
     catch {unset diffmergeid}
     if {![info exists treediffs($ids)]} {
 	if {![info exists treepending]} {
-	    gettreediffs $ids
+	    gettreediffs $ids $singlecommit
 	}
     } else {
-	addtocflist $ids
+	addtocflist $ids $singlecommit
     }
 }
 
-proc addtocflist {ids} {
+proc addtocflist {ids singlecommit} {
     global treediffs cflist
     foreach f $treediffs($ids) {
 	$cflist insert end $f
     }
-    getblobdiffs $ids
+    getblobdiffs $ids $singlecommit
 }
 
-proc gettreediffs {ids} {
+proc gettreediffs {ids singlecommit} {
     global treediff parents treepending
     set treepending $ids
     set treediff {}
     set id [lindex $ids 0]
-    if [catch {set gdtf [open "|git-diff-tree --no-commit-id -r $id" r]}] return
+    if {$singlecommit == 1} {
+	set range "$id"
+    } else {
+	set p [lindex $ids 1]
+	set range "$p $id"
+    }
+    if [catch {set gdtf [open "|git-diff-tree --no-commit-id -r $range" r]}] return
     fconfigure $gdtf -blocking 0
-    fileevent $gdtf readable [list gettreediffline $gdtf $ids]
+    fileevent $gdtf readable [list gettreediffline $gdtf $ids $singlecommit]
 }
 
-proc gettreediffline {gdtf ids} {
+proc gettreediffline {gdtf ids singlecommit} {
     global treediff treediffs treepending diffids diffmergeid
 
     set n [gets $gdtf line]
@@ -2804,12 +2810,12 @@ proc gettreediffline {gdtf ids} {
 	set treediffs($ids) $treediff
 	unset treepending
 	if {$ids != $diffids} {
-	    gettreediffs $diffids
+	    gettreediffs $diffids $singlecommit
 	} else {
 	    if {[info exists diffmergeid]} {
-		contmergediff $ids
+		contmergediff $ids $singlecommit
 	    } else {
-		addtocflist $ids
+		addtocflist $ids $singlecommit
 	    }
 	}
 	return
@@ -2818,13 +2824,18 @@ proc gettreediffline {gdtf ids} {
     lappend treediff $file
 }
 
-proc getblobdiffs {ids} {
+proc getblobdiffs {ids singlecommit} {
     global diffopts blobdifffd diffids env curdifftag curtagstart
     global difffilestart nextupdate diffinhdr treediffs
 
     set id [lindex $ids 0]
     set env(GIT_DIFF_OPTS) $diffopts
-    set cmd [list | git-diff-tree --no-commit-id -r -p -C $id]
+    if {$singlecommit == 1} {
+	set cmd [list | git-diff-tree --no-commit-id -r -p -C $id]
+    } else {
+	set p [lindex $ids 1]
+	set cmd [list | git-diff-tree --no-commit-id -r -p -C $p $id]
+    }
     if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
@@ -3341,7 +3352,7 @@ proc doseldiff {oldid newid} {
     $ctext conf -state disabled
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
-    startdiff [list $newid $oldid]
+    startdiff [list $newid $oldid] 0
 }
 
 proc mkpatch {} {
