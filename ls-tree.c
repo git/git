@@ -11,7 +11,7 @@
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
 #define LS_TREE_ONLY 2
-static int ls_options = 0;
+static int ls_options = LS_RECURSIVE;
 
 static const char ls_tree_usage[] =
 	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
@@ -19,16 +19,15 @@ static const char ls_tree_usage[] =
 static int show_tree(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
 {
 	const char *type = "blob";
-	int retval = 0;
 
 	if (S_ISDIR(mode)) {
-		type = "tree";
 		if (ls_options & LS_RECURSIVE)
-			retval = READ_TREE_RECURSIVE;
+			return READ_TREE_RECURSIVE;
+		type = "tree";
 	}
 
 	printf("%06o %s %s\t%.*s%s%c", mode, type, sha1_to_hex(sha1), baselen, base, pathname, line_termination);
-	return retval;
+	return 0;
 }
 
 int main(int argc, const char **argv)
