@@ -13,22 +13,8 @@ use Getopt::Std;
 
 sub usage() {
 	print <<EOT;
-$0 [-f] [-n] <source> <dest>
-$0 [-f] [-k] [-n] <source> ... <dest directory>
-
-In the first form, source must exist and be either a file,
-symlink or directory, dest must not exist. It renames source to dest.
-In the second form, the last argument has to be an existing
-directory; the given sources will be moved into this directory.
-
-Updates the git cache to reflect the change.
-Use "git commit" to make the change permanently.
-
-Options:
-  -f   Force renaming/moving, even if target exists
-  -k   Continue on error by skipping
-       not-existing or not revision-controlled source
-  -n   Do nothing; show what would happen
+$0 [-f] [-n] <source> <destination>
+$0 [-f] [-n] [-k] <source> ... <destination directory>
 EOT
 	exit(1);
 }
@@ -38,8 +24,8 @@ my $GIT_DIR = $ENV{'GIT_DIR'} || ".git";
 
 unless ( -d $GIT_DIR && -d $GIT_DIR . "/objects" && 
 	-d $GIT_DIR . "/objects/" && -d $GIT_DIR . "/refs") {
-    print "Git repository not found.";
-    usage();
+    print "Error: git repository not found.";
+    exit(1);
 }
 
 
@@ -70,7 +56,7 @@ else {
 	print "Error: moving to directory '"
 	    . $ARGV[$argCount-1]
 	    . "' not possible; not exisiting\n";
-	usage;
+	exit(1);
     }
     @srcArgs = ($ARGV[0]);
     @dstArgs = ($ARGV[1]);
@@ -148,7 +134,7 @@ while(scalar @srcArgs > 0) {
 	    next;
 	}
 	print "Error: $bad\n";
-	usage();
+	exit(1);
     }
     push @srcs, $src;
     push @dsts, $dst;
@@ -187,33 +173,39 @@ while(scalar @srcs > 0) {
 }
 
 if ($opt_n) {
+    if (@changedfiles) {
 	print "Changed  : ". join(", ", @changedfiles) ."\n";
+    }
+    if (@addedfiles) {
 	print "Adding   : ". join(", ", @addedfiles) ."\n";
+    }
+    if (@deletedfiles) {
 	print "Deleting : ". join(", ", @deletedfiles) ."\n";
-	exit(1);
+    }
 }
-	
-if (@changedfiles) {
+else {
+    if (@changedfiles) {
 	open(H, "| git-update-index -z --stdin")
 		or die "git-update-index failed to update changed files with code $!\n";
 	foreach my $fileName (@changedfiles) {
 		print H "$fileName\0";
 	}
 	close(H);
-}
-if (@addedfiles) {
+    }
+    if (@addedfiles) {
 	open(H, "| git-update-index --add -z --stdin")
 		or die "git-update-index failed to add new names with code $!\n";
 	foreach my $fileName (@addedfiles) {
 		print H "$fileName\0";
 	}
 	close(H);
-}
-if (@deletedfiles) {
+    }
+    if (@deletedfiles) {
 	open(H, "| git-update-index --remove -z --stdin")
 		or die "git-update-index failed to remove old names with code $!\n";
 	foreach my $fileName (@deletedfiles) {
 		print H "$fileName\0";
 	}
 	close(H);
+    }
 }
