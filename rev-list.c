@@ -350,7 +350,8 @@ static int count_distance(struct commit_list *entry)
 
 		if (commit->object.flags & (UNINTERESTING | COUNTED))
 			break;
-		nr++;
+		if (!paths || (commit->object.flags & TREECHANGE))
+			nr++;
 		commit->object.flags |= COUNTED;
 		p = commit->parents;
 		entry = p;
@@ -362,6 +363,7 @@ static int count_distance(struct commit_list *entry)
 			}
 		}
 	}
+
 	return nr;
 }
 
@@ -382,15 +384,20 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	nr = 0;
 	p = list;
 	while (p) {
-		nr++;
+		if (!paths || (p->item->object.flags & TREECHANGE))
+			nr++;
 		p = p->next;
 	}
 	closest = 0;
 	best = list;
 
-	p = list;
-	while (p) {
-		int distance = count_distance(p);
+	for (p = list; p; p = p->next) {
+		int distance;
+
+		if (paths && !(p->item->object.flags & TREECHANGE))
+			continue;
+
+		distance = count_distance(p);
 		clear_distance(list);
 		if (nr - distance < distance)
 			distance = nr - distance;
@@ -398,7 +405,6 @@ static struct commit_list *find_bisection(struct commit_list *list)
 			best = p;
 			closest = distance;
 		}
-		p = p->next;
 	}
 	if (best)
 		best->next = NULL;
