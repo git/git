@@ -142,14 +142,17 @@ while(scalar @srcArgs > 0) {
 
 # Final pass: rename/move
 my (@deletedfiles,@addedfiles,@changedfiles);
+$bad = "";
 while(scalar @srcs > 0) {
     $src = shift @srcs;
     $dst = shift @dsts;
 
     if ($opt_n || $opt_v) { print "Renaming $src to $dst\n"; }
     if (!$opt_n) {
-	rename($src,$dst)
-	    or die "rename failed: $!";
+	if (!rename($src,$dst)) {
+	    $bad = "renaming '$src' failed: $!";
+	    last;
+	}
     }
 
     $safesrc = quotemeta($src);
@@ -208,4 +211,9 @@ else {
 	}
 	close(H);
     }
+}
+
+if ($bad ne "") {
+    print "Error: $bad\n";
+    exit(1);
 }
