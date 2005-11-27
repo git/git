@@ -151,6 +151,11 @@ while(scalar @srcs > 0) {
     if (!$opt_n) {
 	if (!rename($src,$dst)) {
 	    $bad = "renaming '$src' failed: $!";
+	    if ($opt_k) {
+		print "Warning: skipped: $bad\n";
+		$bad = "";
+		next;
+	    }
 	    last;
 	}
     }
