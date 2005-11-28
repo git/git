@@ -108,7 +108,7 @@ while(scalar @srcArgs > 0) {
 	}
     }
     
-    if (($bad eq "") && ($dst =~ /^$src\//)) {
+    if (($bad eq "") && ($dst =~ /^$safesrc\//)) {
 	$bad = "can not move directory '$src' into itself";
     }
 
