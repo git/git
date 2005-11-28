@@ -48,7 +48,9 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 		type = "tree";
 	}
 
-	printf("%06o %s %s\t%.*s%s%c", mode, type, sha1_to_hex(sha1), baselen, base, pathname, line_termination);
+	printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
+	write_name_quoted(base, baselen, pathname, line_termination, stdout);
+	putchar(line_termination);
 	return 0;
 }
 
