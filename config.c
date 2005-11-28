@@ -237,6 +237,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "i18n.commitencoding")) {
+		strncpy(git_commit_encoding, value, sizeof(git_commit_encoding));
+		return 0;
+	}
+
 	/* Add other config variables here.. */
 	return 0;
 }

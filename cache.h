@@ -399,6 +399,9 @@ extern int check_repository_format_version(const char *var, const char *value);
 extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
 
+#define MAX_ENCODING_LENGTH 64
+extern char git_commit_encoding[MAX_ENCODING_LENGTH];
+
 /* Sane ctype - no locale, and works with signed chars */
 #undef isspace
 #undef isdigit
