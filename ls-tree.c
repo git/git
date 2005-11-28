@@ -11,7 +11,8 @@
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
 #define LS_TREE_ONLY 2
-static int ls_options = LS_RECURSIVE;
+static int ls_options = 0;
+const char **pathspec;
 
 static const char ls_tree_usage[] =
 	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
@@ -21,8 +22,29 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 	const char *type = "blob";
 
 	if (S_ISDIR(mode)) {
+		const char **s;
 		if (ls_options & LS_RECURSIVE)
 			return READ_TREE_RECURSIVE;
+		s = pathspec;
+		if (s) {
+			for (;;) {
+				const char *spec = *s++;
+				int len, speclen;
+
+				if (!spec)
+					break;
+				if (strncmp(base, spec, baselen))
+					continue;
+				len = strlen(pathname);
+				spec += baselen;
+				speclen = strlen(spec);
+				if (speclen <= len)
+					continue;
+				if (memcmp(pathname, spec, len))
+					continue;
+				return READ_TREE_RECURSIVE;
+			}
+		}
 		type = "tree";
 	}
 
@@ -32,7 +54,7 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 
 int main(int argc, const char **argv)
 {
-	const char **path, *prefix;
+	const char *prefix;
 	unsigned char sha1[20];
 	char *buf;
 	unsigned long size;
@@ -60,11 +82,11 @@ int main(int argc, const char **argv)
 	if (get_sha1(argv[1], sha1) < 0)
 		usage(ls_tree_usage);
 
-	path = get_pathspec(prefix, argv + 2);
+	pathspec = get_pathspec(prefix, argv + 2);
 	buf = read_object_with_reference(sha1, "tree", &size, NULL);
 	if (!buf)
 		die("not a tree object");
-	read_tree_recursive(buf, size, "", 0, 0, path, show_tree);
+	read_tree_recursive(buf, size, "", 0, 0, pathspec, show_tree);
 
 	return 0;
 }
