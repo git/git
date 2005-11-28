@@ -11,7 +11,7 @@
 #define MAXNAME (256)
 
 static FILE *config_file;
-static char *config_file_name;
+static const char *config_file_name;
 static int config_linenr;
 static int get_next_char(void)
 {
