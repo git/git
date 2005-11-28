@@ -717,7 +717,7 @@ static void handle_body(void)
 }
 
 static const char mailinfo_usage[] =
-	"git-mailinfo [-k] [-u] msg patch <mail >info";
+	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
 
 int main(int argc, char **argv)
 {
@@ -731,8 +731,8 @@ int main(int argc, char **argv)
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
 			metainfo_charset = git_commit_encoding;
-		else if (!strncmp(argv[1], "-u=", 3))
-			metainfo_charset = argv[1] + 3;
+		else if (!strncmp(argv[1], "--encoding=", 11))
+			metainfo_charset = argv[1] + 11;
 		else
 			usage(mailinfo_usage);
 		argc--; argv++;
