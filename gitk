@@ -2165,7 +2165,7 @@ proc selectline {l isnew} {
     $cflist delete 0 end
     $cflist insert end "Comments"
     if {$nparents($id) == 1} {
-	startdiff [concat $id $parents($id)]
+	startdiff $id
     } elseif {$nparents($id) > 1} {
 	mergediff $id
     }
@@ -2274,12 +2274,12 @@ proc contmergediff {ids} {
     # diff the child against each of the parents, and diff
     # each of the parents against the GCA.
     while 1 {
-	if {[lindex $ids 0] == $diffmergeid && $diffmergegca ne {}} {
-	    set ids [list [lindex $ids 1] $diffmergegca]
+	if {[lindex $ids 1] == $diffmergeid && $diffmergegca ne {}} {
+	    set ids [list $diffmergegca [lindex $ids 0]]
 	} else {
 	    if {[incr diffpindex] >= $nparents($diffmergeid)} break
 	    set p [lindex $parents($diffmergeid) $diffpindex]
-	    set ids [list $diffmergeid $p]
+	    set ids [list $p $diffmergeid]
 	}
 	if {![info exists treediffs($ids)]} {
 	    set diffids $ids
@@ -2297,8 +2297,8 @@ proc contmergediff {ids} {
     if {$diffmergegca ne {}} {
 	set files {}
 	foreach p $parents($diffmergeid) {
-	    set gcadiffs $treediffs([list $p $diffmergegca])
-	    foreach f $treediffs([list $diffmergeid $p]) {
+	    set gcadiffs $treediffs([list $diffmergegca $p])
+	    foreach f $treediffs([list $p $diffmergeid]) {
 		if {[lsearch -exact $files $f] < 0
 		    && [lsearch -exact $gcadiffs $f] >= 0} {
 		    lappend files $f
@@ -2311,7 +2311,7 @@ proc contmergediff {ids} {
 	set files $treediffs([list $diffmergeid $p])
 	for {set i 1} {$i < $nparents($diffmergeid) && $files ne {}} {incr i} {
 	    set p [lindex $parents($diffmergeid) $i]
-	    set df $treediffs([list $diffmergeid $p])
+	    set df $treediffs([list $p $diffmergeid])
 	    set nf {}
 	    foreach f $files {
 		if {[lsearch -exact $df $f] >= 0} {
@@ -2788,8 +2788,7 @@ proc gettreediffs {ids} {
     global treediff parents treepending
     set treepending $ids
     set treediff {}
-    set id [lindex $ids 0]
-    if [catch {set gdtf [open "|git-diff-tree --no-commit-id -r $id" r]}] return
+    if [catch {set gdtf [open [concat | git-diff-tree --no-commit-id -r $ids] r]}] return
     fconfigure $gdtf -blocking 0
     fileevent $gdtf readable [list gettreediffline $gdtf $ids]
 }
@@ -2822,9 +2821,8 @@ proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env curdifftag curtagstart
     global difffilestart nextupdate diffinhdr treediffs
 
-    set id [lindex $ids 0]
     set env(GIT_DIFF_OPTS) $diffopts
-    set cmd [list | git-diff-tree --no-commit-id -r -p -C $id]
+    set cmd [concat | git-diff-tree --no-commit-id -r -p -C $ids]
     if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
@@ -3341,7 +3339,7 @@ proc doseldiff {oldid newid} {
     $ctext conf -state disabled
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
-    startdiff [list $newid $oldid]
+    startdiff [list $oldid $newid]
 }
 
 proc mkpatch {} {
