@@ -9,6 +9,11 @@ files=$(git-rev-parse --no-revs --no-flags --sq "$@")
 
 : ${flags:="'-M' '-p'"}
 
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
 # I often say 'git diff --cached -p' and get scolded by git-diff-files, but
 # obviously I mean 'git diff --cached -p HEAD' in that case.
 case "$rev" in

@@ -1,5 +1,10 @@
 #!/bin/sh
 
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
 usage() {
     die "usage: git add [-n] [-v] <file>..."
 }

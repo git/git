@@ -2,6 +2,11 @@
 
 GIT_DIR=`git-rev-parse --git-dir` || exit $?
 
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
 type="$(git-cat-file -t "$1" 2>/dev/null)" ||
 	die "$1: no such object."
 

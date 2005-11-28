@@ -8,6 +8,11 @@ usage () {
     exit 1
 }
 
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
 annotate=
 signed=
 force=

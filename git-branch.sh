@@ -2,6 +2,11 @@
 
 GIT_DIR=`git-rev-parse --git-dir` || exit $?
 
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
 usage () {
     echo >&2 "usage: $(basename $0)"' [-d <branch>] | [[-f] <branch> [start-point]]
 
