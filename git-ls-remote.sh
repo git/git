@@ -6,6 +6,11 @@ usage () {
     exit 1;
 }
 
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
 while case "$#" in 0) break;; esac
 do
   case "$1" in
