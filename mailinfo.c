@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <iconv.h>
+#include "cache.h"
 
 #ifdef NO_STRCASESTR
 extern char *gitstrcasestr(const char *haystack, const char *needle);
@@ -718,27 +719,27 @@ static void handle_body(void)
 static const char mailinfo_usage[] =
 	"git-mailinfo [-k] [-u] msg patch <mail >info";
 
-static void usage(void) {
-	fprintf(stderr, "%s\n", mailinfo_usage);
-	exit(1);
-}
-
 int main(int argc, char **argv)
 {
+	/* NEEDSWORK: might want to do the optional .git/ directory
+	 * discovery
+	 */
+	git_config(git_default_config);
+
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
-			metainfo_charset = "utf-8";
+			metainfo_charset = git_commit_encoding;
 		else if (!strncmp(argv[1], "-u=", 3))
 			metainfo_charset = argv[1] + 3;
 		else
-			usage();
+			usage(mailinfo_usage);
 		argc--; argv++;
 	}
 
 	if (argc != 3)
-		usage();
+		usage(mailinfo_usage);
 	cmitmsg = fopen(argv[1], "w");
 	if (!cmitmsg) {
 		perror(argv[1]);
