@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 	int i;
 	const char *type = "blob";
 	int write_object = 0;
-	const char *prefix;
+	const char *prefix = NULL;
 	int prefix_length = -1;
 
 	for (i = 1 ; i < argc; i++) {
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 			write_object = 1;
 		}
 		else {
-			char *arg = argv[i];
+			const char *arg = argv[i];
 			if (0 <= prefix_length)
 				arg = prefix_filename(prefix, prefix_length,
 						      arg);
