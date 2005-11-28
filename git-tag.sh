@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2005 Linus Torvalds
 
-. git-sh-setup
+GIT_DIR=`git-rev-parse --git-dir` || exit $?
 
 usage () {
     echo >&2 "Usage: git-tag [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [<head>]"
