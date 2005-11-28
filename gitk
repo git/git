@@ -3656,7 +3656,14 @@ set datemode 0
 set boldnames 0
 set diffopts "-U 5 -p"
 set wrcomcmd "git-diff-tree --stdin -p --pretty"
-set gitencoding "utf-8"
+
+set gitencoding ""
+catch {
+    set gitencoding [exec git-repo-config --get i18n.commitencoding]
+}
+if {$gitencoding == ""} {
+	set gitencoding "utf-8"
+}
 
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
