@@ -238,7 +238,6 @@ Date: '"$ad"
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
-	git-cat-file commit "$commit^" | sed -e 's/^tree /applies-to: /' -e q
 	git-diff-tree -p $diff_opts "$commit"
 	echo "---"
 	echo "@@GIT_VERSION@@"
