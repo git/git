@@ -41,7 +41,7 @@ extern int quote_c_style(const char *name, char *outbuf, FILE *outfp,
 			 int nodq);
 extern char *unquote_c_style(const char *quoted, const char **endp);
 
-extern void write_name_quoted(const char *prefix, const char *name,
-			      int quote, FILE *out);
+extern void write_name_quoted(const char *prefix, int prefix_len,
+			      const char *name, int quote, FILE *out);
 
 #endif

@@ -157,9 +157,11 @@ static int show_entry(struct tree_entry_list *e, int level, char *pathbuf)
 	int err = 0; 
 
 	if (e != &root_entry) {
+		int pathlen = strlen(pathbuf);
 		printf("%06o %s %s	",
 		       e->mode, entry_type(e), entry_hex(e));
-		write_name_quoted(pathbuf, e->name, line_termination, stdout);
+		write_name_quoted(pathbuf, pathlen, e->name,
+				  line_termination, stdout);
 		putchar(line_termination);
 	}
 

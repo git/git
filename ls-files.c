@@ -344,7 +344,7 @@ static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
 		return;
 
 	fputs(tag, stdout);
-	write_name_quoted("", ent->name + offset, line_terminator, stdout);
+	write_name_quoted("", 0, ent->name + offset, line_terminator, stdout);
 	putchar(line_terminator);
 }
 
@@ -433,7 +433,8 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 
 	if (!show_stage) {
 		fputs(tag, stdout);
-		write_name_quoted("", ce->name + offset, line_terminator, stdout);
+		write_name_quoted("", 0, ce->name + offset,
+				  line_terminator, stdout);
 		putchar(line_terminator);
 	}
 	else {
@@ -442,7 +443,8 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 		       ntohl(ce->ce_mode),
 		       sha1_to_hex(ce->sha1),
 		       ce_stage(ce));
-		write_name_quoted("", ce->name + offset, line_terminator, stdout);
+		write_name_quoted("", 0, ce->name + offset,
+				  line_terminator, stdout);
 		putchar(line_terminator);
 	}
 }
