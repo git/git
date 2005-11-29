@@ -16,22 +16,9 @@ proc gitdir {} {
     }
 }
 
-proc getcommits {rargs} {
-    global commits commfd phase canv mainfont env
-    global startmsecs nextupdate ncmupdate
-    global ctext maincursor textcursor leftover gitencoding
+proc parse_args {rargs} {
+    global parsed_args
 
-    # check that we can find a .git directory somewhere...
-    set gitdir [gitdir]
-    if {![file isdirectory $gitdir]} {
-	error_popup "Cannot find the git directory \"$gitdir\"."
-	exit 1
-    }
-    set commits {}
-    set phase getcommits
-    set startmsecs [clock clicks -milliseconds]
-    set nextupdate [expr {$startmsecs + 100}]
-    set ncmupdate 1
     if [catch {
 	set parse_args [concat --default HEAD $rargs]
 	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
@@ -42,6 +29,27 @@ proc getcommits {rargs} {
 	}
 	set parsed_args $rargs
     }
+    return $parsed_args
+}
+
+proc getcommits {rargs} {
+    global oldcommits commits commfd phase canv mainfont env
+    global startmsecs nextupdate ncmupdate
+    global ctext maincursor textcursor leftover gitencoding
+
+    # check that we can find a .git directory somewhere...
+    set gitdir [gitdir]
+    if {![file isdirectory $gitdir]} {
+	error_popup "Cannot find the git directory \"$gitdir\"."
+	exit 1
+    }
+    set oldcommits {}
+    set commits {}
+    set phase getcommits
+    set startmsecs [clock clicks -milliseconds]
+    set nextupdate [expr {$startmsecs + 100}]
+    set ncmupdate 1
+    set parsed_args [parse_args $rargs]
     if [catch {
 	set commfd [open "|git-rev-list --header --topo-order --parents $parsed_args" r]
     } err] {
@@ -59,9 +67,10 @@ proc getcommits {rargs} {
 }
 
 proc getcommitlines {commfd}  {
-    global commits parents cdate children
+    global oldcommits commits parents cdate children nchildren
     global commitlisted phase nextupdate
     global stopped redisplaying leftover
+    global canv
 
     set stuff [read $commfd]
     if {$stuff == {}} {
@@ -119,10 +128,18 @@ proc getcommitlines {commfd}  {
 	set id [lindex $ids 0]
 	set olds [lrange $ids 1 end]
 	set cmit [string range $cmit [expr {$j + 1}] end]
+	if {$phase == "updatecommits"} {
+	    $canv delete all
+	    set oldcommits $commits
+	    set commits {}
+	    unset children
+	    unset nchildren
+	    set phase getcommits
+	}
 	lappend commits $id
 	set commitlisted($id) 1
 	parsecommit $id $cmit 1 [lrange $ids 1 end]
-	drawcommit $id
+	drawcommit $id 1
 	if {[clock clicks -milliseconds] >= $nextupdate} {
 	    doupdate 1
 	}
@@ -132,7 +149,7 @@ proc getcommitlines {commfd}  {
 		set stopped 0
 		set phase "getcommits"
 		foreach id $commits {
-		    drawcommit $id
+		    drawcommit $id 1
 		    if {$stopped} break
 		    if {[clock clicks -milliseconds] >= $nextupdate} {
 			doupdate 1
@@ -168,16 +185,9 @@ proc readcommit {id} {
     parsecommit $id $contents 0 {}
 }
 
-proc parsecommit {id contents listed olds} {
-    global commitinfo children nchildren parents nparents cdate ncleft
+proc updatechildren {id olds} {
+    global children nchildren parents nparents ncleft
 
-    set inhdr 1
-    set comment {}
-    set headline {}
-    set auname {}
-    set audate {}
-    set comname {}
-    set comdate {}
     if {![info exists nchildren($id)]} {
 	set children($id) {}
 	set nchildren($id) 0
@@ -196,6 +206,19 @@ proc parsecommit {id contents listed olds} {
 	    incr ncleft($p)
 	}
     }
+}
+
+proc parsecommit {id contents listed olds} {
+    global commitinfo cdate
+
+    set inhdr 1
+    set comment {}
+    set headline {}
+    set auname {}
+    set audate {}
+    set comname {}
+    set comdate {}
+    updatechildren $id $olds
     set hdrend [string first "\n\n" $contents]
     if {$hdrend < 0} {
 	# should never happen...
@@ -243,6 +266,9 @@ proc readrefs {} {
     global tagids idtags headids idheads tagcontents
     global otherrefids idotherrefs
 
+    foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
+	catch {unset $v}
+    }
     set refd [open [list | git-ls-remote [gitdir]] r]
     while {0 <= [set n [gets $refd line]]} {
 	if {![regexp {^([0-9a-f]{40})	refs/([^^]*)$} $line \
@@ -292,7 +318,7 @@ proc error_popup msg {
     tkwait window $w
 }
 
-proc makewindow {} {
+proc makewindow {rargs} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
@@ -302,6 +328,7 @@ proc makewindow {} {
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
     menu .bar.file
+    .bar.file add command -label "Update" -command [list updatecommits $rargs]
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
     menu .bar.edit
@@ -1412,8 +1439,9 @@ proc decidenext {{noread 0}} {
     return $level
 }
 
-proc drawcommit {id} {
+proc drawcommit {id reading} {
     global phase todo nchildren datemode nextupdate revlistorder
+    global numcommits ncmupdate displayorder todo onscreen
     global numcommits ncmupdate displayorder todo onscreen parents
 
     if {$phase != "incrdraw"} {
@@ -1451,20 +1479,29 @@ proc drawcommit {id} {
 	    }
 	}
     }
-    drawmore 1
+    drawmore $reading
 }
 
 proc finishcommits {} {
-    global phase
+    global phase oldcommits commits
     global canv mainfont ctext maincursor textcursor
+    global parents
 
-    if {$phase != "incrdraw"} {
+    if {$phase == "incrdraw" || $phase == "removecommits"} {
+	foreach id $oldcommits {
+	    lappend commits $id
+	    updatechildren $id $parents($id)
+	    drawcommit $id 0
+	}
+	set oldcommits {}
+	drawrest
+    } elseif {$phase == "updatecommits"} {
+	set phase {}
+    } else {
 	$canv delete all
 	$canv create text 3 3 -anchor nw -text "No commits selected" \
 	    -font $mainfont -tags textitems
 	set phase {}
-    } else {
-	drawrest
     }
     . config -cursor $maincursor
     settextcursor $textcursor
@@ -3578,9 +3615,6 @@ proc rereadrefs {} {
 	    set ref($id) [listrefs $id]
 	}
     }
-    foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
-	catch {unset $v}
-    }
     readrefs
     set refids [lsort -unique [concat $refids [array names idtags] \
 			[array names idheads] [array names idotherrefs]]]
@@ -3590,6 +3624,80 @@ proc rereadrefs {} {
 	    redrawtags $id
 	}
     }
+}
+
+proc updatecommits {rargs} {
+    global commitlisted commfd phase
+    global startmsecs nextupdate ncmupdate
+    global idtags idheads idotherrefs
+    global leftover
+    global parsed_args
+    global canv
+    global oldcommits commits
+    global parents nchildren children ncleft
+
+    set old_args $parsed_args
+    parse_args $rargs
+
+    foreach id $old_args {
+	if {![regexp {^[0-9a-f]{40}$} $id]} continue
+	if {[info exists oldref($id)]} continue
+	set oldref($id) $id
+	lappend ignoreold "^$id"
+    }
+    foreach id $parsed_args {
+	if {![regexp {^[0-9a-f]{40}$} $id]} continue
+	if {[info exists ref($id)]} continue
+	set ref($id) $id
+	lappend ignorenew "^$id"
+    }
+
+    foreach a $old_args {
+	if {![info exists ref($a)]} {
+	    lappend ignorenew $a
+	}
+    }
+
+    set phase updatecommits
+    set removed_commits [split [eval exec git-rev-list $ignorenew] "\n" ]
+    if {[llength $removed_commits] > 0} {
+	$canv delete all
+	set oldcommits {}
+	foreach c $commits {
+	    if {[lsearch $c $removed_commits] < 0} {
+		lappend oldcommits $c
+	    } else {
+		unset commitlisted($c)
+	    }
+	}
+	set commits {}
+	unset children
+	unset nchildren
+	set phase removecommits
+    }
+
+    set args {}
+    foreach a $parsed_args {
+	if {![info exists oldref($a)]} {
+	    lappend args $a
+	}
+    }
+
+    readrefs
+    if [catch {
+	set commfd [open "|git-rev-list --header --topo-order --parents $ignoreold $args" r]
+    } err] {
+	puts stderr "Error executing git-rev-list: $err"
+	exit 1
+    }
+    set startmsecs [clock clicks -milliseconds]
+    set nextupdate [expr $startmsecs + 100]
+    set ncmupdate 1
+    set leftover {}
+    fconfigure $commfd -blocking 0 -translation lf
+    fileevent $commfd readable [list getcommitlines $commfd]
+    . config -cursor watch
+    settextcursor watch
 }
 
 proc showtag {tag isnew} {
@@ -3738,6 +3846,6 @@ set redisplaying 0
 set stuffsaved 0
 set patchnum 0
 setcoords
-makewindow
+makewindow $revtreeargs
 readrefs
 getcommits $revtreeargs
