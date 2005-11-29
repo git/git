@@ -15,10 +15,10 @@
 - ssh://host.xz/~/path/to/repo.git
 ===============================================================
 +
-	SSH Is the default transport protocol and also supports an
-	scp-like syntax.  Both syntaxes support username expansion,
-	as does the native git protocol. The following three are
-	identical to the last three above, respectively:
+SSH Is the default transport protocol and also supports an
+scp-like syntax.  Both syntaxes support username expansion,
+as does the native git protocol. The following three are
+identical to the last three above, respectively:
 +
 ===============================================================
 - host.xz:/path/to/repo.git/
@@ -26,8 +26,8 @@
 - host.xz:path/to/repo.git
 ===============================================================
 +
-       To sync with a local directory, use:
-
+To sync with a local directory, use:
++
 ===============================================================
 - /path/to/repo.git/
 ===============================================================
@@ -113,7 +113,7 @@ on the remote branch, merge it into your development branch with
 `git pull . remote-B`, while you are on `my-B` branch.
 The common `Pull: master:origin` mapping of a remote `master`
 branch to a local `origin` branch, which is then merged to a
-ocal development branch, again typically named `master`, is made
+local development branch, again typically named `master`, is made
 when you run `git clone` for you to follow this pattern.
 +
 [NOTE]
