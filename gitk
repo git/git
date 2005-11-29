@@ -297,13 +297,16 @@ proc makewindow {} {
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
-    global rowctxmenu gaudydiff mergemax
+    global rowctxmenu mergemax
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
     menu .bar.file
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
+    menu .bar.edit
+    .bar add cascade -label "Edit" -menu .bar.edit
+    .bar.edit add command -label "Preferences" -command doprefs
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
@@ -414,25 +417,19 @@ proc makewindow {} {
     .ctop.cdet add .ctop.cdet.left
 
     $ctext tag conf filesep -font [concat $textfont bold] -back "#aaaaaa"
-    if {$gaudydiff} {
-	$ctext tag conf hunksep -back blue -fore white
-	$ctext tag conf d0 -back "#ff8080"
-	$ctext tag conf d1 -back green
-    } else {
-	$ctext tag conf hunksep -fore blue
-	$ctext tag conf d0 -fore red
-	$ctext tag conf d1 -fore "#00a000"
-	$ctext tag conf m0 -fore red
-	$ctext tag conf m1 -fore blue
-	$ctext tag conf m2 -fore green
-	$ctext tag conf m3 -fore purple
-	$ctext tag conf m4 -fore brown
-	$ctext tag conf mmax -fore darkgrey
-	set mergemax 5
-	$ctext tag conf mresult -font [concat $textfont bold]
-	$ctext tag conf msep -font [concat $textfont bold]
-	$ctext tag conf found -back yellow
-    }
+    $ctext tag conf hunksep -fore blue
+    $ctext tag conf d0 -fore red
+    $ctext tag conf d1 -fore "#00a000"
+    $ctext tag conf m0 -fore red
+    $ctext tag conf m1 -fore blue
+    $ctext tag conf m2 -fore green
+    $ctext tag conf m3 -fore purple
+    $ctext tag conf m4 -fore brown
+    $ctext tag conf mmax -fore darkgrey
+    set mergemax 5
+    $ctext tag conf mresult -font [concat $textfont bold]
+    $ctext tag conf msep -font [concat $textfont bold]
+    $ctext tag conf found -back yellow
 
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
@@ -533,7 +530,7 @@ proc click {w} {
 
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont
-    global stuffsaved findmergefiles gaudydiff maxgraphpct
+    global stuffsaved findmergefiles maxgraphpct
     global maxwidth
 
     if {$stuffsaved} return
@@ -543,7 +540,6 @@ proc savestuff {w} {
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
 	puts $f [list set findmergefiles $findmergefiles]
-	puts $f [list set gaudydiff $gaudydiff]
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
 	puts $f "set geometry(width) [winfo width .ctop]"
@@ -2841,7 +2837,6 @@ proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdifftag curtagstart
     global diffnexthead diffnextnote difffilestart
     global nextupdate diffinhdr treediffs
-    global gaudydiff
 
     set n [gets $bdf line]
     if {$n < 0} {
@@ -2890,26 +2885,14 @@ proc getblobdiffline {bdf ids} {
 	set diffinhdr 0
     } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
 		   $line match f1l f1c f2l f2c rest]} {
-	if {$gaudydiff} {
-	    $ctext insert end "\t" hunksep
-	    $ctext insert end "    $f1l    " d0 "    $f2l    " d1
-	    $ctext insert end "    $rest \n" hunksep
-	} else {
-	    $ctext insert end "$line\n" hunksep
-	}
+	$ctext insert end "$line\n" hunksep
 	set diffinhdr 0
     } else {
 	set x [string range $line 0 0]
 	if {$x == "-" || $x == "+"} {
 	    set tag [expr {$x == "+"}]
-	    if {$gaudydiff} {
-		set line [string range $line 1 end]
-	    }
 	    $ctext insert end "$line\n" d$tag
 	} elseif {$x == " "} {
-	    if {$gaudydiff} {
-		set line [string range $line 1 end]
-	    }
 	    $ctext insert end "$line\n"
 	} elseif {$diffinhdr || $x == "\\"} {
 	    # e.g. "\ No newline at end of file"
@@ -3634,26 +3617,80 @@ proc doquit {} {
     destroy .
 }
 
-proc formatdate {d} {
-    global hours nhours tfd fastdate
+proc doprefs {} {
+    global maxwidth maxgraphpct diffopts findmergefiles
+    global oldprefs prefstop
 
-    if {!$fastdate} {
-	return [clock format $d -format "%Y-%m-%d %H:%M:%S"]
+    set top .gitkprefs
+    set prefstop $top
+    if {[winfo exists $top]} {
+	raise $top
+	return
     }
-    set hr [expr {$d / 3600}]
-    set ms [expr {$d % 3600}]
-    if {![info exists hours($hr)]} {
-	set hours($hr) [clock format $d -format "%Y-%m-%d %H"]
-	set nhours($hr) 0
+    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+	set oldprefs($v) [set $v]
     }
-    incr nhours($hr)
-    set minsec [format "%.2d:%.2d" [expr {$ms/60}] [expr {$ms%60}]]
-    return "$hours($hr):$minsec"
+    toplevel $top
+    wm title $top "Gitk preferences"
+    label $top.ldisp -text "Commit list display options"
+    grid $top.ldisp - -sticky w -pady 10
+    label $top.spacer -text " "
+    label $top.maxwidthl -text "Maximum graph width (lines)" \
+	-font optionfont
+    spinbox $top.maxwidth -from 0 -to 100 -width 4 -textvariable maxwidth
+    grid $top.spacer $top.maxwidthl $top.maxwidth -sticky w
+    label $top.maxpctl -text "Maximum graph width (% of pane)" \
+	-font optionfont
+    spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
+    grid x $top.maxpctl $top.maxpct -sticky w
+    checkbutton $top.findm -variable findmergefiles
+    label $top.findml -text "Include merges for \"Find\" in \"Files\"" \
+	-font optionfont
+    grid $top.findm $top.findml - -sticky w
+    label $top.ddisp -text "Diff display options"
+    grid $top.ddisp - -sticky w -pady 10
+    label $top.diffoptl -text "Options for diff program" \
+	-font optionfont
+    entry $top.diffopt -width 20 -textvariable diffopts
+    grid x $top.diffoptl $top.diffopt -sticky w
+    frame $top.buts
+    button $top.buts.ok -text "OK" -command prefsok
+    button $top.buts.can -text "Cancel" -command prefscan
+    grid $top.buts.ok $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - - -pady 10 -sticky ew
+}
+
+proc prefscan {} {
+    global maxwidth maxgraphpct diffopts findmergefiles
+    global oldprefs prefstop
+
+    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+	set $v $oldprefs($v)
+    }
+    catch {destroy $prefstop}
+    unset prefstop
+}
+
+proc prefsok {} {
+    global maxwidth maxgraphpct
+    global oldprefs prefstop
+
+    catch {destroy $prefstop}
+    unset prefstop
+    if {$maxwidth != $oldprefs(maxwidth)
+	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
+	redisplay
+    }
+}
+
+proc formatdate {d} {
+    return [clock format $d -format "%Y-%m-%d %H:%M:%S"]
 }
 
 # defaults...
 set datemode 0
-set boldnames 0
 set diffopts "-U 5 -p"
 set wrcomcmd "git-diff-tree --stdin -p --pretty"
 
@@ -3668,7 +3705,6 @@ if {$gitencoding == ""} {
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
 set findmergefiles 0
-set gaudydiff 0
 set maxgraphpct 50
 set maxwidth 16
 set revlistorder 0
@@ -3679,15 +3715,13 @@ set colors {green red blue magenta darkgrey brown orange}
 catch {source ~/.gitk}
 
 set namefont $mainfont
-if {$boldnames} {
-    lappend namefont bold
-}
+
+font create optionfont -family sans-serif -size -12
 
 set revtreeargs {}
 foreach arg $argv {
     switch -regexp -- $arg {
 	"^$" { }
-	"^-b" { set boldnames 1 }
 	"^-d" { set datemode 1 }
 	"^-r" { set revlistorder 1 }
 	default {
