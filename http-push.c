@@ -1008,9 +1008,7 @@ static int unlock_remote(struct active_lock *lock)
 	if (lock->owner != NULL)
 		free(lock->owner);
 	free(lock->url);
-/* Freeing the token causes a segfault...
 	free(lock->token);
-*/
 	free(lock);
 
 	return rc;
@@ -1272,6 +1270,9 @@ int main(int argc, char **argv)
 		nr_refspec = argc - i;
 		break;
 	}
+
+	if (!remote->url)
+		usage(http_push_usage);
 
 	memset(remote_dir_exists, 0, 256);
 
