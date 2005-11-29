@@ -239,7 +239,7 @@ Date: '"$ad"
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
 	git-diff-tree -p $diff_opts "$commit"
-	echo "---"
+	echo "-- "
 	echo "@@GIT_VERSION@@"
 
 	case "$mbox" in
