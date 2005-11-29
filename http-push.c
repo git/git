@@ -784,7 +784,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 					strtol(ctx->cdata + 7, NULL, 10);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
 			if (!strncmp(ctx->cdata, "opaquelocktoken:", 16)) {
-				lock->token = xmalloc(strlen(ctx->cdata - 15));
+				lock->token = xmalloc(strlen(ctx->cdata) - 15);
 				strcpy(lock->token, ctx->cdata + 16);
 			}
 		}
