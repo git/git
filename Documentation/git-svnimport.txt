@@ -10,7 +10,7 @@ git-svnimport - Import a SVN repository into git
 SYNOPSIS
 --------
 'git-svnimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ] [ -d | -D ]
-			[ -C <GIT_repository> ] [ -i ] [ -u ] [-l limit_nr_changes]
+			[ -C <GIT_repository> ] [ -i ] [ -u ] [-l limit_rev]
 			[ -b branch_subdir ] [ -t trunk_subdir ] [ -T tag_subdir ]
 			[ -s start_chg ] [ -m ] [ -M regex ]
 			<SVN_repository_URL> [ <path> ]
@@ -71,14 +71,11 @@ When importing incementally, you might need to edit the .git/svn2git file.
 	regex. It can be used with -m to also see the default regexes.
 	You must escape forward slashes.
 
--l <max_num_changes>::
-	Limit the number of SVN changesets we pull before quitting.
-	This option is necessary because the SVN library has serious memory
-	leaks; the recommended value for nontrivial imports is 100.
+-l <max_rev>::
+	Specify a maximum revision number to pull.
 
-	git-svnimport will still exit with a zero exit code. You can check
-	the size of the file ".git/svn2git" to determine whether to call
-	the importer again.
+	Formerly, this option controlled how many revisions to pull, due to
+	SVN memory leaks. (These have been worked around.)
 
 -v::
 	Verbosity: let 'svnimport' report what it is doing.

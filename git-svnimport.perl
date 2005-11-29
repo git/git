@@ -35,7 +35,7 @@ our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from SVN
-       [-o branch-for-HEAD] [-h] [-v] [-l max_num_changes]
+       [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
 END
@@ -126,8 +126,9 @@ sub file {
 package main;
 use URI;
 
-my $svn = $svn_url;
+our $svn = $svn_url;
 $svn .= "/$svn_dir" if defined $svn_dir;
+my $svn2 = SVNconn->new($svn);
 $svn = SVNconn->new($svn);
 
 my $lwp_ua;
@@ -198,7 +199,7 @@ $ENV{GIT_INDEX_FILE} = $git_index;
 my $maxnum = 0;
 my $last_rev = "";
 my $last_branch;
-my $current_rev = $opt_s-1;
+my $current_rev = $opt_s || 1;
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
@@ -254,7 +255,7 @@ EOM
 		my($num,$branch,$ref) = split;
 		$branches{$branch}{$num} = $ref;
 		$branches{$branch}{"LAST"} = $ref;
-		$current_rev = $num if $current_rev < $num;
+		$current_rev = $num+1 if $current_rev <= $num;
 	}
 	close($B);
 }
@@ -708,17 +709,17 @@ sub commit {
 	print "DONE: $revision $dest $cid\n" if $opt_v;
 }
 
-my ($changed_paths, $revision, $author, $date, $message, $pool) = @_;
-sub _commit_all {
-	($changed_paths, $revision, $author, $date, $message, $pool) = @_;
+sub commit_all {
+	# Recursive use of the SVN connection does not work
+	local $svn = $svn2;
+
+	my ($changed_paths, $revision, $author, $date, $message, $pool) = @_;
 	my %p;
 	while(my($path,$action) = each %$changed_paths) {
 		$p{$path} = [ $action->action,$action->copyfrom_path, $action->copyfrom_rev, $path ];
 	}
 	$changed_paths = \%p;
-}
 
-sub commit_all {
 	my %done;
 	my @col;
 	my $pref;
@@ -734,18 +735,12 @@ sub commit_all {
 	}
 }
 
-while(++$current_rev <= $svn->{'maxrev'}) {
-	if (defined $opt_l) {
-		$opt_l--;
-		if ($opt_l < 0) {
-			last;
-		}
-	}
-	my $pool=SVN::Pool->new;
-	$svn->{'svn'}->get_log("/",$current_rev,$current_rev,1,1,1,\&_commit_all,$pool);
-	$pool->clear;
-	commit_all();
-}
+$opt_l = $svn->{'maxrev'} if not defined $opt_l or $opt_l > $svn->{'maxrev'};
+print "Fetching from $current_rev to $opt_l ...\n" if $opt_v;
+
+my $pool=SVN::Pool->new;
+$svn->{'svn'}->get_log("/",$current_rev,$opt_l,0,1,1,\&commit_all,$pool);
+$pool->clear;
 
 
 unlink($git_index);
