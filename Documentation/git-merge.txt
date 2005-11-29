@@ -37,6 +37,101 @@ include::merge-options.txt[]
 include::merge-strategies.txt[]
 
 
+HOW MERGE WORKS
+---------------
+
+A merge is always between the current `HEAD` and one or more
+remote branch heads, and the index file must exactly match the
+tree of `HEAD` commit (i.e. the contents of the last commit) when
+it happens.  In other words, `git-diff --cached HEAD` must
+report no changes.
+
+[NOTE]
+This is a bit of lie.  In certain special cases, your index are
+allowed to be different from the tree of `HEAD` commit.  The most
+notable case is when your `HEAD` commit is already ahead of what
+is being merged, in which case your index can have arbitrary
+difference from your `HEAD` commit.  Otherwise, your index entries
+are allowed have differences from your `HEAD` commit that match
+the result of trivial merge (e.g. you received the same patch
+from external source to produce the same result as what you are
+merging).  For example, if a path did not exist in the common
+ancestor and your head commit but exists in the tree you are
+merging into your repository, and if you already happen to have
+that path exactly in your index, the merge does not have to
+fail.
+
+Otherwise, merge will refuse to do any harm to your repository
+(that is, it may fetch the objects from remote, and it may even
+update the local branch used to keep track of the remote branch
+with `git pull remote rbranch:lbranch`, but your working tree,
+`.git/HEAD` pointer and index file are left intact).
+
+You may have local modifications in the working tree files.  In
+other words, `git-diff` is allowed to report changes.
+However, the merge uses your working tree as the working area,
+and in order to prevent the merge operation from losing such
+changes, it makes sure that they do not interfere with the
+merge. Those complex tables in read-tree documentation define
+what it means for a path to "interfere with the merge".  And if
+your local modifications interfere with the merge, again, it
+stops before touching anything.
+
+So in the above two "failed merge" case, you do not have to
+worry about lossage of data --- you simply were not ready to do
+a merge, so no merge happened at all.  You may want to finish
+whatever you were in the middle of doing, and retry the same
+pull after you are done and ready.
+
+When things cleanly merge, these things happen:
+
+1. the results are updated both in the index file and in your
+   working tree,
+2. index file is written out as a tree,
+3. the tree gets committed, and 
+4. the `HEAD` pointer gets advanced.
+
+Because of 2., we require that the original state of the index
+file to match exactly the current `HEAD` commit; otherwise we
+will write out your local changes already registered in your
+index file along with the merge result, which is not good.
+Because 1. involves only the paths different between your
+branch and the remote branch you are pulling from during the
+merge (which is typically a fraction of the whole tree), you can
+have local modifications in your working tree as long as they do
+not overlap with what the merge updates.
+
+When there are conflicts, these things happen:
+
+1. `HEAD` stays the same.
+
+2. Cleanly merged paths are updated both in the index file and
+   in your working tree.
+
+3. For conflicting paths, the index file records the version
+   from `HEAD`. The working tree files have the result of
+   "merge" program; i.e. 3-way merge result with familiar
+   conflict markers `<<< === >>>`.
+
+4. No other changes are done.  In particular, the local
+   modifications you had before you started merge will stay the
+   same and the index entries for them stay as they were,
+   i.e. matching `HEAD`.
+
+After seeing a conflict, you can do two things:
+
+ * Decide not to merge.  The only clean-up you need are to reset
+   the index file to the `HEAD` commit to reverse 2. and to clean
+   up working tree changes made by 2. and 3.; `git-reset` can
+   be used for this.
+
+ * Resolve the conflicts.  `git-diff` would report only the
+   conflicting paths because of the above 2. and 3..  Edit the
+   working tree files into a desirable shape, `git-update-index`
+   them, to make the index file contain what the merge result
+   should be, and run `git-commit` to commit the result.
+
+
 SEE ALSO
 --------
 gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1]
