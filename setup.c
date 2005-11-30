@@ -116,7 +116,7 @@ static const char *setup_git_directory_1(void)
 		if (validate_symref(path))
 			goto bad_dir_environ;
 		if (getenv(DB_ENVIRONMENT)) {
-			if (access(DB_ENVIRONMENT, X_OK))
+			if (access(getenv(DB_ENVIRONMENT), X_OK))
 				goto bad_dir_environ;
 		}
 		else {
