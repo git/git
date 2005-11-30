@@ -120,26 +120,36 @@ git-apply --index "$PATCHFILE" || {
 	O_OBJECT=`cd "$GIT_OBJECT_DIRECTORY" && pwd`
 	rm -fr .patch-merge-*
 
+	if git-apply -z --index-info "$PATCHFILE" \
+		>.patch-merge-index-info 2>/dev/null &&
+		GIT_INDEX_FILE=.patch-merge-tmp-index \
+		git-update-index -z --index-info <.patch-merge-index-info &&
+		GIT_INDEX_FILE=.patch-merge-tmp-index \
+		git-write-tree >.patch-merge-tmp-base &&
+		(
+			mkdir .patch-merge-tmp-dir &&
+			cd .patch-merge-tmp-dir &&
+			GIT_INDEX_FILE="../.patch-merge-tmp-index" \
+			GIT_OBJECT_DIRECTORY="$O_OBJECT" \
+			git-apply $binary --index
+		) <"$PATCHFILE"
+	then
+		echo Using index info to reconstruct a base tree...
+		mv .patch-merge-tmp-base .patch-merge-base
+		mv .patch-merge-tmp-index .patch-merge-index
+	else
 	(
 		N=10
 
-		# if the patch records the base tree...
-		sed -ne '
-			/^diff /q
-			/^applies-to: \([0-9a-f]*\)$/{
-				s//\1/p
-				q
-			}
-		' "$PATCHFILE"
-
-		# or hoping the patch is against our recent commits...
+		# Otherwise, try nearby trees that can be used to apply the
+		# patch.
 		git-rev-list --max-count=$N HEAD
 
 		# or hoping the patch is against known tags...
 		git-ls-remote --tags .
 	) |
-	while read base junk
-	do
+	    while read base junk
+	    do
 		# Try it if we have it as a tree.
 		git-cat-file tree "$base" >/dev/null 2>&1 || continue
 
@@ -155,7 +165,8 @@ git-apply --index "$PATCHFILE" || {
 			mv ../.patch-merge-tmp-index ../.patch-merge-index &&
 			echo "$base" >../.patch-merge-base
 		) <"$PATCHFILE"  2>/dev/null && break
-	done
+	    done
+	fi
 
 	test -f .patch-merge-index &&
 	his_tree=$(GIT_INDEX_FILE=.patch-merge-index git-write-tree) &&

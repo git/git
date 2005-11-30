@@ -33,7 +33,7 @@ do
 	-k)	keep_subject=-k ;;
 	-q)	query_apply=t ;;
 	-c)	continue="$2"; resume=f; shift ;;
-	-m)	fallback_3way=t ;;
+	-m)	fall_back_3way=t ;;
 	-*)	usage ;;
 	*)	break ;;
 	esac

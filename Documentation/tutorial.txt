@@ -898,9 +898,8 @@ file, which had no differences in the `mybranch` branch), and say:
 	fatal: Merge requires file-level merging
 	Nope.
 	...
-	merge: warning: conflicts during merge
-	ERROR: Merge conflict in hello.
-	fatal: merge program failed
+	Auto-merging hello 
+	CONFLICT (content): Merge conflict in hello 
 	Automatic merge failed/prevented; fix up by hand
 ----------------
 
@@ -942,10 +941,10 @@ environment, is `git show-branch`.
 
 ------------------------------------------------
 $ git show-branch master mybranch
-* [master] Merged "mybranch" changes.
+* [master] Merge work in mybranch
  ! [mybranch] Some work.
 --
-+  [master] Merged "mybranch" changes.
++  [master] Merge work in mybranch
 ++ [mybranch] Some work.
 ------------------------------------------------
 
@@ -998,10 +997,10 @@ looks like, or run `show-branch`, which tells you this.
 
 ------------------------------------------------
 $ git show-branch master mybranch
-! [master] Merged "mybranch" changes.
- * [mybranch] Merged "mybranch" changes.
+! [master] Merge work in mybranch
+ * [mybranch] Merge work in mybranch
 --
-++ [master] Merged "mybranch" changes.
+++ [master] Merge work in mybranch
 ------------------------------------------------
 
 

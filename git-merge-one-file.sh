@@ -79,11 +79,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	# We reset the index to the first branch, making
-	# git-diff-file useful
-	git-update-index --add --cacheinfo "$6" "$2" "$4"
-		git-checkout-index -u -f -- "$4" &&
-		merge "$4" "$orig" "$src2"
+	merge "$4" "$orig" "$src2"
 	ret=$?
 	rm -f -- "$orig" "$src2"
 

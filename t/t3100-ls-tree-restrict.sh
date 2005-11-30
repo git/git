@@ -54,8 +54,6 @@ test_expect_success \
      cat >expected <<\EOF &&
 100644 blob X	path0
 120000 blob X	path1
-040000 tree X	path2
-040000 tree X	path2/baz
 100644 blob X	path2/baz/b
 120000 blob X	path2/bazbo
 100644 blob X	path2/foo
@@ -70,12 +68,14 @@ EOF
      test_output'
 
 
+# it used to be path1 and then path0, but with pathspec semantics
+# they are shown in canonical order.
 test_expect_success \
     'ls-tree filtered with path1 path0' \
     'git-ls-tree $tree path1 path0 >current &&
      cat >expected <<\EOF &&
-120000 blob X	path1
 100644 blob X	path0
+120000 blob X	path1
 EOF
      test_output'
 
@@ -86,45 +86,34 @@ test_expect_success \
 EOF
      test_output'
 
+# It used to show path2 and its immediate children but
+# with pathspec semantics it shows only path2
 test_expect_success \
     'ls-tree filtered with path2' \
     'git-ls-tree $tree path2 >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2
+EOF
+     test_output'
+
+# ... and path2/ shows the children.
+test_expect_success \
+    'ls-tree filtered with path2/' \
+    'git-ls-tree $tree path2/ >current &&
+     cat >expected <<\EOF &&
 040000 tree X	path2/baz
 120000 blob X	path2/bazbo
 100644 blob X	path2/foo
 EOF
      test_output'
 
+# The same change -- exact match does not show children of
+# path2/baz
 test_expect_success \
     'ls-tree filtered with path2/baz' \
     'git-ls-tree $tree path2/baz >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2/baz
-100644 blob X	path2/baz/b
-EOF
-     test_output'
-
-test_expect_success \
-    'ls-tree filtered with path2' \
-    'git-ls-tree $tree path2 >current &&
-     cat >expected <<\EOF &&
-040000 tree X	path2
-040000 tree X	path2/baz
-120000 blob X	path2/bazbo
-100644 blob X	path2/foo
-EOF
-     test_output'
-
-test_expect_success \
-    'ls-tree filtered with path2/' \
-    'git-ls-tree $tree path2/ >current &&
-     cat >expected <<\EOF &&
-040000 tree X	path2
-040000 tree X	path2/baz
-120000 blob X	path2/bazbo
-100644 blob X	path2/foo
 EOF
      test_output'
 

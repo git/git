@@ -828,8 +828,6 @@ def processEntry(entry, branch1Name, branch2Name):
             if cacheOnly:
                 updateFile(False, sha, mode, path)
             else:
-                updateFileExt(aSha, aMode, path,
-                              updateCache=True, updateWd=False)
                 updateFileExt(sha, mode, path, updateCache=False, updateWd=True)
     else:
         die("ERROR: Fatal merge failure, shouldn't happen.")

@@ -1,9 +1,19 @@
 #!/bin/sh
 . git-sh-setup
 
+sq() {
+	perl -e '
+		for (@ARGV) {
+			s/'\''/'\'\\\\\'\''/g;
+			print " '\''$_'\''";
+		}
+		print "\n";
+	' "$@"
+}
+
 usage() {
     echo >&2 'usage: git bisect [start|bad|good|next|reset|visualize]
-git bisect start		reset bisect state and start bisection.
+git bisect start [<pathspec>]	reset bisect state and start bisection.
 git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
 git bisect next			find next bisection to test and check it out.
@@ -33,7 +43,6 @@ bisect_autostart() {
 }
 
 bisect_start() {
-        case "$#" in 0) ;; *) usage ;; esac
 	#
 	# Verify HEAD. If we were bisecting before this, reset to the
 	# top-of-line master first!
@@ -57,7 +66,11 @@ bisect_start() {
 	rm -f "$GIT_DIR/refs/heads/bisect"
 	rm -rf "$GIT_DIR/refs/bisect/"
 	mkdir "$GIT_DIR/refs/bisect"
-	echo "git-bisect start" >"$GIT_DIR/BISECT_LOG"
+	{
+	    echo -n "git-bisect start"
+	    sq "$@"
+	} >"$GIT_DIR/BISECT_LOG"
+	sq "$@" >"$GIT_DIR/BISECT_NAMES"
 }
 
 bisect_bad() {
@@ -121,7 +134,7 @@ bisect_next() {
 	bad=$(git-rev-parse --verify refs/bisect/bad) &&
 	good=$(git-rev-parse --sq --revs-only --not \
 		$(cd "$GIT_DIR" && ls refs/bisect/good-*)) &&
-	rev=$(eval "git-rev-list --bisect $good $bad") || exit
+	rev=$(eval "git-rev-list --bisect $good $bad -- $(cat $GIT_DIR/BISECT_NAMES)") || exit
 	if [ -z "$rev" ]; then
 	    echo "$bad was both good and bad"
 	    exit 1
@@ -131,7 +144,7 @@ bisect_next() {
 	    git-diff-tree --pretty $rev
 	    exit 0
 	fi
-	nr=$(eval "git-rev-list $rev $good" | wc -l) || exit
+	nr=$(eval "git-rev-list $rev $good -- $(cat $GIT_DIR/BISECT_NAMES)" | wc -l) || exit
 	echo "Bisecting: $nr revisions left to test after this"
 	echo "$rev" > "$GIT_DIR/refs/heads/new-bisect"
 	git checkout new-bisect || exit
@@ -142,7 +155,8 @@ bisect_next() {
 
 bisect_visualize() {
 	bisect_next_check fail
-	gitk bisect/bad --not `cd "$GIT_DIR/refs" && echo bisect/good-*`
+	not=`cd "$GIT_DIR/refs" && echo bisect/good-*`
+	eval gitk bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
 }
 
 bisect_reset() {
@@ -173,7 +187,8 @@ bisect_replay () {
 		test "$bisect" = "git-bisect" || continue
 		case "$command" in
 		start)
-			bisect_start
+			cmd="bisect_start $rev"
+			eval "$cmd"
 			;;
 		good)
 			echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
