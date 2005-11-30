@@ -12,7 +12,7 @@ COMMON_DIFF_OPTIONS_HELP;
 
 static struct diff_options diff_options;
 static int silent = 0;
-static int diff_unmerged_stage = -1;
+static int diff_unmerged_stage = 2;
 
 static void show_unmerge(const char *path)
 {
@@ -87,20 +87,6 @@ int main(int argc, const char **argv)
 	pathspec = get_pathspec(prefix, argv + 1);
 	entries = read_cache();
 
-	if (diff_unmerged_stage < 0) {
-		/* default to "ours" if unmerged index, otherwise 0 */
-		for (i = 0; i < entries; i++) {
-			struct cache_entry *ce = active_cache[i];
-			if (ce_stage(ce)) {
-				diff_unmerged_stage = 2;
-				break;
-			}
-		}
-		if (diff_unmerged_stage < 0)
-			diff_unmerged_stage = 0;
-	}
-
-
 	if (diff_setup_done(&diff_options) < 0)
 		usage(diff_files_usage);
 
@@ -122,8 +108,7 @@ int main(int argc, const char **argv)
 			continue;
 
 		if (ce_stage(ce)) {
-			if (!diff_unmerged_stage)
-				show_unmerge(ce->name);
+			show_unmerge(ce->name);
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
 
@@ -145,8 +130,6 @@ int main(int argc, const char **argv)
 			if (ce_stage(ce) != diff_unmerged_stage)
 				continue;
 		}
-		else if (diff_unmerged_stage)
-			continue;
 
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT && errno != ENOTDIR) {
