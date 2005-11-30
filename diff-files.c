@@ -7,12 +7,12 @@
 #include "diff.h"
 
 static const char diff_files_usage[] =
-"git-diff-files [-q] "
-"[<common diff options>] [<path>...]"
+"git-diff-files [-q] [-0/-1/2/3] [<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
 static struct diff_options diff_options;
 static int silent = 0;
+static int diff_unmerged_stage = -1;
 
 static void show_unmerge(const char *path)
 {
@@ -46,7 +46,21 @@ int main(int argc, const char **argv)
 			argc--;
 			break;
 		}
-		if (!strcmp(argv[1], "-q"))
+		if (!strcmp(argv[1], "-0"))
+			diff_unmerged_stage = 0;
+		else if (!strcmp(argv[1], "-1"))
+			diff_unmerged_stage = 1;
+		else if (!strcmp(argv[1], "-2"))
+			diff_unmerged_stage = 2;
+		else if (!strcmp(argv[1], "-3"))
+			diff_unmerged_stage = 3;
+		else if (!strcmp(argv[1], "--base"))
+			diff_unmerged_stage = 1;
+		else if (!strcmp(argv[1], "--ours"))
+			diff_unmerged_stage = 2;
+		else if (!strcmp(argv[1], "--theirs"))
+			diff_unmerged_stage = 3;
+		else if (!strcmp(argv[1], "-q"))
 			silent = 1;
 		else if (!strcmp(argv[1], "-r"))
 			; /* no-op */
@@ -73,6 +87,20 @@ int main(int argc, const char **argv)
 	pathspec = get_pathspec(prefix, argv + 1);
 	entries = read_cache();
 
+	if (diff_unmerged_stage < 0) {
+		/* default to "ours" if unmerged index, otherwise 0 */
+		for (i = 0; i < entries; i++) {
+			struct cache_entry *ce = active_cache[i];
+			if (ce_stage(ce)) {
+				diff_unmerged_stage = 2;
+				break;
+			}
+		}
+		if (diff_unmerged_stage < 0)
+			diff_unmerged_stage = 0;
+	}
+
+
 	if (diff_setup_done(&diff_options) < 0)
 		usage(diff_files_usage);
 
@@ -94,13 +122,31 @@ int main(int argc, const char **argv)
 			continue;
 
 		if (ce_stage(ce)) {
-			show_unmerge(ce->name);
-			while (i < entries &&
-			       !strcmp(ce->name, active_cache[i]->name))
+			if (!diff_unmerged_stage)
+				show_unmerge(ce->name);
+			while (i < entries) {
+				struct cache_entry *nce = active_cache[i];
+
+				if (strcmp(ce->name, nce->name))
+					break;
+				/* diff against the proper unmerged stage */
+				if (ce_stage(nce) == diff_unmerged_stage)
+					ce = nce;
 				i++;
-			i--; /* compensate for loop control increments */
-			continue;
+			}
+			/*
+			 * Compensate for loop update
+			 */
+			i--;
+			/*
+			 * Show the diff for the 'ce' if we found the one
+			 * from the desired stage.
+			 */
+			if (ce_stage(ce) != diff_unmerged_stage)
+				continue;
 		}
+		else if (diff_unmerged_stage)
+			continue;
 
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT && errno != ENOTDIR) {
