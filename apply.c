@@ -16,6 +16,9 @@
 //  --numstat does numeric diffstat, and doesn't actually apply
 //  --index-info shows the old and new index info for paths if available.
 //
+static const char *prefix;
+static int prefix_length = -1;
+
 static int allow_binary_replacement = 0;
 static int check_index = 0;
 static int write_index = 0;
@@ -1706,6 +1709,12 @@ static int use_patch(struct patch *p)
 			return 0;
 		x = x->next;
 	}
+	if (0 < prefix_length) {
+		int pathlen = strlen(pathname);
+		if (pathlen <= prefix_length ||
+		    memcmp(prefix, pathname, prefix_length))
+			return 0;
+	}
 	return 1;
 }
 
@@ -1845,6 +1854,15 @@ int main(int argc, char **argv)
 			line_termination = 0;
 			continue;
 		}
+
+		if (check_index && prefix_length < 0) {
+			prefix = setup_git_directory();
+			prefix_length = prefix ? strlen(prefix) : 0;
+			git_config(git_default_config);
+		}
+		if (0 < prefix_length)
+			arg = prefix_filename(prefix, prefix_length, arg);
+
 		fd = open(arg, O_RDONLY);
 		if (fd < 0)
 			usage(apply_usage);

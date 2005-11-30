@@ -111,6 +111,8 @@ int main(int argc, char **argv)
 	if (argc != 1)
 		usage("cat <signaturefile> | git-mktag");
 
+	setup_git_directory();
+
 	// Read the signature
 	size = 0;
 	for (;;) {

@@ -1237,6 +1237,7 @@ int main(int argc, char **argv)
 	int rc = 0;
 	int i;
 
+	setup_git_directory();
 	setup_ident();
 
 	remote = xmalloc(sizeof(*remote));

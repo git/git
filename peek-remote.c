@@ -27,6 +27,9 @@ int main(int argc, char **argv)
 	char *dest = NULL;
 	int fd[2];
 	pid_t pid;
+	int nongit = 0;
+
+	setup_git_directory_gently(&nongit);
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];

@@ -316,6 +316,8 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 	struct entry *entry;
 
+	setup_git_directory();
+
 	if (argc != 2 || get_sha1(argv[1], sha1))
 		usage("git-convert-objects <sha1>");
 

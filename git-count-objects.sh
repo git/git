@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-. git-sh-setup
+GIT_DIR=`git-rev-parse --git-dir` || exit $?
 
 dc </dev/null 2>/dev/null || {
 	# This is not a real DC at all -- it just knows how

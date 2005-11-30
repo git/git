@@ -431,6 +431,8 @@ int main(int argc, char **argv)
 {
 	int i, heads;
 
+	setup_git_directory();
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 

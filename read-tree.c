@@ -629,6 +629,8 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 	merge_fn_t fn = NULL;
 
+	setup_git_directory();
+
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (newfd < 0)
 		die("unable to create new cachefile");

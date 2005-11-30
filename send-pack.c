@@ -273,6 +273,7 @@ int main(int argc, char **argv)
 	int fd[2], ret;
 	pid_t pid;
 
+	setup_git_directory();
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
 		char *arg = *argv;

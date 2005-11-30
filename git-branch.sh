@@ -1,6 +1,11 @@
 #!/bin/sh
 
-. git-sh-setup
+GIT_DIR=`git-rev-parse --git-dir` || exit $?
+
+die () {
+    echo >&2 "$*"
+    exit 1
+}
 
 usage () {
     echo >&2 "usage: $(basename $0)"' [-d <branch>] | [[-f] <branch> [start-point]]
@@ -12,8 +17,7 @@ If two arguments, create a new branch <branchname> based off of <start-point>.
     exit 1
 }
 
-headref=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD |
-	sed -e 's|^refs/heads/||')
+headref=$(git-symbolic-ref HEAD | sed -e 's|^refs/heads/||')
 
 delete_branch () {
     option="$1"
@@ -114,4 +118,3 @@ then
 	fi
 fi
 git update-ref "refs/heads/$branchname" $rev
-

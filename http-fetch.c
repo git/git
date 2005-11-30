@@ -922,6 +922,8 @@ int main(int argc, char **argv)
 	int arg = 1;
 	int rc = 0;
 
+	setup_git_directory();
+
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
 			get_tree = 1;

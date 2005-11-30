@@ -271,6 +271,8 @@ int main(int argc, char **argv)
 	int fd[2];
 	pid_t pid;
 
+	setup_git_directory();
+
 	nr_heads = 0;
 	heads = NULL;
 	for (i = 1; i < argc; i++) {

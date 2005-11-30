@@ -86,9 +86,12 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 int main(int argc, char **argv)
 {
 	int i, funny;
-	int entries = read_cache();
+	int entries;
 	unsigned char sha1[20];
 	
+	setup_git_directory();
+
+	entries = read_cache();
 	if (argc == 2) {
 		if (!strcmp(argv[1], "--missing-ok"))
 			missing_ok = 1;
