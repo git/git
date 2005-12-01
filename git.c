@@ -283,16 +283,21 @@ int main(int argc, char **argv, char **envp)
 	len = strlen(git_command);
 	prepend_to_path(git_command, len);
 
-	strncat(&git_command[len], "/git-", sizeof(git_command) - len);
-	len += 5;
-	strncat(&git_command[len], argv[i], sizeof(git_command) - len);
-
-	if (access(git_command, X_OK))
-		usage(exec_path, "'%s' is not a git-command", argv[i]);
+	len += snprintf(git_command + len, sizeof(git_command) - len,
+			"/git-%s", argv[i]);
+	if (sizeof(git_command) <= len) {
+		fprintf(stderr, "git: command name given is too long (%d)\n", len);
+		exit(1);
+	}
 
 	/* execve() can only ever return if it fails */
 	execve(git_command, &argv[i], envp);
-	printf("Failed to run command '%s': %s\n", git_command, strerror(errno));
+
+	if (errno == ENOENT)
+		usage(exec_path, "'%s' is not a git-command", argv[i]);
+
+	fprintf(stderr, "Failed to run command '%s': %s\n",
+		git_command, strerror(errno));
 
 	return 1;
 }
