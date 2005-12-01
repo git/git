@@ -4,6 +4,11 @@
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
 -f, \--force::
+	When `git-fetch` is used with `<rbranch>:<lbranch>`
+	refspec, it refuses to update the local branch
+	`<lbranch>` unless the remote branch `<rbranch>` it
+	fetches is a descendant of `<lbranch>`.  This option
+	overrides that check.
 
 -t, \--tags::
 	By default, the git core utilities will not fetch and store
