@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+all:
+
 # Define MOZILLA_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
 # on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
