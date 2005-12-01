@@ -138,8 +138,6 @@ ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS) git$X
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
 
-GIT_LIST_TWEAK =
-
 # Set paths to tools early so that they can be used for version tests.
 ifndef SHELL_PATH
 	SHELL_PATH = /bin/sh
@@ -153,20 +151,6 @@ endif
 
 PYMODULES = \
 	gitMergeCommon.py
-
-ifdef WITH_OWN_SUBPROCESS_PY
-	PYMODULES += compat/subprocess.py
-else
-	ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
-		PYMODULES += compat/subprocess.py
-	endif
-endif
-
-ifdef WITH_SEND_EMAIL
-	SCRIPT_PERL += git-send-email.perl
-else
-	GIT_LIST_TWEAK += -e '/^send-email$$/d'
-endif
 
 LIB_FILE=libgit.a
 
@@ -255,6 +239,18 @@ ifneq (,$(findstring arm,$(uname_M)))
 endif
 
 -include config.mak
+
+ifdef WITH_OWN_SUBPROCESS_PY
+	PYMODULES += compat/subprocess.py
+else
+	ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
+		PYMODULES += compat/subprocess.py
+	endif
+endif
+
+ifdef WITH_SEND_EMAIL
+	SCRIPT_PERL += git-send-email.perl
+endif
 
 ifndef NO_CURL
 	ifdef CURLDIR
