@@ -12,11 +12,12 @@ static int line_termination = '\n';
 #define LS_RECURSIVE 1
 #define LS_TREE_ONLY 2
 #define LS_SHOW_TREES 4
+#define LS_NAME_ONLY 8
 static int ls_options = 0;
 const char **pathspec;
 
 static const char ls_tree_usage[] =
-	"git-ls-tree [-d] [-r] [-t] [-z] <tree-ish> [path...]";
+	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] <tree-ish> [path...]";
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
@@ -64,7 +65,8 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 	else if (ls_options & LS_TREE_ONLY)
 		return 0;
 
-	printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
+	if (!(ls_options & LS_NAME_ONLY))
+		printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
 	write_name_quoted(base, baselen, pathname, line_termination, stdout);
 	putchar(line_termination);
 	return retval;
@@ -92,6 +94,13 @@ int main(int argc, const char **argv)
 		case 't':
 			ls_options |= LS_SHOW_TREES;
 			break;
+		case '-':
+			if (!strcmp(argv[1]+2, "name-only") ||
+			    !strcmp(argv[1]+2, "name-status")) {
+				ls_options |= LS_NAME_ONLY;
+				break;
+			}
+			/* otherwise fallthru */
 		default:
 			usage(ls_tree_usage);
 		}
