@@ -61,6 +61,8 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 		}
 		type = "tree";
 	}
+	else if (ls_options & LS_TREE_ONLY)
+		return 0;
 
 	printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
 	write_name_quoted(base, baselen, pathname, line_termination, stdout);
@@ -95,6 +97,10 @@ int main(int argc, const char **argv)
 		}
 		argc--; argv++;
 	}
+	/* -d -r should imply -t, but -d by itself should not have to. */
+	if ( (LS_TREE_ONLY|LS_RECURSIVE) ==
+	    ((LS_TREE_ONLY|LS_RECURSIVE) & ls_options))
+		ls_options |= LS_SHOW_TREES;
 
 	if (argc < 2)
 		usage(ls_tree_usage);
