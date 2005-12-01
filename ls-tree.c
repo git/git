@@ -11,39 +11,53 @@
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
 #define LS_TREE_ONLY 2
+#define LS_SHOW_TREES 4
 static int ls_options = 0;
 const char **pathspec;
 
 static const char ls_tree_usage[] =
-	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
+	"git-ls-tree [-d] [-r] [-t] [-z] <tree-ish> [path...]";
+
+static int show_recursive(const char *base, int baselen, const char *pathname)
+{
+	const char **s;
+
+	if (ls_options & LS_RECURSIVE)
+		return 1;
+
+	s = pathspec;
+	if (!s)
+		return 0;
+
+	for (;;) {
+		const char *spec = *s++;
+		int len, speclen;
+
+		if (!spec)
+			return 0;
+		if (strncmp(base, spec, baselen))
+			continue;
+		len = strlen(pathname);
+		spec += baselen;
+		speclen = strlen(spec);
+		if (speclen <= len)
+			continue;
+		if (memcmp(pathname, spec, len))
+			continue;
+		return 1;
+	}
+}
 
 static int show_tree(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
 {
+	int retval = 0;
 	const char *type = "blob";
 
 	if (S_ISDIR(mode)) {
-		const char **s;
-		if (ls_options & LS_RECURSIVE)
-			return READ_TREE_RECURSIVE;
-		s = pathspec;
-		if (s) {
-			for (;;) {
-				const char *spec = *s++;
-				int len, speclen;
-
-				if (!spec)
-					break;
-				if (strncmp(base, spec, baselen))
-					continue;
-				len = strlen(pathname);
-				spec += baselen;
-				speclen = strlen(spec);
-				if (speclen <= len)
-					continue;
-				if (memcmp(pathname, spec, len))
-					continue;
-				return READ_TREE_RECURSIVE;
-			}
+		if (show_recursive(base, baselen, pathname)) {
+			retval = READ_TREE_RECURSIVE;
+			if (!(ls_options & LS_SHOW_TREES))
+				return retval;
 		}
 		type = "tree";
 	}
@@ -51,7 +65,7 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 	printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
 	write_name_quoted(base, baselen, pathname, line_termination, stdout);
 	putchar(line_termination);
-	return 0;
+	return retval;
 }
 
 int main(int argc, const char **argv)
@@ -72,6 +86,9 @@ int main(int argc, const char **argv)
 			break;
 		case 'd':
 			ls_options |= LS_TREE_ONLY;
+			break;
+		case 't':
+			ls_options |= LS_SHOW_TREES;
 			break;
 		default:
 			usage(ls_tree_usage);
