@@ -58,6 +58,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Modified in both, but differently.
 #
 "$1$2$3" | ".$2$3")
+
+	case ",$6,$7," in
+	*,120000,*)
+		echo "ERROR: $4: Not merging symbolic link changes."
+		exit 1
+		;;
+	esac
+
 	src2=`git-unpack-file $3`
 	case "$1" in
 	'')
