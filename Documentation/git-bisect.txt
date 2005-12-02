@@ -8,13 +8,13 @@ git-bisect - Find the change that introduced a bug
 
 SYNOPSIS
 --------
-'git bisect' start
-'git bisect' bad <rev>
-'git bisect' good <rev>
-'git bisect' reset [<branch>]
-'git bisect' visualize
-'git bisect' replay <logfile>
-'git bisect' log
+ 'git bisect' start
+ 'git bisect' bad <rev>
+ 'git bisect' good <rev>
+ 'git bisect' reset [<branch>]
+ 'git bisect' visualize
+ 'git bisect' replay <logfile>
+ 'git bisect' log
 
 DESCRIPTION
 -----------
