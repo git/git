@@ -21,6 +21,8 @@ all:
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
+# Define NO_SETENV if you don't have setenv in the C library.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -194,6 +196,7 @@ shellquote = '$(call shq,$(1))'
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
@@ -211,6 +214,9 @@ ifeq ($(uname_S),SunOS)
 	NEEDS_LIBICONV = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
+	ifeq ($(uname_R),5.8)
+		NO_SETENV = YesPlease
+	endif
 	INSTALL = ginstall
 	TAR = gtar
 	ALL_CFLAGS += -D__EXTENSIONS__
@@ -314,12 +320,16 @@ ifdef NEEDS_NSL
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_STRCASESTR
-	ALL_CFLAGS += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
-	LIB_OBJS += compat/strcasestr.o
+	COMPAT_CFLAGS += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
+	COMPAT_OBJS += compat/strcasestr.o
+endif
+ifdef NO_SETENV
+	COMPAT_CFLAGS += -Dsetenv=gitsetenv -DNO_SETENV=1
+	COMPAT_OBJS += compat/setenv.o
 endif
 ifdef NO_MMAP
-	ALL_CFLAGS += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
-	LIB_OBJS += compat/mmap.o
+	COMPAT_CFLAGS += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
+	COMPAT_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
 	ALL_CFLAGS += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
@@ -343,8 +353,8 @@ endif
 endif
 endif
 
-ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER))
-
+ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER)) $(COMPAT_CFLAGS)
+LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
@@ -353,10 +363,9 @@ all: $(ALL_PROGRAMS)
 all:
 	$(MAKE) -C templates
 
-# Only use $(CFLAGS). We don't need anything else.
-git$(X): git.c Makefile
+git$(X): git.c $(COMPAT_OBJS) Makefile
 	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $< -o $@
+		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(filter %.o,$^)
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@

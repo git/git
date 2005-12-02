@@ -13,6 +13,10 @@
 # define PATH_MAX 4096
 #endif
 
+#ifdef NO_SETENV
+extern int gitsetenv(char *name, char *value, int overwrite);
+#endif
+
 static const char git_usage[] =
 	"Usage: git [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ ARGS ]";
 
