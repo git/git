@@ -79,7 +79,13 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	merge "$4" "$orig" "$src2"
+	# Create the working tree file, with the correct permission bits.
+	# we can not rely on the fact that our tree has the path, because
+	# we allow the merge to be done in an unchecked-out working tree.
+	rm -f "$4" &&
+		git-cat-file blob "$2" >"$4" &&
+		case "$6" in *7??) chmod +x "$4" ;; esac &&
+		merge "$4" "$orig" "$src2"
 	ret=$?
 	rm -f -- "$orig" "$src2"
 
