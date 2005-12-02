@@ -61,6 +61,29 @@ EOF
      test_output'
 
 test_expect_success \
+    'ls-tree recursive with -t' \
+    'git-ls-tree -r -t $tree >current &&
+     cat >expected <<\EOF &&
+100644 blob X	path0
+120000 blob X	path1
+040000 tree X	path2
+040000 tree X	path2/baz
+100644 blob X	path2/baz/b
+120000 blob X	path2/bazbo
+100644 blob X	path2/foo
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree recursive with -d' \
+    'git-ls-tree -r -d $tree >current &&
+     cat >expected <<\EOF &&
+040000 tree X	path2
+040000 tree X	path2/baz
+EOF
+     test_output'
+
+test_expect_success \
     'ls-tree filtered with path' \
     'git-ls-tree $tree path >current &&
      cat >expected <<\EOF &&
@@ -114,6 +137,21 @@ test_expect_success \
     'git-ls-tree $tree path2/baz >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2/baz
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree filtered with path2/bak' \
+    'git-ls-tree $tree path2/bak >current &&
+     cat >expected <<\EOF &&
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree -t filtered with path2/bak' \
+    'git-ls-tree -t $tree path2/bak >current &&
+     cat >expected <<\EOF &&
+040000 tree X	path2
 EOF
      test_output'
 
