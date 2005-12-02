@@ -108,10 +108,12 @@ When there are conflicts, these things happen:
 2. Cleanly merged paths are updated both in the index file and
    in your working tree.
 
-3. For conflicting paths, the index file records the version
-   from `HEAD`. The working tree files have the result of
-   "merge" program; i.e. 3-way merge result with familiar
-   conflict markers `<<< === >>>`.
+3. For conflicting paths, the index file records up to three
+   versions; stage1 stores the version from the common ancestor,
+   stage2 from `HEAD`, and stage3 from the remote branch (you
+   can inspect the stages with `git-ls-files -u`).  The working
+   tree files have the result of "merge" program; i.e. 3-way
+   merge result with familiar conflict markers `<<< === >>>`.
 
 4. No other changes are done.  In particular, the local
    modifications you had before you started merge will stay the
