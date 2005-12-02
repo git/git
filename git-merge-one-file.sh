@@ -26,7 +26,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 	if test -f "$4"; then
 		rm -f -- "$4" &&
-		rmdir -p "$(expr "$4" : '\(.*\)/')" 2>/dev/null
+		rmdir -p "$(expr "$4" : '\(.*\)/')" 2>/dev/null || :
 	fi &&
 		exec git-update-index --remove -- "$4"
 	;;
