@@ -28,11 +28,14 @@ will be in unmerged state when "git-read-tree" returns.
 OPTIONS
 -------
 -m::
-	Perform a merge, not just a read.
+	Perform a merge, not just a read.  The command will
+	refuse to run if your index file has unmerged entries,
+	indicating that you have not finished previous merge you
+	started.
 
 --reset::
-
-        Same as -m except that unmerged entries will be silently ignored.
+        Same as -m, except that unmerged entries are discarded
+        instead of failing.
 
 -u::
 	After a successful merge, update the files in the work
@@ -46,7 +49,6 @@ OPTIONS
 	tree and is meant to be used when creating a merge of
 	trees that are not directly related to the current
 	working tree status into a temporary index file.
-
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
