@@ -133,6 +133,19 @@ test_expect_success () {
 	fi
 }
 
+test_expect_code () {
+	test "$#" = 3 ||
+	error "bug in the test script: not 3 parameters to test-expect-code"
+	say >&3 "expecting exit code $1: $3"
+	test_run_ "$3"
+	if [ "$?" = 0 -a "$eval_ret" = "$1" ]
+	then
+		test_ok_ "$2"
+	else
+		test_failure_ "$@"
+	fi
+}
+
 test_done () {
 	trap - exit
 	case "$test_failure" in
