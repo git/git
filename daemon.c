@@ -82,9 +82,63 @@ static void loginfo(const char *err, ...)
 	va_end(params);
 }
 
+static int avoid_alias(char *p)
+{
+	int sl, ndot;
+
+	/* 
+	 * This resurrects the belts and suspenders paranoia check by HPA
+	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
+	 * does not do getcwd() based path canonicalizations.
+	 *
+	 * sl becomes true immediately after seeing '/' and continues to
+	 * be true as long as dots continue after that without intervening
+	 * non-dot character.
+	 */
+	if (!p || (*p != '/' && *p != '~'))
+		return -1;
+	sl = 1; ndot = 0;
+	p++;
+
+	while (1) {
+		char ch = *p++;
+		if (sl) {
+			if (ch == '.')
+				ndot++;
+			else if (ch == '/') {
+				if (ndot < 3)
+					/* reject //, /./ and /../ */
+					return -1;
+				ndot = 0;
+			}
+			else if (ch == 0) {
+				if (0 < ndot && ndot < 3)
+					/* reject /.$ and /..$ */
+					return -1;
+				return 0;
+			}
+			else
+				sl = ndot = 0;
+		}
+		else if (ch == 0)
+			return 0;
+		else if (ch == '/') {
+			sl = 1;
+			ndot = 0;
+		}
+	}
+}
+
 static char *path_ok(char *dir)
 {
-	char *path = enter_repo(dir, strict_paths);
+	char *path;
+
+	if (avoid_alias(dir)) {
+		logerror("'%s': aliased", dir);
+		return NULL;
+	}
+
+	path = enter_repo(dir, strict_paths);
 
 	if (!path) {
 		logerror("'%s': unable to chdir or not a git archive", dir);
@@ -96,9 +150,11 @@ static char *path_ok(char *dir)
 		int pathlen = strlen(path);
 
 		/* The validation is done on the paths after enter_repo
-		 * canonicalization, so whitelist should be written in
-		 * terms of real pathnames (i.e. after ~user is expanded
-		 * and symlinks resolved).
+		 * appends optional {.git,.git/.git} and friends, but 
+		 * it does not use getcwd().  So if your /pub is
+		 * a symlink to /mnt/pub, you can whitelist /pub and
+		 * do not have to say /mnt/pub.
+		 * Do not say /pub/.
 		 */
 		for ( pp = ok_paths ; *pp ; pp++ ) {
 			int len = strlen(*pp);
