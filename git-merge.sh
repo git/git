@@ -273,7 +273,8 @@ fi
 case "$best_strategy" in
 '')
 	restorestate
-	die "No merge strategy handled the merge."
+	echo >&2 "No merge strategy handled the merge."
+	exit 2
 	;;
 "$wt_strategy")
 	# We already have its result in the working tree.
