@@ -14,7 +14,7 @@
 #endif
 
 #ifdef NO_SETENV
-extern int gitsetenv(char *name, char *value, int overwrite);
+extern int gitsetenv(const char *, const char *, int);
 #endif
 
 static const char git_usage[] =
@@ -192,7 +192,6 @@ static void prepend_to_path(const char *dir, int len)
 	path_len = len + strlen(old_path) + 1;
 
 	path = malloc(path_len + 1);
-	path[path_len + 1] = '\0';
 
 	memcpy(path, dir, len);
 	path[len] = ':';
