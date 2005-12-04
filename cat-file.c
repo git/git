@@ -11,27 +11,44 @@ int main(int argc, char **argv)
 	char type[20];
 	void *buf;
 	unsigned long size;
+	int opt;
 
 	setup_git_directory();
 	if (argc != 3 || get_sha1(argv[2], sha1))
-		usage("git-cat-file [-t | -s | <type>] <sha1>");
+		usage("git-cat-file [-t|-s|-e|<type>] <sha1>");
 
-	if (!strcmp("-t", argv[1]) || !strcmp("-s", argv[1])) {
-		if (!sha1_object_info(sha1, type,
-				      argv[1][1] == 's' ? &size : NULL)) {
-			switch (argv[1][1]) {
-			case 't':
-				printf("%s\n", type);
-				break;
-			case 's':
-				printf("%lu\n", size);
-				break;
-			}
+	opt = 0;
+	if ( argv[1][0] == '-' ) {
+		opt = argv[1][1];
+		if ( !opt || argv[1][2] )
+			opt = -1; /* Not a single character option */
+	}
+
+	buf = NULL;
+	switch (opt) {
+	case 't':
+		if (!sha1_object_info(sha1, type, NULL)) {
+			printf("%s\n", type);
 			return 0;
 		}
-		buf = NULL;
-	} else {
+		break;
+
+	case 's':
+		if (!sha1_object_info(sha1, type, &size)) {
+			printf("%lu\n", size);
+			return 0;
+		}
+		break;
+
+	case 'e':
+		return !has_sha1_file(sha1);
+
+	case 0:
 		buf = read_object_with_reference(sha1, argv[1], &size, NULL);
+		break;
+
+	default:
+		die("git-cat-file: unknown option: %s\n", argv[1]);
 	}
 
 	if (!buf)

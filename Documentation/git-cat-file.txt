@@ -8,7 +8,7 @@ git-cat-file - Provide content or type information for repository objects
 
 SYNOPSIS
 --------
-'git-cat-file' (-t | -s | <type>) <object>
+'git-cat-file' (-t | -s | -e | <type>) <object>
 
 DESCRIPTION
 -----------
@@ -29,6 +29,10 @@ OPTIONS
 	Instead of the content, show the object size identified by
 	<object>.
 
+-e::
+	Suppress all output; instead exit with zero status if <object>
+	exists and is a valid object.
+
 <type>::
 	Typically this matches the real type of <object> but asking
 	for a type that can trivially be dereferenced from the given
@@ -39,8 +43,11 @@ OPTIONS
 
 OUTPUT
 ------
-If '-t' is specified, one of the <type>.  If '-s' is specified,
-the size of the <object> in bytes.
+If '-t' is specified, one of the <type>.
+
+If '-s' is specified, the size of the <object> in bytes.
+
+If '-e' is specified, no output.
 
 Otherwise the raw (though uncompressed) contents of the <object> will
 be returned.
