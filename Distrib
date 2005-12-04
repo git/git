@@ -20,7 +20,9 @@ D=$G/debian
 
 set -x
 
+mkdir -p $G/RPMS/i386 $G/RPMS/SRPMS
+
 ln $HOME/debian/git-*_$V[-.]* $D/.
 ln $HOME/debian/git-$V.tar.gz $G/.
-ln $HOME/rpms/RPMS/i386/git*-$V-* $G/.
-ln $HOME/rpms/SRPMS/git-$V-* $G/.
+ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/.
+ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/.

@@ -116,16 +116,20 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* merge-recursive needs to register conflicting paths as higher
+  stage entries in the index.  For that, it first needs to
+  construct three trees whose paths are already renamed, and
+  call 3-way read-tree.
+
 * Binary package split.  Plan laid out and discussion mostly
   done. [RPM side done; Debian side delegated]
 
-* User-relative paths by Andreas Ericsson. [STILL BREWING BUT
-  ALMOST DONE]
+* User-relative paths by Andreas Ericsson. [DONE]
 
 * Accessing configuration variables from C and from scripts by
-  Johannes [STILL BREWING BUT ALMOST DONE].
+  Johannes [DONE].
 
-* Proxing git:// connection by Paul Collins. [Need to ping]
+* Proxing git:// connection by Paul Collins. [DONE]
 
 * Maybe look at Cogito and see if I can help Pasky to adjust to
   the later core features?
@@ -154,21 +158,21 @@ Technical (milder)
 * Make rebase restartable; instead of skipping what cannot be
   automatically forward ported, leave the conflicts in the work
   tree, have the user resolve it, and then restart from where it
-  left off [mechanism DONE; in pu].
+  left off [DONE].
 
 * Output full path in the "git-rev-list --objects" output, not
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
-* Updated git-changes-script Jeff Garzik needs [Inquiry for
-  external spec sent out with a quick hack.  Will know if that
-  is what he needs hopefully soon].
+* Updated git-changes-script Jeff Garzik needs [Not needed --
+  pull into local or borrow temporarily with alternate object
+  directories environment variable and use normal tools].
 
 * Customizable init-db.  Personally I think template mechanism
   is good enough.  Otherwise, maybe add hooks/post-init-db.
 
 * Make sure we do reasonable thing on binary files even in
-  cherry-pick and rebase. [mechanism DONE; rebase in pu]
+  cherry-pick and rebase [DONE].
 
 * Binary diff detection fails if locale set to non English; even
   GNU diff 2.8.1 and 2.8.7 in C locale say different things.  At
@@ -205,16 +209,8 @@ Technical (trivial)
   ko-rc are in refs/tags/).
 
 * We would want test scripts for the relative directory path
-  stuff Linus has been working on.  So far, the following
-  commands should be usable with relative directory paths:
-
-    git-update-index
-    git-ls-files
-    git-diff-files
-    git-diff-index
-    git-diff-tree
-    git-rev-list
-    git-rev-parse
+  stuff Linus has been working on.  Most of the C-level
+  commands should be usable with relative directory paths.
 
 * In a freashly created empty repository, `git fetch foo:bar`
   works OK, but `git checkout bar` afterwards does not (missing
