@@ -147,8 +147,10 @@ extern char *get_graft_file(void);
 #define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
 extern const char **get_pathspec(const char *prefix, const char **pathspec);
+extern const char *setup_git_directory_gently(int *);
 extern const char *setup_git_directory(void);
 extern const char *prefix_path(const char *prefix, int len, const char *path);
+extern const char *prefix_filename(const char *prefix, int len, const char *path);
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
@@ -181,6 +183,10 @@ extern void rollback_index_file(struct cache_file *);
 extern int trust_executable_bit;
 extern int only_use_symrefs;
 extern int diff_rename_limit_default;
+
+#define GIT_REPO_VERSION 0
+extern int repository_format_version;
+extern int check_repository_format(void);
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
@@ -383,15 +389,20 @@ extern int gitfakemunmap(void *start, size_t length);
 
 typedef int (*config_fn_t)(const char *, const char *);
 extern int git_default_config(const char *, const char *);
+extern int git_config_from_file(config_fn_t fn, const char *);
 extern int git_config(config_fn_t fn);
 extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
 extern int git_config_set(const char *, const char *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
+extern int check_repository_format_version(const char *var, const char *value);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
+
+#define MAX_ENCODING_LENGTH 64
+extern char git_commit_encoding[MAX_ENCODING_LENGTH];
 
 /* Sane ctype - no locale, and works with signed chars */
 #undef isspace

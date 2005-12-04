@@ -121,6 +121,9 @@ int main(int argc, char **argv)
 
 	prog = getenv(COUNTERPART_ENV_NAME);
 	if (!prog) prog = COUNTERPART_PROGRAM_NAME;
+
+	setup_git_directory();
+
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 'w')
 			arg++;

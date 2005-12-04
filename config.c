@@ -11,6 +11,7 @@
 #define MAXNAME (256)
 
 static FILE *config_file;
+static const char *config_file_name;
 static int config_linenr;
 static int get_next_char(void)
 {
@@ -186,7 +187,7 @@ static int git_parse_file(config_fn_t fn)
 		if (get_value(fn, var, baselen+1) < 0)
 			break;
 	}
-	die("bad config file line %d", config_linenr);
+	die("bad config file line %d in %s", config_linenr, config_file_name);
 }
 
 int git_config_int(const char *name, const char *value)
@@ -197,7 +198,7 @@ int git_config_int(const char *name, const char *value)
 		if (!*end)
 			return val;
 	}
-	die("bad config value for '%s'", name);
+	die("bad config value for '%s' in %s", name, config_file_name);
 }
 
 int git_config_bool(const char *name, const char *value)
@@ -236,23 +237,35 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "i18n.commitencoding")) {
+		strncpy(git_commit_encoding, value, sizeof(git_commit_encoding));
+		return 0;
+	}
+
 	/* Add other config variables here.. */
 	return 0;
 }
 
-int git_config(config_fn_t fn)
+int git_config_from_file(config_fn_t fn, const char *filename)
 {
 	int ret;
-	FILE *f = fopen(git_path("config"), "r");
+	FILE *f = fopen(filename, "r");
 
 	ret = -1;
 	if (f) {
 		config_file = f;
+		config_file_name = filename;
 		config_linenr = 1;
 		ret = git_parse_file(fn);
 		fclose(f);
+		config_file_name = NULL;
 	}
 	return ret;
+}
+
+int git_config(config_fn_t fn)
+{
+	return git_config_from_file(fn, git_path("config"));
 }
 
 /*

@@ -91,6 +91,8 @@ int main(int argc, char **argv)
 	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
 		usage(commit_tree_usage);
 
+	setup_git_directory();
+
 	check_valid(tree_sha1, "tree");
 	for (i = 2; i < argc; i += 2) {
 		char *a, *b;

@@ -59,24 +59,16 @@ test_expect_success \
 EOF
      test_output'
 
+# Recursive does not show tree nodes anymore...
 test_expect_success \
     'ls-tree recursive' \
     'git-ls-tree -r $tree >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 100644 blob X	2.txt
-040000 tree X	path0
-040000 tree X	path0/a
-040000 tree X	path0/a/b
-040000 tree X	path0/a/b/c
 100644 blob X	path0/a/b/c/1.txt
-040000 tree X	path1
-040000 tree X	path1/b
-040000 tree X	path1/b/c
 100644 blob X	path1/b/c/1.txt
-040000 tree X	path2
 100644 blob X	path2/1.txt
-040000 tree X	path3
 100644 blob X	path3/1.txt
 100644 blob X	path3/2.txt
 EOF
@@ -110,41 +102,27 @@ test_expect_success \
 EOF
      test_output'
 
+# I am not so sure about this one after ls-tree doing pathspec match.
+# Having both path0/a and path0/a/b/c makes path0/a redundant, and
+# it behaves as if path0/a/b/c, path1/b/c, path2 and path3 are specified.
 test_expect_success \
     'ls-tree filter directories' \
     'git-ls-tree $tree path3 path2 path0/a/b/c path1/b/c path0/a >current &&
      cat >expected <<\EOF &&
-040000 tree X	path3
-100644 blob X	path3/1.txt
-100644 blob X	path3/2.txt
-040000 tree X	path2
-100644 blob X	path2/1.txt
 040000 tree X	path0/a/b/c
-100644 blob X	path0/a/b/c/1.txt
 040000 tree X	path1/b/c
-100644 blob X	path1/b/c/1.txt
-040000 tree X	path0/a
-040000 tree X	path0/a/b
+040000 tree X	path2
+040000 tree X	path3
 EOF
      test_output'
 
+# Again, duplicates are filtered away so this is equivalent to
+# having 1.txt and path3
 test_expect_success \
     'ls-tree filter odd names' \
     'git-ls-tree $tree 1.txt /1.txt //1.txt path3/1.txt /path3/1.txt //path3//1.txt path3 /path3/ path3// >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
-100644 blob X	1.txt
-100644 blob X	1.txt
-100644 blob X	path3/1.txt
-100644 blob X	path3/1.txt
-100644 blob X	path3/1.txt
-040000 tree X	path3
-100644 blob X	path3/1.txt
-100644 blob X	path3/2.txt
-040000 tree X	path3
-100644 blob X	path3/1.txt
-100644 blob X	path3/2.txt
-040000 tree X	path3
 100644 blob X	path3/1.txt
 100644 blob X	path3/2.txt
 EOF

@@ -5,6 +5,10 @@
 
 . git-sh-setup
 
+# Force diff to run in C locale.
+LANG=C LC_ALL=C
+export LANG LC_ALL
+
 usage () {
     echo >&2 "usage: $0"' [-n] [-o dir | --stdout] [--keep-subject] [--mbox]
     [--check] [--signoff] [-<diff options>...]
@@ -202,7 +206,7 @@ process_one () {
 	    ;;
 	esac
 
-	eval "$(LANG=C LC_ALL=C sed -ne "$whosepatchScript" $commsg)"
+	eval "$(sed -ne "$whosepatchScript" $commsg)"
 	test "$author,$au" = ",$me" || {
 		mailScript="$mailScript"'
 	a\
@@ -238,9 +242,8 @@ Date: '"$ad"
 	echo
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
-	git-cat-file commit "$commit^" | sed -e 's/^tree /applies-to: /' -e q
 	git-diff-tree -p $diff_opts "$commit"
-	echo "---"
+	echo "-- "
 	echo "@@GIT_VERSION@@"
 
 	case "$mbox" in
@@ -268,7 +271,7 @@ do
     file=`printf '%04d-%stxt' $i "$title"`
     if test '' = "$stdout"
     then
-	    echo "* $file"
+	    echo "$file"
 	    process_one >"$outdir$file"
 	    if test t = "$check"
 	    then
@@ -279,7 +282,7 @@ do
 		:
 	    fi
     else
-	    echo >&2 "* $file"
+	    echo >&2 "$file"
 	    process_one
     fi
     i=`expr "$i" + 1`

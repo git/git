@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <iconv.h>
+#include "cache.h"
 
 #ifdef NO_STRCASESTR
 extern char *gitstrcasestr(const char *haystack, const char *needle);
@@ -16,7 +17,7 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 static FILE *cmitmsg, *patchfile;
 
 static int keep_subject = 0;
-static int metainfo_utf8 = 0;
+static char *metainfo_charset = NULL;
 static char line[1000];
 static char date[1000];
 static char name[1000];
@@ -441,29 +442,38 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 
 static void convert_to_utf8(char *line, char *charset)
 {
-	if (*charset) {
-		char *in, *out;
-		size_t insize, outsize, nrc;
-		char outbuf[4096]; /* cheat */
-		iconv_t conv = iconv_open("utf-8", charset);
+	char *in, *out;
+	size_t insize, outsize, nrc;
+	char outbuf[4096]; /* cheat */
+	static char latin_one[] = "latin-1";
+	char *input_charset = *charset ? charset : latin_one;
+	iconv_t conv = iconv_open(metainfo_charset, input_charset);
 
-		if (conv == (iconv_t) -1) {
-			fprintf(stderr, "cannot convert from %s to utf-8\n",
-				charset);
+	if (conv == (iconv_t) -1) {
+		static int warned_latin1_once = 0;
+		if (input_charset != latin_one) {
+			fprintf(stderr, "cannot convert from %s to %s\n",
+				input_charset, metainfo_charset);
 			*charset = 0;
-			return;
 		}
-		in = line;
-		insize = strlen(in);
-		out = outbuf;
-		outsize = sizeof(outbuf);
-		nrc = iconv(conv, &in, &insize, &out, &outsize);
-		iconv_close(conv);
-		if (nrc == (size_t) -1)
-			return;
-		*out = 0;
-		strcpy(line, outbuf);
+		else if (!warned_latin1_once) {
+			warned_latin1_once = 1;
+			fprintf(stderr, "tried to convert from %s to %s, "
+				"but your iconv does not work with it.\n",
+				input_charset, metainfo_charset);
+		}
+		return;
 	}
+	in = line;
+	insize = strlen(in);
+	out = outbuf;
+	outsize = sizeof(outbuf);
+	nrc = iconv(conv, &in, &insize, &out, &outsize);
+	iconv_close(conv);
+	if (nrc == (size_t) -1)
+		return;
+	*out = 0;
+	strcpy(line, outbuf);
 }
 
 static void decode_header_bq(char *it)
@@ -511,7 +521,7 @@ static void decode_header_bq(char *it)
 		}
 		if (sz < 0)
 			return;
-		if (metainfo_utf8)
+		if (metainfo_charset)
 			convert_to_utf8(piecebuf, charset_q);
 		strcpy(out, piecebuf);
 		out += strlen(out);
@@ -590,7 +600,7 @@ static int handle_commit_msg(void)
 		 * normalize the log message to UTF-8.
 		 */
 		decode_transfer_encoding(line);
-		if (metainfo_utf8)
+		if (metainfo_charset)
 			convert_to_utf8(line, charset);
 		fputs(line, cmitmsg);
 	} while (fgets(line, sizeof(line), stdin) != NULL);
@@ -707,27 +717,29 @@ static void handle_body(void)
 }
 
 static const char mailinfo_usage[] =
-	"git-mailinfo [-k] [-u] msg patch <mail >info";
-
-static void usage(void) {
-	fprintf(stderr, "%s\n", mailinfo_usage);
-	exit(1);
-}
+	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
 
 int main(int argc, char **argv)
 {
+	/* NEEDSWORK: might want to do the optional .git/ directory
+	 * discovery
+	 */
+	git_config(git_default_config);
+
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
-			metainfo_utf8 = 1;
+			metainfo_charset = git_commit_encoding;
+		else if (!strncmp(argv[1], "--encoding=", 11))
+			metainfo_charset = argv[1] + 11;
 		else
-			usage();
+			usage(mailinfo_usage);
 		argc--; argv++;
 	}
 
 	if (argc != 3)
-		usage();
+		usage(mailinfo_usage);
 	cmitmsg = fopen(argv[1], "w");
 	if (!cmitmsg) {
 		perror(argv[1]);

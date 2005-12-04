@@ -26,7 +26,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 	if test -f "$4"; then
 		rm -f -- "$4" &&
-		rmdir -p "$(expr "$4" : '\(.*\)/')" 2>/dev/null
+		rmdir -p "$(expr "$4" : '\(.*\)/')" 2>/dev/null || :
 	fi &&
 		exec git-update-index --remove -- "$4"
 	;;
@@ -58,6 +58,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Modified in both, but differently.
 #
 "$1$2$3" | ".$2$3")
+
+	case ",$6,$7," in
+	*,120000,*)
+		echo "ERROR: $4: Not merging symbolic link changes."
+		exit 1
+		;;
+	esac
+
 	src2=`git-unpack-file $3`
 	case "$1" in
 	'')
@@ -79,10 +87,12 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	# We reset the index to the first branch, making
-	# git-diff-file useful
-	git-update-index --add --cacheinfo "$6" "$2" "$4"
-		git-checkout-index -u -f -- "$4" &&
+	# Create the working tree file, with the correct permission bits.
+	# we can not rely on the fact that our tree has the path, because
+	# we allow the merge to be done in an unchecked-out working tree.
+	rm -f "$4" &&
+		git-cat-file blob "$2" >"$4" &&
+		case "$6" in *7??) chmod +x "$4" ;; esac &&
 		merge "$4" "$orig" "$src2"
 	ret=$?
 	rm -f -- "$orig" "$src2"

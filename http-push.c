@@ -784,7 +784,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 					strtol(ctx->cdata + 7, NULL, 10);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
 			if (!strncmp(ctx->cdata, "opaquelocktoken:", 16)) {
-				lock->token = xmalloc(strlen(ctx->cdata - 15));
+				lock->token = xmalloc(strlen(ctx->cdata) - 15);
 				strcpy(lock->token, ctx->cdata + 16);
 			}
 		}
@@ -1008,9 +1008,7 @@ static int unlock_remote(struct active_lock *lock)
 	if (lock->owner != NULL)
 		free(lock->owner);
 	free(lock->url);
-/* Freeing the token causes a segfault...
 	free(lock->token);
-*/
 	free(lock);
 
 	return rc;
@@ -1239,6 +1237,7 @@ int main(int argc, char **argv)
 	int rc = 0;
 	int i;
 
+	setup_git_directory();
 	setup_ident();
 
 	remote = xmalloc(sizeof(*remote));
@@ -1272,6 +1271,9 @@ int main(int argc, char **argv)
 		nr_refspec = argc - i;
 		break;
 	}
+
+	if (!remote->url)
+		usage(http_push_usage);
 
 	memset(remote_dir_exists, 0, 256);
 

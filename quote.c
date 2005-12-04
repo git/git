@@ -112,7 +112,8 @@ char *sq_dequote(char *arg)
  *     but not enclosed in double-quote pair.  Return value is undefined.
  */
 
-int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
+static int quote_c_style_counted(const char *name, int namelen,
+				 char *outbuf, FILE *outfp, int no_dq)
 {
 #undef EMIT
 #define EMIT(c) \
@@ -125,7 +126,7 @@ int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
 
 	if (!no_dq)
 		EMIT('"');
-	for (sp = name; (ch = *sp++); ) {
+	for (sp = name; (ch = *sp++) && (sp - name) <= namelen; ) {
 
 		if ((ch < ' ') || (ch == '"') || (ch == '\\') ||
 		    (ch == 0177)) {
@@ -160,6 +161,12 @@ int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
 		*outbuf = 0;
 
 	return needquote ? count : 0;
+}
+
+int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
+{
+	int cnt = strlen(name);
+	return quote_c_style_counted(name, cnt, outbuf, outfp, no_dq);
 }
 
 /*
@@ -227,28 +234,30 @@ char *unquote_c_style(const char *quoted, const char **endp)
 	}
 }
 
-void write_name_quoted(const char *prefix, const char *name,
-		       int quote, FILE *out)
+void write_name_quoted(const char *prefix, int prefix_len,
+		       const char *name, int quote, FILE *out)
 {
 	int needquote;
 
 	if (!quote) {
 	no_quote:
-		if (prefix && prefix[0])
-			fputs(prefix, out);
+		if (prefix_len)
+			fprintf(out, "%.*s", prefix_len, prefix);
 		fputs(name, out);
 		return;
 	}
 
 	needquote = 0;
-	if (prefix && prefix[0])
-		needquote = quote_c_style(prefix, NULL, NULL, 0);
+	if (prefix_len)
+		needquote = quote_c_style_counted(prefix, prefix_len,
+						  NULL, NULL, 0);
 	if (!needquote)
 		needquote = quote_c_style(name, NULL, NULL, 0);
 	if (needquote) {
 		fputc('"', out);
-		if (prefix && prefix[0])
-			quote_c_style(prefix, NULL, out, 1);
+		if (prefix_len)
+			quote_c_style_counted(prefix, prefix_len,
+					      NULL, out, 1);
 		quote_c_style(name, NULL, out, 1);
 		fputc('"', out);
 	}

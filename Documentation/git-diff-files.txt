@@ -21,6 +21,15 @@ OPTIONS
 -------
 include::diff-options.txt[]
 
+-1 -2 -3 or --base --ours --theirs, and -0::
+	Diff against the "base" version, "our branch" or "their
+	branch" respectively.  With these options, diffs for
+	merged entries are not shown.
++
+The default is to diff against our branch (-2) and the 
+cleanly resolved paths.  The option -0 can be given to
+omit diff output for unmerged entries and just show "Unmerged".
+
 -q::
 	Remain silent even on nonexisting files
 

@@ -73,7 +73,7 @@ while
 	*,-n) no_checkout=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
-          local_shared=yes ;;
+          local_shared=yes; use_local=yes ;;
 	*,-q|*,--quiet) quiet=-q ;;
 	1,-u|1,--upload-pack) usage ;;
 	*,-u|*,--upload-pack)

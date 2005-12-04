@@ -236,6 +236,8 @@ int main(int argc, char **argv)
 	struct commit *rev1, *rev2;
 	unsigned char rev1key[20], rev2key[20];
 
+	setup_git_directory();
+
 	while (1 < argc && argv[1][0] == '-') {
 		char *arg = argv[1];
 		if (!strcmp(arg, "-a") || !strcmp(arg, "--all"))

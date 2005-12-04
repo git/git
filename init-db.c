@@ -132,6 +132,23 @@ static void copy_templates(const char *git_dir, int len, char *template_dir)
 		return;
 	}
 
+	/* Make sure that template is from the correct vintage */
+	strcpy(template_path + template_len, "config");
+	repository_format_version = 0;
+	git_config_from_file(check_repository_format_version,
+			     template_path);
+	template_path[template_len] = 0;
+
+	if (repository_format_version &&
+	    repository_format_version != GIT_REPO_VERSION) {
+		fprintf(stderr, "warning: not copying templates of "
+			"a wrong format version %d from '%s'\n",
+			repository_format_version,
+			template_dir);
+		closedir(dir);
+		return;
+	}
+
 	memcpy(path, git_dir, len);
 	path[len] = 0;
 	copy_templates_1(path, len,
@@ -140,12 +157,13 @@ static void copy_templates(const char *git_dir, int len, char *template_dir)
 	closedir(dir);
 }
 
-static void create_default_files(const char *git_dir,
-				 char *template_path)
+static void create_default_files(const char *git_dir, char *template_path)
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
 	unsigned char sha1[20];
+	struct stat st1;
+	char repo_version_string[10];
 
 	if (len > sizeof(path)-50)
 		die("insane git directory %s", git_dir);
@@ -164,6 +182,15 @@ static void create_default_files(const char *git_dir,
 	strcpy(path + len, "refs/tags");
 	safe_create_dir(path);
 
+	/* First copy the templates -- we might have the default
+	 * config file there, in which case we would want to read
+	 * from it after installing.
+	 */
+	path[len] = 0;
+	copy_templates(path, len, template_path);
+
+	git_config(git_default_config);
+
 	/*
 	 * Create the default symlink from ".git/HEAD" to the "master"
 	 * branch, if it does not exist yet.
@@ -173,44 +200,22 @@ static void create_default_files(const char *git_dir,
 		if (create_symref(path, "refs/heads/master") < 0)
 			exit(1);
 	}
+
+	/* This forces creation of new config file */
+	sprintf(repo_version_string, "%d", GIT_REPO_VERSION);
+	git_config_set("core.repositoryformatversion", repo_version_string);
+
 	path[len] = 0;
-	copy_templates(path, len, template_path);
-
-	/*
-	 * Find out if we can trust the executable bit.
-	 */
-	safe_create_dir(path);
 	strcpy(path + len, "config");
-	if (access(path, R_OK) < 0) {
-		static const char contents[] =
-			"#\n"
-			"# This is the config file\n"
-			"#\n"
-			"\n"
-			"; core variables\n"
-			"[core]\n"
-			"	; Don't trust file modes\n"
-			"	filemode = false\n"
-			"\n";
-		FILE *config = fopen(path, "w");
-		struct stat st;
 
-		if (!config)
-			die("Can not write to %s?", path);
-
-		fwrite(contents, sizeof(contents)-1, 1, config);
-
-		fclose(config);
-
-		if (!lstat(path, &st)) {
-			struct stat st2;
-			if (!chmod(path, st.st_mode ^ S_IXUSR) &&
-					!lstat(path, &st2) &&
-					st.st_mode != st2.st_mode)
-				unlink(path);
-			else
-				fprintf(stderr, "Ignoring file modes\n");
-		}
+	/* Check filemode trustability */
+	if (!lstat(path, &st1)) {
+		struct stat st2;
+		int filemode = (!chmod(path, st1.st_mode ^ S_IXUSR) &&
+				!lstat(path, &st2) &&
+				st1.st_mode != st2.st_mode);
+		git_config_set("core.filemode",
+			       filemode ? "true" : "false");
 	}
 }
 
@@ -249,6 +254,14 @@ int main(int argc, char **argv)
 		fprintf(stderr, "defaulting to local storage area\n");
 	}
 	safe_create_dir(git_dir);
+
+	/* Check to see if the repository version is right.
+	 * Note that a newly created repository does not have
+	 * config file, so this will not fail.  What we are catching
+	 * is an attempt to reinitialize new repository with an old tool.
+	 */
+	check_repository_format();
+
 	create_default_files(git_dir, template_dir);
 
 	/*

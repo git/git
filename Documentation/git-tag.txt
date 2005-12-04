@@ -10,6 +10,26 @@ SYNOPSIS
 --------
 'git-tag' [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <name> [<head>]
 
+OPTIONS
+-------
+-a::
+	Make an unsigned, annotated tag object
+
+-s::
+	Make a GPG-signed tag, using the default e-mail address's key
+
+-u <key-id>::
+	Make a GPG-signed tag, using the given key
+
+-f::
+	Replace an existing tag with the given name (instead of failing)
+
+-d::
+	Delete an existing tag with the given name
+
+-m <msg>::
+	Use the given tag message (instead of prompting)
+
 DESCRIPTION
 -----------
 Adds a 'tag' reference in .git/refs/tags/
@@ -23,7 +43,7 @@ creates a 'tag' object, and requires the tag message.  Unless
 in the tag message.
 
 Otherwise just the SHA1 object name of the commit object is
-written (i.e. an lightweight tag).
+written (i.e. a lightweight tag).
 
 A GnuPG signed tag object will be created when `-s` or `-u
 <key-id>` is used.  When `-u <key-id>` is not used, the

@@ -5,8 +5,7 @@ static int do_generic_cmd(const char *me, char *arg)
 {
 	const char *my_argv[4];
 
-	arg = sq_dequote(arg);
-	if (!arg)
+	if (!arg || !(arg = sq_dequote(arg)))
 		die("bad argument");
 
 	my_argv[0] = me;

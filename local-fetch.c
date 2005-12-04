@@ -207,6 +207,8 @@ int main(int argc, char **argv)
 	char *commit_id;
 	int arg = 1;
 
+	setup_git_directory();
+
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't')
 			get_tree = 1;

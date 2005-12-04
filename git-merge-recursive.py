@@ -98,7 +98,7 @@ getFilesRE = re.compile(r'^([0-7]+) (\S+) ([0-9a-f]{40})\t(.*)$', re.S)
 def getFilesAndDirs(tree):
     files = Set()
     dirs = Set()
-    out = runProgram(['git-ls-tree', '-r', '-z', tree])
+    out = runProgram(['git-ls-tree', '-r', '-z', '-t', tree])
     for l in out.split('\0'):
         m = getFilesRE.match(l)
         if m:
@@ -828,8 +828,6 @@ def processEntry(entry, branch1Name, branch2Name):
             if cacheOnly:
                 updateFile(False, sha, mode, path)
             else:
-                updateFileExt(aSha, aMode, path,
-                              updateCache=True, updateWd=False)
                 updateFileExt(sha, mode, path, updateCache=False, updateWd=True)
     else:
         die("ERROR: Fatal merge failure, shouldn't happen.")

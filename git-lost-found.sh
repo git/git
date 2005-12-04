@@ -1,7 +1,6 @@
 #!/bin/sh
 
-. git-sh-setup
-
+GIT_DIR=`git-rev-parse --git-dir` || exit $?
 laf="$GIT_DIR/lost-found"
 rm -fr "$laf" && mkdir -p "$laf/commit" "$laf/other" || exit
 

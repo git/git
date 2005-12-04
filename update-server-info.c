@@ -19,5 +19,7 @@ int main(int ac, char **av)
 	if (i != ac)
 		usage(update_server_info_usage);
 
+	setup_git_directory();
+
 	return !!update_server_info(force);
 }

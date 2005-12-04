@@ -34,6 +34,9 @@
  */
 #include "cache.h"
 
+static const char *prefix;
+static int prefix_length;
+
 static struct checkout state = {
 	.base_dir = "",
 	.base_dir_len = 0,
@@ -69,6 +72,10 @@ static int checkout_all(void)
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce))
 			continue;
+		if (prefix && *prefix &&
+		    ( ce_namelen(ce) <= prefix_length ||
+		      memcmp(prefix, ce->name, prefix_length) ))
+			continue;
 		if (checkout_entry(ce, &state) < 0)
 			errs++;
 	}
@@ -90,6 +97,9 @@ int main(int argc, char **argv)
 	int i;
 	int newfd = -1;
 	int all = 0;
+
+	prefix = setup_git_directory();
+	prefix_length = prefix ? strlen(prefix) : 0;
 
 	if (read_cache() < 0) {
 		die("invalid cache");
@@ -155,7 +165,7 @@ int main(int argc, char **argv)
 
 		if (all)
 			die("git-checkout-index: don't mix '--all' and explicit filenames");
-		checkout_file(arg);
+		checkout_file(prefix_path(prefix, prefix_length, arg));
 	}
 
 	if (all)

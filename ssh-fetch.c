@@ -131,6 +131,8 @@ int main(int argc, char **argv)
 	prog = getenv("GIT_SSH_PUSH");
 	if (!prog) prog = "git-ssh-upload";
 
+	setup_git_directory();
+
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
 			get_tree = 1;

@@ -47,6 +47,21 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	return path;
 }
 
+/* 
+ * Unlike prefix_path, this should be used if the named file does
+ * not have to interact with index entry; i.e. name of a random file
+ * on the filesystem.
+ */
+const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
+{
+	static char path[PATH_MAX];
+	if (!pfx || !*pfx || arg[0] == '/')
+		return arg;
+	memcpy(path, pfx, pfx_len);
+	strcpy(path + pfx_len, arg);
+	return path;
+}
+
 const char **get_pathspec(const char *prefix, const char **pathspec)
 {
 	const char *entry = *pathspec;
@@ -92,7 +107,7 @@ static int is_toplevel_directory(void)
 	return 1;
 }
 
-static const char *setup_git_directory_1(void)
+const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static char cwd[PATH_MAX+1];
 	int len, offset;
@@ -116,7 +131,7 @@ static const char *setup_git_directory_1(void)
 		if (validate_symref(path))
 			goto bad_dir_environ;
 		if (getenv(DB_ENVIRONMENT)) {
-			if (access(DB_ENVIRONMENT, X_OK))
+			if (access(getenv(DB_ENVIRONMENT), X_OK))
 				goto bad_dir_environ;
 		}
 		else {
@@ -139,8 +154,15 @@ static const char *setup_git_directory_1(void)
 			break;
 		chdir("..");
 		do {
-			if (!offset)
+			if (!offset) {
+				if (nongit_ok) {
+					if (chdir(cwd))
+						die("Cannot come back to cwd");
+					*nongit_ok = 1;
+					return NULL;
+				}
 				die("Not a git repository");
+			}
 		} while (cwd[--offset] != '/');
 	}
 
@@ -154,8 +176,25 @@ static const char *setup_git_directory_1(void)
 	return cwd + offset;
 }
 
+int check_repository_format_version(const char *var, const char *value)
+{
+       if (strcmp(var, "core.repositoryformatversion") == 0)
+               repository_format_version = git_config_int(var, value);
+       return 0;
+}
+
+int check_repository_format(void)
+{
+	git_config(check_repository_format_version);
+	if (GIT_REPO_VERSION < repository_format_version)
+		die ("Expected git repo version <= %d, found %d",
+		     GIT_REPO_VERSION, repository_format_version);
+	return 0;
+}
+
 const char *setup_git_directory(void)
 {
-	const char *retval = setup_git_directory_1();
+	const char *retval = setup_git_directory_gently(NULL);
+	check_repository_format();
 	return retval;
 }

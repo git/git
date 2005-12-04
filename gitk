@@ -19,7 +19,7 @@ proc gitdir {} {
 proc getcommits {rargs} {
     global commits commfd phase canv mainfont env
     global startmsecs nextupdate ncmupdate
-    global ctext maincursor textcursor leftover
+    global ctext maincursor textcursor leftover gitencoding
 
     # check that we can find a .git directory somewhere...
     set gitdir [gitdir]
@@ -30,7 +30,7 @@ proc getcommits {rargs} {
     set commits {}
     set phase getcommits
     set startmsecs [clock clicks -milliseconds]
-    set nextupdate [expr $startmsecs + 100]
+    set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
     if [catch {
 	set parse_args [concat --default HEAD $rargs]
@@ -49,7 +49,7 @@ proc getcommits {rargs} {
 	exit 1
     }
     set leftover {}
-    fconfigure $commfd -blocking 0 -translation lf
+    fconfigure $commfd -blocking 0 -translation lf -encoding $gitencoding
     fileevent $commfd readable [list getcommitlines $commfd]
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
@@ -74,9 +74,9 @@ proc getcommitlines {commfd}  {
 	}
 	if {[string range $err 0 4] == "usage"} {
 	    set err \
-{Gitk: error reading commits: bad arguments to git-rev-list.
-(Note: arguments to gitk are passed to git-rev-list
-to allow selection of commits to be displayed.)}
+		"Gitk: error reading commits: bad arguments to git-rev-list.\
+		(Note: arguments to gitk are passed to git-rev-list\
+		to allow selection of commits to be displayed.)"
 	} else {
 	    set err "Error reading commits: $err"
 	}
@@ -297,23 +297,26 @@ proc makewindow {} {
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
-    global rowctxmenu gaudydiff mergemax
+    global rowctxmenu mergemax
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
     menu .bar.file
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
+    menu .bar.edit
+    .bar add cascade -label "Edit" -menu .bar.edit
+    .bar.edit add command -label "Preferences" -command doprefs
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
     . configure -menu .bar
 
     if {![info exists geometry(canv1)]} {
-	set geometry(canv1) [expr 45 * $charspc]
-	set geometry(canv2) [expr 30 * $charspc]
-	set geometry(canv3) [expr 15 * $charspc]
-	set geometry(canvh) [expr 25 * $linespc + 4]
+	set geometry(canv1) [expr {45 * $charspc}]
+	set geometry(canv2) [expr {30 * $charspc}]
+	set geometry(canv3) [expr {15 * $charspc}]
+	set geometry(canvh) [expr {25 * $linespc + 4}]
 	set geometry(ctextw) 80
 	set geometry(ctexth) 30
 	set geometry(cflistw) 30
@@ -414,25 +417,19 @@ proc makewindow {} {
     .ctop.cdet add .ctop.cdet.left
 
     $ctext tag conf filesep -font [concat $textfont bold] -back "#aaaaaa"
-    if {$gaudydiff} {
-	$ctext tag conf hunksep -back blue -fore white
-	$ctext tag conf d0 -back "#ff8080"
-	$ctext tag conf d1 -back green
-    } else {
-	$ctext tag conf hunksep -fore blue
-	$ctext tag conf d0 -fore red
-	$ctext tag conf d1 -fore "#00a000"
-	$ctext tag conf m0 -fore red
-	$ctext tag conf m1 -fore blue
-	$ctext tag conf m2 -fore green
-	$ctext tag conf m3 -fore purple
-	$ctext tag conf m4 -fore brown
-	$ctext tag conf mmax -fore darkgrey
-	set mergemax 5
-	$ctext tag conf mresult -font [concat $textfont bold]
-	$ctext tag conf msep -font [concat $textfont bold]
-	$ctext tag conf found -back yellow
-    }
+    $ctext tag conf hunksep -fore blue
+    $ctext tag conf d0 -fore red
+    $ctext tag conf d1 -fore "#00a000"
+    $ctext tag conf m0 -fore red
+    $ctext tag conf m1 -fore blue
+    $ctext tag conf m2 -fore green
+    $ctext tag conf m3 -fore purple
+    $ctext tag conf m4 -fore brown
+    $ctext tag conf mmax -fore darkgrey
+    set mergemax 5
+    $ctext tag conf mresult -font [concat $textfont bold]
+    $ctext tag conf msep -font [concat $textfont bold]
+    $ctext tag conf found -back yellow
 
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
@@ -533,7 +530,7 @@ proc click {w} {
 
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont
-    global stuffsaved findmergefiles gaudydiff maxgraphpct
+    global stuffsaved findmergefiles maxgraphpct
     global maxwidth
 
     if {$stuffsaved} return
@@ -543,15 +540,14 @@ proc savestuff {w} {
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
 	puts $f [list set findmergefiles $findmergefiles]
-	puts $f [list set gaudydiff $gaudydiff]
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
-	puts $f "set geometry(canv1) [expr [winfo width $canv]-2]"
-	puts $f "set geometry(canv2) [expr [winfo width $canv2]-2]"
-	puts $f "set geometry(canv3) [expr [winfo width $canv3]-2]"
-	puts $f "set geometry(canvh) [expr [winfo height $canv]-2]"
+	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
+	puts $f "set geometry(canv2) [expr {[winfo width $canv2]-2}]"
+	puts $f "set geometry(canv3) [expr {[winfo width $canv3]-2}]"
+	puts $f "set geometry(canvh) [expr {[winfo height $canv]-2}]"
 	set wid [expr {([winfo width $ctext] - 8) \
 			   / [font measure $textfont "0"]}]
 	puts $f "set geometry(ctextw) $wid"
@@ -580,12 +576,12 @@ proc resizeclistpanes {win w} {
 		set sash0 30
 	    }
 	    if {$sash1 < $sash0 + 20} {
-		set sash1 [expr $sash0 + 20]
+		set sash1 [expr {$sash0 + 20}]
 	    }
 	    if {$sash1 > $w - 10} {
-		set sash1 [expr $w - 10]
+		set sash1 [expr {$w - 10}]
 		if {$sash0 > $sash1 - 20} {
-		    set sash0 [expr $sash1 - 20]
+		    set sash0 [expr {$sash1 - 20}]
 		}
 	    }
 	}
@@ -608,7 +604,7 @@ proc resizecdetpanes {win w} {
 		set sash0 45
 	    }
 	    if {$sash0 > $w - 15} {
-		set sash0 [expr $w - 15]
+		set sash0 [expr {$w - 15}]
 	    }
 	}
 	$win sash place 0 $sash0 [lindex $s0 1]
@@ -819,9 +815,9 @@ proc drawcommitline {level} {
     }
     set x [xcoord $level $level $lineno]
     set y1 $canvy
-    set canvy [expr $canvy + $linespc]
+    set canvy [expr {$canvy + $linespc}]
     allcanvs conf -scrollregion \
-	[list 0 0 0 [expr $y1 + 0.5 * $linespc + 2]]
+	[list 0 0 0 [expr {$y1 + 0.5 * $linespc + 2}]]
     if {[info exists mainline($id)]} {
 	lappend mainline($id) $x $y1
 	if {$mainlinearrow($id) ne "none"} {
@@ -830,8 +826,8 @@ proc drawcommitline {level} {
     }
     drawlines $id 0 0
     set orad [expr {$linespc / 3}]
-    set t [$canv create oval [expr $x - $orad] [expr $y1 - $orad] \
-	       [expr $x + $orad - 1] [expr $y1 + $orad - 1] \
+    set t [$canv create oval [expr {$x - $orad}] [expr {$y1 - $orad}] \
+	       [expr {$x + $orad - 1}] [expr {$y1 + $orad - 1}] \
 	       -fill $ofill -outline black -width 1]
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
@@ -886,8 +882,8 @@ proc drawtags {id x xt y1} {
     }
 
     set delta [expr {int(0.5 * ($linespc - $lthickness))}]
-    set yt [expr $y1 - 0.5 * $linespc]
-    set yb [expr $yt + $linespc - 1]
+    set yt [expr {$y1 - 0.5 * $linespc}]
+    set yb [expr {$yt + $linespc - 1}]
     set xvals {}
     set wvals {}
     foreach tag $marks {
@@ -900,12 +896,12 @@ proc drawtags {id x xt y1} {
 	       -width $lthickness -fill black -tags tag.$id]
     $canv lower $t
     foreach tag $marks x $xvals wid $wvals {
-	set xl [expr $x + $delta]
-	set xr [expr $x + $delta + $wid + $lthickness]
+	set xl [expr {$x + $delta}]
+	set xr [expr {$x + $delta + $wid + $lthickness}]
 	if {[incr ntags -1] >= 0} {
 	    # draw a tag
-	    set t [$canv create polygon $x [expr $yt + $delta] $xl $yt \
-		       $xr $yt $xr $yb $xl $yb $x [expr $yb - $delta] \
+	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
+		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
 		       -width 1 -outline black -fill yellow -tags tag.$id]
 	    $canv bind $t <1> [list showtag $tag 1]
 	    set rowtextx($idline($id)) [expr {$xr + $linespc}]
@@ -916,7 +912,7 @@ proc drawtags {id x xt y1} {
 	    } else {
 		set col "#ddddff"
 	    }
-	    set xl [expr $xl - $delta/2]
+	    set xl [expr {$xl - $delta/2}]
 	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
 		-width 1 -outline black -fill $col -tags tag.$id
 	}
@@ -1491,7 +1487,7 @@ proc drawgraph {} {
 
     if {$displayorder == {}} return
     set startmsecs [clock clicks -milliseconds]
-    set nextupdate [expr $startmsecs + 100]
+    set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
     initgraph
     foreach id $displayorder {
@@ -1520,7 +1516,7 @@ proc drawrest {} {
     }
     drawmore 0
     set phase {}
-    set drawmsecs [expr [clock clicks -milliseconds] - $startmsecs]
+    set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
     #puts "overall $drawmsecs ms for $numcommits commits"
     if {$redisplaying} {
 	if {$stopped == 0 && [info exists selectedline]} {
@@ -1548,8 +1544,8 @@ proc findmatches {f} {
 	set matches {}
 	set i 0
 	while {[set j [string first $foundstring $str $i]] >= 0} {
-	    lappend matches [list $j [expr $j+$foundstrlen-1]]
-	    set i [expr $j + $foundstrlen]
+	    lappend matches [list $j [expr {$j+$foundstrlen-1}]]
+	    set i [expr {$j + $foundstrlen}]
 	}
     }
     return $matches
@@ -1630,7 +1626,7 @@ proc findselectline {l} {
 	set matches [findmatches $f]
 	foreach match $matches {
 	    set start [lindex $match 0]
-	    set end [expr [lindex $match 1] + 1]
+	    set end [expr {[lindex $match 1] + 1}]
 	    $ctext tag add found "1.0 + $start c" "1.0 + $end c"
 	}
     }
@@ -1984,9 +1980,10 @@ proc markmatches {canv l str tag matches font} {
 	set start [lindex $match 0]
 	set end [lindex $match 1]
 	if {$start > $end} continue
-	set xoff [font measure $font [string range $str 0 [expr $start-1]]]
-	set xlen [font measure $font [string range $str 0 [expr $end]]]
-	set t [$canv create rect [expr $x0+$xoff] $y0 [expr $x0+$xlen+2] $y1 \
+	set xoff [font measure $font [string range $str 0 [expr {$start-1}]]]
+	set xlen [font measure $font [string range $str 0 [expr {$end}]]]
+	set t [$canv create rect [expr {$x0+$xoff}] $y0 \
+		   [expr {$x0+$xlen+2}] $y1 \
 		   -outline {} -tags matches -fill yellow]
 	$canv lower $t
     }
@@ -2078,8 +2075,8 @@ proc selectline {l isnew} {
     set ytop [expr {$y - $linespc - 1}]
     set ybot [expr {$y + $linespc + 1}]
     set wnow [$canv yview]
-    set wtop [expr [lindex $wnow 0] * $ymax]
-    set wbot [expr [lindex $wnow 1] * $ymax]
+    set wtop [expr {[lindex $wnow 0] * $ymax}]
+    set wbot [expr {[lindex $wnow 1] * $ymax}]
     set wh [expr {$wbot - $wtop}]
     set newtop $wtop
     if {$ytop < $wtop} {
@@ -2105,7 +2102,7 @@ proc selectline {l isnew} {
 	if {$newtop < 0} {
 	    set newtop 0
 	}
-	allcanvs yview moveto [expr $newtop * 1.0 / $ymax]
+	allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
     }
 
     if {$isnew} {
@@ -2164,7 +2161,7 @@ proc selectline {l isnew} {
     $cflist delete 0 end
     $cflist insert end "Comments"
     if {$nparents($id) == 1} {
-	startdiff [concat $id $parents($id)]
+	startdiff $id
     } elseif {$nparents($id) > 1} {
 	mergediff $id
     }
@@ -2173,7 +2170,7 @@ proc selectline {l isnew} {
 proc selnextline {dir} {
     global selectedline
     if {![info exists selectedline]} return
-    set l [expr $selectedline + $dir]
+    set l [expr {$selectedline + $dir}]
     unmarkmatches
     selectline $l 1
 }
@@ -2273,12 +2270,12 @@ proc contmergediff {ids} {
     # diff the child against each of the parents, and diff
     # each of the parents against the GCA.
     while 1 {
-	if {[lindex $ids 0] == $diffmergeid && $diffmergegca ne {}} {
-	    set ids [list [lindex $ids 1] $diffmergegca]
+	if {[lindex $ids 1] == $diffmergeid && $diffmergegca ne {}} {
+	    set ids [list $diffmergegca [lindex $ids 0]]
 	} else {
 	    if {[incr diffpindex] >= $nparents($diffmergeid)} break
 	    set p [lindex $parents($diffmergeid) $diffpindex]
-	    set ids [list $diffmergeid $p]
+	    set ids [list $p $diffmergeid]
 	}
 	if {![info exists treediffs($ids)]} {
 	    set diffids $ids
@@ -2296,8 +2293,8 @@ proc contmergediff {ids} {
     if {$diffmergegca ne {}} {
 	set files {}
 	foreach p $parents($diffmergeid) {
-	    set gcadiffs $treediffs([list $p $diffmergegca])
-	    foreach f $treediffs([list $diffmergeid $p]) {
+	    set gcadiffs $treediffs([list $diffmergegca $p])
+	    foreach f $treediffs([list $p $diffmergeid]) {
 		if {[lsearch -exact $files $f] < 0
 		    && [lsearch -exact $gcadiffs $f] >= 0} {
 		    lappend files $f
@@ -2310,7 +2307,7 @@ proc contmergediff {ids} {
 	set files $treediffs([list $diffmergeid $p])
 	for {set i 1} {$i < $nparents($diffmergeid) && $files ne {}} {incr i} {
 	    set p [lindex $parents($diffmergeid) $i]
-	    set df $treediffs([list $diffmergeid $p])
+	    set df $treediffs([list $p $diffmergeid])
 	    set nf {}
 	    foreach f $files {
 		if {[lsearch -exact $df $f] >= 0} {
@@ -2787,8 +2784,7 @@ proc gettreediffs {ids} {
     global treediff parents treepending
     set treepending $ids
     set treediff {}
-    set id [lindex $ids 0]
-    if [catch {set gdtf [open "|git-diff-tree --no-commit-id -r $id" r]}] return
+    if [catch {set gdtf [open [concat | git-diff-tree --no-commit-id -r $ids] r]}] return
     fconfigure $gdtf -blocking 0
     fileevent $gdtf readable [list gettreediffline $gdtf $ids]
 }
@@ -2821,9 +2817,8 @@ proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env curdifftag curtagstart
     global difffilestart nextupdate diffinhdr treediffs
 
-    set id [lindex $ids 0]
     set env(GIT_DIFF_OPTS) $diffopts
-    set cmd [list | git-diff-tree --no-commit-id -r -p -C $id]
+    set cmd [concat | git-diff-tree --no-commit-id -r -p -C $ids]
     if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
@@ -2842,7 +2837,6 @@ proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdifftag curtagstart
     global diffnexthead diffnextnote difffilestart
     global nextupdate diffinhdr treediffs
-    global gaudydiff
 
     set n [gets $bdf line]
     if {$n < 0} {
@@ -2891,26 +2885,14 @@ proc getblobdiffline {bdf ids} {
 	set diffinhdr 0
     } elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
 		   $line match f1l f1c f2l f2c rest]} {
-	if {$gaudydiff} {
-	    $ctext insert end "\t" hunksep
-	    $ctext insert end "    $f1l    " d0 "    $f2l    " d1
-	    $ctext insert end "    $rest \n" hunksep
-	} else {
-	    $ctext insert end "$line\n" hunksep
-	}
+	$ctext insert end "$line\n" hunksep
 	set diffinhdr 0
     } else {
 	set x [string range $line 0 0]
 	if {$x == "-" || $x == "+"} {
 	    set tag [expr {$x == "+"}]
-	    if {$gaudydiff} {
-		set line [string range $line 1 end]
-	    }
 	    $ctext insert end "$line\n" d$tag
 	} elseif {$x == " "} {
-	    if {$gaudydiff} {
-		set line [string range $line 1 end]
-	    }
 	    $ctext insert end "$line\n"
 	} elseif {$diffinhdr || $x == "\\"} {
 	    # e.g. "\ No newline at end of file"
@@ -2966,8 +2948,8 @@ proc setcoords {} {
 
     set linespc [font metrics $mainfont -linespace]
     set charspc [font measure $mainfont "m"]
-    set canvy0 [expr 3 + 0.5 * $linespc]
-    set canvx0 [expr 3 + 0.5 * $linespc]
+    set canvy0 [expr {3 + 0.5 * $linespc}]
+    set canvx0 [expr {3 + 0.5 * $linespc}]
     set lthickness [expr {int($linespc / 9) + 1}]
     set xspc1(0) $linespc
     set xspc2 $linespc
@@ -3340,7 +3322,7 @@ proc doseldiff {oldid newid} {
     $ctext conf -state disabled
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
-    startdiff [list $newid $oldid]
+    startdiff [list $oldid $newid]
 }
 
 proc mkpatch {} {
@@ -3635,33 +3617,94 @@ proc doquit {} {
     destroy .
 }
 
-proc formatdate {d} {
-    global hours nhours tfd fastdate
+proc doprefs {} {
+    global maxwidth maxgraphpct diffopts findmergefiles
+    global oldprefs prefstop
 
-    if {!$fastdate} {
-	return [clock format $d -format "%Y-%m-%d %H:%M:%S"]
+    set top .gitkprefs
+    set prefstop $top
+    if {[winfo exists $top]} {
+	raise $top
+	return
     }
-    set hr [expr {$d / 3600}]
-    set ms [expr {$d % 3600}]
-    if {![info exists hours($hr)]} {
-	set hours($hr) [clock format $d -format "%Y-%m-%d %H"]
-	set nhours($hr) 0
+    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+	set oldprefs($v) [set $v]
     }
-    incr nhours($hr)
-    set minsec [format "%.2d:%.2d" [expr {$ms/60}] [expr {$ms%60}]]
-    return "$hours($hr):$minsec"
+    toplevel $top
+    wm title $top "Gitk preferences"
+    label $top.ldisp -text "Commit list display options"
+    grid $top.ldisp - -sticky w -pady 10
+    label $top.spacer -text " "
+    label $top.maxwidthl -text "Maximum graph width (lines)" \
+	-font optionfont
+    spinbox $top.maxwidth -from 0 -to 100 -width 4 -textvariable maxwidth
+    grid $top.spacer $top.maxwidthl $top.maxwidth -sticky w
+    label $top.maxpctl -text "Maximum graph width (% of pane)" \
+	-font optionfont
+    spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
+    grid x $top.maxpctl $top.maxpct -sticky w
+    checkbutton $top.findm -variable findmergefiles
+    label $top.findml -text "Include merges for \"Find\" in \"Files\"" \
+	-font optionfont
+    grid $top.findm $top.findml - -sticky w
+    label $top.ddisp -text "Diff display options"
+    grid $top.ddisp - -sticky w -pady 10
+    label $top.diffoptl -text "Options for diff program" \
+	-font optionfont
+    entry $top.diffopt -width 20 -textvariable diffopts
+    grid x $top.diffoptl $top.diffopt -sticky w
+    frame $top.buts
+    button $top.buts.ok -text "OK" -command prefsok
+    button $top.buts.can -text "Cancel" -command prefscan
+    grid $top.buts.ok $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - - -pady 10 -sticky ew
+}
+
+proc prefscan {} {
+    global maxwidth maxgraphpct diffopts findmergefiles
+    global oldprefs prefstop
+
+    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+	set $v $oldprefs($v)
+    }
+    catch {destroy $prefstop}
+    unset prefstop
+}
+
+proc prefsok {} {
+    global maxwidth maxgraphpct
+    global oldprefs prefstop
+
+    catch {destroy $prefstop}
+    unset prefstop
+    if {$maxwidth != $oldprefs(maxwidth)
+	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
+	redisplay
+    }
+}
+
+proc formatdate {d} {
+    return [clock format $d -format "%Y-%m-%d %H:%M:%S"]
 }
 
 # defaults...
 set datemode 0
-set boldnames 0
 set diffopts "-U 5 -p"
 set wrcomcmd "git-diff-tree --stdin -p --pretty"
+
+set gitencoding ""
+catch {
+    set gitencoding [exec git-repo-config --get i18n.commitencoding]
+}
+if {$gitencoding == ""} {
+	set gitencoding "utf-8"
+}
 
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
 set findmergefiles 0
-set gaudydiff 0
 set maxgraphpct 50
 set maxwidth 16
 set revlistorder 0
@@ -3672,15 +3715,13 @@ set colors {green red blue magenta darkgrey brown orange}
 catch {source ~/.gitk}
 
 set namefont $mainfont
-if {$boldnames} {
-    lappend namefont bold
-}
+
+font create optionfont -family sans-serif -size -12
 
 set revtreeargs {}
 foreach arg $argv {
     switch -regexp -- $arg {
 	"^$" { }
-	"^-b" { set boldnames 1 }
 	"^-d" { set datemode 1 }
 	"^-r" { set revlistorder 1 }
 	default {

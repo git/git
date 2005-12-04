@@ -21,7 +21,7 @@ static void name_rev(struct commit *commit,
 {
 	struct rev_name *name = (struct rev_name *)commit->object.util;
 	struct commit_list *parents;
-	int parent_number = 0;
+	int parent_number = 1;
 
 	if (!commit->object.parsed)
 		parse_commit(commit);
@@ -56,7 +56,7 @@ copy_data:
 	for (parents = commit->parents;
 			parents;
 			parents = parents->next, parent_number++) {
-		if (parent_number > 0) {
+		if (parent_number > 1) {
 			char *new_name = xmalloc(strlen(tip_name)+8);
 
 			if (generation > 0)
@@ -217,10 +217,9 @@ int main(int argc, char **argv)
 					if (!strcmp(name, "undefined"))
 						continue;
 
-					fwrite(p_start, p - p_start, 1, stdout);
-					fputc('(', stdout);
-					fputs(name, stdout);
-					fputc(')', stdout);
+					fwrite(p_start, p - p_start + 1, 1,
+					       stdout);
+					printf(" (%s)", name);
 					p_start = p + 1;
 				}
 			}
