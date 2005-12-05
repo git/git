@@ -190,16 +190,14 @@ static void init_pack_info(const char *infofile, int force)
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
 		 */
-		if (strncmp(p->pack_name, objdir, objdirlen) ||
-		    strncmp(p->pack_name + objdirlen, "/pack/", 6))
+		if (!p->pack_local)
 			continue;
 		i++;
 	}
 	num_pack = i;
 	info = xcalloc(num_pack, sizeof(struct pack_info *));
 	for (i = 0, p = packed_git; p; p = p->next) {
-		if (strncmp(p->pack_name, objdir, objdirlen) ||
-		    p->pack_name[objdirlen] != '/')
+		if (!p->pack_local)
 			continue;
 		info[i] = xcalloc(1, sizeof(struct pack_info));
 		info[i]->p = p;
