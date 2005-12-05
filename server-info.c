@@ -55,30 +55,6 @@ static int num_pack;
 static const char *objdir;
 static int objdirlen;
 
-static struct object *parse_object_cheap(const unsigned char *sha1)
-{
-	struct object *o;
-
-	if ((o = parse_object(sha1)) == NULL)
-		return NULL;
-	if (o->type == commit_type) {
-		struct commit *commit = (struct commit *)o;
-		free(commit->buffer);
-		commit->buffer = NULL;
-	} else if (o->type == tree_type) {
-		struct tree *tree = (struct tree *)o;
-		struct tree_entry_list *e, *n;
-		for (e = tree->entries; e; e = n) {
-			free(e->name);
-			e->name = NULL;
-			n = e->next;
-			free(e);
-		}
-		tree->entries = NULL;
-	}
-	return o;
-}
-
 static struct pack_info *find_pack_by_name(const char *name)
 {
 	int i;
@@ -88,15 +64,6 @@ static struct pack_info *find_pack_by_name(const char *name)
 		if (!strcmp(p->pack_name + objdirlen + 6, name))
 			return info[i];
 	}
-	return NULL;
-}
-
-static struct pack_info *find_pack_by_old_num(int old_num)
-{
-	int i;
-	for (i = 0; i < num_pack; i++)
-		if (info[i]->old_num == old_num)
-			return info[i];
 	return NULL;
 }
 
