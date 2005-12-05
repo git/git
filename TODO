@@ -6,8 +6,8 @@ The GIT To-Do File
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
 
 
-What to expect until 1.0
-========================
+What to expect until and after 1.0
+==================================
 
 This is written in a form of to-do list for me, so if I say
 "accept patch", it means I do not currently plan to do that
@@ -70,6 +70,7 @@ Technical (heavier)
   releases.
 
   This needs a matching smart on the dumb protocol downloader.
+  [Definitely post 1.0].
 
 * Maybe an Emacs VC backend.
 
@@ -90,7 +91,13 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* strip leading directory from ls-tree output.
+* strip leading directory from ls-tree output, to match ls-files
+  output.
+
+  I am of two minds about this one.  diff output must always be
+  -p1 format no matter where the command was started, and
+  ls-tree might be easier to use if it matched diff, not
+  ls-files.
 
 * diff stopping at the first output; qgit wants to know if this
   tree has any A or D from the other tree and nothing else.
