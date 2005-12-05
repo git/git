@@ -51,7 +51,6 @@ static struct pack_info {
 	int nr_alloc;
 	int nr_heads;
 	unsigned char (*head)[20];
-	char dep[0]; /* more */
 } **info;
 static int num_pack;
 static const char *objdir;
@@ -123,49 +122,12 @@ static int parse_pack_def(const char *line, int old_cnt)
 		return 0;
 	}
 	else {
-		/* The file describes a pack that is no longer here;
-		 * dependencies between packs needs to be recalculated.
-		 */
+		/* The file describes a pack that is no longer here */
 		return 1;
 	}
 }
 
-/* Returns non-zero when we detect that the info in the
- * old file is useless.
- */
-static int parse_depend_def(char *line)
-{
-	unsigned long num;
-	char *cp, *ep;
-	struct pack_info *this, *that;
-
-	cp = line + 2;
-	num = strtoul(cp, &ep, 10);
-	if (ep == cp)
-		return error("invalid input %s", line);
-	this = find_pack_by_old_num(num);
-	if (!this)
-		return 0;
-	while (ep && *(cp = ep)) {
-		num = strtoul(cp, &ep, 10);
-		if (ep == cp)
-			break;
-		that = find_pack_by_old_num(num);
-		if (!that)
-			/* The pack this one depends on does not
-			 * exist; this should not happen because
-			 * we write out the list of packs first and
-			 * then dependency information, but it means
-			 * the file is useless anyway.
-			 */
-			return 1;
-		this->dep[that->new_num] = 1;
-	}
-	return 0;
-}
-
-/* Returns non-zero when we detect that the info in the
- * old file is useless.
+/* Returns non-zero when we detect that the info in the old file is useless.
  */
 static int parse_head_def(char *line)
 {
@@ -212,9 +174,8 @@ static int read_pack_info_file(const char *infofile)
 			if (parse_pack_def(line, old_cnt++))
 				goto out_stale;
 			break;
-		case 'D': /* D ix dep-ix1 dep-ix2... */
-			if (parse_depend_def(line))
-				goto out_stale;
+		case 'D': /* we used to emit D but that was misguided. */
+			goto out_stale;
 			break;
 		case 'T': /* T ix sha1 type */
 			if (parse_head_def(line))
@@ -286,7 +247,6 @@ static void init_pack_info(const char *infofile, int force)
 	struct packed_git *p;
 	int stale;
 	int i = 0;
-	char *dep_temp;
 
 	objdir = get_object_directory();
 	objdirlen = strlen(objdir);
@@ -307,7 +267,7 @@ static void init_pack_info(const char *infofile, int force)
 		if (strncmp(p->pack_name, objdir, objdirlen) ||
 		    p->pack_name[objdirlen] != '/')
 			continue;
-		info[i] = xcalloc(1, sizeof(struct pack_info) + num_pack);
+		info[i] = xcalloc(1, sizeof(struct pack_info));
 		info[i]->p = p;
 		info[i]->old_num = -1;
 		i++;
@@ -321,41 +281,16 @@ static void init_pack_info(const char *infofile, int force)
 	for (i = 0; i < num_pack; i++) {
 		if (stale) {
 			info[i]->old_num = -1;
-			memset(info[i]->dep, 0, num_pack);
 			info[i]->nr_heads = 0;
 		}
 		if (info[i]->old_num < 0)
 			info[i]->latest = get_latest_commit_date(info[i]->p);
 	}
 
+	/* renumber them */
 	qsort(info, num_pack, sizeof(info[0]), compare_info);
 	for (i = 0; i < num_pack; i++)
 		info[i]->new_num = i;
-
-	/* we need to fix up the dependency information
-	 * for the old ones.
-	 */
-	dep_temp = NULL;
-	for (i = 0; i < num_pack; i++) {
-		int old;
-
-		if (info[i]->old_num < 0)
-			continue;
-		if (! dep_temp)
-			dep_temp = xmalloc(num_pack);
-		memset(dep_temp, 0, num_pack);
-		for (old = 0; old < num_pack; old++) {
-			struct pack_info *base;
-			if (!info[i]->dep[old])
-				continue;
-			base = find_pack_by_old_num(old);
-			if (!base)
-				die("internal error renumbering");
-			dep_temp[base->new_num] = 1;
-		}
-		memcpy(info[i]->dep, dep_temp, num_pack);
-	}
-	free(dep_temp);
 }
 
 static void write_pack_info_file(FILE *fp)
@@ -363,17 +298,6 @@ static void write_pack_info_file(FILE *fp)
 	int i, j;
 	for (i = 0; i < num_pack; i++)
 		fprintf(fp, "P %s\n", info[i]->p->pack_name + objdirlen + 6);
-
-	for (i = 0; i < num_pack; i++) {
-		fprintf(fp, "D %1d", i);
-		for (j = 0; j < num_pack; j++) {
-			if ((i == j) || !(info[i]->dep[j]))
-				continue;
-			fprintf(fp, " %1d", j);
-		}
-		fputc('\n', fp);
-	}
-
 	for (i = 0; i < num_pack; i++) {
 		struct pack_info *this = info[i];
 		for (j = 0; j < this->nr_heads; j++) {
@@ -386,37 +310,18 @@ static void write_pack_info_file(FILE *fp)
 }
 
 #define REFERENCED 01
-#define INTERNAL  02
 #define EMITTED   04
 
 static void show(struct object *o, int pack_ix)
 {
 	/*
 	 * We are interested in objects that are not referenced,
-	 * and objects that are referenced but not internal.
 	 */
 	if (o->flags & EMITTED)
 		return;
 
 	if (!(o->flags & REFERENCED))
 		add_head_def(info[pack_ix], o->sha1);
-	else if ((o->flags & REFERENCED) && !(o->flags & INTERNAL)) {
-		int i;
-
-		/* Which pack contains this object?  That is what
-		 * pack_ix can depend on.  We earlier sorted info
-		 * array from youngest to oldest, so try newer packs
-		 * first to favor them here.
-		 */
-		for (i = num_pack - 1; 0 <= i; i--) {
-			struct packed_git *p = info[i]->p;
-			struct pack_entry ent;
-			if (find_pack_entry_one(o->sha1, &ent, p)) {
-				info[pack_ix]->dep[i] = 1;
-				break;
-			}
-		}
-	}
 	o->flags |= EMITTED;
 }
 
@@ -445,7 +350,7 @@ static void find_pack_info_one(int pack_ix)
 		o->flags = 0;
 	}
 
-	/* Mark all the internal ones */
+	/* Mark all the referenced ones */
 	for (i = 0; i < num; i++) {
 		if (nth_packed_object_sha1(p, i, sha1))
 			die("corrupt pack file %s?", p->pack_name);
@@ -457,7 +362,6 @@ static void find_pack_info_one(int pack_ix)
 			for (j = 0; j < refs->count; j++)
 				refs->ref[j]->flags |= REFERENCED;
 		}
-		o->flags |= INTERNAL;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -465,14 +369,7 @@ static void find_pack_info_one(int pack_ix)
 			die("corrupt pack file %s?", p->pack_name);
 		if ((o = lookup_object(sha1)) == NULL)
 			die("cannot find %s", sha1_to_hex(sha1));
-
 		show(o, pack_ix);
-		if (o->refs) {
-			struct object_refs *refs = o->refs;
-			int j;
-			for (j = 0; j < refs->count; j++)
-				show(refs->ref[j], pack_ix);
-		}
 	}
 
 }
@@ -529,6 +426,9 @@ int update_server_info(int force)
 
 	errs = errs | update_info_refs(force);
 	errs = errs | update_info_packs(force);
+
+	/* remove leftover rev-cache file if there is any */
+	unlink(git_path("info/rev-cache"));
 
 	return errs;
 }
