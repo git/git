@@ -100,16 +100,6 @@ static struct pack_info *find_pack_by_old_num(int old_num)
 	return NULL;
 }
 
-static int add_head_def(struct pack_info *this, unsigned char *sha1)
-{
-	if (this->nr_alloc <= this->nr_heads) {
-		this->nr_alloc = alloc_nr(this->nr_alloc);
-		this->head = xrealloc(this->head, this->nr_alloc * 20);
-	}
-	memcpy(this->head[this->nr_heads++], sha1, 20);
-	return 0;
-}
-
 /* Returns non-zero when we detect that the info in the
  * old file is useless.
  */
@@ -124,30 +114,6 @@ static int parse_pack_def(const char *line, int old_cnt)
 		/* The file describes a pack that is no longer here */
 		return 1;
 	}
-}
-
-/* Returns non-zero when we detect that the info in the old file is useless.
- */
-static int parse_head_def(char *line)
-{
-	unsigned char sha1[20];
-	unsigned long num;
-	char *cp, *ep;
-	struct pack_info *this;
-	struct object *o;
-
-	cp = line + 2;
-	num = strtoul(cp, &ep, 10);
-	if (ep == cp || *ep++ != ' ')
-		return error("invalid input ix %s", line);
-	this = find_pack_by_old_num(num);
-	if (!this)
-		return 1; /* You know the drill. */
-	if (get_sha1_hex(ep, sha1) || ep[40] != ' ')
-		return error("invalid input sha1 %s (%s)", line, ep);
-	if ((o = parse_object_cheap(sha1)) == NULL)
-		return error("no such object: %s", line);
-	return add_head_def(this, sha1);
 }
 
 /* Returns non-zero when we detect that the info in the
@@ -176,9 +142,8 @@ static int read_pack_info_file(const char *infofile)
 		case 'D': /* we used to emit D but that was misguided. */
 			goto out_stale;
 			break;
-		case 'T': /* T ix sha1 type */
-			if (parse_head_def(line))
-				goto out_stale;
+		case 'T': /* we used to emit T but nobody uses it. */
+			goto out_stale;
 			break;
 		default:
 			error("unrecognized: %s", line);
@@ -262,100 +227,9 @@ static void init_pack_info(const char *infofile, int force)
 
 static void write_pack_info_file(FILE *fp)
 {
-	int i, j;
+	int i;
 	for (i = 0; i < num_pack; i++)
 		fprintf(fp, "P %s\n", info[i]->p->pack_name + objdirlen + 6);
-	for (i = 0; i < num_pack; i++) {
-		struct pack_info *this = info[i];
-		for (j = 0; j < this->nr_heads; j++) {
-			struct object *o = lookup_object(this->head[j]);
-			fprintf(fp, "T %1d %s %s\n",
-				i, sha1_to_hex(this->head[j]), o->type);
-		}
-	}
-
-}
-
-#define REFERENCED 01
-#define EMITTED   04
-
-static void show(struct object *o, int pack_ix)
-{
-	/*
-	 * We are interested in objects that are not referenced,
-	 */
-	if (o->flags & EMITTED)
-		return;
-
-	if (!(o->flags & REFERENCED))
-		add_head_def(info[pack_ix], o->sha1);
-	o->flags |= EMITTED;
-}
-
-static void find_pack_info_one(int pack_ix)
-{
-	unsigned char sha1[20];
-	struct object *o;
-	int i;
-	struct packed_git *p = info[pack_ix]->p;
-	int num = num_packed_objects(p);
-
-	/* Scan objects, clear flags from all the edge ones and
-	 * internal ones, possibly marked in the previous round.
-	 */
-	for (i = 0; i < num; i++) {
-		if (nth_packed_object_sha1(p, i, sha1))
-			die("corrupt pack file %s?", p->pack_name);
-		if ((o = parse_object_cheap(sha1)) == NULL)
-			die("cannot parse %s", sha1_to_hex(sha1));
-		if (o->refs) {
-			struct object_refs *refs = o->refs;
-			int j;
-			for (j = 0; j < refs->count; j++)
-				refs->ref[j]->flags = 0;
-		}
-		o->flags = 0;
-	}
-
-	/* Mark all the referenced ones */
-	for (i = 0; i < num; i++) {
-		if (nth_packed_object_sha1(p, i, sha1))
-			die("corrupt pack file %s?", p->pack_name);
-		if ((o = lookup_object(sha1)) == NULL)
-			die("cannot find %s", sha1_to_hex(sha1));
-		if (o->refs) {
-			struct object_refs *refs = o->refs;
-			int j;
-			for (j = 0; j < refs->count; j++)
-				refs->ref[j]->flags |= REFERENCED;
-		}
-	}
-
-	for (i = 0; i < num; i++) {
-		if (nth_packed_object_sha1(p, i, sha1))
-			die("corrupt pack file %s?", p->pack_name);
-		if ((o = lookup_object(sha1)) == NULL)
-			die("cannot find %s", sha1_to_hex(sha1));
-		show(o, pack_ix);
-	}
-
-}
-
-static void find_pack_info(void)
-{
-	int i;
-	for (i = 0; i < num_pack; i++) {
-		/* The packed objects are cast in stone, and a head
-		 * in a pack will stay as head, so is the set of missing
-		 * objects.  If the repo has been reorganized and we
-		 * are missing some packs available back then, we have
-		 * already discarded the info read from the file, so
-		 * we will find (old_num < 0) in that case.
-		 */
-		if (0 <= info[i]->old_num)
-			continue;
-		find_pack_info_one(i);
-	}
 }
 
 static int update_info_packs(int force)
@@ -370,7 +244,6 @@ static int update_info_packs(int force)
 	strcpy(name + namelen, "+");
 
 	init_pack_info(infofile, force);
-	find_pack_info();
 
 	safe_create_leading_directories(name);
 	fp = fopen(name, "w");
