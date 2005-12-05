@@ -1636,6 +1636,41 @@ fast forward.  You need to pull and merge those other changes
 back before you push your work when it happens.
 
 
+Advanced Shared Repository Management
+-------------------------------------
+
+Being able to push into a shared repository means being able to
+write into it.  If your developers are coming over the network,
+this means you, as the repository administrator, need to give
+each of them an SSH access to the shared repository machine.
+
+In some cases, though, you may not want to give a normal shell
+account to them, but want to restrict them to be able to only
+do `git push` into the repository and nothing else.
+
+You can achieve this by setting the login shell of your
+developers on the shared repository host to `git-shell` program.
+
+[NOTE]
+Most likely you would also need to list `git-shell` program in
+`/etc/shells` file.
+
+This restricts the set of commands that can be run from incoming
+SSH connection for these users to only `receive-pack` and
+`upload-pack`, so the only thing they can do are `git fetch` and
+`git push`.
+
+You still need to create UNIX user accounts for each developer,
+and put them in the same group.  Make sure that the repository
+shared among these developers is writable by that group.
+
+You can implement finer grained branch policies using update
+hooks.  There is a document ("control access to branches") in
+Documentation/howto by Carl Baldwin and JC outlining how to (1)
+limit access to branch per user, (2) forbid overwriting existing
+tags.
+
+
 Bundling your work together
 ---------------------------
 
