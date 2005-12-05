@@ -6,23 +6,8 @@ The GIT To-Do File
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
 
 
-Tool Renames Plan
-=================
-
- - Immedately after 0.99.9, the backward compatible symbolic
-   links in $(bindir) will be removed [DONE].
-
-   git-ssh-push and git-ssh-pull pair is not going away if ever.
-   Each of these old-name commands continues to invoke its
-   old-name counterpart on the other end.
-
- - There was a discussion to move bulk of the git-* programs out
-   of /usr/bin and use /usr/lib/git; the central mechanism was
-   done, but the actual move is postponed post 1.0.
-
-
-What to expect after 0.99.9
-===========================
+What to expect until 1.0
+========================
 
 This is written in a form of to-do list for me, so if I say
 "accept patch", it means I do not currently plan to do that
@@ -31,12 +16,11 @@ a hint.  Also whatever I marked "Perhaps" do not have to happen
 if ever -- only if somebody cares enough and submits a clean
 patch, perhaps ;-).
 
+Only handful things remain until 1.0.
+
 
 Documentation
 -------------
-
-* Help Jon Loeliger to find place in the documentation to place
-  his drawing [DONE].
 
 * Accept patches from people who actually have done CVS
   migration and update the cvs-migration documentation.
@@ -57,32 +41,17 @@ Documentation
   them.
 
 * Accept patches to talk about "Whoops, it broke.  What's
-  next?" [Started].
+  next?" [ONGOING].
 
 * Accept patches to make formatted tables in asciidoc to work
   well in both html and man pages (see git-diff(1)).
 
+* Work around multiple synopses lines in manual pages
+  (e.g. git-bisect).
+
 
 Technical (heavier)
 -------------------
-
-* Assess the side effects of "make the rest of the things
-  magically work from any subdirectory" change by Linus.  It is
-  a good change in principle and we would like to have that
-  behaviour but some tool implementations I am sure are assuming
-  to never run from anywhere other than the top. [Post 1.0]
-
-* Ref namespace management.  Perhaps use refs/local/ suggestion
-  by Linus.
-
-* Git daemon, when deployed at kernel.org, might turn out to be
-  quite a burden, since it needs to generate customized packs
-  every time a new request comes in.  It may be worthwhile to
-  precompute some packs for popular sets of heads downloaders
-  have and serve that, even if that could give more than the
-  client asks for in some cases.  We will know about this soon
-  enough [DONE part to allow using precomputed pack, but not
-  dynamic caching part].
 
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
@@ -100,47 +69,48 @@ Technical (heavier)
   closely, (3) somebody who tends to follow only the point
   releases.
 
-* Maybe an Emacs VC backend.
+  This needs a matching smart on the dumb protocol downloader.
 
-* 'git split-projects'?  This requires updated 'git-rev-list' to
-  skip irrelevant commits.
-  Message-ID: <Pine.LNX.4.63.0509221617300.23242@iabervon.org>
+* Maybe an Emacs VC backend.
 
 * Look at libified GNU diff CVS seems to use, or libxdiff.
   [Daniel has his own diff tool almost ready to start
   integrating and testing; Post 1.0]
 
-* Plug-in file-level merges [Post 1.0].
+* Plug-in file-level merges [Post 1.0].  On the other hand, we
+  may not even need this; just tell people to run "xxdiff -U" on
+  the working tree files.
+
+* Ref namespace management.  Perhaps use refs/local/ suggestion
+  by Linus. [Does not seem to be high on people's priority list,
+  and not interested myself.  People can resurrect this
+  discussion if they want.]
 
 
 Technical (milder)
 ------------------
 
+* strip leading directory from ls-tree output.
+
+* diff stopping at the first output; qgit wants to know if this
+  tree has any A or D from the other tree and nothing else.
+  Would help internal tree-diff in rev-list as well [can be post
+  1.0].
+
 * merge-recursive needs to register conflicting paths as higher
   stage entries in the index.  For that, it first needs to
   construct three trees whose paths are already renamed, and
-  call 3-way read-tree.
+  call 3-way read-tree.  Alternatively, update-index needs to
+  give it a way to construct higher stages [can be post 1.0, but
+  nicer to have in 1.0].
+
+* daemon --strict-symlink [can be post 1.0].
 
 * Binary package split.  Plan laid out and discussion mostly
-  done. [RPM side done; Debian side delegated]
-
-* User-relative paths by Andreas Ericsson. [DONE]
-
-* Accessing configuration variables from C and from scripts by
-  Johannes [DONE].
-
-* Proxing git:// connection by Paul Collins. [DONE]
-
-* Maybe look at Cogito and see if I can help Pasky to adjust to
-  the later core features?
+  done. [RPM side done; Debian side thrown over the wall.]
 
 * Perhaps detect cloning request in upload-pack and cache the
   result for next cloning request until any of our refs change.
-
-* Encourage concrete proposals to commit log message templates
-  we discussed some time ago.
-
-* Perhaps accept patches to do undo/redo.
 
 * Perhaps accept patch to optionally allow '--fuzz' in
   'git-apply'.
@@ -155,58 +125,13 @@ Technical (milder)
   handy if the repository contains wagging heads like "pu" in
   git.git repository.
 
-* Make rebase restartable; instead of skipping what cannot be
-  automatically forward ported, leave the conflicts in the work
-  tree, have the user resolve it, and then restart from where it
-  left off [DONE].
-
 * Output full path in the "git-rev-list --objects" output, not
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
-* Updated git-changes-script Jeff Garzik needs [Not needed --
-  pull into local or borrow temporarily with alternate object
-  directories environment variable and use normal tools].
-
-* Customizable init-db.  Personally I think template mechanism
-  is good enough.  Otherwise, maybe add hooks/post-init-db.
-
-* Make sure we do reasonable thing on binary files even in
-  cherry-pick and rebase [DONE].
-
-* Binary diff detection fails if locale set to non English; even
-  GNU diff 2.8.1 and 2.8.7 in C locale say different things.  At
-  least run diff under C locale (setenv LANG=C LC_ALL=C) for
-  1.0.  It might be better to have our own binary detection
-  logic, or even our own diff output without forking an external
-  diff.  [The former _might_ make sense for 1.0, but the latter
-  is post 1.0].
-
 
 Technical (trivial)
 -------------------
-
-* Stop installing the old-name symlinks [DONE].
-
-* 'git merge-projects'?
-
-  Subject: Re: Merges without bases
-  References: <1125004228.4110.20.camel@localhost.localdomain>
-  Date: Thu, 25 Aug 2005 15:26:36 -0700
-  Message-ID: <7vvf1tps9v.fsf@assigned-by-dhcp.cox.net>
-
-* 'git lost-and-found'?  Link dangling commits found by
-  fsck-objects under $GIT_DIR/refs/lost-found/.  Then
-  show-branch or gitk can be used to find any lost commit.
-  [DONE]
-
-  Do not name it /lost+found/; that would probably confuse
-  things that mistake it a mount point (not our code but
-  somebody else's).
-
-* Add simple globbing rules to git-show-branch so that I can
-  say 'git show-branch --heads "ko-*"' (ko-master, ko-pu, and
-  ko-rc are in refs/tags/).
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  Most of the C-level
