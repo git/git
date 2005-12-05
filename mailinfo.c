@@ -10,10 +10,6 @@
 #include <iconv.h>
 #include "cache.h"
 
-#ifdef NO_STRCASESTR
-extern char *gitstrcasestr(const char *haystack, const char *needle);
-#endif
-
 static FILE *cmitmsg, *patchfile;
 
 static int keep_subject = 0;

@@ -162,7 +162,7 @@ LIB_FILE=libgit.a
 LIB_H = \
 	blob.h cache.h commit.h count-delta.h csum-file.h delta.h \
 	diff.h epoch.h object.h pack.h pkt-line.h quote.h refs.h \
-	run-command.h strbuf.h tag.h tree.h
+	run-command.h strbuf.h tag.h tree.h git-compat-util.h
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
@@ -320,15 +320,15 @@ ifdef NEEDS_NSL
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_STRCASESTR
-	COMPAT_CFLAGS += -Dstrcasestr=gitstrcasestr -DNO_STRCASESTR=1
+	COMPAT_CFLAGS += -DNO_STRCASESTR
 	COMPAT_OBJS += compat/strcasestr.o
 endif
 ifdef NO_SETENV
-	COMPAT_CFLAGS += -Dsetenv=gitsetenv -DNO_SETENV=1
+	COMPAT_CFLAGS += -DNO_SETENV
 	COMPAT_OBJS += compat/setenv.o
 endif
 ifdef NO_MMAP
-	COMPAT_CFLAGS += -Dmmap=gitfakemmap -Dmunmap=gitfakemunmap -DNO_MMAP
+	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
@@ -363,9 +363,9 @@ all: $(ALL_PROGRAMS)
 all:
 	$(MAKE) -C templates
 
-git$(X): git.c $(COMPAT_OBJS) Makefile
+git$X: git.c $(LIB_FILE) Makefile
 	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(filter %.o,$^)
+		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
