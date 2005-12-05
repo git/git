@@ -289,7 +289,7 @@ int main(int argc, char **argv, char **envp)
 	len += snprintf(git_command + len, sizeof(git_command) - len,
 			"/git-%s", argv[i]);
 	if (sizeof(git_command) <= len) {
-		fprintf(stderr, "git: command name given is too long (%d)\n", len);
+		fprintf(stderr, "git: command name given is too long.\n");
 		exit(1);
 	}
 
