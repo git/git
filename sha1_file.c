@@ -184,8 +184,8 @@ static struct alternate_object_database **alt_odb_tail;
  * alternate_object_database.  The elements on this list come from
  * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
  * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
- * whose contents is exactly in the same format as that environment
- * variable.  Its base points at a statically allocated buffer that
+ * whose contents is similar to that environment variable but can be
+ * LF separated.  Its base points at a statically allocated buffer that
  * contains "/the/directory/corresponding/to/.git/objects/...", while
  * its name points just after the slash at the end of ".git/objects/"
  * in the example above, and has enough space to hold 40-byte hex
@@ -197,6 +197,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 {
 	const char *cp, *last;
 	struct alternate_object_database *ent;
+	const char *objdir = get_object_directory();
 	int base_len = -1;
 
 	last = alt;
@@ -211,6 +212,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		for ( ; cp < ep && *cp != sep; cp++)
 			;
 		if (last != cp) {
+			struct alternate_object_database *alt;
 			/* 43 = 40-byte + 2 '/' + terminating NUL */
 			int pfxlen = cp - last;
 			int entlen = pfxlen + 43;
@@ -223,9 +225,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 				pfxlen += base_len;
 			}
 			ent = xmalloc(sizeof(*ent) + entlen);
-			*alt_odb_tail = ent;
-			alt_odb_tail = &(ent->next);
-			ent->next = NULL;
+
 			if (*last != '/' && relative_base) {
 				memcpy(ent->base, relative_base, base_len - 1);
 				ent->base[base_len - 1] = '/';
@@ -237,6 +237,22 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 			ent->name = ent->base + pfxlen + 1;
 			ent->base[pfxlen] = ent->base[pfxlen + 3] = '/';
 			ent->base[entlen-1] = 0;
+
+			/* Prevent the common mistake of listing the same
+			 * thing twice, or object directory itself.
+			 */
+			for (alt = alt_odb_list; alt; alt = alt->next)
+				if (!memcmp(ent->base, alt->base, pfxlen))
+					goto bad;
+			if (!memcmp(ent->base, objdir, pfxlen)) {
+			bad:
+				free(ent);
+			}
+			else {
+				*alt_odb_tail = ent;
+				alt_odb_tail = &(ent->next);
+				ent->next = NULL;
+			}
 		}
 		while (cp < ep && *cp == sep)
 			cp++;
@@ -531,8 +547,9 @@ void prepare_packed_git(void)
 	prepare_packed_git_one(get_object_directory(), 1);
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		alt->name[0] = 0;
+		alt->name[-1] = 0;
 		prepare_packed_git_one(alt->base, 0);
+		alt->name[-1] = '/';
 	}
 	run_once = 1;
 }
