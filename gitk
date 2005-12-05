@@ -133,14 +133,6 @@ proc getcommitlines {commfd}  {
 	set id [lindex $ids 0]
 	set olds [lrange $ids 1 end]
 	set cmit [string range $cmit [expr {$j + 1}] end]
-	if {$phase == "updatecommits"} {
-	    $canv delete all
-	    set oldcommits $commits
-	    set commits {}
-	    unset children
-	    unset nchildren
-	    set phase getcommits
-	}
 	lappend commits $id
 	set commitlisted($id) 1
 	parsecommit $id $cmit 1 [lrange $ids 1 end]
@@ -751,7 +743,6 @@ proc assigncolor {id} {
 
 proc initgraph {} {
     global canvy canvy0 lineno numcommits nextcolor linespc
-    global mainline mainlinearrow sidelines
     global nchildren ncleft
     global displist nhyperspace
 
@@ -760,9 +751,11 @@ proc initgraph {} {
     set canvy $canvy0
     set lineno -1
     set numcommits 0
-    catch {unset mainline}
-    catch {unset mainlinearrow}
-    catch {unset sidelines}
+    foreach v {mainline mainlinearrow sidelines colormap cornercrossings
+		crossings idline lineid} {
+	global $v
+	catch {unset $v}
+    }
     foreach id [array names nchildren] {
 	set ncleft($id) $nchildren($id)
     }
@@ -1431,30 +1424,23 @@ proc decidenext {{noread 0}} {
 	    }
 	}
     }
-    if {$level < 0} {
-	if {$todo != {}} {
-	    puts "ERROR: none of the pending commits can be done yet:"
-	    foreach p $todo {
-		puts "  $p ($ncleft($p))"
-	    }
-	}
-	return -1
-    }
 
     return $level
 }
 
 proc drawcommit {id reading} {
-    global phase todo nchildren datemode nextupdate revlistorder
-    global numcommits ncmupdate displayorder todo onscreen
+    global phase todo nchildren datemode nextupdate revlistorder ncleft
     global numcommits ncmupdate displayorder todo onscreen parents
+    global commitlisted commitordered
 
     if {$phase != "incrdraw"} {
 	set phase incrdraw
 	set displayorder {}
 	set todo {}
 	initgraph
+	catch {unset commitordered}
     }
+    set commitordered($id) 1
     if {$nchildren($id) == 0} {
 	lappend todo $id
 	set onscreen($id) 0
@@ -1469,18 +1455,16 @@ proc drawcommit {id reading} {
 	updatetodo $level 0
     } else {
 	set level [decidenext 1]
-	if {$level == {} || $id != [lindex $todo $level]} {
-	    return
-	}
+	if {$level == {} || $level < 0} return
 	while 1 {
+	    set id [lindex $todo $level]
+	    if {![info exists commitordered($id)]} {
+		break
+	    }
 	    lappend displayorder [lindex $todo $level]
 	    if {[updatetodo $level $datemode]} {
 		set level [decidenext 1]
-		if {$level == {}} break
-	    }
-	    set id [lindex $todo $level]
-	    if {![info exists commitlisted($id)]} {
-		break
+		if {$level == {} || $level < 0} break
 	    }
 	}
     }
@@ -1490,17 +1474,19 @@ proc drawcommit {id reading} {
 proc finishcommits {} {
     global phase oldcommits commits
     global canv mainfont ctext maincursor textcursor
-    global parents
+    global parents displayorder todo
 
     if {$phase == "incrdraw" || $phase == "removecommits"} {
 	foreach id $oldcommits {
 	    lappend commits $id
-	    updatechildren $id $parents($id)
 	    drawcommit $id 0
 	}
 	set oldcommits {}
 	drawrest
     } elseif {$phase == "updatecommits"} {
+	# there were no new commits, in fact
+	set commits $oldcommits
+	set oldcommits {}
 	set phase {}
     } else {
 	$canv delete all
@@ -1540,7 +1526,7 @@ proc drawgraph {} {
 
 proc drawrest {} {
     global phase stopped redisplaying selectedline
-    global datemode todo displayorder
+    global datemode todo displayorder ncleft
     global numcommits ncmupdate
     global nextupdate startmsecs revlistorder
 
@@ -1556,6 +1542,13 @@ proc drawrest {} {
 	    }
 	}
     }
+    if {$todo != {}} {
+	puts "ERROR: none of the pending commits can be done yet:"
+	foreach p $todo {
+	    puts "  $p ($ncleft($p))"
+	}
+    }
+
     drawmore 0
     set phase {}
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
@@ -3637,12 +3630,34 @@ proc updatecommits {rargs} {
     global idtags idheads idotherrefs
     global leftover
     global parsed_args
-    global canv
+    global canv mainfont
     global oldcommits commits
     global parents nchildren children ncleft
 
     set old_args $parsed_args
     parse_args $rargs
+
+    if {$phase == "getcommits" || $phase == "incrdraw"} {
+	# havent read all the old commits, just start again from scratch
+	stopfindproc
+	set oldcommits {}
+	set commits {}
+	foreach v {children nchildren parents commitlisted commitinfo
+		   selectedline matchinglines treediffs
+		   mergefilelist currentid rowtextx} {
+	    global $v
+	    catch {unset $v}
+	}
+	readrefs
+	if {$phase == "incrdraw"} {
+	    allcanvs delete all
+	    $canv create text 3 3 -anchor nw -text "Reading commits..." \
+		-font $mainfont -tags textitems
+	    set phase getcommits
+	}
+	start_rev_list $parsed_args
+	return
+    }
 
     foreach id $old_args {
 	if {![regexp {^[0-9a-f]{40}$} $id]} continue
@@ -3664,20 +3679,27 @@ proc updatecommits {rargs} {
     }
 
     set phase updatecommits
+    set oldcommits $commits
+    set commits {}
     set removed_commits [split [eval exec git-rev-list $ignorenew] "\n" ]
     if {[llength $removed_commits] > 0} {
-	$canv delete all
-	set oldcommits {}
-	foreach c $commits {
-	    if {[lsearch $c $removed_commits] < 0} {
-		lappend oldcommits $c
-	    } else {
+	allcanvs delete all
+	foreach c $removed_commits {
+	    set i [lsearch -exact $oldcommits $c]
+	    if {$i >= 0} {
+		set oldcommits [lreplace $oldcommits $i $i]
 		unset commitlisted($c)
+		foreach p $parents($c) {
+		    if {[info exists nchildren($p)]} {
+			set j [lsearch -exact $children($p) $c]
+			if {$j >= 0} {
+			    set children($p) [lreplace $children($p) $j $j]
+			    incr nchildren($p) -1
+			}
+		    }
+		}
 	    }
 	}
-	set commits {}
-	unset children
-	unset nchildren
 	set phase removecommits
     }
 
