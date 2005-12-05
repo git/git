@@ -44,7 +44,6 @@ static int update_info_refs(int force)
 
 /* packs */
 static struct pack_info {
-	unsigned long latest;
 	struct packed_git *p;
 	int old_num;
 	int new_num;
@@ -193,32 +192,6 @@ static int read_pack_info_file(const char *infofile)
 	return 1;
 }
 
-/* We sort the packs according to the date of the latest commit.  That
- * in turn indicates how young the pack is, and in general we would
- * want to depend on younger packs.
- */
-static unsigned long get_latest_commit_date(struct packed_git *p)
-{
-	unsigned char sha1[20];
-	struct object *o;
-	int num = num_packed_objects(p);
-	int i;
-	unsigned long latest = 0;
-
-	for (i = 0; i < num; i++) {
-		if (nth_packed_object_sha1(p, i, sha1))
-			die("corrupt pack file %s?", p->pack_name);
-		if ((o = parse_object_cheap(sha1)) == NULL)
-			die("cannot parse %s", sha1_to_hex(sha1));
-		if (o->type == commit_type) {
-			struct commit *commit = (struct commit *)o;
-			if (latest < commit->date)
-				latest = commit->date;
-		}
-	}
-	return latest;
-}
-
 static int compare_info(const void *a_, const void *b_)
 {
 	struct pack_info * const* a = a_;
@@ -234,12 +207,8 @@ static int compare_info(const void *a_, const void *b_)
 		/* The other way around. */
 		return 1;
 
-	if ((*a)->latest < (*b)->latest)
-		return -1;
-	else if ((*a)->latest == (*b)->latest)
-		return 0;
-	else
-		return 1;
+	/* then it does not matter but at least keep the comparison stable */
+	return (*a)->p - (*b)->p;
 }
 
 static void init_pack_info(const char *infofile, int force)
@@ -283,8 +252,6 @@ static void init_pack_info(const char *infofile, int force)
 			info[i]->old_num = -1;
 			info[i]->nr_heads = 0;
 		}
-		if (info[i]->old_num < 0)
-			info[i]->latest = get_latest_commit_date(info[i]->p);
 	}
 
 	/* renumber them */
@@ -339,7 +306,7 @@ static void find_pack_info_one(int pack_ix)
 	for (i = 0; i < num; i++) {
 		if (nth_packed_object_sha1(p, i, sha1))
 			die("corrupt pack file %s?", p->pack_name);
-		if ((o = lookup_object(sha1)) == NULL)
+		if ((o = parse_object_cheap(sha1)) == NULL)
 			die("cannot parse %s", sha1_to_hex(sha1));
 		if (o->refs) {
 			struct object_refs *refs = o->refs;
