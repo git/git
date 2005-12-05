@@ -30,7 +30,7 @@ OPTIONS
 	making a commit.  This option, '--replay', causes it to
 	use the original commit message intact.  This is useful
 	when you are reordering the patches in your private tree
-	before publishing, and is used by 'git rebase'.
+	before publishing.
 
 -n::
 	Usually the command automatically creates a commit with
