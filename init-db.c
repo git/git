@@ -237,9 +237,7 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++, argv++) {
 		char *arg = argv[1];
-		if (arg[0] != '-')
-			break;
-		else if (!strncmp(arg, "--template=", 11))
+		if (!strncmp(arg, "--template=", 11))
 			template_dir = arg+11;
 		else
 			die(init_db_usage);
