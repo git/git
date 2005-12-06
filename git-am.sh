@@ -312,7 +312,7 @@ do
 		echo "--------------------------"
 		cat "$dotest/final-commit"
 		echo "--------------------------"
-		echo -n "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
+		printf "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
 		read reply
 		case "$reply" in
 		[yY]*) action=yes ;;

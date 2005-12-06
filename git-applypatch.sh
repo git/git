@@ -83,7 +83,7 @@ while [ "$interactive" = yes ]; do
 	echo "--------------------------"
 	cat "$final"
 	echo "--------------------------"
-	echo -n "Apply? [y]es/[n]o/[e]dit/[a]ccept all "
+	printf "Apply? [y]es/[n]o/[e]dit/[a]ccept all "
 	read reply
 	case "$reply" in
 		y|Y) interactive=no;;

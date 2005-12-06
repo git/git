@@ -13,7 +13,7 @@ report () {
   trailer=""
   while read status name newname
   do
-    echo -n "$header"
+    printf '%s' "$header"
     header=""
     trailer="#
 "
@@ -27,7 +27,7 @@ report () {
     U ) echo "#	unmerged: $name";;
     esac
   done
-  echo -n "$trailer"
+  printf '%s' "$trailer"
   [ "$header" ]
 }
 
