@@ -123,7 +123,9 @@ merging.
 
 To pretend you have a file with mode and sha1 at path, say:
 
-   $ git-update-index --cacheinfo mode sha1 path
+----------------
+$ git-update-index --cacheinfo mode sha1 path
+----------------
 
 '--info-only' is used to register files without placing them in the object
 database.  This is useful for status-only repositories.
@@ -138,7 +140,9 @@ Examples
 --------
 To update and refresh only the files already checked out:
 
-   git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
+----------------
+$ git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
+----------------
 
 
 Configuration
@@ -146,11 +150,17 @@ Configuration
 
 The command honors `core.filemode` configuration variable.  If
 your repository is on an filesystem whose executable bits are
-unreliable, this should be set to 'false'.  This causes the
-command to ignore differences in file modes recorded in the
-index and the file mode on the filesystem if they differ only on
+unreliable, this should be set to 'false' (see gitlink:git-repo-config[1]).
+This causes the command to ignore differences in file modes recorded
+in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
 need to use `git-update-index --chmod=`.
+
+
+See Also
+--------
+gitlink:git-repo-config[1]
+
 
 Author
 ------

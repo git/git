@@ -9,19 +9,22 @@ residing in a pack file.
 
 SYNOPSIS
 --------
-'git-prune-packed'
+'git-prune-packed' [-n]
+
 
 DESCRIPTION
 -----------
-This program search the GIT_OBJECT_DIR for all objects that currently exist in
-a pack file as well as the independent object directories.
+This program search the `$GIT_OBJECT_DIR` for all objects that currently
+exist in a pack file as well as the independent object directories.
 
 All such extra objects are removed.
 
 A pack is a collection of objects, individually compressed, with delta
 compression applied, stored in a single file, with an associated index file.
 
-Packs are used to reduce the load on mirror systems, backup engines, disk storage, etc.
+Packs are used to reduce the load on mirror systems, backup engines,
+disk storage, etc.
+
 
 OPTIONS
 -------
