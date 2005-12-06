@@ -167,20 +167,26 @@ $ git-read-tree -m <tree1> <tree2> <tree3>
 
 and you will end up with an index with all of the <tree1> entries in
 "stage1", all of the <tree2> entries in "stage2" and all of the
-<tree3> entries in "stage3".
+<tree3> entries in "stage3".  When performing a merge of another
+branch into the current branch, we use the common ancestor tree
+as <tree1>, the current branch head as <tree2>, and the other
+branch head as <tree3>.
 
 Furthermore, `git-read-tree` has special-case logic that says: if you see
 a file that matches in all respects in the following states, it
 "collapses" back to "stage0":
 
    - stage 2 and 3 are the same; take one or the other (it makes no
-     difference - the same work has been done on stage 2 and 3)
+     difference - the same work has been done on our branch in
+     stage 2 and their branch in stage 3)
 
    - stage 1 and stage 2 are the same and stage 3 is different; take
-     stage 3 (some work has been done on stage 3)
+     stage 3 (our branch in stage 2 did not do anything since the
+     ancestor in stage 1 while their branch in stage 3 worked on
+     it)
 
    - stage 1 and stage 3 are the same and stage 2 is different take
-     stage 2 (some work has been done on stage 2)
+     stage 2 (we did something while they did nothing)
 
 The `git-write-tree` command refuses to write a nonsensical tree, and it
 will complain about unmerged entries if it sees a single entry that is not
@@ -223,11 +229,9 @@ populated.  Here is an outline of how the algorithm works:
     trivial rules ..
 
 You would normally use `git-merge-index` with supplied
-`git-merge-one-file` to do this last step.  The script
-does not touch the files in the work tree, and the entire merge
-happens in the index file.  In other words, there is no need to
-worry about what is in the working directory, since it is never
-shown and never used.
+`git-merge-one-file` to do this last step.  The script updates
+the files in the working tree as it merges each path and at the
+end of a successful merge.
 
 When you start a 3-way merge with an index file that is already
 populated, it is assumed that it represents the state of the
@@ -238,7 +242,8 @@ merge refuses to run if it finds an entry in the original index
 file that does not match stage 2.
 
 This is done to prevent you from losing your work-in-progress
-changes.  To illustrate, suppose you start from what has been
+changes, and mixing your random changes in an unrelated merge
+commit.  To illustrate, suppose you start from what has been
 commited last to your repository:
 
 ----------------
@@ -251,8 +256,8 @@ you notice that the tip of your "upstream" tree has advanced
 since you pulled from him:
 
 ----------------
-$ git-fetch rsync://.... linus
-$ LT=`cat .git/MERGE_HEAD`
+$ git-fetch git://.... linus
+$ LT=`cat .git/FETCH_HEAD`
 ----------------
 
 Your work tree is still based on your HEAD ($JC), but you have
@@ -270,6 +275,20 @@ $ echo "Merge with Linus" | \
 what you would commit is a pure merge between $JC and $LT without
 your work-in-progress changes, and your work tree would be
 updated to the result of the merge.
+
+However, if you have local changes in the working tree that
+would be overwritten by this merge,`git-read-tree` will refuse
+to run to prevent your changes from being lost.
+
+In other words, there is no need to worry about what exists only
+in the working tree.  When you have local changes in a part of
+the project that is not involved in the merge, your changes do
+not interfere with the merge, and are kept intact.  When they
+*do* interfere, the merge does not even start (`git-read-tree`
+complains loudly and fails without modifying anything).  In such
+a case, you can simply continue doing what you were in the
+middle of doing, and when your working tree is ready (i.e. you
+have finished your work-in-progress), attempt the merge again.
 
 
 See Also
