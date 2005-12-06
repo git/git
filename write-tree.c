@@ -83,6 +83,8 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 	return nr;
 }
 
+static const char write_tree_usage[] = "git-write-tree [--missing-ok]";
+
 int main(int argc, char **argv)
 {
 	int i, funny;
@@ -96,7 +98,7 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[1], "--missing-ok"))
 			missing_ok = 1;
 		else
-			die("unknown option %s", argv[1]);
+			die(write_tree_usage);
 	}
 	
 	if (argc > 2)
