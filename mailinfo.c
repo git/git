@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <iconv.h>
+#include "git-compat-util.h"
 #include "cache.h"
 
 static FILE *cmitmsg, *patchfile;

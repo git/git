@@ -243,6 +243,10 @@ ifeq ($(uname_S),NetBSD)
 	ALL_CFLAGS += -I/usr/pkg/include
 	ALL_LDFLAGS += -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
 endif
+ifeq ($(uname_S),AIX)
+	NO_STRCASESTR=YesPlease
+	NEEDS_LIBICONV=YesPlease
+endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif

@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE /* glibc2 needs this */
+#define _XOPEN_SOURCE 500 /* glibc2 and AIX 5.3L need this */
+#define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #include <time.h>
 #include "cache.h"
 
