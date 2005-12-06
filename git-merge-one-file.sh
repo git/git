@@ -16,6 +16,14 @@
 # been handled already by git-read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
+verify_path() {
+    file="$1"
+    dir=`dirname "$file"` &&
+    mkdir -p "$dir" &&
+    rm -f -- "$file" &&
+    : >"$file"
+}
+
 case "${1:-.}${2:-.}${3:-.}" in
 #
 # Deleted in both or deleted in one and unchanged in the other
@@ -90,9 +98,9 @@ case "${1:-.}${2:-.}${3:-.}" in
 	# Create the working tree file, with the correct permission bits.
 	# we can not rely on the fact that our tree has the path, because
 	# we allow the merge to be done in an unchecked-out working tree.
-	rm -f "$4" &&
+	verify_path "$4" &&
 		git-cat-file blob "$2" >"$4" &&
-		case "$6" in *7??) chmod +x "$4" ;; esac &&
+		case "$6" in *7??) chmod +x -- "$4" ;; esac &&
 		merge "$4" "$orig" "$src2"
 	ret=$?
 	rm -f -- "$orig" "$src2"
