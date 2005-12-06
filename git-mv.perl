@@ -62,7 +62,7 @@ my $safesrc;
 my (%overwritten, %srcForDst);
 
 $/ = "\0";
-open(F,"-|","git-ls-files","-z")
+open(F, 'git-ls-files -z |')
         or die "Failed to open pipe from git-ls-files: " . $!;
 
 @allfiles = map { chomp; $_; } <F>;
