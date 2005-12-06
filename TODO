@@ -35,7 +35,7 @@ Documentation
   three developers.
 
 * Update tutorial to cover setting up repository hooks to do
-  common tasks.
+  common tasks [Mostly done, with Carl's help].
 
 * Do we still have missing docs?  If so accept patches to finish
   them.
@@ -44,10 +44,11 @@ Documentation
   next?" [ONGOING].
 
 * Accept patches to make formatted tables in asciidoc to work
-  well in both html and man pages (see git-diff(1)).
+  well in both html and man pages (see git-diff(1)) [DONE --
+  avoid them ;-)].
 
 * Work around multiple synopses lines in manual pages
-  (e.g. git-bisect).
+  (e.g. git-bisect) [DONE -- avoid them ;-)].
 
 
 Technical (heavier)
