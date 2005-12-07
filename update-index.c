@@ -256,35 +256,30 @@ inside:
 	}
 }
 
-static int add_cacheinfo(const char *arg1, const char *arg2, const char *arg3)
+static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
+			 const char *path, int stage)
 {
 	int size, len, option;
-	unsigned int mode;
-	unsigned char sha1[20];
 	struct cache_entry *ce;
 
-	if (sscanf(arg1, "%o", &mode) != 1)
-		return -1;
-	if (get_sha1_hex(arg2, sha1))
-		return -1;
-	if (!verify_path(arg3))
+	if (!verify_path(path))
 		return -1;
 
-	len = strlen(arg3);
+	len = strlen(path);
 	size = cache_entry_size(len);
 	ce = xmalloc(size);
 	memset(ce, 0, size);
 
 	memcpy(ce->sha1, sha1, 20);
-	memcpy(ce->name, arg3, len);
-	ce->ce_flags = htons(len);
+	memcpy(ce->name, path, len);
+	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option))
 		return error("%s: cannot add to the index - missing --add option?",
-			     arg3);
-	report("add '%s'", arg3);
+			     path);
+	report("add '%s'", path);
 	return 0;
 }
 
@@ -342,7 +337,24 @@ static void read_index_info(int line_termination)
 		char *path_name;
 		unsigned char sha1[20];
 		unsigned int mode;
+		int stage;
 
+		/* This reads lines formatted in one of three formats:
+		 *
+		 * (1) mode         SP sha1          TAB path
+		 * The first format is what "git-apply --index-info"
+		 * reports, and used to reconstruct a partial tree
+		 * that is used for phony merge base tree when falling
+		 * back on 3-way merge.
+		 *
+		 * (2) mode SP type SP sha1          TAB path
+		 * The second format is to stuff git-ls-tree output
+		 * into the index file.
+		 * 
+		 * (3) mode         SP sha1 SP stage TAB path
+		 * This format is to put higher order stages into the
+		 * index file and matches git-ls-files --stage output.
+		 */
 		read_line(&buf, stdin, line_termination);
 		if (buf.eof)
 			break;
@@ -354,9 +366,19 @@ static void read_index_info(int line_termination)
 		tab = strchr(ptr, '\t');
 		if (!tab || tab - ptr < 41)
 			goto bad_line;
+
+		if (tab[-2] == ' ' && '1' <= tab[-1] && tab[-1] <= '3') {
+			stage = tab[-1] - '0';
+			ptr = tab + 1; /* point at the head of path */
+			tab = tab - 2; /* point at tail of sha1 */
+		}
+		else {
+			stage = 0;
+			ptr = tab + 1; /* point at the head of path */
+		}
+
 		if (get_sha1_hex(tab - 40, sha1) || tab[-41] != ' ')
 			goto bad_line;
-		ptr = tab + 1;
 
 		if (line_termination && ptr[0] == '"')
 			path_name = unquote_c_style(ptr, NULL);
@@ -382,7 +404,7 @@ static void read_index_info(int line_termination)
 			 * ptr[-41] is at the beginning of sha1
 			 */
 			ptr[-42] = ptr[-1] = 0;
-			if (add_cacheinfo(buf.buf, ptr-41, path_name))
+			if (add_cacheinfo(mode, sha1, path_name, stage))
 				die("git-update-index: unable to update %s",
 				    path_name);
 		}
@@ -449,10 +471,17 @@ int main(int argc, const char **argv)
 				continue;
 			}
 			if (!strcmp(path, "--cacheinfo")) {
+				unsigned char sha1[20];
+				unsigned int mode;
+
 				if (i+3 >= argc)
 					die("git-update-index: --cacheinfo <mode> <sha1> <path>");
-				if (add_cacheinfo(argv[i+1], argv[i+2], argv[i+3]))
-					die("git-update-index: --cacheinfo cannot add %s", argv[i+3]);
+
+				if ((sscanf(argv[i+1], "%o", &mode) != 1) ||
+				    get_sha1_hex(argv[i+2], sha1) ||
+				    add_cacheinfo(mode, sha1, argv[i+3], 0))
+					die("git-update-index: --cacheinfo"
+					    " cannot add %s", argv[i+3]);
 				i += 3;
 				continue;
 			}
