@@ -912,7 +912,11 @@ sub read_info_ref {
 	open my $fd, "$projectroot/$project/info/refs" or return;
 	while (my $line = <$fd>) {
 		if ($line =~ m/^([0-9a-fA-F]{40})\t.*\/([^\^]+)/) {
-			$refs{$1} = $2;
+			if (defined $refs{$1}) {
+				$refs{$1} .= " / $2";
+			} else {
+				$refs{$1} = $2;
+			}
 		}
 	}
 	close $fd or return;
