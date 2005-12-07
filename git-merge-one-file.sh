@@ -16,14 +16,6 @@
 # been handled already by git-read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
-verify_path() {
-    file="$1"
-    dir=`dirname "$file"` &&
-    mkdir -p "$dir" &&
-    rm -f -- "$file" &&
-    : >"$file"
-}
-
 case "${1:-.}${2:-.}${3:-.}" in
 #
 # Deleted in both or deleted in one and unchanged in the other
@@ -95,15 +87,16 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	# Create the working tree file, with the correct permission bits.
-	# we can not rely on the fact that our tree has the path, because
-	# we allow the merge to be done in an unchecked-out working tree.
-	verify_path "$4" &&
-		git-cat-file blob "$2" >"$4" &&
-		case "$6" in *7??) chmod +x -- "$4" ;; esac &&
-		merge "$4" "$orig" "$src2"
+	# Be careful for funny filename such as "-L" in "$4", which
+	# would confuse "merge" greatly.
+	src1=`git-unpack-file $2`
+	merge "$src1" "$orig" "$src2"
 	ret=$?
-	rm -f -- "$orig" "$src2"
+
+	# Create the working tree file, using "our tree" version from the
+	# index, and then store the result of the merge.
+	git-checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4"
+	rm -f -- "$orig" "$src1" "$src2"
 
 	if [ "$6" != "$7" ]; then
 		echo "ERROR: Permissions conflict: $5->$6,$7."
