@@ -531,6 +531,7 @@ sub git_read_commit {
 	};
 
 	foreach my $title (@commit_lines) {
+		$title =~ s/^    //;
 		if ($title ne "") {
 			$co{'title'} = chop_str($title, 80, 5);
 			# remove leading stuff of merges to make the interesting part visible
@@ -912,6 +913,7 @@ sub read_info_ref {
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
 	open my $fd, "$projectroot/$project/info/refs" or return;
 	while (my $line = <$fd>) {
+		chomp($line);
 		if ($line =~ m/^([0-9a-fA-F]{40})\t.*$type\/([^\^]+)/) {
 			if (defined $refs{$1}) {
 				$refs{$1} .= " / $2";
@@ -2056,7 +2058,7 @@ sub git_commitdiff_plain {
 	      "\n";
 
 	foreach my $line (@$comment) {;
-		print "  $line\n";
+		print "$line\n";
 	}
 	print "---\n\n";
 
