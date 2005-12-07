@@ -36,6 +36,7 @@
 
 static const char *prefix;
 static int prefix_length;
+static int checkout_stage; /* default to checkout stage0 */
 
 static struct checkout state = {
 	.base_dir = "",
@@ -48,20 +49,36 @@ static struct checkout state = {
 
 static int checkout_file(const char *name)
 {
-	int pos = cache_name_pos(name, strlen(name));
-	if (pos < 0) {
-		if (!state.quiet) {
-			pos = -pos - 1;
-			fprintf(stderr,
-				"git-checkout-index: %s is %s.\n",
-				name,
-				(pos < active_nr &&
-				 !strcmp(active_cache[pos]->name, name)) ?
-				"unmerged" : "not in the cache");
-		}
-		return -1;
+	int namelen = strlen(name);
+	int pos = cache_name_pos(name, namelen);
+	int has_same_name = 0;
+
+	if (pos < 0)
+		pos = -pos - 1;
+
+	while (pos < active_nr) {
+		struct cache_entry *ce = active_cache[pos];
+		if (ce_namelen(ce) != namelen &&
+		    memcmp(ce->name, name, namelen))
+			break;
+		has_same_name = 1;
+		if (checkout_stage == ce_stage(ce))
+			return checkout_entry(ce, &state);
+		pos++;
 	}
-	return checkout_entry(active_cache[pos], &state);
+
+	if (!state.quiet) {
+		fprintf(stderr, "git-checkout-index: %s ", name);
+		if (!has_same_name)
+			fprintf(stderr, "is not in the cache");
+		else if (checkout_stage)
+			fprintf(stderr, "does not exist at stage %d",
+				checkout_stage);
+		else
+			fprintf(stderr, "is unmerged");
+		fputc('\n', stderr);
+	}
+	return -1;
 }
 
 static int checkout_all(void)
@@ -70,11 +87,11 @@ static int checkout_all(void)
 
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce))
+		if (ce_stage(ce) != checkout_stage)
 			continue;
 		if (prefix && *prefix &&
-		    ( ce_namelen(ce) <= prefix_length ||
-		      memcmp(prefix, ce->name, prefix_length) ))
+		    (ce_namelen(ce) <= prefix_length ||
+		     memcmp(prefix, ce->name, prefix_length)))
 			continue;
 		if (checkout_entry(ce, &state) < 0)
 			errs++;
@@ -88,7 +105,7 @@ static int checkout_all(void)
 }
 
 static const char checkout_cache_usage[] =
-"git-checkout-index [-u] [-q] [-a] [-f] [-n] [--prefix=<string>] [--] <file>...";
+"git-checkout-index [-u] [-q] [-a] [-f] [-n] [--stage=[123]] [--prefix=<string>] [--] <file>...";
 
 static struct cache_file cache_file;
 
@@ -138,9 +155,17 @@ int main(int argc, char **argv)
 				die("cannot open index.lock file.");
 			continue;
 		}
-		if (!memcmp(arg, "--prefix=", 9)) {
+		if (!strncmp(arg, "--prefix=", 9)) {
 			state.base_dir = arg+9;
 			state.base_dir_len = strlen(state.base_dir);
+			continue;
+		}
+		if (!strncmp(arg, "--stage=", 8)) {
+			int ch = arg[8];
+			if ('1' <= ch && ch <= '3')
+				checkout_stage = arg[8] - '0';
+			else
+				die("stage should be between 1 and 3");
 			continue;
 		}
 		if (arg[0] == '-')

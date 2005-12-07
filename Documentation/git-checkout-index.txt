@@ -9,7 +9,7 @@ git-checkout-index - Copy files from the index to the working directory
 SYNOPSIS
 --------
 'git-checkout-index' [-u] [-q] [-a] [-f] [-n] [--prefix=<string>]
-	           [--] <file>...
+	[--stage=<number>] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -39,6 +39,10 @@ OPTIONS
 --prefix=<string>::
 	When creating files, prepend <string> (usually a directory
 	including a trailing /)
+
+--stage=<number>::
+	Instead of checking out unmerged entries, copy out the
+	files from named stage.  <number> must be between 1 and 3.
 
 --::
 	Do not interpret any more arguments as options.
