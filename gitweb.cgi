@@ -312,7 +312,7 @@ a.rss_logo {
 }
 a.rss_logo:hover { background-color:#ee5500; }
 span.tag {
-	padding:0px 4px; font-size:10px;
+	padding:0px 4px; font-size:10px; font-weight:normal;
 	background-color:#ffffaa; border:1px solid; border-color:#ffffcc #ffee00 #ffee00 #ffffcc;
 }
 </style>
@@ -906,12 +906,13 @@ sub git_project_list {
 }
 
 sub read_info_ref {
+	my $type = shift || "";
 	my %refs;
 	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c	refs/tags/v2.6.11
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
 	open my $fd, "$projectroot/$project/info/refs" or return;
 	while (my $line = <$fd>) {
-		if ($line =~ m/^([0-9a-fA-F]{40})\t.*\/([^\^]+)/) {
+		if ($line =~ m/^([0-9a-fA-F]{40})\t.*$type\/([^\^]+)/) {
 			if (defined $refs{$1}) {
 				$refs{$1} .= " / $2";
 			} else {
@@ -1047,18 +1048,19 @@ sub git_summary {
 		}
 		$alternate ^= 1;
 		if ($i-- > 0) {
+			my $ref = "";
+			if (defined $refs->{$commit}) {
+				$ref = " <span class=\"tag\">$refs->{$commit}</span>";
+			}
 			print "<td><i>$co{'age_string'}</i></td>\n" .
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 			      "<td>";
 			if (length($co{'title_short'}) < length($co{'title'})) {
 				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
-			              "<b>" . esc_html($co{'title_short'}) . "</b>");
+			              "<b>" . esc_html($co{'title_short'}) . "$ref</b>");
 			} else {
 				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"},
-				      "<b>" . esc_html($co{'title'}) . "</b>");
-			}
-			if (defined $refs->{$commit}) {
-				print " <span class=\"tag\">$refs->{$commit}</span>";
+				      "<b>" . esc_html($co{'title'}) . "$ref</b>");
 			}
 			print "</td>\n" .
 			      "<td class=\"link\">" .
@@ -2012,7 +2014,7 @@ sub git_commitdiff_plain {
 
 	# try to figure out the next tag after this commit
 	my $tagname;
-	my $refs = read_info_ref();
+	my $refs = read_info_ref("tags");
 	open $fd, "-|", "$gitbin/git-rev-list HEAD";
 	chomp (my (@commits) = <$fd>);
 	close $fd;
@@ -2110,7 +2112,7 @@ sub git_history {
 			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 3)) . "</i></td>\n" .
 			      "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"}, "<b>" .
-			      esc_html(chop_str($co{'title'}, 50)) . "</b>") . "$ref</td>\n" .
+			      esc_html(chop_str($co{'title'}, 50)) . "$ref</b>") . "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
 			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
@@ -2326,6 +2328,10 @@ sub git_shortlog {
 	my $alternate = 0;
 	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
 		my $commit = $revlist[$i];
+		my $ref = "";
+		if (defined $refs->{$commit}) {
+			$ref = " <span class=\"tag\">$refs->{$commit}</span>";
+		}
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
@@ -2339,13 +2345,10 @@ sub git_shortlog {
 		      "<td>";
 		if (length($co{'title_short'}) < length($co{'title'})) {
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
-			      "<b>" . esc_html($co{'title_short'}) . "</b>");
+			      "<b>" . esc_html($co{'title_short'}) . "$ref</b>");
 		} else {
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"},
-			      "<b>" . esc_html($co{'title_short'}) . "</b>");
-		}
-		if (defined $refs->{$commit}) {
-			print " <span class=\"tag\">$refs->{$commit}</span>";
+			      "<b>" . esc_html($co{'title_short'}) . "$ref</b>");
 		}
 		print "</td>\n" .
 		      "<td class=\"link\">" .
