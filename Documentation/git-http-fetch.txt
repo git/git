@@ -14,6 +14,12 @@ DESCRIPTION
 -----------
 Downloads a remote git repository via HTTP.
 
+OPTIONS
+-------
+commit-id::
+        Either the hash or the filename under [URL]/refs/ to
+        pull.
+
 -c::
 	Get the commit objects.
 -t::
