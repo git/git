@@ -1282,26 +1282,27 @@ fatal: merge program failed
 
 `git-merge-one-file` script is called with parameters to
 describe those three versions, and is responsible to leave the
-merge results in the working tree and register it in the index
-file.  It is a fairly straightforward shell script, and
-eventually calls `merge` program from RCS suite to perform the
+merge results in the working tree.
+It is a fairly straightforward shell script, and
+eventually calls `merge` program from RCS suite to perform a
 file-level 3-way merge.  In this case, `merge` detects
 conflicts, and the merge result with conflict marks is left in
-the working tree, while the index file is updated with the
-version from the current branch (this is to make `git diff`
-useful after this step).  This can be seen if you run `ls-files
+the working tree..  This can be seen if you run `ls-files
 --stage` again at this point:
 
 ------------
 $ git-ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 0	hello
+100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
+100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 
-As you can see, there is no unmerged paths in the index file.
 This is the state of the index file and the working file after
 `git merge` returns control back to you, leaving the conflicting
-merge for you to resolve.
+merge for you to resolve.  Notice that the path `hello` is still
+unmerged, and what you see with `git diff` at this point is
+differences since stage 2 (i.e. your version).
 
 
 Publishing your work
@@ -1675,10 +1676,10 @@ Bundling your work together
 ---------------------------
 
 It is likely that you will be working on more than one thing at
-a time.  It is easy to use those more-or-less independent tasks
+a time.  It is easy to manage those more-or-less independent tasks
 using branches with git.
 
-We have already seen how branches work in a previous example,
+We have already seen how branches work previously,
 with "fun and work" example using two branches.  The idea is the
 same if there are more than two branches.  Let's say you started
 out from "master" head, and have some new code in the "master"
