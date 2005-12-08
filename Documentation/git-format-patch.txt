@@ -8,7 +8,7 @@ git-format-patch - Prepare patches for e-mail submission.
 
 SYNOPSIS
 --------
-'git-format-patch' [-n][-o <dir>|--stdout][-k][--mbox][--diff-options] <his> [<mine>]
+'git-format-patch' [-n | -k] [-o <dir> | --stdout] [-s] [-c] [--mbox] [--diff-options] <his> [<mine>]
 
 DESCRIPTION
 -----------
@@ -32,23 +32,34 @@ processing with applymbox.
 
 OPTIONS
 -------
--o <dir>::
+-o|--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
 
--n::
+-n|--numbered::
 	Name output in '[PATCH n/m]' format.
 
--k::
+-k|--keep-subject::
 	Do not strip/add '[PATCH]' from the first line of the
 	commit log message.
 
---author, --date::
+-a|--author, -d|--date::
 	Output From: and Date: headers for commits made by
 	yourself as well.  Usually these are output only for
 	commits made by people other than yourself.
 
---mbox::
+-s|--signoff::
+	Add `Signed-off-by:` line to the commit message, using
+	the committer identity of yourself.
+
+-c|--check::
+        Display suspicious lines in the patch.  The definition
+        of 'suspicious lines' is currently the lines that has
+        trailing whitespaces, and the lines whose indentation
+        has a SP character immediately followed by a TAB
+        character.
+
+-m|--mbox::
 	Format the output files for closer to mbox format by
 	adding a phony Unix "From " line, so they can be
 	concatenated together and fed to `git-applymbox`.
