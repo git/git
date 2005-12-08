@@ -7,7 +7,7 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git-show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [<rev> | <glob>]...'
+'git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [<rev> | <glob>]...'
 
 DESCRIPTION
 -----------
@@ -34,6 +34,12 @@ OPTIONS
 --all --heads --tags::
 	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
 	and $GIT_DIR/refs/tags, respectively.
+
+--topo-order::
+        By default, the branches and their commits are shown in
+        reverse chronological order.  This option makes them
+        appear in topological order (i.e., descendant commits
+        are shown before their parents).
 
 --more=<n>::
 	Usually the command stops output upon showing the commit

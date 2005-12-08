@@ -5,7 +5,7 @@
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--all] [--heads] [--tags] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
+"git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
 
 #define UNINTERESTING	01
 
