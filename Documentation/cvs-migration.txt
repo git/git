@@ -187,7 +187,8 @@ you would use git-rev-list and git-diff-tree like this:
 
 We have already talked about the "\--stdin" form of git-diff-tree
 command that reads the list of commits and compares each commit
-with its parents.  The git-whatchanged command internally runs
+with its parents (otherwise you should go back and read the tutorial).
+The git-whatchanged command internally runs
 the equivalent of the above command, and can be used like this:
 
 	$ git-whatchanged -p -S'if (frotz) {
