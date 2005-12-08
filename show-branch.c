@@ -55,7 +55,7 @@ static void name_commit(struct commit *commit, const char *head_name, int nth)
 
 /* Parent is the first parent of the commit.  We may name it
  * as (n+1)th generation ancestor of the same head_name as
- * commit is nth generation ancestore of, if that generation
+ * commit is nth generation ancestor of, if that generation
  * number is better than the name it already has.
  */
 static void name_parent(struct commit *commit, struct commit *parent)
