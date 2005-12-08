@@ -20,7 +20,7 @@ files are passed as arguments 5, 6 and 7.
 OPTIONS
 -------
 --::
-	Interpret all following arguments as filenames.
+	Do not interpret any more arguments as options.
 
 -a::
 	Run merge against all files in the index that need merging.
