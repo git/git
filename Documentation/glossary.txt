@@ -20,7 +20,7 @@ hash::
 
 object database::
 	Stores a set of "objects", and an individial object is identified
-	by its object name. The object usually live in $GIT_DIR/objects/.
+	by its object name. The objects usually live in `$GIT_DIR/objects/`.
 
 blob object::
 	Untyped object, e.g. the contents of a file.
@@ -109,15 +109,15 @@ head::
 branch::
 	A non-cyclical graph of revisions, i.e. the complete history of
 	a particular revision, which is called the branch head. The
-	branch heads are stored in $GIT_DIR/refs/heads/.
+	branch heads are stored in `$GIT_DIR/refs/heads/`.
 
 ref::
 	A 40-byte hex representation of a SHA1 pointing to a particular
-	object. These may be stored in $GIT_DIR/refs/.
+	object. These may be stored in `$GIT_DIR/refs/`.
 
 head ref::
 	A ref pointing to a head. Often, this is abbreviated to "head".
-	Head refs are stored in $GIT_DIR/refs/heads/.
+	Head refs are stored in `$GIT_DIR/refs/heads/`.
 
 tree-ish::
 	A ref pointing to either a commit object, a tree object, or a
@@ -125,7 +125,7 @@ tree-ish::
 
 ent::
 	Favorite synonym to "tree-ish" by some total geeks. See
-	http://en.wikipedia.org/wiki/Ent_(Middle-earth) for an in-depth
+	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
 	explanation.
 
 tag object::
@@ -137,7 +137,7 @@ tag object::
 tag::
 	A ref pointing to a tag or commit object. In contrast to a head,
 	a tag is not changed by a commit. Tags (not tag objects) are
-	stored in $GIT_DIR/refs/tags/. A git tag has nothing to do with
+	stored in `$GIT_DIR/refs/tags/`. A git tag has nothing to do with
 	a Lisp tag (which is called object type in git's context).
 	A tag is most typically used to mark a particular point in the
 	commit ancestry chain.

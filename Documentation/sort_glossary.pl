@@ -42,7 +42,6 @@ sub no_spaces ($) {
 
 print 'GIT Glossary
 ============
-Aug 2005
 
 This list is sorted alphabetically:
 
