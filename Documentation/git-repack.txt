@@ -9,7 +9,7 @@ objects into pack files.
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-d]
+'git-repack' [-a] [-d] [-l] [-n]
 
 DESCRIPTION
 -----------
@@ -39,6 +39,13 @@ OPTIONS
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
 
+-l::
+        Pass the `--local` option to `git pack-objects`, see
+        gitlink:git-pack-objects[1].
+
+-n::
+        Do not update the server information with
+        `git update-server-info`.
 
 Author
 ------
