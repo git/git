@@ -8,7 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [-m [-u|-i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [[-m | --reset] [-u | -i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
