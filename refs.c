@@ -292,6 +292,8 @@ int write_ref_sha1(const char *ref, int fd, const unsigned char *sha1)
 		return -1;
 	filename = ref_file_name(ref);
 	lock_filename = ref_lock_file_name(ref);
+	if (safe_create_leading_directories(filename))
+		die("unable to create leading directory for %s", filename);
 	retval = write_ref_file(filename, lock_filename, fd, sha1);
 	free(filename);
 	free(lock_filename);
@@ -358,6 +360,8 @@ int write_ref_sha1_unlocked(const char *ref, const unsigned char *sha1)
 		return -1;
 	filename = ref_file_name(ref);
 	lock_filename = ref_lock_file_name(ref);
+	if (safe_create_leading_directories(filename))
+		die("unable to create leading directory for %s", filename);
 	fd = open(lock_filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0) {
 		error("Writing %s", lock_filename);
