@@ -172,7 +172,18 @@ test_done () {
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
-export GIT_EXEC_PATH
+export PATH GIT_EXEC_PATH
+
+# Similarly use ../compat/subprocess.py if our python does not
+# have subprocess.py on its own.
+PYTHON=`sed -e '1{
+	s/^#!//
+	q
+}' ../git-merge-recursive` &&
+"$PYTHON" -c 'import subprocess' 2>/dev/null || {
+	PYTHONPATH=$(pwd)/../compat
+	export PYTHONPATH
+}
 
 # Test repository
 test=trash
