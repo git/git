@@ -20,7 +20,7 @@ OPTIONS
 <commit>::
 	Commit to cherry-pick.
 
---edit::
+-e|--edit::
 	With this option, `git-cherry-pick` will let you edit the commit
 	message prior committing.
 

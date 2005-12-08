@@ -20,7 +20,7 @@ OPTIONS
 <commit>::
 	Commit to revert.
 
---edit::
+-e|--edit::
 	With this option, `git-revert` will let you edit the commit
 	message prior committing the revert. This is the default if
 	you run the command from a terminal.
@@ -29,7 +29,7 @@ OPTIONS
 	With this option, `git-revert` will not start the commit
 	message editor.
 
--n::
+-n|--no-commit::
 	Usually the command automatically creates a commit with
 	a commit log message stating which commit was reverted.
 	This flag applies the change necessary to revert the

@@ -38,7 +38,7 @@ do
 	-e|--e|--ed|--edi|--edit)
 		edit=-e
 		;;
-	-n|--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
+	--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
 		edit=
 		;;
 	-r|--r|--re|--rep|--repl|--repla|--replay)
