@@ -17,7 +17,7 @@ Displays the references other repository has.
 
 OPTIONS
 -------
---heads --tags::
+-h|--heads, -t|--tags::
 	Limit to only refs/heads and refs/tags, respectively.
 	These options are _not_ mutually exclusive; when given
 	both, references stored in refs/heads and refs/tags are
