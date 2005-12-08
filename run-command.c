@@ -2,13 +2,19 @@
 #include "run-command.h"
 #include <sys/wait.h>
 
-int run_command_v(int argc, char **argv)
+int run_command_v_opt(int argc, char **argv, int flags)
 {
 	pid_t pid = fork();
 
 	if (pid < 0)
 		return -ERR_RUN_COMMAND_FORK;
 	if (!pid) {
+		if (flags & RUN_COMMAND_NO_STDIO) {
+			int fd = open("/dev/null", O_RDWR);
+			dup2(fd, 0);
+			dup2(fd, 1);
+			close(fd);			
+		}
 		execvp(argv[0], (char *const*) argv);
 		die("exec %s failed.", argv[0]);
 	}
@@ -36,6 +42,11 @@ int run_command_v(int argc, char **argv)
 	}
 }
 
+int run_command_v(int argc, char **argv)
+{
+	return run_command_v_opt(argc, argv, 0);
+}
+
 int run_command(const char *cmd, ...)
 {
 	int argc;
@@ -54,5 +65,5 @@ int run_command(const char *cmd, ...)
 	va_end(param);
 	if (MAX_RUN_COMMAND_ARGS <= argc)
 		return error("too many args to run %s", cmd);
-	return run_command_v(argc, argv);
+	return run_command_v_opt(argc, argv, 0);
 }
