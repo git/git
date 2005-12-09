@@ -140,7 +140,12 @@ static int compare_info(const void *a_, const void *b_)
 		return 1;
 
 	/* then it does not matter but at least keep the comparison stable */
-	return (*a)->p - (*b)->p;
+	if ((*a)->p == (*b)->p)
+		return 0;
+	else if ((*a)->p < (*b)->p)
+		return -1;
+	else
+		return 1;
 }
 
 static void init_pack_info(const char *infofile, int force)
