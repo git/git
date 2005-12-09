@@ -13,10 +13,11 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This runs `git-fsck-objects --unreachable` using the heads
-specified on the command line (or `$GIT_DIR/refs/heads/\*` and
-`$GIT_DIR/refs/tags/\*` if none is specified), and prunes all
-unreachable objects from the object database.  In addition, it
+This runs `git-fsck-objects --unreachable` using all the refs
+available in `$GIT_DIR/refs`, optionally with additional set of
+objects specified on the command line, and prunes all
+objects unreachable from any of these head objects from the object database.
+In addition, it
 prunes the unpacked objects that are also found in packs by
 running `git prune-packed`.
 
@@ -31,29 +32,19 @@ OPTIONS
 	Do not interpret any more arguments as options.
 
 <head>...::
-	Instead of keeping objects
+	In addition to objects
 	reachable from any of our references, keep objects
-	reachable from only listed <head>s.
-+
-Note that the explicitly named <head>s are *not* appended to the
-default set of references, but they replace them.  In general you
-would want to say `git prune $(git-rev-parse --all) extra1
-extra2` to keep chains of commits leading to extra1, extra2,
-... in addition to what are reachable from your own refs.
-Saying `git prune extra1 extra2` would *lose* objects reachable
-only from the usual refs, which is usually not what you want.
-
+	reachable from listed <head>s.
 
 EXAMPLE
 -------
 
-To prune objects not used by your repository and another that
+To prune objects not used by your repository nor another that
 borrows from your repository via its
 `.git/objects/info/alternates`:
 
 ------------
-$ git prune $(git-rev-parse --all) \
-  $(cd ../another && $(git-rev-parse --all))
+$ git prune $(cd ../another && $(git-rev-parse --all))
 ------------
 
 Author
