@@ -149,7 +149,7 @@ test_expect_code () {
 test_done () {
 	trap - exit
 	case "$test_failure" in
-	0)	
+	0)
 		# We could:
 		# cd .. && rm -fr trash
 		# but that means we forbid any tests that use their own
@@ -190,8 +190,7 @@ test=trash
 rm -fr "$test"
 mkdir "$test"
 cd "$test"
-git init-db --template=../../templates/blt/ 2>/dev/null ||
+"$GIT_EXEC_PATH/git" init-db --template=../../templates/blt/ 2>/dev/null ||
 error "cannot run git init-db"
 
 mv .git/hooks .git/hooks-disabled
-
