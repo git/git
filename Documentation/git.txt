@@ -36,22 +36,23 @@ OPTIONS
 CORE GIT COMMANDS
 -----------------
 Before reading this cover to cover, you may want to take a look
-at the link:tutorial.html[tutorial] document.
+at the link:tutorial.html[tutorial] document.  If you are
+migrating from CVS, link:cvs-migration.html[cvs migration]
+document may be helpful after you finish the tutorial.
 
 The <<Discussion>> section below contains much useful definition
 and clarification info - read that first.  After that, if you
 are interested in using git to manage (version control)
-projects, read on commands listed in Porcelain-ish commands
-section next.  On the other hand, if you are writing your own
-Porcelain, I suggest reading gitlink:git-update-index[1] and
-gitlink:git-read-tree[1] first.
-
-If you are migrating from CVS, link:cvs-migration.html[cvs migration]
-document may be helpful after you finish the tutorial.
+projects, use link:everyday.html[Everyday GIT] as a guide to the
+minimum set of commands you need to know for day-to-day work.
 
 After you get the general feel from the tutorial and this
 overview page, you may want to take a look at the
 link:howto-index.html[howto] documents.
+
+If you are writing your own Porcelain, you need to be familiar
+with most of the low level commands --- I suggest starting from
+gitlink:git-update-index[1] and gitlink:git-read-tree[1].
 
 
 David Greaves <david@dgreaves.com>

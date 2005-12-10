@@ -133,6 +133,6 @@ and maintain access to the repository by developers.
   * gitlink:git-shell[1] can be used as a 'restricted login shell'
     for shared central repository users.
 
-  * howto/update-hook-example has a good example of
-    managing a shared central repository.
+  * link:howto/update-hook-example.txt[update hook howto] has a
+    good example of managing a shared central repository.
 
