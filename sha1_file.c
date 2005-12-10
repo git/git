@@ -1528,6 +1528,40 @@ int has_sha1_file(const unsigned char *sha1)
 	return find_sha1_file(sha1, &st) ? 1 : 0;
 }
 
+int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
+{
+	unsigned long size = 4096;
+	char *buf = malloc(size);
+	int iret, ret;
+	unsigned long off = 0;
+	unsigned char hdr[50];
+	int hdrlen;
+	do {
+		iret = read(fd, buf + off, size - off);
+		if (iret > 0) {
+			off += iret;
+			if (off == size) {
+				size *= 2;
+				buf = realloc(buf, size);
+			}
+		}
+	} while (iret > 0);
+	if (iret < 0) {
+		free(buf);
+		return -1;
+	}
+	if (!type)
+		type = "blob";
+	if (write_object)
+		ret = write_sha1_file(buf, off, type, sha1);
+	else {
+		write_sha1_file_prepare(buf, off, type, sha1, hdr, &hdrlen);
+		ret = 0;
+	}
+	free(buf);
+	return ret;
+}
+
 int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type)
 {
 	unsigned long size = st->st_size;

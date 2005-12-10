@@ -21,8 +21,16 @@ static void hash_object(const char *path, const char *type, int write_object)
 	printf("%s\n", sha1_to_hex(sha1));
 }
 
+static void hash_stdin(const char *type, int write_object)
+{
+	unsigned char sha1[20];
+	if (index_pipe(sha1, 0, type, write_object))
+		die("Unable to add stdin to database");
+	printf("%s\n", sha1_to_hex(sha1));
+}
+
 static const char hash_object_usage[] =
-"git-hash-object [-t <type>] [-w] <file>...";
+"git-hash-object [-t <type>] [-w] [--stdin] <file>...";
 
 int main(int argc, char **argv)
 {
@@ -53,9 +61,12 @@ int main(int argc, char **argv)
 			}
 			else if (!strcmp(argv[i], "--help"))
 				usage(hash_object_usage);
+			else if (!strcmp(argv[i], "--stdin")) {
+				hash_stdin(type, write_object);
+			}
 			else
 				die(hash_object_usage);
-		}
+		} 
 		else {
 			const char *arg = argv[i];
 			if (0 <= prefix_length)

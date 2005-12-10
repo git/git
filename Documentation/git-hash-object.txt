@@ -8,7 +8,7 @@ git-hash-object - Computes object ID and optionally creates a blob from a file.
 
 SYNOPSIS
 --------
-'git-hash-object' [-t <type>] [-w] <file>
+'git-hash-object' [-t <type>] [-w] [--stdin] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -28,6 +28,9 @@ OPTIONS
 
 -w::
 	Actually write the object into the object database.
+
+--stdin::
+	Read the object from standard input instead of from a file.
 
 Author
 ------
