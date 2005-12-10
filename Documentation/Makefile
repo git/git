@@ -9,6 +9,7 @@ ARTICLES += diffcore
 ARTICLES += howto-index
 ARTICLES += repository-layout
 ARTICLES += hooks
+ARTICLES += everyday
 # with their own formatting rules.
 SP_ARTICLES = glossary howto/revert-branch-rebase
 
