@@ -179,10 +179,15 @@ export PATH GIT_EXEC_PATH
 PYTHON=`sed -e '1{
 	s/^#!//
 	q
-}' ../git-merge-recursive` &&
+}' ../git-merge-recursive` || {
+	error "You haven't built things yet, have you?"
+}
 "$PYTHON" -c 'import subprocess' 2>/dev/null || {
 	PYTHONPATH=$(pwd)/../compat
 	export PYTHONPATH
+}
+test -d ../templates/blt || {
+	error "You haven't built things yet, have you?"
 }
 
 # Test repository
@@ -191,6 +196,6 @@ rm -fr "$test"
 mkdir "$test"
 cd "$test"
 "$GIT_EXEC_PATH/git" init-db --template=../../templates/blt/ 2>/dev/null ||
-error "cannot run git init-db"
+error "cannot run git init-db -- have you built things yet?"
 
 mv .git/hooks .git/hooks-disabled
