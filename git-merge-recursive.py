@@ -284,17 +284,11 @@ def setIndexStages(path,
                    oSHA1, oMode,
                    aSHA1, aMode,
                    bSHA1, bMode):
-    prog = ['git-update-index', '-z', '--index-info']
-    proc = subprocess.Popen(prog, stdin=subprocess.PIPE)
-    pipe = proc.stdin
-    # Clear stages first.
-    pipe.write("0 " + ("0" * 40) + "\t" + path + "\0")
-    # Set stages
-    pipe.write("%o %s %d\t%s\0" % (oMode, oSHA1, 1, path))
-    pipe.write("%o %s %d\t%s\0" % (aMode, aSHA1, 2, path))
-    pipe.write("%o %s %d\t%s\0" % (bMode, bSHA1, 3, path))
-    pipe.close()
-    proc.wait()
+    runProgram(['git-update-index', '-z', '--index-info'],
+               input="0 " + ("0" * 40) + "\t" + path + "\0" + \
+               "%o %s %d\t%s\0" % (oMode, oSHA1, 1, path) + \
+               "%o %s %d\t%s\0" % (aMode, aSHA1, 2, path) + \
+               "%o %s %d\t%s\0" % (bMode, bSHA1, 3, path))
 
 def removeFile(clean, path):
     updateCache = cacheOnly or clean
@@ -724,7 +718,6 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                     cleanMerge = False
 
                     if not cacheOnly:
-                        # Stuff stage1/2/3
                         setIndexStages(ren1.dstName,
                                        oSHA1, oMode,
                                        aSHA1, aMode,
