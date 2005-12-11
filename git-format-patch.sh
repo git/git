@@ -254,6 +254,15 @@ Date: '"$ad"
 }
 
 total=`wc -l <$series | tr -dc "[0-9]"`
+case "$total,$numbered" in
+1,*)
+	numfmt='' ;;
+*,t)
+	numfmt=`echo "$total" | wc -c`
+	numfmt=$(($numfmt-1))
+	numfmt=" %0${numfmt}d/$total"
+esac
+
 i=1
 while read commit
 do
@@ -262,10 +271,7 @@ do
     case "$numbered" in
     '') num= ;;
     *)
-	case $total in
-	1) num= ;;
-	*) num=' '`printf "%d/%d" $i $total` ;;
-	esac
+        num=`printf "$numfmt" $i` ;;
     esac
 
     file=`printf '%04d-%stxt' $i "$title"`
