@@ -2,7 +2,16 @@
 #
 # Copyright (c) 2005 Linus Torvalds
 #
-GIT_DIR=$(git-rev-parse --git-dir) || exit
+
+USAGE=''
+SUBDIRECTORY_OK='Yes'
+
+. git-sh-setup
+
+if [ "$#" != "0" ]
+then
+  usage
+fi
 
 report () {
   header="#
