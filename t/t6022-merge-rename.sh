@@ -161,4 +161,41 @@ test_expect_success 'pull unrenaming branch into renaming one' \
 	}
 '
 
+test_expect_success 'pull conflicting renames' \
+'
+	git reset --hard
+	git show-branch
+	git pull . blue && {
+		echo "BAD: should have conflicted"
+		exit 1
+	}
+	test "$(git ls-files -u A | wc -l)" -eq 1 || {
+		echo "BAD: should have left a stage"
+		exit 1	
+	}
+	test "$(git ls-files -u B | wc -l)" -eq 1 || {
+		echo "BAD: should have left a stage"
+		exit 1	
+	}
+	test "$(git ls-files -u C | wc -l)" -eq 1 || {
+		echo "BAD: should have left a stage"
+		exit 1	
+	}
+	test "$(git ls-files -s N | wc -l)" -eq 1 || {
+		echo "BAD: should have merged N"
+		exit 1	
+	}
+	sed -ne "/^g/{
+	p
+	q
+	}" B | grep red || {
+		echo "BAD: should have listed our change first"
+		exit 1
+	}
+	test "$(git diff white N | wc -l)" -eq 0 || {
+		echo "BAD: should have taken colored branch"
+		exit 1
+	}
+'
+
 test_done

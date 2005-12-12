@@ -283,12 +283,20 @@ def updateFileExt(sha, mode, path, updateCache, updateWd):
 def setIndexStages(path,
                    oSHA1, oMode,
                    aSHA1, aMode,
-                   bSHA1, bMode):
+                   bSHA1, bMode,
+                   clear=True):
+    istring = []
+    if clear:
+        istring.append("0 " + ("0" * 40) + "\t" + path + "\0")
+    if oMode:
+        istring.append("%o %s %d\t%s\0" % (oMode, oSHA1, 1, path))
+    if aMode:
+        istring.append("%o %s %d\t%s\0" % (aMode, aSHA1, 2, path))
+    if bMode:
+        istring.append("%o %s %d\t%s\0" % (bMode, bSHA1, 3, path))
+
     runProgram(['git-update-index', '-z', '--index-info'],
-               input="0 " + ("0" * 40) + "\t" + path + "\0" + \
-               "%o %s %d\t%s\0" % (oMode, oSHA1, 1, path) + \
-               "%o %s %d\t%s\0" % (aMode, aSHA1, 2, path) + \
-               "%o %s %d\t%s\0" % (bMode, bSHA1, 3, path))
+               input="".join(istring))
 
 def removeFile(clean, path):
     updateCache = cacheOnly or clean
@@ -570,7 +578,7 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
             continue
 
         ren1.processed = True
-        removeFile(True, ren1.srcName)
+
         if ren2:
             # Renamed in 1 and renamed in 2
             assert(ren1.srcName == ren2.srcName)
@@ -598,13 +606,19 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                            'adding as', dstName2, 'instead.')
                     removeFile(False, ren2.dstName)
                 else:
-                    dstName2 = ren1.dstName
+                    dstName2 = ren2.dstName
+                setIndexStages(dstName1,
+                               None, None,
+                               ren1.dstSha, ren1.dstMode,
+			       None, None)
+                setIndexStages(dstName2,
+                               None, None,
+                               None, None,
+                               ren2.dstSha, ren2.dstMode)
 
-                # NEEDSWORK: place dstNameA at stage 2 and dstNameB at stage 3
-                # What about other stages???
-                updateFile(False, ren1.dstSha, ren1.dstMode, dstName1)
-                updateFile(False, ren2.dstSha, ren2.dstMode, dstName2)
             else:
+                removeFile(True, ren1.srcName)
+
                 [resSha, resMode, clean, merge] = \
                          mergeFile(ren1.srcName, ren1.srcSha, ren1.srcMode,
                                    ren1.dstName, ren1.dstSha, ren1.dstMode,
@@ -630,6 +644,8 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
 
                 updateFile(clean, resSha, resMode, ren1.dstName)
         else:
+            removeFile(True, ren1.srcName)
+
             # Renamed in 1, maybe changed in 2
             if renamesA == renames1:
                 stage = 3
