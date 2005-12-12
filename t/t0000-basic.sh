@@ -17,7 +17,36 @@ IDs.  When object ID computation changes, like in the previous case of
 swapping compression and hashing order, the person who is making the
 modification *should* take notice and update the test vectors here.
 '
+
+################################################################
+# It appears that people are getting bitten by not installing
+# 'merge' (usually part of RCS package in binary distributions)
+# or have too old python without subprocess.  Check them and error
+# out before running any tests.  Also catch the bogosity of trying
+# to run tests without building while we are at it.
+
+../git >/dev/null
+if test $? != 1
+then
+	echo >&2 'You do not seem to have built git yet.'
+	exit 1
+fi
+
+merge >/dev/null 2>/dev/null
+if test $? == 127
+then
+	echo >&2 'You do not seem to have "merge" installed.
+Please check INSTALL document.'
+	exit 1
+fi
+
 . ./test-lib.sh
+
+"$PYTHON" -c 'import subprocess' || {
+	echo >&2 'Your python seem to lack "subprocess" module.
+Please check INSTALL document.'
+	exit 1
+}
 
 ################################################################
 # init-db has been done in an empty repository.

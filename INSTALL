@@ -87,3 +87,6 @@ Issues of note:
    have all the libraries/tools needed, or you may have
    necessary libraries at unusual locations.  Please look at the
    top of the Makefile to see what can be adjusted for your needs.
+   You can place local settings in config.mak and the Makefile
+   will include them.  Note that config.mak is not distributed;
+   the name is reserved for local settings.

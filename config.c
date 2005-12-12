@@ -458,12 +458,6 @@ int git_config_set_multivar(const char* key, const char* value,
 	 * If .git/config does not exist yet, write a minimal version.
 	 */
 	if (stat(config_filename, &st)) {
-		static const char contents[] =
-			"#\n"
-			"# This is the config file\n"
-			"#\n"
-			"\n";
-
 		free(store.key);
 
 		/* if nothing to unset, error out */
@@ -474,8 +468,6 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		store.key = (char*)key;
-
-		write(fd, contents, sizeof(contents)-1);
 		store_write_section(fd, key);
 		store_write_pair(fd, key, value);
 	} else{

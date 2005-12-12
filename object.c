@@ -82,7 +82,12 @@ static int compare_object_pointers(const void *a, const void *b)
 {
 	const struct object * const *pa = a;
 	const struct object * const *pb = b;
-	return *pa - *pb;
+	if (*pa == *pb)
+		return 0;
+	else if (*pa < *pb)
+		return -1;
+	else
+		return 1;
 }
 
 void set_object_refs(struct object *obj, struct object_refs *refs)

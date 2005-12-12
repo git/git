@@ -16,7 +16,7 @@ int gitsetenv(const char *name, const char *value, int replace)
 
 	namelen = strlen(name);
 	valuelen = strlen(value);
-	envstr = malloc((namelen + valuelen + 2) * sizeof(char));
+	envstr = malloc((namelen + valuelen + 2));
 	if (!envstr) return -1;
 
 	memcpy(envstr, name, namelen);
@@ -25,7 +25,11 @@ int gitsetenv(const char *name, const char *value, int replace)
 	envstr[namelen + valuelen + 1] = 0;
 
 	out = putenv(envstr);
+	/* putenv(3) makes the argument string part of the environment,
+	 * and changing that string modifies the environment --- which
+	 * means we do not own that storage anymore.  Do not free
+	 * envstr.
+	 */
 
-	free(envstr);
 	return out;
 }

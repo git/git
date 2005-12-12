@@ -16,6 +16,10 @@ DESCRIPTION
 Updates remote refs using local refs, while sending objects
 necessary to complete the given refs.
 
+You can make "interesting" things to happen on the repository
+every time you push into it, by setting up 'hooks' there.  See
+documentation for gitlink:git-receive-pack[1].
+
 
 OPTIONS
 -------
@@ -30,6 +34,7 @@ include::pull-fetch-param.txt[]
 	not an ancestor of the remote ref used to overwrite it.
 	This flag disables the check.  What this means is that the
 	local repository can lose commits; use it with care.
+
 
 Author
 ------

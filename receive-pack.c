@@ -173,7 +173,7 @@ static void run_update_post_hook(struct command *cmd)
 		argc++;
 	}
 	argv[argc] = NULL;
-	run_command_v(argc, argv);
+	run_command_v_opt(argc, argv, RUN_COMMAND_NO_STDIO);
 }
 
 /*

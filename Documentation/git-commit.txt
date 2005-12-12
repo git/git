@@ -7,7 +7,7 @@ git-commit - Record your changes
 
 SYNOPSIS
 --------
-'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] [-e] <file>...
+'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] [-e] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -22,7 +22,7 @@ information.
 
 OPTIONS
 -------
--a::
+-a|--all::
 	Update all paths in the index file.
 
 -c or -C <commit>::
@@ -39,22 +39,28 @@ OPTIONS
 -m <msg>::
 	Use the given <msg> as the commit message.
 
--s::
+-s|--signoff::
 	Add Signed-off-by line at the end of the commit message.
 
--v::
+-v|--verify::
 	Look for suspicious lines the commit introduces, and
 	abort committing if there is one.  The definition of
 	'suspicious lines' is currently the lines that has
 	trailing whitespaces, and the lines whose indentation
 	has a SP character immediately followed by a TAB
-	character.
+	character.  This is the default.
 
--e::
+-n|--no-verify::
+	The opposite of `--verify`.
+
+-e|--edit::
 	The message taken from file with `-F`, command line with
 	`-m`, and from file with `-C` are usually used as the
 	commit log message unmodified.  This option lets you
 	further edit the message taken from these sources.
+
+--::
+	Do not interpret any more arguments as options.
 
 <file>...::
 	Update specified paths in the index file before committing.

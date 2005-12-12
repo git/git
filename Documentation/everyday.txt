@@ -1,0 +1,138 @@
+Everyday GIT With 20 Commands Or So
+===================================
+
+GIT suite has over 100 commands, and the manual page for each of
+them discusses what the command does and how it is used in
+detail, but until you know what command should be used in order
+to achieve what you want to do, you cannot tell which manual
+page to look at, and if you know that already you do not need
+the manual.
+
+Does that mean you need to know all of them before you can use
+git?  Not at all.  Depending on the role you play, the set of
+commands you need to know is slightly different, but in any case
+what you need to learn is far smaller than the full set of
+commands to carry out your day-to-day work.  This document is to
+serve as a cheat-sheet and a set of pointers for people playing
+various roles.
+
+<<Basic Repository>> commands are needed by people who has a
+repository --- that is everybody, because every working tree of
+git is a repository.
+
+In addition, <<Individual Developer (Standalone)>> commands are
+essential for anybody who makes a commit, even for somebody who
+works alone.
+
+If you work with other people, you will need commands listed in
+<<Individual Developer (Participant)>> section as well.
+
+People who play <<Integrator>> role need to learn some more
+commands in addition to the above.
+
+<<Repository Administration>> commands are for system
+administrators who are responsible to care and feed git
+repositories to support developers.
+
+
+Basic Repository[[Basic Repository]]
+------------------------------------
+
+Everybody uses these commands to feed and care git repositories.
+
+  * gitlink:git-init-db[1] or gitlink:git-clone[1] to create a
+    new repository.
+
+  * gitlink:git-fsck-objects[1] to validate the repository.
+
+  * gitlink:git-prune[1] to garbage collect crufts in the
+    repository.
+
+  * gitlink:git-repack[1] to pack loose objects for efficiency.
+
+Individual Developer (Standalone)[[Individual Developer (Standalone)]]
+----------------------------------------------------------------------
+
+A standalone individual developer does not exchange patches with
+other poeple, and works alone in a single repository, using the
+following commands.
+
+  * gitlink:git-show-branch[1] to see where you are.
+
+  * gitlink:git-diff[1] and gitlink:git-status[1] to see what
+    you are in the middle of doing.
+
+  * gitlink:git-log[1] to see what happened.
+
+  * gitlink:git-whatchanged[1] to find out where things have
+    come from.
+
+  * gitlink:git-checkout[1] and gitlink:git-branch[1] to switch
+    branches.
+
+  * gitlink:git-update-index[1] to manage the index file.
+
+  * gitlink:git-commit[1] to advance the current branch.
+
+  * gitlink:git-reset[1] and gitlink:git-checkout[1] (with
+    pathname parameters) to undo changes.
+
+  * gitlink:git-pull[1] with "." as the remote to merge between
+    local branches.
+
+  * gitlink:git-rebase[1] to maintain topic branches.
+
+
+Individual Developer (Participant)[[Individual Developer (Participant)]]
+------------------------------------------------------------------------
+
+A developer working as a participant in a group project needs to
+learn how to communicate with others, and uses these commands in
+addition to the ones needed by a standalone developer.
+
+  * gitlink:git-pull[1] from "origin" to keep up-to-date with
+    the upstream.
+
+  * gitlink:git-push[1] to shared repository if you adopt CVS
+    style shared repository workflow.
+
+  * gitlink:git-format-patch[1] to prepare e-mail submission, if
+    you adopt Linux kernel-style public forum workflow.
+
+
+Integrator[[Integrator]]
+------------------------
+
+A fairly central person acting as the integrator in a group
+project receives changes made by others, reviews and integrates
+them and publishes the result for others to use, using these
+commands in addition to the ones needed by participants.
+
+  * gitlink:git-am[1] to apply patches e-mailed in from your
+    contributors.
+
+  * gitlink:git-pull[1] to merge from your trusted lieutenants.
+
+  * gitlink:git-format-patch[1] to prepare and send suggested
+    alternative to contributors.
+
+  * gitlink:git-revert[1] to undo botched commits.
+
+  * gitlink:git-push[1] to publish the bleeding edge.
+
+
+Repository Administration[[Repository Administration]]
+------------------------------------------------------
+
+A repository administrator uses the following tools to set up
+and maintain access to the repository by developers.
+
+  * gitlink:git-daemon[1] to allow anonymous download from
+    repository.
+
+  * gitlink:git-shell[1] can be used as a 'restricted login shell'
+    for shared central repository users.
+
+  * link:howto/update-hook-example.txt[update hook howto] has a
+    good example of managing a shared central repository.
+

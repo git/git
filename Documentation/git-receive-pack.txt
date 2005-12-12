@@ -71,6 +71,10 @@ packed and is served via a dumb transport.
 	#!/bin/sh
 	exec git-update-server-info
 
+There are other real-world examples of using update and
+post-update hooks found in the Documentation/howto directory.
+
+
 OPTIONS
 -------
 <directory>::

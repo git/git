@@ -149,7 +149,7 @@ test_expect_code () {
 test_done () {
 	trap - exit
 	case "$test_failure" in
-	0)	
+	0)
 		# We could:
 		# cd .. && rm -fr trash
 		# but that means we forbid any tests that use their own
@@ -172,15 +172,30 @@ test_done () {
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
-export GIT_EXEC_PATH
+export PATH GIT_EXEC_PATH
+
+# Similarly use ../compat/subprocess.py if our python does not
+# have subprocess.py on its own.
+PYTHON=`sed -e '1{
+	s/^#!//
+	q
+}' ../git-merge-recursive` || {
+	error "You haven't built things yet, have you?"
+}
+"$PYTHON" -c 'import subprocess' 2>/dev/null || {
+	PYTHONPATH=$(pwd)/../compat
+	export PYTHONPATH
+}
+test -d ../templates/blt || {
+	error "You haven't built things yet, have you?"
+}
 
 # Test repository
 test=trash
 rm -fr "$test"
 mkdir "$test"
 cd "$test"
-git-init-db --template=../../templates/blt/ 2>/dev/null ||
-error "cannot run git-init-db"
+"$GIT_EXEC_PATH/git" init-db --template=../../templates/blt/ 2>/dev/null ||
+error "cannot run git init-db -- have you built things yet?"
 
 mv .git/hooks .git/hooks-disabled
-

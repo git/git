@@ -28,7 +28,7 @@ OPTIONS
 	area to store extracted patches.
 
 --utf8, --keep::
-	Pass `--utf8` and `--keep` flags to `git-mailinfo` (see
+	Pass `-u` and `-k` flags to `git-mailinfo` (see
 	gitlink:git-mailinfo[1]).
 
 --binary::

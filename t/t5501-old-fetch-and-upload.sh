@@ -7,8 +7,9 @@
 # an old counterpart
 
 cd $(dirname $0) || exit 1
+: ${SHELL_PATH=/bin/sh}
 
-tmp=$(mktemp /tmp/tmp-XXXXXXXX)
+tmp=`pwd`/.tmp$$
 
 retval=0
 
@@ -25,13 +26,17 @@ for i in $list; do
 	both) pgm="old-git-upload-pack"; replace="old-git-fetch-pack --exec=$pgm";;
 	esac
 
-	if which $pgm 2>/dev/null; then
+	if where=`LANG=C LC_ALL=C which "$pgm" 2>/dev/null` &&
+	   case "$where" in
+	   "no "*) (exit 1) ;;
+	   esac
+	then
 		echo "Testing with $pgm"
 		sed -e "s/git-fetch-pack/$replace/g" \
 			-e "s/# old fails/warn/" < t5500-fetch-pack.sh > $tmp
 
-		sh $tmp || retval=$?
-		rm $tmp
+		"$SHELL_PATH" "$tmp" || retval=$?
+		rm -f "$tmp"
 
 		test $retval != 0 && exit $retval
 	else

@@ -18,7 +18,6 @@ struct tree_entry_list {
 		struct tree *tree;
 		struct blob *blob;
 	} item;
-	struct tree_entry_list *parent;
 };
 
 struct tree {

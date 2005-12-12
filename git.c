@@ -8,13 +8,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
+#include "git-compat-util.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
-#endif
-
-#ifdef NO_SETENV
-extern int gitsetenv(char *name, char *value, int overwrite);
 #endif
 
 static const char git_usage[] =
@@ -156,10 +153,10 @@ static void list_commands(const char *exec_path, const char *pattern)
 }
 
 #ifdef __GNUC__
-static void usage(const char *exec_path, const char *fmt, ...)
+static void cmd_usage(const char *exec_path, const char *fmt, ...)
 	__attribute__((__format__(__printf__, 2, 3), __noreturn__));
 #endif
-static void usage(const char *exec_path, const char *fmt, ...)
+static void cmd_usage(const char *exec_path, const char *fmt, ...)
 {
 	if (fmt) {
 		va_list ap;
@@ -192,7 +189,6 @@ static void prepend_to_path(const char *dir, int len)
 	path_len = len + strlen(old_path) + 1;
 
 	path = malloc(path_len + 1);
-	path[path_len + 1] = '\0';
 
 	memcpy(path, dir, len);
 	path[len] = ':';
@@ -255,12 +251,12 @@ int main(int argc, char **argv, char **envp)
 		else if (!strcmp(arg, "help"))
 			show_help = 1;
 		else if (!show_help)
-			usage(NULL, NULL);
+			cmd_usage(NULL, NULL);
 	}
 
 	if (i >= argc || show_help) {
 		if (i >= argc)
-			usage(exec_path, NULL);
+			cmd_usage(exec_path, NULL);
 
 		show_man_page(argv[i]);
 	}
@@ -290,7 +286,7 @@ int main(int argc, char **argv, char **envp)
 	len += snprintf(git_command + len, sizeof(git_command) - len,
 			"/git-%s", argv[i]);
 	if (sizeof(git_command) <= len) {
-		fprintf(stderr, "git: command name given is too long (%d)\n", len);
+		fprintf(stderr, "git: command name given is too long.\n");
 		exit(1);
 	}
 
@@ -298,7 +294,7 @@ int main(int argc, char **argv, char **envp)
 	execve(git_command, &argv[i], envp);
 
 	if (errno == ENOENT)
-		usage(exec_path, "'%s' is not a git-command", argv[i]);
+		cmd_usage(exec_path, "'%s' is not a git-command", argv[i]);
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		git_command, strerror(errno));

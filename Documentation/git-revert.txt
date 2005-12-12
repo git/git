@@ -7,7 +7,7 @@ git-revert - Revert an existing commit.
 
 SYNOPSIS
 --------
-'git-revert' [-n] <commit>
+'git-revert' [--edit | --no-edit] [-n] <commit>
 
 DESCRIPTION
 -----------
@@ -20,7 +20,16 @@ OPTIONS
 <commit>::
 	Commit to revert.
 
--n::
+-e|--edit::
+	With this option, `git-revert` will let you edit the commit
+	message prior committing the revert. This is the default if
+	you run the command from a terminal.
+
+--no-edit::
+	With this option, `git-revert` will not start the commit
+	message editor.
+
+-n|--no-commit::
 	Usually the command automatically creates a commit with
 	a commit log message stating which commit was reverted.
 	This flag applies the change necessary to revert the

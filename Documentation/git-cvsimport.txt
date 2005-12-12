@@ -60,7 +60,7 @@ the old cvs2git tool.
 +
 If you need to pass multiple options, separate them with a comma.
 
--P:: <cvsps-output-file>
+-P <cvsps-output-file>::
 	Instead of calling cvsps, read the provided cvsps output file. Useful
 	for debugging or when cvsps is being handled outside cvsimport.
 

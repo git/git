@@ -22,7 +22,7 @@ pull decisions.  This command generates such auxiliary files.
 OPTIONS
 -------
 
---force::
+-f|--force::
 	Update the info files from scratch.
 
 

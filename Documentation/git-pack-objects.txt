@@ -8,7 +8,7 @@ git-pack-objects - Create a packed archive of objects.
 
 SYNOPSIS
 --------
-'git-pack-objects' [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list
+'git-pack-objects' [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list
 
 
 DESCRIPTION
@@ -69,6 +69,10 @@ base-name::
 	ignoring all packed objects, it only ignores objects
 	that are packed and not in the local object store
 	(i.e. borrowed from an alternate).
+
+--non-empty::
+        Only create a packed archive if it would contain at
+        least one object.
 
 Author
 ------

@@ -280,6 +280,16 @@ def updateFileExt(sha, mode, path, updateCache, updateWd):
         runProgram(['git-update-index', '--add', '--cacheinfo',
                     '0%o' % mode, sha, path])
 
+def setIndexStages(path,
+                   oSHA1, oMode,
+                   aSHA1, aMode,
+                   bSHA1, bMode):
+    runProgram(['git-update-index', '-z', '--index-info'],
+               input="0 " + ("0" * 40) + "\t" + path + "\0" + \
+               "%o %s %d\t%s\0" % (oMode, oSHA1, 1, path) + \
+               "%o %s %d\t%s\0" % (aMode, aSHA1, 2, path) + \
+               "%o %s %d\t%s\0" % (bMode, bSHA1, 3, path))
+
 def removeFile(clean, path):
     updateCache = cacheOnly or clean
     updateWd = not cacheOnly
@@ -590,6 +600,8 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 else:
                     dstName2 = ren1.dstName
 
+                # NEEDSWORK: place dstNameA at stage 2 and dstNameB at stage 3
+                # What about other stages???
                 updateFile(False, ren1.dstSha, ren1.dstMode, dstName1)
                 updateFile(False, ren2.dstSha, ren2.dstMode, dstName2)
             else:
@@ -611,8 +623,11 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                     cleanMerge = False
 
                     if not cacheOnly:
-                        updateFileExt(ren1.dstSha, ren1.dstMode, ren1.dstName,
-                                      updateCache=True, updateWd=False)
+                        setIndexStages(ren1.dstName,
+                                       ren1.srcSha, ren1.srcMode,
+                                       ren1.dstSha, ren1.dstMode,
+                                       ren2.dstSha, ren2.dstMode)
+
                 updateFile(clean, resSha, resMode, ren1.dstName)
         else:
             # Renamed in 1, maybe changed in 2
@@ -672,11 +687,24 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                 tryMerge = True
 
             if tryMerge:
+
+                oName, oSHA1, oMode = ren1.srcName, ren1.srcSha, ren1.srcMode
+                aName, bName = ren1.dstName, ren1.srcName
+                aSHA1, bSHA1 = ren1.dstSha, srcShaOtherBranch
+                aMode, bMode = ren1.dstMode, srcModeOtherBranch
+                aBranch, bBranch = branchName1, branchName2
+
+                if renamesA != renames1:
+                    aName, bName = bName, aName
+                    aSHA1, bSHA1 = bSHA1, aSHA1
+                    aMode, bMode = bMode, aMode
+                    aBranch, bBranch = bBranch, aBranch
+
                 [resSha, resMode, clean, merge] = \
-                         mergeFile(ren1.srcName, ren1.srcSha, ren1.srcMode,
-                                   ren1.dstName, ren1.dstSha, ren1.dstMode,
-                                   ren1.srcName, srcShaOtherBranch, srcModeOtherBranch,
-                                   branchName1, branchName2)
+                         mergeFile(oName, oSHA1, oMode,
+                                   aName, aSHA1, aMode,
+                                   bName, bSHA1, bMode,
+                                   aBranch, bBranch);
 
                 if merge or not clean:
                     output('Renaming', fmtRename(ren1.srcName, ren1.dstName))
@@ -690,8 +718,11 @@ def processRenames(renamesA, renamesB, branchNameA, branchNameB):
                     cleanMerge = False
 
                     if not cacheOnly:
-                        updateFileExt(ren1.dstSha, ren1.dstMode, ren1.dstName,
-                                      updateCache=True, updateWd=False)
+                        setIndexStages(ren1.dstName,
+                                       oSHA1, oMode,
+                                       aSHA1, aMode,
+                                       bSHA1, bMode)
+
                 updateFile(clean, resSha, resMode, ren1.dstName)
 
     return cleanMerge

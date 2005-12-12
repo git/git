@@ -8,12 +8,15 @@ git-ls-tree - Lists the contents of a tree object.
 
 SYNOPSIS
 --------
-'git-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
+'git-ls-tree' [-d] [-r] [-t] [-z] [--name-only] [--name-status] <tree-ish> [paths...]
 
 DESCRIPTION
 -----------
-Lists the contents of a tree object, like what "/bin/ls -a" does
-in the current working directory.
+Lists the contents of a given tree object, like what "/bin/ls -a" does
+in the current working directory. Note that the usage is subtly different,
+though - 'paths' denote just a list of patterns to match, e.g. so specifying
+directory name (without '-r') will behave differently, and order of the
+arguments does not matter.
 
 OPTIONS
 -------
@@ -21,36 +24,48 @@ OPTIONS
 	Id of a tree-ish.
 
 -d::
-	show only the named tree entry itself, not its children
+	Show only the named tree entry itself, not its children.
 
 -r::
-	recurse into sub-trees
+	Recurse into sub-trees.
+
+-t::
+	Show tree entries even when going to recurse them. Has no effect
+	if '-r' was not passed. '-d' implies '-t'.
 
 -z::
-	\0 line termination on output
+	\0 line termination on output.
+
+--name-only::
+--name-status::
+	List only filenames (instead of the "long" output), one per line.
 
 paths::
-	When paths are given, show them.  Otherwise implicitly
-	uses the root level of the tree as the sole path argument.
+	When paths are given, show them (note that this isn't really raw
+	pathnames, but rather a list of patterns to match).  Otherwise
+	implicitly uses the root level of the tree as the sole path argument.
 
 
 Output Format
 -------------
         <mode> SP <type> SP <object> TAB <file>
 
-When `-z` option is not used, TAB, LF, and backslash characters
-in pathnames are represented as `\t`, `\n`, and `\\`,
-respectively.
+When the `-z` option is not used, TAB, LF, and backslash characters
+in pathnames are represented as `\t`, `\n`, and `\\`, respectively.
 
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
-Completely rewritten from scratch by Junio C Hamano <junkio@cox.net>
+Written by Petr Baudis <pasky@suse.cz>
+Completely rewritten from scratch by Junio C Hamano <junkio@cox.net>,
+another major rewrite by Linus Torvalds <torvalds@osdl.org>
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by David Greaves, Junio C Hamano and the git-list
+<git@vger.kernel.org>.
+
+This manual page is a stub. You can help the git documentation by expanding it.
 
 GIT
 ---

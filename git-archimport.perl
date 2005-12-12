@@ -25,6 +25,9 @@ See man (1) git-archimport for more details.
  - audit shell-escaping of filenames
  - hide our private tags somewhere smarter
  - find a way to make "cat *patches | patch" safe even when patchfiles are missing newlines  
+ - sort and apply patches by graphing ancestry relations instead of just
+   relying in dates supplied in the changeset itself.
+   tla ancestry-graph -m could be helpful here...
 
 =head1 Devel tricks
 
@@ -53,15 +56,9 @@ and can contain multiple, unrelated branches.
 use strict;
 use warnings;
 use Getopt::Std;
-use File::Spec;
-use File::Temp qw(tempfile tempdir);
-use File::Path qw(mkpath);
+use File::Temp qw(tempdir);
+use File::Path qw(mkpath rmtree);
 use File::Basename qw(basename dirname);
-use String::ShellQuote;
-use Time::Local;
-use IO::Socket;
-use IO::Pipe;
-use POSIX qw(strftime dup2);
 use Data::Dumper qw/ Dumper /;
 use IPC::Open2;
 
@@ -72,124 +69,150 @@ my $git_dir = $ENV{"GIT_DIR"} || ".git";
 $ENV{"GIT_DIR"} = $git_dir;
 my $ptag_dir = "$git_dir/archimport/tags";
 
-our($opt_h,$opt_v, $opt_T,$opt_t,$opt_o);
+our($opt_h,$opt_f,$opt_v,$opt_T,$opt_t,$opt_D,$opt_a,$opt_o);
 
 sub usage() {
     print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from Arch
-       [ -o ] [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
+       [ -f ] [ -o ] [ -h ] [ -v ] [ -T ] [ -a ] [ -D depth  ] [ -t tempdir ]
        repository/arch-branch [ repository/arch-branch] ...
 END
     exit(1);
 }
 
-getopts("Thvt:") or usage();
+getopts("fThvat:D:") or usage();
 usage if $opt_h;
 
 @ARGV >= 1 or usage();
-my @arch_roots = @ARGV;
+# $arch_branches:
+# values associated with keys:
+#   =1 - Arch version / git 'branch' detected via abrowse on a limit
+#   >1 - Arch version / git 'branch' of an auxilliary branch we've merged
+my %arch_branches = map { $_ => 1 } @ARGV;
 
-my ($tmpdir, $tmpdirname) = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
-my $tmp = $opt_t || 1;
-$tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+$ENV{'TMPDIR'} = $opt_t if $opt_t; # $ENV{TMPDIR} will affect tempdir() calls:
+my $tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
 $opt_v && print "+ Using $tmp as temporary directory\n";
 
+my %reachable = ();             # Arch repositories we can access
+my %unreachable = ();           # Arch repositories we can't access :<
 my @psets  = ();                # the collection
 my %psets  = ();                # the collection, by name
+my %stats  = (			# Track which strategy we used to import:
+	get_tag => 0, replay => 0, get_new => 0, get_delta => 0,
+        simple_changeset => 0, import_or_tag => 0
+);
 
 my %rptags = ();                # my reverse private tags
                                 # to map a SHA1 to a commitid
+my $TLA = $ENV{'ARCH_CLIENT'} || 'tla';
 
-foreach my $root (@arch_roots) {
-    my ($arepo, $abranch) = split(m!/!, $root);
-    open ABROWSE, "tla abrowse -f -A $arepo --desc --merges $abranch |" 
-        or die "Problems with tla abrowse: $!";
-    
-    my %ps        = ();         # the current one
-    my $mode      = '';
-    my $lastseen  = '';
-    
-    while (<ABROWSE>) {
-        chomp;
+sub do_abrowse {
+    my $stage = shift;
+    while (my ($limit, $level) = each %arch_branches) {
+        next unless $level == $stage;
         
-        # first record padded w 8 spaces
-        if (s/^\s{8}\b//) {
+	open ABROWSE, "$TLA abrowse -fkD --merges $limit |" 
+                                or die "Problems with tla abrowse: $!";
+    
+        my %ps        = ();         # the current one
+        my $lastseen  = '';
+    
+        while (<ABROWSE>) {
+            chomp;
             
-            # store the record we just captured
-            if (%ps) {
-                my %temp = %ps; # break references
-                push (@psets, \%temp);
-		$psets{$temp{id}} = \%temp;
-                %ps = ();
-            }
-            
-            my ($id, $type) = split(m/\s{3}/, $_);
-            $ps{id}   = $id;
-            $ps{repo} = $arepo;
+            # first record padded w 8 spaces
+            if (s/^\s{8}\b//) {
+                my ($id, $type) = split(m/\s+/, $_, 2);
 
-            # deal with types
-            if ($type =~ m/^\(simple changeset\)/) {
-                $ps{type} = 's';
-            } elsif ($type eq '(initial import)') {
-                $ps{type} = 'i';
-            } elsif ($type =~ m/^\(tag revision of (.+)\)/) {
-                $ps{type} = 't';
-                $ps{tag}  = $1;
-            } else { 
-                warn "Unknown type $type";
-            }
-            $lastseen = 'id';
-        }
-        
-        if (s/^\s{10}//) { 
-            # 10 leading spaces or more 
-            # indicate commit metadata
-            
-            # date & author 
-            if ($lastseen eq 'id' && m/^\d{4}-\d{2}-\d{2}/) {
-                
-                my ($date, $authoremail) = split(m/\s{2,}/, $_);
-                $ps{date}   = $date;
-                $ps{date}   =~ s/\bGMT$//; # strip off trailign GMT
-                if ($ps{date} =~ m/\b\w+$/) {
-                    warn 'Arch dates not in GMT?! - imported dates will be wrong';
+                my %last_ps;
+                # store the record we just captured
+                if (%ps && !exists $psets{ $ps{id} }) {
+                    %last_ps = %ps; # break references
+                    push (@psets, \%last_ps);
+                    $psets{ $last_ps{id} } = \%last_ps;
                 }
-            
-                $authoremail =~ m/^(.+)\s(\S+)$/;
-                $ps{author} = $1;
-                $ps{email}  = $2;
-            
-                $lastseen = 'date';
-            
-            } elsif ($lastseen eq 'date') {
-                # the only hint is position
-                # subject is after date
-                $ps{subj} = $_;
-                $lastseen = 'subj';
-            
-            } elsif ($lastseen eq 'subj' && $_ eq 'merges in:') {
-                $ps{merges} = [];
-                $lastseen = 'merges';
-            
-            } elsif ($lastseen eq 'merges' && s/^\s{2}//) {
-                push (@{$ps{merges}}, $_);
-            } else {
-                warn 'more metadata after merges!?';
-            }
-            
-        }
-    }
+                
+                my $branch = extract_versionname($id);
+                %ps = ( id => $id, branch => $branch );
+                if (%last_ps && ($last_ps{branch} eq $branch)) {
+                    $ps{parent_id} = $last_ps{id};
+                }
+                
+                $arch_branches{$branch} = 1;
+                $lastseen = 'id';
 
-    if (%ps) {
-        my %temp = %ps;         # break references
-        push (@psets, \%temp);  
-	$psets{ $temp{id} } = \%temp;
-        %ps = ();
-    }    
-    close ABROWSE;
+                # deal with types (should work with baz or tla):
+                if ($type =~ m/\(.*changeset\)/) {
+                    $ps{type} = 's';
+                } elsif ($type =~ /\(.*import\)/) {
+                    $ps{type} = 'i';
+                } elsif ($type =~ m/\(tag.*?(\S+\@\S+).*?\)/) {
+                    $ps{type} = 't';
+                    # read which revision we've tagged when we parse the log
+                    $ps{tag}  = $1;
+                } else { 
+                    warn "Unknown type $type";
+                }
+
+                $arch_branches{$branch} = 1;
+                $lastseen = 'id';
+            } elsif (s/^\s{10}//) { 
+                # 10 leading spaces or more 
+                # indicate commit metadata
+                
+                # date
+                if ($lastseen eq 'id' && m/^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)/){
+                    $ps{date}   = $1;
+                    $lastseen = 'date';
+                } elsif ($_ eq 'merges in:') {
+                    $ps{merges} = [];
+                    $lastseen = 'merges';
+                } elsif ($lastseen eq 'merges' && s/^\s{2}//) {
+                    my $id = $_;
+                    push (@{$ps{merges}}, $id);
+                   
+                    # aggressive branch finding:
+                    if ($opt_D) {
+                        my $branch = extract_versionname($id);
+                        my $repo = extract_reponame($branch);
+                        
+                        if (archive_reachable($repo) &&
+                                !defined $arch_branches{$branch}) {
+                            $arch_branches{$branch} = $stage + 1;
+                        }
+                    }
+                } else {
+                    warn "more metadata after merges!?: $_\n" unless /^\s*$/;
+                }
+            }
+        }
+
+        if (%ps && !exists $psets{ $ps{id} }) {
+            my %temp = %ps;         # break references
+            if (@psets && $psets[$#psets]{branch} eq $ps{branch}) {
+                $temp{parent_id} = $psets[$#psets]{id};
+            }
+            push (@psets, \%temp);  
+            $psets{ $temp{id} } = \%temp;
+        }    
+        
+        close ABROWSE or die "$TLA abrowse failed on $limit\n";
+    }
 }                               # end foreach $root
 
+do_abrowse(1);
+my $depth = 2;
+$opt_D ||= 0;
+while ($depth <= $opt_D) {
+    do_abrowse($depth);
+    $depth++;
+}
+
 ## Order patches by time
+# FIXME see if we can find a more optimal way to do this by graphing
+# the ancestry data and walking it, that way we won't have to rely on
+# client-supplied dates
 @psets = sort {$a->{date}.$b->{id} cmp $b->{date}.$b->{id}} @psets;
 
 #print Dumper \@psets;
@@ -210,7 +233,7 @@ unless (-d $git_dir) { # initial import
     }
 } else {    # progressing an import
     # load the rptags
-    opendir(DIR, "$git_dir/archimport/tags")
+    opendir(DIR, $ptag_dir)
 	|| die "can't opendir: $!";
     while (my $file = readdir(DIR)) {
         # skip non-interesting-files
@@ -272,29 +295,69 @@ sub old_style_branchname {
 
 *git_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
 
-# process patchsets
-foreach my $ps (@psets) {
-    $ps->{branch} = git_branchname($ps->{id});
+sub process_patchset_accurate {
+    my $ps = shift;
+    
+    # switch to that branch if we're not already in that branch:
+    if (-e "$git_dir/refs/heads/$ps->{branch}") {
+       system('git-checkout','-f',$ps->{branch}) == 0 or die "$! $?\n";
 
-    #
-    # ensure we have a clean state 
-    # 
-    if (`git diff-files`) {
-        die "Unclean tree when about to process $ps->{id} " .
-            " - did we fail to commit cleanly before?";
+       # remove any old stuff that got leftover:
+       my $rm = safe_pipe_capture('git-ls-files','--others','-z');
+       rmtree(split(/\0/,$rm)) if $rm;
     }
-    die $! if $?;
+    
+    # Apply the import/changeset/merge into the working tree
+    my $dir = sync_to_ps($ps);
+    # read the new log entry:
+    my @commitlog = safe_pipe_capture($TLA,'cat-log','-d',$dir,$ps->{id});
+    die "Error in cat-log: $!" if $?;
+    chomp @commitlog;
 
-    #
-    # skip commits already in repo
-    #
-    if (ptag($ps->{id})) {
-      $opt_v && print " * Skipping already imported: $ps->{id}\n";
-      next;
-    }
+    # grab variables we want from the log, new fields get added to $ps:
+    # (author, date, email, summary, message body ...)
+    parselog($ps, \@commitlog);
 
-    print " * Starting to work on $ps->{id}\n";
+    if ($ps->{id} =~ /--base-0$/ && $ps->{id} ne $psets[0]{id}) {
+        # this should work when importing continuations 
+        if ($ps->{tag} && (my $branchpoint = eval { ptag($ps->{tag}) })) {
+            
+            # find where we are supposed to branch from
+            system('git-checkout','-f','-b',$ps->{branch},
+                            $branchpoint) == 0 or die "$! $?\n";
+            
+            # remove any old stuff that got leftover:
+            my $rm = safe_pipe_capture('git-ls-files','--others','-z');
+            rmtree(split(/\0/,$rm)) if $rm;
 
+            # If we trust Arch with the fact that this is just 
+            # a tag, and it does not affect the state of the tree
+            # then we just tag and move on
+            tag($ps->{id}, $branchpoint);
+            ptag($ps->{id}, $branchpoint);
+            print " * Tagged $ps->{id} at $branchpoint\n";
+            return 0;
+        } else {
+            warn "Tagging from unknown id unsupported\n" if $ps->{tag};
+        }
+        # allow multiple bases/imports here since Arch supports cherry-picks
+        # from unrelated trees
+    } 
+    
+    # update the index with all the changes we got
+    system('git-ls-files --others -z | '.
+            'git-update-index --add -z --stdin') == 0 or die "$! $?\n";
+    system('git-ls-files --deleted -z | '.
+            'git-update-index --remove -z --stdin') == 0 or die "$! $?\n";
+    system('git-ls-files -z | '.
+             'git-update-index -z --stdin') == 0 or die "$! $?\n";
+    return 1;
+}
+
+# the native changeset processing strategy.  This is very fast, but
+# does not handle permissions or any renames involving directories
+sub process_patchset_fast {
+    my $ps = shift;
     # 
     # create the branch if needed
     #
@@ -305,7 +368,7 @@ foreach my $ps (@psets) {
     unless ($import) { # skip for import
         if ( -e "$git_dir/refs/heads/$ps->{branch}") {
             # we know about this branch
-            `git checkout    $ps->{branch}`;
+            system('git-checkout',$ps->{branch});
         } else {
             # new branch! we need to verify a few things
             die "Branch on a non-tag!" unless $ps->{type} eq 't';
@@ -314,7 +377,7 @@ foreach my $ps (@psets) {
                 unless $branchpoint;
             
             # find where we are supposed to branch from
-            `git checkout -b $ps->{branch} $branchpoint`;
+            system('git-checkout','-b',$ps->{branch},$branchpoint);
 
             # If we trust Arch with the fact that this is just 
             # a tag, and it does not affect the state of the tree
@@ -322,7 +385,7 @@ foreach my $ps (@psets) {
             tag($ps->{id}, $branchpoint);
             ptag($ps->{id}, $branchpoint);
             print " * Tagged $ps->{id} at $branchpoint\n";
-            next;
+            return 0;
         } 
         die $! if $?;
     } 
@@ -332,96 +395,128 @@ foreach my $ps (@psets) {
     # 
     if ($ps->{type} eq 'i' || $ps->{type} eq 't') {
         apply_import($ps) or die $!;
+        $stats{import_or_tag}++;
         $import=0;
     } elsif ($ps->{type} eq 's') {
         apply_cset($ps);
+        $stats{simple_changeset}++;
     }
 
     #
     # prepare update git's index, based on what arch knows
     # about the pset, resolve parents, etc
     #
-    my $tree;
     
-    my $commitlog = `tla cat-archive-log -A $ps->{repo} $ps->{id}`; 
+    my @commitlog = safe_pipe_capture($TLA,'cat-archive-log',$ps->{id}); 
     die "Error in cat-archive-log: $!" if $?;
         
-    # parselog will git-add/rm files
-    # and generally prepare things for the commit
-    # NOTE: parselog will shell-quote filenames! 
-    my ($sum, $msg, $add, $del, $mod, $ren) = parselog($commitlog);
-    my $logmessage = "$sum\n$msg";
-
+    parselog($ps,\@commitlog);
 
     # imports don't give us good info
     # on added files. Shame on them
-    if ($ps->{type} eq 'i' || $ps->{type} eq 't') { 
-        `find . -type f -print0 | grep -zv '^./$git_dir' | xargs -0 -l100 git-update-index --add`;
-        `git-ls-files --deleted -z | xargs --no-run-if-empty -0 -l100 git-update-index --remove`;
+    if ($ps->{type} eq 'i' || $ps->{type} eq 't') {
+        system('git-ls-files --others -z | '.
+                'git-update-index --add -z --stdin') == 0 or die "$! $?\n";
+        system('git-ls-files --deleted -z | '.
+                'git-update-index --remove -z --stdin') == 0 or die "$! $?\n";
     }
 
-    if (@$add) {
+    # TODO: handle removed_directories and renamed_directories:
+   
+    if (my $add = $ps->{new_files}) {
         while (@$add) {
             my @slice = splice(@$add, 0, 100);
-            my $slice = join(' ', @slice);          
-            `git-update-index --add $slice`;
-            die "Error in git-update-index --add: $!" if $?;
+            system('git-update-index','--add','--',@slice) == 0 or
+                            die "Error in git-update-index --add: $! $?\n";
         }
     }
-    if (@$del) {
-        foreach my $file (@$del) {
-            unlink $file or die "Problems deleting $file : $!";
-        }
+   
+    if (my $del = $ps->{removed_files}) {
+        unlink @$del;
         while (@$del) {
             my @slice = splice(@$del, 0, 100);
-            my $slice = join(' ', @slice);
-            `git-update-index --remove $slice`;
-            die "Error in git-update-index --remove: $!" if $?;
+            system('git-update-index','--remove','--',@slice) == 0 or
+                            die "Error in git-update-index --remove: $! $?\n";
         }
     }
-    if (@$ren) {                # renamed
+
+    if (my $ren = $ps->{renamed_files}) {                # renamed
         if (@$ren % 2) {
             die "Odd number of entries in rename!?";
         }
-        ;
+        
         while (@$ren) {
-            my $from = pop @$ren;
-            my $to   = pop @$ren;           
+            my $from = shift @$ren;
+            my $to   = shift @$ren;           
 
             unless (-d dirname($to)) {
                 mkpath(dirname($to)); # will die on err
             }
-            #print "moving $from $to";
-            `mv $from $to`;
-            die "Error renaming $from $to : $!" if $?;
-            `git-update-index --remove $from`;
-            die "Error in git-update-index --remove: $!" if $?;
-            `git-update-index --add $to`;
-            die "Error in git-update-index --add: $!" if $?;
+            # print "moving $from $to";
+            rename($from, $to) or die "Error renaming '$from' '$to': $!\n";
+            system('git-update-index','--remove','--',$from) == 0 or
+                            die "Error in git-update-index --remove: $! $?\n";
+            system('git-update-index','--add','--',$to) == 0 or
+                            die "Error in git-update-index --add: $! $?\n";
         }
-
     }
-    if (@$mod) {                # must be _after_ renames
+
+    if (my $mod = $ps->{modified_files}) {
         while (@$mod) {
             my @slice = splice(@$mod, 0, 100);
-            my $slice = join(' ', @slice);
-            `git-update-index $slice`;
-            die "Error in git-update-index: $!" if $?;
+            system('git-update-index','--',@slice) == 0 or
+                            die "Error in git-update-index: $! $?\n";
         }
     }
+    return 1; # we successfully applied the changeset
+}
+
+if ($opt_f) {
+    print "Will import patchsets using the fast strategy\n",
+            "Renamed directories and permission changes will be missed\n";
+    *process_patchset = *process_patchset_fast;
+} else {
+    print "Using the default (accurate) import strategy.\n",
+            "Things may be a bit slow\n";
+    *process_patchset = *process_patchset_accurate;
+}
+    
+foreach my $ps (@psets) {
+    # process patchsets
+    $ps->{branch} = git_branchname($ps->{id});
+
+    #
+    # ensure we have a clean state 
+    # 
+    if (my $dirty = `git-diff-files`) {
+        die "Unclean tree when about to process $ps->{id} " .
+            " - did we fail to commit cleanly before?\n$dirty";
+    }
+    die $! if $?;
+    
+    #
+    # skip commits already in repo
+    #
+    if (ptag($ps->{id})) {
+      $opt_v && print " * Skipping already imported: $ps->{id}\n";
+      next;
+    }
+
+    print " * Starting to work on $ps->{id}\n";
+
+    process_patchset($ps) or next;
 
     # warn "errors when running git-update-index! $!";
-    $tree = `git-write-tree`;
+    my $tree = `git-write-tree`;
     die "cannot write tree $!" if $?;
     chomp $tree;
-        
     
     #
     # Who's your daddy?
     #
     my @par;
     if ( -e "$git_dir/refs/heads/$ps->{branch}") {
-        if (open HEAD, "<$git_dir/refs/heads/$ps->{branch}") {
+        if (open HEAD, "<","$git_dir/refs/heads/$ps->{branch}") {
             my $p = <HEAD>;
             close HEAD;
             chomp $p;
@@ -436,7 +531,6 @@ foreach my $ps (@psets) {
     if ($ps->{merges}) {
         push @par, find_parents($ps);
     }
-    my $par = join (' ', @par);
 
     #    
     # Commit, tag and clean state
@@ -449,13 +543,14 @@ foreach my $ps (@psets) {
     $ENV{GIT_COMMITTER_EMAIL} = $ps->{email};
     $ENV{GIT_COMMITTER_DATE}  = $ps->{date};
 
-    my ($pid, $commit_rh, $commit_wh);
-    $commit_rh = 'commit_rh';
-    $commit_wh = 'commit_wh';
-    
-    $pid = open2(*READER, *WRITER, "git-commit-tree $tree $par") 
+    my $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par) 
         or die $!;
-    print WRITER $logmessage;   # write
+    print WRITER $ps->{summary},"\n";
+    print WRITER $ps->{message},"\n";
+    
+    # make it easy to backtrack and figure out which Arch revision this was:
+    print WRITER 'git-archimport-id: ',$ps->{id},"\n";
+    
     close WRITER;
     my $commitid = <READER>;    # read
     chomp $commitid;
@@ -468,7 +563,7 @@ foreach my $ps (@psets) {
     #
     # Update the branch
     # 
-    open  HEAD, ">$git_dir/refs/heads/$ps->{branch}";
+    open  HEAD, ">","$git_dir/refs/heads/$ps->{branch}";
     print HEAD $commitid;
     close HEAD;
     system('git-update-ref', 'HEAD', "$ps->{branch}");
@@ -482,21 +577,78 @@ foreach my $ps (@psets) {
     print "   + tree   $tree\n";
     print "   + commit $commitid\n";
     $opt_v && print "   + commit date is  $ps->{date} \n";
-    $opt_v && print "   + parents:  $par \n";
+    $opt_v && print "   + parents:  ",join(' ',@par),"\n";
+}
+
+if ($opt_v) {
+    foreach (sort keys %stats) {
+        print" $_: $stats{$_}\n";
+    }
+}
+exit 0;
+
+# used by the accurate strategy:
+sub sync_to_ps {
+    my $ps = shift;
+    my $tree_dir = $tmp.'/'.tree_dirname($ps->{id});
+    
+    $opt_v && print "sync_to_ps($ps->{id}) method: ";
+
+    if (-d $tree_dir) {
+        if ($ps->{type} eq 't') {
+	    $opt_v && print "get (tag)\n";
+            # looks like a tag-only or (worse,) a mixed tags/changeset branch,
+            # can't rely on replay to work correctly on these
+            rmtree($tree_dir);
+            safe_pipe_capture($TLA,'get','--no-pristine',$ps->{id},$tree_dir);
+            $stats{get_tag}++;
+        } else {
+                my $tree_id = arch_tree_id($tree_dir);
+                if ($ps->{parent_id} && ($ps->{parent_id} eq $tree_id)) {
+                    # the common case (hopefully)
+		    $opt_v && print "replay\n";
+                    safe_pipe_capture($TLA,'replay','-d',$tree_dir,$ps->{id});
+                    $stats{replay}++;
+                } else {
+                    # getting one tree is usually faster than getting two trees
+                    # and applying the delta ...
+                    rmtree($tree_dir);
+		    $opt_v && print "apply-delta\n";
+                    safe_pipe_capture($TLA,'get','--no-pristine',
+                                        $ps->{id},$tree_dir);
+                    $stats{get_delta}++;
+                }
+        }
+    } else {
+        # new branch work
+        $opt_v && print "get (new tree)\n";
+        safe_pipe_capture($TLA,'get','--no-pristine',$ps->{id},$tree_dir);
+        $stats{get_new}++;
+    }
+   
+    # added -I flag to rsync since we're going to fast! AIEEEEE!!!!
+    system('rsync','-aI','--delete','--exclude',$git_dir,
+#               '--exclude','.arch-inventory',
+                '--exclude','.arch-ids','--exclude','{arch}',
+                '--exclude','+*','--exclude',',*',
+                "$tree_dir/",'./') == 0 or die "Cannot rsync $tree_dir: $! $?";
+    return $tree_dir;
 }
 
 sub apply_import {
     my $ps = shift;
     my $bname = git_branchname($ps->{id});
 
-    `mkdir -p $tmp`;
+    mkpath($tmp);
 
-    `tla get -s --no-pristine -A $ps->{repo} $ps->{id} $tmp/import`;
+    safe_pipe_capture($TLA,'get','-s','--no-pristine',$ps->{id},"$tmp/import");
     die "Cannot get import: $!" if $?;    
-    `rsync -v --archive --delete --exclude '$git_dir' --exclude '.arch-ids' --exclude '{arch}' $tmp/import/* ./`;
+    system('rsync','-aI','--delete', '--exclude',$git_dir,
+		'--exclude','.arch-ids','--exclude','{arch}',
+		"$tmp/import/", './');
     die "Cannot rsync import:$!" if $?;
     
-    `rm -fr $tmp/import`;
+    rmtree("$tmp/import");
     die "Cannot remove tempdir: $!" if $?;
     
 
@@ -506,10 +658,10 @@ sub apply_import {
 sub apply_cset {
     my $ps = shift;
 
-    `mkdir -p $tmp`;
+    mkpath($tmp);
 
     # get the changeset
-    `tla get-changeset  -A $ps->{repo} $ps->{id} $tmp/changeset`;
+    safe_pipe_capture($TLA,'get-changeset',$ps->{id},"$tmp/changeset");
     die "Cannot get changeset: $!" if $?;
     
     # apply patches
@@ -533,22 +685,27 @@ sub apply_cset {
             $orig =~ s/\.modified$//; # lazy
             $orig =~ s!^\Q$tmp\E/changeset/patches/!!;
             #print "rsync -p '$mod' '$orig'";
-            `rsync -p $mod ./$orig`;
+            system('rsync','-p',$mod,"./$orig");
             die "Problem applying binary changes! $!" if $?;
         }
     }
 
     # bring in new files
-    `rsync --archive --exclude '$git_dir' --exclude '.arch-ids' --exclude '{arch}' $tmp/changeset/new-files-archive/* ./`;
+    system('rsync','-aI','--exclude',$git_dir,
+    		'--exclude','.arch-ids',
+		'--exclude', '{arch}',
+		"$tmp/changeset/new-files-archive/",'./');
 
     # deleted files are hinted from the commitlog processing
 
-    `rm -fr $tmp/changeset`;
+    rmtree("$tmp/changeset");
 }
 
 
 # =for reference
-# A log entry looks like 
+# notes: *-files/-directories keys cannot have spaces, they're always
+# pika-escaped.  Everything after the first newline
+# A log entry looks like:
 # Revision: moodle-org--moodle--1.3.3--patch-15
 # Archive: arch-eduforge@catalyst.net.nz--2004
 # Creator: Penny Leach <penny@catalyst.net.nz>
@@ -566,70 +723,85 @@ sub apply_cset {
 #     admin/editor.html backup/lib.php backup/restore.php
 # New-patches: arch-eduforge@catalyst.net.nz--2004/moodle-org--moodle--1.3.3--patch-15
 # Summary: Updating to latest from MOODLE_14_STABLE (1.4.5+)
+#   summary can be multiline with a leading space just like the above fields
 # Keywords:
 #
 # Updating yadda tadda tadda madda
 sub parselog {
-    my $log = shift;
-    #print $log;
+    my ($ps, $log) = @_;
+    my $key = undef;
 
-    my (@add, @del, @mod, @ren, @kw, $sum, $msg );
-
-    if ($log =~ m/(?:\n|^)New-files:(.*?)(?=\n\w)/s ) {
-        my $files = $1;
-        @add = split(m/\s+/s, $files);
-    }
-       
-    if ($log =~ m/(?:\n|^)Removed-files:(.*?)(?=\n\w)/s ) {
-        my $files = $1;
-        @del = split(m/\s+/s, $files);
-    }
+    # headers we want that contain filenames:
+    my %want_headers = (
+        new_files => 1,
+        modified_files => 1,
+        renamed_files => 1,
+        renamed_directories => 1,
+        removed_files => 1,
+        removed_directories => 1,
+    );
     
-    if ($log =~ m/(?:\n|^)Modified-files:(.*?)(?=\n\w)/s ) {
-        my $files = $1;
-        @mod = split(m/\s+/s, $files);
+    chomp (@$log);
+    while ($_ = shift @$log) {
+        if (/^Continuation-of:\s*(.*)/) {
+            $ps->{tag} = $1;
+            $key = undef;
+        } elsif (/^Summary:\s*(.*)$/ ) {
+            # summary can be multiline as long as it has a leading space
+            $ps->{summary} = [ $1 ];
+            $key = 'summary';
+        } elsif (/^Creator: (.*)\s*<([^\>]+)>/) {
+            $ps->{author} = $1;
+            $ps->{email} = $2;
+            $key = undef;
+        # any *-files or *-directories can be read here:
+        } elsif (/^([A-Z][a-z\-]+):\s*(.*)$/) {
+            my $val = $2;
+            $key = lc $1;
+            $key =~ tr/-/_/; # too lazy to quote :P
+            if ($want_headers{$key}) {
+                push @{$ps->{$key}}, split(/\s+/, $val);
+            } else {
+                $key = undef;
+            }
+        } elsif (/^$/) {
+            last; # remainder of @$log that didn't get shifted off is message
+        } elsif ($key) {
+            if (/^\s+(.*)$/) {
+                if ($key eq 'summary') {
+                    push @{$ps->{$key}}, $1;
+                } else { # files/directories:
+                    push @{$ps->{$key}}, split(/\s+/, $1);
+                }
+            } else {
+                $key = undef;
+            }
+        }
     }
+   
+    # post-processing:
+    $ps->{summary} = join("\n",@{$ps->{summary}})."\n";
+    $ps->{message} = join("\n",@$log);
     
-    if ($log =~ m/(?:\n|^)Renamed-files:(.*?)(?=\n\w)/s ) {
-        my $files = $1;
-        @ren = split(m/\s+/s, $files);
-    }
-
-    $sum ='';
-    if ($log =~ m/^Summary:(.+?)$/m ) {
-        $sum = $1;
-        $sum =~ s/^\s+//;
-        $sum =~ s/\s+$//;
-    }
-
-    $msg = '';
-    if ($log =~ m/\n\n(.+)$/s) {
-        $msg = $1;
-        $msg =~ s/^\s+//;
-        $msg =~ s/\s+$//;
-    }
-
-
-    # cleanup the arrays
-    foreach my $ref ( (\@add, \@del, \@mod, \@ren) ) {
+    # skip Arch control files, unescape pika-escaped files
+    foreach my $k (keys %want_headers) {
+        next unless (defined $ps->{$k});
         my @tmp = ();
-        while (my $t = pop @$ref) {
-            next unless length ($t);
-            next if $t =~ m!\{arch\}/!;
-            next if $t =~ m!\.arch-ids/!;
-            next if $t =~ m!\.arch-inventory$!;
+        foreach my $t (@{$ps->{$k}}) {
+           next unless length ($t);
+           next if $t =~ m!\{arch\}/!;
+           next if $t =~ m!\.arch-ids/!;
+           # should we skip this?
+           next if $t =~ m!\.arch-inventory$!;
            # tla cat-archive-log will give us filenames with spaces as file\(sp)name - why?
            # we can assume that any filename with \ indicates some pika escaping that we want to get rid of.
-           if  ($t =~ /\\/ ){
-               $t = `tla escape --unescaped '$t'`;
+           if ($t =~ /\\/ ){
+               $t = (safe_pipe_capture($TLA,'escape','--unescaped',$t))[0];
            }
-            push (@tmp, shell_quote($t));
+           push @tmp, $t;
         }
-        @$ref = @tmp;
+        $ps->{$k} = \@tmp;
     }
-    
-    #print Dumper [$sum, $msg, \@add, \@del, \@mod, \@ren]; 
-    return       ($sum, $msg, \@add, \@del, \@mod, \@ren); 
 }
 
 # write/read a tag
@@ -826,8 +998,11 @@ sub find_parents {
 	    }
 	}
     }
-    @parents = keys %parents;
-    @parents = map { " -p " . ptag($_) } @parents;
+
+    @parents = ();
+    foreach (keys %parents) {
+        push @parents, '-p', ptag($_);
+    }
     return @parents;
 }
 
@@ -850,3 +1025,45 @@ sub commitid2pset {
 	|| (print Dumper(sort keys %psets)) && die "Cannot find patchset for $name";
     return $ps;
 }
+
+
+# an alterative to `command` that allows input to be passed as an array
+# to work around shell problems with weird characters in arguments
+sub safe_pipe_capture {
+    my @output;
+    if (my $pid = open my $child, '-|') {
+        @output = (<$child>);
+        close $child or die join(' ',@_).": $! $?";
+    } else {
+	exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
+    }
+    return wantarray ? @output : join('',@output);
+}
+
+# `tla logs -rf -d <dir> | head -n1` or `baz tree-id <dir>`
+sub arch_tree_id {
+    my $dir = shift;
+    chomp( my $ret = (safe_pipe_capture($TLA,'logs','-rf','-d',$dir))[0] );
+    return $ret;
+}
+
+sub archive_reachable {
+    my $archive = shift;
+    return 1 if $reachable{$archive};
+    return 0 if $unreachable{$archive};
+    
+    if (system "$TLA whereis-archive $archive >/dev/null") {
+        if ($opt_a && (system($TLA,'register-archive',
+                      "http://mirrors.sourcecontrol.net/$archive") == 0)) {
+            $reachable{$archive} = 1;
+            return 1;
+        }
+        print STDERR "Archive is unreachable: $archive\n";
+        $unreachable{$archive} = 1;
+        return 0;
+    } else {
+        $reachable{$archive} = 1;
+        return 1;
+    }
+}
+

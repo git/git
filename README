@@ -35,7 +35,7 @@ the object (i.e. how it is used, and how it can refer to other
 objects).  There are currently four different object types: "blob",
 "tree", "commit" and "tag".
 
-A "blob" object cannot refer to any other object, and is, like the tag
+A "blob" object cannot refer to any other object, and is, like the type
 implies, a pure storage object containing some user data.  It is used to
 actually store the file data, i.e. a blob object is associated with some
 particular version of some file. 
@@ -64,7 +64,7 @@ symbolic name (of course!) and, optionally, a signature.
 
 Regardless of object type, all objects share the following
 characteristics: they are all deflated with zlib, and have a header
-that not only specifies their tag, but also provides size information
+that not only specifies their type, but also provides size information
 about the data in the object.  It's worth noting that the SHA1 hash
 that is used to name the object is the hash of the original data
 plus this header, so `sha1sum` 'file' does not match the object name
@@ -76,7 +76,7 @@ As a result, the general consistency of an object can always be tested
 independently of the contents or the type of the object: all objects can
 be validated by verifying that (a) their hashes match the content of the
 file and (b) the object successfully inflates to a stream of bytes that
-forms a sequence of <ascii tag without space> + <space> + <ascii decimal
+forms a sequence of <ascii type without space> + <space> + <ascii decimal
 size> + <byte\0> + <binary object data>. 
 
 The structured objects can further have their structure and
@@ -297,7 +297,7 @@ will not normally add totally new entries or remove old entries,
 i.e. it will normally just update existing cache entries.
 
 To tell git that yes, you really do realize that certain files no
-longer exist in the archive, or that new files should be added, you
+longer exist, or that new files should be added, you
 should use the `--remove` and `--add` flags respectively.
 
 NOTE! A `--remove` flag does 'not' mean that subsequent filenames will
@@ -515,8 +515,11 @@ index file, and you can just write the result out with
 Historical note.  We did not have `-u` facility when this
 section was first written, so we used to warn that
 the merge is done in the index file, not in your
-working directory, and your working directory will no longer match your
-index.
+working tree, and your working tree will not match your
+index after this step.
+This is no longer true.  The above command, thanks to `-u`
+option, updates your working tree with the merge results for
+paths that have been trivially merged.
 
 
 8) Merging multiple trees, continued
@@ -579,7 +582,7 @@ The above is the description of a git merge at the lowest level,
 to help you understand what conceptually happens under the hood.
 In practice, nobody, not even git itself, uses three `git-cat-file`
 for this.  There is `git-merge-index` program that extracts the
-stages to temporary files and calls a `merge` script on it
+stages to temporary files and calls a "merge" script on it:
 
 	git-merge-index git-merge-one-file hello.c
 

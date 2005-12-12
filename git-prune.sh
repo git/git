@@ -16,7 +16,11 @@ do
 done
 
 sync
-git-fsck-objects --full --cache --unreachable "$@" |
+case "$#" in
+0) git-fsck-objects --full --cache --unreachable ;;
+*) git-fsck-objects --full --cache --unreachable $(git-rev-parse --all) "$@" ;;
+esac |
+
 sed -ne '/unreachable /{
     s/unreachable [^ ][^ ]* //
     s|\(..\)|\1/|p

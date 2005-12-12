@@ -190,6 +190,12 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	if (match_refs(local_refs, remote_refs, &remote_tail,
 		       nr_refspec, refspec, send_all))
 		return -1;
+
+	if (!remote_refs) {
+		fprintf(stderr, "No refs in common and none specified; doing nothing.\n");
+		return 0;
+	}
+
 	/*
 	 * Finally, tell the other end!
 	 */

@@ -7,22 +7,39 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git-show-branch [--all] [--heads] [--tags] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] <reference>...'
+'git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [<rev> | <glob>]...'
 
 DESCRIPTION
 -----------
-Shows the head commits from the named <reference> (or all refs under
-$GIT_DIR/refs/heads), and displays concise list of commit logs
-to show their relationship semi-visually.
+
+Shows the commit ancestry graph starting from the commits named
+with <rev>s or <globs>s (or all refs under $GIT_DIR/refs/heads
+and/or $GIT_DIR/refs/tags) semi-visually.
+
+It cannot show more than 29 branches and commits at a time.
+
 
 OPTIONS
 -------
-<reference>::
-	Name of the reference under $GIT_DIR/refs/.
+<rev>::
+	Arbitrary extended SHA1 expression (see `git-rev-parse`)
+	that typically names a branch HEAD or a tag.
+
+<glob>::
+	A glob pattern that matches branch or tag names under
+	$GIT_DIR/refs.  For example, if you have many topic
+	branches under $GIT_DIR/refs/heads/topic, giving
+	`topic/*` would show all of them.
 
 --all --heads --tags::
 	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
 	and $GIT_DIR/refs/tags, respectively.
+
+--topo-order::
+        By default, the branches and their commits are shown in
+        reverse chronological order.  This option makes them
+        appear in topological order (i.e., descendant commits
+        are shown before their parents).
 
 --more=<n>::
 	Usually the command stops output upon showing the commit

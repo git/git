@@ -67,7 +67,7 @@ bisect_start() {
 	rm -rf "$GIT_DIR/refs/bisect/"
 	mkdir "$GIT_DIR/refs/bisect"
 	{
-	    echo -n "git-bisect start"
+	    printf "git-bisect start"
 	    sq "$@"
 	} >"$GIT_DIR/BISECT_LOG"
 	sq "$@" >"$GIT_DIR/BISECT_NAMES"

@@ -1,10 +1,11 @@
 #include <stdlib.h>
+#include <fnmatch.h>
 #include "cache.h"
 #include "commit.h"
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--all] [--heads] [--tags] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
+"git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
 
 #define UNINTERESTING	01
 
@@ -54,7 +55,7 @@ static void name_commit(struct commit *commit, const char *head_name, int nth)
 
 /* Parent is the first parent of the commit.  We may name it
  * as (n+1)th generation ancestor of the same head_name as
- * commit is nth generation ancestore of, if that generation
+ * commit is nth generation ancestor of, if that generation
  * number is better than the name it already has.
  */
 static void name_parent(struct commit *commit, struct commit *parent)
@@ -332,6 +333,39 @@ static int append_tag_ref(const char *refname, const unsigned char *sha1)
 	return append_ref(refname + 5, sha1);
 }
 
+static const char *match_ref_pattern = NULL;
+static int match_ref_slash = 0;
+static int count_slash(const char *s)
+{
+	int cnt = 0;
+	while (*s)
+		if (*s++ == '/')
+			cnt++;
+	return cnt;
+}
+
+static int append_matching_ref(const char *refname, const unsigned char *sha1)
+{
+	/* we want to allow pattern hold/<asterisk> to show all
+	 * branches under refs/heads/hold/, and v0.99.9? to show
+	 * refs/tags/v0.99.9a and friends.
+	 */
+	const char *tail;
+	int slash = count_slash(refname);
+	for (tail = refname; *tail && match_ref_slash < slash; )
+		if (*tail++ == '/')
+			slash--;
+	if (!*tail)
+		return 0;
+	if (fnmatch(match_ref_pattern, tail, 0))
+		return 0;
+	if (!strncmp("refs/heads/", refname, 11))
+		return append_head_ref(refname, sha1);
+	if (!strncmp("refs/tags/", refname, 10))
+		return append_tag_ref(refname, sha1);
+	return append_ref(refname, sha1);
+}
+
 static void snarf_refs(int head, int tag)
 {
 	if (head) {
@@ -400,6 +434,27 @@ static int show_independent(struct commit **rev,
 	return 0;
 }
 
+static void append_one_rev(const char *av)
+{
+	unsigned char revkey[20];
+	if (!get_sha1(av, revkey)) {
+		append_ref(av, revkey);
+		return;
+	}
+	if (strchr(av, '*') || strchr(av, '?')) {
+		/* glob style match */
+		int saved_matches = ref_name_cnt;
+		match_ref_pattern = av;
+		match_ref_slash = count_slash(av);
+		for_each_ref(append_matching_ref);
+		if (saved_matches == ref_name_cnt &&
+		    ref_name_cnt < MAX_REVS)
+			error("no matching refs with %s", av);
+		return;
+	}
+	die("bad sha1 reference %s", av);
+}
+
 int main(int ac, char **av)
 {
 	struct commit *rev[MAX_REVS], *commit;
@@ -458,17 +513,20 @@ int main(int ac, char **av)
 	if (all_heads + all_tags)
 		snarf_refs(all_heads, all_tags);
 
-	while (0 < ac) {
-		unsigned char revkey[20];
-		if (get_sha1(*av, revkey))
-			die("bad sha1 reference %s", *av);
-		append_ref(*av, revkey);
-		ac--; av++;
+	if (ac) {
+		while (0 < ac) {
+			append_one_rev(*av);
+			ac--; av++;
+		}
 	}
-
-	/* If still no revs, then add heads */
-	if (!ref_name_cnt)
+	else {
+		/* If no revs given, then add heads */
 		snarf_refs(1, 0);
+	}
+	if (!ref_name_cnt) {
+		fprintf(stderr, "No revs to be shown.\n");
+		exit(0);
+	}
 
 	for (num_rev = 0; ref_name[num_rev]; num_rev++) {
 		unsigned char revkey[20];

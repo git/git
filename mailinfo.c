@@ -8,11 +8,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <iconv.h>
+#include "git-compat-util.h"
 #include "cache.h"
-
-#ifdef NO_STRCASESTR
-extern char *gitstrcasestr(const char *haystack, const char *needle);
-#endif
 
 static FILE *cmitmsg, *patchfile;
 

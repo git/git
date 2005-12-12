@@ -200,7 +200,6 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 		}
 		if (obj)
 			n_refs++;
-		entry->parent = NULL; /* needs to be filled by the user */
 		*list_p = entry;
 		list_p = &entry->next;
 	}

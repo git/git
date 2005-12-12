@@ -19,10 +19,10 @@ esac
 usage () {
 	case "$me" in
 	cherry-pick)
-		die "usage git $me [-n] [-r] <commit-ish>"
+		die "usage git $me [--edit] [-n] [-r] <commit-ish>"
 		;;
 	revert)
-		die "usage git $me [-n] <commit-ish>"
+		die "usage git $me [--edit | --no-edit] [-n] <commit-ish>"
 		;;
 	esac
 }
@@ -38,7 +38,7 @@ do
 	-e|--e|--ed|--edi|--edit)
 		edit=-e
 		;;
-	-n|--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
+	--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
 		edit=
 		;;
 	-r|--r|--re|--rep|--repl|--repla|--replay)

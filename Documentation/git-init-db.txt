@@ -8,7 +8,14 @@ git-init-db - Creates an empty git repository
 
 SYNOPSIS
 --------
-'git-init-db'
+'git-init-db' [--template=<template_directory>]
+
+
+OPTIONS
+-------
+--template=<template_directory>::
+	Provide the directory in from which templates will be used.
+
 
 DESCRIPTION
 -----------
@@ -16,14 +23,26 @@ This simply creates an empty git repository - basically a `.git` directory
 and `.git/object/??/`, `.git/refs/heads` and `.git/refs/tags` directories,
 and links `.git/HEAD` symbolically to `.git/refs/heads/master`.
 
-If the 'GIT_DIR' environment variable is set then it specifies a path
+If the `$GIT_DIR` environment variable is set then it specifies a path
 to use instead of `./.git` for the base of the repository.
 
-If the object storage directory is specified via the 'GIT_OBJECT_DIRECTORY'
+If the object storage directory is specified via the `$GIT_OBJECT_DIRECTORY`
 environment variable then the sha1 directories are created underneath -
 otherwise the default `$GIT_DIR/objects` directory is used.
 
-"git-init-db" won't hurt an existing repository.
+`git-init-db` won't hurt an existing repository.
+
+
+EXAMPLES
+--------
+
+Start a new git repository for an existing code base::
++
+----------------
+$ cd /path/to/my/codebase
+$ git-init-db
+----------------
+
 
 
 Author
