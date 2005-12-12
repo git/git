@@ -38,7 +38,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	from_size = st.st_size;
-	from_buf = mmap(NULL, from_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (from_size)
+		from_buf = mmap(NULL, from_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	else
+		from_buf = "";
 	if (from_buf == MAP_FAILED) {
 		perror(argv[2]);
 		close(fd);
@@ -52,7 +55,11 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	data_size = st.st_size;
-	data_buf = mmap(NULL, data_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+	if (data_size)
+		data_buf = mmap(NULL, data_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	else
+		data_buf = "";
 	if (data_buf == MAP_FAILED) {
 		perror(argv[3]);
 		close(fd);
