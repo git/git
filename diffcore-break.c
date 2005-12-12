@@ -66,6 +66,8 @@ static int should_break(struct diff_filespec *src,
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
 			   &delta_size, 0);
+	if (!delta)
+		return 0; /* error but caught downstream */
 
 	/* Estimate the edit size by interpreting delta. */
 	if (count_delta(delta, delta_size,
