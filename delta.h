@@ -9,8 +9,8 @@ extern void *patch_delta(void *src_buf, unsigned long src_size,
 			 void *delta_buf, unsigned long delta_size,
 			 unsigned long *dst_size);
 
-/* the smallest possible delta size is 4 bytes */
-#define DELTA_SIZE_MIN	4
+/* the smallest possible delta size is 2 bytes (empty to empty) */
+#define DELTA_SIZE_MIN	2
 
 /*
  * This must be called twice on the delta data buffer, first to get the

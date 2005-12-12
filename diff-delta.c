@@ -213,7 +213,7 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 	bdrecord_t *brec;
 	bdfile_t bdf;
 
-	if (!from_size || !to_size || delta_prepare(from_buf, from_size, &bdf))
+	if (delta_prepare(from_buf, from_size, &bdf))
 		return NULL;
 	
 	outpos = 0;
