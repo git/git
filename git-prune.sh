@@ -1,5 +1,6 @@
 #!/bin/sh
 
+USAGE='[-n] [--] [<head>...]'
 . git-sh-setup
 
 dryrun=
@@ -9,7 +10,7 @@ do
     case "$1" in
     -n) dryrun=-n echo=echo ;;
     --) break ;;
-    -*) echo >&2 "usage: git-prune [ -n ] [ heads... ]"; exit 1 ;;
+    -*) usage ;;
     *)  break ;;
     esac
     shift;
