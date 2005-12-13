@@ -62,6 +62,8 @@ static int should_break(struct diff_filespec *src,
 		return 0; /* error but caught downstream */
 
 	base_size = ((src->size < dst->size) ? src->size : dst->size);
+	if (base_size < MINIMUM_BREAK_SIZE)
+		return 0; /* we do not break too small filepair */
 
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
@@ -170,8 +172,7 @@ void diffcore_break(int break_score)
 		    !S_ISDIR(p->one->mode) && !S_ISDIR(p->two->mode) &&
 		    !strcmp(p->one->path, p->two->path)) {
 			if (should_break(p->one, p->two,
-					 break_score, &score) &&
-			    MINIMUM_BREAK_SIZE <= p->one->size) {
+					 break_score, &score)) {
 				/* Split this into delete and create */
 				struct diff_filespec *null_one, *null_two;
 				struct diff_filepair *dp;
