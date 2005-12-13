@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+
+USAGE='<fetch-options> <repository> <refspec>...'
 . git-sh-setup
 . git-parse-remote
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
@@ -33,6 +35,9 @@ do
 		;;
 	-v|--verbose)
 		verbose=Yes
+		;;
+	-*)
+		usage
 		;;
 	*)
 		break
