@@ -33,33 +33,40 @@ OPTIONS
 	environment variable. If no path is given 'git' will print
 	the current setting and then exit.
 
-CORE GIT COMMANDS
------------------
-Before reading this cover to cover, you may want to take a look
-at the link:tutorial.html[tutorial] document.  If you are
-migrating from CVS, link:cvs-migration.html[cvs migration]
-document may be helpful after you finish the tutorial.
 
-The <<Discussion>> section below contains much useful definition
-and clarification info - read that first.  After that, if you
-are interested in using git to manage (version control)
+NOT LEARNING CORE GIT COMMANDS
+------------------------------
+
+This manual is intended to give complete background information
+and internal workings of git, which may be too much for most
+people.  The <<Discussion>> section below contains much useful
+definition and clarification - read that first.
+
+If you are interested in using git to manage (version control)
 projects, use link:everyday.html[Everyday GIT] as a guide to the
 minimum set of commands you need to know for day-to-day work.
+Most likely, that will get you started, and you can go a long
+way without knowing the low level details too much.
+
+The link:tutorial.html[tutorial] document covers how things
+internally work.
+
+If you are migrating from CVS, link:cvs-migration.html[cvs
+migration] document may be helpful after you finish the
+tutorial.
 
 After you get the general feel from the tutorial and this
 overview page, you may want to take a look at the
 link:howto-index.html[howto] documents.
 
+
+CORE GIT COMMANDS
+-----------------
+
 If you are writing your own Porcelain, you need to be familiar
 with most of the low level commands --- I suggest starting from
 gitlink:git-update-index[1] and gitlink:git-read-tree[1].
 
-
-David Greaves <david@dgreaves.com>
-08/05/05
-
-Updated by Junio C Hamano <junkio@cox.net> on 2005-05-05 and
-further on 2005-12-07 to reflect recent changes.
 
 Commands Overview
 -----------------
@@ -582,14 +589,16 @@ include::../README[]
 
 Authors
 -------
-	git's founding father is Linus Torvalds <torvalds@osdl.org>.
-	The current git nurse is Junio C Hamano <junkio@cox.net>.
-	The git potty was written by Andres Ericsson <ae@op5.se>.
-	General upbringing is handled by the git-list <git@vger.kernel.org>.
+* git's founding father is Linus Torvalds <torvalds@osdl.org>.
+* The current git nurse is Junio C Hamano <junkio@cox.net>.
+* The git potty was written by Andres Ericsson <ae@op5.se>.
+* General upbringing is handled by the git-list <git@vger.kernel.org>.
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+The documentation for git suite was started by David Greaves
+<david@dgreaves.com>, and later enhanced greatly by the
+contributors on the git-list <git@vger.kernel.org>.
 
 GIT
 ---

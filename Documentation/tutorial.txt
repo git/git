@@ -18,7 +18,14 @@ doing.
 The core git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
-plumbing does for when the porcelain isn't flushing... 
+plumbing does for when the porcelain isn't flushing.
+
+The material presented here often goes deep describing how things
+work internally.  If you are mostly interested in using git as a
+SCM, you can skip them during your first pass.
+
+[NOTE]
+And those "too deep" descriptions are often marked as Note.
 
 
 Creating a git repository
@@ -251,6 +258,17 @@ tree. That's very useful.
 
 A common shorthand for `git-diff-files -p` is to just write `git
 diff`, which will do the same thing.
+
+------------
+$ git diff
+diff --git a/hello b/hello
+index 557db03..263414f 100644
+--- a/hello
++++ b/hello
+@@ -1 +1,2 @@
+ Hello World
++It's a new day for git
+------------
 
 
 Committing git state
