@@ -188,7 +188,10 @@ yes,yes)
 		cd "$D" && case "$upload_pack" in
 		'') git-clone-pack $quiet "$repo" ;;
 		*) git-clone-pack $quiet "$upload_pack" "$repo" ;;
-		esac
+		esac || {
+			echo >&2 "clone-pack from '$repo' failed."
+			exit 1
+		}
 		;;
 	esac
 	;;
