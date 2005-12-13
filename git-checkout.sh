@@ -1,9 +1,7 @@
 #!/bin/sh
-. git-sh-setup
 
-usage () {
-    die "usage: git checkout [-f] [-b <new_branch>] [<branch>] [<paths>...]"
-}
+USAGE='[-f] [-b <new_branch>] [<branch>] [<paths>...]'
+. git-sh-setup
 
 old=$(git-rev-parse HEAD)
 new=

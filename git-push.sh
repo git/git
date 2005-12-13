@@ -1,10 +1,7 @@
 #!/bin/sh
+
+USAGE='[--all] [--force] <repository> [<refspec>...]'
 . git-sh-setup
-
-usage () {
-    die "Usage: git push [--all] [--force] <repository> [<refspec>]"
-}
-
 
 # Parse out parameters and then stop at remote, so that we can
 # translate it using .git/branches information

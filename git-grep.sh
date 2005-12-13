@@ -3,6 +3,10 @@
 # Copyright (c) Linus Torvalds, 2005
 #
 
+USAGE='<option>... <pattern> <path>...'
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
+
 pattern=
 flags=()
 git_flags=()
@@ -40,8 +44,7 @@ while : ; do
 	shift
 done
 [ "$pattern" ] || {
-	echo >&2 "usage: 'git grep <pattern> [pathspec*]'"
-	exit 1
+	usage
 }
 git-ls-files -z "${git_flags[@]}" "$@" |
 	xargs -0 grep "${flags[@]}" -e "$pattern"

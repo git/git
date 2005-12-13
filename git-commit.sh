@@ -3,11 +3,8 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
+USAGE='[-a] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [<path>...]'
 . git-sh-setup
-
-usage () {
-	die 'git commit [-a] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [<path>...]'
-}
 
 all= logfile= use_commit= no_edit= log_given= log_message= verify=t signoff=
 while case "$#" in 0) break;; esac

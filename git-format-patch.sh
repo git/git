@@ -3,19 +3,8 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-. git-sh-setup
-
-# Force diff to run in C locale.
-LANG=C LC_ALL=C
-export LANG LC_ALL
-
-usage () {
-    echo >&2 "usage: $0"' [-n] [-o dir | --stdout] [--keep-subject] [--mbox]
-    [--check] [--signoff] [-<diff options>...]
-    [--help]
-    ( from..to ... | upstream [ our-head ] )
-
-Prepare each commit with its patch since our-head forked from upstream,
+USAGE='[-n | -k] [-o <dir> | --stdout] [--signoff] [--check] [--mbox] [--diff-options] <upstream> [<our-head>]'
+LONG_USAGE='Prepare each commit with its patch since our-head forked from upstream,
 one file per patch, for e-mail submission.  Each output file is
 numbered sequentially from 1, and uses the first line of the commit
 message (massaged for pathname safety) as the filename.
@@ -28,10 +17,12 @@ as "[PATCH N/M] Subject", unless you have only one patch.
 
 When --mbox is specified, the output is formatted to resemble
 UNIX mailbox format, and can be concatenated together for processing
-with applymbox.
-'
-    exit 1
-}
+with applymbox.'
+. git-sh-setup
+
+# Force diff to run in C locale.
+LANG=C LC_ALL=C
+export LANG LC_ALL
 
 diff_opts=
 LF='

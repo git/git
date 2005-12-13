@@ -3,14 +3,12 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+
+USAGE='[-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+'
 . git-sh-setup
 
 LF='
 '
-
-usage () {
-    die "git-merge [-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+"
-}
 
 all_strategies='recursive octopus resolve stupid ours'
 default_strategies='recursive'
