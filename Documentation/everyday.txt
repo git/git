@@ -83,6 +83,7 @@ following commands.
 
   * gitlink:git-rebase[1] to maintain topic branches.
 
+  * gitlink:git-tag[1] to mark known point.
 
 Examples
 ~~~~~~~~
@@ -92,26 +93,48 @@ Examples
 $ tar zxf frotz.tar.gz
 $ cd frotz
 $ git-init-db
-$ git add .
+$ git add . <1>
 $ git commit -m 'import of frotz source tree.'
+$ git tag v2.43 <2>
+
+<1> add everything under the current directory.
+<2> make a lightweight, unannotated tag.
 ------------
 
 * Create a topic branch and develop
 ------------
-$ git checkout -b private
+$ git checkout -b alsa-audio <1>
 $ edit/compile/test
-$ git diff <1>
-$ git checkout -- foo.c <2>
+$ git checkout -- curses/ux_audio_oss.c <2>
+$ git add curses/ux_audio_alsa.c <3>
 $ edit/compile/test
-$ git commit -a -s <3>
-$ git checkout master <4>
-$ git pull . private <5>
+$ git diff <4>
+$ git commit -a -s <5>
+$ edit/compile/test
+$ git reset --soft HEAD^ <6>
+$ edit/compile/test
+$ git diff ORIG_HEAD <7>
+$ git commit -a -c ORIG_HEAD <8>
+$ git checkout master <9>
+$ git pull . alsa-audio <10>
+$ git log --since='3 days ago' <11>
+$ git log v2.43.. curses/ <12>
 
-<1> to see what changes you are committing.
-<2> revert your botched changes in selected path "foo.c".
-<3> commit everything as you have tested.
-<4> switch to the master branch.
-<5> merge a topic branch into your master branch
+<1> create a new topic branch.
+<2> revert your botched changes in "curses/ux_audio_oss.c".
+<3> you need to tell git if you added a new file; removal and
+modification will be caught if you do "commit -a" later.
+<4> to see what changes you are committing.
+<5> commit everything as you have tested, with your sign-off.
+<6> take the last commit back, keeping what is in the working tree.
+<7> look at the changes since the premature commit we took back.
+<8> redo the commit undone in the previous step, using the message
+you originally wrote.
+<9> switch to the master branch.
+<10> merge a topic branch into your master branch
+<11> or --since='aug 1', --max-count=10
+<12> view only the changes that touch what's in curses/
+directory, since v2.43 tag.
 ------------
 
 
@@ -142,12 +165,19 @@ $ cd my2.6
 $ edit/compile/test; git commit -a -s <1>
 $ git format-patch master <2>
 $ git pull <3>
-$ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <4>
+$ git whatchanged -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
+$ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
+$ git reset --hard ORIG_HEAD <6>
+$ git prune <7>
 
 <1> repeat as needed.
 <2> extract patches from your branch for e-mail submission.
 <3> "pull" fetches from "origin" by default and merges.
-<4> fetch from a specific branch from a specific repository and and merge. 
+<4> look at the changes since last time we checked, only in the
+area we are interested in.
+<5> fetch from a specific branch from a specific repository and and merge.
+<6> revert the pull.
+<7> garbage collect leftover objects from reverted pull.
 ------------
 
 * Branch off of a specific tag.
@@ -157,10 +187,11 @@ $ edit/compile/test; git commit -a
 $ git checkout master
 $ git format-patch -k -m --stdout v2.6.14..private2.6.14 |
   git am -3 -k <2>
+
 <1> create a private branch based on a well known (but somewhat behind)
 tag.
-<2> forward port all changes in private2.6.14 branch to master
-branch without formal "merging".
+<2> forward port all changes in private2.6.14 branch to master branch
+without a formal "merging".
 ------------
 
 
@@ -183,6 +214,51 @@ commands in addition to the ones needed by participants.
   * gitlink:git-revert[1] to undo botched commits.
 
   * gitlink:git-push[1] to publish the bleeding edge.
+
+
+Examples
+~~~~~~~~
+
+* My typical GIT day.
+------------
+$ git status <1>
+$ git show-branch <2>
+$ mailx <3>
+& s 2 3 4 5 ./+to-apply
+& s 7 8 ./+hold-linus
+& q
+$ git checkout master
+$ git am -3 -i -s -u ./+to-apply <4>
+$ compile/test
+$ git checkout -b hold/linus && git am -3 -i -s -u ./+hold-linus <5>
+$ git checkout pu && git reset --hard master <6>
+$ git pull . topic/one topic/two && git pull . hold/linus <7>
+$ git fetch ko master:refs/tags/ko-master &&
+  git show-branch master ko-master <8>
+$ git push ko <9>
+$ git checkout maint
+$ git cherry-pick master~4 <10>
+$ compile/test
+$ git tag -s -m 'GIT 0.99.9x' v0.99.9x <11>
+$ git push ko v0.99.9x <12>
+
+<1> see what I was in the middle of doing, if any.
+<2> see what topic branches I have and think about how ready
+they are.
+<3> read mails, save ones that are applicable, and save others
+that are not quite ready.
+<4> apply them, interactively, with my sign-offs.
+<5> create topic branch as needed and apply, again with my
+sign-offs. 
+<6> restart "pu" every time from the master.
+<7> and bundle topic branches still cooking.
+<8> make sure I did not accidentally rewound master beyond what I
+already pushed out.
+<9> push out the bleeding edge.
+<10> backport a critical fix.
+<11> create a signed tag.
+<12> push the tag out.
+------------
 
 
 Repository Administration[[Repository Administration]]
