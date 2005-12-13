@@ -1,6 +1,14 @@
 #!/bin/sh
 
-GIT_DIR=`git-rev-parse --git-dir` || exit $?
+USAGE=''
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
+
+if [ "$#" != "0" ]
+then
+    usage
+fi
+
 laf="$GIT_DIR/lost-found"
 rm -fr "$laf" && mkdir -p "$laf/commit" "$laf/other" || exit
 
