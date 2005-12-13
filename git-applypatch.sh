@@ -10,7 +10,11 @@
 ##	$3 - "info" file with Author, email and subject
 ##	$4 - optional file containing signoff to add
 ##
+
+USAGE='<msg> <patch> <info> [<signoff>]'
 . git-sh-setup
+
+[[ "$#" = "3" || "$#" = "4" ]] || usage
 
 final=.dotest/final-commit
 ##
