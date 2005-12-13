@@ -16,8 +16,8 @@ test_expect_success \
      git-update-index --add A &&
      git-commit -m "Initial commit."'
 
-test_expect_failure \
-    'git branch --help should return error code' \
+test_expect_success \
+    'git branch --help should return success now.' \
     'git-branch --help'
 
 test_expect_failure \
