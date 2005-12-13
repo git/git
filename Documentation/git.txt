@@ -159,6 +159,9 @@ gitlink:git-merge-base[1]::
 gitlink:git-name-rev[1]::
 	Find symbolic names for given revs.
 
+gitlink:git-pack-redundant[1]::
+	Find redundant pack files.
+
 gitlink:git-rev-list[1]::
 	Lists commit objects in reverse chronological order.
 
@@ -210,6 +213,9 @@ gitlink:git-receive-pack[1]::
 
 gitlink:git-send-pack[1]::
 	Pushes to a remote repository, intelligently.
+
+gitlink:git-http-push[1]::
+	Push missing objects using HTTP/DAV.
 
 gitlink:git-shell[1]::
 	Restricted shell for GIT-only SSH access.
@@ -339,6 +345,9 @@ gitlink:git-convert-objects[1]::
 
 gitlink:git-cvsimport[1]::
 	Salvage your data out of another SCM people love to hate.
+
+gitlink:git-cvsexportcommit[1]::
+	Export a single commit to a CVS checkout.
 
 gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.

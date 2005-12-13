@@ -1,3 +1,6 @@
+Pack transfer protocols
+=======================
+
 There are two Pack push-pull protocols.
 
 upload-pack (S) | fetch/clone-pack (C) protocol:
