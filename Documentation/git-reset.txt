@@ -42,6 +42,76 @@ OPTIONS
 <commit-ish>::
 	Commit to make the current HEAD.
 
+Examples
+~~~~~~~~
+
+Undo a commit and redo::
++
+------------
+$ git commit ...
+$ git reset --soft HEAD^ <1>
+$ edit <2>
+$ git commit -a -c ORIG_HEAD <3>
+
+<1> This is most often done when you remembered what you
+just committed is incomplete, or you misspelled your commit
+message, or both.  Leaves working tree as it was before "reset".
+<2> make corrections to working tree files.
+<3> "reset" copies the old head to .git/ORIG_HEAD; redo the
+commit by starting with its log message.  If you do not need to
+edit the message further, you can give -C option instead.
+------------
+
+Undo commits permanently::
++
+------------
+$ git commit ...
+$ git reset --hard HEAD~3 <1>
+
+<1> The last three commits (HEAD, HEAD^, and HEAD~2) were bad
+and you do not want to ever see them again.  Do *not* do this if
+you have already given these commits to somebody else.
+------------
+
+Undo a commit, making it a topic branch::
++
+------------
+$ git branch topic/wip <1>
+$ git reset --hard HEAD~3 <2>
+$ git checkout topic/wip <3>
+
+<1> You have made some commits, but realize they were premature
+to be in the "master" branch.  You want to continue polishing
+them in a topic branch, so create "topic/wip" branch off of the
+current HEAD.
+<2> Rewind the master branch to get rid of those three commits.
+<3> Switch to "topic/wip" branch and keep working.
+------------
+
+Undo update-index::
++
+------------
+$ edit <1>
+$ git-update-index frotz.c filfre.c
+$ mailx <2>
+$ git reset <3>
+$ git pull git://info.example.com/ nitfol <4>
+
+<1> you are happily working on something, and find the changes
+in these files are in good order.  You do not want to see them
+when you run "git diff", because you plan to work on other files
+and changes with these files are distracting.
+<2> somebody asks you to pull, and the changes sounds worthy of merging.
+<3> however, you already dirtied the index (i.e. your index does
+not match the HEAD commit).  But you know the pull you are going
+to make does not affect frotz.c nor filfre.c, so you revert the
+index changes for these two files.  Your changes in working tree
+remain there.
+<4> then you can pull and merge, leaving frotz.c and filfre.c
+changes still in the working tree.
+------------
+
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net> and Linus Torvalds <torvalds@osdl.org>
