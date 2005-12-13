@@ -84,6 +84,15 @@ git-format-patch origin::
 	pulled from origin the last time in a patch form for
 	e-mail submission.
 
+git-format-patch -M -B origin::
+	The same as the previous one, except detect and handle
+	renames and complete rewrites intelligently to produce
+	renaming patch.  A renaming patch reduces the amount of
+	text output, and generally makes it easier to review
+	it.  Note that the "patch" program does not understand
+	renaming patch well, so use it only when you know the
+	recipient uses git to apply your patch.
+
 
 See Also
 --------
