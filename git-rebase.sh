@@ -3,6 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
+USAGE='<upstream> [<head>]'
 . git-sh-setup
 
 # Make sure we do not have .dotest
@@ -19,7 +20,7 @@ you still have something valuable there.'
 fi
 
 # The other head is given.  Make sure it is valid.
-other=$(git-rev-parse --verify "$1^0") || exit
+other=$(git-rev-parse --verify "$1^0") || usage
 
 # Make sure we have HEAD that is valid.
 head=$(git-rev-parse --verify "HEAD^0") || exit
@@ -36,7 +37,7 @@ esac
 # If the branch to rebase is given, first switch to it.
 case "$#" in
 2)
-	git-checkout "$2" || exit
+	git-checkout "$2" || usage
 esac
 
 # If the HEAD is a proper descendant of $other, we do not even need
