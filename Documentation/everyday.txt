@@ -59,9 +59,6 @@ following commands.
 
   * gitlink:git-show-branch[1] to see where you are.
 
-  * gitlink:git-diff[1] and gitlink:git-status[1] to see what
-    you are in the middle of doing.
-
   * gitlink:git-log[1] to see what happened.
 
   * gitlink:git-whatchanged[1] to find out where things have
@@ -70,7 +67,11 @@ following commands.
   * gitlink:git-checkout[1] and gitlink:git-branch[1] to switch
     branches.
 
-  * gitlink:git-update-index[1] to manage the index file.
+  * gitlink:git-add[1] and gitlink:git-update-index[1] to manage
+    the index file.
+
+  * gitlink:git-diff[1] and gitlink:git-status[1] to see what
+    you are in the middle of doing.
 
   * gitlink:git-commit[1] to advance the current branch.
 
@@ -81,6 +82,37 @@ following commands.
     local branches.
 
   * gitlink:git-rebase[1] to maintain topic branches.
+
+
+Examples
+~~~~~~~~
+
+* Extract a tarball and create a working tree and a new repository to keep track of it.
+------------
+$ tar zxf frotz.tar.gz
+$ cd frotz
+$ git-init-db
+$ git add .
+$ git commit -m 'import of frotz source tree.'
+------------
+
+* Create a topic branch and develop
+------------
+$ git checkout -b private
+$ edit/compile/test
+$ git diff <1>
+$ git checkout -- foo.c <2>
+$ edit/compile/test
+$ git commit -a -s <3>
+$ git checkout master <4>
+$ git pull . private <5>
+
+<1> to see what changes you are committing.
+<2> revert your botched changes in selected path "foo.c".
+<3> commit everything as you have tested.
+<4> switch to the master branch.
+<5> merge a topic branch into your master branch
+------------
 
 
 Individual Developer (Participant)[[Individual Developer (Participant)]]
@@ -98,6 +130,38 @@ addition to the ones needed by a standalone developer.
 
   * gitlink:git-format-patch[1] to prepare e-mail submission, if
     you adopt Linux kernel-style public forum workflow.
+
+
+Examples
+~~~~~~~~
+
+* Clone the upstream and work on it.  Feed changes to upstream.
+------------
+$ git clone git://git.kernel.org/pub/scm/.../torvalds/linux-2.6 my2.6
+$ cd my2.6
+$ edit/compile/test; git commit -a -s <1>
+$ git format-patch master <2>
+$ git pull <3>
+$ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <4>
+
+<1> repeat as needed.
+<2> extract patches from your branch for e-mail submission.
+<3> "pull" fetches from "origin" by default and merges.
+<4> fetch from a specific branch from a specific repository and and merge. 
+------------
+
+* Branch off of a specific tag.
+------------
+$ git checkout -b private2.6.14 v2.6.14 <1>
+$ edit/compile/test; git commit -a
+$ git checkout master
+$ git format-patch -k -m --stdout v2.6.14..private2.6.14 |
+  git am -3 -k <2>
+<1> create a private branch based on a well known (but somewhat behind)
+tag.
+<2> forward port all changes in private2.6.14 branch to master
+branch without formal "merging".
+------------
 
 
 Integrator[[Integrator]]
