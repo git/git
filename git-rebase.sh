@@ -6,6 +6,8 @@
 USAGE='<upstream> [<head>]'
 . git-sh-setup
 
+case $# in 1|2) ;; *) usage ;; esac
+
 # Make sure we do not have .dotest
 if mkdir .dotest
 then
@@ -37,6 +39,7 @@ esac
 # If the branch to rebase is given, first switch to it.
 case "$#" in
 2)
+	head=$(git-rev-parse --verify "$2^") || usage
 	git-checkout "$2" || usage
 esac
 
