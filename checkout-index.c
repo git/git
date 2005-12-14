@@ -58,7 +58,7 @@ static int checkout_file(const char *name)
 
 	while (pos < active_nr) {
 		struct cache_entry *ce = active_cache[pos];
-		if (ce_namelen(ce) != namelen &&
+		if (ce_namelen(ce) != namelen ||
 		    memcmp(ce->name, name, namelen))
 			break;
 		has_same_name = 1;
