@@ -4,13 +4,11 @@
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Linus Torvalds.
 
-usage()
-{
-	echo "$0 <commit> <url> [ <head> ]"
-	echo "  Summarizes the changes since <commit> to the standard output,"
-	echo "  and includes <url> in the message generated."
-	exit 1
-}
+USAGE='<commit> <url> [<head>]'
+LONG_USAGE='Summarizes the changes since <commit> to the standard output,
+and includes <url> in the message generated.'
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
 
 revision=$1
 url=$2

@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "* git clone [-l [-s]] [-q] [-u <upload-pack>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [-l [-s]] [-q] [-u <upload-pack>] [-n] <repo> [<dir>]"
 	exit 1
 }
 

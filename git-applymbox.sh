@@ -18,12 +18,8 @@
 ##
 ## git-am is supposed to be the newer and better tool for this job.
 
+USAGE='[-u] [-k] [-q] [-m] (-c .dotest/<num> | mbox) [signoff]'
 . git-sh-setup
-
-usage () {
-    echo >&2 "applymbox [-u] [-k] [-q] [-m] (-c .dotest/<num> | mbox) [signoff]"
-    exit 1
-}
 
 keep_subject= query_apply= continue= utf8= resume=t
 while case "$#" in 0) break ;; esac

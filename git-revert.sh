@@ -3,29 +3,20 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2005 Junio C Hamano
 #
-. git-sh-setup
 
 case "$0" in
 *-revert* )
 	test -t 0 && edit=-e
-	me=revert ;;
+	me=revert
+	USAGE='[--edit | --no-edit] [-n] <commit-ish>' ;;
 *-cherry-pick* )
 	edit=
-	me=cherry-pick ;;
+	me=cherry-pick
+	USAGE='[--edit] [-n] [-r] <commit-ish>'  ;;
 * )
 	die "What are you talking about?" ;;
 esac
-
-usage () {
-	case "$me" in
-	cherry-pick)
-		die "usage git $me [--edit] [-n] [-r] <commit-ish>"
-		;;
-	revert)
-		die "usage git $me [--edit | --no-edit] [-n] <commit-ish>"
-		;;
-	esac
-}
+. git-sh-setup
 
 no_commit= replay=
 while case "$#" in 0) break ;; esac

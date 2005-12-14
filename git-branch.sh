@@ -1,21 +1,12 @@
 #!/bin/sh
 
-GIT_DIR=`git-rev-parse --git-dir` || exit $?
-
-die () {
-    echo >&2 "$*"
-    exit 1
-}
-
-usage () {
-    echo >&2 "usage: $(basename $0)"' [-d <branch>] | [[-f] <branch> [start-point]]
-
-If no arguments, show available branches and mark current branch with a star.
+USAGE='[-d <branch>] | [[-f] <branch> [start-point]]'
+LONG_USAGE='If no arguments, show available branches and mark current branch with a star.
 If one argument, create a new branch <branchname> based off of current HEAD.
-If two arguments, create a new branch <branchname> based off of <start-point>.
-'
-    exit 1
-}
+If two arguments, create a new branch <branchname> based off of <start-point>.'
+
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
 
 headref=$(git-symbolic-ref HEAD | sed -e 's|^refs/heads/||')
 

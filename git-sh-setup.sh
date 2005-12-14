@@ -11,13 +11,37 @@
 # exporting it.
 unset CDPATH
 
-: ${GIT_DIR=.git}
-: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
-
 die() {
 	echo >&2 "$@"
 	exit 1
 }
 
-# Make sure we are in a valid repository of a vintage we understand.
-GIT_DIR="$GIT_DIR" git-var GIT_AUTHOR_IDENT >/dev/null || exit
+usage() {
+	die "Usage: $0 $USAGE"
+}
+
+if [ -z "$LONG_USAGE" ]
+then
+	LONG_USAGE="Usage: $0 $USAGE"
+else
+	LONG_USAGE="Usage: $0 $USAGE
+
+$LONG_USAGE"
+fi
+
+case "$1" in
+	--h|--he|--hel|--help)
+	echo "$LONG_USAGE"
+	exit
+esac
+
+if [ -z "$SUBDIRECTORY_OK" ]
+then
+	: ${GIT_DIR=.git}
+	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+
+	# Make sure we are in a valid repository of a vintage we understand.
+	GIT_DIR="$GIT_DIR" git-var GIT_AUTHOR_IDENT >/dev/null || exit
+else
+	GIT_DIR=$(git-rev-parse --git-dir) || exit
+fi

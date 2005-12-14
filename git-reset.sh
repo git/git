@@ -1,9 +1,7 @@
 #!/bin/sh
-. git-sh-setup
 
-usage () {
-	die 'Usage: git reset [--mixed | --soft | --hard]  [<commit-ish>]'
-}
+USAGE='[--mixed | --soft | --hard]  [<commit-ish>]'
+. git-sh-setup
 
 tmp=/var/tmp/reset.$$
 trap 'rm -f $tmp-*' 0 1 2 3 15

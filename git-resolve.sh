@@ -4,11 +4,9 @@
 #
 # Resolve two trees.
 #
-. git-sh-setup
 
-usage () {
-	die "git-resolve <head> <remote> <merge-message>"
-}
+USAGE='<head> <remote> <merge-message>'
+. git-sh-setup
 
 dropheads() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" \

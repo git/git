@@ -1,14 +1,10 @@
 #!/bin/sh
 #
 #
-. git-sh-setup
 
-usage () {
-    echo >&2 "usage: $0 [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>"
-    echo >&2 "	or, when resuming"
-    echo >&2 "	$0 [--skip | --resolved]"
-    exit 1;
-}
+USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>
+  or, when resuming [--skip | --resolved]'
+. git-sh-setup
 
 stop_here () {
     echo "$1" >"$dotest/next"
