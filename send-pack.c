@@ -179,6 +179,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 {
 	struct ref *ref;
 	int new_refs;
+	int ret = 0;
 
 	/* No funny business with the matcher */
 	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, 1);
@@ -232,6 +233,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 				error("remote '%s' object %s does not "
 				      "exist on local",
 				      ref->name, sha1_to_hex(ref->old_sha1));
+				ret = -2;
 				continue;
 			}
 
@@ -245,12 +247,14 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 				error("remote ref '%s' is not a strict "
 				      "subset of local ref '%s'.", ref->name,
 				      ref->peer_ref->name);
+				ret = -2;
 				continue;
 			}
 		}
 		memcpy(ref->new_sha1, ref->peer_ref->new_sha1, 20);
 		if (is_zero_sha1(ref->new_sha1)) {
 			error("cannot happen anymore");
+			ret = -3;
 			continue;
 		}
 		new_refs++;
@@ -267,7 +271,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	if (new_refs)
 		pack_objects(out, remote_refs);
 	close(out);
-	return 0;
+	return ret;
 }
 
 
