@@ -53,7 +53,7 @@ Everybody uses these commands to feed and care git repositories.
 Examples
 ~~~~~~~~
 
-Check health and remove cruft::
+Check health and remove cruft.::
 +
 ------------
 $ git fsck-objects <1>
@@ -71,11 +71,14 @@ of loose objects accumulation may be a good rule of thumb.
 <4> after repack, prune removes the duplicate loose objects.
 ------------
 
-Repack a small project into single pack::
+Repack a small project into single pack.::
 +
 ------------
 $ git repack -a -d <1>
 $ git prune
+
+<1> pack all the objects reachable from the refs into one pack
+and remove unneeded other packs
 ------------
 
 
@@ -117,7 +120,7 @@ following commands.
 Examples
 ~~~~~~~~
 
-Extract a tarball and create a working tree and a new repository to keep track of it::
+Extract a tarball and create a working tree and a new repository to keep track of it.::
 +
 ------------
 $ tar zxf frotz.tar.gz
@@ -131,7 +134,7 @@ $ git tag v2.43 <2>
 <2> make a lightweight, unannotated tag.
 ------------
 
-Create a topic branch and develop::
+Create a topic branch and develop.::
 +
 ------------
 $ git checkout -b alsa-audio <1>
@@ -163,7 +166,8 @@ modification will be caught if you do "commit -a" later.
 you originally wrote.
 <9> switch to the master branch.
 <10> merge a topic branch into your master branch
-<11> or --since='aug 1', --max-count=10
+<11> review commit logs; other forms to limit output can be
+combined and include --max-count=10 (show 10 commits), --until='2005-12-10'.
 <12> view only the changes that touch what's in curses/
 directory, since v2.43 tag.
 ------------
@@ -176,20 +180,22 @@ A developer working as a participant in a group project needs to
 learn how to communicate with others, and uses these commands in
 addition to the ones needed by a standalone developer.
 
-  * gitlink:git-pull[1] from "origin" to keep up-to-date with
-    the upstream.
+  * gitlink:git-clone[1] from the upstream to prime your local
+    repository.
 
-  * gitlink:git-push[1] to shared repository if you adopt CVS
+  * gitlink:git-pull[1] and gitlink:git-fetch[1] from "origin"
+    to keep up-to-date with the upstream.
+
+  * gitlink:git-push[1] to shared repository, if you adopt CVS
     style shared repository workflow.
 
   * gitlink:git-format-patch[1] to prepare e-mail submission, if
     you adopt Linux kernel-style public forum workflow.
 
-
 Examples
 ~~~~~~~~
 
-Clone the upstream and work on it.  Feed changes to upstream::
+Clone the upstream and work on it.  Feed changes to upstream.::
 +
 ------------
 $ git clone git://git.kernel.org/pub/scm/.../torvalds/linux-2.6 my2.6
@@ -201,6 +207,7 @@ $ git whatchanged -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
 $ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
 $ git reset --hard ORIG_HEAD <6>
 $ git prune <7>
+$ git fetch --tags <8>
 
 <1> repeat as needed.
 <2> extract patches from your branch for e-mail submission.
@@ -210,9 +217,42 @@ area we are interested in.
 <5> fetch from a specific branch from a specific repository and and merge.
 <6> revert the pull.
 <7> garbage collect leftover objects from reverted pull.
+<8> from time to time, obtain official tags from the "origin"
+and store them under .git/refs/tags/.
 ------------
 
-Branch off of a specific tag::
+
+Push into another repository.::
++
+------------
+satellite$ git clone mothership:frotz/.git frotz <1>
+satellite$ cd frotz
+satellite$ cat .git/remotes/origin <2>
+URL: mothership:frotz/.git
+Pull: master:origin
+satellite$ echo 'Push: master:satellite' >>.git/remotes/origin <3>
+satellite$ edit/compile/test/commit
+satellite$ git push origin <4>
+
+mothership$ cd frotz
+mothership$ git checkout master
+mothership$ git pull . satellite <5>
+
+<1> mothership machine has a frotz repository under your home
+directory; clone from it to start a repository on the satellite
+machine.
+<2> clone creates this file by default.  It arranges "git pull"
+to fetch and store the master branch head of mothership machine
+to local "origin" branch.
+<3> arrange "git push" to push local "master" branch to
+"satellite" branch of the mothership machine.
+<4> push will stash our work away on "satellite" branch on the
+mothership machine.  You could use this as a back-up method.
+<5> on mothership machine, merge the work done on the satellite
+machine into the master branch.
+------------
+
+Branch off of a specific tag.::
 +
 ------------
 $ git checkout -b private2.6.14 v2.6.14 <1>
@@ -252,7 +292,7 @@ commands in addition to the ones needed by participants.
 Examples
 ~~~~~~~~
 
-My typical GIT day::
+My typical GIT day.::
 +
 ------------
 $ git status <1>
@@ -268,13 +308,12 @@ $ git checkout -b hold/linus && git am -3 -i -s -u ./+hold-linus <5>
 $ git checkout topic/one && git rebase master <6>
 $ git checkout pu && git reset --hard master <7>
 $ git pull . topic/one topic/two && git pull . hold/linus <8>
-$ git fetch ko master:refs/tags/ko-master &&
-  git show-branch master ko-master <9>
-$ git push ko <10>
 $ git checkout maint
-$ git cherry-pick master~4 <11>
+$ git cherry-pick master~4 <9>
 $ compile/test
-$ git tag -s -m 'GIT 0.99.9x' v0.99.9x <12>
+$ git tag -s -m 'GIT 0.99.9x' v0.99.9x <10>
+$ git fetch ko && git show-branch master maint 'tags/ko-*' <11>
+$ git push ko <12>
 $ git push ko v0.99.9x <13>
 
 <1> see what I was in the middle of doing, if any.
@@ -289,12 +328,20 @@ sign-offs.
 master, nor exposed as a part of a stable branch.
 <7> restart "pu" every time from the master.
 <8> and bundle topic branches still cooking.
-<9> make sure I did not accidentally rewound master beyond what I
-already pushed out.
-<10> push out the bleeding edge.
-<11> backport a critical fix.
-<12> create a signed tag.
-<13> push the tag out.
+<9> backport a critical fix.
+<10> create a signed tag.
+<11> make sure I did not accidentally rewound master beyond what I
+already pushed out.  "ko" shorthand points at the repository I have
+at kernel.org, and looks like this:
+$ cat .git/remotes/ko
+URL: kernel.org:/pub/scm/git/git.git
+Pull: master:refs/tags/ko-master
+Pull: maint:refs/tags/ko-maint
+Push: master
+Push: +pu
+Push: maint
+<12> push out the bleeding edge.
+<13> push the tag out, too.
 ------------
 
 
@@ -317,21 +364,63 @@ and maintain access to the repository by developers.
 Examples
 ~~~~~~~~
 
-Run git-daemon to serve /pub/scm from inetd::
+Run git-daemon to serve /pub/scm from inetd.::
 +
 ------------
 $ grep git /etc/inet.conf
-git	stream	tcp	nowait	nobody	/usr/bin/git-daemon git-daemon --inetd --syslog --export-all /pub/scm
+git	stream	tcp	nowait	nobody \
+  /usr/bin/git-daemon git-daemon --inetd --syslog --export-all /pub/scm
 ------------
++
+The actual configuration line should be on one line.
 
-Give push/pull only access to developers::
+Give push/pull only access to developers.::
 +
 ------------
-$ grep git /etc/shells
-/usr/bin/git-shell
-$ grep git /etc/passwd
+$ grep git /etc/passwd <1>
 alice:x:1000:1000::/home/alice:/usr/bin/git-shell
 bob:x:1001:1001::/home/bob:/usr/bin/git-shell
 cindy:x:1002:1002::/home/cindy:/usr/bin/git-shell
 david:x:1003:1003::/home/david:/usr/bin/git-shell
+$ grep git /etc/shells <2>
+/usr/bin/git-shell
+
+<1> log-in shell is set to /usr/bin/git-shell, which does not
+allow anything but "git push" and "git pull".  The users should
+get an ssh access to the machine.
+<2> in many distributions /etc/shells needs to list what is used
+as the login shell.
+------------
+
+CVS-style shared repository.::
++
+------------
+$ grep git /etc/group <1>
+git:x:9418:alice,bob,cindy,david
+$ cd /home/devo.git
+$ ls -l <2>
+  lrwxrwxrwx   1 david git    17 Dec  4 22:40 HEAD -> refs/heads/master
+  drwxrwsr-x   2 david git  4096 Dec  4 22:40 branches
+  -rw-rw-r--   1 david git    84 Dec  4 22:40 config
+  -rw-rw-r--   1 david git    58 Dec  4 22:40 description
+  drwxrwsr-x   2 david git  4096 Dec  4 22:40 hooks
+  -rw-rw-r--   1 david git 37504 Dec  4 22:40 index
+  drwxrwsr-x   2 david git  4096 Dec  4 22:40 info
+  drwxrwsr-x   4 david git  4096 Dec  4 22:40 objects
+  drwxrwsr-x   4 david git  4096 Nov  7 14:58 refs
+  drwxrwsr-x   2 david git  4096 Dec  4 22:40 remotes
+$ ls -l hooks/update <3>
+  -r-xr-xr-x   1 david git  3536 Dec  4 22:40 update
+$ cat info/allowed-users <4>
+refs/heads/master	alice\|cindy
+refs/heads/doc-update	bob
+refs/tags/v[0-9]*	david
+
+<1> place the developers into the same git group.
+<2> and make the shared repository writable by the group.
+<3> use update-hook example by Carl from Documentation/howto/
+for branch policy control.
+<4> alice and cindy can push into master, only bob can push into doc-update.
+david is the release manager and is the only person who can
+create and push version tags.
 ------------
