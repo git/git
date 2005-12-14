@@ -31,7 +31,7 @@ test tree and then pull to the release tree as that would leave trivial
 patches blocked in the test tree waiting for complex changes to accumulate
 enough test time to graduate.
 
-Back in the BitKeeper days I achieved this my creating small forests of
+Back in the BitKeeper days I achieved this by creating small forests of
 temporary trees, one tree for each logical grouping of patches, and then
 pulling changes from these trees first to the test tree, and then to the
 release tree.  At first I replicated this in GIT, but then I realised
@@ -42,7 +42,8 @@ So here is the step-by-step guide how this all works for me.
 
 First create your work tree by cloning Linus's public tree:
 
- $ git clone rsync://rsync.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
+ $ git clone \
+ master.kernel.org:/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
 
 Change directory into the cloned tree you just created
 
@@ -52,7 +53,7 @@ Set up a remotes file so that you can fetch the latest from Linus' master
 branch into a local branch named "linus":
 
  $ cat > .git/remotes/linus
- URL: rsync://rsync.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+ URL: master.kernel.org:/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
  Pull: master:linus
  ^D
 
