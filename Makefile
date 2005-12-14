@@ -449,7 +449,7 @@ test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
 
 check:
-	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i; done
+	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
 
 
