@@ -15,7 +15,7 @@
 #include "cache.h"
 
 static const char git_mailsplit_usage[] =
-"git-mailsplit [-d<prec>] [<mbox>] <directory>";
+"git-mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> <mbox>...";
 
 static int is_from_line(const char *line, int len)
 {
@@ -56,14 +56,15 @@ static char buf[4096];
  * the Unix "From " line.  Write it into the specified
  * file.
  */
-static int split_one(FILE *mbox, const char *name)
+static int split_one(FILE *mbox, const char *name, int allow_bare)
 {
 	FILE *output = NULL;
 	int len = strlen(buf);
 	int fd;
 	int status = 0;
+	int is_bare = !is_from_line(buf, len);
 
-	if (!is_from_line(buf, len))
+	if (is_bare && !allow_bare)
 		goto corrupt;
 
 	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
@@ -88,7 +89,7 @@ static int split_one(FILE *mbox, const char *name)
 			die("cannot read mbox");
 		}
 		len = strlen(buf);
-		if (!is_partial && is_from_line(buf, len))
+		if (!is_partial && !is_bare && is_from_line(buf, len))
 			break; /* done with one message */
 	}
 	fclose(output);
@@ -104,54 +105,82 @@ static int split_one(FILE *mbox, const char *name)
 
 int main(int argc, const char **argv)
 {
-	int i, nr, nr_prec = 4;
-	FILE *mbox = NULL;
+	int nr = 0, nr_prec = 4;
+	int allow_bare = 0;
+	const char *dir = NULL;
+	const char **argp;
+	static const char *stdin_only[] = { "-", NULL };
+	char *name;
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+	for (argp = argv+1; *argp; argp++) {
+		const char *arg = *argp;
 
 		if (arg[0] != '-')
 			break;
 		/* do flags here */
-		if (!strncmp(arg, "-d", 2)) {
-			nr_prec = strtol(arg + 2, NULL, 10);
+		if ( arg[1] == 'd' ) {
+			nr_prec = strtol(arg+2, NULL, 10);
 			if (nr_prec < 3 || 10 <= nr_prec)
 				usage(git_mailsplit_usage);
 			continue;
-		}
-	}
-
-	/* Either one remaining arg (dir), or two (mbox and dir) */
-	switch (argc - i) {
-	case 1:
-		mbox = stdin;
-		break;
-	case 2:
-		if ((mbox = fopen(argv[i], "r")) == NULL)
-			die("cannot open mbox %s for reading", argv[i]);
-		break;
-	default:
-		usage(git_mailsplit_usage);
-	}
-	if (chdir(argv[argc - 1]) < 0)
-		usage(git_mailsplit_usage);
-
-	nr = 0;
-	if (fgets(buf, sizeof(buf), mbox) == NULL)
-		die("cannot read mbox");
-
-	for (;;) {
-		char name[10];
-
-		sprintf(name, "%0*d", nr_prec, ++nr);
-		switch (split_one(mbox, name)) {
-		case 0:
+		} else if ( arg[1] == 'f' ) {
+			nr = strtol(arg+2, NULL, 10);
+		} else if ( arg[1] == 'b' && !arg[2] ) {
+			allow_bare = 1;
+		} else if ( arg[1] == 'o' && arg[2] ) {
+			dir = arg+2;
+		} else if ( arg[1] == '-' && !arg[2] ) {
+			argp++;	/* -- marks end of options */
 			break;
-		case 1:
-			printf("%d\n", nr);
-			return 0;
-		default:
-			exit(1);
+		} else {
+			die("unknown option: %s", arg);
 		}
 	}
+
+	if ( !dir ) {
+		/* Backwards compatibility: if no -o specified, accept
+		   <mbox> <dir> or just <dir> */
+		switch (argc - (argp-argv)) {
+		case 1:
+			dir = argp[0];
+			argp = stdin_only;
+			break;
+		case 2:
+			stdin_only[0] = argp[0];
+			dir = argp[1];
+			argp = stdin_only;
+			break;
+		default:
+			usage(git_mailsplit_usage);
+		}
+	} else {
+		/* New usage: if no more argument, parse stdin */
+		if ( !*argp )
+			argp = stdin_only;
+	}
+
+	name = xmalloc(strlen(dir) + 2 + 3 * sizeof(nr));
+
+	while (*argp) {
+		const char *file = *argp++;
+		FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "rt");
+		int file_done = 0;
+
+		if ( !f )
+			die ("cannot open mbox %s", file);
+
+		if (fgets(buf, sizeof(buf), f) == NULL)
+			die("cannot read mbox %s", file);
+
+		while (!file_done) {
+			sprintf(name, "%s/%0*d", dir, nr_prec, ++nr);
+			file_done = split_one(f, name, allow_bare);
+		}
+
+		if (f != stdin)
+			fclose(f);
+	}
+
+	printf("%d\n", nr);
+	return 0;
 }
