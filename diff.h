@@ -44,6 +44,7 @@ struct diff_options {
 	int reverse_diff;
 	int rename_limit;
 	int setup;
+	int abbrev;
 
 	change_fn_t change;
 	add_remove_fn_t add_remove;
@@ -87,6 +88,9 @@ extern int diff_setup_done(struct diff_options *);
 
 #define DIFF_PICKAXE_ALL	1
 
+#define DIFF_DEFAULT_INDEX_ABBREV	7 /* hex digits */
+#define DIFF_DEFAULT_ABBREV	7 /* hex digits */
+
 extern void diffcore_std(struct diff_options *);
 
 extern void diffcore_std_no_resolve(struct diff_options *);
@@ -98,7 +102,8 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  -u            synonym for -p.\n" \
 "  --name-only   show only names of changed files.\n" \
 "  --name-status show names and status of changed files.\n" \
-"  --full-index  show full object name on index ines.\n" \
+"  --full-index  show full object name on index lines.\n" \
+"  --abbrev      abbreviate object names in diff-tree header and diff-raw.\n" \
 "  -R            swap input file pairs.\n" \
 "  -B            detect complete rewrites.\n" \
 "  -M            detect renames.\n" \
@@ -136,5 +141,7 @@ extern void diff_flush(struct diff_options*);
  */
 #define DIFF_STATUS_FILTER_AON		'*'
 #define DIFF_STATUS_FILTER_BROKEN	'B'
+
+extern const char *diff_unique_abbrev(const unsigned char *, int);
 
 #endif /* DIFF_H */
