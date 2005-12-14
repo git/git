@@ -160,10 +160,7 @@ else
 	# Start afresh.
 	mkdir -p "$dotest" || exit
 
-	# cat does the right thing for us, including '-' to mean
-	# standard input.
-	cat "$@" |
-	git-mailsplit -d$prec "$dotest/" >"$dotest/last" || {
+	git-mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
 		rm -fr "$dotest"
 		exit 1
 	}

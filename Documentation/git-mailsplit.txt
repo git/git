@@ -7,7 +7,7 @@ git-mailsplit - Totally braindamaged mbox splitter program.
 
 SYNOPSIS
 --------
-'git-mailsplit' [-d<prec>] [<mbox>] <directory>
+'git-mailsplit' [-b] [-f<nn>] [-d<prec>] -o<directory> [--] [<mbox>...]
 
 DESCRIPTION
 -----------
@@ -23,11 +23,18 @@ OPTIONS
 <directory>::
 	Directory in which to place the individual messages.
 
+-b::
+	If any file doesn't begin with a From line, assume it is a
+	single mail message instead of signalling error.
+
 -d<prec>::
 	Instead of the default 4 digits with leading zeros,
 	different precision can be specified for the generated
 	filenames.
 
+-f<nn>::
+	Skip the first <nn> numbers, for example if -f3 is specified,
+	start the numbering with 0004.
 
 Author
 ------
