@@ -21,32 +21,30 @@ you still have something valuable there.'
 	exit 1
 fi
 
-# The other head is given.  Make sure it is valid.
-other=$(git-rev-parse --verify "$1^0") || usage
-
-# Make sure we have HEAD that is valid.
-head=$(git-rev-parse --verify "HEAD^0") || exit
-
 # The tree must be really really clean.
 git-update-index --refresh || exit
 diff=$(git-diff-index --cached --name-status -r HEAD)
-case "$different" in
+case "$diff" in
 ?*)	echo "$diff"
 	exit 1
 	;;
 esac
 
+# The other head is given.  Make sure it is valid.
+other=$(git-rev-parse --verify "$1^0") || usage
+
+# Make sure the branch to rebase is valid.
+head=$(git-rev-parse --verify "${2-HEAD}^0") || exit
+
 # If the branch to rebase is given, first switch to it.
 case "$#" in
 2)
-	head=$(git-rev-parse --verify "$2^") || usage
 	git-checkout "$2" || usage
 esac
 
-# If the HEAD is a proper descendant of $other, we do not even need
-# to rebase.  Make sure we do not do needless rebase.  In such a
-# case, merge-base should be the same as "$other".
 mb=$(git-merge-base "$other" "$head")
+
+# Check if we are already based on $other.
 if test "$mb" = "$other"
 then
 	echo >&2 "Current branch `git-symbolic-ref HEAD` is up to date."
@@ -55,5 +53,14 @@ fi
 
 # Rewind the head to "$other"
 git-reset --hard "$other"
+
+# If the $other is a proper descendant of the tip of the branch, then
+# we just fast forwarded.
+if test "$mb" = "$head"
+then
+	echo >&2 "Fast-forwarded $head to $other."
+	exit 0
+fi
+
 git-format-patch -k --stdout --full-index "$other" ORIG_HEAD |
 git am --binary -3 -k
