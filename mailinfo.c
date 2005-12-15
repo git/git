@@ -40,13 +40,43 @@ static char *sanity_check(char *name, char *email)
 	return name;
 }
 
+static int bogus_from(char *line)
+{
+	/* John Doe <johndoe> */
+	char *bra, *ket, *dst, *cp;
+
+	/* This is fallback, so do not bother if we already have an
+	 * e-mail address.
+	 */ 
+	if (*email)
+		return 0;
+
+	bra = strchr(line, '<');
+	if (!bra)
+		return 0;
+	ket = strchr(bra, '>');
+	if (!ket)
+		return 0;
+
+	for (dst = email, cp = bra+1; cp < ket; )
+		*dst++ = *cp++;
+	*dst = 0;
+	for (cp = line; isspace(*cp); cp++)
+		;
+	for (bra--; isspace(*bra); bra--)
+		*bra = 0;
+	cp = sanity_check(cp, email);
+	strcpy(name, cp);
+	return 1;
+}
+
 static int handle_from(char *line)
 {
 	char *at = strchr(line, '@');
 	char *dst;
 
 	if (!at)
-		return 0;
+		return bogus_from(line);
 
 	/*
 	 * If we already have one email, don't take any confusing lines
