@@ -259,8 +259,17 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 
 	status = clone_without_unpack(fd);
 
-	if (!status)
-		write_refs(refs);
+	if (!status) {
+		if (nr_match == 0)
+			write_refs(refs);
+		else
+			while (refs) {
+				printf("%s %s\n",
+				       sha1_to_hex(refs->old_sha1),
+				       refs->name);
+				refs = refs->next;
+			}
+	}
 	return status;
 }
 
