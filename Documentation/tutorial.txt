@@ -27,6 +27,12 @@ SCM, you can skip them during your first pass.
 [NOTE]
 And those "too deep" descriptions are often marked as Note.
 
+[NOTE]
+If you are already familiar with another version control system,
+like CVS, you may want to take a look at
+link:everyday.html[Everyday GIT in 20 commands or so] first
+before reading this.
+
 
 Creating a git repository
 -------------------------
