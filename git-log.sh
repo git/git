@@ -3,13 +3,13 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-# This one uses only subdirectory-aware commands, so no need to
-# include sh-setup-script.
+USAGE='[--max-count=<n>] [<since>..<limit>] [--pretty=<format>] [git-rev-list options]'
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
 
 revs=$(git-rev-parse --revs-only --no-flags --default HEAD "$@") || exit
 [ "$revs" ] || {
-	echo >&2 "No HEAD ref"
-	exit 1
+	die "No HEAD ref"
 }
 git-rev-list --pretty $(git-rev-parse --default HEAD "$@") |
 LESS=-S ${PAGER:-less}
