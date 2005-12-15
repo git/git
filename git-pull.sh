@@ -4,18 +4,9 @@
 #
 # Fetch one or more remote refs and merge it/them into the current HEAD.
 
+USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <repo> <head>...'
+LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 . git-sh-setup
-
-usage () {
-    echo >&2 "usage: $0"' [-n] [--no-commit] [--no-summary] [--help]
-    [-s strategy]...
-    [<fetch-options>]
-    <repo> <head>...
-
-Fetch one or more remote refs and merge it/them into the current HEAD.
-'
-    exit 1
-}
 
 strategy_args= no_summary= no_commit=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac

@@ -3,6 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
+USAGE='[-a] [-d] [-l] [-n]'
 . git-sh-setup
 	
 no_update_info= all_into_one= remove_redundant= local=
@@ -13,7 +14,7 @@ do
 	-a)	all_into_one=t ;;
 	-d)	remove_redundant=t ;;
 	-l)	local=t ;;
-	*)	break ;;
+	*)	usage ;;
 	esac
 	shift
 done

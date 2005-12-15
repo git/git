@@ -1,4 +1,15 @@
 #!/bin/sh
+
+USAGE='[start|bad|good|next|reset|visualize]'
+LONG_USAGE='git bisect start [<pathspec>]	reset bisect state and start bisection.
+git bisect bad [<rev>]		mark <rev> a known-bad revision.
+git bisect good [<rev>...]	mark <rev>... known-good revisions.
+git bisect next			find next bisection to test and check it out.
+git bisect reset [<branch>]	finish bisection search and go back to branch.
+git bisect visualize            show bisect status in gitk.
+git bisect replay <logfile>	replay bisection log
+git bisect log			show bisect log.'
+
 . git-sh-setup
 
 sq() {
@@ -9,19 +20,6 @@ sq() {
 		}
 		print "\n";
 	' "$@"
-}
-
-usage() {
-    echo >&2 'usage: git bisect [start|bad|good|next|reset|visualize]
-git bisect start [<pathspec>]	reset bisect state and start bisection.
-git bisect bad [<rev>]		mark <rev> a known-bad revision.
-git bisect good [<rev>...]	mark <rev>... known-good revisions.
-git bisect next			find next bisection to test and check it out.
-git bisect reset [<branch>]	finish bisection search and go back to branch.
-git bisect visualize            show bisect status in gitk.
-git bisect replay <logfile>	replay bisection log
-git bisect log			show bisect log.'
-    exit 1
 }
 
 bisect_autostart() {

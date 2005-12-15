@@ -3,11 +3,8 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-. git-sh-setup
-
-usage="usage: $0 "'[-v] <upstream> [<head>]
-
-             __*__*__*__*__> <upstream>
+USAGE='[-v] <upstream> [<head>]'
+LONG_USAGE='             __*__*__*__*__> <upstream>
             /
   fork-point
             \__+__+__+__+__+__+__+__> <head>
@@ -16,8 +13,8 @@ Each commit between the fork-point and <head> is examined, and
 compared against the change each commit between the fork-point and
 <upstream> introduces.  If the change seems to be in the upstream,
 it is shown on the standard output with prefix "+".  Otherwise
-it is shown with prefix "-".
-'
+it is shown with prefix "-".'
+. git-sh-setup
 
 case "$1" in -v) verbose=t; shift ;; esac 
 
@@ -35,7 +32,7 @@ case "$#" in
 2) upstream=`git-rev-parse --verify "$1"` &&
    ours=`git-rev-parse --verify "$2"` || exit
    ;;
-*) echo >&2 "$usage"; exit 1 ;;
+*) usage ;;
 esac
 
 # Note that these list commits in reverse order;

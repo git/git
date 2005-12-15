@@ -1,14 +1,10 @@
 #!/bin/sh
 #
 #
-. git-sh-setup
 
-usage () {
-    echo >&2 "usage: $0 [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>"
-    echo >&2 "	or, when resuming"
-    echo >&2 "	$0 [--skip | --resolved]"
-    exit 1;
-}
+USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>
+  or, when resuming [--skip | --resolved]'
+. git-sh-setup
 
 stop_here () {
     echo "$1" >"$dotest/next"
@@ -164,10 +160,7 @@ else
 	# Start afresh.
 	mkdir -p "$dotest" || exit
 
-	# cat does the right thing for us, including '-' to mean
-	# standard input.
-	cat "$@" |
-	git-mailsplit -d$prec "$dotest/" >"$dotest/last" || {
+	git-mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
 		rm -fr "$dotest"
 		exit 1
 	}
@@ -256,6 +249,13 @@ do
 	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
 	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
 	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
+
+	if test -z "$GIT_AUTHOR_EMAIL"
+	then
+		echo "Patch does not have a valid e-mail address."
+		stop_here $this
+	fi
+
 	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 
 	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"

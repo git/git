@@ -43,7 +43,15 @@ test_expect_success setup '
 test_expect_success \
         'pushing rewound head should not barf but require --force' ' 
 	# should not fail but refuse to update.
-	git-send-pack ./victim/.git/ master &&
+	if git-send-pack ./victim/.git/ master
+	then
+		# now it should fail with Pasky patch
+		echo >&2 Gaah, it should have failed.
+		false
+	else
+		echo >&2 Thanks, it correctly failed.
+		true
+	fi &&
 	if cmp victim/.git/refs/heads/master .git/refs/heads/master
 	then
 		# should have been left as it was!

@@ -74,9 +74,30 @@ OPTIONS
 	for "host.xz:foo/.git").  Cloning into an existing directory
 	is not allowed.
 
+Examples
+~~~~~~~~
+
+Clone from upstream::
++
+------------
+$ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
+$ cd my2.6
+$ make
+------------
+
+
+Make a local clone that borrows from the current directory, without checking things out::
++
+------------
+$ git clone -l -s -n . ../copy
+$ cd copy
+$ git show-branch
+------------
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
+
 
 Documentation
 --------------

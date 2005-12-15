@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "* git clone [-l [-s]] [-q] [-u <upload-pack>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [-l [-s]] [-q] [-u <upload-pack>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -188,7 +188,10 @@ yes,yes)
 		cd "$D" && case "$upload_pack" in
 		'') git-clone-pack $quiet "$repo" ;;
 		*) git-clone-pack $quiet "$upload_pack" "$repo" ;;
-		esac
+		esac || {
+			echo >&2 "clone-pack from '$repo' failed."
+			exit 1
+		}
 		;;
 	esac
 	;;

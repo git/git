@@ -32,6 +32,32 @@ start-point::
 	Where to create the branch; defaults to HEAD. This
 	option has no meaning with -d and -D.
 
+
+Examples
+~~~~~~~~
+
+Start development off of a know tag::
++
+------------
+$ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
+$ cd my2.6
+$ git branch my2.6.14 v2.6.14 <1>
+$ git checkout my2.6.14
+
+<1> These two steps are the same as "checkout -b my2.6.14 v2.6.14".
+------------
+
+Delete unneeded branch::
++
+------------
+$ git clone git://git.kernel.org/.../git.git my.git
+$ cd my.git
+$ git branch -D todo <1>
+
+<1> delete todo branch even if the "master" branch does not have all
+commits from todo branch.
+------------
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>

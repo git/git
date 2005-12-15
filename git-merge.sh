@@ -3,14 +3,12 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+
+USAGE='[-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+'
 . git-sh-setup
 
 LF='
 '
-
-usage () {
-    die "git-merge [-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+"
-}
 
 all_strategies='recursive octopus resolve stupid ours'
 default_strategies='recursive'
@@ -97,11 +95,14 @@ head=$(git-rev-parse --verify "$1"^0) || usage
 shift
 
 # All the rest are remote heads
+remoteheads=
 for remote
 do
-	git-rev-parse --verify "$remote"^0 >/dev/null ||
+	remotehead=$(git-rev-parse --verify "$remote"^0) ||
 	    die "$remote - not something we can merge"
+	remoteheads="${remoteheads}$remotehead "
 done
+set x $remoteheads ; shift
 
 case "$#" in
 1)

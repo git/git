@@ -1,13 +1,8 @@
 #!/bin/sh
 
-die () {
-    echo >&2 "$*"
-    exit 1
-}
-
-usage() {
-    die "usage: git add [-n] [-v] <file>..."
-}
+USAGE='[-n] [-v] <file>...'
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
 
 show_only=
 verbose=
@@ -28,8 +23,6 @@ while : ; do
   esac
   shift
 done
-
-GIT_DIR=$(git-rev-parse --git-dir) || exit
 
 if test -f "$GIT_DIR/info/exclude"
 then

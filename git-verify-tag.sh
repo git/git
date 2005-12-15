@@ -1,11 +1,13 @@
 #!/bin/sh
 
-GIT_DIR=`git-rev-parse --git-dir` || exit $?
+USAGE='<tag>'
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
 
-die () {
-    echo >&2 "$*"
-    exit 1
-}
+if [ "$#" != "1" ]
+then
+  usage
+fi
 
 type="$(git-cat-file -t "$1" 2>/dev/null)" ||
 	die "$1: no such object."

@@ -55,7 +55,7 @@ all:
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9m
+GIT_VERSION = 0.99.9n
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -449,7 +449,7 @@ test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
 
 check:
-	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i; done
+	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
 
 
