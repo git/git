@@ -79,7 +79,7 @@ static int run_update_hook(const char *refname,
 	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
 		die("waitpid is confused");
 	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		fprintf(stderr, "%s died of signal", update_hook);
+		fprintf(stderr, "%s died of signal\n", update_hook);
 		return -1;
 	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
 		die("%s died strangely", update_hook);
