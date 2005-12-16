@@ -450,6 +450,8 @@ static void append_one_rev(const char *av)
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
 			error("no matching refs with %s", av);
+		if (saved_matches + 1 < ref_name_cnt)
+			sort_ref_range(saved_matches, ref_name_cnt);
 		return;
 	}
 	die("bad sha1 reference %s", av);
