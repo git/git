@@ -12,11 +12,11 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A dumb server that does not do on-the-fly pack generations can
+A dumb server that does not do on-the-fly pack generations must
 have some auxiliary information files in $GIT_DIR/info and
 $GIT_OBJECT_DIRECTORY/info directories to help clients discover
-what references and packs the server has and make optimized
-pull decisions.  This command generates such auxiliary files.
+what references and packs the server has.  This command
+generates such auxiliary files.
 
 
 OPTIONS
