@@ -348,11 +348,8 @@ int check_ref_format(const char *ref)
 			if (level < 2)
 				return -1; /* at least of form "heads/blah" */
 
-			/* Do not allow ref name to end in "HEAD"
-			 * Note that cp is poiting at one past NUL at the end.
-			 * i.e. cp[-1] = NUL.
-			 */
-			if (5 <= cp - ref && !strcmp(cp - 5, "HEAD"))
+			/* do not allow ref name to end in "HEAD" */
+			if (cp - ref > 4 && !strcmp(cp - 4, "HEAD"))
 				return -1;
 
 			return 0;
