@@ -238,7 +238,6 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		NULL
 	};
 	const char **p;
-	int found = 0;
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
@@ -249,36 +248,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	for (p = prefix; *p; p++) {
 		char *pathname = git_path("%s/%.*s", *p, len, str);
-
-		if (!read_ref(pathname, sha1)) {
-			/* Must be unique; i.e. when heads/foo and
-			 * tags/foo are both present, reject "foo".
-			 */
-			if (1 < found++)
-				return -1;
-		}
-
-		/* We want to allow .git/description file and
-		 * "description" branch to exist at the same time.
-		 * "git-rev-parse description" should silently skip
-		 * .git/description file as a candidate for
-		 * get_sha1().  However, having garbage file anywhere
-		 * under refs/ is not OK, and we would not have caught
-		 * ambiguous heads and tags with the above test.
-		 */
-		else if (**p && !access(pathname, F_OK)) {
-			/* Garbage exists under .git/refs */
-			return error("garbage ref found '%s'", pathname);
-		}
+		if (!read_ref(pathname, sha1))
+			return 0;
 	}
-	switch (found) {
-	case 0:
-		return -1;
-	case 1:
-		return 0;
-	default:
-		return error("ambiguous refname '%.*s'", len, str);
-	}
+	return -1;
 }
 
 static int get_sha1_1(const char *name, int len, unsigned char *sha1);
