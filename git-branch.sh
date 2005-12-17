@@ -32,11 +32,11 @@ delete_branch () {
 	    case " $mbs " in
 	    *' '$branch' '*)
 		# the merge base of branch and HEAD contains branch --
-		# which means that the HEAD contains everything in the HEAD.
+		# which means that the HEAD contains everything in both.
 		;;
 	    *)
 		echo >&2 "The branch '$branch_name' is not a strict subset of your current HEAD.
-    If you are sure you want to delete it, run 'git branch -D $branch_name'."
+If you are sure you want to delete it, run 'git branch -D $branch_name'."
 		exit 1
 		;;
 	    esac

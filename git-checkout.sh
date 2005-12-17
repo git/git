@@ -116,7 +116,7 @@ else
 fi
 
 # 
-# Switch the HEAD pointer to the new branch if it we
+# Switch the HEAD pointer to the new branch if we
 # checked out a branch head, and remove any potential
 # old MERGE_HEAD's (subsequent commits will clearly not
 # be based on them, since we re-set the index)
