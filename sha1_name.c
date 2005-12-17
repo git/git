@@ -223,7 +223,7 @@ static int ambiguous_path(const char *path, int len)
 			slash = 0;
 			continue;
 		}
-		return slash;
+		break;
 	}
 	return slash;
 }
