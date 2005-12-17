@@ -347,11 +347,6 @@ int check_ref_format(const char *ref)
 		if (!ch) {
 			if (level < 2)
 				return -1; /* at least of form "heads/blah" */
-
-			/* do not allow ref name to end in "HEAD" */
-			if (cp - ref > 4 && !strcmp(cp - 4, "HEAD"))
-				return -1;
-
 			return 0;
 		}
 	}
