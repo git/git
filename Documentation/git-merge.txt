@@ -37,6 +37,11 @@ include::merge-options.txt[]
 include::merge-strategies.txt[]
 
 
+If you tried a merge which resulted in a complex conflicts and
+would want to start over, you can recover with
+gitlink:git-reset[1].
+
+
 HOW MERGE WORKS
 ---------------
 
