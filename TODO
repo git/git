@@ -41,7 +41,7 @@ Documentation
   them.
 
 * Accept patches to talk about "Whoops, it broke.  What's
-  next?" [ONGOING].
+  next?" [I think this is done].
 
 * Accept patches to make formatted tables in asciidoc to work
   well in both html and man pages (see git-diff(1)) [DONE --
@@ -109,8 +109,8 @@ Technical (milder)
   stage entries in the index.  For that, it first needs to
   construct three trees whose paths are already renamed, and
   call 3-way read-tree.  Alternatively, update-index needs to
-  give it a way to construct higher stages [can be post 1.0, but
-  nicer to have in 1.0].
+  give it a way to construct higher stages [DONE using the
+  "alternatively" implementation].
 
 * daemon --strict-symlink [can be post 1.0].
 
