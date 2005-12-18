@@ -211,10 +211,12 @@ $ git fetch --tags <8>
 
 <1> repeat as needed.
 <2> extract patches from your branch for e-mail submission.
-<3> "pull" fetches from "origin" by default and merges.
-<4> look at the changes since last time we checked, only in the
+<3> "pull" fetches from "origin" by default and merges into the
+current branch.
+<4> immediately after pulling, look at the changes done upstream
+since last time we checked, only in the
 area we are interested in.
-<5> fetch from a specific branch from a specific repository and and merge.
+<5> fetch from a specific branch from a specific repository and merge.
 <6> revert the pull.
 <7> garbage collect leftover objects from reverted pull.
 <8> from time to time, obtain official tags from the "origin"
@@ -330,16 +332,18 @@ master, nor exposed as a part of a stable branch.
 <8> and bundle topic branches still cooking.
 <9> backport a critical fix.
 <10> create a signed tag.
-<11> make sure I did not accidentally rewound master beyond what I
+<11> make sure I did not accidentally rewind master beyond what I
 already pushed out.  "ko" shorthand points at the repository I have
 at kernel.org, and looks like this:
-$ cat .git/remotes/ko
-URL: kernel.org:/pub/scm/git/git.git
-Pull: master:refs/tags/ko-master
-Pull: maint:refs/tags/ko-maint
-Push: master
-Push: +pu
-Push: maint
+    $ cat .git/remotes/ko
+    URL: kernel.org:/pub/scm/git/git.git
+    Pull: master:refs/tags/ko-master
+    Pull: maint:refs/tags/ko-maint
+    Push: master
+    Push: +pu
+    Push: maint
+In the output from "git show-branch", "master" should have
+everything "ko-master" has.
 <12> push out the bleeding edge.
 <13> push the tag out, too.
 ------------
@@ -357,8 +361,8 @@ and maintain access to the repository by developers.
   * gitlink:git-shell[1] can be used as a 'restricted login shell'
     for shared central repository users.
 
-  * link:howto/update-hook-example.txt[update hook howto] has a
-    good example of managing a shared central repository.
+link:howto/update-hook-example.txt[update hook howto] has a good
+example of managing a shared central repository.
 
 
 Examples
