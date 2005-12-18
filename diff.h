@@ -103,7 +103,7 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  --name-only   show only names of changed files.\n" \
 "  --name-status show names and status of changed files.\n" \
 "  --full-index  show full object name on index lines.\n" \
-"  --abbrev      abbreviate object names in diff-tree header and diff-raw.\n" \
+"  --abbrev=<n>  abbreviate object names in diff-tree header and diff-raw.\n" \
 "  -R            swap input file pairs.\n" \
 "  -B            detect complete rewrites.\n" \
 "  -M            detect renames.\n" \
