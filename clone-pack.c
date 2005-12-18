@@ -160,8 +160,6 @@ int main(int argc, char **argv)
 				exec = arg + 7;
 				continue;
 			}
-			if (!strcmp("--keep", arg))
-				continue;
 			usage(clone_pack_usage);
 		}
 		dest = arg;

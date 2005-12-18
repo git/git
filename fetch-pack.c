@@ -416,11 +416,11 @@ int main(int argc, char **argv)
 				exec = arg + 7;
 				continue;
 			}
-			if (!strcmp("-q", arg)) {
+			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
 				quiet = 1;
 				continue;
 			}
-			if (!strcmp("-k", arg)) {
+			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
 				keep_pack = 1;
 				continue;
 			}
