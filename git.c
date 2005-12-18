@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
 #include "git-compat-util.h"
 
 #ifndef PATH_MAX
@@ -25,6 +26,16 @@ static int term_columns(void)
 
 	if (col_string && (n_cols = atoi(col_string)) > 0)
 		return n_cols;
+
+#ifdef TIOCGWINSZ
+	{
+		struct winsize ws;
+		if (!ioctl(1, TIOCGWINSZ, &ws)) {
+			if (ws.ws_col)
+				return ws.ws_col;
+		}
+	}
+#endif
 
 	return 80;
 }
