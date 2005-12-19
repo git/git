@@ -8,7 +8,8 @@ git-archimport - Import an Arch repository into git
 
 SYNOPSIS
 --------
-`git-archimport` [ -h ] [ -v ] [ -T ] [ -t tempdir ] 
+`git-archimport` [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ]
+                 [ -D depth ] [ -t tempdir ] 
                  <archive/branch> [ <archive/branch> ]
 
 DESCRIPTION
@@ -62,6 +63,26 @@ OPTIONS
 -T::
 	Many tags. Will create a tag for every commit, reflecting the commit 
 	name in the Arch repository.
+
+-f::
+	Use the fast patchset import strategy.  This can be significantly
+	faster for large trees, but cannot handle directory renames or
+	permissions changes.  The default strategy is slow and safe.
+
+-o::
+	Use this for compatibility with old-style branch names used by
+	earlier versions of git-archimport.  Old-style branch names
+	were category--branch, whereas new-style branch names are
+	archive,category--branch--version.
+
+-D <depth>::
+	Follow merge ancestry and attempt to import trees that have been
+	merged from.  Specify a depth greater than 1 if patch logs have been
+	pruned.
+
+-a::
+	Attempt to auto-register archives at http://mirrors.sourcecontrol.net
+	This is particularly useful with the -D option.
 
 -t <tmpdir>::
 	Override the default tempdir.
