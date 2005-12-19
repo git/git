@@ -42,8 +42,7 @@ So here is the step-by-step guide how this all works for me.
 
 First create your work tree by cloning Linus's public tree:
 
- $ git clone \
- master.kernel.org:/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
+ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
 
 Change directory into the cloned tree you just created
 
@@ -53,7 +52,7 @@ Set up a remotes file so that you can fetch the latest from Linus' master
 branch into a local branch named "linus":
 
  $ cat > .git/remotes/linus
- URL: master.kernel.org:/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+ URL: git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
  Pull: master:linus
  ^D
 
