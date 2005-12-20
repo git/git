@@ -6,6 +6,7 @@
 #include "cache.h"
 
 struct cache_entry **active_cache = NULL;
+static time_t index_file_timestamp;
 unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
 
 /*
@@ -26,6 +27,64 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 	ce->ce_uid = htonl(st->st_uid);
 	ce->ce_gid = htonl(st->st_gid);
 	ce->ce_size = htonl(st->st_size);
+}
+
+static int ce_compare_data(struct cache_entry *ce, struct stat *st)
+{
+	int match = -1;
+	int fd = open(ce->name, O_RDONLY);
+
+	if (fd >= 0) {
+		unsigned char sha1[20];
+		if (!index_fd(sha1, fd, st, 0, NULL))
+			match = memcmp(sha1, ce->sha1, 20);
+		close(fd);
+	}
+	return match;
+}
+
+static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
+{
+	int match = -1;
+	char *target;
+	void *buffer;
+	unsigned long size;
+	char type[10];
+	int len;
+
+	target = xmalloc(expected_size);
+	len = readlink(ce->name, target, expected_size);
+	if (len != expected_size) {
+		free(target);
+		return -1;
+	}
+	buffer = read_sha1_file(ce->sha1, type, &size);
+	if (!buffer) {
+		free(target);
+		return -1;
+	}
+	if (size == expected_size)
+		match = memcmp(buffer, target, size);
+	free(buffer);
+	free(target);
+	return match;
+}
+
+static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
+{
+	switch (st->st_mode & S_IFMT) {
+	case S_IFREG:
+		if (ce_compare_data(ce, st))
+			return DATA_CHANGED;
+		break;
+	case S_IFLNK:
+		if (ce_compare_link(ce, st->st_size))
+			return DATA_CHANGED;
+		break;
+	default:
+		return TYPE_CHANGED;
+	}
+	return 0;
 }
 
 int ce_match_stat(struct cache_entry *ce, struct stat *st)
@@ -83,57 +142,37 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 
 	if (ce->ce_size != htonl(st->st_size))
 		changed |= DATA_CHANGED;
+
+	/*
+	 * Within 1 second of this sequence:
+	 * 	echo xyzzy >file && git-update-index --add file
+	 * running this command:
+	 * 	echo frotz >file
+	 * would give a falsely clean cache entry.  The mtime and
+	 * length match the cache, and other stat fields do not change.
+	 *
+	 * We could detect this at update-index time (the cache entry
+	 * being registered/updated records the same time as "now")
+	 * and delay the return from git-update-index, but that would
+	 * effectively mean we can make at most one commit per second,
+	 * which is not acceptable.  Instead, we check cache entries
+	 * whose mtime are the same as the index file timestamp more
+	 * careful than others.
+	 */
+	if (!changed &&
+	    index_file_timestamp &&
+	    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
+		changed |= ce_modified_check_fs(ce, st);
+
 	return changed;
-}
-
-static int ce_compare_data(struct cache_entry *ce, struct stat *st)
-{
-	int match = -1;
-	int fd = open(ce->name, O_RDONLY);
-
-	if (fd >= 0) {
-		unsigned char sha1[20];
-		if (!index_fd(sha1, fd, st, 0, NULL))
-			match = memcmp(sha1, ce->sha1, 20);
-		close(fd);
-	}
-	return match;
-}
-
-static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
-{
-	int match = -1;
-	char *target;
-	void *buffer;
-	unsigned long size;
-	char type[10];
-	int len;
-
-	target = xmalloc(expected_size);
-	len = readlink(ce->name, target, expected_size);
-	if (len != expected_size) {
-		free(target);
-		return -1;
-	}
-	buffer = read_sha1_file(ce->sha1, type, &size);
-	if (!buffer) {
-		free(target);
-		return -1;
-	}
-	if (size == expected_size)
-		match = memcmp(buffer, target, size);
-	free(buffer);
-	free(target);
-	return match;
 }
 
 int ce_modified(struct cache_entry *ce, struct stat *st)
 {
-	int changed;
+	int changed, changed_fs;
 	changed = ce_match_stat(ce, st);
 	if (!changed)
 		return 0;
-
 	/*
 	 * If the mode or type has changed, there's no point in trying
 	 * to refresh the entry - it's not going to match
@@ -148,18 +187,9 @@ int ce_modified(struct cache_entry *ce, struct stat *st)
 	if ((changed & DATA_CHANGED) && ce->ce_size != htonl(0))
 		return changed;
 
-	switch (st->st_mode & S_IFMT) {
-	case S_IFREG:
-		if (ce_compare_data(ce, st))
-			return changed | DATA_CHANGED;
-		break;
-	case S_IFLNK:
-		if (ce_compare_link(ce, st->st_size))
-			return changed | DATA_CHANGED;
-		break;
-	default:
-		return changed | TYPE_CHANGED;
-	}
+	changed_fs = ce_modified_check_fs(ce, st);
+	if (changed_fs)
+		return changed | changed_fs;
 	return 0;
 }
 
@@ -471,6 +501,7 @@ int read_cache(void)
 		return active_nr;
 
 	errno = ENOENT;
+	index_file_timestamp = 0;
 	fd = open(get_index_file(), O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT)
@@ -504,6 +535,7 @@ int read_cache(void)
 		offset = offset + ce_size(ce);
 		active_cache[i] = ce;
 	}
+	index_file_timestamp = st.st_mtime;
 	return active_nr;
 
 unmap:
