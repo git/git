@@ -850,7 +850,8 @@ int main(int argc, const char **argv)
 		handle_one_commit(commit, &list);
 	}
 
-	if (!list)
+	if (!list &&
+	    (!(tag_objects||tree_objects||blob_objects) && !pending_objects))
 		usage(rev_list_usage);
 
 	paths = get_pathspec(prefix, argv + i);
