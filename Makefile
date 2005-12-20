@@ -498,7 +498,7 @@ clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o $(LIB_FILE)
 	rm -f $(PROGRAMS) $(SIMPLE_PROGRAMS) git$X
 	rm -f $(filter-out gitk,$(SCRIPTS))
-	rm -f *.spec *.pyc *.pyo
+	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.dsc
@@ -506,3 +506,4 @@ clean:
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean
+
