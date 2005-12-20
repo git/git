@@ -116,14 +116,9 @@ int main(int argc, char **argv)
 	// Read the signature
 	size = 0;
 	for (;;) {
-		int ret = read(0, buffer + size, MAXSIZE - size);
-		if (!ret)
+		int ret = xread(0, buffer + size, MAXSIZE - size);
+		if (ret <= 0)
 			break;
-		if (ret < 0) {
-			if (errno == EAGAIN)
-				continue;
-			break;
-		}
 		size += ret;
 	}
 

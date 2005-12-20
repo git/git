@@ -31,12 +31,10 @@ static void * fill(int min)
 		offset = 0;
 	}
 	do {
-		int ret = read(0, buffer + len, sizeof(buffer) - len);
+		int ret = xread(0, buffer + len, sizeof(buffer) - len);
 		if (ret <= 0) {
 			if (!ret)
 				die("early EOF");
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
 			die("read error on input: %s", strerror(errno));
 		}
 		len += ret;
@@ -299,14 +297,9 @@ int main(int argc, char **argv)
 
 	/* Write the last part of the buffer to stdout */
 	while (len) {
-		int ret = write(1, buffer + offset, len);
-		if (!ret)
+		int ret = xwrite(1, buffer + offset, len);
+		if (ret <= 0)
 			break;
-		if (ret < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
-			break;
-		}
 		len -= ret;
 		offset += ret;
 	}

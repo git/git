@@ -34,10 +34,8 @@ struct path_prefix {
 static void reliable_write(void *buf, unsigned long size)
 {
 	while (size > 0) {
-		long ret = write(1, buf, size);
+		long ret = xwrite(1, buf, size);
 		if (ret < 0) {
-			if (errno == EAGAIN)
-				continue;
 			if (errno == EPIPE)
 				exit(0);
 			die("git-tar-tree: %s", strerror(errno));
