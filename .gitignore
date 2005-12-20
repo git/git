@@ -60,7 +60,6 @@ git-merge-stupid
 git-mktag
 git-name-rev
 git-mv
-git-octopus
 git-pack-redundant
 git-pack-objects
 git-parse-remote

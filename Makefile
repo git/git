@@ -89,7 +89,7 @@ SCRIPT_SH = \
 	git-cherry.sh git-clone.sh git-commit.sh \
 	git-count-objects.sh git-diff.sh git-fetch.sh \
 	git-format-patch.sh git-log.sh git-ls-remote.sh \
-	git-merge-one-file.sh git-octopus.sh git-parse-remote.sh \
+	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
