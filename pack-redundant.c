@@ -8,6 +8,8 @@
 
 #include "cache.h"
 
+#define BLKSIZE 512
+
 static const char pack_redundant_usage[] =
 "git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
 
@@ -33,10 +35,15 @@ static struct pack_list {
 struct pll {
 	struct pll *next;
 	struct pack_list *pl;
-	size_t pl_size;
 };
 
 static struct llist_item *free_nodes = NULL;
+
+static inline void llist_item_put(struct llist_item *item)
+{
+	item->next = free_nodes;
+	free_nodes = item;
+}
 
 static inline struct llist_item *llist_item_get()
 {
@@ -44,16 +51,14 @@ static inline struct llist_item *llist_item_get()
 	if ( free_nodes ) {
 		new = free_nodes;
 		free_nodes = free_nodes->next;
-	} else
-		new = xmalloc(sizeof(struct llist_item));
-
+	} else {
+		int i = 1;
+		new = xmalloc(sizeof(struct llist_item) * BLKSIZE);
+		for(;i < BLKSIZE; i++) {
+			llist_item_put(&new[i]);
+		}
+	}
 	return new;
-}
-
-static inline void llist_item_put(struct llist_item *item)
-{
-	item->next = free_nodes;
-	free_nodes = item;
 }
 
 static void llist_free(struct llist *list)
@@ -270,77 +275,58 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	}
 }
 
-static void pll_insert(struct pll **pll, struct pll **hint_table)
+void pll_free(struct pll *l)
 {
-	struct pll *prev;
-	int i = (*pll)->pl_size - 1;
+	struct pll *old;
+	struct pack_list *opl;
 
-	if (hint_table[i] == NULL) {
-		hint_table[i--] = *pll;
-		for (; i >= 0; --i) {
-			if (hint_table[i] != NULL)
-				break;
+	while (l) {
+		old = l;
+		while (l->pl) {
+			opl = l->pl;
+			l->pl = opl->next;
+			free(opl);
 		}
-		if (hint_table[i] == NULL) /* no elements in list */
-			die("Why did this happen?");
+		l = l->next;
+		free(old);
 	}
-
-	prev = hint_table[i];
-	while (prev->next && prev->next->pl_size < (*pll)->pl_size)
-		prev = prev->next;
-
-	(*pll)->next = prev->next;
-	prev->next = *pll;
 }
 
 /* all the permutations have to be free()d at the same time,
  * since they refer to each other
  */
-static struct pll * get_all_permutations(struct pack_list *list)
+static struct pll * get_permutations(struct pack_list *list, int n)
 {
-	struct pll *subset, *pll, *new_pll = NULL; /*silence warning*/
-	static struct pll **hint = NULL;
-	if (hint == NULL)
-		hint = xcalloc(pack_list_size(list), sizeof(struct pll *));
-		
-	if (list == NULL)
+	struct pll *subset, *ret = NULL, *new_pll = NULL, *pll;
+
+	if (list == NULL || pack_list_size(list) < n || n == 0)
 		return NULL;
 
-	if (list->next == NULL) {
-		new_pll = xmalloc(sizeof(struct pll));
-		hint[0] = new_pll;
-		new_pll->next = NULL;
-		new_pll->pl = list;
-		new_pll->pl_size = 1;
-		return new_pll;
-	}
-
-	pll = subset = get_all_permutations(list->next);
-	while (pll) {
-		if (pll->pl->pack == list->pack) {
-			pll = pll->next;
-			continue;
+	if (n == 1) {
+		while (list) {
+			new_pll = xmalloc(sizeof(pll));
+			new_pll->pl = NULL;
+			pack_list_insert(&new_pll->pl, list);
+			new_pll->next = ret;
+			ret = new_pll;
+			list = list->next;
 		}
-		new_pll = xmalloc(sizeof(struct pll));
-
-		new_pll->pl = xmalloc(sizeof(struct pack_list));
-		memcpy(new_pll->pl, list, sizeof(struct pack_list));
-		new_pll->pl->next = pll->pl;
-		new_pll->pl_size = pll->pl_size + 1;
-		
-		pll_insert(&new_pll, hint);
-
-		pll = pll->next;
+		return ret;
 	}
-	/* add ourself */
-	new_pll = xmalloc(sizeof(struct pll));
-	new_pll->pl = xmalloc(sizeof(struct pack_list));
-	memcpy(new_pll->pl, list, sizeof(struct pack_list));
-	new_pll->pl->next = NULL;
-	new_pll->pl_size = 1;
-	pll_insert(&new_pll, hint);
 
-	return hint[0];
+	while (list->next) {
+		subset = get_permutations(list->next, n - 1);
+		while (subset) {
+			new_pll = xmalloc(sizeof(pll));
+			new_pll->pl = subset->pl;
+			pack_list_insert(&new_pll->pl, list);
+			new_pll->next = ret;
+			ret = new_pll;
+			subset = subset->next;
+		}
+		list = list->next;
+	}
+	return ret;
 }
 
 static int is_superset(struct pack_list *pl, struct llist *list)
@@ -428,6 +414,7 @@ static void minimize(struct pack_list **min)
 	struct pll *perm, *perm_all, *perm_ok = NULL, *new_perm;
 	struct llist *missing;
 	size_t min_perm_size = (size_t)-1, perm_size;
+	int n;
 
 	pl = local_packs;
 	while (pl) {
@@ -441,8 +428,7 @@ static void minimize(struct pack_list **min)
 	missing = llist_copy(all_objects);
 	pl = unique;
 	while (pl) {
-		llist_sorted_difference_inplace(missing,
-						pl->all_objects);
+		llist_sorted_difference_inplace(missing, pl->all_objects);
 		pl = pl->next;
 	}
 
@@ -453,19 +439,21 @@ static void minimize(struct pack_list **min)
 	}
 
 	/* find the permutations which contain all missing objects */
-	perm_all = perm = get_all_permutations(non_unique);
-	while (perm) {
-		if (perm_ok && perm->pl_size > perm_ok->pl_size)
-			break; /* ignore all larger permutations */
-		if (is_superset(perm->pl, missing)) {
-			new_perm = xmalloc(sizeof(struct pll));
-			memcpy(new_perm, perm, sizeof(struct pll));
-			new_perm->next = perm_ok;
-			perm_ok = new_perm;
+	for (n = 1; n <= pack_list_size(non_unique) && !perm_ok; n++) {
+		perm_all = perm = get_permutations(non_unique, n);
+		while (perm) {
+			if (is_superset(perm->pl, missing)) {
+				new_perm = xmalloc(sizeof(struct pll));
+				memcpy(new_perm, perm, sizeof(struct pll));
+				new_perm->next = perm_ok;
+				perm_ok = new_perm;
+			}
+			perm = perm->next;
 		}
-		perm = perm->next;
+		if (perm_ok)
+			break;
+		pll_free(perm_all);
 	}
-	
 	if (perm_ok == NULL)
 		die("Internal error: No complete sets found!\n");
 
@@ -537,6 +525,7 @@ static void scan_alt_odb_packs(void)
 							alt->all_objects);
 			local = local->next;
 		}
+		llist_sorted_difference_inplace(all_objects, alt->all_objects);
 		alt = alt->next;
 	}
 }
