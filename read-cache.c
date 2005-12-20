@@ -87,7 +87,7 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
-int ce_match_stat(struct cache_entry *ce, struct stat *st)
+static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 {
 	unsigned int changed = 0;
 
@@ -142,6 +142,13 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 
 	if (ce->ce_size != htonl(st->st_size))
 		changed |= DATA_CHANGED;
+
+	return changed;
+}
+
+int ce_match_stat(struct cache_entry *ce, struct stat *st)
+{
+	unsigned int changed = ce_match_stat_basic(ce, st);
 
 	/*
 	 * Within 1 second of this sequence:
@@ -594,6 +601,26 @@ static int ce_flush(SHA_CTX *context, int fd)
 	return 0;
 }
 
+static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
+{
+	/*
+	 * The only thing we care about in this function is to smudge the
+	 * falsely clean entry due to touch-update-touch race, so we leave
+	 * everything else as they are.  We are called for entries whose
+	 * ce_mtime match the index file mtime.
+	 */
+	struct stat st;
+
+	if (lstat(ce->name, &st) < 0)
+		return;
+	if (ce_match_stat_basic(ce, &st))
+		return;
+	if (ce_modified_check_fs(ce, &st)) {
+		/* This is "racily clean"; smudge it */
+		ce->ce_size = htonl(0);
+	}
+}
+
 int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
@@ -616,6 +643,9 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		struct cache_entry *ce = cache[i];
 		if (!ce->ce_mode)
 			continue;
+		if (index_file_timestamp &&
+		    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
+			ce_smudge_racily_clean_entry(ce);
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
