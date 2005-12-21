@@ -99,7 +99,10 @@ static int read_pack_info_file(const char *infofile)
 	while (fgets(line, sizeof(line), fp)) {
 		int len = strlen(line);
 		if (line[len-1] == '\n')
-			line[len-1] = 0;
+			line[--len] = 0;
+
+		if (!len)
+			continue;
 
 		switch (line[0]) {
 		case 'P': /* P name */
