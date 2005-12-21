@@ -561,7 +561,8 @@ int git_connect(int fd[2], char *url, const char *prog)
 {
 	char command[1024];
 	char *host, *path = url;
-	char *colon = NULL;
+	char *end;
+	int c;
 	int pipefd[2][2];
 	pid_t pid;
 	enum protocol protocol = PROTO_LOCAL;
@@ -571,15 +572,30 @@ int git_connect(int fd[2], char *url, const char *prog)
 		*host = '\0';
 		protocol = get_protocol(url);
 		host += 3;
-		path = strchr(host, '/');
-	}
-	else {
+		c = '/';
+	} else {
 		host = url;
-		if ((colon = strchr(host, ':'))) {
+		c = ':';
+	}
+
+	if (host[0] == '[') {
+		end = strchr(host + 1, ']');
+		if (end) {
+			*end = 0;
+			end++;
+			host++;
+		} else
+			end = host;
+	} else
+		end = host;
+
+	path = strchr(end, c);
+	if (c == ':') {
+		if (path) {
 			protocol = PROTO_SSH;
-			*colon = '\0';
-			path = colon + 1;
-		}
+			*path++ = '\0';
+		} else
+			path = host;
 	}
 
 	if (!path || !*path)
