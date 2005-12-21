@@ -1,3 +1,14 @@
+git-core (1.0.0a-0) unstable; urgency=low
+
+  * GIT 1.0.0a to include the following fixes:
+  
+    - Avoid misleading success message on error (Johannes)
+    - objects/info/packs: work around bug in http-fetch.c::fetch_indices()
+    - http-fetch.c: fix objects/info/pack parsing.
+    - An off-by-one bug found by valgrind (Pavel)
+
+ -- Junio C Hamano <junkio@cox.net>  Wed, 21 Dec 2005 13:17:17 -0800
+
 git-core (1.0.0-0) unstable; urgency=low
 
   * GIT 1.0.0
