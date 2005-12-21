@@ -272,7 +272,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	packet_flush(out);
 	if (new_refs)
 		pack_objects(out, remote_refs);
-	else
+	else if (ret == 0)
 		fprintf(stderr, "Everything up-to-date\n");
 	close(out);
 	return ret;
