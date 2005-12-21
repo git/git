@@ -297,9 +297,6 @@ gitlink:git-merge[1]::
 gitlink:git-mv[1]::
 	Move or rename a file, a directory, or a symlink.
 
-gitlink:git-octopus[1]::
-	Merge more than two commits.
-
 gitlink:git-pull[1]::
 	Fetch from and merge with a remote repository.
 

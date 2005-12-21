@@ -111,6 +111,39 @@ remain there.
 changes still in the working tree.
 ------------
 
+Undo a merge or pull::
++
+------------
+$ git pull <1>
+Trying really trivial in-index merge...
+fatal: Merge requires file-level merging
+Nope.
+...
+Auto-merging nitfol
+CONFLICT (content): Merge conflict in nitfol
+Automatic merge failed/prevented; fix up by hand
+$ git reset --hard <2>
+
+<1> try to update from the upstream resulted in a lot of
+conflicts; you were not ready to spend a lot of time merging
+right now, so you decide to do that later.
+<2> "pull" has not made merge commit, so "git reset --hard"
+which is a synonym for "git reset --hard HEAD" clears the mess
+from the index file and the working tree.
+
+$ git pull . topic/branch <3>
+Updating from 41223... to 13134...
+Fast forward
+$ git reset --hard ORIG_HEAD <4>
+
+<3> merge a topic branch into the current branch, which resulted
+in a fast forward.
+<4> but you decided that the topic branch is not ready for public
+consumption yet.  "pull" or "merge" always leaves the original
+tip of the current branch in ORIG_HEAD, so resetting hard to it
+brings your index file and the working tree back to that state,
+and resets the tip of the branch to that commit.
+------------
 
 Author
 ------

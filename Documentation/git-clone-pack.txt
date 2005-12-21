@@ -43,7 +43,11 @@ OPTIONS
 	The heads to update.  This is relative to $GIT_DIR
 	(e.g. "HEAD", "refs/heads/master").  When unspecified,
 	all heads are updated to match the remote repository.
-
++
+Usually all the refs from existing repository are stored
+under the same name in the new repository.  Giving explicit
+<head> arguments instead writes the object names and refs to
+the standard output, just like get-fetch-pack does.
 
 Author
 ------

@@ -736,6 +736,13 @@ sub commit_all {
 }
 
 $opt_l = $svn->{'maxrev'} if not defined $opt_l or $opt_l > $svn->{'maxrev'};
+
+if ($svn->{'maxrev'} < $current_rev) {
+    print "Up to date: no new revisions to fetch!\n" if $opt_v;
+    unlink("$git_dir/SVN2GIT_HEAD");
+    exit;
+}
+
 print "Fetching from $current_rev to $opt_l ...\n" if $opt_v;
 
 my $pool=SVN::Pool->new;

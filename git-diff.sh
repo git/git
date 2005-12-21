@@ -3,14 +3,13 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2005 Junio C Hamano
 
+USAGE='[ --diff-options ] <ent>{0,2} [<path>...]'
+SUBDIRECTORY_OK='Yes'
+. git-sh-setup
+
 rev=$(git-rev-parse --revs-only --no-flags --sq "$@") || exit
 flags=$(git-rev-parse --no-revs --flags --sq "$@")
 files=$(git-rev-parse --no-revs --no-flags --sq "$@")
-
-die () {
-    echo >&2 "$*"
-    exit 1
-}
 
 # I often say 'git diff --cached -p' and get scolded by git-diff-files, but
 # obviously I mean 'git diff --cached -p HEAD' in that case.
@@ -40,8 +39,7 @@ esac
 
 case "$rev" in
 ?*' '?*' '?*)
-	echo >&2 "I don't understand"
-	exit 1
+	usage
 	;;
 ?*' '^?*)
 	begin=$(expr "$rev" : '.*^.\([0-9a-f]*\).*') &&
@@ -58,7 +56,7 @@ case "$rev" in
 	cmd="git-diff-files $flags -- $files"
 	;;
 *)
-	die "I don't understand $*"
+	usage
 	;;
 esac
 

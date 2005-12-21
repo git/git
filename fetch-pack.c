@@ -3,13 +3,12 @@
 #include "pkt-line.h"
 #include "commit.h"
 #include "tag.h"
-#include <time.h>
-#include <sys/wait.h>
 
+static int keep_pack;
 static int quiet;
 static int verbose;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [-q] [-v] [--exec=upload-pack] [host:]directory <refs>...";
+"git-fetch-pack [-q] [-v] [-k] [--exec=upload-pack] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -363,7 +362,6 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	struct ref *ref;
 	unsigned char sha1[20];
 	int status;
-	pid_t pid;
 
 	get_remote_heads(fd[0], &ref, 0, NULL, 0);
 	if (server_supports("multi_ack")) {
@@ -381,40 +379,22 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	}
 	if (find_common(fd, sha1, ref) < 0)
 		fprintf(stderr, "warning: no common commits\n");
-	pid = fork();
-	if (pid < 0)
-		die("git-fetch-pack: unable to fork off git-unpack-objects");
-	if (!pid) {
-		dup2(fd[0], 0);
-		close(fd[0]);
-		close(fd[1]);
-		execlp("git-unpack-objects", "git-unpack-objects",
-		       quiet ? "-q" : NULL, NULL);
-		die("git-unpack-objects exec failed");
+
+	if (keep_pack)
+		status = receive_keep_pack(fd, "git-fetch-pack");
+	else
+		status = receive_unpack_pack(fd, "git-fetch-pack", quiet);
+
+	if (status)
+		die("git-fetch-pack: fetch failed.");
+
+ all_done:
+	while (ref) {
+		printf("%s %s\n",
+		       sha1_to_hex(ref->old_sha1), ref->name);
+		ref = ref->next;
 	}
-	close(fd[0]);
-	close(fd[1]);
-	while (waitpid(pid, &status, 0) < 0) {
-		if (errno != EINTR)
-			die("waiting for git-unpack-objects: %s", strerror(errno));
-	}
-	if (WIFEXITED(status)) {
-		int code = WEXITSTATUS(status);
-		if (code)
-			die("git-unpack-objects died with error code %d", code);
-all_done:
-		while (ref) {
-			printf("%s %s\n",
-			       sha1_to_hex(ref->old_sha1), ref->name);
-			ref = ref->next;
-		}
-		return 0;
-	}
-	if (WIFSIGNALED(status)) {
-		int sig = WTERMSIG(status);
-		die("git-unpack-objects died of signal %d", sig);
-	}
-	die("Sherlock Holmes! git-unpack-objects died of unnatural causes %d!", status);
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -436,8 +416,12 @@ int main(int argc, char **argv)
 				exec = arg + 7;
 				continue;
 			}
-			if (!strcmp("-q", arg)) {
+			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
 				quiet = 1;
+				continue;
+			}
+			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
+				keep_pack = 1;
 				continue;
 			}
 			if (!strcmp("-v", arg)) {

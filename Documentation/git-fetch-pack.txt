@@ -8,7 +8,7 @@ git-fetch-pack - Receive missing objects from another repository.
 
 SYNOPSIS
 --------
-git-fetch-pack [-q] [--exec=<git-upload-pack>] [<host>:]<directory> [<refs>...]
+git-fetch-pack [-q] [-k] [--exec=<git-upload-pack>] [<host>:]<directory> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -28,6 +28,11 @@ OPTIONS
 -q::
 	Pass '-q' flag to 'git-unpack-objects'; this makes the
 	cloning process less verbose.
+
+-k::
+	Do not invoke 'git-unpack-objects' on received data, but
+	create a single packfile out of it instead, and store it
+	in the object database.
 
 --exec=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the

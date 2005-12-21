@@ -723,11 +723,13 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 	if (memcmp(one->sha1, two->sha1, 20)) {
 		char one_sha1[41];
-		const char *index_fmt = o->full_index ? "index %s..%s" : "index %.7s..%.7s";
+		int abbrev = o->full_index ? 40 : DIFF_DEFAULT_INDEX_ABBREV;
 		memcpy(one_sha1, sha1_to_hex(one->sha1), 41);
 
 		len += snprintf(msg + len, sizeof(msg) - len,
-				index_fmt, one_sha1, sha1_to_hex(two->sha1));
+				"index %.*s..%.*s",
+				abbrev, one_sha1, abbrev,
+				sha1_to_hex(two->sha1));
 		if (one->mode == two->mode)
 			len += snprintf(msg + len, sizeof(msg) - len,
 					" %06o", one->mode);
@@ -791,6 +793,8 @@ int diff_setup_done(struct diff_options *options)
 	}
 	if (options->setup & DIFF_SETUP_USE_SIZE_CACHE)
 		use_size_cache = 1;
+	if (options->abbrev <= 0 || 40 < options->abbrev)
+		options->abbrev = 40; /* full */
 
 	return 0;
 }
@@ -841,6 +845,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--find-copies-harder"))
 		options->find_copies_harder = 1;
+	else if (!strcmp(arg, "--abbrev"))
+		options->abbrev = DIFF_DEFAULT_ABBREV;
+	else if (!strncmp(arg, "--abbrev=", 9))
+		options->abbrev = strtoul(arg + 9, NULL, 10);
 	else
 		return 0;
 	return 1;
@@ -947,14 +955,49 @@ void diff_free_filepair(struct diff_filepair *p)
 	free(p);
 }
 
+/* This is different from find_unique_abbrev() in that
+ * it needs to deal with 0{40} SHA1.
+ */
+const char *diff_unique_abbrev(const unsigned char *sha1, int len)
+{
+	int abblen;
+	const char *abbrev;
+	if (len == 40)
+		return sha1_to_hex(sha1);
+
+	abbrev = find_unique_abbrev(sha1, len);
+	if (!abbrev) {
+		if (!memcmp(sha1, null_sha1, 20)) {
+			char *buf = sha1_to_hex(null_sha1);
+			if (len < 37)
+				strcpy(buf + len, "...");
+			return buf;
+		}
+		else 
+			return sha1_to_hex(sha1);
+	}
+	abblen = strlen(abbrev);
+	if (abblen < 37) {
+		static char hex[41];
+		if (len < abblen && abblen <= len + 2)
+			sprintf(hex, "%s%.*s", abbrev, len+3-abblen, "..");
+		else
+			sprintf(hex, "%s...", abbrev);
+		return hex;
+	}
+	return sha1_to_hex(sha1);
+}
+
 static void diff_flush_raw(struct diff_filepair *p,
 			   int line_termination,
 			   int inter_name_termination,
-			   int output_format)
+			   struct diff_options *options)
 {
 	int two_paths;
 	char status[10];
+	int abbrev = options->abbrev;
 	const char *path_one, *path_two;
+	int output_format = options->output_format;
 
 	path_one = p->one->path;
 	path_two = p->two->path;
@@ -985,8 +1028,10 @@ static void diff_flush_raw(struct diff_filepair *p,
 	}
 	if (output_format != DIFF_FORMAT_NAME_STATUS) {
 		printf(":%06o %06o %s ",
-		       p->one->mode, p->two->mode, sha1_to_hex(p->one->sha1));
-		printf("%s ", sha1_to_hex(p->two->sha1));
+		       p->one->mode, p->two->mode,
+		       diff_unique_abbrev(p->one->sha1, abbrev));
+		printf("%s ",
+		       diff_unique_abbrev(p->two->sha1, abbrev));
 	}
 	printf("%s%c%s", status, inter_name_termination, path_one);
 	if (two_paths)
@@ -1194,7 +1239,7 @@ void diff_flush(struct diff_options *options)
 		case DIFF_FORMAT_NAME_STATUS:
 			diff_flush_raw(p, line_termination,
 				       inter_name_termination,
-				       diff_output_format);
+				       options);
 			break;
 		case DIFF_FORMAT_NAME:
 			diff_flush_name(p,

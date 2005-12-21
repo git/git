@@ -211,6 +211,7 @@ this=`cat "$dotest/next"`
 if test "$skip" = t
 then
 	this=`expr "$this" + 1`
+	resume=
 fi
 
 if test "$this" -gt "$last"
@@ -225,6 +226,7 @@ do
 	msgnum=`printf "%0${prec}d" $this`
 	next=`expr "$this" + 1`
 	test -f "$dotest/$msgnum" || {
+		resume=
 		go_next
 		continue
 	}

@@ -15,7 +15,7 @@ static int sha1flush(struct sha1file *f, unsigned int count)
 	void *buf = f->buffer;
 
 	for (;;) {
-		int ret = write(f->fd, buf, count);
+		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
 			buf += ret;
 			count -= ret;
@@ -25,8 +25,6 @@ static int sha1flush(struct sha1file *f, unsigned int count)
 		}
 		if (!ret)
 			die("sha1 file '%s' write error. Out of diskspace", f->name);
-		if (errno == EAGAIN || errno == EINTR)
-			continue;
 		die("sha1 file '%s' write error (%s)", f->name, strerror(errno));
 	}
 }

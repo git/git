@@ -188,7 +188,10 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 {
 	int status;
 	static char hex[41];
+
 	memcpy(hex, sha1_to_hex(sha1), 40);
+	if (len == 40)
+		return hex;
 	while (len < 40) {
 		unsigned char sha1_ret[20];
 		status = get_short_sha1(hex, len, sha1_ret, 1);
@@ -203,11 +206,12 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 	return NULL;
 }
 
-static int ambiguous_path(const char *path)
+static int ambiguous_path(const char *path, int len)
 {
 	int slash = 1;
+	int cnt;
 
-	for (;;) {
+	for (cnt = 0; cnt < len; cnt++) {
 		switch (*path++) {
 		case '\0':
 			break;
@@ -222,8 +226,9 @@ static int ambiguous_path(const char *path)
 			slash = 0;
 			continue;
 		}
-		return slash;
+		break;
 	}
+	return slash;
 }
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
@@ -236,31 +241,19 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		NULL
 	};
 	const char **p;
-	int found = 0;
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
 	/* Accept only unambiguous ref paths. */
-	if (ambiguous_path(str))
+	if (ambiguous_path(str, len))
 		return -1;
 
 	for (p = prefix; *p; p++) {
 		char *pathname = git_path("%s/%.*s", *p, len, str);
-		if (!read_ref(pathname, sha1)) {
-			/* Must be unique; i.e. when heads/foo and
-			 * tags/foo are both present, reject "foo".
-			 * Note that read_ref() eventually calls
-			 * get_sha1_hex() which can smudge initial
-			 * part of the buffer even if what is read
-			 * is found to be invalid halfway.
-			 */
-			if (1 < found++)
-				return -1;
-		}
+		if (!read_ref(pathname, sha1))
+			return 0;
 	}
-	if (found == 1)
-		return 0;
 	return -1;
 }
 

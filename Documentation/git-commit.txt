@@ -66,6 +66,10 @@ OPTIONS
 	Update specified paths in the index file before committing.
 
 
+If you make a commit and then found a mistake immediately after
+that, you can recover from it with gitlink:git-reset[1].
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and

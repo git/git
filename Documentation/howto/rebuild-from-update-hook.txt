@@ -10,7 +10,7 @@ The pages under http://www.kernel.org/pub/software/scm/git/docs/
 are built from Documentation/ directory of the git.git project
 and needed to be kept up-to-date.  The www.kernel.org/ servers
 are mirrored and I was told that the origin of the mirror is on
-the machine master.kernel.org, on which I was given an account
+the machine $some.kernel.org, on which I was given an account
 when I took over git maintainership from Linus.
 
 The directories relevant to this how-to are these two:
@@ -63,7 +63,7 @@ like this:
     EOF
     $ chmod +x /pub/scm/git/git.git/hooks/post-update
 
-There are three things worth mentioning:
+There are four things worth mentioning:
 
  - The update-hook is run after the repository accepts a "git
    push", under my user privilege.  It is given the full names
@@ -76,6 +76,10 @@ There are three things worth mentioning:
    the "at" command, and needs to be unset; otherwise, "git
    pull" it does into $HOME/doc-git/docgen/ repository would not
    work correctly.
+
+ - The stdout of update hook script is not connected to git
+   push; I run the heavy part of the command inside "at", to
+   receive the execution report via e-mail.
 
  - This is still crude and does not protect against simultaneous
    make invocations stomping on each other.  I would need to add

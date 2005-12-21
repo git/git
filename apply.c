@@ -84,14 +84,11 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 			buffer = xrealloc(buffer, alloc);
 			nr = alloc - size;
 		}
-		nr = read(fd, buffer + size, nr);
+		nr = xread(fd, buffer + size, nr);
 		if (!nr)
 			break;
-		if (nr < 0) {
-			if (errno == EAGAIN)
-				continue;
+		if (nr < 0)
 			die("git-apply: read returned %s", strerror(errno));
-		}
 		size += nr;
 	}
 	*sizep = size;
@@ -1006,13 +1003,8 @@ static int read_old_data(struct stat *st, const char *path, void *buf, unsigned 
 			return error("unable to open %s", path);
 		got = 0;
 		for (;;) {
-			int ret = read(fd, buf + got, size - got);
-			if (ret < 0) {
-				if (errno == EAGAIN)
-					continue;
-				break;
-			}
-			if (!ret)
+			int ret = xread(fd, buf + got, size - got);
+			if (ret <= 0)
 				break;
 			got += ret;
 		}
@@ -1600,12 +1592,9 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 	while (size) {
-		int written = write(fd, buf, size);
-		if (written < 0) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
+		int written = xwrite(fd, buf, size);
+		if (written < 0)
 			die("writing file %s: %s", path, strerror(errno));
-		}
 		if (!written)
 			die("out of space writing file %s", path);
 		buf += written;

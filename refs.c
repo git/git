@@ -313,7 +313,9 @@ int write_ref_sha1(const char *ref, int fd, const unsigned char *sha1)
 static inline int bad_ref_char(int ch)
 {
 	return (((unsigned) ch) <= ' ' ||
-		ch == '~' || ch == '^' || ch == ':');
+		ch == '~' || ch == '^' || ch == ':' ||
+		/* 2.13 Pattern Matching Notation */
+		ch == '?' || ch == '*' || ch == '[');
 }
 
 int check_ref_format(const char *ref)

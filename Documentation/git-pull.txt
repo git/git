@@ -104,6 +104,11 @@ merge the remote `origin` head into the current,
 local `master` branch.
 
 
+If you tried a pull which resulted in a complex conflicts and
+would want to start over, you can recover with
+gitlink:git-reset[1].
+
+
 SEE ALSO
 --------
 gitlink:git-fetch[1], gitlink:git-merge[1]

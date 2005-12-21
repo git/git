@@ -14,11 +14,6 @@ static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 
 static struct diff_options diff_options;
 
-static void call_diff_setup_done(void)
-{
-	diff_setup_done(&diff_options);
-}
-
 static int call_diff_flush(void)
 {
 	diffcore_std(&diff_options);
@@ -43,7 +38,6 @@ static int diff_tree_sha1_top(const unsigned char *old,
 {
 	int ret;
 
-	call_diff_setup_done();
 	ret = diff_tree_sha1(old, new, base, &diff_options);
 	call_diff_flush();
 	return ret;
@@ -55,7 +49,6 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	void *tree;
 	struct tree_desc empty, real;
 
-	call_diff_setup_done();
 	tree = read_object_with_reference(new, "tree", &real.size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
@@ -69,18 +62,29 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	return retval;
 }
 
-static const char *generate_header(const char *commit, const char *parent, const char *msg)
+static const char *generate_header(const unsigned char *commit_sha1,
+				   const unsigned char *parent_sha1,
+				   const char *msg)
 {
 	static char this_header[16384];
 	int offset;
 	unsigned long len;
+	int abbrev = diff_options.abbrev;
 
 	if (!verbose_header)
-		return commit;
+		return sha1_to_hex(commit_sha1);
 
 	len = strlen(msg);
-	offset = sprintf(this_header, "%s%s (from %s)\n", header_prefix, commit, parent);
-	offset += pretty_print_commit(commit_format, msg, len, this_header + offset, sizeof(this_header) - offset);
+
+	offset = sprintf(this_header, "%s%s ",
+			 header_prefix,
+			 diff_unique_abbrev(commit_sha1, abbrev));
+	offset += sprintf(this_header + offset, "(from %s)\n",
+			 parent_sha1 ?
+			 diff_unique_abbrev(parent_sha1, abbrev) : "root");
+	offset += pretty_print_commit(commit_format, msg, len,
+				      this_header + offset,
+				      sizeof(this_header) - offset);
 	return this_header;
 }
 
@@ -99,18 +103,18 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 	
 	/* Root commit? */
 	if (show_root_diff && !commit->parents) {
-		header = generate_header(name, "root", commit->buffer);
+		header = generate_header(sha1, NULL, commit->buffer);
 		diff_root_tree(commit_sha1, "");
 	}
 
 	/* More than one parent? */
 	if (ignore_merges && commit->parents && commit->parents->next)
-			return 0;
+		return 0;
 
 	for (parents = commit->parents; parents; parents = parents->next) {
 		struct commit *parent = parents->item;
-		header = generate_header(name,
-					 sha1_to_hex(parent->object.sha1),
+		header = generate_header(sha1,
+					 parent->object.sha1,
 					 commit->buffer);
 		diff_tree_sha1_top(parent->object.sha1, commit_sha1, "");
 		if (!header && verbose_header) {
@@ -129,6 +133,7 @@ static int diff_tree_stdin(char *line)
 	int len = strlen(line);
 	unsigned char commit[20], parent[20];
 	static char this_header[1000];
+	int abbrev = diff_options.abbrev;
 
 	if (!len || line[len-1] != '\n')
 		return -1;
@@ -138,7 +143,9 @@ static int diff_tree_stdin(char *line)
 	if (isspace(line[40]) && !get_sha1_hex(line+41, parent)) {
 		line[40] = 0;
 		line[81] = 0;
-		sprintf(this_header, "%s (from %s)\n", line, line+41);
+		sprintf(this_header, "%s (from %s)\n",
+			diff_unique_abbrev(commit, abbrev),
+			diff_unique_abbrev(parent, abbrev));
 		header = this_header;
 		return diff_tree_sha1_top(parent, commit, "");
 	}
@@ -239,6 +246,7 @@ int main(int argc, const char **argv)
 		diff_options.recursive = 1;
 
 	diff_tree_setup_paths(get_pathspec(prefix, argv));
+	diff_setup_done(&diff_options);
 
 	switch (nr_sha1) {
 	case 0:

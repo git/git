@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
 #include "git-compat-util.h"
 
 #ifndef PATH_MAX
@@ -25,6 +26,16 @@ static int term_columns(void)
 
 	if (col_string && (n_cols = atoi(col_string)) > 0)
 		return n_cols;
+
+#ifdef TIOCGWINSZ
+	{
+		struct winsize ws;
+		if (!ioctl(1, TIOCGWINSZ, &ws)) {
+			if (ws.ws_col)
+				return ws.ws_col;
+		}
+	}
+#endif
 
 	return 80;
 }
@@ -74,25 +85,28 @@ static int cmdname_compare(const void *a_, const void *b_)
 
 static void pretty_print_string_list(struct cmdname **cmdname, int longest)
 {
-	int cols = 1;
+	int cols = 1, rows;
 	int space = longest + 1; /* min 1 SP between words */
 	int max_cols = term_columns() - 1; /* don't print *on* the edge */
-	int i;
+	int i, j;
 
 	if (space < max_cols)
 		cols = max_cols / space;
+	rows = (cmdname_cnt + cols - 1) / cols;
 
 	qsort(cmdname, cmdname_cnt, sizeof(*cmdname), cmdname_compare);
 
-	for (i = 0; i < cmdname_cnt; ) {
-		int c;
+	for (i = 0; i < rows; i++) {
 		printf("  ");
 
-		for (c = cols; c && i < cmdname_cnt; i++) {
-			printf("%s", cmdname[i]->name);
-
-			if (--c)
-				mput_char(' ', space - cmdname[i]->len);
+		for (j = 0; j < cols; j++) {
+			int n = j * rows + i;
+			int size = space;
+			if (n >= cmdname_cnt)
+				break;
+			if (j == cols-1 || n + rows >= cmdname_cnt)
+				size = 1;
+			printf("%-*s", size, cmdname[n]->name);
 		}
 		putchar('\n');
 	}

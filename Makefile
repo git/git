@@ -55,7 +55,7 @@ all:
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 0.99.9n
+GIT_VERSION = 1.0.0
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -89,7 +89,7 @@ SCRIPT_SH = \
 	git-cherry.sh git-clone.sh git-commit.sh \
 	git-count-objects.sh git-diff.sh git-fetch.sh \
 	git-format-patch.sh git-log.sh git-ls-remote.sh \
-	git-merge-one-file.sh git-octopus.sh git-parse-remote.sh \
+	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
@@ -175,6 +175,7 @@ LIB_OBJS = \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
+	fetch-clone.o \
 	$(DIFF_OBJS)
 
 LIBS = $(LIB_FILE)
@@ -497,7 +498,7 @@ clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o $(LIB_FILE)
 	rm -f $(PROGRAMS) $(SIMPLE_PROGRAMS) git$X
 	rm -f $(filter-out gitk,$(SCRIPTS))
-	rm -f *.spec *.pyc *.pyo
+	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f git-core_$(GIT_VERSION)-*.dsc
@@ -505,3 +506,4 @@ clean:
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean
+

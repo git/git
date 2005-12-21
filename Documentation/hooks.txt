@@ -111,6 +111,10 @@ Another use suggested on the mailing list is to use this hook to
 implement access control which is finer grained than the one
 based on filesystem group.
 
+The standard output of this hook is sent to /dev/null; if you
+want to report something to the git-send-pack on the other end,
+you can redirect your output to your stderr.
+
 post-update
 -----------
 
@@ -125,3 +129,7 @@ the outcome of `git-receive-pack`.
 The default post-update hook, when enabled, runs
 `git-update-server-info` to keep the information used by dumb
 transport up-to-date.
+
+The standard output of this hook is sent to /dev/null; if you
+want to report something to the git-send-pack on the other end,
+you can redirect your output to your stderr.

@@ -19,7 +19,7 @@
 static void safe_write(int fd, const void *buf, unsigned n)
 {
 	while (n) {
-		int ret = write(fd, buf, n);
+		int ret = xwrite(fd, buf, n);
 		if (ret > 0) {
 			buf += ret;
 			n -= ret;
@@ -27,8 +27,6 @@ static void safe_write(int fd, const void *buf, unsigned n)
 		}
 		if (!ret)
 			die("write error (disk full?)");
-		if (errno == EAGAIN || errno == EINTR)
-			continue;
 		die("write error (%s)", strerror(errno));
 	}
 }
@@ -68,12 +66,9 @@ static void safe_read(int fd, void *buffer, unsigned size)
 	int n = 0;
 
 	while (n < size) {
-		int ret = read(fd, buffer + n, size - n);
-		if (ret < 0) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
+		int ret = xread(fd, buffer + n, size - n);
+		if (ret < 0)
 			die("read error (%s)", strerror(errno));
-		}
 		if (!ret)
 			die("unexpected EOF");
 		n += ret;

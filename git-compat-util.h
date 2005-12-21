@@ -84,6 +84,28 @@ static inline void *xcalloc(size_t nmemb, size_t size)
 	return ret;
 }
 
+static inline ssize_t xread(int fd, void *buf, size_t len)
+{
+	ssize_t nr;
+	while (1) {
+		nr = read(fd, buf, len);
+		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
+			continue;
+		return nr;
+	}
+}
+
+static inline ssize_t xwrite(int fd, const void *buf, size_t len)
+{
+	ssize_t nr;
+	while (1) {
+		nr = write(fd, buf, len);
+		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
+			continue;
+		return nr;
+	}
+}
+
 /* Sane ctype - no locale, and works with signed chars */
 #undef isspace
 #undef isdigit

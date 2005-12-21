@@ -27,6 +27,12 @@ SCM, you can skip them during your first pass.
 [NOTE]
 And those "too deep" descriptions are often marked as Note.
 
+[NOTE]
+If you are already familiar with another version control system,
+like CVS, you may want to take a look at
+link:everyday.html[Everyday GIT in 20 commands or so] first
+before reading this.
+
 
 Creating a git repository
 -------------------------
@@ -1085,9 +1091,10 @@ lacks and transfers (close to) minimum set of objects.
 HTTP(S)::
 	`http://remote.machine/path/to/repo.git/`
 +
-HTTP and HTTPS transport are used only for downloading.  They
-first obtain the topmost commit object name from the remote site
-by looking at `repo.git/info/refs` file, tries to obtain the
+Downloader from http and https URL
+first obtains the topmost commit object name from the remote site
+by looking at the specified refname under `repo.git/refs/` directory,
+and then tries to obtain the
 commit object by downloading from `repo.git/objects/xx/xxx\...`
 using the object name of that commit object.  Then it reads the
 commit object to find out its parent commits and the associate
@@ -1098,7 +1105,9 @@ sometimes also called 'commit walkers'.
 The 'commit walkers' are sometimes also called 'dumb
 transports', because they do not require any git aware smart
 server like git Native transport does.  Any stock HTTP server
-would suffice.
+that does not even support directory index would suffice.  But
+you must prepare your repository with `git-update-server-info`
+to help dumb transport downloaders.
 +
 There are (confusingly enough) `git-ssh-fetch` and `git-ssh-upload`
 programs, which are 'commit walkers'; they outlived their
@@ -1511,12 +1520,13 @@ A recommended workflow for a "project lead" goes like this:
 2. Prepare a public repository accessible to others.
 +
 If other people are pulling from your repository over dumb
-transport protocols, you need to keep this repository 'dumb
-transport friendly'.  After `git init-db`,
+transport protocols (HTTP), you need to keep this repository
+'dumb transport friendly'.  After `git init-db`,
 `$GIT_DIR/hooks/post-update` copied from the standard templates
 would contain a call to `git-update-server-info` but the
 `post-update` hook itself is disabled by default -- enable it
-with `chmod +x post-update`.
+with `chmod +x post-update`.  This makes sure `git-update-server-info`
+keeps the necessary files up-to-date.
 
 3. Push into the public repository from your primary
    repository.
@@ -1615,7 +1625,9 @@ cooperation you are probably more familiar with as well.
 For this, set up a public repository on a machine that is
 reachable via SSH by people with "commit privileges".  Put the
 committers in the same user group and make the repository
-writable by that group.
+writable by that group.  Make sure their umasks are set up to
+allow group members to write into directories other members
+have created.
 
 You, as an individual committer, then:
 

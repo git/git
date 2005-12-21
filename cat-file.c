@@ -55,10 +55,8 @@ int main(int argc, char **argv)
 		die("git-cat-file %s: bad file", argv[2]);
 
 	while (size > 0) {
-		long ret = write(1, buf, size);
+		long ret = xwrite(1, buf, size);
 		if (ret < 0) {
-			if (errno == EAGAIN)
-				continue;
 			/* Ignore epipe */
 			if (errno == EPIPE)
 				break;

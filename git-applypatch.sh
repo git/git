@@ -14,7 +14,7 @@
 USAGE='<msg> <patch> <info> [<signoff>]'
 . git-sh-setup
 
-case "$#" in 3|4) usage ;; esac
+case "$#" in 3|4) ;; *) usage ;; esac
 
 final=.dotest/final-commit
 ##
