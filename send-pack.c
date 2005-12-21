@@ -8,6 +8,7 @@ static const char send_pack_usage[] =
 "git-send-pack [--all] [--exec=git-receive-pack] <remote> [<head>...]\n"
 "  --all and explicit <head> specification are mutually exclusive.";
 static const char *exec = "git-receive-pack";
+static int verbose = 0;
 static int send_all = 0;
 static int force_update = 0;
 
@@ -206,7 +207,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		if (!ref->peer_ref)
 			continue;
 		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
-			fprintf(stderr, "'%s': up-to-date\n", ref->name);
+			if (verbose)
+				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
 		}
 
@@ -270,6 +272,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	packet_flush(out);
 	if (new_refs)
 		pack_objects(out, remote_refs);
+	else
+		fprintf(stderr, "Everything up-to-date\n");
 	close(out);
 	return ret;
 }
@@ -299,6 +303,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--force")) {
 				force_update = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--verbose")) {
+				verbose = 1;
 				continue;
 			}
 			usage(send_pack_usage);
