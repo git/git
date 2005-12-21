@@ -1,3 +1,9 @@
+git-core (1.0.0.GIT-0) unstable; urgency=low
+
+  * Post GIT 1.0.0 development track.
+
+ -- Junio C Hamano <junkio@cox.net>  Wed, 21 Dec 2005 12:12:05 -0800
+
 git-core (1.0.0-0) unstable; urgency=low
 
   * GIT 1.0.0
