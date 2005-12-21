@@ -1625,7 +1625,9 @@ cooperation you are probably more familiar with as well.
 For this, set up a public repository on a machine that is
 reachable via SSH by people with "commit privileges".  Put the
 committers in the same user group and make the repository
-writable by that group.
+writable by that group.  Make sure their umasks are set up to
+allow group members to write into directories other members
+have created.
 
 You, as an individual committer, then:
 
