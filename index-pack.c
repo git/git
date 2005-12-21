@@ -440,7 +440,7 @@ int main(int argc, char **argv)
 		if (len < 5 || strcmp(pack_name + len - 5, ".pack"))
 			die("packfile name '%s' does not end with '.pack'",
 			    pack_name);
-		index_name_buf = xmalloc(len - 1);
+		index_name_buf = xmalloc(len);
 		memcpy(index_name_buf, pack_name, len - 5);
 		strcpy(index_name_buf + len - 5, ".idx");
 		index_name = index_name_buf;

@@ -126,8 +126,10 @@ static int quote_c_style_counted(const char *name, int namelen,
 
 	if (!no_dq)
 		EMIT('"');
-	for (sp = name; (ch = *sp++) && (sp - name) <= namelen; ) {
-
+	for (sp = name; sp < name + namelen; sp++) {
+		ch = *sp;
+		if (!ch)
+			break;
 		if ((ch < ' ') || (ch == '"') || (ch == '\\') ||
 		    (ch == 0177)) {
 			needquote = 1;

@@ -658,7 +658,7 @@ static int fetch_indices(struct alt_base *repo)
 		switch (data[i]) {
 		case 'P':
 			i++;
-			if (i + 52 < buffer.posn &&
+			if (i + 52 <= buffer.posn &&
 			    !strncmp(data + i, " pack-", 6) &&
 			    !strncmp(data + i + 46, ".pack\n", 6)) {
 				get_sha1_hex(data + i + 6, sha1);
@@ -667,7 +667,7 @@ static int fetch_indices(struct alt_base *repo)
 				break;
 			}
 		default:
-			while (data[i] != '\n')
+			while (i < buffer.posn && data[i] != '\n')
 				i++;
 		}
 		i++;
