@@ -397,6 +397,9 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 git-cherry-pick: git-revert
 	cp $< $@
 
+# format-patch records GIT_VERSION
+git-format-patch: Makefile
+
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.o: %.S
