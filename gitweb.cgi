@@ -1707,8 +1707,8 @@ sub git_commit {
 	}
 	my $refs = read_info_ref();
 	my $ref = "";
-	if (defined $refs->{$hash}) {
-		$ref = " <span class=\"tag\">" . esc_html($refs->{$hash}) . "</span>";
+	if (defined $refs->{$co{'id'}}) {
+		$ref = " <span class=\"tag\">" . esc_html($refs->{$co{'id'}}) . "</span>";
 	}
 	git_header_html(undef, $expires);
 	print "<div class=\"page_nav\">\n" .
@@ -1949,8 +1949,8 @@ sub git_commitdiff {
 	}
 	my $refs = read_info_ref();
 	my $ref = "";
-	if (defined $refs->{$hash}) {
-		$ref = " <span class=\"tag\">" . esc_html($refs->{$hash}) . "</span>";
+	if (defined $refs->{$co{'id'}}) {
+		$ref = " <span class=\"tag\">" . esc_html($refs->{$co{'id'}}) . "</span>";
 	}
 	git_header_html(undef, $expires);
 	print "<div class=\"page_nav\">\n" .
