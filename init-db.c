@@ -9,7 +9,7 @@
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
 #endif
 
-static void safe_create_dir(const char *dir)
+static void safe_create_dir(const char *dir, int share)
 {
 	if (mkdir(dir, 0777) < 0) {
 		if (errno != EEXIST) {
@@ -17,6 +17,8 @@ static void safe_create_dir(const char *dir)
 			exit(1);
 		}
 	}
+	else if (share && adjust_shared_perm(dir))
+		die("Could not make %s writable by group\n", dir);
 }
 
 static int copy_file(const char *dst, const char *src, int mode)
@@ -32,6 +34,10 @@ static int copy_file(const char *dst, const char *src, int mode)
 	}
 	status = copy_fd(fdi, fdo);
 	close(fdo);
+
+	if (!status && adjust_shared_perm(dst))
+		return -1;
+
 	return status;
 }
 
@@ -48,7 +54,7 @@ static void copy_templates_1(char *path, int baselen,
 	 * with the way the namespace under .git/ is organized, should
 	 * be really carefully chosen.
 	 */
-	safe_create_dir(path);
+	safe_create_dir(path, 1);
 	while ((de = readdir(dir)) != NULL) {
 		struct stat st_git, st_template;
 		int namelen;
@@ -176,11 +182,11 @@ static void create_default_files(const char *git_dir, char *template_path)
 	 * Create .git/refs/{heads,tags}
 	 */
 	strcpy(path + len, "refs");
-	safe_create_dir(path);
+	safe_create_dir(path, 1);
 	strcpy(path + len, "refs/heads");
-	safe_create_dir(path);
+	safe_create_dir(path, 1);
 	strcpy(path + len, "refs/tags");
-	safe_create_dir(path);
+	safe_create_dir(path, 1);
 
 	/* First copy the templates -- we might have the default
 	 * config file there, in which case we would want to read
@@ -220,7 +226,7 @@ static void create_default_files(const char *git_dir, char *template_path)
 }
 
 static const char init_db_usage[] =
-"git-init-db [--template=<template-directory>]";
+"git-init-db [--template=<template-directory>] [--shared]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.
@@ -239,6 +245,8 @@ int main(int argc, char **argv)
 		char *arg = argv[1];
 		if (!strncmp(arg, "--template=", 11))
 			template_dir = arg+11;
+		else if (!strcmp(arg, "--shared"))
+			shared_repository = 1;
 		else
 			die(init_db_usage);
 	}
@@ -251,7 +259,7 @@ int main(int argc, char **argv)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 		fprintf(stderr, "defaulting to local storage area\n");
 	}
-	safe_create_dir(git_dir);
+	safe_create_dir(git_dir, 0);
 
 	/* Check to see if the repository version is right.
 	 * Note that a newly created repository does not have
@@ -270,10 +278,14 @@ int main(int argc, char **argv)
 	path = xmalloc(len + 40);
 	memcpy(path, sha1_dir, len);
 
-	safe_create_dir(sha1_dir);
+	safe_create_dir(sha1_dir, 1);
 	strcpy(path+len, "/pack");
-	safe_create_dir(path);
+	safe_create_dir(path, 1);
 	strcpy(path+len, "/info");
-	safe_create_dir(path);
+	safe_create_dir(path, 1);
+
+	if (shared_repository)
+		git_config_set("core.sharedRepository", "true");
+
 	return 0;
 }
