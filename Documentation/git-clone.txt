@@ -8,7 +8,7 @@ git-clone - Clones a repository.
 
 SYNOPSIS
 --------
-'git-clone' [-l [-s]] [-q] [-n] [-u <upload-pack>] <repository> [<directory>]
+'git-clone' [-l [-s]] [-q] [-n] [-o <name>] [-u <upload-pack>] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -55,6 +55,13 @@ OPTIONS
 
 -n::
 	No checkout of HEAD is performed after the clone is complete.
+
+-o <name>::
+	Instead of using the branch name 'origin' to keep track
+	of the upstream repository, use <name> instead.  Note
+	that the shorthand name stored in `remotes/origin` is
+	not affected, but the local branch name to pull the
+	remote `master` branch into is.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::

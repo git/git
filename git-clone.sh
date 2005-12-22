@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [-l [-s]] [-q] [-u <upload-pack>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -67,6 +67,7 @@ use_local=no
 local_shared=no
 no_checkout=
 upload_pack=
+origin=origin
 while
 	case "$#,$1" in
 	0,*) break ;;
@@ -75,6 +76,14 @@ while
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes; use_local=yes ;;
 	*,-q|*,--quiet) quiet=-q ;;
+	1,-o) usage;;
+	*,-o)
+		git-check-ref-format "$2" || {
+		    echo >&2 "'$2' is not suitable for a branch name"
+		    exit 1
+		}
+		origin="$2"; shift
+		;;
 	1,-u|1,--upload-pack) usage ;;
 	*,-u|*,--upload-pack)
 		shift
@@ -208,14 +217,14 @@ then
 		mkdir -p .git/remotes &&
 		echo >.git/remotes/origin \
 		"URL: $repo
-Pull: $head_points_at:origin" &&
-		cp ".git/refs/heads/$head_points_at" .git/refs/heads/origin &&
+Pull: $head_points_at:$origin" &&
+		git-update-ref "refs/heads/$origin" $(git-rev-parse HEAD) &&
 		find .git/refs/heads -type f -print |
 		while read ref
 		do
 			head=`expr "$ref" : '.git/refs/heads/\(.*\)'` &&
 			test "$head_points_at" = "$head" ||
-			test "origin" = "$head" ||
+			test "$origin" = "$head" ||
 			echo "Pull: ${head}:${head}"
 		done >>.git/remotes/origin
 	esac
