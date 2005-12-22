@@ -48,6 +48,29 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
+int adjust_shared_perm(const char *path)
+{
+	struct stat st;
+	int mode;
+
+	if (!shared_repository)
+		return 0;
+	if (lstat(path, &st) < 0)
+		return -1;
+	mode = st.st_mode;
+	if (mode & S_IRUSR)
+		mode |= S_IRGRP;
+	if (mode & S_IWUSR)
+		mode |= S_IWGRP;
+	if (mode & S_IXUSR)
+		mode |= S_IXGRP;
+	if (S_ISDIR(mode))
+		mode |= S_ISGID;
+	if (chmod(path, mode) < 0)
+		return -2;
+	return 0;
+}
+
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path;
@@ -59,11 +82,16 @@ int safe_create_leading_directories(char *path)
 		if (!pos)
 			break;
 		*pos = 0;
-		if (mkdir(path, 0777) < 0)
+		if (mkdir(path, 0777) < 0) {
 			if (errno != EEXIST) {
 				*pos = '/';
 				return -1;
 			}
+		}
+		else if (adjust_shared_perm(path)) {
+			*pos = '/';
+			return -2;
+		}
 		*pos++ = '/';
 	}
 	return 0;
@@ -1255,6 +1283,8 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 		if (dir) {
 			*dir = 0;
 			mkdir(filename, 0777);
+			if (adjust_shared_perm(filename))
+				return -2;
 			*dir = '/';
 			if (!link(tmpfile, filename))
 				return 0;

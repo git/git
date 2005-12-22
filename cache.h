@@ -159,6 +159,7 @@ extern void rollback_index_file(struct cache_file *);
 extern int trust_executable_bit;
 extern int only_use_symrefs;
 extern int diff_rename_limit_default;
+extern int shared_repository;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -183,6 +184,7 @@ extern const unsigned char null_sha1[20];
 
 int git_mkstemp(char *path, size_t n, const char *template);
 
+int adjust_shared_perm(const char *path);
 int safe_create_leading_directories(char *path);
 char *safe_strncpy(char *, const char *, size_t);
 char *enter_repo(char *path, int strict);
