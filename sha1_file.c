@@ -464,7 +464,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
 	p->pack_local = local;
-	if (!get_sha1_hex(path + path_len - 40 - 4, sha1))
+	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
 		memcpy(p->sha1, sha1, 20);
 	return p;
 }
@@ -1274,7 +1274,7 @@ int move_temp_to_file(const char *tmpfile, char *filename)
 	unlink(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
-			fprintf(stderr, "unable to write sha1 filename %s: %s", filename, strerror(ret));
+			fprintf(stderr, "unable to write sha1 filename %s: %s\n", filename, strerror(ret));
 			return -1;
 		}
 		/* FIXME!!! Collision check here ? */
@@ -1313,7 +1313,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	}
 
 	if (errno != ENOENT) {
-		fprintf(stderr, "sha1 file %s: %s", filename, strerror(errno));
+		fprintf(stderr, "sha1 file %s: %s\n", filename, strerror(errno));
 		return -1;
 	}
 
@@ -1321,7 +1321,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 
 	fd = mkstemp(tmpfile);
 	if (fd < 0) {
-		fprintf(stderr, "unable to create temporary sha1 filename %s: %s", tmpfile, strerror(errno));
+		fprintf(stderr, "unable to create temporary sha1 filename %s: %s\n", tmpfile, strerror(errno));
 		return -1;
 	}
 
@@ -1410,7 +1410,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 		size = write(fd, buf + posn, objsize - posn);
 		if (size <= 0) {
 			if (!size) {
-				fprintf(stderr, "write closed");
+				fprintf(stderr, "write closed\n");
 			} else {
 				perror("write ");
 			}

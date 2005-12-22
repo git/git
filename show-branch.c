@@ -303,7 +303,7 @@ static int append_ref(const char *refname, const unsigned char *sha1)
 		return 0;
 	if (MAX_REVS <= ref_name_cnt) {
 		fprintf(stderr, "warning: ignoring %s; "
-			"cannot handle more than %d refs",
+			"cannot handle more than %d refs\n",
 			refname, MAX_REVS);
 		return 0;
 	}
@@ -537,7 +537,7 @@ int main(int ac, char **av)
 		if (MAX_REVS <= num_rev)
 			die("cannot handle more than %d revs.", MAX_REVS);
 		if (get_sha1(ref_name[num_rev], revkey))
-			die("'%s' is not a valid ref.\n", ref_name[num_rev]);
+			die("'%s' is not a valid ref.", ref_name[num_rev]);
 		commit = lookup_commit_reference(revkey);
 		if (!commit)
 			die("cannot find commit %s (%s)",

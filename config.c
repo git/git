@@ -487,7 +487,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			store.value_regex = (regex_t*)malloc(sizeof(regex_t));
 			if (regcomp(store.value_regex, value_regex,
 					REG_EXTENDED)) {
-				fprintf(stderr, "Invalid pattern: %s",
+				fprintf(stderr, "Invalid pattern: %s\n",
 					value_regex);
 				free(store.value_regex);
 				return 6;
