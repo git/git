@@ -81,6 +81,8 @@ char * sha1_to_hex(const unsigned char *sha1)
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
 	}
+	*buf = '\0';
+
 	return buffer;
 }
 
