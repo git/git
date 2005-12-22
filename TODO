@@ -6,8 +6,8 @@ The GIT To-Do File
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
 
 
-What to expect until and after 1.0
-==================================
+What to expect from now on
+==========================
 
 This is written in a form of to-do list for me, so if I say
 "accept patch", it means I do not currently plan to do that
@@ -16,15 +16,9 @@ a hint.  Also whatever I marked "Perhaps" do not have to happen
 if ever -- only if somebody cares enough and submits a clean
 patch, perhaps ;-).
 
-Only handful things remain until 1.0.
-
 
 Documentation
 -------------
-
-* Accept patches from people who actually have done CVS
-  migration and update the cvs-migration documentation.
-  Link the documentation from the main git.txt page.
 
 * Talk about using rsync just once at the beginning when
   initializing a remote repository so that local packs do not
@@ -34,21 +28,24 @@ Documentation
 * Maybe update tutorial with a toy project that involves two or
   three developers.
 
-* Update tutorial to cover setting up repository hooks to do
-  common tasks [Mostly done, with Carl's help].
 
-* Do we still have missing docs?  If so accept patches to finish
-  them.
+Design issues
+-------------
 
-* Accept patches to talk about "Whoops, it broke.  What's
-  next?" [I think this is done].
+* Plug-in file-level merges.  On the other hand, we may not even
+  need this; just tell people to run "xxdiff -U" on the working
+  tree files.
 
-* Accept patches to make formatted tables in asciidoc to work
-  well in both html and man pages (see git-diff(1)) [DONE --
-  avoid them ;-)].
+* Ref namespace management.  Perhaps use refs/local/ suggestion
+  by Linus. [Does not seem to be high on people's priority list,
+  and not interested myself.  People can resurrect this
+  discussion if they want.]
 
-* Work around multiple synopses lines in manual pages
-  (e.g. git-bisect) [DONE -- avoid them ;-)].
+* Perhaps "everything in config file"?  Especially remotes/
+  shortcuts.  I am modestly negative about this.
+
+* Perhaps "setting umask from git_config()"?  I am modestly
+  negative about this.
 
 
 Technical (heavier)
@@ -57,8 +54,7 @@ Technical (heavier)
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
   need to be fixed.  [Matthias Urlichs is already working on
-  this: <pan.2005.10.03.20.48.52.132570@smurf.noris.de>; Post
-  1.0].
+  this: <pan.2005.10.03.20.48.52.132570@smurf.noris.de>]
 
 * Maybe a pack optimizer.
 
@@ -71,26 +67,27 @@ Technical (heavier)
   releases.
 
   This needs a matching smart on the dumb protocol downloader.
-  [Definitely post 1.0].
 
 * Maybe an Emacs VC backend.
 
 * Look at libified GNU diff CVS seems to use, or libxdiff.
   [Daniel has his own diff tool almost ready to start
-  integrating and testing; Post 1.0]
-
-* Plug-in file-level merges [Post 1.0].  On the other hand, we
-  may not even need this; just tell people to run "xxdiff -U" on
-  the working tree files.
-
-* Ref namespace management.  Perhaps use refs/local/ suggestion
-  by Linus. [Does not seem to be high on people's priority list,
-  and not interested myself.  People can resurrect this
-  discussion if they want.]
+  integrating and testing]
 
 
 Technical (milder)
 ------------------
+
+* send-pack/receive-pack protocol updates, to allow the receiver
+  to report what it did to the ref update requests.
+
+* Perhaps a smarter HTTP anonymous download via CGI.
+
+* Prepare to enable "always use symbolic refs for HEAD" patch.
+  We need a timeline to force Porcelains to get ready.
+
+* Forbid/ignore pack names that do not conform to the convention
+  sha1_pack_name() assumes and reject in check_packed_git_idx().
 
 * strip leading directory from ls-tree output, to match ls-files
   output.
@@ -102,20 +99,9 @@ Technical (milder)
 
 * diff stopping at the first output; qgit wants to know if this
   tree has any A or D from the other tree and nothing else.
-  Would help internal tree-diff in rev-list as well [can be post
-  1.0].
+  Would help internal tree-diff in rev-list as well.
 
-* merge-recursive needs to register conflicting paths as higher
-  stage entries in the index.  For that, it first needs to
-  construct three trees whose paths are already renamed, and
-  call 3-way read-tree.  Alternatively, update-index needs to
-  give it a way to construct higher stages [DONE using the
-  "alternatively" implementation].
-
-* daemon --strict-symlink [can be post 1.0].
-
-* Binary package split.  Plan laid out and discussion mostly
-  done. [RPM side done; Debian side thrown over the wall.]
+* daemon --strict-symlink.
 
 * Perhaps detect cloning request in upload-pack and cache the
   result for next cloning request until any of our refs change.
@@ -127,11 +113,10 @@ Technical (milder)
   to say '\No newline' if both input ends with incomplete
   lines.
 
-* Maybe grok PGP signed text/plain in applymbox as well.
+* Perhaps deal with "Files differ" (binary diff) in non C
+  locales.
 
-* Enhance "git repack" to not always use --all; this would be
-  handy if the repository contains wagging heads like "pu" in
-  git.git repository.
+* Maybe grok PGP signed text/plain in applymbox as well.
 
 * Output full path in the "git-rev-list --objects" output, not
   just the basename, and see the improved clustering results in
@@ -140,6 +125,12 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
+
+* Versioning scheme.  The next maintenance installment will be
+  1.0.3 not 1.0.0c.  The next feature release would be 1.1.0.
+
+* Either drop supporting Debian myself or coerce patches out of
+  the official maintainer.
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  Most of the C-level
