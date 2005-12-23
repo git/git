@@ -216,6 +216,18 @@ int main(int argc, char **argv)
 					puts(prefix);
 				continue;
 			}
+			if (!strcmp(arg, "--show-cdup")) {
+				const char *pfx = prefix;
+				while (pfx) {
+					pfx = strchr(pfx, '/');
+					if (pfx) {
+						pfx++;
+						printf("../");
+					}
+				}
+				putchar('\n');
+				continue;
+			}
 			if (!strcmp(arg, "--git-dir")) {
 				const char *gitdir = getenv(GIT_DIR_ENVIRONMENT);
 				static char cwd[PATH_MAX];

@@ -68,9 +68,14 @@ OPTIONS
 	Show all refs found in `$GIT_DIR/refs`.
 
 --show-prefix::
-	When the command is invoked from a directory show the
+	When the command is invoked from a subdirectory, show the
 	path of the current directory relative to the top-level
 	directory.
+
+--show-cdup::
+	When the command is invoked from a subdirectory, show the
+	path of the top-level directory relative to the current
+	directory (typically a sequence of "../", or an empty string).
 
 --since=datestring, --after=datestring::
 	Parses the date string, and outputs corresponding
