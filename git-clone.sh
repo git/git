@@ -31,25 +31,11 @@ clone_dumb_http () {
 	cd "$2" &&
 	clone_tmp='.git/clone-tmp' &&
 	mkdir -p "$clone_tmp" || exit 1
-	http_fetch "$1/info/refs" "$clone_tmp/refs" &&
-	http_fetch "$1/objects/info/packs" "$clone_tmp/packs" || {
+	http_fetch "$1/info/refs" "$clone_tmp/refs" || {
 		echo >&2 "Cannot get remote repository information.
 Perhaps git-update-server-info needs to be run there?"
 		exit 1;
 	}
-	while read type name
-	do
-		case "$type" in
-		P) ;;
-		*) continue ;;
-		esac &&
-
-		idx=`expr "$name" : '\(.*\)\.pack'`.idx
-		http_fetch "$1/objects/pack/$name" ".git/objects/pack/$name" &&
-		http_fetch "$1/objects/pack/$idx" ".git/objects/pack/$idx" &&
-		git-verify-pack ".git/objects/pack/$idx" || exit 1
-	done <"$clone_tmp/packs"
-
 	while read sha1 refname
 	do
 		name=`expr "$refname" : 'refs/\(.*\)'` &&
