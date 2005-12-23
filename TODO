@@ -44,9 +44,6 @@ Design issues
 * Perhaps "everything in config file"?  Especially remotes/
   shortcuts.  I am modestly negative about this.
 
-* Perhaps "setting umask from git_config()"?  I am modestly
-  negative about this.
-
 
 Technical (heavier)
 -------------------
@@ -84,10 +81,13 @@ Technical (milder)
 * Perhaps a smarter HTTP anonymous download via CGI.
 
 * Prepare to enable "always use symbolic refs for HEAD" patch.
-  We need a timeline to force Porcelains to get ready.
+  We need a timeline to force Porcelains to get ready.  Last
+  time I looked at them I got an impression that gitweb was not
+  ready.
 
 * Forbid/ignore pack names that do not conform to the convention
-  sha1_pack_name() assumes and reject in check_packed_git_idx().
+  sha1_pack_name() assumes and reject in check_packed_git_idx()
+  [In pu]
 
 * strip leading directory from ls-tree output, to match ls-files
   output.
@@ -96,6 +96,15 @@ Technical (milder)
   -p1 format no matter where the command was started, and
   ls-tree might be easier to use if it matched diff, not
   ls-files.
+
+  [We should not do this, or do this carefully, if we were to
+  merge the "git-checkout (--|<tree>) <path> work from
+  subdirectory" patch.]
+
+* Any Porcelain-ish we forgot or punted to make usable from
+  subdirectory?  I think the last pass caught everything and
+  what are remaining are whole-tree or whole repository
+  operations.
 
 * diff stopping at the first output; qgit wants to know if this
   tree has any A or D from the other tree and nothing else.
@@ -136,7 +145,7 @@ Technical (trivial)
   stuff Linus has been working on.  Most of the C-level
   commands should be usable with relative directory paths.
 
-* In a freashly created empty repository, `git fetch foo:bar`
+* In a freshly created empty repository, `git fetch foo:bar`
   works OK, but `git checkout bar` afterwards does not (missing
   `.git/HEAD`).
 
