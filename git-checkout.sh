@@ -1,6 +1,7 @@
 #!/bin/sh
 
 USAGE='[-f] [-b <new_branch>] [<branch>] [<paths>...]'
+SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
 
 old=$(git-rev-parse HEAD)
@@ -93,6 +94,14 @@ else
 		git-rev-parse --verify "$new^{commit}" >/dev/null 2>&1 ||
 		die "Cannot switch branch to a non-commit."
 	fi
+fi
+
+# We are switching branches and checking out trees, so
+# we *NEED* to be at the toplevel.
+cdup=$(git-rev-parse --show-cdup)
+if test ! -z "$cdup"
+then
+	cd "$cdup"
 fi
 
 [ -z "$new" ] && new=$old
