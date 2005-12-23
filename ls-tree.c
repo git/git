@@ -15,9 +15,11 @@ static int line_termination = '\n';
 #define LS_NAME_ONLY 8
 static int ls_options = 0;
 const char **pathspec;
+static int chomp_prefix = 0;
+static const char *prefix;
 
 static const char ls_tree_usage[] =
-	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] <tree-ish> [path...]";
+	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] [--full-name] <tree-ish> [path...]";
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
@@ -49,7 +51,8 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	}
 }
 
-static int show_tree(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+static int show_tree(unsigned char *sha1, const char *base, int baselen,
+		     const char *pathname, unsigned mode, int stage)
 {
 	int retval = 0;
 	const char *type = "blob";
@@ -65,21 +68,28 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen, const c
 	else if (ls_options & LS_TREE_ONLY)
 		return 0;
 
+	if (chomp_prefix &&
+	    (baselen < chomp_prefix || memcmp(prefix, base, chomp_prefix)))
+		return 0;
+
 	if (!(ls_options & LS_NAME_ONLY))
 		printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
-	write_name_quoted(base, baselen, pathname, line_termination, stdout);
+	write_name_quoted(base + chomp_prefix, baselen - chomp_prefix,
+			  pathname,
+			  line_termination, stdout);
 	putchar(line_termination);
 	return retval;
 }
 
 int main(int argc, const char **argv)
 {
-	const char *prefix;
 	unsigned char sha1[20];
 	char *buf;
 	unsigned long size;
 
 	prefix = setup_git_directory();
+	if (prefix && *prefix)
+		chomp_prefix = strlen(prefix);
 	while (1 < argc && argv[1][0] == '-') {
 		switch (argv[1][1]) {
 		case 'z':
@@ -98,6 +108,10 @@ int main(int argc, const char **argv)
 			if (!strcmp(argv[1]+2, "name-only") ||
 			    !strcmp(argv[1]+2, "name-status")) {
 				ls_options |= LS_NAME_ONLY;
+				break;
+			}
+			if (!strcmp(argv[1]+2, "full-name")) {
+				chomp_prefix = 0;
 				break;
 			}
 			/* otherwise fallthru */
