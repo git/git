@@ -1695,6 +1695,24 @@ You still need to create UNIX user accounts for each developer,
 and put them in the same group.  Make sure that the repository
 shared among these developers is writable by that group.
 
+. Initializing the shared repository with `git-init-db --shared`
+helps somewhat.
+
+. Run the following in the shared repository:
++
+------------
+$ chgrp -R $group repo.git
+$ find repo.git -type d -print | xargs chmod ug+rwx,g+s
+$ GIT_DIR=repo.git git repo-config core.sharedrepository true
+------------
+
+The above measures make sure that directories lazily created in
+`$GIT_DIR` are writable by group members.  You, as the
+repository administrator, are still responsible to make sure
+your developers belong to that shared repository group and set
+their umask to a value no stricter than 027 (i.e. at least allow
+reading and searching by group members).
+
 You can implement finer grained branch policies using update
 hooks.  There is a document ("control access to branches") in
 Documentation/howto by Carl Baldwin and JC outlining how to (1)
