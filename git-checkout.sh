@@ -80,7 +80,7 @@ then
 		# from a specific tree-ish; note that this is for
 		# rescuing paths and is never meant to remove what
 		# is not in the named tree-ish.
-		git-ls-tree -r "$new" "$@" |
+		git-ls-tree --full-name -r "$new" "$@" |
 		git-update-index --index-info || exit $?
 	fi
 	git-checkout-index -f -u -- "$@"
