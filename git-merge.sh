@@ -209,6 +209,7 @@ case "$use_strategies" in
 esac
 
 result_tree= best_cnt=-1 best_strategy= wt_strategy=
+merge_was_ok=
 for strategy in $use_strategies
 do
     test "$wt_strategy" = '' || {
@@ -228,6 +229,7 @@ do
     exit=$?
     if test "$no_commit" = t && test "$exit" = 0
     then
+        merge_was_ok=t
 	exit=1 ;# pretend it left conflicts.
     fi
 
@@ -293,4 +295,11 @@ do
 done >"$GIT_DIR/MERGE_HEAD"
 echo $merge_msg >"$GIT_DIR/MERGE_MSG"
 
-die "Automatic merge failed/prevented; fix up by hand"
+if test "$merge_was_ok" = t
+then
+	echo >&2 \
+	"Automatic merge went well; stopped before committing as requested"
+	exit 0
+else
+	die "Automatic merge failed; fix up by hand"
+fi
