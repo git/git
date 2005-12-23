@@ -267,7 +267,8 @@ static void process_object_response(void *callback_data)
 	obj_req->state = COMPLETE;
 
 	/* Use alternates if necessary */
-	if (obj_req->http_code == 404) {
+	if (obj_req->http_code == 404 ||
+	    obj_req->curl_result == CURLE_FILE_COULDNT_READ_FILE) {
 		fetch_alternates(alt->base);
 		if (obj_req->repo->next != NULL) {
 			obj_req->repo =
@@ -475,7 +476,8 @@ static void process_alternates_response(void *callback_data)
 			}
 		}
 	} else if (slot->curl_result != CURLE_OK) {
-		if (slot->http_code != 404) {
+		if (slot->http_code != 404 &&
+		    slot->curl_result != CURLE_FILE_COULDNT_READ_FILE) {
 			got_alternates = -1;
 			return;
 		}
@@ -637,7 +639,8 @@ static int fetch_indices(struct alt_base *repo)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (slot->curl_result != CURLE_OK) {
-			if (slot->http_code == 404) {
+			if (slot->http_code == 404 ||
+			    slot->curl_result == CURLE_FILE_COULDNT_READ_FILE) {
 				repo->got_indices = 1;
 				free(buffer.buffer);
 				return 0;
@@ -802,7 +805,8 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		ret = error("Request for %s aborted", hex);
 	} else if (obj_req->curl_result != CURLE_OK &&
 		   obj_req->http_code != 416) {
-		if (obj_req->http_code == 404)
+		if (obj_req->http_code == 404 ||
+		    obj_req->curl_result == CURLE_FILE_COULDNT_READ_FILE)
 			ret = -1; /* Be silent, it is probably in a pack. */
 		else
 			ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",

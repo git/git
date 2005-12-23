@@ -278,7 +278,7 @@ int main(int argc, char **argv, char **envp)
 	if (*exec_path != '/') {
 		if (!getcwd(git_command, sizeof(git_command))) {
 			fprintf(stderr,
-				"git: cannot determine current directory");
+				"git: cannot determine current directory\n");
 			exit(1);
 		}
 		len = strlen(git_command);

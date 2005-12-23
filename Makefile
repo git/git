@@ -55,7 +55,7 @@ all:
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 1.0.0b
+GIT_VERSION = 1.0.3
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -396,6 +396,9 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 
 git-cherry-pick: git-revert
 	cp $< $@
+
+# format-patch records GIT_VERSION
+git-format-patch: Makefile
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<

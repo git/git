@@ -231,23 +231,21 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		if (!force_update &&
 		    !is_zero_sha1(ref->old_sha1) &&
 		    !ref->force) {
-			if (!has_sha1_file(ref->old_sha1)) {
-				error("remote '%s' object %s does not "
-				      "exist on local",
-				      ref->name, sha1_to_hex(ref->old_sha1));
-				ret = -2;
-				continue;
-			}
-
-			/* We assume that local is fsck-clean.  Otherwise
-			 * you _could_ have an old tag which points at
-			 * something you do not have, which may or may not
-			 * be a commit.
-			 */
-			if (!ref_newer(ref->peer_ref->new_sha1,
+			if (!has_sha1_file(ref->old_sha1) ||
+			    !ref_newer(ref->peer_ref->new_sha1,
 				       ref->old_sha1)) {
-				error("remote ref '%s' is not a strict "
-				      "subset of local ref '%s'.", ref->name,
+				/* We do not have the remote ref, or
+				 * we know that the remote ref is not
+				 * an ancestor of what we are trying to
+				 * push.  Either way this can be losing
+				 * commits at the remote end and likely
+				 * we were not up to date to begin with.
+				 */
+				error("remote '%s' is not a strict "
+				      "subset of local ref '%s'. "
+				      "maybe you are not up-to-date and "
+				      "need to pull first?",
+				      ref->name,
 				      ref->peer_ref->name);
 				ret = -2;
 				continue;
