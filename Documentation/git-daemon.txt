@@ -9,7 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
-           [--timeout=n] [--init-timeout=n] [--strict-paths] [directory...]
+             [--timeout=n] [--init-timeout=n] [--strict-paths]
+             [--base-path=path] [directory...]
 
 DESCRIPTION
 -----------
@@ -35,6 +36,14 @@ OPTIONS
 	"/foo/repo.git" or "/foo/repo/.git") and don't do user-relative paths.
 	git-daemon will refuse to start when this option is enabled and no
 	whitelist is specified.
+
+--base-path::
+	Remap all the path requests as relative to the given path.
+	This is sort of "GIT root" - if you run git-daemon with
+	'--base-path=/srv/git' on example.com, then if you later try to pull
+	'git://example.com/hello.git', `git-daemon` will interpret the path
+	as '/srv/git/hello.git'. Home directories (the '~login' notation)
+	access is disabled.
 
 --export-all::
 	Allow pulling from all directories that look like GIT repositories

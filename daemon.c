@@ -15,7 +15,8 @@ static int verbose;
 
 static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
-"           [--timeout=n] [--init-timeout=n] [--strict-paths] [directory...]";
+"           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
+"           [--base-path=path] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths = NULL;
@@ -23,6 +24,9 @@ static int strict_paths = 0;
 
 /* If this is set, git-daemon-export-ok is not required */
 static int export_all_trees = 0;
+
+/* Take all paths relative to this one if non-NULL */
+static char *base_path = NULL;
 
 /* Timeout, and initial timeout */
 static unsigned int timeout = 0;
@@ -136,6 +140,17 @@ static char *path_ok(char *dir)
 	if (avoid_alias(dir)) {
 		logerror("'%s': aliased", dir);
 		return NULL;
+	}
+
+	if (base_path) {
+		static char rpath[PATH_MAX];
+		if (*dir != '/') {
+			/* Forbid possible base-path evasion using ~paths. */
+			logerror("'%s': Non-absolute path denied (base-path active)");
+			return NULL;
+		}
+		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
+		dir = rpath;
 	}
 
 	path = enter_repo(dir, strict_paths);
@@ -637,6 +652,10 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--strict-paths")) {
 			strict_paths = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--base-path=", 12)) {
+			base_path = arg+12;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
