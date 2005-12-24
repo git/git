@@ -284,10 +284,54 @@ static void show_one_commit(struct commit *commit, int no_name)
 static char *ref_name[MAX_REVS + 1];
 static int ref_name_cnt;
 
+static const char *find_digit_prefix(const char *s, int *v)
+{
+	const char *p;
+	int ver;
+	char ch;
+
+	for (p = s, ver = 0;
+	     '0' <= (ch = *p) && ch <= '9';
+	     p++)
+		ver = ver * 10 + ch - '0';
+	*v = ver;
+	return p;
+}
+
+
+static int version_cmp(const char *a, const char *b)
+{
+	while (1) {
+		int va, vb;
+
+		a = find_digit_prefix(a, &va);
+		b = find_digit_prefix(b, &vb);
+		if (va != vb)
+			return va - vb;
+
+		while (1) {
+			int ca = *a;
+			int cb = *b;
+			if ('0' <= ca && ca <= '9')
+				ca = 0;
+			if ('0' <= cb && cb <= '9')
+				cb = 0;
+			if (ca != cb)
+				return ca - cb;
+			if (!ca)
+				break;
+			a++;
+			b++;
+		}
+		if (!*a && !*b)
+			return 0;
+	}
+}
+
 static int compare_ref_name(const void *a_, const void *b_)
 {
 	const char * const*a = a_, * const*b = b_;
-	return strcmp(*a, *b);
+	return version_cmp(*a, *b);
 }
 
 static void sort_ref_range(int bottom, int top)
@@ -299,8 +343,15 @@ static void sort_ref_range(int bottom, int top)
 static int append_ref(const char *refname, const unsigned char *sha1)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	int i;
+
 	if (!commit)
 		return 0;
+	/* Avoid adding the same thing twice */
+	for (i = 0; i < ref_name_cnt; i++)
+		if (!strcmp(refname, ref_name[i]))
+			return 0;
+
 	if (MAX_REVS <= ref_name_cnt) {
 		fprintf(stderr, "warning: ignoring %s; "
 			"cannot handle more than %d refs\n",
@@ -512,19 +563,17 @@ int main(int ac, char **av)
 	if (1 < independent + merge_base + (extra != 0))
 		usage(show_branch_usage);
 
+	/* If nothing is specified, show all branches by default */
+	if (ac + all_heads + all_tags == 0)
+		all_heads = 1;
+
 	if (all_heads + all_tags)
 		snarf_refs(all_heads, all_tags);
+	while (0 < ac) {
+		append_one_rev(*av);
+		ac--; av++;
+	}
 
-	if (ac) {
-		while (0 < ac) {
-			append_one_rev(*av);
-			ac--; av++;
-		}
-	}
-	else {
-		/* If no revs given, then add heads */
-		snarf_refs(1, 0);
-	}
 	if (!ref_name_cnt) {
 		fprintf(stderr, "No revs to be shown.\n");
 		exit(0);

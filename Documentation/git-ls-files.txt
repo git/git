@@ -13,7 +13,8 @@ SYNOPSIS
 		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
-		[--exclude-per-directory=<file>] [--] [<file>]\*
+		[--exclude-per-directory=<file>] 
+		[--full-name] [--] [<file>]\*
 
 DESCRIPTION
 -----------
@@ -76,6 +77,12 @@ OPTIONS
 	C::	modifed/changed
 	K::	to be killed
 	?	other
+
+--full-name::
+	When run from a subdirectory, the command usually
+	outputs paths relative to the current directory.  This
+	option forces paths to be output relative to the project
+	top directory.
 
 --::
 	Do not interpret any more arguments as options.

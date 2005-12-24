@@ -10,6 +10,12 @@ git-core (1.0.0.GIT-0) unstable; urgency=low
 
  -- Junio C Hamano <junkio@cox.net>  Wed, 21 Dec 2005 12:12:05 -0800
 
+git-core (1.0.4-0) unstable; urgency=low
+
+  * GIT 1.0.4.
+
+ -- Junio C Hamano <junkio@cox.net>  Sat, 24 Dec 2005 00:01:20 -0800
+
 git-core (1.0.3-0) unstable; urgency=low
 
   * GIT 1.0.3 maintenance release.
