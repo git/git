@@ -163,6 +163,13 @@ test_expect_success \
      else :;
      fi &&
 
+     cp test-1-${packname_1}.pack test-3.pack &&
+     dd if=/dev/zero of=test-3.idx count=1 bs=1 conv=notrunc seek=1200 &&
+     if git-verify-pack test-3.pack
+     then false
+     else :;
+     fi &&
+
      :'
 
 test_expect_success \

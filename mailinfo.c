@@ -472,7 +472,7 @@ static void convert_to_utf8(char *line, char *charset)
 	char *in, *out;
 	size_t insize, outsize, nrc;
 	char outbuf[4096]; /* cheat */
-	static char latin_one[] = "latin-1";
+	static char latin_one[] = "latin1";
 	char *input_charset = *charset ? charset : latin_one;
 	iconv_t conv = iconv_open(metainfo_charset, input_charset);
 

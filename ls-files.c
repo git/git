@@ -562,7 +562,7 @@ static void verify_pathspec(void)
 static const char ls_files_usage[] =
 	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
-	"[ --exclude-per-directory=<filename> ] [--] [<file>]*";
+	"[ --exclude-per-directory=<filename> ] [--full-name] [--] [<file>]*";
 
 int main(int argc, const char **argv)
 {
