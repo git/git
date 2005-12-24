@@ -560,6 +560,9 @@ void sort_in_topological_order(struct commit_list ** list)
 		next = next->next;
 		count++;
 	}
+	
+	if (!count)
+		return;
 	/* allocate an array to help sort the list */
 	nodes = xcalloc(count, sizeof(*nodes));
 	/* link the list to the array */

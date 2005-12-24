@@ -282,7 +282,7 @@ void diffcore_rename(struct diff_options *options)
 		else if (detect_rename == DIFF_DETECT_COPY)
 			register_rename_src(p->one, 1);
 	}
-	if (rename_dst_nr == 0 ||
+	if (rename_dst_nr == 0 || rename_src_nr == 0 ||
 	    (0 < rename_limit && rename_limit < rename_dst_nr))
 		goto cleanup; /* nothing to do */
 
