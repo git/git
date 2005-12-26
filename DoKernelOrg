@@ -1,0 +1,32 @@
+#!/bin/sh
+
+cd $HOME/git &&
+make clean &&
+git reset --hard &&
+make clean &&
+git checkout master &&
+git pull . origin &&
+make clean test doc install &&
+make clean
+git checkout pu &&
+make test clean &&
+case "$1" in
+maint | master)
+	git checkout "$1" &&
+	make rpm &&
+	cp git-*.tar.gz $HOME/tarpit/ &&
+	make clean &&
+	make git doc &&
+	V=$(./git --version | sed -e 's/git version //') &&
+	D=`pwd` &&
+	M="git-man-pages-$V" &&
+	rm -rf "$M" &&
+	rm -f "$M".tar.gz &&
+	./Make man1="$D/$M/man1" man7="$D/$M/man7" -C Documentation install &&
+	tar zcf "$HOME/tarpit/$M".tar.gz "$M" &&
+	rm -fr "$M" &&
+	make clean ||
+	exit $?
+	;;
+esac
+git checkout master
