@@ -1,32 +1,46 @@
 #!/bin/sh
 
+J=
+# J='-l 4 -j'
+nodo=echo
+
 cd $HOME/git &&
 make clean &&
 git reset --hard &&
 make clean &&
 git checkout master &&
 git pull . origin &&
-make clean test doc install &&
-make clean
-git checkout pu &&
-make test clean &&
+make clean &&
+
 case "$1" in
+'')
+	make $J install &&
+	make test &&
+	make clean &&
+	git checkout pu &&
+	make $J clean &&
+	make test clean
+	;;
 maint | master)
+	G=/pub/software/scm/git &&
+
 	git checkout "$1" &&
 	make rpm &&
-	cp git-*.tar.gz $HOME/tarpit/ &&
-	make clean &&
-	make git doc &&
+	make $J git &&
 	V=$(./git --version | sed -e 's/git version //') &&
+	$nodo ln git-$V.tar.gz $G/. &&
 	D=`pwd` &&
 	M="git-man-pages-$V" &&
 	rm -rf "$M" &&
 	rm -f "$M".tar.gz &&
-	./Make man1="$D/$M/man1" man7="$D/$M/man7" -C Documentation install &&
-	tar zcf "$HOME/tarpit/$M".tar.gz "$M" &&
+	make man1="$D/$M/man1" man7="$D/$M/man7" -C Documentation install &&
+	$nodo tar zcf "$G/$M".tar.gz "$M" &&
 	rm -fr "$M" &&
-	make clean ||
-	exit $?
+	make clean &&
+
+	$nodo ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/. &&
+	$nodo ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/.
 	;;
-esac
+esac || exit $?
+
 git checkout master
