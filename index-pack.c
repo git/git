@@ -352,18 +352,24 @@ static int sha1_compare(const void *_a, const void *_b)
 static void write_index_file(const char *index_name, unsigned char *sha1)
 {
 	struct sha1file *f;
-	struct object_entry **sorted_by_sha =
-		xcalloc(nr_objects, sizeof(struct object_entry *));
-	struct object_entry **list = sorted_by_sha;
-	struct object_entry **last = sorted_by_sha + nr_objects;
+	struct object_entry **sorted_by_sha, **list, **last;
 	unsigned int array[256];
 	int i;
 	SHA_CTX ctx;
 
-	for (i = 0; i < nr_objects; ++i)
-		sorted_by_sha[i] = &objects[i];
-	qsort(sorted_by_sha, nr_objects, sizeof(sorted_by_sha[0]),
-	      sha1_compare);
+	if (nr_objects) {
+		sorted_by_sha =
+			xcalloc(nr_objects, sizeof(struct object_entry *));
+		list = sorted_by_sha;
+		last = sorted_by_sha + nr_objects;
+		for (i = 0; i < nr_objects; ++i)
+			sorted_by_sha[i] = &objects[i];
+		qsort(sorted_by_sha, nr_objects, sizeof(sorted_by_sha[0]),
+		      sha1_compare);
+
+	}
+	else
+		sorted_by_sha = list = last = NULL;
 
 	unlink(index_name);
 	f = sha1create("%s", index_name);

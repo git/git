@@ -105,9 +105,13 @@ static int compare_pair_order(const void *a_, const void *b_)
 void diffcore_order(const char *orderfile)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct pair_order *o = xmalloc(sizeof(*o) * q->nr);
+	struct pair_order *o;
 	int i;
 
+	if (!q->nr)
+		return;
+
+	o = xmalloc(sizeof(*o) * q->nr);
 	prepare_order(orderfile);
 	for (i = 0; i < q->nr; i++) {
 		o[i].pair = q->queue[i];

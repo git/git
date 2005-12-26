@@ -48,6 +48,9 @@ void diffcore_pathspec(const char **pathspec)
 	for (i = 0; pathspec[i]; i++)
 		;
 	speccnt = i;
+	if (!speccnt)
+		return;
+
 	spec = xmalloc(sizeof(*spec) * speccnt);
 	for (i = 0; pathspec[i]; i++) {
 		spec[i].spec = pathspec[i];
