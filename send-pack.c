@@ -176,15 +176,52 @@ static void get_local_heads(void)
 	for_each_ref(one_local_ref);
 }
 
+static int receive_status(int in)
+{
+	char line[1000];
+	int ret = 0;
+	int len = packet_read_line(in, line, sizeof(line));
+	if (len < 10 || memcmp(line, "unpack ", 7)) {
+		fprintf(stderr, "did not receive status back\n");
+		return -1;
+	}
+	if (memcmp(line, "unpack ok\n", 10)) {
+		fputs(line, stderr);
+		ret = -1;
+	}
+	while (1) {
+		len = packet_read_line(in, line, sizeof(line));
+		if (!len)
+			break;
+		if (len < 3 ||
+		    (memcmp(line, "ok", 2) && memcmp(line, "ng", 2))) {
+			fprintf(stderr, "protocol error: %s\n", line);
+			ret = -1;
+			break;
+		}
+		if (!memcmp(line, "ok", 2))
+			continue;
+		fputs(line, stderr);
+		ret = -1;
+	}
+	return ret;
+}
+
 static int send_pack(int in, int out, int nr_refspec, char **refspec)
 {
 	struct ref *ref;
 	int new_refs;
 	int ret = 0;
+	int ask_for_status_report = 0;
+	int expect_status_report = 0;
 
 	/* No funny business with the matcher */
 	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, 1);
 	get_local_heads();
+
+	/* Does the other end support the reporting? */
+	if (server_supports("report-status"))
+		ask_for_status_report = 1;
 
 	/* match them up */
 	if (!remote_tail)
@@ -260,7 +297,17 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
-		packet_write(out, "%s %s %s", old_hex, new_hex, ref->name);
+
+		if (ask_for_status_report) {
+			packet_write(out, "%s %s %s%c%s",
+				     old_hex, new_hex, ref->name, 0,
+				     "report-status");
+			ask_for_status_report = 0;
+			expect_status_report = 1;
+		}
+		else
+			packet_write(out, "%s %s %s",
+				     old_hex, new_hex, ref->name);
 		fprintf(stderr, "updating '%s'", ref->name);
 		if (strcmp(ref->name, ref->peer_ref->name))
 			fprintf(stderr, " using '%s'", ref->peer_ref->name);
@@ -270,9 +317,15 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	packet_flush(out);
 	if (new_refs)
 		pack_objects(out, remote_refs);
-	else if (ret == 0)
-		fprintf(stderr, "Everything up-to-date\n");
 	close(out);
+
+	if (expect_status_report) {
+		if (receive_status(in))
+			ret = -4;
+	}
+
+	if (!new_refs && ret == 0)
+		fprintf(stderr, "Everything up-to-date\n");
 	return ret;
 }
 

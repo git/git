@@ -34,16 +34,16 @@ struct ref **get_remote_heads(int in, struct ref **list,
 			die("protocol error: expected sha/ref, got '%s'", buffer);
 		name = buffer + 41;
 
-		if (ignore_funny && 45 < len && !memcmp(name, "refs/", 5) &&
-		    check_ref_format(name + 5))
-			continue;
-
 		name_len = strlen(name);
 		if (len != name_len + 41) {
 			if (server_capabilities)
 				free(server_capabilities);
 			server_capabilities = strdup(name + name_len + 1);
 		}
+
+		if (ignore_funny && 45 < len && !memcmp(name, "refs/", 5) &&
+		    check_ref_format(name + 5))
+			continue;
 
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
