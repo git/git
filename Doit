@@ -1,0 +1,44 @@
+#!/bin/sh
+
+try_if_new () {
+	branch="$1"
+	to_install="$2"
+	commits=$(git-rev-list "ko-${branch}..${branch}")
+
+	to_build=no
+	case "$commits" in
+	'') 
+		echo "* Up-to-date at ko-$branch"
+		to_build=no
+		;;
+	*)
+		to_build=yes
+		;;
+	esac
+
+	case "$to_install" in
+	?*)
+		to_build=yes
+		;;
+	esac
+
+	case "$to_build" in
+	yes)
+		Meta/Make clean >/dev/null 2>&1 &&
+		git checkout "$branch" &&
+		echo "* Testing $branch" &&
+		Meta/Make clean test >./":${branch}.log" 2>&1 &&
+		case "$to_install" in
+		?*)
+			Meta/Make install >>./":${branch}.log" 2>&1 ;;
+		esac
+	esac
+}
+
+git fetch ko &&
+
+try_if_new maint &&
+try_if_new pu &&
+try_if_new master install &&
+Meta/Make clean >/dev/null 2>&1
+
