@@ -5,9 +5,14 @@
 
 #define SEEN (1u << 0)
 
-static const char describe_usage[] = "git-describe [--all] <committish>*";
+static const char describe_usage[] =
+"git-describe [--all] [--tags] [--abbrev=<n>] <committish>*";
 
 static int all = 0;	/* Default to annotated tags only */
+static int tags = 0;	/* But allow any tags if --tags is specified */
+
+#define DEFAULT_ABBREV 8 /* maybe too many */
+static int abbrev = DEFAULT_ABBREV;
 
 static int names = 0, allocs = 0;
 static struct commit_name {
@@ -50,13 +55,19 @@ static int get_name(const char *path, const unsigned char *sha1)
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (!commit)
 		return 0;
+	/* If --all, then any refs are used.
+	 * If --tags, then any tags are used.
+	 * Otherwise only annotated tags are used.
+	 */
 	if (!all) {
-		struct object *object;
 		if (strncmp(path, "refs/tags/", 10))
 			return 0;
-		object = parse_object(sha1);
-		if (object->type != tag_type)
-			return 0;
+		if (!tags) {
+			struct object *object;
+			object = parse_object(sha1);
+			if (object->type != tag_type)
+				return 0;
+		}
 	}
 	add_to_known_names(all ? path : path + 10, commit);
 	return 0;
@@ -96,7 +107,7 @@ static void describe(struct commit *cmit)
 		n = match(c);
 		if (n) {
 			printf("%s-g%s\n", n->path,
-			       find_unique_abbrev(cmit->object.sha1, 8));
+			       find_unique_abbrev(cmit->object.sha1, abbrev));
 			return;
 		}
 	}
@@ -113,6 +124,16 @@ int main(int argc, char **argv)
 
 		if (!strcmp(arg, "--all")) {
 			all = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--tags")) {
+			tags = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--abbrev=", 9)) {
+			abbrev = strtoul(arg + 9, NULL, 10);
+			if (abbrev < 4 || 40 <= abbrev)
+				abbrev = DEFAULT_ABBREV;
 			continue;
 		}
 		if (get_sha1(arg, sha1) < 0)
