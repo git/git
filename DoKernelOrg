@@ -1,48 +1,43 @@
 #!/bin/sh
 
-J=
-# J='-l 4 -j'
-nodo=echo
+J='-l 4 -j'
+G=/pub/software/scm/git &&
 
 cd $HOME/git &&
-make clean &&
+make clean >/dev/null 2>&1 &&
 git reset --hard &&
-make clean &&
+make clean >/dev/null 2>&1 &&
 git checkout master &&
 git pull . origin &&
-make clean &&
+make clean >/dev/null 2>&1 &&
 
 case "$1" in
 '')
-	make $J install &&
-	make test &&
-	make clean &&
-	git checkout pu &&
-	make $J clean &&
-	make test clean
+	echo "* Building all"
+	{
+		make $J install &&
+		make test &&
+		make clean &&
+		git checkout pu &&
+		make $J clean &&
+		make test clean
+	} >:all.log 2>&1
 	;;
 maint | master)
-	G=/pub/software/scm/git &&
+	mkdir -p $G/RPMS/i386 $G/RPMS/SRPMS &&
 
+	echo "* Building $1"
 	git checkout "$1" &&
 	make rpm >./:rpm.log 2>&1 &&
-	make $J git &&
-	V=$(./git --version | sed -e 's/git version //') &&
-	$nodo ln git-$V.tar.gz $G/. &&
-	D=`pwd` &&
-	M="git-man-pages-$V" &&
-	H="git-html-pages-$V" &&
-	rm -rf "$M" "$H" &&
-	make man1="$D/$M/man1" man7="$D/$M/man7" WEBDOC_DEST="$D/$H" \
-		-C Documentation install install-webdoc >./:doc.log 2>&1 &&
-	$nodo tar zcf "$G/$M".tar.gz "$M" &&
-	$nodo tar zcf "$G/$H".tar.gz "$H" &&
-	rm -fr "$M" "$H" ./:rpm.log ./:doc.log &&
+	make $J git >>./:rpm.log 2>&1 &&
+	V=`./git --version | sed -e 's/git version //'` &&
+	ln git-$V.tar.gz $G/. &&
+	ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/. &&
+	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
+	rm -fr ./:rpm.log &&
 	make clean &&
 
-	$nodo ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/. &&
-	$nodo ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/.
-	;;
+	: ;;
 esac || exit $?
 
 git checkout master
