@@ -263,6 +263,10 @@ void diff_tree_setup_paths(const char **p)
 
 		paths = p;
 		nr_paths = count_paths(paths);
+		if (nr_paths == 0) {
+			pathlens = NULL;
+			return;
+		}
 		pathlens = xmalloc(nr_paths * sizeof(int));
 		for (i=0; i<nr_paths; i++)
 			pathlens[i] = strlen(paths[i]);

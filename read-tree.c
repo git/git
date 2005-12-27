@@ -294,17 +294,20 @@ static int unpack_trees(merge_fn_t fn)
 {
 	int indpos = 0;
 	unsigned len = object_list_length(trees);
-	struct tree_entry_list **posns = 
-		xmalloc(len * sizeof(struct tree_entry_list *));
+	struct tree_entry_list **posns;
 	int i;
 	struct object_list *posn = trees;
 	merge_size = len;
-	for (i = 0; i < len; i++) {
-		posns[i] = ((struct tree *) posn->item)->entries;
-		posn = posn->next;
+
+	if (len) {
+		posns = xmalloc(len * sizeof(struct tree_entry_list *));
+		for (i = 0; i < len; i++) {
+			posns[i] = ((struct tree *) posn->item)->entries;
+			posn = posn->next;
+		}
+		if (unpack_trees_rec(posns, len, "", fn, &indpos))
+			return -1;
 	}
-	if (unpack_trees_rec(posns, len, "", fn, &indpos))
-		return -1;
 
 	if (trivial_merges_only && nontrivial_merge)
 		die("Merge requires file-level merging");

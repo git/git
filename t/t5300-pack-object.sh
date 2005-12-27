@@ -142,6 +142,7 @@ test_expect_success \
      else :;
      fi &&
 
+     : PACK_SIGNATURE &&
      cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git-verify-pack test-3.idx
@@ -149,6 +150,7 @@ test_expect_success \
      else :;
      fi &&
 
+     : PACK_VERSION &&
      cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git-verify-pack test-3.idx
@@ -156,6 +158,7 @@ test_expect_success \
      else :;
      fi &&
 
+     : TYPE/SIZE byte of the first packed object data &&
      cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git-verify-pack test-3.idx
@@ -163,8 +166,11 @@ test_expect_success \
      else :;
      fi &&
 
+     : sum of the index file itself &&
+     l=`wc -c <test-3.idx` &&
+     l=`expr "$l" - 20` &&
      cp test-1-${packname_1}.pack test-3.pack &&
-     dd if=/dev/zero of=test-3.idx count=1 bs=1 conv=notrunc seek=1200 &&
+     dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git-verify-pack test-3.pack
      then false
      else :;
