@@ -504,9 +504,9 @@ static void prepare_temp_file(const char *name,
 		}
 		if (S_ISLNK(st.st_mode)) {
 			int ret;
-			char *buf, buf_[1024];
-			buf = ((sizeof(buf_) < st.st_size) ?
-			       xmalloc(st.st_size) : buf_);
+			char buf[PATH_MAX + 1]; /* ought to be SYMLINK_MAX */
+			if (sizeof(buf) <= st.st_size)
+				die("symlink too long: %s", name);
 			ret = readlink(name, buf, st.st_size);
 			if (ret < 0)
 				die("readlink(%s)", name);
@@ -650,7 +650,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->sha1_valid) {
 			struct stat st;
-			if (stat(one->path, &st) < 0)
+			if (lstat(one->path, &st) < 0)
 				die("stat %s", one->path);
 			if (index_path(one->sha1, one->path, &st, 0))
 				die("cannot hash %s\n", one->path);
