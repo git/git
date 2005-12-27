@@ -1,12 +1,13 @@
 #include "cache.h"
 #include "commit.h"
+#include "tag.h"
 #include "refs.h"
 
 #define SEEN (1u << 0)
 
 static const char describe_usage[] = "git-describe [--all] <committish>*";
 
-static int all = 0;	/* Default to tags only */
+static int all = 0;	/* Default to annotated tags only */
 
 static int names = 0, allocs = 0;
 static struct commit_name {
@@ -49,9 +50,15 @@ static int get_name(const char *path, const unsigned char *sha1)
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (!commit)
 		return 0;
-	if (!all && strncmp(path, "refs/tags/", 10))
-		return 0;
-	add_to_known_names(path, commit);
+	if (!all) {
+		struct object *object;
+		if (strncmp(path, "refs/tags/", 10))
+			return 0;
+		object = parse_object(sha1);
+		if (object->type != tag_type)
+			return 0;
+	}
+	add_to_known_names(all ? path : path + 10, commit);
 	return 0;
 }
 
