@@ -55,7 +55,9 @@ all:
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
-GIT_VERSION = 1.0.GIT
+GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+	@sh ./GIT-VERSION-GEN
+-include GIT-VERSION-FILE
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -369,7 +371,7 @@ all: $(ALL_PROGRAMS)
 all:
 	$(MAKE) -C templates
 
-git$X: git.c $(LIB_FILE) Makefile
+git$X: git.c $(LIB_FILE)
 	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
 
@@ -398,8 +400,12 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 git-cherry-pick: git-revert
 	cp $< $@
 
-# format-patch records GIT_VERSION
-git-format-patch: Makefile
+# These can record GIT_VERSION
+git$X git.spec \
+	$(patsubst %.sh,%,$(SCRIPT_SH)) \
+	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
+	$(patsubst %.py,%,$(SCRIPT_PYTHON)) \
+	: GIT-VERSION-FILE
 
 %.o: %.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
@@ -475,7 +481,7 @@ install-doc:
 
 ### Maintainer's dist rules
 
-git.spec: git.spec.in Makefile
+git.spec: git.spec.in
 	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
 
 GIT_TARNAME=git-$(GIT_VERSION)
@@ -510,4 +516,8 @@ clean:
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean
+	rm -f GIT-VERSION-FILE
+
+.PHONY: all install clean
+.PHONY: .FORCE-GIT-VERSION-FILE
 
