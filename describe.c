@@ -95,7 +95,8 @@ static void describe(struct commit *cmit)
 		struct commit *c = pop_most_recent_commit(&list, SEEN);
 		n = match(c);
 		if (n) {
-			printf("%s-g%.8s\n", n->path, sha1_to_hex(cmit->object.sha1));
+			printf("%s-g%s\n", n->path,
+			       find_unique_abbrev(cmit->object.sha1, 8));
 			return;
 		}
 	}
