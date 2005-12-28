@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # DDD=' -DUSE_SYMLINK_HEAD=0'
-
-PATH=/usr/bin:/bin
+# PATH=/usr/bin:/bin
+PATH=$HOME/bin/Linux:/usr/bin:/bin
 LANG=C
 LC_CTYPE=C
 export PATH LANG LC_CTYPE
