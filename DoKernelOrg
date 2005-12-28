@@ -15,12 +15,23 @@ case "$1" in
 '')
 	echo "* Building all"
 	{
-		make $J install &&
-		make test &&
-		make clean &&
-		git checkout pu &&
-		make $J clean &&
-		make test clean
+		nstalled=install
+		for branch in naster master maint pu
+		do
+			if git-rev-parse --verify refs/heads/$branch 2>/dev/null
+			then
+				echo "** $branch **" &&
+				git checkout $branch &&
+				make $J $nstalled &&
+				make test &&
+				make clean &&
+				nstalled=all || exit $?
+			else
+				echo
+				echo "* NO $branch"
+				echo
+			fi
+		done
 	} >:all.log 2>&1
 	;;
 maint | master)
