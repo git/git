@@ -192,7 +192,7 @@ then
 		sed -e '
 			/\^/d
 			s/^[^	]*	//
-			s/.*/&:&/')
+			s/.*/.&:&/')
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.

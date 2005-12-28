@@ -168,7 +168,7 @@ test_expect_success \
 
      : sum of the index file itself &&
      l=`wc -c <test-3.idx` &&
-     l=`expr "$l" - 20` &&
+     l=`expr $l - 20` &&
      cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git-verify-pack test-3.pack

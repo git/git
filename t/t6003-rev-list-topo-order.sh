@@ -79,7 +79,7 @@ save_tag g4 unique_commit g6 tree -p g3 -p h2
 
 git-update-ref HEAD $(tag l5)
 
-test_expect_success 'rev-list has correct number of entries' 'git-rev-list HEAD | wc -l | tr -s " "' <<EOF
+test_output_expect_success 'rev-list has correct number of entries' 'git-rev-list HEAD | wc -l | tr -d \" \"' <<EOF
 19
 EOF
 
