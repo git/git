@@ -139,6 +139,9 @@ Interrogation commands
 gitlink:git-cat-file[1]::
 	Provide content or type/size information for repository objects.
 
+gitlink:git-describe[1]::
+	Show the most recent tag that is reachable from a commit.
+
 gitlink:git-diff-index[1]::
 	Compares content and mode of blobs between the index and repository.
 

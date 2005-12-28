@@ -1,0 +1,79 @@
+git-describe(1)
+===============
+
+NAME
+----
+git-describe - Show the most recent tag that is reachable from a commit.
+
+
+SYNOPSIS
+--------
+'git-describe' [--all] [--tags] [--abbrev=<n>] <committish>...
+
+DESCRIPTION
+-----------
+The command finds the most recent tag that is reachable from a
+commit, and if the commit itself is pointed at by the tag, shows
+the tag.  Otherwise, it suffixes the tag name with abbreviated
+object name of the commit.
+
+
+OPTIONS
+-------
+<committish>::
+	The object name of the comittish. 
+
+--all::
+	Instead of using only the annotated tags, use any ref
+	found in `.git/refs/`.
+
+--tags::
+	Instead of using only the annotated tags, use any tag
+	found in `.git/refs/tags`.
+
+--abbrev=<n>::
+	Instead of using the default 8 hexadecimal digits as the
+	abbreviated object name, use <n> digits.
+
+
+EXAMPLES
+--------
+
+With something like git.git current tree, I get:
+
+	[torvalds@g5 git]$ git-describe parent
+	v1.0.4-g2414721b
+
+i.e. the current head of my "parent" branch is based on v1.0.4,
+but since it has a few commits on top of that, it has added the
+git hash of the thing to the end: "-g" + 8-char shorthand for
+the commit `2414721b194453f058079d897d13c4e377f92dc6`.
+
+Doing a "git-describe" on a tag-name will just show the tag name:
+
+	[torvalds@g5 git]$ git-describe v1.0.4
+	v1.0.4
+
+With --all, the command can use branch heads as references, so
+the output shows the reference path as well:
+
+	[torvalds@g5 git]$ git describe --all --abbrev=4 v1.0.5^2
+	tags/v1.0.0-g975b
+
+	[torvalds@g5 git]$ git describe --all HEAD^
+	heads/lt/describe-g975b
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>, but somewhat
+butchered by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
