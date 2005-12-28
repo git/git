@@ -45,6 +45,9 @@ maint | master)
 	ln git-$V.tar.gz $G/. &&
 	ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/. &&
 	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
+	{
+		/usr/local/bin/yummy $G/RPMS/i386
+	} &&
 	rm -fr ./:rpm.log &&
 	make clean &&
 
