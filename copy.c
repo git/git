@@ -22,11 +22,14 @@ int copy_fd(int ifd, int ofd)
 				buf += written;
 				len -= written;
 			}
-			else if (!written)
+			else if (!written) {
+				close(ifd);
 				return error("copy-fd: write returned 0");
-			else
+			} else {
+				close(ifd);
 				return error("copy-fd: write returned %s",
 					     strerror(errno));
+			}
 		}
 	}
 	close(ifd);
