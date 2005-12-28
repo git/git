@@ -17,6 +17,7 @@ static int abbrev = DEFAULT_ABBREV;
 static int names = 0, allocs = 0;
 static struct commit_name {
 	const struct commit *commit;
+	int prio; /* annotated tag = 2, tag = 1, head = 0 */
 	char path[];
 } **name_array = NULL;
 
@@ -33,13 +34,16 @@ static struct commit_name *match(struct commit *cmit)
 	return NULL;
 }
 
-static void add_to_known_names(const char *path, const struct commit *commit)
+static void add_to_known_names(const char *path,
+			       const struct commit *commit,
+			       int prio)
 {
 	int idx;
 	int len = strlen(path)+1;
 	struct commit_name *name = xmalloc(sizeof(struct commit_name) + len);
 
 	name->commit = commit;
+	name->prio = prio; 
 	memcpy(name->path, path, len);
 	idx = names;
 	if (idx >= allocs) {
@@ -53,23 +57,32 @@ static void add_to_known_names(const char *path, const struct commit *commit)
 static int get_name(const char *path, const unsigned char *sha1)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	struct object *object;
+	int prio;
+
 	if (!commit)
 		return 0;
+	object = parse_object(sha1);
 	/* If --all, then any refs are used.
 	 * If --tags, then any tags are used.
 	 * Otherwise only annotated tags are used.
 	 */
-	if (!all) {
-		if (strncmp(path, "refs/tags/", 10))
-			return 0;
-		if (!tags) {
-			struct object *object;
-			object = parse_object(sha1);
-			if (object->type != tag_type)
-				return 0;
-		}
+	if (!strncmp(path, "refs/tags/", 10)) {
+		if (object->type == tag_type)
+			prio = 2;
+		else
+			prio = 1;
 	}
-	add_to_known_names(all ? path : path + 10, commit);
+	else
+		prio = 0;
+
+	if (!all) {
+		if (!prio)
+			return 0;
+		if (!tags && prio < 2)
+			return 0;
+	}
+	add_to_known_names(all ? path + 5 : path + 10, commit, prio);
 	return 0;
 }
 
@@ -79,6 +92,9 @@ static int compare_names(const void *_a, const void *_b)
 	struct commit_name *b = *(struct commit_name **)_b;
 	unsigned long a_date = a->commit->date;
 	unsigned long b_date = b->commit->date;
+
+	if (a->prio != b->prio)
+		return b->prio - a->prio;
 	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
 }
 
