@@ -40,7 +40,7 @@ OPTIONS
 -s <start_rev>::
         Start importing at this SVN change number. The  default is 1.
 +
-When importing incementally, you might need to edit the .git/svn2git file.
+When importing incrementally, you might need to edit the .git/svn2git file.
 
 -i::
 	Import-only: don't perform a checkout after importing.  This option

@@ -62,7 +62,7 @@ separated with a single space are given.
 -s::
 	By default, "git-diff-tree --stdin" shows differences,
 	either in machine-readable form (without '-p') or in patch
-	form (with '-p').  This output can be supressed.  It is
+	form (with '-p').  This output can be suppressed.  It is
 	only useful with '-v' flag.
 
 -v::

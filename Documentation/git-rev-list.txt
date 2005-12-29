@@ -129,7 +129,7 @@ the marked commit in the list.
 +
 Commits marked with (^) are not parents of the immediately preceding commit.
 These "breaks" represent necessary discontinuities implied by trying to
-represent an arbtirary DAG in a linear form.
+represent an arbitrary DAG in a linear form.
 +
 `--show-breaks` is only valid if `--merge-order` is also specified.
 

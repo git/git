@@ -53,7 +53,7 @@ If '--cached' is specified, it allows you to ask:
 	contents (the ones I'd write with a "git-write-tree")
 
 For example, let's say that you have worked on your working directory, updated
-some files in the index and are ready to commit. You want to see eactly
+some files in the index and are ready to commit. You want to see exactly
 *what* you are going to commit is without having to write a new tree
 object and compare it that way, and to do that, you just do
 
@@ -110,7 +110,7 @@ NOTE: As with other commands of this type, "git-diff-index" does not
 actually look at the contents of the file at all. So maybe
 `kernel/sched.c` hasn't actually changed, and it's just that you
 touched it. In either case, it's a note that you need to
-"git-upate-index" it to make the index be in sync.
+"git-update-index" it to make the index be in sync.
 
 NOTE: You can have a mixture of files show up as "has been updated"
 and "is still dirty in the working directory" together. You can always

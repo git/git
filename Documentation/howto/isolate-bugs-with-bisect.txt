@@ -24,7 +24,7 @@ Then do
 	git bisect bad master		<- mark "master" as the bad state
 	git bisect good ORIG_HEAD	<- mark ORIG_HEAD as good (or
 					   whatever other known-good 
-					   thing you booted laste)
+					   thing you booted last)
 
 and at this point "git bisect" will churn for a while, and tell you what 
 the mid-point between those two commits are, and check that state out as 

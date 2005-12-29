@@ -67,7 +67,7 @@ $ git diff HEAD^ HEAD <3>
 <1> instead of using the tip of the current branch, compare with the
 tip of "test" branch.
 <2> instead of comparing with the tip of "test" branch, compare with
-the tip of the curren branch, but limit the comparison to the
+the tip of the current branch, but limit the comparison to the
 file "test".
 <3> compare the version before the last commit and the last commit.
 ------------

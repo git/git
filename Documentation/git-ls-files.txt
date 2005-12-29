@@ -74,7 +74,7 @@ OPTIONS
 	H::	cached
 	M::	unmerged
 	R::	removed/deleted
-	C::	modifed/changed
+	C::	modified/changed
 	K::	to be killed
 	?	other
 
