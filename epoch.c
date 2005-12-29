@@ -190,7 +190,7 @@ static void free_mass_counter(struct mass_counter *counter)
  * enqueued, enqueuing the commit in a list of pending commits, in latest
  * commit date first order.
  *
- * The algorithm then preceeds to visit each commit in the pending queue.
+ * The algorithm then proceeds to visit each commit in the pending queue.
  * Upon each visit, the pending mass is added to the mass already seen for that
  * commit and then divided into N equal portions, where N is the number of
  * parents of the commit being visited. The divided portions are then injected

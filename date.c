@@ -326,7 +326,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 
 	/*
 	 * NOTE! We will give precedence to day-of-month over month or
-	 * year numebers in the 1-12 range. So 05 is always "mday 5",
+	 * year numbers in the 1-12 range. So 05 is always "mday 5",
 	 * unless we already have a mday..
 	 *
 	 * IOW, 01 Apr 05 parses as "April 1st, 2005".
