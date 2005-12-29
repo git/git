@@ -63,6 +63,8 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 static inline void *xmalloc(size_t size)
 {
 	void *ret = malloc(size);
+	if (!ret && !size)
+		ret = malloc(1);
 	if (!ret)
 		die("Out of memory, malloc failed");
 	return ret;
@@ -71,6 +73,8 @@ static inline void *xmalloc(size_t size)
 static inline void *xrealloc(void *ptr, size_t size)
 {
 	void *ret = realloc(ptr, size);
+	if (!ret && !size)
+		ret = realloc(ptr, 1);
 	if (!ret)
 		die("Out of memory, realloc failed");
 	return ret;
@@ -79,6 +83,8 @@ static inline void *xrealloc(void *ptr, size_t size)
 static inline void *xcalloc(size_t nmemb, size_t size)
 {
 	void *ret = calloc(nmemb, size);
+	if (!ret && (!nmemb || !size))
+		ret = calloc(1, 1);
 	if (!ret)
 		die("Out of memory, calloc failed");
 	return ret;
