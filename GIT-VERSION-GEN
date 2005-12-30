@@ -2,7 +2,7 @@
 
 GVF=GIT-VERSION-FILE
 
-VN=$(git describe --abbrev=4 HEAD 2>/dev/null) || VN=v1.0.GIT
+VN=$(git-describe --abbrev=4 HEAD 2>/dev/null) || VN=v1.0.GIT
 VN=$(expr "$VN" : v'\(.*\)')
 if test -r $GVF
 then
