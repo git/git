@@ -8,7 +8,9 @@ git-format-patch - Prepare patches for e-mail submission.
 
 SYNOPSIS
 --------
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [-s] [-c] [--mbox] [--diff-options] <his> [<mine>]
+[verse]
+'git-format-patch' [-n | -k] [-o <dir> | --stdout] [-s] [-c] [--mbox]
+		 [--diff-options] <his> [<mine>]
 
 DESCRIPTION
 -----------
@@ -96,7 +98,7 @@ git-format-patch -M -B origin::
 
 See Also
 --------
-gitlink:git-am[1], gitlink:git-send-email
+gitlink:git-am[1], gitlink:git-send-email[1]
 
 
 Author

@@ -8,7 +8,10 @@ git-apply - Apply patch on a git index file and a work tree
 
 SYNOPSIS
 --------
-'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [<patch>...]
+[verse]
+'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
+	  [--no-add] [--index-info] [--allow-binary-replacement] [-z]
+	  [<patch>...]
 
 DESCRIPTION
 -----------

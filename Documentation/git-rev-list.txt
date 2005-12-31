@@ -8,18 +8,19 @@ git-rev-list - Lists commit objects in reverse chronological order
 
 SYNOPSIS
 --------
+[verse]
 'git-rev-list' [ \--max-count=number ]
-	[ \--max-age=timestamp ]
-	[ \--min-age=timestamp ]
-	[ \--sparse ]
-	[ \--no-merges ]
-	[ \--all ]
-	[ [ \--merge-order [ \--show-breaks ] ] | [ \--topo-order ] | ]
-	[ \--parents ]
-	[ \--objects [ \--unpacked ] ]
-	[ \--pretty | \--header | ]
-	[ \--bisect ]
-	<commit>... [ \-- <paths>... ]
+	     [ \--max-age=timestamp ]
+	     [ \--min-age=timestamp ]
+	     [ \--sparse ]
+	     [ \--no-merges ]
+	     [ \--all ]
+	     [ [ \--merge-order [ \--show-breaks ] ] | [ \--topo-order ] ]
+	     [ \--parents ]
+	     [ \--objects [ \--unpacked ] ]
+	     [ \--pretty | \--header ]
+	     [ \--bisect ]
+	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION
 -----------

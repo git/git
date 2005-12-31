@@ -8,7 +8,9 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 
 SYNOPSIS
 --------
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty] [-t] [-r] [--root] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
+[verse]
+'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty] [-t] [-r]
+	      [--root] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
 -----------
