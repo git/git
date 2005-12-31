@@ -8,13 +8,16 @@ git-init-db - Creates an empty git repository
 
 SYNOPSIS
 --------
-'git-init-db' [--template=<template_directory>]
+'git-init-db' [--template=<template_directory>] [--shared]
 
 
 OPTIONS
 -------
 --template=<template_directory>::
 	Provide the directory in from which templates will be used.
+
+--shared::
+	Specify that the git repository is to be shared amongst several users.
 
 
 DESCRIPTION
@@ -30,7 +33,16 @@ If the object storage directory is specified via the `$GIT_OBJECT_DIRECTORY`
 environment variable then the sha1 directories are created underneath -
 otherwise the default `$GIT_DIR/objects` directory is used.
 
-`git-init-db` won't hurt an existing repository.
+A shared repository allows users belonging to the same group to push into that
+repository. When specifying `--shared` the config variable "core.sharedRepository" 
+is set to 'true' so that directories under `$GIT_DIR` are made group writable
+(and g+sx, since the git group may be not the primary group of all users).
+
+
+Running `git-init-db` in an existing repository is safe. It will not overwrite
+things that are already there. The primary reason for rerunning `git-init-db`
+is to pick up newly added templates.
+
 
 
 EXAMPLES
