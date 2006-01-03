@@ -244,6 +244,11 @@ int main(int argc, char **argv, char **envp)
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
+		if (!strcmp(arg, "help")) {
+			show_help = 1;
+			continue;
+		}
+
 		if (strncmp(arg, "--", 2))
 			break;
 
