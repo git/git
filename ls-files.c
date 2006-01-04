@@ -19,6 +19,7 @@ static int show_stage = 0;
 static int show_unmerged = 0;
 static int show_modified = 0;
 static int show_killed = 0;
+static int show_other_directories = 0;
 static int line_terminator = '\n';
 
 static int prefix_len = 0, prefix_offset = 0;
@@ -233,6 +234,19 @@ static void add_name(const char *pathname, int len)
 	dir[nr_dir++] = ent;
 }
 
+static int dir_exists(const char *dirname, int len)
+{
+	int pos = cache_name_pos(dirname, len);
+	if (pos >= 0)
+		return 1;
+	pos = -pos-1;
+	if (pos >= active_nr)
+		return 0;
+	if (strncmp(active_cache[pos]->name, dirname, len))
+		return 0;
+	return active_cache[pos]->name[len] == '/';
+}
+
 /*
  * Read a directory tree. We currently ignore anything but
  * directories, regular files and symlinks. That's because git
@@ -280,6 +294,10 @@ static void read_directory(const char *path, const char *base, int baselen)
 					continue;
 				/* fallthrough */
 			case DT_DIR:
+				if (show_other_directories) {
+					if (!dir_exists(fullname, baselen + len))
+						break;
+				}
 				memcpy(fullname + baselen + len, "/", 2);
 				read_directory(fullname, fullname,
 					       baselen + len + 1);
@@ -620,6 +638,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "-k") || !strcmp(arg, "--killed")) {
 			show_killed = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--directory")) {
+			show_other_directories = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
