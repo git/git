@@ -640,7 +640,7 @@ unsigned long approxidate(const char *date)
 	}
 	if (number > 0 && number < 32)
 		tm.tm_mday = number;
-	if (tm.tm_mon > now.tm_mon)
+	if (tm.tm_mon > now.tm_mon && tm.tm_year == now.tm_year)
 		tm.tm_year--;
 	return mktime(&tm);
 }
