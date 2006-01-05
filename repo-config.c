@@ -6,7 +6,7 @@ static const char git_config_set_usage[] =
 
 static char* key = NULL;
 static char* value = NULL;
-static regex_t* regex = NULL;
+static regex_t* regexp = NULL;
 static int do_all = 0;
 static int do_not_match = 0;
 static int seen = 0;
@@ -14,9 +14,9 @@ static int seen = 0;
 static int show_config(const char* key_, const char* value_)
 {
 	if (!strcmp(key_, key) &&
-			(regex == NULL ||
+			(regexp == NULL ||
 			 (do_not_match ^
-			  !regexec(regex, value_, 0, NULL, 0)))) {
+			  !regexec(regexp, value_, 0, NULL, 0)))) {
 		if (do_all) {
 			printf("%s\n", value_);
 			return 0;
@@ -46,8 +46,8 @@ static int get_value(const char* key_, const char* regex_)
 			regex_++;
 		}
 
-		regex = (regex_t*)malloc(sizeof(regex_t));
-		if (regcomp(regex, regex_, REG_EXTENDED)) {
+		regexp = (regex_t*)malloc(sizeof(regex_t));
+		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
 			return -1;
 		}
@@ -59,9 +59,9 @@ static int get_value(const char* key_, const char* regex_)
 		free(value);
 	}
 	free(key);
-	if (regex) {
-		regfree(regex);
-		free(regex);
+	if (regexp) {
+		regfree(regexp);
+		free(regexp);
 	}
 
 	if (do_all)
