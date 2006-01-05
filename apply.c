@@ -1635,7 +1635,8 @@ static void create_one_file(const char *path, unsigned mode, const char *buf, un
 			}
 			if (errno != EEXIST)
 				break;
-		}			
+			++nr;
+		}
 	}
 	die("unable to write file %s mode %o", path, mode);
 }
