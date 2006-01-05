@@ -31,7 +31,12 @@ test_expect_success setup \
 test_expect_success apply \
     'git-apply --index --stat --summary --apply test-patch'
 
-test_expect_success validate \
-    'test -f bar && ls -l bar | grep "^-..x......"'
+if [ "$(git repo-config --get core.filemode)" = false ]
+then
+	say 'filemode disabled on the filesystem'
+else
+	test_expect_success validate \
+	    'test -f bar && ls -l bar | grep "^-..x......"'
+fi
 
 test_done

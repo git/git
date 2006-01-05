@@ -15,11 +15,21 @@ test_expect_success \
      tree=`git-write-tree` &&
      echo $tree'
 
-test_expect_success \
-    'chmod' \
-    'chmod +x rezrov &&
-     git-update-index rezrov &&
-     git-diff-index $tree >current'
+if [ "$(git repo-config --get core.filemode)" = false ]
+then
+	say 'filemode disabled on the filesystem, using update-index --chmod=+x'
+	test_expect_success \
+	    'git-update-index --chmod=+x' \
+	    'git-update-index rezrov &&
+	     git-update-index --chmod=+x rezrov &&
+	     git-diff-index $tree >current'
+else
+	test_expect_success \
+	    'chmod' \
+	    'chmod +x rezrov &&
+	     git-update-index rezrov &&
+	     git-diff-index $tree >current'
+fi
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
