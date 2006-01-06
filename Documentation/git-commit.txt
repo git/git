@@ -7,7 +7,9 @@ git-commit - Record your changes
 
 SYNOPSIS
 --------
-'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>] [-e] [--] <file>...
+[verse]
+'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
+	   [-e] [--] <file>...
 
 DESCRIPTION
 -----------

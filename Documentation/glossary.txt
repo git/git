@@ -19,7 +19,7 @@ hash::
 	In git's context, synonym to object name.
 
 object database::
-	Stores a set of "objects", and an individial object is identified
+	Stores a set of "objects", and an individual object is identified
 	by its object name. The objects usually live in `$GIT_DIR/objects/`.
 
 blob object::

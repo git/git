@@ -8,7 +8,9 @@ git-clone - Clones a repository.
 
 SYNOPSIS
 --------
-'git-clone' [-l [-s]] [-q] [-n] [-u <upload-pack>] <repository> [<directory>]
+[verse]
+'git-clone' [-l [-s]] [-q] [-n] [-u <upload-pack>]
+	  <repository> [<directory>]
 
 DESCRIPTION
 -----------

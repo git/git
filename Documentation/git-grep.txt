@@ -8,7 +8,7 @@ git-grep - print lines matching a pattern
 
 SYNOPSIS
 --------
-'git-grep' <option>... <pattern> <path>...
+'git-grep' [<option>...] <pattern> [<path>...]
 
 DESCRIPTION
 -----------
@@ -27,7 +27,6 @@ OPTIONS
 	The pattern to look for.
 
 <path>...::
-
 	Optional paths to limit the set of files to be searched;
 	passed to `git-ls-files`.
 

@@ -8,7 +8,9 @@ git-fsck-objects - Verifies the connectivity and validity of the objects in the 
 
 SYNOPSIS
 --------
-'git-fsck-objects' [--tags] [--root] [--unreachable] [--cache] [--standalone | --full] [--strict] [<object>*]
+[verse]
+'git-fsck-objects' [--tags] [--root] [--unreachable] [--cache]
+		 [--standalone | --full] [--strict] [<object>*]
 
 DESCRIPTION
 -----------

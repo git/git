@@ -8,8 +8,9 @@ git-checkout-index - Copy files from the index to the working directory
 
 SYNOPSIS
 --------
+[verse]
 'git-checkout-index' [-u] [-q] [-a] [-f] [-n] [--prefix=<string>]
-	[--stage=<number>] [--] <file>...
+		   [--stage=<number>] [--] <file>...
 
 DESCRIPTION
 -----------

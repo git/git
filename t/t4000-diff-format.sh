@@ -26,6 +26,14 @@ rm -f path1
 test_expect_success \
     'git-diff-files -p after editing work tree.' \
     'git-diff-files -p >current'
+
+# that's as far as it comes
+if [ "$(git repo-config --get core.filemode)" = false ]
+then
+	say 'filemode disabled on the filesystem'
+	test_done
+fi
+
 cat >expected <<\EOF
 diff --git a/path0 b/path0
 old mode 100644

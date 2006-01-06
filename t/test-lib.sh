@@ -195,7 +195,7 @@ test -d ../templates/blt || {
 test=trash
 rm -fr "$test"
 mkdir "$test"
-cd "$test"
+cd "$test" || error "Cannot setup test environment"
 "$GIT_EXEC_PATH/git" init-db --template=../../templates/blt/ 2>/dev/null ||
 error "cannot run git init-db -- have you built things yet?"
 

@@ -119,7 +119,7 @@ static unsigned long write_one(struct sha1file *f,
 		return offset;
 	e->offset = offset;
 	offset += write_object(f, e);
-	/* if we are delitified, write out its base object. */
+	/* if we are deltified, write out its base object. */
 	if (e->delta)
 		offset = write_one(f, e->delta, offset);
 	return offset;

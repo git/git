@@ -8,7 +8,7 @@ git-cat-file - Provide content or type information for repository objects
 
 SYNOPSIS
 --------
-'git-cat-file' (-t | -s | -e | <type>) <object>
+'git-cat-file' [-t | -s | -e | <type>] <object>
 
 DESCRIPTION
 -----------
