@@ -11,7 +11,7 @@ SYNOPSIS
 --------
 'git-svnimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ] [ -d | -D ]
 			[ -C <GIT_repository> ] [ -i ] [ -u ] [-l limit_rev]
-			[ -b branch_subdir ] [ -t trunk_subdir ] [ -T tag_subdir ]
+			[ -b branch_subdir ] [ -T trunk_subdir ] [ -t tag_subdir ]
 			[ -s start_chg ] [ -m ] [ -M regex ]
 			<SVN_repository_URL> [ <path> ]
 
@@ -40,17 +40,17 @@ OPTIONS
 -s <start_rev>::
         Start importing at this SVN change number. The  default is 1.
 +
-When importing incementally, you might need to edit the .git/svn2git file.
+When importing incrementally, you might need to edit the .git/svn2git file.
 
 -i::
 	Import-only: don't perform a checkout after importing.  This option
 	ensures the working directory and index remain untouched and will
 	not create them if they do not exist.
 
--t <trunk_subdir>::
+-T <trunk_subdir>::
 	Name the SVN trunk. Default "trunk".
 
--T <tag_subdir>::
+-t <tag_subdir>::
 	Name the SVN subdirectory for tags. Default "tags".
 
 -b <branch_subdir>::

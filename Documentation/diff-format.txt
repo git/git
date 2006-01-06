@@ -117,7 +117,7 @@ git specific extension to diff format
 What -p option produces is slightly different from the
 traditional diff format.
 
-1.   It is preceeded with a "git diff" header, that looks like
+1.   It is preceded with a "git diff" header, that looks like
      this:
 
      diff --git a/file1 b/file2

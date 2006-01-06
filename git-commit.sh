@@ -148,7 +148,7 @@ esac
 
 if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 	echo "#"
-	echo "# It looks like your may be committing a MERGE."
+	echo "# It looks like you may be committing a MERGE."
 	echo "# If this is not correct, please remove the file"
 	echo "#	$GIT_DIR/MERGE_HEAD"
 	echo "# and try again"
@@ -165,6 +165,7 @@ then
 	then
 		pick_author_script='
 		/^author /{
+			s/'\''/'\''\\'\'\''/g
 			h
 			s/^author \([^<]*\) <[^>]*> .*$/\1/
 			s/'\''/'\''\'\'\''/g

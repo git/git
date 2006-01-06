@@ -82,7 +82,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		expr "$sz0" \< "$sz1" \* 2 >/dev/null || : >$orig
 		;;
 	*)
-		echo "Auto-merging $4."
+		echo "Auto-merging $4"
 		orig=`git-unpack-file $1`
 		;;
 	esac
@@ -107,7 +107,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 
 	if [ $ret -ne 0 ]; then
-		echo "ERROR: Merge conflict in $4."
+		echo "ERROR: Merge conflict in $4"
 		exit 1
 	fi
 	exec git-update-index -- "$4"

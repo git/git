@@ -409,8 +409,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	const char* value_regex, int multi_replace)
 {
 	int i;
-	struct stat st;
-	int fd;
+	int fd, in_fd;
 	char* config_filename = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
 	const char* last_dot = strrchr(key, '.');
@@ -457,9 +456,17 @@ int git_config_set_multivar(const char* key, const char* value,
 	/*
 	 * If .git/config does not exist yet, write a minimal version.
 	 */
-	if (stat(config_filename, &st)) {
+	in_fd = open(config_filename, O_RDONLY);
+	if ( in_fd < 0 ) {
 		free(store.key);
 
+		if ( ENOENT != errno ) {
+			error("opening %s: %s", config_filename,
+			      strerror(errno));
+			close(fd);
+			unlink(lock_file);
+			return 3; /* same as "invalid config file" */
+		}
 		/* if nothing to unset, error out */
 		if (value == NULL) {
 			close(fd);
@@ -471,7 +478,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		store_write_section(fd, key);
 		store_write_pair(fd, key, value);
 	} else{
-		int in_fd;
+		struct stat st;
 		char* contents;
 		int i, copy_begin, copy_end, new_line = 0;
 
@@ -528,7 +535,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			return 5;
 		}
 
-		in_fd = open(config_filename, O_RDONLY, 0666);
+		fstat(in_fd, &st);
 		contents = mmap(NULL, st.st_size, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);

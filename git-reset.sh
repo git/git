@@ -3,7 +3,7 @@
 USAGE='[--mixed | --soft | --hard]  [<commit-ish>]'
 . git-sh-setup
 
-tmp=/var/tmp/reset.$$
+tmp=${GIT_DIR}/reset.$$
 trap 'rm -f $tmp-*' 0 1 2 3 15
 
 reset_type=--mixed

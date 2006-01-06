@@ -138,7 +138,7 @@ mailing list archives for details).
 git has a couple of alternatives, though, that you may find sufficient
 or even superior depending on your use.  One is called "git-whatchanged"
 (for obvious reasons) and the other one is called "pickaxe" ("a tool for
-the software archeologist"). 
+the software archaeologist"). 
 
 The "git-whatchanged" script is a truly trivial script that can give you
 a good overview of what has changed in a file or a directory (or an

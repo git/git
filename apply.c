@@ -1588,7 +1588,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 
 	if (S_ISLNK(mode))
 		return symlink(buf, path);
-	fd = open(path, O_CREAT | O_EXCL | O_WRONLY | O_TRUNC, (mode & 0100) ? 0777 : 0666);
+	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
 		return -1;
 	while (size) {
@@ -1635,7 +1635,8 @@ static void create_one_file(const char *path, unsigned mode, const char *buf, un
 			}
 			if (errno != EEXIST)
 				break;
-		}			
+			++nr;
+		}
 	}
 	die("unable to write file %s mode %o", path, mode);
 }

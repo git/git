@@ -787,7 +787,7 @@ int diff_setup_done(struct diff_options *options)
 			 * so it is safe for us to do this here.  Also
 			 * it does not smudge active_cache or active_nr
 			 * when it fails, so we do not have to worry about
-			 * cleaning it up oufselves either.
+			 * cleaning it up ourselves either.
 			 */
 			read_cache();
 	}

@@ -21,7 +21,7 @@ outside world but sometimes useful for private repository.
 . You can be using `objects/info/alternates` mechanism, or
 `$GIT_ALTERNATE_OBJECT_DIRECTORIES` mechanism to 'borrow'
 objects from other object stores.  A repository with this kind
-of incompete object store is not suitable to be published for
+of incomplete object store is not suitable to be published for
 use with dumb transports but otherwise is OK as long as
 `objects/info/alternates` points at the right object stores
 it borrows from.
@@ -106,7 +106,7 @@ info/refs::
 	up-to-date if the repository is published for dumb
 	transports.  The `git-receive-pack` command, which is
 	run on a remote repository when you `git push` into it,
-	runs `hooks/update` hook to help you achive this.
+	runs `hooks/update` hook to help you achieve this.
 
 info/grafts::
 	This file records fake commit ancestry information, to

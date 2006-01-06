@@ -31,7 +31,7 @@ DISCUSSION
 ----------
 
 The list of <file> given to the command is fed to `git-ls-files`
-command to list files that are not registerd in the index and
+command to list files that are not registered in the index and
 are not ignored/excluded by `$GIT_DIR/info/exclude` file or
 `.gitignore` file in each directory.  This means two things:
 

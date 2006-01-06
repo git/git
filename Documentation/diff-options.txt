@@ -21,7 +21,7 @@
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only handful dhexigits prefix.  This is
+	lines, show only handful hexdigits prefix.  This is
 	independent of --full-index option above, which controls
 	the diff-patch output format.  Non default number of
 	digits can be specified with --abbrev=<n>.

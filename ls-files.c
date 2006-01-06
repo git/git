@@ -169,7 +169,7 @@ static int excluded_1(const char *pathname,
 			}
 			else {
 				/* match with FNM_PATHNAME:
-				 * exclude has base (baselen long) inplicitly
+				 * exclude has base (baselen long) implicitly
 				 * in front of it.
 				 */
 				int baselen = x->baselen;

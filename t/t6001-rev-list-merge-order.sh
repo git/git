@@ -8,13 +8,6 @@ test_description='Tests git-rev-list --merge-order functionality'
 . ./test-lib.sh
 . ../t6000lib.sh # t6xxx specific functions
 
-if git-rev-list --merge-order 2>&1 | grep 'OpenSSL not linked' >/dev/null
-then
-    test_expect_success 'skipping merge-order test' :
-    test_done
-    exit
-fi    
-
 # test-case specific test function
 check_adjacency()
 {
@@ -113,6 +106,13 @@ git-update-ref HEAD $(tag l5)
 test_output_expect_success 'rev-list has correct number of entries' 'git-rev-list HEAD | wc -l | tr -d \" \"' <<EOF
 19
 EOF
+
+if git-rev-list --merge-order HEAD 2>&1 | grep 'OpenSSL not linked' >/dev/null
+then
+    test_expect_success 'skipping merge-order test' :
+    test_done
+    exit
+fi
 
 normal_adjacency_count=$(git-rev-list HEAD | check_adjacency | grep -c "\^" | tr -d ' ')
 merge_order_adjacency_count=$(git-rev-list --merge-order HEAD | check_adjacency | grep -c "\^" | tr -d ' ')

@@ -8,15 +8,15 @@ git-archimport - Import an Arch repository into git
 
 SYNOPSIS
 --------
-`git-archimport` [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ]
-                 [ -D depth ] [ -t tempdir ] 
-                 <archive/branch> [ <archive/branch> ]
+[verse]
+`git-archimport` [-h] [-v] [-o] [-a] [-f] [-T] [-D depth] [-t tempdir]
+               <archive/branch> [ <archive/branch> ]
 
 DESCRIPTION
 -----------
 Imports a project from one or more Arch repositories. It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
-parameters suppplied. If it cannot find the remote branch a merge comes from
+parameters supplied. If it cannot find the remote branch a merge comes from
 it will just import it as a regular commit. If it can find it, it will mark it 
 as a merge whenever possible (see discussion below). 
 

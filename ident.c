@@ -140,7 +140,7 @@ static int copy(char *buf, int size, int offset, const char *src)
 
 	/*
 	 * Copy the rest to the buffer, but avoid the special
-	 * characters '\n' '<' and '>' that act as delimeters on
+	 * characters '\n' '<' and '>' that act as delimiters on
 	 * a identification line
 	 */
 	for (i = 0; i < len; i++) {

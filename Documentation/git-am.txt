@@ -8,6 +8,7 @@ git-am - Apply a series of patches in a mailbox
 
 SYNOPSIS
 --------
+[verse]
 'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>...
 'git-am' [--skip | --resolved]
 

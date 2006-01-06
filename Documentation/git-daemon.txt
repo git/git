@@ -7,8 +7,9 @@ git-daemon - A really simple server for git repositories.
 
 SYNOPSIS
 --------
+[verse]
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
-             [--timeout=n] [--init-timeout=n] [--strict-paths] [directory...]
+           [--timeout=n] [--init-timeout=n] [--strict-paths] [directory...]
 
 DESCRIPTION
 -----------

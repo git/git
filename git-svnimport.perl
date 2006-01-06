@@ -96,8 +96,10 @@ sub new {
 sub conn {
 	my $self = shift;
 	my $repo = $self->{'fullrep'};
-	my $s = SVN::Ra->new($repo);
-
+	my $auth = SVN::Core::auth_open ([SVN::Client::get_simple_provider,
+			  SVN::Client::get_ssl_server_trust_file_provider,
+			  SVN::Client::get_username_provider]);
+	my $s = SVN::Ra->new(url => $repo, auth => $auth);
 	die "SVN connection to $repo: $!\n" unless defined $s;
 	$self->{'svn'} = $s;
 	$self->{'repo'} = $repo;

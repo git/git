@@ -188,11 +188,20 @@ esac
 reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
-	taglist=$(git-ls-remote --tags "$remote" |
-		sed -e '
-			/\^/d
-			s/^[^	]*	//
-			s/.*/.&:&/')
+	taglist=$(IFS="	" &&
+		  git-ls-remote --tags "$remote" |
+	          while read sha1 name
+		  do
+			case "$name" in
+			(*^*) continue ;;
+			esac
+		  	if git-check-ref-format "$name"
+			then
+			    echo ".${name}:${name}"
+			else
+			    echo >&2 "warning: tag ${name} ignored"
+			fi
+		  done)
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.

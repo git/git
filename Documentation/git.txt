@@ -425,7 +425,7 @@ gitlink:git-rev-parse[1]::
 gitlink:git-send-email[1]::
 	Send patch e-mails out of "format-patch --mbox" output.
 
-gitlink:git-symbolic-refs[1]::
+gitlink:git-symbolic-ref[1]::
 	Read and modify symbolic refs.
 
 gitlink:git-stripspace[1]::

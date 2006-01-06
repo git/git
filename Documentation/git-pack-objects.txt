@@ -46,7 +46,7 @@ base-name::
 	output of the command.
 
 --stdout::
-	Write the pack contents (what would have been writtin to
+	Write the pack contents (what would have been written to
 	.pack file) out to the standard output.
 
 --window and --depth::

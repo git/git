@@ -60,7 +60,8 @@ either `.git/config` file, or using the following environment variables.
 
 (nb "<", ">" and "\n"s are stripped)
 
-In `.git/config` file, the following items are used:
+In `.git/config` file, the following items are used for GIT_AUTHOR_NAME and
+GIT_AUTHOR_EMAIL:
 
 	[user]
 		name = "Your Name"

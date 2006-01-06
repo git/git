@@ -60,7 +60,7 @@ static void remove_subtree(const char *path)
 static int create_file(const char *path, unsigned int mode)
 {
 	mode = (mode & 0100) ? 0777 : 0666;
-	return open(path, O_WRONLY | O_TRUNC | O_CREAT | O_EXCL, mode);
+	return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
 }
 
 static int write_entry(struct cache_entry *ce, const char *path, struct checkout *state)

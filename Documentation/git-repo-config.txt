@@ -21,9 +21,9 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-If you want to set/unset an option which can occor on multiple lines, you
+If you want to set/unset an option which can occur on multiple lines, you
 should provide a POSIX regex for the value. If you want to handle the lines
-*not* matching the regex, just prepend a single exlamation mark in front
+*not* matching the regex, just prepend a single exclamation mark in front
 (see EXAMPLES).
 
 This command will fail if

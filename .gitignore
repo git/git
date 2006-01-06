@@ -120,3 +120,4 @@ git-core.spec
 *.exe
 libgit.a
 *.o
+*.py[co]
