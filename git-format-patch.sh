@@ -173,6 +173,7 @@ titleScript='
 
 whosepatchScript='
 /^author /{
+	s/'\''/'\''\\'\'\''/g
 	s/author \(.*>\) \(.*\)$/au='\''\1'\'' ad='\''\2'\''/p
 	q
 }'
