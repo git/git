@@ -9,9 +9,6 @@ This test tries pathnames with funny characters in the working
 tree, index, and tree objects.
 '
 
-# since FAT/NTFS does not allow tabs in filenames, skip this test
-test "$(uname -o 2>/dev/null)" = Cygwin && exit 0
-
 . ./test-lib.sh
 
 p0='no-funny'
@@ -26,6 +23,12 @@ EOF
 
 cat >"$p1" "$p0"
 echo 'Foo Bar Baz' >"$p2"
+
+test -f "$p1" && cmp "$p0" "$p1" || {
+	# since FAT/NTFS does not allow tabs in filenames, skip this test
+	say 'Your filesystem does not allow tabs in filenames, test skipped.'
+	test_done
+}
 
 echo 'just space
 no-funny' >expected
