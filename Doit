@@ -1,44 +1,27 @@
 #!/bin/sh
 
-try_if_new () {
-	branch="$1"
-	to_install="$2"
-	commits=$(git-rev-list "ko-${branch}..${branch}")
+J='-l 2.5 -j'
 
-	to_build=no
-	case "$commits" in
-	'') 
-		echo "* Up-to-date at ko-$branch"
-		to_build=no
-		;;
-	*)
-		to_build=yes
-		;;
-	esac
-
-	case "$to_install" in
-	?*)
-		to_build=yes
-		;;
-	esac
-
-	case "$to_build" in
-	yes)
-		Meta/Make clean >/dev/null 2>&1 &&
-		git checkout "$branch" &&
-		echo "* Testing $branch" &&
-		Meta/Make clean test >./":${branch}.log" 2>&1 &&
-		case "$to_install" in
-		?*)
-			Meta/Make install >>./":${branch}.log" 2>&1 ;;
-		esac
-	esac
+test -z "$(git diff --cached --name-status)" || {
+	echo >&2 "Repository unclean."
+	exit 1
 }
 
-git fetch ko &&
-
-try_if_new maint &&
-try_if_new pu &&
-try_if_new master install &&
-Meta/Make clean >/dev/null 2>&1
-
+nstall=install
+for branch in naster master maint pu
+do
+	rm -f ./:$branch.log &&
+	if git rev-parse --verify refs/heads/$branch 2>/dev/null
+	then
+		echo "* $branch" &&
+		git checkout $branch || break
+		{
+		    make $J $nstall &&
+		    make test &&
+		    make clean
+		} >./:$branch.log &&
+		nstall=all || exit $?
+	else
+		echo "* No $branch"
+	fi
+done
