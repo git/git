@@ -240,11 +240,9 @@ static int dir_exists(const char *dirname, int len)
 	if (pos >= 0)
 		return 1;
 	pos = -pos-1;
-	if (pos >= active_nr)
+	if (pos >= active_nr) /* can't */
 		return 0;
-	if (strncmp(active_cache[pos]->name, dirname, len))
-		return 0;
-	return active_cache[pos]->name[len] == '/';
+	return !strncmp(active_cache[pos]->name, dirname, len);
 }
 
 /*
@@ -294,11 +292,10 @@ static void read_directory(const char *path, const char *base, int baselen)
 					continue;
 				/* fallthrough */
 			case DT_DIR:
-				if (show_other_directories) {
-					if (!dir_exists(fullname, baselen + len))
-						break;
-				}
 				memcpy(fullname + baselen + len, "/", 2);
+				if (show_other_directories &&
+				    !dir_exists(fullname, baselen + len + 1))
+					break;
 				read_directory(fullname, fullname,
 					       baselen + len + 1);
 				continue;
