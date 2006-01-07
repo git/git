@@ -83,11 +83,11 @@ report "Changed but not updated" "use git-update-index to mark for commit"
 
 if test -f "$GIT_DIR/info/exclude"
 then
-    git-ls-files -z --others \
+    git-ls-files -z --others --directory \
 	--exclude-from="$GIT_DIR/info/exclude" \
         --exclude-per-directory=.gitignore
 else
-    git-ls-files -z --others \
+    git-ls-files -z --others --directory \
         --exclude-per-directory=.gitignore
 fi |
 perl -e '$/ = "\0";
