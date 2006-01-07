@@ -293,11 +293,12 @@ static void read_directory(const char *path, const char *base, int baselen)
 				/* fallthrough */
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
+				len++;
 				if (show_other_directories &&
-				    !dir_exists(fullname, baselen + len + 1))
+				    !dir_exists(fullname, baselen + len))
 					break;
 				read_directory(fullname, fullname,
-					       baselen + len + 1);
+					       baselen + len);
 				continue;
 			case DT_REG:
 			case DT_LNK:
