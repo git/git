@@ -46,7 +46,10 @@ maint | master)
 	ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/. &&
 	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
 	{
+		# I do not know how it exits, and I do not care much.
 		/usr/local/bin/yummy $G/RPMS/i386
+		/usr/local/bin/yummy $G/RPMS/SRPMS
+		:
 	} &&
 	rm -fr ./:rpm.log &&
 	make clean &&
