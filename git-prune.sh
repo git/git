@@ -33,8 +33,7 @@ sed -ne '/unreachable /{
 
 git-prune-packed $dryrun
 
-redundant=$(git-pack-redundant --all)
-if test "" != "$redundant"
+if redundant=$(git-pack-redundant --all 2>/dev/null) && test "" != "$redundant"
 then
 	if test "" = "$dryrun"
 	then
