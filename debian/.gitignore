@@ -1,6 +1,0 @@
-git-core
-git-tk
-*.debhelper
-*.substvars
-build-stamp
-files
