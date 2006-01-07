@@ -10,15 +10,23 @@
 	fetches is a descendant of `<lbranch>`.  This option
 	overrides that check.
 
+\--no-tags::
+	By default, `git-fetch` fetches tags that point at
+	objects that are downloaded from the remote repository
+	and stores them locally.  This option disables this
+	automatic tag following.
+
 -t, \--tags::
-	By default, the git core utilities will not fetch and store
-	tags under the same name as the remote repository;  ask it
-	to do so using `--tags`.  Using this option will bound the
-	list of objects pulled to the remote tags.  Commits in branches
-	beyond the tags will be ignored.
+	Most of the tags are fetched automatically as branch
+	heads are downloaded, but tags that do not point at
+	objects reachable from the branch heads that are being
+	tracked will not be fetched by this mechanism.  This
+	flag lets all tags and their associated objects be
+	downloaded.
 
 -u, \--update-head-ok::
 	By default `git-fetch` refuses to update the head which
 	corresponds to the current branch.  This flag disables the
 	check.  Note that fetching into the current branch will not
 	update the index and working directory, so use it with care.
+
