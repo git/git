@@ -1,5 +1,5 @@
-#include "blob.h"
 #include "cache.h"
+#include "blob.h"
 #include <stdlib.h>
 
 const char *blob_type = "blob";

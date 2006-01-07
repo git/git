@@ -24,7 +24,7 @@ struct command {
 	unsigned char updated;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
-	char ref_name[0];
+	char ref_name[FLEX_ARRAY]; /* more */
 };
 
 static struct command *commands = NULL;

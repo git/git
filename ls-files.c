@@ -208,7 +208,7 @@ static int excluded(const char *pathname)
 
 struct nond_on_fs {
 	int len;
-	char name[0];
+	char name[FLEX_ARRAY]; /* more */
 };
 
 static struct nond_on_fs **dir;

@@ -1,6 +1,14 @@
 #ifndef GIT_COMPAT_UTIL_H
 #define GIT_COMPAT_UTIL_H
 
+#ifndef FLEX_ARRAY
+#if defined(__GNUC__) && (__GNUC__ < 3)
+#define FLEX_ARRAY 0
+#else
+#define FLEX_ARRAY /* empty */
+#endif
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>

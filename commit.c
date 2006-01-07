@@ -1,6 +1,6 @@
+#include "cache.h"
 #include "tag.h"
 #include "commit.h"
-#include "cache.h"
 
 int save_commit_buffer = 1;
 
