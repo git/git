@@ -169,8 +169,11 @@ int main(int argc, const char **argv)
 		if ( !f )
 			die ("cannot open mbox %s", file);
 
-		if (fgets(buf, sizeof(buf), f) == NULL)
+		if (fgets(buf, sizeof(buf), f) == NULL) {
+			if (f == stdin)
+				break; /* empty stdin is OK */
 			die("cannot read mbox %s", file);
+		}
 
 		while (!file_done) {
 			sprintf(name, "%s/%0*d", dir, nr_prec, ++nr);

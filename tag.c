@@ -1,5 +1,5 @@
-#include "tag.h"
 #include "cache.h"
+#include "tag.h"
 
 const char *tag_type = "tag";
 

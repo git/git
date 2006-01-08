@@ -93,6 +93,7 @@ revert)
 cherry-pick)
 	pick_author_script='
 	/^author /{
+		s/'\''/'\''\\'\'\''/g
 		h
 		s/^author \([^<]*\) <[^>]*> .*$/\1/
 		s/'\''/'\''\'\'\''/g

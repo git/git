@@ -649,6 +649,7 @@ my $commit = sub {
 	        my($xtag) = $tag;
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
+		$xtag =~ s/[\/]/$opt_s/g;
 		
 		my $pid = open2($in, $out, 'git-mktag');
 		print $out "object $cid\n".

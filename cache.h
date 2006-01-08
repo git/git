@@ -81,7 +81,7 @@ struct cache_entry {
 	unsigned int ce_size;
 	unsigned char sha1[20];
 	unsigned short ce_flags;
-	char name[0];
+	char name[FLEX_ARRAY]; /* more */
 };
 
 #define CE_NAMEMASK  (0x0fff)
@@ -257,7 +257,7 @@ extern int checkout_entry(struct cache_entry *ce, struct checkout *state);
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
 	char *name;
-	char base[0]; /* more */
+	char base[FLEX_ARRAY]; /* more */
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
 
@@ -271,7 +271,8 @@ extern struct packed_git {
 	unsigned int pack_use_cnt;
 	int pack_local;
 	unsigned char sha1[20];
-	char pack_name[0]; /* something like ".git/objects/pack/xxxxx.pack" */
+	/* something like ".git/objects/pack/xxxxx.pack" */
+	char pack_name[FLEX_ARRAY]; /* more */
 } *packed_git;
 
 struct pack_entry {
@@ -286,7 +287,7 @@ struct ref {
 	unsigned char new_sha1[20];
 	unsigned char force;
 	struct ref *peer_ref; /* when renaming */
-	char name[0];
+	char name[FLEX_ARRAY]; /* more */
 };
 
 extern int git_connect(int fd[2], char *url, const char *prog);

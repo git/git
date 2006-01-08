@@ -9,8 +9,10 @@ one file per patch, for e-mail submission.  Each output file is
 numbered sequentially from 1, and uses the first line of the commit
 message (massaged for pathname safety) as the filename.
 
-When -o is specified, output files are created in that directory; otherwise in
-the current working directory.
+There are three output modes.  By default, output files are created in
+the current working directory; when -o is specified, they are created
+in that directory instead; when --stdout is specified, they are spit
+on standard output, and can be piped to git-am.
 
 When -n is specified, instead of "[PATCH] Subject", the first line is formatted
 as "[PATCH N/M] Subject", unless you have only one patch.
