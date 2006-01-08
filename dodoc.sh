@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # This script is called from the post-update hook, and when
-# the master branch is updated, run in $HOME/doc-git, like
+# the master branch is updated, run in $HOME/git-doc, like
 # this:
 : <<\END_OF_COMMENTARY
 
@@ -17,7 +17,7 @@ $ chmod +x hooks/post-update
 
 END_OF_COMMENTARY
 
-# $HOME/doc-git is a clone of the git.git repository and
+# $HOME/git-doc is a clone of the git.git repository and
 # has the master branch checkd out.  We update the working
 # tree and build pre-formatted documentation pages, install
 # in doc-htmlpages and doc-manapges subdirectory here.
@@ -44,9 +44,9 @@ test -d doc-htmlpages || (
 	cd doc-htmlpages &&
 	git init-db || exit $?
 
-	if ID=$(git fetch-pack "$MASTERREPO" html)
+	if SID=$(git fetch-pack "$MASTERREPO" html)
 	then
-		git update-ref HEAD `expr "$ID" : '\(.*\) .*'` &&
+		git update-ref HEAD `expr "$SID" : '\(.*\) .*'` &&
 		git checkout || exit $?
 	fi
 )
@@ -55,9 +55,9 @@ test -d doc-manpages || (
 	cd doc-manpages &&
 	git init-db || exit $?
 
-	if ID=$(git fetch-pack "$MASTERREPO" man)
+	if SID=$(git fetch-pack "$MASTERREPO" man)
 	then
-		git update-ref HEAD `expr "$ID" : '\(.*\) .*'` &&
+		git update-ref HEAD `expr "$SID" : '\(.*\) .*'` &&
 		git checkout || exit $?
 	fi
 )
