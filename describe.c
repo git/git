@@ -124,9 +124,10 @@ static void describe(struct commit *cmit)
 		if (n) {
 			printf("%s-g%s\n", n->path,
 			       find_unique_abbrev(cmit->object.sha1, abbrev));
-			return;
+			break;
 		}
 	}
+	clear_commit_marks(cmit, SEEN);
 }
 
 int main(int argc, char **argv)

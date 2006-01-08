@@ -352,6 +352,19 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 	return ret;
 }
 
+void clear_commit_marks(struct commit *commit, unsigned int mark)
+{
+	struct commit_list *parents;
+
+	parents = commit->parents;
+	commit->object.flags &= ~mark;
+	while (parents) {
+		if (parents->item && parents->item->object.parsed)
+			clear_commit_marks(parents->item, mark);
+		parents = parents->next;
+	}
+}
+
 /*
  * Generic support for pretty-printing the header
  */

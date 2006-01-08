@@ -58,6 +58,8 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 
 struct commit *pop_commit(struct commit_list **stack);
 
+void clear_commit_marks(struct commit *commit, unsigned int mark);
+
 int count_parents(struct commit * commit);
 
 /*
