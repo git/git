@@ -3,17 +3,17 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[-v] <upstream> [<head>]'
+USAGE='[-v] <upstream> [<head>] [<limit>]'
 LONG_USAGE='             __*__*__*__*__> <upstream>
             /
   fork-point
             \__+__+__+__+__+__+__+__> <head>
 
-Each commit between the fork-point and <head> is examined, and
-compared against the change each commit between the fork-point and
-<upstream> introduces.  If the change seems to be in the upstream,
-it is shown on the standard output with prefix "+".  Otherwise
-it is shown with prefix "-".'
+Each commit between the fork-point (or <limit> if given) and <head> is
+examined, and compared against the change each commit between the
+fork-point and <upstream> introduces.  If the change seems to be in
+the upstream, it is shown on the standard output with prefix "+".
+Otherwise it is shown with prefix "-".'
 . git-sh-setup
 
 case "$1" in -v) verbose=t; shift ;; esac 
@@ -28,9 +28,15 @@ esac
 case "$#" in
 1) upstream=`git-rev-parse --verify "$1"` &&
    ours=`git-rev-parse --verify HEAD` || exit
+   limit="$upstream"
    ;;
 2) upstream=`git-rev-parse --verify "$1"` &&
    ours=`git-rev-parse --verify "$2"` || exit
+   limit="$upstream"
+   ;;
+3) upstream=`git-rev-parse --verify "$1"` &&
+   ours=`git-rev-parse --verify "$2"` &&
+   limit=`git-rev-parse --verify "$3"` || exit
    ;;
 *) usage ;;
 esac
@@ -38,7 +44,7 @@ esac
 # Note that these list commits in reverse order;
 # not that the order in inup matters...
 inup=`git-rev-list ^$ours $upstream` &&
-ours=`git-rev-list $ours ^$upstream` || exit
+ours=`git-rev-list $ours ^$limit` || exit
 
 tmp=.cherry-tmp$$
 patch=$tmp-patch
