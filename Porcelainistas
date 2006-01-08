@@ -54,3 +54,10 @@ if anybody wants to have a look. My first goal is to get object access
 working sanely (because that's what I need for my Python project).
 
 I haven't merged up for some time, though.
+
+From:	Darrin Thompson <darrint@progeny.com>
+Date:	Wed, 04 Jan 2006 13:51:32 -0500
+Message-Id: <1136400692.5919.11.camel@localhost.localdomain>
+
+I'd like to make this friendly behavior [ls-files -o not showing
+contents of untracked directory] the default in my porcelain.
