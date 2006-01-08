@@ -16,9 +16,9 @@ do
 		echo "* $branch" &&
 		git checkout $branch || break
 		{
-		    make $J $nstall &&
-		    make test &&
-		    make clean
+		    Meta/Make $J $nstall &&
+		    Meta/Make test &&
+		    Meta/Make clean
 		} >./:$branch.log &&
 		nstall=all || exit $?
 	else
