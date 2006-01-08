@@ -1,8 +1,8 @@
+#include "cache.h"
 #include "object.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
-#include "cache.h"
 #include "tag.h"
 
 struct object **objs;

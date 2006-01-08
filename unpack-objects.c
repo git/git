@@ -269,6 +269,8 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
+	quiet = !isatty(2);
+
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 

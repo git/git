@@ -496,12 +496,6 @@ dist: git.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
-deb: dist
-	rm -rf $(GIT_TARNAME)
-	$(TAR) zxf $(GIT_TARNAME).tar.gz
-	dpkg-source -b $(GIT_TARNAME)
-	cd $(GIT_TARNAME) && fakeroot debian/rules binary
-
 ### Cleaning rules
 
 clean:
@@ -511,8 +505,6 @@ clean:
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
-	rm -f git-core_$(GIT_VERSION)-*.dsc
-	rm -f git-*_$(GIT_VERSION)-*.deb
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

@@ -18,7 +18,7 @@ static int names = 0, allocs = 0;
 static struct commit_name {
 	const struct commit *commit;
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
-	char path[];
+	char path[FLEX_ARRAY]; /* more */
 } **name_array = NULL;
 
 static struct commit_name *match(struct commit *cmit)

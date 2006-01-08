@@ -74,7 +74,7 @@ test_debug 'show_files $tree3'
 test_expect_success \
     'read previously written tree and checkout.' \
     'git-read-tree $tree2 && git-checkout-index -f -a'
-test_debug show_files $tree2
+test_debug 'show_files $tree2'
 
 test_expect_success \
     'checking out conflicting path with -f' \

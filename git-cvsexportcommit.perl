@@ -103,8 +103,16 @@ undef @files; # don't need it anymore
 
 # check that the files are clean and up to date according to cvs
 my $dirty;
-foreach my $f (@afiles, @mfiles, @dfiles) {
-    # TODO:we need to handle removed in cvs and/or new (from git) 
+foreach my $f (@afiles) {
+    my $status = `cvs -q status "$f" | grep '^File: '`;
+
+    unless ($status =~ m/Status: Unknown$/) {
+	$dirty = 1;
+	warn "File $f is already known in your CVS checkout!\n";
+    }
+}
+foreach my $f (@mfiles, @dfiles) {
+    # TODO:we need to handle removed in cvs
     my $status = `cvs -q status "$f" | grep '^File: '`;
 
     unless ($status =~ m/Status: Up-to-date$/) {

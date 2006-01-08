@@ -9,7 +9,7 @@ struct object_list {
 
 struct object_refs {
 	unsigned count;
-	struct object *ref[0];
+	struct object *ref[FLEX_ARRAY]; /* more */
 };
 
 struct object {

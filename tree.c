@@ -1,8 +1,8 @@
+#include "cache.h"
 #include "tree.h"
 #include "blob.h"
 #include "commit.h"
 #include "tag.h"
-#include "cache.h"
 #include <stdlib.h>
 
 const char *tree_type = "tree";
