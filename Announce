@@ -1,0 +1,39 @@
+#!/bin/sh
+# Announcement message skelton
+#
+branch=${1?branch}
+previous=${2?previous}
+
+relname=$(git describe "$branch") &&
+vername=$(expr "$relname" : 'v\(.*\)') || exit $?
+
+git rev-parse --verify "$previous" >/dev/null || exit $?
+
+case "$branch" in
+maint)
+	kind="maintenance" ;;
+master)
+	kind="feature" ;;
+esac
+
+cat <<EOF
+The latest $kind release GIT $vername is available at the usual places:
+
+	http://www.kernel.org/pub/software/scm/git/
+
+	git-$vername.tar.{gz,bz2}			(tarball)
+	RPMS/\$arch/git-*-$vername-1.\$arch.rpm	(RPM)
+
+
+BLURB HERE
+BLURB HERE
+BLURB HERE
+
+----------------------------------------------------------------
+
+Changes since $previous are as follows:
+
+EOF
+
+git log --no-merges "$previous".."$branch" | git shortlog
+
