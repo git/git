@@ -76,7 +76,7 @@ Technical (milder)
 ------------------
 
 * send-pack/receive-pack protocol updates, to allow the receiver
-  to report what it did to the ref update requests.
+  to report what it did to the ref update requests [DONE].
 
 * Perhaps a smarter HTTP anonymous download via CGI.
 
@@ -97,9 +97,7 @@ Technical (milder)
   ls-tree might be easier to use if it matched diff, not
   ls-files.
 
-  [We should not do this, or do this carefully, if we were to
-  merge the "git-checkout (--|<tree>) <path> work from
-  subdirectory" patch.]
+  [DONE, with --full-name option like ls-files]
 
 * Any Porcelain-ish we forgot or punted to make usable from
   subdirectory?  I think the last pass caught everything and
@@ -131,15 +129,22 @@ Technical (milder)
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
+* Daemon --base-path does not apply automatically to whitelist
+  somehow feels wrong.  If somebody cares enough, accept
+  patches.
+
 
 Technical (trivial)
 -------------------
 
+* Daemon --base-path forbidding user-path automatically feels
+  wrong.  If somebody cares enough, accept patches.
+
 * Versioning scheme.  The next maintenance installment will be
-  1.0.3 not 1.0.0c.  The next feature release would be 1.1.0.
+  1.0.3 not 1.0.0c.  The next feature release would be 1.1.0 [DONE].
 
 * Either drop supporting Debian myself or coerce patches out of
-  the official maintainer.
+  the official maintainer [DONE -- DROPPED].
 
 * We would want test scripts for the relative directory path
   stuff Linus has been working on.  Most of the C-level
