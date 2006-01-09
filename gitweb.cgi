@@ -396,6 +396,23 @@ sub git_get_type {
 	return $type;
 }
 
+sub git_read_head {
+	my $project = shift;
+	my $oENV = $ENV{'GIT_DIR'};
+	my $retval = undef;
+	$ENV{'GIT_DIR'} = "$projectroot/$project";
+	if (open my $fd, "-|", "$gitbin/git-rev-parse", "--verify", "HEAD") {
+		my $head = <$fd>;
+		close $fd;
+		chomp $head;
+		if ($head =~ m/^[0-9a-fA-F]{40}$/) {
+			$retval = $head;
+		}
+	}
+	$ENV{'GIT_DIR'} = $oENV;
+	return $retval;
+}
+
 sub git_read_hash {
 	my $path = shift;
 
@@ -823,7 +840,7 @@ sub git_project_list {
 		die_error(undef, "No project found.");
 	}
 	foreach my $pr (@list) {
-		my $head = git_read_hash("$pr->{'path'}/HEAD");
+		my $head = git_read_head($pr->{'path'});
 		if (!defined $head) {
 			next;
 		}
@@ -994,7 +1011,7 @@ sub git_read_refs {
 
 sub git_summary {
 	my $descr = git_read_description($project) || "none";
-	my $head = git_read_hash("$project/HEAD");
+	my $head = git_read_head($project);
 	my %co = git_read_commit($head);
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
 
@@ -1034,7 +1051,7 @@ sub git_summary {
 	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
 	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n" .
 	      "</table>\n";
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=17 " . git_read_hash("$project/HEAD") or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$gitbin/git-rev-list --max-count=17 " . git_read_head($project) or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
@@ -1172,7 +1189,7 @@ sub git_summary {
 }
 
 sub git_tag {
-	my $head = git_read_hash("$project/HEAD");
+	my $head = git_read_head($project);
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
@@ -1211,7 +1228,7 @@ sub git_tag {
 }
 
 sub git_tags {
-	my $head = git_read_hash("$project/HEAD");
+	my $head = git_read_head($project);
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
@@ -1270,7 +1287,7 @@ sub git_tags {
 }
 
 sub git_heads {
-	my $head = git_read_hash("$project/HEAD");
+	my $head = git_read_head($project);
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
@@ -1343,7 +1360,7 @@ sub git_get_hash_by_path {
 
 sub git_blob {
 	if (!defined $hash && defined $file_name) {
-		my $base = $hash_base || git_read_hash("$project/HEAD");
+		my $base = $hash_base || git_read_head($project);
 		$hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
 	}
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
@@ -1407,13 +1424,13 @@ sub git_blob_plain {
 
 sub git_tree {
 	if (!defined $hash) {
-		$hash = git_read_hash("$project/HEAD");
+		$hash = git_read_head($project);
 		if (defined $file_name) {
-			my $base = $hash_base || git_read_hash("$project/HEAD");
+			my $base = $hash_base || $hash;
 			$hash = git_get_hash_by_path($base, $file_name, "tree");
 		}
 		if (!defined $hash_base) {
-			$hash_base = git_read_hash("$project/HEAD");
+			$hash_base = $hash;
 		}
 	}
 	$/ = "\0";
@@ -1497,7 +1514,7 @@ sub git_tree {
 
 sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=150 " . git_read_hash("$project/HEAD") or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$gitbin/git-rev-list --max-count=150 " . git_read_head($project) or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading rev-list failed.");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
@@ -1566,7 +1583,7 @@ sub git_opml {
 
 	foreach my $pr (@list) {
 		my %proj = %$pr;
-		my $head = git_read_hash("$proj{'path'}/HEAD");
+		my $head = git_read_head($proj{'path'});
 		if (!defined $head) {
 			next;
 		}
@@ -1587,7 +1604,7 @@ sub git_opml {
 }
 
 sub git_log {
-	my $head = git_read_hash("$project/HEAD");
+	my $head = git_read_head($project);
 	if (!defined $hash) {
 		$hash = $head;
 	}
@@ -2083,7 +2100,7 @@ sub git_commitdiff_plain {
 
 sub git_history {
 	if (!defined $hash) {
-		$hash = git_read_hash("$project/HEAD");
+		$hash = git_read_head($project);
 	}
 	my %co = git_read_commit($hash);
 	if (!%co) {
@@ -2159,7 +2176,7 @@ sub git_search {
 		die_error("", "Text field empty.");
 	}
 	if (!defined $hash) {
-		$hash = git_read_hash("$project/HEAD");
+		$hash = git_read_head($project);
 	}
 	my %co = git_read_commit($hash);
 	if (!%co) {
@@ -2300,7 +2317,7 @@ sub git_search {
 }
 
 sub git_shortlog {
-	my $head = git_read_hash("$project/HEAD");
+	my $head = git_read_head($project);
 	if (!defined $hash) {
 		$hash = $head;
 	}
