@@ -10,6 +10,15 @@ VN=$(cat version) ||
 VN="$DEF_VER"
 
 VN=$(expr "$VN" : v*'\(.*\)')
+
+dirty=$(sh -c 'git-diff-index --name-only HEAD' 2>/dev/null) || dirty=
+case "$dirty" in
+'')
+	;;
+*)
+	VN="$VN-dirty" ;;
+esac
+
 if test -r $GVF
 then
 	VC=$(sed -e 's/^GIT_VERSION = //' <$GVF)
