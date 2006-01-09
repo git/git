@@ -7,6 +7,10 @@
 static const char show_branch_usage[] =
 "git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
 
+static int default_num = 0;
+static int default_alloc = 0;
+static char **default_arg = NULL;
+
 #define UNINTERESTING	01
 
 #define REV_SHIFT	 2
@@ -508,6 +512,21 @@ static void append_one_rev(const char *av)
 	die("bad sha1 reference %s", av);
 }
 
+static int git_show_branch_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "showbranch.default")) {
+		if (default_alloc <= default_num + 1) {
+			default_alloc = default_alloc * 3 / 2 + 20;
+			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);
+		}
+		default_arg[default_num++] = strdup(value);
+		default_arg[default_num] = NULL;
+		return 0;
+	}
+
+	return git_default_config(var, value);
+}
+
 int main(int ac, char **av)
 {
 	struct commit *rev[MAX_REVS], *commit;
@@ -527,11 +546,22 @@ int main(int ac, char **av)
 	int shown_merge_point = 0;
 	int topo_order = 0;
 
+	git_config(git_show_branch_config);
 	setup_git_directory();
+
+	/* If nothing is specified, try the default first */
+	if (ac == 1 && default_num) {
+		ac = default_num + 1;
+		av = default_arg - 1; /* ick; we would not address av[0] */
+	}
 
 	while (1 < ac && av[1][0] == '-') {
 		char *arg = av[1];
-		if (!strcmp(arg, "--all"))
+		if (!strcmp(arg, "--")) {
+			ac--; av++;
+			break;
+		}
+		else if (!strcmp(arg, "--all"))
 			all_heads = all_tags = 1;
 		else if (!strcmp(arg, "--heads"))
 			all_heads = 1;
