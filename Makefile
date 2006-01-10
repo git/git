@@ -489,7 +489,9 @@ dist: git.spec git-tar-tree
 	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
 	@cp git.spec $(GIT_TARNAME)
-	$(TAR) rf $(GIT_TARNAME).tar $(GIT_TARNAME)/git.spec
+	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
+	$(TAR) rf $(GIT_TARNAME).tar \
+		$(GIT_TARNAME)/git.spec $(GIT_TARNAME)/version
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
