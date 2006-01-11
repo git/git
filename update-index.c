@@ -534,10 +534,17 @@ int main(int argc, const char **argv)
 		struct strbuf buf;
 		strbuf_init(&buf);
 		while (1) {
+			char *path_name;
 			read_line(&buf, stdin, line_termination);
 			if (buf.eof)
 				break;
-			update_one(buf.buf, prefix, prefix_length);
+			if (line_termination && buf.buf[0] == '"')
+				path_name = unquote_c_style(buf.buf, NULL);
+			else
+				path_name = buf.buf;
+			update_one(path_name, prefix, prefix_length);
+			if (path_name != buf.buf)
+				free(path_name);
 		}
 	}
 	if (active_cache_changed) {
