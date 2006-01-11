@@ -98,11 +98,19 @@ static int compare_names(const void *_a, const void *_b)
 	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
 }
 
-static void describe(struct commit *cmit)
+static void describe(char *arg)
 {
+	unsigned char sha1[20];
+	struct commit *cmit;
 	struct commit_list *list;
 	static int initialized = 0;
 	struct commit_name *n;
+
+	if (get_sha1(arg, sha1) < 0)
+		usage(describe_usage);
+	cmit = lookup_commit_reference(sha1);
+	if (!cmit)
+		usage(describe_usage);
 
 	if (!initialized) {
 		initialized = 1;
@@ -136,29 +144,27 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		unsigned char sha1[20];
-		struct commit *cmit;
 
-		if (!strcmp(arg, "--all")) {
+		if (*arg != '-')
+			break;
+		else if (!strcmp(arg, "--all"))
 			all = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--tags")) {
+		else if (!strcmp(arg, "--tags"))
 			tags = 1;
-			continue;
-		}
-		if (!strncmp(arg, "--abbrev=", 9)) {
+		else if (!strncmp(arg, "--abbrev=", 9)) {
 			abbrev = strtoul(arg + 9, NULL, 10);
 			if (abbrev < 4 || 40 <= abbrev)
 				abbrev = DEFAULT_ABBREV;
-			continue;
 		}
-		if (get_sha1(arg, sha1) < 0)
+		else
 			usage(describe_usage);
-		cmit = lookup_commit_reference(sha1);
-		if (!cmit)
-			usage(describe_usage);
-		describe(cmit);
 	}
+
+	if (i == argc)
+		describe("HEAD");
+	else
+		while (i < argc)
+			describe(argv[i++]);
+
 	return 0;
 }
