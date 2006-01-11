@@ -118,8 +118,8 @@ cat > show-branch.expect << EOF
 * [master] Merged "mybranch" changes.
  ! [mybranch] Some work.
 --
-+  [master] Merged "mybranch" changes.
-++ [mybranch] Some work.
+-  [master] Merged "mybranch" changes.
+*+ [mybranch] Some work.
 EOF
 
 git show-branch --topo-order master mybranch > show-branch.output
@@ -142,7 +142,7 @@ cat > show-branch2.expect << EOF
 ! [master] Merged "mybranch" changes.
  * [mybranch] Merged "mybranch" changes.
 --
-++ [master] Merged "mybranch" changes.
+-- [master] Merged "mybranch" changes.
 EOF
 
 git show-branch --topo-order master mybranch > show-branch2.output

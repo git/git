@@ -81,13 +81,14 @@ OUTPUT
 ------
 Given N <references>, the first N lines are the one-line
 description from their commit message.  The branch head that is
-pointed at by $GIT_DIR/HEAD is prefixed with an asterisk '*'
-character while other heads are prefixed with a '!' character.
+pointed at by $GIT_DIR/HEAD is prefixed with an asterisk `*`
+character while other heads are prefixed with a `!` character.
 
 Following these N lines, one-line log for each commit is
 displayed, indented N places.  If a commit is on the I-th
-branch, the I-th indentation character shows a '+' sign;
-otherwise it shows a space.  Each commit shows a short name that
+branch, the I-th indentation character shows a `+` sign;
+otherwise it shows a space.  Merge commits are denoted by
+a `-` sign.  Each commit shows a short name that
 can be used as an extended SHA1 to name that commit.
 
 The following example shows three branches, "master", "fixes"
@@ -95,7 +96,7 @@ and "mhf":
 
 ------------------------------------------------
 $ git show-branch master fixes mhf
-! [master] Add 'git show-branch'.
+* [master] Add 'git show-branch'.
  ! [fixes] Introduce "reset type" flag to "git reset"
   ! [mhf] Allow "+remote:local" refspec to cause --force when fetching.
 ---
@@ -109,13 +110,13 @@ $ git show-branch master fixes mhf
   + [mhf~6] Retire git-parse-remote.
   + [mhf~7] Multi-head fetch.
   + [mhf~8] Start adding the $GIT_DIR/remotes/ support.
-+++ [master] Add 'git show-branch'.
+*++ [master] Add 'git show-branch'.
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
 whose commit message is "Add 'git show-branch'.  "fixes" branch
 adds one commit 'Introduce "reset type"'.  "mhf" branch has many
-other commits.
+other commits.  The current branch is "master".
 
 
 EXAMPLE

@@ -968,8 +968,8 @@ $ git show-branch master mybranch
 * [master] Merge work in mybranch
  ! [mybranch] Some work.
 --
-+  [master] Merge work in mybranch
-++ [mybranch] Some work.
+-  [master] Merge work in mybranch
+*+ [mybranch] Some work.
 ------------------------------------------------
 
 The first two lines indicate that it is showing the two branches
@@ -979,7 +979,8 @@ top-of-the-tree commits, you are currently on `master` branch
 the later output lines is used to show commits contained in the
 `master` branch, and the second column for the `mybranch`
 branch. Three commits are shown along with their log messages.
-All of them have plus `+` characters in the first column, which
+All of them have non blank characters in the first column (`*`
+shows an ordinary commit on the current branch, `.` is a merge commit), which
 means they are now part of the `master` branch. Only the "Some
 work" commit has the plus `+` character in the second column,
 because `mybranch` has not been merged to incorporate these
@@ -1024,7 +1025,7 @@ $ git show-branch master mybranch
 ! [master] Merge work in mybranch
  * [mybranch] Merge work in mybranch
 --
-++ [master] Merge work in mybranch
+-- [master] Merge work in mybranch
 ------------------------------------------------
 
 
@@ -1199,9 +1200,9 @@ $ git show-branch --more=3 master mybranch
 ! [master] Merge work in mybranch
  * [mybranch] Merge work in mybranch
 --
-++ [master] Merge work in mybranch
-++ [master^2] Some work.
-++ [master^] Some fun.
+-- [master] Merge work in mybranch
++* [master^2] Some work.
++* [master^] Some fun.
 ------------
 
 Remember, before running `git merge`, our `master` head was at
@@ -1223,8 +1224,8 @@ $ git show-branch
  ! [mybranch] Some work.
 --
  + [mybranch] Some work.
-+  [master] Some fun.
-++ [mybranch^] New day.
+*  [master] Some fun.
+*+ [mybranch^] New day.
 ------------
 
 Now we are ready to experiment with the merge by hand.
@@ -1743,8 +1744,8 @@ $ git show-branch
  +  [diff-fix] Fix rename detection.
  +  [diff-fix~1] Better common substring algorithm.
 +   [commit-fix] Fix commit message normalization.
-  + [master] Release candidate #1
-+++ [diff-fix~2] Pretty-print messages.
+  * [master] Release candidate #1
+++* [diff-fix~2] Pretty-print messages.
 ------------
 
 Both fixes are tested well, and at this point, you want to merge
@@ -1764,13 +1765,13 @@ $ git show-branch
  ! [diff-fix] Fix rename detection.
   * [master] Merge fix in commit-fix
 ---
-  + [master] Merge fix in commit-fix
-+ + [commit-fix] Fix commit message normalization.
-  + [master~1] Merge fix in diff-fix
- ++ [diff-fix] Fix rename detection.
- ++ [diff-fix~1] Better common substring algorithm.
-  + [master~2] Release candidate #1
-+++ [master~3] Pretty-print messages.
+  - [master] Merge fix in commit-fix
++ * [commit-fix] Fix commit message normalization.
+  - [master~1] Merge fix in diff-fix
+ +* [diff-fix] Fix rename detection.
+ +* [diff-fix~1] Better common substring algorithm.
+  * [master~2] Release candidate #1
+++* [master~3] Pretty-print messages.
 ------------
 
 However, there is no particular reason to merge in one branch
@@ -1797,12 +1798,12 @@ $ git show-branch
  ! [diff-fix] Fix rename detection.
   * [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
 ---
-  + [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
-+ + [commit-fix] Fix commit message normalization.
- ++ [diff-fix] Fix rename detection.
- ++ [diff-fix~1] Better common substring algorithm.
-  + [master~1] Release candidate #1
-+++ [master~2] Pretty-print messages.
+  - [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
++ * [commit-fix] Fix commit message normalization.
+ +* [diff-fix] Fix rename detection.
+ +* [diff-fix~1] Better common substring algorithm.
+  * [master~1] Release candidate #1
+++* [master~2] Pretty-print messages.
 ------------
 
 Note that you should not do Octopus because you can.  An octopus

@@ -545,6 +545,7 @@ int main(int ac, char **av)
 	int sha1_name = 0;
 	int shown_merge_point = 0;
 	int topo_order = 0;
+	int head_at = -1;
 
 	git_config(git_show_branch_config);
 	setup_git_directory();
@@ -675,6 +676,8 @@ int main(int ac, char **av)
 			}
 			/* header lines never need name */
 			show_one_commit(rev[i], 1);
+			if (is_head)
+				head_at = i;
 		}
 		if (0 <= extra) {
 			for (i = 0; i < num_rev; i++)
@@ -703,9 +706,19 @@ int main(int ac, char **av)
 		shown_merge_point |= ((this_flag & all_revs) == all_revs);
 
 		if (1 < num_rev) {
-			for (i = 0; i < num_rev; i++)
-				putchar((this_flag & (1u << (i + REV_SHIFT)))
-					? '+' : ' ');
+			int is_merge = !!(commit->parents && commit->parents->next);
+			for (i = 0; i < num_rev; i++) {
+				int mark;
+				if (!(this_flag & (1u << (i + REV_SHIFT))))
+					mark = ' ';
+				else if (is_merge)
+					mark = '-';
+				else if (i == head_at)
+					mark = '*';
+				else
+					mark = '+';
+				putchar(mark);
+			}
 			putchar(' ');
 		}
 		show_one_commit(commit, no_name);
