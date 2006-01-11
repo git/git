@@ -22,7 +22,7 @@ case "$#" in
 		do
 			I=$(($I+1))
 			echo -n "$I: "
-			git-show-branch $H
+			git-show-branch --no-current $H
 		done
 		echo -n "Merge which ones (0 to finish)? "
 		read ans
