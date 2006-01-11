@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "quote.h"
+#include "exec_cmd.h"
 
 static int do_generic_cmd(const char *me, char *arg)
 {
@@ -7,12 +8,14 @@ static int do_generic_cmd(const char *me, char *arg)
 
 	if (!arg || !(arg = sq_dequote(arg)))
 		die("bad argument");
+	if (strncmp(me, "git-", 4))
+		die("bad command");
 
-	my_argv[0] = me;
+	my_argv[0] = me + 4;
 	my_argv[1] = arg;
 	my_argv[2] = NULL;
 
-	return execvp(me, (char**) my_argv);
+	return execv_git_cmd((char**) my_argv);
 }
 
 static struct commands {

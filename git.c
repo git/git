@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include "git-compat-util.h"
+#include "exec_cmd.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
@@ -233,13 +234,10 @@ int main(int argc, char **argv, char **envp)
 {
 	char git_command[PATH_MAX + 1];
 	char wd[PATH_MAX + 1];
-	int i, len, show_help = 0;
-	char *exec_path = getenv("GIT_EXEC_PATH");
+	int i, show_help = 0;
+	const char *exec_path;
 
 	getcwd(wd, PATH_MAX);
-
-	if (!exec_path)
-		exec_path = GIT_EXEC_PATH;
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
@@ -256,10 +254,11 @@ int main(int argc, char **argv, char **envp)
 
 		if (!strncmp(arg, "exec-path", 9)) {
 			arg += 9;
-			if (*arg == '=')
+			if (*arg == '=') {
 				exec_path = arg + 1;
-			else {
-				puts(exec_path);
+				git_set_exec_path(exec_path);
+			} else {
+				puts(git_exec_path());
 				exit(0);
 			}
 		}
@@ -275,42 +274,15 @@ int main(int argc, char **argv, char **envp)
 
 	if (i >= argc || show_help) {
 		if (i >= argc)
-			cmd_usage(exec_path, NULL);
+			cmd_usage(git_exec_path(), NULL);
 
 		show_man_page(argv[i]);
 	}
 
-	if (*exec_path != '/') {
-		if (!getcwd(git_command, sizeof(git_command))) {
-			fprintf(stderr,
-				"git: cannot determine current directory\n");
-			exit(1);
-		}
-		len = strlen(git_command);
+	exec_path = git_exec_path();
+	prepend_to_path(exec_path, strlen(exec_path));
 
-		/* Trivial cleanup */
-		while (!strncmp(exec_path, "./", 2)) {
-			exec_path += 2;
-			while (*exec_path == '/')
-				exec_path++;
-		}
-		snprintf(git_command + len, sizeof(git_command) - len,
-			 "/%s", exec_path);
-	}
-	else
-		strcpy(git_command, exec_path);
-	len = strlen(git_command);
-	prepend_to_path(git_command, len);
-
-	len += snprintf(git_command + len, sizeof(git_command) - len,
-			"/git-%s", argv[i]);
-	if (sizeof(git_command) <= len) {
-		fprintf(stderr, "git: command name given is too long.\n");
-		exit(1);
-	}
-
-	/* execve() can only ever return if it fails */
-	execve(git_command, &argv[i], envp);
+	execv_git_cmd(argv + i);
 
 	if (errno == ENOENT)
 		cmd_usage(exec_path, "'%s' is not a git-command", argv[i]);

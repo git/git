@@ -9,6 +9,7 @@
 #include <syslog.h>
 #include "pkt-line.h"
 #include "cache.h"
+#include "exec_cmd.h"
 
 static int log_syslog;
 static int verbose;
@@ -227,7 +228,7 @@ static int upload(char *dir)
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 
 	/* git-upload-pack only ever reads stuff, so this is safe */
-	execlp("git-upload-pack", "git-upload-pack", "--strict", timeout_buf, ".", NULL);
+	execl_git_cmd("upload-pack", "--strict", timeout_buf, ".", NULL);
 	return -1;
 }
 

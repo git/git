@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "exec_cmd.h"
 #include <sys/wait.h>
 
 static int finish_pack(const char *pack_tmp_name, const char *me)
@@ -27,8 +28,7 @@ static int finish_pack(const char *pack_tmp_name, const char *me)
 		dup2(pipe_fd[1], 1);
 		close(pipe_fd[0]);
 		close(pipe_fd[1]);
-		execlp("git-index-pack","git-index-pack",
-		       "-o", idx, pack_tmp_name, NULL);
+		execl_git_cmd("index-pack", "-o", idx, pack_tmp_name, NULL);
 		error("cannot exec git-index-pack <%s> <%s>",
 		      idx, pack_tmp_name);
 		exit(1);
@@ -105,8 +105,7 @@ int receive_unpack_pack(int fd[2], const char *me, int quiet)
 		dup2(fd[0], 0);
 		close(fd[0]);
 		close(fd[1]);
-		execlp("git-unpack-objects", "git-unpack-objects",
-		       quiet ? "-q" : NULL, NULL);
+		execl_git_cmd("unpack-objects", quiet ? "-q" : NULL, NULL);
 		die("git-unpack-objects exec failed");
 	}
 	close(fd[0]);

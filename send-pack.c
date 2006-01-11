@@ -3,6 +3,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "exec_cmd.h"
 
 static const char send_pack_usage[] =
 "git-send-pack [--all] [--exec=git-receive-pack] <remote> [<head>...]\n"
@@ -26,11 +27,11 @@ static int is_zero_sha1(const unsigned char *sha1)
 static void exec_pack_objects(void)
 {
 	static char *args[] = {
-		"git-pack-objects",
+		"pack-objects",
 		"--stdout",
 		NULL
 	};
-	execvp("git-pack-objects", args);
+	execv_git_cmd(args);
 	die("git-pack-objects exec failed (%s)", strerror(errno));
 }
 
@@ -39,7 +40,7 @@ static void exec_rev_list(struct ref *refs)
 	static char *args[1000];
 	int i = 0;
 
-	args[i++] = "git-rev-list";	/* 0 */
+	args[i++] = "rev-list";	/* 0 */
 	args[i++] = "--objects";	/* 1 */
 	while (refs) {
 		char *buf = malloc(100);
@@ -58,7 +59,7 @@ static void exec_rev_list(struct ref *refs)
 		refs = refs->next;
 	}
 	args[i] = NULL;
-	execvp("git-rev-list", args);
+	execv_git_cmd(args);
 	die("git-rev-list exec failed (%s)", strerror(errno));
 }
 

@@ -4,6 +4,7 @@
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
+#include "exec_cmd.h"
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
@@ -60,7 +61,7 @@ static void create_pack_file(void)
 		close(0);
 		close(fd[0]);
 		close(fd[1]);
-		*p++ = "git-rev-list";
+		*p++ = "rev-list";
 		*p++ = "--objects";
 		if (create_full_pack || MAX_NEEDS <= nr_needs)
 			*p++ = "--all";
@@ -79,13 +80,13 @@ static void create_pack_file(void)
 				buf += 41;
 			}
 		*p++ = NULL;
-		execvp("git-rev-list", argv);
+		execv_git_cmd(argv);
 		die("git-upload-pack: unable to exec git-rev-list");
 	}
 	dup2(fd[0], 0);
 	close(fd[0]);
 	close(fd[1]);
-	execlp("git-pack-objects", "git-pack-objects", "--stdout", NULL);
+	execl_git_cmd("pack-objects", "--stdout", NULL);
 	die("git-upload-pack: unable to exec git-pack-objects");
 }
 

@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "run-command.h"
 #include <sys/wait.h>
+#include "exec_cmd.h"
 
 int run_command_v_opt(int argc, char **argv, int flags)
 {
@@ -13,9 +14,13 @@ int run_command_v_opt(int argc, char **argv, int flags)
 			int fd = open("/dev/null", O_RDWR);
 			dup2(fd, 0);
 			dup2(fd, 1);
-			close(fd);			
+			close(fd);
 		}
-		execvp(argv[0], (char *const*) argv);
+		if (flags & RUN_GIT_CMD) {
+			execv_git_cmd(argv);
+		} else {
+			execvp(argv[0], (char *const*) argv);
+		}
 		die("exec %s failed.", argv[0]);
 	}
 	for (;;) {

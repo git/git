@@ -69,6 +69,7 @@ STRIP ?= strip
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
+gitexecdir = $(prefix)/bin
 template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
@@ -142,7 +143,7 @@ PROGRAMS = \
 	git-describe$X
 
 # what 'all' will build and 'install' will install.
-ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS) git$X
+ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -174,7 +175,7 @@ DIFF_OBJS = \
 
 LIB_OBJS = \
 	blob.o commit.o connect.o count-delta.o csum-file.o \
-	date.o diff-delta.o entry.o ident.o index.o \
+	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
@@ -367,7 +368,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS)
+all: $(ALL_PROGRAMS) git$X
 
 all:
 	$(MAKE) -C templates
@@ -376,7 +377,7 @@ strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
 git$X: git.c $(LIB_FILE)
-	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
+	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
@@ -415,6 +416,8 @@ git$X git.spec \
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+
+exec_cmd.o: ALL_CFLAGS += -DGIT_EXEC_PATH=\"$(gitexecdir)\"
 
 git-%$X: %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
@@ -472,7 +475,9 @@ check:
 
 install: all
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(gitexecdir))
 	$(INSTALL) $(ALL_PROGRAMS) $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) git$X $(call shellquote,$(DESTDIR)$(gitexecdir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))

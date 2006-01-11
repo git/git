@@ -6,7 +6,7 @@
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
-static const char unpacker[] = "git-unpack-objects";
+static char *unpacker[] = { "unpack-objects", NULL };
 
 static int report_status = 0;
 
@@ -257,7 +257,7 @@ static void read_head_info(void)
 
 static const char *unpack(int *error_code)
 {
-	int code = run_command(unpacker, NULL);
+	int code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
 
 	*error_code = 0;
 	switch (code) {
