@@ -46,14 +46,14 @@ H=$(doit 8 H $A $F)
 
 test_expect_success 'compute merge-base (single)' \
     'MB=$(git-merge-base G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* B"'
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 test_expect_success 'compute merge-base (all)' \
     'MB=$(git-merge-base --all G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* B"'
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 test_expect_success 'compute merge-base with show-branch' \
     'MB=$(git-show-branch --merge-base G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* B"'
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 test_done
