@@ -18,6 +18,9 @@ and/or $GIT_DIR/refs/tags) semi-visually.
 
 It cannot show more than 29 branches and commits at a time.
 
+It uses `showbranch.default` multi-valued configuration items if
+no <rev> nor <glob> is given on the command line.
+
 
 OPTIONS
 -------
@@ -50,7 +53,7 @@ OPTIONS
 	tree.
 
 --list::
-	Synomym to `--more=-1`
+	Synonym to `--more=-1`
 
 --merge-base::
 	Instead of showing the commit list, just act like the
@@ -113,6 +116,25 @@ These three branches all forked from a common commit, [master],
 whose commit message is "Add 'git show-branch'.  "fixes" branch
 adds one commit 'Introduce "reset type"'.  "mhf" branch has many
 other commits.
+
+
+EXAMPLE
+-------
+
+If you keep your primary branches immediately under
+`$GIT_DIR/refs/heads`, and topic branches in subdirectories of
+it, having the following in the configuration file may help:
+
+------------
+[showbranch]
+	default = --topo-order
+	default = heads/*
+
+------------
+
+With this,`git show-branch` without extra parameters would show
+only the primary branches.
+
 
 
 Author
