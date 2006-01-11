@@ -24,6 +24,9 @@
 	flag lets all tags and their associated objects be
 	downloaded.
 
+-k, \--keep::
+	Keep downloaded pack.
+
 -u, \--update-head-ok::
 	By default `git-fetch` refuses to update the head which
 	corresponds to the current branch.  This flag disables the

@@ -40,6 +40,9 @@ do
 	-v|--verbose)
 		verbose=Yes
 		;;
+	-k|--k|--ke|--kee|--keep)
+		keep=--keep
+		;;
 	-*)
 		usage
 		;;
@@ -309,7 +312,7 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack $keep "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do
