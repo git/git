@@ -12,11 +12,15 @@ git rev-parse --verify "$previous" >/dev/null || exit $?
 case "$branch" in
 maint)
 	kind="maintenance" ;;
+mainto/*)
+	kind="obsolete maintenance" ;;
 master)
 	kind="feature" ;;
 esac
 
-cat <<EOF
+fmt -64 <<EOF
+Subject: [ANNOUNCE] GIT $vername
+
 The latest $kind release GIT $vername is available at the usual places:
 
 	http://www.kernel.org/pub/software/scm/git/
@@ -25,9 +29,7 @@ The latest $kind release GIT $vername is available at the usual places:
 	RPMS/\$arch/git-*-$vername-1.\$arch.rpm	(RPM)
 
 
-BLURB HERE
-BLURB HERE
-BLURB HERE
+BLURB HERE BLURB HERE BLURB HERE
 
 ----------------------------------------------------------------
 

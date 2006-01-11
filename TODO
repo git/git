@@ -140,6 +140,8 @@ Technical (trivial)
 * Daemon --base-path forbidding user-path automatically feels
   wrong.  If somebody cares enough, accept patches.
 
+* git-proxy should be spawned with sh -c 'command' $1 $2.
+
 * Versioning scheme.  The next maintenance installment will be
   1.0.3 not 1.0.0c.  The next feature release would be 1.1.0 [DONE].
 
