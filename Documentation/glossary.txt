@@ -111,6 +111,17 @@ branch::
 	a particular revision, which is called the branch head. The
 	branch heads are stored in `$GIT_DIR/refs/heads/`.
 
+master::
+	The default branch. Whenever you create a git repository, a branch
+	named "master" is created, and becomes the active branch. In most
+	cases, this contains the local development.
+
+origin::
+	The default upstream branch. Most projects have one upstream
+	project which they track, and by default 'origin' is used for
+	that purpose.  New updates from upstream will be fetched into
+	this branch; you should never commit to it yourself.
+
 ref::
 	A 40-byte hex representation of a SHA1 pointing to a particular
 	object. These may be stored in `$GIT_DIR/refs/`.
