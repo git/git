@@ -7,7 +7,10 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [<rev> | <glob>]...'
+[verse]
+git-show-branch [--all] [--heads] [--tags] [--topo-order] [--current]
+	[--more=<n> | --list | --independent | --merge-base]
+	[--no-name | --sha1-name] [<rev> | <glob>]...
 
 DESCRIPTION
 -----------
@@ -37,6 +40,11 @@ OPTIONS
 --all --heads --tags::
 	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
 	and $GIT_DIR/refs/tags, respectively.
+
+--current::
+	With this option, the command includes the current
+	branch to the list of revs to be shown when it is not
+	given on the command line.
 
 --topo-order::
         By default, the branches and their commits are shown in
@@ -134,7 +142,8 @@ it, having the following in the configuration file may help:
 ------------
 
 With this,`git show-branch` without extra parameters would show
-only the primary branches.
+only the primary branches.  In addition, if you happen to be on
+your topic branch, it is shown as well.
 
 
 

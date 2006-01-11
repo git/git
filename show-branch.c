@@ -5,7 +5,7 @@
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
+"git-show-branch [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
 
 static int default_num = 0;
 static int default_alloc = 0;
@@ -435,12 +435,12 @@ static void snarf_refs(int head, int tag)
 	}
 }
 
-static int rev_is_head(char *head_path, int headlen,
-		       char *name,
+static int rev_is_head(char *head_path, int headlen, char *name,
 		       unsigned char *head_sha1, unsigned char *sha1)
 {
 	int namelen;
-	if ((!head_path[0]) || memcmp(head_sha1, sha1, 20))
+	if ((!head_path[0]) ||
+	    (head_sha1 && sha1 && memcmp(head_sha1, sha1, 20)))
 		return 0;
 	namelen = strlen(name);
 	if ((headlen < namelen) ||
@@ -545,6 +545,7 @@ int main(int ac, char **av)
 	int sha1_name = 0;
 	int shown_merge_point = 0;
 	int topo_order = 0;
+	int with_current_branch = 0;
 	int head_at = -1;
 
 	git_config(git_show_branch_config);
@@ -574,6 +575,8 @@ int main(int ac, char **av)
 			extra = -1;
 		else if (!strcmp(arg, "--no-name"))
 			no_name = 1;
+		else if (!strcmp(arg, "--current"))
+			with_current_branch = 1;
 		else if (!strcmp(arg, "--sha1-name"))
 			sha1_name = 1;
 		else if (!strncmp(arg, "--more=", 7))
@@ -603,6 +606,34 @@ int main(int ac, char **av)
 	while (0 < ac) {
 		append_one_rev(*av);
 		ac--; av++;
+	}
+
+	head_path_p = resolve_ref(git_path("HEAD"), head_sha1, 1);
+	if (head_path_p) {
+		head_path_len = strlen(head_path_p);
+		memcpy(head_path, head_path_p, head_path_len + 1);
+	}
+	else {
+		head_path_len = 0;
+		head_path[0] = 0;
+	}
+
+	if (with_current_branch && head_path_p) {
+		int has_head = 0;
+		for (i = 0; !has_head && i < ref_name_cnt; i++) {
+			/* We are only interested in adding the branch
+			 * HEAD points at.
+			 */
+			if (rev_is_head(head_path,
+					head_path_len,
+					ref_name[i],
+					head_sha1, NULL))
+				has_head++;
+		}
+		if (!has_head) {
+			int pfxlen = strlen(git_path("refs/heads/"));
+			append_one_rev(head_path + pfxlen);
+		}
 	}
 
 	if (!ref_name_cnt) {
@@ -639,16 +670,6 @@ int main(int ac, char **av)
 
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
-
-	head_path_p = resolve_ref(git_path("HEAD"), head_sha1, 1);
-	if (head_path_p) {
-		head_path_len = strlen(head_path_p);
-		memcpy(head_path, head_path_p, head_path_len + 1);
-	}
-	else {
-		head_path_len = 0;
-		head_path[0] = 0;
-	}
 
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
