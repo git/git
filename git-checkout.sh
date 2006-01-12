@@ -121,7 +121,33 @@ then
 	git-checkout-index -q -f -u -a
 else
     git-update-index --refresh >/dev/null
-    git-read-tree -m -u $old $new
+    git-read-tree -m -u $old $new || (
+	echo >&2 -n "Try automerge [y/N]? "
+	read yesno
+	case "$yesno" in [yY]*) ;; *) exit 1 ;; esac
+
+	# NEEDSWORK: We may want to reset the index from the $new for
+	# these paths after the automerge happens, but it is not done
+	# yet.  Probably we need to leave unmerged ones alone, and
+	# yank the object name & mode from $new for cleanly merged
+	# paths and stuff them in the index.
+
+	names=`git diff-files --name-only`
+	case "$names" in
+	'')	;;
+	*)
+		echo "$names" | git update-index --remove --stdin ;;
+	esac
+
+	work=`git write-tree` &&
+	git read-tree -m -u $old $work $new || exit
+	if result=`git write-tree 2>/dev/null`
+	then
+	    echo >&2 "Trivially automerged." ;# can this even happen?
+	    exit 0
+	fi
+	git merge-index -o git-merge-one-file -a
+    )
 fi
 
 # 
