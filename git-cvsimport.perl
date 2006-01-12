@@ -29,19 +29,52 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A);
+my (%conv_author_name, %conv_author_email);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
-       [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT]
-       [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz]
-       [-i] [-k] [-u] [-s subst] [-m] [-M regex] [CVS_module]
+       [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
+       [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz] [-i] [-k] [-u]
+       [-s subst] [-m] [-M regex] [CVS_module]
 END
 	exit(1);
 }
 
-getopts("hivmkuo:d:p:C:z:s:M:P:") or usage();
+sub read_author_info($) {
+	my ($file) = @_;
+	my $user;
+	open my $f, '<', "$file" or die("Failed to open $file: $!\n");
+
+	while (<$f>) {
+		chomp;
+		# Expected format is this;
+		#   exon=Andreas Ericsson <ae@op5.se>
+		if (m/^([^ \t=]*)[ \t=]*([^<]*)(<.*$)\s*/) {
+			$user = $1;
+			$conv_author_name{$1} = $2;
+			$conv_author_email{$1} = $3;
+			# strip trailing whitespace from author name
+			$conv_author_name{$1} =~ s/\s*$//;
+		}
+	}
+	close ($f);
+}
+
+sub write_author_info($) {
+	my ($file) = @_;
+	open my $f, '>', $file or
+	  die("Failed to open $file for writing: $!");
+
+	foreach (keys %conv_author_name) {
+		print $f "$_=" . $conv_author_name{$_} .
+		  " " . $conv_author_email{$_} . "\n";
+	}
+	close ($f);
+}
+
+getopts("hivmkuo:d:p:C:z:s:M:P:A:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -453,7 +486,7 @@ CVS2GIT_HEAD exists.
 Make sure your working directory corresponds to HEAD and remove CVS2GIT_HEAD.
 You may need to run
 
-    git-read-tree -m -u CVS2GIT_HEAD HEAD
+    git read-tree -m -u CVS2GIT_HEAD HEAD
 EOM
 	}
 	system('cp', "$git_dir/HEAD", "$git_dir/CVS2GIT_HEAD");
@@ -488,6 +521,14 @@ EOM
 
 -d $git_dir
 	or die "Could not create git subdir ($git_dir).\n";
+
+# now we read (and possibly save) author-info as well
+-f "$git_dir/cvs-authors" and
+  read_author_info("$git_dir/cvs-authors");
+if ($opt_A) {
+	read_author_info($opt_A);
+	write_author_info("$git_dir/cvs-authors");
+}
 
 my $pid = open(CVS,"-|");
 die "Cannot fork: $!\n" unless defined $pid;
@@ -702,6 +743,9 @@ while(<CVS>) {
 		s/\s+$//;
 		if (/^(.*?)\s+<(.*)>/) {
 		    ($author_name, $author_email) = ($1, $2);
+		} elsif ($conv_author_name{$_}) {
+			$author_name = $conv_author_name{$_};
+			$author_email = $conv_author_email{$_};
 		} else {
 		    $author_name = $author_email = $_;
 		}
