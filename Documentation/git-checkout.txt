@@ -7,7 +7,7 @@ git-checkout - Checkout and switch to a branch.
 
 SYNOPSIS
 --------
-'git-checkout' [-f] [-b <new_branch>] [<branch>] [<paths>...]
+'git-checkout' [-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]
 
 DESCRIPTION
 -----------
@@ -34,6 +34,19 @@ OPTIONS
 -b::
 	Create a new branch and start it at <branch>.
 
+-m::
+	If you have local modifications to a file that is
+	different between the current branch and the branch you
+	are switching to, the command refuses to switch
+	branches, to preserve your modifications in context.
+	With this option, a three-way merge between the current
+	branch, your working tree contents, and the new branch
+	is done, and you will be on the new branch.
++
+When a merge conflict happens, the index entries for conflicting
+paths are left unmerged, and you need to resolve the conflicts
+and mark the resolved paths with `git update-index`.
+
 <new_branch>::
 	Name for the new branch.
 
@@ -42,13 +55,13 @@ OPTIONS
 	commit. Defaults to HEAD.
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
-The following sequence checks out the `master` branch, reverts
+. The following sequence checks out the `master` branch, reverts
 the `Makefile` to two revisions back, deletes hello.c by
 mistake, and gets it back from the index.
-
++
 ------------
 $ git checkout master <1>
 $ git checkout master~2 Makefile <2>
@@ -59,13 +72,62 @@ $ git checkout hello.c <3>
 <2> take out a file out of other commit
 <3> or "git checkout -- hello.c", as in the next example.
 ------------
-
++
 If you have an unfortunate branch that is named `hello.c`, the
 last step above would be confused as an instruction to switch to
 that branch.  You should instead write:
-
++
 ------------
 $ git checkout -- hello.c
+------------
+
+. After working in a wrong branch, switching to the correct
+branch you would want to is done with:
++
+------------
+$ git checkout mytopic
+------------
++
+However, your "wrong" branch and correct "mytopic" branch may
+differ in files that you have locally modified, in which case,
+the above checkout would fail like this:
++
+------------
+$ git checkout mytopic
+fatal: Entry 'frotz' not uptodate. Cannot merge.
+------------
++
+You can give the `-m` flag to the command, which would try a
+three-way merge:
++
+------------
+$ git checkout -m mytopic
+Auto-merging frotz
+------------
++
+After this three-way merge, the local modifications are _not_
+registered in your index file, so `git diff` would show you what
+changes you made since the tip of the new branch.
+
+. When a merge conflict happens during switching branches with
+the `-m` option, you would see something like this:
++
+------------
+$ git checkout -m mytopic
+Auto-merging frotz
+merge: warning: conflicts during merge
+ERROR: Merge conflict in frotz
+fatal: merge program failed
+------------
++
+At this point, `git diff` shows the changes cleanly merged as in
+the previous example, as well as the changes in the conflicted
+files.  Edit and resolve the conflict and mark it resolved with
+`git update-index` as usual:
++
+------------
+$ edit frotz
+$ git update-index frotz
 ------------
 
 

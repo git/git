@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[-f] [-b <new_branch>] [<branch>] [<paths>...]'
+USAGE='[-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
 
@@ -9,6 +9,7 @@ new=
 force=
 branch=
 newbranch=
+merge=
 while [ "$#" != "0" ]; do
     arg="$1"
     shift
@@ -25,6 +26,9 @@ while [ "$#" != "0" ]; do
 		;;
 	"-f")
 		force=1
+		;;
+	-m)
+		merge=1
 		;;
 	--)
 		break
@@ -71,7 +75,7 @@ done
 
 if test "$#" -ge 1
 then
-	if test '' != "$newbranch$force"
+	if test '' != "$newbranch$force$merge"
 	then
 		die "updating paths and switching branches or forcing are incompatible."
 	fi
@@ -121,32 +125,44 @@ then
 	git-checkout-index -q -f -u -a
 else
     git-update-index --refresh >/dev/null
-    git-read-tree -m -u $old $new || (
-	echo >&2 -n "Try automerge [y/N]? "
-	read yesno
-	case "$yesno" in [yY]*) ;; *) exit 1 ;; esac
-
-	# NEEDSWORK: We may want to reset the index from the $new for
-	# these paths after the automerge happens, but it is not done
-	# yet.  Probably we need to leave unmerged ones alone, and
-	# yank the object name & mode from $new for cleanly merged
-	# paths and stuff them in the index.
-
-	names=`git diff-files --name-only`
-	case "$names" in
-	'')	;;
-	*)
-		echo "$names" | git update-index --remove --stdin ;;
+    merge_error=$(git-read-tree -m -u $old $new 2>&1) || (
+	case "$merge" in
+	'')
+		echo >&2 "$merge_error"
+		exit 1 ;;
 	esac
 
+	# Match the index to the working tree, and do a three-way.
+    	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
-	git read-tree -m -u $old $work $new || exit
+	git read-tree --reset $new &&
+	git checkout-index -f -u -q -a &&
+	git read-tree -m -u $old $new $work || exit
+
 	if result=`git write-tree 2>/dev/null`
 	then
-	    echo >&2 "Trivially automerged." ;# can this even happen?
-	    exit 0
+	    echo >&2 "Trivially automerged."
+	else
+	    git merge-index -o git-merge-one-file -a
 	fi
-	git merge-index -o git-merge-one-file -a
+
+	# Do not register the cleanly merged paths in the index yet.
+	# this is not a real merge before committing, but just carrying
+	# the working tree changes along.
+	unmerged=`git ls-files -u`
+	git read-tree --reset $new
+	case "$unmerged" in
+	'')	;;
+	*)
+		(
+			z40=0000000000000000000000000000000000000000
+			echo "$unmerged" |
+			sed -e 's/^[0-7]* [0-9a-f]* /'"0 $z40 /"
+			echo "$unmerged"
+		) | git update-index --index-info
+		;;
+	esac
+	exit 0
     )
 fi
 
