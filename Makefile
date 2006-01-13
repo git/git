@@ -114,14 +114,14 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  gitk git-cherry-pick
+	  git-cherry-pick
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
 	git-stripspace$X git-daemon$X
 
-# ... and all the rest
+# ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
 	git-apply$X git-cat-file$X \
 	git-checkout-index$X git-clone-pack$X git-commit-tree$X \
@@ -142,7 +142,7 @@ PROGRAMS = \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X
 
-# what 'all' will build and 'install' will install.
+# what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
 
 # Backward compatibility -- to be removed after 1.0
@@ -368,7 +368,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS) git$X
+all: $(ALL_PROGRAMS) git$X gitk
 
 all:
 	$(MAKE) -C templates
@@ -476,8 +476,8 @@ check:
 install: all
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(gitexecdir))
-	$(INSTALL) $(ALL_PROGRAMS) $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) git$X $(call shellquote,$(DESTDIR)$(gitexecdir))
+	$(INSTALL) $(ALL_PROGRAMS) $(call shellquote,$(DESTDIR)$(gitexecdir))
+	$(INSTALL) git$X gitk $(call shellquote,$(DESTDIR)$(bindir))
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
 	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
@@ -511,8 +511,7 @@ rpm: dist
 
 clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o $(LIB_FILE)
-	rm -f $(PROGRAMS) $(SIMPLE_PROGRAMS) git$X
-	rm -f $(filter-out gitk,$(SCRIPTS))
+	rm -f $(ALL_PROGRAMS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
