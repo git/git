@@ -53,11 +53,8 @@ do
 	common=$(git-merge-base --all $MRC $SHA1) ||
 		die "Unable to find common commit with $SHA1"
 
-	case "$common" in
-	?*"$LF"?*)
-		die "Not trivially mergeable."
-		;;
-	$SHA1)
+	case "$LF$common$LF" in
+	*"$LF$SHA1$LF"*)
 		echo "Already up-to-date with $SHA1"
 		continue
 		;;
@@ -87,8 +84,11 @@ do
 	if test $? -ne 0
 	then
 		echo "Simple merge did not work, trying automatic merge."
-		git-merge-index -o git-merge-one-file -a ||
-		exit 2 ; # Automatic merge failed; should not be doing Octopus
+		git-merge-index -o git-merge-one-file -a || {
+			echo "Not trivially merged."
+			echo "Should not be doing an Octopus."
+			exit 2
+		}
 		next=$(git-write-tree 2>/dev/null)
 	fi
 
