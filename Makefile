@@ -65,6 +65,7 @@ CFLAGS = -g -O2 -Wall
 LDFLAGS =
 ALL_CFLAGS = $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
+STRIP ?= strip
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
@@ -371,6 +372,9 @@ all: $(ALL_PROGRAMS)
 all:
 	$(MAKE) -C templates
 
+strip: $(PROGRAMS) git$X
+	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
+
 git$X: git.c $(LIB_FILE)
 	$(CC) -DGIT_EXEC_PATH='"$(bindir)"' -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
@@ -512,6 +516,6 @@ clean:
 	$(MAKE) -C t/ clean
 	rm -f GIT-VERSION-FILE
 
-.PHONY: all install clean
+.PHONY: all install clean strip
 .PHONY: .FORCE-GIT-VERSION-FILE
 
