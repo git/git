@@ -134,9 +134,9 @@ is often useful.
 +
 Some short-cut notations are also supported.
 +
-* For backward compatibility, `tag` is almost ignored;
-  it just makes the following parameter <tag> to mean a
-  refspec `refs/tags/<tag>:refs/tags/<tag>`.
+* `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`; 
+  used with pull or fetch, it requests fetching everything up to
+  the given tag.
 * A parameter <ref> without a colon is equivalent to
   <ref>: when pulling/fetching, and <ref>`:`<ref> when
   pushing.  That is, do not store it locally if
