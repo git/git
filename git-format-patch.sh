@@ -34,14 +34,12 @@ outdir=./
 while case "$#" in 0) break;; esac
 do
     case "$1" in
-    -a|--a|--au|--aut|--auth|--autho|--author)
-    author=t ;;
     -c|--c|--ch|--che|--chec|--check)
     check=t ;;
-    -d|--d|--da|--dat|--date)
-    date=t ;;
-    -m|--m|--mb|--mbo|--mbox)
-    date=t author=t mbox=t ;;
+    -a|--a|--au|--aut|--auth|--autho|--author|\
+    -d|--d|--da|--dat|--date|\
+    -m|--m|--mb|--mbo|--mbox) # now noop
+    ;;
     -k|--k|--ke|--kee|--keep|--keep-|--keep-s|--keep-su|--keep-sub|\
     --keep-subj|--keep-subje|--keep-subjec|--keep-subject)
     keep_subject=t ;;
@@ -173,80 +171,89 @@ titleScript='
 	q
 '
 
-whosepatchScript='
-/^author /{
-	s/'\''/'\''\\'\'\''/g
-	s/author \(.*>\) \(.*\)$/au='\''\1'\'' ad='\''\2'\''/p
-	q
-}'
-
 process_one () {
-	mailScript='
-	/./d
-	/^$/n'
-	case "$keep_subject" in
-	t)  ;;
-	*)
-	    mailScript="$mailScript"'
-	    s|^\[PATCH[^]]*\] *||
-	    s|^|[PATCH'"$num"'] |'
-	    ;;
-	esac
-	mailScript="$mailScript"'
-	s|^|Subject: |'
-	case "$mbox" in
-	t)
-	    echo 'From nobody Mon Sep 17 00:00:00 2001' ;# UNIX "From" line
-	    ;;
-	esac
+	perl -w -e '
+my ($keep_subject, $num, $signoff, $commsg) = @ARGV;
+my ($signoff_pattern, $done_header, $done_subject, $signoff_seen,
+    $last_was_signoff);
 
-	eval "$(sed -ne "$whosepatchScript" $commsg)"
-	test "$author,$au" = ",$me" || {
-		mailScript="$mailScript"'
-	a\
-From: '"$au"
+if ($signoff) {
+	$signoff = `git-var GIT_COMMITTER_IDENT`;
+	$signoff =~ s/>.*/>/;
+	$signoff_pattern = quotemeta($signoff);
+}
+
+my @weekday_names = qw(Sun Mon Tue Wed Thu Fri Sat);
+my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+sub show_date {
+    my ($time, $tz) = @_;
+    my $minutes = abs($tz);
+    $minutes = ($minutes / 100) * 60 + ($minutes % 100);
+    if ($tz < 0) {
+        $minutes = -$minutes;
+    }
+    my $t = $time + $minutes * 60;
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday) = gmtime($t);
+    return sprintf("%s %s %d %02d:%02d:%02d %d %+05d",
+		   $weekday_names[$wday],
+		   $month_names[$mon],
+		   $mday, $hour, $min, $sec,
+		   $year+1900, $tz);
+}
+
+print "From nobody Mon Sep 17 00:00:00 2001\n";
+open FH, "git stripspace <$commsg |" or die "open $commsg pipe";
+while (<FH>) {
+    unless ($done_header) {
+	if (/^$/) {
+	    $done_header = 1;
 	}
-	test "$date,$au" = ",$me" || {
-		mailScript="$mailScript"'
-	a\
-Date: '"$ad"
+	elsif (/^author (.*>) (.*)$/) {
+	    my ($author_ident, $author_date) = ($1, $2);
+	    my ($utc, $off) = ($author_date =~ /^(\d+) ([-+]?\d+)$/);
+	    $author_date = show_date($utc, $off);
+
+	    print "From: $author_ident\n";
+	    print "Date: $author_date\n";
 	}
-
-	mailScript="$mailScript"'
-	a\
-
-	: body
-	p
-	n
-	b body'
-
-	(cat $commsg ; echo; echo) |
-	sed -ne "$mailScript" |
-	git-stripspace
-
-	test "$signoff" = "t" && {
-		offsigner=`git-var GIT_COMMITTER_IDENT | sed -e 's/>.*/>/'`
-		line="Signed-off-by: $offsigner"
-		grep -q "^$line\$" $commsg || {
-			echo
-			echo "$line"
-			echo
-		}
+	next;
+    }
+    unless ($done_subject) {
+	unless ($keep_subject) {
+	    s/^\[PATCH[^]]*\]\s*//;
+	    s/^/[PATCH$num] /;
 	}
-	echo
-	echo '---'
-	echo
+        print "Subject: $_";
+	$done_subject = 1;
+	next;
+    }
+
+    $last_was_signoff = 0;
+    if (/Signed-off-by:/i) {
+        if ($signoff ne "" && /Signed-off-by:\s*$signoff_pattern$/i) {
+	    $signoff_seen = 1;
+	}
+    }
+    print $_;
+}
+if (!$signoff_seen && $signoff ne "") {
+    if (!$last_was_signoff) {
+        print "\n";
+    }
+    print "$signoff\n";
+}
+print "\n---\n\n";
+close FH or die "close $commsg pipe";
+' "$keep_subject" "$num" "$signoff" $commsg
+
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
 	git-diff-tree -p $diff_opts "$commit"
 	echo "-- "
 	echo "@@GIT_VERSION@@"
 
-	case "$mbox" in
-	t)
-		echo
-		;;
-	esac
+	echo
 }
 
 total=`wc -l <$series | tr -dc "[0-9]"`
