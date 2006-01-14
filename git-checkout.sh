@@ -164,6 +164,9 @@ else
 	esac
 	exit 0
     )
+    saved_err=$?
+    git diff-files --name-status
+    (exit $saved_err)
 fi
 
 # 
