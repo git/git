@@ -28,6 +28,7 @@ git-diff-files
 git-diff-index
 git-diff-stages
 git-diff-tree
+git-describe
 git-fetch
 git-fetch-pack
 git-findtags

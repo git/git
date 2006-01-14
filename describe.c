@@ -124,10 +124,11 @@ static void describe(struct commit *cmit)
 		if (n) {
 			printf("%s-g%s\n", n->path,
 			       find_unique_abbrev(cmit->object.sha1, abbrev));
-			break;
+			clear_commit_marks(cmit, SEEN);
+			return;
 		}
 	}
-	clear_commit_marks(cmit, SEEN);
+	die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
 }
 
 int main(int argc, char **argv)
