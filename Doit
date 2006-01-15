@@ -6,22 +6,44 @@ test -z "$(git diff --cached --name-status)" || {
 	echo >&2 "Repository unclean."
 	exit 1
 }
+Meta/Make clean >/dev/null 2>&1
+
+branches='naster master maint'
+
+# Make sure naster is between master and pu if exists
+if naster=`git rev-parse --verify refs/heads/naster 2>/dev/null`
+then
+	master=`git rev-parse --verify refs/heads/master` &&
+	pu=`git rev-parse --verify refs/heads/pu` &&
+	MBM=`git merge-base --all $naster $master` &&
+	MBN=`git merge-base --all $naster $pu` &&
+	case ",$MBM,$MBN," in
+	",$master,$naster,") ;;
+	*)	echo >&2 "naster is not between master and pu"
+		exit 1 ;;
+	esac
+	# If naster is the same as pu, no point rebuilding pu.
+	case ",$naster,$pu," in
+	",$pu,$naster,") ;;
+	*) branches="$branches pu" ;;
+	esac
+fi
 
 nstall=install
-for branch in naster master maint pu
+for branch in $branches
 do
-	rm -f ./:$branch.log &&
 	if git rev-parse --verify refs/heads/$branch 2>/dev/null
 	then
 		echo "* $branch" &&
-		git checkout $branch || break
-		{
-		    Meta/Make $J $nstall &&
-		    Meta/Make test &&
-		    Meta/Make clean
-		} >./:$branch.log &&
+		git checkout $branch &&
+		Meta/Make $J all &&
+		Meta/Make $J $nstall &&
+		Meta/Make test &&
+		Meta/Make clean &&
 		nstall=all || exit $?
 	else
 		echo "* No $branch"
 	fi
-done
+done >./:all.log 2>&1
+
+
