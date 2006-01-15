@@ -9,7 +9,7 @@ git-clone - Clones a repository.
 SYNOPSIS
 --------
 [verse]
-'git-clone' [-l [-s]] [-q] [-n] [-o <name>] [-u <upload-pack>]
+'git-clone' [-l [-s]] [-q] [-n] [--naked] [-o <name>] [-u <upload-pack>]
 	  <repository> [<directory>]
 
 DESCRIPTION
@@ -58,6 +58,12 @@ OPTIONS
 -n::
 	No checkout of HEAD is performed after the clone is complete.
 
+--naked::
+	Make a 'naked' GIT repository.  That is, instead of
+	creating `<directory>` and placing the administrative
+	files in `<directory>/.git`, make the `<directory>`
+	itself the `$GIT_DIR`. This implies `-n` option.
+
 -o <name>::
 	Instead of using the branch name 'origin' to keep track
 	of the upstream repository, use <name> instead.  Note
@@ -102,6 +108,22 @@ $ git clone -l -s -n . ../copy
 $ cd copy
 $ git show-branch
 ------------
+
+
+Create a naked repository to publish your changes to the public::
++
+------------
+$ git clone --naked -l /home/proj/.git /pub/scm/proj.git
+------------
+
+
+Create a repository on the kernel.org machine that borrows from Linus::
++
+------------
+$ git clone --naked -l -s /pub/scm/.../torvalds/linux-2.6.git \
+    /pub/scm/.../me/subsys-2.6.git
+------------
+
 
 Author
 ------
