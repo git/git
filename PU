@@ -51,21 +51,22 @@ case "$#" in
 			break ;;
 		esac
 		I=0
-		UNUSE=
-		USE=
+		UNUSE= USE= USED=
 		for H in $HH
 		do
 			I=$(($I+1))
 			case " $ans " in
 			*' '$I' '*)
 				USE="$USE$H "
+				USED="$USED,$H"
 				;;
 			*)
 				UNUSE="$UNUSE$H "
 				;;
 			esac
 		done
-		git pull -n . $USE || exit
+		USED=`expr "$USED" : ',\(.*\)'`
+		git merge -n "Merge $USED" pu $USE || exit
 		HH=$UNUSE
 	done
 	exit
