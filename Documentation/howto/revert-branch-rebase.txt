@@ -32,16 +32,16 @@ merge introduced 5 commits or so:
 
 ------------------------------------------------
 $ git show-branch --more=4 master master^2 | head
-! [master] Merge refs/heads/portable from http://www.cs.berkeley....
+* [master] Merge refs/heads/portable from http://www.cs.berkeley....
  ! [master^2] Replace C99 array initializers with code.
 --
-+  [master] Merge refs/heads/portable from http://www.cs.berkeley....
-++ [master^2] Replace C99 array initializers with code.
-++ [master^2~1] Replace unsetenv() and setenv() with older putenv().
-++ [master^2~2] Include sys/time.h in daemon.c.
-++ [master^2~3] Fix ?: statements.
-++ [master^2~4] Replace zero-length array decls with [].
-+  [master~1] tutorial note about git branch
+-  [master] Merge refs/heads/portable from http://www.cs.berkeley....
+*+ [master^2] Replace C99 array initializers with code.
+*+ [master^2~1] Replace unsetenv() and setenv() with older putenv().
+*+ [master^2~2] Include sys/time.h in daemon.c.
+*+ [master^2~3] Fix ?: statements.
+*+ [master^2~4] Replace zero-length array decls with [].
+*  [master~1] tutorial note about git branch
 ------------------------------------------------
 
 The '--more=4' above means "after we reach the merge base of refs,
@@ -193,8 +193,8 @@ $ git show-branch --more=1 master pu rc
  +  [pu~4] Document "git cherry-pick" and "git revert"
  +  [pu~5] Remove git-apply-patch-script.
  +  [pu~6] Redo "revert" using three-way merge machinery.
-  + [rc] Merge refs/heads/master from .
-+++ [master] Revert "Replace zero-length array decls with []."
-  + [rc~1] Merge refs/heads/master from .
-+++ [master~1] Merge refs/heads/portable from http://www.cs.berkeley....
+  - [rc] Merge refs/heads/master from .
+++* [master] Revert "Replace zero-length array decls with []."
+  - [rc~1] Merge refs/heads/master from .
+... [master~1] Merge refs/heads/portable from http://www.cs.berkeley....
 ------------------------------------------------

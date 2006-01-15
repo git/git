@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--naked] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -53,11 +53,15 @@ use_local=no
 local_shared=no
 no_checkout=
 upload_pack=
+naked=
 origin=origin
 while
 	case "$#,$1" in
 	0,*) break ;;
-	*,-n) no_checkout=yes ;;
+	*,-n|*,--no|*,--no-|*,--no-c|*,--no-ch|*,--no-che|*,--no-chec|\
+	*,--no-check|*,--no-checko|*,--no-checkou|*,--no-checkout)
+	  no_checkout=yes ;;
+	*,--na|*,--nak|*,--nake|*,--naked) naked=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes; use_local=yes ;;
@@ -81,6 +85,9 @@ do
 	shift
 done
 
+# --naked implies --no-checkout
+test -z "$naked" || no_checkout=yes
+
 # Turn the source into an absolute path if
 # it is local
 repo="$1"
@@ -95,10 +102,17 @@ dir="$2"
 [ -z "$dir" ] && dir=$(echo "$repo" | sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*/||g')
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
-D=$(
-	(cd "$dir" && git-init-db && pwd)
-) &&
-test -d "$D" || usage
+D=$(cd "$dir" && pwd) &&
+case "$naked" in
+yes) GIT_DIR="$D" ;;
+*) GIT_DIR="$D/.git" ;;
+esac && export GIT_DIR && git-init-db || usage
+case "$naked" in
+yes)
+	GIT_DIR="$D" ;;
+*)
+	GIT_DIR="$D/.git" ;;
+esac
 
 # We do local magic only when the user tells us to.
 case "$local,$use_local" in
@@ -118,21 +132,21 @@ yes,yes)
 	    test -f "$repo/$sample_file" || exit
 
 	    l=
-	    if ln "$repo/$sample_file" "$D/.git/objects/sample" 2>/dev/null
+	    if ln "$repo/$sample_file" "$GIT_DIR/objects/sample" 2>/dev/null
 	    then
 		    l=l
 	    fi &&
-	    rm -f "$D/.git/objects/sample" &&
+	    rm -f "$GIT_DIR/objects/sample" &&
 	    cd "$repo" &&
-	    find objects -depth -print | cpio -puamd$l "$D/.git/" || exit 1
+	    find objects -depth -print | cpio -puamd$l "$GIT_DIR/" || exit 1
 	    ;;
 	yes)
-	    mkdir -p "$D/.git/objects/info"
+	    mkdir -p "$GIT_DIR/objects/info"
 	    {
 		test -f "$repo/objects/info/alternates" &&
 		cat "$repo/objects/info/alternates";
 		echo "$repo/objects"
-	    } >"$D/.git/objects/info/alternates"
+	    } >"$GIT_DIR/objects/info/alternates"
 	    ;;
 	esac
 
@@ -143,27 +157,27 @@ yes,yes)
 		HEAD=HEAD
 	fi
 	(cd "$repo" && tar cf - refs $HEAD) |
-	(cd "$D/.git" && tar xf -) || exit 1
+	(cd "$GIT_DIR" && tar xf -) || exit 1
 	;;
 *)
 	case "$repo" in
 	rsync://*)
 		rsync $quiet -av --ignore-existing  \
-			--exclude info "$repo/objects/" "$D/.git/objects/" &&
+			--exclude info "$repo/objects/" "$GIT_DIR/objects/" &&
 		rsync $quiet -av --ignore-existing  \
-			--exclude info "$repo/refs/" "$D/.git/refs/" || exit
+			--exclude info "$repo/refs/" "$GIT_DIR/refs/" || exit
 
 		# Look at objects/info/alternates for rsync -- http will
 		# support it natively and git native ones will do it on the
 		# remote end.  Not having that file is not a crime.
 		rsync -q "$repo/objects/info/alternates" \
-			"$D/.git/TMP_ALT" 2>/dev/null ||
-			rm -f "$D/.git/TMP_ALT"
-		if test -f "$D/.git/TMP_ALT"
+			"$GIT_DIR/TMP_ALT" 2>/dev/null ||
+			rm -f "$GIT_DIR/TMP_ALT"
+		if test -f "$GIT_DIR/TMP_ALT"
 		then
 		    ( cd "$D" &&
 		      . git-parse-remote &&
-		      resolve_alternates "$repo" <"./.git/TMP_ALT" ) |
+		      resolve_alternates "$repo" <"$GIT_DIR/TMP_ALT" ) |
 		    while read alt
 		    do
 			case "$alt" in 'bad alternate: '*) die "$alt";; esac
@@ -171,9 +185,9 @@ yes,yes)
 			'')	echo >&2 "Getting alternate: $alt" ;;
 			esac
 			rsync $quiet -av --ignore-existing  \
-			    --exclude info "$alt" "$D/.git/objects" || exit
+			    --exclude info "$alt" "$GIT_DIR/objects" || exit
 		    done
-		    rm -f "$D/.git/TMP_ALT"
+		    rm -f "$GIT_DIR/TMP_ALT"
 		fi
 		;;
 	http://*)
@@ -194,25 +208,25 @@ esac
 
 cd "$D" || exit
 
-if test -f ".git/HEAD"
+if test -f "$GIT_DIR/HEAD"
 then
 	head_points_at=`git-symbolic-ref HEAD`
 	case "$head_points_at" in
 	refs/heads/*)
 		head_points_at=`expr "$head_points_at" : 'refs/heads/\(.*\)'`
-		mkdir -p .git/remotes &&
-		echo >.git/remotes/origin \
+		mkdir -p "$GIT_DIR/remotes" &&
+		echo >"$GIT_DIR/remotes/origin" \
 		"URL: $repo
 Pull: $head_points_at:$origin" &&
 		git-update-ref "refs/heads/$origin" $(git-rev-parse HEAD) &&
-		find .git/refs/heads -type f -print |
+		(cd "$GIT_DIR" && find "refs/heads" -type f -print) |
 		while read ref
 		do
-			head=`expr "$ref" : '.git/refs/heads/\(.*\)'` &&
+			head=`expr "$ref" : 'refs/heads/\(.*\)'` &&
 			test "$head_points_at" = "$head" ||
 			test "$origin" = "$head" ||
 			echo "Pull: ${head}:${head}"
-		done >>.git/remotes/origin
+		done >>"$GIT_DIR/remotes/origin"
 	esac
 
 	case "$no_checkout" in

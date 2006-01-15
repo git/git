@@ -48,8 +48,19 @@ MRC=$head MSG= PARENT="-p $head"
 MRT=$(git-write-tree)
 CNT=1 ;# counting our head
 NON_FF_MERGE=0
+OCTOPUS_FAILURE=0
 for SHA1 in $remotes
 do
+	case "$OCTOPUS_FAILURE" in
+	1)
+		# We allow only last one to have a hand-resolvable
+		# conflicts.  Last round failed and we still had
+		# a head to merge.
+		echo "Automated merge did not work."
+		echo "Should not be doing an Octopus."
+		exit 2
+	esac
+
 	common=$(git-merge-base --all $MRC $SHA1) ||
 		die "Unable to find common commit with $SHA1"
 
@@ -84,11 +95,8 @@ do
 	if test $? -ne 0
 	then
 		echo "Simple merge did not work, trying automatic merge."
-		git-merge-index -o git-merge-one-file -a || {
-			echo "Not trivially merged."
-			echo "Should not be doing an Octopus."
-			exit 2
-		}
+		git-merge-index -o git-merge-one-file -a ||
+		OCTOPUS_FAILURE=1
 		next=$(git-write-tree 2>/dev/null)
 	fi
 
@@ -103,4 +111,4 @@ do
 	MRT=$next
 done
 
-exit 0
+exit "$OCTOPUS_FAILURE"

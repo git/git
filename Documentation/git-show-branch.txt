@@ -7,7 +7,10 @@ git-show-branch - Show branches and their commits.
 
 SYNOPSIS
 --------
-'git-show-branch [--all] [--heads] [--tags] [--topo-order] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [<rev> | <glob>]...'
+[verse]
+git-show-branch [--all] [--heads] [--tags] [--topo-order] [--current]
+	[--more=<n> | --list | --independent | --merge-base]
+	[--no-name | --sha1-name] [<rev> | <glob>]...
 
 DESCRIPTION
 -----------
@@ -17,6 +20,9 @@ with <rev>s or <globs>s (or all refs under $GIT_DIR/refs/heads
 and/or $GIT_DIR/refs/tags) semi-visually.
 
 It cannot show more than 29 branches and commits at a time.
+
+It uses `showbranch.default` multi-valued configuration items if
+no <rev> nor <glob> is given on the command line.
 
 
 OPTIONS
@@ -35,6 +41,11 @@ OPTIONS
 	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
 	and $GIT_DIR/refs/tags, respectively.
 
+--current::
+	With this option, the command includes the current
+	branch to the list of revs to be shown when it is not
+	given on the command line.
+
 --topo-order::
         By default, the branches and their commits are shown in
         reverse chronological order.  This option makes them
@@ -50,7 +61,7 @@ OPTIONS
 	tree.
 
 --list::
-	Synomym to `--more=-1`
+	Synonym to `--more=-1`
 
 --merge-base::
 	Instead of showing the commit list, just act like the
@@ -78,13 +89,14 @@ OUTPUT
 ------
 Given N <references>, the first N lines are the one-line
 description from their commit message.  The branch head that is
-pointed at by $GIT_DIR/HEAD is prefixed with an asterisk '*'
-character while other heads are prefixed with a '!' character.
+pointed at by $GIT_DIR/HEAD is prefixed with an asterisk `*`
+character while other heads are prefixed with a `!` character.
 
 Following these N lines, one-line log for each commit is
 displayed, indented N places.  If a commit is on the I-th
-branch, the I-th indentation character shows a '+' sign;
-otherwise it shows a space.  Each commit shows a short name that
+branch, the I-th indentation character shows a `+` sign;
+otherwise it shows a space.  Merge commits are denoted by
+a `-` sign.  Each commit shows a short name that
 can be used as an extended SHA1 to name that commit.
 
 The following example shows three branches, "master", "fixes"
@@ -92,7 +104,7 @@ and "mhf":
 
 ------------------------------------------------
 $ git show-branch master fixes mhf
-! [master] Add 'git show-branch'.
+* [master] Add 'git show-branch'.
  ! [fixes] Introduce "reset type" flag to "git reset"
   ! [mhf] Allow "+remote:local" refspec to cause --force when fetching.
 ---
@@ -106,13 +118,33 @@ $ git show-branch master fixes mhf
   + [mhf~6] Retire git-parse-remote.
   + [mhf~7] Multi-head fetch.
   + [mhf~8] Start adding the $GIT_DIR/remotes/ support.
-+++ [master] Add 'git show-branch'.
+*++ [master] Add 'git show-branch'.
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
 whose commit message is "Add 'git show-branch'.  "fixes" branch
 adds one commit 'Introduce "reset type"'.  "mhf" branch has many
-other commits.
+other commits.  The current branch is "master".
+
+
+EXAMPLE
+-------
+
+If you keep your primary branches immediately under
+`$GIT_DIR/refs/heads`, and topic branches in subdirectories of
+it, having the following in the configuration file may help:
+
+------------
+[showbranch]
+	default = --topo-order
+	default = heads/*
+
+------------
+
+With this,`git show-branch` without extra parameters would show
+only the primary branches.  In addition, if you happen to be on
+your topic branch, it is shown as well.
+
 
 
 Author
