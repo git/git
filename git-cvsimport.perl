@@ -48,16 +48,28 @@ sub read_author_info($) {
 	open my $f, '<', "$file" or die("Failed to open $file: $!\n");
 
 	while (<$f>) {
-		chomp;
-		# Expected format is this;
+		# Expected format is this:
 		#   exon=Andreas Ericsson <ae@op5.se>
-		if (m/^([^ \t=]*)[ \t=]*([^<]*)(<.*$)\s*/) {
+		if (m/^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/) {
 			$user = $1;
-			$conv_author_name{$1} = $2;
-			$conv_author_email{$1} = $3;
-			# strip trailing whitespace from author name
-			$conv_author_name{$1} =~ s/\s*$//;
+			$conv_author_name{$user} = $2;
+			$conv_author_email{$user} = $3;
 		}
+		# However, we also read from CVSROOT/users format
+		# to ease migration.
+		elsif (/^(\w+):(['"]?)(.+?)\2\s*$/) {
+			my $mapped;
+			($user, $mapped) = ($1, $3);
+			if ($mapped =~ /^\s*(.*?)\s*<(.*)>\s*$/) {
+				$conv_author_name{$user} = $1;
+				$conv_author_email{$user} = $2;
+			}
+			elsif ($mapped =~ /^<?(.*)>?$/) {
+				$conv_author_name{$user} = $user;
+				$conv_author_email{$user} = $1;
+			}
+		}
+		# NEEDSWORK: Maybe warn on unrecognized lines?
 	}
 	close ($f);
 }
@@ -68,8 +80,7 @@ sub write_author_info($) {
 	  die("Failed to open $file for writing: $!");
 
 	foreach (keys %conv_author_name) {
-		print $f "$_=" . $conv_author_name{$_} .
-		  " " . $conv_author_email{$_} . "\n";
+		print $f "$_=$conv_author_name{$_} <$conv_author_email{$_}>\n";
 	}
 	close ($f);
 }
