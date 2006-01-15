@@ -3,27 +3,47 @@
 # Rebuild "pu" from topic branches.
 #
 
-git status && exit
+git-update-index --refresh || exit
+case "$(git-diff-index --name-status HEAD)" in
+'')	;;
+*)	echo 2>&1 "Local modifications exist."
+	exit 1;;
+esac
 git checkout pu &&
 git reset --hard master &&
 ORIG_HEAD=`git rev-parse ORIG_HEAD` || exit
+LF='
+'
 
 case "$#" in
 0)
 	# interactive ;-)
 	shift
 	HH=`cd .git/refs/heads && find -type f |
-	sed -e 's/^\.\///' -e '/^master$/d' -e '/^maint$/d' -e '/^pu$/d'`
+	sed -e 's/^\.\///' \
+	    -e '/^naster$/d' -e '/^master$/d' -e '/^maint$/d' -e '/^pu$/d'`
 	while test "$HH"
 	do
 		I=0
 		echo "0: done"
+		NHH=
 		for H in $HH
 		do
+			HSHA1=`git-rev-parse --verify $H` || continue
+			MB=`git-show-branch --merge-base pu $HSHA1`
+			case "$LF$MB$LF" in
+			*"$LF$HSHA1$LF"*) continue ;; # already merged.
+			esac
 			I=$(($I+1))
 			echo -n "$I: "
-			git-show-branch --no-current $H
+			git-show-branch $H
+			NHH="${NHH}$H "
 		done
+		case "$I" in
+		0)
+			break ;;
+		esac
+		HH=$NHH
 		echo -n "Merge which ones (0 to finish)? "
 		read ans
 		case "$ans" in
