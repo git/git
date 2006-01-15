@@ -8,7 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [[-m [--aggressive]| --reset] [-u | -i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -62,6 +62,15 @@ OPTIONS
 * when both sides remove a path.  The resolution is to remove that path.
 * when both sides adds a path identically.  The resolution
   is to add that path.
+
+--prefix=<prefix>/::
+	Keep the current index contents, and read the contents
+	of named tree-ish under directory at `<prefix>`.  The
+	original index file cannot have anything at the path
+	`<prefix>` itself, and have nothing in `<prefix>/`
+	directory.  Note that the `<prefix>/` value must end
+	with a slash.
+
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
