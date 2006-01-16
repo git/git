@@ -15,7 +15,7 @@
  * passed around in one int (high 16-bit for merge and low 16-bit
  * for break).
  */
-#define MAX_SCORE 60000
+#define MAX_SCORE 60000.0
 #define DEFAULT_RENAME_SCORE 30000 /* rename/copy similarity minimum (50%) */
 #define DEFAULT_BREAK_SCORE  30000 /* minimum for break to happen (50%)*/
 #define DEFAULT_MERGE_SCORE  48000 /* maximum for break-merge to happen (80%)*/
