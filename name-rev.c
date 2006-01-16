@@ -93,10 +93,11 @@ static int name_ref(const char *path, const unsigned char *sha1)
 	}
 	if (o && o->type == commit_type) {
 		struct commit *commit = (struct commit *)o;
-		const char *p;
 
-		while ((p = strchr(path, '/')))
-			path = p+1;
+		if (!strncmp(path, "refs/heads/", 11))
+			path = path + 11;
+		else if (!strncmp(path, "refs/", 5))
+			path = path + 5;
 
 		name_rev(commit, strdup(path), 0, 0, deref);
 	}
