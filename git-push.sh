@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[--all] [--force] <repository> [<refspec>...]'
+USAGE='[--all] [--tags] [--force] <repository> [<refspec>...]'
 . git-sh-setup
 
 # Parse out parameters and then stop at remote, so that we can
@@ -36,23 +36,26 @@ case "$#" in
 	echo "Where would you want to push today?"
         usage ;;
 esac
-if test ",$has_all,$do_tags," = ",--all,yes,"
-then
-	do_tags=
-fi
 
 . git-parse-remote
 remote=$(get_remote_url "$@")
-case "$has_all" in
---all) set x ;;
-'')    set x $(get_remote_refs_for_push "$@") ;;
-esac
-shift
 
-case "$do_tags" in
-yes)
-	set "$@" $(cd "$GIT_DIR/refs" && find tags -type f -print) ;;
+case "$has_all" in
+--all)
+	set x ;;
+'')
+	case "$do_tags,$#" in
+	yes,1)
+		set x $(cd "$GIT_DIR/refs" && find tags -type f -print) ;;
+	yes,*)
+		set x $(cd "$GIT_DIR/refs" && find tags -type f -print) \
+		    $(get_remote_refs_for_push "$@") ;;
+	,*)
+		set x $(get_remote_refs_for_push "$@") ;;
+	esac
 esac
+
+shift ;# away the initial 'x'
 
 # Now we have explicit refs from the command line or from remotes/
 # shorthand, or --tags.  Falling back on the current branch if we still

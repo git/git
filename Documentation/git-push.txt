@@ -8,7 +8,7 @@ git-push - Update remote refs along with associated objects.
 
 SYNOPSIS
 --------
-'git-push' [--all] [--force] <repository> <refspec>...
+'git-push' [--all] [--tags] [--force] <repository> <refspec>...
 
 DESCRIPTION
 -----------
@@ -28,6 +28,11 @@ include::pull-fetch-param.txt[]
 \--all::
 	Instead of naming each ref to push, specifies all refs
 	to be pushed.
+
+\--tags::
+	All refs under `$GIT_DIR/refs/tags` are pushed, in
+	addition to refspecs explicitly listed on the command
+	line.
 
 -f, \--force::
 	Usually, the command refuses to update a local ref that is
