@@ -359,8 +359,10 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 	parents = commit->parents;
 	commit->object.flags &= ~mark;
 	while (parents) {
-		if (parents->item && parents->item->object.parsed)
-			clear_commit_marks(parents->item, mark);
+		struct commit *parent = parents->item;
+		if (parent && parent->object.parsed &&
+		    (parent->object.flags & mark))
+			clear_commit_marks(parent, mark);
 		parents = parents->next;
 	}
 }

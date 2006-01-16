@@ -98,7 +98,7 @@ static int compare_names(const void *_a, const void *_b)
 	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
 }
 
-static void describe(struct commit *cmit)
+static void describe(struct commit *cmit, int last_one)
 {
 	struct commit_list *list;
 	static int initialized = 0;
@@ -124,7 +124,8 @@ static void describe(struct commit *cmit)
 		if (n) {
 			printf("%s-g%s\n", n->path,
 			       find_unique_abbrev(cmit->object.sha1, abbrev));
-			clear_commit_marks(cmit, SEEN);
+			if (!last_one)
+				clear_commit_marks(cmit, SEEN);
 			return;
 		}
 	}
@@ -159,7 +160,7 @@ int main(int argc, char **argv)
 		cmit = lookup_commit_reference(sha1);
 		if (!cmit)
 			usage(describe_usage);
-		describe(cmit);
+		describe(cmit, i == argc - 1);
 	}
 	return 0;
 }
