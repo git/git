@@ -98,7 +98,7 @@ static int compare_names(const void *_a, const void *_b)
 	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
 }
 
-static void describe(char *arg)
+static void describe(char *arg, int last_one)
 {
 	unsigned char sha1[20];
 	struct commit *cmit;
@@ -132,7 +132,8 @@ static void describe(char *arg)
 		if (n) {
 			printf("%s-g%s\n", n->path,
 			       find_unique_abbrev(cmit->object.sha1, abbrev));
-			clear_commit_marks(cmit, SEEN);
+			if (!last_one)
+				clear_commit_marks(cmit, SEEN);
 			return;
 		}
 	}
@@ -162,10 +163,12 @@ int main(int argc, char **argv)
 	}
 
 	if (i == argc)
-		describe("HEAD");
+		describe("HEAD", 1);
 	else
-		while (i < argc)
-			describe(argv[i++]);
+		while (i < argc) {
+			describe(argv[i], (i == argc - 1));
+			i++;
+		}
 
 	return 0;
 }
