@@ -404,12 +404,13 @@ sub git_read_head {
 	if (open my $fd, "-|", "$gitbin/git-rev-parse", "--verify", "HEAD") {
 		my $head = <$fd>;
 		close $fd;
-		chomp $head;
-		if ($head =~ m/^[0-9a-fA-F]{40}$/) {
-			$retval = $head;
+		if (defined $head && $head =~ /^([0-9a-fA-F]{40})$/) {
+			$retval = $1;
 		}
 	}
-	$ENV{'GIT_DIR'} = $oENV;
+	if (defined $oENV) {
+		$ENV{'GIT_DIR'} = $oENV;
+	}
 	return $retval;
 }
 
