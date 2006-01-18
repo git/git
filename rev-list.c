@@ -54,6 +54,7 @@ static int stop_traversal = 0;
 static int topo_order = 0;
 static int no_merges = 0;
 static const char **paths = NULL;
+static int remove_empty_trees = 0;
 
 static void show_commit(struct commit *commit)
 {
@@ -424,14 +425,33 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
-static int is_different = 0;
+#define TREE_SAME	0
+#define TREE_NEW	1
+#define TREE_DIFFERENT	2
+static int tree_difference = TREE_SAME;
 
 static void file_add_remove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
 		    const char *base, const char *path)
 {
-	is_different = 1;
+	int diff = TREE_DIFFERENT;
+
+	/*
+	 * Is it an add of a new file? It means that
+	 * the old tree didn't have it at all, so we
+	 * will turn "TREE_SAME" -> "TREE_NEW", but
+	 * leave any "TREE_DIFFERENT" alone (and if
+	 * it already was "TREE_NEW", we'll keep it
+	 * "TREE_NEW" of course).
+	 */
+	if (addremove == '+') {
+		diff = tree_difference;
+		if (diff != TREE_SAME)
+			return;
+		diff = TREE_NEW;
+	}
+	tree_difference = diff;
 }
 
 static void file_change(struct diff_options *options,
@@ -440,7 +460,7 @@ static void file_change(struct diff_options *options,
 		 const unsigned char *new_sha1,
 		 const char *base, const char *path)
 {
-	is_different = 1;
+	tree_difference = TREE_DIFFERENT;
 }
 
 static struct diff_options diff_opt = {
@@ -449,12 +469,16 @@ static struct diff_options diff_opt = {
 	.change = file_change,
 };
 
-static int same_tree(struct tree *t1, struct tree *t2)
+static int compare_tree(struct tree *t1, struct tree *t2)
 {
-	is_different = 0;
+	if (!t1)
+		return TREE_NEW;
+	if (!t2)
+		return TREE_DIFFERENT;
+	tree_difference = TREE_SAME;
 	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "", &diff_opt) < 0)
-		return 0;
-	return !is_different;
+		return TREE_DIFFERENT;
+	return tree_difference;
 }
 
 static int same_tree_as_empty(struct tree *t1)
@@ -474,28 +498,55 @@ static int same_tree_as_empty(struct tree *t1)
 	empty.buf = "";
 	empty.size = 0;
 
-	is_different = 0;
+	tree_difference = 0;
 	retval = diff_tree(&empty, &real, "", &diff_opt);
 	free(tree);
 
-	return retval >= 0 && !is_different;
+	return retval >= 0 && !tree_difference;
 }
 
-static struct commit *try_to_simplify_merge(struct commit *commit, struct commit_list *parent)
+static void try_to_simplify_commit(struct commit *commit)
 {
-	if (!commit->tree)
-		return NULL;
+	struct commit_list **pp, *parent;
 
-	while (parent) {
-		struct commit *p = parent->item;
-		parent = parent->next;
-		parse_commit(p);
-		if (!p->tree)
-			continue;
-		if (same_tree(commit->tree, p->tree))
-			return p;
+	if (!commit->tree)
+		return;
+
+	if (!commit->parents) {
+		if (!same_tree_as_empty(commit->tree))
+			commit->object.flags |= TREECHANGE;
+		return;
 	}
-	return NULL;
+
+	pp = &commit->parents;
+	while ((parent = *pp) != NULL) {
+		struct commit *p = parent->item;
+
+		if (p->object.flags & UNINTERESTING) {
+			pp = &parent->next;
+			continue;
+		}
+
+		parse_commit(p);
+		switch (compare_tree(p->tree, commit->tree)) {
+		case TREE_SAME:
+			parent->next = NULL;
+			commit->parents = parent;
+			return;
+
+		case TREE_NEW:
+			if (remove_empty_trees && same_tree_as_empty(p->tree)) {
+				*pp = parent->next;
+				continue;
+			}
+		/* fallthrough */
+		case TREE_DIFFERENT:
+			pp = &parent->next;
+			continue;
+		}
+		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
+	}
+	commit->object.flags |= TREECHANGE;
 }
 
 static void add_parents_to_list(struct commit *commit, struct commit_list **list)
@@ -531,20 +582,14 @@ static void add_parents_to_list(struct commit *commit, struct commit_list **list
 	}
 
 	/*
-	 * Ok, the commit wasn't uninteresting. If it
-	 * is a merge, try to find the parent that has
-	 * no differences in the path set if one exists.
+	 * Ok, the commit wasn't uninteresting. Try to
+	 * simplify the commit history and find the parent
+	 * that has no differences in the path set if one exists.
 	 */
-	if (paths && parent && parent->next) {
-		struct commit *preferred;
+	if (paths)
+		try_to_simplify_commit(commit);
 
-		preferred = try_to_simplify_merge(commit, parent);
-		if (preferred) {
-			parent->item = preferred;
-			parent->next = NULL;
-		}
-	}
-
+	parent = commit->parents;
 	while (parent) {
 		struct commit *p = parent->item;
 
@@ -555,33 +600,6 @@ static void add_parents_to_list(struct commit *commit, struct commit_list **list
 			continue;
 		p->object.flags |= SEEN;
 		insert_by_date(p, list);
-	}
-}
-
-static void compress_list(struct commit_list *list)
-{
-	while (list) {
-		struct commit *commit = list->item;
-		struct commit_list *parent = commit->parents;
-		list = list->next;
-
-		if (!parent) {
-			if (!same_tree_as_empty(commit->tree))
-				commit->object.flags |= TREECHANGE;
-			continue;
-		}
-
-		/*
-		 * Exactly one parent? Check if it leaves the tree
-		 * unchanged
-		 */
-		if (!parent->next) {
-			struct tree *t1 = commit->tree;
-			struct tree *t2 = parent->item->tree;
-			if (!t1 || !t2 || same_tree(t1, t2))
-				continue;
-		}
-		commit->object.flags |= TREECHANGE;
 	}
 }
 
@@ -614,8 +632,6 @@ static struct commit_list *limit_list(struct commit_list *list)
 	}
 	if (tree_objects)
 		mark_edges_uninteresting(newlist);
-	if (paths && dense)
-		compress_list(newlist);
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
@@ -806,6 +822,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--sparse")) {
 			dense = 0;
+			continue;
+		}
+		if (!strcmp(arg, "--remove-empty")) {
+			remove_empty_trees = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
