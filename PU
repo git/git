@@ -75,7 +75,7 @@ esac
 
 for H
 do
-	(IFS=",$IFS"; git pull -n . $H) || exit
+	(IFS=",$IFS"; git merge -n "Merge $H" pu $H) || exit
 done
 
-(IFS=",$IFS"; git show-branch master pu $* $ORIG_HEAD)
+(IFS=",$IFS"; git show-branch master $* pu $ORIG_HEAD)

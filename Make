@@ -11,7 +11,7 @@ export PATH LANG LC_CTYPE
 make bindir=$HOME/bin/Linux \
      gitexecdir=$HOME/bin/Linux \
      PYTHON_PATH=/usr/bin/python2.4 \
-     CFLAGS='-O1 -Wall -Wdeclaration-after-statement -g'"$DDD" \
+     CFLAGS='-O0 -Wall -Wdeclaration-after-statement -g'"$DDD" \
      WITH_SEND_EMAIL=YesPlease \
      WITH_SVNIMPORT=YesPlease \
      "$@"

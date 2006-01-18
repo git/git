@@ -20,13 +20,8 @@ patch, perhaps ;-).
 Documentation
 -------------
 
-* Talk about using rsync just once at the beginning when
-  initializing a remote repository so that local packs do not
-  need to be expanded.  I personally do not think we need tool
-  support for this (but see below about optimized cloning).
-
-* Maybe update tutorial with a toy project that involves two or
-  three developers.
+* Take the updated tutorial by Bruce Fields very seriously.  It
+  is a quite good initiative.
 
 
 Design issues
@@ -36,13 +31,13 @@ Design issues
   need this; just tell people to run "xxdiff -U" on the working
   tree files.
 
-* Ref namespace management.  Perhaps use refs/local/ suggestion
-  by Linus. [Does not seem to be high on people's priority list,
-  and not interested myself.  People can resurrect this
-  discussion if they want.]
+* Doing a merge in a separate directory.
 
-* Perhaps "everything in config file"?  Especially remotes/
-  shortcuts.  I am modestly negative about this.
+* Subprojects.  I think the "bind commit" approach has been
+  outlined at sufficiently detailed level.  Maybe find time to
+  actually start prototyping it?
+
+  <7vacdzkww3.fsf@assigned-by-dhcp.cox.net>
 
 
 Technical (heavier)
@@ -75,29 +70,37 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* send-pack/receive-pack protocol updates, to allow the receiver
-  to report what it did to the ref update requests [DONE].
+* Decide what to do about rebase applied to merged head.  One
+  extreme is to allow rebase if "rev-list ours..theirs" gives
+  anything.  This loosens the current merge-base based approach.
+  The other extreme is to refuse rebase if "rev-list
+  theirs..ours" contains any merge commit, which was discussed
+  on the list.
+
+  <43CC695E.2020506@codeweavers.com>
+
+* Decide what the right thing to do upon an empty merge commit,
+  when both branches happen to have obtained the same set of
+  changes through different history.  Not recording such keeps
+  the history simpler, and the next merge would soon create a
+  true merge commit anyway, but does not feel quite right.
+
+  <20060114021800.4688.qmail@web31803.mail.mud.yahoo.com>
 
 * Perhaps a smarter HTTP anonymous download via CGI.
 
 * Prepare to enable "always use symbolic refs for HEAD" patch.
-  We need a timeline to force Porcelains to get ready.  Last
-  time I looked at them I got an impression that gitweb was not
-  ready.
+  We need a timeline to force Porcelains to get ready.  All the
+  major ones should be ready now.
+
+* Prepare to enable "most of the things are installed in
+  GIT_EXEC_PATH not in bindir".  I do not plan to set bindir !=
+  gitexecdir myself in the main Makefile I ship, but distos
+  should be able to choose to do so.
 
 * Forbid/ignore pack names that do not conform to the convention
   sha1_pack_name() assumes and reject in check_packed_git_idx()
-  [In pu]
-
-* strip leading directory from ls-tree output, to match ls-files
-  output.
-
-  I am of two minds about this one.  diff output must always be
-  -p1 format no matter where the command was started, and
-  ls-tree might be easier to use if it matched diff, not
-  ls-files.
-
-  [DONE, with --full-name option like ls-files]
+  [In "pu"]
 
 * Any Porcelain-ish we forgot or punted to make usable from
   subdirectory?  I think the last pass caught everything and
@@ -110,11 +113,18 @@ Technical (milder)
 
 * daemon --strict-symlink.
 
+* daemon --no-user-dir, to make ~user still work with
+  --base-path.  They ought to be independent.
+
+* daemon --base-path does not apply automatically to whitelist
+  somehow feels wrong.  If somebody cares enough, accept
+  patches.
+
 * Perhaps detect cloning request in upload-pack and cache the
   result for next cloning request until any of our refs change.
 
 * Perhaps accept patch to optionally allow '--fuzz' in
-  'git-apply'.
+  'git-apply'.  am/applymbox is _not_ the place to do it.
 
 * Allow 'git apply' to accept GNU diff 2.7 output that forgets
   to say '\No newline' if both input ends with incomplete
@@ -129,28 +139,15 @@ Technical (milder)
   just the basename, and see the improved clustering results in
   better packing [Tried, but did not work out well].
 
-* Daemon --base-path does not apply automatically to whitelist
-  somehow feels wrong.  If somebody cares enough, accept
-  patches.
-
 
 Technical (trivial)
 -------------------
 
-* Daemon --base-path forbidding user-path automatically feels
-  wrong.  If somebody cares enough, accept patches.
+* s/naked/bare/g.
 
 * git-proxy should be spawned with sh -c 'command' $1 $2.
 
-* Versioning scheme.  The next maintenance installment will be
-  1.0.3 not 1.0.0c.  The next feature release would be 1.1.0 [DONE].
-
-* Either drop supporting Debian myself or coerce patches out of
-  the official maintainer [DONE -- DROPPED].
-
-* We would want test scripts for the relative directory path
-  stuff Linus has been working on.  Most of the C-level
-  commands should be usable with relative directory paths.
+* test scripts for the relative directory path stuff.
 
 * In a freshly created empty repository, `git fetch foo:bar`
   works OK, but `git checkout bar` afterwards does not (missing
