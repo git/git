@@ -39,6 +39,29 @@ Design issues
 
   <7vacdzkww3.fsf@assigned-by-dhcp.cox.net>
 
+* Make 'format-patch' take revision limiters similar to
+  rev-list.  For example:
+
+               A		   C
+	....---x---o---o---x---o---o
+                          /
+                         /
+                        /
+	....---x---o---o
+               B
+
+  we should be able to format commits 'o', without duplicates,
+  by:
+
+  	$ git format-patch ^A ^B C
+
+  Currently the closest approximation is
+
+  	$ git format-patch A..C B..C
+
+  which results in the last two commits including C formatted
+  twice.
+
 
 Technical (heavier)
 -------------------
