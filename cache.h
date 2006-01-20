@@ -13,6 +13,10 @@
 #if defined(DT_UNKNOWN) && !NO_D_TYPE_IN_DIRENT
 #define DTYPE(de)	((de)->d_type)
 #else
+#undef DT_UNKNOWN
+#undef DT_DIR
+#undef DT_REG
+#undef DT_LNK
 #define DT_UNKNOWN	0
 #define DT_DIR		1
 #define DT_REG		2
