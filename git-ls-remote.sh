@@ -2,7 +2,8 @@
 #
 
 usage () {
-    echo >&2 "usage: $0 [--heads] [--tags] <repository> <refs>..."
+    echo >&2 "usage: $0 [--heads] [--tags] [-u|--upload-pack <upload-pack>]"
+    echo >&2 "          <repository> <refs>..."
     exit 1;
 }
 
@@ -11,6 +12,7 @@ die () {
     exit 1
 }
 
+exec=
 while case "$#" in 0) break;; esac
 do
   case "$1" in
@@ -18,6 +20,11 @@ do
   heads=heads; shift ;;
   -t|--t|--ta|--tag|--tags)
   tags=tags; shift ;;
+  -u|--u|--up|--upl|--uploa|--upload|--upload-|--upload-p|--upload-pa|\
+  --upload-pac|--upload-pack)
+	shift
+	exec="--exec=$1"
+	shift;;
   --)
   shift; break ;;
   -*)
@@ -66,7 +73,7 @@ rsync://* )
 	;;
 
 * )
-	git-peek-remote "$peek_repo" ||
+	git-peek-remote $exec "$peek_repo" ||
 		echo "failed	slurping"
 	;;
 esac |

@@ -18,6 +18,7 @@ force=
 verbose=
 update_head_ok=
 exec=
+upload_pack=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -28,6 +29,7 @@ do
 	--upload-pac|--upload-pack)
 		shift
 		exec="--exec=$1" 
+		upload_pack="-u $1"
 		;;
 	-f|--f|--fo|--for|--forc|--force)
 		force=t
@@ -202,7 +204,7 @@ reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
 	taglist=$(IFS="	" &&
-		  git-ls-remote --tags "$remote" |
+		  git-ls-remote $upload_pack --tags "$remote" |
 	          while read sha1 name
 		  do
 			case "$name" in
@@ -367,7 +369,7 @@ fetch_main "$reflist"
 case "$no_tags$tags" in
 '')
 	taglist=$(IFS=" " &&
-    	git-ls-remote --tags "$remote" |
+	git-ls-remote $upload_pack --tags "$remote" |
 	sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
 	while read sha1 name
 	do
