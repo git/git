@@ -58,7 +58,7 @@ EOF
 
 test_expect_success \
     'diff identical, but newly created symlink' \
-    'sleep 1 &&
+    'sleep 3 &&
     ln -s xyzzy frotz &&
     git-diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
