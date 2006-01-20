@@ -20,6 +20,13 @@ static int check_strict = 0;
 static int keep_cache_objects = 0; 
 static unsigned char head_sha1[20];
 
+#if NO_D_INO_IN_DIRENT
+#define SORT_DIRENT 0
+#define DIRENT_SORT_HINT(de) 0
+#else
+#define SORT_DIRENT 1
+#define DIRENT_SORT_HINT(de) ((de)->d_ino)
+#endif
 
 static void objreport(struct object *obj, const char *severity,
                       const char *err, va_list params)
@@ -307,7 +314,9 @@ static void fsck_sha1_list(void)
 {
 	int i, nr = sha1_list.nr;
 
-	qsort(sha1_list.entry, nr, sizeof(struct sha1_entry *), ino_compare);
+	if (SORT_DIRENT)
+		qsort(sha1_list.entry, nr,
+		      sizeof(struct sha1_entry *), ino_compare);
 	for (i = 0; i < nr; i++) {
 		struct sha1_entry *entry = sha1_list.entry[i];
 		unsigned char *sha1 = entry->sha1;
@@ -361,7 +370,7 @@ static int fsck_dir(int i, char *path)
 			memcpy(name+2, de->d_name, len+1);
 			if (get_sha1_hex(name, sha1) < 0)
 				break;
-			add_sha1_list(sha1, de->d_ino);
+			add_sha1_list(sha1, DIRENT_SORT_HINT(de));
 			continue;
 		}
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);

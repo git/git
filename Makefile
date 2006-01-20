@@ -19,6 +19,8 @@ all:
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 #
+# Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_SETENV if you don't have setenv in the C library.
@@ -234,6 +236,7 @@ ifeq ($(uname_S),SunOS)
 	ALL_CFLAGS += -D__EXTENSIONS__
 endif
 ifeq ($(uname_O),Cygwin)
+	NO_D_INO_IN_DIRENT = YesPlease
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	# There are conflicting reports about this.
@@ -333,6 +336,9 @@ endif
 ifdef NEEDS_NSL
 	LIBS += -lnsl
 	SIMPLE_LIB += -lnsl
+endif
+ifdef NO_D_INO_IN_DIRENT
+	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT
 endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
