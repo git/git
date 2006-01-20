@@ -321,16 +321,12 @@ struct packed_git *packed_git;
 static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 				void **idx_map_)
 {
-	SHA_CTX ctx;
-	unsigned char sha1[20];
 	void *idx_map;
 	unsigned int *index;
 	unsigned long idx_size;
 	int nr, i;
-	int fd;
+	int fd = open(path, O_RDONLY);
 	struct stat st;
-
-	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return -1;
 	if (fstat(fd, &st)) {
@@ -367,16 +363,6 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	 */
 	if (idx_size != 4*256 + nr * 24 + 20 + 20)
 		return error("wrong index file size");
-
-	/*
-	 * File checksum.
-	 */
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, idx_map, idx_size-20);
-	SHA1_Final(sha1, &ctx);
-
-	if (memcmp(sha1, idx_map + idx_size - 20, 20))
-		return error("index checksum mismatch");
 
 	return 0;
 }
