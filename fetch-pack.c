@@ -262,9 +262,6 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 {
 	struct ref *prev, *current, *next;
 
-	if (!nr_match)
-		return;
-
 	for (prev = NULL, current = *refs; current; current = next) {
 		next = current->next;
 		if ((!memcmp(current->name, "refs/", 5) &&
