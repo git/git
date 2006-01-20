@@ -9,7 +9,7 @@ GIT as a Linux subsystem maintainer.
 
 -Tony
 
-Last updated w.r.t. GIT 0.99.9f
+Last updated w.r.t. GIT 1.1
 
 Linux subsystem maintenance using GIT
 -------------------------------------
@@ -91,6 +91,14 @@ These can be easily kept up to date by merging from the "linus" branch:
 
  $ git checkout test && git merge "Auto-update from upstream" test linus
  $ git checkout release && git merge "Auto-update from upstream" release linus
+
+Important note!  If you have any local changes in these branches, then
+this merge will create a commit object in the history (with no local
+changes git will simply do a "Fast forward" merge).  Many people dislike
+the "noise" that this creates in the Linux history, so you should avoid
+doing this capriciously in the "release" branch, as these noisy commits
+will become part of the permanent history when you ask Linus to pull
+from the release branch.
 
 Set up so that you can push upstream to your public tree (you need to
 log-in to the remote system and create an empty tree there before the
