@@ -45,6 +45,9 @@ all:
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
+# Define NO_SOCKADDR_STORAGE if your platform does not have struct
+# sockaddr_storage.
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -344,7 +347,14 @@ ifdef NO_MMAP
 	COMPAT_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
-	ALL_CFLAGS += -DNO_IPV6 -Dsockaddr_storage=sockaddr_in
+	ALL_CFLAGS += -DNO_IPV6
+endif
+ifdef NO_SOCKADDR_STORAGE
+ifdef NO_IPV6
+	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in
+else
+	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
+endif
 endif
 
 ifdef PPC_SHA1
