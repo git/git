@@ -21,6 +21,9 @@ all:
 #
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 #
+# Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
+# d_type in struct dirent (latest Cygwin -- will be fixed soonish).
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_SETENV if you don't have setenv in the C library.
@@ -236,6 +239,7 @@ ifeq ($(uname_S),SunOS)
 	ALL_CFLAGS += -D__EXTENSIONS__
 endif
 ifeq ($(uname_O),Cygwin)
+	NO_D_TYPE_IN_DIRENT = YesPlease
 	NO_D_INO_IN_DIRENT = YesPlease
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
@@ -336,6 +340,9 @@ endif
 ifdef NEEDS_NSL
 	LIBS += -lnsl
 	SIMPLE_LIB += -lnsl
+endif
+ifdef NO_D_TYPE_IN_DIRENT
+	ALL_CFLAGS += -DNO_D_TYPE_IN_DIRENT
 endif
 ifdef NO_D_INO_IN_DIRENT
 	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT

@@ -10,7 +10,7 @@
 #define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
 #endif
 
-#ifdef DT_UNKNOWN
+#if defined(DT_UNKNOWN) && !NO_D_TYPE_IN_DIRENT
 #define DTYPE(de)	((de)->d_type)
 #else
 #define DT_UNKNOWN	0
