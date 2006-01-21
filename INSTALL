@@ -5,8 +5,8 @@ Normally you can just do "make" followed by "make install", and that
 will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
-	$ make prefix=/usr ;# as yourself
-	# make prefix=/usr install ;# as root
+	$ make prefix=/usr all doc ;# as yourself
+	# make prefix=/usr install install-doc ;# as root
 
 (or prefix=/usr/local, of course).  Just like any program suite
 that uses $prefix, the built results have some paths encoded,
@@ -90,3 +90,27 @@ Issues of note:
    You can place local settings in config.mak and the Makefile
    will include them.  Note that config.mak is not distributed;
    the name is reserved for local settings.
+
+ - To build and install documentation suite, you need to have the
+   asciidoc/xmlto toolchain.  Alternatively, pre-formatted
+   documentation are available in "html" and "man" branches of the git
+   repository itself.  For example, you could:
+
+	$ mkdir manual && cd manual
+	$ git init-db
+	$ git clone-pack git://git.kernel.org/pub/scm/git/git.git man html |
+	  while read a b
+	  do
+	    echo $a >.git/$b
+	  done
+	$ cp .git/refs/heads/man .git/refs/heads/master
+	$ git checkout
+
+   to checkout the pre-built man pages.  Also in this repository:
+
+	$ git checkout html
+
+   would instead give you a copy of what you see at:
+
+	http://www.kernel.org/pub/software/scm/git/docs/
+
