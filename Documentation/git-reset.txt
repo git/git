@@ -147,8 +147,8 @@ and resets the tip of the branch to that commit.
 
 Interrupted workflow::
 +
-You can get interrupted by an ungent fix request while you are
-still in the middle of a large change.  The files in your
+Suppose you are interrupted by an urgent fix request while you
+are in the middle of a large change.  The files in your
 working tree are not in any shape to be committed yet, but you
 need to get to the other branch for a quick bugfix.
 +
@@ -164,8 +164,8 @@ $ git reset --soft HEAD^ ;# go back to WIP state <2>
 $ git reset <3>
 
 <1> This commit will get blown away so a throw-away log message is OK.
-<2> This removes the 'WIP' commit from the commit history, and makes
-    your working tree in the state just before you made that snapshot.
+<2> This removes the 'WIP' commit from the commit history, and sets
+    your working tree to the state just before you made that snapshot.
 <3> After <2>, the index file still has all the WIP changes you
     committed in <1>.  This sets it to the last commit you were
     basing the WIP changes on.

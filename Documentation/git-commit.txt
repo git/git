@@ -27,7 +27,7 @@ OPTIONS
 -a|--all::
 	Update all paths in the index file.  This flag notices
 	files that have been modified and deleted, but new files
-	you have not told about git are not affected.
+	you have not told git about are not affected.
 
 -c or -C <commit>::
 	Take existing commit object, and reuse the log message
