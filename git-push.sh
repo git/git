@@ -57,14 +57,9 @@ esac
 
 shift ;# away the initial 'x'
 
-# Now we have explicit refs from the command line or from remotes/
-# shorthand, or --tags.  Falling back on the current branch if we still
-# do not have any may be an alternative, but prevent mistakes for now.
-
-case "$#,$has_all" in
-0,)
-	die "No refs given to be pushed." ;;
-esac
+# $# is now 0 if there was no explicit refspec on the command line
+# and there was no defalt refspec to push from remotes/ file.
+# we will let git-send-pack to do its "matching refs" thing.
 
 case "$remote" in
 git://*)
