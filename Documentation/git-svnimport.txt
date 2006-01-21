@@ -21,7 +21,7 @@ DESCRIPTION
 Imports a SVN repository into git. It will either create a new
 repository, or incrementally import into an existing one.
 
-SVN access is done by the SVN:: Perl module.
+SVN access is done by the SVN::Perl module.
 
 git-svnimport assumes that SVN repositories are organized into one
 "trunk" directory where the main development happens, "branch/FOO"
@@ -74,8 +74,8 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 -l <max_rev>::
 	Specify a maximum revision number to pull.
 
-	Formerly, this option controlled how many revisions to pull, due to
-	SVN memory leaks. (These have been worked around.)
+	Formerly, this option controlled how many revisions to pull,
+	due to SVN memory leaks. (These have been worked around.)
 
 -v::
 	Verbosity: let 'svnimport' report what it is doing.
@@ -100,11 +100,7 @@ with a 40x error pretty quickly.
 If you're using the "-d" or "-D" option, this is the URL of the SVN
 repository itself; it usually ends in "/svn".
 
-<SVN_repository_URL>::
-	The URL of the SVN module you want to import. For local
-	repositories, use "file:///absolute/path".
-
-<path>
+<path>::
 	The path to the module you want to check out.
 
 -h::
