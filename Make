@@ -7,11 +7,11 @@ LANG=C
 LC_CTYPE=C
 export PATH LANG LC_CTYPE
 
-#make prefix=/usr/local \
+: ${O=-O2}
 make bindir=$HOME/bin/Linux \
      gitexecdir=$HOME/bin/Linux \
      PYTHON_PATH=/usr/bin/python2.4 \
-     CFLAGS='-O0 -Wall -Wdeclaration-after-statement -g'"$DDD" \
+     CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
      WITH_SEND_EMAIL=YesPlease \
      WITH_SVNIMPORT=YesPlease \
      "$@"
