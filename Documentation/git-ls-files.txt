@@ -46,6 +46,10 @@ OPTIONS
 -s|--stage::
 	Show stage files in the output
 
+--directory::
+	If a whole directory is classified as "other", show just its
+	name (with a trailing slash) and not its whole contents.
+
 -u|--unmerged::
 	Show unmerged files in the output (forces --stage)
 
