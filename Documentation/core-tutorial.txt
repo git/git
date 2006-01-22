@@ -1667,6 +1667,26 @@ complain, telling you that the remote `master` head does not
 fast forward.  You need to pull and merge those other changes
 back before you push your work when it happens.
 
+The `git push` command without any explicit refspec parameter
+pushes the refs that exist both in the local repository and the
+remote repository.  So the last `push` can be done with either
+one of these:
+------------
+$ git push origin
+$ git push repo.shared.xz:/pub/scm/project.git/
+------------
+as long as the shared repository does not have any branches
+other than `master`.
+[NOTE]
+============
+If you created your shared repository by cloning from somewhere
+else, you may have the `origin` branch.  Your developers
+typically do not use that branch; remove it.  Otherwise, that
+would be pushed back by the `git push origin` because your
+developers' repository would surely have `origin` branch to keep
+track of the shared repository, and would be counted as "exist
+on both ends".
+============
 
 Advanced Shared Repository Management
 -------------------------------------
