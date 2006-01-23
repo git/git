@@ -55,6 +55,7 @@ no_checkout=
 upload_pack=
 bare=
 origin=origin
+origin_override=
 while
 	case "$#,$1" in
 	0,*) break ;;
@@ -73,6 +74,11 @@ while
 		    echo >&2 "'$2' is not suitable for a branch name"
 		    exit 1
 		}
+		test -z "$origin_override" || {
+		    echo >&2 "Do not give more than one -o options."
+		    exit 1
+		}
+		origin_override=yes
 		origin="$2"; shift
 		;;
 	1,-u|1,--upload-pack) usage ;;
@@ -87,7 +93,15 @@ do
 done
 
 # --bare implies --no-checkout
-test =z "$bare" || no_checkout=yes
+if test yes = "$bare"
+then
+	if test yes = "$origin_override"
+	then
+		echo >&2 '--bare and -o $origin options are incompatible.'
+		exit 1
+	fi
+	no_checkout=yes
+fi
 
 # Turn the source into an absolute path if
 # it is local
