@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [--naked] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -53,7 +53,7 @@ use_local=no
 local_shared=no
 no_checkout=
 upload_pack=
-naked=
+bare=
 origin=origin
 while
 	case "$#,$1" in
@@ -61,7 +61,8 @@ while
 	*,-n|*,--no|*,--no-|*,--no-c|*,--no-ch|*,--no-che|*,--no-chec|\
 	*,--no-check|*,--no-checko|*,--no-checkou|*,--no-checkout)
 	  no_checkout=yes ;;
-	*,--na|*,--nak|*,--nake|*,--naked) naked=yes ;;
+	*,--na|*,--nak|*,--nake|*,--naked|\
+	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes; use_local=yes ;;
@@ -85,8 +86,8 @@ do
 	shift
 done
 
-# --naked implies --no-checkout
-test -z "$naked" || no_checkout=yes
+# --bare implies --no-checkout
+test =z "$bare" || no_checkout=yes
 
 # Turn the source into an absolute path if
 # it is local
@@ -103,11 +104,11 @@ dir="$2"
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
-case "$naked" in
+case "$bare" in
 yes) GIT_DIR="$D" ;;
 *) GIT_DIR="$D/.git" ;;
 esac && export GIT_DIR && git-init-db || usage
-case "$naked" in
+case "$bare" in
 yes)
 	GIT_DIR="$D" ;;
 *)
