@@ -43,12 +43,13 @@ people.  The <<Discussion>> section below contains much useful
 definition and clarification - read that first.
 
 If you are interested in using git to manage (version control)
-projects, use link:everyday.html[Everyday GIT] as a guide to the
+projects, use link:tutorial.html[The Tutorial] to get you started,
+and then link:everyday.html[Everyday GIT] as a guide to the
 minimum set of commands you need to know for day-to-day work.
 Most likely, that will get you started, and you can go a long
 way without knowing the low level details too much.
 
-The link:tutorial.html[tutorial] document covers how things
+The link:core-tutorial.html[Core tutorial] document covers how things
 internally work.
 
 If you are migrating from CVS, link:cvs-migration.html[cvs
