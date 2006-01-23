@@ -209,7 +209,7 @@ esac
 
 cd "$D" || exit
 
-if test -f "$GIT_DIR/HEAD"
+if test -f "$GIT_DIR/HEAD" && test -z "$bare"
 then
 	head_points_at=`git-symbolic-ref HEAD`
 	case "$head_points_at" in

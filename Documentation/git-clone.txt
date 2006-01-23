@@ -62,7 +62,9 @@ OPTIONS
 	Make a 'bare' GIT repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
-	itself the `$GIT_DIR`. This implies `-n` option.
+	itself the `$GIT_DIR`. This implies `-n` option.  When
+	this option is used, neither the `origin` branch nor the
+	default	`remotes/origin` file is created.
 
 -o <name>::
 	Instead of using the branch name 'origin' to keep track
