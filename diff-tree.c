@@ -8,6 +8,7 @@ static int verbose_header = 0;
 static int ignore_merges = 1;
 static int show_empty_combined = 0;
 static int combine_merges = 0;
+static int dense_combined_merges = 0;
 static int read_stdin = 0;
 
 static const char *header = NULL;
@@ -121,7 +122,8 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 			header = generate_header(sha1, sha1,
 						 commit->buffer);
 			return diff_tree_combined_merge(sha1, header,
-							show_empty_combined);
+							show_empty_combined,
+							dense_combined_merges);
 		}
 	}
 
@@ -168,7 +170,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static const char diff_tree_usage[] =
-"git-diff-tree [--stdin] [-m] [-c] [-s] [-v] [--pretty] [-t] [-r] [--root] "
+"git-diff-tree [--stdin] [-m] [-c] [--cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
 "[<common diff options>] <tree-ish> [<tree-ish>] [<path>...]\n"
 "  -r            diff recursively\n"
 "  --root        include the initial commit as diff against /dev/null\n"
@@ -233,6 +235,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "-c")) {
 			combine_merges = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--cc")) {
+			dense_combined_merges = combine_merges = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-v")) {

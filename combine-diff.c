@@ -278,7 +278,25 @@ static int interesting(struct sline *sline, unsigned long all_mask)
 	return ((sline->flag & all_mask) != all_mask || sline->lost_head);
 }
 
-static void make_hunks(struct sline *sline, unsigned long cnt, int num_parent)
+static unsigned long line_diff_parents(struct sline *sline, unsigned long all_mask)
+{
+	/*
+	 * Look at the line and see from which parents we have difference.
+	 * Lower bits of sline->flag records if the parent had this line,
+	 * so XOR with all_mask gives us on-bits for parents we have
+	 * differences with.
+	 */
+	unsigned long parents = (sline->flag ^ all_mask);
+	if (sline->lost_head) {
+		struct lline *ll;
+		for (ll = sline->lost_head; ll; ll = ll->next)
+			parents |= ll->parent_map;
+	}
+	return parents & all_mask;
+}
+
+static void make_hunks(struct sline *sline, unsigned long cnt,
+		       int num_parent, int dense)
 {
 	unsigned long all_mask = (1UL<<num_parent) - 1;
 	unsigned long mark = (1UL<<num_parent);
@@ -301,6 +319,45 @@ static void make_hunks(struct sline *sline, unsigned long cnt, int num_parent)
 			continue;
 		}
 		i++;
+	}
+	if (!dense)
+		return;
+
+	/* Look at each hunk, and if it contains changes from only
+	 * one parent, mark that uninteresting.
+	 */
+	i = 0;
+	while (i < cnt) {
+		int j, hunk_end, diffs;
+		unsigned long parents;
+		while (i < cnt && !(sline[i].flag & mark))
+			i++;
+		if (cnt <= i)
+			break; /* No more interesting hunks */
+		for (hunk_end = i + 1; hunk_end < cnt; hunk_end++)
+			if (!(sline[hunk_end].flag & mark))
+				break;
+		/* [i..hunk_end) are interesting.  Now is it from
+		 * only one parent?
+		 * If lost lines are only from one parent and
+		 * remaining lines existed in parents other than
+		 * that parent, then the hunk is not that interesting.
+		 */
+		parents = 0;
+		diffs = 0;
+		for (j = i; j < hunk_end; j++)
+			parents |= line_diff_parents(sline + j, all_mask);
+		/* Now, how many bits from [0..num_parent) are on? */
+		for (j = 0; j < num_parent; j++) {
+			if (parents & (1UL<<j))
+				diffs++;
+		}
+		if (diffs < 2) {
+			/* This hunk is not that interesting after all */
+			for (j = i; j < hunk_end; j++)
+				sline[j].flag &= ~mark;
+		}
+		i = hunk_end;
 	}
 }
 
@@ -351,7 +408,8 @@ static void dump_sline(struct sline *sline, int cnt, int num_parent)
 	}
 }
 
-static void show_combined_diff(struct path_list *elem, int num_parent)
+static void show_combined_diff(struct path_list *elem, int num_parent,
+			       int dense)
 {
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
@@ -390,7 +448,7 @@ static void show_combined_diff(struct path_list *elem, int num_parent)
 	for (i = 0; i < num_parent; i++)
 		combine_diff(elem->parent_sha1[i], ourtmp, sline, cnt, i);
 
-	make_hunks(sline, cnt, num_parent);
+	make_hunks(sline, cnt, num_parent, dense);
 
 	dump_sline(sline, cnt, num_parent);
 	unlink(ourtmp);
@@ -410,7 +468,8 @@ static void show_combined_diff(struct path_list *elem, int num_parent)
 }
 
 int diff_tree_combined_merge(const unsigned char *sha1,
-			     const char *header, int show_empty_merge)
+			     const char *header,
+			     int show_empty_merge, int dense)
 {
 	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
@@ -455,7 +514,7 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 			else
 				printf("%s", p->path);
 			putchar('\n');
-			show_combined_diff(p, num_parent);
+			show_combined_diff(p, num_parent, dense);
 		}
 	}
 
