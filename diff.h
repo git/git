@@ -56,6 +56,8 @@ extern int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
 			  const char *base, struct diff_options *opt);
 
+extern int diff_tree_combined_merge(const unsigned char *sha1, const char *, int);
+
 extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
