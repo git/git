@@ -271,21 +271,56 @@ static int interesting(struct sline *sline, unsigned long all_mask)
 	return ((sline->flag & all_mask) != all_mask || sline->lost_head);
 }
 
-static unsigned long line_diff_parents(struct sline *sline, unsigned long all_mask)
+static unsigned long line_common_diff(struct sline *sline, unsigned long all_mask)
 {
 	/*
-	 * Look at the line and see from which parents we have difference.
-	 * Lower bits of sline->flag records if the parent had this line,
-	 * so XOR with all_mask gives us on-bits for parents we have
-	 * differences with.
+	 * Look at the line and see from which parents we have the
+	 * same difference.
 	 */
-	unsigned long parents = (sline->flag ^ all_mask);
+
+	/* Lower bits of sline->flag records if the parent had this
+	 * line, so XOR with all_mask gives us on-bits for parents we
+	 * have differences with.
+	 */
+	unsigned long common_adds = (sline->flag ^ all_mask) & all_mask;
+	unsigned long common_removes = all_mask;
+
+	/* If all the parents have this line, that also counts as
+	 * having the same difference.
+	 */
+	if (!common_adds)
+		common_adds = all_mask;
+
 	if (sline->lost_head) {
+		/* Lost head list records the lines removed from
+		 * the parents, and parent_map records from which
+		 * parent the line was removed.
+		 */
 		struct lline *ll;
-		for (ll = sline->lost_head; ll; ll = ll->next)
-			parents |= ll->parent_map;
+		for (ll = sline->lost_head; ll; ll = ll->next) {
+			common_removes &= ll->parent_map;
+		}
 	}
-	return parents & all_mask;
+	return common_adds & common_removes;
+}
+
+static unsigned long line_all_diff(struct sline *sline, unsigned long all_mask)
+{
+	/*
+	 * Look at the line and see from which parents we have some difference.
+	 */
+	unsigned long different = (sline->flag ^ all_mask) & all_mask;
+	if (sline->lost_head) {
+		/* Lost head list records the lines removed from
+		 * the parents, and parent_map records from which
+		 * parent the line was removed.
+		 */
+		struct lline *ll;
+		for (ll = sline->lost_head; ll; ll = ll->next) {
+			different |= ll->parent_map;
+		}
+	}
+	return different;
 }
 
 static void make_hunks(struct sline *sline, unsigned long cnt,
@@ -316,13 +351,14 @@ static void make_hunks(struct sline *sline, unsigned long cnt,
 	if (!dense)
 		return;
 
-	/* Look at each hunk, and if it contains changes from only
-	 * one parent, mark that uninteresting.
+	/* Look at each hunk, and if we have changes from only one
+	 * parent, or the changes are the same from all but one
+	 * parent, mark that uninteresting.
 	 */
 	i = 0;
 	while (i < cnt) {
-		int j, hunk_end, diffs;
-		unsigned long parents;
+		int j, hunk_end, same, diff;
+		unsigned long same_diff, all_diff, this_diff;
 		while (i < cnt && !(sline[i].flag & mark))
 			i++;
 		if (cnt <= i)
@@ -330,22 +366,23 @@ static void make_hunks(struct sline *sline, unsigned long cnt,
 		for (hunk_end = i + 1; hunk_end < cnt; hunk_end++)
 			if (!(sline[hunk_end].flag & mark))
 				break;
-		/* [i..hunk_end) are interesting.  Now is it from
-		 * only one parent?
-		 * If lost lines are only from one parent and
-		 * remaining lines existed in parents other than
-		 * that parent, then the hunk is not that interesting.
+		/* [i..hunk_end) are interesting.  Now does it have
+		 * the same change with all but one parent?
 		 */
-		parents = 0;
-		diffs = 0;
-		for (j = i; j < hunk_end; j++)
-			parents |= line_diff_parents(sline + j, all_mask);
-		/* Now, how many bits from [0..num_parent) are on? */
-		for (j = 0; j < num_parent; j++) {
-			if (parents & (1UL<<j))
-				diffs++;
+		same_diff = all_mask;
+		all_diff = 0;
+		for (j = i; j < hunk_end; j++) {
+			same_diff &= line_common_diff(sline + j, all_mask);
+			all_diff |= line_all_diff(sline + j, all_mask);
 		}
-		if (diffs < 2) {
+		diff = same = 0;
+		for (j = 0; j < num_parent; j++) {
+			if (same_diff & (1UL<<j))
+				same++;
+			if (all_diff & (1UL<<j))
+				diff++;
+		}
+		if ((num_parent - 1 <= same) || (diff == 1)) {
 			/* This hunk is not that interesting after all */
 			for (j = i; j < hunk_end; j++)
 				sline[j].flag &= ~mark;
