@@ -586,7 +586,7 @@ git Diffs
 
 Discussion[[Discussion]]
 ------------------------
-include::../README[]
+include::README[]
 
 Authors
 -------
