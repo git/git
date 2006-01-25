@@ -844,8 +844,12 @@ int main(int argc, const char **argv)
 			arg++;
 			limited = 1;
 		}
-		if (get_sha1(arg, sha1) < 0)
+		if (get_sha1(arg, sha1) < 0) {
+			struct stat st;
+			if (lstat(arg, &st) < 0)
+				die("'%s': %s", arg, strerror(errno));
 			break;
+		}
 		commit = get_commit_reference(arg, sha1, flags);
 		handle_one_commit(commit, &list);
 	}

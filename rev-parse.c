@@ -154,6 +154,7 @@ int main(int argc, char **argv)
 	const char *prefix = setup_git_directory();
 	
 	for (i = 1; i < argc; i++) {
+		struct stat st;
 		char *arg = argv[i];
 		char *dotdot;
 	
@@ -293,6 +294,8 @@ int main(int argc, char **argv)
 		}
 		if (verify)
 			die("Needed a single revision");
+		if (lstat(arg, &st) < 0)
+			die("'%s': %s", arg, strerror(errno));
 		as_is = 1;
 		show_file(arg);
 	}
