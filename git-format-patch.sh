@@ -178,7 +178,7 @@ my ($signoff_pattern, $done_header, $done_subject, $signoff_seen,
     $last_was_signoff);
 
 if ($signoff) {
-	$signoff = `git-var GIT_COMMITTER_IDENT`;
+	$signoff = "Signed-off-by: " . `git-var GIT_COMMITTER_IDENT`;
 	$signoff =~ s/>.*/>/;
 	$signoff_pattern = quotemeta($signoff);
 }
