@@ -29,7 +29,7 @@ static struct path_list *intersect_paths(struct path_list *curr,
 	int i;
 
 	if (!n) {
-		struct path_list *list = NULL, *tail = NULL;
+		struct path_list *list = NULL, **tail = &list;
 		for (i = 0; i < q->nr; i++) {
 			int len;
 			const char *path;
@@ -46,12 +46,8 @@ static struct path_list *intersect_paths(struct path_list *curr,
 			p->next = NULL;
 			memcpy(p->sha1, q->queue[i]->two->sha1, 20);
 			memcpy(p->parent_sha1[n], q->queue[i]->one->sha1, 20);
-			if (!tail)
-				list = tail = p;
-			else {
-				tail->next = p;
-				p = tail;
-			}
+			*tail = p;
+			tail = &p->next;
 		}
 		return list;
 	}
@@ -212,10 +208,7 @@ static void append_lost(struct sline *sline, int n, const char *line)
 	lline->parent_map = this_mask;
 	memcpy(lline->line, line, len);
 	lline->line[len] = 0;
-	if (sline->lost_head)
-		*(sline->lost_tail) = lline;
-	else
-		sline->lost_head = lline;
+	*sline->lost_tail = lline;
 	sline->lost_tail = &lline->next;
 }
 
@@ -433,6 +426,7 @@ static void show_combined_diff(struct path_list *elem, int num_parent,
 	sline[0].bol = result;
 	for (lno = 0, cp = result; cp - result < size; cp++) {
 		if (*cp == '\n') {
+			sline[lno].lost_tail = &sline[lno].lost_head;
 			sline[lno].len = cp - sline[lno].bol;
 			sline[lno].flag = (1UL<<num_parent) - 1;
 			lno++;
@@ -441,6 +435,7 @@ static void show_combined_diff(struct path_list *elem, int num_parent,
 		}
 	}
 	if (result[size-1] != '\n') {
+		sline[cnt-1].lost_tail = &sline[cnt-1].lost_head;
 		sline[cnt-1].len = size - (sline[cnt-1].bol - result);
 		sline[cnt-1].flag = (1UL<<num_parent) - 1;
 	}
