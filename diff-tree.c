@@ -84,7 +84,7 @@ static const char *generate_header(const unsigned char *commit_sha1,
 			 diff_unique_abbrev(parent_sha1, abbrev) : "root");
 	offset += pretty_print_commit(commit_format, msg, len,
 				      this_header + offset,
-				      sizeof(this_header) - offset);
+				      sizeof(this_header) - offset, abbrev);
 	return this_header;
 }
 

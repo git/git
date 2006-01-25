@@ -426,9 +426,10 @@ static int is_empty_line(const char *line, int len)
 	return !len;
 }
 
-static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int parents)
+static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int parents, int abbrev)
 {
 	int offset = 0;
+	unsigned char sha1[20];
 
 	if (fmt == CMIT_FMT_ONELINE)
 		return offset;
@@ -437,17 +438,25 @@ static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int p
 		break;
 	case 2:
 		/* Go back to the previous line: 40 characters of previous parent, and one '\n' */
-		offset = sprintf(buf, "Merge: %.40s\n", line-41);
+		if (abbrev && !get_sha1_hex(line-41, sha1))
+			offset = sprintf(buf, "Merge: %s\n",
+					 find_unique_abbrev(sha1, abbrev));
+		else
+			offset = sprintf(buf, "Merge: %.40s\n", line-41);
 		/* Fallthrough */
 	default:
 		/* Replace the previous '\n' with a space */
 		buf[offset-1] = ' ';
-		offset += sprintf(buf + offset, "%.40s\n", line+7);
+		if (abbrev && !get_sha1_hex(line+7, sha1))
+			offset += sprintf(buf + offset, "%s\n",
+					 find_unique_abbrev(sha1, abbrev));
+		else
+			offset += sprintf(buf + offset, "%.40s\n", line+7);
 	}
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space, int abbrev)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
@@ -488,7 +497,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned l
 			if (!memcmp(line, "parent ", 7)) {
 				if (linelen != 48)
 					die("bad parent line in commit");
-				offset += add_parent_info(fmt, buf + offset, line, ++parents);
+				offset += add_parent_info(fmt, buf + offset, line, ++parents, abbrev);
 			}
 
 			/*
