@@ -4,7 +4,7 @@ USAGE='[-p] [--max-count=<n>] [<since>..<limit>] [--pretty=<format>] [-m] [git-d
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
-diff_tree_flags=$(git-rev-parse --sq --no-revs --flags "$@")
+diff_tree_flags=$(git-rev-parse --sq --no-revs --flags "$@") || exit
 test -z "$diff_tree_flags" &&
 	diff_tree_flags=$(git-repo-config --get whatchanged.difftree)
 test -z "$diff_tree_flags" &&
