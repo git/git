@@ -723,7 +723,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 	if (memcmp(one->sha1, two->sha1, 20)) {
 		char one_sha1[41];
-		int abbrev = o->full_index ? 40 : DIFF_DEFAULT_INDEX_ABBREV;
+		int abbrev = o->full_index ? 40 : DEFAULT_ABBREV;
 		memcpy(one_sha1, sha1_to_hex(one->sha1), 41);
 
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -846,7 +846,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--find-copies-harder"))
 		options->find_copies_harder = 1;
 	else if (!strcmp(arg, "--abbrev"))
-		options->abbrev = DIFF_DEFAULT_ABBREV;
+		options->abbrev = DEFAULT_ABBREV;
 	else if (!strncmp(arg, "--abbrev=", 9))
 		options->abbrev = strtoul(arg + 9, NULL, 10);
 	else

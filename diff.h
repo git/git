@@ -88,9 +88,6 @@ extern int diff_setup_done(struct diff_options *);
 
 #define DIFF_PICKAXE_ALL	1
 
-#define DIFF_DEFAULT_INDEX_ABBREV	7 /* hex digits */
-#define DIFF_DEFAULT_ABBREV	7 /* hex digits */
-
 extern void diffcore_std(struct diff_options *);
 
 extern void diffcore_std_no_resolve(struct diff_options *);

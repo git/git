@@ -11,7 +11,6 @@ static const char describe_usage[] =
 static int all = 0;	/* Default to annotated tags only */
 static int tags = 0;	/* But allow any tags if --tags is specified */
 
-#define DEFAULT_ABBREV 8 /* maybe too many */
 static int abbrev = DEFAULT_ABBREV;
 
 static int names = 0, allocs = 0;
@@ -155,7 +154,7 @@ int main(int argc, char **argv)
 			tags = 1;
 		else if (!strncmp(arg, "--abbrev=", 9)) {
 			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev < 4 || 40 <= abbrev)
+			if (abbrev < MINIMUM_ABBREV || 40 <= abbrev)
 				abbrev = DEFAULT_ABBREV;
 		}
 		else
