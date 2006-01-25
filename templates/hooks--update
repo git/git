@@ -68,7 +68,7 @@ then
 	refs/heads/*)
 		branch="${1##refs/heads/}"
 		echo "New branch '$branch' available with the following commits:"
-		git-rev-list --pretty "$3"
+		git-rev-list --pretty "$3" $(git-rev-parse --not --all)
 		;;
 	esac
 else
