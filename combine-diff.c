@@ -323,12 +323,13 @@ static unsigned long line_all_diff(struct sline *sline, unsigned long all_mask)
 	return different;
 }
 
-static void make_hunks(struct sline *sline, unsigned long cnt,
+static int make_hunks(struct sline *sline, unsigned long cnt,
 		       int num_parent, int dense)
 {
 	unsigned long all_mask = (1UL<<num_parent) - 1;
 	unsigned long mark = (1UL<<num_parent);
 	unsigned long i;
+	int has_interesting = 0;
 
 	i = 0;
 	while (i < cnt) {
@@ -344,21 +345,23 @@ static void make_hunks(struct sline *sline, unsigned long cnt,
 			j = (i + context < cnt) ? i + context : cnt;
 			while (i < j)
 				sline[i++].flag |= mark;
+			has_interesting = 1;
 			continue;
 		}
 		i++;
 	}
 	if (!dense)
-		return;
+		return has_interesting;
 
 	/* Look at each hunk, and if we have changes from only one
 	 * parent, or the changes are the same from all but one
 	 * parent, mark that uninteresting.
 	 */
+	has_interesting = 0;
 	i = 0;
 	while (i < cnt) {
 		int j, hunk_end, same, diff;
-		unsigned long same_diff, all_diff, this_diff;
+		unsigned long same_diff, all_diff;
 		while (i < cnt && !(sline[i].flag & mark))
 			i++;
 		if (cnt <= i)
@@ -387,8 +390,11 @@ static void make_hunks(struct sline *sline, unsigned long cnt,
 			for (j = i; j < hunk_end; j++)
 				sline[j].flag &= ~mark;
 		}
+		else
+			has_interesting = 1;
 		i = hunk_end;
 	}
+	return has_interesting;
 }
 
 static void dump_sline(struct sline *sline, int cnt, int num_parent)
@@ -437,13 +443,13 @@ static void dump_sline(struct sline *sline, int cnt, int num_parent)
 	}
 }
 
-static void show_combined_diff(struct path_list *elem, int num_parent,
-			       int dense)
+static int show_combined_diff(struct path_list *elem, int num_parent,
+			      int dense, const char *header, int show_empty)
 {
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
 	struct sline *sline; /* survived lines */
-	int i;
+	int i, show_hunks, shown_header = 0;
 	char ourtmp[TMPPATHLEN];
 
 	/* Read the result of merge first */
@@ -479,9 +485,21 @@ static void show_combined_diff(struct path_list *elem, int num_parent,
 	for (i = 0; i < num_parent; i++)
 		combine_diff(elem->parent_sha1[i], ourtmp, sline, cnt, i);
 
-	make_hunks(sline, cnt, num_parent, dense);
+	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
-	dump_sline(sline, cnt, num_parent);
+	if (header && (show_hunks || show_empty)) {
+		shown_header++;
+		puts(header);
+	}
+	if (show_hunks) {
+		printf("diff --%s ", dense ? "cc" : "combined");
+		if (quote_c_style(elem->path, NULL, NULL, 0))
+			quote_c_style(elem->path, NULL, stdout, 0);
+		else
+			printf("%s", elem->path);
+		putchar('\n');
+		dump_sline(sline, cnt, num_parent);
+	}
 	unlink(ourtmp);
 	free(result);
 
@@ -496,6 +514,7 @@ static void show_combined_diff(struct path_list *elem, int num_parent,
 		}
 	}
 	free(sline);
+	return shown_header;
 }
 
 int diff_tree_combined_merge(const unsigned char *sha1,
@@ -535,17 +554,12 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 			num_paths++;
 	}
 	if (num_paths || show_empty_merge) {
-		puts(header);
 		for (p = paths; p; p = p->next) {
 			if (!p->len)
 				continue;
-			printf("diff --%s ", dense ? "cc" : "combined");
-			if (quote_c_style(p->path, NULL, NULL, 0))
-				quote_c_style(p->path, NULL, stdout, 0);
-			else
-				printf("%s", p->path);
-			putchar('\n');
-			show_combined_diff(p, num_parent, dense);
+			if (show_combined_diff(p, num_parent, dense, header,
+					       show_empty_merge))
+				header = NULL;
 		}
 	}
 
