@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "cache.h"
 #include "pkt-line.h"
 #include "quote.h"

@@ -63,6 +63,11 @@ extern int gitfakemunmap(void *start, size_t length);
 extern int gitsetenv(const char *, const char *, int);
 #endif
 
+#ifdef NO_UNSETENV
+#define unsetenv gitunsetenv
+extern void gitunsetenv(const char *);
+#endif
+
 #ifdef NO_STRCASESTR
 #define strcasestr gitstrcasestr
 extern char *gitstrcasestr(const char *haystack, const char *needle);

@@ -232,6 +232,7 @@ ifeq ($(uname_S),SunOS)
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
 	ifeq ($(uname_R),5.8)
+		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 	endif
 	INSTALL = ginstall
@@ -354,6 +355,10 @@ endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
 	COMPAT_OBJS += compat/setenv.o
+endif
+ifdef NO_SETENV
+	COMPAT_CFLAGS += -DNO_UNSETENV
+	COMPAT_OBJS += compat/unsetenv.o
 endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
