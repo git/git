@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [--naked] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -53,15 +53,17 @@ use_local=no
 local_shared=no
 no_checkout=
 upload_pack=
-naked=
+bare=
 origin=origin
+origin_override=
 while
 	case "$#,$1" in
 	0,*) break ;;
 	*,-n|*,--no|*,--no-|*,--no-c|*,--no-ch|*,--no-che|*,--no-chec|\
 	*,--no-check|*,--no-checko|*,--no-checkou|*,--no-checkout)
 	  no_checkout=yes ;;
-	*,--na|*,--nak|*,--nake|*,--naked) naked=yes ;;
+	*,--na|*,--nak|*,--nake|*,--naked|\
+	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes; use_local=yes ;;
@@ -72,6 +74,11 @@ while
 		    echo >&2 "'$2' is not suitable for a branch name"
 		    exit 1
 		}
+		test -z "$origin_override" || {
+		    echo >&2 "Do not give more than one -o options."
+		    exit 1
+		}
+		origin_override=yes
 		origin="$2"; shift
 		;;
 	1,-u|1,--upload-pack) usage ;;
@@ -85,8 +92,16 @@ do
 	shift
 done
 
-# --naked implies --no-checkout
-test -z "$naked" || no_checkout=yes
+# --bare implies --no-checkout
+if test yes = "$bare"
+then
+	if test yes = "$origin_override"
+	then
+		echo >&2 '--bare and -o $origin options are incompatible.'
+		exit 1
+	fi
+	no_checkout=yes
+fi
 
 # Turn the source into an absolute path if
 # it is local
@@ -103,11 +118,11 @@ dir="$2"
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
-case "$naked" in
+case "$bare" in
 yes) GIT_DIR="$D" ;;
 *) GIT_DIR="$D/.git" ;;
 esac && export GIT_DIR && git-init-db || usage
-case "$naked" in
+case "$bare" in
 yes)
 	GIT_DIR="$D" ;;
 *)
@@ -208,7 +223,7 @@ esac
 
 cd "$D" || exit
 
-if test -f "$GIT_DIR/HEAD"
+if test -f "$GIT_DIR/HEAD" && test -z "$bare"
 then
 	head_points_at=`git-symbolic-ref HEAD`
 	case "$head_points_at" in

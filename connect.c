@@ -644,10 +644,16 @@ int git_connect(int fd[2], char *url, const char *prog)
 				ssh_basename++;
 			execlp(ssh, ssh_basename, host, command, NULL);
 		}
-		else
+		else {
+			unsetenv(ALTERNATE_DB_ENVIRONMENT);
+			unsetenv(DB_ENVIRONMENT);
+			unsetenv(GIT_DIR_ENVIRONMENT);
+			unsetenv(GRAFT_ENVIRONMENT);
+			unsetenv(INDEX_ENVIRONMENT);
 			execlp("sh", "sh", "-c", command, NULL);
+		}
 		die("exec failed");
-	}		
+	}
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
 	close(pipefd[0][1]);
