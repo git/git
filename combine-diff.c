@@ -386,7 +386,6 @@ static void dump_sline(struct sline *sline, int cnt, int num_parent)
 					else
 						putchar(' ');
 				}
-				putchar(' ');
 				puts(ll->line);
 				ll = ll->next;
 			}
@@ -396,7 +395,7 @@ static void dump_sline(struct sline *sline, int cnt, int num_parent)
 				else
 					putchar('+');
 			}
-			printf(" %.*s\n", sl->len, sl->bol);
+			printf("%.*s\n", sl->len, sl->bol);
 		}
 	}
 }
@@ -503,7 +502,7 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 		for (p = paths; p; p = p->next) {
 			if (!p->len)
 				continue;
-			printf("diff --combined ");
+			printf("diff --%s ", dense ? "cc" : "combined");
 			if (quote_c_style(p->path, NULL, NULL, 0))
 				quote_c_style(p->path, NULL, stdout, 0);
 			else
