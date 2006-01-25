@@ -19,13 +19,13 @@ save_tag final unique_commit "final" tree -p two_parents
 
 test_expect_success 'start is valid' 'git-rev-parse start | grep "^[0-9a-f]\{40\}$"'
 test_expect_success 'start^0' "test $(cat .git/refs/tags/start) = $(git-rev-parse start^0)"
-test_expect_success 'start^1 not valid' "test $(git-rev-parse start^1) = start^1"
+test_expect_success 'start^1 not valid' "if git-rev-parse --verify start^1; then false; else :; fi"
 test_expect_success 'second^1 = second^' "test $(git-rev-parse second^1) = $(git-rev-parse second^)"
 test_expect_success 'final^1^1^1' "test $(git-rev-parse start) = $(git-rev-parse final^1^1^1)"
 test_expect_success 'final^1^1^1 = final^^^' "test $(git-rev-parse final^1^1^1) = $(git-rev-parse final^^^)"
 test_expect_success 'final^1^2' "test $(git-rev-parse start2) = $(git-rev-parse final^1^2)"
 test_expect_success 'final^1^2 != final^1^1' "test $(git-rev-parse final^1^2) != $(git-rev-parse final^1^1)"
-test_expect_success 'final^1^3 not valid' "test $(git-rev-parse final^1^3) = final^1^3"
+test_expect_success 'final^1^3 not valid' "if git-rev-parse --verify final^1^3; then false; else :; fi"
 test_expect_failure '--verify start2^1' 'git-rev-parse --verify start2^1'
 test_expect_success '--verify start2^0' 'git-rev-parse --verify start2^0'
 
