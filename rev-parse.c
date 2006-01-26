@@ -206,8 +206,10 @@ int main(int argc, char **argv)
 				abbrev = DEFAULT_ABBREV;
 				if (arg[8] == '=')
 					abbrev = strtoul(arg + 9, NULL, 10);
-				if (abbrev < 0 || 40 <= abbrev)
-					abbrev = DEFAULT_ABBREV;
+				if (abbrev < MINIMUM_ABBREV)
+					abbrev = MINIMUM_ABBREV;
+				else if (40 <= abbrev)
+					abbrev = 40;
 				continue;
 			}
 			if (!strcmp(arg, "--sq")) {
