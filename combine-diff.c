@@ -323,6 +323,85 @@ static unsigned long line_all_diff(struct sline *sline, unsigned long all_mask)
 	return different;
 }
 
+static unsigned long adjust_hunk_tail(struct sline *sline,
+				      unsigned long all_mask,
+				      unsigned long hunk_begin,
+				      unsigned long i)
+{
+	/* i points at the first uninteresting line.
+	 * If the last line of the hunk was interesting
+	 * only because it has some deletion, then
+	 * it is not all that interesting for the
+	 * purpose of giving trailing context lines.
+	 */
+	if ((hunk_begin + 1 <= i) &&
+	    ((sline[i-1].flag & all_mask) == all_mask))
+		i--;
+	return i;
+}
+
+static unsigned long next_interesting(struct sline *sline,
+				      unsigned long mark,
+				      unsigned long i,
+				      unsigned long cnt,
+				      int uninteresting)
+{
+	while (i < cnt)
+		if (uninteresting ?
+		    !(sline[i].flag & mark) :
+		    (sline[i].flag & mark))
+			return i;
+		else
+			i++;
+	return cnt;
+}
+
+static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
+{
+	unsigned long all_mask = (1UL<<num_parent) - 1;
+	unsigned long mark = (1UL<<num_parent);
+	unsigned long i;
+
+	i = next_interesting(sline, mark, 0, cnt, 0);
+	if (cnt <= i)
+		return 0;
+
+	while (i < cnt) {
+		unsigned long j = (context < i) ? (i - context) : 0;
+		unsigned long k;
+		while (j < i)
+			sline[j++].flag |= mark;
+
+	again:
+		j = next_interesting(sline, mark, i, cnt, 1);
+		if (cnt <= j)
+			break; /* the rest are all interesting */
+
+		/* lookahead context lines */
+		k = next_interesting(sline, mark, j, cnt, 0);
+		j = adjust_hunk_tail(sline, all_mask, i, j);
+
+		if (k < j + context) {
+			/* k is interesting and [j,k) are not, but
+			 * paint them interesting because the gap is small.
+			 */
+			while (j < k)
+				sline[j++].flag |= mark;
+			i = k;
+			goto again;
+		}
+
+		/* j is the first uninteresting line and there is
+		 * no overlap beyond it within context lines.
+		 */
+		i = k;
+		k = (j + context < cnt) ? j + context : cnt;
+		while (j < k)
+			sline[j++].flag |= mark;
+	}
+	return 1;
+}
+
 static int make_hunks(struct sline *sline, unsigned long cnt,
 		       int num_parent, int dense)
 {
@@ -331,44 +410,54 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 	unsigned long i;
 	int has_interesting = 0;
 
-	i = 0;
-	while (i < cnt) {
-		if (interesting(&sline[i], all_mask)) {
-			unsigned long j = (context < i) ? i - context : 0;
-			while (j <= i)
-				sline[j++].flag |= mark;
-			while (++i < cnt) {
-				if (!interesting(&sline[i], all_mask))
-					break;
-				sline[i].flag |= mark;
-			}
-			j = (i + context < cnt) ? i + context : cnt;
-			while (i < j)
-				sline[i++].flag |= mark;
-			has_interesting = 1;
-			continue;
-		}
-		i++;
+	for (i = 0; i < cnt; i++) {
+		if (interesting(&sline[i], all_mask))
+			sline[i].flag |= mark;
+		else
+			sline[i].flag &= ~mark;
 	}
 	if (!dense)
-		return has_interesting;
+		return give_context(sline, cnt, num_parent);
 
 	/* Look at each hunk, and if we have changes from only one
 	 * parent, or the changes are the same from all but one
 	 * parent, mark that uninteresting.
 	 */
-	has_interesting = 0;
 	i = 0;
 	while (i < cnt) {
-		int j, hunk_end, same, diff;
+		unsigned long j, hunk_begin, hunk_end;
+		int same, diff;
 		unsigned long same_diff, all_diff;
 		while (i < cnt && !(sline[i].flag & mark))
 			i++;
 		if (cnt <= i)
 			break; /* No more interesting hunks */
-		for (hunk_end = i + 1; hunk_end < cnt; hunk_end++)
-			if (!(sline[hunk_end].flag & mark))
-				break;
+		hunk_begin = i;
+		for (j = i + 1; j < cnt; j++) {
+			if (!(sline[j].flag & mark)) {
+				/* Look beyond the end to see if there
+				 * is an interesting line after this
+				 * hunk within context span.
+				 */
+				unsigned long la; /* lookahead */
+				int contin = 0;
+				la = adjust_hunk_tail(sline, all_mask,
+						     hunk_begin, j);
+				la = (la + context < cnt) ?
+					(la + context) : cnt;
+				while (j <= --la) {
+					if (sline[la].flag & mark) {
+						contin = 1;
+						break;
+					}
+				}
+				if (!contin)
+					break;
+				j = la;
+			}
+		}
+		hunk_end = j;
+
 		/* [i..hunk_end) are interesting.  Now does it have
 		 * the same change with all but one parent?
 		 */
@@ -387,13 +476,13 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 		}
 		if ((num_parent - 1 <= same) || (diff == 1)) {
 			/* This hunk is not that interesting after all */
-			for (j = i; j < hunk_end; j++)
+			for (j = hunk_begin; j < hunk_end; j++)
 				sline[j].flag &= ~mark;
 		}
-		else
-			has_interesting = 1;
 		i = hunk_end;
 	}
+
+	has_interesting = give_context(sline, cnt, num_parent);
 	return has_interesting;
 }
 
