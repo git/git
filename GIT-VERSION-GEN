@@ -5,9 +5,11 @@ DEF_VER=v1.1.GIT
 
 # First try git-describe, then see if there is a version file
 # (included in release tarballs), then default
-VN=$(git-describe --abbrev=4 HEAD 2>/dev/null | sed -e 's/-/./g') ||
-VN=$(cat version) ||
-VN="$DEF_VER"
+if VN=$(git-describe --abbrev=4 HEAD 2>/dev/null); then
+	VN=$(echo "$VN" | sed -e 's/-/./g');
+else
+	VN=$(cat version) || VN="$DEF_VER"
+fi
 
 VN=$(expr "$VN" : v*'\(.*\)')
 
