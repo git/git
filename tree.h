@@ -37,10 +37,11 @@ struct tree *parse_tree_indirect(const unsigned char *sha1);
 #define READ_TREE_RECURSIVE 1
 typedef int (*read_tree_fn_t)(unsigned char *, const char *, int, const char *, unsigned int, int);
 
-extern int read_tree_recursive(void *buffer, unsigned long size,
-			const char *base, int baselen,
-			int stage, const char **match,
-			read_tree_fn_t fn);
+extern int read_tree_recursive(struct tree *tree,
+			       const char *base, int baselen,
+			       int stage, const char **match,
+			       read_tree_fn_t fn);
 
+extern int read_tree(struct tree *tree, int stage, const char **paths);
 
 #endif /* TREE_H */

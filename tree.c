@@ -74,27 +74,24 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 	return 0;
 }
 
-int read_tree_recursive(void *buffer, unsigned long size,
+int read_tree_recursive(struct tree *tree,
 			const char *base, int baselen,
 			int stage, const char **match,
 			read_tree_fn_t fn)
 {
-	while (size) {
-		int len = strlen(buffer)+1;
-		unsigned char *sha1 = buffer + len;
-		char *path = strchr(buffer, ' ')+1;
-		unsigned int mode;
-
-		if (size < len + 20 || sscanf(buffer, "%o", &mode) != 1)
-			return -1;
-
-		buffer = sha1 + 20;
-		size -= len + 20;
-
-		if (!match_tree_entry(base, baselen, path, mode, match))
+	struct tree_entry_list *list;
+	if (parse_tree(tree))
+		return -1;
+	list = tree->entries;
+	while (list) {
+		struct tree_entry_list *current = list;
+		list = list->next;
+		if (!match_tree_entry(base, baselen, current->name,
+				      current->mode, match))
 			continue;
 
-		switch (fn(sha1, base, baselen, path, mode, stage)) {
+		switch (fn(current->item.any->sha1, base, baselen,
+			   current->name, current->mode, stage)) {
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
@@ -102,28 +99,19 @@ int read_tree_recursive(void *buffer, unsigned long size,
 		default:
 			return -1;
 		}
-		if (S_ISDIR(mode)) {
+		if (current->directory) {
 			int retval;
-			int pathlen = strlen(path);
+			int pathlen = strlen(current->name);
 			char *newbase;
-			void *eltbuf;
-			char elttype[20];
-			unsigned long eltsize;
 
-			eltbuf = read_sha1_file(sha1, elttype, &eltsize);
-			if (!eltbuf || strcmp(elttype, "tree")) {
-				if (eltbuf) free(eltbuf);
-				return -1;
-			}
 			newbase = xmalloc(baselen + 1 + pathlen);
 			memcpy(newbase, base, baselen);
-			memcpy(newbase + baselen, path, pathlen);
+			memcpy(newbase + baselen, current->name, pathlen);
 			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(eltbuf, eltsize,
+			retval = read_tree_recursive(current->item.tree,
 						     newbase,
 						     baselen + pathlen + 1,
 						     stage, match, fn);
-			free(eltbuf);
 			free(newbase);
 			if (retval)
 				return -1;
@@ -133,9 +121,9 @@ int read_tree_recursive(void *buffer, unsigned long size,
 	return 0;
 }
 
-int read_tree(void *buffer, unsigned long size, int stage, const char **match)
+int read_tree(struct tree *tree, int stage, const char **match)
 {
-	return read_tree_recursive(buffer, size, "", 0, stage, match, read_one_entry);
+	return read_tree_recursive(tree, "", 0, stage, match, read_one_entry);
 }
 
 struct tree *lookup_tree(const unsigned char *sha1)

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "tree.h"
 #include "diff.h"
 
 static int cached_only = 0;
@@ -174,8 +175,7 @@ int main(int argc, const char **argv)
 	unsigned char sha1[20];
 	const char *prefix = setup_git_directory();
 	const char **pathspec = NULL;
-	void *tree;
-	unsigned long size;
+	struct tree *tree;
 	int ret;
 	int allow_options = 1;
 	int i;
@@ -233,10 +233,10 @@ int main(int argc, const char **argv)
 
 	mark_merge_entries();
 
-	tree = read_object_with_reference(sha1, "tree", &size, NULL);
+	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("bad tree object %s", tree_name);
-	if (read_tree(tree, size, 1, pathspec))
+	if (read_tree(tree, 1, pathspec))
 		die("unable to read tree object %s", tree_name);
 
 	ret = diff_cache(active_cache, active_nr, pathspec);

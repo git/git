@@ -84,8 +84,7 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen,
 int main(int argc, const char **argv)
 {
 	unsigned char sha1[20];
-	char *buf;
-	unsigned long size;
+	struct tree *tree;
 
 	prefix = setup_git_directory();
 	if (prefix && *prefix)
@@ -131,10 +130,10 @@ int main(int argc, const char **argv)
 		usage(ls_tree_usage);
 
 	pathspec = get_pathspec(prefix, argv + 2);
-	buf = read_object_with_reference(sha1, "tree", &size, NULL);
-	if (!buf)
+	tree = parse_tree_indirect(sha1);
+	if (!tree)
 		die("not a tree object");
-	read_tree_recursive(buf, size, "", 0, 0, pathspec, show_tree);
+	read_tree_recursive(tree, "", 0, 0, pathspec, show_tree);
 
 	return 0;
 }
