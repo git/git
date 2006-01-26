@@ -251,6 +251,11 @@ ifeq ($(uname_O),Cygwin)
 	NO_IPV6 = YesPlease
 	X = .exe
 endif
+ifeq ($(uname_S),FreeBSD)
+	NEEDS_LIBICONV = YesPlease
+	ALL_CFLAGS += -I/usr/local/include
+	ALL_LDFLAGS += -L/usr/local/lib
+endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
