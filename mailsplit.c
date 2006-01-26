@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
-#include <assert.h>
 #include "cache.h"
 
 static const char git_mailsplit_usage[] =
