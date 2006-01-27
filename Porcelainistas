@@ -61,3 +61,13 @@ Message-Id: <1136400692.5919.11.camel@localhost.localdomain>
 
 I'd like to make this friendly behavior [ls-files -o not showing
 contents of untracked directory] the default in my porcelain.
+
+
+Message-ID: <cc723f590601261946h101d7000oa1990c31c5b642fc@mail.gmail.com>
+From:	Aneesh Kumar <aneesh.kumar@gmail.com>
+Date:	Fri, 27 Jan 2006 09:16:58 +0530
+
+I am right now making a gnome based git repository browser [1].
+
+[1] http://www.flickr.com/photos/17388011@N00/91636482/
+This is based on bzrk GUI frontend to bazaar and written in python
