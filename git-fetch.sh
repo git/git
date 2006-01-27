@@ -25,8 +25,8 @@ do
 	-a|--a|--ap|--app|--appe|--appen|--append)
 		append=t
 		;;
-	-u|--u|--up|--upl|--uploa|--upload|--upload-|--upload-p|--upload-pa|\
-	--upload-pac|--upload-pack)
+	--upl|--uplo|--uploa|--upload|--upload-|--upload-p|\
+	--upload-pa|--upload-pac|--upload-pack)
 		shift
 		exec="--exec=$1" 
 		upload_pack="-u $1"

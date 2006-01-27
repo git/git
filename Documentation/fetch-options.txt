@@ -3,8 +3,7 @@
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
---upload-pack <upload-pack>::
--u <upload-pack>::
+\--upload-pack <upload-pack>::
         When given, and the repository to fetch from is handled
         by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
         the command to specify non-default path for the command
