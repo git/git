@@ -258,7 +258,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 	char pretty[256], *cp;
 	struct commit_name *name = commit->object.util;
 	if (commit->object.parsed)
-		pretty_print_commit(CMIT_FMT_ONELINE, commit->buffer, ~0,
+		pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
 				    pretty, sizeof(pretty), 0);
 	else
 		strcpy(pretty, "(unavailable)");

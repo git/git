@@ -64,12 +64,13 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 
 static const char *generate_header(const unsigned char *commit_sha1,
 				   const unsigned char *parent_sha1,
-				   const char *msg)
+				   const struct commit *commit)
 {
 	static char this_header[16384];
 	int offset;
 	unsigned long len;
 	int abbrev = diff_options.abbrev;
+	const char *msg = commit->buffer;
 
 	if (!verbose_header)
 		return sha1_to_hex(commit_sha1);
@@ -82,7 +83,7 @@ static const char *generate_header(const unsigned char *commit_sha1,
 	offset += sprintf(this_header + offset, "(from %s)\n",
 			 parent_sha1 ?
 			 diff_unique_abbrev(parent_sha1, abbrev) : "root");
-	offset += pretty_print_commit(commit_format, msg, len,
+	offset += pretty_print_commit(commit_format, commit, len,
 				      this_header + offset,
 				      sizeof(this_header) - offset, abbrev);
 	return this_header;
@@ -103,7 +104,7 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 	
 	/* Root commit? */
 	if (show_root_diff && !commit->parents) {
-		header = generate_header(sha1, NULL, commit->buffer);
+		header = generate_header(sha1, NULL, commit);
 		diff_root_tree(commit_sha1, "");
 	}
 
@@ -113,9 +114,7 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 
 	for (parents = commit->parents; parents; parents = parents->next) {
 		struct commit *parent = parents->item;
-		header = generate_header(sha1,
-					 parent->object.sha1,
-					 commit->buffer);
+		header = generate_header(sha1, parent->object.sha1, commit);
 		diff_tree_sha1_top(parent->object.sha1, commit_sha1, "");
 		if (!header && verbose_header) {
 			header_prefix = "\ndiff-tree ";

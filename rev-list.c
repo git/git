@@ -81,7 +81,7 @@ static void show_commit(struct commit *commit)
 
 	if (verbose_header) {
 		static char pretty_header[16384];
-		pretty_print_commit(commit_format, commit->buffer, ~0, pretty_header, sizeof(pretty_header), 0);
+		pretty_print_commit(commit_format, commit, ~0, pretty_header, sizeof(pretty_header), 0);
 		printf("%s%c", pretty_header, hdr_termination);
 	}
 	fflush(stdout);

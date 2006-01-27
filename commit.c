@@ -456,12 +456,13 @@ static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int p
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const char *msg, unsigned long len, char *buf, unsigned long space, int abbrev)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
 	int parents = 0;
 	int indent = (fmt == CMIT_FMT_ONELINE) ? 0 : 4;
+	const char *msg = commit->buffer;
 
 	for (;;) {
 		const char *line = msg;
