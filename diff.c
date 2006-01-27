@@ -847,8 +847,13 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->find_copies_harder = 1;
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
-	else if (!strncmp(arg, "--abbrev=", 9))
+	else if (!strncmp(arg, "--abbrev=", 9)) {
 		options->abbrev = strtoul(arg + 9, NULL, 10);
+		if (options->abbrev < MINIMUM_ABBREV)
+			options->abbrev = MINIMUM_ABBREV;
+		else if (40 < options->abbrev)
+			options->abbrev = 40;
+	}
 	else
 		return 0;
 	return 1;
