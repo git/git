@@ -426,33 +426,27 @@ static int is_empty_line(const char *line, int len)
 	return !len;
 }
 
-static int add_parent_info(enum cmit_fmt fmt, char *buf, const char *line, int parents, int abbrev)
+static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *commit, int abbrev)
 {
-	int offset = 0;
-	unsigned char sha1[20];
+	struct commit_list *parent = commit->parents;
+	int offset;
 
-	if (fmt == CMIT_FMT_ONELINE)
-		return offset;
-	switch (parents) {
-	case 1:
-		break;
-	case 2:
-		/* Go back to the previous line: 40 characters of previous parent, and one '\n' */
-		if (abbrev && !get_sha1_hex(line-41, sha1))
-			offset = sprintf(buf, "Merge: %s\n",
-					 find_unique_abbrev(sha1, abbrev));
-		else
-			offset = sprintf(buf, "Merge: %.40s\n", line-41);
-		/* Fallthrough */
-	default:
-		/* Replace the previous '\n' with a space */
-		buf[offset-1] = ' ';
-		if (abbrev && !get_sha1_hex(line+7, sha1))
-			offset += sprintf(buf + offset, "%s\n",
-					 find_unique_abbrev(sha1, abbrev));
-		else
-			offset += sprintf(buf + offset, "%.40s\n", line+7);
+	if ((fmt == CMIT_FMT_ONELINE) || !parent || !parent->next)
+		return 0;
+
+	offset = sprintf(buf, "Merge:");
+
+	while (parent) {
+		struct commit *p = parent->item;
+		parent = parent->next;
+
+		offset += sprintf(buf + offset,
+				  abbrev ? " %s..." : " %s",
+				  abbrev
+				  ? find_unique_abbrev(p->object.sha1, abbrev)
+				  : sha1_to_hex(p->object.sha1));
 	}
+	buf[offset++] = '\n';
 	return offset;
 }
 
@@ -460,8 +454,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
-	int parents = 0;
 	int indent = (fmt == CMIT_FMT_ONELINE) ? 0 : 4;
+	int parents_shown = 0;
 	const char *msg = commit->buffer;
 
 	for (;;) {
@@ -498,9 +492,15 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			if (!memcmp(line, "parent ", 7)) {
 				if (linelen != 48)
 					die("bad parent line in commit");
-				offset += add_parent_info(fmt, buf + offset, line, ++parents, abbrev);
+				continue;
 			}
 
+			if (!parents_shown) {
+				offset += add_merge_info(fmt, buf + offset,
+							 commit, abbrev);
+				parents_shown = 1;
+				continue;
+			}
 			/*
 			 * MEDIUM == DEFAULT shows only author with dates.
 			 * FULL shows both authors but not dates.
