@@ -199,8 +199,8 @@ int main(int argc, char **argv)
 				verify = 1;
 				continue;
 			}
-			if (!strcmp(arg, "--abbrev") ||
-			    !strncmp(arg, "--abbrev=", 9)) {
+			if (!strcmp(arg, "--short") ||
+			    !strncmp(arg, "--short=", 9)) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
 				abbrev = DEFAULT_ABBREV;
