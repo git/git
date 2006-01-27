@@ -21,6 +21,7 @@ static const char rev_list_usage[] =
 "    --min-age=epoch\n"
 "    --sparse\n"
 "    --no-merges\n"
+"    --remove-empty\n"
 "    --all\n"
 "  ordering output:\n"
 "    --merge-order [ --show-breaks ]\n"
