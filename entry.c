@@ -70,7 +70,6 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 	unsigned long size;
 	long wrote;
 	char type[20];
-	char target[1024];
 
 	new = read_sha1_file(ce->sha1, type, &size);
 	if (!new || strcmp(type, "blob")) {
@@ -94,12 +93,10 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 			return error("git-checkout-index: unable to write file %s", path);
 		break;
 	case S_IFLNK:
-		memcpy(target, new, size);
-		target[size] = '\0';
-		if (symlink(target, path)) {
+		if (symlink(new, path)) {
 			free(new);
-			return error("git-checkout-index: unable to create symlink %s (%s)",
-				path, strerror(errno));
+			return error("git-checkout-index: unable to create "
+				     "symlink %s (%s)", path, strerror(errno));
 		}
 		free(new);
 		break;
