@@ -294,7 +294,9 @@ int main(int argc, char **argv)
 		}
 		if (verify)
 			die("Needed a single revision");
-		if (lstat(arg, &st) < 0)
+		if ((filter & DO_REVS) &&
+		    (filter & DO_NONFLAGS) && /* !def && */
+		    lstat(arg, &st) < 0)
 			die("'%s': %s", arg, strerror(errno));
 		as_is = 1;
 		show_file(arg);
