@@ -9,8 +9,9 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 SYNOPSIS
 --------
 [verse]
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty] [-t] [-r]
-	      [--root] [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
+'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
+	      [-t] [-r] [-c | --cc] [--root] [<common diff options>]
+	      <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
 -----------
@@ -79,6 +80,20 @@ separated with a single space are given.
 --no-commit-id::
 	git-diff-tree outputs a line with the commit ID when
 	applicable.  This flag suppressed the commit ID output.
+
+-c,--cc::
+	These flags change the way a merge commit is displayed
+	(which means it is useful only when the command is given
+	one <tree-ish>, or '--stdin').  It shows the differences
+	from each of the parents to the merge result
+	simultaneously, instead of showing pairwise diff between
+	a parent and the result one at a time, which '-m' option
+	output does.  '--cc' further compresses the output by
+	omiting hunks that show differences from only one
+	parent, or show the same change from all but one parent
+	for an Octopus merge.  When this optimization makes all
+	hunks disappear, the commit itself and the commit log
+	message is not shown, unless '-m' is specified.
 
 
 Limiting Output

@@ -146,3 +146,52 @@ the file that rename/copy produces, respectively.
 
 3.  TAB, LF, and backslash characters in pathnames are
     represented as `\t`, `\n`, and `\\`, respectively.
+
+
+combined diff format
+--------------------
+
+git-diff-tree and git-diff-files can take '-c' or '--cc' option
+to produce 'combined diff', which looks like this:
+
+------------
+diff --combined describe.c
+@@@ +98,7 @@@
+   return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
+  }
+
+- static void describe(char *arg)
+ -static void describe(struct commit *cmit, int last_one)
+++static void describe(char *arg, int last_one)
+  {
+ +     unsigned char sha1[20];
+ +     struct commit *cmit;
+------------
+
+Unlike the traditional 'unified' diff format, which shows two
+files A and B with a single column that has `-` (minus --
+appears in A but removed in B), `+` (plus -- missing in A but
+added to B), or ` ` (space -- unchanged) prefix, this format
+compares two or more files file1, file2,... with one file X, and
+shows how X differs from each of fileN.  One column for each of
+fileN is prepended to the output line to note how X's line is
+different from it.
+
+A `-` character in the column N means that the line appears in
+fileN but it does not appear in the last file.  A `+` character
+in the column N means that the line appears in the last file,
+and fileN does not have that line.
+
+In the above example output, the function signature was changed
+from both files (hence two `-` removals from both file1 and
+file2, plus `++` to mean one line that was added does not appear
+in either file1 nor file2).  Also two other lines are the same
+from file1 but do not appear in file2 (hence prefixed with ` +`).
+
+When shown by `git diff-tree -c`, it compares the parents of a
+merge commit with the merge result (i.e. file1..fileN are the
+parents).  When shown by `git diff-files -c`, it compares the
+two unresolved merge parents with the working tree file
+(i.e. file1 is stage 2 aka "our version", file2 is stage 3 aka
+"their version").
+
