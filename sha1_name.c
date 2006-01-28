@@ -155,7 +155,7 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	char canonical[40];
 	unsigned char res[20];
 
-	if (len < 4)
+	if (len < MINIMUM_ABBREV)
 		return -1;
 	memset(res, 0, 20);
 	memset(canonical, 'x', 40);

@@ -221,6 +221,9 @@ extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
 
 /* Convert to/from hex/sha1 representation */
+#define MINIMUM_ABBREV 4
+#define DEFAULT_ABBREV 7
+
 extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */

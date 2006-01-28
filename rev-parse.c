@@ -20,6 +20,7 @@ static char *def = NULL;
 #define REVERSED 1
 static int show_type = NORMAL;
 static int symbolic = 0;
+static int abbrev = 0;
 static int output_sq = 0;
 
 static int revs_count = 0;
@@ -95,6 +96,8 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 		putchar('^');
 	if (symbolic && name)
 		show(name);
+	else if (abbrev)
+		show(find_unique_abbrev(sha1, abbrev));
 	else
 		show(sha1_to_hex(sha1));
 }
@@ -196,6 +199,19 @@ int main(int argc, char **argv)
 				verify = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--short") ||
+			    !strncmp(arg, "--short=", 9)) {
+				filter &= ~(DO_FLAGS|DO_NOREV);
+				verify = 1;
+				abbrev = DEFAULT_ABBREV;
+				if (arg[8] == '=')
+					abbrev = strtoul(arg + 9, NULL, 10);
+				if (abbrev < MINIMUM_ABBREV)
+					abbrev = MINIMUM_ABBREV;
+				else if (40 <= abbrev)
+					abbrev = 40;
+				continue;
+			}
 			if (!strcmp(arg, "--sq")) {
 				output_sq = 1;
 				continue;
@@ -294,7 +310,9 @@ int main(int argc, char **argv)
 		}
 		if (verify)
 			die("Needed a single revision");
-		if (lstat(arg, &st) < 0)
+		if ((filter & DO_REVS) &&
+		    (filter & DO_NONFLAGS) && /* !def && */
+		    lstat(arg, &st) < 0)
 			die("'%s': %s", arg, strerror(errno));
 		as_is = 1;
 		show_file(arg);

@@ -14,6 +14,7 @@ SYNOPSIS
 	     [ \--min-age=timestamp ]
 	     [ \--sparse ]
 	     [ \--no-merges ]
+	     [ \--remove-empty ]
 	     [ \--all ]
 	     [ [ \--merge-order [ \--show-breaks ] ] | [ \--topo-order ] ]
 	     [ \--parents ]
@@ -79,6 +80,9 @@ OPTIONS
 	flag makes the command output all eligible commits
 	(still subject to count and age limitation), but apply
 	merge simplification nevertheless.
+
+--remove-empty::
+	Stop when a given path disappears from the tree.
 
 --all::
 	Pretend as if all the refs in `$GIT_DIR/refs/` are

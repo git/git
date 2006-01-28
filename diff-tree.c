@@ -6,6 +6,9 @@ static int show_root_diff = 0;
 static int no_commit_id = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
+static int show_empty_combined = 0;
+static int combine_merges = 0;
+static int dense_combined_merges = 0;
 static int read_stdin = 0;
 
 static const char *header = NULL;
@@ -64,12 +67,13 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 
 static const char *generate_header(const unsigned char *commit_sha1,
 				   const unsigned char *parent_sha1,
-				   const char *msg)
+				   const struct commit *commit)
 {
 	static char this_header[16384];
 	int offset;
 	unsigned long len;
 	int abbrev = diff_options.abbrev;
+	const char *msg = commit->buffer;
 
 	if (!verbose_header)
 		return sha1_to_hex(commit_sha1);
@@ -79,12 +83,16 @@ static const char *generate_header(const unsigned char *commit_sha1,
 	offset = sprintf(this_header, "%s%s ",
 			 header_prefix,
 			 diff_unique_abbrev(commit_sha1, abbrev));
-	offset += sprintf(this_header + offset, "(from %s)\n",
-			 parent_sha1 ?
-			 diff_unique_abbrev(parent_sha1, abbrev) : "root");
-	offset += pretty_print_commit(commit_format, msg, len,
+	if (commit_sha1 != parent_sha1)
+		offset += sprintf(this_header + offset, "(from %s)\n",
+				  parent_sha1
+				  ? diff_unique_abbrev(parent_sha1, abbrev)
+				  : "root");
+	else
+		offset += sprintf(this_header + offset, "(from parents)\n");
+	offset += pretty_print_commit(commit_format, commit, len,
 				      this_header + offset,
-				      sizeof(this_header) - offset);
+				      sizeof(this_header) - offset, abbrev);
 	return this_header;
 }
 
@@ -103,19 +111,25 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 	
 	/* Root commit? */
 	if (show_root_diff && !commit->parents) {
-		header = generate_header(sha1, NULL, commit->buffer);
+		header = generate_header(sha1, NULL, commit);
 		diff_root_tree(commit_sha1, "");
 	}
 
 	/* More than one parent? */
-	if (ignore_merges && commit->parents && commit->parents->next)
-		return 0;
+	if (commit->parents && commit->parents->next) {
+		if (ignore_merges)
+			return 0;
+		else if (combine_merges) {
+			header = generate_header(sha1, sha1, commit);
+			return diff_tree_combined_merge(sha1, header,
+							show_empty_combined,
+							dense_combined_merges);
+		}
+	}
 
 	for (parents = commit->parents; parents; parents = parents->next) {
 		struct commit *parent = parents->item;
-		header = generate_header(sha1,
-					 parent->object.sha1,
-					 commit->buffer);
+		header = generate_header(sha1, parent->object.sha1, commit);
 		diff_tree_sha1_top(parent->object.sha1, commit_sha1, "");
 		if (!header && verbose_header) {
 			header_prefix = "\ndiff-tree ";
@@ -154,7 +168,7 @@ static int diff_tree_stdin(char *line)
 }
 
 static const char diff_tree_usage[] =
-"git-diff-tree [--stdin] [-m] [-s] [-v] [--pretty] [-t] [-r] [--root] "
+"git-diff-tree [--stdin] [-m] [-c] [--cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
 "[<common diff options>] <tree-ish> [<tree-ish>] [<path>...]\n"
 "  -r            diff recursively\n"
 "  --root        include the initial commit as diff against /dev/null\n"
@@ -217,6 +231,14 @@ int main(int argc, const char **argv)
 			ignore_merges = 0;
 			continue;
 		}
+		if (!strcmp(arg, "-c")) {
+			combine_merges = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--cc")) {
+			dense_combined_merges = combine_merges = 1;
+			continue;
+		}
 		if (!strcmp(arg, "-v")) {
 			verbose_header = 1;
 			header_prefix = "diff-tree ";
@@ -244,6 +266,12 @@ int main(int argc, const char **argv)
 	}
 	if (diff_options.output_format == DIFF_FORMAT_PATCH)
 		diff_options.recursive = 1;
+
+	if (combine_merges) {
+		diff_options.output_format = DIFF_FORMAT_PATCH;
+		show_empty_combined = !ignore_merges;
+		ignore_merges = 0;
+	}
 
 	diff_tree_setup_paths(get_pathspec(prefix, argv));
 	diff_setup_done(&diff_options);
