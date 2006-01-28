@@ -4,14 +4,6 @@
 #include "diffcore.h"
 #include "quote.h"
 
-struct path_list {
-	struct path_list *next;
-	int len;
-	char *path;
-	unsigned char sha1[20];
-	unsigned char parent_sha1[FLEX_ARRAY][20];
-};
-
 static int uninteresting(struct diff_filepair *p)
 {
 	if (diff_unmodified_pair(p))
@@ -21,15 +13,14 @@ static int uninteresting(struct diff_filepair *p)
 	return 0;
 }
 
-static struct path_list *intersect_paths(struct path_list *curr,
-					 int n, int num_parent)
+static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct path_list *p;
+	struct combine_diff_path *p;
 	int i;
 
 	if (!n) {
-		struct path_list *list = NULL, **tail = &list;
+		struct combine_diff_path *list = NULL, **tail = &list;
 		for (i = 0; i < q->nr; i++) {
 			int len;
 			const char *path;
@@ -532,18 +523,52 @@ static void dump_sline(struct sline *sline, int cnt, int num_parent)
 	}
 }
 
-static int show_combined_diff(struct path_list *elem, int num_parent,
-			      int dense, const char *header, int show_empty)
+int show_combined_diff(struct combine_diff_path *elem, int num_parent,
+		       int dense, const char *header, int show_empty)
 {
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
 	struct sline *sline; /* survived lines */
 	int i, show_hunks, shown_header = 0;
-	char ourtmp[TMPPATHLEN];
+	char ourtmp_buf[TMPPATHLEN];
+	char *ourtmp = ourtmp_buf;
 
 	/* Read the result of merge first */
-	result = grab_blob(elem->sha1, &size);
-	write_to_temp_file(ourtmp, result, size);
+	if (memcmp(elem->sha1, null_sha1, 20)) {
+		result = grab_blob(elem->sha1, &size);
+		write_to_temp_file(ourtmp, result, size);
+	}
+	else {
+		struct stat st;
+		int fd;
+		ourtmp = elem->path;
+		if (0 <= (fd = open(ourtmp, O_RDONLY)) &&
+		    !fstat(fd, &st)) {
+			int len = st.st_size;
+			int cnt = 0;
+
+			size = len;
+			result = xmalloc(len + 1);
+			while (cnt < len) {
+				int done = xread(fd, result+cnt, len-cnt);
+				if (done == 0)
+					break;
+				if (done < 0)
+					die("read error '%s'", ourtmp);
+				cnt += done;
+			}
+			result[len] = 0;
+		}
+		else {
+			/* deleted file */
+			size = 0;
+			result = xmalloc(1);
+			result[0] = 0;
+			ourtmp = "/dev/null";
+		}
+		if (0 <= fd)
+			close(fd);
+	}
 
 	for (cnt = 0, cp = result; cp - result < size; cp++) {
 		if (*cp == '\n')
@@ -589,7 +614,8 @@ static int show_combined_diff(struct path_list *elem, int num_parent,
 		putchar('\n');
 		dump_sline(sline, cnt, num_parent);
 	}
-	unlink(ourtmp);
+	if (ourtmp == ourtmp_buf)
+		unlink(ourtmp);
 	free(result);
 
 	for (i = 0; i < cnt; i++) {
@@ -613,7 +639,7 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
 	struct commit_list *parents;
-	struct path_list *p, *paths = NULL;
+	struct combine_diff_path *p, *paths = NULL;
 	int num_parent, i, num_paths;
 
 	diff_setup(&diffopts);
@@ -654,7 +680,7 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 
 	/* Clean things up */
 	while (paths) {
-		struct path_list *tmp = paths;
+		struct combine_diff_path *tmp = paths;
 		paths = paths->next;
 		free(tmp);
 	}

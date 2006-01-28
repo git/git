@@ -56,6 +56,17 @@ extern int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
 			  const char *base, struct diff_options *opt);
 
+struct combine_diff_path {
+	struct combine_diff_path *next;
+	int len;
+	char *path;
+	unsigned char sha1[20];
+	unsigned char parent_sha1[FLEX_ARRAY][20];
+};
+
+int show_combined_diff(struct combine_diff_path *elem, int num_parent,
+		       int dense, const char *header, int show_empty);
+
 extern int diff_tree_combined_merge(const unsigned char *sha1, const char *, int, int);
 
 extern void diff_addremove(struct diff_options *,

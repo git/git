@@ -7,12 +7,14 @@
 #include "diff.h"
 
 static const char diff_files_usage[] =
-"git-diff-files [-q] [-0/-1/2/3] [<common diff options>] [<path>...]"
+"git-diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
 static struct diff_options diff_options;
 static int silent = 0;
 static int diff_unmerged_stage = 2;
+static int combine_merges = 0;
+static int dense_combined_merges = 0;
 
 static void show_unmerge(const char *path)
 {
@@ -66,6 +68,10 @@ int main(int argc, const char **argv)
 			; /* no-op */
 		else if (!strcmp(argv[1], "-s"))
 			; /* no-op */
+		else if (!strcmp(argv[1], "-c"))
+			combine_merges = 1;
+		else if (!strcmp(argv[1], "--cc"))
+			dense_combined_merges = combine_merges = 1;
 		else {
 			int diff_opt_cnt;
 			diff_opt_cnt = diff_opt_parse(&diff_options,
@@ -81,6 +87,9 @@ int main(int argc, const char **argv)
 				usage(diff_files_usage);
 		}
 		argv++; argc--;
+	}
+	if (combine_merges) {
+		diff_options.output_format = DIFF_FORMAT_PATCH;
 	}
 
 	/* Find the directory, and set up the pathspec */
@@ -108,14 +117,35 @@ int main(int argc, const char **argv)
 			continue;
 
 		if (ce_stage(ce)) {
-			show_unmerge(ce->name);
+			struct {
+				struct combine_diff_path p;
+				unsigned char fill[4][20];
+			} combine;
+
+			combine.p.next = NULL;
+			combine.p.len = ce_namelen(ce);
+			combine.p.path = xmalloc(combine.p.len + 1);
+			memcpy(combine.p.path, ce->name, combine.p.len);
+			combine.p.path[combine.p.len] = 0;
+			memset(combine.p.sha1, 0, 100);
+
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
+				int stage;
 
 				if (strcmp(ce->name, nce->name))
 					break;
+
+				/* Stage #2 (ours) is the first parent,
+				 * stage #3 (theirs) is the second.
+				 */
+				stage = ce_stage(nce);
+				if (2 <= stage)
+					memcpy(combine.p.parent_sha1[stage-2],
+					       nce->sha1, 20);
+
 				/* diff against the proper unmerged stage */
-				if (ce_stage(nce) == diff_unmerged_stage)
+				if (stage == diff_unmerged_stage)
 					ce = nce;
 				i++;
 			}
@@ -123,10 +153,19 @@ int main(int argc, const char **argv)
 			 * Compensate for loop update
 			 */
 			i--;
+
+			if (combine_merges) {
+				show_combined_diff(&combine.p, 2,
+						   dense_combined_merges,
+						   NULL, 0);
+				continue;
+			}
+
 			/*
 			 * Show the diff for the 'ce' if we found the one
 			 * from the desired stage.
 			 */
+			show_unmerge(ce->name);
 			if (ce_stage(ce) != diff_unmerged_stage)
 				continue;
 		}
