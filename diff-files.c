@@ -121,6 +121,7 @@ int main(int argc, const char **argv)
 				struct combine_diff_path p;
 				unsigned char fill[4][20];
 			} combine;
+			int num_compare_stages = 0;
 
 			combine.p.next = NULL;
 			combine.p.len = ce_namelen(ce);
@@ -140,9 +141,11 @@ int main(int argc, const char **argv)
 				 * stage #3 (theirs) is the second.
 				 */
 				stage = ce_stage(nce);
-				if (2 <= stage)
+				if (2 <= stage) {
+					num_compare_stages++;
 					memcpy(combine.p.parent_sha1[stage-2],
 					       nce->sha1, 20);
+				}
 
 				/* diff against the proper unmerged stage */
 				if (stage == diff_unmerged_stage)
@@ -154,12 +157,14 @@ int main(int argc, const char **argv)
 			 */
 			i--;
 
-			if (combine_merges) {
+			if (combine_merges && num_compare_stages == 2) {
 				show_combined_diff(&combine.p, 2,
 						   dense_combined_merges,
 						   NULL, 0);
+				free(combine.p.path);
 				continue;
 			}
+			free(combine.p.path);
 
 			/*
 			 * Show the diff for the 'ce' if we found the one
