@@ -301,5 +301,13 @@ then
 	"Automatic merge went well; stopped before committing as requested"
 	exit 0
 else
+	{
+	    echo '
+Conflicts:
+'
+		git ls-files --unmerged |
+		sed -e 's/^[^	]*	/	/' |
+		uniq
+	} >>"$GIT_DIR/MERGE_MSG"
 	die "Automatic merge failed; fix up by hand"
 fi
