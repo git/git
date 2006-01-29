@@ -3,6 +3,7 @@
  */
 #include <time.h>
 #include "cache.h"
+#include "tree.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -334,40 +335,37 @@ static void write_header(const unsigned char *sha1, char typeflag, const char *b
 	write_if_needed();
 }
 
-static void traverse_tree(void *buffer, unsigned long size,
+static void traverse_tree(struct tree *tree,
 			  struct path_prefix *prefix)
 {
 	struct path_prefix this_prefix;
+	struct tree_entry_list *item;
 	this_prefix.prev = prefix;
 
-	while (size) {
-		int namelen = strlen(buffer)+1;
+	parse_tree(tree);
+	item = tree->entries;
+
+	while (item) {
 		void *eltbuf;
 		char elttype[20];
 		unsigned long eltsize;
-		unsigned char *sha1 = buffer + namelen;
-		char *path = strchr(buffer, ' ') + 1;
-		unsigned int mode;
 
-		if (size < namelen + 20 || sscanf(buffer, "%o", &mode) != 1)
-			die("corrupt 'tree' file");
-		if (S_ISDIR(mode) || S_ISREG(mode))
-			mode |= (mode & 0100) ? 0777 : 0666;
-		buffer = sha1 + 20;
-		size -= namelen + 20;
-
-		eltbuf = read_sha1_file(sha1, elttype, &eltsize);
+		eltbuf = read_sha1_file(item->item.any->sha1, 
+					elttype, &eltsize);
 		if (!eltbuf)
-			die("cannot read %s", sha1_to_hex(sha1));
-		write_header(sha1, TYPEFLAG_AUTO, basedir, prefix, path,
-		             mode, eltbuf, eltsize);
-		if (!strcmp(elttype, "tree")) {
-			this_prefix.name = path;
-			traverse_tree(eltbuf, eltsize, &this_prefix);
-		} else if (!strcmp(elttype, "blob") && !S_ISLNK(mode)) {
+			die("cannot read %s", 
+			    sha1_to_hex(item->item.any->sha1));
+		write_header(item->item.any->sha1, TYPEFLAG_AUTO, basedir, 
+			     prefix, item->name,
+		             item->mode, eltbuf, eltsize);
+		if (item->directory) {
+			this_prefix.name = item->name;
+			traverse_tree(item->item.tree, &this_prefix);
+		} else if (!item->symlink) {
 			write_blocked(eltbuf, eltsize);
 		}
 		free(eltbuf);
+		item = item->next;
 	}
 }
 
@@ -404,6 +402,7 @@ int main(int argc, char **argv)
 	unsigned char commit_sha1[20];
 	void *buffer;
 	unsigned long size;
+	struct tree *tree;
 
 	setup_git_directory();
 
@@ -425,8 +424,8 @@ int main(int argc, char **argv)
 		archive_time = commit_time(buffer, size);
 		free(buffer);
 	}
-	buffer = read_object_with_reference(sha1, "tree", &size, NULL);
-	if (!buffer)
+	tree = parse_tree_indirect(sha1);
+	if (!tree)
 		die("not a reference to a tag, commit or tree object: %s",
 		    sha1_to_hex(sha1));
 	if (!archive_time)
@@ -434,8 +433,7 @@ int main(int argc, char **argv)
 	if (basedir)
 		write_header((unsigned char *)"0", TYPEFLAG_DIR, NULL, NULL,
 			basedir, 040777, NULL, 0);
-	traverse_tree(buffer, size, NULL);
-	free(buffer);
+	traverse_tree(tree, NULL);
 	write_trailer();
 	return 0;
 }
