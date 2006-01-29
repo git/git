@@ -313,6 +313,9 @@ gitlink:git-rebase[1]::
 gitlink:git-repack[1]::
 	Pack unpacked objects in a repository.
 
+gitlink:git-rerere[1]::
+	Reuse recorded resolution of conflicted merges.
+
 gitlink:git-reset[1]::
 	Reset current HEAD to the specified state.
 

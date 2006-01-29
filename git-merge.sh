@@ -309,5 +309,6 @@ Conflicts:
 		sed -e 's/^[^	]*	/	/' |
 		uniq
 	} >>"$GIT_DIR/MERGE_MSG"
+	git rerere
 	die "Automatic merge failed; fix up by hand"
 fi
