@@ -4,6 +4,7 @@
 #include <time.h>
 #include "cache.h"
 #include "tree.h"
+#include "commit.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -369,39 +370,10 @@ static void traverse_tree(struct tree *tree,
 	}
 }
 
-/* get commit time from committer line of commit object */
-static time_t commit_time(void * buffer, unsigned long size)
-{
-	time_t result = 0;
-	char *p = buffer;
-
-	while (size > 0) {
-		char *endp = memchr(p, '\n', size);
-		if (!endp || endp == p)
-			break;
-		*endp = '\0';
-		if (endp - p > 10 && !memcmp(p, "committer ", 10)) {
-			char *nump = strrchr(p, '>');
-			if (!nump)
-				break;
-			nump++;
-			result = strtoul(nump, &endp, 10);
-			if (*endp != ' ')
-				result = 0;
-			break;
-		}
-		size -= endp - p - 1;
-		p = endp + 1;
-	}
-	return result;
-}
-
 int main(int argc, char **argv)
 {
 	unsigned char sha1[20];
-	unsigned char commit_sha1[20];
-	void *buffer;
-	unsigned long size;
+	struct commit *commit;
 	struct tree *tree;
 
 	setup_git_directory();
@@ -418,11 +390,10 @@ int main(int argc, char **argv)
 		usage(tar_tree_usage);
 	}
 
-	buffer = read_object_with_reference(sha1, "commit", &size, commit_sha1);
-	if (buffer) {
-		write_global_extended_header(commit_sha1);
-		archive_time = commit_time(buffer, size);
-		free(buffer);
+	commit = lookup_commit_reference(sha1);
+	if (commit) {
+		write_global_extended_header(commit->object.sha1);
+		archive_time = commit->date;
 	}
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
