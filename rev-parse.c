@@ -165,6 +165,21 @@ int main(int argc, char **argv)
 			show_file(arg);
 			continue;
 		}
+		if (!strcmp(arg,"-n")) {
+			if (++i >= argc)
+				die("-n requires an argument");
+			if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
+				show(arg);
+				show(argv[i]);
+			}
+			continue;
+		}
+		if (!strncmp(arg,"-n",2)) {
+			if ((filter & DO_FLAGS) && (filter & DO_REVS))
+				show(arg);
+			continue;
+		}
+
 		if (*arg == '-') {
 			if (!strcmp(arg, "--")) {
 				as_is = 1;

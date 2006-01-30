@@ -749,6 +749,16 @@ int main(int argc, const char **argv)
 		struct commit *commit;
 		unsigned char sha1[20];
 
+		if (!strcmp(arg, "-n")) {
+			if (++i >= argc)
+				die("-n requires an argument");
+			max_count = atoi(argv[i]);
+			continue;
+		}
+		if (!strncmp(arg,"-n",2)) {
+			max_count = atoi(arg + 2);
+			continue;
+		}
 		if (!strncmp(arg, "--max-count=", 12)) {
 			max_count = atoi(arg + 12);
 			continue;
