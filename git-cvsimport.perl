@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S);
 my (%conv_author_name, %conv_author_email);
 
 sub usage() {
@@ -37,7 +37,7 @@ sub usage() {
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz] [-i] [-k] [-u]
-       [-s subst] [-m] [-M regex] [CVS_module]
+       [-s subst] [-m] [-M regex] [-S regex] [CVS_module]
 END
 	exit(1);
 }
@@ -85,7 +85,7 @@ sub write_author_info($) {
 	close ($f);
 }
 
-getopts("hivmkuo:d:p:C:z:s:M:P:A:") or usage();
+getopts("hivmkuo:d:p:C:z:s:M:P:A:S:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -579,7 +579,7 @@ unless($pid) {
 my $state = 0;
 
 my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
-my(@old,@new);
+my(@old,@new,@skipped);
 my $commit = sub {
 	my $pid;
 	while(@old) {
@@ -674,6 +674,11 @@ my $commit = sub {
 	# compatibility with git2cvs
 	substr($logmsg,32767) = "" if length($logmsg) > 32767;
 	$logmsg =~ s/[\s\n]+\z//;
+
+	if (@skipped) {
+	    $logmsg .= "\n\n\nSKIPPED:\n\t";
+	    $logmsg .= join("\n\t", @skipped) . "\n";
+	}
 
 	print $pw "$logmsg\n"
 		or die "Error writing to git-commit-tree: $!\n";
@@ -832,6 +837,12 @@ while(<CVS>) {
 		my $fn = $1;
 		my $rev = $3;
 		$fn =~ s#^/+##;
+		if ($opt_S && $fn =~ m/$opt_S/) {
+		    print "SKIPPING $fn v $rev\n";
+		    push(@skipped, $fn);
+		    next;
+		}
+		print "Fetching $fn   v $rev\n" if $opt_v;
 		my ($tmpname, $size) = $cvs->file($fn,$rev);
 		if($size == -1) {
 			push(@old,$fn);
