@@ -17,6 +17,7 @@ Exports a commit from GIT to a CVS checkout, making it easier
 to merge patches from a git repository into a CVS repository. 
 
 Execute it from the root of the CVS working copy. GIT_DIR must be defined. 
+See examples below.
 
 It does its best to do the safe thing, it will check that the files are 
 unchanged and up to date in the CVS checkout, and it will not autocommit 
@@ -40,6 +41,26 @@ OPTIONS
 
 -v::
 	Verbose.
+
+EXAMPLES
+--------
+
+Merge one patch into CVS::
++
+------------
+$ export GIT_DIR=~/project/.git
+$ cd ~/project_cvs_checkout
+$ git-cvsexportcommit -v <commit-sha1>
+$ cvs commit -F .mgs <files> 
+------------
+
+Merge pending patches into CVS automatically -- only if you really know what you are doing ::
++
+------------
+$ export GIT_DIR=~/project/.git
+$ cd ~/project_cvs_checkout
+$ git-cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git-cvsexportcommit -c -p -v
+------------
 
 Author
 ------
