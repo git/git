@@ -10,8 +10,16 @@
 # This is slightly modified from Andrew Morton's Perfect Patch.
 # Lines you introduce should not have trailing whitespace.
 # Also check for an indentation that has SP before a TAB.
+
+if git-rev-parse --verify HEAD 2>/dev/null
+then
+	git-diff-index -p -M --cached HEAD
+else
+	# NEEDSWORK: we should produce a diff with an empty tree here
+	# if we want to do the same verification for the initial import.
+	:
+fi |
 perl -e '
-    my $fh;
     my $found_bad = 0;
     my $filename;
     my $reported_filename = "";
@@ -31,8 +39,7 @@ perl -e '
 	print STDERR "* $why (line $lineno)\n";
 	print STDERR "$filename:$lineno:$line\n";
     }
-    open $fh, "-|", qw(git-diff-index -p -M --cached HEAD);
-    while (<$fh>) {
+    while (<>) {
 	if (m|^diff --git a/(.*) b/\1$|) {
 	    $filename = $1;
 	    next;
