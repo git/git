@@ -35,10 +35,10 @@ include::pull-fetch-param.txt[]
 	line.
 
 -f, \--force::
-	Usually, the command refuses to update a local ref that is
-	not an ancestor of the remote ref used to overwrite it.
-	This flag disables the check.  What this means is that the
-	local repository can lose commits; use it with care.
+	Usually, the command refuses to update a remote ref that is
+	not a descendent of the local ref used to overwrite it.
+	This flag disables the check.  This can cause the
+	remote repository to lose commits; use it with care.
 
 
 Author

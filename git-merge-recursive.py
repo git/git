@@ -205,11 +205,16 @@ def mergeFile(oPath, oSha, oMode, aPath, aSha, aMode, bPath, bSha, bMode,
             orig = runProgram(['git-unpack-file', oSha]).rstrip()
             src1 = runProgram(['git-unpack-file', aSha]).rstrip()
             src2 = runProgram(['git-unpack-file', bSha]).rstrip()
-            [out, code] = runProgram(['merge',
-                                      '-L', branch1Name + '/' + aPath,
-                                      '-L', 'orig/' + oPath,
-                                      '-L', branch2Name + '/' + bPath,
-                                      src1, orig, src2], returnCode=True)
+            try:
+                [out, code] = runProgram(['merge',
+                                          '-L', branch1Name + '/' + aPath,
+                                          '-L', 'orig/' + oPath,
+                                          '-L', branch2Name + '/' + bPath,
+                                          src1, orig, src2], returnCode=True)
+            except ProgramError, e:
+                print >>sys.stderr, e
+                die("Failed to execute 'merge'. merge(1) is used as the "
+                    "file-level merge tool. Is 'merge' in your path?")
 
             sha = runProgram(['git-hash-object', '-t', 'blob', '-w',
                               src1]).rstrip()
