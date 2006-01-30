@@ -749,6 +749,11 @@ int main(int argc, const char **argv)
 		struct commit *commit;
 		unsigned char sha1[20];
 
+		/* accept -<digit>, like traditilnal "head" */
+		if ((*arg == '-') && isdigit(arg[1])) {
+			max_count = atoi(arg + 1);
+			continue;
+		}
 		if (!strcmp(arg, "-n")) {
 			if (++i >= argc)
 				die("-n requires an argument");

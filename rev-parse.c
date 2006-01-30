@@ -53,6 +53,10 @@ static int is_rev_argument(const char *arg)
 	};
 	const char **p = rev_args;
 
+	/* accept -<digit>, like traditional "head" */
+	if ((*arg == '-') && isdigit(arg[1]))
+		return 1;
+
 	for (;;) {
 		const char *str = *p++;
 		int len;
