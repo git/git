@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
-	  [--no-add] [--index-info] [--allow-binary-replacement] [-z]
+	  [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM]
 	  [<patch>...]
 
 DESCRIPTION
@@ -67,6 +67,10 @@ OPTIONS
 	this flag, the pathnames output will have TAB, LF, and
 	backslash characters replaced with `\t`, `\n`, and `\\`,
 	respectively.
+
+-p<n>::
+	Remove <n> leading slashes from traditional diff paths. The
+	default is 1.
 
 --apply::
 	If you use any of the options marked ``Turns off

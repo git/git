@@ -19,6 +19,7 @@
 static const char *prefix;
 static int prefix_length = -1;
 
+static int p_value = 1;
 static int allow_binary_replacement = 0;
 static int check_index = 0;
 static int write_index = 0;
@@ -31,7 +32,7 @@ static int no_add = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] <patch>...";
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -217,7 +218,6 @@ static char * find_name(const char *line, char *def, int p_value, int terminate)
  */
 static void parse_traditional_patch(const char *first, const char *second, struct patch *patch)
 {
-	int p_value = 1;
 	char *name;
 
 	first += 4;	// skip "--- "
@@ -1797,6 +1797,10 @@ int main(int argc, char **argv)
 			x->path = arg + 10;
 			x->next = excludes;
 			excludes = x;
+			continue;
+		}
+		if (!strncmp(arg, "-p", 2)) {
+			p_value = atoi(arg + 2);
 			continue;
 		}
 		if (!strcmp(arg, "--no-add")) {
