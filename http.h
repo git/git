@@ -22,6 +22,12 @@
 #define NO_CURL_EASY_DUPHANDLE
 #endif
 
+struct slot_results
+{
+	CURLcode curl_result;
+	long http_code;
+};
+
 struct active_request_slot
 {
 	CURL *curl;
@@ -29,6 +35,7 @@ struct active_request_slot
 	int in_use;
 	CURLcode curl_result;
 	long http_code;
+	struct slot_results *results;
 	void *callback_data;
 	void (*callback_func)(void *data);
 	struct active_request_slot *next;

@@ -375,6 +375,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 
 	FILE *indexfile;
 	struct active_request_slot *slot;
+	static struct slot_results results;
 
 	if (has_pack_index(sha1))
 		return 0;
@@ -393,6 +394,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 			     filename);
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, indexfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -414,7 +416,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK) {
 			fclose(indexfile);
 			return error("Unable to get pack index %s\n%s", url,
 				     curl_errorstr);
@@ -616,6 +618,7 @@ static int fetch_indices(struct alt_base *repo)
 	int i = 0;
 
 	struct active_request_slot *slot;
+	static struct slot_results results;
 
 	if (repo->got_indices)
 		return 0;
@@ -632,15 +635,16 @@ static int fetch_indices(struct alt_base *repo)
 	sprintf(url, "%s/objects/info/packs", repo->base);
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
-			if (slot->http_code == 404 ||
-			    slot->curl_result == CURLE_FILE_COULDNT_READ_FILE) {
+		if (results.curl_result != CURLE_OK) {
+			if (results.http_code == 404 ||
+			    results.curl_result == CURLE_FILE_COULDNT_READ_FILE) {
 				repo->got_indices = 1;
 				free(buffer.buffer);
 				return 0;
@@ -695,6 +699,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	struct curl_slist *range_header = NULL;
 
 	struct active_request_slot *slot;
+	static struct slot_results results;
 
 	if (fetch_indices(repo))
 		return -1;
@@ -721,6 +726,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 			     filename);
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, packfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -742,7 +748,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK) {
 			fclose(packfile);
 			return error("Unable to get pack file %s\n%s", url,
 				     curl_errorstr);
@@ -894,6 +900,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         struct buffer buffer;
 	char *base = alt->base;
 	struct active_request_slot *slot;
+	static struct slot_results results;
         buffer.size = 41;
         buffer.posn = 0;
         buffer.buffer = hex;
@@ -901,13 +908,14 @@ int fetch_ref(char *ref, unsigned char *sha1)
         
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK)
+		if (results.curl_result != CURLE_OK)
 			return error("Couldn't get %s for %s\n%s",
 				     url, ref, curl_errorstr);
 	} else {

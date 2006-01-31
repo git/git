@@ -335,6 +335,7 @@ struct active_request_slot *get_active_slot(void)
 	active_requests++;
 	slot->in_use = 1;
 	slot->local = NULL;
+	slot->results = NULL;
 	slot->callback_data = NULL;
 	slot->callback_func = NULL;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
@@ -421,7 +422,13 @@ static void finish_active_slot(struct active_request_slot *slot)
         active_requests--;
         slot->in_use = 0;
         curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
- 
+
+	/* Store slot results so they can be read after the slot is reused */
+	if (slot->results != NULL) {
+		slot->results->curl_result = slot->curl_result;
+		slot->results->http_code = slot->http_code;
+	}
+
         /* Run callback if appropriate */
         if (slot->callback_func != NULL) {
                 slot->callback_func(slot->callback_data);
