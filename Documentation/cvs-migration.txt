@@ -140,7 +140,7 @@ You can update the shared repository with your changes using:
 $ git push origin master
 ------------------------------------------------
 
-If some else has updated the repository more recently, `git push`, like
+If someone else has updated the repository more recently, `git push`, like
 `cvs commit`, will complain, in which case you must pull any changes
 before attempting the push again.
 
