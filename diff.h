@@ -13,6 +13,9 @@ struct tree_desc {
 	unsigned long size;
 };
 
+extern void update_tree_entry(struct tree_desc *);
+extern const unsigned char *tree_entry_extract(struct tree_desc *, const char **, unsigned int *);
+
 struct diff_options;
 
 typedef void (*change_fn_t)(struct diff_options *options,

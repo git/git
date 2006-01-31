@@ -9,7 +9,7 @@ static int nr_paths = 0;
 static const char **paths = NULL;
 static int *pathlens = NULL;
 
-static void update_tree_entry(struct tree_desc *desc)
+void update_tree_entry(struct tree_desc *desc)
 {
 	void *buf = desc->buf;
 	unsigned long size = desc->size;
@@ -21,7 +21,7 @@ static void update_tree_entry(struct tree_desc *desc)
 	desc->size = size - len;
 }
 
-static const unsigned char *extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
+const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
 {
 	void *tree = desc->buf;
 	unsigned long size = desc->size;
@@ -56,8 +56,8 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 	const unsigned char *sha1, *sha2;
 	int cmp, pathlen1, pathlen2;
 
-	sha1 = extract(t1, &path1, &mode1);
-	sha2 = extract(t2, &path2, &mode2);
+	sha1 = tree_entry_extract(t1, &path1, &mode1);
+	sha2 = tree_entry_extract(t2, &path2, &mode2);
 
 	pathlen1 = strlen(path1);
 	pathlen2 = strlen(path2);
@@ -109,7 +109,7 @@ static int interesting(struct tree_desc *desc, const char *base)
 	if (!nr_paths)
 		return 1;
 
-	(void)extract(desc, &path, &mode);
+	(void)tree_entry_extract(desc, &path, &mode);
 
 	pathlen = strlen(path);
 	baselen = strlen(base);
@@ -167,7 +167,7 @@ static int show_entry(struct diff_options *opt, const char *prefix, struct tree_
 {
 	unsigned mode;
 	const char *path;
-	const unsigned char *sha1 = extract(desc, &path, &mode);
+	const unsigned char *sha1 = tree_entry_extract(desc, &path, &mode);
 
 	if (opt->recursive && S_ISDIR(mode)) {
 		char type[20];
