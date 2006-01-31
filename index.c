@@ -18,6 +18,8 @@ static void remove_lock_file(void)
 static void remove_lock_file_on_signal(int signo)
 {
 	remove_lock_file();
+	signal(SIGINT, SIG_DFL);
+	raise(signo);
 }
 
 int hold_index_file_for_update(struct cache_file *cf, const char *path)
