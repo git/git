@@ -1,126 +1,182 @@
 git for CVS users
 =================
 
-Ok, so you're a CVS user. That's ok, it's a treatable condition, and the
-first step to recovery is admitting you have a problem. The fact that
-you are reading this file means that you may be well on that path
-already.
+So you're a CVS user. That's ok, it's a treatable condition.  The job of
+this document is to put you on the road to recovery, by helping you
+convert an existing cvs repository to git, and by showing you how to use a
+git repository in a cvs-like fashion.
 
-The thing about CVS is that it absolutely sucks as a source control
-manager, and you'll thus be happy with almost anything else. git,
-however, may be a bit 'too' different (read: "good") for your taste, and
-does a lot of things differently. 
+Some basic familiarity with git is required.  This
+link:tutorial.html[tutorial introduction to git] should be sufficient.
 
-One particular suckage of CVS is very hard to work around: CVS is
-basically a tool for tracking 'file' history, while git is a tool for
-tracking 'project' history.  This sometimes causes problems if you are
-used to doing very strange things in CVS, in particular if you're doing
-things like making branches of just a subset of the project.  git can't
-track that, since git never tracks things on the level of an individual
-file, only on the whole project level. 
+First, note some ways that git differs from CVS:
 
-The good news is that most people don't do that, and in fact most sane
-people think it's a bug in CVS that makes it tag (and check in changes)
-one file at a time.  So most projects you'll ever see will use CVS
-'as if' it was sane.  In which case you'll find it very easy indeed to
-move over to git. 
+  * Commits are atomic and project-wide, not per-file as in CVS.
 
-First off: this is not a git tutorial. See
-link:tutorial.html[Documentation/tutorial.txt] for how git
-actually works. This is more of a random collection of gotcha's
-and notes on converting from CVS to git.
+  * Offline work is supported: you can make multiple commits locally,
+    then submit them when you're ready.
 
-Second: CVS has the notion of a "repository" as opposed to the thing
-that you're actually working in (your working directory, or your
-"checked out tree").  git does not have that notion at all, and all git
-working directories 'are' the repositories.  However, you can easily
-emulate the CVS model by having one special "global repository", which
-people can synchronize with.  See details later, but in the meantime
-just keep in mind that with git, every checked out working tree will
-have a full revision control history of its own.
+  * Branching is fast and easy.
 
+  * Every working tree contains a repository with a full copy of the
+    project history, and no repository is inherently more important than
+    any other.  However, you can emulate the CVS model by designating a
+    single shared repository which people can synchronize with; see below
+    for details.
 
 Importing a CVS archive
 -----------------------
 
-Ok, you have an old project, and you want to at least give git a chance
-to see how it performs. The first thing you want to do (after you've
-gone through the git tutorial, and generally familiarized yourself with
-how to commit stuff etc in git) is to create a git'ified version of your
-CVS archive.
+First, install version 2.1 or higher of cvsps from
+link:http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
+sure it is in your path.  The magic command line is then
 
-Happily, that's very easy indeed. git will do it for you, although git
-will need the help of a program called "cvsps":
+-------------------------------------------
+$ git cvsimport -v -d <cvsroot> -C <destination> <module>
+-------------------------------------------
 
-	http://www.cobite.com/cvsps/
+This puts a git archive of the named CVS module in the directory
+<destination>, which will be created if necessary.  The -v option makes
+the conversion script very chatty.
 
-which is not actually related to git at all, but which makes CVS usage
-look almost sane (ie you almost certainly want to have it even if you
-decide to stay with CVS). However, git will want 'at least' version 2.1
-of cvsps (available at the address above), and in fact will currently
-refuse to work with anything else.
+The import checks out from CVS every revision of every file.  Reportedly
+cvsimport can average some twenty revisions per second, so for a
+medium-sized project this should not take more than a couple of minutes.
+Larger projects or remote repositories may take longer.
 
-Once you've gotten (and installed) cvsps, you may or may not want to get
-any more familiar with it, but make sure it is in your path. After that,
-the magic command line is
+The main trunk is stored in the git branch named `origin`, and additional
+CVS branches are stored in git branches with the same names.  The most
+recent version of the main trunk is also left checked out on the `master`
+branch, so you can start adding your own changes right away.
 
-	git cvsimport -v -d <cvsroot> -C <destination> <module>
+The import is incremental, so if you call it again next month it will
+fetch any CVS updates that have been made in the meantime.  For this to
+work, you must not modify the imported branches; instead, create new
+branches for your own changes, and merge in the imported branches as
+necessary.
 
-which will do exactly what you'd think it does: it will create a git
-archive of the named CVS module. The new archive will be created in the
-subdirectory named <destination>; it'll be created if it doesn't exist.
-Default is the local directory.
+Development Models
+------------------
 
-It can take some time to actually do the conversion for a large archive
-since it involves checking out from CVS every revision of every file,
-and the conversion script is reasonably chatty unless you omit the '-v'
-option, but on some not very scientific tests it averaged about twenty
-revisions per second, so a medium-sized project should not take more
-than a couple of minutes.  For larger projects or remote repositories,
-the process may take longer.
+CVS users are accustomed to giving a group of developers commit access to
+a common repository.  In the next section we'll explain how to do this
+with git.  However, the distributed nature of git allows other development
+models, and you may want to first consider whether one of them might be a
+better fit for your project.
 
-After the (initial) import is done, the CVS archive's current head
-revision will be checked out -- thus, you can start adding your own
-changes right away.
+For example, you can choose a single person to maintain the project's
+primary public repository.  Other developers then clone this repository
+and each work in their own clone.  When they have a series of changes that
+they're happy with, they ask the maintainer to pull from the branch
+containing the changes.  The maintainer reviews their changes and pulls
+them into the primary repository, which other developers pull from as
+necessary to stay coordinated.  The Linux kernel and other projects use
+variants of this model.
 
-The import is incremental, i.e. if you call it again next month it'll
-fetch any CVS updates that have been happening in the meantime. The
-cut-off is date-based, so don't change the branches that were imported
-from CVS.
+With a small group, developers may just pull changes from each other's
+repositories without the need for a central maintainer.
 
-You can merge those updates (or, in fact, a different CVS branch) into
-your main branch:
+Emulating the CVS Development Model
+-----------------------------------
 
-	git resolve HEAD origin "merge with current CVS HEAD"
+Start with an ordinary git working directory containing the project, and
+remove the checked-out files, keeping just the bare .git directory:
 
-The HEAD revision from CVS is named "origin", not "HEAD", because git
-already uses "HEAD". (If you don't like 'origin', use cvsimport's
-'-o' option to change it.)
+------------------------------------------------
+$ mv project/.git /pub/repo.git
+$ rm -r project/
+------------------------------------------------
 
+Next, give every team member read/write access to this repository.  One
+easy way to do this is to give all the team members ssh access to the
+machine where the repository is hosted.  If you don't want to give them a
+full shell on the machine, there is a restricted shell which only allows
+users to do git pushes and pulls; see gitlink:git-shell[1].
 
-Emulating CVS behaviour
------------------------
+Put all the committers should in the same group, and make the repository
+writable by that group:
 
+------------------------------------------------
+$ chgrp -R $group repo.git
+$ find repo.git -mindepth 1 -type d |xargs chmod ug+rwx,g+s
+$ GIT_DIR=repo.git git repo-config core.sharedrepository true
+------------------------------------------------
 
-So, by now you are convinced you absolutely want to work with git, but
-at the same time you absolutely have to have a central repository.
-Step back and think again. Okay, you still need a single central
-repository? There are several ways to go about that:
+Make sure committers have a umask of at most 027, so that the directories
+they create are writable and searchable by other group members.
 
-1. Designate a person responsible to pull all branches. Make the
-repository of this person public, and make every team member
-pull regularly from it.
+Suppose this repository is now set up in /pub/repo.git on the host
+foo.com.  Then as an individual commiter you can clone the shared
+repository:
 
-2. Set up a public repository with read/write access for every team
-member. Use "git pull/push" as you used "cvs update/commit".  Be
-sure that your repository is up to date before pushing, just
-like you used to do with "cvs commit"; your push will fail if
-what you are pushing is not up to date.
+------------------------------------------------
+$ git clone foo.com:/pub/repo.git/ my-project
+$ cd my-project
+------------------------------------------------
 
-3. Make the repository of every team member public. It is the
-responsibility of each single member to pull from every other
-team member.
+and hack away.  The equivalent of `cvs update` is
 
+------------------------------------------------
+$ git pull origin
+------------------------------------------------
+
+which merges in any work that others might have done since the clone
+operation.
+
+[NOTE]
+================================
+The first `git clone` places the following in the
+`my-project/.git/remotes/origin` file, and that's why the previous step
+and the next step both work.
+------------
+URL: foo.com:/pub/project.git/ my-project
+Pull: master:origin
+------------
+================================
+
+You can update the shared repository with your changes using:
+
+------------------------------------------------
+$ git push origin master
+------------------------------------------------
+
+If someone else has updated the repository more recently, `git push`, like
+`cvs commit`, will complain, in which case you must pull any changes
+before attempting the push again.
+
+In the `git push` command above we specify the name of the remote branch
+to update (`master`).  If we leave that out, `git push` tries to update
+any branches in the remote repository that have the same name as a branch
+in the local repository.  So the last `push` can be done with either of:
+
+------------
+$ git push origin
+$ git push repo.shared.xz:/pub/scm/project.git/
+------------
+
+as long as the shared repository does not have any branches
+other than `master`.
+
+[NOTE]
+============
+Because of this behaviour, if the shared repository and the developer's
+repository both have branches named `origin`, then a push like the above
+attempts to update the `origin` branch in the shared repository from the
+developer's `origin` branch.  The results may be unexpected, so it's
+usually best to remove any branch named `origin` from the shared
+repository.
+============
+
+Advanced Shared Repository Management
+-------------------------------------
+
+Git allows you to specify scripts called "hooks" to be run at certain
+points.  You can use these, for example, to send all commits to the shared
+repository to a mailing list.  See link:hooks.txt[Hooks used by git].
+
+You can enforce finer grained permissions using update hooks.  See
+link:howto/update-hook-example.txt[Controlling access to branches using
+update hooks].
 
 CVS annotate
 ------------
