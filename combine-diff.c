@@ -68,6 +68,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 	return curr;
 }
 
+/* Lines lost from parent */
 struct lline {
 	struct lline *next;
 	int len;
@@ -75,10 +76,15 @@ struct lline {
 	char line[FLEX_ARRAY];
 };
 
+/* Lines surviving in the merge result */
 struct sline {
 	struct lline *lost_head, **lost_tail;
 	char *bol;
 	int len;
+	/* bit 0 up to (N-1) are on if the parent does _not_
+	 * have this line (i.e. we changed it).
+	 * bit N is used for "interesting" lines, including context.
+	 */
 	unsigned long flag;
 };
 
@@ -242,7 +248,7 @@ static void combine_diff(const unsigned char *parent, const char *ourtmp,
 			continue;
 		}
 		if (!lost_bucket)
-			continue;
+			continue; /* not in any hunk yet */
 		switch (line[0]) {
 		case '-':
 			append_lost(lost_bucket, n, line+1);
