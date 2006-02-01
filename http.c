@@ -192,6 +192,9 @@ static CURL* get_curl_handle(void)
 
 	curl_easy_setopt(result, CURLOPT_FOLLOWLOCATION, 1);
 
+	if (getenv("GIT_CURL_VERBOSE"))
+		curl_easy_setopt(result, CURLOPT_VERBOSE, 1);
+
 	return result;
 }
 
