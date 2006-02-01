@@ -468,13 +468,11 @@ static void process_alternates_response(void *callback_data)
 					 alt_req->url);
 			active_requests++;
 			slot->in_use = 1;
-			if (start_active_slot(slot)) {
-				return;
-			} else {
+			if (!start_active_slot(slot)) {
 				got_alternates = -1;
 				slot->in_use = 0;
-				return;
 			}
+			return;
 		}
 	} else if (slot->curl_result != CURLE_OK) {
 		if (slot->http_code != 404 &&
