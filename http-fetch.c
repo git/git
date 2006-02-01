@@ -822,9 +822,8 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
 		ret = error("File %s has bad hash\n", hex);
 	} else if (obj_req->rename < 0) {
-		ret = error("unable to write sha1 filename %s: %s",
-			    obj_req->filename,
-			    strerror(obj_req->rename));
+		ret = error("unable to write sha1 filename %s",
+			    obj_req->filename);
 	}
 
 	release_object_request(obj_req);
