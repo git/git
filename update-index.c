@@ -367,7 +367,7 @@ static void read_index_info(int line_termination)
 		if (!tab || tab - ptr < 41)
 			goto bad_line;
 
-		if (tab[-2] == ' ' && '1' <= tab[-1] && tab[-1] <= '3') {
+		if (tab[-2] == ' ' && '0' <= tab[-1] && tab[-1] <= '3') {
 			stage = tab[-1] - '0';
 			ptr = tab + 1; /* point at the head of path */
 			tab = tab - 2; /* point at tail of sha1 */
