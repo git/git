@@ -546,23 +546,30 @@ sub commit {
 			}
 		}
 
-		if(@old) {
-			open my $F, "-|", "git-ls-files", "-z", @old or die $!;
-			@old = ();
+		while(@old) {
+			my @o1;
+			if(@old > 55) {
+				@o1 = splice(@old,0,50);
+			} else {
+				@o1 = @old;
+				@old = ();
+			}
+			open my $F, "-|", "git-ls-files", "-z", @o1 or die $!;
+			@o1 = ();
 			local $/ = "\0";
 			while(<$F>) {
 				chomp;
-				push(@old,$_);
+				push(@o1,$_);
 			}
 			close($F);
 
-			while(@old) {
+			while(@o1) {
 				my @o2;
-				if(@old > 55) {
-					@o2 = splice(@old,0,50);
+				if(@o1 > 55) {
+					@o2 = splice(@o1,0,50);
 				} else {
-					@o2 = @old;
-					@old = ();
+					@o2 = @o1;
+					@o1 = ();
 				}
 				system("git-update-index","--force-remove","--",@o2);
 				die "Cannot remove files: $?\n" if $?;
