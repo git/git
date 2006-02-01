@@ -375,7 +375,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 
 	FILE *indexfile;
 	struct active_request_slot *slot;
-	static struct slot_results results;
+	struct slot_results results;
 
 	if (has_pack_index(sha1))
 		return 0;
@@ -555,7 +555,7 @@ static void fetch_alternates(char *base)
 	char *url;
 	char *data;
 	struct active_request_slot *slot;
-	static struct alternates_request alt_req;
+	struct alternates_request alt_req;
 
 	/* If another request has already started fetching alternates,
 	   wait for them to arrive and return to processing this request's
@@ -618,7 +618,7 @@ static int fetch_indices(struct alt_base *repo)
 	int i = 0;
 
 	struct active_request_slot *slot;
-	static struct slot_results results;
+	struct slot_results results;
 
 	if (repo->got_indices)
 		return 0;
@@ -699,7 +699,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	struct curl_slist *range_header = NULL;
 
 	struct active_request_slot *slot;
-	static struct slot_results results;
+	struct slot_results results;
 
 	if (fetch_indices(repo))
 		return -1;
@@ -900,7 +900,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         struct buffer buffer;
 	char *base = alt->base;
 	struct active_request_slot *slot;
-	static struct slot_results results;
+	struct slot_results results;
         buffer.size = 41;
         buffer.posn = 0;
         buffer.buffer = hex;
