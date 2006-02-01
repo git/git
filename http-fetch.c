@@ -311,7 +311,7 @@ void fill_active_slots(void)
 	while (active_requests < max_requests && obj_req != NULL) {
 		if (obj_req->state == WAITING) {
 			if (has_sha1_file(obj_req->sha1))
-				release_object_request(obj_req);
+				obj_req->state = COMPLETE;
 			else
 				start_object_request(obj_req);
 			curl_multi_perform(curlm, &num_transfers);
