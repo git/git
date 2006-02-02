@@ -397,7 +397,23 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 		hunk_end = j;
 
 		/* [i..hunk_end) are interesting.  Now is it really
-		 * interesting?
+		 * interesting?  We check if there are only two versions
+		 * and the result matches one of them.  That is, we look
+		 * at:
+		 *   (+) line, which records lines added to which parents;
+		 *       this line appears in the result.
+		 *   (-) line, which records from what parents the line
+		 *       was removed; this line does not appear in the result.
+		 * then check the set of parents the result has difference
+		 * from, from all lines.  If there are lines that has
+		 * different set of parents that the result has differences
+		 * from, that means we have more than two versions.
+		 *
+		 * Even when we have only two versions, if the result does
+		 * not match any of the parents, the it should be considered
+		 * interesting.  In such a case, we would have all '+' line.
+		 * After passing the above "two versions" test, that would
+		 * appear as "the same set of parents" to be "all parents".
 		 */
 		same_diff = 0;
 		has_interesting = 0;
@@ -429,7 +445,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 			}
 		}
 
-		if (!has_interesting) {
+		if (!has_interesting && same_diff != all_mask) {
 			/* This hunk is not that interesting after all */
 			for (j = hunk_begin; j < hunk_end; j++)
 				sline[j].flag &= ~mark;
