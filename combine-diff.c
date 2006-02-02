@@ -81,8 +81,8 @@ struct sline {
 	struct lline *lost_head, **lost_tail;
 	char *bol;
 	int len;
-	/* bit 0 up to (N-1) are on if the parent does _not_
-	 * have this line (i.e. we changed it).
+	/* bit 0 up to (N-1) are on if the parent has this line (i.e.
+	 * we did not change it).
 	 * bit N is used for "interesting" lines, including context.
 	 */
 	unsigned long flag;
@@ -219,7 +219,6 @@ static void combine_diff(const unsigned char *parent, const char *ourtmp,
 	char line[MAXLINELEN];
 	unsigned int lno, ob, on, nb, nn, p_lno;
 	unsigned long nmask = (1UL << n);
-	unsigned long pmask = ~nmask;
 	struct sline *lost_bucket = NULL;
 
 	write_temp_blob(parent_tmp, parent);
@@ -265,7 +264,7 @@ static void combine_diff(const unsigned char *parent, const char *ourtmp,
 			append_lost(lost_bucket, n, line+1);
 			break;
 		case '+':
-			sline[lno-1].flag &= pmask;
+			sline[lno-1].flag |= nmask;
 			lno++;
 			break;
 		}
@@ -291,7 +290,7 @@ static void combine_diff(const unsigned char *parent, const char *ourtmp,
 				p_lno++; /* '-' means parent had it */
 			ll = ll->next;
 		}
-		if (sline[lno].flag & nmask)
+		if (!(sline[lno].flag & nmask))
 			p_lno++; /* no '+' means parent had it */
 	}
 	sline[lno].p_lno[n] = p_lno; /* trailer */
@@ -302,7 +301,10 @@ static char combine_marker = '@';
 
 static int interesting(struct sline *sline, unsigned long all_mask)
 {
-	return ((sline->flag & all_mask) != all_mask || sline->lost_head);
+	/* If some parents lost lines here, or if we have added to
+	 * some parent, it is interesting.
+	 */
+	return ((sline->flag & all_mask) || sline->lost_head);
 }
 
 static unsigned long adjust_hunk_tail(struct sline *sline,
@@ -310,28 +312,35 @@ static unsigned long adjust_hunk_tail(struct sline *sline,
 				      unsigned long hunk_begin,
 				      unsigned long i)
 {
-	/* i points at the first uninteresting line.
-	 * If the last line of the hunk was interesting
-	 * only because it has some deletion, then
-	 * it is not all that interesting for the
-	 * purpose of giving trailing context lines.
+	/* i points at the first uninteresting line.  If the last line
+	 * of the hunk was interesting only because it has some
+	 * deletion, then it is not all that interesting for the
+	 * purpose of giving trailing context lines.  This is because
+	 * we output '-' line and then unmodified sline[i-1] itself in
+	 * that case which gives us one extra context line.
 	 */
-	if ((hunk_begin + 1 <= i) &&
-	    ((sline[i-1].flag & all_mask) == all_mask))
+	if ((hunk_begin + 1 <= i) && !(sline[i-1].flag & all_mask))
 		i--;
 	return i;
 }
 
-static unsigned long next_interesting(struct sline *sline,
-				      unsigned long mark,
-				      unsigned long i,
-				      unsigned long cnt,
-				      int uninteresting)
+static unsigned long find_next(struct sline *sline,
+			       unsigned long mark,
+			       unsigned long i,
+			       unsigned long cnt,
+			       int uninteresting)
 {
+	/* We have examined up to i-1 and are about to look at i.
+	 * Find next interesting or uninteresting line.  Here,
+	 * "interesting" does not mean interesting(), but marked by
+	 * the give_context() function below (i.e. it includes context
+	 * lines that are not interesting to interesting() function
+	 * that are surrounded by interesting() ones.
+	 */
 	while (i < cnt)
-		if (uninteresting ?
-		    !(sline[i].flag & mark) :
-		    (sline[i].flag & mark))
+		if (uninteresting
+		    ? !(sline[i].flag & mark)
+		    : (sline[i].flag & mark))
 			return i;
 		else
 			i++;
@@ -344,23 +353,37 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 	unsigned long mark = (1UL<<num_parent);
 	unsigned long i;
 
-	i = next_interesting(sline, mark, 0, cnt, 0);
+	/* Two groups of interesting lines may have a short gap of
+	 * unintersting lines.  Connect such groups to give them a
+	 * bit of context.
+	 *
+	 * We first start from what the interesting() function says,
+	 * and mark them with "mark", and paint context lines with the
+	 * mark.  So interesting() would still say false for such context
+	 * lines but they are treated as "interesting" in the end.
+	 */
+	i = find_next(sline, mark, 0, cnt, 0);
 	if (cnt <= i)
 		return 0;
 
 	while (i < cnt) {
 		unsigned long j = (context < i) ? (i - context) : 0;
 		unsigned long k;
+
+		/* Paint a few lines before the first interesting line. */
 		while (j < i)
 			sline[j++].flag |= mark;
 
 	again:
-		j = next_interesting(sline, mark, i, cnt, 1);
+		/* we know up to i is to be included.  where does the
+		 * next uninteresting one start?
+		 */
+		j = find_next(sline, mark, i, cnt, 1);
 		if (cnt <= j)
 			break; /* the rest are all interesting */
 
 		/* lookahead context lines */
-		k = next_interesting(sline, mark, j, cnt, 0);
+		k = find_next(sline, mark, j, cnt, 0);
 		j = adjust_hunk_tail(sline, all_mask, i, j);
 
 		if (k < j + context) {
@@ -374,7 +397,8 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 		}
 
 		/* j is the first uninteresting line and there is
-		 * no overlap beyond it within context lines.
+		 * no overlap beyond it within context lines.  Paint
+		 * the trailing edge a bit.
 		 */
 		i = k;
 		k = (j + context < cnt) ? j + context : cnt;
@@ -461,7 +485,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 		same_diff = 0;
 		has_interesting = 0;
 		for (j = i; j < hunk_end && !has_interesting; j++) {
-			unsigned long this_diff = ~sline[j].flag & all_mask;
+			unsigned long this_diff = sline[j].flag & all_mask;
 			struct lline *ll = sline[j].lost_head;
 			if (this_diff) {
 				/* This has some changes.  Is it the
@@ -532,6 +556,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 		while (lno < hunk_end) {
 			struct lline *ll;
 			int j;
+			unsigned long p_mask;
 			sl = &sline[lno++];
 			ll = sl->lost_head;
 			while (ll) {
@@ -544,11 +569,13 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 				puts(ll->line);
 				ll = ll->next;
 			}
+			p_mask = 1;
 			for (j = 0; j < num_parent; j++) {
-				if ((1UL<<j) & sl->flag)
-					putchar(' ');
-				else
+				if (p_mask & sl->flag)
 					putchar('+');
+				else
+					putchar(' ');
+				p_mask <<= 1;
 			}
 			printf("%.*s\n", sl->len, sl->bol);
 		}
@@ -574,8 +601,8 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 				ll->parent_map |= imask;
 			ll = ll->next;
 		}
-		if (!(sline->flag & jmask))
-			sline->flag &= ~imask;
+		if (sline->flag & jmask)
+			sline->flag |= imask;
 		sline++;
 	}
 }
@@ -641,7 +668,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		if (*cp == '\n') {
 			sline[lno].lost_tail = &sline[lno].lost_head;
 			sline[lno].len = cp - sline[lno].bol;
-			sline[lno].flag = (1UL<<num_parent) - 1;
+			sline[lno].flag = 0;
 			lno++;
 			if (lno < cnt)
 				sline[lno].bol = cp + 1;
@@ -650,7 +677,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 	if (result[size-1] != '\n') {
 		sline[cnt-1].lost_tail = &sline[cnt-1].lost_head;
 		sline[cnt-1].len = size - (sline[cnt-1].bol - result);
-		sline[cnt-1].flag = (1UL<<num_parent) - 1;
+		sline[cnt-1].flag = 0;
 	}
 
 	sline[0].p_lno = xcalloc((cnt+1) * num_parent, sizeof(unsigned long));
@@ -673,11 +700,11 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
-	if (header && (show_hunks || show_empty)) {
-		shown_header++;
-		puts(header);
-	}
 	if (show_hunks) {
+		if (header) {
+			shown_header++;
+			puts(header);
+		}
 		printf("diff --%s ", dense ? "cc" : "combined");
 		if (quote_c_style(elem->path, NULL, NULL, 0))
 			quote_c_style(elem->path, NULL, stdout, 0);
@@ -709,6 +736,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			}
 		}
 	}
+	free(sline[0].p_lno);
 	free(sline);
 	return shown_header;
 }
