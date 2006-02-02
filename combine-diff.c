@@ -262,58 +262,6 @@ static int interesting(struct sline *sline, unsigned long all_mask)
 	return ((sline->flag & all_mask) != all_mask || sline->lost_head);
 }
 
-static unsigned long line_common_diff(struct sline *sline, unsigned long all_mask)
-{
-	/*
-	 * Look at the line and see from which parents we have the
-	 * same difference.
-	 */
-
-	/* Lower bits of sline->flag records if the parent had this
-	 * line, so XOR with all_mask gives us on-bits for parents we
-	 * have differences with.
-	 */
-	unsigned long common_adds = (sline->flag ^ all_mask) & all_mask;
-	unsigned long common_removes = all_mask;
-
-	/* If all the parents have this line, that also counts as
-	 * having the same difference.
-	 */
-	if (!common_adds)
-		common_adds = all_mask;
-
-	if (sline->lost_head) {
-		/* Lost head list records the lines removed from
-		 * the parents, and parent_map records from which
-		 * parent the line was removed.
-		 */
-		struct lline *ll;
-		for (ll = sline->lost_head; ll; ll = ll->next) {
-			common_removes &= ll->parent_map;
-		}
-	}
-	return common_adds & common_removes;
-}
-
-static unsigned long line_all_diff(struct sline *sline, unsigned long all_mask)
-{
-	/*
-	 * Look at the line and see from which parents we have some difference.
-	 */
-	unsigned long different = (sline->flag ^ all_mask) & all_mask;
-	if (sline->lost_head) {
-		/* Lost head list records the lines removed from
-		 * the parents, and parent_map records from which
-		 * parent the line was removed.
-		 */
-		struct lline *ll;
-		for (ll = sline->lost_head; ll; ll = ll->next) {
-			different |= ll->parent_map;
-		}
-	}
-	return different;
-}
-
 static unsigned long adjust_hunk_tail(struct sline *sline,
 				      unsigned long all_mask,
 				      unsigned long hunk_begin,
@@ -417,8 +365,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 	i = 0;
 	while (i < cnt) {
 		unsigned long j, hunk_begin, hunk_end;
-		int same, diff;
-		unsigned long same_diff, all_diff;
+		unsigned long same_diff;
 		while (i < cnt && !(sline[i].flag & mark))
 			i++;
 		if (cnt <= i)
@@ -449,23 +396,40 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 		}
 		hunk_end = j;
 
-		/* [i..hunk_end) are interesting.  Now does it have
-		 * the same change with all but one parent?
+		/* [i..hunk_end) are interesting.  Now is it really
+		 * interesting?
 		 */
-		same_diff = all_mask;
-		all_diff = 0;
-		for (j = i; j < hunk_end; j++) {
-			same_diff &= line_common_diff(sline + j, all_mask);
-			all_diff |= line_all_diff(sline + j, all_mask);
+		same_diff = 0;
+		has_interesting = 0;
+		for (j = i; j < hunk_end && !has_interesting; j++) {
+			unsigned long this_diff = ~sline[j].flag & all_mask;
+			struct lline *ll = sline[j].lost_head;
+			if (this_diff) {
+				/* This has some changes.  Is it the
+				 * same as others?
+				 */
+				if (!same_diff)
+					same_diff = this_diff;
+				else if (same_diff != this_diff) {
+					has_interesting = 1;
+					break;
+				}
+			}
+			while (ll && !has_interesting) {
+				/* Lost this line from these parents;
+				 * who are they?  Are they the same?
+				 */
+				this_diff = ll->parent_map;
+				if (!same_diff)
+					same_diff = this_diff;
+				else if (same_diff != this_diff) {
+					has_interesting = 1;
+				}
+				ll = ll->next;
+			}
 		}
-		diff = same = 0;
-		for (j = 0; j < num_parent; j++) {
-			if (same_diff & (1UL<<j))
-				same++;
-			if (all_diff & (1UL<<j))
-				diff++;
-		}
-		if ((num_parent - 1 <= same) || (diff == 1)) {
+
+		if (!has_interesting) {
 			/* This hunk is not that interesting after all */
 			for (j = hunk_begin; j < hunk_end; j++)
 				sline[j].flag &= ~mark;
