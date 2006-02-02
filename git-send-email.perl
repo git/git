@@ -125,7 +125,7 @@ if ($compose) {
 	# effort to have it be unique
 	open(C,">",$compose_filename)
 		or die "Failed to open for writing $compose_filename: $!";
-	print C "From \n";
+	print C "From $from # This line is ignored.\n";
 	printf C "Subject: %s\n\n", $initial_subject;
 	printf C <<EOT;
 GIT: Please enter your email below.
