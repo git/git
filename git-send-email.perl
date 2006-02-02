@@ -34,7 +34,7 @@ my $compose_filename = ".msg.$$";
 my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
 
 # Behavior modification variables
-my ($chain_reply_to, $smtp_server) = (1, "localhost");
+my ($chain_reply_to, $smtp_server, $quiet) = (1, "localhost", 0);
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -51,6 +51,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
+		    "quiet" => \$quiet,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:
@@ -267,8 +268,10 @@ sub send_message
 
 	sendmail(%mail) or die $Mail::Sendmail::error;
 
-	print "OK. Log says:\n", $Mail::Sendmail::log;
-	print "\n\n"
+	unless ($quiet) {
+		print "OK. Log says:\n", $Mail::Sendmail::log;
+		print "\n\n"
+	}
 }
 
 
