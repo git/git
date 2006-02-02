@@ -107,7 +107,10 @@ def isSha(obj):
     return (type(obj) is str and bool(shaRE.match(obj))) or \
            (type(obj) is int and obj >= 1)
 
-class Commit:
+class Commit(object):
+    __slots__ = ['parents', 'firstLineMsg', 'children', '_tree', 'sha',
+                 'virtual']
+
     def __init__(self, sha, parents, tree=None):
         self.parents = parents
         self.firstLineMsg = None
