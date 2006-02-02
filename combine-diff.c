@@ -523,6 +523,30 @@ static void dump_sline(struct sline *sline, int cnt, int num_parent)
 	}
 }
 
+static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
+			       int i, int j)
+{
+	/* We have already examined parent j and we know parent i
+	 * and parent j are the same, so reuse the combined result
+	 * of parent j for parent i.
+	 */
+	unsigned long lno, imask, jmask;
+	imask = (1UL<<i);
+	jmask = (1UL<<j);
+
+	for (lno = 0; lno < cnt; lno++) {
+		struct lline *ll = sline->lost_head;
+		while (ll) {
+			if (ll->parent_map & jmask)
+				ll->parent_map |= imask;
+			ll = ll->next;
+		}
+		if (!(sline->flag & jmask))
+			sline->flag &= ~imask;
+		sline++;
+	}
+}
+
 int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		       int dense, const char *header, int show_empty)
 {
@@ -596,8 +620,19 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		sline[cnt-1].flag = (1UL<<num_parent) - 1;
 	}
 
-	for (i = 0; i < num_parent; i++)
-		combine_diff(elem->parent_sha1[i], ourtmp, sline, cnt, i);
+	for (i = 0; i < num_parent; i++) {
+		int j;
+		for (j = 0; j < i; j++) {
+			if (!memcmp(elem->parent_sha1[i],
+				    elem->parent_sha1[j], 20)) {
+				reuse_combine_diff(sline, cnt, i, j);
+				break;
+			}
+		}
+		if (i <= j)
+			combine_diff(elem->parent_sha1[i], ourtmp, sline,
+				     cnt, i);
+	}
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
