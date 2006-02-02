@@ -78,4 +78,4 @@ do
 	(IFS=",$IFS"; git merge -n "Merge $H" pu $H) || exit
 done
 
-(IFS=",$IFS"; git show-branch master $* pu $ORIG_HEAD)
+(IFS=",$IFS"; git show-branch master $* pu `git rev-parse --short $ORIG_HEAD`)

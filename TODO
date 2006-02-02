@@ -20,24 +20,25 @@ patch, perhaps ;-).
 Documentation
 -------------
 
-* Take the updated tutorial by Bruce Fields very seriously.  It
-  is a quite good initiative.
+* No pending issues at the moment.  "Revamp Tutorial" initiative
+  by Bruce Fields ongoing and things are looking better.
 
 
 Design issues
 -------------
+
+* Rehash "git commit" with various parameters to be more
+  intuitive without breaking traditinal users too much.  We need
+  to phase this in, especially if we are going to change "git
+  commit" to imply the current "git commit -a" behaviour.
+
+* "intent to add" index entries.
 
 * Plug-in file-level merges.  On the other hand, we may not even
   need this; just tell people to run "xxdiff -U" on the working
   tree files.
 
 * Doing a merge in a separate directory.
-
-* Subprojects.  I think the "bind commit" approach has been
-  outlined at sufficiently detailed level.  Maybe find time to
-  actually start prototyping it?
-
-  <7vacdzkww3.fsf@assigned-by-dhcp.cox.net>
 
 * Make 'format-patch' take revision limiters similar to
   rev-list.  For example:
@@ -93,6 +94,39 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* Subprojects.  I think the "bind commit" approach has been
+  outlined at sufficiently detailed level.  Maybe find time to
+  actually start prototyping it?
+
+  <7vacdzkww3.fsf@assigned-by-dhcp.cox.net>
+
+* Shallow clones.
+
+* Mark entries as "assume unchanged" in the index.
+  New option to update-index to set or drop the bit is needed.
+
+  - update-index --no-stat paths...
+  - update-index --with-stat paths...
+
+  Also a config item '[core] trust_stat = false' would enable
+  this automatically:
+
+  - "update-index" with or without --add would mark the path
+    after registering.  Should we make the working tree file
+    read-only at this point?
+
+  - checkout-index -u would mark the path and makes the working
+    tree file read-only.
+
+  Impacts to various commands:
+
+  - update-index --refresh would ignore them.
+
+  - diff-files would say unchanged.
+
+  - diff-index without --cached acts the same way as diff-index
+    --cached.
+
 * Decide what to do about rebase applied to merged head.  One
   extreme is to allow rebase if "rev-list ours..theirs" gives
   anything.  This loosens the current merge-base based approach.
@@ -106,7 +140,7 @@ Technical (milder)
   when both branches happen to have obtained the same set of
   changes through different history.  Not recording such keeps
   the history simpler, and the next merge would soon create a
-  true merge commit anyway, but does not feel quite right.
+  true merge commit anyway, but this does not feel quite right.
 
   <20060114021800.4688.qmail@web31803.mail.mud.yahoo.com>
 
@@ -115,20 +149,6 @@ Technical (milder)
 * Prepare to enable "always use symbolic refs for HEAD" patch.
   We need a timeline to force Porcelains to get ready.  All the
   major ones should be ready now.
-
-* Prepare to enable "most of the things are installed in
-  GIT_EXEC_PATH not in bindir".  I do not plan to set bindir !=
-  gitexecdir myself in the main Makefile I ship, but distos
-  should be able to choose to do so.
-
-* Forbid/ignore pack names that do not conform to the convention
-  sha1_pack_name() assumes and reject in check_packed_git_idx()
-  [In "pu"]
-
-* Any Porcelain-ish we forgot or punted to make usable from
-  subdirectory?  I think the last pass caught everything and
-  what are remaining are whole-tree or whole repository
-  operations.
 
 * diff stopping at the first output; qgit wants to know if this
   tree has any A or D from the other tree and nothing else.
@@ -166,7 +186,7 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
-* s/naked/bare/g.
+* Use parent info in 'diff-tree --stdin'.
 
 * git-proxy should be spawned with sh -c 'command' $1 $2.
 
