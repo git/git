@@ -235,7 +235,10 @@ static void combine_diff(const unsigned char *parent, const char *ourtmp,
 				 */
 				nb = 1;
 			}
-			lost_bucket = &sline[nb-1]; /* sline is 0 based */
+			if (nn == 0)
+				lost_bucket = &sline[nb];
+			else
+				lost_bucket = &sline[nb-1];
 			continue;
 		}
 		if (!lost_bucket)
@@ -627,6 +630,15 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		else
 			printf("%s", elem->path);
 		putchar('\n');
+		printf("index ");
+		for (i = 0; i < num_parent; i++) {
+			printf("%s%s",
+			       i ? ".." : "",
+			       find_unique_abbrev(elem->parent_sha1[i],
+						  DEFAULT_ABBREV));
+		}
+		printf("->%s\n",
+		       find_unique_abbrev(elem->sha1, DEFAULT_ABBREV));
 		dump_sline(sline, cnt, num_parent);
 	}
 	if (ourtmp == ourtmp_buf)
