@@ -45,11 +45,10 @@ cacheOnly = False
 # The entry point to the merge code
 # ---------------------------------
 
-def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
+def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0, ancestor=None):
     '''Merge the commits h1 and h2, return the resulting virtual
     commit object and a flag indicating the cleaness of the merge.'''
     assert(isinstance(h1, Commit) and isinstance(h2, Commit))
-    assert(isinstance(graph, Graph))
 
     global outputIndent
 
@@ -58,7 +57,11 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
     output(h2)
     sys.stdout.flush()
 
-    ca = getCommonAncestors(graph, h1, h2)
+    if ancestor:
+        ca = [ancestor]
+    else:
+        assert(isinstance(graph, Graph))
+        ca = getCommonAncestors(graph, h1, h2)
     output('found', len(ca), 'common ancestor(s):')
     for x in ca:
         output(x)
@@ -86,7 +89,7 @@ def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0):
     [shaRes, clean] = mergeTrees(h1.tree(), h2.tree(), mergedCA.tree(),
                                  branch1Name, branch2Name)
 
-    if clean or cacheOnly:
+    if graph and (clean or cacheOnly):
         res = Commit(None, [h1, h2], tree=shaRes)
         graph.addNode(res)
     else:
@@ -891,12 +894,11 @@ def usage():
 
 # main entry point as merge strategy module
 # The first parameters up to -- are merge bases, and the rest are heads.
-# This strategy module figures out merge bases itself, so we only
-# get heads.
 
 if len(sys.argv) < 4:
     usage()
 
+bases = []
 for nextArg in xrange(1, len(sys.argv)):
     if sys.argv[nextArg] == '--':
         if len(sys.argv) != nextArg + 3:
@@ -907,6 +909,8 @@ for nextArg in xrange(1, len(sys.argv)):
         except IndexError:
             usage()
         break
+    else:
+        bases.append(sys.argv[nextArg])
 
 print 'Merging', h1, 'with', h2
 
@@ -914,10 +918,17 @@ try:
     h1 = runProgram(['git-rev-parse', '--verify', h1 + '^0']).rstrip()
     h2 = runProgram(['git-rev-parse', '--verify', h2 + '^0']).rstrip()
 
-    graph = buildGraph([h1, h2])
-
-    [dummy, clean] = merge(graph.shaMap[h1], graph.shaMap[h2],
-                           firstBranch, secondBranch, graph)
+    if len(bases) == 1:
+        base = runProgram(['git-rev-parse', '--verify',
+                           bases[0] + '^0']).rstrip()
+        ancestor = Commit(base, None)
+        [dummy, clean] = merge(Commit(h1, None), Commit(h2, None),
+                               firstBranch, secondBranch, None, 0,
+                               ancestor)
+    else:
+        graph = buildGraph([h1, h2])
+        [dummy, clean] = merge(graph.shaMap[h1], graph.shaMap[h2],
+                               firstBranch, secondBranch, graph)
 
     print ''
 except:
