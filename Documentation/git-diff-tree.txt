@@ -93,7 +93,7 @@ separated with a single space are given.
 	parent, or show the same change from all but one parent
 	for an Octopus merge.  When this optimization makes all
 	hunks disappear, the commit itself and the commit log
-	message is not shown, unless '-m' is specified.
+	message is not shown, just like any other "empty diff" cases.
 
 
 Limiting Output
