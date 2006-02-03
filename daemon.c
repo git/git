@@ -147,7 +147,7 @@ static char *path_ok(char *dir)
 		static char rpath[PATH_MAX];
 		if (*dir != '/') {
 			/* Forbid possible base-path evasion using ~paths. */
-			logerror("'%s': Non-absolute path denied (base-path active)");
+			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
 		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
