@@ -13,11 +13,12 @@
 
 static int log_syslog;
 static int verbose;
+static int reuseaddr;
 
 static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
-"           [--base-path=path] [directory...]";
+"           [--base-path=path] [--reuseaddr] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths = NULL;
@@ -451,6 +452,16 @@ static void child_handler(int signo)
 	}
 }
 
+static int set_reuse_addr(int sockfd)
+{
+	int on = 1;
+
+	if (!reuseaddr)
+		return 0;
+	return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+			  &on, sizeof(on));
+}
+
 #ifndef NO_IPV6
 
 static int socksetup(int port, int **socklist_p)
@@ -495,6 +506,11 @@ static int socksetup(int port, int **socklist_p)
 		}
 #endif
 
+		if (set_reuse_addr(sockfd)) {
+			close(sockfd);
+			return 0;	/* not fatal */
+		}
+
 		if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
 			close(sockfd);
 			continue;	/* not fatal */
@@ -536,6 +552,11 @@ static int socksetup(int port, int **socklist_p)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	sin.sin_port = htons(port);
+
+	if (set_reuse_addr(sockfd)) {
+		close(sockfd);
+		return 0;
+	}
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
 		close(sockfd);
@@ -661,6 +682,10 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--base-path=", 12)) {
 			base_path = arg+12;
+			continue;
+		}
+		if (!strcmp(arg, "--reuseaddr")) {
+			reuseaddr = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
