@@ -27,10 +27,47 @@ sub andjoin {
 	return ($m);
 }
 
+sub repoconfig {
+	my $fh;
+	my $val;
+	eval {
+		open $fh, '-|', 'git-repo-config', '--get', 'merge.summary'
+		    or die "$!";
+		($val) = <$fh>;
+		close $fh;
+	};
+	return $val;
+}
+
+sub mergebase {
+	my ($other) = @_;
+	my $fh;
+	open $fh, '-|', 'git-merge-base', '--all', 'HEAD', $other or die "$!";
+	my (@mb) = map { chomp; $_ } <$fh>;
+	close $fh or die "$!";
+	return @mb;
+}
+
+sub shortlog {
+	my ($tip, $limit, @base) = @_;
+	my ($fh, @result);
+	open $fh, '-|', ('git-log', "--max-count=$limit", '--topo-order',
+			 '--pretty=oneline', $tip, map { "^$_" } @base)
+	    or die "$!";
+	while (<$fh>) {
+		s/^[0-9a-f]{40}\s+//;
+		push @result, $_;
+	}
+	close $fh or die "$!";
+	return @result;
+}
+
+my @origin = ();
 while (<>) {
-	my ($bname, $tname, $gname, $src);
+	my ($bname, $tname, $gname, $src, $sha1, $origin);
 	chomp;
-	s/^[0-9a-f]*	//;
+	s/^([0-9a-f]*)	//;
+	$sha1 = $1;
 	next if (/^not-for-merge/);
 	s/^	//;
 	if (s/ of (.*)$//) {
@@ -52,19 +89,30 @@ while (<>) {
 		};
 	}
 	if (/^branch (.*)$/) {
+		$origin = $1;
 		push @{$src{$src}{BRANCH}}, $1;
 		$src{$src}{HEAD_STATUS} |= 2;
 	}
 	elsif (/^tag (.*)$/) {
+		$origin = $_;
 		push @{$src{$src}{TAG}}, $1;
 		$src{$src}{HEAD_STATUS} |= 2;
 	}
 	elsif (/^HEAD$/) {
+		$origin = $src;
 		$src{$src}{HEAD_STATUS} |= 1;
 	}
 	else {
 		push @{$src{$src}{GENERIC}}, $_;
 		$src{$src}{HEAD_STATUS} |= 2;
+		$origin = $src;
+	}
+	if ($src eq '.' || $src eq $origin) {
+		$origin =~ s/^'(.*)'$/$1/;
+		push @origin, [$sha1, "$origin"];
+	}
+	else {
+		push @origin, [$sha1, "$origin of $src"];
 	}
 }
 
@@ -93,3 +141,30 @@ for my $src (@src) {
 	push @msg, $this;
 }
 print "Merge ", join("; ", @msg), "\n";
+
+if (!repoconfig) {
+	exit(0);
+}
+
+# We limit the merge message to the latst 20 or so per each branch.
+my $limit = 20;
+
+for (@origin) {
+	my ($sha1, $name) = @$_;
+	my @mb = mergebase($sha1);
+	my @log = shortlog($sha1, $limit + 1, @mb);
+	if ($limit + 1 <= @log) {
+		print "\n* $name: (" . scalar(@log) . " commits)\n";
+	}
+	else {
+		print "\n* $name:\n";
+	}
+	my $cnt = 0;
+	for my $log (@log) {
+		if ($limit < ++$cnt) {
+			print "  ...\n";
+			last;
+		}
+		print "  $log";
+	}
+}
