@@ -293,7 +293,7 @@ for remote
 do
 	echo $remote
 done >"$GIT_DIR/MERGE_HEAD"
-echo $merge_msg >"$GIT_DIR/MERGE_MSG"
+echo "$merge_msg" >"$GIT_DIR/MERGE_MSG"
 
 if test "$merge_was_ok" = t
 then
