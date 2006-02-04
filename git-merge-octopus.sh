@@ -90,7 +90,7 @@ do
 	NON_FF_MERGE=1
 
 	echo "Trying simple merge with $SHA1"
-	git-read-tree -u -m $common $MRT $SHA1 || exit 2
+	git-read-tree -u -m --aggressive  $common $MRT $SHA1 || exit 2
 	next=$(git-write-tree 2>/dev/null)
 	if test $? -ne 0
 	then

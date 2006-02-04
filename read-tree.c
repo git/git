@@ -15,6 +15,7 @@ static int update = 0;
 static int index_only = 0;
 static int nontrivial_merge = 0;
 static int trivial_merges_only = 0;
+static int aggressive = 0;
 
 static int head_idx = -1;
 static int merge_size = 0;
@@ -424,11 +425,14 @@ static int threeway_merge(struct cache_entry **stages)
 	int df_conflict_remote = 0;
 
 	int any_anc_missing = 0;
+	int no_anc_exists = 1;
 	int i;
 
 	for (i = 1; i < head_idx; i++) {
 		if (!stages[i])
 			any_anc_missing = 1;
+		else
+			no_anc_exists = 0;
 	}
 
 	index = stages[0];
@@ -488,6 +492,29 @@ static int threeway_merge(struct cache_entry **stages)
 	/* #1 */
 	if (!head && !remote && any_anc_missing)
 		return 0;
+
+	/* Under the new "aggressive" rule, we resolve mostly trivial
+	 * cases that we historically had git-merge-one-file resolve.
+	 */
+	if (aggressive) {
+		int head_deleted = !head && !df_conflict_head;
+		int remote_deleted = !remote && !df_conflict_remote;
+		/*
+		 * Deleted in both.
+		 * Deleted in one and unchanged in the other.
+		 */
+		if ((head_deleted && remote_deleted) ||
+		    (head_deleted && remote && remote_match) ||
+		    (remote_deleted && head && head_match))
+			return 0;
+
+		/*
+		 * Added in both, identically.
+		 */
+		if (no_anc_exists && head && remote && same(head, remote))
+			return merged_entry(head, index);
+
+	}
 
 	/* Below are "no merge" cases, which require that the index be
 	 * up-to-date to avoid the files getting overwritten with
@@ -674,6 +701,11 @@ int main(int argc, char **argv)
 
 		if (!strcmp(arg, "--trivial")) {
 			trivial_merges_only = 1;
+			continue;
+		}
+
+		if (!strcmp(arg, "--aggressive")) {
+			aggressive = 1;
 			continue;
 		}
 
