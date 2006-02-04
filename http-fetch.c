@@ -220,7 +220,6 @@ static void start_object_request(struct object_request *obj_req)
 		free(obj_req->url);
 		return;
 	}
-	
 }
 
 static void finish_object_request(struct object_request *obj_req)
@@ -326,7 +325,7 @@ void fill_active_slots(void)
 			slot->curl = NULL;
 		}
 		slot = slot->next;
-	}				
+	}
 }
 #endif
 
@@ -382,10 +381,10 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 
 	if (get_verbosely)
 		fprintf(stderr, "Getting index for pack %s\n", hex);
-	
+
 	url = xmalloc(strlen(repo->base) + 64);
 	sprintf(url, "%s/objects/pack/pack-%s.idx", repo->base, hex);
-	
+
 	filename = sha1_pack_index_name(sha1);
 	snprintf(tmpfile, sizeof(tmpfile), "%s.temp", filename);
 	indexfile = fopen(tmpfile, "a");
@@ -504,7 +503,7 @@ static void process_alternates_response(void *callback_data)
 			} else if (!memcmp(data + i, "../", 3)) {
 				i += 3;
 				serverlen = strlen(base);
-				while (i + 2 < posn && 
+				while (i + 2 < posn &&
 				       !memcmp(data + i, "../", 3)) {
 					do {
 						serverlen--;
@@ -513,7 +512,7 @@ static void process_alternates_response(void *callback_data)
 					i += 3;
 				}
 				// If the server got removed, give up.
-				okay = strchr(base, ':') - base + 3 < 
+				okay = strchr(base, ':') - base + 3 <
 					serverlen;
 			} else if (alt_req->http_specific) {
 				char *colon = strchr(data + i, ':');
@@ -531,7 +530,7 @@ static void process_alternates_response(void *callback_data)
 					posn - i - 7);
 				target[serverlen + posn - i - 7] = '\0';
 				if (get_verbosely)
-					fprintf(stderr, 
+					fprintf(stderr,
 						"Also look at %s\n", target);
 				newalt = xmalloc(sizeof(*newalt));
 				newalt->next = NULL;
@@ -580,7 +579,7 @@ static void fetch_alternates(char *base)
 
 	if (get_verbosely)
 		fprintf(stderr, "Getting alternates list for %s\n", base);
-	
+
 	url = xmalloc(strlen(base) + 31);
 	sprintf(url, "%s/objects/info/http-alternates", base);
 
@@ -630,7 +629,7 @@ static int fetch_indices(struct alt_base *repo)
 
 	if (get_verbosely)
 		fprintf(stderr, "Getting pack list for %s\n", repo->base);
-	
+
 	url = xmalloc(strlen(repo->base) + 21);
 	sprintf(url, "%s/objects/info/packs", repo->base);
 
@@ -844,7 +843,7 @@ int fetch(unsigned char *sha1)
 		fetch_alternates(alt->base);
 		altbase = altbase->next;
 	}
-	return error("Unable to find %s under %s\n", sha1_to_hex(sha1), 
+	return error("Unable to find %s under %s\n", sha1_to_hex(sha1),
 		     alt->base);
 }
 
@@ -905,7 +904,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         buffer.posn = 0;
         buffer.buffer = hex;
         hex[41] = '\0';
-        
+
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
 	slot->results = &results;

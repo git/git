@@ -528,7 +528,7 @@ static void show_parent_lno(struct sline *sline, unsigned long l0, unsigned long
 {
 	l0 = sline[l0].p_lno[n];
 	l1 = sline[l1].p_lno[n];
-	printf("-%lu,%lu ", l0, l1-l0);
+	printf(" -%lu,%lu", l0, l1-l0);
 }
 
 static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
@@ -548,9 +548,9 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 			if (!(sline[hunk_end].flag & mark))
 				break;
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
-		printf(" +%lu,%lu ", lno+1, hunk_end-lno);
 		for (i = 0; i < num_parent; i++)
 			show_parent_lno(sline, lno, hunk_end, cnt, i);
+		printf(" +%lu,%lu ", lno+1, hunk_end-lno);
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		putchar('\n');
 		while (lno < hunk_end) {
@@ -714,11 +714,11 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
 			printf("%s%s",
-			       i ? ".." : "",
+			       i ? "," : "",
 			       find_unique_abbrev(elem->parent_sha1[i],
 						  DEFAULT_ABBREV));
 		}
-		printf("->%s\n",
+		printf("..%s\n",
 		       find_unique_abbrev(elem->sha1, DEFAULT_ABBREV));
 		dump_sline(sline, cnt, num_parent);
 	}

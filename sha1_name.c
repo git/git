@@ -388,43 +388,36 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 
 static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 {
-	int parent, ret;
+	int ret, has_suffix;
 	const char *cp;
 
-	/* foo^[0-9] or foo^ (== foo^1); we do not do more than 9 parents. */
-	if (len > 2 && name[len-2] == '^' &&
-	    name[len-1] >= '0' && name[len-1] <= '9') {
-		parent = name[len-1] - '0';
-		len -= 2;
-	}
-	else if (len > 1 && name[len-1] == '^') {
-		parent = 1;
-		len--;
-	} else
-		parent = -1;
-
-	if (parent >= 0)
-		return get_parent(name, len, sha1, parent);
-
 	/* "name~3" is "name^^^",
-	 * "name~12" is "name^^^^^^^^^^^^", and
 	 * "name~" and "name~0" are name -- not "name^0"!
+	 * "name^" is not "name^0"; it is "name^1".
 	 */
-	parent = 0;
+	has_suffix = 0;
 	for (cp = name + len - 1; name <= cp; cp--) {
 		int ch = *cp;
 		if ('0' <= ch && ch <= '9')
 			continue;
-		if (ch != '~')
-			parent = -1;
+		if (ch == '~' || ch == '^')
+			has_suffix = ch;
 		break;
 	}
-	if (!parent && *cp == '~') {
+
+	if (has_suffix) {
+		int num = 0;
 		int len1 = cp - name;
 		cp++;
 		while (cp < name + len)
-			parent = parent * 10 + *cp++ - '0';
-		return get_nth_ancestor(name, len1, sha1, parent);
+			num = num * 10 + *cp++ - '0';
+		if (has_suffix == '^') {
+			if (!num && len1 == len - 1)
+				num = 1;
+			return get_parent(name, len1, sha1, num);
+		}
+		/* else if (has_suffix == '~') -- goes without saying */
+		return get_nth_ancestor(name, len1, sha1, num);
 	}
 
 	ret = peel_onion(name, len, sha1);
