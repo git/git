@@ -66,7 +66,8 @@ case "$#" in
 			esac
 		done
 		USED=`expr "$USED" : ',\(.*\)'`
-		git merge -n "Merge $USED" pu $USE || exit
+		git pull -n . $USE || exit
+		# git merge -n "Merge $USED" pu $USE || exit
 		HH=$UNUSE
 	done
 	exit
@@ -75,7 +76,8 @@ esac
 
 for H
 do
-	(IFS=",$IFS"; git merge -n "Merge $H" pu $H) || exit
+#	(IFS=",$IFS"; git merge -n "Merge $H" pu $H) || exit
+	(IFS=",$IFS"; git pull -n . $H) || exit
 done
 
 (IFS=",$IFS"; git show-branch master $* pu `git rev-parse --short $ORIG_HEAD`)
