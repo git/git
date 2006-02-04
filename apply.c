@@ -1564,24 +1564,6 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 		die("unable to add cache entry for %s", path);
 }
 
-static void create_subdirectories(const char *path)
-{
-	int len = strlen(path);
-	char *buf = xmalloc(len + 1);
-	const char *slash = path;
-
-	while ((slash = strchr(slash+1, '/')) != NULL) {
-		len = slash - path;
-		memcpy(buf, path, len);
-		buf[len] = 0;
-		if (mkdir(buf, 0777) < 0) {
-			if (errno != EEXIST)
-				break;
-		}
-	}
-	free(buf);
-}
-
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
@@ -1610,13 +1592,14 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
  * which is true 99% of the time anyway. If they don't,
  * we create them and try again.
  */
-static void create_one_file(const char *path, unsigned mode, const char *buf, unsigned long size)
+static void create_one_file(char *path, unsigned mode, const char *buf, unsigned long size)
 {
 	if (!try_create_file(path, mode, buf, size))
 		return;
 
 	if (errno == ENOENT) {
-		create_subdirectories(path);
+		if (safe_create_leading_directories(path))
+			return;
 		if (!try_create_file(path, mode, buf, size))
 			return;
 	}
@@ -1643,7 +1626,7 @@ static void create_one_file(const char *path, unsigned mode, const char *buf, un
 
 static void create_file(struct patch *patch)
 {
-	const char *path = patch->new_name;
+	char *path = patch->new_name;
 	unsigned mode = patch->new_mode;
 	unsigned long size = patch->resultsize;
 	char *buf = patch->result;
