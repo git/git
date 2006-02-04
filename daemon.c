@@ -145,13 +145,17 @@ static char *path_ok(char *dir)
 
 	if (base_path) {
 		static char rpath[PATH_MAX];
-		if (*dir != '/') {
-			/* Forbid possible base-path evasion using ~paths. */
+		if (!strict_paths && *dir == '~')
+			; /* allow user relative paths */
+		else if (*dir != '/') {
+			/* otherwise allow only absolute */
 			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
-		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
-		dir = rpath;
+		else {
+			snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
+			dir = rpath;
+		}
 	}
 
 	path = enter_repo(dir, strict_paths);
