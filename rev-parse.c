@@ -107,12 +107,15 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 }
 
 /* Output a flag, only if filter allows it. */
-static void show_flag(char *arg)
+static int show_flag(char *arg)
 {
 	if (!(filter & DO_FLAGS))
-		return;
-	if (filter & (is_rev_argument(arg) ? DO_REVS : DO_NOREV))
+		return 0;
+	if (filter & (is_rev_argument(arg) ? DO_REVS : DO_NOREV)) {
 		show(arg);
+		return 1;
+	}
+	return 0;
 }
 
 static void show_default(void)
@@ -296,9 +299,8 @@ int main(int argc, char **argv)
 				show_datestring("--min-age=", arg+8);
 				continue;
 			}
-			if (verify)
+			if (show_flag(arg) && verify)
 				die("Needed a single revision");
-			show_flag(arg);
 			continue;
 		}
 
