@@ -1,85 +1,170 @@
 #!/bin/sh
 #
 # Copyright (c) 2005 Linus Torvalds
-#
+# Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [<path>...]'
+USAGE='[-a] [-i] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [--author <author>] [<path>...]'
+
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
-all= logfile= use_commit= no_edit= log_given= log_message= verify=t signoff=
+git-rev-parse --verify HEAD >/dev/null 2>&1 ||
+initial_commit=t
+
+refuse_partial () {
+	echo >&2 "$1"
+	echo >&2 "Experienced git users:"
+	echo >&2 "You might have meant to say 'git commit -i paths...', perhaps?"
+	exit 1
+}
+
+all=
+also=
+logfile=
+use_commit=
+no_edit=
+log_given=
+log_message=
+verify=t
+signoff=
+force_author=
 while case "$#" in 0) break;; esac
 do
   case "$1" in
+  -F|--F|-f|--f|--fi|--fil|--file)
+      case "$#" in 1) usage ;; esac
+      shift
+      no_edit=t
+      log_given=t$log_given
+      logfile="$1"
+      shift
+      ;;
+  -F*|-f*)
+      no_edit=t
+      log_given=t$log_given
+      logfile=`expr "$1" : '-[Ff]\(.*\)'`
+      shift
+      ;;
+  --F=*|--f=*|--fi=*|--fil=*|--file=*)
+      no_edit=t
+      log_given=t$log_given
+      logfile=`expr "$1" : '-[^=]*=\(.*\)'`
+      shift
+      ;;
   -a|--a|--al|--all)
-    all=t
-    shift ;;
-  -F=*|--f=*|--fi=*|--fil=*|--file=*)
-    log_given=t$log_given
-    logfile=`expr "$1" : '-[^=]*=\(.*\)'`
-    no_edit=t
-    shift ;;
-  -F|--f|--fi|--fil|--file)
-    case "$#" in 1) usage ;; esac; shift
-    log_given=t$log_given
-    logfile="$1"
-    no_edit=t
-    shift ;;
-  -m=*|--m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
-    log_given=t$log_given
-    log_message=`expr "$1" : '-[^=]*=\(.*\)'`
-    no_edit=t
-    shift ;;
+      all=t
+      shift
+      ;;
+  --au=*|--aut=*|--auth=*|--autho=*|--author=*)
+      force_author=`expr "$1" : '-[^=]*=\(.*\)'`
+      shift
+      ;;
+  --au|--aut|--auth|--autho|--author)
+      case "$#" in 1) usage ;; esac
+      shift
+      force_author="$1"
+      shift
+      ;;
+  -e|--e|--ed|--edi|--edit)
+      no_edit=
+      shift
+      ;;
+  -i|--i|--in|--inc|--incl|--inclu|--includ|--include)
+      also=t
+      shift
+      ;;
   -m|--m|--me|--mes|--mess|--messa|--messag|--message)
-    case "$#" in 1) usage ;; esac; shift
-    log_given=t$log_given
-    log_message="$1"
-    no_edit=t
-    shift ;;
-  -c=*|--ree=*|--reed=*|--reedi=*|--reedit=*|--reedit-=*|--reedit-m=*|\
+      case "$#" in 1) usage ;; esac
+      shift
+      log_given=t$log_given
+      log_message="$1"
+      no_edit=t
+      shift
+      ;;
+  -m*)
+      log_given=t$log_given
+      log_message=`expr "$1" : '-m\(.*\)'`
+      no_edit=t
+      shift
+      ;;
+  --m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
+      log_given=t$log_given
+      log_message=`expr "$1" : '-[^=]*=\(.*\)'`
+      no_edit=t
+      shift
+      ;;
+  -n|--n|--no|--no-|--no-v|--no-ve|--no-ver|--no-veri|--no-verif|--no-verify)
+      verify=
+      shift
+      ;;
+  -c)
+      case "$#" in 1) usage ;; esac
+      shift
+      log_given=t$log_given
+      use_commit="$1"
+      no_edit=
+      shift
+      ;;
+  --ree=*|--reed=*|--reedi=*|--reedit=*|--reedit-=*|--reedit-m=*|\
   --reedit-me=*|--reedit-mes=*|--reedit-mess=*|--reedit-messa=*|\
   --reedit-messag=*|--reedit-message=*)
-    log_given=t$log_given
-    use_commit=`expr "$1" : '-[^=]*=\(.*\)'`
-    shift ;;
-  -c|--ree|--reed|--reedi|--reedit|--reedit-|--reedit-m|--reedit-me|\
+      log_given=t$log_given
+      use_commit=`expr "$1" : '-[^=]*=\(.*\)'`
+      no_edit=
+      shift
+      ;;
+  --ree|--reed|--reedi|--reedit|--reedit-|--reedit-m|--reedit-me|\
   --reedit-mes|--reedit-mess|--reedit-messa|--reedit-messag|--reedit-message)
-    case "$#" in 1) usage ;; esac; shift
-    log_given=t$log_given
-    use_commit="$1"
-    shift ;;
-  -C=*|--reu=*|--reus=*|--reuse=*|--reuse-=*|--reuse-m=*|--reuse-me=*|\
+      case "$#" in 1) usage ;; esac
+      shift
+      log_given=t$log_given
+      use_commit="$1"
+      no_edit=
+      shift
+      ;;
+  -C)
+      case "$#" in 1) usage ;; esac
+      shift
+      log_given=t$log_given
+      use_commit="$1"
+      no_edit=t
+      shift
+      ;;
+  --reu=*|--reus=*|--reuse=*|--reuse-=*|--reuse-m=*|--reuse-me=*|\
   --reuse-mes=*|--reuse-mess=*|--reuse-messa=*|--reuse-messag=*|\
   --reuse-message=*)
-    log_given=t$log_given
-    use_commit=`expr "$1" : '-[^=]*=\(.*\)'`
-    no_edit=t
-    shift ;;
-  -C|--reu|--reus|--reuse|--reuse-|--reuse-m|--reuse-me|--reuse-mes|\
+      log_given=t$log_given
+      use_commit=`expr "$1" : '-[^=]*=\(.*\)'`
+      no_edit=t
+      shift
+      ;;
+  --reu|--reus|--reuse|--reuse-|--reuse-m|--reuse-me|--reuse-mes|\
   --reuse-mess|--reuse-messa|--reuse-messag|--reuse-message)
-    case "$#" in 1) usage ;; esac; shift
-    log_given=t$log_given
-    use_commit="$1"
-    no_edit=t
-    shift ;;
-  -e|--e|--ed|--edi|--edit)
-    no_edit=
-    shift ;;
+      case "$#" in 1) usage ;; esac
+      shift
+      log_given=t$log_given
+      use_commit="$1"
+      no_edit=t
+      shift
+      ;;
   -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
-    signoff=t
-    shift ;;
-  -n|--n|--no|--no-|--no-v|--no-ve|--no-ver|--no-veri|--no-verif|--no-verify)
-    verify=
-    shift ;;
+      signoff=t
+      shift
+      ;;
   -v|--v|--ve|--ver|--veri|--verif|--verify)
-    verify=t
-    shift ;;
+      verify=t
+      shift
+      ;;
   --)
-    shift
-    break ;;
+      shift
+      break
+      ;;
   -*)
-     usage ;;
+      usage
+      ;;
   *)
-    break ;;
+      break
+      ;;
   esac
 done
 
@@ -88,30 +173,92 @@ tt*)
   die "Only one of -c/-C/-F/-m can be used." ;;
 esac
 
-case "$all,$#" in
-t,0)
-	git-diff-files --name-only -z |
+TOP=`git-rev-parse --show-cdup`
+
+case "$all,$also" in
+t,t)
+	die "Cannot use -a and -i at the same time." ;;
+t,)
+	SAVE_INDEX="$GIT_DIR/save-index$$" &&
+	cp "$GIT_DIR/index" "$SAVE_INDEX" &&
+	(
+		if test '' != "$TOP"
+		then
+			cd "$TOP"
+		fi &&
+		git-diff-files --name-only -z |
+		git-update-index --remove -z --stdin
+	)
+	;;
+,t)
+	case "$#" in
+	0) die "No paths with -i does not make sense." ;;
+	esac
+	SAVE_INDEX="$GIT_DIR/save-index$$" &&
+	cp "$GIT_DIR/index" "$SAVE_INDEX" &&
+	git-diff-files --name-only -z -- "$@"  |
 	git-update-index --remove -z --stdin
 	;;
-t,*)
-	die "Cannot use -a and explicit files at the same time."
+,)
+	case "$#" in
+	0)
+	    ;; # commit as-is
+	*)
+	    if test -f "$GIT_DIR/MERGE_HEAD"
+	    then
+		refuse_partial "Cannot do a partial commit during a merge."
+	    fi
+	    TMP_INDEX="$GIT_DIR/tmp-index$$"
+	    if test -z "$initial_commit"
+	    then
+		# make sure index is clean at the specified paths, or
+		# they are additions.
+		dirty_in_index=`git-diff-index --cached --name-status \
+			--diff-filter=DMTXU HEAD -- "$@"`
+		test -z "$dirty_in_index" ||
+		refuse_partial "Cannot do a partial commit of paths dirty in index:
+
+$dirty_in_index"
+	    fi
+	    commit_only=`git-ls-files -- "$@"` ;;
+	esac
 	;;
-,0)
-	;;
-*)
-	git-diff-files --name-only -z -- "$@" |
-	git-update-index --remove -z --stdin
-	;;
-esac || exit 1
+esac
+
 git-update-index -q --refresh || exit 1
 
-case "$verify" in
-t)
-	if test -x "$GIT_DIR"/hooks/pre-commit
+trap '
+	test -f "$TMP_INDEX" && rm -f "$TMP_INDEX"
+	test -f "$SAVE_INDEX" && mv -f "$SAVE_INDEX" "$GIT_DIR/index"
+' 0
+
+if test "$TMP_INDEX"
+then
+	if test -z "$initial_commit"
 	then
-		"$GIT_DIR"/hooks/pre-commit || exit
-	fi
-esac
+		GIT_INDEX_FILE="$TMP_INDEX" git-read-tree HEAD
+	else
+		rm -f "$TMP_INDEX"
+	fi || exit
+	echo "$commit_only" |
+	GIT_INDEX_FILE="$TMP_INDEX" git-update-index --add --remove --stdin &&
+	echo "$commit_only" |
+	git-update-index --remove --stdin ||
+	exit
+else
+	#
+	:
+fi
+
+if test t = "$verify" && test -x "$GIT_DIR"/hooks/pre-commit
+then
+	if test "$TMP_INDEX"
+	then
+		GIT_INDEX_FILE="$TMP_INDEX" "$GIT_DIR"/hooks/pre-commit
+	else
+		"$GIT_DIR"/hooks/pre-commit
+	fi || exit
+fi
 
 if test "$log_message" != ''
 then
@@ -155,41 +302,51 @@ if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 	echo "#"
 fi >>"$GIT_DIR"/COMMIT_EDITMSG
 
+# Author
+if test '' != "$use_commit"
+then
+	pick_author_script='
+	/^author /{
+		s/'\''/'\''\\'\'\''/g
+		h
+		s/^author \([^<]*\) <[^>]*> .*$/\1/
+		s/'\''/'\''\'\'\''/g
+		s/.*/GIT_AUTHOR_NAME='\''&'\''/p
+
+		g
+		s/^author [^<]* <\([^>]*\)> .*$/\1/
+		s/'\''/'\''\'\'\''/g
+		s/.*/GIT_AUTHOR_EMAIL='\''&'\''/p
+
+		g
+		s/^author [^<]* <[^>]*> \(.*\)$/\1/
+		s/'\''/'\''\'\'\''/g
+		s/.*/GIT_AUTHOR_DATE='\''&'\''/p
+
+		q
+	}
+	'
+	set_author_env=`git-cat-file commit "$use_commit" |
+	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
+	eval "$set_author_env"
+	export GIT_AUTHOR_NAME
+	export GIT_AUTHOR_EMAIL
+	export GIT_AUTHOR_DATE
+elif test '' != "$force_author"
+then
+	GIT_AUTHOR_NAME=`expr "$force_author" : '\(.*[^ ]\) *<.*'` &&
+	GIT_AUTHOR_EMAIL=`expr "$force_author" : '.*\(<.*\)'` &&
+	test '' != "$GIT_AUTHOR_NAME" &&
+	test '' != "$GIT_AUTHOR_EMAIL" ||
+	die "malformatted --author parameter"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+fi
+
 PARENTS="-p HEAD"
-if GIT_DIR="$GIT_DIR" git-rev-parse --verify HEAD >/dev/null 2>&1
+if test -z "$initial_commit"
 then
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
-	fi
-	if test "$use_commit" != ""
-	then
-		pick_author_script='
-		/^author /{
-			s/'\''/'\''\\'\'\''/g
-			h
-			s/^author \([^<]*\) <[^>]*> .*$/\1/
-			s/'\''/'\''\'\'\''/g
-			s/.*/GIT_AUTHOR_NAME='\''&'\''/p
-
-			g
-			s/^author [^<]* <\([^>]*\)> .*$/\1/
-			s/'\''/'\''\'\'\''/g
-			s/.*/GIT_AUTHOR_EMAIL='\''&'\''/p
-
-			g
-			s/^author [^<]* <[^>]*> \(.*\)$/\1/
-			s/'\''/'\''\'\'\''/g
-			s/.*/GIT_AUTHOR_DATE='\''&'\''/p
-
-			q
-		}
-		'
-		set_author_env=`git-cat-file commit "$use_commit" |
-		LANG=C LC_ALL=C sed -ne "$pick_author_script"`
-		eval "$set_author_env"
-		export GIT_AUTHOR_NAME
-		export GIT_AUTHOR_EMAIL
-		export GIT_AUTHOR_DATE
 	fi
 else
 	if [ -z "$(git-ls-files)" ]; then
@@ -198,10 +355,21 @@ else
 	fi
 	PARENTS=""
 fi
-git-status >>"$GIT_DIR"/COMMIT_EDITMSG
+
+(
+	if test '' != "$TOP"
+	then
+		cd "$TOP"
+	fi &&
+	git-status >>"$GIT_DIR"/COMMIT_EDITMSG
+)
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"
+	if test '' != "$TOP"
+	then
+		cd "$TOP"
+	fi &&
 	git-status
 	exit 1
 fi
@@ -213,7 +381,8 @@ case "$no_edit" in
 		echo >&2 "Please supply the commit log message using either"
 		echo >&2 "-m or -F option.  A boilerplate log message has"
 		echo >&2 "been prepared in $GIT_DIR/COMMIT_EDITMSG"
-		exit 1 ;;
+		exit 1
+		;;
 	esac
 	${VISUAL:-${EDITOR:-vi}} "$GIT_DIR/COMMIT_EDITMSG"
 	;;
@@ -235,7 +404,13 @@ if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
 	wc -l` &&
    test 0 -lt $cnt
 then
-	tree=$(git-write-tree) &&
+	if test -z "$TMP_INDEX"
+	then
+		tree=$(git-write-tree)
+	else
+		tree=$(GIT_INDEX_FILE="$TMP_INDEX" git-write-tree) &&
+		rm -f "$TMP_INDEX"
+	fi &&
 	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
 	git-update-ref HEAD $commit $current &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD"
@@ -250,5 +425,9 @@ git-rerere
 if test -x "$GIT_DIR"/hooks/post-commit && test "$ret" = 0
 then
 	"$GIT_DIR"/hooks/post-commit
+fi
+if test 0 -eq "$ret"
+then
+	rm -f "$SAVE_INDEX"
 fi
 exit "$ret"

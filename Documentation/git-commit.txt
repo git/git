@@ -8,8 +8,8 @@ git-commit - Record your changes
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
-	   [-e] [--] <file>...
+'git-commit' [-a] [-i] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
+	   [-e] [--author <author>] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -40,6 +40,10 @@ OPTIONS
 	Take the commit message from the given file.  Use '-' to
 	read the message from the standard input.
 
+--author <author>::
+	Override the author name used in the commit.  Use
+	`A U Thor <author@example.com>` format.
+
 -m <msg>::
 	Use the given <msg> as the commit message.
 
@@ -63,15 +67,64 @@ OPTIONS
 	commit log message unmodified.  This option lets you
 	further edit the message taken from these sources.
 
+-i|--include::
+	Instead of committing only the files specified on the
+	command line, update them in the index file and then
+	commit the whole index.  This is the traditional
+	behaviour.
+
 --::
 	Do not interpret any more arguments as options.
 
 <file>...::
-	Update specified paths in the index file before committing.
-
+	Commit only the files specified on the command line.
+	This format cannot be used during a merge, nor when the
+	index and the latest commit does not match on the
+	specified paths to avoid confusion.
 
 If you make a commit and then found a mistake immediately after
 that, you can recover from it with gitlink:git-reset[1].
+
+
+Discussion
+----------
+
+`git commit` without _any_ parameter commits the tree structure
+recorded by the current index file.  This is a whole-tree commit
+even the command is invoked from a subdirectory.
+
+`git commit --include paths...` is equivalent to
+
+	git update-index --remove paths...
+	git commit
+
+That is, update the specified paths to the index and then commit
+the whole tree.
+
+`git commit paths...` largely bypasses the index file and
+commits only the changes made to the specified paths.  It has
+however several safety valves to prevent confusion.
+
+. It refuses to run during a merge (i.e. when
+  `$GIT_DIR/MERGE_HEAD` exists), and reminds trained git users
+  that the traditional semantics now needs -i flag.
+
+. It refuses to run if named `paths...` are different in HEAD
+  and the index (ditto about reminding).  Added paths are OK.
+  This is because an earlier `git diff` (not `git diff HEAD`)
+  would have shown the differences since the last `git
+  update-index paths...` to the user, and an inexperienced user
+  may mistakenly think that the changes between the index and
+  the HEAD (i.e. earlier changes made before the last `git
+  update-index paths...` was done) are not being committed.
+
+. It reads HEAD commit into a temporary index file, updates the
+  specified `paths...` and makes a commit.  At the same time,
+  the real index file is also updated with the same `paths...`.
+
+`git commit --all` updates the index file with _all_ changes to
+the working tree, and makes a whole-tree commit, regardless of
+which subdirectory the command is invoked in.
 
 
 Author

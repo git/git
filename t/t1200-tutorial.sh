@@ -95,13 +95,13 @@ test_expect_success 'git branch' 'cmp branch.expect branch.output'
 
 git checkout mybranch
 echo "Work, work, work" >>hello
-git commit -m 'Some work.' hello
+git commit -m 'Some work.' -i hello
 
 git checkout master
 
 echo "Play, play, play" >>hello
 echo "Lots of fun" >>example
-git commit -m 'Some fun.' hello example
+git commit -m 'Some fun.' -i hello example
 
 test_expect_failure 'git resolve now fails' 'git resolve HEAD mybranch "Merge work in mybranch"'
 
@@ -112,7 +112,7 @@ Play, play, play
 Work, work, work
 EOF
 
-git commit -m 'Merged "mybranch" changes.' hello
+git commit -m 'Merged "mybranch" changes.' -i hello
 
 cat > show-branch.expect << EOF
 * [master] Merged "mybranch" changes.
