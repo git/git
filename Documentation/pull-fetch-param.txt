@@ -1,7 +1,6 @@
 <repository>::
 	The "remote" repository that is the source of a fetch
-	or pull operation.
-include::urls.txt[]
+	or pull operation.  See the section <<URLS,GIT URLS>> below.
 
 <refspec>::
 	The canonical format of a <refspec> parameter is

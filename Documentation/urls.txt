@@ -1,6 +1,9 @@
+GIT URLS[[URLS]]
+----------------
+
 One of the following notations can be used
 to name the remote repository:
-+
+
 ===============================================================
 - rsync://host.xz/path/to/repo.git/
 - http://host.xz/path/to/repo.git/
@@ -11,39 +14,42 @@ to name the remote repository:
 - ssh://host.xz/~user/path/to/repo.git/
 - ssh://host.xz/~/path/to/repo.git
 ===============================================================
-+
+
 SSH Is the default transport protocol and also supports an
 scp-like syntax.  Both syntaxes support username expansion,
 as does the native git protocol. The following three are
 identical to the last three above, respectively:
-+
+
 ===============================================================
 - host.xz:/path/to/repo.git/
 - host.xz:~user/path/to/repo.git/
 - host.xz:path/to/repo.git
 ===============================================================
-+
+
 To sync with a local directory, use:
-+
+
 ===============================================================
 - /path/to/repo.git/
 ===============================================================
-+
+
+REMOTES
+-------
+
 In addition to the above, as a short-hand, the name of a
 file in `$GIT_DIR/remotes` directory can be given; the
 named file should be in the following format:
-+
+
 	URL: one of the above URL format
 	Push: <refspec>
 	Pull: <refspec>
-+
-When such a short-hand is specified in place of
+
+Then such a short-hand is specified in place of
 <repository> without <refspec> parameters on the command
 line, <refspec> specified on `Push:` lines or `Pull:`
 lines are used for `git-push` and `git-fetch`/`git-pull`,
 respectively.  Multiple `Push:` and and `Pull:` lines may
 be specified for additional branch mappings.
-+
+
 The name of a file in `$GIT_DIR/branches` directory can be
 specified as an older notation short-hand; the named
 file should contain a single line, a URL in one of the
@@ -52,11 +58,11 @@ name of remote head (URL fragment notation).
 `$GIT_DIR/branches/<remote>` file that stores a <url>
 without the fragment is equivalent to have this in the
 corresponding file in the `$GIT_DIR/remotes/` directory.
-+
+
 	URL: <url>
 	Pull: refs/heads/master:<remote>
-+
+
 while having `<url>#<head>` is equivalent to
-+
+
 	URL: <url>
 	Pull: refs/heads/<head>:<remote>

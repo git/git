@@ -24,8 +24,8 @@ documentation for gitlink:git-receive-pack[1].
 OPTIONS
 -------
 <repository>::
-	The "remote" repository that is destination of a push operation.
-include::urls.txt[]
+	The "remote" repository that is destination of a push
+	operation.  See the section <<URLS,GIT URLS>> below.
 
 <refspec>::
 	The canonical format of a <refspec> parameter is
@@ -65,6 +65,7 @@ Some short-cut notations are also supported.
 	This flag disables the check.  This can cause the
 	remote repository to lose commits; use it with care.
 
+include::urls.txt[]
 
 Author
 ------
