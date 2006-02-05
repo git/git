@@ -10,6 +10,7 @@ static int show_empty_combined = 0;
 static int combine_merges = 0;
 static int dense_combined_merges = 0;
 static int read_stdin = 0;
+static int always_show_header = 0;
 
 static const char *header = NULL;
 static const char *header_prefix = "";
@@ -93,6 +94,10 @@ static const char *generate_header(const unsigned char *commit_sha1,
 	offset += pretty_print_commit(commit_format, commit, len,
 				      this_header + offset,
 				      sizeof(this_header) - offset, abbrev);
+	if (always_show_header) {
+		puts(this_header);
+		return NULL;
+	}
 	return this_header;
 }
 
@@ -260,6 +265,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--no-commit-id")) {
 			no_commit_id = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--always")) {
+			always_show_header = 1;
 			continue;
 		}
 		usage(diff_tree_usage);
