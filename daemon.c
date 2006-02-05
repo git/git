@@ -18,7 +18,8 @@ static int reuseaddr;
 static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
-"           [--base-path=path] [--reuseaddr] [directory...]";
+"           [--base-path=path] [--user-path | --user-path=path]\n"
+"           [--reuseaddr] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths = NULL;
@@ -29,6 +30,12 @@ static int export_all_trees = 0;
 
 /* Take all paths relative to this one if non-NULL */
 static char *base_path = NULL;
+
+/* If defined, ~user notation is allowed and the string is inserted
+ * after ~user/.  E.g. a request to git://host/~alice/frotz would
+ * go to /home/alice/pub_git/frotz with --user-path=pub_git.
+ */
+static char *user_path = NULL;
 
 /* Timeout, and initial timeout */
 static unsigned int timeout = 0;
@@ -137,6 +144,7 @@ static int avoid_alias(char *p)
 
 static char *path_ok(char *dir)
 {
+	static char rpath[PATH_MAX];
 	char *path;
 
 	if (avoid_alias(dir)) {
@@ -144,12 +152,31 @@ static char *path_ok(char *dir)
 		return NULL;
 	}
 
-	if (base_path) {
-		static char rpath[PATH_MAX];
-		if (!strict_paths && *dir == '~')
-			; /* allow user relative paths */
-		else if (*dir != '/') {
-			/* otherwise allow only absolute */
+	if (*dir == '~') {
+		if (!user_path) {
+			logerror("'%s': User-path not allowed", dir);
+			return NULL;
+		}
+		if (*user_path) {
+			/* Got either "~alice" or "~alice/foo";
+			 * rewrite them to "~alice/%s" or
+			 * "~alice/%s/foo".
+			 */
+			int namlen, restlen = strlen(dir);
+			char *slash = strchr(dir, '/');
+			if (!slash)
+				slash = dir + restlen;
+			namlen = slash - dir;
+			restlen -= namlen;
+			loginfo("userpath <%s>, request <%s>, namlen %d, restlen %d, slash <%s>", user_path, dir, namlen, restlen, slash);
+			snprintf(rpath, PATH_MAX, "%.*s/%s%.*s",
+				 namlen, dir, user_path, restlen, slash);
+			dir = rpath;
+		}
+	}
+	else if (base_path) {
+		if (*dir != '/') {
+			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
@@ -686,6 +713,14 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--reuseaddr")) {
 			reuseaddr = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--user-path")) {
+			user_path = "";
+			continue;
+		}
+		if (!strncmp(arg, "--user-path=", 12)) {
+			user_path = arg + 12;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {

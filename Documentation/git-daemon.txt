@@ -10,7 +10,8 @@ SYNOPSIS
 [verse]
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
              [--timeout=n] [--init-timeout=n] [--strict-paths]
-             [--base-path=path] [directory...]
+             [--base-path=path] [--user-path | --user-path=path]
+	     [directory...]
 
 DESCRIPTION
 -----------
@@ -42,8 +43,7 @@ OPTIONS
 	This is sort of "GIT root" - if you run git-daemon with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', `git-daemon` will interpret the path
-	as '/srv/git/hello.git'. Home directories (the '~login' notation)
-	access is disabled.
+	as '/srv/git/hello.git'.
 
 --export-all::
 	Allow pulling from all directories that look like GIT repositories
@@ -69,6 +69,15 @@ OPTIONS
 --syslog::
 	Log to syslog instead of stderr. Note that this option does not imply
 	--verbose, thus by default only error conditions will be logged.
+
+--user-path, --user-path=path::
+	Allow ~user notation to be used in requests.  When
+	specified with no parameter, requests to
+	git://host/~alice/foo is taken as a request to access
+	'foo' repository in the home directory of user `alice`.
+	If `--user-path=path` is specified, the same request is
+	taken as a request to access `path/foo` repository in
+	the home directory of user `alice`.
 
 --verbose::
 	Log details about the incoming connections and requested files.
