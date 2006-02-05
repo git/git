@@ -207,6 +207,14 @@ then
 fi
 case "$no_edit" in
 '')
+	case "${VISUAL:-$EDITOR},$TERM" in
+	,dumb)
+		echo >&2 "Terminal is dumb but no VISUAL nor EDITOR defined."
+		echo >&2 "Please supply the commit log message using either"
+		echo >&2 "-m or -F option.  A boilerplate log message has"
+		echo >&2 "been prepared in $GIT_DIR/COMMIT_EDITMSG"
+		exit 1 ;;
+	esac
 	${VISUAL:-${EDITOR:-vi}} "$GIT_DIR/COMMIT_EDITMSG"
 	;;
 esac
