@@ -56,7 +56,8 @@ case "$1" in
 	} >:all.log 2>&1
 	;;
 maint | master)
-	mkdir -p $G/RPMS/i386 $G/RPMS/SRPMS &&
+	arch=x86_64
+	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 
 	echo "* Building $1"
 	git checkout "$1" &&
@@ -64,11 +65,11 @@ maint | master)
 	make $J git >>./:rpm.log 2>&1 &&
 	V=`./git --version | sed -e 's/git version //'` &&
 	ln git-$V.tar.gz $G/. &&
-	ln $HOME/rpms/RPMS/i386/git*-$V-* $G/RPMS/i386/. &&
+	ln $HOME/rpms/RPMS/$arch/git*-$V-* $G/RPMS/$arch/. &&
 	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
 	{
 		# I do not know how it exits, and I do not care much.
-		/usr/local/bin/yummy $G/RPMS/i386
+		/usr/local/bin/yummy $G/RPMS/$arch
 		/usr/local/bin/yummy $G/RPMS/SRPMS
 		:
 	} &&
