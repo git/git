@@ -23,7 +23,32 @@ documentation for gitlink:git-receive-pack[1].
 
 OPTIONS
 -------
-include::pull-fetch-param.txt[]
+<repository>::
+	The "remote" repository that is destination of a push operation.
+include::urls.txt[]
+
+<refspec>::
+	The canonical format of a <refspec> parameter is
+	`+?<src>:<dst>`; that is, an optional plus `+`, followed
+	by the source ref, followed by a colon `:`, followed by
+	the destination ref.
++
+The <src> side can be an
+arbitrary "SHA1 expression" that can be used as an
+argument to `git-cat-file -t`.  E.g. `master~4` (push
+four parents before the current master head).
++
+The local ref that matches <src> is used
+to fast forward the remote ref that matches <dst>.  If
+the optional plus `+` is used, the remote ref is updated
+even if it does not result in a fast forward update.
++
+Some short-cut notations are also supported.
++
+* `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
+* A parameter <ref> without a colon is equivalent to
+  <ref>`:`<ref>, hence updates <ref> in the destination from <ref>
+  in the source.
 
 \--all::
 	Instead of naming each ref to push, specifies all refs

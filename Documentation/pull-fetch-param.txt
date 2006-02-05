@@ -1,68 +1,7 @@
 <repository>::
 	The "remote" repository that is the source of a fetch
-	or pull operation, or the destination of a push operation.
-	One of the following notations can be used
-	to name the remote repository:
-+
-===============================================================
-- rsync://host.xz/path/to/repo.git/
-- http://host.xz/path/to/repo.git/
-- https://host.xz/path/to/repo.git/
-- git://host.xz/path/to/repo.git/
-- git://host.xz/~user/path/to/repo.git/
-- ssh://host.xz/path/to/repo.git/
-- ssh://host.xz/~user/path/to/repo.git/
-- ssh://host.xz/~/path/to/repo.git
-===============================================================
-+
-SSH Is the default transport protocol and also supports an
-scp-like syntax.  Both syntaxes support username expansion,
-as does the native git protocol. The following three are
-identical to the last three above, respectively:
-+
-===============================================================
-- host.xz:/path/to/repo.git/
-- host.xz:~user/path/to/repo.git/
-- host.xz:path/to/repo.git
-===============================================================
-+
-To sync with a local directory, use:
-+
-===============================================================
-- /path/to/repo.git/
-===============================================================
-+
-In addition to the above, as a short-hand, the name of a
-file in `$GIT_DIR/remotes` directory can be given; the
-named file should be in the following format:
-+
-	URL: one of the above URL format
-	Push: <refspec>
-	Pull: <refspec>
-+
-When such a short-hand is specified in place of
-<repository> without <refspec> parameters on the command
-line, <refspec> specified on `Push:` lines or `Pull:`
-lines are used for `git-push` and `git-fetch`/`git-pull`,
-respectively.  Multiple `Push:` and and `Pull:` lines may
-be specified for additional branch mappings.
-+
-The name of a file in `$GIT_DIR/branches` directory can be
-specified as an older notation short-hand; the named
-file should contain a single line, a URL in one of the
-above formats, optionally followed by a hash `#` and the
-name of remote head (URL fragment notation).
-`$GIT_DIR/branches/<remote>` file that stores a <url>
-without the fragment is equivalent to have this in the
-corresponding file in the `$GIT_DIR/remotes/` directory.
-+
-	URL: <url>
-	Pull: refs/heads/master:<remote>
-+
-while having `<url>#<head>` is equivalent to
-+
-	URL: <url>
-	Pull: refs/heads/<head>:<remote>
+	or pull operation.
+include::urls.txt[]
 
 <refspec>::
 	The canonical format of a <refspec> parameter is
@@ -70,17 +9,7 @@ while having `<url>#<head>` is equivalent to
 	by the source ref, followed by a colon `:`, followed by
 	the destination ref.
 +
-When used in `git-push`, the <src> side can be an
-arbitrary "SHA1 expression" that can be used as an
-argument to `git-cat-file -t`.  E.g. `master~4` (push
-four parents before the current master head).
-+
-For `git-push`, the local ref that matches <src> is used
-to fast forward the remote ref that matches <dst>.  If
-the optional plus `+` is used, the remote ref is updated
-even if it does not result in a fast forward update.
-+
-For `git-fetch` and `git-pull`, the remote ref that matches <src>
+The remote ref that matches <src>
 is fetched, and if <dst> is not empty string, the local
 ref that matches it is fast forwarded using <src>.
 Again, if the optional plus `+` is used, the local ref
@@ -135,10 +64,7 @@ is often useful.
 Some short-cut notations are also supported.
 +
 * `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`; 
-  used with pull or fetch, it requests fetching everything up to
-  the given tag.
+  it requests fetching everything up to the given tag.
 * A parameter <ref> without a colon is equivalent to
-  <ref>: when pulling/fetching, and <ref>`:`<ref> when
-  pushing.  That is, do not store it locally if
-  fetching, and update the same name if pushing.
-
+  <ref>: when pulling/fetching, so it merges <ref> into the current
+  branch without storing the remote branch anywhere locally
