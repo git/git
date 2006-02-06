@@ -22,14 +22,23 @@ case "$rev" in
 	esac
 esac
 
-# If we do not have --name-status, --name-only nor -r, default to --cc.
-# If we do not have -B nor -C, default to -M.
+# If we have -[123] --ours --theirs --base, don't do --cc by default.
 case " $flags " in
-*" '--name-status' "* | *" '--name-only' "* | *" '-r' "* )
+*" '-"[123]"' "* | *" '--ours' "* | *" '--base' "* | *" '--theirs' "*)
+	cc_or_p=-p ;;
+*)
+	cc_or_p=--cc ;;
+esac
+
+# If we do not have --name-status, --name-only, -r, or -c default to --cc.
+case " $flags " in
+*" '--name-status' "* | *" '--name-only' "* | *" '-r' "* | *" '-c' "* )
 	;;
 *)
-	flags="$flags'--cc' " ;;
+	flags="$flags'$cc_or_p' " ;;
 esac
+
+# If we do not have -B nor -C, default to -M.
 case " $flags " in
 *" '-"[BCM]* | *" '--find-copies-harder' "*)
 	;; # something like -M50.
