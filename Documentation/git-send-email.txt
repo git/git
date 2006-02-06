@@ -24,32 +24,6 @@ OPTIONS
 -------
 The options available are:
 
---to::
-	Specify the primary recipient of the emails generated.
-	Generally, this will be the upstream maintainer of the
-	project involved.
-
---from::
-	Specify the sender of the emails.  This will default to
-	the value GIT_COMMITTER_IDENT, as returned by "git-var -l".
-	The user will still be prompted to confirm this entry.
-
---compose::
-	Use \$EDITOR to edit an introductory message for the
-	patch series.
-
---subject::
-   	Specify the initial subject of the email thread.
-	Only necessary if --compose is also set.  If --compose
-	is not set, this will be prompted for.
-
---in-reply-to::
-	Specify the contents of the first In-Reply-To header.
-	Subsequent emails will refer to the previous email 
-	instead of this if --chain-reply-to is set (the default)
-	Only necessary if --compose is also set.  If --compose
-	is not set, this will be prompted for.
-
 --chain-reply-to, --no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
@@ -58,9 +32,39 @@ The options available are:
 	entire patch series.
 	Default is --chain-reply-to
 
+--compose::
+	Use $EDITOR to edit an introductory message for the
+	patch series.
+
+--from::
+	Specify the sender of the emails.  This will default to
+	the value GIT_COMMITTER_IDENT, as returned by "git-var -l".
+	The user will still be prompted to confirm this entry.
+
+--in-reply-to::
+	Specify the contents of the first In-Reply-To header.
+	Subsequent emails will refer to the previous email 
+	instead of this if --chain-reply-to is set (the default)
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
+
+--quiet::
+	Make git-send-email less verbose.  One line per email should be
+	all that is output.
+
 --smtp-server::
 	If set, specifies the outgoing SMTP server to use.  Defaults to
 	localhost.
+
+--subject::
+   	Specify the initial subject of the email thread.
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
+
+--to::
+	Specify the primary recipient of the emails generated.
+	Generally, this will be the upstream maintainer of the
+	project involved.
 
 
 Author

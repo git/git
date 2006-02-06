@@ -186,7 +186,9 @@ for my $f (@ARGV) {
 }
 
 if (@files) {
-	print $_,"\n" for @files;
+	unless ($quiet) {
+		print $_,"\n" for (@files);
+	}
 } else {
 	print <<EOT;
 git-send-email [options] <file | directory> [... file | directory ]
@@ -212,6 +214,10 @@ Options:
 
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
+
+   --quiet	Make git-send-email less verbose.  One line per email should be
+		all that is output.
+
 
 Error: Please specify a file or a directory on the command line.
 EOT
@@ -268,7 +274,9 @@ sub send_message
 
 	sendmail(%mail) or die $Mail::Sendmail::error;
 
-	unless ($quiet) {
+	if ($quiet) {
+		printf "Sent %s\n", $subject;
+	} else {
 		print "OK. Log says:\n", $Mail::Sendmail::log;
 		print "\n\n"
 	}
@@ -280,7 +288,6 @@ make_message_id();
 $subject = $initial_subject;
 
 foreach my $t (@files) {
-	my $F = $t;
 	open(F,"<",$t) or die "can't open file $t";
 
 	@cc = ();
@@ -298,7 +305,7 @@ foreach my $t (@files) {
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
 					printf("(mbox) Adding cc: %s from line '%s'\n",
-						$2, $_);
+						$2, $_) unless $quiet;
 					push @cc, $2;
 				}
 
@@ -310,7 +317,7 @@ foreach my $t (@files) {
 				# So let's support that, too.
 				if (@cc == 0) {
 					printf("(non-mbox) Adding cc: %s from line '%s'\n",
-						$_, $_);
+						$_, $_) unless $quiet;
 
 					push @cc, $_;
 
@@ -330,7 +337,7 @@ foreach my $t (@files) {
 				chomp $c;
 				push @cc, $c;
 				printf("(sob) Adding cc: %s from line '%s'\n",
-					$c, $_);
+					$c, $_) unless $quiet;
 			}
 		}
 	}
