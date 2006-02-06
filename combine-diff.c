@@ -623,6 +623,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		write_to_temp_file(ourtmp, result, size);
 	}
 	else {
+		/* Used by diff-tree to read from the working tree */
 		struct stat st;
 		int fd;
 		ourtmp = elem->path;
@@ -701,6 +702,11 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
 	if (show_hunks) {
+		const char *abb;
+		char null_abb[DEFAULT_ABBREV + 1];
+
+		memset(null_abb, '0', DEFAULT_ABBREV);
+		null_abb[DEFAULT_ABBREV] = 0;
 		if (header) {
 			shown_header++;
 			puts(header);
@@ -713,13 +719,18 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		putchar('\n');
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
-			printf("%s%s",
-			       i ? "," : "",
-			       find_unique_abbrev(elem->parent_sha1[i],
-						  DEFAULT_ABBREV));
+			if (memcmp(elem->parent_sha1[i], null_sha1, 20))
+				abb = find_unique_abbrev(elem->parent_sha1[i],
+							 DEFAULT_ABBREV);
+			else
+				abb = null_abb;
+			printf("%s%s", i ? "," : "", abb);
 		}
-		printf("..%s\n",
-		       find_unique_abbrev(elem->sha1, DEFAULT_ABBREV));
+		if (memcmp(elem->sha1, null_sha1, 20))
+			abb = find_unique_abbrev(elem->sha1, DEFAULT_ABBREV);
+		else
+			abb = null_abb;
+		printf("..%s\n", abb);
 		dump_sline(sline, cnt, num_parent);
 	}
 	if (ourtmp == ourtmp_buf)
