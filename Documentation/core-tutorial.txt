@@ -66,9 +66,9 @@ your new project. You will now have a `.git` directory, and you can
 inspect that with `ls`. For your new empty project, it should show you
 three entries, among other things:
 
- - a symlink called `HEAD`, pointing to `refs/heads/master` (if your
-   platform does not have native symlinks, it is a file containing the
-   line "ref: refs/heads/master")
+ - a file called `HEAD`, that has `ref: refs/heads/master` in it.
+   This is similar to a symbolic link and points at
+   `refs/heads/master` relative to the `HEAD` file.
 +
 Don't worry about the fact that the file that the `HEAD` link points to
 doesn't even exist yet -- you haven't created the commit that will
@@ -89,7 +89,7 @@ of different 'heads' of development (aka 'branches'), and to any
 repository.
 
 One note: the special `master` head is the default branch, which is
-why the `.git/HEAD` file was created as a symlink to it even if it
+why the `.git/HEAD` file was created points to it even if it
 doesn't yet exist. Basically, the `HEAD` link is supposed to always
 point to the branch you are working on right now, and you always
 start out expecting to work on the `master` branch.
@@ -133,8 +133,8 @@ $ echo "Hello World" >hello
 $ echo "Silly example" >example
 ------------------------------------------------
 
-you have now created two files in your working tree (aka 'working directory'), but to
-actually check in your hard work, you will have to go through two steps:
+you have now created two files in your working tree (aka 'working directory'),
+but to actually check in your hard work, you will have to go through two steps:
 
  - fill in the 'index' file (aka 'cache') with the information about your
    working tree state.
@@ -173,8 +173,8 @@ and see two files:
 .git/objects/f2/4c74a2e500f5ee1332c86b94199f52b1d1d962
 ----------------
 
-which correspond with the objects with names of 557db... and f24c7..
-respectively.
+which correspond with the objects with names of `557db...` and
+`f24c7...` respectively.
 
 If you want to, you can use `git-cat-file` to look at those objects, but
 you'll have to use the object name, not the filename of the object:
@@ -191,7 +191,7 @@ regular file), and you can see the contents with
 $ git-cat-file "blob" 557db03
 ----------------
 
-which will print out "Hello World". The object 557db03 is nothing
+which will print out "Hello World". The object `557db03` is nothing
 more than the contents of your file `hello`.
 
 [NOTE]
@@ -530,8 +530,8 @@ various diff-\* commands compare things.
                     +-----------+
 ============
 
-More interestingly, you can also give `git-diff-tree` the `-v` flag, which
-tells it to also show the commit message and author and date of the
+More interestingly, you can also give `git-diff-tree` the `--pretty` flag,
+which tells it to also show the commit message and author and date of the
 commit, and you can tell it to show a whole series of diffs.
 Alternatively, you can tell it to be "silent", and not show the diffs at
 all, but just show the actual commit message.
@@ -814,17 +814,11 @@ $ git checkout master
 branch you happen to be on, a simple
 
 ------------
-$ ls -l .git/HEAD
-------------
-
-will tell you where it's pointing (Note that on platforms with bad or no
-symlink support, you have to execute
-
-------------
 $ cat .git/HEAD
 ------------
 
-instead). To get the list of branches you have, you can say
+will tell you where it's pointing.  To get the list of branches
+you have, you can say
 
 ------------
 $ git branch
@@ -863,7 +857,9 @@ $ git commit -m 'Some work.' hello
 
 Here, we just added another line to `hello`, and we used a shorthand for
 doing both `git-update-index hello` and `git commit` by just giving the
-filename directly to `git commit`. The `-m` flag is to give the
+filename directly to `git commit`, with an `-i` flag (it tells
+git to 'include' that file in addition to what you have done to
+the index file so far when making the commit).  The `-m` flag is to give the
 commit log message from the command line.
 
 Now, to make it a bit more interesting, let's assume that somebody else
@@ -924,7 +920,7 @@ file, which had no differences in the `mybranch` branch), and say:
 	...
 	Auto-merging hello 
 	CONFLICT (content): Merge conflict in hello 
-	Automatic merge failed/prevented; fix up by hand
+	Automatic merge failed; fix up by hand
 ----------------
 
 which is way too verbose, but it basically tells you that it failed the
@@ -964,7 +960,7 @@ Another useful tool, especially if you do not always work in X-Window
 environment, is `git show-branch`.
 
 ------------------------------------------------
-$ git show-branch master mybranch
+$ git show-branch --topo-order master mybranch
 * [master] Merge work in mybranch
  ! [mybranch] Some work.
 --
@@ -1006,6 +1002,7 @@ would be different)
 
 ----------------
 Updating from ae3a2da... to a80b4aa....
+Fast forward
  example |    1 +
  hello   |    1 +
  2 files changed, 2 insertions(+), 0 deletions(-)
