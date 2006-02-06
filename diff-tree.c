@@ -6,7 +6,6 @@ static int show_root_diff = 0;
 static int no_commit_id = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
-static int show_empty_combined = 0;
 static int combine_merges = 0;
 static int dense_combined_merges = 0;
 static int read_stdin = 0;
@@ -127,7 +126,6 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 		else if (combine_merges) {
 			header = generate_header(sha1, sha1, commit);
 			return diff_tree_combined_merge(sha1, header,
-							show_empty_combined,
 							dense_combined_merges);
 		}
 	}
@@ -278,7 +276,6 @@ int main(int argc, const char **argv)
 
 	if (combine_merges) {
 		diff_options.output_format = DIFF_FORMAT_PATCH;
-		show_empty_combined = !ignore_merges;
 		ignore_merges = 0;
 	}
 

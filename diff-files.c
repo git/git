@@ -160,7 +160,7 @@ int main(int argc, const char **argv)
 			if (combine_merges && num_compare_stages == 2) {
 				show_combined_diff(&combine.p, 2,
 						   dense_combined_merges,
-						   NULL, 0);
+						   NULL);
 				free(combine.p.path);
 				continue;
 			}
