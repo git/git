@@ -16,7 +16,7 @@ DESCRIPTION
 Updates remote refs using local refs, while sending objects
 necessary to complete the given refs.
 
-You can make "interesting" things to happen on the repository
+You can make interesting things happen to a repository
 every time you push into it, by setting up 'hooks' there.  See
 documentation for gitlink:git-receive-pack[1].
 
@@ -51,8 +51,8 @@ Some short-cut notations are also supported.
   in the source.
 
 \--all::
-	Instead of naming each ref to push, specifies all refs
-	to be pushed.
+	Instead of naming each ref to push, specifies that all
+	refs be pushed.
 
 \--tags::
 	All refs under `$GIT_DIR/refs/tags` are pushed, in
