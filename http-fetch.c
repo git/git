@@ -311,7 +311,7 @@ void fill_active_slots(void)
 	while (active_requests < max_requests && obj_req != NULL) {
 		if (obj_req->state == WAITING) {
 			if (has_sha1_file(obj_req->sha1))
-				release_object_request(obj_req);
+				obj_req->state = COMPLETE;
 			else
 				start_object_request(obj_req);
 			curl_multi_perform(curlm, &num_transfers);
@@ -468,13 +468,11 @@ static void process_alternates_response(void *callback_data)
 					 alt_req->url);
 			active_requests++;
 			slot->in_use = 1;
-			if (start_active_slot(slot)) {
-				return;
-			} else {
+			if (!start_active_slot(slot)) {
 				got_alternates = -1;
 				slot->in_use = 0;
-				return;
 			}
+			return;
 		}
 	} else if (slot->curl_result != CURLE_OK) {
 		if (slot->http_code != 404 &&
@@ -822,9 +820,8 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
 		ret = error("File %s has bad hash\n", hex);
 	} else if (obj_req->rename < 0) {
-		ret = error("unable to write sha1 filename %s: %s",
-			    obj_req->filename,
-			    strerror(obj_req->rename));
+		ret = error("unable to write sha1 filename %s",
+			    obj_req->filename);
 	}
 
 	release_object_request(obj_req);

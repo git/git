@@ -13,11 +13,13 @@
 
 static int log_syslog;
 static int verbose;
+static int reuseaddr;
 
 static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
-"           [--base-path=path] [directory...]";
+"           [--base-path=path] [--user-path | --user-path=path]\n"
+"           [--reuseaddr] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths = NULL;
@@ -28,6 +30,12 @@ static int export_all_trees = 0;
 
 /* Take all paths relative to this one if non-NULL */
 static char *base_path = NULL;
+
+/* If defined, ~user notation is allowed and the string is inserted
+ * after ~user/.  E.g. a request to git://host/~alice/frotz would
+ * go to /home/alice/pub_git/frotz with --user-path=pub_git.
+ */
+static char *user_path = NULL;
 
 /* Timeout, and initial timeout */
 static unsigned int timeout = 0;
@@ -136,6 +144,7 @@ static int avoid_alias(char *p)
 
 static char *path_ok(char *dir)
 {
+	static char rpath[PATH_MAX];
 	char *path;
 
 	if (avoid_alias(dir)) {
@@ -143,15 +152,38 @@ static char *path_ok(char *dir)
 		return NULL;
 	}
 
-	if (base_path) {
-		static char rpath[PATH_MAX];
+	if (*dir == '~') {
+		if (!user_path) {
+			logerror("'%s': User-path not allowed", dir);
+			return NULL;
+		}
+		if (*user_path) {
+			/* Got either "~alice" or "~alice/foo";
+			 * rewrite them to "~alice/%s" or
+			 * "~alice/%s/foo".
+			 */
+			int namlen, restlen = strlen(dir);
+			char *slash = strchr(dir, '/');
+			if (!slash)
+				slash = dir + restlen;
+			namlen = slash - dir;
+			restlen -= namlen;
+			loginfo("userpath <%s>, request <%s>, namlen %d, restlen %d, slash <%s>", user_path, dir, namlen, restlen, slash);
+			snprintf(rpath, PATH_MAX, "%.*s/%s%.*s",
+				 namlen, dir, user_path, restlen, slash);
+			dir = rpath;
+		}
+	}
+	else if (base_path) {
 		if (*dir != '/') {
-			/* Forbid possible base-path evasion using ~paths. */
+			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
-		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
-		dir = rpath;
+		else {
+			snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
+			dir = rpath;
+		}
 	}
 
 	path = enter_repo(dir, strict_paths);
@@ -447,6 +479,16 @@ static void child_handler(int signo)
 	}
 }
 
+static int set_reuse_addr(int sockfd)
+{
+	int on = 1;
+
+	if (!reuseaddr)
+		return 0;
+	return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+			  &on, sizeof(on));
+}
+
 #ifndef NO_IPV6
 
 static int socksetup(int port, int **socklist_p)
@@ -491,6 +533,11 @@ static int socksetup(int port, int **socklist_p)
 		}
 #endif
 
+		if (set_reuse_addr(sockfd)) {
+			close(sockfd);
+			return 0;	/* not fatal */
+		}
+
 		if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
 			close(sockfd);
 			continue;	/* not fatal */
@@ -532,6 +579,11 @@ static int socksetup(int port, int **socklist_p)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	sin.sin_port = htons(port);
+
+	if (set_reuse_addr(sockfd)) {
+		close(sockfd);
+		return 0;
+	}
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
 		close(sockfd);
@@ -657,6 +709,18 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--base-path=", 12)) {
 			base_path = arg+12;
+			continue;
+		}
+		if (!strcmp(arg, "--reuseaddr")) {
+			reuseaddr = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--user-path")) {
+			user_path = "";
+			continue;
+		}
+		if (!strncmp(arg, "--user-path=", 12)) {
+			user_path = arg + 12;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
