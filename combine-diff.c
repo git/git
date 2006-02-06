@@ -28,15 +28,19 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 				continue;
 			path = q->queue[i]->two->path;
 			len = strlen(path);
-
-			p = xmalloc(sizeof(*p) + len + 1 + num_parent * 20);
-			p->path = (char*) &(p->parent_sha1[num_parent][0]);
+			p = xmalloc(combine_diff_path_size(num_parent, len));
+			p->path = (char*) &(p->parent[num_parent]);
 			memcpy(p->path, path, len);
 			p->path[len] = 0;
 			p->len = len;
 			p->next = NULL;
+			memset(p->parent, 0,
+			       sizeof(p->parent[0]) * num_parent);
+
 			memcpy(p->sha1, q->queue[i]->two->sha1, 20);
-			memcpy(p->parent_sha1[n], q->queue[i]->one->sha1, 20);
+			p->mode = q->queue[i]->two->mode;
+			memcpy(p->parent[n].sha1, q->queue[i]->one->sha1, 20);
+			p->parent[n].mode = q->queue[i]->one->mode;
 			*tail = p;
 			tail = &p->next;
 		}
@@ -57,8 +61,9 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			len = strlen(path);
 			if (len == p->len && !memcmp(path, p->path, len)) {
 				found = 1;
-				memcpy(p->parent_sha1[n],
+				memcpy(p->parent[n].sha1,
 				       q->queue[i]->one->sha1, 20);
+				p->parent[n].mode = q->queue[i]->one->mode;
 				break;
 			}
 		}
@@ -613,6 +618,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
 	struct sline *sline; /* survived lines */
+	int mode_differs = 0;
 	int i, show_hunks, shown_header = 0;
 	char ourtmp_buf[TMPPATHLEN];
 	char *ourtmp = ourtmp_buf;
@@ -688,20 +694,22 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 	for (i = 0; i < num_parent; i++) {
 		int j;
 		for (j = 0; j < i; j++) {
-			if (!memcmp(elem->parent_sha1[i],
-				    elem->parent_sha1[j], 20)) {
+			if (!memcmp(elem->parent[i].sha1,
+				    elem->parent[j].sha1, 20)) {
 				reuse_combine_diff(sline, cnt, i, j);
 				break;
 			}
 		}
 		if (i <= j)
-			combine_diff(elem->parent_sha1[i], ourtmp, sline,
+			combine_diff(elem->parent[i].sha1, ourtmp, sline,
 				     cnt, i, num_parent);
+		if (elem->parent[i].mode != elem->mode)
+			mode_differs = 1;
 	}
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
-	if (show_hunks) {
+	if (show_hunks || mode_differs) {
 		const char *abb;
 		char null_abb[DEFAULT_ABBREV + 1];
 
@@ -719,8 +727,10 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		putchar('\n');
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
-			if (memcmp(elem->parent_sha1[i], null_sha1, 20))
-				abb = find_unique_abbrev(elem->parent_sha1[i],
+			if (elem->parent[i].mode != elem->mode)
+				mode_differs = 1;
+			if (memcmp(elem->parent[i].sha1, null_sha1, 20))
+				abb = find_unique_abbrev(elem->parent[i].sha1,
 							 DEFAULT_ABBREV);
 			else
 				abb = null_abb;
@@ -731,6 +741,16 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		else
 			abb = null_abb;
 		printf("..%s\n", abb);
+
+		if (mode_differs) {
+			printf("mode ");
+			for (i = 0; i < num_parent; i++) {
+				printf("%s%06o", i ? "," : "",
+				       elem->parent[i].mode);
+			}
+			printf("..%06o\n", elem->mode);
+		}
+		/* if (show_hunks) perhaps */
 		dump_sline(sline, cnt, num_parent);
 	}
 	if (ourtmp == ourtmp_buf)

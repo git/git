@@ -63,9 +63,16 @@ struct combine_diff_path {
 	struct combine_diff_path *next;
 	int len;
 	char *path;
+	unsigned int mode;
 	unsigned char sha1[20];
-	unsigned char parent_sha1[FLEX_ARRAY][20];
+	struct combine_diff_parent {
+		unsigned int mode;
+		unsigned char sha1[20];
+	} parent[FLEX_ARRAY];
 };
+#define combine_diff_path_size(n, l) \
+	(sizeof(struct combine_diff_path) + \
+	 sizeof(struct combine_diff_parent) * (n) + (l) + 1)
 
 int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		       int dense, const char *header);

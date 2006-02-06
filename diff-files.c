@@ -119,7 +119,7 @@ int main(int argc, const char **argv)
 		if (ce_stage(ce)) {
 			struct {
 				struct combine_diff_path p;
-				unsigned char fill[4][20];
+				struct combine_diff_parent filler[5];
 			} combine;
 			int num_compare_stages = 0;
 
@@ -128,7 +128,10 @@ int main(int argc, const char **argv)
 			combine.p.path = xmalloc(combine.p.len + 1);
 			memcpy(combine.p.path, ce->name, combine.p.len);
 			combine.p.path[combine.p.len] = 0;
-			memset(combine.p.sha1, 0, 100);
+			combine.p.mode = 0;
+			memset(combine.p.sha1, 0, 20);
+			memset(&combine.p.parent[0], 0,
+			       sizeof(combine.filler));
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
@@ -142,9 +145,12 @@ int main(int argc, const char **argv)
 				 */
 				stage = ce_stage(nce);
 				if (2 <= stage) {
+					int mode = ntohl(nce->ce_mode);
 					num_compare_stages++;
-					memcpy(combine.p.parent_sha1[stage-2],
+					memcpy(combine.p.parent[stage-2].sha1,
 					       nce->sha1, 20);
+					combine.p.parent[stage-2].mode =
+						DIFF_FILE_CANON_MODE(mode);
 				}
 
 				/* diff against the proper unmerged stage */
