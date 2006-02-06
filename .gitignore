@@ -88,6 +88,7 @@ git-send-pack
 git-sh-setup
 git-shell
 git-shortlog
+git-show
 git-show-branch
 git-show-index
 git-ssh-fetch

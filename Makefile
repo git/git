@@ -125,7 +125,7 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  git-cherry-pick
+	  git-cherry-pick git-show
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
@@ -438,6 +438,9 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	chmod +x $@
 
 git-cherry-pick: git-revert
+	cp $< $@
+
+git-show: git-whatchanged
 	cp $< $@
 
 # These can record GIT_VERSION
