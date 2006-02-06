@@ -608,7 +608,7 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 }
 
 int show_combined_diff(struct combine_diff_path *elem, int num_parent,
-		       int dense, const char *header, int show_empty)
+		       int dense, const char *header)
 {
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
@@ -742,8 +742,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 }
 
 int diff_tree_combined_merge(const unsigned char *sha1,
-			     const char *header,
-			     int show_empty_merge, int dense)
+			     const char *header, int dense)
 {
 	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
@@ -777,12 +776,11 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 		if (p->len)
 			num_paths++;
 	}
-	if (num_paths || show_empty_merge) {
+	if (num_paths) {
 		for (p = paths; p; p = p->next) {
 			if (!p->len)
 				continue;
-			if (show_combined_diff(p, num_parent, dense, header,
-					       show_empty_merge))
+			if (show_combined_diff(p, num_parent, dense, header))
 				header = NULL;
 		}
 	}
