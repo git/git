@@ -13,13 +13,30 @@ initial_commit=t
 
 refuse_partial () {
 	echo >&2 "$1"
-	echo >&2 "Experienced git users:"
 	echo >&2 "You might have meant to say 'git commit -i paths...', perhaps?"
 	exit 1
 }
 
+SAVE_INDEX="$GIT_DIR/save-index$$"
+save_index () {
+	cp "$GIT_DIR/index" "$SAVE_INDEX"
+}
+
+run_status () {
+	(
+		cd "$TOP"
+		if test '' != "$TMP_INDEX"
+		then
+			GIT_INDEX_FILE="$TMP_INDEX" git-status
+		else
+			git-status
+		fi
+	)
+}
+
 all=
 also=
+only=
 logfile=
 use_commit=
 no_edit=
@@ -71,6 +88,10 @@ do
       ;;
   -i|--i|--in|--inc|--incl|--inclu|--includ|--include)
       also=t
+      shift
+      ;;
+  -o|--o|--on|--onl|--only)
+      only=t
       shift
       ;;
   -m|--m|--me|--mes|--mess|--messa|--messag|--message)
@@ -153,7 +174,7 @@ do
       ;;
   -v|--v|--ve|--ver|--veri|--verif|--verify)
       verify=t
-      shift
+     shift
       ;;
   --)
       shift
@@ -173,19 +194,41 @@ tt*)
   die "Only one of -c/-C/-F/-m can be used." ;;
 esac
 
+case "$#,$also$only" in
+*,tt)
+  die "Only one of --include/--only can be used." ;;
+0,t)
+  die "No paths with --include/--only does not make sense." ;;
+0,)
+  ;;
+*,)
+  echo >&2 "assuming --include paths..."
+  also=t
+  # Later when switch the defaults, we will replace them with these:
+  # echo >&2 "assuming --only paths..."
+  # also=
+  ;;
+esac
+unset only
+
 TOP=`git-rev-parse --show-cdup`
+if test -z "$TOP"
+then
+	TOP=./
+fi
 
 case "$all,$also" in
 t,t)
 	die "Cannot use -a and -i at the same time." ;;
 t,)
-	SAVE_INDEX="$GIT_DIR/save-index$$" &&
-	cp "$GIT_DIR/index" "$SAVE_INDEX" &&
+	case "$#" in
+	0) ;;
+	*) die "Paths with -a does not make sense." ;;
+	esac
+
+	save_index &&
 	(
-		if test '' != "$TOP"
-		then
-			cd "$TOP"
-		fi &&
+		cd "$TOP"
 		git-diff-files --name-only -z |
 		git-update-index --remove -z --stdin
 	)
@@ -194,10 +237,10 @@ t,)
 	case "$#" in
 	0) die "No paths with -i does not make sense." ;;
 	esac
-	SAVE_INDEX="$GIT_DIR/save-index$$" &&
-	cp "$GIT_DIR/index" "$SAVE_INDEX" &&
+
+	save_index &&
 	git-diff-files --name-only -z -- "$@"  |
-	git-update-index --remove -z --stdin
+	(cd "$TOP" && git-update-index --remove -z --stdin)
 	;;
 ,)
 	case "$#" in
@@ -214,10 +257,9 @@ t,)
 		# make sure index is clean at the specified paths, or
 		# they are additions.
 		dirty_in_index=`git-diff-index --cached --name-status \
-			--diff-filter=DMTXU HEAD -- "$@"`
+			--diff-filter=DMTU HEAD -- "$@"`
 		test -z "$dirty_in_index" ||
-		refuse_partial "Cannot do a partial commit of paths dirty in index:
-
+		refuse_partial "Different in index and the last commit:
 $dirty_in_index"
 	    fi
 	    commit_only=`git-ls-files -- "$@"` ;;
@@ -228,7 +270,9 @@ esac
 git-update-index -q --refresh || exit 1
 
 trap '
-	test -f "$TMP_INDEX" && rm -f "$TMP_INDEX"
+	test -z "$TMP_INDEX" || {
+		test -f "$TMP_INDEX" && rm -f "$TMP_INDEX"
+	}
 	test -f "$SAVE_INDEX" && mv -f "$SAVE_INDEX" "$GIT_DIR/index"
 ' 0
 
@@ -242,12 +286,10 @@ then
 	fi || exit
 	echo "$commit_only" |
 	GIT_INDEX_FILE="$TMP_INDEX" git-update-index --add --remove --stdin &&
+	save_index &&
 	echo "$commit_only" |
 	git-update-index --remove --stdin ||
 	exit
-else
-	#
-	:
 fi
 
 if test t = "$verify" && test -x "$GIT_DIR"/hooks/pre-commit
@@ -303,7 +345,15 @@ if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 fi >>"$GIT_DIR"/COMMIT_EDITMSG
 
 # Author
-if test '' != "$use_commit"
+if test '' != "$force_author"
+then
+	GIT_AUTHOR_NAME=`expr "$force_author" : '\(.*[^ ]\) *<.*'` &&
+	GIT_AUTHOR_EMAIL=`expr "$force_author" : '.*\(<.*\)'` &&
+	test '' != "$GIT_AUTHOR_NAME" &&
+	test '' != "$GIT_AUTHOR_EMAIL" ||
+	die "malformatted --author parameter"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+elif test '' != "$use_commit"
 then
 	pick_author_script='
 	/^author /{
@@ -332,14 +382,6 @@ then
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
 	export GIT_AUTHOR_DATE
-elif test '' != "$force_author"
-then
-	GIT_AUTHOR_NAME=`expr "$force_author" : '\(.*[^ ]\) *<.*'` &&
-	GIT_AUTHOR_EMAIL=`expr "$force_author" : '.*\(<.*\)'` &&
-	test '' != "$GIT_AUTHOR_NAME" &&
-	test '' != "$GIT_AUTHOR_EMAIL" ||
-	die "malformatted --author parameter"
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 fi
 
 PARENTS="-p HEAD"
@@ -350,27 +392,18 @@ then
 	fi
 else
 	if [ -z "$(git-ls-files)" ]; then
-		echo Nothing to commit 1>&2
+		echo >&2 Nothing to commit
 		exit 1
 	fi
 	PARENTS=""
 fi
 
-(
-	if test '' != "$TOP"
-	then
-		cd "$TOP"
-	fi &&
-	git-status >>"$GIT_DIR"/COMMIT_EDITMSG
-)
+
+run_status >>"$GIT_DIR"/COMMIT_EDITMSG
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"
-	if test '' != "$TOP"
-	then
-		cd "$TOP"
-	fi &&
-	git-status
+	run_status
 	exit 1
 fi
 case "$no_edit" in
