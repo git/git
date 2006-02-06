@@ -19,10 +19,10 @@ proc gitdir {} {
 proc parse_args {rargs} {
     global parsed_args
 
-    if [catch {
+    if {[catch {
 	set parse_args [concat --default HEAD $rargs]
 	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
-    }] {
+    }]} {
 	# if git-rev-parse failed for some reason...
 	if {$rargs == {}} {
 	    set rargs HEAD
@@ -39,10 +39,10 @@ proc start_rev_list {rlargs} {
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
-    if [catch {
+    if {[catch {
 	set commfd [open [concat | git-rev-list --header --topo-order \
 			      --parents $rlargs] r]
-    } err] {
+    } err]} {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
     }
@@ -181,7 +181,7 @@ proc doupdate {reading} {
 }
 
 proc readcommit {id} {
-    if [catch {set contents [exec git-cat-file commit $id]}] return
+    if {[catch {set contents [exec git-cat-file commit $id]}]} return
     parsecommit $id $contents 0 {}
 }
 
@@ -679,7 +679,7 @@ proc savestuff {w} {
 
 proc resizeclistpanes {win w} {
     global oldwidth
-    if [info exists oldwidth($win)] {
+    if {[info exists oldwidth($win)]} {
 	set s0 [$win sash coord 0]
 	set s1 [$win sash coord 1]
 	if {$w < 60} {
@@ -710,7 +710,7 @@ proc resizeclistpanes {win w} {
 
 proc resizecdetpanes {win w} {
     global oldwidth
-    if [info exists oldwidth($win)] {
+    if {[info exists oldwidth($win)]} {
 	set s0 [$win sash coord 0]
 	if {$w < 60} {
 	    set sash0 [expr {int($w*3/4 - 2)}]
@@ -768,7 +768,7 @@ proc assigncolor {id} {
     global parents nparents children nchildren
     global cornercrossings crossings
 
-    if [info exists colormap($id)] return
+    if {[info exists colormap($id)]} return
     set ncolors [llength $colors]
     if {$nparents($id) <= 1 && $nchildren($id) == 1} {
 	set child [lindex $children($id) 0]
@@ -2912,7 +2912,9 @@ proc gettreediffs {ids} {
     global treediff parents treepending
     set treepending $ids
     set treediff {}
-    if [catch {set gdtf [open [concat | git-diff-tree --no-commit-id -r $ids] r]}] return
+    if {[catch \
+	 {set gdtf [open [concat | git-diff-tree --no-commit-id -r $ids] r]} \
+	]} return
     fconfigure $gdtf -blocking 0
     fileevent $gdtf readable [list gettreediffline $gdtf $ids]
 }
