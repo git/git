@@ -150,11 +150,14 @@ static void show_datestring(const char *flag, const char *datestr)
 	show(buffer);
 }
 
-static void show_file(const char *arg)
+static int show_file(const char *arg)
 {
 	show_default();
-	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV))
+	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV)) {
 		show(arg);
+		return 1;
+	}
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -329,14 +332,13 @@ int main(int argc, char **argv)
 			show_rev(REVERSED, sha1, arg+1);
 			continue;
 		}
+		as_is = 1;
+		if (!show_file(arg))
+			continue;
 		if (verify)
 			die("Needed a single revision");
-		if ((filter & DO_REVS) &&
-		    (filter & DO_NONFLAGS) && /* !def && */
-		    lstat(arg, &st) < 0)
+		if (lstat(arg, &st) < 0)
 			die("'%s': %s", arg, strerror(errno));
-		as_is = 1;
-		show_file(arg);
 	}
 	show_default();
 	if (verify && revs_count != 1)
