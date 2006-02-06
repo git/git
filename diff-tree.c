@@ -100,23 +100,15 @@ static const char *generate_header(const unsigned char *commit_sha1,
 	return this_header;
 }
 
-static int diff_tree_commit(const unsigned char *commit_sha1)
+static int diff_tree_commit(struct commit *commit)
 {
-	struct commit *commit;
 	struct commit_list *parents;
-	char name[50];
-	unsigned char sha1[20];
+	unsigned const char *sha1 = commit->object.sha1;
 
-	sprintf(name, "%s^0", sha1_to_hex(commit_sha1));
-	if (get_sha1(name, sha1))
-		return -1;
-	name[40] = 0;
-	commit = lookup_commit(sha1);
-	
 	/* Root commit? */
 	if (show_root_diff && !commit->parents) {
 		header = generate_header(sha1, NULL, commit);
-		diff_root_tree(commit_sha1, "");
+		diff_root_tree(sha1, "");
 	}
 
 	/* More than one parent? */
@@ -133,7 +125,7 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 	for (parents = commit->parents; parents; parents = parents->next) {
 		struct commit *parent = parents->item;
 		header = generate_header(sha1, parent->object.sha1, commit);
-		diff_tree_sha1_top(parent->object.sha1, commit_sha1, "");
+		diff_tree_sha1_top(parent->object.sha1, sha1, "");
 		if (!header && verbose_header) {
 			header_prefix = "\ndiff-tree ";
 			/*
@@ -145,28 +137,49 @@ static int diff_tree_commit(const unsigned char *commit_sha1)
 	return 0;
 }
 
+static int diff_tree_commit_sha1(const unsigned char *sha1)
+{
+	struct commit *commit = lookup_commit_reference(sha1);
+	if (!commit)
+		return -1;
+	return diff_tree_commit(commit);
+}
+
 static int diff_tree_stdin(char *line)
 {
 	int len = strlen(line);
-	unsigned char commit[20], parent[20];
-	static char this_header[1000];
-	int abbrev = diff_options.abbrev;
+	unsigned char sha1[20];
+	struct commit *commit;
 
 	if (!len || line[len-1] != '\n')
 		return -1;
 	line[len-1] = 0;
-	if (get_sha1_hex(line, commit))
+	if (get_sha1_hex(line, sha1))
 		return -1;
-	if (isspace(line[40]) && !get_sha1_hex(line+41, parent)) {
-		line[40] = 0;
-		line[81] = 0;
-		sprintf(this_header, "%s (from %s)\n",
-			diff_unique_abbrev(commit, abbrev),
-			diff_unique_abbrev(parent, abbrev));
-		header = this_header;
-		return diff_tree_sha1_top(parent, commit, "");
+	commit = lookup_commit(sha1);
+	if (!commit || parse_commit(commit))
+		return -1;
+	if (isspace(line[40]) && !get_sha1_hex(line+41, sha1)) {
+		/* Graft the fake parents locally to the commit */
+		int pos = 41;
+		struct commit_list **pptr, *parents;
+
+		/* Free the real parent list */
+		for (parents = commit->parents; parents; ) {
+			struct commit_list *tmp = parents->next;
+			free(parents);
+			parents = tmp;
+		}
+		commit->parents = NULL;
+		pptr = &(commit->parents);
+		while (line[pos] && !get_sha1_hex(line + pos, sha1)) {
+			struct commit *parent = lookup_commit(sha1);
+			if (parent) {
+				pptr = &commit_list_insert(parent, pptr)->next;
+			}
+			pos += 41;
+		}
 	}
-	line[40] = 0;
 	return diff_tree_commit(commit);
 }
 
@@ -288,7 +301,7 @@ int main(int argc, const char **argv)
 			usage(diff_tree_usage);
 		break;
 	case 1:
-		diff_tree_commit(sha1[0]);
+		diff_tree_commit_sha1(sha1[0]);
 		break;
 	case 2:
 		diff_tree_sha1_top(sha1[0], sha1[1], "");
