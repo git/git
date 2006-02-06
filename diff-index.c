@@ -201,6 +201,14 @@ int main(int argc, const char **argv)
 			/* We accept the -r flag just to look like git-diff-tree */
 			continue;
 		}
+		if (!strcmp(arg, "--cc"))
+			/*
+			 * I _think_ "diff-index --cached HEAD" with an
+			 * unmerged index could show something else
+			 * later, but pretend --cc is the same as -p for
+			 * now.  "git diff" uses --cc by default.
+			 */
+			argv[i] = arg = "-p";
 		diff_opt_cnt = diff_opt_parse(&diff_options, argv + i,
 					      argc - i);
 		if (diff_opt_cnt < 0)
