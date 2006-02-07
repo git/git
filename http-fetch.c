@@ -773,6 +773,20 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	return 0;
 }
 
+static void abort_object_request(struct object_request *obj_req)
+{
+	if (obj_req->local >= 0) {
+		close(obj_req->local);
+		obj_req->local = -1;
+	}
+	unlink(obj_req->tmpfile);
+	if (obj_req->slot) {
+ 		release_active_slot(obj_req->slot);
+		obj_req->slot = NULL;
+	}
+	release_object_request(obj_req);
+}
+
 static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
@@ -785,7 +799,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		return error("Couldn't find request for %s in the queue", hex);
 
 	if (has_sha1_file(obj_req->sha1)) {
-		release_object_request(obj_req);
+		abort_object_request(obj_req);
 		return 0;
 	}
 

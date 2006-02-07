@@ -420,10 +420,26 @@ void run_active_slot(struct active_request_slot *slot)
 #endif
 }
 
-static void finish_active_slot(struct active_request_slot *slot)
+static void closedown_active_slot(struct active_request_slot *slot)
 {
         active_requests--;
         slot->in_use = 0;
+}
+
+void release_active_slot(struct active_request_slot *slot)
+{
+	closedown_active_slot(slot);
+	if (slot->curl) {
+		curl_multi_remove_handle(curlm, slot->curl);
+		curl_easy_cleanup(slot->curl);
+		slot->curl = NULL;
+	}
+	fill_active_slots();
+}
+
+static void finish_active_slot(struct active_request_slot *slot)
+{
+	closedown_active_slot(slot);
         curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
 
 	/* Store slot results so they can be read after the slot is reused */
