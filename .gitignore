@@ -78,6 +78,7 @@ git-relink
 git-repack
 git-repo-config
 git-request-pull
+git-rerere
 git-reset
 git-resolve
 git-rev-list
@@ -123,3 +124,4 @@ git-core.spec
 libgit.a
 *.o
 *.py[co]
+config.mak
