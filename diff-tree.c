@@ -284,13 +284,14 @@ int main(int argc, const char **argv)
 		}
 		usage(diff_tree_usage);
 	}
-	if (diff_options.output_format == DIFF_FORMAT_PATCH)
-		diff_options.recursive = 1;
 
 	if (combine_merges) {
 		diff_options.output_format = DIFF_FORMAT_PATCH;
 		ignore_merges = 0;
 	}
+
+	if (diff_options.output_format == DIFF_FORMAT_PATCH)
+		diff_options.recursive = 1;
 
 	diff_tree_setup_paths(get_pathspec(prefix, argv));
 	diff_setup_done(&diff_options);
