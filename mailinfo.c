@@ -707,6 +707,9 @@ static void handle_multipart_body(void)
 		if (!len) {
 			if (handle_multipart_one_part() < 0)
 				return;
+			/* Reset per part headers */
+			transfer_encoding = TE_DONTCARE;
+			charset[0] = 0;
 		}
 		else
 			check_subheader_line(line, len);
