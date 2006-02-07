@@ -1,0 +1,49 @@
+git-show(1)
+===========
+
+NAME
+----
+git-show - Show one commit with difference it introduces.
+
+
+SYNOPSIS
+--------
+'git-show' <option>...
+
+DESCRIPTION
+-----------
+Shows commit log and textual diff for a single commit.  The
+command internally invokes 'git-rev-list' piped to
+'git-diff-tree', and takes command line options for both of
+these commands. It also presents the merge commit in a special
+format as produced by 'git-diff-tree --cc'.
+
+This manual page describes only the most frequently used options.
+
+
+OPTIONS
+-------
+<commitid>::
+	ID of the commit to show.
+
+--pretty=<format>::
+	Controls the output format for the commit logs.
+	<format> can be one of 'raw', 'medium', 'short', 'full',
+	and 'oneline'.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org> and
+Junio C Hamano <junkio@cox.net>
+
+
+Documentation
+-------------
+Documentation by David Greaves, Petr Baudis and the git-list <git@vger.kernel.org>.
+
+This manual page is a stub. You can help the git documentation by expanding it.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
