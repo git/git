@@ -8,8 +8,6 @@ static int uninteresting(struct diff_filepair *p)
 {
 	if (diff_unmodified_pair(p))
 		return 1;
-	if (!S_ISREG(p->one->mode) || !S_ISREG(p->two->mode))
-		return 1;
 	return 0;
 }
 
@@ -225,6 +223,9 @@ static void combine_diff(const unsigned char *parent, const char *ourtmp,
 	unsigned int lno, ob, on, nb, nn, p_lno;
 	unsigned long nmask = (1UL << n);
 	struct sline *lost_bucket = NULL;
+
+	if (!cnt)
+		return; /* result deleted */
 
 	write_temp_blob(parent_tmp, parent);
 	sprintf(cmd, "diff --unified=0 -La/x -Lb/x '%s' '%s'",
@@ -542,6 +543,9 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 	int i;
 	unsigned long lno = 0;
 
+	if (!cnt)
+		return; /* result deleted */
+
 	while (1) {
 		struct sline *sl = &sline[lno];
 		int hunk_end;
@@ -610,6 +614,8 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 			sline->flag |= imask;
 		sline++;
 	}
+	/* the overall size of the file (sline[cnt]) */
+	sline->p_lno[i] = sline->p_lno[j];
 }
 
 int show_combined_diff(struct combine_diff_path *elem, int num_parent,
@@ -665,27 +671,26 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		if (*cp == '\n')
 			cnt++;
 	}
-	if (result[size-1] != '\n')
+	if (size && result[size-1] != '\n')
 		cnt++; /* incomplete line */
 
 	sline = xcalloc(cnt+1, sizeof(*sline));
 	ep = result;
 	sline[0].bol = result;
+	for (lno = 0; lno <= cnt; lno++) {
+		sline[lno].lost_tail = &sline[lno].lost_head;
+		sline[lno].flag = 0;
+	}
 	for (lno = 0, cp = result; cp - result < size; cp++) {
 		if (*cp == '\n') {
-			sline[lno].lost_tail = &sline[lno].lost_head;
 			sline[lno].len = cp - sline[lno].bol;
-			sline[lno].flag = 0;
 			lno++;
 			if (lno < cnt)
 				sline[lno].bol = cp + 1;
 		}
 	}
-	if (result[size-1] != '\n') {
-		sline[cnt-1].lost_tail = &sline[cnt-1].lost_head;
+	if (size && result[size-1] != '\n')
 		sline[cnt-1].len = size - (sline[cnt-1].bol - result);
-		sline[cnt-1].flag = 0;
-	}
 
 	sline[0].p_lno = xcalloc((cnt+1) * num_parent, sizeof(unsigned long));
 	for (lno = 0; lno < cnt; lno++)
@@ -750,7 +755,6 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			}
 			printf("..%06o\n", elem->mode);
 		}
-		/* if (show_hunks) perhaps */
 		dump_sline(sline, cnt, num_parent);
 	}
 	if (ourtmp == ourtmp_buf)
