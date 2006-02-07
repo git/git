@@ -3,23 +3,23 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n | -k] [-o <dir> | --stdout] [--signoff] [--check] [--mbox] [--diff-options] <upstream> [<our-head>]'
-LONG_USAGE='Prepare each commit with its patch since our-head forked from upstream,
-one file per patch, for e-mail submission.  Each output file is
-numbered sequentially from 1, and uses the first line of the commit
-message (massaged for pathname safety) as the filename.
+USAGE='[-n | -k] [-o <dir> | --stdout] [--signoff] [--check] [--diff-options] <his> [<mine>]'
+LONG_USAGE='Prepare each commit with its patch since <mine> head forked from
+<his> head, one file per patch formatted to resemble UNIX mailbox
+format, for e-mail submission or use with git-am.
 
-There are three output modes.  By default, output files are created in
-the current working directory; when -o is specified, they are created
-in that directory instead; when --stdout is specified, they are spit
-on standard output, and can be piped to git-am.
+Each output file is numbered sequentially from 1, and uses the
+first line of the commit message (massaged for pathname safety)
+as the filename.
 
-When -n is specified, instead of "[PATCH] Subject", the first line is formatted
-as "[PATCH N/M] Subject", unless you have only one patch.
+When -o is specified, output files are created in <dir>; otherwise
+they are created in the current working directory.  This option
+is ignored if --stdout is specified.
 
-When --mbox is specified, the output is formatted to resemble
-UNIX mailbox format, and can be concatenated together for processing
-with applymbox.'
+When -n is specified, instead of "[PATCH] Subject", the first
+line is formatted as "[PATCH N/M] Subject", unless you have only
+one patch.'
+
 . git-sh-setup
 
 # Force diff to run in C locale.
@@ -48,7 +48,7 @@ do
     -s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
     signoff=t ;;
     --st|--std|--stdo|--stdou|--stdout)
-    stdout=t mbox=t date=t author=t ;;
+    stdout=t ;;
     -o=*|--o=*|--ou=*|--out=*|--outp=*|--outpu=*|--output=*|--output-=*|\
     --output-d=*|--output-di=*|--output-dir=*|--output-dire=*|\
     --output-direc=*|--output-direct=*|--output-directo=*|\

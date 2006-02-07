@@ -9,27 +9,26 @@ git-format-patch - Prepare patches for e-mail submission.
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [-s] [-c] [--mbox]
+'git-format-patch' [-n | -k] [-o <dir> | --stdout] [-s] [-c]
 		 [--diff-options] <his> [<mine>]
 
 DESCRIPTION
 -----------
 Prepare each commit with its patch since <mine> head forked from
-<his> head, one file per patch, for e-mail submission.  Each
-output file is numbered sequentially from 1, and uses the first
-line of the commit message (massaged for pathname safety) as the
-filename.
+<his> head, one file per patch formatted to resemble UNIX mailbox
+format, for e-mail submission or use with gitlink:git-am[1].
 
-When -o is specified, output files are created in that
-directory; otherwise in the current working directory.
+Each output file is numbered sequentially from 1, and uses the
+first line of the commit message (massaged for pathname safety)
+as the filename.
+
+When -o is specified, output files are created in <dir>; otherwise
+they are created in the current working directory.  This option
+is ignored if --stdout is specified.
 
 When -n is specified, instead of "[PATCH] Subject", the first
 line is formatted as "[PATCH N/M] Subject", unless you have only
 one patch.
-
-When --mbox is specified, the output is formatted to resemble
-UNIX mailbox format, and can be concatenated together for
-processing with applymbox.
 
 
 OPTIONS
@@ -45,11 +44,6 @@ OPTIONS
 	Do not strip/add '[PATCH]' from the first line of the
 	commit log message.
 
--a|--author, -d|--date::
-	Output From: and Date: headers for commits made by
-	yourself as well.  Usually these are output only for
-	commits made by people other than yourself.
-
 -s|--signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
@@ -60,12 +54,6 @@ OPTIONS
         trailing whitespaces, and the lines whose indentation
         has a SP character immediately followed by a TAB
         character.
-
--m|--mbox::
-	Format the output files for closer to mbox format by
-	adding a phony Unix "From " line, so they can be
-	concatenated together and fed to `git-applymbox`.
-	Implies --author and --date.
 
 --stdout::
 	This flag generates the mbox formatted output to the
