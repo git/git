@@ -8,26 +8,7 @@ test -z "$(git diff --cached --name-status)" || {
 }
 Meta/Make clean >/dev/null 2>&1
 
-branches='naster master maint'
-
-# Make sure naster is between master and pu if exists
-if naster=`git rev-parse --verify refs/heads/naster 2>/dev/null`
-then
-	master=`git rev-parse --verify refs/heads/master` &&
-	pu=`git rev-parse --verify refs/heads/pu` &&
-	MBM=`git merge-base --all $naster $master` &&
-	MBN=`git merge-base --all $naster $pu` &&
-	case ",$MBM,$MBN," in
-	",$master,$naster,") ;;
-	*)	echo >&2 "naster is not between master and pu"
-		exit 1 ;;
-	esac
-	# If naster is the same as pu, no point rebuilding pu.
-	case ",$naster,$pu," in
-	",$pu,$naster,") ;;
-	*) branches="$branches pu" ;;
-	esac
-fi
+branches='next master maint'
 
 nstall=install
 for branch in $branches
@@ -45,5 +26,7 @@ do
 		echo "* No $branch"
 	fi
 done >./:all.log 2>&1
+
+git checkout master
 
 
