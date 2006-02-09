@@ -94,6 +94,8 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* "git status -v" to give commit preview.
+
 * Subprojects.  I think the "bind commit" approach has been
   outlined at sufficiently detailed level.  Maybe find time to
   actually start prototyping it?
@@ -103,20 +105,21 @@ Technical (milder)
 * Shallow clones.
 
 * Mark entries as "assume unchanged" in the index.
-  New option to update-index to set or drop the bit is needed.
 
-  - update-index --no-stat paths...
-  - update-index --with-stat paths...
+  <Pine.LNX.4.64.0601311807470.7301@g5.osdl.org>
 
-  Also a config item '[core] trust_stat = false' would enable
-  this automatically:
+  A config item '[core] trust_stat = false' would cause to:
 
   - "update-index" with or without --add would mark the path
-    after registering.  Should we make the working tree file
-    read-only at this point?
+    valid after registering.  Should we make the working tree
+    file read-only at this point?
 
   - checkout-index -u would mark the path and makes the working
     tree file read-only.
+
+  - read-tree without -u would mark the path invalid.
+
+  - update-index --refresh should *not* mark up-to-date paths valid.
 
   Impacts to various commands:
 
@@ -146,18 +149,11 @@ Technical (milder)
 
 * Perhaps a smarter HTTP anonymous download via CGI.
 
-* Prepare to enable "always use symbolic refs for HEAD" patch.
-  We need a timeline to force Porcelains to get ready.  All the
-  major ones should be ready now.
-
 * diff stopping at the first output; qgit wants to know if this
   tree has any A or D from the other tree and nothing else.
   Would help internal tree-diff in rev-list as well.
 
 * daemon --strict-symlink.
-
-* daemon --no-user-dir, to make ~user still work with
-  --base-path.  They ought to be independent.
 
 * daemon --base-path does not apply automatically to whitelist
   somehow feels wrong.  If somebody cares enough, accept
@@ -185,8 +181,6 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
-
-* Use parent info in 'diff-tree --stdin'.
 
 * git-proxy should be spawned with sh -c 'command' $1 $2.
 
