@@ -35,6 +35,17 @@
 -C::
 	Detect copies as well as renames.
 
+--diff-filter=[ACDMRTUXB*]::
+	Select only files that are Added (`A`), Copied (`C`),
+	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
+	type (mode) changed (`T`), are Unmerged (`U`), are
+	Unknown (`X`), or have had their pairing Broken (`B`).
+	Any combination of the filter characters may be used.
+	When `*` (All-or-none) is added to the combination, all
+	paths are selected if there is any file that matches
+	other criteria in the comparison; if there is no file
+	that matches other criteria, nothing is selected.
+
 --find-copies-harder::
 	For performance reasons, by default, -C option finds copies only 
 	if the original file of the copy was modified in the same 
