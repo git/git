@@ -447,6 +447,22 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (pathspec && !match(pathspec, ce->name, len))
 		return;
 
+	if (tag && *tag && (ce->ce_flags & htons(CE_VALID))) {
+		static char alttag[4];
+		memcpy(alttag, tag, 3);
+		if (isalpha(tag[0]))
+			alttag[0] = tolower(tag[0]);
+		else if (tag[0] == '?')
+			alttag[0] = '!';
+		else {
+			alttag[0] = 'v';
+			alttag[1] = tag[0];
+			alttag[2] = ' ';
+			alttag[3] = 0;
+		}
+		tag = alttag;
+	}
+
 	if (!show_stage) {
 		fputs(tag, stdout);
 		write_name_quoted("", 0, ce->name + offset,
@@ -503,7 +519,7 @@ static void show_files(void)
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);
-			if (show_modified && ce_modified(ce, &st))
+			if (show_modified && ce_modified(ce, &st, 0))
 				show_ce_entry(tag_modified, ce);
 		}
 	}
