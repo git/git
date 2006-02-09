@@ -161,8 +161,13 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce, int really)
 		return ERR_PTR(-errno);
 
 	changed = ce_match_stat(ce, &st, really);
-	if (!changed)
-		return NULL;
+	if (!changed) {
+		if (really && assume_unchanged &&
+		    !(ce->ce_flags & htons(CE_VALID)))
+			; /* mark this one VALID again */
+		else
+			return NULL;
+	}
 
 	if (ce_modified(ce, &st, really))
 		return ERR_PTR(-EINVAL);
