@@ -248,7 +248,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-m")) {
-			ignore_merges = 0;
+			combine_merges = ignore_merges = 0;
 			continue;
 		}
 		if (!strcmp(arg, "-c")) {

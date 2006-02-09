@@ -88,9 +88,8 @@ int main(int argc, const char **argv)
 		}
 		argv++; argc--;
 	}
-	if (combine_merges) {
+	if (dense_combined_merges)
 		diff_options.output_format = DIFF_FORMAT_PATCH;
-	}
 
 	/* Find the directory, and set up the pathspec */
 	pathspec = get_pathspec(prefix, argv + 1);
@@ -166,7 +165,8 @@ int main(int argc, const char **argv)
 			if (combine_merges && num_compare_stages == 2) {
 				show_combined_diff(&combine.p, 2,
 						   dense_combined_merges,
-						   NULL);
+						   NULL,
+						   &diff_options);
 				free(combine.p.path);
 				continue;
 			}
