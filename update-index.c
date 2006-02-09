@@ -23,6 +23,10 @@ static int quiet; /* --refresh needing update is not error */
 static int info_only;
 static int force_remove;
 static int verbose;
+static int mark_valid_only = 0;
+#define MARK_VALID 1
+#define UNMARK_VALID 2
+
 
 /* Three functions to allow overloaded pointer return; see linux/err.h */
 static inline void *ERR_PTR(long error)
@@ -51,6 +55,25 @@ static void report(const char *fmt, ...)
 	vprintf(fmt, vp);
 	putchar('\n');
 	va_end(vp);
+}
+
+static int mark_valid(const char *path)
+{
+	int namelen = strlen(path);
+	int pos = cache_name_pos(path, namelen);
+	if (0 <= pos) {
+		switch (mark_valid_only) {
+		case MARK_VALID:
+			active_cache[pos]->ce_flags |= htons(CE_VALID);
+			break;
+		case UNMARK_VALID:
+			active_cache[pos]->ce_flags &= ~htons(CE_VALID);
+			break;
+		}
+		active_cache_changed = 1;
+		return 0;
+	}
+	return -1;
 }
 
 static int add_file_to_cache(const char *path)
@@ -94,6 +117,7 @@ static int add_file_to_cache(const char *path)
 	ce = xmalloc(size);
 	memset(ce, 0, size);
 	memcpy(ce->name, path, namelen);
+	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
 	ce->ce_mode = create_ce_mode(st.st_mode);
@@ -105,7 +129,6 @@ static int add_file_to_cache(const char *path)
 		if (0 <= pos)
 			ce->ce_mode = active_cache[pos]->ce_mode;
 	}
-	ce->ce_flags = htons(namelen);
 
 	if (index_path(ce->sha1, path, &st, !info_only))
 		return -1;
@@ -128,7 +151,7 @@ static int add_file_to_cache(const char *path)
  * For example, you'd want to do this after doing a "git-read-tree",
  * to link up the stat cache details with the proper files.
  */
-static struct cache_entry *refresh_entry(struct cache_entry *ce)
+static struct cache_entry *refresh_entry(struct cache_entry *ce, int really)
 {
 	struct stat st;
 	struct cache_entry *updated;
@@ -137,21 +160,22 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce)
 	if (lstat(ce->name, &st) < 0)
 		return ERR_PTR(-errno);
 
-	changed = ce_match_stat(ce, &st);
+	changed = ce_match_stat(ce, &st, really);
 	if (!changed)
 		return NULL;
 
-	if (ce_modified(ce, &st))
+	if (ce_modified(ce, &st, really))
 		return ERR_PTR(-EINVAL);
 
 	size = ce_size(ce);
 	updated = xmalloc(size);
 	memcpy(updated, ce, size);
 	fill_stat_cache_info(updated, &st);
+
 	return updated;
 }
 
-static int refresh_cache(void)
+static int refresh_cache(int really)
 {
 	int i;
 	int has_errors = 0;
@@ -171,12 +195,19 @@ static int refresh_cache(void)
 			continue;
 		}
 
-		new = refresh_entry(ce);
+		new = refresh_entry(ce, really);
 		if (!new)
 			continue;
 		if (IS_ERR(new)) {
 			if (not_new && PTR_ERR(new) == -ENOENT)
 				continue;
+			if (really && PTR_ERR(new) == -EINVAL) {
+				/* If we are doing --really-refresh that
+				 * means the index is not valid anymore.
+				 */
+				ce->ce_flags &= ~htons(CE_VALID);
+				active_cache_changed = 1;
+			}
 			if (quiet)
 				continue;
 			printf("%s: needs update\n", ce->name);
@@ -274,6 +305,8 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
+	if (assume_unchanged)
+		ce->ce_flags |= htons(CE_VALID);
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option))
@@ -317,6 +350,12 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 		fprintf(stderr, "Ignoring path %s\n", path);
 		return;
 	}
+	if (mark_valid_only) {
+		if (mark_valid(p))
+			die("Unable to mark file %s", path);
+		return;
+	}
+
 	if (force_remove) {
 		if (remove_file_from_cache(p))
 			die("git-update-index: unable to remove %s", path);
@@ -467,7 +506,11 @@ int main(int argc, const char **argv)
 				continue;
 			}
 			if (!strcmp(path, "--refresh")) {
-				has_errors |= refresh_cache();
+				has_errors |= refresh_cache(0);
+				continue;
+			}
+			if (!strcmp(path, "--really-refresh")) {
+				has_errors |= refresh_cache(1);
 				continue;
 			}
 			if (!strcmp(path, "--cacheinfo")) {
@@ -491,6 +534,14 @@ int main(int argc, const char **argv)
 					die("git-update-index: %s <path>", path);
 				if (chmod_path(path[8], argv[++i]))
 					die("git-update-index: %s cannot chmod %s", path, argv[i]);
+				continue;
+			}
+			if (!strcmp(path, "--assume-unchanged")) {
+				mark_valid_only = MARK_VALID;
+				continue;
+			}
+			if (!strcmp(path, "--no-assume-unchanged")) {
+				mark_valid_only = UNMARK_VALID;
 				continue;
 			}
 			if (!strcmp(path, "--info-only")) {

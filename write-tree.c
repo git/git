@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 	funny = 0;
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = active_cache[i];
-		if (ntohs(ce->ce_flags) & ~CE_NAMEMASK) {
+		if (ce_stage(ce)) {
 			if (10 < ++funny) {
 				fprintf(stderr, "...\n");
 				break;
