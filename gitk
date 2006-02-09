@@ -1936,7 +1936,7 @@ proc findfiles {} {
     global selectedline numcommits lineid ctext
     global ffileline finddidsel parents nparents
     global findinprogress findstartline findinsertpos
-    global treediffs fdiffids fdiffsneeded fdiffpos
+    global treediffs fdiffid fdiffsneeded fdiffpos
     global findmergefiles
 
     if {$numcommits == 0} return
@@ -1953,11 +1953,9 @@ proc findfiles {} {
     while 1 {
 	set id $lineid($l)
 	if {$findmergefiles || $nparents($id) == 1} {
-	    foreach p $parents($id) {
-		if {![info exists treediffs([list $id $p])]} {
-		    append diffsneeded "$id $p\n"
-		    lappend fdiffsneeded [list $id $p]
-		}
+	    if {![info exists treediffs($id)]} {
+		append diffsneeded "$id\n"
+		lappend fdiffsneeded $id
 	    }
 	}
 	if {[incr l] >= $numcommits} {
@@ -1974,7 +1972,7 @@ proc findfiles {} {
 	    error_popup "Error starting search process: $err"
 	    return
 	}
-	catch {unset fdiffids}
+	catch {unset fdiffid}
 	set fdiffpos 0
 	fconfigure $df -blocking 0
 	fileevent $df readable [list readfilediffs $df]
@@ -1983,16 +1981,15 @@ proc findfiles {} {
     set finddidsel 0
     set findinsertpos end
     set id $lineid($l)
-    set p [lindex $parents($id) 0]
     . config -cursor watch
     settextcursor watch
     set findinprogress 1
-    findcont [list $id $p]
+    findcont $id
     update
 }
 
 proc readfilediffs {df} {
-    global findids fdiffids fdiffs
+    global findid fdiffid fdiffs
 
     set n [gets $df line]
     if {$n < 0} {
@@ -2002,19 +1999,19 @@ proc readfilediffs {df} {
 		stopfindproc
 		bell
 		error_popup "Error in git-diff-tree: $err"
-	    } elseif {[info exists findids]} {
-		set ids $findids
+	    } elseif {[info exists findid]} {
+		set id $findid
 		stopfindproc
 		bell
-		error_popup "Couldn't find diffs for {$ids}"
+		error_popup "Couldn't find diffs for $id"
 	    }
 	}
 	return
     }
-    if {[regexp {^([0-9a-f]{40}) \(from ([0-9a-f]{40})\)} $line match id p]} {
+    if {[regexp {^([0-9a-f]{40})$} $line match id]} {
 	# start of a new string of diffs
 	donefilediff
-	set fdiffids [list $id $p]
+	set fdiffid $id
 	set fdiffs {}
     } elseif {[string match ":*" $line]} {
 	lappend fdiffs [lindex $line 5]
@@ -2022,53 +2019,50 @@ proc readfilediffs {df} {
 }
 
 proc donefilediff {} {
-    global fdiffids fdiffs treediffs findids
+    global fdiffid fdiffs treediffs findid
     global fdiffsneeded fdiffpos
 
-    if {[info exists fdiffids]} {
-	while {[lindex $fdiffsneeded $fdiffpos] ne $fdiffids
+    if {[info exists fdiffid]} {
+	while {[lindex $fdiffsneeded $fdiffpos] ne $fdiffid
 	       && $fdiffpos < [llength $fdiffsneeded]} {
 	    # git-diff-tree doesn't output anything for a commit
 	    # which doesn't change anything
-	    set nullids [lindex $fdiffsneeded $fdiffpos]
-	    set treediffs($nullids) {}
-	    if {[info exists findids] && $nullids eq $findids} {
-		unset findids
-		findcont $nullids
+	    set nullid [lindex $fdiffsneeded $fdiffpos]
+	    set treediffs($nullid) {}
+	    if {[info exists findid] && $nullid eq $findid} {
+		unset findid
+		findcont $nullid
 	    }
 	    incr fdiffpos
 	}
 	incr fdiffpos
 
-	if {![info exists treediffs($fdiffids)]} {
-	    set treediffs($fdiffids) $fdiffs
+	if {![info exists treediffs($fdiffid)]} {
+	    set treediffs($fdiffid) $fdiffs
 	}
-	if {[info exists findids] && $fdiffids eq $findids} {
-	    unset findids
-	    findcont $fdiffids
+	if {[info exists findid] && $fdiffid eq $findid} {
+	    unset findid
+	    findcont $fdiffid
 	}
     }
 }
 
-proc findcont {ids} {
-    global findids treediffs parents nparents
+proc findcont {id} {
+    global findid treediffs parents nparents
     global ffileline findstartline finddidsel
     global lineid numcommits matchinglines findinprogress
     global findmergefiles
 
-    set id [lindex $ids 0]
-    set p [lindex $ids 1]
-    set pi [lsearch -exact $parents($id) $p]
     set l $ffileline
     while 1 {
 	if {$findmergefiles || $nparents($id) == 1} {
-	    if {![info exists treediffs($ids)]} {
-		set findids $ids
+	    if {![info exists treediffs($id)]} {
+		set findid $id
 		set ffileline $l
 		return
 	    }
 	    set doesmatch 0
-	    foreach f $treediffs($ids) {
+	    foreach f $treediffs($id) {
 		set x [findmatches $f]
 		if {$x != {}} {
 		    set doesmatch 1
@@ -2077,21 +2071,13 @@ proc findcont {ids} {
 	    }
 	    if {$doesmatch} {
 		insertmatch $l $id
-		set pi $nparents($id)
 	    }
-	} else {
-	    set pi $nparents($id)
 	}
-	if {[incr pi] >= $nparents($id)} {
-	    set pi 0
-	    if {[incr l] >= $numcommits} {
-		set l 0
-	    }
-	    if {$l == $findstartline} break
-	    set id $lineid($l)
+	if {[incr l] >= $numcommits} {
+	    set l 0
 	}
-	set p [lindex $parents($id) $pi]
-	set ids [list $id $p]
+	if {$l == $findstartline} break
+	set id $lineid($l)
     }
     stopfindproc
     if {!$finddidsel} {
