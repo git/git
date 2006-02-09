@@ -349,7 +349,7 @@ static void verify_uptodate(struct cache_entry *ce)
 		return;
 
 	if (!lstat(ce->name, &st)) {
-		unsigned changed = ce_match_stat(ce, &st);
+		unsigned changed = ce_match_stat(ce, &st, 1);
 		if (!changed)
 			return;
 		errno = 0;

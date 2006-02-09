@@ -167,6 +167,11 @@ static const char *get_ident(const char *name, const char *email,
 		name = git_default_name;
 	if (!email)
 		email = git_default_email;
+
+	if (!*name || !*email)
+		die("empty ident %s <%s> not allowed",
+		    name, email);
+
 	strcpy(date, git_default_date);
 	if (date_str)
 		parse_date(date_str, date, sizeof(date));
