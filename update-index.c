@@ -172,6 +172,15 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce, int really)
 	memcpy(updated, ce, size);
 	fill_stat_cache_info(updated, &st);
 
+	/* In this case, if really is not set, we should leave
+	 * CE_VALID bit alone.  Otherwise, paths marked with
+	 * --no-assume-unchanged (i.e. things to be edited) will
+	 * reacquire CE_VALID bit automatically, which is not
+	 * really what we want.
+	 */
+	if (!really && assume_unchanged && !(ce->ce_flags & htons(CE_VALID)))
+		updated->ce_flags &= ~htons(CE_VALID);
+
 	return updated;
 }
 
