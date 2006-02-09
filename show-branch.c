@@ -548,8 +548,8 @@ int main(int ac, char **av)
 	int with_current_branch = 0;
 	int head_at = -1;
 
-	git_config(git_show_branch_config);
 	setup_git_directory();
+	git_config(git_show_branch_config);
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
