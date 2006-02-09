@@ -829,7 +829,7 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 	struct combine_diff_path *p, *paths = NULL;
 	int num_parent, i, num_paths;
 
-	diff_setup(&diffopts);
+	diffopts = *opt;
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.recursive = 1;
 
@@ -846,6 +846,7 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 		struct commit *parent = parents->item;
 		diff_tree_sha1(parent->object.sha1, commit->object.sha1, "",
 			       &diffopts);
+		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 		diff_flush(&diffopts);
 	}
