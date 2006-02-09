@@ -74,10 +74,10 @@ struct combine_diff_path {
 	(sizeof(struct combine_diff_path) + \
 	 sizeof(struct combine_diff_parent) * (n) + (l) + 1)
 
-int show_combined_diff(struct combine_diff_path *elem, int num_parent,
-		       int dense, const char *header);
+extern int show_combined_diff(struct combine_diff_path *elem, int num_parent,
+			      int dense, const char *header);
 
-extern int diff_tree_combined_merge(const unsigned char *sha1, const char *, int);
+extern const char *diff_tree_combined_merge(const unsigned char *sha1, const char *, int, struct diff_options *opt);
 
 extern void diff_addremove(struct diff_options *,
 			   int addremove,

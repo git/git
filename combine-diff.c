@@ -776,8 +776,52 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 	return shown_header;
 }
 
-int diff_tree_combined_merge(const unsigned char *sha1,
-			     const char *header, int dense)
+#define COLONS "::::::::::::::::::::::::::::::::"
+
+static void show_raw_diff(struct combine_diff_path *p, int num_parent, const char *header, struct diff_options *opt)
+{
+	int i, offset, mod_type = 'A';
+	const char *prefix;
+	int line_termination, inter_name_termination;
+
+	line_termination = opt->line_termination;
+	inter_name_termination = '\t';
+	if (!line_termination)
+		inter_name_termination = 0;
+
+	if (header)
+		puts(header);
+	offset = strlen(COLONS) - num_parent;
+	if (offset < 0)
+		offset = 0;
+	prefix = COLONS + offset;
+
+	/* Show the modes */
+	for (i = 0; i < num_parent; i++) {
+		int mode = p->parent[i].mode;
+		if (mode)
+			mod_type = 'M';
+		printf("%s%06o", prefix, mode);
+		prefix = " ";
+	}
+	printf("%s%06o", prefix, p->mode);
+	if (!p->mode)
+		mod_type = 'D';
+
+	/* Show sha1's */
+	for (i = 0; i < num_parent; i++) {
+		printf("%s%s", prefix, diff_unique_abbrev(p->parent[i].sha1, opt->abbrev));
+		prefix = " ";
+	}
+	printf("%s%s", prefix, diff_unique_abbrev(p->sha1, opt->abbrev));
+
+	/* Modification type, terminations, filename */
+	printf(" %c%c%s%c", mod_type, inter_name_termination, p->path, line_termination);
+}
+
+const char *diff_tree_combined_merge(const unsigned char *sha1,
+			     const char *header, int dense,
+			     struct diff_options *opt)
 {
 	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
@@ -815,6 +859,11 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 		for (p = paths; p; p = p->next) {
 			if (!p->len)
 				continue;
+			if (opt->output_format == DIFF_FORMAT_RAW) {
+				show_raw_diff(p, num_parent, header, opt);
+				header = NULL;
+				continue;
+			}
 			if (show_combined_diff(p, num_parent, dense, header))
 				header = NULL;
 		}
@@ -826,5 +875,5 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 		paths = paths->next;
 		free(tmp);
 	}
-	return 0;
+	return header;
 }

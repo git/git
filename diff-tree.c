@@ -6,7 +6,7 @@ static int show_root_diff = 0;
 static int no_commit_id = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
-static int combine_merges = 0;
+static int combine_merges = 1;
 static int dense_combined_merges = 0;
 static int read_stdin = 0;
 static int always_show_header = 0;
@@ -117,8 +117,12 @@ static int diff_tree_commit(struct commit *commit)
 			return 0;
 		else if (combine_merges) {
 			header = generate_header(sha1, sha1, commit);
-			return diff_tree_combined_merge(sha1, header,
-							dense_combined_merges);
+			header = diff_tree_combined_merge(sha1, header,
+							dense_combined_merges,
+							&diff_options);
+			if (!header && verbose_header)
+				header_prefix = "\ndiff-tree ";
+			return 0;
 		}
 	}
 
@@ -285,10 +289,12 @@ int main(int argc, const char **argv)
 		usage(diff_tree_usage);
 	}
 
-	if (combine_merges) {
-		diff_options.output_format = DIFF_FORMAT_PATCH;
+	if (combine_merges)
 		ignore_merges = 0;
-	}
+
+	/* We can only do dense combined merges with diff output */
+	if (dense_combined_merges)
+		diff_options.output_format = DIFF_FORMAT_PATCH;
 
 	if (diff_options.output_format == DIFF_FORMAT_PATCH)
 		diff_options.recursive = 1;
