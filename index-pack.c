@@ -68,9 +68,9 @@ static void parse_pack_header(void)
 	hdr = (void *)pack_base;
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		die("packfile '%s' signature mismatch", pack_name);
-	if (hdr->hdr_version != htonl(PACK_VERSION))
-		die("packfile '%s' version %d different from ours %d",
-		    pack_name, ntohl(hdr->hdr_version), PACK_VERSION);
+	if (!pack_version_ok(hdr->hdr_version))
+		die("packfile '%s' version %d unsupported",
+		    pack_name, ntohl(hdr->hdr_version));
 
 	nr_objects = ntohl(hdr->hdr_entries);
 
