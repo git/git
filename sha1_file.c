@@ -6,8 +6,6 @@
  * This handles basic git sha1 object files - packing, unpacking,
  * creation etc.
  */
-#include <sys/types.h>
-#include <dirent.h>
 #include "cache.h"
 #include "delta.h"
 #include "pack.h"
@@ -74,6 +72,8 @@ int adjust_shared_perm(const char *path)
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path;
+	struct stat st;
+
 	if (*pos == '/')
 		pos++;
 
@@ -82,11 +82,16 @@ int safe_create_leading_directories(char *path)
 		if (!pos)
 			break;
 		*pos = 0;
-		if (mkdir(path, 0777) < 0) {
-			if (errno != EEXIST) {
+		if (!stat(path, &st)) {
+			/* path exists */
+			if (!S_ISDIR(st.st_mode)) {
 				*pos = '/';
-				return -1;
+				return -3;
 			}
+		}
+		else if (mkdir(path, 0777)) {
+			*pos = '/';
+			return -1;
 		}
 		else if (adjust_shared_perm(path)) {
 			*pos = '/';
