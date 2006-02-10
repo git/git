@@ -39,6 +39,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			p->mode = q->queue[i]->two->mode;
 			memcpy(p->parent[n].sha1, q->queue[i]->one->sha1, 20);
 			p->parent[n].mode = q->queue[i]->one->mode;
+			p->parent[n].status = q->queue[i]->status;
 			*tail = p;
 			tail = &p->next;
 		}
@@ -62,6 +63,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 				memcpy(p->parent[n].sha1,
 				       q->queue[i]->one->sha1, 20);
 				p->parent[n].mode = q->queue[i]->one->mode;
+				p->parent[n].status = q->queue[i]->status;
 				break;
 			}
 		}
@@ -739,12 +741,25 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		printf("..%s\n", abb);
 
 		if (mode_differs) {
-			printf("mode ");
-			for (i = 0; i < num_parent; i++) {
-				printf("%s%06o", i ? "," : "",
-				       elem->parent[i].mode);
+			int added = !!elem->mode;
+			for (i = 0; added && i < num_parent; i++)
+				if (elem->parent[i].status !=
+				    DIFF_STATUS_ADDED)
+					added = 0;
+			if (added)
+				printf("new file mode %06o", elem->mode);
+			else {
+				if (!elem->mode)
+					printf("deleted file ");
+				printf("mode ");
+				for (i = 0; i < num_parent; i++) {
+					printf("%s%06o", i ? "," : "",
+					       elem->parent[i].mode);
+				}
+				if (elem->mode)
+					printf("..%06o", elem->mode);
 			}
-			printf("..%06o\n", elem->mode);
+			putchar('\n');
 		}
 		dump_sline(sline, cnt, num_parent);
 	}
@@ -811,8 +826,11 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, const cha
 	}
 
 	if (opt->output_format == DIFF_FORMAT_RAW ||
-	    opt->output_format == DIFF_FORMAT_NAME_STATUS)
-		printf("%c%c", mod_type, inter_name_termination);
+	    opt->output_format == DIFF_FORMAT_NAME_STATUS) {
+		for (i = 0; i < num_parent; i++)
+			putchar(p->parent[i].status);
+		putchar(inter_name_termination);
+	}
 
 	if (line_termination) {
 		if (quote_c_style(p->path, NULL, NULL, 0))

@@ -66,6 +66,7 @@ struct combine_diff_path {
 	unsigned int mode;
 	unsigned char sha1[20];
 	struct combine_diff_parent {
+		char status;
 		unsigned int mode;
 		unsigned char sha1[20];
 	} parent[FLEX_ARRAY];
