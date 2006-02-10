@@ -16,9 +16,9 @@ static int verify_packfile(struct packed_git *p)
 	hdr = p->pack_base;
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		return error("Packfile %s signature mismatch", p->pack_name);
-	if (hdr->hdr_version != htonl(PACK_VERSION))
-		return error("Packfile version %d different from ours %d",
-			     ntohl(hdr->hdr_version), PACK_VERSION);
+	if (!pack_version_ok(hdr->hdr_version))
+		return error("Packfile version %d unsupported",
+			     ntohl(hdr->hdr_version));
 	nr_objects = ntohl(hdr->hdr_entries);
 	if (num_packed_objects(p) != nr_objects)
 		return error("Packfile claims to have %d objects, "

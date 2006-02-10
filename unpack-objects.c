@@ -246,13 +246,12 @@ static void unpack_all(void)
 {
 	int i;
 	struct pack_header *hdr = fill(sizeof(struct pack_header));
-	unsigned version = ntohl(hdr->hdr_version);
 	unsigned nr_objects = ntohl(hdr->hdr_entries);
 
 	if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
 		die("bad pack file");
-	if (version != PACK_VERSION)
-		die("unable to handle pack file version %d", version);
+	if (!pack_version_ok(hdr->hdr_version))
+		die("unknown pack file version %d", ntohl(hdr->hdr_version));
 	fprintf(stderr, "Unpacking %d objects\n", nr_objects);
 
 	use(sizeof(struct pack_header));

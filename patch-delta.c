@@ -44,16 +44,15 @@ void *patch_delta(void *src_buf, unsigned long src_size,
 		cmd = *data++;
 		if (cmd & 0x80) {
 			unsigned long cp_off = 0, cp_size = 0;
-			const unsigned char *buf;
 			if (cmd & 0x01) cp_off = *data++;
 			if (cmd & 0x02) cp_off |= (*data++ << 8);
 			if (cmd & 0x04) cp_off |= (*data++ << 16);
 			if (cmd & 0x08) cp_off |= (*data++ << 24);
 			if (cmd & 0x10) cp_size = *data++;
 			if (cmd & 0x20) cp_size |= (*data++ << 8);
+			if (cmd & 0x40) cp_size |= (*data++ << 16);
 			if (cp_size == 0) cp_size = 0x10000;
-			buf = (cmd & 0x40) ? dst_buf : src_buf;
-			memcpy(out, buf + cp_off, cp_size);
+			memcpy(out, src_buf + cp_off, cp_size);
 			out += cp_size;
 		} else {
 			memcpy(out, data, cmd);
