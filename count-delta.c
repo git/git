@@ -16,11 +16,7 @@
  *
  * Number of bytes that are _not_ copied from the source is deletion,
  * and number of inserted literal bytes are addition, so sum of them
- * is the extent of damage.  xdelta can express an edit that copies
- * data inside of the destination which originally came from the
- * source.  We do not count that in the following routine, so we are
- * undercounting the source material that remains in the final output
- * that way.
+ * is the extent of damage.
  */
 int count_delta(void *delta_buf, unsigned long delta_size,
 		unsigned long *src_copied, unsigned long *literal_added)
