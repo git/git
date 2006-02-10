@@ -19,14 +19,14 @@ extern void *patch_delta(void *src_buf, unsigned long src_size,
 static inline unsigned long get_delta_hdr_size(const unsigned char **datap)
 {
 	const unsigned char *data = *datap;
-	unsigned char cmd = *data++;
-	unsigned long size = cmd & ~0x80;
-	int i = 7;
-	while (cmd & 0x80) {
+	unsigned char cmd;
+	unsigned long size = 0;
+	int i = 0;
+	do {
 		cmd = *data++;
 		size |= (cmd & ~0x80) << i;
 		i += 7;
-	}
+	} while (cmd & 0x80);
 	*datap = data;
 	return size;
 }
