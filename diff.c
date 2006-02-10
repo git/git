@@ -963,7 +963,7 @@ void diff_free_filepair(struct diff_filepair *p)
 }
 
 /* This is different from find_unique_abbrev() in that
- * it needs to deal with 0{40} SHA1.
+ * it stuffs the result with dots for alignment.
  */
 const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 {
@@ -973,16 +973,8 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 		return sha1_to_hex(sha1);
 
 	abbrev = find_unique_abbrev(sha1, len);
-	if (!abbrev) {
-		if (!memcmp(sha1, null_sha1, 20)) {
-			char *buf = sha1_to_hex(null_sha1);
-			if (len < 37)
-				strcpy(buf + len, "...");
-			return buf;
-		}
-		else 
-			return sha1_to_hex(sha1);
-	}
+	if (!abbrev)
+		return sha1_to_hex(sha1);
 	abblen = strlen(abbrev);
 	if (abblen < 37) {
 		static char hex[41];
