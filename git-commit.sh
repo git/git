@@ -3,13 +3,21 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-i] [-s] [-v | --no-verify]  [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [--author <author>] [<path>...]'
-
+USAGE='[-a] [-i] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [--author <author>] [<path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
-git-rev-parse --verify HEAD >/dev/null 2>&1 ||
-initial_commit=t
+git-rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
+branch=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD)
+
+case "$0" in
+*status)
+	status_only=t
+	unmerged_ok_if_status=--unmerged ;;
+*commit)
+	status_only=
+	unmerged_ok_if_status= ;;
+esac
 
 refuse_partial () {
 	echo >&2 "$1"
@@ -17,22 +25,154 @@ refuse_partial () {
 	exit 1
 }
 
-SAVE_INDEX="$GIT_DIR/save-index$$"
+THIS_INDEX="$GIT_DIR/index"
+NEXT_INDEX="$GIT_DIR/next-index$$"
+rm -f "$NEXT_INDEX"
 save_index () {
-	cp "$GIT_DIR/index" "$SAVE_INDEX"
+	cp "$THIS_INDEX" "$NEXT_INDEX"
+}
+
+report () {
+  header="#
+# $1:
+#   ($2)
+#
+"
+  trailer=""
+  while read status name newname
+  do
+    printf '%s' "$header"
+    header=""
+    trailer="#
+"
+    case "$status" in
+    M ) echo "#	modified: $name";;
+    D*) echo "#	deleted:  $name";;
+    T ) echo "#	typechange: $name";;
+    C*) echo "#	copied: $name -> $newname";;
+    R*) echo "#	renamed: $name -> $newname";;
+    A*) echo "#	new file: $name";;
+    U ) echo "#	unmerged: $name";;
+    esac
+  done
+  printf '%s' "$trailer"
+  [ "$header" ]
 }
 
 run_status () {
-	(
-		cd "$TOP"
-		if test '' != "$TMP_INDEX"
+    (
+	# We always show status for the whole tree.
+	cd "$TOP"
+
+	# If TMP_INDEX is defined, that means we are doing
+	# "--only" partial commit, and that index file is used
+	# to build the tree for the commit.  Otherwise, if
+	# NEXT_INDEX exists, that is the index file used to
+	# make the commit.  Otherwise we are using as-is commit
+	# so the regular index file is what we use to compare.
+	if test '' != "$TMP_INDEX"
+	then
+	    GIT_INDEX_FILE="$TMP_INDEX"
+	    export GIT_INDEX_FILE
+	elif test -f "$NEXT_INDEX"
+	then
+	    GIT_INDEX_FILE="$NEXT_INDEX"
+	    export GIT_INDEX_FILE
+	fi
+
+	case "$branch" in
+	refs/heads/master) ;;
+	*)  echo "# On branch $branch" ;;
+	esac
+
+	if test -z "$initial_commit"
+	then
+	    if test -z "$verbose"
+	    then
+		git-diff-index -M --cached --name-status \
+		    --diff-filter=MDTCRA HEAD |
+		sed -e '
+			s/\\/\\\\/g
+			s/ /\\ /g
+		' |
+		report "Updated but not checked in" "will commit"
+	    else
+	        if git-diff-index --cached -M -p --diff-filter=MDTCRA HEAD |
+		   grep .
 		then
-			GIT_INDEX_FILE="$TMP_INDEX" git-status
+		   false
 		else
-			git-status
+		   true
 		fi
-	)
+	    fi
+	    committable="$?"
+	else
+	    echo '#
+# Initial commit
+#'
+	    git-ls-files |
+	    sed -e '
+		    s/\\/\\\\/g
+		    s/ /\\ /g
+		    s/^/A /
+	    ' |
+	    report "Updated but not checked in" "will commit"
+
+	    committable="$?"
+	fi
+
+	git-diff-files  --name-status |
+	sed -e '
+		s/\\/\\\\/g
+		s/ /\\ /g
+	' |
+	report "Changed but not updated" \
+	    "use git-update-index to mark for commit"
+
+	if test -f "$GIT_DIR/info/exclude"
+	then
+	    git-ls-files -z --others --directory \
+		--exclude-from="$GIT_DIR/info/exclude" \
+		--exclude-per-directory=.gitignore
+	else
+	    git-ls-files -z --others --directory \
+		--exclude-per-directory=.gitignore
+	fi |
+	perl -e '$/ = "\0";
+	    my $shown = 0;
+	    while (<>) {
+		chomp;
+		s|\\|\\\\|g;
+		s|\t|\\t|g;
+		s|\n|\\n|g;
+		s/^/#	/;
+		if (!$shown) {
+		    print "#\n# Untracked files:\n";
+		    print "#   (use \"git add\" to add to commit)\n";
+		    print "#\n";
+		    $shown = 1;
+		}
+		print "$_\n";
+	    }
+	'
+	case "$committable" in
+	0)
+	    echo "nothing to commit"
+	    exit 1
+	esac
+	exit 0
+    )
 }
+
+trap '
+	test -z "$TMP_INDEX" || {
+		test -f "$TMP_INDEX" && rm -f "$TMP_INDEX"
+	}
+	rm -f "$NEXT_INDEX"
+' 0
+
+################################################################
+# Command line argument parsing and sanity checking
 
 all=
 also=
@@ -43,6 +183,7 @@ no_edit=
 log_given=
 log_message=
 verify=t
+verbose=
 signoff=
 force_author=
 while case "$#" in 0) break;; esac
@@ -172,9 +313,9 @@ do
       signoff=t
       shift
       ;;
-  -v|--v|--ve|--ver|--veri|--verif|--verify)
-      verify=t
-     shift
+  -v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
+      verbose=t
+      shift
       ;;
   --)
       shift
@@ -188,6 +329,9 @@ do
       ;;
   esac
 done
+
+################################################################
+# Sanity check options
 
 case "$log_given" in
 tt*)
@@ -207,9 +351,24 @@ case "$#,$also$only" in
   # Later when switch the defaults, we will replace them with these:
   # echo >&2 "assuming --only paths..."
   # also=
+
+  # If we are going to launch an editor, the message won't be
+  # shown without this...
+  test -z "$log_given$status_only" && sleep 1
   ;;
 esac
 unset only
+case "$all,$also,$#" in
+t,t,*)
+	die "Cannot use -a and -i at the same time." ;;
+t,,[1-9]*)
+	die "Paths with -a does not make sense." ;;
+,t,0)
+	die "No paths with -i does not make sense." ;;
+esac
+
+################################################################
+# Prepare index to have a tree to be committed
 
 TOP=`git-rev-parse --show-cdup`
 if test -z "$TOP"
@@ -218,29 +377,25 @@ then
 fi
 
 case "$all,$also" in
-t,t)
-	die "Cannot use -a and -i at the same time." ;;
 t,)
-	case "$#" in
-	0) ;;
-	*) die "Paths with -a does not make sense." ;;
-	esac
-
 	save_index &&
 	(
 		cd "$TOP"
+		GIT_INDEX_FILE="$NEXT_INDEX"
+		export GIT_INDEX_FILE
 		git-diff-files --name-only -z |
 		git-update-index --remove -z --stdin
 	)
 	;;
 ,t)
-	case "$#" in
-	0) die "No paths with -i does not make sense." ;;
-	esac
-
 	save_index &&
 	git-diff-files --name-only -z -- "$@"  |
-	(cd "$TOP" && git-update-index --remove -z --stdin)
+	(
+		cd "$TOP"
+		GIT_INDEX_FILE="$NEXT_INDEX"
+		export GIT_INDEX_FILE
+		git-update-index --remove -z --stdin
+	)
 	;;
 ,)
 	case "$#" in
@@ -262,35 +417,60 @@ t,)
 		refuse_partial "Different in index and the last commit:
 $dirty_in_index"
 	    fi
-	    commit_only=`git-ls-files -- "$@"` ;;
+	    commit_only=`git-ls-files -- "$@"`
+
+	    # Build the temporary index and update the real index
+	    # the same way.
+	    if test -z "$initial_commit"
+	    then
+		cp "$THIS_INDEX" "$TMP_INDEX"
+		GIT_INDEX_FILE="$TMP_INDEX" git-read-tree -m HEAD
+	    else
+		    rm -f "$TMP_INDEX"
+	    fi || exit
+
+	    echo "$commit_only" |
+	    GIT_INDEX_FILE="$TMP_INDEX" \
+	    git-update-index --add --remove --stdin &&
+
+	    save_index &&
+	    echo "$commit_only" |
+	    (
+		GIT_INDEX_FILE="$NEXT_INDEX"
+		export GIT_INDEX_FILE
+		git-update-index --remove --stdin
+	    ) || exit
+	    ;;
 	esac
 	;;
 esac
 
-git-update-index -q --refresh || exit 1
+################################################################
+# If we do as-is commit, the index file will be THIS_INDEX,
+# otherwise NEXT_INDEX after we make this commit.  We leave
+# the index as is if we abort.
 
-trap '
-	test -z "$TMP_INDEX" || {
-		test -f "$TMP_INDEX" && rm -f "$TMP_INDEX"
-	}
-	test -f "$SAVE_INDEX" && mv -f "$SAVE_INDEX" "$GIT_DIR/index"
-' 0
-
-if test "$TMP_INDEX"
+if test -f "$NEXT_INDEX"
 then
-	if test -z "$initial_commit"
-	then
-		GIT_INDEX_FILE="$TMP_INDEX" git-read-tree HEAD
-	else
-		rm -f "$TMP_INDEX"
-	fi || exit
-	echo "$commit_only" |
-	GIT_INDEX_FILE="$TMP_INDEX" git-update-index --add --remove --stdin &&
-	save_index &&
-	echo "$commit_only" |
-	git-update-index --remove --stdin ||
-	exit
+	USE_INDEX="$NEXT_INDEX"
+else
+	USE_INDEX="$THIS_INDEX"
 fi
+
+GIT_INDEX_FILE="$USE_INDEX" \
+    git-update-index -q $unmerged_ok_if_status --refresh || exit
+
+################################################################
+# If the request is status, just show it and exit.
+
+case "$0" in
+*status)
+	run_status
+	exit $?
+esac
+
+################################################################
+# Grab commit message, write out tree and make commit.
 
 if test t = "$verify" && test -x "$GIT_DIR"/hooks/pre-commit
 then
@@ -298,7 +478,7 @@ then
 	then
 		GIT_INDEX_FILE="$TMP_INDEX" "$GIT_DIR"/hooks/pre-commit
 	else
-		"$GIT_DIR"/hooks/pre-commit
+		GIT_INDEX_FILE="$USE_INDEX" "$GIT_DIR"/hooks/pre-commit
 	fi || exit
 fi
 
@@ -398,8 +578,10 @@ else
 	PARENTS=""
 fi
 
-
-run_status >>"$GIT_DIR"/COMMIT_EDITMSG
+{
+    test -z "$verbose" || echo '---'
+    run_status
+} >>"$GIT_DIR"/COMMIT_EDITMSG
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"
@@ -429,8 +611,14 @@ t)
 	fi
 esac
 
-grep -v '^#' < "$GIT_DIR"/COMMIT_EDITMSG |
-git-stripspace > "$GIT_DIR"/COMMIT_MSG
+sed -e '
+	/^---$/{
+		s///
+		q
+	}
+	/^#/d
+' "$GIT_DIR"/COMMIT_EDITMSG |
+git-stripspace >"$GIT_DIR"/COMMIT_MSG
 
 if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
 	git-stripspace |
@@ -439,14 +627,20 @@ if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
 then
 	if test -z "$TMP_INDEX"
 	then
-		tree=$(git-write-tree)
+		tree=$(GIT_INDEX_FILE="$USE_INDEX" git-write-tree)
 	else
 		tree=$(GIT_INDEX_FILE="$TMP_INDEX" git-write-tree) &&
 		rm -f "$TMP_INDEX"
 	fi &&
 	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
 	git-update-ref HEAD $commit $current &&
-	rm -f -- "$GIT_DIR/MERGE_HEAD"
+	rm -f -- "$GIT_DIR/MERGE_HEAD" &&
+	if test -f "$NEXT_INDEX"
+	then
+		mv "$NEXT_INDEX" "$THIS_INDEX"
+	else
+		: ;# happy
+	fi
 else
 	echo >&2 "* no commit message?  aborting commit."
 	false
@@ -458,9 +652,5 @@ git-rerere
 if test -x "$GIT_DIR"/hooks/post-commit && test "$ret" = 0
 then
 	"$GIT_DIR"/hooks/post-commit
-fi
-if test 0 -eq "$ret"
-then
-	rm -f "$SAVE_INDEX"
 fi
 exit "$ret"

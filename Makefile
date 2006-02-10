@@ -107,7 +107,7 @@ SCRIPT_SH = \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-resolve.sh git-revert.sh git-sh-setup.sh git-status.sh \
+	git-resolve.sh git-revert.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -125,7 +125,7 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  git-cherry-pick git-show
+	  git-cherry-pick git-show git-status
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
@@ -441,6 +441,9 @@ git-cherry-pick: git-revert
 	cp $< $@
 
 git-show: git-whatchanged
+	cp $< $@
+
+git-status: git-commit
 	cp $< $@
 
 # These can record GIT_VERSION
