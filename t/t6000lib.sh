@@ -51,7 +51,12 @@ as_author()
 
 	export GIT_AUTHOR_EMAIL="$_author"
 	"$@"
-        export GIT_AUTHOR_EMAIL="$_save"
+	if test -z "$_save"
+	then
+		unset GIT_AUTHOR_EMAIL
+	else
+		export GIT_AUTHOR_EMAIL="$_save"
+	fi
 }
 
 commit_date()
