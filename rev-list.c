@@ -32,6 +32,7 @@ static const char rev_list_usage[] =
 "    --objects\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
+"    --abbrev=nr | --no-abbrev\n"
 "  special purpose:\n"
 "    --bisect"
 ;
@@ -43,6 +44,7 @@ static int tag_objects = 0;
 static int tree_objects = 0;
 static int blob_objects = 0;
 static int verbose_header = 0;
+static int abbrev = DEFAULT_ABBREV;
 static int show_parents = 0;
 static int hdr_termination = 0;
 static const char *commit_prefix = "";
@@ -96,7 +98,7 @@ static void show_commit(struct commit *commit)
 
 	if (verbose_header) {
 		static char pretty_header[16384];
-		pretty_print_commit(commit_format, commit, ~0, pretty_header, sizeof(pretty_header), 0);
+		pretty_print_commit(commit_format, commit, ~0, pretty_header, sizeof(pretty_header), abbrev);
 		printf("%s%c", pretty_header, hdr_termination);
 	}
 	fflush(stdout);
@@ -793,6 +795,18 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--header")) {
 			verbose_header = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--no-abbrev")) {
+			abbrev = 0;
+			continue;
+		}
+		if (!strncmp(arg, "--abbrev=", 9)) {
+			abbrev = strtoul(arg + 9, NULL, 10);
+			if (abbrev && abbrev < MINIMUM_ABBREV)
+				abbrev = MINIMUM_ABBREV;
+			else if (40 < abbrev)
+				abbrev = 40;
 			continue;
 		}
 		if (!strncmp(arg, "--pretty", 8)) {
