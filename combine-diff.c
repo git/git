@@ -716,10 +716,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 	if (show_hunks || mode_differs) {
 		const char *abb;
-		char null_abb[DEFAULT_ABBREV + 1];
 
-		memset(null_abb, '0', DEFAULT_ABBREV);
-		null_abb[DEFAULT_ABBREV] = 0;
 		if (header) {
 			shown_header++;
 			puts(header);
@@ -734,17 +731,11 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		for (i = 0; i < num_parent; i++) {
 			if (elem->parent[i].mode != elem->mode)
 				mode_differs = 1;
-			if (memcmp(elem->parent[i].sha1, null_sha1, 20))
-				abb = find_unique_abbrev(elem->parent[i].sha1,
-							 DEFAULT_ABBREV);
-			else
-				abb = null_abb;
+			abb = find_unique_abbrev(elem->parent[i].sha1,
+						 DEFAULT_ABBREV);
 			printf("%s%s", i ? "," : "", abb);
 		}
-		if (memcmp(elem->sha1, null_sha1, 20))
-			abb = find_unique_abbrev(elem->sha1, DEFAULT_ABBREV);
-		else
-			abb = null_abb;
+		abb = find_unique_abbrev(elem->sha1, DEFAULT_ABBREV);
 		printf("..%s\n", abb);
 
 		if (mode_differs) {
