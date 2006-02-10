@@ -50,13 +50,10 @@ int count_delta(void *delta_buf, unsigned long delta_size,
 			if (cmd & 0x08) cp_off |= (*data++ << 24);
 			if (cmd & 0x10) cp_size = *data++;
 			if (cmd & 0x20) cp_size |= (*data++ << 8);
+			if (cmd & 0x40) cp_size |= (*data++ << 16);
 			if (cp_size == 0) cp_size = 0x10000;
 
-			if (cmd & 0x40)
-				/* copy from dst */
-				;
-			else
-				copied_from_source += cp_size;
+			copied_from_source += cp_size;
 			out += cp_size;
 		} else {
 			/* write literal into dst */
