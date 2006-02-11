@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include <sys/wait.h>
+#include <sys/time.h>
 
 static int finish_pack(const char *pack_tmp_name, const char *me)
 {
@@ -129,10 +130,12 @@ int receive_unpack_pack(int fd[2], const char *me, int quiet)
 	die("git-unpack-objects died of unnatural causes %d", status);
 }
 
-int receive_keep_pack(int fd[2], const char *me)
+int receive_keep_pack(int fd[2], const char *me, int quiet)
 {
 	char tmpfile[PATH_MAX];
 	int ofd, ifd;
+	unsigned long total;
+	static struct timeval prev_tv;
 
 	ifd = fd[0];
 	snprintf(tmpfile, sizeof(tmpfile),
@@ -141,6 +144,8 @@ int receive_keep_pack(int fd[2], const char *me)
 	if (ofd < 0)
 		return error("unable to create temporary file %s", tmpfile);
 
+	gettimeofday(&prev_tv, NULL);
+	total = 0;
 	while (1) {
 		char buf[8192];
 		ssize_t sz, wsz, pos;
@@ -164,6 +169,27 @@ int receive_keep_pack(int fd[2], const char *me)
 				return -1;
 			}
 			pos += wsz;
+		}
+		total += sz;
+		if (!quiet) {
+			static unsigned long last;
+			struct timeval tv;
+			unsigned long diff = total - last;
+			/* not really "msecs", but a power-of-two millisec (1/1024th of a sec) */
+			unsigned long msecs;
+
+			gettimeofday(&tv, NULL);
+			msecs = tv.tv_sec - prev_tv.tv_sec;
+			msecs <<= 10;
+			msecs += (int)(tv.tv_usec - prev_tv.tv_usec) >> 10;
+			if (msecs > 500) {
+				prev_tv = tv;
+				last = total;
+				fprintf(stderr, "%4lu.%03luMB  (%lu kB/s)        \r",
+					total >> 20,
+					1000*((total >> 10) & 1023)>>10,
+					diff / msecs );
+			}
 		}
 	}
 	close(ofd);

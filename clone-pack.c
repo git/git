@@ -6,6 +6,8 @@ static const char clone_pack_usage[] =
 "git-clone-pack [--exec=<git-upload-pack>] [<host>:]<directory> [<heads>]*";
 static const char *exec = "git-upload-pack";
 
+static int quiet = 0;
+
 static void clone_handshake(int fd[2], struct ref *ref)
 {
 	unsigned char sha1[20];
@@ -123,7 +125,9 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 	}
 	clone_handshake(fd, refs);
 
-	status = receive_keep_pack(fd, "git-clone-pack");
+	if (!quiet)
+		fprintf(stderr, "Generating pack ...\r");
+	status = receive_keep_pack(fd, "git-clone-pack", quiet);
 
 	if (!status) {
 		if (nr_match == 0)
@@ -154,8 +158,10 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!strcmp("-q", arg))
+			if (!strcmp("-q", arg)) {
+				quiet = 1;
 				continue;
+			}
 			if (!strncmp("--exec=", arg, 7)) {
 				exec = arg + 7;
 				continue;
