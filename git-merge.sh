@@ -131,7 +131,7 @@ case "$#,$common,$no_commit" in
 	;;
 1,"$head",*)
 	# Again the most common case of merging one remote.
-	echo "Updating from $head to $1."
+	echo "Updating from $head to $1"
 	git-update-index --refresh 2>/dev/null
 	new_head=$(git-rev-parse --verify "$1^0") &&
 	git-read-tree -u -v -m $head "$new_head" &&
