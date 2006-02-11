@@ -87,24 +87,13 @@ run_status () {
 
 	if test -z "$initial_commit"
 	then
-	    if test -z "$verbose"
-	    then
-		git-diff-index -M --cached --name-status \
-		    --diff-filter=MDTCRA HEAD |
-		sed -e '
-			s/\\/\\\\/g
-			s/ /\\ /g
-		' |
-		report "Updated but not checked in" "will commit"
-	    else
-	        if git-diff-index --cached -M -p --diff-filter=MDTCRA HEAD |
-		   grep .
-		then
-		   false
-		else
-		   true
-		fi
-	    fi
+	    git-diff-index -M --cached --name-status \
+		--diff-filter=MDTCRA HEAD |
+	    sed -e '
+		    s/\\/\\\\/g
+		    s/ /\\ /g
+	    ' |
+	    report "Updated but not checked in" "will commit"
 	    committable="$?"
 	else
 	    echo '#
@@ -155,6 +144,11 @@ run_status () {
 		print "$_\n";
 	    }
 	'
+
+	if test -n "$verbose"
+	then
+	    git-diff-index --cached -M -p --diff-filter=MDTCRA HEAD
+	fi
 	case "$committable" in
 	0)
 	    echo "nothing to commit"
@@ -578,10 +572,7 @@ else
 	PARENTS=""
 fi
 
-{
-    test -z "$verbose" || echo '---'
-    run_status
-} >>"$GIT_DIR"/COMMIT_EDITMSG
+run_status >>"$GIT_DIR"/COMMIT_EDITMSG
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"
@@ -612,11 +603,11 @@ t)
 esac
 
 sed -e '
-	/^---$/{
-		s///
-		q
-	}
-	/^#/d
+    /^diff --git a\/.*/{
+	s///
+	q
+    }
+    /^#/d
 ' "$GIT_DIR"/COMMIT_EDITMSG |
 git-stripspace >"$GIT_DIR"/COMMIT_MSG
 
