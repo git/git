@@ -41,7 +41,11 @@ then
 	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
 
 	# Make sure we are in a valid repository of a vintage we understand.
-	GIT_DIR="$GIT_DIR" git-var GIT_AUTHOR_IDENT >/dev/null || exit
+	GIT_DIR="$GIT_DIR" git repo-config --get core.nosuch >/dev/null
+	if test $? == 128
+	then
+	    exit
+	fi
 else
 	GIT_DIR=$(git-rev-parse --git-dir) || exit
 fi
