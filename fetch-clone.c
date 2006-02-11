@@ -178,10 +178,13 @@ int receive_keep_pack(int fd[2], const char *me, int quiet)
 		if (sz == 0)
 			break;
 		if (sz < 0) {
-			error("error reading pack (%s)", strerror(errno));
-			close(ofd);
-			unlink(tmpfile);
-			return -1;
+			if (errno != EINTR && errno != EAGAIN) {
+				error("error reading pack (%s)", strerror(errno));
+				close(ofd);
+				unlink(tmpfile);
+				return -1;
+			}
+			sz = 0;
 		}
 		pos = 0;
 		while (pos < sz) {
