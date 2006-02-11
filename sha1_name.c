@@ -186,16 +186,18 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 const char *find_unique_abbrev(const unsigned char *sha1, int len)
 {
-	int status;
+	int status, is_null;
 	static char hex[41];
 
+	is_null = !memcmp(sha1, null_sha1, 20);
 	memcpy(hex, sha1_to_hex(sha1), 40);
 	if (len == 40)
 		return hex;
 	while (len < 40) {
 		unsigned char sha1_ret[20];
 		status = get_short_sha1(hex, len, sha1_ret, 1);
-		if (!status) {
+		if (!status ||
+		    (is_null && status != SHORT_NAME_AMBIGUOUS)) {
 			hex[len] = 0;
 			return hex;
 		}

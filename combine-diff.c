@@ -39,6 +39,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			p->mode = q->queue[i]->two->mode;
 			memcpy(p->parent[n].sha1, q->queue[i]->one->sha1, 20);
 			p->parent[n].mode = q->queue[i]->one->mode;
+			p->parent[n].status = q->queue[i]->status;
 			*tail = p;
 			tail = &p->next;
 		}
@@ -62,6 +63,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 				memcpy(p->parent[n].sha1,
 				       q->queue[i]->one->sha1, 20);
 				p->parent[n].mode = q->queue[i]->one->mode;
+				p->parent[n].status = q->queue[i]->status;
 				break;
 			}
 		}
@@ -618,8 +620,8 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 	sline->p_lno[i] = sline->p_lno[j];
 }
 
-int show_combined_diff(struct combine_diff_path *elem, int num_parent,
-		       int dense, const char *header)
+static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
+			   int dense, const char *header)
 {
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
@@ -716,10 +718,7 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 
 	if (show_hunks || mode_differs) {
 		const char *abb;
-		char null_abb[DEFAULT_ABBREV + 1];
 
-		memset(null_abb, '0', DEFAULT_ABBREV);
-		null_abb[DEFAULT_ABBREV] = 0;
 		if (header) {
 			shown_header++;
 			puts(header);
@@ -734,26 +733,33 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 		for (i = 0; i < num_parent; i++) {
 			if (elem->parent[i].mode != elem->mode)
 				mode_differs = 1;
-			if (memcmp(elem->parent[i].sha1, null_sha1, 20))
-				abb = find_unique_abbrev(elem->parent[i].sha1,
-							 DEFAULT_ABBREV);
-			else
-				abb = null_abb;
+			abb = find_unique_abbrev(elem->parent[i].sha1,
+						 DEFAULT_ABBREV);
 			printf("%s%s", i ? "," : "", abb);
 		}
-		if (memcmp(elem->sha1, null_sha1, 20))
-			abb = find_unique_abbrev(elem->sha1, DEFAULT_ABBREV);
-		else
-			abb = null_abb;
+		abb = find_unique_abbrev(elem->sha1, DEFAULT_ABBREV);
 		printf("..%s\n", abb);
 
 		if (mode_differs) {
-			printf("mode ");
-			for (i = 0; i < num_parent; i++) {
-				printf("%s%06o", i ? "," : "",
-				       elem->parent[i].mode);
+			int added = !!elem->mode;
+			for (i = 0; added && i < num_parent; i++)
+				if (elem->parent[i].status !=
+				    DIFF_STATUS_ADDED)
+					added = 0;
+			if (added)
+				printf("new file mode %06o", elem->mode);
+			else {
+				if (!elem->mode)
+					printf("deleted file ");
+				printf("mode ");
+				for (i = 0; i < num_parent; i++) {
+					printf("%s%06o", i ? "," : "",
+					       elem->parent[i].mode);
+				}
+				if (elem->mode)
+					printf("..%06o", elem->mode);
 			}
-			printf("..%06o\n", elem->mode);
+			putchar('\n');
 		}
 		dump_sline(sline, cnt, num_parent);
 	}
@@ -776,8 +782,92 @@ int show_combined_diff(struct combine_diff_path *elem, int num_parent,
 	return shown_header;
 }
 
-int diff_tree_combined_merge(const unsigned char *sha1,
-			     const char *header, int dense)
+#define COLONS "::::::::::::::::::::::::::::::::"
+
+static void show_raw_diff(struct combine_diff_path *p, int num_parent, const char *header, struct diff_options *opt)
+{
+	int i, offset, mod_type = 'A';
+	const char *prefix;
+	int line_termination, inter_name_termination;
+
+	line_termination = opt->line_termination;
+	inter_name_termination = '\t';
+	if (!line_termination)
+		inter_name_termination = 0;
+
+	if (header)
+		puts(header);
+
+	for (i = 0; i < num_parent; i++) {
+		if (p->parent[i].mode)
+			mod_type = 'M';
+	}
+	if (!p->mode)
+		mod_type = 'D';
+
+	if (opt->output_format == DIFF_FORMAT_RAW) {
+		offset = strlen(COLONS) - num_parent;
+		if (offset < 0)
+			offset = 0;
+		prefix = COLONS + offset;
+
+		/* Show the modes */
+		for (i = 0; i < num_parent; i++) {
+			printf("%s%06o", prefix, p->parent[i].mode);
+			prefix = " ";
+		}
+		printf("%s%06o", prefix, p->mode);
+
+		/* Show sha1's */
+		for (i = 0; i < num_parent; i++)
+			printf(" %s", diff_unique_abbrev(p->parent[i].sha1,
+							 opt->abbrev));
+		printf(" %s ", diff_unique_abbrev(p->sha1, opt->abbrev));
+	}
+
+	if (opt->output_format == DIFF_FORMAT_RAW ||
+	    opt->output_format == DIFF_FORMAT_NAME_STATUS) {
+		for (i = 0; i < num_parent; i++)
+			putchar(p->parent[i].status);
+		putchar(inter_name_termination);
+	}
+
+	if (line_termination) {
+		if (quote_c_style(p->path, NULL, NULL, 0))
+			quote_c_style(p->path, NULL, stdout, 0);
+		else
+			printf("%s", p->path);
+		putchar(line_termination);
+	}
+	else {
+		printf("%s%c", p->path, line_termination);
+	}
+}
+
+int show_combined_diff(struct combine_diff_path *p,
+		       int num_parent,
+		       int dense,
+		       const char *header,
+		       struct diff_options *opt)
+{
+	if (!p->len)
+		return 0;
+	switch (opt->output_format) {
+	case DIFF_FORMAT_RAW:
+	case DIFF_FORMAT_NAME_STATUS:
+	case DIFF_FORMAT_NAME:
+		show_raw_diff(p, num_parent, header, opt);
+		return 1;
+
+	default:
+	case DIFF_FORMAT_PATCH:
+		return show_patch_diff(p, num_parent, dense, header);
+	}
+}
+
+const char *diff_tree_combined_merge(const unsigned char *sha1,
+			     const char *header, int dense,
+			     struct diff_options *opt)
 {
 	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
@@ -785,7 +875,7 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 	struct combine_diff_path *p, *paths = NULL;
 	int num_parent, i, num_paths;
 
-	diff_setup(&diffopts);
+	diffopts = *opt;
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.recursive = 1;
 
@@ -802,6 +892,7 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 		struct commit *parent = parents->item;
 		diff_tree_sha1(parent->object.sha1, commit->object.sha1, "",
 			       &diffopts);
+		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 		diff_flush(&diffopts);
 	}
@@ -813,9 +904,8 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 	}
 	if (num_paths) {
 		for (p = paths; p; p = p->next) {
-			if (!p->len)
-				continue;
-			if (show_combined_diff(p, num_parent, dense, header))
+			if (show_combined_diff(p, num_parent, dense,
+					       header, opt))
 				header = NULL;
 		}
 	}
@@ -826,5 +916,5 @@ int diff_tree_combined_merge(const unsigned char *sha1,
 		paths = paths->next;
 		free(tmp);
 	}
-	return 0;
+	return header;
 }
