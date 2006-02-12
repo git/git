@@ -60,7 +60,7 @@ void created_object(const unsigned char *sha1, struct object *obj)
 		objs = xrealloc(objs, obj_allocs * sizeof(struct object *));
 		memset(objs + count, 0, (obj_allocs - count)
 				* sizeof(struct object *));
-		for (i = 0; i < count; i++)
+		for (i = 0; i < obj_allocs; i++)
 			if (objs[i]) {
 				int j = find_object(objs[i]->sha1);
 				if (j != i) {
