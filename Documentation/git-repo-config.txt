@@ -8,12 +8,12 @@ git-repo-config - Get and set options in .git/config.
 
 SYNOPSIS
 --------
-'git-repo-config' name [value [value_regex]]
-'git-repo-config' --replace-all name [value [value_regex]]
-'git-repo-config' --get name [value_regex]
-'git-repo-config' --get-all name [value_regex]
-'git-repo-config' --unset name [value_regex]
-'git-repo-config' --unset-all name [value_regex]
+'git-repo-config' [type] name [value [value_regex]]
+'git-repo-config' [type] --replace-all name [value [value_regex]]
+'git-repo-config' [type] --get name [value_regex]
+'git-repo-config' [type] --get-all name [value_regex]
+'git-repo-config' [type] --unset name [value_regex]
+'git-repo-config' [type] --unset-all name [value_regex]
 
 DESCRIPTION
 -----------
@@ -25,6 +25,12 @@ If you want to set/unset an option which can occur on multiple lines, you
 should provide a POSIX regex for the value. If you want to handle the lines
 *not* matching the regex, just prepend a single exclamation mark in front
 (see EXAMPLES).
+
+The type specifier can be either '--int' or '--bool', which will make
+'git-repo-config' ensure that the variable(s) are of the given type and
+convert the value to the canonical form (simple decimal number for int,
+a "true" or "false" string for bool). If no type specifier is passed,
+no checks or transformations are performed on the value.
 
 This command will fail if
 
