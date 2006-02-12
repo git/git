@@ -6,7 +6,7 @@ static int show_root_diff = 0;
 static int no_commit_id = 0;
 static int verbose_header = 0;
 static int ignore_merges = 1;
-static int combine_merges = 1;
+static int combine_merges = 0;
 static int dense_combined_merges = 0;
 static int read_stdin = 0;
 static int always_show_header = 0;
@@ -248,7 +248,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "-m")) {
-			combine_merges = ignore_merges = 0;
+			ignore_merges = 0;
 			continue;
 		}
 		if (!strcmp(arg, "-c")) {
