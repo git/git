@@ -5,7 +5,7 @@
 #include "csum-file.h"
 #include <sys/time.h>
 
-static const char pack_usage[] = "git-pack-objects [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
+static const char pack_usage[] = "git-pack-objects [-q] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -27,7 +27,7 @@ static struct object_entry *objects = NULL;
 static int nr_objects = 0, nr_alloc = 0;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
-static int progress = 0;
+static int progress = 1;
 
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
 {
@@ -520,6 +520,10 @@ int main(int argc, char **argv)
 					usage(pack_usage);
 				continue;
 			}
+			if (!strcmp("-q", arg)) {
+				progress = 0;
+				continue;
+			}
 			if (!strcmp("--stdout", arg)) {
 				pack_to_stdout = 1;
 				continue;
@@ -533,8 +537,6 @@ int main(int argc, char **argv)
 
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
-
-	progress = isatty(2);
 
 	prepare_packed_git();
 	if (progress) {
