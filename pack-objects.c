@@ -3,6 +3,7 @@
 #include "delta.h"
 #include "pack.h"
 #include "csum-file.h"
+#include <sys/time.h>
 
 static const char pack_usage[] = "git-pack-objects [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
@@ -26,6 +27,7 @@ static struct object_entry *objects = NULL;
 static int nr_objects = 0, nr_alloc = 0;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
+static int progress = 0;
 
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
 {
@@ -362,10 +364,13 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	int i, idx;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array = xmalloc(array_size);
+	int eye_candy;
 
 	memset(array, 0, array_size);
 	i = nr_objects;
 	idx = 0;
+	eye_candy = i - (nr_objects / 20);
+
 	while (--i >= 0) {
 		struct object_entry *entry = list[i];
 		struct unpacked *n = array + idx;
@@ -373,6 +378,10 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		char type[10];
 		int j;
 
+		if (progress && i <= eye_candy) {
+			eye_candy -= nr_objects / 20;
+			fputc('.', stderr);
+		}
 		free(n->data);
 		n->entry = entry;
 		n->data = read_sha1_file(entry->sha1, type, &size);
@@ -404,11 +413,13 @@ static void prepare_pack(int window, int depth)
 {
 	get_object_details();
 
-	fprintf(stderr, "Packing %d objects\n", nr_objects);
-
+	if (progress)
+		fprintf(stderr, "Packing %d objects", nr_objects);
 	sorted_by_type = create_sorted_list(type_size_sort);
 	if (window && depth)
 		find_deltas(sorted_by_type, window+1, depth);
+	if (progress)
+		fputc('\n', stderr);
 	write_pack_file();
 }
 
@@ -472,6 +483,10 @@ int main(int argc, char **argv)
 	int window = 10, depth = 10, pack_to_stdout = 0;
 	struct object_entry **list;
 	int i;
+	struct timeval prev_tv;
+	int eye_candy = 0;
+	int eye_candy_incr = 500;
+
 
 	setup_git_directory();
 
@@ -519,12 +534,34 @@ int main(int argc, char **argv)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
+	progress = isatty(2);
+
 	prepare_packed_git();
+	if (progress) {
+		fprintf(stderr, "Generating pack...\n");
+		gettimeofday(&prev_tv, NULL);
+	}
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned int hash;
 		char *p;
 		unsigned char sha1[20];
 
+		if (progress && (eye_candy <= nr_objects)) {
+			fprintf(stderr, "Counting objects...%d\r", nr_objects);
+			if (eye_candy && (50 <= eye_candy_incr)) {
+				struct timeval tv;
+				int time_diff;
+				gettimeofday(&tv, NULL);
+				time_diff = (tv.tv_sec - prev_tv.tv_sec);
+				time_diff <<= 10;
+				time_diff += (tv.tv_usec - prev_tv.tv_usec);
+				if ((1 << 9) < time_diff)
+					eye_candy_incr += 50;
+				else if (50 < eye_candy_incr)
+					eye_candy_incr -= 50;
+			}
+			eye_candy += eye_candy_incr;
+		}
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
 		hash = 0;
@@ -537,6 +574,8 @@ int main(int argc, char **argv)
 		}
 		add_object_entry(sha1, hash);
 	}
+	if (progress)
+		fprintf(stderr, "Done counting %d objects.\n", nr_objects);
 	if (non_empty && !nr_objects)
 		return 0;
 

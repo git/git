@@ -70,21 +70,21 @@ case "$merge_head" in
 	exit 0
 	;;
 ?*' '?*)
-	var=`git-var -l | sed -ne 's/^pull\.octopus=/-s /p'`
+	var=`git repo-config --get pull.octopus`
 	if test '' = "$var"
 	then
 		strategy_default_args='-s octopus'
 	else
-		strategy_default_args=$var
+		strategy_default_args="-s $var"
 	fi
 	;;
 *)
-	var=`git-var -l | sed -ne 's/^pull\.twohead=/-s /p'`
+	var=`git repo-config --get pull.twohead`
 	if test '' = "$var"
 	then
 		strategy_default_args='-s recursive'
 	else
-		strategy_default_args=$var
+		strategy_default_args="-s $var"
 	fi
 	;;
 esac

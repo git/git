@@ -76,7 +76,7 @@ function pull_to_client () {
 	git-symbolic-ref HEAD refs/heads/${heads:0:1}
 	test_expect_success "fsck" 'git-fsck-objects --full > fsck.txt 2>&1'
 	test_expect_object_count "after $number pull" $count
-	pack_count=$(grep Packing log.txt|tr -dc "0-9")
+	pack_count=$(grep Unpacking log.txt|tr -dc "0-9")
 	test -z "$pack_count" && pack_count=0
 	if [ -z "$no_strict_count_check" ]; then
 		test_expect_success "minimal count" "test $count = $pack_count"

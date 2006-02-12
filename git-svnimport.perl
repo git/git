@@ -318,7 +318,7 @@ sub get_file($$$) {
 			die $res->status_line." at $url\n";
 		}
 	} else {
-		$name = $svn->file("/$svnpath",$rev);
+		$name = $svn->file("$svnpath",$rev);
 		return undef unless defined $name;
 	}
 

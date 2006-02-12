@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include <sys/wait.h>
+#include <sys/time.h>
 
 static int finish_pack(const char *pack_tmp_name, const char *me)
 {
@@ -129,10 +130,35 @@ int receive_unpack_pack(int fd[2], const char *me, int quiet)
 	die("git-unpack-objects died of unnatural causes %d", status);
 }
 
-int receive_keep_pack(int fd[2], const char *me)
+/*
+ * We average out the download speed over this many "events", where
+ * an event is a minimum of about half a second. That way, we get
+ * a reasonably stable number.
+ */
+#define NR_AVERAGE (4)
+
+/*
+ * A "binary msec" is a power-of-two-msec, aka 1/1024th of a second.
+ * Keeing the time in that format means that "bytes / msecs" means
+ * is the same as kB/s (modulo rounding).
+ *
+ * 1000512 is a magic number (usecs in a second, rounded up by half
+ * of 1024, to make "rounding" come out right ;)
+ */
+#define usec_to_binarymsec(x) ((int)(x) / (1000512 >> 10))
+
+int receive_keep_pack(int fd[2], const char *me, int quiet)
 {
 	char tmpfile[PATH_MAX];
 	int ofd, ifd;
+	unsigned long total;
+	static struct timeval prev_tv;
+	struct average {
+		unsigned long bytes;
+		unsigned long time;
+	} download[NR_AVERAGE] = { {0, 0}, };
+	unsigned long avg_bytes, avg_time;
+	int idx = 0;
 
 	ifd = fd[0];
 	snprintf(tmpfile, sizeof(tmpfile),
@@ -141,6 +167,10 @@ int receive_keep_pack(int fd[2], const char *me)
 	if (ofd < 0)
 		return error("unable to create temporary file %s", tmpfile);
 
+	gettimeofday(&prev_tv, NULL);
+	total = 0;
+	avg_bytes = 0;
+	avg_time = 0;
 	while (1) {
 		char buf[8192];
 		ssize_t sz, wsz, pos;
@@ -148,10 +178,13 @@ int receive_keep_pack(int fd[2], const char *me)
 		if (sz == 0)
 			break;
 		if (sz < 0) {
-			error("error reading pack (%s)", strerror(errno));
-			close(ofd);
-			unlink(tmpfile);
-			return -1;
+			if (errno != EINTR && errno != EAGAIN) {
+				error("error reading pack (%s)", strerror(errno));
+				close(ofd);
+				unlink(tmpfile);
+				return -1;
+			}
+			sz = 0;
 		}
 		pos = 0;
 		while (pos < sz) {
@@ -164,6 +197,40 @@ int receive_keep_pack(int fd[2], const char *me)
 				return -1;
 			}
 			pos += wsz;
+		}
+		total += sz;
+		if (!quiet) {
+			static unsigned long last;
+			struct timeval tv;
+			unsigned long diff = total - last;
+			/* not really "msecs", but a power-of-two millisec (1/1024th of a sec) */
+			unsigned long msecs;
+
+			gettimeofday(&tv, NULL);
+			msecs = tv.tv_sec - prev_tv.tv_sec;
+			msecs <<= 10;
+			msecs += usec_to_binarymsec(tv.tv_usec - prev_tv.tv_usec);
+
+			if (msecs > 500) {
+				prev_tv = tv;
+				last = total;
+
+				/* Update averages ..*/
+				avg_bytes += diff;
+				avg_time += msecs;
+				avg_bytes -= download[idx].bytes;
+				avg_time -= download[idx].time;
+				download[idx].bytes = diff;
+				download[idx].time = msecs;
+				idx++;
+				if (idx >= NR_AVERAGE)
+					idx = 0;
+
+				fprintf(stderr, "%4lu.%03luMB  (%lu kB/s)      \r",
+					total >> 20,
+					1000*((total >> 10) & 1023)>>10,
+					avg_bytes / avg_time );
+			}
 		}
 	}
 	close(ofd);

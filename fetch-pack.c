@@ -378,7 +378,7 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		fprintf(stderr, "warning: no common commits\n");
 
 	if (keep_pack)
-		status = receive_keep_pack(fd, "git-fetch-pack");
+		status = receive_keep_pack(fd, "git-fetch-pack", quiet);
 	else
 		status = receive_unpack_pack(fd, "git-fetch-pack", quiet);
 
