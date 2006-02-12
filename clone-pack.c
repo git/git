@@ -125,9 +125,9 @@ static int clone_pack(int fd[2], int nr_match, char **match)
 	}
 	clone_handshake(fd, refs);
 
-	if (!quiet)
-		fprintf(stderr, "Generating pack ...\r");
 	status = receive_keep_pack(fd, "git-clone-pack", quiet);
+	if (!quiet)
+		fprintf(stderr, "\n");
 
 	if (!status) {
 		if (nr_match == 0)
