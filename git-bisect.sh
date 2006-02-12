@@ -49,9 +49,16 @@ bisect_start() {
 	die "Bad HEAD - I need a symbolic ref"
 	case "$head" in
 	refs/heads/bisect*)
-		git checkout master || exit
+		if [ -s "$GIT_DIR/head-name" ]; then
+		    branch=`cat "$GIT_DIR/head-name"`
+		else
+		    branch=master
+	        fi
+		git checkout $branch || exit
 		;;
 	refs/heads/*)
+		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
+		echo "$head" | sed 's#^refs/heads/##' >"$GIT_DIR/head-name"
 		;;
 	*)
 		die "Bad HEAD - strange symbolic ref"
@@ -159,7 +166,11 @@ bisect_visualize() {
 
 bisect_reset() {
 	case "$#" in
-	0) branch=master ;;
+	0) if [ -s "$GIT_DIR/head-name" ]; then
+	       branch=`cat "$GIT_DIR/head-name"`
+	   else
+	       branch=master
+	   fi ;;
 	1) test -f "$GIT_DIR/refs/heads/$1" || {
 	       echo >&2 "$1 does not seem to be a valid branch"
 	       exit 1
@@ -170,7 +181,7 @@ bisect_reset() {
 	esac
 	git checkout "$branch" &&
 	rm -fr "$GIT_DIR/refs/bisect"
-	rm -f "$GIT_DIR/refs/heads/bisect"
+	rm -f "$GIT_DIR/refs/heads/bisect" "$GIT_DIR/head-name"
 	rm -f "$GIT_DIR/BISECT_LOG"
 }
 
