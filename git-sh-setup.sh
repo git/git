@@ -42,7 +42,7 @@ then
 
 	# Make sure we are in a valid repository of a vintage we understand.
 	GIT_DIR="$GIT_DIR" git repo-config --get core.nosuch >/dev/null
-	if test $? == 128
+	if test $? = 128
 	then
 	    exit
 	fi
