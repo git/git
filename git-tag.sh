@@ -85,7 +85,8 @@ if [ "$annotate" ]; then
 	exit 1
     }
 
-    ( echo -e "object $object\ntype $type\ntag $name\ntagger $tagger\n";
+    ( printf 'object %s\ntype %s\ntag %s\ntagger %s\n\n' \
+	"$object" "$type" "$name" "$tagger";
       cat "$GIT_DIR"/TAG_FINALMSG ) >"$GIT_DIR"/TAG_TMP
     rm -f "$GIT_DIR"/TAG_TMP.asc "$GIT_DIR"/TAG_FINALMSG
     if [ "$signed" ]; then

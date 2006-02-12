@@ -33,7 +33,7 @@ then
 fi
 
 merge >/dev/null 2>/dev/null
-if test $? == 127
+if test $? = 127
 then
 	echo >&2 'You do not seem to have "merge" installed.
 Please check INSTALL document.'

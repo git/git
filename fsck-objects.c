@@ -61,8 +61,11 @@ static void check_connectivity(void)
 	int i;
 
 	/* Look up all the requirements, warn about missing objects.. */
-	for (i = 0; i < nr_objs; i++) {
+	for (i = 0; i < obj_allocs; i++) {
 		struct object *obj = objs[i];
+
+		if (!obj)
+			continue;
 
 		if (!obj->parsed) {
 			if (!standalone && has_sha1_file(obj->sha1))
