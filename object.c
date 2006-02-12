@@ -13,17 +13,19 @@ int track_object_refs = 1;
 
 static int hashtable_index(const unsigned char *sha1)
 {
-	unsigned int i = *(unsigned int *)sha1;
+	unsigned int i;
+	memcpy(&i, sha1, sizeof(unsigned int));
 	return (int)(i % obj_allocs);
 }
 
 static int find_object(const unsigned char *sha1)
 {
-	int i = hashtable_index(sha1);
+	int i;
 
 	if (!objs)
 		return -1;
 
+	i = hashtable_index(sha1);
 	while (objs[i]) {
 		if (memcmp(sha1, objs[i]->sha1, 20) == 0)
 			return i;
