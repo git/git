@@ -2,7 +2,7 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]]";
+"git-repo-config [ --bool | --int ] [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]]";
 
 static char* key = NULL;
 static char* value = NULL;
@@ -10,6 +10,7 @@ static regex_t* regexp = NULL;
 static int do_all = 0;
 static int do_not_match = 0;
 static int seen = 0;
+static enum { T_RAW, T_INT, T_BOOL } type = T_RAW;
 
 static int show_config(const char* key_, const char* value_)
 {
@@ -25,7 +26,17 @@ static int show_config(const char* key_, const char* value_)
 			fprintf(stderr, "More than one value: %s\n", value);
 			free(value);
 		}
-		value = strdup(value_);
+
+		if (type == T_INT) {
+			value = malloc(256);
+			sprintf(value, "%d", git_config_int(key_, value_));
+		} else if (type == T_BOOL) {
+			value = malloc(256);
+			sprintf(value, "%s", git_config_bool(key_, value_)
+					     ? "true" : "false");
+		} else {
+			value = strdup(value_ ? value_ : "");
+		}
 		seen++;
 	}
 	return 0;
@@ -73,6 +84,18 @@ static int get_value(const char* key_, const char* regex_)
 int main(int argc, const char **argv)
 {
 	setup_git_directory();
+
+	while (1 < argc) {
+		if (!strcmp(argv[1], "--int"))
+			type = T_INT;
+		else if (!strcmp(argv[1], "--bool"))
+			type = T_BOOL;
+		else
+			break;
+		argc--;
+		argv++;
+	}
+
 	switch (argc) {
 	case 2:
 		return get_value(argv[1], NULL);
