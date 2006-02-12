@@ -88,7 +88,10 @@ fall_back_3way () {
     # saying that we reverted all those changes.
 
     git-merge-resolve $orig_tree -- HEAD $his_tree || {
-	    git-rerere
+	    if test -d "$GIT_DIR/rr-cache"
+	    then
+		git-rerere
+	    fi
 	    echo Failed to merge in the changes.
 	    exit 1
     }

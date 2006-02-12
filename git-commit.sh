@@ -638,7 +638,10 @@ else
 fi
 ret="$?"
 rm -f "$GIT_DIR/COMMIT_MSG" "$GIT_DIR/COMMIT_EDITMSG"
-git-rerere
+if test -d "$GIT_DIR/rr-cache"
+then
+	git-rerere
+fi
 
 if test -x "$GIT_DIR"/hooks/post-commit && test "$ret" = 0
 then
