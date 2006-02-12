@@ -20,6 +20,7 @@ static int show_unmerged = 0;
 static int show_modified = 0;
 static int show_killed = 0;
 static int show_other_directories = 0;
+static int show_valid_bit = 0;
 static int line_terminator = '\n';
 
 static int prefix_len = 0, prefix_offset = 0;
@@ -447,7 +448,8 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (pathspec && !match(pathspec, ce->name, len))
 		return;
 
-	if (tag && *tag && (ce->ce_flags & htons(CE_VALID))) {
+	if (tag && *tag && show_valid_bit &&
+	    (ce->ce_flags & htons(CE_VALID))) {
 		static char alttag[4];
 		memcpy(alttag, tag, 3);
 		if (isalpha(tag[0]))
@@ -592,7 +594,7 @@ static void verify_pathspec(void)
 }
 
 static const char ls_files_usage[] =
-	"git-ls-files [-z] [-t] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
+	"git-ls-files [-z] [-t] [-v] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
 	"[ --exclude-per-directory=<filename> ] [--full-name] [--] [<file>]*";
 
@@ -617,13 +619,15 @@ int main(int argc, const char **argv)
 			line_terminator = 0;
 			continue;
 		}
-		if (!strcmp(arg, "-t")) {
+		if (!strcmp(arg, "-t") || !strcmp(arg, "-v")) {
 			tag_cached = "H ";
 			tag_unmerged = "M ";
 			tag_removed = "R ";
 			tag_modified = "C ";
 			tag_other = "? ";
 			tag_killed = "K ";
+			if (arg[1] == 'v')
+				show_valid_bit = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-c") || !strcmp(arg, "--cached")) {
