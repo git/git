@@ -10,7 +10,7 @@ case "$0" in
 	count=
 	test -z "$diff_tree_flags" &&
 		diff_tree_flags=$(git-repo-config --get whatchanged.difftree)
-	diff_tree_default_flags='-M --abbrev' ;;
+	diff_tree_default_flags='-c -M --abbrev' ;;
 *show)
 	count=-n1
 	test -z "$diff_tree_flags" &&
