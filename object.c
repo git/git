@@ -6,30 +6,32 @@
 #include "tag.h"
 
 struct object **objs;
-int nr_objs;
-static int obj_allocs;
+static int nr_objs;
+int obj_allocs;
 
 int track_object_refs = 1;
 
+static int hashtable_index(const unsigned char *sha1)
+{
+	unsigned int i = *(unsigned int *)sha1;
+	return (int)(i % obj_allocs);
+}
+
 static int find_object(const unsigned char *sha1)
 {
-	int first = 0, last = nr_objs;
+	int i = hashtable_index(sha1);
 
-        while (first < last) {
-                int next = (first + last) / 2;
-                struct object *obj = objs[next];
-                int cmp;
+	if (!objs)
+		return -1;
 
-                cmp = memcmp(sha1, obj->sha1, 20);
-                if (!cmp)
-                        return next;
-                if (cmp < 0) {
-                        last = next;
-                        continue;
-                }
-                first = next+1;
-        }
-        return -first-1;
+	while (objs[i]) {
+		if (memcmp(sha1, objs[i]->sha1, 20) == 0)
+			return i;
+		i++;
+		if (i == obj_allocs)
+			i = 0;
+	}
+	return -1 - i;
 }
 
 struct object *lookup_object(const unsigned char *sha1)
@@ -42,7 +44,7 @@ struct object *lookup_object(const unsigned char *sha1)
 
 void created_object(const unsigned char *sha1, struct object *obj)
 {
-	int pos = find_object(sha1);
+	int pos;
 
 	obj->parsed = 0;
 	memcpy(obj->sha1, sha1, 20);
@@ -50,18 +52,27 @@ void created_object(const unsigned char *sha1, struct object *obj)
 	obj->refs = NULL;
 	obj->used = 0;
 
+	if (obj_allocs - 1 <= nr_objs * 2) {
+		int i, count = obj_allocs;
+		obj_allocs = (obj_allocs < 32 ? 32 : 2 * obj_allocs);
+		objs = xrealloc(objs, obj_allocs * sizeof(struct object *));
+		memset(objs + count, 0, (obj_allocs - count)
+				* sizeof(struct object *));
+		for (i = 0; i < count; i++)
+			if (objs[i]) {
+				int j = find_object(objs[i]->sha1);
+				if (j != i) {
+					j = -1 - j;
+					objs[j] = objs[i];
+					objs[i] = NULL;
+				}
+			}
+	}
+
+	pos = find_object(sha1);
 	if (pos >= 0)
 		die("Inserting %s twice\n", sha1_to_hex(sha1));
 	pos = -pos-1;
-
-	if (obj_allocs == nr_objs) {
-		obj_allocs = alloc_nr(obj_allocs);
-		objs = xrealloc(objs, obj_allocs * sizeof(struct object *));
-	}
-
-	/* Insert it into the right place */
-	memmove(objs + pos + 1, objs + pos, (nr_objs - pos) * 
-		sizeof(struct object *));
 
 	objs[pos] = obj;
 	nr_objs++;

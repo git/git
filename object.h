@@ -23,7 +23,7 @@ struct object {
 };
 
 extern int track_object_refs;
-extern int nr_objs;
+extern int obj_allocs;
 extern struct object **objs;
 
 /** Internal only **/

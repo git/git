@@ -232,9 +232,10 @@ int main(int argc, char **argv)
 	} else if (all) {
 		int i;
 
-		for (i = 0; i < nr_objs; i++)
-			printf("%s %s\n", sha1_to_hex(objs[i]->sha1),
-					get_rev_name(objs[i]));
+		for (i = 0; i < obj_allocs; i++)
+			if (objs[i])
+				printf("%s %s\n", sha1_to_hex(objs[i]->sha1),
+						get_rev_name(objs[i]));
 	} else
 		for ( ; revs; revs = revs->next)
 			printf("%s %s\n", revs->name, get_rev_name(revs->item));
