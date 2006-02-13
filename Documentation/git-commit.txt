@@ -8,8 +8,8 @@ git-commit - Record your changes
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a] [-i] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
-	   [-e] [--author <author>] [--] <file>...
+'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
+	   [-e] [--author <author>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
@@ -73,17 +73,37 @@ OPTIONS
 	commit the whole index.  This is the traditional
 	behaviour.
 
---::
-	Do not interpret any more arguments as options.
-
-<file>...::
+-o|--only::
 	Commit only the files specified on the command line.
 	This format cannot be used during a merge, nor when the
 	index and the latest commit does not match on the
 	specified paths to avoid confusion.
 
+--::
+	Do not interpret any more arguments as options.
+
+<file>...::
+	Files to be committed.  The meaning of these is
+	different between `--include` and `--only`.  Without
+	either, it defaults `--include` semantics.
+
 If you make a commit and then found a mistake immediately after
 that, you can recover from it with gitlink:git-reset[1].
+
+
+WARNING
+-------
+
+The 1.2.0 and its maintenance series 1.2.X will keep the
+traditional `--include` semantics as the default when neither
+`--only` nor `--include` is specified and `paths...` are given.
+This *will* change during the development towards 1.3.0 in the
+'master' branch of `git.git` repository.  If you are using this
+command in your scripts, and you depend on the traditional
+`--include` semantics, please update them to explicitly ask for
+`--include` semantics.  Also if you are used to making partial
+commit using `--include` semantics, please train your fingers to
+say `git commit --include paths...` (or `git commit -i paths...`).
 
 
 Discussion
@@ -101,7 +121,7 @@ even the command is invoked from a subdirectory.
 That is, update the specified paths to the index and then commit
 the whole tree.
 
-`git commit paths...` largely bypasses the index file and
+`git commit --only paths...` largely bypasses the index file and
 commits only the changes made to the specified paths.  It has
 however several safety valves to prevent confusion.
 
