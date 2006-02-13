@@ -36,6 +36,15 @@ other=$(git-rev-parse --verify "$1^0") || usage
 # Make sure the branch to rebase is valid.
 head=$(git-rev-parse --verify "${2-HEAD}^0") || exit
 
+# If a hook exists, give it a chance to interrupt
+if test -x "$GIT_DIR/hooks/pre-rebase"
+then
+	"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
+		echo >&2 "The pre-rebase hook refused to rebase."
+		exit 1
+	}
+fi
+
 # If the branch to rebase is given, first switch to it.
 case "$#" in
 2)
