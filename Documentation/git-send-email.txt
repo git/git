@@ -48,6 +48,9 @@ The options available are:
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
+--no-signed-off-by-cc::
+	Do not add emails foudn in Signed-off-by: lines to the cc list.
+
 --quiet::
 	Make git-send-email less verbose.  One line per email should be
 	all that is output.
@@ -60,6 +63,10 @@ The options available are:
    	Specify the initial subject of the email thread.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
+
+--suppress-from::
+	Do not add the From: address to the cc: list, if it shows up in a From:
+	line.
 
 --to::
 	Specify the primary recipient of the emails generated.

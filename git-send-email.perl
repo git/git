@@ -34,7 +34,7 @@ my $compose_filename = ".msg.$$";
 my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
 
 # Behavior modification variables
-my ($chain_reply_to, $smtp_server, $quiet) = (1, "localhost", 0);
+my ($chain_reply_to, $smtp_server, $quiet, $suppress_from, $no_signed_off_cc) = (1, "localhost", 0, 0, 0);
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -52,6 +52,8 @@ my $rc = GetOptions("from=s" => \$from,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
+		    "suppress-from" => \$suppress_from,
+		    "no-signed-off-cc" => \$no_signed_off_cc,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:
@@ -212,12 +214,18 @@ Options:
                   email sent, rather than to the first email sent.
                   Defaults to on.
 
+   --no-signed-off-cc Suppress the automatic addition of email addresses
+                 that appear in a Signed-off-by: line, to the cc: list.
+		 Note: Using this option is not recommended.
+
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
+  --suppress-from Supress sending emails to yourself if your address
+                  appears in a From: line.
+
    --quiet	Make git-send-email less verbose.  One line per email should be
 		all that is output.
-
 
 Error: Please specify a file or a directory on the command line.
 EOT
@@ -304,6 +312,7 @@ foreach my $t (@files) {
 					$subject = $1;
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
+					next if ($2 eq $from && $suppress_from);
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
 					push @cc, $2;
@@ -332,7 +341,7 @@ foreach my $t (@files) {
 			}
 		} else {
 			$message .=  $_;
-			if (/^Signed-off-by: (.*)$/i) {
+			if (/^Signed-off-by: (.*)$/i && !$no_signed_off_cc) {
 				my $c = $1;
 				chomp $c;
 				push @cc, $c;
