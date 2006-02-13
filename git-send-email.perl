@@ -31,7 +31,7 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
+my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
 
 # Behavior modification variables
 my ($chain_reply_to, $smtp_server, $quiet, $suppress_from, $no_signed_off_cc) = (1, "localhost", 0, 0, 0);
@@ -48,6 +48,7 @@ my $rc = GetOptions("from=s" => \$from,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
+		    "cc=s" => \@initial_cc,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
@@ -199,6 +200,9 @@ Options:
 
    --to           Specify the primary "To:" line of the email.
 
+   --cc           Specify an initial "Cc:" list for the entire series
+                  of emails.
+
    --compose      Use \$EDITOR to edit an introductory message for the
                   patch series.
 
@@ -298,7 +302,7 @@ $subject = $initial_subject;
 foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
 
-	@cc = ();
+	@cc = @initial_cc;
 	my $found_mbox = 0;
 	my $header_done = 0;
 	$message = "";

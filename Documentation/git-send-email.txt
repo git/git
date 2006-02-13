@@ -24,6 +24,9 @@ OPTIONS
 -------
 The options available are:
 
+--cc::
+	Specify a starting "Cc:" value for each email.
+
 --chain-reply-to, --no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
