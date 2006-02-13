@@ -246,9 +246,9 @@ int cache_name_compare(const char *name1, int flags1, const char *name2, int fla
 	if (len1 > len2)
 		return 1;
 
-	/* Differences between "assume up-to-date" should not matter. */
-	flags1 &= ~CE_VALID;
-	flags2 &= ~CE_VALID;
+	/* Compare stages  */
+	flags1 &= CE_STAGEMASK;
+	flags2 &= CE_STAGEMASK;
 
 	if (flags1 < flags2)
 		return -1;
