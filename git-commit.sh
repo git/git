@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-i] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [--author <author>] [<path>...]'
+USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
@@ -340,11 +340,8 @@ case "$#,$also$only" in
 0,)
   ;;
 *,)
-  echo >&2 "assuming --include paths..."
-  also=t
-  # Later when switch the defaults, we will replace them with these:
-  # echo >&2 "assuming --only paths..."
-  # also=
+  echo >&2 "assuming --only paths..."
+  also=
 
   # If we are going to launch an editor, the message won't be
   # shown without this...
