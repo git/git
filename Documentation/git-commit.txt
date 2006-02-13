@@ -8,8 +8,8 @@ git-commit - Record your changes
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a] [-i] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
-	   [-e] [--author <author>] [--] <file>...
+'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
+	   [-e] [--author <author>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
@@ -73,14 +73,19 @@ OPTIONS
 	commit the whole index.  This is the traditional
 	behaviour.
 
---::
-	Do not interpret any more arguments as options.
-
-<file>...::
+-o|--only::
 	Commit only the files specified on the command line.
 	This format cannot be used during a merge, nor when the
 	index and the latest commit does not match on the
 	specified paths to avoid confusion.
+
+--::
+	Do not interpret any more arguments as options.
+
+<file>...::
+	Files to be committed.  The meaning of these is
+	different between `--include` and `--only`.  Without
+	either, it defaults `--only` semantics.
 
 If you make a commit and then found a mistake immediately after
 that, you can recover from it with gitlink:git-reset[1].
