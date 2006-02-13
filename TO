@@ -1,0 +1,150 @@
+#!/bin/sh
+
+clean=
+case "$1" in
+--clean)
+	branch=`git symbolic-ref HEAD` &&
+	test refs/heads/master = "$branch" || {
+		echo >&2 Not on master 
+		exit 1
+	}
+	clean=t
+	shift
+	;;
+esac
+
+LF='
+'
+(cd .git/refs/heads && find -type f) |
+sed -n \
+    -e 's/^\.\///' \
+    -e '/^[^\/][^\/]\//p' |
+while read topic
+do
+	rebase= done= not_done= trouble=
+
+	# (1)
+	only_next_1=`git-rev-list ^master "^$topic" next | sort`
+	only_next_2=`git-rev-list ^master           next | sort`
+	if test "$only_next_1" = "$only_next_2"
+	then
+		not_in_topic=`git-rev-list "^$topic" master`
+		if test -z "$not_in_topic"
+		then
+			rebase=" (vanilla)"
+		else
+			rebase=" (can be rebased)"
+		fi
+	fi
+
+	# (2)
+	not_in_master=`
+		git-rev-list --pretty=oneline ^master "$topic" |
+		sed -e 's/^[0-9a-f]* //'
+	`
+	test -z "$not_in_master" &&
+	done="${LF}Fully merged -- delete."
+
+	# (3)
+	not_in_next=`
+		git-rev-list --pretty=oneline ^next "$topic" |
+		sed -e 's/^[0-9a-f]* / - /'
+	`
+	if test -n "$not_in_next"
+	then
+	    	if test -n "$done"
+		then
+			trouble="${LF}### MODIFIED AFTER COOKED ###"
+		fi
+		not_done="${LF}Still not merged in next$rebase.$LF$not_in_next"
+	elif test -n "$done"
+	then
+		not_done=
+	else
+		not_done="${LF}Up to date."
+	fi
+
+	echo "*** $topic ***$trouble$done$not_done"
+
+	if test -z "$trouble$not_done" &&
+	    test -n "$done" &&
+	    test t = "$clean"
+	then
+		git branch -d "$topic"
+	fi
+done
+
+exit
+
+################################################################
+Using Topic Branches
+
+Some important disciplines first.
+
+ * Once a topic branch forks from "master", never merge "master"
+   updates into the topic branch.
+
+ * Once a topic branch is fully cooked and merged into "master",
+   delete it.  If you need to build on top of it to correct
+   earlier mistakes, create a new topic branch by forking at the
+   tip of the "master".  This is not strictly necessary, but it
+   makes it easier to keep your history simple.
+
+ * Whenever you need to test or publish your changes to topic
+   branches, merge them into "next" branch.
+
+So, you would want to know:
+
+(1) ... if a topic branch has ever been merged to "next".  Young
+    topic branches can have stupid mistakes you would rather
+    clean up, and things that have not been merged into other
+    branches can be easily rebased without affecting others.
+
+(2) ... if a topic branch has been fully merged to "master".
+    Then you can delete it.  More importantly, you can tell you
+    should not build on top of it.
+
+(3) ... if a topic branch has commits unmerged to "next".  You
+    need to merge them to test and/or publish.
+
+Let's look at this example:
+
+		   o---o---o---o---o---o---o---o---o---o "next"
+		  /       /           /           /
+		 /   a---a---b A     /           /
+		/   /               /           /
+	       /   /   c---c---c---c B         /
+	      /   /   /             \         /
+	     /   /   /   b---b C     \       /
+	    /   /   /   /             \     /
+    ---o---o---o---o---o---o---o---o---o---o---o "master"
+
+
+A, B and C are topic branches.
+
+ * A has one fix since it was merged up to "next".
+
+ * B has finished.  It has been fully merged up to "master" and "next",
+   and is ready to be deleted.
+
+ * C has not merged to "next" at all.
+
+To compute (1):
+
+	git-rev-list ^master ^topic next
+	git-rev-list ^master        next
+
+	if these match, topic has not merged in next at all.
+
+To compute (2):
+
+	git-rev-list master..topic
+
+	if this is empty, it is fully merged to "master".
+
+To compute (3):
+
+	git-rev-list next..topic
+
+	if this is empty, there is nothing to merge to "next".
+

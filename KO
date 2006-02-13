@@ -11,6 +11,7 @@ then
 	echo "OOOOOPPPPPPPPPPPPPPSSS! master is not ko-master fast forward."
 	exit 1
 fi
-git show-branch ko-master master
-git show-branch ko-maint maint
-git show-branch ko-pu pu
+git show-branch --topo-order ko-master master
+git show-branch --topo-order ko-maint maint
+git show-branch --topo-order ko-next next
+git show-branch --topo-order ko-pu pu
