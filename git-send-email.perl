@@ -31,10 +31,10 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
+my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
 
 # Behavior modification variables
-my ($chain_reply_to, $smtp_server, $quiet) = (1, "localhost", 0);
+my ($chain_reply_to, $smtp_server, $quiet, $suppress_from, $no_signed_off_cc) = (1, "localhost", 0, 0, 0);
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -48,10 +48,13 @@ my $rc = GetOptions("from=s" => \$from,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
+		    "cc=s" => \@initial_cc,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
+		    "suppress-from" => \$suppress_from,
+		    "no-signed-off-cc" => \$no_signed_off_cc,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:
@@ -197,6 +200,9 @@ Options:
 
    --to           Specify the primary "To:" line of the email.
 
+   --cc           Specify an initial "Cc:" list for the entire series
+                  of emails.
+
    --compose      Use \$EDITOR to edit an introductory message for the
                   patch series.
 
@@ -212,12 +218,18 @@ Options:
                   email sent, rather than to the first email sent.
                   Defaults to on.
 
+   --no-signed-off-cc Suppress the automatic addition of email addresses
+                 that appear in a Signed-off-by: line, to the cc: list.
+		 Note: Using this option is not recommended.
+
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
+  --suppress-from Supress sending emails to yourself if your address
+                  appears in a From: line.
+
    --quiet	Make git-send-email less verbose.  One line per email should be
 		all that is output.
-
 
 Error: Please specify a file or a directory on the command line.
 EOT
@@ -290,7 +302,7 @@ $subject = $initial_subject;
 foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
 
-	@cc = ();
+	@cc = @initial_cc;
 	my $found_mbox = 0;
 	my $header_done = 0;
 	$message = "";
@@ -304,6 +316,7 @@ foreach my $t (@files) {
 					$subject = $1;
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
+					next if ($2 eq $from && $suppress_from);
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
 					push @cc, $2;
@@ -332,7 +345,7 @@ foreach my $t (@files) {
 			}
 		} else {
 			$message .=  $_;
-			if (/^Signed-off-by: (.*)$/i) {
+			if (/^Signed-off-by: (.*)$/i && !$no_signed_off_cc) {
 				my $c = $1;
 				chomp $c;
 				push @cc, $c;
