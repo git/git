@@ -81,7 +81,7 @@ OPTIONS
 	R::	removed/deleted
 	C::	modified/changed
 	K::	to be killed
-	?	other
+	?::	other
 
 -v::
 	Similar to `-t`, but use lowercase letters for files
