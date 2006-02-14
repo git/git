@@ -3,10 +3,48 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='<upstream> [<head>]'
+USAGE='[--onto <newbase>] <upstream> [<branch>]'
+LONG_USAGE='If <branch> is specified, switch to that branch first.  Then,
+extract commits in the current branch that are not in <upstream>,
+and reconstruct the current on top of <upstream>, discarding the original
+development history.  If --onto <newbase> is specified, the history is
+reconstructed on top of <newbase>, instead of <upstream>.  For example,
+while on "topic" branch:
+
+          A---B---C topic
+         /
+    D---E---F---G master
+
+	$ '"$0"' --onto master~1 master topic
+
+would rewrite the history to look like this:
+
+
+	      A'\''--B'\''--C'\'' topic
+	     /
+    D---E---F---G master
+'
+
 . git-sh-setup
 
-case $# in 1|2) ;; *) usage ;; esac
+unset newbase
+while case "$#" in 0) break ;; esac
+do
+	case "$1" in
+	--onto)
+		test 2 -le "$#" || usage
+		newbase="$2"
+		shift
+		;;
+	-*)
+		usage
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
 
 # Make sure we do not have .dotest
 if mkdir .dotest
@@ -30,37 +68,52 @@ case "$diff" in
 	;;
 esac
 
-# The other head is given.  Make sure it is valid.
-other=$(git-rev-parse --verify "$1^0") || usage
-
-# Make sure the branch to rebase is valid.
-head=$(git-rev-parse --verify "${2-HEAD}^0") || exit
+# The upstream head must be given.  Make sure it is valid.
+upstream_name="$1"
+upstream=`git rev-parse --verify "${upstream_name}^0"` ||
+    die "invalid upsteram $upstream_name"
 
 # If the branch to rebase is given, first switch to it.
 case "$#" in
 2)
+	branch_name="$2"
 	git-checkout "$2" || usage
+	;;
+*)
+	branch_name=`git symbolic-ref HEAD` || die "No current branch"
+	branch_name=`expr "$branch_name" : 'refs/heads/\(.*\)'`
+	;;
 esac
+branch=$(git-rev-parse --verify "${branch_name}^0") || exit
 
-mb=$(git-merge-base "$other" "$head")
+# Make sure the branch to rebase onto is valid.
+onto_name=${newbase-"$upstream_name"}
+onto=$(git-rev-parse --verify "${onto_name}^0") || exit
 
-# Check if we are already based on $other.
-if test "$mb" = "$other"
+# Now we are rebasing commits $upstream..$branch on top of $onto
+
+# Check if we are already based on $onto, but this should be
+# done only when upstream and onto are the same.
+if test "$upstream" = "onto"
 then
-	echo >&2 "Current branch `git-symbolic-ref HEAD` is up to date."
-	exit 0
+	mb=$(git-merge-base "$onto" "$branch")
+	if test "$mb" = "$onto"
+	then
+		echo >&2 "Current branch $branch_name is up to date."
+		exit 0
+	fi
 fi
 
-# Rewind the head to "$other"
-git-reset --hard "$other"
+# Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
+git-reset --hard "$onto"
 
-# If the $other is a proper descendant of the tip of the branch, then
+# If the $onto is a proper descendant of the tip of the branch, then
 # we just fast forwarded.
-if test "$mb" = "$head"
+if test "$mb" = "$onto"
 then
-	echo >&2 "Fast-forwarded $head to $other."
+	echo >&2 "Fast-forwarded $branch to $newbase."
 	exit 0
 fi
 
-git-format-patch -k --stdout --full-index "$other" ORIG_HEAD |
+git-format-patch -k --stdout --full-index "$upstream" ORIG_HEAD |
 git am --binary -3 -k
