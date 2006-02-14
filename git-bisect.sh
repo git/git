@@ -172,6 +172,7 @@ bisect_reset() {
 	rm -fr "$GIT_DIR/refs/bisect"
 	rm -f "$GIT_DIR/refs/heads/bisect"
 	rm -f "$GIT_DIR/BISECT_LOG"
+	rm -f "$GIT_DIR/BISECT_NAMES"
 }
 
 bisect_replay () {
