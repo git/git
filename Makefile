@@ -67,7 +67,7 @@ all:
 # change being considered an inode change from the update-cache perspective.
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
-	@$(SHELL) ./GIT-VERSION-GEN
+	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.

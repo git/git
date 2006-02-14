@@ -80,7 +80,7 @@ OPTIONS
 	R::	removed/deleted
 	C::	modified/changed
 	K::	to be killed
-	?	other
+	?::	other
 
 --full-name::
 	When run from a subdirectory, the command usually
