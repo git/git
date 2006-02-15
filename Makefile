@@ -419,6 +419,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
 	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    $@.sh >$@
 	chmod +x $@
 
