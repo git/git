@@ -165,8 +165,10 @@ else
 	exit 0
     )
     saved_err=$?
-    test "$new" = "$old" ||
-	git diff-index --name-status "$new"
+    if test "$saved_err" = 0
+    then
+	test "$new" = "$old" || git diff-index --name-status "$new"
+    fi
     (exit $saved_err)
 fi
 
