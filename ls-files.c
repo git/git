@@ -757,7 +757,7 @@ int main(int argc, const char **argv)
 			if (ps_matched[num])
 				continue;
 			error("pathspec '%s' did not match any.",
-			      pathspec[num] + prefix_len);
+			      pathspec[num] + prefix_offset);
 		}
 		return errors ? 1 : 0;
 	}
