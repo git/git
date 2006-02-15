@@ -55,9 +55,26 @@ static int same_entry(struct name_entry *a, struct name_entry *b)
 		a->mode == b->mode;
 }
 
-static void resolve(const char *base, struct name_entry *result)
+static const char *sha1_to_hex_zero(const unsigned char *sha1)
 {
-	printf("0 %06o %s %s%s\n", result->mode, sha1_to_hex(result->sha1), base, result->path);
+	if (sha1)
+		return sha1_to_hex(sha1);
+	return "0000000000000000000000000000000000000000";
+}
+
+static void resolve(const char *base, struct name_entry *branch1, struct name_entry *result)
+{
+	char branch1_sha1[50];
+
+	/* If it's already branch1, don't bother showing it */
+	if (!branch1)
+		return;
+	memcpy(branch1_sha1, sha1_to_hex_zero(branch1->sha1), 41);
+
+	printf("0 %06o->%06o %s->%s %s%s\n",
+		branch1->mode, result->mode,
+		branch1_sha1, sha1_to_hex_zero(result->sha1),
+		base, result->path);
 }
 
 static int unresolved_directory(const char *base, struct name_entry n[3])
@@ -100,9 +117,12 @@ static void unresolved(const char *base, struct name_entry n[3])
 {
 	if (unresolved_directory(base, n))
 		return;
-	printf("1 %06o %s %s%s\n", n[0].mode, sha1_to_hex(n[0].sha1), base, n[0].path);
-	printf("2 %06o %s %s%s\n", n[1].mode, sha1_to_hex(n[1].sha1), base, n[1].path);
-	printf("3 %06o %s %s%s\n", n[2].mode, sha1_to_hex(n[2].sha1), base, n[2].path);
+	if (n[0].sha1)
+		printf("1 %06o %s %s%s\n", n[0].mode, sha1_to_hex(n[0].sha1), base, n[0].path);
+	if (n[1].sha1)
+		printf("2 %06o %s %s%s\n", n[1].mode, sha1_to_hex(n[1].sha1), base, n[1].path);
+	if (n[2].sha1)
+		printf("3 %06o %s %s%s\n", n[2].mode, sha1_to_hex(n[2].sha1), base, n[2].path);
 }
 
 /*
@@ -183,21 +203,21 @@ static void merge_trees(struct tree_desc t[3], const char *base)
 		/* Same in both? */
 		if (same_entry(entry+1, entry+2)) {
 			if (entry[0].sha1) {
-				resolve(base, entry+1);
+				resolve(base, NULL, entry+1);
 				continue;
 			}
 		}
 
 		if (same_entry(entry+0, entry+1)) {
-			if (entry[2].sha1) {
-				resolve(base, entry+2);
+			if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
+				resolve(base, entry+1, entry+2);
 				continue;
 			}
 		}
 
 		if (same_entry(entry+0, entry+2)) {
-			if (entry[1].sha1) {
-				resolve(base, entry+1);
+			if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
+				resolve(base, NULL, entry+1);
 				continue;
 			}
 		}
