@@ -84,7 +84,7 @@ static void show_pack_info(struct packed_git *p)
 		char type[20];
 		unsigned long size;
 		unsigned long store_size;
-		int delta_chain_length;
+		unsigned int delta_chain_length;
 
 		if (nth_packed_object_sha1(p, i, sha1))
 			die("internal error pack-check nth-packed-object");
@@ -98,7 +98,7 @@ static void show_pack_info(struct packed_git *p)
 		if (!delta_chain_length)
 			printf("%-6s %lu %u\n", type, size, e.offset);
 		else
-			printf("%-6s %lu %u %d %s\n", type, size, e.offset,
+			printf("%-6s %lu %u %u %s\n", type, size, e.offset,
 			       delta_chain_length, sha1_to_hex(base_sha1));
 	}
 
