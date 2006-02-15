@@ -150,6 +150,8 @@ int main(int argc, const char **argv)
 					       nce->sha1, 20);
 					combine.p.parent[stage-2].mode =
 						DIFF_FILE_CANON_MODE(mode);
+					combine.p.parent[stage-2].status =
+						DIFF_STATUS_MODIFIED;
 				}
 
 				/* diff against the proper unmerged stage */

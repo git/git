@@ -630,9 +630,10 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int i, show_hunks, shown_header = 0;
 	char ourtmp_buf[TMPPATHLEN];
 	char *ourtmp = ourtmp_buf;
+	int working_tree_file = !memcmp(elem->sha1, null_sha1, 20);
 
 	/* Read the result of merge first */
-	if (memcmp(elem->sha1, null_sha1, 20)) {
+	if (!working_tree_file) {
 		result = grab_blob(elem->sha1, &size);
 		write_to_temp_file(ourtmp, result, size);
 	}
@@ -646,6 +647,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			int len = st.st_size;
 			int cnt = 0;
 
+			elem->mode = DIFF_FILE_CANON_MODE(st.st_mode);
 			size = len;
 			result = xmalloc(len + 1);
 			while (cnt < len) {
@@ -661,6 +663,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		else {
 			/* deleted file */
 			size = 0;
+			elem->mode = 0;
 			result = xmalloc(1);
 			result[0] = 0;
 			ourtmp = "/dev/null";
@@ -716,7 +719,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
-	if (show_hunks || mode_differs) {
+	if (show_hunks || mode_differs || working_tree_file) {
 		const char *abb;
 
 		if (header) {
@@ -731,8 +734,6 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		putchar('\n');
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
-			if (elem->parent[i].mode != elem->mode)
-				mode_differs = 1;
 			abb = find_unique_abbrev(elem->parent[i].sha1,
 						 DEFAULT_ABBREV);
 			printf("%s%s", i ? "," : "", abb);

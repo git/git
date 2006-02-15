@@ -30,19 +30,19 @@ die "Need SVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_s,$opt_l,$opt_d,$opt_D);
+our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_r,$opt_s,$opt_l,$opt_d,$opt_D);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
-       [-d|-D] [-i] [-u] [-s start_chg] [-m] [-M regex] [SVN_URL]
+       [-d|-D] [-i] [-u] [-r] [-s start_chg] [-m] [-M regex] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("b:C:dDhil:mM:o:s:t:T:uv") or usage();
+getopts("b:C:dDhil:mM:o:rs:t:T:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -650,6 +650,7 @@ sub commit {
 		$pr->reader();
 
 		$message =~ s/[\s\n]+\z//;
+		$message = "r$revision: $message" if $opt_r;
 
 		print $pw "$message\n"
 			or die "Error writing to git-commit-tree: $!\n";

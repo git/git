@@ -61,6 +61,10 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 	the git repository. Use this option if you want to import into a
 	different branch.
 
+-r::
+	Prepend 'rX: ' to commit messages, where X is the imported
+	subversion revision.
+
 -m::
 	Attempt to detect merges based on the commit message. This option
 	will enable default regexes that try to capture the name source
