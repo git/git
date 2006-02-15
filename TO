@@ -1,17 +1,33 @@
 #!/bin/sh
 
-clean=
-case "$1" in
---clean)
-	branch=`git symbolic-ref HEAD` &&
-	test refs/heads/master = "$branch" || {
-		echo >&2 Not on master 
+clean= next=next
+while case $# in 0) break ;; esac
+do
+	case "$1" in
+	--clean)
+		branch=`git symbolic-ref HEAD` &&
+		test refs/heads/master = "$branch" || {
+			echo >&2 Not on master 
+			exit 1
+		}
+		clean=t
+		;;
+	--next)
+		test 2 -le $# || {
+			echo >&2 "Need argument"
+			exit 1
+		}
+		next="$2"
+		git rev-parse --verify "$next" >/dev/null || exit
+		shift
+		;;
+	*)
+		echo >&2 "$0 [--clean | --next test-next ]"
 		exit 1
-	}
-	clean=t
+		;;
+	esac
 	shift
-	;;
-esac
+done
 
 LF='
 '
@@ -24,8 +40,8 @@ do
 	rebase= done= not_done= trouble=
 
 	# (1)
-	only_next_1=`git-rev-list ^master "^$topic" next | sort`
-	only_next_2=`git-rev-list ^master           next | sort`
+	only_next_1=`git-rev-list ^master "^$topic" ${next} | sort`
+	only_next_2=`git-rev-list ^master           ${next} | sort`
 	if test "$only_next_1" = "$only_next_2"
 	then
 		not_in_topic=`git-rev-list "^$topic" master`
@@ -47,7 +63,7 @@ do
 
 	# (3)
 	not_in_next=`
-		git-rev-list --pretty=oneline ^next "$topic" |
+		git-rev-list --pretty=oneline ^${next} "$topic" |
 		sed -e 's/^[0-9a-f]* / - /'
 	`
 	if test -n "$not_in_next"
@@ -56,7 +72,7 @@ do
 		then
 			trouble="${LF}### MODIFIED AFTER COOKED ###"
 		fi
-		not_done="${LF}Still not merged in next$rebase.$LF$not_in_next"
+		not_done="${LF}Still not merged in ${next}$rebase.$LF$not_in_next"
 	elif test -n "$done"
 	then
 		not_done=

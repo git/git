@@ -24,6 +24,23 @@ Documentation
   by Bruce Fields ongoing and things are looking better.
 
 
+UI
+--
+
+* Make "git branch -d foo" while on foo branch suggest "maybe
+  you want to go back to 'master'?"
+
+* Error message from "git checkout -b bar v2.6.10" should assume
+  v2.6.10 is an attempt to switch to a new branch based on
+  mistyped tag, not an attempt to revert path v2.6.10 from the
+  HEAD commit with extra "make and switch to this branch"
+  argument.
+
+* "git commit [-i|-o] paths..." with misspelled paths would be
+  silently ignored.  Add a flag to ls-files to catch unmatched
+  pathspec to prevent this.
+
+
 Design issues
 -------------
 
