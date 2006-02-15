@@ -180,6 +180,7 @@ verify=t
 verbose=
 signoff=
 force_author=
+only_include_assumed=
 while case "$#" in 0) break;; esac
 do
   case "$1" in
@@ -340,12 +341,8 @@ case "$#,$also$only" in
 0,)
   ;;
 *,)
-  echo >&2 "assuming --only paths..."
+  only_include_assumed="# Explicit paths specified without -i nor -o; assuming --only paths..."
   also=
-
-  # If we are going to launch an editor, the message won't be
-  # shown without this...
-  test -z "$log_given$status_only" && sleep 1
   ;;
 esac
 unset only
@@ -380,6 +377,8 @@ t,)
 	;;
 ,t)
 	save_index &&
+	git-ls-files --error-unmatch -- "$@" >/dev/null || exit
+
 	git-diff-files --name-only -z -- "$@"  |
 	(
 		cd "$TOP"
@@ -408,7 +407,7 @@ t,)
 		refuse_partial "Different in index and the last commit:
 $dirty_in_index"
 	    fi
-	    commit_only=`git-ls-files -- "$@"`
+	    commit_only=`git-ls-files --error-unmatch -- "$@"` || exit
 
 	    # Build the temporary index and update the real index
 	    # the same way.
@@ -569,7 +568,10 @@ else
 	PARENTS=""
 fi
 
-run_status >>"$GIT_DIR"/COMMIT_EDITMSG
+{
+	test -z "$only_include_assumed" || echo "$only_include_assumed"
+	run_status
+} >>"$GIT_DIR"/COMMIT_EDITMSG
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"

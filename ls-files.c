@@ -25,6 +25,8 @@ static int line_terminator = '\n';
 static int prefix_len = 0, prefix_offset = 0;
 static const char *prefix = NULL;
 static const char **pathspec = NULL;
+static int error_unmatch = 0;
+static char *ps_matched = NULL;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -325,7 +327,8 @@ static int cmp_name(const void *p1, const void *p2)
  * Match a pathspec against a filename. The first "len" characters
  * are the common prefix
  */
-static int match(const char **spec, const char *filename, int len)
+static int match(const char **spec, char *ps_matched,
+		 const char *filename, int len)
 {
 	const char *m;
 
@@ -333,17 +336,24 @@ static int match(const char **spec, const char *filename, int len)
 		int matchlen = strlen(m + len);
 
 		if (!matchlen)
-			return 1;
+			goto matched;
 		if (!strncmp(m + len, filename + len, matchlen)) {
 			if (m[len + matchlen - 1] == '/')
-				return 1;
+				goto matched;
 			switch (filename[len + matchlen]) {
 			case '/': case '\0':
-				return 1;
+				goto matched;
 			}
 		}
 		if (!fnmatch(m + len, filename + len, 0))
-			return 1;
+			goto matched;
+		if (ps_matched)
+			ps_matched++;
+		continue;
+	matched:
+		if (ps_matched)
+			*ps_matched = 1;
+		return 1;
 	}
 	return 0;
 }
@@ -356,7 +366,7 @@ static void show_dir_entry(const char *tag, struct nond_on_fs *ent)
 	if (len >= ent->len)
 		die("git-ls-files: internal error - directory entry not superset of prefix");
 
-	if (pathspec && !match(pathspec, ent->name, len))
+	if (pathspec && !match(pathspec, ps_matched, ent->name, len))
 		return;
 
 	fputs(tag, stdout);
@@ -444,7 +454,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (len >= ce_namelen(ce))
 		die("git-ls-files: internal error - cache entry not superset of prefix");
 
-	if (pathspec && !match(pathspec, ce->name, len))
+	if (pathspec && !match(pathspec, ps_matched, ce->name, len))
 		return;
 
 	if (!show_stage) {
@@ -699,6 +709,10 @@ int main(int argc, const char **argv)
 			prefix_offset = 0;
 			continue;
 		}
+		if (!strcmp(arg, "--error-unmatch")) {
+			error_unmatch = 1;
+			continue;
+		}
 		if (*arg == '-')
 			usage(ls_files_usage);
 		break;
@@ -709,6 +723,14 @@ int main(int argc, const char **argv)
 	/* Verify that the pathspec matches the prefix */
 	if (pathspec)
 		verify_pathspec();
+
+	/* Treat unmatching pathspec elements as errors */
+	if (pathspec && error_unmatch) {
+		int num;
+		for (num = 0; pathspec[num]; num++)
+			;
+		ps_matched = xcalloc(1, num);
+	}
 
 	if (show_ignored && !exc_given) {
 		fprintf(stderr, "%s: --ignored needs some exclude pattern\n",
@@ -725,5 +747,20 @@ int main(int argc, const char **argv)
 	if (prefix)
 		prune_cache();
 	show_files();
+
+	if (ps_matched) {
+		/* We need to make sure all pathspec matched otherwise
+		 * it is an error.
+		 */
+		int num, errors = 0;
+		for (num = 0; pathspec[num]; num++) {
+			if (ps_matched[num])
+				continue;
+			error("pathspec '%s' did not match any.",
+			      pathspec[num] + prefix_len);
+		}
+		return errors ? 1 : 0;
+	}
+
 	return 0;
 }
