@@ -22,7 +22,7 @@ while [ "$#" != "0" ]; do
 		[ -e "$GIT_DIR/refs/heads/$newbranch" ] &&
 			die "git checkout: branch $newbranch already exists"
 		git-check-ref-format "heads/$newbranch" ||
-			die "we do not like '$newbranch' as a branch name."
+			die "git checkout: we do not like '$newbranch' as a branch name."
 		;;
 	"-f")
 		force=1
@@ -75,9 +75,15 @@ done
 
 if test "$#" -ge 1
 then
+	hint=
+	if test "$#" -eq 1
+	then
+		hint="
+Did you intend to checkout '$@' which can not be resolved as commit?"
+	fi
 	if test '' != "$newbranch$force$merge"
 	then
-		die "updating paths and switching branches or forcing are incompatible."
+		die "git checkout: updating paths is incompatible with switching branches/forcing$hint"
 	fi
 	if test '' != "$new"
 	then
@@ -117,7 +123,8 @@ fi
 
 [ -z "$branch$newbranch" ] &&
 	[ "$new" != "$old" ] &&
-	die "git checkout: you need to specify a new branch name"
+	die "git checkout: to checkout the requested commit you need to specify 
+              a name for a new branch which is created and switched to"
 
 if [ "$force" ]
 then
