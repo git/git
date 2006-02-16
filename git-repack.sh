@@ -3,17 +3,20 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-USAGE='[-a] [-d] [-l] [-n]'
+USAGE='[-a] [-d] [-f] [-l] [-n] [-q]'
 . git-sh-setup
 	
-no_update_info= all_into_one= remove_redundant= local=
+no_update_info= all_into_one= remove_redundant=
+local= quiet= no_reuse_delta=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
 	-d)	remove_redundant=t ;;
-	-l)	local=t ;;
+	-q)	quiet=-q ;;
+	-f)	no_reuse_delta=--no-reuse-delta ;;
+	-l)	local=--local ;;
 	*)	usage ;;
 	esac
 	shift
@@ -39,9 +42,7 @@ case ",$all_into_one," in
 	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
-if [ "$local" ]; then
-	pack_objects="$pack_objects --local"
-fi
+pack_objects="$pack_objects $local $quiet $no_reuse_delta"
 name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) 2>&1 |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
