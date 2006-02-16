@@ -37,7 +37,7 @@ sed -n \
     -e '/^[^\/][^\/]\//p' |
 while read topic
 do
-	rebase= done= not_done= trouble=
+	rebase= done= not_done= trouble= date=
 
 	# (1)
 	only_next_1=`git-rev-list ^master "^$topic" ${next} | sort`
@@ -55,16 +55,14 @@ do
 
 	# (2)
 	not_in_master=`
-		git-rev-list --pretty=oneline ^master "$topic" |
-		sed -e 's/^[0-9a-f]* //'
+		git-rev-list ^master "$topic"
 	`
 	test -z "$not_in_master" &&
 	done="${LF}Fully merged -- delete."
 
 	# (3)
 	not_in_next=`
-		git-rev-list --pretty=oneline ^${next} "$topic" |
-		sed -e 's/^[0-9a-f]* / - /'
+		git-rev-list --pretty=oneline ^${next} "$topic"
 	`
 	if test -n "$not_in_next"
 	then
@@ -72,6 +70,12 @@ do
 		then
 			trouble="${LF}### MODIFIED AFTER COOKED ###"
 		fi
+		last=`expr "$not_in_next" : '\([0-9a-f]*\) '`
+		date=`
+			git-rev-list -1 --pretty "$last" |
+			sed -ne 's/^Date: *\(.*\)/ (\1)/p'
+		`
+		not_in_next=`echo "$not_in_next" | sed -e 's/^[0-9a-f]* / - /'`
 		not_done="${LF}Still not merged in ${next}$rebase.$LF$not_in_next"
 	elif test -n "$done"
 	then
@@ -80,7 +84,7 @@ do
 		not_done="${LF}Up to date."
 	fi
 
-	echo "*** $topic ***$trouble$done$not_done"
+	echo "*** $topic ***$date$trouble$done$not_done"
 
 	if test -z "$trouble$not_done" &&
 	    test -n "$done" &&
