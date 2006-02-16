@@ -24,6 +24,17 @@ while : ; do
   shift
 done
 
+# Check misspelled pathspec
+case "$#" in
+0)	;;
+*)
+	git-ls-files --error-unmatch --others --cached -- "$@" >/dev/null || {
+		echo >&2 "Maybe you misspelled it?"
+		exit 1
+	}
+	;;
+esac
+
 if test -f "$GIT_DIR/info/exclude"
 then
 	git-ls-files -z \
