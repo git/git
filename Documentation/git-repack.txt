@@ -9,7 +9,7 @@ objects into pack files.
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-d] [-l] [-n]
+'git-repack' [-a] [-d] [-f] [-l] [-n] [-q]
 
 DESCRIPTION
 -----------
@@ -41,6 +41,14 @@ OPTIONS
 
 -l::
         Pass the `--local` option to `git pack-objects`, see
+        gitlink:git-pack-objects[1].
+
+-f::
+        Pass the `--no-reuse-delta` option to `git pack-objects`, see
+        gitlink:git-pack-objects[1].
+
+-q::
+        Pass the `-q` option to `git pack-objects`, see
         gitlink:git-pack-objects[1].
 
 -n::
