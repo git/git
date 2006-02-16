@@ -72,6 +72,8 @@ int count_parents(struct commit * commit);
  * Post-conditions: 
  *   invariant of resulting list is:
  *      a reachable from b => ord(b) < ord(a)
+ *   in addition, when lifo == 0, commits on parallel tracks are
+ *   sorted in the dates order.
  */
-void sort_in_topological_order(struct commit_list ** list);
+void sort_in_topological_order(struct commit_list ** list, int lifo);
 #endif /* COMMIT_H */

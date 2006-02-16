@@ -27,6 +27,7 @@ static const char rev_list_usage[] =
 "  ordering output:\n"
 "    --merge-order [ --show-breaks ]\n"
 "    --topo-order\n"
+"    --date-order\n"
 "  formatting output:\n"
 "    --parents\n"
 "    --objects\n"
@@ -56,6 +57,7 @@ static int merge_order = 0;
 static int show_breaks = 0;
 static int stop_traversal = 0;
 static int topo_order = 0;
+static int lifo = 1;
 static int no_merges = 0;
 static const char **paths = NULL;
 static int remove_empty_trees = 0;
@@ -856,6 +858,13 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--topo-order")) {
 		        topo_order = 1;
+			lifo = 1;
+		        limited = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--date-order")) {
+		        topo_order = 1;
+			lifo = 0;
 		        limited = 1;
 			continue;
 		}
@@ -940,7 +949,7 @@ int main(int argc, const char **argv)
 	        if (limited)
 			list = limit_list(list);
 		if (topo_order)
-			sort_in_topological_order(&list);
+			sort_in_topological_order(&list, lifo);
 		show_commit_list(list);
 	} else {
 #ifndef NO_OPENSSL

@@ -48,6 +48,7 @@ static int is_rev_argument(const char *arg)
 		"--show-breaks",
 		"--sparse",
 		"--topo-order",
+		"--date-order",
 		"--unpacked",
 		NULL
 	};
