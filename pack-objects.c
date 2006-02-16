@@ -5,7 +5,7 @@
 #include "csum-file.h"
 #include <sys/time.h>
 
-static const char pack_usage[] = "git-pack-objects [-q] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
+static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -14,10 +14,11 @@ struct object_entry {
 	unsigned int depth;	/* delta depth */
 	unsigned int hash;	/* name hint hash */
 	enum object_type type;
+	unsigned char edge;	/* reused delta chain points at this entry. */
+	enum object_type in_pack_type;	/* could be delta */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
 	struct object_entry *delta;	/* delta base object */
 	struct packed_git *in_pack; 	/* already in pack */
-	enum object_type in_pack_type;	/* could be delta */
 	unsigned int in_pack_offset;
 };
 
@@ -36,6 +37,7 @@ struct object_entry {
 
 static unsigned char object_list_sha1[20];
 static int non_empty = 0;
+static int no_reuse_delta = 0;
 static int local = 0;
 static int incremental = 0;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
@@ -75,7 +77,9 @@ static int pack_revindex_hashsz = 0;
  * stats
  */
 static int written = 0;
+static int written_delta = 0;
 static int reused = 0;
+static int reused_delta = 0;
 
 static int pack_revindex_ix(struct packed_git *p)
 {
@@ -227,10 +231,23 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 	unsigned char header[10];
 	unsigned hdrlen, datalen;
 	enum object_type obj_type;
+	int to_reuse = 0;
 
 	obj_type = entry->type;
-	if (!entry->in_pack ||
-	    (obj_type != entry->in_pack_type)) {
+	if (! entry->in_pack)
+		to_reuse = 0;	/* can't reuse what we don't have */
+	else if (obj_type == OBJ_DELTA)
+		to_reuse = 1;	/* check_object() decided it for us */
+	else if (obj_type != entry->in_pack_type)
+		to_reuse = 0;	/* pack has delta which is unusable */
+	else if (entry->delta)
+		to_reuse = 0;	/* we want to pack afresh */
+	else
+		to_reuse = 1;	/* we have it in-pack undeltified,
+				 * and we do not need to deltify it.
+				 */
+
+	if (! to_reuse) {
 		buf = read_sha1_file(entry->sha1, type, &size);
 		if (!buf)
 			die("unable to read %s", sha1_to_hex(entry->sha1));
@@ -266,8 +283,12 @@ static unsigned long write_object(struct sha1file *f, struct object_entry *entry
 		sha1write(f, buf, datalen);
 		unuse_packed_git(p);
 		hdrlen = 0; /* not really */
+		if (obj_type == OBJ_DELTA)
+			reused_delta++;
 		reused++;
 	}
+	if (obj_type == OBJ_DELTA)
+		written_delta++;
 	written++;
 	return hdrlen + datalen;
 }
@@ -294,7 +315,6 @@ static void write_pack_file(void)
 	int i;
 	struct sha1file *f;
 	unsigned long offset;
-	unsigned long mb;
 	struct pack_header hdr;
 
 	if (!base_name)
@@ -357,10 +377,9 @@ static int add_object_entry(unsigned char *sha1, unsigned int hash)
 	unsigned int idx = nr_objects;
 	struct object_entry *entry;
 	struct packed_git *p;
-	unsigned int found_offset;
-	struct packed_git *found_pack;
+	unsigned int found_offset = 0;
+	struct packed_git *found_pack = NULL;
 
-	found_pack = NULL;
 	for (p = packed_git; p; p = p->next) {
 		struct pack_entry e;
 		if (find_pack_entry_one(sha1, &e, p)) {
@@ -420,32 +439,39 @@ static void check_object(struct object_entry *entry)
 	char type[20];
 
 	if (entry->in_pack) {
+		unsigned char base[20];
+		unsigned long size;
+		struct object_entry *base_entry;
+
+		/* We want in_pack_type even if we do not reuse delta.
+		 * There is no point not reusing non-delta representations.
+		 */
+		check_reuse_pack_delta(entry->in_pack,
+				       entry->in_pack_offset,
+				       base, &size,
+				       &entry->in_pack_type);
+
 		/* Check if it is delta, and the base is also an object
 		 * we are going to pack.  If so we will reuse the existing
 		 * delta.
 		 */
-		unsigned char base[20];
-		unsigned long size;
-		struct object_entry *base_entry;
-		if (!check_reuse_pack_delta(entry->in_pack,
-					    entry->in_pack_offset,
-					    base, &size,
-					    &entry->in_pack_type) &&
+		if (!no_reuse_delta &&
+		    entry->in_pack_type == OBJ_DELTA &&
 		    (base_entry = locate_object_entry(base))) {
-			/* We do not know depth at this point, but it
-			 * does not matter.  Getting delta_chain_length
-			 * with packed_object_info_detail() is not so
-			 * expensive, so we could do that later if we
-			 * wanted to.  Calling sha1_object_info to get
-			 * the true size (and later an uncompressed
-			 * representation) of deeply deltified object
-			 * is quite expensive.
+
+			/* Depth value does not matter - find_deltas()
+			 * will never consider reused delta as the
+			 * base object to deltify other objects
+			 * against, in order to avoid circular deltas.
 			 */
-			entry->depth = 1;
-			/* uncompressed size */
+
+			/* uncompressed size of the delta data */
 			entry->size = entry->delta_size = size;
 			entry->delta = base_entry;
 			entry->type = OBJ_DELTA;
+
+			base_entry->edge = 1;
+
 			return;
 		}
 		/* Otherwise we would do the usual */
@@ -568,6 +594,13 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	if (cur_entry->type != old_entry->type)
 		return -1;
 
+	/* If the current object is at edge, take the depth the objects
+	 * that depend on the current object into account -- otherwise
+	 * they would become too deep.
+	 */
+	if (cur_entry->edge)
+		max_depth /= 4;
+
 	size = cur_entry->size;
 	if (size < 50)
 		return -1;
@@ -627,7 +660,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 		if (entry->delta)
 			/* This happens if we decided to reuse existing
-			 * delta from a pack.
+			 * delta from a pack.  "!no_reuse_delta &&" is implied.
 			 */
 			continue;
 
@@ -636,6 +669,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		n->data = read_sha1_file(entry->sha1, type, &size);
 		if (size != entry->size)
 			die("object %s inconsistent object length (%lu vs %lu)", sha1_to_hex(entry->sha1), size, entry->size);
+
 		j = window;
 		while (--j > 0) {
 			unsigned int other_idx = idx + j;
@@ -664,7 +698,7 @@ static void prepare_pack(int window, int depth)
 		fprintf(stderr, "Packing %d objects", nr_objects);
 	get_object_details();
 	if (progress)
-		fprintf(stderr, ".");
+		fputc('.', stderr);
 
 	sorted_by_type = create_sorted_list(type_size_sort);
 	if (window && depth)
@@ -694,8 +728,9 @@ static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
 		}
 	}
 
-	fprintf(stderr, "Reusing %d objects pack %s\n", nr_objects,
-		sha1_to_hex(sha1));
+	if (progress)
+		fprintf(stderr, "Reusing %d objects pack %s\n", nr_objects,
+			sha1_to_hex(sha1));
 
 	if (pack_to_stdout) {
 		if (copy_fd(ifd, 1))
@@ -775,6 +810,10 @@ int main(int argc, char **argv)
 				progress = 0;
 				continue;
 			}
+			if (!strcmp("--no-reuse-delta", arg)) {
+				no_reuse_delta = 1;
+				continue;
+			}
 			if (!strcmp("--stdout", arg)) {
 				pack_to_stdout = 1;
 				continue;
@@ -850,7 +889,8 @@ int main(int argc, char **argv)
 			puts(sha1_to_hex(object_list_sha1));
 		}
 	}
-	fprintf(stderr, "Total %d, written %d, reused %d\n",
-		nr_objects, written, reused);
+	if (progress)
+		fprintf(stderr, "Total %d, written %d (delta %d), reused %d (delta %d)\n",
+			nr_objects, written, written_delta, reused, reused_delta);
 	return 0;
 }
