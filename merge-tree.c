@@ -125,44 +125,19 @@ static void unresolved(const char *base, struct name_entry n[3])
 		printf("3 %06o %s %s%s\n", n[2].mode, sha1_to_hex(n[2].sha1), base, n[2].path);
 }
 
-/*
- * Merge two trees together (t[1] and t[2]), using a common base (t[0])
- * as the origin.
- *
- * This walks the (sorted) trees in lock-step, checking every possible
- * name. Note that directories automatically sort differently from other
- * files (see "base_name_compare"), so you'll never see file/directory
- * conflicts, because they won't ever compare the same.
- *
- * IOW, if a directory changes to a filename, it will automatically be
- * seen as the directory going away, and the filename being created.
- *
- * Think of this as a three-way diff.
- *
- * The output will be either:
- *  - successful merge
- *	 "0 mode sha1 filename"
- *    NOTE NOTE NOTE! FIXME! We really really need to walk the index
- *    in parallel with this too!
- * 
- *  - conflict:
- *	"1 mode sha1 filename"
- *	"2 mode sha1 filename"
- *	"3 mode sha1 filename"
- *    where not all of the 1/2/3 lines may exist, of course.
- *
- * The successful merge rules are the same as for the three-way merge
- * in git-read-tree.
- */
-static void merge_trees(struct tree_desc t[3], const char *base)
+typedef void (*traverse_callback_t)(int n, unsigned long mask, struct name_entry *entry, const char *base);
+
+static void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callback_t callback)
 {
+	struct name_entry *entry = xmalloc(n*sizeof(*entry));
+
 	for (;;) {
 		struct name_entry entry[3];
-		unsigned int mask = 0;
+		unsigned long mask = 0;
 		int i, last;
 
 		last = -1;
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < n; i++) {
 			if (!t[i].size)
 				continue;
 			entry_extract(t+i, entry+i);
@@ -182,7 +157,7 @@ static void merge_trees(struct tree_desc t[3], const char *base)
 				if (cmp < 0)
 					mask = 0;
 			}
-			mask |= 1u << i;
+			mask |= 1ul << i;
 			last = i;
 		}
 		if (!mask)
@@ -192,38 +167,77 @@ static void merge_trees(struct tree_desc t[3], const char *base)
 		 * Update the tree entries we've walked, and clear
 		 * all the unused name-entries.
 		 */
-		for (i = 0; i < 3; i++) {
-			if (mask & (1u << i)) {
+		for (i = 0; i < n; i++) {
+			if (mask & (1ul << i)) {
 				update_tree_entry(t+i);
 				continue;
 			}
 			entry_clear(entry + i);
 		}
-
-		/* Same in both? */
-		if (same_entry(entry+1, entry+2)) {
-			if (entry[0].sha1) {
-				resolve(base, NULL, entry+1);
-				continue;
-			}
-		}
-
-		if (same_entry(entry+0, entry+1)) {
-			if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
-				resolve(base, entry+1, entry+2);
-				continue;
-			}
-		}
-
-		if (same_entry(entry+0, entry+2)) {
-			if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
-				resolve(base, NULL, entry+1);
-				continue;
-			}
-		}
-
-		unresolved(base, entry);
+		callback(n, mask, entry, base);
 	}
+	free(entry);
+}
+
+/*
+ * Merge two trees together (t[1] and t[2]), using a common base (t[0])
+ * as the origin.
+ *
+ * This walks the (sorted) trees in lock-step, checking every possible
+ * name. Note that directories automatically sort differently from other
+ * files (see "base_name_compare"), so you'll never see file/directory
+ * conflicts, because they won't ever compare the same.
+ *
+ * IOW, if a directory changes to a filename, it will automatically be
+ * seen as the directory going away, and the filename being created.
+ *
+ * Think of this as a three-way diff.
+ *
+ * The output will be either:
+ *  - successful merge
+ *	 "0 mode sha1 filename"
+ *    NOTE NOTE NOTE! FIXME! We really really need to walk the index
+ *    in parallel with this too!
+ *
+ *  - conflict:
+ *	"1 mode sha1 filename"
+ *	"2 mode sha1 filename"
+ *	"3 mode sha1 filename"
+ *    where not all of the 1/2/3 lines may exist, of course.
+ *
+ * The successful merge rules are the same as for the three-way merge
+ * in git-read-tree.
+ */
+static void threeway_callback(int n, unsigned long mask, struct name_entry *entry, const char *base)
+{
+	/* Same in both? */
+	if (same_entry(entry+1, entry+2)) {
+		if (entry[0].sha1) {
+			resolve(base, NULL, entry+1);
+			return;
+		}
+	}
+
+	if (same_entry(entry+0, entry+1)) {
+		if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
+			resolve(base, entry+1, entry+2);
+			return;
+		}
+	}
+
+	if (same_entry(entry+0, entry+2)) {
+		if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
+			resolve(base, NULL, entry+1);
+			return;
+		}
+	}
+
+	unresolved(base, entry);
+}
+
+static void merge_trees(struct tree_desc t[3], const char *base)
+{
+	traverse_trees(3, t, base, threeway_callback);
 }
 
 static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)
