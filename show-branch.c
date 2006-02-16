@@ -535,6 +535,7 @@ int main(int ac, char **av)
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_tags = 0;
 	int all_mask, all_revs;
+	int lifo = 1;
 	char head_path[128];
 	const char *head_path_p;
 	int head_path_len;
@@ -544,7 +545,6 @@ int main(int ac, char **av)
 	int no_name = 0;
 	int sha1_name = 0;
 	int shown_merge_point = 0;
-	int topo_order = 0;
 	int with_current_branch = 0;
 	int head_at = -1;
 
@@ -586,7 +586,9 @@ int main(int ac, char **av)
 		else if (!strcmp(arg, "--independent"))
 			independent = 1;
 		else if (!strcmp(arg, "--topo-order"))
-			topo_order = 1;
+			lifo = 1;
+		else if (!strcmp(arg, "--date-order"))
+			lifo = 0;
 		else
 			usage(show_branch_usage);
 		ac--; av++;
@@ -710,8 +712,7 @@ int main(int ac, char **av)
 		exit(0);
 
 	/* Sort topologically */
-	if (topo_order)
-		sort_in_topological_order(&seen);
+	sort_in_topological_order(&seen, lifo);
 
 	/* Give names to commits */
 	if (!sha1_name && !no_name)
