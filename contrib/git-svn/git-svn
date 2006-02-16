@@ -523,7 +523,7 @@ sub svn_log_raw {
 
 			# if we have an empty log message, put something there:
 			if (@svn_log) {
-				$svn_log[0]->{msg} ||= "\n";
+				$svn_log[$#svn_log]->{msg} ||= "\n";
 			}
 			next;
 		}
@@ -538,7 +538,7 @@ sub svn_log_raw {
 					date => "$tz $Y-$m-$d $H:$M:$S",
 					author => $author,
 					msg => '' );
-			unshift @svn_log, \%log_msg;
+			push @svn_log, \%log_msg;
 			$state = 'msg_start';
 			next;
 		}
@@ -546,7 +546,7 @@ sub svn_log_raw {
 		if ($state eq 'msg_start' && /^$/) {
 			$state = 'msg';
 		} elsif ($state eq 'msg') {
-			$svn_log[0]->{msg} .= $_."\n";
+			$svn_log[$#svn_log]->{msg} .= $_."\n";
 		}
 	}
 	close $log_fh or croak $?;
