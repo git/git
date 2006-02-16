@@ -830,7 +830,7 @@ void packed_object_info_detail(struct pack_entry *e,
 			       char *type,
 			       unsigned long *size,
 			       unsigned long *store_size,
-			       int *delta_chain_length,
+			       unsigned int *delta_chain_length,
 			       unsigned char *base_sha1)
 {
 	struct packed_git *p = e->p;
@@ -844,7 +844,7 @@ void packed_object_info_detail(struct pack_entry *e,
 	if (kind != OBJ_DELTA)
 		*delta_chain_length = 0;
 	else {
-		int chain_length = 0;
+		unsigned int chain_length = 0;
 		memcpy(base_sha1, pack, 20);
 		do {
 			struct pack_entry base_ent;

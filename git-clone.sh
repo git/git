@@ -206,7 +206,13 @@ yes,yes)
 		fi
 		;;
 	http://*)
-		clone_dumb_http "$repo" "$D"
+		if test -z "@@NO_CURL@@"
+		then
+			clone_dumb_http "$repo" "$D"
+		else
+			echo >&2 "http transport not supported, rebuild Git with curl support"
+			exit 1
+		fi
 		;;
 	*)
 		cd "$D" && case "$upload_pack" in
