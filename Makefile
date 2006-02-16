@@ -53,6 +53,8 @@ all:
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
 # sockaddr_storage.
 #
+# Define NO_ICONV if your libc does not properly support iconv.
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -378,6 +380,10 @@ ifdef NO_IPV6
 else
 	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
 endif
+endif
+
+ifdef NO_ICONV
+	ALL_CFLAGS += -DNO_ICONV
 endif
 
 ifdef PPC_SHA1
