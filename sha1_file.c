@@ -826,6 +826,25 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	return offset;
 }
 
+int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
+			   unsigned char *base, unsigned long *sizep,
+			   enum object_type *kindp)
+{
+	unsigned long ptr;
+	int status = -1;
+
+	use_packed_git(p);
+	ptr = offset;
+	ptr = unpack_object_header(p, ptr, kindp, sizep);
+	if (*kindp != OBJ_DELTA)
+		goto done;
+	memcpy(base, p->pack_base + ptr, 20);
+	status = 0;
+ done:
+	unuse_packed_git(p);
+	return status;
+}
+
 void packed_object_info_detail(struct pack_entry *e,
 			       char *type,
 			       unsigned long *size,
