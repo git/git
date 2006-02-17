@@ -276,6 +276,16 @@ ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
 	NEEDS_LIBICONV=YesPlease
 endif
+ifeq ($(uname_S),IRIX64)
+	NO_IPV6=YesPlease
+	NO_SETENV=YesPlease
+	NO_STRCASESTR=YesPlease
+	NO_SOCKADDR_STORAGE=YesPlease
+	SHELL_PATH=/usr/gnu/bin/bash
+	ALL_CFLAGS += -DPATH_MAX=1024
+	# for now, build 32-bit version
+	ALL_LDFLAGS += -L/usr/lib32
+endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
