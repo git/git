@@ -8,7 +8,10 @@ git-pack-objects - Create a packed archive of objects.
 
 SYNOPSIS
 --------
-'git-pack-objects' [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list
+[verse]
+'git-pack-objects' [-q] [--no-reuse-delta] [--non-empty]
+	[--local] [--incremental] [--window=N] [--depth=N]
+	{--stdout | base-name} < object-list
 
 
 DESCRIPTION
@@ -31,6 +34,10 @@ transport by their peers.
 Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
 enables git to read from such an archive.
+
+In a packed archive, an object is either stored as a compressed
+whole, or as a difference from some other object.  The latter is
+often called a delta.
 
 
 OPTIONS
@@ -73,6 +80,18 @@ base-name::
 --non-empty::
         Only create a packed archive if it would contain at
         least one object.
+
+-q::
+	This flag makes the command not to report its progress
+	on the standard error stream.
+
+--no-reuse-delta::
+	When creating a packed archive in a repository that
+	has existing packs, the command reuses existing deltas.
+	This sometimes results in a slightly suboptimal pack.
+	This flag tells the command not to reuse existing deltas
+	but compute them from scratch.
+
 
 Author
 ------

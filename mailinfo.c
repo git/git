@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef NO_ICONV
 #include <iconv.h>
+#endif
 #include "git-compat-util.h"
 #include "cache.h"
 
@@ -469,6 +471,7 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 
 static void convert_to_utf8(char *line, char *charset)
 {
+#ifndef NO_ICONV
 	char *in, *out;
 	size_t insize, outsize, nrc;
 	char outbuf[4096]; /* cheat */
@@ -501,6 +504,7 @@ static void convert_to_utf8(char *line, char *charset)
 		return;
 	*out = 0;
 	strcpy(line, outbuf);
+#endif
 }
 
 static void decode_header_bq(char *it)
