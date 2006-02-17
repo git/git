@@ -168,14 +168,15 @@ sub fetch {
 	my (@parents) = @_;
 	$SVN_URL ||= file_to_s("$GIT_DIR/$GIT_SVN/info/url");
 	my @log_args = -d $SVN_WC ? ($SVN_WC) : ($SVN_URL);
-	if (-d $SVN_WC && !$_revision) {
-		$_revision = 'BASE:HEAD';
+	unless ($_revision) {
+		$_revision = -d $SVN_WC ? 'BASE:HEAD' : '0:HEAD';
 	}
-	push @log_args, "-r$_revision" if $_revision;
+	push @log_args, "-r$_revision";
 	push @log_args, '--stop-on-copy' unless $_no_stop_copy;
 
 	eval { require XML::Simple or croak $! };
 	my $svn_log = $@ ? svn_log_raw(@log_args) : svn_log_xml(@log_args);
+	@$svn_log = sort { $a->{revision} <=> $b->{revision} } @$svn_log;
 
 	my $base = shift @$svn_log or croak "No base revision!\n";
 	my $last_commit = undef;
