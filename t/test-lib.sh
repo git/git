@@ -149,6 +149,21 @@ test_expect_code () {
 	fi
 }
 
+# Most tests can use the created repository, but some amy need to create more.
+# Usage: test_create_repo <directory>
+test_create_repo () {
+	test "$#" = 1 ||
+	error "bug in the test script: not 1 parameter to test-create-repo"
+	owd=`pwd`
+	repo="$1"
+	mkdir "$repo"
+	cd "$repo" || error "Cannot setup test environment"
+	"$GIT_EXEC_PATH/git" init-db --template=$GIT_EXEC_PATH/templates/blt/ 2>/dev/null ||
+	error "cannot run git init-db -- have you built things yet?"
+	mv .git/hooks .git/hooks-disabled
+	cd "$owd"
+}
+	
 test_done () {
 	trap - exit
 	case "$test_failure" in
@@ -196,9 +211,5 @@ test -d ../templates/blt || {
 # Test repository
 test=trash
 rm -fr "$test"
-mkdir "$test"
-cd "$test" || error "Cannot setup test environment"
-"$GIT_EXEC_PATH/git" init-db --template=../../templates/blt/ 2>/dev/null ||
-error "cannot run git init-db -- have you built things yet?"
-
-mv .git/hooks .git/hooks-disabled
+test_create_repo $test
+cd "$test"
