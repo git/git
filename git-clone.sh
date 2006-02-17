@@ -153,7 +153,7 @@ yes,yes)
 	    fi &&
 	    rm -f "$GIT_DIR/objects/sample" &&
 	    cd "$repo" &&
-	    find objects -depth -print | cpio -puamd$l "$GIT_DIR/" || exit 1
+	    find objects -depth -print | cpio -pumd$l "$GIT_DIR/" || exit 1
 	    ;;
 	yes)
 	    mkdir -p "$GIT_DIR/objects/info"
