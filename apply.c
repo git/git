@@ -1142,6 +1142,14 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 		size -= len;
 	}
 
+#ifdef NO_ACCURATE_DIFF
+	if (oldsize > 0 && old[oldsize - 1] == '\n' &&
+			newsize > 0 && new[newsize - 1] == '\n') {
+		oldsize--;
+		newsize--;
+	}
+#endif
+			
 	offset = find_offset(buf, desc->size, old, oldsize, frag->newpos);
 	if (offset >= 0) {
 		int diff = newsize - oldsize;

@@ -55,6 +55,9 @@ all:
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 #
+# Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
+# a missing newline at the end of the file.
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -402,6 +405,9 @@ else
 	LIBS += $(LIB_4_CRYPTO)
 endif
 endif
+endif
+ifdef NO_ACCURATE_DIFF
+	ALL_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
 ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER)) $(COMPAT_CFLAGS)
