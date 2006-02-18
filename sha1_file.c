@@ -551,8 +551,10 @@ static void prepare_packed_git_one(char *objdir, int local)
 	sprintf(path, "%s/pack", objdir);
 	len = strlen(path);
 	dir = opendir(path);
-	if (!dir)
+	if (!dir) {
+		fprintf(stderr, "unable to open object pack directory: %s: %s\n", path, strerror(errno));
 		return;
+	}
 	path[len++] = '/';
 	while ((de = readdir(dir)) != NULL) {
 		int namelen = strlen(de->d_name);
