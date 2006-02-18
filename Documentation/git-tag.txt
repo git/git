@@ -8,11 +8,13 @@ git-tag -  Create a tag object signed with GPG
 
 SYNOPSIS
 --------
+[verse]
 'git-tag' [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <name> [<head>]
+'git-tag' -l [<pattern>]
 
 DESCRIPTION
 -----------
-Adds a 'tag' reference in .git/refs/tags/
+Adds a 'tag' reference in `.git/refs/tags/`
 
 Unless `-f` is given, the tag must not yet exist in
 `.git/refs/tags/` directory.
@@ -32,6 +34,9 @@ GnuPG key for signing.
 
 `-d <tag>` deletes the tag.
 
+`-l <pattern>` lists tags that match the given pattern (or all
+if no pattern is given).
+
 OPTIONS
 -------
 -a::
@@ -48,6 +53,9 @@ OPTIONS
 
 -d::
 	Delete an existing tag with the given name
+
+-l <pattern>::
+	List tags that match the given pattern (or all if no pattern is given).
 
 -m <msg>::
 	Use the given tag message (instead of prompting)

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2005 Linus Torvalds
 
-USAGE='[-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [<head>]'
+USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [<head>]'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
@@ -10,6 +10,7 @@ signed=
 force=
 message=
 username=
+list=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -22,6 +23,17 @@ do
 	;;
     -f)
 	force=1
+	;;
+    -l)
+        cd "$GIT_DIR/refs" &&
+	case "$#" in
+	1)
+		find tags -type f -print ;;
+	*)
+		shift
+		find tags -type f -print | grep "$@" ;;
+	esac
+	exit $?
 	;;
     -m)
     	annotate=1
