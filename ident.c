@@ -46,6 +46,15 @@ static void copy_gecos(struct passwd *w, char *name, int sz)
 
 }
 
+static const char au_env[] = "GIT_AUTHOR_NAME";
+static const char co_env[] = "GIT_COMMITTER_NAME";
+static const char env_hint[] =
+"\n*** Environment problem:\n"
+"*** Your name cannot be determined from your system services (gecos).\n"
+"*** You would need to set %s and %s\n"
+"*** environment variables; otherwise you won't be able to perform\n"
+"*** certain operations because of \"empty ident\" errors.\n\n";
+
 int setup_ident(void)
 {
 	int len;
@@ -56,6 +65,11 @@ int setup_ident(void)
 
 	/* Get the name ("gecos") */
 	copy_gecos(pw, git_default_name, sizeof(git_default_name));
+
+	if (!*git_default_name) {
+		if (!getenv(au_env) || !getenv(co_env))
+			fprintf(stderr, env_hint, au_env, co_env);
+	}
 
 	/* Make up a fake email address (name + '@' + hostname [+ '.' + domainname]) */
 	len = strlen(pw->pw_name);
