@@ -15,6 +15,10 @@ shellquote = '$(call shq,$(1))'
 
 T = $(wildcard t[0-9][0-9][0-9][0-9]-*.sh)
 
+ifdef NO_PYTHON
+	GIT_TEST_OPTS += --no-python
+endif
+
 all: $(T) clean
 
 $(T):

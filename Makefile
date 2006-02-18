@@ -58,6 +58,8 @@ all:
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
 #
+# Define NO_PYTHON if you want to loose all benefits of the recursive merge.
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -442,6 +444,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
 	    $@.sh >$@
 	chmod +x $@
 
@@ -520,6 +523,12 @@ doc:
 
 
 ### Testing rules
+
+# GNU make supports exporting all variables by "export" without parameters.
+# However, the environment gets quite big, and some programs have problems
+# with that.
+
+export NO_PYTHON
 
 test: all
 	$(MAKE) -C t/ all
