@@ -10,16 +10,22 @@ static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--no
 struct object_entry {
 	unsigned char sha1[20];
 	unsigned long size;	/* uncompressed size */
-	unsigned long offset;	/* offset into the final pack file (nonzero if already written) */
+	unsigned long offset;	/* offset into the final pack file;
+				 * nonzero if already written.
+				 */
 	unsigned int depth;	/* delta depth */
+	unsigned int delta_limit;	/* base adjustment for in-pack delta */
 	unsigned int hash;	/* name hint hash */
 	enum object_type type;
-	unsigned char edge;	/* reused delta chain points at this entry. */
 	enum object_type in_pack_type;	/* could be delta */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
 	struct object_entry *delta;	/* delta base object */
 	struct packed_git *in_pack; 	/* already in pack */
 	unsigned int in_pack_offset;
+	struct object_entry *delta_child; /* delitified objects who bases me */
+	struct object_entry *delta_sibling; /* other deltified objects who
+					     * uses the same base as me
+					     */
 };
 
 /*
@@ -470,7 +476,8 @@ static void check_object(struct object_entry *entry)
 			entry->delta = base_entry;
 			entry->type = OBJ_DELTA;
 
-			base_entry->edge = 1;
+			entry->delta_sibling = base_entry->delta_child;
+			base_entry->delta_child = entry;
 
 			return;
 		}
@@ -513,15 +520,32 @@ static void hash_objects(void)
 	}
 }
 
+static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
+{
+	struct object_entry *child = me->delta_child;
+	unsigned int m = n;
+	while (child) {
+		unsigned int c = check_delta_limit(child, n + 1);
+		if (m < c)
+			m = c;
+		child = child->delta_sibling;
+	}
+	return m;
+}
+
 static void get_object_details(void)
 {
 	int i;
-	struct object_entry *entry = objects;
+	struct object_entry *entry;
 
 	hash_objects();
 	prepare_pack_ix();
-	for (i = 0; i < nr_objects; i++)
-		check_object(entry++);
+	for (i = 0, entry = objects; i < nr_objects; i++, entry++)
+		check_object(entry);
+	for (i = 0, entry = objects; i < nr_objects; i++, entry++)
+		if (!entry->delta && entry->delta_child)
+			entry->delta_limit =
+				check_delta_limit(entry, 1);
 }
 
 typedef int (*entry_sort_t)(const struct object_entry *, const struct object_entry *);
@@ -598,8 +622,11 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	 * that depend on the current object into account -- otherwise
 	 * they would become too deep.
 	 */
-	if (cur_entry->edge)
-		max_depth /= 4;
+	if (cur_entry->delta_child) {
+		if (max_depth <= cur_entry->delta_limit)
+			return 0;
+		max_depth -= cur_entry->delta_limit;
+	}
 
 	size = cur_entry->size;
 	if (size < 50)
