@@ -571,7 +571,7 @@ int count_parents(struct commit * commit)
 /*
  * Performs an in-place topological sort on the list supplied.
  */
-void sort_in_topological_order(struct commit_list ** list)
+void sort_in_topological_order(struct commit_list ** list, int lifo)
 {
 	struct commit_list * next = *list;
 	struct commit_list * work = NULL, **insert;
@@ -630,7 +630,10 @@ void sort_in_topological_order(struct commit_list ** list)
 		}
 		next=next->next;
 	}
+
 	/* process the list in topological order */
+	if (!lifo)
+		sort_by_date(&work);
 	while (work) {
 		struct commit * work_item = pop_commit(&work);
 		struct sort_node * work_node = (struct sort_node *)work_item->object.util;
@@ -647,8 +650,12 @@ void sort_in_topological_order(struct commit_list ** list)
                                  * guaranteeing topological order.
                                  */
 				pn->indegree--;
-				if (!pn->indegree) 
-					commit_list_insert(parent, &work);
+				if (!pn->indegree) {
+					if (!lifo)
+						insert_by_date(parent, &work);
+					else
+						commit_list_insert(parent, &work);
+				}
 			}
 			parents=parents->next;
 		}
