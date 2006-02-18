@@ -580,13 +580,12 @@ sub svn_info {
 sub sys { system(@_) == 0 or croak $? }
 
 sub git_addremove {
-	system(	"git-ls-files -z --others ".
+	system( "git-diff-files --name-only -z ".
+				" | git-update-index --remove -z --stdin; ".
+		"git-ls-files -z --others ".
 			"'--exclude-from=$GIT_DIR/$GIT_SVN/info/exclude'".
-				"| git-update-index --add -z --stdin; ".
-		"git-ls-files -z --deleted ".
-				"| git-update-index --remove -z --stdin; ".
-		"git-ls-files -z --modified".
-				"| git-update-index -z --stdin") == 0 or croak $?
+				" | git-update-index --add -z --stdin; "
+		) == 0 or croak $?
 }
 
 sub s_to_file {
