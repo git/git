@@ -32,7 +32,7 @@ EXAMPLES
 	  Show as the changes since version v2.6.12 that changed any file in the include/scsi
 	  or drivers/scsi subdirectories
 
-	gitk --since=2.weeks.ago
+	gitview --since=2.weeks.ago
 	  Show the changes during the last two weeks 
 
 	
