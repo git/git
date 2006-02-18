@@ -118,6 +118,7 @@ dir="$2"
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
+trap 'err=$?; rm -r $D; exit $err' exit
 case "$bare" in
 yes) GIT_DIR="$D" ;;
 *) GIT_DIR="$D/.git" ;;
@@ -255,3 +256,6 @@ Pull: $head_points_at:$origin" &&
 		git checkout
 	esac
 fi
+
+trap - exit
+

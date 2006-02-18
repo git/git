@@ -226,12 +226,12 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp(arg, "--short") ||
-			    !strncmp(arg, "--short=", 9)) {
+			    !strncmp(arg, "--short=", 8)) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
 				abbrev = DEFAULT_ABBREV;
-				if (arg[8] == '=')
-					abbrev = strtoul(arg + 9, NULL, 10);
+				if (arg[7] == '=')
+					abbrev = strtoul(arg + 8, NULL, 10);
 				if (abbrev < MINIMUM_ABBREV)
 					abbrev = MINIMUM_ABBREV;
 				else if (40 <= abbrev)
