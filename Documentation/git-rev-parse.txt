@@ -77,6 +77,14 @@ OPTIONS
 	path of the top-level directory relative to the current
 	directory (typically a sequence of "../", or an empty string).
 
+--git-dir::
+	Show `$GIT_DIR` if defined else show the path to the .git directory.
+
+--short, short=number::
+	Instead of outputting the full SHA1 values of object names try to
+	abbriviate them to a shorter unique name. When no length is specified
+	7 is used. The minimum length is 4.
+
 --since=datestring, --after=datestring::
 	Parses the date string, and outputs corresponding
 	--max-age= parameter for git-rev-list command.
