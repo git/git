@@ -42,7 +42,7 @@ fi
 
 . ./test-lib.sh
 
-"$PYTHON" -c 'import subprocess' || {
+test "$no_python" || "$PYTHON" -c 'import subprocess' || {
 	echo >&2 'Your python seem to lack "subprocess" module.
 Please check INSTALL document.'
 	exit 1

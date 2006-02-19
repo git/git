@@ -13,6 +13,10 @@ LF='
 all_strategies='recursive octopus resolve stupid ours'
 default_strategies='recursive'
 use_strategies=
+if test "@@NO_PYTHON@@"; then
+	all_strategies='resolve octopus stupid ours'
+	default_strategies='resolve'
+fi
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
