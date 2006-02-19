@@ -75,6 +75,15 @@ while(scalar @srcArgs > 0) {
     $dst = shift @dstArgs;
     $bad = "";
 
+    for ($src, $dst) {
+	# Be nicer to end-users by doing ".//a/./b/.//./c" ==> "a/b/c"
+	s|^\./||;
+	s|/\./|/| while (m|/\./|);
+	s|//+|/|g;
+	# Also "a/b/../c" ==> "a/c"
+	1 while (s,(^|/)[^/]+/\.\./,$1,);
+    }
+
     if ($opt_v) {
 	print "Checking rename of '$src' to '$dst'\n";
     }
