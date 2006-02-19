@@ -12,7 +12,7 @@ static const char var_usage[] = "git-var [-l | <variable>]";
 
 struct git_var {
 	const char *name;
-	const char *(*read)(void);
+	const char *(*read)(int);
 };
 static struct git_var git_vars[] = {
 	{ "GIT_COMMITTER_IDENT", git_committer_info },
@@ -24,7 +24,7 @@ static void list_vars(void)
 {
 	struct git_var *ptr;
 	for(ptr = git_vars; ptr->read; ptr++) {
-		printf("%s=%s\n", ptr->name, ptr->read());
+		printf("%s=%s\n", ptr->name, ptr->read(0));
 	}
 }
 
@@ -35,7 +35,7 @@ static const char *read_var(const char *var)
 	val = NULL;
 	for(ptr = git_vars; ptr->read; ptr++) {
 		if (strcmp(var, ptr->name) == 0) {
-			val = ptr->read();
+			val = ptr->read(1);
 			break;
 		}
 	}
