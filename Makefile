@@ -291,8 +291,10 @@ endif
 ifdef WITH_OWN_SUBPROCESS_PY
 	PYMODULES += compat/subprocess.py
 else
-	ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
-		PYMODULES += compat/subprocess.py
+	ifeq ($(NO_PYTHON),)
+		ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
+			PYMODULES += compat/subprocess.py
+		endif
 	endif
 endif
 
