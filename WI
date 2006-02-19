@@ -1,0 +1,20 @@
+#!/bin/sh
+# Prepare "What's in git.git"
+
+has_msg=' has these since the last announcement.'
+in_addition=
+for m in master next pu
+do
+	tagged=`git rev-parse --not --verify tags/sa/$m 2>/dev/null`
+	list=`git-rev-list $in_addition $tagged heads/$m 2>/dev/null` &&
+	test -n "$list" || continue
+
+	echo "* The '$m' branch$has_msg"
+	echo
+	git log $in_addition $tagged heads/$m |
+	git shortlog
+	echo
+
+	in_addition="$in_addition ^heads/$m"
+	has_msg=', in addition, has these.'
+done
