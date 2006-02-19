@@ -29,6 +29,7 @@ do
 	shift
 done
 
+master_sha1=`git rev-parse --verify refs/heads/master`
 LF='
 '
 (cd .git/refs/heads && find -type f) |
@@ -38,7 +39,12 @@ sed -n \
 while read topic
 do
 	rebase= done= not_done= trouble= date=
+	topic_sha1=`git rev-parse --verify "refs/heads/$topic"`
 
+	date=`
+		git-rev-list -1 --pretty "$topic" |
+		sed -ne 's/^Date: *\(.*\)/ (\1)/p'
+	`
 	# (1)
 	only_next_1=`git-rev-list ^master "^$topic" ${next} | sort`
 	only_next_2=`git-rev-list ^master           ${next} | sort`
@@ -62,20 +68,18 @@ do
 
 	# (3)
 	not_in_next=`
-		git-rev-list --pretty=oneline ^${next} "$topic"
+		git-rev-list --pretty=oneline ^${next} "$topic" |
+		sed -e 's/^[0-9a-f]* / - /'
 	`
 	if test -n "$not_in_next"
 	then
 	    	if test -n "$done"
 		then
+			# If $topic and master are the same,
+			# it is fine.
+			test "$master_sha1" = "$topic_sha1" ||
 			trouble="${LF}### MODIFIED AFTER COOKED ###"
 		fi
-		last=`expr "$not_in_next" : '\([0-9a-f]*\) '`
-		date=`
-			git-rev-list -1 --pretty "$last" |
-			sed -ne 's/^Date: *\(.*\)/ (\1)/p'
-		`
-		not_in_next=`echo "$not_in_next" | sed -e 's/^[0-9a-f]* / - /'`
 		not_done="${LF}Still not merged in ${next}$rebase.$LF$not_in_next"
 	elif test -n "$done"
 	then
