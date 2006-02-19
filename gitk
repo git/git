@@ -34,13 +34,17 @@ proc parse_args {rargs} {
 
 proc start_rev_list {rlargs} {
     global startmsecs nextupdate ncmupdate
-    global commfd leftover tclencoding
+    global commfd leftover tclencoding datemode
 
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
+    set order "--topo-order"
+    if {$datemode} {
+	set order "--date-order"
+    }
     if {[catch {
-	set commfd [open [concat | git-rev-list --header --topo-order \
+	set commfd [open [concat | git-rev-list --header $order \
 			      --parents $rlargs] r]
     } err]} {
 	puts stderr "Error executing git-rev-list: $err"
@@ -77,7 +81,7 @@ proc getcommits {rargs} {
 proc getcommitlines {commfd}  {
     global oldcommits commits parents cdate children nchildren
     global commitlisted phase nextupdate
-    global stopped redisplaying leftover
+    global stopped leftover
     global canv
 
     set stuff [read $commfd]
@@ -105,7 +109,7 @@ proc getcommitlines {commfd}  {
 	set i [string first "\0" $stuff $start]
 	if {$i < 0} {
 	    append leftover [string range $stuff $start end]
-	    return
+	    break
 	}
 	set cmit [string range $stuff $start [expr {$i - 1}]]
 	if {$start == 0} {
@@ -140,23 +144,10 @@ proc getcommitlines {commfd}  {
 	set commitlisted($id) 1
 	parsecommit $id $cmit 1 [lrange $ids 1 end]
 	drawcommit $id 1
-	if {[clock clicks -milliseconds] >= $nextupdate} {
-	    doupdate 1
-	}
-	while {$redisplaying} {
-	    set redisplaying 0
-	    if {$stopped == 1} {
-		set stopped 0
-		set phase "getcommits"
-		foreach id $commits {
-		    drawcommit $id 1
-		    if {$stopped} break
-		    if {[clock clicks -milliseconds] >= $nextupdate} {
-			doupdate 1
-		    }
-		}
-	    }
-	}
+    }
+    layoutmore
+    if {[clock clicks -milliseconds] >= $nextupdate} {
+	doupdate 1
     }
 }
 
@@ -193,7 +184,7 @@ proc updatecommits {rargs} {
     global parsed_args
     global canv mainfont
     global oldcommits commits
-    global parents nchildren children ncleft
+    global parents nchildren children
 
     set old_args $parsed_args
     parse_args $rargs
@@ -276,12 +267,11 @@ proc updatecommits {rargs} {
 }
 
 proc updatechildren {id olds} {
-    global children nchildren parents nparents ncleft
+    global children nchildren parents nparents
 
     if {![info exists nchildren($id)]} {
 	set children($id) {}
 	set nchildren($id) 0
-	set ncleft($id) 0
     }
     set parents($id) $olds
     set nparents($id) [llength $olds]
@@ -289,11 +279,9 @@ proc updatechildren {id olds} {
 	if {![info exists nchildren($p)]} {
 	    set children($p) [list $id]
 	    set nchildren($p) 1
-	    set ncleft($p) 1
 	} elseif {[lsearch -exact $children($p) $id] < 0} {
 	    lappend children($p) $id
 	    incr nchildren($p)
-	    incr ncleft($p)
 	}
     }
 }
@@ -457,7 +445,7 @@ proc makewindow {rargs} {
     set canv .ctop.top.clist.canv
     canvas $canv -height $geometry(canvh) -width $geometry(canv1) \
 	-bg white -bd 0 \
-	-yscrollincr $linespc -yscrollcommand "$cscroll set"
+	-yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
     .ctop.top.clist add $canv
     set canv2 .ctop.top.clist.canv2
     canvas $canv2 -height $geometry(canvh) -width $geometry(canv2) \
@@ -631,6 +619,11 @@ proc makewindow {rargs} {
     $rowctxmenu add command -label "Write commit to file" -command writecommit
 }
 
+proc scrollcanv {cscroll f0 f1} {
+    $cscroll set $f0 $f1
+    drawfrac $f0 $f1
+}
+
 # when we make a key binding for the toplevel, make sure
 # it doesn't get triggered when that key is pressed in the
 # find string entry widget.
@@ -763,15 +756,703 @@ proc about {} {
     toplevel $w
     wm title $w "About gitk"
     message $w.m -text {
-Gitk version 1.2
+Gitk - a commit viewer for git
 
-Copyright © 2005 Paul Mackerras
+Copyright © 2005-2006 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text Close -command "destroy $w"
     pack $w.ok -side bottom
+}
+
+proc shortids {ids} {
+    set res {}
+    foreach id $ids {
+	if {[llength $id] > 1} {
+	    lappend res [shortids $id]
+	} elseif {[regexp {^[0-9a-f]{40}$} $id]} {
+	    lappend res [string range $id 0 7]
+	} else {
+	    lappend res $id
+	}
+    }
+    return $res
+}
+
+proc incrange {l x o} {
+    set n [llength $l]
+    while {$x < $n} {
+	set e [lindex $l $x]
+	if {$e ne {}} {
+	    lset l $x [expr {$e + $o}]
+	}
+	incr x
+    }
+    return $l
+}
+
+proc ntimes {n o} {
+    set ret {}
+    for {} {$n > 0} {incr n -1} {
+	lappend ret $o
+    }
+    return $ret
+}
+
+proc usedinrange {id l1 l2} {
+    global children commitrow
+
+    if {[info exists commitrow($id)]} {
+	set r $commitrow($id)
+	if {$l1 <= $r && $r <= $l2} {
+	    return [expr {$r - $l1 + 1}]
+	}
+    }
+    foreach c $children($id) {
+	if {[info exists commitrow($c)]} {
+	    set r $commitrow($c)
+	    if {$l1 <= $r && $r <= $l2} {
+		return [expr {$r - $l1 + 1}]
+	    }
+	}
+    }
+    return 0
+}
+
+proc sanity {row {full 0}} {
+    global rowidlist rowoffsets
+
+    set col -1
+    set ids $rowidlist($row)
+    foreach id $ids {
+	incr col
+	if {$id eq {}} continue
+	if {$col < [llength $ids] - 1 &&
+	    [lsearch -exact -start [expr {$col+1}] $ids $id] >= 0} {
+	    puts "oops: [shortids $id] repeated in row $row col $col: {[shortids $rowidlist($row)]}"
+	}
+	set o [lindex $rowoffsets($row) $col]
+	set y $row
+	set x $col
+	while {$o ne {}} {
+	    incr y -1
+	    incr x $o
+	    if {[lindex $rowidlist($y) $x] != $id} {
+		puts "oops: rowoffsets wrong at row [expr {$y+1}] col [expr {$x-$o}]"
+		puts "  id=[shortids $id] check started at row $row"
+		for {set i $row} {$i >= $y} {incr i -1} {
+		    puts "  row $i ids={[shortids $rowidlist($i)]} offs={$rowoffsets($i)}"
+		}
+		break
+	    }
+	    if {!$full} break
+	    set o [lindex $rowoffsets($y) $x]
+	}
+    }
+}
+
+proc makeuparrow {oid x y z} {
+    global rowidlist rowoffsets uparrowlen idrowranges
+
+    for {set i 1} {$i < $uparrowlen && $y > 1} {incr i} {
+	incr y -1
+	incr x $z
+	set off0 $rowoffsets($y)
+	for {set x0 $x} {1} {incr x0} {
+	    if {$x0 >= [llength $off0]} {
+		set x0 [llength $rowoffsets([expr {$y-1}])]
+		break
+	    }
+	    set z [lindex $off0 $x0]
+	    if {$z ne {}} {
+		incr x0 $z
+		break
+	    }
+	}
+	set z [expr {$x0 - $x}]
+	set rowidlist($y) [linsert $rowidlist($y) $x $oid]
+	set rowoffsets($y) [linsert $rowoffsets($y) $x $z]
+    }
+    set tmp [lreplace $rowoffsets($y) $x $x {}]
+    set rowoffsets($y) [incrange $tmp [expr {$x+1}] -1]
+    lappend idrowranges($oid) $y
+}
+
+proc initlayout {} {
+    global rowidlist rowoffsets displayorder
+    global rowlaidout rowoptim
+    global idinlist rowchk
+
+    set rowidlist(0) {}
+    set rowoffsets(0) {}
+    catch {unset idinlist}
+    catch {unset rowchk}
+    set rowlaidout 0
+    set rowoptim 0
+}
+
+proc visiblerows {} {
+    global canv numcommits linespc
+
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    if {$ymax eq {} || $ymax == 0} return
+    set f [$canv yview]
+    set y0 [expr {int([lindex $f 0] * $ymax)}]
+    set r0 [expr {int(($y0 - 3) / $linespc) - 1}]
+    if {$r0 < 0} {
+	set r0 0
+    }
+    set y1 [expr {int([lindex $f 1] * $ymax)}]
+    set r1 [expr {int(($y1 - 3) / $linespc) + 1}]
+    if {$r1 >= $numcommits} {
+	set r1 [expr {$numcommits - 1}]
+    }
+    return [list $r0 $r1]
+}
+
+proc layoutmore {} {
+    global rowlaidout rowoptim commitidx numcommits optim_delay
+    global uparrowlen
+
+    set row $rowlaidout
+    set rowlaidout [layoutrows $row $commitidx 0]
+    set orow [expr {$rowlaidout - $uparrowlen - 1}]
+    if {$orow > $rowoptim} {
+	checkcrossings $rowoptim $orow
+	optimize_rows $rowoptim 0 $orow
+	set rowoptim $orow
+    }
+    set canshow [expr {$rowoptim - $optim_delay}]
+    if {$canshow > $numcommits} {
+	showstuff $canshow
+    }
+}
+
+proc showstuff {canshow} {
+    global numcommits
+    global canvy0 linespc
+    global linesegends idrowranges idrangedrawn
+
+    set row $numcommits
+    set numcommits $canshow
+    allcanvs conf -scrollregion \
+	[list 0 0 0 [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]]
+    set rows [visiblerows]
+    set r0 [lindex $rows 0]
+    set r1 [lindex $rows 1]
+    for {set r $row} {$r < $canshow} {incr r} {
+	if {[info exists linesegends($r)]} {
+	    foreach id $linesegends($r) {
+		set i -1
+		foreach {s e} $idrowranges($id) {
+		    incr i
+		    if {$e ne {} && $e < $numcommits && $s <= $r1 && $e >= $r0
+			&& ![info exists idrangedrawn($id,$i)]} {
+			drawlineseg $id $i 1
+			set idrangedrawn($id,$i) 1
+		    }
+		}
+	    }
+	}
+    }
+    if {$canshow > $r1} {
+	set canshow $r1
+    }
+    while {$row < $canshow} {
+	drawcmitrow $row
+	incr row
+    }
+}
+
+proc layoutrows {row endrow last} {
+    global rowidlist rowoffsets displayorder
+    global uparrowlen downarrowlen maxwidth mingaplen
+    global nchildren parents nparents
+    global idrowranges linesegends
+    global commitidx
+    global idinlist rowchk
+
+    set idlist $rowidlist($row)
+    set offs $rowoffsets($row)
+    while {$row < $endrow} {
+	set id [lindex $displayorder $row]
+	set oldolds {}
+	set newolds {}
+	foreach p $parents($id) {
+	    if {![info exists idinlist($p)]} {
+		lappend newolds $p
+	    } elseif {!$idinlist($p)} {
+		lappend oldolds $p
+	    }
+	}
+	set nev [expr {[llength $idlist] + [llength $newolds]
+		       + [llength $oldolds] - $maxwidth + 1}]
+	if {$nev > 0} {
+	    if {!$last && $row + $uparrowlen + $mingaplen >= $commitidx} break
+	    for {set x [llength $idlist]} {[incr x -1] >= 0} {} {
+		set i [lindex $idlist $x]
+		if {![info exists rowchk($i)] || $row >= $rowchk($i)} {
+		    set r [usedinrange $i [expr {$row - $downarrowlen}] \
+			       [expr {$row + $uparrowlen + $mingaplen}]]
+		    if {$r == 0} {
+			set idlist [lreplace $idlist $x $x]
+			set offs [lreplace $offs $x $x]
+			set offs [incrange $offs $x 1]
+			set idinlist($i) 0
+			lappend linesegends($row) $i
+			lappend idrowranges($i) [expr {$row-1}]
+			if {[incr nev -1] <= 0} break
+			continue
+		    }
+		    set rowchk($id) [expr {$row + $r}]
+		}
+	    }
+	    set rowidlist($row) $idlist
+	    set rowoffsets($row) $offs
+	}
+	set col [lsearch -exact $idlist $id]
+	if {$col < 0} {
+	    set col [llength $idlist]
+	    lappend idlist $id
+	    set rowidlist($row) $idlist
+	    set z {}
+	    if {$nchildren($id) > 0} {
+		set z [expr {[llength $rowidlist([expr {$row-1}])] - $col}]
+		unset idinlist($id)
+	    }
+	    lappend offs $z
+	    set rowoffsets($row) $offs
+	    if {$z ne {}} {
+		makeuparrow $id $col $row $z
+	    }
+	} else {
+	    unset idinlist($id)
+	}
+	if {[info exists idrowranges($id)]} {
+	    lappend linesegends($row) $id
+	    lappend idrowranges($id) $row
+	}
+	incr row
+	set offs [ntimes [llength $idlist] 0]
+	set l [llength $newolds]
+	set idlist [eval lreplace \$idlist $col $col $newolds]
+	set o 0
+	if {$l != 1} {
+	    set offs [lrange $offs 0 [expr {$col - 1}]]
+	    foreach x $newolds {
+		lappend offs {}
+		incr o -1
+	    }
+	    incr o
+	    set tmp [expr {[llength $idlist] - [llength $offs]}]
+	    if {$tmp > 0} {
+		set offs [concat $offs [ntimes $tmp $o]]
+	    }
+	} else {
+	    lset offs $col {}
+	}
+	foreach i $newolds {
+	    set idinlist($i) 1
+	    set idrowranges($i) $row
+	}
+	incr col $l
+	foreach oid $oldolds {
+	    set idinlist($oid) 1
+	    set idlist [linsert $idlist $col $oid]
+	    set offs [linsert $offs $col $o]
+	    makeuparrow $oid $col $row $o
+	    incr col
+	}
+	set rowidlist($row) $idlist
+	set rowoffsets($row) $offs
+    }
+    return $row
+}
+
+proc addextraid {id row} {
+    global displayorder commitrow lineid commitinfo nparents
+    global commitidx
+
+    incr commitidx
+    lappend displayorder $id
+    set commitrow($id) $row
+    set lineid($row) $id
+    readcommit $id
+    if {![info exists commitinfo($id)]} {
+	set commitinfo($id) {"No commit information available"}
+	set nparents($id) 0
+    }
+}
+
+proc layouttail {} {
+    global rowidlist rowoffsets idinlist commitidx
+    global idrowranges linesegends
+
+    set row $commitidx
+    set idlist $rowidlist($row)
+    while {$idlist ne {}} {
+	set col [expr {[llength $idlist] - 1}]
+	set id [lindex $idlist $col]
+	addextraid $id $row
+	unset idinlist($id)
+	lappend linesegends($row) $id
+	lappend idrowranges($id) $row
+	incr row
+	set offs [ntimes $col 0]
+	set idlist [lreplace $idlist $col $col]
+	set rowidlist($row) $idlist
+	set rowoffsets($row) $offs
+    }
+
+    foreach id [array names idinlist] {
+	addextraid $id $row
+	set rowidlist($row) [list $id]
+	set rowoffsets($row) 0
+	makeuparrow $id 0 $row 0
+	lappend linesegends($row) $id
+	lappend idrowranges($id) $row
+	incr row
+    }
+}
+
+proc insert_pad {row col npad} {
+    global rowidlist rowoffsets
+
+    set pad [ntimes $npad {}]
+    set rowidlist($row) [eval linsert \$rowidlist($row) $col $pad]
+    set tmp [eval linsert \$rowoffsets($row) $col $pad]
+    set rowoffsets($row) [incrange $tmp [expr {$col + $npad}] [expr {-$npad}]]
+}
+
+proc optimize_rows {row col endrow} {
+    global rowidlist rowoffsets idrowranges
+
+    for {} {$row < $endrow} {incr row} {
+	set idlist $rowidlist($row)
+	set offs $rowoffsets($row)
+	set haspad 0
+	for {} {$col < [llength $offs]} {incr col} {
+	    if {[lindex $idlist $col] eq {}} {
+		set haspad 1
+		continue
+	    }
+	    set z [lindex $offs $col]
+	    if {$z eq {}} continue
+	    set isarrow 0
+	    set x0 [expr {$col + $z}]
+	    set y0 [expr {$row - 1}]
+	    set z0 [lindex $rowoffsets($y0) $x0]
+	    if {$z0 eq {}} {
+		set id [lindex $idlist $col]
+		if {[info exists idrowranges($id)] &&
+		    $y0 > [lindex $idrowranges($id) 0]} {
+		    set isarrow 1
+		}
+	    }
+	    if {$z < -1 || ($z < 0 && $isarrow)} {
+		set npad [expr {-1 - $z + $isarrow}]
+		set offs [incrange $offs $col $npad]
+		insert_pad $y0 $x0 $npad
+		if {$y0 > 0} {
+		    optimize_rows $y0 $x0 $row
+		}
+		set z [lindex $offs $col]
+		set x0 [expr {$col + $z}]
+		set z0 [lindex $rowoffsets($y0) $x0]
+	    } elseif {$z > 1 || ($z > 0 && $isarrow)} {
+		set npad [expr {$z - 1 + $isarrow}]
+		set y1 [expr {$row + 1}]
+		set offs2 $rowoffsets($y1)
+		set x1 -1
+		foreach z $offs2 {
+		    incr x1
+		    if {$z eq {} || $x1 + $z < $col} continue
+		    if {$x1 + $z > $col} {
+			incr npad
+		    }
+		    set rowoffsets($y1) [incrange $offs2 $x1 $npad]
+		    break
+		}
+		set pad [ntimes $npad {}]
+		set idlist [eval linsert \$idlist $col $pad]
+		set tmp [eval linsert \$offs $col $pad]
+		incr col $npad
+		set offs [incrange $tmp $col [expr {-$npad}]]
+		set z [lindex $offs $col]
+		set haspad 1
+	    }
+	    if {$z0 ne {} && $z < 0 && $z0 > 0} {
+		insert_pad $y0 $x0 1
+		set offs [incrange $offs $col 1]
+		optimize_rows $y0 [expr {$x0 + 1}] $row
+	    }
+	}
+	if {!$haspad} {
+	    for {set col [llength $idlist]} {[incr col -1] >= 0} {} {
+		set o [lindex $offs $col]
+		if {$o eq {} || $o <= 0} break
+	    }
+	    if {[incr col] < [llength $idlist]} {
+		set y1 [expr {$row + 1}]
+		set offs2 $rowoffsets($y1)
+		set x1 -1
+		foreach z $offs2 {
+		    incr x1
+		    if {$z eq {} || $x1 + $z < $col} continue
+		    set rowoffsets($y1) [incrange $offs2 $x1 1]
+		    break
+		}
+		set idlist [linsert $idlist $col {}]
+		set tmp [linsert $offs $col {}]
+		incr col
+		set offs [incrange $tmp $col -1]
+	    }
+	}
+	set rowidlist($row) $idlist
+	set rowoffsets($row) $offs
+	set col 0
+    }
+}
+
+proc xc {row col} {
+    global canvx0 linespc
+    return [expr {$canvx0 + $col * $linespc}]
+}
+
+proc yc {row} {
+    global canvy0 linespc
+    return [expr {$canvy0 + $row * $linespc}]
+}
+
+proc drawlineseg {id i wid} {
+    global rowoffsets rowidlist idrowranges
+    global canv colormap lthickness
+
+    set startrow [lindex $idrowranges($id) [expr {2 * $i}]]
+    set row [lindex $idrowranges($id) [expr {2 * $i + 1}]]
+    if {$startrow == $row} return
+    assigncolor $id
+    set coords {}
+    set col [lsearch -exact $rowidlist($row) $id]
+    if {$col < 0} {
+	puts "oops: drawline: id $id not on row $row"
+	return
+    }
+    set lasto {}
+    set ns 0
+    while {1} {
+	set o [lindex $rowoffsets($row) $col]
+	if {$o eq {}} break
+	if {$o ne $lasto} {
+	    # changing direction
+	    set x [xc $row $col]
+	    set y [yc $row]
+	    lappend coords $x $y
+	    set lasto $o
+	}
+	incr col $o
+	incr row -1
+    }
+    if {$coords eq {}} return
+    set last [expr {[llength $idrowranges($id)] / 2 - 1}]
+    set arrow [expr {2 * ($i > 0) + ($i < $last)}]
+    set arrow [lindex {none first last both} $arrow]
+    set wid [expr {$wid * $lthickness}]
+    set x [xc $row $col]
+    set y [yc $row]
+    lappend coords $x $y
+    set t [$canv create line $coords -width $wid \
+	       -fill $colormap($id) -tags lines.$id -arrow $arrow]
+    $canv lower $t
+    bindline $t $id
+}
+
+proc drawparentlinks {id row col olds wid} {
+    global rowoffsets rowidlist canv colormap lthickness
+
+    set row2 [expr {$row + 1}]
+    set x [xc $row $col]
+    set y [yc $row]
+    set y2 [yc $row2]
+    set ids $rowidlist($row2)
+    set offs $rowidlist($row2)
+    # rmx = right-most X coord used
+    set rmx 0
+    set wid [expr {$wid * $lthickness}]
+    foreach p $olds {
+	set i [lsearch -exact $ids $p]
+	if {$i < 0} {
+	    puts "oops, parent $p of $id not in list"
+	    continue
+	}
+	assigncolor $p
+	# should handle duplicated parents here...
+	set coords [list $x $y]
+	if {$i < $col - 1} {
+	    lappend coords [xc $row [expr {$i + 1}]] $y
+	} elseif {$i > $col + 1} {
+	    lappend coords [xc $row [expr {$i - 1}]] $y
+	}
+	set x2 [xc $row2 $i]
+	if {$x2 > $rmx} {
+	    set rmx $x2
+	}
+	lappend coords $x2 $y2
+	set t [$canv create line $coords -width $wid \
+		   -fill $colormap($p) -tags lines.$p]
+	$canv lower $t
+	bindline $t $p
+    }
+    return $rmx
+}
+
+proc drawlines {id xtra} {
+    global colormap canv
+    global idrowranges idrangedrawn
+    global children iddrawn commitrow rowidlist
+
+    $canv delete lines.$id
+    set wid [expr {$xtra + 1}]
+    set nr [expr {[llength $idrowranges($id)] / 2}]
+    for {set i 0} {$i < $nr} {incr i} {
+	if {[info exists idrangedrawn($id,$i)]} {
+	    drawlineseg $id $i $wid
+	}
+    }
+    if {[info exists children($id)]} {
+	foreach child $children($id) {
+	    if {[info exists iddrawn($child)]} {
+		set row $commitrow($child)
+		set col [lsearch -exact $rowidlist($row) $child]
+		if {$col >= 0} {
+		    drawparentlinks $child $row $col [list $id] $wid
+		}
+	    }
+	}
+    }
+}
+
+proc drawcmittext {id row col rmx} {
+    global linespc canv canv2 canv3 canvy0
+    global commitlisted commitinfo rowidlist
+    global rowtextx idpos idtags idheads idotherrefs
+    global linehtag linentag linedtag
+    global mainfont namefont
+
+    set ofill [expr {[info exists commitlisted($id)]? "blue": "white"}]
+    set x [xc $row $col]
+    set y [yc $row]
+    set orad [expr {$linespc / 3}]
+    set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
+	       [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
+	       -fill $ofill -outline black -width 1]
+    $canv raise $t
+    $canv bind $t <1> {selcanvline {} %x %y}
+    set xt [xc $row [llength $rowidlist($row)]]
+    if {$xt < $rmx} {
+	set xt $rmx
+    }
+    set rowtextx($row) $xt
+    set idpos($id) [list $x $xt $y]
+    if {[info exists idtags($id)] || [info exists idheads($id)]
+	|| [info exists idotherrefs($id)]} {
+	set xt [drawtags $id $x $xt $y]
+    }
+    set headline [lindex $commitinfo($id) 0]
+    set name [lindex $commitinfo($id) 1]
+    set date [lindex $commitinfo($id) 2]
+    set date [formatdate $date]
+    set linehtag($row) [$canv create text $xt $y -anchor w \
+			    -text $headline -font $mainfont ]
+    $canv bind $linehtag($row) <Button-3> "rowmenu %X %Y $id"
+    set linentag($row) [$canv2 create text 3 $y -anchor w \
+			    -text $name -font $namefont]
+    set linedtag($row) [$canv3 create text 3 $y -anchor w \
+			    -text $date -font $mainfont]
+}
+
+proc drawcmitrow {row} {
+    global displayorder rowidlist rowoffsets
+    global idrowranges idrangedrawn iddrawn
+    global commitinfo commitlisted parents numcommits
+
+    if {![info exists rowidlist($row)]} return
+    foreach id $rowidlist($row) {
+	if {![info exists idrowranges($id)]} continue
+	set i -1
+	foreach {s e} $idrowranges($id) {
+	    incr i
+	    if {$row < $s} continue
+	    if {$e eq {}} break
+	    if {$row <= $e} {
+		if {$e < $numcommits && ![info exists idrangedrawn($id,$i)]} {
+		    drawlineseg $id $i 1
+		    set idrangedrawn($id,$i) 1
+		}
+		break
+	    }
+	}
+    }
+
+    set id [lindex $displayorder $row]
+    if {[info exists iddrawn($id)]} return
+    set col [lsearch -exact $rowidlist($row) $id]
+    if {$col < 0} {
+	puts "oops, row $row id $id not in list"
+	return
+    }
+    if {![info exists commitinfo($id)]} {
+	readcommit $id
+	if {![info exists commitinfo($id)]} {
+	    set commitinfo($id) {"No commit information available"}
+	    set nparents($id) 0
+	}
+    }
+    assigncolor $id
+    if {[info exists commitlisted($id)] && [info exists parents($id)]
+	&& $parents($id) ne {}} {
+	set rmx [drawparentlinks $id $row $col $parents($id) 1]
+    } else {
+	set rmx 0
+    }
+    drawcmittext $id $row $col $rmx
+    set iddrawn($id) 1
+}
+
+proc drawfrac {f0 f1} {
+    global numcommits canv
+    global linespc
+
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    if {$ymax eq {} || $ymax == 0} return
+    set y0 [expr {int($f0 * $ymax)}]
+    set row [expr {int(($y0 - 3) / $linespc) - 1}]
+    if {$row < 0} {
+	set row 0
+    }
+    set y1 [expr {int($f1 * $ymax)}]
+    set endrow [expr {int(($y1 - 3) / $linespc) + 1}]
+    if {$endrow >= $numcommits} {
+	set endrow [expr {$numcommits - 1}]
+    }
+    for {} {$row <= $endrow} {incr row} {
+	drawcmitrow $row
+    }
+}
+
+proc drawvisible {} {
+    global canv
+    eval drawfrac [$canv yview]
+}
+
+proc clear_display {} {
+    global iddrawn idrangedrawn
+
+    allcanvs delete all
+    catch {unset iddrawn}
+    catch {unset idrangedrawn}
 }
 
 proc assigncolor {id} {
@@ -781,7 +1462,7 @@ proc assigncolor {id} {
 
     if {[info exists colormap($id)]} return
     set ncolors [llength $colors]
-    if {$nparents($id) <= 1 && $nchildren($id) == 1} {
+    if {$nchildren($id) == 1} {
 	set child [lindex $children($id) 0]
 	if {[info exists colormap($child)]
 	    && $nparents($child) == 1} {
@@ -846,25 +1527,16 @@ proc assigncolor {id} {
 }
 
 proc initgraph {} {
-    global canvy canvy0 lineno numcommits nextcolor linespc
-    global nchildren ncleft
-    global displist nhyperspace
+    global numcommits nextcolor linespc
+    global nchildren
 
     allcanvs delete all
     set nextcolor 0
-    set canvy $canvy0
-    set lineno -1
     set numcommits 0
-    foreach v {mainline mainlinearrow sidelines colormap cornercrossings
-		crossings idline lineid} {
+    foreach v {colormap cornercrossings	crossings lineid} {
 	global $v
 	catch {unset $v}
     }
-    foreach id [array names nchildren] {
-	set ncleft($id) $nchildren($id)
-    }
-    set displist {}
-    set nhyperspace 0
 }
 
 proc bindline {t id} {
@@ -876,121 +1548,10 @@ proc bindline {t id} {
     $canv bind $t <Button-1> "lineclick %x %y $id 1"
 }
 
-proc drawlines {id xtra delold} {
-    global mainline mainlinearrow sidelines lthickness colormap canv
-
-    if {$delold} {
-	$canv delete lines.$id
-    }
-    if {[info exists mainline($id)]} {
-	set t [$canv create line $mainline($id) \
-		   -width [expr {($xtra + 1) * $lthickness}] \
-		   -fill $colormap($id) -tags lines.$id \
-		   -arrow $mainlinearrow($id)]
-	$canv lower $t
-	bindline $t $id
-    }
-    if {[info exists sidelines($id)]} {
-	foreach ls $sidelines($id) {
-	    set coords [lindex $ls 0]
-	    set thick [lindex $ls 1]
-	    set arrow [lindex $ls 2]
-	    set t [$canv create line $coords -fill $colormap($id) \
-		       -width [expr {($thick + $xtra) * $lthickness}] \
-		       -arrow $arrow -tags lines.$id]
-	    $canv lower $t
-	    bindline $t $id
-	}
-    }
-}
-
-# level here is an index in displist
-proc drawcommitline {level} {
-    global parents children nparents displist
-    global canv canv2 canv3 mainfont namefont canvy linespc
-    global lineid linehtag linentag linedtag commitinfo
-    global colormap numcommits currentparents dupparents
-    global idtags idline idheads idotherrefs
-    global lineno lthickness mainline mainlinearrow sidelines
-    global commitlisted rowtextx idpos lastuse displist
-    global oldnlines olddlevel olddisplist
-
-    incr numcommits
-    incr lineno
-    set id [lindex $displist $level]
-    set lastuse($id) $lineno
-    set lineid($lineno) $id
-    set idline($id) $lineno
-    set ofill [expr {[info exists commitlisted($id)]? "blue": "white"}]
-    if {![info exists commitinfo($id)]} {
-	readcommit $id
-	if {![info exists commitinfo($id)]} {
-	    set commitinfo($id) {"No commit information available"}
-	    set nparents($id) 0
-	}
-    }
-    assigncolor $id
-    set currentparents {}
-    set dupparents {}
-    if {[info exists commitlisted($id)] && [info exists parents($id)]} {
-	foreach p $parents($id) {
-	    if {[lsearch -exact $currentparents $p] < 0} {
-		lappend currentparents $p
-	    } else {
-		# remember that this parent was listed twice
-		lappend dupparents $p
-	    }
-	}
-    }
-    set x [xcoord $level $level $lineno]
-    set y1 $canvy
-    set canvy [expr {$canvy + $linespc}]
-    allcanvs conf -scrollregion \
-	[list 0 0 0 [expr {$y1 + 0.5 * $linespc + 2}]]
-    if {[info exists mainline($id)]} {
-	lappend mainline($id) $x $y1
-	if {$mainlinearrow($id) ne "none"} {
-	    set mainline($id) [trimdiagstart $mainline($id)]
-	}
-    }
-    drawlines $id 0 0
-    set orad [expr {$linespc / 3}]
-    set t [$canv create oval [expr {$x - $orad}] [expr {$y1 - $orad}] \
-	       [expr {$x + $orad - 1}] [expr {$y1 + $orad - 1}] \
-	       -fill $ofill -outline black -width 1]
-    $canv raise $t
-    $canv bind $t <1> {selcanvline {} %x %y}
-    set xt [xcoord [llength $displist] $level $lineno]
-    if {[llength $currentparents] > 2} {
-	set xt [expr {$xt + ([llength $currentparents] - 2) * $linespc}]
-    }
-    set rowtextx($lineno) $xt
-    set idpos($id) [list $x $xt $y1]
-    if {[info exists idtags($id)] || [info exists idheads($id)]
-	|| [info exists idotherrefs($id)]} {
-	set xt [drawtags $id $x $xt $y1]
-    }
-    set headline [lindex $commitinfo($id) 0]
-    set name [lindex $commitinfo($id) 1]
-    set date [lindex $commitinfo($id) 2]
-    set date [formatdate $date]
-    set linehtag($lineno) [$canv create text $xt $y1 -anchor w \
-			       -text $headline -font $mainfont ]
-    $canv bind $linehtag($lineno) <Button-3> "rowmenu %X %Y $id"
-    set linentag($lineno) [$canv2 create text 3 $y1 -anchor w \
-			       -text $name -font $namefont]
-    set linedtag($lineno) [$canv3 create text 3 $y1 -anchor w \
-			       -text $date -font $mainfont]
-
-    set olddlevel $level
-    set olddisplist $displist
-    set oldnlines [llength $displist]
-}
-
 proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs
     global linespc lthickness
-    global canv mainfont idline rowtextx
+    global canv mainfont commitrow rowtextx
 
     set marks {}
     set ntags 0
@@ -1033,7 +1594,7 @@ proc drawtags {id x xt y1} {
 		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
 		       -width 1 -outline black -fill yellow -tags tag.$id]
 	    $canv bind $t <1> [list showtag $tag 1]
-	    set rowtextx($idline($id)) [expr {$xr + $linespc}]
+	    set rowtextx($commitrow($id)) [expr {$xr + $linespc}]
 	} else {
 	    # draw a head or other ref
 	    if {[incr nheads -1] >= 0} {
@@ -1054,11 +1615,32 @@ proc drawtags {id x xt y1} {
     return $xt
 }
 
-proc notecrossings {id lo hi corner} {
-    global olddisplist crossings cornercrossings
+proc checkcrossings {row endrow} {
+    global displayorder parents rowidlist
+
+    for {} {$row < $endrow} {incr row} {
+	set id [lindex $displayorder $row]
+	set i [lsearch -exact $rowidlist($row) $id]
+	if {$i < 0} continue
+	set idlist $rowidlist([expr {$row+1}])
+	foreach p $parents($id) {
+	    set j [lsearch -exact $idlist $p]
+	    if {$j > 0} {
+		if {$j < $i - 1} {
+		    notecrossings $row $p $j $i [expr {$j+1}]
+		} elseif {$j > $i + 1} {
+		    notecrossings $row $p $i $j [expr {$j-1}]
+		}
+	    }
+	}
+    }
+}
+
+proc notecrossings {row id lo hi corner} {
+    global rowidlist crossings cornercrossings
 
     for {set i $lo} {[incr i] < $hi} {} {
-	set p [lindex $olddisplist $i]
+	set p [lindex $rowidlist($row) $i]
 	if {$p == {}} continue
 	if {$i == $corner} {
 	    if {![info exists cornercrossings($id)]
@@ -1094,491 +1676,29 @@ proc xcoord {i level ln} {
     return $x
 }
 
-# it seems Tk can't draw arrows on the end of diagonal line segments...
-proc trimdiagend {line} {
-    while {[llength $line] > 4} {
-	set x1 [lindex $line end-3]
-	set y1 [lindex $line end-2]
-	set x2 [lindex $line end-1]
-	set y2 [lindex $line end]
-	if {($x1 == $x2) != ($y1 == $y2)} break
-	set line [lreplace $line end-1 end]
-    }
-    return $line
-}
-
-proc trimdiagstart {line} {
-    while {[llength $line] > 4} {
-	set x1 [lindex $line 0]
-	set y1 [lindex $line 1]
-	set x2 [lindex $line 2]
-	set y2 [lindex $line 3]
-	if {($x1 == $x2) != ($y1 == $y2)} break
-	set line [lreplace $line 0 1]
-    }
-    return $line
-}
-
-proc drawslants {id needonscreen nohs} {
-    global canv mainline mainlinearrow sidelines
-    global canvx0 canvy xspc1 xspc2 lthickness
-    global currentparents dupparents
-    global lthickness linespc canvy colormap lineno geometry
-    global maxgraphpct maxwidth
-    global displist onscreen lastuse
-    global parents commitlisted
-    global oldnlines olddlevel olddisplist
-    global nhyperspace numcommits nnewparents
-
-    if {$lineno < 0} {
-	lappend displist $id
-	set onscreen($id) 1
-	return 0
-    }
-
-    set y1 [expr {$canvy - $linespc}]
-    set y2 $canvy
-
-    # work out what we need to get back on screen
-    set reins {}
-    if {$onscreen($id) < 0} {
-	# next to do isn't displayed, better get it on screen...
-	lappend reins [list $id 0]
-    }
-    # make sure all the previous commits's parents are on the screen
-    foreach p $currentparents {
-	if {$onscreen($p) < 0} {
-	    lappend reins [list $p 0]
-	}
-    }
-    # bring back anything requested by caller
-    if {$needonscreen ne {}} {
-	lappend reins $needonscreen
-    }
-
-    # try the shortcut
-    if {$currentparents == $id && $onscreen($id) == 0 && $reins eq {}} {
-	set dlevel $olddlevel
-	set x [xcoord $dlevel $dlevel $lineno]
-	set mainline($id) [list $x $y1]
-	set mainlinearrow($id) none
-	set lastuse($id) $lineno
-	set displist [lreplace $displist $dlevel $dlevel $id]
-	set onscreen($id) 1
-	set xspc1([expr {$lineno + 1}]) $xspc1($lineno)
-	return $dlevel
-    }
-
-    # update displist
-    set displist [lreplace $displist $olddlevel $olddlevel]
-    set j $olddlevel
-    foreach p $currentparents {
-	set lastuse($p) $lineno
-	if {$onscreen($p) == 0} {
-	    set displist [linsert $displist $j $p]
-	    set onscreen($p) 1
-	    incr j
-	}
-    }
-    if {$onscreen($id) == 0} {
-	lappend displist $id
-	set onscreen($id) 1
-    }
-
-    # remove the null entry if present
-    set nullentry [lsearch -exact $displist {}]
-    if {$nullentry >= 0} {
-	set displist [lreplace $displist $nullentry $nullentry]
-    }
-
-    # bring back the ones we need now (if we did it earlier
-    # it would change displist and invalidate olddlevel)
-    foreach pi $reins {
-	# test again in case of duplicates in reins
-	set p [lindex $pi 0]
-	if {$onscreen($p) < 0} {
-	    set onscreen($p) 1
-	    set lastuse($p) $lineno
-	    set displist [linsert $displist [lindex $pi 1] $p]
-	    incr nhyperspace -1
-	}
-    }
-
-    set lastuse($id) $lineno
-
-    # see if we need to make any lines jump off into hyperspace
-    set displ [llength $displist]
-    if {$displ > $maxwidth} {
-	set ages {}
-	foreach x $displist {
-	    lappend ages [list $lastuse($x) $x]
-	}
-	set ages [lsort -integer -index 0 $ages]
-	set k 0
-	while {$displ > $maxwidth} {
-	    set use [lindex $ages $k 0]
-	    set victim [lindex $ages $k 1]
-	    if {$use >= $lineno - 5} break
-	    incr k
-	    if {[lsearch -exact $nohs $victim] >= 0} continue
-	    set i [lsearch -exact $displist $victim]
-	    set displist [lreplace $displist $i $i]
-	    set onscreen($victim) -1
-	    incr nhyperspace
-	    incr displ -1
-	    if {$i < $nullentry} {
-		incr nullentry -1
-	    }
-	    set x [lindex $mainline($victim) end-1]
-	    lappend mainline($victim) $x $y1
-	    set line [trimdiagend $mainline($victim)]
-	    set arrow "last"
-	    if {$mainlinearrow($victim) ne "none"} {
-		set line [trimdiagstart $line]
-		set arrow "both"
-	    }
-	    lappend sidelines($victim) [list $line 1 $arrow]
-	    unset mainline($victim)
-	}
-    }
-
-    set dlevel [lsearch -exact $displist $id]
-
-    # If we are reducing, put in a null entry
-    if {$displ < $oldnlines} {
-	# does the next line look like a merge?
-	# i.e. does it have > 1 new parent?
-	if {$nnewparents($id) > 1} {
-	    set i [expr {$dlevel + 1}]
-	} elseif {$nnewparents([lindex $olddisplist $olddlevel]) == 0} {
-	    set i $olddlevel
-	    if {$nullentry >= 0 && $nullentry < $i} {
-		incr i -1
-	    }
-	} elseif {$nullentry >= 0} {
-	    set i $nullentry
-	    while {$i < $displ
-		   && [lindex $olddisplist $i] == [lindex $displist $i]} {
-		incr i
-	    }
-	} else {
-	    set i $olddlevel
-	    if {$dlevel >= $i} {
-		incr i
-	    }
-	}
-	if {$i < $displ} {
-	    set displist [linsert $displist $i {}]
-	    incr displ
-	    if {$dlevel >= $i} {
-		incr dlevel
-	    }
-	}
-    }
-
-    # decide on the line spacing for the next line
-    set lj [expr {$lineno + 1}]
-    set maxw [expr {$maxgraphpct * $geometry(canv1) / 100}]
-    if {$displ <= 1 || $canvx0 + $displ * $xspc2 <= $maxw} {
-	set xspc1($lj) $xspc2
-    } else {
-	set xspc1($lj) [expr {($maxw - $canvx0 - $xspc2) / ($displ - 1)}]
-	if {$xspc1($lj) < $lthickness} {
-	    set xspc1($lj) $lthickness
-	}
-    }
-
-    foreach idi $reins {
-	set id [lindex $idi 0]
-	set j [lsearch -exact $displist $id]
-	set xj [xcoord $j $dlevel $lj]
-	set mainline($id) [list $xj $y2]
-	set mainlinearrow($id) first
-    }
-
-    set i -1
-    foreach id $olddisplist {
-	incr i
-	if {$id == {}} continue
-	if {$onscreen($id) <= 0} continue
-	set xi [xcoord $i $olddlevel $lineno]
-	if {$i == $olddlevel} {
-	    foreach p $currentparents {
-		set j [lsearch -exact $displist $p]
-		set coords [list $xi $y1]
-		set xj [xcoord $j $dlevel $lj]
-		if {$xj < $xi - $linespc} {
-		    lappend coords [expr {$xj + $linespc}] $y1
-		    notecrossings $p $j $i [expr {$j + 1}]
-		} elseif {$xj > $xi + $linespc} {
-		    lappend coords [expr {$xj - $linespc}] $y1
-		    notecrossings $p $i $j [expr {$j - 1}]
-		}
-		if {[lsearch -exact $dupparents $p] >= 0} {
-		    # draw a double-width line to indicate the doubled parent
-		    lappend coords $xj $y2
-		    lappend sidelines($p) [list $coords 2 none]
-		    if {![info exists mainline($p)]} {
-			set mainline($p) [list $xj $y2]
-			set mainlinearrow($p) none
-		    }
-		} else {
-		    # normal case, no parent duplicated
-		    set yb $y2
-		    set dx [expr {abs($xi - $xj)}]
-		    if {0 && $dx < $linespc} {
-			set yb [expr {$y1 + $dx}]
-		    }
-		    if {![info exists mainline($p)]} {
-			if {$xi != $xj} {
-			    lappend coords $xj $yb
-			}
-			set mainline($p) $coords
-			set mainlinearrow($p) none
-		    } else {
-			lappend coords $xj $yb
-			if {$yb < $y2} {
-			    lappend coords $xj $y2
-			}
-			lappend sidelines($p) [list $coords 1 none]
-		    }
-		}
-	    }
-	} else {
-	    set j $i
-	    if {[lindex $displist $i] != $id} {
-		set j [lsearch -exact $displist $id]
-	    }
-	    if {$j != $i || $xspc1($lineno) != $xspc1($lj)
-		|| ($olddlevel < $i && $i < $dlevel)
-		|| ($dlevel < $i && $i < $olddlevel)} {
-		set xj [xcoord $j $dlevel $lj]
-		lappend mainline($id) $xi $y1 $xj $y2
-	    }
-	}
-    }
-    return $dlevel
-}
-
-# search for x in a list of lists
-proc llsearch {llist x} {
-    set i 0
-    foreach l $llist {
-	if {$l == $x || [lsearch -exact $l $x] >= 0} {
-	    return $i
-	}
-	incr i
-    }
-    return -1
-}
-
-proc drawmore {reading} {
-    global displayorder numcommits ncmupdate nextupdate
-    global stopped nhyperspace parents commitlisted
-    global maxwidth onscreen displist currentparents olddlevel
-
-    set n [llength $displayorder]
-    while {$numcommits < $n} {
-	set id [lindex $displayorder $numcommits]
-	set ctxend [expr {$numcommits + 10}]
-	if {!$reading && $ctxend > $n} {
-	    set ctxend $n
-	}
-	set dlist {}
-	if {$numcommits > 0} {
-	    set dlist [lreplace $displist $olddlevel $olddlevel]
-	    set i $olddlevel
-	    foreach p $currentparents {
-		if {$onscreen($p) == 0} {
-		    set dlist [linsert $dlist $i $p]
-		    incr i
-		}
-	    }
-	}
-	set nohs {}
-	set reins {}
-	set isfat [expr {[llength $dlist] > $maxwidth}]
-	if {$nhyperspace > 0 || $isfat} {
-	    if {$ctxend > $n} break
-	    # work out what to bring back and
-	    # what we want to don't want to send into hyperspace
-	    set room 1
-	    for {set k $numcommits} {$k < $ctxend} {incr k} {
-		set x [lindex $displayorder $k]
-		set i [llsearch $dlist $x]
-		if {$i < 0} {
-		    set i [llength $dlist]
-		    lappend dlist $x
-		}
-		if {[lsearch -exact $nohs $x] < 0} {
-		    lappend nohs $x
-		}
-		if {$reins eq {} && $onscreen($x) < 0 && $room} {
-		    set reins [list $x $i]
-		}
-		set newp {}
-		if {[info exists commitlisted($x)]} {
-		    set right 0
-		    foreach p $parents($x) {
-			if {[llsearch $dlist $p] < 0} {
-			    lappend newp $p
-			    if {[lsearch -exact $nohs $p] < 0} {
-				lappend nohs $p
-			    }
-			    if {$reins eq {} && $onscreen($p) < 0 && $room} {
-				set reins [list $p [expr {$i + $right}]]
-			    }
-			}
-			set right 1
-		    }
-		}
-		set l [lindex $dlist $i]
-		if {[llength $l] == 1} {
-		    set l $newp
-		} else {
-		    set j [lsearch -exact $l $x]
-		    set l [concat [lreplace $l $j $j] $newp]
-		}
-		set dlist [lreplace $dlist $i $i $l]
-		if {$room && $isfat && [llength $newp] <= 1} {
-		    set room 0
-		}
-	    }
-	}
-
-	set dlevel [drawslants $id $reins $nohs]
-	drawcommitline $dlevel
-	if {[clock clicks -milliseconds] >= $nextupdate
-	    && $numcommits >= $ncmupdate} {
-	    doupdate $reading
-	    if {$stopped} break
-	}
-    }
-}
-
-# level here is an index in todo
-proc updatetodo {level noshortcut} {
-    global ncleft todo nnewparents
-    global commitlisted parents onscreen
-
-    set id [lindex $todo $level]
-    set olds {}
-    if {[info exists commitlisted($id)]} {
-	foreach p $parents($id) {
-	    if {[lsearch -exact $olds $p] < 0} {
-		lappend olds $p
-	    }
-	}
-    }
-    if {!$noshortcut && [llength $olds] == 1} {
-	set p [lindex $olds 0]
-	if {$ncleft($p) == 1 && [lsearch -exact $todo $p] < 0} {
-	    set ncleft($p) 0
-	    set todo [lreplace $todo $level $level $p]
-	    set onscreen($p) 0
-	    set nnewparents($id) 1
-	    return 0
-	}
-    }
-
-    set todo [lreplace $todo $level $level]
-    set i $level
-    set n 0
-    foreach p $olds {
-	incr ncleft($p) -1
-	set k [lsearch -exact $todo $p]
-	if {$k < 0} {
-	    set todo [linsert $todo $i $p]
-	    set onscreen($p) 0
-	    incr i
-	    incr n
-	}
-    }
-    set nnewparents($id) $n
-
-    return 1
-}
-
-proc decidenext {{noread 0}} {
-    global ncleft todo
-    global datemode cdate
-    global commitinfo
-
-    # choose which one to do next time around
-    set todol [llength $todo]
-    set level -1
-    set latest {}
-    for {set k $todol} {[incr k -1] >= 0} {} {
-	set p [lindex $todo $k]
-	if {$ncleft($p) == 0} {
-	    if {$datemode} {
-		if {![info exists commitinfo($p)]} {
-		    if {$noread} {
-			return {}
-		    }
-		    readcommit $p
-		}
-		if {$latest == {} || $cdate($p) > $latest} {
-		    set level $k
-		    set latest $cdate($p)
-		}
-	    } else {
-		set level $k
-		break
-	    }
-	}
-    }
-
-    return $level
-}
-
 proc drawcommit {id reading} {
-    global phase todo nchildren datemode nextupdate revlistorder ncleft
-    global numcommits ncmupdate displayorder todo onscreen parents
-    global commitlisted commitordered
+    global phase todo nchildren nextupdate
+    global displayorder parents
+    global commitrow commitidx lineid
 
     if {$phase != "incrdraw"} {
 	set phase incrdraw
 	set displayorder {}
 	set todo {}
+	set commitidx 0
+	initlayout
 	initgraph
-	catch {unset commitordered}
     }
-    set commitordered($id) 1
-    if {$nchildren($id) == 0} {
-	lappend todo $id
-	set onscreen($id) 0
-    }
-    if {$revlistorder} {
-	set level [lsearch -exact $todo $id]
-	if {$level < 0} {
-	    error_popup "oops, $id isn't in todo"
-	    return
-	}
-	lappend displayorder $id
-	updatetodo $level 0
-    } else {
-	set level [decidenext 1]
-	if {$level == {} || $level < 0} return
-	while 1 {
-	    set id [lindex $todo $level]
-	    if {![info exists commitordered($id)]} {
-		break
-	    }
-	    lappend displayorder [lindex $todo $level]
-	    if {[updatetodo $level $datemode]} {
-		set level [decidenext 1]
-		if {$level == {} || $level < 0} break
-	    }
-	}
-    }
-    drawmore $reading
+    set commitrow($id) $commitidx
+    set lineid($commitidx) $id
+    incr commitidx
+    lappend displayorder $id
 }
 
 proc finishcommits {} {
     global phase oldcommits commits
     global canv mainfont ctext maincursor textcursor
-    global parents displayorder todo
+    global parents todo
 
     if {$phase == "incrdraw" || $phase == "removecommits"} {
 	foreach id $oldcommits {
@@ -1613,61 +1733,22 @@ proc settextcursor {c} {
     set curtextcursor $c
 }
 
-proc drawgraph {} {
-    global nextupdate startmsecs ncmupdate
-    global displayorder onscreen
-
-    if {$displayorder == {}} return
-    set startmsecs [clock clicks -milliseconds]
-    set nextupdate [expr {$startmsecs + 100}]
-    set ncmupdate 1
-    initgraph
-    foreach id $displayorder {
-	set onscreen($id) 0
-    }
-    drawmore 0
-}
-
 proc drawrest {} {
-    global phase stopped redisplaying selectedline
-    global datemode todo displayorder ncleft
-    global numcommits ncmupdate
-    global nextupdate startmsecs revlistorder
+    global phase
+    global numcommits
+    global startmsecs
+    global canvy0 numcommits linespc
+    global rowlaidout commitidx
 
-    set level [decidenext]
-    if {$level >= 0} {
-	set phase drawgraph
-	while 1 {
-	    lappend displayorder [lindex $todo $level]
-	    set hard [updatetodo $level $datemode]
-	    if {$hard} {
-		set level [decidenext]
-		if {$level < 0} break
-	    }
-	}
-    }
-    if {$todo != {}} {
-	puts "ERROR: none of the pending commits can be done yet:"
-	foreach p $todo {
-	    puts "  $p ($ncleft($p))"
-	}
-    }
+    set row $rowlaidout
+    layoutrows $rowlaidout $commitidx 1
+    layouttail
+    optimize_rows $row 0 $commitidx
+    showstuff $commitidx
 
-    drawmore 0
     set phase {}
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
     #puts "overall $drawmsecs ms for $numcommits commits"
-    if {$redisplaying} {
-	if {$stopped == 0 && [info exists selectedline]} {
-	    selectline $selectedline 0
-	}
-	if {$stopped == 1} {
-	    set stopped 0
-	    after idle drawgraph
-	} else {
-	    set redisplaying 0
-	}
-    }
 }
 
 proc findmatches {f} {
@@ -1734,10 +1815,13 @@ proc dofind {} {
 	    if {$matches == {}} continue
 	    set doesmatch 1
 	    if {$ty == "Headline"} {
+		drawcmitrow $l
 		markmatches $canv $l $f $linehtag($l) $matches $mainfont
 	    } elseif {$ty == "Author"} {
+		drawcmitrow $l
 		markmatches $canv2 $l $f $linentag($l) $matches $namefont
 	    } elseif {$ty == "Date"} {
+		drawcmitrow $l
 		markmatches $canv3 $l $f $linedtag($l) $matches $mainfont
 	    }
 	}
@@ -1886,7 +1970,7 @@ proc findpatches {} {
 
 proc readfindproc {} {
     global findprocfile finddidsel
-    global idline matchinglines findinsertpos
+    global commitrow matchinglines findinsertpos
 
     set n [gets $findprocfile line]
     if {$n < 0} {
@@ -1903,11 +1987,11 @@ proc readfindproc {} {
 	stopfindproc
 	return
     }
-    if {![info exists idline($id)]} {
+    if {![info exists commitrow($id)]} {
 	puts stderr "spurious id: $id"
 	return
     }
-    set l $idline($id)
+    set l $commitrow($id)
     insertmatch $l $id
 }
 
@@ -2090,6 +2174,7 @@ proc findcont {id} {
 proc markheadline {l id} {
     global canv mainfont linehtag commitinfo
 
+    drawcmitrow $l
     set bbox [$canv bbox $linehtag($l)]
     set t [$canv create rect $bbox -outline {} -tags matches -fill yellow]
     $canv lower $t
@@ -2123,7 +2208,7 @@ proc unmarkmatches {} {
 
 proc selcanvline {w x y} {
     global canv canvy0 ctext linespc
-    global lineid linehtag linentag linedtag rowtextx
+    global rowtextx
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax == {}} return
     set yfrac [lindex [$canv yview] 0]
@@ -2151,7 +2236,7 @@ proc commit_descriptor {p} {
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
 proc appendwithlinks {text} {
-    global ctext idline linknum
+    global ctext commitrow linknum
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text
@@ -2161,11 +2246,11 @@ proc appendwithlinks {text} {
 	set s [lindex $l 0]
 	set e [lindex $l 1]
 	set linkid [string range $text $s $e]
-	if {![info exists idline($linkid)]} continue
+	if {![info exists commitrow($linkid)]} continue
 	incr e
 	$ctext tag add link "$start + $s c" "$start + $e c"
 	$ctext tag add link$linknum "$start + $s c" "$start + $e c"
-	$ctext tag bind link$linknum <1> [list selectline $idline($linkid) 1]
+	$ctext tag bind link$linknum <1> [list selectline $commitrow($linkid) 1]
 	incr linknum
     }
     $ctext tag conf link -foreground blue -underline 1
@@ -2178,24 +2263,12 @@ proc selectline {l isnew} {
     global lineid linehtag linentag linedtag
     global canvy0 linespc parents nparents children
     global cflist currentid sha1entry
-    global commentend idtags idline linknum
+    global commentend idtags linknum
     global mergemax
 
     $canv delete hover
     normalline
-    if {![info exists lineid($l)] || ![info exists linehtag($l)]} return
-    $canv delete secsel
-    set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv cget -selectbackground]]
-    $canv lower $t
-    $canv2 delete secsel
-    set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv2 cget -selectbackground]]
-    $canv2 lower $t
-    $canv3 delete secsel
-    set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv3 cget -selectbackground]]
-    $canv3 lower $t
+    if {![info exists lineid($l)]} return
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
     set ytop [expr {$y - $linespc - 1}]
@@ -2229,7 +2302,22 @@ proc selectline {l isnew} {
 	    set newtop 0
 	}
 	allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
+	drawvisible
     }
+
+    if {![info exists linehtag($l)]} return
+    $canv delete secsel
+    set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv cget -selectbackground]]
+    $canv lower $t
+    $canv2 delete secsel
+    set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv2 cget -selectbackground]]
+    $canv2 lower $t
+    $canv3 delete secsel
+    set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv3 cget -selectbackground]]
+    $canv3 lower $t
 
     if {$isnew} {
 	addtohistory [list selectline $l 0]
@@ -2662,22 +2750,27 @@ proc setcoords {} {
 
     set linespc [font metrics $mainfont -linespace]
     set charspc [font measure $mainfont "m"]
-    set canvy0 [expr {3 + 0.5 * $linespc}]
-    set canvx0 [expr {3 + 0.5 * $linespc}]
+    set canvy0 [expr {int(3 + 0.5 * $linespc)}]
+    set canvx0 [expr {int(3 + 0.5 * $linespc)}]
     set lthickness [expr {int($linespc / 9) + 1}]
     set xspc1(0) $linespc
     set xspc2 $linespc
 }
 
 proc redisplay {} {
-    global stopped redisplaying phase
-    if {$stopped > 1} return
-    if {$phase == "getcommits"} return
-    set redisplaying 1
-    if {$phase == "drawgraph" || $phase == "incrdraw"} {
-	set stopped 1
-    } else {
-	drawgraph
+    global canv canvy0 linespc numcommits
+    global selectedline
+
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    if {$ymax eq {} || $ymax == 0} return
+    set span [$canv yview]
+    clear_display
+    allcanvs conf -scrollregion \
+	[list 0 0 0 [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]]
+    allcanvs yview moveto [lindex $span 0]
+    drawvisible
+    if {[info exists selectedline]} {
+	selectline $selectedline 0
     }
 }
 
@@ -2724,7 +2817,7 @@ proc sha1change {n1 n2 op} {
 }
 
 proc gotocommit {} {
-    global sha1string currentid idline tagids
+    global sha1string currentid commitrow tagids
     global lineid numcommits
 
     if {$sha1string == {}
@@ -2749,8 +2842,8 @@ proc gotocommit {} {
 	    }
 	}
     }
-    if {[info exists idline($id)]} {
-	selectline $idline($id) 1
+    if {[info exists commitrow($id)]} {
+	selectline $commitrow($id) 1
 	return
     }
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
@@ -2905,7 +2998,7 @@ proc lineclick {x y id isnew} {
     normalline
     $canv delete hover
     # draw this line thicker than normal
-    drawlines $id 1 1
+    drawlines $id 1
     set thickerline $id
     if {$isnew} {
 	set ymax [lindex [$canv cget -scrollregion] 3]
@@ -2959,15 +3052,15 @@ proc lineclick {x y id isnew} {
 proc normalline {} {
     global thickerline
     if {[info exists thickerline]} {
-	drawlines $thickerline 0 1
+	drawlines $thickerline 0
 	unset thickerline
     }
 }
 
 proc selbyid {id} {
-    global idline
-    if {[info exists idline($id)]} {
-	selectline $idline($id) 1
+    global commitrow
+    if {[info exists commitrow($id)]} {
+	selectline $commitrow($id) 1
     }
 }
 
@@ -2980,9 +3073,9 @@ proc mstime {} {
 }
 
 proc rowmenu {x y id} {
-    global rowctxmenu idline selectedline rowmenuid
+    global rowctxmenu commitrow selectedline rowmenuid
 
-    if {![info exists selectedline] || $idline($id) eq $selectedline} {
+    if {![info exists selectedline] || $commitrow($id) eq $selectedline} {
 	set state disabled
     } else {
 	set state normal
@@ -3185,13 +3278,14 @@ proc domktag {} {
 }
 
 proc redrawtags {id} {
-    global canv linehtag idline idpos selectedline
+    global canv linehtag commitrow idpos selectedline
 
-    if {![info exists idline($id)]} return
+    if {![info exists commitrow($id)]} return
+    drawcmitrow $commitrow($id)
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
-    $canv coords $linehtag($idline($id)) $xt [lindex $idpos($id) 2]
-    if {[info exists selectedline] && $selectedline == $idline($id)} {
+    $canv coords $linehtag($commitrow($id)) $xt [lindex $idpos($id) 2]
+    if {[info exists selectedline] && $selectedline == $commitrow($id)} {
 	selectline $selectedline 0
     }
 }
@@ -3697,6 +3791,9 @@ set maxgraphpct 50
 set maxwidth 16
 set revlistorder 0
 set fastdate 0
+set uparrowlen 7
+set downarrowlen 7
+set mingaplen 30
 
 set colors {green red blue magenta darkgrey brown orange}
 
@@ -3711,7 +3808,6 @@ foreach arg $argv {
     switch -regexp -- $arg {
 	"^$" { }
 	"^-d" { set datemode 1 }
-	"^-r" { set revlistorder 1 }
 	default {
 	    lappend revtreeargs $arg
 	}
@@ -3721,8 +3817,9 @@ foreach arg $argv {
 set history {}
 set historyindex 0
 
+set optim_delay 16
+
 set stopped 0
-set redisplaying 0
 set stuffsaved 0
 set patchnum 0
 setcoords
