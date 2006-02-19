@@ -1,10 +1,12 @@
 #!/bin/sh
 #
-#
+# Copyright (c) 2005, 2006 Junio C Hamano
 
 USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
+
+git var GIT_COMMITTER_IDENT >/dev/null || exit
 
 stop_here () {
     echo "$1" >"$dotest/next"

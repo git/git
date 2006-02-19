@@ -50,6 +50,9 @@ case "$common" in
 	;;
 esac
 
+# We are going to make a new commit.
+git var GIT_COMMITTER_IDENT >/dev/null || exit
+
 # Find an optimum merge base if there are more than one candidates.
 LF='
 '

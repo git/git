@@ -21,6 +21,8 @@
 USAGE='[-u] [-k] [-q] [-m] (-c .dotest/<num> | mbox) [signoff]'
 . git-sh-setup
 
+git var GIT_COMMITTER_IDENT >/dev/null || exit
+
 keep_subject= query_apply= continue= utf8= resume=t
 while case "$#" in 0) break ;; esac
 do

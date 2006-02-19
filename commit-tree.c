@@ -118,8 +118,8 @@ int main(int argc, char **argv)
 		add_buffer(&buffer, &size, "parent %s\n", sha1_to_hex(parent_sha1[i]));
 
 	/* Person/date information */
-	add_buffer(&buffer, &size, "author %s\n", git_author_info());
-	add_buffer(&buffer, &size, "committer %s\n\n", git_committer_info());
+	add_buffer(&buffer, &size, "author %s\n", git_author_info(1));
+	add_buffer(&buffer, &size, "committer %s\n\n", git_committer_info(1));
 
 	/* And add the comment */
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
