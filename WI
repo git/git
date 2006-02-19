@@ -5,7 +5,9 @@ has_msg=' has these since the last announcement.'
 in_addition=
 for m in master next pu
 do
-	tagged=`git rev-parse --not --verify tags/sa/$m 2>/dev/null`
+	tagged=`git rev-parse --not --verify tags/sa/$m 2>/dev/null` ||
+	test "$m" != pu || exit
+
 	list=`git-rev-list $in_addition $tagged heads/$m 2>/dev/null` &&
 	test -n "$list" || continue
 
