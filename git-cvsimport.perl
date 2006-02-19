@@ -361,6 +361,7 @@ sub _line {
 			}
 		}
 	}
+	return undef;
 }
 sub file {
 	my($self,$fn,$rev) = @_;
@@ -372,18 +373,14 @@ sub file {
 	$self->_file($fn,$rev) and $res = $self->_line($fh);
 
 	if (!defined $res) {
-	    # retry
+	    print STDERR "Server has gone away while fetching $fn $rev, retrying...\n";
+	    truncate $fh, 0;
 	    $self->conn();
-	    $self->_file($fn,$rev)
-		    or die "No file command send\n";
+	    $self->_file($fn,$rev) or die "No file command send";
 	    $res = $self->_line($fh);
-	    die "No input: $fn $rev\n" unless defined $res;
+	    die "Retry failed" unless defined $res;
 	}
 	close ($fh);
-
-	if ($res eq '') {
-	    die "Looks like the server has gone away while fetching $fn $rev -- exiting!";
-	}
 
 	return ($name, $res);
 }
