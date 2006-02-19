@@ -136,7 +136,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
-	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
+	git-get-tar-commit-id$X git-mailsplit$X \
 	git-stripspace$X git-daemon$X
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
@@ -146,8 +146,8 @@ PROGRAMS = \
 	git-convert-objects$X git-diff-files$X \
 	git-diff-index$X git-diff-stages$X \
 	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
-	git-hash-object$X git-index-pack$X git-init-db$X \
-	git-local-fetch$X git-ls-files$X git-ls-tree$X git-merge-base$X \
+	git-hash-object$X git-index-pack$X git-init-db$X git-local-fetch$X \
+	git-ls-files$X git-ls-tree$X git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-read-tree$X \
 	git-receive-pack$X git-rev-list$X git-rev-parse$X \
