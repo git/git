@@ -346,12 +346,10 @@ sub process_patchset_accurate {
     } 
     
     # update the index with all the changes we got
+    system('git-diff-files --name-only -z | '.
+            'git-update-index --remove -z --stdin') == 0 or die "$! $?\n";
     system('git-ls-files --others -z | '.
             'git-update-index --add -z --stdin') == 0 or die "$! $?\n";
-    system('git-ls-files --deleted -z | '.
-            'git-update-index --remove -z --stdin') == 0 or die "$! $?\n";
-    system('git-ls-files -z | '.
-             'git-update-index -z --stdin') == 0 or die "$! $?\n";
     return 1;
 }
 
@@ -416,22 +414,14 @@ sub process_patchset_fast {
     # imports don't give us good info
     # on added files. Shame on them
     if ($ps->{type} eq 'i' || $ps->{type} eq 't') {
-        system('git-ls-files --others -z | '.
-                'git-update-index --add -z --stdin') == 0 or die "$! $?\n";
         system('git-ls-files --deleted -z | '.
                 'git-update-index --remove -z --stdin') == 0 or die "$! $?\n";
+        system('git-ls-files --others -z | '.
+                'git-update-index --add -z --stdin') == 0 or die "$! $?\n";
     }
 
     # TODO: handle removed_directories and renamed_directories:
-   
-    if (my $add = $ps->{new_files}) {
-        while (@$add) {
-            my @slice = splice(@$add, 0, 100);
-            system('git-update-index','--add','--',@slice) == 0 or
-                            die "Error in git-update-index --add: $! $?\n";
-        }
-    }
-   
+
     if (my $del = $ps->{removed_files}) {
         unlink @$del;
         while (@$del) {
@@ -458,6 +448,14 @@ sub process_patchset_fast {
             system('git-update-index','--remove','--',$from) == 0 or
                             die "Error in git-update-index --remove: $! $?\n";
             system('git-update-index','--add','--',$to) == 0 or
+                            die "Error in git-update-index --add: $! $?\n";
+        }
+    }
+
+    if (my $add = $ps->{new_files}) {
+        while (@$add) {
+            my @slice = splice(@$add, 0, 100);
+            system('git-update-index','--add','--',@slice) == 0 or
                             die "Error in git-update-index --add: $! $?\n";
         }
     }

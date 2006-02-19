@@ -88,6 +88,9 @@ case "$reset_type" in
 				# it is ok if this fails -- it may already
 				# have been culled by checkout-index.
 				unlink $_;
+				while (s|/[^/]*$||) {
+					rmdir($_) or last;
+				}
 			}
 		}
 	' $tmp-exists
