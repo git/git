@@ -1,4 +1,6 @@
 #!/usr/bin/env perl
+# Copyright (C) 2006, Eric Wong <normalperson@yhbt.net>
+# License: GPL v2 or later
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
@@ -6,7 +8,7 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
-$VERSION = '0.9.0';
+$VERSION = '0.9.1';
 $GIT_DIR = $ENV{GIT_DIR} || "$ENV{PWD}/.git";
 $GIT_SVN = $ENV{GIT_SVN_ID} || 'git-svn';
 $GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
@@ -31,7 +33,7 @@ use File::Spec qw//;
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{6,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l);
+	$_find_copies_harder, $_l, $_version);
 
 GetOptions(	'revision|r=s' => \$_revision,
 		'no-ignore-externals' => \$_no_ignore_ext,
@@ -41,6 +43,7 @@ GetOptions(	'revision|r=s' => \$_revision,
 		'help|H|h' => \$_help,
 		'find-copies-harder' => \$_find_copies_harder,
 		'l=i' => \$_l,
+		'version|V' => \$_version,
 		'no-stop-on-copy' => \$_no_stop_copy );
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN" ],
@@ -66,6 +69,7 @@ foreach (keys %cmd) {
 	}
 }
 usage(0) if $_help;
+version() if $_version;
 usage(1) unless (defined $cmd);
 svn_check_ignore_externals();
 $cmd{$cmd}->[0]->(@ARGV);
@@ -89,6 +93,11 @@ you're tracking multiple SVN branches/repositories in one git repository
 and want to keep them separate.
 
 	exit $exit;
+}
+
+sub version {
+	print "git-svn version $VERSION\n";
+	exit 0;
 }
 
 sub rebuild {
