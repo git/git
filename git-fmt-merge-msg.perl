@@ -39,20 +39,26 @@ sub repoconfig {
 	return $val;
 }
 
-sub mergebase {
-	my ($other) = @_;
+sub current_branch {
 	my $fh;
-	open $fh, '-|', 'git-merge-base', '--all', 'HEAD', $other or die "$!";
-	my (@mb) = map { chomp; $_ } <$fh>;
-	close $fh or die "$!";
-	return @mb;
+	open $fh, '-|', 'git-symbolic-ref', 'HEAD' or die "$!";
+	my ($bra) = <$fh>;
+	chomp($bra);
+	$bra =~ s|^refs/heads/||;
+	if ($bra ne 'master') {
+		$bra = " into $bra";
+	} else {
+		$bra = "";
+	}
+
+	return $bra;
 }
 
 sub shortlog {
-	my ($tip, $limit, @base) = @_;
+	my ($tip, $limit) = @_;
 	my ($fh, @result);
 	open $fh, '-|', ('git-log', "--max-count=$limit", '--topo-order',
-			 '--pretty=oneline', $tip, map { "^$_" } @base)
+			 '--pretty=oneline', $tip, '^HEAD')
 	    or die "$!";
 	while (<$fh>) {
 		s/^[0-9a-f]{40}\s+//;
@@ -140,7 +146,10 @@ for my $src (@src) {
 	}
 	push @msg, $this;
 }
-print "Merge ", join("; ", @msg), "\n";
+
+my $into = current_branch();
+
+print "Merge ", join("; ", @msg), $into, "\n";
 
 if (!repoconfig) {
 	exit(0);
@@ -151,8 +160,7 @@ my $limit = 20;
 
 for (@origin) {
 	my ($sha1, $name) = @$_;
-	my @mb = mergebase($sha1);
-	my @log = shortlog($sha1, $limit + 1, @mb);
+	my @log = shortlog($sha1, $limit + 1);
 	if ($limit + 1 <= @log) {
 		print "\n* $name: (" . scalar(@log) . " commits)\n";
 	}
