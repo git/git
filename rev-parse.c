@@ -43,6 +43,7 @@ static int is_rev_argument(const char *arg)
 		"--min-age=",
 		"--no-merges",
 		"--objects",
+		"--objects-edge",
 		"--parents",
 		"--pretty",
 		"--show-breaks",

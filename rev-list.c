@@ -30,7 +30,7 @@ static const char rev_list_usage[] =
 "    --date-order\n"
 "  formatting output:\n"
 "    --parents\n"
-"    --objects\n"
+"    --objects | --objects-edge\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
 "    --abbrev=nr | --no-abbrev\n"
@@ -44,6 +44,7 @@ static int bisect_list = 0;
 static int tag_objects = 0;
 static int tree_objects = 0;
 static int blob_objects = 0;
+static int edge_hint = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
 static int show_parents = 0;
@@ -430,16 +431,30 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	return best;
 }
 
+static void mark_edge_parents_uninteresting(struct commit *commit)
+{
+	struct commit_list *parents;
+
+	for (parents = commit->parents; parents; parents = parents->next) {
+		struct commit *parent = parents->item;
+		if (!(parent->object.flags & UNINTERESTING))
+			continue;
+		mark_tree_uninteresting(parent->tree);
+		if (edge_hint)
+			printf("-%s\n", sha1_to_hex(parent->object.sha1));
+	}
+}
+
 static void mark_edges_uninteresting(struct commit_list *list)
 {
 	for ( ; list; list = list->next) {
-		struct commit_list *parents = list->item->parents;
+		struct commit *commit = list->item;
 
-		for ( ; parents; parents = parents->next) {
-			struct commit *commit = parents->item;
-			if (commit->object.flags & UNINTERESTING)
-				mark_tree_uninteresting(commit->tree);
+		if (commit->object.flags & UNINTERESTING) {
+			mark_tree_uninteresting(commit->tree);
+			continue;
 		}
+		mark_edge_parents_uninteresting(commit);
 	}
 }
 
@@ -841,6 +856,13 @@ int main(int argc, const char **argv)
 			tag_objects = 1;
 			tree_objects = 1;
 			blob_objects = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--objects-edge")) {
+			tag_objects = 1;
+			tree_objects = 1;
+			blob_objects = 1;
+			edge_hint = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--unpacked")) {
