@@ -59,24 +59,29 @@ my $rc = GetOptions("from=s" => \$from,
 
 # Now, let's fill any that aren't set in with defaults:
 
-open(GITVAR,"-|","git-var","-l")
-	or die "Failed to open pipe from git-var: $!";
-
-my ($author,$committer);
-while(<GITVAR>) {
-	chomp;
-	my ($var,$data) = split /=/,$_,2;
-	my @fields = split /\s+/, $data;
-
-	my $ident = join(" ", @fields[0...(@fields-3)]);
-
-	if ($var eq 'GIT_AUTHOR_IDENT') {
-		$author = $ident;
-	} elsif ($var eq 'GIT_COMMITTER_IDENT') {
-		$committer = $ident;
-	}
+sub gitvar {
+    my ($var) = @_;
+    my $fh;
+    my $pid = open($fh, '-|');
+    die "$!" unless defined $pid;
+    if (!$pid) {
+	exec('git-var', $var) or die "$!";
+    }
+    my ($val) = <$fh>;
+    close $fh or die "$!";
+    chomp($val);
+    return $val;
 }
-close(GITVAR);
+
+sub gitvar_ident {
+    my ($name) = @_;
+    my $val = gitvar($name);
+    my @field = split(/\s+/, $val);
+    return join(' ', @field[0...(@field-3)]);
+}
+
+my ($author) = gitvar_ident('GIT_AUTHOR_IDENT');
+my ($committer) = gitvar_ident('GIT_COMMITTER_IDENT');
 
 my $prompting = 0;
 if (!defined $from) {

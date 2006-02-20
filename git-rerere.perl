@@ -131,7 +131,11 @@ sub record_preimage {
 sub find_conflict {
 	my $in;
 	local $/ = "\0";
-	open $in, '-|', qw(git ls-files -z -u) or die "$!: ls-files";
+	my $pid = open($in, '-|');
+	die "$!" unless defined $pid;
+	if (!$pid) {
+		exec(qw(git ls-files -z -u)) or die "$!: ls-files";
+	}
 	my %path = ();
 	my @path = ();
 	while (<$in>) {
