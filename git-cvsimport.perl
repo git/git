@@ -846,8 +846,12 @@ while(<CVS>) {
 			print "Drop $fn\n" if $opt_v;
 		} else {
 			print "".($init ? "New" : "Update")." $fn: $size bytes\n" if $opt_v;
-			open my $F, '-|', "git-hash-object -w $tmpname"
+			my $pid = open(my $F, '-|');
+			die $! unless defined $pid;
+			if (!$pid) {
+			    exec("git-hash-object", "-w", $tmpname)
 				or die "Cannot create object: $!\n";
+			}
 			my $sha = <$F>;
 			chomp $sha;
 			close $F;
