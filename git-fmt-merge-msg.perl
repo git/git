@@ -43,6 +43,7 @@ sub current_branch {
 	my $fh;
 	open $fh, '-|', 'git-symbolic-ref', 'HEAD' or die "$!";
 	my ($bra) = <$fh>;
+	chomp($bra);
 	$bra =~ s|^refs/heads/||;
 	if ($bra ne 'master') {
 		$bra = " into $bra";
