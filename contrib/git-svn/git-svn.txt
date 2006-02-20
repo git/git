@@ -99,6 +99,13 @@ OPTIONS
 	default for objects that are commits, and forced on when committing
 	tree objects.
 
+-l<num>::
+--find-copies-harder::
+	Both of these are only used with the 'commit' command.
+
+	They are both passed directly to git-diff-tree see
+	git-diff-tree(1) for more information.
+
 COMPATIBILITY OPTIONS
 ---------------------
 --no-ignore-externals::

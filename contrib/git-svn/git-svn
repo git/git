@@ -30,7 +30,8 @@ use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use File::Spec qw//;
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{6,40}/;
-my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit);
+my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
+	$_find_copies_harder, $_l);
 
 GetOptions(	'revision|r=s' => \$_revision,
 		'no-ignore-externals' => \$_no_ignore_ext,
@@ -38,6 +39,8 @@ GetOptions(	'revision|r=s' => \$_revision,
 		'edit|e' => \$_edit,
 		'rmdir' => \$_rmdir,
 		'help|H|h' => \$_help,
+		'find-copies-harder' => \$_find_copies_harder,
+		'l=i' => \$_l,
 		'no-stop-on-copy' => \$_no_stop_copy );
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN" ],
@@ -348,7 +351,10 @@ sub svn_checkout_tree {
 	my $pid = open my $diff_fh, '-|';
 	defined $pid or croak $!;
 	if ($pid == 0) {
-		exec(qw(git-diff-tree -z -r -C), $from, $commit) or croak $!;
+		my @diff_tree = qw(git-diff-tree -z -r -C);
+		push @diff_tree, '--find-copies-harder' if $_find_copies_harder;
+		push @diff_tree, "-l$_l" if defined $_l;
+		exec(@diff_tree, $from, $commit) or croak $!;
 	}
 	my $mods = parse_diff_tree($diff_fh);
 	unless (@$mods) {
