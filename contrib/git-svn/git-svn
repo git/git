@@ -216,14 +216,21 @@ sub commit {
 		print "Reading from stdin...\n";
 		@commits = ();
 		while (<STDIN>) {
-			if (/^([a-f\d]{6,40})\b/) {
+			if (/\b([a-f\d]{6,40})\b/) {
 				unshift @commits, $1;
 			}
 		}
 	}
 	my @revs;
-	foreach (@commits) {
-		push @revs, (safe_qx('git-rev-parse',$_));
+	foreach my $c (@commits) {
+		chomp(my @tmp = safe_qx('git-rev-parse',$c));
+		if (scalar @tmp == 1) {
+			push @revs, $tmp[0];
+		} elsif (scalar @tmp > 1) {
+			push @revs, reverse (safe_qx('git-rev-list',@tmp));
+		} else {
+			die "Failed to rev-parse $c\n";
+		}
 	}
 	chomp @revs;
 
