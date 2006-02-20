@@ -206,6 +206,13 @@ working trees with metadata files.
 svn:keywords can't be ignored in Subversion (at least I don't know of
 a way to ignore them).
 
+Renamed and copied directories are not detected by git and hence not
+tracked when committing to SVN.  I do not plan on adding support for
+this as it's quite difficult and time-consuming to get working for all
+the possible corner cases (git doesn't do it, either).  Renamed and
+copied files are fully supported if they're similar enough for git to
+detect them.
+
 Author
 ------
 Written by Eric Wong <normalperson@yhbt.net>.
