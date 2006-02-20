@@ -99,6 +99,13 @@ OPTIONS
 	default for objects that are commits, and forced on when committing
 	tree objects.
 
+-l<num>::
+--find-copies-harder::
+	Both of these are only used with the 'commit' command.
+
+	They are both passed directly to git-diff-tree see
+	git-diff-tree(1) for more information.
+
 COMPATIBILITY OPTIONS
 ---------------------
 --no-ignore-externals::
@@ -142,7 +149,7 @@ Tracking and contributing to an Subversion managed-project:
 # Commit only the git commits you want to SVN::
 	git-svn commit <tree-ish> [<tree-ish_2> ...]
 # Commit all the git commits from my-branch that don't exist in SVN::
-	git rev-list --pretty=oneline git-svn-HEAD..my-branch | git-svn commit
+	git commit git-svn-HEAD..my-branch
 # Something is committed to SVN, pull the latest into your branch::
 	git-svn fetch && git pull . git-svn-HEAD
 
@@ -198,6 +205,13 @@ working trees with metadata files.
 
 svn:keywords can't be ignored in Subversion (at least I don't know of
 a way to ignore them).
+
+Renamed and copied directories are not detected by git and hence not
+tracked when committing to SVN.  I do not plan on adding support for
+this as it's quite difficult and time-consuming to get working for all
+the possible corner cases (git doesn't do it, either).  Renamed and
+copied files are fully supported if they're similar enough for git to
+detect them.
 
 Author
 ------
