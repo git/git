@@ -38,7 +38,7 @@ GetOptions(	'revision|r=s' => \$_revision,
 		'edit|e' => \$_edit,
 		'rmdir' => \$_rmdir,
 		'help|H|h' => \$_help,
-		'no-stop-copy' => \$_no_stop_copy );
+		'no-stop-on-copy' => \$_no_stop_copy );
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN" ],
 	init => [ \&init, "Initialize and fetch (import)"],
