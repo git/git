@@ -142,6 +142,8 @@ case "$#,$common,$no_commit" in
 1,*,)
 	# We are not doing octopus, not fast forward, and have only
 	# one common.  See if it is really trivial.
+	git var GIT_COMMITTER_IDENT >/dev/null || exit
+
 	echo "Trying really trivial in-index merge..."
 	git-update-index --refresh 2>/dev/null
 	if git-read-tree --trivial -m -u $common $head "$1" &&
@@ -178,6 +180,9 @@ case "$#,$common,$no_commit" in
 	fi
 	;;
 esac
+
+# We are going to make a new commit.
+git var GIT_COMMITTER_IDENT >/dev/null || exit
 
 case "$use_strategies" in
 '')

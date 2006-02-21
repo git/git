@@ -156,8 +156,18 @@ static int copy(char *buf, int size, int offset, const char *src)
 	return offset;
 }
 
+static const char au_env[] = "GIT_AUTHOR_NAME";
+static const char co_env[] = "GIT_COMMITTER_NAME";
+static const char *env_hint =
+"\n*** Environment problem:\n"
+"*** Your name cannot be determined from your system services (gecos).\n"
+"*** You would need to set %s and %s\n"
+"*** environment variables; otherwise you won't be able to perform\n"
+"*** certain operations because of \"empty ident\" errors.\n"
+"*** Alternatively, you can use user.name configuration variable.\n\n";
+
 static const char *get_ident(const char *name, const char *email,
-			     const char *date_str)
+			     const char *date_str, int error_on_no_name)
 {
 	static char buffer[1000];
 	char date[50];
@@ -168,9 +178,14 @@ static const char *get_ident(const char *name, const char *email,
 	if (!email)
 		email = git_default_email;
 
-	if (!*name || !*email)
-		die("empty ident %s <%s> not allowed",
-		    name, email);
+	if (!*name) {
+		if (name == git_default_name && env_hint) {
+			fprintf(stderr, env_hint, au_env, co_env);
+			env_hint = NULL; /* warn only once, for "git-var -l" */
+		}
+		if (error_on_no_name)
+			die("empty ident %s <%s> not allowed", name, email);
+	}
 
 	strcpy(date, git_default_date);
 	if (date_str)
@@ -187,16 +202,18 @@ static const char *get_ident(const char *name, const char *email,
 	return buffer;
 }
 
-const char *git_author_info(void)
+const char *git_author_info(int error_on_no_name)
 {
 	return get_ident(getenv("GIT_AUTHOR_NAME"),
 			 getenv("GIT_AUTHOR_EMAIL"),
-			 getenv("GIT_AUTHOR_DATE"));
+			 getenv("GIT_AUTHOR_DATE"),
+			 error_on_no_name);
 }
 
-const char *git_committer_info(void)
+const char *git_committer_info(int error_on_no_name)
 {
 	return get_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
-			 getenv("GIT_COMMITTER_DATE"));
+			 getenv("GIT_COMMITTER_DATE"),
+			 error_on_no_name);
 }
