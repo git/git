@@ -55,6 +55,11 @@ all:
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 #
+# Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
+# a missing newline at the end of the file.
+#
+# Define NO_PYTHON if you want to loose all benefits of the recursive merge.
+#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -273,6 +278,16 @@ ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
 	NEEDS_LIBICONV=YesPlease
 endif
+ifeq ($(uname_S),IRIX64)
+	NO_IPV6=YesPlease
+	NO_SETENV=YesPlease
+	NO_STRCASESTR=YesPlease
+	NO_SOCKADDR_STORAGE=YesPlease
+	SHELL_PATH=/usr/gnu/bin/bash
+	ALL_CFLAGS += -DPATH_MAX=1024
+	# for now, build 32-bit version
+	ALL_LDFLAGS += -L/usr/lib32
+endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
@@ -403,6 +418,9 @@ else
 endif
 endif
 endif
+ifdef NO_ACCURATE_DIFF
+	ALL_CFLAGS += -DNO_ACCURATE_DIFF
+endif
 
 ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER)) $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
@@ -426,6 +444,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
 	    $@.sh >$@
 	chmod +x $@
 
@@ -504,6 +523,12 @@ doc:
 
 
 ### Testing rules
+
+# GNU make supports exporting all variables by "export" without parameters.
+# However, the environment gets quite big, and some programs have problems
+# with that.
+
+export NO_PYTHON
 
 test: all
 	$(MAKE) -C t/ all
