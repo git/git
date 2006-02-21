@@ -75,7 +75,7 @@ esac
 # The upstream head must be given.  Make sure it is valid.
 upstream_name="$1"
 upstream=`git rev-parse --verify "${upstream_name}^0"` ||
-    die "invalid upsteram $upstream_name"
+    die "invalid upstream $upstream_name"
 
 # If a hook exists, give it a chance to interrupt
 if test -x "$GIT_DIR/hooks/pre-rebase"
