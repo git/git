@@ -141,8 +141,9 @@ git-read-tree -m -u $base $head $next &&
 result=$(git-write-tree 2>/dev/null) || {
     echo >&2 "Simple $me fails; trying Automatic $me."
     git-merge-index -o git-merge-one-file -a || {
-	    echo >&2 "Automatic $me failed.  After fixing it up,"
-	    echo >&2 "you can use \"git commit -F .msg\""
+	    echo >&2 "Automatic $me failed.  After resolving the conflicts,"
+	    echo >&2 "mark the corrected paths with 'git-update-index <paths>'"
+	    echo >&2 "and commit with 'git commit -F .msg'"
 	    case "$me" in
 	    cherry-pick)
 		echo >&2 "You may choose to use the following when making"
