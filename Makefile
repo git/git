@@ -143,7 +143,7 @@ PROGRAMS = \
 	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-init-db$X \
 	git-local-fetch$X git-ls-files$X git-ls-tree$X git-merge-base$X \
-	git-merge-index$X git-mktag$X git-pack-objects$X git-patch-id$X \
+	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-read-tree$X \
 	git-receive-pack$X git-rev-list$X git-rev-parse$X \
 	git-send-pack$X git-show-branch$X git-shell$X \
