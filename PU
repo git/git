@@ -9,8 +9,15 @@ case "$(git-diff-index --name-status HEAD)" in
 *)	echo 2>&1 "Local modifications exist."
 	exit 1;;
 esac
-git checkout pu &&
-git reset --hard master &&
+
+case "$1" in
+--continue)
+	shift
+	;;
+*)
+	git checkout pu &&
+	git reset --hard master || exit
+esac
 ORIG_HEAD=`git rev-parse ORIG_HEAD` || exit
 LF='
 '
