@@ -515,15 +515,15 @@ git-ssh-upload$X: rsh.o
 git-ssh-pull$X: rsh.o fetch.o
 git-ssh-push$X: rsh.o
 
-git-http-fetch$X: fetch.o http.o http-fetch.o
+git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL)
 
-git-http-push$X: http.o http-push.o
+git-http-push$X: http.o http-push.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-git-rev-list$X: rev-list.o
+git-rev-list$X: rev-list.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(OPENSSL_LIBSSL)
 
