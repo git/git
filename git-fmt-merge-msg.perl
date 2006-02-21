@@ -55,9 +55,9 @@ sub current_branch {
 }
 
 sub shortlog {
-	my ($tip, $limit) = @_;
+	my ($tip) = @_;
 	my ($fh, @result);
-	open $fh, '-|', ('git-log', "--max-count=$limit", '--topo-order',
+	open $fh, '-|', ('git-log', '--topo-order',
 			 '--pretty=oneline', $tip, '^HEAD')
 	    or die "$!";
 	while (<$fh>) {
@@ -160,7 +160,7 @@ my $limit = 20;
 
 for (@origin) {
 	my ($sha1, $name) = @$_;
-	my @log = shortlog($sha1, $limit + 1);
+	my @log = shortlog($sha1);
 	if ($limit + 1 <= @log) {
 		print "\n* $name: (" . scalar(@log) . " commits)\n";
 	}
