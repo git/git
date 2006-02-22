@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# Copyright (C) 2006 Carl D. Worth <cworth@cworth.org>
+#
+
+test_description='test git-clone to cleanup after failure
+
+This test covers the fact that if git-clone fails, it should remove
+the directory it created, to avoid the user having to manually
+remove the directory before attempting a clone again.'
+
+. ./test-lib.sh
+
+test_expect_failure \
+    'clone of non-existent source should fail' \
+    'git-clone foo bar'
+
+test_expect_failure \
+    'failed clone should not leave a directory' \
+    'cd bar'
+
+# Need a repo to clone
+test_create_repo foo
+
+# clone doesn't like it if there is no HEAD. Is that a bug?
+(cd foo && touch file && git add file && git commit -m 'add file' >/dev/null 2>&1)
+
+test_expect_success \
+    'clone should work now that source exists' \
+    'git-clone foo bar'
+
+test_expect_success \
+    'successfull clone must leave the directory' \
+    'cd bar'
+
+test_done

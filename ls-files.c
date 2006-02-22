@@ -778,6 +778,7 @@ int main(int argc, const char **argv)
 				continue;
 			error("pathspec '%s' did not match any.",
 			      pathspec[num] + prefix_offset);
+			errors++;
 		}
 		return errors ? 1 : 0;
 	}

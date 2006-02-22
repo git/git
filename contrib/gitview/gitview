@@ -56,20 +56,6 @@ def show_date(epoch, tz):
 
 	return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(secs))
 
-def get_sha1_from_tags(line):
-	fp = os.popen("git cat-file -t " + line)
-	entry = string.strip(fp.readline())
-	fp.close()
-	if (entry == "commit"):
-		return line
-	elif (entry == "tag"):
-		fp = os.popen("git cat-file tag "+ line)
-		entry = string.strip(fp.readline())
-		fp.close()
-		obj = re.split(" ", entry)
-		if (obj[0] == "object"):
-			return obj[1]
-	return None
 
 class CellRendererGraph(gtk.GenericCellRenderer):
 	"""Cell renderer for directed graph.
@@ -174,9 +160,9 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 		names_len = 0
 		if (len(names) != 0):
 			for item in names:
-				names_len += len(item)/3
+				names_len += len(item)
 
-		width = box_size * (cols + 1 + names_len )
+		width = box_size * (cols + 1 ) + names_len 
 		height = box_size
 
 		# FIXME I have no idea how to use cell_area properly
@@ -258,6 +244,8 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 			for item in names:
 				name = name + item + " "
 
+			ctx.select_font_face("Monospace")
+			ctx.set_font_size(13)
 			ctx.text_path(name)
 
 		self.set_colour(ctx, colour, 0.0, 0.5)
@@ -465,32 +453,24 @@ class GitView:
 		respective sha1 details """
 
 		self.bt_sha1 = { }
+		ls_remote = re.compile('^(.{40})\trefs/([^^]+)(?:\\^(..))?$');
 		git_dir = os.getenv("GIT_DIR")
 		if (git_dir == None):
 			git_dir = ".git"
 
-		#FIXME the path seperator
-		ref_files = os.listdir(git_dir + "/refs/tags")
-		for file in ref_files:
-			fp = open(git_dir + "/refs/tags/"+file)
-			sha1 = get_sha1_from_tags(string.strip(fp.readline()))
-			try:
-				self.bt_sha1[sha1].append(file)
-			except KeyError:
-				self.bt_sha1[sha1] = [file]
-			fp.close()
-
-
-		#FIXME the path seperator
-		ref_files = os.listdir(git_dir + "/refs/heads")
-		for file in ref_files:
-			fp = open(git_dir + "/refs/heads/" + file)
-			sha1 = get_sha1_from_tags(string.strip(fp.readline()))
-			try:
-				self.bt_sha1[sha1].append(file)
-			except KeyError:
-				self.bt_sha1[sha1] = [file]
-			fp.close()
+		fp = os.popen('git ls-remote ' + git_dir)
+		while 1:
+			line = string.strip(fp.readline())
+			if line == '':
+				break
+			m = ls_remote.match(line)
+			if not m:
+				continue
+			(sha1, name) = (m.group(1), m.group(2))
+			if not self.bt_sha1.has_key(sha1):
+				self.bt_sha1[sha1] = []
+			self.bt_sha1[sha1].append(name)
+		fp.close()
 
 
 	def construct(self):
@@ -537,8 +517,8 @@ class GitView:
 
 		cell = CellRendererGraph()
 		column = gtk.TreeViewColumn()
-		column.set_resizable(False)
-		column.pack_start(cell, expand=False)
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
 		column.add_attribute(cell, "node", 1)
 		column.add_attribute(cell, "in-lines", 2)
 		column.add_attribute(cell, "out-lines", 3)

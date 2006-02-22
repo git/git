@@ -15,6 +15,7 @@ SYNOPSIS
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>] 
+		[--error-unmatch]
 		[--full-name] [--] [<file>]\*
 
 DESCRIPTION
@@ -72,6 +73,10 @@ OPTIONS
 --exclude-per-directory=<file>::
 	read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
+
+--error-unmatch::
+	If any <file> does not appear in the index, treat this as an
+	error (return 1).
 
 -t::
 	Identify the file status with the following tags (followed by
