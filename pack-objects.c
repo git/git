@@ -629,11 +629,10 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	}
 
 	size = cur_entry->size;
-	if (size < 50)
-		return -1;
 	oldsize = old_entry->size;
 	sizediff = oldsize > size ? oldsize - size : size - oldsize;
-	if (sizediff > size / 8)
+
+	if (size < 50)
 		return -1;
 	if (old_entry->depth >= max_depth)
 		return 0;
