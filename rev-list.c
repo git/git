@@ -256,8 +256,8 @@ static void show_commit_list(struct commit_list *list)
 		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
 	}
 	while (objects) {
-		/* An object with name "foo\n0000000000000000000000000000000000000000"
-		 * can be used confuse downstream git-pack-objects very badly.
+		/* An object with name "foo\n0000000..." can be used to
+		 * confuse downstream git-pack-objects very badly.
 		 */
 		const char *ep = strchr(objects->name, '\n');
 		if (ep) {
