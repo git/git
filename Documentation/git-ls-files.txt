@@ -8,7 +8,8 @@ git-ls-files - Information about files in the index/working directory
 
 SYNOPSIS
 --------
-'git-ls-files' [-z] [-t]
+[verse]
+'git-ls-files' [-z] [-t] [-v]
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
 		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
@@ -86,6 +87,10 @@ OPTIONS
 	C::	modified/changed
 	K::	to be killed
 	?::	other
+
+-v::
+	Similar to `-t`, but use lowercase letters for files
+	that are marked as 'always matching index'.
 
 --full-name::
 	When run from a subdirectory, the command usually

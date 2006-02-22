@@ -8,11 +8,14 @@ git-update-index - Modifies the index or directory cache
 
 SYNOPSIS
 --------
+[verse]
 'git-update-index'
 	     [--add] [--remove | --force-remove] [--replace] 
 	     [--refresh [-q] [--unmerged] [--ignore-missing]]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
+	     [--assume-unchanged | --no-assume-unchanged]
+	     [--really-refresh]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
@@ -64,6 +67,18 @@ OPTIONS
 
 --chmod=(+|-)x::
         Set the execute permissions on the updated files.        
+
+--assume-unchanged, --no-assume-unchanged::
+	When these flags are specified, the object name recorded
+	for the paths are not updated.  Instead, these options
+	sets and unsets the "assume unchanged" bit for the
+	paths.  When the "assume unchanged" bit is on, git stops
+	checking the working tree files for possible
+	modifications, so you need to manually unset the bit to
+	tell git when you change the working tree file. This is
+	sometimes helpful when working with a big project on a
+	filesystem that has very slow lstat(2) system call
+	(e.g. cifs).
 
 --info-only::
 	Do not create objects in the object database for all
@@ -193,6 +208,37 @@ $ git ls-files -s
 ------------
 
 
+Using "assume unchanged" bit
+----------------------------
+
+Many operations in git depend on your filesystem to have an
+efficient `lstat(2)` implementation, so that `st_mtime`
+information for working tree files can be cheaply checked to see
+if the file contents have changed from the version recorded in
+the index file.  Unfortunately, some filesystems have
+inefficient `lstat(2)`.  If your filesystem is one of them, you
+can set "assume unchanged" bit to paths you have not changed to
+cause git not to do this check.  Note that setting this bit on a
+path does not mean git will check the contents of the file to
+see if it has changed -- it makes git to omit any checking and
+assume it has *not* changed.  When you make changes to working
+tree files, you have to explicitly tell git about it by dropping
+"assume unchanged" bit, either before or after you modify them.
+
+In order to set "assume unchanged" bit, use `--assume-unchanged`
+option.  To unset, use `--no-assume-unchanged`.
+
+The command looks at `core.ignorestat` configuration variable.  When
+this is true, paths updated with `git-update-index paths...` and
+paths updated with other git commands that update both index and
+working tree (e.g. `git-apply --index`, `git-checkout-index -u`,
+and `git-read-tree -u`) are automatically marked as "assume
+unchanged".  Note that "assume unchanged" bit is *not* set if
+`git-update-index --refresh` finds the working tree file matches
+the index (use `git-update-index --really-refresh` if you want
+to mark them as "assume unchanged").
+
+
 Examples
 --------
 To update and refresh only the files already checked out:
@@ -200,6 +246,35 @@ To update and refresh only the files already checked out:
 ----------------
 $ git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
 ----------------
+
+On an inefficient filesystem with `core.ignorestat` set:
+
+------------
+$ git update-index --really-refresh <1>
+$ git update-index --no-assume-unchanged foo.c <2>
+$ git diff --name-only <3>
+$ edit foo.c
+$ git diff --name-only <4>
+M foo.c
+$ git update-index foo.c <5>
+$ git diff --name-only <6>
+$ edit foo.c
+$ git diff --name-only <7>
+$ git update-index --no-assume-unchanged foo.c <8>
+$ git diff --name-only <9>
+M foo.c
+
+<1> forces lstat(2) to set "assume unchanged" bits for paths
+    that match index.
+<2> mark the path to be edited.
+<3> this does lstat(2) and finds index matches the path.
+<4> this does lstat(2) and finds index does not match the path.
+<5> registering the new version to index sets "assume unchanged" bit.
+<6> and it is assumed unchanged.
+<7> even after you edit it.
+<8> you can tell about the change after the fact.
+<9> now it checks with lstat(2) and finds it has been changed.
+------------
 
 
 Configuration
@@ -212,6 +287,9 @@ This causes the command to ignore differences in file modes recorded
 in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
 need to use `git-update-index --chmod=`.
+
+The command looks at `core.ignorestat` configuration variable.  See
+'Using "assume unchanged" bit' section above.
 
 
 See Also

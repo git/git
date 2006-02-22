@@ -91,6 +91,7 @@ struct cache_entry {
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
 #define CE_UPDATE    (0x4000)
+#define CE_VALID     (0x8000)
 #define CE_STAGESHIFT 12
 
 #define create_ce_flags(len, stage) htons((len) | ((stage) << CE_STAGESHIFT))
@@ -144,8 +145,8 @@ extern int add_cache_entry(struct cache_entry *ce, int option);
 extern int remove_cache_entry_at(int pos);
 extern int remove_file_from_cache(const char *path);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
-extern int ce_match_stat(struct cache_entry *ce, struct stat *st);
-extern int ce_modified(struct cache_entry *ce, struct stat *st);
+extern int ce_match_stat(struct cache_entry *ce, struct stat *st, int);
+extern int ce_modified(struct cache_entry *ce, struct stat *st, int);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type);
 extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object);
@@ -161,6 +162,7 @@ extern int commit_index_file(struct cache_file *);
 extern void rollback_index_file(struct cache_file *);
 
 extern int trust_executable_bit;
+extern int assume_unchanged;
 extern int only_use_symrefs;
 extern int diff_rename_limit_default;
 extern int shared_repository;

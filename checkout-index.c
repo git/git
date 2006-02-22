@@ -116,6 +116,7 @@ int main(int argc, char **argv)
 	int all = 0;
 
 	prefix = setup_git_directory();
+	git_config(git_default_config);
 	prefix_length = prefix ? strlen(prefix) : 0;
 
 	if (read_cache() < 0) {
