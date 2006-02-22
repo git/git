@@ -37,26 +37,44 @@ static void exec_pack_objects(void)
 
 static void exec_rev_list(struct ref *refs)
 {
+	struct ref *ref;
 	static char *args[1000];
-	int i = 0;
+	int i = 0, j;
 
 	args[i++] = "rev-list";	/* 0 */
 	args[i++] = "--objects";	/* 1 */
-	while (refs) {
-		char *buf = malloc(100);
-		if (i > 900)
+
+	/* First send the ones we care about most */
+	for (ref = refs; ref; ref = ref->next) {
+		if (900 < i)
 			die("git-rev-list environment overflow");
-		if (!is_zero_sha1(refs->old_sha1) &&
-		    has_sha1_file(refs->old_sha1)) {
+		if (!is_zero_sha1(ref->new_sha1)) {
+			char *buf = malloc(100);
 			args[i++] = buf;
-			snprintf(buf, 50, "^%s", sha1_to_hex(refs->old_sha1));
+			snprintf(buf, 50, "%s", sha1_to_hex(ref->new_sha1));
 			buf += 50;
+			if (!is_zero_sha1(ref->old_sha1) &&
+			    has_sha1_file(ref->old_sha1)) {
+				args[i++] = buf;
+				snprintf(buf, 50, "^%s",
+					 sha1_to_hex(ref->old_sha1));
+			}
 		}
-		if (!is_zero_sha1(refs->new_sha1)) {
+	}
+
+	/* Then a handful of the remainder
+	 * NEEDSWORK: we would be better off if used the newer ones first.
+	 */
+	for (ref = refs, j = i + 16;
+	     i < 900 && i < j && ref;
+	     ref = ref->next) {
+		if (is_zero_sha1(ref->new_sha1) &&
+		    !is_zero_sha1(ref->old_sha1) &&
+		    has_sha1_file(ref->old_sha1)) {
+			char *buf = malloc(42);
 			args[i++] = buf;
-			snprintf(buf, 50, "%s", sha1_to_hex(refs->new_sha1));
+			snprintf(buf, 42, "^%s", sha1_to_hex(ref->old_sha1));
 		}
-		refs = refs->next;
 	}
 	args[i] = NULL;
 	execv_git_cmd(args);
