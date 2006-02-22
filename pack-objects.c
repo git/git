@@ -53,6 +53,7 @@ static int nr_objects = 0, nr_alloc = 0;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
+static volatile int progress_update = 0;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -333,8 +334,14 @@ static void write_pack_file(void)
 	hdr.hdr_entries = htonl(nr_objects);
 	sha1write(f, &hdr, sizeof(hdr));
 	offset = sizeof(hdr);
-	for (i = 0; i < nr_objects; i++)
+	for (i = 0; i < nr_objects; i++) {
 		offset = write_one(f, objects + i, offset);
+		if (progress_update) {
+			fprintf(stderr, "Writing (%d %d%%)\r",
+				i+1, (i+1) * 100/nr_objects);
+			progress_update = 0;
+		}
+	}
 
 	sha1close(f, pack_file_sha1, 1);
 }
@@ -662,7 +669,6 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	return 0;
 }
 
-static volatile int progress_update = 0;
 static void progress_interval(int signum)
 {
 	signal(SIGALRM, progress_interval);
@@ -735,7 +741,6 @@ static void prepare_pack(int window, int depth)
 	sorted_by_type = create_sorted_list(type_size_sort);
 	if (window && depth)
 		find_deltas(sorted_by_type, window+1, depth);
-	write_pack_file();
 }
 
 static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
@@ -905,6 +910,14 @@ int main(int argc, char **argv)
 		;
 	else {
 		prepare_pack(window, depth);
+		if (progress && pack_to_stdout) {
+			/* the other end usually displays progress itself */
+			struct itimerval v = {{0,},};
+			setitimer(ITIMER_REAL, &v, NULL);
+			signal(SIGALRM, SIG_IGN );
+			progress_update = 0;
+		}
+		write_pack_file();
 		if (!pack_to_stdout) {
 			write_index_file();
 			puts(sha1_to_hex(object_list_sha1));
