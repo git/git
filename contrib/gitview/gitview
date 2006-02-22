@@ -454,11 +454,7 @@ class GitView:
 
 		self.bt_sha1 = { }
 		ls_remote = re.compile('^(.{40})\trefs/([^^]+)(?:\\^(..))?$');
-		git_dir = os.getenv("GIT_DIR")
-		if (git_dir == None):
-			git_dir = ".git"
-
-		fp = os.popen('git ls-remote ' + git_dir)
+		fp = os.popen('git ls-remote "${GIT_DIR-.git}"')
 		while 1:
 			line = string.strip(fp.readline())
 			if line == '':
