@@ -10,7 +10,6 @@
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
 
-require 5.008; # for shell-safe open("-|",LIST)
 use strict;
 use warnings;
 use Getopt::Std;
@@ -322,8 +321,12 @@ sub get_file($$$) {
 		return undef unless defined $name;
 	}
 
-	open my $F, '-|', "git-hash-object", "-w", $name
+	my $pid = open(my $F, '-|');
+	die $! unless defined $pid;
+	if (!$pid) {
+	    exec("git-hash-object", "-w", $name)
 		or die "Cannot create object: $!\n";
+	}
 	my $sha = <$F>;
 	chomp $sha;
 	close $F;
@@ -398,7 +401,12 @@ sub copy_path($$$$$$$$) {
 			$srcpath =~ s#/*$#/#;
 	}
 	
-	open my $f,"-|","git-ls-tree","-r","-z",$gitrev,$srcpath;
+	my $pid = open my $f,'-|';
+	die $! unless defined $pid;
+	if (!$pid) {
+		exec("git-ls-tree","-r","-z",$gitrev,$srcpath)
+			or die $!;
+	}
 	local $/ = "\0";
 	while(<$f>) {
 		chomp;
@@ -554,7 +562,11 @@ sub commit {
 				@o1 = @old;
 				@old = ();
 			}
-			open my $F, "-|", "git-ls-files", "-z", @o1 or die $!;
+			my $pid = open my $F, "-|";
+			die "$!" unless defined $pid;
+			if (!$pid) {
+				exec("git-ls-files", "-z", @o1) or die $!;
+			}
 			@o1 = ();
 			local $/ = "\0";
 			while(<$F>) {
