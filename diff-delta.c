@@ -148,16 +148,20 @@ static void delta_cleanup(bdfile_t *bdf)
 	cha_free(&bdf->cha);
 }
 
+/* provide the size of the copy opcode given the block offset and size */
 #define COPYOP_SIZE(o, s) \
     (!!(o & 0xff) + !!(o & 0xff00) + !!(o & 0xff0000) + !!(o & 0xff000000) + \
      !!(s & 0xff) + !!(s & 0xff00) + 1)
+
+/* the maximum size for any opcode */
+#define MAX_OP_SIZE COPYOP_SIZE(0xffffffff, 0xffffffff)
 
 void *diff_delta(void *from_buf, unsigned long from_size,
 		 void *to_buf, unsigned long to_size,
 		 unsigned long *delta_size,
 		 unsigned long max_size)
 {
-	int i, outpos, outsize, inscnt, csize, msize, moff;
+	unsigned int i, outpos, outsize, inscnt, csize, msize, moff;
 	unsigned int fp;
 	const unsigned char *ref_data, *ref_top, *data, *top, *ptr1, *ptr2;
 	unsigned char *out, *orig;
@@ -169,6 +173,8 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 	
 	outpos = 0;
 	outsize = 8192;
+	if (max_size && outsize >= max_size)
+		outsize = max_size + MAX_OP_SIZE + 1;
 	out = malloc(outsize);
 	if (!out) {
 		delta_cleanup(&bdf);
@@ -259,17 +265,15 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 			*orig = i;
 		}
 
-		if (max_size && outpos > max_size) {
-			free(out);
-			delta_cleanup(&bdf);
-			return NULL;
-		}
-
-		/* next time around the largest possible output is 1 + 4 + 3 */
-		if (outpos > outsize - 8) {
+		if (outpos >= outsize - MAX_OP_SIZE) {
 			void *tmp = out;
 			outsize = outsize * 3 / 2;
-			out = realloc(out, outsize);
+			if (max_size && outsize >= max_size)
+				outsize = max_size + MAX_OP_SIZE + 1;
+			if (max_size && outpos > max_size)
+				out = NULL;
+			else
+				out = realloc(out, outsize);
 			if (!out) {
 				free(tmp);
 				delta_cleanup(&bdf);
