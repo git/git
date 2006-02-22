@@ -43,6 +43,12 @@ to fast forward the remote ref that matches <dst>.  If
 the optional plus `+` is used, the remote ref is updated
 even if it does not result in a fast forward update.
 +
+Note: If no explicit refspec is found, (that is neither
+on the command line nor in any Push line of the
+corresponding remotes file---see below), then all the
+refs that exist both on the local side and on the remote
+side are updated.
++
 Some short-cut notations are also supported.
 +
 * `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
