@@ -189,7 +189,7 @@ my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 sub show_date {
     my ($time, $tz) = @_;
     my $minutes = abs($tz);
-    $minutes = ($minutes / 100) * 60 + ($minutes % 100);
+    $minutes = int($minutes / 100) * 60 + ($minutes % 100);
     if ($tz < 0) {
         $minutes = -$minutes;
     }
