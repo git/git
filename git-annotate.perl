@@ -8,9 +8,25 @@
 
 use warnings;
 use strict;
+use Getopt::Std;
+use POSIX qw(strftime gmtime);
+
+sub usage() {
+	print STDERR 'Usage: ${\basename $0} [-s] [-S revs-file] file
+
+	-l		show long rev
+	-r		follow renames
+	-S commit	use revs from revs-file instead of calling git-rev-list
+';
+
+	exit(1);
+}
+
+our ($opt_h, $opt_l, $opt_r, $opt_S);
+getopts("hlrS:") or usage();
+$opt_h && usage();
 
 my $filename = shift @ARGV;
-
 
 my @stack = (
 	{
@@ -41,9 +57,16 @@ while (my $bound = pop @stack) {
 		my ($rev, @parents) = @$revinst;
 		$head ||= $rev;
 
+		if (!defined($rev)) {
+			$rev = "";
+		}
 		$revs{$rev}{'filename'} = $bound->{'filename'};
 		if (scalar @parents > 0) {
 			$revs{$rev}{'parents'} = \@parents;
+			next;
+		}
+
+		if (!$opt_r) {
 			next;
 		}
 
@@ -65,7 +88,7 @@ foreach my $l (@filelines) {
 	my ($output, $rev, $committer, $date);
 	if (ref $l eq 'ARRAY') {
 		($output, $rev, $committer, $date) = @$l;
-		if (length($rev) > 8) {
+		if (!$opt_l && length($rev) > 8) {
 			$rev = substr($rev,0,8);
 		}
 	} else {
@@ -73,7 +96,8 @@ foreach my $l (@filelines) {
 		($rev, $committer, $date) = ('unknown', 'unknown', 'unknown');
 	}
 
-	printf("(%8s %10s %10s %d)%s\n", $rev, $committer, $date, $i++, $output);
+	printf("%s\t(%10s\t%10s\t%d)%s\n", $rev, $committer,
+		format_date($date), $i++, $output);
 }
 
 sub init_claim {
@@ -119,8 +143,12 @@ sub handle_rev {
 sub git_rev_list {
 	my ($rev, $file) = @_;
 
-	open(P,"-|","git-rev-list","--parents","--remove-empty",$rev,"--",$file)
-		or die "Failed to exec git-rev-list: $!";
+	if ($opt_S) {
+		open(P, '<' . $opt_S);
+	} else {
+		open(P,"-|","git-rev-list","--parents","--remove-empty",$rev,"--",$file)
+			or die "Failed to exec git-rev-list: $!";
+	}
 
 	my @revs;
 	while(my $line = <P>) {
@@ -319,3 +347,10 @@ sub git_commit_info {
 
 	return %info;
 }
+
+sub format_date {
+	my ($timestamp, $timezone) = split(' ', $_[0]);
+
+	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($timestamp));
+}
+
