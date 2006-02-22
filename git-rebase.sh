@@ -4,24 +4,28 @@
 #
 
 USAGE='[--onto <newbase>] <upstream> [<branch>]'
-LONG_USAGE='If <branch> is specified, switch to that branch first.  Then,
-extract commits in the current branch that are not in <upstream>,
-and reconstruct the current on top of <upstream>, discarding the original
-development history.  If --onto <newbase> is specified, the history is
-reconstructed on top of <newbase>, instead of <upstream>.  For example,
-while on "topic" branch:
+LONG_USAGE='git-rebase applies to <upstream> (or optionally to <newbase>) commits
+from <branch> that do not appear in <upstream>. When <branch> is not
+specified it defaults to the current branch (HEAD).
+
+When git-rebase is complete, <branch> will be updated to point to the
+newly created line of commit objects, so the previous line will not be
+accessible unless there are other references to it already.
+
+Assuming the following history:
 
           A---B---C topic
          /
     D---E---F---G master
 
-	$ '"$0"' --onto master~1 master topic
+The result of the following command:
 
-would rewrite the history to look like this:
+    git-rebase --onto master~1 master topic
 
+  would be:
 
-	      A'\''--B'\''--C'\'' topic
-	     /
+              A'\''--B'\''--C'\'' topic
+             /
     D---E---F---G master
 '
 
