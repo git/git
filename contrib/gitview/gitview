@@ -823,6 +823,7 @@ class GitView:
 		self.colours = {}
 		self.nodepos = {}
 		self.incomplete_line = {}
+		self.commits = []
 
 		index = 0
 		last_colour = 0
@@ -840,12 +841,7 @@ class GitView:
 
 			commit = Commit(commit_lines)
 			if (commit != None ):
-				(out_line, last_colour, last_nodepos) = self.draw_graph(commit,
-										index, out_line,
-										last_colour,
-										last_nodepos)
-				self.index[commit.commit_sha1] = index
-				index += 1
+				self.commits.append(commit)
 
 			# Skip the '\0
 			commit_lines = []
@@ -853,6 +849,14 @@ class GitView:
 			input_line = fp.readline()
 
 		fp.close()
+
+		for commit in self.commits:
+			(out_line, last_colour, last_nodepos) = self.draw_graph(commit,
+										index, out_line,
+										last_colour,
+										last_nodepos)
+			self.index[commit.commit_sha1] = index
+			index += 1
 
 		self.treeview.set_model(self.model)
 		self.treeview.show()
@@ -869,13 +873,6 @@ class GitView:
 			last_nodepos = 0
 
 		# Add the incomplete lines of the last cell in this
-		for sha1 in self.incomplete_line.keys():
-			if ( sha1 != commit.commit_sha1):
-				for pos in self.incomplete_line[sha1]:
-					in_line.append((pos, pos, self.colours[sha1]))
-			else:
-				del self.incomplete_line[sha1]
-
 		try:
 			colour = self.colours[commit.commit_sha1]
 		except KeyError:
@@ -896,6 +893,14 @@ class GitView:
 		except KeyError:
 			self.colours[commit.parent_sha1[0]] = colour
 			self.nodepos[commit.parent_sha1[0]] = node_pos
+
+		for sha1 in self.incomplete_line.keys():
+			if ( sha1 != commit.commit_sha1):
+				self.draw_incomplete_line(sha1, node_pos,
+						out_line, in_line, index)
+			else:
+				del self.incomplete_line[sha1]
+
 
 		in_line.append((node_pos, self.nodepos[commit.parent_sha1[0]],
 					self.colours[commit.parent_sha1[0]]))
@@ -935,6 +940,23 @@ class GitView:
 			self.incomplete_line[sha1].append(self.nodepos[sha1])
 		except KeyError:
 			self.incomplete_line[sha1] = [self.nodepos[sha1]]
+
+	def draw_incomplete_line(self, sha1, node_pos, out_line, in_line, index):
+		for idx, pos in enumerate(self.incomplete_line[sha1]):
+			if(pos == node_pos):
+				out_line.append((pos,
+					pos+0.5, self.colours[sha1]))
+				self.incomplete_line[sha1][idx] = pos = pos+0.5
+			try:
+				next_commit = self.commits[index+1]
+				if (next_commit.commit_sha1 == sha1 and pos != int(pos)):
+				# join the line back to the node point 
+				# This need to be done only if we modified it
+					in_line.append((pos, pos-0.5, self.colours[sha1]))
+					continue;
+			except IndexError:
+				pass
+			in_line.append((pos, pos, self.colours[sha1]))
 
 
 	def _go_clicked_cb(self, widget, revid):
