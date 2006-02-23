@@ -439,9 +439,37 @@ static void rehash_objects(void)
 	}
 }
 
-static int add_object_entry(const unsigned char *sha1, const char *name, int exclude)
+struct name_path {
+	struct name_path *up;
+	const char *elem;
+	int len;
+};
+
+static unsigned name_hash(struct name_path *path, const char *name)
 {
-	unsigned int hash = 0;
+	struct name_path *p = path;
+	const char *n = name + strlen(name);
+	unsigned hash = 0;
+
+	if (n != name && n[-1] == '\n')
+		n--;
+	while (name <= --n) {
+		unsigned char c = *n;
+		hash = hash * 11 + c;
+	}
+	for (p = path; p; p = p->up) {
+		hash = hash * 11 + '/';
+		n = p->elem + p->len;
+		while (p->elem <= --n) {
+			unsigned char c = *n;
+			hash = hash * 11 + c;
+		}
+	}
+	return hash;
+}
+
+static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclude)
+{
 	unsigned int idx = nr_objects;
 	struct object_entry *entry;
 	struct packed_git *p;
@@ -466,13 +494,6 @@ static int add_object_entry(const unsigned char *sha1, const char *name, int exc
 	}
 	if ((entry = locate_object_entry(sha1)) != NULL)
 		goto already_added;
-
-	while (*name) {
-		unsigned char c = *name++;
-		if (isspace(c))
-			continue;
-		hash = hash * 11 + c;
-	}
 
 	if (idx >= nr_alloc) {
 		unsigned int needed = (idx + 1024) * 3 / 2;
@@ -507,12 +528,12 @@ static int add_object_entry(const unsigned char *sha1, const char *name, int exc
 	return status;
 }
 
-static void add_pbase_tree(struct tree_desc *tree)
+static void add_pbase_tree(struct tree_desc *tree, struct name_path *up)
 {
 	while (tree->size) {
 		const unsigned char *sha1;
 		const char *name;
-		unsigned mode;
+		unsigned mode, hash;
 		unsigned long size;
 		char type[20];
 
@@ -523,16 +544,22 @@ static void add_pbase_tree(struct tree_desc *tree)
 		if (sha1_object_info(sha1, type, &size))
 			continue;
 
-		if (!add_object_entry(sha1, name, 1))
+		hash = name_hash(up, name);
+		if (!add_object_entry(sha1, hash, 1))
 			continue;
 
 		if (!strcmp(type, "tree")) {
 			struct tree_desc sub;
 			void *elem;
+			struct name_path me;
+
 			elem = read_sha1_file(sha1, type, &sub.size);
 			sub.buf = elem;
 			if (sub.buf) {
-				add_pbase_tree(&sub);
+				me.up = up;
+				me.elem = name;
+				me.len = strlen(name);
+				add_pbase_tree(&sub, &me);
 				free(elem);
 			}
 		}
@@ -543,12 +570,13 @@ static void add_preferred_base(unsigned char *sha1)
 {
 	struct tree_desc tree;
 	void *elem;
+
 	elem = read_object_with_reference(sha1, "tree", &tree.size, NULL);
 	tree.buf = elem;
 	if (!tree.buf)
 		return;
-	if (add_object_entry(sha1, "", 1))
-		add_pbase_tree(&tree);
+	if (add_object_entry(sha1, name_hash(NULL, ""), 1))
+		add_pbase_tree(&tree, NULL);
 	free(elem);
 }
 
@@ -1031,7 +1059,7 @@ int main(int argc, char **argv)
 		}
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
-		add_object_entry(sha1, line+40, 0);
+		add_object_entry(sha1, name_hash(NULL, line+41), 0);
 	}
 	if (progress)
 		fprintf(stderr, "Done counting %d objects.\n", nr_objects);
