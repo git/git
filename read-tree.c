@@ -564,7 +564,7 @@ static int twoway_merge(struct cache_entry **src)
 	struct cache_entry *oldtree = src[1], *newtree = src[2];
 
 	if (merge_size != 2)
-		return error("Cannot do a twoway merge of %d trees\n",
+		return error("Cannot do a twoway merge of %d trees",
 			     merge_size);
 
 	if (current) {
@@ -616,7 +616,7 @@ static int oneway_merge(struct cache_entry **src)
 	struct cache_entry *a = src[1];
 
 	if (merge_size != 1)
-		return error("Cannot do a oneway merge of %d trees\n",
+		return error("Cannot do a oneway merge of %d trees",
 			     merge_size);
 
 	if (!a)

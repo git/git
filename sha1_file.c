@@ -564,7 +564,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 	dir = opendir(path);
 	if (!dir) {
 		if (errno != ENOENT)
-			error("unable to open object pack directory: %s: %s\n",
+			error("unable to open object pack directory: %s: %s",
 			      path, strerror(errno));
 		return;
 	}
@@ -1513,7 +1513,8 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 
 	local = mkstemp(tmpfile);
 	if (local < 0)
-		return error("Couldn't open %s for %s\n", tmpfile, sha1_to_hex(sha1));
+		return error("Couldn't open %s for %s",
+			     tmpfile, sha1_to_hex(sha1));
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -1561,7 +1562,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	}
 	if (memcmp(sha1, real_sha1, 20)) {
 		unlink(tmpfile);
-		return error("File %s has bad hash\n", sha1_to_hex(sha1));
+		return error("File %s has bad hash", sha1_to_hex(sha1));
 	}
 
 	return move_temp_to_file(tmpfile, sha1_file_name(sha1));
