@@ -253,7 +253,7 @@ Pull: $head_points_at:$origin" &&
 
 	case "$no_checkout" in
 	'')
-		git checkout
+		git-read-tree -m -u -v HEAD HEAD
 	esac
 fi
 

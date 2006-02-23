@@ -9,6 +9,8 @@
 
 #include "object.h"
 #include "tree.h"
+#include <sys/time.h>
+#include <signal.h>
 
 static int merge = 0;
 static int update = 0;
@@ -16,6 +18,8 @@ static int index_only = 0;
 static int nontrivial_merge = 0;
 static int trivial_merges_only = 0;
 static int aggressive = 0;
+static int verbose_update = 0;
+static volatile int progress_update = 0;
 
 static int head_idx = -1;
 static int merge_size = 0;
@@ -267,6 +271,12 @@ static void unlink_entry(char *name)
 	}
 }
 
+static void progress_interval(int signum)
+{
+	signal(SIGALRM, progress_interval);
+	progress_update = 1;
+}
+
 static void check_updates(struct cache_entry **src, int nr)
 {
 	static struct checkout state = {
@@ -276,8 +286,49 @@ static void check_updates(struct cache_entry **src, int nr)
 		.refresh_cache = 1,
 	};
 	unsigned short mask = htons(CE_UPDATE);
+	unsigned last_percent = 200, cnt = 0, total = 0;
+
+	if (update && verbose_update) {
+		struct itimerval v;
+
+		for (total = cnt = 0; cnt < nr; cnt++) {
+			struct cache_entry *ce = src[cnt];
+			if (!ce->ce_mode || ce->ce_flags & mask)
+				total++;
+		}
+
+		/* Don't bother doing this for very small updates */
+		if (total < 250)
+			total = 0;
+
+		if (total) {
+			v.it_interval.tv_sec = 1;
+			v.it_interval.tv_usec = 0;
+			v.it_value = v.it_interval;
+			signal(SIGALRM, progress_interval);
+			setitimer(ITIMER_REAL, &v, NULL);
+			fprintf(stderr, "Checking files out...\n");
+			progress_update = 1;
+		}
+		cnt = 0;
+	}
+
 	while (nr--) {
 		struct cache_entry *ce = *src++;
+
+		if (total) {
+			if (!ce->ce_mode || ce->ce_flags & mask) {
+				unsigned percent;
+				cnt++;
+				percent = (cnt * 100) / total;
+				if (percent != last_percent ||
+				    progress_update) {
+					fprintf(stderr, "%4u%% (%u/%u) done\r",
+						percent, cnt, total);
+					last_percent = percent;
+				}
+			}
+		}
 		if (!ce->ce_mode) {
 			if (update)
 				unlink_entry(ce->name);
@@ -288,6 +339,10 @@ static void check_updates(struct cache_entry **src, int nr)
 			if (update)
 				checkout_entry(ce, &state);
 		}
+	}
+	if (total) {
+		fputc('\n', stderr);
+		signal(SIGALRM, SIG_IGN);
 	}
 }
 
@@ -677,6 +732,11 @@ int main(int argc, char **argv)
 		 */
 		if (!strcmp(arg, "-u")) {
 			update = 1;
+			continue;
+		}
+
+		if (!strcmp(arg, "-v")) {
+			verbose_update = 1;
 			continue;
 		}
 

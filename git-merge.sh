@@ -130,7 +130,7 @@ case "$#,$common,$no_commit" in
 	echo "Updating from $head to $1."
 	git-update-index --refresh 2>/dev/null
 	new_head=$(git-rev-parse --verify "$1^0") &&
-	git-read-tree -u -m $head "$new_head" &&
+	git-read-tree -u -v -m $head "$new_head" &&
 	finish "$new_head" "Fast forward"
 	dropsave
 	exit 0
@@ -146,7 +146,7 @@ case "$#,$common,$no_commit" in
 
 	echo "Trying really trivial in-index merge..."
 	git-update-index --refresh 2>/dev/null
-	if git-read-tree --trivial -m -u $common $head "$1" &&
+	if git-read-tree --trivial -m -u -v $common $head "$1" &&
 	   result_tree=$(git-write-tree)
 	then
 	    echo "Wonderful."
