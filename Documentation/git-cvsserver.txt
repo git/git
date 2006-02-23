@@ -1,0 +1,89 @@
+git-cvsserver(1)
+================
+
+NAME
+----
+git-cvsserver - A CVS server emulator for git
+
+
+SYNOPSIS
+--------
+[verse]
+export CVS_SERVER=git-cvsserver
+'cvs' -d :ext:user@server/path/repo.git co <HEAD_name>
+
+
+DESCRIPTION
+-----------
+
+This application is a CVS emulation layer for git.
+
+It is highly functional. However, not all methods are implemented,
+and for those methods that are implemented,
+not all switches are implemented.
+
+Testing has been done using both the CLI CVS client, and the Eclipse CVS
+plugin. Most functionality works fine with both of these clients.
+
+LIMITATIONS
+-----------
+Currently gitcvs only works over ssh connections.
+
+
+INSTALLATION
+------------
+1. Put server.pl somewhere useful on the same machine that is hosting your git repos
+
+2. For each repo that you want accessible from CVS you need to edit config in
+   the repo and add the following section.
+
+   [gitcvs]
+        enabled=1
+        logfile=/path/to/logfile
+
+   n.b. you need to ensure each user that is going to invoke server.pl has
+   write access to the log file.
+
+5. On each client machine you need to set the following variables.
+     CVSROOT should be set as per normal, but the directory should point at the
+             appropriate git repo.
+     CVS_SERVER should be set to the server.pl script that has been put on the
+                remote machine.
+
+6. Clients should now be able to check out modules (where modules are the names
+   of branches in git).
+     $ cvs co -d mylocaldir master
+
+Operations supported
+--------------------
+
+All the operations required for normal use are supported, including
+checkout, diff, status, update, log, add, remove, commit.
+Legacy monitoring operations are not supported (edit, watch and related).
+Exports and tagging (tags and branches) are not supported at this stage.
+
+The server will set the -k mode to binary when relevant. In proper GIT
+tradition, the contents of the files are always respected.
+No keyword expansion or newline munging is supported.
+
+Dependencies
+------------
+
+git-cvsserver depends on DBD::SQLite.
+
+Copyright and Authors
+---------------------
+
+This program is copyright The Open University UK - 2006.
+
+Authors: Martyn Smith    <martyn@catalyst.net.nz>
+         Martin Langhoff <martin@catalyst.net.nz>
+         with ideas and patches from participants of the git-list <git@vger.kernel.org>.
+
+Documentation
+--------------
+Documentation by Martyn Smith <martyn@catalyst.net.nz> and Martin Langhoff <martin@catalyst.net.nz>Matthias Urlichs <smurf@smurf.noris.de>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
