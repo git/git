@@ -368,20 +368,25 @@ fetch_main "$reflist"
 # automated tag following
 case "$no_tags$tags" in
 '')
-	taglist=$(IFS=" " &&
-	git-ls-remote $upload_pack --tags "$remote" |
-	sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
-	while read sha1 name
-	do
-		test -f "$GIT_DIR/$name" && continue
-	  	git-check-ref-format "$name" || {
-			echo >&2 "warning: tag ${name} ignored"
-			continue
-		}
-		git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
-		echo >&2 "Auto-following $name"
-		echo ".${name}:${name}"
-	done)
+	case "$reflist" in
+	*:refs/*)
+		# effective only when we are following remote branch
+		# using local tracking branch.
+		taglist=$(IFS=" " &&
+		git-ls-remote $upload_pack --tags "$remote" |
+		sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
+		while read sha1 name
+		do
+			test -f "$GIT_DIR/$name" && continue
+			git-check-ref-format "$name" || {
+				echo >&2 "warning: tag ${name} ignored"
+				continue
+			}
+			git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
+			echo >&2 "Auto-following $name"
+			echo ".${name}:${name}"
+		done)
+	esac
 	case "$taglist" in
 	'') ;;
 	?*)

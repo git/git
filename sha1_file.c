@@ -247,6 +247,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		for ( ; cp < ep && *cp != sep; cp++)
 			;
 		if (last != cp) {
+			struct stat st;
 			struct alternate_object_database *alt;
 			/* 43 = 40-byte + 2 '/' + terminating NUL */
 			int pfxlen = cp - last;
@@ -269,9 +270,19 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 			}
 			else
 				memcpy(ent->base, last, pfxlen);
+
 			ent->name = ent->base + pfxlen + 1;
-			ent->base[pfxlen] = ent->base[pfxlen + 3] = '/';
-			ent->base[entlen-1] = 0;
+			ent->base[pfxlen + 3] = '/';
+			ent->base[pfxlen] = ent->base[entlen-1] = 0;
+
+			/* Detect cases where alternate disappeared */
+			if (stat(ent->base, &st) || !S_ISDIR(st.st_mode)) {
+				error("object directory %s does not exist; "
+				      "check .git/objects/info/alternates.",
+				      ent->base);
+				goto bad;
+			}
+			ent->base[pfxlen] = '/';
 
 			/* Prevent the common mistake of listing the same
 			 * thing twice, or object directory itself.
@@ -552,7 +563,9 @@ static void prepare_packed_git_one(char *objdir, int local)
 	len = strlen(path);
 	dir = opendir(path);
 	if (!dir) {
-		fprintf(stderr, "unable to open object pack directory: %s: %s\n", path, strerror(errno));
+		if (errno != ENOENT)
+			error("unable to open object pack directory: %s: %s\n",
+			      path, strerror(errno));
 		return;
 	}
 	path[len++] = '/';
