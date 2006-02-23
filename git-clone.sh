@@ -118,7 +118,7 @@ dir="$2"
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
-trap 'err=$?; rm -r $D; exit $err' exit
+trap 'err=$?; cd ..; rm -r "$D"; exit $err' exit
 case "$bare" in
 yes) GIT_DIR="$D" ;;
 *) GIT_DIR="$D/.git" ;;
