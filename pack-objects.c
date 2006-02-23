@@ -99,7 +99,7 @@ static int reused_delta = 0;
 
 static int pack_revindex_ix(struct packed_git *p)
 {
-	unsigned int ui = (unsigned int) p;
+	unsigned long ui = (unsigned long)(long)p;
 	int i;
 
 	ui = ui ^ (ui >> 16); /* defeat structure alignment */
