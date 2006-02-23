@@ -92,7 +92,7 @@ static int run_update_hook(const char *refname,
 	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
 		return error("waitpid is confused");
 	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		return error("%s died of signal\n", update_hook);
+		return error("%s died of signal", update_hook);
 	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
 		return error("%s died strangely", update_hook);
 	default:
@@ -158,7 +158,7 @@ static int update(struct command *cmd)
 	if (run_update_hook(name, old_hex, new_hex)) {
 		unlink(lock_name);
 		cmd->error_string = "hook declined";
-		return error("hook declined to update %s\n", name);
+		return error("hook declined to update %s", name);
 	}
 	else if (rename(lock_name, name) < 0) {
 		unlink(lock_name);

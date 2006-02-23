@@ -212,7 +212,8 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 	if (memcmp(bufptr, "tree ", 5))
 		return error("bogus commit object %s", sha1_to_hex(item->object.sha1));
 	if (get_sha1_hex(bufptr + 5, parent) < 0)
-		return error("bad tree pointer in commit %s\n", sha1_to_hex(item->object.sha1));
+		return error("bad tree pointer in commit %s",
+			     sha1_to_hex(item->object.sha1));
 	item->tree = lookup_tree(parent);
 	if (item->tree)
 		n_refs++;

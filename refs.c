@@ -268,7 +268,7 @@ static int write_ref_file(const char *filename,
 	char term = '\n';
 	if (write(fd, hex, 40) < 40 ||
 	    write(fd, &term, 1) < 1) {
-		error("Couldn't write %s\n", filename);
+		error("Couldn't write %s", filename);
 		close(fd);
 		return -1;
 	}
