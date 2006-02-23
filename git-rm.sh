@@ -4,7 +4,6 @@ USAGE='[-f] [-n] [-v] [--] <file>...'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
-index_remove_option=--force-remove
 remove_files=
 show_only=
 verbose=
@@ -12,7 +11,6 @@ while : ; do
   case "$1" in
     -f)
 	remove_files=true
-	index_remote_option=--force
 	;;
     -n)
 	show_only=true
@@ -45,23 +43,28 @@ case "$#" in
 	;;
 esac
 
-files=$(
-    if test -f "$GIT_DIR/info/exclude" ; then
-	git-ls-files \
-	    --exclude-from="$GIT_DIR/info/exclude" \
-	    --exclude-per-directory=.gitignore -- "$@"
-    else
-	git-ls-files \
+if test -f "$GIT_DIR/info/exclude"
+then
+	git-ls-files -z \
+	--exclude-from="$GIT_DIR/info/exclude" \
 	--exclude-per-directory=.gitignore -- "$@"
-    fi | sort | uniq
-)
-
-case "$show_only" in
-true)
-	echo $files
+else
+	git-ls-files -z \
+	--exclude-per-directory=.gitignore -- "$@"
+fi |
+case "$show_only,$remove_files" in
+true,*)
+	xargs -0 echo
+	;;
+*,true)
+	xargs -0 sh -c "
+		while [ \$# -gt 0 ]; do
+			file=\$1; shift
+			rm -- \"\$file\" && git-update-index --remove $verbose \"\$file\"
+		done
+	" inline
 	;;
 *)
-	[[ "$remove_files" = "true" ]] && rm -- $files
-	git-update-index $index_remove_option $verbose $files
+	git-update-index --force-remove $verbose -z --stdin
 	;;
 esac
