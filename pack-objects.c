@@ -5,6 +5,7 @@
 #include "csum-file.h"
 #include "diff.h"
 #include <sys/time.h>
+#include <signal.h>
 
 static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
@@ -60,6 +61,7 @@ static int nr_objects = 0, nr_alloc = 0, nr_result = 0;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
+static volatile int progress_update = 0;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -334,20 +336,41 @@ static void write_pack_file(void)
 	struct sha1file *f;
 	unsigned long offset;
 	struct pack_header hdr;
+	unsigned last_percent = 999;
+	int do_progress = 0;
 
 	if (!base_name)
 		f = sha1fd(1, "<stdout>");
-	else
+	else {
 		f = sha1create("%s-%s.%s", base_name,
 			       sha1_to_hex(object_list_sha1), "pack");
+		do_progress = progress;
+	}
+	if (do_progress)
+		fprintf(stderr, "Writing %d objects.\n", nr_result);
+
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_result);
 	sha1write(f, &hdr, sizeof(hdr));
 	offset = sizeof(hdr);
-	for (i = 0; i < nr_objects; i++)
+	if (!nr_result)
+		goto done;
+	for (i = 0; i < nr_objects; i++) {
 		offset = write_one(f, objects + i, offset);
-
+		if (do_progress) {
+			unsigned percent = written * 100 / nr_result;
+			if (progress_update || percent != last_percent) {
+				fprintf(stderr, "%4u%% (%u/%u) done\r",
+					percent, written, nr_result);
+				progress_update = 0;
+				last_percent = percent;
+			}
+		}
+	}
+	if (do_progress)
+		fputc('\n', stderr);
+ done:
 	sha1close(f, pack_file_sha1, 1);
 }
 
@@ -495,6 +518,10 @@ static int add_object_entry(const unsigned char *sha1, const char *name, int exc
 	}
 
  already_added:
+	if (progress_update) {
+		fprintf(stderr, "Counting objects...%d\r", nr_objects);
+		progress_update = 0;
+	}
 	if (exclude)
 		entry->preferred_base = 1;
 	else {
@@ -799,17 +826,25 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	return 0;
 }
 
+static void progress_interval(int signum)
+{
+	signal(SIGALRM, progress_interval);
+	progress_update = 1;
+}
+
 static void find_deltas(struct object_entry **list, int window, int depth)
 {
 	int i, idx;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array = xmalloc(array_size);
-	int eye_candy;
+	unsigned processed = 0;
+	unsigned last_percent = 999;
 
 	memset(array, 0, array_size);
 	i = nr_objects;
 	idx = 0;
-	eye_candy = i - (nr_objects / 20);
+	if (progress)
+		fprintf(stderr, "Deltifying %d objects.\n", nr_result);
 
 	while (--i >= 0) {
 		struct object_entry *entry = list[i];
@@ -818,9 +853,17 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		char type[10];
 		int j;
 
-		if (progress && i <= eye_candy) {
-			eye_candy -= nr_objects / 20;
-			fputc('.', stderr);
+		if (!entry->preferred_base)
+			processed++;
+
+		if (progress) {
+			unsigned percent = processed * 100 / nr_result;
+			if (percent != last_percent || progress_update) {
+				fprintf(stderr, "%4u%% (%u/%u) done\r",
+					percent, processed, nr_result);
+				progress_update = 0;
+				last_percent = percent;
+			}
 		}
 
 		if (entry->delta)
@@ -852,6 +895,9 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			idx = 0;
 	}
 
+	if (progress)
+		fputc('\n', stderr);
+
 	for (i = 0; i < window; ++i)
 		free(array[i].data);
 	free(array);
@@ -859,18 +905,10 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 static void prepare_pack(int window, int depth)
 {
-	if (progress)
-		fprintf(stderr, "Packing %d objects", nr_result);
 	get_object_details();
-	if (progress)
-		fputc('.', stderr);
-
 	sorted_by_type = create_sorted_list(type_size_sort);
 	if (window && depth)
 		find_deltas(sorted_by_type, window+1, depth);
-	if (progress)
-		fputc('\n', stderr);
-	write_pack_file();
 }
 
 static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
@@ -934,10 +972,6 @@ int main(int argc, char **argv)
 	int window = 10, depth = 10, pack_to_stdout = 0;
 	struct object_entry **list;
 	int i;
-	struct timeval prev_tv;
-	int eye_candy = 0;
-	int eye_candy_incr = 500;
-
 
 	setup_git_directory();
 
@@ -994,29 +1028,20 @@ int main(int argc, char **argv)
 		usage(pack_usage);
 
 	prepare_packed_git();
+
 	if (progress) {
+		struct itimerval v;
+		v.it_interval.tv_sec = 1;
+		v.it_interval.tv_usec = 0;
+		v.it_value = v.it_interval;
+		signal(SIGALRM, progress_interval);
+		setitimer(ITIMER_REAL, &v, NULL);
 		fprintf(stderr, "Generating pack...\n");
-		gettimeofday(&prev_tv, NULL);
 	}
+
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned char sha1[20];
 
-		if (progress && (eye_candy <= nr_objects)) {
-			fprintf(stderr, "Counting objects...%d\r", nr_objects);
-			if (eye_candy && (50 <= eye_candy_incr)) {
-				struct timeval tv;
-				int time_diff;
-				gettimeofday(&tv, NULL);
-				time_diff = (tv.tv_sec - prev_tv.tv_sec);
-				time_diff <<= 10;
-				time_diff += (tv.tv_usec - prev_tv.tv_usec);
-				if ((1 << 9) < time_diff)
-					eye_candy_incr += 50;
-				else if (50 < eye_candy_incr)
-					eye_candy_incr -= 50;
-			}
-			eye_candy += eye_candy_incr;
-		}
 		if (line[0] == '-') {
 			if (get_sha1_hex(line+1, sha1))
 				die("expected edge sha1, got garbage:\n %s",
@@ -1030,10 +1055,10 @@ int main(int argc, char **argv)
 	}
 	if (progress)
 		fprintf(stderr, "Done counting %d objects.\n", nr_objects);
-	if (non_empty && !nr_objects)
+	sorted_by_sha = create_final_object_list();
+	if (non_empty && !nr_result)
 		return 0;
 
-	sorted_by_sha = create_final_object_list();
 	SHA1_Init(&ctx);
 	list = sorted_by_sha;
 	for (i = 0; i < nr_result; i++) {
@@ -1047,7 +1072,16 @@ int main(int argc, char **argv)
 	if (reuse_cached_pack(object_list_sha1, pack_to_stdout))
 		;
 	else {
-		prepare_pack(window, depth);
+		if (nr_result)
+			prepare_pack(window, depth);
+		if (progress && pack_to_stdout) {
+			/* the other end usually displays progress itself */
+			struct itimerval v = {{0,},};
+			setitimer(ITIMER_REAL, &v, NULL);
+			signal(SIGALRM, SIG_IGN );
+			progress_update = 0;
+		}
+		write_pack_file();
 		if (!pack_to_stdout) {
 			write_index_file();
 			puts(sha1_to_hex(object_list_sha1));
