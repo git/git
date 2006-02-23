@@ -84,6 +84,7 @@ git-resolve
 git-rev-list
 git-rev-parse
 git-revert
+git-rm
 git-send-email
 git-send-pack
 git-sh-setup
