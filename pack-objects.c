@@ -447,7 +447,7 @@ static int add_object_entry(const unsigned char *sha1, const char *name, int exc
 	struct packed_git *p;
 	unsigned int found_offset = 0;
 	struct packed_git *found_pack = NULL;
-	int ix;
+	int ix, status = 0;
 
 	if (!exclude) {
 		for (p = packed_git; p; p = p->next) {
@@ -493,6 +493,7 @@ static int add_object_entry(const unsigned char *sha1, const char *name, int exc
 			die("internal error in object hashing.");
 		object_ix[-1 - ix] = idx + 1;
 	}
+	status = 1;
 
  already_added:
 	if (exclude)
@@ -503,7 +504,7 @@ static int add_object_entry(const unsigned char *sha1, const char *name, int exc
 			entry->in_pack_offset = found_offset;
 		}
 	}
-	return 1;
+	return status;
 }
 
 static void add_pbase_tree(struct tree_desc *tree)
@@ -521,7 +522,10 @@ static void add_pbase_tree(struct tree_desc *tree)
 			continue;
 		if (sha1_object_info(sha1, type, &size))
 			continue;
-		add_object_entry(sha1, name, 1);
+
+		if (!add_object_entry(sha1, name, 1))
+			continue;
+
 		if (!strcmp(type, "tree")) {
 			struct tree_desc sub;
 			void *elem;
@@ -543,8 +547,8 @@ static void add_preferred_base(unsigned char *sha1)
 	tree.buf = elem;
 	if (!tree.buf)
 		return;
-	add_object_entry(sha1, "", 1);
-	add_pbase_tree(&tree);
+	if (add_object_entry(sha1, "", 1))
+		add_pbase_tree(&tree);
 	free(elem);
 }
 
@@ -774,7 +778,7 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 				 * already have a delta based on preferred
 				 * one is pointless.
 				 */
-				return 0;
+				return -1;
 		}
 		else if (!old_preferred)
 			max_size = cur_entry->delta_size-1;
