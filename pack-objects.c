@@ -324,11 +324,19 @@ static void write_pack_file(void)
 	struct sha1file *f;
 	unsigned long offset;
 	struct pack_header hdr;
+	unsigned last_percent = 999;
+	int do_progress = 0;
 
 	if (!base_name)
 		f = sha1fd(1, "<stdout>");
-	else
-		f = sha1create("%s-%s.%s", base_name, sha1_to_hex(object_list_sha1), "pack");
+	else {
+		f = sha1create("%s-%s.%s", base_name,
+			       sha1_to_hex(object_list_sha1), "pack");
+		do_progress = progress;
+	}
+	if (do_progress)
+		fprintf(stderr, "Writing %d objects.\n", nr_objects);
+
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_objects);
@@ -336,12 +344,18 @@ static void write_pack_file(void)
 	offset = sizeof(hdr);
 	for (i = 0; i < nr_objects; i++) {
 		offset = write_one(f, objects + i, offset);
-		if (progress_update) {
-			fprintf(stderr, "Writing (%d %d%%)\r",
-				i+1, (i+1) * 100/nr_objects);
-			progress_update = 0;
+		if (do_progress) {
+			unsigned percent = written * 100 / nr_objects;
+			if (progress_update || percent != last_percent) {
+				fprintf(stderr, "%4u%% (%u/%u) done\r",
+					percent, written, nr_objects);
+				progress_update = 0;
+				last_percent = percent;
+			}
 		}
 	}
+	if (do_progress)
+		fputc('\n', stderr);
 
 	sha1close(f, pack_file_sha1, 1);
 }
@@ -680,10 +694,14 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	int i, idx;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array = xmalloc(array_size);
+	unsigned processed = 0;
+	unsigned last_percent = 999;
 
 	memset(array, 0, array_size);
 	i = nr_objects;
 	idx = 0;
+	if (progress)
+		fprintf(stderr, "Deltifying %d objects.\n", nr_objects);
 
 	while (--i >= 0) {
 		struct object_entry *entry = list[i];
@@ -692,10 +710,15 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		char type[10];
 		int j;
 
-		if (progress_update || i == 0) {
-			fprintf(stderr, "Deltifying (%d %d%%)\r",
-				nr_objects-i, (nr_objects-i) * 100/nr_objects);
-			progress_update = 0;
+		processed++;
+		if (progress) {
+			unsigned percent = processed * 100 / nr_objects;
+			if (percent != last_percent || progress_update) {
+				fprintf(stderr, "%4u%% (%u/%u) done\r",
+					percent, processed, nr_objects);
+				progress_update = 0;
+				last_percent = percent;
+			}
 		}
 
 		if (entry->delta)
