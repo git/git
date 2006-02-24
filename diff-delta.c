@@ -20,11 +20,21 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <zlib.h>
 #include "delta.h"
 
 
+/* block size: min = 16, max = 64k, power of 2 */
+#define BLK_SIZE 16
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#define GR_PRIME 0x9e370001
+#define HASH(v, shift) (((unsigned int)(v) * GR_PRIME) >> (shift))
+
 struct index {
 	const unsigned char *ptr;
+	unsigned int val;
 	struct index *next;
 };
 
@@ -32,21 +42,21 @@ static struct index ** delta_index(const unsigned char *buf,
 				   unsigned long bufsize,
 				   unsigned int *hash_shift)
 {
-	unsigned long hsize;
-	unsigned int hshift, i;
+	unsigned int hsize, hshift, entries, blksize, i;
 	const unsigned char *data;
 	struct index *entry, **hash;
 	void *mem;
 
 	/* determine index hash size */
-	hsize = bufsize / 4;
-	for (i = 8; (1 << i) < hsize && i < 16; i++);
+	entries = (bufsize + BLK_SIZE - 1) / BLK_SIZE;
+	hsize = entries / 4;
+	for (i = 4; (1 << i) < hsize && i < 16; i++);
 	hsize = 1 << i;
-	hshift = i - 8;
+	hshift = 32 - i;
 	*hash_shift = hshift;
 
 	/* allocate lookup index */
-	mem = malloc(hsize * sizeof(*hash) + bufsize * sizeof(*entry));
+	mem = malloc(hsize * sizeof(*hash) + entries * sizeof(*entry));
 	if (!mem)
 		return NULL;
 	hash = mem;
@@ -54,12 +64,17 @@ static struct index ** delta_index(const unsigned char *buf,
 	memset(hash, 0, hsize * sizeof(*hash));
 
 	/* then populate it */
-	data = buf + bufsize - 2;
-	while (data > buf) {
-		entry->ptr = --data;
-		i = data[0] ^ data[1] ^ (data[2] << hshift);
+	data = buf + entries * BLK_SIZE - BLK_SIZE;
+	blksize = bufsize - (data - buf);
+	while (data >= buf) {
+		unsigned int val = adler32(0, data, blksize);
+		i = HASH(val, hshift);
+		entry->ptr = data;
+		entry->val = val;
 		entry->next = hash[i];
 		hash[i] = entry++;
+		blksize = BLK_SIZE;
+		data -= BLK_SIZE;
  	}
 
 	return hash;
@@ -126,27 +141,29 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 
 	while (data < top) {
 		unsigned int moff = 0, msize = 0;
-		if (data + 2 < top) {
-			i = data[0] ^ data[1] ^ (data[2] << hash_shift);
-			for (entry = hash[i]; entry; entry = entry->next) {
-				const unsigned char *ref = entry->ptr;
-				const unsigned char *src = data;
-				unsigned int ref_size = ref_top - ref;
-				if (ref_size > top - src)
-					ref_size = top - src;
-				if (ref_size > 0x10000)
-					ref_size = 0x10000;
-				if (ref_size <= msize)
+		unsigned int blksize = MIN(top - data, BLK_SIZE);
+		unsigned int val = adler32(0, data, blksize);
+		i = HASH(val, hash_shift);
+		for (entry = hash[i]; entry; entry = entry->next) {
+			const unsigned char *ref = entry->ptr;
+			const unsigned char *src = data;
+			unsigned int ref_size = ref_top - ref;
+			if (entry->val != val)
+				continue;
+			if (ref_size > top - src)
+				ref_size = top - src;
+			while (ref_size && *src++ == *ref) {
+				ref++;
+				ref_size--;
+			}
+			ref_size = ref - entry->ptr;
+			if (ref_size > msize) {
+				/* this is our best match so far */
+				moff = entry->ptr - ref_data;
+				msize = ref_size;
+				if (msize >= 0x10000) {
+					msize = 0x10000;
 					break;
-				while (ref_size && *src++ == *ref) {
-					ref++;
-					ref_size--;
-				}
-				ref_size = ref - entry->ptr;
-				if (msize < ref - entry->ptr) {
-					/* this is our best match so far */
-					msize = ref - entry->ptr;
-					moff = entry->ptr - ref_data;
 				}
 			}
 		}
