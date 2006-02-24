@@ -440,8 +440,10 @@ static void mark_edge_parents_uninteresting(struct commit *commit)
 		if (!(parent->object.flags & UNINTERESTING))
 			continue;
 		mark_tree_uninteresting(parent->tree);
-		if (edge_hint)
+		if (edge_hint && !(parent->object.flags & SHOWN)) {
+			parent->object.flags |= SHOWN;
 			printf("-%s\n", sha1_to_hex(parent->object.sha1));
+		}
 	}
 }
 
