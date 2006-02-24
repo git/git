@@ -422,7 +422,7 @@ class DiffWindow:
 class GitView:
 	""" This is the main class
 	"""
-	version = "0.6"
+	version = "0.7"
 
 	def __init__(self, with_diff=0):
 		self.with_diff = with_diff
