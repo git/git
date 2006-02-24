@@ -26,7 +26,7 @@ static void touch_range(struct span **span,
 		again:
 		if (ofs < e->end) {
 			while (e->end < end) {
-				if (e->next) {
+				if (e->next && e->next->ofs <= end) {
 					e->end = e->next->ofs;
 					e = e->next;
 				}
