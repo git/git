@@ -28,28 +28,13 @@ sub andjoin {
 }
 
 sub repoconfig {
-	my $val;
-	eval {
-		my $pid = open(my $fh, '-|');
-		if (!$pid) {
-			exec('git-repo-config', '--get', 'merge.summary');
-		}
-		($val) = <$fh>;
-		close $fh;
-	};
+	my ($val) = qx{git-repo-config --get merge.summary};
 	return $val;
 }
 
 sub current_branch {
-	my $fh;
-	my $pid = open($fh, '-|');
-	die "$!" unless defined $pid;
-	if (!$pid) {
-	    exec('git-symbolic-ref', 'HEAD') or die "$!";
-	}
-	my ($bra) = <$fh>;
+	my ($bra) = qx{git-symbolic-ref HEAD};
 	chomp($bra);
-	close $fh or die "$!";
 	$bra =~ s|^refs/heads/||;
 	if ($bra ne 'master') {
 		$bra = " into $bra";
@@ -61,18 +46,12 @@ sub current_branch {
 
 sub shortlog {
 	my ($tip) = @_;
-	my ($fh, @result);
-	my $pid = open($fh, '-|');
-	die "$!" unless defined $pid;
-	if (!$pid) {
-	    exec('git-log', '--topo-order',
-		 '--pretty=oneline', $tip, '^HEAD') or die "$!";
-	}
-	while (<$fh>) {
+	my @result;
+	foreach ( qx{git-log --topo-order --pretty=oneline $tip ^HEAD} ) {
 		s/^[0-9a-f]{40}\s+//;
 		push @result, $_;
 	}
-	close $fh or die "$!";
+	die "git-log failed\n" if $?;
 	return @result;
 }
 
