@@ -445,17 +445,28 @@ struct name_path {
 	int len;
 };
 
+#define DIRBITS 12
+
 static unsigned name_hash(struct name_path *path, const char *name)
 {
 	struct name_path *p = path;
 	const char *n = name + strlen(name);
-	unsigned hash = 0;
+	unsigned hash = 0, name_hash = 0, name_done = 0;
 
 	if (n != name && n[-1] == '\n')
 		n--;
 	while (name <= --n) {
 		unsigned char c = *n;
+		if (c == '/' && !name_done) {
+			name_hash = hash;
+			name_done = 1;
+			hash = 0;
+		}
 		hash = hash * 11 + c;
+	}
+	if (!name_done) {
+		name_hash = hash;
+		hash = 0;
 	}
 	for (p = path; p; p = p->up) {
 		hash = hash * 11 + '/';
@@ -464,6 +475,26 @@ static unsigned name_hash(struct name_path *path, const char *name)
 			unsigned char c = *n;
 			hash = hash * 11 + c;
 		}
+	}
+	/*
+	 * Make sure "Makefile" and "t/Makefile" are hashed separately
+	 * but close enough.
+	 */
+	hash = (name_hash<<DIRBITS) | (hash & ((1U<<DIRBITS )-1));
+
+	if (0) { /* debug */
+		n = name + strlen(name);
+		if (n != name && n[-1] == '\n')
+			n--;
+		while (name <= --n)
+			fputc(*n, stderr);
+		for (p = path; p; p = p->up) {
+			fputc('/', stderr);
+			n = p->elem + p->len;
+			while (p->elem <= --n)
+				fputc(*n, stderr);
+		}
+		fprintf(stderr, "\t%08x\n", hash);
 	}
 	return hash;
 }
