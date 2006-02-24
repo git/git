@@ -300,7 +300,7 @@ do
 	    } >"$dotest/final-commit"
 	    ;;
 	*)
-		case "$resolved,$interactive" in
+		case "$resolved$interactive" in
 		tt)
 			# This is used only for interactive view option.
 			git-diff-index -p --cached HEAD >"$dotest/patch"
@@ -364,6 +364,12 @@ do
 		# trust what the user has in the index file and the
 		# working tree.
 		resolved=
+		changed="$(git-diff-index --cached --name-only HEAD)"
+		if test '' = "$changed"
+		then
+			echo "No changes - did you forget update-index?"
+			stop_here $this
+		fi
 		apply_status=0
 		;;
 	esac
@@ -374,7 +380,7 @@ do
 		then
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
-		    changed="$(git-diff-index --cached --name-only -z HEAD)"
+		    changed="$(git-diff-index --cached --name-only HEAD)"
 		    if test '' = "$changed"
 		    then
 			    echo No changes -- Patch already applied.
