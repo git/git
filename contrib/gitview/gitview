@@ -870,21 +870,22 @@ class GitView:
 
 		# Reset nodepostion
 		if (last_nodepos > 5):
-			last_nodepos = 0
+			last_nodepos = -1 
 
 		# Add the incomplete lines of the last cell in this
 		try:
 			colour = self.colours[commit.commit_sha1]
 		except KeyError:
-			last_colour +=1
-			self.colours[commit.commit_sha1] = last_colour
-			colour =  last_colour
+			self.colours[commit.commit_sha1] = last_colour+1
+			last_colour = self.colours[commit.commit_sha1] 
+			colour =   self.colours[commit.commit_sha1] 
+
 		try:
 			node_pos = self.nodepos[commit.commit_sha1]
 		except KeyError:
-			last_nodepos +=1
-			self.nodepos[commit.commit_sha1] = last_nodepos
-			node_pos = last_nodepos
+			self.nodepos[commit.commit_sha1] = last_nodepos+1
+			last_nodepos = self.nodepos[commit.commit_sha1]
+			node_pos =  self.nodepos[commit.commit_sha1]
 
 		#The first parent always continue on the same line
 		try:
@@ -895,32 +896,25 @@ class GitView:
 			self.nodepos[commit.parent_sha1[0]] = node_pos
 
 		for sha1 in self.incomplete_line.keys():
-			if ( sha1 != commit.commit_sha1):
+			if (sha1 != commit.commit_sha1):
 				self.draw_incomplete_line(sha1, node_pos,
 						out_line, in_line, index)
 			else:
 				del self.incomplete_line[sha1]
 
 
-		in_line.append((node_pos, self.nodepos[commit.parent_sha1[0]],
-					self.colours[commit.parent_sha1[0]]))
+		for parent_id in commit.parent_sha1:
+			try:
+				tmp_node_pos = self.nodepos[parent_id]
+			except KeyError:
+				self.colours[parent_id] = last_colour+1
+				last_colour = self.colours[parent_id]
+				self.nodepos[parent_id] = last_nodepos+1
+				last_nodepos = self.nodepos[parent_id] 
 
-		self.add_incomplete_line(commit.parent_sha1[0], index+1)
-
-		if (len(commit.parent_sha1) > 1):
-			for parent_id in commit.parent_sha1[1:]:
-				try:
-					tmp_node_pos = self.nodepos[parent_id]
-				except KeyError:
-					last_colour += 1;
-					self.colours[parent_id] = last_colour
-					last_nodepos +=1
-					self.nodepos[parent_id] = last_nodepos
-
-				in_line.append((node_pos, self.nodepos[parent_id],
-							self.colours[parent_id]))
-				self.add_incomplete_line(parent_id, index+1)
-
+			in_line.append((node_pos, self.nodepos[parent_id],
+						self.colours[parent_id]))
+			self.add_incomplete_line(parent_id)
 
 		try:
 			branch_tag = self.bt_sha1[commit.commit_sha1]
@@ -935,7 +929,7 @@ class GitView:
 
 		return (in_line, last_colour, last_nodepos)
 
-	def add_incomplete_line(self, sha1, index):
+	def add_incomplete_line(self, sha1):
 		try:
 			self.incomplete_line[sha1].append(self.nodepos[sha1])
 		except KeyError:
