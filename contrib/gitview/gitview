@@ -154,7 +154,7 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 
 		cols = self.node[0]
 		for start, end, colour in self.in_lines + self.out_lines:
-			cols = max(cols, start, end)
+			cols = int(max(cols, start, end))
 
 		(column, colour, names) = self.node
 		names_len = 0
