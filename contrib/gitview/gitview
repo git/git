@@ -938,8 +938,10 @@ class GitView:
 	def draw_incomplete_line(self, sha1, node_pos, out_line, in_line, index):
 		for idx, pos in enumerate(self.incomplete_line[sha1]):
 			if(pos == node_pos):
-				out_line.append((pos,
-					pos+0.5, self.colours[sha1]))
+				#remove the straight line and add a slash
+				if ((pos, pos, self.colours[sha1]) in out_line):
+					out_line.remove((pos, pos, self.colours[sha1]))
+				out_line.append((pos, pos+0.5, self.colours[sha1]))
 				self.incomplete_line[sha1][idx] = pos = pos+0.5
 			try:
 				next_commit = self.commits[index+1]
