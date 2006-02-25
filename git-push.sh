@@ -8,6 +8,7 @@ USAGE='[--all] [--tags] [--force] <repository> [<refspec>...]'
 has_all=
 has_force=
 has_exec=
+has_thin=
 remote=
 do_tags=
 
@@ -22,6 +23,8 @@ do
 		has_force=--force ;;
 	--exec=*)
 		has_exec="$1" ;;
+	--thin)
+		has_thin="$1" ;;
 	-*)
                 usage ;;
         *)
@@ -72,6 +75,7 @@ set x "$remote" "$@"; shift
 test "$has_all" && set x "$has_all" "$@" && shift
 test "$has_force" && set x "$has_force" "$@" && shift
 test "$has_exec" && set x "$has_exec" "$@" && shift
+test "$has_thin" && set x "$has_thin" "$@" && shift
 
 case "$remote" in
 http://* | https://*)

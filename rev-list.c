@@ -30,7 +30,7 @@ static const char rev_list_usage[] =
 "    --date-order\n"
 "  formatting output:\n"
 "    --parents\n"
-"    --objects\n"
+"    --objects | --objects-edge\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
 "    --abbrev=nr | --no-abbrev\n"
@@ -44,6 +44,7 @@ static int bisect_list = 0;
 static int tag_objects = 0;
 static int tree_objects = 0;
 static int blob_objects = 0;
+static int edge_hint = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
 static int show_parents = 0;
@@ -61,6 +62,36 @@ static int lifo = 1;
 static int no_merges = 0;
 static const char **paths = NULL;
 static int remove_empty_trees = 0;
+
+struct name_path {
+	struct name_path *up;
+	int elem_len;
+	const char *elem;
+};
+
+static char *path_name(struct name_path *path, const char *name)
+{
+	struct name_path *p;
+	char *n, *m;
+	int nlen = strlen(name);
+	int len = nlen + 1;
+
+	for (p = path; p; p = p->up) {
+		if (p->elem_len)
+			len += p->elem_len + 1;
+	}
+	n = xmalloc(len);
+	m = n + len - (nlen + 1);
+	strcpy(m, name);
+	for (p = path; p; p = p->up) {
+		if (p->elem_len) {
+			m -= p->elem_len + 1;
+			memcpy(m, p->elem, p->elem_len);
+			m[p->elem_len] = '/';
+		}
+	}
+	return n;
+}
 
 static void show_commit(struct commit *commit)
 {
@@ -173,17 +204,23 @@ static int process_commit(struct commit * commit)
 	return CONTINUE;
 }
 
-static struct object_list **add_object(struct object *obj, struct object_list **p, const char *name)
+static struct object_list **add_object(struct object *obj,
+				       struct object_list **p,
+				       struct name_path *path,
+				       const char *name)
 {
 	struct object_list *entry = xmalloc(sizeof(*entry));
 	entry->item = obj;
 	entry->next = *p;
-	entry->name = name;
+	entry->name = path_name(path, name);
 	*p = entry;
 	return &entry->next;
 }
 
-static struct object_list **process_blob(struct blob *blob, struct object_list **p, const char *name)
+static struct object_list **process_blob(struct blob *blob,
+					 struct object_list **p,
+					 struct name_path *path,
+					 const char *name)
 {
 	struct object *obj = &blob->object;
 
@@ -192,13 +229,17 @@ static struct object_list **process_blob(struct blob *blob, struct object_list *
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
 	obj->flags |= SEEN;
-	return add_object(obj, p, name);
+	return add_object(obj, p, path, name);
 }
 
-static struct object_list **process_tree(struct tree *tree, struct object_list **p, const char *name)
+static struct object_list **process_tree(struct tree *tree,
+					 struct object_list **p,
+					 struct name_path *path,
+					 const char *name)
 {
 	struct object *obj = &tree->object;
 	struct tree_entry_list *entry;
+	struct name_path me;
 
 	if (!tree_objects)
 		return p;
@@ -207,15 +248,18 @@ static struct object_list **process_tree(struct tree *tree, struct object_list *
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
-	p = add_object(obj, p, name);
+	p = add_object(obj, p, path, name);
+	me.up = path;
+	me.elem = name;
+	me.elem_len = strlen(name);
 	entry = tree->entries;
 	tree->entries = NULL;
 	while (entry) {
 		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
-			p = process_tree(entry->item.tree, p, entry->name);
+			p = process_tree(entry->item.tree, p, &me, entry->name);
 		else
-			p = process_blob(entry->item.blob, p, entry->name);
+			p = process_blob(entry->item.blob, p, &me, entry->name);
 		free(entry);
 		entry = next;
 	}
@@ -230,7 +274,7 @@ static void show_commit_list(struct commit_list *list)
 	while (list) {
 		struct commit *commit = pop_most_recent_commit(&list, SEEN);
 
-		p = process_tree(commit->tree, p, "");
+		p = process_tree(commit->tree, p, NULL, "");
 		if (process_commit(commit) == STOP)
 			break;
 	}
@@ -241,15 +285,15 @@ static void show_commit_list(struct commit_list *list)
 			continue;
 		if (obj->type == tag_type) {
 			obj->flags |= SEEN;
-			p = add_object(obj, p, name);
+			p = add_object(obj, p, NULL, name);
 			continue;
 		}
 		if (obj->type == tree_type) {
-			p = process_tree((struct tree *)obj, p, name);
+			p = process_tree((struct tree *)obj, p, NULL, name);
 			continue;
 		}
 		if (obj->type == blob_type) {
-			p = process_blob((struct blob *)obj, p, name);
+			p = process_blob((struct blob *)obj, p, NULL, name);
 			continue;
 		}
 		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
@@ -430,16 +474,32 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	return best;
 }
 
+static void mark_edge_parents_uninteresting(struct commit *commit)
+{
+	struct commit_list *parents;
+
+	for (parents = commit->parents; parents; parents = parents->next) {
+		struct commit *parent = parents->item;
+		if (!(parent->object.flags & UNINTERESTING))
+			continue;
+		mark_tree_uninteresting(parent->tree);
+		if (edge_hint && !(parent->object.flags & SHOWN)) {
+			parent->object.flags |= SHOWN;
+			printf("-%s\n", sha1_to_hex(parent->object.sha1));
+		}
+	}
+}
+
 static void mark_edges_uninteresting(struct commit_list *list)
 {
 	for ( ; list; list = list->next) {
-		struct commit_list *parents = list->item->parents;
+		struct commit *commit = list->item;
 
-		for ( ; parents; parents = parents->next) {
-			struct commit *commit = parents->item;
-			if (commit->object.flags & UNINTERESTING)
-				mark_tree_uninteresting(commit->tree);
+		if (commit->object.flags & UNINTERESTING) {
+			mark_tree_uninteresting(commit->tree);
+			continue;
 		}
+		mark_edge_parents_uninteresting(commit);
 	}
 }
 
@@ -657,7 +717,7 @@ static struct commit_list *limit_list(struct commit_list *list)
 
 static void add_pending_object(struct object *obj, const char *name)
 {
-	add_object(obj, &pending_objects, name);
+	add_object(obj, &pending_objects, NULL, name);
 }
 
 static struct commit *get_commit_reference(const char *name, const unsigned char *sha1, unsigned int flags)
@@ -841,6 +901,13 @@ int main(int argc, const char **argv)
 			tag_objects = 1;
 			tree_objects = 1;
 			blob_objects = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--objects-edge")) {
+			tag_objects = 1;
+			tree_objects = 1;
+			blob_objects = 1;
+			edge_hint = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--unpacked")) {
