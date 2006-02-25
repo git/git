@@ -164,6 +164,7 @@ fast_forward_local () {
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
+		echo >&2 "  from $local to $2"
 		git-update-ref "$1" "$2" "$local"
 		;;
 	    *)
