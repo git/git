@@ -279,8 +279,11 @@ static void read_directory(const char *path, const char *base, int baselen)
 				continue;
 			len = strlen(de->d_name);
 			memcpy(fullname + baselen, de->d_name, len+1);
-			if (excluded(fullname) != show_ignored)
-				continue;
+			if (excluded(fullname) != show_ignored) {
+				if (!show_ignored || DTYPE(de) != DT_DIR) {
+					continue;
+				}
+			}
 
 			switch (DTYPE(de)) {
 			struct stat st;
