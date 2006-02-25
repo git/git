@@ -12,6 +12,7 @@ static const char *exec = "git-receive-pack";
 static int verbose = 0;
 static int send_all = 0;
 static int force_update = 0;
+static int use_thin_pack = 0;
 
 static int is_zero_sha1(const unsigned char *sha1)
 {
@@ -42,7 +43,10 @@ static void exec_rev_list(struct ref *refs)
 	int i = 0, j;
 
 	args[i++] = "rev-list";	/* 0 */
-	args[i++] = "--objects";	/* 1 */
+	if (use_thin_pack)	/* 1 */
+		args[i++] = "--objects-edge";
+	else
+		args[i++] = "--objects";
 
 	/* First send the ones we care about most */
 	for (ref = refs; ref; ref = ref->next) {
@@ -377,6 +381,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--verbose")) {
 				verbose = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--thin")) {
+				use_thin_pack = 1;
 				continue;
 			}
 			usage(send_pack_usage);

@@ -320,7 +320,7 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack $exec $keep "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack $exec $keep --thin "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do
