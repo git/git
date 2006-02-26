@@ -13,7 +13,7 @@ SYNOPSIS
 		[ -C <GIT_repository> ] [ -i ] [ -u ] [-l limit_rev]
 		[ -b branch_subdir ] [ -T trunk_subdir ] [ -t tag_subdir ]
 		[ -s start_chg ] [ -m ] [ -r ] [ -M regex ]
-		<SVN_repository_URL> [ <path> ]
+		[ -I <ignorefile_name> ] <SVN_repository_URL> [ <path> ]
 
 
 DESCRIPTION
@@ -64,6 +64,12 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 -r::
 	Prepend 'rX: ' to commit messages, where X is the imported
 	subversion revision.
+
+-I <ignorefile_name>::
+	Import the svn:ignore directory property to files with this
+	name in each directory. (The Subversion and GIT ignore
+	syntaxes are similar enough that using the Subversion patterns
+	directly with "-I .gitignore" will almost always just work.)
 
 -m::
 	Attempt to detect merges based on the commit message. This option
