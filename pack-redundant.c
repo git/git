@@ -45,7 +45,7 @@ static inline void llist_item_put(struct llist_item *item)
 	free_nodes = item;
 }
 
-static inline struct llist_item *llist_item_get()
+static inline struct llist_item *llist_item_get(void)
 {
 	struct llist_item *new;
 	if ( free_nodes ) {
@@ -275,7 +275,7 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	}
 }
 
-void pll_free(struct pll *l)
+static void pll_free(struct pll *l)
 {
 	struct pll *old;
 	struct pack_list *opl;

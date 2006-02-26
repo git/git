@@ -20,7 +20,7 @@ static int check_strict = 0;
 static int keep_cache_objects = 0; 
 static unsigned char head_sha1[20];
 
-#if NO_D_INO_IN_DIRENT
+#ifdef NO_D_INO_IN_DIRENT
 #define SORT_DIRENT 0
 #define DIRENT_SORT_HINT(de) 0
 #else
