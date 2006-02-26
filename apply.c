@@ -34,6 +34,12 @@ static int line_termination = '\n';
 static const char apply_usage[] =
 "git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] <patch>...";
 
+static enum whitespace_eol {
+	nowarn,
+	warn_on_whitespace,
+	error_on_whitespace
+} new_whitespace = nowarn;
+
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
  * we've seen, and the longest filename. That allows us to do simple
@@ -815,6 +821,22 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			oldlines--;
 			break;
 		case '+':
+			/*
+			 * We know len is at least two, since we have a '+' and
+			 * we checked that the last character was a '\n' above
+			 */
+			if (isspace(line[len-2])) {
+				switch (new_whitespace) {
+				case nowarn:
+					break;
+				case warn_on_whitespace:
+					new_whitespace = nowarn;	/* Just once */
+					error("Added whitespace at end of line at line %d", linenr);
+					break;
+				case error_on_whitespace:
+					die("Added whitespace at end of line at line %d", linenr);
+				}
+			}
 			added++;
 			newlines--;
 			break;
@@ -1830,6 +1852,17 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "-z")) {
 			line_termination = 0;
 			continue;
+		}
+		if (!strncmp(arg, "--whitespace=", 13)) {
+			if (strcmp(arg+13, "warn")) {
+				new_whitespace = warn_on_whitespace;
+				continue;
+			}
+			if (strcmp(arg+13, "error")) {
+				new_whitespace = error_on_whitespace;
+				continue;
+			}
+			die("unrecognixed whitespace option '%s'", arg+13);
 		}
 
 		if (check_index && prefix_length < 0) {
