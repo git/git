@@ -15,6 +15,7 @@
 
 #include "cache.h"
 #include "commit.h"
+#include "revision.h"
 #include "epoch.h"
 
 struct fraction {

@@ -768,7 +768,7 @@ static int sha1_sort(const struct object_entry *a, const struct object_entry *b)
 	return memcmp(a->sha1, b->sha1, 20);
 }
 
-static struct object_entry **create_final_object_list()
+static struct object_entry **create_final_object_list(void)
 {
 	struct object_entry **list;
 	int i, j;

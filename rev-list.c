@@ -6,9 +6,10 @@
 #include "blob.h"
 #include "epoch.h"
 #include "diff.h"
+#include "revision.h"
 
-#define SEEN		(1u << 0)
-#define INTERESTING	(1u << 1)
+/* bits #0 and #1 in revision.h */
+
 #define COUNTED		(1u << 2)
 #define SHOWN		(1u << 3)
 #define TREECHANGE	(1u << 4)
@@ -38,60 +39,20 @@ static const char rev_list_usage[] =
 "    --bisect"
 ;
 
-static int dense = 1;
+struct rev_info revs;
+
 static int unpacked = 0;
 static int bisect_list = 0;
-static int tag_objects = 0;
-static int tree_objects = 0;
-static int blob_objects = 0;
-static int edge_hint = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
 static int show_parents = 0;
 static int hdr_termination = 0;
 static const char *commit_prefix = "";
-static unsigned long max_age = -1;
-static unsigned long min_age = -1;
-static int max_count = -1;
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 static int merge_order = 0;
 static int show_breaks = 0;
 static int stop_traversal = 0;
-static int topo_order = 0;
-static int lifo = 1;
 static int no_merges = 0;
-static const char **paths = NULL;
-static int remove_empty_trees = 0;
-
-struct name_path {
-	struct name_path *up;
-	int elem_len;
-	const char *elem;
-};
-
-static char *path_name(struct name_path *path, const char *name)
-{
-	struct name_path *p;
-	char *n, *m;
-	int nlen = strlen(name);
-	int len = nlen + 1;
-
-	for (p = path; p; p = p->up) {
-		if (p->elem_len)
-			len += p->elem_len + 1;
-	}
-	n = xmalloc(len);
-	m = n + len - (nlen + 1);
-	strcpy(m, name);
-	for (p = path; p; p = p->up) {
-		if (p->elem_len) {
-			m -= p->elem_len + 1;
-			memcpy(m, p->elem, p->elem_len);
-			m[p->elem_len] = '/';
-		}
-	}
-	return n;
-}
 
 static void show_commit(struct commit *commit)
 {
@@ -168,15 +129,15 @@ static int filter_commit(struct commit * commit)
 		return STOP;
 	if (commit->object.flags & (UNINTERESTING|SHOWN))
 		return CONTINUE;
-	if (min_age != -1 && (commit->date > min_age))
+	if (revs.min_age != -1 && (commit->date > revs.min_age))
 		return CONTINUE;
-	if (max_age != -1 && (commit->date < max_age)) {
+	if (revs.max_age != -1 && (commit->date < revs.max_age)) {
 		stop_traversal=1;
 		return CONTINUE;
 	}
 	if (no_merges && (commit->parents && commit->parents->next))
 		return CONTINUE;
-	if (paths && dense) {
+	if (revs.paths && revs.dense) {
 		if (!(commit->object.flags & TREECHANGE))
 			return CONTINUE;
 		rewrite_parents(commit);
@@ -196,25 +157,12 @@ static int process_commit(struct commit * commit)
 		return CONTINUE;
 	}
 
-	if (max_count != -1 && !max_count--)
+	if (revs.max_count != -1 && !revs.max_count--)
 		return STOP;
 
 	show_commit(commit);
 
 	return CONTINUE;
-}
-
-static struct object_list **add_object(struct object *obj,
-				       struct object_list **p,
-				       struct name_path *path,
-				       const char *name)
-{
-	struct object_list *entry = xmalloc(sizeof(*entry));
-	entry->item = obj;
-	entry->next = *p;
-	entry->name = path_name(path, name);
-	*p = entry;
-	return &entry->next;
 }
 
 static struct object_list **process_blob(struct blob *blob,
@@ -224,7 +172,7 @@ static struct object_list **process_blob(struct blob *blob,
 {
 	struct object *obj = &blob->object;
 
-	if (!blob_objects)
+	if (!revs.blob_objects)
 		return p;
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
@@ -241,7 +189,7 @@ static struct object_list **process_tree(struct tree *tree,
 	struct tree_entry_list *entry;
 	struct name_path me;
 
-	if (!tree_objects)
+	if (!revs.tree_objects)
 		return p;
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
@@ -314,75 +262,6 @@ static void show_commit_list(struct commit_list *list)
 	}
 }
 
-static void mark_blob_uninteresting(struct blob *blob)
-{
-	if (!blob_objects)
-		return;
-	if (blob->object.flags & UNINTERESTING)
-		return;
-	blob->object.flags |= UNINTERESTING;
-}
-
-static void mark_tree_uninteresting(struct tree *tree)
-{
-	struct object *obj = &tree->object;
-	struct tree_entry_list *entry;
-
-	if (!tree_objects)
-		return;
-	if (obj->flags & UNINTERESTING)
-		return;
-	obj->flags |= UNINTERESTING;
-	if (!has_sha1_file(obj->sha1))
-		return;
-	if (parse_tree(tree) < 0)
-		die("bad tree %s", sha1_to_hex(obj->sha1));
-	entry = tree->entries;
-	tree->entries = NULL;
-	while (entry) {
-		struct tree_entry_list *next = entry->next;
-		if (entry->directory)
-			mark_tree_uninteresting(entry->item.tree);
-		else
-			mark_blob_uninteresting(entry->item.blob);
-		free(entry);
-		entry = next;
-	}
-}
-
-static void mark_parents_uninteresting(struct commit *commit)
-{
-	struct commit_list *parents = commit->parents;
-
-	while (parents) {
-		struct commit *commit = parents->item;
-		commit->object.flags |= UNINTERESTING;
-
-		/*
-		 * Normally we haven't parsed the parent
-		 * yet, so we won't have a parent of a parent
-		 * here. However, it may turn out that we've
-		 * reached this commit some other way (where it
-		 * wasn't uninteresting), in which case we need
-		 * to mark its parents recursively too..
-		 */
-		if (commit->parents)
-			mark_parents_uninteresting(commit);
-
-		/*
-		 * A missing commit is ok iff its parent is marked 
-		 * uninteresting.
-		 *
-		 * We just mark such a thing parsed, so that when
-		 * it is popped next time around, we won't be trying
-		 * to parse it and get an error.
-		 */
-		if (!has_sha1_file(commit->object.sha1))
-			commit->object.parsed = 1;
-		parents = parents->next;
-	}
-}
-
 static int everybody_uninteresting(struct commit_list *orig)
 {
 	struct commit_list *list = orig;
@@ -413,7 +292,7 @@ static int count_distance(struct commit_list *entry)
 
 		if (commit->object.flags & (UNINTERESTING | COUNTED))
 			break;
-		if (!paths || (commit->object.flags & TREECHANGE))
+		if (!revs.paths || (commit->object.flags & TREECHANGE))
 			nr++;
 		commit->object.flags |= COUNTED;
 		p = commit->parents;
@@ -447,7 +326,7 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	nr = 0;
 	p = list;
 	while (p) {
-		if (!paths || (p->item->object.flags & TREECHANGE))
+		if (!revs.paths || (p->item->object.flags & TREECHANGE))
 			nr++;
 		p = p->next;
 	}
@@ -457,7 +336,7 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	for (p = list; p; p = p->next) {
 		int distance;
 
-		if (paths && !(p->item->object.flags & TREECHANGE))
+		if (revs.paths && !(p->item->object.flags & TREECHANGE))
 			continue;
 
 		distance = count_distance(p);
@@ -483,7 +362,7 @@ static void mark_edge_parents_uninteresting(struct commit *commit)
 		if (!(parent->object.flags & UNINTERESTING))
 			continue;
 		mark_tree_uninteresting(parent->tree);
-		if (edge_hint && !(parent->object.flags & SHOWN)) {
+		if (revs.edge_hint && !(parent->object.flags & SHOWN)) {
 			parent->object.flags |= SHOWN;
 			printf("-%s\n", sha1_to_hex(parent->object.sha1));
 		}
@@ -613,7 +492,7 @@ static void try_to_simplify_commit(struct commit *commit)
 			return;
 
 		case TREE_NEW:
-			if (remove_empty_trees && same_tree_as_empty(p->tree)) {
+			if (revs.remove_empty_trees && same_tree_as_empty(p->tree)) {
 				*pp = parent->next;
 				continue;
 			}
@@ -664,7 +543,7 @@ static void add_parents_to_list(struct commit *commit, struct commit_list **list
 	 * simplify the commit history and find the parent
 	 * that has no differences in the path set if one exists.
 	 */
-	if (paths)
+	if (revs.paths)
 		try_to_simplify_commit(commit);
 
 	parent = commit->parents;
@@ -693,7 +572,7 @@ static struct commit_list *limit_list(struct commit_list *list)
 		list = list->next;
 		free(entry);
 
-		if (max_age != -1 && (commit->date < max_age))
+		if (revs.max_age != -1 && (commit->date < revs.max_age))
 			obj->flags |= UNINTERESTING;
 		if (unpacked && has_sha1_pack(obj->sha1))
 			obj->flags |= UNINTERESTING;
@@ -704,155 +583,40 @@ static struct commit_list *limit_list(struct commit_list *list)
 				break;
 			continue;
 		}
-		if (min_age != -1 && (commit->date > min_age))
+		if (revs.min_age != -1 && (commit->date > revs.min_age))
 			continue;
 		p = &commit_list_insert(commit, p)->next;
 	}
-	if (tree_objects)
+	if (revs.tree_objects)
 		mark_edges_uninteresting(newlist);
 	if (bisect_list)
 		newlist = find_bisection(newlist);
 	return newlist;
 }
 
-static void add_pending_object(struct object *obj, const char *name)
-{
-	add_object(obj, &pending_objects, NULL, name);
-}
-
-static struct commit *get_commit_reference(const char *name, const unsigned char *sha1, unsigned int flags)
-{
-	struct object *object;
-
-	object = parse_object(sha1);
-	if (!object)
-		die("bad object %s", name);
-
-	/*
-	 * Tag object? Look what it points to..
-	 */
-	while (object->type == tag_type) {
-		struct tag *tag = (struct tag *) object;
-		object->flags |= flags;
-		if (tag_objects && !(object->flags & UNINTERESTING))
-			add_pending_object(object, tag->tag);
-		object = parse_object(tag->tagged->sha1);
-		if (!object)
-			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
-	}
-
-	/*
-	 * Commit object? Just return it, we'll do all the complex
-	 * reachability crud.
-	 */
-	if (object->type == commit_type) {
-		struct commit *commit = (struct commit *)object;
-		object->flags |= flags;
-		if (parse_commit(commit) < 0)
-			die("unable to parse commit %s", name);
-		if (flags & UNINTERESTING)
-			mark_parents_uninteresting(commit);
-		return commit;
-	}
-
-	/*
-	 * Tree object? Either mark it uniniteresting, or add it
-	 * to the list of objects to look at later..
-	 */
-	if (object->type == tree_type) {
-		struct tree *tree = (struct tree *)object;
-		if (!tree_objects)
-			return NULL;
-		if (flags & UNINTERESTING) {
-			mark_tree_uninteresting(tree);
-			return NULL;
-		}
-		add_pending_object(object, "");
-		return NULL;
-	}
-
-	/*
-	 * Blob object? You know the drill by now..
-	 */
-	if (object->type == blob_type) {
-		struct blob *blob = (struct blob *)object;
-		if (!blob_objects)
-			return NULL;
-		if (flags & UNINTERESTING) {
-			mark_blob_uninteresting(blob);
-			return NULL;
-		}
-		add_pending_object(object, "");
-		return NULL;
-	}
-	die("%s is unknown object", name);
-}
-
-static void handle_one_commit(struct commit *com, struct commit_list **lst)
-{
-	if (!com || com->object.flags & SEEN)
-		return;
-	com->object.flags |= SEEN;
-	commit_list_insert(com, lst);
-}
-
-/* for_each_ref() callback does not allow user data -- Yuck. */
-static struct commit_list **global_lst;
-
-static int include_one_commit(const char *path, const unsigned char *sha1)
-{
-	struct commit *com = get_commit_reference(path, sha1, 0);
-	handle_one_commit(com, global_lst);
-	return 0;
-}
-
-static void handle_all(struct commit_list **lst)
-{
-	global_lst = lst;
-	for_each_ref(include_one_commit);
-	global_lst = NULL;
-}
-
 int main(int argc, const char **argv)
 {
-	const char *prefix = setup_git_directory();
-	struct commit_list *list = NULL;
+	struct commit_list *list;
 	int i, limited = 0;
 
+	argc = setup_revisions(argc, argv, &revs);
+
 	for (i = 1 ; i < argc; i++) {
-		int flags;
 		const char *arg = argv[i];
-		char *dotdot;
-		struct commit *commit;
-		unsigned char sha1[20];
 
 		/* accept -<digit>, like traditilnal "head" */
 		if ((*arg == '-') && isdigit(arg[1])) {
-			max_count = atoi(arg + 1);
+			revs.max_count = atoi(arg + 1);
 			continue;
 		}
 		if (!strcmp(arg, "-n")) {
 			if (++i >= argc)
 				die("-n requires an argument");
-			max_count = atoi(argv[i]);
+			revs.max_count = atoi(argv[i]);
 			continue;
 		}
 		if (!strncmp(arg,"-n",2)) {
-			max_count = atoi(arg + 2);
-			continue;
-		}
-		if (!strncmp(arg, "--max-count=", 12)) {
-			max_count = atoi(arg + 12);
-			continue;
-		}
-		if (!strncmp(arg, "--max-age=", 10)) {
-			max_age = atoi(arg + 10);
-			limited = 1;
-			continue;
-		}
-		if (!strncmp(arg, "--min-age=", 10)) {
-			min_age = atoi(arg + 10);
-			limited = 1;
+			revs.max_count = atoi(arg + 2);
 			continue;
 		}
 		if (!strcmp(arg, "--header")) {
@@ -893,23 +657,6 @@ int main(int argc, const char **argv)
 			bisect_list = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--all")) {
-			handle_all(&list);
-			continue;
-		}
-		if (!strcmp(arg, "--objects")) {
-			tag_objects = 1;
-			tree_objects = 1;
-			blob_objects = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--objects-edge")) {
-			tag_objects = 1;
-			tree_objects = 1;
-			blob_objects = 1;
-			edge_hint = 1;
-			continue;
-		}
 		if (!strcmp(arg, "--unpacked")) {
 			unpacked = 1;
 			limited = 1;
@@ -923,100 +670,42 @@ int main(int argc, const char **argv)
 			show_breaks = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--topo-order")) {
-		        topo_order = 1;
-			lifo = 1;
-		        limited = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--date-order")) {
-		        topo_order = 1;
-			lifo = 0;
-		        limited = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--dense")) {
-			dense = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--sparse")) {
-			dense = 0;
-			continue;
-		}
-		if (!strcmp(arg, "--remove-empty")) {
-			remove_empty_trees = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-
-		if (show_breaks && !merge_order)
-			usage(rev_list_usage);
-
-		flags = 0;
-		dotdot = strstr(arg, "..");
-		if (dotdot) {
-			unsigned char from_sha1[20];
-			char *next = dotdot + 2;
-			*dotdot = 0;
-			if (!*next)
-				next = "HEAD";
-			if (!get_sha1(arg, from_sha1) && !get_sha1(next, sha1)) {
-				struct commit *exclude;
-				struct commit *include;
-				
-				exclude = get_commit_reference(arg, from_sha1, UNINTERESTING);
-				include = get_commit_reference(next, sha1, 0);
-				if (!exclude || !include)
-					die("Invalid revision range %s..%s", arg, next);
-				limited = 1;
-				handle_one_commit(exclude, &list);
-				handle_one_commit(include, &list);
-				continue;
-			}
-			*dotdot = '.';
-		}
-		if (*arg == '^') {
-			flags = UNINTERESTING;
-			arg++;
-			limited = 1;
-		}
-		if (get_sha1(arg, sha1) < 0) {
-			struct stat st;
-			if (lstat(arg, &st) < 0)
-				die("'%s': %s", arg, strerror(errno));
-			break;
-		}
-		commit = get_commit_reference(arg, sha1, flags);
-		handle_one_commit(commit, &list);
-	}
-
-	if (!list &&
-	    (!(tag_objects||tree_objects||blob_objects) && !pending_objects))
 		usage(rev_list_usage);
 
-	paths = get_pathspec(prefix, argv + i);
-	if (paths) {
-		limited = 1;
-		diff_tree_setup_paths(paths);
 	}
+
+	list = revs.commits;
+	if (list && list->next)
+		limited = 1;
+
+	if (revs.topo_order)
+		limited = 1;
+
+	if (!list &&
+	    (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) && !revs.pending_objects))
+		usage(rev_list_usage);
+
+	if (revs.paths) {
+		limited = 1;
+		diff_tree_setup_paths(revs.paths);
+	}
+	if (revs.max_age || revs.min_age)
+		limited = 1;
 
 	save_commit_buffer = verbose_header;
 	track_object_refs = 0;
 
 	if (!merge_order) {		
 		sort_by_date(&list);
-		if (list && !limited && max_count == 1 &&
-		    !tag_objects && !tree_objects && !blob_objects) {
+		if (list && !limited && revs.max_count == 1 &&
+		    !revs.tag_objects && !revs.tree_objects && !revs.blob_objects) {
 			show_commit(list->item);
 			return 0;
 		}
 	        if (limited)
 			list = limit_list(list);
-		if (topo_order)
-			sort_in_topological_order(&list, lifo);
+		if (revs.topo_order)
+			sort_in_topological_order(&list, revs.lifo);
 		show_commit_list(list);
 	} else {
 #ifndef NO_OPENSSL

@@ -230,62 +230,141 @@ static void show_man_page(char *git_cmd)
 	execlp("man", "man", page, NULL);
 }
 
+static int cmd_version(int argc, char **argv, char **envp)
+{
+	printf("git version %s\n", GIT_VERSION);
+	return 0;
+}
+
+static int cmd_help(int argc, char **argv, char **envp)
+{
+	char *help_cmd = argv[1];
+	if (!help_cmd)
+		cmd_usage(git_exec_path(), NULL);
+	show_man_page(help_cmd);
+	return 0;
+}
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
+static void handle_internal_command(int argc, char **argv, char **envp)
+{
+	const char *cmd = argv[0];
+	static struct cmd_struct {
+		const char *cmd;
+		int (*fn)(int, char **, char **);
+	} commands[] = {
+		{ "version", cmd_version },
+		{ "help", cmd_help },
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+		struct cmd_struct *p = commands+i;
+		if (strcmp(p->cmd, cmd))
+			continue;
+		exit(p->fn(argc, argv, envp));
+	}
+}
+
 int main(int argc, char **argv, char **envp)
 {
+	char *cmd = argv[0];
+	char *slash = strrchr(cmd, '/');
 	char git_command[PATH_MAX + 1];
-	char wd[PATH_MAX + 1];
-	int i, show_help = 0;
-	const char *exec_path;
+	const char *exec_path = NULL;
 
-	getcwd(wd, PATH_MAX);
+	/*
+	 * Take the basename of argv[0] as the command
+	 * name, and the dirname as the default exec_path
+	 * if it's an absolute path and we don't have
+	 * anything better.
+	 */
+	if (slash) {
+		*slash++ = 0;
+		if (*cmd == '/')
+			exec_path = cmd;
+		cmd = slash;
+	}
 
-	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+	/*
+	 * "git-xxxx" is the same as "git xxxx", but we obviously:
+	 *
+	 *  - cannot take flags in between the "git" and the "xxxx".
+	 *  - cannot execute it externally (since it would just do
+	 *    the same thing over again)
+	 *
+	 * So we just directly call the internal command handler, and
+	 * die if that one cannot handle it.
+	 */
+	if (!strncmp(cmd, "git-", 4)) {
+		cmd += 4;
+		argv[0] = cmd;
+		handle_internal_command(argc, argv, envp);
+		die("cannot handle %s internally", cmd);
+	}
 
-		if (!strcmp(arg, "help")) {
-			show_help = 1;
-			continue;
-		}
+	/* Default command: "help" */
+	cmd = "help";
 
-		if (strncmp(arg, "--", 2))
+	/* Look for flags.. */
+	while (argc > 1) {
+		cmd = *++argv;
+		argc--;
+
+		if (strncmp(cmd, "--", 2))
 			break;
 
-		arg += 2;
+		cmd += 2;
 
-		if (!strncmp(arg, "exec-path", 9)) {
-			arg += 9;
-			if (*arg == '=') {
-				exec_path = arg + 1;
-				git_set_exec_path(exec_path);
-			} else {
-				puts(git_exec_path());
-				exit(0);
+		/*
+		 * For legacy reasons, the "version" and "help"
+		 * commands can be written with "--" prepended
+		 * to make them look like flags.
+		 */
+		if (!strcmp(cmd, "help"))
+			break;
+		if (!strcmp(cmd, "version"))
+			break;
+
+		/*
+		 * Check remaining flags (which by now must be
+		 * "--exec-path", but maybe we will accept
+		 * other arguments some day)
+		 */
+		if (!strncmp(cmd, "exec-path", 9)) {
+			cmd += 9;
+			if (*cmd == '=') {
+				git_set_exec_path(cmd + 1);
+				continue;
 			}
-		}
-		else if (!strcmp(arg, "version")) {
-			printf("git version %s\n", GIT_VERSION);
+			puts(git_exec_path());
 			exit(0);
 		}
-		else if (!strcmp(arg, "help"))
-			show_help = 1;
-		else if (!show_help)
-			cmd_usage(NULL, NULL);
+		cmd_usage(NULL, NULL);
 	}
+	argv[0] = cmd;
 
-	if (i >= argc || show_help) {
-		if (i >= argc)
-			cmd_usage(git_exec_path(), NULL);
-
-		show_man_page(argv[i]);
-	}
-
+	/*
+	 * We search for git commands in the following order:
+	 *  - git_exec_path()
+	 *  - the path of the "git" command if we could find it
+	 *    in $0
+	 *  - the regular PATH.
+	 */
+	if (exec_path)
+		prepend_to_path(exec_path, strlen(exec_path));
 	exec_path = git_exec_path();
 	prepend_to_path(exec_path, strlen(exec_path));
 
-	execv_git_cmd(argv + i);
+	/* See if it's an internal command */
+	handle_internal_command(argc, argv, envp);
+
+	/* .. then try the external ones */
+	execv_git_cmd(argv);
 
 	if (errno == ENOENT)
-		cmd_usage(exec_path, "'%s' is not a git-command", argv[i]);
+		cmd_usage(exec_path, "'%s' is not a git-command", cmd);
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		git_command, strerror(errno));

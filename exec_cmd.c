@@ -13,7 +13,7 @@ void git_set_exec_path(const char *exec_path)
 
 
 /* Returns the highest-priority, location to look for git programs. */
-const char *git_exec_path()
+const char *git_exec_path(void)
 {
 	const char *env;
 

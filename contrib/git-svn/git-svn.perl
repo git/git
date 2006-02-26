@@ -8,7 +8,7 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
-$VERSION = '0.9.1';
+$VERSION = '0.10.0';
 $GIT_DIR = $ENV{GIT_DIR} || "$ENV{PWD}/.git";
 $GIT_SVN = $ENV{GIT_SVN_ID} || 'git-svn';
 $GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
@@ -30,6 +30,7 @@ use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use File::Spec qw//;
+use POSIX qw/strftime/;
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{6,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
@@ -49,6 +50,7 @@ my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN" ],
 	init => [ \&init, "Initialize and fetch (import)"],
 	commit => [ \&commit, "Commit git revisions to SVN" ],
+	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings" ],
 	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)" ],
 	help => [ \&usage, "Show help" ],
 );
@@ -256,6 +258,30 @@ sub commit {
 	}
 	print "Done committing ",scalar @revs," revisions to SVN\n";
 
+}
+
+sub show_ignore {
+	require File::Find or die $!;
+	my $exclude_file = "$GIT_DIR/info/exclude";
+	open my $fh, '<', $exclude_file or croak $!;
+	chomp(my @excludes = (<$fh>));
+	close $fh or croak $!;
+
+	$SVN_URL ||= file_to_s("$GIT_DIR/$GIT_SVN/info/url");
+	chdir $SVN_WC or croak $!;
+	my %ign;
+	File::Find::find({wanted=>sub{if(lstat $_ && -d _ && -d "$_/.svn"){
+		s#^\./##;
+		@{$ign{$_}} = safe_qx(qw(svn propget svn:ignore),$_);
+		}}, no_chdir=>1},'.');
+
+	print "\n# /\n";
+	foreach (@{$ign{'.'}}) { print '/',$_ if /\S/ }
+	delete $ign{'.'};
+	foreach my $i (sort keys %ign) {
+		print "\n# ",$i,"\n";
+		foreach (@{$ign{$i}}) { print '/',$i,'/',$_ if /\S/ }
+	}
 }
 
 ########################### utility functions #########################
@@ -566,6 +592,7 @@ sub handle_rmdir {
 sub svn_commit_tree {
 	my ($svn_rev, $commit) = @_;
 	my $commit_msg = "$GIT_DIR/$GIT_SVN/.svn-commit.tmp.$$";
+	my %log_msg = ( msg => '' );
 	open my $msg, '>', $commit_msg  or croak $!;
 
 	chomp(my $type = `git-cat-file -t $commit`);
@@ -581,6 +608,7 @@ sub svn_commit_tree {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
 			} else {
+				$log_msg{msg} .= $_;
 				print $msg $_ or croak $!;
 			}
 		}
@@ -600,9 +628,30 @@ sub svn_commit_tree {
 			join("\n",@ci_output),"\n";
 	my ($rev_committed) = ($committed =~ /^Committed revision (\d+)\./);
 
-	# resync immediately
-	my @svn_up = (qw(svn up), "-r$svn_rev");
+	my @svn_up = qw(svn up);
 	push @svn_up, '--ignore-externals' unless $_no_ignore_ext;
+	if ($rev_committed == ($svn_rev + 1)) {
+		push @svn_up, "-r$rev_committed";
+		sys(@svn_up);
+		my $info = svn_info('.');
+		my $date = $info->{'Last Changed Date'} or die "Missing date\n";
+		if ($info->{'Last Changed Rev'} != $rev_committed) {
+			croak "$info->{'Last Changed Rev'} != $rev_committed\n"
+		}
+		my ($Y,$m,$d,$H,$M,$S,$tz) = ($date =~
+					/(\d{4})\-(\d\d)\-(\d\d)\s
+					 (\d\d)\:(\d\d)\:(\d\d)\s([\-\+]\d+)/x)
+					 or croak "Failed to parse date: $date\n";
+		$log_msg{date} = "$tz $Y-$m-$d $H:$M:$S";
+		$log_msg{author} = $info->{'Last Changed Author'};
+		$log_msg{revision} = $rev_committed;
+		$log_msg{msg} .= "\n";
+		my $parent = file_to_s("$REV_DIR/$svn_rev");
+		git_commit(\%log_msg, $parent, $commit);
+		return $rev_committed;
+	}
+	# resync immediately
+	push @svn_up, "-r$svn_rev";
 	sys(@svn_up);
 	return fetch("$rev_committed=$commit")->{revision};
 }
@@ -699,7 +748,7 @@ sub svn_info {
 	# only single-lines seem to exist in svn info output
 	while (<$info_fh>) {
 		chomp $_;
-		if (m#^([^:]+)\s*:\s*(\S*)$#) {
+		if (m#^([^:]+)\s*:\s*(\S.*)$#) {
 			$ret->{$1} = $2;
 			push @{$ret->{-order}}, $1;
 		}

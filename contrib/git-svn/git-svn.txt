@@ -61,6 +61,11 @@ rebuild::
 	the directory/repository you're tracking has moved or changed
 	protocols.
 
+show-ignore::
+	Recursively finds and lists the svn:ignore property on
+	directories.  The output is suitable for appending to
+	the $GIT_DIR/info/exclude file.
+
 OPTIONS
 -------
 -r <ARG>::
@@ -152,6 +157,8 @@ Tracking and contributing to an Subversion managed-project:
 	git commit git-svn-HEAD..my-branch
 # Something is committed to SVN, pull the latest into your branch::
 	git-svn fetch && git pull . git-svn-HEAD
+# Append svn:ignore settings to the default git exclude file:
+	git-svn show-ignore >> .git/info/exclude
 
 DESIGN PHILOSOPHY
 -----------------

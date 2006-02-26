@@ -8,6 +8,7 @@
 #
 # To enable this hook, make this file executable.
 
+. git-sh-setup
 test -x "$GIT_DIR/hooks/pre-commit" &&
 	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
 :
