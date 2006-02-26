@@ -112,16 +112,22 @@ sub file {
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	print "... $rev $path ...\n" if $opt_v;
-	my $pool = SVN::Pool->new();
-	eval { $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
-	$pool->clear;
+	my (undef, $properties);
+	eval { (undef, $properties)
+		   = $self->{'svn'}->get_file($path,$rev,$fh); };
 	if($@) {
 		return undef if $@ =~ /Attempted to get checksum/;
 		die $@;
 	}
+	my $mode;
+	if (exists $properties->{'svn:executable'}) {
+		$mode = '0755';
+	} else {
+		$mode = '0644';
+	}
 	close ($fh);
 
-	return $name;
+	return ($name, $mode);
 }
 
 package main;
@@ -296,7 +302,7 @@ sub get_file($$$) {
 	my $svnpath = revert_split_path($branch,$path);
 
 	# now get it
-	my $name;
+	my ($name,$mode);
 	if($opt_d) {
 		my($req,$res);
 
@@ -316,8 +322,9 @@ sub get_file($$$) {
 			return undef if $res->code == 301; # directory?
 			die $res->status_line." at $url\n";
 		}
+		$mode = '0644'; # can't obtain mode via direct http request?
 	} else {
-		$name = $svn->file("$svnpath",$rev);
+		($name,$mode) = $svn->file("$svnpath",$rev);
 		return undef unless defined $name;
 	}
 
@@ -331,7 +338,6 @@ sub get_file($$$) {
 	chomp $sha;
 	close $F;
 	unlink $name;
-	my $mode = "0644"; # SV does not seem to store any file modes
 	return [$mode, $sha, $path];
 }
 
