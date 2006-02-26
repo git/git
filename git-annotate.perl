@@ -431,8 +431,20 @@ sub gitvar_name {
     return join(' ', @field[0...(@field-4)]);
 }
 
-
 sub open_pipe {
+	if ($^O eq '##INSERT_ACTIVESTATE_STRING_HERE##') {
+		return open_pipe_activestate(@_);
+	} else {
+		return open_pipe_normal(@_);
+	}
+}
+
+sub open_pipe_activestate {
+	tie *fh, "Git::ActiveStatePipe", @_;
+	return *fh;
+}
+
+sub open_pipe_normal {
 	my (@execlist) = @_;
 
 	my $pid = open my $kid, "-|";
@@ -444,4 +456,33 @@ sub open_pipe {
 	}
 
 	return $kid;
+}
+
+package Git::ActiveStatePipe;
+use strict;
+
+sub TIEHANDLE {
+	my ($class, @params) = @_;
+	my $cmdline = join " ", @params;
+	my  @data = qx{$cmdline};
+	bless { i => 0, data => \@data }, $class;
+}
+
+sub READLINE {
+	my $self = shift;
+	if ($self->{i} >= scalar @{$self->{data}}) {
+		return undef;
+	}
+	return $self->{'data'}->[ $self->{i}++ ];
+}
+
+sub CLOSE {
+	my $self = shift;
+	delete $self->{data};
+	delete $self->{i};
+}
+
+sub EOF {
+	my $self = shift;
+	return ($self->{i} >= scalar @{$self->{data}});
 }
