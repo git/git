@@ -98,15 +98,15 @@ while (my $bound = pop @stack) {
 push @revqueue, $head;
 init_claim( defined $starting_rev ? $starting_rev : 'dirty');
 unless (defined $starting_rev) {
-	open(DIFF,"-|","git","diff","-R", "HEAD", "--",$filename)
+	my $diff = open_pipe("git","diff","-R", "HEAD", "--",$filename)
 		or die "Failed to call git diff to check for dirty state: $!";
 
-	_git_diff_parse(*DIFF, $head, "dirty", (
+	_git_diff_parse($diff, $head, "dirty", (
 				'author' => gitvar_name("GIT_AUTHOR_IDENT"),
 				'author_date' => sprintf("%s +0000",time()),
 				)
 			);
-	close(DIFF);
+	close($diff);
 }
 handle_rev();
 
@@ -172,20 +172,21 @@ sub handle_rev {
 sub git_rev_list {
 	my ($rev, $file) = @_;
 
+	my $revlist;
 	if ($rev_file) {
-		open(P, '<' . $rev_file);
+		open($revlist, '<' . $rev_file);
 	} else {
-		open(P,"-|","git-rev-list","--parents","--remove-empty",$rev,"--",$file)
+		$revlist = open_pipe("git-rev-list","--parents","--remove-empty",$rev,"--",$file)
 			or die "Failed to exec git-rev-list: $!";
 	}
 
 	my @revs;
-	while(my $line = <P>) {
+	while(my $line = <$revlist>) {
 		chomp $line;
 		my ($rev, @parents) = split /\s+/, $line;
 		push @revs, [ $rev, @parents ];
 	}
-	close(P);
+	close($revlist);
 
 	printf("0 revs found for rev %s (%s)\n", $rev, $file) if (@revs == 0);
 	return @revs;
@@ -194,22 +195,22 @@ sub git_rev_list {
 sub find_parent_renames {
 	my ($rev, $file) = @_;
 
-	open(P,"-|","git-diff-tree", "-M50", "-r","--name-status", "-z","$rev")
+	my $patch = open_pipe("git-diff-tree", "-M50", "-r","--name-status", "-z","$rev")
 		or die "Failed to exec git-diff: $!";
 
 	local $/ = "\0";
 	my %bound;
-	my $junk = <P>;
-	while (my $change = <P>) {
+	my $junk = <$patch>;
+	while (my $change = <$patch>) {
 		chomp $change;
-		my $filename = <P>;
+		my $filename = <$patch>;
 		chomp $filename;
 
 		if ($change =~ m/^[AMD]$/ ) {
 			next;
 		} elsif ($change =~ m/^R/ ) {
 			my $oldfilename = $filename;
-			$filename = <P>;
+			$filename = <$patch>;
 			chomp $filename;
 			if ( $file eq $filename ) {
 				my $parent = git_find_parent($rev, $oldfilename);
@@ -218,7 +219,7 @@ sub find_parent_renames {
 			}
 		}
 	}
-	close(P);
+	close($patch);
 
 	return \%bound;
 }
@@ -227,14 +228,14 @@ sub find_parent_renames {
 sub git_find_parent {
 	my ($rev, $filename) = @_;
 
-	open(REVPARENT,"-|","git-rev-list","--remove-empty", "--parents","--max-count=1","$rev","--",$filename)
+	my $revparent = open_pipe("git-rev-list","--remove-empty", "--parents","--max-count=1","$rev","--",$filename)
 		or die "Failed to open git-rev-list to find a single parent: $!";
 
-	my $parentline = <REVPARENT>;
+	my $parentline = <$revparent>;
 	chomp $parentline;
 	my ($revfound,$parent) = split m/\s+/, $parentline;
 
-	close(REVPARENT);
+	close($revparent);
 
 	return $parent;
 }
@@ -245,13 +246,13 @@ sub git_find_parent {
 sub git_diff_parse {
 	my ($parent, $rev, %revinfo) = @_;
 
-	open(DIFF,"-|","git-diff-tree","-M","-p",$rev,$parent,"--",
+	my $diff = open_pipe("git-diff-tree","-M","-p",$rev,$parent,"--",
 			$revs{$rev}{'filename'}, $revs{$parent}{'filename'})
 		or die "Failed to call git-diff for annotation: $!";
 
-	_git_diff_parse(*DIFF, $parent, $rev, %revinfo);
+	_git_diff_parse($diff, $parent, $rev, %revinfo);
 
-	close(DIFF);
+	close($diff);
 }
 
 sub _git_diff_parse {
@@ -264,7 +265,7 @@ sub _git_diff_parse {
 	my $gotheader = 0;
 	my ($remstart);
 	my ($hunk_start, $hunk_index);
-	while(<DIFF>) {
+	while(<$diff>) {
 		chomp;
 		if (m/^@@ -(\d+),(\d+) \+(\d+),(\d+)/) {
 			$remstart = $1;
@@ -335,15 +336,15 @@ sub git_cat_file {
 
 	my $blob = git_ls_tree($rev, $filename);
 
-	open(C,"-|","git","cat-file", "blob", $blob)
+	my $catfile = open_pipe("git","cat-file", "blob", $blob)
 		or die "Failed to git-cat-file blob $blob (rev $rev, file $filename): " . $!;
 
 	my @lines;
-	while(<C>) {
+	while(<$catfile>) {
 		chomp;
 		push @lines, $_;
 	}
-	close(C);
+	close($catfile);
 
 	return @lines;
 }
@@ -351,15 +352,15 @@ sub git_cat_file {
 sub git_ls_tree {
 	my ($rev, $filename) = @_;
 
-	open(T,"-|","git","ls-tree",$rev,$filename)
+	my $lstree = open_pipe("git","ls-tree",$rev,$filename)
 		or die "Failed to call git ls-tree: $!";
 
 	my ($mode, $type, $blob, $tfilename);
-	while(<T>) {
+	while(<$lstree>) {
 		($mode, $type, $blob, $tfilename) = split(/\s+/, $_, 4);
 		last if ($tfilename eq $filename);
 	}
-	close(T);
+	close($lstree);
 
 	return $blob if $filename eq $filename;
 	die "git-ls-tree failed to find blob for $filename";
@@ -379,11 +380,11 @@ sub claim_line {
 
 sub git_commit_info {
 	my ($rev) = @_;
-	open(COMMIT, "-|","git-cat-file", "commit", $rev)
+	my $commit = open_pipe("git-cat-file", "commit", $rev)
 		or die "Failed to call git-cat-file: $!";
 
 	my %info;
-	while(<COMMIT>) {
+	while(<$commit>) {
 		chomp;
 		last if (length $_ == 0);
 
@@ -397,7 +398,7 @@ sub git_commit_info {
 			$info{'committer_date'} = $3;
 		}
 	}
-	close(COMMIT);
+	close($commit);
 
 	return %info;
 }
@@ -430,3 +431,17 @@ sub gitvar_name {
     return join(' ', @field[0...(@field-4)]);
 }
 
+
+sub open_pipe {
+	my (@execlist) = @_;
+
+	my $pid = open my $kid, "-|";
+	defined $pid or die "Cannot fork: $!";
+
+	unless ($pid) {
+		exec @execlist;
+		die "Cannot exec @execlist: $!";
+	}
+
+	return $kid;
+}
