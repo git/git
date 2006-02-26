@@ -49,6 +49,7 @@ my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN" ],
 	init => [ \&init, "Initialize and fetch (import)"],
 	commit => [ \&commit, "Commit git revisions to SVN" ],
+	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings" ],
 	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)" ],
 	help => [ \&usage, "Show help" ],
 );
@@ -256,6 +257,30 @@ sub commit {
 	}
 	print "Done committing ",scalar @revs," revisions to SVN\n";
 
+}
+
+sub show_ignore {
+	require File::Find or die $!;
+	my $exclude_file = "$GIT_DIR/info/exclude";
+	open my $fh, '<', $exclude_file or croak $!;
+	chomp(my @excludes = (<$fh>));
+	close $fh or croak $!;
+
+	$SVN_URL ||= file_to_s("$GIT_DIR/$GIT_SVN/info/url");
+	chdir $SVN_WC or croak $!;
+	my %ign;
+	File::Find::find({wanted=>sub{if(lstat $_ && -d _ && -d "$_/.svn"){
+		s#^\./##;
+		@{$ign{$_}} = safe_qx(qw(svn propget svn:ignore),$_);
+		}}, no_chdir=>1},'.');
+
+	print "\n# /\n";
+	foreach (@{$ign{'.'}}) { print '/',$_ if /\S/ }
+	delete $ign{'.'};
+	foreach my $i (sort keys %ign) {
+		print "\n# ",$i,"\n";
+		foreach (@{$ign{$i}}) { print '/',$i,'/',$_ if /\S/ }
+	}
 }
 
 ########################### utility functions #########################
