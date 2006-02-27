@@ -30,7 +30,7 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
-    $opt_b,$opt_r,$opt_I,$opt_s,$opt_l,$opt_d,$opt_D);
+    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D);
 
 sub usage() {
 	print STDERR <<END;
@@ -38,12 +38,12 @@ Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
-       [-m] [-M regex] [SVN_URL]
+       [-m] [-M regex] [-A author_file] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("b:C:dDhiI:l:mM:o:rs:t:T:uv") or usage();
+getopts("A:b:C:dDhiI:l:mM:o:rs:t:T:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -66,6 +66,19 @@ if ($opt_m) {
 }
 if ($opt_M) {
 	push (@mergerx, qr/$opt_M/);
+}
+
+our %users = ();
+if ($opt_A) {
+	die "Cannot open $opt_A\n" unless -f $opt_A;
+	open(my $authors,$opt_A);
+	while(<$authors>) {
+		chomp;
+		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		(my $user,my $name,my $email) = ($1,$2,$3);
+		$users{$user} = [$name,$email];
+	}
+	close($authors);
 }
 
 select(STDERR); $|=1; select(STDOUT);
@@ -485,6 +498,10 @@ sub commit {
 
 	if (not defined $author) {
 		$author_name = $author_email = "unknown";
+	} elsif ($opt_A) {
+		die "User $author is not listed in $opt_A\n"
+		    unless exists $users{$author};
+		($author_name,$author_email) = @{$users{$author}};
 	} elsif ($author =~ /^(.*?)\s+<(.*)>$/) {
 		($author_name, $author_email) = ($1, $2);
 	} else {
