@@ -159,7 +159,7 @@ Tracking and contributing to an Subversion managed-project:
 # Commit only the git commits you want to SVN::
 	git-svn commit <tree-ish> [<tree-ish_2> ...]
 # Commit all the git commits from my-branch that don't exist in SVN::
-	git commit git-svn-HEAD..my-branch
+	git-svn commit git-svn-HEAD..my-branch
 # Something is committed to SVN, pull the latest into your branch::
 	git-svn fetch && git pull . git-svn-HEAD
 # Append svn:ignore settings to the default git exclude file:
