@@ -75,9 +75,9 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 -A <author_file>::
 	Read a file with lines on the form
 
-	  username User's Full Name <email@addres.org>
+	  username = User's Full Name <email@addr.es>
 
-	and use "User's Full Name <email@addres.org>" as the GIT
+	and use "User's Full Name <email@addr.es>" as the GIT
 	author and committer for Subversion commits made by
 	"username". If encountering a commit made by a user not in the
 	list, abort.

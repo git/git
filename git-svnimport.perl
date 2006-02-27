@@ -74,7 +74,7 @@ if ($opt_A) {
 	open(my $authors,$opt_A);
 	while(<$authors>) {
 		chomp;
-		next unless /^(\S+)\s+(.+?)\s+<(\S+)>$/;
+		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
 		(my $user,my $name,my $email) = ($1,$2,$3);
 		$users{$user} = [$name,$email];
 	}
