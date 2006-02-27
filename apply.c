@@ -41,6 +41,8 @@ static enum whitespace_eol {
 	strip_and_apply,
 } new_whitespace = nowarn;
 static int whitespace_error = 0;
+static int squelch_whitespace_errors = 5;
+static int applied_after_stripping = 0;
 static const char *patch_input_file = NULL;
 
 /*
@@ -832,11 +834,16 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			 */
 			if ((new_whitespace != nowarn) &&
 			    isspace(line[len-2])) {
-				fprintf(stderr, "Added whitespace\n");
-				fprintf(stderr, "%s:%d:%.*s\n",
-					patch_input_file,
-					linenr, len-2, line+1);
-				whitespace_error = 1;
+				whitespace_error++;
+				if (squelch_whitespace_errors &&
+				    squelch_whitespace_errors <
+				    whitespace_error)
+					;
+				else {
+					fprintf(stderr, "Adds trailing whitespace.\n%s:%d:%.*s\n",
+						patch_input_file,
+						linenr, len-2, line+1);
+				}
 			}
 			added++;
 			newlines--;
@@ -1129,6 +1136,7 @@ static int apply_line(char *output, const char *patch, int plen)
 		plen--;
 		while (0 < plen && isspace(patch[plen]))
 			plen--;
+		applied_after_stripping++;
 	}
 	memcpy(output, patch + 1, plen);
 	if (add_nl_to_tail)
@@ -1895,11 +1903,16 @@ int main(int argc, char **argv)
 				new_whitespace = error_on_whitespace;
 				continue;
 			}
+			if (!strcmp(arg+13, "error-all")) {
+				new_whitespace = error_on_whitespace;
+				squelch_whitespace_errors = 0;
+				continue;
+			}
 			if (!strcmp(arg+13, "strip")) {
 				new_whitespace = strip_and_apply;
 				continue;
 			}
-			die("unrecognixed whitespace option '%s'", arg+13);
+			die("unrecognized whitespace option '%s'", arg+13);
 		}
 
 		if (check_index && prefix_length < 0) {
@@ -1919,7 +1932,31 @@ int main(int argc, char **argv)
 	}
 	if (read_stdin)
 		apply_patch(0, "<stdin>");
-	if (whitespace_error && new_whitespace == error_on_whitespace)
-		return 1;
+	if (whitespace_error) {
+		if (squelch_whitespace_errors &&
+		    squelch_whitespace_errors < whitespace_error) {
+			int squelched =
+				whitespace_error - squelch_whitespace_errors;
+			fprintf(stderr, "warning: squelched %d whitespace error%s\n",
+				squelched,
+				squelched == 1 ? "" : "s");
+		}
+		if (new_whitespace == error_on_whitespace)
+			die("%d line%s add%s trailing whitespaces.",
+			    whitespace_error,
+			    whitespace_error == 1 ? "" : "s",
+			    whitespace_error == 1 ? "s" : "");
+		if (applied_after_stripping)
+			fprintf(stderr, "warning: %d line%s applied after"
+				" stripping trailing whitespaces.\n",
+				applied_after_stripping,
+				applied_after_stripping == 1 ? "" : "s");
+		else if (whitespace_error)
+			fprintf(stderr, "warning: %d line%s add%s trailing"
+				" whitespaces.\n",
+				whitespace_error,
+				whitespace_error == 1 ? "" : "s",
+				whitespace_error == 1 ? "s" : "");
+	}
 	return 0;
 }
