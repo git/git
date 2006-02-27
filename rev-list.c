@@ -41,7 +41,6 @@ static const char rev_list_usage[] =
 
 struct rev_info revs;
 
-static int unpacked = 0;
 static int bisect_list = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
@@ -572,7 +571,7 @@ static struct commit_list *limit_list(struct commit_list *list)
 
 		if (revs.max_age != -1 && (commit->date < revs.max_age))
 			obj->flags |= UNINTERESTING;
-		if (unpacked && has_sha1_pack(obj->sha1))
+		if (revs.unpacked && has_sha1_pack(obj->sha1))
 			obj->flags |= UNINTERESTING;
 		add_parents_to_list(commit, &list);
 		if (obj->flags & UNINTERESTING) {
@@ -595,7 +594,7 @@ static struct commit_list *limit_list(struct commit_list *list)
 int main(int argc, const char **argv)
 {
 	struct commit_list *list;
-	int i, limited = 0;
+	int i;
 
 	argc = setup_revisions(argc, argv, &revs);
 
@@ -655,11 +654,6 @@ int main(int argc, const char **argv)
 			bisect_list = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--unpacked")) {
-			unpacked = 1;
-			limited = 1;
-			continue;
-		}
 		if (!strcmp(arg, "--merge-order")) {
 		        merge_order = 1;
 			continue;
@@ -673,34 +667,25 @@ int main(int argc, const char **argv)
 	}
 
 	list = revs.commits;
-	if (list)
-		limited = 1;
-
-	if (revs.topo_order)
-		limited = 1;
 
 	if (!list &&
 	    (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) && !revs.pending_objects))
 		usage(rev_list_usage);
 
-	if (revs.paths) {
-		limited = 1;
+	if (revs.paths)
 		diff_tree_setup_paths(revs.paths);
-	}
-	if (revs.max_age != -1 || revs.min_age != -1)
-		limited = 1;
 
 	save_commit_buffer = verbose_header;
 	track_object_refs = 0;
 
 	if (!merge_order) {		
 		sort_by_date(&list);
-		if (list && !limited && revs.max_count == 1 &&
+		if (list && !revs.limited && revs.max_count == 1 &&
 		    !revs.tag_objects && !revs.tree_objects && !revs.blob_objects) {
 			show_commit(list->item);
 			return 0;
 		}
-	        if (limited)
+	        if (revs.limited)
 			list = limit_list(list);
 		if (revs.topo_order)
 			sort_in_topological_order(&list, revs.lifo);

@@ -143,8 +143,10 @@ static struct commit *get_commit_reference(struct rev_info *revs, const char *na
 		object->flags |= flags;
 		if (parse_commit(commit) < 0)
 			die("unable to parse commit %s", name);
-		if (flags & UNINTERESTING)
+		if (flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
+			revs->limited = 1;
+		}
 		return commit;
 	}
 
@@ -255,10 +257,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs)
 			}
 			if (!strncmp(arg, "--max-age=", 10)) {
 				revs->max_age = atoi(arg + 10);
+				revs->limited = 1;
 				continue;
 			}
 			if (!strncmp(arg, "--min-age=", 10)) {
 				revs->min_age = atoi(arg + 10);
+				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
@@ -277,11 +281,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs)
 			}
 			if (!strcmp(arg, "--topo-order")) {
 				revs->topo_order = 1;
+				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--date-order")) {
 				revs->lifo = 0;
 				revs->topo_order = 1;
+				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--dense")) {
@@ -307,6 +313,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs)
 				revs->tree_objects = 1;
 				revs->blob_objects = 1;
 				revs->edge_hint = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--unpacked")) {
+				revs->unpacked = 1;
+				revs->limited = 1;
 				continue;
 			}
 			*unrecognized++ = arg;
@@ -365,6 +376,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs)
 		commit = get_commit_reference(revs, def, sha1, 0);
 		add_one_commit(commit, revs);
 	}
+	if (revs->paths)
+		revs->limited = 1;
 	*unrecognized = NULL;
 	return left;
 }
