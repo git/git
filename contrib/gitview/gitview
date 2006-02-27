@@ -391,7 +391,7 @@ class DiffWindow:
 		sourceview.show()
 
 
-	def set_diff(self, commit_sha1, parent_sha1):
+	def set_diff(self, commit_sha1, parent_sha1, encoding):
 		"""Set the differences showed by this window.
 		Compares the two trees and populates the window with the
 		differences.
@@ -401,7 +401,7 @@ class DiffWindow:
 			return
 
 		fp = os.popen("git diff-tree -p " + parent_sha1 + " " + commit_sha1)
-		self.buffer.set_text(fp.read())
+		self.buffer.set_text(unicode(fp.read(), encoding).encode('utf-8'))
 		fp.close()
 		self.window.show()
 
@@ -430,6 +430,7 @@ class GitView:
 		self.window.set_border_width(0)
 		self.window.set_title("Git repository browser")
 
+		self.get_encoding()
 		self.get_bt_sha1()
 
 		# Use three-quarters of the screen by default
@@ -467,6 +468,13 @@ class GitView:
 				self.bt_sha1[sha1] = []
 			self.bt_sha1[sha1].append(name)
 		fp.close()
+
+	def get_encoding(self):
+		fp = os.popen("git repo-config --get i18n.commitencoding")
+		self.encoding=string.strip(fp.readline())
+		fp.close()
+		if (self.encoding == ""):
+			self.encoding = "utf-8"
 
 
 	def construct(self):
@@ -683,7 +691,7 @@ class GitView:
 		self.revid_label.set_text(revid_label)
 		self.committer_label.set_text(committer)
 		self.timestamp_label.set_text(timestamp)
-		self.message_buffer.set_text(message)
+		self.message_buffer.set_text(unicode(message, self.encoding).encode('utf-8'))
 
 		for widget in self.parents_widgets:
 			self.table.remove(widget)
@@ -728,7 +736,7 @@ class GitView:
 			button.set_relief(gtk.RELIEF_NONE)
 			button.set_sensitive(True)
 			button.connect("clicked", self._show_clicked_cb,
-					commit.commit_sha1, parent_id)
+					commit.commit_sha1, parent_id, self.encoding)
 			hbox.pack_start(button, expand=False, fill=True)
 			button.show()
 
@@ -967,10 +975,10 @@ class GitView:
 
 		self.treeview.grab_focus()
 
-	def _show_clicked_cb(self, widget,  commit_sha1, parent_sha1):
+	def _show_clicked_cb(self, widget,  commit_sha1, parent_sha1, encoding):
 		"""Callback for when the show button for a parent is clicked."""
 		window = DiffWindow()
-		window.set_diff(commit_sha1, parent_sha1)
+		window.set_diff(commit_sha1, parent_sha1, encoding)
 		self.treeview.grab_focus()
 
 if __name__ == "__main__":
