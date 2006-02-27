@@ -82,6 +82,11 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 	"username". If encountering a commit made by a user not in the
 	list, abort.
 
+	For convenience, this data is saved to $GIT_DIR/svn-authors
+	each time the -A option is provided, and read from that same
+	file each time git-svnimport is run with an existing GIT
+	repository without -A.
+
 -m::
 	Attempt to detect merges based on the commit message. This option
 	will enable default regexes that try to capture the name source
