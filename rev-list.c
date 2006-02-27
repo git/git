@@ -214,8 +214,6 @@ static struct object_list **process_tree(struct tree *tree,
 	return p;
 }
 
-static struct object_list *pending_objects = NULL;
-
 static void show_commit_list(struct commit_list *list)
 {
 	struct object_list *objects = NULL, **p = &objects, *pending;
@@ -226,7 +224,7 @@ static void show_commit_list(struct commit_list *list)
 		if (process_commit(commit) == STOP)
 			break;
 	}
-	for (pending = pending_objects; pending; pending = pending->next) {
+	for (pending = revs.pending_objects; pending; pending = pending->next) {
 		struct object *obj = pending->item;
 		const char *name = pending->name;
 		if (obj->flags & (UNINTERESTING | SEEN))
@@ -675,7 +673,7 @@ int main(int argc, const char **argv)
 	}
 
 	list = revs.commits;
-	if (list && list->next)
+	if (list)
 		limited = 1;
 
 	if (revs.topo_order)
@@ -689,7 +687,7 @@ int main(int argc, const char **argv)
 		limited = 1;
 		diff_tree_setup_paths(revs.paths);
 	}
-	if (revs.max_age || revs.min_age)
+	if (revs.max_age != -1 || revs.min_age != -1)
 		limited = 1;
 
 	save_commit_buffer = verbose_header;
