@@ -178,11 +178,12 @@ static void emit_rewrite_diff(const char *name_a,
 		copy_file('+', temp[1].name);
 }
 
-static void builtin_diff(const char *name_a,
+static const char *builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_tempfile *temp,
 			 const char *xfrm_msg,
-			 int complete_rewrite)
+			 int complete_rewrite,
+			 const char **args)
 {
 	int i, next_at, cmd_size;
 	const char *const diff_cmd = "diff -L%s -L%s";
@@ -242,19 +243,24 @@ static void builtin_diff(const char *name_a,
 		}
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
+		/*
+		 * we do not run diff between different kind
+		 * of objects.
+		 */
 		if (strncmp(temp[0].mode, temp[1].mode, 3))
-			/* we do not run diff between different kind
-			 * of objects.
-			 */
-			exit(0);
+			return NULL;
 		if (complete_rewrite) {
-			fflush(NULL);
 			emit_rewrite_diff(name_a, name_b, temp);
-			exit(0);
+			return NULL;
 		}
 	}
-	fflush(NULL);
-	execlp("/bin/sh","sh", "-c", cmd, NULL);
+
+	/* This is disgusting */
+	*args++ = "sh";
+	*args++ = "-c";
+	*args++ = cmd;
+	*args = NULL;
+	return "/bin/sh";
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -559,6 +565,40 @@ static void remove_tempfile_on_signal(int signo)
 	raise(signo);
 }
 
+static int spawn_prog(const char *pgm, const char **arg)
+{
+	pid_t pid;
+	int status;
+
+	fflush(NULL);
+	pid = fork();
+	if (pid < 0)
+		die("unable to fork");
+	if (!pid) {
+		execvp(pgm, (char *const*) arg);
+		exit(255);
+	}
+
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno == EINTR)
+			continue;
+		return -1;
+	}
+
+	/* Earlier we did not check the exit status because
+	 * diff exits non-zero if files are different, and
+	 * we are not interested in knowing that.  It was a
+	 * mistake which made it harder to quit a diff-*
+	 * session that uses the git-apply-patch-script as
+	 * the GIT_EXTERNAL_DIFF.  A custom GIT_EXTERNAL_DIFF
+	 * should also exit non-zero only when it wants to
+	 * abort the entire diff-* session.
+	 */
+	if (WIFEXITED(status) && !WEXITSTATUS(status))
+		return 0;
+	return -1;
+}
+
 /* An external diff command takes:
  *
  * diff-cmd name infile1 infile1-sha1 infile1-mode \
@@ -573,9 +613,9 @@ static void run_external_diff(const char *pgm,
 			      const char *xfrm_msg,
 			      int complete_rewrite)
 {
+	const char *spawn_arg[10];
 	struct diff_tempfile *temp = diff_temp;
-	pid_t pid;
-	int status;
+	int retval;
 	static int atexit_asked = 0;
 	const char *othername;
 
@@ -592,59 +632,41 @@ static void run_external_diff(const char *pgm,
 		signal(SIGINT, remove_tempfile_on_signal);
 	}
 
-	fflush(NULL);
-	pid = fork();
-	if (pid < 0)
-		die("unable to fork");
-	if (!pid) {
-		if (pgm) {
-			if (one && two) {
-				const char *exec_arg[10];
-				const char **arg = &exec_arg[0];
-				*arg++ = pgm;
-				*arg++ = name;
-				*arg++ = temp[0].name;
-				*arg++ = temp[0].hex;
-				*arg++ = temp[0].mode;
-				*arg++ = temp[1].name;
-				*arg++ = temp[1].hex;
-				*arg++ = temp[1].mode;
-				if (other) {
-					*arg++ = other;
-					*arg++ = xfrm_msg;
-				}
-				*arg = NULL;
-				execvp(pgm, (char *const*) exec_arg);
+	if (pgm) {
+		const char **arg = &spawn_arg[0];
+		if (one && two) {
+			*arg++ = pgm;
+			*arg++ = name;
+			*arg++ = temp[0].name;
+			*arg++ = temp[0].hex;
+			*arg++ = temp[0].mode;
+			*arg++ = temp[1].name;
+			*arg++ = temp[1].hex;
+			*arg++ = temp[1].mode;
+			if (other) {
+				*arg++ = other;
+				*arg++ = xfrm_msg;
 			}
-			else
-				execlp(pgm, pgm, name, NULL);
+		} else {
+			*arg++ = pgm;
+			*arg++ = name;
 		}
-		/*
-		 * otherwise we use the built-in one.
-		 */
-		if (one && two)
-			builtin_diff(name, othername, temp, xfrm_msg,
-				     complete_rewrite);
-		else
+		*arg = NULL;
+	} else {
+		if (one && two) {
+			pgm = builtin_diff(name, othername, temp, xfrm_msg, complete_rewrite, spawn_arg);
+		} else
 			printf("* Unmerged path %s\n", name);
-		exit(0);
 	}
-	if (waitpid(pid, &status, 0) < 0 ||
-	    !WIFEXITED(status) || WEXITSTATUS(status)) {
-		/* Earlier we did not check the exit status because
-		 * diff exits non-zero if files are different, and
-		 * we are not interested in knowing that.  It was a
-		 * mistake which made it harder to quit a diff-*
-		 * session that uses the git-apply-patch-script as
-		 * the GIT_EXTERNAL_DIFF.  A custom GIT_EXTERNAL_DIFF
-		 * should also exit non-zero only when it wants to
-		 * abort the entire diff-* session.
-		 */
-		remove_tempfile();
+
+	retval = 0;
+	if (pgm)
+		retval = spawn_prog(pgm, spawn_arg);
+	remove_tempfile();
+	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
 		exit(1);
 	}
-	remove_tempfile();
 }
 
 static void diff_fill_sha1_info(struct diff_filespec *one)

@@ -29,19 +29,21 @@ die "Need SVN:Core 1.2.1 or better" if $SVN::Core::VERSION lt "1.2.1";
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,$opt_b,$opt_r,$opt_s,$opt_l,$opt_d,$opt_D);
+our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
+    $opt_b,$opt_r,$opt_I,$opt_s,$opt_l,$opt_d,$opt_D);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
-       [-d|-D] [-i] [-u] [-r] [-s start_chg] [-m] [-M regex] [SVN_URL]
+       [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
+       [-m] [-M regex] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("b:C:dDhil:mM:o:rs:t:T:uv") or usage();
+getopts("b:C:dDhiI:l:mM:o:rs:t:T:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -112,16 +114,40 @@ sub file {
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	print "... $rev $path ...\n" if $opt_v;
-	my $pool = SVN::Pool->new();
-	eval { $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
-	$pool->clear;
+	my (undef, $properties);
+	eval { (undef, $properties)
+		   = $self->{'svn'}->get_file($path,$rev,$fh); };
 	if($@) {
 		return undef if $@ =~ /Attempted to get checksum/;
 		die $@;
 	}
+	my $mode;
+	if (exists $properties->{'svn:executable'}) {
+		$mode = '0755';
+	} else {
+		$mode = '0644';
+	}
 	close ($fh);
 
-	return $name;
+	return ($name, $mode);
+}
+
+sub ignore {
+	my($self,$path,$rev) = @_;
+
+	print "... $rev $path ...\n" if $opt_v;
+	my (undef,undef,$properties)
+	    = $self->{'svn'}->get_dir($path,$rev,undef);
+	if (exists $properties->{'svn:ignore'}) {
+		my ($fh, $name) = tempfile('gitsvn.XXXXXX',
+					   DIR => File::Spec->tmpdir(),
+					   UNLINK => 1);
+		print $fh $properties->{'svn:ignore'};
+		close($fh);
+		return $name;
+	} else {
+		return undef;
+	}
 }
 
 package main;
@@ -296,7 +322,7 @@ sub get_file($$$) {
 	my $svnpath = revert_split_path($branch,$path);
 
 	# now get it
-	my $name;
+	my ($name,$mode);
 	if($opt_d) {
 		my($req,$res);
 
@@ -316,8 +342,9 @@ sub get_file($$$) {
 			return undef if $res->code == 301; # directory?
 			die $res->status_line." at $url\n";
 		}
+		$mode = '0644'; # can't obtain mode via direct http request?
 	} else {
-		$name = $svn->file("$svnpath",$rev);
+		($name,$mode) = $svn->file("$svnpath",$rev);
 		return undef unless defined $name;
 	}
 
@@ -331,8 +358,35 @@ sub get_file($$$) {
 	chomp $sha;
 	close $F;
 	unlink $name;
-	my $mode = "0644"; # SV does not seem to store any file modes
 	return [$mode, $sha, $path];
+}
+
+sub get_ignore($$$$$) {
+	my($new,$old,$rev,$branch,$path) = @_;
+
+	return unless $opt_I;
+	my $svnpath = revert_split_path($branch,$path);
+	my $name = $svn->ignore("$svnpath",$rev);
+	if ($path eq '/') {
+		$path = $opt_I;
+	} else {
+		$path = File::Spec->catfile($path,$opt_I);
+	}
+	if (defined $name) {
+		my $pid = open(my $F, '-|');
+		die $! unless defined $pid;
+		if (!$pid) {
+			exec("git-hash-object", "-w", $name)
+			    or die "Cannot create object: $!\n";
+		}
+		my $sha = <$F>;
+		chomp $sha;
+		close $F;
+		unlink $name;
+		push(@$new,['0644',$sha,$path]);
+	} else {
+		push(@$old,$path);
+	}
 }
 
 sub split_path($$) {
@@ -540,6 +594,9 @@ sub commit {
 						my $opath = $action->[3];
 						print STDERR "$revision: $branch: could not fetch '$opath'\n";
 					}
+				} elsif ($node_kind eq $SVN::Node::dir) {
+					get_ignore(\@new, \@old, $revision,
+						   $branch,$path);
 				}
 			} elsif ($action->[0] eq "D") {
 				push(@old,$path);
@@ -548,6 +605,9 @@ sub commit {
 				if ($node_kind eq $SVN::Node::file) {
 					my $f = get_file($revision,$branch,$path);
 					push(@new,$f) if $f;
+				} elsif ($node_kind eq $SVN::Node::dir) {
+					get_ignore(\@new, \@old, $revision,
+						   $branch,$path);
 				}
 			} else {
 				die "$revision: unknown action '".$action->[0]."' for $path\n";
