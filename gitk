@@ -2918,65 +2918,26 @@ proc linehover {} {
 }
 
 proc clickisonarrow {id y} {
-    global mainline mainlinearrow sidelines lthickness
+    global lthickness idrowranges
 
     set thresh [expr {2 * $lthickness + 6}]
-    if {[info exists mainline($id)]} {
-	if {$mainlinearrow($id) ne "none"} {
-	    if {abs([lindex $mainline($id) 1] - $y) < $thresh} {
-		return "up"
-	    }
-	}
-    }
-    if {[info exists sidelines($id)]} {
-	foreach ls $sidelines($id) {
-	    set coords [lindex $ls 0]
-	    set arrow [lindex $ls 2]
-	    if {$arrow eq "first" || $arrow eq "both"} {
-		if {abs([lindex $coords 1] - $y) < $thresh} {
-		    return "up"
-		}
-	    }
-	    if {$arrow eq "last" || $arrow eq "both"} {
-		if {abs([lindex $coords end] - $y) < $thresh} {
-		    return "down"
-		}
-	    }
+    set n [expr {[llength $idrowranges($id)] - 1}]
+    for {set i 1} {$i < $n} {incr i} {
+	set row [lindex $idrowranges($id) $i]
+	if {abs([yc $row] - $y) < $thresh} {
+	    return $i
 	}
     }
     return {}
 }
 
-proc arrowjump {id dirn y} {
-    global mainline sidelines canv canv2 canv3
+proc arrowjump {id n y} {
+    global idrowranges canv
 
-    set yt {}
-    if {$dirn eq "down"} {
-	if {[info exists mainline($id)]} {
-	    set y1 [lindex $mainline($id) 1]
-	    if {$y1 > $y} {
-		set yt $y1
-	    }
-	}
-	if {[info exists sidelines($id)]} {
-	    foreach ls $sidelines($id) {
-		set y1 [lindex $ls 0 1]
-		if {$y1 > $y && ($yt eq {} || $y1 < $yt)} {
-		    set yt $y1
-		}
-	    }
-	}
-    } else {
-	if {[info exists sidelines($id)]} {
-	    foreach ls $sidelines($id) {
-		set y1 [lindex $ls 0 end]
-		if {$y1 < $y && ($yt eq {} || $y1 > $yt)} {
-		    set yt $y1
-		}
-	    }
-	}
-    }
-    if {$yt eq {}} return
+    # 1 <-> 2, 3 <-> 4, etc...
+    set n [expr {(($n - 1) ^ 1) + 1}]
+    set row [lindex $idrowranges($id) $n]
+    set yt [yc $row]
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax eq {} || $ymax <= 0} return
     set view [$canv yview]
@@ -2985,9 +2946,7 @@ proc arrowjump {id dirn y} {
     if {$yfrac < 0} {
 	set yfrac 0
     }
-    $canv yview moveto $yfrac
-    $canv2 yview moveto $yfrac
-    $canv3 yview moveto $yfrac
+    allcanvs yview moveto $yfrac
 }
 
 proc lineclick {x y id isnew} {
