@@ -174,7 +174,7 @@ titleScript='
 process_one () {
 	perl -w -e '
 my ($keep_subject, $num, $signoff, $commsg) = @ARGV;
-my ($signoff_pattern, $done_header, $done_subject, $signoff_seen,
+my ($signoff_pattern, $done_header, $done_subject, $done_separator, $signoff_seen,
     $last_was_signoff);
 
 if ($signoff) {
@@ -227,6 +227,11 @@ while (<FH>) {
         print "Subject: $_";
 	$done_subject = 1;
 	next;
+    }
+    unless ($done_separator) {
+        print "\n";
+        $done_separator = 1;
+        next if (/^$/);
     }
 
     $last_was_signoff = 0;

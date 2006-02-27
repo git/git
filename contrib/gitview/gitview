@@ -162,7 +162,7 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 			for item in names:
 				names_len += len(item)
 
-		width = box_size * (cols + 1 ) + names_len 
+		width = box_size * (cols + 1 ) + names_len
 		height = box_size
 
 		# FIXME I have no idea how to use cell_area properly
@@ -261,11 +261,11 @@ class Commit:
 	children_sha1 = {}
 
 	def __init__(self, commit_lines):
-		self.message 		= ""
+		self.message		= ""
 		self.author		= ""
-		self.date 		= ""
-		self.committer 		= ""
-		self.commit_date 	= ""
+		self.date		= ""
+		self.committer		= ""
+		self.commit_date	= ""
 		self.commit_sha1	= ""
 		self.parent_sha1	= [ ]
 		self.parse_commit(commit_lines)
@@ -391,7 +391,7 @@ class DiffWindow:
 		sourceview.show()
 
 
-	def set_diff(self, commit_sha1, parent_sha1):
+	def set_diff(self, commit_sha1, parent_sha1, encoding):
 		"""Set the differences showed by this window.
 		Compares the two trees and populates the window with the
 		differences.
@@ -401,7 +401,7 @@ class DiffWindow:
 			return
 
 		fp = os.popen("git diff-tree -p " + parent_sha1 + " " + commit_sha1)
-		self.buffer.set_text(fp.read())
+		self.buffer.set_text(unicode(fp.read(), encoding).encode('utf-8'))
 		fp.close()
 		self.window.show()
 
@@ -426,10 +426,11 @@ class GitView:
 
 	def __init__(self, with_diff=0):
 		self.with_diff = with_diff
-		self.window =  	gtk.Window(gtk.WINDOW_TOPLEVEL)
+		self.window =	gtk.Window(gtk.WINDOW_TOPLEVEL)
 		self.window.set_border_width(0)
 		self.window.set_title("Git repository browser")
 
+		self.get_encoding()
 		self.get_bt_sha1()
 
 		# Use three-quarters of the screen by default
@@ -467,6 +468,13 @@ class GitView:
 				self.bt_sha1[sha1] = []
 			self.bt_sha1[sha1].append(name)
 		fp.close()
+
+	def get_encoding(self):
+		fp = os.popen("git repo-config --get i18n.commitencoding")
+		self.encoding=string.strip(fp.readline())
+		fp.close()
+		if (self.encoding == ""):
+			self.encoding = "utf-8"
 
 
 	def construct(self):
@@ -683,7 +691,7 @@ class GitView:
 		self.revid_label.set_text(revid_label)
 		self.committer_label.set_text(committer)
 		self.timestamp_label.set_text(timestamp)
-		self.message_buffer.set_text(message)
+		self.message_buffer.set_text(unicode(message, self.encoding).encode('utf-8'))
 
 		for widget in self.parents_widgets:
 			self.table.remove(widget)
@@ -728,7 +736,7 @@ class GitView:
 			button.set_relief(gtk.RELIEF_NONE)
 			button.set_sensitive(True)
 			button.connect("clicked", self._show_clicked_cb,
-					commit.commit_sha1, parent_id)
+					commit.commit_sha1, parent_id, self.encoding)
 			hbox.pack_start(button, expand=False, fill=True)
 			button.show()
 
@@ -870,15 +878,15 @@ class GitView:
 
 		# Reset nodepostion
 		if (last_nodepos > 5):
-			last_nodepos = -1 
+			last_nodepos = -1
 
 		# Add the incomplete lines of the last cell in this
 		try:
 			colour = self.colours[commit.commit_sha1]
 		except KeyError:
 			self.colours[commit.commit_sha1] = last_colour+1
-			last_colour = self.colours[commit.commit_sha1] 
-			colour =   self.colours[commit.commit_sha1] 
+			last_colour = self.colours[commit.commit_sha1]
+			colour =   self.colours[commit.commit_sha1]
 
 		try:
 			node_pos = self.nodepos[commit.commit_sha1]
@@ -910,7 +918,7 @@ class GitView:
 				self.colours[parent_id] = last_colour+1
 				last_colour = self.colours[parent_id]
 				self.nodepos[parent_id] = last_nodepos+1
-				last_nodepos = self.nodepos[parent_id] 
+				last_nodepos = self.nodepos[parent_id]
 
 			in_line.append((node_pos, self.nodepos[parent_id],
 						self.colours[parent_id]))
@@ -946,7 +954,7 @@ class GitView:
 			try:
 				next_commit = self.commits[index+1]
 				if (next_commit.commit_sha1 == sha1 and pos != int(pos)):
-				# join the line back to the node point 
+				# join the line back to the node point
 				# This need to be done only if we modified it
 					in_line.append((pos, pos-0.5, self.colours[sha1]))
 					continue;
@@ -967,10 +975,10 @@ class GitView:
 
 		self.treeview.grab_focus()
 
-	def _show_clicked_cb(self, widget,  commit_sha1, parent_sha1):
+	def _show_clicked_cb(self, widget,  commit_sha1, parent_sha1, encoding):
 		"""Callback for when the show button for a parent is clicked."""
 		window = DiffWindow()
-		window.set_diff(commit_sha1, parent_sha1)
+		window.set_diff(commit_sha1, parent_sha1, encoding)
 		self.treeview.grab_focus()
 
 if __name__ == "__main__":

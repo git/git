@@ -621,7 +621,8 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 }
 
 static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
-			   int dense, const char *header)
+			   int dense, const char *header,
+			   struct diff_options *opt)
 {
 	unsigned long size, cnt, lno;
 	char *result, *cp, *ep;
@@ -631,6 +632,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	char ourtmp_buf[TMPPATHLEN];
 	char *ourtmp = ourtmp_buf;
 	int working_tree_file = !memcmp(elem->sha1, null_sha1, 20);
+	int abbrev = opt->full_index ? 40 : DEFAULT_ABBREV;
 
 	/* Read the result of merge first */
 	if (!working_tree_file) {
@@ -724,7 +726,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 		if (header) {
 			shown_header++;
-			puts(header);
+			printf("%s%c", header, opt->line_termination);
 		}
 		printf("diff --%s ", dense ? "cc" : "combined");
 		if (quote_c_style(elem->path, NULL, NULL, 0))
@@ -735,10 +737,10 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
 			abb = find_unique_abbrev(elem->parent[i].sha1,
-						 DEFAULT_ABBREV);
+						 abbrev);
 			printf("%s%s", i ? "," : "", abb);
 		}
-		abb = find_unique_abbrev(elem->sha1, DEFAULT_ABBREV);
+		abb = find_unique_abbrev(elem->sha1, abbrev);
 		printf("..%s\n", abb);
 
 		if (mode_differs) {
@@ -797,7 +799,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, const cha
 		inter_name_termination = 0;
 
 	if (header)
-		puts(header);
+		printf("%s%c", header, line_termination);
 
 	for (i = 0; i < num_parent; i++) {
 		if (p->parent[i].mode)
@@ -862,7 +864,7 @@ int show_combined_diff(struct combine_diff_path *p,
 
 	default:
 	case DIFF_FORMAT_PATCH:
-		return show_patch_diff(p, num_parent, dense, header);
+		return show_patch_diff(p, num_parent, dense, header, opt);
 	}
 }
 
