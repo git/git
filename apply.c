@@ -37,8 +37,11 @@ static const char apply_usage[] =
 static enum whitespace_eol {
 	nowarn,
 	warn_on_whitespace,
-	error_on_whitespace
+	error_on_whitespace,
+	strip_and_apply,
 } new_whitespace = nowarn;
+static int whitespace_error = 0;
+static const char *patch_input_file = NULL;
 
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -823,19 +826,17 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 		case '+':
 			/*
 			 * We know len is at least two, since we have a '+' and
-			 * we checked that the last character was a '\n' above
+			 * we checked that the last character was a '\n' above.
+			 * That is, an addition of an empty line would check
+			 * the '+' here.  Sneaky...
 			 */
-			if (isspace(line[len-2])) {
-				switch (new_whitespace) {
-				case nowarn:
-					break;
-				case warn_on_whitespace:
-					new_whitespace = nowarn;	/* Just once */
-					error("Added whitespace at end of line at line %d", linenr);
-					break;
-				case error_on_whitespace:
-					die("Added whitespace at end of line at line %d", linenr);
-				}
+			if ((new_whitespace != nowarn) &&
+			    isspace(line[len-2])) {
+				fprintf(stderr, "Added whitespace\n");
+				fprintf(stderr, "%s:%d:%.*s\n",
+					patch_input_file,
+					linenr, len-2, line+1);
+				whitespace_error = 1;
 			}
 			added++;
 			newlines--;
@@ -1114,6 +1115,27 @@ struct buffer_desc {
 	unsigned long alloc;
 };
 
+static int apply_line(char *output, const char *patch, int plen)
+{
+	/* plen is number of bytes to be copied from patch,
+	 * starting at patch+1 (patch[0] is '+').  Typically
+	 * patch[plen] is '\n'.
+	 */
+	int add_nl_to_tail = 0;
+	if ((new_whitespace == strip_and_apply) &&
+	    1 < plen && isspace(patch[plen-1])) {
+		if (patch[plen] == '\n')
+			add_nl_to_tail = 1;
+		plen--;
+		while (0 < plen && isspace(patch[plen]))
+			plen--;
+	}
+	memcpy(output, patch + 1, plen);
+	if (add_nl_to_tail)
+		output[plen++] = '\n';
+	return plen;
+}
+
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 {
 	char *buf = desc->buffer;
@@ -1149,10 +1171,9 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (*patch != '+' || !no_add) {
-				memcpy(new + newsize, patch + 1, plen);
-				newsize += plen;
-			}
+			if (*patch != '+' || !no_add)
+				newsize += apply_line(new + newsize, patch,
+						      plen);
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
@@ -1713,7 +1734,7 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd)
+static int apply_patch(int fd, const char *filename)
 {
 	int newfd;
 	unsigned long offset, size;
@@ -1721,6 +1742,7 @@ static int apply_patch(int fd)
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
+	patch_input_file = filename;
 	if (!buffer)
 		return -1;
 	offset = 0;
@@ -1747,6 +1769,9 @@ static int apply_patch(int fd)
 	}
 
 	newfd = -1;
+	if (whitespace_error && (new_whitespace == error_on_whitespace))
+		apply = 0;
+
 	write_index = check_index && apply;
 	if (write_index)
 		newfd = hold_index_file_for_update(&cache_file, get_index_file());
@@ -1793,7 +1818,7 @@ int main(int argc, char **argv)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0);
+			apply_patch(0, "<stdin>");
 			read_stdin = 0;
 			continue;
 		}
@@ -1854,12 +1879,16 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (!strncmp(arg, "--whitespace=", 13)) {
-			if (strcmp(arg+13, "warn")) {
+			if (!strcmp(arg+13, "warn")) {
 				new_whitespace = warn_on_whitespace;
 				continue;
 			}
-			if (strcmp(arg+13, "error")) {
+			if (!strcmp(arg+13, "error")) {
 				new_whitespace = error_on_whitespace;
+				continue;
+			}
+			if (!strcmp(arg+13, "strip")) {
+				new_whitespace = strip_and_apply;
 				continue;
 			}
 			die("unrecognixed whitespace option '%s'", arg+13);
@@ -1877,10 +1906,12 @@ int main(int argc, char **argv)
 		if (fd < 0)
 			usage(apply_usage);
 		read_stdin = 0;
-		apply_patch(fd);
+		apply_patch(fd, arg);
 		close(fd);
 	}
 	if (read_stdin)
-		apply_patch(0);
+		apply_patch(0, "<stdin>");
+	if (whitespace_error && new_whitespace == error_on_whitespace)
+		return 1;
 	return 0;
 }
