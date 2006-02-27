@@ -13,6 +13,7 @@
 use strict;
 use warnings;
 use Getopt::Std;
+use File::Copy;
 use File::Spec;
 use File::Temp qw(tempfile);
 use File::Path qw(mkpath);
@@ -68,13 +69,19 @@ if ($opt_M) {
 	push (@mergerx, qr/$opt_M/);
 }
 
+# Absolutize filename now, since we will have chdir'ed by the time we
+# get around to opening it.
+$opt_A = File::Spec->rel2abs($opt_A) if $opt_A;
+
 our %users = ();
-if ($opt_A) {
-	die "Cannot open $opt_A\n" unless -f $opt_A;
-	open(my $authors,$opt_A);
+our $users_file = undef;
+sub read_users($) {
+	$users_file = File::Spec->rel2abs(@_);
+	die "Cannot open $users_file\n" unless -f $users_file;
+	open(my $authors,$users_file);
 	while(<$authors>) {
 		chomp;
-		next unless /^(\S+)\s+(.+?)\s+<(\S+)>$/;
+		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
 		(my $user,my $name,my $email) = ($1,$2,$3);
 		$users{$user} = [$name,$email];
 	}
@@ -302,6 +309,14 @@ EOM
 -d $git_dir
 	or die "Could not create git subdir ($git_dir).\n";
 
+my $default_authors = "$git_dir/svn-authors";
+if ($opt_A) {
+	read_users($opt_A);
+	copy($opt_A,$default_authors) or die "Copy failed: $!";
+} else {
+	read_users($default_authors) if -f $default_authors;
+}
+
 open BRANCHES,">>", "$git_dir/svn2git";
 
 sub node_kind($$$) {
@@ -498,8 +513,8 @@ sub commit {
 
 	if (not defined $author) {
 		$author_name = $author_email = "unknown";
-	} elsif ($opt_A) {
-		die "User $author is not listed in $opt_A\n"
+	} elsif (defined $users_file) {
+		die "User $author is not listed in $users_file\n"
 		    unless exists $users{$author};
 		($author_name,$author_email) = @{$users{$author}};
 	} elsif ($author =~ /^(.*?)\s+<(.*)>$/) {
