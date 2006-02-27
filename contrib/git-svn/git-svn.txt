@@ -43,6 +43,11 @@ fetch::
 	Fetch unfetched revisions from the SVN_URL we are tracking.
 	refs/heads/git-svn-HEAD will be updated to the latest revision.
 
+	Note: You should never attempt to modify the git-svn-HEAD branch
+	outside of git-svn.  Instead, create a branch from git-svn-HEAD
+	and work on that branch.  Use the 'commit' command (see below)
+	to write git commits back to git-svn-HEAD.
+
 commit::
 	Commit specified commit or tree objects to SVN.  This relies on
 	your imported fetch data being up-to-date.  This makes
@@ -179,7 +184,9 @@ SVN repositories via one git repository.  Simply set the GIT_SVN_ID
 environment variable to a name other other than "git-svn" (the default)
 and git-svn will ignore the contents of the $GIT_DIR/git-svn directory
 and instead do all of its work in $GIT_DIR/$GIT_SVN_ID for that
-invocation.
+invocation.  The interface branch will be $GIT_SVN_ID-HEAD, instead of
+git-svn-HEAD.  Any $GIT_SVN_ID-HEAD branch should never be modified
+by the user outside of git-svn commands.
 
 ADDITIONAL FETCH ARGUMENTS
 --------------------------
