@@ -726,7 +726,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 		if (header) {
 			shown_header++;
-			puts(header);
+			printf("%s%c", header, opt->line_termination);
 		}
 		printf("diff --%s ", dense ? "cc" : "combined");
 		if (quote_c_style(elem->path, NULL, NULL, 0))
@@ -799,7 +799,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, const cha
 		inter_name_termination = 0;
 
 	if (header)
-		puts(header);
+		printf("%s%c", header, line_termination);
 
 	for (i = 0; i < num_parent; i++) {
 		if (p->parent[i].mode)
