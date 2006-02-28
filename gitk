@@ -61,16 +61,8 @@ proc start_rev_list {rlargs} {
 }
 
 proc getcommits {rargs} {
-    global oldcommits commits phase canv mainfont env
+    global phase canv mainfont
 
-    # check that we can find a .git directory somewhere...
-    set gitdir [gitdir]
-    if {![file isdirectory $gitdir]} {
-	error_popup "Cannot find the git directory \"$gitdir\"."
-	exit 1
-    }
-    set oldcommits {}
-    set commits {}
     set phase getcommits
     start_rev_list [parse_args $rargs]
     $canv delete all
@@ -79,8 +71,8 @@ proc getcommits {rargs} {
 }
 
 proc getcommitlines {commfd}  {
-    global oldcommits commits parents cdate children nchildren
-    global commitlisted phase nextupdate
+    global parents cdate children nchildren
+    global commitlisted nextupdate
     global stopped leftover
     global canv
 
@@ -140,7 +132,6 @@ proc getcommitlines {commfd}  {
 	set id [lindex $ids 0]
 	set olds [lrange $ids 1 end]
 	set cmit [string range $cmit [expr {$j + 1}] end]
-	lappend commits $id
 	set commitlisted($id) 1
 	parsecommit $id $cmit 1 [lrange $ids 1 end]
 	drawcommit $id 1
@@ -177,93 +168,18 @@ proc readcommit {id} {
 }
 
 proc updatecommits {rargs} {
-    global commitlisted commfd phase
-    global startmsecs nextupdate ncmupdate
-    global idtags idheads idotherrefs
-    global leftover
-    global parsed_args
-    global canv mainfont
-    global oldcommits commits
-    global parents nchildren children
-
-    set old_args $parsed_args
-    parse_args $rargs
-
-    if {$phase == "getcommits" || $phase == "incrdraw"} {
-	# havent read all the old commits, just start again from scratch
-	stopfindproc
-	set oldcommits {}
-	set commits {}
-	foreach v {children nchildren parents commitlisted commitinfo
-		   selectedline matchinglines treediffs
-		   mergefilelist currentid rowtextx} {
-	    global $v
-	    catch {unset $v}
-	}
-	readrefs
-	if {$phase == "incrdraw"} {
-	    allcanvs delete all
-	    $canv create text 3 3 -anchor nw -text "Reading commits..." \
-		-font $mainfont -tags textitems
-	    set phase getcommits
-	}
-	start_rev_list $parsed_args
-	return
+    stopfindproc
+    foreach v {children nchildren parents nparents commitlisted
+	commitinfo colormap selectedline matchinglines treediffs
+	mergefilelist currentid rowtextx commitrow lineid
+	rowidlist rowoffsets idrowranges idrangedrawn iddrawn
+	linesegends crossings cornercrossings} {
+	global $v
+	catch {unset $v}
     }
-
-    foreach id $old_args {
-	if {![regexp {^[0-9a-f]{40}$} $id]} continue
-	if {[info exists oldref($id)]} continue
-	set oldref($id) $id
-	lappend ignoreold "^$id"
-    }
-    foreach id $parsed_args {
-	if {![regexp {^[0-9a-f]{40}$} $id]} continue
-	if {[info exists ref($id)]} continue
-	set ref($id) $id
-	lappend ignorenew "^$id"
-    }
-
-    foreach a $old_args {
-	if {![info exists ref($a)]} {
-	    lappend ignorenew $a
-	}
-    }
-
-    set phase updatecommits
-    set oldcommits $commits
-    set commits {}
-    set removed_commits [split [eval exec git-rev-list $ignorenew] "\n" ]
-    if {[llength $removed_commits] > 0} {
-	allcanvs delete all
-	foreach c $removed_commits {
-	    set i [lsearch -exact $oldcommits $c]
-	    if {$i >= 0} {
-		set oldcommits [lreplace $oldcommits $i $i]
-		unset commitlisted($c)
-		foreach p $parents($c) {
-		    if {[info exists nchildren($p)]} {
-			set j [lsearch -exact $children($p) $c]
-			if {$j >= 0} {
-			    set children($p) [lreplace $children($p) $j $j]
-			    incr nchildren($p) -1
-			}
-		    }
-		}
-	    }
-	}
-	set phase removecommits
-    }
-
-    set args {}
-    foreach a $parsed_args {
-	if {![info exists oldref($a)]} {
-	    lappend args $a
-	}
-    }
-
+    allcanvs delete all
     readrefs
-    start_rev_list [concat $ignoreold $args]
+    getcommits $rargs
 }
 
 proc updatechildren {id olds} {
@@ -1456,7 +1372,7 @@ proc clear_display {} {
 }
 
 proc assigncolor {id} {
-    global colormap commcolors colors nextcolor
+    global colormap colors nextcolor
     global parents nparents children nchildren
     global cornercrossings crossings
 
@@ -1533,10 +1449,6 @@ proc initgraph {} {
     allcanvs delete all
     set nextcolor 0
     set numcommits 0
-    foreach v {colormap cornercrossings	crossings lineid} {
-	global $v
-	catch {unset $v}
-    }
 }
 
 proc bindline {t id} {
@@ -1696,22 +1608,11 @@ proc drawcommit {id reading} {
 }
 
 proc finishcommits {} {
-    global phase oldcommits commits
+    global phase
     global canv mainfont ctext maincursor textcursor
-    global parents todo
 
-    if {$phase == "incrdraw" || $phase == "removecommits"} {
-	foreach id $oldcommits {
-	    lappend commits $id
-	    drawcommit $id 0
-	}
-	set oldcommits {}
+    if {$phase == "incrdraw"} {
 	drawrest
-    } elseif {$phase == "updatecommits"} {
-	# there were no new commits, in fact
-	set commits $oldcommits
-	set oldcommits {}
-	set phase {}
     } else {
 	$canv delete all
 	$canv create text 3 3 -anchor nw -text "No commits selected" \
@@ -3771,6 +3672,13 @@ foreach arg $argv {
 	    lappend revtreeargs $arg
 	}
     }
+}
+
+# check that we can find a .git directory somewhere...
+set gitdir [gitdir]
+if {![file isdirectory $gitdir]} {
+    error_popup "Cannot find the git directory \"$gitdir\"."
+    exit 1
 }
 
 set history {}
