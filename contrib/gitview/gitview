@@ -368,7 +368,7 @@ class DiffWindow:
 		save_menu.connect("activate", self.save_menu_response, "save")
 		save_menu.show()
 		menu_bar.append(save_menu)
-		vbox.pack_start(menu_bar, False, False, 2)
+		vbox.pack_start(menu_bar, expand=False, fill=True)
 		menu_bar.show()
 
 		scrollwin = gtk.ScrolledWindow()
@@ -482,19 +482,10 @@ class GitView:
 
 	def construct(self):
 		"""Construct the window contents."""
+		vbox = gtk.VBox()
 		paned = gtk.VPaned()
 		paned.pack1(self.construct_top(), resize=False, shrink=True)
 		paned.pack2(self.construct_bottom(), resize=False, shrink=True)
-		self.window.add(paned)
-		paned.show()
-
-
-	def construct_top(self):
-		"""Construct the top-half of the window."""
-		vbox = gtk.VBox(spacing=6)
-		vbox.set_border_width(12)
-		vbox.show()
-
 		menu_bar = gtk.MenuBar()
 		menu_bar.set_pack_direction(gtk.PACK_DIRECTION_RTL)
 		help_menu = gtk.MenuItem("Help")
@@ -506,8 +497,20 @@ class GitView:
 		help_menu.set_submenu(menu)
 		help_menu.show()
 		menu_bar.append(help_menu)
-		vbox.pack_start(menu_bar, False, False, 2)
 		menu_bar.show()
+		vbox.pack_start(menu_bar, expand=False, fill=True)
+		vbox.pack_start(paned, expand=True, fill=True)
+		self.window.add(vbox)
+		paned.show()
+		vbox.show()
+
+
+	def construct_top(self):
+		"""Construct the top-half of the window."""
+		vbox = gtk.VBox(spacing=6)
+		vbox.set_border_width(12)
+		vbox.show()
+
 
 		scrollwin = gtk.ScrolledWindow()
 		scrollwin.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
