@@ -20,62 +20,92 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
 #include "delta.h"
 
 
-/* block size: min = 16, max = 64k, power of 2 */
-#define BLK_SIZE 16
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
-#define GR_PRIME 0x9e370001
-#define HASH(v, shift) (((unsigned int)(v) * GR_PRIME) >> (shift))
-
 struct index {
 	const unsigned char *ptr;
-	unsigned int val;
 	struct index *next;
 };
 
 static struct index ** delta_index(const unsigned char *buf,
 				   unsigned long bufsize,
+				   unsigned long trg_bufsize,
 				   unsigned int *hash_shift)
 {
-	unsigned int hsize, hshift, entries, blksize, i;
+	unsigned long hsize;
+	unsigned int i, hshift, hlimit, *hash_count;
 	const unsigned char *data;
 	struct index *entry, **hash;
 	void *mem;
 
 	/* determine index hash size */
-	entries = (bufsize + BLK_SIZE - 1) / BLK_SIZE;
-	hsize = entries / 4;
-	for (i = 4; (1 << i) < hsize && i < 16; i++);
+	hsize = bufsize / 4;
+	for (i = 8; (1 << i) < hsize && i < 24; i += 2);
 	hsize = 1 << i;
-	hshift = 32 - i;
+	hshift = (i - 8) / 2;
 	*hash_shift = hshift;
 
 	/* allocate lookup index */
-	mem = malloc(hsize * sizeof(*hash) + entries * sizeof(*entry));
+	mem = malloc(hsize * sizeof(*hash) + bufsize * sizeof(*entry));
 	if (!mem)
 		return NULL;
 	hash = mem;
 	entry = mem + hsize * sizeof(*hash);
 	memset(hash, 0, hsize * sizeof(*hash));
 
-	/* then populate it */
-	data = buf + entries * BLK_SIZE - BLK_SIZE;
-	blksize = bufsize - (data - buf);
-	while (data >= buf) {
-		unsigned int val = adler32(0, data, blksize);
-		i = HASH(val, hshift);
-		entry->ptr = data;
-		entry->val = val;
+	/* allocate an array to count hash entries */
+	hash_count = calloc(hsize, sizeof(*hash_count));
+	if (!hash_count) {
+		free(hash);
+		return NULL;
+	}
+
+	/* then populate the index */
+	data = buf + bufsize - 2;
+	while (data > buf) {
+		entry->ptr = --data;
+		i = data[0] ^ ((data[1] ^ (data[2] << hshift)) << hshift);
 		entry->next = hash[i];
 		hash[i] = entry++;
-		blksize = BLK_SIZE;
-		data -= BLK_SIZE;
+		hash_count[i]++;
  	}
+
+	/*
+	 * Determine a limit on the number of entries in the same hash
+	 * bucket.  This guard us against patological data sets causing
+	 * really bad hash distribution with most entries in the same hash
+	 * bucket that would bring us to O(m*n) computing costs (m and n
+	 * corresponding to reference and target buffer sizes).
+	 *
+	 * The more the target buffer is large, the more it is important to
+	 * have small entry lists for each hash buckets.  With such a limit
+	 * the cost is bounded to something more like O(m+n).
+	 */
+	hlimit = (1 << 26) / trg_bufsize;
+	if (hlimit < 16)
+		hlimit = 16;
+
+	/*
+	 * Now make sure none of the hash buckets has more entries than
+	 * we're willing to test.  Otherwise we short-circuit the entry
+	 * list uniformly to still preserve a good repartition across
+	 * the reference buffer.
+	 */
+	for (i = 0; i < hsize; i++) {
+		if (hash_count[i] < hlimit)
+			continue;
+		entry = hash[i];
+		do {
+			struct index *keep = entry;
+			int skip = hash_count[i] / hlimit / 2;
+			do {
+				entry = entry->next;
+			} while(--skip && entry);
+			keep->next = entry;
+		} while(entry);
+	}
+	free(hash_count);
 
 	return hash;
 }
@@ -100,7 +130,7 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 
 	if (!from_size || !to_size)
 		return NULL;
-	hash = delta_index(from_buf, from_size, &hash_shift);
+	hash = delta_index(from_buf, from_size, to_size, &hash_shift);
 	if (!hash)
 		return NULL;
 
@@ -141,29 +171,25 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 
 	while (data < top) {
 		unsigned int moff = 0, msize = 0;
-		unsigned int blksize = MIN(top - data, BLK_SIZE);
-		unsigned int val = adler32(0, data, blksize);
-		i = HASH(val, hash_shift);
-		for (entry = hash[i]; entry; entry = entry->next) {
-			const unsigned char *ref = entry->ptr;
-			const unsigned char *src = data;
-			unsigned int ref_size = ref_top - ref;
-			if (entry->val != val)
-				continue;
-			if (ref_size > top - src)
-				ref_size = top - src;
-			while (ref_size && *src++ == *ref) {
-				ref++;
-				ref_size--;
-			}
-			ref_size = ref - entry->ptr;
-			if (ref_size > msize) {
-				/* this is our best match so far */
-				moff = entry->ptr - ref_data;
-				msize = ref_size;
-				if (msize >= 0x10000) {
-					msize = 0x10000;
+		if (data + 3 <= top) {
+			i = data[0] ^ ((data[1] ^ (data[2] << hash_shift)) << hash_shift);
+			for (entry = hash[i]; entry; entry = entry->next) {
+				const unsigned char *ref = entry->ptr;
+				const unsigned char *src = data;
+				unsigned int ref_size = ref_top - ref;
+				if (ref_size > top - src)
+					ref_size = top - src;
+				if (ref_size > 0x10000)
+					ref_size = 0x10000;
+				if (ref_size <= msize)
 					break;
+				if (*ref != *src)
+					continue;
+				while (ref_size-- && *++src == *++ref);
+				if (msize < ref - entry->ptr) {
+					/* this is our best match so far */
+					msize = ref - entry->ptr;
+					moff = entry->ptr - ref_data;
 				}
 			}
 		}
