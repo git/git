@@ -928,7 +928,7 @@ sub find_parents {
 
 	# now walk up to the mergepoint collecting what patches we have
 	my $branchtip = git_rev_parse($ps->{branch});
-	my @ancestors = `git-rev-list --merge-order $branchtip ^$mergebase`;
+	my @ancestors = `git-rev-list --topo-order $branchtip ^$mergebase`;
 	my %have; # collected merges this branch has
 	foreach my $merge (@{$ps->{merges}}) {
 	    $have{$merge} = 1;
@@ -951,7 +951,7 @@ sub find_parents {
 	# see what the remote branch has - these are the merges we 
 	# will want to have in a consecutive series from the mergebase
 	my $otherbranchtip = git_rev_parse($branch);
-	my @needraw = `git-rev-list --merge-order $otherbranchtip ^$mergebase`;
+	my @needraw = `git-rev-list --topo-order $otherbranchtip ^$mergebase`;
 	my @need;
 	foreach my $needps (@needraw) { 	# get the psets
 	    $needps = commitid2pset($needps);

@@ -4,14 +4,12 @@
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
-#include "epoch.h"
 #include "diff.h"
 #include "revision.h"
 
-/* bits #0-2 in revision.h */
+/* bits #0-3 in revision.h */
 
-#define COUNTED		(1u << 3)
-#define SHOWN		(1u << 4)
+#define COUNTED		(1u << 4)
 #define TMP_MARK	(1u << 5) /* for isolated cases; clean after use */
 
 static const char rev_list_usage[] =
@@ -25,7 +23,6 @@ static const char rev_list_usage[] =
 "    --remove-empty\n"
 "    --all\n"
 "  ordering output:\n"
-"    --merge-order [ --show-breaks ]\n"
 "    --topo-order\n"
 "    --date-order\n"
 "  formatting output:\n"
@@ -47,22 +44,9 @@ static int show_parents = 0;
 static int hdr_termination = 0;
 static const char *commit_prefix = "";
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
-static int merge_order = 0;
-static int show_breaks = 0;
-static int stop_traversal = 0;
-static int no_merges = 0;
 
 static void show_commit(struct commit *commit)
 {
-	commit->object.flags |= SHOWN;
-	if (show_breaks) {
-		commit_prefix = "| ";
-		if (commit->object.flags & DISCONTINUITY) {
-			commit_prefix = "^ ";     
-		} else if (commit->object.flags & BOUNDARY) {
-			commit_prefix = "= ";
-		} 
-        }        		
 	printf("%s%s", commit_prefix, sha1_to_hex(commit->object.sha1));
 	if (show_parents) {
 		struct commit_list *parents = commit->parents;
@@ -94,73 +78,6 @@ static void show_commit(struct commit *commit)
 		printf("%s%c", pretty_header, hdr_termination);
 	}
 	fflush(stdout);
-}
-
-static int rewrite_one(struct commit **pp)
-{
-	for (;;) {
-		struct commit *p = *pp;
-		if (p->object.flags & (TREECHANGE | UNINTERESTING))
-			return 0;
-		if (!p->parents)
-			return -1;
-		*pp = p->parents->item;
-	}
-}
-
-static void rewrite_parents(struct commit *commit)
-{
-	struct commit_list **pp = &commit->parents;
-	while (*pp) {
-		struct commit_list *parent = *pp;
-		if (rewrite_one(&parent->item) < 0) {
-			*pp = parent->next;
-			continue;
-		}
-		pp = &parent->next;
-	}
-}
-
-static int filter_commit(struct commit * commit)
-{
-	if (stop_traversal && (commit->object.flags & BOUNDARY))
-		return STOP;
-	if (commit->object.flags & (UNINTERESTING|SHOWN))
-		return CONTINUE;
-	if (revs.min_age != -1 && (commit->date > revs.min_age))
-		return CONTINUE;
-	if (revs.max_age != -1 && (commit->date < revs.max_age)) {
-		stop_traversal=1;
-		return CONTINUE;
-	}
-	if (no_merges && (commit->parents && commit->parents->next))
-		return CONTINUE;
-	if (revs.paths && revs.dense) {
-		if (!(commit->object.flags & TREECHANGE))
-			return CONTINUE;
-		rewrite_parents(commit);
-	}
-	return DO;
-}
-
-static int process_commit(struct commit * commit)
-{
-	int action=filter_commit(commit);
-
-	if (action == STOP) {
-		return STOP;
-	}
-
-	if (action == CONTINUE) {
-		return CONTINUE;
-	}
-
-	if (revs.max_count != -1 && !revs.max_count--)
-		return STOP;
-
-	show_commit(commit);
-
-	return CONTINUE;
 }
 
 static struct object_list **process_blob(struct blob *blob,
@@ -219,8 +136,7 @@ static void show_commit_list(struct rev_info *revs)
 
 	while ((commit = get_revision(revs)) != NULL) {
 		p = process_tree(commit->tree, p, NULL, "");
-		if (process_commit(commit) == STOP)
-			break;
+		show_commit(commit);
 	}
 	for (pending = revs->pending_objects; pending; pending = pending->next) {
 		struct object *obj = pending->item;
@@ -416,24 +332,12 @@ int main(int argc, const char **argv)
 				commit_prefix = "commit ";
 			continue;
 		}
-		if (!strncmp(arg, "--no-merges", 11)) {
-			no_merges = 1;
-			continue;
-		}
 		if (!strcmp(arg, "--parents")) {
 			show_parents = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--bisect")) {
 			bisect_list = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--merge-order")) {
-		        merge_order = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--show-breaks")) {
-			show_breaks = 1;
 			continue;
 		}
 		usage(rev_list_usage);
@@ -456,17 +360,7 @@ int main(int argc, const char **argv)
 	save_commit_buffer = verbose_header;
 	track_object_refs = 0;
 
-	if (!merge_order) {
-		show_commit_list(&revs);
-	} else {
-#ifndef NO_OPENSSL
-		if (sort_list_in_merge_order(list, &process_commit)) {
-			die("merge order sort failed\n");
-		}
-#else
-		die("merge order sort unsupported, OpenSSL not linked");
-#endif
-	}
+	show_commit_list(&revs);
 
 	return 0;
 }

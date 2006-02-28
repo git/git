@@ -4,6 +4,7 @@
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
 #define TREECHANGE	(1u<<2)
+#define SHOWN		(1u<<3)
 
 struct rev_info {
 	/* Starting list */
@@ -16,6 +17,7 @@ struct rev_info {
 
 	/* Traversal flags */
 	unsigned int	dense:1,
+			no_merges:1,
 			remove_empty_trees:1,
 			lifo:1,
 			topo_order:1,

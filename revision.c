@@ -381,6 +381,9 @@ static void limit_list(struct rev_info *revs)
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
 
+	if (revs->paths)
+		diff_tree_setup_paths(revs->paths);
+
 	while (list) {
 		struct commit_list *entry = list;
 		struct commit *commit = list->item;
@@ -436,12 +439,13 @@ static void handle_all(struct rev_info *revs, unsigned flags)
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
  *
- * Returns the number of arguments left ("new argc").
+ * Returns the number of arguments left that weren't recognized
+ * (which are also moved to the head of the argument list)
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
 	int i, flags, seen_dashdash;
-	const char **unrecognized = argv+1;
+	const char **unrecognized = argv + 1;
 	int left = 1;
 
 	memset(revs, 0, sizeof(*revs));
@@ -525,6 +529,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->remove_empty_trees = 1;
 				continue;
 			}
+			if (!strncmp(arg, "--no-merges", 11)) {
+				revs->no_merges = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--objects")) {
 				revs->tag_objects = 1;
 				revs->tree_objects = 1;
@@ -601,14 +609,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	}
 	if (revs->paths)
 		revs->limited = 1;
-	*unrecognized = NULL;
 	return left;
 }
 
 void prepare_revision_walk(struct rev_info *revs)
 {
-	if (revs->paths)
-		diff_tree_setup_paths(revs->paths);
 	sort_by_date(&revs->commits);
 	if (revs->limited)
 		limit_list(revs);
@@ -616,11 +621,67 @@ void prepare_revision_walk(struct rev_info *revs)
 		sort_in_topological_order(&revs->commits, revs->lifo);
 }
 
-struct commit *get_revision(struct rev_info *revs)
+static int rewrite_one(struct commit **pp)
 {
-	if (!revs->commits)
-		return NULL;
-	return pop_most_recent_commit(&revs->commits, SEEN);
+	for (;;) {
+		struct commit *p = *pp;
+		if (p->object.flags & (TREECHANGE | UNINTERESTING))
+			return 0;
+		if (!p->parents)
+			return -1;
+		*pp = p->parents->item;
+	}
 }
 
+static void rewrite_parents(struct commit *commit)
+{
+	struct commit_list **pp = &commit->parents;
+	while (*pp) {
+		struct commit_list *parent = *pp;
+		if (rewrite_one(&parent->item) < 0) {
+			*pp = parent->next;
+			continue;
+		}
+		pp = &parent->next;
+	}
+}
 
+struct commit *get_revision(struct rev_info *revs)
+{
+	struct commit_list *list = revs->commits;
+	struct commit *commit;
+
+	if (!list)
+		return NULL;
+
+	/* Check the max_count ... */
+	commit = list->item;
+	switch (revs->max_count) {
+	case -1:
+		break;
+	case 0:
+		return NULL;
+	default:
+		revs->max_count--;
+	}
+
+	do {
+		commit = pop_most_recent_commit(&revs->commits, SEEN);
+		if (commit->object.flags & (UNINTERESTING|SHOWN))
+			continue;
+		if (revs->min_age != -1 && (commit->date > revs->min_age))
+			continue;
+		if (revs->max_age != -1 && (commit->date < revs->max_age))
+			return NULL;
+		if (revs->no_merges && commit->parents && commit->parents->next)
+			continue;
+		if (revs->paths && revs->dense) {
+			if (!(commit->object.flags & TREECHANGE))
+				continue;
+			rewrite_parents(commit);
+		}
+		commit->object.flags |= SHOWN;
+		return commit;
+	} while (revs->commits);
+	return NULL;
+}
