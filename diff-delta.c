@@ -30,19 +30,20 @@ struct index {
 
 static struct index ** delta_index(const unsigned char *buf,
 				   unsigned long bufsize,
+				   unsigned long trg_bufsize,
 				   unsigned int *hash_shift)
 {
 	unsigned long hsize;
-	unsigned int hshift, i;
+	unsigned int i, hshift, hlimit, *hash_count;
 	const unsigned char *data;
 	struct index *entry, **hash;
 	void *mem;
 
 	/* determine index hash size */
 	hsize = bufsize / 4;
-	for (i = 8; (1 << i) < hsize && i < 16; i++);
+	for (i = 8; (1 << i) < hsize && i < 24; i += 2);
 	hsize = 1 << i;
-	hshift = i - 8;
+	hshift = (i - 8) / 2;
 	*hash_shift = hshift;
 
 	/* allocate lookup index */
@@ -53,14 +54,58 @@ static struct index ** delta_index(const unsigned char *buf,
 	entry = mem + hsize * sizeof(*hash);
 	memset(hash, 0, hsize * sizeof(*hash));
 
-	/* then populate it */
+	/* allocate an array to count hash entries */
+	hash_count = calloc(hsize, sizeof(*hash_count));
+	if (!hash_count) {
+		free(hash);
+		return NULL;
+	}
+
+	/* then populate the index */
 	data = buf + bufsize - 2;
 	while (data > buf) {
 		entry->ptr = --data;
-		i = data[0] ^ data[1] ^ (data[2] << hshift);
+		i = data[0] ^ ((data[1] ^ (data[2] << hshift)) << hshift);
 		entry->next = hash[i];
 		hash[i] = entry++;
+		hash_count[i]++;
  	}
+
+	/*
+	 * Determine a limit on the number of entries in the same hash
+	 * bucket.  This guard us against patological data sets causing
+	 * really bad hash distribution with most entries in the same hash
+	 * bucket that would bring us to O(m*n) computing costs (m and n
+	 * corresponding to reference and target buffer sizes).
+	 *
+	 * The more the target buffer is large, the more it is important to
+	 * have small entry lists for each hash buckets.  With such a limit
+	 * the cost is bounded to something more like O(m+n).
+	 */
+	hlimit = (1 << 26) / trg_bufsize;
+	if (hlimit < 16)
+		hlimit = 16;
+
+	/*
+	 * Now make sure none of the hash buckets has more entries than
+	 * we're willing to test.  Otherwise we short-circuit the entry
+	 * list uniformly to still preserve a good repartition across
+	 * the reference buffer.
+	 */
+	for (i = 0; i < hsize; i++) {
+		if (hash_count[i] < hlimit)
+			continue;
+		entry = hash[i];
+		do {
+			struct index *keep = entry;
+			int skip = hash_count[i] / hlimit / 2;
+			do {
+				entry = entry->next;
+			} while(--skip && entry);
+			keep->next = entry;
+		} while(entry);
+	}
+	free(hash_count);
 
 	return hash;
 }
@@ -85,7 +130,7 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 
 	if (!from_size || !to_size)
 		return NULL;
-	hash = delta_index(from_buf, from_size, &hash_shift);
+	hash = delta_index(from_buf, from_size, to_size, &hash_shift);
 	if (!hash)
 		return NULL;
 
@@ -126,8 +171,8 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 
 	while (data < top) {
 		unsigned int moff = 0, msize = 0;
-		if (data + 2 < top) {
-			i = data[0] ^ data[1] ^ (data[2] << hash_shift);
+		if (data + 3 <= top) {
+			i = data[0] ^ ((data[1] ^ (data[2] << hash_shift)) << hash_shift);
 			for (entry = hash[i]; entry; entry = entry->next) {
 				const unsigned char *ref = entry->ptr;
 				const unsigned char *src = data;
@@ -138,11 +183,9 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 					ref_size = 0x10000;
 				if (ref_size <= msize)
 					break;
-				while (ref_size && *src++ == *ref) {
-					ref++;
-					ref_size--;
-				}
-				ref_size = ref - entry->ptr;
+				if (*ref != *src)
+					continue;
+				while (ref_size-- && *++src == *++ref);
 				if (msize < ref - entry->ptr) {
 					/* this is our best match so far */
 					msize = ref - entry->ptr;
