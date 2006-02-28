@@ -88,22 +88,35 @@ static struct index ** delta_index(const unsigned char *buf,
 
 	/*
 	 * Now make sure none of the hash buckets has more entries than
-	 * we're willing to test.  Otherwise we short-circuit the entry
-	 * list uniformly to still preserve a good repartition across
-	 * the reference buffer.
+	 * we're willing to test.  Otherwise we cull the entry list to
+	 * limit identical three byte prefixes to still preserve a good
+	 * repartition across the reference buffer.
 	 */
 	for (i = 0; i < hsize; i++) {
+		struct index **list, *bucket, *remaining;
+		int cnt;
 		if (hash_count[i] < hlimit)
 			continue;
-		entry = hash[i];
-		do {
-			struct index *keep = entry;
-			int skip = hash_count[i] / hlimit / 2;
-			do {
-				entry = entry->next;
-			} while(--skip && entry);
-			keep->next = entry;
-		} while(entry);
+
+		bucket = NULL;
+		list = &bucket;
+		remaining = hash[i];
+		cnt = 0;
+		while (cnt < hlimit && remaining) {
+			struct index *this = remaining, *that;
+			remaining = remaining->next;
+			for (that = bucket; that; that = that->next) {
+				if (!memcmp(that->ptr, this->ptr, 3))
+					break;
+			}
+			if (that)
+				continue; /* discard */
+			cnt++;
+			*list = this;
+			list = &(this->next);
+			this->next = NULL;
+		}
+		hash[i] = bucket;
 	}
 	free(hash_count);
 
