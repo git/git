@@ -239,20 +239,23 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 				box_size / 4, 0, 2 * math.pi)
 
 
+		self.set_colour(ctx, colour, 0.0, 0.5)
+		ctx.stroke_preserve()
+
+		self.set_colour(ctx, colour, 0.5, 1.0)
+		ctx.fill_preserve()
+
 		if (len(names) != 0):
 			name = " "
 			for item in names:
 				name = name + item + " "
 
-			ctx.select_font_face("Monospace")
 			ctx.set_font_size(13)
-			ctx.text_path(name)
-
-		self.set_colour(ctx, colour, 0.0, 0.5)
-		ctx.stroke_preserve()
-
-		self.set_colour(ctx, colour, 0.5, 1.0)
-		ctx.fill()
+			if (flags & 1):
+				self.set_colour(ctx, colour, 0.5, 1.0)
+			else:
+				self.set_colour(ctx, colour, 0.0, 0.5)
+			ctx.show_text(name)
 
 class Commit:
 	""" This represent a commit object obtained after parsing the git-rev-list
