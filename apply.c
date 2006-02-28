@@ -39,7 +39,7 @@ static enum whitespace_eol {
 	warn_on_whitespace,
 	error_on_whitespace,
 	strip_whitespace,
-} new_whitespace = nowarn_whitespace;
+} new_whitespace = warn_on_whitespace;
 static int whitespace_error = 0;
 static int squelch_whitespace_errors = 5;
 static int applied_after_stripping = 0;
@@ -48,11 +48,15 @@ static const char *patch_input_file = NULL;
 static void parse_whitespace_option(const char *option)
 {
 	if (!option) {
-		new_whitespace = nowarn_whitespace;
+		new_whitespace = warn_on_whitespace;
 		return;
 	}
 	if (!strcmp(option, "warn")) {
 		new_whitespace = warn_on_whitespace;
+		return;
+	}
+	if (!strcmp(option, "nowarn")) {
+		new_whitespace = nowarn_whitespace;
 		return;
 	}
 	if (!strcmp(option, "error")) {
