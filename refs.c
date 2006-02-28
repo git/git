@@ -151,10 +151,15 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 					break;
 				continue;
 			}
-			if (read_ref(git_path("%s", path), sha1) < 0)
+			if (read_ref(git_path("%s", path), sha1) < 0) {
+				fprintf(stderr, "%s points nowhere!", path);
 				continue;
-			if (!has_sha1_file(sha1))
+			}
+			if (!has_sha1_file(sha1)) {
+				fprintf(stderr, "%s does not point to a valid "
+						"commit object!", path);
 				continue;
+			}
 			retval = fn(path, sha1);
 			if (retval)
 				break;
