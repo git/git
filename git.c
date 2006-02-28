@@ -12,6 +12,10 @@
 #include "git-compat-util.h"
 #include "exec_cmd.h"
 
+#include "cache.h"
+#include "commit.h"
+#include "revision.h"
+
 #ifndef PATH_MAX
 # define PATH_MAX 4096
 #endif
@@ -245,6 +249,25 @@ static int cmd_help(int argc, char **argv, char **envp)
 	return 0;
 }
 
+#define LOGSIZE (65536)
+
+static int cmd_log(int argc, char **argv, char **envp)
+{
+	struct rev_info rev;
+	struct commit *commit;
+	char *buf = xmalloc(LOGSIZE);
+
+	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	prepare_revision_walk(&rev);
+	setup_pager();
+	while ((commit = get_revision(&rev)) != NULL) {
+		pretty_print_commit(CMIT_FMT_DEFAULT, commit, ~0, buf, LOGSIZE, 18);
+		printf("%s\n", buf);
+	}
+	free(buf);
+	return 0;
+}
+
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 static void handle_internal_command(int argc, char **argv, char **envp)
@@ -256,6 +279,7 @@ static void handle_internal_command(int argc, char **argv, char **envp)
 	} commands[] = {
 		{ "version", cmd_version },
 		{ "help", cmd_help },
+		{ "log", cmd_log },
 	};
 	int i;
 

@@ -450,7 +450,7 @@ strip: $(PROGRAMS) git$X
 
 git$X: git.c $(LIB_FILE)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE) $(LIBS)
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
