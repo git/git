@@ -75,6 +75,15 @@ static void parse_whitespace_option(const char *option)
 	die("unrecognized whitespace option '%s'", option);
 }
 
+static void set_default_whitespace_mode(const char *whitespace_option)
+{
+	if (!whitespace_option && !apply_default_whitespace) {
+		new_whitespace = (apply
+				  ? warn_on_whitespace
+				  : nowarn_whitespace);
+	}
+}
+
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
  * we've seen, and the longest filename. That allows us to do simple
@@ -1955,9 +1964,11 @@ int main(int argc, char **argv)
 		if (fd < 0)
 			usage(apply_usage);
 		read_stdin = 0;
+		set_default_whitespace_mode(whitespace_option);
 		apply_patch(fd, arg);
 		close(fd);
 	}
+	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
 		apply_patch(0, "<stdin>");
 	if (whitespace_error) {
