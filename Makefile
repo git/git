@@ -223,11 +223,15 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	## fink
-	ALL_CFLAGS += -I/sw/include
-	ALL_LDFLAGS += -L/sw/lib
+	ifeq ($(shell test -d /sw/lib && echo y),y)
+		ALL_CFLAGS += -I/sw/include
+		ALL_LDFLAGS += -L/sw/lib
+	endif
 	## darwinports
-	ALL_CFLAGS += -I/opt/local/include
-	ALL_LDFLAGS += -L/opt/local/lib
+	ifeq ($(shell test -d /opt/local/lib && echo y),y)
+		ALL_CFLAGS += -I/opt/local/include
+		ALL_LDFLAGS += -L/opt/local/lib
+	endif
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
