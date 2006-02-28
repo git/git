@@ -39,7 +39,7 @@ static enum whitespace_eol {
 	warn_on_whitespace,
 	error_on_whitespace,
 	strip_whitespace,
-} new_whitespace = nowarn_whitespace;
+} new_whitespace = warn_on_whitespace;
 static int whitespace_error = 0;
 static int squelch_whitespace_errors = 5;
 static int applied_after_stripping = 0;
@@ -48,11 +48,15 @@ static const char *patch_input_file = NULL;
 static void parse_whitespace_option(const char *option)
 {
 	if (!option) {
-		new_whitespace = nowarn_whitespace;
+		new_whitespace = warn_on_whitespace;
 		return;
 	}
 	if (!strcmp(option, "warn")) {
 		new_whitespace = warn_on_whitespace;
+		return;
+	}
+	if (!strcmp(option, "nowarn")) {
+		new_whitespace = nowarn_whitespace;
 		return;
 	}
 	if (!strcmp(option, "error")) {
@@ -69,6 +73,15 @@ static void parse_whitespace_option(const char *option)
 		return;
 	}
 	die("unrecognized whitespace option '%s'", option);
+}
+
+static void set_default_whitespace_mode(const char *whitespace_option)
+{
+	if (!whitespace_option && !apply_default_whitespace) {
+		new_whitespace = (apply
+				  ? warn_on_whitespace
+				  : nowarn_whitespace);
+	}
 }
 
 /*
@@ -1951,9 +1964,11 @@ int main(int argc, char **argv)
 		if (fd < 0)
 			usage(apply_usage);
 		read_stdin = 0;
+		set_default_whitespace_mode(whitespace_option);
 		apply_patch(fd, arg);
 		close(fd);
 	}
+	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
 		apply_patch(0, "<stdin>");
 	if (whitespace_error) {
