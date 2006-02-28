@@ -352,4 +352,7 @@ extern int copy_fd(int ifd, int ofd);
 extern int receive_unpack_pack(int fd[2], const char *me, int quiet);
 extern int receive_keep_pack(int fd[2], const char *me, int quiet);
 
+/* pager.c */
+extern void setup_pager(void);
+
 #endif /* CACHE_H */
