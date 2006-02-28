@@ -3,6 +3,7 @@
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
+#define TREECHANGE	(1u<<2)
 
 struct rev_info {
 	/* Starting list */
@@ -32,7 +33,10 @@ struct rev_info {
 };
 
 /* revision.c */
-extern int setup_revisions(int argc, const char **argv, struct rev_info *revs);
+extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern void prepare_revision_walk(struct rev_info *revs);
+extern struct commit *get_revision(struct rev_info *revs);
+
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);
 
