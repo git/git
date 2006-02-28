@@ -168,7 +168,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	delta_limit = base_size * (MAX_SCORE-minimum_score) / MAX_SCORE;
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
-			   &delta_size, delta_limit);
+			   &delta_size, delta_limit, NULL);
 	if (!delta)
 		/* If delta_limit is exceeded, we have too much differences */
 		return 0;

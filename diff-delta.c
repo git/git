@@ -30,8 +30,7 @@ struct index {
 
 static struct index ** delta_index(const unsigned char *buf,
 				   unsigned long bufsize,
-				   unsigned long trg_bufsize,
-				   unsigned int *hash_shift)
+				   unsigned long trg_bufsize)
 {
 	unsigned long hsize;
 	unsigned int i, hshift, hlimit, *hash_count;
@@ -44,14 +43,17 @@ static struct index ** delta_index(const unsigned char *buf,
 	for (i = 8; (1 << i) < hsize && i < 24; i += 2);
 	hsize = 1 << i;
 	hshift = (i - 8) / 2;
-	*hash_shift = hshift;
 
-	/* allocate lookup index */
-	mem = malloc(hsize * sizeof(*hash) + bufsize * sizeof(*entry));
+	/*
+	 * Allocate lookup index.  Note the first hash pointer
+	 * is used to store the hash shift value.
+	 */
+	mem = malloc((1 + hsize) * sizeof(*hash) + bufsize * sizeof(*entry));
 	if (!mem)
 		return NULL;
 	hash = mem;
-	entry = mem + hsize * sizeof(*hash);
+	*hash++ = (void *)hshift;
+	entry = mem + (1 + hsize) * sizeof(*hash);
 	memset(hash, 0, hsize * sizeof(*hash));
 
 	/* allocate an array to count hash entries */
@@ -107,7 +109,7 @@ static struct index ** delta_index(const unsigned char *buf,
 	}
 	free(hash_count);
 
-	return hash;
+	return hash-1;
 }
 
 /* provide the size of the copy opcode given the block offset and size */
@@ -121,7 +123,8 @@ static struct index ** delta_index(const unsigned char *buf,
 void *diff_delta(void *from_buf, unsigned long from_size,
 		 void *to_buf, unsigned long to_size,
 		 unsigned long *delta_size,
-		 unsigned long max_size)
+		 unsigned long max_size,
+		 void **from_index)
 {
 	unsigned int i, outpos, outsize, inscnt, hash_shift;
 	const unsigned char *ref_data, *ref_top, *data, *top;
@@ -130,9 +133,16 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 
 	if (!from_size || !to_size)
 		return NULL;
-	hash = delta_index(from_buf, from_size, to_size, &hash_shift);
-	if (!hash)
-		return NULL;
+	if (from_index && *from_index) {
+		hash = *from_index;
+	} else {
+		hash = delta_index(from_buf, from_size, to_size);
+		if (!hash)
+			return NULL;
+		if (from_index)
+			*from_index = hash;
+	}
+	hash_shift = (unsigned int)(*hash++);
 
 	outpos = 0;
 	outsize = 8192;
@@ -140,7 +150,8 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 		outsize = max_size + MAX_OP_SIZE + 1;
 	out = malloc(outsize);
 	if (!out) {
-		free(hash);
+		if (!from_index)
+			free(hash-1);
 		return NULL;
 	}
 
@@ -241,7 +252,8 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 				out = realloc(out, outsize);
 			if (!out) {
 				free(tmp);
-				free(hash);
+				if (!from_index)
+					free(hash-1);
 				return NULL;
 			}
 		}
@@ -250,7 +262,8 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 	if (inscnt)
 		out[outpos - inscnt - 1] = inscnt;
 
-	free(hash);
+	if (!from_index)
+		free(hash-1);
 	*delta_size = outpos;
 	return out;
 }

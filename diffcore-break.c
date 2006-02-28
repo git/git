@@ -71,7 +71,7 @@ static int should_break(struct diff_filespec *src,
 
 	delta = diff_delta(src->data, src->size,
 			   dst->data, dst->size,
-			   &delta_size, 0);
+			   &delta_size, 0, NULL);
 	if (!delta)
 		return 0; /* error but caught downstream */
 

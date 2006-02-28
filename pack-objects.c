@@ -204,7 +204,7 @@ static void *delta_against(void *buf, unsigned long size, struct object_entry *e
 	if (!otherbuf)
 		die("unable to read %s", sha1_to_hex(entry->delta->sha1));
         delta_buf = diff_delta(otherbuf, othersize,
-			       buf, size, &delta_size, 0);
+			       buf, size, &delta_size, 0, NULL);
         if (!delta_buf || delta_size != entry->delta_size)
         	die("delta size changed");
         free(buf);
@@ -810,6 +810,7 @@ static int type_size_sort(const struct object_entry *a, const struct object_entr
 struct unpacked {
 	struct object_entry *entry;
 	void *data;
+	void **delta_index;
 };
 
 /*
@@ -891,7 +892,8 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	if (sizediff >= max_size)
 		return -1;
 	delta_buf = diff_delta(old->data, oldsize,
-			       cur->data, size, &delta_size, max_size);
+			       cur->data, size, &delta_size,
+			       max_size, old->delta_index);
 	if (!delta_buf)
 		return 0;
 	cur_entry->delta = old_entry;
@@ -948,6 +950,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			 */
 			continue;
 
+		free(n->delta_index);
 		free(n->data);
 		n->entry = entry;
 		n->data = read_sha1_file(entry->sha1, type, &size);
@@ -974,8 +977,10 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	if (progress)
 		fputc('\n', stderr);
 
-	for (i = 0; i < window; ++i)
+	for (i = 0; i < window; ++i) {
+		free(array[i].delta_index);
 		free(array[i].data);
+	}
 	free(array);
 }
 
