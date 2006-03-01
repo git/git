@@ -40,9 +40,7 @@ Issues of note:
 
 	  If you don't have openssl, you can use one of the SHA1 libraries
 	  that come with git (git includes the one from Mozilla, and has
-	  its own PowerPC-optimized one too - see the Makefile), and you
-	  can avoid the bignum support by excising git-rev-list support
-	  for "--merge-order" (by hand).
+	  its own PowerPC and ARM optimized ones too - see the Makefile).
 
 	- "libcurl" and "curl" executable.  git-http-fetch and
 	  git-fetch use them.  If you do not use http

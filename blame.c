@@ -6,7 +6,6 @@
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
-#include "epoch.h"
 #include "diff.h"
 
 #define DEBUG 0

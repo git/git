@@ -16,7 +16,7 @@ SYNOPSIS
 	     [ \--no-merges ]
 	     [ \--remove-empty ]
 	     [ \--all ]
-	     [ [ \--merge-order [ \--show-breaks ] ] | [ \--topo-order ] ]
+	     [ \--topo-order ]
 	     [ \--parents ]
 	     [ \--objects [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
@@ -94,56 +94,9 @@ OPTIONS
 	topological order (i.e. descendant commits are shown
 	before their parents).
 
---merge-order::
-	When specified the commit history is decomposed into a unique
-	sequence of minimal, non-linear epochs and maximal, linear epochs.
-	Non-linear epochs are then linearised by sorting them into merge
-	order, which is described below.
-+
-Maximal, linear epochs correspond to periods of sequential development.
-Minimal, non-linear epochs correspond to periods of divergent development
-followed by a converging merge. The theory of epochs is described in more
-detail at
-link:http://blackcubes.dyndns.org/epoch/[http://blackcubes.dyndns.org/epoch/].
-+
-The merge order for a non-linear epoch is defined as a linearisation for which
-the following invariants are true:
-+
-    1. if a commit P is reachable from commit N, commit P sorts after commit N
-       in the linearised list.
-    2. if Pi and Pj are any two parents of a merge M (with i < j), then any
-       commit N, such that N is reachable from Pj but not reachable from Pi,
-       sorts before all commits reachable from Pi.
-+
-Invariant 1 states that later commits appear before earlier commits they are
-derived from.
-+
-Invariant 2 states that commits unique to "later" parents in a merge, appear
-before all commits from "earlier" parents of a merge.
-
---show-breaks::
-	Each item of the list is output with a 2-character prefix consisting
-	of one of: (|), (^), (=) followed by a space.
-+
-Commits marked with (=) represent the boundaries of minimal, non-linear epochs
-and correspond either to the start of a period of divergent development or to
-the end of such a period.
-+
-Commits marked with (|) are direct parents of commits immediately preceding
-the marked commit in the list.
-+
-Commits marked with (^) are not parents of the immediately preceding commit.
-These "breaks" represent necessary discontinuities implied by trying to
-represent an arbitrary DAG in a linear form.
-+
-`--show-breaks` is only valid if `--merge-order` is also specified.
-
-
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
-
-Original *--merge-order* logic by Jon Seymour <jon.seymour@gmail.com>
 
 Documentation
 --------------

@@ -6,8 +6,8 @@ all:
 # on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
 # choice) has very fast version optimized for i586.
 #
-# Define NO_OPENSSL environment variable if you do not have OpenSSL. You will
-# miss out git-rev-list --merge-order. This also implies MOZILLA_SHA1.
+# Define NO_OPENSSL environment variable if you do not have OpenSSL.
+# This also implies MOZILLA_SHA1.
 #
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
@@ -191,7 +191,7 @@ LIB_FILE=libgit.a
 
 LIB_H = \
 	blob.h cache.h commit.h count-delta.h csum-file.h delta.h \
-	diff.h epoch.h object.h pack.h pkt-line.h quote.h refs.h \
+	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h
 
 DIFF_OBJS = \
@@ -206,7 +206,7 @@ LIB_OBJS = \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
-	fetch-clone.o revision.o \
+	fetch-clone.o revision.o pager.o \
 	$(DIFF_OBJS)
 
 LIBS = $(LIB_FILE)
@@ -329,7 +329,6 @@ ifndef NO_CURL
 endif
 
 ifndef NO_OPENSSL
-	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		# Again this may be problematic -- gcc does not always want -R.
@@ -455,7 +454,7 @@ strip: $(PROGRAMS) git$X
 
 git$X: git.c $(LIB_FILE)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE) $(LIBS)
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
