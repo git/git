@@ -630,6 +630,26 @@ sub req_update
 
     argsplit("update");
 
+    #
+    # It may just be a client exploring the available heads/modukles
+    # in that case, list them as top level directories and leave it
+    # at that. Eclipse uses this technique to offer you a list of
+    # projects (heads in this case) to checkout.
+    #
+    if ($state->{module} eq '') {
+        print "E cvs update: Updating .\n";
+	opendir HEADS, $state->{CVSROOT} . '/refs/heads';
+	while (my $head = readdir(HEADS)) {
+	    if (-f $state->{CVSROOT} . '/refs/heads/' . $head) {
+	        print "E cvs update: New directory `$head'\n";
+	    }
+	}
+	closedir HEADS;
+	print "ok\n";
+	return 1;
+    }
+
+
     # Grab a handle to the SQLite db and do any necessary updates
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
 
