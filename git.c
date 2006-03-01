@@ -256,12 +256,80 @@ static int cmd_log(int argc, char **argv, char **envp)
 	struct rev_info rev;
 	struct commit *commit;
 	char *buf = xmalloc(LOGSIZE);
+	static enum cmit_fmt commit_format = CMIT_FMT_DEFAULT;
+	int abbrev = DEFAULT_ABBREV;
+	int show_parents = 0;
+	const char *commit_prefix = "commit ";
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	while (1 < argc) {
+		char *arg = argv[1];
+		/* accept -<digit>, like traditilnal "head" */
+		if ((*arg == '-') && isdigit(arg[1])) {
+			rev.max_count = atoi(arg + 1);
+		}
+		else if (!strcmp(arg, "-n")) {
+			if (argc < 2)
+				die("-n requires an argument");
+			rev.max_count = atoi(argv[2]);
+			argc--; argv++;
+		}
+		else if (!strncmp(arg,"-n",2)) {
+			rev.max_count = atoi(arg + 2);
+		}
+		else if (!strncmp(arg, "--pretty", 8)) {
+			commit_format = get_commit_format(arg + 8);
+			if (commit_format == CMIT_FMT_ONELINE)
+				commit_prefix = "";
+		}
+		else if (!strcmp(arg, "--parents")) {
+			show_parents = 1;
+		}
+		else if (!strcmp(arg, "--no-abbrev")) {
+			abbrev = 0;
+		}
+		else if (!strncmp(arg, "--abbrev=", 9)) {
+			abbrev = strtoul(arg + 9, NULL, 10);
+			if (abbrev && abbrev < MINIMUM_ABBREV)
+				abbrev = MINIMUM_ABBREV;
+			else if (40 < abbrev)
+				abbrev = 40;
+		}
+		else
+			die("unrecognized argument: %s", arg);
+		argc--; argv++;
+	}
+
 	prepare_revision_walk(&rev);
 	setup_pager();
 	while ((commit = get_revision(&rev)) != NULL) {
-		pretty_print_commit(CMIT_FMT_DEFAULT, commit, ~0, buf, LOGSIZE, 18);
+		printf("%s%s", commit_prefix,
+		       sha1_to_hex(commit->object.sha1));
+		if (show_parents) {
+			struct commit_list *parents = commit->parents;
+			while (parents) {
+				struct object *o = &(parents->item->object);
+				parents = parents->next;
+				if (o->flags & TMP_MARK)
+					continue;
+				printf(" %s", sha1_to_hex(o->sha1));
+				o->flags |= TMP_MARK;
+			}
+			/* TMP_MARK is a general purpose flag that can
+			 * be used locally, but the user should clean
+			 * things up after it is done with them.
+			 */
+			for (parents = commit->parents;
+			     parents;
+			     parents = parents->next)
+				parents->item->object.flags &= ~TMP_MARK;
+		}
+		if (commit_format == CMIT_FMT_ONELINE)
+			putchar(' ');
+		else
+			putchar('\n');
+		pretty_print_commit(commit_format, commit, ~0, buf,
+				    LOGSIZE, abbrev);
 		printf("%s\n", buf);
 	}
 	free(buf);
