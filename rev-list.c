@@ -7,10 +7,9 @@
 #include "diff.h"
 #include "revision.h"
 
-/* bits #0-3 in revision.h */
+/* bits #0-4 in revision.h */
 
-#define COUNTED		(1u << 4)
-#define TMP_MARK	(1u << 5) /* for isolated cases; clean after use */
+#define COUNTED		(1u<<5)
 
 static const char rev_list_usage[] =
 "git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
