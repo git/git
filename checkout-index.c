@@ -22,6 +22,10 @@
  *
  *	find . -name '*.h' -print0 | xargs -0 git-checkout-index -f --
  *
+ * or:
+ *
+ *	find . -name '*.h' -print0 | git-checkout-index -f -z --stdin
+ *
  * which will force all existing *.h files to be replaced with
  * their cached copies. If an empty command line implied "all",
  * then this would force-refresh everything in the cache, which
@@ -33,6 +37,8 @@
  * but get used to it in scripting!).
  */
 #include "cache.h"
+#include "strbuf.h"
+#include "quote.h"
 
 static const char *prefix;
 static int prefix_length;
@@ -114,6 +120,8 @@ int main(int argc, char **argv)
 	int i;
 	int newfd = -1;
 	int all = 0;
+	int read_from_stdin = 0;
+	int line_termination = '\n';
 
 	prefix = setup_git_directory();
 	git_config(git_default_config);
@@ -156,6 +164,17 @@ int main(int argc, char **argv)
 				die("cannot open index.lock file.");
 			continue;
 		}
+		if (!strcmp(arg, "-z")) {
+			line_termination = 0;
+			continue;
+		}
+		if (!strcmp(arg, "--stdin")) {
+			if (i != argc - 1)
+				die("--stdin must be at the end");
+			read_from_stdin = 1;
+			i++; /* do not consider arg as a file name */
+			break;
+		}
 		if (!strncmp(arg, "--prefix=", 9)) {
 			state.base_dir = arg+9;
 			state.base_dir_len = strlen(state.base_dir);
@@ -191,7 +210,29 @@ int main(int argc, char **argv)
 
 		if (all)
 			die("git-checkout-index: don't mix '--all' and explicit filenames");
+		if (read_from_stdin)
+			die("git-checkout-index: don't mix '--stdin' and explicit filenames");
 		checkout_file(prefix_path(prefix, prefix_length, arg));
+	}
+
+	if (read_from_stdin) {
+		struct strbuf buf;
+		if (all)
+			die("git-checkout-index: don't mix '--all' and '--stdin'");
+		strbuf_init(&buf);
+		while (1) {
+			char *path_name;
+			read_line(&buf, stdin, line_termination);
+			if (buf.eof)
+				break;
+			if (line_termination && buf.buf[0] == '"')
+				path_name = unquote_c_style(buf.buf, NULL);
+			else
+				path_name = buf.buf;
+			checkout_file(prefix_path(prefix, prefix_length, path_name));
+			if (path_name != buf.buf)
+				free(path_name);
+		}
 	}
 
 	if (all)
