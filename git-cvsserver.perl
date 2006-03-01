@@ -53,6 +53,7 @@ my $methods = {
     'Entry'           => \&req_Entry,
     'Modified'        => \&req_Modified,
     'Unchanged'       => \&req_Unchanged,
+    'Questionable'    => \&req_Questionable,
     'Argument'        => \&req_Argument,
     'Argumentx'       => \&req_Argument,
     'expand-modules'  => \&req_expandmodules,
@@ -63,6 +64,7 @@ my $methods = {
     'ci'              => \&req_ci,
     'diff'            => \&req_diff,
     'log'             => \&req_log,
+    'rlog'            => \&req_log,
     'tag'             => \&req_CATCHALL,
     'status'          => \&req_status,
     'admin'           => \&req_CATCHALL,
@@ -459,6 +461,22 @@ sub req_Unchanged
     #$log->debug("req_Unchanged : $data");
 }
 
+# Questionable filename \n
+#     Response expected: no. Additional data: no. 
+#     Tell the server to check whether filename should be ignored,
+#     and if not, next time the server sends responses, send (in
+#     a M response) `?' followed by the directory and filename.
+#     filename must not contain `/'; it needs to be a file in the
+#     directory named by the most recent Directory request.
+sub req_Questionable
+{
+    my ( $cmd, $data ) = @_;
+
+    $state->{entries}{$state->{directory}.$data}{questionable} = 1;
+
+    #$log->debug("req_Questionable : $data");
+}
+
 # Argument text \n
 #     Response expected: no. Save argument for use in a subsequent command.
 #     Arguments accumulate until an argument-using command is given, at which
@@ -568,7 +586,7 @@ sub req_co
 
         # print some information to the client
         print "MT +updated\n";
-        print "MT text U\n";
+        print "MT text U \n";
         if ( defined ( $git->{dir} ) and $git->{dir} ne "./" )
         {
             print "MT fname $checkout_path/$git->{dir}$git->{name}\n";
@@ -579,9 +597,9 @@ sub req_co
         print "MT -updated\n";
 
         # instruct client we're sending a file to put in this path
-        print "Created $checkout_path/" . ( defined ( $git->{dir} ) ? $git->{dir} . "/" : "" ) . "\n";
+        print "Created $checkout_path/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "\n";
 
-        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
+        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
 
         # this is an "entries" line
         print "/$git->{name}/1.$git->{revision}///\n";
