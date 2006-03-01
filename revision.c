@@ -492,6 +492,26 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->limited = 1;
 				continue;
 			}
+			if (!strncmp(arg, "--since=", 8)) {
+				revs->max_age = approxidate(arg + 8);
+				revs->limited = 1;
+				continue;
+			}
+			if (!strncmp(arg, "--after=", 8)) {
+				revs->max_age = approxidate(arg + 8);
+				revs->limited = 1;
+				continue;
+			}
+			if (!strncmp(arg, "--before=", 9)) {
+				revs->min_age = approxidate(arg + 9);
+				revs->limited = 1;
+				continue;
+			}
+			if (!strncmp(arg, "--until=", 8)) {
+				revs->min_age = approxidate(arg + 8);
+				revs->limited = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--all")) {
 				handle_all(revs, flags);
 				continue;
