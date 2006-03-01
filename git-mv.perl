@@ -19,25 +19,26 @@ EOT
 	exit(1);
 }
 
-my $GIT_DIR = `git rev-parse --git-dir`;
-exit 1 if $?; # rev-parse would have given "not a git dir" message.
-chomp($GIT_DIR);
-
 our ($opt_n, $opt_f, $opt_h, $opt_k, $opt_v);
 getopts("hnfkv") || usage;
 usage() if $opt_h;
 @ARGV >= 1 or usage;
 
+my $GIT_DIR = `git rev-parse --git-dir`;
+exit 1 if $?; # rev-parse would have given "not a git dir" message.
+chomp($GIT_DIR);
+
 my (@srcArgs, @dstArgs, @srcs, @dsts);
 my ($src, $dst, $base, $dstDir);
+
+# remove any trailing slash in arguments
+for (@ARGV) { s/\/*$//; }
 
 my $argCount = scalar @ARGV;
 if (-d $ARGV[$argCount-1]) {
 	$dstDir = $ARGV[$argCount-1];
-	# remove any trailing slash
-	$dstDir =~ s/\/$//;
 	@srcArgs = @ARGV[0..$argCount-2];
-	
+
 	foreach $src (@srcArgs) {
 		$base = $src;
 		$base =~ s/^.*\///;
@@ -46,15 +47,29 @@ if (-d $ARGV[$argCount-1]) {
 	}
 }
 else {
-    if ($argCount != 2) {
+    if ($argCount < 2) {
+	print "Error: need at least two arguments\n";
+	exit(1);
+    }
+    if ($argCount > 2) {
 	print "Error: moving to directory '"
 	    . $ARGV[$argCount-1]
-	    . "' not possible; not exisiting\n";
+	    . "' not possible; not existing\n";
 	exit(1);
     }
     @srcArgs = ($ARGV[0]);
     @dstArgs = ($ARGV[1]);
     $dstDir = "";
+}
+
+# normalize paths, needed to compare against versioned files and update-index
+# also, this is nicer to end-users by doing ".//a/./b/.//./c" ==> "a/b/c"
+for (@srcArgs, @dstArgs) {
+    s|^\./||;
+    s|/\./|/| while (m|/\./|);
+    s|//+|/|g;
+    # Also "a/b/../c" ==> "a/c"
+    1 while (s,(^|/)[^/]+/\.\./,$1,);
 }
 
 my (@allfiles,@srcfiles,@dstfiles);
