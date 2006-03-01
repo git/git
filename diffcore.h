@@ -101,4 +101,10 @@ void diff_debug_queue(const char *, struct diff_queue_struct *);
 #define diff_debug_queue(a,b) do {} while(0)
 #endif
 
+extern int diffcore_count_changes(void *src, unsigned long src_size,
+				  void *dst, unsigned long dst_size,
+				  unsigned long delta_limit,
+				  unsigned long *src_copied,
+				  unsigned long *literal_added);
+
 #endif

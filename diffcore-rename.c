@@ -4,8 +4,6 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "delta.h"
-#include "count-delta.h"
 
 /* Table of rename/copy destinations */
 
@@ -135,7 +133,6 @@ static int estimate_similarity(struct diff_filespec *src,
 	 * match than anything else; the destination does not even
 	 * call into this function in that case.
 	 */
-	void *delta;
 	unsigned long delta_size, base_size, src_copied, literal_added;
 	unsigned long delta_limit;
 	int score;
@@ -165,28 +162,13 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
+
 	delta_limit = base_size * (MAX_SCORE-minimum_score) / MAX_SCORE;
-	delta = diff_delta(src->data, src->size,
-			   dst->data, dst->size,
-			   &delta_size, delta_limit);
-	if (!delta)
-		/* If delta_limit is exceeded, we have too much differences */
+	if (diffcore_count_changes(src->data, src->size,
+				   dst->data, dst->size,
+				   delta_limit,
+				   &src_copied, &literal_added))
 		return 0;
-
-	/* A delta that has a lot of literal additions would have
-	 * big delta_size no matter what else it does.
-	 */
-	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE) {
-		free(delta);
-		return 0;
-	}
-
-	/* Estimate the edit size by interpreting delta. */
-	if (count_delta(delta, delta_size, &src_copied, &literal_added)) {
-		free(delta);
-		return 0;
-	}
-	free(delta);
 
 	/* Extent of damage */
 	if (src->size + literal_added < src_copied)
