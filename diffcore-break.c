@@ -58,6 +58,10 @@ static int should_break(struct diff_filespec *src,
 	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
 		return 0; /* leave symlink rename alone */
 
+	if (src->sha1_valid && dst->sha1_valid &&
+	    !memcmp(src->sha1, dst->sha1, 20))
+		return 0; /* they are the same */
+
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
