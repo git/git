@@ -100,7 +100,7 @@ fall_back_3way () {
 }
 
 prec=4
-dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary=
+dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws=
 
 while case "$#" in 0) break;; esac
 do
@@ -132,6 +132,9 @@ do
 
 	--sk|--ski|--skip)
 	skip=t; shift ;;
+
+	--whitespace=*)
+	ws=$1; shift ;;
 
 	--)
 	shift; break ;;
@@ -171,10 +174,11 @@ else
 		exit 1
 	}
 
-	# -b, -s, -u and -k flags are kept for the resuming session after
-	# a patch failure.
+	# -b, -s, -u, -k and --whitespace flags are kept for the
+	# resuming session after a patch failure.
 	# -3 and -i can and must be given when resuming.
 	echo "$binary" >"$dotest/binary"
+	echo " $ws" >"$dotest/whitespace"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
@@ -202,6 +206,7 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
+ws=`cat "$dotest/whitespace"`
 if test "$(cat "$dotest/sign")" = t
 then
 	SIGNOFF=`git-var GIT_COMMITTER_IDENT | sed -e '
@@ -355,7 +360,7 @@ do
 
 	case "$resolved" in
 	'')
-		git-apply $binary --index "$dotest/patch"
+		git-apply $binary --index $ws "$dotest/patch"
 		apply_status=$?
 		;;
 	t)
