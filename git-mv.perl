@@ -19,14 +19,14 @@ EOT
 	exit(1);
 }
 
-my $GIT_DIR = `git rev-parse --git-dir`;
-exit 1 if $?; # rev-parse would have given "not a git dir" message.
-chomp($GIT_DIR);
-
 our ($opt_n, $opt_f, $opt_h, $opt_k, $opt_v);
 getopts("hnfkv") || usage;
 usage() if $opt_h;
 @ARGV >= 1 or usage;
+
+my $GIT_DIR = `git rev-parse --git-dir`;
+exit 1 if $?; # rev-parse would have given "not a git dir" message.
+chomp($GIT_DIR);
 
 my (@srcArgs, @dstArgs, @srcs, @dsts);
 my ($src, $dst, $base, $dstDir);
@@ -46,10 +46,14 @@ if (-d $ARGV[$argCount-1]) {
 	}
 }
 else {
-    if ($argCount != 2) {
+    if ($argCount < 2) {
+	print "Error: need at least two arguments\n";
+	exit(1);
+    }
+    if ($argCount > 2) {
 	print "Error: moving to directory '"
 	    . $ARGV[$argCount-1]
-	    . "' not possible; not exisiting\n";
+	    . "' not possible; not existing\n";
 	exit(1);
     }
     @srcArgs = ($ARGV[0]);
