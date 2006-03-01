@@ -31,13 +31,14 @@ chomp($GIT_DIR);
 my (@srcArgs, @dstArgs, @srcs, @dsts);
 my ($src, $dst, $base, $dstDir);
 
+# remove any trailing slash in arguments
+for (@ARGV) { s/\/*$//; }
+
 my $argCount = scalar @ARGV;
 if (-d $ARGV[$argCount-1]) {
 	$dstDir = $ARGV[$argCount-1];
-	# remove any trailing slash
-	$dstDir =~ s/\/$//;
 	@srcArgs = @ARGV[0..$argCount-2];
-	
+
 	foreach $src (@srcArgs) {
 		$base = $src;
 		$base =~ s/^.*\///;
@@ -61,6 +62,16 @@ else {
     $dstDir = "";
 }
 
+# normalize paths, needed to compare against versioned files and update-index
+# also, this is nicer to end-users by doing ".//a/./b/.//./c" ==> "a/b/c"
+for (@srcArgs, @dstArgs) {
+    s|^\./||;
+    s|/\./|/| while (m|/\./|);
+    s|//+|/|g;
+    # Also "a/b/../c" ==> "a/c"
+    1 while (s,(^|/)[^/]+/\.\./,$1,);
+}
+
 my (@allfiles,@srcfiles,@dstfiles);
 my $safesrc;
 my (%overwritten, %srcForDst);
@@ -78,15 +89,6 @@ while(scalar @srcArgs > 0) {
     $src = shift @srcArgs;
     $dst = shift @dstArgs;
     $bad = "";
-
-    for ($src, $dst) {
-	# Be nicer to end-users by doing ".//a/./b/.//./c" ==> "a/b/c"
-	s|^\./||;
-	s|/\./|/| while (m|/\./|);
-	s|//+|/|g;
-	# Also "a/b/../c" ==> "a/c"
-	1 while (s,(^|/)[^/]+/\.\./,$1,);
-    }
 
     if ($opt_v) {
 	print "Checking rename of '$src' to '$dst'\n";
