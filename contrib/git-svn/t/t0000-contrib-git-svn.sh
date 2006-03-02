@@ -71,14 +71,14 @@ test_expect_success \
 
 
 name='try a deep --rmdir with a commit'
-git checkout -b mybranch git-svn-HEAD
+git checkout -b mybranch remotes/git-svn
 mv dir/a/b/c/d/e/file dir/file
 cp dir/file file
 git update-index --add --remove dir/a/b/c/d/e/file dir/file file
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch &&
+    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch &&
      test -d $SVN_TREE/dir && test ! -d $SVN_TREE/dir/a"
 
 
@@ -91,13 +91,13 @@ git update-index --add dir/file/file
 git commit -m "$name"
 
 test_expect_code 1 "$name" \
-    'git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch' \
+    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch' \
     || true
 
 
 name='detect node change from directory to file #1'
 rm -rf dir $GIT_DIR/index
-git checkout -b mybranch2 git-svn-HEAD
+git checkout -b mybranch2 remotes/git-svn
 mv bar/zzz zzz
 rm -rf bar
 mv zzz bar
@@ -106,13 +106,13 @@ git update-index --add -- bar
 git commit -m "$name"
 
 test_expect_code 1 "$name" \
-    'git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch2' \
+    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch2' \
     || true
 
 
 name='detect node change from file to directory #2'
 rm -f $GIT_DIR/index
-git checkout -b mybranch3 git-svn-HEAD
+git checkout -b mybranch3 remotes/git-svn
 rm bar/zzz
 git-update-index --remove bar/zzz
 mkdir bar/zzz
@@ -121,13 +121,13 @@ git-update-index --add bar/zzz/yyy
 git commit -m "$name"
 
 test_expect_code 1 "$name" \
-    'git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch3' \
+    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch3' \
     || true
 
 
 name='detect node change from directory to file #2'
 rm -f $GIT_DIR/index
-git checkout -b mybranch4 git-svn-HEAD
+git checkout -b mybranch4 remotes/git-svn
 rm -rf dir
 git update-index --remove -- dir/file
 touch dir
@@ -136,19 +136,19 @@ git update-index --add -- dir
 git commit -m "$name"
 
 test_expect_code 1 "$name" \
-    'git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch4' \
+    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch4' \
     || true
 
 
 name='remove executable bit from a file'
 rm -f $GIT_DIR/index
-git checkout -b mybranch5 git-svn-HEAD
+git checkout -b mybranch5 remotes/git-svn
 chmod -x exec.sh
 git update-index exec.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch5 &&
+    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      test ! -x $SVN_TREE/exec.sh"
 
 
@@ -158,7 +158,7 @@ git update-index exec.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch5 &&
+    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      test -x $SVN_TREE/exec.sh"
 
 
@@ -170,7 +170,7 @@ git update-index exec.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch5 &&
+    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      test -L $SVN_TREE/exec.sh"
 
 
@@ -182,7 +182,7 @@ git update-index --add bar/zzz exec-2.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch5 &&
+    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      test -x $SVN_TREE/bar/zzz &&
      test -L $SVN_TREE/exec-2.sh"
 
@@ -196,7 +196,7 @@ git update-index exec-2.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir git-svn-HEAD..mybranch5 &&
+    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      test -f $SVN_TREE/exec-2.sh &&
      test ! -L $SVN_TREE/exec-2.sh &&
      diff -u help $SVN_TREE/exec-2.sh"
@@ -207,9 +207,9 @@ name='test fetch functionality (svn => git) with alternate GIT_SVN_ID'
 GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
-    "git-svn init $svnrepo && git-svn fetch -v &&
-     git-rev-list --pretty=raw git-svn-HEAD | grep ^tree | uniq > a &&
-     git-rev-list --pretty=raw alt-HEAD | grep ^tree | uniq > b &&
+    "git-svn init $svnrepo && git-svn fetch &&
+     git-rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
+     git-rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
      diff -u a b"
 
 test_done
