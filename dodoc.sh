@@ -36,6 +36,7 @@ test "$DOCREPO" != "" &&
 cd "$DOCREPO" || exit $?
 
 git pull "$MASTERREPO" master &&
+git fetch --tags "$MASTERREPO" || exit $?
 test $(git-rev-parse --verify refs/heads/master) == "$ID" &&
 NID=$(git-describe --abbrev=4 "$ID") &&
 test '' != "$NID" ||  exit $?
