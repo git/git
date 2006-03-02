@@ -338,6 +338,7 @@ proc error_popup msg {
     button $w.ok -text OK -command "destroy $w"
     pack $w.ok -side bottom -fill x
     bind $w <Visibility> "grab $w; focus $w"
+    bind $w <Key-Return> "destroy $w"
     tkwait window $w
 }
 
