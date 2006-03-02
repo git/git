@@ -560,9 +560,11 @@ static int threeway_merge(struct cache_entry **stages)
 		 */
 		if ((head_deleted && remote_deleted) ||
 		    (head_deleted && remote && remote_match) ||
-		    (remote_deleted && head && head_match))
+		    (remote_deleted && head && head_match)) {
+			if (index)
+				return deleted_entry(index, index);
 			return 0;
-
+		}
 		/*
 		 * Added in both, identically.
 		 */
