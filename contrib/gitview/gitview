@@ -513,7 +513,7 @@ class GitView:
 
 
 		scrollwin = gtk.ScrolledWindow()
-		scrollwin.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		scrollwin.set_shadow_type(gtk.SHADOW_IN)
 		vbox.pack_start(scrollwin, expand=True, fill=True)
 		scrollwin.show()
@@ -526,9 +526,6 @@ class GitView:
 		self.treeview.show()
 
 		cell = CellRendererGraph()
-		#  Set the default width to 265
-		#  This make sure that we have nice display with large tag names
-		cell.set_property("width", 265)
 		column = gtk.TreeViewColumn()
 		column.set_resizable(True)
 		column.pack_start(cell, expand=True)
