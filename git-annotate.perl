@@ -15,6 +15,8 @@ sub usage() {
 	print STDERR 'Usage: ${\basename $0} [-s] [-S revs-file] file [ revision ]
 	-l, --long
 			Show long rev (Defaults off)
+	-t, --time
+			Show raw timestamp (Defaults off)
 	-r, --rename
 			Follow renames (Defaults on).
 	-S, --rev-file revs-file
@@ -26,9 +28,10 @@ sub usage() {
 	exit(1);
 }
 
-our ($help, $longrev, $rename, $starting_rev, $rev_file) = (0, 0, 1);
+our ($help, $longrev, $rename, $rawtime, $starting_rev, $rev_file) = (0, 0, 1);
 
 my $rc = GetOptions(	"long|l" => \$longrev,
+			"time|t" => \$rawtime,
 			"help|h" => \$help,
 			"rename|r" => \$rename,
 			"rev-file|S=s" => \$rev_file);
@@ -411,8 +414,10 @@ sub git_commit_info {
 }
 
 sub format_date {
+	if ($rawtime) {
+		return $_[0];
+	}
 	my ($timestamp, $timezone) = split(' ', $_[0]);
-
 	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($timestamp));
 }
 
