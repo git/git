@@ -571,8 +571,19 @@ sub req_co
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $module, $log);
     $updater->update();
 
+    $checkout_path =~ s|/$||; # get rid of trailing slashes
+
+    # Eclipse seems to need the Clear-sticky command
+    # to prepare the 'Entries' file for the new directory.
+    print "Clear-sticky $checkout_path/\n";
+    print $state->{CVSROOT} . "/$checkout_path/\n";
+    print "Clear-static-directory $checkout_path/\n";
+    print $state->{CVSROOT} . "/$checkout_path/\n";
+
     # instruct the client that we're checking out to $checkout_path
-    print "E cvs server: updating $checkout_path\n";
+    print "E cvs checkout: Updating $checkout_path\n";
+
+    my %seendirs = ();
 
     foreach my $git ( @{$updater->gethead} )
     {
@@ -585,16 +596,24 @@ sub req_co
         print "Mod-time $git->{modified}\n";
 
         # print some information to the client
-        print "MT +updated\n";
-        print "MT text U \n";
         if ( defined ( $git->{dir} ) and $git->{dir} ne "./" )
         {
-            print "MT fname $checkout_path/$git->{dir}$git->{name}\n";
+            print "M U $checkout_path/$git->{dir}$git->{name}\n";
         } else {
-            print "MT fname $checkout_path/$git->{name}\n";
+            print "M U $checkout_path/$git->{name}\n";
         }
-        print "MT newline\n";
-        print "MT -updated\n";
+
+	if (length($git->{dir}) && $git->{dir} ne './' && !exists($seendirs{$git->{dir}})) {
+
+	    # Eclipse seems to need the Clear-sticky command
+	    # to prepare the 'Entries' file for the new directory.
+	    print "Clear-sticky $module/$git->{dir}\n";
+	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
+	    print "Clear-static-directory $module/$git->{dir}\n";
+	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
+	    print "E cvs checkout: Updating /$module/$git->{dir}\n";
+	    $seendirs{$git->{dir}} = 1;
+	}
 
         # instruct client we're sending a file to put in this path
         print "Created $checkout_path/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "\n";
