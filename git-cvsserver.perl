@@ -714,8 +714,27 @@ sub req_update
 
         #$log->debug("Target revision is $meta->{revision}, current working revision is $wrev");
 
-        # Files are up to date if the working copy and repo copy have the same revision, and the working copy is unmodified _and_ the user hasn't specified -C
-        next if ( defined ( $wrev ) and defined($meta->{revision}) and $wrev == $meta->{revision} and $state->{entries}{$filename}{unchanged} and not exists ( $state->{opt}{C} ) );
+        # Files are up to date if the working copy and repo copy have the same revision,
+        # and the working copy is unmodified _and_ the user hasn't specified -C
+        next if ( defined ( $wrev )
+                  and defined($meta->{revision})
+                  and $wrev == $meta->{revision}
+                  and $state->{entries}{$filename}{unchanged}
+                  and not exists ( $state->{opt}{C} ) );
+
+        # If the working copy and repo copy have the same revision,
+        # but the working copy is modified, tell the client it's modified
+        if ( defined ( $wrev )
+             and defined($meta->{revision})
+             and $wrev == $meta->{revision}
+             and not exists ( $state->{opt}{C} ) )
+        {
+            $log->info("Tell the client the file is modified");
+            print "MT text U\n";
+            print "MT fname $filename\n";
+            print "MT newline\n";
+            next;
+        }
 
         if ( $meta->{filehash} eq "deleted" )
         {
@@ -727,7 +746,8 @@ sub req_update
             print "Removed $dirpart\n";
             print "$filepart\n";
         }
-        elsif ( not defined ( $state->{entries}{$filename}{modified_hash} ) or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
+        elsif ( not defined ( $state->{entries}{$filename}{modified_hash} )
+		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
         {
             $log->info("Updating '$filename'");
             # normal update, just send the new revision (either U=Update, or A=Add, or R=Remove)
@@ -763,6 +783,7 @@ sub req_update
             # transmit file
             transmitfile($meta->{filehash});
         } else {
+            $log->info("Updating '$filename'");
             my ( $filepart, $dirpart ) = filenamesplit($meta->{name});
 
             my $dir = tempdir( DIR => $TEMP_DIR, CLEANUP => 1 ) . "/";
