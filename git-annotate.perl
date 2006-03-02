@@ -31,7 +31,7 @@ our ($help, $longrev, $rename, $starting_rev, $rev_file) = (0, 0, 1);
 my $rc = GetOptions(	"long|l" => \$longrev,
 			"help|h" => \$help,
 			"rename|r" => \$rename,
-			"rev-file|S" => \$rev_file);
+			"rev-file|S=s" => \$rev_file);
 if (!$rc or $help) {
 	usage();
 }
@@ -174,7 +174,8 @@ sub git_rev_list {
 
 	my $revlist;
 	if ($rev_file) {
-		open($revlist, '<' . $rev_file);
+		open($revlist, '<' . $rev_file)
+		    or die "Failed to open $rev_file : $!";
 	} else {
 		$revlist = open_pipe("git-rev-list","--parents","--remove-empty",$rev,"--",$file)
 			or die "Failed to exec git-rev-list: $!";
