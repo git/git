@@ -304,6 +304,12 @@ sub _git_diff_parse {
 			}
 			$ri++;
 
+		} elsif (m/^\\/) {
+			;
+			# Skip \No newline at end of file.
+			# But this can be internationalized, so only look
+			# for an initial \
+
 		} else {
 			if (substr($_,1) ne get_line($slines,$ri) ) {
 				die sprintf("Line %d (%d) does not match:\n|%s\n|%s\n%s => %s\n",
