@@ -7,8 +7,11 @@ DEF_VER=v1.2.GIT
 # (included in release tarballs), then default
 if VN=$(git-describe --abbrev=4 HEAD 2>/dev/null); then
 	VN=$(echo "$VN" | sed -e 's/-/./g');
-else
+elif test -f version
+then
 	VN=$(cat version) || VN="$DEF_VER"
+else
+	VN="$DEF_VER"
 fi
 
 VN=$(expr "$VN" : v*'\(.*\)')
