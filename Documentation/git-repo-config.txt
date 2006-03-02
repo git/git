@@ -8,6 +8,7 @@ git-repo-config - Get and set options in .git/config.
 
 SYNOPSIS
 --------
+[verse]
 'git-repo-config' [type] name [value [value_regex]]
 'git-repo-config' [type] --replace-all name [value [value_regex]]
 'git-repo-config' [type] --get name [value_regex]
