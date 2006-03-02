@@ -571,8 +571,19 @@ sub req_co
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $module, $log);
     $updater->update();
 
+    $checkout_path =~ s|/$||; # get rid of trailing slashes
+
+    # Eclipse seems to need the Clear-sticky command
+    # to prepare the 'Entries' file for the new directory.
+    print "Clear-sticky $checkout_path/\n";
+    print $state->{CVSROOT} . "/$checkout_path/\n";
+    print "Clear-static-directory $checkout_path/\n";
+    print $state->{CVSROOT} . "/$checkout_path/\n";
+
     # instruct the client that we're checking out to $checkout_path
-    print "E cvs server: updating $checkout_path\n";
+    print "E cvs checkout: Updating $checkout_path\n";
+
+    my %seendirs = ();
 
     foreach my $git ( @{$updater->gethead} )
     {
@@ -585,16 +596,24 @@ sub req_co
         print "Mod-time $git->{modified}\n";
 
         # print some information to the client
-        print "MT +updated\n";
-        print "MT text U \n";
         if ( defined ( $git->{dir} ) and $git->{dir} ne "./" )
         {
-            print "MT fname $checkout_path/$git->{dir}$git->{name}\n";
+            print "M U $checkout_path/$git->{dir}$git->{name}\n";
         } else {
-            print "MT fname $checkout_path/$git->{name}\n";
+            print "M U $checkout_path/$git->{name}\n";
         }
-        print "MT newline\n";
-        print "MT -updated\n";
+
+	if (length($git->{dir}) && $git->{dir} ne './' && !exists($seendirs{$git->{dir}})) {
+
+	    # Eclipse seems to need the Clear-sticky command
+	    # to prepare the 'Entries' file for the new directory.
+	    print "Clear-sticky $module/$git->{dir}\n";
+	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
+	    print "Clear-static-directory $module/$git->{dir}\n";
+	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
+	    print "E cvs checkout: Updating /$module/$git->{dir}\n";
+	    $seendirs{$git->{dir}} = 1;
+	}
 
         # instruct client we're sending a file to put in this path
         print "Created $checkout_path/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "\n";
@@ -695,8 +714,27 @@ sub req_update
 
         #$log->debug("Target revision is $meta->{revision}, current working revision is $wrev");
 
-        # Files are up to date if the working copy and repo copy have the same revision, and the working copy is unmodified _and_ the user hasn't specified -C
-        next if ( defined ( $wrev ) and defined($meta->{revision}) and $wrev == $meta->{revision} and $state->{entries}{$filename}{unchanged} and not exists ( $state->{opt}{C} ) );
+        # Files are up to date if the working copy and repo copy have the same revision,
+        # and the working copy is unmodified _and_ the user hasn't specified -C
+        next if ( defined ( $wrev )
+                  and defined($meta->{revision})
+                  and $wrev == $meta->{revision}
+                  and $state->{entries}{$filename}{unchanged}
+                  and not exists ( $state->{opt}{C} ) );
+
+        # If the working copy and repo copy have the same revision,
+        # but the working copy is modified, tell the client it's modified
+        if ( defined ( $wrev )
+             and defined($meta->{revision})
+             and $wrev == $meta->{revision}
+             and not exists ( $state->{opt}{C} ) )
+        {
+            $log->info("Tell the client the file is modified");
+            print "MT text U\n";
+            print "MT fname $filename\n";
+            print "MT newline\n";
+            next;
+        }
 
         if ( $meta->{filehash} eq "deleted" )
         {
@@ -708,7 +746,8 @@ sub req_update
             print "Removed $dirpart\n";
             print "$filepart\n";
         }
-        elsif ( not defined ( $state->{entries}{$filename}{modified_hash} ) or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
+        elsif ( not defined ( $state->{entries}{$filename}{modified_hash} )
+		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
         {
             $log->info("Updating '$filename'");
             # normal update, just send the new revision (either U=Update, or A=Add, or R=Remove)
@@ -744,6 +783,7 @@ sub req_update
             # transmit file
             transmitfile($meta->{filehash});
         } else {
+            $log->info("Updating '$filename'");
             my ( $filepart, $dirpart ) = filenamesplit($meta->{name});
 
             my $dir = tempdir( DIR => $TEMP_DIR, CLEANUP => 1 ) . "/";
