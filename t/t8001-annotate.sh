@@ -50,7 +50,8 @@ test_expect_success \
 test_expect_success \
     'merge-setup part 2' \
     'git checkout -b branch2 master &&
-     sed -i -e "s/2A quick brown/4A quick brown lazy dog/" file &&
+     sed -e "s/2A quick brown/4A quick brown lazy dog/" < file > file.new &&
+     mv file.new file &&
      GIT_AUTHOR_NAME="B2" git commit -a -m "Branch2-1"'
 
 test_expect_success \
