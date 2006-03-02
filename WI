@@ -1,22 +1,35 @@
 #!/bin/sh
 # Prepare "What's in git.git"
 
-has_msg=' has these since the last announcement.'
-in_addition=
-for m in master next pu
-do
-	tagged=`git rev-parse --not --verify tags/sa/$m 2>/dev/null` ||
-	test "$m" != pu || exit
+echo "To: git@vger.kernel.org"
+echo "Subject: What's in git.git"
 
-	list=`git-rev-list $in_addition $tagged heads/$m 2>/dev/null` &&
-	test -n "$list" || continue
-
-	echo "* The '$m' branch$has_msg"
+tagged=`git rev-parse --not --verify tags/sa/master`
+list=`git-rev-list $tagged heads/master 2>/dev/null`
+if test -n "$list"
+then
 	echo
-	git log $in_addition $tagged heads/$m |
-	git shortlog
+	echo "* The 'master' branch has these since the last announcement."
 	echo
+	git log $tagged heads/master | git shortlog
+fi
 
-	in_addition="$in_addition ^heads/$m"
-	has_msg=', in addition, has these.'
-done
+list=`git-rev-list heads/master..heads/next 2>/dev/null`
+if test -n "$list"
+then
+	echo
+	echo
+	echo "* The 'next' branch, in addition, has these."
+	echo
+	git log --no-merges heads/master..heads/next | git shortlog
+fi
+
+list=`git-rev-list ^heads/master ^heads/next heads/pu 2>/dev/null`
+if test -n "$list"
+then
+	echo
+	echo
+	echo "* The 'pu' branch, in addition, has these."
+	echo
+	git log --no-merges ^heads/master ^heads/next heads/pu | git shortlog
+fi
