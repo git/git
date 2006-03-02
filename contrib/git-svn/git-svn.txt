@@ -41,12 +41,12 @@ init::
 
 fetch::
 	Fetch unfetched revisions from the SVN_URL we are tracking.
-	refs/heads/git-svn-HEAD will be updated to the latest revision.
+	refs/heads/remotes/git-svn will be updated to the latest revision.
 
-	Note: You should never attempt to modify the git-svn-HEAD branch
-	outside of git-svn.  Instead, create a branch from git-svn-HEAD
+	Note: You should never attempt to modify the remotes/git-svn branch
+	outside of git-svn.  Instead, create a branch from remotes/git-svn
 	and work on that branch.  Use the 'commit' command (see below)
-	to write git commits back to git-svn-HEAD.
+	to write git commits back to remotes/git-svn.
 
 commit::
 	Commit specified commit or tree objects to SVN.  This relies on
@@ -155,13 +155,13 @@ Tracking and contributing to an Subversion managed-project:
 # Fetch remote revisions::
 	git-svn fetch
 # Create your own branch to hack on::
-	git checkout -b my-branch git-svn-HEAD
+	git checkout -b my-branch remotes/git-svn
 # Commit only the git commits you want to SVN::
 	git-svn commit <tree-ish> [<tree-ish_2> ...]
 # Commit all the git commits from my-branch that don't exist in SVN::
-	git-svn commit git-svn-HEAD..my-branch
+	git-svn commit remotes/git-svn..my-branch
 # Something is committed to SVN, pull the latest into your branch::
-	git-svn fetch && git pull . git-svn-HEAD
+	git-svn fetch && git pull . remotes/git-svn
 # Append svn:ignore settings to the default git exclude file:
 	git-svn show-ignore >> .git/info/exclude
 
@@ -184,8 +184,8 @@ SVN repositories via one git repository.  Simply set the GIT_SVN_ID
 environment variable to a name other other than "git-svn" (the default)
 and git-svn will ignore the contents of the $GIT_DIR/git-svn directory
 and instead do all of its work in $GIT_DIR/$GIT_SVN_ID for that
-invocation.  The interface branch will be $GIT_SVN_ID-HEAD, instead of
-git-svn-HEAD.  Any $GIT_SVN_ID-HEAD branch should never be modified
+invocation.  The interface branch will be remotes/$GIT_SVN_ID, instead of
+remotes/git-svn.  Any remotes/$GIT_SVN_ID branch should never be modified
 by the user outside of git-svn commands.
 
 ADDITIONAL FETCH ARGUMENTS

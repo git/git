@@ -34,13 +34,14 @@ use POSIX qw/strftime/;
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{6,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_version);
+	$_find_copies_harder, $_l, $_version, $_upgrade);
 
 GetOptions(	'revision|r=s' => \$_revision,
 		'no-ignore-externals' => \$_no_ignore_ext,
 		'stdin|' => \$_stdin,
 		'edit|e' => \$_edit,
 		'rmdir' => \$_rmdir,
+		'upgrade' => \$_upgrade,
 		'help|H|h' => \$_help,
 		'find-copies-harder' => \$_find_copies_harder,
 		'l=i' => \$_l,
@@ -106,13 +107,18 @@ sub rebuild {
 	$SVN_URL = shift or undef;
 	my $repo_uuid;
 	my $newest_rev = 0;
+	if ($_upgrade) {
+		sys('git-update-ref',"refs/remotes/$GIT_SVN","$GIT_SVN-HEAD");
+	} else {
+		check_upgrade_needed();
+	}
 
 	my $pid = open(my $rev_list,'-|');
 	defined $pid or croak $!;
 	if ($pid == 0) {
-		exec("git-rev-list","$GIT_SVN-HEAD") or croak $!;
+		exec("git-rev-list","refs/remotes/$GIT_SVN") or croak $!;
 	}
-	my $first;
+	my $latest;
 	while (<$rev_list>) {
 		chomp;
 		my $c = $_;
@@ -132,18 +138,20 @@ sub rebuild {
 					"$c, $id\n";
 			}
 		}
+
+		# if we merged or otherwise started elsewhere, this is
+		# how we break out of it
+		next if (defined $repo_uuid && ($uuid ne $repo_uuid));
+		next if (defined $SVN_URL && ($url ne $SVN_URL));
+
 		print "r$rev = $c\n";
-		unless (defined $first) {
+		unless (defined $latest) {
 			if (!$SVN_URL && !$url) {
 				croak "SVN repository location required: $url\n";
 			}
 			$SVN_URL ||= $url;
-			$repo_uuid = setup_git_svn();
-			$first = $rev;
-		}
-		if ($uuid ne $repo_uuid) {
-			croak "Repository UUIDs do not match!\ngot: $uuid\n",
-						"expected: $repo_uuid\n";
+			$repo_uuid ||= setup_git_svn();
+			$latest = $rev;
 		}
 		assert_revision_eq_or_unknown($rev, $c);
 		sys('git-update-ref',"$GIT_SVN/revs/$rev",$c);
@@ -151,7 +159,7 @@ sub rebuild {
 	}
 	close $rev_list or croak $?;
 	if (!chdir $SVN_WC) {
-		my @svn_co = ('svn','co',"-r$first");
+		my @svn_co = ('svn','co',"-r$latest");
 		push @svn_co, '--ignore-externals' unless $_no_ignore_ext;
 		sys(@svn_co, $SVN_URL, $SVN_WC);
 		chdir $SVN_WC or croak $!;
@@ -168,6 +176,13 @@ sub rebuild {
 		exec('git-write-tree');
 	}
 	waitpid $pid, 0;
+
+	if ($_upgrade) {
+		print STDERR <<"";
+Keeping deprecated refs/head/$GIT_SVN-HEAD for now.  Please remove it
+when you have upgraded your tools and habits to use refs/remotes/$GIT_SVN
+
+	}
 }
 
 sub init {
@@ -180,6 +195,7 @@ sub init {
 
 sub fetch {
 	my (@parents) = @_;
+	check_upgrade_needed();
 	$SVN_URL ||= file_to_s("$GIT_DIR/$GIT_SVN/info/url");
 	my @log_args = -d $SVN_WC ? ($SVN_WC) : ($SVN_URL);
 	unless ($_revision) {
@@ -222,6 +238,7 @@ sub fetch {
 
 sub commit {
 	my (@commits) = @_;
+	check_upgrade_needed();
 	if ($_stdin || !@commits) {
 		print "Reading from stdin...\n";
 		@commits = ();
@@ -863,7 +880,7 @@ sub git_commit {
 	if ($commit !~ /^$sha1$/o) {
 		croak "Failed to commit, invalid sha1: $commit\n";
 	}
-	my @update_ref = ('git-update-ref',"refs/heads/$GIT_SVN-HEAD",$commit);
+	my @update_ref = ('git-update-ref',"refs/remotes/$GIT_SVN",$commit);
 	if (my $primary_parent = shift @exec_parents) {
 		push @update_ref, $primary_parent;
 	}
@@ -936,6 +953,28 @@ sub svn_check_ignore_externals {
 		$_no_ignore_ext = 1;
 	}
 }
+
+sub check_upgrade_needed {
+	my $old = eval {
+		my $pid = open my $child, '-|';
+		defined $pid or croak $!;
+		if ($pid == 0) {
+			close STDERR;
+			exec('git-rev-parse',"$GIT_SVN-HEAD") or croak $?;
+		}
+		my @ret = (<$child>);
+		close $child or croak $?;
+		die $? if $?; # just in case close didn't error out
+		return wantarray ? @ret : join('',@ret);
+	};
+	return unless $old;
+	my $head = eval { safe_qx('git-rev-parse',"refs/remotes/$GIT_SVN") };
+	if ($@ || !$head) {
+		print STDERR "Please run: $0 rebuild --upgrade\n";
+		exit 1;
+	}
+}
+
 __END__
 
 Data structures:
