@@ -906,7 +906,7 @@ proc showstuff {canshow} {
 		    incr i
 		    if {$e ne {} && $e < $numcommits && $s <= $r1 && $e >= $r0
 			&& ![info exists idrangedrawn($id,$i)]} {
-			drawlineseg $id $i 1
+			drawlineseg $id $i
 			set idrangedrawn($id,$i) 1
 		    }
 		}
@@ -1183,9 +1183,19 @@ proc yc {row} {
     return [expr {$canvy0 + $row * $linespc}]
 }
 
-proc drawlineseg {id i wid} {
+proc linewidth {id} {
+    global thickerline lthickness
+
+    set wid $lthickness
+    if {[info exists thickerline] && $id eq $thickerline} {
+	set wid [expr {2 * $lthickness}]
+    }
+    return $wid
+}
+
+proc drawlineseg {id i} {
     global rowoffsets rowidlist idrowranges
-    global canv colormap lthickness
+    global canv colormap
 
     set startrow [lindex $idrowranges($id) [expr {2 * $i}]]
     set row [lindex $idrowranges($id) [expr {2 * $i + 1}]]
@@ -1216,18 +1226,17 @@ proc drawlineseg {id i wid} {
     set last [expr {[llength $idrowranges($id)] / 2 - 1}]
     set arrow [expr {2 * ($i > 0) + ($i < $last)}]
     set arrow [lindex {none first last both} $arrow]
-    set wid [expr {$wid * $lthickness}]
     set x [xc $row $col]
     set y [yc $row]
     lappend coords $x $y
-    set t [$canv create line $coords -width $wid \
+    set t [$canv create line $coords -width [linewidth $id] \
 	       -fill $colormap($id) -tags lines.$id -arrow $arrow]
     $canv lower $t
     bindline $t $id
 }
 
-proc drawparentlinks {id row col olds wid} {
-    global rowidlist canv colormap lthickness
+proc drawparentlinks {id row col olds} {
+    global rowidlist canv colormap
 
     set row2 [expr {$row + 1}]
     set x [xc $row $col]
@@ -1236,7 +1245,6 @@ proc drawparentlinks {id row col olds wid} {
     set ids [lindex $rowidlist $row2]
     # rmx = right-most X coord used
     set rmx 0
-    set wid [expr {$wid * $lthickness}]
     foreach p $olds {
 	set i [lsearch -exact $ids $p]
 	if {$i < 0} {
@@ -1256,7 +1264,7 @@ proc drawparentlinks {id row col olds wid} {
 	    set rmx $x2
 	}
 	lappend coords $x2 $y2
-	set t [$canv create line $coords -width $wid \
+	set t [$canv create line $coords -width [linewidth $p] \
 		   -fill $colormap($p) -tags lines.$p]
 	$canv lower $t
 	bindline $t $p
@@ -1264,17 +1272,16 @@ proc drawparentlinks {id row col olds wid} {
     return $rmx
 }
 
-proc drawlines {id xtra} {
+proc drawlines {id} {
     global colormap canv
     global idrowranges idrangedrawn
     global children iddrawn commitrow rowidlist
 
     $canv delete lines.$id
-    set wid [expr {$xtra + 1}]
     set nr [expr {[llength $idrowranges($id)] / 2}]
     for {set i 0} {$i < $nr} {incr i} {
 	if {[info exists idrangedrawn($id,$i)]} {
-	    drawlineseg $id $i $wid
+	    drawlineseg $id $i
 	}
     }
     if {[info exists children($id)]} {
@@ -1283,7 +1290,7 @@ proc drawlines {id xtra} {
 		set row $commitrow($child)
 		set col [lsearch -exact [lindex $rowidlist $row] $child]
 		if {$col >= 0} {
-		    drawparentlinks $child $row $col [list $id] $wid
+		    drawparentlinks $child $row $col [list $id]
 		}
 	    }
 	}
@@ -1345,7 +1352,7 @@ proc drawcmitrow {row} {
 	    if {$e eq {}} break
 	    if {$row <= $e} {
 		if {$e < $numcommits && ![info exists idrangedrawn($id,$i)]} {
-		    drawlineseg $id $i 1
+		    drawlineseg $id $i
 		    set idrangedrawn($id,$i) 1
 		}
 		break
@@ -1366,7 +1373,7 @@ proc drawcmitrow {row} {
     assigncolor $id
     if {[info exists commitlisted($id)] && [info exists parents($id)]
 	&& $parents($id) ne {}} {
-	set rmx [drawparentlinks $id $row $col $parents($id) 1]
+	set rmx [drawparentlinks $id $row $col $parents($id)]
     } else {
 	set rmx 0
     }
@@ -1644,7 +1651,6 @@ proc settextcursor {c} {
 }
 
 proc drawrest {} {
-    global phase
     global numcommits
     global startmsecs
     global canvy0 numcommits linespc
@@ -1656,7 +1662,6 @@ proc drawrest {} {
     optimize_rows $row 0 $commitidx
     showstuff $commitidx
 
-    set phase {}
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
     #puts "overall $drawmsecs ms for $numcommits commits"
 }
@@ -2884,8 +2889,8 @@ proc lineclick {x y id isnew} {
     normalline
     $canv delete hover
     # draw this line thicker than normal
-    drawlines $id 1
     set thickerline $id
+    drawlines $id
     if {$isnew} {
 	set ymax [lindex [$canv cget -scrollregion] 3]
 	if {$ymax eq {}} return
@@ -2939,8 +2944,9 @@ proc lineclick {x y id isnew} {
 proc normalline {} {
     global thickerline
     if {[info exists thickerline]} {
-	drawlines $thickerline 0
+	set id $thickerline
 	unset thickerline
+	drawlines $id
     }
 }
 
