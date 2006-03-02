@@ -14,6 +14,10 @@ while : ; do
     -v)
 	verbose=--verbose
 	;;
+    --)
+	shift
+	break
+	;;
     -*)
 	usage
 	;;

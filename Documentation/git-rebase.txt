@@ -7,14 +7,54 @@ git-rebase - Rebase local commits to new upstream head.
 
 SYNOPSIS
 --------
-'git-rebase' <upstream> [<head>]
+'git-rebase' [--onto <newbase>] <upstream> [<branch>]
 
 DESCRIPTION
 -----------
-Rebases local commits to the new head of the upstream tree.
+git-rebase applies to <upstream> (or optionally to <newbase>) commits
+from <branch> that do not appear in <upstream>. When <branch> is not
+specified it defaults to the current branch (HEAD).
+
+When git-rebase is complete, <branch> will be updated to point to the
+newly created line of commit objects, so the previous line will not be
+accessible unless there are other references to it already.
+
+Assume the following history exists and the current branch is "topic":
+
+          A---B---C topic
+         /
+    D---E---F---G master
+
+From this point, the result of the following commands:
+
+    git-rebase master
+    git-rebase master topic
+
+would be:
+
+                  A'--B'--C' topic
+                 /
+    D---E---F---G master
+
+While, starting from the same point, the result of the following
+commands:
+
+    git-rebase --onto master~1 master
+    git-rebase --onto master~1 master topic
+
+would be:
+
+              A'--B'--C' topic
+             /
+    D---E---F---G master
 
 OPTIONS
 -------
+<newbase>::
+	Starting point at which to create the new commits. If the
+	--onto option is not specified, the starting point is
+	<upstream>.
+
 <upstream>::
 	Upstream branch to compare against.
 

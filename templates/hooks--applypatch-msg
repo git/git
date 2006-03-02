@@ -9,6 +9,7 @@
 #
 # To enable this hook, make this file executable.
 
+. git-sh-setup
 test -x "$GIT_DIR/hooks/commit-msg" &&
 	exec "$GIT_DIR/hooks/commit-msg" ${1+"$@"}
 :

@@ -1317,7 +1317,7 @@ static int check_patch(struct patch *patch)
 					return -1;
 			}
 
-			changed = ce_match_stat(active_cache[pos], &st);
+			changed = ce_match_stat(active_cache[pos], &st, 1);
 			if (changed)
 				return error("%s: does not match index",
 					     old_name);

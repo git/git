@@ -6,8 +6,8 @@ all:
 # on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
 # choice) has very fast version optimized for i586.
 #
-# Define NO_OPENSSL environment variable if you do not have OpenSSL. You will
-# miss out git-rev-list --merge-order. This also implies MOZILLA_SHA1.
+# Define NO_OPENSSL environment variable if you do not have OpenSSL.
+# This also implies MOZILLA_SHA1.
 #
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
@@ -77,6 +77,12 @@ GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
+uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
+
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
 CFLAGS = -g -O2 -Wall
@@ -87,7 +93,7 @@ STRIP ?= strip
 
 prefix = $(HOME)
 bindir = $(prefix)/bin
-gitexecdir = $(prefix)/bin
+gitexecdir = $(bindir)
 template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
@@ -114,7 +120,7 @@ SCRIPT_SH = \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-resolve.sh git-revert.sh git-sh-setup.sh \
+	git-resolve.sh git-revert.sh git-rm.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh git-whatchanged.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -124,6 +130,7 @@ SCRIPT_SH = \
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-shortlog.perl git-fmt-merge-msg.perl git-rerere.perl \
+	git-annotate.perl git-cvsserver.perl \
 	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl
 
 SCRIPT_PYTHON = \
@@ -136,7 +143,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # The ones that do not have to link with lcrypto nor lz.
 SIMPLE_PROGRAMS = \
-	git-get-tar-commit-id$X git-mailinfo$X git-mailsplit$X \
+	git-get-tar-commit-id$X git-mailsplit$X \
 	git-stripspace$X git-daemon$X
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
@@ -146,8 +153,8 @@ PROGRAMS = \
 	git-convert-objects$X git-diff-files$X \
 	git-diff-index$X git-diff-stages$X \
 	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
-	git-hash-object$X git-index-pack$X git-init-db$X \
-	git-local-fetch$X git-ls-files$X git-ls-tree$X git-merge-base$X \
+	git-hash-object$X git-index-pack$X git-init-db$X git-local-fetch$X \
+	git-ls-files$X git-ls-tree$X git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-read-tree$X \
 	git-receive-pack$X git-rev-list$X git-rev-parse$X \
@@ -184,8 +191,8 @@ LIB_FILE=libgit.a
 
 LIB_H = \
 	blob.h cache.h commit.h count-delta.h csum-file.h delta.h \
-	diff.h epoch.h object.h pack.h pkt-line.h quote.h refs.h \
-	run-command.h strbuf.h tag.h tree.h git-compat-util.h
+	diff.h object.h pack.h pkt-line.h quote.h refs.h \
+	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
@@ -198,17 +205,11 @@ LIB_OBJS = \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
-	fetch-clone.o \
+	fetch-clone.o revision.o pager.o \
 	$(DIFF_OBJS)
 
 LIBS = $(LIB_FILE)
 LIBS += -lz
-
-# Shell quote;
-# Result of this needs to be placed inside ''
-shq = $(subst ','\'',$(1))
-# This has surrounding ''
-shellquote = '$(call shq,$(1))'
 
 #
 # Platform specific tweaks
@@ -217,10 +218,6 @@ shellquote = '$(call shq,$(1))'
 # We choose to avoid "if .. else if .. else .. endif endif"
 # because maintaining the nesting to match is a pain.  If
 # we had "elif" things would have been much nicer...
-uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
-uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
-uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
@@ -235,10 +232,10 @@ endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
-	NEEDS_LIBICONV = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
 	ifeq ($(uname_R),5.8)
+		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 	endif
@@ -297,8 +294,10 @@ endif
 ifdef WITH_OWN_SUBPROCESS_PY
 	PYMODULES += compat/subprocess.py
 else
-	ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
-		PYMODULES += compat/subprocess.py
+	ifeq ($(NO_PYTHON),)
+		ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
+			PYMODULES += compat/subprocess.py
+		endif
 	endif
 endif
 
@@ -325,7 +324,6 @@ ifndef NO_CURL
 endif
 
 ifndef NO_OPENSSL
-	LIB_OBJS += epoch.o
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		# Again this may be problematic -- gcc does not always want -R.
@@ -422,7 +420,21 @@ ifdef NO_ACCURATE_DIFF
 	ALL_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
-ALL_CFLAGS += -DSHA1_HEADER=$(call shellquote,$(SHA1_HEADER)) $(COMPAT_CFLAGS)
+# Shell quote (do not use $(call) to accomodate ancient setups);
+
+SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
+
+DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
+bindir_SQ = $(subst ','\'',$(bindir))
+gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
+template_dir_SQ = $(subst ','\'',$(template_dir))
+
+SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
+GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
+
+ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
@@ -437,11 +449,11 @@ strip: $(PROGRAMS) git$X
 
 git$X: git.c $(LIB_FILE)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(CFLAGS) $(COMPAT_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE)
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE) $(LIBS)
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@
-	sed -e '1s|#!.*/sh|#!$(call shq,$(SHELL_PATH))|' \
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
@@ -450,15 +462,15 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	rm -f $@
-	sed -e '1s|#!.*perl|#!$(call shq,$(PERL_PATH))|' \
+	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@
 	chmod +x $@
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	rm -f $@
-	sed -e '1s|#!.*python|#!$(call shq,$(PYTHON_PATH))|' \
-	    -e 's|@@GIT_PYTHON_PATH@@|$(call shq,$(GIT_PYTHON_DIR))|g' \
+	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
+	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.py >$@
 	chmod +x $@
@@ -484,32 +496,42 @@ git$X git.spec \
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
-exec_cmd.o: ALL_CFLAGS += -DGIT_EXEC_PATH=\"$(gitexecdir)\"
+exec_cmd.o: exec_cmd.c
+	$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
 
 git-%$X: %.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
-git-mailinfo$X : SIMPLE_LIB += $(LIB_4_ICONV)
 $(SIMPLE_PROGRAMS) : $(LIB_FILE)
 $(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIB_FILE) $(SIMPLE_LIB)
 
-git-http-fetch$X: fetch.o http.o
-git-http-push$X: http.o
+git-mailinfo$X: mailinfo.o $(LIB_FILE)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIB_FILE) $(SIMPLE_LIB) $(LIB_4_ICONV)
+
 git-local-fetch$X: fetch.o
 git-ssh-fetch$X: rsh.o fetch.o
 git-ssh-upload$X: rsh.o
 git-ssh-pull$X: rsh.o fetch.o
 git-ssh-push$X: rsh.o
 
-git-http-fetch$X: LIBS += $(CURL_LIBCURL)
-git-http-push$X: LIBS += $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
-git-rev-list$X: LIBS += $(OPENSSL_LIBSSL)
+git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIBS) $(CURL_LIBCURL)
+
+git-http-push$X: http.o http-push.o $(LIB_FILE)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
+
+git-rev-list$X: rev-list.o $(LIB_FILE)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIBS) $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
-		-DDEFAULT_GIT_TEMPLATE_DIR=$(call shellquote,"$(template_dir)") $*.c
+		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H)
@@ -547,13 +569,13 @@ check:
 ### Installation rules
 
 install: all
-	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(bindir))
-	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(gitexecdir))
-	$(INSTALL) $(ALL_PROGRAMS) $(call shellquote,$(DESTDIR)$(gitexecdir))
-	$(INSTALL) git$X gitk $(call shellquote,$(DESTDIR)$(bindir))
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates install
-	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
-	$(INSTALL) $(PYMODULES) $(call shellquote,$(DESTDIR)$(GIT_PYTHON_DIR))
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
+	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 
 install-doc:
 	$(MAKE) -C Documentation install

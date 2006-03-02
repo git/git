@@ -193,7 +193,7 @@ int main(int argc, const char **argv)
 			show_file('-', ce);
 			continue;
 		}
-		changed = ce_match_stat(ce, &st);
+		changed = ce_match_stat(ce, &st, 0);
 		if (!changed && !diff_options.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);

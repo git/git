@@ -8,10 +8,7 @@ SHELL_PATH ?= $(SHELL)
 TAR ?= $(TAR)
 
 # Shell quote;
-# Result of this needs to be placed inside ''
-shq = $(subst ','\'',$(1))
-# This has surrounding ''
-shellquote = '$(call shq,$(1))'
+SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
 T = $(wildcard t[0-9][0-9][0-9][0-9]-*.sh)
 
@@ -22,7 +19,7 @@ endif
 all: $(T) clean
 
 $(T):
-	@echo "*** $@ ***"; $(call shellquote,$(SHELL_PATH)) $@ $(GIT_TEST_OPTS)
+	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
 clean:
 	rm -fr trash

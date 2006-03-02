@@ -27,6 +27,9 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 	ce->ce_uid = htonl(st->st_uid);
 	ce->ce_gid = htonl(st->st_gid);
 	ce->ce_size = htonl(st->st_size);
+
+	if (assume_unchanged)
+		ce->ce_flags |= htons(CE_VALID);
 }
 
 static int ce_compare_data(struct cache_entry *ce, struct stat *st)
@@ -146,9 +149,18 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-int ce_match_stat(struct cache_entry *ce, struct stat *st)
+int ce_match_stat(struct cache_entry *ce, struct stat *st, int ignore_valid)
 {
-	unsigned int changed = ce_match_stat_basic(ce, st);
+	unsigned int changed;
+
+	/*
+	 * If it's marked as always valid in the index, it's
+	 * valid whatever the checked-out copy says.
+	 */
+	if (!ignore_valid && (ce->ce_flags & htons(CE_VALID)))
+		return 0;
+
+	changed = ce_match_stat_basic(ce, st);
 
 	/*
 	 * Within 1 second of this sequence:
@@ -164,7 +176,7 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 	 * effectively mean we can make at most one commit per second,
 	 * which is not acceptable.  Instead, we check cache entries
 	 * whose mtime are the same as the index file timestamp more
-	 * careful than others.
+	 * carefully than others.
 	 */
 	if (!changed &&
 	    index_file_timestamp &&
@@ -174,10 +186,10 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-int ce_modified(struct cache_entry *ce, struct stat *st)
+int ce_modified(struct cache_entry *ce, struct stat *st, int really)
 {
 	int changed, changed_fs;
-	changed = ce_match_stat(ce, st);
+	changed = ce_match_stat(ce, st, really);
 	if (!changed)
 		return 0;
 	/*
@@ -233,6 +245,11 @@ int cache_name_compare(const char *name1, int flags1, const char *name2, int fla
 		return -1;
 	if (len1 > len2)
 		return 1;
+
+	/* Compare stages  */
+	flags1 &= CE_STAGEMASK;
+	flags2 &= CE_STAGEMASK;
+
 	if (flags1 < flags2)
 		return -1;
 	if (flags1 > flags2)
@@ -430,6 +447,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	int ok_to_add = option & ADD_CACHE_OK_TO_ADD;
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
+
 	pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 
 	/* existing match? Just replace it. */

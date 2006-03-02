@@ -130,7 +130,7 @@ static void start_object_request(struct object_request *obj_req)
 
 	if (obj_req->local < 0) {
 		obj_req->state = ABORTED;
-		error("Couldn't create temporary file %s for %s: %s\n",
+		error("Couldn't create temporary file %s for %s: %s",
 		      obj_req->tmpfile, obj_req->filename, strerror(errno));
 		return;
 	}
@@ -830,9 +830,9 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 				    obj_req->errorstr, obj_req->curl_result,
 				    obj_req->http_code, hex);
 	} else if (obj_req->zret != Z_STREAM_END) {
-		ret = error("File %s (%s) corrupt\n", hex, obj_req->url);
+		ret = error("File %s (%s) corrupt", hex, obj_req->url);
 	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
-		ret = error("File %s has bad hash\n", hex);
+		ret = error("File %s has bad hash", hex);
 	} else if (obj_req->rename < 0) {
 		ret = error("unable to write sha1 filename %s",
 			    obj_req->filename);
@@ -854,7 +854,7 @@ int fetch(unsigned char *sha1)
 		fetch_alternates(alt->base);
 		altbase = altbase->next;
 	}
-	return error("Unable to find %s under %s\n", sha1_to_hex(sha1),
+	return error("Unable to find %s under %s", sha1_to_hex(sha1),
 		     alt->base);
 }
 

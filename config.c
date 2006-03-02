@@ -222,6 +222,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.ignorestat")) {
+		assume_unchanged = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.symrefsonly")) {
 		only_use_symrefs = git_config_bool(var, value);
 		return 0;

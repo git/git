@@ -7,7 +7,7 @@ git-add - Add files to the index file.
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] <file>...
+'git-add' [-n] [-v] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -25,6 +25,11 @@ OPTIONS
 
 -v::
         Be verbose.
+
+--::
+	This option can be used to separate command-line options from
+	the list of files, (useful when filenames might be mistaken
+	for command-line options).
 
 
 DISCUSSION

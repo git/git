@@ -33,7 +33,7 @@ static int get_stat_data(struct cache_entry *ce,
 			}
 			return -1;
 		}
-		changed = ce_match_stat(ce, &st);
+		changed = ce_match_stat(ce, &st, 0);
 		if (changed) {
 			mode = create_ce_mode(st.st_mode);
 			if (!trust_executable_bit &&

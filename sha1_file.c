@@ -247,6 +247,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		for ( ; cp < ep && *cp != sep; cp++)
 			;
 		if (last != cp) {
+			struct stat st;
 			struct alternate_object_database *alt;
 			/* 43 = 40-byte + 2 '/' + terminating NUL */
 			int pfxlen = cp - last;
@@ -269,9 +270,19 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 			}
 			else
 				memcpy(ent->base, last, pfxlen);
+
 			ent->name = ent->base + pfxlen + 1;
-			ent->base[pfxlen] = ent->base[pfxlen + 3] = '/';
-			ent->base[entlen-1] = 0;
+			ent->base[pfxlen + 3] = '/';
+			ent->base[pfxlen] = ent->base[entlen-1] = 0;
+
+			/* Detect cases where alternate disappeared */
+			if (stat(ent->base, &st) || !S_ISDIR(st.st_mode)) {
+				error("object directory %s does not exist; "
+				      "check .git/objects/info/alternates.",
+				      ent->base);
+				goto bad;
+			}
+			ent->base[pfxlen] = '/';
 
 			/* Prevent the common mistake of listing the same
 			 * thing twice, or object directory itself.
@@ -552,7 +563,9 @@ static void prepare_packed_git_one(char *objdir, int local)
 	len = strlen(path);
 	dir = opendir(path);
 	if (!dir) {
-		fprintf(stderr, "unable to open object pack directory: %s: %s\n", path, strerror(errno));
+		if (errno != ENOENT)
+			error("unable to open object pack directory: %s: %s",
+			      path, strerror(errno));
 		return;
 	}
 	path[len++] = '/';
@@ -826,6 +839,25 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	}
 	*sizep = size;
 	return offset;
+}
+
+int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
+			   unsigned char *base, unsigned long *sizep,
+			   enum object_type *kindp)
+{
+	unsigned long ptr;
+	int status = -1;
+
+	use_packed_git(p);
+	ptr = offset;
+	ptr = unpack_object_header(p, ptr, kindp, sizep);
+	if (*kindp != OBJ_DELTA)
+		goto done;
+	memcpy(base, p->pack_base + ptr, 20);
+	status = 0;
+ done:
+	unuse_packed_git(p);
+	return status;
 }
 
 void packed_object_info_detail(struct pack_entry *e,
@@ -1481,7 +1513,8 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 
 	local = mkstemp(tmpfile);
 	if (local < 0)
-		return error("Couldn't open %s for %s\n", tmpfile, sha1_to_hex(sha1));
+		return error("Couldn't open %s for %s",
+			     tmpfile, sha1_to_hex(sha1));
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -1529,7 +1562,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	}
 	if (memcmp(sha1, real_sha1, 20)) {
 		unlink(tmpfile);
-		return error("File %s has bad hash\n", sha1_to_hex(sha1));
+		return error("File %s has bad hash", sha1_to_hex(sha1));
 	}
 
 	return move_temp_to_file(tmpfile, sha1_file_name(sha1));

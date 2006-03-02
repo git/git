@@ -56,20 +56,6 @@ def show_date(epoch, tz):
 
 	return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(secs))
 
-def get_sha1_from_tags(line):
-	fp = os.popen("git cat-file -t " + line)
-	entry = string.strip(fp.readline())
-	fp.close()
-	if (entry == "commit"):
-		return line
-	elif (entry == "tag"):
-		fp = os.popen("git cat-file tag "+ line)
-		entry = string.strip(fp.readline())
-		fp.close()
-		obj = re.split(" ", entry)
-		if (obj[0] == "object"):
-			return obj[1]
-	return None
 
 class CellRendererGraph(gtk.GenericCellRenderer):
 	"""Cell renderer for directed graph.
@@ -168,15 +154,15 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 
 		cols = self.node[0]
 		for start, end, colour in self.in_lines + self.out_lines:
-			cols = max(cols, start, end)
+			cols = int(max(cols, start, end))
 
 		(column, colour, names) = self.node
 		names_len = 0
 		if (len(names) != 0):
 			for item in names:
-				names_len += len(item)/3
+				names_len += len(item)
 
-		width = box_size * (cols + 1 + names_len )
+		width = box_size * (cols + 1 ) + names_len 
 		height = box_size
 
 		# FIXME I have no idea how to use cell_area properly
@@ -258,6 +244,8 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 			for item in names:
 				name = name + item + " "
 
+			ctx.select_font_face("Monospace")
+			ctx.set_font_size(13)
 			ctx.text_path(name)
 
 		self.set_colour(ctx, colour, 0.0, 0.5)
@@ -434,7 +422,7 @@ class DiffWindow:
 class GitView:
 	""" This is the main class
 	"""
-	version = "0.6"
+	version = "0.7"
 
 	def __init__(self, with_diff=0):
 		self.with_diff = with_diff
@@ -465,32 +453,20 @@ class GitView:
 		respective sha1 details """
 
 		self.bt_sha1 = { }
-		git_dir = os.getenv("GIT_DIR")
-		if (git_dir == None):
-			git_dir = ".git"
-
-		#FIXME the path seperator
-		ref_files = os.listdir(git_dir + "/refs/tags")
-		for file in ref_files:
-			fp = open(git_dir + "/refs/tags/"+file)
-			sha1 = get_sha1_from_tags(string.strip(fp.readline()))
-			try:
-				self.bt_sha1[sha1].append(file)
-			except KeyError:
-				self.bt_sha1[sha1] = [file]
-			fp.close()
-
-
-		#FIXME the path seperator
-		ref_files = os.listdir(git_dir + "/refs/heads")
-		for file in ref_files:
-			fp = open(git_dir + "/refs/heads/" + file)
-			sha1 = get_sha1_from_tags(string.strip(fp.readline()))
-			try:
-				self.bt_sha1[sha1].append(file)
-			except KeyError:
-				self.bt_sha1[sha1] = [file]
-			fp.close()
+		ls_remote = re.compile('^(.{40})\trefs/([^^]+)(?:\\^(..))?$');
+		fp = os.popen('git ls-remote "${GIT_DIR-.git}"')
+		while 1:
+			line = string.strip(fp.readline())
+			if line == '':
+				break
+			m = ls_remote.match(line)
+			if not m:
+				continue
+			(sha1, name) = (m.group(1), m.group(2))
+			if not self.bt_sha1.has_key(sha1):
+				self.bt_sha1[sha1] = []
+			self.bt_sha1[sha1].append(name)
+		fp.close()
 
 
 	def construct(self):
@@ -537,8 +513,8 @@ class GitView:
 
 		cell = CellRendererGraph()
 		column = gtk.TreeViewColumn()
-		column.set_resizable(False)
-		column.pack_start(cell, expand=False)
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
 		column.add_attribute(cell, "node", 1)
 		column.add_attribute(cell, "in-lines", 2)
 		column.add_attribute(cell, "out-lines", 3)
@@ -847,6 +823,7 @@ class GitView:
 		self.colours = {}
 		self.nodepos = {}
 		self.incomplete_line = {}
+		self.commits = []
 
 		index = 0
 		last_colour = 0
@@ -864,12 +841,7 @@ class GitView:
 
 			commit = Commit(commit_lines)
 			if (commit != None ):
-				(out_line, last_colour, last_nodepos) = self.draw_graph(commit,
-										index, out_line,
-										last_colour,
-										last_nodepos)
-				self.index[commit.commit_sha1] = index
-				index += 1
+				self.commits.append(commit)
 
 			# Skip the '\0
 			commit_lines = []
@@ -877,6 +849,14 @@ class GitView:
 			input_line = fp.readline()
 
 		fp.close()
+
+		for commit in self.commits:
+			(out_line, last_colour, last_nodepos) = self.draw_graph(commit,
+										index, out_line,
+										last_colour,
+										last_nodepos)
+			self.index[commit.commit_sha1] = index
+			index += 1
 
 		self.treeview.set_model(self.model)
 		self.treeview.show()
@@ -890,28 +870,22 @@ class GitView:
 
 		# Reset nodepostion
 		if (last_nodepos > 5):
-			last_nodepos = 0
+			last_nodepos = -1 
 
 		# Add the incomplete lines of the last cell in this
-		for sha1 in self.incomplete_line.keys():
-			if ( sha1 != commit.commit_sha1):
-				for pos in self.incomplete_line[sha1]:
-					in_line.append((pos, pos, self.colours[sha1]))
-			else:
-				del self.incomplete_line[sha1]
-
 		try:
 			colour = self.colours[commit.commit_sha1]
 		except KeyError:
-			last_colour +=1
-			self.colours[commit.commit_sha1] = last_colour
-			colour =  last_colour
+			self.colours[commit.commit_sha1] = last_colour+1
+			last_colour = self.colours[commit.commit_sha1] 
+			colour =   self.colours[commit.commit_sha1] 
+
 		try:
 			node_pos = self.nodepos[commit.commit_sha1]
 		except KeyError:
-			last_nodepos +=1
-			self.nodepos[commit.commit_sha1] = last_nodepos
-			node_pos = last_nodepos
+			self.nodepos[commit.commit_sha1] = last_nodepos+1
+			last_nodepos = self.nodepos[commit.commit_sha1]
+			node_pos =  self.nodepos[commit.commit_sha1]
 
 		#The first parent always continue on the same line
 		try:
@@ -921,25 +895,26 @@ class GitView:
 			self.colours[commit.parent_sha1[0]] = colour
 			self.nodepos[commit.parent_sha1[0]] = node_pos
 
-		in_line.append((node_pos, self.nodepos[commit.parent_sha1[0]],
-					self.colours[commit.parent_sha1[0]]))
+		for sha1 in self.incomplete_line.keys():
+			if (sha1 != commit.commit_sha1):
+				self.draw_incomplete_line(sha1, node_pos,
+						out_line, in_line, index)
+			else:
+				del self.incomplete_line[sha1]
 
-		self.add_incomplete_line(commit.parent_sha1[0], index+1)
 
-		if (len(commit.parent_sha1) > 1):
-			for parent_id in commit.parent_sha1[1:]:
-				try:
-					tmp_node_pos = self.nodepos[parent_id]
-				except KeyError:
-					last_colour += 1;
-					self.colours[parent_id] = last_colour
-					last_nodepos +=1
-					self.nodepos[parent_id] = last_nodepos
+		for parent_id in commit.parent_sha1:
+			try:
+				tmp_node_pos = self.nodepos[parent_id]
+			except KeyError:
+				self.colours[parent_id] = last_colour+1
+				last_colour = self.colours[parent_id]
+				self.nodepos[parent_id] = last_nodepos+1
+				last_nodepos = self.nodepos[parent_id] 
 
-				in_line.append((node_pos, self.nodepos[parent_id],
-							self.colours[parent_id]))
-				self.add_incomplete_line(parent_id, index+1)
-
+			in_line.append((node_pos, self.nodepos[parent_id],
+						self.colours[parent_id]))
+			self.add_incomplete_line(parent_id)
 
 		try:
 			branch_tag = self.bt_sha1[commit.commit_sha1]
@@ -954,11 +929,30 @@ class GitView:
 
 		return (in_line, last_colour, last_nodepos)
 
-	def add_incomplete_line(self, sha1, index):
+	def add_incomplete_line(self, sha1):
 		try:
 			self.incomplete_line[sha1].append(self.nodepos[sha1])
 		except KeyError:
 			self.incomplete_line[sha1] = [self.nodepos[sha1]]
+
+	def draw_incomplete_line(self, sha1, node_pos, out_line, in_line, index):
+		for idx, pos in enumerate(self.incomplete_line[sha1]):
+			if(pos == node_pos):
+				#remove the straight line and add a slash
+				if ((pos, pos, self.colours[sha1]) in out_line):
+					out_line.remove((pos, pos, self.colours[sha1]))
+				out_line.append((pos, pos+0.5, self.colours[sha1]))
+				self.incomplete_line[sha1][idx] = pos = pos+0.5
+			try:
+				next_commit = self.commits[index+1]
+				if (next_commit.commit_sha1 == sha1 and pos != int(pos)):
+				# join the line back to the node point 
+				# This need to be done only if we modified it
+					in_line.append((pos, pos-0.5, self.colours[sha1]))
+					continue;
+			except IndexError:
+				pass
+			in_line.append((pos, pos, self.colours[sha1]))
 
 
 	def _go_clicked_cb(self, widget, revid):

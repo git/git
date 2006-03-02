@@ -164,6 +164,7 @@ fast_forward_local () {
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
+		echo >&2 "  from $local to $2"
 		git-update-ref "$1" "$2" "$local"
 		;;
 	    *)
@@ -320,7 +321,7 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack $exec $keep "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack $exec $keep --thin "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do
@@ -368,20 +369,25 @@ fetch_main "$reflist"
 # automated tag following
 case "$no_tags$tags" in
 '')
-	taglist=$(IFS=" " &&
-	git-ls-remote $upload_pack --tags "$remote" |
-	sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
-	while read sha1 name
-	do
-		test -f "$GIT_DIR/$name" && continue
-	  	git-check-ref-format "$name" || {
-			echo >&2 "warning: tag ${name} ignored"
-			continue
-		}
-		git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
-		echo >&2 "Auto-following $name"
-		echo ".${name}:${name}"
-	done)
+	case "$reflist" in
+	*:refs/*)
+		# effective only when we are following remote branch
+		# using local tracking branch.
+		taglist=$(IFS=" " &&
+		git-ls-remote $upload_pack --tags "$remote" |
+		sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
+		while read sha1 name
+		do
+			test -f "$GIT_DIR/$name" && continue
+			git-check-ref-format "$name" || {
+				echo >&2 "warning: tag ${name} ignored"
+				continue
+			}
+			git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
+			echo >&2 "Auto-following $name"
+			echo ".${name}:${name}"
+		done)
+	esac
 	case "$taglist" in
 	'') ;;
 	?*)

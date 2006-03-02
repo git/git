@@ -8,7 +8,7 @@ static int keep_pack;
 static int quiet;
 static int verbose;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [-q] [-v] [-k] [--exec=upload-pack] [host:]directory <refs>...";
+"git-fetch-pack [-q] [-v] [-k] [--thin] [--exec=upload-pack] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -18,7 +18,7 @@ static const char *exec = "git-upload-pack";
 #define POPPED		(1U << 4)
 
 static struct commit_list *rev_list = NULL;
-static int non_common_revs = 0, multi_ack = 0;
+static int non_common_revs = 0, multi_ack = 0, use_thin_pack = 0;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -82,7 +82,7 @@ static void mark_common(struct commit *commit,
   Get the next rev to send, ignoring the common.
 */
 
-static const unsigned char* get_rev()
+static const unsigned char* get_rev(void)
 {
 	struct commit *commit = NULL;
 
@@ -156,8 +156,9 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			continue;
 		}
 
-		packet_write(fd[1], "want %s%s\n", sha1_to_hex(remote),
-			multi_ack ? " multi_ack" : "");
+		packet_write(fd[1], "want %s%s%s\n", sha1_to_hex(remote),
+			     (multi_ack ? " multi_ack" : ""),
+			     (use_thin_pack ? " thin-pack" : ""));
 		fetching++;
 	}
 	packet_flush(fd[1]);
@@ -421,6 +422,10 @@ int main(int argc, char **argv)
 				keep_pack = 1;
 				continue;
 			}
+			if (!strcmp("--thin", arg)) {
+				use_thin_pack = 1;
+				continue;
+			}
 			if (!strcmp("-v", arg)) {
 				verbose = 1;
 				continue;
@@ -434,6 +439,8 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
+	if (keep_pack)
+		use_thin_pack = 0;
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
