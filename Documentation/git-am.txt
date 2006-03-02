@@ -9,7 +9,8 @@ git-am - Apply a series of patches in a mailbox
 SYNOPSIS
 --------
 [verse]
-'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>...
+'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way]
+         [--interactive] [--whitespace=<option>] <mbox>...
 'git-am' [--skip | --resolved]
 
 DESCRIPTION
@@ -46,6 +47,10 @@ OPTIONS
 	Skip the current patch.  This is only meaningful when
 	restarting an aborted patch.
 
+--whitespace=<option>::
+	This flag is passed to the `git-apply` program that applies
+	the patch.
+
 --interactive::
 	Run interactively, just like git-applymbox.
 
@@ -80,7 +85,7 @@ names.
 
 SEE ALSO
 --------
-gitlink:git-applymbox[1], gitlink:git-applypatch[1].
+gitlink:git-applymbox[1], gitlink:git-applypatch[1], gitlink:git-apply[1].
 
 
 Author

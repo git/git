@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
 	  [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM]
+	  [--whitespace=<nowarn|warn|error|error-all|strip>]
 	  [<patch>...]
 
 DESCRIPTION
@@ -96,6 +97,35 @@ OPTIONS
 	database, use the post-image object as the patch
 	result.  This allows binary files to be patched in a
 	very limited way.
+
+--whitespace=<option>::
+	When applying a patch, detect a new or modified line
+	that ends with trailing whitespaces (this includes a
+	line that solely consists of whitespaces).  By default,
+	the command outputs warning messages and applies the
+	patch.
+	When `git-apply` is used for statistics and not applying a
+	patch, it defaults to `nowarn`.
+	You can use different `<option>` to control this
+	behaviour:
++
+* `nowarn` turns off the trailing whitespace warning.
+* `warn` outputs warnings for a few such errors, but applies the
+  patch (default).
+* `error` outputs warnings for a few such errors, and refuses
+  to apply the patch.
+* `error-all` is similar to `error` but shows all errors.
+* `strip` outputs warnings for a few such errors, strips out the
+  trailing whitespaces and applies the patch.
+
+
+Configuration
+-------------
+
+apply.whitespace::
+	When no `--whitespace` flag is given from the command
+	line, this configuration item is used as the default.
+
 
 Author
 ------
