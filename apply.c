@@ -34,6 +34,56 @@ static int line_termination = '\n';
 static const char apply_usage[] =
 "git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] <patch>...";
 
+static enum whitespace_eol {
+	nowarn_whitespace,
+	warn_on_whitespace,
+	error_on_whitespace,
+	strip_whitespace,
+} new_whitespace = warn_on_whitespace;
+static int whitespace_error = 0;
+static int squelch_whitespace_errors = 5;
+static int applied_after_stripping = 0;
+static const char *patch_input_file = NULL;
+
+static void parse_whitespace_option(const char *option)
+{
+	if (!option) {
+		new_whitespace = warn_on_whitespace;
+		return;
+	}
+	if (!strcmp(option, "warn")) {
+		new_whitespace = warn_on_whitespace;
+		return;
+	}
+	if (!strcmp(option, "nowarn")) {
+		new_whitespace = nowarn_whitespace;
+		return;
+	}
+	if (!strcmp(option, "error")) {
+		new_whitespace = error_on_whitespace;
+		return;
+	}
+	if (!strcmp(option, "error-all")) {
+		new_whitespace = error_on_whitespace;
+		squelch_whitespace_errors = 0;
+		return;
+	}
+	if (!strcmp(option, "strip")) {
+		new_whitespace = strip_whitespace;
+		return;
+	}
+	die("unrecognized whitespace option '%s'", option);
+}
+
+static void set_default_whitespace_mode(const char *whitespace_option)
+{
+	if (!whitespace_option && !apply_default_whitespace) {
+		new_whitespace = (apply
+				  ? warn_on_whitespace
+				  : nowarn_whitespace);
+	}
+}
+
 /*
  * For "diff-stat" like behaviour, we keep track of the biggest change
  * we've seen, and the longest filename. That allows us to do simple
@@ -815,6 +865,25 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			oldlines--;
 			break;
 		case '+':
+			/*
+			 * We know len is at least two, since we have a '+' and
+			 * we checked that the last character was a '\n' above.
+			 * That is, an addition of an empty line would check
+			 * the '+' here.  Sneaky...
+			 */
+			if ((new_whitespace != nowarn_whitespace) &&
+			    isspace(line[len-2])) {
+				whitespace_error++;
+				if (squelch_whitespace_errors &&
+				    squelch_whitespace_errors <
+				    whitespace_error)
+					;
+				else {
+					fprintf(stderr, "Adds trailing whitespace.\n%s:%d:%.*s\n",
+						patch_input_file,
+						linenr, len-2, line+1);
+				}
+			}
 			added++;
 			newlines--;
 			break;
@@ -1092,6 +1161,28 @@ struct buffer_desc {
 	unsigned long alloc;
 };
 
+static int apply_line(char *output, const char *patch, int plen)
+{
+	/* plen is number of bytes to be copied from patch,
+	 * starting at patch+1 (patch[0] is '+').  Typically
+	 * patch[plen] is '\n'.
+	 */
+	int add_nl_to_tail = 0;
+	if ((new_whitespace == strip_whitespace) &&
+	    1 < plen && isspace(patch[plen-1])) {
+		if (patch[plen] == '\n')
+			add_nl_to_tail = 1;
+		plen--;
+		while (0 < plen && isspace(patch[plen]))
+			plen--;
+		applied_after_stripping++;
+	}
+	memcpy(output, patch + 1, plen);
+	if (add_nl_to_tail)
+		output[plen++] = '\n';
+	return plen;
+}
+
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 {
 	char *buf = desc->buffer;
@@ -1127,10 +1218,9 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (*patch != '+' || !no_add) {
-				memcpy(new + newsize, patch + 1, plen);
-				newsize += plen;
-			}
+			if (*patch != '+' || !no_add)
+				newsize += apply_line(new + newsize, patch,
+						      plen);
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
@@ -1691,7 +1781,7 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd)
+static int apply_patch(int fd, const char *filename)
 {
 	int newfd;
 	unsigned long offset, size;
@@ -1699,6 +1789,7 @@ static int apply_patch(int fd)
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
+	patch_input_file = filename;
 	if (!buffer)
 		return -1;
 	offset = 0;
@@ -1725,6 +1816,9 @@ static int apply_patch(int fd)
 	}
 
 	newfd = -1;
+	if (whitespace_error && (new_whitespace == error_on_whitespace))
+		apply = 0;
+
 	write_index = check_index && apply;
 	if (write_index)
 		newfd = hold_index_file_for_update(&cache_file, get_index_file());
@@ -1761,17 +1855,28 @@ static int apply_patch(int fd)
 	return 0;
 }
 
+static int git_apply_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "apply.whitespace")) {
+		apply_default_whitespace = strdup(value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
+
 int main(int argc, char **argv)
 {
 	int i;
 	int read_stdin = 1;
+	const char *whitespace_option = NULL;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0);
+			apply_patch(0, "<stdin>");
 			read_stdin = 0;
 			continue;
 		}
@@ -1831,11 +1936,18 @@ int main(int argc, char **argv)
 			line_termination = 0;
 			continue;
 		}
+		if (!strncmp(arg, "--whitespace=", 13)) {
+			whitespace_option = arg + 13;
+			parse_whitespace_option(arg + 13);
+			continue;
+		}
 
 		if (check_index && prefix_length < 0) {
 			prefix = setup_git_directory();
 			prefix_length = prefix ? strlen(prefix) : 0;
-			git_config(git_default_config);
+			git_config(git_apply_config);
+			if (!whitespace_option && apply_default_whitespace)
+				parse_whitespace_option(apply_default_whitespace);
 		}
 		if (0 < prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);
@@ -1844,10 +1956,38 @@ int main(int argc, char **argv)
 		if (fd < 0)
 			usage(apply_usage);
 		read_stdin = 0;
-		apply_patch(fd);
+		set_default_whitespace_mode(whitespace_option);
+		apply_patch(fd, arg);
 		close(fd);
 	}
+	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0);
+		apply_patch(0, "<stdin>");
+	if (whitespace_error) {
+		if (squelch_whitespace_errors &&
+		    squelch_whitespace_errors < whitespace_error) {
+			int squelched =
+				whitespace_error - squelch_whitespace_errors;
+			fprintf(stderr, "warning: squelched %d whitespace error%s\n",
+				squelched,
+				squelched == 1 ? "" : "s");
+		}
+		if (new_whitespace == error_on_whitespace)
+			die("%d line%s add%s trailing whitespaces.",
+			    whitespace_error,
+			    whitespace_error == 1 ? "" : "s",
+			    whitespace_error == 1 ? "s" : "");
+		if (applied_after_stripping)
+			fprintf(stderr, "warning: %d line%s applied after"
+				" stripping trailing whitespaces.\n",
+				applied_after_stripping,
+				applied_after_stripping == 1 ? "" : "s");
+		else if (whitespace_error)
+			fprintf(stderr, "warning: %d line%s add%s trailing"
+				" whitespaces.\n",
+				whitespace_error,
+				whitespace_error == 1 ? "" : "s",
+				whitespace_error == 1 ? "s" : "");
+	}
 	return 0;
 }

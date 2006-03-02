@@ -16,6 +16,7 @@ int only_use_symrefs = 0;
 int repository_format_version = 0;
 char git_commit_encoding[MAX_ENCODING_LENGTH] = "utf-8";
 int shared_repository = 0;
+const char *apply_default_whitespace = NULL;
 
 static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
 	*git_graft_file;

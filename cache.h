@@ -160,10 +160,12 @@ extern int hold_index_file_for_update(struct cache_file *, const char *path);
 extern int commit_index_file(struct cache_file *);
 extern void rollback_index_file(struct cache_file *);
 
+/* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int only_use_symrefs;
 extern int diff_rename_limit_default;
 extern int shared_repository;
+extern const char *apply_default_whitespace;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
