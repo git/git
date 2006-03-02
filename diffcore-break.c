@@ -4,8 +4,6 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "delta.h"
-#include "count-delta.h"
 
 static int should_break(struct diff_filespec *src,
 			struct diff_filespec *dst,
@@ -47,7 +45,6 @@ static int should_break(struct diff_filespec *src,
 	 * The value we return is 1 if we want the pair to be broken,
 	 * or 0 if we do not.
 	 */
-	void *delta;
 	unsigned long delta_size, base_size, src_copied, literal_added;
 	int to_break = 0;
 
@@ -69,19 +66,11 @@ static int should_break(struct diff_filespec *src,
 	if (base_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
-	delta = diff_delta(src->data, src->size,
-			   dst->data, dst->size,
-			   &delta_size, 0);
-	if (!delta)
-		return 0; /* error but caught downstream */
-
-	/* Estimate the edit size by interpreting delta. */
-	if (count_delta(delta, delta_size,
-			&src_copied, &literal_added)) {
-		free(delta);
-		return 0; /* we cannot tell */
-	}
-	free(delta);
+	if (diffcore_count_changes(src->data, src->size,
+				   dst->data, dst->size,
+				   0,
+				   &src_copied, &literal_added))
+		return 0;
 
 	/* Compute merge-score, which is "how much is removed
 	 * from the source material".  The clean-up stage will
