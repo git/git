@@ -584,6 +584,7 @@ sub req_co
     print "E cvs checkout: Updating $checkout_path\n";
 
     my %seendirs = ();
+    my $lastdir ='';
 
     foreach my $git ( @{$updater->gethead} )
     {
@@ -603,7 +604,8 @@ sub req_co
             print "M U $checkout_path/$git->{name}\n";
         }
 
-	if (length($git->{dir}) && $git->{dir} ne './' && !exists($seendirs{$git->{dir}})) {
+	if (length($git->{dir}) && $git->{dir} ne './'
+	    && $git->{dir} ne $lastdir && !exists($seendirs{$git->{dir}})) {
 
 	    # Eclipse seems to need the Clear-sticky command
 	    # to prepare the 'Entries' file for the new directory.
@@ -612,6 +614,7 @@ sub req_co
 	    print "Clear-static-directory $module/$git->{dir}\n";
 	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
 	    print "E cvs checkout: Updating /$module/$git->{dir}\n";
+	    $lastdir = $git->{dir};
 	    $seendirs{$git->{dir}} = 1;
 	}
 
@@ -2349,7 +2352,7 @@ sub gethead
 
     return $self->{gethead_cache} if ( defined ( $self->{gethead_cache} ) );
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM head",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM head ORDER BY name ASC",{},1);
     $db_query->execute();
 
     my $tree = [];
