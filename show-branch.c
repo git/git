@@ -727,24 +727,16 @@ int main(int ac, char **av)
 	while (seen) {
 		struct commit *commit = pop_one_commit(&seen);
 		int this_flag = commit->object.flags;
+		int is_merge_point = ((this_flag & all_revs) == all_revs);
 
-		shown_merge_point |= ((this_flag & all_revs) == all_revs);
+		shown_merge_point |= is_merge_point;
 
 		if (1 < num_rev) {
 			int is_merge = !!(commit->parents && commit->parents->next);
-			if (topics) {
-				int interesting = 0;
-				for (i = 1; i < num_rev; i++) {
-					if ((this_flag &
-					     (1u << (i + REV_SHIFT)))) {
-						interesting = 1;
-						break;
-					}
-				}
-				if (!interesting)
-					continue;
-			}
-
+			if (topics &&
+			    !is_merge_point &&
+			    (this_flag & (1u << REV_SHIFT)))
+				continue;
 
 			for (i = 0; i < num_rev; i++) {
 				int mark;
