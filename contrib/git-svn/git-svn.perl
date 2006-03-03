@@ -625,6 +625,9 @@ sub svn_commit_tree {
 		while (<$msg_fh>) {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
+			} elsif (/^git-svn-id: /) {
+				# skip this, we regenerate the correct one
+				# on re-fetch anyways
 			} else {
 				print $msg $_ or croak $!;
 			}
