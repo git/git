@@ -10,13 +10,6 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '0.10.0';
 $GIT_DIR = $ENV{GIT_DIR} || "$ENV{PWD}/.git";
-$GIT_SVN = $ENV{GIT_SVN_ID} || 'git-svn';
-$GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
-$ENV{GIT_DIR} ||= $GIT_DIR;
-$SVN_URL = undef;
-$REV_DIR = "$GIT_DIR/$GIT_SVN/revs";
-$SVN_WC = "$GIT_DIR/$GIT_SVN/tree";
-
 # make sure the svn binary gives consistent output between locales and TZs:
 $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
@@ -78,7 +71,17 @@ foreach (keys %cmd) {
 my %opts;
 %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
-GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version ) or exit 1;
+GetOptions(%opts, 'help|H|h' => \$_help,
+		'version|V' => \$_version,
+		'id|i=s' => \$GIT_SVN) or exit 1;
+
+$GIT_SVN ||= $ENV{GIT_SVN_ID} || 'git-svn';
+$GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
+$ENV{GIT_DIR} ||= $GIT_DIR;
+$SVN_URL = undef;
+$REV_DIR = "$GIT_DIR/$GIT_SVN/revs";
+$SVN_WC = "$GIT_DIR/$GIT_SVN/tree";
+
 usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
