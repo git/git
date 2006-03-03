@@ -5,7 +5,7 @@
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [<refs>...]";
+"git-show-branch [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
 static int default_num = 0;
 static int default_alloc = 0;
@@ -547,6 +547,7 @@ int main(int ac, char **av)
 	int shown_merge_point = 0;
 	int with_current_branch = 0;
 	int head_at = -1;
+	int topics = 0;
 
 	setup_git_directory();
 	git_config(git_show_branch_config);
@@ -587,6 +588,8 @@ int main(int ac, char **av)
 			independent = 1;
 		else if (!strcmp(arg, "--topo-order"))
 			lifo = 1;
+		else if (!strcmp(arg, "--topics"))
+			topics = 1;
 		else if (!strcmp(arg, "--date-order"))
 			lifo = 0;
 		else
@@ -729,6 +732,20 @@ int main(int ac, char **av)
 
 		if (1 < num_rev) {
 			int is_merge = !!(commit->parents && commit->parents->next);
+			if (topics) {
+				int interesting = 0;
+				for (i = 1; i < num_rev; i++) {
+					if ((this_flag &
+					     (1u << (i + REV_SHIFT)))) {
+						interesting = 1;
+						break;
+					}
+				}
+				if (!interesting)
+					continue;
+			}
+
+
 			for (i = 0; i < num_rev; i++) {
 				int mark;
 				if (!(this_flag & (1u << (i + REV_SHIFT))))
