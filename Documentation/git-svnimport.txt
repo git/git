@@ -9,6 +9,7 @@ git-svnimport - Import a SVN repository into git
 
 SYNOPSIS
 --------
+[verse]
 'git-svnimport' [ -o <branch-for-HEAD> ] [ -h ] [ -v ] [ -d | -D ]
 		[ -C <GIT_repository> ] [ -i ] [ -u ] [-l limit_rev]
 		[ -b branch_subdir ] [ -T trunk_subdir ] [ -t tag_subdir ]

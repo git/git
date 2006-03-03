@@ -4,19 +4,12 @@
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$SVN_URL $SVN_INFO $SVN_WC
+		$SVN_URL $SVN_INFO $SVN_WC $SVN_UUID
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '0.10.0';
 $GIT_DIR = $ENV{GIT_DIR} || "$ENV{PWD}/.git";
-$GIT_SVN = $ENV{GIT_SVN_ID} || 'git-svn';
-$GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
-$ENV{GIT_DIR} ||= $GIT_DIR;
-$SVN_URL = undef;
-$REV_DIR = "$GIT_DIR/$GIT_SVN/revs";
-$SVN_WC = "$GIT_DIR/$GIT_SVN/tree";
-
 # make sure the svn binary gives consistent output between locales and TZs:
 $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
@@ -24,6 +17,7 @@ $ENV{LC_ALL} = 'C';
 # If SVN:: library support is added, please make the dependencies
 # optional and preserve the capability to use the command-line client.
 # use eval { require SVN::... } to make it lazy load
+# We don't use any modules not in the standard Perl distribution:
 use Carp qw/croak/;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
@@ -32,28 +26,30 @@ use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use File::Spec qw//;
 use POSIX qw/strftime/;
 my $sha1 = qr/[a-f\d]{40}/;
-my $sha1_short = qr/[a-f\d]{6,40}/;
+my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_version, $_upgrade);
+	$_find_copies_harder, $_l, $_version, $_upgrade, $_authors);
+my (@_branch_from, %tree_map, %users);
 
-GetOptions(	'revision|r=s' => \$_revision,
-		'no-ignore-externals' => \$_no_ignore_ext,
-		'stdin|' => \$_stdin,
-		'edit|e' => \$_edit,
-		'rmdir' => \$_rmdir,
-		'upgrade' => \$_upgrade,
-		'help|H|h' => \$_help,
-		'find-copies-harder' => \$_find_copies_harder,
-		'l=i' => \$_l,
-		'version|V' => \$_version,
-		'no-stop-on-copy' => \$_no_stop_copy );
+my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
+		'branch|b=s' => \@_branch_from,
+		'authors-file|A=s' => \$_authors );
 my %cmd = (
-	fetch => [ \&fetch, "Download new revisions from SVN" ],
-	init => [ \&init, "Initialize and fetch (import)"],
-	commit => [ \&commit, "Commit git revisions to SVN" ],
-	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings" ],
-	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)" ],
-	help => [ \&usage, "Show help" ],
+	fetch => [ \&fetch, "Download new revisions from SVN",
+			{ 'revision|r=s' => \$_revision, %fc_opts } ],
+	init => [ \&init, "Initialize and fetch (import)", { } ],
+	commit => [ \&commit, "Commit git revisions to SVN",
+			{	'stdin|' => \$_stdin,
+				'edit|e' => \$_edit,
+				'rmdir' => \$_rmdir,
+				'find-copies-harder' => \$_find_copies_harder,
+				'l=i' => \$_l,
+				%fc_opts,
+			} ],
+	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings", { } ],
+	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)",
+			{ 'no-ignore-externals' => \$_no_ignore_ext,
+			  'upgrade' => \$_upgrade } ],
 );
 my $cmd;
 for (my $i = 0; $i < @ARGV; $i++) {
@@ -64,16 +60,23 @@ for (my $i = 0; $i < @ARGV; $i++) {
 	}
 };
 
-# we may be called as git-svn-(command), or git-svn(command).
-foreach (keys %cmd) {
-	if (/git\-svn\-?($_)(?:\.\w+)?$/) {
-		$cmd = $1;
-		last;
-	}
-}
+my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
+
+GetOptions(%opts, 'help|H|h' => \$_help,
+		'version|V' => \$_version,
+		'id|i=s' => \$GIT_SVN) or exit 1;
+
+$GIT_SVN ||= $ENV{GIT_SVN_ID} || 'git-svn';
+$GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
+$ENV{GIT_DIR} ||= $GIT_DIR;
+$SVN_URL = undef;
+$REV_DIR = "$GIT_DIR/$GIT_SVN/revs";
+$SVN_WC = "$GIT_DIR/$GIT_SVN/tree";
+
 usage(0) if $_help;
 version() if $_version;
-usage(1) unless (defined $cmd);
+usage(1) unless defined $cmd;
+load_authors() if $_authors;
 svn_check_ignore_externals();
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
@@ -85,15 +88,25 @@ sub usage {
 	print $fd <<"";
 git-svn - bidirectional operations between a single Subversion tree and git
 Usage: $0 <command> [options] [arguments]\n
-Available commands:
+
+	print $fd "Available commands:\n" unless $cmd;
 
 	foreach (sort keys %cmd) {
-		print $fd '  ',pack('A10',$_),$cmd{$_}->[1],"\n";
+		next if $cmd && $cmd ne $_;
+		print $fd '  ',pack('A13',$_),$cmd{$_}->[1],"\n";
+		foreach (keys %{$cmd{$_}->[2]}) {
+			# prints out arguments as they should be passed:
+			my $x = s#=s$## ? '<arg>' : s#=i$## ? '<num>' : '';
+			print $fd ' ' x 17, join(', ', map { length $_ > 1 ?
+							"--$_" : "-$_" }
+						split /\|/,$_)," $x\n";
+		}
 	}
 	print $fd <<"";
-\nGIT_SVN_ID may be set in the environment to an arbitrary identifier if
-you're tracking multiple SVN branches/repositories in one git repository
-and want to keep them separate.
+\nGIT_SVN_ID may be set in the environment or via the --id/-i switch to an
+arbitrary identifier if you're tracking multiple SVN branches/repositories in
+one git repository and want to keep them separate.  See git-svn(1) for more
+information.
 
 	exit $exit;
 }
@@ -105,7 +118,6 @@ sub version {
 
 sub rebuild {
 	$SVN_URL = shift or undef;
-	my $repo_uuid;
 	my $newest_rev = 0;
 	if ($_upgrade) {
 		sys('git-update-ref',"refs/remotes/$GIT_SVN","$GIT_SVN-HEAD");
@@ -141,7 +153,7 @@ sub rebuild {
 
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
-		next if (defined $repo_uuid && ($uuid ne $repo_uuid));
+		next if (defined $SVN_UUID && ($uuid ne $SVN_UUID));
 		next if (defined $SVN_URL && ($url ne $SVN_URL));
 
 		print "r$rev = $c\n";
@@ -150,7 +162,7 @@ sub rebuild {
 				croak "SVN repository location required: $url\n";
 			}
 			$SVN_URL ||= $url;
-			$repo_uuid ||= setup_git_svn();
+			$SVN_UUID ||= setup_git_svn();
 			$latest = $rev;
 		}
 		assert_revision_eq_or_unknown($rev, $c);
@@ -215,9 +227,6 @@ sub fetch {
 		sys(@svn_co, $SVN_URL, $SVN_WC);
 		chdir $SVN_WC or croak $!;
 		$last_commit = git_commit($base, @parents);
-		unless (-f "$GIT_DIR/refs/heads/master") {
-			sys(qw(git-update-ref refs/heads/master),$last_commit);
-		}
 		assert_svn_wc_clean($base->{revision}, $last_commit);
 	} else {
 		chdir $SVN_WC or croak $!;
@@ -233,6 +242,9 @@ sub fetch {
 		$last_commit = git_commit($log_msg, $last_commit, @parents);
 	}
 	assert_svn_wc_clean($last_rev, $last_commit);
+	unless (-e "$GIT_DIR/refs/heads/master") {
+		sys(qw(git-update-ref refs/heads/master),$last_commit);
+	}
 	return pop @$svn_log;
 }
 
@@ -243,7 +255,7 @@ sub commit {
 		print "Reading from stdin...\n";
 		@commits = ();
 		while (<STDIN>) {
-			if (/\b([a-f\d]{6,40})\b/) {
+			if (/\b($sha1_short)\b/o) {
 				unshift @commits, $1;
 			}
 		}
@@ -265,7 +277,6 @@ sub commit {
 	chdir $SVN_WC or croak $!;
 	my $svn_current_rev =  svn_info('.')->{'Last Changed Rev'};
 	foreach my $c (@revs) {
-		print "Committing $c\n";
 		my $mods = svn_checkout_tree($svn_current_rev, $c);
 		if (scalar @$mods == 0) {
 			print "Skipping, no changes detected\n";
@@ -312,24 +323,31 @@ sub setup_git_svn {
 	mkpath(["$GIT_DIR/$GIT_SVN/info"]);
 	mkpath([$REV_DIR]);
 	s_to_file($SVN_URL,"$GIT_DIR/$GIT_SVN/info/url");
-	my $uuid = svn_info($SVN_URL)->{'Repository UUID'} or
+	$SVN_UUID = svn_info($SVN_URL)->{'Repository UUID'} or
 					croak "Repository UUID unreadable\n";
-	s_to_file($uuid,"$GIT_DIR/$GIT_SVN/info/uuid");
+	s_to_file($SVN_UUID,"$GIT_DIR/$GIT_SVN/info/uuid");
 
 	open my $fd, '>>', "$GIT_DIR/$GIT_SVN/info/exclude" or croak $!;
 	print $fd '.svn',"\n";
 	close $fd or croak $!;
-	return $uuid;
+	return $SVN_UUID;
 }
 
 sub assert_svn_wc_clean {
 	my ($svn_rev, $treeish) = @_;
 	croak "$svn_rev is not an integer!\n" unless ($svn_rev =~ /^\d+$/);
 	croak "$treeish is not a sha1!\n" unless ($treeish =~ /^$sha1$/o);
-	my $svn_info = svn_info('.');
-	if ($svn_rev != $svn_info->{'Last Changed Rev'}) {
-		croak "Expected r$svn_rev, got r",
-				$svn_info->{'Last Changed Rev'},"\n";
+	my $lcr = svn_info('.')->{'Last Changed Rev'};
+	if ($svn_rev != $lcr) {
+		print STDERR "Checking for copy-tree ... ";
+		# use
+		my @diff = grep(/^Index: /,(safe_qx(qw(svn diff),
+						"-r$lcr:$svn_rev")));
+		if (@diff) {
+			croak "Nope!  Expected r$svn_rev, got r$lcr\n";
+		} else {
+			print STDERR "OK!\n";
+		}
 	}
 	my @status = grep(!/^Performing status on external/,(`svn status`));
 	@status = grep(!/^\s*$/,@status);
@@ -512,7 +530,7 @@ sub svn_checkout_tree {
 	my ($svn_rev, $treeish) = @_;
 	my $from = file_to_s("$REV_DIR/$svn_rev");
 	assert_svn_wc_clean($svn_rev,$from);
-	print "diff-tree '$from' '$treeish'\n";
+	print "diff-tree $from $treeish\n";
 	my $pid = open my $diff_fh, '-|';
 	defined $pid or croak $!;
 	if ($pid == 0) {
@@ -523,7 +541,7 @@ sub svn_checkout_tree {
 	}
 	my $mods = parse_diff_tree($diff_fh);
 	unless (@$mods) {
-		# git can do empty commits, SVN doesn't allow it...
+		# git can do empty commits, but SVN doesn't allow it...
 		return $mods;
 	}
 	my ($rm, $add) = precommit_check($mods);
@@ -610,7 +628,7 @@ sub svn_commit_tree {
 	my ($svn_rev, $commit) = @_;
 	my $commit_msg = "$GIT_DIR/$GIT_SVN/.svn-commit.tmp.$$";
 	my %log_msg = ( msg => '' );
-	open my $msg, '>', $commit_msg  or croak $!;
+	open my $msg, '>', $commit_msg or croak $!;
 
 	chomp(my $type = `git-cat-file -t $commit`);
 	if ($type eq 'commit') {
@@ -624,8 +642,10 @@ sub svn_commit_tree {
 		while (<$msg_fh>) {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
+			} elsif (/^git-svn-id: /) {
+				# skip this, we regenerate the correct one
+				# on re-fetch anyways
 			} else {
-				$log_msg{msg} .= $_;
 				print $msg $_ or croak $!;
 			}
 		}
@@ -637,6 +657,15 @@ sub svn_commit_tree {
 		my $editor = $ENV{VISUAL} || $ENV{EDITOR} || 'vi';
 		system($editor, $commit_msg);
 	}
+
+	# file_to_s removes all trailing newlines, so just use chomp() here:
+	open $msg, '<', $commit_msg or croak $!;
+	{ local $/; chomp($log_msg{msg} = <$msg>); }
+	close $msg or croak $!;
+
+	my ($oneline) = ($log_msg{msg} =~ /([^\n\r]+)/);
+	print "Committing $commit: $oneline\n";
+
 	my @ci_output = safe_qx(qw(svn commit -F),$commit_msg);
 	my ($committed) = grep(/^Committed revision \d+\./,@ci_output);
 	unlink $commit_msg;
@@ -728,6 +757,10 @@ sub svn_log_raw {
 					author => $author,
 					lines => $lines,
 					msg => '' );
+			if (defined $_authors && ! defined $users{$author}) {
+				die "Author: $author not defined in ",
+						"$_authors file\n";
+			}
 			push @svn_log, \%log_msg;
 			$state = 'msg_start';
 			next;
@@ -827,9 +860,9 @@ sub git_commit {
 	my ($log_msg, @parents) = @_;
 	assert_revision_unknown($log_msg->{revision});
 	my $out_fh = IO::File->new_tmpfile or croak $!;
-	my $info = svn_info('.');
-	my $uuid = $info->{'Repository UUID'};
-	defined $uuid or croak "Unable to get Repository UUID\n";
+	$SVN_UUID ||= svn_info('.')->{'Repository UUID'};
+
+	map_tree_joins() if (@_branch_from && !%tree_map);
 
 	# commit parents can be conditionally bound to a particular
 	# svn revision via: "svn_revno=commit_sha1", filter them out here:
@@ -852,19 +885,26 @@ sub git_commit {
 		git_addremove();
 		chomp(my $tree = `git-write-tree`);
 		croak if $?;
+		if (exists $tree_map{$tree}) {
+			my %seen_parent = map { $_ => 1 } @exec_parents;
+			foreach (@{$tree_map{$tree}}) {
+				# MAXPARENT is defined to 16 in commit-tree.c:
+				if ($seen_parent{$_} || @exec_parents > 16) {
+					next;
+				}
+				push @exec_parents, $_;
+				$seen_parent{$_} = 1;
+			}
+		}
 		my $msg_fh = IO::File->new_tmpfile or croak $!;
 		print $msg_fh $log_msg->{msg}, "\ngit-svn-id: ",
 					"$SVN_URL\@$log_msg->{revision}",
-					" $uuid\n" or croak $!;
+					" $SVN_UUID\n" or croak $!;
 		$msg_fh->flush == 0 or croak $!;
 		seek $msg_fh, 0, 0 or croak $!;
 
-		$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} =
-						$log_msg->{author};
-		$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} =
-						$log_msg->{author}."\@$uuid";
-		$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} =
-						$log_msg->{date};
+		set_commit_env($log_msg);
+
 		my @exec = ('git-commit-tree',$tree);
 		push @exec, '-p', $_  foreach @exec_parents;
 		open STDIN, '<&', $msg_fh or croak $!;
@@ -888,6 +928,16 @@ sub git_commit {
 	sys('git-update-ref',"$GIT_SVN/revs/$log_msg->{revision}",$commit);
 	print "r$log_msg->{revision} = $commit\n";
 	return $commit;
+}
+
+sub set_commit_env {
+	my ($log_msg) = @_;
+	my $author = $log_msg->{author};
+	my ($name,$email) = defined $users{$author} ?  @{$users{$author}}
+				: ($author,"$author\@$SVN_UUID");
+	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
+	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
 }
 
 sub apply_mod_line_blob {
@@ -975,6 +1025,41 @@ sub check_upgrade_needed {
 	}
 }
 
+# fills %tree_map with a reverse mapping of trees to commits.  Useful
+# for finding parents to commit on.
+sub map_tree_joins {
+	foreach my $br (@_branch_from) {
+		my $pid = open my $pipe, '-|';
+		defined $pid or croak $!;
+		if ($pid == 0) {
+			exec(qw(git-rev-list --pretty=raw), $br) or croak $?;
+		}
+		while (<$pipe>) {
+			if (/^commit ($sha1)$/o) {
+				my $commit = $1;
+				my ($tree) = (<$pipe> =~ /^tree ($sha1)$/o);
+				unless (defined $tree) {
+					die "Failed to parse commit $commit\n";
+				}
+				push @{$tree_map{$tree}}, $commit;
+			}
+		}
+		close $pipe or croak $?;
+	}
+}
+
+# '<svn username> = real-name <email address>' mapping based on git-svnimport:
+sub load_authors {
+	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
+	while (<$authors>) {
+		chomp;
+		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		my ($user, $name, $email) = ($1, $2, $3);
+		$users{$user} = [$name, $email];
+	}
+	close $authors or croak $!;
+}
+
 __END__
 
 Data structures:
@@ -999,7 +1084,7 @@ diff-index line ($m hash)
 	mode_a => first column of diff-index output, no leading ':',
 	mode_b => second column of diff-index output,
 	sha1_b => sha1sum of the final blob,
-	chg => change type [MCRAD],
+	chg => change type [MCRADT],
 	file_a => original file name of a file (iff chg is 'C' or 'R')
 	file_b => new/current file name of a file (any chg)
 }

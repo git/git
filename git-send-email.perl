@@ -54,7 +54,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "suppress-from" => \$suppress_from,
-		    "no-signed-off-cc" => \$no_signed_off_cc,
+		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
 	 );
 
 # Now, let's fill any that aren't set in with defaults:

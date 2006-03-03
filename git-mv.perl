@@ -62,9 +62,17 @@ else {
     $dstDir = "";
 }
 
+my $subdir_prefix = `git rev-parse --show-prefix`;
+chomp($subdir_prefix);
+
+# run in git base directory, so that git-ls-files lists all revisioned files
+chdir "$GIT_DIR/..";
+
 # normalize paths, needed to compare against versioned files and update-index
 # also, this is nicer to end-users by doing ".//a/./b/.//./c" ==> "a/b/c"
 for (@srcArgs, @dstArgs) {
+    # prepend git prefix as we run from base directory
+    $_ = $subdir_prefix.$_;
     s|^\./||;
     s|/\./|/| while (m|/\./|);
     s|//+|/|g;

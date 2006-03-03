@@ -577,9 +577,11 @@ int main(int argc, const char **argv)
 				break;
 			}
 			if (!strcmp(path, "--index-info")) {
+				if (i != argc - 1)
+					die("--index-info must be at the end");
 				allow_add = allow_replace = allow_remove = 1;
 				read_index_info(line_termination);
-				continue;
+				break;
 			}
 			if (!strcmp(path, "--ignore-missing")) {
 				not_new = 1;

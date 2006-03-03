@@ -27,7 +27,7 @@ For importing svn, git-svnimport is potentially more powerful when
 operating on repositories organized under the recommended
 trunk/branch/tags structure, and should be faster, too.
 
-git-svn completely ignores the very limited view of branching that
+git-svn mostly ignores the very limited view of branching that
 Subversion has.  This allows git-svn to be much easier to use,
 especially on repositories that are not organized in a manner that
 git-svnimport is designed for.
@@ -116,8 +116,38 @@ OPTIONS
 	They are both passed directly to git-diff-tree see
 	git-diff-tree(1) for more information.
 
+ADVANCED OPTIONS
+----------------
+-b<refname>::
+--branch <refname>::
+	Used with 'fetch' or 'commit'.
+
+	This can be used to join arbitrary git branches to remotes/git-svn
+	on new commits where the tree object is equivalent.
+
+	When used with different GIT_SVN_ID values, tags and branches in
+	SVN can be tracked this way, as can some merges where the heads
+	end up having completely equivalent content.  This can even be
+	used to track branches across multiple SVN _repositories_.
+
+	This option may be specified multiple times, once for each
+	branch.
+
+-i<GIT_SVN_ID>::
+--id <GIT_SVN_ID>::
+	This sets GIT_SVN_ID (instead of using the environment).  See
+	the section on "Tracking Multiple Repositories or Branches" for
+	more information on using GIT_SVN_ID.
+
 COMPATIBILITY OPTIONS
 ---------------------
+--upgrade::
+	Only used with the 'rebuild' command.
+
+	Run this if you used an old version of git-svn that used
+	'git-svn-HEAD' instead of 'remotes/git-svn' as the branch
+	for tracking the remote.
+
 --no-ignore-externals::
 	Only used with the 'fetch' and 'rebuild' command.
 
@@ -162,7 +192,7 @@ Tracking and contributing to an Subversion managed-project:
 	git-svn commit remotes/git-svn..my-branch
 # Something is committed to SVN, pull the latest into your branch::
 	git-svn fetch && git pull . remotes/git-svn
-# Append svn:ignore settings to the default git exclude file:
+# Append svn:ignore settings to the default git exclude file::
 	git-svn show-ignore >> .git/info/exclude
 
 DESIGN PHILOSOPHY

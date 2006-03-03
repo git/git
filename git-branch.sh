@@ -48,12 +48,22 @@ If you are sure you want to delete it, run 'git branch -D $branch_name'."
     exit 0
 }
 
+ls_remote_branches () {
+    git-rev-parse --symbolic --all |
+    sed -ne 's|^refs/\(remotes/\)|\1|p' |
+    sort
+}
+
 force=
 while case "$#,$1" in 0,*) break ;; *,-*) ;; *) break ;; esac
 do
 	case "$1" in
 	-d | -D)
 		delete_branch "$@"
+		exit
+		;;
+	-r)
+		ls_remote_branches
 		exit
 		;;
 	-f)

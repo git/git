@@ -798,7 +798,7 @@ class GitView:
 			button.set_relief(gtk.RELIEF_NONE)
 			button.set_sensitive(True)
 			button.connect("clicked", self._show_clicked_cb,
-					child_id, commit.commit_sha1)
+					child_id, commit.commit_sha1, self.encoding)
 			hbox.pack_start(button, expand=False, fill=True)
 			button.show()
 
