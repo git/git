@@ -8,11 +8,20 @@ test_description='Test of the various options to git-rm.'
 . ./test-lib.sh
 
 # Setup some files to be removed, some with funny characters
-touch -- foo bar baz 'space embedded' 'tab	embedded' 'newline
-embedded' -q
-git-add -- foo bar baz 'space embedded' 'tab	embedded' 'newline
-embedded' -q
-git-commit -m "add files"
+touch -- foo bar baz 'space embedded' -q
+git-add -- foo bar baz 'space embedded' -q
+git-commit -m "add normal files"
+test_tabs=y
+if touch -- 'tab	embedded' 'newline
+embedded'
+then
+git-add -- 'tab	embedded' 'newline
+embedded'
+git-commit -m "add files with tabs and newlines"
+else
+    say 'Your filesystem does not allow tabs in filenames.'
+    test_tabs=n
+fi
 
 test_expect_success \
     'Pre-check that foo exists and is in index before git-rm foo' \
@@ -42,16 +51,18 @@ test_expect_success \
     'Test that "git-rm -- -q" succeeds (remove a file that looks like an option)' \
     'git-rm -- -q'
 
-test_expect_success \
+test "$test_tabs" = y && test_expect_success \
     "Test that \"git-rm -f\" succeeds with embedded space, tab, or newline characters." \
     "git-rm -f 'space embedded' 'tab	embedded' 'newline
 embedded'"
 
+if test "$test_tabs" = y; then
 chmod u-w .
 test_expect_failure \
     'Test that "git-rm -f" fails if its rm fails' \
     'git-rm -f baz'
 chmod u+w .
+fi
 
 test_expect_success \
     'When the rm in "git-rm -f" fails, it should not remove the file from the index' \
