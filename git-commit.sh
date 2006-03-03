@@ -595,12 +595,14 @@ then
 		PARENTS=$(git-cat-file commit HEAD |
 			sed -n -e '/^$/q' -e 's/^parent /-p /p')
 	fi
+	current=$(git-rev-parse --verify HEAD)
 else
 	if [ -z "$(git-ls-files)" ]; then
 		echo >&2 Nothing to commit
 		exit 1
 	fi
 	PARENTS=""
+	current=
 fi
 
 {
