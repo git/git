@@ -27,7 +27,7 @@ For importing svn, git-svnimport is potentially more powerful when
 operating on repositories organized under the recommended
 trunk/branch/tags structure, and should be faster, too.
 
-git-svn completely ignores the very limited view of branching that
+git-svn mostly ignores the very limited view of branching that
 Subversion has.  This allows git-svn to be much easier to use,
 especially on repositories that are not organized in a manner that
 git-svnimport is designed for.
@@ -115,6 +115,21 @@ OPTIONS
 
 	They are both passed directly to git-diff-tree see
 	git-diff-tree(1) for more information.
+
+-b<refname>::
+--branch <refname>::
+	Used with 'fetch' or 'commit'.
+
+	This can be used to join arbitrary git branches to remotes/git-svn
+	on new commits where the tree object is equivalent.
+
+	When used with different GIT_SVN_ID values, tags and branches in
+	SVN can be tracked this way, as can some merges where the heads
+	end up having completely equivalent content.  This can even be
+	used to track branches across multiple SVN _repositories_.
+
+	This option may be specified multiple times, once for each
+	branch.
 
 COMPATIBILITY OPTIONS
 ---------------------

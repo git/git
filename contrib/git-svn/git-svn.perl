@@ -35,6 +35,7 @@ my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{6,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_version, $_upgrade);
+my (@_branch_from, %tree_map);
 
 GetOptions(	'revision|r=s' => \$_revision,
 		'no-ignore-externals' => \$_no_ignore_ext,
@@ -43,6 +44,7 @@ GetOptions(	'revision|r=s' => \$_revision,
 		'rmdir' => \$_rmdir,
 		'upgrade' => \$_upgrade,
 		'help|H|h' => \$_help,
+		'branch|b=s' => \@_branch_from,
 		'find-copies-harder' => \$_find_copies_harder,
 		'l=i' => \$_l,
 		'version|V' => \$_version,
@@ -831,6 +833,8 @@ sub git_commit {
 	my $uuid = $info->{'Repository UUID'};
 	defined $uuid or croak "Unable to get Repository UUID\n";
 
+	map_tree_joins() if (@_branch_from && !%tree_map);
+
 	# commit parents can be conditionally bound to a particular
 	# svn revision via: "svn_revno=commit_sha1", filter them out here:
 	my @exec_parents;
@@ -852,6 +856,17 @@ sub git_commit {
 		git_addremove();
 		chomp(my $tree = `git-write-tree`);
 		croak if $?;
+		if (exists $tree_map{$tree}) {
+			my %seen_parent = map { $_ => 1 } @exec_parents;
+			foreach (@{$tree_map{$tree}}) {
+				# MAXPARENT is defined to 16 in commit-tree.c:
+				if ($seen_parent{$_} || @exec_parents > 16) {
+					next;
+				}
+				push @exec_parents, $_;
+				$seen_parent{$_} = 1;
+			}
+		}
 		my $msg_fh = IO::File->new_tmpfile or croak $!;
 		print $msg_fh $log_msg->{msg}, "\ngit-svn-id: ",
 					"$SVN_URL\@$log_msg->{revision}",
@@ -972,6 +987,29 @@ sub check_upgrade_needed {
 	if ($@ || !$head) {
 		print STDERR "Please run: $0 rebuild --upgrade\n";
 		exit 1;
+	}
+}
+
+# fills %tree_map with a reverse mapping of trees to commits.  Useful
+# for finding parents to commit on.
+sub map_tree_joins {
+	foreach my $br (@_branch_from) {
+		my $pid = open my $pipe, '-|';
+		defined $pid or croak $!;
+		if ($pid == 0) {
+			exec(qw(git-rev-list --pretty=raw), $br) or croak $?;
+		}
+		while (<$pipe>) {
+			if (/^commit ($sha1)$/o) {
+				my $commit = $1;
+				my ($tree) = (<$pipe> =~ /^tree ($sha1)$/o);
+				unless (defined $tree) {
+					die "Failed to parse commit $commit\n";
+				}
+				push @{$tree_map{$tree}}, $commit;
+			}
+		}
+		close $pipe or croak $?;
 	}
 }
 
