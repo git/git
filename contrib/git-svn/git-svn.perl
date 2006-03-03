@@ -337,10 +337,17 @@ sub assert_svn_wc_clean {
 	my ($svn_rev, $treeish) = @_;
 	croak "$svn_rev is not an integer!\n" unless ($svn_rev =~ /^\d+$/);
 	croak "$treeish is not a sha1!\n" unless ($treeish =~ /^$sha1$/o);
-	my $svn_info = svn_info('.');
-	if ($svn_rev != $svn_info->{'Last Changed Rev'}) {
-		croak "Expected r$svn_rev, got r",
-				$svn_info->{'Last Changed Rev'},"\n";
+	my $lcr = svn_info('.')->{'Last Changed Rev'};
+	if ($svn_rev != $lcr) {
+		print STDERR "Checking for copy-tree ... ";
+		# use
+		my @diff = grep(/^Index: /,(safe_qx(qw(svn diff),
+						"-r$lcr:$svn_rev")));
+		if (@diff) {
+			croak "Nope!  Expected r$svn_rev, got r$lcr\n";
+		} else {
+			print STDERR "OK!\n";
+		}
 	}
 	my @status = grep(!/^Performing status on external/,(`svn status`));
 	@status = grep(!/^\s*$/,@status);
