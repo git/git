@@ -11,17 +11,31 @@ test_expect_success \
      git-commit -m add -a'
 
 test_expect_success \
-    'moving the file' \
+    'moving the file out of subdirectory' \
     'cd path0 && git-mv COPYING ../path1/COPYING'
 
 # in path0 currently
 test_expect_success \
     'commiting the change' \
-    'cd .. && git-commit -m move -a'
+    'cd .. && git-commit -m move-out -a'
 
 test_expect_success \
     'checking the commit' \
     'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
     grep -E "^R100.+path0/COPYING.+path1/COPYING"'
+
+test_expect_success \
+    'moving the file back into subdirectory' \
+    'cd path0 && git-mv ../path1/COPYING COPYING'
+
+# in path0 currently
+test_expect_success \
+    'commiting the change' \
+    'cd .. && git-commit -m move-in -a'
+
+test_expect_success \
+    'checking the commit' \
+    'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+    grep -E "^R100.+path1/COPYING.+path0/COPYING"'
 
 test_done
