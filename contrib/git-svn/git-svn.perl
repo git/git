@@ -60,16 +60,7 @@ for (my $i = 0; $i < @ARGV; $i++) {
 	}
 };
 
-# we may be called as git-svn-(command), or git-svn(command).
-foreach (keys %cmd) {
-	if (/git\-svn\-?($_)(?:\.\w+)?$/) {
-		$cmd = $1;
-		last;
-	}
-}
-
-my %opts;
-%opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
+my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 GetOptions(%opts, 'help|H|h' => \$_help,
 		'version|V' => \$_version,
@@ -97,15 +88,25 @@ sub usage {
 	print $fd <<"";
 git-svn - bidirectional operations between a single Subversion tree and git
 Usage: $0 <command> [options] [arguments]\n
-Available commands:
+
+	print $fd "Available commands:\n" unless $cmd;
 
 	foreach (sort keys %cmd) {
+		next if $cmd && $cmd ne $_;
 		print $fd '  ',pack('A13',$_),$cmd{$_}->[1],"\n";
+		foreach (keys %{$cmd{$_}->[2]}) {
+			# prints out arguments as they should be passed:
+			my $x = s#=s$## ? '<arg>' : s#=i$## ? '<num>' : '';
+			print $fd ' ' x 17, join(', ', map { length $_ > 1 ?
+							"--$_" : "-$_" }
+						split /\|/,$_)," $x\n";
+		}
 	}
 	print $fd <<"";
-\nGIT_SVN_ID may be set in the environment to an arbitrary identifier if
-you're tracking multiple SVN branches/repositories in one git repository
-and want to keep them separate.  See git-svn(1) for more information.
+\nGIT_SVN_ID may be set in the environment or via the --id/-i switch to an
+arbitrary identifier if you're tracking multiple SVN branches/repositories in
+one git repository and want to keep them separate.  See git-svn(1) for more
+information.
 
 	exit $exit;
 }
