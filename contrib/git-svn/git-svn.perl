@@ -4,7 +4,7 @@
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$SVN_URL $SVN_INFO $SVN_WC
+		$SVN_URL $SVN_INFO $SVN_WC $SVN_UUID
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
@@ -114,7 +114,6 @@ sub version {
 
 sub rebuild {
 	$SVN_URL = shift or undef;
-	my $repo_uuid;
 	my $newest_rev = 0;
 	if ($_upgrade) {
 		sys('git-update-ref',"refs/remotes/$GIT_SVN","$GIT_SVN-HEAD");
@@ -150,7 +149,7 @@ sub rebuild {
 
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
-		next if (defined $repo_uuid && ($uuid ne $repo_uuid));
+		next if (defined $SVN_UUID && ($uuid ne $SVN_UUID));
 		next if (defined $SVN_URL && ($url ne $SVN_URL));
 
 		print "r$rev = $c\n";
@@ -159,7 +158,7 @@ sub rebuild {
 				croak "SVN repository location required: $url\n";
 			}
 			$SVN_URL ||= $url;
-			$repo_uuid ||= setup_git_svn();
+			$SVN_UUID ||= setup_git_svn();
 			$latest = $rev;
 		}
 		assert_revision_eq_or_unknown($rev, $c);
@@ -252,7 +251,7 @@ sub commit {
 		print "Reading from stdin...\n";
 		@commits = ();
 		while (<STDIN>) {
-			if (/\b($sha1_short)\b/) {
+			if (/\b($sha1_short)\b/o) {
 				unshift @commits, $1;
 			}
 		}
@@ -320,14 +319,14 @@ sub setup_git_svn {
 	mkpath(["$GIT_DIR/$GIT_SVN/info"]);
 	mkpath([$REV_DIR]);
 	s_to_file($SVN_URL,"$GIT_DIR/$GIT_SVN/info/url");
-	my $uuid = svn_info($SVN_URL)->{'Repository UUID'} or
+	$SVN_UUID = svn_info($SVN_URL)->{'Repository UUID'} or
 					croak "Repository UUID unreadable\n";
-	s_to_file($uuid,"$GIT_DIR/$GIT_SVN/info/uuid");
+	s_to_file($SVN_UUID,"$GIT_DIR/$GIT_SVN/info/uuid");
 
 	open my $fd, '>>', "$GIT_DIR/$GIT_SVN/info/exclude" or croak $!;
 	print $fd '.svn',"\n";
 	close $fd or croak $!;
-	return $uuid;
+	return $SVN_UUID;
 }
 
 sub assert_svn_wc_clean {
@@ -850,9 +849,7 @@ sub git_commit {
 	my ($log_msg, @parents) = @_;
 	assert_revision_unknown($log_msg->{revision});
 	my $out_fh = IO::File->new_tmpfile or croak $!;
-	my $info = svn_info('.');
-	my $uuid = $info->{'Repository UUID'};
-	defined $uuid or croak "Unable to get Repository UUID\n";
+	$SVN_UUID ||= svn_info('.')->{'Repository UUID'};
 
 	map_tree_joins() if (@_branch_from && !%tree_map);
 
@@ -891,11 +888,11 @@ sub git_commit {
 		my $msg_fh = IO::File->new_tmpfile or croak $!;
 		print $msg_fh $log_msg->{msg}, "\ngit-svn-id: ",
 					"$SVN_URL\@$log_msg->{revision}",
-					" $uuid\n" or croak $!;
+					" $SVN_UUID\n" or croak $!;
 		$msg_fh->flush == 0 or croak $!;
 		seek $msg_fh, 0, 0 or croak $!;
 
-		set_commit_env($log_msg, $uuid);
+		set_commit_env($log_msg);
 
 		my @exec = ('git-commit-tree',$tree);
 		push @exec, '-p', $_  foreach @exec_parents;
@@ -923,10 +920,10 @@ sub git_commit {
 }
 
 sub set_commit_env {
-	my ($log_msg, $uuid) = @_;
+	my ($log_msg) = @_;
 	my $author = $log_msg->{author};
 	my ($name,$email) = defined $users{$author} ?  @{$users{$author}}
-				: ($author,"$author\@$uuid");
+				: ($author,"$author\@$SVN_UUID");
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
