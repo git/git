@@ -224,9 +224,6 @@ sub fetch {
 		sys(@svn_co, $SVN_URL, $SVN_WC);
 		chdir $SVN_WC or croak $!;
 		$last_commit = git_commit($base, @parents);
-		unless (-f "$GIT_DIR/refs/heads/master") {
-			sys(qw(git-update-ref refs/heads/master),$last_commit);
-		}
 		assert_svn_wc_clean($base->{revision}, $last_commit);
 	} else {
 		chdir $SVN_WC or croak $!;
@@ -242,6 +239,9 @@ sub fetch {
 		$last_commit = git_commit($log_msg, $last_commit, @parents);
 	}
 	assert_svn_wc_clean($last_rev, $last_commit);
+	unless (-e "$GIT_DIR/refs/heads/master") {
+		sys(qw(git-update-ref refs/heads/master),$last_commit);
+	}
 	return pop @$svn_log;
 }
 
