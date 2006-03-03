@@ -34,8 +34,8 @@ use POSIX qw/strftime/;
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_version, $_upgrade);
-my (@_branch_from, %tree_map);
+	$_find_copies_harder, $_l, $_version, $_upgrade, $_authors);
+my (@_branch_from, %tree_map, %users);
 
 GetOptions(	'revision|r=s' => \$_revision,
 		'no-ignore-externals' => \$_no_ignore_ext,
@@ -46,6 +46,7 @@ GetOptions(	'revision|r=s' => \$_revision,
 		'help|H|h' => \$_help,
 		'branch|b=s' => \@_branch_from,
 		'find-copies-harder' => \$_find_copies_harder,
+		'authors-file|authors|A=s' => \$_authors,
 		'l=i' => \$_l,
 		'version|V' => \$_version,
 		'no-stop-on-copy' => \$_no_stop_copy );
@@ -73,6 +74,19 @@ foreach (keys %cmd) {
 		last;
 	}
 }
+
+# '<svn username> = real-name <email address>' mapping based on git-svnimport:
+if ($_authors) {
+	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
+	while (<$authors>) {
+		chomp;
+		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		my ($user, $name, $email) = ($1, $2, $3);
+		$users{$user} = [$name, $email];
+	}
+	close $authors or croak $!;
+}
+
 usage(0) if $_help;
 version() if $_version;
 usage(1) unless (defined $cmd);
@@ -740,6 +754,10 @@ sub svn_log_raw {
 					author => $author,
 					lines => $lines,
 					msg => '' );
+			if (defined $_authors && ! defined $users{$author}) {
+				die "Author: $author not defined in ",
+						"$_authors file\n";
+			}
 			push @svn_log, \%log_msg;
 			$state = 'msg_start';
 			next;
@@ -884,12 +902,8 @@ sub git_commit {
 		$msg_fh->flush == 0 or croak $!;
 		seek $msg_fh, 0, 0 or croak $!;
 
-		$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} =
-						$log_msg->{author};
-		$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} =
-						$log_msg->{author}."\@$uuid";
-		$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} =
-						$log_msg->{date};
+		set_commit_env($log_msg, $uuid);
+
 		my @exec = ('git-commit-tree',$tree);
 		push @exec, '-p', $_  foreach @exec_parents;
 		open STDIN, '<&', $msg_fh or croak $!;
@@ -913,6 +927,16 @@ sub git_commit {
 	sys('git-update-ref',"$GIT_SVN/revs/$log_msg->{revision}",$commit);
 	print "r$log_msg->{revision} = $commit\n";
 	return $commit;
+}
+
+sub set_commit_env {
+	my ($log_msg, $uuid) = @_;
+	my $author = $log_msg->{author};
+	my ($name,$email) = defined $users{$author} ?  @{$users{$author}}
+				: ($author,"$author\@$uuid");
+	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
+	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
 }
 
 sub apply_mod_line_blob {
