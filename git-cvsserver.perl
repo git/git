@@ -576,9 +576,9 @@ sub req_co
     # Eclipse seems to need the Clear-sticky command
     # to prepare the 'Entries' file for the new directory.
     print "Clear-sticky $checkout_path/\n";
-    print $state->{CVSROOT} . "/$checkout_path/\n";
+    print $state->{CVSROOT} . "/$module/\n";
     print "Clear-static-directory $checkout_path/\n";
-    print $state->{CVSROOT} . "/$checkout_path/\n";
+    print $state->{CVSROOT} . "/$module/\n";
 
     # instruct the client that we're checking out to $checkout_path
     print "E cvs checkout: Updating $checkout_path\n";
@@ -609,11 +609,11 @@ sub req_co
 
 	    # Eclipse seems to need the Clear-sticky command
 	    # to prepare the 'Entries' file for the new directory.
-	    print "Clear-sticky $module/$git->{dir}\n";
+	    print "Clear-sticky $checkout_path/$git->{dir}\n";
 	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
-	    print "Clear-static-directory $module/$git->{dir}\n";
+	    print "Clear-static-directory $checkout_path/$git->{dir}\n";
 	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
-	    print "E cvs checkout: Updating /$module/$git->{dir}\n";
+	    print "E cvs checkout: Updating /$checkout_path/$git->{dir}\n";
 	    $lastdir = $git->{dir};
 	    $seendirs{$git->{dir}} = 1;
 	}
