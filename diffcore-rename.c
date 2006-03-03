@@ -170,19 +170,15 @@ static int estimate_similarity(struct diff_filespec *src,
 				   &src_copied, &literal_added))
 		return 0;
 
-	/* Extent of damage */
-	if (src->size + literal_added < src_copied)
-		delta_size = 0;
-	else
-		delta_size = (src->size - src_copied) + literal_added;
-
-	/*
-	 * Now we will give some score to it.  100% edit gets 0 points
-	 * and 0% edit gets MAX_SCORE points.
+	/* How similar are they?
+	 * what percentage of material in dst are from source?
 	 */
-	score = MAX_SCORE - (MAX_SCORE * delta_size / base_size); 
-	if (score < 0) return 0;
-	if (MAX_SCORE < score) return MAX_SCORE;
+	if (dst->size < src_copied)
+		score = MAX_SCORE;
+	else if (!dst->size)
+		score = 0; /* should not happen */
+	else
+		score = src_copied * MAX_SCORE / dst->size;
 	return score;
 }
 
