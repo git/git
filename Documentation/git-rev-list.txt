@@ -18,7 +18,7 @@ SYNOPSIS
 	     [ \--all ]
 	     [ \--topo-order ]
 	     [ \--parents ]
-	     [ \--objects [ \--unpacked ] ]
+	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
 	     <commit>... [ \-- <paths>... ]
@@ -52,6 +52,14 @@ OPTIONS
 	'git-rev-list --objects foo ^bar' thus means "send me all object IDs
 	which I need to download if I have the commit object 'bar', but
 	not 'foo'".
+
+--objects-edge::
+	Similar to `--objects`, but also print the IDs of
+	excluded commits refixed with a `-` character.  This is
+	used by `git-pack-objects` to build 'thin' pack, which
+	records objects in deltified form based on objects
+	contained in these excluded commits to reduce network
+	traffic.
 
 --unpacked::
 	Only useful with `--objects`; print the object IDs that

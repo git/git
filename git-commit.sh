@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>) [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
@@ -64,6 +64,22 @@ run_status () {
 	# We always show status for the whole tree.
 	cd "$TOP"
 
+	IS_INITIAL="$initial_commit"
+	REFERENCE=HEAD
+	case "$amend" in
+	t)
+		# If we are amending the initial commit, there
+		# is no HEAD^1.
+		if git-rev-parse --verify "HEAD^1" >/dev/null 2>&1
+		then
+			REFERENCE="HEAD^1"
+			IS_INITIAL=
+		else
+			IS_INITIAL=t
+		fi
+		;;
+	esac
+
 	# If TMP_INDEX is defined, that means we are doing
 	# "--only" partial commit, and that index file is used
 	# to build the tree for the commit.  Otherwise, if
@@ -85,10 +101,10 @@ run_status () {
 	*)  echo "# On branch $branch" ;;
 	esac
 
-	if test -z "$initial_commit"
+	if test -z "$IS_INITIAL"
 	then
 	    git-diff-index -M --cached --name-status \
-		--diff-filter=MDTCRA HEAD |
+		--diff-filter=MDTCRA $REFERENCE |
 	    sed -e '
 		    s/\\/\\\\/g
 		    s/ /\\ /g
@@ -147,7 +163,7 @@ run_status () {
 
 	if test -n "$verbose"
 	then
-	    git-diff-index --cached -M -p --diff-filter=MDTCRA HEAD
+	    git-diff-index --cached -M -p --diff-filter=MDTCRA $REFERENCE
 	fi
 	case "$committable" in
 	0)
@@ -173,6 +189,7 @@ also=
 only=
 logfile=
 use_commit=
+amend=
 no_edit=
 log_given=
 log_message=
@@ -254,6 +271,12 @@ do
       verify=
       shift
       ;;
+  --a|--am|--ame|--amen|--amend)
+      amend=t
+      log_given=t$log_given
+      use_commit=HEAD
+      shift
+      ;;
   -c)
       case "$#" in 1) usage ;; esac
       shift
@@ -327,6 +350,15 @@ done
 
 ################################################################
 # Sanity check options
+
+case "$amend,$initial_commit" in
+t,t)
+  die "You do not have anything to amend." ;;
+t,)
+  if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+    die "You are in the middle of a merge -- cannot amend."
+  fi ;;
+esac
 
 case "$log_given" in
 tt*)
@@ -559,13 +591,18 @@ if test -z "$initial_commit"
 then
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
+	elif test -n "$amend"; then
+		PARENTS=$(git-cat-file commit HEAD |
+			sed -n -e '/^$/q' -e 's/^parent /-p /p')
 	fi
+	current=$(git-rev-parse --verify HEAD)
 else
 	if [ -z "$(git-ls-files)" ]; then
 		echo >&2 Nothing to commit
 		exit 1
 	fi
 	PARENTS=""
+	current=
 fi
 
 {

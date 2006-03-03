@@ -2,7 +2,8 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
-USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way] <mbox>
+USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way]
+  [--interactive] [--whitespace=<option>] <mbox>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
 

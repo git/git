@@ -8,7 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [[-m | --reset] [-u | -i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [[-m [--aggressive]| --reset] [-u | -i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -49,6 +49,19 @@ OPTIONS
 	tree and is meant to be used when creating a merge of
 	trees that are not directly related to the current
 	working tree status into a temporary index file.
+
+--aggressive::
+	Usually a three-way merge by `git-read-tree` resolves
+	the merge for really trivial cases and leaves other
+	cases unresolved in the index, so that Porcelains can
+	implement different merge policies.  This flag makes the
+	command to resolve a few more cases internally:
++
+* when one side removes a path and the other side leaves the path
+  unmodified.  The resolution is to remove that path.
+* when both sides remove a path.  The resolution is to remove that path.
+* when both sides adds a path identically.  The resolution
+  is to add that path.
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
