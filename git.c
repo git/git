@@ -264,20 +264,7 @@ static int cmd_log(int argc, char **argv, char **envp)
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	while (1 < argc) {
 		char *arg = argv[1];
-		/* accept -<digit>, like traditilnal "head" */
-		if ((*arg == '-') && isdigit(arg[1])) {
-			rev.max_count = atoi(arg + 1);
-		}
-		else if (!strcmp(arg, "-n")) {
-			if (argc < 2)
-				die("-n requires an argument");
-			rev.max_count = atoi(argv[2]);
-			argc--; argv++;
-		}
-		else if (!strncmp(arg,"-n",2)) {
-			rev.max_count = atoi(arg + 2);
-		}
-		else if (!strncmp(arg, "--pretty", 8)) {
+		if (!strncmp(arg, "--pretty", 8)) {
 			commit_format = get_commit_format(arg + 8);
 			if (commit_format == CMIT_FMT_ONELINE)
 				commit_prefix = "";

@@ -482,6 +482,21 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->max_count = atoi(arg + 12);
 				continue;
 			}
+			/* accept -<digit>, like traditilnal "head" */
+			if ((*arg == '-') && isdigit(arg[1])) {
+				revs->max_count = atoi(arg + 1);
+				continue;
+			}
+			if (!strcmp(arg, "-n")) {
+				if (argc <= i + 1)
+					die("-n requires an argument");
+				revs->max_count = atoi(argv[++i]);
+				continue;
+			}
+			if (!strncmp(arg,"-n",2)) {
+				revs->max_count = atoi(arg + 2);
+				continue;
+			}
 			if (!strncmp(arg, "--max-age=", 10)) {
 				revs->max_age = atoi(arg + 10);
 				revs->limited = 1;
