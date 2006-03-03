@@ -24,6 +24,7 @@ $ENV{LC_ALL} = 'C';
 # If SVN:: library support is added, please make the dependencies
 # optional and preserve the capability to use the command-line client.
 # use eval { require SVN::... } to make it lazy load
+# We don't use any modules not in the standard Perl distribution:
 use Carp qw/croak/;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
@@ -37,26 +38,25 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_version, $_upgrade, $_authors);
 my (@_branch_from, %tree_map, %users);
 
-GetOptions(	'revision|r=s' => \$_revision,
-		'no-ignore-externals' => \$_no_ignore_ext,
-		'stdin|' => \$_stdin,
-		'edit|e' => \$_edit,
-		'rmdir' => \$_rmdir,
-		'upgrade' => \$_upgrade,
-		'help|H|h' => \$_help,
+my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
-		'find-copies-harder' => \$_find_copies_harder,
-		'authors-file|authors|A=s' => \$_authors,
-		'l=i' => \$_l,
-		'version|V' => \$_version,
-		'no-stop-on-copy' => \$_no_stop_copy );
+		'authors-file|A=s' => \$_authors );
 my %cmd = (
-	fetch => [ \&fetch, "Download new revisions from SVN" ],
-	init => [ \&init, "Initialize and fetch (import)"],
-	commit => [ \&commit, "Commit git revisions to SVN" ],
-	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings" ],
-	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)" ],
-	help => [ \&usage, "Show help" ],
+	fetch => [ \&fetch, "Download new revisions from SVN",
+			{ 'revision|r=s' => \$_revision, %fc_opts } ],
+	init => [ \&init, "Initialize and fetch (import)", { } ],
+	commit => [ \&commit, "Commit git revisions to SVN",
+			{	'stdin|' => \$_stdin,
+				'edit|e' => \$_edit,
+				'rmdir' => \$_rmdir,
+				'find-copies-harder' => \$_find_copies_harder,
+				'l=i' => \$_l,
+				%fc_opts,
+			} ],
+	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings", { } ],
+	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)",
+			{ 'no-ignore-externals' => \$_no_ignore_ext,
+			  'upgrade' => \$_upgrade } ],
 );
 my $cmd;
 for (my $i = 0; $i < @ARGV; $i++) {
@@ -75,21 +75,14 @@ foreach (keys %cmd) {
 	}
 }
 
-# '<svn username> = real-name <email address>' mapping based on git-svnimport:
-if ($_authors) {
-	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
-	while (<$authors>) {
-		chomp;
-		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
-		my ($user, $name, $email) = ($1, $2, $3);
-		$users{$user} = [$name, $email];
-	}
-	close $authors or croak $!;
-}
+my %opts;
+%opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
+GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version ) or exit 1;
 usage(0) if $_help;
 version() if $_version;
-usage(1) unless (defined $cmd);
+usage(1) unless defined $cmd;
+load_authors() if $_authors;
 svn_check_ignore_externals();
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
@@ -1045,6 +1038,18 @@ sub map_tree_joins {
 		}
 		close $pipe or croak $?;
 	}
+}
+
+# '<svn username> = real-name <email address>' mapping based on git-svnimport:
+sub load_authors {
+	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
+	while (<$authors>) {
+		chomp;
+		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		my ($user, $name, $email) = ($1, $2, $3);
+		$users{$user} = [$name, $email];
+	}
+	close $authors or croak $!;
 }
 
 __END__
