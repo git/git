@@ -128,7 +128,7 @@ foreach my $l (@filelines) {
 	}
 
 	printf("%s\t(%10s\t%10s\t%d)%s\n", $rev, $committer,
-		format_date($date), $i++, $output);
+		format_date($date), ++$i, $output);
 }
 
 sub init_claim {
