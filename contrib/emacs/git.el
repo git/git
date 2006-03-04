@@ -943,6 +943,7 @@ Commands:
     (erase-buffer)
   (let ((status (ewoc-create 'git-fileinfo-prettyprint "" "")))
     (set (make-local-variable 'git-status) status))
+  (set (make-local-variable 'list-buffers-directory) default-directory)
   (run-hooks 'git-status-mode-hook)))
 
 (defun git-status (dir)
@@ -952,8 +953,8 @@ Commands:
   (if (file-directory-p (concat (file-name-as-directory dir) ".git"))
       (let ((buffer (create-file-buffer (expand-file-name "*git-status*" dir))))
         (switch-to-buffer buffer)
-        (git-status-mode)
         (cd dir)
+        (git-status-mode)
         (git-refresh-status)
         (goto-char (point-min)))
     (message "%s is not a git working tree." dir)))
