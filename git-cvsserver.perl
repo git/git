@@ -139,8 +139,21 @@ sub req_Root
     $state->{CVSROOT} = $data;
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+    unless (-d $ENV{GIT_DIR} && -e $ENV{GIT_DIR}.'HEAD') {
+       print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
+        print "E \n";
+        print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+       return 0;
+    }
 
-    foreach my $line ( `git-var -l` )
+    my @gitvars = `git-var -l`;
+    if ($?) {
+       print "E problems executing git-var on the server -- this is not a git repository or the PATH is not set correcly.\n";
+        print "E \n";
+        print "error 1 - problem executing git-var\n";
+       return 0;
+    }
+    foreach my $line ( @gitvars )
     {
         next unless ( $line =~ /^(.*?)\.(.*?)=(.*)$/ );
         $cfg->{$1}{$2} = $3;
