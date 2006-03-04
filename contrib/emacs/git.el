@@ -44,7 +44,6 @@
 ;;  - switching branches
 ;;  - revlist browser
 ;;  - git-show-branch browser
-;;  - customize support
 ;;  - menus
 ;;
 
@@ -52,67 +51,91 @@
 (require 'ewoc)
 
 
-;;;; Faces
+;;;; Customizations
 ;;;; ------------------------------------------------------------
+
+(defgroup git nil
+  "Git user interface")
+
+(defcustom git-committer-name nil
+  "User name to use for commits.
+The default is to fall back to `add-log-full-name' and then `user-full-name'."
+  :group 'git
+  :type '(choice (const :tag "Default" nil)
+                 (string :tag "Name")))
+
+(defcustom git-committer-email nil
+  "Email address to use for commits.
+The default is to fall back to `add-log-mailing-address' and then `user-mail-address'."
+  :group 'git
+  :type '(choice (const :tag "Default" nil)
+                 (string :tag "Email")))
+
+(defcustom git-commits-coding-system 'utf-8
+  "Default coding system for the log message of git commits."
+  :group 'git
+  :type 'coding-system)
+
+(defcustom git-append-signed-off-by nil
+  "Whether to append a Signed-off-by line to the commit message before editing."
+  :group 'git
+  :type 'boolean)
+
+(defcustom git-per-dir-ignore-file ".gitignore"
+  "Name of the per-directory ignore file."
+  :group 'git
+  :type 'string)
 
 (defface git-status-face
   '((((class color) (background light)) (:foreground "purple")))
-  "Git mode face used to highlight added and modified files.")
+  "Git mode face used to highlight added and modified files."
+  :group 'git)
 
 (defface git-unmerged-face
   '((((class color) (background light)) (:foreground "red" :bold t)))
-  "Git mode face used to highlight unmerged files.")
+  "Git mode face used to highlight unmerged files."
+  :group 'git)
 
 (defface git-unknown-face
   '((((class color) (background light)) (:foreground "goldenrod" :bold t)))
-  "Git mode face used to highlight unknown files.")
+  "Git mode face used to highlight unknown files."
+  :group 'git)
 
 (defface git-uptodate-face
   '((((class color) (background light)) (:foreground "grey60")))
-  "Git mode face used to highlight up-to-date files.")
+  "Git mode face used to highlight up-to-date files."
+  :group 'git)
 
 (defface git-ignored-face
   '((((class color) (background light)) (:foreground "grey60")))
-  "Git mode face used to highlight ignored files.")
+  "Git mode face used to highlight ignored files."
+  :group 'git)
 
 (defface git-mark-face
   '((((class color) (background light)) (:foreground "red" :bold t)))
-  "Git mode face used for the file marks.")
+  "Git mode face used for the file marks."
+  :group 'git)
 
 (defface git-header-face
   '((((class color) (background light)) (:foreground "blue")))
-  "Git mode face used for commit headers.")
+  "Git mode face used for commit headers."
+  :group 'git)
 
 (defface git-separator-face
   '((((class color) (background light)) (:foreground "brown")))
-  "Git mode face used for commit separator.")
+  "Git mode face used for commit separator."
+  :group 'git)
 
 (defface git-permission-face
   '((((class color) (background light)) (:foreground "green" :bold t)))
-  "Git mode face used for permission changes.")
-
-(defvar git-committer-name nil
-  "*User name to use for commits.
-If not set, fall back to `add-log-full-name' and then `user-full-name'.")
-
-(defvar git-committer-email nil
-  "*Email address to use for commits.
-If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.")
-
-(defvar git-commits-coding-system 'utf-8
-  "Default coding system for git commits.")
-
-(defvar git-append-signed-off-by nil
-  "Whether to append a Signed-off-by line to the commit message.")
-
-(defconst git-log-msg-separator "--- log message follows this line ---")
-
-(defconst git-per-dir-ignore-file ".gitignore"
-  "Name of the per-directory ignore file.")
+  "Git mode face used for permission changes."
+  :group 'git)
 
 
 ;;;; Utilities
 ;;;; ------------------------------------------------------------
+
+(defconst git-log-msg-separator "--- log message follows this line ---")
 
 (defun git-get-env-strings (env)
   "Build a list of NAME=VALUE strings from a list of environment strings."
@@ -279,7 +302,7 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
     (with-current-buffer buffer
       (goto-char (point-min))
       (if
-          (setq log-start (re-search-forward (concat "^" git-log-msg-separator "\n") nil t))
+          (setq log-start (re-search-forward (concat "^" (regexp-quote git-log-msg-separator) "\n") nil t))
           (save-restriction
             (narrow-to-region (point-min) log-start)
             (goto-char (point-min))
