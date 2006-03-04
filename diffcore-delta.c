@@ -2,87 +2,52 @@
 #include "diff.h"
 #include "diffcore.h"
 
-struct linehash {
-	unsigned long bytes;
-	unsigned long hash;
-};
+/*
+ * Idea here is very simple.
+ *
+ * We have total of (sz-N+1) N-byte overlapping sequences in buf whose
+ * size is sz.  If the same N-byte sequence appears in both source and
+ * destination, we say the byte that starts that sequence is shared
+ * between them (i.e. copied from source to destination).
+ *
+ * For each possible N-byte sequence, if the source buffer has more
+ * instances of it than the destination buffer, that means the
+ * difference are the number of bytes not copied from source to
+ * destination.  If the counts are the same, everything was copied
+ * from source to destination.  If the destination has more,
+ * everything was copied, and destination added more.
+ *
+ * We are doing an approximation so we do not really have to waste
+ * memory by actually storing the sequence.  We just hash them into
+ * somewhere around 2^16 hashbuckets and count the occurrences.
+ *
+ * The length of the sequence is arbitrarily set to 8 for now.
+ */
 
-static unsigned long hash_extended_line(const unsigned char **buf_p,
-					unsigned long left)
+#define HASHBASE 65537 /* next_prime(2^16) */
+
+static void hash_chars(unsigned char *buf, unsigned long sz, int *count)
 {
-	/* An extended line is zero or more whitespace letters (including LF)
-	 * followed by one non whitespace letter followed by zero or more
-	 * non LF, and terminated with by a LF (or EOF).
+	unsigned int accum1, accum2, i;
+
+	/* an 8-byte shift register made of accum1 and accum2.  New
+	 * bytes come at LSB of accum2, and shifted up to accum1
 	 */
-	const unsigned char *bol = *buf_p;
-	const unsigned char *buf = bol;
-	unsigned long hashval = 0;
-	while (left) {
-		unsigned c = *buf++;
-		if (!c)
-			goto binary;
-		left--;
-		if (' ' < c) {
-			hashval = c;
-			break;
-		}
+	for (i = accum1 = accum2 = 0; i < 7; i++, sz--) {
+		accum1 = (accum1 << 8) | (accum2 >> 24);
+		accum2 = (accum2 << 8) | *buf++;
 	}
-	while (left) {
-		unsigned c = *buf++;
-		if (!c)
-			goto binary;
-		left--;
-		if (c == '\n')
-			break;
-		if (' ' < c)
-			hashval = hashval * 11 + c;
+	while (sz) {
+		accum1 = (accum1 << 8) | (accum2 >> 24);
+		accum2 = (accum2 << 8) | *buf++;
+		/* We want something that hashes permuted byte
+		 * sequences nicely; simpler hash like (accum1 ^
+		 * accum2) does not perform as well.
+		 */
+		i = (accum1 + accum2 * 0x61) % HASHBASE;
+		count[i]++;
+		sz--;
 	}
-	*buf_p = buf;
-	return hashval;
-
- binary:
-	*buf_p = NULL;
-	return 0;
-}
-
-static int linehash_compare(const void *a_, const void *b_)
-{
-	struct linehash *a = (struct linehash *) a_;
-	struct linehash *b = (struct linehash *) b_;
-	if (a->hash < b->hash) return -1;
-	if (a->hash > b->hash) return 1;
-	return 0;
-}
-
-static struct linehash *hash_lines(const unsigned char *buf,
-				   unsigned long size)
-{
-	const unsigned char *eobuf = buf + size;
-	struct linehash *line = NULL;
-	int alloc = 0, used = 0;
-
-	while (buf < eobuf) {
-		const unsigned char *ptr = buf;
-		unsigned long hash = hash_extended_line(&buf, eobuf-ptr);
-		if (!buf) {
-			free(line);
-			return NULL;
-		}
-		if (alloc <= used) {
-			alloc = alloc_nr(alloc);
-			line = xrealloc(line, sizeof(*line) * alloc);
-		}
-		line[used].bytes = buf - ptr;
-		line[used].hash = hash;
-		used++;
-	}
-	qsort(line, used, sizeof(*line), linehash_compare);
-
-	/* Terminate the list */
-	if (alloc <= used)
-		line = xrealloc(line, sizeof(*line) * (used+1));
-	line[used].bytes = line[used].hash = 0;
-	return line;
 }
 
 int diffcore_count_changes(void *src, unsigned long src_size,
@@ -91,38 +56,28 @@ int diffcore_count_changes(void *src, unsigned long src_size,
 			   unsigned long *src_copied,
 			   unsigned long *literal_added)
 {
-	struct linehash *src_lines, *dst_lines;
+	int *src_count, *dst_count, i;
 	unsigned long sc, la;
 
-	src_lines = hash_lines(src, src_size);
-	if (!src_lines)
+	if (src_size < 8 || dst_size < 8)
 		return -1;
-	dst_lines = hash_lines(dst, dst_size);
-	if (!dst_lines) {
-		free(src_lines);
-		return -1;
-	}
+
+	src_count = xcalloc(HASHBASE * 2, sizeof(int));
+	dst_count = src_count + HASHBASE;
+	hash_chars(src, src_size, src_count);
+	hash_chars(dst, dst_size, dst_count);
+
 	sc = la = 0;
-	while (src_lines->bytes && dst_lines->bytes) {
-		int cmp = linehash_compare(src_lines, dst_lines);
-		if (!cmp) {
-			sc += src_lines->bytes;
-			src_lines++;
-			dst_lines++;
-			continue;
+	for (i = 0; i < HASHBASE; i++) {
+		if (src_count[i] < dst_count[i]) {
+			la += dst_count[i] - src_count[i];
+			sc += src_count[i];
 		}
-		if (cmp < 0) {
-			src_lines++;
-			continue;
-		}
-		la += dst_lines->bytes;
-		dst_lines++;
-	}
-	while (dst_lines->bytes) {
-		la += dst_lines->bytes;
-		dst_lines++;
+		else /* i.e. if (dst_count[i] <= src_count[i]) */
+			sc += dst_count[i];
 	}
 	*src_copied = sc;
 	*literal_added = la;
+	free(src_count);
 	return 0;
 }

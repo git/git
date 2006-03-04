@@ -190,7 +190,7 @@ PYMODULES = \
 LIB_FILE=libgit.a
 
 LIB_H = \
-	blob.h cache.h commit.h count-delta.h csum-file.h delta.h \
+	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h
 
@@ -200,7 +200,7 @@ DIFF_OBJS = \
 	diffcore-delta.o
 
 LIB_OBJS = \
-	blob.o commit.o connect.o count-delta.o csum-file.o \
+	blob.o commit.o connect.o csum-file.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \
