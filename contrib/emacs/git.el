@@ -213,14 +213,19 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
   "Add a file name to the ignore file in its directory."
   (let* ((fullname (expand-file-name file))
          (dir (file-name-directory fullname))
-         (name (file-name-nondirectory fullname)))
+         (name (file-name-nondirectory fullname))
+         (ignore-name (expand-file-name git-per-dir-ignore-file dir))
+         (created (not (file-exists-p ignore-name))))
   (save-window-excursion
-    (set-buffer (find-file-noselect (expand-file-name git-per-dir-ignore-file dir)))
+    (set-buffer (find-file-noselect ignore-name))
     (goto-char (point-max))
     (unless (zerop (current-column)) (insert "\n"))
     (insert name "\n")
     (sort-lines nil (point-min) (point-max))
-    (save-buffer))))
+    (save-buffer))
+  (when created
+    (git-run-command nil nil "update-index" "--info-only" "--add" "--" (file-relative-name ignore-name)))
+  (git-add-status-file (if created 'added 'modified) (file-relative-name ignore-name))))
 
 
 ;;;; Wrappers for basic git commands
