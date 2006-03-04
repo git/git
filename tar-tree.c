@@ -304,9 +304,11 @@ static void write_header(const unsigned char *sha1, char typeflag, const char *b
 	}
 
 	if (S_ISDIR(mode))
-		mode |= 0755;	/* GIT doesn't store permissions of dirs */
-	if (S_ISLNK(mode))
-		mode |= 0777;   /* ... nor of symlinks */
+		mode |= 0777;
+	else if (S_ISREG(mode))
+		mode |= (mode & 0100) ? 0777 : 0666;
+	else if (S_ISLNK(mode))
+		mode |= 0777;
 	sprintf(&header[100], "%07o", mode & 07777);
 
 	/* XXX: should we provide more meaningful info here? */
@@ -391,7 +393,7 @@ int main(int argc, char **argv)
 		usage(tar_tree_usage);
 	}
 
-	commit = lookup_commit_reference(sha1);
+	commit = lookup_commit_reference_gently(sha1, 1);
 	if (commit) {
 		write_global_extended_header(commit->object.sha1);
 		archive_time = commit->date;
