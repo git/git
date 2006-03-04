@@ -87,6 +87,31 @@ $log->info("--------------- STARTING -----------------");
 my $TEMP_DIR = tempdir( CLEANUP => 1 );
 $log->debug("Temporary directory is '$TEMP_DIR'");
 
+# if we are called with a pserver argument,
+# deal with the authentication cat before entereing the
+# main loop
+if (@ARGV && $ARGV[0] eq 'pserver') {
+    my $line = <STDIN>; chomp $line;
+    unless( $line eq 'BEGIN AUTH REQUEST') {
+       die "E Do not understand $line - expecting BEGIN AUTH REQUEST\n";
+    }
+    $line = <STDIN>; chomp $line;
+    req_Root('root', $line) # reuse Root
+       or die "E Invalid root $line \n";
+    $line = <STDIN>; chomp $line;
+    unless ($line eq 'anonymous') {
+       print "E Only anonymous user allowed via pserver\n";
+       print "I HATE YOU\n";
+    }
+    $line = <STDIN>; chomp $line;    # validate the password?
+    $line = <STDIN>; chomp $line;
+    unless ($line eq 'END AUTH REQUEST') {
+       die "E Do not understand $line -- expecting END AUTH REQUEST\n";
+    }
+    print "I LOVE YOU\n";
+    # and now back to our regular programme...
+}
+
 # Keep going until the client closes the connection
 while (<STDIN>)
 {
@@ -165,6 +190,7 @@ sub req_Root
         print "E the repo config file needs a [gitcvs] section added, and the parameter 'enabled' set to 1\n";
         print "E \n";
         print "error 1 GITCVS emulation disabled\n";
+        return 0;
     }
 
     if ( defined ( $cfg->{gitcvs}{logfile} ) )
@@ -173,6 +199,8 @@ sub req_Root
     } else {
         $log->nofile();
     }
+
+    return 1;
 }
 
 # Global_option option \n
@@ -913,6 +941,12 @@ sub req_ci
     #$log->debug("State : " . Dumper($state));
 
     $log->info("req_ci : " . ( defined($data) ? $data : "[NULL]" ));
+
+    if ( @ARGV && $ARGV[0] eq 'pserver')
+    {
+        print "error 1 pserver access cannot commit\n";
+        exit;
+    }
 
     if ( -e $state->{CVSROOT} . "/index" )
     {
