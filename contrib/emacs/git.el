@@ -39,7 +39,6 @@
 ;;  - hook into file save (after-save-hook)
 ;;  - diff against other branch
 ;;  - renaming files from the status buffer
-;;  - support for appending signed-off-by
 ;;  - creating tags
 ;;  - fetch/pull
 ;;  - switching branches
@@ -102,6 +101,9 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
 
 (defvar git-commits-coding-system 'utf-8
   "Default coding system for git commits.")
+
+(defvar git-append-signed-off-by nil
+  "Whether to append a Signed-off-by line to the commit message.")
 
 (defconst git-log-msg-separator "--- log message follows this line ---")
 
@@ -792,7 +794,8 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
   (unless git-status (error "Not in git-status buffer."))
   (let ((buffer (get-buffer-create "*git-commit*"))
         (merge-heads (git-get-merge-heads))
-        (dir default-directory))
+        (dir default-directory)
+        (sign-off git-append-signed-off-by))
     (with-current-buffer buffer
       (when (eq 0 (buffer-size))
         (cd dir)
@@ -809,10 +812,13 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
           'face 'git-header-face)
          (propertize git-log-msg-separator 'face 'git-separator-face)
          "\n")
-        (when (and merge-heads (file-readable-p ".git/MERGE_MSG"))
-          (insert-file-contents ".git/MERGE_MSG"))))
+        (cond ((and merge-heads (file-readable-p ".git/MERGE_MSG"))
+               (insert-file-contents ".git/MERGE_MSG"))
+              (sign-off
+               (insert (format "\n\nSigned-off-by: %s <%s>\n"
+                               (git-get-committer-name) (git-get-committer-email)))))))
     (let ((log-edit-font-lock-keywords
-           `(("^\\(Author:\\|Date:\\|Parent:\\)\\(.*\\)"
+           `(("^\\(Author:\\|Date:\\|Parent:\\|Signed-off-by:\\)\\(.*\\)"
               (1 font-lock-keyword-face)
               (2 font-lock-function-name-face))
              (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
