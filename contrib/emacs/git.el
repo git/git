@@ -388,9 +388,9 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
   (propertize
    (if (or (not old-perm)
            (not new-perm)
-           (eq 0 (logand #O111 (logxor old-perm new-perm))))
+           (eq 0 (logand ?\111 (logxor old-perm new-perm))))
        "  "
-     (if (eq 0 (logand #O111 old-perm)) "+x" "-x"))
+     (if (eq 0 (logand ?\111 old-perm)) "+x" "-x"))
   'face 'git-permission-face))
 
 (defun git-fileinfo-prettyprint (info)
@@ -806,7 +806,13 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
          "\n")
         (when (and merge-heads (file-readable-p ".git/MERGE_MSG"))
           (insert-file-contents ".git/MERGE_MSG"))))
-      (log-edit #'git-do-commit nil #'git-log-edit-files buffer)))
+    (let ((log-edit-font-lock-keywords
+           `(("^\\(Author:\\|Date:\\|Parent:\\)\\(.*\\)"
+              (1 font-lock-keyword-face)
+              (2 font-lock-function-name-face))
+             (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
+              (1 font-lock-comment-face)))))
+      (log-edit #'git-do-commit nil #'git-log-edit-files buffer))))
 
 (defun git-find-file ()
   "Visit the current file in its own buffer."
@@ -891,7 +897,7 @@ If not set, fall back to `add-log-mailing-address' and then `user-mail-address'.
     (define-key map "d"    diff-map)
     (define-key map "="   'git-diff-file)
     (define-key map "f"   'git-find-file)
-    (define-key map [RET] 'git-find-file)
+    (define-key map "\r"  'git-find-file)
     (define-key map "g"   'git-refresh-status)
     (define-key map "i"   'git-ignore-file)
     (define-key map "l"   'git-log-file)
