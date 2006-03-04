@@ -139,8 +139,21 @@ sub req_Root
     $state->{CVSROOT} = $data;
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+    unless (-d $ENV{GIT_DIR} && -e $ENV{GIT_DIR}.'HEAD') {
+       print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
+        print "E \n";
+        print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+       return 0;
+    }
 
-    foreach my $line ( `git-var -l` )
+    my @gitvars = `git-var -l`;
+    if ($?) {
+       print "E problems executing git-var on the server -- this is not a git repository or the PATH is not set correcly.\n";
+        print "E \n";
+        print "error 1 - problem executing git-var\n";
+       return 0;
+    }
+    foreach my $line ( @gitvars )
     {
         next unless ( $line =~ /^(.*?)\.(.*?)=(.*)$/ );
         $cfg->{$1}{$2} = $3;
@@ -579,6 +592,11 @@ sub req_co
     print $state->{CVSROOT} . "/$module/\n";
     print "Clear-static-directory $checkout_path/\n";
     print $state->{CVSROOT} . "/$module/\n";
+    print "Clear-sticky $checkout_path/\n"; # yes, twice
+    print $state->{CVSROOT} . "/$module/\n";
+    print "Template $checkout_path/\n";
+    print $state->{CVSROOT} . "/$module/\n";
+    print "0\n";
 
     # instruct the client that we're checking out to $checkout_path
     print "E cvs checkout: Updating $checkout_path\n";
@@ -586,12 +604,60 @@ sub req_co
     my %seendirs = ();
     my $lastdir ='';
 
+    # recursive
+    sub prepdir {
+       my ($dir, $repodir, $remotedir, $seendirs) = @_;
+       my $parent = dirname($dir);
+       $dir       =~ s|/+$||;
+       $repodir   =~ s|/+$||;
+       $remotedir =~ s|/+$||;
+       $parent    =~ s|/+$||;
+       $log->debug("announcedir $dir, $repodir, $remotedir" );
+
+       if ($parent eq '.' || $parent eq './') {
+           $parent = '';
+       }
+       # recurse to announce unseen parents first
+       if (length($parent) && !exists($seendirs->{$parent})) {
+           prepdir($parent, $repodir, $remotedir, $seendirs);
+       }
+       # Announce that we are going to modify at the parent level
+       if ($parent) {
+           print "E cvs checkout: Updating $remotedir/$parent\n";
+       } else {
+           print "E cvs checkout: Updating $remotedir\n";
+       }
+       print "Clear-sticky $remotedir/$parent/\n";
+       print "$repodir/$parent/\n";
+
+       print "Clear-static-directory $remotedir/$dir/\n";
+       print "$repodir/$dir/\n";
+       print "Clear-sticky $remotedir/$parent/\n"; # yes, twice
+       print "$repodir/$parent/\n";
+       print "Template $remotedir/$dir/\n";
+       print "$repodir/$dir/\n";
+       print "0\n";
+
+       $seendirs->{$dir} = 1;
+    }
+
     foreach my $git ( @{$updater->gethead} )
     {
         # Don't want to check out deleted files
         next if ( $git->{filehash} eq "deleted" );
 
         ( $git->{name}, $git->{dir} ) = filenamesplit($git->{name});
+
+       if (length($git->{dir}) && $git->{dir} ne './'
+           && $git->{dir} ne $lastdir ) {
+           unless (exists($seendirs{$git->{dir}})) {
+               prepdir($git->{dir}, $state->{CVSROOT} . "/$module/",
+                       $checkout_path, \%seendirs);
+               $lastdir = $git->{dir};
+               $seendirs{$git->{dir}} = 1;
+           }
+           print "E cvs checkout: Updating /$checkout_path/$git->{dir}\n";
+       }
 
         # modification time of this file
         print "Mod-time $git->{modified}\n";
@@ -604,24 +670,10 @@ sub req_co
             print "M U $checkout_path/$git->{name}\n";
         }
 
-	if (length($git->{dir}) && $git->{dir} ne './'
-	    && $git->{dir} ne $lastdir && !exists($seendirs{$git->{dir}})) {
+       # instruct client we're sending a file to put in this path
+       print "Created $checkout_path/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "\n";
 
-	    # Eclipse seems to need the Clear-sticky command
-	    # to prepare the 'Entries' file for the new directory.
-	    print "Clear-sticky $checkout_path/$git->{dir}\n";
-	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
-	    print "Clear-static-directory $checkout_path/$git->{dir}\n";
-	    print $state->{CVSROOT} . "/$module/$git->{dir}\n";
-	    print "E cvs checkout: Updating /$checkout_path/$git->{dir}\n";
-	    $lastdir = $git->{dir};
-	    $seendirs{$git->{dir}} = 1;
-	}
-
-        # instruct client we're sending a file to put in this path
-        print "Created $checkout_path/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "\n";
-
-        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
+       print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
 
         # this is an "entries" line
         print "/$git->{name}/1.$git->{revision}///\n";
