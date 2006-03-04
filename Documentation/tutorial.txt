@@ -309,7 +309,7 @@ git diff HEAD^^ HEAD^
 -------------------------------------
 
 shows the difference between that previous state and the state two
-commits ago.  Also, HEAD~5 can be used as a shorthand for HEAD^^^^^,
+commits ago.  Also, HEAD~5 can be used as a shorthand for HEAD{caret}{caret}{caret}{caret}{caret},
 and more generally HEAD~n can refer to the nth previous commit.
 Commits representing merges have more than one parent, and you can
 specify which parent to follow in that case; see
