@@ -609,7 +609,7 @@ fi
 	test -z "$only_include_assumed" || echo "$only_include_assumed"
 	run_status
 } >>"$GIT_DIR"/COMMIT_EDITMSG
-if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
+if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" -a -z "$amend" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"
 	run_status

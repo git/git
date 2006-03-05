@@ -101,7 +101,7 @@ Documentation
 -------------
 Documentation by Junio C Hamano
 
-See-Also
+See Also
 --------
 gitlink:git-repack[1]
 gitlink:git-prune-packed[1]
