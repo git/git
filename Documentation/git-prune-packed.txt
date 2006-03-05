@@ -40,7 +40,7 @@ Documentation
 --------------
 Documentation by Ryan Anderson <ryan@michonline.com>
 
-See-Also
+See Also
 --------
 gitlink:git-pack-objects[1]
 gitlink:git-repack[1]
