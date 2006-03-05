@@ -589,7 +589,7 @@ int main(int argc, const char **argv)
 				usage(blame_usage);
 			else if(!strcmp(argv[i], "-l") ||
 				!strcmp(argv[i], "--long")) {
-				sha1_len = 20;
+				sha1_len = 40;
 				continue;
 			} else if(!strcmp(argv[i], "-c") ||
 				  !strcmp(argv[i], "--compability")) {
@@ -651,7 +651,9 @@ int main(int argc, const char **argv)
 	process_commits(&rev, filename, &initial);
 
 	buf = blame_contents;
-	max_digits = 1 + log(num_blame_lines+1)/log(10);
+	for (max_digits = 1, i = 10; i <= num_blame_lines + 1; max_digits++)
+		i *= 10;
+
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		if (!c)
