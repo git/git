@@ -226,6 +226,7 @@ static void print_patch(struct patch *p)
 	}
 }
 
+#if 0
 /* For debugging only */
 static void print_map(struct commit *cmit, struct commit *other)
 {
@@ -259,6 +260,7 @@ static void print_map(struct commit *cmit, struct commit *other)
 		printf("\n");
 	}
 }
+#endif
 
 // p is a patch from commit to other.
 static void fill_line_map(struct commit *commit, struct commit *other,

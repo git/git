@@ -15,7 +15,7 @@ static int do_generic_cmd(const char *me, char *arg)
 	my_argv[1] = arg;
 	my_argv[2] = NULL;
 
-	return execv_git_cmd((char**) my_argv);
+	return execv_git_cmd(my_argv);
 }
 
 static struct commands {

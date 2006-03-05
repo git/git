@@ -216,33 +216,33 @@ static void prepend_to_path(const char *dir, int len)
 	setenv("PATH", path, 1);
 }
 
-static void show_man_page(char *git_cmd)
+static void show_man_page(const char *git_cmd)
 {
-	char *page;
+	const char *page;
 
 	if (!strncmp(git_cmd, "git", 3))
 		page = git_cmd;
 	else {
 		int page_len = strlen(git_cmd) + 4;
-
-		page = malloc(page_len + 1);
-		strcpy(page, "git-");
-		strcpy(page + 4, git_cmd);
-		page[page_len] = 0;
+		char *p = malloc(page_len + 1);
+		strcpy(p, "git-");
+		strcpy(p + 4, git_cmd);
+		p[page_len] = 0;
+		page = p;
 	}
 
 	execlp("man", "man", page, NULL);
 }
 
-static int cmd_version(int argc, char **argv, char **envp)
+static int cmd_version(int argc, const char **argv, char **envp)
 {
 	printf("git version %s\n", GIT_VERSION);
 	return 0;
 }
 
-static int cmd_help(int argc, char **argv, char **envp)
+static int cmd_help(int argc, const char **argv, char **envp)
 {
-	char *help_cmd = argv[1];
+	const char *help_cmd = argv[1];
 	if (!help_cmd)
 		cmd_usage(git_exec_path(), NULL);
 	show_man_page(help_cmd);
@@ -251,7 +251,7 @@ static int cmd_help(int argc, char **argv, char **envp)
 
 #define LOGSIZE (65536)
 
-static int cmd_log(int argc, char **argv, char **envp)
+static int cmd_log(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 	struct commit *commit;
@@ -263,7 +263,7 @@ static int cmd_log(int argc, char **argv, char **envp)
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	while (1 < argc) {
-		char *arg = argv[1];
+		const char *arg = argv[1];
 		if (!strncmp(arg, "--pretty", 8)) {
 			commit_format = get_commit_format(arg + 8);
 			if (commit_format == CMIT_FMT_ONELINE)
@@ -325,12 +325,12 @@ static int cmd_log(int argc, char **argv, char **envp)
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-static void handle_internal_command(int argc, char **argv, char **envp)
+static void handle_internal_command(int argc, const char **argv, char **envp)
 {
 	const char *cmd = argv[0];
 	static struct cmd_struct {
 		const char *cmd;
-		int (*fn)(int, char **, char **);
+		int (*fn)(int, const char **, char **);
 	} commands[] = {
 		{ "version", cmd_version },
 		{ "help", cmd_help },
@@ -346,9 +346,9 @@ static void handle_internal_command(int argc, char **argv, char **envp)
 	}
 }
 
-int main(int argc, char **argv, char **envp)
+int main(int argc, const char **argv, char **envp)
 {
-	char *cmd = argv[0];
+	const char *cmd = argv[0];
 	char *slash = strrchr(cmd, '/');
 	char git_command[PATH_MAX + 1];
 	const char *exec_path = NULL;

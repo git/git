@@ -1,4 +1,7 @@
-MAN1_TXT=$(wildcard git-*.txt) gitk.txt
+MAN1_TXT= \
+	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
+		$(wildcard git-*.txt)) \
+	gitk.txt
 MAN7_TXT=git.txt
 
 DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
@@ -11,6 +14,7 @@ ARTICLES += howto-index
 ARTICLES += repository-layout
 ARTICLES += hooks
 ARTICLES += everyday
+ARTICLES += git-tools
 # with their own formatting rules.
 SP_ARTICLES = glossary howto/revert-branch-rebase
 

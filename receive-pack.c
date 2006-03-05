@@ -6,7 +6,7 @@
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
-static char *unpacker[] = { "unpack-objects", NULL };
+static const char *unpacker[] = { "unpack-objects", NULL };
 
 static int report_status = 0;
 
@@ -177,7 +177,7 @@ static void run_update_post_hook(struct command *cmd)
 {
 	struct command *cmd_p;
 	int argc;
-	char **argv;
+	const char **argv;
 
 	if (access(update_post_hook, X_OK) < 0)
 		return;
@@ -190,10 +190,12 @@ static void run_update_post_hook(struct command *cmd)
 	argv[0] = update_post_hook;
 
 	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
+		char *p;
 		if (cmd_p->error_string)
 			continue;
-		argv[argc] = xmalloc(strlen(cmd_p->ref_name) + 1);
-		strcpy(argv[argc], cmd_p->ref_name);
+		p = xmalloc(strlen(cmd_p->ref_name) + 1);
+		strcpy(p, cmd_p->ref_name);
+		argv[argc] = p;
 		argc++;
 	}
 	argv[argc] = NULL;

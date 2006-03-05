@@ -5,13 +5,11 @@ NAME
 ----
 git-cvsserver - A CVS server emulator for git
 
-
 SYNOPSIS
 --------
 [verse]
 export CVS_SERVER=git-cvsserver
 'cvs' -d :ext:user@server/path/repo.git co <HEAD_name>
-
 
 DESCRIPTION
 -----------
@@ -27,48 +25,85 @@ plugin. Most functionality works fine with both of these clients.
 
 LIMITATIONS
 -----------
-Currently gitcvs only works over ssh connections.
 
+Currently cvsserver works over SSH connections for read/write clients, and
+over pserver for anonymous CVS access.
+
+CVS clients cannot tag, branch or perform GIT merges.
 
 INSTALLATION
 ------------
-1. Put server.pl somewhere useful on the same machine that is hosting your git repos
+
+1. If you are going to offer anonymous CVS access via pserver, add a line in
+   /etc/inetd.conf like
+
+   cvspserver stream tcp nowait nobody git-cvsserver pserver
+
+   Note: In some cases, you need to pass the 'pserver' argument twice for
+   git-cvsserver to see it. So the line would look like
+
+   cvspserver stream tcp nowait nobody git-cvsserver pserver pserver
+
+   No special setup is needed for SSH access, other than having GIT tools
+   in the PATH. If you have clients that do not accept the CVS_SERVER
+   env variable, you can rename git-cvsserver to cvs.
 
 2. For each repo that you want accessible from CVS you need to edit config in
    the repo and add the following section.
 
    [gitcvs]
         enabled=1
+        # optional for debugging
         logfile=/path/to/logfile
 
-   n.b. you need to ensure each user that is going to invoke server.pl has
-   write access to the log file.
+   Note: you need to ensure each user that is going to invoke git-cvsserver has
+   write access to the log file and to the git repository. When offering anon
+   access via pserver, this means that the nobody user should have write access
+   to at least the sqlite database at the root of the repository.
 
-5. On each client machine you need to set the following variables.
-     CVSROOT should be set as per normal, but the directory should point at the
-             appropriate git repo.
-     CVS_SERVER should be set to the server.pl script that has been put on the
-                remote machine.
+3. On the client machine you need to set the following variables.
+   CVSROOT should be set as per normal, but the directory should point at the
+   appropriate git repo. For example:
 
-6. Clients should now be able to check out modules (where modules are the names
-   of branches in git).
-     $ cvs co -d mylocaldir master
+   For SSH access, CVS_SERVER should be set to git-cvsserver
+
+   Example:
+
+     export CVSROOT=:ext:user@server:/var/git/project.git
+     export CVS_SERVER=git-cvsserver
+
+4. For SSH clients that will make commits, make sure their .bashrc file
+   sets the GIT_AUTHOR and GIT_COMMITTER variables.
+
+5. Clients should now be able to check out the project. Use the CVS 'module'
+   name to indicate what GIT 'head' you want to check out. Example:
+
+     cvs co -d project-master master
 
 Eclipse CVS Client Notes
 ------------------------
 
 To get a checkout with the Eclipse CVS client:
 
-1. Create a new project from CVS checkout, giving it repository and module
-2. Context Menu->Team->Share Project...
-3. Enter the repository and module information again and click Finish
-4. The Synchronize view appears. Untick  "launch commit wizard" to avoid
-committing the .project file, and select HEAD as the tag to synchronize to.
-Update all incoming changes.
+1. Select "Create a new project -> From CVS checkout"
+2. Create a new location. See the notes below for details on how to choose the
+   right protocol.
+3. Browse the 'modules' available. It will give you a list of the heads in
+   the repository. You will not be able to browse the tree from there. Only
+   the heads.
+4. Pick 'HEAD' when it asks what branch/tag to check out. Untick the
+   "launch commit wizard" to avoid committing the .project file.
 
-Note that most versions of Eclipse ignore CVS_SERVER (which you can set in
-the Preferences->Team->CVS->ExtConnection pane), so you may have to
-rename, alias or symlink git-cvsserver to 'cvs' on the server.
+Protocol notes: If you are using anonymous acces via pserver, just select that.
+Those using SSH access should choose the 'ext' protocol, and configure 'ext'
+access on the Preferences->Team->CVS->ExtConnection pane. Set CVS_SERVER to
+'git-cvsserver'. Not that password support is not good when using 'ext',
+you will definitely want to have SSH keys setup.
+
+Alternatively, you can just use the non-standard extssh protocol that Eclipse
+offer. In that case CVS_SERVER is ignored, and you will have to replace
+the cvs utility on the server with git-cvsserver or manipulate your .bashrc
+so that calling 'cvs' effectively calls git-cvsserver.
 
 Clients known to work
 ---------------------
@@ -106,7 +141,7 @@ Authors: Martyn Smith    <martyn@catalyst.net.nz>
 
 Documentation
 --------------
-Documentation by Martyn Smith <martyn@catalyst.net.nz> and Martin Langhoff <martin@catalyst.net.nz>Matthias Urlichs <smurf@smurf.noris.de>.
+Documentation by Martyn Smith <martyn@catalyst.net.nz> and Martin Langhoff <martin@catalyst.net.nz> Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---
