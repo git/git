@@ -65,6 +65,9 @@ git-add git-*.sh::
 	(i.e. you are listing the files explicitly), it does not
 	add `subdir/git-foo.sh` to the index.
 
+See Also
+--------
+gitlink:git-rm[1]
 
 Author
 ------
