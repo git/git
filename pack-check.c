@@ -70,13 +70,17 @@ static int verify_packfile(struct packed_git *p)
 }
 
 
+#define MAX_CHAIN 40
+
 static void show_pack_info(struct packed_git *p)
 {
 	struct pack_header *hdr;
 	int nr_objects, i;
+	unsigned int chain_histogram[MAX_CHAIN];
 
 	hdr = p->pack_base;
 	nr_objects = ntohl(hdr->hdr_entries);
+	memset(chain_histogram, 0, sizeof(chain_histogram));
 
 	for (i = 0; i < nr_objects; i++) {
 		unsigned char sha1[20], base_sha1[20];
@@ -97,11 +101,25 @@ static void show_pack_info(struct packed_git *p)
 		printf("%s ", sha1_to_hex(sha1));
 		if (!delta_chain_length)
 			printf("%-6s %lu %u\n", type, size, e.offset);
-		else
+		else {
 			printf("%-6s %lu %u %u %s\n", type, size, e.offset,
 			       delta_chain_length, sha1_to_hex(base_sha1));
+			if (delta_chain_length < MAX_CHAIN)
+				chain_histogram[delta_chain_length]++;
+			else
+				chain_histogram[0]++;
+		}
 	}
 
+	for (i = 0; i < MAX_CHAIN; i++) {
+		if (!chain_histogram[i])
+			continue;
+		printf("chain length %s %d: %d object%s\n",
+		       i ? "=" : ">=",
+		       i ? i : MAX_CHAIN,
+		       chain_histogram[i],
+		       1 < chain_histogram[i] ? "s" : "");
+	}
 }
 
 int verify_pack(struct packed_git *p, int verbose)
