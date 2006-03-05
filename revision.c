@@ -684,13 +684,11 @@ static void rewrite_parents(struct commit *commit)
 struct commit *get_revision(struct rev_info *revs)
 {
 	struct commit_list *list = revs->commits;
-	struct commit *commit;
 
 	if (!list)
 		return NULL;
 
 	/* Check the max_count ... */
-	commit = list->item;
 	switch (revs->max_count) {
 	case -1:
 		break;
@@ -701,22 +699,28 @@ struct commit *get_revision(struct rev_info *revs)
 	}
 
 	do {
-		commit = pop_most_recent_commit(&revs->commits, SEEN);
+		struct commit *commit = revs->commits->item;
+
 		if (commit->object.flags & (UNINTERESTING|SHOWN))
-			continue;
+			goto next;
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
-			continue;
+			goto next;
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			return NULL;
 		if (revs->no_merges && commit->parents && commit->parents->next)
-			continue;
+			goto next;
 		if (revs->paths && revs->dense) {
 			if (!(commit->object.flags & TREECHANGE))
-				continue;
+				goto next;
 			rewrite_parents(commit);
 		}
+		/* More to go? */
+		if (revs->max_count)
+			pop_most_recent_commit(&revs->commits, SEEN);
 		commit->object.flags |= SHOWN;
 		return commit;
+next:
+		pop_most_recent_commit(&revs->commits, SEEN);
 	} while (revs->commits);
 	return NULL;
 }
