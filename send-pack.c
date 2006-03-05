@@ -27,7 +27,7 @@ static int is_zero_sha1(const unsigned char *sha1)
 
 static void exec_pack_objects(void)
 {
-	static char *args[] = {
+	static const char *args[] = {
 		"pack-objects",
 		"--stdout",
 		NULL
@@ -39,7 +39,7 @@ static void exec_pack_objects(void)
 static void exec_rev_list(struct ref *refs)
 {
 	struct ref *ref;
-	static char *args[1000];
+	static const char *args[1000];
 	int i = 0, j;
 
 	args[i++] = "rev-list";	/* 0 */

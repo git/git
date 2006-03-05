@@ -3,7 +3,7 @@
 #include <sys/wait.h>
 #include "exec_cmd.h"
 
-int run_command_v_opt(int argc, char **argv, int flags)
+int run_command_v_opt(int argc, const char **argv, int flags)
 {
 	pid_t pid = fork();
 
@@ -47,7 +47,7 @@ int run_command_v_opt(int argc, char **argv, int flags)
 	}
 }
 
-int run_command_v(int argc, char **argv)
+int run_command_v(int argc, const char **argv)
 {
 	return run_command_v_opt(argc, argv, 0);
 }
@@ -55,7 +55,7 @@ int run_command_v(int argc, char **argv)
 int run_command(const char *cmd, ...)
 {
 	int argc;
-	char *argv[MAX_RUN_COMMAND_ARGS];
+	const char *argv[MAX_RUN_COMMAND_ARGS];
 	const char *arg;
 	va_list param;
 

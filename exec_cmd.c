@@ -29,10 +29,9 @@ const char *git_exec_path(void)
 }
 
 
-int execv_git_cmd(char **argv)
+int execv_git_cmd(const char **argv)
 {
 	char git_command[PATH_MAX + 1];
-	char *tmp;
 	int len, err, i;
 	const char *paths[] = { current_exec_path,
 				getenv("GIT_EXEC_PATH"),
@@ -40,6 +39,8 @@ int execv_git_cmd(char **argv)
 
 	for (i = 0; i < sizeof(paths)/sizeof(paths[0]); ++i) {
 		const char *exec_dir = paths[i];
+		const char *tmp;
+
 		if (!exec_dir) continue;
 
 		if (*exec_dir != '/') {
@@ -82,7 +83,7 @@ int execv_git_cmd(char **argv)
 		argv[0] = git_command;
 
 		/* execve() can only ever return if it fails */
-		execve(git_command, argv, environ);
+		execve(git_command, (char **)argv, environ);
 
 		err = errno;
 
@@ -93,11 +94,11 @@ int execv_git_cmd(char **argv)
 }
 
 
-int execl_git_cmd(char *cmd,...)
+int execl_git_cmd(const char *cmd,...)
 {
 	int argc;
-	char *argv[MAX_ARGS + 1];
-	char *arg;
+	const char *argv[MAX_ARGS + 1];
+	const char *arg;
 	va_list param;
 
 	va_start(param, cmd);

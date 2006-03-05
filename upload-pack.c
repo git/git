@@ -46,7 +46,7 @@ static void create_pack_file(void)
 	if (!pid) {
 		int i;
 		int args;
-		char **argv;
+		const char **argv;
 		char *buf;
 		char **p;
 
@@ -56,9 +56,9 @@ static void create_pack_file(void)
 		}
 		else
 			args = nr_has + nr_needs + 5;
-		argv = xmalloc(args * sizeof(char *));
+		p = xmalloc(args * sizeof(char *));
+		argv = (const char **) p;
 		buf = xmalloc(args * 45);
-		p = argv;
 
 		dup2(fd[1], 1);
 		close(0);
