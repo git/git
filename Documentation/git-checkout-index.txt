@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git-checkout-index' [-u] [-q] [-a] [-f] [-n] [--prefix=<string>]
-		   [--stage=<number>]
+		   [--stage=<number>|all]
+		   [--temp]
 		   [-z] [--stdin]
 		   [--] [<file>]\*
 
@@ -43,9 +44,15 @@ OPTIONS
 	When creating files, prepend <string> (usually a directory
 	including a trailing /)
 
---stage=<number>::
+--stage=<number>|all::
 	Instead of checking out unmerged entries, copy out the
 	files from named stage.  <number> must be between 1 and 3.
+	Note: --stage=all automatically implies --temp.
+
+--temp::
+	Instead of copying the files to the working directory
+	write the content to temporary files.  The temporary name
+	associations will be written to stdout.
 
 --stdin::
 	Instead of taking list of paths from the command line,
@@ -85,6 +92,46 @@ $ find . -name '*.h' -print0 | git-checkout-index -f -z --stdin
 The `--` is just a good idea when you know the rest will be filenames;
 it will prevent problems with a filename of, for example,  `-a`.
 Using `--` is probably a good policy in scripts.
+
+
+Using --temp or --stage=all
+---------------------------
+When `--temp` is used (or implied by `--stage=all`)
+`git-checkout-index` will create a temporary file for each index
+entry being checked out.  The index will not be updated with stat
+information.  These options can be useful if the caller needs all
+stages of all unmerged entries so that the unmerged files can be
+processed by an external merge tool.
+
+A listing will be written to stdout providing the association of
+temporary file names to tracked path names.  The listing format
+has two variations:
+
+    . tempname TAB path RS
++
+The first format is what gets used when `--stage` is omitted or
+is not `--stage=all`. The field tempname is the temporary file
+name holding the file content and path is the tracked path name in
+the index.  Only the requested entries are output.
+
+    . stage1temp SP stage2temp SP stage3tmp TAB path RS
++
+The second format is what gets used when `--stage=all`.  The three
+stage temporary fields (stage1temp, stage2temp, stage3temp) list the
+name of the temporary file if there is a stage entry in the index
+or `.` if there is no stage entry.  Paths which only have a stage 0
+entry will always be omitted from the output.
+
+In both formats RS (the record separator) is newline by default
+but will be the null byte if -z was passed on the command line.
+The temporary file names are always safe strings; they will never
+contain directory separators or whitespace characters.  The path
+field is always relative to the current directory and the temporary
+file names are always relative to the top level directory.
+
+If the object being copied out to a temporary file is a symbolic
+link the content of the link will be written to a normal file.  It is
+up to the end-user or the Porcelain to make use of this information.
 
 
 EXAMPLES

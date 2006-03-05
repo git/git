@@ -63,7 +63,7 @@ static int create_file(const char *path, unsigned int mode)
 	return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
 }
 
-static int write_entry(struct cache_entry *ce, const char *path, struct checkout *state)
+static int write_entry(struct cache_entry *ce, char *path, struct checkout *state, int to_tempfile)
 {
 	int fd;
 	void *new;
@@ -80,7 +80,11 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 	}
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
 	case S_IFREG:
-		fd = create_file(path, ntohl(ce->ce_mode));
+		if (to_tempfile) {
+			strcpy(path, ".merge_file_XXXXXX");
+			fd = mkstemp(path);
+		} else
+			fd = create_file(path, ntohl(ce->ce_mode));
 		if (fd < 0) {
 			free(new);
 			return error("git-checkout-index: unable to create file %s (%s)",
@@ -93,12 +97,27 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 			return error("git-checkout-index: unable to write file %s", path);
 		break;
 	case S_IFLNK:
-		if (symlink(new, path)) {
+		if (to_tempfile) {
+			strcpy(path, ".merge_link_XXXXXX");
+			fd = mkstemp(path);
+			if (fd < 0) {
+				free(new);
+				return error("git-checkout-index: unable to create "
+						 "file %s (%s)", path, strerror(errno));
+			}
+			wrote = write(fd, new, size);
+			close(fd);
 			free(new);
-			return error("git-checkout-index: unable to create "
-				     "symlink %s (%s)", path, strerror(errno));
+			if (wrote != size)
+				return error("git-checkout-index: unable to write file %s",
+					path);
+		} else {
+			wrote = symlink(new, path);
+			free(new);
+			if (wrote)
+				return error("git-checkout-index: unable to create "
+						 "symlink %s (%s)", path, strerror(errno));
 		}
-		free(new);
 		break;
 	default:
 		free(new);
@@ -113,11 +132,14 @@ static int write_entry(struct cache_entry *ce, const char *path, struct checkout
 	return 0;
 }
 
-int checkout_entry(struct cache_entry *ce, struct checkout *state)
+int checkout_entry(struct cache_entry *ce, struct checkout *state, char *topath)
 {
-	struct stat st;
 	static char path[MAXPATHLEN+1];
+	struct stat st;
 	int len = state->base_dir_len;
+
+	if (topath)
+		return write_entry(ce, topath, state, 1);
 
 	memcpy(path, state->base_dir, len);
 	strcpy(path + len, ce->name);
@@ -144,10 +166,10 @@ int checkout_entry(struct cache_entry *ce, struct checkout *state)
 				return error("%s is a directory", path);
 			remove_subtree(path);
 		}
-	} else if (state->not_new) 
+	} else if (state->not_new)
 		return 0;
 	create_directories(path, state);
-	return write_entry(ce, path, state);
+	return write_entry(ce, path, state, 0);
 }
 
 
