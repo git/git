@@ -550,13 +550,22 @@ static void get_commit_info(struct commit* commit, struct commit_info* ret)
 	*tmp = 0;
 }
 
-char* format_time(unsigned long time, const char* tz)
+static const char* format_time(unsigned long time, const char* tz_str)
 {
 	static char time_buf[128];
 	time_t t = time;
+	int minutes, tz;
+	struct tm *tm;
 
-	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", gmtime(&t));
-	strcat(time_buf, tz);
+	tz = atoi(tz_str);
+	minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100)*60 + (minutes % 100);
+	minutes = tz < 0 ? -minutes : minutes;
+	t = time + minutes * 60;
+	tm = gmtime(&t);
+
+	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", tm);
+	strcat(time_buf, tz_str);
 	return time_buf;
 }
 

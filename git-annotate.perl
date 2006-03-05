@@ -418,7 +418,13 @@ sub format_date {
 		return $_[0];
 	}
 	my ($timestamp, $timezone) = split(' ', $_[0]);
-	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($timestamp));
+	my $minutes = abs($timezone);
+	$minutes = int($minutes / 100) * 60 + ($minutes % 100);
+	if ($timezone < 0) {
+	    $minutes = -$minutes;
+	}
+	my $t = $timestamp + $minutes * 60;
+	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($t));
 }
 
 # Copied from git-send-email.perl - We need a Git.pm module..
