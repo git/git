@@ -149,6 +149,7 @@ do
 done >$series
 
 me=`git-var GIT_AUTHOR_IDENT | sed -e 's/>.*/>/'`
+headers=`git-repo-config --get format.headers`
 
 case "$outdir" in
 */) ;;
@@ -173,7 +174,7 @@ titleScript='
 
 process_one () {
 	perl -w -e '
-my ($keep_subject, $num, $signoff, $commsg) = @ARGV;
+my ($keep_subject, $num, $signoff, $headers, $commsg) = @ARGV;
 my ($signoff_pattern, $done_header, $done_subject, $done_separator, $signoff_seen,
     $last_was_signoff);
 
@@ -224,6 +225,9 @@ while (<FH>) {
 	    s/^\[PATCH[^]]*\]\s*//;
 	    s/^/[PATCH$num] /;
 	}
+	if ($headers) {
+	    print "$headers\n";
+	}
         print "Subject: $_";
 	$done_subject = 1;
 	next;
@@ -250,7 +254,7 @@ if (!$signoff_seen && $signoff ne "") {
 }
 print "\n---\n\n";
 close FH or die "close $commsg pipe";
-' "$keep_subject" "$num" "$signoff" $commsg
+' "$keep_subject" "$num" "$signoff" "$headers" $commsg
 
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
