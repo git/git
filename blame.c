@@ -92,7 +92,7 @@ static struct patch *get_patch(struct commit *commit, struct commit *other)
 		die("write failed: %s", strerror(errno));
 	close(fd);
 
-	sprintf(diff_cmd, "diff -u -U 0 %s %s", tmp_path1, tmp_path2);
+	sprintf(diff_cmd, "diff -U 0 %s %s", tmp_path1, tmp_path2);
 	fin = popen(diff_cmd, "r");
 	if (!fin)
 		die("popen failed: %s", strerror(errno));
@@ -234,7 +234,7 @@ static void print_patch(struct patch *p)
 	}
 }
 
-#if 0
+#if DEBUG
 /* For debugging only */
 static void print_map(struct commit *cmit, struct commit *other)
 {
