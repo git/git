@@ -8,9 +8,9 @@ git-show-branch - Show branches and their commits.
 SYNOPSIS
 --------
 [verse]
-git-show-branch [--all] [--heads] [--tags] [--topo-order] [--current]
-	[--more=<n> | --list | --independent | --merge-base]
-	[--no-name | --sha1-name] [<rev> | <glob>]...
+'git-show-branch' [--all] [--heads] [--tags] [--topo-order] [--current]
+		[--more=<n> | --list | --independent | --merge-base]
+		[--no-name | --sha1-name] [<rev> | <glob>]...
 
 DESCRIPTION
 -----------

@@ -8,7 +8,7 @@ git-pack-redundant - Program used to find redundant pack files.
 
 SYNOPSIS
 --------
-'git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | .pack filename ... >'
+'git-pack-redundant' [ --verbose ] [ --alt-odb ] < --all | .pack filename ... >
 
 DESCRIPTION
 -----------
