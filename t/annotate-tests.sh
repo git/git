@@ -1,6 +1,37 @@
 # This file isn't used as a test script directly, instead it is
 # sourced from t8001-annotate.sh and t8001-blame.sh.
 
+check_count () {
+	head=
+	case "$1" in -h) head="$2"; shift; shift ;; esac
+	$PROG file $head | perl -e '
+		my %expect = (@ARGV);
+		my %count = ();
+		while (<STDIN>) {
+			if (/^[0-9a-f]+\t\(([^\t]+)\t/) {
+				my $author = $1;
+				for ($author) { s/^\s*//; s/\s*$//; }
+				if (exists $expect{$author}) {
+					$count{$author}++;
+				}
+			}
+		}
+		my $bad = 0;
+		while (my ($author, $count) = each %count) {
+			my $ok;
+			if ($expect{$author} != $count) {
+				$bad = 1;
+				$ok = "bad";
+			}
+			else {
+				$ok = "good";
+			}
+			print STDERR "Author $author (expected $expect{$author}, attributed $count) $ok\n";
+		}
+		exit($bad);
+	' "$@"
+}
+
 test_expect_success \
     'prepare reference tree' \
     'echo "1A quick brown fox jumps over the" >file &&
@@ -10,7 +41,7 @@ test_expect_success \
 
 test_expect_success \
     'check all lines blamed on A' \
-    '[ $(git annotate file | awk "{print \$3}" | grep -c "A") == 2 ]'
+    'check_count A 2'
 
 test_expect_success \
     'Setup new lines blamed on B' \
@@ -19,12 +50,8 @@ test_expect_success \
      GIT_AUTHOR_NAME="B" git commit -a -m "Second."'
 
 test_expect_success \
-    'Two lines blamed on A' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "A") == 2 ]'
-
-test_expect_success \
-    'Two lines blamed on B' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "B") == 2 ]'
+    'Two lines blamed on A, two on B' \
+    'check_count A 2 B 2'
 
 test_expect_success \
     'merge-setup part 1' \
@@ -34,16 +61,8 @@ test_expect_success \
      GIT_AUTHOR_NAME="B1" git commit -a -m "Branch1-1"'
 
 test_expect_success \
-    'Two lines blamed on A' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^A$") == 2 ]'
-
-test_expect_success \
-    'Two lines blamed on B' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B$") == 2 ]'
-
-test_expect_success \
-    'Two lines blamed on B1' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B1$") == 2 ]'
+    'Two lines blamed on A, two on B, two on B1' \
+    'check_count A 2 B 2 B1 2'
 
 test_expect_success \
     'merge-setup part 2' \
@@ -53,34 +72,22 @@ test_expect_success \
      GIT_AUTHOR_NAME="B2" git commit -a -m "Branch2-1"'
 
 test_expect_success \
-    'Two lines blamed on A' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^A$") == 2 ]'
-
-test_expect_success \
-    'One line blamed on B' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B$") == 1 ]'
-
-test_expect_success \
-    'One line blamed on B2' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B2$") == 1 ]'
-
+    'Two lines blamed on A, one on B, one on B2' \
+    'check_count A 2 B 1 B2 1'
 
 test_expect_success \
     'merge-setup part 3' \
     'git pull . branch1'
 
 test_expect_success \
-    'Two lines blamed on A' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^A$") == 2 ]'
+    'Two lines blamed on A, one on B, two on B1, one on B2' \
+    'check_count A 2 B 1 B1 2 B2 1'
 
 test_expect_success \
-    'One line blamed on B' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B$") == 1 ]'
+    'Annotating an old revision works' \
+    'check_count -h master A 2 B 2'
 
 test_expect_success \
-    'Two lines blamed on B1' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B1$") == 2 ]'
+    'Annotating an old revision works' \
+    'check_count -h master^ A 2'
 
-test_expect_success \
-    'One line blamed on B2' \
-    '[ $($PROG file | awk "{print \$3}" | grep -c "^B2$") == 1 ]'
