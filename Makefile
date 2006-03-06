@@ -671,7 +671,6 @@ check-docs::
 	@for v in $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk; \
 	do \
 		case "$$v" in \
-		git-annotate | git-blame | \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | \
 		git-ssh-pull | git-ssh-push ) continue ;; \

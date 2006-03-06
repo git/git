@@ -399,6 +399,12 @@ gitlink:git-update-ref[1]::
 
 Interrogators:
 
+gitlink:git-annotate[1]::
+	Annotate file lines with commit info.
+
+gitlink:git-blame[1]::
+	Blame file lines on commits.
+
 gitlink:git-check-ref-format[1]::
 	Make sure ref name is well formed.
 
