@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <time.h>
 #include <sys/time.h>
+#include <math.h>
 
 #include "cache.h"
 #include "refs.h"
@@ -17,8 +18,15 @@
 
 #define DEBUG 0
 
-struct commit **blame_lines;
-int num_blame_lines;
+static const char blame_usage[] = "[-c] [-l] [--] file [commit]\n"
+	"  -c, --compability Use the same output mode as git-annotate (Default: off)\n"
+	"  -l, --long        Show long commit SHA1 (Default: off)\n"
+	"  -h, --help        This message";
+
+static struct commit **blame_lines;
+static int num_blame_lines;
+static char* blame_contents;
+static int blame_len;
 
 struct util_info {
 	int *line_map;
@@ -84,7 +92,7 @@ static struct patch *get_patch(struct commit *commit, struct commit *other)
 		die("write failed: %s", strerror(errno));
 	close(fd);
 
-	sprintf(diff_cmd, "diff -u0 %s %s", tmp_path1, tmp_path2);
+	sprintf(diff_cmd, "diff -u -U 0 %s %s", tmp_path1, tmp_path2);
 	fin = popen(diff_cmd, "r");
 	if (!fin)
 		die("popen failed: %s", strerror(errno));
@@ -390,9 +398,8 @@ static void init_first_commit(struct commit* commit, const char* filename)
 	alloc_line_map(commit);
 
 	util = commit->object.util;
-	num_blame_lines = util->num_lines;
 
-	for (i = 0; i < num_blame_lines; i++)
+	for (i = 0; i < util->num_lines; i++)
 		util->line_map[i] = i;
 }
 
@@ -414,6 +421,9 @@ static void process_commits(struct rev_info *rev, const char *path,
 	util = commit->object.util;
 	num_blame_lines = util->num_lines;
 	blame_lines = xmalloc(sizeof(struct commit *) * num_blame_lines);
+	blame_contents = util->buf;
+	blame_len = util->size;
+
 	for (i = 0; i < num_blame_lines; i++)
 		blame_lines[i] = NULL;
 
@@ -501,32 +511,137 @@ static void process_commits(struct rev_info *rev, const char *path,
 	} while ((commit = get_revision(rev)) != NULL);
 }
 
+struct commit_info
+{
+	char* author;
+	char* author_mail;
+	unsigned long author_time;
+	char* author_tz;
+};
+
+static void get_commit_info(struct commit* commit, struct commit_info* ret)
+{
+	int len;
+	char* tmp;
+	static char author_buf[1024];
+
+	tmp = strstr(commit->buffer, "\nauthor ") + 8;
+	len = index(tmp, '\n') - tmp;
+	ret->author = author_buf;
+	memcpy(ret->author, tmp, len);
+
+	tmp = ret->author;
+	tmp += len;
+	*tmp = 0;
+	while(*tmp != ' ')
+		tmp--;
+	ret->author_tz = tmp+1;
+
+	*tmp = 0;
+	while(*tmp != ' ')
+		tmp--;
+	ret->author_time = strtoul(tmp, NULL, 10);
+
+	*tmp = 0;
+	while(*tmp != ' ')
+		tmp--;
+	ret->author_mail = tmp + 1;
+
+	*tmp = 0;
+}
+
+static const char* format_time(unsigned long time, const char* tz_str)
+{
+	static char time_buf[128];
+	time_t t = time;
+	int minutes, tz;
+	struct tm *tm;
+
+	tz = atoi(tz_str);
+	minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100)*60 + (minutes % 100);
+	minutes = tz < 0 ? -minutes : minutes;
+	t = time + minutes * 60;
+	tm = gmtime(&t);
+
+	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", tm);
+	strcat(time_buf, tz_str);
+	return time_buf;
+}
+
 int main(int argc, const char **argv)
 {
 	int i;
 	struct commit *initial = NULL;
 	unsigned char sha1[20];
-	const char* filename;
+
+	const char *filename = NULL, *commit = NULL;
+	char filename_buf[256];
+	int sha1_len = 8;
+	int compability = 0;
+	int options = 1;
+
 	int num_args;
 	const char* args[10];
 	struct rev_info rev;
 
-	setup_git_directory();
+	struct commit_info ci;
+	const char *buf;
+	int max_digits;
 
-	if (argc != 3)
-		die("Usage: blame commit-ish file");
+	const char* prefix = setup_git_directory();
 
+	for(i = 1; i < argc; i++) {
+		if(options) {
+			if(!strcmp(argv[i], "-h") ||
+			   !strcmp(argv[i], "--help"))
+				usage(blame_usage);
+			else if(!strcmp(argv[i], "-l") ||
+				!strcmp(argv[i], "--long")) {
+				sha1_len = 40;
+				continue;
+			} else if(!strcmp(argv[i], "-c") ||
+				  !strcmp(argv[i], "--compability")) {
+				compability = 1;
+				continue;
+			} else if(!strcmp(argv[i], "--")) {
+				options = 0;
+				continue;
+			} else if(argv[i][0] == '-')
+				usage(blame_usage);
+			else
+				options = 0;
+		}
 
-	filename = argv[2];
+		if(!options) {
+			if(!filename)
+				filename = argv[i];
+			else if(!commit)
+				commit = argv[i];
+			else
+				usage(blame_usage);
+		}
+	}
+
+	if(!filename)
+		usage(blame_usage);
+	if(!commit)
+		commit = "HEAD";
+
+	if(prefix)
+		sprintf(filename_buf, "%s%s", prefix, filename);
+	else
+		strcpy(filename_buf, filename);
+	filename = filename_buf;
 
 	{
-		struct commit* commit;
-		if (get_sha1(argv[1], sha1))
-			die("get_sha1 failed");
-		commit = lookup_commit_reference(sha1);
+		struct commit* c;
+		if (get_sha1(commit, sha1))
+			die("get_sha1 failed, commit '%s' not found", commit);
+		c = lookup_commit_reference(sha1);
 
-		if (fill_util_info(commit, filename)) {
-			printf("%s not found in %s\n", filename, argv[1]);
+		if (fill_util_info(c, filename)) {
+			printf("%s not found in %s\n", filename, commit);
 			return 1;
 		}
 	}
@@ -535,7 +650,7 @@ int main(int argc, const char **argv)
 	args[num_args++] = NULL;
 	args[num_args++] = "--topo-order";
 	args[num_args++] = "--remove-empty";
-	args[num_args++] = argv[1];
+	args[num_args++] = commit;
 	args[num_args++] = "--";
 	args[num_args++] = filename;
 	args[num_args] = NULL;
@@ -544,13 +659,35 @@ int main(int argc, const char **argv)
 	prepare_revision_walk(&rev);
 	process_commits(&rev, filename, &initial);
 
+	buf = blame_contents;
+	for (max_digits = 1, i = 10; i <= num_blame_lines + 1; max_digits++)
+		i *= 10;
+
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		if (!c)
 			c = initial;
 
-		printf("%d %.8s\n", i, sha1_to_hex(c->object.sha1));
-// printf("%d %s\n", i, find_unique_abbrev(blame_lines[i]->object.sha1, 6));
+		get_commit_info(c, &ci);
+		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
+		if(compability)
+			printf("\t(%10s\t%10s\t%d)", ci.author,
+			       format_time(ci.author_time, ci.author_tz), i+1);
+		else
+			printf(" (%-15.15s %10s %*d) ", ci.author,
+			       format_time(ci.author_time, ci.author_tz),
+			       max_digits, i+1);
+
+		if(i == num_blame_lines - 1) {
+			fwrite(buf, blame_len - (buf - blame_contents),
+			       1, stdout);
+			if(blame_contents[blame_len-1] != '\n')
+				putc('\n', stdout);
+		} else {
+			char* next_buf = index(buf, '\n') + 1;
+			fwrite(buf, next_buf - buf, 1, stdout);
+			buf = next_buf;
+		}
 	}
 
 	if (DEBUG) {

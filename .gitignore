@@ -130,3 +130,4 @@ libgit.a
 *.o
 *.py[co]
 config.mak
+git-blame

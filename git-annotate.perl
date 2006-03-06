@@ -99,7 +99,7 @@ while (my $bound = pop @stack) {
 	}
 }
 push @revqueue, $head;
-init_claim( defined $starting_rev ? $starting_rev : 'dirty');
+init_claim( defined $starting_rev ? $head : 'dirty');
 unless (defined $starting_rev) {
 	my $diff = open_pipe("git","diff","-R", "HEAD", "--",$filename)
 		or die "Failed to call git diff to check for dirty state: $!";
@@ -345,6 +345,7 @@ sub git_cat_file {
 	return () unless defined $rev && defined $filename;
 
 	my $blob = git_ls_tree($rev, $filename);
+	die "Failed to find a blob for $filename in rev $rev\n" if !defined $blob;
 
 	my $catfile = open_pipe("git","cat-file", "blob", $blob)
 		or die "Failed to git-cat-file blob $blob (rev $rev, file $filename): " . $!;
@@ -367,12 +368,13 @@ sub git_ls_tree {
 
 	my ($mode, $type, $blob, $tfilename);
 	while(<$lstree>) {
+		chomp;
 		($mode, $type, $blob, $tfilename) = split(/\s+/, $_, 4);
 		last if ($tfilename eq $filename);
 	}
 	close($lstree);
 
-	return $blob if $filename eq $filename;
+	return $blob if ($tfilename eq $filename);
 	die "git-ls-tree failed to find blob for $filename";
 
 }
@@ -418,7 +420,13 @@ sub format_date {
 		return $_[0];
 	}
 	my ($timestamp, $timezone) = split(' ', $_[0]);
-	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($timestamp));
+	my $minutes = abs($timezone);
+	$minutes = int($minutes / 100) * 60 + ($minutes % 100);
+	if ($timezone < 0) {
+	    $minutes = -$minutes;
+	}
+	my $t = $timestamp + $minutes * 60;
+	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($t));
 }
 
 # Copied from git-send-email.perl - We need a Git.pm module..

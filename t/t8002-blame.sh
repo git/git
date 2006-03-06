@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description='git-annotate'
+test_description='git-blame'
 . ./test-lib.sh
 
-PROG='git annotate'
+PROG='git blame -c'
 . ../annotate-tests.sh
 
 test_done

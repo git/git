@@ -74,6 +74,9 @@ git-rm -f git-*.sh::
 	shell expand the asterisk (i.e. you are listing the files
 	explicitly), it does not remove `subdir/git-foo.sh`.
 
+See Also
+--------
+gitlink:git-add[1]
 
 Author
 ------
