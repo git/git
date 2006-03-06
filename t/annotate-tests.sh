@@ -91,3 +91,12 @@ test_expect_success \
     'Annotating an old revision works' \
     'check_count -h master^ A 2'
 
+test_expect_success \
+    'merge-setup part 4' \
+    'echo "evil merge." >>file &&
+     EDITOR=: git commit -a --amend'
+
+test_expect_success \
+    'Two lines blamed on A, one on B, two on B1, one on B2, one on A U Thor' \
+    'check_count A 2 B 1 B1 2 B2 1 "A U Thor" 1'
+
