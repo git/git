@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n | -k] [-o <dir> | --stdout] [--signoff] [--check] [--diff-options] <his> [<mine>]'
+USAGE='[-n | -k] [-o <dir> | --stdout] [--signoff] [--check] [--diff-options] [--attach] <his> [<mine>]'
 LONG_USAGE='Prepare each commit with its patch since <mine> head forked from
 <his> head, one file per patch formatted to resemble UNIX mailbox
 format, for e-mail submission or use with git-am.
@@ -18,7 +18,9 @@ is ignored if --stdout is specified.
 
 When -n is specified, instead of "[PATCH] Subject", the first
 line is formatted as "[PATCH N/M] Subject", unless you have only
-one patch.'
+one patch.
+
+When --attach is specified, patches are attached, not inlined.'
 
 . git-sh-setup
 
@@ -40,6 +42,8 @@ do
     -d|--d|--da|--dat|--date|\
     -m|--m|--mb|--mbo|--mbox) # now noop
     ;;
+    --at|--att|--atta|--attac|--attach)
+    attach=t ;;
     -k|--k|--ke|--kee|--keep|--keep-|--keep-s|--keep-su|--keep-sub|\
     --keep-subj|--keep-subje|--keep-subjec|--keep-subject)
     keep_subject=t ;;
@@ -150,6 +154,11 @@ done >$series
 
 me=`git-var GIT_AUTHOR_IDENT | sed -e 's/>.*/>/'`
 headers=`git-repo-config --get format.headers`
+case "$attach" in
+"") ;;
+*)
+	mimemagic="050802040500080604070107"
+esac
 
 case "$outdir" in
 */) ;;
@@ -174,7 +183,7 @@ titleScript='
 
 process_one () {
 	perl -w -e '
-my ($keep_subject, $num, $signoff, $headers, $commsg) = @ARGV;
+my ($keep_subject, $num, $signoff, $headers, $mimemagic, $commsg) = @ARGV;
 my ($signoff_pattern, $done_header, $done_subject, $done_separator, $signoff_seen,
     $last_was_signoff);
 
@@ -229,6 +238,16 @@ while (<FH>) {
 	    print "$headers\n";
 	}
         print "Subject: $_";
+	if ($mimemagic) {
+	    print "MIME-Version: 1.0\n";
+	    print "Content-Type: multipart/mixed;\n";
+	    print " boundary=\"------------$mimemagic\"\n";
+	    print "\n";
+	    print "This is a multi-part message in MIME format.\n";
+	    print "--------------$mimemagic\n";
+	    print "Content-Type: text/plain; charset=UTF-8; format=fixed\n";
+	    print "Content-Transfer-Encoding: 8bit\n";
+	}
 	$done_subject = 1;
 	next;
     }
@@ -254,14 +273,33 @@ if (!$signoff_seen && $signoff ne "") {
 }
 print "\n---\n\n";
 close FH or die "close $commsg pipe";
-' "$keep_subject" "$num" "$signoff" "$headers" $commsg
+' "$keep_subject" "$num" "$signoff" "$headers" "$mimemagic" $commsg
 
 	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
 	echo
+	case "$mimemagic" in
+	'');;
+	*)
+		echo "--------------$mimemagic"
+		echo "Content-Type: text/x-patch;"
+		echo " name=\"$commit.diff\""
+		echo "Content-Transfer-Encoding: 8bit"
+		echo "Content-Disposition: inline;"
+		echo " filename=\"$commit.diff\""
+		echo
+	esac
 	git-diff-tree -p $diff_opts "$commit"
-	echo "-- "
-	echo "@@GIT_VERSION@@"
-
+	case "$mimemagic" in
+	'')
+		echo "-- "
+		echo "@@GIT_VERSION@@"
+		;;
+	*)
+		echo
+		echo "--------------$mimemagic--"
+		echo
+		;;
+	esac
 	echo
 }
 
