@@ -100,3 +100,22 @@ test_expect_success \
     'Two lines blamed on A, one on B, two on B1, one on B2, one on A U Thor' \
     'check_count A 2 B 1 B1 2 B2 1 "A U Thor" 1'
 
+test_expect_success \
+    'an incomplete line added' \
+    'echo "incomplete" | tr -d "\\012" >>file &&
+    GIT_AUTHOR_NAME="C" git commit -a -m "Incomplete"'
+
+test_expect_success \
+    'With incomplete lines.' \
+    'check_count A 2 B 1 B1 2 B2 1 "A U Thor" 1 C 1'
+
+test_expect_success \
+    'some edit' \
+    'mv file file1 &&
+     sed -e 1d -e "5s/3A/99/" file1 >file &&
+     rm -f file1 &&
+    GIT_AUTHOR_NAME="D" git commit -a -m "edit"'
+
+test_expect_success \
+    'some edit' \
+    'check_count A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1'
