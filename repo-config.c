@@ -14,6 +14,9 @@ static enum { T_RAW, T_INT, T_BOOL } type = T_RAW;
 
 static int show_config(const char* key_, const char* value_)
 {
+	if (value_ == NULL)
+		value_ = "";
+
 	if (!strcmp(key_, key) &&
 			(regexp == NULL ||
 			 (do_not_match ^
@@ -35,7 +38,7 @@ static int show_config(const char* key_, const char* value_)
 			sprintf(value, "%s", git_config_bool(key_, value_)
 					     ? "true" : "false");
 		} else {
-			value = strdup(value_ ? value_ : "");
+			value = strdup(value_);
 		}
 		seen++;
 	}
