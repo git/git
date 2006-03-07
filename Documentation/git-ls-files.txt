@@ -14,9 +14,9 @@ SYNOPSIS
 		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
-		[--exclude-per-directory=<file>] 
+		[--exclude-per-directory=<file>]
 		[--error-unmatch]
-		[--full-name] [--] [<file>]\*
+		[--full-name] [--abbrev] [--] [<file>]\*
 
 DESCRIPTION
 -----------
@@ -97,6 +97,11 @@ OPTIONS
 	outputs paths relative to the current directory.  This
 	option forces paths to be output relative to the project
 	top directory.
+
+--abbrev[=<n>]::
+	Instead of showing the full 40-byte hexadecimal object
+	lines, show only handful hexdigits prefix.
+	Non default number of digits can be specified with --abbrev=<n>.
 
 --::
 	Do not interpret any more arguments as options.

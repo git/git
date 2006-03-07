@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "quote.h"
 
+static int abbrev = 0;
 static int show_deleted = 0;
 static int show_cached = 0;
 static int show_others = 0;
@@ -488,7 +489,8 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 		printf("%s%06o %s %d\t",
 		       tag,
 		       ntohl(ce->ce_mode),
-		       sha1_to_hex(ce->sha1),
+		       abbrev ? find_unique_abbrev(ce->sha1,abbrev)
+				: sha1_to_hex(ce->sha1),
 		       ce_stage(ce));
 		write_name_quoted("", 0, ce->name + offset,
 				  line_terminator, stdout);
@@ -629,7 +631,8 @@ static void verify_pathspec(void)
 static const char ls_files_usage[] =
 	"git-ls-files [-z] [-t] [-v] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
-	"[ --exclude-per-directory=<filename> ] [--full-name] [--] [<file>]*";
+	"[ --exclude-per-directory=<filename> ] [--full-name] [--abbrev] "
+	"[--] [<file>]*";
 
 int main(int argc, const char **argv)
 {
@@ -734,6 +737,18 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--error-unmatch")) {
 			error_unmatch = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--abbrev=", 9)) {
+			abbrev = strtoul(arg+9, NULL, 10);
+			if (abbrev && abbrev < MINIMUM_ABBREV)
+				abbrev = MINIMUM_ABBREV;
+			else if (abbrev > 40)
+				abbrev = 40;
+			continue;
+		}
+		if (!strcmp(arg, "--abbrev")) {
+			abbrev = DEFAULT_ABBREV;
 			continue;
 		}
 		if (*arg == '-')
