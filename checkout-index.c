@@ -40,9 +40,13 @@
 #include "strbuf.h"
 #include "quote.h"
 
+#define CHECKOUT_ALL 4
 static const char *prefix;
 static int prefix_length;
+static int line_termination = '\n';
 static int checkout_stage; /* default to checkout stage0 */
+static int to_tempfile;
+static char topath[4][MAXPATHLEN+1];
 
 static struct checkout state = {
 	.base_dir = "",
@@ -53,11 +57,39 @@ static struct checkout state = {
 	.refresh_cache = 0,
 };
 
+static void write_tempfile_record (const char *name)
+{
+	int i;
+
+	if (CHECKOUT_ALL == checkout_stage) {
+		for (i = 1; i < 4; i++) {
+			if (i > 1)
+				putchar(' ');
+			if (topath[i][0])
+				fputs(topath[i], stdout);
+			else
+				putchar('.');
+		}
+	} else
+		fputs(topath[checkout_stage], stdout);
+
+	putchar('\t');
+	write_name_quoted("", 0, name + prefix_length,
+		line_termination, stdout);
+	putchar(line_termination);
+
+	for (i = 0; i < 4; i++) {
+		topath[i][0] = 0;
+	}
+}
+
 static int checkout_file(const char *name)
 {
 	int namelen = strlen(name);
 	int pos = cache_name_pos(name, namelen);
 	int has_same_name = 0;
+	int did_checkout = 0;
+	int errs = 0;
 
 	if (pos < 0)
 		pos = -pos - 1;
@@ -68,9 +100,20 @@ static int checkout_file(const char *name)
 		    memcmp(ce->name, name, namelen))
 			break;
 		has_same_name = 1;
-		if (checkout_stage == ce_stage(ce))
-			return checkout_entry(ce, &state);
 		pos++;
+		if (ce_stage(ce) != checkout_stage
+		    && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
+			continue;
+		did_checkout = 1;
+		if (checkout_entry(ce, &state,
+		    to_tempfile ? topath[ce_stage(ce)] : NULL) < 0)
+			errs++;
+	}
+
+	if (did_checkout) {
+		if (to_tempfile)
+			write_tempfile_record(name);
+		return errs > 0 ? -1 : 0;
 	}
 
 	if (!state.quiet) {
@@ -90,18 +133,29 @@ static int checkout_file(const char *name)
 static int checkout_all(void)
 {
 	int i, errs = 0;
+	struct cache_entry* last_ce = 0;
 
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce) != checkout_stage)
+		if (ce_stage(ce) != checkout_stage
+		    && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
 			continue;
 		if (prefix && *prefix &&
 		    (ce_namelen(ce) <= prefix_length ||
 		     memcmp(prefix, ce->name, prefix_length)))
 			continue;
-		if (checkout_entry(ce, &state) < 0)
+		if (last_ce && to_tempfile) {
+			if (ce_namelen(last_ce) != ce_namelen(ce)
+			    || memcmp(last_ce->name, ce->name, ce_namelen(ce)))
+				write_tempfile_record(last_ce->name);
+		}
+		if (checkout_entry(ce, &state,
+		    to_tempfile ? topath[ce_stage(ce)] : NULL) < 0)
 			errs++;
+		last_ce = ce;
 	}
+	if (last_ce && to_tempfile)
+		write_tempfile_record(last_ce->name);
 	if (errs)
 		/* we have already done our error reporting.
 		 * exit with the same code as die().
@@ -111,7 +165,7 @@ static int checkout_all(void)
 }
 
 static const char checkout_cache_usage[] =
-"git-checkout-index [-u] [-q] [-a] [-f] [-n] [--stage=[123]] [--prefix=<string>] [--] <file>...";
+"git-checkout-index [-u] [-q] [-a] [-f] [-n] [--stage=[123]|all] [--prefix=<string>] [--temp] [--] <file>...";
 
 static struct cache_file cache_file;
 
@@ -121,7 +175,6 @@ int main(int argc, char **argv)
 	int newfd = -1;
 	int all = 0;
 	int read_from_stdin = 0;
-	int line_termination = '\n';
 
 	prefix = setup_git_directory();
 	git_config(git_default_config);
@@ -175,17 +228,26 @@ int main(int argc, char **argv)
 			i++; /* do not consider arg as a file name */
 			break;
 		}
+		if (!strcmp(arg, "--temp")) {
+			to_tempfile = 1;
+			continue;
+		}
 		if (!strncmp(arg, "--prefix=", 9)) {
 			state.base_dir = arg+9;
 			state.base_dir_len = strlen(state.base_dir);
 			continue;
 		}
 		if (!strncmp(arg, "--stage=", 8)) {
-			int ch = arg[8];
-			if ('1' <= ch && ch <= '3')
-				checkout_stage = arg[8] - '0';
-			else
-				die("stage should be between 1 and 3");
+			if (!strcmp(arg + 8, "all")) {
+				to_tempfile = 1;
+				checkout_stage = CHECKOUT_ALL;
+			} else {
+				int ch = arg[8];
+				if ('1' <= ch && ch <= '3')
+					checkout_stage = arg[8] - '0';
+				else
+					die("stage should be between 1 and 3 or all");
+			}
 			continue;
 		}
 		if (arg[0] == '-')
@@ -193,7 +255,7 @@ int main(int argc, char **argv)
 		break;
 	}
 
-	if (state.base_dir_len) {
+	if (state.base_dir_len || to_tempfile) {
 		/* when --prefix is specified we do not
 		 * want to update cache.
 		 */

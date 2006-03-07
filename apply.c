@@ -1402,7 +1402,8 @@ static int check_patch(struct patch *patch)
 				costate.not_new = 0;
 				costate.refresh_cache = 1;
 				if (checkout_entry(active_cache[pos],
-						   &costate) ||
+						   &costate,
+						   NULL) ||
 				    lstat(old_name, &st))
 					return -1;
 			}

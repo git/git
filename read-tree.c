@@ -337,7 +337,7 @@ static void check_updates(struct cache_entry **src, int nr)
 		if (ce->ce_flags & mask) {
 			ce->ce_flags &= ~mask;
 			if (update)
-				checkout_entry(ce, &state);
+				checkout_entry(ce, &state, NULL);
 		}
 	}
 	if (total) {
