@@ -22,6 +22,12 @@ repository, or incrementally import into an existing one.
 Splitting the CVS log into patch sets is done by 'cvsps'.
 At least version 2.1 is required.
 
+You should *never* do any work of your own on the branches that are
+created by git-cvsimport. The initial import will create and populate a
+"master" branch from the CVS repository's main branch which you're free
+to work with; after that, you need to 'git merge' incremental imports, or
+any CVS branches, yourself.
+
 OPTIONS
 -------
 -d <CVSROOT>::
