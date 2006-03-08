@@ -247,5 +247,13 @@ EOF
 
 test_expect_success 'hierarchical section value' 'cmp .git/config expect'
 
+cat > .git/config << EOF
+[novalue]
+	variable
+EOF
+
+test_expect_success 'get variable with no value' \
+	'git-repo-config --get novalue.variable ^$'
+
 test_done
 

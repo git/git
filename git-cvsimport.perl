@@ -452,7 +452,6 @@ chdir($git_tree);
 
 my $last_branch = "";
 my $orig_branch = "";
-my $forward_master = 0;
 my %branch_date;
 
 my $git_dir = $ENV{"GIT_DIR"} || ".git";
@@ -488,21 +487,6 @@ unless(-d $git_dir) {
 		$last_branch = "master";
 	}
 	$orig_branch = $last_branch;
-	if (-f "$git_dir/CVS2GIT_HEAD") {
-		die <<EOM;
-CVS2GIT_HEAD exists.
-Make sure your working directory corresponds to HEAD and remove CVS2GIT_HEAD.
-You may need to run
-
-    git read-tree -m -u CVS2GIT_HEAD HEAD
-EOM
-	}
-	system('cp', "$git_dir/HEAD", "$git_dir/CVS2GIT_HEAD");
-
-	$forward_master =
-	    $opt_o ne 'master' && -f "$git_dir/refs/heads/master" &&
-	    system('cmp', '-s', "$git_dir/refs/heads/master", 
-				"$git_dir/refs/heads/$opt_o") == 0;
 
 	# populate index
 	system('git-read-tree', $last_branch);
@@ -889,17 +873,11 @@ if (defined $orig_git_index) {
 
 # Now switch back to the branch we were in before all of this happened
 if($orig_branch) {
-	print "DONE\n" if $opt_v;
-	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
-		if $forward_master;
-	unless ($opt_i) {
-		system('git-read-tree', '-m', '-u', 'CVS2GIT_HEAD', 'HEAD');
-		die "read-tree failed: $?\n" if $?;
-	}
+	print "DONE; you may need to merge manually.\n" if $opt_v;
 } else {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
-	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
+	system("git-update-ref", "refs/heads/master", "refs/heads/$opt_o")
 		unless -f "$git_dir/refs/heads/master";
 	system('git-update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
@@ -907,4 +885,3 @@ if($orig_branch) {
 		die "checkout failed: $?\n" if $?;
 	}
 }
-unlink("$git_dir/CVS2GIT_HEAD");
