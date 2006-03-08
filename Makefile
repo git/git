@@ -564,7 +564,7 @@ test-date$X: test-date.c date.o ctype.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) test-date.c date.o ctype.o
 
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^ -lz
 
 check:
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
