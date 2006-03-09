@@ -30,6 +30,7 @@ my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_version, $_upgrade, $_authors);
 my (@_branch_from, %tree_map, %users);
+my $_svn_co_url_revs;
 
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
@@ -77,7 +78,7 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
-svn_check_ignore_externals();
+svn_compat_check();
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
 
@@ -162,7 +163,8 @@ sub rebuild {
 				croak "SVN repository location required: $url\n";
 			}
 			$SVN_URL ||= $url;
-			$SVN_UUID ||= setup_git_svn();
+			$SVN_UUID ||= $uuid;
+			setup_git_svn();
 			$latest = $rev;
 		}
 		assert_revision_eq_or_unknown($rev, $c);
@@ -171,9 +173,7 @@ sub rebuild {
 	}
 	close $rev_list or croak $?;
 	if (!chdir $SVN_WC) {
-		my @svn_co = ('svn','co',"-r$latest");
-		push @svn_co, '--ignore-externals' unless $_no_ignore_ext;
-		sys(@svn_co, $SVN_URL, $SVN_WC);
+		svn_cmd_checkout($SVN_URL, $latest, $SVN_WC);
 		chdir $SVN_WC or croak $!;
 	}
 
@@ -222,14 +222,14 @@ sub fetch {
 	my $base = shift @$svn_log or croak "No base revision!\n";
 	my $last_commit = undef;
 	unless (-d $SVN_WC) {
-		my @svn_co = ('svn','co',"-r$base->{revision}");
-		push @svn_co,'--ignore-externals' unless $_no_ignore_ext;
-		sys(@svn_co, $SVN_URL, $SVN_WC);
+		svn_cmd_checkout($SVN_URL,$base->{revision},$SVN_WC);
 		chdir $SVN_WC or croak $!;
+		read_uuid();
 		$last_commit = git_commit($base, @parents);
 		assert_svn_wc_clean($base->{revision}, $last_commit);
 	} else {
 		chdir $SVN_WC or croak $!;
+		read_uuid();
 		$last_commit = file_to_s("$REV_DIR/$base->{revision}");
 	}
 	my @svn_up = qw(svn up);
@@ -275,7 +275,9 @@ sub commit {
 
 	fetch();
 	chdir $SVN_WC or croak $!;
-	my $svn_current_rev =  svn_info('.')->{'Last Changed Rev'};
+	my $info = svn_info('.');
+	read_uuid($info);
+	my $svn_current_rev =  $info->{'Last Changed Rev'};
 	foreach my $c (@revs) {
 		my $mods = svn_checkout_tree($svn_current_rev, $c);
 		if (scalar @$mods == 0) {
@@ -314,6 +316,14 @@ sub show_ignore {
 
 ########################### utility functions #########################
 
+sub read_uuid {
+	return if $SVN_UUID;
+	my $info = shift || svn_info('.');
+	$SVN_UUID = $info->{'Repository UUID'} or
+					croak "Repository UUID unreadable\n";
+	s_to_file($SVN_UUID,"$GIT_DIR/$GIT_SVN/info/uuid");
+}
+
 sub setup_git_svn {
 	defined $SVN_URL or croak "SVN repository location required\n";
 	unless (-d $GIT_DIR) {
@@ -323,14 +333,10 @@ sub setup_git_svn {
 	mkpath(["$GIT_DIR/$GIT_SVN/info"]);
 	mkpath([$REV_DIR]);
 	s_to_file($SVN_URL,"$GIT_DIR/$GIT_SVN/info/url");
-	$SVN_UUID = svn_info($SVN_URL)->{'Repository UUID'} or
-					croak "Repository UUID unreadable\n";
-	s_to_file($SVN_UUID,"$GIT_DIR/$GIT_SVN/info/uuid");
 
 	open my $fd, '>>', "$GIT_DIR/$GIT_SVN/info/exclude" or croak $!;
 	print $fd '.svn',"\n";
 	close $fd or croak $!;
-	return $SVN_UUID;
 }
 
 sub assert_svn_wc_clean {
@@ -860,7 +866,6 @@ sub git_commit {
 	my ($log_msg, @parents) = @_;
 	assert_revision_unknown($log_msg->{revision});
 	my $out_fh = IO::File->new_tmpfile or croak $!;
-	$SVN_UUID ||= svn_info('.')->{'Repository UUID'};
 
 	map_tree_joins() if (@_branch_from && !%tree_map);
 
@@ -922,7 +927,16 @@ sub git_commit {
 	}
 	my @update_ref = ('git-update-ref',"refs/remotes/$GIT_SVN",$commit);
 	if (my $primary_parent = shift @exec_parents) {
-		push @update_ref, $primary_parent;
+		$pid = fork;
+		defined $pid or croak $!;
+		if (!$pid) {
+			close STDERR;
+			close STDOUT;
+			exec 'git-rev-parse','--verify',
+						"refs/remotes/$GIT_SVN^0";
+		}
+		waitpid $pid, 0;
+		push @update_ref, $primary_parent unless $?;
 	}
 	sys(@update_ref);
 	sys('git-update-ref',"$GIT_SVN/revs/$log_msg->{revision}",$commit);
@@ -995,13 +1009,26 @@ sub safe_qx {
 	return wantarray ? @ret : join('',@ret);
 }
 
-sub svn_check_ignore_externals {
-	return if $_no_ignore_ext;
-	unless (grep /ignore-externals/,(safe_qx(qw(svn co -h)))) {
+sub svn_compat_check {
+	my @co_help = safe_qx(qw(svn co -h));
+	unless (grep /ignore-externals/,@co_help) {
 		print STDERR "W: Installed svn version does not support ",
 				"--ignore-externals\n";
 		$_no_ignore_ext = 1;
 	}
+	if (grep /usage: checkout URL\[\@REV\]/,@co_help) {
+		$_svn_co_url_revs = 1;
+	}
+}
+
+# *sigh*, new versions of svn won't honor -r<rev> without URL@<rev>,
+# (and they won't honor URL@<rev> without -r<rev>, too!)
+sub svn_cmd_checkout {
+	my ($url, $rev, $dir) = @_;
+	my @cmd = ('svn','co', "-r$rev");
+	push @cmd, '--ignore-externals' unless $_no_ignore_ext;
+	$url .= "\@$rev" if $_svn_co_url_revs;
+	sys(@cmd, $url, $dir);
 }
 
 sub check_upgrade_needed {
