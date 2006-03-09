@@ -3,7 +3,7 @@ git-diff(1)
 
 NAME
 ----
-git-diff - Show changes between commits, commit and working tree, etc.
+git-diff - Show changes between commits, commit and working tree, etc
 
 
 SYNOPSIS

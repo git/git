@@ -3,7 +3,7 @@ git-unpack-objects(1)
 
 NAME
 ----
-git-unpack-objects - Unpack objects from a packed archive.
+git-unpack-objects - Unpack objects from a packed archive
 
 
 SYNOPSIS

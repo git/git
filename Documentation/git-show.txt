@@ -3,7 +3,7 @@ git-show(1)
 
 NAME
 ----
-git-show - Show one commit with difference it introduces.
+git-show - Show one commit with difference it introduces
 
 
 SYNOPSIS

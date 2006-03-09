@@ -3,7 +3,7 @@ git-format-patch(1)
 
 NAME
 ----
-git-format-patch - Prepare patches for e-mail submission.
+git-format-patch - Prepare patches for e-mail submission
 
 
 SYNOPSIS

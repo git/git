@@ -3,7 +3,7 @@ git-relink(1)
 
 NAME
 ----
-git-relink - Hardlink common objects in local repositories.
+git-relink - Hardlink common objects in local repositories
 
 SYNOPSIS
 --------

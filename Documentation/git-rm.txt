@@ -3,7 +3,7 @@ git-rm(1)
 
 NAME
 ----
-git-rm - Remove files from the working tree and from the index.
+git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------

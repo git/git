@@ -3,7 +3,7 @@ git-ls-remote(1)
 
 NAME
 ----
-git-ls-remote - Look at references other repository has.
+git-ls-remote - Look at references other repository has
 
 
 SYNOPSIS

@@ -3,7 +3,7 @@ git-request-pull(1)
 
 NAME
 ----
-git-request-pull - Generates a summary of pending changes.
+git-request-pull - Generates a summary of pending changes
 
 SYNOPSIS
 --------

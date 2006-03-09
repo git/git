@@ -3,7 +3,7 @@ git-verify-tag(1)
 
 NAME
 ----
-git-verify-tag - Check the GPG signature of tag.
+git-verify-tag - Check the GPG signature of tag
 
 SYNOPSIS
 --------

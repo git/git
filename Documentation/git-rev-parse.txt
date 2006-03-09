@@ -3,7 +3,7 @@ git-rev-parse(1)
 
 NAME
 ----
-git-rev-parse - Pick out and massage parameters.
+git-rev-parse - Pick out and massage parameters
 
 
 SYNOPSIS

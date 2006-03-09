@@ -3,7 +3,7 @@ git-patch-id(1)
 
 NAME
 ----
-git-patch-id - Generate a patch ID.
+git-patch-id - Generate a patch ID
 
 SYNOPSIS
 --------

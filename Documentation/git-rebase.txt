@@ -3,7 +3,7 @@ git-rebase(1)
 
 NAME
 ----
-git-rebase - Rebase local commits to new upstream head.
+git-rebase - Rebase local commits to new upstream head
 
 SYNOPSIS
 --------

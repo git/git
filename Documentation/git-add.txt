@@ -3,7 +3,7 @@ git-add(1)
 
 NAME
 ----
-git-add - Add files to the index file.
+git-add - Add files to the index file
 
 SYNOPSIS
 --------

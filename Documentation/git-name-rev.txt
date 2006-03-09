@@ -3,7 +3,7 @@ git-name-rev(1)
 
 NAME
 ----
-git-name-rev - Find symbolic names for given revs.
+git-name-rev - Find symbolic names for given revs
 
 
 SYNOPSIS

@@ -3,7 +3,7 @@ git-check-ref-format(1)
 
 NAME
 ----
-git-check-ref-format - Make sure ref name is well formed.
+git-check-ref-format - Make sure ref name is well formed
 
 SYNOPSIS
 --------

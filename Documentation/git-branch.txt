@@ -3,7 +3,7 @@ git-branch(1)
 
 NAME
 ----
-git-branch - Create a new branch, or remove an old one.
+git-branch - Create a new branch, or remove an old one
 
 SYNOPSIS
 --------
