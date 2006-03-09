@@ -123,8 +123,6 @@ static const struct {
 	{ "IDLE", +12, 0, },	/* International Date Line East */
 };
 
-#define NR_TZ (sizeof(timezone_names) / sizeof(timezone_names[0]))
-	
 static int match_string(const char *date, const char *str)
 {
 	int i = 0;
@@ -173,7 +171,7 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 		}
 	}
 
-	for (i = 0; i < NR_TZ; i++) {
+	for (i = 0; i < ARRAY_SIZE(timezone_names); i++) {
 		int match = match_string(date, timezone_names[i].name);
 		if (match >= 3) {
 			int off = timezone_names[i].offset;

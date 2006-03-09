@@ -323,8 +323,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	return 0;
 }
 
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
 	const char *cmd = argv[0];
