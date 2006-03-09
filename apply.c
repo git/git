@@ -651,7 +651,7 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 		len = linelen(line, size);
 		if (!len || line[len-1] != '\n')
 			break;
-		for (i = 0; i < sizeof(optable) / sizeof(optable[0]); i++) {
+		for (i = 0; i < ARRAY_SIZE(optable); i++) {
 			const struct opentry *p = optable + i;
 			int oplen = strlen(p->str);
 			if (len < oplen || memcmp(p->str, line, oplen))

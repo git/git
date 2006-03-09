@@ -11,6 +11,7 @@
 #include <sys/ioctl.h>
 #include "git-compat-util.h"
 #include "exec_cmd.h"
+#include "common-cmds.h"
 
 #include "cache.h"
 #include "commit.h"
@@ -171,11 +172,29 @@ static void list_commands(const char *exec_path, const char *pattern)
 	putchar('\n');
 }
 
+static void list_common_cmds_help()
+{
+	int i, longest = 0;
+
+	for (i = 0; i < ARRAY_SIZE(common_cmds); i++) {
+		if (longest < strlen(common_cmds[i].name))
+			longest = strlen(common_cmds[i].name);
+	}
+
+	puts("The most commonly used git commands are:");
+	for (i = 0; i < ARRAY_SIZE(common_cmds); i++) {
+		printf("    %s", common_cmds[i].name);
+		mput_char(' ', longest - strlen(common_cmds[i].name) + 4);
+		puts(common_cmds[i].help);
+	}
+	puts("(use 'git help -a' to get a list of all installed git commands)");
+}
+
 #ifdef __GNUC__
-static void cmd_usage(const char *exec_path, const char *fmt, ...)
-	__attribute__((__format__(__printf__, 2, 3), __noreturn__));
+static void cmd_usage(int show_all, const char *exec_path, const char *fmt, ...)
+	__attribute__((__format__(__printf__, 3, 4), __noreturn__));
 #endif
-static void cmd_usage(const char *exec_path, const char *fmt, ...)
+static void cmd_usage(int show_all, const char *exec_path, const char *fmt, ...)
 {
 	if (fmt) {
 		va_list ap;
@@ -189,10 +208,13 @@ static void cmd_usage(const char *exec_path, const char *fmt, ...)
 	else
 		puts(git_usage);
 
-	putchar('\n');
-
-	if(exec_path)
-		list_commands(exec_path, "git-*");
+	if (exec_path) {
+		putchar('\n');
+		if (show_all)
+			list_commands(exec_path, "git-*");
+		else
+			list_common_cmds_help();
+        }
 
 	exit(1);
 }
@@ -244,8 +266,11 @@ static int cmd_help(int argc, const char **argv, char **envp)
 {
 	const char *help_cmd = argv[1];
 	if (!help_cmd)
-		cmd_usage(git_exec_path(), NULL);
-	show_man_page(help_cmd);
+		cmd_usage(0, git_exec_path(), NULL);
+	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a"))
+		cmd_usage(1, git_exec_path(), NULL);
+	else
+		show_man_page(help_cmd);
 	return 0;
 }
 
@@ -322,8 +347,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	free(buf);
 	return 0;
 }
-
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
@@ -420,7 +443,7 @@ int main(int argc, const char **argv, char **envp)
 			puts(git_exec_path());
 			exit(0);
 		}
-		cmd_usage(NULL, NULL);
+		cmd_usage(0, NULL, NULL);
 	}
 	argv[0] = cmd;
 
@@ -443,7 +466,7 @@ int main(int argc, const char **argv, char **envp)
 	execv_git_cmd(argv);
 
 	if (errno == ENOENT)
-		cmd_usage(exec_path, "'%s' is not a git-command", cmd);
+		cmd_usage(0, exec_path, "'%s' is not a git-command", cmd);
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		git_command, strerror(errno));

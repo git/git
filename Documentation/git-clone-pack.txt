@@ -3,7 +3,7 @@ git-clone-pack(1)
 
 NAME
 ----
-git-clone-pack - Clones a repository by receiving packed objects.
+git-clone-pack - Clones a repository by receiving packed objects
 
 
 SYNOPSIS

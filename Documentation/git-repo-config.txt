@@ -3,7 +3,7 @@ git-repo-config(1)
 
 NAME
 ----
-git-repo-config - Get and set options in .git/config.
+git-repo-config - Get and set options in .git/config
 
 
 SYNOPSIS

@@ -37,7 +37,7 @@ int execv_git_cmd(const char **argv)
 				getenv("GIT_EXEC_PATH"),
 				builtin_exec_path };
 
-	for (i = 0; i < sizeof(paths)/sizeof(paths[0]); ++i) {
+	for (i = 0; i < ARRAY_SIZE(paths); ++i) {
 		const char *exec_dir = paths[i];
 		const char *tmp;
 

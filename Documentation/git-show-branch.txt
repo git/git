@@ -3,7 +3,7 @@ git-show-branch(1)
 
 NAME
 ----
-git-show-branch - Show branches and their commits.
+git-show-branch - Show branches and their commits
 
 SYNOPSIS
 --------

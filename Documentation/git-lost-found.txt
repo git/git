@@ -3,7 +3,7 @@ git-lost-found(1)
 
 NAME
 ----
-git-lost-found - Recover lost refs that luckily have not yet been pruned.
+git-lost-found - Recover lost refs that luckily have not yet been pruned
 
 SYNOPSIS
 --------

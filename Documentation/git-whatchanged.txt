@@ -3,7 +3,7 @@ git-whatchanged(1)
 
 NAME
 ----
-git-whatchanged - Show logs with difference each commit introduces.
+git-whatchanged - Show logs with difference each commit introduces
 
 
 SYNOPSIS

@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-fsck-objects' [--tags] [--root] [--unreachable] [--cache]
-		 [--standalone | --full] [--strict] [<object>*]
+		 [--full] [--strict] [<object>*]
 
 DESCRIPTION
 -----------
@@ -38,21 +38,14 @@ index file and all SHA1 references in .git/refs/* as heads.
 	Consider any object recorded in the index also as a head node for
 	an unreachability trace.
 
---standalone::
-	Limit checks to the contents of GIT_OBJECT_DIRECTORY
-	($GIT_DIR/objects), making sure that it is consistent and
-	complete without referring to objects found in alternate
-	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES,
-	nor packed git archives found in $GIT_DIR/objects/pack;
-	cannot be used with --full.
-
 --full::
 	Check not just objects in GIT_OBJECT_DIRECTORY
 	($GIT_DIR/objects), but also the ones found in alternate
-	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES,
+	object pools listed in GIT_ALTERNATE_OBJECT_DIRECTORIES
+	or $GIT_DIR/objects/info/alternates,
 	and in packed git archives found in $GIT_DIR/objects/pack
 	and corresponding pack subdirectories in alternate
-	object pools; cannot be used with --standalone.
+	object pools.
 
 --strict::
 	Enable more strict checking, namely to catch a file mode

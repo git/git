@@ -3,7 +3,7 @@ git-sh-setup(1)
 
 NAME
 ----
-git-sh-setup - Common git shell script setup code.
+git-sh-setup - Common git shell script setup code
 
 SYNOPSIS
 --------

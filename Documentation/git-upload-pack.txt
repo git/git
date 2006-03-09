@@ -3,7 +3,7 @@ git-upload-pack(1)
 
 NAME
 ----
-git-upload-pack - Send missing objects packed.
+git-upload-pack - Send missing objects packed
 
 
 SYNOPSIS

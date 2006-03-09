@@ -9,6 +9,8 @@
 #endif
 #endif
 
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>

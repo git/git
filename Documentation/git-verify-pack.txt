@@ -3,7 +3,7 @@ git-verify-pack(1)
 
 NAME
 ----
-git-verify-pack - Validate packed git archive files.
+git-verify-pack - Validate packed git archive files
 
 
 SYNOPSIS

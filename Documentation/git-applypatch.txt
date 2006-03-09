@@ -3,7 +3,7 @@ git-applypatch(1)
 
 NAME
 ----
-git-applypatch - Apply one patch extracted from an e-mail.
+git-applypatch - Apply one patch extracted from an e-mail
 
 
 SYNOPSIS

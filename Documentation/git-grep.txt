@@ -3,7 +3,7 @@ git-grep(1)
 
 NAME
 ----
-git-grep - print lines matching a pattern
+git-grep - Print lines matching a pattern
 
 
 SYNOPSIS

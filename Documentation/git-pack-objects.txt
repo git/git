@@ -3,7 +3,7 @@ git-pack-objects(1)
 
 NAME
 ----
-git-pack-objects - Create a packed archive of objects.
+git-pack-objects - Create a packed archive of objects
 
 
 SYNOPSIS

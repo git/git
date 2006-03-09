@@ -3,7 +3,7 @@ git-cherry(1)
 
 NAME
 ----
-git-cherry - Find commits not merged upstream.
+git-cherry - Find commits not merged upstream
 
 SYNOPSIS
 --------

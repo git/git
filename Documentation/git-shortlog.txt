@@ -3,7 +3,7 @@ git-shortlog(1)
 
 NAME
 ----
-git-shortlog - Summarize 'git log' output.
+git-shortlog - Summarize 'git log' output
 
 
 SYNOPSIS
