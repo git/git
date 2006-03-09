@@ -47,7 +47,7 @@ sub current_branch {
 sub shortlog {
 	my ($tip) = @_;
 	my @result;
-	foreach ( qx{git-log --topo-order --pretty=oneline $tip ^HEAD} ) {
+	foreach ( qx{git-log --no-merges --topo-order --pretty=oneline $tip ^HEAD} ) {
 		s/^[0-9a-f]{40}\s+//;
 		push @result, $_;
 	}
