@@ -155,7 +155,7 @@ sub rebuild {
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
 		next if (defined $SVN_UUID && ($uuid ne $SVN_UUID));
-		next if (defined $SVN_URL && ($url ne $SVN_URL));
+		next if (defined $SVN_URL && defined $url && ($url ne $SVN_URL));
 
 		print "r$rev = $c\n";
 		unless (defined $latest) {
