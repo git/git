@@ -82,18 +82,20 @@ void mark_parents_uninteresting(struct commit *commit)
 
 	while (parents) {
 		struct commit *commit = parents->item;
-		commit->object.flags |= UNINTERESTING;
+		if (!(commit->object.flags & UNINTERESTING)) {
+			commit->object.flags |= UNINTERESTING;
 
-		/*
-		 * Normally we haven't parsed the parent
-		 * yet, so we won't have a parent of a parent
-		 * here. However, it may turn out that we've
-		 * reached this commit some other way (where it
-		 * wasn't uninteresting), in which case we need
-		 * to mark its parents recursively too..
-		 */
-		if (commit->parents)
-			mark_parents_uninteresting(commit);
+			/*
+			 * Normally we haven't parsed the parent
+			 * yet, so we won't have a parent of a parent
+			 * here. However, it may turn out that we've
+			 * reached this commit some other way (where it
+			 * wasn't uninteresting), in which case we need
+			 * to mark its parents recursively too..
+			 */
+			if (commit->parents)
+				mark_parents_uninteresting(commit);
+		}
 
 		/*
 		 * A missing commit is ok iff its parent is marked
