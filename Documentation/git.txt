@@ -20,15 +20,16 @@ brings your stuff to the plumbing).
 OPTIONS
 -------
 --version::
-	prints the git suite version that the 'git' program came from.
+	Prints the git suite version that the 'git' program came from.
 
 --help::
-	prints the synopsis and a list of available commands.
-	If a git command is named this option will bring up the
-	man-page for that command.
+	Prints the synopsis and a list of the most commonly used
+	commands.  If a git command is named this option will bring up
+	the man-page for that command. If the option '--all' or '-a' is
+	given then all available commands are printed.
 
 --exec-path::
-	path to wherever your core git programs are installed.
+	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
 	environment variable. If no path is given 'git' will print
 	the current setting and then exit.

@@ -121,6 +121,7 @@ git-write-tree
 git-core-*/?*
 test-date
 test-delta
+common-cmds.h
 *.tar.gz
 *.dsc
 *.deb
