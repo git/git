@@ -1019,6 +1019,17 @@ sub svn_compat_check {
 	if (grep /usage: checkout URL\[\@REV\]/,@co_help) {
 		$_svn_co_url_revs = 1;
 	}
+
+	# I really, really hope nobody hits this...
+	unless (grep /stop-on-copy/, (safe_qx(qw(svn log -h)))) {
+		print STDERR <<'';
+W: The installed svn version does not support the --stop-on-copy flag in
+   the log command.
+   Lets hope the directory you're tracking is not a branch or tag
+   and was never moved within the repository...
+
+		$_no_stop_copy = 1;
+	}
 }
 
 # *sigh*, new versions of svn won't honor -r<rev> without URL@<rev>,

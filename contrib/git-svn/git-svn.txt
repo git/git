@@ -162,19 +162,6 @@ COMPATIBILITY OPTIONS
 	Otherwise, do not enable this flag unless you know what you're
 	doing.
 
---no-stop-on-copy::
-	Only used with the 'fetch' command.
-
-	By default, git-svn passes --stop-on-copy to avoid dealing with
-	the copied/renamed branch directory problem entirely.  A
-	copied/renamed branch is the result of a <SVN_URL> being created
-	in the past from a different source.  These are problematic to
-	deal with even when working purely with svn if you work inside
-	subdirectories.
-
-	Do not use this flag unless you know exactly what you're getting
-	yourself into.  You have been warned.
-
 Basic Examples
 ~~~~~~~~~~~~~~
 
