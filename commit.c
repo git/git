@@ -569,10 +569,28 @@ int count_parents(struct commit * commit)
         return count;
 }
 
+void topo_sort_default_setter(struct commit *c, void *data)
+{
+	c->object.util = data;
+}
+
+void *topo_sort_default_getter(struct commit *c)
+{
+	return c->object.util;
+}
+
 /*
  * Performs an in-place topological sort on the list supplied.
  */
 void sort_in_topological_order(struct commit_list ** list, int lifo)
+{
+	sort_in_topological_order_fn(list, lifo, topo_sort_default_setter,
+				     topo_sort_default_getter);
+}
+
+void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
+				  topo_sort_set_fn_t setter,
+				  topo_sort_get_fn_t getter)
 {
 	struct commit_list * next = *list;
 	struct commit_list * work = NULL, **insert;
@@ -596,7 +614,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	next=*list;
 	while (next) {
 		next_nodes->list_item = next;
-		next->item->object.util = next_nodes;
+		setter(next->item, next_nodes);
 		next_nodes++;
 		next = next->next;
 	}
@@ -606,8 +624,8 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		struct commit_list * parents = next->item->parents;
 		while (parents) {
 			struct commit * parent=parents->item;
-			struct sort_node * pn = (struct sort_node *)parent->object.util;
-			
+			struct sort_node * pn = (struct sort_node *) getter(parent);
+
 			if (pn)
 				pn->indegree++;
 			parents=parents->next;
@@ -624,7 +642,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	next=*list;
 	insert = &work;
 	while (next) {
-		struct sort_node * node = (struct sort_node *)next->item->object.util;
+		struct sort_node * node = (struct sort_node *) getter(next->item);
 
 		if (node->indegree == 0) {
 			insert = &commit_list_insert(next->item, insert)->next;
@@ -637,15 +655,15 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		sort_by_date(&work);
 	while (work) {
 		struct commit * work_item = pop_commit(&work);
-		struct sort_node * work_node = (struct sort_node *)work_item->object.util;
+		struct sort_node * work_node = (struct sort_node *) getter(work_item);
 		struct commit_list * parents = work_item->parents;
 
 		while (parents) {
 			struct commit * parent=parents->item;
-			struct sort_node * pn = (struct sort_node *)parent->object.util;
-			
+			struct sort_node * pn = (struct sort_node *) getter(parent);
+
 			if (pn) {
-				/* 
+				/*
 				 * parents are only enqueued for emission 
                                  * when all their children have been emitted thereby
                                  * guaranteeing topological order.
@@ -667,7 +685,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		*pptr = work_node->list_item;
 		pptr = &(*pptr)->next;
 		*pptr = NULL;
-		work_item->object.util = NULL;
+		setter(work_item, NULL);
 	}
 	free(nodes);
 }
