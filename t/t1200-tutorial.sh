@@ -128,7 +128,7 @@ test_expect_success 'git show-branch' 'cmp show-branch.expect show-branch.output
 git checkout mybranch
 
 cat > resolve.expect << EOF
-Updating from VARIABLE to VARIABLE.
+Updating from VARIABLE to VARIABLE
  example |    1 +
  hello   |    1 +
  2 files changed, 2 insertions(+), 0 deletions(-)
