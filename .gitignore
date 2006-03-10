@@ -42,6 +42,7 @@ git-grep
 git-hash-object
 git-http-fetch
 git-http-push
+git-imap-send
 git-index-pack
 git-init-db
 git-local-fetch

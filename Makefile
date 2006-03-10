@@ -165,7 +165,7 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
-	git-describe$X git-merge-tree$X git-blame$X
+	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -524,6 +524,8 @@ git-ssh-fetch$X: rsh.o fetch.o
 git-ssh-upload$X: rsh.o
 git-ssh-pull$X: rsh.o fetch.o
 git-ssh-push$X: rsh.o
+
+git-imap-send$X: imap-send.o $(LIB_FILE)
 
 git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
