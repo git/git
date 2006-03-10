@@ -64,6 +64,15 @@ OPTIONS
 	Create attachments instead of inlining patches.
 
 
+CONFIGURATION
+-------------
+You can specify extra mail header lines to be added to each
+message in the repository configuration as follows:
+
+[format]
+        headers = "Organization: git-foo\n"
+
+
 EXAMPLES
 --------
 
