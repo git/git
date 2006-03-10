@@ -190,7 +190,7 @@ static int count_distance(struct commit_list *entry)
 
 		if (commit->object.flags & (UNINTERESTING | COUNTED))
 			break;
-		if (!revs.paths || (commit->object.flags & TREECHANGE))
+		if (!revs.prune_fn || (commit->object.flags & TREECHANGE))
 			nr++;
 		commit->object.flags |= COUNTED;
 		p = commit->parents;
@@ -224,7 +224,7 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	nr = 0;
 	p = list;
 	while (p) {
-		if (!revs.paths || (p->item->object.flags & TREECHANGE))
+		if (!revs.prune_fn || (p->item->object.flags & TREECHANGE))
 			nr++;
 		p = p->next;
 	}
@@ -234,7 +234,7 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	for (p = list; p; p = p->next) {
 		int distance;
 
-		if (revs.paths && !(p->item->object.flags & TREECHANGE))
+		if (revs.prune_fn && !(p->item->object.flags & TREECHANGE))
 			continue;
 
 		distance = count_distance(p);
