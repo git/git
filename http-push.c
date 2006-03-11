@@ -302,6 +302,7 @@ static void start_move(struct transfer_request *request)
 static int refresh_lock(struct remote_lock *check_lock)
 {
 	struct active_request_slot *slot;
+	struct slot_results results;
 	char *if_header;
 	char timeout_header[25];
 	struct curl_slist *dav_headers = NULL;
@@ -329,6 +330,7 @@ static int refresh_lock(struct remote_lock *check_lock)
 		dav_headers = curl_slist_append(dav_headers, timeout_header);
 
 		slot = get_active_slot();
+		slot->results = &results;
 		curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 		curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 		curl_easy_setopt(slot->curl, CURLOPT_URL, lock->url);
@@ -337,8 +339,8 @@ static int refresh_lock(struct remote_lock *check_lock)
 
 		if (start_active_slot(slot)) {
 			run_active_slot(slot);
-			if (slot->curl_result != CURLE_OK) {
-				fprintf(stderr, "Got HTTP error %ld\n", slot->http_code);
+			if (results.curl_result != CURLE_OK) {
+				fprintf(stderr, "Got HTTP error %ld\n", results.http_code);
 				lock->active = 0;
 			} else {
 				lock->active = 1;
@@ -509,16 +511,18 @@ static int fetch_index(unsigned char *sha1)
 
 	FILE *indexfile;
 	struct active_request_slot *slot;
+	struct slot_results results;
 
 	/* Don't use the index if the pack isn't there */
 	url = xmalloc(strlen(remote->url) + 65);
 	sprintf(url, "%s/objects/pack/pack-%s.pack", remote->url, hex);
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK) {
 			free(url);
 			return error("Unable to verify pack %s is available",
 				     hex);
@@ -543,6 +547,7 @@ static int fetch_index(unsigned char *sha1)
 			     filename);
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, indexfile);
@@ -566,7 +571,7 @@ static int fetch_index(unsigned char *sha1)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK) {
 			free(url);
 			fclose(indexfile);
 			return error("Unable to get pack index %s\n%s", url,
@@ -606,6 +611,7 @@ static int fetch_indices(void)
 	int i = 0;
 
 	struct active_request_slot *slot;
+	struct slot_results results;
 
 	data = xmalloc(4096);
 	memset(data, 0, 4096);
@@ -620,16 +626,17 @@ static int fetch_indices(void)
 	sprintf(url, "%s/objects/info/packs", remote->url);
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK) {
 			free(buffer.buffer);
 			free(url);
-			if (slot->http_code == 404)
+			if (results.http_code == 404)
 				return 0;
 			else
 				return error("%s", curl_errorstr);
@@ -716,20 +723,22 @@ int fetch_ref(char *ref, unsigned char *sha1)
         struct buffer buffer;
 	char *base = remote->url;
 	struct active_request_slot *slot;
+	struct slot_results results;
         buffer.size = 41;
         buffer.posn = 0;
         buffer.buffer = hex;
         hex[41] = '\0';
-        
+
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result != CURLE_OK)
+		if (results.curl_result != CURLE_OK)
 			return error("Couldn't get %s for %s\n%s",
 				     url, ref, curl_errorstr);
 	} else {
@@ -913,6 +922,7 @@ xml_cdata(void *userData, const XML_Char *s, int len)
 static struct remote_lock *lock_remote(char *path, long timeout)
 {
 	struct active_request_slot *slot;
+	struct slot_results results;
 	struct buffer out_buffer;
 	struct buffer in_buffer;
 	char *out_data;
@@ -946,14 +956,15 @@ static struct remote_lock *lock_remote(char *path, long timeout)
 	while (ep) {
 		*ep = 0;
 		slot = get_active_slot();
+		slot->results = &results;
 		curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 		curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 		curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_MKCOL);
 		curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 		if (start_active_slot(slot)) {
 			run_active_slot(slot);
-			if (slot->curl_result != CURLE_OK &&
-			    slot->http_code != 405) {
+			if (results.curl_result != CURLE_OK &&
+			    results.http_code != 405) {
 				fprintf(stderr,
 					"Unable to create branch path %s\n",
 					url);
@@ -985,6 +996,7 @@ static struct remote_lock *lock_remote(char *path, long timeout)
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
@@ -1003,7 +1015,7 @@ static struct remote_lock *lock_remote(char *path, long timeout)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result == CURLE_OK) {
+		if (results.curl_result == CURLE_OK) {
 			ctx.name = xcalloc(10, 1);
 			ctx.len = 0;
 			ctx.cdata = NULL;
@@ -1053,6 +1065,7 @@ static struct remote_lock *lock_remote(char *path, long timeout)
 static int unlock_remote(struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
+	struct slot_results results;
 	char *lock_token_header;
 	struct curl_slist *dav_headers = NULL;
 	int rc = 0;
@@ -1063,6 +1076,7 @@ static int unlock_remote(struct remote_lock *lock)
 	dav_headers = curl_slist_append(dav_headers, lock_token_header);
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, lock->url);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_UNLOCK);
@@ -1070,11 +1084,11 @@ static int unlock_remote(struct remote_lock *lock)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result == CURLE_OK)
+		if (results.curl_result == CURLE_OK)
 			rc = 1;
 		else
 			fprintf(stderr, "Got HTTP error %ld\n",
-				slot->http_code);
+				results.http_code);
 	} else {
 		fprintf(stderr, "Unable to start request\n");
 	}
@@ -1091,6 +1105,7 @@ static void crawl_remote_refs(char *path)
 {
 	char *url;
 	struct active_request_slot *slot;
+	struct slot_results results;
 	struct buffer in_buffer;
 	struct buffer out_buffer;
 	char *in_data;
@@ -1125,6 +1140,7 @@ static void crawl_remote_refs(char *path)
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
@@ -1137,7 +1153,7 @@ static void crawl_remote_refs(char *path)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result == CURLE_OK) {
+		if (results.curl_result == CURLE_OK) {
 			ctx.name = xcalloc(10, 1);
 			ctx.len = 0;
 			ctx.cdata = NULL;
@@ -1171,6 +1187,7 @@ static void get_remote_object_list(unsigned char parent)
 {
 	char *url;
 	struct active_request_slot *slot;
+	struct slot_results results;
 	struct buffer in_buffer;
 	struct buffer out_buffer;
 	char *in_data;
@@ -1203,6 +1220,7 @@ static void get_remote_object_list(unsigned char parent)
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
@@ -1215,7 +1233,7 @@ static void get_remote_object_list(unsigned char parent)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result == CURLE_OK) {
+		if (results.curl_result == CURLE_OK) {
 			remote_dir_exists[parent] = 1;
 			ctx.name = xcalloc(10, 1);
 			ctx.len = 0;
@@ -1250,6 +1268,7 @@ static void get_remote_object_list(unsigned char parent)
 static int locking_available(void)
 {
 	struct active_request_slot *slot;
+	struct slot_results results;
 	struct buffer in_buffer;
 	struct buffer out_buffer;
 	char *in_data;
@@ -1276,8 +1295,9 @@ static int locking_available(void)
 
 	dav_headers = curl_slist_append(dav_headers, "Depth: 0");
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
-	
+
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
@@ -1290,7 +1310,7 @@ static int locking_available(void)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (slot->curl_result == CURLE_OK) {
+		if (results.curl_result == CURLE_OK) {
 			ctx.name = xcalloc(10, 1);
 			ctx.len = 0;
 			ctx.cdata = NULL;
@@ -1416,6 +1436,7 @@ static void get_delta(struct rev_info *revs, struct remote_lock *lock)
 static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
+	struct slot_results results;
 	char *out_data;
 	char *if_header;
 	struct buffer out_buffer;
@@ -1437,6 +1458,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	out_buffer.buffer = out_data;
 
 	slot = get_active_slot();
+	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
@@ -1451,10 +1473,10 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 		run_active_slot(slot);
 		free(out_data);
 		free(if_header);
-		if (slot->curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK) {
 			fprintf(stderr,
 				"PUT error: curl result=%d, HTTP code=%ld\n",
-				slot->curl_result, slot->http_code);
+				results.curl_result, results.http_code);
 			/* We should attempt recovery? */
 			return 0;
 		}
