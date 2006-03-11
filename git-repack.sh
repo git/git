@@ -75,6 +75,7 @@ then
 		  done
 		)
 	fi
+	git-prune-packed
 fi
 
 case "$no_update_info" in
