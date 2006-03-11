@@ -20,7 +20,7 @@ sub usage() {
 	-r, --rename
 			Follow renames (Defaults on).
 	-S, --rev-file revs-file
-			use revs from revs-file instead of calling git-rev-list
+			Use revs from revs-file instead of calling git-rev-list
 	-h, --help
 			This message.
 ';
