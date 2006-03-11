@@ -282,6 +282,7 @@ static int same_tree_as_empty(struct tree *t1)
 static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list **pp, *parent;
+	int tree_changed = 0;
 
 	if (!commit->tree)
 		return;
@@ -296,14 +297,19 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	while ((parent = *pp) != NULL) {
 		struct commit *p = parent->item;
 
-		if (p->object.flags & UNINTERESTING) {
-			pp = &parent->next;
-			continue;
-		}
-
 		parse_commit(p);
 		switch (compare_tree(p->tree, commit->tree)) {
 		case TREE_SAME:
+			if (p->object.flags & UNINTERESTING) {
+				/* Even if a merge with an uninteresting
+				 * side branch brought the entire change
+				 * we are interested in, we do not want
+				 * to lose the other branches of this
+				 * merge, so we just keep going.
+				 */
+				pp = &parent->next;
+				continue;
+			}
 			parent->next = NULL;
 			commit->parents = parent;
 			return;
@@ -315,12 +321,14 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			}
 		/* fallthrough */
 		case TREE_DIFFERENT:
+			tree_changed = 1;
 			pp = &parent->next;
 			continue;
 		}
 		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
 	}
-	commit->object.flags |= TREECHANGE;
+	if (tree_changed)
+		commit->object.flags |= TREECHANGE;
 }
 
 static void add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
