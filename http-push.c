@@ -140,11 +140,23 @@ struct remote_lock
 	struct remote_lock *next;
 };
 
-struct remote_dentry
+/* Flags that control remote_ls processing */
+#define PROCESS_FILES (1u << 0)
+#define PROCESS_DIRS  (1u << 1)
+#define RECURSIVE     (1u << 2)
+
+/* Flags that remote_ls passes to callback functions */
+#define IS_DIR (1u << 0)
+
+struct remote_ls_ctx
 {
-	char *base;
-	char *name;
-	int is_dir;
+	char *path;
+	void (*userFunc)(struct remote_ls_ctx *ls);
+	void *userData;
+	int flags;
+	char *dentry_name;
+	int dentry_flags;
+	struct remote_ls_ctx *parent;
 };
 
 static void finish_request(struct transfer_request *request);
@@ -812,55 +824,6 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 }
 
 static void one_remote_ref(char *refname);
-static void crawl_remote_refs(char *path);
-
-static void handle_crawl_ref_ctx(struct xml_ctx *ctx, int tag_closed)
-{
-	struct remote_dentry *dentry = (struct remote_dentry *)ctx->userData;
-
-
-	if (tag_closed) {
-		if (!strcmp(ctx->name, DAV_PROPFIND_RESP) && dentry->name) {
-			if (dentry->is_dir) {
-				if (strcmp(dentry->name, dentry->base)) {
-					crawl_remote_refs(dentry->name);
-				}
-			} else {
-				one_remote_ref(dentry->name);
-			}
-		} else if (!strcmp(ctx->name, DAV_PROPFIND_NAME) && ctx->cdata) {
-			dentry->name = xmalloc(strlen(ctx->cdata) -
-					       remote->path_len + 1);
-			strcpy(dentry->name,
-			       ctx->cdata + remote->path_len);
-		} else if (!strcmp(ctx->name, DAV_PROPFIND_COLLECTION)) {
-			dentry->is_dir = 1;
-		}
-	} else if (!strcmp(ctx->name, DAV_PROPFIND_RESP)) {
-		dentry->name = NULL;
-		dentry->is_dir = 0;
-	}
-}
-
-static void handle_remote_object_list_ctx(struct xml_ctx *ctx, int tag_closed)
-{
-	char *path;
-	char *obj_hex;
-
-	if (tag_closed) {
-		if (!strcmp(ctx->name, DAV_PROPFIND_NAME) && ctx->cdata) {
-			path = ctx->cdata + remote->path_len;
-			if (strlen(path) != 50)
-				return;
-			path += 9;
-			obj_hex = xmalloc(strlen(path));
-			strncpy(obj_hex, path, 2);
-			strcpy(obj_hex + 2, path + 3);
-			one_remote_object(obj_hex);
-			free(obj_hex);
-		}
-	}
-}
 
 static void
 xml_start_tag(void *userData, const char *name, const char **atts)
@@ -1101,9 +1064,83 @@ static int unlock_remote(struct remote_lock *lock)
 	return rc;
 }
 
-static void crawl_remote_refs(char *path)
+static void remote_ls(const char *path, int flags,
+		      void (*userFunc)(struct remote_ls_ctx *ls),
+		      void *userData);
+
+static void process_ls_object(struct remote_ls_ctx *ls)
 {
-	char *url;
+	unsigned int *parent = (unsigned int *)ls->userData;
+	char *path = ls->dentry_name;
+	char *obj_hex;
+
+	if (!strcmp(ls->path, ls->dentry_name) && (ls->flags & IS_DIR)) {
+		remote_dir_exists[*parent] = 1;
+		return;
+	}
+
+	if (strlen(path) != 49)
+		return;
+	path += 8;
+	obj_hex = xmalloc(strlen(path));
+	strncpy(obj_hex, path, 2);
+	strcpy(obj_hex + 2, path + 3);
+	one_remote_object(obj_hex);
+	free(obj_hex);
+}
+
+static void process_ls_ref(struct remote_ls_ctx *ls)
+{
+	if (!strcmp(ls->path, ls->dentry_name) && (ls->dentry_flags & IS_DIR)) {
+		fprintf(stderr, "  %s\n", ls->dentry_name);
+		return;
+	}
+
+	if (!(ls->dentry_flags & IS_DIR))
+		one_remote_ref(ls->dentry_name);
+}
+
+static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
+{
+	struct remote_ls_ctx *ls = (struct remote_ls_ctx *)ctx->userData;
+
+	if (tag_closed) {
+		if (!strcmp(ctx->name, DAV_PROPFIND_RESP) && ls->dentry_name) {
+			if (ls->dentry_flags & IS_DIR) {
+				if (ls->flags & PROCESS_DIRS) {
+					ls->userFunc(ls);
+				}
+				if (strcmp(ls->dentry_name, ls->path) &&
+				    ls->flags & RECURSIVE) {
+					remote_ls(ls->dentry_name,
+						  ls->flags,
+						  ls->userFunc,
+						  ls->userData);
+				}
+			} else if (ls->flags & PROCESS_FILES) {
+				ls->userFunc(ls);
+			}
+		} else if (!strcmp(ctx->name, DAV_PROPFIND_NAME) && ctx->cdata) {
+			ls->dentry_name = xmalloc(strlen(ctx->cdata) -
+						  remote->path_len + 1);
+			strcpy(ls->dentry_name, ctx->cdata + remote->path_len);
+		} else if (!strcmp(ctx->name, DAV_PROPFIND_COLLECTION)) {
+			ls->dentry_flags |= IS_DIR;
+		}
+	} else if (!strcmp(ctx->name, DAV_PROPFIND_RESP)) {
+		if (ls->dentry_name) {
+			free(ls->dentry_name);
+		}
+		ls->dentry_name = NULL;
+		ls->dentry_flags = 0;
+	}
+}
+
+static void remote_ls(const char *path, int flags,
+		      void (*userFunc)(struct remote_ls_ctx *ls),
+		      void *userData)
+{
+	char *url = xmalloc(strlen(remote->url) + strlen(path) + 1);
 	struct active_request_slot *slot;
 	struct slot_results results;
 	struct buffer in_buffer;
@@ -1114,15 +1151,15 @@ static void crawl_remote_refs(char *path)
 	enum XML_Status result;
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
-	struct remote_dentry dentry;
+	struct remote_ls_ctx ls;
 
-	fprintf(stderr, "  %s\n", path);
+	ls.flags = flags;
+	ls.path = strdup(path);
+	ls.dentry_name = NULL;
+	ls.dentry_flags = 0;
+	ls.userData = userData;
+	ls.userFunc = userFunc;
 
-	dentry.base = path;
-	dentry.name = NULL;
-	dentry.is_dir = 0;
-
-	url = xmalloc(strlen(remote->url) + strlen(path) + 1);
 	sprintf(url, "%s%s", remote->url, path);
 
 	out_buffer.size = strlen(PROPFIND_ALL_REQUEST);
@@ -1157,8 +1194,8 @@ static void crawl_remote_refs(char *path)
 			ctx.name = xcalloc(10, 1);
 			ctx.len = 0;
 			ctx.cdata = NULL;
-			ctx.userFunc = handle_crawl_ref_ctx;
-			ctx.userData = &dentry;
+			ctx.userFunc = handle_remote_ls_ctx;
+			ctx.userData = &ls;
 			XML_SetUserData(parser, &ctx);
 			XML_SetElementHandler(parser, xml_start_tag,
 					      xml_end_tag);
@@ -1174,9 +1211,10 @@ static void crawl_remote_refs(char *path)
 			}
 		}
 	} else {
-		fprintf(stderr, "Unable to start request\n");
+		fprintf(stderr, "Unable to start PROPFIND request\n");
 	}
 
+	free(ls.path);
 	free(url);
 	free(out_data);
 	free(in_buffer.buffer);
@@ -1185,84 +1223,15 @@ static void crawl_remote_refs(char *path)
 
 static void get_remote_object_list(unsigned char parent)
 {
-	char *url;
-	struct active_request_slot *slot;
-	struct slot_results results;
-	struct buffer in_buffer;
-	struct buffer out_buffer;
-	char *in_data;
-	char *out_data;
-	XML_Parser parser = XML_ParserCreate(NULL);
-	enum XML_Status result;
-	struct curl_slist *dav_headers = NULL;
-	struct xml_ctx ctx;
-	char path[] = "/objects/XX/";
+	char path[] = "objects/XX/";
 	static const char hex[] = "0123456789abcdef";
 	unsigned int val = parent;
 
-	path[9] = hex[val >> 4];
-	path[10] = hex[val & 0xf];
-	url = xmalloc(strlen(remote->url) + strlen(path) + 1);
-	sprintf(url, "%s%s", remote->url, path);
-
-	out_buffer.size = strlen(PROPFIND_ALL_REQUEST);
-	out_data = xmalloc(out_buffer.size + 1);
-	snprintf(out_data, out_buffer.size + 1, PROPFIND_ALL_REQUEST);
-	out_buffer.posn = 0;
-	out_buffer.buffer = out_data;
-
-	in_buffer.size = 4096;
-	in_data = xmalloc(in_buffer.size);
-	in_buffer.posn = 0;
-	in_buffer.buffer = in_data;
-
-	dav_headers = curl_slist_append(dav_headers, "Depth: 1");
-	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
-
-	slot = get_active_slot();
-	slot->results = &results;
-	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
-	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
-	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PROPFIND);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
-
-	if (start_active_slot(slot)) {
-		run_active_slot(slot);
-		if (results.curl_result == CURLE_OK) {
-			remote_dir_exists[parent] = 1;
-			ctx.name = xcalloc(10, 1);
-			ctx.len = 0;
-			ctx.cdata = NULL;
-			ctx.userFunc = handle_remote_object_list_ctx;
-			XML_SetUserData(parser, &ctx);
-			XML_SetElementHandler(parser, xml_start_tag,
-					      xml_end_tag);
-			XML_SetCharacterDataHandler(parser, xml_cdata);
-			result = XML_Parse(parser, in_buffer.buffer,
-					   in_buffer.posn, 1);
-			free(ctx.name);
-
-			if (result != XML_STATUS_OK) {
-				fprintf(stderr, "XML error: %s\n",
-					XML_ErrorString(
-						XML_GetErrorCode(parser)));
-			}
-		} else {
-			remote_dir_exists[parent] = 0;
-		}
-	} else {
-		fprintf(stderr, "Unable to start request\n");
-	}
-
-	free(url);
-	free(out_data);
-	free(in_buffer.buffer);
-	curl_slist_free_all(dav_headers);
+	path[8] = hex[val >> 4];
+	path[9] = hex[val & 0xf];
+	remote_dir_exists[val] = 0;
+	remote_ls(path, (PROCESS_FILES | PROCESS_DIRS),
+		  process_ls_object, &val);
 }
 
 static int locking_available(void)
@@ -1534,7 +1503,7 @@ static void get_local_heads(void)
 static void get_dav_remote_heads(void)
 {
 	remote_tail = &remote_refs;
-	crawl_remote_refs("refs/");
+	remote_ls("refs/", (PROCESS_FILES | PROCESS_DIRS | RECURSIVE), process_ls_ref, NULL);
 }
 
 static int is_zero_sha1(const unsigned char *sha1)
