@@ -945,7 +945,7 @@ imap_open_store( imap_server_conf_t *srvc )
 				_exit( 127 );
 			close( a[0] );
 			close( a[1] );
-			execl( "/bin/sh", "sh", "-c", srvc->tunnel, 0 );
+			execl( "/bin/sh", "sh", "-c", srvc->tunnel, NULL );
 			_exit( 127 );
 		}
 
