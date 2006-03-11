@@ -7,6 +7,10 @@
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
 
+struct rev_info;
+
+typedef void (prune_fn_t)(struct rev_info *revs, struct commit *commit);
+
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
@@ -14,7 +18,8 @@ struct rev_info {
 
 	/* Basic information */
 	const char *prefix;
-	const char **paths;
+	void *prune_data;
+	prune_fn_t *prune_fn;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
@@ -33,9 +38,20 @@ struct rev_info {
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
+
+	topo_sort_set_fn_t topo_setter;
+	topo_sort_get_fn_t topo_getter;
 };
 
+#define REV_TREE_SAME		0
+#define REV_TREE_NEW		1
+#define REV_TREE_DIFFERENT	2
+
 /* revision.c */
+extern int rev_same_tree_as_empty(struct tree *t1);
+extern int rev_compare_tree(struct tree *t1, struct tree *t2);
+
+extern void init_revisions(struct rev_info *revs);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
 extern void prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);

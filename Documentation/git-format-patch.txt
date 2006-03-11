@@ -9,7 +9,7 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [-s] [-c]
+'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [-s] [-c]
 		 [--diff-options] <his> [<mine>]
 
 DESCRIPTION
@@ -59,6 +59,18 @@ OPTIONS
 	This flag generates the mbox formatted output to the
 	standard output, instead of saving them into a file per
 	patch and implies --mbox.
+
+--attach::
+	Create attachments instead of inlining patches.
+
+
+CONFIGURATION
+-------------
+You can specify extra mail header lines to be added to each
+message in the repository configuration as follows:
+
+[format]
+        headers = "Organization: git-foo\n"
 
 
 EXAMPLES

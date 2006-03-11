@@ -41,7 +41,7 @@ case "$common" in
 	exit 0
 	;;
 "$head")
-	echo "Updating from $head to $merge."
+	echo "Updating from $head to $merge"
 	git-read-tree -u -m $head $merge || exit 1
 	git-update-ref HEAD "$merge" "$head"
 	git-diff-tree -p $head $merge | git-apply --stat
