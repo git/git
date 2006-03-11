@@ -1752,23 +1752,20 @@ int main(int argc, char **argv)
 		}
 
 		/* Set up revision info for this refspec */
-		const char *commit_argv[3];
-		int commit_argc = 2;
+		const char *commit_argv[4];
+		int commit_argc = 3;
 		char *new_sha1_hex = strdup(sha1_to_hex(ref->new_sha1));
 		char *old_sha1_hex = NULL;
-		commit_argv[1] = new_sha1_hex;
+		commit_argv[1] = "--objects";
+		commit_argv[2] = new_sha1_hex;
 		if (!push_all && !is_zero_sha1(ref->old_sha1)) {
 			old_sha1_hex = xmalloc(42);
 			sprintf(old_sha1_hex, "^%s",
 				sha1_to_hex(ref->old_sha1));
-			commit_argv[2] = old_sha1_hex;
+			commit_argv[3] = old_sha1_hex;
 			commit_argc++;
 		}
-		revs.commits = NULL;
 		setup_revisions(commit_argc, commit_argv, &revs, NULL);
-		revs.tag_objects = 1;
-		revs.tree_objects = 1;
-		revs.blob_objects = 1;
 		free(new_sha1_hex);
 		if (old_sha1_hex) {
 			free(old_sha1_hex);
