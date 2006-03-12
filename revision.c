@@ -317,12 +317,16 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		case TREE_NEW:
 			if (revs->remove_empty_trees &&
 			    same_tree_as_empty(p->tree)) {
-				/* We are adding all the specified paths from
-				 * this parent, so the parents of it is
-				 * not interesting, but the difference between
-				 * this parent and us still is interesting.
+				/* We are adding all the specified
+				 * paths from this parent, so the
+				 * history beyond this parent is not
+				 * interesting.  Remove its parents
+				 * (they are grandparents for us).
+				 * IOW, we pretend this parent is a
+				 * "root" commit.
 				 */
-				p->object.flags |= UNINTERESTING;
+				parse_commit(p);
+				p->parents = NULL;
 			}
 		/* fallthrough */
 		case TREE_DIFFERENT:
