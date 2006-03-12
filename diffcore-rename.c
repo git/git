@@ -166,6 +166,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	delta_limit = base_size * (MAX_SCORE-minimum_score) / MAX_SCORE;
 	if (diffcore_count_changes(src->data, src->size,
 				   dst->data, dst->size,
+				   &src->cnt_data, &dst->cnt_data,
 				   delta_limit,
 				   &src_copied, &literal_added))
 		return 0;
@@ -306,6 +307,8 @@ void diffcore_rename(struct diff_options *options)
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
 		}
+		free(two->cnt_data);
+		two->cnt_data = NULL;
 		dst_cnt++;
 	}
 	/* cost matrix sorted by most to least similar pair */
