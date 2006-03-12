@@ -313,8 +313,12 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		case REV_TREE_NEW:
 			if (revs->remove_empty_trees &&
 			    rev_same_tree_as_empty(p->tree)) {
-				*pp = parent->next;
-				continue;
+				/* We are adding all the specified paths from
+				 * this parent, so the parents of it is
+				 * not interesting, but the difference between
+				 * this parent and us still is interesting.
+				 */
+				p->object.flags |= UNINTERESTING;
 			}
 		/* fallthrough */
 		case REV_TREE_DIFFERENT:
