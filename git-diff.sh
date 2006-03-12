@@ -38,9 +38,9 @@ case " $flags " in
 	flags="$flags'$cc_or_p' " ;;
 esac
 
-# If we do not have -B nor -C, default to -M.
+# If we do not have -B, -C, -r, nor -p, default to -M.
 case " $flags " in
-*" '-"[BCM]* | *" '--find-copies-harder' "*)
+*" '-"[BCMrp]* | *" '--find-copies-harder' "*)
 	;; # something like -M50.
 *)
 	flags="$flags'-M' " ;;
