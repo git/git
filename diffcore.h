@@ -26,6 +26,7 @@ struct diff_filespec {
 	unsigned char sha1[20];
 	char *path;
 	void *data;
+	void *cnt_data;
 	unsigned long size;
 	int xfrm_flags;		 /* for use by the xfrm */
 	unsigned short mode;	 /* file mode */
@@ -103,6 +104,8 @@ void diff_debug_queue(const char *, struct diff_queue_struct *);
 
 extern int diffcore_count_changes(void *src, unsigned long src_size,
 				  void *dst, unsigned long dst_size,
+				  void **src_count_p,
+				  void **dst_count_p,
 				  unsigned long delta_limit,
 				  unsigned long *src_copied,
 				  unsigned long *literal_added);

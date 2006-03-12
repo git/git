@@ -463,6 +463,8 @@ void diff_free_filespec_data(struct diff_filespec *s)
 		munmap(s->data, s->size);
 	s->should_free = s->should_munmap = 0;
 	s->data = NULL;
+	free(s->cnt_data);
+	s->cnt_data = NULL;
 }
 
 static void prep_temp_blob(struct diff_tempfile *temp,

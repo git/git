@@ -68,6 +68,7 @@ static int should_break(struct diff_filespec *src,
 
 	if (diffcore_count_changes(src->data, src->size,
 				   dst->data, dst->size,
+				   NULL, NULL,
 				   0,
 				   &src_copied, &literal_added))
 		return 0;

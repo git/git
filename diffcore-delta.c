@@ -24,11 +24,106 @@
  * The length of the sequence is arbitrarily set to 8 for now.
  */
 
+/* Wild guess at the initial hash size */
+#define INITIAL_HASH_SIZE 10
 #define HASHBASE 65537 /* next_prime(2^16) */
 
-static void hash_chars(unsigned char *buf, unsigned long sz, int *count)
+struct spanhash {
+	unsigned long hashval;
+	unsigned long cnt;
+};
+struct spanhash_top {
+	int alloc_log2;
+	int free;
+	struct spanhash data[FLEX_ARRAY];
+};
+
+static struct spanhash *spanhash_find(struct spanhash_top *top, unsigned long hashval)
 {
-	unsigned int accum1, accum2, i;
+	int sz = 1 << top->alloc_log2;
+	int bucket = hashval & (sz - 1);
+	while (1) {
+		struct spanhash *h = &(top->data[bucket++]);
+		if (!h->cnt)
+			return NULL;
+		if (h->hashval == hashval)
+			return h;
+		if (sz <= bucket)
+			bucket = 0;
+	}
+}
+
+static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
+{
+	struct spanhash_top *new;
+	int i;
+	int osz = 1 << orig->alloc_log2;
+	int sz = osz << 1;
+
+	new = xmalloc(sizeof(*orig) + sizeof(struct spanhash) * sz);
+	new->alloc_log2 = orig->alloc_log2 + 1;
+	new->free = osz;
+	memset(new->data, 0, sizeof(struct spanhash) * sz);
+	for (i = 0; i < osz; i++) {
+		struct spanhash *o = &(orig->data[i]);
+		int bucket;
+		if (!o->cnt)
+			continue;
+		bucket = o->hashval & (sz - 1);
+		while (1) {
+			struct spanhash *h = &(new->data[bucket++]);
+			if (!h->cnt) {
+				h->hashval = o->hashval;
+				h->cnt = o->cnt;
+				new->free--;
+				break;
+			}
+			if (sz <= bucket)
+				bucket = 0;
+		}
+	}
+	free(orig);
+	return new;
+}
+
+static struct spanhash_top *add_spanhash(struct spanhash_top *top,
+					 unsigned long hashval)
+{
+	int bucket, lim;
+	struct spanhash *h;
+
+	lim = (1 << top->alloc_log2);
+	bucket = hashval & (lim - 1);
+	while (1) {
+		h = &(top->data[bucket++]);
+		if (!h->cnt) {
+			h->hashval = hashval;
+			h->cnt = 1;
+			top->free--;
+			if (top->free < 0)
+				return spanhash_rehash(top);
+			return top;
+		}
+		if (h->hashval == hashval) {
+			h->cnt++;
+			return top;
+		}
+		if (lim <= bucket)
+			bucket = 0;
+	}
+}
+
+static struct spanhash_top *hash_chars(unsigned char *buf, unsigned long sz)
+{
+	int i;
+	unsigned long accum1, accum2, hashval;
+	struct spanhash_top *hash;
+
+	i = INITIAL_HASH_SIZE;
+	hash = xmalloc(sizeof(*hash) + sizeof(struct spanhash) * (1<<i));
+	hash->alloc_log2 = i;
+	hash->free = (1<<i)/2;
+	memset(hash->data, 0, sizeof(struct spanhash) * (1<<i));
 
 	/* an 8-byte shift register made of accum1 and accum2.  New
 	 * bytes come at LSB of accum2, and shifted up to accum1
@@ -40,44 +135,68 @@ static void hash_chars(unsigned char *buf, unsigned long sz, int *count)
 	while (sz) {
 		accum1 = (accum1 << 8) | (accum2 >> 24);
 		accum2 = (accum2 << 8) | *buf++;
-		/* We want something that hashes permuted byte
-		 * sequences nicely; simpler hash like (accum1 ^
-		 * accum2) does not perform as well.
-		 */
-		i = (accum1 + accum2 * 0x61) % HASHBASE;
-		count[i]++;
+		hashval = (accum1 + accum2 * 0x61) % HASHBASE;
+		hash = add_spanhash(hash, hashval);
 		sz--;
 	}
+	return hash;
 }
 
 int diffcore_count_changes(void *src, unsigned long src_size,
 			   void *dst, unsigned long dst_size,
+			   void **src_count_p,
+			   void **dst_count_p,
 			   unsigned long delta_limit,
 			   unsigned long *src_copied,
 			   unsigned long *literal_added)
 {
-	int *src_count, *dst_count, i;
+	int i, ssz;
+	struct spanhash_top *src_count, *dst_count;
 	unsigned long sc, la;
 
 	if (src_size < 8 || dst_size < 8)
 		return -1;
 
-	src_count = xcalloc(HASHBASE * 2, sizeof(int));
-	dst_count = src_count + HASHBASE;
-	hash_chars(src, src_size, src_count);
-	hash_chars(dst, dst_size, dst_count);
-
-	sc = la = 0;
-	for (i = 0; i < HASHBASE; i++) {
-		if (src_count[i] < dst_count[i]) {
-			la += dst_count[i] - src_count[i];
-			sc += src_count[i];
-		}
-		else /* i.e. if (dst_count[i] <= src_count[i]) */
-			sc += dst_count[i];
+	src_count = dst_count = NULL;
+	if (src_count_p)
+		src_count = *src_count_p;
+	if (!src_count) {
+		src_count = hash_chars(src, src_size);
+		if (src_count_p)
+			*src_count_p = src_count;
 	}
+	if (dst_count_p)
+		dst_count = *dst_count_p;
+	if (!dst_count) {
+		dst_count = hash_chars(dst, dst_size);
+		if (dst_count_p)
+			*dst_count_p = dst_count;
+	}
+	sc = la = 0;
+
+	ssz = 1 << src_count->alloc_log2;
+	for (i = 0; i < ssz; i++) {
+		struct spanhash *s = &(src_count->data[i]);
+		struct spanhash *d;
+		unsigned dst_cnt, src_cnt;
+		if (!s->cnt)
+			continue;
+		src_cnt = s->cnt;
+		d = spanhash_find(dst_count, s->hashval);
+		dst_cnt = d ? d->cnt : 0;
+		if (src_cnt < dst_cnt) {
+			la += dst_cnt - src_cnt;
+			sc += src_cnt;
+		}
+		else
+			sc += dst_cnt;
+	}
+
+	if (!src_count_p)
+		free(src_count);
+	if (!dst_count_p)
+		free(dst_count);
 	*src_copied = sc;
 	*literal_added = la;
-	free(src_count);
 	return 0;
 }
