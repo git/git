@@ -307,8 +307,8 @@ void diffcore_rename(struct diff_options *options)
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
 		}
-		free(two->cnt_data);
-		two->cnt_data = NULL;
+		/* We do not need the text anymore */
+		diff_free_filespec_data(two);
 		dst_cnt++;
 	}
 	/* cost matrix sorted by most to least similar pair */
