@@ -25,8 +25,12 @@
  */
 
 /* Wild guess at the initial hash size */
-#define INITIAL_HASH_SIZE 10
+#define INITIAL_HASH_SIZE 9
 #define HASHBASE 65537 /* next_prime(2^16) */
+/* We leave more room in smaller hash but do not let it
+ * grow to have unused hole too much.
+ */
+#define INITIAL_FREE(sz_log2) ((1<<(sz_log2))*(sz_log2-3)/(sz_log2))
 
 struct spanhash {
 	unsigned long hashval;
@@ -38,7 +42,8 @@ struct spanhash_top {
 	struct spanhash data[FLEX_ARRAY];
 };
 
-static struct spanhash *spanhash_find(struct spanhash_top *top, unsigned long hashval)
+static struct spanhash *spanhash_find(struct spanhash_top *top,
+				      unsigned long hashval)
 {
 	int sz = 1 << top->alloc_log2;
 	int bucket = hashval & (sz - 1);
@@ -62,7 +67,7 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 
 	new = xmalloc(sizeof(*orig) + sizeof(struct spanhash) * sz);
 	new->alloc_log2 = orig->alloc_log2 + 1;
-	new->free = osz;
+	new->free = INITIAL_FREE(new->alloc_log2);
 	memset(new->data, 0, sizeof(struct spanhash) * sz);
 	for (i = 0; i < osz; i++) {
 		struct spanhash *o = &(orig->data[i]);
@@ -122,7 +127,7 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned long sz)
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(sizeof(*hash) + sizeof(struct spanhash) * (1<<i));
 	hash->alloc_log2 = i;
-	hash->free = (1<<i)/2;
+	hash->free = INITIAL_FREE(i);
 	memset(hash->data, 0, sizeof(struct spanhash) * (1<<i));
 
 	/* an 8-byte shift register made of accum1 and accum2.  New
