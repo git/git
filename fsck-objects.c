@@ -14,10 +14,9 @@
 static int show_root = 0;
 static int show_tags = 0;
 static int show_unreachable = 0;
-static int standalone = 0;
 static int check_full = 0;
 static int check_strict = 0;
-static int keep_cache_objects = 0; 
+static int keep_cache_objects = 0;
 static unsigned char head_sha1[20];
 
 #ifdef NO_D_INO_IN_DIRENT
@@ -68,7 +67,7 @@ static void check_connectivity(void)
 			continue;
 
 		if (!obj->parsed) {
-			if (!standalone && has_sha1_file(obj->sha1))
+			if (has_sha1_file(obj->sha1))
 				; /* it is in pack */
 			else
 				printf("missing %s %s\n",
@@ -82,7 +81,7 @@ static void check_connectivity(void)
 			for (j = 0; j < refs->count; j++) {
 				struct object *ref = refs->ref[j];
 				if (ref->parsed ||
-				    (!standalone && has_sha1_file(ref->sha1)))
+				    (has_sha1_file(ref->sha1)))
 					continue;
 				printf("broken link from %7s %s\n",
 				       obj->type, sha1_to_hex(obj->sha1));
@@ -390,7 +389,7 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 
 	obj = lookup_object(sha1);
 	if (!obj) {
-		if (!standalone && has_sha1_file(sha1)) {
+		if (has_sha1_file(sha1)) {
 			default_refs++;
 			return 0; /* it is in a pack */
 		}
@@ -464,10 +463,6 @@ int main(int argc, char **argv)
 			keep_cache_objects = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--standalone")) {
-			standalone = 1;
-			continue;
-		}
 		if (!strcmp(arg, "--full")) {
 			check_full = 1;
 			continue;
@@ -477,13 +472,8 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (*arg == '-')
-			usage("git-fsck-objects [--tags] [--root] [[--unreachable] [--cache] [--standalone | --full] [--strict] <head-sha1>*]");
+			usage("git-fsck-objects [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
 	}
-
-	if (standalone && check_full)
-		die("Only one of --standalone or --full can be used.");
-	if (standalone)
-		putenv("GIT_ALTERNATE_OBJECT_DIRECTORIES=");
 
 	fsck_head_link();
 	fsck_object_dir(get_object_directory());
