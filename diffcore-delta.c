@@ -26,11 +26,18 @@
 
 /* Wild guess at the initial hash size */
 #define INITIAL_HASH_SIZE 9
-#define HASHBASE 65537 /* next_prime(2^16) */
+
 /* We leave more room in smaller hash but do not let it
  * grow to have unused hole too much.
  */
 #define INITIAL_FREE(sz_log2) ((1<<(sz_log2))*(sz_log2-3)/(sz_log2))
+
+/* A prime rather carefully chosen between 2^16..2^17, so that
+ * HASHBASE < INITIAL_FREE(17).  We want to keep the maximum hashtable
+ * size under the current 2<<17 maximum, which can hold this many
+ * different values before overflowing to hashtable of size 2<<18.
+ */
+#define HASHBASE 107927
 
 struct spanhash {
 	unsigned long hashval;
