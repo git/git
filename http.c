@@ -339,6 +339,7 @@ struct active_request_slot *get_active_slot(void)
 	slot->in_use = 1;
 	slot->local = NULL;
 	slot->results = NULL;
+	slot->finished = NULL;
 	slot->callback_data = NULL;
 	slot->callback_func = NULL;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
@@ -389,8 +390,10 @@ void run_active_slot(struct active_request_slot *slot)
 	fd_set excfds;
 	int max_fd;
 	struct timeval select_timeout;
+	int finished = 0;
 
-	while (slot->in_use) {
+	slot->finished = &finished;
+	while (!finished) {
 		data_received = 0;
 		step_active_slots();
 
@@ -441,6 +444,9 @@ static void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
         curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
+
+	if (slot->finished != NULL)
+		(*slot->finished) = 1;
 
 	/* Store slot results so they can be read after the slot is reused */
 	if (slot->results != NULL) {
