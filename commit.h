@@ -65,15 +65,29 @@ int count_parents(struct commit * commit);
 /*
  * Performs an in-place topological sort of list supplied.
  *
- * Pre-conditions:
+ * Pre-conditions for sort_in_topological_order:
  *   all commits in input list and all parents of those
  *   commits must have object.util == NULL
- *        
- * Post-conditions: 
+ *
+ * Pre-conditions for sort_in_topological_order_fn:
+ *   all commits in input list and all parents of those
+ *   commits must have getter(commit) == NULL
+ *
+ * Post-conditions:
  *   invariant of resulting list is:
  *      a reachable from b => ord(b) < ord(a)
  *   in addition, when lifo == 0, commits on parallel tracks are
  *   sorted in the dates order.
  */
+
+typedef void (*topo_sort_set_fn_t)(struct commit*, void *data);
+typedef void* (*topo_sort_get_fn_t)(struct commit*);
+
+void topo_sort_default_setter(struct commit *c, void *data);
+void *topo_sort_default_getter(struct commit *c);
+
 void sort_in_topological_order(struct commit_list ** list, int lifo);
+void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
+				  topo_sort_set_fn_t setter,
+				  topo_sort_get_fn_t getter);
 #endif /* COMMIT_H */

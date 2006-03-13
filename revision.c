@@ -199,31 +199,27 @@ static int everybody_uninteresting(struct commit_list *orig)
 	return 1;
 }
 
-#define TREE_SAME	0
-#define TREE_NEW	1
-#define TREE_DIFFERENT	2
-static int tree_difference = TREE_SAME;
+static int tree_difference = REV_TREE_SAME;
 
 static void file_add_remove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
 		    const char *base, const char *path)
 {
-	int diff = TREE_DIFFERENT;
+	int diff = REV_TREE_DIFFERENT;
 
 	/*
-	 * Is it an add of a new file? It means that
-	 * the old tree didn't have it at all, so we
-	 * will turn "TREE_SAME" -> "TREE_NEW", but
-	 * leave any "TREE_DIFFERENT" alone (and if
-	 * it already was "TREE_NEW", we'll keep it
-	 * "TREE_NEW" of course).
+	 * Is it an add of a new file? It means that the old tree
+	 * didn't have it at all, so we will turn "REV_TREE_SAME" ->
+	 * "REV_TREE_NEW", but leave any "REV_TREE_DIFFERENT" alone
+	 * (and if it already was "REV_TREE_NEW", we'll keep it
+	 * "REV_TREE_NEW" of course).
 	 */
 	if (addremove == '+') {
 		diff = tree_difference;
-		if (diff != TREE_SAME)
+		if (diff != REV_TREE_SAME)
 			return;
-		diff = TREE_NEW;
+		diff = REV_TREE_NEW;
 	}
 	tree_difference = diff;
 }
@@ -234,7 +230,7 @@ static void file_change(struct diff_options *options,
 		 const unsigned char *new_sha1,
 		 const char *base, const char *path)
 {
-	tree_difference = TREE_DIFFERENT;
+	tree_difference = REV_TREE_DIFFERENT;
 }
 
 static struct diff_options diff_opt = {
@@ -243,19 +239,19 @@ static struct diff_options diff_opt = {
 	.change = file_change,
 };
 
-static int compare_tree(struct tree *t1, struct tree *t2)
+int rev_compare_tree(struct tree *t1, struct tree *t2)
 {
 	if (!t1)
-		return TREE_NEW;
+		return REV_TREE_NEW;
 	if (!t2)
-		return TREE_DIFFERENT;
-	tree_difference = TREE_SAME;
+		return REV_TREE_DIFFERENT;
+	tree_difference = REV_TREE_SAME;
 	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "", &diff_opt) < 0)
-		return TREE_DIFFERENT;
+		return REV_TREE_DIFFERENT;
 	return tree_difference;
 }
 
-static int same_tree_as_empty(struct tree *t1)
+int rev_same_tree_as_empty(struct tree *t1)
 {
 	int retval;
 	void *tree;
@@ -288,7 +284,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		return;
 
 	if (!commit->parents) {
-		if (!same_tree_as_empty(commit->tree))
+		if (!rev_same_tree_as_empty(commit->tree))
 			commit->object.flags |= TREECHANGE;
 		return;
 	}
@@ -298,8 +294,8 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		struct commit *p = parent->item;
 
 		parse_commit(p);
-		switch (compare_tree(p->tree, commit->tree)) {
-		case TREE_SAME:
+		switch (rev_compare_tree(p->tree, commit->tree)) {
+		case REV_TREE_SAME:
 			if (p->object.flags & UNINTERESTING) {
 				/* Even if a merge with an uninteresting
 				 * side branch brought the entire change
@@ -314,13 +310,14 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			commit->parents = parent;
 			return;
 
-		case TREE_NEW:
-			if (revs->remove_empty_trees && same_tree_as_empty(p->tree)) {
+		case REV_TREE_NEW:
+			if (revs->remove_empty_trees &&
+			    rev_same_tree_as_empty(p->tree)) {
 				*pp = parent->next;
 				continue;
 			}
 		/* fallthrough */
-		case TREE_DIFFERENT:
+		case REV_TREE_DIFFERENT:
 			tree_changed = 1;
 			pp = &parent->next;
 			continue;
@@ -368,8 +365,8 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 	 * simplify the commit history and find the parent
 	 * that has no differences in the path set if one exists.
 	 */
-	if (revs->paths)
-		try_to_simplify_commit(revs, commit);
+	if (revs->prune_fn)
+		revs->prune_fn(revs, commit);
 
 	parent = commit->parents;
 	while (parent) {
@@ -390,9 +387,6 @@ static void limit_list(struct rev_info *revs)
 	struct commit_list *list = revs->commits;
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
-
-	if (revs->paths)
-		diff_tree_setup_paths(revs->paths);
 
 	while (list) {
 		struct commit_list *entry = list;
@@ -445,6 +439,23 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 	for_each_ref(handle_one_ref);
 }
 
+void init_revisions(struct rev_info *revs)
+{
+	memset(revs, 0, sizeof(*revs));
+	revs->lifo = 1;
+	revs->dense = 1;
+	revs->prefix = setup_git_directory();
+	revs->max_age = -1;
+	revs->min_age = -1;
+	revs->max_count = -1;
+
+	revs->prune_fn = NULL;
+	revs->prune_data = NULL;
+
+	revs->topo_setter = topo_sort_default_setter;
+	revs->topo_getter = topo_sort_default_getter;
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -458,13 +469,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	const char **unrecognized = argv + 1;
 	int left = 1;
 
-	memset(revs, 0, sizeof(*revs));
-	revs->lifo = 1;
-	revs->dense = 1;
-	revs->prefix = setup_git_directory();
-	revs->max_age = -1;
-	revs->min_age = -1;
-	revs->max_count = -1;
+	init_revisions(revs);
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -474,7 +479,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			continue;
 		argv[i] = NULL;
 		argc = i;
-		revs->paths = get_pathspec(revs->prefix, argv + i + 1);
+		revs->prune_data = get_pathspec(revs->prefix, argv + i + 1);
 		seen_dashdash = 1;
 		break;
 	}
@@ -638,7 +643,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				if (lstat(argv[j], &st) < 0)
 					die("'%s': %s", arg, strerror(errno));
 			}
-			revs->paths = get_pathspec(revs->prefix, argv + i);
+			revs->prune_data = get_pathspec(revs->prefix, argv + i);
 			break;
 		}
 		commit = get_commit_reference(revs, arg, sha1, flags ^ local_flags);
@@ -652,8 +657,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		commit = get_commit_reference(revs, def, sha1, 0);
 		add_one_commit(commit, revs);
 	}
-	if (revs->paths)
+
+	if (revs->prune_data) {
+		diff_tree_setup_paths(revs->prune_data);
+		revs->prune_fn = try_to_simplify_commit;
 		revs->limited = 1;
+	}
+
 	return left;
 }
 
@@ -663,7 +673,9 @@ void prepare_revision_walk(struct rev_info *revs)
 	if (revs->limited)
 		limit_list(revs);
 	if (revs->topo_order)
-		sort_in_topological_order(&revs->commits, revs->lifo);
+		sort_in_topological_order_fn(&revs->commits, revs->lifo,
+					     revs->topo_setter,
+					     revs->topo_getter);
 }
 
 static int rewrite_one(struct commit **pp)
@@ -719,7 +731,7 @@ struct commit *get_revision(struct rev_info *revs)
 			return NULL;
 		if (revs->no_merges && commit->parents && commit->parents->next)
 			goto next;
-		if (revs->paths && revs->dense) {
+		if (revs->prune_fn && revs->dense) {
 			if (!(commit->object.flags & TREECHANGE))
 				goto next;
 			rewrite_parents(commit);
