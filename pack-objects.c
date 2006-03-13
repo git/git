@@ -32,9 +32,6 @@ struct object_entry {
 				 * be used as the base objectto delta huge
 				 * objects against.
 				 */
-	int based_on_preferred;	/* current delta candidate is a preferred
-				 * one, or delta against a preferred one.
-				 */
 };
 
 /*
@@ -824,8 +821,6 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 {
 	struct object_entry *cur_entry = cur->entry;
 	struct object_entry *old_entry = old->entry;
-	int old_preferred = (old_entry->preferred_base ||
-			     old_entry->based_on_preferred);
 	unsigned long size, oldsize, delta_size, sizediff;
 	long max_size;
 	void *delta_buf;
@@ -867,27 +862,8 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	 * delete).
 	 */
 	max_size = size / 2 - 20;
-	if (cur_entry->delta) {
-		if (cur_entry->based_on_preferred) {
-			if (old_preferred)
-				max_size = cur_entry->delta_size-1;
-			else
-				/* trying with non-preferred one when we
-				 * already have a delta based on preferred
-				 * one is pointless.
-				 */
-				return -1;
-		}
-		else if (!old_preferred)
-			max_size = cur_entry->delta_size-1;
-		else
-			/* otherwise...  even if delta with a
-			 * preferred one produces a bigger result than
-			 * what we currently have, which is based on a
-			 * non-preferred one, it is OK.
-			 */
-			;
-	}
+	if (cur_entry->delta)
+		max_size = cur_entry->delta_size-1;
 	if (sizediff >= max_size)
 		return -1;
 	delta_buf = diff_delta(old->data, oldsize,
@@ -897,7 +873,6 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	cur_entry->delta = old_entry;
 	cur_entry->delta_size = delta_size;
 	cur_entry->depth = old_entry->depth + 1;
-	cur_entry->based_on_preferred = old_preferred;
 	free(delta_buf);
 	return 0;
 }
@@ -966,6 +941,15 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			if (try_delta(n, m, depth) < 0)
 				break;
 		}
+#if 0
+		/* if we made n a delta, and if n is already at max
+		 * depth, leaving it in the window is pointless.  we
+		 * should evict it first.
+		 * ... in theory only; somehow this makes things worse.
+		 */
+		if (entry->delta && depth <= entry->depth)
+			continue;
+#endif
 		idx++;
 		if (idx >= window)
 			idx = 0;
