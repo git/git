@@ -133,7 +133,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	 * match than anything else; the destination does not even
 	 * call into this function in that case.
 	 */
-	unsigned long delta_size, base_size, src_copied, literal_added;
+	unsigned long max_size, delta_size, base_size, src_copied, literal_added;
 	unsigned long delta_limit;
 	int score;
 
@@ -144,9 +144,9 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
 		return 0;
 
-	delta_size = ((src->size < dst->size) ?
-		      (dst->size - src->size) : (src->size - dst->size));
+	max_size = ((src->size > dst->size) ? src->size : dst->size);
 	base_size = ((src->size < dst->size) ? src->size : dst->size);
+	delta_size = max_size - base_size;
 
 	/* We would not consider edits that change the file size so
 	 * drastically.  delta_size must be smaller than
@@ -174,12 +174,10 @@ static int estimate_similarity(struct diff_filespec *src,
 	/* How similar are they?
 	 * what percentage of material in dst are from source?
 	 */
-	if (dst->size < src_copied)
-		score = MAX_SCORE;
-	else if (!dst->size)
+	if (!dst->size)
 		score = 0; /* should not happen */
 	else
-		score = src_copied * MAX_SCORE / dst->size;
+		score = src_copied * MAX_SCORE / max_size;
 	return score;
 }
 
