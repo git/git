@@ -40,8 +40,8 @@
 #define HASHBASE 107927
 
 struct spanhash {
-	unsigned long hashval;
-	unsigned long cnt;
+	unsigned int hashval;
+	unsigned int cnt;
 };
 struct spanhash_top {
 	int alloc_log2;
@@ -50,7 +50,7 @@ struct spanhash_top {
 };
 
 static struct spanhash *spanhash_find(struct spanhash_top *top,
-				      unsigned long hashval)
+				      unsigned int hashval)
 {
 	int sz = 1 << top->alloc_log2;
 	int bucket = hashval & (sz - 1);
@@ -99,7 +99,7 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 }
 
 static struct spanhash_top *add_spanhash(struct spanhash_top *top,
-					 unsigned long hashval, int cnt)
+					 unsigned int hashval, int cnt)
 {
 	int bucket, lim;
 	struct spanhash *h;
@@ -125,10 +125,10 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 	}
 }
 
-static struct spanhash_top *hash_chars(unsigned char *buf, unsigned long sz)
+static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
 {
 	int i, n;
-	unsigned long accum1, accum2, hashval;
+	unsigned int accum1, accum2, hashval;
 	struct spanhash_top *hash;
 
 	i = INITIAL_HASH_SIZE;
@@ -140,10 +140,11 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned long sz)
 	n = 0;
 	accum1 = accum2 = 0;
 	while (sz) {
-		unsigned long c = *buf++;
+		unsigned int c = *buf++;
+		unsigned int old_1 = accum1;
 		sz--;
-		accum1 = (accum1 << 7) | (accum2 >> 25);
-		accum2 = (accum2 << 7) | (accum1 >> 25);
+		accum1 = (accum1 << 7) ^ (accum2 >> 25);
+		accum2 = (accum2 << 7) ^ (old_1 >> 25);
 		accum1 += c;
 		if (++n < 64 && c != '\n')
 			continue;
