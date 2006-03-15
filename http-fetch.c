@@ -468,9 +468,13 @@ static void process_alternates_response(void *callback_data)
 					 alt_req->url);
 			active_requests++;
 			slot->in_use = 1;
+			if (slot->finished != NULL)
+				(*slot->finished) = 0;
 			if (!start_active_slot(slot)) {
 				got_alternates = -1;
 				slot->in_use = 0;
+				if (slot->finished != NULL)
+					(*slot->finished) = 1;
 			}
 			return;
 		}
