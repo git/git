@@ -99,7 +99,7 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 }
 
 static struct spanhash_top *add_spanhash(struct spanhash_top *top,
-					 unsigned long hashval)
+					 unsigned long hashval, int cnt)
 {
 	int bucket, lim;
 	struct spanhash *h;
@@ -110,14 +110,14 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 		h = &(top->data[bucket++]);
 		if (!h->cnt) {
 			h->hashval = hashval;
-			h->cnt = 1;
+			h->cnt = cnt;
 			top->free--;
 			if (top->free < 0)
 				return spanhash_rehash(top);
 			return top;
 		}
 		if (h->hashval == hashval) {
-			h->cnt++;
+			h->cnt += cnt;
 			return top;
 		}
 		if (lim <= bucket)
@@ -127,7 +127,7 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 
 static struct spanhash_top *hash_chars(unsigned char *buf, unsigned long sz)
 {
-	int i;
+	int i, n;
 	unsigned long accum1, accum2, hashval;
 	struct spanhash_top *hash;
 
@@ -137,19 +137,20 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned long sz)
 	hash->free = INITIAL_FREE(i);
 	memset(hash->data, 0, sizeof(struct spanhash) * (1<<i));
 
-	/* an 8-byte shift register made of accum1 and accum2.  New
-	 * bytes come at LSB of accum2, and shifted up to accum1
-	 */
-	for (i = accum1 = accum2 = 0; i < 7; i++, sz--) {
-		accum1 = (accum1 << 8) | (accum2 >> 24);
-		accum2 = (accum2 << 8) | *buf++;
-	}
+	n = 0;
+	accum1 = accum2 = 0;
 	while (sz) {
-		accum1 = (accum1 << 8) | (accum2 >> 24);
-		accum2 = (accum2 << 8) | *buf++;
-		hashval = (accum1 + accum2 * 0x61) % HASHBASE;
-		hash = add_spanhash(hash, hashval);
+		unsigned long c = *buf++;
 		sz--;
+		accum1 = (accum1 << 7) | (accum2 >> 25);
+		accum2 = (accum2 << 7) | (accum1 >> 25);
+		accum1 += c;
+		if (++n < 64 && c != '\n')
+			continue;
+		hashval = (accum1 + accum2 * 0x61) % HASHBASE;
+		hash = add_spanhash(hash, hashval, n);
+		n = 0;
+		accum1 = accum2 = 0;
 	}
 	return hash;
 }
@@ -165,9 +166,6 @@ int diffcore_count_changes(void *src, unsigned long src_size,
 	int i, ssz;
 	struct spanhash_top *src_count, *dst_count;
 	unsigned long sc, la;
-
-	if (src_size < 8 || dst_size < 8)
-		return -1;
 
 	src_count = dst_count = NULL;
 	if (src_count_p)
