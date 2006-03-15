@@ -372,7 +372,7 @@ free_generic_messages( message_t *msgs )
 }
 
 static int
-vasprintf( char **strp, const char *fmt, va_list ap )
+git_vasprintf( char **strp, const char *fmt, va_list ap )
 {
 	int len;
 	char tmp[1024];
@@ -402,7 +402,7 @@ nfsnprintf( char *buf, int blen, const char *fmt, ... )
 static int
 nfvasprintf( char **str, const char *fmt, va_list va )
 {
-	int ret = vasprintf( str, fmt, va );
+	int ret = git_vasprintf( str, fmt, va );
 	if (ret < 0)
 		die( "Fatal: Out of memory\n");
 	return ret;
