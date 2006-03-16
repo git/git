@@ -71,19 +71,15 @@ case "$merge_head" in
 	;;
 ?*' '?*)
 	var=`git repo-config --get pull.octopus`
-	if test '' = "$var"
+	if test -n "$var"
 	then
-		strategy_default_args='-s octopus'
-	else
 		strategy_default_args="-s $var"
 	fi
 	;;
 *)
 	var=`git repo-config --get pull.twohead`
-	if test '' = "$var"
-	then
-		strategy_default_args='-s recursive'
-	else
+	if test -n "$var"
+        then
 		strategy_default_args="-s $var"
 	fi
 	;;
