@@ -950,6 +950,7 @@ sub req_ci
 
     if ( -e $state->{CVSROOT} . "/index" )
     {
+        $log->warn("file 'index' already exists in the git repository");
         print "error 1 Index already exists in git repo\n";
         exit;
     }
@@ -957,6 +958,7 @@ sub req_ci
     my $lockfile = "$state->{CVSROOT}/refs/heads/$state->{module}.lock";
     unless ( sysopen(LOCKFILE,$lockfile,O_EXCL|O_CREAT|O_WRONLY) )
     {
+        $log->warn("lockfile '$lockfile' already exists, please try again");
         print "error 1 Lock file '$lockfile' already exists, please try again\n";
         exit;
     }
