@@ -35,7 +35,6 @@ proc parse_args {rargs} {
 proc start_rev_list {rlargs} {
     global startmsecs nextupdate ncmupdate
     global commfd leftover tclencoding datemode
-    global commitdata
 
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
@@ -53,7 +52,6 @@ proc start_rev_list {rlargs} {
 	exit 1
     }
     set leftover {}
-    set commitdata {}
     fconfigure $commfd -blocking 0 -translation lf
     if {$tclencoding != {}} {
 	fconfigure $commfd -encoding $tclencoding
@@ -137,8 +135,8 @@ proc getcommitlines {commfd}  {
 	set id [lindex $ids 0]
 	set olds [lrange $ids 1 end]
 	set commitlisted($id) 1
-	updatechildren $id [lrange $ids 1 end]
-	lappend commitdata [string range $cmit [expr {$j + 1}] end]
+	updatechildren $id $olds
+	set commitdata($id) [string range $cmit [expr {$j + 1}] end]
 	set commitrow($id) $commitidx
 	incr commitidx
 	lappend displayorder $id
@@ -266,15 +264,11 @@ proc parsecommit {id contents listed} {
 			     $comname $comdate $comment]
 }
 
-proc getcommit {id {row {}}} {
-    global commitdata commitrow commitinfo nparents
+proc getcommit {id} {
+    global commitdata commitinfo nparents
 
-    if {$row eq {}} {
-	if {![info exists commitrow($id)]} {return 0}
-	set row $commitrow($id)
-    }
-    if {$row < [llength $commitdata]} {
-	parsecommit $id [lindex $commitdata $row] 1
+    if {[info exists commitdata($id)]} {
+	parsecommit $id $commitdata($id) 1
     } else {
 	readcommit $id
 	if {![info exists commitinfo($id)]} {
@@ -1341,7 +1335,6 @@ proc drawcmitrow {row} {
     global displayorder rowidlist
     global idrowranges idrangedrawn iddrawn
     global commitinfo commitlisted parents numcommits
-    global commitdata
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
@@ -1369,7 +1362,7 @@ proc drawcmitrow {row} {
 	return
     }
     if {![info exists commitinfo($id)]} {
-	getcommit $id $row
+	getcommit $id
     }
     assigncolor $id
     if {[info exists commitlisted($id)] && [info exists parents($id)]
@@ -1723,7 +1716,8 @@ proc dofind {} {
     set didsel 0
     set fldtypes {Headline Author Date Committer CDate Comment}
     set l -1
-    foreach d $commitdata {
+    foreach id $displayorder {
+	set d $commitdata($id)
 	incr l
 	if {$findtype == "Regexp"} {
 	    set doesmatch [regexp $foundstring $d]
@@ -1733,9 +1727,8 @@ proc dofind {} {
 	    set doesmatch [string match $matchstring $d]
 	}
 	if {!$doesmatch} continue
-	set id [lindex $displayorder $l]
 	if {![info exists commitinfo($id)]} {
-	    getcommit $id $l
+	    getcommit $id
 	}
 	set info $commitinfo($id)
 	set doesmatch 0
