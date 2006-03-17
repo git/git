@@ -180,11 +180,13 @@ static int get_blob_sha1_internal(unsigned char *sha1, const char *base,
 				  unsigned mode, int stage);
 
 static unsigned char blob_sha1[20];
+static const char* blame_file;
 static int get_blob_sha1(struct tree *t, const char *pathname,
 			 unsigned char *sha1)
 {
 	int i;
 	const char *pathspec[2];
+	blame_file = pathname;
 	pathspec[0] = pathname;
 	pathspec[1] = NULL;
 	memset(blob_sha1, 0, sizeof(blob_sha1));
@@ -208,6 +210,10 @@ static int get_blob_sha1_internal(unsigned char *sha1, const char *base,
 {
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
+
+	if (strncmp(blame_file, base, baselen) ||
+	    strcmp(blame_file + baselen, pathname))
+		return -1;
 
 	memcpy(blob_sha1, sha1, 20);
 	return -1;
