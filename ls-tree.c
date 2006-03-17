@@ -13,13 +13,14 @@ static int line_termination = '\n';
 #define LS_TREE_ONLY 2
 #define LS_SHOW_TREES 4
 #define LS_NAME_ONLY 8
+static int abbrev = 0;
 static int ls_options = 0;
 const char **pathspec;
 static int chomp_prefix = 0;
 static const char *prefix;
 
 static const char ls_tree_usage[] =
-	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] [--full-name] <tree-ish> [path...]";
+	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] [--full-name] [--abbrev[=<n>]] <tree-ish> [path...]";
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
@@ -73,7 +74,9 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen,
 		return 0;
 
 	if (!(ls_options & LS_NAME_ONLY))
-		printf("%06o %s %s\t", mode, type, sha1_to_hex(sha1));
+		printf("%06o %s %s\t", mode, type,
+				abbrev ? find_unique_abbrev(sha1,abbrev)
+					: sha1_to_hex(sha1));
 	write_name_quoted(base + chomp_prefix, baselen - chomp_prefix,
 			  pathname,
 			  line_termination, stdout);
@@ -111,6 +114,18 @@ int main(int argc, const char **argv)
 			}
 			if (!strcmp(argv[1]+2, "full-name")) {
 				chomp_prefix = 0;
+				break;
+			}
+			if (!strncmp(argv[1]+2, "abbrev=",7)) {
+				abbrev = strtoul(argv[1]+9, NULL, 10);
+				if (abbrev && abbrev < MINIMUM_ABBREV)
+					abbrev = MINIMUM_ABBREV;
+				else if (abbrev > 40)
+					abbrev = 40;
+				break;
+			}
+			if (!strcmp(argv[1]+2, "abbrev")) {
+				abbrev = DEFAULT_ABBREV;
 				break;
 			}
 			/* otherwise fallthru */
