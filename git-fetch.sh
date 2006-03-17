@@ -179,6 +179,7 @@ fast_forward_local () {
 			;;
 		*)
 			echo >&2 "  not updating."
+			exit 1
 			;;
 		esac
 	    }
