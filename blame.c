@@ -742,6 +742,8 @@ int main(int argc, const char **argv)
 	struct commit_info ci;
 	const char *buf;
 	int max_digits;
+	size_t longest_file, longest_author;
+	int found_rename;
 
 	const char* prefix = setup_git_directory();
 
@@ -818,6 +820,25 @@ int main(int argc, const char **argv)
 	for (max_digits = 1, i = 10; i <= num_blame_lines + 1; max_digits++)
 		i *= 10;
 
+	longest_file = 0;
+	longest_author = 0;
+	found_rename = 0;
+	for (i = 0; i < num_blame_lines; i++) {
+		struct commit *c = blame_lines[i];
+		struct util_info* u;
+		if (!c)
+			c = initial;
+		u = c->object.util;
+
+		if (!found_rename && strcmp(filename, u->pathname))
+			found_rename = 1;
+		if (longest_file < strlen(u->pathname))
+			longest_file = strlen(u->pathname);
+		get_commit_info(c, &ci);
+		if (longest_author < strlen(ci.author))
+			longest_author = strlen(ci.author);
+	}
+
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		struct util_info* u;
@@ -828,14 +849,18 @@ int main(int argc, const char **argv)
 		u = c->object.util;
 		get_commit_info(c, &ci);
 		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
-		if(compability)
+		if(compability) {
 			printf("\t(%10s\t%10s\t%d)", ci.author,
 			       format_time(ci.author_time, ci.author_tz), i+1);
-		else
-			printf(" %s (%-15.15s %10s %*d) ", u->pathname,
-			       ci.author, format_time(ci.author_time,
-						      ci.author_tz),
+		} else {
+			if (found_rename)
+				printf(" %-*.*s", longest_file, longest_file,
+				       u->pathname);
+			printf(" (%-*.*s %10s %*d) ",
+			       longest_author, longest_author, ci.author,
+			       format_time(ci.author_time, ci.author_tz),
 			       max_digits, i+1);
+		}
 
 		if(i == num_blame_lines - 1) {
 			fwrite(buf, blame_len - (buf - blame_contents),
