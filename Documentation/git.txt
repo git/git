@@ -329,6 +329,9 @@ gitlink:git-revert[1]::
 gitlink:git-shortlog[1]::
 	Summarizes 'git log' output.
 
+gitlink:git-show[1]::
+	Show one commit log and its diff.
+
 gitlink:git-show-branch[1]::
 	Show branches and their commits.
 
