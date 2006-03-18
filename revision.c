@@ -313,8 +313,16 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		case REV_TREE_NEW:
 			if (revs->remove_empty_trees &&
 			    rev_same_tree_as_empty(p->tree)) {
-				*pp = parent->next;
-				continue;
+				/* We are adding all the specified
+				 * paths from this parent, so the
+				 * history beyond this parent is not
+				 * interesting.  Remove its parents
+				 * (they are grandparents for us).
+				 * IOW, we pretend this parent is a
+				 * "root" commit.
+				 */
+				parse_commit(p);
+				p->parents = NULL;
 			}
 		/* fallthrough */
 		case REV_TREE_DIFFERENT:
