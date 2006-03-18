@@ -18,6 +18,10 @@ Updates the index file for given paths, or all modified files if
 VISUAL and EDITOR environment variables to edit the commit log
 message.
 
+Several environment variable are used during commits.  They are
+documented in gitlink:git-commit-tree[1].
+
+
 This command can run `commit-msg`, `pre-commit`, and
 `post-commit` hooks.  See link:hooks.html[hooks] for more
 information.
