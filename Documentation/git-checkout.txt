@@ -7,15 +7,18 @@ git-checkout - Checkout and switch to a branch
 
 SYNOPSIS
 --------
-'git-checkout' [-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]
+[verse]
+'git-checkout' [-f] [-b <new_branch>] [-m] [<branch>]
+'git-checkout' [-m] [<branch>] <paths>...
 
 DESCRIPTION
 -----------
 
-When <paths> are not given, this command switches branches, by
+When <paths> are not given, this command switches branches by
 updating the index and working tree to reflect the specified
 branch, <branch>, and updating HEAD to be <branch> or, if
-specified, <new_branch>.
+specified, <new_branch>.  Using -b will cause <new_branch> to
+be created.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
@@ -29,17 +32,17 @@ given paths before updating the working tree.
 OPTIONS
 -------
 -f::
-	Force an re-read of everything.
+	Force a re-read of everything.
 
 -b::
 	Create a new branch and start it at <branch>.
 
 -m::
-	If you have local modifications to a file that is
-	different between the current branch and the branch you
-	are switching to, the command refuses to switch
-	branches, to preserve your modifications in context.
-	With this option, a three-way merge between the current
+	If you have local modifications to one or more files that
+	are different between the current branch and the branch to
+	which you are switching, the command refuses to switch
+	branches in order to preserve your modifications in context.
+	However, with this option, a three-way merge between the current
 	branch, your working tree contents, and the new branch
 	is done, and you will be on the new branch.
 +
@@ -82,7 +85,7 @@ $ git checkout -- hello.c
 ------------
 
 . After working in a wrong branch, switching to the correct
-branch you would want to is done with:
+branch would be done using:
 +
 ------------
 $ git checkout mytopic

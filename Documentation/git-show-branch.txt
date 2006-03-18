@@ -141,7 +141,7 @@ it, having the following in the configuration file may help:
 
 ------------
 
-With this,`git show-branch` without extra parameters would show
+With this, `git show-branch` without extra parameters would show
 only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
