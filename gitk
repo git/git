@@ -952,8 +952,9 @@ proc layoutrows {row endrow last} {
 			set offs [lreplace $offs $x $x]
 			set offs [incrange $offs $x 1]
 			set idinlist($i) 0
-			lappend linesegends($row) $i
-			lappend idrowranges($i) [expr {$row-1}]
+			set rm1 [expr {$row - 1}]
+			lappend linesegends($rm1) $i
+			lappend idrowranges($i) $rm1
 			if {[incr nev -1] <= 0} break
 			continue
 		    }
@@ -982,7 +983,6 @@ proc layoutrows {row endrow last} {
 	    unset idinlist($id)
 	}
 	if {[info exists idrowranges($id)]} {
-	    lappend linesegends($row) $id
 	    lappend idrowranges($id) $row
 	}
 	incr row
@@ -1038,7 +1038,7 @@ proc addextraid {id row} {
 
 proc layouttail {} {
     global rowidlist rowoffsets idinlist commitidx
-    global idrowranges linesegends
+    global idrowranges
 
     set row $commitidx
     set idlist [lindex $rowidlist $row]
@@ -1047,7 +1047,6 @@ proc layouttail {} {
 	set id [lindex $idlist $col]
 	addextraid $id $row
 	unset idinlist($id)
-	lappend linesegends($row) $id
 	lappend idrowranges($id) $row
 	incr row
 	set offs [ntimes $col 0]
@@ -1061,7 +1060,6 @@ proc layouttail {} {
 	lset rowidlist $row [list $id]
 	lset rowoffsets $row 0
 	makeuparrow $id 0 $row 0
-	lappend linesegends($row) $id
 	lappend idrowranges($id) $row
 	incr row
 	lappend rowidlist {}
@@ -1079,12 +1077,23 @@ proc insert_pad {row col npad} {
 }
 
 proc optimize_rows {row col endrow} {
-    global rowidlist rowoffsets idrowranges
+    global rowidlist rowoffsets idrowranges linesegends displayorder
 
     for {} {$row < $endrow} {incr row} {
 	set idlist [lindex $rowidlist $row]
 	set offs [lindex $rowoffsets $row]
 	set haspad 0
+	set downarrowcols {}
+	if {[info exists linesegends($row)]} {
+	    set downarrowcols $linesegends($row)
+	    if {$col > 0} {
+		while {$downarrowcols ne {}} {
+		    set i [lsearch -exact $idlist [lindex $downarrowcols 0]]
+		    if {$i < 0 || $i >= $col} break
+		    set downarrowcols [lrange $downarrowcols 1 end]
+		}
+	    }
+	}
 	for {} {$col < [llength $offs]} {incr col} {
 	    if {[lindex $idlist $col] eq {}} {
 		set haspad 1
@@ -1102,6 +1111,10 @@ proc optimize_rows {row col endrow} {
 		    $y0 > [lindex $idrowranges($id) 0]} {
 		    set isarrow 1
 		}
+	    } elseif {$downarrowcols ne {} &&
+		      [lindex $idlist $col] eq [lindex $downarrowcols 0]} {
+		set downarrowcols [lrange $downarrowcols 1 end]
+		set isarrow 1
 	    }
 	    if {$z < -1 || ($z < 0 && $isarrow)} {
 		set npad [expr {-1 - $z + $isarrow}]
@@ -1660,7 +1673,7 @@ proc drawrest {} {
     showstuff $commitidx
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
-    puts "overall $drawmsecs ms for $numcommits commits"
+    #puts "overall $drawmsecs ms for $numcommits commits"
 }
 
 proc findmatches {f} {
