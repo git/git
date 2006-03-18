@@ -93,11 +93,12 @@ static int add_excludes_from_file_1(const char *fname,
 		close(fd);
 		return 0;
 	}
-	buf = xmalloc(size);
+	buf = xmalloc(size+1);
 	if (read(fd, buf, size) != size)
 		goto err;
 	close(fd);
 
+	buf[size++] = '\n';
 	entry = buf;
 	for (i = 0; i < size; i++) {
 		if (buf[i] == '\n') {

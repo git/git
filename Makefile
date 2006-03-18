@@ -553,6 +553,13 @@ $(LIB_FILE): $(LIB_OBJS)
 doc:
 	$(MAKE) -C Documentation all
 
+TAGS:
+	rm -f TAGS
+	find . -name '*.[hcS]' -print | xargs etags -a
+
+tags:
+	rm -f tags
+	find . -name '*.[hcS]' -print | xargs ctags -a
 
 ### Testing rules
 
@@ -617,7 +624,7 @@ rpm: dist
 clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o $(LIB_FILE)
 	rm -f $(ALL_PROGRAMS) git$X
-	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h
+	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	$(MAKE) -C Documentation/ clean
@@ -626,5 +633,5 @@ clean:
 	rm -f GIT-VERSION-FILE
 
 .PHONY: all install clean strip
-.PHONY: .FORCE-GIT-VERSION-FILE
+.PHONY: .FORCE-GIT-VERSION-FILE TAGS tags
 
