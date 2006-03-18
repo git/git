@@ -1148,6 +1148,15 @@ proc optimize_rows {row col endrow} {
 		set z [lindex $offs $col]
 		set haspad 1
 	    }
+	    if {$z0 eq {} && !$isarrow} {
+		# this line links to its first child on row $row-2
+		set rm2 [expr {$row - 2}]
+		set id [lindex $displayorder $rm2]
+		set xc [lsearch -exact [lindex $rowidlist $rm2] $id]
+		if {$xc >= 0} {
+		    set z0 [expr {$xc - $x0}]
+		}
+	    }
 	    if {$z0 ne {} && $z < 0 && $z0 > 0} {
 		insert_pad $y0 $x0 1
 		set offs [incrange $offs $col 1]
@@ -1155,11 +1164,26 @@ proc optimize_rows {row col endrow} {
 	    }
 	}
 	if {!$haspad} {
+	    set o {}
 	    for {set col [llength $idlist]} {[incr col -1] >= 0} {} {
 		set o [lindex $offs $col]
+		if {$o eq {}} {
+		    # check if this is the link to the first child
+		    set id [lindex $idlist $col]
+		    if {[info exists idrowranges($id)] &&
+			$row == [lindex $idrowranges($id) 0]} {
+			# it is, work out offset to child
+			set y0 [expr {$row - 1}]
+			set id [lindex $displayorder $y0]
+			set x0 [lsearch -exact [lindex $rowidlist $y0] $id]
+			if {$x0 >= 0} {
+			    set o [expr {$x0 - $col}]
+			}
+		    }
+		}
 		if {$o eq {} || $o <= 0} break
 	    }
-	    if {[incr col] < [llength $idlist]} {
+	    if {$o ne {} && [incr col] < [llength $idlist]} {
 		set y1 [expr {$row + 1}]
 		set offs2 [lindex $rowoffsets $y1]
 		set x1 -1
@@ -1203,6 +1227,7 @@ proc linewidth {id} {
 
 proc drawlineseg {id i} {
     global rowoffsets rowidlist idrowranges
+    global displayorder
     global canv colormap
 
     set startrow [lindex $idrowranges($id) [expr {2 * $i}]]
@@ -1230,13 +1255,29 @@ proc drawlineseg {id i} {
 	incr col $o
 	incr row -1
     }
-    if {$coords eq {}} return
-    set last [expr {[llength $idrowranges($id)] / 2 - 1}]
-    set arrow [expr {2 * ($i > 0) + ($i < $last)}]
-    set arrow [lindex {none first last both} $arrow]
     set x [xc $row $col]
     set y [yc $row]
     lappend coords $x $y
+    if {$i == 0} {
+	# draw the link to the first child as part of this line
+	incr row -1
+	set child [lindex $displayorder $row]
+	set ccol [lsearch -exact [lindex $rowidlist $row] $child]
+	if {$ccol >= 0} {
+	    set x [xc $row $ccol]
+	    set y [yc $row]
+	    if {$ccol < $col - 1} {
+		lappend coords [xc $row [expr {$col - 1}]] $yc
+	    } elseif {$ccol > $col + 1} {
+		lappend coords [xc $row [expr {$col + 1}]] $yc
+	    }
+	    lappend coords $x $y
+	}
+    }
+    if {[llength $coords] < 4} return
+    set last [expr {[llength $idrowranges($id)] / 2 - 1}]
+    set arrow [expr {2 * ($i > 0) + ($i < $last)}]
+    set arrow [lindex {none first last both} $arrow]
     set t [$canv create line $coords -width [linewidth $id] \
 	       -fill $colormap($id) -tags lines.$id -arrow $arrow]
     $canv lower $t
@@ -1244,7 +1285,7 @@ proc drawlineseg {id i} {
 }
 
 proc drawparentlinks {id row col olds} {
-    global rowidlist canv colormap
+    global rowidlist canv colormap idrowranges
 
     set row2 [expr {$row + 1}]
     set x [xc $row $col]
@@ -1254,6 +1295,12 @@ proc drawparentlinks {id row col olds} {
     # rmx = right-most X coord used
     set rmx 0
     foreach p $olds {
+	if {[info exists idrowranges($p)] &&
+	    $row2 == [lindex $idrowranges($p) 0] &&
+	    $row2 < [lindex $idrowranges($p) 1]} {
+	    # drawlineseg will do this one for us
+	    continue
+	}
 	set i [lsearch -exact $ids $p]
 	if {$i < 0} {
 	    puts "oops, parent $p of $id not in list"
