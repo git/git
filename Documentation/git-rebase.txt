@@ -25,7 +25,7 @@ Assume the following history exists and the current branch is "topic":
          /
     D---E---F---G master
 
-From this point, the result of the following commands:
+From this point, the result of either of the following commands:
 
     git-rebase master
     git-rebase master topic
@@ -36,7 +36,7 @@ would be:
                  /
     D---E---F---G master
 
-While, starting from the same point, the result of the following
+While, starting from the same point, the result of either of the following
 commands:
 
     git-rebase --onto master~1 master
@@ -58,7 +58,7 @@ OPTIONS
 <upstream>::
 	Upstream branch to compare against.
 
-<head>::
+<branch>::
 	Working branch; defaults to HEAD.
 
 Author
