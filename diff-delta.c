@@ -136,7 +136,8 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 		 unsigned long *delta_size,
 		 unsigned long max_size)
 {
-	unsigned int i, outpos, outsize, inscnt, hash_shift;
+	unsigned int i, outpos, outsize, hash_shift;
+	int inscnt;
 	const unsigned char *ref_data, *ref_top, *data, *top;
 	unsigned char *out;
 	struct index *entry, **hash;
@@ -222,6 +223,20 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 			unsigned char *op;
 
 			if (inscnt) {
+				while (moff && ref_data[moff-1] == data[-1]) {
+					if (msize == 0x10000)
+						break;
+					/* we can match one byte back */
+					msize++;
+					moff--;
+					data--;
+					outpos--;
+					if (--inscnt)
+						continue;
+					outpos--;  /* remove count slot */
+					inscnt--;  /* make it -1 */
+					break;
+				}
 				out[outpos - inscnt - 1] = inscnt;
 				inscnt = 0;
 			}
