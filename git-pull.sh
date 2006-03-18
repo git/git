@@ -70,14 +70,14 @@ case "$merge_head" in
 	exit 0
 	;;
 ?*' '?*)
-	var=`git repo-config --get pull.octopus`
+	var=`git-repo-config --get pull.octopus`
 	if test -n "$var"
 	then
 		strategy_default_args="-s $var"
 	fi
 	;;
 *)
-	var=`git repo-config --get pull.twohead`
+	var=`git-repo-config --get pull.twohead`
 	if test -n "$var"
         then
 		strategy_default_args="-s $var"
