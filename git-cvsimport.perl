@@ -881,6 +881,7 @@ if($orig_branch) {
 	}
 	my $tip_at_end = `git-rev-parse --verify HEAD`;
 	if ($tip_at_start ne $tip_at_end) {
+		for ($tip_at_start, $tip_at_end) { chomp; }
 		print "Fetched into the current branch.\n" if $opt_v;
 		system(qw(git-read-tree -u -m),
 		       $tip_at_start, $tip_at_end);
