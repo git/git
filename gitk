@@ -1620,6 +1620,7 @@ proc xcoord {i level ln} {
 proc finishcommits {} {
     global commitidx phase
     global canv mainfont ctext maincursor textcursor
+    global findinprogress
 
     if {$commitidx > 0} {
 	drawrest
@@ -1628,8 +1629,10 @@ proc finishcommits {} {
 	$canv create text 3 3 -anchor nw -text "No commits selected" \
 	    -font $mainfont -tags textitems
     }
-    . config -cursor $maincursor
-    settextcursor $textcursor
+    if {![info exists findinprogress]} {
+	. config -cursor $maincursor
+	settextcursor $textcursor
+    }
     set phase {}
 }
 
@@ -1657,7 +1660,7 @@ proc drawrest {} {
     showstuff $commitidx
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
-    #puts "overall $drawmsecs ms for $numcommits commits"
+    puts "overall $drawmsecs ms for $numcommits commits"
 }
 
 proc findmatches {f} {
