@@ -148,6 +148,12 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
              (append (git-get-env-strings env) (list "git") args))
     (apply #'call-process "git" nil buffer nil args)))
 
+(defun git-call-process-env-string (env &rest args)
+  "Wrapper for call-process that sets environment strings, and returns the process output as a string."
+  (with-temp-buffer
+    (and (eq 0 (apply #' git-call-process-env t env args))
+         (buffer-string))))
+
 (defun git-run-process-region (buffer start end program args)
   "Run a git process with a buffer region as input."
   (let ((output-buffer (current-buffer))
@@ -189,8 +195,9 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
 
 (defun git-get-string-sha1 (string)
   "Read a SHA1 from the specified string."
-  (let ((pos (string-match "[0-9a-f]\\{40\\}" string)))
-    (and pos (substring string pos (match-end 0)))))
+  (and string
+       (string-match "[0-9a-f]\\{40\\}" string)
+       (match-string 0 string)))
 
 (defun git-get-committer-name ()
   "Return the name to use as GIT_COMMITTER_NAME."
@@ -259,18 +266,12 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
 (defun git-rev-parse (rev)
   "Parse a revision name and return its SHA1."
   (git-get-string-sha1
-   (with-output-to-string
-     (with-current-buffer standard-output
-       (git-call-process-env t nil "rev-parse" rev)))))
+   (git-call-process-env-string nil "rev-parse" rev)))
 
 (defun git-symbolic-ref (ref)
   "Wrapper for the git-symbolic-ref command."
-  (car
-   (split-string
-    (with-output-to-string
-      (with-current-buffer standard-output
-        (git-call-process-env t nil "symbolic-ref" ref)))
-    "\n")))
+  (let ((str (git-call-process-env-string nil "symbolic-ref" ref)))
+    (and str (car (split-string str "\n")))))
 
 (defun git-update-ref (ref val &optional oldval)
   "Update a reference by calling git-update-ref."
@@ -285,11 +286,7 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
 (defun git-write-tree (&optional index-file)
   "Call git-write-tree and return the resulting tree SHA1 as a string."
   (git-get-string-sha1
-   (with-output-to-string
-     (with-current-buffer standard-output
-       (git-call-process-env t
-        (if index-file `(("GIT_INDEX_FILE" . ,index-file)) nil)
-        "write-tree")))))
+   (git-call-process-env-string (and index-file `(("GIT_INDEX_FILE" . ,index-file))) "write-tree")))
 
 (defun git-commit-tree (buffer tree head)
   "Call git-commit-tree with buffer as input and return the resulting commit SHA1."
