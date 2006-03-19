@@ -767,6 +767,16 @@ The default is to fall back to the git repository config, then to `add-log-maili
     (git-setup-diff-buffer
      (apply #'git-run-command-buffer "*git-diff*" "diff-index" "-p" "-M" "HEAD" "--" (git-get-filenames files)))))
 
+(defun git-diff-file-merge-head (arg)
+  "Diff the marked file(s) against the first merge head (or the nth one with a numeric prefix)."
+  (interactive "p")
+  (let ((files (git-marked-files))
+        (merge-heads (git-get-merge-heads)))
+    (unless merge-heads (error "No merge in progress"))
+    (git-setup-diff-buffer
+     (apply #'git-run-command-buffer "*git-diff*" "diff-index" "-p" "-M"
+            (or (nth (1- arg) merge-heads) "HEAD") "--" (git-get-filenames files)))))
+
 (defun git-diff-unmerged-file (stage)
   "Diff the marked unmerged file(s) against the specified stage."
   (let ((files (git-marked-files)))
@@ -959,6 +969,7 @@ The default is to fall back to the git repository config, then to `add-log-maili
     (define-key diff-map "=" 'git-diff-file)
     (define-key diff-map "e" 'git-diff-file-idiff)
     (define-key diff-map "E" 'git-find-file-imerge)
+    (define-key diff-map "h" 'git-diff-file-merge-head)
     (define-key diff-map "m" 'git-diff-file-mine)
     (define-key diff-map "o" 'git-diff-file-other)
     (setq git-status-mode-map map)))
