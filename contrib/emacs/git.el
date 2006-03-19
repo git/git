@@ -59,14 +59,14 @@
 
 (defcustom git-committer-name nil
   "User name to use for commits.
-The default is to fall back to `add-log-full-name' and then `user-full-name'."
+The default is to fall back to the repository config, then to `add-log-full-name' and then to `user-full-name'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Name")))
 
 (defcustom git-committer-email nil
   "Email address to use for commits.
-The default is to fall back to `add-log-mailing-address' and then `user-mail-address'."
+The default is to fall back to the git repository config, then to `add-log-mailing-address' and then to `user-mail-address'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Email")))
@@ -203,6 +203,7 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
   "Return the name to use as GIT_COMMITTER_NAME."
   ; copied from log-edit
   (or git-committer-name
+      (git-repo-config "user.name")
       (and (boundp 'add-log-full-name) add-log-full-name)
       (and (fboundp 'user-full-name) (user-full-name))
       (and (boundp 'user-full-name) user-full-name)))
@@ -211,6 +212,7 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
   "Return the email address to use as GIT_COMMITTER_EMAIL."
   ; copied from log-edit
   (or git-committer-email
+      (git-repo-config "user.email")
       (and (boundp 'add-log-mailing-address) add-log-mailing-address)
       (and (fboundp 'user-mail-address) (user-mail-address))
       (and (boundp 'user-mail-address) user-mail-address)))
@@ -267,6 +269,11 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
   "Parse a revision name and return its SHA1."
   (git-get-string-sha1
    (git-call-process-env-string nil "rev-parse" rev)))
+
+(defun git-repo-config (key)
+  "Retrieve the value associated to KEY in the git repository config file."
+  (let ((str (git-call-process-env-string nil "repo-config" key)))
+    (and str (car (split-string str "\n")))))
 
 (defun git-symbolic-ref (ref)
   "Wrapper for the git-symbolic-ref command."
