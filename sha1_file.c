@@ -973,6 +973,16 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 
 	if (left < 20)
 		die("truncated pack file");
+
+	/* The base entry _must_ be in the same pack */
+	if (!find_pack_entry_one(base_sha1, &base_ent, p))
+		die("failed to find delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
+	base = unpack_entry_gently(&base_ent, type, &base_size);
+	if (!base)
+		die("failed to read delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
+
 	data = base_sha1 + 20;
 	data_size = left - 20;
 	delta_data = xmalloc(delta_size);
@@ -990,14 +1000,6 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
 		die("delta data unpack failed");
 
-	/* The base entry _must_ be in the same pack */
-	if (!find_pack_entry_one(base_sha1, &base_ent, p))
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	base = unpack_entry_gently(&base_ent, type, &base_size);
-	if (!base)
-		die("failed to read delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     &result_size);

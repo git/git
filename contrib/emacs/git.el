@@ -59,14 +59,14 @@
 
 (defcustom git-committer-name nil
   "User name to use for commits.
-The default is to fall back to `add-log-full-name' and then `user-full-name'."
+The default is to fall back to the repository config, then to `add-log-full-name' and then to `user-full-name'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Name")))
 
 (defcustom git-committer-email nil
   "Email address to use for commits.
-The default is to fall back to `add-log-mailing-address' and then `user-mail-address'."
+The default is to fall back to the git repository config, then to `add-log-mailing-address' and then to `user-mail-address'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Email")))
@@ -148,6 +148,12 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
              (append (git-get-env-strings env) (list "git") args))
     (apply #'call-process "git" nil buffer nil args)))
 
+(defun git-call-process-env-string (env &rest args)
+  "Wrapper for call-process that sets environment strings, and returns the process output as a string."
+  (with-temp-buffer
+    (and (eq 0 (apply #' git-call-process-env t env args))
+         (buffer-string))))
+
 (defun git-run-process-region (buffer start end program args)
   "Run a git process with a buffer region as input."
   (let ((output-buffer (current-buffer))
@@ -189,13 +195,15 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
 
 (defun git-get-string-sha1 (string)
   "Read a SHA1 from the specified string."
-  (let ((pos (string-match "[0-9a-f]\\{40\\}" string)))
-    (and pos (substring string pos (match-end 0)))))
+  (and string
+       (string-match "[0-9a-f]\\{40\\}" string)
+       (match-string 0 string)))
 
 (defun git-get-committer-name ()
   "Return the name to use as GIT_COMMITTER_NAME."
   ; copied from log-edit
   (or git-committer-name
+      (git-repo-config "user.name")
       (and (boundp 'add-log-full-name) add-log-full-name)
       (and (fboundp 'user-full-name) (user-full-name))
       (and (boundp 'user-full-name) user-full-name)))
@@ -204,6 +212,7 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
   "Return the email address to use as GIT_COMMITTER_EMAIL."
   ; copied from log-edit
   (or git-committer-email
+      (git-repo-config "user.email")
       (and (boundp 'add-log-mailing-address) add-log-mailing-address)
       (and (fboundp 'user-mail-address) (user-mail-address))
       (and (boundp 'user-mail-address) user-mail-address)))
@@ -259,18 +268,17 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
 (defun git-rev-parse (rev)
   "Parse a revision name and return its SHA1."
   (git-get-string-sha1
-   (with-output-to-string
-     (with-current-buffer standard-output
-       (git-call-process-env t nil "rev-parse" rev)))))
+   (git-call-process-env-string nil "rev-parse" rev)))
+
+(defun git-repo-config (key)
+  "Retrieve the value associated to KEY in the git repository config file."
+  (let ((str (git-call-process-env-string nil "repo-config" key)))
+    (and str (car (split-string str "\n")))))
 
 (defun git-symbolic-ref (ref)
   "Wrapper for the git-symbolic-ref command."
-  (car
-   (split-string
-    (with-output-to-string
-      (with-current-buffer standard-output
-        (git-call-process-env t nil "symbolic-ref" ref)))
-    "\n")))
+  (let ((str (git-call-process-env-string nil "symbolic-ref" ref)))
+    (and str (car (split-string str "\n")))))
 
 (defun git-update-ref (ref val &optional oldval)
   "Update a reference by calling git-update-ref."
@@ -285,11 +293,7 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
 (defun git-write-tree (&optional index-file)
   "Call git-write-tree and return the resulting tree SHA1 as a string."
   (git-get-string-sha1
-   (with-output-to-string
-     (with-current-buffer standard-output
-       (git-call-process-env t
-        (if index-file `(("GIT_INDEX_FILE" . ,index-file)) nil)
-        "write-tree")))))
+   (git-call-process-env-string (and index-file `(("GIT_INDEX_FILE" . ,index-file))) "write-tree")))
 
 (defun git-commit-tree (buffer tree head)
   "Call git-commit-tree with buffer as input and return the resulting commit SHA1."
@@ -763,6 +767,16 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
     (git-setup-diff-buffer
      (apply #'git-run-command-buffer "*git-diff*" "diff-index" "-p" "-M" "HEAD" "--" (git-get-filenames files)))))
 
+(defun git-diff-file-merge-head (arg)
+  "Diff the marked file(s) against the first merge head (or the nth one with a numeric prefix)."
+  (interactive "p")
+  (let ((files (git-marked-files))
+        (merge-heads (git-get-merge-heads)))
+    (unless merge-heads (error "No merge in progress"))
+    (git-setup-diff-buffer
+     (apply #'git-run-command-buffer "*git-diff*" "diff-index" "-p" "-M"
+            (or (nth (1- arg) merge-heads) "HEAD") "--" (git-get-filenames files)))))
+
 (defun git-diff-unmerged-file (stage)
   "Diff the marked unmerged file(s) against the specified stage."
   (let ((files (git-marked-files)))
@@ -955,6 +969,7 @@ The default is to fall back to `add-log-mailing-address' and then `user-mail-add
     (define-key diff-map "=" 'git-diff-file)
     (define-key diff-map "e" 'git-diff-file-idiff)
     (define-key diff-map "E" 'git-find-file-imerge)
+    (define-key diff-map "h" 'git-diff-file-merge-head)
     (define-key diff-map "m" 'git-diff-file-mine)
     (define-key diff-map "o" 'git-diff-file-other)
     (setq git-status-mode-map map)))
