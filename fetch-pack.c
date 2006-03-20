@@ -7,8 +7,9 @@
 static int keep_pack;
 static int quiet;
 static int verbose;
+static int fetch_all;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [-q] [-v] [-k] [--thin] [--exec=upload-pack] [host:]directory <refs>...";
+"git-fetch-pack [--all] [-q] [-v] [-k] [--thin] [--exec=upload-pack] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -266,8 +267,9 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	for (prev = NULL, current = *refs; current; current = next) {
 		next = current->next;
 		if ((!memcmp(current->name, "refs/", 5) &&
-					check_ref_format(current->name + 5)) ||
-				!path_match(current->name, nr_match, match)) {
+		     check_ref_format(current->name + 5)) ||
+		    (!fetch_all &&
+		     !path_match(current->name, nr_match, match))) {
 			if (prev == NULL)
 				*refs = next;
 			else
@@ -376,7 +378,11 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		goto all_done;
 	}
 	if (find_common(fd, sha1, ref) < 0)
-		fprintf(stderr, "warning: no common commits\n");
+		if (!keep_pack)
+			/* When cloning, it is not unusual to have
+			 * no common commit.
+			 */
+			fprintf(stderr, "warning: no common commits\n");
 
 	if (keep_pack)
 		status = receive_keep_pack(fd, "git-fetch-pack", quiet);
@@ -424,6 +430,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp("--thin", arg)) {
 				use_thin_pack = 1;
+				continue;
+			}
+			if (!strcmp("--all", arg)) {
+				fetch_all = 1;
 				continue;
 			}
 			if (!strcmp("-v", arg)) {
