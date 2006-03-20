@@ -71,7 +71,7 @@ enum XML_Status {
 
 static int pushing = 0;
 static int aborted = 0;
-static char remote_dir_exists[256];
+static signed char remote_dir_exists[256];
 
 static struct curl_slist *no_pragma_header;
 static struct curl_slist *default_headers;
