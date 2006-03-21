@@ -1267,9 +1267,9 @@ proc drawlineseg {id i} {
 	    set x [xc $row $ccol]
 	    set y [yc $row]
 	    if {$ccol < $col - 1} {
-		lappend coords [xc $row [expr {$col - 1}]] $yc
+		lappend coords [xc $row [expr {$col - 1}]] [yc $row]
 	    } elseif {$ccol > $col + 1} {
-		lappend coords [xc $row [expr {$col + 1}]] $yc
+		lappend coords [xc $row [expr {$col + 1}]] [yc $row]
 	    }
 	    lappend coords $x $y
 	}
@@ -2451,9 +2451,10 @@ proc goforw {} {
 
 proc mergediff {id} {
     global parents diffmergeid diffopts mdifffd
-    global difffilestart
+    global difffilestart diffids
 
     set diffmergeid $id
+    set diffids $id
     catch {unset difffilestart}
     # this doesn't seem to actually affect anything...
     set env(GIT_DIFF_OPTS) $diffopts
@@ -2470,7 +2471,7 @@ proc mergediff {id} {
 
 proc getmergediffline {mdf id} {
     global diffmergeid ctext cflist nextupdate nparents mergemax
-    global difffilestart
+    global difffilestart mdifffd
 
     set n [gets $mdf line]
     if {$n < 0} {
@@ -2479,7 +2480,8 @@ proc getmergediffline {mdf id} {
 	}
 	return
     }
-    if {![info exists diffmergeid] || $id != $diffmergeid} {
+    if {![info exists diffmergeid] || $id != $diffmergeid
+	|| $mdf != $mdifffd($id)} {
 	return
     }
     $ctext conf -state normal
@@ -2589,13 +2591,11 @@ proc gettreediffline {gdtf ids} {
 	set treediffs($ids) $treediff
 	unset treepending
 	if {$ids != $diffids} {
-	    gettreediffs $diffids
-	} else {
-	    if {[info exists diffmergeid]} {
-		contmergediff $ids
-	    } else {
-		addtocflist $ids
+	    if {![info exists diffmergeid]} {
+		gettreediffs $diffids
 	    }
+	} else {
+	    addtocflist $ids
 	}
 	return
     }
