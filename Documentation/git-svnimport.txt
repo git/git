@@ -75,18 +75,21 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 
 -A <author_file>::
 	Read a file with lines on the form
++
+------
+	username = User's Full Name <email@addr.es>
 
-	  username = User's Full Name <email@addr.es>
-
-	and use "User's Full Name <email@addr.es>" as the GIT
-	author and committer for Subversion commits made by
-	"username". If encountering a commit made by a user not in the
-	list, abort.
-
-	For convenience, this data is saved to $GIT_DIR/svn-authors
-	each time the -A option is provided, and read from that same
-	file each time git-svnimport is run with an existing GIT
-	repository without -A.
+------
++
+and use "User's Full Name <email@addr.es>" as the GIT
+author and committer for Subversion commits made by
+"username". If encountering a commit made by a user not in the
+list, abort.
++
+For convenience, this data is saved to $GIT_DIR/svn-authors
+each time the -A option is provided, and read from that same
+file each time git-svnimport is run with an existing GIT
+repository without -A.
 
 -m::
 	Attempt to detect merges based on the commit message. This option

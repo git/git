@@ -8,6 +8,7 @@
 #define RANGE_HEADER_SIZE 30
 
 static int got_alternates = -1;
+static int corrupt_object_found = 0;
 
 static struct curl_slist *no_pragma_header;
 
@@ -834,6 +835,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 				    obj_req->errorstr, obj_req->curl_result,
 				    obj_req->http_code, hex);
 	} else if (obj_req->zret != Z_STREAM_END) {
+		corrupt_object_found++;
 		ret = error("File %s (%s) corrupt", hex, obj_req->url);
 	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
 		ret = error("File %s has bad hash", hex);
@@ -993,5 +995,11 @@ int main(int argc, char **argv)
 
 	http_cleanup();
 
+	if (corrupt_object_found) {
+		fprintf(stderr,
+"Some loose object were found to be corrupt, but they might be just\n"
+"a false '404 Not Found' error message sent with incorrect HTTP\n"
+"status code.  Suggest running git fsck-objects.\n");
+	}
 	return rc;
 }

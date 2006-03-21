@@ -850,11 +850,23 @@ sub assert_revision_unknown {
 	}
 }
 
+sub trees_eq {
+	my ($x, $y) = @_;
+	my @x = safe_qx('git-cat-file','commit',$x);
+	my @y = safe_qx('git-cat-file','commit',$y);
+	if (($y[0] ne $x[0]) || $x[0] !~ /^tree $sha1\n$/
+				|| $y[0] !~ /^tree $sha1\n$/) {
+		print STDERR "Trees not equal: $y[0] != $x[0]\n";
+		return 0
+	}
+	return 1;
+}
+
 sub assert_revision_eq_or_unknown {
 	my ($revno, $commit) = @_;
 	if (-f "$REV_DIR/$revno") {
 		my $current = file_to_s("$REV_DIR/$revno");
-		if ($commit ne $current) {
+		if (($commit ne $current) && !trees_eq($commit, $current)) {
 			croak "$REV_DIR/$revno already exists!\n",
 				"current: $current\nexpected: $commit\n";
 		}

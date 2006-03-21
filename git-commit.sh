@@ -161,7 +161,7 @@ run_status () {
 	    }
 	'
 
-	if test -n "$verbose"
+	if test -n "$verbose" -a -z "$IS_INITIAL"
 	then
 	    git-diff-index --cached -M -p --diff-filter=MDTCRA $REFERENCE
 	fi
