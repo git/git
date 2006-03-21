@@ -240,9 +240,13 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		"refs",
 		"refs/tags",
 		"refs/heads",
+		"refs/remotes",
 		NULL
 	};
 	const char **p;
+	const char *warning = "warning: refname '%.*s' is ambiguous.\n";
+	char *pathname;
+	int already_found = 0;
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
@@ -252,10 +256,23 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		return -1;
 
 	for (p = prefix; *p; p++) {
-		char *pathname = git_path("%s/%.*s", *p, len, str);
-		if (!read_ref(pathname, sha1))
-			return 0;
+		unsigned char sha1_from_ref[20];
+		unsigned char *this_result =
+			already_found ? sha1_from_ref : sha1;
+		pathname = git_path("%s/%.*s", *p, len, str);
+		if (!read_ref(pathname, this_result)) {
+			if (warn_ambiguous_refs) {
+				if (already_found &&
+				    !memcmp(sha1, sha1_from_ref, 20))
+					fprintf(stderr, warning, len, str);
+				already_found++;
+			}
+			else
+				return 0;
+		}
 	}
+	if (already_found)
+		return 0;
 	return -1;
 }
 
