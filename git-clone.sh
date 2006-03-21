@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -61,8 +61,9 @@ use File::Path qw(mkpath);
 use File::Basename qw(dirname);
 my $git_dir = $ARGV[0];
 my $use_separate_remote = $ARGV[1];
+my $origin = $ARGV[2];
 
-my $branch_top = ($use_separate_remote ? "remotes" : "heads");
+my $branch_top = ($use_separate_remote ? "remotes/$origin" : "heads");
 my $tag_top = "tags";
 
 sub store {
@@ -127,7 +128,12 @@ while
 	*,--reference=*)
 		reference=`expr "$1" : '--reference=\(.*\)'` ;;
 	*,-o)
-		git-check-ref-format "$2" || {
+		case "$2" in
+		*/*)
+		    echo >&2 "'$2' is not suitable for an origin name"
+		    exit 1
+		esac
+		git-check-ref-format "heads/$2" || {
 		    echo >&2 "'$2' is not suitable for a branch name"
 		    exit 1
 		}
@@ -165,14 +171,9 @@ then
 	no_checkout=yes
 fi
 
-if test -z "$origin_override$origin"
+if test -z "$origin"
 then
-	if test -n "$use_separate_remote"
-	then
-		origin=remotes/master
-	else
-		origin=heads/origin
-	fi
+	origin=origin
 fi
 
 # Turn the source into an absolute path if
@@ -317,7 +318,7 @@ test -d "$GIT_DIR/refs/reference-tmp" && rm -fr "$GIT_DIR/refs/reference-tmp"
 if test -f "$GIT_DIR/CLONE_HEAD"
 then
 	# Figure out where the remote HEAD points at.
-	perl -e "$copy_refs" "$GIT_DIR" "$use_separate_remote"
+	perl -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin"
 fi
 
 cd "$D" || exit
@@ -328,8 +329,18 @@ then
 	# Figure out which remote branch HEAD points at.
 	case "$use_separate_remote" in
 	'')	remote_top=refs/heads ;;
-	*)	remote_top=refs/remotes ;;
+	*)	remote_top="refs/remotes/$origin" ;;
 	esac
+
+	# What to use to track the remote primary branch
+	if test -n "$use_separate_remote"
+	then
+		origin_tracking="remotes/$origin/master"
+	else
+		origin_tracking="heads/$origin"
+	fi
+
+	# The name under $remote_top the remote HEAD seems to point at
 	head_points_at=$(
 		(
 			echo "master"
@@ -349,25 +360,26 @@ then
 		done
 		)
 	)
+
+	# Write out remotes/$origin file.
 	case "$head_points_at" in
 	?*)
 		mkdir -p "$GIT_DIR/remotes" &&
-		echo >"$GIT_DIR/remotes/origin" \
+		echo >"$GIT_DIR/remotes/$origin" \
 		"URL: $repo
-Pull: refs/heads/$head_points_at:refs/$origin" &&
+Pull: refs/heads/$head_points_at:refs/$origin_tracking" &&
 		case "$use_separate_remote" in
 		t) git-update-ref HEAD "$head_sha1" ;;
 		*) git-update-ref "refs/$origin" $(git-rev-parse HEAD)
 		esac &&
-		(cd "$GIT_DIR" && find "$remote_top" -type f -print) |
-		while read ref
+		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
+		while read dotslref
 		do
-			head=`expr "$ref" : 'refs/\(.*\)'` &&
-			name=`expr "$ref" : 'refs/[^\/]*/\(.*\)'` &&
+			name=`expr "$dotslref" : './\(.*\)'` &&
 			test "$head_points_at" = "$name" ||
 			test "$origin" = "$head" ||
 			echo "Pull: refs/heads/${name}:$remote_top/${name}"
-		done >>"$GIT_DIR/remotes/origin"
+		done >>"$GIT_DIR/remotes/$origin"
 	esac
 
 	case "$no_checkout" in
