@@ -40,13 +40,18 @@ static int bisect_list = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
 static int show_parents = 0;
+static int show_timestamp = 0;
 static int hdr_termination = 0;
 static const char *commit_prefix = "";
 static enum cmit_fmt commit_format = CMIT_FMT_RAW;
 
 static void show_commit(struct commit *commit)
 {
-	printf("%s%s", commit_prefix, sha1_to_hex(commit->object.sha1));
+	if (show_timestamp)
+		printf("%lu ", commit->date);
+	if (commit_prefix[0])
+		fputs(commit_prefix, stdout);
+	fputs(sha1_to_hex(commit->object.sha1), stdout);
 	if (show_parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
@@ -333,6 +338,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--parents")) {
 			show_parents = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--timestamp")) {
+			show_timestamp = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--bisect")) {
