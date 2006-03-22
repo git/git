@@ -59,7 +59,13 @@ then
 	echo >&2 "Warning: $orig_head commit."
 	git-update-index --refresh 2>/dev/null
 	git-read-tree -u -m "$orig_head" "$curr_head" ||
-		die "You need to first update your working tree."
+		die 'Cannot fast-forward your working tree.
+After making sure that you saved anything precious from
+$ git diff '$orig_head'
+output, run
+$ git reset --hard
+to recover.'
+
 fi
 
 merge_head=$(sed -e '/	not-for-merge	/d' \
