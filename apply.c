@@ -834,7 +834,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			patch->new_name = NULL;
 	}
 
-	if (patch->is_new != !oldlines)
+	if (patch->is_new && oldlines)
 		return error("new file depends on old contents");
 	if (patch->is_delete != !newlines) {
 		if (newlines)

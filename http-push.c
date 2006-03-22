@@ -1863,6 +1863,7 @@ static void one_remote_ref(char *refname)
 	struct ref *ref;
 	unsigned char remote_sha1[20];
 	struct object *obj;
+	int len = strlen(refname) + 1;
 
 	if (fetch_ref(refname, remote_sha1) != 0) {
 		fprintf(stderr,
@@ -1884,7 +1885,6 @@ static void one_remote_ref(char *refname)
 		}
 	}
 
-	int len = strlen(refname) + 1;
 	ref = xcalloc(1, sizeof(*ref) + len);
 	memcpy(ref->old_sha1, remote_sha1, 20);
 	memcpy(ref->name, refname, len);
@@ -2313,6 +2313,8 @@ int main(int argc, char **argv)
 	int objects_to_send;
 	int rc = 0;
 	int i;
+	int new_refs;
+	struct ref *ref;
 
 	setup_git_directory();
 	setup_ident();
@@ -2347,8 +2349,8 @@ int main(int argc, char **argv)
 			}
 		}
 		if (!remote->url) {
-			remote->url = arg;
 			char *path = strstr(arg, "//");
+			remote->url = arg;
 			if (path) {
 				path = index(path+2, '/');
 				if (path)
@@ -2421,10 +2423,13 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	int new_refs = 0;
-	struct ref *ref;
+	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
+		const char *commit_argv[4];
+		int commit_argc;
+		char *new_sha1_hex, *old_sha1_hex;
+
 		if (!ref->peer_ref)
 			continue;
 		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
@@ -2482,10 +2487,9 @@ int main(int argc, char **argv)
 		}
 
 		/* Set up revision info for this refspec */
-		const char *commit_argv[4];
-		int commit_argc = 3;
-		char *new_sha1_hex = strdup(sha1_to_hex(ref->new_sha1));
-		char *old_sha1_hex = NULL;
+		commit_argc = 3;
+		new_sha1_hex = strdup(sha1_to_hex(ref->new_sha1));
+		old_sha1_hex = NULL;
 		commit_argv[1] = "--objects";
 		commit_argv[2] = new_sha1_hex;
 		if (!push_all && !is_zero_sha1(ref->old_sha1)) {

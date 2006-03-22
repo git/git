@@ -748,7 +748,7 @@ int main(int argc, const char **argv)
 	struct commit_info ci;
 	const char *buf;
 	int max_digits;
-	size_t longest_file, longest_author;
+	int longest_file, longest_author;
 	int found_rename;
 
 	const char* prefix = setup_git_directory();
