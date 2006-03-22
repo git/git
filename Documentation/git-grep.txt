@@ -24,13 +24,13 @@ OPTIONS
 
 <option>...::
 	Either an option to pass to `grep` or `git-ls-files`.
-
-	The following are the specific `git-ls-files` options
-	that may be given: `-o`, `--cached`, `--deleted`, `--others`,
-	`--killed`, `--ignored`, `--modified`, `--exclude=*`,
-	`--exclude-from=*`, and `--exclude-per-directory=*`.
-
-	All other options will be passed to `grep`.
++
+The following are the specific `git-ls-files` options
+that may be given: `-o`, `--cached`, `--deleted`, `--others`,
+`--killed`, `--ignored`, `--modified`, `--exclude=\*`,
+`--exclude-from=\*`, and `--exclude-per-directory=\*`.
++
+All other options will be passed to `grep`.
 
 <pattern>::
 	The pattern to look for.  The first non option is taken
