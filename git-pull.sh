@@ -55,7 +55,9 @@ then
 	# First update the working tree to match $curr_head.
 
 	echo >&2 "Warning: fetch updated the current branch head."
-	echo >&2 "Warning: fast forwarding your working tree."
+	echo >&2 "Warning: fast forwarding your working tree from"
+	echo >&2 "Warning: $orig_head commit."
+	git-update-index --refresh 2>/dev/null
 	git-read-tree -u -m "$orig_head" "$curr_head" ||
 		die "You need to first update your working tree."
 fi
