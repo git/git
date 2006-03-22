@@ -370,14 +370,14 @@ then
 Pull: refs/heads/$head_points_at:refs/$origin_tracking" &&
 		case "$use_separate_remote" in
 		t) git-update-ref HEAD "$head_sha1" ;;
-		*) git-update-ref "refs/$origin" $(git-rev-parse HEAD) ;;
+		*) git-update-ref "refs/heads/$origin" $(git-rev-parse HEAD) ;;
 		esac &&
 		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
 		while read dotslref
 		do
 			name=`expr "$dotslref" : './\(.*\)'` &&
 			test "$head_points_at" = "$name" ||
-			test "$origin" = "$head" ||
+			test "$origin" = "$name" ||
 			echo "Pull: refs/heads/${name}:$remote_top/${name}"
 		done >>"$GIT_DIR/remotes/$origin" &&
 		case "$use_separate_remote" in
