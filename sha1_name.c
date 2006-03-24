@@ -236,7 +236,7 @@ static int ambiguous_path(const char *path, int len)
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
 	static const char *fmt[] = {
-		"/%.*s",
+		"%.*s",
 		"refs/%.*s",
 		"refs/tags/%.*s",
 		"refs/heads/%.*s",
@@ -263,8 +263,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		pathname = git_path(*p, len, str);
 		if (!read_ref(pathname, this_result)) {
 			if (warn_ambiguous_refs) {
-				if (already_found &&
-				    !memcmp(sha1, sha1_from_ref, 20))
+				if (already_found)
 					fprintf(stderr, warning, len, str);
 				already_found++;
 			}

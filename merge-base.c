@@ -237,6 +237,7 @@ int main(int argc, char **argv)
 	unsigned char rev1key[20], rev2key[20];
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	while (1 < argc && argv[1][0] == '-') {
 		char *arg = argv[1];

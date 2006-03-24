@@ -100,6 +100,7 @@ int main(int argc, char **argv)
 	int opt;
 
 	setup_git_directory();
+	git_config(git_default_config);
 	if (argc != 3 || get_sha1(argv[2], sha1))
 		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
 

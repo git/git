@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 	int fd, written;
 
 	setup_git_directory();
+	git_config(git_default_config);
 	if (argc < 3 || argc > 4)
 		usage(git_update_ref_usage);
 

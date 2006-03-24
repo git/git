@@ -362,6 +362,8 @@ int main(int argc, char **argv)
 	pid_t pid;
 
 	setup_git_directory();
+	git_config(git_default_config);
+
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
 		char *arg = *argv;
