@@ -453,6 +453,7 @@ chdir($git_tree);
 my $last_branch = "";
 my $orig_branch = "";
 my %branch_date;
+my $tip_at_start = undef;
 
 my $git_dir = $ENV{"GIT_DIR"} || ".git";
 $git_dir = getwd()."/".$git_dir unless $git_dir =~ m#^/#;
@@ -487,6 +488,7 @@ unless(-d $git_dir) {
 		$last_branch = "master";
 	}
 	$orig_branch = $last_branch;
+	$tip_at_start = `git-rev-parse --verify HEAD`;
 
 	# populate index
 	system('git-read-tree', $last_branch);
@@ -873,7 +875,22 @@ if (defined $orig_git_index) {
 
 # Now switch back to the branch we were in before all of this happened
 if($orig_branch) {
-	print "DONE; you may need to merge manually.\n" if $opt_v;
+	print "DONE.\n" if $opt_v;
+	if ($opt_i) {
+		exit 0;
+	}
+	my $tip_at_end = `git-rev-parse --verify HEAD`;
+	if ($tip_at_start ne $tip_at_end) {
+		for ($tip_at_start, $tip_at_end) { chomp; }
+		print "Fetched into the current branch.\n" if $opt_v;
+		system(qw(git-read-tree -u -m),
+		       $tip_at_start, $tip_at_end);
+		die "Fast-forward update failed: $?\n" if $?;
+	}
+	else {
+		system(qw(git-merge cvsimport HEAD), "refs/heads/$opt_o");
+		die "Could not merge $opt_o into the current branch.\n" if $?;
+	}
 } else {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
