@@ -166,6 +166,8 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 	const char *prefix = setup_git_directory();
 	
+	git_config(git_default_config);
+
 	for (i = 1; i < argc; i++) {
 		struct stat st;
 		char *arg = argv[i];

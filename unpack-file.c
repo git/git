@@ -30,6 +30,7 @@ int main(int argc, char **argv)
 		usage("git-unpack-file <sha1>");
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	puts(create_temp_file(sha1));
 	return 0;

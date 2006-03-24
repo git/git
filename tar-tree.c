@@ -380,6 +380,7 @@ int main(int argc, char **argv)
 	struct tree_desc tree;
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	switch (argc) {
 	case 3:

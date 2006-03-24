@@ -127,6 +127,7 @@ int main(int argc, char **argv)
 	int as_is = 0, all = 0, transform_stdin = 0;
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	if (argc < 2)
 		usage(name_rev_usage);
