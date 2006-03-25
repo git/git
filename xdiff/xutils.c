@@ -245,20 +245,24 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2, xdemitcb_t *ecb) {
 
 	nb += xdl_num_out(buf + nb, c1 ? s1: 0);
 
-	memcpy(buf + nb, ",", 1);
-	nb += 1;
+	if (c1 != 1) {
+		memcpy(buf + nb, ",", 1);
+		nb += 1;
 
-	nb += xdl_num_out(buf + nb, c1);
+		nb += xdl_num_out(buf + nb, c1);
+	}
 
 	memcpy(buf + nb, " +", 2);
 	nb += 2;
 
 	nb += xdl_num_out(buf + nb, c2 ? s2: 0);
 
-	memcpy(buf + nb, ",", 1);
-	nb += 1;
+	if (c2 != 1) {
+		memcpy(buf + nb, ",", 1);
+		nb += 1;
 
-	nb += xdl_num_out(buf + nb, c2);
+		nb += xdl_num_out(buf + nb, c2);
+	}
 
 	memcpy(buf + nb, " @@\n", 4);
 	nb += 4;

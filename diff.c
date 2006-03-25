@@ -212,13 +212,34 @@ static int fill_mmfile(mmfile_t *mf, const char *file)
 	return 0;
 }
 
+struct emit_callback {
+	const char **label_path;
+};
+
 static int fn_out(void *priv, mmbuffer_t *mb, int nbuf)
 {
 	int i;
+	struct emit_callback *ecbdata = priv;
 
+	if (ecbdata->label_path[0]) {
+		printf("--- %s\n", ecbdata->label_path[0]);
+		printf("+++ %s\n", ecbdata->label_path[1]);
+		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
+	}
 	for (i = 0; i < nbuf; i++)
 		if (!fwrite(mb[i].ptr, mb[i].size, 1, stdout))
 			return -1;
+	return 0;
+}
+
+#define FIRST_FEW_BYTES 8000
+static int mmfile_is_binary(mmfile_t *mf)
+{
+	long sz = mf->size;
+	if (FIRST_FEW_BYTES < sz)
+		sz = FIRST_FEW_BYTES;
+	if (memchr(mf->ptr, 0, sz))
+		return 1;
 	return 0;
 }
 
@@ -306,22 +327,32 @@ static const char *builtin_diff(const char *name_a,
 	if (label_path[1][0] != '/')
 		label_path[1] = quote_two("b/", name_b);
 
-	printf("--- %s\n", label_path[0]);
-	printf("+++ %s\n", label_path[1]);
-
 	if (fill_mmfile(&mf1, temp[0].name) < 0 ||
 	    fill_mmfile(&mf2, temp[1].name) < 0)
 		die("unable to read files to diff");
 
-	/* Crazy xdl interfaces.. */
-	{
+	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))
+		printf("Binary files %s and %s differ\n",
+		       label_path[0], label_path[1]);
+	else {
+		/* Crazy xdl interfaces.. */
+		const char *diffopts = getenv("GIT_DIFF_OPTS");
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
+		struct emit_callback ecbdata;
 
+		ecbdata.label_path = label_path;
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
+		if (!diffopts)
+			;
+		else if (!strncmp(diffopts, "--unified=", 10))
+			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
+		else if (!strncmp(diffopts, "-u", 2))
+			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
 		ecb.outf = fn_out;
+		ecb.priv = &ecbdata;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
