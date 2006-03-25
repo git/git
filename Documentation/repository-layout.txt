@@ -89,6 +89,8 @@ hooks::
 	commands.  A handful of sample hooks are installed when
 	`git init-db` is run, but all of them are disabled by
 	default.  To enable, they need to be made executable.
+	Read link:hooks.html[hooks] for more details about
+	each hook.
 
 index::
 	The current index file for the repository.  It is
