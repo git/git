@@ -161,6 +161,16 @@ static unsigned int ustar_header_chksum(const struct ustar_header *header)
 	return chksum;
 }
 
+static int get_path_prefix(const struct strbuf *path, int maxlen)
+{
+	int i = path->len;
+	if (i > maxlen)
+		i = maxlen;
+	while (i > 0 && path->buf[i] != '/')
+		i--;
+	return i;
+}
+
 static void write_entry(const unsigned char *sha1, struct strbuf *path,
                         unsigned int mode, void *buffer, unsigned long size)
 {
@@ -195,9 +205,17 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 			return;
 		}
 		if (path->len > sizeof(header.name)) {
-			sprintf(header.name, "%s.data", sha1_to_hex(sha1));
-			strbuf_append_ext_header(&ext_header, "path",
-				                 path->buf, path->len);
+			int plen = get_path_prefix(path, sizeof(header.prefix));
+			int rest = path->len - plen - 1;
+			if (plen > 0 && rest <= sizeof(header.name)) {
+				memcpy(header.prefix, path->buf, plen);
+				memcpy(header.name, path->buf + plen + 1, rest);
+			} else {
+				sprintf(header.name, "%s.data",
+				        sha1_to_hex(sha1));
+				strbuf_append_ext_header(&ext_header, "path",
+				                         path->buf, path->len);
+			}
 		} else
 			memcpy(header.name, path->buf, path->len);
 	}
