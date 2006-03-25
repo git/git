@@ -375,7 +375,7 @@ static void traverse_tree(struct tree_desc *tree,
 
 int main(int argc, char **argv)
 {
-	unsigned char sha1[20];
+	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;
 	struct tree_desc tree;
 
@@ -398,14 +398,15 @@ int main(int argc, char **argv)
 		write_global_extended_header(commit->object.sha1);
 		archive_time = commit->date;
 	}
-	tree.buf = read_object_with_reference(sha1, "tree", &tree.size, NULL);
+	tree.buf = read_object_with_reference(sha1, "tree", &tree.size,
+	                                      tree_sha1);
 	if (!tree.buf)
 		die("not a reference to a tag, commit or tree object: %s",
 		    sha1_to_hex(sha1));
 	if (!archive_time)
 		archive_time = time(NULL);
 	if (basedir)
-		write_header((unsigned char *)"0", TYPEFLAG_DIR, NULL, NULL,
+		write_header(tree_sha1, TYPEFLAG_DIR, NULL, NULL,
 			basedir, 040777, NULL, 0);
 	traverse_tree(&tree, NULL);
 	write_trailer();
