@@ -258,8 +258,7 @@ my $message_id_template = "<%s-git-send-email-$message_id_from>";
 
 sub make_message_id
 {
-	my $date = `date "+\%s"`;
-	chomp($date);
+	my $date = time;
 	my $pseudo_rand = int (rand(4200));
 	$message_id = sprintf $message_id_template, "$date$pseudo_rand";
 	#print "new message id = $message_id\n"; # Was useful for debugging
