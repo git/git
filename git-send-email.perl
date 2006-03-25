@@ -37,7 +37,7 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
+my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
 my ($chain_reply_to, $smtp_server, $quiet, $suppress_from, $no_signed_off_cc) = (1, "localhost", 0, 0, 0);
@@ -273,13 +273,14 @@ sub make_message_id
 
 
 $cc = "";
+$time = time - scalar $#files;
 
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc);
-	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime(time));
+	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
 
 	my $header = "From: $from
 To: $to
