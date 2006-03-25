@@ -1,20 +1,15 @@
 /*
- * Copyright (c) 2005 Rene Scharfe
+ * Copyright (c) 2005, 2006 Rene Scharfe
  */
 #include <time.h>
 #include "cache.h"
 #include "diff.h"
 #include "commit.h"
+#include "strbuf.h"
+#include "tar.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
-
-#define TYPEFLAG_AUTO		'\0'
-#define TYPEFLAG_REG		'0'
-#define TYPEFLAG_LNK		'2'
-#define TYPEFLAG_DIR		'5'
-#define TYPEFLAG_GLOBAL_HEADER	'g'
-#define TYPEFLAG_EXT_HEADER	'x'
 
 #define EXT_HEADER_PATH		1
 #define EXT_HEADER_LINKPATH	2
@@ -117,6 +112,127 @@ static void write_blocked(void *buf, unsigned long size)
 		offset += RECORDSIZE - tail;
 	}
 	write_if_needed();
+}
+
+/*
+ * pax extended header records have the format "%u %s=%s\n".  %u contains
+ * the size of the whole string (including the %u), the first %s is the
+ * keyword, the second one is the value.  This function constructs such a
+ * string and appends it to a struct strbuf.
+ */
+static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
+                                     const char *value, unsigned int valuelen)
+{
+	char *p;
+	int len, total, tmp;
+
+	/* "%u %s=%s\n" */
+	len = 1 + 1 + strlen(keyword) + 1 + valuelen + 1;
+	for (tmp = len; tmp > 9; tmp /= 10)
+		len++;
+
+	total = sb->len + len;
+	if (total > sb->alloc) {
+		sb->buf = xrealloc(sb->buf, total);
+		sb->alloc = total;
+	}
+
+	p = sb->buf;
+	p += sprintf(p, "%u %s=", len, keyword);
+	memcpy(p, value, valuelen);
+	p += valuelen;
+	*p = '\n';
+	sb->len = total;
+}
+
+static unsigned int ustar_header_chksum(const struct ustar_header *header)
+{
+	char *p = (char *)header;
+	unsigned int chksum = 0;
+	while (p < header->chksum)
+		chksum += *p++;
+	chksum += sizeof(header->chksum) * ' ';
+	p += sizeof(header->chksum);
+	while (p < (char *)header + sizeof(struct ustar_header))
+		chksum += *p++;
+	return chksum;
+}
+
+static void write_entry(const unsigned char *sha1, struct strbuf *path,
+                        unsigned int mode, void *buffer, unsigned long size)
+{
+	struct ustar_header header;
+	struct strbuf ext_header;
+
+	memset(&header, 0, sizeof(header));
+	ext_header.buf = NULL;
+	ext_header.len = ext_header.alloc = 0;
+
+	if (!sha1) {
+		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
+		mode = 0100666;
+		strcpy(header.name, "pax_global_header");
+	} else if (!path) {
+		*header.typeflag = TYPEFLAG_EXT_HEADER;
+		mode = 0100666;
+		sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
+	} else {
+		if (S_ISDIR(mode)) {
+			*header.typeflag = TYPEFLAG_DIR;
+			mode |= 0777;
+		} else if (S_ISLNK(mode)) {
+			*header.typeflag = TYPEFLAG_LNK;
+			mode |= 0777;
+		} else if (S_ISREG(mode)) {
+			*header.typeflag = TYPEFLAG_REG;
+			mode |= (mode & 0100) ? 0777 : 0666;
+		} else {
+			error("unsupported file mode: 0%o (SHA1: %s)",
+			      mode, sha1_to_hex(sha1));
+			return;
+		}
+		if (path->len > sizeof(header.name)) {
+			sprintf(header.name, "%s.data", sha1_to_hex(sha1));
+			strbuf_append_ext_header(&ext_header, "path",
+				                 path->buf, path->len);
+		} else
+			memcpy(header.name, path->buf, path->len);
+	}
+
+	if (S_ISLNK(mode) && buffer) {
+		if (size > sizeof(header.linkname)) {
+			sprintf(header.linkname, "see %s.paxheader",
+			        sha1_to_hex(sha1));
+			strbuf_append_ext_header(&ext_header, "linkpath",
+			                         buffer, size);
+		} else
+			memcpy(header.linkname, buffer, size);
+	}
+
+	sprintf(header.mode, "%07o", mode & 07777);
+	sprintf(header.size, "%011lo", S_ISREG(mode) ? size : 0);
+	sprintf(header.mtime, "%011lo", archive_time);
+
+	/* XXX: should we provide more meaningful info here? */
+	sprintf(header.uid, "%07o", 0);
+	sprintf(header.gid, "%07o", 0);
+	strncpy(header.uname, "git", 31);
+	strncpy(header.gname, "git", 31);
+	sprintf(header.devmajor, "%07o", 0);
+	sprintf(header.devminor, "%07o", 0);
+
+	memcpy(header.magic, "ustar", 6);
+	memcpy(header.version, "00", 2);
+
+	sprintf(header.chksum, "%07o", ustar_header_chksum(&header));
+
+	if (ext_header.len > 0) {
+		write_entry(sha1, NULL, 0, ext_header.buf, ext_header.len);
+		free(ext_header.buf);
+	}
+	write_blocked(&header, sizeof(header));
+	if (S_ISREG(mode) && buffer && size > 0)
+		write_blocked(buffer, size);
 }
 
 static void append_string(char **p, const char *s)
@@ -237,16 +353,12 @@ static void write_extended_header(const char *headerfilename, int is_dir,
 
 static void write_global_extended_header(const unsigned char *sha1)
 {
-	char *p;
-	unsigned int size;
-
-	size = extended_header_len("comment", 40);
-	write_header(NULL, TYPEFLAG_GLOBAL_HEADER, NULL, NULL,
-	             "pax_global_header", 0100600, NULL, size);
-
-	p = get_record();
-	append_extended_header(&p, "comment", sha1_to_hex(sha1), 40);
-	write_if_needed();
+	struct strbuf ext_header;
+	ext_header.buf = NULL;
+	ext_header.len = ext_header.alloc = 0;
+	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
+	write_entry(NULL, NULL, 0, ext_header.buf, ext_header.len);
+	free(ext_header.buf);
 }
 
 /* stores a ustar header directly in the block buffer */
