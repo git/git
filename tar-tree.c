@@ -114,6 +114,18 @@ static void write_blocked(void *buf, unsigned long size)
 	write_if_needed();
 }
 
+static void strbuf_append_string(struct strbuf *sb, const char *s)
+{
+	int slen = strlen(s);
+	int total = sb->len + slen;
+	if (total > sb->alloc) {
+		sb->buf = xrealloc(sb->buf, total);
+		sb->alloc = total;
+	}
+	memcpy(sb->buf + sb->len, s, slen);
+	sb->len = total;
+}
+
 /*
  * pax extended header records have the format "%u %s=%s\n".  %u contains
  * the size of the whole string (including the %u), the first %s is the
@@ -450,11 +462,9 @@ static void write_header(const unsigned char *sha1, char typeflag, const char *b
 	write_if_needed();
 }
 
-static void traverse_tree(struct tree_desc *tree,
-			  struct path_prefix *prefix)
+static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 {
-	struct path_prefix this_prefix;
-	this_prefix.prev = prefix;
+	int pathlen = path->len;
 
 	while (tree->size) {
 		const char *name;
@@ -470,16 +480,19 @@ static void traverse_tree(struct tree_desc *tree,
 		eltbuf = read_sha1_file(sha1, elttype, &eltsize);
 		if (!eltbuf)
 			die("cannot read %s", sha1_to_hex(sha1));
-		write_header(sha1, TYPEFLAG_AUTO, basedir, 
-			     prefix, name, mode, eltbuf, eltsize);
+
+		path->len = pathlen;
+		strbuf_append_string(path, name);
+		if (S_ISDIR(mode))
+			strbuf_append_string(path, "/");
+
+		write_entry(sha1, path, mode, eltbuf, eltsize);
+
 		if (S_ISDIR(mode)) {
 			struct tree_desc subtree;
 			subtree.buf = eltbuf;
 			subtree.size = eltsize;
-			this_prefix.name = name;
-			traverse_tree(&subtree, &this_prefix);
-		} else if (!S_ISLNK(mode)) {
-			write_blocked(eltbuf, eltsize);
+			traverse_tree(&subtree, path);
 		}
 		free(eltbuf);
 	}
@@ -490,12 +503,18 @@ int main(int argc, char **argv)
 	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;
 	struct tree_desc tree;
+	struct strbuf current_path;
+
+	current_path.buf = xmalloc(PATH_MAX);
+	current_path.alloc = PATH_MAX;
+	current_path.len = current_path.eof = 0;
 
 	setup_git_directory();
 
 	switch (argc) {
 	case 3:
-		basedir = argv[2];
+		strbuf_append_string(&current_path, argv[2]);
+		strbuf_append_string(&current_path, "/");
 		/* FALLTHROUGH */
 	case 2:
 		if (get_sha1(argv[1], sha1) < 0)
@@ -509,18 +528,19 @@ int main(int argc, char **argv)
 	if (commit) {
 		write_global_extended_header(commit->object.sha1);
 		archive_time = commit->date;
-	}
+	} else
+		archive_time = time(NULL);
+
 	tree.buf = read_object_with_reference(sha1, "tree", &tree.size,
 	                                      tree_sha1);
 	if (!tree.buf)
 		die("not a reference to a tag, commit or tree object: %s",
 		    sha1_to_hex(sha1));
-	if (!archive_time)
-		archive_time = time(NULL);
-	if (basedir)
-		write_header(tree_sha1, TYPEFLAG_DIR, NULL, NULL,
-			basedir, 040777, NULL, 0);
-	traverse_tree(&tree, NULL);
+
+	if (current_path.len > 0)
+		write_entry(tree_sha1, &current_path, 040777, NULL, 0);
+	traverse_tree(&tree, &current_path);
 	write_trailer();
+	free(current_path.buf);
 	return 0;
 }
