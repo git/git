@@ -8,7 +8,7 @@ USAGE='[--all] [--tags] [--force] <repository> [<refspec>...]'
 has_all=
 has_force=
 has_exec=
-has_thin=
+has_thin=--thin
 remote=
 do_tags=
 
@@ -24,7 +24,9 @@ do
 	--exec=*)
 		has_exec="$1" ;;
 	--thin)
-		has_thin="$1" ;;
+		;; # noop
+	--no-thin)
+		has_thin= ;;
 	-*)
                 usage ;;
         *)
