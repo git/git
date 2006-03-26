@@ -22,12 +22,12 @@ use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
 use Net::SMTP;
-use Email::Valid;
 
 # most mail servers generate the Date: header, but not all...
 $ENV{LC_ALL} = 'C';
 use POSIX qw/strftime/;
 
+my $have_email_valid = eval { require Email::Valid; 1 };
 my $smtp;
 
 sub unique_email_list(@);
@@ -250,6 +250,16 @@ EOT
 # Variables we set as part of the loop over files
 our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 
+sub extract_valid_address {
+	my $address = shift;
+	if ($have_email_valid) {
+		return Email::Valid->address($address);
+	} else {
+		# less robust/correct than the monster regexp in Email::Valid,
+		# but still does a 99% job, and one less dependency
+		return ($address =~ /([^\"<>\s]+@[^<>\s]+)/);
+	}
+}
 
 # Usually don't need to change anything below here.
 
@@ -259,7 +269,7 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 # 1 second since the last time we were called.
 
 # We'll setup a template for the message id, using the "from" address:
-my $message_id_from = Email::Valid->address($from);
+my $message_id_from = extract_valid_address($from);
 my $message_id_template = "<%s-git-send-email-$message_id_from>";
 
 sub make_message_id
@@ -413,7 +423,7 @@ sub unique_email_list(@) {
 	my @emails;
 
 	foreach my $entry (@_) {
-		my $clean = Email::Valid->address($entry);
+		my $clean = extract_valid_address($entry);
 		next if $seen{$clean}++;
 		push @emails, $entry;
 	}
