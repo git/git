@@ -48,6 +48,18 @@ would be:
              /
     D---E---F---G master
 
+In case of conflict, git-rebase will stop at the first problematic commit
+and leave conflict markers in the tree.  After resolving the conflict manually
+and updating the index with the desired resolution, you can continue the
+rebasing process with
+
+    git am --resolved --3way
+
+Alternatively, you can undo the git-rebase with
+
+    git reset --hard ORIG_HEAD
+    rm -r .dotest
+
 OPTIONS
 -------
 <newbase>::
