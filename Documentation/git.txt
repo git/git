@@ -521,15 +521,13 @@ HEAD::
 	a valid head 'name'
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
-<snap>::
-	a valid snapshot 'name'
-	(i.e. the contents of `$GIT_DIR/refs/snap/<snap>`).
-
 
 File/Directory Structure
 ------------------------
 
 Please see link:repository-layout.html[repository layout] document.
+
+Read link:hooks.html[hooks] for more details about each hook.
 
 Higher level SCMs may provide and manage additional information in the
 `$GIT_DIR`.

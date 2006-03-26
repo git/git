@@ -693,7 +693,7 @@ static int parse_range(const char *line, int len, int offset, const char *expect
 	line += digits;
 	len -= digits;
 
-	*p2 = *p1;
+	*p2 = 1;
 	if (*line == ',') {
 		digits = parse_num(line+1, p2);
 		if (!digits)
@@ -901,6 +901,8 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			break;
 		}
 	}
+	if (oldlines || newlines)
+		return -1;
 	/* If a fragment ends with an incomplete line, we failed to include
 	 * it in the above loop because we hit oldlines == newlines == 0
 	 * before seeing it.

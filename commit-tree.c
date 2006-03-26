@@ -125,7 +125,10 @@ int main(int argc, char **argv)
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
 		add_buffer(&buffer, &size, "%s", comment);
 
-	write_sha1_file(buffer, size, "commit", commit_sha1);
-	printf("%s\n", sha1_to_hex(commit_sha1));
-	return 0;
+	if (!write_sha1_file(buffer, size, "commit", commit_sha1)) {
+		printf("%s\n", sha1_to_hex(commit_sha1));
+		return 0;
+	}
+	else
+		return 1;
 }

@@ -307,6 +307,7 @@ $subject = $initial_subject;
 foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
 
+	my $author_not_sender = undef;
 	@cc = @initial_cc;
 	my $found_mbox = 0;
 	my $header_done = 0;
@@ -321,7 +322,12 @@ foreach my $t (@files) {
 					$subject = $1;
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
-					next if ($2 eq $from && $suppress_from);
+					if ($2 eq $from) {
+						next if ($suppress_from);
+					}
+					else {
+						$author_not_sender = $2;
+					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
 					push @cc, $2;
@@ -360,6 +366,9 @@ foreach my $t (@files) {
 		}
 	}
 	close F;
+	if (defined $author_not_sender) {
+		$message = "From: $author_not_sender\n\n$message";
+	}
 
 	$cc = join(", ", unique_email_list(@cc));
 
