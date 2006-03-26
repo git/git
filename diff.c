@@ -10,8 +10,6 @@
 #include "diffcore.h"
 #include "xdiff/xdiff.h"
 
-static const char *diff_opts = "-pu";
-
 static int use_size_cache;
 
 int diff_rename_limit_default = -1;
@@ -70,25 +68,10 @@ static const char *external_diff(void)
 {
 	static const char *external_diff_cmd = NULL;
 	static int done_preparing = 0;
-	const char *env_diff_opts;
 
 	if (done_preparing)
 		return external_diff_cmd;
-
-	/*
-	 * Default values above are meant to match the
-	 * Linux kernel development style.  Examples of
-	 * alternative styles you can specify via environment
-	 * variables are:
-	 *
-	 * GIT_DIFF_OPTS="-c";
-	 */
 	external_diff_cmd = getenv("GIT_EXTERNAL_DIFF");
-
-	/* In case external diff fails... */
-	env_diff_opts = getenv("GIT_DIFF_OPTS");
-	if (env_diff_opts) diff_opts = env_diff_opts;
-
 	done_preparing = 1;
 	return external_diff_cmd;
 }
@@ -102,13 +85,12 @@ static struct diff_tempfile {
 	char tmp_path[TEMPFILE_PATH_LEN];
 } diff_temp[2];
 
-static int count_lines(const char *filename)
+static int count_lines(const char *data, int size)
 {
-	FILE *in;
 	int count, ch, completely_empty = 1, nl_just_seen = 0;
-	in = fopen(filename, "r");
 	count = 0;
-	while ((ch = fgetc(in)) != EOF)
+	while (0 < size--) {
+		ch = *data++;
 		if (ch == '\n') {
 			count++;
 			nl_just_seen = 1;
@@ -118,7 +100,7 @@ static int count_lines(const char *filename)
 			nl_just_seen = 0;
 			completely_empty = 0;
 		}
-	fclose(in);
+	}
 	if (completely_empty)
 		return 0;
 	if (!nl_just_seen)
@@ -141,12 +123,11 @@ static void print_line_count(int count)
 	}
 }
 
-static void copy_file(int prefix, const char *filename)
+static void copy_file(int prefix, const char *data, int size)
 {
-	FILE *in;
 	int ch, nl_just_seen = 1;
-	in = fopen(filename, "r");
-	while ((ch = fgetc(in)) != EOF) {
+	while (0 < size--) {
+		ch = *data++;
 		if (nl_just_seen)
 			putchar(prefix);
 		putchar(ch);
@@ -155,60 +136,41 @@ static void copy_file(int prefix, const char *filename)
 		else
 			nl_just_seen = 0;
 	}
-	fclose(in);
 	if (!nl_just_seen)
 		printf("\n\\ No newline at end of file\n");
 }
 
 static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
-			      struct diff_tempfile *temp)
+			      struct diff_filespec *one, 
+			      struct diff_filespec *two)
 {
 	/* Use temp[i].name as input, name_a and name_b as labels */
 	int lc_a, lc_b;
-	lc_a = count_lines(temp[0].name);
-	lc_b = count_lines(temp[1].name);
+	lc_a = count_lines(one->data, one->size);
+	lc_b = count_lines(two->data, two->size);
 	printf("--- %s\n+++ %s\n@@ -", name_a, name_b);
 	print_line_count(lc_a);
 	printf(" +");
 	print_line_count(lc_b);
 	printf(" @@\n");
 	if (lc_a)
-		copy_file('-', temp[0].name);
+		copy_file('-', one->data, one->size);
 	if (lc_b)
-		copy_file('+', temp[1].name);
+		copy_file('+', two->data, two->size);
 }
 
-static int fill_mmfile(mmfile_t *mf, const char *file)
+static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 {
-	int fd = open(file, O_RDONLY);
-	struct stat st;
-	char *buf;
-	unsigned long size;
-
-	mf->ptr = NULL;
-	mf->size = 0;
-	if (fd < 0)
+	if (!DIFF_FILE_VALID(one)) {
+		mf->ptr = ""; /* does not matter */
+		mf->size = 0;
 		return 0;
-	fstat(fd, &st);
-	size = st.st_size;
-	buf = xmalloc(size);
-	mf->ptr = buf;
-	mf->size = size;
-	while (size) {
-		int retval = read(fd, buf, size);
-		if (retval < 0) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-			break;
-		}
-		if (!retval)
-			break;
-		buf += retval;
-		size -= retval;
 	}
-	mf->size -= size;
-	close(fd);
+	else if (diff_populate_filespec(one, 0))
+		return -1;
+	mf->ptr = one->data;
+	mf->size = one->size;
 	return 0;
 }
 
@@ -243,69 +205,37 @@ static int mmfile_is_binary(mmfile_t *mf)
 	return 0;
 }
 
-static const char *builtin_diff(const char *name_a,
+static void builtin_diff(const char *name_a,
 			 const char *name_b,
-			 struct diff_tempfile *temp,
+			 struct diff_filespec *one,
+			 struct diff_filespec *two,
 			 const char *xfrm_msg,
-			 int complete_rewrite,
-			 const char **args)
+			 int complete_rewrite)
 {
-	int i, next_at, cmd_size;
 	mmfile_t mf1, mf2;
-	const char *const diff_cmd = "diff -L%s -L%s";
-	const char *const diff_arg  = "-- %s %s||:"; /* "||:" is to return 0 */
-	const char *input_name_sq[2];
-	const char *label_path[2];
-	char *cmd;
+	const char *lbl[2];
+	char *a_one, *b_two;
 
-	/* diff_cmd and diff_arg have 4 %s in total which makes
-	 * the sum of these strings 8 bytes larger than required.
-	 * we use 2 spaces around diff-opts, and we need to count
-	 * terminating NUL; we used to subtract 5 here, but we do not
-	 * care about small leaks in this subprocess that is about
-	 * to exec "diff" anymore.
-	 */
-	cmd_size = (strlen(diff_cmd) + strlen(diff_opts) + strlen(diff_arg)
-		    + 128);
-
-	for (i = 0; i < 2; i++) {
-		input_name_sq[i] = sq_quote(temp[i].name);
-		if (!strcmp(temp[i].name, "/dev/null"))
-			label_path[i] = "/dev/null";
-		else if (!i)
-			label_path[i] = sq_quote(quote_two("a/", name_a));
-		else
-			label_path[i] = sq_quote(quote_two("b/", name_b));
-		cmd_size += (strlen(label_path[i]) + strlen(input_name_sq[i]));
-	}
-
-	cmd = xmalloc(cmd_size);
-
-	next_at = 0;
-	next_at += snprintf(cmd+next_at, cmd_size-next_at,
-			    diff_cmd, label_path[0], label_path[1]);
-	next_at += snprintf(cmd+next_at, cmd_size-next_at,
-			    " %s ", diff_opts);
-	next_at += snprintf(cmd+next_at, cmd_size-next_at,
-			    diff_arg, input_name_sq[0], input_name_sq[1]);
-
-	printf("diff --git %s %s\n",
-	       quote_two("a/", name_a), quote_two("b/", name_b));
-	if (label_path[0][0] == '/') {
-		/* dev/null */
-		printf("new file mode %s\n", temp[1].mode);
+	a_one = quote_two("a/", name_a);
+	b_two = quote_two("b/", name_b);
+	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
+	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
+	printf("diff --git %s %s\n", a_one, b_two);
+	if (lbl[0][0] == '/') {
+		/* /dev/null */
+		printf("new file mode %06o\n", two->mode);
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
 	}
-	else if (label_path[1][0] == '/') {
-		printf("deleted file mode %s\n", temp[0].mode);
+	else if (lbl[1][0] == '/') {
+		printf("deleted file mode %06o\n", one->mode);
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
 	}
 	else {
-		if (strcmp(temp[0].mode, temp[1].mode)) {
-			printf("old mode %s\n", temp[0].mode);
-			printf("new mode %s\n", temp[1].mode);
+		if (one->mode != two->mode) {
+			printf("old mode %06o\n", one->mode);
+			printf("new mode %06o\n", two->mode);
 		}
 		if (xfrm_msg && xfrm_msg[0])
 			puts(xfrm_msg);
@@ -313,27 +243,19 @@ static const char *builtin_diff(const char *name_a,
 		 * we do not run diff between different kind
 		 * of objects.
 		 */
-		if (strncmp(temp[0].mode, temp[1].mode, 3))
-			return NULL;
+		if ((one->mode ^ two->mode) & S_IFMT)
+			goto free_ab_and_return;
 		if (complete_rewrite) {
-			emit_rewrite_diff(name_a, name_b, temp);
-			return NULL;
+			emit_rewrite_diff(name_a, name_b, one, two);
+			goto free_ab_and_return;
 		}
 	}
 
-	/* Un-quote the paths */
-	if (label_path[0][0] != '/')
-		label_path[0] = quote_two("a/", name_a);
-	if (label_path[1][0] != '/')
-		label_path[1] = quote_two("b/", name_b);
-
-	if (fill_mmfile(&mf1, temp[0].name) < 0 ||
-	    fill_mmfile(&mf2, temp[1].name) < 0)
+	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
 	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))
-		printf("Binary files %s and %s differ\n",
-		       label_path[0], label_path[1]);
+		printf("Binary files %s and %s differ\n", lbl[0], lbl[1]);
 	else {
 		/* Crazy xdl interfaces.. */
 		const char *diffopts = getenv("GIT_DIFF_OPTS");
@@ -342,7 +264,7 @@ static const char *builtin_diff(const char *name_a,
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
 
-		ecbdata.label_path = label_path;
+		ecbdata.label_path = lbl;
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
 		if (!diffopts)
@@ -356,9 +278,10 @@ static const char *builtin_diff(const char *name_a,
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
-	free(mf1.ptr);
-	free(mf2.ptr);
-	return NULL;
+ free_ab_and_return:
+	free(a_one);
+	free(b_two);
+	return;
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -718,6 +641,7 @@ static void run_external_diff(const char *pgm,
 	int retval;
 	static int atexit_asked = 0;
 	const char *othername;
+	const char **arg = &spawn_arg[0];
 
 	othername = (other? other : name);
 	if (one && two) {
@@ -732,41 +656,50 @@ static void run_external_diff(const char *pgm,
 		signal(SIGINT, remove_tempfile_on_signal);
 	}
 
-	if (pgm) {
-		const char **arg = &spawn_arg[0];
-		if (one && two) {
-			*arg++ = pgm;
-			*arg++ = name;
-			*arg++ = temp[0].name;
-			*arg++ = temp[0].hex;
-			*arg++ = temp[0].mode;
-			*arg++ = temp[1].name;
-			*arg++ = temp[1].hex;
-			*arg++ = temp[1].mode;
-			if (other) {
-				*arg++ = other;
-				*arg++ = xfrm_msg;
-			}
-		} else {
-			*arg++ = pgm;
-			*arg++ = name;
+	if (one && two) {
+		*arg++ = pgm;
+		*arg++ = name;
+		*arg++ = temp[0].name;
+		*arg++ = temp[0].hex;
+		*arg++ = temp[0].mode;
+		*arg++ = temp[1].name;
+		*arg++ = temp[1].hex;
+		*arg++ = temp[1].mode;
+		if (other) {
+			*arg++ = other;
+			*arg++ = xfrm_msg;
 		}
-		*arg = NULL;
 	} else {
-		if (one && two) {
-			pgm = builtin_diff(name, othername, temp, xfrm_msg, complete_rewrite, spawn_arg);
-		} else
-			printf("* Unmerged path %s\n", name);
+		*arg++ = pgm;
+		*arg++ = name;
 	}
-
-	retval = 0;
-	if (pgm)
-		retval = spawn_prog(pgm, spawn_arg);
+	*arg = NULL;
+	retval = spawn_prog(pgm, spawn_arg);
 	remove_tempfile();
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
 		exit(1);
 	}
+}
+
+static void run_diff_cmd(const char *pgm,
+			 const char *name,
+			 const char *other,
+			 struct diff_filespec *one,
+			 struct diff_filespec *two,
+			 const char *xfrm_msg,
+			 int complete_rewrite)
+{
+	if (pgm) {
+		run_external_diff(pgm, name, other, one, two, xfrm_msg,
+				  complete_rewrite);
+		return;
+	}
+	if (one && two)
+		builtin_diff(name, other ? other : name,
+			     one, two, xfrm_msg, complete_rewrite);
+	else
+		printf("* Unmerged path %s\n", name);
 }
 
 static void diff_fill_sha1_info(struct diff_filespec *one)
@@ -798,8 +731,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		run_external_diff(pgm, p->one->path, NULL, NULL, NULL, NULL,
-				  0);
+		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, 0);
 		return;
 	}
 
@@ -871,15 +803,15 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		 * needs to be split into deletion and creation.
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
-		run_external_diff(NULL, name, other, one, null, xfrm_msg, 0);
+		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, 0);
 		free(null);
 		null = alloc_filespec(one->path);
-		run_external_diff(NULL, name, other, null, two, xfrm_msg, 0);
+		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, 0);
 		free(null);
 	}
 	else
-		run_external_diff(pgm, name, other, one, two, xfrm_msg,
-				  complete_rewrite);
+		run_diff_cmd(pgm, name, other, one, two, xfrm_msg,
+			     complete_rewrite);
 
 	free(name_munged);
 	free(other_munged);
