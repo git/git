@@ -11,11 +11,15 @@ LF='
 '
 
 all_strategies='recursive octopus resolve stupid ours'
-default_strategies='recursive'
+default_twohead_strategies='recursive'
+default_octopus_strategies='octopus'
+no_trivial_merge_strategies='ours'
 use_strategies=
+
+index_merge=t
 if test "@@NO_PYTHON@@"; then
 	all_strategies='resolve octopus stupid ours'
-	default_strategies='resolve'
+	default_twohead_strategies='resolve'
 fi
 
 dropsave() {
@@ -90,8 +94,6 @@ do
 	shift
 done
 
-test "$#" -le 2 && usage ;# we need at least two heads.
-
 merge_msg="$1"
 shift
 head_arg="$1"
@@ -99,6 +101,8 @@ head=$(git-rev-parse --verify "$1"^0) || usage
 shift
 
 # All the rest are remote heads
+test "$#" = 0 && usage ;# we need at least one remote head.
+
 remoteheads=
 for remote
 do
@@ -107,6 +111,27 @@ do
 	remoteheads="${remoteheads}$remotehead "
 done
 set x $remoteheads ; shift
+
+case "$use_strategies" in
+'')
+	case "$#" in
+	1)
+		use_strategies="$default_twohead_strategies" ;;
+	*)
+		use_strategies="$default_octopus_strategies" ;;
+	esac
+	;;
+esac
+
+for s in $use_strategies
+do
+	case " $s " in
+	*" $no_trivial_merge_strategies "*)
+		index_merge=f
+		break
+		;;
+	esac
+done
 
 case "$#" in
 1)
@@ -118,18 +143,21 @@ case "$#" in
 esac
 echo "$head" >"$GIT_DIR/ORIG_HEAD"
 
-case "$#,$common,$no_commit" in
-*,'',*)
+case "$index_merge,$#,$common,$no_commit" in
+f,*)
+	# We've been told not to try anything clever.  Skip to real merge.
+	;;
+?,*,'',*)
 	# No common ancestors found. We need a real merge.
 	;;
-1,"$1",*)
+?,1,"$1",*)
 	# If head can reach all the merge then we are up to date.
-	# but first the most common case of merging one remote
+	# but first the most common case of merging one remote.
 	echo "Already up-to-date."
 	dropsave
 	exit 0
 	;;
-1,"$head",*)
+?,1,"$head",*)
 	# Again the most common case of merging one remote.
 	echo "Updating from $head to $1"
 	git-update-index --refresh 2>/dev/null
@@ -139,11 +167,11 @@ case "$#,$common,$no_commit" in
 	dropsave
 	exit 0
 	;;
-1,?*"$LF"?*,*)
+?,1,?*"$LF"?*,*)
 	# We are not doing octopus and not fast forward.  Need a
 	# real merge.
 	;;
-1,*,)
+?,1,*,)
 	# We are not doing octopus, not fast forward, and have only
 	# one common.  See if it is really trivial.
 	git var GIT_COMMITTER_IDENT >/dev/null || exit
@@ -187,17 +215,6 @@ esac
 
 # We are going to make a new commit.
 git var GIT_COMMITTER_IDENT >/dev/null || exit
-
-case "$use_strategies" in
-'')
-	case "$#" in
-	1)
-		use_strategies="$default_strategies" ;;
-	*)
-		use_strategies=octopus ;;
-	esac		
-	;;
-esac
 
 # At this point, we need a real merge.  No matter what strategy
 # we use, it would operate on the index, possibly affecting the
@@ -270,11 +287,7 @@ done
 # auto resolved the merge cleanly.
 if test '' != "$result_tree"
 then
-    parents="-p $head"
-    for remote
-    do
-        parents="$parents -p $remote"
-    done
+    parents=$(git-show-branch --independent "$head" "$@" | sed -e 's/^/-p /')
     result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree $parents) || exit
     finish "$result_commit" "Merge $result_commit, made by $wt_strategy."
     dropsave
