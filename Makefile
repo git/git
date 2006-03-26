@@ -188,6 +188,7 @@ PYMODULES = \
 	gitMergeCommon.py
 
 LIB_FILE=libgit.a
+XDIFF_LIB=xdiff/lib.a
 
 LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
@@ -209,7 +210,7 @@ LIB_OBJS = \
 	fetch-clone.o revision.o pager.o \
 	$(DIFF_OBJS)
 
-LIBS = $(LIB_FILE)
+LIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS += -lz
 
 #
@@ -544,11 +545,17 @@ init-db.o: init-db.c
 		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
-$(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H)
+$(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIBS)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(AR) rcs $@ $(LIB_OBJS)
+
+XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o
+
+$(XDIFF_LIB): $(XDIFF_OBJS)
+	$(AR) rcs $@ $(XDIFF_OBJS)
+
 
 doc:
 	$(MAKE) -C Documentation all

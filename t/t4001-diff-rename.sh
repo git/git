@@ -49,7 +49,7 @@ rename from path0
 rename to path1
 --- a/path0
 +++ b/path1
-@@ -8,7 +8,7 @@ Line 7
+@@ -8,7 +8,7 @@
  Line 8
  Line 9
  Line 10
