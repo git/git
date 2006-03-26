@@ -20,6 +20,7 @@ static int show_unmerged = 0;
 static int show_modified = 0;
 static int show_killed = 0;
 static int show_other_directories = 0;
+static int hide_empty_directories = 0;
 static int show_valid_bit = 0;
 static int line_terminator = '\n';
 
@@ -258,11 +259,12 @@ static int dir_exists(const char *dirname, int len)
  * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
  */
-static void read_directory(const char *path, const char *base, int baselen)
+static int read_directory(const char *path, const char *base, int baselen)
 {
-	DIR *dir = opendir(path);
+	DIR *fdir = opendir(path);
+	int contents = 0;
 
-	if (dir) {
+	if (fdir) {
 		int exclude_stk;
 		struct dirent *de;
 		char fullname[MAXPATHLEN + 1];
@@ -270,7 +272,7 @@ static void read_directory(const char *path, const char *base, int baselen)
 
 		exclude_stk = push_exclude_per_directory(base, baselen);
 
-		while ((de = readdir(dir)) != NULL) {
+		while ((de = readdir(fdir)) != NULL) {
 			int len;
 
 			if ((de->d_name[0] == '.') &&
@@ -288,6 +290,7 @@ static void read_directory(const char *path, const char *base, int baselen)
 
 			switch (DTYPE(de)) {
 			struct stat st;
+			int subdir, rewind_base;
 			default:
 				continue;
 			case DT_UNKNOWN:
@@ -301,22 +304,32 @@ static void read_directory(const char *path, const char *base, int baselen)
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
 				len++;
+				rewind_base = nr_dir;
+				subdir = read_directory(fullname, fullname,
+				                        baselen + len);
 				if (show_other_directories &&
-				    !dir_exists(fullname, baselen + len))
+				    (subdir || !hide_empty_directories) &&
+				    !dir_exists(fullname, baselen + len)) {
+					// Rewind the read subdirectory
+					while (nr_dir > rewind_base)
+						free(dir[--nr_dir]);
 					break;
-				read_directory(fullname, fullname,
-					       baselen + len);
+				}
+				contents += subdir;
 				continue;
 			case DT_REG:
 			case DT_LNK:
 				break;
 			}
 			add_name(fullname, baselen + len);
+			contents++;
 		}
-		closedir(dir);
+		closedir(fdir);
 
 		pop_exclude_per_directory(exclude_stk);
 	}
+
+	return contents;
 }
 
 static int cmp_name(const void *p1, const void *p2)
@@ -694,6 +707,10 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--directory")) {
 			show_other_directories = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--no-empty-directory")) {
+			hide_empty_directories = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
