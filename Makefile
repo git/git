@@ -210,8 +210,8 @@ LIB_OBJS = \
 	fetch-clone.o revision.o pager.o \
 	$(DIFF_OBJS)
 
-LIBS = $(LIB_FILE) $(XDIFF_LIB)
-LIBS += -lz
+GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
+LIBS = $(GITLIBS) -lz
 
 #
 # Platform specific tweaks
@@ -545,7 +545,7 @@ init-db.o: init-db.c
 		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $*.c
 
 $(LIB_OBJS): $(LIB_H)
-$(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIBS)
+$(patsubst git-%$X,%.o,$(PROGRAMS)): $(GITLIBS)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
