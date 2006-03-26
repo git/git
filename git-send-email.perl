@@ -19,10 +19,16 @@
 use strict;
 use warnings;
 use Term::ReadLine;
-use Mail::Sendmail qw(sendmail %mailcfg);
 use Getopt::Long;
 use Data::Dumper;
-use Email::Valid;
+use Net::SMTP;
+
+# most mail servers generate the Date: header, but not all...
+$ENV{LC_ALL} = 'C';
+use POSIX qw/strftime/;
+
+my $have_email_valid = eval { require Email::Valid; 1 };
+my $smtp;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
@@ -31,7 +37,7 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose);
+my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
 my ($chain_reply_to, $smtp_server, $quiet, $suppress_from, $no_signed_off_cc) = (1, "localhost", 0, 0, 0);
@@ -244,6 +250,16 @@ EOT
 # Variables we set as part of the loop over files
 our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 
+sub extract_valid_address {
+	my $address = shift;
+	if ($have_email_valid) {
+		return Email::Valid->address($address);
+	} else {
+		# less robust/correct than the monster regexp in Email::Valid,
+		# but still does a 99% job, and one less dependency
+		return ($address =~ /([^\"<>\s]+@[^<>\s]+)/);
+	}
+}
 
 # Usually don't need to change anything below here.
 
@@ -253,13 +269,12 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 # 1 second since the last time we were called.
 
 # We'll setup a template for the message id, using the "from" address:
-my $message_id_from = Email::Valid->address($from);
+my $message_id_from = extract_valid_address($from);
 my $message_id_template = "<%s-git-send-email-$message_id_from>";
 
 sub make_message_id
 {
-	my $date = `date "+\%s"`;
-	chomp($date);
+	my $date = time;
 	my $pseudo_rand = int (rand(4200));
 	$message_id = sprintf $message_id_template, "$date$pseudo_rand";
 	#print "new message id = $message_id\n"; # Was useful for debugging
@@ -268,37 +283,48 @@ sub make_message_id
 
 
 $cc = "";
+$time = time - scalar $#files;
 
 sub send_message
 {
-	my $to = join (", ", unique_email_list(@to));
+	my @recipients = unique_email_list(@to);
+	my $to = join (",\n\t", @recipients);
+	@recipients = unique_email_list(@recipients,@cc);
+	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
 
-	%mail = (	To	=>	$to,
-			From	=>	$from,
-			CC	=>	$cc,
-			Subject	=>	$subject,
-			Message	=>	$message,
-			'Reply-to'	=>	$from,
-			'In-Reply-To'	=>	$reply_to,
-			'Message-ID'	=>	$message_id,
-			'X-Mailer'	=>	"git-send-email",
-		);
+	my $header = "From: $from
+To: $to
+Cc: $cc
+Subject: $subject
+Reply-To: $from
+Date: $date
+Message-Id: $message_id
+X-Mailer: git-send-email @@GIT_VERSION@@
+";
+	$header .= "In-Reply-To: $reply_to\n" if $reply_to;
 
-	$mail{smtp} = $smtp_server;
-	$mailcfg{mime} = 0;
-
-	#print Data::Dumper->Dump([\%mail],[qw(*mail)]);
-
-	sendmail(%mail) or die $Mail::Sendmail::error;
+	$smtp ||= Net::SMTP->new( $smtp_server );
+	$smtp->mail( $from ) or die $smtp->message;
+	$smtp->to( @recipients ) or die $smtp->message;
+	$smtp->data or die $smtp->message;
+	$smtp->datasend("$header\n$message") or die $smtp->message;
+	$smtp->dataend() or die $smtp->message;
+	$smtp->ok or die "Failed to send $subject\n".$smtp->message;
 
 	if ($quiet) {
 		printf "Sent %s\n", $subject;
 	} else {
-		print "OK. Log says:\n", $Mail::Sendmail::log;
-		print "\n\n"
+		print "OK. Log says:
+Date: $date
+Server: $smtp_server Port: 25
+From: $from
+Subject: $subject
+Cc: $cc
+To: $to
+
+Result: ", $smtp->code, ' ', ($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
 	}
 }
-
 
 $reply_to = $initial_reply_to;
 make_message_id();
@@ -390,14 +416,14 @@ sub cleanup_compose_files() {
 
 }
 
-
+$smtp->quit if $smtp;
 
 sub unique_email_list(@) {
 	my %seen;
 	my @emails;
 
 	foreach my $entry (@_) {
-		my $clean = Email::Valid->address($entry);
+		my $clean = extract_valid_address($entry);
 		next if $seen{$clean}++;
 		push @emails, $entry;
 	}
