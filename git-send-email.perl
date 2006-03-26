@@ -19,10 +19,16 @@
 use strict;
 use warnings;
 use Term::ReadLine;
-use Mail::Sendmail qw(sendmail %mailcfg);
 use Getopt::Long;
 use Data::Dumper;
+use Net::SMTP;
 use Email::Valid;
+
+# most mail servers generate the Date: header, but not all...
+$ENV{LC_ALL} = 'C';
+use POSIX qw/strftime/;
+
+my $smtp;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
@@ -270,34 +276,44 @@ $cc = "";
 
 sub send_message
 {
-	my $to = join (", ", unique_email_list(@to));
+	my @recipients = unique_email_list(@to);
+	my $to = join (",\n\t", @recipients);
+	@recipients = unique_email_list(@recipients,@cc);
+	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime(time));
 
-	%mail = (	To	=>	$to,
-			From	=>	$from,
-			CC	=>	$cc,
-			Subject	=>	$subject,
-			Message	=>	$message,
-			'Reply-to'	=>	$from,
-			'In-Reply-To'	=>	$reply_to,
-			'Message-ID'	=>	$message_id,
-			'X-Mailer'	=>	"git-send-email",
-		);
+	my $header = "From: $from
+To: $to
+Cc: $cc
+Subject: $subject
+Reply-To: $from
+Date: $date
+Message-Id: $message_id
+X-Mailer: git-send-email @@GIT_VERSION@@
+";
+	$header .= "In-Reply-To: $reply_to\n" if $reply_to;
 
-	$mail{smtp} = $smtp_server;
-	$mailcfg{mime} = 0;
-
-	#print Data::Dumper->Dump([\%mail],[qw(*mail)]);
-
-	sendmail(%mail) or die $Mail::Sendmail::error;
+	$smtp ||= Net::SMTP->new( $smtp_server );
+	$smtp->mail( $from ) or die $smtp->message;
+	$smtp->to( @recipients ) or die $smtp->message;
+	$smtp->data or die $smtp->message;
+	$smtp->datasend("$header\n$message") or die $smtp->message;
+	$smtp->dataend() or die $smtp->message;
+	$smtp->ok or die "Failed to send $subject\n".$smtp->message;
 
 	if ($quiet) {
 		printf "Sent %s\n", $subject;
 	} else {
-		print "OK. Log says:\n", $Mail::Sendmail::log;
-		print "\n\n"
+		print "OK. Log says:
+Date: $date
+Server: $smtp_server Port: 25
+From: $from
+Subject: $subject
+Cc: $cc
+To: $to
+
+Result: ", $smtp->code, ' ', ($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
 	}
 }
-
 
 $reply_to = $initial_reply_to;
 make_message_id();
@@ -389,7 +405,7 @@ sub cleanup_compose_files() {
 
 }
 
-
+$smtp->quit if $smtp;
 
 sub unique_email_list(@) {
 	my %seen;
