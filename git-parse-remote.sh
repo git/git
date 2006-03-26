@@ -86,14 +86,14 @@ canon_refs_list_for_fetch () {
 		local=$(expr "$ref" : '[^:]*:\(.*\)')
 		case "$remote" in
 		'') remote=HEAD ;;
-		refs/heads/* | refs/tags/*) ;;
-		heads/* | tags/* ) remote="refs/$remote" ;;
+		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
+		heads/* | tags/* | remotes/* ) remote="refs/$remote" ;;
 		*) remote="refs/heads/$remote" ;;
 		esac
 		case "$local" in
 		'') local= ;;
-		refs/heads/* | refs/tags/*) ;;
-		heads/* | tags/* ) local="refs/$local" ;;
+		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
+		heads/* | tags/* | remotes/* ) local="refs/$local" ;;
 		*) local="refs/heads/$local" ;;
 		esac
 

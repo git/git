@@ -752,6 +752,7 @@ int main(int argc, const char **argv)
 	int found_rename;
 
 	const char* prefix = setup_git_directory();
+	git_config(git_default_config);
 
 	for(i = 1; i < argc; i++) {
 		if(options) {

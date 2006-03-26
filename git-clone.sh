@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -40,13 +40,62 @@ Perhaps git-update-server-info needs to be run there?"
 	do
 		name=`expr "$refname" : 'refs/\(.*\)'` &&
 		case "$name" in
-		*^*)	;;
-		*)
-			git-http-fetch -v -a -w "$name" "$name" "$1/" || exit 1
+		*^*)	continue;;
 		esac
+		if test -n "$use_separate_remote" &&
+		   branch_name=`expr "$name" : 'heads/\(.*\)'`
+		then
+			tname="remotes/$origin/$branch_name"
+		else
+			tname=$name
+		fi
+		git-http-fetch -v -a -w "$tname" "$name" "$1/" || exit 1
 	done <"$clone_tmp/refs"
 	rm -fr "$clone_tmp"
+	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD"
 }
+
+# Read git-fetch-pack -k output and store the remote branches.
+copy_refs='
+use File::Path qw(mkpath);
+use File::Basename qw(dirname);
+my $git_dir = $ARGV[0];
+my $use_separate_remote = $ARGV[1];
+my $origin = $ARGV[2];
+
+my $branch_top = ($use_separate_remote ? "remotes/$origin" : "heads");
+my $tag_top = "tags";
+
+sub store {
+	my ($sha1, $name, $top) = @_;
+	$name = "$git_dir/refs/$top/$name";
+	mkpath(dirname($name));
+	open O, ">", "$name";
+	print O "$sha1\n";
+	close O;
+}
+
+open FH, "<", "$git_dir/CLONE_HEAD";
+while (<FH>) {
+	my ($sha1, $name) = /^([0-9a-f]{40})\s(.*)$/;
+	next if ($name =~ /\^\173/);
+	if ($name eq "HEAD") {
+		open O, ">", "$git_dir/REMOTE_HEAD";
+		print O "$sha1\n";
+		close O;
+		next;
+	}
+	if ($name =~ s/^refs\/heads\///) {
+		store($sha1, $name, $branch_top);
+		next;
+	}
+	if ($name =~ s/^refs\/tags\///) {
+		store($sha1, $name, $tag_top);
+		next;
+	}
+}
+close FH;
+'
 
 quiet=
 use_local=no
@@ -54,8 +103,10 @@ local_shared=no
 no_checkout=
 upload_pack=
 bare=
-origin=origin
+reference=
+origin=
 origin_override=
+use_separate_remote=
 while
 	case "$#,$1" in
 	0,*) break ;;
@@ -68,9 +119,21 @@ while
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes; use_local=yes ;;
 	*,-q|*,--quiet) quiet=-q ;;
+	*,--use-separate-remote)
+		use_separate_remote=t ;;
 	1,-o) usage;;
+	1,--reference) usage ;;
+	*,--reference)
+		shift; reference="$1" ;;
+	*,--reference=*)
+		reference=`expr "$1" : '--reference=\(.*\)'` ;;
 	*,-o)
-		git-check-ref-format "$2" || {
+		case "$2" in
+		*/*)
+		    echo >&2 "'$2' is not suitable for an origin name"
+		    exit 1
+		esac
+		git-check-ref-format "heads/$2" || {
 		    echo >&2 "'$2' is not suitable for a branch name"
 		    exit 1
 		}
@@ -100,7 +163,17 @@ then
 		echo >&2 '--bare and -o $origin options are incompatible.'
 		exit 1
 	fi
+	if test t = "$use_separate_remote"
+	then
+		echo >&2 '--bare and --use-separate-remote options are incompatible.'
+		exit 1
+	fi
 	no_checkout=yes
+fi
+
+if test -z "$origin"
+then
+	origin=origin
 fi
 
 # Turn the source into an absolute path if
@@ -129,6 +202,28 @@ yes)
 *)
 	GIT_DIR="$D/.git" ;;
 esac
+
+if test -n "$reference"
+then
+	if test -d "$reference"
+	then
+		if test -d "$reference/.git/objects"
+		then
+			reference="$reference/.git"
+		fi
+		reference=$(cd "$reference" && pwd)
+		echo "$reference/objects" >"$GIT_DIR/objects/info/alternates"
+		(cd "$reference" && tar cf - refs) |
+		(cd "$GIT_DIR/refs" &&
+		 mkdir reference-tmp &&
+		 cd reference-tmp &&
+		 tar xf -)
+	else
+		echo >&2 "$reference: not a local directory." && usage
+	fi
+fi
+
+rm -f "$GIT_DIR/CLONE_HEAD"
 
 # We do local magic only when the user tells us to.
 case "$local,$use_local" in
@@ -165,24 +260,14 @@ yes,yes)
 	    } >"$GIT_DIR/objects/info/alternates"
 	    ;;
 	esac
-
-	# Make a duplicate of refs and HEAD pointer
-	HEAD=
-	if test -f "$repo/HEAD"
-	then
-		HEAD=HEAD
-	fi
-	(cd "$repo" && tar cf - refs $HEAD) |
-	(cd "$GIT_DIR" && tar xf -) || exit 1
+	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
 	;;
 *)
 	case "$repo" in
 	rsync://*)
 		rsync $quiet -av --ignore-existing  \
-			--exclude info "$repo/objects/" "$GIT_DIR/objects/" &&
-		rsync $quiet -av --ignore-existing  \
-			--exclude info "$repo/refs/" "$GIT_DIR/refs/" || exit
-
+			--exclude info "$repo/objects/" "$GIT_DIR/objects/" ||
+		exit
 		# Look at objects/info/alternates for rsync -- http will
 		# support it natively and git native ones will do it on the
 		# remote end.  Not having that file is not a crime.
@@ -205,6 +290,7 @@ yes,yes)
 		    done
 		    rm -f "$GIT_DIR/TMP_ALT"
 		fi
+		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
 		;;
 	http://*)
 		if test -z "@@NO_CURL@@"
@@ -217,38 +303,89 @@ yes,yes)
 		;;
 	*)
 		cd "$D" && case "$upload_pack" in
-		'') git-clone-pack $quiet "$repo" ;;
-		*) git-clone-pack $quiet "$upload_pack" "$repo" ;;
-		esac || {
-			echo >&2 "clone-pack from '$repo' failed."
+		'') git-fetch-pack --all -k $quiet "$repo" ;;
+		*) git-fetch-pack --all -k $quiet "$upload_pack" "$repo" ;;
+		esac >"$GIT_DIR/CLONE_HEAD" || {
+			echo >&2 "fetch-pack from '$repo' failed."
 			exit 1
 		}
 		;;
 	esac
 	;;
 esac
+test -d "$GIT_DIR/refs/reference-tmp" && rm -fr "$GIT_DIR/refs/reference-tmp"
+
+if test -f "$GIT_DIR/CLONE_HEAD"
+then
+	# Figure out where the remote HEAD points at.
+	perl -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin"
+fi
 
 cd "$D" || exit
 
-if test -f "$GIT_DIR/HEAD" && test -z "$bare"
+if test -z "$bare" && test -f "$GIT_DIR/REMOTE_HEAD"
 then
-	head_points_at=`git-symbolic-ref HEAD`
-	case "$head_points_at" in
-	refs/heads/*)
-		head_points_at=`expr "$head_points_at" : 'refs/heads/\(.*\)'`
-		mkdir -p "$GIT_DIR/remotes" &&
-		echo >"$GIT_DIR/remotes/origin" \
-		"URL: $repo
-Pull: $head_points_at:$origin" &&
-		git-update-ref "refs/heads/$origin" $(git-rev-parse HEAD) &&
-		(cd "$GIT_DIR" && find "refs/heads" -type f -print) |
-		while read ref
+	head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+	# Figure out which remote branch HEAD points at.
+	case "$use_separate_remote" in
+	'')	remote_top=refs/heads ;;
+	*)	remote_top="refs/remotes/$origin" ;;
+	esac
+
+	# What to use to track the remote primary branch
+	if test -n "$use_separate_remote"
+	then
+		origin_tracking="remotes/$origin/master"
+	else
+		origin_tracking="heads/$origin"
+	fi
+
+	# The name under $remote_top the remote HEAD seems to point at
+	head_points_at=$(
+		(
+			echo "master"
+			cd "$GIT_DIR/$remote_top" &&
+			find . -type f -print | sed -e 's/^\.\///'
+		) | (
+		done=f
+		while read name
 		do
-			head=`expr "$ref" : 'refs/heads/\(.*\)'` &&
-			test "$head_points_at" = "$head" ||
-			test "$origin" = "$head" ||
-			echo "Pull: ${head}:${head}"
-		done >>"$GIT_DIR/remotes/origin"
+			test t = $done && continue
+			branch_tip=`cat "$GIT_DIR/$remote_top/$name"`
+			if test "$head_sha1" = "$branch_tip"
+			then
+				echo "$name"
+				done=t
+			fi
+		done
+		)
+	)
+
+	# Write out remotes/$origin file.
+	case "$head_points_at" in
+	?*)
+		mkdir -p "$GIT_DIR/remotes" &&
+		echo >"$GIT_DIR/remotes/$origin" \
+		"URL: $repo
+Pull: refs/heads/$head_points_at:refs/$origin_tracking" &&
+		case "$use_separate_remote" in
+		t) git-update-ref HEAD "$head_sha1" ;;
+		*) git-update-ref "refs/heads/$origin" $(git-rev-parse HEAD) ;;
+		esac &&
+		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
+		while read dotslref
+		do
+			name=`expr "$dotslref" : './\(.*\)'` &&
+			test "$head_points_at" = "$name" ||
+			test "$origin" = "$name" ||
+			echo "Pull: refs/heads/${name}:$remote_top/${name}"
+		done >>"$GIT_DIR/remotes/$origin" &&
+		case "$use_separate_remote" in
+		t)
+			rm -f "refs/remotes/$origin/HEAD"
+			git-symbolic-ref "refs/remotes/$origin/HEAD" \
+				"refs/remotes/$origin/$head_points_at"
+		esac
 	esac
 
 	case "$no_checkout" in
@@ -256,6 +393,7 @@ Pull: $head_points_at:$origin" &&
 		git-read-tree -m -u -v HEAD HEAD
 	esac
 fi
+rm -f "$GIT_DIR/CLONE_HEAD" "$GIT_DIR/REMOTE_HEAD"
 
 trap - exit
 

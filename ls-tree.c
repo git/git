@@ -87,6 +87,7 @@ int main(int argc, const char **argv)
 	struct tree *tree;
 
 	prefix = setup_git_directory();
+	git_config(git_default_config);
 	if (prefix && *prefix)
 		chomp_prefix = strlen(prefix);
 	while (1 < argc && argv[1][0] == '-') {

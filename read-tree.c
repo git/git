@@ -717,6 +717,7 @@ int main(int argc, char **argv)
 	merge_fn_t fn = NULL;
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (newfd < 0)

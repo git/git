@@ -94,6 +94,9 @@ append_fetch_head () {
     # remote-nick is the URL given on the command line (or a shorthand)
     # remote-name is the $GIT_DIR relative refs/ path we computed
     # for this refspec.
+
+    # the $note_ variable will be fed to git-fmt-merge-msg for further
+    # processing.
     case "$remote_name_" in
     HEAD)
 	note_= ;;
@@ -103,6 +106,9 @@ append_fetch_head () {
     refs/tags/*)
 	note_="$(expr "$remote_name_" : 'refs/tags/\(.*\)')"
 	note_="tag '$note_' of " ;;
+    refs/remotes/*)
+	note_="$(expr "$remote_name_" : 'refs/remotes/\(.*\)')"
+	note_="remote branch '$note_' of " ;;
     *)
 	note_="$remote_name of " ;;
     esac
@@ -147,10 +153,10 @@ fast_forward_local () {
 	else
 		echo >&2 "* $1: storing $3"
 	fi
-	git-update-ref "$1" "$2" 
+	git-update-ref "$1" "$2"
 	;;
 
-    refs/heads/*)
+    refs/heads/* | refs/remotes/*)
 	# $1 is the ref being updated.
 	# $2 is the new value for the ref.
 	local=$(git-rev-parse --verify "$1^0" 2>/dev/null)

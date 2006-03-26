@@ -75,6 +75,7 @@ while (<>) {
 		$src{$src} = {
 			BRANCH => [],
 			TAG => [],
+			R_BRANCH => [],
 			GENERIC => [],
 			# &1 == has HEAD.
 			# &2 == has others.
@@ -89,6 +90,11 @@ while (<>) {
 	elsif (/^tag (.*)$/) {
 		$origin = $_;
 		push @{$src{$src}{TAG}}, $1;
+		$src{$src}{HEAD_STATUS} |= 2;
+	}
+	elsif (/^remote branch (.*)$/) {
+		$origin = $1;
+		push @{$src{$src}{R_BRANCH}}, $1;
 		$src{$src}{HEAD_STATUS} |= 2;
 	}
 	elsif (/^HEAD$/) {
@@ -123,6 +129,8 @@ for my $src (@src) {
 	}
 	push @this, andjoin("branch ", "branches ",
 			   $src{$src}{BRANCH});
+	push @this, andjoin("remote branch ", "remote branches ",
+			   $src{$src}{R_BRANCH});
 	push @this, andjoin("tag ", "tags ",
 			   $src{$src}{TAG});
 	push @this, andjoin("commit ", "commits ",
