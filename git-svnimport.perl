@@ -136,8 +136,10 @@ sub file {
 
 	print "... $rev $path ...\n" if $opt_v;
 	my (undef, $properties);
+	my $pool = SVN::Pool->new();
 	eval { (undef, $properties)
-		   = $self->{'svn'}->get_file($path,$rev,$fh); };
+		   = $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
+	$pool->clear;
 	if($@) {
 		return undef if $@ =~ /Attempted to get checksum/;
 		die $@;
