@@ -128,8 +128,7 @@ common-cmds.h
 *.deb
 git-core.spec
 *.exe
-libgit.a
-*.o
+*.[ao]
 *.py[co]
 config.mak
 git-blame
