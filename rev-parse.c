@@ -172,9 +172,11 @@ int main(int argc, char **argv)
 		struct stat st;
 		char *arg = argv[i];
 		char *dotdot;
-	
+
 		if (as_is) {
-			show_file(arg);
+			if (show_file(arg) && as_is < 2)
+				if (lstat(arg, &st) < 0)
+					die("'%s': %s", arg, strerror(errno));
 			continue;
 		}
 		if (!strcmp(arg,"-n")) {
@@ -194,7 +196,7 @@ int main(int argc, char **argv)
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--")) {
-				as_is = 1;
+				as_is = 2;
 				/* Pass on the "--" if we show anything but files.. */
 				if (filter & (DO_FLAGS | DO_REVS))
 					show_file(arg);

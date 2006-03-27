@@ -52,6 +52,9 @@ OPTIONS
 	If a whole directory is classified as "other", show just its
 	name (with a trailing slash) and not its whole contents.
 
+--no-empty-directory::
+	Do not list empty directories. Has no effect without --directory.
+
 -u|--unmerged::
 	Show unmerged files in the output (forces --stage)
 

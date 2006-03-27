@@ -649,7 +649,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			/* If we didn't have a "--", all filenames must exist */
 			for (j = i; j < argc; j++) {
 				if (lstat(argv[j], &st) < 0)
-					die("'%s': %s", arg, strerror(errno));
+					die("'%s': %s", argv[j], strerror(errno));
 			}
 			revs->prune_data = get_pathspec(revs->prefix, argv + i);
 			break;
