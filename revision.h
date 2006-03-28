@@ -6,6 +6,7 @@
 #define TREECHANGE	(1u<<2)
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
+#define BOUNDARY	(1u<<5)
 
 struct rev_info;
 
@@ -32,7 +33,8 @@ struct rev_info {
 			blob_objects:1,
 			edge_hint:1,
 			limited:1,
-			unpacked:1;
+			unpacked:1,
+			boundary:1;
 
 	/* special limits */
 	int max_count;

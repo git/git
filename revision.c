@@ -419,6 +419,27 @@ static void limit_list(struct rev_info *revs)
 			continue;
 		p = &commit_list_insert(commit, p)->next;
 	}
+	if (revs->boundary) {
+		list = newlist;
+		while (list) {
+			struct commit *commit = list->item;
+			struct object *obj = &commit->object;
+			struct commit_list *parent = commit->parents;
+			if (obj->flags & (UNINTERESTING|BOUNDARY)) {
+				list = list->next;
+				continue;
+			}
+			while (parent) {
+				struct commit *pcommit = parent->item;
+				parent = parent->next;
+				if (!(pcommit->object.flags & UNINTERESTING))
+					continue;
+				pcommit->object.flags |= BOUNDARY;
+				p = &commit_list_insert(pcommit, p)->next;
+			}
+			list = list->next;
+		}
+	}
 	revs->commits = newlist;
 }
 
@@ -591,6 +612,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->no_merges = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--boundary")) {
+				revs->boundary = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--objects")) {
 				revs->tag_objects = 1;
 				revs->tree_objects = 1;
@@ -731,13 +756,17 @@ struct commit *get_revision(struct rev_info *revs)
 	do {
 		struct commit *commit = revs->commits->item;
 
-		if (commit->object.flags & (UNINTERESTING|SHOWN))
+		if (commit->object.flags & SHOWN)
+			goto next;
+		if (!(commit->object.flags & BOUNDARY) &&
+		    (commit->object.flags & UNINTERESTING))
 			goto next;
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			goto next;
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			return NULL;
-		if (revs->no_merges && commit->parents && commit->parents->next)
+		if (revs->no_merges &&
+		    commit->parents && commit->parents->next)
 			goto next;
 		if (revs->prune_fn && revs->dense) {
 			if (!(commit->object.flags & TREECHANGE))
@@ -745,8 +774,19 @@ struct commit *get_revision(struct rev_info *revs)
 			rewrite_parents(commit);
 		}
 		/* More to go? */
-		if (revs->max_count)
-			pop_most_recent_commit(&revs->commits, SEEN);
+		if (revs->max_count) {
+			if (commit->object.flags & BOUNDARY) {
+				/* this is already uninteresting,
+				 * so there is no point popping its
+				 * parents into the list.
+				 */
+				struct commit_list *it = revs->commits;
+				revs->commits = it->next;
+				free(it);
+			}
+			else
+				pop_most_recent_commit(&revs->commits, SEEN);
+		}
 		commit->object.flags |= SHOWN;
 		return commit;
 next:

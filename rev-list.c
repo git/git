@@ -7,9 +7,9 @@
 #include "diff.h"
 #include "revision.h"
 
-/* bits #0-4 in revision.h */
+/* bits #0-5 in revision.h */
 
-#define COUNTED		(1u<<5)
+#define COUNTED		(1u<<6)
 
 static const char rev_list_usage[] =
 "git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
@@ -51,6 +51,8 @@ static void show_commit(struct commit *commit)
 		printf("%lu ", commit->date);
 	if (commit_prefix[0])
 		fputs(commit_prefix, stdout);
+	if (commit->object.flags & BOUNDARY)
+		putchar('-');
 	fputs(sha1_to_hex(commit->object.sha1), stdout);
 	if (show_parents) {
 		struct commit_list *parents = commit->parents;
