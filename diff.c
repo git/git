@@ -267,6 +267,7 @@ static void builtin_diff(const char *name_a,
 		ecbdata.label_path = lbl;
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
+		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (!diffopts)
 			;
 		else if (!strncmp(diffopts, "--unified=", 10))

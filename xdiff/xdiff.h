@@ -35,6 +35,8 @@ extern "C" {
 #define XDL_PATCH_MODEMASK ((1 << 8) - 1)
 #define XDL_PATCH_IGNOREBSPACE (1 << 8)
 
+#define XDL_EMIT_FUNCNAMES (1 << 0)
+
 #define XDL_MMB_READONLY (1 << 0)
 
 #define XDL_MMF_ATOMIC (1 << 0)
@@ -65,6 +67,7 @@ typedef struct s_xdemitcb {
 
 typedef struct s_xdemitconf {
 	long ctxlen;
+	unsigned long flags;
 } xdemitconf_t;
 
 typedef struct s_bdiffparam {

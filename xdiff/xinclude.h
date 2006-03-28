@@ -23,6 +23,7 @@
 #if !defined(XINCLUDE_H)
 #define XINCLUDE_H
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

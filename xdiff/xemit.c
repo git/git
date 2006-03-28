@@ -69,10 +69,43 @@ static xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg) {
 }
 
 
+static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
+
+	/*
+	 * Be quite stupid about this for now.  Find a line in the old file
+	 * before the start of the hunk (and context) which starts with a
+	 * plausible character.
+	 */
+
+	const char *rec;
+	long len;
+
+	*ll = 0;
+	while (i-- > 0) {
+		len = xdl_get_rec(xf, i, &rec);
+		if (len > 0 &&
+		    (isalpha((unsigned char)*rec) || /* identifier? */
+		     *rec == '_' ||	/* also identifier? */
+		     *rec == '(' ||	/* lisp defun? */
+		     *rec == '#')) {	/* #define? */
+			if (len > sz)
+				len = sz;
+			if (len && rec[len - 1] == '\n')
+				len--;
+			memcpy(buf, rec, len);
+			*ll = len;
+			return;
+		}
+	}
+}
+
+
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
+	char funcbuf[40];
+	long funclen = 0;
 
 	for (xch = xche = xscr; xch; xch = xche->next) {
 		xche = xdl_get_hunk(xch, xecfg);
@@ -90,7 +123,13 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		/*
 		 * Emit current hunk header.
 		 */
-		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2, ecb) < 0)
+
+		if (xecfg->flags & XDL_EMIT_FUNCNAMES) {
+			xdl_find_func(&xe->xdf1, s1, funcbuf,
+				      sizeof(funcbuf), &funclen);
+		}
+		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2,
+				      funcbuf, funclen, ecb) < 0)
 			return -1;
 
 		/*

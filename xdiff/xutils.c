@@ -235,7 +235,8 @@ long xdl_atol(char const *str, char const **next) {
 }
 
 
-int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2, xdemitcb_t *ecb) {
+int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
+		      const char *func, long funclen, xdemitcb_t *ecb) {
 	int nb = 0;
 	mmbuffer_t mb;
 	char buf[128];
@@ -264,8 +265,16 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2, xdemitcb_t *ecb) {
 		nb += xdl_num_out(buf + nb, c2);
 	}
 
-	memcpy(buf + nb, " @@\n", 4);
-	nb += 4;
+	memcpy(buf + nb, " @@", 3);
+	nb += 3;
+	if (func && funclen) {
+		buf[nb++] = ' ';
+		if (funclen > sizeof(buf) - nb - 1)
+			funclen = sizeof(buf) - nb - 1;
+		memcpy(buf + nb, func, funclen);
+		nb += funclen;
+	}
+	buf[nb++] = '\n';
 
 	mb.ptr = buf;
 	mb.size = nb;
