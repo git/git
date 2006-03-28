@@ -587,7 +587,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->remove_empty_trees = 1;
 				continue;
 			}
-			if (!strncmp(arg, "--no-merges", 11)) {
+			if (!strcmp(arg, "--no-merges")) {
 				revs->no_merges = 1;
 				continue;
 			}
