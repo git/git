@@ -291,8 +291,7 @@ sub req_Directory
         $log->debug("Prepending '$state->{prependdir}' to state|directory");
         $state->{directory} = $state->{prependdir} . $state->{directory}
     }
-
-    $log->debug("req_Directory : localdir=$data repository=$repository directory=$state->{directory} module=$state->{module}");
+    $log->debug("req_Directory : localdir=$data repository=$repository path=$state->{path} directory=$state->{directory} module=$state->{module}");
 }
 
 # Entry entry-line \n
@@ -1705,17 +1704,34 @@ sub argsfromdir
 
     $state->{args} = [] if ( scalar(@{$state->{args}}) == 1 and $state->{args}[0] eq "." );
 
-    return if ( scalar ( @{$state->{args}} ) > 0 );
+    return if ( scalar ( @{$state->{args}} ) > 1 );
 
-    $log->info("No args specified, populating file list automatically");
-
-    $state->{args} = [];
-
-    foreach my $file ( @{$updater->gethead} )
+    if ( scalar(@{$state->{args}}) == 1 )
     {
-        next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
-        next unless ( $file->{name} =~ s/^$state->{directory}// );
-        push @{$state->{args}}, $file->{name};
+        my $arg = $state->{args}[0];
+        $arg .= $state->{prependdir} if ( defined ( $state->{prependdir} ) );
+
+        $log->info("Only one arg specified, checking for directory expansion on '$arg'");
+
+        foreach my $file ( @{$updater->gethead} )
+        {
+            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
+            next unless ( $file->{name} =~ /^$arg\// or $file->{name} eq $arg  );
+            push @{$state->{args}}, $file->{name};
+        }
+
+        shift @{$state->{args}} if ( scalar(@{$state->{args}}) > 1 );
+    } else {
+        $log->info("Only one arg specified, populating file list automatically");
+
+        $state->{args} = [];
+
+        foreach my $file ( @{$updater->gethead} )
+        {
+            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
+            next unless ( $file->{name} =~ s/^$state->{prependdir}// );
+            push @{$state->{args}}, $file->{name};
+        }
     }
 }
 
@@ -1816,7 +1832,7 @@ sub filecleanup
     }
 
     $filename =~ s/^\.\///g;
-    $filename = $state->{directory} . $filename;
+    $filename = $state->{prependdir} . $filename;
     return $filename;
 }
 
