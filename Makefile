@@ -455,7 +455,8 @@ strip: $(PROGRAMS) git$X
 
 git$X: git.c common-cmds.h $(LIB_FILE)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE) $(LIBS)
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE) \
+		$(ALL_LDFLAGS) $(LIBS)
 
 common-cmds.h: Documentation/git-*.txt
 	./generate-cmdlist.sh > $@
