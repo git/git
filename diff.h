@@ -102,6 +102,7 @@ extern int diff_setup_done(struct diff_options *);
 #define DIFF_DETECT_COPY	2
 
 #define DIFF_PICKAXE_ALL	1
+#define DIFF_PICKAXE_REGEX	2
 
 extern void diffcore_std(struct diff_options *);
 
