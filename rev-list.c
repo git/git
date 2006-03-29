@@ -358,15 +358,15 @@ int main(int argc, const char **argv)
 	    (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) && !revs.pending_objects))
 		usage(rev_list_usage);
 
+	save_commit_buffer = verbose_header;
+	track_object_refs = 0;
+
 	prepare_revision_walk(&revs);
 	if (revs.tree_objects)
 		mark_edges_uninteresting(revs.commits);
 
 	if (bisect_list)
 		revs.commits = find_bisection(revs.commits);
-
-	save_commit_buffer = verbose_header;
-	track_object_refs = 0;
 
 	show_commit_list(&revs);
 
