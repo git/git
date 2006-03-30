@@ -2847,13 +2847,15 @@ proc sha1change {n1 n2 op} {
 }
 
 proc gotocommit {} {
-    global sha1string currentid commitrow tagids
+    global sha1string currentid commitrow tagids headids
     global displayorder numcommits
 
     if {$sha1string == {}
 	|| ([info exists currentid] && $sha1string == $currentid)} return
     if {[info exists tagids($sha1string)]} {
 	set id $tagids($sha1string)
+    } elseif {[info exists headids($sha1string)]} {
+	set id $headids($sha1string)
     } else {
 	set id [string tolower $sha1string]
 	if {[regexp {^[0-9a-f]{4,39}$} $id]} {
@@ -2879,7 +2881,7 @@ proc gotocommit {} {
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
 	set type "SHA1 id"
     } else {
-	set type "Tag"
+	set type "Tag/Head"
     }
     error_popup "$type $sha1string is not known"
 }
@@ -3370,7 +3372,6 @@ proc listrefs {id} {
 
 proc rereadrefs {} {
     global idtags idheads idotherrefs
-    global tagids headids otherrefids
 
     set refids [concat [array names idtags] \
 		    [array names idheads] [array names idotherrefs]]
