@@ -512,8 +512,8 @@ proc makewindow {rargs} {
     #bindall <B1-Motion> {selcanvline %W %x %y}
     bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
-    bindall <2> "allcanvs scan mark 0 %y"
-    bindall <B2-Motion> "allcanvs scan dragto 0 %y"
+    bindall <2> "canvscan mark %W %x %y"
+    bindall <B2-Motion> "canvscan dragto %W %x %y"
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
     bind . <Key-Right> "goforw"
@@ -566,6 +566,19 @@ proc makewindow {rargs} {
     $rowctxmenu add command -label "Make patch" -command mkpatch
     $rowctxmenu add command -label "Create tag" -command mktag
     $rowctxmenu add command -label "Write commit to file" -command writecommit
+}
+
+# mouse-2 makes all windows scan vertically, but only the one
+# the cursor is in scans horizontally
+proc canvscan {op w x y} {
+    global canv canv2 canv3
+    foreach c [list $canv $canv2 $canv3] {
+	if {$c == $w} {
+	    $c scan $op $x $y
+	} else {
+	    $c scan $op 0 $y
+	}
+    }
 }
 
 proc scrollcanv {cscroll f0 f1} {
@@ -833,7 +846,7 @@ proc initlayout {} {
     global rowidlist rowoffsets displayorder
     global rowlaidout rowoptim
     global idinlist rowchk
-    global commitidx numcommits
+    global commitidx numcommits canvxmax canv
     global nextcolor
 
     set commitidx 0
@@ -846,6 +859,16 @@ proc initlayout {} {
     catch {unset rowchk}
     set rowlaidout 0
     set rowoptim 0
+    set canvxmax [$canv cget -width]
+}
+
+proc setcanvscroll {} {
+    global canv canv2 canv3 numcommits linespc canvxmax canvy0
+
+    set ymax [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]
+    $canv conf -scrollregion [list 0 0 $canvxmax $ymax]
+    $canv2 conf -scrollregion [list 0 0 0 $ymax]
+    $canv3 conf -scrollregion [list 0 0 0 $ymax]
 }
 
 proc visiblerows {} {
@@ -887,7 +910,6 @@ proc layoutmore {} {
 
 proc showstuff {canshow} {
     global numcommits
-    global canvy0 linespc
     global linesegends idrowranges idrangedrawn
 
     if {$numcommits == 0} {
@@ -897,8 +919,7 @@ proc showstuff {canshow} {
     }
     set row $numcommits
     set numcommits $canshow
-    allcanvs conf -scrollregion \
-	[list 0 0 0 [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]]
+    setcanvscroll
     set rows [visiblerows]
     set r0 [lindex $rows 0]
     set r1 [lindex $rows 1]
@@ -1366,7 +1387,7 @@ proc drawcmittext {id row col rmx} {
     global commitlisted commitinfo rowidlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
-    global mainfont namefont
+    global mainfont namefont canvxmax
 
     set ofill [expr {[info exists commitlisted($id)]? "blue": "white"}]
     set x [xc $row $col]
@@ -1398,6 +1419,11 @@ proc drawcmittext {id row col rmx} {
 			    -text $name -font $namefont]
     set linedtag($row) [$canv3 create text 3 $y -anchor w \
 			    -text $date -font $mainfont]
+    set xr [expr {$xt + [font measure $mainfont $headline]}]
+    if {$xr > $canvxmax} {
+	set canvxmax $xr
+	setcanvscroll
+    }
 }
 
 proc drawcmitrow {row} {
@@ -2757,15 +2783,14 @@ proc setcoords {} {
 }
 
 proc redisplay {} {
-    global canv canvy0 linespc numcommits
+    global canv
     global selectedline
 
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax eq {} || $ymax == 0} return
     set span [$canv yview]
     clear_display
-    allcanvs conf -scrollregion \
-	[list 0 0 0 [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]]
+    setcanvscroll
     allcanvs yview moveto [lindex $span 0]
     drawvisible
     if {[info exists selectedline]} {
