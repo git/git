@@ -642,14 +642,19 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		if (dotdot) {
 			unsigned char from_sha1[20];
 			char *next = dotdot + 2;
+			char *this = arg;
+			static const char HEAD[] = "HEAD";
 			*dotdot = 0;
 			if (!*next)
-				next = "HEAD";
-			if (!get_sha1(arg, from_sha1) && !get_sha1(next, sha1)) {
+				next = HEAD;
+			if (dotdot == arg)
+				this = HEAD;
+			if (!get_sha1(this, from_sha1) &&
+			    !get_sha1(next, sha1)) {
 				struct commit *exclude;
 				struct commit *include;
 
-				exclude = get_commit_reference(revs, arg, from_sha1, flags ^ UNINTERESTING);
+				exclude = get_commit_reference(revs, this, from_sha1, flags ^ UNINTERESTING);
 				include = get_commit_reference(revs, next, sha1, flags);
 				if (!exclude || !include)
 					die("Invalid revision range %s..%s", arg, next);

@@ -315,16 +315,17 @@ int main(int argc, char **argv)
 		dotdot = strstr(arg, "..");
 		if (dotdot) {
 			unsigned char end[20];
-			char *n = dotdot+2;
+			char *next = dotdot + 2;
+			char *this = arg;
 			*dotdot = 0;
-			if (!get_sha1(arg, sha1)) {
-				if (!*n)
-					n = "HEAD";
-				if (!get_sha1(n, end)) {
-					show_rev(NORMAL, end, n);
-					show_rev(REVERSED, sha1, arg);
-					continue;
-				}
+			if (!*next)
+				next = "HEAD";
+			if (dotdot == arg)
+				this = "HEAD";
+			if (!get_sha1(this, sha1) && !get_sha1(next, end)) {
+				show_rev(NORMAL, end, next);
+				show_rev(REVERSED, sha1, this);
+				continue;
 			}
 			*dotdot = '.';
 		}
