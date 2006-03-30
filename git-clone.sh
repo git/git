@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [-o <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -121,14 +121,15 @@ while
 	*,-q|*,--quiet) quiet=-q ;;
 	*,--use-separate-remote)
 		use_separate_remote=t ;;
-	1,-o) usage;;
 	1,--reference) usage ;;
 	*,--reference)
 		shift; reference="$1" ;;
 	*,--reference=*)
 		reference=`expr "$1" : '--reference=\(.*\)'` ;;
-	*,-o)
+	*,-o|*,--or|*,--ori|*,--orig|*,--origi|*,--origin)
 		case "$2" in
+		'')
+		    usage ;;
 		*/*)
 		    echo >&2 "'$2' is not suitable for an origin name"
 		    exit 1
@@ -138,7 +139,7 @@ while
 		    exit 1
 		}
 		test -z "$origin_override" || {
-		    echo >&2 "Do not give more than one -o options."
+		    echo >&2 "Do not give more than one --origin options."
 		    exit 1
 		}
 		origin_override=yes
@@ -160,7 +161,7 @@ if test yes = "$bare"
 then
 	if test yes = "$origin_override"
 	then
-		echo >&2 '--bare and -o $origin options are incompatible.'
+		echo >&2 '--bare and --origin $origin options are incompatible.'
 		exit 1
 	fi
 	if test t = "$use_separate_remote"
