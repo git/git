@@ -677,11 +677,7 @@ my $commit = sub {
 	waitpid($pid,0);
 	die "Error running git-commit-tree: $?\n" if $?;
 
-	open(C,">$git_dir/refs/heads/$branch")
-		or die "Cannot open branch $branch for update: $!\n";
-	print C "$cid\n"
-		or die "Cannot write branch $branch for update: $!\n";
-	close(C)
+	system("git-update-ref refs/heads/$branch $cid") == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if($tag) {
