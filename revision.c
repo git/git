@@ -641,14 +641,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		dotdot = strstr(arg, "..");
 		if (dotdot) {
 			unsigned char from_sha1[20];
-			char *next = dotdot + 2;
-			char *this = arg;
-			static const char HEAD[] = "HEAD";
+			const char *next = dotdot + 2;
+			const char *this = arg;
 			*dotdot = 0;
 			if (!*next)
-				next = HEAD;
+				next = "HEAD";
 			if (dotdot == arg)
-				this = HEAD;
+				this = "HEAD";
 			if (!get_sha1(this, from_sha1) &&
 			    !get_sha1(next, sha1)) {
 				struct commit *exclude;
