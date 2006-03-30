@@ -98,6 +98,7 @@ close FH;
 '
 
 quiet=
+local=no
 use_local=no
 local_shared=no
 no_checkout=
@@ -156,6 +157,13 @@ do
 	shift
 done
 
+repo="$1"
+if test -z "$repo"
+then
+    echo >&2 'you must specify a repository to clone.'
+    exit 1
+fi
+
 # --bare implies --no-checkout
 if test yes = "$bare"
 then
@@ -179,8 +187,6 @@ fi
 
 # Turn the source into an absolute path if
 # it is local
-repo="$1"
-local=no
 if base=$(get_repo_base "$repo"); then
 	repo="$base"
 	local=yes
