@@ -2386,9 +2386,9 @@ proc selectline {l isnew} {
 
     $cflist delete 0 end
     $cflist insert end "Comments"
-    if {$nparents($id) == 1} {
+    if {$nparents($id) <= 1} {
 	startdiff $id
-    } elseif {$nparents($id) > 1} {
+    } else {
 	mergediff $id
     }
 }
