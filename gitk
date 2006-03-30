@@ -46,7 +46,7 @@ proc start_rev_list {rlargs} {
     }
     if {[catch {
 	set commfd [open [concat | git-rev-list --header $order \
-			      --parents $rlargs] r]
+			      --parents --boundary $rlargs] r]
     } err]} {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
@@ -114,8 +114,13 @@ proc getcommitlines {commfd}  {
 	set start [expr {$i + 1}]
 	set j [string first "\n" $cmit]
 	set ok 0
+	set listed 1
 	if {$j >= 0} {
 	    set ids [string range $cmit 0 [expr {$j - 1}]]
+	    if {[string range $ids 0 0] == "-"} {
+		set listed 0
+		set ids [string range $ids 1 end]
+	    }
 	    set ok 1
 	    foreach id $ids {
 		if {[string length $id] != 40} {
@@ -133,8 +138,12 @@ proc getcommitlines {commfd}  {
 	    exit 1
 	}
 	set id [lindex $ids 0]
-	set olds [lrange $ids 1 end]
-	set commitlisted($id) 1
+	if {$listed} {
+	    set olds [lrange $ids 1 end]
+	    set commitlisted($id) 1
+	} else {
+	    set olds {}
+	}
 	updatechildren $id $olds
 	set commitdata($id) [string range $cmit [expr {$j + 1}] end]
 	set commitrow($id) $commitidx
