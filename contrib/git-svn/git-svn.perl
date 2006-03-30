@@ -9,7 +9,11 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '0.11.0';
-$GIT_DIR = $ENV{GIT_DIR} || "$ENV{PWD}/.git";
+
+use Cwd qw/abs_path/;
+$GIT_DIR = abs_path($ENV{GIT_DIR} || '.git');
+$ENV{GIT_DIR} = $GIT_DIR;
+
 # make sure the svn binary gives consistent output between locales and TZs:
 $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
@@ -69,7 +73,6 @@ GetOptions(%opts, 'help|H|h' => \$_help,
 
 $GIT_SVN ||= $ENV{GIT_SVN_ID} || 'git-svn';
 $GIT_SVN_INDEX = "$GIT_DIR/$GIT_SVN/index";
-$ENV{GIT_DIR} ||= $GIT_DIR;
 $SVN_URL = undef;
 $REV_DIR = "$GIT_DIR/$GIT_SVN/revs";
 $SVN_WC = "$GIT_DIR/$GIT_SVN/tree";
