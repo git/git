@@ -4,7 +4,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
-#include "diff.h"
+#include "tree-walk.h"
 #include "revision.h"
 
 /* bits #0-5 in revision.h */

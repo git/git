@@ -649,7 +649,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			int len = st.st_size;
 			int cnt = 0;
 
-			elem->mode = DIFF_FILE_CANON_MODE(st.st_mode);
+			elem->mode = canon_mode(st.st_mode);
 			size = len;
 			result = xmalloc(len + 1);
 			while (cnt < len) {

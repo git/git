@@ -149,7 +149,7 @@ int main(int argc, const char **argv)
 					memcpy(combine.p.parent[stage-2].sha1,
 					       nce->sha1, 20);
 					combine.p.parent[stage-2].mode =
-						DIFF_FILE_CANON_MODE(mode);
+						canon_mode(mode);
 					combine.p.parent[stage-2].status =
 						DIFF_STATUS_MODIFIED;
 				}
@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
 			continue;
 		oldmode = ntohl(ce->ce_mode);
 
-		newmode = DIFF_FILE_CANON_MODE(st.st_mode);
+		newmode = canon_mode(st.st_mode);
 		if (!trust_executable_bit &&
 		    S_ISREG(newmode) && S_ISREG(oldmode) &&
 		    ((newmode ^ oldmode) == 0111))

@@ -9,34 +9,6 @@ static int nr_paths = 0;
 static const char **paths = NULL;
 static int *pathlens = NULL;
 
-void update_tree_entry(struct tree_desc *desc)
-{
-	void *buf = desc->buf;
-	unsigned long size = desc->size;
-	int len = strlen(buf) + 1 + 20;
-
-	if (size < len)
-		die("corrupt tree file");
-	desc->buf = buf + len;
-	desc->size = size - len;
-}
-
-const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
-{
-	void *tree = desc->buf;
-	unsigned long size = desc->size;
-	int len = strlen(tree)+1;
-	const unsigned char *sha1 = tree + len;
-	const char *path = strchr(tree, ' ');
-	unsigned int mode;
-
-	if (!path || size < len + 20 || sscanf(tree, "%o", &mode) != 1)
-		die("corrupt tree file");
-	*pathp = path+1;
-	*modep = DIFF_FILE_CANON_MODE(mode);
-	return sha1;
-}
-
 static char *malloc_base(const char *base, const char *path, int pathlen)
 {
 	int baselen = strlen(base);

@@ -300,7 +300,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 		   unsigned short mode)
 {
 	if (mode) {
-		spec->mode = DIFF_FILE_CANON_MODE(mode);
+		spec->mode = canon_mode(mode);
 		memcpy(spec->sha1, sha1, 20);
 		spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
 	}

@@ -193,7 +193,8 @@ XDIFF_LIB=xdiff/lib.a
 LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
-	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h
+	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
+	tree-walk.h
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
@@ -207,7 +208,7 @@ LIB_OBJS = \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
-	fetch-clone.o revision.o pager.o \
+	fetch-clone.o revision.o pager.o tree-walk.o \
 	$(DIFF_OBJS)
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)

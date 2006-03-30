@@ -3,7 +3,7 @@
  */
 #include <time.h>
 #include "cache.h"
-#include "diff.h"
+#include "tree-walk.h"
 #include "commit.h"
 #include "strbuf.h"
 #include "tar.h"

@@ -1,50 +1,10 @@
 #include "cache.h"
-#include "diff.h"
+#include "tree-walk.h"
 
 static const char merge_tree_usage[] = "git-merge-tree <base-tree> <branch1> <branch2>";
 static int resolve_directories = 1;
 
 static void merge_trees(struct tree_desc t[3], const char *base);
-
-static void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1)
-{
-	unsigned long size = 0;
-	void *buf = NULL;
-
-	if (sha1) {
-		buf = read_object_with_reference(sha1, "tree", &size, NULL);
-		if (!buf)
-			die("unable to read tree %s", sha1_to_hex(sha1));
-	}
-	desc->size = size;
-	desc->buf = buf;
-	return buf;
-}
-
-struct name_entry {
-	const unsigned char *sha1;
-	const char *path;
-	unsigned int mode;
-	int pathlen;
-};
-
-static void entry_clear(struct name_entry *a)
-{
-	memset(a, 0, sizeof(*a));
-}
-
-static int entry_compare(struct name_entry *a, struct name_entry *b)
-{
-	return base_name_compare(
-			a->path, a->pathlen, a->mode,
-			b->path, b->pathlen, b->mode);
-}
-
-static void entry_extract(struct tree_desc *t, struct name_entry *a)
-{
-	a->sha1 = tree_entry_extract(t, &a->path, &a->mode);
-	a->pathlen = strlen(a->path);
-}
 
 /* An empty entry never compares same, not even to another empty entry */
 static int same_entry(struct name_entry *a, struct name_entry *b)
@@ -123,60 +83,6 @@ static void unresolved(const char *base, struct name_entry n[3])
 		printf("2 %06o %s %s%s\n", n[1].mode, sha1_to_hex(n[1].sha1), base, n[1].path);
 	if (n[2].sha1)
 		printf("3 %06o %s %s%s\n", n[2].mode, sha1_to_hex(n[2].sha1), base, n[2].path);
-}
-
-typedef void (*traverse_callback_t)(int n, unsigned long mask, struct name_entry *entry, const char *base);
-
-static void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callback_t callback)
-{
-	struct name_entry *entry = xmalloc(n*sizeof(*entry));
-
-	for (;;) {
-		struct name_entry entry[3];
-		unsigned long mask = 0;
-		int i, last;
-
-		last = -1;
-		for (i = 0; i < n; i++) {
-			if (!t[i].size)
-				continue;
-			entry_extract(t+i, entry+i);
-			if (last >= 0) {
-				int cmp = entry_compare(entry+i, entry+last);
-
-				/*
-				 * Is the new name bigger than the old one?
-				 * Ignore it
-				 */
-				if (cmp > 0)
-					continue;
-				/*
-				 * Is the new name smaller than the old one?
-				 * Ignore all old ones
-				 */
-				if (cmp < 0)
-					mask = 0;
-			}
-			mask |= 1ul << i;
-			last = i;
-		}
-		if (!mask)
-			break;
-
-		/*
-		 * Update the tree entries we've walked, and clear
-		 * all the unused name-entries.
-		 */
-		for (i = 0; i < n; i++) {
-			if (mask & (1ul << i)) {
-				update_tree_entry(t+i);
-				continue;
-			}
-			entry_clear(entry + i);
-		}
-		callback(n, mask, entry, base);
-	}
-	free(entry);
 }
 
 /*

@@ -3,7 +3,7 @@
 #include "delta.h"
 #include "pack.h"
 #include "csum-file.h"
-#include "diff.h"
+#include "tree-walk.h"
 #include <sys/time.h>
 #include <signal.h>
 

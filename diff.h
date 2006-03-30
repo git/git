@@ -4,17 +4,7 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#define DIFF_FILE_CANON_MODE(mode) \
-	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
-	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
-
-struct tree_desc {
-	void *buf;
-	unsigned long size;
-};
-
-extern void update_tree_entry(struct tree_desc *);
-extern const unsigned char *tree_entry_extract(struct tree_desc *, const char **, unsigned int *);
+#include "tree-walk.h"
 
 struct diff_options;
 

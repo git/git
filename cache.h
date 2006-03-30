@@ -106,6 +106,9 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 		return htonl(S_IFLNK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
+#define canon_mode(mode) \
+	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
+	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
