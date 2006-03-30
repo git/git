@@ -1304,15 +1304,19 @@ proc drawparentlinks {id row col olds} {
     # rmx = right-most X coord used
     set rmx 0
     foreach p $olds {
+	set i [lsearch -exact $ids $p]
+	if {$i < 0} {
+	    puts "oops, parent $p of $id not in list"
+	    continue
+	}
+	set x2 [xc $row2 $i]
+	if {$x2 > $rmx} {
+	    set rmx $x2
+	}
 	if {[info exists idrowranges($p)] &&
 	    $row2 == [lindex $idrowranges($p) 0] &&
 	    $row2 < [lindex $idrowranges($p) 1]} {
 	    # drawlineseg will do this one for us
-	    continue
-	}
-	set i [lsearch -exact $ids $p]
-	if {$i < 0} {
-	    puts "oops, parent $p of $id not in list"
 	    continue
 	}
 	assigncolor $p
@@ -1322,10 +1326,6 @@ proc drawparentlinks {id row col olds} {
 	    lappend coords [xc $row [expr {$i + 1}]] $y
 	} elseif {$i > $col + 1} {
 	    lappend coords [xc $row [expr {$i - 1}]] $y
-	}
-	set x2 [xc $row2 $i]
-	if {$x2 > $rmx} {
-	    set rmx $x2
 	}
 	lappend coords $x2 $y2
 	set t [$canv create line $coords -width [linewidth $p] \
