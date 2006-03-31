@@ -711,7 +711,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->prune_data) {
 		diff_tree_setup_paths(revs->prune_data);
 		revs->prune_fn = try_to_simplify_commit;
-		revs->limited = 1;
+
+		/*
+		 * If we fix up parent data, we currently cannot
+		 * do that on-the-fly.
+		 */
+		if (revs->parents)
+			revs->limited = 1;
 	}
 
 	return left;
@@ -773,41 +779,34 @@ struct commit *get_revision(struct rev_info *revs)
 	do {
 		struct commit *commit = revs->commits->item;
 
+		revs->commits = revs->commits->next;
+
+		/*
+		 * If we haven't done the list limiting, we need to look at
+		 * the parents here
+		 */
+		if (!revs->limited)
+			add_parents_to_list(revs, commit, &revs->commits);
 		if (commit->object.flags & SHOWN)
-			goto next;
+			continue;
 		if (!(commit->object.flags & BOUNDARY) &&
 		    (commit->object.flags & UNINTERESTING))
-			goto next;
+			continue;
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
-			goto next;
+			continue;
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			return NULL;
 		if (revs->no_merges &&
 		    commit->parents && commit->parents->next)
-			goto next;
+			continue;
 		if (revs->prune_fn && revs->dense) {
 			if (!(commit->object.flags & TREECHANGE))
-				goto next;
-			rewrite_parents(commit);
-		}
-		/* More to go? */
-		if (revs->max_count) {
-			if (commit->object.flags & BOUNDARY) {
-				/* this is already uninteresting,
-				 * so there is no point popping its
-				 * parents into the list.
-				 */
-				struct commit_list *it = revs->commits;
-				revs->commits = it->next;
-				free(it);
-			}
-			else
-				pop_most_recent_commit(&revs->commits, SEEN);
+				continue;
+			if (revs->parents)
+				rewrite_parents(commit);
 		}
 		commit->object.flags |= SHOWN;
 		return commit;
-next:
-		pop_most_recent_commit(&revs->commits, SEEN);
 	} while (revs->commits);
 	return NULL;
 }
