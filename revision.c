@@ -420,24 +420,33 @@ static void limit_list(struct rev_info *revs)
 		p = &commit_list_insert(commit, p)->next;
 	}
 	if (revs->boundary) {
-		list = newlist;
-		while (list) {
+		/* mark the ones that are on the result list first */
+		for (list = newlist; list; list = list->next) {
+			struct commit *commit = list->item;
+			commit->object.flags |= TMP_MARK;
+		}
+		for (list = newlist; list; list = list->next) {
 			struct commit *commit = list->item;
 			struct object *obj = &commit->object;
-			struct commit_list *parent = commit->parents;
-			if (obj->flags & (UNINTERESTING|BOUNDARY)) {
-				list = list->next;
+			struct commit_list *parent;
+			if (obj->flags & UNINTERESTING)
 				continue;
-			}
-			while (parent) {
+			for (parent = commit->parents;
+			     parent;
+			     parent = parent->next) {
 				struct commit *pcommit = parent->item;
-				parent = parent->next;
 				if (!(pcommit->object.flags & UNINTERESTING))
 					continue;
 				pcommit->object.flags |= BOUNDARY;
+				if (pcommit->object.flags & TMP_MARK)
+					continue;
+				pcommit->object.flags |= TMP_MARK;
 				p = &commit_list_insert(pcommit, p)->next;
 			}
-			list = list->next;
+		}
+		for (list = newlist; list; list = list->next) {
+			struct commit *commit = list->item;
+			commit->object.flags &= ~TMP_MARK;
 		}
 	}
 	revs->commits = newlist;
