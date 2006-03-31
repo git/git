@@ -46,7 +46,7 @@ proc start_rev_list {rlargs} {
     }
     if {[catch {
 	set commfd [open [concat | git-rev-list --header $order \
-			      --parents $rlargs] r]
+			      --parents --boundary $rlargs] r]
     } err]} {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
@@ -114,8 +114,13 @@ proc getcommitlines {commfd}  {
 	set start [expr {$i + 1}]
 	set j [string first "\n" $cmit]
 	set ok 0
+	set listed 1
 	if {$j >= 0} {
 	    set ids [string range $cmit 0 [expr {$j - 1}]]
+	    if {[string range $ids 0 0] == "-"} {
+		set listed 0
+		set ids [string range $ids 1 end]
+	    }
 	    set ok 1
 	    foreach id $ids {
 		if {[string length $id] != 40} {
@@ -133,8 +138,12 @@ proc getcommitlines {commfd}  {
 	    exit 1
 	}
 	set id [lindex $ids 0]
-	set olds [lrange $ids 1 end]
-	set commitlisted($id) 1
+	if {$listed} {
+	    set olds [lrange $ids 1 end]
+	    set commitlisted($id) 1
+	} else {
+	    set olds {}
+	}
 	updatechildren $id $olds
 	set commitdata($id) [string range $cmit [expr {$j + 1}] end]
 	set commitrow($id) $commitidx
@@ -503,8 +512,8 @@ proc makewindow {rargs} {
     #bindall <B1-Motion> {selcanvline %W %x %y}
     bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
-    bindall <2> "allcanvs scan mark 0 %y"
-    bindall <B2-Motion> "allcanvs scan dragto 0 %y"
+    bindall <2> "canvscan mark %W %x %y"
+    bindall <B2-Motion> "canvscan dragto %W %x %y"
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
     bind . <Key-Right> "goforw"
@@ -557,6 +566,19 @@ proc makewindow {rargs} {
     $rowctxmenu add command -label "Make patch" -command mkpatch
     $rowctxmenu add command -label "Create tag" -command mktag
     $rowctxmenu add command -label "Write commit to file" -command writecommit
+}
+
+# mouse-2 makes all windows scan vertically, but only the one
+# the cursor is in scans horizontally
+proc canvscan {op w x y} {
+    global canv canv2 canv3
+    foreach c [list $canv $canv2 $canv3] {
+	if {$c == $w} {
+	    $c scan $op $x $y
+	} else {
+	    $c scan $op 0 $y
+	}
+    }
 }
 
 proc scrollcanv {cscroll f0 f1} {
@@ -824,7 +846,7 @@ proc initlayout {} {
     global rowidlist rowoffsets displayorder
     global rowlaidout rowoptim
     global idinlist rowchk
-    global commitidx numcommits
+    global commitidx numcommits canvxmax canv
     global nextcolor
 
     set commitidx 0
@@ -837,6 +859,16 @@ proc initlayout {} {
     catch {unset rowchk}
     set rowlaidout 0
     set rowoptim 0
+    set canvxmax [$canv cget -width]
+}
+
+proc setcanvscroll {} {
+    global canv canv2 canv3 numcommits linespc canvxmax canvy0
+
+    set ymax [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]
+    $canv conf -scrollregion [list 0 0 $canvxmax $ymax]
+    $canv2 conf -scrollregion [list 0 0 0 $ymax]
+    $canv3 conf -scrollregion [list 0 0 0 $ymax]
 }
 
 proc visiblerows {} {
@@ -878,7 +910,6 @@ proc layoutmore {} {
 
 proc showstuff {canshow} {
     global numcommits
-    global canvy0 linespc
     global linesegends idrowranges idrangedrawn
 
     if {$numcommits == 0} {
@@ -888,8 +919,7 @@ proc showstuff {canshow} {
     }
     set row $numcommits
     set numcommits $canshow
-    allcanvs conf -scrollregion \
-	[list 0 0 0 [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]]
+    setcanvscroll
     set rows [visiblerows]
     set r0 [lindex $rows 0]
     set r1 [lindex $rows 1]
@@ -1083,17 +1113,6 @@ proc optimize_rows {row col endrow} {
 	set idlist [lindex $rowidlist $row]
 	set offs [lindex $rowoffsets $row]
 	set haspad 0
-	set downarrowcols {}
-	if {[info exists linesegends($row)]} {
-	    set downarrowcols $linesegends($row)
-	    if {$col > 0} {
-		while {$downarrowcols ne {}} {
-		    set i [lsearch -exact $idlist [lindex $downarrowcols 0]]
-		    if {$i < 0 || $i >= $col} break
-		    set downarrowcols [lrange $downarrowcols 1 end]
-		}
-	    }
-	}
 	for {} {$col < [llength $offs]} {incr col} {
 	    if {[lindex $idlist $col] eq {}} {
 		set haspad 1
@@ -1111,10 +1130,6 @@ proc optimize_rows {row col endrow} {
 		    $y0 > [lindex $idrowranges($id) 0]} {
 		    set isarrow 1
 		}
-	    } elseif {$downarrowcols ne {} &&
-		      [lindex $idlist $col] eq [lindex $downarrowcols 0]} {
-		set downarrowcols [lrange $downarrowcols 1 end]
-		set isarrow 1
 	    }
 	    if {$z < -1 || ($z < 0 && $isarrow)} {
 		set npad [expr {-1 - $z + $isarrow}]
@@ -1228,7 +1243,7 @@ proc linewidth {id} {
 proc drawlineseg {id i} {
     global rowoffsets rowidlist idrowranges
     global displayorder
-    global canv colormap
+    global canv colormap linespc
 
     set startrow [lindex $idrowranges($id) [expr {2 * $i}]]
     set row [lindex $idrowranges($id) [expr {2 * $i + 1}]]
@@ -1276,6 +1291,26 @@ proc drawlineseg {id i} {
     }
     if {[llength $coords] < 4} return
     set last [expr {[llength $idrowranges($id)] / 2 - 1}]
+    if {$i < $last} {
+	# This line has an arrow at the lower end: check if the arrow is
+	# on a diagonal segment, and if so, work around the Tk 8.4
+	# refusal to draw arrows on diagonal lines.
+	set x0 [lindex $coords 0]
+	set x1 [lindex $coords 2]
+	if {$x0 != $x1} {
+	    set y0 [lindex $coords 1]
+	    set y1 [lindex $coords 3]
+	    if {$y0 - $y1 <= 2 * $linespc && $x1 == [lindex $coords 4]} {
+		# we have a nearby vertical segment, just trim off the diag bit
+		set coords [lrange $coords 2 end]
+	    } else {
+		set slope [expr {($x0 - $x1) / ($y0 - $y1)}]
+		set xi [expr {$x0 - $slope * $linespc / 2}]
+		set yi [expr {$y0 - $linespc / 2}]
+		set coords [lreplace $coords 0 1 $xi $y0 $xi $yi]
+	    }
+	}
+    }
     set arrow [expr {2 * ($i > 0) + ($i < $last)}]
     set arrow [lindex {none first last both} $arrow]
     set t [$canv create line $coords -width [linewidth $id] \
@@ -1295,15 +1330,19 @@ proc drawparentlinks {id row col olds} {
     # rmx = right-most X coord used
     set rmx 0
     foreach p $olds {
+	set i [lsearch -exact $ids $p]
+	if {$i < 0} {
+	    puts "oops, parent $p of $id not in list"
+	    continue
+	}
+	set x2 [xc $row2 $i]
+	if {$x2 > $rmx} {
+	    set rmx $x2
+	}
 	if {[info exists idrowranges($p)] &&
 	    $row2 == [lindex $idrowranges($p) 0] &&
 	    $row2 < [lindex $idrowranges($p) 1]} {
 	    # drawlineseg will do this one for us
-	    continue
-	}
-	set i [lsearch -exact $ids $p]
-	if {$i < 0} {
-	    puts "oops, parent $p of $id not in list"
 	    continue
 	}
 	assigncolor $p
@@ -1313,10 +1352,6 @@ proc drawparentlinks {id row col olds} {
 	    lappend coords [xc $row [expr {$i + 1}]] $y
 	} elseif {$i > $col + 1} {
 	    lappend coords [xc $row [expr {$i - 1}]] $y
-	}
-	set x2 [xc $row2 $i]
-	if {$x2 > $rmx} {
-	    set rmx $x2
 	}
 	lappend coords $x2 $y2
 	set t [$canv create line $coords -width [linewidth $p] \
@@ -1357,7 +1392,7 @@ proc drawcmittext {id row col rmx} {
     global commitlisted commitinfo rowidlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
-    global mainfont namefont
+    global mainfont namefont canvxmax
 
     set ofill [expr {[info exists commitlisted($id)]? "blue": "white"}]
     set x [xc $row $col]
@@ -1389,6 +1424,11 @@ proc drawcmittext {id row col rmx} {
 			    -text $name -font $namefont]
     set linedtag($row) [$canv3 create text 3 $y -anchor w \
 			    -text $date -font $mainfont]
+    set xr [expr {$xt + [font measure $mainfont $headline]}]
+    if {$xr > $canvxmax} {
+	set canvxmax $xr
+	setcanvscroll
+    }
 }
 
 proc drawcmitrow {row} {
@@ -2377,9 +2417,9 @@ proc selectline {l isnew} {
 
     $cflist delete 0 end
     $cflist insert end "Comments"
-    if {$nparents($id) == 1} {
+    if {$nparents($id) <= 1} {
 	startdiff $id
-    } elseif {$nparents($id) > 1} {
+    } else {
 	mergediff $id
     }
 }
@@ -2748,15 +2788,14 @@ proc setcoords {} {
 }
 
 proc redisplay {} {
-    global canv canvy0 linespc numcommits
+    global canv
     global selectedline
 
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax eq {} || $ymax == 0} return
     set span [$canv yview]
     clear_display
-    allcanvs conf -scrollregion \
-	[list 0 0 0 [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]]
+    setcanvscroll
     allcanvs yview moveto [lindex $span 0]
     drawvisible
     if {[info exists selectedline]} {
