@@ -39,7 +39,6 @@ struct rev_info revs;
 static int bisect_list = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
-static int show_parents = 0;
 static int show_timestamp = 0;
 static int hdr_termination = 0;
 static const char *commit_prefix = "";
@@ -54,7 +53,7 @@ static void show_commit(struct commit *commit)
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
 	fputs(sha1_to_hex(commit->object.sha1), stdout);
-	if (show_parents) {
+	if (revs.parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
 			struct object *o = &(parents->item->object);
@@ -336,10 +335,6 @@ int main(int argc, const char **argv)
 				commit_prefix = "";
 			else
 				commit_prefix = "commit ";
-			continue;
-		}
-		if (!strcmp(arg, "--parents")) {
-			show_parents = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--timestamp")) {

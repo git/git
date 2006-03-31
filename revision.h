@@ -34,7 +34,8 @@ struct rev_info {
 			edge_hint:1,
 			limited:1,
 			unpacked:1,
-			boundary:1;
+			boundary:1,
+			parents:1;
 
 	/* special limits */
 	int max_count;

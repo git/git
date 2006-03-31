@@ -605,6 +605,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->limited = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--parents")) {
+				revs->parents = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--dense")) {
 				revs->dense = 1;
 				continue;

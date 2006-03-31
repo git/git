@@ -283,7 +283,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	char *buf = xmalloc(LOGSIZE);
 	static enum cmit_fmt commit_format = CMIT_FMT_DEFAULT;
 	int abbrev = DEFAULT_ABBREV;
-	int show_parents = 0;
 	const char *commit_prefix = "commit ";
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
@@ -293,9 +292,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			commit_format = get_commit_format(arg + 8);
 			if (commit_format == CMIT_FMT_ONELINE)
 				commit_prefix = "";
-		}
-		else if (!strcmp(arg, "--parents")) {
-			show_parents = 1;
 		}
 		else if (!strcmp(arg, "--no-abbrev")) {
 			abbrev = 0;
@@ -317,7 +313,7 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	while ((commit = get_revision(&rev)) != NULL) {
 		printf("%s%s", commit_prefix,
 		       sha1_to_hex(commit->object.sha1));
-		if (show_parents) {
+		if (rev.parents) {
 			struct commit_list *parents = commit->parents;
 			while (parents) {
 				struct object *o = &(parents->item->object);
