@@ -141,7 +141,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  git-cherry-pick git-show git-status
 
-# The ones that do not have to link with lcrypto nor lz.
+# The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
 	git-get-tar-commit-id$X git-mailsplit$X \
 	git-stripspace$X git-daemon$X
@@ -454,9 +454,9 @@ all:
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
-git$X: git.c common-cmds.h $(LIB_FILE)
+git$X: git.c common-cmds.h $(GITLIBS)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) $(LIB_FILE) \
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(ALL_LDFLAGS) $(LIBS)
 
 common-cmds.h: Documentation/git-*.txt
@@ -510,7 +510,7 @@ git$X git.spec \
 exec_cmd.o: exec_cmd.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
 
-git-%$X: %.o $(LIB_FILE)
+git-%$X: %.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 $(SIMPLE_PROGRAMS) : $(LIB_FILE)
