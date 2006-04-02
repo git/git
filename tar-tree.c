@@ -94,7 +94,6 @@ static void write_blocked(void *buf, unsigned long size)
 	}
 	if (size) {
 		memcpy(block + offset, buf, size);
-		buf += size;
 		offset += size;
 	}
 	tail = offset % RECORDSIZE;
