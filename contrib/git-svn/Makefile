@@ -25,6 +25,9 @@ git-svn.1 : git-svn.xml
 git-svn.xml : git-svn.txt
 	asciidoc -b docbook -d manpage \
 		-f ../../Documentation/asciidoc.conf $<
+git-svn.html : git-svn.txt
+	asciidoc -b xhtml11 -d manpage \
+		-f ../../Documentation/asciidoc.conf $<
 test:
 	cd t && $(SHELL) ./t0000-contrib-git-svn.sh
 

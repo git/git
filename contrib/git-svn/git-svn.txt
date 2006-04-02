@@ -101,6 +101,8 @@ OPTIONS
 	cannot version empty directories.  Enabling this flag will make
 	the commit to SVN act like git.
 
+	repo-config key: svn.rmdir
+
 -e::
 --edit::
 	Only used with the 'commit' command.
@@ -109,12 +111,17 @@ OPTIONS
 	default for objects that are commits, and forced on when committing
 	tree objects.
 
+	repo-config key: svn.edit
+
 -l<num>::
 --find-copies-harder::
 	Both of these are only used with the 'commit' command.
 
 	They are both passed directly to git-diff-tree see
 	git-diff-tree(1) for more information.
+
+	repo-config key: svn.l
+	repo-config key: svn.findcopiesharder
 
 ADVANCED OPTIONS
 ----------------
@@ -133,6 +140,8 @@ ADVANCED OPTIONS
 	This option may be specified multiple times, once for each
 	branch.
 
+	repo-config key: svn.branch
+
 -i<GIT_SVN_ID>::
 --id <GIT_SVN_ID>::
 	This sets GIT_SVN_ID (instead of using the environment).  See
@@ -145,7 +154,7 @@ COMPATIBILITY OPTIONS
 	Only used with the 'rebuild' command.
 
 	Run this if you used an old version of git-svn that used
-	'git-svn-HEAD' instead of 'remotes/git-svn' as the branch
+	"git-svn-HEAD" instead of "remotes/git-svn" as the branch
 	for tracking the remote.
 
 --no-ignore-externals::
@@ -162,25 +171,29 @@ COMPATIBILITY OPTIONS
 	Otherwise, do not enable this flag unless you know what you're
 	doing.
 
+	repo-config key: svn.noignoreexternals
+
 Basic Examples
 ~~~~~~~~~~~~~~
 
 Tracking and contributing to an Subversion managed-project:
 
-# Initialize a tree (like git init-db)::
+------------------------------------------------------------------------
+# Initialize a tree (like git init-db):
 	git-svn init http://svn.foo.org/project/trunk
-# Fetch remote revisions::
+# Fetch remote revisions:
 	git-svn fetch
-# Create your own branch to hack on::
+# Create your own branch to hack on:
 	git checkout -b my-branch remotes/git-svn
-# Commit only the git commits you want to SVN::
+# Commit only the git commits you want to SVN:
 	git-svn commit <tree-ish> [<tree-ish_2> ...]
-# Commit all the git commits from my-branch that don't exist in SVN::
+# Commit all the git commits from my-branch that don't exist in SVN:
 	git-svn commit remotes/git-svn..my-branch
-# Something is committed to SVN, pull the latest into your branch::
+# Something is committed to SVN, pull the latest into your branch:
 	git-svn fetch && git pull . remotes/git-svn
-# Append svn:ignore settings to the default git exclude file::
+# Append svn:ignore settings to the default git exclude file:
 	git-svn show-ignore >> .git/info/exclude
+------------------------------------------------------------------------
 
 DESIGN PHILOSOPHY
 -----------------
@@ -219,7 +232,7 @@ git commits with the following syntax:
 
 This allows you to tie unfetched SVN revision 375 to your current HEAD::
 
-	git-svn fetch 375=$(git-rev-parse HEAD)
+	`git-svn fetch 375=$(git-rev-parse HEAD)`
 
 Advanced Example: Tracking a Reorganized Repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -232,22 +245,24 @@ This is how Yann Dirson tracked the trunk of the ufoai directory when
 the /trunk directory of his repository was moved to /ufoai/trunk and
 he needed to continue tracking /ufoai/trunk where /trunk left off.
 
-	# This log message shows when the repository was reorganized::
+------------------------------------------------------------------------
+	# This log message shows when the repository was reorganized:
 	r166 | ydirson | 2006-03-02 01:36:55 +0100 (Thu, 02 Mar 2006) | 1 line
 	Changed paths:
 	   D /trunk
 	   A /ufoai/trunk (from /trunk:165)
 
-	# First we start tracking the old revisions::
+	# First we start tracking the old revisions:
 	GIT_SVN_ID=git-oldsvn git-svn init \
-	      https://svn.sourceforge.net/svnroot/ufoai/trunk
+			https://svn.sourceforge.net/svnroot/ufoai/trunk
 	GIT_SVN_ID=git-oldsvn git-svn fetch -r1:165
 
-	# And now, we continue tracking the new revisions::
+	# And now, we continue tracking the new revisions:
 	GIT_SVN_ID=git-newsvn git-svn init \
 	      https://svn.sourceforge.net/svnroot/ufoai/ufoai/trunk
 	GIT_SVN_ID=git-newsvn git-svn fetch \
 	      166=`git-rev-parse refs/remotes/git-oldsvn`
+------------------------------------------------------------------------
 
 BUGS
 ----
