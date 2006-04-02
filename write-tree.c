@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "tree.h"
 
 static int missing_ok = 0;
 
@@ -78,7 +79,7 @@ static int write_tree(struct cache_entry **cachep, int maxentries, const char *b
 		nr++;
 	}
 
-	write_sha1_file(buffer, offset, "tree", returnsha1);
+	write_sha1_file(buffer, offset, tree_type, returnsha1);
 	free(buffer);
 	return nr;
 }

@@ -196,15 +196,15 @@ struct object *parse_object(const unsigned char *sha1)
 		struct object *obj;
 		if (check_sha1_signature(sha1, buffer, size, type) < 0)
 			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
-		if (!strcmp(type, "blob")) {
+		if (!strcmp(type, blob_type)) {
 			struct blob *blob = lookup_blob(sha1);
 			parse_blob_buffer(blob, buffer, size);
 			obj = &blob->object;
-		} else if (!strcmp(type, "tree")) {
+		} else if (!strcmp(type, tree_type)) {
 			struct tree *tree = lookup_tree(sha1);
 			parse_tree_buffer(tree, buffer, size);
 			obj = &tree->object;
-		} else if (!strcmp(type, "commit")) {
+		} else if (!strcmp(type, commit_type)) {
 			struct commit *commit = lookup_commit(sha1);
 			parse_commit_buffer(commit, buffer, size);
 			if (!commit->buffer) {
@@ -212,7 +212,7 @@ struct object *parse_object(const unsigned char *sha1)
 				buffer = NULL;
 			}
 			obj = &commit->object;
-		} else if (!strcmp(type, "tag")) {
+		} else if (!strcmp(type, tag_type)) {
 			struct tag *tag = lookup_tag(sha1);
 			parse_tag_buffer(tag, buffer, size);
 			obj = &tag->object;

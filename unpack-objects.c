@@ -2,6 +2,10 @@
 #include "object.h"
 #include "delta.h"
 #include "pack.h"
+#include "blob.h"
+#include "commit.h"
+#include "tag.h"
+#include "tree.h"
 
 #include <sys/time.h>
 
@@ -148,10 +152,10 @@ static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
 	const char *type;
 
 	switch (kind) {
-	case OBJ_COMMIT: type = "commit"; break;
-	case OBJ_TREE:   type = "tree"; break;
-	case OBJ_BLOB:   type = "blob"; break;
-	case OBJ_TAG:    type = "tag"; break;
+	case OBJ_COMMIT: type = commit_type; break;
+	case OBJ_TREE:   type = tree_type; break;
+	case OBJ_BLOB:   type = blob_type; break;
+	case OBJ_TAG:    type = tag_type; break;
 	default: die("bad type %d", kind);
 	}
 	if (!dry_run)

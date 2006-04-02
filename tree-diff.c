@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "diff.h"
+#include "tree.h"
 
 // What paths are we interested in?
 static int nr_paths = 0;
@@ -148,7 +149,7 @@ static int show_entry(struct diff_options *opt, const char *prefix, struct tree_
 		void *tree;
 
 		tree = read_sha1_file(sha1, type, &inner.size);
-		if (!tree || strcmp(type, "tree"))
+		if (!tree || strcmp(type, tree_type))
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
 		inner.buf = tree;
@@ -206,10 +207,10 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 	struct tree_desc t1, t2;
 	int retval;
 
-	tree1 = read_object_with_reference(old, "tree", &t1.size, NULL);
+	tree1 = read_object_with_reference(old, tree_type, &t1.size, NULL);
 	if (!tree1)
 		die("unable to read source tree (%s)", sha1_to_hex(old));
-	tree2 = read_object_with_reference(new, "tree", &t2.size, NULL);
+	tree2 = read_object_with_reference(new, tree_type, &t2.size, NULL);
 	if (!tree2)
 		die("unable to read destination tree (%s)", sha1_to_hex(new));
 	t1.buf = tree1;

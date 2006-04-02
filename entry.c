@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include "cache.h"
+#include "blob.h"
 
 static void create_directories(const char *path, struct checkout *state)
 {
@@ -72,7 +73,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 	char type[20];
 
 	new = read_sha1_file(ce->sha1, type, &size);
-	if (!new || strcmp(type, "blob")) {
+	if (!new || strcmp(type, blob_type)) {
 		if (new)
 			free(new);
 		return error("git-checkout-index: unable to read sha1 file of %s (%s)",

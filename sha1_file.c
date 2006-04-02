@@ -9,6 +9,10 @@
 #include "cache.h"
 #include "delta.h"
 #include "pack.h"
+#include "blob.h"
+#include "commit.h"
+#include "tag.h"
+#include "tree.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -894,16 +898,16 @@ void packed_object_info_detail(struct pack_entry *e,
 	}
 	switch (kind) {
 	case OBJ_COMMIT:
-		strcpy(type, "commit");
+		strcpy(type, commit_type);
 		break;
 	case OBJ_TREE:
-		strcpy(type, "tree");
+		strcpy(type, tree_type);
 		break;
 	case OBJ_BLOB:
-		strcpy(type, "blob");
+		strcpy(type, blob_type);
 		break;
 	case OBJ_TAG:
-		strcpy(type, "tag");
+		strcpy(type, tag_type);
 		break;
 	default:
 		die("corrupted pack file %s containing object of kind %d",
@@ -934,16 +938,16 @@ static int packed_object_info(struct pack_entry *entry,
 		unuse_packed_git(p);
 		return retval;
 	case OBJ_COMMIT:
-		strcpy(type, "commit");
+		strcpy(type, commit_type);
 		break;
 	case OBJ_TREE:
-		strcpy(type, "tree");
+		strcpy(type, tree_type);
 		break;
 	case OBJ_BLOB:
-		strcpy(type, "blob");
+		strcpy(type, blob_type);
 		break;
 	case OBJ_TAG:
-		strcpy(type, "tag");
+		strcpy(type, tag_type);
 		break;
 	default:
 		die("corrupted pack file %s containing object of kind %d",
@@ -1071,16 +1075,16 @@ void *unpack_entry_gently(struct pack_entry *entry,
 		retval = unpack_delta_entry(pack, size, left, type, sizep, p);
 		return retval;
 	case OBJ_COMMIT:
-		strcpy(type, "commit");
+		strcpy(type, commit_type);
 		break;
 	case OBJ_TREE:
-		strcpy(type, "tree");
+		strcpy(type, tree_type);
 		break;
 	case OBJ_BLOB:
-		strcpy(type, "blob");
+		strcpy(type, blob_type);
 		break;
 	case OBJ_TAG:
-		strcpy(type, "tag");
+		strcpy(type, tag_type);
 		break;
 	default:
 		return NULL;
@@ -1241,9 +1245,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 			return buffer;
 		}
 		/* Handle references */
-		else if (!strcmp(type, "commit"))
+		else if (!strcmp(type, commit_type))
 			ref_type = "tree ";
-		else if (!strcmp(type, "tag"))
+		else if (!strcmp(type, tag_type))
 			ref_type = "object ";
 		else {
 			free(buffer);
@@ -1625,7 +1629,7 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 		return -1;
 	}
 	if (!type)
-		type = "blob";
+		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, off, type, sha1);
 	else {
@@ -1652,7 +1656,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 		return -1;
 
 	if (!type)
-		type = "blob";
+		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
 	else {
@@ -1690,9 +1694,9 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 		if (!write_object) {
 			unsigned char hdr[50];
 			int hdrlen;
-			write_sha1_file_prepare(target, st->st_size, "blob",
+			write_sha1_file_prepare(target, st->st_size, blob_type,
 						sha1, hdr, &hdrlen);
-		} else if (write_sha1_file(target, st->st_size, "blob", sha1))
+		} else if (write_sha1_file(target, st->st_size, blob_type, sha1))
 			return error("%s: failed to insert into database",
 				     path);
 		free(target);

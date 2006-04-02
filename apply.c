@@ -9,6 +9,7 @@
 #include <fnmatch.h>
 #include "cache.h"
 #include "quote.h"
+#include "blob.h"
 
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
@@ -1296,7 +1297,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 			 * applies to.
 			 */
 			write_sha1_file_prepare(desc->buffer, desc->size,
-						"blob", sha1, hdr, &hdrlen);
+						blob_type, sha1, hdr, &hdrlen);
 			if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 				return error("the patch applies to '%s' (%s), "
 					     "which does not match the "
@@ -1659,7 +1660,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	if (lstat(path, &st) < 0)
 		die("unable to stat newly created file %s", path);
 	fill_stat_cache_info(ce, &st);
-	if (write_sha1_file(buf, size, "blob", ce->sha1) < 0)
+	if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
 		die("unable to create backing store for newly created file %s", path);
 	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
 		die("unable to add cache entry for %s", path);
