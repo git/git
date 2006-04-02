@@ -273,8 +273,24 @@ static void unlink_entry(char *name)
 
 static void progress_interval(int signum)
 {
-	signal(SIGALRM, progress_interval);
 	progress_update = 1;
+}
+
+static void setup_progress_signal(void)
+{
+	struct sigaction sa;
+	struct itimerval v;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = progress_interval;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sigaction(SIGALRM, &sa, NULL);
+
+	v.it_interval.tv_sec = 1;
+	v.it_interval.tv_usec = 0;
+	v.it_value = v.it_interval;
+	setitimer(ITIMER_REAL, &v, NULL);
 }
 
 static void check_updates(struct cache_entry **src, int nr)
@@ -289,8 +305,6 @@ static void check_updates(struct cache_entry **src, int nr)
 	unsigned last_percent = 200, cnt = 0, total = 0;
 
 	if (update && verbose_update) {
-		struct itimerval v;
-
 		for (total = cnt = 0; cnt < nr; cnt++) {
 			struct cache_entry *ce = src[cnt];
 			if (!ce->ce_mode || ce->ce_flags & mask)
@@ -302,12 +316,8 @@ static void check_updates(struct cache_entry **src, int nr)
 			total = 0;
 
 		if (total) {
-			v.it_interval.tv_sec = 1;
-			v.it_interval.tv_usec = 0;
-			v.it_value = v.it_interval;
-			signal(SIGALRM, progress_interval);
-			setitimer(ITIMER_REAL, &v, NULL);
 			fprintf(stderr, "Checking files out...\n");
+			setup_progress_signal();
 			progress_update = 1;
 		}
 		cnt = 0;
@@ -341,8 +351,8 @@ static void check_updates(struct cache_entry **src, int nr)
 		}
 	}
 	if (total) {
-		fputc('\n', stderr);
 		signal(SIGALRM, SIG_IGN);
+		fputc('\n', stderr);
 	}
 }
 
