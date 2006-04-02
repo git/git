@@ -783,10 +783,14 @@ struct commit *get_revision(struct rev_info *revs)
 
 		/*
 		 * If we haven't done the list limiting, we need to look at
-		 * the parents here
+		 * the parents here. We also need to do the date-based limiting
+		 * that we'd otherwise have done in limit_list().
 		 */
-		if (!revs->limited)
+		if (!revs->limited) {
+			if (revs->max_age != -1 && (commit->date < revs->max_age))
+				continue;
 			add_parents_to_list(revs, commit, &revs->commits);
+		}
 		if (commit->object.flags & SHOWN)
 			continue;
 		if (!(commit->object.flags & BOUNDARY) &&
@@ -794,8 +798,6 @@ struct commit *get_revision(struct rev_info *revs)
 			continue;
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			continue;
-		if (revs->max_age != -1 && (commit->date < revs->max_age))
-			return NULL;
 		if (revs->no_merges &&
 		    commit->parents && commit->parents->next)
 			continue;
