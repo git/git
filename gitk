@@ -75,6 +75,7 @@ proc getcommitlines {commfd}  {
     global commitlisted nextupdate
     global leftover
     global displayorder commitidx commitrow commitdata
+    global parentlist childlist children
 
     set stuff [read $commfd]
     if {$stuff == {}} {
@@ -140,15 +141,26 @@ proc getcommitlines {commfd}  {
 	set id [lindex $ids 0]
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
-	    set commitlisted($id) 1
+	    if {[llength $olds] > 1} {
+		set olds [lsort -unique $olds]
+	    }
+	    foreach p $olds {
+		lappend children($p) $id
+	    }
 	} else {
 	    set olds {}
 	}
-	updatechildren $id $olds
+	lappend parentlist $olds
+	if {[info exists children($id)]} {
+	    lappend childlist $children($id)
+	} else {
+	    lappend childlist {}
+	}
 	set commitdata($id) [string range $cmit [expr {$j + 1}] end]
 	set commitrow($id) $commitidx
 	incr commitidx
 	lappend displayorder $id
+	lappend commitlisted $listed
 	set gotsome 1
     }
     if {$gotsome} {
@@ -181,14 +193,12 @@ proc doupdate {reading} {
 
 proc readcommit {id} {
     if {[catch {set contents [exec git-cat-file commit $id]}]} return
-    updatechildren $id {}
     parsecommit $id $contents 0
 }
 
 proc updatecommits {rargs} {
     stopfindproc
-    foreach v {children nchildren parents nparents commitlisted
-	colormap selectedline matchinglines treediffs
+    foreach v {colormap selectedline matchinglines treediffs
 	mergefilelist currentid rowtextx commitrow
 	rowidlist rowoffsets idrowranges idrangedrawn iddrawn
 	linesegends crossings cornercrossings} {
@@ -198,26 +208,6 @@ proc updatecommits {rargs} {
     allcanvs delete all
     readrefs
     getcommits $rargs
-}
-
-proc updatechildren {id olds} {
-    global children nchildren parents nparents
-
-    if {![info exists nchildren($id)]} {
-	set children($id) {}
-	set nchildren($id) 0
-    }
-    set parents($id) $olds
-    set nparents($id) [llength $olds]
-    foreach p $olds {
-	if {![info exists nchildren($p)]} {
-	    set children($p) [list $id]
-	    set nchildren($p) 1
-	} elseif {[lsearch -exact $children($p) $id] < 0} {
-	    lappend children($p) $id
-	    incr nchildren($p)
-	}
-    }
 }
 
 proc parsecommit {id contents listed} {
@@ -274,7 +264,7 @@ proc parsecommit {id contents listed} {
 }
 
 proc getcommit {id} {
-    global commitdata commitinfo nparents
+    global commitdata commitinfo
 
     if {[info exists commitdata($id)]} {
 	parsecommit $id $commitdata($id) 1
@@ -282,7 +272,6 @@ proc getcommit {id} {
 	readcommit $id
 	if {![info exists commitinfo($id)]} {
 	    set commitinfo($id) {"No commit information available"}
-	    set nparents($id) 0
 	}
     }
     return 1
@@ -843,15 +832,20 @@ proc makeuparrow {oid x y z} {
 }
 
 proc initlayout {} {
-    global rowidlist rowoffsets displayorder
+    global rowidlist rowoffsets displayorder commitlisted
     global rowlaidout rowoptim
     global idinlist rowchk
     global commitidx numcommits canvxmax canv
     global nextcolor
+    global parentlist childlist children
 
     set commitidx 0
     set numcommits 0
     set displayorder {}
+    set commitlisted {}
+    set parentlist {}
+    set childlist {}
+    catch {unset children}
     set nextcolor 0
     set rowidlist {{}}
     set rowoffsets {{}}
@@ -950,7 +944,7 @@ proc showstuff {canshow} {
 proc layoutrows {row endrow last} {
     global rowidlist rowoffsets displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
-    global nchildren parents nparents
+    global childlist parentlist
     global idrowranges linesegends
     global commitidx
     global idinlist rowchk
@@ -961,7 +955,7 @@ proc layoutrows {row endrow last} {
 	set id [lindex $displayorder $row]
 	set oldolds {}
 	set newolds {}
-	foreach p $parents($id) {
+	foreach p [lindex $parentlist $row] {
 	    if {![info exists idinlist($p)]} {
 		lappend newolds $p
 	    } elseif {!$idinlist($p)} {
@@ -1000,7 +994,7 @@ proc layoutrows {row endrow last} {
 	    lappend idlist $id
 	    lset rowidlist $row $idlist
 	    set z {}
-	    if {$nchildren($id) > 0} {
+	    if {[lindex $childlist $row] ne {}} {
 		set z [expr {[llength [lindex $rowidlist [expr {$row-1}]]] - $col}]
 		unset idinlist($id)
 	    }
@@ -1053,16 +1047,22 @@ proc layoutrows {row endrow last} {
 }
 
 proc addextraid {id row} {
-    global displayorder commitrow commitinfo nparents
+    global displayorder commitrow commitinfo
     global commitidx
+    global parentlist childlist children
 
     incr commitidx
     lappend displayorder $id
+    lappend parentlist {}
     set commitrow($id) $row
     readcommit $id
     if {![info exists commitinfo($id)]} {
 	set commitinfo($id) {"No commit information available"}
-	set nparents($id) 0
+    }
+    if {[info exists children($id)]} {
+	lappend childlist $children($id)
+    } else {
+	lappend childlist {}
     }
 }
 
@@ -1365,7 +1365,7 @@ proc drawparentlinks {id row col olds} {
 proc drawlines {id} {
     global colormap canv
     global idrowranges idrangedrawn
-    global children iddrawn commitrow rowidlist
+    global childlist iddrawn commitrow rowidlist
 
     $canv delete lines.$id
     set nr [expr {[llength $idrowranges($id)] / 2}]
@@ -1374,14 +1374,12 @@ proc drawlines {id} {
 	    drawlineseg $id $i
 	}
     }
-    if {[info exists children($id)]} {
-	foreach child $children($id) {
-	    if {[info exists iddrawn($child)]} {
-		set row $commitrow($child)
-		set col [lsearch -exact [lindex $rowidlist $row] $child]
-		if {$col >= 0} {
-		    drawparentlinks $child $row $col [list $id]
-		}
+    foreach child [lindex $childlist $commitrow($id)] {
+	if {[info exists iddrawn($child)]} {
+	    set row $commitrow($child)
+	    set col [lsearch -exact [lindex $rowidlist $row] $child]
+	    if {$col >= 0} {
+		drawparentlinks $child $row $col [list $id]
 	    }
 	}
     }
@@ -1394,7 +1392,7 @@ proc drawcmittext {id row col rmx} {
     global linehtag linentag linedtag
     global mainfont namefont canvxmax
 
-    set ofill [expr {[info exists commitlisted($id)]? "blue": "white"}]
+    set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
     set x [xc $row $col]
     set y [yc $row]
     set orad [expr {$linespc / 3}]
@@ -1434,7 +1432,7 @@ proc drawcmittext {id row col rmx} {
 proc drawcmitrow {row} {
     global displayorder rowidlist
     global idrowranges idrangedrawn iddrawn
-    global commitinfo commitlisted parents numcommits
+    global commitinfo commitlisted parentlist numcommits
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
@@ -1465,9 +1463,9 @@ proc drawcmitrow {row} {
 	getcommit $id
     }
     assigncolor $id
-    if {[info exists commitlisted($id)] && [info exists parents($id)]
-	&& $parents($id) ne {}} {
-	set rmx [drawparentlinks $id $row $col $parents($id)]
+    set olds [lindex $parentlist $row]
+    if {$olds ne {}} {
+	set rmx [drawparentlinks $id $row $col $olds]
     } else {
 	set rmx 0
     }
@@ -1511,15 +1509,22 @@ proc clear_display {} {
 
 proc assigncolor {id} {
     global colormap colors nextcolor
-    global parents nparents children nchildren
+    global commitrow parentlist children childlist
     global cornercrossings crossings
 
     if {[info exists colormap($id)]} return
     set ncolors [llength $colors]
-    if {$nchildren($id) == 1} {
-	set child [lindex $children($id) 0]
+    if {[info exists commitrow($id)]} {
+	set kids [lindex $childlist $commitrow($id)]
+    } elseif {[info exists children($id)]} {
+	set kids $children($id)
+    } else {
+	set kids {}
+    }
+    if {[llength $kids] == 1} {
+	set child [lindex $kids 0]
 	if {[info exists colormap($child)]
-	    && $nparents($child) == 1} {
+	    && [llength [lindex $parentlist $commitrow($child)]] == 1} {
 	    set colormap($id) $colormap($child)
 	    return
 	}
@@ -1552,17 +1557,15 @@ proc assigncolor {id} {
 	set origbad $badcolors
     }
     if {[llength $badcolors] < $ncolors - 1} {
-	foreach child $children($id) {
+	foreach child $kids {
 	    if {[info exists colormap($child)]
 		&& [lsearch -exact $badcolors $colormap($child)] < 0} {
 		lappend badcolors $colormap($child)
 	    }
-	    if {[info exists parents($child)]} {
-		foreach p $parents($child) {
-		    if {[info exists colormap($p)]
-			&& [lsearch -exact $badcolors $colormap($p)] < 0} {
-			lappend badcolors $colormap($p)
-		    }
+	    foreach p [lindex $parentlist $commitrow($child)] {
+		if {[info exists colormap($p)]
+		    && [lsearch -exact $badcolors $colormap($p)] < 0} {
+		    lappend badcolors $colormap($p)
 		}
 	    }
 	}
@@ -1657,14 +1660,14 @@ proc drawtags {id x xt y1} {
 }
 
 proc checkcrossings {row endrow} {
-    global displayorder parents rowidlist
+    global displayorder parentlist rowidlist
 
     for {} {$row < $endrow} {incr row} {
 	set id [lindex $displayorder $row]
 	set i [lsearch -exact [lindex $rowidlist $row] $id]
 	if {$i < 0} continue
 	set idlist [lindex $rowidlist [expr {$row+1}]]
-	foreach p $parents($id) {
+	foreach p [lindex $parentlist $row] {
 	    set j [lsearch -exact $idlist $p]
 	    if {$j > 0} {
 		if {$j < $i - 1} {
@@ -1760,7 +1763,7 @@ proc drawrest {} {
     showstuff $commitidx
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
-    #puts "overall $drawmsecs ms for $numcommits commits"
+    puts "overall $drawmsecs ms for $numcommits commits"
 }
 
 proc findmatches {f} {
@@ -2046,7 +2049,7 @@ proc insertmatch {l id} {
 
 proc findfiles {} {
     global selectedline numcommits displayorder ctext
-    global ffileline finddidsel parents nparents
+    global ffileline finddidsel parentlist
     global findinprogress findstartline findinsertpos
     global treediffs fdiffid fdiffsneeded fdiffpos
     global findmergefiles
@@ -2064,7 +2067,7 @@ proc findfiles {} {
     set fdiffsneeded {}
     while 1 {
 	set id [lindex $displayorder $l]
-	if {$findmergefiles || $nparents($id) == 1} {
+	if {$findmergefiles || [llength [lindex $parentlist $l]] == 1} {
 	    if {![info exists treediffs($id)]} {
 		append diffsneeded "$id\n"
 		lappend fdiffsneeded $id
@@ -2096,7 +2099,7 @@ proc findfiles {} {
     . config -cursor watch
     settextcursor watch
     set findinprogress 1
-    findcont $id
+    findcont
     update
 }
 
@@ -2143,7 +2146,7 @@ proc donefilediff {} {
 	    set treediffs($nullid) {}
 	    if {[info exists findid] && $nullid eq $findid} {
 		unset findid
-		findcont $nullid
+		findcont
 	    }
 	    incr fdiffpos
 	}
@@ -2154,20 +2157,21 @@ proc donefilediff {} {
 	}
 	if {[info exists findid] && $fdiffid eq $findid} {
 	    unset findid
-	    findcont $fdiffid
+	    findcont
 	}
     }
 }
 
 proc findcont {id} {
-    global findid treediffs parents nparents
+    global findid treediffs parentlist
     global ffileline findstartline finddidsel
     global displayorder numcommits matchinglines findinprogress
     global findmergefiles
 
     set l $ffileline
-    while 1 {
-	if {$findmergefiles || $nparents($id) == 1} {
+    while {1} {
+	set id [lindex $displayorder $l]
+	if {$findmergefiles || [llength [lindex $parentlist $l]] == 1} {
 	    if {![info exists treediffs($id)]} {
 		set findid $id
 		set ffileline $l
@@ -2189,7 +2193,6 @@ proc findcont {id} {
 	    set l 0
 	}
 	if {$l == $findstartline} break
-	set id [lindex $displayorder $l]
     }
     stopfindproc
     if {!$finddidsel} {
@@ -2289,7 +2292,7 @@ proc appendwithlinks {text} {
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
-    global canvy0 linespc parents nparents children
+    global canvy0 linespc parentlist childlist
     global cflist currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits
@@ -2379,9 +2382,10 @@ proc selectline {l isnew} {
     }
  
     set comment {}
-    if {$nparents($id) > 1} {
+    set olds [lindex $parentlist $l]
+    if {[llength $olds] > 1} {
 	set np 0
-	foreach p $parents($id) {
+	foreach p $olds {
 	    if {$np >= $mergemax} {
 		set tag mmax
 	    } else {
@@ -2392,17 +2396,13 @@ proc selectline {l isnew} {
 	    incr np
 	}
     } else {
-	if {[info exists parents($id)]} {
-	    foreach p $parents($id) {
-		append comment "Parent: [commit_descriptor $p]\n"
-	    }
+	foreach p $olds {
+	    append comment "Parent: [commit_descriptor $p]\n"
 	}
     }
 
-    if {[info exists children($id)]} {
-	foreach c $children($id) {
-	    append comment "Child:  [commit_descriptor $c]\n"
-	}
+    foreach c [lindex $childlist $l] {
+	append comment "Child:  [commit_descriptor $c]\n"
     }
     append comment "\n"
     append comment [lindex $info 5]
@@ -2417,10 +2417,10 @@ proc selectline {l isnew} {
 
     $cflist delete 0 end
     $cflist insert end "Comments"
-    if {$nparents($id) <= 1} {
+    if {[llength $olds] <= 1} {
 	startdiff $id
     } else {
-	mergediff $id
+	mergediff $id $l
     }
 }
 
@@ -2489,9 +2489,10 @@ proc goforw {} {
     }
 }
 
-proc mergediff {id} {
-    global parents diffmergeid diffopts mdifffd
+proc mergediff {id l} {
+    global diffmergeid diffopts mdifffd
     global difffilestart diffids
+    global parentlist
 
     set diffmergeid $id
     set diffids $id
@@ -2505,12 +2506,13 @@ proc mergediff {id} {
     }
     fconfigure $mdf -blocking 0
     set mdifffd($id) $mdf
-    fileevent $mdf readable [list getmergediffline $mdf $id]
+    set np [llength [lindex $parentlist $l]]
+    fileevent $mdf readable [list getmergediffline $mdf $id $np]
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
 }
 
-proc getmergediffline {mdf id} {
-    global diffmergeid ctext cflist nextupdate nparents mergemax
+proc getmergediffline {mdf id np} {
+    global diffmergeid ctext cflist nextupdate mergemax
     global difffilestart mdifffd
 
     set n [gets $mdf line]
@@ -2543,7 +2545,6 @@ proc getmergediffline {mdf id} {
 	# do nothing
     } else {
 	# parse the prefix - one ' ', '-' or '+' for each parent
-	set np $nparents($id)
 	set spaces {}
 	set minuses {}
 	set pluses {}
@@ -2611,7 +2612,7 @@ proc addtocflist {ids} {
 }
 
 proc gettreediffs {ids} {
-    global treediff parents treepending
+    global treediff treepending
     set treepending $ids
     set treediff {}
     if {[catch \
@@ -2979,7 +2980,7 @@ proc arrowjump {id n y} {
 }
 
 proc lineclick {x y id isnew} {
-    global ctext commitinfo children cflist canv thickerline
+    global ctext commitinfo childlist commitrow cflist canv thickerline
 
     if {![info exists commitinfo($id)] && ![getcommit $id]} return
     unmarkmatches
@@ -3018,10 +3019,11 @@ proc lineclick {x y id isnew} {
     $ctext insert end "\tAuthor:\t[lindex $info 1]\n"
     set date [formatdate [lindex $info 2]]
     $ctext insert end "\tDate:\t$date\n"
-    if {[info exists children($id)]} {
+    set kids [lindex $childlist $commitrow($id)]
+    if {$kids ne {}} {
 	$ctext insert end "\nChildren:"
 	set i 0
-	foreach child $children($id) {
+	foreach child $kids {
 	    incr i
 	    if {![info exists commitinfo($child)] && ![getcommit $child]} continue
 	    set info $commitinfo($child)
