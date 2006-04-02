@@ -52,7 +52,8 @@ Perhaps git-update-server-info needs to be run there?"
 		git-http-fetch -v -a -w "$tname" "$name" "$1/" || exit 1
 	done <"$clone_tmp/refs"
 	rm -fr "$clone_tmp"
-	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD"
+	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD" ||
+	rm -f "$GIT_DIR/REMOTE_HEAD"
 }
 
 # Read git-fetch-pack -k output and store the remote branches.
@@ -324,7 +325,7 @@ test -d "$GIT_DIR/refs/reference-tmp" && rm -fr "$GIT_DIR/refs/reference-tmp"
 
 if test -f "$GIT_DIR/CLONE_HEAD"
 then
-	# Figure out where the remote HEAD points at.
+	# Read git-fetch-pack -k output and store the remote branches.
 	perl -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin"
 fi
 
@@ -332,22 +333,25 @@ cd "$D" || exit
 
 if test -z "$bare" && test -f "$GIT_DIR/REMOTE_HEAD"
 then
-	head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
 	# Figure out which remote branch HEAD points at.
 	case "$use_separate_remote" in
 	'')	remote_top=refs/heads ;;
 	*)	remote_top="refs/remotes/$origin" ;;
 	esac
 
-	# What to use to track the remote primary branch
-	if test -n "$use_separate_remote"
-	then
-		origin_tracking="remotes/$origin/master"
-	else
-		origin_tracking="heads/$origin"
-	fi
+	head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+	case "$head_sha1" in
+	'ref: refs/'*)
+		# Uh-oh, the remote told us (http transport done against
+		# new style repository with a symref HEAD).
+		# Ideally we should skip the guesswork but for now
+		# opt for minimum change.
+		head_sha1=`expr "$head_sha1" : 'ref: refs/heads/\(.*\)'`
+		head_sha1=`cat "$GIT_DIR/$remote_top/$head_sha1"`
+		;;
+	esac
 
-	# The name under $remote_top the remote HEAD seems to point at
+	# The name under $remote_top the remote HEAD seems to point at.
 	head_points_at=$(
 		(
 			echo "master"
@@ -368,23 +372,28 @@ then
 		)
 	)
 
-	# Write out remotes/$origin file.
+	# Write out remotes/$origin file, and update our "$head_points_at".
 	case "$head_points_at" in
 	?*)
 		mkdir -p "$GIT_DIR/remotes" &&
+		git-symbolic-ref HEAD "refs/heads/$head_points_at" &&
+		case "$use_separate_remote" in
+		t)	origin_track="$remote_top/$head_points_at"
+			git-update-ref HEAD "$head_sha1" ;;
+		*)	origin_track="$remote_top/$origin"
+			git-update-ref "refs/heads/$origin" "$head_sha1" ;;
+		esac &&
 		echo >"$GIT_DIR/remotes/$origin" \
 		"URL: $repo
-Pull: refs/heads/$head_points_at:refs/$origin_tracking" &&
-		case "$use_separate_remote" in
-		t) git-update-ref HEAD "$head_sha1" ;;
-		*) git-update-ref "refs/heads/$origin" $(git-rev-parse HEAD) ;;
-		esac &&
+Pull: refs/heads/$head_points_at:$origin_track" &&
 		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
 		while read dotslref
 		do
 			name=`expr "$dotslref" : './\(.*\)'` &&
-			test "$head_points_at" = "$name" ||
-			test "$origin" = "$name" ||
+			test "$use_separate_remote" = '' && {
+				test "$head_points_at" = "$name" ||
+				test "$origin" = "$name"
+			} ||
 			echo "Pull: refs/heads/${name}:$remote_top/${name}"
 		done >>"$GIT_DIR/remotes/$origin" &&
 		case "$use_separate_remote" in
