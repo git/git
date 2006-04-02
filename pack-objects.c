@@ -905,10 +905,20 @@ int main(int argc, char **argv)
 		setup_progress_signal();
 	}
 
-	while (fgets(line, sizeof(line), stdin) != NULL) {
+	for (;;) {
 		unsigned int hash;
 		char *p;
 		unsigned char sha1[20];
+
+		if (!fgets(line, sizeof(line), stdin)) {
+			if (feof(stdin))
+				break;
+			if (!ferror(stdin))
+				die("fgets returned NULL, not EOF, not error!");
+			if (errno == EINTR)
+				continue;
+			die("fgets: %s", strerror(errno));
+		}
 
 		if (progress_update) {
 			fprintf(stderr, "Counting objects...%d\r", nr_objects);
