@@ -53,7 +53,7 @@ static int nr_objects = 0, nr_alloc = 0;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
-static volatile int progress_update = 0;
+static volatile sig_atomic_t progress_update = 0;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -685,7 +685,6 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 
 static void progress_interval(int signum)
 {
-	signal(SIGALRM, progress_interval);
 	progress_update = 1;
 }
 
@@ -820,6 +819,23 @@ static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
 	return 1;
 }
 
+static void setup_progress_signal(void)
+{
+	struct sigaction sa;
+	struct itimerval v;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = progress_interval;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sigaction(SIGALRM, &sa, NULL);
+
+	v.it_interval.tv_sec = 1;
+	v.it_interval.tv_usec = 0;
+	v.it_value = v.it_interval;
+	setitimer(ITIMER_REAL, &v, NULL);
+}
+
 int main(int argc, char **argv)
 {
 	SHA_CTX ctx;
@@ -885,13 +901,8 @@ int main(int argc, char **argv)
 	prepare_packed_git();
 
 	if (progress) {
-		struct itimerval v;
-		v.it_interval.tv_sec = 1;
-		v.it_interval.tv_usec = 0;
-		v.it_value = v.it_interval;
-		signal(SIGALRM, progress_interval);
-		setitimer(ITIMER_REAL, &v, NULL);
 		fprintf(stderr, "Generating pack...\n");
+		setup_progress_signal();
 	}
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
