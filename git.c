@@ -172,7 +172,7 @@ static void list_commands(const char *exec_path, const char *pattern)
 	putchar('\n');
 }
 
-static void list_common_cmds_help()
+static void list_common_cmds_help(void)
 {
 	int i, longest = 0;
 

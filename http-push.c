@@ -622,7 +622,7 @@ static int refresh_lock(struct remote_lock *lock)
 	return rc;
 }
 
-static void check_locks()
+static void check_locks(void)
 {
 	struct remote_lock *lock = remote->locks;
 	time_t current_time = time(NULL);
