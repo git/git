@@ -699,7 +699,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		add_one_commit(commit, revs);
 	}
 
-	if ((revs->max_age != -1) || revs->topo_order || revs->unpacked)
+	if (revs->topo_order || revs->unpacked)
 		revs->limited = 1;
 
 	if (revs->prune_data) {
