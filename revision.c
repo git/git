@@ -552,32 +552,26 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strncmp(arg, "--max-age=", 10)) {
 				revs->max_age = atoi(arg + 10);
-				revs->limited = 1;
-				continue;
-			}
-			if (!strncmp(arg, "--min-age=", 10)) {
-				revs->min_age = atoi(arg + 10);
-				revs->limited = 1;
 				continue;
 			}
 			if (!strncmp(arg, "--since=", 8)) {
 				revs->max_age = approxidate(arg + 8);
-				revs->limited = 1;
 				continue;
 			}
 			if (!strncmp(arg, "--after=", 8)) {
 				revs->max_age = approxidate(arg + 8);
-				revs->limited = 1;
+				continue;
+			}
+			if (!strncmp(arg, "--min-age=", 10)) {
+				revs->min_age = atoi(arg + 10);
 				continue;
 			}
 			if (!strncmp(arg, "--before=", 9)) {
 				revs->min_age = approxidate(arg + 9);
-				revs->limited = 1;
 				continue;
 			}
 			if (!strncmp(arg, "--until=", 8)) {
 				revs->min_age = approxidate(arg + 8);
-				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
@@ -596,13 +590,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--topo-order")) {
 				revs->topo_order = 1;
-				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--date-order")) {
 				revs->lifo = 0;
 				revs->topo_order = 1;
-				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--parents")) {
@@ -644,7 +636,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--unpacked")) {
 				revs->unpacked = 1;
-				revs->limited = 1;
 				continue;
 			}
 			*unrecognized++ = arg;
@@ -707,6 +698,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		commit = get_commit_reference(revs, def, sha1, 0);
 		add_one_commit(commit, revs);
 	}
+
+	if ((revs->max_age != -1) || revs->topo_order || revs->unpacked)
+		revs->limited = 1;
 
 	if (revs->prune_data) {
 		diff_tree_setup_paths(revs->prune_data);
