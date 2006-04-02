@@ -67,6 +67,23 @@ for (my $i = 0; $i < @ARGV; $i++) {
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
+# convert GetOpt::Long specs for use by git-repo-config
+foreach my $o (keys %opts) {
+	my $v = $opts{$o};
+	my ($key) = ($o =~ /^([a-z\-]+)/);
+	$key =~ s/-//g;
+	my $arg = 'git-repo-config';
+	$arg .= ' --int' if ($o =~ /=i$/);
+	$arg .= ' --bool' if ($o !~ /=[sfi]$/);
+	$arg .= " svn.$key"; # $key only matches [a-z\-], always shell-safe
+	if (ref $v eq 'ARRAY') {
+		chomp(@$v = `$arg`);
+	} else {
+		chomp($$v = `$arg`);
+		$$v = 0 if $$v eq 'false';
+	}
+}
+
 GetOptions(%opts, 'help|H|h' => \$_help,
 		'version|V' => \$_version,
 		'id|i=s' => \$GIT_SVN) or exit 1;
