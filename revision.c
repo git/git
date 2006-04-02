@@ -787,7 +787,10 @@ struct commit *get_revision(struct rev_info *revs)
 		 * that we'd otherwise have done in limit_list().
 		 */
 		if (!revs->limited) {
-			if (revs->max_age != -1 && (commit->date < revs->max_age))
+			if ((revs->unpacked &&
+			     has_sha1_pack(commit->object.sha1)) ||
+			    (revs->max_age != -1 &&
+			     (commit->date < revs->max_age)))
 				continue;
 			add_parents_to_list(revs, commit, &revs->commits);
 		}
