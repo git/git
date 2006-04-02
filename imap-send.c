@@ -335,12 +335,12 @@ next_arg( char **s )
 	char *ret;
 
 	if (!s || !*s)
-		return 0;
+		return NULL;
 	while (isspace( (unsigned char) **s ))
 		(*s)++;
 	if (!**s) {
-		*s = 0;
-		return 0;
+		*s = NULL;
+		return NULL;
 	}
 	if (**s == '"') {
 		++*s;
@@ -355,7 +355,7 @@ next_arg( char **s )
 		if (**s)
 			*(*s)++ = 0;
 		if (!**s)
-			*s = 0;
+			*s = NULL;
 	}
 	return ret;
 }
@@ -475,7 +475,7 @@ v_issue_imap_cmd( imap_store_t *ctx, struct imap_cmd_cb *cb,
 		memset( &cmd->cb, 0, sizeof(cmd->cb) );
 
 	while (imap->literal_pending)
-		get_cmd_result( ctx, 0 );
+		get_cmd_result( ctx, NULL );
 
 	bufl = nfsnprintf( buf, sizeof(buf), cmd->cb.data ? CAP(LITERALPLUS) ?
 			   "%d %s{%d+}\r\n" : "%d %s{%d}\r\n" : "%d %s\r\n",
@@ -506,12 +506,12 @@ v_issue_imap_cmd( imap_store_t *ctx, struct imap_cmd_cb *cb,
 				free( cmd );
 				return NULL;
 			}
-			cmd->cb.data = 0;
+			cmd->cb.data = NULL;
 		} else
 			imap->literal_pending = 1;
 	} else if (cmd->cb.cont)
 		imap->literal_pending = 1;
-	cmd->next = 0;
+	cmd->next = NULL;
 	*imap->in_progress_append = cmd;
 	imap->in_progress_append = &cmd->next;
 	imap->num_in_progress++;
@@ -607,7 +607,7 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 		}
 		*curp = cur = xmalloc( sizeof(*cur) );
 		curp = &cur->next;
-		cur->val = 0; /* for clean bail */
+		cur->val = NULL; /* for clean bail */
 		if (*s == '(') {
 			/* sublist */
 			s++;
@@ -680,11 +680,11 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 			goto bail;
 	}
 	*sp = s;
-	*curp = 0;
+	*curp = NULL;
 	return 0;
 
   bail:
-	*curp = 0;
+	*curp = NULL;
 	return -1;
 }
 
@@ -702,7 +702,7 @@ parse_imap_list( imap_t *imap, char **sp )
 static list_t *
 parse_list( char **sp )
 {
-	return parse_imap_list( 0, sp );
+	return parse_imap_list( NULL, sp );
 }
 
 static void
@@ -789,7 +789,7 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 				imap->ns_shared = parse_list( &cmd );
 			} else if (!strcmp( "OK", arg ) || !strcmp( "BAD", arg ) ||
 				   !strcmp( "NO", arg ) || !strcmp( "BYE", arg )) {
-				if ((resp = parse_response_code( ctx, 0, cmd )) != RESP_OK)
+				if ((resp = parse_response_code( ctx, NULL, cmd )) != RESP_OK)
 					return resp;
 			} else if (!strcmp( "CAPABILITY", arg ))
 				parse_capability( imap, cmd );
@@ -813,7 +813,7 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 			if (cmdp->cb.data) {
 				n = socket_write( &imap->buf.sock, cmdp->cb.data, cmdp->cb.dlen );
 				free( cmdp->cb.data );
-				cmdp->cb.data = 0;
+				cmdp->cb.data = NULL;
 				if (n != (int)cmdp->cb.dlen)
 					return RESP_BAD;
 			} else if (cmdp->cb.cont) {
@@ -849,7 +849,7 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 				if (!strcmp( "NO", arg )) {
 					if (cmdp->cb.create && cmd && (cmdp->cb.trycreate || !memcmp( cmd, "[TRYCREATE]", 11 ))) { /* SELECT, APPEND or UID COPY */
 						p = strchr( cmdp->cmd, '"' );
-						if (!issue_imap_cmd( ctx, 0, "CREATE \"%.*s\"", strchr( p + 1, '"' ) - p + 1, p )) {
+						if (!issue_imap_cmd( ctx, NULL, "CREATE \"%.*s\"", strchr( p + 1, '"' ) - p + 1, p )) {
 							resp = RESP_BAD;
 							goto normal;
 						}
@@ -898,7 +898,7 @@ imap_close_server( imap_store_t *ictx )
 	imap_t *imap = ictx->imap;
 
 	if (imap->buf.sock.fd != -1) {
-		imap_exec( ictx, 0, "LOGOUT" );
+		imap_exec( ictx, NULL, "LOGOUT" );
 		close( imap->buf.sock.fd );
 	}
 	free_list( imap->ns_personal );
@@ -1001,8 +1001,8 @@ imap_open_store( imap_server_conf_t *srvc )
 		fprintf( stderr, "IMAP error: unknown greeting response\n" );
 		goto bail;
 	}
-	parse_response_code( ctx, 0, rsp );
-	if (!imap->caps && imap_exec( ctx, 0, "CAPABILITY" ) != RESP_OK)
+	parse_response_code( ctx, NULL, rsp );
+	if (!imap->caps && imap_exec( ctx, NULL, "CAPABILITY" ) != RESP_OK)
 		goto bail;
 
 	if (!preauth) {
@@ -1035,7 +1035,7 @@ imap_open_store( imap_server_conf_t *srvc )
 			goto bail;
 		}
 		warn( "*** IMAP Warning *** Password is being sent in the clear\n" );
-		if (imap_exec( ctx, 0, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass ) != RESP_OK) {
+		if (imap_exec( ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass ) != RESP_OK) {
 			fprintf( stderr, "IMAP error: LOGIN failed\n" );
 			goto bail;
 		}
@@ -1047,7 +1047,7 @@ imap_open_store( imap_server_conf_t *srvc )
 
   bail:
 	imap_close_store( &ctx->gen );
-	return 0;
+	return NULL;
 }
 
 static int
@@ -1310,7 +1310,7 @@ int
 main(int argc, char **argv)
 {
 	msg_data_t all_msgs, msg;
-	store_t *ctx = 0;
+	store_t *ctx = NULL;
 	int uid = 0;
 	int ofs = 0;
 	int r;

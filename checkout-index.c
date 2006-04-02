@@ -133,7 +133,7 @@ static int checkout_file(const char *name)
 static int checkout_all(void)
 {
 	int i, errs = 0;
-	struct cache_entry* last_ce = 0;
+	struct cache_entry* last_ce = NULL;
 
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
