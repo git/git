@@ -114,8 +114,7 @@ static int add_file_to_cache(const char *path)
 
 	namelen = strlen(path);
 	size = cache_entry_size(namelen);
-	ce = xmalloc(size);
-	memset(ce, 0, size);
+	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
@@ -312,8 +311,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 
 	len = strlen(path);
 	size = cache_entry_size(len);
-	ce = xmalloc(size);
-	memset(ce, 0, size);
+	ce = xcalloc(1, size);
 
 	memcpy(ce->sha1, sha1, 20);
 	memcpy(ce->name, path, len);

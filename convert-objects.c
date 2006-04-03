@@ -21,8 +21,7 @@ static struct entry * convert_entry(unsigned char *sha1);
 
 static struct entry *insert_new(unsigned char *sha1, int pos)
 {
-	struct entry *new = xmalloc(sizeof(struct entry));
-	memset(new, 0, sizeof(*new));
+	struct entry *new = xcalloc(1, sizeof(struct entry));
 	memcpy(new->old_sha1, sha1, 20);
 	memmove(convert + pos + 1, convert + pos, (nr_convert - pos) * sizeof(struct entry *));
 	convert[pos] = new;

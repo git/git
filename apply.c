@@ -925,8 +925,7 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		struct fragment *fragment;
 		int len;
 
-		fragment = xmalloc(sizeof(*fragment));
-		memset(fragment, 0, sizeof(*fragment));
+		fragment = xcalloc(1, sizeof(*fragment));
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
@@ -1652,8 +1651,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	if (!write_index)
 		return;
 
-	ce = xmalloc(ce_size);
-	memset(ce, 0, ce_size);
+	ce = xcalloc(1, ce_size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = htons(namelen);
@@ -1809,8 +1807,7 @@ static int apply_patch(int fd, const char *filename)
 		struct patch *patch;
 		int nr;
 
-		patch = xmalloc(sizeof(*patch));
-		memset(patch, 0, sizeof(*patch));
+		patch = xcalloc(1, sizeof(*patch));
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;

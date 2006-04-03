@@ -85,8 +85,7 @@ struct object_refs *alloc_object_refs(unsigned count)
 	struct object_refs *refs;
 	size_t size = sizeof(*refs) + count*sizeof(struct object *);
 
-	refs = xmalloc(size);
-	memset(refs, 0, size);
+	refs = xcalloc(1, size);
 	refs->count = count;
 	return refs;
 }
@@ -178,8 +177,7 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		union any_object *ret = xmalloc(sizeof(*ret));
-		memset(ret, 0, sizeof(*ret));
+		union any_object *ret = xcalloc(1, sizeof(*ret));
 		created_object(sha1, &ret->object);
 		ret->object.type = NULL;
 		return &ret->object;
