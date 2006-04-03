@@ -12,10 +12,14 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-'git' is both a program and a directory content tracker system.
-The program 'git' is just a wrapper to reach the core git programs
-(or a potty if you like, as it's not exactly porcelain but still
-brings your stuff to the plumbing).
+Git is a fast, scalable, distributed revision control system with an
+unusually rich command set that provides both high-level operations
+and full access to internals.
+
+See this link:tutorial.html[tutorial] to get started, then see
+link:everyday.html[Everyday Git] for a useful minimum set of commands, and
+"man git-commandname" for documentation of each command.  CVS users may
+also want to read link:cvs-migration.html[CVS migration].
 
 OPTIONS
 -------
@@ -35,55 +39,38 @@ OPTIONS
 	the current setting and then exit.
 
 
-NOT LEARNING CORE GIT COMMANDS
-------------------------------
+FURTHER DOCUMENTATION
+---------------------
 
-This manual is intended to give complete background information
-and internal workings of git, which may be too much for most
-people.  The <<Discussion>> section below contains much useful
-definition and clarification - read that first.
+See the references above to get started using git.  The following is
+probably more detail than necessary for a first-time user.
 
-If you are interested in using git to manage (version control)
-projects, use link:tutorial.html[The Tutorial] to get you started,
-and then link:everyday.html[Everyday GIT] as a guide to the
-minimum set of commands you need to know for day-to-day work.
-Most likely, that will get you started, and you can go a long
-way without knowing the low level details too much.
+The <<Discussion,Discussion>> section below and the
+link:core-tutorial.html[Core tutorial] both provide introductions to the
+underlying git architecture.
 
-The link:core-tutorial.html[Core tutorial] document covers how things
-internally work.
+See also the link:howto-index.html[howto] documents for some useful
+examples.
 
-If you are migrating from CVS, link:cvs-migration.html[cvs
-migration] document may be helpful after you finish the
-tutorial.
+GIT COMMANDS
+------------
 
-After you get the general feel from the tutorial and this
-overview page, you may want to take a look at the
-link:howto-index.html[howto] documents.
+We divide git into high level ("porcelain") commands and low level
+("plumbing") commands.
 
+Low-level commands (plumbing)
+-----------------------------
 
-CORE GIT COMMANDS
------------------
+Although git includes its
+own porcelain layer, its low-level commands are sufficient to support
+development of alternative porcelains.  Developers of such porcelains
+might start by reading about gitlink:git-update-index[1] and
+gitlink:git-read-tree[1].
 
-If you are writing your own Porcelain, you need to be familiar
-with most of the low level commands --- I suggest starting from
-gitlink:git-update-index[1] and gitlink:git-read-tree[1].
-
-
-Commands Overview
------------------
-The git commands can helpfully be split into those that manipulate
-the repository, the index and the files in the working tree, those that
-interrogate and compare them, and those that moves objects and
-references between repositories.
-
-In addition, git itself comes with a spartan set of porcelain
-commands.  They are usable but are not meant to compete with real
-Porcelains.
-
-There are also some ancillary programs that can be viewed as useful
-aids for using the core commands but which are unlikely to be used by
-SCMs layered over git.
+We divide the low-level commands into commands that manipulate objects (in
+the repository, index, and working tree), commands that interrogate and
+compare objects, and commands that move objects and references between
+repositories.
 
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
@@ -248,8 +235,14 @@ gitlink:git-upload-pack[1]::
 	what are asked for.
 
 
-Porcelain-ish Commands
-----------------------
+High-level commands (porcelain)
+-------------------------------
+
+We separate the porcelain commands into the main commands and some
+ancillary user utilities.
+
+Main porcelain commands
+~~~~~~~~~~~~~~~~~~~~~~~
 
 gitlink:git-add[1]::
 	Add paths to the index.
@@ -346,7 +339,7 @@ gitlink:git-whatchanged[1]::
 
 
 Ancillary Commands
-------------------
+~~~~~~~~~~~~~~~~~~
 Manipulators:
 
 gitlink:git-applypatch[1]::

@@ -29,12 +29,10 @@ PACKDIR="$GIT_OBJECT_DIRECTORY/pack"
 case ",$all_into_one," in
 ,,)
 	rev_list='--unpacked'
-	rev_parse='--all'
 	pack_objects='--incremental'
 	;;
 ,t,)
 	rev_list=
-	rev_parse='--all'
 	pack_objects=
 
 	# Redundancy check in all-into-one case is trivial.
@@ -43,7 +41,7 @@ case ",$all_into_one," in
 	;;
 esac
 pack_objects="$pack_objects $local $quiet $no_reuse_delta"
-name=$(git-rev-list --objects $rev_list $(git-rev-parse $rev_parse) 2>&1 |
+name=$(git-rev-list --objects --all $rev_list 2>&1 |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
 if [ -z "$name" ]; then
