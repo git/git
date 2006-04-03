@@ -77,10 +77,13 @@ foreach my $o (keys %opts) {
 	$arg .= ' --bool' if ($o !~ /=[sfi]$/);
 	$arg .= " svn.$key"; # $key only matches [a-z\-], always shell-safe
 	if (ref $v eq 'ARRAY') {
-		chomp(@$v = `$arg`);
+		chomp(my @tmp = `$arg`);
+		@$v = @tmp if @tmp;
 	} else {
-		chomp($$v = `$arg`);
-		$$v = 0 if $$v eq 'false';
+		chomp(my $tmp = `$arg`);
+		if ($tmp && !($arg =~ / --bool / && $tmp eq 'false')) {
+			$$v = $tmp;
+		}
 	}
 }
 
