@@ -353,6 +353,7 @@ proc makewindow {rargs} {
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
+    .bar.help add command -label "Key bindings" -command keys
     . configure -menu .bar
 
     if {![info exists geometry(canv1)]} {
@@ -714,6 +715,47 @@ Copyright © 2005-2006 Paul Mackerras
 Use and redistribute under the terms of the GNU General Public License} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
+    button $w.ok -text Close -command "destroy $w"
+    pack $w.ok -side bottom
+}
+
+proc keys {} {
+    set w .keys
+    if {[winfo exists $w]} {
+	raise $w
+	return
+    }
+    toplevel $w
+    wm title $w "Gitk key bindings"
+    message $w.m -text {
+Gitk key bindings:
+
+<Ctrl-Q>		Quit
+<Up>, p, i	Move up one commit
+<Down>, n, k	Move down one commit
+<Left>, z, j	Go back in history list
+<Right>, x, l	Go forward in history list
+<Page up>	Scroll commit list up one page
+<Page down>	Scroll commit list down one page
+<Delete>, b	Scroll diff view up one page
+<Backspace>	Scroll diff view up one page
+<Space>		Scroll diff view down one page
+u		Scroll diff view up 18 lines
+d		Scroll diff view down 18 lines
+<Ctrl-F>		Find
+<Ctrl-G>		Move to next find hit
+<Ctrl-R>		Move to previous find hit
+<Return>	Move to next find hit
+/		Move to next find hit, or redo find
+?		Move to previous find hit
+f		Scroll diff view to next file
+<Ctrl-KP+>	Increase font size
+<Ctrl-plus>	Increase font size
+<Ctrl-KP->	Decrease font size
+<Ctrl-minus>	Decrease font size
+} \
+	    -justify left -bg white -border 2 -relief sunken
+    pack $w.m -side top -fill both
     button $w.ok -text Close -command "destroy $w"
     pack $w.ok -side bottom
 }
@@ -1763,7 +1805,7 @@ proc drawrest {} {
     showstuff $commitidx
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
-    puts "overall $drawmsecs ms for $numcommits commits"
+    #puts "overall $drawmsecs ms for $numcommits commits"
 }
 
 proc findmatches {f} {
