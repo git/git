@@ -1,12 +1,15 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
+#include <regex.h>
+
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
 
 static unsigned int contains(struct diff_filespec *one,
-			     const char *needle, unsigned long len)
+			     const char *needle, unsigned long len,
+			     regex_t *regexp)
 {
 	unsigned int cnt;
 	unsigned long offset, sz;
@@ -18,14 +21,27 @@ static unsigned int contains(struct diff_filespec *one,
 	data = one->data;
 	cnt = 0;
 
-	/* Yes, I've heard of strstr(), but the thing is *data may
-	 * not be NUL terminated.  Sue me.
-	 */
-	for (offset = 0; offset + len <= sz; offset++) {
-		/* we count non-overlapping occurrences of needle */
-		if (!memcmp(needle, data + offset, len)) {
-			offset += len - 1;
+	if (regexp) {
+		regmatch_t regmatch;
+		int flags = 0;
+
+		while (*data && !regexec(regexp, data, 1, &regmatch, flags)) {
+			flags |= REG_NOTBOL;
+			data += regmatch.rm_so;
+			if (*data) data++;
 			cnt++;
+		}
+
+	} else { /* Classic exact string match */
+		/* Yes, I've heard of strstr(), but the thing is *data may
+		 * not be NUL terminated.  Sue me.
+		 */
+		for (offset = 0; offset + len <= sz; offset++) {
+			/* we count non-overlapping occurrences of needle */
+			if (!memcmp(needle, data + offset, len)) {
+				offset += len - 1;
+				cnt++;
+			}
 		}
 	}
 	return cnt;
@@ -36,9 +52,23 @@ void diffcore_pickaxe(const char *needle, int opts)
 	struct diff_queue_struct *q = &diff_queued_diff;
 	unsigned long len = strlen(needle);
 	int i, has_changes;
+	regex_t regex, *regexp = NULL;
 	struct diff_queue_struct outq;
 	outq.queue = NULL;
 	outq.nr = outq.alloc = 0;
+
+	if (opts & DIFF_PICKAXE_REGEX) {
+		int err;
+		err = regcomp(&regex, needle, REG_EXTENDED | REG_NEWLINE);
+		if (err) {
+			/* The POSIX.2 people are surely sick */
+			char errbuf[1024];
+			regerror(err, &regex, errbuf, 1024);
+			regfree(&regex);
+			die("invalid pickaxe regex: %s", errbuf);
+		}
+		regexp = &regex;
+	}
 
 	if (opts & DIFF_PICKAXE_ALL) {
 		/* Showing the whole changeset if needle exists */
@@ -48,16 +78,16 @@ void diffcore_pickaxe(const char *needle, int opts)
 				if (!DIFF_FILE_VALID(p->two))
 					continue; /* ignore unmerged */
 				/* created */
-				if (contains(p->two, needle, len))
+				if (contains(p->two, needle, len, regexp))
 					has_changes++;
 			}
 			else if (!DIFF_FILE_VALID(p->two)) {
-				if (contains(p->one, needle, len))
+				if (contains(p->one, needle, len, regexp))
 					has_changes++;
 			}
 			else if (!diff_unmodified_pair(p) &&
-				 contains(p->one, needle, len) !=
-				 contains(p->two, needle, len))
+				 contains(p->one, needle, len, regexp) !=
+				 contains(p->two, needle, len, regexp))
 				has_changes++;
 		}
 		if (has_changes)
@@ -80,16 +110,16 @@ void diffcore_pickaxe(const char *needle, int opts)
 				if (!DIFF_FILE_VALID(p->two))
 					; /* ignore unmerged */
 				/* created */
-				else if (contains(p->two, needle, len))
+				else if (contains(p->two, needle, len, regexp))
 					has_changes = 1;
 			}
 			else if (!DIFF_FILE_VALID(p->two)) {
-				if (contains(p->one, needle, len))
+				if (contains(p->one, needle, len, regexp))
 					has_changes = 1;
 			}
 			else if (!diff_unmodified_pair(p) &&
-				 contains(p->one, needle, len) !=
-				 contains(p->two, needle, len))
+				 contains(p->one, needle, len, regexp) !=
+				 contains(p->two, needle, len, regexp))
 				has_changes = 1;
 
 			if (has_changes)
@@ -97,6 +127,10 @@ void diffcore_pickaxe(const char *needle, int opts)
 			else
 				diff_free_filepair(p);
 		}
+
+	if (opts & DIFF_PICKAXE_REGEX) {
+		regfree(&regex);
+	}
 
 	free(q->queue);
 	*q = outq;

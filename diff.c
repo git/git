@@ -883,6 +883,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->filter = arg + 14;
 	else if (!strcmp(arg, "--pickaxe-all"))
 		options->pickaxe_opts = DIFF_PICKAXE_ALL;
+	else if (!strcmp(arg, "--pickaxe-regex"))
+		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
 	else if (!strncmp(arg, "-B", 2)) {
 		if ((options->break_opt =
 		     diff_scoreopt_parse(arg)) == -1)
