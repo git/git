@@ -335,7 +335,7 @@ proc error_popup msg {
 }
 
 proc makewindow {rargs} {
-    global canv canv2 canv3 linespc charspc ctext cflist textfont
+    global canv canv2 canv3 linespc charspc ctext cflist textfont mainfont uifont
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
@@ -343,17 +343,21 @@ proc makewindow {rargs} {
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
+    .bar configure -font $uifont
     menu .bar.file
     .bar.file add command -label "Update" -command [list updatecommits $rargs]
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
+    .bar.file configure -font $uifont
     menu .bar.edit
     .bar add cascade -label "Edit" -menu .bar.edit
     .bar.edit add command -label "Preferences" -command doprefs
+    .bar.edit configure -font $uifont
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
     .bar.help add command -label "Key bindings" -command keys
+    .bar.help configure -font $uifont
     . configure -menu .bar
 
     if {![info exists geometry(canv1)]} {
@@ -400,7 +404,7 @@ proc makewindow {rargs} {
     set entries $sha1entry
     set sha1but .ctop.top.bar.sha1label
     button $sha1but -text "SHA1 ID: " -state disabled -relief flat \
-	-command gotocommit -width 8
+	-command gotocommit -width 8 -font $uifont
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .ctop.top.bar.sha1label -side left
     entry $sha1entry -width 40 -font $textfont -textvariable sha1string
@@ -430,19 +434,24 @@ proc makewindow {rargs} {
 	-state disabled -width 26
     pack .ctop.top.bar.rightbut -side left -fill y
 
-    button .ctop.top.bar.findbut -text "Find" -command dofind
+    button .ctop.top.bar.findbut -text "Find" -command dofind -font $uifont
     pack .ctop.top.bar.findbut -side left
     set findstring {}
     set fstring .ctop.top.bar.findstring
     lappend entries $fstring
-    entry $fstring -width 30 -font $textfont -textvariable findstring
+    entry $fstring -width 30 -font $textfont -textvariable findstring -font $textfont
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
     set findtypemenu [tk_optionMenu .ctop.top.bar.findtype \
 			  findtype Exact IgnCase Regexp]
+    .ctop.top.bar.findtype configure -font $uifont
+    .ctop.top.bar.findtype.menu configure -font $uifont
     set findloc "All fields"
     tk_optionMenu .ctop.top.bar.findloc findloc "All fields" Headline \
 	Comments Author Committer Files Pickaxe
+    .ctop.top.bar.findloc configure -font $uifont
+    .ctop.top.bar.findloc.menu configure -font $uifont
+
     pack .ctop.top.bar.findloc -side right
     pack .ctop.top.bar.findtype -side right
     # for making sure type==Exact whenever loc==Pickaxe
@@ -489,7 +498,7 @@ proc makewindow {rargs} {
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
     listbox $cflist -bg white -selectmode extended -width $geometry(cflistw) \
-	-yscrollcommand ".ctop.cdet.right.sb set"
+	-yscrollcommand ".ctop.cdet.right.sb set" -font $mainfont
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
@@ -610,7 +619,7 @@ proc click {w} {
 }
 
 proc savestuff {w} {
-    global canv canv2 canv3 ctext cflist mainfont textfont
+    global canv canv2 canv3 ctext cflist mainfont textfont uifont
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth
 
@@ -620,6 +629,7 @@ proc savestuff {w} {
 	set f [open "~/.gitk-new" w]
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
+	puts $f [list set uifont $uifont]
 	puts $f [list set findmergefiles $findmergefiles]
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
@@ -3885,6 +3895,7 @@ if {$tclencoding == {}} {
 
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
+set uifont {Helvetica 9 bold}
 set findmergefiles 0
 set maxgraphpct 50
 set maxwidth 16
