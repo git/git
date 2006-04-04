@@ -2,6 +2,9 @@
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #include <time.h>
 #include "cache.h"
+#include "blob.h"
+#include "commit.h"
+#include "tree.h"
 
 struct entry {
 	unsigned char old_sha1[20];
@@ -18,8 +21,7 @@ static struct entry * convert_entry(unsigned char *sha1);
 
 static struct entry *insert_new(unsigned char *sha1, int pos)
 {
-	struct entry *new = xmalloc(sizeof(struct entry));
-	memset(new, 0, sizeof(*new));
+	struct entry *new = xcalloc(1, sizeof(struct entry));
 	memcpy(new->old_sha1, sha1, 20);
 	memmove(convert + pos + 1, convert + pos, (nr_convert - pos) * sizeof(struct entry *));
 	convert[pos] = new;
@@ -122,7 +124,7 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 		buffer += len;
 	}
 
-	write_sha1_file(new, newlen, "tree", result_sha1);
+	write_sha1_file(new, newlen, tree_type, result_sha1);
 	free(new);
 	return used;
 }
@@ -262,8 +264,8 @@ static void convert_date(void *buffer, unsigned long size, unsigned char *result
 	memcpy(new + newlen, buffer, size);
 	newlen += size;
 
-	write_sha1_file(new, newlen, "commit", result_sha1);
-	free(new);	
+	write_sha1_file(new, newlen, commit_type, result_sha1);
+	free(new);
 }
 
 static void convert_commit(void *buffer, unsigned long size, unsigned char *result_sha1)
@@ -297,12 +299,12 @@ static struct entry * convert_entry(unsigned char *sha1)
 
 	buffer = xmalloc(size);
 	memcpy(buffer, data, size);
-	
-	if (!strcmp(type, "blob")) {
-		write_sha1_file(buffer, size, "blob", entry->new_sha1);
-	} else if (!strcmp(type, "tree"))
+
+	if (!strcmp(type, blob_type)) {
+		write_sha1_file(buffer, size, blob_type, entry->new_sha1);
+	} else if (!strcmp(type, tree_type))
 		convert_tree(buffer, size, entry->new_sha1);
-	else if (!strcmp(type, "commit"))
+	else if (!strcmp(type, commit_type))
 		convert_commit(buffer, size, entry->new_sha1);
 	else
 		die("unknown object type '%s' in %s", type, sha1_to_hex(sha1));

@@ -2,6 +2,10 @@
 #include "delta.h"
 #include "pack.h"
 #include "csum-file.h"
+#include "blob.h"
+#include "commit.h"
+#include "tag.h"
+#include "tree.h"
 
 static const char index_pack_usage[] =
 "git-index-pack [-o index-file] pack-file";
@@ -224,10 +228,10 @@ static void sha1_object(const void *data, unsigned long size,
 	const char *type_str;
 
 	switch (type) {
-	case OBJ_COMMIT: type_str = "commit"; break;
-	case OBJ_TREE:   type_str = "tree"; break;
-	case OBJ_BLOB:   type_str = "blob"; break;
-	case OBJ_TAG:    type_str = "tag"; break;
+	case OBJ_COMMIT: type_str = commit_type; break;
+	case OBJ_TREE:   type_str = tree_type; break;
+	case OBJ_BLOB:   type_str = blob_type; break;
+	case OBJ_TAG:    type_str = tag_type; break;
 	default:
 		die("bad type %d", type);
 	}

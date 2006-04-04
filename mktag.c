@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "tag.h"
 
 /*
  * A signature file has a very simple fixed format: three lines
@@ -126,7 +127,7 @@ int main(int argc, char **argv)
 	if (verify_tag(buffer, size) < 0)
 		die("invalid tag signature file");
 
-	if (write_sha1_file(buffer, size, "tag", result_sha1) < 0)
+	if (write_sha1_file(buffer, size, tag_type, result_sha1) < 0)
 		die("unable to write tag file");
 	printf("%s\n", sha1_to_hex(result_sha1));
 	return 0;

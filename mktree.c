@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "quote.h"
+#include "tree.h"
 
 static struct treeent {
 	unsigned mode;
@@ -67,7 +68,7 @@ static void write_tree(unsigned char *sha1)
 		memcpy(buffer + offset, ent->sha1, 20);
 		offset += 20;
 	}
-	write_sha1_file(buffer, offset, "tree", sha1);
+	write_sha1_file(buffer, offset, tree_type, sha1);
 }
 
 static const char mktree_usage[] = "mktree [-z]";

@@ -9,6 +9,7 @@
 #include <fnmatch.h>
 #include "cache.h"
 #include "quote.h"
+#include "blob.h"
 
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
@@ -924,8 +925,7 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		struct fragment *fragment;
 		int len;
 
-		fragment = xmalloc(sizeof(*fragment));
-		memset(fragment, 0, sizeof(*fragment));
+		fragment = xcalloc(1, sizeof(*fragment));
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
@@ -1296,7 +1296,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 			 * applies to.
 			 */
 			write_sha1_file_prepare(desc->buffer, desc->size,
-						"blob", sha1, hdr, &hdrlen);
+						blob_type, sha1, hdr, &hdrlen);
 			if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 				return error("the patch applies to '%s' (%s), "
 					     "which does not match the "
@@ -1651,15 +1651,14 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	if (!write_index)
 		return;
 
-	ce = xmalloc(ce_size);
-	memset(ce, 0, ce_size);
+	ce = xcalloc(1, ce_size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = htons(namelen);
 	if (lstat(path, &st) < 0)
 		die("unable to stat newly created file %s", path);
 	fill_stat_cache_info(ce, &st);
-	if (write_sha1_file(buf, size, "blob", ce->sha1) < 0)
+	if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
 		die("unable to create backing store for newly created file %s", path);
 	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
 		die("unable to add cache entry for %s", path);
@@ -1808,8 +1807,7 @@ static int apply_patch(int fd, const char *filename)
 		struct patch *patch;
 		int nr;
 
-		patch = xmalloc(sizeof(*patch));
-		memset(patch, 0, sizeof(*patch));
+		patch = xcalloc(1, sizeof(*patch));
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;

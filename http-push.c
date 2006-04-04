@@ -1008,8 +1008,7 @@ static int fetch_indices(void)
 	struct active_request_slot *slot;
 	struct slot_results results;
 
-	data = xmalloc(4096);
-	memset(data, 0, 4096);
+	data = xcalloc(1, 4096);
 	buffer.size = 4096;
 	buffer.posn = 0;
 	buffer.buffer = data;
@@ -2042,8 +2041,7 @@ static void update_remote_info_refs(struct remote_lock *lock)
 	char *if_header;
 	struct curl_slist *dav_headers = NULL;
 
-	buffer.buffer = xmalloc(4096);
-	memset(buffer.buffer, 0, 4096);
+	buffer.buffer = xcalloc(1, 4096);
 	buffer.size = 4096;
 	buffer.posn = 0;
 	remote_ls("refs/", (PROCESS_FILES | RECURSIVE),

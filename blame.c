@@ -229,7 +229,7 @@ static void get_blob(struct commit *commit)
 
 	info->buf = read_sha1_file(info->sha1, type, &info->size);
 
-	assert(!strcmp(type, "blob"));
+	assert(!strcmp(type, blob_type));
 }
 
 /* For debugging only */

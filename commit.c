@@ -73,8 +73,7 @@ struct commit *lookup_commit(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		struct commit *ret = xmalloc(sizeof(struct commit));
-		memset(ret, 0, sizeof(struct commit));
+		struct commit *ret = xcalloc(1, sizeof(struct commit));
 		created_object(sha1, &ret->object);
 		ret->object.type = commit_type;
 		return ret;
