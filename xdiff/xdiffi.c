@@ -349,12 +349,7 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	kvdf += xe->xdf2.nreff + 1;
 	kvdb += xe->xdf2.nreff + 1;
 
-	/*
-	 * Classical integer square root approximation using shifts.
-	 */
-	xenv.mxcost = 1;
-	for (; ndiags; ndiags >>= 2)
-		xenv.mxcost <<= 1;
+	xenv.mxcost = xdl_bogosqrt(ndiags);
 	if (xenv.mxcost < XDL_MAX_COST_MIN)
 		xenv.mxcost = XDL_MAX_COST_MIN;
 	xenv.snake_cnt = XDL_SNAKE_CNT;

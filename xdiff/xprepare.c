@@ -25,6 +25,7 @@
 
 
 #define XDL_KPDIS_RUN 4
+#define XDL_MAX_EQLIMIT 1024
 
 
 
@@ -305,26 +306,48 @@ void xdl_free_env(xdfenv_t *xe) {
 
 
 static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
-	long r, rdis, rpdis;
+	long r, rdis0, rpdis0, rdis1, rpdis1;
 
-	for (r = 1, rdis = 0, rpdis = 1; (i - r) >= s; r++) {
+	/*
+	 * Scans the lines before 'i' to find a run of lines that either
+	 * have no match (dis[j] == 0) or have multiple matches (dis[j] > 1).
+	 * Note that we always call this function with dis[i] > 1, so the
+	 * current line (i) is already a multimatch line.
+	 */
+	for (r = 1, rdis0 = 0, rpdis0 = 1; (i - r) >= s; r++) {
 		if (!dis[i - r])
-			rdis++;
+			rdis0++;
 		else if (dis[i - r] == 2)
-			rpdis++;
+			rpdis0++;
 		else
 			break;
 	}
-	for (r = 1; (i + r) <= e; r++) {
+	/*
+	 * If the run before the line 'i' found only multimatch lines, we
+	 * return 0 and hence we don't make the current line (i) discarded.
+	 * We want to discard multimatch lines only when they appear in the
+	 * middle of runs with nomatch lines (dis[j] == 0).
+	 */
+	if (rdis0 == 0)
+		return 0;
+	for (r = 1, rdis1 = 0, rpdis1 = 1; (i + r) <= e; r++) {
 		if (!dis[i + r])
-			rdis++;
+			rdis1++;
 		else if (dis[i + r] == 2)
-			rpdis++;
+			rpdis1++;
 		else
 			break;
 	}
+	/*
+	 * If the run after the line 'i' found only multimatch lines, we
+	 * return 0 and hence we don't make the current line (i) discarded.
+	 */
+	if (rdis1 == 0)
+		return 0;
+	rdis1 += rdis0;
+	rpdis1 += rpdis0;
 
-	return rpdis * XDL_KPDIS_RUN < (rpdis + rdis);
+	return rpdis1 * XDL_KPDIS_RUN < (rpdis1 + rdis1);
 }
 
 
@@ -334,34 +357,40 @@ static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
  * might be potentially discarded if they happear in a run of discardable.
  */
 static int xdl_cleanup_records(xdfile_t *xdf1, xdfile_t *xdf2) {
-	long i, rhi, nreff;
+	long i, nm, rhi, nreff, mlim;
 	unsigned long hav;
 	xrecord_t **recs;
 	xrecord_t *rec;
 	char *dis, *dis1, *dis2;
 
-	if (!(dis = (char *) xdl_malloc((xdf1->nrec + xdf2->nrec + 2) * sizeof(char)))) {
+	if (!(dis = (char *) xdl_malloc(xdf1->nrec + xdf2->nrec + 2))) {
 
 		return -1;
 	}
-	memset(dis, 0, (xdf1->nrec + xdf2->nrec + 2) * sizeof(char));
+	memset(dis, 0, xdf1->nrec + xdf2->nrec + 2);
 	dis1 = dis;
 	dis2 = dis1 + xdf1->nrec + 1;
 
+	if ((mlim = xdl_bogosqrt(xdf1->nrec)) > XDL_MAX_EQLIMIT)
+		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart]; i <= xdf1->dend; i++, recs++) {
 		hav = (*recs)->ha;
 		rhi = (long) XDL_HASHLONG(hav, xdf2->hbits);
-		for (rec = xdf2->rhash[rhi]; rec; rec = rec->next)
-			if (rec->ha == hav && ++dis1[i] == 2)
+		for (nm = 0, rec = xdf2->rhash[rhi]; rec; rec = rec->next)
+			if (rec->ha == hav && ++nm == mlim)
 				break;
+		dis1[i] = (nm == 0) ? 0: (nm >= mlim) ? 2: 1;
 	}
 
+	if ((mlim = xdl_bogosqrt(xdf2->nrec)) > XDL_MAX_EQLIMIT)
+		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart]; i <= xdf2->dend; i++, recs++) {
 		hav = (*recs)->ha;
 		rhi = (long) XDL_HASHLONG(hav, xdf1->hbits);
-		for (rec = xdf1->rhash[rhi]; rec; rec = rec->next)
-			if (rec->ha == hav && ++dis2[i] == 2)
+		for (nm = 0, rec = xdf1->rhash[rhi]; rec; rec = rec->next)
+			if (rec->ha == hav && ++nm == mlim)
 				break;
+		dis2[i] = (nm == 0) ? 0: (nm >= mlim) ? 2: 1;
 	}
 
 	for (nreff = 0, i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart];
