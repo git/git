@@ -17,19 +17,38 @@ proc gitdir {} {
 }
 
 proc parse_args {rargs} {
-    global parsed_args
+    global parsed_args cmdline_files
 
+    set parsed_args {}
+    set cmdline_files {}
     if {[catch {
 	set parse_args [concat --default HEAD $rargs]
-	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
+	set args [split [eval exec git-rev-parse $parse_args] "\n"]
+	set i 0
+	foreach arg $args {
+	    if {![regexp {^[0-9a-f]{40}$} $arg]} {
+		if {$arg eq "--"} {
+		    incr i
+		}
+		set cmdline_files [lrange $args $i end]
+		break
+	    }
+	    lappend parsed_args $arg
+	    incr i
+	}
     }]} {
 	# if git-rev-parse failed for some reason...
-	if {$rargs == {}} {
-	    set rargs HEAD
+	set i [lsearch -exact $rargs "--"]
+	if {$i >= 0} {
+	    set cmdline_files [lrange $rargs [expr {$i+1}] end]
+	    set rargs [lrange $rargs 0 [expr {$i-1}]]
 	}
-	set parsed_args $rargs
+	if {$rargs == {}} {
+	    set parsed_args HEAD
+	} else {
+	    set parsed_args $rargs
+	}
     }
-    return $parsed_args
 }
 
 proc start_rev_list {rlargs} {
@@ -65,7 +84,7 @@ proc getcommits {rargs} {
     global phase canv mainfont
 
     set phase getcommits
-    start_rev_list [parse_args $rargs]
+    start_rev_list $rargs
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
@@ -141,11 +160,12 @@ proc getcommitlines {commfd}  {
 	set id [lindex $ids 0]
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
-	    if {[llength $olds] > 1} {
-		set olds [lsort -unique $olds]
-	    }
+	    set i 0
 	    foreach p $olds {
-		lappend children($p) $id
+		if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
+		    lappend children($p) $id
+		}
+		incr i
 	    }
 	} else {
 	    set olds {}
@@ -196,18 +216,18 @@ proc readcommit {id} {
     parsecommit $id $contents 0
 }
 
-proc updatecommits {rargs} {
+proc updatecommits {} {
+    global parsed_args
+
+    unselectline
     stopfindproc
-    foreach v {colormap selectedline matchinglines treediffs
-	mergefilelist currentid rowtextx commitrow
-	rowidlist rowoffsets idrowranges idrangedrawn iddrawn
-	linesegends crossings cornercrossings} {
+    foreach v {matchinglines treediffs currentid} {
 	global $v
 	catch {unset $v}
     }
-    allcanvs delete all
+    clear_display
     readrefs
-    getcommits $rargs
+    getcommits $parsed_args
 }
 
 proc parsecommit {id contents listed} {
@@ -344,12 +364,18 @@ proc makewindow {rargs} {
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
     menu .bar.file
-    .bar.file add command -label "Update" -command [list updatecommits $rargs]
+    .bar.file add command -label "Update" -command updatecommits
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
     menu .bar.edit
     .bar add cascade -label "Edit" -menu .bar.edit
     .bar.edit add command -label "Preferences" -command doprefs
+    menu .bar.view
+    .bar add cascade -label "View" -menu .bar.view
+    .bar.view add command -label "New view..." -command newview
+    .bar.view add command -label "Delete view" -command delview -state disabled
+    .bar.view add separator
+    .bar.view add command -label "All files" -command {showview 0}
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
@@ -718,6 +744,169 @@ Use and redistribute under the terms of the GNU General Public License} \
     pack $w.ok -side bottom
 }
 
+proc newview {} {
+    global newviewname nextviewnum newviewtop
+
+    set top .gitkview
+    if {[winfo exists $top]} {
+	raise $top
+	return
+    }
+    set newviewtop $top
+    toplevel $top
+    wm title $top "Gitk view definition"
+    label $top.nl -text "Name"
+    entry $top.name -width 20 -textvariable newviewname
+    set newviewname "View $nextviewnum"
+    grid $top.nl $top.name -sticky w
+    label $top.l -text "Files and directories to include:"
+    grid $top.l - -sticky w -pady 10
+    text $top.t -width 30 -height 10
+    grid $top.t - -sticky w
+    frame $top.buts
+    button $top.buts.ok -text "OK" -command newviewok
+    button $top.buts.can -text "Cancel" -command newviewcan
+    grid $top.buts.ok $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - -pady 10 -sticky ew
+    focus $top.t
+}
+
+proc newviewok {} {
+    global newviewtop nextviewnum
+    global viewname viewfiles
+
+    set n $nextviewnum
+    incr nextviewnum
+    set viewname($n) [$newviewtop.name get]
+    set files {}
+    foreach f [split [$newviewtop.t get 0.0 end] "\n"] {
+	set ft [string trim $f]
+	if {$ft ne {}} {
+	    lappend files $ft
+	}
+    }
+    set viewfiles($n) $files
+    catch {destroy $newviewtop}
+    unset newviewtop
+    .bar.view add command -label $viewname($n) -command [list showview $n]
+    after idle showview $n
+}
+
+proc newviewcan {} {
+    global newviewtop
+
+    catch {destroy $newviewtop}
+    unset newviewtop
+}
+
+proc delview {} {
+    global curview viewdata
+
+    if {$curview == 0} return
+    set nmenu [.bar.view index end]
+    set targetcmd [list showview $curview]
+    for {set i 5} {$i <= $nmenu} {incr i} {
+	if {[.bar.view entrycget $i -command] eq $targetcmd} {
+	    .bar.view delete $i
+	    break
+	}
+    }
+    set viewdata($curview) {}
+    showview 0
+}
+
+proc saveview {} {
+    global curview viewdata
+    global displayorder parentlist childlist rowidlist rowoffsets
+    global rowrangelist commitlisted
+
+}
+
+proc showview {n} {
+    global curview viewdata viewfiles
+    global displayorder parentlist childlist rowidlist rowoffsets
+    global colormap rowtextx commitrow
+    global numcommits rowrangelist commitlisted idrowranges
+    global selectedline currentid canv canvy0
+    global matchinglines treediffs
+    global parsed_args
+
+    if {$n == $curview} return
+    set selid {}
+    if {[info exists selectedline]} {
+	set selid $currentid
+	set y [yc $selectedline]
+	set ymax [lindex [$canv cget -scrollregion] 3]
+	set span [$canv yview]
+	set ytop [expr {[lindex $span 0] * $ymax}]
+	set ybot [expr {[lindex $span 1] * $ymax}]
+	if {$ytop < $y && $y < $ybot} {
+	    set yscreen [expr {$y - $ytop}]
+	} else {
+	    set yscreen [expr {($ybot - $ytop) / 2}]
+	}
+    }
+    unselectline
+    stopfindproc
+    if {![info exists viewdata($curview)]} {
+	set viewdata($curview) \
+	    [list $displayorder $parentlist $childlist $rowidlist \
+		 $rowoffsets $rowrangelist $commitlisted]
+    }
+    catch {unset matchinglines}
+    catch {unset treediffs}
+    clear_display
+
+    set curview $n
+    .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
+
+    if {![info exists viewdata($n)]} {
+	set args $parsed_args
+	if {$viewfiles($n) ne {}} {
+	    set args [concat $args "--" $viewfiles($n)]
+	}
+	getcommits $args 
+	return
+    }
+
+    set displayorder [lindex $viewdata($n) 0]
+    set parentlist [lindex $viewdata($n) 1]
+    set childlist [lindex $viewdata($n) 2]
+    set rowidlist [lindex $viewdata($n) 3]
+    set rowoffsets [lindex $viewdata($n) 4]
+    set rowrangelist [lindex $viewdata($n) 5]
+    set commitlisted [lindex $viewdata($n) 6]
+    set numcommits [llength $displayorder]
+    catch {unset colormap}
+    catch {unset rowtextx}
+    catch {unset commitrow}
+    catch {unset idrowranges}
+    set curview $n
+    set row 0
+    foreach id $displayorder {
+	set commitrow($id) $row
+	incr row
+    }
+    setcanvscroll
+    set yf 0
+    set row 0
+    if {$selid ne {} && [info exists commitrow($selid)]} {
+	set row $commitrow($selid)
+	# try to get the selected row in the same position on the screen
+	set ymax [lindex [$canv cget -scrollregion] 3]
+	set ytop [expr {[yc $row] - $yscreen}]
+	if {$ytop < 0} {
+	    set ytop 0
+	}
+	set yf [expr {$ytop * 1.0 / $ymax}]
+    }
+    allcanvs yview moveto $yf
+    drawvisible
+    selectline $row 0
+}
+
 proc shortids {ids} {
     set res {}
     foreach id $ids {
@@ -834,10 +1023,12 @@ proc makeuparrow {oid x y z} {
 proc initlayout {} {
     global rowidlist rowoffsets displayorder commitlisted
     global rowlaidout rowoptim
-    global idinlist rowchk
+    global idinlist rowchk rowrangelist idrowranges
     global commitidx numcommits canvxmax canv
     global nextcolor
     global parentlist childlist children
+    global colormap rowtextx commitrow
+    global linesegends
 
     set commitidx 0
     set numcommits 0
@@ -845,6 +1036,7 @@ proc initlayout {} {
     set commitlisted {}
     set parentlist {}
     set childlist {}
+    set rowrangelist {{}}
     catch {unset children}
     set nextcolor 0
     set rowidlist {{}}
@@ -854,6 +1046,11 @@ proc initlayout {} {
     set rowlaidout 0
     set rowoptim 0
     set canvxmax [$canv cget -width]
+    catch {unset colormap}
+    catch {unset rowtextx}
+    catch {unset commitrow}
+    catch {unset idrowranges}
+    catch {unset linesegends}
 }
 
 proc setcanvscroll {} {
@@ -892,7 +1089,6 @@ proc layoutmore {} {
     set rowlaidout [layoutrows $row $commitidx 0]
     set orow [expr {$rowlaidout - $uparrowlen - 1}]
     if {$orow > $rowoptim} {
-	checkcrossings $rowoptim $orow
 	optimize_rows $rowoptim 0 $orow
 	set rowoptim $orow
     }
@@ -947,7 +1143,7 @@ proc layoutrows {row endrow last} {
     global childlist parentlist
     global idrowranges linesegends
     global commitidx
-    global idinlist rowchk
+    global idinlist rowchk rowrangelist
 
     set idlist [lindex $rowidlist $row]
     set offs [lindex $rowoffsets $row]
@@ -1008,6 +1204,7 @@ proc layoutrows {row endrow last} {
 	}
 	if {[info exists idrowranges($id)]} {
 	    lappend idrowranges($id) $row
+	    lappend rowrangelist $idrowranges($id)
 	}
 	incr row
 	set offs [ntimes [llength $idlist] 0]
@@ -1068,7 +1265,7 @@ proc addextraid {id row} {
 
 proc layouttail {} {
     global rowidlist rowoffsets idinlist commitidx
-    global idrowranges
+    global idrowranges rowrangelist
 
     set row $commitidx
     set idlist [lindex $rowidlist $row]
@@ -1078,6 +1275,7 @@ proc layouttail {} {
 	addextraid $id $row
 	unset idinlist($id)
 	lappend idrowranges($id) $row
+	lappend rowrangelist $idrowranges($id)
 	incr row
 	set offs [ntimes $col 0]
 	set idlist [lreplace $idlist $col $col]
@@ -1091,6 +1289,7 @@ proc layouttail {} {
 	lset rowoffsets $row 0
 	makeuparrow $id 0 $row 0
 	lappend idrowranges($id) $row
+	lappend rowrangelist $idrowranges($id)
 	incr row
 	lappend rowidlist {}
 	lappend rowoffsets {}
@@ -1107,7 +1306,7 @@ proc insert_pad {row col npad} {
 }
 
 proc optimize_rows {row col endrow} {
-    global rowidlist rowoffsets idrowranges linesegends displayorder
+    global rowidlist rowoffsets idrowranges displayorder
 
     for {} {$row < $endrow} {incr row} {
 	set idlist [lindex $rowidlist $row]
@@ -1240,13 +1439,33 @@ proc linewidth {id} {
     return $wid
 }
 
+proc rowranges {id} {
+    global idrowranges commitrow numcommits rowrangelist
+
+    set ranges {}
+    if {[info exists commitrow($id)] && $commitrow($id) < $numcommits} {
+	set ranges [lindex $rowrangelist $commitrow($id)]
+    } elseif {[info exists idrowranges($id)]} {
+	set ranges $idrowranges($id)
+    }
+    return $ranges
+}
+
 proc drawlineseg {id i} {
-    global rowoffsets rowidlist idrowranges
+    global rowoffsets rowidlist
     global displayorder
     global canv colormap linespc
+    global numcommits commitrow
 
-    set startrow [lindex $idrowranges($id) [expr {2 * $i}]]
-    set row [lindex $idrowranges($id) [expr {2 * $i + 1}]]
+    set ranges [rowranges $id]
+    set downarrow 1
+    if {[info exists commitrow($id)] && $commitrow($id) < $numcommits} {
+	set downarrow [expr {$i < [llength $ranges] / 2 - 1}]
+    } else {
+	set downarrow 1
+    }
+    set startrow [lindex $ranges [expr {2 * $i}]]
+    set row [lindex $ranges [expr {2 * $i + 1}]]
     if {$startrow == $row} return
     assigncolor $id
     set coords {}
@@ -1290,8 +1509,7 @@ proc drawlineseg {id i} {
 	}
     }
     if {[llength $coords] < 4} return
-    set last [expr {[llength $idrowranges($id)] / 2 - 1}]
-    if {$i < $last} {
+    if {$downarrow} {
 	# This line has an arrow at the lower end: check if the arrow is
 	# on a diagonal segment, and if so, work around the Tk 8.4
 	# refusal to draw arrows on diagonal lines.
@@ -1311,7 +1529,7 @@ proc drawlineseg {id i} {
 	    }
 	}
     }
-    set arrow [expr {2 * ($i > 0) + ($i < $last)}]
+    set arrow [expr {2 * ($i > 0) + $downarrow}]
     set arrow [lindex {none first last both} $arrow]
     set t [$canv create line $coords -width [linewidth $id] \
 	       -fill $colormap($id) -tags lines.$id -arrow $arrow]
@@ -1320,7 +1538,7 @@ proc drawlineseg {id i} {
 }
 
 proc drawparentlinks {id row col olds} {
-    global rowidlist canv colormap idrowranges
+    global rowidlist canv colormap
 
     set row2 [expr {$row + 1}]
     set x [xc $row $col]
@@ -1339,9 +1557,9 @@ proc drawparentlinks {id row col olds} {
 	if {$x2 > $rmx} {
 	    set rmx $x2
 	}
-	if {[info exists idrowranges($p)] &&
-	    $row2 == [lindex $idrowranges($p) 0] &&
-	    $row2 < [lindex $idrowranges($p) 1]} {
+	set ranges [rowranges $p]
+	if {$ranges ne {} && $row2 == [lindex $ranges 0]
+	    && $row2 < [lindex $ranges 1]} {
 	    # drawlineseg will do this one for us
 	    continue
 	}
@@ -1364,11 +1582,11 @@ proc drawparentlinks {id row col olds} {
 
 proc drawlines {id} {
     global colormap canv
-    global idrowranges idrangedrawn
+    global idrangedrawn
     global childlist iddrawn commitrow rowidlist
 
     $canv delete lines.$id
-    set nr [expr {[llength $idrowranges($id)] / 2}]
+    set nr [expr {[llength [rowranges $id]] / 2}]
     for {set i 0} {$i < $nr} {incr i} {
 	if {[info exists idrangedrawn($id,$i)]} {
 	    drawlineseg $id $i
@@ -1431,14 +1649,13 @@ proc drawcmittext {id row col rmx} {
 
 proc drawcmitrow {row} {
     global displayorder rowidlist
-    global idrowranges idrangedrawn iddrawn
+    global idrangedrawn iddrawn
     global commitinfo commitlisted parentlist numcommits
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
-	if {![info exists idrowranges($id)]} continue
 	set i -1
-	foreach {s e} $idrowranges($id) {
+	foreach {s e} [rowranges $id] {
 	    incr i
 	    if {$row < $s} continue
 	    if {$e eq {}} break
@@ -1507,10 +1724,50 @@ proc clear_display {} {
     catch {unset idrangedrawn}
 }
 
+proc findcrossings {id} {
+    global rowidlist parentlist numcommits rowoffsets displayorder
+
+    set cross {}
+    set ccross {}
+    foreach {s e} [rowranges $id] {
+	if {$e >= $numcommits} {
+	    set e [expr {$numcommits - 1}]
+	    if {$e < $s} continue
+	}
+	set x [lsearch -exact [lindex $rowidlist $e] $id]
+	if {$x < 0} {
+	    puts "findcrossings: oops, no [shortids $id] in row $e"
+	    continue
+	}
+	for {set row $e} {[incr row -1] >= $s} {} {
+	    set olds [lindex $parentlist $row]
+	    set kid [lindex $displayorder $row]
+	    set kidx [lsearch -exact [lindex $rowidlist $row] $kid]
+	    if {$kidx < 0} continue
+	    set nextrow [lindex $rowidlist [expr {$row + 1}]]
+	    foreach p $olds {
+		set px [lsearch -exact $nextrow $p]
+		if {$px < 0} continue
+		if {($kidx < $x && $x < $px) || ($px < $x && $x < $kidx)} {
+		    if {[lsearch -exact $ccross $p] >= 0} continue
+		    if {$x == $px + ($kidx < $px? -1: 1)} {
+			lappend ccross $p
+		    } elseif {[lsearch -exact $cross $p] < 0} {
+			lappend cross $p
+		    }
+		}
+	    }
+	    set inc [lindex $rowoffsets $row $x]
+	    if {$inc eq {}} break
+	    incr x $inc
+	}
+    }
+    return [concat $ccross {{}} $cross]
+}
+
 proc assigncolor {id} {
     global colormap colors nextcolor
     global commitrow parentlist children childlist
-    global cornercrossings crossings
 
     if {[info exists colormap($id)]} return
     set ncolors [llength $colors]
@@ -1530,32 +1787,22 @@ proc assigncolor {id} {
 	}
     }
     set badcolors {}
-    if {[info exists cornercrossings($id)]} {
-	foreach x $cornercrossings($id) {
-	    if {[info exists colormap($x)]
-		&& [lsearch -exact $badcolors $colormap($x)] < 0} {
-		lappend badcolors $colormap($x)
-	    }
+    set origbad {}
+    foreach x [findcrossings $id] {
+	if {$x eq {}} {
+	    # delimiter between corner crossings and other crossings
+	    if {[llength $badcolors] >= $ncolors - 1} break
+	    set origbad $badcolors
 	}
-	if {[llength $badcolors] >= $ncolors} {
-	    set badcolors {}
+	if {[info exists colormap($x)]
+	    && [lsearch -exact $badcolors $colormap($x)] < 0} {
+	    lappend badcolors $colormap($x)
 	}
+    }
+    if {[llength $badcolors] >= $ncolors} {
+	set badcolors $origbad
     }
     set origbad $badcolors
-    if {[llength $badcolors] < $ncolors - 1} {
-	if {[info exists crossings($id)]} {
-	    foreach x $crossings($id) {
-		if {[info exists colormap($x)]
-		    && [lsearch -exact $badcolors $colormap($x)] < 0} {
-		    lappend badcolors $colormap($x)
-		}
-	    }
-	    if {[llength $badcolors] >= $ncolors} {
-		set badcolors $origbad
-	    }
-	}
-	set origbad $badcolors
-    }
     if {[llength $badcolors] < $ncolors - 1} {
 	foreach child $kids {
 	    if {[info exists colormap($child)]
@@ -1659,55 +1906,6 @@ proc drawtags {id x xt y1} {
     return $xt
 }
 
-proc checkcrossings {row endrow} {
-    global displayorder parentlist rowidlist
-
-    for {} {$row < $endrow} {incr row} {
-	set id [lindex $displayorder $row]
-	set i [lsearch -exact [lindex $rowidlist $row] $id]
-	if {$i < 0} continue
-	set idlist [lindex $rowidlist [expr {$row+1}]]
-	foreach p [lindex $parentlist $row] {
-	    set j [lsearch -exact $idlist $p]
-	    if {$j > 0} {
-		if {$j < $i - 1} {
-		    notecrossings $row $p $j $i [expr {$j+1}]
-		} elseif {$j > $i + 1} {
-		    notecrossings $row $p $i $j [expr {$j-1}]
-		}
-	    }
-	}
-    }
-}
-
-proc notecrossings {row id lo hi corner} {
-    global rowidlist crossings cornercrossings
-
-    for {set i $lo} {[incr i] < $hi} {} {
-	set p [lindex [lindex $rowidlist $row] $i]
-	if {$p == {}} continue
-	if {$i == $corner} {
-	    if {![info exists cornercrossings($id)]
-		|| [lsearch -exact $cornercrossings($id) $p] < 0} {
-		lappend cornercrossings($id) $p
-	    }
-	    if {![info exists cornercrossings($p)]
-		|| [lsearch -exact $cornercrossings($p) $id] < 0} {
-		lappend cornercrossings($p) $id
-	    }
-	} else {
-	    if {![info exists crossings($id)]
-		|| [lsearch -exact $crossings($id) $p] < 0} {
-		lappend crossings($id) $p
-	    }
-	    if {![info exists crossings($p)]
-		|| [lsearch -exact $crossings($p) $id] < 0} {
-		lappend crossings($p) $id
-	    }
-	}
-    }
-}
-
 proc xcoord {i level ln} {
     global canvx0 xspc1 xspc2
 
@@ -1763,7 +1961,7 @@ proc drawrest {} {
     showstuff $commitidx
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
-    puts "overall $drawmsecs ms for $numcommits commits"
+    #puts "overall $drawmsecs ms for $numcommits commits"
 }
 
 proc findmatches {f} {
@@ -2433,9 +2631,10 @@ proc selnextline {dir} {
 }
 
 proc unselectline {} {
-    global selectedline
+    global selectedline currentid
 
     catch {unset selectedline}
+    catch {unset currentid}
     allcanvs delete secsel
 }
 
@@ -2948,12 +3147,13 @@ proc linehover {} {
 }
 
 proc clickisonarrow {id y} {
-    global lthickness idrowranges
+    global lthickness
 
+    set ranges [rowranges $id]
     set thresh [expr {2 * $lthickness + 6}]
-    set n [expr {[llength $idrowranges($id)] - 1}]
+    set n [expr {[llength $ranges] - 1}]
     for {set i 1} {$i < $n} {incr i} {
-	set row [lindex $idrowranges($id) $i]
+	set row [lindex $ranges $i]
 	if {abs([yc $row] - $y) < $thresh} {
 	    return $i
 	}
@@ -2962,11 +3162,11 @@ proc clickisonarrow {id y} {
 }
 
 proc arrowjump {id n y} {
-    global idrowranges canv
+    global canv
 
     # 1 <-> 2, 3 <-> 4, etc...
     set n [expr {(($n - 1) ^ 1) + 1}]
-    set row [lindex $idrowranges($id) $n]
+    set row [lindex [rowranges $id] $n]
     set yt [yc $row]
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax eq {} || $ymax <= 0} return
@@ -3819,10 +4019,26 @@ set historyindex 0
 
 set optim_delay 16
 
+set nextviewnum 1
+set curview 0
+set viewfiles(0) {}
+
 set stopped 0
 set stuffsaved 0
 set patchnum 0
 setcoords
 makewindow $revtreeargs
 readrefs
-getcommits $revtreeargs
+parse_args $revtreeargs
+set args $parsed_args
+if {$cmdline_files ne {}} {
+    # create a view for the files/dirs specified on the command line
+    set curview 1
+    set nextviewnum 2
+    set viewname(1) "Command line"
+    set viewfiles(1) $cmdline_files
+    .bar.view add command -label $viewname(1) -command {showview 1}
+    .bar.view entryconf 2 -state normal
+    set args [concat $args "--" $cmdline_files]
+}
+getcommits $args
