@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "quote.h"
+#include "xdiff/xdiff.h"
 
 static int uninteresting(struct diff_filepair *p)
 {
@@ -110,28 +111,6 @@ static char *grab_blob(const unsigned char *sha1, unsigned long *size)
 	return blob;
 }
 
-#define TMPPATHLEN 50
-#define MAXLINELEN 10240
-
-static void write_to_temp_file(char *tmpfile, void *blob, unsigned long size)
-{
-	int fd = git_mkstemp(tmpfile, TMPPATHLEN, ".diff_XXXXXX");
-	if (fd < 0)
-		die("unable to create temp-file");
-	if (write(fd, blob, size) != size)
-		die("unable to write temp-file");
-	close(fd);
-}
-
-static void write_temp_blob(char *tmpfile, const unsigned char *sha1)
-{
-	unsigned long size;
-	void *blob;
-	blob = grab_blob(sha1, &size);
-	write_to_temp_file(tmpfile, blob, size);
-	free(blob);
-}
-
 static int parse_num(char **cp_p, unsigned int *num_p)
 {
 	char *cp = *cp_p;
@@ -178,10 +157,9 @@ static int parse_hunk_header(char *line, int len,
 	return -!!memcmp(cp, " @@", 3);
 }
 
-static void append_lost(struct sline *sline, int n, const char *line)
+static void append_lost(struct sline *sline, int n, const char *line, int len)
 {
 	struct lline *lline;
-	int len = strlen(line);
 	unsigned long this_mask = (1UL<<n);
 	if (line[len-1] == '\n')
 		len--;
@@ -216,70 +194,130 @@ static void append_lost(struct sline *sline, int n, const char *line)
 	sline->lost_tail = &lline->next;
 }
 
-static void combine_diff(const unsigned char *parent, const char *ourtmp,
+struct combine_diff_state {
+	char *remainder;
+	unsigned long remainder_size;
+	unsigned int lno, ob, on, nb, nn;
+	unsigned long nmask;
+	int num_parent;
+	int n;
+	struct sline *sline;
+	struct sline *lost_bucket;
+};
+
+static void consume_line(struct combine_diff_state *state,
+			 char *line,
+			 unsigned long len)
+{
+	if (5 < len && !memcmp("@@ -", line, 4)) {
+		if (parse_hunk_header(line, len,
+				      &state->ob, &state->on,
+				      &state->nb, &state->nn))
+			return;
+		state->lno = state->nb;
+		if (!state->nb)
+			/* @@ -1,2 +0,0 @@ to remove the
+			 * first two lines...
+			 */
+			state->nb = 1;
+		if (state->nn == 0)
+			/* @@ -X,Y +N,0 @@ removed Y lines
+			 * that would have come *after* line N
+			 * in the result.  Our lost buckets hang
+			 * to the line after the removed lines,
+			 */
+			state->lost_bucket = &state->sline[state->nb];
+		else
+			state->lost_bucket = &state->sline[state->nb-1];
+		if (!state->sline[state->nb-1].p_lno)
+			state->sline[state->nb-1].p_lno =
+				xcalloc(state->num_parent,
+					sizeof(unsigned long));
+		state->sline[state->nb-1].p_lno[state->n] = state->ob;
+		return;
+	}
+	if (!state->lost_bucket)
+		return; /* not in any hunk yet */
+	switch (line[0]) {
+	case '-':
+		append_lost(state->lost_bucket, state->n, line+1, len-1);
+		break;
+	case '+':
+		state->sline[state->lno-1].flag |= state->nmask;
+		state->lno++;
+		break;
+	}
+}
+
+static int combine_diff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
+{
+	struct combine_diff_state *priv = priv_;
+	int i;
+	for (i = 0; i < nbuf; i++) {
+		if (mb[i].ptr[mb[i].size-1] != '\n') {
+			/* Incomplete line */
+			priv->remainder = realloc(priv->remainder,
+						  priv->remainder_size +
+						  mb[i].size);
+			memcpy(priv->remainder + priv->remainder_size,
+			       mb[i].ptr, mb[i].size);
+			priv->remainder_size += mb[i].size;
+			continue;
+		}
+
+		/* we have a complete line */
+		if (!priv->remainder) {
+			consume_line(priv, mb[i].ptr, mb[i].size);
+			continue;
+		}
+		priv->remainder = realloc(priv->remainder,
+					  priv->remainder_size +
+					  mb[i].size);
+		memcpy(priv->remainder + priv->remainder_size,
+		       mb[i].ptr, mb[i].size);
+		consume_line(priv, priv->remainder,
+			     priv->remainder_size + mb[i].size);
+		free(priv->remainder);
+		priv->remainder = NULL;
+		priv->remainder_size = 0;
+	}
+	return 0;
+}
+
+static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 			 struct sline *sline, int cnt, int n, int num_parent)
 {
-	FILE *in;
-	char parent_tmp[TMPPATHLEN];
-	char cmd[TMPPATHLEN * 2 + 1024];
-	char line[MAXLINELEN];
-	unsigned int lno, ob, on, nb, nn, p_lno;
+	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
-	struct sline *lost_bucket = NULL;
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
+	mmfile_t parent_file;
+	xdemitcb_t ecb;
+	struct combine_diff_state state;
+	unsigned long sz;
 
 	if (!cnt)
 		return; /* result deleted */
 
-	write_temp_blob(parent_tmp, parent);
-	sprintf(cmd, "diff --unified=0 -La/x -Lb/x '%s' '%s'",
-		parent_tmp, ourtmp);
-	in = popen(cmd, "r");
-	if (!in)
-		die("cannot spawn %s", cmd);
+	parent_file.ptr = grab_blob(parent, &sz);
+	parent_file.size = sz;
+	xpp.flags = XDF_NEED_MINIMAL;
+	xecfg.ctxlen = 0;
+	xecfg.flags = 0;
+	ecb.outf = combine_diff_outf;
+	ecb.priv = &state;
+	memset(&state, 0, sizeof(state));
+	state.nmask = nmask;
+	state.sline = sline;
+	state.lno = 1;
+	state.num_parent = num_parent;
+	state.n = n;
 
-	lno = 1;
-	while (fgets(line, sizeof(line), in) != NULL) {
-		int len = strlen(line);
-		if (5 < len && !memcmp("@@ -", line, 4)) {
-			if (parse_hunk_header(line, len,
-					      &ob, &on, &nb, &nn))
-				break;
-			lno = nb;
-			if (!nb)
-				/* @@ -1,2 +0,0 @@ to remove the
-				 * first two lines...
-				 */
-				nb = 1;
-			if (nn == 0)
-				/* @@ -X,Y +N,0 @@ removed Y lines
-				 * that would have come *after* line N
-				 * in the result.  Our lost buckets hang
-				 * to the line after the removed lines,
-				 */
-				lost_bucket = &sline[nb];
-			else
-				lost_bucket = &sline[nb-1];
-			if (!sline[nb-1].p_lno)
-				sline[nb-1].p_lno =
-					xcalloc(num_parent,
-						sizeof(unsigned long));
-			sline[nb-1].p_lno[n] = ob;
-			continue;
-		}
-		if (!lost_bucket)
-			continue; /* not in any hunk yet */
-		switch (line[0]) {
-		case '-':
-			append_lost(lost_bucket, n, line+1);
-			break;
-		case '+':
-			sline[lno-1].flag |= nmask;
-			lno++;
-			break;
-		}
-	}
-	fclose(in);
-	unlink(parent_tmp);
+	xdl_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
+	if (state.remainder && state.remainder_size)
+		consume_line(&state, state.remainder, state.remainder_size);
+	free(state.remainder);
+	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.
 	 *
@@ -625,61 +663,56 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			   int dense, const char *header,
 			   struct diff_options *opt)
 {
-	unsigned long size, cnt, lno;
+	unsigned long result_size, cnt, lno;
 	char *result, *cp, *ep;
 	struct sline *sline; /* survived lines */
 	int mode_differs = 0;
 	int i, show_hunks, shown_header = 0;
-	char ourtmp_buf[TMPPATHLEN];
-	char *ourtmp = ourtmp_buf;
 	int working_tree_file = !memcmp(elem->sha1, null_sha1, 20);
 	int abbrev = opt->full_index ? 40 : DEFAULT_ABBREV;
+	mmfile_t result_file;
 
 	/* Read the result of merge first */
-	if (!working_tree_file) {
-		result = grab_blob(elem->sha1, &size);
-		write_to_temp_file(ourtmp, result, size);
-	}
+	if (!working_tree_file)
+		result = grab_blob(elem->sha1, &result_size);
 	else {
 		/* Used by diff-tree to read from the working tree */
 		struct stat st;
 		int fd;
-		ourtmp = elem->path;
-		if (0 <= (fd = open(ourtmp, O_RDONLY)) &&
+		if (0 <= (fd = open(elem->path, O_RDONLY)) &&
 		    !fstat(fd, &st)) {
 			int len = st.st_size;
 			int cnt = 0;
 
 			elem->mode = canon_mode(st.st_mode);
-			size = len;
+			result_size = len;
 			result = xmalloc(len + 1);
 			while (cnt < len) {
 				int done = xread(fd, result+cnt, len-cnt);
 				if (done == 0)
 					break;
 				if (done < 0)
-					die("read error '%s'", ourtmp);
+					die("read error '%s'", elem->path);
 				cnt += done;
 			}
 			result[len] = 0;
 		}
 		else {
 			/* deleted file */
-			size = 0;
+			result_size = 0;
 			elem->mode = 0;
 			result = xmalloc(1);
 			result[0] = 0;
-			ourtmp = "/dev/null";
 		}
 		if (0 <= fd)
 			close(fd);
 	}
 
-	for (cnt = 0, cp = result; cp - result < size; cp++) {
+	for (cnt = 0, cp = result; cp - result < result_size; cp++) {
 		if (*cp == '\n')
 			cnt++;
 	}
-	if (size && result[size-1] != '\n')
+	if (result_size && result[result_size-1] != '\n')
 		cnt++; /* incomplete line */
 
 	sline = xcalloc(cnt+1, sizeof(*sline));
@@ -689,7 +722,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		sline[lno].lost_tail = &sline[lno].lost_head;
 		sline[lno].flag = 0;
 	}
-	for (lno = 0, cp = result; cp - result < size; cp++) {
+	for (lno = 0, cp = result; cp - result < result_size; cp++) {
 		if (*cp == '\n') {
 			sline[lno].len = cp - sline[lno].bol;
 			lno++;
@@ -697,8 +730,11 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				sline[lno].bol = cp + 1;
 		}
 	}
-	if (size && result[size-1] != '\n')
-		sline[cnt-1].len = size - (sline[cnt-1].bol - result);
+	if (result_size && result[result_size-1] != '\n')
+		sline[cnt-1].len = result_size - (sline[cnt-1].bol - result);
+
+	result_file.ptr = result;
+	result_file.size = result_size;
 
 	sline[0].p_lno = xcalloc((cnt+1) * num_parent, sizeof(unsigned long));
 	for (lno = 0; lno < cnt; lno++)
@@ -714,7 +750,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			}
 		}
 		if (i <= j)
-			combine_diff(elem->parent[i].sha1, ourtmp, sline,
+			combine_diff(elem->parent[i].sha1, &result_file, sline,
 				     cnt, i, num_parent);
 		if (elem->parent[i].mode != elem->mode)
 			mode_differs = 1;
@@ -767,8 +803,6 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		}
 		dump_sline(sline, cnt, num_parent);
 	}
-	if (ourtmp == ourtmp_buf)
-		unlink(ourtmp);
 	free(result);
 
 	for (i = 0; i < cnt; i++) {

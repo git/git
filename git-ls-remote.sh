@@ -53,7 +53,7 @@ http://* | https://* )
         if [ -n "$GIT_SSL_NO_VERIFY" ]; then
             curl_extra_args="-k"
         fi
-	curl -nsf $curl_extra_args "$peek_repo/info/refs" ||
+	curl -nsf $curl_extra_args --header "Pragma: no-cache" "$peek_repo/info/refs" ||
 		echo "failed	slurping"
 	;;
 

@@ -195,6 +195,8 @@ static CURL* get_curl_handle(void)
 	if (getenv("GIT_CURL_VERBOSE"))
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1);
 
+	curl_easy_setopt(result, CURLOPT_USERAGENT, GIT_USER_AGENT);
+
 	return result;
 }
 
