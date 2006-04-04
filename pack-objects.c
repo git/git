@@ -1,5 +1,9 @@
 #include "cache.h"
 #include "object.h"
+#include "blob.h"
+#include "commit.h"
+#include "tag.h"
+#include "tree.h"
 #include "delta.h"
 #include "pack.h"
 #include "csum-file.h"
@@ -603,7 +607,7 @@ static void add_pbase_tree(struct tree_desc *tree, struct name_path *up)
 		if (!add_object_entry(sha1, hash, 1))
 			continue;
 
-		if (!strcmp(type, "tree")) {
+		if (!strcmp(type, tree_type)) {
 			struct tree_desc sub;
 			void *elem;
 			struct name_path me;
@@ -626,7 +630,7 @@ static void add_preferred_base(unsigned char *sha1)
 	struct tree_desc tree;
 	void *elem;
 
-	elem = read_object_with_reference(sha1, "tree", &tree.size, NULL);
+	elem = read_object_with_reference(sha1, tree_type, &tree.size, NULL);
 	tree.buf = elem;
 	if (!tree.buf)
 		return;
@@ -684,13 +688,13 @@ static void check_object(struct object_entry *entry)
 		die("unable to get type of object %s",
 		    sha1_to_hex(entry->sha1));
 
-	if (!strcmp(type, "commit")) {
+	if (!strcmp(type, commit_type)) {
 		entry->type = OBJ_COMMIT;
-	} else if (!strcmp(type, "tree")) {
+	} else if (!strcmp(type, tree_type)) {
 		entry->type = OBJ_TREE;
-	} else if (!strcmp(type, "blob")) {
+	} else if (!strcmp(type, blob_type)) {
 		entry->type = OBJ_BLOB;
-	} else if (!strcmp(type, "tag")) {
+	} else if (!strcmp(type, tag_type)) {
 		entry->type = OBJ_TAG;
 	} else
 		die("unable to pack object %s of type %s",

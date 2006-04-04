@@ -133,11 +133,9 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 		pathlen = strlen(first);
 		ce_size = cache_entry_size(baselen + pathlen);
 
-		src = xmalloc(sizeof(struct cache_entry *) * src_size);
-		memset(src, 0, sizeof(struct cache_entry *) * src_size);
+		src = xcalloc(src_size, sizeof(struct cache_entry *));
 
-		subposns = xmalloc(sizeof(struct tree_list_entry *) * len);
-		memset(subposns, 0, sizeof(struct tree_list_entry *) * len);
+		subposns = xcalloc(len, sizeof(struct tree_list_entry *));
 
 		if (cache_name && !strcmp(cache_name, first)) {
 			any_files = 1;
@@ -177,8 +175,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			else
 				ce_stage = 2;
 
-			ce = xmalloc(ce_size);
-			memset(ce, 0, ce_size);
+			ce = xcalloc(1, ce_size);
 			ce->ce_mode = create_ce_mode(posns[i]->mode);
 			ce->ce_flags = create_ce_flags(baselen + pathlen,
 						       ce_stage);

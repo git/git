@@ -2,9 +2,10 @@
  * GIT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
- * Copyright (C) Junio C Hamano, 2005 
+ * Copyright (C) Junio C Hamano, 2005
  */
 #include "cache.h"
+#include "blob.h"
 
 static void hash_object(const char *path, const char *type, int write_object)
 {
@@ -35,7 +36,7 @@ static const char hash_object_usage[] =
 int main(int argc, char **argv)
 {
 	int i;
-	const char *type = "blob";
+	const char *type = blob_type;
 	int write_object = 0;
 	const char *prefix = NULL;
 	int prefix_length = -1;

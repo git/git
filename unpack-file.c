@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "blob.h"
 
 static char *create_temp_file(unsigned char *sha1)
 {
@@ -9,7 +10,7 @@ static char *create_temp_file(unsigned char *sha1)
 	int fd;
 
 	buf = read_sha1_file(sha1, type, &size);
-	if (!buf || strcmp(type, "blob"))
+	if (!buf || strcmp(type, blob_type))
 		die("unable to read blob object %s", sha1_to_hex(sha1));
 
 	strcpy(path, ".merge_file_XXXXXX");

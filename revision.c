@@ -260,7 +260,7 @@ int rev_same_tree_as_empty(struct tree *t1)
 	if (!t1)
 		return 0;
 
-	tree = read_object_with_reference(t1->object.sha1, "tree", &real.size, NULL);
+	tree = read_object_with_reference(t1->object.sha1, tree_type, &real.size, NULL);
 	if (!tree)
 		return 0;
 	real.buf = tree;

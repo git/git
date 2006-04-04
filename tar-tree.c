@@ -335,7 +335,7 @@ int main(int argc, char **argv)
 	} else
 		archive_time = time(NULL);
 
-	tree.buf = read_object_with_reference(sha1, "tree", &tree.size,
+	tree.buf = read_object_with_reference(sha1, tree_type, &tree.size,
 	                                      tree_sha1);
 	if (!tree.buf)
 		die("not a reference to a tag, commit or tree object: %s",

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "commit.h"
+#include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "quote.h"
@@ -104,7 +105,7 @@ static char *grab_blob(const unsigned char *sha1, unsigned long *size)
 		return xcalloc(1, 1);
 	}
 	blob = read_sha1_file(sha1, type, size);
-	if (strcmp(type, "blob"))
+	if (strcmp(type, blob_type))
 		die("object '%s' is not a blob!", sha1_to_hex(sha1));
 	return blob;
 }

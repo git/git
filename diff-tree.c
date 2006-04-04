@@ -52,7 +52,7 @@ static int diff_root_tree(const unsigned char *new, const char *base)
 	void *tree;
 	struct tree_desc empty, real;
 
-	tree = read_object_with_reference(new, "tree", &real.size, NULL);
+	tree = read_object_with_reference(new, tree_type, &real.size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
 	real.buf = tree;

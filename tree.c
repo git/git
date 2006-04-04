@@ -18,9 +18,7 @@ static int read_one_entry(unsigned char *sha1, const char *base, int baselen, co
 
 	len = strlen(pathname);
 	size = cache_entry_size(baselen + len);
-	ce = xmalloc(size);
-
-	memset(ce, 0, size);
+	ce = xcalloc(1, size);
 
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = create_ce_flags(baselen + len, stage);
@@ -130,8 +128,7 @@ struct tree *lookup_tree(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		struct tree *ret = xmalloc(sizeof(struct tree));
-		memset(ret, 0, sizeof(struct tree));
+		struct tree *ret = xcalloc(1, sizeof(struct tree));
 		created_object(sha1, &ret->object);
 		ret->object.type = tree_type;
 		return ret;

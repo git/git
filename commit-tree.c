@@ -4,6 +4,8 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "commit.h"
+#include "tree.h"
 
 #define BLOCKING (1ul << 14)
 
@@ -93,13 +95,13 @@ int main(int argc, char **argv)
 	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
 		usage(commit_tree_usage);
 
-	check_valid(tree_sha1, "tree");
+	check_valid(tree_sha1, tree_type);
 	for (i = 2; i < argc; i += 2) {
 		char *a, *b;
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p") || get_sha1(b, parent_sha1[parents]))
 			usage(commit_tree_usage);
-		check_valid(parent_sha1[parents], "commit");
+		check_valid(parent_sha1[parents], commit_type);
 		if (new_parent(parents))
 			parents++;
 	}
@@ -125,7 +127,7 @@ int main(int argc, char **argv)
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
 		add_buffer(&buffer, &size, "%s", comment);
 
-	if (!write_sha1_file(buffer, size, "commit", commit_sha1)) {
+	if (!write_sha1_file(buffer, size, commit_type, commit_sha1)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));
 		return 0;
 	}

@@ -5,6 +5,8 @@
  */
 #include "cache.h"
 #include "exec_cmd.h"
+#include "tag.h"
+#include "tree.h"
 
 static void flush_buffer(const char *buf, unsigned long size)
 {
@@ -136,13 +138,13 @@ int main(int argc, char **argv)
 			die("Not a valid object name %s", argv[2]);
 
 		/* custom pretty-print here */
-		if (!strcmp(type, "tree"))
+		if (!strcmp(type, tree_type))
 			return execl_git_cmd("ls-tree", argv[2], NULL);
 
 		buf = read_sha1_file(sha1, type, &size);
 		if (!buf)
 			die("Cannot read object %s", argv[2]);
-		if (!strcmp(type, "tag"))
+		if (!strcmp(type, tag_type))
 			return pprint_tag(sha1, buf, size);
 
 		/* otherwise just spit out the data */

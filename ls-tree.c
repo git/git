@@ -56,7 +56,7 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen,
 		     const char *pathname, unsigned mode, int stage)
 {
 	int retval = 0;
-	const char *type = "blob";
+	const char *type = blob_type;
 
 	if (S_ISDIR(mode)) {
 		if (show_recursive(base, baselen, pathname)) {
@@ -64,7 +64,7 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen,
 			if (!(ls_options & LS_SHOW_TREES))
 				return retval;
 		}
-		type = "tree";
+		type = tree_type;
 	}
 	else if (ls_options & LS_TREE_ONLY)
 		return 0;
