@@ -29,6 +29,19 @@
 
 
 
+long xdl_bogosqrt(long n) {
+	long i;
+
+	/*
+	 * Classical integer square root approximation using shifts.
+	 */
+	for (i = 1; n > 0; n >>= 2)
+		i <<= 1;
+
+	return i;
+}
+
+
 int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 		     xdemitcb_t *ecb) {
 	mmbuffer_t mb[3];
@@ -244,7 +257,7 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 	memcpy(buf, "@@ -", 4);
 	nb += 4;
 
-	nb += xdl_num_out(buf + nb, c1 ? s1: 0);
+	nb += xdl_num_out(buf + nb, c1 ? s1: s1 - 1);
 
 	if (c1 != 1) {
 		memcpy(buf + nb, ",", 1);
@@ -256,7 +269,7 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 	memcpy(buf + nb, " +", 2);
 	nb += 2;
 
-	nb += xdl_num_out(buf + nb, c2 ? s2: 0);
+	nb += xdl_num_out(buf + nb, c2 ? s2: s2 - 1);
 
 	if (c2 != 1) {
 		memcpy(buf + nb, ",", 1);

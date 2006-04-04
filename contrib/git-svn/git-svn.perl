@@ -75,12 +75,14 @@ foreach my $o (keys %opts) {
 	my $arg = 'git-repo-config';
 	$arg .= ' --int' if ($o =~ /=i$/);
 	$arg .= ' --bool' if ($o !~ /=[sfi]$/);
-	$arg .= " svn.$key"; # $key only matches [a-z\-], always shell-safe
 	if (ref $v eq 'ARRAY') {
-		chomp(@$v = `$arg`);
+		chomp(my @tmp = `$arg --get-all svn.$key`);
+		@$v = @tmp if @tmp;
 	} else {
-		chomp($$v = `$arg`);
-		$$v = 0 if $$v eq 'false';
+		chomp(my $tmp = `$arg --get svn.$key`);
+		if ($tmp && !($arg =~ / --bool / && $tmp eq 'false')) {
+			$$v = $tmp;
+		}
 	}
 }
 
