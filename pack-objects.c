@@ -1118,9 +1118,10 @@ int main(int argc, char **argv)
 				break;
 			if (!ferror(stdin))
 				die("fgets returned NULL, not EOF, not error!");
-			if (errno == EINTR)
-				continue;
-			die("fgets: %s", strerror(errno));
+			if (errno != EINTR)
+				die("fgets: %s", strerror(errno));
+			clearerr(stdin);
+			continue;
 		}
 
 		if (line[0] == '-') {
