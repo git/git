@@ -69,6 +69,10 @@
 	changeset, not just the files that contain the change
 	in <string>.
 
+--pickaxe-regex::
+	Make the <string> not a plain string but an extended POSIX
+	regex to match.
+
 -O<orderfile>::
 	Output the patch in the order specified in the
 	<orderfile>, which has one shell glob pattern per line.
