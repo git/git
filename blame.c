@@ -16,6 +16,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
+#include "xdiff-interface.h"
 
 #define DEBUG 0
 
@@ -57,116 +58,89 @@ static int num_get_patch = 0;
 static int num_commits = 0;
 static int patch_time = 0;
 
-#define TEMPFILE_PATH_LEN 60
+struct blame_diff_state {
+	struct xdiff_emit_state xm;
+	struct patch *ret;
+};
+
+static void process_u0_diff(void *state_, char *line, unsigned long len)
+{
+	struct blame_diff_state *state = state_;
+	struct chunk *chunk;
+
+	if (len < 4 || line[0] != '@' || line[1] != '@')
+		return;
+
+	if (DEBUG)
+		printf("chunk line: %.*s", (int)len, line);
+	state->ret->num++;
+	state->ret->chunks = xrealloc(state->ret->chunks,
+				      sizeof(struct chunk) * state->ret->num);
+	chunk = &state->ret->chunks[state->ret->num - 1];
+
+	assert(!strncmp(line, "@@ -", 4));
+
+	if (parse_hunk_header(line, len,
+			      &chunk->off1, &chunk->len1,
+			      &chunk->off2, &chunk->len2)) {
+		state->ret->num--;
+		return;
+	}
+
+	if (chunk->len1 == 0)
+		chunk->off1++;
+	if (chunk->len2 == 0)
+		chunk->off2++;
+
+	if (chunk->off1 > 0)
+		chunk->off1--;
+	if (chunk->off2 > 0)
+		chunk->off2--;
+
+	assert(chunk->off1 >= 0);
+	assert(chunk->off2 >= 0);
+}
+
 static struct patch *get_patch(struct commit *commit, struct commit *other)
 {
-	struct patch *ret;
+	struct blame_diff_state state;
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
+	mmfile_t file_c, file_o;
+	xdemitcb_t ecb;
 	struct util_info *info_c = (struct util_info *)commit->object.util;
 	struct util_info *info_o = (struct util_info *)other->object.util;
-	char tmp_path1[TEMPFILE_PATH_LEN], tmp_path2[TEMPFILE_PATH_LEN];
-	char diff_cmd[TEMPFILE_PATH_LEN*2 + 20];
 	struct timeval tv_start, tv_end;
-	int fd;
-	FILE *fin;
-	char buf[1024];
-
-	ret = xmalloc(sizeof(struct patch));
-	ret->chunks = NULL;
-	ret->num = 0;
 
 	get_blob(commit);
+	file_c.ptr = info_c->buf;
+	file_c.size = info_c->size;
+
 	get_blob(other);
+	file_o.ptr = info_o->buf;
+	file_o.size = info_o->size;
 
 	gettimeofday(&tv_start, NULL);
 
-	fd = git_mkstemp(tmp_path1, TEMPFILE_PATH_LEN, "git-blame-XXXXXX");
-	if (fd < 0)
-		die("unable to create temp-file: %s", strerror(errno));
+	xpp.flags = XDF_NEED_MINIMAL;
+	xecfg.ctxlen = 0;
+	xecfg.flags = 0;
+	ecb.outf = xdiff_outf;
+	ecb.priv = &state;
+	memset(&state, 0, sizeof(state));
+	state.xm.consume = process_u0_diff;
+	state.ret = xmalloc(sizeof(struct patch));
+	state.ret->chunks = NULL;
+	state.ret->num = 0;
 
-	if (xwrite(fd, info_c->buf, info_c->size) != info_c->size)
-		die("write failed: %s", strerror(errno));
-	close(fd);
-
-	fd = git_mkstemp(tmp_path2, TEMPFILE_PATH_LEN, "git-blame-XXXXXX");
-	if (fd < 0)
-		die("unable to create temp-file: %s", strerror(errno));
-
-	if (xwrite(fd, info_o->buf, info_o->size) != info_o->size)
-		die("write failed: %s", strerror(errno));
-	close(fd);
-
-	sprintf(diff_cmd, "diff -U 0 %s %s", tmp_path1, tmp_path2);
-	fin = popen(diff_cmd, "r");
-	if (!fin)
-		die("popen failed: %s", strerror(errno));
-
-	while (fgets(buf, sizeof(buf), fin)) {
-		struct chunk *chunk;
-		char *start, *sp;
-
-		if (buf[0] != '@' || buf[1] != '@')
-			continue;
-
-		if (DEBUG)
-			printf("chunk line: %s", buf);
-		ret->num++;
-		ret->chunks = xrealloc(ret->chunks,
-				       sizeof(struct chunk) * ret->num);
-		chunk = &ret->chunks[ret->num - 1];
-
-		assert(!strncmp(buf, "@@ -", 4));
-
-		start = buf + 4;
-		sp = index(start, ' ');
-		*sp = '\0';
-		if (index(start, ',')) {
-			int ret =
-			    sscanf(start, "%d,%d", &chunk->off1, &chunk->len1);
-			assert(ret == 2);
-		} else {
-			int ret = sscanf(start, "%d", &chunk->off1);
-			assert(ret == 1);
-			chunk->len1 = 1;
-		}
-		*sp = ' ';
-
-		start = sp + 1;
-		sp = index(start, ' ');
-		*sp = '\0';
-		if (index(start, ',')) {
-			int ret =
-			    sscanf(start, "%d,%d", &chunk->off2, &chunk->len2);
-			assert(ret == 2);
-		} else {
-			int ret = sscanf(start, "%d", &chunk->off2);
-			assert(ret == 1);
-			chunk->len2 = 1;
-		}
-		*sp = ' ';
-
-		if (chunk->len1 == 0)
-			chunk->off1++;
-		if (chunk->len2 == 0)
-			chunk->off2++;
-
-		if (chunk->off1 > 0)
-			chunk->off1--;
-		if (chunk->off2 > 0)
-			chunk->off2--;
-
-		assert(chunk->off1 >= 0);
-		assert(chunk->off2 >= 0);
-	}
-	pclose(fin);
-	unlink(tmp_path1);
-	unlink(tmp_path2);
+	xdl_diff(&file_c, &file_o, &xpp, &xecfg, &ecb);
 
 	gettimeofday(&tv_end, NULL);
 	patch_time += 1000000 * (tv_end.tv_sec - tv_start.tv_sec) +
 		tv_end.tv_usec - tv_start.tv_usec;
 
 	num_get_patch++;
-	return ret;
+	return state.ret;
 }
 
 static void free_patch(struct patch *p)
@@ -674,7 +648,7 @@ static void get_commit_info(struct commit* commit, struct commit_info* ret)
 	static char author_buf[1024];
 
 	tmp = strstr(commit->buffer, "\nauthor ") + 8;
-	len = index(tmp, '\n') - tmp;
+	len = strchr(tmp, '\n') - tmp;
 	ret->author = author_buf;
 	memcpy(ret->author, tmp, len);
 
@@ -875,7 +849,7 @@ int main(int argc, const char **argv)
 			if(blame_contents[blame_len-1] != '\n')
 				putc('\n', stdout);
 		} else {
-			char* next_buf = index(buf, '\n') + 1;
+			char* next_buf = strchr(buf, '\n') + 1;
 			fwrite(buf, next_buf - buf, 1, stdout);
 			buf = next_buf;
 		}
