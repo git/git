@@ -504,12 +504,20 @@ proc makewindow {rargs} {
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
+    bindkey <Home> selfirstline
+    bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
-    bind . <Key-Right> "goforw"
-    bind . <Key-Left> "goback"
-    bind . <Key-Prior> "allcanvs yview scroll -1 pages"
-    bind . <Key-Next> "allcanvs yview scroll 1 pages"
+    bindkey <Key-Right> "goforw"
+    bindkey <Key-Left> "goback"
+    bind . <Key-Prior> "selnextpage -1"
+    bind . <Key-Next> "selnextpage 1"
+    bind . <Control-Home> "allcanvs yview moveto 0.0"
+    bind . <Control-End> "allcanvs yview moveto 1.0"
+    bind . <Control-Key-Up> "allcanvs yview scroll -1 units"
+    bind . <Control-Key-Down> "allcanvs yview scroll 1 units"
+    bind . <Control-Key-Prior> "allcanvs yview scroll -1 pages"
+    bind . <Control-Key-Next> "allcanvs yview scroll 1 pages"
     bindkey <Key-Delete> "$ctext yview scroll -1 pages"
     bindkey <Key-BackSpace> "$ctext yview scroll -1 pages"
     bindkey <Key-space> "$ctext yview scroll 1 pages"
@@ -731,12 +739,20 @@ proc keys {} {
 Gitk key bindings:
 
 <Ctrl-Q>		Quit
+<Home>		Move to first commit
+<End>		Move to last commit
 <Up>, p, i	Move up one commit
 <Down>, n, k	Move down one commit
 <Left>, z, j	Go back in history list
 <Right>, x, l	Go forward in history list
-<Page up>	Scroll commit list up one page
-<Page down>	Scroll commit list down one page
+<PageUp>	Move up one page in commit list
+<PageDown>	Move down one page in commit list
+<Ctrl-Home>	Scroll to top of commit list
+<Ctrl-End>	Scroll to bottom of commit list
+<Ctrl-Up>	Scroll commit list up one line
+<Ctrl-Down>	Scroll commit list down one line
+<Ctrl-PageUp>	Scroll commit list up one page
+<Ctrl-PageDown>	Scroll commit list down one page
 <Delete>, b	Scroll diff view up one page
 <Backspace>	Scroll diff view up one page
 <Space>		Scroll diff view down one page
@@ -2331,6 +2347,22 @@ proc appendwithlinks {text} {
     $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
 }
 
+proc viewnextline {dir} {
+    global canv linespc
+
+    $canv delete hover
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    set wnow [$canv yview]
+    set wtop [expr {[lindex $wnow 0] * $ymax}]
+    set newtop [expr {$wtop + $dir * $linespc}]
+    if {$newtop < 0} {
+	set newtop 0
+    } elseif {$newtop > $ymax} {
+	set newtop $ymax
+    }
+    allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
+}
+
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
@@ -2466,12 +2498,43 @@ proc selectline {l isnew} {
     }
 }
 
+proc selfirstline {} {
+    unmarkmatches
+    selectline 0 1
+}
+
+proc sellastline {} {
+    global numcommits
+    unmarkmatches
+    set l [expr {$numcommits - 1}]
+    selectline $l 1
+}
+
 proc selnextline {dir} {
     global selectedline
     if {![info exists selectedline]} return
     set l [expr {$selectedline + $dir}]
     unmarkmatches
     selectline $l 1
+}
+
+proc selnextpage {dir} {
+    global canv linespc selectedline numcommits
+
+    set lpp [expr {([winfo height $canv] - 2) / $linespc}]
+    if {$lpp < 1} {
+	set lpp 1
+    }
+    allcanvs yview scroll [expr {$dir * $lpp}] units
+    if {![info exists selectedline]} return
+    set l [expr {$selectedline + $dir * $lpp}]
+    if {$l < 0} {
+	set l 0
+    } elseif {$l >= $numcommits} {
+        set l [expr $numcommits - 1]
+    }
+    unmarkmatches
+    selectline $l 1    
 }
 
 proc unselectline {} {
