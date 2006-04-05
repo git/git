@@ -111,52 +111,6 @@ static char *grab_blob(const unsigned char *sha1, unsigned long *size)
 	return blob;
 }
 
-static int parse_num(char **cp_p, unsigned int *num_p)
-{
-	char *cp = *cp_p;
-	unsigned int num = 0;
-	int read_some;
-
-	while ('0' <= *cp && *cp <= '9')
-		num = num * 10 + *cp++ - '0';
-	if (!(read_some = cp - *cp_p))
-		return -1;
-	*cp_p = cp;
-	*num_p = num;
-	return 0;
-}
-
-static int parse_hunk_header(char *line, int len,
-			     unsigned int *ob, unsigned int *on,
-			     unsigned int *nb, unsigned int *nn)
-{
-	char *cp;
-	cp = line + 4;
-	if (parse_num(&cp, ob)) {
-	bad_line:
-		return error("malformed diff output: %s", line);
-	}
-	if (*cp == ',') {
-		cp++;
-		if (parse_num(&cp, on))
-			goto bad_line;
-	}
-	else
-		*on = 1;
-	if (*cp++ != ' ' || *cp++ != '+')
-		goto bad_line;
-	if (parse_num(&cp, nb))
-		goto bad_line;
-	if (*cp == ',') {
-		cp++;
-		if (parse_num(&cp, nn))
-			goto bad_line;
-	}
-	else
-		*nn = 1;
-	return -!!memcmp(cp, " @@", 3);
-}
-
 static void append_lost(struct sline *sline, int n, const char *line, int len)
 {
 	struct lline *lline;
