@@ -324,9 +324,11 @@ ifndef NO_CURL
 	curl_check := $(shell (echo 070908; curl-config --vernum) | sort -r | sed -ne 2p)
 	ifeq "$(curl_check)" "070908"
 		ifndef NO_EXPAT
-			EXPAT_LIBEXPAT = -lexpat
 			PROGRAMS += git-http-push$X
 		endif
+	endif
+	ifndef NO_EXPAT
+		EXPAT_LIBEXPAT = -lexpat
 	endif
 endif
 
