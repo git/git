@@ -1225,28 +1225,34 @@ void diff_flush(struct diff_options *options)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if ((diff_output_format == DIFF_FORMAT_NO_OUTPUT) ||
-		    (p->status == DIFF_STATUS_UNKNOWN))
-			continue;
-		if (p->status == 0)
+
+		switch (p->status) {
+		case DIFF_STATUS_UNKNOWN:
+			break;
+		case 0:
 			die("internal error in diff-resolve-rename-copy");
-		switch (diff_output_format) {
-		case DIFF_FORMAT_PATCH:
-			diff_flush_patch(p, options);
 			break;
-		case DIFF_FORMAT_RAW:
-		case DIFF_FORMAT_NAME_STATUS:
-			diff_flush_raw(p, line_termination,
-				       inter_name_termination,
-				       options);
-			break;
-		case DIFF_FORMAT_NAME:
-			diff_flush_name(p,
-					inter_name_termination,
-					line_termination);
-			break;
+		default:
+			switch (diff_output_format) {
+			case DIFF_FORMAT_PATCH:
+				diff_flush_patch(p, options);
+				break;
+			case DIFF_FORMAT_RAW:
+			case DIFF_FORMAT_NAME_STATUS:
+				diff_flush_raw(p, line_termination,
+					       inter_name_termination,
+					       options);
+				break;
+			case DIFF_FORMAT_NAME:
+				diff_flush_name(p,
+						inter_name_termination,
+						line_termination);
+				break;
+			case DIFF_FORMAT_NO_OUTPUT:
+				break;
+			}
 		}
-		diff_free_filepair(q->queue[i]);
+		diff_free_filepair(p);
 	}
 	free(q->queue);
 	q->queue = NULL;
