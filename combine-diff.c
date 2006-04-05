@@ -4,7 +4,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "quote.h"
-#include "xdiff/xdiff.h"
+#include "xdiff-interface.h"
 
 static int uninteresting(struct diff_filepair *p)
 {
@@ -195,8 +195,8 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 }
 
 struct combine_diff_state {
-	char *remainder;
-	unsigned long remainder_size;
+	struct xdiff_emit_state xm;
+
 	unsigned int lno, ob, on, nb, nn;
 	unsigned long nmask;
 	int num_parent;
@@ -205,10 +205,9 @@ struct combine_diff_state {
 	struct sline *lost_bucket;
 };
 
-static void consume_line(struct combine_diff_state *state,
-			 char *line,
-			 unsigned long len)
+static void consume_line(void *state_, char *line, unsigned long len)
 {
+	struct combine_diff_state *state = state_;
 	if (5 < len && !memcmp("@@ -", line, 4)) {
 		if (parse_hunk_header(line, len,
 				      &state->ob, &state->on,
@@ -249,41 +248,6 @@ static void consume_line(struct combine_diff_state *state,
 	}
 }
 
-static int combine_diff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
-{
-	struct combine_diff_state *priv = priv_;
-	int i;
-	for (i = 0; i < nbuf; i++) {
-		if (mb[i].ptr[mb[i].size-1] != '\n') {
-			/* Incomplete line */
-			priv->remainder = realloc(priv->remainder,
-						  priv->remainder_size +
-						  mb[i].size);
-			memcpy(priv->remainder + priv->remainder_size,
-			       mb[i].ptr, mb[i].size);
-			priv->remainder_size += mb[i].size;
-			continue;
-		}
-
-		/* we have a complete line */
-		if (!priv->remainder) {
-			consume_line(priv, mb[i].ptr, mb[i].size);
-			continue;
-		}
-		priv->remainder = realloc(priv->remainder,
-					  priv->remainder_size +
-					  mb[i].size);
-		memcpy(priv->remainder + priv->remainder_size,
-		       mb[i].ptr, mb[i].size);
-		consume_line(priv, priv->remainder,
-			     priv->remainder_size + mb[i].size);
-		free(priv->remainder);
-		priv->remainder = NULL;
-		priv->remainder_size = 0;
-	}
-	return 0;
-}
-
 static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 			 struct sline *sline, int cnt, int n, int num_parent)
 {
@@ -304,9 +268,10 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	xpp.flags = XDF_NEED_MINIMAL;
 	xecfg.ctxlen = 0;
 	xecfg.flags = 0;
-	ecb.outf = combine_diff_outf;
+	ecb.outf = xdiff_outf;
 	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));
+	state.xm.consume = consume_line;
 	state.nmask = nmask;
 	state.sline = sline;
 	state.lno = 1;
@@ -314,9 +279,6 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	state.n = n;
 
 	xdl_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
-	if (state.remainder && state.remainder_size)
-		consume_line(&state, state.remainder, state.remainder_size);
-	free(state.remainder);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.

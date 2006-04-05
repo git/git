@@ -15,6 +15,7 @@ git-checkout
 git-checkout-index
 git-cherry
 git-cherry-pick
+git-clean
 git-clone
 git-clone-pack
 git-commit

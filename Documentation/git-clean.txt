@@ -1,0 +1,50 @@
+git-clean(1)
+============
+
+NAME
+----
+git-clean - Remove untracked files from the working tree
+
+SYNOPSIS
+--------
+[verse]
+'git-clean' [-d] [-n] [-q] [-x | -X]
+
+DESCRIPTION
+-----------
+Removes files unknown to git.  This allows to clean the working tree
+from files that are not under version control.  If the '-x' option is
+specified, ignored files are also removed, allowing to remove all
+build products.
+
+OPTIONS
+-------
+-d::
+	Remove untracked directories in addition to untracked files.
+
+-n::
+	Don't actually remove anything, just show what would be done.
+
+-q::
+	Be quiet, only report errors, but not the files that are
+	successfully removed.
+
+-x::
+	Don't use the ignore rules.  This allows removing all untracked
+	files, including build products.  This can be used (possibly in
+	conjunction with gitlink:git-reset[1]) to create a pristine
+	working directory to test a clean build.
+
+-X::
+	Remove only files ignored by git.  This may be useful to rebuild
+	everything from scratch, but keep manually created files.
+
+
+Author
+------
+Written by Pavel Roskin <proski@gnu.org>
+
+
+GIT
+---
+Part of the gitlink:git[7] suite

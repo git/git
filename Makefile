@@ -114,7 +114,7 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 SCRIPT_SH = \
 	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
-	git-cherry.sh git-clone.sh git-commit.sh \
+	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-count-objects.sh git-diff.sh git-fetch.sh \
 	git-format-patch.sh git-log.sh git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
@@ -208,7 +208,7 @@ LIB_OBJS = \
 	quote.o read-cache.o refs.o run-command.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
-	fetch-clone.o revision.o pager.o tree-walk.o \
+	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
 	$(DIFF_OBJS)
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
