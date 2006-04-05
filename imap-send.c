@@ -1202,6 +1202,7 @@ read_message( FILE *f, msg_data_t *msg )
 			p = xrealloc(msg->data, len+1);
 			if (!p)
 				break;
+			msg->data = p;
 		}
 		r = fread( &msg->data[msg->len], 1, len - msg->len, f );
 		if (r <= 0)
@@ -1332,6 +1333,12 @@ main(int argc, char **argv)
 		return 1;
 	}
 
+	total = count_messages( &all_msgs );
+	if (!total) {
+		fprintf(stderr,"no messages to send\n");
+		return 1;
+	}
+
 	/* write it to the imap server */
 	ctx = imap_open_store( &server );
 	if (!ctx) {
@@ -1339,7 +1346,6 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	total = count_messages( &all_msgs );
 	fprintf( stderr, "sending %d message%s\n", total, (total!=1)?"s":"" );
 	ctx->name = imap_folder;
 	while (1) {
