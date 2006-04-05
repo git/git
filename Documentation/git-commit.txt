@@ -83,15 +83,16 @@ OPTIONS
 	the current tip as parents -- so the current top commit is
 	discarded.
 +
+--
 It is a rough equivalent for:
-+
-------------
+------
 	$ git reset --soft HEAD^
 	$ ... do something else to come up with the right tree ...
 	$ git commit -c ORIG_HEAD
-------------
-+
+
+------
 but can be used to amend a merge commit.
+--
 
 -i|--include::
 	Instead of committing only the files specified on the
