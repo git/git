@@ -1202,6 +1202,7 @@ read_message( FILE *f, msg_data_t *msg )
 			p = xrealloc(msg->data, len+1);
 			if (!p)
 				break;
+			msg->data = p;
 		}
 		r = fread( &msg->data[msg->len], 1, len - msg->len, f );
 		if (r <= 0)
