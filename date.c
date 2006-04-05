@@ -257,10 +257,10 @@ static int match_multi_number(unsigned long num, char c, const char *date, char 
 				break;
 		}
 		/* mm/dd/yy ? */
-		if (is_date(num3, num2, num, tm))
+		if (is_date(num3, num, num2, tm))
 			break;
 		/* dd/mm/yy ? */
-		if (is_date(num3, num, num2, tm))
+		if (is_date(num3, num2, num, tm))
 			break;
 		return 0;
 	}
