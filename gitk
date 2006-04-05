@@ -2230,7 +2230,7 @@ proc donefilediff {} {
     }
 }
 
-proc findcont {id} {
+proc findcont {} {
     global findid treediffs parentlist
     global ffileline findstartline finddidsel
     global displayorder numcommits matchinglines findinprogress
