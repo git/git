@@ -513,6 +513,11 @@ exec_cmd.o: exec_cmd.c
 http.o: http.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
 
+ifdef NO_EXPAT
+http-fetch.o: http-fetch.c
+	$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_EXPAT $<
+endif
+
 git-%$X: %.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
@@ -535,7 +540,7 @@ git-imap-send$X: imap-send.o $(LIB_FILE)
 
 git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIBS) $(CURL_LIBCURL)
+		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 git-http-push$X: revision.o http.o http-push.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
