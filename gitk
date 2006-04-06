@@ -300,7 +300,7 @@ proc readrefs {} {
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
     }
-    set refd [open [list | git-ls-remote [gitdir]] r]
+    set refd [open [list | git ls-remote [gitdir]] r]
     while {0 <= [set n [gets $refd line]]} {
 	if {![regexp {^([0-9a-f]{40})	refs/([^^]*)$} $line \
 	    match id path]} {
@@ -351,7 +351,7 @@ proc error_popup msg {
 }
 
 proc makewindow {} {
-    global canv canv2 canv3 linespc charspc ctext cflist textfont
+    global canv canv2 canv3 linespc charspc ctext cflist textfont mainfont uifont
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
@@ -359,13 +359,16 @@ proc makewindow {} {
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
+    .bar configure -font $uifont
     menu .bar.file
     .bar.file add command -label "Update" -command updatecommits
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "Quit" -command doquit
+    .bar.file configure -font $uifont
     menu .bar.edit
     .bar add cascade -label "Edit" -menu .bar.edit
     .bar.edit add command -label "Preferences" -command doprefs
+    .bar.edit configure -font $uifont
     menu .bar.view
     .bar add cascade -label "View" -menu .bar.view
     .bar.view add command -label "New view..." -command newview
@@ -375,6 +378,8 @@ proc makewindow {} {
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
+    .bar.help add command -label "Key bindings" -command keys
+    .bar.help configure -font $uifont
     . configure -menu .bar
 
     if {![info exists geometry(canv1)]} {
@@ -421,7 +426,7 @@ proc makewindow {} {
     set entries $sha1entry
     set sha1but .ctop.top.bar.sha1label
     button $sha1but -text "SHA1 ID: " -state disabled -relief flat \
-	-command gotocommit -width 8
+	-command gotocommit -width 8 -font $uifont
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .ctop.top.bar.sha1label -side left
     entry $sha1entry -width 40 -font $textfont -textvariable sha1string
@@ -451,19 +456,24 @@ proc makewindow {} {
 	-state disabled -width 26
     pack .ctop.top.bar.rightbut -side left -fill y
 
-    button .ctop.top.bar.findbut -text "Find" -command dofind
+    button .ctop.top.bar.findbut -text "Find" -command dofind -font $uifont
     pack .ctop.top.bar.findbut -side left
     set findstring {}
     set fstring .ctop.top.bar.findstring
     lappend entries $fstring
-    entry $fstring -width 30 -font $textfont -textvariable findstring
+    entry $fstring -width 30 -font $textfont -textvariable findstring -font $textfont
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
     set findtypemenu [tk_optionMenu .ctop.top.bar.findtype \
 			  findtype Exact IgnCase Regexp]
+    .ctop.top.bar.findtype configure -font $uifont
+    .ctop.top.bar.findtype.menu configure -font $uifont
     set findloc "All fields"
     tk_optionMenu .ctop.top.bar.findloc findloc "All fields" Headline \
 	Comments Author Committer Files Pickaxe
+    .ctop.top.bar.findloc configure -font $uifont
+    .ctop.top.bar.findloc.menu configure -font $uifont
+
     pack .ctop.top.bar.findloc -side right
     pack .ctop.top.bar.findtype -side right
     # for making sure type==Exact whenever loc==Pickaxe
@@ -510,7 +520,7 @@ proc makewindow {} {
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
     listbox $cflist -bg white -selectmode extended -width $geometry(cflistw) \
-	-yscrollcommand ".ctop.cdet.right.sb set"
+	-yscrollcommand ".ctop.cdet.right.sb set" -font $mainfont
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
@@ -525,12 +535,20 @@ proc makewindow {} {
     bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
+    bindkey <Home> selfirstline
+    bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
-    bind . <Key-Right> "goforw"
-    bind . <Key-Left> "goback"
-    bind . <Key-Prior> "allcanvs yview scroll -1 pages"
-    bind . <Key-Next> "allcanvs yview scroll 1 pages"
+    bindkey <Key-Right> "goforw"
+    bindkey <Key-Left> "goback"
+    bind . <Key-Prior> "selnextpage -1"
+    bind . <Key-Next> "selnextpage 1"
+    bind . <Control-Home> "allcanvs yview moveto 0.0"
+    bind . <Control-End> "allcanvs yview moveto 1.0"
+    bind . <Control-Key-Up> "allcanvs yview scroll -1 units"
+    bind . <Control-Key-Down> "allcanvs yview scroll 1 units"
+    bind . <Control-Key-Prior> "allcanvs yview scroll -1 pages"
+    bind . <Control-Key-Next> "allcanvs yview scroll 1 pages"
     bindkey <Key-Delete> "$ctext yview scroll -1 pages"
     bindkey <Key-BackSpace> "$ctext yview scroll -1 pages"
     bindkey <Key-space> "$ctext yview scroll 1 pages"
@@ -623,7 +641,7 @@ proc click {w} {
 }
 
 proc savestuff {w} {
-    global canv canv2 canv3 ctext cflist mainfont textfont
+    global canv canv2 canv3 ctext cflist mainfont textfont uifont
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth
 
@@ -633,6 +651,7 @@ proc savestuff {w} {
 	set f [open "~/.gitk-new" w]
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
+	puts $f [list set uifont $uifont]
 	puts $f [list set findmergefiles $findmergefiles]
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
@@ -736,6 +755,55 @@ Copyright © 2005-2006 Paul Mackerras
 Use and redistribute under the terms of the GNU General Public License} \
 	    -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
+    button $w.ok -text Close -command "destroy $w"
+    pack $w.ok -side bottom
+}
+
+proc keys {} {
+    set w .keys
+    if {[winfo exists $w]} {
+	raise $w
+	return
+    }
+    toplevel $w
+    wm title $w "Gitk key bindings"
+    message $w.m -text {
+Gitk key bindings:
+
+<Ctrl-Q>		Quit
+<Home>		Move to first commit
+<End>		Move to last commit
+<Up>, p, i	Move up one commit
+<Down>, n, k	Move down one commit
+<Left>, z, j	Go back in history list
+<Right>, x, l	Go forward in history list
+<PageUp>	Move up one page in commit list
+<PageDown>	Move down one page in commit list
+<Ctrl-Home>	Scroll to top of commit list
+<Ctrl-End>	Scroll to bottom of commit list
+<Ctrl-Up>	Scroll commit list up one line
+<Ctrl-Down>	Scroll commit list down one line
+<Ctrl-PageUp>	Scroll commit list up one page
+<Ctrl-PageDown>	Scroll commit list down one page
+<Delete>, b	Scroll diff view up one page
+<Backspace>	Scroll diff view up one page
+<Space>		Scroll diff view down one page
+u		Scroll diff view up 18 lines
+d		Scroll diff view down 18 lines
+<Ctrl-F>		Find
+<Ctrl-G>		Move to next find hit
+<Ctrl-R>		Move to previous find hit
+<Return>	Move to next find hit
+/		Move to next find hit, or redo find
+?		Move to previous find hit
+f		Scroll diff view to next file
+<Ctrl-KP+>	Increase font size
+<Ctrl-plus>	Increase font size
+<Ctrl-KP->	Decrease font size
+<Ctrl-minus>	Decrease font size
+} \
+	    -justify left -bg white -border 2 -relief sunken
+    pack $w.m -side top -fill both
     button $w.ok -text Close -command "destroy $w"
     pack $w.ok -side bottom
 }
@@ -2487,6 +2555,22 @@ proc appendwithlinks {text} {
     $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
 }
 
+proc viewnextline {dir} {
+    global canv linespc
+
+    $canv delete hover
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    set wnow [$canv yview]
+    set wtop [expr {[lindex $wnow 0] * $ymax}]
+    set newtop [expr {$wtop + $dir * $linespc}]
+    if {$newtop < 0} {
+	set newtop 0
+    } elseif {$newtop > $ymax} {
+	set newtop $ymax
+    }
+    allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
+}
+
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
@@ -2623,12 +2707,43 @@ proc selectline {l isnew} {
     }
 }
 
+proc selfirstline {} {
+    unmarkmatches
+    selectline 0 1
+}
+
+proc sellastline {} {
+    global numcommits
+    unmarkmatches
+    set l [expr {$numcommits - 1}]
+    selectline $l 1
+}
+
 proc selnextline {dir} {
     global selectedline
     if {![info exists selectedline]} return
     set l [expr {$selectedline + $dir}]
     unmarkmatches
     selectline $l 1
+}
+
+proc selnextpage {dir} {
+    global canv linespc selectedline numcommits
+
+    set lpp [expr {([winfo height $canv] - 2) / $linespc}]
+    if {$lpp < 1} {
+	set lpp 1
+    }
+    allcanvs yview scroll [expr {$dir * $lpp}] units
+    if {![info exists selectedline]} return
+    set l [expr {$selectedline + $dir * $lpp}]
+    if {$l < 0} {
+	set l 0
+    } elseif {$l >= $numcommits} {
+        set l [expr $numcommits - 1]
+    }
+    unmarkmatches
+    selectline $l 1    
 }
 
 proc unselectline {} {
@@ -3047,13 +3162,15 @@ proc sha1change {n1 n2 op} {
 }
 
 proc gotocommit {} {
-    global sha1string currentid commitrow tagids
+    global sha1string currentid commitrow tagids headids
     global displayorder numcommits
 
     if {$sha1string == {}
 	|| ([info exists currentid] && $sha1string == $currentid)} return
     if {[info exists tagids($sha1string)]} {
 	set id $tagids($sha1string)
+    } elseif {[info exists headids($sha1string)]} {
+	set id $headids($sha1string)
     } else {
 	set id [string tolower $sha1string]
 	if {[regexp {^[0-9a-f]{4,39}$} $id]} {
@@ -3079,7 +3196,7 @@ proc gotocommit {} {
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
 	set type "SHA1 id"
     } else {
-	set type "Tag"
+	set type "Tag/Head"
     }
     error_popup "$type $sha1string is not known"
 }
@@ -3571,7 +3688,6 @@ proc listrefs {id} {
 
 proc rereadrefs {} {
     global idtags idheads idotherrefs
-    global tagids headids otherrefids
 
     set refids [concat [array names idtags] \
 		    [array names idheads] [array names idotherrefs]]
@@ -3980,6 +4096,7 @@ if {$tclencoding == {}} {
 
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
+set uifont {Helvetica 9 bold}
 set findmergefiles 0
 set maxgraphpct 50
 set maxwidth 16
