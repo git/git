@@ -813,6 +813,7 @@ int main(int argc, const char **argv)
 	rev.prune_fn = simplify_commit;
 	rev.topo_setter = topo_setter;
 	rev.topo_getter = topo_getter;
+	rev.parents = 1;
 	rev.limited = 1;
 
 	commit_list_insert(start_commit, &rev.commits);
