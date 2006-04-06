@@ -223,6 +223,7 @@ proc updatecommits {} {
     set curview -1
     catch {unset viewdata($n)}
     parse_args $revtreeargs
+    readrefs
     showview $n
 }
 
@@ -351,7 +352,8 @@ proc error_popup msg {
 }
 
 proc makewindow {} {
-    global canv canv2 canv3 linespc charspc ctext cflist textfont mainfont uifont
+    global canv canv2 canv3 linespc charspc ctext cflist
+    global textfont mainfont uifont
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
@@ -369,7 +371,7 @@ proc makewindow {} {
     .bar add cascade -label "Edit" -menu .bar.edit
     .bar.edit add command -label "Preferences" -command doprefs
     .bar.edit configure -font $uifont
-    menu .bar.view
+    menu .bar.view -font $uifont
     .bar add cascade -label "View" -menu .bar.view
     .bar.view add command -label "New view..." -command newview
     .bar.view add command -label "Delete view" -command delview -state disabled
@@ -907,6 +909,7 @@ proc showview {n} {
 	}
     }
     unselectline
+    normalline
     stopfindproc
     if {$curview >= 0 && $phase eq {} && ![info exists viewdata($curview)]} {
 	set viewdata($curview) \
@@ -916,7 +919,6 @@ proc showview {n} {
     catch {unset matchinglines}
     catch {unset treediffs}
     clear_display
-    readrefs
 
     set curview $n
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
@@ -1159,7 +1161,7 @@ proc layoutmore {} {
 }
 
 proc showstuff {canshow} {
-    global numcommits commitrow pending_select
+    global numcommits commitrow pending_select selectedline
     global linesegends idrowranges idrangedrawn
 
     if {$numcommits == 0} {
@@ -1200,6 +1202,9 @@ proc showstuff {canshow} {
 	[info exists commitrow($pending_select)] &&
 	$commitrow($pending_select) < $numcommits} {
 	selectline $commitrow($pending_select) 1
+    }
+    if {![info exists selectedline] && ![info exists pending_select]} {
+	selectline 0 1
     }
 }
 
@@ -1989,7 +1994,7 @@ proc xcoord {i level ln} {
 proc finishcommits {} {
     global commitidx phase
     global canv mainfont ctext maincursor textcursor
-    global findinprogress
+    global findinprogress pending_select
 
     if {$commitidx > 0} {
 	drawrest
@@ -2003,6 +2008,7 @@ proc finishcommits {} {
 	settextcursor $textcursor
     }
     set phase {}
+    catch {unset pending_select}
 }
 
 # Don't change the text pane cursor if it is currently the hand cursor,
@@ -2021,12 +2027,16 @@ proc drawrest {} {
     global startmsecs
     global canvy0 numcommits linespc
     global rowlaidout commitidx
+    global pending_select
 
     set row $rowlaidout
     layoutrows $rowlaidout $commitidx 1
     layouttail
     optimize_rows $row 0 $commitidx
     showstuff $commitidx
+    if {[info exists pending_select]} {
+	selectline 0 1
+    }
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
     #puts "overall $drawmsecs ms for $numcommits commits"
