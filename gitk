@@ -2700,7 +2700,7 @@ proc getmergediffline {mdf id np} {
 	incr nextupdate 100
 	fileevent $mdf readable {}
 	update
-	fileevent $mdf readable [list getmergediffline $mdf $id]
+	fileevent $mdf readable [list getmergediffline $mdf $id $np]
     }
 }
 
