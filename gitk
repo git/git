@@ -22,8 +22,8 @@ proc parse_args {rargs} {
     set parsed_args {}
     set cmdline_files {}
     if {[catch {
-	set parse_args [concat --default HEAD $rargs]
-	set args [split [eval exec git-rev-parse $parse_args] "\n"]
+	set args [concat --default HEAD $rargs]
+	set args [split [eval exec git-rev-parse $args] "\n"]
 	set i 0
 	foreach arg $args {
 	    if {![regexp {^[0-9a-f]{40}$} $arg]} {
@@ -217,17 +217,13 @@ proc readcommit {id} {
 }
 
 proc updatecommits {} {
-    global parsed_args
+    global viewdata curview revtreeargs
 
-    unselectline
-    stopfindproc
-    foreach v {matchinglines treediffs currentid} {
-	global $v
-	catch {unset $v}
-    }
-    clear_display
-    readrefs
-    getcommits $parsed_args
+    set n $curview
+    set curview -1
+    catch {unset viewdata($n)}
+    parse_args $revtreeargs
+    showview $n
 }
 
 proc parsecommit {id contents listed} {
@@ -354,7 +350,7 @@ proc error_popup msg {
     tkwait window $w
 }
 
-proc makewindow {rargs} {
+proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist textfont
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
@@ -817,13 +813,6 @@ proc delview {} {
     showview 0
 }
 
-proc saveview {} {
-    global curview viewdata
-    global displayorder parentlist childlist rowidlist rowoffsets
-    global rowrangelist commitlisted
-
-}
-
 proc showview {n} {
     global curview viewdata viewfiles
     global displayorder parentlist childlist rowidlist rowoffsets
@@ -832,6 +821,7 @@ proc showview {n} {
     global selectedline currentid canv canvy0
     global matchinglines treediffs
     global parsed_args
+    global pending_select phase
 
     if {$n == $curview} return
     set selid {}
@@ -850,7 +840,7 @@ proc showview {n} {
     }
     unselectline
     stopfindproc
-    if {![info exists viewdata($curview)]} {
+    if {$curview >= 0 && $phase eq {} && ![info exists viewdata($curview)]} {
 	set viewdata($curview) \
 	    [list $displayorder $parentlist $childlist $rowidlist \
 		 $rowoffsets $rowrangelist $commitlisted]
@@ -858,6 +848,7 @@ proc showview {n} {
     catch {unset matchinglines}
     catch {unset treediffs}
     clear_display
+    readrefs
 
     set curview $n
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
@@ -867,6 +858,7 @@ proc showview {n} {
 	if {$viewfiles($n) ne {}} {
 	    set args [concat $args "--" $viewfiles($n)]
 	}
+	set pending_select $selid
 	getcommits $args 
 	return
     }
@@ -1036,7 +1028,7 @@ proc initlayout {} {
     set commitlisted {}
     set parentlist {}
     set childlist {}
-    set rowrangelist {{}}
+    set rowrangelist {}
     catch {unset children}
     set nextcolor 0
     set rowidlist {{}}
@@ -1099,7 +1091,7 @@ proc layoutmore {} {
 }
 
 proc showstuff {canshow} {
-    global numcommits
+    global numcommits commitrow pending_select
     global linesegends idrowranges idrangedrawn
 
     if {$numcommits == 0} {
@@ -1113,6 +1105,7 @@ proc showstuff {canshow} {
     set rows [visiblerows]
     set r0 [lindex $rows 0]
     set r1 [lindex $rows 1]
+    set selrow -1
     for {set r $row} {$r < $canshow} {incr r} {
 	if {[info exists linesegends($r)]} {
 	    foreach id $linesegends($r) {
@@ -1134,6 +1127,11 @@ proc showstuff {canshow} {
     while {$row < $canshow} {
 	drawcmitrow $row
 	incr row
+    }
+    if {[info exists pending_select] &&
+	[info exists commitrow($pending_select)] &&
+	$commitrow($pending_select) < $numcommits} {
+	selectline $commitrow($pending_select) 1
     }
 }
 
@@ -1202,10 +1200,12 @@ proc layoutrows {row endrow last} {
 	} else {
 	    unset idinlist($id)
 	}
+	set ranges {}
 	if {[info exists idrowranges($id)]} {
 	    lappend idrowranges($id) $row
-	    lappend rowrangelist $idrowranges($id)
+	    set ranges $idrowranges($id)
 	}
+	lappend rowrangelist $ranges
 	incr row
 	set offs [ntimes [llength $idlist] 0]
 	set l [llength $newolds]
@@ -1732,8 +1732,8 @@ proc findcrossings {id} {
     foreach {s e} [rowranges $id] {
 	if {$e >= $numcommits} {
 	    set e [expr {$numcommits - 1}]
-	    if {$e < $s} continue
 	}
+	if {$e <= $s} continue
 	set x [lsearch -exact [lindex $rowidlist $e] $id]
 	if {$x < 0} {
 	    puts "findcrossings: oops, no [shortids $id] in row $e"
@@ -2360,7 +2360,7 @@ proc donefilediff {} {
     }
 }
 
-proc findcont {id} {
+proc findcont {} {
     global findid treediffs parentlist
     global ffileline findstartline finddidsel
     global displayorder numcommits matchinglines findinprogress
@@ -2493,8 +2493,9 @@ proc selectline {l isnew} {
     global canvy0 linespc parentlist childlist
     global cflist currentid sha1entry
     global commentend idtags linknum
-    global mergemax numcommits
+    global mergemax numcommits pending_select
 
+    catch {unset pending_select}
     $canv delete hover
     normalline
     if {$l < 0 || $l >= $numcommits} return
@@ -2784,7 +2785,7 @@ proc getmergediffline {mdf id np} {
 	incr nextupdate 100
 	fileevent $mdf readable {}
 	update
-	fileevent $mdf readable [list getmergediffline $mdf $id]
+	fileevent $mdf readable [list getmergediffline $mdf $id $np]
     }
 }
 
@@ -4027,7 +4028,7 @@ set stopped 0
 set stuffsaved 0
 set patchnum 0
 setcoords
-makewindow $revtreeargs
+makewindow
 readrefs
 parse_args $revtreeargs
 set args $parsed_args
