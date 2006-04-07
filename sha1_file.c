@@ -804,10 +804,12 @@ static int packed_delta_info(unsigned char *base_sha1,
 		 * the result size.
 		 */
 		data = delta_head;
-		get_delta_hdr_size(&data); /* ignore base size */
+
+		/* ignore base size */
+		get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
 
 		/* Read the result size */
-		result_size = get_delta_hdr_size(&data);
+		result_size = get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
 		*sizep = result_size;
 	}
 	return 0;
