@@ -2230,7 +2230,7 @@ proc donefilediff {} {
     }
 }
 
-proc findcont {id} {
+proc findcont {} {
     global findid treediffs parentlist
     global ffileline findstartline finddidsel
     global displayorder numcommits matchinglines findinprogress
@@ -2700,7 +2700,7 @@ proc getmergediffline {mdf id np} {
 	incr nextupdate 100
 	fileevent $mdf readable {}
 	update
-	fileevent $mdf readable [list getmergediffline $mdf $id]
+	fileevent $mdf readable [list getmergediffline $mdf $id $np]
     }
 }
 
