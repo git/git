@@ -453,7 +453,7 @@ static void rehash_objects(void)
 	if (object_ix_hashsz < 1024)
 		object_ix_hashsz = 1024;
 	object_ix = xrealloc(object_ix, sizeof(int) * object_ix_hashsz);
-	object_ix = memset(object_ix, 0, sizeof(int) * object_ix_hashsz);
+	memset(object_ix, 0, sizeof(int) * object_ix_hashsz);
 	for (i = 0, oe = objects; i < nr_objects; i++, oe++) {
 		int ix = locate_object_entry_hash(oe->sha1);
 		if (0 <= ix)
@@ -505,21 +505,6 @@ static unsigned name_hash(struct name_path *path, const char *name)
 	 * but close enough.
 	 */
 	hash = (name_hash<<DIRBITS) | (hash & ((1U<<DIRBITS )-1));
-
-	if (0) { /* debug */
-		n = name + strlen(name);
-		if (n != name && n[-1] == '\n')
-			n--;
-		while (name <= --n)
-			fputc(*n, stderr);
-		for (p = path; p; p = p->up) {
-			fputc('/', stderr);
-			n = p->elem + p->len;
-			while (p->elem <= --n)
-				fputc(*n, stderr);
-		}
-		fprintf(stderr, "\t%08x\n", hash);
-	}
 	return hash;
 }
 
@@ -587,56 +572,254 @@ static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclud
 	return status;
 }
 
-static void add_pbase_tree(struct tree_desc *tree, struct name_path *up)
+struct pbase_tree_cache {
+	unsigned char sha1[20];
+	int ref;
+	int temporary;
+	void *tree_data;
+	unsigned long tree_size;
+};
+
+static struct pbase_tree_cache *(pbase_tree_cache[256]);
+static int pbase_tree_cache_ix(const unsigned char *sha1)
+{
+	return sha1[0] % ARRAY_SIZE(pbase_tree_cache);
+}
+static int pbase_tree_cache_ix_incr(int ix)
+{
+	return (ix+1) % ARRAY_SIZE(pbase_tree_cache);
+}
+
+static struct pbase_tree {
+	struct pbase_tree *next;
+	/* This is a phony "cache" entry; we are not
+	 * going to evict it nor find it through _get()
+	 * mechanism -- this is for the toplevel node that
+	 * would almost always change with any commit.
+	 */
+	struct pbase_tree_cache pcache;
+} *pbase_tree;
+
+static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
+{
+	struct pbase_tree_cache *ent, *nent;
+	void *data;
+	unsigned long size;
+	char type[20];
+	int neigh;
+	int my_ix = pbase_tree_cache_ix(sha1);
+	int available_ix = -1;
+
+	/* pbase-tree-cache acts as a limited hashtable.
+	 * your object will be found at your index or within a few
+	 * slots after that slot if it is cached.
+	 */
+	for (neigh = 0; neigh < 8; neigh++) {
+		ent = pbase_tree_cache[my_ix];
+		if (ent && !memcmp(ent->sha1, sha1, 20)) {
+			ent->ref++;
+			return ent;
+		}
+		else if (((available_ix < 0) && (!ent || !ent->ref)) ||
+			 ((0 <= available_ix) &&
+			  (!ent && pbase_tree_cache[available_ix])))
+			available_ix = my_ix;
+		if (!ent)
+			break;
+		my_ix = pbase_tree_cache_ix_incr(my_ix);
+	}
+
+	/* Did not find one.  Either we got a bogus request or
+	 * we need to read and perhaps cache.
+	 */
+	data = read_sha1_file(sha1, type, &size);
+	if (!data)
+		return NULL;
+	if (strcmp(type, tree_type)) {
+		free(data);
+		return NULL;
+	}
+
+	/* We need to either cache or return a throwaway copy */
+
+	if (available_ix < 0)
+		ent = NULL;
+	else {
+		ent = pbase_tree_cache[available_ix];
+		my_ix = available_ix;
+	}
+
+	if (!ent) {
+		nent = xmalloc(sizeof(*nent));
+		nent->temporary = (available_ix < 0);
+	}
+	else {
+		/* evict and reuse */
+		free(ent->tree_data);
+		nent = ent;
+	}
+	memcpy(nent->sha1, sha1, 20);
+	nent->tree_data = data;
+	nent->tree_size = size;
+	nent->ref = 1;
+	if (!nent->temporary)
+		pbase_tree_cache[my_ix] = nent;
+	return nent;
+}
+
+static void pbase_tree_put(struct pbase_tree_cache *cache)
+{
+	if (!cache->temporary) {
+		cache->ref--;
+		return;
+	}
+	free(cache->tree_data);
+	free(cache);
+}
+
+static int name_cmp_len(const char *name)
+{
+	int i;
+	for (i = 0; name[i] && name[i] != '\n' && name[i] != '/'; i++)
+		;
+	return i;
+}
+
+static void add_pbase_object(struct tree_desc *tree,
+			     struct name_path *up,
+			     const char *name,
+			     int cmplen)
 {
 	while (tree->size) {
 		const unsigned char *sha1;
-		const char *name;
-		unsigned mode, hash;
+		const char *entry_name;
+		int entry_len;
+		unsigned mode;
 		unsigned long size;
 		char type[20];
 
-		sha1 = tree_entry_extract(tree, &name, &mode);
+		sha1 = tree_entry_extract(tree, &entry_name, &mode);
 		update_tree_entry(tree);
-		if (!has_sha1_file(sha1))
+		entry_len = strlen(entry_name);
+		if (entry_len != cmplen ||
+		    memcmp(entry_name, name, cmplen) ||
+		    !has_sha1_file(sha1) ||
+		    sha1_object_info(sha1, type, &size))
 			continue;
-		if (sha1_object_info(sha1, type, &size))
-			continue;
-
-		hash = name_hash(up, name);
-		if (!add_object_entry(sha1, hash, 1))
-			continue;
-
+		if (name[cmplen] != '/') {
+			unsigned hash = name_hash(up, name);
+			add_object_entry(sha1, hash, 1);
+			return;
+		}
 		if (!strcmp(type, tree_type)) {
 			struct tree_desc sub;
-			void *elem;
 			struct name_path me;
+			struct pbase_tree_cache *tree;
+			const char *down = name+cmplen+1;
+			int downlen = name_cmp_len(down);
 
-			elem = read_sha1_file(sha1, type, &sub.size);
-			sub.buf = elem;
-			if (sub.buf) {
-				me.up = up;
-				me.elem = name;
-				me.len = strlen(name);
-				add_pbase_tree(&sub, &me);
-				free(elem);
-			}
+			tree = pbase_tree_get(sha1);
+			if (!tree)
+				return;
+			sub.buf = tree->tree_data;
+			sub.size = tree->tree_size;
+
+			me.up = up;
+			me.elem = entry_name;
+			me.len = entry_len;
+			add_pbase_object(&sub, &me, down, downlen);
+			pbase_tree_put(tree);
+		}
+	}
+}
+
+static unsigned *done_pbase_paths;
+static int done_pbase_paths_num;
+static int done_pbase_paths_alloc;
+static int done_pbase_path_pos(unsigned hash)
+{
+	int lo = 0;
+	int hi = done_pbase_paths_num;
+	while (lo < hi) {
+		int mi = (hi + lo) / 2;
+		if (done_pbase_paths[mi] == hash)
+			return mi;
+		if (done_pbase_paths[mi] < hash)
+			hi = mi;
+		else
+			lo = mi + 1;
+	}
+	return -lo-1;
+}
+
+static int check_pbase_path(unsigned hash)
+{
+	int pos = (!done_pbase_paths) ? -1 : done_pbase_path_pos(hash);
+	if (0 <= pos)
+		return 1;
+	pos = -pos - 1;
+	if (done_pbase_paths_alloc <= done_pbase_paths_num) {
+		done_pbase_paths_alloc = alloc_nr(done_pbase_paths_alloc);
+		done_pbase_paths = xrealloc(done_pbase_paths,
+					    done_pbase_paths_alloc *
+					    sizeof(unsigned));
+	}
+	done_pbase_paths_num++;
+	if (pos < done_pbase_paths_num)
+		memmove(done_pbase_paths + pos + 1,
+			done_pbase_paths + pos,
+			(done_pbase_paths_num - pos - 1) * sizeof(unsigned));
+	done_pbase_paths[pos] = hash;
+	return 0;
+}
+
+static void add_preferred_base_object(char *name, unsigned hash)
+{
+	struct pbase_tree *it;
+	int cmplen = name_cmp_len(name);
+
+	if (check_pbase_path(hash))
+		return;
+
+	for (it = pbase_tree; it; it = it->next) {
+		if (cmplen == 0) {
+			hash = name_hash(NULL, "");
+			add_object_entry(it->pcache.sha1, hash, 1);
+		}
+		else {
+			struct tree_desc tree;
+			tree.buf = it->pcache.tree_data;
+			tree.size = it->pcache.tree_size;
+			add_pbase_object(&tree, NULL, name, cmplen);
 		}
 	}
 }
 
 static void add_preferred_base(unsigned char *sha1)
 {
-	struct tree_desc tree;
-	void *elem;
+	struct pbase_tree *it;
+	void *data;
+	unsigned long size;
+	unsigned char tree_sha1[20];
 
-	elem = read_object_with_reference(sha1, tree_type, &tree.size, NULL);
-	tree.buf = elem;
-	if (!tree.buf)
+	data = read_object_with_reference(sha1, tree_type, &size, tree_sha1);
+	if (!data)
 		return;
-	if (add_object_entry(sha1, name_hash(NULL, ""), 1))
-		add_pbase_tree(&tree, NULL);
-	free(elem);
+
+	for (it = pbase_tree; it; it = it->next) {
+		if (!memcmp(it->pcache.sha1, tree_sha1, 20)) {
+			free(data);
+			return;
+		}
+	}
+
+	it = xcalloc(1, sizeof(*it));
+	it->next = pbase_tree;
+	pbase_tree = it;
+
+	memcpy(it->pcache.sha1, tree_sha1, 20);
+	it->pcache.tree_data = data;
+	it->pcache.tree_size = size;
 }
 
 static void check_object(struct object_entry *entry)
@@ -1051,6 +1234,7 @@ int main(int argc, char **argv)
 	char line[PATH_MAX + 20];
 	int window = 10, depth = 10, pack_to_stdout = 0;
 	struct object_entry **list;
+	int num_preferred_base = 0;
 	int i;
 
 	setup_git_directory();
@@ -1116,6 +1300,7 @@ int main(int argc, char **argv)
 
 	for (;;) {
 		unsigned char sha1[20];
+		unsigned hash;
 
 		if (!fgets(line, sizeof(line), stdin)) {
 			if (feof(stdin))
@@ -1132,12 +1317,15 @@ int main(int argc, char **argv)
 			if (get_sha1_hex(line+1, sha1))
 				die("expected edge sha1, got garbage:\n %s",
 				    line+1);
-			add_preferred_base(sha1);
+			if (num_preferred_base++ < window)
+				add_preferred_base(sha1);
 			continue;
 		}
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
-		add_object_entry(sha1, name_hash(NULL, line+41), 0);
+		hash = name_hash(NULL, line+41);
+		add_preferred_base_object(line+41, hash);
+		add_object_entry(sha1, hash, 0);
 	}
 	if (progress)
 		fprintf(stderr, "Done counting %d objects.\n", nr_objects);
