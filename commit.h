@@ -90,4 +90,15 @@ void sort_in_topological_order(struct commit_list ** list, int lifo);
 void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 				  topo_sort_set_fn_t setter,
 				  topo_sort_get_fn_t getter);
+
+struct commit_graft {
+	unsigned char sha1[20];
+	int nr_parent;
+	unsigned char parent[FLEX_ARRAY][20]; /* more */
+};
+
+struct commit_graft *read_graft_line(char *buf, int len);
+int register_commit_graft(struct commit_graft *, int);
+int read_graft_file(const char *graft_file);
+
 #endif /* COMMIT_H */
