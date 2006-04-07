@@ -28,12 +28,12 @@ void *patch_delta(void *src_buf, unsigned long src_size,
 	top = delta_buf + delta_size;
 
 	/* make sure the orig file size matches what we expect */
-	size = get_delta_hdr_size(&data);
+	size = get_delta_hdr_size(&data, top);
 	if (size != src_size)
 		return NULL;
 
 	/* now the result size */
-	size = get_delta_hdr_size(&data);
+	size = get_delta_hdr_size(&data, top);
 	dst_buf = malloc(size + 1);
 	if (!dst_buf)
 		return NULL;
@@ -52,21 +52,37 @@ void *patch_delta(void *src_buf, unsigned long src_size,
 			if (cmd & 0x20) cp_size |= (*data++ << 8);
 			if (cmd & 0x40) cp_size |= (*data++ << 16);
 			if (cp_size == 0) cp_size = 0x10000;
+			if (cp_off + cp_size < cp_size ||
+			    cp_off + cp_size > src_size ||
+			    cp_size > size)
+				goto bad;
 			memcpy(out, src_buf + cp_off, cp_size);
 			out += cp_size;
-		} else {
+			size -= cp_size;
+		} else if (cmd) {
+			if (cmd > size)
+				goto bad;
 			memcpy(out, data, cmd);
 			out += cmd;
 			data += cmd;
+			size -= cmd;
+		} else {
+			/*
+			 * cmd == 0 is reserved for future encoding
+			 * extensions. In the mean time we must fail when
+			 * encountering them (might be data corruption).
+			 */
+			goto bad;
 		}
 	}
 
 	/* sanity check */
-	if (data != top || out - dst_buf != size) {
+	if (data != top || size != 0) {
+		bad:
 		free(dst_buf);
 		return NULL;
 	}
 
-	*dst_size = size;
+	*dst_size = out - dst_buf;
 	return dst_buf;
 }

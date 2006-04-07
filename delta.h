@@ -16,7 +16,8 @@ extern void *patch_delta(void *src_buf, unsigned long src_size,
  * This must be called twice on the delta data buffer, first to get the
  * expected reference buffer size, and again to get the result buffer size.
  */
-static inline unsigned long get_delta_hdr_size(const unsigned char **datap)
+static inline unsigned long get_delta_hdr_size(const unsigned char **datap,
+					       const unsigned char *top)
 {
 	const unsigned char *data = *datap;
 	unsigned char cmd;
@@ -26,7 +27,7 @@ static inline unsigned long get_delta_hdr_size(const unsigned char **datap)
 		cmd = *data++;
 		size |= (cmd & ~0x80) << i;
 		i += 7;
-	} while (cmd & 0x80);
+	} while (cmd & 0x80 && data < top);
 	*datap = data;
 	return size;
 }
