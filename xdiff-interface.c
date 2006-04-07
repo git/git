@@ -1,10 +1,10 @@
 #include "cache.h"
 #include "xdiff-interface.h"
 
-static int parse_num(char **cp_p, unsigned int *num_p)
+static int parse_num(char **cp_p, int *num_p)
 {
 	char *cp = *cp_p;
-	unsigned int num = 0;
+	int num = 0;
 	int read_some;
 
 	while ('0' <= *cp && *cp <= '9')
@@ -17,8 +17,8 @@ static int parse_num(char **cp_p, unsigned int *num_p)
 }
 
 int parse_hunk_header(char *line, int len,
-		      unsigned int *ob, unsigned int *on,
-		      unsigned int *nb, unsigned int *nn)
+		      int *ob, int *on,
+		      int *nb, int *nn)
 {
 	char *cp;
 	cp = line + 4;

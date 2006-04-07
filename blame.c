@@ -703,11 +703,30 @@ static void* topo_getter(struct commit* c)
 	return util->topo_data;
 }
 
+static int read_ancestry(const char *graft_file,
+			 unsigned char **start_sha1)
+{
+	FILE *fp = fopen(graft_file, "r");
+	char buf[1024];
+	if (!fp)
+		return -1;
+	while (fgets(buf, sizeof(buf), fp)) {
+		/* The format is just "Commit Parent1 Parent2 ...\n" */
+		int len = strlen(buf);
+		struct commit_graft *graft = read_graft_line(buf, len);
+		register_commit_graft(graft, 0);
+		if (!*start_sha1)
+			*start_sha1 = graft->sha1;
+	}
+	fclose(fp);
+	return 0;
+}
+
 int main(int argc, const char **argv)
 {
 	int i;
 	struct commit *initial = NULL;
-	unsigned char sha1[20];
+	unsigned char sha1[20], *sha1_p = NULL;
 
 	const char *filename = NULL, *commit = NULL;
 	char filename_buf[256];
@@ -741,6 +760,14 @@ int main(int argc, const char **argv)
 				  !strcmp(argv[i], "--compability")) {
 				compability = 1;
 				continue;
+			} else if(!strcmp(argv[i], "-S")) {
+				if (i + 1 < argc &&
+				    !read_ancestry(argv[i + 1], &sha1_p)) {
+					compability = 1;
+					i++;
+					continue;
+				}
+				usage(blame_usage);
 			} else if(!strcmp(argv[i], "--")) {
 				options = 0;
 				continue;
@@ -762,7 +789,9 @@ int main(int argc, const char **argv)
 
 	if(!filename)
 		usage(blame_usage);
-	if(!commit)
+	if (commit && sha1_p)
+		usage(blame_usage);
+	else if(!commit)
 		commit = "HEAD";
 
 	if(prefix)
@@ -771,9 +800,12 @@ int main(int argc, const char **argv)
 		strcpy(filename_buf, filename);
 	filename = filename_buf;
 
-	if (get_sha1(commit, sha1))
-		die("get_sha1 failed, commit '%s' not found", commit);
-	start_commit = lookup_commit_reference(sha1);
+	if (!sha1_p) {
+		if (get_sha1(commit, sha1))
+			die("get_sha1 failed, commit '%s' not found", commit);
+		sha1_p = sha1;
+	}
+	start_commit = lookup_commit_reference(sha1_p);
 	get_util(start_commit)->pathname = filename;
 	if (fill_util_info(start_commit)) {
 		printf("%s not found in %s\n", filename, commit);
