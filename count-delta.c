@@ -32,8 +32,8 @@ int count_delta(void *delta_buf, unsigned long delta_size,
 	data = delta_buf;
 	top = delta_buf + delta_size;
 
-	src_size = get_delta_hdr_size(&data);
-	dst_size = get_delta_hdr_size(&data);
+	src_size = get_delta_hdr_size(&data, top);
+	dst_size = get_delta_hdr_size(&data, top);
 
 	added_literal = copied_from_source = out = 0;
 	while (data < top) {
