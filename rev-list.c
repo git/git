@@ -30,6 +30,7 @@ static const char rev_list_usage[] =
 "    --unpacked\n"
 "    --header | --pretty\n"
 "    --abbrev=nr | --no-abbrev\n"
+"    --abbrev-commit\n"
 "  special purpose:\n"
 "    --bisect"
 ;
@@ -39,6 +40,7 @@ struct rev_info revs;
 static int bisect_list = 0;
 static int verbose_header = 0;
 static int abbrev = DEFAULT_ABBREV;
+static int abbrev_commit = 0;
 static int show_timestamp = 0;
 static int hdr_termination = 0;
 static const char *commit_prefix = "";
@@ -52,7 +54,10 @@ static void show_commit(struct commit *commit)
 		fputs(commit_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
-	fputs(sha1_to_hex(commit->object.sha1), stdout);
+	if (abbrev_commit && abbrev)
+		fputs(find_unique_abbrev(commit->object.sha1, abbrev), stdout);
+	else
+		fputs(sha1_to_hex(commit->object.sha1), stdout);
 	if (revs.parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
@@ -317,6 +322,14 @@ int main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--no-abbrev")) {
 			abbrev = 0;
+			continue;
+		}
+		if (!strcmp(arg, "--abbrev")) {
+			abbrev = DEFAULT_ABBREV;
+			continue;
+		}
+		if (!strcmp(arg, "--abbrev-commit")) {
+			abbrev_commit = 1;
 			continue;
 		}
 		if (!strncmp(arg, "--abbrev=", 9)) {
