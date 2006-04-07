@@ -1,0 +1,60 @@
+git-imap-send(1)
+================
+
+NAME
+----
+git-imap-send - Dump a mailbox from stdin into an imap folder
+
+
+SYNOPSIS
+--------
+'git-imap-send'
+
+
+DESCRIPTION
+-----------
+This command uploads a mailbox generated with git-format-patch
+into an imap drafts folder.  This allows patches to be sent as
+other email is sent with mail clients that cannot read mailbox
+files directly.
+
+Typical usage is something like:
+
+git-format-patch --signoff --stdout --attach origin | git-imap-send
+
+
+CONFIGURATION
+-------------
+
+git-imap-send requires the following values in the repository
+configuration file (shown with examples):
+
+[imap]
+    Folder = "INBOX.Drafts"
+
+[imap]
+    Tunnel = "ssh -q user@server.com /usr/bin/imapd ./Maildir 2> /dev/null"
+
+[imap]
+    Host = imap.server.com
+    User = bob
+    Password = pwd
+    Port = 143
+
+
+BUGS
+----
+Doesn't handle lines starting with "From " in the message body.
+
+
+Author
+------
+Derived from isync 1.0.1 by Mike McCormack.
+
+Documentation
+--------------
+Documentation by Mike McCormack
+
+GIT
+---
+Part of the gitlink:git[7] suite

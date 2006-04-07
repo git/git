@@ -1,0 +1,111 @@
+GIT pack format
+===============
+
+= pack-*.pack file has the following format:
+
+   - The header appears at the beginning and consists of the following:
+
+     4-byte signature
+     4-byte version number (network byte order)
+     4-byte number of objects contained in the pack (network byte order)
+
+     Observation: we cannot have more than 4G versions ;-) and
+     more than 4G objects in a pack.
+
+   - The header is followed by number of object entries, each of
+     which looks like this:
+
+     (undeltified representation)
+     n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+     compressed data
+
+     (deltified representation)
+     n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+     20-byte base object name
+     compressed delta data
+
+     Observation: length of each object is encoded in a variable
+     length format and is not constrained to 32-bit or anything.
+
+  - The trailer records 20-byte SHA1 checksum of all of the above.
+
+= pack-*.idx file has the following format:
+
+  - The header consists of 256 4-byte network byte order
+    integers.  N-th entry of this table records the number of
+    objects in the corresponding pack, the first byte of whose
+    object name are smaller than N.  This is called the
+    'first-level fan-out' table.
+
+    Observation: we would need to extend this to an array of
+    8-byte integers to go beyond 4G objects per pack, but it is
+    not strictly necessary.
+
+  - The header is followed by sorted 28-byte entries, one entry
+    per object in the pack.  Each entry is:
+
+    4-byte network byte order integer, recording where the
+    object is stored in the packfile as the offset from the
+    beginning.
+
+    20-byte object name.
+
+    Observation: we would definitely need to extend this to
+    8-byte integer plus 20-byte object name to handle a packfile
+    that is larger than 4GB.
+
+  - The file is concluded with a trailer:
+
+    A copy of the 20-byte SHA1 checksum at the end of
+    corresponding packfile.
+
+    20-byte SHA1-checksum of all of the above.
+
+Pack Idx file:
+
+	idx
+	    +--------------------------------+
+	    | fanout[0] = 2                  |-.
+	    +--------------------------------+ |
+	    | fanout[1]                      | |
+	    +--------------------------------+ |
+	    | fanout[2]                      | |
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
+	    | fanout[255]                    | |
+	    +--------------------------------+ |
+main	    | offset                         | |
+index	    | object name 00XXXXXXXXXXXXXXXX | |
+table	    +--------------------------------+ | 
+	    | offset                         | |
+	    | object name 00XXXXXXXXXXXXXXXX | |
+	    +--------------------------------+ |
+	  .-| offset                         |<+
+	  | | object name 01XXXXXXXXXXXXXXXX |
+	  | +--------------------------------+
+	  | | offset                         |
+	  | | object name 01XXXXXXXXXXXXXXXX |
+	  | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	  | | offset                         |
+	  | | object name FFXXXXXXXXXXXXXXXX |
+	  | +--------------------------------+
+trailer	  | | packfile checksum              |
+	  | +--------------------------------+
+	  | | idxfile checksum               |
+	  | +--------------------------------+
+          .-------.      
+                  |
+Pack file entry: <+
+
+     packed object header:
+	1-byte type (upper 4-bit)
+	       size0 (lower 4-bit) 
+        n-byte sizeN (as long as MSB is set, each 7-bit)
+		size0..sizeN form 4+7+7+..+7 bit integer, size0
+		is the most significant part.
+     packed object data:
+        If it is not DELTA, then deflated bytes (the size above
+		is the size before compression).
+	If it is DELTA, then
+	  20-byte base object name SHA1 (the size above is the
+	  	size of the delta data that follows).
+          delta data, deflated.
