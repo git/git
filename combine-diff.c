@@ -151,7 +151,8 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 struct combine_diff_state {
 	struct xdiff_emit_state xm;
 
-	unsigned int lno, ob, on, nb, nn;
+	unsigned int lno;
+	int ob, on, nb, nn;
 	unsigned long nmask;
 	int num_parent;
 	int n;
