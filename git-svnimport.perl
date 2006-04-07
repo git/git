@@ -616,9 +616,7 @@ sub commit {
 			}
 			if(($action->[0] eq "A") || ($action->[0] eq "R")) {
 				my $node_kind = node_kind($branch,$path,$revision);
-				if($action->[1]) {
-					copy_path($revision,$branch,$path,$action->[1],$action->[2],$node_kind,\@new,\@parents);
-				} elsif ($node_kind eq $SVN::Node::file) {
+				if ($node_kind eq $SVN::Node::file) {
 					my $f = get_file($revision,$branch,$path);
 					if ($f) {
 						push(@new,$f) if $f;
@@ -627,8 +625,15 @@ sub commit {
 						print STDERR "$revision: $branch: could not fetch '$opath'\n";
 					}
 				} elsif ($node_kind eq $SVN::Node::dir) {
-					get_ignore(\@new, \@old, $revision,
-						   $branch,$path);
+					if($action->[1]) {
+						copy_path($revision, $branch,
+							  $path, $action->[1],
+							  $action->[2], $node_kind,
+							  \@new, \@parents);
+					} else {
+						get_ignore(\@new, \@old, $revision,
+							   $branch, $path);
+					}
 				}
 			} elsif ($action->[0] eq "D") {
 				push(@old,$path);
