@@ -197,26 +197,43 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 	return skip_alpha(date);
 }
 
-static int is_date(int year, int month, int day, struct tm *tm)
+static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, struct tm *tm)
 {
 	if (month > 0 && month < 13 && day > 0 && day < 32) {
-		if (year == -1) {
-			tm->tm_mon = month-1;
-			tm->tm_mday = day;
-			return 1;
-		}
-		if (year >= 1970 && year < 2100) {
-			year -= 1900;
-		} else if (year > 70 && year < 100) {
-			/* ok */
-		} else if (year < 38) {
-			year += 100;
-		} else
-			return 0;
+		struct tm check = *tm;
+		struct tm *r = (now_tm ? &check : tm);
+		time_t specified;
 
-		tm->tm_mon = month-1;
-		tm->tm_mday = day;
-		tm->tm_year = year;
+		r->tm_mon = month - 1;
+		r->tm_mday = day;
+		if (year == -1) {
+			if (!now_tm)
+				return 1;
+			r->tm_year = now_tm->tm_year;
+		}
+		else if (year >= 1970 && year < 2100)
+			r->tm_year = year - 1900;
+		else if (year > 70 && year < 100)
+			r->tm_year = year;
+		else if (year < 38)
+			r->tm_year = year + 100;
+		else
+			return 0;
+		if (!now_tm)
+			return 1;
+
+		specified = my_mktime(r);
+
+		/* Be it commit time or author time, it does not make
+		 * sense to specify timestamp way into the future.  Make
+		 * sure it is not later than ten days from now...
+		 */
+		if (now + 10*24*3600 < specified)
+			return 0;
+		tm->tm_mon = r->tm_mon;
+		tm->tm_mday = r->tm_mday;
+		if (year != -1)
+			tm->tm_year = r->tm_year;
 		return 1;
 	}
 	return 0;
@@ -224,6 +241,9 @@ static int is_date(int year, int month, int day, struct tm *tm)
 
 static int match_multi_number(unsigned long num, char c, const char *date, char *end, struct tm *tm)
 {
+	time_t now;
+	struct tm now_tm;
+	struct tm *refuse_future;
 	long num2, num3;
 
 	num2 = strtol(end+1, &end, 10);
@@ -246,19 +266,33 @@ static int match_multi_number(unsigned long num, char c, const char *date, char 
 
 	case '-':
 	case '/':
+	case '.':
+		now = time(NULL);
+		refuse_future = NULL;
+		if (gmtime_r(&now, &now_tm))
+			refuse_future = &now_tm;
+
 		if (num > 70) {
 			/* yyyy-mm-dd? */
-			if (is_date(num, num2, num3, tm))
+			if (is_date(num, num2, num3, refuse_future, now, tm))
 				break;
 			/* yyyy-dd-mm? */
-			if (is_date(num, num3, num2, tm))
+			if (is_date(num, num3, num2, refuse_future, now, tm))
 				break;
 		}
-		/* mm/dd/yy ? */
-		if (is_date(num3, num, num2, tm))
+		/* Our eastern European friends say dd.mm.yy[yy]
+		 * is the norm there, so giving precedence to
+		 * mm/dd/yy[yy] form only when separator is not '.'
+		 */
+		if (c != '.' &&
+		    is_date(num3, num, num2, refuse_future, now, tm))
 			break;
-		/* dd/mm/yy ? */
-		if (is_date(num3, num2, num, tm))
+		/* European dd.mm.yy[yy] or funny US dd/mm/yy[yy] */
+		if (is_date(num3, num2, num, refuse_future, now, tm))
+			break;
+		/* Funny European mm.dd.yy */
+		if (c == '.' &&
+		    is_date(num3, num, num2, refuse_future, now, tm))
 			break;
 		return 0;
 	}
@@ -288,10 +322,11 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 	}
 
 	/*
-	 * Check for special formats: num[:-/]num[same]num
+	 * Check for special formats: num[-.:/]num[same]num
 	 */
 	switch (*end) {
 	case ':':
+	case '.':
 	case '/':
 	case '-':
 		if (isdigit(end[1])) {
