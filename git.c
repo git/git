@@ -283,6 +283,7 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	char *buf = xmalloc(LOGSIZE);
 	static enum cmit_fmt commit_format = CMIT_FMT_DEFAULT;
 	int abbrev = DEFAULT_ABBREV;
+	int abbrev_commit = 0;
 	const char *commit_prefix = "commit ";
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
@@ -295,6 +296,12 @@ static int cmd_log(int argc, const char **argv, char **envp)
 		}
 		else if (!strcmp(arg, "--no-abbrev")) {
 			abbrev = 0;
+		}
+		else if (!strcmp(arg, "--abbrev")) {
+			abbrev = DEFAULT_ABBREV;
+		}
+		else if (!strcmp(arg, "--abbrev-commit")) {
+			abbrev_commit = 1;
 		}
 		else if (!strncmp(arg, "--abbrev=", 9)) {
 			abbrev = strtoul(arg + 9, NULL, 10);
@@ -311,8 +318,12 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	prepare_revision_walk(&rev);
 	setup_pager();
 	while ((commit = get_revision(&rev)) != NULL) {
-		printf("%s%s", commit_prefix,
-		       sha1_to_hex(commit->object.sha1));
+		fputs(commit_prefix, stdout);
+		if (abbrev_commit && abbrev)
+			fputs(find_unique_abbrev(commit->object.sha1, abbrev),
+			      stdout);
+		else
+			fputs(sha1_to_hex(commit->object.sha1), stdout);
 		if (rev.parents) {
 			struct commit_list *parents = commit->parents;
 			while (parents) {
