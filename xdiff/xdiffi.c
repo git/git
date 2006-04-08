@@ -218,7 +218,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		if (ec >= xenv->mxcost) {
 			long fbest, fbest1, bbest, bbest1;
 
-			fbest = -1;
+			fbest = fbest1 = -1;
 			for (d = fmax; d >= fmin; d -= 2) {
 				i1 = XDL_MIN(kvdf[d], lim1);
 				i2 = i1 - d;
@@ -230,7 +230,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 				}
 			}
 
-			bbest = XDL_LINE_MAX;
+			bbest = bbest1 = XDL_LINE_MAX;
 			for (d = bmax; d >= bmin; d -= 2) {
 				i1 = XDL_MAX(off1, kvdb[d]);
 				i2 = i1 - d;
@@ -296,6 +296,7 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 	} else {
 		long ec;
 		xdpsplit_t spl;
+		spl.i1 = spl.i2 = 0;
 
 		/*
 		 * Divide ...
