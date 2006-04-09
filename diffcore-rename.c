@@ -54,12 +54,14 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 /* Table of rename/copy src files */
 static struct diff_rename_src {
 	struct diff_filespec *one;
+	unsigned short score; /* to remember the break score */
 	unsigned src_path_left : 1;
 } *rename_src;
 static int rename_src_nr, rename_src_alloc;
 
 static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
-						   int src_path_left)
+						   int src_path_left,
+						   unsigned short score)
 {
 	int first, last;
 
@@ -89,6 +91,7 @@ static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
 		memmove(rename_src + first + 1, rename_src + first,
 			(rename_src_nr - first - 1) * sizeof(*rename_src));
 	rename_src[first].one = one;
+	rename_src[first].score = score;
 	rename_src[first].src_path_left = src_path_left;
 	return &(rename_src[first]);
 }
@@ -198,7 +201,10 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 	fill_filespec(two, dst->sha1, dst->mode);
 
 	dp = diff_queue(NULL, one, two);
-	dp->score = score;
+	if (!strcmp(src->path, dst->path))
+		dp->score = rename_src[src_index].score;
+	else
+		dp->score = score;
 	dp->source_stays = rename_src[src_index].src_path_left;
 	rename_dst[dst_index].pair = dp;
 }
@@ -256,10 +262,10 @@ void diffcore_rename(struct diff_options *options)
 			 * that means the source actually stays.
 			 */
 			int stays = (p->broken_pair && !p->score);
-			register_rename_src(p->one, stays);
+			register_rename_src(p->one, stays, p->score);
 		}
 		else if (detect_rename == DIFF_DETECT_COPY)
-			register_rename_src(p->one, 1);
+			register_rename_src(p->one, 1, p->score);
 	}
 	if (rename_dst_nr == 0 || rename_src_nr == 0 ||
 	    (0 < rename_limit && rename_limit < rename_dst_nr))
