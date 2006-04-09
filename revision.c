@@ -340,6 +340,10 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 {
 	struct commit_list *parent = commit->parents;
 
+	if (commit->object.flags & ADDED)
+		return;
+	commit->object.flags |= ADDED;
+
 	/*
 	 * If the commit is uninteresting, don't try to
 	 * prune parents - we want the maximal uninteresting
@@ -705,13 +709,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->prune_data) {
 		diff_tree_setup_paths(revs->prune_data);
 		revs->prune_fn = try_to_simplify_commit;
-
-		/*
-		 * If we fix up parent data, we currently cannot
-		 * do that on-the-fly.
-		 */
-		if (revs->parents)
-			revs->limited = 1;
 	}
 
 	return left;
@@ -728,10 +725,12 @@ void prepare_revision_walk(struct rev_info *revs)
 					     revs->topo_getter);
 }
 
-static int rewrite_one(struct commit **pp)
+static int rewrite_one(struct rev_info *revs, struct commit **pp)
 {
 	for (;;) {
 		struct commit *p = *pp;
+		if (!revs->limited)
+			add_parents_to_list(revs, p, &revs->commits);
 		if (p->object.flags & (TREECHANGE | UNINTERESTING))
 			return 0;
 		if (!p->parents)
@@ -740,12 +739,12 @@ static int rewrite_one(struct commit **pp)
 	}
 }
 
-static void rewrite_parents(struct commit *commit)
+static void rewrite_parents(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list **pp = &commit->parents;
 	while (*pp) {
 		struct commit_list *parent = *pp;
-		if (rewrite_one(&parent->item) < 0) {
+		if (rewrite_one(revs, &parent->item) < 0) {
 			*pp = parent->next;
 			continue;
 		}
@@ -802,7 +801,7 @@ struct commit *get_revision(struct rev_info *revs)
 			if (!(commit->object.flags & TREECHANGE))
 				continue;
 			if (revs->parents)
-				rewrite_parents(commit);
+				rewrite_parents(revs, commit);
 		}
 		commit->object.flags |= SHOWN;
 		return commit;

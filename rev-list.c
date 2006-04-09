@@ -7,9 +7,9 @@
 #include "tree-walk.h"
 #include "revision.h"
 
-/* bits #0-5 in revision.h */
+/* bits #0-6 in revision.h */
 
-#define COUNTED		(1u<<6)
+#define COUNTED		(1u<<7)
 
 static const char rev_list_usage[] =
 "git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
