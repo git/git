@@ -142,11 +142,12 @@ static void copy_file(int prefix, const char *data, int size)
 
 static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
-			      struct diff_filespec *one, 
+			      struct diff_filespec *one,
 			      struct diff_filespec *two)
 {
-	/* Use temp[i].name as input, name_a and name_b as labels */
 	int lc_a, lc_b;
+	diff_populate_filespec(one, 0);
+	diff_populate_filespec(two, 0);
 	lc_a = count_lines(one->data, one->size);
 	lc_b = count_lines(two->data, two->size);
 	printf("--- %s\n+++ %s\n@@ -", name_a, name_b);
