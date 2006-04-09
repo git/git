@@ -194,12 +194,12 @@ LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
-	tree-walk.h
+	tree-walk.h log-tree.h
 
 DIFF_OBJS = \
 	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
 	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
-	diffcore-delta.o
+	diffcore-delta.o log-tree.o
 
 LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o \
