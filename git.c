@@ -16,6 +16,8 @@
 #include "cache.h"
 #include "commit.h"
 #include "revision.h"
+#include "diff.h"
+#include "log-tree.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
@@ -285,7 +287,10 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	int abbrev = DEFAULT_ABBREV;
 	int abbrev_commit = 0;
 	const char *commit_prefix = "commit ";
+	struct log_tree_opt opt;
+	int do_diff = 0;
 
+	init_log_tree_opt(&opt);
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	while (1 < argc) {
 		const char *arg = argv[1];
@@ -310,9 +315,31 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			else if (40 < abbrev)
 				abbrev = 40;
 		}
-		else
+		else {
+			int cnt = log_tree_opt_parse(&opt, argv+1, argc-1);
+			if (0 < cnt) {
+				do_diff = 1;
+				argv += cnt;
+				argc -= cnt;
+				continue;
+			}
 			die("unrecognized argument: %s", arg);
+		}
+
 		argc--; argv++;
+	}
+	if (do_diff) {
+		opt.diffopt.abbrev = abbrev;
+		opt.verbose_header = 0;
+		opt.always_show_header = 0;
+		opt.no_commit_id = 1;
+		if (opt.combine_merges)
+			opt.ignore_merges = 0;
+		if (opt.dense_combined_merges)
+			opt.diffopt.output_format = DIFF_FORMAT_PATCH;
+		if (opt.diffopt.output_format == DIFF_FORMAT_PATCH)
+			opt.diffopt.recursive = 1;
+		diff_setup_done(&opt.diffopt);
 	}
 
 	prepare_revision_walk(&rev);
@@ -350,6 +377,9 @@ static int cmd_log(int argc, const char **argv, char **envp)
 		pretty_print_commit(commit_format, commit, ~0, buf,
 				    LOGSIZE, abbrev);
 		printf("%s\n", buf);
+
+		if (do_diff)
+			log_tree_commit(&opt, commit);
 	}
 	free(buf);
 	return 0;
