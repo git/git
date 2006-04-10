@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
 	  [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM]
-	  [--whitespace=<nowarn|warn|error|error-all|strip>]
+	  [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>]
 	  [<patch>...]
 
 DESCRIPTION
@@ -72,6 +72,12 @@ OPTIONS
 -p<n>::
 	Remove <n> leading slashes from traditional diff paths. The
 	default is 1.
+
+-C<n>::
+	Ensure at least <n> lines of surrounding context match before
+	and after each change.  When fewer lines of surrounding
+	context exist they all most match.  By default no context is
+	ever ignored.
 
 --apply::
 	If you use any of the options marked ``Turns off
