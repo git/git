@@ -59,12 +59,12 @@ enum XML_Status {
 #define LOCK_TIME 600
 #define LOCK_REFRESH 30
 
-/* bits #0-4 in revision.h */
+/* bits #0-6 in revision.h */
 
-#define LOCAL    (1u << 5)
-#define REMOTE   (1u << 6)
-#define FETCHING (1u << 7)
-#define PUSHING  (1u << 8)
+#define LOCAL    (1u << 7)
+#define REMOTE   (1u << 8)
+#define FETCHING (1u << 9)
+#define PUSHING  (1u << 10)
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5

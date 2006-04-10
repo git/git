@@ -1375,8 +1375,6 @@ static void diffcore_apply_filter(const char *filter)
 
 void diffcore_std(struct diff_options *options)
 {
-	if (options->paths && options->paths[0])
-		diffcore_pathspec(options->paths);
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
 	if (options->detect_rename)
