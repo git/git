@@ -38,11 +38,15 @@ struct diff_options {
 	int setup;
 	int abbrev;
 
+	int nr_paths;
+	const char **paths;
+	int *pathlens;
 	change_fn_t change;
 	add_remove_fn_t add_remove;
 };
 
-extern void diff_tree_setup_paths(const char **paths);
+extern void diff_tree_setup_paths(const char **paths, struct diff_options *);
+extern void diff_tree_release_paths(struct diff_options *);
 extern int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 		     const char *base, struct diff_options *opt);
 extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,

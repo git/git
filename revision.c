@@ -707,7 +707,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->limited = 1;
 
 	if (revs->prune_data) {
-		diff_tree_setup_paths(revs->prune_data);
+		diff_tree_setup_paths(revs->prune_data, &diff_opt);
 		revs->prune_fn = try_to_simplify_commit;
 	}
 
