@@ -832,6 +832,7 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 
 	diffopts = *opt;
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diffopts.with_raw = 0;
 	diffopts.recursive = 1;
 
 	/* count parents */
@@ -858,6 +859,16 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 			num_paths++;
 	}
 	if (num_paths) {
+		if (opt->with_raw) {
+			int saved_format = opt->output_format;
+			opt->output_format = DIFF_FORMAT_RAW;
+			for (p = paths; p; p = p->next) {
+				if (show_combined_diff(p, num_parent, dense,
+						       header, opt))
+					header = NULL;
+			}
+			opt->output_format = saved_format;
+		}
 		for (p = paths; p; p = p->next) {
 			if (show_combined_diff(p, num_parent, dense,
 					       header, opt))

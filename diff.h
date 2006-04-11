@@ -24,6 +24,7 @@ struct diff_options {
 	const char *orderfile;
 	const char *pickaxe;
 	unsigned recursive:1,
+		 with_raw:1,
 		 tree_in_recursive:1,
 		 full_index:1;
 	int break_opt;
