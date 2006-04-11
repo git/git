@@ -248,6 +248,10 @@ ifeq ($(uname_S),SunOS)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 	endif
+	ifeq ($(uname_R),5.9)
+		NO_UNSETENV = YesPlease
+		NO_SETENV = YesPlease
+	endif
 	INSTALL = ginstall
 	TAR = gtar
 	ALL_CFLAGS += -D__EXTENSIONS__
