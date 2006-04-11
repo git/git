@@ -116,7 +116,7 @@ SCRIPT_SH = \
 	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-count-objects.sh git-diff.sh git-fetch.sh \
-	git-format-patch.sh git-log.sh git-ls-remote.sh \
+	git-format-patch.sh git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
@@ -166,6 +166,8 @@ PROGRAMS = \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
+
+BUILT_INS = git-log$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -448,7 +450,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS) git$X gitk
+all: $(ALL_PROGRAMS) git$X $(BUILT_INS) gitk
 
 all:
 	$(MAKE) -C templates
@@ -460,6 +462,9 @@ git$X: git.c common-cmds.h $(GITLIBS)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(ALL_LDFLAGS) $(LIBS)
+
+$(BUILT_INS): git$X
+	rm -f $@ && ln git$X $@
 
 common-cmds.h: Documentation/git-*.txt
 	./generate-cmdlist.sh > $@
@@ -642,7 +647,7 @@ rpm: dist
 
 clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
-		$(LIB_FILE) $(XDIFF_LIB)
+		$(LIB_FILE) $(XDIFF_LIB) $(BUILT_INS)
 	rm -f $(ALL_PROGRAMS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf $(GIT_TARNAME)
