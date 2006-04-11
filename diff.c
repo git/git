@@ -1322,6 +1322,7 @@ void diff_flush(struct diff_options *options)
 			struct diff_filepair *p = q->queue[i];
 			flush_one_pair(p, DIFF_FORMAT_RAW, options);
 		}
+		putchar(options->line_termination);
 	}
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

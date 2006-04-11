@@ -868,6 +868,7 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 					header = NULL;
 			}
 			opt->output_format = saved_format;
+			putchar(opt->line_termination);
 		}
 		for (p = paths; p; p = p->next) {
 			if (show_combined_diff(p, num_parent, dense,
