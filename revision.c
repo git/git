@@ -233,25 +233,20 @@ static void file_change(struct diff_options *options,
 	tree_difference = REV_TREE_DIFFERENT;
 }
 
-static struct diff_options diff_opt = {
-	.recursive = 1,
-	.add_remove = file_add_remove,
-	.change = file_change,
-};
-
-int rev_compare_tree(struct tree *t1, struct tree *t2)
+int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
 {
 	if (!t1)
 		return REV_TREE_NEW;
 	if (!t2)
 		return REV_TREE_DIFFERENT;
 	tree_difference = REV_TREE_SAME;
-	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "", &diff_opt) < 0)
+	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "",
+			   &revs->diffopt) < 0)
 		return REV_TREE_DIFFERENT;
 	return tree_difference;
 }
 
-int rev_same_tree_as_empty(struct tree *t1)
+int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 {
 	int retval;
 	void *tree;
@@ -269,7 +264,7 @@ int rev_same_tree_as_empty(struct tree *t1)
 	empty.size = 0;
 
 	tree_difference = 0;
-	retval = diff_tree(&empty, &real, "", &diff_opt);
+	retval = diff_tree(&empty, &real, "", &revs->diffopt);
 	free(tree);
 
 	return retval >= 0 && !tree_difference;
@@ -284,7 +279,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		return;
 
 	if (!commit->parents) {
-		if (!rev_same_tree_as_empty(commit->tree))
+		if (!rev_same_tree_as_empty(revs, commit->tree))
 			commit->object.flags |= TREECHANGE;
 		return;
 	}
@@ -294,7 +289,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		struct commit *p = parent->item;
 
 		parse_commit(p);
-		switch (rev_compare_tree(p->tree, commit->tree)) {
+		switch (rev_compare_tree(revs, p->tree, commit->tree)) {
 		case REV_TREE_SAME:
 			if (p->object.flags & UNINTERESTING) {
 				/* Even if a merge with an uninteresting
@@ -312,7 +307,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 
 		case REV_TREE_NEW:
 			if (revs->remove_empty_trees &&
-			    rev_same_tree_as_empty(p->tree)) {
+			    rev_same_tree_as_empty(revs, p->tree)) {
 				/* We are adding all the specified
 				 * paths from this parent, so the
 				 * history beyond this parent is not
@@ -484,6 +479,9 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 void init_revisions(struct rev_info *revs)
 {
 	memset(revs, 0, sizeof(*revs));
+	revs->diffopt.recursive = 1;
+	revs->diffopt.add_remove = file_add_remove;
+	revs->diffopt.change = file_change;
 	revs->lifo = 1;
 	revs->dense = 1;
 	revs->prefix = setup_git_directory();
@@ -707,7 +705,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->limited = 1;
 
 	if (revs->prune_data) {
-		diff_tree_setup_paths(revs->prune_data, &diff_opt);
+		diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
 		revs->prune_fn = try_to_simplify_commit;
 	}
 

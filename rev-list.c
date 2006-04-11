@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "blob.h"
 #include "tree-walk.h"
+#include "diff.h"
 #include "revision.h"
 
 /* bits #0-6 in revision.h */

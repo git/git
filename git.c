@@ -15,8 +15,8 @@
 
 #include "cache.h"
 #include "commit.h"
-#include "revision.h"
 #include "diff.h"
+#include "revision.h"
 #include "log-tree.h"
 
 #ifndef PATH_MAX

@@ -43,6 +43,9 @@ struct rev_info {
 	unsigned long max_age;
 	unsigned long min_age;
 
+	/* paths limiting */
+	struct diff_options diffopt;
+
 	topo_sort_set_fn_t topo_setter;
 	topo_sort_get_fn_t topo_getter;
 };
@@ -52,8 +55,8 @@ struct rev_info {
 #define REV_TREE_DIFFERENT	2
 
 /* revision.c */
-extern int rev_same_tree_as_empty(struct tree *t1);
-extern int rev_compare_tree(struct tree *t1, struct tree *t2);
+extern int rev_same_tree_as_empty(struct rev_info *, struct tree *t1);
+extern int rev_compare_tree(struct rev_info *, struct tree *t1, struct tree *t2);
 
 extern void init_revisions(struct rev_info *revs);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);

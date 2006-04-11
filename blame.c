@@ -508,25 +508,33 @@ static void process_commits(struct rev_info *rev, const char *path,
 static int compare_tree_path(struct rev_info* revs,
 			     struct commit* c1, struct commit* c2)
 {
+	int ret;
 	const char* paths[2];
 	struct util_info* util = c2->object.util;
 	paths[0] = util->pathname;
 	paths[1] = NULL;
 
-	diff_tree_setup_paths(get_pathspec(revs->prefix, paths));
-	return rev_compare_tree(c1->tree, c2->tree);
+	diff_tree_setup_paths(get_pathspec(revs->prefix, paths),
+			      &revs->diffopt);
+	ret = rev_compare_tree(revs, c1->tree, c2->tree);
+	diff_tree_release_paths(&revs->diffopt);
+	return ret;
 }
 
 
 static int same_tree_as_empty_path(struct rev_info *revs, struct tree* t1,
 				   const char* path)
 {
+	int ret;
 	const char* paths[2];
 	paths[0] = path;
 	paths[1] = NULL;
 
-	diff_tree_setup_paths(get_pathspec(revs->prefix, paths));
-	return rev_same_tree_as_empty(t1);
+	diff_tree_setup_paths(get_pathspec(revs->prefix, paths),
+			      &revs->diffopt);
+	ret = rev_same_tree_as_empty(revs, t1);
+	diff_tree_release_paths(&revs->diffopt);
+	return ret;
 }
 
 static const char* find_rename(struct commit* commit, struct commit* parent)
@@ -546,7 +554,7 @@ static const char* find_rename(struct commit* commit, struct commit* parent)
 	diff_opts.recursive = 1;
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	paths[0] = NULL;
-	diff_tree_setup_paths(paths);
+	diff_tree_setup_paths(paths, &diff_opts);
 	if (diff_setup_done(&diff_opts) < 0)
 		die("diff_setup_done failed");
 
@@ -826,7 +834,7 @@ int main(int argc, const char **argv)
 
 	args[0] = filename;
 	args[1] = NULL;
-	diff_tree_setup_paths(args);
+	diff_tree_setup_paths(args, &rev.diffopt);
 	prepare_revision_walk(&rev);
 	process_commits(&rev, filename, &initial);
 
