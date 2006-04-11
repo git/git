@@ -597,7 +597,7 @@ static void process_alternates_response(void *callback_data)
 				newalt->packs = NULL;
 				path = strstr(target, "//");
 				if (path) {
-					path = index(path+2, '/');
+					path = strchr(path+2, '/');
 					if (path)
 						newalt->path_len = strlen(path);
 				}
@@ -678,7 +678,7 @@ static void
 xml_start_tag(void *userData, const char *name, const char **atts)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	const char *c = index(name, ':');
+	const char *c = strchr(name, ':');
 	int new_len;
 
 	if (c == NULL)
@@ -707,7 +707,7 @@ static void
 xml_end_tag(void *userData, const char *name)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	const char *c = index(name, ':');
+	const char *c = strchr(name, ':');
 	char *ep;
 
 	ctx->userFunc(ctx, 1);
@@ -1261,7 +1261,7 @@ int main(int argc, char **argv)
 	alt->next = NULL;
 	path = strstr(url, "//");
 	if (path) {
-		path = index(path+2, '/');
+		path = strchr(path+2, '/');
 		if (path)
 			alt->path_len = strlen(path);
 	}

@@ -170,7 +170,7 @@ PROGRAMS = \
 BUILT_INS = git-log$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
-ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(BUILT_INS) $(SCRIPTS)
+ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -245,6 +245,10 @@ ifeq ($(uname_S),SunOS)
 	NO_STRCASESTR = YesPlease
 	ifeq ($(uname_R),5.8)
 		NEEDS_LIBICONV = YesPlease
+		NO_UNSETENV = YesPlease
+		NO_SETENV = YesPlease
+	endif
+	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 	endif
@@ -450,7 +454,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS) git$X gitk
+all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk
 
 all:
 	$(MAKE) -C templates
@@ -617,6 +621,7 @@ install: all
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
+	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(bindir_SQ)/$p' && ln '$(DESTDIR_SQ)$(bindir_SQ)/git$X' '$(DESTDIR_SQ)$(bindir_SQ)/$p' ;)
 
 install-doc:
 	$(MAKE) -C Documentation install
