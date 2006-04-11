@@ -243,7 +243,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	 * started by showing sline[lno] (possibly showing the lost
 	 * lines attached to it first).
 	 */
-	for (lno = 0,  p_lno = 1; lno < cnt; lno++) {
+	for (lno = 0,  p_lno = 1; lno <= cnt; lno++) {
 		struct lline *ll;
 		sline[lno].p_lno[n] = p_lno;
 
@@ -254,7 +254,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 				p_lno++; /* '-' means parent had it */
 			ll = ll->next;
 		}
-		if (!(sline[lno].flag & nmask))
+		if (lno < cnt && !(sline[lno].flag & nmask))
 			p_lno++; /* no '+' means parent had it */
 	}
 	sline[lno].p_lno[n] = p_lno; /* trailer */
@@ -301,14 +301,14 @@ static unsigned long find_next(struct sline *sline,
 	 * lines that are not interesting to interesting() function
 	 * that are surrounded by interesting() ones.
 	 */
-	while (i < cnt)
+	while (i <= cnt)
 		if (uninteresting
 		    ? !(sline[i].flag & mark)
 		    : (sline[i].flag & mark))
 			return i;
 		else
 			i++;
-	return cnt;
+	return i;
 }
 
 static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
@@ -327,10 +327,10 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 	 * lines but they are treated as "interesting" in the end.
 	 */
 	i = find_next(sline, mark, 0, cnt, 0);
-	if (cnt <= i)
+	if (cnt < i)
 		return 0;
 
-	while (i < cnt) {
+	while (i <= cnt) {
 		unsigned long j = (context < i) ? (i - context) : 0;
 		unsigned long k;
 
@@ -343,7 +343,7 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 		 * next uninteresting one start?
 		 */
 		j = find_next(sline, mark, i, cnt, 1);
-		if (cnt <= j)
+		if (cnt < j)
 			break; /* the rest are all interesting */
 
 		/* lookahead context lines */
@@ -365,7 +365,7 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 		 * the trailing edge a bit.
 		 */
 		i = k;
-		k = (j + context < cnt) ? j + context : cnt;
+		k = (j + context < cnt+1) ? j + context : cnt+1;
 		while (j < k)
 			sline[j++].flag |= mark;
 	}
@@ -380,7 +380,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 	unsigned long i;
 	int has_interesting = 0;
 
-	for (i = 0; i < cnt; i++) {
+	for (i = 0; i <= cnt; i++) {
 		if (interesting(&sline[i], all_mask))
 			sline[i].flag |= mark;
 		else
@@ -394,15 +394,15 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 	 * parent, mark that uninteresting.
 	 */
 	i = 0;
-	while (i < cnt) {
+	while (i <= cnt) {
 		unsigned long j, hunk_begin, hunk_end;
 		unsigned long same_diff;
-		while (i < cnt && !(sline[i].flag & mark))
+		while (i <= cnt && !(sline[i].flag & mark))
 			i++;
-		if (cnt <= i)
+		if (cnt < i)
 			break; /* No more interesting hunks */
 		hunk_begin = i;
-		for (j = i + 1; j < cnt; j++) {
+		for (j = i + 1; j <= cnt; j++) {
 			if (!(sline[j].flag & mark)) {
 				/* Look beyond the end to see if there
 				 * is an interesting line after this
@@ -412,8 +412,8 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 				int contin = 0;
 				la = adjust_hunk_tail(sline, all_mask,
 						     hunk_begin, j);
-				la = (la + context < cnt) ?
-					(la + context) : cnt;
+				la = (la + context < cnt + 1) ?
+					(la + context) : cnt + 1;
 				while (j <= --la) {
 					if (sline[la].flag & mark) {
 						contin = 1;
@@ -507,17 +507,23 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 	while (1) {
 		struct sline *sl = &sline[lno];
 		int hunk_end;
-		while (lno < cnt && !(sline[lno].flag & mark))
+		int rlines;
+		while (lno <= cnt && !(sline[lno].flag & mark))
 			lno++;
-		if (cnt <= lno)
+		if (cnt < lno)
 			break;
-		for (hunk_end = lno + 1; hunk_end < cnt; hunk_end++)
-			if (!(sline[hunk_end].flag & mark))
-				break;
+		else {
+			for (hunk_end = lno + 1; hunk_end <= cnt; hunk_end++)
+				if (!(sline[hunk_end].flag & mark))
+					break;
+		}
+		rlines = hunk_end - lno;
+		if (cnt < hunk_end)
+			rlines--; /* pointing at the last delete hunk */
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		for (i = 0; i < num_parent; i++)
 			show_parent_lno(sline, lno, hunk_end, cnt, i);
-		printf(" +%lu,%lu ", lno+1, hunk_end-lno);
+		printf(" +%lu,%lu ", lno+1, rlines);
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		putchar('\n');
 		while (lno < hunk_end) {
@@ -536,6 +542,8 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 				puts(ll->line);
 				ll = ll->next;
 			}
+			if (cnt < lno)
+				break;
 			p_mask = 1;
 			for (j = 0; j < num_parent; j++) {
 				if (p_mask & sl->flag)
@@ -560,7 +568,7 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 	imask = (1UL<<i);
 	jmask = (1UL<<j);
 
-	for (lno = 0; lno < cnt; lno++) {
+	for (lno = 0; lno <= cnt; lno++) {
 		struct lline *ll = sline->lost_head;
 		sline->p_lno[i] = sline->p_lno[j];
 		while (ll) {
@@ -632,10 +640,10 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	if (result_size && result[result_size-1] != '\n')
 		cnt++; /* incomplete line */
 
-	sline = xcalloc(cnt+1, sizeof(*sline));
+	sline = xcalloc(cnt+2, sizeof(*sline));
 	ep = result;
 	sline[0].bol = result;
-	for (lno = 0; lno <= cnt; lno++) {
+	for (lno = 0; lno <= cnt + 1; lno++) {
 		sline[lno].lost_tail = &sline[lno].lost_head;
 		sline[lno].flag = 0;
 	}
@@ -653,8 +661,11 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	result_file.ptr = result;
 	result_file.size = result_size;
 
-	sline[0].p_lno = xcalloc((cnt+1) * num_parent, sizeof(unsigned long));
-	for (lno = 0; lno < cnt; lno++)
+	/* Even p_lno[cnt+1] is valid -- that is for the end line number
+	 * for deletion hunk at the end.
+	 */
+	sline[0].p_lno = xcalloc((cnt+2) * num_parent, sizeof(unsigned long));
+	for (lno = 0; lno <= cnt; lno++)
 		sline[lno+1].p_lno = sline[lno].p_lno + num_parent;
 
 	for (i = 0; i < num_parent; i++) {
