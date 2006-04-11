@@ -5,11 +5,6 @@
 #include "diff.h"
 #include "tree.h"
 
-// What paths are we interested in?
-static int nr_paths = 0;
-static const char **paths = NULL;
-static int *pathlens = NULL;
-
 static char *malloc_base(const char *base, const char *path, int pathlen)
 {
 	int baselen = strlen(base);
@@ -72,14 +67,14 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 	return 0;
 }
 
-static int interesting(struct tree_desc *desc, const char *base)
+static int interesting(struct tree_desc *desc, const char *base, struct diff_options *opt)
 {
 	const char *path;
 	unsigned mode;
 	int i;
 	int baselen, pathlen;
 
-	if (!nr_paths)
+	if (!opt->nr_paths)
 		return 1;
 
 	(void)tree_entry_extract(desc, &path, &mode);
@@ -87,9 +82,9 @@ static int interesting(struct tree_desc *desc, const char *base)
 	pathlen = strlen(path);
 	baselen = strlen(base);
 
-	for (i=0; i < nr_paths; i++) {
-		const char *match = paths[i];
-		int matchlen = pathlens[i];
+	for (i=0; i < opt->nr_paths; i++) {
+		const char *match = opt->paths[i];
+		int matchlen = opt->pathlens[i];
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
@@ -129,7 +124,7 @@ static int interesting(struct tree_desc *desc, const char *base)
 static void show_tree(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base)
 {
 	while (desc->size) {
-		if (interesting(desc, base))
+		if (interesting(desc, base, opt))
 			show_entry(opt, prefix, desc, base);
 		update_tree_entry(desc);
 	}
@@ -167,11 +162,11 @@ static int show_entry(struct diff_options *opt, const char *prefix, struct tree_
 int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
 {
 	while (t1->size | t2->size) {
-		if (nr_paths && t1->size && !interesting(t1, base)) {
+		if (opt->nr_paths && t1->size && !interesting(t1, base, opt)) {
 			update_tree_entry(t1);
 			continue;
 		}
-		if (nr_paths && t2->size && !interesting(t2, base)) {
+		if (opt->nr_paths && t2->size && !interesting(t2, base, opt)) {
 			update_tree_entry(t2);
 			continue;
 		}
@@ -229,19 +224,28 @@ static int count_paths(const char **paths)
 	return i;
 }
 
-void diff_tree_setup_paths(const char **p)
+void diff_tree_release_paths(struct diff_options *opt)
 {
+	free(opt->pathlens);
+}
+
+void diff_tree_setup_paths(const char **p, struct diff_options *opt)
+{
+	opt->nr_paths = 0;
+	opt->pathlens = NULL;
+	opt->paths = NULL;
+
 	if (p) {
 		int i;
 
-		paths = p;
-		nr_paths = count_paths(paths);
-		if (nr_paths == 0) {
-			pathlens = NULL;
+		opt->paths = p;
+		opt->nr_paths = count_paths(p);
+		if (opt->nr_paths == 0) {
+			opt->pathlens = NULL;
 			return;
 		}
-		pathlens = xmalloc(nr_paths * sizeof(int));
-		for (i=0; i<nr_paths; i++)
-			pathlens[i] = strlen(paths[i]);
+		opt->pathlens = xmalloc(opt->nr_paths * sizeof(int));
+		for (i=0; i < opt->nr_paths; i++)
+			opt->pathlens[i] = strlen(p[i]);
 	}
 }

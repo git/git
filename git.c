@@ -15,8 +15,8 @@
 
 #include "cache.h"
 #include "commit.h"
-#include "revision.h"
 #include "diff.h"
+#include "revision.h"
 #include "log-tree.h"
 
 #ifndef PATH_MAX
@@ -288,7 +288,9 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	int abbrev_commit = 0;
 	const char *commit_prefix = "commit ";
 	struct log_tree_opt opt;
+	int shown = 0;
 	int do_diff = 0;
+	int full_diff = 0;
 
 	init_log_tree_opt(&opt);
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
@@ -315,6 +317,10 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			else if (40 < abbrev)
 				abbrev = 40;
 		}
+		else if (!strcmp(arg, "--full-diff")) {
+			do_diff = 1;
+			full_diff = 1;
+		}
 		else {
 			int cnt = log_tree_opt_parse(&opt, argv+1, argc-1);
 			if (0 < cnt) {
@@ -328,6 +334,7 @@ static int cmd_log(int argc, const char **argv, char **envp)
 
 		argc--; argv++;
 	}
+
 	if (do_diff) {
 		opt.diffopt.abbrev = abbrev;
 		opt.verbose_header = 0;
@@ -339,12 +346,16 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			opt.diffopt.output_format = DIFF_FORMAT_PATCH;
 		if (opt.diffopt.output_format == DIFF_FORMAT_PATCH)
 			opt.diffopt.recursive = 1;
+		if (!full_diff && rev.prune_data)
+			diff_tree_setup_paths(rev.prune_data, &opt.diffopt);
 		diff_setup_done(&opt.diffopt);
 	}
 
 	prepare_revision_walk(&rev);
 	setup_pager();
 	while ((commit = get_revision(&rev)) != NULL) {
+		if (commit_format != CMIT_FMT_ONELINE && shown)
+			putchar('\n');
 		fputs(commit_prefix, stdout);
 		if (abbrev_commit && abbrev)
 			fputs(find_unique_abbrev(commit->object.sha1, abbrev),
@@ -377,9 +388,9 @@ static int cmd_log(int argc, const char **argv, char **envp)
 		pretty_print_commit(commit_format, commit, ~0, buf,
 				    LOGSIZE, abbrev);
 		printf("%s\n", buf);
-
 		if (do_diff)
 			log_tree_commit(&opt, commit);
+		shown = 1;
 	}
 	free(buf);
 	return 0;
