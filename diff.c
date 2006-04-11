@@ -862,6 +862,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	const char *arg = av[0];
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
 		options->output_format = DIFF_FORMAT_PATCH;
+	else if (!strcmp(arg, "--patch-with-raw")) {
+		options->output_format = DIFF_FORMAT_PATCH;
+		options->with_raw = 1;
+	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
 	else if (!strncmp(arg, "-l", 2))
@@ -1048,13 +1052,13 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 static void diff_flush_raw(struct diff_filepair *p,
 			   int line_termination,
 			   int inter_name_termination,
-			   struct diff_options *options)
+			   struct diff_options *options,
+			   int output_format)
 {
 	int two_paths;
 	char status[10];
 	int abbrev = options->abbrev;
 	const char *path_one, *path_two;
-	int output_format = options->output_format;
 
 	path_one = p->one->path;
 	path_two = p->two->path;
@@ -1270,46 +1274,58 @@ static void diff_resolve_rename_copy(void)
 	diff_debug_queue("resolve-rename-copy done", q);
 }
 
+static void flush_one_pair(struct diff_filepair *p,
+			   int diff_output_format,
+			   struct diff_options *options)
+{
+	int inter_name_termination = '\t';
+	int line_termination = options->line_termination;
+	if (!line_termination)
+		inter_name_termination = 0;
+
+	switch (p->status) {
+	case DIFF_STATUS_UNKNOWN:
+		break;
+	case 0:
+		die("internal error in diff-resolve-rename-copy");
+		break;
+	default:
+		switch (diff_output_format) {
+		case DIFF_FORMAT_PATCH:
+			diff_flush_patch(p, options);
+			break;
+		case DIFF_FORMAT_RAW:
+		case DIFF_FORMAT_NAME_STATUS:
+			diff_flush_raw(p, line_termination,
+				       inter_name_termination,
+				       options, diff_output_format);
+			break;
+		case DIFF_FORMAT_NAME:
+			diff_flush_name(p,
+					inter_name_termination,
+					line_termination);
+			break;
+		case DIFF_FORMAT_NO_OUTPUT:
+			break;
+		}
+	}
+}
+
 void diff_flush(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	int inter_name_termination = '\t';
 	int diff_output_format = options->output_format;
-	int line_termination = options->line_termination;
 
-	if (!line_termination)
-		inter_name_termination = 0;
-
+	if (options->with_raw) {
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			flush_one_pair(p, DIFF_FORMAT_RAW, options);
+		}
+	}
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-
-		switch (p->status) {
-		case DIFF_STATUS_UNKNOWN:
-			break;
-		case 0:
-			die("internal error in diff-resolve-rename-copy");
-			break;
-		default:
-			switch (diff_output_format) {
-			case DIFF_FORMAT_PATCH:
-				diff_flush_patch(p, options);
-				break;
-			case DIFF_FORMAT_RAW:
-			case DIFF_FORMAT_NAME_STATUS:
-				diff_flush_raw(p, line_termination,
-					       inter_name_termination,
-					       options);
-				break;
-			case DIFF_FORMAT_NAME:
-				diff_flush_name(p,
-						inter_name_termination,
-						line_termination);
-				break;
-			case DIFF_FORMAT_NO_OUTPUT:
-				break;
-			}
-		}
+		flush_one_pair(p, diff_output_format, options);
 		diff_free_filepair(p);
 	}
 	free(q->queue);
@@ -1375,8 +1391,6 @@ static void diffcore_apply_filter(const char *filter)
 
 void diffcore_std(struct diff_options *options)
 {
-	if (options->paths && options->paths[0])
-		diffcore_pathspec(options->paths);
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
 	if (options->detect_rename)

@@ -11,15 +11,17 @@ static const char diff_stages_usage[] =
 "git-diff-stages [<common diff options>] <stage1> <stage2> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-static void diff_stages(int stage1, int stage2)
+static void diff_stages(int stage1, int stage2, const char **pathspec)
 {
 	int i = 0;
 	while (i < active_nr) {
 		struct cache_entry *ce, *stages[4] = { NULL, };
 		struct cache_entry *one, *two;
 		const char *name;
-		int len;
+		int len, skip;
+
 		ce = active_cache[i];
+		skip = !ce_path_match(ce, pathspec);
 		len = ce_namelen(ce);
 		name = ce->name;
 		for (;;) {
@@ -34,7 +36,8 @@ static void diff_stages(int stage1, int stage2)
 		}
 		one = stages[stage1];
 		two = stages[stage2];
-		if (!one && !two)
+
+		if (skip || (!one && !two))
 			continue;
 		if (!one)
 			diff_addremove(&diff_options, '+', ntohl(two->ce_mode),
@@ -54,8 +57,8 @@ static void diff_stages(int stage1, int stage2)
 int main(int ac, const char **av)
 {
 	int stage1, stage2;
-
-	setup_git_directory();
+	const char *prefix = setup_git_directory();
+	const char **pathspec = NULL;
 
 	git_config(git_diff_config);
 	read_cache();
@@ -89,12 +92,12 @@ int main(int ac, const char **av)
 		usage(diff_stages_usage);
 
 	av += 3; /* The rest from av[0] are for paths restriction. */
-	diff_options.paths = av;
+	pathspec = get_pathspec(prefix, av);
 
 	if (diff_setup_done(&diff_options) < 0)
 		usage(diff_stages_usage);
 
-	diff_stages(stage1, stage2);
+	diff_stages(stage1, stage2, pathspec);
 	diffcore_std(&diff_options);
 	diff_flush(&diff_options);
 	return 0;

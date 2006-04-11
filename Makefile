@@ -116,7 +116,7 @@ SCRIPT_SH = \
 	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-count-objects.sh git-diff.sh git-fetch.sh \
-	git-format-patch.sh git-log.sh git-ls-remote.sh \
+	git-format-patch.sh git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
@@ -167,8 +167,10 @@ PROGRAMS = \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
+BUILT_INS = git-log$X
+
 # what 'all' will build and 'install' will install, in gitexecdir
-ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
+ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(BUILT_INS) $(SCRIPTS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -197,7 +199,7 @@ LIB_H = \
 	tree-walk.h log-tree.h
 
 DIFF_OBJS = \
-	diff.o diffcore-break.o diffcore-order.o diffcore-pathspec.o \
+	diff.o diffcore-break.o diffcore-order.o \
 	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
 	diffcore-delta.o log-tree.o
 
@@ -460,6 +462,9 @@ git$X: git.c common-cmds.h $(GITLIBS)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(ALL_LDFLAGS) $(LIBS)
+
+$(BUILT_INS): git$X
+	rm -f $@ && ln git$X $@
 
 common-cmds.h: Documentation/git-*.txt
 	./generate-cmdlist.sh > $@

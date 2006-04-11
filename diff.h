@@ -20,11 +20,11 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    const char *base, const char *path);
 
 struct diff_options {
-	const char **paths;
 	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
 	unsigned recursive:1,
+		 with_raw:1,
 		 tree_in_recursive:1,
 		 full_index:1;
 	int break_opt;
