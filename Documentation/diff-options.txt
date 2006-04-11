@@ -4,6 +4,9 @@
 -u::
 	Synonym for "-p".
 
+--patch-with-raw::
+	Generate patch but keep also the default raw diff output.
+
 -z::
 	\0 line termination on output
 

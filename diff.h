@@ -113,6 +113,8 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  -z            output diff-raw with lines terminated with NUL.\n" \
 "  -p            output patch format.\n" \
 "  -u            synonym for -p.\n" \
+"  --patch-with-raw\n" \
+"                output both a patch and the diff-raw format.\n" \
 "  --name-only   show only names of changed files.\n" \
 "  --name-status show names and status of changed files.\n" \
 "  --full-index  show full object name on index lines.\n" \
