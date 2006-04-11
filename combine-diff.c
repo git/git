@@ -243,7 +243,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	 * started by showing sline[lno] (possibly showing the lost
 	 * lines attached to it first).
 	 */
-	for (lno = 0,  p_lno = 1; lno < cnt; lno++) {
+	for (lno = 0,  p_lno = 1; lno <= cnt; lno++) {
 		struct lline *ll;
 		sline[lno].p_lno[n] = p_lno;
 
@@ -254,7 +254,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 				p_lno++; /* '-' means parent had it */
 			ll = ll->next;
 		}
-		if (!(sline[lno].flag & nmask))
+		if (lno < cnt && !(sline[lno].flag & nmask))
 			p_lno++; /* no '+' means parent had it */
 	}
 	sline[lno].p_lno[n] = p_lno; /* trailer */
@@ -509,15 +509,28 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 		int hunk_end;
 		while (lno < cnt && !(sline[lno].flag & mark))
 			lno++;
-		if (cnt <= lno)
+		if (cnt < lno)
 			break;
-		for (hunk_end = lno + 1; hunk_end < cnt; hunk_end++)
-			if (!(sline[hunk_end].flag & mark))
+		else if (cnt == lno) {
+			/* See if there is anything interesting */
+			struct lline *ll;
+			for (ll = sline[lno].lost_head; ll; ll = ll->next)
+				if (ll->parent_map)
+					break;
+			if (!ll)
 				break;
+			hunk_end = cnt + 1;
+		}
+		else {
+			for (hunk_end = lno + 1; hunk_end < cnt; hunk_end++)
+				if (!(sline[hunk_end].flag & mark))
+					break;
+		}
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		for (i = 0; i < num_parent; i++)
 			show_parent_lno(sline, lno, hunk_end, cnt, i);
-		printf(" +%lu,%lu ", lno+1, hunk_end-lno);
+		printf(" +%lu,%lu ", lno+1,
+		       (cnt == lno) ? 0 : hunk_end - lno);
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		putchar('\n');
 		while (lno < hunk_end) {
@@ -536,6 +549,8 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 				puts(ll->line);
 				ll = ll->next;
 			}
+			if (cnt <= lno)
+				break;
 			p_mask = 1;
 			for (j = 0; j < num_parent; j++) {
 				if (p_mask & sl->flag)
@@ -560,7 +575,7 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 	imask = (1UL<<i);
 	jmask = (1UL<<j);
 
-	for (lno = 0; lno < cnt; lno++) {
+	for (lno = 0; lno <= cnt; lno++) {
 		struct lline *ll = sline->lost_head;
 		sline->p_lno[i] = sline->p_lno[j];
 		while (ll) {
@@ -632,10 +647,10 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	if (result_size && result[result_size-1] != '\n')
 		cnt++; /* incomplete line */
 
-	sline = xcalloc(cnt+1, sizeof(*sline));
+	sline = xcalloc(cnt+2, sizeof(*sline));
 	ep = result;
 	sline[0].bol = result;
-	for (lno = 0; lno <= cnt; lno++) {
+	for (lno = 0; lno <= cnt + 1; lno++) {
 		sline[lno].lost_tail = &sline[lno].lost_head;
 		sline[lno].flag = 0;
 	}
@@ -653,8 +668,11 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	result_file.ptr = result;
 	result_file.size = result_size;
 
-	sline[0].p_lno = xcalloc((cnt+1) * num_parent, sizeof(unsigned long));
-	for (lno = 0; lno < cnt; lno++)
+	/* Even p_lno[cnt+1] is valid -- that is for the end line number
+	 * for deletion hunk at the end.
+	 */
+	sline[0].p_lno = xcalloc((cnt+2) * num_parent, sizeof(unsigned long));
+	for (lno = 0; lno <= cnt; lno++)
 		sline[lno+1].p_lno = sline[lno].p_lno + num_parent;
 
 	for (i = 0; i < num_parent; i++) {
