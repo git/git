@@ -32,8 +32,9 @@ static int apply = 1;
 static int no_add = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
+static unsigned long p_context = -1;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -100,6 +101,7 @@ static int max_change, max_len;
 static int linenr = 1;
 
 struct fragment {
+	unsigned long leading, trailing;
 	unsigned long oldpos, oldlines;
 	unsigned long newpos, newlines;
 	const char *patch;
@@ -817,12 +819,15 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	int added, deleted;
 	int len = linelen(line, size), offset;
 	unsigned long oldlines, newlines;
+	unsigned long leading, trailing;
 
 	offset = parse_fragment_header(line, len, fragment);
 	if (offset < 0)
 		return -1;
 	oldlines = fragment->oldlines;
 	newlines = fragment->newlines;
+	leading = 0;
+	trailing = 0;
 
 	if (patch->is_new < 0) {
 		patch->is_new =  !oldlines;
@@ -860,10 +865,14 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 		case ' ':
 			oldlines--;
 			newlines--;
+			if (!deleted && !added)
+				leading++;
+			trailing++;
 			break;
 		case '-':
 			deleted++;
 			oldlines--;
+			trailing = 0;
 			break;
 		case '+':
 			/*
@@ -887,6 +896,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			}
 			added++;
 			newlines--;
+			trailing = 0;
 			break;
 
                 /* We allow "\ No newline at end of file". Depending
@@ -904,6 +914,9 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	}
 	if (oldlines || newlines)
 		return -1;
+	fragment->leading = leading;
+	fragment->trailing = trailing;
+
 	/* If a fragment ends with an incomplete line, we failed to include
 	 * it in the above loop because we hit oldlines == newlines == 0
 	 * before seeing it.
@@ -1087,7 +1100,7 @@ static int read_old_data(struct stat *st, const char *path, void *buf, unsigned 
 	}
 }
 
-static int find_offset(const char *buf, unsigned long size, const char *fragment, unsigned long fragsize, int line)
+static int find_offset(const char *buf, unsigned long size, const char *fragment, unsigned long fragsize, int line, int *lines)
 {
 	int i;
 	unsigned long start, backwards, forwards;
@@ -1148,6 +1161,7 @@ static int find_offset(const char *buf, unsigned long size, const char *fragment
 		n = (i >> 1)+1;
 		if (i & 1)
 			n = -n;
+		*lines = n;
 		return try;
 	}
 
@@ -1155,6 +1169,33 @@ static int find_offset(const char *buf, unsigned long size, const char *fragment
 	 * We should start searching forward and backward.
 	 */
 	return -1;
+}
+
+static void remove_first_line(const char **rbuf, int *rsize)
+{
+	const char *buf = *rbuf;
+	int size = *rsize;
+	unsigned long offset;
+	offset = 0;
+	while (offset <= size) {
+		if (buf[offset++] == '\n')
+			break;
+	}
+	*rsize = size - offset;
+	*rbuf = buf + offset;
+}
+
+static void remove_last_line(const char **rbuf, int *rsize)
+{
+	const char *buf = *rbuf;
+	int size = *rsize;
+	unsigned long offset;
+	offset = size - 1;
+	while (offset > 0) {
+		if (buf[--offset] == '\n')
+			break;
+	}
+	*rsize = offset + 1;
 }
 
 struct buffer_desc {
@@ -1192,7 +1233,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 	int offset, size = frag->size;
 	char *old = xmalloc(size);
 	char *new = xmalloc(size);
+	const char *oldlines, *newlines;
 	int oldsize = 0, newsize = 0;
+	unsigned long leading, trailing;
+	int pos, lines;
 
 	while (size > 0) {
 		int len = linelen(patch, size);
@@ -1241,23 +1285,59 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 		newsize--;
 	}
 #endif
-			
-	offset = find_offset(buf, desc->size, old, oldsize, frag->newpos);
-	if (offset >= 0) {
-		int diff = newsize - oldsize;
-		unsigned long size = desc->size + diff;
-		unsigned long alloc = desc->alloc;
 
-		if (size > alloc) {
-			alloc = size + 8192;
-			desc->alloc = alloc;
-			buf = xrealloc(buf, alloc);
-			desc->buffer = buf;
+	oldlines = old;
+	newlines = new;
+	leading = frag->leading;
+	trailing = frag->trailing;
+	lines = 0;
+	pos = frag->newpos;
+	for (;;) {
+		offset = find_offset(buf, desc->size, oldlines, oldsize, pos, &lines);
+		if (offset >= 0) {
+			int diff = newsize - oldsize;
+			unsigned long size = desc->size + diff;
+			unsigned long alloc = desc->alloc;
+
+			/* Warn if it was necessary to reduce the number
+			 * of context lines.
+			 */
+			if ((leading != frag->leading) || (trailing != frag->trailing))
+				fprintf(stderr, "Context reduced to (%ld/%ld) to apply fragment at %d\n",
+					leading, trailing, pos + lines);
+
+			if (size > alloc) {
+				alloc = size + 8192;
+				desc->alloc = alloc;
+				buf = xrealloc(buf, alloc);
+				desc->buffer = buf;
+			}
+			desc->size = size;
+			memmove(buf + offset + newsize, buf + offset + oldsize, size - offset - newsize);
+			memcpy(buf + offset, newlines, newsize);
+			offset = 0;
+
+			break;
 		}
-		desc->size = size;
-		memmove(buf + offset + newsize, buf + offset + oldsize, size - offset - newsize);
-		memcpy(buf + offset, new, newsize);
-		offset = 0;
+
+		/* Am I at my context limits? */
+		if ((leading <= p_context) && (trailing <= p_context))
+			break;
+		/* Reduce the number of context lines
+		 * Reduce both leading and trailing if they are equal
+		 * otherwise just reduce the larger context.
+		 */
+		if (leading >= trailing) {
+			remove_first_line(&oldlines, &oldsize);
+			remove_first_line(&newlines, &newsize);
+			pos--;
+			leading--;
+		}
+		if (trailing > leading) {
+			remove_last_line(&oldlines, &oldsize);
+			remove_last_line(&newlines, &newsize);
+			trailing--;
+		}
 	}
 
 	free(old);
@@ -1882,6 +1962,7 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
+		char *end;
 		int fd;
 
 		if (!strcmp(arg, "-")) {
@@ -1943,6 +2024,12 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "-z")) {
 			line_termination = 0;
+			continue;
+		}
+		if (!strncmp(arg, "-C", 2)) {
+			p_context = strtoul(arg + 2, &end, 0);
+			if (*end != '\0')
+				die("unrecognized context count '%s'", arg + 2);
 			continue;
 		}
 		if (!strncmp(arg, "--whitespace=", 13)) {
