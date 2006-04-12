@@ -537,7 +537,7 @@ t)
 	;;
 esac
 
-if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+if test -f "$GIT_DIR/MERGE_HEAD" && test -z "$no_edit"; then
 	echo "#"
 	echo "# It looks like you may be committing a MERGE."
 	echo "# If this is not correct, please remove the file"
@@ -605,16 +605,23 @@ else
 	current=
 fi
 
-{
-	test -z "$only_include_assumed" || echo "$only_include_assumed"
-	run_status
-} >>"$GIT_DIR"/COMMIT_EDITMSG
+if test -z "$no_edit"
+then
+	{
+		test -z "$only_include_assumed" || echo "$only_include_assumed"
+		run_status
+	} >>"$GIT_DIR"/COMMIT_EDITMSG
+else
+	# we need to check if there is anything to commit
+	run_status >/dev/null 
+fi
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" -a -z "$amend" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG"
 	run_status
 	exit 1
 fi
+
 case "$no_edit" in
 '')
 	case "${VISUAL:-$EDITOR},$TERM" in

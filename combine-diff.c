@@ -506,8 +506,8 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 
 	while (1) {
 		struct sline *sl = &sline[lno];
-		int hunk_end;
-		int rlines;
+		unsigned long hunk_end;
+		unsigned long rlines;
 		while (lno <= cnt && !(sline[lno].flag & mark))
 			lno++;
 		if (cnt < lno)

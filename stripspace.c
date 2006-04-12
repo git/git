@@ -6,9 +6,9 @@
  * Remove empty lines from the beginning and end.
  *
  * Turn multiple consecutive empty lines into just one
- * empty line.
+ * empty line.  Return true if it is an incomplete line.
  */
-static void cleanup(char *line)
+static int cleanup(char *line)
 {
 	int len = strlen(line);
 
@@ -21,16 +21,19 @@ static void cleanup(char *line)
 			len--;
 			line[len] = 0;
 		} while (len > 1);
+		return 0;
 	}
+	return 1;
 }
 
 int main(int argc, char **argv)
 {
 	int empties = -1;
+	int incomplete = 0;
 	char line[1024];
 
 	while (fgets(line, sizeof(line), stdin)) {
-		cleanup(line);
+		incomplete = cleanup(line);
 
 		/* Not just an empty line? */
 		if (line[0] != '\n') {
@@ -44,5 +47,7 @@ int main(int argc, char **argv)
 			continue;
 		empties++;
 	}
+	if (incomplete)
+		putchar('\n');
 	return 0;
 }

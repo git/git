@@ -400,11 +400,11 @@ static int get_one_line(const char *msg, unsigned long len)
 
 	while (len--) {
 		char c = *msg++;
+		if (!c)
+			break;
 		ret++;
 		if (c == '\n')
 			break;
-		if (!c)
-			return 0;
 	}
 	return ret;
 }
