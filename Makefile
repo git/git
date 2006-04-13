@@ -665,3 +665,23 @@ clean:
 .PHONY: all install clean strip
 .PHONY: .FORCE-GIT-VERSION-FILE TAGS tags
 
+### Check documentation
+#
+check-docs::
+	@for v in $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk; \
+	do \
+		case "$$v" in \
+		git-annotate | git-blame | \
+		git-merge-octopus | git-merge-ours | git-merge-recursive | \
+		git-merge-resolve | git-merge-stupid | \
+		git-ssh-pull | git-ssh-push ) continue ;; \
+		esac ; \
+		test -f "Documentation/$$v.txt" || \
+		echo "no doc: $$v"; \
+		grep -q "^gitlink:$$v\[[0-9]\]::" Documentation/git.txt || \
+		case "$$v" in \
+		git) ;; \
+		*) echo "no link: $$v";; \
+		esac ; \
+	done | sort
+
