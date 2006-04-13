@@ -23,6 +23,16 @@ else
     test_tabs=n
 fi
 
+# Later we will try removing an unremovable path to make sure
+# git-rm barfs, but if the test is run as root that cannot be
+# arranged.
+: >test-file
+chmod a-w .
+rm -f test-file
+test -f test-file && test_failed_remove=y
+chmod 775 .
+rm -f test-file
+
 test_expect_success \
     'Pre-check that foo exists and is in index before git-rm foo' \
     '[ -f foo ] && git-ls-files --error-unmatch foo'
@@ -56,12 +66,14 @@ test "$test_tabs" = y && test_expect_success \
     "git-rm -f 'space embedded' 'tab	embedded' 'newline
 embedded'"
 
-if test "$test_tabs" = y; then
-chmod u-w .
+if test "$test_failed_remove" = y; then
+chmod a-w .
 test_expect_failure \
     'Test that "git-rm -f" fails if its rm fails' \
     'git-rm -f baz'
-chmod u+w .
+chmod 775 .
+else
+    test_expect_success 'skipping removal failure (perhaps running as root?)' :
 fi
 
 test_expect_success \
