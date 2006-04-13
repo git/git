@@ -1,0 +1,35 @@
+git-mktree(1)
+=============
+
+NAME
+----
+git-mktree - Build a tree-object from ls-tree formatted text
+
+
+SYNOPSIS
+--------
+'git-mktree' [-z]
+
+DESCRIPTION
+-----------
+Reads standard input in non-recursive `ls-tree` output format,
+and creates a tree object.  The object name of the tree object
+built is written to the standard output.
+
+OPTIONS
+-------
+-z::
+	Read the NUL-terminated `ls-tree -z` output instead.
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
