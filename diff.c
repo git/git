@@ -266,7 +266,7 @@ static void show_stats(struct diffstat_t* data)
 			char *qname = xmalloc(len + 1);
 			quote_c_style(name, qname, NULL, 0);
 			free(name);
-			name = qname;
+			data->files[i]->name = name = qname;
 		}
 
 		/*
@@ -297,10 +297,10 @@ static void show_stats(struct diffstat_t* data)
 		if (added < 0) {
 			/* binary file */
 			printf(" %s%-*s |  Bin\n", prefix, len, name);
-			continue;
+			goto free_diffstat_file;
 		} else if (added + deleted == 0) {
 			total_files--;
-			continue;
+			goto free_diffstat_file;
 		}
 
 		add = added;
@@ -314,11 +314,11 @@ static void show_stats(struct diffstat_t* data)
 			add = (add * max + max_change / 2) / max_change;
 			del = total - add;
 		}
-		/* TODO: binary */
 		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
 				len, name, added + deleted,
 				add, pluses, del, minuses);
-		free(name);
+	free_diffstat_file:
+		free(data->files[i]->name);
 		free(data->files[i]);
 	}
 	free(data->files);
