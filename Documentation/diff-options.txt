@@ -7,6 +7,9 @@
 --patch-with-raw::
 	Generate patch but keep also the default raw diff output.
 
+--stat::
+	Generate a diffstat instead of a patch.
+
 -z::
 	\0 line termination on output
 

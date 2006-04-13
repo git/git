@@ -119,6 +119,7 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  -u            synonym for -p.\n" \
 "  --patch-with-raw\n" \
 "                output both a patch and the diff-raw format.\n" \
+"  --stat        show diffstat instead of patch.\n" \
 "  --name-only   show only names of changed files.\n" \
 "  --name-status show names and status of changed files.\n" \
 "  --full-index  show full object name on index lines.\n" \
@@ -142,6 +143,7 @@ extern int diff_queue_is_empty(void);
 #define DIFF_FORMAT_NO_OUTPUT	3
 #define DIFF_FORMAT_NAME	4
 #define DIFF_FORMAT_NAME_STATUS	5
+#define DIFF_FORMAT_DIFFSTAT	6
 
 extern void diff_flush(struct diff_options*);
 
