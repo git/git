@@ -354,7 +354,7 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	prepare_revision_walk(&rev);
 	setup_pager();
 	while ((commit = get_revision(&rev)) != NULL) {
-		if (commit_format != CMIT_FMT_ONELINE && shown)
+		if (shown && do_diff && commit_format != CMIT_FMT_ONELINE)
 			putchar('\n');
 		fputs(commit_prefix, stdout);
 		if (abbrev_commit && abbrev)
