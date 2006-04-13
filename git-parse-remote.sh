@@ -8,8 +8,8 @@ get_data_source () {
 	case "$1" in
 	*/*)
 		# Not so fast.	This could be the partial URL shorthand...
-		token=$(expr "$1" : '\([^/]*\)/')
-		remainder=$(expr "$1" : '[^/]*/\(.*\)')
+		token=$(expr "z$1" : 'z\([^/]*\)/')
+		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
 		if test -f "$GIT_DIR/branches/$token"
 		then
 			echo branches-partial
@@ -43,8 +43,8 @@ get_remote_url () {
 	branches)
 		sed -e 's/#.*//' "$GIT_DIR/branches/$1" ;;
 	branches-partial)
-		token=$(expr "$1" : '\([^/]*\)/')
-		remainder=$(expr "$1" : '[^/]*/\(.*\)')
+		token=$(expr "z$1" : 'z\([^/]*\)/')
+		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
 		url=$(sed -e 's/#.*//' "$GIT_DIR/branches/$token")
 		echo "$url/$remainder"
 		;;
@@ -77,13 +77,13 @@ canon_refs_list_for_fetch () {
 		force=
 		case "$ref" in
 		+*)
-			ref=$(expr "$ref" : '\+\(.*\)')
+			ref=$(expr "z$ref" : 'z\+\(.*\)')
 			force=+
 			;;
 		esac
-		expr "$ref" : '.*:' >/dev/null || ref="${ref}:"
-		remote=$(expr "$ref" : '\([^:]*\):')
-		local=$(expr "$ref" : '[^:]*:\(.*\)')
+		expr "z$ref" : 'z.*:' >/dev/null || ref="${ref}:"
+		remote=$(expr "z$ref" : 'z\([^:]*\):')
+		local=$(expr "z$ref" : 'z[^:]*:\(.*\)')
 		case "$remote" in
 		'') remote=HEAD ;;
 		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
@@ -97,7 +97,7 @@ canon_refs_list_for_fetch () {
 		*) local="refs/heads/$local" ;;
 		esac
 
-		if local_ref_name=$(expr "$local" : 'refs/\(.*\)')
+		if local_ref_name=$(expr "z$local" : 'zrefs/\(.*\)')
 		then
 		   git-check-ref-format "$local_ref_name" ||
 		   die "* refusing to create funny ref '$local_ref_name' locally"
@@ -171,7 +171,7 @@ get_remote_refs_for_fetch () {
 
 resolve_alternates () {
 	# original URL (xxx.git)
-	top_=`expr "$1" : '\([^:]*:/*[^/]*\)/'`
+	top_=`expr "z$1" : 'z\([^:]*:/*[^/]*\)/'`
 	while read path
 	do
 		case "$path" in

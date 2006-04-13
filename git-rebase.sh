@@ -94,7 +94,7 @@ case "$#" in
 	;;
 *)
 	branch_name=`git symbolic-ref HEAD` || die "No current branch"
-	branch_name=`expr "$branch_name" : 'refs/heads/\(.*\)'`
+	branch_name=`expr "z$branch_name" : 'zrefs/heads/\(.*\)'`
 	;;
 esac
 branch=$(git-rev-parse --verify "${branch_name}^0") || exit

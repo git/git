@@ -549,8 +549,8 @@ fi >>"$GIT_DIR"/COMMIT_EDITMSG
 # Author
 if test '' != "$force_author"
 then
-	GIT_AUTHOR_NAME=`expr "$force_author" : '\(.*[^ ]\) *<.*'` &&
-	GIT_AUTHOR_EMAIL=`expr "$force_author" : '.*\(<.*\)'` &&
+	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
+	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
 	test '' != "$GIT_AUTHOR_NAME" &&
 	test '' != "$GIT_AUTHOR_EMAIL" ||
 	die "malformatted --author parameter"

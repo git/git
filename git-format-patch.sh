@@ -126,8 +126,8 @@ for revpair
 do
 	case "$revpair" in
 	?*..?*)
-		rev1=`expr "$revpair" : '\(.*\)\.\.'`
-		rev2=`expr "$revpair" : '.*\.\.\(.*\)'`
+		rev1=`expr "z$revpair" : 'z\(.*\)\.\.'`
+		rev2=`expr "z$revpair" : 'z.*\.\.\(.*\)'`
 		;;
 	*)
 		rev1="$revpair^"

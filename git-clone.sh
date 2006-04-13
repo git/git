@@ -38,12 +38,12 @@ Perhaps git-update-server-info needs to be run there?"
 	}
 	while read sha1 refname
 	do
-		name=`expr "$refname" : 'refs/\(.*\)'` &&
+		name=`expr "z$refname" : 'zrefs/\(.*\)'` &&
 		case "$name" in
 		*^*)	continue;;
 		esac
 		if test -n "$use_separate_remote" &&
-		   branch_name=`expr "$name" : 'heads/\(.*\)'`
+		   branch_name=`expr "z$name" : 'zheads/\(.*\)'`
 		then
 			tname="remotes/$origin/$branch_name"
 		else
@@ -346,7 +346,7 @@ then
 		# new style repository with a symref HEAD).
 		# Ideally we should skip the guesswork but for now
 		# opt for minimum change.
-		head_sha1=`expr "$head_sha1" : 'ref: refs/heads/\(.*\)'`
+		head_sha1=`expr "z$head_sha1" : 'zref: refs/heads/\(.*\)'`
 		head_sha1=`cat "$GIT_DIR/$remote_top/$head_sha1"`
 		;;
 	esac

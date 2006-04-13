@@ -20,7 +20,7 @@ case "$1" in -v) verbose=t; shift ;; esac
 
 case "$#,$1" in
 1,*..*)
-    upstream=$(expr "$1" : '\(.*\)\.\.') ours=$(expr "$1" : '.*\.\.\(.*\)$')
+    upstream=$(expr "z$1" : 'z\(.*\)\.\.') ours=$(expr "z$1" : '.*\.\.\(.*\)$')
     set x "$upstream" "$ours"
     shift ;;
 esac

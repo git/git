@@ -112,7 +112,7 @@ append_fetch_head () {
     *)
 	note_="$remote_name of " ;;
     esac
-    remote_1_=$(expr "$remote_" : '\(.*\)\.git/*$') &&
+    remote_1_=$(expr "z$remote_" : 'z\(.*\)\.git/*$') &&
 	remote_="$remote_1_"
     note_="$note_$remote_"
 
@@ -245,22 +245,22 @@ fetch_main () {
 
       # These are relative path from $GIT_DIR, typically starting at refs/
       # but may be HEAD
-      if expr "$ref" : '\.' >/dev/null
+      if expr "z$ref" : 'z\.' >/dev/null
       then
 	  not_for_merge=t
-	  ref=$(expr "$ref" : '\.\(.*\)')
+	  ref=$(expr "z$ref" : 'z\.\(.*\)')
       else
 	  not_for_merge=
       fi
-      if expr "$ref" : '\+' >/dev/null
+      if expr "z$ref" : 'z\+' >/dev/null
       then
 	  single_force=t
-	  ref=$(expr "$ref" : '\+\(.*\)')
+	  ref=$(expr "z$ref" : 'z\+\(.*\)')
       else
 	  single_force=
       fi
-      remote_name=$(expr "$ref" : '\([^:]*\):')
-      local_name=$(expr "$ref" : '[^:]*:\(.*\)')
+      remote_name=$(expr "z$ref" : 'z\([^:]*\):')
+      local_name=$(expr "z$ref" : 'z[^:]*:\(.*\)')
 
       rref="$rref$LF$remote_name"
 
@@ -276,7 +276,7 @@ fetch_main () {
 	      print "$u";
 	  ' "$remote_name")
 	  head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted") &&
-	  expr "$head" : "$_x40\$" >/dev/null ||
+	  expr "z$head" : "z$_x40\$" >/dev/null ||
 		  die "Failed to fetch $remote_name from $remote"
 	  echo >&2 Fetching "$remote_name from $remote" using http
 	  git-http-fetch -v -a "$head" "$remote/" || exit
@@ -362,7 +362,7 @@ fetch_main () {
 		  break ;;
 	      esac
 	  done
-	  local_name=$(expr "$found" : '[^:]*:\(.*\)')
+	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
 	  append_fetch_head "$sha1" "$remote" \
 		  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
       done
