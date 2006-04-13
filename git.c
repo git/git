@@ -391,6 +391,8 @@ static int cmd_log(int argc, const char **argv, char **envp)
 		if (do_diff)
 			log_tree_commit(&opt, commit);
 		shown = 1;
+		free(commit->buffer);
+		commit->buffer = NULL;
 	}
 	free(buf);
 	return 0;
