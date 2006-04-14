@@ -371,6 +371,8 @@ int main(int argc, const char **argv)
 
 	save_commit_buffer = verbose_header;
 	track_object_refs = 0;
+	if (bisect_list)
+		revs.limited = 1;
 
 	prepare_revision_walk(&revs);
 	if (revs.tree_objects)
