@@ -12,11 +12,6 @@ test_description='Testing multi_ack pack fetching
 
 # Some convenience functions
 
-function show_count () {
-	commit_count=$(($commit_count+1))
-	printf "      %d\r" $commit_count
-}
-
 function add () {
 	local name=$1
 	local text="$@"
@@ -55,13 +50,6 @@ function test_expect_object_count () {
 		"test $count = $output"
 }
 
-function test_repack () {
-	local rep=$1
-
-	test_expect_success "repack && prune-packed in $rep" \
-		'(git-repack && git-prune-packed)2>>log.txt'
-}
-
 function pull_to_client () {
 	local number=$1
 	local heads=$2
@@ -70,13 +58,23 @@ function pull_to_client () {
 
 	cd client
 	test_expect_success "$number pull" \
-		"git-fetch-pack -v .. $heads > log.txt 2>&1"
+		"git-fetch-pack -k -v .. $heads"
 	case "$heads" in *A*) echo $ATIP > .git/refs/heads/A;; esac
 	case "$heads" in *B*) echo $BTIP > .git/refs/heads/B;; esac
 	git-symbolic-ref HEAD refs/heads/${heads:0:1}
+
 	test_expect_success "fsck" 'git-fsck-objects --full > fsck.txt 2>&1'
-	test_expect_object_count "after $number pull" $count
-	pack_count=$(grep Unpacking log.txt|tr -dc "0-9")
+
+	test_expect_success 'check downloaded results' \
+	'mv .git/objects/pack/pack-* . &&
+	 p=`ls -1 pack-*.pack` &&
+	 git-unpack-objects <$p &&
+	 git-fsck-objects --full'
+
+	test_expect_success "new object count after $number pull" \
+	'idx=`echo pack-*.idx` &&
+	 pack_count=`git-show-index <$idx | wc -l` &&
+	 test $pack_count = $count'
 	test -z "$pack_count" && pack_count=0
 	if [ -z "$no_strict_count_check" ]; then
 		test_expect_success "minimal count" "test $count = $pack_count"
@@ -84,6 +82,7 @@ function pull_to_client () {
 		test $count != $pack_count && \
 			echo "WARNING: $pack_count objects transmitted, only $count of which were needed"
 	fi
+	rm -f pack-*
 	cd ..
 }
 
@@ -117,8 +116,6 @@ git-symbolic-ref HEAD refs/heads/B
 
 pull_to_client 1st "B A" $((11*3))
 
-(cd client; test_repack client)
-
 add A11 $A10
 
 prev=1; cur=2; while [ $cur -le 65 ]; do
@@ -128,8 +125,6 @@ prev=1; cur=2; while [ $cur -le 65 ]; do
 done
 
 pull_to_client 2nd "B" $((64*3))
-
-(cd client; test_repack client)
 
 pull_to_client 3rd "A" $((1*3)) # old fails
 
