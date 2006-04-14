@@ -3,7 +3,7 @@
 #include "commit.h"
 #include "log-tree.h"
 
-static struct log_tree_opt log_tree_opt;
+static struct rev_info log_tree_opt;
 
 static int diff_tree_commit_sha1(const unsigned char *sha1)
 {
@@ -62,47 +62,18 @@ int main(int argc, const char **argv)
 {
 	int nr_sha1;
 	char line[1000];
-	unsigned char sha1[2][20];
-	const char *prefix = setup_git_directory();
-	static struct log_tree_opt *opt = &log_tree_opt;
+	struct object *tree1, *tree2;
+	static struct rev_info *opt = &log_tree_opt;
+	struct object_list *list;
 	int read_stdin = 0;
 
 	git_config(git_diff_config);
 	nr_sha1 = 0;
-	init_log_tree_opt(opt);
+	argc = setup_revisions(argc, argv, opt, NULL);
 
-	for (;;) {
-		int opt_cnt;
-		const char *arg;
+	while (--argc > 0) {
+		const char *arg = *++argv;
 
-		argv++;
-		argc--;
-		arg = *argv;
-		if (!arg)
-			break;
-
-		if (*arg != '-') {
-			if (nr_sha1 < 2 && !get_sha1(arg, sha1[nr_sha1])) {
-				nr_sha1++;
-				continue;
-			}
-			break;
-		}
-
-		opt_cnt = log_tree_opt_parse(opt, argv, argc);
-		if (opt_cnt < 0)
-			usage(diff_tree_usage);
-		else if (opt_cnt) {
-			argv += opt_cnt - 1;
-			argc -= opt_cnt - 1;
-			continue;
-		}
-
-		if (!strcmp(arg, "--")) {
-			argv++;
-			argc--;
-			break;
-		}
 		if (!strcmp(arg, "--stdin")) {
 			read_stdin = 1;
 			continue;
@@ -110,18 +81,36 @@ int main(int argc, const char **argv)
 		usage(diff_tree_usage);
 	}
 
-	if (opt->combine_merges)
-		opt->ignore_merges = 0;
-
-	/* We can only do dense combined merges with diff output */
-	if (opt->dense_combined_merges)
-		opt->diffopt.output_format = DIFF_FORMAT_PATCH;
-
-	if (opt->diffopt.output_format == DIFF_FORMAT_PATCH)
-		opt->diffopt.recursive = 1;
-
-	diff_tree_setup_paths(get_pathspec(prefix, argv), opt);
-	diff_setup_done(&opt->diffopt);
+	/*
+	 * NOTE! "setup_revisions()" will have inserted the revisions
+	 * it parsed in reverse order. So if you do
+	 *
+	 *	git-diff-tree a b
+	 *
+	 * the commit list will be "b" -> "a" -> NULL, so we reverse
+	 * the order of the objects if the first one is not marked
+	 * UNINTERESTING.
+	 */
+	nr_sha1 = 0;
+	list = opt->pending_objects;
+	if (list) {
+		nr_sha1++;
+		tree1 = list->item;
+		list = list->next;
+		if (list) {
+			nr_sha1++;
+			tree2 = tree1;
+			tree1 = list->item;
+			if (list->next)
+				usage(diff_tree_usage);
+			/* Switch them around if the second one was uninteresting.. */
+			if (tree2->flags & UNINTERESTING) {
+				struct object *tmp = tree2;
+				tree2 = tree1;
+				tree1 = tmp;
+			}
+		}
+	}
 
 	switch (nr_sha1) {
 	case 0:
@@ -129,10 +118,12 @@ int main(int argc, const char **argv)
 			usage(diff_tree_usage);
 		break;
 	case 1:
-		diff_tree_commit_sha1(sha1[0]);
+		diff_tree_commit_sha1(tree1->sha1);
 		break;
 	case 2:
-		diff_tree_sha1(sha1[0], sha1[1], "", &opt->diffopt);
+		diff_tree_sha1(tree1->sha1,
+			       tree2->sha1,
+			       "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 		break;
 	}
