@@ -30,7 +30,7 @@ $LONG_USAGE"
 fi
 
 case "$1" in
-	--h|--he|--hel|--help)
+	-h|--h|--he|--hel|--help)
 	echo "$LONG_USAGE"
 	exit
 esac
