@@ -252,10 +252,10 @@ fetch_main () {
       else
 	  not_for_merge=
       fi
-      if expr "z$ref" : 'z\+' >/dev/null
+      if expr "z$ref" : 'z+' >/dev/null
       then
 	  single_force=t
-	  ref=$(expr "z$ref" : 'z\+\(.*\)')
+	  ref=$(expr "z$ref" : 'z+\(.*\)')
       else
 	  single_force=
       fi

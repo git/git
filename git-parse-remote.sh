@@ -77,7 +77,7 @@ canon_refs_list_for_fetch () {
 		force=
 		case "$ref" in
 		+*)
-			ref=$(expr "z$ref" : 'z\+\(.*\)')
+			ref=$(expr "z$ref" : 'z+\(.*\)')
 			force=+
 			;;
 		esac
