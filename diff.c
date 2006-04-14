@@ -438,8 +438,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xdemitcb_t ecb;
 
 		xpp.flags = XDF_NEED_MINIMAL;
-		xecfg.ctxlen = 3;
-		xecfg.flags = XDL_EMIT_FUNCNAMES;
+		xecfg.ctxlen = 0;
+		xecfg.flags = 0;
 		ecb.outf = xdiff_outf;
 		ecb.priv = diffstat;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
