@@ -25,7 +25,6 @@ int log_tree_opt_parse(struct log_tree_opt *, const char **, int);
 struct whatchanged_opt {
 	struct rev_info revopt;
 	struct log_tree_opt logopt;
-	enum cmit_fmt commit_format;
 	int abbrev;
 	int abbrev_commit;
 	int do_diff;

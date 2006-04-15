@@ -288,19 +288,20 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	struct rev_info *rev = &wcopt.revopt;
 	struct log_tree_opt *opt = &wcopt.logopt;
 
+	memset(&wcopt, 0, sizeof(wcopt));
 	init_log_tree_opt(&wcopt.logopt);
-	wcopt.commit_format = CMIT_FMT_DEFAULT;
+	opt->commit_format = CMIT_FMT_DEFAULT;
 	wcopt.abbrev = DEFAULT_ABBREV;
 	argc = parse_whatchanged_opt(argc, argv, &wcopt);
 
-	if (wcopt.logopt.commit_format == CMIT_FMT_ONELINE)
+	if (opt->commit_format == CMIT_FMT_ONELINE)
 		commit_prefix = "";
 
 	prepare_revision_walk(rev);
 	setup_pager();
 	while ((commit = get_revision(rev)) != NULL) {
 		if (shown && wcopt.do_diff &&
-		    wcopt.commit_format != CMIT_FMT_ONELINE)
+		    opt->commit_format != CMIT_FMT_ONELINE)
 			putchar('\n');
 		fputs(commit_prefix, stdout);
 		if (wcopt.abbrev_commit && wcopt.abbrev)
@@ -327,11 +328,11 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			     parents = parents->next)
 				parents->item->object.flags &= ~TMP_MARK;
 		}
-		if (wcopt.commit_format == CMIT_FMT_ONELINE)
+		if (opt->commit_format == CMIT_FMT_ONELINE)
 			putchar(' ');
 		else
 			putchar('\n');
-		pretty_print_commit(wcopt.commit_format, commit, ~0, buf,
+		pretty_print_commit(opt->commit_format, commit, ~0, buf,
 				    LOGSIZE, wcopt.abbrev);
 		printf("%s\n", buf);
 		if (wcopt.do_diff)
