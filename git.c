@@ -278,33 +278,32 @@ static int cmd_help(int argc, const char **argv, char **envp)
 
 #define LOGSIZE (65536)
 
-static int cmd_log(int argc, const char **argv, char **envp)
+static int cmd_log_wc(int argc, const char **argv, char **envp,
+		      struct whatchanged_opt *wcopt)
 {
-	struct whatchanged_opt wcopt;
 	struct commit *commit;
 	char *buf = xmalloc(LOGSIZE);
 	const char *commit_prefix = "commit ";
 	int shown = 0;
-	struct rev_info *rev = &wcopt.revopt;
-	struct log_tree_opt *opt = &wcopt.logopt;
+	struct rev_info *rev = &wcopt->revopt;
+	struct log_tree_opt *opt = &wcopt->logopt;
 
-	init_log_tree_opt(&wcopt.logopt);
-	wcopt.commit_format = CMIT_FMT_DEFAULT;
-	wcopt.abbrev = DEFAULT_ABBREV;
-	argc = parse_whatchanged_opt(argc, argv, &wcopt);
+	opt->commit_format = CMIT_FMT_DEFAULT;
+	wcopt->abbrev = DEFAULT_ABBREV;
+	argc = parse_whatchanged_opt(argc, argv, wcopt);
 
-	if (wcopt.logopt.commit_format == CMIT_FMT_ONELINE)
+	if (opt->commit_format == CMIT_FMT_ONELINE)
 		commit_prefix = "";
 
 	prepare_revision_walk(rev);
 	setup_pager();
 	while ((commit = get_revision(rev)) != NULL) {
-		if (shown && wcopt.do_diff &&
-		    wcopt.commit_format != CMIT_FMT_ONELINE)
+		if (shown && wcopt->do_diff &&
+		    opt->commit_format != CMIT_FMT_ONELINE)
 			putchar('\n');
 		fputs(commit_prefix, stdout);
-		if (wcopt.abbrev_commit && wcopt.abbrev)
-			fputs(find_unique_abbrev(commit->object.sha1, wcopt.abbrev),
+		if (wcopt->abbrev_commit && wcopt->abbrev)
+			fputs(find_unique_abbrev(commit->object.sha1, wcopt->abbrev),
 			      stdout);
 		else
 			fputs(sha1_to_hex(commit->object.sha1), stdout);
@@ -327,14 +326,14 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			     parents = parents->next)
 				parents->item->object.flags &= ~TMP_MARK;
 		}
-		if (wcopt.commit_format == CMIT_FMT_ONELINE)
+		if (opt->commit_format == CMIT_FMT_ONELINE)
 			putchar(' ');
 		else
 			putchar('\n');
-		pretty_print_commit(wcopt.commit_format, commit, ~0, buf,
-				    LOGSIZE, wcopt.abbrev);
+		pretty_print_commit(opt->commit_format, commit, ~0, buf,
+				    LOGSIZE, wcopt->abbrev);
 		printf("%s\n", buf);
-		if (wcopt.do_diff)
+		if (wcopt->do_diff)
 			log_tree_commit(opt, commit);
 		shown = 1;
 		free(commit->buffer);
@@ -342,6 +341,26 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	}
 	free(buf);
 	return 0;
+}
+
+static int cmd_log(int ac, const char **av, char **ep)
+{
+	struct whatchanged_opt wcopt;
+
+	memset(&wcopt, 0, sizeof(wcopt));
+	init_log_tree_opt(&wcopt.logopt);
+	return cmd_log_wc(ac, av, ep, &wcopt);
+}
+
+static int cmd_whatchanged(int ac, const char **av, char **ep)
+{
+	struct whatchanged_opt wcopt;
+
+	memset(&wcopt, 0, sizeof(wcopt));
+	wcopt.do_diff = 1;
+	init_log_tree_opt(&wcopt.logopt);
+	wcopt.logopt.diffopt.recursive = 1;
+	return cmd_log_wc(ac, av, ep, &wcopt);
 }
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
@@ -354,6 +373,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "version", cmd_version },
 		{ "help", cmd_help },
 		{ "log", cmd_log },
+		{ "whatchanged", cmd_whatchanged },
 	};
 	int i;
 
