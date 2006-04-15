@@ -182,6 +182,8 @@ int parse_whatchanged_opt(int ac, const char **av, struct whatchanged_opt *wcopt
 	int left = 1;
 
 	ac = setup_revisions(ac, av, rev, "HEAD");
+	if (!strcmp(av[0], "show"))
+		rev->no_walk = 1;
 	while (1 < ac) {
 		const char *arg = av[1];
 		if (!strncmp(arg, "--pretty", 8)) {
