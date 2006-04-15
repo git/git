@@ -38,32 +38,13 @@ struct rev_info {
 			boundary:1,
 			parents:1;
 
-	/* Diff flags */
-	unsigned int	diff:1,
-			full_diff:1,
-			show_root_diff:1,
-			no_commit_id:1,
-			verbose_header:1,
-			ignore_merges:1,
-			combine_merges:1,
-			dense_combined_merges:1,
-			always_show_header:1;
-
-	/* Format info */
-	unsigned int	abbrev_commit:1;
-	unsigned int	abbrev;
-	enum cmit_fmt	commit_format;
-	const char	*header_prefix;
-	const char	*header;
-
 	/* special limits */
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
 
-	/* diff info for patches and for paths limiting */
+	/* paths limiting */
 	struct diff_options diffopt;
-	struct diff_options pruning;
 
 	topo_sort_set_fn_t topo_setter;
 	topo_sort_get_fn_t topo_getter;
