@@ -388,8 +388,10 @@ static int cmd_log(int argc, const char **argv, char **envp)
 		pretty_print_commit(commit_format, commit, ~0, buf,
 				    LOGSIZE, abbrev);
 		printf("%s\n", buf);
-		if (do_diff)
+		if (do_diff) {
+			printf("---\n");
 			log_tree_commit(&opt, commit);
+		}
 		shown = 1;
 		free(commit->buffer);
 		commit->buffer = NULL;

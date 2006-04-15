@@ -245,8 +245,6 @@ static void show_stats(struct diffstat_t* data)
 	if (data->nr == 0)
 		return;
 
-	printf("---\n");
-
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 
