@@ -280,89 +280,35 @@ static int cmd_help(int argc, const char **argv, char **envp)
 
 static int cmd_log(int argc, const char **argv, char **envp)
 {
-	struct rev_info rev;
+	struct whatchanged_opt wcopt;
 	struct commit *commit;
 	char *buf = xmalloc(LOGSIZE);
-	static enum cmit_fmt commit_format = CMIT_FMT_DEFAULT;
-	int abbrev = DEFAULT_ABBREV;
-	int abbrev_commit = 0;
 	const char *commit_prefix = "commit ";
-	struct log_tree_opt opt;
 	int shown = 0;
-	int do_diff = 0;
-	int full_diff = 0;
+	struct rev_info *rev = &wcopt.revopt;
+	struct log_tree_opt *opt = &wcopt.logopt;
 
-	init_log_tree_opt(&opt);
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strncmp(arg, "--pretty", 8)) {
-			commit_format = get_commit_format(arg + 8);
-			if (commit_format == CMIT_FMT_ONELINE)
-				commit_prefix = "";
-		}
-		else if (!strcmp(arg, "--no-abbrev")) {
-			abbrev = 0;
-		}
-		else if (!strcmp(arg, "--abbrev")) {
-			abbrev = DEFAULT_ABBREV;
-		}
-		else if (!strcmp(arg, "--abbrev-commit")) {
-			abbrev_commit = 1;
-		}
-		else if (!strncmp(arg, "--abbrev=", 9)) {
-			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev && abbrev < MINIMUM_ABBREV)
-				abbrev = MINIMUM_ABBREV;
-			else if (40 < abbrev)
-				abbrev = 40;
-		}
-		else if (!strcmp(arg, "--full-diff")) {
-			do_diff = 1;
-			full_diff = 1;
-		}
-		else {
-			int cnt = log_tree_opt_parse(&opt, argv+1, argc-1);
-			if (0 < cnt) {
-				do_diff = 1;
-				argv += cnt;
-				argc -= cnt;
-				continue;
-			}
-			die("unrecognized argument: %s", arg);
-		}
+	init_log_tree_opt(&wcopt.logopt);
+	wcopt.commit_format = CMIT_FMT_DEFAULT;
+	wcopt.abbrev = DEFAULT_ABBREV;
+	argc = parse_whatchanged_opt(argc, argv, &wcopt);
 
-		argc--; argv++;
-	}
+	if (wcopt.logopt.commit_format == CMIT_FMT_ONELINE)
+		commit_prefix = "";
 
-	if (do_diff) {
-		opt.diffopt.abbrev = abbrev;
-		opt.verbose_header = 0;
-		opt.always_show_header = 0;
-		opt.no_commit_id = 1;
-		if (opt.combine_merges)
-			opt.ignore_merges = 0;
-		if (opt.dense_combined_merges)
-			opt.diffopt.output_format = DIFF_FORMAT_PATCH;
-		if (opt.diffopt.output_format == DIFF_FORMAT_PATCH)
-			opt.diffopt.recursive = 1;
-		if (!full_diff && rev.prune_data)
-			diff_tree_setup_paths(rev.prune_data, &opt.diffopt);
-		diff_setup_done(&opt.diffopt);
-	}
-
-	prepare_revision_walk(&rev);
+	prepare_revision_walk(rev);
 	setup_pager();
-	while ((commit = get_revision(&rev)) != NULL) {
-		if (shown && do_diff && commit_format != CMIT_FMT_ONELINE)
+	while ((commit = get_revision(rev)) != NULL) {
+		if (shown && wcopt.do_diff &&
+		    wcopt.commit_format != CMIT_FMT_ONELINE)
 			putchar('\n');
 		fputs(commit_prefix, stdout);
-		if (abbrev_commit && abbrev)
-			fputs(find_unique_abbrev(commit->object.sha1, abbrev),
+		if (wcopt.abbrev_commit && wcopt.abbrev)
+			fputs(find_unique_abbrev(commit->object.sha1, wcopt.abbrev),
 			      stdout);
 		else
 			fputs(sha1_to_hex(commit->object.sha1), stdout);
-		if (rev.parents) {
+		if (rev->parents) {
 			struct commit_list *parents = commit->parents;
 			while (parents) {
 				struct object *o = &(parents->item->object);
@@ -381,15 +327,15 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			     parents = parents->next)
 				parents->item->object.flags &= ~TMP_MARK;
 		}
-		if (commit_format == CMIT_FMT_ONELINE)
+		if (wcopt.commit_format == CMIT_FMT_ONELINE)
 			putchar(' ');
 		else
 			putchar('\n');
-		pretty_print_commit(commit_format, commit, ~0, buf,
-				    LOGSIZE, abbrev);
+		pretty_print_commit(wcopt.commit_format, commit, ~0, buf,
+				    LOGSIZE, wcopt.abbrev);
 		printf("%s\n", buf);
-		if (do_diff)
-			log_tree_commit(&opt, commit);
+		if (wcopt.do_diff)
+			log_tree_commit(opt, commit);
 		shown = 1;
 		free(commit->buffer);
 		commit->buffer = NULL;
