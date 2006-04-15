@@ -413,6 +413,12 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 	};
 	int i;
 
+	/* Turn "git cmd --help" into "git help cmd" */
+	if (argc > 1 && !strcmp(argv[1], "--help")) {
+		argv[1] = argv[0];
+		argv[0] = cmd = "help";
+	}
+
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		struct cmd_struct *p = commands+i;
 		if (strcmp(p->cmd, cmd))
