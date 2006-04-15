@@ -26,6 +26,7 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			no_merges:1,
+			no_walk:1,
 			remove_empty_trees:1,
 			lifo:1,
 			topo_order:1,

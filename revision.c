@@ -380,6 +380,9 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 	if (revs->prune_fn)
 		revs->prune_fn(revs, commit);
 
+	if (revs->no_walk)
+		return;
+
 	parent = commit->parents;
 	while (parent) {
 		struct commit *p = parent->item;
@@ -816,6 +819,8 @@ void prepare_revision_walk(struct rev_info *revs)
 		list = list->next;
 	}
 
+	if (revs->no_walk)
+		return;
 	if (revs->limited)
 		limit_list(revs);
 	if (revs->topo_order)

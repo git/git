@@ -354,6 +354,23 @@ static int cmd_wc(int argc, const char **argv, char **envp)
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
+static int cmd_show(int argc, const char **argv, char **envp)
+{
+	struct rev_info rev;
+
+	init_revisions(&rev);
+	rev.diff = 1;
+	rev.ignore_merges = 0;
+	rev.combine_merges = 1;
+	rev.dense_combined_merges = 1;
+	rev.abbrev = DEFAULT_ABBREV;
+	rev.commit_format = CMIT_FMT_DEFAULT;
+	rev.diffopt.recursive = 1;
+	rev.no_walk = 1;
+	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	return cmd_log_wc(argc, argv, envp, &rev);
+}
+
 static int cmd_log(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
@@ -377,6 +394,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "help", cmd_help },
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_wc },
+		{ "show", cmd_show },
 	};
 	int i;
 
