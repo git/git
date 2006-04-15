@@ -365,8 +365,10 @@ int main(int argc, const char **argv)
 
 	list = revs.commits;
 
-	if (!list &&
-	    (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) && !revs.pending_objects))
+	if ((!list &&
+	     (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) &&
+	      !revs.pending_objects)) ||
+	    revs.diff)
 		usage(rev_list_usage);
 
 	save_commit_buffer = verbose_header;
