@@ -30,9 +30,11 @@ case " $flags " in
 	cc_or_p=--cc ;;
 esac
 
-# If we do not have --name-status, --name-only, -r, or -c default to --cc.
+# If we do not have --name-status, --name-only, -r, -c or --stat,
+# default to --cc.
 case " $flags " in
-*" '--name-status' "* | *" '--name-only' "* | *" '-r' "* | *" '-c' "* )
+*" '--name-status' "* | *" '--name-only' "* | *" '-r' "* | *" '-c' "* | \
+*" '--stat' "*)
 	;;
 *)
 	flags="$flags'$cc_or_p' " ;;
