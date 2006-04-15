@@ -25,6 +25,7 @@ struct diff_options {
 	const char *pickaxe;
 	unsigned recursive:1,
 		 with_raw:1,
+		 with_stat:1,
 		 tree_in_recursive:1,
 		 full_index:1;
 	int break_opt;
@@ -120,6 +121,8 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  --patch-with-raw\n" \
 "                output both a patch and the diff-raw format.\n" \
 "  --stat        show diffstat instead of patch.\n" \
+"  --patch-with-stat\n" \
+"                output a patch and prepend its diffstat.\n" \
 "  --name-only   show only names of changed files.\n" \
 "  --name-status show names and status of changed files.\n" \
 "  --full-index  show full object name on index lines.\n" \

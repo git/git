@@ -1060,6 +1060,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--stat"))
 		options->output_format = DIFF_FORMAT_DIFFSTAT;
+	else if (!strcmp(arg, "--patch-with-stat")) {
+		options->output_format = DIFF_FORMAT_PATCH;
+		options->with_stat = 1;
+	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
 	else if (!strncmp(arg, "-l", 2))
@@ -1529,7 +1533,7 @@ void diff_flush(struct diff_options *options)
 	int diff_output_format = options->output_format;
 	struct diffstat_t *diffstat = NULL;
 
-	if (diff_output_format == DIFF_FORMAT_DIFFSTAT) {
+	if (diff_output_format == DIFF_FORMAT_DIFFSTAT || options->with_stat) {
 		diffstat = xcalloc(sizeof (struct diffstat_t), 1);
 		diffstat->xm.consume = diffstat_consume;
 	}
@@ -1539,6 +1543,17 @@ void diff_flush(struct diff_options *options)
 			struct diff_filepair *p = q->queue[i];
 			flush_one_pair(p, DIFF_FORMAT_RAW, options, NULL);
 		}
+		putchar(options->line_termination);
+	}
+	if (options->with_stat) {
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			flush_one_pair(p, DIFF_FORMAT_DIFFSTAT, options,
+					diffstat);
+		}
+		show_stats(diffstat);
+		free(diffstat);
+		diffstat = NULL;
 		putchar(options->line_termination);
 	}
 	for (i = 0; i < q->nr; i++) {
