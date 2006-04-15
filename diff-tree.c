@@ -69,6 +69,7 @@ int main(int argc, const char **argv)
 
 	git_config(git_diff_config);
 	nr_sha1 = 0;
+	opt->abbrev = 0;
 	argc = setup_revisions(argc, argv, opt, NULL);
 
 	while (--argc > 0) {

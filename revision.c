@@ -475,7 +475,12 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 
 void init_revisions(struct rev_info *revs)
 {
+	unsigned abbrev = revs->abbrev;
+
 	memset(revs, 0, sizeof(*revs));
+
+	revs->abbrev = abbrev;
+	revs->ignore_merges = 1;
 	revs->pruning.recursive = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
