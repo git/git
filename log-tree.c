@@ -173,3 +173,68 @@ int log_tree_commit(struct log_tree_opt *opt, struct commit *commit)
 	}
 	return 0;
 }
+
+int parse_whatchanged_opt(int ac, const char **av, struct whatchanged_opt *wcopt)
+{
+	struct rev_info *rev = &wcopt->revopt;
+	struct log_tree_opt *opt = &wcopt->logopt;
+	const char **unrecognized = av+1;
+	int left = 1;
+
+	ac = setup_revisions(ac, av, rev, "HEAD");
+	while (1 < ac) {
+		const char *arg = av[1];
+		if (!strncmp(arg, "--pretty", 8)) {
+			opt->commit_format = get_commit_format(arg + 8);
+		}
+		else if (!strcmp(arg, "--no-abbrev")) {
+			wcopt->abbrev = 0;
+		}
+		else if (!strcmp(arg, "--abbrev")) {
+			wcopt->abbrev = DEFAULT_ABBREV;
+		}
+		else if (!strcmp(arg, "--abbrev-commit")) {
+			wcopt->abbrev_commit = 1;
+		}
+		else if (!strncmp(arg, "--abbrev=", 9)) {
+			wcopt->abbrev = strtoul(arg + 9, NULL, 10);
+			if (wcopt->abbrev && wcopt->abbrev < MINIMUM_ABBREV)
+				wcopt->abbrev = MINIMUM_ABBREV;
+			else if (40 < wcopt->abbrev)
+				wcopt->abbrev = 40;
+		}
+		else if (!strcmp(arg, "--full-diff")) {
+			wcopt->do_diff = 1;
+			wcopt->full_diff = 1;
+		}
+		else {
+			int cnt = log_tree_opt_parse(opt, av+1, ac-1);
+			if (0 < cnt) {
+				wcopt->do_diff = 1;
+				av += cnt;
+				ac -= cnt;
+				continue;
+			}
+			*unrecognized++ = arg;
+			left++;
+		}
+		ac--; av++;
+	}
+
+	if (wcopt->do_diff) {
+		opt->diffopt.abbrev = wcopt->abbrev;
+		opt->verbose_header = 0;
+		opt->always_show_header = 0;
+		opt->no_commit_id = 1;
+		if (opt->combine_merges)
+			opt->ignore_merges = 0;
+		if (opt->dense_combined_merges)
+			opt->diffopt.output_format = DIFF_FORMAT_PATCH;
+		if (opt->diffopt.output_format == DIFF_FORMAT_PATCH)
+			opt->diffopt.recursive = 1;
+		if (!wcopt->full_diff && rev->prune_data)
+			diff_tree_setup_paths(rev->prune_data, &opt->diffopt);
+		diff_setup_done(&opt->diffopt);
+	}
+	return left;
+}
