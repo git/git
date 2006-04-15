@@ -606,6 +606,9 @@ test-date$X: test-date.c date.o ctype.o
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^ -lz
 
+test-gsimm$X: test-gsimm.c gsimm.o rabinpoly.o
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
+
 check:
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
@@ -654,6 +657,7 @@ clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) git$X
+	rm -f test-date$X test-delta$X test-gsimm$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf $(GIT_TARNAME)
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
