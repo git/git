@@ -12,7 +12,9 @@ static int cleanup(char *line)
 {
 	int len = strlen(line);
 
-	if (len > 1 && line[len-1] == '\n') {
+	if (len && line[len-1] == '\n') {
+		if (len == 1)
+			return 0;
 		do {
 			unsigned char c = line[len-2];
 			if (!isspace(c))

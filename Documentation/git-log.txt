@@ -12,11 +12,16 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Shows the commit logs.  This command internally invokes
-'git-rev-list', and the command line options are passed to that
-command.
+Shows the commit logs.
 
-This manual page describes only the most frequently used options.
+The command takes options applicable to the gitlink::git-rev-list[1]
+command to control what is shown and how, and options applicable to
+the gitlink::git-diff-tree[1] commands to control how the change
+each commit introduces are shown.
+
+This manual page describes only the most frequently used
+options.
+
 
 OPTIONS
 -------
@@ -28,6 +33,12 @@ OPTIONS
 
 <since>..<until>::
 	Show only commits between the named two commits.
+
+-p::
+	Show the change the commit introduces in a patch form.
+
+<paths>...::
+	Show only commits that affect the specified paths.
 
 
 Examples
@@ -47,6 +58,11 @@ git log --since="2 weeks ago" -- gitk::
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
+git log -r --name-status release..test::
+
+	Show the commits that are in the "test" branch but not yet
+	in the "release" branch, along with the list of paths
+	each commit modifies.
 
 Author
 ------

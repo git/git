@@ -557,16 +557,11 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
 	}
-	if (fmt == CMIT_FMT_ONELINE) {
-		/* We do not want the terminating newline */
-		if (buf[offset - 1] == '\n')
-			offset--;
-	}
-	else {
-		/* Make sure there is an EOLN */
-		if (buf[offset - 1] != '\n')
-			buf[offset++] = '\n';
-	}
+	while (offset && isspace(buf[offset-1]))
+		offset--;
+	/* Make sure there is an EOLN for the non-oneline case */
+	if (fmt != CMIT_FMT_ONELINE)
+		buf[offset++] = '\n';
 	buf[offset] = '\0';
 	return offset;
 }
