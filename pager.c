@@ -5,22 +5,24 @@
  * something different on Windows, for example.
  */
 
-static void run_pager(void)
+static void run_pager(const char *pager)
 {
-	const char *prog = getenv("PAGER");
-	if (!prog)
-		prog = "less";
-	setenv("LESS", "-S", 0);
-	execlp(prog, prog, NULL);
+	execlp(pager, pager, NULL);
 }
 
 void setup_pager(void)
 {
 	pid_t pid;
 	int fd[2];
+	const char *pager = getenv("PAGER");
 
 	if (!isatty(1))
 		return;
+	if (!pager)
+		pager = "less";
+	else if (!*pager || !strcmp(pager, "cat"))
+		return;
+
 	if (pipe(fd) < 0)
 		return;
 	pid = fork();
@@ -43,6 +45,7 @@ void setup_pager(void)
 	close(fd[0]);
 	close(fd[1]);
 
-	run_pager();
+	setenv("LESS", "-S", 0);
+	run_pager(pager);
 	exit(255);
 }
