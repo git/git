@@ -363,6 +363,20 @@ static int cmd_whatchanged(int ac, const char **av, char **ep)
 	return cmd_log_wc(ac, av, ep, &wcopt);
 }
 
+static int cmd_show(int ac, const char **av, char **ep)
+{
+	struct whatchanged_opt wcopt;
+
+	memset(&wcopt, 0, sizeof(wcopt));
+	wcopt.do_diff = 1;
+	init_log_tree_opt(&wcopt.logopt);
+	wcopt.logopt.ignore_merges = 0;
+	wcopt.logopt.combine_merges = 1;
+	wcopt.logopt.dense_combined_merges = 1;
+	wcopt.logopt.diffopt.recursive = 1;
+	return cmd_log_wc(ac, av, ep, &wcopt);
+}
+
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
 	const char *cmd = argv[0];
@@ -373,6 +387,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "version", cmd_version },
 		{ "help", cmd_help },
 		{ "log", cmd_log },
+		{ "show", cmd_show },
 		{ "whatchanged", cmd_whatchanged },
 	};
 	int i;

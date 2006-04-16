@@ -375,6 +375,9 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 	if (revs->prune_fn)
 		revs->prune_fn(revs, commit);
 
+	if (revs->no_walk)
+		return;
+
 	parent = commit->parents;
 	while (parent) {
 		struct commit *p = parent->item;
@@ -714,6 +717,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 void prepare_revision_walk(struct rev_info *revs)
 {
+	if (revs->no_walk)
+		return;
 	sort_by_date(&revs->commits);
 	if (revs->limited)
 		limit_list(revs);
