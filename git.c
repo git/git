@@ -286,6 +286,7 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	const char *commit_prefix = "commit ";
 	int shown = 0;
 
+	init_revisions(&rev);
 	rev.abbrev = DEFAULT_ABBREV;
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)

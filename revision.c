@@ -475,11 +475,9 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 
 void init_revisions(struct rev_info *revs)
 {
-	unsigned abbrev = revs->abbrev;
-
 	memset(revs, 0, sizeof(*revs));
 
-	revs->abbrev = abbrev;
+	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
 	revs->pruning.recursive = 1;
 	revs->pruning.add_remove = file_add_remove;
@@ -515,8 +513,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	int i, flags, seen_dashdash;
 	const char **unrecognized = argv + 1;
 	int left = 1;
-
-	init_revisions(revs);
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
