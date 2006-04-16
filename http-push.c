@@ -2498,6 +2498,7 @@ int main(int argc, char **argv)
 			commit_argv[3] = old_sha1_hex;
 			commit_argc++;
 		}
+		init_revisions(&revs);
 		setup_revisions(commit_argc, commit_argv, &revs, NULL);
 		free(new_sha1_hex);
 		if (old_sha1_hex) {

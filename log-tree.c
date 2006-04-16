@@ -3,57 +3,7 @@
 #include "commit.h"
 #include "log-tree.h"
 
-void init_log_tree_opt(struct log_tree_opt *opt)
-{
-	memset(opt, 0, sizeof *opt);
-	opt->ignore_merges = 1;
-	opt->header_prefix = "";
-	opt->commit_format = CMIT_FMT_RAW;
-	diff_setup(&opt->diffopt);
-}
-
-int log_tree_opt_parse(struct log_tree_opt *opt, const char **av, int ac)
-{
-	const char *arg;
-	int cnt = diff_opt_parse(&opt->diffopt, av, ac);
-	if (0 < cnt)
-		return cnt;
-	arg = *av;
-	if (!strcmp(arg, "-r"))
-		opt->diffopt.recursive = 1;
-	else if (!strcmp(arg, "-t")) {
-		opt->diffopt.recursive = 1;
-		opt->diffopt.tree_in_recursive = 1;
-	}
-	else if (!strcmp(arg, "-m"))
-		opt->ignore_merges = 0;
-	else if (!strcmp(arg, "-c"))
-		opt->combine_merges = 1;
-	else if (!strcmp(arg, "--cc")) {
-		opt->dense_combined_merges = 1;
-		opt->combine_merges = 1;
-	}
-	else if (!strcmp(arg, "-v")) {
-		opt->verbose_header = 1;
-		opt->header_prefix = "diff-tree ";
-	}
-	else if (!strncmp(arg, "--pretty", 8)) {
-		opt->verbose_header = 1;
-		opt->header_prefix = "diff-tree ";
-		opt->commit_format = get_commit_format(arg+8);
-	}
-	else if (!strcmp(arg, "--root"))
-		opt->show_root_diff = 1;
-	else if (!strcmp(arg, "--no-commit-id"))
-		opt->no_commit_id = 1;
-	else if (!strcmp(arg, "--always"))
-		opt->always_show_header = 1;
-	else
-		return 0;
-	return 1;
-}
-
-int log_tree_diff_flush(struct log_tree_opt *opt)
+int log_tree_diff_flush(struct rev_info *opt)
 {
 	diffcore_std(&opt->diffopt);
 	if (diff_queue_is_empty()) {
@@ -73,7 +23,7 @@ int log_tree_diff_flush(struct log_tree_opt *opt)
 	return 1;
 }
 
-static int diff_root_tree(struct log_tree_opt *opt,
+static int diff_root_tree(struct rev_info *opt,
 			  const unsigned char *new, const char *base)
 {
 	int retval;
@@ -93,7 +43,7 @@ static int diff_root_tree(struct log_tree_opt *opt,
 	return retval;
 }
 
-static const char *generate_header(struct log_tree_opt *opt,
+static const char *generate_header(struct rev_info *opt,
 				   const unsigned char *commit_sha1,
 				   const unsigned char *parent_sha1,
 				   const struct commit *commit)
@@ -129,7 +79,7 @@ static const char *generate_header(struct log_tree_opt *opt,
 	return this_header;
 }
 
-static int do_diff_combined(struct log_tree_opt *opt, struct commit *commit)
+static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
 	unsigned const char *sha1 = commit->object.sha1;
 
@@ -142,7 +92,7 @@ static int do_diff_combined(struct log_tree_opt *opt, struct commit *commit)
 	return 0;
 }
 
-int log_tree_commit(struct log_tree_opt *opt, struct commit *commit)
+int log_tree_commit(struct rev_info *opt, struct commit *commit)
 {
 	struct commit_list *parents;
 	unsigned const char *sha1 = commit->object.sha1;
@@ -172,71 +122,4 @@ int log_tree_commit(struct log_tree_opt *opt, struct commit *commit)
 			opt->header_prefix = "\ndiff-tree ";
 	}
 	return 0;
-}
-
-int parse_whatchanged_opt(int ac, const char **av, struct whatchanged_opt *wcopt)
-{
-	struct rev_info *rev = &wcopt->revopt;
-	struct log_tree_opt *opt = &wcopt->logopt;
-	const char **unrecognized = av+1;
-	int left = 1;
-
-	ac = setup_revisions(ac, av, rev, "HEAD");
-	if (!strcmp(av[0], "show"))
-		rev->no_walk = 1;
-	while (1 < ac) {
-		const char *arg = av[1];
-		if (!strncmp(arg, "--pretty", 8)) {
-			opt->commit_format = get_commit_format(arg + 8);
-		}
-		else if (!strcmp(arg, "--no-abbrev")) {
-			wcopt->abbrev = 0;
-		}
-		else if (!strcmp(arg, "--abbrev")) {
-			wcopt->abbrev = DEFAULT_ABBREV;
-		}
-		else if (!strcmp(arg, "--abbrev-commit")) {
-			wcopt->abbrev_commit = 1;
-		}
-		else if (!strncmp(arg, "--abbrev=", 9)) {
-			wcopt->abbrev = strtoul(arg + 9, NULL, 10);
-			if (wcopt->abbrev && wcopt->abbrev < MINIMUM_ABBREV)
-				wcopt->abbrev = MINIMUM_ABBREV;
-			else if (40 < wcopt->abbrev)
-				wcopt->abbrev = 40;
-		}
-		else if (!strcmp(arg, "--full-diff")) {
-			wcopt->do_diff = 1;
-			wcopt->full_diff = 1;
-		}
-		else {
-			int cnt = log_tree_opt_parse(opt, av+1, ac-1);
-			if (0 < cnt) {
-				wcopt->do_diff = 1;
-				av += cnt;
-				ac -= cnt;
-				continue;
-			}
-			*unrecognized++ = arg;
-			left++;
-		}
-		ac--; av++;
-	}
-
-	if (wcopt->do_diff) {
-		opt->diffopt.abbrev = wcopt->abbrev;
-		opt->verbose_header = 0;
-		opt->always_show_header = 0;
-		opt->no_commit_id = 1;
-		if (opt->combine_merges)
-			opt->ignore_merges = 0;
-		if (opt->dense_combined_merges)
-			opt->diffopt.output_format = DIFF_FORMAT_PATCH;
-		if (opt->diffopt.output_format == DIFF_FORMAT_PATCH)
-			opt->diffopt.recursive = 1;
-		if (!wcopt->full_diff && rev->prune_data)
-			diff_tree_setup_paths(rev->prune_data, &opt->diffopt);
-		diff_setup_done(&opt->diffopt);
-	}
-	return left;
 }

@@ -45,6 +45,8 @@ enum cmit_fmt {
 	CMIT_FMT_FULL,
 	CMIT_FMT_FULLER,
 	CMIT_FMT_ONELINE,
+
+	CMIT_FMT_UNSPECIFIED,
 };
 
 extern enum cmit_fmt get_commit_format(const char *arg);
