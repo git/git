@@ -333,8 +333,10 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 		pretty_print_commit(opt->commit_format, commit, ~0, buf,
 				    LOGSIZE, wcopt->abbrev);
 		printf("%s\n", buf);
-		if (wcopt->do_diff)
+		if (wcopt->do_diff) {
+			printf("---\n");
 			log_tree_commit(opt, commit);
+		}
 		shown = 1;
 		free(commit->buffer);
 		commit->buffer = NULL;
@@ -391,6 +393,12 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "whatchanged", cmd_whatchanged },
 	};
 	int i;
+
+	/* Turn "git cmd --help" into "git help cmd" */
+	if (argc > 1 && !strcmp(argv[1], "--help")) {
+		argv[1] = argv[0];
+		argv[0] = cmd = "help";
+	}
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		struct cmd_struct *p = commands+i;

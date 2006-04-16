@@ -10,6 +10,9 @@
 --stat::
 	Generate a diffstat instead of a patch.
 
+--patch-with-stat::
+	Generate patch and prepend its diffstat.
+
 -z::
 	\0 line termination on output
 
