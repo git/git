@@ -288,7 +288,6 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
-	rev->no_commit_id = 1;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 
 	if (argc > 1)
@@ -299,16 +298,20 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 	prepare_revision_walk(rev);
 	setup_pager();
 	while ((commit = get_revision(rev)) != NULL) {
+		unsigned long ofs = 0;
+
 		if (shown && rev->diff &&
 		    rev->commit_format != CMIT_FMT_ONELINE)
 			putchar('\n');
-		fputs(commit_prefix, stdout);
+
+		ofs = sprintf(buf, "%s", commit_prefix);
 		if (rev->abbrev_commit && rev->abbrev)
-			fputs(find_unique_abbrev(commit->object.sha1,
-						 rev->abbrev),
-			      stdout);
+			ofs += sprintf(buf + ofs, "%s",
+				       find_unique_abbrev(commit->object.sha1,
+							  rev->abbrev));
 		else
-			fputs(sha1_to_hex(commit->object.sha1), stdout);
+			ofs += sprintf(buf + ofs, "%s",
+				       sha1_to_hex(commit->object.sha1));
 		if (rev->parents) {
 			struct commit_list *parents = commit->parents;
 			while (parents) {
@@ -316,7 +319,8 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 				parents = parents->next;
 				if (o->flags & TMP_MARK)
 					continue;
-				printf(" %s", sha1_to_hex(o->sha1));
+				ofs += sprintf(buf + ofs, " %s",
+					       sha1_to_hex(o->sha1));
 				o->flags |= TMP_MARK;
 			}
 			/* TMP_MARK is a general purpose flag that can
@@ -328,17 +332,20 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 			     parents = parents->next)
 				parents->item->object.flags &= ~TMP_MARK;
 		}
-		if (rev->commit_format == CMIT_FMT_ONELINE)
-			putchar(' ');
-		else
-			putchar('\n');
-		pretty_print_commit(rev->commit_format, commit, ~0, buf,
-				    LOGSIZE, rev->abbrev);
-		printf("%s\n", buf);
+		buf[ofs++] = 
+			(rev->commit_format == CMIT_FMT_ONELINE) ? ' ' : '\n';
+		ofs += pretty_print_commit(rev->commit_format, commit, ~0,
+					   buf + ofs,
+					   LOGSIZE - ofs - 20,
+					   rev->abbrev);
+
 		if (rev->diff) {
-			printf("---\n");
+			rev->use_precomputed_header = buf;
+			strcpy(buf + ofs, "\n---\n");
 			log_tree_commit(rev, commit);
 		}
+		else
+			printf("%s\n", buf);
 		shown = 1;
 		free(commit->buffer);
 		commit->buffer = NULL;
@@ -376,6 +383,10 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	struct rev_info rev;
 
 	init_revisions(&rev);
+	rev.always_show_header = 1;
+	rev.diffopt.recursive = 1;
+	rev.combine_merges = 1;
+	rev.ignore_merges = 0;
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
