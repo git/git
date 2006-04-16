@@ -202,6 +202,8 @@ struct diffstat_t {
 	int alloc;
 	struct diffstat_file {
 		char *name;
+		unsigned is_unmerged:1;
+		unsigned is_binary:1;
 		unsigned int added, deleted;
 	} **files;
 };
@@ -245,11 +247,11 @@ static void show_stats(struct diffstat_t* data)
 	if (data->nr == 0)
 		return;
 
-	printf("---\n");
-
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 
+		if (file->is_binary || file->is_unmerged)
+			continue;
 		if (max_change < file->added + file->deleted)
 			max_change = file->added + file->deleted;
 		len = strlen(file->name);
@@ -294,11 +296,15 @@ static void show_stats(struct diffstat_t* data)
 		if (max + len > 70)
 			max = 70 - len;
 
-		if (added < 0) {
-			/* binary file */
+		if (data->files[i]->is_binary) {
 			printf(" %s%-*s |  Bin\n", prefix, len, name);
 			goto free_diffstat_file;
-		} else if (added + deleted == 0) {
+		}
+		else if (data->files[i]->is_unmerged) {
+			printf(" %s%-*s |  Unmerged\n", prefix, len, name);
+			goto free_diffstat_file;
+		}
+		else if (added + deleted == 0) {
 			total_files--;
 			goto free_diffstat_file;
 		}
@@ -426,11 +432,16 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 	data = diffstat_add(diffstat, name_a ? name_a : name_b);
 
+	if (!one || !two) {
+		data->is_unmerged = 1;
+		return;
+	}
+
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
 	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))
-		data->added = -1;
+		data->is_binary = 1;
 	else {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
@@ -1049,6 +1060,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--stat"))
 		options->output_format = DIFF_FORMAT_DIFFSTAT;
+	else if (!strcmp(arg, "--patch-with-stat")) {
+		options->output_format = DIFF_FORMAT_PATCH;
+		options->with_stat = 1;
+	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
 	else if (!strncmp(arg, "-l", 2))
@@ -1518,7 +1533,7 @@ void diff_flush(struct diff_options *options)
 	int diff_output_format = options->output_format;
 	struct diffstat_t *diffstat = NULL;
 
-	if (diff_output_format == DIFF_FORMAT_DIFFSTAT) {
+	if (diff_output_format == DIFF_FORMAT_DIFFSTAT || options->with_stat) {
 		diffstat = xcalloc(sizeof (struct diffstat_t), 1);
 		diffstat->xm.consume = diffstat_consume;
 	}
@@ -1528,6 +1543,17 @@ void diff_flush(struct diff_options *options)
 			struct diff_filepair *p = q->queue[i];
 			flush_one_pair(p, DIFF_FORMAT_RAW, options, NULL);
 		}
+		putchar(options->line_termination);
+	}
+	if (options->with_stat) {
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			flush_one_pair(p, DIFF_FORMAT_DIFFSTAT, options,
+					diffstat);
+		}
+		show_stats(diffstat);
+		free(diffstat);
+		diffstat = NULL;
 		putchar(options->line_termination);
 	}
 	for (i = 0; i < q->nr; i++) {
