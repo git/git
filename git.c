@@ -286,6 +286,11 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 	const char *commit_prefix = "commit ";
 	int shown = 0;
 
+	rev->abbrev = DEFAULT_ABBREV;
+	rev->commit_format = CMIT_FMT_DEFAULT;
+	rev->no_commit_id = 1;
+	argc = setup_revisions(argc, argv, rev, "HEAD");
+
 	if (argc > 1)
 		die("unrecognized argument: %s", argv[1]);
 	if (rev->commit_format == CMIT_FMT_ONELINE)
@@ -347,12 +352,8 @@ static int cmd_wc(int argc, const char **argv, char **envp)
 	struct rev_info rev;
 
 	init_revisions(&rev);
-	rev.abbrev = DEFAULT_ABBREV;
-	rev.no_commit_id = 1;
-	rev.commit_format = CMIT_FMT_DEFAULT;
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
@@ -362,14 +363,11 @@ static int cmd_show(int argc, const char **argv, char **envp)
 
 	init_revisions(&rev);
 	rev.diff = 1;
-	rev.ignore_merges = 0;
+	rev.diffopt.recursive = 1;
 	rev.combine_merges = 1;
 	rev.dense_combined_merges = 1;
-	rev.abbrev = DEFAULT_ABBREV;
-	rev.commit_format = CMIT_FMT_DEFAULT;
-	rev.diffopt.recursive = 1;
+	rev.ignore_merges = 0;
 	rev.no_walk = 1;
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
@@ -378,10 +376,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	struct rev_info rev;
 
 	init_revisions(&rev);
-	rev.abbrev = DEFAULT_ABBREV;
-	rev.no_commit_id = 1;
-	rev.commit_format = CMIT_FMT_DEFAULT;
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
