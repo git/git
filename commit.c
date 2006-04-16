@@ -161,7 +161,7 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	if (buf[len-1] == '\n')
 		buf[--len] = 0;
 	if (buf[0] == '#')
-		return 0;
+		return NULL;
 	if ((len + 1) % 41) {
 	bad_graft_data:
 		error("bad graft data: %s", buf);
@@ -192,6 +192,8 @@ int read_graft_file(const char *graft_file)
 		/* The format is just "Commit Parent1 Parent2 ...\n" */
 		int len = strlen(buf);
 		struct commit_graft *graft = read_graft_line(buf, len);
+		if (!graft)
+			continue;
 		if (register_commit_graft(graft, 1))
 			error("duplicate graft data: %s", buf);
 	}
