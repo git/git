@@ -54,6 +54,9 @@ static const char *generate_header(struct rev_info *opt,
 	int abbrev = opt->diffopt.abbrev;
 	const char *msg = commit->buffer;
 
+	if (opt->use_precomputed_header)
+		return opt->use_precomputed_header;
+
 	if (!opt->verbose_header)
 		return sha1_to_hex(commit_sha1);
 

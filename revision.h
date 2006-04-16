@@ -56,6 +56,7 @@ struct rev_info {
 	enum cmit_fmt	commit_format;
 	const char	*header_prefix;
 	const char	*header;
+	const char	*use_precomputed_header;
 
 	/* special limits */
 	int max_count;
