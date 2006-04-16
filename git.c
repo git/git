@@ -278,36 +278,33 @@ static int cmd_help(int argc, const char **argv, char **envp)
 
 #define LOGSIZE (65536)
 
-static int cmd_log(int argc, const char **argv, char **envp)
+static int cmd_log_wc(int argc, const char **argv, char **envp,
+		      struct rev_info *rev)
 {
-	struct rev_info rev;
 	struct commit *commit;
 	char *buf = xmalloc(LOGSIZE);
 	const char *commit_prefix = "commit ";
 	int shown = 0;
 
-	init_revisions(&rev);
-	rev.abbrev = DEFAULT_ABBREV;
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
 		die("unrecognized argument: %s", argv[1]);
-
-	rev.no_commit_id = 1;
-	if (rev.commit_format == CMIT_FMT_ONELINE)
+	if (rev->commit_format == CMIT_FMT_ONELINE)
 		commit_prefix = "";
 
-	prepare_revision_walk(&rev);
+	prepare_revision_walk(rev);
 	setup_pager();
-	while ((commit = get_revision(&rev)) != NULL) {
-		if (shown && rev.diff && rev.commit_format != CMIT_FMT_ONELINE)
+	while ((commit = get_revision(rev)) != NULL) {
+		if (shown && rev->diff &&
+		    rev->commit_format != CMIT_FMT_ONELINE)
 			putchar('\n');
 		fputs(commit_prefix, stdout);
-		if (rev.abbrev_commit && rev.abbrev)
-			fputs(find_unique_abbrev(commit->object.sha1, rev.abbrev),
+		if (rev->abbrev_commit && rev->abbrev)
+			fputs(find_unique_abbrev(commit->object.sha1,
+						 rev->abbrev),
 			      stdout);
 		else
 			fputs(sha1_to_hex(commit->object.sha1), stdout);
-		if (rev.parents) {
+		if (rev->parents) {
 			struct commit_list *parents = commit->parents;
 			while (parents) {
 				struct object *o = &(parents->item->object);
@@ -326,21 +323,47 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			     parents = parents->next)
 				parents->item->object.flags &= ~TMP_MARK;
 		}
-		if (rev.commit_format == CMIT_FMT_ONELINE)
+		if (rev->commit_format == CMIT_FMT_ONELINE)
 			putchar(' ');
 		else
 			putchar('\n');
-		pretty_print_commit(rev.commit_format, commit, ~0, buf,
-				    LOGSIZE, rev.abbrev);
+		pretty_print_commit(rev->commit_format, commit, ~0, buf,
+				    LOGSIZE, rev->abbrev);
 		printf("%s\n", buf);
-		if (rev.diff)
-			log_tree_commit(&rev, commit);
+		if (rev->diff)
+			log_tree_commit(rev, commit);
 		shown = 1;
 		free(commit->buffer);
 		commit->buffer = NULL;
 	}
 	free(buf);
 	return 0;
+}
+
+static int cmd_wc(int argc, const char **argv, char **envp)
+{
+	struct rev_info rev;
+
+	init_revisions(&rev);
+	rev.abbrev = DEFAULT_ABBREV;
+	rev.no_commit_id = 1;
+	rev.commit_format = CMIT_FMT_DEFAULT;
+	rev.diff = 1;
+	rev.diffopt.recursive = 1;
+	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	return cmd_log_wc(argc, argv, envp, &rev);
+}
+
+static int cmd_log(int argc, const char **argv, char **envp)
+{
+	struct rev_info rev;
+
+	init_revisions(&rev);
+	rev.abbrev = DEFAULT_ABBREV;
+	rev.no_commit_id = 1;
+	rev.commit_format = CMIT_FMT_DEFAULT;
+	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
@@ -353,6 +376,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "version", cmd_version },
 		{ "help", cmd_help },
 		{ "log", cmd_log },
+		{ "whatchanged", cmd_wc },
 	};
 	int i;
 
