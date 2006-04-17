@@ -5,6 +5,7 @@
 #include "diffcore.h"
 #include "quote.h"
 #include "xdiff-interface.h"
+#include "log-tree.h"
 
 static int uninteresting(struct diff_filepair *p)
 {
@@ -585,9 +586,9 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 }
 
 static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
-			   int dense, const char *header,
-			   struct diff_options *opt)
+			   int dense, struct rev_info *rev)
 {
+	struct diff_options *opt = &rev->diffopt;
 	unsigned long result_size, cnt, lno;
 	char *result, *cp, *ep;
 	struct sline *sline; /* survived lines */
@@ -689,10 +690,8 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	if (show_hunks || mode_differs || working_tree_file) {
 		const char *abb;
 
-		if (header) {
-			shown_header++;
-			printf("%s%c", header, opt->line_termination);
-		}
+		if (rev->loginfo)
+			show_log(rev, rev->loginfo, "\n");
 		printf("diff --%s ", dense ? "cc" : "combined");
 		if (quote_c_style(elem->path, NULL, NULL, 0))
 			quote_c_style(elem->path, NULL, stdout, 0);
@@ -750,8 +749,9 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 #define COLONS "::::::::::::::::::::::::::::::::"
 
-static void show_raw_diff(struct combine_diff_path *p, int num_parent, const char *header, struct diff_options *opt)
+static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct rev_info *rev)
 {
+	struct diff_options *opt = &rev->diffopt;
 	int i, offset, mod_type = 'A';
 	const char *prefix;
 	int line_termination, inter_name_termination;
@@ -761,8 +761,8 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, const cha
 	if (!line_termination)
 		inter_name_termination = 0;
 
-	if (header)
-		printf("%s%c", header, line_termination);
+	if (rev->loginfo)
+		show_log(rev, rev->loginfo, "\n");
 
 	for (i = 0; i < num_parent; i++) {
 		if (p->parent[i].mode)
@@ -810,31 +810,31 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, const cha
 	}
 }
 
-int show_combined_diff(struct combine_diff_path *p,
+void show_combined_diff(struct combine_diff_path *p,
 		       int num_parent,
 		       int dense,
-		       const char *header,
-		       struct diff_options *opt)
+		       struct rev_info *rev)
 {
+	struct diff_options *opt = &rev->diffopt;
 	if (!p->len)
-		return 0;
+		return;
 	switch (opt->output_format) {
 	case DIFF_FORMAT_RAW:
 	case DIFF_FORMAT_NAME_STATUS:
 	case DIFF_FORMAT_NAME:
-		show_raw_diff(p, num_parent, header, opt);
-		return 1;
+		show_raw_diff(p, num_parent, rev);
+		return;
 
 	default:
 	case DIFF_FORMAT_PATCH:
-		return show_patch_diff(p, num_parent, dense, header, opt);
+		show_patch_diff(p, num_parent, dense, rev);
 	}
 }
 
-const char *diff_tree_combined_merge(const unsigned char *sha1,
-			     const char *header, int dense,
-			     struct diff_options *opt)
+void diff_tree_combined_merge(const unsigned char *sha1,
+			     int dense, struct rev_info *rev)
 {
+	struct diff_options *opt = &rev->diffopt;
 	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
 	struct commit_list *parents;
@@ -874,17 +874,13 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 			int saved_format = opt->output_format;
 			opt->output_format = DIFF_FORMAT_RAW;
 			for (p = paths; p; p = p->next) {
-				if (show_combined_diff(p, num_parent, dense,
-						       header, opt))
-					header = NULL;
+				show_combined_diff(p, num_parent, dense, rev);
 			}
 			opt->output_format = saved_format;
 			putchar(opt->line_termination);
 		}
 		for (p = paths; p; p = p->next) {
-			if (show_combined_diff(p, num_parent, dense,
-					       header, opt))
-				header = NULL;
+			show_combined_diff(p, num_parent, dense, rev);
 		}
 	}
 
@@ -894,5 +890,4 @@ const char *diff_tree_combined_merge(const unsigned char *sha1,
 		paths = paths->next;
 		free(tmp);
 	}
-	return header;
 }

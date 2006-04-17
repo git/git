@@ -10,6 +10,7 @@
 #define ADDED		(1u<<6)	/* Parents already parsed and added? */
 
 struct rev_info;
+struct log_info;
 
 typedef void (prune_fn_t)(struct rev_info *revs, struct commit *commit);
 
@@ -51,12 +52,11 @@ struct rev_info {
 			always_show_header:1;
 
 	/* Format info */
-	unsigned int	abbrev_commit:1;
+	unsigned int	shown_one:1,
+			abbrev_commit:1;
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;
-	const char	*header_prefix;
-	const char	*header;
-	const char	*use_precomputed_header;
+	struct log_info *loginfo;
 
 	/* special limits */
 	int max_count;
