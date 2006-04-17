@@ -856,6 +856,17 @@ static void rewrite_parents(struct rev_info *revs, struct commit *commit)
 	}
 }
 
+static void mark_boundary_to_show(struct commit *commit)
+{
+	struct commit_list *p = commit->parents;
+	while (p) {
+		commit = p->item;
+		p = p->next;
+		if (commit->object.flags & BOUNDARY)
+			commit->object.flags |= BOUNDARY_SHOW;
+	}
+}
+
 struct commit *get_revision(struct rev_info *revs)
 {
 	struct commit_list *list = revs->commits;
@@ -893,8 +904,20 @@ struct commit *get_revision(struct rev_info *revs)
 		}
 		if (commit->object.flags & SHOWN)
 			continue;
-		if (!(commit->object.flags & BOUNDARY) &&
-		    (commit->object.flags & UNINTERESTING))
+
+		/* We want to show boundary commits only when their
+		 * children are shown.  When path-limiter is in effect,
+		 * rewrite_parents() drops some commits from getting shown,
+		 * and there is no point showing boundary parents that
+		 * are not shown.  After rewrite_parents() rewrites the
+		 * parents of a commit that is shown, we mark the boundary
+		 * parents with BOUNDARY_SHOW.
+		 */
+		if (commit->object.flags & BOUNDARY_SHOW) {
+			commit->object.flags |= SHOWN;
+			return commit;
+		}
+		if (commit->object.flags & UNINTERESTING)
 			continue;
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			continue;
@@ -907,6 +930,8 @@ struct commit *get_revision(struct rev_info *revs)
 			if (revs->parents)
 				rewrite_parents(revs, commit);
 		}
+		if (revs->boundary)
+			mark_boundary_to_show(commit);
 		commit->object.flags |= SHOWN;
 		return commit;
 	} while (revs->commits);

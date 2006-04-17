@@ -25,5 +25,5 @@ clean:
 	rm -fr trash
 
 .PHONY: $(T) clean
-.NOPARALLEL:
+.NOTPARALLEL:
 

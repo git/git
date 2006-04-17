@@ -656,7 +656,7 @@ rpm: dist
 clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
 		$(LIB_FILE) $(XDIFF_LIB)
-	rm -f $(ALL_PROGRAMS) git$X
+	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f test-date$X test-delta$X test-gsimm$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf $(GIT_TARNAME)

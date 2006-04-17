@@ -1116,11 +1116,12 @@ proc layoutrows {row endrow last} {
 
 proc addextraid {id row} {
     global displayorder commitrow commitinfo
-    global commitidx
+    global commitidx commitlisted
     global parentlist childlist children
 
     incr commitidx
     lappend displayorder $id
+    lappend commitlisted 0
     lappend parentlist {}
     set commitrow($id) $row
     readcommit $id
@@ -1500,7 +1501,7 @@ proc drawcmittext {id row col rmx} {
 proc drawcmitrow {row} {
     global displayorder rowidlist
     global idrowranges idrangedrawn iddrawn
-    global commitinfo commitlisted parentlist numcommits
+    global commitinfo parentlist numcommits
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
