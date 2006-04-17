@@ -1,4 +1,3 @@
-
 #include "cache.h"
 #include "diff.h"
 #include "commit.h"
@@ -55,7 +54,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 	}
 
 	if (opt->loginfo && !opt->no_commit_id)
-		show_log(opt, opt->loginfo, "\n");
+		show_log(opt, opt->loginfo, opt->diffopt.with_stat ? "---\n" : "\n");
 	diff_flush(&opt->diffopt);
 	return 1;
 }

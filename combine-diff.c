@@ -585,6 +585,16 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 	sline->p_lno[i] = sline->p_lno[j];
 }
 
+static void dump_quoted_path(const char *prefix, const char *path)
+{
+	fputs(prefix, stdout);
+	if (quote_c_style(path, NULL, NULL, 0))
+		quote_c_style(path, NULL, stdout, 0);
+	else
+		printf("%s", path);
+	putchar('\n');
+}
+
 static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			   int dense, struct rev_info *rev)
 {
@@ -692,12 +702,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 		if (rev->loginfo)
 			show_log(rev, rev->loginfo, "\n");
-		printf("diff --%s ", dense ? "cc" : "combined");
-		if (quote_c_style(elem->path, NULL, NULL, 0))
-			quote_c_style(elem->path, NULL, stdout, 0);
-		else
-			printf("%s", elem->path);
-		putchar('\n');
+		dump_quoted_path(dense ? "diff --cc " : "diff --combined ", elem->path);
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
 			abb = find_unique_abbrev(elem->parent[i].sha1,
@@ -728,6 +733,8 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			}
 			putchar('\n');
 		}
+		dump_quoted_path("--- a/", elem->path);
+		dump_quoted_path("+++ b/", elem->path);
 		dump_sline(sline, cnt, num_parent);
 	}
 	free(result);
@@ -861,6 +868,9 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 			       &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
+
+		if (diffopts.with_stat && rev->loginfo)
+			show_log(rev, rev->loginfo, "---\n");
 		diff_flush(&diffopts);
 	}
 
