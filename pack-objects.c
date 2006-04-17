@@ -8,6 +8,8 @@
 #include "pack.h"
 #include "csum-file.h"
 #include "tree-walk.h"
+#include "rabinpoly.h"
+#include "gsimm.h"
 #include <sys/time.h>
 #include <signal.h>
 
@@ -993,6 +995,7 @@ static int type_size_sort(const struct object_entry *a, const struct object_entr
 
 struct unpacked {
 	struct object_entry *entry;
+	unsigned char fingerprint[MD_LENGTH];
 	void *data;
 };
 
@@ -1041,6 +1044,9 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	if (old_entry->depth >= max_depth)
 		return 0;
 
+	if (gb_simm_score(cur->fingerprint, old->fingerprint) < 0.4)
+		return 0;
+
 	/*
 	 * NOTE!
 	 *
@@ -1077,6 +1083,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	unsigned processed = 0;
 	unsigned last_percent = 999;
 
+	rabin_reset ();
 	memset(array, 0, array_size);
 	i = nr_objects;
 	idx = 0;
@@ -1115,6 +1122,8 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		if (size != entry->size)
 			die("object %s inconsistent object length (%lu vs %lu)", sha1_to_hex(entry->sha1), size, entry->size);
 
+		gb_simm_process(n->data, size, n->fingerprint);
+
 		j = window;
 		while (--j > 0) {
 			unsigned int other_idx = idx + j;
@@ -1124,6 +1133,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
+
 			if (try_delta(n, m, depth) < 0)
 				break;
 		}
