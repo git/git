@@ -589,7 +589,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			   struct diff_options *opt)
 {
 	unsigned long result_size, cnt, lno;
-	char *result, *cp, *ep;
+	char *result, *cp;
 	struct sline *sline; /* survived lines */
 	int mode_differs = 0;
 	int i, show_hunks, shown_header = 0;
@@ -641,7 +641,6 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		cnt++; /* incomplete line */
 
 	sline = xcalloc(cnt+2, sizeof(*sline));
-	ep = result;
 	sline[0].bol = result;
 	for (lno = 0; lno <= cnt + 1; lno++) {
 		sline[lno].lost_tail = &sline[lno].lost_head;
@@ -752,7 +751,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 static void show_raw_diff(struct combine_diff_path *p, int num_parent, const char *header, struct diff_options *opt)
 {
-	int i, offset, mod_type = 'A';
+	int i, offset;
 	const char *prefix;
 	int line_termination, inter_name_termination;
 
@@ -763,13 +762,6 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, const cha
 
 	if (header)
 		printf("%s%c", header, line_termination);
-
-	for (i = 0; i < num_parent; i++) {
-		if (p->parent[i].mode)
-			mod_type = 'M';
-	}
-	if (!p->mode)
-		mod_type = 'D';
 
 	if (opt->output_format == DIFF_FORMAT_RAW) {
 		offset = strlen(COLONS) - num_parent;
