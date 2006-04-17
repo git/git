@@ -7,7 +7,8 @@
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
 #define BOUNDARY	(1u<<5)
-#define ADDED		(1u<<6)	/* Parents already parsed and added? */
+#define BOUNDARY_SHOW	(1u<<6)
+#define ADDED		(1u<<7)	/* Parents already parsed and added? */
 
 struct rev_info;
 

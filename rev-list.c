@@ -8,9 +8,9 @@
 #include "diff.h"
 #include "revision.h"
 
-/* bits #0-6 in revision.h */
+/* bits #0-15 in revision.h */
 
-#define COUNTED		(1u<<7)
+#define COUNTED		(1u<<16)
 
 static const char rev_list_usage[] =
 "git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
