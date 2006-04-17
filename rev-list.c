@@ -326,6 +326,9 @@ int main(int argc, const char **argv)
 		else
 			revs.header_prefix = "commit ";
 	}
+	else if (revs.verbose_header)
+		/* Only --header was specified */
+		revs.commit_format = CMIT_FMT_RAW;
 
 	list = revs.commits;
 
