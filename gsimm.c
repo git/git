@@ -1,3 +1,4 @@
+#include <string.h>
 #include "rabinpoly.h"
 #include "gsimm.h"
 
@@ -32,12 +33,40 @@ static void freq_to_md(u_char *md, int *freq)
   bzero (freq, sizeof(freq[0]) * MD_BITS);
 }
 
+static int dist (u_char *l, u_char *r)
+{ int j, k;
+  int d = 0;
+
+  for (j = 0; j < MD_LENGTH; j++)
+  { u_char ch = l[j] ^ r[j];
+
+    for (k = 0; k < 8; k++) d += ((ch & (1<<k)) > 0);
+  }
+
+  return d;
+}
+
+double gb_simm_score(u_char *l, u_char *r)
+{
+	int d = dist(l, r);
+	double sim = (double) (d) / (MD_LENGTH * 4 - 1);
+	if (1.0 < sim)
+		return 0;
+	else
+		return 1.0 - sim;
+}
+
 void gb_simm_process(u_char *data, unsigned len, u_char *md)
 { size_t j = 0;
   u_int32_t ofs;
   u_int32_t dup_cache[DUP_CACHE_SIZE];
   u_int32_t count [MD_BITS * (GROUP_COUNTERS/GROUP_BITS)];
   int freq[MD_BITS];
+
+  if (len < GB_SIMM_MIN_FILE_SIZE || GB_SIMM_MAX_FILE_SIZE < len) {
+	  memset(md, 0, MD_LENGTH);
+	  return;
+  }
 
   bzero (freq, sizeof(freq[0]) * MD_BITS);
   bzero (dup_cache, DUP_CACHE_SIZE * sizeof (u_int32_t));

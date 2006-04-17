@@ -58,19 +58,6 @@ void usage()
    exit (1);
 }
 
-int dist (u_char *l, u_char *r)
-{ int j, k;
-  int d = 0;
-
-  for (j = 0; j < MD_LENGTH; j++)
-  { u_char ch = l[j] ^ r[j];
-
-    for (k = 0; k < 8; k++) d += ((ch & (1<<k)) > 0);
-  }
-
-  return d;
-}
-
 char *md_to_str(u_char *md)
 { int j;
 
@@ -102,8 +89,8 @@ void process_file (char *name)
     exit (2);
   }
 
-  if (fs.st_size >= MIN_FILE_SIZE
-      && fs.st_size <= MAX_FILE_SIZE)
+  if (fs.st_size >= GB_SIMM_MIN_FILE_SIZE
+      && fs.st_size <= GB_SIMM_MAX_FILE_SIZE)
   { fi->length = fs.st_size;
     fi->name = name;
 
@@ -116,13 +103,11 @@ void process_file (char *name)
 
     gb_simm_process (data, fs.st_size, fi->md);
     if (flag_relative)
-    { int d = dist (fi->md, relative_md);
-      double sim = 1.0 - MIN (1.0, (double) (d) / (MD_LENGTH * 4 - 1));
-      fprintf (stdout, "%s %llu %u %s %u %3.1f\n",
-               md_to_str (fi->md), (long long unsigned) 0,
-	       (unsigned) fs.st_size, name,
-               d, 100.0 * sim);
-    }
+	    fprintf (stdout, "%s %llu %u %s %u %3.1f\n",
+		     md_to_str (fi->md), (long long unsigned) 0,
+		     (unsigned) fs.st_size, name,
+		     (unsigned) 0,
+		     100.0 * gb_simm_score(fi->md, relative_md));
     else
     {
       fprintf (stdout, "%s %llu %u %s\n",

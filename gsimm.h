@@ -15,14 +15,15 @@
    In order to get at least an average of 12 samples
    per bit in the final message digest, require at least 3 * MD_LENGTH
    complete windows in the file.  */
-#define MIN_FILE_SIZE (3 * MD_LENGTH + 2 * (RABIN_WINDOW_SIZE - 1))
+#define GB_SIMM_MIN_FILE_SIZE (3 * MD_LENGTH + 2 * (RABIN_WINDOW_SIZE - 1))
 
 /* Limit matching algorithm to files less than 256 MB, so we can use
    32 bit integers everywhere without fear of overflow. For larger
    files we should add logic to mmap the file by piece and accumulate
    the frequency counts. */
-#define MAX_FILE_SIZE (256*1024*1024 - 1)
+#define GB_SIMM_MAX_FILE_SIZE (256*1024*1024 - 1)
 
 void gb_simm_process(u_char *data, unsigned len, u_char *md);
+double gb_simm_score(u_char *l, u_char *r);
 
 #endif
