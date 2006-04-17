@@ -32,7 +32,7 @@ const char *git_exec_path(void)
 int execv_git_cmd(const char **argv)
 {
 	char git_command[PATH_MAX + 1];
-	int len, err, i;
+	int len,  i;
 	const char *paths[] = { current_exec_path,
 				getenv("GIT_EXEC_PATH"),
 				builtin_exec_path };
@@ -84,8 +84,6 @@ int execv_git_cmd(const char **argv)
 
 		/* execve() can only ever return if it fails */
 		execve(git_command, (char **)argv, environ);
-
-		err = errno;
 
 		argv[0] = tmp;
 	}
