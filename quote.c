@@ -144,8 +144,6 @@ static int quote_c_style_counted(const char *name, int namelen,
 
 			case '\\': /* fallthru */
 			case '"': EMITQ(); break;
-			case ' ':
-				break;
 			default:
 				/* octal */
 				EMITQ();
