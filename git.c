@@ -373,6 +373,7 @@ static int cmd_show(int argc, const char **argv, char **envp)
 	rev.diffopt.recursive = 1;
 	rev.combine_merges = 1;
 	rev.dense_combined_merges = 1;
+	rev.always_show_header = 1;
 	rev.ignore_merges = 0;
 	rev.no_walk = 1;
 	return cmd_log_wc(argc, argv, envp, &rev);

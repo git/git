@@ -43,7 +43,7 @@ static int diff_root_tree(struct rev_info *opt,
 	return retval;
 }
 
-static const char *generate_header(struct rev_info *opt,
+static const char *get_header(struct rev_info *opt,
 				   const unsigned char *commit_sha1,
 				   const unsigned char *parent_sha1,
 				   const struct commit *commit)
@@ -75,11 +75,21 @@ static const char *generate_header(struct rev_info *opt,
 	offset += pretty_print_commit(opt->commit_format, commit, len,
 				      this_header + offset,
 				      sizeof(this_header) - offset, abbrev);
-	if (opt->always_show_header) {
-		puts(this_header);
-		return NULL;
-	}
 	return this_header;
+}
+
+static const char *generate_header(struct rev_info *opt,
+					const unsigned char *commit_sha1,
+					const unsigned char *parent_sha1,
+					const struct commit *commit)
+{
+	const char *header = get_header(opt, commit_sha1, parent_sha1, commit);
+
+	if (opt->always_show_header) {
+		puts(header);
+		header = NULL;
+	}
+	return header;
 }
 
 static int do_diff_combined(struct rev_info *opt, struct commit *commit)
