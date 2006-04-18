@@ -9,6 +9,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
+	const char *extra;
 	int len;
 
 	opt->loginfo = NULL;
@@ -18,8 +19,17 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	}
 
 	/*
-	 * Whitespace between commit messages, unless we are oneline
+	 * The "oneline" format has several special cases:
+	 *  - The pretty-printed commit lacks a newline at the end
+	 *    of the buffer, but we do want to make sure that we
+	 *    have a newline there. If the separator isn't already
+	 *    a newline, add an extra one.
+	 *  - unlike other log messages, the one-line format does
+	 *    not have an empty line between entries.
 	 */
+	extra = "";
+	if (*sep != '\n' && opt->commit_format == CMIT_FMT_ONELINE)
+		extra = "\n";
 	if (opt->shown_one && opt->commit_format != CMIT_FMT_ONELINE)
 		putchar('\n');
 	opt->shown_one = 1;
@@ -38,7 +48,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	 * And then the pretty-printed message itself
 	 */
 	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev);
-	printf("%s%s", this_header, sep);
+	printf("%s%s%s", this_header, extra, sep);
 }
 
 int log_tree_diff_flush(struct rev_info *opt)
