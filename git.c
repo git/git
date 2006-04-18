@@ -276,6 +276,43 @@ static int cmd_help(int argc, const char **argv, char **envp)
 	return 0;
 }
 
+static int cmd_format_patch(int argc, const char **argv, char **envp)
+{
+	struct commit *commit;
+	struct commit **list = NULL;
+	struct rev_info rev;
+	int nr = 0;
+
+	init_revisions(&rev);
+	rev.commit_format = CMIT_FMT_EMAIL;
+	rev.verbose_header = 1;
+	rev.diff = 1;
+	rev.diffopt.with_raw = 0;
+	rev.diffopt.with_stat = 1;
+	rev.combine_merges = 0;
+	rev.ignore_merges = 1;
+	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	argc = setup_revisions(argc, argv, &rev, "HEAD");
+
+	prepare_revision_walk(&rev);
+	while ((commit = get_revision(&rev)) != NULL) {
+		nr++;
+		list = realloc(list, nr * sizeof(list[0]));
+		list[nr - 1] = commit;
+	}
+	while (0 <= --nr) {
+		int shown;
+		commit = list[nr];
+		shown = log_tree_commit(&rev, commit);
+		free(commit->buffer);
+		commit->buffer = NULL;
+		if (shown)
+			printf("-- \n%s\n\n", GIT_VERSION);
+	}
+	free(list);
+	return 0;
+}
+
 static int cmd_log_wc(int argc, const char **argv, char **envp,
 		      struct rev_info *rev)
 {
@@ -348,6 +385,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_wc },
 		{ "show", cmd_show },
+		{ "format-patch", cmd_format_patch },
 	};
 	int i;
 
