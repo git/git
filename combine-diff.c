@@ -831,10 +831,11 @@ void show_combined_diff(struct combine_diff_path *p,
 	case DIFF_FORMAT_NAME:
 		show_raw_diff(p, num_parent, rev);
 		return;
-
-	default:
 	case DIFF_FORMAT_PATCH:
 		show_patch_diff(p, num_parent, dense, rev);
+		return;
+	default:
+		return;
 	}
 }
 
@@ -847,10 +848,13 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 	struct commit_list *parents;
 	struct combine_diff_path *p, *paths = NULL;
 	int num_parent, i, num_paths;
+	int do_diffstat;
 
+	do_diffstat = (opt->output_format == DIFF_FORMAT_DIFFSTAT ||
+		       opt->with_stat);
 	diffopts = *opt;
-	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.with_raw = 0;
+	diffopts.with_stat = 0;
 	diffopts.recursive = 1;
 
 	/* count parents */
@@ -864,14 +868,24 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 	     parents;
 	     parents = parents->next, i++) {
 		struct commit *parent = parents->item;
+		/* show stat against the first parent even
+		 * when doing combined diff.
+		 */
+		if (i == 0 && do_diffstat)
+			diffopts.output_format = DIFF_FORMAT_DIFFSTAT;
+		else
+			diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 		diff_tree_sha1(parent->object.sha1, commit->object.sha1, "",
 			       &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 
-		if (diffopts.with_stat && rev->loginfo)
-			show_log(rev, rev->loginfo, "---\n");
+		if (do_diffstat && rev->loginfo)
+			show_log(rev, rev->loginfo,
+				 opt->with_stat ? "---\n" : "\n");
 		diff_flush(&diffopts);
+		if (opt->with_stat)
+			putchar('\n');
 	}
 
 	/* find out surviving paths */
