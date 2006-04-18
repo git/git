@@ -344,8 +344,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 			opt.ignore_merges = 0;
 		if (opt.dense_combined_merges)
 			opt.diffopt.output_format = DIFF_FORMAT_PATCH;
-		if (opt.diffopt.output_format == DIFF_FORMAT_PATCH)
-			opt.diffopt.recursive = 1;
 		if (!full_diff && rev.prune_data)
 			diff_tree_setup_paths(rev.prune_data, &opt.diffopt);
 		diff_setup_done(&opt.diffopt);

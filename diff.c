@@ -1029,6 +1029,16 @@ int diff_setup_done(struct diff_options *options)
 	     options->detect_rename != DIFF_DETECT_COPY) ||
 	    (0 <= options->rename_limit && !options->detect_rename))
 		return -1;
+
+	/*
+	 * These cases always need recursive; we do not drop caller-supplied
+	 * recursive bits for other formats here.
+	 */
+	if ((options->output_format == DIFF_FORMAT_PATCH) ||
+	    (options->output_format == DIFF_FORMAT_DIFFSTAT) ||
+	    (options->with_stat))
+		options->recursive = 1;
+
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
 	if (options->setup & DIFF_SETUP_USE_CACHE) {

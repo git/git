@@ -117,9 +117,6 @@ int main(int argc, const char **argv)
 	if (opt->dense_combined_merges)
 		opt->diffopt.output_format = DIFF_FORMAT_PATCH;
 
-	if (opt->diffopt.output_format == DIFF_FORMAT_PATCH)
-		opt->diffopt.recursive = 1;
-
 	diff_tree_setup_paths(get_pathspec(prefix, argv), &opt->diffopt);
 	diff_setup_done(&opt->diffopt);
 
