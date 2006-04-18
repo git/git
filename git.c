@@ -276,8 +276,6 @@ static int cmd_help(int argc, const char **argv, char **envp)
 	return 0;
 }
 
-#define LOGSIZE (65536)
-
 static int cmd_log_wc(int argc, const char **argv, char **envp,
 		      struct rev_info *rev)
 {
