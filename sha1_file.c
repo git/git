@@ -874,17 +874,19 @@ void packed_object_info_detail(struct pack_entry *e,
 			       unsigned char *base_sha1)
 {
 	struct packed_git *p = e->p;
-	unsigned long offset, left;
+	unsigned long offset;
 	unsigned char *pack;
 	enum object_type kind;
 
 	offset = unpack_object_header(p, e->offset, &kind, size);
 	pack = p->pack_base + offset;
-	left = p->pack_size - offset;
 	if (kind != OBJ_DELTA)
 		*delta_chain_length = 0;
 	else {
 		unsigned int chain_length = 0;
+		if (p->pack_size <= offset + 20)
+			die("pack file %s records an incomplete delta base",
+			    p->pack_name);
 		memcpy(base_sha1, pack, 20);
 		do {
 			struct pack_entry base_ent;
