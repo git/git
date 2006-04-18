@@ -20,7 +20,7 @@ void setup_pager(void)
 		return;
 	if (!pager)
 		pager = "less";
-	else if (!*pager)
+	else if (!*pager || !strcmp(pager, "cat"))
 		return;
 
 	if (pipe(fd) < 0)
