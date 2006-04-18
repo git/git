@@ -276,81 +276,26 @@ static int cmd_help(int argc, const char **argv, char **envp)
 	return 0;
 }
 
-#define LOGSIZE (65536)
-
 static int cmd_log_wc(int argc, const char **argv, char **envp,
 		      struct rev_info *rev)
 {
 	struct commit *commit;
-	char *buf = xmalloc(LOGSIZE);
-	const char *commit_prefix = "commit ";
-	int shown = 0;
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
+	rev->verbose_header = 1;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 
 	if (argc > 1)
 		die("unrecognized argument: %s", argv[1]);
-	if (rev->commit_format == CMIT_FMT_ONELINE)
-		commit_prefix = "";
 
 	prepare_revision_walk(rev);
 	setup_pager();
 	while ((commit = get_revision(rev)) != NULL) {
-		unsigned long ofs = 0;
-
-		if (shown && rev->diff &&
-		    rev->commit_format != CMIT_FMT_ONELINE)
-			putchar('\n');
-
-		ofs = sprintf(buf, "%s", commit_prefix);
-		if (rev->abbrev_commit && rev->abbrev)
-			ofs += sprintf(buf + ofs, "%s",
-				       find_unique_abbrev(commit->object.sha1,
-							  rev->abbrev));
-		else
-			ofs += sprintf(buf + ofs, "%s",
-				       sha1_to_hex(commit->object.sha1));
-		if (rev->parents) {
-			struct commit_list *parents = commit->parents;
-			while (parents) {
-				struct object *o = &(parents->item->object);
-				parents = parents->next;
-				if (o->flags & TMP_MARK)
-					continue;
-				ofs += sprintf(buf + ofs, " %s",
-					       sha1_to_hex(o->sha1));
-				o->flags |= TMP_MARK;
-			}
-			/* TMP_MARK is a general purpose flag that can
-			 * be used locally, but the user should clean
-			 * things up after it is done with them.
-			 */
-			for (parents = commit->parents;
-			     parents;
-			     parents = parents->next)
-				parents->item->object.flags &= ~TMP_MARK;
-		}
-		buf[ofs++] = 
-			(rev->commit_format == CMIT_FMT_ONELINE) ? ' ' : '\n';
-		ofs += pretty_print_commit(rev->commit_format, commit, ~0,
-					   buf + ofs,
-					   LOGSIZE - ofs - 20,
-					   rev->abbrev);
-
-		if (rev->diff) {
-			rev->use_precomputed_header = buf;
-			strcpy(buf + ofs, "\n---\n");
-			log_tree_commit(rev, commit);
-		}
-		else
-			printf("%s\n", buf);
-		shown = 1;
+		log_tree_commit(rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
 	}
-	free(buf);
 	return 0;
 }
 

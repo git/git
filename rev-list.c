@@ -41,13 +41,14 @@ struct rev_info revs;
 static int bisect_list = 0;
 static int show_timestamp = 0;
 static int hdr_termination = 0;
+static const char *header_prefix;
 
 static void show_commit(struct commit *commit)
 {
 	if (show_timestamp)
 		printf("%lu ", commit->date);
-	if (*revs.header_prefix)
-		fputs(revs.header_prefix, stdout);
+	if (header_prefix)
+		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
 	if (revs.abbrev_commit && revs.abbrev)
@@ -322,10 +323,13 @@ int main(int argc, const char **argv)
 		/* The command line has a --pretty  */
 		hdr_termination = '\n';
 		if (revs.commit_format == CMIT_FMT_ONELINE)
-			revs.header_prefix = "";
+			header_prefix = "";
 		else
-			revs.header_prefix = "commit ";
+			header_prefix = "commit ";
 	}
+	else if (revs.verbose_header)
+		/* Only --header was specified */
+		revs.commit_format = CMIT_FMT_RAW;
 
 	list = revs.commits;
 

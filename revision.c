@@ -498,7 +498,6 @@ void init_revisions(struct rev_info *revs)
 	revs->topo_setter = topo_sort_default_setter;
 	revs->topo_getter = topo_sort_default_getter;
 
-	revs->header_prefix = "";
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
 	diff_setup(&revs->diffopt);
@@ -675,12 +674,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "-v")) {
 				revs->verbose_header = 1;
-				revs->header_prefix = "diff-tree ";
 				continue;
 			}
 			if (!strncmp(arg, "--pretty", 8)) {
 				revs->verbose_header = 1;
-				revs->header_prefix = "diff-tree ";
 				revs->commit_format = get_commit_format(arg+8);
 				continue;
 			}

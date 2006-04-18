@@ -71,6 +71,7 @@ int main(int argc, const char **argv)
 	nr_sha1 = 0;
 	init_revisions(opt);
 	opt->abbrev = 0;
+	opt->diff = 1;
 	argc = setup_revisions(argc, argv, opt, NULL);
 
 	while (--argc > 0) {

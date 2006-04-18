@@ -5,12 +5,14 @@
  */
 #include "cache.h"
 #include "diff.h"
+#include "commit.h"
+#include "revision.h"
 
 static const char diff_files_usage[] =
 "git-diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-static struct diff_options diff_options;
+static struct rev_info rev;
 static int silent = 0;
 static int diff_unmerged_stage = 2;
 static int combine_merges = 0;
@@ -18,12 +20,12 @@ static int dense_combined_merges = 0;
 
 static void show_unmerge(const char *path)
 {
-	diff_unmerge(&diff_options, path);
+	diff_unmerge(&rev.diffopt, path);
 }
 
 static void show_file(int pfx, struct cache_entry *ce)
 {
-	diff_addremove(&diff_options, pfx, ntohl(ce->ce_mode),
+	diff_addremove(&rev.diffopt, pfx, ntohl(ce->ce_mode),
 		       ce->sha1, ce->name, NULL);
 }
 
@@ -31,7 +33,7 @@ static void show_modified(int oldmode, int mode,
 			  const unsigned char *old_sha1, const unsigned char *sha1,
 			  char *path)
 {
-	diff_change(&diff_options, oldmode, mode, old_sha1, sha1, path, NULL);
+	diff_change(&rev.diffopt, oldmode, mode, old_sha1, sha1, path, NULL);
 }
 
 int main(int argc, const char **argv)
@@ -41,7 +43,7 @@ int main(int argc, const char **argv)
 	int entries, i;
 
 	git_config(git_diff_config);
-	diff_setup(&diff_options);
+	diff_setup(&rev.diffopt);
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "--")) {
 			argv++;
@@ -74,7 +76,7 @@ int main(int argc, const char **argv)
 			dense_combined_merges = combine_merges = 1;
 		else {
 			int diff_opt_cnt;
-			diff_opt_cnt = diff_opt_parse(&diff_options,
+			diff_opt_cnt = diff_opt_parse(&rev.diffopt,
 						      argv+1, argc-1);
 			if (diff_opt_cnt < 0)
 				usage(diff_files_usage);
@@ -89,13 +91,13 @@ int main(int argc, const char **argv)
 		argv++; argc--;
 	}
 	if (dense_combined_merges)
-		diff_options.output_format = DIFF_FORMAT_PATCH;
+		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 
 	/* Find the directory, and set up the pathspec */
 	pathspec = get_pathspec(prefix, argv + 1);
 	entries = read_cache();
 
-	if (diff_setup_done(&diff_options) < 0)
+	if (diff_setup_done(&rev.diffopt) < 0)
 		usage(diff_files_usage);
 
 	/* At this point, if argc == 1, then we are doing everything.
@@ -167,8 +169,7 @@ int main(int argc, const char **argv)
 			if (combine_merges && num_compare_stages == 2) {
 				show_combined_diff(&combine.p, 2,
 						   dense_combined_merges,
-						   NULL,
-						   &diff_options);
+						   &rev);
 				free(combine.p.path);
 				continue;
 			}
@@ -194,7 +195,7 @@ int main(int argc, const char **argv)
 			continue;
 		}
 		changed = ce_match_stat(ce, &st, 0);
-		if (!changed && !diff_options.find_copies_harder)
+		if (!changed && !rev.diffopt.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);
 
@@ -207,7 +208,7 @@ int main(int argc, const char **argv)
 			      ce->sha1, (changed ? null_sha1 : ce->sha1),
 			      ce->name);
 	}
-	diffcore_std(&diff_options);
-	diff_flush(&diff_options);
+	diffcore_std(&rev.diffopt);
+	diff_flush(&rev.diffopt);
 	return 0;
 }
