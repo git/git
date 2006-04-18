@@ -274,9 +274,15 @@ proc readrefs {} {
 	    match id path]} {
 	    continue
 	}
+	if {[regexp {^remotes/.*/HEAD$} $path match]} {
+	    continue
+	}
 	if {![regexp {^(tags|heads)/(.*)$} $path match type name]} {
 	    set type others
 	    set name $path
+	}
+	if {[regexp {^remotes/} $path match]} {
+	    set type heads
 	}
 	if {$type == "tags"} {
 	    set tagids($name) $id
@@ -1702,6 +1708,14 @@ proc drawtags {id x xt y1} {
 	    set xl [expr {$xl - $delta/2}]
 	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
 		-width 1 -outline black -fill $col -tags tag.$id
+	    if {[regexp {^(remotes/.*/|remotes/)} $tag match remoteprefix]} {
+	        set rwid [font measure $mainfont $remoteprefix]
+		set xi [expr {$x + 1}]
+		set yti [expr {$yt + 1}]
+		set xri [expr {$x + $rwid}]
+		$canv create polygon $xi $yti $xri $yti $xri $yb $xi $yb \
+			-width 0 -fill "#ffddaa" -tags tag.$id
+	    }
 	}
 	set t [$canv create text $xl $y1 -anchor w -text $tag \
 		   -font $mainfont -tags tag.$id]
