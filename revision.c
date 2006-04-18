@@ -791,8 +791,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		if (revs->dense_combined_merges)
 			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 	}
-	if (revs->diffopt.output_format == DIFF_FORMAT_PATCH)
-		revs->diffopt.recursive = 1;
 	revs->diffopt.abbrev = revs->abbrev;
 	diff_setup_done(&revs->diffopt);
 
