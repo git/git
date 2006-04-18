@@ -7,9 +7,17 @@ LANG=C
 LC_CTYPE=C
 export PATH LANG LC_CTYPE
 
+case "`git symbolic-ref HEAD`" in
+refs/heads/master)
+	d="prefix=$HOME/git-master" ;;
+refs/heads/pu)
+	d="prefix=$HOME/git-pu" ;;
+*)
+	d="bindir=$HOME/bin/Linux gitexecdir=$HOME/bin/Linux" ;;
+esac
+
 : ${O=-O2}
-make bindir=$HOME/bin/Linux \
-     gitexecdir=$HOME/bin/Linux \
+make $d \
      PYTHON_PATH=/usr/bin/python2.4 \
      CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
      WITH_SEND_EMAIL=YesPlease \
