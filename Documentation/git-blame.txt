@@ -1,0 +1,42 @@
+git-blame(1)
+============
+
+NAME
+----
+git-blame - Blame file lines on commits
+
+SYNOPSIS
+--------
+git-blame file [options] file [revision]
+
+DESCRIPTION
+-----------
+Annotates each line in the given file with information from the commit
+which introduced the line. Start annotation from the given revision.
+
+OPTIONS
+-------
+-c, --compability::
+	Use the same output mode as git-annotate (Default: off).
+
+-l, --long::
+	Show long rev (Defaults off).
+
+-S, --rev-file <revs-file>::
+	Use revs from revs-file instead of calling git-rev-list.
+
+-h, --help::
+	Show help message.
+
+
+SEE ALSO
+--------
+gitlink:git-annotate[1]
+
+AUTHOR
+------
+Written by Fredrik Kuivinen <freku045@student.liu.se>.
+
+GIT
+---
+Part of the gitlink:git[7] suite

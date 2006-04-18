@@ -98,6 +98,7 @@ package SVNconn;
 use File::Spec;
 use File::Temp qw(tempfile);
 use POSIX qw(strftime dup2);
+use Fcntl qw(SEEK_SET);
 
 sub new {
 	my($what,$repo) = @_;
@@ -143,9 +144,22 @@ sub file {
 	}
 	my $mode;
 	if (exists $properties->{'svn:executable'}) {
-		$mode = '0755';
+		$mode = '100755';
+	} elsif (exists $properties->{'svn:special'}) {
+		my ($special_content, $filesize);
+		$filesize = tell $fh;
+		seek $fh, 0, SEEK_SET;
+		read $fh, $special_content, $filesize;
+		if ($special_content =~ s/^link //) {
+			$mode = '120000';
+			seek $fh, 0, SEEK_SET;
+			truncate $fh, 0;
+			print $fh $special_content;
+		} else {
+			die "unexpected svn:special file encountered";
+		}
 	} else {
-		$mode = '0644';
+		$mode = '100644';
 	}
 	close ($fh);
 
