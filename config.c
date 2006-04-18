@@ -420,6 +420,7 @@ int git_config_set_multivar(const char* key, const char* value,
 {
 	int i;
 	int fd, in_fd;
+	int ret;
 	char* config_filename = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
 	const char* last_dot = strrchr(key, '.');
@@ -429,9 +430,10 @@ int git_config_set_multivar(const char* key, const char* value,
 	 * key name separated by a dot, we have to know where the dot is.
 	 */
 
-	if (last_dot == NULL) {	
+	if (last_dot == NULL) {
 		fprintf(stderr, "key does not contain a section: %s\n", key);
-		return 2;
+		ret = 2;
+		goto out_free;
 	}
 	store.baselen = last_dot - key;
 
@@ -447,7 +449,8 @@ int git_config_set_multivar(const char* key, const char* value,
 				 (i == store.baselen+1 && !isalpha(key[i])))) {
 			fprintf(stderr, "invalid key: %s\n", key);
 			free(store.key);
-			return 1;
+			ret = 1;
+			goto out_free;
 		} else
 			store.key[i] = tolower(key[i]);
 	store.key[i] = 0;
@@ -460,7 +463,8 @@ int git_config_set_multivar(const char* key, const char* value,
 	if (fd < 0) {
 		fprintf(stderr, "could not lock config file\n");
 		free(store.key);
-		return -1;
+		ret = -1;
+		goto out_free;
 	}
 
 	/*
@@ -475,13 +479,15 @@ int git_config_set_multivar(const char* key, const char* value,
 			      strerror(errno));
 			close(fd);
 			unlink(lock_file);
-			return 3; /* same as "invalid config file" */
+			ret = 3; /* same as "invalid config file" */
+			goto out_free;
 		}
 		/* if nothing to unset, error out */
 		if (value == NULL) {
 			close(fd);
 			unlink(lock_file);
-			return 5;
+			ret = 5;
+			goto out_free;
 		}
 
 		store.key = (char*)key;
@@ -507,7 +513,8 @@ int git_config_set_multivar(const char* key, const char* value,
 				fprintf(stderr, "Invalid pattern: %s\n",
 					value_regex);
 				free(store.value_regex);
-				return 6;
+				ret = 6;
+				goto out_free;
 			}
 		}
 
@@ -528,7 +535,8 @@ int git_config_set_multivar(const char* key, const char* value,
 				regfree(store.value_regex);
 				free(store.value_regex);
 			}
-			return 3;
+			ret = 3;
+			goto out_free;
 		}
 
 		free(store.key);
@@ -542,7 +550,8 @@ int git_config_set_multivar(const char* key, const char* value,
 				(store.seen > 1 && multi_replace == 0)) {
 			close(fd);
 			unlink(lock_file);
-			return 5;
+			ret = 5;
+			goto out_free;
 		}
 
 		fstat(in_fd, &st);
@@ -593,10 +602,18 @@ int git_config_set_multivar(const char* key, const char* value,
 
 	if (rename(lock_file, config_filename) < 0) {
 		fprintf(stderr, "Could not rename the lock file?\n");
-		return 4;
+		ret = 4;
+		goto out_free;
 	}
 
-	return 0;
+	ret = 0;
+
+out_free:
+	if (config_filename)
+		free(config_filename);
+	if (lock_file)
+		free(lock_file);
+	return ret;
 }
 
 

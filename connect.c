@@ -74,7 +74,7 @@ int get_ack(int fd, unsigned char *result_sha1)
 		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
 		return 0;
-	if (!strncmp(line, "ACK ", 3)) {
+	if (!strncmp(line, "ACK ", 4)) {
 		if (!get_sha1_hex(line+4, result_sha1)) {
 			if (strstr(line+45, "continue"))
 				return 2;
@@ -567,6 +567,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 	int pipefd[2][2];
 	pid_t pid;
 	enum protocol protocol = PROTO_LOCAL;
+	int free_path = 0;
 
 	host = strstr(url, "://");
 	if(host) {
@@ -610,16 +611,23 @@ int git_connect(int fd[2], char *url, const char *prog)
 		char *ptr = path;
 		if (path[1] == '~')
 			path++;
-		else
+		else {
 			path = strdup(ptr);
+			free_path = 1;
+		}
 
 		*ptr = '\0';
 	}
 
 	if (protocol == PROTO_GIT) {
+		int ret;
 		if (git_use_proxy(host))
-			return git_proxy_connect(fd, prog, host, path);
-		return git_tcp_connect(fd, prog, host, path);
+			ret = git_proxy_connect(fd, prog, host, path);
+		else
+			ret = git_tcp_connect(fd, prog, host, path);
+		if (free_path)
+			free(path);
+		return ret;
 	}
 
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
@@ -659,6 +667,8 @@ int git_connect(int fd[2], char *url, const char *prog)
 	fd[1] = pipefd[1][1];
 	close(pipefd[0][1]);
 	close(pipefd[1][0]);
+	if (free_path)
+		free(path);
 	return pid;
 }
 

@@ -160,7 +160,7 @@ struct commit_graft *read_graft_line(char *buf, int len)
 
 	if (buf[len-1] == '\n')
 		buf[--len] = 0;
-	if (buf[0] == '#')
+	if (buf[0] == '#' || buf[0] == '\0')
 		return NULL;
 	if ((len + 1) % 41) {
 	bad_graft_data:
