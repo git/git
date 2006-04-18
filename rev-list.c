@@ -39,24 +39,21 @@ static const char rev_list_usage[] =
 struct rev_info revs;
 
 static int bisect_list = 0;
-static int verbose_header = 0;
-static int abbrev = DEFAULT_ABBREV;
-static int abbrev_commit = 0;
 static int show_timestamp = 0;
 static int hdr_termination = 0;
-static const char *commit_prefix = "";
-static enum cmit_fmt commit_format = CMIT_FMT_RAW;
+static const char *header_prefix;
 
 static void show_commit(struct commit *commit)
 {
 	if (show_timestamp)
 		printf("%lu ", commit->date);
-	if (commit_prefix[0])
-		fputs(commit_prefix, stdout);
+	if (header_prefix)
+		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
-	if (abbrev_commit && abbrev)
-		fputs(find_unique_abbrev(commit->object.sha1, abbrev), stdout);
+	if (revs.abbrev_commit && revs.abbrev)
+		fputs(find_unique_abbrev(commit->object.sha1, revs.abbrev),
+		      stdout);
 	else
 		fputs(sha1_to_hex(commit->object.sha1), stdout);
 	if (revs.parents) {
@@ -78,14 +75,16 @@ static void show_commit(struct commit *commit)
 		     parents = parents->next)
 			parents->item->object.flags &= ~TMP_MARK;
 	}
-	if (commit_format == CMIT_FMT_ONELINE)
+	if (revs.commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else
 		putchar('\n');
 
-	if (verbose_header) {
+	if (revs.verbose_header) {
 		static char pretty_header[16384];
-		pretty_print_commit(commit_format, commit, ~0, pretty_header, sizeof(pretty_header), abbrev);
+		pretty_print_commit(revs.commit_format, commit, ~0,
+				    pretty_header, sizeof(pretty_header),
+				    revs.abbrev);
 		printf("%s%c", pretty_header, hdr_termination);
 	}
 	fflush(stdout);
@@ -297,58 +296,16 @@ int main(int argc, const char **argv)
 	struct commit_list *list;
 	int i;
 
+	init_revisions(&revs);
+	revs.abbrev = 0;
+	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 
-		/* accept -<digit>, like traditilnal "head" */
-		if ((*arg == '-') && isdigit(arg[1])) {
-			revs.max_count = atoi(arg + 1);
-			continue;
-		}
-		if (!strcmp(arg, "-n")) {
-			if (++i >= argc)
-				die("-n requires an argument");
-			revs.max_count = atoi(argv[i]);
-			continue;
-		}
-		if (!strncmp(arg,"-n",2)) {
-			revs.max_count = atoi(arg + 2);
-			continue;
-		}
 		if (!strcmp(arg, "--header")) {
-			verbose_header = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-abbrev")) {
-			abbrev = 0;
-			continue;
-		}
-		if (!strcmp(arg, "--abbrev")) {
-			abbrev = DEFAULT_ABBREV;
-			continue;
-		}
-		if (!strcmp(arg, "--abbrev-commit")) {
-			abbrev_commit = 1;
-			continue;
-		}
-		if (!strncmp(arg, "--abbrev=", 9)) {
-			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev && abbrev < MINIMUM_ABBREV)
-				abbrev = MINIMUM_ABBREV;
-			else if (40 < abbrev)
-				abbrev = 40;
-			continue;
-		}
-		if (!strncmp(arg, "--pretty", 8)) {
-			commit_format = get_commit_format(arg+8);
-			verbose_header = 1;
-			hdr_termination = '\n';
-			if (commit_format == CMIT_FMT_ONELINE)
-				commit_prefix = "";
-			else
-				commit_prefix = "commit ";
+			revs.verbose_header = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--timestamp")) {
@@ -362,14 +319,27 @@ int main(int argc, const char **argv)
 		usage(rev_list_usage);
 
 	}
+	if (revs.commit_format != CMIT_FMT_UNSPECIFIED) {
+		/* The command line has a --pretty  */
+		hdr_termination = '\n';
+		if (revs.commit_format == CMIT_FMT_ONELINE)
+			header_prefix = "";
+		else
+			header_prefix = "commit ";
+	}
+	else if (revs.verbose_header)
+		/* Only --header was specified */
+		revs.commit_format = CMIT_FMT_RAW;
 
 	list = revs.commits;
 
-	if (!list &&
-	    (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) && !revs.pending_objects))
+	if ((!list &&
+	     (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) &&
+	      !revs.pending_objects)) ||
+	    revs.diff)
 		usage(rev_list_usage);
 
-	save_commit_buffer = verbose_header;
+	save_commit_buffer = revs.verbose_header;
 	track_object_refs = 0;
 	if (bisect_list)
 		revs.limited = 1;

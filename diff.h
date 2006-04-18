@@ -6,6 +6,7 @@
 
 #include "tree-walk.h"
 
+struct rev_info;
 struct diff_options;
 
 typedef void (*change_fn_t)(struct diff_options *options,
@@ -70,11 +71,10 @@ struct combine_diff_path {
 	(sizeof(struct combine_diff_path) + \
 	 sizeof(struct combine_diff_parent) * (n) + (l) + 1)
 
-extern int show_combined_diff(struct combine_diff_path *elem, int num_parent,
-			      int dense, const char *header,
-			      struct diff_options *);
+extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
+			      int dense, struct rev_info *);
 
-extern const char *diff_tree_combined_merge(const unsigned char *sha1, const char *, int, struct diff_options *opt);
+extern void diff_tree_combined_merge(const unsigned char *sha1, int, struct rev_info *);
 
 extern void diff_addremove(struct diff_options *,
 			   int addremove,

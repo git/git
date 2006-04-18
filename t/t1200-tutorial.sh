@@ -49,7 +49,7 @@ test_expect_success 'git diff HEAD' 'cmp diff.expect diff.output'
 #test_expect_success 'git-read-tree --reset HEAD' "git-read-tree --reset HEAD ; test \"hello: needs update\" = \"$(git-update-index --refresh)\""
 
 cat > whatchanged.expect << EOF
-diff-tree VARIABLE (from root)
+commit VARIABLE
 Author: VARIABLE
 Date:   VARIABLE
 
@@ -72,7 +72,7 @@ index 0000000..557db03
 EOF
 
 git-whatchanged -p --root | \
-	sed -e "1s/^\(.\{10\}\).\{40\}/\1VARIABLE/" \
+	sed -e "1s/^\(.\{7\}\).\{40\}/\1VARIABLE/" \
 		-e "2,3s/^\(.\{8\}\).*$/\1VARIABLE/" \
 > whatchanged.output
 test_expect_success 'git-whatchanged -p --root' 'cmp whatchanged.expect whatchanged.output'

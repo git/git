@@ -11,6 +11,7 @@
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 
 struct rev_info;
+struct log_info;
 
 typedef void (prune_fn_t)(struct rev_info *revs, struct commit *commit);
 
@@ -27,6 +28,7 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			no_merges:1,
+			no_walk:1,
 			remove_empty_trees:1,
 			lifo:1,
 			topo_order:1,
@@ -39,13 +41,32 @@ struct rev_info {
 			boundary:1,
 			parents:1;
 
+	/* Diff flags */
+	unsigned int	diff:1,
+			full_diff:1,
+			show_root_diff:1,
+			no_commit_id:1,
+			verbose_header:1,
+			ignore_merges:1,
+			combine_merges:1,
+			dense_combined_merges:1,
+			always_show_header:1;
+
+	/* Format info */
+	unsigned int	shown_one:1,
+			abbrev_commit:1;
+	unsigned int	abbrev;
+	enum cmit_fmt	commit_format;
+	struct log_info *loginfo;
+
 	/* special limits */
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
 
-	/* paths limiting */
+	/* diff info for patches and for paths limiting */
 	struct diff_options diffopt;
+	struct diff_options pruning;
 
 	topo_sort_set_fn_t topo_setter;
 	topo_sort_get_fn_t topo_getter;

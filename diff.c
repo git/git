@@ -1035,8 +1035,7 @@ int diff_setup_done(struct diff_options *options)
 	 * recursive bits for other formats here.
 	 */
 	if ((options->output_format == DIFF_FORMAT_PATCH) ||
-	    (options->output_format == DIFF_FORMAT_DIFFSTAT) ||
-	    (options->with_stat))
+	    (options->output_format == DIFF_FORMAT_DIFFSTAT))
 		options->recursive = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)

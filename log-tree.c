@@ -3,59 +3,58 @@
 #include "commit.h"
 #include "log-tree.h"
 
-void init_log_tree_opt(struct log_tree_opt *opt)
+void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 {
-	memset(opt, 0, sizeof *opt);
-	opt->ignore_merges = 1;
-	opt->header_prefix = "";
-	opt->commit_format = CMIT_FMT_RAW;
-	diff_setup(&opt->diffopt);
+	static char this_header[16384];
+	struct commit *commit = log->commit, *parent = log->parent;
+	int abbrev = opt->diffopt.abbrev;
+	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
+	const char *extra;
+	int len;
+
+	opt->loginfo = NULL;
+	if (!opt->verbose_header) {
+		puts(sha1_to_hex(commit->object.sha1));
+		return;
+	}
+
+	/*
+	 * The "oneline" format has several special cases:
+	 *  - The pretty-printed commit lacks a newline at the end
+	 *    of the buffer, but we do want to make sure that we
+	 *    have a newline there. If the separator isn't already
+	 *    a newline, add an extra one.
+	 *  - unlike other log messages, the one-line format does
+	 *    not have an empty line between entries.
+	 */
+	extra = "";
+	if (*sep != '\n' && opt->commit_format == CMIT_FMT_ONELINE)
+		extra = "\n";
+	if (opt->shown_one && opt->commit_format != CMIT_FMT_ONELINE)
+		putchar('\n');
+	opt->shown_one = 1;
+
+	/*
+	 * Print header line of header..
+	 */
+	printf("%s%s",
+		opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
+		diff_unique_abbrev(commit->object.sha1, abbrev_commit));
+	if (parent) 
+		printf(" (from %s)", diff_unique_abbrev(parent->object.sha1, abbrev_commit));
+	putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+
+	/*
+	 * And then the pretty-printed message itself
+	 */
+	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev);
+	printf("%s%s%s", this_header, extra, sep);
 }
 
-int log_tree_opt_parse(struct log_tree_opt *opt, const char **av, int ac)
-{
-	const char *arg;
-	int cnt = diff_opt_parse(&opt->diffopt, av, ac);
-	if (0 < cnt)
-		return cnt;
-	arg = *av;
-	if (!strcmp(arg, "-r"))
-		opt->diffopt.recursive = 1;
-	else if (!strcmp(arg, "-t")) {
-		opt->diffopt.recursive = 1;
-		opt->diffopt.tree_in_recursive = 1;
-	}
-	else if (!strcmp(arg, "-m"))
-		opt->ignore_merges = 0;
-	else if (!strcmp(arg, "-c"))
-		opt->combine_merges = 1;
-	else if (!strcmp(arg, "--cc")) {
-		opt->dense_combined_merges = 1;
-		opt->combine_merges = 1;
-	}
-	else if (!strcmp(arg, "-v")) {
-		opt->verbose_header = 1;
-		opt->header_prefix = "diff-tree ";
-	}
-	else if (!strncmp(arg, "--pretty", 8)) {
-		opt->verbose_header = 1;
-		opt->header_prefix = "diff-tree ";
-		opt->commit_format = get_commit_format(arg+8);
-	}
-	else if (!strcmp(arg, "--root"))
-		opt->show_root_diff = 1;
-	else if (!strcmp(arg, "--no-commit-id"))
-		opt->no_commit_id = 1;
-	else if (!strcmp(arg, "--always"))
-		opt->always_show_header = 1;
-	else
-		return 0;
-	return 1;
-}
-
-int log_tree_diff_flush(struct log_tree_opt *opt)
+int log_tree_diff_flush(struct rev_info *opt)
 {
 	diffcore_std(&opt->diffopt);
+
 	if (diff_queue_is_empty()) {
 		int saved_fmt = opt->diffopt.output_format;
 		opt->diffopt.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -63,17 +62,14 @@ int log_tree_diff_flush(struct log_tree_opt *opt)
 		opt->diffopt.output_format = saved_fmt;
 		return 0;
 	}
-	if (opt->header) {
-		if (!opt->no_commit_id)
-			printf("%s%c", opt->header,
-			       opt->diffopt.line_termination);
-		opt->header = NULL;
-	}
+
+	if (opt->loginfo && !opt->no_commit_id)
+		show_log(opt, opt->loginfo, opt->diffopt.with_stat ? "---\n" : "\n");
 	diff_flush(&opt->diffopt);
 	return 1;
 }
 
-static int diff_root_tree(struct log_tree_opt *opt,
+static int diff_root_tree(struct rev_info *opt,
 			  const unsigned char *new, const char *base)
 {
 	int retval;
@@ -93,83 +89,78 @@ static int diff_root_tree(struct log_tree_opt *opt,
 	return retval;
 }
 
-static const char *generate_header(struct log_tree_opt *opt,
-				   const unsigned char *commit_sha1,
-				   const unsigned char *parent_sha1,
-				   const struct commit *commit)
-{
-	static char this_header[16384];
-	int offset;
-	unsigned long len;
-	int abbrev = opt->diffopt.abbrev;
-	const char *msg = commit->buffer;
-
-	if (!opt->verbose_header)
-		return sha1_to_hex(commit_sha1);
-
-	len = strlen(msg);
-
-	offset = sprintf(this_header, "%s%s ",
-			 opt->header_prefix,
-			 diff_unique_abbrev(commit_sha1, abbrev));
-	if (commit_sha1 != parent_sha1)
-		offset += sprintf(this_header + offset, "(from %s)\n",
-				  parent_sha1
-				  ? diff_unique_abbrev(parent_sha1, abbrev)
-				  : "root");
-	else
-		offset += sprintf(this_header + offset, "(from parents)\n");
-	offset += pretty_print_commit(opt->commit_format, commit, len,
-				      this_header + offset,
-				      sizeof(this_header) - offset, abbrev);
-	if (opt->always_show_header) {
-		puts(this_header);
-		return NULL;
-	}
-	return this_header;
-}
-
-static int do_diff_combined(struct log_tree_opt *opt, struct commit *commit)
+static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
 	unsigned const char *sha1 = commit->object.sha1;
 
-	opt->header = generate_header(opt, sha1, sha1, commit);
-	opt->header = diff_tree_combined_merge(sha1, opt->header,
-						opt->dense_combined_merges,
-						&opt->diffopt);
-	if (!opt->header && opt->verbose_header)
-		opt->header_prefix = "\ndiff-tree ";
-	return 0;
+	diff_tree_combined_merge(sha1, opt->dense_combined_merges, opt);
+	return !opt->loginfo;
 }
 
-int log_tree_commit(struct log_tree_opt *opt, struct commit *commit)
+/*
+ * Show the diff of a commit.
+ *
+ * Return true if we printed any log info messages
+ */
+static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log_info *log)
 {
+	int showed_log;
 	struct commit_list *parents;
 	unsigned const char *sha1 = commit->object.sha1;
 
+	if (!opt->diff)
+		return 0;
+
 	/* Root commit? */
-	if (opt->show_root_diff && !commit->parents) {
-		opt->header = generate_header(opt, sha1, NULL, commit);
-		diff_root_tree(opt, sha1, "");
+	parents = commit->parents;
+	if (!parents) {
+		if (opt->show_root_diff)
+			diff_root_tree(opt, sha1, "");
+		return !opt->loginfo;
 	}
 
 	/* More than one parent? */
-	if (commit->parents && commit->parents->next) {
+	if (parents && parents->next) {
 		if (opt->ignore_merges)
 			return 0;
 		else if (opt->combine_merges)
 			return do_diff_combined(opt, commit);
+
+		/* If we show individual diffs, show the parent info */
+		log->parent = parents->item;
 	}
 
-	for (parents = commit->parents; parents; parents = parents->next) {
+	showed_log = 0;
+	for (;;) {
 		struct commit *parent = parents->item;
-		unsigned const char *psha1 = parent->object.sha1;
-		opt->header = generate_header(opt, sha1, psha1, commit);
-		diff_tree_sha1(psha1, sha1, "", &opt->diffopt);
-		log_tree_diff_flush(opt);		
 
-		if (!opt->header && opt->verbose_header)
-			opt->header_prefix = "\ndiff-tree ";
+		diff_tree_sha1(parent->object.sha1, sha1, "", &opt->diffopt);
+		log_tree_diff_flush(opt);
+
+		showed_log |= !opt->loginfo;
+
+		/* Set up the log info for the next parent, if any.. */
+		parents = parents->next;
+		if (!parents)
+			break;
+		log->parent = parents->item;
+		opt->loginfo = log;
 	}
+	return showed_log;
+}
+
+int log_tree_commit(struct rev_info *opt, struct commit *commit)
+{
+	struct log_info log;
+
+	log.commit = commit;
+	log.parent = NULL;
+	opt->loginfo = &log;
+
+	if (!log_tree_diff(opt, commit, &log) && opt->loginfo && opt->always_show_header) {
+		log.parent = NULL;
+		show_log(opt, opt->loginfo, "");
+	}
+	opt->loginfo = NULL;
 	return 0;
 }
