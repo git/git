@@ -165,7 +165,8 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
-	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
+	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
+	git-unresolve$X
 
 BUILT_INS = git-log$X
 
@@ -199,7 +200,7 @@ LIB_H = \
 	tree-walk.h log-tree.h
 
 DIFF_OBJS = \
-	diff.o diffcore-break.o diffcore-order.o \
+	diff-lib.o diffcore-break.o diffcore-order.o \
 	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
 	diffcore-delta.o log-tree.o
 

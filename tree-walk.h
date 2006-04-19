@@ -22,4 +22,6 @@ typedef void (*traverse_callback_t)(int n, unsigned long mask, struct name_entry
 
 void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callback_t callback);
 
+int get_tree_entry(const unsigned char *, const char *, unsigned char *, unsigned *);
+
 #endif

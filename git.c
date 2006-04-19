@@ -368,8 +368,6 @@ static int cmd_log(int argc, const char **argv, char **envp)
 	init_revisions(&rev);
 	rev.always_show_header = 1;
 	rev.diffopt.recursive = 1;
-	rev.combine_merges = 1;
-	rev.ignore_merges = 0;
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
