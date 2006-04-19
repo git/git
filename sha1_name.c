@@ -450,18 +450,17 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	return get_short_sha1(name, len, sha1, 0);
 }
 
-static int get_tree_entry(const unsigned char *, const char *, unsigned char *);
+static int get_tree_entry(const unsigned char *, const char *, unsigned char *, unsigned *);
 
-static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result)
+static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)
 {
 	int namelen = strlen(name);
 	while (t->size) {
 		const char *entry;
 		const unsigned char *sha1;
 		int entrylen, cmp;
-		unsigned mode;
 
-		sha1 = tree_entry_extract(t, &entry, &mode);
+		sha1 = tree_entry_extract(t, &entry, mode);
 		update_tree_entry(t);
 		entrylen = strlen(entry);
 		if (entrylen > namelen)
@@ -477,18 +476,18 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		}
 		if (name[entrylen] != '/')
 			continue;
-		if (!S_ISDIR(mode))
+		if (!S_ISDIR(*mode))
 			break;
 		if (++entrylen == namelen) {
 			memcpy(result, sha1, 20);
 			return 0;
 		}
-		return get_tree_entry(sha1, name + entrylen, result);
+		return get_tree_entry(sha1, name + entrylen, result, mode);
 	}
 	return -1;
 }
 
-static int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned char *sha1)
+static int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned char *sha1, unsigned *mode)
 {
 	int retval;
 	void *tree;
@@ -498,7 +497,7 @@ static int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsi
 	if (!tree)
 		return -1;
 	t.buf = tree;
-	retval = find_tree_entry(&t, name, sha1);
+	retval = find_tree_entry(&t, name, sha1, mode);
 	free(tree);
 	return retval;
 }
@@ -510,6 +509,7 @@ static int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsi
 int get_sha1(const char *name, unsigned char *sha1)
 {
 	int ret;
+	unsigned unused;
 
 	prepare_alt_odb();
 	ret = get_sha1_1(name, strlen(name), sha1);
@@ -518,7 +518,8 @@ int get_sha1(const char *name, unsigned char *sha1)
 		if (cp) {
 			unsigned char tree_sha1[20];
 			if (!get_sha1_1(name, cp-name, tree_sha1))
-				return get_tree_entry(tree_sha1, cp+1, sha1);
+				return get_tree_entry(tree_sha1, cp+1, sha1,
+						      &unused);
 		}
 	}
 	return ret;
