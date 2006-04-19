@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-clone' [-l [-s]] [-q] [-n] [--bare] [-o <name>] [-u <upload-pack>]
+	  [--reference <repository>]
 	  <repository> [<directory>]
 
 DESCRIPTION
@@ -46,9 +47,17 @@ OPTIONS
 -s::
 	When the repository to clone is on the local machine,
 	instead of using hard links, automatically setup
-	.git/objects/info/alternatives to share the objects
+	.git/objects/info/alternates to share the objects
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
+
+--reference <repository>::
+	If the reference repository is on the local machine
+	automatically setup .git/objects/info/alternates to
+	obtain objects from the reference repository.  Using
+	an already existing repository as an alternate will
+	require less objects to be copied from the repository
+	being cloned, reducing network and local storage costs.
 
 --quiet::
 -q::
@@ -109,6 +118,16 @@ Make a local clone that borrows from the current directory, without checking thi
 $ git clone -l -s -n . ../copy
 $ cd copy
 $ git show-branch
+------------
+
+
+Clone from upstream while borrowing from an existing local directory::
++
+------------
+$ git clone --reference my2.6 \
+	git://git.kernel.org/pub/scm/.../linux-2.7 \
+	my2.7
+$ cd my2.7
 ------------
 
 
