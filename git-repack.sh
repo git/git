@@ -5,9 +5,9 @@
 
 USAGE='[-a] [-d] [-f] [-l] [-n] [-q]'
 . git-sh-setup
-	
+
 no_update_info= all_into_one= remove_redundant=
-local= quiet= no_reuse_delta=
+local= quiet= no_reuse_delta= extra=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -17,6 +17,8 @@ do
 	-q)	quiet=-q ;;
 	-f)	no_reuse_delta=--no-reuse-delta ;;
 	-l)	local=--local ;;
+	--window=*) extra="$extra $1" ;;
+	--depth=*) extra="$extra $1" ;;
 	*)	usage ;;
 	esac
 	shift
@@ -40,7 +42,7 @@ case ",$all_into_one," in
 	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
-pack_objects="$pack_objects $local $quiet $no_reuse_delta"
+pack_objects="$pack_objects $local $quiet $no_reuse_delta$extra"
 name=$(git-rev-list --objects --all $rev_list 2>&1 |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
