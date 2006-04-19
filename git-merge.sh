@@ -335,5 +335,5 @@ Conflicts:
 	then
 		git-rerere
 	fi
-	die "Automatic merge failed; fix up by hand"
+	die "Automatic merge failed; fix conflicts and then commit the result."
 fi
