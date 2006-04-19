@@ -3,7 +3,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
-#include "diff.h"
+#include "tree-walk.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
