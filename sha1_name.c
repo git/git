@@ -450,58 +450,6 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	return get_short_sha1(name, len, sha1, 0);
 }
 
-static int get_tree_entry(const unsigned char *, const char *, unsigned char *, unsigned *);
-
-static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)
-{
-	int namelen = strlen(name);
-	while (t->size) {
-		const char *entry;
-		const unsigned char *sha1;
-		int entrylen, cmp;
-
-		sha1 = tree_entry_extract(t, &entry, mode);
-		update_tree_entry(t);
-		entrylen = strlen(entry);
-		if (entrylen > namelen)
-			continue;
-		cmp = memcmp(name, entry, entrylen);
-		if (cmp > 0)
-			continue;
-		if (cmp < 0)
-			break;
-		if (entrylen == namelen) {
-			memcpy(result, sha1, 20);
-			return 0;
-		}
-		if (name[entrylen] != '/')
-			continue;
-		if (!S_ISDIR(*mode))
-			break;
-		if (++entrylen == namelen) {
-			memcpy(result, sha1, 20);
-			return 0;
-		}
-		return get_tree_entry(sha1, name + entrylen, result, mode);
-	}
-	return -1;
-}
-
-static int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned char *sha1, unsigned *mode)
-{
-	int retval;
-	void *tree;
-	struct tree_desc t;
-
-	tree = read_object_with_reference(tree_sha1, tree_type, &t.size, NULL);
-	if (!tree)
-		return -1;
-	t.buf = tree;
-	retval = find_tree_entry(&t, name, sha1, mode);
-	free(tree);
-	return retval;
-}
-
 /*
  * This is like "get_sha1_basic()", except it allows "sha1 expressions",
  * notably "xyz^" for "parent of xyz"
