@@ -250,13 +250,14 @@ static void show_stats(struct diffstat_t* data)
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 
+		len = strlen(file->name);
+		if (max_len < len)
+			max_len = len;
+
 		if (file->is_binary || file->is_unmerged)
 			continue;
 		if (max_change < file->added + file->deleted)
 			max_change = file->added + file->deleted;
-		len = strlen(file->name);
-		if (max_len < len)
-			max_len = len;
 	}
 
 	for (i = 0; i < data->nr; i++) {
