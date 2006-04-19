@@ -498,7 +498,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 	const char *subject = NULL;
 
 	if (fmt == CMIT_FMT_EMAIL)
-		subject = "Subject: ";
+		subject = "Subject: [PATCH] ";
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
 
