@@ -165,8 +165,7 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
-	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
-	git-unresolve$X
+	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = git-log$X
 

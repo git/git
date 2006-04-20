@@ -111,7 +111,6 @@ git-tag
 git-tar-tree
 git-unpack-file
 git-unpack-objects
-git-unresolve
 git-update-index
 git-update-ref
 git-update-server-info
