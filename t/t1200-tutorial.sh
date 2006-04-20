@@ -114,6 +114,8 @@ EOF
 
 git commit -m 'Merged "mybranch" changes.' -i hello
 
+test_done
+
 cat > show-branch.expect << EOF
 * [master] Merged "mybranch" changes.
  ! [mybranch] Some work.

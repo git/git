@@ -167,8 +167,13 @@ run_status () {
 	fi
 	case "$committable" in
 	0)
-	    echo "nothing to commit"
-	    exit 1
+		case "$amend" in
+		t)
+			echo "# No changes" ;;
+		*)
+			echo "nothing to commit" ;;
+		esac
+		exit 1 ;;
 	esac
 	exit 0
     )
@@ -365,14 +370,16 @@ tt*)
   die "Only one of -c/-C/-F/-m can be used." ;;
 esac
 
-case "$#,$also$only" in
-*,tt)
+case "$#,$also,$only,$amend" in
+*,t,t,*)
   die "Only one of --include/--only can be used." ;;
-0,t)
+0,t,,* | 0,,t,)
   die "No paths with --include/--only does not make sense." ;;
-0,)
+0,,t,t)
+  only_include_assumed="# Clever... amending the last one with dirty index." ;;
+0,,,*)
   ;;
-*,)
+*,,,*)
   only_include_assumed="# Explicit paths specified without -i nor -o; assuming --only paths..."
   also=
   ;;
