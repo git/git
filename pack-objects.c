@@ -1231,7 +1231,7 @@ static void setup_progress_signal(void)
 int main(int argc, char **argv)
 {
 	SHA_CTX ctx;
-	char line[PATH_MAX + 20];
+	char line[40 + 1 + PATH_MAX + 2];
 	int window = 10, depth = 10, pack_to_stdout = 0;
 	struct object_entry **list;
 	int num_preferred_base = 0;
