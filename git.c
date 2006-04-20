@@ -383,7 +383,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_wc },
 		{ "show", cmd_show },
-		{ "format-patch", cmd_format_patch },
+		{ "fmt-patch", cmd_format_patch },
 	};
 	int i;
 
