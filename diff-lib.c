@@ -195,6 +195,56 @@ static int fn_out(void *priv, mmbuffer_t *mb, int nbuf)
 	return 0;
 }
 
+static char *pprint_rename(const char *a, const char *b)
+{
+	const char *old = a;
+	const char *new = b;
+	char *name = NULL;
+	int pfx_length, sfx_length;
+	int len_a = strlen(a);
+	int len_b = strlen(b);
+
+	/* Find common prefix */
+	pfx_length = 0;
+	while (*old && *new && *old == *new) {
+		if (*old == '/')
+			pfx_length = old - a + 1;
+		old++;
+		new++;
+	}
+
+	/* Find common suffix */
+	old = a + len_a;
+	new = b + len_b;
+	sfx_length = 0;
+	while (a <= old && b <= new && *old == *new) {
+		if (*old == '/')
+			sfx_length = len_a - (old - a);
+		old--;
+		new--;
+	}
+
+	/*
+	 * pfx{mid-a => mid-b}sfx
+	 * {pfx-a => pfx-b}sfx
+	 * pfx{sfx-a => sfx-b}
+	 * name-a => name-b
+	 */
+	if (pfx_length + sfx_length) {
+		name = xmalloc(len_a + len_b - pfx_length - sfx_length + 7);
+		sprintf(name, "%.*s{%.*s => %.*s}%s",
+			pfx_length, a,
+			len_a - pfx_length - sfx_length, a + pfx_length,
+			len_b - pfx_length - sfx_length, b + pfx_length,
+			a + len_a - sfx_length);
+	}
+	else {
+		name = xmalloc(len_a + len_b + 5);
+		sprintf(name, "%s => %s", a, b);
+	}
+	return name;
+}
+
 struct diffstat_t {
 	struct xdiff_emit_state xm;
 
@@ -204,12 +254,14 @@ struct diffstat_t {
 		char *name;
 		unsigned is_unmerged:1;
 		unsigned is_binary:1;
+		unsigned is_renamed:1;
 		unsigned int added, deleted;
 	} **files;
 };
 
 static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
-		const char *name)
+					  const char *name_a,
+					  const char *name_b)
 {
 	struct diffstat_file *x;
 	x = xcalloc(sizeof (*x), 1);
@@ -219,7 +271,12 @@ static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
 				diffstat->alloc * sizeof(x));
 	}
 	diffstat->files[diffstat->nr++] = x;
-	x->name = strdup(name);
+	if (name_b) {
+		x->name = pprint_rename(name_a, name_b);
+		x->is_renamed = 1;
+	}
+	else
+		x->name = strdup(name_a);
 	return x;
 }
 
@@ -305,7 +362,8 @@ static void show_stats(struct diffstat_t* data)
 			printf(" %s%-*s |  Unmerged\n", prefix, len, name);
 			goto free_diffstat_file;
 		}
-		else if (added + deleted == 0) {
+		else if (!data->files[i]->is_renamed &&
+			 (added + deleted == 0)) {
 			total_files--;
 			goto free_diffstat_file;
 		}
@@ -425,13 +483,14 @@ static void builtin_diff(const char *name_a,
 }
 
 static void builtin_diffstat(const char *name_a, const char *name_b,
-		struct diff_filespec *one, struct diff_filespec *two,
-		struct diffstat_t *diffstat)
+			     struct diff_filespec *one,
+			     struct diff_filespec *two,
+			     struct diffstat_t *diffstat)
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
 
-	data = diffstat_add(diffstat, name_a ? name_a : name_b);
+	data = diffstat_add(diffstat, name_a, name_b);
 
 	if (!one || !two) {
 		data->is_unmerged = 1;
@@ -992,7 +1051,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 }
 
 static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
-		struct diffstat_t *diffstat)
+			 struct diffstat_t *diffstat)
 {
 	const char *name;
 	const char *other;
@@ -1374,7 +1433,7 @@ static void diff_flush_patch(struct diff_filepair *p, struct diff_options *o)
 }
 
 static void diff_flush_stat(struct diff_filepair *p, struct diff_options *o,
-		struct diffstat_t *diffstat)
+			    struct diffstat_t *diffstat)
 {
 	if (diff_unmodified_pair(p))
 		return;
@@ -1559,7 +1618,7 @@ void diff_flush(struct diff_options *options)
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			flush_one_pair(p, DIFF_FORMAT_DIFFSTAT, options,
-					diffstat);
+				       diffstat);
 		}
 		show_stats(diffstat);
 		free(diffstat);
