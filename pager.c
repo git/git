@@ -8,6 +8,7 @@
 static void run_pager(const char *pager)
 {
 	execlp(pager, pager, NULL);
+	execl("/bin/sh", "sh", "-c", pager, NULL);
 }
 
 void setup_pager(void)
@@ -47,5 +48,6 @@ void setup_pager(void)
 
 	setenv("LESS", "-S", 0);
 	run_pager(pager);
+	die("unable to execute pager '%s'", pager);
 	exit(255);
 }
