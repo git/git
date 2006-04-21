@@ -1,11 +1,23 @@
 #!/bin/sh
 # Prepare "What's in git.git"
 
+maint_at=$(git rev-parse --verify refs/heads/maint)
 master_at=$(git rev-parse --verify refs/heads/master)
 
 echo "To: git@vger.kernel.org"
 echo "Subject: What's in git.git"
+echo "X-maint-at: $maint_at"
 echo "X-master-at: $master_at"
+
+tagged=`git rev-parse --not --verify tags/sa/maint`
+list=`git-rev-list $tagged refs/heads/maint 2>/dev/null`
+if test -n "$list"
+then
+	echo
+	echo "* The 'maint' branch has these fixes since the last announcement."
+	echo
+	git log --no-merges $tagged heads/maint | git shortlog
+fi
 
 tagged=`git rev-parse --not --verify tags/sa/master`
 list=`git-rev-list $tagged refs/heads/master 2>/dev/null`
@@ -14,13 +26,12 @@ then
 	echo
 	echo "* The 'master' branch has these since the last announcement."
 	echo
-	git log $tagged heads/master | git shortlog
+	git log --no-merges $tagged heads/master | git shortlog
 fi
 
 list=`git-rev-list refs/heads/master..refs/heads/next 2>/dev/null`
 if test -n "$list"
 then
-	echo
 	echo
 	echo "* The 'next' branch, in addition, has these."
 	echo
@@ -30,7 +41,6 @@ fi
 list=`git-rev-list ^refs/heads/master ^refs/heads/next refs/heads/pu 2>/dev/null`
 if test -n "$list"
 then
-	echo
 	echo
 	echo "* The 'pu' branch, in addition, has these."
 	echo

@@ -3,3 +3,5 @@
 # "What's in git.git" announcement, for the next round.
 
 git tag -f sa/master refs/heads/master
+git tag -f sa/maint refs/heads/maint
+
