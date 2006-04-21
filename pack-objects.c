@@ -1052,7 +1052,7 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	if (cur_entry->delta)
 		max_size = cur_entry->delta_size-1;
 	if (sizediff >= max_size)
-		return -1;
+		return 0;
 	delta_buf = diff_delta(old->data, oldsize,
 			       cur->data, size, &delta_size, max_size);
 	if (!delta_buf)
