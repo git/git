@@ -213,6 +213,9 @@ LIB_OBJS = \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
 	$(DIFF_OBJS)
 
+BUILTIN_OBJS = \
+	builtin-log.o builtin-help.o
+
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
 
@@ -462,10 +465,10 @@ all:
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
-git$X: git.c common-cmds.h $(GITLIBS)
+git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
-		$(ALL_LDFLAGS) $(LIBS)
+		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
@@ -565,7 +568,7 @@ init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
 		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $*.c
 
-$(LIB_OBJS): $(LIB_H)
+$(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(GITLIBS)
 $(DIFF_OBJS): diffcore.h
 
