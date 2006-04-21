@@ -405,7 +405,7 @@ static unsigned hexval(int c)
 	return ~0;
 }
 
-static int decode_q_segment(char *in, char *ot, char *ep)
+static int decode_q_segment(char *in, char *ot, char *ep, int rfc2047)
 {
 	int c;
 	while ((c = *in++) != 0 && (in <= ep)) {
@@ -414,9 +414,11 @@ static int decode_q_segment(char *in, char *ot, char *ep)
 			if (d == '\n' || !d)
 				break; /* drop trailing newline */
 			*ot++ = ((hexval(d) << 4) | hexval(*in++));
+			continue;
 		}
-		else
-			*ot++ = c;
+		if (rfc2047 && c == '_') /* rfc2047 4.2 (2) */
+			c = 0x20;
+		*ot++ = c;
 	}
 	*ot = 0;
 	return 0;
@@ -547,7 +549,7 @@ static void decode_header_bq(char *it)
 			sz = decode_b_segment(cp + 3, piecebuf, ep);
 			break;
 		case 'q':
-			sz = decode_q_segment(cp + 3, piecebuf, ep);
+			sz = decode_q_segment(cp + 3, piecebuf, ep, 1);
 			break;
 		}
 		if (sz < 0)
@@ -569,7 +571,7 @@ static void decode_transfer_encoding(char *line)
 	switch (transfer_encoding) {
 	case TE_QP:
 		ep = line + strlen(line);
-		decode_q_segment(line, line, ep);
+		decode_q_segment(line, line, ep, 0);
 		break;
 	case TE_BASE64:
 		ep = line + strlen(line);

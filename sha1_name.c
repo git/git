@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
+#include "tree-walk.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
@@ -455,6 +456,19 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
  */
 int get_sha1(const char *name, unsigned char *sha1)
 {
+	int ret;
+	unsigned unused;
+
 	prepare_alt_odb();
-	return get_sha1_1(name, strlen(name), sha1);
+	ret = get_sha1_1(name, strlen(name), sha1);
+	if (ret < 0) {
+		const char *cp = strchr(name, ':');
+		if (cp) {
+			unsigned char tree_sha1[20];
+			if (!get_sha1_1(name, cp-name, tree_sha1))
+				return get_tree_entry(tree_sha1, cp+1, sha1,
+						      &unused);
+		}
+	}
+	return ret;
 }
