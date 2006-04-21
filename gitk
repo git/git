@@ -959,7 +959,8 @@ proc showview {n} {
 		     $commitidx $rowlaidout $rowoptim $numcommits \
 		     $linesegends $leftover $commfd]
 	    fileevent $commfd readable {}
-	} elseif {![info exists viewdata($curview)]} {
+	} elseif {![info exists viewdata($curview)]
+		  || [lindex $viewdata($curview) 0] ne {}} {
 	    set viewdata($curview) \
 		[list {} $displayorder $parentlist $childlist $rowidlist \
 		     $rowoffsets $rowrangelist $commitlisted]
@@ -1035,6 +1036,14 @@ proc showview {n} {
     allcanvs yview moveto $yf
     drawvisible
     selectline $row 0
+    if {$phase eq {}} {
+	global maincursor textcursor
+	. config -cursor $maincursor
+	settextcursor $textcursor
+    } else {
+	. config -cursor watch
+	settextcursor watch
+    }
 }
 
 proc shortids {ids} {
@@ -2301,7 +2310,7 @@ proc stopfindproc {{done 0}} {
     }
     if {[info exists findinprogress]} {
 	unset findinprogress
-	if {$phase != "incrdraw"} {
+	if {$phase eq {}} {
 	    . config -cursor $maincursor
 	    settextcursor $textcursor
 	}
@@ -2840,17 +2849,18 @@ proc unselectline {} {
 }
 
 proc addtohistory {cmd} {
-    global history historyindex
+    global history historyindex curview
 
+    set elt [list $curview $cmd]
     if {$historyindex > 0
-	&& [lindex $history [expr {$historyindex - 1}]] == $cmd} {
+	&& [lindex $history [expr {$historyindex - 1}]] == $elt} {
 	return
     }
 
     if {$historyindex < [llength $history]} {
-	set history [lreplace $history $historyindex end $cmd]
+	set history [lreplace $history $historyindex end $elt]
     } else {
-	lappend history $cmd
+	lappend history $elt
     }
     incr historyindex
     if {$historyindex > 1} {
@@ -2861,13 +2871,23 @@ proc addtohistory {cmd} {
     .ctop.top.bar.rightbut conf -state disabled
 }
 
+proc godo {elt} {
+    global curview
+
+    set view [lindex $elt 0]
+    set cmd [lindex $elt 1]
+    if {$curview != $view} {
+	showview $view
+    }
+    eval $cmd
+}
+
 proc goback {} {
     global history historyindex
 
     if {$historyindex > 1} {
 	incr historyindex -1
-	set cmd [lindex $history [expr {$historyindex - 1}]]
-	eval $cmd
+	godo [lindex $history [expr {$historyindex - 1}]]
 	.ctop.top.bar.rightbut conf -state normal
     }
     if {$historyindex <= 1} {
@@ -2881,7 +2901,7 @@ proc goforw {} {
     if {$historyindex < [llength $history]} {
 	set cmd [lindex $history $historyindex]
 	incr historyindex
-	eval $cmd
+	godo $cmd
 	.ctop.top.bar.leftbut conf -state normal
     }
     if {$historyindex >= [llength $history]} {
