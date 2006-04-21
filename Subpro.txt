@@ -40,19 +40,20 @@ The idea here is to:
 . Keep `linux-2.6/` part as an independent project.  The work by
   the project on the kernel part can be naturally exchanged with
   the other kernel developers this way.  Specifically, a tree
-  object contained in commit objects belonging to this project
+  object contained in commit objects belonging to this sub-project
   does *not* have `linux-2.6/` directory at the top.
 
 . Keep the `appliance/` part as another independent project.
   Applications are supposed to be more or less independent from
   the kernel version, but some other bits might be tied to a
   specific kernel version.  Again, a tree object contained in
-  commit objects belonging to this project does *not* have
+  commit objects belonging to this sub-project does *not* have
   `appliance/` directory at the top.
 
 . Have another project that combines the whole thing together,
   so that the project can keep track of which versions of the
-  parts are built together.
+  parts are built together.  The Makefile is illustrated above,
+  but there might be other files and directories.
 
 We will call the project that binds things together the
 'toplevel project'.  Other projects that hold `linux-2.6/` part
@@ -111,6 +112,10 @@ with `update-index --bind` command.
 
 Also note that in this round of proposal, there is no separate
 branches that keep track of heads of subprojects.
+
+`update-index --bind` is not implemented on the core side yet;
+it would involve backward incompatible changes to the index
+format.
 ============
 
 Let's not forget to add the `Makefile`, and check the whole
@@ -283,6 +288,11 @@ error: the merged heads have subprojects bound at different places.
 	gadget/
 	manual/
 ------------
+[NOTE]
+============
+Again, `update-index --unbind` is not implemented yet
+on the core side.
+============
 
 Their branch added another subproject, so this did not work (or
 it could be the other way around -- we might have been the one
