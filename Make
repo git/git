@@ -8,12 +8,16 @@ LC_CTYPE=C
 export PATH LANG LC_CTYPE
 
 case "`git symbolic-ref HEAD`" in
+refs/heads/next)
+	d="bindir=$HOME/bin/Linux gitexecdir=$HOME/bin/Linux" ;;
+refs/heads/maint)
+	d="prefix=$HOME/git-maint" ;;
 refs/heads/master)
 	d="prefix=$HOME/git-master" ;;
 refs/heads/pu)
 	d="prefix=$HOME/git-pu" ;;
 *)
-	d="bindir=$HOME/bin/Linux gitexecdir=$HOME/bin/Linux" ;;
+	d="prefix=$HOME/git-test" ;;
 esac
 
 : ${O=-O2}
