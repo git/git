@@ -308,12 +308,20 @@ static void mark_merge_entries(void)
 	}
 }
 
-int run_diff_index(struct rev_info *revs, int cached, int match_missing)
+int run_diff_index(struct rev_info *revs, int cached)
 {
 	int ret;
 	struct object *ent;
 	struct tree *tree;
 	const char *tree_name;
+	int match_missing = 0;
+
+	/* 
+	 * Backward compatibility wart - "diff-index -m" does
+	 * not mean "do not ignore merges", but totally different.
+	 */
+	if (!revs->ignore_merges)
+		match_missing = 1;
 
 	if (read_cache() < 0) {
 		perror("read_cache");

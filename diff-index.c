@@ -23,9 +23,7 @@ int main(int argc, const char **argv)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 			
-		if (!strcmp(arg, "-m"))
-			match_missing = 1; 
-		else if (!strcmp(arg, "--cached"))
+		if (!strcmp(arg, "--cached"))
 			cached = 1;
 		else
 			usage(diff_cache_usage);
@@ -37,5 +35,5 @@ int main(int argc, const char **argv)
 	if (!rev.pending_objects || rev.pending_objects->next ||
 	    rev.max_count != -1 || rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_cache_usage);
-	return run_diff_index(&rev, cached, match_missing);
+	return run_diff_index(&rev, cached);
 }
