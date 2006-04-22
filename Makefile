@@ -199,7 +199,7 @@ LIB_H = \
 	tree-walk.h log-tree.h
 
 DIFF_OBJS = \
-	diff-lib.o diffcore-break.o diffcore-order.o \
+	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
 	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
 	diffcore-delta.o log-tree.o
 
