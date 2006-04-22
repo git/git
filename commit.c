@@ -574,8 +574,9 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		}
 
 		if (subject) {
-			memcpy(buf + offset, subject, 9);
-			offset += 9;
+			int slen = strlen(subject);
+			memcpy(buf + offset, subject, slen);
+			offset += slen;
 		}
 		memset(buf + offset, ' ', indent);
 		memcpy(buf + offset + indent, line, linelen);
