@@ -20,7 +20,7 @@ compare_change () {
 }
 
 check_cache_at () {
-	clean_if_empty=`git-diff-files "$1"`
+	clean_if_empty=`git-diff-files -- "$1"`
 	case "$clean_if_empty" in
 	'')  echo "$1: clean" ;;
 	?*)  echo "$1: dirty" ;;

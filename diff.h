@@ -28,10 +28,11 @@ struct diff_options {
 		 with_raw:1,
 		 with_stat:1,
 		 tree_in_recursive:1,
-		 full_index:1;
+		 full_index:1,
+		 silent_on_remove:1,
+		 find_copies_harder:1;
 	int break_opt;
 	int detect_rename;
-	int find_copies_harder;
 	int line_termination;
 	int output_format;
 	int pickaxe_opts;
@@ -167,5 +168,9 @@ extern void diff_flush(struct diff_options*);
 #define DIFF_STATUS_FILTER_BROKEN	'B'
 
 extern const char *diff_unique_abbrev(const unsigned char *, int);
+
+extern int run_diff_files(struct rev_info *revs, int silent_on_removed);
+
+extern int run_diff_index(struct rev_info *revs, int cached, int match_missing);
 
 #endif /* DIFF_H */
