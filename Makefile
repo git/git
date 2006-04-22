@@ -470,6 +470,8 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS)
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
+builtin-help.o: common-cmds.h
+
 $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
 
