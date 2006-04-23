@@ -138,8 +138,11 @@ extern const char *prefix_filename(const char *prefix, int len, const char *path
 #define alloc_nr(x) (((x)+16)*3/2)
 
 /* Initialize and use the cache information */
+extern int read_cache_1(unsigned char *);
+extern int write_cache_1(int, struct cache_entry **, int, unsigned char *);
 extern int read_cache(void);
-extern int write_cache(int newfd, struct cache_entry **cache, int entries);
+extern int write_cache(int, struct cache_entry **, int);
+
 extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
