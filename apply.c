@@ -8,8 +8,13 @@
  */
 #include <fnmatch.h>
 #include "cache.h"
+#include "cache-tree.h"
 #include "quote.h"
 #include "blob.h"
+
+static unsigned char active_cache_sha1[20];
+static struct cache_tree *active_cache_tree;
+
 
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
@@ -1717,6 +1722,7 @@ static void remove_file(struct patch *patch)
 	if (write_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
 			die("unable to remove %s from index", patch->old_name);
+		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
 	unlink(patch->old_name);
 }
@@ -1813,8 +1819,9 @@ static void create_file(struct patch *patch)
 
 	if (!mode)
 		mode = S_IFREG | 0644;
-	create_one_file(path, mode, buf, size);	
+	create_one_file(path, mode, buf, size);
 	add_index_file(path, mode, buf, size);
+	cache_tree_invalidate_path(active_cache_tree, path);
 }
 
 static void write_out_one_result(struct patch *patch)
@@ -1912,8 +1919,9 @@ static int apply_patch(int fd, const char *filename)
 	if (write_index)
 		newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (check_index) {
-		if (read_cache() < 0)
+		if (read_cache_1(active_cache_sha1) < 0)
 			die("unable to read index file");
+		active_cache_tree = read_cache_tree(active_cache_sha1);
 	}
 
 	if ((check || apply) && check_patch_list(list) < 0)
@@ -1923,9 +1931,11 @@ static int apply_patch(int fd, const char *filename)
 		write_out_results(list, skipped_patch);
 
 	if (write_index) {
-		if (write_cache(newfd, active_cache, active_nr) ||
+		if (write_cache_1(newfd, active_cache, active_nr,
+				  active_cache_sha1) ||
 		    commit_index_file(&cache_file))
 			die("Unable to write new cachefile");
+		write_cache_tree(active_cache_sha1, active_cache_tree);
 	}
 
 	if (show_index_info)
