@@ -16,56 +16,26 @@ proc gitdir {} {
     }
 }
 
-proc parse_args {rargs} {
-    global parsed_args cmdline_files
-
-    set parsed_args {}
-    set cmdline_files {}
-    if {[catch {
-	set args [concat --default HEAD $rargs]
-	set args [split [eval exec git-rev-parse $args] "\n"]
-	set i 0
-	foreach arg $args {
-	    if {![regexp {^[0-9a-f]{40}$} $arg]} {
-		if {$arg eq "--"} {
-		    incr i
-		}
-		set cmdline_files [lrange $args $i end]
-		break
-	    }
-	    lappend parsed_args $arg
-	    incr i
-	}
-    }]} {
-	# if git-rev-parse failed for some reason...
-	set i [lsearch -exact $rargs "--"]
-	if {$i >= 0} {
-	    set cmdline_files [lrange $rargs [expr {$i+1}] end]
-	    set rargs [lrange $rargs 0 [expr {$i-1}]]
-	}
-	if {$rargs == {}} {
-	    set parsed_args HEAD
-	} else {
-	    set parsed_args $rargs
-	}
-    }
-}
-
-proc start_rev_list {rlargs} {
+proc start_rev_list {} {
     global startmsecs nextupdate ncmupdate
     global commfd leftover tclencoding datemode
+    global revtreeargs curview viewfiles
 
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
     initlayout
+    set args $revtreeargs
+    if {$viewfiles($curview) ne {}} {
+	set args [concat $args "--" $viewfiles($curview)]
+    }
     set order "--topo-order"
     if {$datemode} {
 	set order "--date-order"
     }
     if {[catch {
 	set commfd [open [concat | git-rev-list --header $order \
-			      --parents --boundary $rlargs] r]
+			      --parents --boundary --default HEAD $args] r]
     } err]} {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
@@ -92,11 +62,11 @@ proc stop_rev_list {} {
     unset commfd
 }
 
-proc getcommits {rargs} {
+proc getcommits {} {
     global phase canv mainfont
 
     set phase getcommits
-    start_rev_list $rargs
+    start_rev_list
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
@@ -239,7 +209,6 @@ proc updatecommits {} {
     set n $curview
     set curview -1
     catch {unset viewdata($n)}
-    parse_args $revtreeargs
     readrefs
     showview $n
 }
@@ -926,7 +895,6 @@ proc showview {n} {
     global numcommits rowrangelist commitlisted idrowranges
     global selectedline currentid canv canvy0
     global matchinglines treediffs
-    global parsed_args
     global pending_select phase
     global commitidx rowlaidout rowoptim linesegends leftover
     global commfd nextupdate
@@ -974,12 +942,8 @@ proc showview {n} {
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
 
     if {![info exists viewdata($n)]} {
-	set args $parsed_args
-	if {$viewfiles($n) ne {}} {
-	    set args [concat $args "--" $viewfiles($n)]
-	}
 	set pending_select $selid
-	getcommits $args 
+	getcommits
 	return
     }
 
@@ -4252,8 +4216,18 @@ set patchnum 0
 setcoords
 makewindow
 readrefs
-parse_args $revtreeargs
-set args $parsed_args
+
+set cmdline_files {}
+catch {
+    set fileargs [eval exec git-rev-parse --no-revs --no-flags $revtreeargs]
+    set cmdline_files [split $fileargs "\n"]
+    set n [llength $cmdline_files]
+    set revtreeargs [lrange $revtreeargs 0 end-$n]
+}
+if {[lindex $revtreeargs end] eq "--"} {
+    set revtreeargs [lrange $revtreeargs 0 end-1]
+}
+
 if {$cmdline_files ne {}} {
     # create a view for the files/dirs specified on the command line
     set curview 1
@@ -4262,6 +4236,5 @@ if {$cmdline_files ne {}} {
     set viewfiles(1) $cmdline_files
     .bar.view add command -label $viewname(1) -command {showview 1}
     .bar.view entryconf 2 -state normal
-    set args [concat $args "--" $cmdline_files]
 }
-getcommits $args
+getcommits
