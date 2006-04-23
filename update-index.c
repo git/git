@@ -328,7 +328,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	return 0;
 }
 
-static int chmod_path(int flip, const char *path)
+static void chmod_path(int flip, const char *path)
 {
 	int pos;
 	struct cache_entry *ce;
@@ -336,21 +336,24 @@ static int chmod_path(int flip, const char *path)
 
 	pos = cache_name_pos(path, strlen(path));
 	if (pos < 0)
-		return -1;
+		goto fail;
 	ce = active_cache[pos];
 	mode = ntohl(ce->ce_mode);
 	if (!S_ISREG(mode))
-		return -1;
+		goto fail;
 	switch (flip) {
 	case '+':
 		ce->ce_mode |= htonl(0111); break;
 	case '-':
 		ce->ce_mode &= htonl(~0111); break;
 	default:
-		return -1;
+		goto fail;
 	}
 	active_cache_changed = 1;
-	return 0;
+	report("chmod %cx '%s'", flip, path);
+	return;
+ fail:
+	die("git-update-index: cannot chmod %cx '%s'", flip, path);
 }
 
 static struct cache_file cache_file;
@@ -478,6 +481,7 @@ int main(int argc, const char **argv)
 	int read_from_stdin = 0;
 	const char *prefix = setup_git_directory();
 	int prefix_length = prefix ? strlen(prefix) : 0;
+	char set_executable_bit = 0;
 
 	git_config(git_default_config);
 
@@ -544,8 +548,7 @@ int main(int argc, const char **argv)
 			    !strcmp(path, "--chmod=+x")) {
 				if (argc <= i+1)
 					die("git-update-index: %s <path>", path);
-				if (chmod_path(path[8], argv[++i]))
-					die("git-update-index: %s cannot chmod %s", path, argv[i]);
+				set_executable_bit = path[8];
 				continue;
 			}
 			if (!strcmp(path, "--assume-unchanged")) {
@@ -594,6 +597,8 @@ int main(int argc, const char **argv)
 			die("unknown option %s", path);
 		}
 		update_one(path, prefix, prefix_length);
+		if (set_executable_bit)
+			chmod_path(set_executable_bit, path);
 	}
 	if (read_from_stdin) {
 		struct strbuf buf;
@@ -608,6 +613,10 @@ int main(int argc, const char **argv)
 			else
 				path_name = buf.buf;
 			update_one(path_name, prefix, prefix_length);
+			if (set_executable_bit) {
+				const char *p = prefix_path(prefix, prefix_length, path_name);
+				chmod_path(set_executable_bit, p);
+			}
 			if (path_name != buf.buf)
 				free(path_name);
 		}
