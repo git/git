@@ -7,6 +7,11 @@
 #include "strbuf.h"
 #include "quote.h"
 #include "tree-walk.h"
+#include "tree.h"
+#include "cache-tree.h"
+
+static unsigned char active_cache_sha1[20];
+static struct cache_tree *active_cache_tree;
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -71,6 +76,7 @@ static int mark_valid(const char *path)
 			active_cache[pos]->ce_flags &= ~htons(CE_VALID);
 			break;
 		}
+		cache_tree_invalidate_path(active_cache_tree, path);
 		active_cache_changed = 1;
 		return 0;
 	}
@@ -84,6 +90,12 @@ static int add_file_to_cache(const char *path)
 	struct stat st;
 
 	status = lstat(path, &st);
+
+	/* We probably want to do this in remove_file_from_cache() and
+	 * add_cache_entry() instead...
+	 */
+	cache_tree_invalidate_path(active_cache_tree, path);
+
 	if (status < 0 || S_ISDIR(st.st_mode)) {
 		/* When we used to have "path" and now we want to add
 		 * "path/file", we need a way to remove "path" before
@@ -326,6 +338,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 		return error("%s: cannot add to the index - missing --add option?",
 			     path);
 	report("add '%s'", path);
+	cache_tree_invalidate_path(active_cache_tree, path);
 	return 0;
 }
 
@@ -350,6 +363,7 @@ static void chmod_path(int flip, const char *path)
 	default:
 		goto fail;
 	}
+	cache_tree_invalidate_path(active_cache_tree, path);
 	active_cache_changed = 1;
 	report("chmod %cx '%s'", flip, path);
 	return;
@@ -371,6 +385,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 			die("Unable to mark file %s", path);
 		return;
 	}
+	cache_tree_invalidate_path(active_cache_tree, path);
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
@@ -446,6 +461,7 @@ static void read_index_info(int line_termination)
 				free(path_name);
 			continue;
 		}
+		cache_tree_invalidate_path(active_cache_tree, path_name);
 
 		if (!mode) {
 			/* mode == 0 means there is no such path -- remove */
@@ -550,6 +566,7 @@ static int unresolve_one(const char *path)
 		goto free_return;
 	}
 
+	cache_tree_invalidate_path(active_cache_tree, path);
 	remove_file_from_cache(path);
 	if (add_cache_entry(ce_2, ADD_CACHE_OK_TO_ADD)) {
 		error("%s: cannot add our version to the index.", path);
@@ -608,9 +625,10 @@ int main(int argc, const char **argv)
 	if (newfd < 0)
 		die("unable to create new cachefile");
 
-	entries = read_cache();
+	entries = read_cache_1(active_cache_sha1);
 	if (entries < 0)
 		die("cache corrupted");
+	active_cache_tree = read_cache_tree(active_cache_sha1);
 
 	for (i = 1 ; i < argc; i++) {
 		const char *path = argv[i];
@@ -749,9 +767,11 @@ int main(int argc, const char **argv)
 
  finish:
 	if (active_cache_changed) {
-		if (write_cache(newfd, active_cache, active_nr) ||
+		if (write_cache_1(newfd, active_cache, active_nr,
+				  active_cache_sha1) ||
 		    commit_index_file(&cache_file))
 			die("Unable to write new cachefile");
+		write_cache_tree(active_cache_sha1, active_cache_tree);
 	}
 
 	return has_errors ? 1 : 0;

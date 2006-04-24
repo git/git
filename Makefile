@@ -204,7 +204,7 @@ DIFF_OBJS = \
 	diffcore-delta.o log-tree.o
 
 LIB_OBJS = \
-	blob.o commit.o connect.o csum-file.o \
+	blob.o commit.o connect.o csum-file.o cache-tree.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \

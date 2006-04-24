@@ -496,10 +496,12 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	return 0;
 }
 
-static int verify_hdr(struct cache_header *hdr, unsigned long size)
+static int verify_hdr(struct cache_header *hdr, unsigned long size, unsigned char *sha1)
 {
 	SHA_CTX c;
-	unsigned char sha1[20];
+	unsigned char sha1_buf[20];
+	if (!sha1)
+		sha1 = sha1_buf;
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error("bad signature");
@@ -513,7 +515,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	return 0;
 }
 
-int read_cache(void)
+int read_cache_1(unsigned char *cache_sha1)
 {
 	int fd, i;
 	struct stat st;
@@ -547,7 +549,7 @@ int read_cache(void)
 		die("index file mmap failed (%s)", strerror(errno));
 
 	hdr = map;
-	if (verify_hdr(hdr, size) < 0)
+	if (verify_hdr(hdr, size, cache_sha1) < 0)
 		goto unmap;
 
 	active_nr = ntohl(hdr->hdr_entries);
@@ -595,7 +597,7 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
  	return 0;
 }
 
-static int ce_flush(SHA_CTX *context, int fd)
+static int ce_flush(SHA_CTX *context, int fd, unsigned char *sha1)
 {
 	unsigned int left = write_buffer_len;
 
@@ -612,7 +614,8 @@ static int ce_flush(SHA_CTX *context, int fd)
 	}
 
 	/* Append the SHA1 signature at the end */
-	SHA1_Final(write_buffer + left, context);
+	SHA1_Final(sha1, context);
+	memcpy(write_buffer + left, sha1, 20);
 	left += 20;
 	if (write(fd, write_buffer, left) != left)
 		return -1;
@@ -663,11 +666,14 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 	}
 }
 
-int write_cache(int newfd, struct cache_entry **cache, int entries)
+int write_cache_1(int newfd, struct cache_entry **cache, int entries,
+		  unsigned char *cache_sha1)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
 	int i, removed;
+	int status;
+	unsigned char sha1[20];
 
 	for (i = removed = 0; i < entries; i++)
 		if (!cache[i]->ce_mode)
@@ -691,5 +697,18 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
-	return ce_flush(&c, newfd);
+	status = ce_flush(&c, newfd, sha1);
+	if (cache_sha1)
+		memcpy(cache_sha1, sha1, 20);
+	return status;
+}
+
+int read_cache(void)
+{
+	return read_cache_1(NULL);
+}
+
+int write_cache(int newfd, struct cache_entry **cache, int entries)
+{
+	return write_cache_1(newfd, cache, entries, NULL);
 }
