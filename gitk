@@ -16,22 +16,6 @@ proc gitdir {} {
     }
 }
 
-proc parse_args {rargs} {
-    global parsed_args
-
-    if {[catch {
-	set parse_args [concat --default HEAD $rargs]
-	set parsed_args [split [eval exec git-rev-parse $parse_args] "\n"]
-    }]} {
-	# if git-rev-parse failed for some reason...
-	if {$rargs == {}} {
-	    set rargs HEAD
-	}
-	set parsed_args $rargs
-    }
-    return $parsed_args
-}
-
 proc start_rev_list {rlargs} {
     global startmsecs nextupdate ncmupdate
     global commfd leftover tclencoding datemode
@@ -46,7 +30,7 @@ proc start_rev_list {rlargs} {
     }
     if {[catch {
 	set commfd [open [concat | git-rev-list --header $order \
-			      --parents --boundary $rlargs] r]
+			      --parents --boundary --default HEAD $rlargs] r]
     } err]} {
 	puts stderr "Error executing git-rev-list: $err"
 	exit 1
@@ -65,7 +49,7 @@ proc getcommits {rargs} {
     global phase canv mainfont
 
     set phase getcommits
-    start_rev_list [parse_args $rargs]
+    start_rev_list $rargs
     $canv delete all
     $canv create text 3 3 -anchor nw -text "Reading commits..." \
 	-font $mainfont -tags textitems
