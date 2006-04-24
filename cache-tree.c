@@ -177,7 +177,7 @@ static int update_one(struct cache_tree *it,
 	char *buffer;
 	int i;
 
-	if (0 <= it->entry_count)
+	if (0 <= it->entry_count && has_sha1_file(it->sha1))
 		return it->entry_count;
 
 	/*
