@@ -252,7 +252,7 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	/* Add other config variables here.. */
+	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
 
