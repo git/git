@@ -2,12 +2,11 @@
 #include "tree.h"
 #include "cache-tree.h"
 
-static unsigned char active_cache_sha1[20];
-static struct cache_tree *active_cache_tree;
-
 static void dump_cache_tree(struct cache_tree *it, const char *pfx)
 {
 	int i;
+	if (!it)
+		return;
 	if (it->entry_count < 0)
 		printf("%-40s %s\n", "invalid", pfx);
 	else
@@ -24,9 +23,8 @@ static void dump_cache_tree(struct cache_tree *it, const char *pfx)
 
 int main(int ac, char **av)
 {
-	if (read_cache_1(active_cache_sha1) < 0)
+	if (read_cache() < 0)
 		die("unable to read index file");
-	active_cache_tree = read_cache_tree(active_cache_sha1);
 	dump_cache_tree(active_cache_tree, "");
 	return 0;
 }

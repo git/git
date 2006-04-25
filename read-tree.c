@@ -9,6 +9,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "cache-tree.h"
 #include <sys/time.h>
 #include <signal.h>
 
@@ -828,6 +829,7 @@ int main(int argc, char **argv)
 	}
 
 	unpack_trees(fn);
+	cache_tree_free(&active_cache_tree);
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
 		die("unable to write new index file");

@@ -12,10 +12,6 @@
 #include "quote.h"
 #include "blob.h"
 
-static unsigned char active_cache_sha1[20];
-static struct cache_tree *active_cache_tree;
-
-
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
@@ -1919,9 +1915,8 @@ static int apply_patch(int fd, const char *filename)
 	if (write_index)
 		newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (check_index) {
-		if (read_cache_1(active_cache_sha1) < 0)
+		if (read_cache() < 0)
 			die("unable to read index file");
-		active_cache_tree = read_cache_tree(active_cache_sha1);
 	}
 
 	if ((check || apply) && check_patch_list(list) < 0)
@@ -1931,11 +1926,9 @@ static int apply_patch(int fd, const char *filename)
 		write_out_results(list, skipped_patch);
 
 	if (write_index) {
-		if (write_cache_1(newfd, active_cache, active_nr,
-				  active_cache_sha1) ||
+		if (write_cache(newfd, active_cache, active_nr) ||
 		    commit_index_file(&cache_file))
 			die("Unable to write new cachefile");
-		write_cache_tree(active_cache_sha1, active_cache_tree);
 	}
 
 	if (show_index_info)

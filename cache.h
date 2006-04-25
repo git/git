@@ -114,6 +114,7 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 
 extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
+extern struct cache_tree *active_cache_tree;
 
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
@@ -138,11 +139,8 @@ extern const char *prefix_filename(const char *prefix, int len, const char *path
 #define alloc_nr(x) (((x)+16)*3/2)
 
 /* Initialize and use the cache information */
-extern int read_cache_1(unsigned char *);
-extern int write_cache_1(int, struct cache_entry **, int, unsigned char *);
 extern int read_cache(void);
-extern int write_cache(int, struct cache_entry **, int);
-
+extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */

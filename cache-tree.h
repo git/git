@@ -18,12 +18,13 @@ struct cache_tree {
 };
 
 struct cache_tree *cache_tree(void);
-void cache_tree_free(struct cache_tree *);
+void cache_tree_free(struct cache_tree **);
 void cache_tree_invalidate_path(struct cache_tree *, const char *);
 
-int write_cache_tree(const unsigned char *, struct cache_tree *);
-struct cache_tree *read_cache_tree(unsigned char *);
-int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int);
+void *cache_tree_write(struct cache_tree *root, unsigned long *size_p);
+struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
 
+int cache_tree_fully_valid(struct cache_tree *);
+int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int);
 
 #endif

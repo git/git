@@ -11,16 +11,18 @@ struct cache_tree *cache_tree(void)
 	return it;
 }
 
-void cache_tree_free(struct cache_tree *it)
+void cache_tree_free(struct cache_tree **it_p)
 {
 	int i;
+	struct cache_tree *it = *it_p;
 
 	if (!it)
 		return;
 	for (i = 0; i < it->subtree_nr; i++)
-		cache_tree_free(it->down[i]->cache_tree);
+		cache_tree_free(&it->down[i]->cache_tree);
 	free(it->down);
 	free(it);
+	*it_p = NULL;
 }
 
 static struct cache_tree_sub *find_subtree(struct cache_tree *it,
@@ -78,7 +80,7 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 				break;
 		}
 		if (i < it->subtree_nr) {
-			cache_tree_free(it->down[i]->cache_tree);
+			cache_tree_free(&it->down[i]->cache_tree);
 			free(it->down[i]);
 			/* 0 1 2 3 4 5
 			 *       ^     ^subtree_nr = 6
@@ -159,11 +161,25 @@ static void discard_unused_subtrees(struct cache_tree *it)
 		if (s->used)
 			down[dst++] = s;
 		else {
-			cache_tree_free(s->cache_tree);
+			cache_tree_free(&s->cache_tree);
 			free(s);
 			it->subtree_nr--;
 		}
 	}
+}
+
+int cache_tree_fully_valid(struct cache_tree *it)
+{
+	int i;
+	if (!it)
+		return 0;
+	if (it->entry_count < 0 || !has_sha1_file(it->sha1))
+		return 0;
+	for (i = 0; i < it->subtree_nr; i++) {
+		if (!cache_tree_fully_valid(it->down[i]->cache_tree))
+			return 0;
+	}
+	return 1;
 }
 
 static int update_one(struct cache_tree *it,
@@ -354,19 +370,15 @@ static void *write_one(struct cache_tree *it,
 	return buffer;
 }
 
-static void *cache_tree_write(const unsigned char *cache_sha1,
-			      struct cache_tree *root,
-			      unsigned long *offset_p)
+void *cache_tree_write(struct cache_tree *root, unsigned long *size_p)
 {
 	char path[PATH_MAX];
 	unsigned long size = 8192;
 	char *buffer = xmalloc(size);
 
-	/* the cache checksum of the corresponding index file. */
-	memcpy(buffer, cache_sha1, 20);
-	*offset_p = 20;
+	*size_p = 0;
 	path[0] = 0;
-	return write_one(root, path, 0, buffer, &size, offset_p);
+	return write_one(root, path, 0, buffer, &size, size_p);
 }
 
 static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
@@ -439,81 +451,13 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	return it;
 
  free_return:
-	cache_tree_free(it);
+	cache_tree_free(&it);
 	return NULL;
 }
 
-static struct cache_tree *cache_tree_read(unsigned char *sha1,
-					  const char *buffer,
-					  unsigned long size)
+struct cache_tree *cache_tree_read(const char *buffer, unsigned long size)
 {
-	/* check the cache-tree matches the index */
-	if (memcmp(buffer, sha1, 20))
-		return NULL; /* checksum mismatch */
-	if (buffer[20])
+	if (buffer[0])
 		return NULL; /* not the whole tree */
-	buffer += 20;
-	size -= 20;
 	return read_one(&buffer, &size);
-}
-
-struct cache_tree *read_cache_tree(unsigned char *sha1)
-{
-	int fd;
-	struct stat st;
-	char path[PATH_MAX];
-	unsigned long size = 0;
-	void *map;
-	struct cache_tree *it;
-
-	sprintf(path, "%s.aux", get_index_file());
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		return cache_tree();
-
-	if (fstat(fd, &st))
-		return cache_tree();
-	size = st.st_size;
-	map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	close(fd);
-	if (map == MAP_FAILED)
-		return cache_tree();
-	it = cache_tree_read(sha1, map, size);
-	munmap(map, size);
-	if (!it)
-		return cache_tree();
-	return it;
-}
-
-int write_cache_tree(const unsigned char *sha1, struct cache_tree *root)
-{
-	char path[PATH_MAX];
-	unsigned long size = 0;
-	void *buf, *buffer;
-	int fd, ret = -1;
-
-	sprintf(path, "%s.aux", get_index_file());
-	if (!root) {
-		unlink(path);
-		return -1;
-	}
-	fd = open(path, O_WRONLY|O_CREAT, 0666);
-	if (fd < 0)
-		return -1;
-	buffer = buf = cache_tree_write(sha1, root, &size);
-	while (size) {
-		int written = xwrite(fd, buf, size);
-		if (written <= 0)
-			goto fail;
-		buf += written;
-		size -= written;
-	}
-	ret = 0;
-
- fail:
-	close(fd);
-	free(buffer);
-	if (ret)
-		unlink(path);
-	return ret;
 }
