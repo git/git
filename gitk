@@ -362,7 +362,8 @@ proc makewindow {} {
     .bar.view add command -label "New view..." -command newview
     .bar.view add command -label "Delete view" -command delview -state disabled
     .bar.view add separator
-    .bar.view add command -label "All files" -command {showview 0}
+    .bar.view add radiobutton -label "All files" -command {showview 0} \
+	-variable selectedview -value 0
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
@@ -632,6 +633,7 @@ proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont uifont
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth
+    global viewname viewfiles viewperm nextviewnum
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -655,6 +657,13 @@ proc savestuff {w} {
 	set wid [expr {([winfo width $cflist] - 11) \
 			   / [font measure [$cflist cget -font] "0"]}]
 	puts $f "set geometry(cflistw) $wid"
+	puts -nonewline $f "set permviews {"
+	for {set v 0} {$v < $nextviewnum} {incr v} {
+	    if {$viewperm($v)} {
+		puts $f "{[list $viewname($v) $viewfiles($v)]}"
+	    }
+	}
+	puts $f "}"
 	close $f
 	file rename -force "~/.gitk-new" "~/.gitk"
     }
@@ -797,7 +806,7 @@ f		Scroll diff view to next file
 }
 
 proc newview {} {
-    global newviewname nextviewnum newviewtop
+    global newviewname nextviewnum newviewtop newviewperm uifont
 
     set top .gitkview
     if {[winfo exists $top]} {
@@ -807,14 +816,18 @@ proc newview {} {
     set newviewtop $top
     toplevel $top
     wm title $top "Gitk view definition"
-    label $top.nl -text "Name"
+    label $top.nl -text "Name" -font $uifont
     entry $top.name -width 20 -textvariable newviewname
     set newviewname "View $nextviewnum"
-    grid $top.nl $top.name -sticky w
-    label $top.l -text "Files and directories to include:"
-    grid $top.l - -sticky w -pady 10
-    text $top.t -width 30 -height 10
-    grid $top.t - -sticky w
+    grid $top.nl $top.name -sticky w -pady 5
+    set newviewperm 0
+    checkbutton $top.perm -text "Remember this view" -variable newviewperm
+    grid $top.perm - -pady 5 -sticky w
+    message $top.l -aspect 500 -font $uifont \
+	-text "Enter files and directories to include, one per line:"
+    grid $top.l - -sticky w
+    text $top.t -width 40 -height 10 -background white
+    grid $top.t - -sticky w -padx 5
     frame $top.buts
     button $top.buts.ok -text "OK" -command newviewok
     button $top.buts.can -text "Cancel" -command newviewcan
@@ -826,12 +839,13 @@ proc newview {} {
 }
 
 proc newviewok {} {
-    global newviewtop nextviewnum
-    global viewname viewfiles
+    global newviewtop nextviewnum newviewperm
+    global viewname viewfiles viewperm selectedview
 
     set n $nextviewnum
     incr nextviewnum
     set viewname($n) [$newviewtop.name get]
+    set viewperm($n) $newviewperm
     set files {}
     foreach f [split [$newviewtop.t get 0.0 end] "\n"] {
 	set ft [string trim $f]
@@ -842,7 +856,8 @@ proc newviewok {} {
     set viewfiles($n) $files
     catch {destroy $newviewtop}
     unset newviewtop
-    .bar.view add command -label $viewname($n) -command [list showview $n]
+    .bar.view add radiobutton -label $viewname($n) \
+	-command [list showview $n] -variable selectedview -value $n
     after idle showview $n
 }
 
@@ -854,7 +869,7 @@ proc newviewcan {} {
 }
 
 proc delview {} {
-    global curview viewdata
+    global curview viewdata viewperm
 
     if {$curview == 0} return
     set nmenu [.bar.view index end]
@@ -866,6 +881,7 @@ proc delview {} {
 	}
     }
     set viewdata($curview) {}
+    set viewperm($curview) 0
     showview 0
 }
 
@@ -898,6 +914,7 @@ proc showview {n} {
     global pending_select phase
     global commitidx rowlaidout rowoptim linesegends leftover
     global commfd nextupdate
+    global selectedview
 
     if {$n == $curview} return
     set selid {}
@@ -939,6 +956,7 @@ proc showview {n} {
     clear_display
 
     set curview $n
+    set selectedview $n
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
 
     if {![info exists viewdata($n)]} {
@@ -4209,7 +4227,9 @@ set optim_delay 16
 
 set nextviewnum 1
 set curview 0
+set selectedview 0
 set viewfiles(0) {}
+set viewperm(0) 0
 
 set stopped 0
 set stuffsaved 0
@@ -4232,10 +4252,25 @@ if {[lindex $revtreeargs end] eq "--"} {
 if {$cmdline_files ne {}} {
     # create a view for the files/dirs specified on the command line
     set curview 1
+    set selectedview 1
     set nextviewnum 2
     set viewname(1) "Command line"
     set viewfiles(1) $cmdline_files
-    .bar.view add command -label $viewname(1) -command {showview 1}
+    set viewperm(1) 0
+    .bar.view add radiobutton -label $viewname(1) -command {showview 1} \
+	-variable selectedview -value 1
     .bar.view entryconf 2 -state normal
+}
+
+if {[info exists permviews]} {
+    foreach v $permviews {
+	set n $nextviewnum
+	incr nextviewnum
+	set viewname($n) [lindex $v 0]
+	set viewfiles($n) [lindex $v 1]
+	set viewperm($n) 1
+	.bar.view add radiobutton -label $viewname($n) \
+	    -command [list showview $n] -variable selectedview -value $n
+    }
 }
 getcommits
