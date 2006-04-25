@@ -360,6 +360,7 @@ proc makewindow {} {
     menu .bar.view -font $uifont
     .bar add cascade -label "View" -menu .bar.view
     .bar.view add command -label "New view..." -command newview
+    .bar.view add command -label "Edit view..." -command editview
     .bar.view add command -label "Delete view" -command delview -state disabled
     .bar.view add separator
     .bar.view add radiobutton -label "All files" -command {showview 0} \
@@ -806,31 +807,59 @@ f		Scroll diff view to next file
 }
 
 proc newview {} {
-    global newviewname nextviewnum newviewtop newviewperm uifont
+    global nextviewnum newviewname newviewperm uifont
 
     set top .gitkview
     if {[winfo exists $top]} {
 	raise $top
 	return
     }
-    set newviewtop $top
+    set newviewname($nextviewnum) "View $nextviewnum"
+    set newviewperm($nextviewnum) 0
+    vieweditor $top $nextviewnum "Gitk view definition" 
+}
+
+proc editview {} {
+    global curview
+    global viewname viewperm newviewname newviewperm
+
+    set top .gitkvedit-$curview
+    if {[winfo exists $top]} {
+	raise $top
+	return
+    }
+    set newviewname($curview) $viewname($curview)
+    set newviewperm($curview) $viewperm($curview)
+    vieweditor $top $curview "Gitk: edit view $viewname($curview)"
+}
+
+proc vieweditor {top n title} {
+    global newviewname newviewperm viewfiles
+    global uifont
+
     toplevel $top
-    wm title $top "Gitk view definition"
+    wm title $top $title
     label $top.nl -text "Name" -font $uifont
-    entry $top.name -width 20 -textvariable newviewname
-    set newviewname "View $nextviewnum"
+    entry $top.name -width 20 -textvariable newviewname($n)
     grid $top.nl $top.name -sticky w -pady 5
-    set newviewperm 0
-    checkbutton $top.perm -text "Remember this view" -variable newviewperm
+    checkbutton $top.perm -text "Remember this view" -variable newviewperm($n)
     grid $top.perm - -pady 5 -sticky w
     message $top.l -aspect 500 -font $uifont \
 	-text "Enter files and directories to include, one per line:"
     grid $top.l - -sticky w
     text $top.t -width 40 -height 10 -background white
+    if {[info exists viewfiles($n)]} {
+	foreach f $viewfiles($n) {
+	    $top.t insert end $f
+	    $top.t insert end "\n"
+	}
+	$top.t delete {end - 1c} end
+	$top.t mark set insert 0.0
+    }
     grid $top.t - -sticky w -padx 5
     frame $top.buts
-    button $top.buts.ok -text "OK" -command newviewok
-    button $top.buts.can -text "Cancel" -command newviewcan
+    button $top.buts.ok -text "OK" -command [list newviewok $top $n]
+    button $top.buts.can -text "Cancel" -command [list destroy $top]
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -838,47 +867,64 @@ proc newview {} {
     focus $top.t
 }
 
-proc newviewok {} {
-    global newviewtop nextviewnum newviewperm
-    global viewname viewfiles viewperm selectedview
+proc viewmenuitem {n} {
+    set nmenu [.bar.view index end]
+    set targetcmd [list showview $n]
+    for {set i 6} {$i <= $nmenu} {incr i} {
+	if {[.bar.view entrycget $i -command] eq $targetcmd} {
+	    return $i
+	}
+    }
+    return {}
+}
 
-    set n $nextviewnum
-    incr nextviewnum
-    set viewname($n) [$newviewtop.name get]
-    set viewperm($n) $newviewperm
+proc newviewok {top n} {
+    global nextviewnum newviewperm newviewname
+    global viewname viewfiles viewperm selectedview curview
+
     set files {}
-    foreach f [split [$newviewtop.t get 0.0 end] "\n"] {
+    foreach f [split [$top.t get 0.0 end] "\n"] {
 	set ft [string trim $f]
 	if {$ft ne {}} {
 	    lappend files $ft
 	}
     }
-    set viewfiles($n) $files
-    catch {destroy $newviewtop}
-    unset newviewtop
-    .bar.view add radiobutton -label $viewname($n) \
-	-command [list showview $n] -variable selectedview -value $n
-    after idle showview $n
-}
-
-proc newviewcan {} {
-    global newviewtop
-
-    catch {destroy $newviewtop}
-    unset newviewtop
+    if {![info exists viewfiles($n)]} {
+	# creating a new view
+	incr nextviewnum
+	set viewname($n) $newviewname($n)
+	set viewperm($n) $newviewperm($n)
+	set viewfiles($n) $files
+	.bar.view add radiobutton -label $viewname($n) \
+	    -command [list showview $n] -variable selectedview -value $n
+	after idle showview $n
+    } else {
+	# editing an existing view
+	set viewperm($n) $newviewperm($n)
+	if {$newviewname($n) ne $viewname($n)} {
+	    set viewname($n) $newviewname($n)
+	    set i [viewmenuitem $n]
+	    if {$i ne {}} {
+		.bar.view entryconf $i -label $viewname($n)
+	    }
+	}
+	if {$files ne $viewfiles($n)} {
+	    set viewfiles($n) $files
+	    if {$curview == $n} {
+		after idle updatecommits
+	    }
+	}
+    }
+    catch {destroy $top}
 }
 
 proc delview {} {
     global curview viewdata viewperm
 
     if {$curview == 0} return
-    set nmenu [.bar.view index end]
-    set targetcmd [list showview $curview]
-    for {set i 5} {$i <= $nmenu} {incr i} {
-	if {[.bar.view entrycget $i -command] eq $targetcmd} {
-	    .bar.view delete $i
-	    break
-	}
+    set i [viewmenuitem $curview]
+    if {$i ne {}} {
+	.bar.view delete $i
     }
     set viewdata($curview) {}
     set viewperm($curview) 0
@@ -958,6 +1004,7 @@ proc showview {n} {
     set curview $n
     set selectedview $n
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf 3 -state [expr {$n == 0? "disabled": "normal"}]
 
     if {![info exists viewdata($n)]} {
 	set pending_select $selid
@@ -1025,6 +1072,11 @@ proc showview {n} {
     } else {
 	. config -cursor watch
 	settextcursor watch
+	if {$phase eq "getcommits"} {
+	    global mainfont
+	    $canv create text 3 3 -anchor nw -text "Reading commits..." \
+		-font $mainfont -tags textitems
+	}
     }
 }
 
@@ -4260,6 +4312,7 @@ if {$cmdline_files ne {}} {
     .bar.view add radiobutton -label $viewname(1) -command {showview 1} \
 	-variable selectedview -value 1
     .bar.view entryconf 2 -state normal
+    .bar.view entryconf 3 -state normal
 }
 
 if {[info exists permviews]} {
