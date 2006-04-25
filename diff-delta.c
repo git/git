@@ -27,26 +27,35 @@
 /* block size: min = 16, max = 64k, power of 2 */
 #define BLK_SIZE 16
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+/* maximum hash entry list for the same hash bucket */
+#define HASH_LIMIT 64
 
 #define GR_PRIME 0x9e370001
 #define HASH(v, shift) (((unsigned int)(v) * GR_PRIME) >> (shift))
 
-struct index {
+struct index_entry {
 	const unsigned char *ptr;
 	unsigned int val;
-	struct index *next;
+	struct index_entry *next;
 };
 
-static struct index ** delta_index(const unsigned char *buf,
-				   unsigned long bufsize,
-				   unsigned long trg_bufsize,
-				   unsigned int *hash_shift)
+struct delta_index {
+	const void *src_buf;
+	unsigned long src_size;
+	unsigned int hash_shift;
+	struct index_entry *hash[0];
+};
+
+struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 {
-	unsigned int i, hsize, hshift, hlimit, entries, *hash_count;
-	const unsigned char *data;
-	struct index *entry, **hash;
+	unsigned int i, hsize, hshift, entries, *hash_count;
+	const unsigned char *data, *buffer = buf;
+	struct delta_index *index;
+	struct index_entry *entry, **hash;
 	void *mem;
+
+	if (!buf || !bufsize)
+		return NULL;
 
 	/* determine index hash size */
 	entries = bufsize  / BLK_SIZE;
@@ -54,26 +63,34 @@ static struct index ** delta_index(const unsigned char *buf,
 	for (i = 4; (1 << i) < hsize && i < 31; i++);
 	hsize = 1 << i;
 	hshift = 32 - i;
-	*hash_shift = hshift;
 
 	/* allocate lookup index */
-	mem = malloc(hsize * sizeof(*hash) + entries * sizeof(*entry));
+	mem = malloc(sizeof(*index) +
+		     sizeof(*hash) * hsize +
+		     sizeof(*entry) * entries);
 	if (!mem)
 		return NULL;
+	index = mem;
+	mem = index + 1;
 	hash = mem;
-	entry = mem + hsize * sizeof(*hash);
+	mem = hash + hsize;
+	entry = mem;
+
+	index->src_buf = buf;
+	index->src_size = bufsize;
+	index->hash_shift = hshift;
 	memset(hash, 0, hsize * sizeof(*hash));
 
 	/* allocate an array to count hash entries */
 	hash_count = calloc(hsize, sizeof(*hash_count));
 	if (!hash_count) {
-		free(hash);
+		free(index);
 		return NULL;
 	}
 
 	/* then populate the index */
-	data = buf + entries * BLK_SIZE - BLK_SIZE;
-	while (data >= buf) {
+	data = buffer + entries * BLK_SIZE - BLK_SIZE;
+	while (data >= buffer) {
 		unsigned int val = adler32(0, data, BLK_SIZE);
 		i = HASH(val, hshift);
 		entry->ptr = data;
@@ -91,27 +108,18 @@ static struct index ** delta_index(const unsigned char *buf,
 	 * bucket that would bring us to O(m*n) computing costs (m and n
 	 * corresponding to reference and target buffer sizes).
 	 *
-	 * The more the target buffer is large, the more it is important to
-	 * have small entry lists for each hash buckets.  With such a limit
-	 * the cost is bounded to something more like O(m+n).
-	 */
-	hlimit = (1 << 26) / trg_bufsize;
-	if (hlimit < 4*BLK_SIZE)
-		hlimit = 4*BLK_SIZE;
-
-	/*
-	 * Now make sure none of the hash buckets has more entries than
+	 * Make sure none of the hash buckets has more entries than
 	 * we're willing to test.  Otherwise we cull the entry list
 	 * uniformly to still preserve a good repartition across
 	 * the reference buffer.
 	 */
 	for (i = 0; i < hsize; i++) {
-		if (hash_count[i] < hlimit)
+		if (hash_count[i] < HASH_LIMIT)
 			continue;
 		entry = hash[i];
 		do {
-			struct index *keep = entry;
-			int skip = hash_count[i] / hlimit / 2;
+			struct index_entry *keep = entry;
+			int skip = hash_count[i] / HASH_LIMIT / 2;
 			do {
 				entry = entry->next;
 			} while(--skip && entry);
@@ -120,7 +128,12 @@ static struct index ** delta_index(const unsigned char *buf,
 	}
 	free(hash_count);
 
-	return hash;
+	return index;
+}
+
+void free_delta_index(struct delta_index *index)
+{
+	free(index);
 }
 
 /* provide the size of the copy opcode given the block offset and size */
@@ -131,21 +144,17 @@ static struct index ** delta_index(const unsigned char *buf,
 /* the maximum size for any opcode */
 #define MAX_OP_SIZE COPYOP_SIZE(0xffffffff, 0xffffffff)
 
-void *diff_delta(void *from_buf, unsigned long from_size,
-		 void *to_buf, unsigned long to_size,
-		 unsigned long *delta_size,
-		 unsigned long max_size)
+void *
+create_delta(const struct delta_index *index,
+	     const void *trg_buf, unsigned long trg_size,
+	     unsigned long *delta_size, unsigned long max_size)
 {
 	unsigned int i, outpos, outsize, hash_shift;
 	int inscnt;
 	const unsigned char *ref_data, *ref_top, *data, *top;
 	unsigned char *out;
-	struct index *entry, **hash;
 
-	if (!from_size || !to_size)
-		return NULL;
-	hash = delta_index(from_buf, from_size, to_size, &hash_shift);
-	if (!hash)
+	if (!trg_buf || !trg_size)
 		return NULL;
 
 	outpos = 0;
@@ -153,60 +162,55 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 	if (max_size && outsize >= max_size)
 		outsize = max_size + MAX_OP_SIZE + 1;
 	out = malloc(outsize);
-	if (!out) {
-		free(hash);
+	if (!out)
 		return NULL;
-	}
-
-	ref_data = from_buf;
-	ref_top = from_buf + from_size;
-	data = to_buf;
-	top = to_buf + to_size;
 
 	/* store reference buffer size */
-	out[outpos++] = from_size;
-	from_size >>= 7;
-	while (from_size) {
-		out[outpos - 1] |= 0x80;
-		out[outpos++] = from_size;
-		from_size >>= 7;
+	i = index->src_size;
+	while (i >= 0x80) {
+		out[outpos++] = i | 0x80;
+		i >>= 7;
 	}
+	out[outpos++] = i;
 
 	/* store target buffer size */
-	out[outpos++] = to_size;
-	to_size >>= 7;
-	while (to_size) {
-		out[outpos - 1] |= 0x80;
-		out[outpos++] = to_size;
-		to_size >>= 7;
+	i = trg_size;
+	while (i >= 0x80) {
+		out[outpos++] = i | 0x80;
+		i >>= 7;
 	}
+	out[outpos++] = i;
 
+	ref_data = index->src_buf;
+	ref_top = ref_data + index->src_size;
+	data = trg_buf;
+	top = trg_buf + trg_size;
+	hash_shift = index->hash_shift;
 	inscnt = 0;
 
 	while (data < top) {
 		unsigned int moff = 0, msize = 0;
-		if (data + BLK_SIZE <= top) {
-			unsigned int val = adler32(0, data, BLK_SIZE);
-			i = HASH(val, hash_shift);
-			for (entry = hash[i]; entry; entry = entry->next) {
-				const unsigned char *ref = entry->ptr;
-				const unsigned char *src = data;
-				unsigned int ref_size = ref_top - ref;
-				if (entry->val != val)
-					continue;
-				if (ref_size > top - src)
-					ref_size = top - src;
-				if (ref_size > 0x10000)
-					ref_size = 0x10000;
-				if (ref_size <= msize)
-					break;
-				while (ref_size-- && *src++ == *ref)
-					ref++;
-				if (msize < ref - entry->ptr) {
-					/* this is our best match so far */
-					msize = ref - entry->ptr;
-					moff = entry->ptr - ref_data;
-				}
+		struct index_entry *entry;
+		unsigned int val = adler32(0, data, BLK_SIZE);
+		i = HASH(val, hash_shift);
+		for (entry = index->hash[i]; entry; entry = entry->next) {
+			const unsigned char *ref = entry->ptr;
+			const unsigned char *src = data;
+			unsigned int ref_size = ref_top - ref;
+			if (entry->val != val)
+				continue;
+			if (ref_size > top - src)
+				ref_size = top - src;
+			if (ref_size > 0x10000)
+				ref_size = 0x10000;
+			if (ref_size <= msize)
+				break;
+			while (ref_size-- && *src++ == *ref)
+				ref++;
+			if (msize < ref - entry->ptr) {
+				/* this is our best match so far */
+				msize = ref - entry->ptr;
+				moff = entry->ptr - ref_data;
 			}
 		}
 
@@ -271,7 +275,6 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 				out = realloc(out, outsize);
 			if (!out) {
 				free(tmp);
-				free(hash);
 				return NULL;
 			}
 		}
@@ -280,7 +283,6 @@ void *diff_delta(void *from_buf, unsigned long from_size,
 	if (inscnt)
 		out[outpos - inscnt - 1] = inscnt;
 
-	free(hash);
 	*delta_size = outpos;
 	return out;
 }
