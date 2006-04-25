@@ -7,11 +7,7 @@
 #include "strbuf.h"
 #include "quote.h"
 #include "tree-walk.h"
-#include "tree.h"
 #include "cache-tree.h"
-
-static unsigned char active_cache_sha1[20];
-static struct cache_tree *active_cache_tree;
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -625,10 +621,9 @@ int main(int argc, const char **argv)
 	if (newfd < 0)
 		die("unable to create new cachefile");
 
-	entries = read_cache_1(active_cache_sha1);
+	entries = read_cache();
 	if (entries < 0)
 		die("cache corrupted");
-	active_cache_tree = read_cache_tree(active_cache_sha1);
 
 	for (i = 1 ; i < argc; i++) {
 		const char *path = argv[i];
@@ -767,11 +762,9 @@ int main(int argc, const char **argv)
 
  finish:
 	if (active_cache_changed) {
-		if (write_cache_1(newfd, active_cache, active_nr,
-				  active_cache_sha1) ||
+		if (write_cache(newfd, active_cache, active_nr) ||
 		    commit_index_file(&cache_file))
 			die("Unable to write new cachefile");
-		write_cache_tree(active_cache_sha1, active_cache_tree);
 	}
 
 	return has_errors ? 1 : 0;

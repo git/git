@@ -611,6 +611,9 @@ test-date$X: test-date.c date.o ctype.o
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^ -lz
 
+test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
 test-gsimm$X: test-gsimm.c gsimm.o rabinpoly.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
 

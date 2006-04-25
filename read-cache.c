@@ -4,10 +4,25 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "cache-tree.h"
+
+/* Index extensions.
+ *
+ * The first letter should be 'A'..'Z' for extensions that are not
+ * necessary for a correct operation (i.e. optimization data).
+ * When new extensions are added that _needs_ to be understood in
+ * order to correctly interpret the index file, pick character that
+ * is outside the range, to cause the reader to abort.
+ */
+
+#define CACHE_EXT(s) ( (s[0]<<24)|(s[1]<<16)|(s[2]<<8)|(s[3]) )
+#define CACHE_EXT_TREE 0x54524545	/* "TREE" */
 
 struct cache_entry **active_cache = NULL;
 static time_t index_file_timestamp;
 unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
+
+struct cache_tree *active_cache_tree = NULL;
 
 /*
  * This only updates the "non-critical" parts of the directory
@@ -496,12 +511,10 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	return 0;
 }
 
-static int verify_hdr(struct cache_header *hdr, unsigned long size, unsigned char *sha1)
+static int verify_hdr(struct cache_header *hdr, unsigned long size)
 {
 	SHA_CTX c;
-	unsigned char sha1_buf[20];
-	if (!sha1)
-		sha1 = sha1_buf;
+	unsigned char sha1[20];
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error("bad signature");
@@ -515,7 +528,23 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size, unsigned cha
 	return 0;
 }
 
-int read_cache_1(unsigned char *cache_sha1)
+static int read_index_extension(const char *ext, void *data, unsigned long sz)
+{
+	switch (CACHE_EXT(ext)) {
+	case CACHE_EXT_TREE:
+		active_cache_tree = cache_tree_read(data, sz);
+		break;
+	default:
+		if (*ext < 'A' || 'Z' < *ext)
+			return error("index uses %.4s extension, which we do not understand",
+				     ext);
+		fprintf(stderr, "ignoring %.4s extension\n", ext);
+		break;
+	}
+	return 0;
+}
+
+int read_cache(void)
 {
 	int fd, i;
 	struct stat st;
@@ -549,7 +578,7 @@ int read_cache_1(unsigned char *cache_sha1)
 		die("index file mmap failed (%s)", strerror(errno));
 
 	hdr = map;
-	if (verify_hdr(hdr, size, cache_sha1) < 0)
+	if (verify_hdr(hdr, size) < 0)
 		goto unmap;
 
 	active_nr = ntohl(hdr->hdr_entries);
@@ -563,6 +592,22 @@ int read_cache_1(unsigned char *cache_sha1)
 		active_cache[i] = ce;
 	}
 	index_file_timestamp = st.st_mtime;
+	while (offset <= size - 20 - 8) {
+		/* After an array of active_nr index entries,
+		 * there can be arbitrary number of extended
+		 * sections, each of which is prefixed with
+		 * extension name (4-byte) and section length
+		 * in 4-byte network byte order.
+		 */
+		unsigned long extsize;
+		memcpy(&extsize, map + offset + 4, 4);
+		extsize = ntohl(extsize);
+		if (read_index_extension(map + offset,
+					 map + offset + 8, extsize) < 0)
+			goto unmap;
+		offset += 8;
+		offset += extsize;
+	}
 	return active_nr;
 
 unmap:
@@ -597,7 +642,18 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
  	return 0;
 }
 
-static int ce_flush(SHA_CTX *context, int fd, unsigned char *sha1)
+static int write_index_ext_header(SHA_CTX *context, int fd,
+				  unsigned long ext, unsigned long sz)
+{
+	ext = htonl(ext);
+	sz = htonl(sz);
+	if ((ce_write(context, fd, &ext, 4) < 0) ||
+	    (ce_write(context, fd, &sz, 4) < 0))
+		return -1;
+	return 0;
+}
+
+static int ce_flush(SHA_CTX *context, int fd)
 {
 	unsigned int left = write_buffer_len;
 
@@ -614,8 +670,7 @@ static int ce_flush(SHA_CTX *context, int fd, unsigned char *sha1)
 	}
 
 	/* Append the SHA1 signature at the end */
-	SHA1_Final(sha1, context);
-	memcpy(write_buffer + left, sha1, 20);
+	SHA1_Final(write_buffer + left, context);
 	left += 20;
 	if (write(fd, write_buffer, left) != left)
 		return -1;
@@ -666,14 +721,11 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 	}
 }
 
-int write_cache_1(int newfd, struct cache_entry **cache, int entries,
-		  unsigned char *cache_sha1)
+int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
 	int i, removed;
-	int status;
-	unsigned char sha1[20];
 
 	for (i = removed = 0; i < entries; i++)
 		if (!cache[i]->ce_mode)
@@ -697,18 +749,19 @@ int write_cache_1(int newfd, struct cache_entry **cache, int entries,
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
-	status = ce_flush(&c, newfd, sha1);
-	if (cache_sha1)
-		memcpy(cache_sha1, sha1, 20);
-	return status;
-}
 
-int read_cache(void)
-{
-	return read_cache_1(NULL);
-}
-
-int write_cache(int newfd, struct cache_entry **cache, int entries)
-{
-	return write_cache_1(newfd, cache, entries, NULL);
+	/* Write extension data here */
+	if (active_cache_tree) {
+		unsigned long sz;
+		void *data = cache_tree_write(active_cache_tree, &sz);
+		if (data &&
+		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
+		    !ce_write(&c, newfd, data, sz))
+			;
+		else {
+			free(data);
+			return -1;
+		}
+	}
+	return ce_flush(&c, newfd);
 }
