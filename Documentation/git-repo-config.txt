@@ -87,11 +87,11 @@ Given a .git/config like this:
 		renames = true
 
 	; Proxy settings
-	[proxy]
-		command="ssh" for "ssh://kernel.org/"
-		command="proxy-command" for kernel.org
-		command="myprotocol-command" for "my://"
-		command=default-proxy ; for all the rest
+	[core]
+		gitproxy="ssh" for "ssh://kernel.org/"
+		gitproxy="proxy-command" for kernel.org
+		gitproxy="myprotocol-command" for "my://"
+		gitproxy=default-proxy ; for all the rest
 
 you can set the filemode to true with
 
@@ -104,7 +104,7 @@ to what URL they apply. Here is how to change the entry for kernel.org
 to "ssh".
 
 ------------
-% git repo-config proxy.command '"ssh" for kernel.org' 'for kernel.org$'
+% git repo-config core.gitproxy '"ssh" for kernel.org' 'for kernel.org$'
 ------------
 
 This makes sure that only the key/value pair for kernel.org is replaced.
@@ -115,7 +115,7 @@ To delete the entry for renames, do
 % git repo-config --unset diff.renames
 ------------
 
-If you want to delete an entry for a multivar (like proxy.command above),
+If you want to delete an entry for a multivar (like core.gitproxy above),
 you have to provide a regex matching the value of exactly one line.
 
 To query the value for a given key, do
@@ -133,27 +133,27 @@ or
 or, to query a multivar:
 
 ------------
-% git repo-config --get proxy.command "for kernel.org$"
+% git repo-config --get core.gitproxy "for kernel.org$"
 ------------
 
 If you want to know all the values for a multivar, do:
 
 ------------
-% git repo-config --get-all proxy.command
+% git repo-config --get-all core.gitproxy
 ------------
 
-If you like to live dangerous, you can replace *all* proxy.commands by a
+If you like to live dangerous, you can replace *all* core.gitproxy by a
 new one with
 
 ------------
-% git repo-config --replace-all proxy.command ssh
+% git repo-config --replace-all core.gitproxy ssh
 ------------
 
 However, if you really only want to replace the line for the default proxy,
 i.e. the one without a "for ..." postfix, do something like this:
 
 ------------
-% git repo-config proxy.command ssh '! for '
+% git repo-config core.gitproxy ssh '! for '
 ------------
 
 To actually match only values with an exclamation mark, you have to
@@ -163,13 +163,16 @@ To actually match only values with an exclamation mark, you have to
 ------------
 
 
+include::config.txt[]
+
+
 Author
 ------
 Written by Johannes Schindelin <Johannes.Schindelin@gmx.de>
 
 Documentation
 --------------
-Documentation by Johannes Schindelin.
+Documentation by Johannes Schindelin, Petr Baudis and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
