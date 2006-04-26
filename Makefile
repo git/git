@@ -580,7 +580,7 @@ $(LIB_FILE): $(LIB_OBJS)
 XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
-	$(AR) rcs $@ $(XDIFF_OBJS)
+	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
 doc:
