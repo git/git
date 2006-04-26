@@ -8,11 +8,12 @@ static void dump_cache_tree(struct cache_tree *it, const char *pfx)
 	if (!it)
 		return;
 	if (it->entry_count < 0)
-		printf("%-40s %s\n", "invalid", pfx);
+		printf("%-40s %s (%d subtrees)\n", "invalid", pfx,
+		       it->subtree_nr);
 	else
-		printf("%s %s (%d entries)\n",
+		printf("%s %s (%d entries, %d subtrees)\n",
 		       sha1_to_hex(it->sha1),
-		       pfx, it->entry_count);
+		       pfx, it->entry_count, it->subtree_nr);
 	for (i = 0; i < it->subtree_nr; i++) {
 		char path[PATH_MAX];
 		struct cache_tree_sub *down = it->down[i];
