@@ -19,10 +19,42 @@ void cache_tree_free(struct cache_tree **it_p)
 	if (!it)
 		return;
 	for (i = 0; i < it->subtree_nr; i++)
-		cache_tree_free(&it->down[i]->cache_tree);
+		if (it->down[i])
+			cache_tree_free(&it->down[i]->cache_tree);
 	free(it->down);
 	free(it);
 	*it_p = NULL;
+}
+
+static int subtree_name_cmp(const char *one, int onelen,
+			    const char *two, int twolen)
+{
+	if (onelen < twolen)
+		return -1;
+	if (twolen < onelen)
+		return 1;
+	return memcmp(one, two, onelen);
+}
+
+static int subtree_pos(struct cache_tree *it, const char *path, int pathlen)
+{
+	struct cache_tree_sub **down = it->down;
+	int lo, hi;
+	lo = 0;
+	hi = it->subtree_nr;
+	while (lo < hi) {
+		int mi = (lo + hi) / 2;
+		struct cache_tree_sub *mdl = down[mi];
+		int cmp = subtree_name_cmp(path, pathlen,
+					   mdl->name, mdl->namelen);
+		if (!cmp)
+			return mi;
+		if (cmp < 0)
+			hi = mi;
+		else
+			lo = mi + 1;
+	}
+	return -lo-1;
 }
 
 static struct cache_tree_sub *find_subtree(struct cache_tree *it,
@@ -30,27 +62,32 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 					   int pathlen,
 					   int create)
 {
-	int i;
 	struct cache_tree_sub *down;
-	for (i = 0; i < it->subtree_nr; i++) {
-		down = it->down[i];
-		if (down->namelen == pathlen &&
-		    !memcmp(down->name, path, pathlen))
-			return down;
-	}
+	int pos = subtree_pos(it, path, pathlen);
+	if (0 <= pos)
+		return it->down[pos];
 	if (!create)
 		return NULL;
+
+	pos = -pos-1;
 	if (it->subtree_alloc <= it->subtree_nr) {
 		it->subtree_alloc = alloc_nr(it->subtree_alloc);
 		it->down = xrealloc(it->down, it->subtree_alloc *
 				    sizeof(*it->down));
 	}
+	it->subtree_nr++;
+
 	down = xmalloc(sizeof(*down) + pathlen + 1);
-	down->cache_tree = NULL; /* cache_tree(); */
+	down->cache_tree = NULL;
 	down->namelen = pathlen;
 	memcpy(down->name, path, pathlen);
-	down->name[pathlen] = 0; /* not strictly needed */
-	it->down[it->subtree_nr++] = down;
+	down->name[pathlen] = 0;
+
+	if (pos < it->subtree_nr)
+		memmove(it->down + pos + 1,
+			it->down + pos,
+			sizeof(down) * (it->subtree_nr - pos - 1));
+	it->down[pos] = down;
 	return down;
 }
 
@@ -72,25 +109,21 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 	slash = strchr(path, '/');
 	it->entry_count = -1;
 	if (!slash) {
-		int i;
+		int pos;
 		namelen = strlen(path);
-		for (i = 0; i < it->subtree_nr; i++) {
-			if (it->down[i]->namelen == namelen &&
-			    !memcmp(it->down[i]->name, path, namelen))
-				break;
-		}
-		if (i < it->subtree_nr) {
-			cache_tree_free(&it->down[i]->cache_tree);
-			free(it->down[i]);
+		pos = subtree_pos(it, path, namelen);
+		if (0 <= pos) {
+			cache_tree_free(&it->down[pos]->cache_tree);
+			free(it->down[pos]);
 			/* 0 1 2 3 4 5
 			 *       ^     ^subtree_nr = 6
-			 *       i
+			 *       pos
 			 * move 4 and 5 up one place (2 entries)
-			 * 2 = 6 - 3 - 1 = subtree_nr - i - 1
+			 * 2 = 6 - 3 - 1 = subtree_nr - pos - 1
 			 */
-			memmove(it->down+i, it->down+i+1,
+			memmove(it->down+pos, it->down+pos+1,
 				sizeof(struct cache_tree_sub *) *
-				(it->subtree_nr - i - 1));
+				(it->subtree_nr - pos - 1));
 			it->subtree_nr--;
 		}
 		return;
@@ -364,6 +397,12 @@ static void *write_one(struct cache_tree *it,
 	}
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *down = it->down[i];
+		if (i) {
+			struct cache_tree_sub *prev = it->down[i-1];
+			if (subtree_name_cmp(down->name, down->namelen,
+					     prev->name, prev->namelen) <= 0)
+				die("fatal - unsorted cache subtree");
+		}
 		buffer = write_one(down->cache_tree, down->name, down->namelen,
 				   buffer, size, offset);
 	}
@@ -435,14 +474,15 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	for (i = 0; i < subtree_nr; i++) {
 		/* read each subtree */
 		struct cache_tree *sub;
+		struct cache_tree_sub *subtree;
 		const char *name = buf;
 		int namelen;
 		sub = read_one(&buf, &size);
 		if (!sub)
 			goto free_return;
 		namelen = strlen(name);
-		it->down[i] = find_subtree(it, name, namelen, 1);
-		it->down[i]->cache_tree = sub;
+		subtree = find_subtree(it, name, namelen, 1);
+		subtree->cache_tree = sub;
 	}
 	if (subtree_nr != it->subtree_nr)
 		die("cache-tree: internal error");
