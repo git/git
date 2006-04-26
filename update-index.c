@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "quote.h"
+#include "cache-tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
 
