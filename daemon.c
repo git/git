@@ -535,7 +535,7 @@ static int socksetup(int port, int **socklist_p)
 
 		if (set_reuse_addr(sockfd)) {
 			close(sockfd);
-			return 0;	/* not fatal */
+			continue;
 		}
 
 		if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {

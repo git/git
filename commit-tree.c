@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
 	git_config(git_default_config);
 
-	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
+	if (argc < 2 || get_sha1(argv[1], tree_sha1) < 0)
 		usage(commit_tree_usage);
 
 	check_valid(tree_sha1, tree_type);
