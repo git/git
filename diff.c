@@ -485,7 +485,8 @@ static void builtin_diff(const char *name_a,
 static void builtin_diffstat(const char *name_a, const char *name_b,
 			     struct diff_filespec *one,
 			     struct diff_filespec *two,
-			     struct diffstat_t *diffstat)
+			     struct diffstat_t *diffstat,
+			     int complete_rewrite)
 {
 	mmfile_t mf1, mf2;
 	struct diffstat_file *data;
@@ -496,7 +497,13 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		data->is_unmerged = 1;
 		return;
 	}
-
+	if (complete_rewrite) {
+		diff_populate_filespec(one, 0);
+		diff_populate_filespec(two, 0);
+		data->deleted = count_lines(one->data, one->size);
+		data->added = count_lines(two->data, two->size);
+		return;
+	}
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
@@ -1055,10 +1062,11 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 {
 	const char *name;
 	const char *other;
+	int complete_rewrite = 0;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat);
+		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat, 0);
 		return;
 	}
 
@@ -1068,7 +1076,9 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
-	builtin_diffstat(name, other, p->one, p->two, diffstat);
+	if (p->status == DIFF_STATUS_MODIFIED && p->score)
+		complete_rewrite = 1;
+	builtin_diffstat(name, other, p->one, p->two, diffstat, complete_rewrite);
 }
 
 void diff_setup(struct diff_options *options)
