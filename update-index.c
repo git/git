@@ -8,7 +8,6 @@
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
-#include "cache-tree.h"
 
 /*
  * Default to not allowing changes to the list of files. The
