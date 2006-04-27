@@ -226,7 +226,8 @@ static int update_one(struct cache_tree *it,
 		      int entries,
 		      const char *base,
 		      int baselen,
-		      int missing_ok)
+		      int missing_ok,
+		      int dryrun)
 {
 	unsigned long size, offset;
 	char *buffer;
@@ -273,7 +274,8 @@ static int update_one(struct cache_tree *it,
 				    cache + i, entries - i,
 				    path,
 				    baselen + sublen + 1,
-				    missing_ok);
+				    missing_ok,
+				    dryrun);
 		i += subcnt - 1;
 		sub->used = 1;
 	}
@@ -338,7 +340,14 @@ static int update_one(struct cache_tree *it,
 #endif
 	}
 
-	write_sha1_file(buffer, offset, tree_type, it->sha1);
+	if (dryrun) {
+		char hdr[200];
+		int hdrlen;
+		write_sha1_file_prepare(buffer, offset, tree_type, it->sha1,
+					hdr, &hdrlen);
+	}
+	else
+		write_sha1_file(buffer, offset, tree_type, it->sha1);
 	free(buffer);
 	it->entry_count = i;
 #if DEBUG
@@ -352,13 +361,14 @@ static int update_one(struct cache_tree *it,
 int cache_tree_update(struct cache_tree *it,
 		      struct cache_entry **cache,
 		      int entries,
-		      int missing_ok)
+		      int missing_ok,
+		      int dryrun)
 {
 	int i;
 	i = verify_cache(cache, entries);
 	if (i)
 		return i;
-	i = update_one(it, cache, entries, "", 0, missing_ok);
+	i = update_one(it, cache, entries, "", 0, missing_ok, dryrun);
 	if (i < 0)
 		return i;
 	return 0;

@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	if (!was_valid) {
 		if (cache_tree_update(active_cache_tree,
 				      active_cache, active_nr,
-				      missing_ok) < 0)
+				      missing_ok, 0) < 0)
 			die("git-write-tree: error building trees");
 		if (0 <= newfd) {
 			if (!write_cache(newfd, active_cache, active_nr))
