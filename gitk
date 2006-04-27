@@ -481,7 +481,7 @@ proc makewindow {} {
     set ctext .ctop.cdet.left.ctext
     text $ctext -bg white -state disabled -font $textfont \
 	-width $geometry(ctextw) -height $geometry(ctexth) \
-	-yscrollcommand ".ctop.cdet.left.sb set" -wrap none
+	-yscrollcommand scrolltext -wrap none
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
@@ -515,11 +515,16 @@ proc makewindow {} {
 
     frame .ctop.cdet.right
     set cflist .ctop.cdet.right.cfiles
-    listbox $cflist -bg white -selectmode extended -width $geometry(cflistw) \
-	-yscrollcommand ".ctop.cdet.right.sb set" -font $mainfont
+    set indent [font measure $mainfont "nn"]
+    text $cflist -width $geometry(cflistw) -background white -font $mainfont \
+	-tabs [list $indent [expr {2 * $indent}]] \
+	-yscrollcommand ".ctop.cdet.right.sb set" \
+	-cursor [. cget -cursor] \
+	-spacing1 1 -spacing3 1
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
+    $cflist tag configure highlight -background yellow
     .ctop.cdet add .ctop.cdet.right
     bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
 
@@ -571,12 +576,13 @@ proc makewindow {} {
     bind . <Control-KP_Add> {incrfont 1}
     bind . <Control-minus> {incrfont -1}
     bind . <Control-KP_Subtract> {incrfont -1}
-    bind $cflist <<ListboxSelect>> listboxsel
     bind . <Destroy> {savestuff %W}
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
     bind $sha1entry <Key-Return> gotocommit
     bind $sha1entry <<PasteSelection>> clearsha1
+    bind $cflist <1> {sel_flist %W %x %y; break}
+    bind $cflist <B1-Motion> {sel_flist %W %x %y; break}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -811,6 +817,101 @@ f		Scroll diff view to next file
     button $w.ok -text Close -command "destroy $w"
     pack $w.ok -side bottom
 }
+
+# Procedures for manipulating the file list window at the
+# bottom right of the overall window.
+proc init_flist {first} {
+    global cflist cflist_top cflist_bot selectedline difffilestart
+
+    $cflist conf -state normal
+    $cflist delete 0.0 end
+    if {$first ne {}} {
+	$cflist insert end $first
+	set cflist_top 1
+	set cflist_bot 1
+	$cflist tag add highlight 1.0 "1.0 lineend"
+    } else {
+	catch {unset cflist_top}
+    }
+    $cflist conf -state disabled
+    set difffilestart {}
+}
+
+proc add_flist {f} {
+    global flistmode cflist
+
+    $cflist conf -state normal
+    if {$flistmode eq "flat"} {
+	$cflist insert end "\n$f"
+    }
+    $cflist conf -state disabled
+}
+
+proc sel_flist {w x y} {
+    global flistmode ctext difffilestart cflist cflist_top
+
+    if {![info exists cflist_top]} return
+    set l [lindex [split [$w index "@$x,$y"] "."] 0]
+    if {$flistmode eq "flat"} {
+	if {$l == 1} {
+	    $ctext yview 1.0
+	} else {
+	    catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
+	}
+	highlight_flist $l
+    }
+}
+
+proc scrolltext {f0 f1} {
+    global cflist_top
+
+    .ctop.cdet.left.sb set $f0 $f1
+    if {[info exists cflist_top]} {
+	highlight_flist $cflist_top
+    }
+}
+
+# Given an index $tl in the $ctext window, this works out which line
+# of the $cflist window displays the filename whose patch is shown
+# at the given point in the $ctext window.  $ll is a hint about which
+# line it might be, and is used as the starting point of the search.
+proc ctext_index {tl ll} {
+    global ctext difffilestart
+
+    while {$ll >= 2 && [$ctext compare $tl < \
+			    [lindex $difffilestart [expr {$ll - 2}]]]} {
+	incr ll -1
+    }
+    set nfiles [llength $difffilestart]
+    while {$ll - 1 < $nfiles && [$ctext compare $tl >= \
+			    [lindex $difffilestart [expr {$ll - 1}]]]} {
+	incr ll
+    }
+    return $ll
+}
+
+proc highlight_flist {ll} {
+    global ctext cflist cflist_top cflist_bot difffilestart
+
+    if {![info exists difffilestart] || [llength $difffilestart] == 0} return
+    set ll [ctext_index [$ctext index @0,1] $ll]
+    set lb $cflist_bot
+    if {$lb < $ll} {
+	set lb $ll
+    }
+    set y [expr {[winfo height $ctext] - 2}]
+    set lb [ctext_index [$ctext index @0,$y] $lb]
+    if {$ll != $cflist_top || $lb != $cflist_bot} {
+	$cflist tag remove highlight $cflist_top.0 "$cflist_bot.0 lineend"
+	for {set l $ll} {$l <= $lb} {incr l} {
+	    $cflist tag add highlight $l.0 "$l.0 lineend"
+	}
+	set cflist_top $ll
+	set cflist_bot $lb
+    }
+}
+
+# Code to implement multiple views
 
 proc newview {} {
     global nextviewnum newviewname newviewperm uifont
@@ -2718,7 +2819,7 @@ proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
     global canvy0 linespc parentlist childlist
-    global cflist currentid sha1entry
+    global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
 
@@ -2841,8 +2942,7 @@ proc selectline {l isnew} {
     $ctext conf -state disabled
     set commentend [$ctext index "end - 1c"]
 
-    $cflist delete 0 end
-    $cflist insert end "Comments"
+    init_flist "Comments"
     if {[llength $olds] <= 1} {
 	startdiff $id
     } else {
@@ -2960,12 +3060,11 @@ proc goforw {} {
 
 proc mergediff {id l} {
     global diffmergeid diffopts mdifffd
-    global difffilestart diffids
+    global diffids
     global parentlist
 
     set diffmergeid $id
     set diffids $id
-    catch {unset difffilestart}
     # this doesn't seem to actually affect anything...
     set env(GIT_DIFF_OPTS) $diffopts
     set cmd [concat | git-diff-tree --no-commit-id --cc $id]
@@ -3000,11 +3099,10 @@ proc getmergediffline {mdf id np} {
 	# start of a new file
 	$ctext insert end "\n"
 	set here [$ctext index "end - 1c"]
-	set i [$cflist index end]
-	$ctext mark set fmark.$i $here
-	$ctext mark gravity fmark.$i left
-	set difffilestart([expr {$i-1}]) $here
-	$cflist insert end $fname
+	$ctext mark set f:$fname $here
+	$ctext mark gravity f:$fname left
+	lappend difffilestart $here
+	add_flist $fname
 	set l [expr {(78 - [string length $fname]) / 2}]
 	set pad [string range "----------------------------------------" 1 $l]
 	$ctext insert end "$pad $fname $pad\n" filesep
@@ -3075,7 +3173,7 @@ proc startdiff {ids} {
 proc addtocflist {ids} {
     global treediffs cflist
     foreach f $treediffs($ids) {
-	$cflist insert end $f
+	add_flist $f
     }
     getblobdiffs $ids
 }
@@ -3115,7 +3213,7 @@ proc gettreediffline {gdtf ids} {
 
 proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env curdifftag curtagstart
-    global difffilestart nextupdate diffinhdr treediffs
+    global nextupdate diffinhdr treediffs
 
     set env(GIT_DIFF_OPTS) $diffopts
     set cmd [concat | git-diff-tree --no-commit-id -r -p -C $ids]
@@ -3128,7 +3226,6 @@ proc getblobdiffs {ids} {
     set blobdifffd($ids) $bdf
     set curdifftag Comments
     set curtagstart 0.0
-    catch {unset difffilestart}
     fileevent $bdf readable [list getblobdiffline $bdf $diffids]
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
 }
@@ -3156,24 +3253,15 @@ proc getblobdiffline {bdf ids} {
 	# start of a new file
 	$ctext insert end "\n"
 	$ctext tag add $curdifftag $curtagstart end
-	set curtagstart [$ctext index "end - 1c"]
-	set header $newname
 	set here [$ctext index "end - 1c"]
-	set i [lsearch -exact $treediffs($diffids) $fname]
-	if {$i >= 0} {
-	    set difffilestart($i) $here
-	    incr i
-	    $ctext mark set fmark.$i $here
-	    $ctext mark gravity fmark.$i left
-	}
+	set curtagstart $here
+	set header $newname
+	lappend difffilestart $here
+	$ctext mark set f:$fname $here
+	$ctext mark gravity f:$fname left
 	if {$newname != $fname} {
-	    set i [lsearch -exact $treediffs($diffids) $newname]
-	    if {$i >= 0} {
-		set difffilestart($i) $here
-		incr i
-		$ctext mark set fmark.$i $here
-		$ctext mark gravity fmark.$i left
-	    }
+	    $ctext mark set f:$newfname $here
+	    $ctext mark gravity f:$newfname left
 	}
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
@@ -3222,26 +3310,11 @@ proc getblobdiffline {bdf ids} {
 proc nextfile {} {
     global difffilestart ctext
     set here [$ctext index @0,0]
-    for {set i 0} {[info exists difffilestart($i)]} {incr i} {
-	if {[$ctext compare $difffilestart($i) > $here]} {
-	    if {![info exists pos]
-		|| [$ctext compare $difffilestart($i) < $pos]} {
-		set pos $difffilestart($i)
-	    }
+    foreach loc $difffilestart {
+	if {[$ctext compare $loc > $here]} {
+	    $ctext yview $loc
 	}
     }
-    if {[info exists pos]} {
-	$ctext yview $pos
-    }
-}
-
-proc listboxsel {} {
-    global ctext cflist currentid
-    if {![info exists currentid]} return
-    set sel [lsort [$cflist curselection]]
-    if {$sel eq {}} return
-    set first [lindex $sel 0]
-    catch {$ctext yview fmark.$first}
 }
 
 proc setcoords {} {
@@ -3452,7 +3525,7 @@ proc arrowjump {id n y} {
 }
 
 proc lineclick {x y id isnew} {
-    global ctext commitinfo childlist commitrow cflist canv thickerline
+    global ctext commitinfo childlist commitrow canv thickerline
 
     if {![info exists commitinfo($id)] && ![getcommit $id]} return
     unmarkmatches
@@ -3509,8 +3582,7 @@ proc lineclick {x y id isnew} {
 	}
     }
     $ctext conf -state disabled
-
-    $cflist delete 0 end
+    init_flist {}
 }
 
 proc normalline {} {
@@ -3568,15 +3640,14 @@ proc diffvssel {dirn} {
 }
 
 proc doseldiff {oldid newid} {
-    global ctext cflist
+    global ctext
     global commitinfo
 
     $ctext conf -state normal
     $ctext delete 0.0 end
     $ctext mark set fmark.0 0.0
     $ctext mark gravity fmark.0 left
-    $cflist delete 0 end
-    $cflist insert end "Top"
+    init_flist "Top"
     $ctext insert end "From "
     $ctext tag conf link -foreground blue -underline 1
     $ctext tag bind link <Enter> { %W configure -cursor hand2 }
@@ -3862,7 +3933,7 @@ proc rereadrefs {} {
 }
 
 proc showtag {tag isnew} {
-    global ctext cflist tagcontents tagids linknum
+    global ctext tagcontents tagids linknum
 
     if {$isnew} {
 	addtohistory [list showtag $tag 0]
@@ -3877,7 +3948,7 @@ proc showtag {tag isnew} {
     }
     appendwithlinks $text
     $ctext conf -state disabled
-    $cflist delete 0 end
+    init_flist {}
 }
 
 proc doquit {} {
@@ -4259,6 +4330,7 @@ set fastdate 0
 set uparrowlen 7
 set downarrowlen 7
 set mingaplen 30
+set flistmode "flat"
 
 set colors {green red blue magenta darkgrey brown orange}
 
