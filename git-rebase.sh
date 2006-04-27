@@ -107,7 +107,7 @@ onto=$(git-rev-parse --verify "${onto_name}^0") || exit
 
 # Check if we are already based on $onto, but this should be
 # done only when upstream and onto are the same.
-if test "$upstream" = "onto"
+if test "$upstream" = "$onto"
 then
 	mb=$(git-merge-base "$onto" "$branch")
 	if test "$mb" = "$onto"

@@ -160,14 +160,6 @@ static int show_file(const char *arg)
 	return 0;
 }
 
-static void die_badfile(const char *arg)
-{
-	if (errno != ENOENT)
-		die("'%s': %s", arg, strerror(errno));
-	die("'%s' is ambiguous - revision name or file/directory name?\n"
-	    "Please put '--' before the list of filenames.", arg);
-}
-
 int main(int argc, char **argv)
 {
 	int i, as_is = 0, verify = 0;
@@ -177,14 +169,12 @@ int main(int argc, char **argv)
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
-		struct stat st;
 		char *arg = argv[i];
 		char *dotdot;
 
 		if (as_is) {
 			if (show_file(arg) && as_is < 2)
-				if (lstat(arg, &st) < 0)
-					die_badfile(arg);
+				verify_filename(prefix, arg);
 			continue;
 		}
 		if (!strcmp(arg,"-n")) {
@@ -350,8 +340,7 @@ int main(int argc, char **argv)
 			continue;
 		if (verify)
 			die("Needed a single revision");
-		if (lstat(arg, &st) < 0)
-			die_badfile(arg);
+		verify_filename(prefix, arg);
 	}
 	show_default();
 	if (verify && revs_count != 1)
