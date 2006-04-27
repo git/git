@@ -91,6 +91,12 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 	return down;
 }
 
+struct cache_tree_sub *cache_tree_sub(struct cache_tree *it, const char *path)
+{
+	int pathlen = strlen(path);
+	return find_subtree(it, path, pathlen, 1);
+}
+
 void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 {
 	/* a/b/c
@@ -476,12 +482,11 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		struct cache_tree *sub;
 		struct cache_tree_sub *subtree;
 		const char *name = buf;
-		int namelen;
+
 		sub = read_one(&buf, &size);
 		if (!sub)
 			goto free_return;
-		namelen = strlen(name);
-		subtree = find_subtree(it, name, namelen, 1);
+		subtree = cache_tree_sub(it, name);
 		subtree->cache_tree = sub;
 	}
 	if (subtree_nr != it->subtree_nr)

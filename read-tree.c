@@ -725,6 +725,39 @@ static int read_cache_unmerged(void)
 	return deleted;
 }
 
+static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
+{
+	struct tree_entry_list *ent;
+	int cnt;
+	
+	memcpy(it->sha1, tree->object.sha1, 20);
+	for (cnt = 0, ent = tree->entries; ent; ent = ent->next) {
+		if (!ent->directory)
+			cnt++;
+		else {
+			struct cache_tree_sub *sub;
+			struct tree *subtree = (struct tree *)ent->item.tree;
+			if (!subtree->object.parsed)
+				parse_tree(subtree);
+			sub = cache_tree_sub(it, ent->name);
+			sub->cache_tree = cache_tree();
+			prime_cache_tree_rec(sub->cache_tree, subtree);
+			cnt += sub->cache_tree->entry_count;
+		}
+	}
+	it->entry_count = cnt;
+}
+
+static void prime_cache_tree(void)
+{
+	struct tree *tree = (struct tree *)trees->item;
+	if (!tree)
+		return;
+	active_cache_tree = cache_tree();
+	prime_cache_tree_rec(active_cache_tree, tree);
+
+}
+
 static const char read_tree_usage[] = "git-read-tree (<sha> | -m [--aggressive] [-u | -i] <sha1> [<sha2> [<sha3>]])";
 
 static struct cache_file cache_file;
@@ -839,6 +872,18 @@ int main(int argc, char **argv)
 	}
 
 	unpack_trees(fn);
+
+	/*
+	 * When reading only one tree (either the most basic form,
+	 * "-m ent" or "--reset ent" form), we can obtain a fully
+	 * valid cache-tree because the index must match exactly
+	 * what came from the tree.
+	 */
+	if (trees->item && (!merge || (stage == 2))) {
+		cache_tree_free(&active_cache_tree);		
+		prime_cache_tree();
+	}
+
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
 		die("unable to write new index file");
