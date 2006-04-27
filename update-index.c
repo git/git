@@ -562,6 +562,7 @@ static int unresolve_one(const char *path)
 		goto free_return;
 	}
 
+	cache_tree_invalidate_path(active_cache_tree, path);
 	remove_file_from_cache(path);
 	if (add_cache_entry(ce_2, ADD_CACHE_OK_TO_ADD)) {
 		error("%s: cannot add our version to the index.", path);
