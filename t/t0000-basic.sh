@@ -226,4 +226,32 @@ test_expect_success \
     'no diff after checkout and git-update-index --refresh.' \
     'git-diff-files >current && cmp -s current /dev/null'
 
+################################################################
+P=087704a96baf1c2d1c869a8b084481e121c88b5b
+test_expect_success \
+    'git-commit-tree records the correct tree in a commit.' \
+    'commit0=$(echo NO | git-commit-tree $P) &&
+     tree=$(git show --pretty=raw $commit0 |
+	 sed -n -e "s/^tree //p" -e "/^author /q") &&
+     test "z$tree" = "z$P"'
+
+test_expect_success \
+    'git-commit-tree records the correct parent in a commit.' \
+    'commit1=$(echo NO | git-commit-tree $P -p $commit0) &&
+     parent=$(git show --pretty=raw $commit1 |
+	 sed -n -e "s/^parent //p" -e "/^author /q") &&
+     test "z$commit0" = "z$parent"'
+
+test_expect_success \
+    'git-commit-tree omits duplicated parent in a commit.' \
+    'commit2=$(echo NO | git-commit-tree $P -p $commit0 -p $commit0) &&
+     parent=$(git show --pretty=raw $commit2 |
+	 sed -n -e "s/^parent //p" -e "/^author /q" |
+	 sort -u) &&
+     test "z$commit0" = "z$parent" &&
+     numparent=$(git show --pretty=raw $commit2 |
+	 sed -n -e "s/^parent //p" -e "/^author /q" |
+	 wc -l) &&
+     test $numparent = 1'
+
 test_done
