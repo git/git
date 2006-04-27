@@ -15,6 +15,7 @@ SYNOPSIS
 'git-repo-config' [type] --get-all name [value_regex]
 'git-repo-config' [type] --unset name [value_regex]
 'git-repo-config' [type] --unset-all name [value_regex]
+'git-repo-config' -l | --list
 
 DESCRIPTION
 -----------
@@ -63,6 +64,9 @@ OPTIONS
 
 --unset-all::
 	Remove all matching lines from .git/config.
+
+-l, --list::
+	List all variables set in .git/config.
 
 
 EXAMPLE
