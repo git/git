@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <sys/ioctl.h>
 #include "git-compat-util.h"
 #include "exec_cmd.h"
 
