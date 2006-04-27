@@ -46,6 +46,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_whatchanged },
 		{ "show", cmd_show },
+		{ "count-objects", cmd_count_objects },
 	};
 	int i;
 
