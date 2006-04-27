@@ -752,17 +752,15 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			arg++;
 		}
 		if (get_sha1(arg, sha1) < 0) {
-			struct stat st;
 			int j;
 
 			if (seen_dashdash || local_flags)
 				die("bad revision '%s'", arg);
 
 			/* If we didn't have a "--", all filenames must exist */
-			for (j = i; j < argc; j++) {
-				if (lstat(argv[j], &st) < 0)
-					die("'%s': %s", argv[j], strerror(errno));
-			}
+			for (j = i; j < argc; j++)
+				verify_filename(revs->prefix, argv[j]);
+
 			revs->prune_data = get_pathspec(revs->prefix, argv + i);
 			break;
 		}
