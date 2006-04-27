@@ -422,6 +422,12 @@ static void verify_uptodate(struct cache_entry *ce)
 	die("Entry '%s' not uptodate. Cannot merge.", ce->name);
 }
 
+static void invalidate_ce_path(struct cache_entry *ce)
+{
+	if (ce)
+		cache_tree_invalidate_path(active_cache_tree, ce->name);
+}
+
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old)
 {
 	merge->ce_flags |= htons(CE_UPDATE);
@@ -437,6 +443,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old)
 			*merge = *old;
 		} else {
 			verify_uptodate(old);
+			invalidate_ce_path(old);
 		}
 	}
 	merge->ce_flags &= ~htons(CE_STAGEMASK);
@@ -450,6 +457,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old)
 		verify_uptodate(old);
 	ce->ce_mode = 0;
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD);
+	invalidate_ce_path(ce);
 	return 1;
 }
 
@@ -684,8 +692,10 @@ static int oneway_merge(struct cache_entry **src)
 		return error("Cannot do a oneway merge of %d trees",
 			     merge_size);
 
-	if (!a)
+	if (!a) {
+		invalidate_ce_path(old);
 		return 0;
+	}
 	if (old && same(old, a)) {
 		return keep_entry(old);
 	}
@@ -704,6 +714,7 @@ static int read_cache_unmerged(void)
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce)) {
 			deleted++;
+			invalidate_ce_path(ce);
 			continue;
 		}
 		if (deleted)
@@ -815,10 +826,9 @@ int main(int argc, char **argv)
 			fn = twoway_merge;
 			break;
 		case 3:
-			fn = threeway_merge;
-			break;
 		default:
 			fn = threeway_merge;
+			cache_tree_free(&active_cache_tree);
 			break;
 		}
 
@@ -829,7 +839,6 @@ int main(int argc, char **argv)
 	}
 
 	unpack_trees(fn);
-	cache_tree_free(&active_cache_tree);
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
 		die("unable to write new index file");
