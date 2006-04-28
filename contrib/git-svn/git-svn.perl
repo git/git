@@ -1220,23 +1220,30 @@ sub check_upgrade_needed {
 # fills %tree_map with a reverse mapping of trees to commits.  Useful
 # for finding parents to commit on.
 sub map_tree_joins {
+	my %seen;
 	foreach my $br (@_branch_from) {
 		my $pid = open my $pipe, '-|';
 		defined $pid or croak $!;
 		if ($pid == 0) {
-			exec(qw(git-rev-list --pretty=raw), $br) or croak $?;
+			exec(qw(git-rev-list --topo-order --pretty=raw), $br)
+								or croak $?;
 		}
 		while (<$pipe>) {
 			if (/^commit ($sha1)$/o) {
 				my $commit = $1;
+
+				# if we've seen a commit,
+				# we've seen its parents
+				last if $seen{$commit};
 				my ($tree) = (<$pipe> =~ /^tree ($sha1)$/o);
 				unless (defined $tree) {
 					die "Failed to parse commit $commit\n";
 				}
 				push @{$tree_map{$tree}}, $commit;
+				$seen{$commit} = 1;
 			}
 		}
-		close $pipe or croak $?;
+		close $pipe; # we could be breaking the pipe early
 	}
 }
 
