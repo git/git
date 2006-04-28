@@ -208,6 +208,9 @@ sub find_parent_renames {
 	while (my $change = <$patch>) {
 		chomp $change;
 		my $filename = <$patch>;
+		if (!defined $filename) {
+			next;
+		}
 		chomp $filename;
 
 		if ($change =~ m/^[AMD]$/ ) {
