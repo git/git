@@ -34,12 +34,13 @@ my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity,
-	$_version, $_upgrade, $_authors);
+	$_version, $_upgrade, $_authors, $_branch_all_refs);
 my (@_branch_from, %tree_map, %users);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
+		'branch-all-refs|B' => \$_branch_all_refs,
 		'authors-file|A=s' => \$_authors );
 
 # yes, 'native' sets "\n".  Patches to fix this for non-*nix systems welcome:
@@ -108,6 +109,7 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
+load_all_refs() if $_branch_all_refs;
 svn_compat_check();
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
@@ -1236,6 +1238,17 @@ sub map_tree_joins {
 		}
 		close $pipe or croak $?;
 	}
+}
+
+sub load_all_refs {
+	if (@_branch_from) {
+		print STDERR '--branch|-b parameters are ignored when ',
+			"--branch-all-refs|-B is passed\n";
+	}
+
+	# don't worry about rev-list on non-commit objects/tags,
+	# it shouldn't blow up if a ref is a blob or tree...
+	chomp(@_branch_from = `git-rev-parse --symbolic --all`);
 }
 
 # '<svn username> = real-name <email address>' mapping based on git-svnimport:
