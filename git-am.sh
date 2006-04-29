@@ -376,6 +376,13 @@ do
 			echo "No changes - did you forget update-index?"
 			stop_here $this
 		fi
+		unmerged=$(git-ls-files -u)
+		if test -n "$unmerged"
+		then
+			echo "You still have unmerged paths in your index"
+			echo "did you forget update-index?"
+			stop_here $this
+		fi
 		apply_status=0
 		;;
 	esac
