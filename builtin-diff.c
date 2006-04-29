@@ -47,13 +47,17 @@ static int builtin_diff_files(struct rev_info *revs,
 	}
 	/*
 	 * Make sure there are NO revision (i.e. pending object) parameter,
-	 * rev.max_count is reasonable (0 <= n <= 3),
-	 * there is no other revision filtering parameters.
+	 * specified rev.max_count is reasonable (0 <= n <= 3), and
+	 * there is no other revision filtering parameter.
 	 */
 	if (revs->pending_objects ||
 	    revs->min_age != -1 ||
-	    revs->max_age != -1)
+	    revs->max_age != -1 ||
+	    3 < revs->max_count)
 		usage(builtin_diff_usage);
+	if (revs->max_count < 0 &&
+	    (revs->diffopt.output_format == DIFF_FORMAT_PATCH))
+		revs->combine_merges = revs->dense_combined_merges = 1;
 	/*
 	 * Backward compatibility wart - "diff-files -s" used to
 	 * defeat the common diff option "-s" which asked for
@@ -178,9 +182,6 @@ static int builtin_diff_tree(struct rev_info *revs,
 			     int argc, const char **argv,
 			     struct object_list *ent)
 {
-	/* We saw two trees, ent[0] and ent[1].
-	 * unless ent[0] is unintesting, they are swapped
-	 */
 	const unsigned char *(sha1[2]);
 	int swap = 1;
 	while (1 < argc) {
@@ -191,12 +192,43 @@ static int builtin_diff_tree(struct rev_info *revs,
 			usage(builtin_diff_usage);
 		argv++; argc--;
 	}
+
+	/* We saw two trees, ent[0] and ent[1].
+	 * unless ent[0] is unintesting, they are swapped
+	 */
 	if (ent[0].item->flags & UNINTERESTING)
 		swap = 0;
 	sha1[swap] = ent[0].item->sha1;
 	sha1[1-swap] = ent[1].item->sha1;
 	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
+	return 0;
+}
+
+static int builtin_diff_combined(struct rev_info *revs,
+				 int argc, const char **argv,
+				 struct object_list *ent,
+				 int ents)
+{
+	const unsigned char (*parent)[20];
+	int i;
+
+	while (1 < argc) {
+		const char *arg = argv[1];
+		if (!strcmp(arg, "--raw"))
+			revs->diffopt.output_format = DIFF_FORMAT_RAW;
+		else
+			usage(builtin_diff_usage);
+		argv++; argc--;
+	}
+	if (!revs->dense_combined_merges && !revs->combine_merges)
+		revs->dense_combined_merges = revs->combine_merges = 1;
+	parent = xmalloc(ents * sizeof(*parent));
+	/* Again, the revs are all reverse */
+	for (i = 0; i < ents; i++)
+		memcpy(parent + i, ent[ents - 1 - i].item->sha1, 20);
+	diff_tree_combined(parent[0], parent + 1, ents - 1,
+			   revs->dense_combined_merges, revs);
 	return 0;
 }
 
@@ -215,7 +247,7 @@ static void add_head(struct rev_info *revs)
 int cmd_diff(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
-	struct object_list *list, ent[2];
+	struct object_list *list, ent[100];
 	int ents = 0, blobs = 0, paths = 0;
 	const char *path = NULL;
 	struct blobinfo blob[2];
@@ -273,8 +305,9 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		if (!strcmp(obj->type, commit_type))
 			obj = &((struct commit *)obj)->tree->object;
 		if (!strcmp(obj->type, tree_type)) {
-			if (2 <= ents)
-				die("more than two trees given: '%s'", name);
+			if (ARRAY_SIZE(ent) <= ents)
+				die("more than %d trees given: '%s'",
+				    ARRAY_SIZE(ent), name);
 			obj->flags |= flags;
 			ent[ents].item = obj;
 			ent[ents].name = name;
@@ -316,6 +349,8 @@ int cmd_diff(int argc, const char **argv, char **envp)
 			return builtin_diff_b_f(&rev, argc, argv, blob, path);
 			break;
 		case 2:
+			if (paths)
+				usage(builtin_diff_usage);
 			return builtin_diff_blobs(&rev, argc, argv, blob);
 			break;
 		default:
@@ -328,5 +363,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		return builtin_diff_index(&rev, argc, argv);
 	else if (ents == 2)
 		return builtin_diff_tree(&rev, argc, argv, ent);
+	else
+		return builtin_diff_combined(&rev, argc, argv, ent, ents);
 	usage(builtin_diff_usage);
 }
