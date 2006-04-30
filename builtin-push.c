@@ -68,14 +68,11 @@ static void set_refspecs(const char **refs, int nr)
 	expand_refspecs();
 }
 
-#define MAX_REFSPECS 10
-static int current_refspec = 0;
-static char *refspecs_[MAX_REFSPECS];
-
 static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 {
 	int n = 0;
 	FILE *f = fopen(git_path("remotes/%s", repo), "r");
+	int has_explicit_refspec = refspec_nr;
 
 	if (!f)
 		return -1;
@@ -103,10 +100,14 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		while (isspace(p[-1]))
 			*--p = 0;
 
-		if (!is_refspec && n < MAX_URI)
-			uri[n++] = strdup(s);
-		else if (is_refspec && current_refspec < MAX_REFSPECS)
-			refspecs_[current_refspec++] = strdup(s);
+		if (!is_refspec) {
+			if (n < MAX_URI)
+				uri[n++] = strdup(s);
+			else
+				error("more than %d URL's specified, ignoreing the rest", MAX_URI);
+		}
+		else if (is_refspec && !has_explicit_refspec)
+			add_refspec(strdup(s));
 	}
 	fclose(f);
 	if (!n)
@@ -146,13 +147,17 @@ static int get_branches_uri(const char *repo, const char *uri[MAX_URI])
 	return 1;
 }
 
-static int get_uri(const char *repo, const char *uri[MAX_URI])
+/*
+ * Read remotes and branches file, fill the push target URI
+ * list.  If there is no command line refspecs, read Push: lines
+ * to set up the *refspec list as well.
+ * return the number of push target URIs
+ */
+static int read_config(const char *repo, const char *uri[MAX_URI])
 {
 	int n;
 
 	if (*repo != '/') {
-		current_refspec = 0;
-
 		n = get_remotes_uri(repo, uri);
 		if (n > 0)
 			return n;
@@ -169,17 +174,14 @@ static int get_uri(const char *repo, const char *uri[MAX_URI])
 static int do_push(const char *repo)
 {
 	const char *uri[MAX_URI];
-	int i, n = get_uri(repo, uri);
+	int i, n;
 	int remote;
 	const char **argv;
 	int argc;
 
-	n = get_uri(repo, uri);
+	n = read_config(repo, uri);
 	if (n <= 0)
 		die("bad repository '%s'", repo);
-
-	if (refspec_nr == 0)
-		set_refspecs((const char**)refspecs_, current_refspec);
 
 	argv = xmalloc((refspec_nr + 10) * sizeof(char *));
 	argv[0] = "dummy-send-pack";
