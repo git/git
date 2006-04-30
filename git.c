@@ -49,6 +49,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "fmt-patch", cmd_format_patch },
 		{ "count-objects", cmd_count_objects },
 		{ "diffn", cmd_diff },
+		{ "push", cmd_push },
 	};
 	int i;
 
