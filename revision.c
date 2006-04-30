@@ -477,6 +477,36 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 	for_each_ref(handle_one_ref);
 }
 
+static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
+{
+	unsigned char sha1[20];
+	struct object *it;
+	struct commit *commit;
+	struct commit_list *parents;
+
+	if (*arg == '^') {
+		flags ^= UNINTERESTING;
+		arg++;
+	}
+	if (get_sha1(arg, sha1))
+		return 0;
+	while (1) {
+		it = get_reference(revs, arg, sha1, 0);
+		if (strcmp(it->type, tag_type))
+			break;
+		memcpy(sha1, ((struct tag*)it)->tagged->sha1, 20);
+	}
+	if (strcmp(it->type, commit_type))
+		return 0;
+	commit = (struct commit *)it;
+	for (parents = commit->parents; parents; parents = parents->next) {
+		it = &parents->item->object;
+		it->flags |= flags;
+		add_pending_object(revs, it, arg);
+	}
+	return 1;
+}
+
 void init_revisions(struct rev_info *revs)
 {
 	memset(revs, 0, sizeof(*revs));
@@ -745,6 +775,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			*dotdot = '.';
+		}
+		dotdot = strstr(arg, "^@");
+		if (dotdot && !dotdot[2]) {
+			*dotdot = 0;
+			if (add_parents_only(revs, arg, flags))
+				continue;
+			*dotdot = '^';
 		}
 		local_flags = 0;
 		if (*arg == '^') {
