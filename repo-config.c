@@ -2,7 +2,7 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --bool | --int ] [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]]";
+"git-repo-config [ --bool | --int ] [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
 
 static char* key = NULL;
 static char* value = NULL;
@@ -11,6 +11,15 @@ static int do_all = 0;
 static int do_not_match = 0;
 static int seen = 0;
 static enum { T_RAW, T_INT, T_BOOL } type = T_RAW;
+
+static int show_all_config(const char *key_, const char *value_)
+{
+	if (value_)
+		printf("%s=%s\n", key_, value_);
+	else
+		printf("%s\n", key_);
+	return 0;
+}
 
 static int show_config(const char* key_, const char* value_)
 {
@@ -67,7 +76,7 @@ static int get_value(const char* key_, const char* regex_)
 		}
 	}
 
-	i = git_config(show_config);
+	git_config(show_config);
 	if (value) {
 		printf("%s\n", value);
 		free(value);
@@ -98,6 +107,9 @@ int main(int argc, const char **argv)
 		argc--;
 		argv++;
 	}
+
+	if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l"))
+		return git_config(show_all_config);
 
 	switch (argc) {
 	case 2:

@@ -62,6 +62,29 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 	return path;
 }
 
+/*
+ * Verify a filename that we got as an argument for a pathspec
+ * entry. Note that a filename that begins with "-" never verifies
+ * as true, because even if such a filename were to exist, we want
+ * it to be preceded by the "--" marker (or we want the user to
+ * use a format like "./-filename")
+ */
+void verify_filename(const char *prefix, const char *arg)
+{
+	const char *name;
+	struct stat st;
+
+	if (*arg == '-')
+		die("bad flag '%s' used after filename", arg);
+	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
+	if (!lstat(name, &st))
+		return;
+	if (errno == ENOENT)
+		die("ambiguous argument '%s': unknown revision or filename\n"
+		    "Use '--' to separate filenames from revisions", arg);
+	die("'%s': %s", arg, strerror(errno));
+}
+
 const char **get_pathspec(const char *prefix, const char **pathspec)
 {
 	const char *entry = *pathspec;

@@ -61,7 +61,8 @@ $ git prune
 $ git count-objects <2>
 $ git repack <3>
 $ git prune <4>
-
+------------
++
 <1> running without "--full" is usually cheap and assures the
 repository health reasonably well.
 <2> check how many loose objects there are and how much
@@ -69,17 +70,16 @@ diskspace is wasted by not repacking.
 <3> without "-a" repacks incrementally.  repacking every 4-5MB
 of loose objects accumulation may be a good rule of thumb.
 <4> after repack, prune removes the duplicate loose objects.
-------------
 
 Repack a small project into single pack.::
 +
 ------------
 $ git repack -a -d <1>
 $ git prune
-
+------------
++
 <1> pack all the objects reachable from the refs into one pack
 and remove unneeded other packs
-------------
 
 
 Individual Developer (Standalone)[[Individual Developer (Standalone)]]
@@ -129,10 +129,10 @@ $ git-init-db
 $ git add . <1>
 $ git commit -m 'import of frotz source tree.'
 $ git tag v2.43 <2>
-
+------------
++
 <1> add everything under the current directory.
 <2> make a lightweight, unannotated tag.
-------------
 
 Create a topic branch and develop.::
 +
@@ -153,7 +153,8 @@ $ git checkout master <9>
 $ git pull . alsa-audio <10>
 $ git log --since='3 days ago' <11>
 $ git log v2.43.. curses/ <12>
-
+------------
++
 <1> create a new topic branch.
 <2> revert your botched changes in "curses/ux_audio_oss.c".
 <3> you need to tell git if you added a new file; removal and
@@ -170,7 +171,6 @@ you originally wrote.
 combined and include --max-count=10 (show 10 commits), --until='2005-12-10'.
 <12> view only the changes that touch what's in curses/
 directory, since v2.43 tag.
-------------
 
 
 Individual Developer (Participant)[[Individual Developer (Participant)]]
@@ -208,7 +208,8 @@ $ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
 $ git reset --hard ORIG_HEAD <6>
 $ git prune <7>
 $ git fetch --tags <8>
-
+------------
++
 <1> repeat as needed.
 <2> extract patches from your branch for e-mail submission.
 <3> "pull" fetches from "origin" by default and merges into the
@@ -221,7 +222,6 @@ area we are interested in.
 <7> garbage collect leftover objects from reverted pull.
 <8> from time to time, obtain official tags from the "origin"
 and store them under .git/refs/tags/.
-------------
 
 
 Push into another repository.::
@@ -239,7 +239,8 @@ satellite$ git push origin <4>
 mothership$ cd frotz
 mothership$ git checkout master
 mothership$ git pull . satellite <5>
-
+------------
++
 <1> mothership machine has a frotz repository under your home
 directory; clone from it to start a repository on the satellite
 machine.
@@ -252,7 +253,6 @@ to local "origin" branch.
 mothership machine.  You could use this as a back-up method.
 <5> on mothership machine, merge the work done on the satellite
 machine into the master branch.
-------------
 
 Branch off of a specific tag.::
 +
@@ -262,12 +262,12 @@ $ edit/compile/test; git commit -a
 $ git checkout master
 $ git format-patch -k -m --stdout v2.6.14..private2.6.14 |
   git am -3 -k <2>
-
+------------
++
 <1> create a private branch based on a well known (but somewhat behind)
 tag.
 <2> forward port all changes in private2.6.14 branch to master branch
 without a formal "merging".
-------------
 
 
 Integrator[[Integrator]]
@@ -317,7 +317,8 @@ $ git tag -s -m 'GIT 0.99.9x' v0.99.9x <10>
 $ git fetch ko && git show-branch master maint 'tags/ko-*' <11>
 $ git push ko <12>
 $ git push ko v0.99.9x <13>
-
+------------
++
 <1> see what I was in the middle of doing, if any.
 <2> see what topic branches I have and think about how ready
 they are.
@@ -346,7 +347,6 @@ In the output from "git show-branch", "master" should have
 everything "ko-master" has.
 <12> push out the bleeding edge.
 <13> push the tag out, too.
-------------
 
 
 Repository Administration[[Repository Administration]]
@@ -367,7 +367,6 @@ example of managing a shared central repository.
 
 Examples
 ~~~~~~~~
-
 Run git-daemon to serve /pub/scm from inetd.::
 +
 ------------
@@ -388,13 +387,13 @@ cindy:x:1002:1002::/home/cindy:/usr/bin/git-shell
 david:x:1003:1003::/home/david:/usr/bin/git-shell
 $ grep git /etc/shells <2>
 /usr/bin/git-shell
-
+------------
++
 <1> log-in shell is set to /usr/bin/git-shell, which does not
 allow anything but "git push" and "git pull".  The users should
 get an ssh access to the machine.
 <2> in many distributions /etc/shells needs to list what is used
 as the login shell.
-------------
 
 CVS-style shared repository.::
 +
@@ -419,7 +418,8 @@ $ cat info/allowed-users <4>
 refs/heads/master	alice\|cindy
 refs/heads/doc-update	bob
 refs/tags/v[0-9]*	david
-
+------------
++
 <1> place the developers into the same git group.
 <2> and make the shared repository writable by the group.
 <3> use update-hook example by Carl from Documentation/howto/
@@ -427,7 +427,6 @@ for branch policy control.
 <4> alice and cindy can push into master, only bob can push into doc-update.
 david is the release manager and is the only person who can
 create and push version tags.
-------------
 
 HTTP server to support dumb protocol transfer.::
 +
@@ -435,7 +434,7 @@ HTTP server to support dumb protocol transfer.::
 dev$ git update-server-info <1>
 dev$ ftp user@isp.example.com <2>
 ftp> cp -r .git /home/user/myproject.git
-
+------------
++
 <1> make sure your info/refs and objects/info/packs are up-to-date
 <2> upload to public HTTP server hosted by your ISP.
-------------

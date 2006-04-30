@@ -174,6 +174,27 @@ test_expect_success \
     'git-ls-tree -r output for a known tree.' \
     'diff current expected'
 
+# But with -r -t we can have both.
+test_expect_success \
+    'showing tree with git-ls-tree -r -t' \
+    'git-ls-tree -r -t $tree >current'
+cat >expected <<\EOF
+100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
+120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
+040000 tree 58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
+100644 blob 3feff949ed00a62d9f7af97c15cd8a30595e7ac7	path2/file2
+120000 blob d8ce161addc5173867a3c3c730924388daedbc38	path2/file2sym
+040000 tree 21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
+100644 blob 0aa34cae68d0878578ad119c86ca2b5ed5b28376	path3/file3
+120000 blob 8599103969b43aff7e430efea79ca4636466794f	path3/file3sym
+040000 tree 3c5e5399f3a333eddecce7a9b9465b63f65f51e2	path3/subp3
+100644 blob 00fb5908cb97c2564a9783c0c64087333b3b464f	path3/subp3/file3
+120000 blob 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c	path3/subp3/file3sym
+EOF
+test_expect_success \
+    'git-ls-tree -r output for a known tree.' \
+    'diff current expected'
+
 ################################################################
 rm .git/index
 test_expect_success \
@@ -204,5 +225,33 @@ test_expect_success \
 test_expect_success \
     'no diff after checkout and git-update-index --refresh.' \
     'git-diff-files >current && cmp -s current /dev/null'
+
+################################################################
+P=087704a96baf1c2d1c869a8b084481e121c88b5b
+test_expect_success \
+    'git-commit-tree records the correct tree in a commit.' \
+    'commit0=$(echo NO | git-commit-tree $P) &&
+     tree=$(git show --pretty=raw $commit0 |
+	 sed -n -e "s/^tree //p" -e "/^author /q") &&
+     test "z$tree" = "z$P"'
+
+test_expect_success \
+    'git-commit-tree records the correct parent in a commit.' \
+    'commit1=$(echo NO | git-commit-tree $P -p $commit0) &&
+     parent=$(git show --pretty=raw $commit1 |
+	 sed -n -e "s/^parent //p" -e "/^author /q") &&
+     test "z$commit0" = "z$parent"'
+
+test_expect_success \
+    'git-commit-tree omits duplicated parent in a commit.' \
+    'commit2=$(echo NO | git-commit-tree $P -p $commit0 -p $commit0) &&
+     parent=$(git show --pretty=raw $commit2 |
+	 sed -n -e "s/^parent //p" -e "/^author /q" |
+	 sort -u) &&
+     test "z$commit0" = "z$parent" &&
+     numparent=$(git show --pretty=raw $commit2 |
+	 sed -n -e "s/^parent //p" -e "/^author /q" |
+	 wc -l) &&
+     test $numparent = 1'
 
 test_done

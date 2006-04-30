@@ -29,11 +29,11 @@ static int verify_packfile(struct packed_git *p)
 	pack_base = p->pack_base;
 	SHA1_Update(&ctx, pack_base, pack_size - 20);
 	SHA1_Final(sha1, &ctx);
-	if (memcmp(sha1, index_base + index_size - 40, 20))
-		return error("Packfile %s SHA1 mismatch with idx",
-			     p->pack_name);
 	if (memcmp(sha1, pack_base + pack_size - 20, 20))
 		return error("Packfile %s SHA1 mismatch with itself",
+			     p->pack_name);
+	if (memcmp(sha1, index_base + index_size - 40, 20))
+		return error("Packfile %s SHA1 mismatch with idx",
 			     p->pack_name);
 
 	/* Make sure everything reachable from idx is valid.  Since we

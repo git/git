@@ -79,7 +79,7 @@ clean:
 	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<
 
 %.1 %.7 : %.xml
-	xmlto man $<
+	xmlto -m callouts.xsl man $<
 
 %.xml : %.txt
 	asciidoc -b docbook -d manpage -f asciidoc.conf $<

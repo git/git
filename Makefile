@@ -199,7 +199,7 @@ LIB_H = \
 	tree-walk.h log-tree.h
 
 DIFF_OBJS = \
-	diff-lib.o diffcore-break.o diffcore-order.o \
+	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
 	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
 	diffcore-delta.o log-tree.o
 
@@ -575,12 +575,12 @@ $(patsubst git-%$X,%.o,$(PROGRAMS)): $(GITLIBS)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
-	$(AR) rcs $@ $(LIB_OBJS)
+	rm -f $@ && $(AR) rcs $@ $(LIB_OBJS)
 
 XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
-	$(AR) rcs $@ $(XDIFF_OBJS)
+	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
 doc:
