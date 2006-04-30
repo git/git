@@ -307,7 +307,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		if (!strcmp(obj->type, tree_type)) {
 			if (ARRAY_SIZE(ent) <= ents)
 				die("more than %d trees given: '%s'",
-				    ARRAY_SIZE(ent), name);
+				    (int) ARRAY_SIZE(ent), name);
 			obj->flags |= flags;
 			ent[ents].item = obj;
 			ent[ents].name = name;
