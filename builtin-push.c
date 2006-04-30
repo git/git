@@ -72,15 +72,22 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 {
 	int n = 0;
 	FILE *f = fopen(git_path("remotes/%s", repo), "r");
+	int has_explicit_refspec = refspec_nr;
 
 	if (!f)
 		return -1;
 	while (fgets(buffer, BUF_SIZE, f)) {
+		int is_refspec;
 		char *s, *p;
 
-		if (strncmp("URL: ", buffer, 5))
+		if (!strncmp("URL: ", buffer, 5)) {
+			is_refspec = 0;
+			s = buffer + 5;
+		} else if (!strncmp("Push: ", buffer, 6)) {
+			is_refspec = 1;
+			s = buffer + 6;
+		} else
 			continue;
-		s = buffer + 5;
 
 		/* Remove whitespace at the head.. */
 		while (isspace(*s))
@@ -93,9 +100,14 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		while (isspace(p[-1]))
 			*--p = 0;
 
-		uri[n++] = strdup(s);
-		if (n == MAX_URI)
-			break;
+		if (!is_refspec) {
+			if (n < MAX_URI)
+				uri[n++] = strdup(s);
+			else
+				error("more than %d URL's specified, ignoreing the rest", MAX_URI);
+		}
+		else if (is_refspec && !has_explicit_refspec)
+			add_refspec(strdup(s));
 	}
 	fclose(f);
 	if (!n)
@@ -135,7 +147,13 @@ static int get_branches_uri(const char *repo, const char *uri[MAX_URI])
 	return 1;
 }
 
-static int get_uri(const char *repo, const char *uri[MAX_URI])
+/*
+ * Read remotes and branches file, fill the push target URI
+ * list.  If there is no command line refspecs, read Push: lines
+ * to set up the *refspec list as well.
+ * return the number of push target URIs
+ */
+static int read_config(const char *repo, const char *uri[MAX_URI])
 {
 	int n;
 
@@ -156,12 +174,12 @@ static int get_uri(const char *repo, const char *uri[MAX_URI])
 static int do_push(const char *repo)
 {
 	const char *uri[MAX_URI];
-	int i, n = get_uri(repo, uri);
+	int i, n;
 	int remote;
 	const char **argv;
 	int argc;
 
-	n = get_uri(repo, uri);
+	n = read_config(repo, uri);
 	if (n <= 0)
 		die("bad repository '%s'", repo);
 
