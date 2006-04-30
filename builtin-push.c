@@ -68,6 +68,10 @@ static void set_refspecs(const char **refs, int nr)
 	expand_refspecs();
 }
 
+#define MAX_REFSPECS 10
+static int current_refspec = 0;
+static char *refspecs_[MAX_REFSPECS];
+
 static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 {
 	int n = 0;
@@ -76,11 +80,17 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 	if (!f)
 		return -1;
 	while (fgets(buffer, BUF_SIZE, f)) {
+		int is_refspec;
 		char *s, *p;
 
-		if (strncmp("URL: ", buffer, 5))
+		if (!strncmp("URL: ", buffer, 5)) {
+			is_refspec = 0;
+			s = buffer + 5;
+		} else if (!strncmp("Push: ", buffer, 6)) {
+			is_refspec = 1;
+			s = buffer + 6;
+		} else
 			continue;
-		s = buffer + 5;
 
 		/* Remove whitespace at the head.. */
 		while (isspace(*s))
@@ -93,9 +103,10 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		while (isspace(p[-1]))
 			*--p = 0;
 
-		uri[n++] = strdup(s);
-		if (n == MAX_URI)
-			break;
+		if (!is_refspec && n < MAX_URI)
+			uri[n++] = strdup(s);
+		else if (is_refspec && current_refspec < MAX_REFSPECS)
+			refspecs_[current_refspec++] = strdup(s);
 	}
 	fclose(f);
 	if (!n)
@@ -140,6 +151,8 @@ static int get_uri(const char *repo, const char *uri[MAX_URI])
 	int n;
 
 	if (*repo != '/') {
+		current_refspec = 0;
+
 		n = get_remotes_uri(repo, uri);
 		if (n > 0)
 			return n;
@@ -164,6 +177,9 @@ static int do_push(const char *repo)
 	n = get_uri(repo, uri);
 	if (n <= 0)
 		die("bad repository '%s'", repo);
+
+	if (refspec_nr == 0)
+		set_refspecs((const char**)refspecs_, current_refspec);
 
 	argv = xmalloc((refspec_nr + 10) * sizeof(char *));
 	argv[0] = "dummy-send-pack";
