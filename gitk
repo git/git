@@ -514,6 +514,13 @@ proc makewindow {} {
     $ctext tag conf found -back yellow
 
     frame .ctop.cdet.right
+    frame .ctop.cdet.right.mode
+    radiobutton .ctop.cdet.right.mode.patch -text "Patch" \
+	-command reselectline -variable cmitmode -value "patch"
+    radiobutton .ctop.cdet.right.mode.tree -text "Tree" \
+	-command reselectline -variable cmitmode -value "tree"
+    grid .ctop.cdet.right.mode.patch .ctop.cdet.right.mode.tree -sticky ew
+    pack .ctop.cdet.right.mode -side top -fill x
     set cflist .ctop.cdet.right.cfiles
     set indent [font measure $mainfont "nn"]
     text $cflist -width $geometry(cflistw) -background white -font $mainfont \
@@ -583,6 +590,7 @@ proc makewindow {} {
     bind $sha1entry <<PasteSelection>> clearsha1
     bind $cflist <1> {sel_flist %W %x %y; break}
     bind $cflist <B1-Motion> {sel_flist %W %x %y; break}
+    bind $cflist <ButtonRelease-1> {treeclick %W %x %y}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -647,6 +655,7 @@ proc savestuff {w} {
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth
     global viewname viewfiles viewperm nextviewnum
+    global cmitmode
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -658,6 +667,7 @@ proc savestuff {w} {
 	puts $f [list set findmergefiles $findmergefiles]
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
+	puts $f [list set cmitmode $cmitmode]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
@@ -820,6 +830,236 @@ f		Scroll diff view to next file
 
 # Procedures for manipulating the file list window at the
 # bottom right of the overall window.
+
+proc treeview {w l openlevs} {
+    global treecontents treediropen treeheight treeparent treeindex
+
+    set ix 0
+    set treeindex() 0
+    set lev 0
+    set prefix {}
+    set prefixend -1
+    set prefendstack {}
+    set htstack {}
+    set ht 0
+    set treecontents() {}
+    $w conf -state normal
+    foreach f $l {
+	while {[string range $f 0 $prefixend] ne $prefix} {
+	    if {$lev <= $openlevs} {
+		$w mark set e:$treeindex($prefix) "end -1c"
+		$w mark gravity e:$treeindex($prefix) left
+	    }
+	    set treeheight($prefix) $ht
+	    incr ht [lindex $htstack end]
+	    set htstack [lreplace $htstack end end]
+	    set prefixend [lindex $prefendstack end]
+	    set prefendstack [lreplace $prefendstack end end]
+	    set prefix [string range $prefix 0 $prefixend]
+	    incr lev -1
+	}
+	set tail [string range $f [expr {$prefixend+1}] end]
+	while {[set slash [string first "/" $tail]] >= 0} {
+	    lappend htstack $ht
+	    set ht 0
+	    lappend prefendstack $prefixend
+	    incr prefixend [expr {$slash + 1}]
+	    set d [string range $tail 0 $slash]
+	    lappend treecontents($prefix) $d
+	    set oldprefix $prefix
+	    append prefix $d
+	    set treecontents($prefix) {}
+	    set treeindex($prefix) [incr ix]
+	    set treeparent($prefix) $oldprefix
+	    set tail [string range $tail [expr {$slash+1}] end]
+	    if {$lev <= $openlevs} {
+		set ht 1
+		set treediropen($prefix) [expr {$lev < $openlevs}]
+		set bm [expr {$lev == $openlevs? "tri-rt": "tri-dn"}]
+		$w mark set d:$ix "end -1c"
+		$w mark gravity d:$ix left
+		set str "\n"
+		for {set i 0} {$i < $lev} {incr i} {append str "\t"}
+		$w insert end $str
+		$w image create end -align center -image $bm -padx 1 \
+		    -name a:$ix
+		$w insert end $d
+		$w mark set s:$ix "end -1c"
+		$w mark gravity s:$ix left
+	    }
+	    incr lev
+	}
+	if {$tail ne {}} {
+	    if {$lev <= $openlevs} {
+		incr ht
+		set str "\n"
+		for {set i 0} {$i < $lev} {incr i} {append str "\t"}
+		$w insert end $str
+		$w insert end $tail
+	    }
+	    lappend treecontents($prefix) $tail
+	}
+    }
+    while {$htstack ne {}} {
+	set treeheight($prefix) $ht
+	incr ht [lindex $htstack end]
+	set htstack [lreplace $htstack end end]
+    }
+    $w conf -state disabled
+}
+
+proc linetoelt {l} {
+    global treeheight treecontents
+
+    set y 2
+    set prefix {}
+    while {1} {
+	foreach e $treecontents($prefix) {
+	    if {$y == $l} {
+		return "$prefix$e"
+	    }
+	    set n 1
+	    if {[string index $e end] eq "/"} {
+		set n $treeheight($prefix$e)
+		if {$y + $n > $l} {
+		    append prefix $e
+		    incr y
+		    break
+		}
+	    }
+	    incr y $n
+	}
+    }
+}
+
+proc treeclosedir {w dir} {
+    global treediropen treeheight treeparent treeindex
+
+    set ix $treeindex($dir)
+    $w conf -state normal
+    $w delete s:$ix e:$ix
+    set treediropen($dir) 0
+    $w image configure a:$ix -image tri-rt
+    $w conf -state disabled
+    set n [expr {1 - $treeheight($dir)}]
+    while {$dir ne {}} {
+	incr treeheight($dir) $n
+	set dir $treeparent($dir)
+    }
+}
+
+proc treeopendir {w dir} {
+    global treediropen treeheight treeparent treecontents treeindex
+
+    set ix $treeindex($dir)
+    $w conf -state normal
+    $w image configure a:$ix -image tri-dn
+    $w mark set e:$ix s:$ix
+    $w mark gravity e:$ix right
+    set lev 0
+    set str "\n"
+    set n [llength $treecontents($dir)]
+    for {set x $dir} {$x ne {}} {set x $treeparent($x)} {
+	incr lev
+	append str "\t"
+	incr treeheight($x) $n
+    }
+    foreach e $treecontents($dir) {
+	if {[string index $e end] eq "/"} {
+	    set de $dir$e
+	    set iy $treeindex($de)
+	    $w mark set d:$iy e:$ix
+	    $w mark gravity d:$iy left
+	    $w insert e:$ix $str
+	    set treediropen($de) 0
+	    $w image create e:$ix -align center -image tri-rt -padx 1 \
+		-name a:$iy
+	    $w insert e:$ix $e
+	    $w mark set s:$iy e:$ix
+	    $w mark gravity s:$iy left
+	    set treeheight($de) 1
+	} else {
+	    $w insert e:$ix $str
+	    $w insert e:$ix $e
+	}
+    }
+    $w mark gravity e:$ix left
+    $w conf -state disabled
+    set treediropen($dir) 1
+    set top [lindex [split [$w index @0,0] .] 0]
+    set ht [$w cget -height]
+    set l [lindex [split [$w index s:$ix] .] 0]
+    if {$l < $top} {
+	$w yview $l.0
+    } elseif {$l + $n + 1 > $top + $ht} {
+	set top [expr {$l + $n + 2 - $ht}]
+	if {$l < $top} {
+	    set top $l
+	}
+	$w yview $top.0
+    }
+}
+
+proc treeclick {w x y} {
+    global treediropen cmitmode ctext cflist cflist_top
+
+    if {$cmitmode ne "tree"} return
+    if {![info exists cflist_top]} return
+    set l [lindex [split [$w index "@$x,$y"] "."] 0]
+    $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
+    $cflist tag add highlight $l.0 "$l.0 lineend"
+    set cflist_top $l
+    if {$l == 1} {
+	$ctext yview 1.0
+	return
+    }
+    set e [linetoelt $l]
+    if {[string index $e end] ne "/"} {
+	showfile $e
+    } elseif {$treediropen($e)} {
+	treeclosedir $w $e
+    } else {
+	treeopendir $w $e
+    }
+}
+
+proc setfilelist {id} {
+    global treefilelist cflist
+
+    treeview $cflist $treefilelist($id) 0
+}
+
+image create bitmap tri-rt -background black -foreground blue -data {
+    #define tri-rt_width 13
+    #define tri-rt_height 13
+    static unsigned char tri-rt_bits[] = {
+       0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x30, 0x00, 0x70, 0x00, 0xf0, 0x00,
+       0xf0, 0x01, 0xf0, 0x00, 0x70, 0x00, 0x30, 0x00, 0x10, 0x00, 0x00, 0x00,
+       0x00, 0x00};
+} -maskdata {
+    #define tri-rt-mask_width 13
+    #define tri-rt-mask_height 13
+    static unsigned char tri-rt-mask_bits[] = {
+       0x08, 0x00, 0x18, 0x00, 0x38, 0x00, 0x78, 0x00, 0xf8, 0x00, 0xf8, 0x01,
+       0xf8, 0x03, 0xf8, 0x01, 0xf8, 0x00, 0x78, 0x00, 0x38, 0x00, 0x18, 0x00,
+       0x08, 0x00};
+}
+image create bitmap tri-dn -background black -foreground blue -data {
+    #define tri-dn_width 13
+    #define tri-dn_height 13
+    static unsigned char tri-dn_bits[] = {
+       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfc, 0x07, 0xf8, 0x03,
+       0xf0, 0x01, 0xe0, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+       0x00, 0x00};
+} -maskdata {
+    #define tri-dn-mask_width 13
+    #define tri-dn-mask_height 13
+    static unsigned char tri-dn-mask_bits[] = {
+       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x1f, 0xfe, 0x0f, 0xfc, 0x07,
+       0xf8, 0x03, 0xf0, 0x01, 0xe0, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+       0x00, 0x00};
+}
+
 proc init_flist {first} {
     global cflist cflist_top cflist_bot selectedline difffilestart
 
@@ -837,29 +1077,30 @@ proc init_flist {first} {
     set difffilestart {}
 }
 
-proc add_flist {f} {
+proc add_flist {fl} {
     global flistmode cflist
 
     $cflist conf -state normal
     if {$flistmode eq "flat"} {
-	$cflist insert end "\n$f"
+	foreach f $fl {
+	    $cflist insert end "\n$f"
+	}
     }
     $cflist conf -state disabled
 }
 
 proc sel_flist {w x y} {
-    global flistmode ctext difffilestart cflist cflist_top
+    global flistmode ctext difffilestart cflist cflist_top cmitmode
 
+    if {$cmitmode eq "tree"} return
     if {![info exists cflist_top]} return
     set l [lindex [split [$w index "@$x,$y"] "."] 0]
-    if {$flistmode eq "flat"} {
-	if {$l == 1} {
-	    $ctext yview 1.0
-	} else {
-	    catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
-	}
-	highlight_flist $l
+    if {$l == 1} {
+	$ctext yview 1.0
+    } else {
+	catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
     }
+    highlight_flist $l
 }
 
 proc scrolltext {f0 f1} {
@@ -2822,6 +3063,7 @@ proc selectline {l isnew} {
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
+    global cmitmode
 
     catch {unset pending_select}
     $canv delete hover
@@ -2893,8 +3135,6 @@ proc selectline {l isnew} {
     $ctext conf -state normal
     $ctext delete 0.0 end
     set linknum 0
-    $ctext mark set fmark.0 0.0
-    $ctext mark gravity fmark.0 left
     set info $commitinfo($id)
     set date [formatdate [lindex $info 2]]
     $ctext insert end "Author: [lindex $info 1]  $date\n"
@@ -2943,7 +3183,9 @@ proc selectline {l isnew} {
     set commentend [$ctext index "end - 1c"]
 
     init_flist "Comments"
-    if {[llength $olds] <= 1} {
+    if {$cmitmode eq "tree"} {
+	gettree $id
+    } elseif {[llength $olds] <= 1} {
 	startdiff $id
     } else {
 	mergediff $id $l
@@ -2995,6 +3237,14 @@ proc unselectline {} {
     catch {unset selectedline}
     catch {unset currentid}
     allcanvs delete secsel
+}
+
+proc reselectline {} {
+    global selectedline
+
+    if {[info exists selectedline]} {
+	selectline $selectedline 0
+    }
 }
 
 proc addtohistory {cmd} {
@@ -3058,6 +3308,94 @@ proc goforw {} {
     }
 }
 
+proc gettree {id} {
+    global treefilelist treeidlist diffids diffmergeid treepending
+
+    set diffids $id
+    catch {unset diffmergeid}
+    if {![info exists treefilelist($id)]} {
+	if {![info exists treepending]} {
+	    if {[catch {set gtf [open [concat | git-ls-tree -r $id] r]}]} {
+		return
+	    }
+	    set treepending $id
+	    set treefilelist($id) {}
+	    set treeidlist($id) {}
+	    fconfigure $gtf -blocking 0
+	    fileevent $gtf readable [list gettreeline $gtf $id]
+	}
+    } else {
+	setfilelist $id
+    }
+}
+
+proc gettreeline {gtf id} {
+    global treefilelist treeidlist treepending cmitmode diffids
+
+    while {[gets $gtf line] >= 0} {
+	if {[lindex $line 1] ne "blob"} continue
+	set sha1 [lindex $line 2]
+	set fname [lindex $line 3]
+	lappend treefilelist($id) $fname
+	lappend treeidlist($id) $sha1
+    }
+    if {![eof $gtf]} return
+    close $gtf
+    unset treepending
+    if {$cmitmode ne "tree"} {
+	if {![info exists diffmergeid]} {
+	    gettreediffs $diffids
+	}
+    } elseif {$id ne $diffids} {
+	gettree $diffids
+    } else {
+	setfilelist $id
+    }
+}
+
+proc showfile {f} {
+    global treefilelist treeidlist diffids
+    global ctext commentend
+
+    set i [lsearch -exact $treefilelist($diffids) $f]
+    if {$i < 0} {
+	puts "oops, $f not in list for id $diffids"
+	return
+    }
+    set blob [lindex $treeidlist($diffids) $i]
+    if {[catch {set bf [open [concat | git-cat-file blob $blob] r]} err]} {
+	puts "oops, error reading blob $blob: $err"
+	return
+    }
+    fconfigure $bf -blocking 0
+    fileevent $bf readable [list getblobline $bf $diffids]
+    $ctext config -state normal
+    $ctext delete $commentend end
+    $ctext insert end "\n"
+    $ctext insert end "$f\n" filesep
+    $ctext config -state disabled
+    $ctext yview $commentend
+}
+
+proc getblobline {bf id} {
+    global diffids cmitmode ctext
+
+    if {$id ne $diffids || $cmitmode ne "tree"} {
+	catch {close $bf}
+	return
+    }
+    $ctext config -state normal
+    while {[gets $bf line] >= 0} {
+	$ctext insert end "$line\n"
+    }
+    if {[eof $bf]} {
+	# delete last newline
+	$ctext delete "end - 2c" "end - 1c"
+	close $bf
+    }
+    $ctext config -state disabled
+}
+
 proc mergediff {id l} {
     global diffmergeid diffopts mdifffd
     global diffids
@@ -3102,7 +3440,7 @@ proc getmergediffline {mdf id np} {
 	$ctext mark set f:$fname $here
 	$ctext mark gravity f:$fname left
 	lappend difffilestart $here
-	add_flist $fname
+	add_flist [list $fname]
 	set l [expr {(78 - [string length $fname]) / 2}]
 	set pad [string range "----------------------------------------" 1 $l]
 	$ctext insert end "$pad $fname $pad\n" filesep
@@ -3172,9 +3510,7 @@ proc startdiff {ids} {
 
 proc addtocflist {ids} {
     global treediffs cflist
-    foreach f $treediffs($ids) {
-	add_flist $f
-    }
+    add_flist $treediffs($ids)
     getblobdiffs $ids
 }
 
@@ -3191,6 +3527,7 @@ proc gettreediffs {ids} {
 
 proc gettreediffline {gdtf ids} {
     global treediff treediffs treepending diffids diffmergeid
+    global cmitmode
 
     set n [gets $gdtf line]
     if {$n < 0} {
@@ -3198,7 +3535,9 @@ proc gettreediffline {gdtf ids} {
 	close $gdtf
 	set treediffs($ids) $treediff
 	unset treepending
-	if {$ids != $diffids} {
+	if {$cmitmode eq "tree"} {
+	    gettree $diffids
+	} elseif {$ids != $diffids} {
 	    if {![info exists diffmergeid]} {
 		gettreediffs $diffids
 	    }
@@ -3645,8 +3984,6 @@ proc doseldiff {oldid newid} {
 
     $ctext conf -state normal
     $ctext delete 0.0 end
-    $ctext mark set fmark.0 0.0
-    $ctext mark gravity fmark.0 left
     init_flist "Top"
     $ctext insert end "From "
     $ctext tag conf link -foreground blue -underline 1
@@ -4331,6 +4668,7 @@ set uparrowlen 7
 set downarrowlen 7
 set mingaplen 30
 set flistmode "flat"
+set cmitmode "patch"
 
 set colors {green red blue magenta darkgrey brown orange}
 
