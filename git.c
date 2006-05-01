@@ -50,6 +50,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "count-objects", cmd_count_objects },
 		{ "diffn", cmd_diff },
 		{ "push", cmd_push },
+		{ "grep", cmd_grep },
 	};
 	int i;
 
