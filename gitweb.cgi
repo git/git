@@ -787,7 +787,7 @@ sub get_file_owner {
 	}
 	my $owner = $gcos;
 	$owner =~ s/[,;].*$//;
-	return $owner;
+	return decode("utf8", $owner, Encode::FB_DEFAULT);
 }
 
 sub git_read_projects {
@@ -823,7 +823,7 @@ sub git_read_projects {
 			if (-e "$projectroot/$path/HEAD") {
 				my $pr = {
 					path => $path,
-					owner => $owner,
+					owner => decode("utf8", $owner, Encode::FB_DEFAULT),
 				};
 				push @list, $pr
 			}
@@ -1025,7 +1025,7 @@ sub git_summary {
 			$pr = unescape($pr);
 			$ow = unescape($ow);
 			if ($pr eq $project) {
-				$owner = $ow;
+				$owner = decode("utf8", $ow, Encode::FB_DEFAULT);
 				last;
 			}
 		}
