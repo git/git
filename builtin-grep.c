@@ -81,6 +81,7 @@ struct grep_opt {
 	regex_t regexp;
 	unsigned linenum:1;
 	unsigned invert:1;
+	unsigned name_only:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
@@ -139,6 +140,10 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		if (opt->invert)
 			hit = !hit;
 		if (hit) {
+			if (opt->name_only) {
+				printf("%s\n", name);
+				return 1;
+			}
 			/* Hit at this line.  If we haven't shown the
 			 * pre-context lines, we would need to show them.
 			 */
@@ -404,6 +409,11 @@ int cmd_grep(int argc, const char **argv, char **envp)
 				/* We always show the pathname, so this
 				 * is a noop.
 				 */
+				continue;
+			}
+			if (!strcmp("-l", arg) ||
+			    !strcmp("--files-with-matches", arg)) {
+				opt.name_only = 1;
 				continue;
 			}
 			if (!strcmp("-A", arg) ||
