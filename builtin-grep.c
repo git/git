@@ -12,33 +12,66 @@
 #include "revision.h"
 #include "builtin.h"
 #include <regex.h>
+#include <fnmatch.h>
 
+/*
+ * git grep pathspecs are somewhat different from diff-tree pathspecs;
+ * pathname wildcards are allowed.
+ */
 static int pathspec_matches(struct diff_options *opt, const char *name)
 {
-	int i, j;
-	int namelen;
+	int namelen, i;
 	if (!opt->nr_paths)
 		return 1;
 	namelen = strlen(name);
 	for (i = 0; i < opt->nr_paths; i++) {
 		const char *match = opt->paths[i];
 		int matchlen = opt->pathlens[i];
-		if (matchlen <= namelen) {
-			if (!strncmp(name, match, matchlen))
-				return 1;
-			continue;
-		}
-		/* If name is "Documentation" and pathspec is
-		 * "Documentation/", they should match.  Maybe
-		 * we would want to strip it in get_pathspec()???
-		 */
-		if (strncmp(name, match, namelen))
-			continue;
-		for (j = namelen; j < matchlen; j++)
-			if (match[j] != '/')
-				break;
-		if (matchlen <= j)
+		const char *slash, *cp;
+
+		if ((matchlen <= namelen) &&
+		    !strncmp(name, match, matchlen) &&
+		    (match[matchlen-1] == '/' ||
+		     name[matchlen] == '\0' || name[matchlen] == '/'))
 			return 1;
+		if (!fnmatch(match, name, 0))
+			return 1;
+		if (name[namelen-1] != '/')
+			continue;
+
+		/* We are being asked if the name directory is worth
+		 * descending into.
+		 *
+		 * Find the longest leading directory name that does
+		 * not have metacharacter in the pathspec; the name
+		 * we are looking at must overlap with that directory.
+		 */
+		for (cp = match, slash = NULL; cp - match < matchlen; cp++) {
+			char ch = *cp;
+			if (ch == '/')
+				slash = cp;
+			if (ch == '*' || ch == '[')
+				break;
+		}
+		if (!slash)
+			slash = match; /* toplevel */
+		else
+			slash++;
+		if (namelen <= slash - match) {
+			/* Looking at "Documentation/" and
+			 * the pattern says "Documentation/howto/", or
+			 * "Documentation/diff*.txt".
+			 */
+			if (!memcmp(match, name, namelen))
+				return 1;
+		}
+		else {
+			/* Looking at "Documentation/howto/" and
+			 * the pattern says "Documentation/h*".
+			 */
+			if (!memcmp(match, name, slash - match))
+				return 1;
+		}
 	}
 	return 0;
 }
@@ -232,17 +265,17 @@ static int grep_tree(struct grep_opt *opt, struct rev_info *revs,
 	int hit = 0;
 	const char *path;
 	const unsigned char *sha1;
-	char *down_base;
+	char *down;
 	char *path_buf = xmalloc(PATH_MAX + strlen(tree_name) + 100);
 
 	if (tree_name[0]) {
 		int offset = sprintf(path_buf, "%s:", tree_name);
-		down_base = path_buf + offset;
-		strcat(down_base, base);
+		down = path_buf + offset;
+		strcat(down, base);
 	}
 	else {
-		down_base = path_buf;
-		strcpy(down_base, base);
+		down = path_buf;
+		strcpy(down, base);
 	}
 	len = strlen(path_buf);
 
@@ -252,7 +285,14 @@ static int grep_tree(struct grep_opt *opt, struct rev_info *revs,
 		pathlen = strlen(path);
 		strcpy(path_buf + len, path);
 
-		if (!pathspec_matches(&revs->diffopt, down_base))
+		if (S_ISDIR(mode))
+			/* Match "abc/" against pathspec to
+			 * decide if we want to descend into "abc"
+			 * directory.
+			 */
+			strcpy(path_buf + len + pathlen, "/");
+
+		if (!pathspec_matches(&revs->diffopt, down))
 			;
 		else if (S_ISREG(mode))
 			hit |= grep_sha1(opt, sha1, path_buf);
@@ -264,9 +304,8 @@ static int grep_tree(struct grep_opt *opt, struct rev_info *revs,
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(sha1));
-			strcpy(path_buf + len + pathlen, "/");
 			sub.buf = data;
-			hit = grep_tree(opt, revs, &sub, tree_name, down_base);
+			hit |= grep_tree(opt, revs, &sub, tree_name, down);
 			free(data);
 		}
 		update_tree_entry(tree);
