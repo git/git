@@ -88,6 +88,7 @@ struct grep_opt {
 	unsigned linenum:1;
 	unsigned invert:1;
 	unsigned name_only:1;
+	unsigned count:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
@@ -149,6 +150,7 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 	unsigned last_hit = 0;
 	unsigned last_shown = 0;
 	const char *hunk_mark = "";
+	unsigned count = 0;
 
 	if (opt->pre_context)
 		prev = xcalloc(opt->pre_context, sizeof(*prev));
@@ -179,12 +181,16 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		if (opt->invert)
 			hit = !hit;
 		if (hit) {
+			count++;
 			if (opt->name_only) {
 				printf("%s\n", name);
 				return 1;
 			}
 			/* Hit at this line.  If we haven't shown the
 			 * pre-context lines, we would need to show them.
+			 * When asked to do "count", this still show
+			 * the context which is nonsense, but the user
+			 * deserves to get that ;-).
 			 */
 			if (opt->pre_context) {
 				unsigned from;
@@ -206,7 +212,8 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 			}
 			if (last_shown && lno != last_shown + 1)
 				printf(hunk_mark);
-			show_line(opt, bol, eol, name, lno, ':');
+			if (!opt->count)
+				show_line(opt, bol, eol, name, lno, ':');
 			last_shown = last_hit = lno;
 		}
 		else if (last_hit &&
@@ -230,6 +237,13 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		left--;
 		lno++;
 	}
+	/* NEEDSWORK:
+	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,
+	 * which feels mostly useless but sometimes useful.  Maybe
+	 * make it another option?  For now suppress them.
+	 */
+	if (opt->count && count)
+		printf("%s:%u\n", name, count);
 	return !!last_hit;
 }
 
@@ -440,6 +454,11 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		if (!strcmp("-l", arg) ||
 		    !strcmp("--files-with-matches", arg)) {
 			opt.name_only = 1;
+			continue;
+		}
+		if (!strcmp("-c", arg) ||
+		    !strcmp("--count", arg)) {
+			opt.count = 1;
 			continue;
 		}
 		if (!strncmp("-A", arg, 2) ||
