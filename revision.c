@@ -740,6 +740,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				include = get_reference(revs, next, sha1, flags);
 				if (!exclude || !include)
 					die("Invalid revision range %s..%s", arg, next);
+
+				if (!seen_dashdash) {
+					*dotdot = '.';
+					verify_non_filename(revs->prefix, arg);
+				}
 				add_pending_object(revs, exclude, this);
 				add_pending_object(revs, include, next);
 				continue;
@@ -757,13 +762,20 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (seen_dashdash || local_flags)
 				die("bad revision '%s'", arg);
 
-			/* If we didn't have a "--", all filenames must exist */
+			/* If we didn't have a "--":
+			 * (1) all filenames must exist;
+			 * (2) all rev-args must not be interpretable
+			 *     as a valid filename.
+			 * but the latter we have checked in the main loop.
+			 */
 			for (j = i; j < argc; j++)
 				verify_filename(revs->prefix, argv[j]);
 
 			revs->prune_data = get_pathspec(revs->prefix, argv + i);
 			break;
 		}
+		if (!seen_dashdash)
+			verify_non_filename(revs->prefix, arg);
 		object = get_reference(revs, arg, sha1, flags ^ local_flags);
 		add_pending_object(revs, object, arg);
 	}
