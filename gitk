@@ -512,7 +512,7 @@ proc makewindow {} {
     set ctext .ctop.cdet.left.ctext
     text $ctext -bg white -state disabled -font $textfont \
 	-width $geometry(ctextw) -height $geometry(ctexth) \
-	-yscrollcommand scrolltext -wrap none
+	-yscrollcommand {.ctop.cdet.left.sb set} -wrap none
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
@@ -562,7 +562,8 @@ proc makewindow {} {
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
-    $cflist tag configure highlight -background yellow
+    $cflist tag configure highlight \
+	-background [$cflist cget -selectbackground]
     .ctop.cdet add .ctop.cdet.right
     bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
 
@@ -1092,14 +1093,13 @@ image create bitmap tri-dn -background black -foreground blue -data {
 }
 
 proc init_flist {first} {
-    global cflist cflist_top cflist_bot selectedline difffilestart
+    global cflist cflist_top selectedline difffilestart
 
     $cflist conf -state normal
     $cflist delete 0.0 end
     if {$first ne {}} {
 	$cflist insert end $first
 	set cflist_top 1
-	set cflist_bot 1
 	$cflist tag add highlight 1.0 "1.0 lineend"
     } else {
 	catch {unset cflist_top}
@@ -1126,60 +1126,13 @@ proc sel_flist {w x y} {
     if {$cmitmode eq "tree"} return
     if {![info exists cflist_top]} return
     set l [lindex [split [$w index "@$x,$y"] "."] 0]
+    $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
+    $cflist tag add highlight $l.0 "$l.0 lineend"
+    set cflist_top $l
     if {$l == 1} {
 	$ctext yview 1.0
     } else {
 	catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
-    }
-    highlight_flist $l
-}
-
-proc scrolltext {f0 f1} {
-    global cflist_top
-
-    .ctop.cdet.left.sb set $f0 $f1
-    if {[info exists cflist_top]} {
-	highlight_flist $cflist_top
-    }
-}
-
-# Given an index $tl in the $ctext window, this works out which line
-# of the $cflist window displays the filename whose patch is shown
-# at the given point in the $ctext window.  $ll is a hint about which
-# line it might be, and is used as the starting point of the search.
-proc ctext_index {tl ll} {
-    global ctext difffilestart
-
-    while {$ll >= 2 && [$ctext compare $tl < \
-			    [lindex $difffilestart [expr {$ll - 2}]]]} {
-	incr ll -1
-    }
-    set nfiles [llength $difffilestart]
-    while {$ll - 1 < $nfiles && [$ctext compare $tl >= \
-			    [lindex $difffilestart [expr {$ll - 1}]]]} {
-	incr ll
-    }
-    return $ll
-}
-
-proc highlight_flist {ll} {
-    global ctext cflist cflist_top cflist_bot difffilestart
-
-    if {![info exists difffilestart] || [llength $difffilestart] == 0} return
-    set ll [ctext_index [$ctext index @0,1] $ll]
-    set lb $cflist_bot
-    if {$lb < $ll} {
-	set lb $ll
-    }
-    set y [expr {[winfo height $ctext] - 2}]
-    set lb [ctext_index [$ctext index @0,$y] $lb]
-    if {$ll != $cflist_top || $lb != $cflist_bot} {
-	$cflist tag remove highlight $cflist_top.0 "$cflist_bot.0 lineend"
-	for {set l $ll} {$l <= $lb} {incr l} {
-	    $cflist tag add highlight $l.0 "$l.0 lineend"
-	}
-	set cflist_top $ll
-	set cflist_bot $lb
     }
 }
 
@@ -3561,8 +3514,6 @@ proc getmergediffline {mdf id np} {
 	# start of a new file
 	$ctext insert end "\n"
 	set here [$ctext index "end - 1c"]
-	$ctext mark set f:$fname $here
-	$ctext mark gravity f:$fname left
 	lappend difffilestart $here
 	add_flist [list $fname]
 	set l [expr {(78 - [string length $fname]) / 2}]
@@ -3693,6 +3644,19 @@ proc getblobdiffs {ids} {
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
 }
 
+proc setinlist {var i val} {
+    global $var
+
+    while {[llength [set $var]] < $i} {
+	lappend $var {}
+    }
+    if {[llength [set $var]] == $i} {
+	lappend $var $val
+    } else {
+	lset $var $i $val
+    }
+}
+
 proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdifftag curtagstart
     global diffnexthead diffnextnote difffilestart
@@ -3719,12 +3683,15 @@ proc getblobdiffline {bdf ids} {
 	set here [$ctext index "end - 1c"]
 	set curtagstart $here
 	set header $newname
-	lappend difffilestart $here
-	$ctext mark set f:$fname $here
-	$ctext mark gravity f:$fname left
-	if {$newname != $fname} {
-	    $ctext mark set f:$newfname $here
-	    $ctext mark gravity f:$newfname left
+	set i [lsearch -exact $treediffs($ids) $fname]
+	if {$i >= 0} {
+	    setinlist difffilestart $i $here
+	}
+	if {$newname ne $fname} {
+	    set i [lsearch -exact $treediffs($ids) $newname]
+	    if {$i >= 0} {
+		setinlist difffilestart $i $here
+	    }
 	}
 	set curdifftag "f:$fname"
 	$ctext tag delete $curdifftag
