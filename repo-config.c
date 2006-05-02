@@ -6,7 +6,10 @@ static const char git_config_set_usage[] =
 
 static char* key = NULL;
 static char* value = NULL;
+static regex_t* key_regexp = NULL;
 static regex_t* regexp = NULL;
+static int show_keys = 0;
+static int use_key_regexp = 0;
 static int do_all = 0;
 static int do_not_match = 0;
 static int seen = 0;
@@ -26,16 +29,18 @@ static int show_config(const char* key_, const char* value_)
 	if (value_ == NULL)
 		value_ = "";
 
-	if (!strcmp(key_, key) &&
+	if ((use_key_regexp || !strcmp(key_, key)) &&
+			(!use_key_regexp ||
+			 !regexec(key_regexp, key_, 0, NULL, 0)) &&
 			(regexp == NULL ||
 			 (do_not_match ^
 			  !regexec(regexp, value_, 0, NULL, 0)))) {
-		if (do_all) {
-			printf("%s\n", value_);
-			return 0;
-		}
+		if (show_keys)
+			printf("%s ", key_);
 		if (seen > 0) {
-			fprintf(stderr, "More than one value: %s\n", value);
+			if (!do_all)
+				fprintf(stderr, "More than one value: %s\n",
+						value);
 			free(value);
 		}
 
@@ -50,6 +55,8 @@ static int show_config(const char* key_, const char* value_)
 			value = strdup(value_);
 		}
 		seen++;
+		if (do_all)
+			printf("%s\n", value);
 	}
 	return 0;
 }
@@ -62,6 +69,14 @@ static int get_value(const char* key_, const char* regex_)
 	for (i = 0; key_[i]; i++)
 		key[i] = tolower(key_[i]);
 	key[i] = 0;
+
+	if (use_key_regexp) {
+		key_regexp = (regex_t*)malloc(sizeof(regex_t));
+		if (regcomp(key_regexp, key, REG_EXTENDED)) {
+			fprintf(stderr, "Invalid key pattern: %s\n", regex_);
+			return -1;
+		}
+	}
 
 	if (regex_) {
 		if (regex_[0] == '!') {
@@ -78,7 +93,8 @@ static int get_value(const char* key_, const char* regex_)
 
 	git_config(show_config);
 	if (value) {
-		printf("%s\n", value);
+		if (!do_all)
+			printf("%s\n", value);
 		free(value);
 	}
 	free(key);
@@ -123,6 +139,11 @@ int main(int argc, const char **argv)
 		else if (!strcmp(argv[1], "--get-all")) {
 			do_all = 1;
 			return get_value(argv[2], NULL);
+		} else if (!strcmp(argv[1], "--get-regexp")) {
+			show_keys = 1;
+			use_key_regexp = 1;
+			do_all = 1;
+			return get_value(argv[2], NULL);
 		} else
 
 			return git_config_set(argv[1], argv[2]);
@@ -134,6 +155,11 @@ int main(int argc, const char **argv)
 		else if (!strcmp(argv[1], "--get"))
 			return get_value(argv[2], argv[3]);
 		else if (!strcmp(argv[1], "--get-all")) {
+			do_all = 1;
+			return get_value(argv[2], argv[3]);
+		} else if (!strcmp(argv[1], "--get-regexp")) {
+			show_keys = 1;
+			use_key_regexp = 1;
 			do_all = 1;
 			return get_value(argv[2], argv[3]);
 		} else if (!strcmp(argv[1], "--replace-all"))

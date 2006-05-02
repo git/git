@@ -247,6 +247,24 @@ EOF
 
 test_expect_success 'hierarchical section value' 'cmp .git/config expect'
 
+cat > expect << EOF
+beta.noindent=sillyValue
+nextsection.nonewline=wow2 for me
+123456.a123=987
+1.2.3.alpha=beta
+EOF
+
+test_expect_success 'working --list' \
+	'git-repo-config --list > output && cmp output expect'
+
+cat > expect << EOF
+beta.noindent sillyValue
+nextsection.nonewline wow2 for me
+EOF
+
+test_expect_success '--get-regexp' \
+	'git-repo-config --get-regexp in > output && cmp output expect'
+
 cat > .git/config << EOF
 [novalue]
 	variable
@@ -254,6 +272,11 @@ EOF
 
 test_expect_success 'get variable with no value' \
 	'git-repo-config --get novalue.variable ^$'
+
+git-repo-config > output 2>&1
+
+test_expect_success 'no arguments, but no crash' \
+	"test $? = 129 && grep usage output"
 
 test_done
 
