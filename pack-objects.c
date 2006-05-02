@@ -1032,12 +1032,6 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 		max_depth -= cur_entry->delta_limit;
 	}
 
-	size = cur_entry->size;
-	oldsize = old_entry->size;
-	sizediff = oldsize > size ? oldsize - size : size - oldsize;
-
-	if (size < 50)
-		return -1;
 	if (old_entry->depth >= max_depth)
 		return 0;
 
@@ -1048,9 +1042,12 @@ static int try_delta(struct unpacked *cur, struct unpacked *old, unsigned max_de
 	 * more space-efficient (deletes don't have to say _what_ they
 	 * delete).
 	 */
+	size = cur_entry->size;
 	max_size = size / 2 - 20;
 	if (cur_entry->delta)
 		max_size = cur_entry->delta_size-1;
+	oldsize = old_entry->size;
+	sizediff = oldsize < size ? size - oldsize : 0;
 	if (sizediff >= max_size)
 		return 0;
 	delta_buf = diff_delta(old->data, oldsize,
@@ -1107,6 +1104,9 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			/* This happens if we decided to reuse existing
 			 * delta from a pack.  "!no_reuse_delta &&" is implied.
 			 */
+			continue;
+
+		if (entry->size < 50)
 			continue;
 
 		free(n->data);
