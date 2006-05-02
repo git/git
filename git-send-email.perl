@@ -291,6 +291,13 @@ sub send_message
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc);
 	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
+	my $gitversion = '@@GIT_VERSION@@';
+	if ($gitversion =~ m/..GIT_VERSION../) {
+	    $gitversion = `git --version`;
+	    chomp $gitversion;
+	    # keep only what's after the last space
+	    $gitversion =~ s/^.* //;
+	}
 
 	my $header = "From: $from
 To: $to
@@ -299,7 +306,7 @@ Subject: $subject
 Reply-To: $from
 Date: $date
 Message-Id: $message_id
-X-Mailer: git-send-email @@GIT_VERSION@@
+X-Mailer: git-send-email $gitversion
 ";
 	$header .= "In-Reply-To: $reply_to\n" if $reply_to;
 
