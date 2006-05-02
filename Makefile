@@ -28,8 +28,8 @@ all:
 #
 # Define NO_SETENV if you don't have setenv in the C library.
 #
-# Define USE_SYMLINK_HEAD if you want .git/HEAD to be a symbolic link.
-# Don't enable it on Windows.
+# Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
+# Enable it on Windows.  By default, symrefs are still used.
 #
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
@@ -263,6 +263,7 @@ ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
 	NO_D_INO_IN_DIRENT = YesPlease
 	NO_STRCASESTR = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
@@ -385,6 +386,9 @@ ifdef NO_D_TYPE_IN_DIRENT
 endif
 ifdef NO_D_INO_IN_DIRENT
 	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT
+endif
+ifdef NO_SYMLINK_HEAD
+	ALL_CFLAGS += -DNO_SYMLINK_HEAD
 endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
