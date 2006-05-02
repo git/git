@@ -19,13 +19,13 @@ proc gitdir {} {
 proc start_rev_list {view} {
     global startmsecs nextupdate ncmupdate
     global commfd leftover tclencoding datemode
-    global revtreeargs viewfiles commitidx
+    global viewargs viewfiles commitidx
 
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
     set ncmupdate 1
     set commitidx($view) 0
-    set args $revtreeargs
+    set args $viewargs($view)
     if {$viewfiles($view) ne {}} {
 	set args [concat $args "--" $viewfiles($view)]
     }
@@ -69,9 +69,7 @@ proc getcommits {} {
     set phase getcommits
     initlayout
     start_rev_list $curview
-    $canv delete all
-    $canv create text 3 3 -anchor nw -text "Reading commits..." \
-	-font $mainfont -tags textitems
+    show_status "Reading commits..."
 }
 
 proc getcommitlines {fd view}  {
@@ -84,26 +82,33 @@ proc getcommitlines {fd view}  {
     set stuff [read $fd]
     if {$stuff == {}} {
 	if {![eof $fd]} return
+	global viewname
 	unset commfd($view)
+	notbusy $view
 	# set it blocking so we wait for the process to terminate
 	fconfigure $fd -blocking 1
-	if {![catch {close $fd} err]} {
-	    notbusy $view
-	    if {$view == $curview} {
-		after idle finishcommits
+	if {[catch {close $fd} err]} {
+	    set fv {}
+	    if {$view != $curview} {
+		set fv " for the \"$viewname($view)\" view"
 	    }
-	    return
+	    if {[string range $err 0 4] == "usage"} {
+		set err "Gitk: error reading commits$fv:\
+			bad arguments to git-rev-list."
+		if {$viewname($view) eq "Command line"} {
+		    append err \
+			"  (Note: arguments to gitk are passed to git-rev-list\
+			 to allow selection of commits to be displayed.)"
+		}
+	    } else {
+		set err "Error reading commits$fv: $err"
+	    }
+	    error_popup $err
 	}
-	if {[string range $err 0 4] == "usage"} {
-	    set err \
-		"Gitk: error reading commits: bad arguments to git-rev-list.\
-		(Note: arguments to gitk are passed to git-rev-list\
-		to allow selection of commits to be displayed.)"
-	} else {
-	    set err "Error reading commits: $err"
+	if {$view == $curview} {
+	    after idle finishcommits
 	}
-	error_popup $err
-	exit 1
+	return
     }
     set start 0
     set gotsome 0
@@ -217,7 +222,7 @@ proc readcommit {id} {
 }
 
 proc updatecommits {} {
-    global viewdata curview revtreeargs phase displayorder
+    global viewdata curview phase displayorder
     global children commitrow
 
     if {$phase ne {}} {
@@ -352,10 +357,7 @@ proc readrefs {} {
     close $refd
 }
 
-proc error_popup msg {
-    set w .error
-    toplevel $w
-    wm transient $w .
+proc show_error {w msg} {
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text OK -command "destroy $w"
@@ -363,6 +365,13 @@ proc error_popup msg {
     bind $w <Visibility> "grab $w; focus $w"
     bind $w <Key-Return> "destroy $w"
     tkwait window $w
+}
+
+proc error_popup msg {
+    set w .error
+    toplevel $w
+    wm transient $w .
+    show_error $w $msg
 }
 
 proc makewindow {} {
@@ -686,7 +695,7 @@ proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont uifont
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth
-    global viewname viewfiles viewperm nextviewnum
+    global viewname viewfiles viewargs viewperm nextviewnum
     global cmitmode
 
     if {$stuffsaved} return
@@ -715,7 +724,7 @@ proc savestuff {w} {
 	puts -nonewline $f "set permviews {"
 	for {set v 0} {$v < $nextviewnum} {incr v} {
 	    if {$viewperm($v)} {
-		puts $f "{[list $viewname($v) $viewfiles($v)]}"
+		puts $f "{[list $viewname($v) $viewfiles($v) $viewargs($v)]}"
 	    }
 	}
 	puts $f "}"
@@ -1136,10 +1145,105 @@ proc sel_flist {w x y} {
     }
 }
 
+# Functions for adding and removing shell-type quoting
+
+proc shellquote {str} {
+    if {![string match "*\['\"\\ \t]*" $str]} {
+	return $str
+    }
+    if {![string match "*\['\"\\]*" $str]} {
+	return "\"$str\""
+    }
+    if {![string match "*'*" $str]} {
+	return "'$str'"
+    }
+    return "\"[string map {\" \\\" \\ \\\\} $str]\""
+}
+
+proc shellarglist {l} {
+    set str {}
+    foreach a $l {
+	if {$str ne {}} {
+	    append str " "
+	}
+	append str [shellquote $a]
+    }
+    return $str
+}
+
+proc shelldequote {str} {
+    set ret {}
+    set used -1
+    while {1} {
+	incr used
+	if {![regexp -start $used -indices "\['\"\\\\ \t]" $str first]} {
+	    append ret [string range $str $used end]
+	    set used [string length $str]
+	    break
+	}
+	set first [lindex $first 0]
+	set ch [string index $str $first]
+	if {$first > $used} {
+	    append ret [string range $str $used [expr {$first - 1}]]
+	    set used $first
+	}
+	if {$ch eq " " || $ch eq "\t"} break
+	incr used
+	if {$ch eq "'"} {
+	    set first [string first "'" $str $used]
+	    if {$first < 0} {
+		error "unmatched single-quote"
+	    }
+	    append ret [string range $str $used [expr {$first - 1}]]
+	    set used $first
+	    continue
+	}
+	if {$ch eq "\\"} {
+	    if {$used >= [string length $str]} {
+		error "trailing backslash"
+	    }
+	    append ret [string index $str $used]
+	    continue
+	}
+	# here ch == "\""
+	while {1} {
+	    if {![regexp -start $used -indices "\[\"\\\\]" $str first]} {
+		error "unmatched double-quote"
+	    }
+	    set first [lindex $first 0]
+	    set ch [string index $str $first]
+	    if {$first > $used} {
+		append ret [string range $str $used [expr {$first - 1}]]
+		set used $first
+	    }
+	    if {$ch eq "\""} break
+	    incr used
+	    append ret [string index $str $used]
+	    incr used
+	}
+    }
+    return [list $used $ret]
+}
+
+proc shellsplit {str} {
+    set l {}
+    while {1} {
+	set str [string trimleft $str]
+	if {$str eq {}} break
+	set dq [shelldequote $str]
+	set n [lindex $dq 0]
+	set word [lindex $dq 1]
+	set str [string range $str $n end]
+	lappend l $word
+    }
+    return $l
+}
+
 # Code to implement multiple views
 
 proc newview {ishighlight} {
     global nextviewnum newviewname newviewperm uifont newishighlight
+    global newviewargs revtreeargs
 
     set newishighlight $ishighlight
     set top .gitkview
@@ -1149,12 +1253,14 @@ proc newview {ishighlight} {
     }
     set newviewname($nextviewnum) "View $nextviewnum"
     set newviewperm($nextviewnum) 0
+    set newviewargs($nextviewnum) [shellarglist $revtreeargs]
     vieweditor $top $nextviewnum "Gitk view definition" 
 }
 
 proc editview {} {
     global curview
     global viewname viewperm newviewname newviewperm
+    global viewargs newviewargs
 
     set top .gitkvedit-$curview
     if {[winfo exists $top]} {
@@ -1163,6 +1269,7 @@ proc editview {} {
     }
     set newviewname($curview) $viewname($curview)
     set newviewperm($curview) $viewperm($curview)
+    set newviewargs($curview) [shellarglist $viewargs($curview)]
     vieweditor $top $curview "Gitk: edit view $viewname($curview)"
 }
 
@@ -1177,7 +1284,13 @@ proc vieweditor {top n title} {
     grid $top.nl $top.name -sticky w -pady 5
     checkbutton $top.perm -text "Remember this view" -variable newviewperm($n)
     grid $top.perm - -pady 5 -sticky w
-    message $top.l -aspect 500 -font $uifont \
+    message $top.al -aspect 1000 -font $uifont \
+	-text "Commits to include (arguments to git-rev-list):"
+    grid $top.al - -sticky w -pady 5
+    entry $top.args -width 50 -textvariable newviewargs($n) \
+	-background white
+    grid $top.args - -sticky ew -padx 5
+    message $top.l -aspect 1000 -font $uifont \
 	-text "Enter files and directories to include, one per line:"
     grid $top.l - -sticky w
     text $top.t -width 40 -height 10 -background white
@@ -1189,7 +1302,7 @@ proc vieweditor {top n title} {
 	$top.t delete {end - 1c} end
 	$top.t mark set insert 0.0
     }
-    grid $top.t - -sticky w -padx 5
+    grid $top.t - -sticky ew -padx 5
     frame $top.buts
     button $top.buts.ok -text "OK" -command [list newviewok $top $n]
     button $top.buts.can -text "Cancel" -command [list destroy $top]
@@ -1211,14 +1324,23 @@ proc doviewmenu {m first cmd op args} {
 }
 
 proc allviewmenus {n op args} {
-    doviewmenu .bar.view 6 [list showview $n] $op $args
+    doviewmenu .bar.view 7 [list showview $n] $op $args
     doviewmenu .bar.view.hl 3 [list addhighlight $n] $op $args
 }
 
 proc newviewok {top n} {
     global nextviewnum newviewperm newviewname newishighlight
     global viewname viewfiles viewperm selectedview curview
+    global viewargs newviewargs
 
+    if {[catch {
+	set newargs [shellsplit $newviewargs($n)]
+    } err]} {
+	error_popup "Error in commit selection arguments: $err"
+	wm raise $top
+	focus $top
+	return
+    }
     set files {}
     foreach f [split [$top.t get 0.0 end] "\n"] {
 	set ft [string trim $f]
@@ -1232,6 +1354,7 @@ proc newviewok {top n} {
 	set viewname($n) $newviewname($n)
 	set viewperm($n) $newviewperm($n)
 	set viewfiles($n) $files
+	set viewargs($n) $newargs
 	addviewmenu $n
 	if {!$newishighlight} {
 	    after idle showview $n
@@ -1245,8 +1368,9 @@ proc newviewok {top n} {
 	    set viewname($n) $newviewname($n)
 	    allviewmenus $n entryconf -label $viewname($n)
 	}
-	if {$files ne $viewfiles($n)} {
+	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n)} {
 	    set viewfiles($n) $files
+	    set viewargs($n) $newargs
 	    if {$curview == $n} {
 		after idle updatecommits
 	    }
@@ -1347,8 +1471,8 @@ proc showview {n} {
     set curview $n
     set selectedview $n
     set selectedhlview -1
-    .bar.view entryconf 1 -state [expr {$n == 0? "disabled": "normal"}]
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf 3 -state [expr {$n == 0? "disabled": "normal"}]
     catch {unset hlview}
     .bar.view.hl entryconf 1 -state disabled
 
@@ -1403,15 +1527,15 @@ proc showview {n} {
     selectline $row 0
     if {$phase ne {}} {
 	if {$phase eq "getcommits"} {
-	    global mainfont
-	    $canv create text 3 3 -anchor nw -text "Reading commits..." \
-		-font $mainfont -tags textitems
+	    show_status "Reading commits..."
 	}
 	if {[info exists commfd($n)]} {
 	    layoutmore
 	} else {
 	    finishcommits
 	}
+    } elseif {$numcommits == 0} {
+	show_status "No commits selected"
     }
 }
 
@@ -2533,6 +2657,13 @@ proc xcoord {i level ln} {
     return $x
 }
 
+proc show_status {msg} {
+    global canv mainfont
+
+    clear_display
+    $canv create text 3 3 -anchor nw -text $msg -font $mainfont -tags textitems
+}
+
 proc finishcommits {} {
     global commitidx phase curview
     global canv mainfont ctext maincursor textcursor
@@ -2541,9 +2672,7 @@ proc finishcommits {} {
     if {$commitidx($curview) > 0} {
 	drawrest
     } else {
-	$canv delete all
-	$canv create text 3 3 -anchor nw -text "No commits selected" \
-	    -font $mainfont -tags textitems
+	show_status "No commits selected"
     }
     set phase {}
     catch {unset pending_select}
@@ -4782,8 +4911,31 @@ foreach arg $argv {
 # check that we can find a .git directory somewhere...
 set gitdir [gitdir]
 if {![file isdirectory $gitdir]} {
-    error_popup "Cannot find the git directory \"$gitdir\"."
+    show_error . "Cannot find the git directory \"$gitdir\"."
     exit 1
+}
+
+set cmdline_files {}
+set i [lsearch -exact $revtreeargs "--"]
+if {$i >= 0} {
+    set cmdline_files [lrange $revtreeargs [expr {$i + 1}] end]
+    set revtreeargs [lrange $revtreeargs 0 [expr {$i - 1}]]
+} elseif {$revtreeargs ne {}} {
+    if {[catch {
+	set f [eval exec git-rev-parse --no-revs --no-flags $revtreeargs]
+	set cmdline_files [split $f "\n"]
+	set n [llength $cmdline_files]
+	set revtreeargs [lrange $revtreeargs 0 end-$n]
+    } err]} {
+	# unfortunately we get both stdout and stderr in $err,
+	# so look for "fatal:".
+	set i [string first "fatal:" $err]
+	if {$i > 0} {
+	    set err [string range [expr {$i + 6}] end]
+	}
+	show_error . "Bad arguments to gitk:\n$err"
+	exit 1
+    }
 }
 
 set history {}
@@ -4797,7 +4949,9 @@ set selectedview 0
 set selectedhlview {}
 set viewfiles(0) {}
 set viewperm(0) 0
+set viewargs(0) {}
 
+set cmdlineok 0
 set stopped 0
 set stuffsaved 0
 set patchnum 0
@@ -4805,28 +4959,18 @@ setcoords
 makewindow
 readrefs
 
-set cmdline_files {}
-catch {
-    set fileargs [eval exec git-rev-parse --no-revs --no-flags $revtreeargs]
-    set cmdline_files [split $fileargs "\n"]
-    set n [llength $cmdline_files]
-    set revtreeargs [lrange $revtreeargs 0 end-$n]
-}
-if {[lindex $revtreeargs end] eq "--"} {
-    set revtreeargs [lrange $revtreeargs 0 end-1]
-}
-
-if {$cmdline_files ne {}} {
+if {$cmdline_files ne {} || $revtreeargs ne {}} {
     # create a view for the files/dirs specified on the command line
     set curview 1
     set selectedview 1
     set nextviewnum 2
     set viewname(1) "Command line"
     set viewfiles(1) $cmdline_files
+    set viewargs(1) $revtreeargs
     set viewperm(1) 0
     addviewmenu 1
-    .bar.view entryconf 1 -state normal
     .bar.view entryconf 2 -state normal
+    .bar.view entryconf 3 -state normal
 }
 
 if {[info exists permviews]} {
@@ -4835,6 +4979,7 @@ if {[info exists permviews]} {
 	incr nextviewnum
 	set viewname($n) [lindex $v 0]
 	set viewfiles($n) [lindex $v 1]
+	set viewargs($n) [lindex $v 2]
 	set viewperm($n) 1
 	addviewmenu $n
     }
