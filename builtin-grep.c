@@ -75,16 +75,48 @@ static int pathspec_matches(const char **paths, const char *name)
 	return 0;
 }
 
-struct grep_opt {
+struct grep_pat {
+	struct grep_pat *next;
 	const char *pattern;
+	regex_t regexp;
+};
+
+struct grep_opt {
+	struct grep_pat *pattern_list;
+	struct grep_pat **pattern_tail;
 	regex_t regexp;
 	unsigned linenum:1;
 	unsigned invert:1;
 	unsigned name_only:1;
+	unsigned count:1;
+	unsigned word_regexp:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
 };
+
+static void add_pattern(struct grep_opt *opt, const char *pat)
+{
+	struct grep_pat *p = xcalloc(1, sizeof(*p));
+	p->pattern = pat;
+	*opt->pattern_tail = p;
+	opt->pattern_tail = &p->next;
+	p->next = NULL;
+}
+
+static void compile_patterns(struct grep_opt *opt)
+{
+	struct grep_pat *p;
+	for (p = opt->pattern_list; p; p = p->next) {
+		int err = regcomp(&p->regexp, p->pattern, opt->regflags);
+		if (err) {
+			char errbuf[1024];
+			regerror(err, &p->regexp, errbuf, 1024);
+			regfree(&p->regexp);
+			die("'%s': %s", p->pattern, errbuf);
+		}
+	}
+}
 
 static char *end_of_line(char *cp, unsigned long *left)
 {
@@ -95,6 +127,11 @@ static char *end_of_line(char *cp, unsigned long *left)
 	}
 	*left = l;
 	return cp;
+}
+
+static int word_char(char ch)
+{
+	return isalnum(ch) || ch == '_';
 }
 
 static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
@@ -119,6 +156,7 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 	unsigned last_hit = 0;
 	unsigned last_shown = 0;
 	const char *hunk_mark = "";
+	unsigned count = 0;
 
 	if (opt->pre_context)
 		prev = xcalloc(opt->pre_context, sizeof(*prev));
@@ -128,23 +166,56 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 	while (left) {
 		regmatch_t pmatch[10];
 		char *eol, ch;
-		int hit;
+		int hit = 0;
+		struct grep_pat *p;
 
 		eol = end_of_line(bol, &left);
 		ch = *eol;
 		*eol = 0;
 
-		hit = !regexec(&opt->regexp, bol, ARRAY_SIZE(pmatch),
-			       pmatch, 0);
+		for (p = opt->pattern_list; p; p = p->next) {
+			regex_t *exp = &p->regexp;
+			hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
+				       pmatch, 0);
+
+			if (hit && opt->word_regexp) {
+				/* Match beginning must be either
+				 * beginning of the line, or at word
+				 * boundary (i.e. the last char must
+				 * not be alnum or underscore).
+				 */
+				if ((pmatch[0].rm_so < 0) ||
+				    (eol - bol) <= pmatch[0].rm_so ||
+				    (pmatch[0].rm_eo < 0) ||
+				    (eol - bol) < pmatch[0].rm_eo)
+					die("regexp returned nonsense");
+				if (pmatch[0].rm_so != 0 &&
+				    word_char(bol[pmatch[0].rm_so-1]))
+					continue; /* not a word boundary */
+				if ((eol-bol) < pmatch[0].rm_eo &&
+				    word_char(bol[pmatch[0].rm_eo]))
+					continue; /* not a word boundary */
+			}
+			if (hit)
+				break;
+		}
+		/* "grep -v -e foo -e bla" should list lines
+		 * that do not have either, so inversion should
+		 * be done outside.
+		 */
 		if (opt->invert)
 			hit = !hit;
 		if (hit) {
+			count++;
 			if (opt->name_only) {
 				printf("%s\n", name);
 				return 1;
 			}
 			/* Hit at this line.  If we haven't shown the
 			 * pre-context lines, we would need to show them.
+			 * When asked to do "count", this still show
+			 * the context which is nonsense, but the user
+			 * deserves to get that ;-).
 			 */
 			if (opt->pre_context) {
 				unsigned from;
@@ -166,7 +237,8 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 			}
 			if (last_shown && lno != last_shown + 1)
 				printf(hunk_mark);
-			show_line(opt, bol, eol, name, lno, ':');
+			if (!opt->count)
+				show_line(opt, bol, eol, name, lno, ':');
 			last_shown = last_hit = lno;
 		}
 		else if (last_hit &&
@@ -190,6 +262,13 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		left--;
 		lno++;
 	}
+	/* NEEDSWORK:
+	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,
+	 * which feels mostly useless but sometimes useful.  Maybe
+	 * make it another option?  For now suppress them.
+	 */
+	if (opt->count && count)
+		printf("%s:%u\n", name, count);
 	return !!last_hit;
 }
 
@@ -344,7 +423,6 @@ static const char builtin_grep_usage[] =
 
 int cmd_grep(int argc, const char **argv, char **envp)
 {
-	int err;
 	int hit = 0;
 	int no_more_flags = 0;
 	int seen_noncommit = 0;
@@ -355,6 +433,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	const char **paths = NULL;
 
 	memset(&opt, 0, sizeof(opt));
+	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
 	/*
@@ -402,18 +481,44 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			opt.name_only = 1;
 			continue;
 		}
-		if (!strcmp("-A", arg) ||
-		    !strcmp("-B", arg) ||
-		    !strcmp("-C", arg)) {
+		if (!strcmp("-c", arg) ||
+		    !strcmp("--count", arg)) {
+			opt.count = 1;
+			continue;
+		}
+		if (!strcmp("-w", arg) ||
+		    !strcmp("--word-regexp", arg)) {
+			opt.word_regexp = 1;
+			continue;
+		}
+		if (!strncmp("-A", arg, 2) ||
+		    !strncmp("-B", arg, 2) ||
+		    !strncmp("-C", arg, 2) ||
+		    (arg[0] == '-' && '1' <= arg[1] && arg[1] <= '9')) {
 			unsigned num;
-			if (argc <= 1 ||
-			    sscanf(*++argv, "%u", &num) != 1)
+			const char *scan;
+			switch (arg[1]) {
+			case 'A': case 'B': case 'C':
+				if (!arg[2]) {
+					if (argc <= 1)
+						usage(builtin_grep_usage);
+					scan = *++argv;
+					argc--;
+				}
+				else
+					scan = arg + 2;
+				break;
+			default:
+				scan = arg + 1;
+				break;
+			}
+			if (sscanf(scan, "%u", &num) != 1)
 				usage(builtin_grep_usage);
-			argc--;
 			switch (arg[1]) {
 			case 'A':
 				opt.post_context = num;
 				break;
+			default:
 			case 'C':
 				opt.post_context = num;
 			case 'B':
@@ -424,12 +529,8 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		}
 		if (!strcmp("-e", arg)) {
 			if (1 < argc) {
-				/* We probably would want to do
-				 * -e pat1 -e pat2 as well later...
-				 */
-				if (opt.pattern)
-					die("more than one pattern?");
-				opt.pattern = *++argv;
+				add_pattern(&opt, argv[1]);
+				argv++;
 				argc--;
 				continue;
 			}
@@ -442,8 +543,8 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		/* Either unrecognized option or a single pattern */
 		if (!no_more_flags && *arg == '-')
 			usage(builtin_grep_usage);
-		if (!opt.pattern) {
-			opt.pattern = arg;
+		if (!opt.pattern_list) {
+			add_pattern(&opt, arg);
 			break;
 		}
 		else {
@@ -455,15 +556,9 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			break;
 		}
 	}
-	if (!opt.pattern)
+	if (!opt.pattern_list)
 		die("no pattern given.");
-	err = regcomp(&opt.regexp, opt.pattern, opt.regflags);
-	if (err) {
-		char errbuf[1024];
-		regerror(err, &opt.regexp, errbuf, 1024);
-		regfree(&opt.regexp);
-		die("'%s': %s", opt.pattern, errbuf);
-	}
+	compile_patterns(&opt);
 	tail = &object_list;
 	while (1 < argc) {
 		struct object *object;
