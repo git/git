@@ -121,7 +121,7 @@ SCRIPT_SH = \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-rm.sh git-sh-setup.sh \
-	git-tag.sh git-verify-tag.sh git-whatchanged.sh \
+	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
@@ -139,7 +139,7 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  git-cherry-pick git-show git-status
+	  git-cherry-pick git-status
 
 # The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
@@ -167,7 +167,7 @@ PROGRAMS = \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
-BUILT_INS = git-log$X
+BUILT_INS = git-log$X git-whatchanged$X git-show$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -503,9 +503,6 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 	chmod +x $@
 
 git-cherry-pick: git-revert
-	cp $< $@
-
-git-show: git-whatchanged
 	cp $< $@
 
 git-status: git-commit
