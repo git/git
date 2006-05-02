@@ -168,7 +168,7 @@ extern void rollback_index_file(struct cache_file *);
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int assume_unchanged;
-extern int only_use_symrefs;
+extern int prefer_symlink_refs;
 extern int warn_ambiguous_refs;
 extern int diff_rename_limit_default;
 extern int shared_repository;

@@ -64,9 +64,11 @@ core.ignoreStat::
 	slow, such as Microsoft Windows.  See gitlink:git-update-index[1].
 	False by default.
 
-core.onlyUseSymrefs::
-	Always use the "symref" format instead of symbolic links for HEAD
-	and other symbolic reference files. True by default.
+core.preferSymlinkRefs::
+	Instead of the default "symref" format for HEAD
+	and other symbolic reference files, use symbolic links.
+	This is sometimes needed to work with old scripts that
+	expect HEAD to be a symbolic link.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
