@@ -46,7 +46,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_whatchanged },
 		{ "show", cmd_show },
-		{ "diffn", cmd_diff },
+		{ "diff", cmd_diff },
 	};
 	int i;
 
