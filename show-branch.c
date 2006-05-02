@@ -5,7 +5,7 @@
 #include "refs.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
+"git-show-branch [--dense] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
 static int default_num = 0;
 static int default_alloc = 0;
@@ -527,6 +527,27 @@ static int git_show_branch_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
+static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
+{
+	/* If the commit is tip of the named branches, do not
+	 * omit it.
+	 * Otherwise, if it is a merge that is reachable from only one
+	 * tip, it is not that interesting.
+	 */
+	int i, flag, count;
+	for (i = 0; i < n; i++)
+		if (rev[i] == commit)
+			return 0;
+	flag = commit->object.flags;
+	for (i = count = 0; i < n; i++) {
+		if (flag & (1u << (i + REV_SHIFT)))
+			count++;
+	}
+	if (count == 1)
+		return 1;
+	return 0;
+}
+
 int main(int ac, char **av)
 {
 	struct commit *rev[MAX_REVS], *commit;
@@ -548,6 +569,7 @@ int main(int ac, char **av)
 	int with_current_branch = 0;
 	int head_at = -1;
 	int topics = 0;
+	int dense = 1;
 
 	setup_git_directory();
 	git_config(git_show_branch_config);
@@ -590,6 +612,8 @@ int main(int ac, char **av)
 			lifo = 1;
 		else if (!strcmp(arg, "--topics"))
 			topics = 1;
+		else if (!strcmp(arg, "--sparse"))
+			dense = 0;
 		else if (!strcmp(arg, "--date-order"))
 			lifo = 0;
 		else
@@ -732,12 +756,15 @@ int main(int ac, char **av)
 		shown_merge_point |= is_merge_point;
 
 		if (1 < num_rev) {
-			int is_merge = !!(commit->parents && commit->parents->next);
+			int is_merge = !!(commit->parents &&
+					  commit->parents->next);
 			if (topics &&
 			    !is_merge_point &&
 			    (this_flag & (1u << REV_SHIFT)))
 				continue;
-
+			if (dense && is_merge &&
+			    omit_in_dense(commit, rev, num_rev))
+				continue;
 			for (i = 0; i < num_rev; i++) {
 				int mark;
 				if (!(this_flag & (1u << (i + REV_SHIFT))))
