@@ -60,6 +60,12 @@ static char *parse_value(void)
 			space = 1;
 			continue;
 		}
+		if (!quote) {
+			if (c == ';' || c == '#') {
+				comment = 1;
+				continue;
+			}
+		}
 		if (space) {
 			if (len)
 				value[len++] = ' ';
@@ -92,12 +98,6 @@ static char *parse_value(void)
 		if (c == '"') {
 			quote = 1-quote;
 			continue;
-		}
-		if (!quote) {
-			if (c == ';' || c == '#') {
-				comment = 1;
-				continue;
-			}
 		}
 		value[len++] = c;
 	}
