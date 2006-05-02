@@ -440,6 +440,8 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 {
 	const char *buf = *buffer;
 	unsigned long size = *size_p;
+	const char *cp;
+	char *ep;
 	struct cache_tree *it;
 	int i, subtree_nr;
 
@@ -453,7 +455,14 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		goto free_return;
 	buf++; size--;
 	it = cache_tree();
-	if (sscanf(buf, "%d %d\n", &it->entry_count, &subtree_nr) != 2)
+
+	cp = buf;
+	it->entry_count = strtol(cp, &ep, 10);
+	if (cp == ep)
+		goto free_return;
+	cp = ep;
+	subtree_nr = strtol(cp, &ep, 10);
+	if (cp == ep)
 		goto free_return;
 	while (size && *buf && *buf != '\n') {
 		size--;
