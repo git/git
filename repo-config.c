@@ -102,14 +102,13 @@ int main(int argc, const char **argv)
 			type = T_INT;
 		else if (!strcmp(argv[1], "--bool"))
 			type = T_BOOL;
+		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l"))
+			return git_config(show_all_config);
 		else
 			break;
 		argc--;
 		argv++;
 	}
-
-	if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l"))
-		return git_config(show_all_config);
 
 	switch (argc) {
 	case 2:
