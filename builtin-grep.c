@@ -89,6 +89,7 @@ struct grep_opt {
 	unsigned invert:1;
 	unsigned name_only:1;
 	unsigned count:1;
+	unsigned word_regexp:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
@@ -126,6 +127,11 @@ static char *end_of_line(char *cp, unsigned long *left)
 	}
 	*left = l;
 	return cp;
+}
+
+static int word_char(char ch)
+{
+	return isalnum(ch) || ch == '_';
 }
 
 static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
@@ -171,6 +177,25 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 			regex_t *exp = &p->regexp;
 			hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
 				       pmatch, 0);
+
+			if (hit && opt->word_regexp) {
+				/* Match beginning must be either
+				 * beginning of the line, or at word
+				 * boundary (i.e. the last char must
+				 * not be alnum or underscore).
+				 */
+				if ((pmatch[0].rm_so < 0) ||
+				    (eol - bol) <= pmatch[0].rm_so ||
+				    (pmatch[0].rm_eo < 0) ||
+				    (eol - bol) < pmatch[0].rm_eo)
+					die("regexp returned nonsense");
+				if (pmatch[0].rm_so != 0 &&
+				    word_char(bol[pmatch[0].rm_so-1]))
+					continue; /* not a word boundary */
+				if ((eol-bol) < pmatch[0].rm_eo &&
+				    word_char(bol[pmatch[0].rm_eo]))
+					continue; /* not a word boundary */
+			}
 			if (hit)
 				break;
 		}
@@ -459,6 +484,11 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		if (!strcmp("-c", arg) ||
 		    !strcmp("--count", arg)) {
 			opt.count = 1;
+			continue;
+		}
+		if (!strcmp("-w", arg) ||
+		    !strcmp("--word-regexp", arg)) {
+			opt.word_regexp = 1;
 			continue;
 		}
 		if (!strncmp("-A", arg, 2) ||
