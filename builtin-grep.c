@@ -75,8 +75,15 @@ static int pathspec_matches(const char **paths, const char *name)
 	return 0;
 }
 
-struct grep_opt {
+struct grep_pat {
+	struct grep_pat *next;
 	const char *pattern;
+	regex_t regexp;
+};
+
+struct grep_opt {
+	struct grep_pat *pattern_list;
+	struct grep_pat **pattern_tail;
 	regex_t regexp;
 	unsigned linenum:1;
 	unsigned invert:1;
@@ -85,6 +92,29 @@ struct grep_opt {
 	unsigned pre_context;
 	unsigned post_context;
 };
+
+static void add_pattern(struct grep_opt *opt, const char *pat)
+{
+	struct grep_pat *p = xcalloc(1, sizeof(*p));
+	p->pattern = pat;
+	*opt->pattern_tail = p;
+	opt->pattern_tail = &p->next;
+	p->next = NULL;
+}
+
+static void compile_patterns(struct grep_opt *opt)
+{
+	struct grep_pat *p;
+	for (p = opt->pattern_list; p; p = p->next) {
+		int err = regcomp(&p->regexp, p->pattern, opt->regflags);
+		if (err) {
+			char errbuf[1024];
+			regerror(err, &p->regexp, errbuf, 1024);
+			regfree(&p->regexp);
+			die("'%s': %s", p->pattern, errbuf);
+		}
+	}
+}
 
 static char *end_of_line(char *cp, unsigned long *left)
 {
@@ -128,14 +158,24 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 	while (left) {
 		regmatch_t pmatch[10];
 		char *eol, ch;
-		int hit;
+		int hit = 0;
+		struct grep_pat *p;
 
 		eol = end_of_line(bol, &left);
 		ch = *eol;
 		*eol = 0;
 
-		hit = !regexec(&opt->regexp, bol, ARRAY_SIZE(pmatch),
-			       pmatch, 0);
+		for (p = opt->pattern_list; p; p = p->next) {
+			regex_t *exp = &p->regexp;
+			hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
+				       pmatch, 0);
+			if (hit)
+				break;
+		}
+		/* "grep -v -e foo -e bla" should list lines
+		 * that do not have either, so inversion should
+		 * be done outside.
+		 */
 		if (opt->invert)
 			hit = !hit;
 		if (hit) {
@@ -344,7 +384,6 @@ static const char builtin_grep_usage[] =
 
 int cmd_grep(int argc, const char **argv, char **envp)
 {
-	int err;
 	int hit = 0;
 	int no_more_flags = 0;
 	int seen_noncommit = 0;
@@ -355,6 +394,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	const char **paths = NULL;
 
 	memset(&opt, 0, sizeof(opt));
+	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
 	/*
@@ -440,12 +480,8 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		}
 		if (!strcmp("-e", arg)) {
 			if (1 < argc) {
-				/* We probably would want to do
-				 * -e pat1 -e pat2 as well later...
-				 */
-				if (opt.pattern)
-					die("more than one pattern?");
-				opt.pattern = *++argv;
+				add_pattern(&opt, argv[1]);
+				argv++;
 				argc--;
 				continue;
 			}
@@ -458,8 +494,8 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		/* Either unrecognized option or a single pattern */
 		if (!no_more_flags && *arg == '-')
 			usage(builtin_grep_usage);
-		if (!opt.pattern) {
-			opt.pattern = arg;
+		if (!opt.pattern_list) {
+			add_pattern(&opt, arg);
 			break;
 		}
 		else {
@@ -471,15 +507,9 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			break;
 		}
 	}
-	if (!opt.pattern)
+	if (!opt.pattern_list)
 		die("no pattern given.");
-	err = regcomp(&opt.regexp, opt.pattern, opt.regflags);
-	if (err) {
-		char errbuf[1024];
-		regerror(err, &opt.regexp, errbuf, 1024);
-		regfree(&opt.regexp);
-		die("'%s': %s", opt.pattern, errbuf);
-	}
+	compile_patterns(&opt);
 	tail = &object_list;
 	while (1 < argc) {
 		struct object *object;
