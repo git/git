@@ -446,6 +446,8 @@ static int fsck_cache_tree(struct cache_tree *it)
 
 	if (0 <= it->entry_count) {
 		struct object *obj = parse_object(it->sha1);
+		mark_reachable(obj, REACHABLE);
+		obj->used = 1;
 		if (obj->type != tree_type)
 			err |= objerror(obj, "non-tree in cache-tree");
 	}
