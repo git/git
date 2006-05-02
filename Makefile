@@ -115,7 +115,7 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 SCRIPT_SH = \
 	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
-	git-count-objects.sh git-fetch.sh \
+	git-fetch.sh \
 	git-format-patch.sh git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
@@ -168,7 +168,7 @@ PROGRAMS = \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
-	git-diff$X
+	git-count-objects$X git-diff$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
