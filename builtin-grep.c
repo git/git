@@ -103,7 +103,7 @@ static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
 	printf("%s%c", name, sign);
 	if (opt->linenum)
 		printf("%d%c", lno, sign);
-	printf("%.*s\n", eol-bol, bol);
+	printf("%.*s\n", (int)(eol-bol), bol);
 }
 
 static int grep_buffer(struct grep_opt *opt, const char *name,
