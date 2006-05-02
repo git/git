@@ -4,13 +4,43 @@
 # this would fail in that case and would issue an error message.
 GIT_DIR=$(git-rev-parse --git-dir 2>/dev/null) || :;
 
+if [ -d "$GIT_DIR"/remotes -a "$GIT_REWRITE_REMOTES" = true ]; then
+	echo "Rewriting $GIT_DIR/remotes" >&2
+	error=0
+	# rewrite into config
+	{
+		cd "$GIT_DIR"/remotes
+		ls | while read f; do
+			name=$(echo -n "$f" | tr -c "A-Za-z0-9" ".")
+			sed -n \
+			-e "s/^URL: /remote.$name.url . /p" \
+			-e "s/^Pull: /remote.$name.pull ^$ /p" \
+			-e "s/^Push: /remote.$name.push ^$ /p" \
+			< "$f"
+		done
+		echo done
+	} | while read key regex value; do
+		case $key in
+		done)
+			if [ $error = 0 ]; then
+				mv "$GIT_DIR"/remotes "$GIT_DIR"/remotes.old
+			fi ;;
+		*)
+			git-repo-config $key "$value" $regex || error=1 ;;
+		esac
+	done
+fi
+
 get_data_source () {
 	case "$1" in
 	*/*)
 		# Not so fast.	This could be the partial URL shorthand...
 		token=$(expr "z$1" : 'z\([^/]*\)/')
 		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		if test -f "$GIT_DIR/branches/$token"
+		if test "$(git-repo-config --get "remote.$token.url")"
+		then
+			echo config-partial
+		elif test -f "$GIT_DIR/branches/$token"
 		then
 			echo branches-partial
 		else
@@ -18,7 +48,10 @@ get_data_source () {
 		fi
 		;;
 	*)
-		if test -f "$GIT_DIR/remotes/$1"
+		if test "$(git-repo-config --get "remote.$1.url")"
+		then
+			echo config
+		elif test -f "$GIT_DIR/remotes/$1"
 		then
 			echo remotes
 		elif test -f "$GIT_DIR/branches/$1"
@@ -35,6 +68,15 @@ get_remote_url () {
 	case "$data_source" in
 	'')
 		echo "$1" ;;
+	config-partial)
+		token=$(expr "z$1" : '\([^/]*\)/')
+		remainder=$(expr "z$1" : '[^/]*/\(.*\)')
+		url=$(git-repo-config --get "remote.$token.url")
+		echo "$url/$remainder"
+		;;
+	config)
+		git-repo-config --get "remote.$1.url"
+		;;
 	remotes)
 		sed -ne '/^URL: */{
 			s///p
@@ -56,8 +98,10 @@ get_remote_url () {
 get_remote_default_refs_for_push () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | branches | branches-partial)
+	'' | config-partial | branches | branches-partial)
 		;; # no default push mapping, just send matching refs.
+	config)
+		git-repo-config --get-all "remote.$1.push" ;;
 	remotes)
 		sed -ne '/^Push: */{
 			s///p
@@ -111,8 +155,11 @@ canon_refs_list_for_fetch () {
 get_remote_default_refs_for_fetch () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | branches-partial)
+	'' | config-partial | branches-partial)
 		echo "HEAD:" ;;
+	config)
+		canon_refs_list_for_fetch \
+			$(git-repo-config --get-all "remote.$1.pull") ;;
 	branches)
 		remote_branch=$(sed -ne '/#/s/.*#//p' "$GIT_DIR/branches/$1")
 		case "$remote_branch" in '') remote_branch=master ;; esac

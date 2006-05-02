@@ -115,6 +115,41 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 	return n;
 }
 
+static const char **config_uri;
+static const char *config_repo;
+static int config_repo_len;
+static int config_current_uri;
+static int config_get_refspecs;
+
+static int get_remote_config(const char* key, const char* value)
+{
+	if (!strncmp(key, "remote.", 7) &&
+	    !strncmp(key + 7, config_repo, config_repo_len)) {
+		if (!strcmp(key + 7 + config_repo_len, ".url")) {
+			if (config_current_uri < MAX_URI)
+				config_uri[config_current_uri++] = strdup(value);
+			else
+				error("more than %d URL's specified, ignoring the rest", MAX_URI);
+		}
+		else if (config_get_refspecs &&
+			 !strcmp(key + 7 + config_repo_len, ".push"))
+			add_refspec(strdup(value));
+	}
+	return 0;
+}
+
+static int get_config_remotes_uri(const char *repo, const char *uri[MAX_URI])
+{
+	config_repo_len = strlen(repo);
+	config_repo = repo;
+	config_current_uri = 0;
+	config_uri = uri;
+	config_get_refspecs = !refspec_nr;
+
+	git_config(get_remote_config);
+	return config_current_uri;
+}
+
 static int get_branches_uri(const char *repo, const char *uri[MAX_URI])
 {
 	const char *slash = strchr(repo, '/');
@@ -159,6 +194,10 @@ static int read_config(const char *repo, const char *uri[MAX_URI])
 
 	if (*repo != '/') {
 		n = get_remotes_uri(repo, uri);
+		if (n > 0)
+			return n;
+
+		n = get_config_remotes_uri(repo, uri);
 		if (n > 0)
 			return n;
 
