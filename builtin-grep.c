@@ -402,18 +402,34 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			opt.name_only = 1;
 			continue;
 		}
-		if (!strcmp("-A", arg) ||
-		    !strcmp("-B", arg) ||
-		    !strcmp("-C", arg)) {
+		if (!strncmp("-A", arg, 2) ||
+		    !strncmp("-B", arg, 2) ||
+		    !strncmp("-C", arg, 2) ||
+		    (arg[0] == '-' && '1' <= arg[1] && arg[1] <= '9')) {
 			unsigned num;
-			if (argc <= 1 ||
-			    sscanf(*++argv, "%u", &num) != 1)
+			const char *scan;
+			switch (arg[1]) {
+			case 'A': case 'B': case 'C':
+				if (!arg[2]) {
+					if (argc <= 1)
+						usage(builtin_grep_usage);
+					scan = *++argv;
+					argc--;
+				}
+				else
+					scan = arg + 2;
+				break;
+			default:
+				scan = arg + 1;
+				break;
+			}
+			if (sscanf(scan, "%u", &num) != 1)
 				usage(builtin_grep_usage);
-			argc--;
 			switch (arg[1]) {
 			case 'A':
 				opt.post_context = num;
 				break;
+			default:
 			case 'C':
 				opt.post_context = num;
 			case 'B':
