@@ -105,6 +105,8 @@ int cmd_count_objects(int ac, const char **av, char **ep)
 	}
 	if (verbose) {
 		struct packed_git *p;
+		if (!packed_git)
+			prepare_packed_git();
 		for (p = packed_git; p; p = p->next) {
 			if (!p->pack_local)
 				continue;
