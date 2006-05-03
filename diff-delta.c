@@ -239,7 +239,7 @@ create_delta(const struct delta_index *index,
 	     const void *trg_buf, unsigned long trg_size,
 	     unsigned long *delta_size, unsigned long max_size)
 {
-	unsigned int i, outpos, outsize, hash_mask, val;
+	unsigned int i, outpos, outsize, val;
 	int inscnt;
 	const unsigned char *ref_data, *ref_top, *data, *top;
 	unsigned char *out;
@@ -275,7 +275,6 @@ create_delta(const struct delta_index *index,
 	ref_top = ref_data + index->src_size;
 	data = trg_buf;
 	top = trg_buf + trg_size;
-	hash_mask = index->hash_mask;
 
 	outpos++;
 	val = 0;
@@ -290,7 +289,7 @@ create_delta(const struct delta_index *index,
 		struct index_entry *entry;
 		val ^= U[data[-RABIN_WINDOW]];
 		val = ((val << 8) | *data) ^ T[val >> RABIN_SHIFT];
-		i = val & hash_mask;
+		i = val & index->hash_mask;
 		for (entry = index->hash[i]; entry; entry = entry->next) {
 			const unsigned char *ref = entry->ptr;
 			const unsigned char *src = data;
