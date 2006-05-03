@@ -21,10 +21,9 @@ static int dump_cache_tree(struct cache_tree *it,
 	int i;
 	int errs = 0;
 
-	if (!it)
-		return;
-	if (!ref)
-		die("internal error");
+	if (!it || !ref)
+		/* missing in either */
+		return 0;
 
 	if (it->entry_count < 0) {
 		dump_one(it, pfx, "");
