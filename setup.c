@@ -80,9 +80,29 @@ void verify_filename(const char *prefix, const char *arg)
 	if (!lstat(name, &st))
 		return;
 	if (errno == ENOENT)
-		die("ambiguous argument '%s': unknown revision or filename\n"
-		    "Use '--' to separate filenames from revisions", arg);
+		die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
+		    "Use '--' to separate paths from revisions", arg);
 	die("'%s': %s", arg, strerror(errno));
+}
+
+/*
+ * Opposite of the above: the command line did not have -- marker
+ * and we parsed the arg as a refname.  It should not be interpretable
+ * as a filename.
+ */
+void verify_non_filename(const char *prefix, const char *arg)
+{
+	const char *name;
+	struct stat st;
+
+	if (*arg == '-')
+		return; /* flag */
+	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
+	if (!lstat(name, &st))
+		die("ambiguous argument '%s': both revision and filename\n"
+		    "Use '--' to separate filenames from revisions", arg);
+	if (errno != ENOENT)
+		die("'%s': %s", arg, strerror(errno));
 }
 
 const char **get_pathspec(const char *prefix, const char **pathspec)

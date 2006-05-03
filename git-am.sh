@@ -14,6 +14,26 @@ stop_here () {
     exit 1
 }
 
+stop_here_user_resolve () {
+    cmdline=$(basename $0)
+    if test '' != "$interactive"
+    then
+        cmdline="$cmdline -i"
+    fi
+    if test '' != "$threeway"
+    then
+        cmdline="$cmdline -3"
+    fi
+    if test '.dotest' != "$dotest"
+    then
+        cmdline="$cmdline -d=$dotest"
+    fi
+    echo "When you have resolved this problem run \"$cmdline --resolved\"."
+    echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+
+    stop_here $1
+}
+
 go_next () {
 	rm -f "$dotest/$msgnum" "$dotest/msg" "$dotest/msg-clean" \
 		"$dotest/patch" "$dotest/info"
@@ -374,14 +394,14 @@ do
 		if test '' = "$changed"
 		then
 			echo "No changes - did you forget update-index?"
-			stop_here $this
+			stop_here_user_resolve $this
 		fi
 		unmerged=$(git-ls-files -u)
 		if test -n "$unmerged"
 		then
 			echo "You still have unmerged paths in your index"
 			echo "did you forget update-index?"
-			stop_here $this
+			stop_here_user_resolve $this
 		fi
 		apply_status=0
 		;;
@@ -407,7 +427,7 @@ do
 	if test $apply_status != 0
 	then
 		echo Patch failed at $msgnum.
-		stop_here $this
+		stop_here_user_resolve $this
 	fi
 
 	if test -x "$GIT_DIR"/hooks/pre-applypatch
