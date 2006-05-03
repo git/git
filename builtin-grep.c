@@ -26,7 +26,7 @@ static int pathspec_matches(const char **paths, const char *name)
 	for (i = 0; paths[i]; i++) {
 		const char *match = paths[i];
 		int matchlen = strlen(match);
-		const char *slash, *cp;
+		const char *cp, *meta;
 
 		if ((matchlen <= namelen) &&
 		    !strncmp(name, match, matchlen) &&
@@ -38,38 +38,43 @@ static int pathspec_matches(const char **paths, const char *name)
 		if (name[namelen-1] != '/')
 			continue;
 
-		/* We are being asked if the name directory is worth
+		/* We are being asked if the directory ("name") is worth
 		 * descending into.
 		 *
 		 * Find the longest leading directory name that does
 		 * not have metacharacter in the pathspec; the name
 		 * we are looking at must overlap with that directory.
 		 */
-		for (cp = match, slash = NULL; cp - match < matchlen; cp++) {
+		for (cp = match, meta = NULL; cp - match < matchlen; cp++) {
 			char ch = *cp;
-			if (ch == '/')
-				slash = cp;
-			if (ch == '*' || ch == '[')
+			if (ch == '*' || ch == '[' || ch == '?') {
+				meta = cp;
 				break;
+			}
 		}
-		if (!slash)
-			slash = match; /* toplevel */
-		else
-			slash++;
-		if (namelen <= slash - match) {
+		if (!meta)
+			meta = cp; /* fully literal */
+
+		if (namelen <= meta - match) {
 			/* Looking at "Documentation/" and
 			 * the pattern says "Documentation/howto/", or
-			 * "Documentation/diff*.txt".
+			 * "Documentation/diff*.txt".  The name we
+			 * have should match prefix.
 			 */
 			if (!memcmp(match, name, namelen))
 				return 1;
+			continue;
 		}
-		else {
+
+		if (meta - match < namelen) {
 			/* Looking at "Documentation/howto/" and
-			 * the pattern says "Documentation/h*".
+			 * the pattern says "Documentation/h*";
+			 * match up to "Do.../h"; this avoids descending
+			 * into "Documentation/technical/".
 			 */
-			if (!memcmp(match, name, slash - match))
+			if (!memcmp(match, name, meta - match))
 				return 1;
+			continue;
 		}
 	}
 	return 0;
