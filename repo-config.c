@@ -2,10 +2,9 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --bool | --int ] [--get | --get-all | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
+"git-repo-config [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
 
 static char* key = NULL;
-static char* value = NULL;
 static regex_t* key_regexp = NULL;
 static regex_t* regexp = NULL;
 static int show_keys = 0;
@@ -26,6 +25,9 @@ static int show_all_config(const char *key_, const char *value_)
 
 static int show_config(const char* key_, const char* value_)
 {
+	char value[256];
+	const char *vptr = value;
+
 	if (value_ == NULL)
 		value_ = "";
 
@@ -35,28 +37,25 @@ static int show_config(const char* key_, const char* value_)
 			(regexp == NULL ||
 			 (do_not_match ^
 			  !regexec(regexp, value_, 0, NULL, 0)))) {
+		int dup_error = 0;
 		if (show_keys)
 			printf("%s ", key_);
-		if (seen > 0) {
-			if (!do_all)
-				fprintf(stderr, "More than one value: %s\n",
-						value);
-			free(value);
-		}
-
-		if (type == T_INT) {
-			value = malloc(256);
+		if (seen && !do_all)
+			dup_error = 1;
+		if (type == T_INT)
 			sprintf(value, "%d", git_config_int(key_, value_));
-		} else if (type == T_BOOL) {
-			value = malloc(256);
+		else if (type == T_BOOL)
 			sprintf(value, "%s", git_config_bool(key_, value_)
 					     ? "true" : "false");
-		} else {
-			value = strdup(value_);
-		}
+		else
+			vptr = value_;
 		seen++;
-		if (do_all)
-			printf("%s\n", value);
+		if (dup_error) {
+			error("More than one value for the key %s: %s",
+			      key_, vptr);
+		}
+		else
+			printf("%s\n", vptr);
 	}
 	return 0;
 }
@@ -73,7 +72,7 @@ static int get_value(const char* key_, const char* regex_)
 	if (use_key_regexp) {
 		key_regexp = (regex_t*)malloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
-			fprintf(stderr, "Invalid key pattern: %s\n", regex_);
+			fprintf(stderr, "Invalid key pattern: %s\n", key_);
 			return -1;
 		}
 	}
@@ -92,11 +91,6 @@ static int get_value(const char* key_, const char* regex_)
 	}
 
 	git_config(show_config);
-	if (value) {
-		if (!do_all)
-			printf("%s\n", value);
-		free(value);
-	}
 	free(key);
 	if (regexp) {
 		regfree(regexp);
@@ -104,9 +98,9 @@ static int get_value(const char* key_, const char* regex_)
 	}
 
 	if (do_all)
-		return 0;
+		return !seen;
 
-	return seen == 1 ? 0 : 1;
+	return (seen == 1) ? 0 : 1;
 }
 
 int main(int argc, const char **argv)
