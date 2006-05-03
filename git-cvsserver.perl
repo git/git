@@ -2076,14 +2076,15 @@ sub update
     # TODO: log processing is memory bound
     # if we can parse into a 2nd file that is in reverse order
     # we can probably do something really efficient
-    my @git_log_params = ('--parents', '--topo-order');
+    my @git_log_params = ('--pretty', '--parents', '--topo-order');
 
     if (defined $lastcommit) {
         push @git_log_params, "$lastcommit..$self->{module}";
     } else {
         push @git_log_params, $self->{module};
     }
-    open(GITLOG, '-|', 'git-log', @git_log_params) or die "Cannot call git-log: $!";
+    # git-rev-list is the backend / plumbing version of git-log
+    open(GITLOG, '-|', 'git-rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
 
     my @commits;
 
