@@ -446,6 +446,8 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old)
 			invalidate_ce_path(old);
 		}
 	}
+	else
+		invalidate_ce_path(merge);
 	merge->ce_flags &= ~htons(CE_STAGEMASK);
 	add_cache_entry(merge, ADD_CACHE_OK_TO_ADD);
 	return 1;

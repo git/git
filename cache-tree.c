@@ -110,6 +110,10 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 	int namelen;
 	struct cache_tree_sub *down;
 
+#if DEBUG
+	fprintf(stderr, "cache-tree invalidate <%s>\n", path);
+#endif
+
 	if (!it)
 		return;
 	slash = strchr(path, '/');
@@ -335,7 +339,7 @@ static int update_one(struct cache_tree *it,
 		offset += 20;
 
 #if DEBUG
-		fprintf(stderr, "cache-tree %o %.*s\n",
+		fprintf(stderr, "cache-tree update-one %o %.*s\n",
 			mode, entlen, path + baselen);
 #endif
 	}
@@ -351,7 +355,7 @@ static int update_one(struct cache_tree *it,
 	free(buffer);
 	it->entry_count = i;
 #if DEBUG
-	fprintf(stderr, "cache-tree (%d ent, %d subtree) %s\n",
+	fprintf(stderr, "cache-tree update-one (%d ent, %d subtree) %s\n",
 		it->entry_count, it->subtree_nr,
 		sha1_to_hex(it->sha1));
 #endif
