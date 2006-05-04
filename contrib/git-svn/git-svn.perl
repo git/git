@@ -262,7 +262,14 @@ sub fetch {
 	} else {
 		chdir $SVN_WC or croak $!;
 		read_uuid();
-		$last_commit = file_to_s("$REV_DIR/$base->{revision}");
+		eval { $last_commit = file_to_s("$REV_DIR/$base->{revision}") };
+		# looks like a user manually cp'd and svn switch'ed
+		unless ($last_commit) {
+			sys(qw/svn revert -R ./);
+			assert_svn_wc_clean($base->{revision});
+			$last_commit = git_commit($base, @parents);
+			assert_tree($last_commit);
+		}
 	}
 	my @svn_up = qw(svn up);
 	push @svn_up, '--ignore-externals' unless $_no_ignore_ext;
