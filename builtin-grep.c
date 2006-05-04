@@ -93,6 +93,7 @@ struct grep_opt {
 	unsigned linenum:1;
 	unsigned invert:1;
 	unsigned name_only:1;
+	unsigned unmatch_name_only:1;
 	unsigned count:1;
 	unsigned word_regexp:1;
 #define GREP_BINARY_DEFAULT	0
@@ -241,6 +242,11 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		 */
 		if (opt->invert)
 			hit = !hit;
+		if (opt->unmatch_name_only) {
+			if (hit)
+				return 0;
+			goto next_line;
+		}
 		if (hit) {
 			count++;
 			if (binary_match_only) {
@@ -297,6 +303,8 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 			prev->bol = bol;
 			prev->eol = eol;
 		}
+
+	next_line:
 		*eol = ch;
 		bol = eol + 1;
 		if (!left)
@@ -304,6 +312,13 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		left--;
 		lno++;
 	}
+
+	if (opt->unmatch_name_only) {
+		/* We did not see any hit, so we want to show this */
+		printf("%s\n", name);
+		return 1;
+	}
+
 	/* NEEDSWORK:
 	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,
 	 * which feels mostly useless but sometimes useful.  Maybe
@@ -530,6 +545,11 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		if (!strcmp("-l", arg) ||
 		    !strcmp("--files-with-matches", arg)) {
 			opt.name_only = 1;
+			continue;
+		}
+		if (!strcmp("-L", arg) ||
+		    !strcmp("--files-without-match", arg)) {
+			opt.unmatch_name_only = 1;
 			continue;
 		}
 		if (!strcmp("-c", arg) ||
