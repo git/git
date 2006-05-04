@@ -1018,14 +1018,12 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	}
 
 	if (memcmp(one->sha1, two->sha1, 20)) {
-		char one_sha1[41];
 		int abbrev = o->full_index ? 40 : DEFAULT_ABBREV;
-		memcpy(one_sha1, sha1_to_hex(one->sha1), 41);
 
 		len += snprintf(msg + len, sizeof(msg) - len,
 				"index %.*s..%.*s",
-				abbrev, one_sha1, abbrev,
-				sha1_to_hex(two->sha1));
+				abbrev, sha1_to_hex(one->sha1),
+				abbrev, sha1_to_hex(two->sha1));
 		if (one->mode == two->mode)
 			len += snprintf(msg + len, sizeof(msg) - len,
 					" %06o", one->mode);
