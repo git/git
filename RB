@@ -9,6 +9,12 @@ sed -n \
     -e '/^[^\/][^\/]\//p' |
 while read topic
 do
+	case " $* " in
+	*' '"$topic"' '*)
+		echo >&2 "* Skipping $topic"
+		continue ;;
+	esac
+
 	rebase= done= not_done= trouble= date=
 	topic_sha1=`git rev-parse --verify "refs/heads/$topic"`
 

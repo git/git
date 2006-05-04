@@ -8,7 +8,7 @@ test -z "$(git diff --cached --name-status)" || {
 }
 Meta/Make clean >/dev/null 2>&1
 
-: ${branches='next master pu'}
+: ${branches='next master maint pu'}
 
 nstall=install
 for branch in $branches
@@ -20,8 +20,7 @@ do
 		Meta/Make $J all &&
 		Meta/Make $J $nstall &&
 		Meta/Make test &&
-		Meta/Make clean &&
-		nstall=all || exit $?
+		Meta/Make clean || exit $?
 	else
 		echo "* No $branch"
 	fi

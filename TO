@@ -1,11 +1,11 @@
 #!/bin/sh
 
 clean= next=next
+branch=`git symbolic-ref HEAD`
 while case $# in 0) break ;; esac
 do
 	case "$1" in
 	--clean)
-		branch=`git symbolic-ref HEAD` &&
 		test refs/heads/master = "$branch" || {
 			echo >&2 Not on master 
 			exit 1
@@ -40,6 +40,11 @@ while read topic
 do
 	rebase= done= not_done= trouble= date=
 	topic_sha1=`git rev-parse --verify "refs/heads/$topic"`
+	is_current=
+	if test "refs/heads/$topic" = "$branch"
+	then
+		is_current=" *"
+	fi
 
 	date=`
 		git-rev-list -1 --pretty "$topic" |
@@ -88,7 +93,7 @@ do
 		not_done="${LF}Up to date."
 	fi
 
-	echo "*** $topic ***$date$trouble$done$not_done"
+	echo "*** $topic ***$date$is_current$trouble$done$not_done"
 
 	if test -z "$trouble$not_done" &&
 	    test -n "$done" &&
