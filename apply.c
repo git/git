@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "quote.h"
 #include "blob.h"
+#include "delta.h"
 
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
@@ -966,6 +967,70 @@ static inline int metadata_changes(struct patch *patch)
 		 patch->old_mode != patch->new_mode);
 }
 
+static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
+{
+	/* We have read "GIT binary patch\n"; what follows is a
+	 * sequence of 'length-byte' followed by base-85 encoded
+	 * delta data.
+	 *
+	 * Each 5-byte sequence of base-85 encodes up to 4 bytes,
+	 * and we would limit the patch line to 66 characters,
+	 * so one line can fit up to 13 groups that would decode
+	 * to 52 bytes max.  The length byte 'A'-'Z' corresponds
+	 * to 1-26 bytes, and 'a'-'z' corresponds to 27-52 bytes.
+	 * The end of binary is signalled with an empty line.
+	 */
+	int llen, used;
+	struct fragment *fragment;
+	char *delta = NULL;
+
+	patch->is_binary = 1;
+	patch->fragments = fragment = xcalloc(1, sizeof(*fragment));
+	used = 0;
+	while (1) {
+		int byte_length, max_byte_length, newsize;
+		llen = linelen(buffer, size);
+		used += llen;
+		linenr++;
+		if (llen == 1)
+			break;
+		/* Minimum line is "A00000\n" which is 7-byte long,
+		 * and the line length must be multiple of 5 plus 2.
+		 */
+		if ((llen < 7) || (llen-2) % 5)
+			goto corrupt;
+		max_byte_length = (llen - 2) / 5 * 4;
+		byte_length = *buffer;
+		if ('A' <= byte_length && byte_length <= 'Z')
+			byte_length = byte_length - 'A' + 1;
+		else if ('a' <= byte_length && byte_length <= 'z')
+			byte_length = byte_length - 'a' + 27;
+		else
+			goto corrupt;
+		/* if the input length was not multiple of 4, we would
+		 * have filler at the end but the filler should never
+		 * exceed 3 bytes
+		 */
+		if (max_byte_length < byte_length ||
+		    byte_length <= max_byte_length - 4)
+			goto corrupt;
+		newsize = fragment->size + byte_length;
+		delta = xrealloc(delta, newsize);
+		if (decode_85(delta + fragment->size,
+			      buffer + 1,
+			      byte_length))
+			goto corrupt;
+		fragment->size = newsize;
+		buffer += llen;
+		size -= llen;
+	}
+	fragment->patch = delta;
+	return used;
+ corrupt:
+	return error("corrupt binary patch at line %d: %.*s",
+		     linenr-1, llen-1, buffer);
+}
+
 static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 {
 	int hdrsize, patchsize;
@@ -982,19 +1047,34 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 			"Files ",
 			NULL,
 		};
+		static const char git_binary[] = "GIT binary patch\n";
 		int i;
 		int hd = hdrsize + offset;
 		unsigned long llen = linelen(buffer + hd, size - hd);
 
-		if (!memcmp(" differ\n", buffer + hd + llen - 8, 8))
+		if (llen == sizeof(git_binary) - 1 &&
+		    !memcmp(git_binary, buffer + hd, llen)) {
+			int used;
+			linenr++;
+			used = parse_binary(buffer + hd + llen,
+					    size - hd - llen, patch);
+			if (used)
+				patchsize = used + llen;
+			else
+				patchsize = 0;
+		}
+		else if (!memcmp(" differ\n", buffer + hd + llen - 8, 8)) {
 			for (i = 0; binhdr[i]; i++) {
 				int len = strlen(binhdr[i]);
 				if (len < size - hd &&
 				    !memcmp(binhdr[i], buffer + hd, len)) {
+					linenr++;
 					patch->is_binary = 1;
+					patchsize = llen;
 					break;
 				}
 			}
+		}
 
 		/* Empty patch cannot be applied if:
 		 * - it is a binary patch and we do not do binary_replace, or
@@ -1345,75 +1425,107 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 	return offset;
 }
 
+static int apply_binary(struct buffer_desc *desc, struct patch *patch)
+{
+	const char *name = patch->old_name ? patch->old_name : patch->new_name;
+	unsigned char sha1[20];
+	unsigned char hdr[50];
+	int hdrlen;
+
+	if (!allow_binary_replacement)
+		return error("cannot apply binary patch to '%s' "
+			     "without --allow-binary-replacement",
+			     name);
+
+	/* For safety, we require patch index line to contain
+	 * full 40-byte textual SHA1 for old and new, at least for now.
+	 */
+	if (strlen(patch->old_sha1_prefix) != 40 ||
+	    strlen(patch->new_sha1_prefix) != 40 ||
+	    get_sha1_hex(patch->old_sha1_prefix, sha1) ||
+	    get_sha1_hex(patch->new_sha1_prefix, sha1))
+		return error("cannot apply binary patch to '%s' "
+			     "without full index line", name);
+
+	if (patch->old_name) {
+		/* See if the old one matches what the patch
+		 * applies to.
+		 */
+		write_sha1_file_prepare(desc->buffer, desc->size,
+					blob_type, sha1, hdr, &hdrlen);
+		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
+			return error("the patch applies to '%s' (%s), "
+				     "which does not match the "
+				     "current contents.",
+				     name, sha1_to_hex(sha1));
+	}
+	else {
+		/* Otherwise, the old one must be empty. */
+		if (desc->size)
+			return error("the patch applies to an empty "
+				     "'%s' but it is not empty", name);
+	}
+
+	if (desc->buffer) {
+		free(desc->buffer);
+		desc->alloc = desc->size = 0;
+	}
+	get_sha1_hex(patch->new_sha1_prefix, sha1);
+	if (!memcmp(sha1, null_sha1, 20))
+		return 0; /* deletion patch */
+
+	if (has_sha1_file(sha1)) {
+		char type[10];
+		unsigned long size;
+
+		desc->buffer = read_sha1_file(sha1, type, &size);
+		if (!desc->buffer)
+			return error("the necessary postimage %s for "
+				     "'%s' cannot be read",
+				     patch->new_sha1_prefix, name);
+		desc->alloc = desc->size = size;
+	}
+	else {
+		char type[10];
+		unsigned long src_size, dst_size;
+		void *src;
+
+		get_sha1_hex(patch->old_sha1_prefix, sha1);
+		src = read_sha1_file(sha1, type, &src_size);
+		if (!src)
+			return error("the necessary preimage %s for "
+				     "'%s' cannot be read",
+				     patch->old_sha1_prefix, name);
+
+		/* patch->fragment->patch has the delta data and
+		 * we should apply it to the preimage.
+		 */
+		desc->buffer = patch_delta(src, src_size,
+					   (void*) patch->fragments->patch,
+					   patch->fragments->size,
+					   &dst_size);
+		if (!desc->buffer)
+			return error("binary patch does not apply to '%s'",
+				     name);
+		desc->size = desc->alloc = dst_size;
+
+		/* verify that the result matches */
+		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
+					sha1, hdr, &hdrlen);
+		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
+			return error("binary patch to '%s' creates incorrect result", name);
+	}
+
+	return 0;
+}
+
 static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 
-	if (patch->is_binary) {
-		unsigned char sha1[20];
-
-		if (!allow_binary_replacement)
-			return error("cannot apply binary patch to '%s' "
-				     "without --allow-binary-replacement",
-				     name);
-
-		/* For safety, we require patch index line to contain
-		 * full 40-byte textual SHA1 for old and new, at least for now.
-		 */
-		if (strlen(patch->old_sha1_prefix) != 40 ||
-		    strlen(patch->new_sha1_prefix) != 40 ||
-		    get_sha1_hex(patch->old_sha1_prefix, sha1) ||
-		    get_sha1_hex(patch->new_sha1_prefix, sha1))
-			return error("cannot apply binary patch to '%s' "
-				     "without full index line", name);
-
-		if (patch->old_name) {
-			unsigned char hdr[50];
-			int hdrlen;
-
-			/* See if the old one matches what the patch
-			 * applies to.
-			 */
-			write_sha1_file_prepare(desc->buffer, desc->size,
-						blob_type, sha1, hdr, &hdrlen);
-			if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
-				return error("the patch applies to '%s' (%s), "
-					     "which does not match the "
-					     "current contents.",
-					     name, sha1_to_hex(sha1));
-		}
-		else {
-			/* Otherwise, the old one must be empty. */
-			if (desc->size)
-				return error("the patch applies to an empty "
-					     "'%s' but it is not empty", name);
-		}
-
-		/* For now, we do not record post-image data in the patch,
-		 * and require the object already present in the recipient's
-		 * object database.
-		 */
-		if (desc->buffer) {
-			free(desc->buffer);
-			desc->alloc = desc->size = 0;
-		}
-		get_sha1_hex(patch->new_sha1_prefix, sha1);
-
-		if (memcmp(sha1, null_sha1, 20)) {
-			char type[10];
-			unsigned long size;
-
-			desc->buffer = read_sha1_file(sha1, type, &size);
-			if (!desc->buffer)
-				return error("the necessary postimage %s for "
-					     "'%s' does not exist",
-					     patch->new_sha1_prefix, name);
-			desc->alloc = desc->size = size;
-		}
-
-		return 0;
-	}
+	if (patch->is_binary)
+		return apply_binary(desc, patch);
 
 	while (frag) {
 		if (apply_one_fragment(desc, frag) < 0)

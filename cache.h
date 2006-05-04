@@ -363,4 +363,7 @@ extern int receive_keep_pack(int fd[2], const char *me, int quiet);
 /* pager.c */
 extern void setup_pager(void);
 
+/* base85 */
+int decode_85(char *dst, char *line, int linelen);
+
 #endif /* CACHE_H */

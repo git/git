@@ -8,6 +8,7 @@
 #include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "delta.h"
 #include "xdiff-interface.h"
 
 static int use_size_cache;
@@ -391,6 +392,90 @@ static void show_stats(struct diffstat_t* data)
 			total_files, adds, dels);
 }
 
+static void *encode_delta_size(void *data, unsigned long size)
+{
+	unsigned char *cp = data;
+	*cp++ = size;
+	size >>= 7;
+	while (size) {
+		cp[-1] |= 0x80;
+		*cp++ = size;
+		size >>= 7;
+	}
+	return cp;
+}
+
+static void *safe_diff_delta(const unsigned char *src, unsigned long src_size,
+			     const unsigned char *dst, unsigned long dst_size,
+			     unsigned long *delta_size)
+{
+	unsigned long bufsize;
+	unsigned char *data;
+	unsigned char *cp;
+
+	if (src_size && dst_size)
+		return diff_delta(src, src_size, dst, dst_size, delta_size, 0);
+
+	/* diff-delta does not like to do delta with empty, so
+	 * we do that by hand here.  Sigh...
+	 */
+
+	if (!src_size)
+		/* literal copy can be done only 127-byte at a time.
+		 */
+		bufsize = dst_size + (dst_size / 127) + 40;
+	else
+		bufsize = 40;
+	data = xmalloc(bufsize);
+	cp = encode_delta_size(data, src_size);
+	cp = encode_delta_size(cp, dst_size);
+
+	if (dst_size) {
+		/* copy out literally */
+		while (dst_size) {
+			int sz = (127 < dst_size) ? 127 : dst_size;
+			*cp++ = sz;
+			dst_size -= sz;
+			while (sz) {
+				*cp++ = *dst++;
+				sz--;
+			}
+		}
+	}
+	*delta_size = (cp - data);
+	return data;
+}
+
+static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
+{
+	void *delta, *cp;
+	unsigned long delta_size;
+
+	printf("GIT binary patch\n");
+	delta = safe_diff_delta(one->ptr, one->size,
+				two->ptr, two->size,
+				&delta_size);
+	if (!delta)
+		die("unable to generate binary diff");
+
+	/* emit delta encoded in base85 */
+	cp = delta;
+	while (delta_size) {
+		int bytes = (52 < delta_size) ? 52 : delta_size;
+		char line[70];
+		delta_size -= bytes;
+		if (bytes <= 26)
+			line[0] = bytes + 'A' - 1;
+		else
+			line[0] = bytes - 26 + 'a' - 1;
+		encode_85(line + 1, cp, bytes);
+		cp += bytes;
+		puts(line);
+	}
+	printf("\n");
+	free(delta);
+}
+
 #define FIRST_FEW_BYTES 8000
 static int mmfile_is_binary(mmfile_t *mf)
 {
@@ -407,6 +492,7 @@ static void builtin_diff(const char *name_a,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
+			 struct diff_options *o,
 			 int complete_rewrite)
 {
 	mmfile_t mf1, mf2;
@@ -451,8 +537,13 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))
-		printf("Binary files %s and %s differ\n", lbl[0], lbl[1]);
+	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
+		if (o->full_index)
+			emit_binary_diff(&mf1, &mf2);
+		else
+			printf("Binary files %s and %s differ\n",
+			       lbl[0], lbl[1]);
+	}
 	else {
 		/* Crazy xdl interfaces.. */
 		const char *diffopts = getenv("GIT_DIFF_OPTS");
@@ -928,6 +1019,7 @@ static void run_diff_cmd(const char *pgm,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
+			 struct diff_options *o,
 			 int complete_rewrite)
 {
 	if (pgm) {
@@ -937,7 +1029,7 @@ static void run_diff_cmd(const char *pgm,
 	}
 	if (one && two)
 		builtin_diff(name, other ? other : name,
-			     one, two, xfrm_msg, complete_rewrite);
+			     one, two, xfrm_msg, o, complete_rewrite);
 	else
 		printf("* Unmerged path %s\n", name);
 }
@@ -971,7 +1063,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, 0);
+		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, o, 0);
 		return;
 	}
 
@@ -1041,14 +1133,14 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		 * needs to be split into deletion and creation.
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
-		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, 0);
+		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, o, 0);
 		free(null);
 		null = alloc_filespec(one->path);
-		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, 0);
+		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, o, 0);
 		free(null);
 	}
 	else
-		run_diff_cmd(pgm, name, other, one, two, xfrm_msg,
+		run_diff_cmd(pgm, name, other, one, two, xfrm_msg, o,
 			     complete_rewrite);
 
 	free(name_munged);
