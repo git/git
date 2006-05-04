@@ -92,7 +92,7 @@ separated with a single space are given.
 	Furthermore, it lists only files which were modified
 	from all parents.
 
--cc::
+--cc::
 	This flag changes the way a merge commit patch is displayed,
 	in a similar way to the '-c' option. It implies the '-c'
 	and '-p' options and further compresses the patch output

@@ -10,12 +10,12 @@ SYNOPSIS
 --------
 [verse]
 'git-update-index'
-	     [--add] [--remove | --force-remove] [--replace] 
-	     [--refresh [-q] [--unmerged] [--ignore-missing]]
+	     [--add] [--remove | --force-remove] [--replace]
+	     [--refresh] [-q] [--unmerged] [--ignore-missing]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
-	     [--really-refresh]
+	     [--really-refresh] [--unresolve]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
@@ -79,6 +79,10 @@ OPTIONS
 	sometimes helpful when working with a big project on a
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
+
+--unresolve::
+	Restores the 'unmerged' or 'needs updating' state of a
+	file during a merge if it was cleared by accident.
 
 --info-only::
 	Do not create objects in the object database for all
