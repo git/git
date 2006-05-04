@@ -446,6 +446,11 @@ static int fsck_cache_tree(struct cache_tree *it)
 
 	if (0 <= it->entry_count) {
 		struct object *obj = parse_object(it->sha1);
+		if (!obj) {
+			error("%s: invalid sha1 pointer in cache-tree",
+			      sha1_to_hex(it->sha1));
+			return 1;
+		}
 		mark_reachable(obj, REACHABLE);
 		obj->used = 1;
 		if (obj->type != tree_type)
