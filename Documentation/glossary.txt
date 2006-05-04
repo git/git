@@ -68,6 +68,14 @@ ent::
 	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
 	explanation.
 
+fast forward::
+	A fast-forward is a special type of merge where you have
+	a revision and you are "merging" another branch's changes
+	that happen to be a descendant of what you have.
+	In such these cases, you do not make a new merge commit but
+	instead just update to his revision. This will happen
+	frequently on a tracking branch of a remote repository.
+
 fetch::
 	Fetching a branch means to get the branch's head ref from a
 	remote repository, to find out which objects are missing from
@@ -160,6 +168,12 @@ parent::
 	A commit object contains a (possibly empty) list of the logical
 	predecessor(s) in the line of development, i.e. its parents.
 
+pickaxe:: The term pickaxe refers to an option to the diffcore routines
+	that help select changes that add or delete a given text string.
+	With the --pickaxe-all option, it can be used to view the
+	full changeset that introduced or removed, say, a particular
+	line of text.  See gitlink:git-diff[1].
+
 plumbing::
 	Cute name for core git.
 
@@ -193,6 +207,18 @@ ref::
 	A 40-byte hex representation of a SHA1 pointing to a particular
 	object. These may be stored in `$GIT_DIR/refs/`.
 
+refspec::
+	A refspec is used by fetch and push to describe the mapping
+	between remote ref and local ref.  They are combined with
+	a colon in the format <src>:<dst>, preceded by an optional
+	plus sign, +.  For example:
+	`git fetch $URL refs/heads/master:refs/heads/origin`
+	means "grab the master branch head from the $URL and store
+	it as my origin branch head".
+	And `git push $URL refs/heads/master:refs/heads/to-upstream`
+	means "publish my master branch head as to-upstream master head
+	at $URL".   See also gitlink:git-push[1]
+
 repository::
 	A collection of refs together with an object database containing
 	all objects, which are reachable from the refs, possibly accompanied
@@ -216,6 +242,13 @@ SCM::
 
 SHA1::
 	Synonym for object name.
+
+tracking branch::
+	A regular git branch that is used to follow changes from
+	another repository.  A tracking branch should not contain
+	direct modifications or made commits made locally.
+	A tracking branch can usually be identified as the
+	right-hand-side ref in a Pull: refspec.
 
 tree object::
 	An object containing a list of file names and modes along with refs
