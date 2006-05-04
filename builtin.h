@@ -19,6 +19,7 @@ extern int cmd_version(int argc, const char **argv, char **envp);
 extern int cmd_whatchanged(int argc, const char **argv, char **envp);
 extern int cmd_show(int argc, const char **argv, char **envp);
 extern int cmd_log(int argc, const char **argv, char **envp);
+extern int cmd_count_objects(int argc, const char **argv, char **envp);
 
 extern int cmd_push(int argc, const char **argv, char **envp);
 
