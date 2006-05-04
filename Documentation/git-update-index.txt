@@ -10,8 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git-update-index'
-	     [--add] [--remove | --force-remove] [--replace] 
-	     [--refresh [-q] [--unmerged] [--ignore-missing]]
+	     [--add] [--remove | --force-remove] [--replace]
+	     [--refresh] [-q] [--unmerged] [--ignore-missing]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]

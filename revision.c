@@ -574,7 +574,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->max_count = atoi(arg + 12);
 				continue;
 			}
-			/* accept -<digit>, like traditilnal "head" */
+			/* accept -<digit>, like traditional "head" */
 			if ((*arg == '-') && isdigit(arg[1])) {
 				revs->max_count = atoi(arg + 1);
 				continue;
