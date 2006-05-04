@@ -271,7 +271,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	 *
 	 * Other cases are errors.
 	 */
-	
+
 	git_config(git_diff_config);
 	init_revisions(&rev);
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
@@ -321,7 +321,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 			blob[blobs].name = name;
 			blobs++;
 			continue;
-			
+
 		}
 		die("unhandled object '%s' given.", name);
 	}

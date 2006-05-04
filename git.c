@@ -46,10 +46,10 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_whatchanged },
 		{ "show", cmd_show },
+		{ "push", cmd_push },
 		{ "fmt-patch", cmd_format_patch },
 		{ "count-objects", cmd_count_objects },
 		{ "diff", cmd_diff },
-		{ "push", cmd_push },
 		{ "grep", cmd_grep },
 	};
 	int i;
