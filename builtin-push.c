@@ -72,7 +72,7 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 {
 	int n = 0;
 	FILE *f = fopen(git_path("remotes/%s", repo), "r");
-	int has_explicit_refspec = refspec_nr;
+	int has_explicit_refspec = refspec_nr || all || tags;
 
 	if (!f)
 		return -1;
@@ -144,7 +144,7 @@ static int get_config_remotes_uri(const char *repo, const char *uri[MAX_URI])
 	config_repo = repo;
 	config_current_uri = 0;
 	config_uri = uri;
-	config_get_refspecs = !refspec_nr;
+	config_get_refspecs = !(refspec_nr || all || tags);
 
 	git_config(get_remote_config);
 	return config_current_uri;
