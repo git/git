@@ -694,6 +694,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "-c")) {
 				revs->diff = 1;
+				revs->dense_combined_merges = 0;
 				revs->combine_merges = 1;
 				continue;
 			}

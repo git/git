@@ -48,6 +48,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "show", cmd_show },
 		{ "push", cmd_push },
 		{ "count-objects", cmd_count_objects },
+		{ "diff", cmd_diff },
 	};
 	int i;
 
