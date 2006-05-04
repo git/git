@@ -264,6 +264,8 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		}
 		*eol = ch;
 		bol = eol + 1;
+		if (!left)
+			break;
 		left--;
 		lno++;
 	}
