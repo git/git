@@ -69,12 +69,65 @@ int cmd_log(int argc, const char **argv, char **envp)
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
+static int istitlechar(char c)
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+		(c >= '0' && c <= '9') || c == '.' || c == '_';
+}
+
+static void reopen_stdout(struct commit *commit, int nr)
+{
+	char filename[1024];
+	char *sol;
+	int len;
+
+
+	sprintf(filename, "%04d", nr);
+	len = strlen(filename);
+
+	sol = strstr(commit->buffer, "\n\n");
+	if (sol) {
+		int j, space = 1;
+
+		sol += 2;
+		/* strip [PATCH] or [PATCH blabla] */
+		if (!strncmp(sol, "[PATCH", 6)) {
+			char *eos = strchr(sol + 6, ']');
+			if (eos) {
+				while (isspace(*eos))
+					eos++;
+				sol = eos;
+			}
+		}
+
+		for (j = 0; len < 1024 - 6 && sol[j] && sol[j] != '\n'; j++) {
+			if (istitlechar(sol[j])) {
+				if (space) {
+					filename[len++] = '-';
+					space = 0;
+				}
+				filename[len++] = sol[j];
+				if (sol[j] == '.')
+					while (sol[j + 1] == '.')
+						j++;
+			} else
+				space = 1;
+		}
+		while (filename[len - 1] == '.' || filename[len - 1] == '-')
+			len--;
+	}
+	strcpy(filename + len, ".txt");
+	fprintf(stderr, "%s\n", filename);
+	freopen(filename, "w", stdout);
+}
+
 int cmd_format_patch(int argc, const char **argv, char **envp)
 {
 	struct commit *commit;
 	struct commit **list = NULL;
 	struct rev_info rev;
-	int nr = 0;
+	int nr = 0, total;
+	int use_stdout = 0;
 
 	init_revisions(&rev);
 	rev.commit_format = CMIT_FMT_EMAIL;
@@ -87,20 +140,37 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 
+	while (argc > 1) {
+		if (!strcmp(argv[1], "--stdout"))
+			use_stdout = 1;
+		else
+			die ("unrecognized argument: %s", argv[1]);
+		argc--;
+		argv++;
+	}
+
 	prepare_revision_walk(&rev);
 	while ((commit = get_revision(&rev)) != NULL) {
+		/* ignore merges */
+		if (commit->parents && commit->parents->next)
+			continue;
 		nr++;
 		list = realloc(list, nr * sizeof(list[0]));
 		list[nr - 1] = commit;
 	}
+	total = nr;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
+		if (!use_stdout)
+			reopen_stdout(commit, total - nr);
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
 		if (shown)
 			printf("-- \n%s\n\n", git_version_string);
+		if (!use_stdout)
+			fclose(stdout);
 	}
 	free(list);
 	return 0;
