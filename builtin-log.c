@@ -137,6 +137,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	struct rev_info rev;
 	int nr = 0, total, i, j;
 	int use_stdout = 0;
+	int numbered = 0;
 
 	init_revisions(&rev);
 	rev.commit_format = CMIT_FMT_EMAIL;
@@ -156,6 +157,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	for (i = 1, j = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "--stdout"))
 			use_stdout = 1;
+		else if (!strcmp(argv[i], "-n") ||
+				!strcmp(argv[i], "--numbered"))
+			numbered = 1;
 		else if (!strcmp(argv[i], "-o")) {
 			if (argc < 3)
 				die ("Which directory?");
@@ -186,11 +190,14 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		list[nr - 1] = commit;
 	}
 	total = nr;
+	if (numbered)
+		rev.total = total;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
+		rev.nr = total - nr;
 		if (!use_stdout)
-			reopen_stdout(commit, total - nr);
+			reopen_stdout(commit, rev.nr);
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;

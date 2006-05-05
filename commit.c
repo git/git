@@ -489,17 +489,14 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
 	int indent = 4;
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
-	const char *subject = NULL;
 
-	if (fmt == CMIT_FMT_EMAIL)
-		subject = "Subject: [PATCH] ";
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
 
