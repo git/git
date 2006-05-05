@@ -11,11 +11,20 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Each commit between the fork-point and <head> is examined, and compared against
-the change each commit between the fork-point and <upstream> introduces.
-Commits already included in upstream are prefixed with '-' (meaning "drop from
-my local pull"), while commits missing from upstream are prefixed with '+'
-(meaning "add to the updated upstream").
+The changeset (or "diff") of each commit between the fork-point and <head>
+is compared against each commit between the fork-point and <upstream>.
+
+Every commit with a changeset that doesn't exist in the other branch
+has its id (sha1) reported, prefixed by a symbol.  Those existing only
+in the <upstream> branch are prefixed with a minus (-) sign, and those
+that only exist in the <head> branch are prefixed with a plus (+) symbol.
+
+Because git-cherry compares the changeset rather than the commit id
+(sha1), you can use git-cherry to find out if a commit you made locally
+has been applied <upstream> under a different commit id.  For example,
+this will happen if you're feeding patches <upstream> via email rather
+than pushing or pulling commits directly.
+
 
 OPTIONS
 -------
