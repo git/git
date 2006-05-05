@@ -20,6 +20,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
 	const char *extra;
 	int len;
+	char* subject = NULL;
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
@@ -50,10 +51,21 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	 * Print header line of header..
 	 */
 
-	if (opt->commit_format == CMIT_FMT_EMAIL)
+	if (opt->commit_format == CMIT_FMT_EMAIL) {
+		if (opt->total > 0) {
+			static char buffer[64];
+			snprintf(buffer, sizeof(buffer),
+					"Subject: [PATCH %d/%d] ",
+					opt->nr, opt->total);
+			subject = buffer;
+		} else if (opt->total == 0)
+			subject = "Subject: [PATCH] ";
+		else
+			subject = "Subject: ";
+
 		printf("From %s  Thu Apr 7 15:13:13 2005\n",
 		       sha1_to_hex(commit->object.sha1));
-	else {
+	} else {
 		printf("%s%s",
 		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
 		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
@@ -69,7 +81,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev);
+	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev, subject);
 	printf("%s%s%s", this_header, extra, sep);
 }
 
