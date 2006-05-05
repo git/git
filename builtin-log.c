@@ -76,15 +76,22 @@ static int istitlechar(char c)
 }
 
 static FILE *realstdout = NULL;
+static char *output_directory = NULL;
 
 static void reopen_stdout(struct commit *commit, int nr)
 {
 	char filename[1024];
 	char *sol;
-	int len;
+	int len = 0;
 
+	if (output_directory) {
+		strncpy(filename, output_directory, 1010);
+		len = strlen(filename);
+		if (filename[len - 1] != '/')
+			filename[len++] = '/';
+	}
 
-	sprintf(filename, "%04d", nr);
+	sprintf(filename + len, "%04d", nr);
 	len = strlen(filename);
 
 	sol = strstr(commit->buffer, "\n\n");
@@ -128,7 +135,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	struct commit *commit;
 	struct commit **list = NULL;
 	struct rev_info rev;
-	int nr = 0, total;
+	int nr = 0, total, i, j;
 	int use_stdout = 0;
 
 	init_revisions(&rev);
@@ -140,16 +147,31 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
 
-	while (argc > 1) {
-		if (!strcmp(argv[1], "--stdout"))
+	/*
+	 * Parse the arguments before setup_revisions(), or something
+	 * like "git fmt-patch -o a123 HEAD^.." may fail; a123 is
+	 * possibly a valid SHA1.
+	 */
+	for (i = 1, j = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--stdout"))
 			use_stdout = 1;
-		else
-			die ("unrecognized argument: %s", argv[1]);
-		argc--;
-		argv++;
+		else if (!strcmp(argv[i], "-o")) {
+			if (argc < 3)
+				die ("Which directory?");
+			if (mkdir(argv[i + 1], 0777) < 0 && errno != EEXIST)
+				die("Could not create directory %s",
+						argv[i + 1]);
+			output_directory = strdup(argv[i + 1]);
+			i++;
+		} else
+			argv[j++] = argv[i];
 	}
+	argc = j;
+
+	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	if (argc > 1)
+		die ("unrecognized argument: %s", argv[1]);
 
 	if (!use_stdout)
 		realstdout = fdopen(dup(1), "w");
@@ -177,6 +199,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		if (!use_stdout)
 			fclose(stdout);
 	}
+	if (output_directory)
+		free(output_directory);
 	free(list);
 	return 0;
 }
