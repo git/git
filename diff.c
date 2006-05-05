@@ -392,78 +392,78 @@ static void show_stats(struct diffstat_t* data)
 			total_files, adds, dels);
 }
 
-static void *encode_delta_size(void *data, unsigned long size)
+static unsigned char *deflate_it(char *data,
+				 unsigned long size,
+				 unsigned long *result_size)
 {
-	unsigned char *cp = data;
-	*cp++ = size;
-	size >>= 7;
-	while (size) {
-		cp[-1] |= 0x80;
-		*cp++ = size;
-		size >>= 7;
-	}
-	return cp;
-}
+	int bound;
+	unsigned char *deflated;
+	z_stream stream;
 
-static void *safe_diff_delta(const unsigned char *src, unsigned long src_size,
-			     const unsigned char *dst, unsigned long dst_size,
-			     unsigned long *delta_size)
-{
-	unsigned long bufsize;
-	unsigned char *data;
-	unsigned char *cp;
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, Z_BEST_COMPRESSION);
+	bound = deflateBound(&stream, size);
+	deflated = xmalloc(bound);
+	stream.next_out = deflated;
+	stream.avail_out = bound;
 
-	if (src_size && dst_size)
-		return diff_delta(src, src_size, dst, dst_size, delta_size, 0);
-
-	/* diff-delta does not like to do delta with empty, so
-	 * we do that by hand here.  Sigh...
-	 */
-
-	if (!src_size)
-		/* literal copy can be done only 127-byte at a time.
-		 */
-		bufsize = dst_size + (dst_size / 127) + 40;
-	else
-		bufsize = 40;
-	data = xmalloc(bufsize);
-	cp = encode_delta_size(data, src_size);
-	cp = encode_delta_size(cp, dst_size);
-
-	if (dst_size) {
-		/* copy out literally */
-		while (dst_size) {
-			int sz = (127 < dst_size) ? 127 : dst_size;
-			*cp++ = sz;
-			dst_size -= sz;
-			while (sz) {
-				*cp++ = *dst++;
-				sz--;
-			}
-		}
-	}
-	*delta_size = (cp - data);
-	return data;
+	stream.next_in = (unsigned char *)data;
+	stream.avail_in = size;
+	while (deflate(&stream, Z_FINISH) == Z_OK)
+		; /* nothing */
+	deflateEnd(&stream);
+	*result_size = stream.total_out;
+	return deflated;
 }
 
 static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 {
-	void *delta, *cp;
+	void *cp;
+	void *delta;
+	void *deflated;
+	void *data;
+	unsigned long orig_size;
 	unsigned long delta_size;
+	unsigned long deflate_size;
+	unsigned long data_size;
 
 	printf("GIT binary patch\n");
-	delta = safe_diff_delta(one->ptr, one->size,
-				two->ptr, two->size,
-				&delta_size);
-	if (!delta)
-		die("unable to generate binary diff");
+	/* We could do deflated delta, or we could do just deflated two,
+	 * whichever is smaller.
+	 */
+	delta = NULL;
+	deflated = deflate_it(two->ptr, two->size, &deflate_size);
+	if (one->size && two->size) {
+		delta = diff_delta(one->ptr, one->size,
+				   two->ptr, two->size,
+				   &delta_size, deflate_size);
+		if (delta) {
+			void *to_free = delta;
+			orig_size = delta_size;
+			delta = deflate_it(delta, delta_size, &delta_size);
+			free(to_free);
+		}
+	}
 
-	/* emit delta encoded in base85 */
-	cp = delta;
-	while (delta_size) {
-		int bytes = (52 < delta_size) ? 52 : delta_size;
+	if (delta && delta_size < deflate_size) {
+		printf("delta %lu\n", orig_size);
+		free(deflated);
+		data = delta;
+		data_size = delta_size;
+	}
+	else {
+		printf("literal %lu\n", two->size);
+		free(delta);
+		data = deflated;
+		data_size = deflate_size;
+	}
+
+	/* emit data encoded in base85 */
+	cp = data;
+	while (data_size) {
+		int bytes = (52 < data_size) ? 52 : data_size;
 		char line[70];
-		delta_size -= bytes;
+		data_size -= bytes;
 		if (bytes <= 26)
 			line[0] = bytes + 'A' - 1;
 		else
@@ -473,7 +473,7 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 		puts(line);
 	}
 	printf("\n");
-	free(delta);
+	free(data);
 }
 
 #define FIRST_FEW_BYTES 8000
@@ -538,7 +538,11 @@ static void builtin_diff(const char *name_a,
 		die("unable to read files to diff");
 
 	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
-		if (o->full_index)
+		/* Quite common confusing case */
+		if (mf1.size == mf2.size &&
+		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
+			goto free_ab_and_return;
+		if (o->binary)
 			emit_binary_diff(&mf1, &mf2);
 		else
 			printf("Binary files %s and %s differ\n",
@@ -1239,6 +1243,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->rename_limit = strtoul(arg+2, NULL, 10);
 	else if (!strcmp(arg, "--full-index"))
 		options->full_index = 1;
+	else if (!strcmp(arg, "--binary")) {
+		options->output_format = DIFF_FORMAT_PATCH;
+		options->full_index = options->binary = 1;
+	}
 	else if (!strcmp(arg, "--name-only"))
 		options->output_format = DIFF_FORMAT_NAME;
 	else if (!strcmp(arg, "--name-status"))

@@ -114,6 +114,9 @@ struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
 	int is_rename, is_copy, is_new, is_delete, is_binary;
+#define BINARY_DELTA_DEFLATED 1
+#define BINARY_LITERAL_DEFLATED 2
+	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
 	struct fragment *fragments;
@@ -969,9 +972,11 @@ static inline int metadata_changes(struct patch *patch)
 
 static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 {
-	/* We have read "GIT binary patch\n"; what follows is a
-	 * sequence of 'length-byte' followed by base-85 encoded
-	 * delta data.
+	/* We have read "GIT binary patch\n"; what follows is a line
+	 * that says the patch method (currently, either "deflated
+	 * literal" or "deflated delta") and the length of data before
+	 * deflating; a sequence of 'length-byte' followed by base-85
+	 * encoded data follows.
 	 *
 	 * Each 5-byte sequence of base-85 encodes up to 4 bytes,
 	 * and we would limit the patch line to 66 characters,
@@ -982,11 +987,27 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	 */
 	int llen, used;
 	struct fragment *fragment;
-	char *delta = NULL;
+	char *data = NULL;
 
-	patch->is_binary = 1;
 	patch->fragments = fragment = xcalloc(1, sizeof(*fragment));
-	used = 0;
+
+	/* Grab the type of patch */
+	llen = linelen(buffer, size);
+	used = llen;
+	linenr++;
+
+	if (!strncmp(buffer, "delta ", 6)) {
+		patch->is_binary = BINARY_DELTA_DEFLATED;
+		patch->deflate_origlen = strtoul(buffer + 6, NULL, 10);
+	}
+	else if (!strncmp(buffer, "literal ", 8)) {
+		patch->is_binary = BINARY_LITERAL_DEFLATED;
+		patch->deflate_origlen = strtoul(buffer + 8, NULL, 10);
+	}
+	else
+		return error("unrecognized binary patch at line %d: %.*s",
+			     linenr-1, llen-1, buffer);
+	buffer += llen;
 	while (1) {
 		int byte_length, max_byte_length, newsize;
 		llen = linelen(buffer, size);
@@ -1015,8 +1036,8 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 		    byte_length <= max_byte_length - 4)
 			goto corrupt;
 		newsize = fragment->size + byte_length;
-		delta = xrealloc(delta, newsize);
-		if (decode_85(delta + fragment->size,
+		data = xrealloc(data, newsize);
+		if (decode_85(data + fragment->size,
 			      buffer + 1,
 			      byte_length))
 			goto corrupt;
@@ -1024,7 +1045,7 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 		buffer += llen;
 		size -= llen;
 	}
-	fragment->patch = delta;
+	fragment->patch = data;
 	return used;
  corrupt:
 	return error("corrupt binary patch at line %d: %.*s",
@@ -1425,6 +1446,61 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 	return offset;
 }
 
+static char *inflate_it(const void *data, unsigned long size,
+			unsigned long inflated_size)
+{
+	z_stream stream;
+	void *out;
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+
+	stream.next_in = (unsigned char *)data;
+	stream.avail_in = size;
+	stream.next_out = out = xmalloc(inflated_size);
+	stream.avail_out = inflated_size;
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
+		free(out);
+		return NULL;
+	}
+	return out;
+}
+
+static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
+{
+	unsigned long dst_size;
+	struct fragment *fragment = patch->fragments;
+	void *data;
+	void *result;
+
+	data = inflate_it(fragment->patch, fragment->size,
+			  patch->deflate_origlen);
+	if (!data)
+		return error("corrupt patch data");
+	switch (patch->is_binary) {
+	case BINARY_DELTA_DEFLATED:
+		result = patch_delta(desc->buffer, desc->size,
+				     data,
+				     patch->deflate_origlen,
+				     &dst_size);
+		free(desc->buffer);
+		desc->buffer = result;
+		free(data);
+		break;
+	case BINARY_LITERAL_DEFLATED:
+		free(desc->buffer);
+		desc->buffer = data;
+		dst_size = patch->deflate_origlen;
+		break;
+	}
+	if (!desc->buffer)
+		return -1;
+	desc->size = desc->alloc = dst_size;
+	return 0;
+}
+
 static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
@@ -1466,18 +1542,20 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 				     "'%s' but it is not empty", name);
 	}
 
-	if (desc->buffer) {
+	get_sha1_hex(patch->new_sha1_prefix, sha1);
+	if (!memcmp(sha1, null_sha1, 20)) {
 		free(desc->buffer);
 		desc->alloc = desc->size = 0;
-	}
-	get_sha1_hex(patch->new_sha1_prefix, sha1);
-	if (!memcmp(sha1, null_sha1, 20))
+		desc->buffer = NULL;
 		return 0; /* deletion patch */
+	}
 
 	if (has_sha1_file(sha1)) {
+		/* We already have the postimage */
 		char type[10];
 		unsigned long size;
 
+		free(desc->buffer);
 		desc->buffer = read_sha1_file(sha1, type, &size);
 		if (!desc->buffer)
 			return error("the necessary postimage %s for "
@@ -1486,28 +1564,13 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		desc->alloc = desc->size = size;
 	}
 	else {
-		char type[10];
-		unsigned long src_size, dst_size;
-		void *src;
-
-		get_sha1_hex(patch->old_sha1_prefix, sha1);
-		src = read_sha1_file(sha1, type, &src_size);
-		if (!src)
-			return error("the necessary preimage %s for "
-				     "'%s' cannot be read",
-				     patch->old_sha1_prefix, name);
-
-		/* patch->fragment->patch has the delta data and
-		 * we should apply it to the preimage.
+		/* We have verified desc matches the preimage;
+		 * apply the patch data to it, which is stored
+		 * in the patch->fragments->{patch,size}.
 		 */
-		desc->buffer = patch_delta(src, src_size,
-					   (void*) patch->fragments->patch,
-					   patch->fragments->size,
-					   &dst_size);
-		if (!desc->buffer)
+		if (apply_binary_fragment(desc, patch))
 			return error("binary patch does not apply to '%s'",
 				     name);
-		desc->size = desc->alloc = dst_size;
 
 		/* verify that the result matches */
 		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
@@ -2102,7 +2165,8 @@ int main(int argc, char **argv)
 			diffstat = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--allow-binary-replacement")) {
+		if (!strcmp(arg, "--allow-binary-replacement") ||
+		    !strcmp(arg, "--binary")) {
 			allow_binary_replacement = 1;
 			continue;
 		}

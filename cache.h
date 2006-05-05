@@ -365,5 +365,6 @@ extern void setup_pager(void);
 
 /* base85 */
 int decode_85(char *dst, char *line, int linelen);
+void encode_85(char *buf, unsigned char *data, int bytes);
 
 #endif /* CACHE_H */
