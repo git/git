@@ -34,10 +34,10 @@ convert the value to the canonical form (simple decimal number for int,
 a "true" or "false" string for bool). If no type specifier is passed,
 no checks or transformations are performed on the value.
 
-This command will fail if
+This command will fail if:
 
-. .git/config is invalid,
-. .git/config can not be written to,
+. The .git/config file is invalid,
+. Can not write to .git/config,
 . no section was provided,
 . the section or key is invalid,
 . you try to unset an option which does not exist, or

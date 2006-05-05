@@ -101,7 +101,7 @@ OPTIONS
 	is not allowed.
 
 Examples
-~~~~~~~~
+--------
 
 Clone from upstream::
 +

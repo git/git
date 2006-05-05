@@ -41,6 +41,7 @@ Enter git-name-rev:
 
 ------------
 % git name-rev 33db5f4d9027a10e477ccf054b2c1ab94f74c85a
+33db5f4d9027a10e477ccf054b2c1ab94f74c85a tags/v0.99^0~940
 ------------
 
 Now you are wiser, because you know that it happened 940 revisions before v0.99.
