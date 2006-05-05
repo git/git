@@ -46,8 +46,11 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 					"Subject: [PATCH %d/%d] ",
 					opt->nr, opt->total);
 			subject = buffer;
-		} else
+		} else if (opt->total == 0)
 			subject = "Subject: [PATCH] ";
+		else
+			subject = "Subject: ";
+
 		printf("From %s  Thu Apr 7 15:13:13 2005\n",
 		       sha1_to_hex(commit->object.sha1));
 	} else {

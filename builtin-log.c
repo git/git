@@ -78,7 +78,7 @@ static int istitlechar(char c)
 static FILE *realstdout = NULL;
 static char *output_directory = NULL;
 
-static void reopen_stdout(struct commit *commit, int nr)
+static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 {
 	char filename[1024];
 	char *sol;
@@ -100,7 +100,7 @@ static void reopen_stdout(struct commit *commit, int nr)
 
 		sol += 2;
 		/* strip [PATCH] or [PATCH blabla] */
-		if (!strncmp(sol, "[PATCH", 6)) {
+		if (!keep_subject && !strncmp(sol, "[PATCH", 6)) {
 			char *eos = strchr(sol + 6, ']');
 			if (eos) {
 				while (isspace(*eos))
@@ -138,6 +138,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int nr = 0, total, i, j;
 	int use_stdout = 0;
 	int numbered = 0;
+	int keep_subject = 0;
 
 	init_revisions(&rev);
 	rev.commit_format = CMIT_FMT_EMAIL;
@@ -160,7 +161,11 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		else if (!strcmp(argv[i], "-n") ||
 				!strcmp(argv[i], "--numbered"))
 			numbered = 1;
-		else if (!strcmp(argv[i], "-o")) {
+		else if (!strcmp(argv[i], "-k") ||
+				!strcmp(argv[i], "--keep-subject")) {
+			keep_subject = 1;
+			rev.total = -1;
+		} else if (!strcmp(argv[i], "-o")) {
 			if (argc < 3)
 				die ("Which directory?");
 			if (mkdir(argv[i + 1], 0777) < 0 && errno != EEXIST)
@@ -172,6 +177,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			argv[j++] = argv[i];
 	}
 	argc = j;
+
+	if (numbered && keep_subject < 0)
+		die ("-n and -k are mutually exclusive.");
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
@@ -197,7 +205,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		commit = list[nr];
 		rev.nr = total - nr;
 		if (!use_stdout)
-			reopen_stdout(commit, rev.nr);
+			reopen_stdout(commit, rev.nr, keep_subject);
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
