@@ -131,8 +131,8 @@ static struct index ** delta_index(const unsigned char *buf,
 /* the maximum size for any opcode */
 #define MAX_OP_SIZE COPYOP_SIZE(0xffffffff, 0xffffffff)
 
-void *diff_delta(void *from_buf, unsigned long from_size,
-		 void *to_buf, unsigned long to_size,
+void *diff_delta(const void *from_buf, unsigned long from_size,
+		 const void *to_buf, unsigned long to_size,
 		 unsigned long *delta_size,
 		 unsigned long max_size)
 {
