@@ -75,6 +75,8 @@ static int istitlechar(char c)
 		(c >= '0' && c <= '9') || c == '.' || c == '_';
 }
 
+static FILE *realstdout = NULL;
+
 static void reopen_stdout(struct commit *commit, int nr)
 {
 	char filename[1024];
@@ -117,7 +119,7 @@ static void reopen_stdout(struct commit *commit, int nr)
 			len--;
 	}
 	strcpy(filename + len, ".txt");
-	fprintf(stderr, "%s\n", filename);
+	fprintf(realstdout, "%s\n", filename);
 	freopen(filename, "w", stdout);
 }
 
@@ -148,6 +150,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		argc--;
 		argv++;
 	}
+
+	if (!use_stdout)
+		realstdout = fdopen(dup(1), "w");
 
 	prepare_revision_walk(&rev);
 	while ((commit = get_revision(&rev)) != NULL) {
