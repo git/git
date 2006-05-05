@@ -28,6 +28,7 @@ struct diff_options {
 		 with_raw:1,
 		 with_stat:1,
 		 tree_in_recursive:1,
+		 binary:1,
 		 full_index:1,
 		 silent_on_remove:1,
 		 find_copies_harder:1;

@@ -1243,6 +1243,7 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
+	progress = isatty(2);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -1271,6 +1272,10 @@ int main(int argc, char **argv)
 				depth = strtoul(arg+8, &end, 0);
 				if (!arg[8] || *end)
 					usage(pack_usage);
+				continue;
+			}
+			if (!strcmp("--progress", arg)) {
+				progress = 1;
 				continue;
 			}
 			if (!strcmp("-q", arg)) {

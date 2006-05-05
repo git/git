@@ -335,8 +335,9 @@ static int store_aux(const char* key, const char* value)
 			store.offset[store.seen] = ftell(config_file);
 			store.state = KEY_SEEN;
 			store.seen++;
-		} else if(!strncmp(key, store.key, store.baselen))
-			store.state = SECTION_SEEN;
+		} else if (strrchr(key, '.') - key == store.baselen &&
+			      !strncmp(key, store.key, store.baselen))
+					store.state = SECTION_SEEN;
 	}
 	return 0;
 }

@@ -205,7 +205,7 @@ DIFF_OBJS = \
 	diffcore-delta.o log-tree.o
 
 LIB_OBJS = \
-	blob.o commit.o connect.o csum-file.o cache-tree.o \
+	blob.o commit.o connect.o csum-file.o cache-tree.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \
@@ -564,10 +564,6 @@ git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
 git-http-push$X: revision.o http.o http-push.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
-
-git-rev-list$X: rev-list.o $(LIB_FILE)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIBS) $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
