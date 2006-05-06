@@ -15,7 +15,7 @@ SYNOPSIS
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
-	     [--really-refresh] [--unresolve]
+	     [--really-refresh] [--unresolve] [--again]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
@@ -79,6 +79,10 @@ OPTIONS
 	sometimes helpful when working with a big project on a
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
+
+--again::
+	Runs `git-update-index` itself on the paths whose index
+	entries are different from those from the `HEAD` commit.
 
 --unresolve::
 	Restores the 'unmerged' or 'needs updating' state of a
