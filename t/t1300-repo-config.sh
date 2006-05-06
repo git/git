@@ -278,5 +278,36 @@ git-repo-config > output 2>&1
 test_expect_success 'no arguments, but no crash' \
 	"test $? = 129 && grep usage output"
 
+cat > .git/config << EOF
+[a.b]
+	c = d
+EOF
+
+git-repo-config a.x y
+
+cat > expect << EOF
+[a.b]
+	c = d
+[a]
+	x = y
+EOF
+
+test_expect_success 'new section is partial match of another' 'cmp .git/config expect'
+
+git-repo-config b.x y
+git-repo-config a.b c
+
+cat > expect << EOF
+[a.b]
+	c = d
+[a]
+	x = y
+	b = c
+[b]
+	x = y
+EOF
+
+test_expect_success 'new variable inserts into proper section' 'cmp .git/config expect'
+
 test_done
 
