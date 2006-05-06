@@ -576,7 +576,8 @@ static void read_head_pointers(void)
 	}
 }
 
-static int do_unresolve(int ac, const char **av)
+static int do_unresolve(int ac, const char **av,
+			const char *prefix, int prefix_length)
 {
 	int i;
 	int err = 0;
@@ -588,7 +589,10 @@ static int do_unresolve(int ac, const char **av)
 
 	for (i = 1; i < ac; i++) {
 		const char *arg = av[i];
-		err |= unresolve_one(arg);
+		const char *p = prefix_path(prefix, prefix_length, arg);
+		err |= unresolve_one(p);
+		if (p != arg)
+			free((char*)p);
 	}
 	return err;
 }
@@ -704,7 +708,8 @@ int main(int argc, const char **argv)
 				break;
 			}
 			if (!strcmp(path, "--unresolve")) {
-				has_errors = do_unresolve(argc - i, argv + i);
+				has_errors = do_unresolve(argc - i, argv + i,
+							  prefix, prefix_length);
 				if (has_errors)
 					active_cache_changed = 0;
 				goto finish;
