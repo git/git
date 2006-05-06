@@ -364,23 +364,26 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 	const char *p = prefix_path(prefix, prefix_length, path);
 	if (!verify_path(p)) {
 		fprintf(stderr, "Ignoring path %s\n", path);
-		return;
+		goto free_return;
 	}
 	if (mark_valid_only) {
 		if (mark_valid(p))
 			die("Unable to mark file %s", path);
-		return;
+		goto free_return;
 	}
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
 			die("git-update-index: unable to remove %s", path);
 		report("remove '%s'", path);
-		return;
+		goto free_return;
 	}
 	if (add_file_to_cache(p))
 		die("Unable to process file %s", path);
 	report("add '%s'", path);
+ free_return:
+	if (p != path)
+		free((char*)p);
 }
 
 static void read_index_info(int line_termination)
@@ -735,6 +738,7 @@ int main(int argc, const char **argv)
 		strbuf_init(&buf);
 		while (1) {
 			char *path_name;
+			const char *p;
 			read_line(&buf, stdin, line_termination);
 			if (buf.eof)
 				break;
@@ -742,11 +746,12 @@ int main(int argc, const char **argv)
 				path_name = unquote_c_style(buf.buf, NULL);
 			else
 				path_name = buf.buf;
-			update_one(path_name, prefix, prefix_length);
-			if (set_executable_bit) {
-				const char *p = prefix_path(prefix, prefix_length, path_name);
+			p = prefix_path(prefix, prefix_length, path_name);
+			update_one(p, NULL, 0);
+			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			}
+			if (p != path_name)
+				free((char*) p);
 			if (path_name != buf.buf)
 				free(path_name);
 		}
