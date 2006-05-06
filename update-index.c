@@ -610,6 +610,7 @@ static int do_reupdate(int ac, const char **av,
 	 */
 	int pos;
 	int has_head = 1;
+	char **pathspec = get_pathspec(prefix, av + 1);
 
 	if (read_ref(git_path("HEAD"), head_sha1))
 		/* If there is no HEAD, that means it is an initial
@@ -621,7 +622,8 @@ static int do_reupdate(int ac, const char **av,
 		struct cache_entry *ce = active_cache[pos];
 		struct cache_entry *old = NULL;
 		int save_nr;
-		if (ce_stage(ce))
+
+		if (ce_stage(ce) || !ce_path_match(ce, pathspec))
 			continue;
 		if (has_head)
 			old = read_one_ent(NULL, head_sha1,

@@ -69,5 +69,14 @@ test_expect_success 'update-index --update from subdir' \
 100644 0f1ae1422c2bf43f117d3dbd715c988a9ed2103f 0	file2
 EOF'
 
-test_done
+test_expect_success 'update-index --update with pathspec' \
+	'echo very happy >file2 &&
+	cat file2 >dir1/file3 &&
+	git-update-index --again dir1/ &&
+	git-ls-files -s >current &&
+	cmp current - <<\EOF
+100644 594fb5bb1759d90998e2bf2a38261ae8e243c760 0	dir1/file3
+100644 0f1ae1422c2bf43f117d3dbd715c988a9ed2103f 0	file2
+EOF'
 
+test_done
