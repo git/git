@@ -10,9 +10,10 @@ use warnings;
 use strict;
 use Getopt::Long;
 use POSIX qw(strftime gmtime);
+use File::Basename qw(basename dirname);
 
 sub usage() {
-	print STDERR 'Usage: ${\basename $0} [-s] [-S revs-file] file [ revision ]
+	print STDERR "Usage: ${\basename $0} [-s] [-S revs-file] file [ revision ]
 	-l, --long
 			Show long rev (Defaults off)
 	-t, --time
@@ -23,7 +24,7 @@ sub usage() {
 			Use revs from revs-file instead of calling git-rev-list
 	-h, --help
 			This message.
-';
+";
 
 	exit(1);
 }
@@ -35,7 +36,7 @@ my $rc = GetOptions(	"long|l" => \$longrev,
 			"help|h" => \$help,
 			"rename|r" => \$rename,
 			"rev-file|S=s" => \$rev_file);
-if (!$rc or $help) {
+if (!$rc or $help or !@ARGV) {
 	usage();
 }
 
@@ -208,6 +209,9 @@ sub find_parent_renames {
 	while (my $change = <$patch>) {
 		chomp $change;
 		my $filename = <$patch>;
+		if (!defined $filename) {
+			next;
+		}
 		chomp $filename;
 
 		if ($change =~ m/^[AMD]$/ ) {

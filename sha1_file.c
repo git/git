@@ -108,9 +108,10 @@ int safe_create_leading_directories(char *path)
 
 char * sha1_to_hex(const unsigned char *sha1)
 {
-	static char buffer[50];
+	static int bufno;
+	static char hexbuffer[4][50];
 	static const char hex[] = "0123456789abcdef";
-	char *buf = buffer;
+	char *buffer = hexbuffer[3 & ++bufno], *buf = buffer;
 	int i;
 
 	for (i = 0; i < 20; i++) {

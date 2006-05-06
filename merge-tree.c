@@ -24,16 +24,14 @@ static const char *sha1_to_hex_zero(const unsigned char *sha1)
 
 static void resolve(const char *base, struct name_entry *branch1, struct name_entry *result)
 {
-	char branch1_sha1[50];
-
 	/* If it's already branch1, don't bother showing it */
 	if (!branch1)
 		return;
-	memcpy(branch1_sha1, sha1_to_hex_zero(branch1->sha1), 41);
 
 	printf("0 %06o->%06o %s->%s %s%s\n",
 		branch1->mode, result->mode,
-		branch1_sha1, sha1_to_hex_zero(result->sha1),
+		sha1_to_hex_zero(branch1->sha1),
+		sha1_to_hex_zero(result->sha1),
 		base, result->path);
 }
 

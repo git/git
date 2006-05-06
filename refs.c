@@ -76,8 +76,8 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 	char ref[1000];
 	int fd, len, written;
 
-#ifdef USE_SYMLINK_HEAD
-	if (!only_use_symrefs) {
+#ifndef NO_SYMLINK_HEAD
+	if (prefer_symlink_refs) {
 		unlink(git_HEAD);
 		if (!symlink(refs_heads_master, git_HEAD))
 			return 0;

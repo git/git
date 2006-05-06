@@ -3,6 +3,15 @@
 #include "commit.h"
 #include "log-tree.h"
 
+static void show_parents(struct commit *commit, int abbrev)
+{
+	struct commit_list *p;
+	for (p = commit->parents; p ; p = p->next) {
+		struct commit *parent = p->item;
+		printf(" %s", diff_unique_abbrev(parent->object.sha1, abbrev));
+	}
+}
+
 void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 {
 	static char this_header[16384];
@@ -15,7 +24,10 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
-		puts(sha1_to_hex(commit->object.sha1));
+		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
+		if (opt->parents)
+			show_parents(commit, abbrev_commit);
+		putchar('\n');
 		return;
 	}
 
@@ -57,6 +69,8 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 		printf("%s%s",
 		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
 		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
+		if (opt->parents)
+			show_parents(commit, abbrev_commit);
 		if (parent) 
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,

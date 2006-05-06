@@ -1,0 +1,183 @@
+CONFIGURATION FILE
+------------------
+
+The git configuration file contains a number of variables that affect
+the git commands behaviour. They can be used by both the git plumbing
+and the porcelains. The variables are divided to sections, where
+in the fully qualified variable name the variable itself is the last
+dot-separated segment and the section name is everything before the last
+dot. The variable names are case-insensitive and only alphanumeric
+characters are allowed. Some variables may appear multiple times.
+
+The syntax is fairly flexible and permissive; whitespaces are mostly
+ignored. The '#' and ';' characters begin commends to the end of line,
+blank lines are ignored, lines containing strings enclosed in square
+brackets start sections and all the other lines are recognized
+as setting variables, in the form 'name = value'. If there is no equal
+sign on the line, the entire line is taken as 'name' and the variable
+is recognized as boolean "true". String values may be entirely or partially
+enclosed in double quotes; some variables may require special value format.
+
+Example
+~~~~~~~
+
+	# Core variables
+	[core]
+		; Don't trust file modes
+		filemode = false
+
+	# Our diff algorithm
+	[diff]
+		external = "/usr/local/bin/gnu-diff -u"
+		renames = true
+
+Variables
+~~~~~~~~~
+
+Note that this list is non-comprehensive and not necessarily complete.
+For command-specific variables, you will find more detailed description
+in the appropriate manual page. You will find description of non-core
+porcelain configuration variables in the respective porcelain documentation.
+
+core.fileMode::
+	If false, the executable bit differences between the index and
+	the working copy are ignored; useful on broken filesystems like FAT.
+	See gitlink:git-update-index[1]. True by default.
+
+core.gitProxy::
+	A "proxy command" to execute (as 'command host port') instead
+	of establishing direct connection to the remote server when
+	using the git protocol for fetching. If the variable value is
+	in the "COMMAND for DOMAIN" format, the command is applied only
+	on hostnames ending with the specified domain string. This variable
+	may be set multiple times and is matched in the given order;
+	the first match wins.
+
+	Can be overriden by the 'GIT_PROXY_COMMAND' environment variable
+	(which always applies universally, without the special "for"
+	handling).
+
+core.ignoreStat::
+	The working copy files are assumed to stay unchanged until you
+	mark them otherwise manually - Git will not detect the file changes
+	by lstat() calls. This is useful on systems where those are very
+	slow, such as Microsoft Windows.  See gitlink:git-update-index[1].
+	False by default.
+
+core.preferSymlinkRefs::
+	Instead of the default "symref" format for HEAD
+	and other symbolic reference files, use symbolic links.
+	This is sometimes needed to work with old scripts that
+	expect HEAD to be a symbolic link.
+
+core.repositoryFormatVersion::
+	Internal variable identifying the repository format and layout
+	version.
+
+core.sharedRepository::
+	If true, the repository is made shareable between several users
+	in a group (making sure all the files and objects are group-writable).
+	See gitlink:git-init-db[1]. False by default.
+
+core.warnAmbiguousRefs::
+	If true, git will warn you if the ref name you passed it is ambiguous
+	and might match multiple refs in the .git/refs/ tree. True by default.
+
+apply.whitespace::
+	Tells `git-apply` how to handle whitespaces, in the same way
+	as the '--whitespace' option. See gitlink:git-apply[1].
+
+diff.renameLimit::
+	The number of files to consider when performing the copy/rename
+	detection; equivalent to the git diff option '-l'.
+
+format.headers::
+	Additional email headers to include in a patch to be submitted
+	by mail.  See gitlink:git-format-patch[1].
+
+gitcvs.enabled::
+	Whether the cvs pserver interface is enabled for this repository.
+	See gitlink:git-cvsserver[1].
+
+gitcvs.logfile::
+	Path to a log file where the cvs pserver interface well... logs
+	various stuff. See gitlink:git-cvsserver[1].
+
+http.sslVerify::
+	Whether to verify the SSL certificate when fetching or pushing
+	over HTTPS. Can be overriden by the 'GIT_SSL_NO_VERIFY' environment
+	variable.
+
+http.sslCert::
+	File containing the SSL certificate when fetching or pushing
+	over HTTPS. Can be overriden by the 'GIT_SSL_CERT' environment
+	variable.
+
+http.sslKey::
+	File containing the SSL private key when fetching or pushing
+	over HTTPS. Can be overriden by the 'GIT_SSL_KEY' environment
+	variable.
+
+http.sslCAInfo::
+	File containing the certificates to verify the peer with when
+	fetching or pushing over HTTPS. Can be overriden by the
+	'GIT_SSL_CAINFO' environment variable.
+
+http.sslCAPath::
+	Path containing files with the CA certificates to verify the peer
+	with when fetching or pushing over HTTPS. Can be overriden
+	by the 'GIT_SSL_CAPATH' environment variable.
+
+http.maxRequests::
+	How many HTTP requests to launch in parallel. Can be overriden
+	by the 'GIT_HTTP_MAX_REQUESTS' environment variable. Default is 5.
+
+http.lowSpeedLimit, http.lowSpeedTime::
+	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
+	for longer than 'http.lowSpeedTime' seconds, the transfer is aborted.
+	Can be overriden by the 'GIT_HTTP_LOW_SPEED_LIMIT' and
+	'GIT_HTTP_LOW_SPEED_TIME' environment variables.
+
+i18n.commitEncoding::
+	Character encoding the commit messages are stored in; git itself
+	does not care per se, but this information is necessary e.g. when
+	importing commits from emails or in the gitk graphical history
+	browser (and possibly at other places in the future or in other
+	porcelains). See e.g. gitlink:git-mailinfo[1]. Defaults to 'utf-8'.
+
+merge.summary::
+	Whether to include summaries of merged commits in newly created
+	merge commit messages. False by default.
+
+pull.octopus::
+	The default merge strategy to use when pulling multiple branches
+	at once.
+
+pull.twohead::
+	The default merge strategy to use when pulling a single branch.
+
+show.difftree::
+	The default gitlink:git-diff-tree[1] arguments to be used
+	for gitlink:git-show[1].
+
+showbranch.default::
+	The default set of branches for gitlink:git-show-branch[1].
+	See gitlink:git-show-branch[1].
+
+user.email::
+	Your email address to be recorded in any newly created commits.
+	Can be overriden by the 'GIT_AUTHOR_EMAIL' and 'GIT_COMMITTER_EMAIL'
+	environment variables.  See gitlink:git-commit-tree[1].
+
+user.name::
+	Your full name to be recorded in any newly created commits.
+	Can be overriden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
+	environment variables.  See gitlink:git-commit-tree[1].
+
+whatchanged.difftree::
+	The default gitlink:git-diff-tree[1] arguments to be used
+	for gitlink:git-whatchanged[1].
+
+imap::
+	The configuration variables in the 'imap' section are described
+	in gitlink:git-imap-send[1].

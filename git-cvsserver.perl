@@ -88,7 +88,7 @@ my $TEMP_DIR = tempdir( CLEANUP => 1 );
 $log->debug("Temporary directory is '$TEMP_DIR'");
 
 # if we are called with a pserver argument,
-# deal with the authentication cat before entereing the
+# deal with the authentication cat before entering the
 # main loop
 if (@ARGV && $ARGV[0] eq 'pserver') {
     my $line = <STDIN>; chomp $line;
@@ -117,7 +117,7 @@ while (<STDIN>)
 {
     chomp;
 
-    # Check to see if we've seen this method, and call appropiate function.
+    # Check to see if we've seen this method, and call appropriate function.
     if ( /^([\w-]+)(?:\s+(.*))?$/ and defined($methods->{$1}) )
     {
         # use the $methods hash to call the appropriate sub for this command
@@ -171,11 +171,11 @@ sub req_Root
        return 0;
     }
 
-    my @gitvars = `git-var -l`;
+    my @gitvars = `git-repo-config -l`;
     if ($?) {
-       print "E problems executing git-var on the server -- this is not a git repository or the PATH is not set correcly.\n";
+       print "E problems executing git-repo-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
         print "E \n";
-        print "error 1 - problem executing git-var\n";
+        print "error 1 - problem executing git-repo-config\n";
        return 0;
     }
     foreach my $line ( @gitvars )
@@ -224,7 +224,7 @@ sub req_Globaloption
 sub req_Validresponses
 {
     my ( $cmd, $data ) = @_;
-    $log->debug("req_Validrepsonses : $data");
+    $log->debug("req_Validresponses : $data");
 
     # TODO : re-enable this, currently it's not particularly useful
     #$state->{validresponses} = [ split /\s+/, $data ];
@@ -733,7 +733,7 @@ sub req_update
     argsplit("update");
 
     #
-    # It may just be a client exploring the available heads/modukles
+    # It may just be a client exploring the available heads/modules
     # in that case, list them as top level directories and leave it
     # at that. Eclipse uses this technique to offer you a list of
     # projects (heads in this case) to checkout.
@@ -1731,7 +1731,7 @@ sub transmitfile
 }
 
 # This method takes a file name, and returns ( $dirpart, $filepart ) which
-# refers to the directory porition and the file portion of the filename
+# refers to the directory portion and the file portion of the filename
 # respectively
 sub filenamesplit
 {
@@ -1790,7 +1790,7 @@ Log::Log4perl
 =head2 new
 
 Creates a new log object, optionally you can specify a filename here to
-indicate the file to log to. If no log file is specified, you can specifiy one
+indicate the file to log to. If no log file is specified, you can specify one
 later with method setfile, or indicate you no longer want logging with method
 nofile.
 
@@ -2076,14 +2076,15 @@ sub update
     # TODO: log processing is memory bound
     # if we can parse into a 2nd file that is in reverse order
     # we can probably do something really efficient
-    my @git_log_params = ('--parents', '--topo-order');
+    my @git_log_params = ('--pretty', '--parents', '--topo-order');
 
     if (defined $lastcommit) {
         push @git_log_params, "$lastcommit..$self->{module}";
     } else {
         push @git_log_params, $self->{module};
     }
-    open(GITLOG, '-|', 'git-log', @git_log_params) or die "Cannot call git-log: $!";
+    # git-rev-list is the backend / plumbing version of git-log
+    open(GITLOG, '-|', 'git-rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
 
     my @commits;
 
@@ -2595,7 +2596,7 @@ sub in_array
 
 =head2 safe_pipe_capture
 
-an alterative to `command` that allows input to be passed as an array
+an alternative to `command` that allows input to be passed as an array
 to work around shell problems with weird characters in arguments
 
 =cut

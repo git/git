@@ -36,17 +36,22 @@ COMMANDS
 --------
 init::
 	Creates an empty git repository with additional metadata
-	directories for git-svn.  The SVN_URL must be specified
-	at this point.
+	directories for git-svn.  The Subversion URL must be specified
+	as a command-line argument.
 
 fetch::
-	Fetch unfetched revisions from the SVN_URL we are tracking.
-	refs/heads/remotes/git-svn will be updated to the latest revision.
+	Fetch unfetched revisions from the Subversion URL we are
+	tracking.  refs/remotes/git-svn will be updated to the
+	latest revision.
 
-	Note: You should never attempt to modify the remotes/git-svn branch
-	outside of git-svn.  Instead, create a branch from remotes/git-svn
-	and work on that branch.  Use the 'commit' command (see below)
-	to write git commits back to remotes/git-svn.
+	Note: You should never attempt to modify the remotes/git-svn
+	branch outside of git-svn.  Instead, create a branch from
+	remotes/git-svn and work on that branch.  Use the 'commit'
+	command (see below) to write git commits back to
+	remotes/git-svn.
+
+	See 'Additional Fetch Arguments' if you are interested in
+	manually joining branches on commit.
 
 commit::
 	Commit specified commit or tree objects to SVN.  This relies on
@@ -62,9 +67,9 @@ rebuild::
 	tracked with git-svn.  Unfortunately, git-clone does not clone
 	git-svn metadata and the svn working tree that git-svn uses for
 	its operations.  This rebuilds the metadata so git-svn can
-	resume fetch operations.  SVN_URL may be optionally specified if
-	the directory/repository you're tracking has moved or changed
-	protocols.
+	resume fetch operations.  A Subversion URL may be optionally
+	specified at the command-line if the directory/repository you're
+	tracking has moved or changed protocols.
 
 show-ignore::
 	Recursively finds and lists the svn:ignore property on
@@ -122,6 +127,24 @@ OPTIONS
 
 	repo-config key: svn.l
 	repo-config key: svn.findcopiesharder
+
+-A<filename>::
+--authors-file=<filename>::
+
+	Syntax is compatible with the files used by git-svnimport and
+	git-cvsimport:
+
+------------------------------------------------------------------------
+loginname = Joe User <user@example.com>
+------------------------------------------------------------------------
+
+	If this option is specified and git-svn encounters an SVN
+	committer name that does not exist in the authors-file, git-svn
+	will abort operation. The user will then have to add the
+	appropriate entry.  Re-running the previous git-svn command
+	after the authors-file is modified should continue operation.
+
+	repo-config key: svn.authors-file
 
 ADVANCED OPTIONS
 ----------------

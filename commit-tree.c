@@ -45,14 +45,13 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 
 static void check_valid(unsigned char *sha1, const char *expect)
 {
-	void *buf;
 	char type[20];
-	unsigned long size;
 
-	buf = read_sha1_file(sha1, type, &size);
-	if (!buf || strcmp(type, expect))
-		die("%s is not a valid '%s' object", sha1_to_hex(sha1), expect);
-	free(buf);
+	if (sha1_object_info(sha1, type, NULL))
+		die("%s is not a valid object", sha1_to_hex(sha1));
+	if (expect && strcmp(type, expect))
+		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
+		    expect);
 }
 
 /*
@@ -92,7 +91,7 @@ int main(int argc, char **argv)
 
 	git_config(git_default_config);
 
-	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
+	if (argc < 2 || get_sha1(argv[1], tree_sha1) < 0)
 		usage(commit_tree_usage);
 
 	check_valid(tree_sha1, tree_type);

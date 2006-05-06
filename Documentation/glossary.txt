@@ -1,45 +1,134 @@
-object::
-	The unit of storage in git. It is uniquely identified by
-	the SHA1 of its contents. Consequently, an object can not
-	be changed.
+alternate object database::
+	Via the alternates mechanism, a repository can inherit part of its
+	object database from another object database, which is called
+	"alternate".
 
-object name::
-	The unique identifier of an object. The hash of the object's contents
-	using the Secure Hash Algorithm 1 and usually represented by the 40
-	character hexadecimal encoding of the hash of the object (possibly
-	followed by a white space).
-
-SHA1::
-	Synonym for object name.
-
-object identifier::
-	Synonym for object name.
-
-hash::
-	In git's context, synonym to object name.
-
-object database::
-	Stores a set of "objects", and an individual object is identified
-	by its object name. The objects usually live in `$GIT_DIR/objects/`.
+bare repository::
+	A bare repository is normally an appropriately named
+	directory with a `.git` suffix that does not have a
+	locally checked-out copy of any of the files under revision
+	control.  That is, all of the `git` administrative and
+	control files that would normally be present in the
+	hidden `.git` sub-directory are directly present in
+	the `repository.git` directory instead, and no other files
+	are present and checked out.  Usually publishers of public
+	repositories make bare repositories available.
 
 blob object::
 	Untyped object, e.g. the contents of a file.
 
-tree object::
-	An object containing a list of file names and modes along with refs
-	to the associated blob and/or tree objects. A tree is equivalent
-	to a directory.
+branch::
+	A non-cyclical graph of revisions, i.e. the complete history of
+	a particular revision, which is called the branch head. The
+	branch heads are stored in `$GIT_DIR/refs/heads/`.
 
-tree::
-	Either a working tree, or a tree object together with the
-	dependent blob and tree objects (i.e. a stored representation
-	of a working tree).
+cache::
+	Obsolete for: index.
+
+chain::
+	A list of objects, where each object in the list contains a
+	reference to its successor (for example, the successor of a commit
+	could be one of its parents).
+
+changeset::
+	BitKeeper/cvsps speak for "commit". Since git does not store
+	changes, but states, it really does not make sense to use
+	the term "changesets" with git.
+
+checkout::
+	The action of updating the working tree to a revision which was
+	stored in the object database.
+
+cherry-picking::
+	In SCM jargon, "cherry pick" means to choose a subset of
+	changes out of a series of changes (typically commits)
+	and record them as a new series of changes on top of
+	different codebase.  In GIT, this is performed by
+	"git cherry-pick" command to extract the change
+	introduced by an existing commit and to record it based
+	on the tip of the current branch as a new commit.
+
+clean::
+	A working tree is clean, if it corresponds to the revision
+	referenced by the current head.  Also see "dirty".
+
+commit::
+	As a verb: The action of storing the current state of the index in the
+	object database. The result is a revision.
+	As a noun: Short hand for commit object.
+
+commit object::
+	An object which contains the information about a particular
+	revision, such as parents, committer, author, date and the
+	tree object which corresponds to the top directory of the
+	stored revision.
+
+core git::
+	Fundamental data structures and utilities of git. Exposes only
+	limited source code management tools.
 
 DAG::
 	Directed acyclic graph. The commit objects form a directed acyclic
 	graph, because they have parents (directed), and the graph of commit
 	objects is acyclic (there is no chain which begins and ends with the
 	same object).
+
+dircache::
+	You are *waaaaay* behind.
+
+dirty::
+	A working tree is said to be dirty if it contains modifications
+	which have not been committed to the current branch.
+
+directory::
+	The list you get with "ls" :-)
+
+ent::
+	Favorite synonym to "tree-ish" by some total geeks. See
+	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
+	explanation.
+
+fast forward::
+	A fast-forward is a special type of merge where you have
+	a revision and you are "merging" another branch's changes
+	that happen to be a descendant of what you have.
+	In such these cases, you do not make a new merge commit but
+	instead just update to his revision. This will happen
+	frequently on a tracking branch of a remote repository.
+
+fetch::
+	Fetching a branch means to get the branch's head ref from a
+	remote repository, to find out which objects are missing from
+	the local object database, and to get them, too.
+
+file system::
+	Linus Torvalds originally designed git to be a user space file
+	system, i.e. the infrastructure to hold files and directories.
+	That ensured the efficiency and speed of git.
+
+git archive::
+	Synonym for repository (for arch people).
+
+hash::
+	In git's context, synonym to object name.
+
+head::
+	The top of a branch. It contains a ref to the corresponding
+	commit object.
+
+head ref::
+	A ref pointing to a head. Often, this is abbreviated to "head".
+	Head refs are stored in `$GIT_DIR/refs/heads/`.
+
+hook::
+	During the normal execution of several git commands,
+	call-outs are made to optional scripts that allow
+	a developer to add functionality or checking.
+	Typically, the hooks allow for a command to be pre-verified
+	and potentially aborted, and allow for a post-notification
+	after the operation is done.
+	The hook scripts are found in the `$GIT_DIR/hooks/` directory,
+	and are enabled by simply making them executable.
 
 index::
 	A collection of files with stat information, whose contents are
@@ -53,91 +142,166 @@ index entry::
 	yet finished (i.e. if the index contains multiple versions of
 	that file).
 
-unmerged index:
-	An index which contains unmerged index entries.
+master::
+	The default development branch. Whenever you create a git
+	repository, a branch named "master" is created, and becomes
+	the active branch. In most cases, this contains the local
+	development, though that is purely conventional and not required.
 
-cache::
-	Obsolete for: index.
+merge::
+	To merge branches means to try to accumulate the changes since a
+	common ancestor and apply them to the first branch. An automatic
+	merge uses heuristics to accomplish that. Evidently, an automatic
+	merge can fail.
 
-working tree::
-	The set of files and directories currently being worked on,
-	i.e. you can work in your working tree without using git at all.
+object::
+	The unit of storage in git. It is uniquely identified by
+	the SHA1 of its contents. Consequently, an object can not
+	be changed.
 
-directory::
-	The list you get with "ls" :-)
+object database::
+	Stores a set of "objects", and an individual object is identified
+	by its object name. The objects usually live in `$GIT_DIR/objects/`.
 
-revision::
-	A particular state of files and directories which was stored in
-	the object database. It is referenced by a commit object.
+object identifier::
+	Synonym for object name.
 
-checkout::
-	The action of updating the working tree to a revision which was
-	stored in the object database.
+object name::
+	The unique identifier of an object. The hash of the object's contents
+	using the Secure Hash Algorithm 1 and usually represented by the 40
+	character hexadecimal encoding of the hash of the object (possibly
+	followed by a white space).
 
-commit::
-	As a verb: The action of storing the current state of the index in the
-	object database. The result is a revision.
-	As a noun: Short hand for commit object.
+object type:
+	One of the identifiers "commit","tree","tag" and "blob" describing
+	the type of an object.
 
-commit object::
-	An object which contains the information about a particular
-	revision, such as parents, committer, author, date and the
-	tree object which corresponds to the top directory of the
-	stored revision.
+octopus::
+	To merge more than two branches. Also denotes an intelligent
+	predator.
+
+origin::
+	The default upstream tracking branch. Most projects have at
+	least one upstream project which they track. By default
+	'origin' is used for that purpose.  New upstream updates
+	will be fetched into this branch; you should never commit
+	to it yourself.
+
+pack::
+	A set of objects which have been compressed into one file (to save
+	space or to transmit them efficiently).
+
+pack index::
+	The list of identifiers, and other information, of the objects in a
+	pack, to assist in efficiently accessing the contents of a pack.
 
 parent::
 	A commit object contains a (possibly empty) list of the logical
 	predecessor(s) in the line of development, i.e. its parents.
 
-changeset::
-	BitKeeper/cvsps speak for "commit". Since git does not store
-	changes, but states, it really does not make sense to use
-	the term "changesets" with git.
+pickaxe::
+	The term pickaxe refers to an option to the diffcore routines
+	that help select changes that add or delete a given text string.
+	With the --pickaxe-all option, it can be used to view the
+	full changeset that introduced or removed, say, a particular
+	line of text.  See gitlink:git-diff[1].
 
-clean::
-	A working tree is clean, if it corresponds to the revision
-	referenced by the current head.
+plumbing::
+	Cute name for core git.
 
-dirty::
-	A working tree is said to be dirty if it contains modifications
-	which have not been committed to the current branch.
+porcelain::
+	Cute name for programs and program suites depending on core git,
+	presenting a high level access to core git. Porcelains expose
+	more of a SCM interface than the plumbing.
 
-head::
-	The top of a branch. It contains a ref to the corresponding
-	commit object.
+pull::
+	Pulling a branch means to fetch it and merge it.
 
-branch::
-	A non-cyclical graph of revisions, i.e. the complete history of
-	a particular revision, which is called the branch head. The
-	branch heads are stored in `$GIT_DIR/refs/heads/`.
+push::
+	Pushing a branch means to get the branch's head ref from a remote
+	repository, find out if it is an ancestor to the branch's local
+	head ref is a direct, and in that case, putting all objects, which
+	are reachable from the local head ref, and which are missing from
+	the remote repository, into the remote object database, and updating
+	the remote head ref. If the remote head is not an ancestor to the
+	local head, the push fails.
 
-master::
-	The default branch. Whenever you create a git repository, a branch
-	named "master" is created, and becomes the active branch. In most
-	cases, this contains the local development.
+reachable::
+	An object is reachable from a ref/commit/tree/tag, if there is a
+	chain leading from the latter to the former.
 
-origin::
-	The default upstream branch. Most projects have one upstream
-	project which they track, and by default 'origin' is used for
-	that purpose.  New updates from upstream will be fetched into
-	this branch; you should never commit to it yourself.
+rebase::
+	To clean a branch by starting from the head of the main line of
+	development ("master"), and reapply the (possibly cherry-picked)
+	changes from that branch.
 
 ref::
-	A 40-byte hex representation of a SHA1 pointing to a particular
-	object. These may be stored in `$GIT_DIR/refs/`.
+	A 40-byte hex representation of a SHA1 or a name that denotes
+	a particular object. These may be stored in `$GIT_DIR/refs/`.
 
-head ref::
-	A ref pointing to a head. Often, this is abbreviated to "head".
-	Head refs are stored in `$GIT_DIR/refs/heads/`.
+refspec::
+	A refspec is used by fetch and push to describe the mapping
+	between remote ref and local ref.  They are combined with
+	a colon in the format <src>:<dst>, preceded by an optional
+	plus sign, +.  For example:
+	`git fetch $URL refs/heads/master:refs/heads/origin`
+	means "grab the master branch head from the $URL and store
+	it as my origin branch head".
+	And `git push $URL refs/heads/master:refs/heads/to-upstream`
+	means "publish my master branch head as to-upstream master head
+	at $URL".   See also gitlink:git-push[1]
+
+repository::
+	A collection of refs together with an object database containing
+	all objects, which are reachable from the refs, possibly accompanied
+	by meta data from one or more porcelains. A repository can
+	share an object database with other repositories.
+
+resolve::
+	The action of fixing up manually what a failed automatic merge
+	left behind.
+
+revision::
+	A particular state of files and directories which was stored in
+	the object database. It is referenced by a commit object.
+
+rewind::
+	To throw away part of the development, i.e. to assign the head to
+	an earlier revision.
+
+SCM::
+	Source code management (tool).
+
+SHA1::
+	Synonym for object name.
+
+topic branch::
+	A regular git branch that is used by a developer to
+	identify a conceptual line of development.  Since branches
+	are very easy and inexpensive, it is often desirable to
+	have several small branches that each contain very well
+	defined concepts or small incremental yet related changes.
+
+tracking branch::
+	A regular git branch that is used to follow changes from
+	another repository.  A tracking branch should not contain
+	direct modifications or have local commits made to it.
+	A tracking branch can usually be identified as the
+	right-hand-side ref in a Pull: refspec.
+
+tree object::
+	An object containing a list of file names and modes along with refs
+	to the associated blob and/or tree objects. A tree is equivalent
+	to a directory.
+
+tree::
+	Either a working tree, or a tree object together with the
+	dependent blob and tree objects (i.e. a stored representation
+	of a working tree).
 
 tree-ish::
 	A ref pointing to either a commit object, a tree object, or a
 	tag object pointing to a tag or commit or tree object.
-
-ent::
-	Favorite synonym to "tree-ish" by some total geeks. See
-	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
-	explanation.
 
 tag object::
 	An object containing a ref pointing to another object, which can
@@ -153,101 +317,10 @@ tag::
 	A tag is most typically used to mark a particular point in the
 	commit ancestry chain.
 
-merge::
-	To merge branches means to try to accumulate the changes since a
-	common ancestor and apply them to the first branch. An automatic
-	merge uses heuristics to accomplish that. Evidently, an automatic
-	merge can fail.
+unmerged index:
+	An index which contains unmerged index entries.
 
-octopus::
-	To merge more than two branches. Also denotes an intelligent
-	predator.
-
-resolve::
-	The action of fixing up manually what a failed automatic merge
-	left behind.
-
-rewind::
-	To throw away part of the development, i.e. to assign the head to
-	an earlier revision.
-
-rebase::
-	To clean a branch by starting from the head of the main line of
-	development ("master"), and reapply the (possibly cherry-picked)
-	changes from that branch.
-
-repository::
-	A collection of refs together with an object database containing
-	all objects, which are reachable from the refs, possibly accompanied
-	by meta data from one or more porcelains. A repository can
-	share an object database with other repositories.
-
-git archive::
-	Synonym for repository (for arch people).
-
-file system::
-	Linus Torvalds originally designed git to be a user space file
-	system, i.e. the infrastructure to hold files and directories.
-	That ensured the efficiency and speed of git.
-
-alternate object database::
-	Via the alternates mechanism, a repository can inherit part of its
-	object database from another object database, which is called
-	"alternate".
-
-reachable::
-	An object is reachable from a ref/commit/tree/tag, if there is a
-	chain leading from the latter to the former.
-
-chain::
-	A list of objects, where each object in the list contains a
-	reference to its successor (for example, the successor of a commit
-	could be one of its parents).
-
-fetch::
-	Fetching a branch means to get the branch's head ref from a
-	remote repository, to find out which objects are missing from
-	the local object database, and to get them, too.
-
-pull::
-	Pulling a branch means to fetch it and merge it.
-
-push::
-	Pushing a branch means to get the branch's head ref from a remote
-	repository, find out if it is an ancestor to the branch's local
-	head ref is a direct, and in that case, putting all objects, which
-	are reachable from the local head ref, and which are missing from
-	the remote repository, into the remote object database, and updating
-	the remote head ref. If the remote head is not an ancestor to the
-	local head, the push fails.
-
-pack::
-	A set of objects which have been compressed into one file (to save
-	space or to transmit them efficiently).
-
-pack index::
-	The list of identifiers, and other information, of the objects in a
-	pack, to assist in efficiently accessing the contents of a pack. 
-
-core git::
-	Fundamental data structures and utilities of git. Exposes only
-	limited source code management tools.
-
-plumbing::
-	Cute name for core git.
-
-porcelain::
-	Cute name for programs and program suites depending on core git,
-	presenting a high level access to core git. Porcelains expose
-	more of a SCM interface than the plumbing.
-
-object type:
-	One of the identifiers "commit","tree","tag" and "blob" describing
-	the type of an object.
-
-SCM::
-	Source code management (tool).
-
-dircache::
-	You are *waaaaay* behind.
+working tree::
+	The set of files and directories currently being worked on,
+	i.e. you can work in your working tree without using git at all.
 

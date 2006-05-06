@@ -106,7 +106,7 @@ OPTIONS
 	lines, show only handful hexdigits prefix.
 	Non default number of digits can be specified with --abbrev=<n>.
 
---::
+\--::
 	Do not interpret any more arguments as options.
 
 <file>::

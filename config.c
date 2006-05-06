@@ -60,6 +60,12 @@ static char *parse_value(void)
 			space = 1;
 			continue;
 		}
+		if (!quote) {
+			if (c == ';' || c == '#') {
+				comment = 1;
+				continue;
+			}
+		}
 		if (space) {
 			if (len)
 				value[len++] = ' ';
@@ -92,12 +98,6 @@ static char *parse_value(void)
 		if (c == '"') {
 			quote = 1-quote;
 			continue;
-		}
-		if (!quote) {
-			if (c == ';' || c == '#') {
-				comment = 1;
-				continue;
-			}
 		}
 		value[len++] = c;
 	}
@@ -227,8 +227,8 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.symrefsonly")) {
-		only_use_symrefs = git_config_bool(var, value);
+	if (!strcmp(var, "core.prefersymlinkrefs")) {
+		prefer_symlink_refs = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -252,7 +252,7 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	/* Add other config variables here.. */
+	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
 
@@ -335,8 +335,11 @@ static int store_aux(const char* key, const char* value)
 			store.offset[store.seen] = ftell(config_file);
 			store.state = KEY_SEEN;
 			store.seen++;
-		} else if(!strncmp(key, store.key, store.baselen))
-			store.state = SECTION_SEEN;
+		} else if (strrchr(key, '.') - key == store.baselen &&
+			      !strncmp(key, store.key, store.baselen)) {
+					store.state = SECTION_SEEN;
+					store.offset[store.seen] = ftell(config_file);
+		}
 	}
 	return 0;
 }

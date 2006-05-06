@@ -4,37 +4,51 @@
 #
 
 USAGE='[--onto <newbase>] <upstream> [<branch>]'
-LONG_USAGE='git-rebase applies to <upstream> (or optionally to <newbase>) commits
-from <branch> that do not appear in <upstream>. When <branch> is not
-specified it defaults to the current branch (HEAD).
+LONG_USAGE='git-rebase replaces <branch> with a new branch of the
+same name.  When the --onto option is provided the new branch starts
+out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
+It then attempts to create a new commit for each commit from the original
+<branch> that does not exist in the <upstream> branch.
 
-When git-rebase is complete, <branch> will be updated to point to the
-newly created line of commit objects, so the previous line will not be
-accessible unless there are other references to it already.
+It is possible that a merge failure will prevent this process from being
+completely automatic.  You will have to resolve any such merge failure
+and run git-rebase --continue.  If you can not resolve the merge failure,
+running git-rebase --abort will restore the original <branch> and remove
+the working files found in the .dotest directory.
 
-Assuming the following history:
+Note that if <branch> is not specified on the command line, the
+currently checked out branch is used.  You must be in the top
+directory of your project to start (or continue) a rebase.
 
-          A---B---C topic
-         /
-    D---E---F---G master
+Example:       git-rebase master~1 topic
 
-The result of the following command:
-
-    git-rebase --onto master~1 master topic
-
-  would be:
-
-              A'\''--B'\''--C'\'' topic
-             /
-    D---E---F---G master
+        A---B---C topic                   A'\''--B'\''--C'\'' topic
+       /                   -->           /
+  D---E---F---G master          D---E---F---G master
 '
-
 . git-sh-setup
 
 unset newbase
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
+	--continue)
+		diff=$(git-diff-files)
+		case "$diff" in
+		?*)	echo "You must edit all merge conflicts and then"
+			echo "mark them as resolved using git update-index"
+			exit 1
+			;;
+		esac
+		git am --resolved --3way
+		exit
+		;;
+	--abort)
+		[ -d .dotest ] || die "No rebase in progress?"
+		git reset --hard ORIG_HEAD
+		rm -r .dotest
+		exit
+		;;
 	--onto)
 		test 2 -le "$#" || usage
 		newbase="$2"
@@ -107,7 +121,7 @@ onto=$(git-rev-parse --verify "${onto_name}^0") || exit
 
 # Check if we are already based on $onto, but this should be
 # done only when upstream and onto are the same.
-if test "$upstream" = "onto"
+if test "$upstream" = "$onto"
 then
 	mb=$(git-merge-base "$onto" "$branch")
 	if test "$mb" = "$onto"

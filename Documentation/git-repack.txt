@@ -38,6 +38,7 @@ OPTIONS
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
+	Also runs gitlink:git-prune-packed[1].
 
 -l::
         Pass the `--local` option to `git pack-objects`, see

@@ -60,12 +60,12 @@ Start a new git repository for an existing code base::
 +
 ----------------
 $ cd /path/to/my/codebase
-$ git-init-db <1>
-$ git-add . <2>
-
+$ git-init-db   <1>
+$ git-add .     <2>
+----------------
++
 <1> prepare /path/to/my/codebase/.git directory
 <2> add all existing file to the index
-----------------
 
 
 Author

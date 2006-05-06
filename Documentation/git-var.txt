@@ -17,7 +17,10 @@ Prints a git logical variable.
 OPTIONS
 -------
 -l::
-	Cause the logical variables to be listed.
+	Cause the logical variables to be listed. In addition, all the
+	variables of the git configuration file .git/config are listed
+	as well. (However, the configuration variables listing functionality
+	is deprecated in favor of `git-repo-config -l`.)
 
 EXAMPLE
 --------
@@ -46,6 +49,7 @@ See Also
 --------
 gitlink:git-commit-tree[1]
 gitlink:git-tag[1]
+gitlink:git-repo-config[1]
 
 Author
 ------
