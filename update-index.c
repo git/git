@@ -382,7 +382,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 		die("Unable to process file %s", path);
 	report("add '%s'", path);
  free_return:
-	if (p != path)
+	if (p < path || p > path + strlen(path))
 		free((char*)p);
 }
 
@@ -596,7 +596,7 @@ static int do_unresolve(int ac, const char **av,
 		const char *arg = av[i];
 		const char *p = prefix_path(prefix, prefix_length, arg);
 		err |= unresolve_one(p);
-		if (p != arg)
+		if (p < arg || p > arg + strlen(arg))
 			free((char*)p);
 	}
 	return err;
@@ -610,7 +610,7 @@ static int do_reupdate(int ac, const char **av,
 	 */
 	int pos;
 	int has_head = 1;
-	char **pathspec = get_pathspec(prefix, av + 1);
+	const char **pathspec = get_pathspec(prefix, av + 1);
 
 	if (read_ref(git_path("HEAD"), head_sha1))
 		/* If there is no HEAD, that means it is an initial
@@ -802,7 +802,7 @@ int main(int argc, const char **argv)
 			update_one(p, NULL, 0);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			if (p != path_name)
+			if (p < path_name || p > path_name + strlen(path_name))
 				free((char*) p);
 			if (path_name != buf.buf)
 				free(path_name);
