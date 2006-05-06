@@ -476,7 +476,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -491,11 +491,13 @@ static struct cache_entry *read_one_ent(const char *which,
 	struct cache_entry *ce;
 
 	if (get_tree_entry(ent, path, sha1, &mode)) {
-		error("%s: not in %s branch.", path, which);
+		if (which)
+			error("%s: not in %s branch.", path, which);
 		return NULL;
 	}
 	if (mode == S_IFDIR) {
-		error("%s: not a blob in %s branch.", path, which);
+		if (which)
+			error("%s: not a blob in %s branch.", path, which);
 		return NULL;
 	}
 	size = cache_entry_size(namelen);
@@ -598,6 +600,47 @@ static int do_unresolve(int ac, const char **av,
 			free((char*)p);
 	}
 	return err;
+}
+
+static int do_reupdate(int ac, const char **av,
+		       const char *prefix, int prefix_length)
+{
+	/* Read HEAD and run update-index on paths that are
+	 * merged and already different between index and HEAD.
+	 */
+	int pos;
+	int has_head = 1;
+
+	if (read_ref(git_path("HEAD"), head_sha1))
+		/* If there is no HEAD, that means it is an initial
+		 * commit.  Update everything in the index.
+		 */
+		has_head = 0;
+ redo:
+	for (pos = 0; pos < active_nr; pos++) {
+		struct cache_entry *ce = active_cache[pos];
+		struct cache_entry *old = NULL;
+		int save_nr;
+		if (ce_stage(ce))
+			continue;
+		if (has_head)
+			old = read_one_ent(NULL, head_sha1,
+					   ce->name, ce_namelen(ce), 0);
+		if (old && ce->ce_mode == old->ce_mode &&
+		    !memcmp(ce->sha1, old->sha1, 20)) {
+			free(old);
+			continue; /* unchanged */
+		}
+		/* Be careful.  The working tree may not have the
+		 * path anymore, in which case, under 'allow_remove',
+		 * or worse yet 'allow_replace', active_nr may decrease.
+		 */
+		save_nr = active_nr;
+		update_one(ce->name + prefix_length, prefix, prefix_length);
+		if (save_nr != active_nr)
+			goto redo;
+	}
+	return 0;
 }
 
 int main(int argc, const char **argv)
@@ -713,6 +756,13 @@ int main(int argc, const char **argv)
 			if (!strcmp(path, "--unresolve")) {
 				has_errors = do_unresolve(argc - i, argv + i,
 							  prefix, prefix_length);
+				if (has_errors)
+					active_cache_changed = 0;
+				goto finish;
+			}
+			if (!strcmp(path, "--again")) {
+				has_errors = do_reupdate(argc - i, argv + i,
+							 prefix, prefix_length);
 				if (has_errors)
 					active_cache_changed = 0;
 				goto finish;
