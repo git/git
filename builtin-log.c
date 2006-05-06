@@ -11,6 +11,9 @@
 #include "log-tree.h"
 #include "builtin.h"
 
+/* this is in builtin-diff.c */
+void add_head(struct rev_info *revs);
+
 static int cmd_log_wc(int argc, const char **argv, char **envp,
 		      struct rev_info *rev)
 {
@@ -184,6 +187,11 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
+
+	if (rev.pending_objects && rev.pending_objects->next == NULL) {
+		rev.pending_objects->item->flags |= UNINTERESTING;
+		add_head(&rev);
+	}
 
 	if (!use_stdout)
 		realstdout = fdopen(dup(1), "w");
