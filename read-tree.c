@@ -881,8 +881,8 @@ int main(int argc, char **argv)
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
 	 */
-	if (trees->item && (!merge || (stage == 2))) {
-		cache_tree_free(&active_cache_tree);		
+	if (trees && trees->item && (!merge || (stage == 2))) {
+		cache_tree_free(&active_cache_tree);
 		prime_cache_tree();
 	}
 
