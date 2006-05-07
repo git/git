@@ -516,6 +516,8 @@ int git_config_set_multivar(const char* key, const char* value,
 				fprintf(stderr, "Invalid pattern: %s\n",
 					value_regex);
 				free(store.value_regex);
+				close(fd);
+				unlink(lock_file);
 				ret = 6;
 				goto out_free;
 			}

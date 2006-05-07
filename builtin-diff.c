@@ -84,8 +84,7 @@ static void stuff_change(struct diff_options *opt,
 
 	if (opt->reverse_diff) {
 		unsigned tmp;
-		const
-			const unsigned char *tmp_u;
+		const unsigned char *tmp_u;
 		const char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_u = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_u;

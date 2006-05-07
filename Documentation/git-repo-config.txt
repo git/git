@@ -23,10 +23,11 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-If you want to set/unset an option which can occur on multiple lines, you
-should provide a POSIX regex for the value. If you want to handle the lines
-*not* matching the regex, just prepend a single exclamation mark in front
-(see EXAMPLES).
+If you want to set/unset an option which can occur on multiple
+lines, a POSIX regexp `value_regex` needs to be given.  Only the
+existing values that match the regexp are updated or unset.  If
+you want to handle the lines that do *not* match the regex, just
+prepend a single exclamation mark in front (see EXAMPLES).
 
 The type specifier can be either '--int' or '--bool', which will make
 'git-repo-config' ensure that the variable(s) are of the given type and
