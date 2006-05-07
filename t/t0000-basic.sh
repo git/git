@@ -195,6 +195,20 @@ test_expect_success \
     'git-ls-tree -r output for a known tree.' \
     'diff current expected'
 
+test_expect_success \
+    'writing partial tree out with git-write-tree --prefix.' \
+    'ptree=$(git-write-tree --prefix=path3)'
+test_expect_success \
+    'validate object ID for a known tree.' \
+    'test "$ptree" = 21ae8269cacbe57ae09138dcc3a2887f904d02b3'
+
+test_expect_success \
+    'writing partial tree out with git-write-tree --prefix.' \
+    'ptree=$(git-write-tree --prefix=path3/subp3)'
+test_expect_success \
+    'validate object ID for a known tree.' \
+    'test "$ptree" = 3c5e5399f3a333eddecce7a9b9465b63f65f51e2'
+
 ################################################################
 rm .git/index
 test_expect_success \
