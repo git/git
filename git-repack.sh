@@ -48,15 +48,15 @@ name=$(git-rev-list --objects --all $rev_list 2>&1 |
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
-	exit 0
+else
+	echo "Pack pack-$name created."
+
+	mkdir -p "$PACKDIR" || exit
+
+	mv .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
+	mv .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" ||
+	exit
 fi
-echo "Pack pack-$name created."
-
-mkdir -p "$PACKDIR" || exit
-
-mv .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
-mv .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" ||
-exit
 
 if test "$remove_redundant" = t
 then

@@ -265,7 +265,7 @@ yes,yes)
 		test -f "$repo/objects/info/alternates" &&
 		cat "$repo/objects/info/alternates";
 		echo "$repo/objects"
-	    } >"$GIT_DIR/objects/info/alternates"
+	    } >>"$GIT_DIR/objects/info/alternates"
 	    ;;
 	esac
 	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
