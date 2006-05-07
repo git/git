@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 			die("git-checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
 		checkout_file(p);
-		if (p != arg)
+		if (p < arg || p > arg + strlen(arg))
 			free((char*)p);
 	}
 
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 				path_name = buf.buf;
 			p = prefix_path(prefix, prefix_length, path_name);
 			checkout_file(p);
-			if (p != path_name)
+			if (p < path_name || p > path_name + strlen(path_name))
 				free((char *)p);
 			if (path_name != buf.buf)
 				free(path_name);
