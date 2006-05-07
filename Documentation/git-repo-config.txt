@@ -34,10 +34,10 @@ convert the value to the canonical form (simple decimal number for int,
 a "true" or "false" string for bool). If no type specifier is passed,
 no checks or transformations are performed on the value.
 
-This command will fail if
+This command will fail if:
 
-. .git/config is invalid,
-. .git/config can not be written to,
+. The .git/config file is invalid,
+. Can not write to .git/config,
 . no section was provided,
 . the section or key is invalid,
 . you try to unset an option which does not exist, or
@@ -49,7 +49,7 @@ OPTIONS
 
 --replace-all::
 	Default behaviour is to replace at most one line. This replaces
-	all lines matching the key (and optionally the value_regex)
+	all lines matching the key (and optionally the value_regex).
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
@@ -58,6 +58,9 @@ OPTIONS
 --get-all::
 	Like get, but does not fail if the number of values for the key
 	is not exactly one.
+
+--get-regexp::
+	Like --get-all, but interprets the name as a regular expression.
 
 --unset::
 	Remove the line matching the key from .git/config.

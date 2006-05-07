@@ -227,8 +227,8 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.symrefsonly")) {
-		only_use_symrefs = git_config_bool(var, value);
+	if (!strcmp(var, "core.prefersymlinkrefs")) {
+		prefer_symlink_refs = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -335,8 +335,11 @@ static int store_aux(const char* key, const char* value)
 			store.offset[store.seen] = ftell(config_file);
 			store.state = KEY_SEEN;
 			store.seen++;
-		} else if(!strncmp(key, store.key, store.baselen))
-			store.state = SECTION_SEEN;
+		} else if (strrchr(key, '.') - key == store.baselen &&
+			      !strncmp(key, store.key, store.baselen)) {
+					store.state = SECTION_SEEN;
+					store.offset[store.seen] = ftell(config_file);
+		}
 	}
 	return 0;
 }

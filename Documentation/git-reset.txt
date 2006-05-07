@@ -43,7 +43,7 @@ OPTIONS
 	Commit to make the current HEAD.
 
 Examples
-~~~~~~~~
+--------
 
 Undo a commit and redo::
 +

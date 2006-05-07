@@ -28,8 +28,8 @@ all:
 #
 # Define NO_SETENV if you don't have setenv in the C library.
 #
-# Define USE_SYMLINK_HEAD if you want .git/HEAD to be a symbolic link.
-# Don't enable it on Windows.
+# Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
+# Enable it on Windows.  By default, symrefs are still used.
 #
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
@@ -115,13 +115,13 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 SCRIPT_SH = \
 	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
-	git-count-objects.sh git-diff.sh git-fetch.sh \
+	git-fetch.sh \
 	git-format-patch.sh git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
-	git-prune.sh git-pull.sh git-push.sh git-rebase.sh \
+	git-prune.sh git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-rm.sh git-sh-setup.sh \
-	git-tag.sh git-verify-tag.sh git-whatchanged.sh \
+	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
@@ -139,7 +139,7 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  git-cherry-pick git-show git-status
+	  git-cherry-pick git-status
 
 # The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
@@ -167,7 +167,8 @@ PROGRAMS = \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
-BUILT_INS = git-log$X
+BUILT_INS = git-log$X git-whatchanged$X git-show$X \
+	git-count-objects$X git-diff$X git-push$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -214,7 +215,7 @@ LIB_OBJS = \
 	$(DIFF_OBJS)
 
 BUILTIN_OBJS = \
-	builtin-log.o builtin-help.o
+	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -263,6 +264,7 @@ ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
 	NO_D_INO_IN_DIRENT = YesPlease
 	NO_STRCASESTR = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
@@ -386,6 +388,9 @@ endif
 ifdef NO_D_INO_IN_DIRENT
 	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT
 endif
+ifdef NO_SYMLINK_HEAD
+	ALL_CFLAGS += -DNO_SYMLINK_HEAD
+endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
 	COMPAT_OBJS += compat/strcasestr.o
@@ -505,9 +510,6 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
 git-cherry-pick: git-revert
 	cp $< $@
 
-git-show: git-whatchanged
-	cp $< $@
-
 git-status: git-commit
 	cp $< $@
 
@@ -561,10 +563,6 @@ git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
 git-http-push$X: revision.o http.o http-push.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
-
-git-rev-list$X: rev-list.o $(LIB_FILE)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIBS) $(OPENSSL_LIBSSL)
 
 init-db.o: init-db.c
 	$(CC) -c $(ALL_CFLAGS) \
