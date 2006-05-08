@@ -321,8 +321,8 @@ int main(int argc, char **argv)
 		strbuf_append_string(&current_path, "/");
 		/* FALLTHROUGH */
 	case 2:
-		if (get_sha1(argv[1], sha1) < 0)
-			usage(tar_tree_usage);
+		if (get_sha1(argv[1], sha1))
+			die("Not a valid object name %s", argv[1]);
 		break;
 	default:
 		usage(tar_tree_usage);

@@ -32,10 +32,10 @@ int main(int argc, char **argv)
 	refname = argv[1];
 	value = argv[2];
 	oldval = argv[3];
-	if (get_sha1(value, sha1) < 0)
+	if (get_sha1(value, sha1))
 		die("%s: not a valid SHA1", value);
 	memset(oldsha1, 0, 20);
-	if (oldval && get_sha1(oldval, oldsha1) < 0)
+	if (oldval && get_sha1(oldval, oldsha1))
 		die("%s: not a valid old SHA1", oldval);
 
 	path = resolve_ref(git_path("%s", refname), currsha1, !!oldval);

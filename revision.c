@@ -674,7 +674,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			local_flags = UNINTERESTING;
 			arg++;
 		}
-		if (get_sha1(arg, sha1) < 0) {
+		if (get_sha1(arg, sha1)) {
 			int j;
 
 			if (seen_dashdash || local_flags)
@@ -693,7 +693,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (def && !revs->commits) {
 		unsigned char sha1[20];
 		struct commit *commit;
-		if (get_sha1(def, sha1) < 0)
+		if (get_sha1(def, sha1))
 			die("bad default revision '%s'", def);
 		commit = get_commit_reference(revs, def, sha1, 0);
 		add_one_commit(commit, revs);
