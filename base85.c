@@ -44,34 +44,38 @@ int decode_85(char *dst, char *buffer, int len)
 	say2("decode 85 <%.*s>", len/4*5, buffer);
 	while (len) {
 		unsigned acc = 0;
-		int cnt;
-		for (cnt = 0; cnt < 5; cnt++, buffer++) {
-			int ch = *((unsigned char *)buffer);
-			int de = de85[ch];
-			if (!de)
+		int de, cnt = 4;
+		unsigned char ch;
+		do {
+			ch = *buffer++;
+			de = de85[ch];
+			if (--de < 0)
 				return error("invalid base85 alphabet %c", ch);
-			de--;
-			if (cnt == 4) {
-				/*
-				 * Detect overflow.  The largest
-				 * 5-letter possible is "|NsC0" to
-				 * encode 0xffffffff, and "|NsC" gives
-				 * 0x03030303 at this point (i.e.
-				 * 0xffffffff = 0x03030303 * 85).
-				 */
-				if (0x03030303 < acc ||
-				    (0x03030303 == acc && de))
-					error("invalid base85 sequence %.5s",
-					      buffer-3);
-			}
 			acc = acc * 85 + de;
-			say1(" <%08x>", acc);
-		}
+		} while (--cnt);
+		ch = *buffer++;
+		de = de85[ch];
+		if (--de < 0)
+			return error("invalid base85 alphabet %c", ch);
+		/*
+		 * Detect overflow.  The largest
+		 * 5-letter possible is "|NsC0" to
+		 * encode 0xffffffff, and "|NsC" gives
+		 * 0x03030303 at this point (i.e.
+		 * 0xffffffff = 0x03030303 * 85).
+		 */
+		if (0x03030303 < acc ||
+		    0xffffffff - de < (acc *= 85))
+			error("invalid base85 sequence %.5s", buffer-5);
+		acc += de;
 		say1(" %08x", acc);
-		for (cnt = 0; cnt < 4 && len; cnt++, len--) {
-			*dst++ = (acc >> 24) & 0xff;
-			acc = acc << 8;
-		}
+
+		cnt = (len < 4) ? len : 4;
+		len -= cnt;
+		do {
+			acc = (acc << 8) | (acc >> 24);
+			*dst++ = acc;
+		} while (--cnt);
 	}
 	say("\n");
 
@@ -86,15 +90,17 @@ void encode_85(char *buf, unsigned char *data, int bytes)
 	while (bytes) {
 		unsigned acc = 0;
 		int cnt;
-		for (cnt = 0; cnt < 4 && bytes; cnt++, bytes--) {
+		for (cnt = 24; cnt >= 0; cnt -= 8) {
 			int ch = *data++;
-			acc |= ch << ((3-cnt)*8);
+			acc |= ch << cnt;
+			if (--bytes == 0)
+				break;
 		}
 		say1(" %08x", acc);
-		for (cnt = 0; cnt < 5; cnt++) {
+		for (cnt = 4; cnt >= 0; cnt--) {
 			int val = acc % 85;
 			acc /= 85;
-			buf[4-cnt] = en85[val];
+			buf[cnt] = en85[val];
 		}
 		buf += 5;
 	}
