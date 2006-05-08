@@ -142,8 +142,8 @@ int main(int argc, const char **argv)
 
 	if (argc < 2)
 		usage(ls_tree_usage);
-	if (get_sha1(argv[1], sha1) < 0)
-		usage(ls_tree_usage);
+	if (get_sha1(argv[1], sha1))
+		die("Not a valid object name %s", argv[1]);
 
 	pathspec = get_pathspec(prefix, argv + 2);
 	tree = parse_tree_indirect(sha1);

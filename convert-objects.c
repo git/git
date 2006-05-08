@@ -321,8 +321,10 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
-	if (argc != 2 || get_sha1(argv[1], sha1))
+	if (argc != 2)
 		usage("git-convert-objects <sha1>");
+	if (get_sha1(argv[1], sha1))
+		die("Not a valid object name %s", argv[1]);
 
 	entry = convert_entry(sha1);
 	printf("new sha1: %s\n", sha1_to_hex(entry->new_sha1));

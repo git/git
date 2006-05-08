@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 	commit_id = argv[arg];
 	url = argv[arg + 1];
 	if (get_sha1(commit_id, sha1))
-		usage(ssh_push_usage);
+		die("Not a valid object name %s", commit_id);
 	memcpy(hex, sha1_to_hex(sha1), sizeof(hex));
 	argv[arg] = hex;
 
