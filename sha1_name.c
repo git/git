@@ -498,6 +498,7 @@ int get_sha1(const char *name, unsigned char *sha1)
 				memcpy(sha1, ce->sha1, 20);
 				return 0;
 			}
+			pos++;
 		}
 		return -1;
 	}
