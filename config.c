@@ -422,7 +422,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	const char* value_regex, int multi_replace)
 {
 	int i;
-	int fd, in_fd;
+	int fd = -1, in_fd;
 	int ret;
 	char* config_filename = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
@@ -480,15 +480,11 @@ int git_config_set_multivar(const char* key, const char* value,
 		if ( ENOENT != errno ) {
 			error("opening %s: %s", config_filename,
 			      strerror(errno));
-			close(fd);
-			unlink(lock_file);
 			ret = 3; /* same as "invalid config file" */
 			goto out_free;
 		}
 		/* if nothing to unset, error out */
 		if (value == NULL) {
-			close(fd);
-			unlink(lock_file);
 			ret = 5;
 			goto out_free;
 		}
@@ -516,8 +512,6 @@ int git_config_set_multivar(const char* key, const char* value,
 				fprintf(stderr, "Invalid pattern: %s\n",
 					value_regex);
 				free(store.value_regex);
-				close(fd);
-				unlink(lock_file);
 				ret = 6;
 				goto out_free;
 			}
@@ -553,8 +547,6 @@ int git_config_set_multivar(const char* key, const char* value,
 		/* if nothing to unset, or too many matches, error out */
 		if ((store.seen == 0 && value == NULL) ||
 				(store.seen > 1 && multi_replace == 0)) {
-			close(fd);
-			unlink(lock_file);
 			ret = 5;
 			goto out_free;
 		}
@@ -603,8 +595,6 @@ int git_config_set_multivar(const char* key, const char* value,
 		unlink(config_filename);
 	}
 
-	close(fd);
-
 	if (rename(lock_file, config_filename) < 0) {
 		fprintf(stderr, "Could not rename the lock file?\n");
 		ret = 4;
@@ -614,10 +604,14 @@ int git_config_set_multivar(const char* key, const char* value,
 	ret = 0;
 
 out_free:
+	if (0 <= fd)
+		close(fd);
 	if (config_filename)
 		free(config_filename);
-	if (lock_file)
+	if (lock_file) {
+		unlink(lock_file);
 		free(lock_file);
+	}
 	return ret;
 }
 

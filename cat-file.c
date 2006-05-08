@@ -103,8 +103,10 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 	git_config(git_default_config);
-	if (argc != 3 || get_sha1(argv[2], sha1))
+	if (argc != 3)
 		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
+	if (get_sha1(argv[2], sha1))
+		die("Not a valid object name %s", argv[2]);
 
 	opt = 0;
 	if ( argv[1][0] == '-' ) {
@@ -133,8 +135,7 @@ int main(int argc, char **argv)
 		return !has_sha1_file(sha1);
 
 	case 'p':
-		if (get_sha1(argv[2], sha1) ||
-		    sha1_object_info(sha1, type, NULL))
+		if (sha1_object_info(sha1, type, NULL))
 			die("Not a valid object name %s", argv[2]);
 
 		/* custom pretty-print here */

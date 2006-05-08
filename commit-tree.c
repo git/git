@@ -91,15 +91,19 @@ int main(int argc, char **argv)
 
 	git_config(git_default_config);
 
-	if (argc < 2 || get_sha1(argv[1], tree_sha1) < 0)
+	if (argc < 2)
 		usage(commit_tree_usage);
+	if (get_sha1(argv[1], tree_sha1))
+		die("Not a valid object name %s", argv[1]);
 
 	check_valid(tree_sha1, tree_type);
 	for (i = 2; i < argc; i += 2) {
 		char *a, *b;
 		a = argv[i]; b = argv[i+1];
-		if (!b || strcmp(a, "-p") || get_sha1(b, parent_sha1[parents]))
+		if (!b || strcmp(a, "-p"))
 			usage(commit_tree_usage);
+		if (get_sha1(b, parent_sha1[parents]))
+			die("Not a valid object name %s", b);
 		check_valid(parent_sha1[parents], commit_type);
 		if (new_parent(parents))
 			parents++;

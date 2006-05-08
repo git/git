@@ -3,13 +3,15 @@
 # Copyright (c) 2005-2006 Pavel Roskin
 #
 
-USAGE="[-d] [-n] [-q] [-x | -X]"
+USAGE="[-d] [-n] [-q] [-x | -X] [--] <paths>..."
 LONG_USAGE='Clean untracked files from the working directory
 	-d	remove directories as well
 	-n 	don'\''t remove anything, just show what would be done
 	-q	be quiet, only report errors
 	-x	remove ignored files as well
-	-X	remove only ignored files as well'
+	-X	remove only ignored files
+When optional <paths>... arguments are given, the paths
+affected are further limited to those that match them.'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
@@ -44,8 +46,15 @@ do
 	-X)
 		ignoredonly=1
 		;;
-	*)
+	--)
+		shift
+		break
+		;;
+	-*)
 		usage
+		;;
+	*)
+		break
 	esac
 	shift
 done
@@ -64,7 +73,7 @@ if [ -z "$ignored" ]; then
 	fi
 fi
 
-git-ls-files --others --directory $excl ${excl_info:+"$excl_info"} |
+git-ls-files --others --directory $excl ${excl_info:+"$excl_info"} -- "$@" |
 while read -r file; do
 	if [ -d "$file" -a ! -L "$file" ]; then
 		if [ -z "$cleandir" ]; then

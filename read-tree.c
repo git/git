@@ -880,8 +880,8 @@ int main(int argc, char **argv)
 		if (1 < index_only + update)
 			usage(read_tree_usage);
 
-		if (get_sha1(arg, sha1) < 0)
-			usage(read_tree_usage);
+		if (get_sha1(arg, sha1))
+			die("Not a valid object name %s", arg);
 		if (list_tree(sha1) < 0)
 			die("failed to unpack tree object %s", arg);
 		stage++;

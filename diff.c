@@ -297,7 +297,6 @@ static const char minuses[]= "--------------------------------------------------
 
 static void show_stats(struct diffstat_t* data)
 {
-	char *prefix = "";
 	int i, len, add, del, total, adds = 0, dels = 0;
 	int max, max_change = 0, max_len = 0;
 	int total_files = data->nr;
@@ -319,6 +318,7 @@ static void show_stats(struct diffstat_t* data)
 	}
 
 	for (i = 0; i < data->nr; i++) {
+		char *prefix = "";
 		char *name = data->files[i]->name;
 		int added = data->files[i]->added;
 		int deleted = data->files[i]->deleted;
