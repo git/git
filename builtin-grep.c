@@ -82,6 +82,8 @@ static int pathspec_matches(const char **paths, const char *name)
 
 struct grep_pat {
 	struct grep_pat *next;
+	const char *origin;
+	int no;
 	const char *pattern;
 	regex_t regexp;
 };
@@ -105,10 +107,13 @@ struct grep_opt {
 	unsigned post_context;
 };
 
-static void add_pattern(struct grep_opt *opt, const char *pat)
+static void add_pattern(struct grep_opt *opt, const char *pat,
+			const char *origin, int no)
 {
 	struct grep_pat *p = xcalloc(1, sizeof(*p));
 	p->pattern = pat;
+	p->origin = origin;
+	p->no = no;
 	*opt->pattern_tail = p;
 	opt->pattern_tail = &p->next;
 	p->next = NULL;
@@ -121,9 +126,17 @@ static void compile_patterns(struct grep_opt *opt)
 		int err = regcomp(&p->regexp, p->pattern, opt->regflags);
 		if (err) {
 			char errbuf[1024];
+			char where[1024];
+			if (p->no)
+				sprintf(where, "In '%s' at %d, ",
+					p->origin, p->no);
+			else if (p->origin)
+				sprintf(where, "%s, ", p->origin);
+			else
+				where[0] = 0;
 			regerror(err, &p->regexp, errbuf, 1024);
 			regfree(&p->regexp);
-			die("'%s': %s", p->pattern, errbuf);
+			die("%s'%s': %s", where, p->pattern, errbuf);
 		}
 	}
 }
@@ -482,7 +495,6 @@ int cmd_grep(int argc, const char **argv, char **envp)
 {
 	int hit = 0;
 	int no_more_flags = 0;
-	int seen_noncommit = 0;
 	int cached = 0;
 	struct grep_opt opt;
 	struct object_list *list, **tail, *object_list = NULL;
@@ -598,9 +610,32 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			}
 			continue;
 		}
+		if (!strcmp("-f", arg)) {
+			FILE *patterns;
+			int lno = 0;
+			char buf[1024];
+			if (argc <= 1)
+				usage(builtin_grep_usage);
+			patterns = fopen(argv[1], "r");
+			if (!patterns)
+				die("'%s': %s", strerror(errno));
+			while (fgets(buf, sizeof(buf), patterns)) {
+				int len = strlen(buf);
+				if (buf[len-1] == '\n')
+					buf[len-1] = 0;
+				/* ignore empty line like grep does */
+				if (!buf[0])
+					continue;
+				add_pattern(&opt, strdup(buf), argv[1], ++lno);
+			}
+			fclose(patterns);
+			argv++;
+			argc--;
+			continue;
+		}
 		if (!strcmp("-e", arg)) {
 			if (1 < argc) {
-				add_pattern(&opt, argv[1]);
+				add_pattern(&opt, argv[1], "-e option", 0);
 				argv++;
 				argc--;
 				continue;
@@ -615,7 +650,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		if (!no_more_flags && *arg == '-')
 			usage(builtin_grep_usage);
 		if (!opt.pattern_list) {
-			add_pattern(&opt, arg);
+			add_pattern(&opt, arg, "command line", 0);
 			break;
 		}
 		else {
@@ -656,21 +691,9 @@ int cmd_grep(int argc, const char **argv, char **envp)
 
 	if (!object_list)
 		return !grep_cache(&opt, paths, cached);
-	/*
-	 * Do not walk "grep -e foo master next pu -- Documentation/"
-	 * but do walk "grep -e foo master..next -- Documentation/".
-	 * Ranged request mixed with a blob or tree object, like
-	 * "grep -e foo v1.0.0:Documentation/ master..next"
-	 * so detect that and complain.
-	 */
-	for (list = object_list; list; list = list->next) {
-		struct object *real_obj;
-		real_obj = deref_tag(list->item, NULL, 0);
-		if (strcmp(real_obj->type, commit_type))
-			seen_noncommit = 1;
-	}
+
 	if (cached)
-		die("both --cached and revisions given.");
+		die("both --cached and trees are given.");
 
 	for (list = object_list; list; list = list->next) {
 		struct object *real_obj;
