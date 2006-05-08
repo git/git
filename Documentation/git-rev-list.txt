@@ -68,9 +68,10 @@ OPTIONS
 --bisect::
 	Limit output to the one commit object which is roughly halfway
 	between the included and excluded commits. Thus, if 'git-rev-list
-	--bisect foo ^bar ^baz' outputs 'midpoint', the output
-	of 'git-rev-list foo ^midpoint' and 'git-rev-list midpoint
-	^bar ^baz' would be of roughly the same length. Finding the change
+	--bisect foo {caret}bar {caret}baz' outputs 'midpoint', the output
+	of 'git-rev-list foo {caret}midpoint' and 'git-rev-list midpoint
+	{caret}bar {caret}baz' would be of roughly the same length.
+	Finding the change
 	which introduces a regression is thus reduced to a binary search:
 	repeatedly generate and test new 'midpoint's until the commit chain
 	is of length one.
