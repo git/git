@@ -19,6 +19,7 @@
 //
 static const char *prefix;
 static int prefix_length = -1;
+static int newfd = -1;
 
 static int p_value = 1;
 static int allow_binary_replacement = 0;
@@ -1873,7 +1874,6 @@ static int use_patch(struct patch *p)
 
 static int apply_patch(int fd, const char *filename)
 {
-	int newfd;
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
 	struct patch *list = NULL, **listp = &list;
@@ -1904,12 +1904,11 @@ static int apply_patch(int fd, const char *filename)
 		size -= nr;
 	}
 
-	newfd = -1;
 	if (whitespace_error && (new_whitespace == error_on_whitespace))
 		apply = 0;
 
 	write_index = check_index && apply;
-	if (write_index)
+	if (write_index && newfd < 0)
 		newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (check_index) {
 		if (read_cache() < 0)
@@ -1921,12 +1920,6 @@ static int apply_patch(int fd, const char *filename)
 
 	if (apply)
 		write_out_results(list, skipped_patch);
-
-	if (write_index) {
-		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_index_file(&cache_file))
-			die("Unable to write new cachefile");
-	}
 
 	if (show_index_info)
 		show_index_list(list);
@@ -2085,5 +2078,12 @@ int main(int argc, char **argv)
 				whitespace_error == 1 ? "" : "s",
 				whitespace_error == 1 ? "s" : "");
 	}
+
+	if (write_index) {
+		if (write_cache(newfd, active_cache, active_nr) ||
+		    commit_index_file(&cache_file))
+			die("Unable to write new cachefile");
+	}
+
 	return 0;
 }
