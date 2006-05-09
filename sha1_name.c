@@ -458,17 +458,56 @@ int get_sha1(const char *name, unsigned char *sha1)
 {
 	int ret;
 	unsigned unused;
+	int namelen = strlen(name);
+	const char *cp;
 
 	prepare_alt_odb();
-	ret = get_sha1_1(name, strlen(name), sha1);
-	if (ret < 0) {
-		const char *cp = strchr(name, ':');
-		if (cp) {
-			unsigned char tree_sha1[20];
-			if (!get_sha1_1(name, cp-name, tree_sha1))
-				return get_tree_entry(tree_sha1, cp+1, sha1,
-						      &unused);
+	ret = get_sha1_1(name, namelen, sha1);
+	if (!ret)
+		return ret;
+	/* sha1:path --> object name of path in ent sha1
+	 * :path -> object name of path in index
+	 * :[0-3]:path -> object name of path in index at stage
+	 */
+	if (name[0] == ':') {
+		int stage = 0;
+		struct cache_entry *ce;
+		int pos;
+		if (namelen < 3 ||
+		    name[2] != ':' ||
+		    name[1] < '0' || '3' < name[1])
+			cp = name + 1;
+		else {
+			stage = name[1] - '0';
+			cp = name + 3;
 		}
+		namelen = namelen - (cp - name);
+		if (!active_cache)
+			read_cache();
+		if (active_nr < 0)
+			return -1;
+		pos = cache_name_pos(cp, namelen);
+		if (pos < 0)
+			pos = -pos - 1;
+		while (pos < active_nr) {
+			ce = active_cache[pos];
+			if (ce_namelen(ce) != namelen ||
+			    memcmp(ce->name, cp, namelen))
+				break;
+			if (ce_stage(ce) == stage) {
+				memcpy(sha1, ce->sha1, 20);
+				return 0;
+			}
+			pos++;
+		}
+		return -1;
+	}
+	cp = strchr(name, ':');
+	if (cp) {
+		unsigned char tree_sha1[20];
+		if (!get_sha1_1(name, cp-name, tree_sha1))
+			return get_tree_entry(tree_sha1, cp+1, sha1,
+					      &unused);
 	}
 	return ret;
 }
