@@ -494,20 +494,30 @@ static const char builtin_grep_usage[] =
 int cmd_grep(int argc, const char **argv, char **envp)
 {
 	int hit = 0;
-	int no_more_flags = 0;
 	int cached = 0;
+	int seen_dashdash = 0;
 	struct grep_opt opt;
 	struct object_list *list, **tail, *object_list = NULL;
 	const char *prefix = setup_git_directory();
 	const char **paths = NULL;
+	int i;
 
 	memset(&opt, 0, sizeof(opt));
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
 	/*
-	 * No point using rev_info, really.
+	 * If there is no -- then the paths must exist in the working
+	 * tree.  If there is no explicit pattern specified with -e or
+	 * -f, we take the first unrecognized non option to be the
+	 * pattern, but then what follows it must be zero or more
+	 * valid refs up to the -- (if exists), and then existing
+	 * paths.  If there is an explicit pattern, then the first
+	 * unrecocnized non option is the beginning of the refs list
+	 * that continues up to the -- (if exists), and then paths.
 	 */
+
+	tail = &object_list;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		argc--; argv++;
@@ -618,7 +628,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 				usage(builtin_grep_usage);
 			patterns = fopen(argv[1], "r");
 			if (!patterns)
-				die("'%s': %s", strerror(errno));
+				die("'%s': %s", argv[1], strerror(errno));
 			while (fgets(buf, sizeof(buf), patterns)) {
 				int len = strlen(buf);
 				if (buf[len-1] == '\n')
@@ -642,47 +652,61 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			}
 			usage(builtin_grep_usage);
 		}
-		if (!strcmp("--", arg)) {
-			no_more_flags = 1;
-			continue;
-		}
-		/* Either unrecognized option or a single pattern */
-		if (!no_more_flags && *arg == '-')
+		if (!strcmp("--", arg))
+			break;
+		if (*arg == '-')
 			usage(builtin_grep_usage);
+
+		/* First unrecognized non-option token */
 		if (!opt.pattern_list) {
 			add_pattern(&opt, arg, "command line", 0);
 			break;
 		}
 		else {
 			/* We are looking at the first path or rev;
-			 * it is found at argv[0] after leaving the
+			 * it is found at argv[1] after leaving the
 			 * loop.
 			 */
 			argc++; argv--;
 			break;
 		}
 	}
+
 	if (!opt.pattern_list)
 		die("no pattern given.");
 	compile_patterns(&opt);
-	tail = &object_list;
-	while (1 < argc) {
-		struct object *object;
-		struct object_list *elem;
-		const char *arg = argv[1];
+
+	/* Check revs and then paths */
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
 		unsigned char sha1[20];
-		if (get_sha1(arg, sha1) < 0)
-			break;
-		object = parse_object(sha1);
-		if (!object)
-			die("bad object %s", arg);
-		elem = object_list_insert(object, tail);
-		elem->name = arg;
-		tail = &elem->next;
-		argc--; argv++;
+		/* Is it a rev? */
+		if (!get_sha1(arg, sha1)) {
+			struct object *object = parse_object(sha1);
+			struct object_list *elem;
+			if (!object)
+				die("bad object %s", arg);
+			elem = object_list_insert(object, tail);
+			elem->name = arg;
+			tail = &elem->next;
+			continue;
+		}
+		if (!strcmp(arg, "--")) {
+			i++;
+			seen_dashdash = 1;
+		}
+		break;
 	}
-	if (1 < argc)
-		paths = get_pathspec(prefix, argv + 1);
+
+	/* The rest are paths */
+	if (!seen_dashdash) {
+		int j;
+		for (j = i; j < argc; i++)
+			verify_filename(prefix, argv[j]);
+	}
+
+	if (i < argc)
+		paths = get_pathspec(prefix, argv + i);
 	else if (prefix) {
 		paths = xcalloc(2, sizeof(const char *));
 		paths[0] = prefix;
