@@ -1,0 +1,30 @@
+#!/bin/sh
+F=`git diff-tree -r --name-only HEAD^ HEAD`
+echo "The topic modifies these paths:"
+echo "$F" | sed -e 's/^/	/'
+
+# Documentation/git-cvsexportcommit.txt
+# git-cvsexportcommit.perl
+# git-cvsserver.perl
+B=`git merge-base master HEAD`
+# 45f75a0167b4a4693f2c6005bf7db231ca91ecc8 (master)
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+git rev-list --parents master..HEAD^2 |
+sed -ne "/^$_x40 $_x40 $_x40/p" |
+while read merge first second
+do
+	echo
+	# first is the previous cvs topic tip, second is what was merged into
+	# it.  Does the merge have anything to do with adjust the topic to
+	# updated upstream?
+	git name-rev "$merge"
+	out=`git diff-tree --stat "$merge^" "$merge" -- $F`
+	case "$out" in
+	'')
+		echo "* Nothing to do with the topic" ;;
+	*)
+		echo "$out" ;;
+	esac
+done
+

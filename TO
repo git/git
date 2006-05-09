@@ -36,6 +36,7 @@ LF='
 sed -n \
     -e 's/^\.\///' \
     -e '/^[^\/][^\/]\//p' |
+sort |
 while read topic
 do
 	rebase= done= not_done= trouble= date=
