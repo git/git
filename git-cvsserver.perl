@@ -214,8 +214,7 @@ sub req_Globaloption
 {
     my ( $cmd, $data ) = @_;
     $log->debug("req_Globaloption : $data");
-
-    # TODO : is this data useful ???
+    $state->{globaloptions}{$data} = 1;
 }
 
 # Valid-responses request-list \n
@@ -267,12 +266,32 @@ sub req_Directory
 
     $state->{localdir} = $data;
     $state->{repository} = $repository;
-    $state->{directory} = $repository;
-    $state->{directory} =~ s/^$state->{CVSROOT}\///;
-    $state->{module} = $1 if ($state->{directory} =~ s/^(.*?)(\/|$)//);
+    $state->{path} = $repository;
+    $state->{path} =~ s/^$state->{CVSROOT}\///;
+    $state->{module} = $1 if ($state->{path} =~ s/^(.*?)(\/|$)//);
+    $state->{path} .= "/" if ( $state->{path} =~ /\S/ );
+
+    $state->{directory} = $state->{localdir};
+    $state->{directory} = "" if ( $state->{directory} eq "." );
     $state->{directory} .= "/" if ( $state->{directory} =~ /\S/ );
 
-    $log->debug("req_Directory : localdir=$data repository=$repository directory=$state->{directory} module=$state->{module}");
+    if ( not defined($state->{prependdir}) and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
+    {
+        $log->info("Setting prepend to '$state->{path}'");
+        $state->{prependdir} = $state->{path};
+        foreach my $entry ( keys %{$state->{entries}} )
+        {
+            $state->{entries}{$state->{prependdir} . $entry} = $state->{entries}{$entry};
+            delete $state->{entries}{$entry};
+        }
+    }
+
+    if ( defined ( $state->{prependdir} ) )
+    {
+        $log->debug("Prepending '$state->{prependdir}' to state|directory");
+        $state->{directory} = $state->{prependdir} . $state->{directory}
+    }
+    $log->debug("req_Directory : localdir=$data repository=$repository path=$state->{path} directory=$state->{directory} module=$state->{module}");
 }
 
 # Entry entry-line \n
@@ -290,7 +309,7 @@ sub req_Entry
 {
     my ( $cmd, $data ) = @_;
 
-    $log->debug("req_Entry : $data");
+    #$log->debug("req_Entry : $data");
 
     my @data = split(/\//, $data);
 
@@ -300,6 +319,22 @@ sub req_Entry
         options     => $data[4],
         tag_or_date => $data[5],
     };
+
+    $log->info("Received entry line '$data' => '" . $state->{directory} . $data[1] . "'");
+}
+
+# Questionable filename \n
+#     Response expected: no. Additional data: no. Tell the server to check
+#     whether filename should be ignored, and if not, next time the server
+#     sends responses, send (in a M response) `?' followed by the directory and
+#     filename. filename must not contain `/'; it needs to be a file in the
+#     directory named by the most recent Directory request.
+sub req_Questionable
+{
+    my ( $cmd, $data ) = @_;
+
+    $log->debug("req_Questionable : $data");
+    $state->{entries}{$state->{directory}.$data}{questionable} = 1;
 }
 
 # add \n
@@ -332,8 +367,7 @@ sub req_add
             next;
         }
 
-
-        my ( $filepart, $dirpart ) = filenamesplit($filename);
+        my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         print "E cvs add: scheduling file `$filename' for addition\n";
 
@@ -414,7 +448,7 @@ sub req_remove
         }
 
 
-        my ( $filepart, $dirpart ) = filenamesplit($filename);
+        my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         print "E cvs remove: scheduling `$filename' for removal\n";
 
@@ -500,22 +534,6 @@ sub req_Unchanged
     $state->{entries}{$state->{directory}.$data}{unchanged} = 1;
 
     #$log->debug("req_Unchanged : $data");
-}
-
-# Questionable filename \n
-#     Response expected: no. Additional data: no.
-#     Tell the server to check whether filename should be ignored,
-#     and if not, next time the server sends responses, send (in
-#     a M response) `?' followed by the directory and filename.
-#     filename must not contain `/'; it needs to be a file in the
-#     directory named by the most recent Directory request.
-sub req_Questionable
-{
-    my ( $cmd, $data ) = @_;
-
-    $state->{entries}{$state->{directory}.$data}{questionable} = 1;
-
-    #$log->debug("req_Questionable : $data");
 }
 
 # Argument text \n
@@ -757,8 +775,7 @@ sub req_update
 
     $updater->update();
 
-    # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     #$log->debug("update state : " . Dumper($state));
 
@@ -766,6 +783,8 @@ sub req_update
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
+
+        $log->debug("Processing file $filename");
 
         # if we have a -C we should pretend we never saw modified stuff
         if ( exists ( $state->{opt}{C} ) )
@@ -821,13 +840,16 @@ sub req_update
 
         if ( $meta->{filehash} eq "deleted" )
         {
-            my ( $filepart, $dirpart ) = filenamesplit($filename);
+            my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
             $log->info("Removing '$filename' from working copy (no longer in the repo)");
 
             print "E cvs update: `$filename' is no longer in the repository\n";
-            print "Removed $dirpart\n";
-            print "$filepart\n";
+            # Don't want to actually _DO_ the update if -n specified
+            unless ( $state->{globaloptions}{-n} ) {
+		print "Removed $dirpart\n";
+		print "$filepart\n";
+	    }
         }
         elsif ( not defined ( $state->{entries}{$filename}{modified_hash} )
 		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
@@ -840,34 +862,42 @@ sub req_update
             print "MT newline\n";
             print "MT -updated\n";
 
-            my ( $filepart, $dirpart ) = filenamesplit($filename);
-            $dirpart =~ s/^$state->{directory}//;
+            my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
-            if ( defined ( $wrev ) )
-            {
-                # instruct client we're sending a file to put in this path as a replacement
-                print "Update-existing $dirpart\n";
-                $log->debug("Updating existing file 'Update-existing $dirpart'");
-            } else {
-                # instruct client we're sending a file to put in this path as a new file
-                print "Created $dirpart\n";
-                $log->debug("Creating new file 'Created $dirpart'");
-            }
-            print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+	    # Don't want to actually _DO_ the update if -n specified
+	    unless ( $state->{globaloptions}{-n} )
+	    {
+		if ( defined ( $wrev ) )
+		{
+		    # instruct client we're sending a file to put in this path as a replacement
+		    print "Update-existing $dirpart\n";
+		    $log->debug("Updating existing file 'Update-existing $dirpart'");
+		} else {
+		    # instruct client we're sending a file to put in this path as a new file
+		    print "Clear-static-directory $dirpart\n";
+		    print $state->{CVSROOT} . "/$state->{module}/$dirpart\n";
+		    print "Clear-sticky $dirpart\n";
+		    print $state->{CVSROOT} . "/$state->{module}/$dirpart\n";
 
-            # this is an "entries" line
-            $log->debug("/$filepart/1.$meta->{revision}///");
-            print "/$filepart/1.$meta->{revision}///\n";
+		    $log->debug("Creating new file 'Created $dirpart'");
+		    print "Created $dirpart\n";
+		}
+		print $state->{CVSROOT} . "/$state->{module}/$filename\n";
 
-            # permissions
-            $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
-            print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+		# this is an "entries" line
+		$log->debug("/$filepart/1.$meta->{revision}///");
+		print "/$filepart/1.$meta->{revision}///\n";
 
-            # transmit file
-            transmitfile($meta->{filehash});
+		# permissions
+		$log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+		print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+
+		# transmit file
+		transmitfile($meta->{filehash});
+	    }
         } else {
             $log->info("Updating '$filename'");
-            my ( $filepart, $dirpart ) = filenamesplit($meta->{name});
+            my ( $filepart, $dirpart ) = filenamesplit($meta->{name},1);
 
             my $dir = tempdir( DIR => $TEMP_DIR, CLEANUP => 1 ) . "/";
 
@@ -892,19 +922,29 @@ sub req_update
                 $log->info("Merged successfully");
                 print "M M $filename\n";
                 $log->debug("Update-existing $dirpart");
-                print "Update-existing $dirpart\n";
-                $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
-                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                $log->debug("/$filepart/1.$meta->{revision}///");
-                print "/$filepart/1.$meta->{revision}///\n";
+
+                # Don't want to actually _DO_ the update if -n specified
+                unless ( $state->{globaloptions}{-n} )
+                {
+                    print "Update-existing $dirpart\n";
+                    $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
+                    print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+                    $log->debug("/$filepart/1.$meta->{revision}///");
+                    print "/$filepart/1.$meta->{revision}///\n";
+                }
             }
             elsif ( $return == 1 )
             {
                 $log->info("Merged with conflicts");
                 print "M C $filename\n";
-                print "Update-existing $dirpart\n";
-                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                print "/$filepart/1.$meta->{revision}/+//\n";
+
+                # Don't want to actually _DO_ the update if -n specified
+                unless ( $state->{globaloptions}{-n} )
+                {
+                    print "Update-existing $dirpart\n";
+                    print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+                    print "/$filepart/1.$meta->{revision}/+//\n";
+                }
             }
             else
             {
@@ -912,17 +952,21 @@ sub req_update
                 next;
             }
 
-            # permissions
-            $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
-            print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+            # Don't want to actually _DO_ the update if -n specified
+            unless ( $state->{globaloptions}{-n} )
+            {
+                # permissions
+                $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+                print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
 
-            # transmit file, format is single integer on a line by itself (file
-            # size) followed by the file contents
-            # TODO : we should copy files in blocks
-            my $data = `cat $file_local`;
-            $log->debug("File size : " . length($data));
-            print length($data) . "\n";
-            print $data;
+                # transmit file, format is single integer on a line by itself (file
+                # size) followed by the file contents
+                # TODO : we should copy files in blocks
+                my $data = `cat $file_local`;
+                $log->debug("File size : " . length($data));
+                print length($data) . "\n";
+                print $data;
+            }
 
             chdir "/";
         }
@@ -950,6 +994,7 @@ sub req_ci
 
     if ( -e $state->{CVSROOT} . "/index" )
     {
+        $log->warn("file 'index' already exists in the git repository");
         print "error 1 Index already exists in git repo\n";
         exit;
     }
@@ -957,6 +1002,7 @@ sub req_ci
     my $lockfile = "$state->{CVSROOT}/refs/heads/$state->{module}.lock";
     unless ( sysopen(LOCKFILE,$lockfile,O_EXCL|O_CREAT|O_WRONLY) )
     {
+        $log->warn("lockfile '$lockfile' already exists, please try again");
         print "error 1 Lock file '$lockfile' already exists, please try again\n";
         exit;
     }
@@ -988,6 +1034,7 @@ sub req_ci
     # foreach file specified on the commandline ...
     foreach my $filename ( @{$state->{args}} )
     {
+        my $committedfile = $filename;
         $filename = filecleanup($filename);
 
         next unless ( exists $state->{entries}{$filename}{modified_filename} or not $state->{entries}{$filename}{unchanged} );
@@ -1022,7 +1069,7 @@ sub req_ci
             exit;
         }
 
-        push @committedfiles, $filename;
+        push @committedfiles, $committedfile;
         $log->info("Committing $filename");
 
         system("mkdir","-p",$dirpart) unless ( -d $dirpart );
@@ -1105,7 +1152,7 @@ sub req_ci
 
         my $meta = $updater->getmeta($filename);
 
-        my ( $filepart, $dirpart ) = filenamesplit($filename);
+        my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         $log->debug("Checked-in $dirpart : $filename");
 
@@ -1141,7 +1188,7 @@ sub req_status
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     # foreach file specified on the commandline ...
     foreach my $filename ( @{$state->{args}} )
@@ -1242,7 +1289,7 @@ sub req_diff
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     # foreach file specified on the commandline ...
     foreach my $filename ( @{$state->{args}} )
@@ -1384,7 +1431,7 @@ sub req_log
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     # foreach file specified on the commandline ...
     foreach my $filename ( @{$state->{args}} )
@@ -1460,7 +1507,7 @@ sub req_annotate
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing annotate on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     # we'll need a temporary checkout dir
     my $tmpdir = tempdir ( DIR => $TEMP_DIR );
@@ -1655,13 +1702,36 @@ sub argsfromdir
 {
     my $updater = shift;
 
-    $state->{args} = [];
+    $state->{args} = [] if ( scalar(@{$state->{args}}) == 1 and $state->{args}[0] eq "." );
 
-    foreach my $file ( @{$updater->gethead} )
+    return if ( scalar ( @{$state->{args}} ) > 1 );
+
+    if ( scalar(@{$state->{args}}) == 1 )
     {
-        next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
-        next unless ( $file->{name} =~ s/^$state->{directory}// );
-        push @{$state->{args}}, $file->{name};
+        my $arg = $state->{args}[0];
+        $arg .= $state->{prependdir} if ( defined ( $state->{prependdir} ) );
+
+        $log->info("Only one arg specified, checking for directory expansion on '$arg'");
+
+        foreach my $file ( @{$updater->gethead} )
+        {
+            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
+            next unless ( $file->{name} =~ /^$arg\// or $file->{name} eq $arg  );
+            push @{$state->{args}}, $file->{name};
+        }
+
+        shift @{$state->{args}} if ( scalar(@{$state->{args}}) > 1 );
+    } else {
+        $log->info("Only one arg specified, populating file list automatically");
+
+        $state->{args} = [];
+
+        foreach my $file ( @{$updater->gethead} )
+        {
+            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
+            next unless ( $file->{name} =~ s/^$state->{prependdir}// );
+            push @{$state->{args}}, $file->{name};
+        }
     }
 }
 
@@ -1736,10 +1806,16 @@ sub transmitfile
 sub filenamesplit
 {
     my $filename = shift;
+    my $fixforlocaldir = shift;
 
     my ( $filepart, $dirpart ) = ( $filename, "." );
     ( $filepart, $dirpart ) = ( $2, $1 ) if ( $filename =~ /(.*)\/(.*)/ );
     $dirpart .= "/";
+
+    if ( $fixforlocaldir )
+    {
+        $dirpart =~ s/^$state->{prependdir}//;
+    }
 
     return ( $filepart, $dirpart );
 }
@@ -1756,8 +1832,7 @@ sub filecleanup
     }
 
     $filename =~ s/^\.\///g;
-    $filename = $state->{directory} . $filename;
-
+    $filename = $state->{prependdir} . $filename;
     return $filename;
 }
 

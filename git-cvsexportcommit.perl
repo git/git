@@ -10,9 +10,9 @@ unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
 }
 
-our ($opt_h, $opt_p, $opt_v, $opt_c );
+our ($opt_h, $opt_p, $opt_v, $opt_c, $opt_f, $opt_m );
 
-getopts('hpvc');
+getopts('hpvcfm:');
 
 $opt_h && usage();
 
@@ -77,12 +77,16 @@ if ($parent) {
 $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
 
 # grab the commit message
-`git-cat-file commit $commit | sed -e '1,/^\$/d' > .msg`;
+open(MSG, ">.msg") or die "Cannot open .msg for writing";
+print MSG $opt_m;
+close MSG;
+
+`git-cat-file commit $commit | sed -e '1,/^\$/d' >> .msg`;
 $? && die "Error extracting the commit message";
 
 my (@afiles, @dfiles, @mfiles);
 my @files = safe_pipe_capture('git-diff-tree', '-r', $parent, $commit);
-print @files;
+#print @files;
 $? && die "Error in git-diff-tree";
 foreach my $f (@files) {
     chomp $f;
@@ -109,7 +113,7 @@ foreach my $f (@afiles) {
     if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
     unless ($status[0] =~ m/Status: Unknown$/) {
  	$dirty = 1;
-	warn "File $f is already known in your CVS checkout!\n";
+	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
     }
 }
 foreach my $f (@mfiles, @dfiles) {
@@ -122,7 +126,11 @@ foreach my $f (@mfiles, @dfiles) {
     }
 }
 if ($dirty) {
-    die "Exiting: your CVS tree is not clean for this merge.";
+    if ($opt_f) {	warn "The tree is not clean -- forced merge\n";
+	$dirty = 0;
+    } else {
+	die "Exiting: your CVS tree is not clean for this merge.";
+    }
 }
 
 ###
@@ -215,7 +223,7 @@ if ($opt_c) {
 }
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-m msgprefix] [ parent ] commit
 END
 	exit(1);
 }
