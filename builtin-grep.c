@@ -98,6 +98,7 @@ struct grep_opt {
 	unsigned unmatch_name_only:1;
 	unsigned count:1;
 	unsigned word_regexp:1;
+	unsigned fixed:1;
 #define GREP_BINARY_DEFAULT	0
 #define GREP_BINARY_NOMATCH	1
 #define GREP_BINARY_TEXT	2
@@ -179,6 +180,20 @@ static int buffer_is_binary(const char *ptr, unsigned long size)
 	return 0;
 }
 
+static int fixmatch(const char *pattern, char *line, regmatch_t *match)
+{
+	char *hit = strstr(line, pattern);
+	if (!hit) {
+		match->rm_so = match->rm_eo = -1;
+		return REG_NOMATCH;
+	}
+	else {
+		match->rm_so = hit - line;
+		match->rm_eo = match->rm_so + strlen(pattern);
+		return 0;
+	}
+}
+
 static int grep_buffer(struct grep_opt *opt, const char *name,
 		       char *buf, unsigned long size)
 {
@@ -224,9 +239,14 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 		*eol = 0;
 
 		for (p = opt->pattern_list; p; p = p->next) {
-			regex_t *exp = &p->regexp;
-			hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
-				       pmatch, 0);
+			if (!opt->fixed) {
+				regex_t *exp = &p->regexp;
+				hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
+					       pmatch, 0);
+			}
+			else {
+				hit = !fixmatch(p->pattern, bol, pmatch);
+			}
 
 			if (hit && opt->word_regexp) {
 				/* Match beginning must be either
@@ -241,10 +261,10 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 					die("regexp returned nonsense");
 				if (pmatch[0].rm_so != 0 &&
 				    word_char(bol[pmatch[0].rm_so-1]))
-					continue; /* not a word boundary */
-				if ((eol-bol) < pmatch[0].rm_eo &&
+					hit = 0;
+				if (pmatch[0].rm_eo != (eol-bol) &&
 				    word_char(bol[pmatch[0].rm_eo]))
-					continue; /* not a word boundary */
+					hit = 0;
 			}
 			if (hit)
 				break;
@@ -549,6 +569,11 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			opt.regflags |= REG_EXTENDED;
 			continue;
 		}
+		if (!strcmp("-F", arg) ||
+		    !strcmp("--fixed-strings", arg)) {
+			opt.fixed = 1;
+			continue;
+		}
 		if (!strcmp("-G", arg) ||
 		    !strcmp("--basic-regexp", arg)) {
 			opt.regflags &= ~REG_EXTENDED;
@@ -674,7 +699,10 @@ int cmd_grep(int argc, const char **argv, char **envp)
 
 	if (!opt.pattern_list)
 		die("no pattern given.");
-	compile_patterns(&opt);
+	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
+		die("cannot mix --fixed-strings and regexp");
+	if (!opt.fixed)
+		compile_patterns(&opt);
 
 	/* Check revs and then paths */
 	for (i = 1; i < argc; i++) {
@@ -701,7 +729,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	/* The rest are paths */
 	if (!seen_dashdash) {
 		int j;
-		for (j = i; j < argc; i++)
+		for (j = i; j < argc; j++)
 			verify_filename(prefix, argv[j]);
 	}
 
