@@ -350,7 +350,7 @@ sub _line {
 				return $res;
 			} elsif($line =~ s/^E //) {
 				# print STDERR "S: $line\n";
-			} elsif($line =~ /^Remove-entry /i) {
+			} elsif($line =~ /^(Remove-entry|Removed) /i) {
 				$line = $self->readline(); # filename
 				$line = $self->readline(); # OK
 				chomp $line;
