@@ -701,7 +701,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	/* The rest are paths */
 	if (!seen_dashdash) {
 		int j;
-		for (j = i; j < argc; i++)
+		for (j = i; j < argc; j++)
 			verify_filename(prefix, argv[j]);
 	}
 
