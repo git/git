@@ -583,7 +583,7 @@ int read_cache(void)
 
 	active_nr = ntohl(hdr->hdr_entries);
 	active_alloc = alloc_nr(active_nr);
-	active_cache = calloc(active_alloc, sizeof(struct cache_entry *));
+	active_cache = xcalloc(active_alloc, sizeof(struct cache_entry *));
 
 	offset = sizeof(*hdr);
 	for (i = 0; i < active_nr; i++) {
