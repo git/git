@@ -241,10 +241,10 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 					die("regexp returned nonsense");
 				if (pmatch[0].rm_so != 0 &&
 				    word_char(bol[pmatch[0].rm_so-1]))
-					continue; /* not a word boundary */
-				if ((eol-bol) < pmatch[0].rm_eo &&
+					hit = 0;
+				if (pmatch[0].rm_eo != (eol-bol) &&
 				    word_char(bol[pmatch[0].rm_eo]))
-					continue; /* not a word boundary */
+					hit = 0;
 			}
 			if (hit)
 				break;
