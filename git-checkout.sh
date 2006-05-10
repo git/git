@@ -144,7 +144,7 @@ else
 	work=`git write-tree` &&
 	git read-tree --reset $new &&
 	git checkout-index -f -u -q -a &&
-	git read-tree -m -u $old $new $work || exit
+	git read-tree -m -u --aggressive $old $new $work || exit
 
 	if result=`git write-tree 2>/dev/null`
 	then
