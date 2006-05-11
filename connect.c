@@ -100,7 +100,7 @@ int path_match(const char *path, int nr, char **match)
 		if (pathlen > len && path[pathlen - len - 1] != '/')
 			continue;
 		*s = 0;
-		return 1;
+		return (i + 1);
 	}
 	return 0;
 }
