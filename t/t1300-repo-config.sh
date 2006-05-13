@@ -229,7 +229,7 @@ test_expect_failure 'invalid key' 'git-repo-config inval.2key blabla'
 test_expect_success 'correct key' 'git-repo-config 123456.a123 987'
 
 test_expect_success 'hierarchical section' \
-	'git-repo-config 1.2.3.alpha beta'
+	'git-repo-config Version.1.2.3eX.Alpha beta'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -241,8 +241,8 @@ noIndent= sillyValue ; 'nother silly comment
 	NoNewLine = wow2 for me
 [123456]
 	a123 = 987
-[1.2.3]
-	alpha = beta
+[Version "1.2.3eX"]
+	Alpha = beta
 EOF
 
 test_expect_success 'hierarchical section value' 'cmp .git/config expect'
@@ -251,7 +251,7 @@ cat > expect << EOF
 beta.noindent=sillyValue
 nextsection.nonewline=wow2 for me
 123456.a123=987
-1.2.3.alpha=beta
+version.1.2.3eX.alpha=beta
 EOF
 
 test_expect_success 'working --list' \
