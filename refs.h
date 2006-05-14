@@ -7,6 +7,9 @@
  */
 extern int head_ref(int (*fn)(const char *path, const unsigned char *sha1));
 extern int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1));
+extern int for_each_tag_ref(int (*fn)(const char *path, const unsigned char *sha1));
+extern int for_each_branch_ref(int (*fn)(const char *path, const unsigned char *sha1));
+extern int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *sha1));
 
 /** Reads the refs file specified into sha1 **/
 extern int get_ref_sha1(const char *ref, unsigned char *sha1);
