@@ -13,6 +13,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include <stdint.h>
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
