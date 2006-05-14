@@ -15,6 +15,10 @@ stop_here () {
 }
 
 stop_here_user_resolve () {
+    if [ -n "$resolvemsg" ]; then
+	    echo "$resolvemsg"
+	    stop_here $1
+    fi
     cmdline=$(basename $0)
     if test '' != "$interactive"
     then
@@ -121,7 +125,7 @@ fall_back_3way () {
 }
 
 prec=4
-dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws=
+dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws= resolvemsg=
 
 while case "$#" in 0) break;; esac
 do
@@ -157,6 +161,9 @@ do
 	--whitespace=*)
 	ws=$1; shift ;;
 
+	--resolvemsg=*)
+	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
+
 	--)
 	shift; break ;;
 	-*)
@@ -185,7 +192,7 @@ then
 else
 	# Make sure we are not given --skip nor --resolved
 	test ",$skip,$resolved," = ,,, ||
-		die "we are not resuming."
+		die "Resolve operation not in progress, we are not resuming."
 
 	# Start afresh.
 	mkdir -p "$dotest" || exit
