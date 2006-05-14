@@ -64,12 +64,13 @@ static int show_config(const char* key_, const char* value_)
 
 static int get_value(const char* key_, const char* regex_)
 {
-	int i;
+	char *tl;
 
-	key = malloc(strlen(key_)+1);
-	for (i = 0; key_[i]; i++)
-		key[i] = tolower(key_[i]);
-	key[i] = 0;
+	key = strdup(key_);
+	for (tl=key+strlen(key)-1; tl >= key && *tl != '.'; --tl)
+		*tl = tolower(*tl);
+	for (tl=key; *tl && *tl != '.'; ++tl)
+		*tl = tolower(*tl);
 
 	if (use_key_regexp) {
 		key_regexp = (regex_t*)malloc(sizeof(regex_t));

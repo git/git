@@ -199,7 +199,6 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 			entry->next = hash[i];
 			hash[i] = entry++;
 			hash_count[i]++;
-			entries--;
 		}
 	}
 
@@ -229,10 +228,6 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 		} while(entry);
 	}
 	free(hash_count);
-
-	/* If we didn't use all hash entries, free the unused memory. */
-	if (entries)
-		index = realloc(index, memsize - entries * sizeof(*entry));
 
 	return index;
 }
