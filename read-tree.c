@@ -684,7 +684,7 @@ static int oneway_merge(struct cache_entry **src)
 			     merge_size);
 
 	if (!a)
-		return 0;
+		return deleted_entry(old, NULL);
 	if (old && same(old, a)) {
 		return keep_entry(old);
 	}
