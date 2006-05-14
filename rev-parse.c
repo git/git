@@ -36,6 +36,7 @@ static int is_rev_argument(const char *arg)
 		"--all",
 		"--bisect",
 		"--dense",
+		"--branches",
 		"--header",
 		"--max-age=",
 		"--max-count=",
@@ -45,7 +46,9 @@ static int is_rev_argument(const char *arg)
 		"--objects-edge",
 		"--parents",
 		"--pretty",
+		"--remotes",
 		"--sparse",
+		"--tags",
 		"--topo-order",
 		"--date-order",
 		"--unpacked",
@@ -165,7 +168,7 @@ int main(int argc, char **argv)
 	int i, as_is = 0, verify = 0;
 	unsigned char sha1[20];
 	const char *prefix = setup_git_directory();
-	
+
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
@@ -253,6 +256,18 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference);
+				continue;
+			}
+			if (!strcmp(arg, "--branches")) {
+				for_each_branch_ref(show_reference);
+				continue;
+			}
+			if (!strcmp(arg, "--tags")) {
+				for_each_tag_ref(show_reference);
+				continue;
+			}
+			if (!strcmp(arg, "--remotes")) {
+				for_each_remote_ref(show_reference);
 				continue;
 			}
 			if (!strcmp(arg, "--show-prefix")) {

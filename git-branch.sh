@@ -82,8 +82,7 @@ done
 
 case "$#" in
 0)
-	git-rev-parse --symbolic --all |
-	sed -ne 's|^refs/heads/||p' |
+	git-rev-parse --symbolic --branches |
 	sort |
 	while read ref
 	do
