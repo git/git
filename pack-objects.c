@@ -156,7 +156,7 @@ static void prepare_pack_revindex(struct pack_revindex *rix)
 
 	rix->revindex = xmalloc(sizeof(unsigned long) * (num_ent + 1));
 	for (i = 0; i < num_ent; i++) {
-		long hl = *((long *)(index + 24 * i));
+		uint32_t hl = *((uint32_t *)(index + 24 * i));
 		rix->revindex[i] = ntohl(hl);
 	}
 	/* This knows the pack format -- the 20-byte trailer
