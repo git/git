@@ -720,7 +720,7 @@ static int oneway_merge(struct cache_entry **src)
 
 	if (!a) {
 		invalidate_ce_path(old);
-		return 0;
+		return deleted_entry(old, NULL);
 	}
 	if (old && same(old, a)) {
 		return keep_entry(old);
