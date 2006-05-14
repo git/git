@@ -3213,8 +3213,11 @@ proc selcanvline {w x y} {
 
 proc commit_descriptor {p} {
     global commitinfo
+    if {![info exists commitinfo($p)]} {
+	getcommit $p
+    }
     set l "..."
-    if {[info exists commitinfo($p)]} {
+    if {[llength $commitinfo($p)] > 1} {
 	set l [lindex $commitinfo($p) 0]
     }
     return "$p ($l)"
