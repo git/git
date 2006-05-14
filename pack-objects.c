@@ -10,6 +10,7 @@
 #include "tree-walk.h"
 #include <sys/time.h>
 #include <signal.h>
+#include <stdint.h>
 
 static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
