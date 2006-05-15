@@ -723,6 +723,9 @@ static int oneway_merge(struct cache_entry **src)
 		return deleted_entry(old, NULL);
 	}
 	if (old && same(old, a)) {
+		struct stat st;
+		if (lstat(old->name, &st) || ce_match_stat(old, &st, 1))
+			old->ce_flags |= htons(CE_UPDATE);
 		return keep_entry(old);
 	}
 	return merged_entry(a, NULL);
