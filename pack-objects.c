@@ -1039,8 +1039,8 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Now some size filtering euristics. */
 	size = trg_entry->size;
-	max_size = size / 2 - 20;
-	if (trg_entry->delta)
+	max_size = (size/2 - 20) / (src_entry->depth + 1);
+	if (trg_entry->delta && trg_entry->delta_size <= max_size)
 		max_size = trg_entry->delta_size-1;
 	src_size = src_entry->size;
 	sizediff = src_size < size ? size - src_size : 0;
@@ -1129,15 +1129,12 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			if (try_delta(n, m, m->index, depth) < 0)
 				break;
 		}
-#if 0
 		/* if we made n a delta, and if n is already at max
 		 * depth, leaving it in the window is pointless.  we
 		 * should evict it first.
-		 * ... in theory only; somehow this makes things worse.
 		 */
 		if (entry->delta && depth <= entry->depth)
 			continue;
-#endif
 		idx++;
 		if (idx >= window)
 			idx = 0;
