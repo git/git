@@ -13,7 +13,6 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
-#include <stdint.h>
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -1127,7 +1126,7 @@ int find_pack_entry_one(const unsigned char *sha1,
 		int mi = (lo + hi) / 2;
 		int cmp = memcmp(index + 24 * mi + 4, sha1, 20);
 		if (!cmp) {
-			e->offset = ntohl(*((uint32_t *)(index + 24 * mi)));
+			e->offset = ntohl(*((unsigned int *)(index + 24 * mi)));
 			memcpy(e->sha1, sha1, 20);
 			e->p = p;
 			return 1;
