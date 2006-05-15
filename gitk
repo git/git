@@ -380,7 +380,7 @@ proc makewindow {} {
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
-    global rowctxmenu mergemax
+    global rowctxmenu mergemax wrapcomment
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -527,6 +527,7 @@ proc makewindow {} {
     pack $ctext -side left -fill both -expand 1
     .ctop.cdet add .ctop.cdet.left
 
+    $ctext tag conf comment -wrap $wrapcomment
     $ctext tag conf filesep -font [concat $textfont bold] -back "#aaaaaa"
     $ctext tag conf hunksep -fore blue
     $ctext tag conf d0 -fore red
@@ -696,7 +697,7 @@ proc savestuff {w} {
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth
     global viewname viewfiles viewargs viewperm nextviewnum
-    global cmitmode
+    global cmitmode wrapcomment
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -709,6 +710,7 @@ proc savestuff {w} {
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
 	puts $f [list set cmitmode $cmitmode]
+	puts $f [list set wrapcomment $wrapcomment]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
@@ -3225,11 +3227,11 @@ proc commit_descriptor {p} {
 
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
-proc appendwithlinks {text} {
+proc appendwithlinks {text tags} {
     global ctext commitrow linknum curview
 
     set start [$ctext index "end - 1c"]
-    $ctext insert end $text
+    $ctext insert end $text $tags
     $ctext insert end "\n"
     set links [regexp -indices -all -inline {[0-9a-f]{40}} $text]
     foreach l $links {
@@ -3357,7 +3359,7 @@ proc selectline {l isnew} {
 	$ctext insert end "\n"
     }
  
-    set comment {}
+    set headers {}
     set olds [lindex $parentlist $l]
     if {[llength $olds] > 1} {
 	set np 0
@@ -3368,23 +3370,22 @@ proc selectline {l isnew} {
 		set tag m$np
 	    }
 	    $ctext insert end "Parent: " $tag
-	    appendwithlinks [commit_descriptor $p]
+	    appendwithlinks [commit_descriptor $p] {}
 	    incr np
 	}
     } else {
 	foreach p $olds {
-	    append comment "Parent: [commit_descriptor $p]\n"
+	    append headers "Parent: [commit_descriptor $p]\n"
 	}
     }
 
     foreach c [lindex $childlist $l] {
-	append comment "Child:  [commit_descriptor $c]\n"
+	append headers "Child:  [commit_descriptor $c]\n"
     }
-    append comment "\n"
-    append comment [lindex $info 5]
 
     # make anything that looks like a SHA1 ID be a clickable link
-    appendwithlinks $comment
+    appendwithlinks $headers {}
+    appendwithlinks [lindex $info 5] {comment}
 
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
@@ -4508,7 +4509,7 @@ proc showtag {tag isnew} {
     } else {
 	set text "Tag: $tag\nId:  $tagids($tag)"
     }
-    appendwithlinks $text
+    appendwithlinks $text {}
     $ctext conf -state disabled
     init_flist {}
 }
@@ -4894,6 +4895,7 @@ set downarrowlen 7
 set mingaplen 30
 set flistmode "flat"
 set cmitmode "patch"
+set wrapcomment "none"
 
 set colors {green red blue magenta darkgrey brown orange}
 
