@@ -307,6 +307,10 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 
 sub extract_valid_address {
 	my $address = shift;
+
+	# check for a local address:
+	return $address if ($address =~ /^([\w\-]+)$/);
+
 	if ($have_email_valid) {
 		return Email::Valid->address($address);
 	} else {
@@ -498,9 +502,14 @@ sub unique_email_list(@) {
 	my @emails;
 
 	foreach my $entry (@_) {
-		my $clean = extract_valid_address($entry);
-		next if $seen{$clean}++;
-		push @emails, $entry;
+		if (my $clean = extract_valid_address($entry)) {
+			$seen{$clean} ||= 0;
+			next if $seen{$clean}++;
+			push @emails, $entry;
+		} else {
+			print STDERR "W: unable to extract a valid address",
+					" from: $entry\n";
+		}
 	}
 	return @emails;
 }
