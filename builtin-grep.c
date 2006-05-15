@@ -12,6 +12,7 @@
 #include "builtin.h"
 #include <regex.h>
 #include <fnmatch.h>
+#include <sys/wait.h>
 
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
@@ -409,11 +410,89 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	return i;
 }
 
+static int exec_grep(int argc, const char **argv)
+{
+	pid_t pid;
+	int status;
+
+	argv[argc] = NULL;
+	pid = fork();
+	if (pid < 0)
+		return pid;
+	if (!pid) {
+		execvp("grep", (char **) argv);
+		exit(255);
+	}
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno == EINTR)
+			continue;
+		return -1;
+	}
+	if (WIFEXITED(status)) {
+		if (!WEXITSTATUS(status))
+			return 1;
+		return 0;
+	}
+	return -1;
+}
+
+#define MAXARGS 1000
+
+static int external_grep(struct grep_opt *opt, const char **paths, int cached)
+{
+	int i, nr, argc, hit;
+	const char *argv[MAXARGS+1];
+	struct grep_pat *p;
+
+	nr = 0;
+	argv[nr++] = "grep";
+	if (opt->word_regexp)
+		argv[nr++] = "-w";
+	if (opt->name_only)
+		argv[nr++] = "-l";
+	for (p = opt->pattern_list; p; p = p->next) {
+		argv[nr++] = "-e";
+		argv[nr++] = p->pattern;
+	}
+	argv[nr++] = "--";
+
+	hit = 0;
+	argc = nr;
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce) || !S_ISREG(ntohl(ce->ce_mode)))
+			continue;
+		if (!pathspec_matches(paths, ce->name))
+			continue;
+		argv[argc++] = ce->name;
+		if (argc < MAXARGS)
+			continue;
+		hit += exec_grep(argc, argv);
+		argc = nr;
+	}
+	if (argc > nr)
+		hit += exec_grep(argc, argv);
+	return 0;
+}
+
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 {
 	int hit = 0;
 	int nr;
 	read_cache();
+
+#ifdef __unix__
+	/*
+	 * Use the external "grep" command for the case where
+	 * we grep through the checked-out files. It tends to
+	 * be a lot more optimized
+	 */
+	if (!cached) {
+		hit = external_grep(opt, paths, cached);
+		if (hit >= 0)
+			return hit;
+	}
+#endif
 
 	for (nr = 0; nr < active_nr; nr++) {
 		struct cache_entry *ce = active_cache[nr];
