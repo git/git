@@ -286,7 +286,9 @@ ifeq ($(uname_S),OpenBSD)
 	ALL_LDFLAGS += -L/usr/local/lib
 endif
 ifeq ($(uname_S),NetBSD)
-	NEEDS_LIBICONV = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
+		NEEDS_LIBICONV = YesPlease
+	endif
 	ALL_CFLAGS += -I/usr/pkg/include
 	ALL_LDFLAGS += -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
 endif
