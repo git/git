@@ -232,11 +232,16 @@ static char *pprint_rename(const char *a, const char *b)
 	 * name-a => name-b
 	 */
 	if (pfx_length + sfx_length) {
+		int a_midlen = len_a - pfx_length - sfx_length;
+		int b_midlen = len_b - pfx_length - sfx_length;
+		if (a_midlen < 0) a_midlen = 0;
+		if (b_midlen < 0) b_midlen = 0;
+
 		name = xmalloc(len_a + len_b - pfx_length - sfx_length + 7);
 		sprintf(name, "%.*s{%.*s => %.*s}%s",
 			pfx_length, a,
-			len_a - pfx_length - sfx_length, a + pfx_length,
-			len_b - pfx_length - sfx_length, b + pfx_length,
+			a_midlen, a + pfx_length,
+			b_midlen, b + pfx_length,
 			a + len_a - sfx_length);
 	}
 	else {
