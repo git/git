@@ -1105,17 +1105,14 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 		if (entry->size < 50)
 			continue;
-		if (n->index)
-			free_delta_index(n->index);
+		free_delta_index(n->index);
+		n->index = NULL;
 		free(n->data);
 		n->entry = entry;
 		n->data = read_sha1_file(entry->sha1, type, &size);
 		if (size != entry->size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(entry->sha1), size, entry->size);
-		n->index = create_delta_index(n->data, size);
-		if (!n->index)
-			die("out of memory");
 
 		j = window;
 		while (--j > 0) {
@@ -1135,6 +1132,11 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		 */
 		if (entry->delta && depth <= entry->depth)
 			continue;
+
+		n->index = create_delta_index(n->data, size);
+		if (!n->index)
+			die("out of memory");
+
 		idx++;
 		if (idx >= window)
 			idx = 0;
@@ -1144,8 +1146,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		fputc('\n', stderr);
 
 	for (i = 0; i < window; ++i) {
-		if (array[i].index)
-			free_delta_index(array[i].index);
+		free_delta_index(array[i].index);
 		free(array[i].data);
 	}
 	free(array);
