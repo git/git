@@ -437,24 +437,73 @@ static int exec_grep(int argc, const char **argv)
 }
 
 #define MAXARGS 1000
+#define ARGBUF 4096
+#define push_arg(a) do { \
+	if (nr < MAXARGS) argv[nr++] = (a); \
+	else die("maximum number of args exceeded"); \
+	} while (0)
 
 static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 {
-	int i, nr, argc, hit;
+	int i, nr, argc, hit, len;
 	const char *argv[MAXARGS+1];
+	char randarg[ARGBUF];
+	char *argptr = randarg;
 	struct grep_pat *p;
 
-	nr = 0;
-	argv[nr++] = "grep";
+	len = nr = 0;
+	push_arg("grep");
+	push_arg("-H");
+	if (opt->fixed)
+		push_arg("-H");
+	if (opt->linenum)
+		push_arg("-n");
+	if (opt->regflags & REG_EXTENDED)
+		push_arg("-E");
 	if (opt->word_regexp)
-		argv[nr++] = "-w";
+		push_arg("-w");
 	if (opt->name_only)
-		argv[nr++] = "-l";
-	for (p = opt->pattern_list; p; p = p->next) {
-		argv[nr++] = "-e";
-		argv[nr++] = p->pattern;
+		push_arg("-l");
+	if (opt->unmatch_name_only)
+		push_arg("-L");
+	if (opt->count)
+		push_arg("-c");
+	if (opt->post_context || opt->pre_context) {
+		if (opt->post_context != opt->pre_context) {
+			if (opt->pre_context) {
+				push_arg("-B");
+				len += snprintf(argptr, sizeof(randarg)-len,
+						"%u", opt->pre_context);
+				if (sizeof(randarg) <= len)
+					die("maximum length of args exceeded");
+				push_arg(argptr);
+				argptr += len;
+			}
+			if (opt->post_context) {
+				push_arg("-A");
+				len += snprintf(argptr, sizeof(randarg)-len,
+						"%u", opt->post_context);
+				if (sizeof(randarg) <= len)
+					die("maximum length of args exceeded");
+				push_arg(argptr);
+				argptr += len;
+			}
+		}
+		else {
+			push_arg("-C");
+			len += snprintf(argptr, sizeof(randarg)-len,
+					"%u", opt->post_context);
+			if (sizeof(randarg) <= len)
+				die("maximum length of args exceeded");
+			push_arg(argptr);
+			argptr += len;
+		}
 	}
-	argv[nr++] = "--";
+	for (p = opt->pattern_list; p; p = p->next) {
+		push_arg("-e");
+		push_arg(p->pattern);
+	}
+	push_arg("--");
 
 	hit = 0;
 	argc = nr;
