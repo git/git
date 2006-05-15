@@ -33,7 +33,8 @@ use POSIX qw/strftime/;
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_version, $_upgrade, $_authors);
+	$_find_copies_harder, $_l, $_cp_similarity,
+	$_version, $_upgrade, $_authors);
 my (@_branch_from, %tree_map, %users);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 
@@ -55,6 +56,7 @@ my %cmd = (
 				'rmdir' => \$_rmdir,
 				'find-copies-harder' => \$_find_copies_harder,
 				'l=i' => \$_l,
+				'copy-similarity|C=i'=> \$_cp_similarity,
 				%fc_opts,
 			} ],
 	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings", { } ],
@@ -580,7 +582,12 @@ sub svn_checkout_tree {
 	my $pid = open my $diff_fh, '-|';
 	defined $pid or croak $!;
 	if ($pid == 0) {
-		my @diff_tree = qw(git-diff-tree -z -r -C);
+		my @diff_tree = qw(git-diff-tree -z -r);
+		if ($_cp_similarity) {
+			push @diff_tree, "-C$_cp_similarity";
+		} else {
+			push @diff_tree, '-C';
+		}
 		push @diff_tree, '--find-copies-harder' if $_find_copies_harder;
 		push @diff_tree, "-l$_l" if defined $_l;
 		exec(@diff_tree, $from, $treeish) or croak $!;
