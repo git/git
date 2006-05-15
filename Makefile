@@ -131,7 +131,8 @@ SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-shortlog.perl git-fmt-merge-msg.perl git-rerere.perl \
 	git-annotate.perl git-cvsserver.perl \
-	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl
+	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl \
+	git-send-email.perl
 
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
@@ -318,10 +319,6 @@ else
 			PYMODULES += compat/subprocess.py
 		endif
 	endif
-endif
-
-ifdef WITH_SEND_EMAIL
-	SCRIPT_PERL += git-send-email.perl
 endif
 
 ifndef NO_CURL
