@@ -1037,9 +1037,12 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (src_entry->depth >= max_depth)
 		return 0;
 
-	/* Now some size filtering euristics. */
+	/* Now some size filtering heuristics. */
 	size = trg_entry->size;
-	max_size = (size/2 - 20) / (src_entry->depth + 1);
+	max_size = size/2 - 20;
+	max_size = max_size * (max_depth - src_entry->depth) / max_depth;
+	if (max_size == 0)
+		return 0;
 	if (trg_entry->delta && trg_entry->delta_size <= max_size)
 		max_size = trg_entry->delta_size-1;
 	src_size = src_entry->size;
