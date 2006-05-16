@@ -422,6 +422,46 @@ static int get_one_line(const char *msg, unsigned long len)
 	return ret;
 }
 
+static int is_rfc2047_special(char ch)
+{
+	return ((ch & 0x80) || (ch == '=') || (ch == '?') || (ch == '_'));
+}
+
+static int add_rfc2047(char *buf, const char *line, int len)
+{
+	char *bp = buf;
+	int i, needquote;
+	static const char q_utf8[] = "=?utf-8?q?";
+
+	for (i = needquote = 0; !needquote && i < len; i++) {
+		unsigned ch = line[i];
+		if (ch & 0x80)
+			needquote++;
+		if ((i + 1 < len) &&
+		    (ch == '=' && line[i+1] == '?'))
+			needquote++;
+	}
+	if (!needquote)
+		return sprintf(buf, "%.*s", len, line);
+
+	memcpy(bp, q_utf8, sizeof(q_utf8)-1);
+	bp += sizeof(q_utf8)-1;
+	for (i = 0; i < len; i++) {
+		unsigned ch = line[i];
+		if (is_rfc2047_special(ch)) {
+			sprintf(bp, "=%02X", ch);
+			bp += 3;
+		}
+		else if (ch == ' ')
+			*bp++ = '_';
+		else
+			*bp++ = ch;
+	}
+	memcpy(bp, "?=", 2);
+	bp += 2;
+	return bp - buf;
+}
+
 static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const char *line)
 {
 	char *date;
@@ -440,12 +480,26 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	tz = strtol(date, NULL, 10);
 
 	if (fmt == CMIT_FMT_EMAIL) {
-		what = "From";
+		char *name_tail = strchr(line, '<');
+		int display_name_length;
+		if (!name_tail)
+			return 0;
+		while (line < name_tail && isspace(name_tail[-1]))
+			name_tail--;
+		display_name_length = name_tail - line;
 		filler = "";
+		strcpy(buf, "From: ");
+		ret = strlen(buf);
+		ret += add_rfc2047(buf + ret, line, display_name_length);
+		memcpy(buf + ret, name_tail, namelen - display_name_length);
+		ret += namelen - display_name_length;
+		buf[ret++] = '\n';
 	}
-	ret = sprintf(buf, "%s: %.*s%.*s\n", what,
-		      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
-		      filler, namelen, line);
+	else {
+		ret = sprintf(buf, "%s: %.*s%.*s\n", what,
+			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
+			      filler, namelen, line);
+	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
 		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
@@ -584,13 +638,24 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			int slen = strlen(subject);
 			memcpy(buf + offset, subject, slen);
 			offset += slen;
+			offset += add_rfc2047(buf + offset, line, linelen);
 		}
-		memset(buf + offset, ' ', indent);
-		memcpy(buf + offset + indent, line, linelen);
-		offset += linelen + indent;
+		else {
+			memset(buf + offset, ' ', indent);
+			memcpy(buf + offset + indent, line, linelen);
+			offset += linelen + indent;
+		}
 		buf[offset++] = '\n';
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
+		if (subject) {
+			static const char header[] =
+				"Content-Type: text/plain; charset=UTF-8\n"
+				"Content-Transfer-Encoding: 8bit\n";
+			memcpy(buf + offset, header, sizeof(header)-1);
+			offset += sizeof(header)-1;
+			subject = NULL;
+		}
 		if (after_subject) {
 			int slen = strlen(after_subject);
 			if (slen > space - offset - 1)
