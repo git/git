@@ -9,9 +9,7 @@ SYNOPSIS
 --------
 'git-rebase' [--onto <newbase>] <upstream> [<branch>]
 
-'git-rebase' --continue
-
-'git-rebase' --abort
+'git-rebase' --continue | --skip | --abort
 
 DESCRIPTION
 -----------
@@ -23,9 +21,10 @@ not exist in the <upstream> branch.
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
-and run `git rebase --continue`.  If you can not resolve the merge
-failure, running `git rebase --abort` will restore the original <branch>
-and remove the working files found in the .dotest directory.
+and run `git rebase --continue`.  Another option is to bypass the commit
+that caused the merge failure with `git rebase --skip`.  To restore the
+original <branch> and remove the .dotest working files, use the command
+`git rebase --abort` instead.
 
 Note that if <branch> is not specified on the command line, the currently
 checked out branch is used.
