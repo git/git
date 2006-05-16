@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #include <signal.h>
 
+static int reset = 0;
 static int merge = 0;
 static int update = 0;
 static int index_only = 0;
@@ -416,6 +417,10 @@ static void verify_uptodate(struct cache_entry *ce)
 			return;
 		errno = 0;
 	}
+	if (reset) {
+		ce->ce_flags |= htons(CE_UPDATE);
+		return;
+	}
 	if (errno == ENOENT)
 		return;
 	die("Entry '%s' not uptodate. Cannot merge.", ce->name);
@@ -684,8 +689,14 @@ static int oneway_merge(struct cache_entry **src)
 			     merge_size);
 
 	if (!a)
-		return 0;
+		return deleted_entry(old, NULL);
 	if (old && same(old, a)) {
+		if (reset) {
+			struct stat st;
+			if (lstat(old->name, &st) ||
+			    ce_match_stat(old, &st, 1))
+				old->ce_flags |= htons(CE_UPDATE);
+		}
 		return keep_entry(old);
 	}
 	return merged_entry(a, NULL);
@@ -719,7 +730,7 @@ static struct cache_file cache_file;
 
 int main(int argc, char **argv)
 {
-	int i, newfd, reset, stage = 0;
+	int i, newfd, stage = 0;
 	unsigned char sha1[20];
 	merge_fn_t fn = NULL;
 
