@@ -455,7 +455,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	push_arg("grep");
 	push_arg("-H");
 	if (opt->fixed)
-		push_arg("-H");
+		push_arg("-F");
 	if (opt->linenum)
 		push_arg("-n");
 	if (opt->regflags & REG_EXTENDED)
