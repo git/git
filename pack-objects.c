@@ -10,7 +10,6 @@
 #include "tree-walk.h"
 #include <sys/time.h>
 #include <signal.h>
-#include <stdint.h>
 
 static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
 
@@ -157,7 +156,7 @@ static void prepare_pack_revindex(struct pack_revindex *rix)
 
 	rix->revindex = xmalloc(sizeof(unsigned long) * (num_ent + 1));
 	for (i = 0; i < num_ent; i++) {
-		uint32_t hl = *((uint32_t *)(index + 24 * i));
+		unsigned int hl = *((unsigned int *)(index + 24 * i));
 		rix->revindex[i] = ntohl(hl);
 	}
 	/* This knows the pack format -- the 20-byte trailer
