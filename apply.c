@@ -18,6 +18,8 @@
 //  --stat does just a diffstat, and doesn't actually apply
 //  --numstat does numeric diffstat, and doesn't actually apply
 //  --index-info shows the old and new index info for paths if available.
+//  --index updates the cache as well.
+//  --cached updates only the cache without ever touching the working tree.
 //
 static const char *prefix;
 static int prefix_length = -1;
@@ -27,6 +29,7 @@ static int p_value = 1;
 static int allow_binary_replacement = 0;
 static int check_index = 0;
 static int write_index = 0;
+static int cached = 0;
 static int diffstat = 0;
 static int numstat = 0;
 static int summary = 0;
@@ -37,7 +40,7 @@ static int show_index_info = 0;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -1601,7 +1604,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 	return 0;
 }
 
-static int apply_data(struct patch *patch, struct stat *st)
+static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	char *buf;
 	unsigned long size, alloc;
@@ -1610,7 +1613,17 @@ static int apply_data(struct patch *patch, struct stat *st)
 	size = 0;
 	alloc = 0;
 	buf = NULL;
-	if (patch->old_name) {
+	if (cached) {
+		if (ce) {
+			char type[20];
+			buf = read_sha1_file(ce->sha1, type, &size);
+			if (!buf)
+				return error("read of %s failed",
+					     patch->old_name);
+			alloc = size;
+		}
+	}
+	else if (patch->old_name) {
 		size = st->st_size;
 		alloc = size + 8192;
 		buf = xmalloc(alloc);
@@ -1638,16 +1651,21 @@ static int check_patch(struct patch *patch)
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
+	struct cache_entry *ce = NULL;
 
 	if (old_name) {
-		int changed;
-		int stat_ret = lstat(old_name, &st);
+		int changed = 0;
+		int stat_ret = 0;
+		unsigned st_mode = 0;
 
+		if (!cached)
+			stat_ret = lstat(old_name, &st);
 		if (check_index) {
 			int pos = cache_name_pos(old_name, strlen(old_name));
 			if (pos < 0)
 				return error("%s: does not exist in index",
 					     old_name);
+			ce = active_cache[pos];
 			if (stat_ret < 0) {
 				struct checkout costate;
 				if (errno != ENOENT)
@@ -1660,37 +1678,41 @@ static int check_patch(struct patch *patch)
 				costate.quiet = 0;
 				costate.not_new = 0;
 				costate.refresh_cache = 1;
-				if (checkout_entry(active_cache[pos],
+				if (checkout_entry(ce,
 						   &costate,
 						   NULL) ||
 				    lstat(old_name, &st))
 					return -1;
 			}
-
-			changed = ce_match_stat(active_cache[pos], &st, 1);
+			if (!cached)
+				changed = ce_match_stat(ce, &st, 1);
 			if (changed)
 				return error("%s: does not match index",
 					     old_name);
+			if (cached)
+				st_mode = ntohl(ce->ce_mode);
 		}
 		else if (stat_ret < 0)
 			return error("%s: %s", old_name, strerror(errno));
 
+		if (!cached)
+			st_mode = ntohl(create_ce_mode(st.st_mode));
+
 		if (patch->is_new < 0)
 			patch->is_new = 0;
-		st.st_mode = ntohl(create_ce_mode(st.st_mode));
 		if (!patch->old_mode)
-			patch->old_mode = st.st_mode;
-		if ((st.st_mode ^ patch->old_mode) & S_IFMT)
+			patch->old_mode = st_mode;
+		if ((st_mode ^ patch->old_mode) & S_IFMT)
 			return error("%s: wrong type", old_name);
-		if (st.st_mode != patch->old_mode)
+		if (st_mode != patch->old_mode)
 			fprintf(stderr, "warning: %s has type %o, expected %o\n",
-				old_name, st.st_mode, patch->old_mode);
+				old_name, st_mode, patch->old_mode);
 	}
 
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
 		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
 			return error("%s: already exists in index", new_name);
-		if (!lstat(new_name, &st))
+		if (!cached && !lstat(new_name, &st))
 			return error("%s: already exists in working directory", new_name);
 		if (errno != ENOENT)
 			return error("%s: %s", new_name, strerror(errno));
@@ -1710,9 +1732,9 @@ static int check_patch(struct patch *patch)
 			return error("new mode (%o) of %s does not match old mode (%o)%s%s",
 				patch->new_mode, new_name, patch->old_mode,
 				same ? "" : " of ", same ? "" : old_name);
-	}	
+	}
 
-	if (apply_data(patch, &st) < 0)
+	if (apply_data(patch, &st, ce) < 0)
 		return error("%s: patch does not apply", name);
 	return 0;
 }
@@ -1896,7 +1918,8 @@ static void remove_file(struct patch *patch)
 			die("unable to remove %s from index", patch->old_name);
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
-	unlink(patch->old_name);
+	if (!cached)
+		unlink(patch->old_name);
 }
 
 static void add_index_file(const char *path, unsigned mode, void *buf, unsigned long size)
@@ -1913,9 +1936,11 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = htons(namelen);
-	if (lstat(path, &st) < 0)
-		die("unable to stat newly created file %s", path);
-	fill_stat_cache_info(ce, &st);
+	if (!cached) {
+		if (lstat(path, &st) < 0)
+			die("unable to stat newly created file %s", path);
+		fill_stat_cache_info(ce, &st);
+	}
 	if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
 		die("unable to create backing store for newly created file %s", path);
 	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
@@ -1952,6 +1977,8 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
  */
 static void create_one_file(char *path, unsigned mode, const char *buf, unsigned long size)
 {
+	if (cached)
+		return;
 	if (!try_create_file(path, mode, buf, size))
 		return;
 
@@ -2183,6 +2210,11 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--index")) {
 			check_index = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--cached")) {
+			check_index = 1;
+			cached = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--apply")) {
