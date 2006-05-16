@@ -124,7 +124,7 @@ SCRIPT_SH = \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
-	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
+	git-merge-resolve.sh git-merge-ours.sh \
 	git-lost-found.sh
 
 SCRIPT_PERL = \
@@ -169,7 +169,8 @@ PROGRAMS = \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
-	git-count-objects$X git-diff$X git-push$X
+	git-count-objects$X git-diff$X git-push$X \
+	git-grep$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
