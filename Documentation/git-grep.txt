@@ -8,43 +8,82 @@ git-grep - Print lines matching a pattern
 
 SYNOPSIS
 --------
-'git-grep' [<option>...] [-e] <pattern> [--] [<path>...]
+[verse]
+'git-grep' [--cached]
+	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
+	   [-v | --invert-match]
+	   [-E | --extended-regexp] [-G | --basic-regexp] [-F | --fixed-strings]
+	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
+	   [-c | --count]
+	   [-A <post-context>] [-B <pre-context>] [-C <context>]
+	   [-f <file>] [-e <pattern>]
+	   [<tree>...]
+	   [--] [<path>...]
 
 DESCRIPTION
 -----------
-Searches list of files `git-ls-files` produces for lines
-containing a match to the given pattern.
+Look for specified patterns in the working tree files, blobs
+registered in the index file, or given tree objects.
 
 
 OPTIONS
 -------
+--cached::
+	Instead of searching in the working tree files, check
+	the blobs registerd in the index file.
+
+-a | --text::
+	Process binary files as if they were text.
+
+-i | --ignore-case::
+	Ignore case differences between the patterns and the
+	files.
+
+-w | --word-regexp::
+	Match the pattern only at word boundary (either begin at the
+	beginning of a line, or preceded by a non-word character; end at
+	the end of a line or followed by a non-word character).
+
+-v | --invert-match::
+	Select non-matching lines.
+
+-E | --extended-regexp | -G | --basic-regexp::
+	Use POSIX extended/basic regexp for patterns.  Default
+	is to use basic regexp.
+
+-n::
+	Prefix the line number to matching lines.
+
+-l | --files-with-matches | -L | --files-without-match::
+	Instead of showing every matched line, show only the
+	names of files that contain (or do not contain) matches.
+
+-c | --count::
+	Instead of showing every matched line, show the number of
+	lines that match.
+
+-[ABC] <context>::
+	Show `context` trailing (`A` -- after), or leading (`B`
+	-- before), or both (`C` -- context) lines, and place a
+	line containing `--` between continguous groups of
+	matches.
+
+-f <file>::
+	Read patterns from <file>, one per line.
+
+`<tree>...`::
+	Search blobs in the trees for specified patterns.
+
 `--`::
 	Signals the end of options; the rest of the parameters
 	are <path> limiters.
 
-<option>...::
-	Either an option to pass to `grep` or `git-ls-files`.
-+
-The following are the specific `git-ls-files` options
-that may be given: `-o`, `--cached`, `--deleted`, `--others`,
-`--killed`, `--ignored`, `--modified`, `--exclude=\*`,
-`--exclude-from=\*`, and `--exclude-per-directory=\*`.
-+
-All other options will be passed to `grep`.
-
-<pattern>::
-	The pattern to look for.  The first non option is taken
-	as the pattern; if your pattern begins with a dash, use
-	`-e <pattern>`.
-
-<path>...::
-	Optional paths to limit the set of files to be searched;
-	passed to `git-ls-files`.
-
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org>
+Originally written by Linus Torvalds <torvalds@osdl.org>, later
+revamped by Junio C Hamano.
+
 
 Documentation
 --------------
