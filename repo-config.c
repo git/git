@@ -64,7 +64,6 @@ static int show_config(const char* key_, const char* value_)
 
 static int get_value(const char* key_, const char* regex_)
 {
-	int i;
 	char *tl;
 
 	key = strdup(key_);
