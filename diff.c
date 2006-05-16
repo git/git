@@ -1288,6 +1288,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--stat"))
 		options->output_format = DIFF_FORMAT_DIFFSTAT;
+	else if (!strcmp(arg, "--summary"))
+		options->summary = 1;
 	else if (!strcmp(arg, "--patch-with-stat")) {
 		options->output_format = DIFF_FORMAT_PATCH;
 		options->with_stat = 1;
@@ -1758,6 +1760,85 @@ static void flush_one_pair(struct diff_filepair *p,
 	}
 }
 
+static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
+{
+	if (fs->mode)
+		printf(" %s mode %06o %s\n", newdelete, fs->mode, fs->path);
+	else
+		printf(" %s %s\n", newdelete, fs->path);
+}
+
+
+static void show_mode_change(struct diff_filepair *p, int show_name)
+{
+	if (p->one->mode && p->two->mode && p->one->mode != p->two->mode) {
+		if (show_name)
+			printf(" mode change %06o => %06o %s\n",
+			       p->one->mode, p->two->mode, p->two->path);
+		else
+			printf(" mode change %06o => %06o\n",
+			       p->one->mode, p->two->mode);
+	}
+}
+
+static void show_rename_copy(const char *renamecopy, struct diff_filepair *p)
+{
+	const char *old, *new;
+
+	/* Find common prefix */
+	old = p->one->path;
+	new = p->two->path;
+	while (1) {
+		const char *slash_old, *slash_new;
+		slash_old = strchr(old, '/');
+		slash_new = strchr(new, '/');
+		if (!slash_old ||
+		    !slash_new ||
+		    slash_old - old != slash_new - new ||
+		    memcmp(old, new, slash_new - new))
+			break;
+		old = slash_old + 1;
+		new = slash_new + 1;
+	}
+	/* p->one->path thru old is the common prefix, and old and new
+	 * through the end of names are renames
+	 */
+	if (old != p->one->path)
+		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
+		       (int)(old - p->one->path), p->one->path,
+		       old, new, (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	else
+		printf(" %s %s => %s (%d%%)\n", renamecopy,
+		       p->one->path, p->two->path,
+		       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	show_mode_change(p, 0);
+}
+
+static void diff_summary(struct diff_filepair *p)
+{
+	switch(p->status) {
+	case DIFF_STATUS_DELETED:
+		show_file_mode_name("delete", p->one);
+		break;
+	case DIFF_STATUS_ADDED:
+		show_file_mode_name("create", p->two);
+		break;
+	case DIFF_STATUS_COPIED:
+		show_rename_copy("copy", p);
+		break;
+	case DIFF_STATUS_RENAMED:
+		show_rename_copy("rename", p);
+		break;
+	default:
+		if (p->score) {
+			printf(" rewrite %s (%d%%)\n", p->two->path,
+				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			show_mode_change(p, 0);
+		} else	show_mode_change(p, 1);
+		break;
+	}
+}
+
 void diff_flush(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -1791,12 +1872,17 @@ void diff_flush(struct diff_options *options)
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		flush_one_pair(p, diff_output_format, options, diffstat);
-		diff_free_filepair(p);
 	}
 
 	if (diffstat) {
 		show_stats(diffstat);
 		free(diffstat);
+	}
+
+	for (i = 0; i < q->nr; i++) {
+		if (options->summary)
+			diff_summary(q->queue[i]);
+		diff_free_filepair(q->queue[i]);
 	}
 
 	free(q->queue);

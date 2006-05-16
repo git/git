@@ -10,6 +10,10 @@
 --stat::
 	Generate a diffstat instead of a patch.
 
+--summary::
+	Output a condensed summary of extended header information
+	such as creations, renames and mode changes.
+
 --patch-with-stat::
 	Generate patch and prepend its diffstat.
 
