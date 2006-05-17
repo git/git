@@ -1,8 +1,9 @@
 #!/bin/sh
-USAGE='--author <author> --patches </path/to/quilt/patch/directory>'
+USAGE='--dry-run --author <author> --patches </path/to/quilt/patch/directory>'
 SUBDIRECTORY_ON=Yes
 . git-sh-setup
 
+dry_run=""
 quilt_author=""
 while case "$#" in 0) break;; esac
 do
@@ -17,6 +18,11 @@ do
 		shift
 		quilt_author="$1"
 		shift
+		;;
+
+	--dry-run)
+		shift
+		dry_run=1
 		;;
 
 	--pa=*|--pat=*|--patc=*|--patch=*|--patche=*|--patches=*)
@@ -75,8 +81,12 @@ for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 		if [ -n "$quilt_author" ] ; then
 			GIT_AUTHOR_NAME="$quilt_author_name";
 			GIT_AUTHOR_EMAIL="$quilt_author_email";
+		elif [ -n "$dry_run" ]; then
+			echo "No author found in $patch_name" >&2;
+			GIT_AUTHOR_NAME="dry-run-not-found";
+			GIT_AUTHOR_EMAIL="dry-run-not-found";
 		else
-			echo "No author found in $patch_name";
+			echo "No author found in $patch_name" >&2;
 			echo "---"
 			cat $tmp_msg
 			echo -n "Author: ";
@@ -98,9 +108,11 @@ for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 		SUBJECT=$(echo $patch_name | sed -e 's/.patch$//')
 	fi
 
-	git-apply --index -C1 "$tmp_patch" &&
-	tree=$(git-write-tree) &&
-	commit=$((echo "$SUBJECT"; echo; cat "$tmp_msg") | git-commit-tree $tree -p $commit) &&
-	git-update-ref HEAD $commit || exit 4
+	if [ -z "$dry_run" ] ; then
+		git-apply --index -C1 "$tmp_patch" &&
+		tree=$(git-write-tree) &&
+		commit=$((echo "$SUBJECT"; echo; cat "$tmp_msg") | git-commit-tree $tree -p $commit) &&
+		git-update-ref HEAD $commit || exit 4
+	fi
 done
 rm -rf $tmp_dir || exit 5
