@@ -30,6 +30,7 @@ test_expect_success \
      git-commit -m "Add C." &&
 
      git-checkout -f master &&
+     rm -f B C &&
 
      echo Third >> A &&
      git-update-index A &&

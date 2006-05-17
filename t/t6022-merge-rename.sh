@@ -111,6 +111,7 @@ test_expect_success 'pull renaming branch into unrenaming one' \
 
 test_expect_success 'pull renaming branch into another renaming one' \
 '
+	rm -f B
 	git reset --hard
 	git checkout red
 	git pull . white && {
