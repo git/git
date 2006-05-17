@@ -82,8 +82,9 @@ static struct commit *interesting(struct commit_list *list)
  * commit B.
  *
  *
- * Another pathological example how this thing can fail to mark an ancestor
- * of a merge base as UNINTERESTING without the postprocessing phase.
+ * Another pathological example how this thing used to fail to mark an
+ * ancestor of a merge base as UNINTERESTING before we introduced the
+ * postprocessing phase (mark_reachable_commits).
  *
  *		  2
  *		  H
@@ -118,7 +119,9 @@ static struct commit *interesting(struct commit_list *list)
  *	 D7			2 3 7 7 3 2 1 2
  *	 E7			2 3 7 7 7 2 1 2
  *
- * and we end up showing E as an interesting merge base.
+ * and we ended up showing E as an interesting merge base.
+ * The postprocessing phase re-injects C and continues traversal
+ * to contaminate D and E.
  */
 
 static int show_all = 0;
