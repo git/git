@@ -302,6 +302,7 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 
 	lock->ref_file = strdup(path);
 	lock->lock_file = strdup(mkpath("%s.lock", lock->ref_file));
+	lock->log_file = strdup(git_path("logs/%s", lock->ref_file + plen));
 
 	if (safe_create_leading_directories(lock->lock_file))
 		die("unable to create directory for %s", lock->lock_file);
@@ -343,7 +344,58 @@ void unlock_ref (struct ref_lock *lock)
 		free(lock->ref_file);
 	if (lock->lock_file)
 		free(lock->lock_file);
+	if (lock->log_file)
+		free(lock->log_file);
 	free(lock);
+}
+
+static int log_ref_write(struct ref_lock *lock,
+	const unsigned char *sha1, const char *msg)
+{
+	int logfd, written, oflags = O_APPEND | O_WRONLY;
+	unsigned maxlen, len;
+	char *logrec;
+	const char *comitter;
+
+	if (log_all_ref_updates) {
+		if (safe_create_leading_directories(lock->log_file) < 0)
+			return error("unable to create directory for %s",
+				lock->log_file);
+		oflags |= O_CREAT;
+	}
+
+	logfd = open(lock->log_file, oflags, 0666);
+	if (logfd < 0) {
+		if (!log_all_ref_updates && errno == ENOENT)
+			return 0;
+		return error("Unable to append to %s: %s",
+			lock->log_file, strerror(errno));
+	}
+
+	setup_ident();
+	comitter = git_committer_info(1);
+	if (msg) {
+		maxlen = strlen(comitter) + strlen(msg) + 2*40 + 5;
+		logrec = xmalloc(maxlen);
+		len = snprintf(logrec, maxlen, "%s %s %s\t%s\n",
+			sha1_to_hex(lock->old_sha1),
+			sha1_to_hex(sha1),
+			comitter,
+			msg);
+	} else {
+		maxlen = strlen(comitter) + 2*40 + 4;
+		logrec = xmalloc(maxlen);
+		len = snprintf(logrec, maxlen, "%s %s %s\n",
+			sha1_to_hex(lock->old_sha1),
+			sha1_to_hex(sha1),
+			comitter);
+	}
+	written = len <= maxlen ? write(logfd, logrec, len) : -1;
+	free(logrec);
+	close(logfd);
+	if (written != len)
+		return error("Unable to append to %s", lock->log_file);
+	return 0;
 }
 
 int write_ref_sha1(struct ref_lock *lock,
@@ -361,6 +413,10 @@ int write_ref_sha1(struct ref_lock *lock,
 	    write(lock->lock_fd, &term, 1) != 1
 		|| close(lock->lock_fd) < 0) {
 		error("Couldn't write %s", lock->lock_file);
+		unlock_ref(lock);
+		return -1;
+	}
+	if (log_ref_write(lock, sha1, logmsg) < 0) {
 		unlock_ref(lock);
 		return -1;
 	}

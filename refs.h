@@ -4,6 +4,7 @@
 struct ref_lock {
 	char *ref_file;
 	char *lock_file;
+	char *log_file;
 	unsigned char old_sha1[20];
 	int lock_fd;
 };

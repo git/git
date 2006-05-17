@@ -70,6 +70,14 @@ core.preferSymlinkRefs::
 	This is sometimes needed to work with old scripts that
 	expect HEAD to be a symbolic link.
 
+core.logAllRefUpdates::
+	If true, `git-update-ref` will append a line to
+	"$GIT_DIR/logs/<ref>" listing the new SHA1 and the date/time
+	of the update.	If the file does not exist it will be
+	created automatically.	This information can be used to
+	determine what commit was the tip of a branch "2 days ago".
+	This value is false by default (no logging).
+
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
 	version.
