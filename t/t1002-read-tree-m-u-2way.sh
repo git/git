@@ -39,7 +39,6 @@ test_expect_success \
      echo nitfol >nitfol &&
      echo bozbar >bozbar &&
      echo rezrov >rezrov &&
-     echo yomin >yomin &&
      git-update-index --add nitfol bozbar rezrov &&
      treeH=`git-write-tree` &&
      echo treeH $treeH &&
@@ -56,7 +55,8 @@ test_expect_success \
 
 test_expect_success \
     '1, 2, 3 - no carry forward' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >1-3.out &&
      cmp M.out 1-3.out &&
@@ -66,11 +66,12 @@ test_expect_success \
      check_cache_at frotz clean &&
      check_cache_at nitfol clean'
 
-echo '+100644 X 0	yomin' >expected
-
 test_expect_success \
     '4 - carry forward local addition.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
+     echo "+100644 X 0	yomin" >expected &&
+     echo yomin >yomin &&
      git-update-index --add yomin &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >4.out || return 1
@@ -85,7 +86,9 @@ test_expect_success \
 
 test_expect_success \
     '5 - carry forward local addition.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
+     git-read-tree -m -u $treeH &&
      echo yomin >yomin &&
      git-update-index --add yomin &&
      echo yomin yomin >yomin &&
@@ -103,7 +106,9 @@ test_expect_success \
 
 test_expect_success \
     '6 - local addition already has the same.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
+     echo frotz >frotz &&
      git-update-index --add frotz &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >6.out &&
@@ -117,7 +122,8 @@ test_expect_success \
 
 test_expect_success \
     '7 - local addition already has the same.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo frotz >frotz &&
      git-update-index --add frotz &&
      echo frotz frotz >frotz &&
@@ -134,14 +140,16 @@ test_expect_success \
 
 test_expect_success \
     '8 - conflicting addition.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo frotz frotz >frotz &&
      git-update-index --add frotz &&
      if git-read-tree -m -u $treeH $treeM; then false; else :; fi'
 
 test_expect_success \
     '9 - conflicting addition.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo frotz frotz >frotz &&
      git-update-index --add frotz &&
      echo frotz >frotz &&
@@ -149,7 +157,8 @@ test_expect_success \
 
 test_expect_success \
     '10 - path removed.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo rezrov >rezrov &&
      git-update-index --add rezrov &&
      git-read-tree -m -u $treeH $treeM &&
@@ -160,7 +169,8 @@ test_expect_success \
 
 test_expect_success \
     '11 - dirty path removed.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo rezrov >rezrov &&
      git-update-index --add rezrov &&
      echo rezrov rezrov >rezrov &&
@@ -168,14 +178,16 @@ test_expect_success \
 
 test_expect_success \
     '12 - unmatching local changes being removed.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo rezrov rezrov >rezrov &&
      git-update-index --add rezrov &&
      if git-read-tree -m -u $treeH $treeM; then false; else :; fi'
 
 test_expect_success \
     '13 - unmatching local changes being removed.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo rezrov rezrov >rezrov &&
      git-update-index --add rezrov &&
      echo rezrov >rezrov &&
@@ -188,7 +200,8 @@ EOF
 
 test_expect_success \
     '14 - unchanged in two heads.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo nitfol nitfol >nitfol &&
      git-update-index --add nitfol &&
      git-read-tree -m -u $treeH $treeM &&
@@ -207,7 +220,8 @@ test_expect_success \
 
 test_expect_success \
     '15 - unchanged in two heads.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo nitfol nitfol >nitfol &&
      git-update-index --add nitfol &&
      echo nitfol nitfol nitfol >nitfol &&
@@ -227,14 +241,16 @@ test_expect_success \
 
 test_expect_success \
     '16 - conflicting local change.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo bozbar bozbar >bozbar &&
      git-update-index --add bozbar &&
      if git-read-tree -m -u $treeH $treeM; then false; else :; fi'
 
 test_expect_success \
     '17 - conflicting local change.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo bozbar bozbar >bozbar &&
      git-update-index --add bozbar &&
      echo bozbar bozbar bozbar >bozbar &&
@@ -242,7 +258,8 @@ test_expect_success \
 
 test_expect_success \
     '18 - local change already having a good result.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo gnusto >bozbar &&
      git-update-index --add bozbar &&
      git-read-tree -m -u $treeH $treeM &&
@@ -254,7 +271,8 @@ test_expect_success \
 
 test_expect_success \
     '19 - local change already having a good result, further modified.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo gnusto >bozbar &&
      git-update-index --add bozbar &&
      echo gnusto gnusto >bozbar &&
@@ -273,7 +291,8 @@ test_expect_success \
 
 test_expect_success \
     '20 - no local change, use new tree.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo bozbar >bozbar &&
      git-update-index --add bozbar &&
      git-read-tree -m -u $treeH $treeM &&
@@ -285,7 +304,8 @@ test_expect_success \
 
 test_expect_success \
     '21 - no local change, dirty cache.' \
-    'rm -f .git/index &&
+    'rm -f .git/index nitfol bozbar rezrov frotz &&
+     git-read-tree --reset -u $treeH &&
      echo bozbar >bozbar &&
      git-update-index --add bozbar &&
      echo gnusto gnusto >bozbar &&
@@ -294,7 +314,7 @@ test_expect_success \
 # Also make sure we did not break DF vs DF/DF case.
 test_expect_success \
     'DF vs DF/DF case setup.' \
-    'rm -f .git/index &&
+    'rm -f .git/index
      echo DF >DF &&
      git-update-index --add DF &&
      treeDF=`git-write-tree` &&
