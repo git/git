@@ -429,3 +429,56 @@ int write_ref_sha1(struct ref_lock *lock,
 	unlock_ref(lock);
 	return 0;
 }
+
+int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
+{
+	const char *logfile, *logdata, *logend, *rec, *c;
+	char *tz_c;
+	int logfd, tz;
+	struct stat st;
+	unsigned long date;
+
+	logfile = git_path("logs/%s", ref);
+	logfd = open(logfile, O_RDONLY, 0);
+	if (logfd < 0)
+		die("Unable to read log %s: %s", logfile, strerror(errno));
+	fstat(logfd, &st);
+	if (!st.st_size)
+		die("Log %s is empty.", logfile);
+	logdata = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	close(logfd);
+
+	rec = logend = logdata + st.st_size;
+	while (logdata < rec) {
+		if (logdata < rec && *(rec-1) == '\n')
+			rec--;
+		while (logdata < rec && *(rec-1) != '\n')
+			rec--;
+		c = rec;
+		while (c < logend && *c != '>' && *c != '\n')
+			c++;
+		if (c == logend || *c == '\n')
+			die("Log %s is corrupt.", logfile);
+		date = strtoul(c, NULL, 10);
+		if (date <= at_time) {
+			if (get_sha1_hex(rec + 41, sha1))
+				die("Log %s is corrupt.", logfile);
+			munmap((void*)logdata, st.st_size);
+			return 0;
+		}
+	}
+
+	c = logdata;
+	while (c < logend && *c != '>' && *c != '\n')
+		c++;
+	if (c == logend || *c == '\n')
+		die("Log %s is corrupt.", logfile);
+	date = strtoul(c, &tz_c, 10);
+	tz = strtoul(tz_c, NULL, 10);
+	if (get_sha1_hex(logdata, sha1))
+		die("Log %s is corrupt.", logfile);
+	munmap((void*)logdata, st.st_size);
+	fprintf(stderr, "warning: Log %s only goes back to %s.\n",
+		logfile, show_rfc2822_date(date, tz));
+	return 0;
+}
