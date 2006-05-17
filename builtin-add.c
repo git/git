@@ -44,50 +44,89 @@ static int common_prefix(const char **pathspec)
 	return prefix;
 }
 
-static int match(const char **pathspec, const char *name, int namelen, int prefix)
+static int match_one(const char *match, const char *name, int namelen)
 {
+	int matchlen;
+
+	/* If the match was just the prefix, we matched */
+	matchlen = strlen(match);
+	if (!matchlen)
+		return 1;
+
+	/*
+	 * If we don't match the matchstring exactly,
+	 * we need to match by fnmatch
+	 */
+	if (strncmp(match, name, matchlen))
+		return !fnmatch(match, name, 0);
+
+	/*
+	 * If we did match the string exactly, we still
+	 * need to make sure that it happened on a path
+	 * component boundary (ie either the last character
+	 * of the match was '/', or the next character of
+	 * the name was '/' or the terminating NUL.
+	 */
+	return	match[matchlen-1] == '/' ||
+		name[matchlen] == '/' ||
+		!name[matchlen];
+}
+
+static int match(const char **pathspec, const char *name, int namelen, int prefix, char *seen)
+{
+	int retval;
 	const char *match;
 
 	name += prefix;
 	namelen -= prefix;
 
-	while ((match = *pathspec++) != NULL) {
-		int matchlen;
-
+	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
+		if (retval & *seen)
+			continue;
 		match += prefix;
-		matchlen = strlen(match);
-		if (!matchlen)
-			return 1;
-		if (!strncmp(match, name, matchlen)) {
-			if (match[matchlen-1] == '/')
-				return 1;
-			switch (name[matchlen]) {
-			case '/': case '\0':
-				return 1;
-			}
+		if (match_one(match, name, namelen)) {
+			retval = 1;
+			*seen = 1;
 		}
-		if (!fnmatch(match, name, 0))
-			return 1;
 	}
-	return 0;
+	return retval;
 }
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
-	int i;
+	char *seen;
+	int i, specs;
 	struct dir_entry **src, **dst;
+
+	for (specs = 0; pathspec[specs];  specs++)
+		/* nothing */;
+	seen = xmalloc(specs);
+	memset(seen, 0, specs);
 
 	src = dst = dir->entries;
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (!match(pathspec, entry->name, entry->len, prefix)) {
+		if (!match(pathspec, entry->name, entry->len, prefix, seen)) {
 			free(entry);
 			continue;
 		}
 		*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
+
+	for (i = 0; i < specs; i++) {
+		struct stat st;
+		const char *match;
+		if (seen[i])
+			continue;
+
+		/* Existing file? We must have ignored it */
+		match = pathspec[i];
+		if (!lstat(match, &st))
+			continue;
+		die("pathspec '%s' did not match any files", match);
+	}
 }
 
 static void fill_directory(struct dir_struct *dir, const char **pathspec)
