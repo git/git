@@ -1036,10 +1036,13 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (src_entry->depth >= max_depth)
 		return 0;
 
-	/* Now some size filtering euristics. */
+	/* Now some size filtering heuristics. */
 	size = trg_entry->size;
-	max_size = size / 2 - 20;
-	if (trg_entry->delta)
+	max_size = size/2 - 20;
+	max_size = max_size * (max_depth - src_entry->depth) / max_depth;
+	if (max_size == 0)
+		return 0;
+	if (trg_entry->delta && trg_entry->delta_size <= max_size)
 		max_size = trg_entry->delta_size-1;
 	src_size = src_entry->size;
 	sizediff = src_size < size ? size - src_size : 0;
@@ -1104,17 +1107,14 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 		if (entry->size < 50)
 			continue;
-		if (n->index)
-			free_delta_index(n->index);
+		free_delta_index(n->index);
+		n->index = NULL;
 		free(n->data);
 		n->entry = entry;
 		n->data = read_sha1_file(entry->sha1, type, &size);
 		if (size != entry->size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(entry->sha1), size, entry->size);
-		n->index = create_delta_index(n->data, size);
-		if (!n->index)
-			die("out of memory");
 
 		j = window;
 		while (--j > 0) {
@@ -1128,15 +1128,17 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			if (try_delta(n, m, m->index, depth) < 0)
 				break;
 		}
-#if 0
 		/* if we made n a delta, and if n is already at max
 		 * depth, leaving it in the window is pointless.  we
 		 * should evict it first.
-		 * ... in theory only; somehow this makes things worse.
 		 */
 		if (entry->delta && depth <= entry->depth)
 			continue;
-#endif
+
+		n->index = create_delta_index(n->data, size);
+		if (!n->index)
+			die("out of memory");
+
 		idx++;
 		if (idx >= window)
 			idx = 0;
@@ -1146,8 +1148,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		fputc('\n', stderr);
 
 	for (i = 0; i < window; ++i) {
-		if (array[i].index)
-			free_delta_index(array[i].index);
+		free_delta_index(array[i].index);
 		free(array[i].data);
 	}
 	free(array);

@@ -18,6 +18,8 @@ create_delta_index(const void *buf, unsigned long bufsize);
 
 /*
  * free_delta_index: free the index created by create_delta_index()
+ *
+ * Given pointer must be what create_delta_index() returned, or NULL.
  */
 extern void free_delta_index(struct delta_index *index);
 
