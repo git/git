@@ -24,5 +24,6 @@ extern int cmd_count_objects(int argc, const char **argv, char **envp);
 
 extern int cmd_push(int argc, const char **argv, char **envp);
 extern int cmd_grep(int argc, const char **argv, char **envp);
+extern int cmd_add(int argc, const char **argv, char **envp);
 
 #endif
