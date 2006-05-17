@@ -204,14 +204,14 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 
 int pull(char *target)
 {
+	struct ref_lock *lock;
 	unsigned char sha1[20];
-	int fd = -1;
 
 	save_commit_buffer = 0;
 	track_object_refs = 0;
-	if (write_ref && current_ref) {
-		fd = lock_ref_sha1(write_ref, current_ref);
-		if (fd < 0)
+	if (write_ref) {
+		lock = lock_ref_sha1(write_ref, current_ref, 1);
+		if (!lock)
 			return -1;
 	}
 
@@ -219,20 +219,22 @@ int pull(char *target)
 		for_each_ref(mark_complete);
 	}
 
-	if (interpret_target(target, sha1))
-		return error("Could not interpret %s as something to pull",
-			     target);
-	if (process(lookup_unknown_object(sha1)))
+	if (interpret_target(target, sha1)) {
+		error("Could not interpret %s as something to pull", target);
+		unlock_ref(lock);
 		return -1;
-	if (loop())
+	}
+	if (process(lookup_unknown_object(sha1))) {
+		unlock_ref(lock);
 		return -1;
-	
+	}
+	if (loop()) {
+		unlock_ref(lock);
+		return -1;
+	}
+
 	if (write_ref) {
-		if (current_ref) {
-			write_ref_sha1(write_ref, fd, sha1);
-		} else {
-			write_ref_sha1_unlocked(write_ref, sha1);
-		}
+		return write_ref_sha1(lock, sha1, "git fetch");
 	}
 	return 0;
 }
