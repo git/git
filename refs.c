@@ -459,7 +459,7 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 			c++;
 		if (c == logend || *c == '\n')
 			die("Log %s is corrupt.", logfile);
-		date = strtoul(c, NULL, 10);
+		date = strtoul(c + 1, NULL, 10);
 		if (date <= at_time) {
 			if (get_sha1_hex(rec + 41, sha1))
 				die("Log %s is corrupt.", logfile);

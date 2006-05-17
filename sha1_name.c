@@ -267,6 +267,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 			at_time = approxidate(date_spec);
 			free(date_spec);
 			len = at_mark;
+			break;
 		}
 	}
 
