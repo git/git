@@ -215,28 +215,8 @@ static void show_files(struct dir_struct *dir)
 		const char *path = ".", *base = "";
 		int baselen = prefix_len;
 
-		if (baselen) {
+		if (baselen)
 			path = base = prefix;
-			if (dir->exclude_per_dir) {
-				char *p, *pp = xmalloc(baselen+1);
-				memcpy(pp, prefix, baselen+1);
-				p = pp;
-				while (1) {
-					char save = *p;
-					*p = 0;
-					push_exclude_per_directory(dir, pp, p-pp);
-					*p++ = save;
-					if (!save)
-						break;
-					p = strchr(p, '/');
-					if (p)
-						p++;
-					else
-						p = pp + baselen;
-				}
-				free(pp);
-			}
-		}
 		read_directory(dir, path, base, baselen);
 		if (show_others)
 			show_other_files(dir);

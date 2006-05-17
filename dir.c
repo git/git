@@ -78,7 +78,7 @@ void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 		die("cannot use %s as an exclude file", fname);
 }
 
-int push_exclude_per_directory(struct dir_struct *dir, const char *base, int baselen)
+static int push_exclude_per_directory(struct dir_struct *dir, const char *base, int baselen)
 {
 	char exclude_file[PATH_MAX];
 	struct exclude_list *el = &dir->exclude_list[EXC_DIRS];
@@ -289,6 +289,32 @@ static int cmp_name(const void *p1, const void *p2)
 
 int read_directory(struct dir_struct *dir, const char *path, const char *base, int baselen)
 {
+	/*
+	 * Make sure to do the per-directory exclude for all the
+	 * directories leading up to our base.
+	 */
+	if (baselen) {
+		if (dir->exclude_per_dir) {
+			char *p, *pp = xmalloc(baselen+1);
+			memcpy(pp, base, baselen+1);
+			p = pp;
+			while (1) {
+				char save = *p;
+				*p = 0;
+				push_exclude_per_directory(dir, pp, p-pp);
+				*p++ = save;
+				if (!save)
+					break;
+				p = strchr(p, '/');
+				if (p)
+					p++;
+				else
+					p = pp + baselen;
+			}
+			free(pp);
+		}
+	}
+
 	read_directory_recursive(dir, path, base, baselen);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	return dir->nr;

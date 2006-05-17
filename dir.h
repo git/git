@@ -44,7 +44,5 @@ extern int excluded(struct dir_struct *, const char *);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *which);
-extern int push_exclude_per_directory(struct dir_struct *,
-				      const char *base, int baselen);
 
 #endif
