@@ -46,8 +46,6 @@ all:
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
-# Define NO_H_OPTION_IN_GREP if your grep does not understand -H.
-#
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
@@ -446,12 +444,6 @@ ifdef NO_ACCURATE_DIFF
 	ALL_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
-ifdef NO_H_OPTION_IN_GREP
-	NO_H_OPTION_IN_GREP=1
-else
-	NO_H_OPTION_IN_GREP=0
-endif
-
 # Shell quote (do not use $(call) to accomodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
@@ -533,9 +525,6 @@ git$X git.spec \
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
-
-builtin-grep.o: builtin-grep.c
-	$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_H_OPTION_IN_GREP=$(NO_H_OPTION_IN_GREP) $<
 
 exec_cmd.o: exec_cmd.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<

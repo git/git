@@ -453,6 +453,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 
 	len = nr = 0;
 	push_arg("grep");
+	push_arg("-H");
 	if (opt->fixed)
 		push_arg("-F");
 	if (opt->linenum)
@@ -502,13 +503,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-e");
 		push_arg(p->pattern);
 	}
-
-	if (NO_H_OPTION_IN_GREP)
-		push_arg("/dev/null");
-	else {
-		push_arg("-H");
-		push_arg("--");
-	}
+	push_arg("--");
 
 	hit = 0;
 	argc = nr;
@@ -540,19 +535,8 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	 * Use the external "grep" command for the case where
 	 * we grep through the checked-out files. It tends to
 	 * be a lot more optimized
-	 *
-	 * Some grep implementations do not understand -H nor --
-	 * but /dev/null can be used as a substitution in most
-	 * cases.
-	 *
-	 * However -L and -c would slightly misbehave (-L would
-	 * list /dev/null as a hit, and -c would report 0 hits
-	 * from /dev/null); so do not use the external one on
-	 * such platforms.
 	 */
-	if (!cached &&
-	    (!NO_H_OPTION_IN_GREP ||
-	     (!opt->count && !opt->unmatch_name_only))) {
+	if (!cached) {
 		hit = external_grep(opt, paths, cached);
 		if (hit >= 0)
 			return hit;
