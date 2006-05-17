@@ -690,7 +690,7 @@ static int twoway_merge(struct cache_entry **src)
  * Bind merge.
  *
  * Keep the index entries at stage0, collapse stage1 but make sure
- * stage0 does not have anything in prefix.
+ * stage0 does not have anything there.
  */
 static int bind_merge(struct cache_entry **src)
 {
@@ -700,12 +700,12 @@ static int bind_merge(struct cache_entry **src)
 	if (merge_size != 1)
 		return error("Cannot do a bind merge of %d trees\n",
 			     merge_size);
-	if (!a)
-		return merged_entry(old, NULL);
-	if (old)
+	if (a && old)
 		die("Entry '%s' overlaps.  Cannot bind.", a->name);
-
-	return merged_entry(a, NULL);
+	if (!a)
+		return keep_entry(old);
+	else
+		return merged_entry(a, NULL);
 }
 
 /*
