@@ -1,6 +1,6 @@
 #!/bin/sh
 
-J=
+: ${J=-j2}
 
 test -z "$(git diff --cached --name-status)" || {
 	echo >&2 "Repository unclean."
