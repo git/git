@@ -138,7 +138,10 @@ int main(int argc, const char **argv)
 		opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
 				       DIFF_SETUP_USE_CACHE);
 	while (fgets(line, sizeof(line), stdin))
-		diff_tree_stdin(line);
+		if (line[0] == '\n')
+			fflush(stdout);
+		else
+			diff_tree_stdin(line);
 
 	return 0;
 }
