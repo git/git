@@ -124,7 +124,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 
 		/* Existing file? We must have ignored it */
 		match = pathspec[i];
-		if (!lstat(match, &st))
+		if (!match[0] || !lstat(match, &st))
 			continue;
 		die("pathspec '%s' did not match any files", match);
 	}
