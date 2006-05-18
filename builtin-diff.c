@@ -122,7 +122,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	stuff_change(&revs->diffopt,
 		     canon_mode(st.st_mode), canon_mode(st.st_mode),
 		     blob[0].sha1, null_sha1,
-		     blob[0].name, path);
+		     path, path);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
