@@ -113,7 +113,7 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 ### --- END CONFIGURATION SECTION ---
 
 SCRIPT_SH = \
-	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
+	git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
 	git-format-patch.sh git-ls-remote.sh \
@@ -170,7 +170,7 @@ PROGRAMS = \
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X \
-	git-grep$X
+	git-grep$X git-add$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
