@@ -220,12 +220,9 @@ static char *ref_lock_file_name(const char *ref)
 
 int get_ref_sha1(const char *ref, unsigned char *sha1)
 {
-	const char *filename;
-
 	if (check_ref_format(ref))
 		return -1;
-	filename = git_path("refs/%s", ref);
-	return read_ref(filename, sha1);
+	return read_ref(git_path("refs/%s", ref), sha1);
 }
 
 static int lock_ref_file(const char *filename, const char *lock_filename,
