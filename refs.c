@@ -288,6 +288,7 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 	const unsigned char *old_sha1, int mustexist)
 {
 	struct ref_lock *lock;
+	struct stat st;
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
@@ -303,6 +304,7 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 	lock->ref_file = strdup(path);
 	lock->lock_file = strdup(mkpath("%s.lock", lock->ref_file));
 	lock->log_file = strdup(git_path("logs/%s", lock->ref_file + plen));
+	lock->force_write = !lstat(lock->ref_file, &st) || errno == ENOENT;
 
 	if (safe_create_leading_directories(lock->lock_file))
 		die("unable to create directory for %s", lock->lock_file);
@@ -405,7 +407,7 @@ int write_ref_sha1(struct ref_lock *lock,
 
 	if (!lock)
 		return -1;
-	if (!memcmp(lock->old_sha1, sha1, 20)) {
+	if (!lock->force_write && !memcmp(lock->old_sha1, sha1, 20)) {
 		unlock_ref(lock);
 		return 0;
 	}

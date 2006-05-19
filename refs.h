@@ -7,6 +7,7 @@ struct ref_lock {
 	char *log_file;
 	unsigned char old_sha1[20];
 	int lock_fd;
+	int force_write;
 };
 
 /*
