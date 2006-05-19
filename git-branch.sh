@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[(-d | -D) <branchname>] | [[-f] <branchname> [<start-point>]] | -r'
+USAGE='[-l] [(-d | -D) <branchname>] | [[-f] <branchname> [<start-point>]] | -r'
 LONG_USAGE='If no arguments, show available branches and mark current branch with a star.
 If one argument, create a new branch <branchname> based off of current HEAD.
 If two arguments, create a new branch <branchname> based off of <start-point>.'
@@ -42,6 +42,7 @@ If you are sure you want to delete it, run 'git branch -D $branch_name'."
 	    esac
 	    ;;
 	esac
+	rm -f "$GIT_DIR/logs/refs/heads/$branch_name"
 	rm -f "$GIT_DIR/refs/heads/$branch_name"
 	echo "Deleted branch $branch_name."
     done
@@ -55,6 +56,7 @@ ls_remote_branches () {
 }
 
 force=
+create_log=
 while case "$#,$1" in 0,*) break ;; *,-*) ;; *) break ;; esac
 do
 	case "$1" in
@@ -68,6 +70,9 @@ do
 		;;
 	-f)
 		force="$1"
+		;;
+	-l)
+		create_log="yes"
 		;;
 	--)
 		shift
@@ -116,5 +121,10 @@ then
 	then
 		die "cannot force-update the current branch."
 	fi
+fi
+if test "$create_log" = 'yes'
+then
+	mkdir -p $(dirname "$GIT_DIR/logs/refs/heads/$branchname")
+	touch "$GIT_DIR/logs/refs/heads/$branchname"
 fi
 git update-ref -m "branch: Created from $head" "refs/heads/$branchname" $rev

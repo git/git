@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-branch' [-r]
-'git-branch' [-f] <branchname> [<start-point>]
+'git-branch' [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-d | -D) <branchname>...
 
 DESCRIPTION
@@ -23,7 +23,8 @@ If no <start-point> is given, the branch will be created with a head
 equal to that of the currently checked out branch.
 
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
-specify more than one branch for deletion.
+specify more than one branch for deletion.  If the branch currently
+has a ref log then the ref log will also be deleted.
 
 
 OPTIONS
@@ -33,6 +34,11 @@ OPTIONS
 
 -D::
 	Delete a branch irrespective of its index status.
+
+-l::
+	Create the branch's ref log.  This activates recording of
+	all changes to made the branch ref, enabling use of date
+	based sha1 expressions such as "<branchname>@{yesterday}".
 
 -f::
 	Force the creation of a new branch even if it means deleting
