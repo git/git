@@ -1223,6 +1223,7 @@ int main(int argc, char **argv)
 	int rc = 0;
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -1249,6 +1250,7 @@ int main(int argc, char **argv)
 	}
 	commit_id = argv[arg];
 	url = argv[arg + 1];
+	write_ref_log_details = url;
 
 	http_init();
 

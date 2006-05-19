@@ -8,6 +8,7 @@
 #include "refs.h"
 
 const char *write_ref = NULL;
+const char *write_ref_log_details = NULL;
 
 const unsigned char *current_ref = NULL;
 
@@ -206,13 +207,17 @@ int pull(char *target)
 {
 	struct ref_lock *lock;
 	unsigned char sha1[20];
+	char *msg;
+	int ret;
 
 	save_commit_buffer = 0;
 	track_object_refs = 0;
 	if (write_ref) {
 		lock = lock_ref_sha1(write_ref, current_ref, 1);
-		if (!lock)
+		if (!lock) {
+			error("Can't lock ref %s", write_ref);
 			return -1;
+		}
 	}
 
 	if (!get_recover) {
@@ -234,7 +239,15 @@ int pull(char *target)
 	}
 
 	if (write_ref) {
-		return write_ref_sha1(lock, sha1, "git fetch");
+		if (write_ref_log_details) {
+			msg = xmalloc(strlen(write_ref_log_details) + 12);
+			sprintf(msg, "fetch from %s", write_ref_log_details);
+		} else
+			msg = NULL;
+		ret = write_ref_sha1(lock, sha1, msg ? msg : "fetch (unknown)");
+		if (msg)
+			free(msg);
+		return ret;
 	}
 	return 0;
 }

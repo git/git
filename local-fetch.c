@@ -208,6 +208,7 @@ int main(int argc, char **argv)
 	int arg = 1;
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't')
@@ -239,6 +240,7 @@ int main(int argc, char **argv)
 		usage(local_pull_usage);
 	commit_id = argv[arg];
 	path = argv[arg + 1];
+	write_ref_log_details = path;
 
 	if (pull(commit_id))
 		return 1;

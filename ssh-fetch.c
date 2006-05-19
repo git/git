@@ -132,6 +132,7 @@ int main(int argc, char **argv)
 	if (!prog) prog = "git-ssh-upload";
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -158,6 +159,7 @@ int main(int argc, char **argv)
 	}
 	commit_id = argv[arg];
 	url = argv[arg + 1];
+	write_ref_log_details = url;
 
 	if (setup_connection(&fd_in, &fd_out, prog, url, arg, argv + 1))
 		return 1;

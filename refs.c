@@ -142,6 +142,8 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			namelen = strlen(de->d_name);
 			if (namelen > 255)
 				continue;
+			if (namelen>5 && !strcmp(de->d_name+namelen-5,".lock"))
+				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
 			if (stat(git_path("%s", path), &st) < 0)
 				continue;
@@ -296,7 +298,6 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 	plen = strlen(path) - plen;
 	path = resolve_ref(path, lock->old_sha1, mustexist);
 	if (!path) {
-		error("Can't read ref %s", path);
 		unlock_ref(lock);
 		return NULL;
 	}
@@ -326,7 +327,7 @@ struct ref_lock* lock_ref_sha1(const char *ref,
 	if (check_ref_format(ref))
 		return NULL;
 	return lock_ref_sha1_basic(git_path("refs/%s", ref),
-		strlen(ref), old_sha1, mustexist);
+		5 + strlen(ref), old_sha1, mustexist);
 }
 
 struct ref_lock* lock_any_ref_for_update(const char *ref,
