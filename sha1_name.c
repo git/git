@@ -249,7 +249,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
 	const char **p, *pathname;
 	char *real_path = NULL;
-	int refs_found = 0, at_mark;
+	int refs_found = 0, am;
 	unsigned long at_time = (unsigned long)-1;
 	unsigned char *this_result;
 	unsigned char sha1_from_ref[20];
@@ -257,16 +257,16 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
-	/* At a given period of time? "@2 hours ago" */
-	for (at_mark = 1; at_mark < len; at_mark++) {
-		if (str[at_mark] == '@') {
-			int date_len = len - at_mark - 1;
+	/* At a given period of time? "@{2 hours ago}" */
+	for (am = 1; am < len - 1; am++) {
+		if (str[am] == '@' && str[am+1] == '{' && str[len-1] == '}') {
+			int date_len = len - am - 3;
 			char *date_spec = xmalloc(date_len + 1);
-			strncpy(date_spec, str + at_mark + 1, date_len);
+			strncpy(date_spec, str + am + 2, date_len);
 			date_spec[date_len] = 0;
 			at_time = approxidate(date_spec);
 			free(date_spec);
-			len = at_mark;
+			len = am;
 			break;
 		}
 	}
@@ -482,7 +482,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
  */
 int get_sha1(const char *name, unsigned char *sha1)
 {
-	int ret;
+	int ret, bracket_depth;
 	unsigned unused;
 	int namelen = strlen(name);
 	const char *cp;
@@ -528,8 +528,15 @@ int get_sha1(const char *name, unsigned char *sha1)
 		}
 		return -1;
 	}
-	cp = strchr(name, ':');
-	if (cp) {
+	for (cp = name, bracket_depth = 0; *cp; cp++) {
+		if (*cp == '{')
+			bracket_depth++;
+		else if (bracket_depth && *cp == '}')
+			bracket_depth--;
+		else if (!bracket_depth && *cp == ':')
+			break;
+	}
+	if (*cp == ':') {
 		unsigned char tree_sha1[20];
 		if (!get_sha1_1(name, cp-name, tree_sha1))
 			return get_tree_entry(tree_sha1, cp+1, sha1,
