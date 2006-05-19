@@ -651,6 +651,25 @@ dist: git.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
+htmldocs = git-htmldocs-$(GIT_VERSION)
+manpages = git-manpages-$(GIT_VERSION)
+dist-doc:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir
+	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
+	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar .
+	gzip -n -9 -f $(htmldocs).tar
+	:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
+	$(MAKE) -C Documentation DESTDIR=. \
+		man1=../.doc-tmp-dir/man1 \
+		man7=../.doc-tmp-dir/man7 \
+		install
+	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
+	gzip -n -9 -f $(manpages).tar
+	rm -fr .doc-tmp-dir
+
 ### Cleaning rules
 
 clean:
@@ -658,8 +677,9 @@ clean:
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
-	rm -rf $(GIT_TARNAME)
+	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	rm -f $(htmldocs).tar $(manpages).tar
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean
