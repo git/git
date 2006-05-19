@@ -432,11 +432,12 @@ int write_ref_sha1(struct ref_lock *lock,
 
 int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 {
-	const char *logfile, *logdata, *logend, *rec, *c;
+	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
 	char *tz_c;
 	int logfd, tz;
 	struct stat st;
 	unsigned long date;
+	unsigned char logged_sha1[20];
 
 	logfile = git_path("logs/%s", ref);
 	logfd = open(logfile, O_RDONLY, 0);
@@ -448,32 +449,57 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 	logdata = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
 	close(logfd);
 
+	lastrec = NULL;
 	rec = logend = logdata + st.st_size;
 	while (logdata < rec) {
 		if (logdata < rec && *(rec-1) == '\n')
 			rec--;
-		while (logdata < rec && *(rec-1) != '\n')
+		lastgt = NULL;
+		while (logdata < rec && *(rec-1) != '\n') {
 			rec--;
-		c = rec;
-		while (c < logend && *c != '>' && *c != '\n')
-			c++;
-		if (c == logend || *c == '\n')
+			if (*rec == '>')
+				lastgt = rec;
+		}
+		if (!lastgt)
 			die("Log %s is corrupt.", logfile);
-		date = strtoul(c + 1, NULL, 10);
+		date = strtoul(lastgt + 1, &tz_c, 10);
 		if (date <= at_time) {
-			if (get_sha1_hex(rec + 41, sha1))
-				die("Log %s is corrupt.", logfile);
+			if (lastrec) {
+				if (get_sha1_hex(lastrec, logged_sha1))
+					die("Log %s is corrupt.", logfile);
+				if (get_sha1_hex(rec + 41, sha1))
+					die("Log %s is corrupt.", logfile);
+				if (memcmp(logged_sha1, sha1, 20)) {
+					tz = strtoul(tz_c, NULL, 10);
+					fprintf(stderr,
+						"warning: Log %s has gap after %s.\n",
+						logfile, show_rfc2822_date(date, tz));
+				}
+			} else if (date == at_time) {
+				if (get_sha1_hex(rec + 41, sha1))
+					die("Log %s is corrupt.", logfile);
+			} else {
+				if (get_sha1_hex(rec + 41, logged_sha1))
+					die("Log %s is corrupt.", logfile);
+				if (memcmp(logged_sha1, sha1, 20)) {
+					tz = strtoul(tz_c, NULL, 10);
+					fprintf(stderr,
+						"warning: Log %s unexpectedly ended on %s.\n",
+						logfile, show_rfc2822_date(date, tz));
+				}
+			}
 			munmap((void*)logdata, st.st_size);
 			return 0;
 		}
+		lastrec = rec;
 	}
 
-	c = logdata;
-	while (c < logend && *c != '>' && *c != '\n')
-		c++;
-	if (c == logend || *c == '\n')
+	rec = logdata;
+	while (rec < logend && *rec != '>' && *rec != '\n')
+		rec++;
+	if (rec == logend || *rec == '\n')
 		die("Log %s is corrupt.", logfile);
-	date = strtoul(c, &tz_c, 10);
+	date = strtoul(rec + 1, &tz_c, 10);
 	tz = strtoul(tz_c, NULL, 10);
 	if (get_sha1_hex(logdata, sha1))
 		die("Log %s is corrupt.", logfile);
