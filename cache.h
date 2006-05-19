@@ -143,6 +143,7 @@ extern void verify_non_filename(const char *prefix, const char *name);
 /* Initialize and use the cache information */
 extern int read_cache(void);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
+extern int verify_path(const char *path);
 extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */

@@ -347,6 +347,70 @@ int ce_path_match(const struct cache_entry *ce, const char **pathspec)
 }
 
 /*
+ * We fundamentally don't like some paths: we don't want
+ * dot or dot-dot anywhere, and for obvious reasons don't
+ * want to recurse into ".git" either.
+ *
+ * Also, we don't want double slashes or slashes at the
+ * end that can make pathnames ambiguous.
+ */
+static int verify_dotfile(const char *rest)
+{
+	/*
+	 * The first character was '.', but that
+	 * has already been discarded, we now test
+	 * the rest.
+	 */
+	switch (*rest) {
+	/* "." is not allowed */
+	case '\0': case '/':
+		return 0;
+
+	/*
+	 * ".git" followed by  NUL or slash is bad. This
+	 * shares the path end test with the ".." case.
+	 */
+	case 'g':
+		if (rest[1] != 'i')
+			break;
+		if (rest[2] != 't')
+			break;
+		rest += 2;
+	/* fallthrough */
+	case '.':
+		if (rest[1] == '\0' || rest[1] == '/')
+			return 0;
+	}
+	return 1;
+}
+
+int verify_path(const char *path)
+{
+	char c;
+
+	goto inside;
+	for (;;) {
+		if (!c)
+			return 1;
+		if (c == '/') {
+inside:
+			c = *path++;
+			switch (c) {
+			default:
+				continue;
+			case '/': case '\0':
+				break;
+			case '.':
+				if (verify_dotfile(path))
+					continue;
+			}
+			return 0;
+		}
+		c = *path++;
+	}
+}
+
+/*
  * Do we have another file that has the beginning components being a
  * proper superset of the name we're trying to add?
  */
@@ -486,6 +550,8 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	}
 
 	if (!ok_to_add)
+		return -1;
+	if (!verify_path(ce->name))
 		return -1;
 
 	if (!skip_df_check &&
