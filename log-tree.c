@@ -49,14 +49,22 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	/*
 	 * Print header line of header..
 	 */
-	printf("%s%s",
-		opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
-		diff_unique_abbrev(commit->object.sha1, abbrev_commit));
-	if (opt->parents)
-		show_parents(commit, abbrev_commit);
-	if (parent)
-		printf(" (from %s)", diff_unique_abbrev(parent->object.sha1, abbrev_commit));
-	putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+
+	if (opt->commit_format == CMIT_FMT_EMAIL)
+		printf("From %s  Thu Apr 7 15:13:13 2005\n",
+		       sha1_to_hex(commit->object.sha1));
+	else {
+		printf("%s%s",
+		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
+		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
+		if (opt->parents)
+			show_parents(commit, abbrev_commit);
+		if (parent)
+			printf(" (from %s)",
+			       diff_unique_abbrev(parent->object.sha1,
+						  abbrev_commit));
+		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+	}
 
 	/*
 	 * And then the pretty-printed message itself
@@ -166,15 +174,18 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 int log_tree_commit(struct rev_info *opt, struct commit *commit)
 {
 	struct log_info log;
+	int shown;
 
 	log.commit = commit;
 	log.parent = NULL;
 	opt->loginfo = &log;
 
-	if (!log_tree_diff(opt, commit, &log) && opt->loginfo && opt->always_show_header) {
+	shown = log_tree_diff(opt, commit, &log);
+	if (!shown && opt->loginfo && opt->always_show_header) {
 		log.parent = NULL;
 		show_log(opt, opt->loginfo, "");
+		shown = 1;
 	}
 	opt->loginfo = NULL;
-	return 0;
+	return shown;
 }

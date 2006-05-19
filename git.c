@@ -47,6 +47,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "whatchanged", cmd_whatchanged },
 		{ "show", cmd_show },
 		{ "push", cmd_push },
+		{ "fmt-patch", cmd_format_patch },
 		{ "count-objects", cmd_count_objects },
 		{ "diff", cmd_diff },
 		{ "grep", cmd_grep },

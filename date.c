@@ -42,18 +42,24 @@ static const char *weekday_names[] = {
  * thing, which means that tz -0100 is passed in as the integer -100,
  * even though it means "sixty minutes off"
  */
-const char *show_date(unsigned long time, int tz)
+static struct tm *time_to_tm(unsigned long time, int tz)
 {
-	struct tm *tm;
 	time_t t;
-	static char timebuf[200];
 	int minutes;
 
 	minutes = tz < 0 ? -tz : tz;
 	minutes = (minutes / 100)*60 + (minutes % 100);
 	minutes = tz < 0 ? -minutes : minutes;
 	t = time + minutes * 60;
-	tm = gmtime(&t);
+	return gmtime(&t);
+}
+
+const char *show_date(unsigned long time, int tz)
+{
+	struct tm *tm;
+	static char timebuf[200];
+
+	tm = time_to_tm(time, tz);
 	if (!tm)
 		return NULL;
 	sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d %+05d",
@@ -62,6 +68,21 @@ const char *show_date(unsigned long time, int tz)
 		tm->tm_mday,
 		tm->tm_hour, tm->tm_min, tm->tm_sec,
 		tm->tm_year + 1900, tz);
+	return timebuf;
+}
+
+const char *show_rfc2822_date(unsigned long time, int tz)
+{
+	struct tm *tm;
+	static char timebuf[200];
+
+	tm = time_to_tm(time, tz);
+	if (!tm)
+		return NULL;
+	sprintf(timebuf, "%.3s, %d %.3s %d %02d:%02d:%02d %+05d",
+		weekday_names[tm->tm_wday], tm->tm_mday,
+		month_names[tm->tm_mon], tm->tm_year + 1900,
+		tm->tm_hour, tm->tm_min, tm->tm_sec, tz);
 	return timebuf;
 }
 
