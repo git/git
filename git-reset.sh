@@ -48,7 +48,7 @@ then
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-git-update-ref HEAD "$rev"
+git-update-ref -m "reset $reset_type $@" HEAD "$rev"
 
 case "$reset_type" in
 --hard )

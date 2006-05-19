@@ -117,4 +117,4 @@ then
 		die "cannot force-update the current branch."
 	fi
 fi
-git update-ref "refs/heads/$branchname" $rev
+git update-ref -m "branch: Created from $head" "refs/heads/$branchname" $rev
