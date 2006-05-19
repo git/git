@@ -187,7 +187,7 @@ proc getcommitlines {fd view}  {
 	if {$view == $curview} {
 	    layoutmore
 	} elseif {[info exists hlview] && $view == $hlview} {
-	    highlightmore
+	    vhighlightmore
 	}
     }
     if {[clock clicks -milliseconds] >= $nextupdate} {
@@ -223,7 +223,7 @@ proc readcommit {id} {
 
 proc updatecommits {} {
     global viewdata curview phase displayorder
-    global children commitrow
+    global children commitrow selectedline thickerline
 
     if {$phase ne {}} {
 	stop_rev_list
@@ -235,6 +235,8 @@ proc updatecommits {} {
 	catch {unset commitrow($n,$id)}
     }
     set curview -1
+    catch {unset selectedline}
+    catch {unset thickerline}
     catch {unset viewdata($n)}
     readrefs
     showview $n
@@ -381,6 +383,7 @@ proc makewindow {} {
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
     global rowctxmenu mergemax
+    global highlight_files highlight_names
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -396,20 +399,14 @@ proc makewindow {} {
     .bar.edit configure -font $uifont
 
     menu .bar.view -font $uifont
-    menu .bar.view.hl -font $uifont -tearoff 0
     .bar add cascade -label "View" -menu .bar.view
     .bar.view add command -label "New view..." -command {newview 0}
     .bar.view add command -label "Edit view..." -command editview \
 	-state disabled
     .bar.view add command -label "Delete view" -command delview -state disabled
-    .bar.view add cascade -label "Highlight" -menu .bar.view.hl
     .bar.view add separator
     .bar.view add radiobutton -label "All files" -command {showview 0} \
 	-variable selectedview -value 0
-    .bar.view.hl add command -label "New view..." -command {newview 1}
-    .bar.view.hl add command -label "Remove" -command delhighlight \
-	-state disabled
-    .bar.view.hl add separator
     
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
@@ -436,6 +433,8 @@ proc makewindow {} {
     }
     frame .ctop.top
     frame .ctop.top.bar
+    frame .ctop.top.lbar
+    pack .ctop.top.lbar -side bottom -fill x
     pack .ctop.top.bar -side bottom -fill x
     set cscroll .ctop.top.csb
     scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
@@ -497,7 +496,7 @@ proc makewindow {} {
     set findstring {}
     set fstring .ctop.top.bar.findstring
     lappend entries $fstring
-    entry $fstring -width 30 -font $textfont -textvariable findstring -font $textfont
+    entry $fstring -width 30 -font $textfont -textvariable findstring
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
     set findtypemenu [tk_optionMenu .ctop.top.bar.findtype \
@@ -514,6 +513,29 @@ proc makewindow {} {
     pack .ctop.top.bar.findtype -side right
     # for making sure type==Exact whenever loc==Pickaxe
     trace add variable findloc write findlocchange
+
+    label .ctop.top.lbar.flabel -text "Highlight:  Commits touching paths:" \
+	-font $uifont
+    pack .ctop.top.lbar.flabel -side left -fill y
+    entry .ctop.top.lbar.fent -width 25 -font $textfont \
+	-textvariable highlight_files
+    trace add variable highlight_files write hfiles_change
+    lappend entries .ctop.top.lbar.fent
+    pack .ctop.top.lbar.fent -side left -fill x -expand 1
+    label .ctop.top.lbar.vlabel -text " OR in view" -font $uifont
+    pack .ctop.top.lbar.vlabel -side left -fill y
+    global viewhlmenu selectedhlview
+    set viewhlmenu [tk_optionMenu .ctop.top.lbar.vhl selectedhlview None]
+    $viewhlmenu entryconf 0 -command delvhighlight
+    pack .ctop.top.lbar.vhl -side left -fill y
+    label .ctop.top.lbar.alabel -text " OR author/committer:" \
+	-font $uifont
+    pack .ctop.top.lbar.alabel -side left -fill y
+    entry .ctop.top.lbar.aent -width 20 -font $textfont \
+	-textvariable highlight_names
+    trace add variable highlight_names write hnames_change
+    lappend entries .ctop.top.lbar.aent
+    pack .ctop.top.lbar.aent -side right -fill x -expand 1
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
@@ -664,6 +686,7 @@ proc canvscan {op w x y} {
 proc scrollcanv {cscroll f0 f1} {
     $cscroll set $f0 $f1
     drawfrac $f0 $f1
+    flushhighlights
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -1313,25 +1336,27 @@ proc vieweditor {top n title} {
     focus $top.t
 }
 
-proc doviewmenu {m first cmd op args} {
+proc doviewmenu {m first cmd op argv} {
     set nmenu [$m index end]
     for {set i $first} {$i <= $nmenu} {incr i} {
 	if {[$m entrycget $i -command] eq $cmd} {
-	    eval $m $op $i $args
+	    eval $m $op $i $argv
 	    break
 	}
     }
 }
 
 proc allviewmenus {n op args} {
+    global viewhlmenu
+
     doviewmenu .bar.view 7 [list showview $n] $op $args
-    doviewmenu .bar.view.hl 3 [list addhighlight $n] $op $args
+    doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
 }
 
 proc newviewok {top n} {
     global nextviewnum newviewperm newviewname newishighlight
     global viewname viewfiles viewperm selectedview curview
-    global viewargs newviewargs
+    global viewargs newviewargs viewhlmenu
 
     if {[catch {
 	set newargs [shellsplit $newviewargs($n)]
@@ -1359,14 +1384,17 @@ proc newviewok {top n} {
 	if {!$newishighlight} {
 	    after idle showview $n
 	} else {
-	    after idle addhighlight $n
+	    after idle addvhighlight $n
 	}
     } else {
 	# editing an existing view
 	set viewperm($n) $newviewperm($n)
 	if {$newviewname($n) ne $viewname($n)} {
 	    set viewname($n) $newviewname($n)
-	    allviewmenus $n entryconf -label $viewname($n)
+	    doviewmenu .bar.view 7 [list showview $n] \
+		entryconf [list -label $viewname($n)]
+	    doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
+		entryconf [list -label $viewname($n) -value $viewname($n)]
 	}
 	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n)} {
 	    set viewfiles($n) $files
@@ -1380,9 +1408,13 @@ proc newviewok {top n} {
 }
 
 proc delview {} {
-    global curview viewdata viewperm
+    global curview viewdata viewperm hlview selectedhlview
 
     if {$curview == 0} return
+    if {[info exists hlview] && $hlview == $curview} {
+	set selectedhlview None
+	unset hlview
+    }
     allviewmenus $curview delete
     set viewdata($curview) {}
     set viewperm($curview) 0
@@ -1390,12 +1422,12 @@ proc delview {} {
 }
 
 proc addviewmenu {n} {
-    global viewname
+    global viewname viewhlmenu
 
     .bar.view add radiobutton -label $viewname($n) \
 	-command [list showview $n] -variable selectedview -value $n
-    .bar.view.hl add radiobutton -label $viewname($n) \
-	-command [list addhighlight $n] -variable selectedhlview -value $n
+    $viewhlmenu add radiobutton -label $viewname($n) \
+	-command [list addvhighlight $n] -variable selectedhlview
 }
 
 proc flatten {var} {
@@ -1427,8 +1459,9 @@ proc showview {n} {
     global pending_select phase
     global commitidx rowlaidout rowoptim linesegends
     global commfd nextupdate
-    global selectedview hlview selectedhlview
+    global selectedview
     global vparentlist vchildlist vdisporder vcmitlisted
+    global hlview selectedhlview
 
     if {$n == $curview} return
     set selid {}
@@ -1467,14 +1500,15 @@ proc showview {n} {
     catch {unset matchinglines}
     catch {unset treediffs}
     clear_display
+    if {[info exists hlview] && $hlview == $n} {
+	unset hlview
+	set selectedhlview None
+    }
 
     set curview $n
     set selectedview $n
-    set selectedhlview -1
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
     .bar.view entryconf 3 -state [expr {$n == 0? "disabled": "normal"}]
-    catch {unset hlview}
-    .bar.view.hl entryconf 1 -state disabled
 
     if {![info exists viewdata($n)]} {
 	set pending_select $selid
@@ -1539,18 +1573,66 @@ proc showview {n} {
     }
 }
 
-proc addhighlight {n} {
-    global hlview curview viewdata highlighted highlightedrows
-    global selectedhlview
+# Stuff relating to the highlighting facility
+
+proc ishighlighted {row} {
+    global vhighlights fhighlights nhighlights
+
+    if {[info exists nhighlights($row)] && $nhighlights($row) > 0} {
+	return $nhighlights($row)
+    }
+    if {[info exists vhighlights($row)] && $vhighlights($row) > 0} {
+	return $vhighlights($row)
+    }
+    if {[info exists fhighlights($row)] && $fhighlights($row) > 0} {
+	return $fhighlights($row)
+    }
+    return 0
+}
+
+proc bolden {row font} {
+    global canv linehtag selectedline
+
+    $canv itemconf $linehtag($row) -font $font
+    if {$row == $selectedline} {
+	$canv delete secsel
+	set t [eval $canv create rect [$canv bbox $linehtag($row)] \
+		   -outline {{}} -tags secsel \
+		   -fill [$canv cget -selectbackground]]
+	$canv lower $t
+    }
+}
+
+proc bolden_name {row font} {
+    global canv2 linentag selectedline
+
+    $canv2 itemconf $linentag($row) -font $font
+    if {$row == $selectedline} {
+	$canv2 delete secsel
+	set t [eval $canv2 create rect [$canv2 bbox $linentag($row)] \
+		   -outline {{}} -tags secsel \
+		   -fill [$canv2 cget -selectbackground]]
+	$canv2 lower $t
+    }
+}
+
+proc unbolden {rows} {
+    global mainfont
+
+    foreach row $rows {
+	if {![ishighlighted $row]} {
+	    bolden $row $mainfont
+	}
+    }
+}
+
+proc addvhighlight {n} {
+    global hlview curview viewdata vhl_done vhighlights commitidx
 
     if {[info exists hlview]} {
-	delhighlight
+	delvhighlight
     }
     set hlview $n
-    set selectedhlview $n
-    .bar.view.hl entryconf 1 -state normal
-    set highlighted($n) 0
-    set highlightedrows {}
     if {$n != $curview && ![info exists viewdata($n)]} {
 	set viewdata($n) [list getcommits {{}} {{}} {} {} {} 0 0 0 {}]
 	set vparentlist($n) {}
@@ -1558,34 +1640,29 @@ proc addhighlight {n} {
 	set vdisporder($n) {}
 	set vcmitlisted($n) {}
 	start_rev_list $n
-    } else {
-	highlightmore
+    }
+    set vhl_done $commitidx($hlview)
+    if {$vhl_done > 0} {
+	drawvisible
     }
 }
 
-proc delhighlight {} {
-    global hlview highlightedrows canv linehtag mainfont
-    global selectedhlview selectedline
+proc delvhighlight {} {
+    global hlview vhighlights
+    global selectedline
 
     if {![info exists hlview]} return
     unset hlview
-    set selectedhlview {}
-    .bar.view.hl entryconf 1 -state disabled
-    foreach l $highlightedrows {
-	$canv itemconf $linehtag($l) -font $mainfont
-	if {$l == $selectedline} {
-	    $canv delete secsel
-	    set t [eval $canv create rect [$canv bbox $linehtag($l)] \
-		       -outline {{}} -tags secsel \
-		       -fill [$canv cget -selectbackground]]
-	    $canv lower $t
-	}
+    set rows [array names vhighlights]
+    if {$rows ne {}} {
+	unset vhighlights
+	unbolden $rows
     }
 }
 
-proc highlightmore {} {
-    global hlview highlighted commitidx highlightedrows linehtag mainfont
-    global displayorder vdisporder curview canv commitrow selectedline
+proc vhighlightmore {} {
+    global hlview vhl_done commitidx vhighlights
+    global displayorder vdisporder curview mainfont
 
     set font [concat $mainfont bold]
     set max $commitidx($hlview)
@@ -1594,25 +1671,158 @@ proc highlightmore {} {
     } else {
 	set disp $vdisporder($hlview)
     }
-    for {set i $highlighted($hlview)} {$i < $max} {incr i} {
+    set vr [visiblerows]
+    set r0 [lindex $vr 0]
+    set r1 [lindex $vr 1]
+    for {set i $vhl_done} {$i < $max} {incr i} {
 	set id [lindex $disp $i]
 	if {[info exists commitrow($curview,$id)]} {
 	    set row $commitrow($curview,$id)
-	    if {[info exists linehtag($row)]} {
-		$canv itemconf $linehtag($row) -font $font
-		lappend highlightedrows $row
-		if {$row == $selectedline} {
-		    $canv delete secsel
-		    set t [eval $canv create rect \
-			       [$canv bbox $linehtag($row)] \
-			       -outline {{}} -tags secsel \
-			       -fill [$canv cget -selectbackground]]
-		    $canv lower $t
+	    if {$r0 <= $row && $row <= $r1} {
+		if {![highlighted $row]} {
+		    bolden $row $font
 		}
+		set vhighlights($row) 1
 	    }
 	}
     }
-    set highlighted($hlview) $max
+    set vhl_done $max
+}
+
+proc askvhighlight {row id} {
+    global hlview vhighlights commitrow iddrawn mainfont
+
+    if {[info exists commitrow($hlview,$id)]} {
+	if {[info exists iddrawn($id)] && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+	set vhighlights($row) 1
+    } else {
+	set vhighlights($row) 0
+    }
+}
+
+proc hfiles_change {name ix op} {
+    global highlight_files filehighlight fhighlights fh_serial
+    global mainfont
+
+    if {[info exists filehighlight]} {
+	# delete previous highlights
+	catch {close $filehighlight}
+	unset filehighlight
+	set rows [array names fhighlights]
+	if {$rows ne {}} {
+	    unset fhighlights
+	    unbolden $rows
+	}
+    }
+    after cancel do_file_hl $fh_serial
+    incr fh_serial
+    if {$highlight_files ne {}} {
+	after 300 do_file_hl $fh_serial
+    }
+}
+
+proc do_file_hl {serial} {
+    global highlight_files filehighlight
+
+    if {[catch {set paths [shellsplit $highlight_files]}]} return
+    set cmd [concat | git-diff-tree -r -s --stdin -- $paths]
+    set filehighlight [open $cmd r+]
+    fconfigure $filehighlight -blocking 0
+    fileevent $filehighlight readable readfhighlight
+    drawvisible
+    flushhighlights
+}
+
+proc flushhighlights {} {
+    global filehighlight
+
+    if {[info exists filehighlight]} {
+	puts $filehighlight ""
+	flush $filehighlight
+    }
+}
+
+proc askfilehighlight {row id} {
+    global filehighlight fhighlights
+
+    set fhighlights($row) 0
+    puts $filehighlight $id
+}
+
+proc readfhighlight {} {
+    global filehighlight fhighlights commitrow curview mainfont iddrawn
+
+    set n [gets $filehighlight line]
+    if {$n < 0} {
+	if {[eof $filehighlight]} {
+	    # strange...
+	    puts "oops, git-diff-tree died"
+	    catch {close $filehighlight}
+	    unset filehighlight
+	}
+	return
+    }
+    set line [string trim $line]
+    if {$line eq {}} return
+    if {![info exists commitrow($curview,$line)]} return
+    set row $commitrow($curview,$line)
+    if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
+	bolden $row [concat $mainfont bold]
+    }
+    set fhighlights($row) 1
+}
+
+proc hnames_change {name ix op} {
+    global highlight_names nhighlights nhl_names mainfont
+
+    # delete previous highlights, if any
+    set rows [array names nhighlights]
+    if {$rows ne {}} {
+	foreach row $rows {
+	    if {$nhighlights($row) >= 2} {
+		bolden_name $row $mainfont
+	    }
+	}
+	unset nhighlights
+	unbolden $rows
+    }
+    if {[catch {set nhl_names [shellsplit $highlight_names]}]} {
+	set nhl_names {}
+	return
+    }
+    drawvisible
+}
+
+proc asknamehighlight {row id} {
+    global nhl_names nhighlights commitinfo iddrawn mainfont
+
+    if {![info exists commitinfo($id)]} {
+	getcommit $id
+    }
+    set isbold 0
+    set author [lindex $commitinfo($id) 1]
+    set committer [lindex $commitinfo($id) 3]
+    foreach name $nhl_names {
+	set pattern "*$name*"
+	if {[string match -nocase $pattern $author]} {
+	    set isbold 2
+	    break
+	}
+	if {!$isbold && [string match -nocase $pattern $committer]} {
+	    set isbold 1
+	}
+    }
+    if {[info exists iddrawn($id)]} {
+	if {$isbold && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+	if {$isbold >= 2} {
+	    bolden_name $row [concat $mainfont bold]
+	}
+    }
+    set nhighlights($row) $isbold
 }
 
 # Graph layout functions
@@ -2335,7 +2545,6 @@ proc drawcmittext {id row col rmx} {
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
     global mainfont canvxmax
-    global hlview commitrow highlightedrows
 
     set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
     set x [xc $row $col]
@@ -2361,15 +2570,19 @@ proc drawcmittext {id row col rmx} {
     set date [lindex $commitinfo($id) 2]
     set date [formatdate $date]
     set font $mainfont
-    if {[info exists hlview] && [info exists commitrow($hlview,$id)]} {
+    set nfont $mainfont
+    set isbold [ishighlighted $row]
+    if {$isbold > 0} {
 	lappend font bold
-	lappend highlightedrows $row
+	if {$isbold > 1} {
+	    lappend nfont bold
+	}
     }
     set linehtag($row) [$canv create text $xt $y -anchor w \
 			    -text $headline -font $font]
     $canv bind $linehtag($row) <Button-3> "rowmenu %X %Y $id"
     set linentag($row) [$canv2 create text 3 $y -anchor w \
-			    -text $name -font $mainfont]
+			    -text $name -font $nfont]
     set linedtag($row) [$canv3 create text 3 $y -anchor w \
 			    -text $date -font $mainfont]
     set xr [expr {$xt + [font measure $mainfont $headline]}]
@@ -2383,6 +2596,8 @@ proc drawcmitrow {row} {
     global displayorder rowidlist
     global idrangedrawn iddrawn
     global commitinfo parentlist numcommits
+    global filehighlight fhighlights nhl_names nhighlights
+    global hlview vhighlights
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
@@ -2403,6 +2618,15 @@ proc drawcmitrow {row} {
     }
 
     set id [lindex $displayorder $row]
+    if {[info exists hlview] && ![info exists vhighlights($row)]} {
+	askvhighlight $row $id
+    }
+    if {[info exists filehighlight] && ![info exists fhighlights($row)]} {
+	askfilehighlight $row $id
+    }
+    if {$nhl_names ne {} && ![info exists nhighlights($row)]} {
+	asknamehighlight $row $id
+    }
     if {[info exists iddrawn($id)]} return
     set col [lsearch -exact [lindex $rowidlist $row] $id]
     if {$col < 0} {
@@ -2451,10 +2675,14 @@ proc drawvisible {} {
 
 proc clear_display {} {
     global iddrawn idrangedrawn
+    global vhighlights fhighlights nhighlights
 
     allcanvs delete all
     catch {unset iddrawn}
     catch {unset idrangedrawn}
+    catch {unset vhighlights}
+    catch {unset fhighlights}
+    catch {unset nhighlights}
 }
 
 proc findcrossings {id} {
@@ -4943,13 +5171,16 @@ if {$i >= 0} {
 
 set history {}
 set historyindex 0
+set fh_serial 0
+set highlight_names {}
+set nhl_names {}
 
 set optim_delay 16
 
 set nextviewnum 1
 set curview 0
 set selectedview 0
-set selectedhlview {}
+set selectedhlview None
 set viewfiles(0) {}
 set viewperm(0) 0
 set viewargs(0) {}
