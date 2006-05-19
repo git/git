@@ -158,19 +158,19 @@ PROGRAMS = \
 	git-ls-files$X git-ls-tree$X git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-read-tree$X \
-	git-receive-pack$X git-rev-list$X git-rev-parse$X \
+	git-receive-pack$X git-rev-parse$X \
 	git-send-pack$X git-show-branch$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
-	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
+	git-update-ref$X git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X \
-	git-grep$X git-add$X
+	git-grep$X git-add$X git-rev-list$X git-check-ref-format$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -218,7 +218,7 @@ LIB_OBJS = \
 
 BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
-	builtin-grep.o builtin-add.o
+	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -655,6 +655,25 @@ dist: git.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
+htmldocs = git-htmldocs-$(GIT_VERSION)
+manpages = git-manpages-$(GIT_VERSION)
+dist-doc:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir
+	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
+	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar .
+	gzip -n -9 -f $(htmldocs).tar
+	:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
+	$(MAKE) -C Documentation DESTDIR=. \
+		man1=../.doc-tmp-dir/man1 \
+		man7=../.doc-tmp-dir/man7 \
+		install
+	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
+	gzip -n -9 -f $(manpages).tar
+	rm -fr .doc-tmp-dir
+
 ### Cleaning rules
 
 clean:
@@ -662,8 +681,9 @@ clean:
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
-	rm -rf $(GIT_TARNAME)
+	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	rm -f $(htmldocs).tar $(manpages).tar
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

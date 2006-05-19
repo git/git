@@ -266,8 +266,8 @@ This recipe appears to work with the current [*1*] Thunderbird from Suse.
 The following Thunderbird extensions are needed:
 	AboutConfig 0.5
 		http://aboutconfig.mozdev.org/
-	External Editor 0.5.4
-		http://extensionroom.mozdev.org/more-info/exteditor
+	External Editor 0.7.2
+		http://globs.org/articles.php?lng=en&pg=8
 
 1) Prepare the patch as a text file using your method of choice.
 
