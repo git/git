@@ -7,7 +7,7 @@ git-update-ref - update the object name stored in a ref safely
 
 SYNOPSIS
 --------
-'git-update-ref' <ref> <newvalue> [<oldvalue>] [-m <reason>]
+'git-update-ref' [-m <reason>] <ref> <newvalue> [<oldvalue>]
 
 DESCRIPTION
 -----------
