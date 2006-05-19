@@ -305,7 +305,7 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 	lock->ref_file = strdup(path);
 	lock->lock_file = strdup(mkpath("%s.lock", lock->ref_file));
 	lock->log_file = strdup(git_path("logs/%s", lock->ref_file + plen));
-	lock->force_write = !lstat(lock->ref_file, &st) || errno == ENOENT;
+	lock->force_write = lstat(lock->ref_file, &st) && errno == ENOENT;
 
 	if (safe_create_leading_directories(lock->lock_file))
 		die("unable to create directory for %s", lock->lock_file);
