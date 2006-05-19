@@ -27,5 +27,7 @@ extern int cmd_grep(int argc, const char **argv, char **envp);
 extern int cmd_rev_list(int argc, const char **argv, char **envp);
 extern int cmd_check_ref_format(int argc, const char **argv, char **envp);
 extern int cmd_init_db(int argc, const char **argv, char **envp);
+extern int cmd_tar_tree(int argc, const char **argv, char **envp);
+extern int cmd_upload_tar(int argc, const char **argv, char **envp);
 
 #endif
