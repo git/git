@@ -3657,6 +3657,7 @@ proc selnextpage {dir} {
 	set lpp 1
     }
     allcanvs yview scroll [expr {$dir * $lpp}] units
+    drawvisible
     if {![info exists selectedline]} return
     set l [expr {$selectedline + $dir * $lpp}]
     if {$l < 0} {
