@@ -1711,10 +1711,12 @@ static int check_patch(struct patch *patch)
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
 		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
 			return error("%s: already exists in index", new_name);
-		if (!cached && !lstat(new_name, &st))
-			return error("%s: already exists in working directory", new_name);
-		if (errno != ENOENT)
-			return error("%s: %s", new_name, strerror(errno));
+		if (!cached) {
+			if (!lstat(new_name, &st))
+				return error("%s: already exists in working directory", new_name);
+			if (errno != ENOENT)
+				return error("%s: %s", new_name, strerror(errno));
+		}
 		if (!patch->new_mode) {
 			if (patch->is_new)
 				patch->new_mode = S_IFREG | 0644;
