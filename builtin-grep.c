@@ -453,7 +453,6 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 
 	len = nr = 0;
 	push_arg("grep");
-	push_arg("-H");
 	if (opt->fixed)
 		push_arg("-F");
 	if (opt->linenum)
@@ -503,17 +502,35 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-e");
 		push_arg(p->pattern);
 	}
-	push_arg("--");
+
+	/*
+	 * To make sure we get the header printed out when we want it,
+	 * add /dev/null to the paths to grep.  This is unnecessary
+	 * (and wrong) with "-l" or "-L", which always print out the
+	 * name anyway.
+	 *
+	 * GNU grep has "-H", but this is portable.
+	 */
+	if (!opt->name_only && !opt->unmatch_name_only)
+		push_arg("/dev/null");
 
 	hit = 0;
 	argc = nr;
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
+		const char *name;
 		if (ce_stage(ce) || !S_ISREG(ntohl(ce->ce_mode)))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
-		argv[argc++] = ce->name;
+		name = ce->name;
+		if (name[0] == '-') {
+			int len = ce_namelen(ce);
+			name = xmalloc(len + 3);
+			memcpy(name, "./", 2);
+			memcpy(name + 2, ce->name, len + 1);
+		}
+		argv[argc++] = name;
 		if (argc < MAXARGS)
 			continue;
 		hit += exec_grep(argc, argv);
