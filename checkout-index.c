@@ -39,6 +39,7 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "quote.h"
+#include "cache-tree.h"
 
 #define CHECKOUT_ALL 4
 static const char *prefix;

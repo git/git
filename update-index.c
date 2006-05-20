@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "quote.h"
+#include "cache-tree.h"
 #include "tree-walk.h"
 
 /*
@@ -51,6 +52,7 @@ static int mark_valid(const char *path)
 			active_cache[pos]->ce_flags &= ~htons(CE_VALID);
 			break;
 		}
+		cache_tree_invalidate_path(active_cache_tree, path);
 		active_cache_changed = 1;
 		return 0;
 	}
@@ -64,6 +66,12 @@ static int add_file_to_cache(const char *path)
 	struct stat st;
 
 	status = lstat(path, &st);
+
+	/* We probably want to do this in remove_file_from_cache() and
+	 * add_cache_entry() instead...
+	 */
+	cache_tree_invalidate_path(active_cache_tree, path);
+
 	if (status < 0 || S_ISDIR(st.st_mode)) {
 		/* When we used to have "path" and now we want to add
 		 * "path/file", we need a way to remove "path" before
@@ -209,6 +217,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 		return error("%s: cannot add to the index - missing --add option?",
 			     path);
 	report("add '%s'", path);
+	cache_tree_invalidate_path(active_cache_tree, path);
 	return 0;
 }
 
@@ -233,6 +242,7 @@ static void chmod_path(int flip, const char *path)
 	default:
 		goto fail;
 	}
+	cache_tree_invalidate_path(active_cache_tree, path);
 	active_cache_changed = 1;
 	report("chmod %cx '%s'", flip, path);
 	return;
@@ -254,6 +264,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 			die("Unable to mark file %s", path);
 		goto free_return;
 	}
+	cache_tree_invalidate_path(active_cache_tree, path);
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
@@ -332,6 +343,7 @@ static void read_index_info(int line_termination)
 				free(path_name);
 			continue;
 		}
+		cache_tree_invalidate_path(active_cache_tree, path_name);
 
 		if (!mode) {
 			/* mode == 0 means there is no such path -- remove */
@@ -438,6 +450,7 @@ static int unresolve_one(const char *path)
 		goto free_return;
 	}
 
+	cache_tree_invalidate_path(active_cache_tree, path);
 	remove_file_from_cache(path);
 	if (add_cache_entry(ce_2, ADD_CACHE_OK_TO_ADD)) {
 		error("%s: cannot add our version to the index.", path);

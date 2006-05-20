@@ -114,6 +114,7 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 
 extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
+extern struct cache_tree *active_cache_tree;
 
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"

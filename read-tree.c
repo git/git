@@ -9,6 +9,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "cache-tree.h"
 #include <sys/time.h>
 #include <signal.h>
 
@@ -426,6 +427,12 @@ static void verify_uptodate(struct cache_entry *ce)
 	die("Entry '%s' not uptodate. Cannot merge.", ce->name);
 }
 
+static void invalidate_ce_path(struct cache_entry *ce)
+{
+	if (ce)
+		cache_tree_invalidate_path(active_cache_tree, ce->name);
+}
+
 /*
  * We do not want to remove or overwrite a working tree file that
  * is not tracked.
@@ -456,10 +463,13 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old)
 			*merge = *old;
 		} else {
 			verify_uptodate(old);
+			invalidate_ce_path(old);
 		}
 	}
-	else
+	else {
 		verify_absent(merge->name, "overwritten");
+		invalidate_ce_path(merge);
+	}
 
 	merge->ce_flags &= ~htons(CE_STAGEMASK);
 	add_cache_entry(merge, ADD_CACHE_OK_TO_ADD);
@@ -474,6 +484,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old)
 		verify_absent(ce->name, "removed");
 	ce->ce_mode = 0;
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD);
+	invalidate_ce_path(ce);
 	return 1;
 }
 
@@ -749,6 +760,7 @@ static int read_cache_unmerged(void)
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce)) {
 			deleted++;
+			invalidate_ce_path(ce);
 			continue;
 		}
 		if (deleted)
@@ -757,6 +769,39 @@ static int read_cache_unmerged(void)
 	}
 	active_nr -= deleted;
 	return deleted;
+}
+
+static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
+{
+	struct tree_entry_list *ent;
+	int cnt;
+
+	memcpy(it->sha1, tree->object.sha1, 20);
+	for (cnt = 0, ent = tree->entries; ent; ent = ent->next) {
+		if (!ent->directory)
+			cnt++;
+		else {
+			struct cache_tree_sub *sub;
+			struct tree *subtree = (struct tree *)ent->item.tree;
+			if (!subtree->object.parsed)
+				parse_tree(subtree);
+			sub = cache_tree_sub(it, ent->name);
+			sub->cache_tree = cache_tree();
+			prime_cache_tree_rec(sub->cache_tree, subtree);
+			cnt += sub->cache_tree->entry_count;
+		}
+	}
+	it->entry_count = cnt;
+}
+
+static void prime_cache_tree(void)
+{
+	struct tree *tree = (struct tree *)trees->item;
+	if (!tree)
+		return;
+	active_cache_tree = cache_tree();
+	prime_cache_tree_rec(active_cache_tree, tree);
+
 }
 
 static const char read_tree_usage[] = "git-read-tree (<sha> | -m [--aggressive] [-u | -i] <sha1> [<sha2> [<sha3>]])";
@@ -860,10 +905,9 @@ int main(int argc, char **argv)
 			fn = twoway_merge;
 			break;
 		case 3:
-			fn = threeway_merge;
-			break;
 		default:
 			fn = threeway_merge;
+			cache_tree_free(&active_cache_tree);
 			break;
 		}
 
@@ -874,6 +918,18 @@ int main(int argc, char **argv)
 	}
 
 	unpack_trees(fn);
+
+	/*
+	 * When reading only one tree (either the most basic form,
+	 * "-m ent" or "--reset ent" form), we can obtain a fully
+	 * valid cache-tree because the index must match exactly
+	 * what came from the tree.
+	 */
+	if (trees && trees->item && (!merge || (stage == 2))) {
+		cache_tree_free(&active_cache_tree);
+		prime_cache_tree();
+	}
+
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_index_file(&cache_file))
 		die("unable to write new index file");
