@@ -11,6 +11,86 @@
 #include "cache.h"
 #include "dir.h"
 
+int common_prefix(const char **pathspec)
+{
+	const char *path, *slash, *next;
+	int prefix;
+
+	if (!pathspec)
+		return 0;
+
+	path = *pathspec;
+	slash = strrchr(path, '/');
+	if (!slash)
+		return 0;
+
+	prefix = slash - path + 1;
+	while ((next = *++pathspec) != NULL) {
+		int len = strlen(next);
+		if (len >= prefix && !memcmp(path, next, len))
+			continue;
+		for (;;) {
+			if (!len)
+				return 0;
+			if (next[--len] != '/')
+				continue;
+			if (memcmp(path, next, len+1))
+				continue;
+			prefix = len + 1;
+			break;
+		}
+	}
+	return prefix;
+}
+
+static int match_one(const char *match, const char *name, int namelen)
+{
+	int matchlen;
+
+	/* If the match was just the prefix, we matched */
+	matchlen = strlen(match);
+	if (!matchlen)
+		return 1;
+
+	/*
+	 * If we don't match the matchstring exactly,
+	 * we need to match by fnmatch
+	 */
+	if (strncmp(match, name, matchlen))
+		return !fnmatch(match, name, 0);
+
+	/*
+	 * If we did match the string exactly, we still
+	 * need to make sure that it happened on a path
+	 * component boundary (ie either the last character
+	 * of the match was '/', or the next character of
+	 * the name was '/' or the terminating NUL.
+	 */
+	return	match[matchlen-1] == '/' ||
+		name[matchlen] == '/' ||
+		!name[matchlen];
+}
+
+int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen)
+{
+	int retval;
+	const char *match;
+
+	name += prefix;
+	namelen -= prefix;
+
+	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
+		if (retval & *seen)
+			continue;
+		match += prefix;
+		if (match_one(match, name, namelen)) {
+			retval = 1;
+			*seen = 1;
+		}
+	}
+	return retval;
+}
+
 void add_exclude(const char *string, const char *base,
 		 int baselen, struct exclude_list *which)
 {

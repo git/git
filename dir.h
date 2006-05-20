@@ -39,6 +39,9 @@ struct dir_struct {
 	struct exclude_list exclude_list[3];
 };
 
+extern int common_prefix(const char **pathspec);
+extern int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen);
+
 extern int read_directory(struct dir_struct *, const char *path, const char *base, int baselen);
 extern int excluded(struct dir_struct *, const char *);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
