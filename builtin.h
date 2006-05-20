@@ -29,5 +29,6 @@ extern int cmd_rm(int argc, const char **argv, char **envp);
 extern int cmd_add(int argc, const char **argv, char **envp);
 extern int cmd_rev_list(int argc, const char **argv, char **envp);
 extern int cmd_check_ref_format(int argc, const char **argv, char **envp);
+extern int cmd_init_db(int argc, const char **argv, char **envp);
 
 #endif
