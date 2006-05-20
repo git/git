@@ -153,6 +153,7 @@ extern int diff_queue_is_empty(void);
 #define DIFF_FORMAT_NAME	4
 #define DIFF_FORMAT_NAME_STATUS	5
 #define DIFF_FORMAT_DIFFSTAT	6
+#define DIFF_FORMAT_CHECKDIFF	7
 
 extern void diff_flush(struct diff_options*);
 
