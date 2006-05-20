@@ -461,6 +461,7 @@ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
 ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+ALL_CFLAGS += -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
@@ -475,7 +476,6 @@ strip: $(PROGRAMS) git$X
 
 git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS)
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
