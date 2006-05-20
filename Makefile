@@ -113,14 +113,14 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 ### --- END CONFIGURATION SECTION ---
 
 SCRIPT_SH = \
-	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
+	git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
 	git-format-patch.sh git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-resolve.sh git-revert.sh git-rm.sh git-sh-setup.sh \
+	git-resolve.sh git-revert.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -170,7 +170,8 @@ PROGRAMS = \
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X \
-	git-grep$X git-rev-list$X git-check-ref-format$X \
+	git-grep$X git-add$X git-rm$X git-rev-list$X \
+	git-check-ref-format$X \
 	git-init-db$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -200,7 +201,7 @@ LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
-	tree-walk.h log-tree.h
+	tree-walk.h log-tree.h dir.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -211,7 +212,7 @@ LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o cache-tree.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
-	quote.o read-cache.o refs.o run-command.o \
+	quote.o read-cache.o refs.o run-command.o dir.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
@@ -219,8 +220,8 @@ LIB_OBJS = \
 
 BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
-	builtin-grep.o builtin-rev-list.o builtin-check-ref-format.o \
-	builtin-init-db.o
+	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
+	builtin-rm.o builtin-init-db.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
