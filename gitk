@@ -950,7 +950,7 @@ proc treeview {w l openlevs} {
 		$w insert end $str
 		$w image create end -align center -image $bm -padx 1 \
 		    -name a:$ix
-		$w insert end $d
+		$w insert end $d [highlight_tag $prefix]
 		$w mark set s:$ix "end -1c"
 		$w mark gravity s:$ix left
 	    }
@@ -962,7 +962,7 @@ proc treeview {w l openlevs} {
 		set str "\n"
 		for {set i 0} {$i < $lev} {incr i} {append str "\t"}
 		$w insert end $str
-		$w insert end $tail
+		$w insert end $tail [highlight_tag $f]
 	    }
 	    lappend treecontents($prefix) $tail
 	}
@@ -999,6 +999,22 @@ proc linetoelt {l} {
     }
 }
 
+proc highlight_tree {y prefix} {
+    global treeheight treecontents cflist
+
+    foreach e $treecontents($prefix) {
+	set path $prefix$e
+	if {[highlight_tag $path] ne {}} {
+	    $cflist tag add bold $y.0 "$y.0 lineend"
+	}
+	incr y
+	if {[string index $e end] eq "/" && $treeheight($path) > 1} {
+	    set y [highlight_tree $y $path]
+	}
+    }
+    return $y
+}
+
 proc treeclosedir {w dir} {
     global treediropen treeheight treeparent treeindex
 
@@ -1032,8 +1048,8 @@ proc treeopendir {w dir} {
 	incr treeheight($x) $n
     }
     foreach e $treecontents($dir) {
+	set de $dir$e
 	if {[string index $e end] eq "/"} {
-	    set de $dir$e
 	    set iy $treeindex($de)
 	    $w mark set d:$iy e:$ix
 	    $w mark gravity d:$iy left
@@ -1041,13 +1057,13 @@ proc treeopendir {w dir} {
 	    set treediropen($de) 0
 	    $w image create e:$ix -align center -image tri-rt -padx 1 \
 		-name a:$iy
-	    $w insert e:$ix $e
+	    $w insert e:$ix $e [highlight_tag $de]
 	    $w mark set s:$iy e:$ix
 	    $w mark gravity s:$iy left
 	    set treeheight($de) 1
 	} else {
 	    $w insert e:$ix $str
-	    $w insert e:$ix $e
+	    $w insert e:$ix $e [highlight_tag $de]
 	}
     }
     $w mark gravity e:$ix left
@@ -1155,11 +1171,10 @@ proc highlight_tag {f} {
 }
 
 proc highlight_filelist {} {
-    global flistmode cflist
+    global cmitmode cflist
 
-    global highlight_paths
-    if {$flistmode eq "flat"} {
-	$cflist conf -state normal
+    $cflist conf -state normal
+    if {$cmitmode ne "tree"} {
 	set end [lindex [split [$cflist index end] .] 0]
 	for {set l 2} {$l < $end} {incr l} {
 	    set line [$cflist get $l.0 "$l.0 lineend"]
@@ -1167,35 +1182,33 @@ proc highlight_filelist {} {
 		$cflist tag add bold $l.0 "$l.0 lineend"
 	    }
 	}
-	$cflist conf -state disabled
+    } else {
+	highlight_tree 2 {}
     }
+    $cflist conf -state disabled
 }
 
 proc unhighlight_filelist {} {
-    global flistmode cflist
+    global cflist
 
-    if {$flistmode eq "flat"} {
-	$cflist conf -state normal
-	$cflist tag remove bold 1.0 end
-	$cflist conf -state disabled
-    }
+    $cflist conf -state normal
+    $cflist tag remove bold 1.0 end
+    $cflist conf -state disabled
 }
 
 proc add_flist {fl} {
-    global flistmode cflist
+    global cflist
 
-    if {$flistmode eq "flat"} {
-	$cflist conf -state normal
-	foreach f $fl {
-	    $cflist insert end "\n"
-	    $cflist insert end $f [highlight_tag $f]
-	}
-	$cflist conf -state disabled
+    $cflist conf -state normal
+    foreach f $fl {
+	$cflist insert end "\n"
+	$cflist insert end $f [highlight_tag $f]
     }
+    $cflist conf -state disabled
 }
 
 proc sel_flist {w x y} {
-    global flistmode ctext difffilestart cflist cflist_top cmitmode
+    global ctext difffilestart cflist cflist_top cmitmode
 
     if {$cmitmode eq "tree"} return
     if {![info exists cflist_top]} return
@@ -5180,7 +5193,6 @@ set fastdate 0
 set uparrowlen 7
 set downarrowlen 7
 set mingaplen 30
-set flistmode "flat"
 set cmitmode "patch"
 
 set colors {green red blue magenta darkgrey brown orange}
