@@ -527,6 +527,8 @@ proc makewindow {} {
     global viewhlmenu selectedhlview
     set viewhlmenu [tk_optionMenu .ctop.top.lbar.vhl selectedhlview None]
     $viewhlmenu entryconf 0 -command delvhighlight
+    $viewhlmenu conf -font $uifont
+    .ctop.top.lbar.vhl conf -font $uifont
     pack .ctop.top.lbar.vhl -side left -fill y
     label .ctop.top.lbar.alabel -text " OR author/committer:" \
 	-font $uifont
@@ -595,6 +597,7 @@ proc makewindow {} {
     pack $cflist -side left -fill both -expand 1
     $cflist tag configure highlight \
 	-background [$cflist cget -selectbackground]
+    $cflist tag configure bold -font [concat $mainfont bold]
     .ctop.cdet add .ctop.cdet.right
     bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
 
@@ -1140,16 +1143,55 @@ proc init_flist {first} {
     set difffilestart {}
 }
 
+proc highlight_tag {f} {
+    global highlight_paths
+
+    foreach p $highlight_paths {
+	if {[string match $p $f]} {
+	    return "bold"
+	}
+    }
+    return {}
+}
+
+proc highlight_filelist {} {
+    global flistmode cflist
+
+    global highlight_paths
+    if {$flistmode eq "flat"} {
+	$cflist conf -state normal
+	set end [lindex [split [$cflist index end] .] 0]
+	for {set l 2} {$l < $end} {incr l} {
+	    set line [$cflist get $l.0 "$l.0 lineend"]
+	    if {[highlight_tag $line] ne {}} {
+		$cflist tag add bold $l.0 "$l.0 lineend"
+	    }
+	}
+	$cflist conf -state disabled
+    }
+}
+
+proc unhighlight_filelist {} {
+    global flistmode cflist
+
+    if {$flistmode eq "flat"} {
+	$cflist conf -state normal
+	$cflist tag remove bold 1.0 end
+	$cflist conf -state disabled
+    }
+}
+
 proc add_flist {fl} {
     global flistmode cflist
 
-    $cflist conf -state normal
     if {$flistmode eq "flat"} {
+	$cflist conf -state normal
 	foreach f $fl {
-	    $cflist insert end "\n$f"
+	    $cflist insert end "\n"
+	    $cflist insert end $f [highlight_tag $f]
 	}
+	$cflist conf -state disabled
     }
-    $cflist conf -state disabled
 }
 
 proc sel_flist {w x y} {
@@ -1704,7 +1746,7 @@ proc askvhighlight {row id} {
 
 proc hfiles_change {name ix op} {
     global highlight_files filehighlight fhighlights fh_serial
-    global mainfont
+    global mainfont highlight_paths
 
     if {[info exists filehighlight]} {
 	# delete previous highlights
@@ -1715,7 +1757,9 @@ proc hfiles_change {name ix op} {
 	    unset fhighlights
 	    unbolden $rows
 	}
+	unhighlight_filelist
     }
+    set highlight_paths {}
     after cancel do_file_hl $fh_serial
     incr fh_serial
     if {$highlight_files ne {}} {
@@ -1723,10 +1767,26 @@ proc hfiles_change {name ix op} {
     }
 }
 
+proc makepatterns {l} {
+    set ret {}
+    foreach e $l {
+	set ee [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} $e]
+	if {[string index $ee end] eq "/"} {
+	    lappend ret "$ee*"
+	} else {
+	    lappend ret $ee
+	    lappend ret "$ee/*"
+	}
+    }
+    return $ret
+}
+
 proc do_file_hl {serial} {
-    global highlight_files filehighlight
+    global highlight_files filehighlight highlight_paths
 
     if {[catch {set paths [shellsplit $highlight_files]}]} return
+    set highlight_paths [makepatterns $paths]
+    highlight_filelist
     set cmd [concat | git-diff-tree -r -s --stdin -- $paths]
     set filehighlight [open $cmd r+]
     fconfigure $filehighlight -blocking 0
@@ -5175,6 +5235,7 @@ set historyindex 0
 set fh_serial 0
 set highlight_names {}
 set nhl_names {}
+set highlight_paths {}
 
 set optim_delay 16
 
