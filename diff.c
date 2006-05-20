@@ -299,6 +299,7 @@ static void diffstat_consume(void *priv, char *line, unsigned long len)
 
 static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 static const char minuses[]= "----------------------------------------------------------------------";
+const char mime_boundary_leader[] = "------------";
 
 static void show_stats(struct diffstat_t* data)
 {
@@ -1980,7 +1981,10 @@ void diff_flush(struct diff_options *options)
 		show_stats(diffstat);
 		free(diffstat);
 		diffstat = NULL;
-		putchar(options->line_termination);
+		if (options->stat_sep)
+			fputs(options->stat_sep, stdout);
+		else
+			putchar(options->line_termination);
 	}
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

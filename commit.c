@@ -498,7 +498,7 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
@@ -591,6 +591,14 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		buf[offset++] = '\n';
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
+		if (after_subject) {
+			int slen = strlen(after_subject);
+			if (slen > space - offset - 1)
+				slen = space - offset - 1;
+			memcpy(buf + offset, after_subject, slen);
+			offset += slen;
+			after_subject = NULL;
+		}
 		subject = NULL;
 	}
 	while (offset && isspace(buf[offset-1]))

@@ -44,6 +44,7 @@ struct diff_options {
 	int rename_limit;
 	int setup;
 	int abbrev;
+	const char *stat_sep;
 
 	int nr_paths;
 	const char **paths;
@@ -51,6 +52,8 @@ struct diff_options {
 	change_fn_t change;
 	add_remove_fn_t add_remove;
 };
+
+extern const char mime_boundary_leader[];
 
 extern void diff_tree_setup_paths(const char **paths, struct diff_options *);
 extern void diff_tree_release_paths(struct diff_options *);
