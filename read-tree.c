@@ -801,7 +801,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
 	struct tree_entry_list *ent;
 	int cnt;
-	
+
 	memcpy(it->sha1, tree->object.sha1, 20);
 	for (cnt = 0, ent = tree->entries; ent; ent = ent->next) {
 		if (!ent->directory)
