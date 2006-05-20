@@ -7,11 +7,14 @@
 #include "commit.h"
 #include "strbuf.h"
 #include "tar.h"
+#include "builtin.h"
+#include "pkt-line.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
 
-static const char tar_tree_usage[] = "git-tar-tree <key> [basedir]";
+static const char tar_tree_usage[] =
+"git-tar-tree [--remote=<repo>] <ent> [basedir]";
 
 static char block[BLOCKSIZE];
 static unsigned long offset;
@@ -301,7 +304,7 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
-int main(int argc, char **argv)
+int generate_tar(int argc, const char **argv)
 {
 	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;
@@ -347,4 +350,59 @@ int main(int argc, char **argv)
 	write_trailer();
 	free(current_path.buf);
 	return 0;
+}
+
+static const char *exec = "git-upload-tar";
+
+static int remote_tar(int argc, const char **argv)
+{
+	int fd[2], ret, len;
+	pid_t pid;
+	char buf[1024];
+	char *url;
+
+	if (argc < 3 || 4 < argc)
+		usage(tar_tree_usage);
+
+	/* --remote=<repo> */
+	url = strdup(argv[1]+9);
+	pid = git_connect(fd, url, exec);
+	if (pid < 0)
+		return 1;
+
+	packet_write(fd[1], "want %s\n", argv[2]);
+	if (argv[3])
+		packet_write(fd[1], "base %s\n", argv[3]);
+	packet_flush(fd[1]);
+
+	len = packet_read_line(fd[0], buf, sizeof(buf));
+	if (!len)
+		die("git-tar-tree: expected ACK/NAK, got EOF");
+	if (buf[len-1] == '\n')
+		buf[--len] = 0;
+	if (strcmp(buf, "ACK")) {
+		if (5 < len && !strncmp(buf, "NACK ", 5))
+			die("git-tar-tree: NACK %s", buf + 5);
+		die("git-tar-tree: protocol error");
+	}
+	/* expect a flush */
+	len = packet_read_line(fd[0], buf, sizeof(buf));
+	if (len)
+		die("git-tar-tree: expected a flush");
+
+	/* Now, start reading from fd[0] and spit it out to stdout */
+	ret = copy_fd(fd[0], 1);
+	close(fd[0]);
+
+	ret |= finish_connect(pid);
+	return !!ret;
+}
+
+int cmd_tar_tree(int argc, const char **argv, char **envp)
+{
+	if (argc < 2)
+		usage(tar_tree_usage);
+	if (!strncmp("--remote=", argv[1], 9))
+		return remote_tar(argc, argv);
+	return generate_tar(argc, argv);
 }
