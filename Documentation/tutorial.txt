@@ -442,7 +442,25 @@ $ git diff v2.5:Makefile HEAD:Makefile.in
 Next Steps
 ----------
 
-Some good commands to explore next:
+This tutorial should be enough to perform basic distributed revision
+control for your projects.  However, to fully understand the depth
+and power of git you need to understand two simple ideas on which it
+is based:
+
+  * The object database is the rather elegant system used to
+    store the history of your project--files, directories, and
+    commits.
+
+  * The index file is a cache of the state of a directory tree,
+    used to create commits, check out working directories, and
+    hold the various trees involved in a merge.
+
+link:tutorial-2.html[Part two of this tutorial] explains the object
+database, the index file, and a few other odds and ends that you'll
+need to make the most of git.
+
+If you don't want to consider with that right away, a few other
+digressions that may be interesting at this point are:
 
   * gitlink:git-format-patch[1], gitlink:git-am[1]: These convert
     series of git commits into emailed patches, and vice versa,
@@ -456,8 +474,6 @@ Some good commands to explore next:
     smart enough to perform a close-to-optimal search even in the
     case of complex non-linear history with lots of merged branches.
 
-Other good starting points include link:everyday.html[Everday GIT
-with 20 Commands Or So] and link:cvs-migration.html[git for CVS
-users].  Also, link:core-tutorial.html[A short git tutorial] gives an
-introduction to lower-level git commands for advanced users and
-developers.
+  * link:everyday.html[Everday GIT with 20 Commands Or So]
+
+  * link:cvs-migration.html[git for CVS users].
