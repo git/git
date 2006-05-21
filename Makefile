@@ -116,7 +116,7 @@ SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
-	git-format-patch.sh git-ls-remote.sh \
+	git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
@@ -172,7 +172,7 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X \
 	git-grep$X git-add$X git-rm$X git-rev-list$X \
 	git-check-ref-format$X \
-	git-init-db$X git-tar-tree$X git-upload-tar$X
+	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)

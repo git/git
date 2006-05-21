@@ -183,7 +183,12 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 						argv[i + 1]);
 			output_directory = strdup(argv[i + 1]);
 			i++;
-		} else
+		}
+		else if (!strcmp(argv[i], "--attach"))
+			rev.mime_boundary = git_version_string;
+		else if (!strncmp(argv[i], "--attach=", 9))
+			rev.mime_boundary = argv[i] + 9;
+		else
 			argv[j++] = argv[i];
 	}
 	argc = j;
@@ -224,8 +229,14 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
-		if (shown)
-			printf("-- \n%s\n\n", git_version_string);
+		if (shown) {
+			if (rev.mime_boundary)
+				printf("\n--%s%s--\n\n\n",
+				       mime_boundary_leader,
+				       rev.mime_boundary);
+			else
+				printf("-- \n%s\n\n", git_version_string);
+		}
 		if (!use_stdout)
 			fclose(stdout);
 	}

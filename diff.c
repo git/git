@@ -299,6 +299,7 @@ static void diffstat_consume(void *priv, char *line, unsigned long len)
 
 static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 static const char minuses[]= "----------------------------------------------------------------------";
+const char mime_boundary_leader[] = "------------";
 
 static void show_stats(struct diffstat_t* data)
 {
@@ -395,6 +396,46 @@ static void show_stats(struct diffstat_t* data)
 	free(data->files);
 	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
 			total_files, adds, dels);
+}
+
+struct checkdiff_t {
+	struct xdiff_emit_state xm;
+	const char *filename;
+	int lineno;
+};
+
+static void checkdiff_consume(void *priv, char *line, unsigned long len)
+{
+	struct checkdiff_t *data = priv;
+
+	if (line[0] == '+') {
+		int i, spaces = 0;
+
+		data->lineno++;
+
+		/* check space before tab */
+		for (i = 1; i < len && (line[i] == ' ' || line[i] == '\t'); i++)
+			if (line[i] == ' ')
+				spaces++;
+		if (line[i - 1] == '\t' && spaces)
+			printf("%s:%d: space before tab:%.*s\n",
+				data->filename, data->lineno, (int)len, line);
+
+		/* check white space at line end */
+		if (line[len - 1] == '\n')
+			len--;
+		if (isspace(line[len - 1]))
+			printf("%s:%d: white space at end: %.*s\n",
+				data->filename, data->lineno, (int)len, line);
+	} else if (line[0] == ' ')
+		data->lineno++;
+	else if (line[0] == '@') {
+		char *plus = strchr(line, '+');
+		if (plus)
+			data->lineno = strtol(plus, line + len, 10);
+		else
+			die("invalid diff");
+	}
 }
 
 static unsigned char *deflate_it(char *data,
@@ -620,6 +661,41 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xecfg.flags = 0;
 		ecb.outf = xdiff_outf;
 		ecb.priv = diffstat;
+		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+	}
+}
+
+static void builtin_checkdiff(const char *name_a, const char *name_b,
+			     struct diff_filespec *one,
+			     struct diff_filespec *two)
+{
+	mmfile_t mf1, mf2;
+	struct checkdiff_t data;
+
+	if (!two)
+		return;
+
+	memset(&data, 0, sizeof(data));
+	data.xm.consume = checkdiff_consume;
+	data.filename = name_b ? name_b : name_a;
+	data.lineno = 0;
+
+	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
+		die("unable to read files to diff");
+
+	if (mmfile_is_binary(&mf2))
+		return;
+	else {
+		/* Crazy xdl interfaces.. */
+		xpparam_t xpp;
+		xdemitconf_t xecfg;
+		xdemitcb_t ecb;
+
+		xpp.flags = XDF_NEED_MINIMAL;
+		xecfg.ctxlen = 0;
+		xecfg.flags = 0;
+		ecb.outf = xdiff_outf;
+		ecb.priv = &data;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 }
@@ -1180,6 +1256,25 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	builtin_diffstat(name, other, p->one, p->two, diffstat, complete_rewrite);
 }
 
+static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
+{
+	const char *name;
+	const char *other;
+
+	if (DIFF_PAIR_UNMERGED(p)) {
+		/* unmerged */
+		return;
+	}
+
+	name = p->one->path;
+	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+
+	diff_fill_sha1_info(p->one);
+	diff_fill_sha1_info(p->two);
+
+	builtin_checkdiff(name, other, p->one, p->two);
+}
+
 void diff_setup(struct diff_options *options)
 {
 	memset(options, 0, sizeof(*options));
@@ -1205,7 +1300,8 @@ int diff_setup_done(struct diff_options *options)
 	 * recursive bits for other formats here.
 	 */
 	if ((options->output_format == DIFF_FORMAT_PATCH) ||
-	    (options->output_format == DIFF_FORMAT_DIFFSTAT))
+	    (options->output_format == DIFF_FORMAT_DIFFSTAT) ||
+	    (options->output_format == DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)
@@ -1288,6 +1384,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--stat"))
 		options->output_format = DIFF_FORMAT_DIFFSTAT;
+	else if (!strcmp(arg, "--check"))
+		options->output_format = DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
 		options->summary = 1;
 	else if (!strcmp(arg, "--patch-with-stat")) {
@@ -1610,6 +1708,19 @@ static void diff_flush_stat(struct diff_filepair *p, struct diff_options *o,
 	run_diffstat(p, o, diffstat);
 }
 
+static void diff_flush_checkdiff(struct diff_filepair *p,
+		struct diff_options *o)
+{
+	if (diff_unmodified_pair(p))
+		return;
+
+	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
+	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
+		return; /* no tree diffs in patch format */
+
+	run_checkdiff(p, o);
+}
+
 int diff_queue_is_empty(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -1740,6 +1851,9 @@ static void flush_one_pair(struct diff_filepair *p,
 		case DIFF_FORMAT_DIFFSTAT:
 			diff_flush_stat(p, options, diffstat);
 			break;
+		case DIFF_FORMAT_CHECKDIFF:
+			diff_flush_checkdiff(p, options);
+			break;
 		case DIFF_FORMAT_PATCH:
 			diff_flush_patch(p, options);
 			break;
@@ -1867,7 +1981,10 @@ void diff_flush(struct diff_options *options)
 		show_stats(diffstat);
 		free(diffstat);
 		diffstat = NULL;
-		putchar(options->line_termination);
+		if (options->stat_sep)
+			fputs(options->stat_sep, stdout);
+		else
+			putchar(options->line_termination);
 	}
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
