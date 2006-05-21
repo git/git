@@ -80,13 +80,13 @@ file; just remove it, then commit.
 At any point you can view the history of your changes using
 
 ------------------------------------------------
-$ git whatchanged
+$ git log
 ------------------------------------------------
 
 If you also want to see complete diffs at each step, use
 
 ------------------------------------------------
-$ git whatchanged -p
+$ git log -p
 ------------------------------------------------
 
 Managing branches
@@ -216,7 +216,7 @@ This actually pulls changes from the branch in Bob's repository named
 "master".  Alice could request a different branch by adding the name
 of the branch to the end of the git pull command line.
 
-This merges Bob's changes into her repository; "git whatchanged" will
+This merges Bob's changes into her repository; "git log" will
 now show the new commits.  If Alice has made her own changes in the
 meantime, then Bob's changes will be merged in, and she will need to
 manually fix any conflicts.
@@ -234,7 +234,7 @@ named bob-incoming.  (Unlike git pull, git fetch just fetches a copy
 of Bob's line of development without doing any merging).  Then
 
 -------------------------------------
-$ git whatchanged -p master..bob-incoming
+$ git log -p master..bob-incoming
 -------------------------------------
 
 shows a list of all the changes that Bob made since he branched from
@@ -330,13 +330,13 @@ But you may find it more useful to see the list of commits made in
 the experimental branch but not in the current branch, and
 
 -------------------------------------
-git whatchanged HEAD..experimental
+git log HEAD..experimental
 -------------------------------------
 
 will do that, just as
 
 -------------------------------------
-git whatchanged experimental..HEAD
+git log experimental..HEAD
 -------------------------------------
 
 will show the list of commits made on the HEAD but not included in
