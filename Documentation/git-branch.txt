@@ -43,6 +43,9 @@ OPTIONS
 
 <branchname>::
 	The name of the branch to create or delete.
+	The new branch name must pass all checks defined by
+	gitlink:git-check-ref-format[1].  Some of these checks
+	may restrict the characters allowed in a branch name.
 
 <start-point>::
 	The new branch will be created with a HEAD equal to this.  It may
