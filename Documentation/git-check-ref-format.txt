@@ -45,6 +45,8 @@ refname expressions (see gitlink:git-rev-parse[1]).  Namely:
 
 . colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
+  It may also be used to select a specific object such as with
+  gitlink:git-cat-file[1] "git-cat-file blob v1.3.3:refs.c".
 
 
 GIT
