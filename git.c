@@ -50,6 +50,10 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "fmt-patch", cmd_format_patch },
 		{ "count-objects", cmd_count_objects },
 		{ "diff", cmd_diff },
+		{ "grep", cmd_grep },
+		{ "rev-list", cmd_rev_list },
+		{ "init-db", cmd_init_db },
+		{ "check-ref-format", cmd_check_ref_format }
 	};
 	int i;
 

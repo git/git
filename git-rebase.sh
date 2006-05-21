@@ -12,9 +12,10 @@ It then attempts to create a new commit for each commit from the original
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
-and run git-rebase --continue.  If you can not resolve the merge failure,
-running git-rebase --abort will restore the original <branch> and remove
-the working files found in the .dotest directory.
+and run git rebase --continue.  Another option is to bypass the commit
+that caused the merge failure with git rebase --skip.  To restore the
+original <branch> and remove the .dotest working files, use the command
+git rebase --abort instead.
 
 Note that if <branch> is not specified on the command line, the
 currently checked out branch is used.  You must be in the top
@@ -28,6 +29,11 @@ Example:       git-rebase master~1 topic
 '
 . git-sh-setup
 
+RESOLVEMSG="
+When you have resolved this problem run \"git rebase --continue\".
+If you would prefer to skip this patch, instead run \"git rebase --skip\".
+To restore the original branch and stop rebasing run \"git rebase --abort\".
+"
 unset newbase
 while case "$#" in 0) break ;; esac
 do
@@ -40,7 +46,11 @@ do
 			exit 1
 			;;
 		esac
-		git am --resolved --3way
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
+		exit
+		;;
+	--skip)
+		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--abort)
@@ -143,4 +153,5 @@ then
 fi
 
 git-format-patch -k --stdout --full-index "$upstream" ORIG_HEAD |
-git am --binary -3 -k
+git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+

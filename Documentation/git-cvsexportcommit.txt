@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommmit' [-h] [-v] [-c] [-p] [PARENTCOMMIT] COMMITID
+'git-cvsexportcommmit' [-h] [-v] [-c] [-p] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION
@@ -38,6 +38,13 @@ OPTIONS
 -p::
 	Be pedantic (paranoid) when applying patches. Invokes patch with 
 	--fuzz=0
+
+-f::
+	Force the merge even if the files are not up to date.
+
+-m::
+	Prepend the commit message with the provided prefix. 
+	Useful for patch series and the like.
 
 -v::
 	Verbose.

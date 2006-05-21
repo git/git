@@ -124,14 +124,15 @@ SCRIPT_SH = \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
-	git-merge-resolve.sh git-merge-ours.sh git-grep.sh \
-	git-lost-found.sh
+	git-merge-resolve.sh git-merge-ours.sh \
+	git-lost-found.sh git-quiltimport.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-shortlog.perl git-fmt-merge-msg.perl git-rerere.perl \
 	git-annotate.perl git-cvsserver.perl \
-	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl
+	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl \
+	git-send-email.perl
 
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
@@ -153,22 +154,24 @@ PROGRAMS = \
 	git-convert-objects$X git-diff-files$X \
 	git-diff-index$X git-diff-stages$X \
 	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
-	git-hash-object$X git-index-pack$X git-init-db$X git-local-fetch$X \
+	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-ls-files$X git-ls-tree$X git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-read-tree$X \
-	git-receive-pack$X git-rev-list$X git-rev-parse$X \
+	git-receive-pack$X git-rev-parse$X \
 	git-send-pack$X git-show-branch$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
-	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
+	git-update-ref$X git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
-	git-count-objects$X git-diff$X git-push$X
+	git-count-objects$X git-diff$X git-push$X \
+	git-grep$X git-rev-list$X git-check-ref-format$X \
+	git-init-db$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -205,7 +208,7 @@ DIFF_OBJS = \
 	diffcore-delta.o log-tree.o
 
 LIB_OBJS = \
-	blob.o commit.o connect.o csum-file.o \
+	blob.o commit.o connect.o csum-file.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
 	quote.o read-cache.o refs.o run-command.o \
@@ -215,7 +218,9 @@ LIB_OBJS = \
 	$(DIFF_OBJS)
 
 BUILTIN_OBJS = \
-	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o
+	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
+	builtin-grep.o builtin-rev-list.o builtin-check-ref-format.o \
+	builtin-init-db.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -285,7 +290,9 @@ ifeq ($(uname_S),OpenBSD)
 	ALL_LDFLAGS += -L/usr/local/lib
 endif
 ifeq ($(uname_S),NetBSD)
-	NEEDS_LIBICONV = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
+		NEEDS_LIBICONV = YesPlease
+	endif
 	ALL_CFLAGS += -I/usr/pkg/include
 	ALL_LDFLAGS += -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
 endif
@@ -317,10 +324,6 @@ else
 			PYMODULES += compat/subprocess.py
 		endif
 	endif
-endif
-
-ifdef WITH_SEND_EMAIL
-	SCRIPT_PERL += git-send-email.perl
 endif
 
 ifndef NO_CURL
@@ -458,6 +461,7 @@ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
 ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+ALL_CFLAGS += -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
@@ -564,10 +568,6 @@ git-http-push$X: revision.o http.o http-push.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-init-db.o: init-db.c
-	$(CC) -c $(ALL_CFLAGS) \
-		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $*.c
-
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(GITLIBS)
 $(DIFF_OBJS): diffcore.h
@@ -607,7 +607,7 @@ test-date$X: test-date.c date.o ctype.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) test-date.c date.o ctype.o
 
 test-delta$X: test-delta.c diff-delta.o patch-delta.o
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^ -lz
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $^
 
 check:
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
@@ -651,6 +651,25 @@ dist: git.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
+htmldocs = git-htmldocs-$(GIT_VERSION)
+manpages = git-manpages-$(GIT_VERSION)
+dist-doc:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir
+	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
+	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar .
+	gzip -n -9 -f $(htmldocs).tar
+	:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
+	$(MAKE) -C Documentation DESTDIR=. \
+		man1=../.doc-tmp-dir/man1 \
+		man7=../.doc-tmp-dir/man7 \
+		install
+	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
+	gzip -n -9 -f $(manpages).tar
+	rm -fr .doc-tmp-dir
+
 ### Cleaning rules
 
 clean:
@@ -658,8 +677,9 @@ clean:
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
-	rm -rf $(GIT_TARNAME)
+	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	rm -f $(htmldocs).tar $(manpages).tar
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

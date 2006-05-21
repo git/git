@@ -28,9 +28,12 @@ struct diff_options {
 		 with_raw:1,
 		 with_stat:1,
 		 tree_in_recursive:1,
+		 binary:1,
 		 full_index:1,
 		 silent_on_remove:1,
-		 find_copies_harder:1;
+		 find_copies_harder:1,
+		 summary:1;
+	int context;
 	int break_opt;
 	int detect_rename;
 	int line_termination;
@@ -150,6 +153,7 @@ extern int diff_queue_is_empty(void);
 #define DIFF_FORMAT_NAME	4
 #define DIFF_FORMAT_NAME_STATUS	5
 #define DIFF_FORMAT_DIFFSTAT	6
+#define DIFF_FORMAT_CHECKDIFF	7
 
 extern void diff_flush(struct diff_options*);
 

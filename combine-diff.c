@@ -608,6 +608,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int abbrev = opt->full_index ? 40 : DEFAULT_ABBREV;
 	mmfile_t result_file;
 
+	context = opt->context;
 	/* Read the result of merge first */
 	if (!working_tree_file)
 		result = grab_blob(elem->sha1, &result_size);

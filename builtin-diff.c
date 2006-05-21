@@ -84,8 +84,7 @@ static void stuff_change(struct diff_options *opt,
 
 	if (opt->reverse_diff) {
 		unsigned tmp;
-		const
-			const unsigned char *tmp_u;
+		const unsigned char *tmp_u;
 		const char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_u = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_u;
@@ -123,7 +122,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	stuff_change(&revs->diffopt,
 		     canon_mode(st.st_mode), canon_mode(st.st_mode),
 		     blob[0].sha1, null_sha1,
-		     blob[0].name, path);
+		     path, path);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -133,7 +132,9 @@ static int builtin_diff_blobs(struct rev_info *revs,
 			      int argc, const char **argv,
 			      struct blobinfo *blob)
 {
-	/* Blobs */
+	/* Blobs: the arguments are reversed when setup_revisions()
+	 * picked them up.
+	 */
 	unsigned mode = canon_mode(S_IFREG | 0644);
 
 	while (1 < argc) {
@@ -146,8 +147,8 @@ static int builtin_diff_blobs(struct rev_info *revs,
 	}
 	stuff_change(&revs->diffopt,
 		     mode, mode,
-		     blob[0].sha1, blob[1].sha1,
-		     blob[1].name, blob[1].name);
+		     blob[1].sha1, blob[0].sha1,
+		     blob[0].name, blob[0].name);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;

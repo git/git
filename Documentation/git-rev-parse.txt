@@ -67,6 +67,15 @@ OPTIONS
 --all::
 	Show all refs found in `$GIT_DIR/refs`.
 
+--branches::
+	Show branch refs found in `$GIT_DIR/refs/heads`.
+
+--tags::
+	Show tag refs found in `$GIT_DIR/refs/tags`.
+
+--remotes::
+	Show tag refs found in `$GIT_DIR/refs/remotes`.
+
 --show-prefix::
 	When the command is invoked from a subdirectory, show the
 	path of the current directory relative to the top-level

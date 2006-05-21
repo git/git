@@ -158,6 +158,12 @@ extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_o
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
+#define REFRESH_REALLY		0x0001	/* ignore_valid */
+#define REFRESH_UNMERGED	0x0002	/* allow unmerged */
+#define REFRESH_QUIET		0x0004	/* be quiet about it */
+#define REFRESH_IGNORE_MISSING	0x0008	/* ignore non-existent */
+extern int refresh_cache(unsigned int flags);
+
 struct cache_file {
 	struct cache_file *next;
 	char lockfile[PATH_MAX];
@@ -363,5 +369,9 @@ extern int receive_keep_pack(int fd[2], const char *me, int quiet);
 
 /* pager.c */
 extern void setup_pager(void);
+
+/* base85 */
+int decode_85(char *dst, char *line, int linelen);
+void encode_85(char *buf, unsigned char *data, int bytes);
 
 #endif /* CACHE_H */

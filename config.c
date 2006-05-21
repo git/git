@@ -134,6 +134,41 @@ static int get_value(config_fn_t fn, char *name, unsigned int len)
 	return fn(name, value);
 }
 
+static int get_extended_base_var(char *name, int baselen, int c)
+{
+	do {
+		if (c == '\n')
+			return -1;
+		c = get_next_char();
+	} while (isspace(c));
+
+	/* We require the format to be '[base "extension"]' */
+	if (c != '"')
+		return -1;
+	name[baselen++] = '.';
+
+	for (;;) {
+		int c = get_next_char();
+		if (c == '\n')
+			return -1;
+		if (c == '"')
+			break;
+		if (c == '\\') {
+			c = get_next_char();
+			if (c == '\n')
+				return -1;
+		}
+		name[baselen++] = c;
+		if (baselen > MAXNAME / 2)
+			return -1;
+	}
+
+	/* Final ']' */
+	if (get_next_char() != ']')
+		return -1;
+	return baselen;
+}
+
 static int get_base_var(char *name)
 {
 	int baselen = 0;
@@ -144,6 +179,8 @@ static int get_base_var(char *name)
 			return -1;
 		if (c == ']')
 			return baselen;
+		if (isspace(c))
+			return get_extended_base_var(name, baselen, c);
 		if (!isalnum(c) && c != '.')
 			return -1;
 		if (baselen > MAXNAME / 2)
@@ -335,10 +372,12 @@ static int store_aux(const char* key, const char* value)
 			store.offset[store.seen] = ftell(config_file);
 			store.state = KEY_SEEN;
 			store.seen++;
-		} else if (strrchr(key, '.') - key == store.baselen &&
+		} else {
+			if (strrchr(key, '.') - key == store.baselen &&
 			      !strncmp(key, store.key, store.baselen)) {
 					store.state = SECTION_SEEN;
 					store.offset[store.seen] = ftell(config_file);
+			}
 		}
 	}
 	return 0;
@@ -346,8 +385,30 @@ static int store_aux(const char* key, const char* value)
 
 static void store_write_section(int fd, const char* key)
 {
+	const char *dot = strchr(key, '.');
+	int len1 = store.baselen, len2 = -1;
+
+	dot = strchr(key, '.');
+	if (dot) {
+		int dotlen = dot - key;
+		if (dotlen < len1) {
+			len2 = len1 - dotlen - 1;
+			len1 = dotlen;
+		}
+	}
+
 	write(fd, "[", 1);
-	write(fd, key, store.baselen);
+	write(fd, key, len1);
+	if (len2 >= 0) {
+		write(fd, " \"", 2);
+		while (--len2 >= 0) {
+			unsigned char c = *++dot;
+			if (c == '"')
+				write(fd, "\\", 1);
+			write(fd, &c, 1);
+		}
+		write(fd, "\"", 1);
+	}
 	write(fd, "]\n", 2);
 }
 
@@ -421,8 +482,8 @@ int git_config_set(const char* key, const char* value)
 int git_config_set_multivar(const char* key, const char* value,
 	const char* value_regex, int multi_replace)
 {
-	int i;
-	int fd, in_fd;
+	int i, dot;
+	int fd = -1, in_fd;
 	int ret;
 	char* config_filename = strdup(git_path("config"));
 	char* lock_file = strdup(git_path("config.lock"));
@@ -446,16 +507,23 @@ int git_config_set_multivar(const char* key, const char* value,
 	 * Validate the key and while at it, lower case it for matching.
 	 */
 	store.key = (char*)malloc(strlen(key)+1);
-	for (i = 0; key[i]; i++)
-		if (i != store.baselen &&
-				((!isalnum(key[i]) && key[i] != '.') ||
-				 (i == store.baselen+1 && !isalpha(key[i])))) {
-			fprintf(stderr, "invalid key: %s\n", key);
-			free(store.key);
-			ret = 1;
-			goto out_free;
-		} else
-			store.key[i] = tolower(key[i]);
+	dot = 0;
+	for (i = 0; key[i]; i++) {
+		unsigned char c = key[i];
+		if (c == '.')
+			dot = 1;
+		/* Leave the extended basename untouched.. */
+		if (!dot || i > store.baselen) {
+			if (!isalnum(c) || (i == store.baselen+1 && !isalpha(c))) {
+				fprintf(stderr, "invalid key: %s\n", key);
+				free(store.key);
+				ret = 1;
+				goto out_free;
+			}
+			c = tolower(c);
+		}
+		store.key[i] = c;
+	}
 	store.key[i] = 0;
 
 	/*
@@ -480,15 +548,11 @@ int git_config_set_multivar(const char* key, const char* value,
 		if ( ENOENT != errno ) {
 			error("opening %s: %s", config_filename,
 			      strerror(errno));
-			close(fd);
-			unlink(lock_file);
 			ret = 3; /* same as "invalid config file" */
 			goto out_free;
 		}
 		/* if nothing to unset, error out */
 		if (value == NULL) {
-			close(fd);
-			unlink(lock_file);
 			ret = 5;
 			goto out_free;
 		}
@@ -551,8 +615,6 @@ int git_config_set_multivar(const char* key, const char* value,
 		/* if nothing to unset, or too many matches, error out */
 		if ((store.seen == 0 && value == NULL) ||
 				(store.seen > 1 && multi_replace == 0)) {
-			close(fd);
-			unlink(lock_file);
 			ret = 5;
 			goto out_free;
 		}
@@ -601,8 +663,6 @@ int git_config_set_multivar(const char* key, const char* value,
 		unlink(config_filename);
 	}
 
-	close(fd);
-
 	if (rename(lock_file, config_filename) < 0) {
 		fprintf(stderr, "Could not rename the lock file?\n");
 		ret = 4;
@@ -612,10 +672,14 @@ int git_config_set_multivar(const char* key, const char* value,
 	ret = 0;
 
 out_free:
+	if (0 <= fd)
+		close(fd);
 	if (config_filename)
 		free(config_filename);
-	if (lock_file)
+	if (lock_file) {
+		unlink(lock_file);
 		free(lock_file);
+	}
 	return ret;
 }
 

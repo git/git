@@ -274,7 +274,7 @@ print "\n---\n\n";
 close FH or die "close $commsg pipe";
 ' "$keep_subject" "$num" "$signoff" "$headers" "$mimemagic" $commsg
 
-	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
+	git-diff-tree -p --stat --summary $diff_opts "$commit"
 	echo
 	case "$mimemagic" in
 	'');;

@@ -8,6 +8,7 @@
 #include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "delta.h"
 #include "xdiff-interface.h"
 
 static int use_size_cache;
@@ -231,11 +232,16 @@ static char *pprint_rename(const char *a, const char *b)
 	 * name-a => name-b
 	 */
 	if (pfx_length + sfx_length) {
+		int a_midlen = len_a - pfx_length - sfx_length;
+		int b_midlen = len_b - pfx_length - sfx_length;
+		if (a_midlen < 0) a_midlen = 0;
+		if (b_midlen < 0) b_midlen = 0;
+
 		name = xmalloc(len_a + len_b - pfx_length - sfx_length + 7);
 		sprintf(name, "%.*s{%.*s => %.*s}%s",
 			pfx_length, a,
-			len_a - pfx_length - sfx_length, a + pfx_length,
-			len_b - pfx_length - sfx_length, b + pfx_length,
+			a_midlen, a + pfx_length,
+			b_midlen, b + pfx_length,
 			a + len_a - sfx_length);
 	}
 	else {
@@ -296,7 +302,6 @@ static const char minuses[]= "--------------------------------------------------
 
 static void show_stats(struct diffstat_t* data)
 {
-	char *prefix = "";
 	int i, len, add, del, total, adds = 0, dels = 0;
 	int max, max_change = 0, max_len = 0;
 	int total_files = data->nr;
@@ -318,6 +323,7 @@ static void show_stats(struct diffstat_t* data)
 	}
 
 	for (i = 0; i < data->nr; i++) {
+		char *prefix = "";
 		char *name = data->files[i]->name;
 		int added = data->files[i]->added;
 		int deleted = data->files[i]->deleted;
@@ -391,6 +397,130 @@ static void show_stats(struct diffstat_t* data)
 			total_files, adds, dels);
 }
 
+struct checkdiff_t {
+	struct xdiff_emit_state xm;
+	const char *filename;
+	int lineno;
+};
+
+static void checkdiff_consume(void *priv, char *line, unsigned long len)
+{
+	struct checkdiff_t *data = priv;
+
+	if (line[0] == '+') {
+		int i, spaces = 0;
+
+		data->lineno++;
+
+		/* check space before tab */
+		for (i = 1; i < len && (line[i] == ' ' || line[i] == '\t'); i++)
+			if (line[i] == ' ')
+				spaces++;
+		if (line[i - 1] == '\t' && spaces)
+			printf("%s:%d: space before tab:%.*s\n",
+				data->filename, data->lineno, (int)len, line);
+
+		/* check white space at line end */
+		if (line[len - 1] == '\n')
+			len--;
+		if (isspace(line[len - 1]))
+			printf("%s:%d: white space at end: %.*s\n",
+				data->filename, data->lineno, (int)len, line);
+	} else if (line[0] == ' ')
+		data->lineno++;
+	else if (line[0] == '@') {
+		char *plus = strchr(line, '+');
+		if (plus)
+			data->lineno = strtol(plus, line + len, 10);
+		else
+			die("invalid diff");
+	}
+}
+
+static unsigned char *deflate_it(char *data,
+				 unsigned long size,
+				 unsigned long *result_size)
+{
+	int bound;
+	unsigned char *deflated;
+	z_stream stream;
+
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, Z_BEST_COMPRESSION);
+	bound = deflateBound(&stream, size);
+	deflated = xmalloc(bound);
+	stream.next_out = deflated;
+	stream.avail_out = bound;
+
+	stream.next_in = (unsigned char *)data;
+	stream.avail_in = size;
+	while (deflate(&stream, Z_FINISH) == Z_OK)
+		; /* nothing */
+	deflateEnd(&stream);
+	*result_size = stream.total_out;
+	return deflated;
+}
+
+static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
+{
+	void *cp;
+	void *delta;
+	void *deflated;
+	void *data;
+	unsigned long orig_size;
+	unsigned long delta_size;
+	unsigned long deflate_size;
+	unsigned long data_size;
+
+	printf("GIT binary patch\n");
+	/* We could do deflated delta, or we could do just deflated two,
+	 * whichever is smaller.
+	 */
+	delta = NULL;
+	deflated = deflate_it(two->ptr, two->size, &deflate_size);
+	if (one->size && two->size) {
+		delta = diff_delta(one->ptr, one->size,
+				   two->ptr, two->size,
+				   &delta_size, deflate_size);
+		if (delta) {
+			void *to_free = delta;
+			orig_size = delta_size;
+			delta = deflate_it(delta, delta_size, &delta_size);
+			free(to_free);
+		}
+	}
+
+	if (delta && delta_size < deflate_size) {
+		printf("delta %lu\n", orig_size);
+		free(deflated);
+		data = delta;
+		data_size = delta_size;
+	}
+	else {
+		printf("literal %lu\n", two->size);
+		free(delta);
+		data = deflated;
+		data_size = deflate_size;
+	}
+
+	/* emit data encoded in base85 */
+	cp = data;
+	while (data_size) {
+		int bytes = (52 < data_size) ? 52 : data_size;
+		char line[70];
+		data_size -= bytes;
+		if (bytes <= 26)
+			line[0] = bytes + 'A' - 1;
+		else
+			line[0] = bytes - 26 + 'a' - 1;
+		encode_85(line + 1, cp, bytes);
+		cp += bytes;
+		puts(line);
+	}
+	printf("\n");
+	free(data);
+}
+
 #define FIRST_FEW_BYTES 8000
 static int mmfile_is_binary(mmfile_t *mf)
 {
@@ -407,6 +537,7 @@ static void builtin_diff(const char *name_a,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
+			 struct diff_options *o,
 			 int complete_rewrite)
 {
 	mmfile_t mf1, mf2;
@@ -451,8 +582,17 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))
-		printf("Binary files %s and %s differ\n", lbl[0], lbl[1]);
+	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
+		/* Quite common confusing case */
+		if (mf1.size == mf2.size &&
+		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
+			goto free_ab_and_return;
+		if (o->binary)
+			emit_binary_diff(&mf1, &mf2);
+		else
+			printf("Binary files %s and %s differ\n",
+			       lbl[0], lbl[1]);
+	}
 	else {
 		/* Crazy xdl interfaces.. */
 		const char *diffopts = getenv("GIT_DIFF_OPTS");
@@ -463,7 +603,7 @@ static void builtin_diff(const char *name_a,
 
 		ecbdata.label_path = lbl;
 		xpp.flags = XDF_NEED_MINIMAL;
-		xecfg.ctxlen = 3;
+		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (!diffopts)
 			;
@@ -520,6 +660,41 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xecfg.flags = 0;
 		ecb.outf = xdiff_outf;
 		ecb.priv = diffstat;
+		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+	}
+}
+
+static void builtin_checkdiff(const char *name_a, const char *name_b,
+			     struct diff_filespec *one,
+			     struct diff_filespec *two)
+{
+	mmfile_t mf1, mf2;
+	struct checkdiff_t data;
+
+	if (!two)
+		return;
+
+	memset(&data, 0, sizeof(data));
+	data.xm.consume = checkdiff_consume;
+	data.filename = name_b ? name_b : name_a;
+	data.lineno = 0;
+
+	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
+		die("unable to read files to diff");
+
+	if (mmfile_is_binary(&mf2))
+		return;
+	else {
+		/* Crazy xdl interfaces.. */
+		xpparam_t xpp;
+		xdemitconf_t xecfg;
+		xdemitcb_t ecb;
+
+		xpp.flags = XDF_NEED_MINIMAL;
+		xecfg.ctxlen = 0;
+		xecfg.flags = 0;
+		ecb.outf = xdiff_outf;
+		ecb.priv = &data;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 }
@@ -928,6 +1103,7 @@ static void run_diff_cmd(const char *pgm,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
+			 struct diff_options *o,
 			 int complete_rewrite)
 {
 	if (pgm) {
@@ -937,7 +1113,7 @@ static void run_diff_cmd(const char *pgm,
 	}
 	if (one && two)
 		builtin_diff(name, other ? other : name,
-			     one, two, xfrm_msg, complete_rewrite);
+			     one, two, xfrm_msg, o, complete_rewrite);
 	else
 		printf("* Unmerged path %s\n", name);
 }
@@ -971,7 +1147,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, 0);
+		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, o, 0);
 		return;
 	}
 
@@ -1041,14 +1217,14 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		 * needs to be split into deletion and creation.
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
-		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, 0);
+		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, o, 0);
 		free(null);
 		null = alloc_filespec(one->path);
-		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, 0);
+		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, o, 0);
 		free(null);
 	}
 	else
-		run_diff_cmd(pgm, name, other, one, two, xfrm_msg,
+		run_diff_cmd(pgm, name, other, one, two, xfrm_msg, o,
 			     complete_rewrite);
 
 	free(name_munged);
@@ -1079,6 +1255,25 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	builtin_diffstat(name, other, p->one, p->two, diffstat, complete_rewrite);
 }
 
+static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
+{
+	const char *name;
+	const char *other;
+
+	if (DIFF_PAIR_UNMERGED(p)) {
+		/* unmerged */
+		return;
+	}
+
+	name = p->one->path;
+	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+
+	diff_fill_sha1_info(p->one);
+	diff_fill_sha1_info(p->two);
+
+	builtin_checkdiff(name, other, p->one, p->two);
+}
+
 void diff_setup(struct diff_options *options)
 {
 	memset(options, 0, sizeof(*options));
@@ -1086,6 +1281,7 @@ void diff_setup(struct diff_options *options)
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
+	options->context = 3;
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
@@ -1103,7 +1299,8 @@ int diff_setup_done(struct diff_options *options)
 	 * recursive bits for other formats here.
 	 */
 	if ((options->output_format == DIFF_FORMAT_PATCH) ||
-	    (options->output_format == DIFF_FORMAT_DIFFSTAT))
+	    (options->output_format == DIFF_FORMAT_DIFFSTAT) ||
+	    (options->output_format == DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)
@@ -1126,10 +1323,59 @@ int diff_setup_done(struct diff_options *options)
 	return 0;
 }
 
+int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)
+{
+	char c, *eq;
+	int len;
+
+	if (*arg != '-')
+		return 0;
+	c = *++arg;
+	if (!c)
+		return 0;
+	if (c == arg_short) {
+		c = *++arg;
+		if (!c)
+			return 1;
+		if (val && isdigit(c)) {
+			char *end;
+			int n = strtoul(arg, &end, 10);
+			if (*end)
+				return 0;
+			*val = n;
+			return 1;
+		}
+		return 0;
+	}
+	if (c != '-')
+		return 0;
+	arg++;
+	eq = strchr(arg, '=');
+	if (eq)
+		len = eq - arg;
+	else
+		len = strlen(arg);
+	if (!len || strncmp(arg, arg_long, len))
+		return 0;
+	if (eq) {
+		int n;
+		char *end;
+		if (!isdigit(*++eq))
+			return 0;
+		n = strtoul(eq, &end, 10);
+		if (*end)
+			return 0;
+		*val = n;
+	}
+	return 1;
+}
+
 int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
+		options->output_format = DIFF_FORMAT_PATCH;
+	else if (opt_arg(arg, 'U', "unified", &options->context))
 		options->output_format = DIFF_FORMAT_PATCH;
 	else if (!strcmp(arg, "--patch-with-raw")) {
 		options->output_format = DIFF_FORMAT_PATCH;
@@ -1137,6 +1383,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--stat"))
 		options->output_format = DIFF_FORMAT_DIFFSTAT;
+	else if (!strcmp(arg, "--check"))
+		options->output_format = DIFF_FORMAT_CHECKDIFF;
+	else if (!strcmp(arg, "--summary"))
+		options->summary = 1;
 	else if (!strcmp(arg, "--patch-with-stat")) {
 		options->output_format = DIFF_FORMAT_PATCH;
 		options->with_stat = 1;
@@ -1147,6 +1397,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->rename_limit = strtoul(arg+2, NULL, 10);
 	else if (!strcmp(arg, "--full-index"))
 		options->full_index = 1;
+	else if (!strcmp(arg, "--binary")) {
+		options->output_format = DIFF_FORMAT_PATCH;
+		options->full_index = options->binary = 1;
+	}
 	else if (!strcmp(arg, "--name-only"))
 		options->output_format = DIFF_FORMAT_NAME;
 	else if (!strcmp(arg, "--name-status"))
@@ -1453,6 +1707,19 @@ static void diff_flush_stat(struct diff_filepair *p, struct diff_options *o,
 	run_diffstat(p, o, diffstat);
 }
 
+static void diff_flush_checkdiff(struct diff_filepair *p,
+		struct diff_options *o)
+{
+	if (diff_unmodified_pair(p))
+		return;
+
+	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
+	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
+		return; /* no tree diffs in patch format */
+
+	run_checkdiff(p, o);
+}
+
 int diff_queue_is_empty(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -1583,6 +1850,9 @@ static void flush_one_pair(struct diff_filepair *p,
 		case DIFF_FORMAT_DIFFSTAT:
 			diff_flush_stat(p, options, diffstat);
 			break;
+		case DIFF_FORMAT_CHECKDIFF:
+			diff_flush_checkdiff(p, options);
+			break;
 		case DIFF_FORMAT_PATCH:
 			diff_flush_patch(p, options);
 			break;
@@ -1600,6 +1870,85 @@ static void flush_one_pair(struct diff_filepair *p,
 		case DIFF_FORMAT_NO_OUTPUT:
 			break;
 		}
+	}
+}
+
+static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
+{
+	if (fs->mode)
+		printf(" %s mode %06o %s\n", newdelete, fs->mode, fs->path);
+	else
+		printf(" %s %s\n", newdelete, fs->path);
+}
+
+
+static void show_mode_change(struct diff_filepair *p, int show_name)
+{
+	if (p->one->mode && p->two->mode && p->one->mode != p->two->mode) {
+		if (show_name)
+			printf(" mode change %06o => %06o %s\n",
+			       p->one->mode, p->two->mode, p->two->path);
+		else
+			printf(" mode change %06o => %06o\n",
+			       p->one->mode, p->two->mode);
+	}
+}
+
+static void show_rename_copy(const char *renamecopy, struct diff_filepair *p)
+{
+	const char *old, *new;
+
+	/* Find common prefix */
+	old = p->one->path;
+	new = p->two->path;
+	while (1) {
+		const char *slash_old, *slash_new;
+		slash_old = strchr(old, '/');
+		slash_new = strchr(new, '/');
+		if (!slash_old ||
+		    !slash_new ||
+		    slash_old - old != slash_new - new ||
+		    memcmp(old, new, slash_new - new))
+			break;
+		old = slash_old + 1;
+		new = slash_new + 1;
+	}
+	/* p->one->path thru old is the common prefix, and old and new
+	 * through the end of names are renames
+	 */
+	if (old != p->one->path)
+		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
+		       (int)(old - p->one->path), p->one->path,
+		       old, new, (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	else
+		printf(" %s %s => %s (%d%%)\n", renamecopy,
+		       p->one->path, p->two->path,
+		       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	show_mode_change(p, 0);
+}
+
+static void diff_summary(struct diff_filepair *p)
+{
+	switch(p->status) {
+	case DIFF_STATUS_DELETED:
+		show_file_mode_name("delete", p->one);
+		break;
+	case DIFF_STATUS_ADDED:
+		show_file_mode_name("create", p->two);
+		break;
+	case DIFF_STATUS_COPIED:
+		show_rename_copy("copy", p);
+		break;
+	case DIFF_STATUS_RENAMED:
+		show_rename_copy("rename", p);
+		break;
+	default:
+		if (p->score) {
+			printf(" rewrite %s (%d%%)\n", p->two->path,
+				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			show_mode_change(p, 0);
+		} else	show_mode_change(p, 1);
+		break;
 	}
 }
 
@@ -1636,12 +1985,17 @@ void diff_flush(struct diff_options *options)
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		flush_one_pair(p, diff_output_format, options, diffstat);
-		diff_free_filepair(p);
 	}
 
 	if (diffstat) {
 		show_stats(diffstat);
 		free(diffstat);
+	}
+
+	for (i = 0; i < q->nr; i++) {
+		if (options->summary)
+			diff_summary(q->queue[i]);
+		diff_free_filepair(q->queue[i]);
 	}
 
 	free(q->queue);

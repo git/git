@@ -261,11 +261,7 @@ yes,yes)
 	    ;;
 	yes)
 	    mkdir -p "$GIT_DIR/objects/info"
-	    {
-		test -f "$repo/objects/info/alternates" &&
-		cat "$repo/objects/info/alternates";
-		echo "$repo/objects"
-	    } >"$GIT_DIR/objects/info/alternates"
+	    echo "$repo/objects" >> "$GIT_DIR/objects/info/alternates"
 	    ;;
 	esac
 	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
