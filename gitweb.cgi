@@ -17,7 +17,7 @@ use Fcntl ':mode';
 binmode STDOUT, ':utf8';
 
 my $cgi = new CGI;
-my $version =		"265";
+my $version =		"266";
 my $my_url =		$cgi->url();
 my $my_uri =		$cgi->url(-absolute => 1);
 my $rss_link =		"";
