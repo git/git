@@ -627,7 +627,14 @@ install: all
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
-	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(bindir_SQ)/$p' && ln '$(DESTDIR_SQ)$(bindir_SQ)/git$X' '$(DESTDIR_SQ)$(bindir_SQ)/$p' ;)
+	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
+	then \
+		ln -f '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
+			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' || \
+		cp '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
+			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X'; \
+	fi
+	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 
 install-doc:
 	$(MAKE) -C Documentation install
