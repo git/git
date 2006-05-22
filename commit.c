@@ -559,9 +559,23 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 	int indent = 4;
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
+	int plain_non_ascii = 0;
 
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
+
+	/* After-subject is used to pass in Content-Type: multipart
+	 * MIME header; in that case we do not have to do the
+	 * plaintext content type even if the commit message has
+	 * non 7-bit ASCII character.  Otherwise, check if we need
+	 * to say this is not a 7-bit ASCII.
+	 */
+	if (fmt == CMIT_FMT_EMAIL && !after_subject) {
+		int i;
+		for (i = 0; !plain_non_ascii && msg[i] && i < len; i++)
+			if (msg[i] & 0x80)
+				plain_non_ascii = 1;
+	}
 
 	for (;;) {
 		const char *line = msg;
@@ -648,13 +662,12 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		buf[offset++] = '\n';
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
-		if (subject) {
+		if (subject && plain_non_ascii) {
 			static const char header[] =
 				"Content-Type: text/plain; charset=UTF-8\n"
 				"Content-Transfer-Encoding: 8bit\n";
 			memcpy(buf + offset, header, sizeof(header)-1);
 			offset += sizeof(header)-1;
-			subject = NULL;
 		}
 		if (after_subject) {
 			int slen = strlen(after_subject);
