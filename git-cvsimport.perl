@@ -650,6 +650,8 @@ my $commit = sub {
 			"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
 			"git-commit-tree", $tree,@par);
 		die "Cannot exec git-commit-tree: $!\n";
+
+		close OUT;
 	}
 	$pw->writer();
 	$pr->reader();
@@ -661,6 +663,7 @@ my $commit = sub {
 	if (@skipped) {
 	    $logmsg .= "\n\n\nSKIPPED:\n\t";
 	    $logmsg .= join("\n\t", @skipped) . "\n";
+	    @skipped = ();
 	}
 
 	print $pw "$logmsg\n"
