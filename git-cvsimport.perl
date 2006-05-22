@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L);
 my (%conv_author_name, %conv_author_email);
 
 sub usage() {
@@ -85,7 +85,7 @@ sub write_author_info($) {
 	close ($f);
 }
 
-getopts("hivmkuo:d:p:C:z:s:M:P:A:S:") or usage();
+getopts("hivmkuo:d:p:C:z:s:M:P:A:S:L:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -719,6 +719,7 @@ sub commit {
 	}
 };
 
+my $commitcount = 1;
 while(<CVS>) {
 	chomp;
 	if($state == 0 and /^-+$/) {
@@ -852,6 +853,9 @@ while(<CVS>) {
 	} elsif($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif(($state == 9 or $state == 10) and /^-+$/) {
+		if ($opt_L && $commitcount++ >= $opt_L) {
+			last;
+		}
 		commit();
 		$state = 1;
 	} elsif($state == 11 and /^-+$/) {
