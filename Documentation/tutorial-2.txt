@@ -214,7 +214,7 @@ $ git diff
 +++ b/file.txt
 @@ -1 +1,2 @@
  hello world!
- +hello world, again
++hello world, again
 $ git update-index file.txt
 $ git diff
 ------------------------------------------------
@@ -230,7 +230,7 @@ index a042389..513feba 100644
 +++ b/file.txt
 @@ -1 +1,2 @@
  hello world!
- +hello world, again
++hello world, again
 ------------------------------------------------
 
 So "git diff" is comparing against something other than the head.
