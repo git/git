@@ -2,8 +2,8 @@
 
 # gitweb - simple web interface to track changes in git repositories
 #
-# (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
-# (C) 2005, Christian Gierke <ch@gierke.de>
+# (C) 2005-2006, Kay Sievers <kay.sievers@vrfy.org>
+# (C) 2005, Christian Gierke
 #
 # This program is licensed under the GPLv2
 
@@ -253,7 +253,7 @@ sub git_header_html {
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
-<!-- git web interface v$version, (C) 2005, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke <ch\@gierke.de> -->
+<!-- git web interface v$version, (C) 2005-2006, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke -->
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 <meta name="robots" content="index, nofollow"/>
