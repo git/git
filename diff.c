@@ -1303,6 +1303,14 @@ int diff_setup_done(struct diff_options *options)
 	    (options->output_format == DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
 
+	/*
+	 * These combinations do not make sense.
+	 */
+	if (options->output_format == DIFF_FORMAT_RAW)
+		options->with_raw = 0;
+	if (options->output_format == DIFF_FORMAT_DIFFSTAT)
+		options->with_stat  = 0;
+
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
 	if (options->setup & DIFF_SETUP_USE_CACHE) {
