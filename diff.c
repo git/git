@@ -432,7 +432,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
-			data->lineno = strtol(plus, line + len, 10);
+			data->lineno = strtol(plus, NULL, 10);
 		else
 			die("invalid diff");
 	}

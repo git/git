@@ -421,6 +421,9 @@ else
 	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
 endif
 endif
+ifdef NO_INET_NTOP
+	LIB_OBJS += compat/inet_ntop.o
+endif
 
 ifdef NO_ICONV
 	ALL_CFLAGS += -DNO_ICONV
