@@ -724,7 +724,7 @@ static void handle_body(void)
 {
 	int seen = 0;
 
-	if (fgets(line, sizeof(line), stdin) != NULL) {
+	if (line[0] || fgets(line, sizeof(line), stdin) != NULL) {
 		handle_commit_msg(&seen);
 		handle_patch();
 	}
