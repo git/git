@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
+#include "cache-tree.h"
 
 static const char builtin_rm_usage[] =
 "git-rm [-n] [-v] [-f] <filepattern>...";
