@@ -565,29 +565,19 @@ my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
 my(@old,@new,@skipped);
 sub commit {
 	my $pid;
-	while(@old) {
-		my @o2;
-		if(@old > 55) {
-			@o2 = splice(@old,0,50);
-		} else {
-			@o2 = @old;
-			@old = ();
-		}
-		system("git-update-index","--force-remove","--",@o2);
-		die "Cannot remove files: $?\n" if $?;
-	}
-	while(@new) {
-		my @n2;
-		if(@new > 12) {
-			@n2 = splice(@new,0,10);
-		} else {
-			@n2 = @new;
-			@new = ();
-		}
-		system("git-update-index","--add",
-			(map { ('--cacheinfo', @$_) } @n2));
-		die "Cannot add files: $?\n" if $?;
-	}
+
+	open(my $fh, '|-', qw(git-update-index -z --index-info))
+		or die "unable to open git-update-index: $!";
+	print $fh
+		(map { "0 0000000000000000000000000000000000000000\t$_\0" }
+			@old),
+		(map { '100' . sprintf('%o', $_->[0]) . " $_->[1]\t$_->[2]\0" }
+			@new)
+		or die "unable to write to git-update-index: $!";
+	close $fh
+		or die "unable to write to git-update-index: $!";
+	$? and die "git-update-index reported error: $?";
+	@old = @new = ();
 
 	$pid = open(C,"-|");
 	die "Cannot fork: $!" unless defined $pid;
