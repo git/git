@@ -29,5 +29,6 @@ extern int cmd_check_ref_format(int argc, const char **argv, char **envp);
 extern int cmd_init_db(int argc, const char **argv, char **envp);
 extern int cmd_ls_files(int argc, const char **argv, char **envp);
 extern int cmd_ls_tree(int argc, const char **argv, char **envp);
+extern int cmd_tar_tree(int argc, const char **argv, char **envp);
 
 #endif

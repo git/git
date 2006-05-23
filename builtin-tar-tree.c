@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "strbuf.h"
 #include "tar.h"
+#include "builtin.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -301,7 +302,7 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_tar_tree(int argc, const char **argv, char** envp)
 {
 	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;

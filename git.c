@@ -54,7 +54,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "init-db", cmd_init_db },
 		{ "check-ref-format", cmd_check_ref_format },
 		{ "ls-files", cmd_ls_files },
-		{ "ls-tree", cmd_ls_tree }
+		{ "ls-tree", cmd_ls_tree },
+		{ "tar-tree", cmd_tar_tree }
 	};
 	int i;
 
