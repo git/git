@@ -72,11 +72,14 @@ static int bogus_from(char *line)
 	return 1;
 }
 
-static int handle_from(char *line)
+static int handle_from(char *in_line)
 {
-	char *at = strchr(line, '@');
+	char line[1000];
+	char *at;
 	char *dst;
 
+	strcpy(line, in_line);
+	at = strchr(line, '@');
 	if (!at)
 		return bogus_from(line);
 
@@ -242,8 +245,6 @@ static int eatspace(char *line)
 /* First lines of body can have From:, Date:, and Subject: */
 static void handle_inbody_header(int *seen, char *line)
 {
-	if (*seen & SEEN_PREFIX)
-		return;
 	if (!memcmp("From:", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_FROM) && handle_from(line+6)) {
 			*seen |= SEEN_FROM;
