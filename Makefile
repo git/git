@@ -159,7 +159,7 @@ PROGRAMS = \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X \
 	git-receive-pack$X git-rev-parse$X \
-	git-send-pack$X git-show-branch$X git-shell$X \
+	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-unpack-file$X \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
@@ -173,7 +173,7 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-grep$X git-rev-list$X git-check-ref-format$X \
 	git-init-db$X git-ls-files$X git-ls-tree$X \
 	git-tar-tree$X git-read-tree$X git-commit-tree$X \
-	git-apply$X
+	git-apply$X git-show-branch$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -224,7 +224,7 @@ BUILTIN_OBJS = \
 	builtin-grep.o builtin-rev-list.o builtin-check-ref-format.o \
 	builtin-init-db.o builtin-ls-files.o builtin-ls-tree.o \
         builtin-tar-tree.o builtin-read-tree.o builtin-commit-tree.o \
-	builtin-apply.o
+	builtin-apply.o builtin-show-branch.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz

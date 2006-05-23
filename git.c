@@ -58,7 +58,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "tar-tree", cmd_tar_tree },
 		{ "read-tree", cmd_read_tree },
 		{ "commit-tree", cmd_commit_tree },
-		{ "apply", cmd_apply }
+		{ "apply", cmd_apply },
+		{ "show-branch", cmd_show_branch }
 	};
 	int i;
 
