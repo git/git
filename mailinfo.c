@@ -72,11 +72,14 @@ static int bogus_from(char *line)
 	return 1;
 }
 
-static int handle_from(char *line)
+static int handle_from(char *in_line)
 {
-	char *at = strchr(line, '@');
+	char line[1000];
+	char *at;
 	char *dst;
 
+	strcpy(line, in_line);
+	at = strchr(line, '@');
 	if (!at)
 		return bogus_from(line);
 
@@ -238,44 +241,45 @@ static int eatspace(char *line)
 #define SEEN_DATE 02
 #define SEEN_SUBJECT 04
 #define SEEN_BOGUS_UNIX_FROM 010
+#define SEEN_PREFIX  020
 
 /* First lines of body can have From:, Date:, and Subject: */
-static int handle_inbody_header(int *seen, char *line)
+static void handle_inbody_header(int *seen, char *line)
 {
 	if (!memcmp(">From", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_BOGUS_UNIX_FROM)) {
 			*seen |= SEEN_BOGUS_UNIX_FROM;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("From:", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_FROM) && handle_from(line+6)) {
 			*seen |= SEEN_FROM;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("Date:", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_DATE)) {
 			handle_date(line+6);
 			*seen |= SEEN_DATE;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("Subject:", line, 8) && isspace(line[8])) {
 		if (!(*seen & SEEN_SUBJECT)) {
 			handle_subject(line+9);
 			*seen |= SEEN_SUBJECT;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("[PATCH]", line, 7) && isspace(line[7])) {
 		if (!(*seen & SEEN_SUBJECT)) {
 			handle_subject(line);
 			*seen |= SEEN_SUBJECT;
-			return 1;
+			return;
 		}
 	}
-	return 0;
+	*seen |= SEEN_PREFIX;
 }
 
 static char *cleanup_subject(char *subject)
@@ -331,6 +335,7 @@ static void cleanup_space(char *buf)
 	}
 }
 
+static void decode_header_bq(char *it);
 typedef int (*header_fn_t)(char *);
 struct header_def {
 	const char *name;
@@ -338,7 +343,7 @@ struct header_def {
 	int namelen;
 };
 
-static void check_header(char *line, int len, struct header_def *header)
+static void check_header(char *line, struct header_def *header)
 {
 	int i;
 
@@ -350,13 +355,17 @@ static void check_header(char *line, int len, struct header_def *header)
 		int len = header[i].namelen;
 		if (!strncasecmp(line, header[i].name, len) &&
 		    line[len] == ':' && isspace(line[len + 1])) {
+			/* Unwrap inline B and Q encoding, and optionally
+			 * normalize the meta information to utf8.
+			 */
+			decode_header_bq(line + len + 2);
 			header[i].func(line + len + 2);
 			break;
 		}
 	}
 }
 
-static void check_subheader_line(char *line, int len)
+static void check_subheader_line(char *line)
 {
 	static struct header_def header[] = {
 		{ "Content-Type", handle_subcontent_type },
@@ -364,9 +373,9 @@ static void check_subheader_line(char *line, int len)
 		  handle_content_transfer_encoding },
 		{ NULL },
 	};
-	check_header(line, len, header);
+	check_header(line, header);
 }
-static void check_header_line(char *line, int len)
+static void check_header_line(char *line)
 {
 	static struct header_def header[] = {
 		{ "From", handle_from },
@@ -377,27 +386,36 @@ static void check_header_line(char *line, int len)
 		  handle_content_transfer_encoding },
 		{ NULL },
 	};
-	check_header(line, len, header);
+	check_header(line, header);
 }
 
 static int read_one_header_line(char *line, int sz, FILE *in)
 {
 	int ofs = 0;
 	while (ofs < sz) {
+		const char *colon;
 		int peek, len;
 		if (fgets(line + ofs, sz - ofs, in) == NULL)
-			return ofs;
+			break;
 		len = eatspace(line + ofs);
 		if (len == 0)
-			return ofs;
-		peek = fgetc(in); ungetc(peek, in);
-		if (peek == ' ' || peek == '\t') {
-			/* Yuck, 2822 header "folding" */
-			ofs += len;
-			continue;
+			break;
+		colon = strchr(line, ':');
+		if (!colon || !isspace(colon[1])) {
+			/* Re-add the newline */
+			line[ofs + len] = '\n';
+			line[ofs + len + 1] = '\0';
+			break;
 		}
-		return ofs + len;
+		ofs += len;
+		/* Yuck, 2822 header "folding" */
+		peek = fgetc(in); ungetc(peek, in);
+		if (peek != ' ' && peek != '\t')
+			break;
 	}
+	/* Count mbox From headers as headers */
+	if (!ofs && !memcmp(line, "From ", 5))
+		ofs = 1;
 	return ofs;
 }
 
@@ -592,25 +610,13 @@ static void decode_transfer_encoding(char *line)
 static void handle_info(void)
 {
 	char *sub;
-	static int done_info = 0;
 
-	if (done_info)
-		return;
-
-	done_info = 1;
 	sub = cleanup_subject(subject);
 	cleanup_space(name);
 	cleanup_space(date);
 	cleanup_space(email);
 	cleanup_space(sub);
 
-	/* Unwrap inline B and Q encoding, and optionally
-	 * normalize the meta information to utf8.
-	 */
-	decode_header_bq(name);
-	decode_header_bq(date);
-	decode_header_bq(email);
-	decode_header_bq(sub);
 	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n",
 	       name, email, sub, date);
 }
@@ -618,7 +624,7 @@ static void handle_info(void)
 /* We are inside message body and have read line[] already.
  * Spit out the commit log.
  */
-static int handle_commit_msg(void)
+static int handle_commit_msg(int *seen)
 {
 	if (!cmitmsg)
 		return 0;
@@ -642,6 +648,11 @@ static int handle_commit_msg(void)
 		decode_transfer_encoding(line);
 		if (metainfo_charset)
 			convert_to_utf8(line, charset);
+
+		handle_inbody_header(seen, line);
+		if (!(*seen & SEEN_PREFIX))
+			continue;
+
 		fputs(line, cmitmsg);
 	} while (fgets(line, sizeof(line), stdin) != NULL);
 	fclose(cmitmsg);
@@ -673,26 +684,16 @@ static void handle_patch(void)
  * that the first part to contain commit message and a patch, and
  * handle other parts as pure patches.
  */
-static int handle_multipart_one_part(void)
+static int handle_multipart_one_part(int *seen)
 {
-	int seen = 0;
 	int n = 0;
-	int len;
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 	again:
-		len = eatspace(line);
 		n++;
-		if (!len)
-			continue;
 		if (is_multipart_boundary(line))
 			break;
-		if (0 <= seen && handle_inbody_header(&seen, line))
-			continue;
-		seen = -1; /* no more inbody headers */
-		line[len] = '\n';
-		handle_info();
-		if (handle_commit_msg())
+		if (handle_commit_msg(seen))
 			goto again;
 		handle_patch();
 		break;
@@ -704,6 +705,7 @@ static int handle_multipart_one_part(void)
 
 static void handle_multipart_body(void)
 {
+	int seen = 0;
 	int part_num = 0;
 
 	/* Skip up to the first boundary */
@@ -716,16 +718,16 @@ static void handle_multipart_body(void)
 		return;
 	/* We are on boundary line.  Start slurping the subhead. */
 	while (1) {
-		int len = read_one_header_line(line, sizeof(line), stdin);
-		if (!len) {
-			if (handle_multipart_one_part() < 0)
+		int hdr = read_one_header_line(line, sizeof(line), stdin);
+		if (!hdr) {
+			if (handle_multipart_one_part(&seen) < 0)
 				return;
 			/* Reset per part headers */
 			transfer_encoding = TE_DONTCARE;
 			charset[0] = 0;
 		}
 		else
-			check_subheader_line(line, len);
+			check_subheader_line(line);
 	}
 	fclose(patchfile);
 	if (!patch_lines) {
@@ -739,18 +741,9 @@ static void handle_body(void)
 {
 	int seen = 0;
 
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = eatspace(line);
-		if (!len)
-			continue;
-		if (0 <= seen && handle_inbody_header(&seen, line))
-			continue;
-		seen = -1; /* no more inbody headers */
-		line[len] = '\n';
-		handle_info();
-		handle_commit_msg();
+	if (line[0] || fgets(line, sizeof(line), stdin) != NULL) {
+		handle_commit_msg(&seen);
 		handle_patch();
-		break;
 	}
 	fclose(patchfile);
 	if (!patch_lines) {
@@ -794,15 +787,16 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	while (1) {
-		int len = read_one_header_line(line, sizeof(line), stdin);
-		if (!len) {
+		int hdr = read_one_header_line(line, sizeof(line), stdin);
+		if (!hdr) {
 			if (multipart_boundary[0])
 				handle_multipart_body();
 			else
 				handle_body();
+			handle_info();
 			break;
 		}
-		check_header_line(line, len);
+		check_header_line(line);
 	}
 	return 0;
 }
