@@ -371,7 +371,7 @@ sub file {
 }
 sub _fetchfile {
 	my ($self, $fh, $cnt) = @_;
-	my $res;
+	my $res = 0;
 	my $bufsize = 1024 * 1024;
 	while($cnt) {
 	    if ($bufsize > $cnt) {
