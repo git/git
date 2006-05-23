@@ -46,41 +46,45 @@ static int verify_tag(char *buffer, unsigned long size)
 	const char *object, *type_line, *tag_line, *tagger_line;
 
 	if (size < 64)
-		return -1;
+		return error("wanna fool me ? you obviously got the size wrong !\n");
+
 	buffer[size] = 0;
 
 	/* Verify object line */
 	object = buffer;
 	if (memcmp(object, "object ", 7))
-		return -1;
+		return error("char%d: does not start with \"object \"\n", 0);
+
 	if (get_sha1_hex(object + 7, sha1))
-		return -1;
+		return error("char%d: could not get SHA1 hash\n", 7);
 
 	/* Verify type line */
 	type_line = object + 48;
 	if (memcmp(type_line - 1, "\ntype ", 6))
-		return -1;
+		return error("char%d: could not find \"\\ntype \"\n", 47);
 
 	/* Verify tag-line */
 	tag_line = strchr(type_line, '\n');
 	if (!tag_line)
-		return -1;
+		return error("char%td: could not find next \"\\n\"\n", type_line - buffer);
 	tag_line++;
 	if (memcmp(tag_line, "tag ", 4) || tag_line[4] == '\n')
-		return -1;
+		return error("char%td: no \"tag \" found\n", tag_line - buffer);
 
 	/* Get the actual type */
 	typelen = tag_line - type_line - strlen("type \n");
 	if (typelen >= sizeof(type))
-		return -1;
+		return error("char%td: type too long\n", type_line+5 - buffer);
+
 	memcpy(type, type_line+5, typelen);
 	type[typelen] = 0;
 
 	/* Verify that the object matches */
 	if (get_sha1_hex(object + 7, sha1))
-		return -1;
+		return error("char%d: could not get SHA1 hash but this is really odd since i got it before !\n", 7);
+
 	if (verify_object(sha1, type))
-		return -1;
+		return error("char%d: could not verify object %s\n", 7, sha1);
 
 	/* Verify the tag-name: we don't allow control characters or spaces in it */
 	tag_line += 4;
@@ -90,14 +94,14 @@ static int verify_tag(char *buffer, unsigned long size)
 			break;
 		if (c > ' ')
 			continue;
-		return -1;
+		return error("char%td: could not verify tag name\n", tag_line - buffer);
 	}
 
 	/* Verify the tagger line */
 	tagger_line = tag_line;
 
 	if (memcmp(tagger_line, "tagger", 6) || (tagger_line[6] == '\n'))
-		return -1;
+		return error("char%td: could not find \"tagger\"\n", tagger_line - buffer);
 
 	/* The actual stuff afterwards we don't care about.. */
 	return 0;
