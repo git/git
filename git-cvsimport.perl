@@ -315,15 +315,7 @@ sub _line {
 			chomp $cnt;
 			die "Duh: Filesize $cnt" if $cnt !~ /^\d+$/;
 			$line="";
-			$res=0;
-			while($cnt) {
-				my $buf;
-				my $num = $self->{'socketi'}->read($buf,$cnt);
-				die "Server: Filesize $cnt: $num: $!\n" if not defined $num or $num<=0;
-				print $fh $buf;
-				$res += $num;
-				$cnt -= $num;
-			}
+			$res = $self->_fetchfile($fh, $cnt);
 		} elsif($line =~ s/^ //) {
 			print $fh $line;
 			$res += length($line);
@@ -335,14 +327,7 @@ sub _line {
 			chomp $cnt;
 			die "Duh: Mbinary $cnt" if $cnt !~ /^\d+$/ or $cnt<1;
 			$line="";
-			while($cnt) {
-				my $buf;
-				my $num = $self->{'socketi'}->read($buf,$cnt);
-				die "S: Mbinary $cnt: $num: $!\n" if not defined $num or $num<=0;
-				print $fh $buf;
-				$res += $num;
-				$cnt -= $num;
-			}
+			$res += $self->_fetchfile($fh, $cnt);
 		} else {
 			chomp $line;
 			if($line eq "ok") {
@@ -383,6 +368,23 @@ sub file {
 	close ($fh);
 
 	return ($name, $res);
+}
+sub _fetchfile {
+	my ($self, $fh, $cnt) = @_;
+	my $res;
+	my $bufsize = 1024 * 1024;
+	while($cnt) {
+	    if ($bufsize > $cnt) {
+		$bufsize = $cnt;
+	    }
+	    my $buf;
+	    my $num = $self->{'socketi'}->read($buf,$bufsize);
+	    die "Server: Filesize $cnt: $num: $!\n" if not defined $num or $num<=0;
+	    print $fh $buf;
+	    $res += $num;
+	    $cnt -= $num;
+	}
+	return $res;
 }
 
 
