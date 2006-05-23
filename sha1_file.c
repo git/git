@@ -1645,16 +1645,24 @@ int has_sha1_file(const unsigned char *sha1)
 	return find_sha1_file(sha1, &st) ? 1 : 0;
 }
 
-int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
+/*
+ * reads from fd as long as possible into a supplied buffer of size bytes.
+ * If neccessary the buffer's size is increased using realloc()
+ *
+ * returns 0 if anything went fine and -1 otherwise
+ *
+ * NOTE: both buf and size may change, but even when -1 is returned
+ * you still have to free() it yourself.
+ */
+int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 {
-	unsigned long size = 4096;
-	char *buf = malloc(size);
-	int iret, ret;
+	char* buf = *return_buf;
+	unsigned long size = *return_size;
+	int iret;
 	unsigned long off = 0;
-	unsigned char hdr[50];
-	int hdrlen;
+
 	do {
-		iret = read(fd, buf + off, size - off);
+		iret = xread(fd, buf + off, size - off);
 		if (iret > 0) {
 			off += iret;
 			if (off == size) {
@@ -1663,16 +1671,34 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 			}
 		}
 	} while (iret > 0);
-	if (iret < 0) {
+
+	*return_buf = buf;
+	*return_size = off;
+
+	if (iret < 0)
+		return -1;
+	return 0;
+}
+
+int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
+{
+	unsigned long size = 4096;
+	char *buf = malloc(size);
+	int ret;
+	unsigned char hdr[50];
+	int hdrlen;
+
+	if (read_pipe(fd, &buf, &size)) {
 		free(buf);
 		return -1;
 	}
+
 	if (!type)
 		type = blob_type;
 	if (write_object)
-		ret = write_sha1_file(buf, off, type, sha1);
+		ret = write_sha1_file(buf, size, type, sha1);
 	else {
-		write_sha1_file_prepare(buf, off, type, sha1, hdr, &hdrlen);
+		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
 		ret = 0;
 	}
 	free(buf);
