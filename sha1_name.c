@@ -4,6 +4,7 @@
 #include "tree.h"
 #include "blob.h"
 #include "tree-walk.h"
+#include "refs.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
@@ -245,36 +246,61 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		"refs/remotes/%.*s/HEAD",
 		NULL
 	};
-	const char **p;
-	const char *warning = "warning: refname '%.*s' is ambiguous.\n";
-	char *pathname;
-	int already_found = 0;
+	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
+	const char **p, *pathname;
+	char *real_path = NULL;
+	int refs_found = 0, am;
+	unsigned long at_time = (unsigned long)-1;
 	unsigned char *this_result;
 	unsigned char sha1_from_ref[20];
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
+	/* At a given period of time? "@{2 hours ago}" */
+	for (am = 1; am < len - 1; am++) {
+		if (str[am] == '@' && str[am+1] == '{' && str[len-1] == '}') {
+			int date_len = len - am - 3;
+			char *date_spec = xmalloc(date_len + 1);
+			strncpy(date_spec, str + am + 2, date_len);
+			date_spec[date_len] = 0;
+			at_time = approxidate(date_spec);
+			free(date_spec);
+			len = am;
+			break;
+		}
+	}
+
 	/* Accept only unambiguous ref paths. */
 	if (ambiguous_path(str, len))
 		return -1;
 
 	for (p = fmt; *p; p++) {
-		this_result = already_found ? sha1_from_ref : sha1;
-		pathname = git_path(*p, len, str);
-		if (!read_ref(pathname, this_result)) {
-			if (warn_ambiguous_refs) {
-				if (already_found)
-					fprintf(stderr, warning, len, str);
-				already_found++;
-			}
-			else
-				return 0;
+		this_result = refs_found ? sha1_from_ref : sha1;
+		pathname = resolve_ref(git_path(*p, len, str), this_result, 1);
+		if (pathname) {
+			if (!refs_found++)
+				real_path = strdup(pathname);
+			if (!warn_ambiguous_refs)
+				break;
 		}
 	}
-	if (already_found)
-		return 0;
-	return -1;
+
+	if (!refs_found)
+		return -1;
+
+	if (warn_ambiguous_refs && refs_found > 1)
+		fprintf(stderr, warning, len, str);
+
+	if (at_time != (unsigned long)-1) {
+		read_ref_at(
+			real_path + strlen(git_path(".")) - 1,
+			at_time,
+			sha1);
+	}
+
+	free(real_path);
+	return 0;
 }
 
 static int get_sha1_1(const char *name, int len, unsigned char *sha1);
@@ -456,7 +482,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
  */
 int get_sha1(const char *name, unsigned char *sha1)
 {
-	int ret;
+	int ret, bracket_depth;
 	unsigned unused;
 	int namelen = strlen(name);
 	const char *cp;
@@ -502,8 +528,15 @@ int get_sha1(const char *name, unsigned char *sha1)
 		}
 		return -1;
 	}
-	cp = strchr(name, ':');
-	if (cp) {
+	for (cp = name, bracket_depth = 0; *cp; cp++) {
+		if (*cp == '{')
+			bracket_depth++;
+		else if (bracket_depth && *cp == '}')
+			bracket_depth--;
+		else if (!bracket_depth && *cp == ':')
+			break;
+	}
+	if (*cp == ':') {
 		unsigned char tree_sha1[20];
 		if (!get_sha1_1(name, cp-name, tree_sha1))
 			return get_tree_entry(tree_sha1, cp+1, sha1,

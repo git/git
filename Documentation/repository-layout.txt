@@ -128,3 +128,14 @@ remotes::
 	Stores shorthands to be used to give URL and default
 	refnames to interact with remote repository to `git
 	fetch`, `git pull` and `git push` commands.
+
+logs::
+	Records of changes made to refs are stored in this
+	directory.  See the documentation on git-update-ref
+	for more information.
+
+logs/refs/heads/`name`::
+	Records all changes made to the branch tip named `name`.
+
+logs/refs/tags/`name`::
+	Records all changes made to the tag named `name`.

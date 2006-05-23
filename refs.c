@@ -142,6 +142,8 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			namelen = strlen(de->d_name);
 			if (namelen > 255)
 				continue;
+			if (namelen>5 && !strcmp(de->d_name+namelen-5,".lock"))
+				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
 			if (stat(git_path("%s", path), &st) < 0)
 				continue;
@@ -198,119 +200,11 @@ int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *sha1))
 	return do_for_each_ref("refs/remotes", fn, 13);
 }
 
-static char *ref_file_name(const char *ref)
-{
-	char *base = get_refs_directory();
-	int baselen = strlen(base);
-	int reflen = strlen(ref);
-	char *ret = xmalloc(baselen + 2 + reflen);
-	sprintf(ret, "%s/%s", base, ref);
-	return ret;
-}
-
-static char *ref_lock_file_name(const char *ref)
-{
-	char *base = get_refs_directory();
-	int baselen = strlen(base);
-	int reflen = strlen(ref);
-	char *ret = xmalloc(baselen + 7 + reflen);
-	sprintf(ret, "%s/%s.lock", base, ref);
-	return ret;
-}
-
 int get_ref_sha1(const char *ref, unsigned char *sha1)
 {
 	if (check_ref_format(ref))
 		return -1;
 	return read_ref(git_path("refs/%s", ref), sha1);
-}
-
-static int lock_ref_file(const char *filename, const char *lock_filename,
-			 const unsigned char *old_sha1)
-{
-	int fd = open(lock_filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	unsigned char current_sha1[20];
-	int retval;
-	if (fd < 0) {
-		return error("Couldn't open lock file for %s: %s",
-			     filename, strerror(errno));
-	}
-	retval = read_ref(filename, current_sha1);
-	if (old_sha1) {
-		if (retval) {
-			close(fd);
-			unlink(lock_filename);
-			return error("Could not read the current value of %s",
-				     filename);
-		}
-		if (memcmp(current_sha1, old_sha1, 20)) {
-			close(fd);
-			unlink(lock_filename);
-			error("The current value of %s is %s",
-			      filename, sha1_to_hex(current_sha1));
-			return error("Expected %s",
-				     sha1_to_hex(old_sha1));
-		}
-	} else {
-		if (!retval) {
-			close(fd);
-			unlink(lock_filename);
-			return error("Unexpectedly found a value of %s for %s",
-				     sha1_to_hex(current_sha1), filename);
-		}
-	}
-	return fd;
-}
-
-int lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
-{
-	char *filename;
-	char *lock_filename;
-	int retval;
-	if (check_ref_format(ref))
-		return -1;
-	filename = ref_file_name(ref);
-	lock_filename = ref_lock_file_name(ref);
-	retval = lock_ref_file(filename, lock_filename, old_sha1);
-	free(filename);
-	free(lock_filename);
-	return retval;
-}
-
-static int write_ref_file(const char *filename,
-			  const char *lock_filename, int fd,
-			  const unsigned char *sha1)
-{
-	char *hex = sha1_to_hex(sha1);
-	char term = '\n';
-	if (write(fd, hex, 40) < 40 ||
-	    write(fd, &term, 1) < 1) {
-		error("Couldn't write %s", filename);
-		close(fd);
-		return -1;
-	}
-	close(fd);
-	rename(lock_filename, filename);
-	return 0;
-}
-
-int write_ref_sha1(const char *ref, int fd, const unsigned char *sha1)
-{
-	char *filename;
-	char *lock_filename;
-	int retval;
-	if (fd < 0)
-		return -1;
-	if (check_ref_format(ref))
-		return -1;
-	filename = ref_file_name(ref);
-	lock_filename = ref_lock_file_name(ref);
-	if (safe_create_leading_directories(filename))
-		die("unable to create leading directory for %s", filename);
-	retval = write_ref_file(filename, lock_filename, fd, sha1);
-	free(filename);
-	free(lock_filename);
-	return retval;
 }
 
 /*
@@ -365,25 +259,255 @@ int check_ref_format(const char *ref)
 	}
 }
 
-int write_ref_sha1_unlocked(const char *ref, const unsigned char *sha1)
+static struct ref_lock* verify_lock(struct ref_lock *lock,
+	const unsigned char *old_sha1, int mustexist)
 {
-	char *filename;
-	char *lock_filename;
-	int fd;
-	int retval;
-	if (check_ref_format(ref))
-		return -1;
-	filename = ref_file_name(ref);
-	lock_filename = ref_lock_file_name(ref);
-	if (safe_create_leading_directories(filename))
-		die("unable to create leading directory for %s", filename);
-	fd = open(lock_filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0) {
-		error("Writing %s", lock_filename);
-		perror("Open");
+	char buf[40];
+	int nr, fd = open(lock->ref_file, O_RDONLY);
+	if (fd < 0 && (mustexist || errno != ENOENT)) {
+		error("Can't verify ref %s", lock->ref_file);
+		unlock_ref(lock);
+		return NULL;
 	}
-	retval = write_ref_file(filename, lock_filename, fd, sha1);
-	free(filename);
-	free(lock_filename);
-	return retval;
+	nr = read(fd, buf, 40);
+	close(fd);
+	if (nr != 40 || get_sha1_hex(buf, lock->old_sha1) < 0) {
+		error("Can't verify ref %s", lock->ref_file);
+		unlock_ref(lock);
+		return NULL;
+	}
+	if (memcmp(lock->old_sha1, old_sha1, 20)) {
+		error("Ref %s is at %s but expected %s", lock->ref_file,
+			sha1_to_hex(lock->old_sha1), sha1_to_hex(old_sha1));
+		unlock_ref(lock);
+		return NULL;
+	}
+	return lock;
+}
+
+static struct ref_lock* lock_ref_sha1_basic(const char *path,
+	int plen,
+	const unsigned char *old_sha1, int mustexist)
+{
+	struct ref_lock *lock;
+	struct stat st;
+
+	lock = xcalloc(1, sizeof(struct ref_lock));
+	lock->lock_fd = -1;
+
+	plen = strlen(path) - plen;
+	path = resolve_ref(path, lock->old_sha1, mustexist);
+	if (!path) {
+		unlock_ref(lock);
+		return NULL;
+	}
+
+	lock->ref_file = strdup(path);
+	lock->lock_file = strdup(mkpath("%s.lock", lock->ref_file));
+	lock->log_file = strdup(git_path("logs/%s", lock->ref_file + plen));
+	lock->force_write = lstat(lock->ref_file, &st) && errno == ENOENT;
+
+	if (safe_create_leading_directories(lock->lock_file))
+		die("unable to create directory for %s", lock->lock_file);
+	lock->lock_fd = open(lock->lock_file,
+		O_WRONLY | O_CREAT | O_EXCL, 0666);
+	if (lock->lock_fd < 0) {
+		error("Couldn't open lock file %s: %s",
+			lock->lock_file, strerror(errno));
+		unlock_ref(lock);
+		return NULL;
+	}
+
+	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
+}
+
+struct ref_lock* lock_ref_sha1(const char *ref,
+	const unsigned char *old_sha1, int mustexist)
+{
+	if (check_ref_format(ref))
+		return NULL;
+	return lock_ref_sha1_basic(git_path("refs/%s", ref),
+		5 + strlen(ref), old_sha1, mustexist);
+}
+
+struct ref_lock* lock_any_ref_for_update(const char *ref,
+	const unsigned char *old_sha1, int mustexist)
+{
+	return lock_ref_sha1_basic(git_path("%s", ref),
+		strlen(ref), old_sha1, mustexist);
+}
+
+void unlock_ref (struct ref_lock *lock)
+{
+	if (lock->lock_fd >= 0) {
+		close(lock->lock_fd);
+		unlink(lock->lock_file);
+	}
+	if (lock->ref_file)
+		free(lock->ref_file);
+	if (lock->lock_file)
+		free(lock->lock_file);
+	if (lock->log_file)
+		free(lock->log_file);
+	free(lock);
+}
+
+static int log_ref_write(struct ref_lock *lock,
+	const unsigned char *sha1, const char *msg)
+{
+	int logfd, written, oflags = O_APPEND | O_WRONLY;
+	unsigned maxlen, len;
+	char *logrec;
+	const char *comitter;
+
+	if (log_all_ref_updates) {
+		if (safe_create_leading_directories(lock->log_file) < 0)
+			return error("unable to create directory for %s",
+				lock->log_file);
+		oflags |= O_CREAT;
+	}
+
+	logfd = open(lock->log_file, oflags, 0666);
+	if (logfd < 0) {
+		if (!log_all_ref_updates && errno == ENOENT)
+			return 0;
+		return error("Unable to append to %s: %s",
+			lock->log_file, strerror(errno));
+	}
+
+	setup_ident();
+	comitter = git_committer_info(1);
+	if (msg) {
+		maxlen = strlen(comitter) + strlen(msg) + 2*40 + 5;
+		logrec = xmalloc(maxlen);
+		len = snprintf(logrec, maxlen, "%s %s %s\t%s\n",
+			sha1_to_hex(lock->old_sha1),
+			sha1_to_hex(sha1),
+			comitter,
+			msg);
+	} else {
+		maxlen = strlen(comitter) + 2*40 + 4;
+		logrec = xmalloc(maxlen);
+		len = snprintf(logrec, maxlen, "%s %s %s\n",
+			sha1_to_hex(lock->old_sha1),
+			sha1_to_hex(sha1),
+			comitter);
+	}
+	written = len <= maxlen ? write(logfd, logrec, len) : -1;
+	free(logrec);
+	close(logfd);
+	if (written != len)
+		return error("Unable to append to %s", lock->log_file);
+	return 0;
+}
+
+int write_ref_sha1(struct ref_lock *lock,
+	const unsigned char *sha1, const char *logmsg)
+{
+	static char term = '\n';
+
+	if (!lock)
+		return -1;
+	if (!lock->force_write && !memcmp(lock->old_sha1, sha1, 20)) {
+		unlock_ref(lock);
+		return 0;
+	}
+	if (write(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
+	    write(lock->lock_fd, &term, 1) != 1
+		|| close(lock->lock_fd) < 0) {
+		error("Couldn't write %s", lock->lock_file);
+		unlock_ref(lock);
+		return -1;
+	}
+	if (log_ref_write(lock, sha1, logmsg) < 0) {
+		unlock_ref(lock);
+		return -1;
+	}
+	if (rename(lock->lock_file, lock->ref_file) < 0) {
+		error("Couldn't set %s", lock->ref_file);
+		unlock_ref(lock);
+		return -1;
+	}
+	lock->lock_fd = -1;
+	unlock_ref(lock);
+	return 0;
+}
+
+int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
+{
+	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
+	char *tz_c;
+	int logfd, tz;
+	struct stat st;
+	unsigned long date;
+	unsigned char logged_sha1[20];
+
+	logfile = git_path("logs/%s", ref);
+	logfd = open(logfile, O_RDONLY, 0);
+	if (logfd < 0)
+		die("Unable to read log %s: %s", logfile, strerror(errno));
+	fstat(logfd, &st);
+	if (!st.st_size)
+		die("Log %s is empty.", logfile);
+	logdata = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	close(logfd);
+
+	lastrec = NULL;
+	rec = logend = logdata + st.st_size;
+	while (logdata < rec) {
+		if (logdata < rec && *(rec-1) == '\n')
+			rec--;
+		lastgt = NULL;
+		while (logdata < rec && *(rec-1) != '\n') {
+			rec--;
+			if (*rec == '>')
+				lastgt = rec;
+		}
+		if (!lastgt)
+			die("Log %s is corrupt.", logfile);
+		date = strtoul(lastgt + 1, &tz_c, 10);
+		if (date <= at_time) {
+			if (lastrec) {
+				if (get_sha1_hex(lastrec, logged_sha1))
+					die("Log %s is corrupt.", logfile);
+				if (get_sha1_hex(rec + 41, sha1))
+					die("Log %s is corrupt.", logfile);
+				if (memcmp(logged_sha1, sha1, 20)) {
+					tz = strtoul(tz_c, NULL, 10);
+					fprintf(stderr,
+						"warning: Log %s has gap after %s.\n",
+						logfile, show_rfc2822_date(date, tz));
+				}
+			} else if (date == at_time) {
+				if (get_sha1_hex(rec + 41, sha1))
+					die("Log %s is corrupt.", logfile);
+			} else {
+				if (get_sha1_hex(rec + 41, logged_sha1))
+					die("Log %s is corrupt.", logfile);
+				if (memcmp(logged_sha1, sha1, 20)) {
+					tz = strtoul(tz_c, NULL, 10);
+					fprintf(stderr,
+						"warning: Log %s unexpectedly ended on %s.\n",
+						logfile, show_rfc2822_date(date, tz));
+				}
+			}
+			munmap((void*)logdata, st.st_size);
+			return 0;
+		}
+		lastrec = rec;
+	}
+
+	rec = logdata;
+	while (rec < logend && *rec != '>' && *rec != '\n')
+		rec++;
+	if (rec == logend || *rec == '\n')
+		die("Log %s is corrupt.", logfile);
+	date = strtoul(rec + 1, &tz_c, 10);
+	tz = strtoul(tz_c, NULL, 10);
+	if (get_sha1_hex(logdata, sha1))
+		die("Log %s is corrupt.", logfile);
+	munmap((void*)logdata, st.st_size);
+	fprintf(stderr, "warning: Log %s only goes back to %s.\n",
+		logfile, show_rfc2822_date(date, tz));
+	return 0;
 }

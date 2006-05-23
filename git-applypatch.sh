@@ -204,7 +204,7 @@ echo Wrote tree $tree
 parent=$(git-rev-parse --verify HEAD) &&
 commit=$(git-commit-tree $tree -p $parent <"$final") || exit 1
 echo Committed: $commit
-git-update-ref HEAD $commit $parent || exit
+git-update-ref -m "applypatch: $SUBJECT" HEAD $commit $parent || exit
 
 if test -x "$GIT_DIR"/hooks/post-applypatch
 then

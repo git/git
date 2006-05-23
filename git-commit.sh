@@ -687,7 +687,8 @@ then
 		rm -f "$TMP_INDEX"
 	fi &&
 	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
-	git-update-ref HEAD $commit $current &&
+	rlogm=$(sed -e 1q "$GIT_DIR"/COMMIT_MSG) &&
+	git-update-ref -m "commit: $rlogm" HEAD $commit $current &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD" &&
 	if test -f "$NEXT_INDEX"
 	then

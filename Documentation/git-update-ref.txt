@@ -7,7 +7,7 @@ git-update-ref - update the object name stored in a ref safely
 
 SYNOPSIS
 --------
-'git-update-ref' <ref> <newvalue> [<oldvalue>]
+'git-update-ref' [-m <reason>] <ref> <newvalue> [<oldvalue>]
 
 DESCRIPTION
 -----------
@@ -48,6 +48,32 @@ that point to "outside" the tree are safe: they'll be followed
 for reading but not for writing (so we'll never write through a
 ref symlink to some other tree, if you have copied a whole
 archive by creating a symlink tree).
+
+Logging Updates
+---------------
+If config parameter "core.logAllRefUpdates" is true or the file
+"$GIT_DIR/logs/<ref>" exists then `git-update-ref` will append
+a line to the log file "$GIT_DIR/logs/<ref>" (dereferencing all
+symbolic refs before creating the log name) describing the change
+in ref value.  Log lines are formatted as:
+
+    . oldsha1 SP newsha1 SP committer LF
++
+Where "oldsha1" is the 40 character hexadecimal value previously
+stored in <ref>, "newsha1" is the 40 character hexadecimal value of
+<newvalue> and "committer" is the committer's name, email address
+and date in the standard GIT committer ident format.
+
+Optionally with -m:
+
+    . oldsha1 SP newsha1 SP committer TAB message LF
++
+Where all fields are as described above and "message" is the
+value supplied to the -m option.
+
+An update will fail (without changing <ref>) if the current user is
+unable to create a new log file, append to the existing log file
+or does not have committer information available.
 
 Author
 ------

@@ -179,6 +179,7 @@ extern void rollback_index_file(struct cache_file *);
 extern int trust_executable_bit;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
+extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int diff_rename_limit_default;
 extern int shared_repository;
