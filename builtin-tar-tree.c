@@ -304,7 +304,7 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
-int generate_tar(int argc, const char **argv)
+static int generate_tar(int argc, const char **argv, char** envp)
 {
 	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;
@@ -404,5 +404,5 @@ int cmd_tar_tree(int argc, const char **argv, char **envp)
 		usage(tar_tree_usage);
 	if (!strncmp("--remote=", argv[1], 9))
 		return remote_tar(argc, argv);
-	return generate_tar(argc, argv);
+	return generate_tar(argc, argv, envp);
 }

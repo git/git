@@ -32,5 +32,15 @@ extern int cmd_check_ref_format(int argc, const char **argv, char **envp);
 extern int cmd_init_db(int argc, const char **argv, char **envp);
 extern int cmd_tar_tree(int argc, const char **argv, char **envp);
 extern int cmd_upload_tar(int argc, const char **argv, char **envp);
+extern int cmd_ls_files(int argc, const char **argv, char **envp);
+extern int cmd_ls_tree(int argc, const char **argv, char **envp);
+extern int cmd_read_tree(int argc, const char **argv, char **envp);
+extern int cmd_commit_tree(int argc, const char **argv, char **envp);
+extern int cmd_apply(int argc, const char **argv, char **envp);
+extern int cmd_show_branch(int argc, const char **argv, char **envp);
+extern int cmd_diff_files(int argc, const char **argv, char **envp);
+extern int cmd_diff_index(int argc, const char **argv, char **envp);
+extern int cmd_diff_stages(int argc, const char **argv, char **envp);
+extern int cmd_diff_tree(int argc, const char **argv, char **envp);
 
 #endif

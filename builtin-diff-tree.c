@@ -2,6 +2,7 @@
 #include "diff.h"
 #include "commit.h"
 #include "log-tree.h"
+#include "builtin.h"
 
 static struct rev_info log_tree_opt;
 
@@ -58,7 +59,7 @@ static const char diff_tree_usage[] =
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-int main(int argc, const char **argv)
+int cmd_diff_tree(int argc, const char **argv, char **envp)
 {
 	int nr_sha1;
 	char line[1000];
