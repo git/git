@@ -385,20 +385,29 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 {
 	int ofs = 0;
 	while (ofs < sz) {
+		const char *colon;
 		int peek, len;
 		if (fgets(line + ofs, sz - ofs, in) == NULL)
-			return ofs;
+			break;
 		len = eatspace(line + ofs);
 		if (len == 0)
-			return ofs;
-		peek = fgetc(in); ungetc(peek, in);
-		if (peek == ' ' || peek == '\t') {
-			/* Yuck, 2822 header "folding" */
-			ofs += len;
-			continue;
+			break;
+		colon = strchr(line, ':');
+		if (!colon || !isspace(colon[1])) {
+			/* Re-add the newline */
+			line[ofs + len] = '\n';
+			line[ofs + len + 1] = '\0';
+			break;
 		}
-		return ofs + len;
+		ofs += len;
+		/* Yuck, 2822 header "folding" */
+		peek = fgetc(in); ungetc(peek, in);
+		if (peek != ' ' && peek != '\t')
+			break;
 	}
+	/* Count mbox From headers as headers */
+	if (!ofs && !memcmp(line, "From ", 5))
+		ofs = 1;
 	return ofs;
 }
 
