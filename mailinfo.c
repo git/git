@@ -237,38 +237,41 @@ static int eatspace(char *line)
 #define SEEN_FROM 01
 #define SEEN_DATE 02
 #define SEEN_SUBJECT 04
+#define SEEN_PREFIX  0x08
 
 /* First lines of body can have From:, Date:, and Subject: */
-static int handle_inbody_header(int *seen, char *line)
+static void handle_inbody_header(int *seen, char *line)
 {
+	if (*seen & SEEN_PREFIX)
+		return;
 	if (!memcmp("From:", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_FROM) && handle_from(line+6)) {
 			*seen |= SEEN_FROM;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("Date:", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_DATE)) {
 			handle_date(line+6);
 			*seen |= SEEN_DATE;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("Subject:", line, 8) && isspace(line[8])) {
 		if (!(*seen & SEEN_SUBJECT)) {
 			handle_subject(line+9);
 			*seen |= SEEN_SUBJECT;
-			return 1;
+			return;
 		}
 	}
 	if (!memcmp("[PATCH]", line, 7) && isspace(line[7])) {
 		if (!(*seen & SEEN_SUBJECT)) {
 			handle_subject(line);
 			*seen |= SEEN_SUBJECT;
-			return 1;
+			return;
 		}
 	}
-	return 0;
+	*seen |= SEEN_PREFIX;
 }
 
 static char *cleanup_subject(char *subject)
@@ -590,12 +593,7 @@ static void decode_transfer_encoding(char *line)
 static void handle_info(void)
 {
 	char *sub;
-	static int done_info = 0;
 
-	if (done_info)
-		return;
-
-	done_info = 1;
 	sub = cleanup_subject(subject);
 	cleanup_space(name);
 	cleanup_space(date);
@@ -609,7 +607,7 @@ static void handle_info(void)
 /* We are inside message body and have read line[] already.
  * Spit out the commit log.
  */
-static int handle_commit_msg(void)
+static int handle_commit_msg(int *seen)
 {
 	if (!cmitmsg)
 		return 0;
@@ -633,6 +631,11 @@ static int handle_commit_msg(void)
 		decode_transfer_encoding(line);
 		if (metainfo_charset)
 			convert_to_utf8(line, charset);
+
+		handle_inbody_header(seen, line);
+		if (!(*seen & SEEN_PREFIX))
+			continue;
+
 		fputs(line, cmitmsg);
 	} while (fgets(line, sizeof(line), stdin) != NULL);
 	fclose(cmitmsg);
@@ -664,26 +667,16 @@ static void handle_patch(void)
  * that the first part to contain commit message and a patch, and
  * handle other parts as pure patches.
  */
-static int handle_multipart_one_part(void)
+static int handle_multipart_one_part(int *seen)
 {
-	int seen = 0;
 	int n = 0;
-	int len;
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 	again:
-		len = eatspace(line);
 		n++;
-		if (!len)
-			continue;
 		if (is_multipart_boundary(line))
 			break;
-		if (0 <= seen && handle_inbody_header(&seen, line))
-			continue;
-		seen = -1; /* no more inbody headers */
-		line[len] = '\n';
-		handle_info();
-		if (handle_commit_msg())
+		if (handle_commit_msg(seen))
 			goto again;
 		handle_patch();
 		break;
@@ -695,6 +688,7 @@ static int handle_multipart_one_part(void)
 
 static void handle_multipart_body(void)
 {
+	int seen = 0;
 	int part_num = 0;
 
 	/* Skip up to the first boundary */
@@ -709,7 +703,7 @@ static void handle_multipart_body(void)
 	while (1) {
 		int hdr = read_one_header_line(line, sizeof(line), stdin);
 		if (!hdr) {
-			if (handle_multipart_one_part() < 0)
+			if (handle_multipart_one_part(&seen) < 0)
 				return;
 			/* Reset per part headers */
 			transfer_encoding = TE_DONTCARE;
@@ -730,18 +724,9 @@ static void handle_body(void)
 {
 	int seen = 0;
 
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = eatspace(line);
-		if (!len)
-			continue;
-		if (0 <= seen && handle_inbody_header(&seen, line))
-			continue;
-		seen = -1; /* no more inbody headers */
-		line[len] = '\n';
-		handle_info();
-		handle_commit_msg();
+	if (fgets(line, sizeof(line), stdin) != NULL) {
+		handle_commit_msg(&seen);
 		handle_patch();
-		break;
 	}
 	fclose(patchfile);
 	if (!patch_lines) {
@@ -791,6 +776,7 @@ int main(int argc, char **argv)
 				handle_multipart_body();
 			else
 				handle_body();
+			handle_info();
 			break;
 		}
 		check_header_line(line);
