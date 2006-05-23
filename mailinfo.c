@@ -324,6 +324,7 @@ static void cleanup_space(char *buf)
 	}
 }
 
+static void decode_header_bq(char *it);
 typedef int (*header_fn_t)(char *);
 struct header_def {
 	const char *name;
@@ -343,6 +344,10 @@ static void check_header(char *line, struct header_def *header)
 		int len = header[i].namelen;
 		if (!strncasecmp(line, header[i].name, len) &&
 		    line[len] == ':' && isspace(line[len + 1])) {
+			/* Unwrap inline B and Q encoding, and optionally
+			 * normalize the meta information to utf8.
+			 */
+			decode_header_bq(line + len + 2);
 			header[i].func(line + len + 2);
 			break;
 		}
@@ -597,13 +602,6 @@ static void handle_info(void)
 	cleanup_space(email);
 	cleanup_space(sub);
 
-	/* Unwrap inline B and Q encoding, and optionally
-	 * normalize the meta information to utf8.
-	 */
-	decode_header_bq(name);
-	decode_header_bq(date);
-	decode_header_bq(email);
-	decode_header_bq(sub);
 	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n",
 	       name, email, sub, date);
 }
