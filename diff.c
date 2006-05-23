@@ -237,7 +237,7 @@ static char *pprint_rename(const char *a, const char *b)
 		if (a_midlen < 0) a_midlen = 0;
 		if (b_midlen < 0) b_midlen = 0;
 
-		name = xmalloc(len_a + len_b - pfx_length - sfx_length + 7);
+		name = xmalloc(pfx_length + a_midlen + b_midlen + sfx_length + 7);
 		sprintf(name, "%.*s{%.*s => %.*s}%s",
 			pfx_length, a,
 			a_midlen, a + pfx_length,
