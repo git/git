@@ -56,7 +56,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "ls-files", cmd_ls_files },
 		{ "ls-tree", cmd_ls_tree },
 		{ "tar-tree", cmd_tar_tree },
-		{ "read-tree", cmd_read_tree }
+		{ "read-tree", cmd_read_tree },
+		{ "commit-tree", cmd_commit_tree }
 	};
 	int i;
 
