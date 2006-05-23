@@ -1988,6 +1988,9 @@ void diff_flush(struct diff_options *options)
 		show_stats(diffstat);
 		free(diffstat);
 		diffstat = NULL;
+		if (options->summary)
+			for (i = 0; i < q->nr; i++)
+				diff_summary(q->queue[i]);
 		putchar(options->line_termination);
 	}
 	for (i = 0; i < q->nr; i++) {
@@ -2001,7 +2004,7 @@ void diff_flush(struct diff_options *options)
 	}
 
 	for (i = 0; i < q->nr; i++) {
-		if (options->summary)
+		if (diffstat && options->summary)
 			diff_summary(q->queue[i]);
 		diff_free_filepair(q->queue[i]);
 	}
