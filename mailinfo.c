@@ -331,7 +331,7 @@ struct header_def {
 	int namelen;
 };
 
-static void check_header(char *line, int len, struct header_def *header)
+static void check_header(char *line, struct header_def *header)
 {
 	int i;
 
@@ -349,7 +349,7 @@ static void check_header(char *line, int len, struct header_def *header)
 	}
 }
 
-static void check_subheader_line(char *line, int len)
+static void check_subheader_line(char *line)
 {
 	static struct header_def header[] = {
 		{ "Content-Type", handle_subcontent_type },
@@ -357,9 +357,9 @@ static void check_subheader_line(char *line, int len)
 		  handle_content_transfer_encoding },
 		{ NULL },
 	};
-	check_header(line, len, header);
+	check_header(line, header);
 }
-static void check_header_line(char *line, int len)
+static void check_header_line(char *line)
 {
 	static struct header_def header[] = {
 		{ "From", handle_from },
@@ -370,7 +370,7 @@ static void check_header_line(char *line, int len)
 		  handle_content_transfer_encoding },
 		{ NULL },
 	};
-	check_header(line, len, header);
+	check_header(line, header);
 }
 
 static int read_one_header_line(char *line, int sz, FILE *in)
@@ -709,8 +709,8 @@ static void handle_multipart_body(void)
 		return;
 	/* We are on boundary line.  Start slurping the subhead. */
 	while (1) {
-		int len = read_one_header_line(line, sizeof(line), stdin);
-		if (!len) {
+		int hdr = read_one_header_line(line, sizeof(line), stdin);
+		if (!hdr) {
 			if (handle_multipart_one_part() < 0)
 				return;
 			/* Reset per part headers */
@@ -718,7 +718,7 @@ static void handle_multipart_body(void)
 			charset[0] = 0;
 		}
 		else
-			check_subheader_line(line, len);
+			check_subheader_line(line);
 	}
 	fclose(patchfile);
 	if (!patch_lines) {
@@ -787,15 +787,15 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	while (1) {
-		int len = read_one_header_line(line, sizeof(line), stdin);
-		if (!len) {
+		int hdr = read_one_header_line(line, sizeof(line), stdin);
+		if (!hdr) {
 			if (multipart_boundary[0])
 				handle_multipart_body();
 			else
 				handle_body();
 			break;
 		}
-		check_header_line(line, len);
+		check_header_line(line);
 	}
 	return 0;
 }
