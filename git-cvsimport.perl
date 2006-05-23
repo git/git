@@ -853,10 +853,14 @@ while(<CVS>) {
 	} elsif($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif(($state == 9 or $state == 10) and /^-+$/) {
-		if ($opt_L && $commitcount++ >= $opt_L) {
+		$commitcount++;
+		if ($opt_L && $commitcount > $opt_L) {
 			last;
 		}
 		commit();
+		if (($commitcount & 1023) == 0) {
+			system("git repack -a -d");
+		}
 		$state = 1;
 	} elsif($state == 11 and /^-+$/) {
 		$state = 1;
