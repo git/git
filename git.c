@@ -59,7 +59,11 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "read-tree", cmd_read_tree },
 		{ "commit-tree", cmd_commit_tree },
 		{ "apply", cmd_apply },
-		{ "show-branch", cmd_show_branch }
+		{ "show-branch", cmd_show_branch },
+		{ "diff-files", cmd_diff_files },
+		{ "diff-index", cmd_diff_index },
+		{ "diff-stages", cmd_diff_stages },
+		{ "diff-tree", cmd_diff_tree }
 	};
 	int i;
 

@@ -151,9 +151,7 @@ SIMPLE_PROGRAMS = \
 PROGRAMS = \
 	git-cat-file$X \
 	git-checkout-index$X git-clone-pack$X \
-	git-convert-objects$X git-diff-files$X \
-	git-diff-index$X git-diff-stages$X \
-	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
+	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
@@ -173,7 +171,8 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-grep$X git-rev-list$X git-check-ref-format$X \
 	git-init-db$X git-ls-files$X git-ls-tree$X \
 	git-tar-tree$X git-read-tree$X git-commit-tree$X \
-	git-apply$X git-show-branch$X
+	git-apply$X git-show-branch$X git-diff-files$X \
+	git-diff-index$X git-diff-stages$X git-diff-tree$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -223,8 +222,9 @@ BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
 	builtin-grep.o builtin-rev-list.o builtin-check-ref-format.o \
 	builtin-init-db.o builtin-ls-files.o builtin-ls-tree.o \
-        builtin-tar-tree.o builtin-read-tree.o builtin-commit-tree.o \
-	builtin-apply.o builtin-show-branch.o
+	builtin-tar-tree.o builtin-read-tree.o builtin-commit-tree.o \
+	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
+	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
