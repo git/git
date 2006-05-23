@@ -10,6 +10,7 @@
 
 #include "cache.h"
 #include "quote.h"
+#include "builtin.h"
 
 static int abbrev = 0;
 static int show_deleted = 0;
@@ -648,7 +649,7 @@ static const char ls_files_usage[] =
 	"[ --exclude-per-directory=<filename> ] [--full-name] [--abbrev] "
 	"[--] [<file>]*";
 
-int main(int argc, const char **argv)
+int cmd_ls_files(int argc, const char **argv, char** envp)
 {
 	int i;
 	int exc_given = 0;

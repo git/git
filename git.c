@@ -52,7 +52,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "grep", cmd_grep },
 		{ "rev-list", cmd_rev_list },
 		{ "init-db", cmd_init_db },
-		{ "check-ref-format", cmd_check_ref_format }
+		{ "check-ref-format", cmd_check_ref_format },
+		{ "ls-files", cmd_ls_files }
 	};
 	int i;
 
