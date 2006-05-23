@@ -199,7 +199,7 @@ dir="$2"
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
-trap 'err=$?; cd ..; rm -r "$D"; exit $err' exit
+trap 'err=$?; cd ..; rm -r "$D"; exit $err' 0
 case "$bare" in
 yes) GIT_DIR="$D" ;;
 *) GIT_DIR="$D/.git" ;;
@@ -407,5 +407,5 @@ Pull: refs/heads/$head_points_at:$origin_track" &&
 fi
 rm -f "$GIT_DIR/CLONE_HEAD" "$GIT_DIR/REMOTE_HEAD"
 
-trap - exit
+trap - 0
 

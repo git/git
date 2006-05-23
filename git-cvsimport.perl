@@ -563,7 +563,7 @@ my $state = 0;
 
 my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
 my(@old,@new,@skipped);
-my $commit = sub {
+sub commit {
 	my $pid;
 	while(@old) {
 		my @o2;
@@ -650,6 +650,8 @@ my $commit = sub {
 			"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
 			"git-commit-tree", $tree,@par);
 		die "Cannot exec git-commit-tree: $!\n";
+
+		close OUT;
 	}
 	$pw->writer();
 	$pr->reader();
@@ -661,6 +663,7 @@ my $commit = sub {
 	if (@skipped) {
 	    $logmsg .= "\n\n\nSKIPPED:\n\t";
 	    $logmsg .= join("\n\t", @skipped) . "\n";
+	    @skipped = ();
 	}
 
 	print $pw "$logmsg\n"
@@ -849,7 +852,7 @@ while(<CVS>) {
 	} elsif($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif(($state == 9 or $state == 10) and /^-+$/) {
-		&$commit();
+		commit();
 		$state = 1;
 	} elsif($state == 11 and /^-+$/) {
 		$state = 1;
@@ -859,7 +862,7 @@ while(<CVS>) {
 		print "* UNKNOWN LINE * $_\n";
 	}
 }
-&$commit() if $branch and $state != 11;
+commit() if $branch and $state != 11;
 
 unlink($git_index);
 
