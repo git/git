@@ -152,6 +152,6 @@ then
 	exit 0
 fi
 
-git-format-patch -k --stdout --full-index "$upstream" ORIG_HEAD |
+git-format-patch -k --stdout --full-index "$upstream"..ORIG_HEAD |
 git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
 

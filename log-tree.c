@@ -20,6 +20,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
 	const char *extra;
 	int len;
+	char *subject = NULL, *after_subject = NULL;
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
@@ -49,19 +50,67 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	/*
 	 * Print header line of header..
 	 */
-	printf("%s%s",
-		opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
-		diff_unique_abbrev(commit->object.sha1, abbrev_commit));
-	if (opt->parents)
-		show_parents(commit, abbrev_commit);
-	if (parent)
-		printf(" (from %s)", diff_unique_abbrev(parent->object.sha1, abbrev_commit));
-	putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+
+	if (opt->commit_format == CMIT_FMT_EMAIL) {
+		char *sha1 = sha1_to_hex(commit->object.sha1);
+		if (opt->total > 0) {
+			static char buffer[64];
+			snprintf(buffer, sizeof(buffer),
+					"Subject: [PATCH %d/%d] ",
+					opt->nr, opt->total);
+			subject = buffer;
+		} else if (opt->total == 0)
+			subject = "Subject: [PATCH] ";
+		else
+			subject = "Subject: ";
+
+		printf("From %s Mon Sep 17 00:00:00 2001\n", sha1);
+		if (opt->mime_boundary) {
+			static char subject_buffer[1024];
+			static char buffer[1024];
+			snprintf(subject_buffer, sizeof(subject_buffer) - 1,
+				 "MIME-Version: 1.0\n"
+				 "Content-Type: multipart/mixed;\n"
+				 " boundary=\"%s%s\"\n"
+				 "\n"
+				 "This is a multi-part message in MIME "
+				 "format.\n"
+				 "--%s%s\n"
+				 "Content-Type: text/plain; "
+				 "charset=UTF-8; format=fixed\n"
+				 "Content-Transfer-Encoding: 8bit\n\n",
+				 mime_boundary_leader, opt->mime_boundary,
+				 mime_boundary_leader, opt->mime_boundary);
+			after_subject = subject_buffer;
+
+			snprintf(buffer, sizeof(buffer) - 1,
+				 "--%s%s\n"
+				 "Content-Type: text/x-patch;\n"
+				 " name=\"%s.diff\"\n"
+				 "Content-Transfer-Encoding: 8bit\n"
+				 "Content-Disposition: inline;\n"
+				 " filename=\"%s.diff\"\n\n",
+				 mime_boundary_leader, opt->mime_boundary,
+				 sha1, sha1);
+			opt->diffopt.stat_sep = buffer;
+		}
+	} else {
+		printf("%s%s",
+		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
+		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
+		if (opt->parents)
+			show_parents(commit, abbrev_commit);
+		if (parent)
+			printf(" (from %s)",
+			       diff_unique_abbrev(parent->object.sha1,
+						  abbrev_commit));
+		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+	}
 
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev);
+	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev, subject, after_subject);
 	printf("%s%s%s", this_header, extra, sep);
 }
 
@@ -166,15 +215,18 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 int log_tree_commit(struct rev_info *opt, struct commit *commit)
 {
 	struct log_info log;
+	int shown;
 
 	log.commit = commit;
 	log.parent = NULL;
 	opt->loginfo = &log;
 
-	if (!log_tree_diff(opt, commit, &log) && opt->loginfo && opt->always_show_header) {
+	shown = log_tree_diff(opt, commit, &log);
+	if (!shown && opt->loginfo && opt->always_show_header) {
 		log.parent = NULL;
 		show_log(opt, opt->loginfo, "");
+		shown = 1;
 	}
 	opt->loginfo = NULL;
-	return 0;
+	return shown;
 }

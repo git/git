@@ -11,6 +11,7 @@
 #include "tree.h"
 #include <sys/time.h>
 #include <signal.h>
+#include "builtin.h"
 
 static int reset = 0;
 static int merge = 0;
@@ -763,7 +764,7 @@ static const char read_tree_usage[] = "git-read-tree (<sha> | -m [--aggressive] 
 
 static struct cache_file cache_file;
 
-int main(int argc, char **argv)
+int cmd_read_tree(int argc, const char **argv, char **envp)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];

@@ -11,6 +11,7 @@
 #include "quote.h"
 #include "blob.h"
 #include "delta.h"
+#include "builtin.h"
 
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
@@ -2168,7 +2169,7 @@ static int git_apply_config(const char *var, const char *value)
 }
 
 
-int main(int argc, char **argv)
+int cmd_apply(int argc, const char **argv, char **envp)
 {
 	int i;
 	int read_stdin = 1;
