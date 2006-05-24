@@ -384,6 +384,7 @@ proc makewindow {} {
     global maincursor textcursor curtextcursor
     global rowctxmenu mergemax
     global highlight_files highlight_names
+    global searchstring sstring
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -542,10 +543,20 @@ proc makewindow {} {
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
     frame .ctop.cdet.left
+    frame .ctop.cdet.left.bot
+    pack .ctop.cdet.left.bot -side bottom -fill x
+    button .ctop.cdet.left.bot.search -text "Search" -command dosearch \
+	-font $uifont
+    pack .ctop.cdet.left.bot.search -side left -padx 5
+    set sstring .ctop.cdet.left.bot.sstring
+    entry $sstring -width 20 -font $textfont -textvariable searchstring
+    lappend entries $sstring
+    trace add variable searchstring write incrsearch
+    pack $sstring -side left -expand 1 -fill x
     set ctext .ctop.cdet.left.ctext
     text $ctext -bg white -state disabled -font $textfont \
 	-width $geometry(ctextw) -height $geometry(ctexth) \
-	-yscrollcommand {.ctop.cdet.left.sb set} -wrap none
+	-yscrollcommand scrolltext -wrap none
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
@@ -645,6 +656,7 @@ proc makewindow {} {
     bind . <Control-f> dofind
     bind . <Control-g> {findnext 0}
     bind . <Control-r> findprev
+    bind . <Control-s> dosearch
     bind . <Control-equal> {incrfont 1}
     bind . <Control-KP_Add> {incrfont 1}
     bind . <Control-minus> {incrfont -1}
@@ -3643,7 +3655,7 @@ proc selectline {l isnew} {
     $sha1entry selection to end
 
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     set linknum 0
     set info $commitinfo($id)
     set date [formatdate [lindex $info 2]]
@@ -3881,7 +3893,7 @@ proc showfile {f} {
     fconfigure $bf -blocking 0
     fileevent $bf readable [list getblobline $bf $diffids]
     $ctext config -state normal
-    $ctext delete $commentend end
+    clear_ctext $commentend
     $ctext insert end "\n"
     $ctext insert end "$f\n" filesep
     $ctext config -state disabled
@@ -4181,6 +4193,89 @@ proc nextfile {} {
     }
 }
 
+proc clear_ctext {{first 1.0}} {
+    global ctext smarktop smarkbot
+
+    if {![info exists smarktop] || [$ctext compare $first < $smarktop]} {
+	set smarktop $first
+    }
+    if {![info exists smarkbot] || [$ctext compare $first < $smarkbot]} {
+	set smarkbot $first
+    }
+    $ctext delete $first end
+}
+
+proc incrsearch {name ix op} {
+    global ctext searchstring
+
+    $ctext tag remove found 1.0 end
+    if {$searchstring ne {}} {
+	searchmarkvisible 1
+    }
+}
+
+proc dosearch {} {
+    global sstring ctext searchstring
+
+    focus $sstring
+    $sstring icursor end
+    $ctext tag remove sel 1.0 end
+    if {$searchstring eq {}} return
+    set here [$ctext index insert]
+    set match [$ctext search -count mlen -- $searchstring $here]
+    if {$match eq {}} {
+	bell
+	return
+    }
+    $ctext see $match
+    set mend "$match + $mlen c"
+    $ctext tag add sel $match $mend
+    $ctext mark set insert $mend
+}
+
+proc searchmark {first last} {
+    global ctext searchstring
+
+    set mend $first.0
+    while {1} {
+	set match [$ctext search -count mlen -- $searchstring $mend $last.end]
+	if {$match eq {}} break
+	set mend "$match + $mlen c"
+	$ctext tag add found $match $mend
+    }
+}
+
+proc searchmarkvisible {doall} {
+    global ctext smarktop smarkbot
+
+    set topline [lindex [split [$ctext index @0,0] .] 0]
+    set botline [lindex [split [$ctext index @0,[winfo height $ctext]] .] 0]
+    if {$doall || $botline < $smarktop || $topline > $smarkbot} {
+	# no overlap with previous
+	searchmark $topline $botline
+	set smarktop $topline
+	set smarkbot $botline
+    } else {
+	if {$topline < $smarktop} {
+	    searchmark $topline [expr {$smarktop-1}]
+	    set smarktop $topline
+	}
+	if {$botline > $smarkbot} {
+	    searchmark [expr {$smarkbot+1}] $botline
+	    set smarkbot $botline
+	}
+    }
+}
+
+proc scrolltext {f0 f1} {
+    global ctext smarktop smarkbot searchstring
+
+    .ctop.cdet.left.sb set $f0 $f1
+    if {$searchstring ne {}} {
+	searchmarkvisible 0
+    }
+}
+
 proc setcoords {} {
     global linespc charspc canvx0 canvy0 mainfont
     global xspc1 xspc2 lthickness
@@ -4415,7 +4510,7 @@ proc lineclick {x y id isnew} {
     }
     # fill the details pane with info about this line
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     $ctext tag conf link -foreground blue -underline 1
     $ctext tag bind link <Enter> { %W configure -cursor hand2 }
     $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
@@ -4508,7 +4603,7 @@ proc doseldiff {oldid newid} {
     global commitinfo
 
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     init_flist "Top"
     $ctext insert end "From "
     $ctext tag conf link -foreground blue -underline 1
@@ -4802,7 +4897,7 @@ proc showtag {tag isnew} {
 	addtohistory [list showtag $tag 0]
     }
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     set linknum 0
     if {[info exists tagcontents($tag)]} {
 	set text $tagcontents($tag)
