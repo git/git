@@ -34,6 +34,7 @@ my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity,
+	$_repack, $_repack_nr, $_repack_flags,
 	$_version, $_upgrade, $_authors, $_branch_all_refs);
 my (@_branch_from, %tree_map, %users);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
@@ -42,7 +43,9 @@ my @repo_path_split_cache;
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
 		'branch-all-refs|B' => \$_branch_all_refs,
-		'authors-file|A=s' => \$_authors );
+		'authors-file|A=s' => \$_authors,
+		'repack:i' => \$_repack,
+		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
 
 # yes, 'native' sets "\n".  Patches to fix this for non-*nix systems welcome:
 my %EOL = ( CR => "\015", LF => "\012", CRLF => "\015\012", native => "\012" );
@@ -82,6 +85,7 @@ GetOptions(%opts, 'help|H|h' => \$_help,
 		'version|V' => \$_version,
 		'id|i=s' => \$GIT_SVN) or exit 1;
 
+set_default_vals();
 usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
@@ -1120,6 +1124,10 @@ sub git_commit {
 	sys(@update_ref);
 	sys('git-update-ref',"svn/$GIT_SVN/revs/$log_msg->{revision}",$commit);
 	print "r$log_msg->{revision} = $commit\n";
+	if ($_repack && (--$_repack_nr == 0)) {
+		$_repack_nr = $_repack;
+		sys("git repack $_repack_flags");
+	}
 	return $commit;
 }
 
@@ -1359,6 +1367,14 @@ sub read_repo_config {
 				$$v = $tmp;
 			}
 		}
+	}
+}
+
+sub set_default_vals {
+	if (defined $_repack) {
+		$_repack = 1000 if ($_repack <= 0);
+		$_repack_nr = $_repack;
+		$_repack_flags ||= '';
 	}
 }
 
