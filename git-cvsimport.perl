@@ -618,14 +618,13 @@ sub commit {
 	}
 
 	my $commit_date = strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date));
+	$ENV{GIT_AUTHOR_NAME} = $author_name;
+	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
+	$ENV{GIT_AUTHOR_DATE} = $commit_date;
+	$ENV{GIT_COMMITTER_NAME} = $author_name;
+	$ENV{GIT_COMMITTER_EMAIL} = $author_email;
+	$ENV{GIT_COMMITTER_DATE} = $commit_date;
 	my $pid = open2(my $commit_read, my $commit_write,
-		'env',
-		"GIT_AUTHOR_NAME=$author_name",
-		"GIT_AUTHOR_EMAIL=$author_email",
-		"GIT_AUTHOR_DATE=$commit_date",
-		"GIT_COMMITTER_NAME=$author_name",
-		"GIT_COMMITTER_EMAIL=$author_email",
-		"GIT_COMMITTER_DATE=$commit_date",
 		'git-commit-tree', $tree, @commit_args);
 
 	# compatibility with git2cvs
