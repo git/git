@@ -68,7 +68,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "diff-files", cmd_diff_files },
 		{ "diff-index", cmd_diff_index },
 		{ "diff-stages", cmd_diff_stages },
-		{ "diff-tree", cmd_diff_tree }
+		{ "diff-tree", cmd_diff_tree },
+		{ "cat-file", cmd_cat_file }
 	};
 	int i;
 

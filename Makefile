@@ -149,7 +149,6 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-cat-file$X \
 	git-checkout-index$X git-clone-pack$X \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
@@ -174,7 +173,7 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-ls-files$X git-ls-tree$X \
 	git-read-tree$X git-commit-tree$X \
 	git-apply$X git-show-branch$X git-diff-files$X \
-	git-diff-index$X git-diff-stages$X git-diff-tree$X
+	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -228,7 +227,8 @@ BUILTIN_OBJS = \
 	builtin-ls-files.o builtin-ls-tree.o \
 	builtin-read-tree.o builtin-commit-tree.o \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
-	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o
+	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
+	builtin-cat-file.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz

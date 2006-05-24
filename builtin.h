@@ -42,5 +42,6 @@ extern int cmd_diff_files(int argc, const char **argv, char **envp);
 extern int cmd_diff_index(int argc, const char **argv, char **envp);
 extern int cmd_diff_stages(int argc, const char **argv, char **envp);
 extern int cmd_diff_tree(int argc, const char **argv, char **envp);
+extern int cmd_cat_file(int argc, const char **argv, char **envp);
 
 #endif
