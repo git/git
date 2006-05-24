@@ -100,7 +100,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
 		if (opt->parents)
 			show_parents(commit, abbrev_commit);
-		if (parent) 
+		if (parent)
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));

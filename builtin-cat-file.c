@@ -7,6 +7,7 @@
 #include "exec_cmd.h"
 #include "tag.h"
 #include "tree.h"
+#include "builtin.h"
 
 static void flush_buffer(const char *buf, unsigned long size)
 {
@@ -93,7 +94,7 @@ static int pprint_tag(const unsigned char *sha1, const char *buf, unsigned long 
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_cat_file(int argc, const char **argv, char **envp)
 {
 	unsigned char sha1[20];
 	char type[20];
