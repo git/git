@@ -122,7 +122,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	stuff_change(&revs->diffopt,
 		     canon_mode(st.st_mode), canon_mode(st.st_mode),
 		     blob[0].sha1, null_sha1,
-		     blob[0].name, path);
+		     path, path);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -233,7 +233,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 	return 0;
 }
 
-static void add_head(struct rev_info *revs)
+void add_head(struct rev_info *revs)
 {
 	unsigned char sha1[20];
 	struct object *obj;

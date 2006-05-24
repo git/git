@@ -1399,6 +1399,25 @@ int move_temp_to_file(const char *tmpfile, char *filename)
 	return 0;
 }
 
+static int write_buffer(int fd, const void *buf, size_t len)
+{
+	while (len) {
+		ssize_t size;
+
+		size = write(fd, buf, len);
+		if (!size)
+			return error("file write: disk full");
+		if (size < 0) {
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			return error("file write error (%s)", strerror(errno));
+		}
+		len -= size;
+		buf += size;
+	}
+	return 0;
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
@@ -1465,8 +1484,8 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	deflateEnd(&stream);
 	size = stream.total_out;
 
-	if (write(fd, compressed, size) != size)
-		die("unable to write file");
+	if (write_buffer(fd, compressed, size) < 0)
+		die("unable to write sha1 file");
 	fchmod(fd, 0444);
 	close(fd);
 	free(compressed);
@@ -1474,73 +1493,70 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	return move_temp_to_file(tmpfile, filename);
 }
 
+/*
+ * We need to unpack and recompress the object for writing
+ * it out to a different file.
+ */
+static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
+{
+	size_t size;
+	z_stream stream;
+	unsigned char *unpacked;
+	unsigned long len;
+	char type[20];
+	char hdr[50];
+	int hdrlen;
+	void *buf;
+
+	// need to unpack and recompress it by itself
+	unpacked = read_packed_sha1(sha1, type, &len);
+
+	hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
+
+	/* Set it up */
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, Z_BEST_COMPRESSION);
+	size = deflateBound(&stream, len + hdrlen);
+	buf = xmalloc(size);
+
+	/* Compress it */
+	stream.next_out = buf;
+	stream.avail_out = size;
+
+	/* First header.. */
+	stream.next_in = (void *)hdr;
+	stream.avail_in = hdrlen;
+	while (deflate(&stream, 0) == Z_OK)
+		/* nothing */;
+
+	/* Then the data itself.. */
+	stream.next_in = unpacked;
+	stream.avail_in = len;
+	while (deflate(&stream, Z_FINISH) == Z_OK)
+		/* nothing */;
+	deflateEnd(&stream);
+	free(unpacked);
+
+	*objsize = stream.total_out;
+	return buf;
+}
+
 int write_sha1_to_fd(int fd, const unsigned char *sha1)
 {
-	ssize_t size;
+	int retval;
 	unsigned long objsize;
-	int posn = 0;
-	void *map = map_sha1_file_internal(sha1, &objsize);
-	void *buf = map;
-	void *temp_obj = NULL;
-	z_stream stream;
+	void *buf = map_sha1_file_internal(sha1, &objsize);
 
-	if (!buf) {
-		unsigned char *unpacked;
-		unsigned long len;
-		char type[20];
-		char hdr[50];
-		int hdrlen;
-		// need to unpack and recompress it by itself
-		unpacked = read_packed_sha1(sha1, type, &len);
-
-		hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
-
-		/* Set it up */
-		memset(&stream, 0, sizeof(stream));
-		deflateInit(&stream, Z_BEST_COMPRESSION);
-		size = deflateBound(&stream, len + hdrlen);
-		temp_obj = buf = xmalloc(size);
-
-		/* Compress it */
-		stream.next_out = buf;
-		stream.avail_out = size;
-		
-		/* First header.. */
-		stream.next_in = (void *)hdr;
-		stream.avail_in = hdrlen;
-		while (deflate(&stream, 0) == Z_OK)
-			/* nothing */;
-
-		/* Then the data itself.. */
-		stream.next_in = unpacked;
-		stream.avail_in = len;
-		while (deflate(&stream, Z_FINISH) == Z_OK)
-			/* nothing */;
-		deflateEnd(&stream);
-		free(unpacked);
-		
-		objsize = stream.total_out;
+	if (buf) {
+		retval = write_buffer(fd, buf, objsize);
+		munmap(buf, objsize);
+		return retval;
 	}
 
-	do {
-		size = write(fd, buf + posn, objsize - posn);
-		if (size <= 0) {
-			if (!size) {
-				fprintf(stderr, "write closed\n");
-			} else {
-				perror("write ");
-			}
-			return -1;
-		}
-		posn += size;
-	} while (posn < objsize);
-
-	if (map)
-		munmap(map, objsize);
-	if (temp_obj)
-		free(temp_obj);
-
-	return 0;
+	buf = repack_object(sha1, &objsize);
+	retval = write_buffer(fd, buf, objsize);
+	free(buf);
+	return retval;
 }
 
 int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
@@ -1579,7 +1595,8 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 				SHA1_Update(&c, discard, sizeof(discard) -
 					    stream.avail_out);
 			} while (stream.avail_in && ret == Z_OK);
-			write(local, buffer, *bufposn - stream.avail_in);
+			if (write_buffer(local, buffer, *bufposn - stream.avail_in) < 0)
+				die("unable to write sha1 file");
 			memmove(buffer, buffer + *bufposn - stream.avail_in,
 				stream.avail_in);
 			*bufposn = stream.avail_in;
@@ -1645,16 +1662,24 @@ int has_sha1_file(const unsigned char *sha1)
 	return find_sha1_file(sha1, &st) ? 1 : 0;
 }
 
-int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
+/*
+ * reads from fd as long as possible into a supplied buffer of size bytes.
+ * If neccessary the buffer's size is increased using realloc()
+ *
+ * returns 0 if anything went fine and -1 otherwise
+ *
+ * NOTE: both buf and size may change, but even when -1 is returned
+ * you still have to free() it yourself.
+ */
+int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 {
-	unsigned long size = 4096;
-	char *buf = malloc(size);
-	int iret, ret;
+	char* buf = *return_buf;
+	unsigned long size = *return_size;
+	int iret;
 	unsigned long off = 0;
-	unsigned char hdr[50];
-	int hdrlen;
+
 	do {
-		iret = read(fd, buf + off, size - off);
+		iret = xread(fd, buf + off, size - off);
 		if (iret > 0) {
 			off += iret;
 			if (off == size) {
@@ -1663,16 +1688,34 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 			}
 		}
 	} while (iret > 0);
-	if (iret < 0) {
+
+	*return_buf = buf;
+	*return_size = off;
+
+	if (iret < 0)
+		return -1;
+	return 0;
+}
+
+int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
+{
+	unsigned long size = 4096;
+	char *buf = malloc(size);
+	int ret;
+	unsigned char hdr[50];
+	int hdrlen;
+
+	if (read_pipe(fd, &buf, &size)) {
 		free(buf);
 		return -1;
 	}
+
 	if (!type)
 		type = blob_type;
 	if (write_object)
-		ret = write_sha1_file(buf, off, type, sha1);
+		ret = write_sha1_file(buf, size, type, sha1);
 	else {
-		write_sha1_file_prepare(buf, off, type, sha1, hdr, &hdrlen);
+		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
 		ret = 0;
 	}
 	free(buf);

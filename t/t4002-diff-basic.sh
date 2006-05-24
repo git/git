@@ -191,7 +191,7 @@ test_expect_success \
     'rm -fr Z [A-Z][A-Z] &&
      git-read-tree $tree_A &&
      git-checkout-index -f -a &&
-     git-read-tree -m $tree_O || return 1
+     git-read-tree --reset $tree_O || return 1
      git-update-index --refresh >/dev/null ;# this can exit non-zero
      git-diff-files >.test-a &&
      cmp_diff_files_output .test-a .test-recursive-OA'
@@ -201,7 +201,7 @@ test_expect_success \
     'rm -fr Z [A-Z][A-Z] &&
      git-read-tree $tree_B &&
      git-checkout-index -f -a &&
-     git-read-tree -m $tree_O || return 1
+     git-read-tree --reset $tree_O || return 1
      git-update-index --refresh >/dev/null ;# this can exit non-zero
      git-diff-files >.test-a &&
      cmp_diff_files_output .test-a .test-recursive-OB'
@@ -211,7 +211,7 @@ test_expect_success \
     'rm -fr Z [A-Z][A-Z] &&
      git-read-tree $tree_B &&
      git-checkout-index -f -a &&
-     git-read-tree -m $tree_A || return 1
+     git-read-tree --reset $tree_A || return 1
      git-update-index --refresh >/dev/null ;# this can exit non-zero
      git-diff-files >.test-a &&
      cmp_diff_files_output .test-a .test-recursive-AB'

@@ -262,22 +262,58 @@ static void mark_recent_complete_commits(unsigned long cutoff)
 
 static void filter_refs(struct ref **refs, int nr_match, char **match)
 {
-	struct ref *prev, *current, *next;
+	struct ref **return_refs;
+	struct ref *newlist = NULL;
+	struct ref **newtail = &newlist;
+	struct ref *ref, *next;
+	struct ref *fastarray[32];
 
-	for (prev = NULL, current = *refs; current; current = next) {
-		next = current->next;
-		if ((!memcmp(current->name, "refs/", 5) &&
-		     check_ref_format(current->name + 5)) ||
-		    (!fetch_all &&
-		     !path_match(current->name, nr_match, match))) {
-			if (prev == NULL)
-				*refs = next;
-			else
-				prev->next = next;
-			free(current);
-		} else
-			prev = current;
+	if (nr_match && !fetch_all) {
+		if (ARRAY_SIZE(fastarray) < nr_match)
+			return_refs = xcalloc(nr_match, sizeof(struct ref *));
+		else {
+			return_refs = fastarray;
+			memset(return_refs, 0, sizeof(struct ref *) * nr_match);
+		}
 	}
+	else
+		return_refs = NULL;
+
+	for (ref = *refs; ref; ref = next) {
+		next = ref->next;
+		if (!memcmp(ref->name, "refs/", 5) &&
+		    check_ref_format(ref->name + 5))
+			; /* trash */
+		else if (fetch_all) {
+			*newtail = ref;
+			ref->next = NULL;
+			newtail = &ref->next;
+			continue;
+		}
+		else {
+			int order = path_match(ref->name, nr_match, match);
+			if (order) {
+				return_refs[order-1] = ref;
+				continue; /* we will link it later */
+			}
+		}
+		free(ref);
+	}
+
+	if (!fetch_all) {
+		int i;
+		for (i = 0; i < nr_match; i++) {
+			ref = return_refs[i];
+			if (ref) {
+				*newtail = ref;
+				ref->next = NULL;
+				newtail = &ref->next;
+			}
+		}
+		if (return_refs != fastarray)
+			free(return_refs);
+	}
+	*refs = newlist;
 }
 
 static int everything_local(struct ref **refs, int nr_match, char **match)

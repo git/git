@@ -4,6 +4,7 @@
 
 #include "cache.h"
 #include "diff.h"
+#include "builtin.h"
 
 static struct diff_options diff_options;
 
@@ -54,7 +55,7 @@ static void diff_stages(int stage1, int stage2, const char **pathspec)
 	}
 }
 
-int main(int ac, const char **av)
+int cmd_diff_stages(int ac, const char **av, char **envp)
 {
 	int stage1, stage2;
 	const char *prefix = setup_git_directory();

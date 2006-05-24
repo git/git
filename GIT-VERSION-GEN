@@ -5,7 +5,7 @@ DEF_VER=v1.3.GIT
 
 # First try git-describe, then see if there is a version file
 # (included in release tarballs), then default
-if VN=$(git-describe --abbrev=4 HEAD 2>/dev/null); then
+if VN=$(git describe --abbrev=4 HEAD 2>/dev/null); then
 	VN=$(echo "$VN" | sed -e 's/-/./g');
 elif test -f version
 then
@@ -16,7 +16,7 @@ fi
 
 VN=$(expr "$VN" : v*'\(.*\)')
 
-dirty=$(sh -c 'git-diff-index --name-only HEAD' 2>/dev/null) || dirty=
+dirty=$(sh -c 'git diff-index --name-only HEAD' 2>/dev/null) || dirty=
 case "$dirty" in
 '')
 	;;

@@ -18,32 +18,12 @@
 static int allow_add;
 static int allow_remove;
 static int allow_replace;
-static int allow_unmerged; /* --refresh needing merge is not error */
-static int not_new; /* --refresh not having working tree files is not error */
-static int quiet; /* --refresh needing update is not error */
 static int info_only;
 static int force_remove;
 static int verbose;
 static int mark_valid_only = 0;
 #define MARK_VALID 1
 #define UNMARK_VALID 2
-
-
-/* Three functions to allow overloaded pointer return; see linux/err.h */
-static inline void *ERR_PTR(long error)
-{
-	return (void *) error;
-}
-
-static inline long PTR_ERR(const void *ptr)
-{
-	return (long) ptr;
-}
-
-static inline long IS_ERR(const void *ptr)
-{
-	return (unsigned long)ptr > (unsigned long)-1000L;
-}
 
 static void report(const char *fmt, ...)
 {
@@ -138,167 +118,6 @@ static int add_file_to_cache(const char *path)
 		return error("%s: cannot add to the index - missing --add option?",
 			     path);
 	return 0;
-}
-
-/*
- * "refresh" does not calculate a new sha1 file or bring the
- * cache up-to-date for mode/content changes. But what it
- * _does_ do is to "re-match" the stat information of a file
- * with the cache, so that you can refresh the cache for a
- * file that hasn't been changed but where the stat entry is
- * out of date.
- *
- * For example, you'd want to do this after doing a "git-read-tree",
- * to link up the stat cache details with the proper files.
- */
-static struct cache_entry *refresh_entry(struct cache_entry *ce, int really)
-{
-	struct stat st;
-	struct cache_entry *updated;
-	int changed, size;
-
-	if (lstat(ce->name, &st) < 0)
-		return ERR_PTR(-errno);
-
-	changed = ce_match_stat(ce, &st, really);
-	if (!changed) {
-		if (really && assume_unchanged &&
-		    !(ce->ce_flags & htons(CE_VALID)))
-			; /* mark this one VALID again */
-		else
-			return NULL;
-	}
-
-	if (ce_modified(ce, &st, really))
-		return ERR_PTR(-EINVAL);
-
-	size = ce_size(ce);
-	updated = xmalloc(size);
-	memcpy(updated, ce, size);
-	fill_stat_cache_info(updated, &st);
-
-	/* In this case, if really is not set, we should leave
-	 * CE_VALID bit alone.  Otherwise, paths marked with
-	 * --no-assume-unchanged (i.e. things to be edited) will
-	 * reacquire CE_VALID bit automatically, which is not
-	 * really what we want.
-	 */
-	if (!really && assume_unchanged && !(ce->ce_flags & htons(CE_VALID)))
-		updated->ce_flags &= ~htons(CE_VALID);
-
-	return updated;
-}
-
-static int refresh_cache(int really)
-{
-	int i;
-	int has_errors = 0;
-
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce, *new;
-		ce = active_cache[i];
-		if (ce_stage(ce)) {
-			while ((i < active_nr) &&
-			       ! strcmp(active_cache[i]->name, ce->name))
-				i++;
-			i--;
-			if (allow_unmerged)
-				continue;
-			printf("%s: needs merge\n", ce->name);
-			has_errors = 1;
-			continue;
-		}
-
-		new = refresh_entry(ce, really);
-		if (!new)
-			continue;
-		if (IS_ERR(new)) {
-			if (not_new && PTR_ERR(new) == -ENOENT)
-				continue;
-			if (really && PTR_ERR(new) == -EINVAL) {
-				/* If we are doing --really-refresh that
-				 * means the index is not valid anymore.
-				 */
-				ce->ce_flags &= ~htons(CE_VALID);
-				active_cache_changed = 1;
-			}
-			if (quiet)
-				continue;
-			printf("%s: needs update\n", ce->name);
-			has_errors = 1;
-			continue;
-		}
-		active_cache_changed = 1;
-		/* You can NOT just free active_cache[i] here, since it
-		 * might not be necessarily malloc()ed but can also come
-		 * from mmap(). */
-		active_cache[i] = new;
-	}
-	return has_errors;
-}
-
-/*
- * We fundamentally don't like some paths: we don't want
- * dot or dot-dot anywhere, and for obvious reasons don't
- * want to recurse into ".git" either.
- *
- * Also, we don't want double slashes or slashes at the
- * end that can make pathnames ambiguous.
- */
-static int verify_dotfile(const char *rest)
-{
-	/*
-	 * The first character was '.', but that
-	 * has already been discarded, we now test
-	 * the rest.
-	 */
-	switch (*rest) {
-	/* "." is not allowed */
-	case '\0': case '/':
-		return 0;
-
-	/*
-	 * ".git" followed by  NUL or slash is bad. This
-	 * shares the path end test with the ".." case.
-	 */
-	case 'g':
-		if (rest[1] != 'i')
-			break;
-		if (rest[2] != 't')
-			break;
-		rest += 2;
-	/* fallthrough */
-	case '.':
-		if (rest[1] == '\0' || rest[1] == '/')
-			return 0;
-	}
-	return 1;
-}
-
-static int verify_path(const char *path)
-{
-	char c;
-
-	goto inside;
-	for (;;) {
-		if (!c)
-			return 1;
-		if (c == '/') {
-inside:
-			c = *path++;
-			switch (c) {
-			default:
-				continue;
-			case '/': case '\0':
-				break;
-			case '.':
-				if (verify_dotfile(path))
-					continue;
-			}
-			return 0;
-		}
-		c = *path++;
-	}
 }
 
 static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
@@ -653,6 +472,7 @@ int main(int argc, const char **argv)
 	const char *prefix = setup_git_directory();
 	int prefix_length = prefix ? strlen(prefix) : 0;
 	char set_executable_bit = 0;
+	unsigned int refresh_flags = 0;
 
 	git_config(git_default_config);
 
@@ -673,7 +493,7 @@ int main(int argc, const char **argv)
 				continue;
 			}
 			if (!strcmp(path, "-q")) {
-				quiet = 1;
+				refresh_flags |= REFRESH_QUIET;
 				continue;
 			}
 			if (!strcmp(path, "--add")) {
@@ -689,15 +509,15 @@ int main(int argc, const char **argv)
 				continue;
 			}
 			if (!strcmp(path, "--unmerged")) {
-				allow_unmerged = 1;
+				refresh_flags |= REFRESH_UNMERGED;
 				continue;
 			}
 			if (!strcmp(path, "--refresh")) {
-				has_errors |= refresh_cache(0);
+				has_errors |= refresh_cache(refresh_flags);
 				continue;
 			}
 			if (!strcmp(path, "--really-refresh")) {
-				has_errors |= refresh_cache(1);
+				has_errors |= refresh_cache(REFRESH_REALLY | refresh_flags);
 				continue;
 			}
 			if (!strcmp(path, "--cacheinfo")) {
@@ -770,7 +590,7 @@ int main(int argc, const char **argv)
 				goto finish;
 			}
 			if (!strcmp(path, "--ignore-missing")) {
-				not_new = 1;
+				refresh_flags |= REFRESH_IGNORE_MISSING;
 				continue;
 			}
 			if (!strcmp(path, "--verbose")) {

@@ -11,6 +11,7 @@
 #include "tree.h"
 #include <sys/time.h>
 #include <signal.h>
+#include "builtin.h"
 
 static int reset = 0;
 static int merge = 0;
@@ -408,7 +409,7 @@ static void verify_uptodate(struct cache_entry *ce)
 {
 	struct stat st;
 
-	if (index_only)
+	if (index_only || reset)
 		return;
 
 	if (!lstat(ce->name, &st)) {
@@ -424,6 +425,21 @@ static void verify_uptodate(struct cache_entry *ce)
 	if (errno == ENOENT)
 		return;
 	die("Entry '%s' not uptodate. Cannot merge.", ce->name);
+}
+
+/*
+ * We do not want to remove or overwrite a working tree file that
+ * is not tracked.
+ */
+static void verify_absent(const char *path, const char *action)
+{
+	struct stat st;
+
+	if (index_only || reset || !update)
+		return;
+	if (!lstat(path, &st))
+		die("Untracked working tree file '%s' "
+		    "would be %s by merge.", path, action);
 }
 
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old)
@@ -443,6 +459,9 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old)
 			verify_uptodate(old);
 		}
 	}
+	else
+		verify_absent(merge->name, "overwritten");
+
 	merge->ce_flags &= ~htons(CE_STAGEMASK);
 	add_cache_entry(merge, ADD_CACHE_OK_TO_ADD);
 	return 1;
@@ -452,6 +471,8 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old)
 {
 	if (old)
 		verify_uptodate(old);
+	else
+		verify_absent(ce->name, "removed");
 	ce->ce_mode = 0;
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD);
 	return 1;
@@ -487,6 +508,7 @@ static int threeway_merge(struct cache_entry **stages)
 	int count;
 	int head_match = 0;
 	int remote_match = 0;
+	const char *path = NULL;
 
 	int df_conflict_head = 0;
 	int df_conflict_remote = 0;
@@ -498,8 +520,11 @@ static int threeway_merge(struct cache_entry **stages)
 	for (i = 1; i < head_idx; i++) {
 		if (!stages[i])
 			any_anc_missing = 1;
-		else
+		else {
+			if (!path)
+				path = stages[i]->name;
 			no_anc_exists = 0;
+		}
 	}
 
 	index = stages[0];
@@ -515,8 +540,15 @@ static int threeway_merge(struct cache_entry **stages)
 		remote = NULL;
 	}
 
+	if (!path && index)
+		path = index->name;
+	if (!path && head)
+		path = head->name;
+	if (!path && remote)
+		path = remote->name;
+
 	/* First, if there's a #16 situation, note that to prevent #13
-	 * and #14. 
+	 * and #14.
 	 */
 	if (!same(remote, head)) {
 		for (i = 1; i < head_idx; i++) {
@@ -575,6 +607,8 @@ static int threeway_merge(struct cache_entry **stages)
 		    (remote_deleted && head && head_match)) {
 			if (index)
 				return deleted_entry(index, index);
+			else if (path)
+				verify_absent(path, "removed");
 			return 0;
 		}
 		/*
@@ -592,6 +626,8 @@ static int threeway_merge(struct cache_entry **stages)
 	if (index) {
 		verify_uptodate(index);
 	}
+	else if (path)
+		verify_absent(path, "overwritten");
 
 	nontrivial_merge = 1;
 
@@ -689,7 +725,7 @@ static int oneway_merge(struct cache_entry **src)
 			     merge_size);
 
 	if (!a)
-		return deleted_entry(old, NULL);
+		return deleted_entry(old, old);
 	if (old && same(old, a)) {
 		if (reset) {
 			struct stat st;
@@ -699,7 +735,7 @@ static int oneway_merge(struct cache_entry **src)
 		}
 		return keep_entry(old);
 	}
-	return merged_entry(a, NULL);
+	return merged_entry(a, old);
 }
 
 static int read_cache_unmerged(void)
@@ -728,7 +764,7 @@ static const char read_tree_usage[] = "git-read-tree (<sha> | -m [--aggressive] 
 
 static struct cache_file cache_file;
 
-int main(int argc, char **argv)
+int cmd_read_tree(int argc, const char **argv, char **envp)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];

@@ -113,19 +113,19 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 ### --- END CONFIGURATION SECTION ---
 
 SCRIPT_SH = \
-	git-add.sh git-bisect.sh git-branch.sh git-checkout.sh \
+	git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
-	git-format-patch.sh git-ls-remote.sh \
+	git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-resolve.sh git-revert.sh git-rm.sh git-sh-setup.sh \
+	git-resolve.sh git-revert.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh \
-	git-lost-found.sh
+	git-lost-found.sh git-quiltimport.sh
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
@@ -149,28 +149,31 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-apply$X git-cat-file$X \
-	git-checkout-index$X git-clone-pack$X git-commit-tree$X \
-	git-convert-objects$X git-diff-files$X \
-	git-diff-index$X git-diff-stages$X \
-	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
-	git-hash-object$X git-index-pack$X git-init-db$X git-local-fetch$X \
-	git-ls-files$X git-ls-tree$X git-mailinfo$X git-merge-base$X \
+	git-checkout-index$X git-clone-pack$X \
+	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
+	git-hash-object$X git-index-pack$X git-local-fetch$X \
+	git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
-	git-peek-remote$X git-prune-packed$X git-read-tree$X \
-	git-receive-pack$X git-rev-list$X git-rev-parse$X \
-	git-send-pack$X git-show-branch$X git-shell$X \
+	git-peek-remote$X git-prune-packed$X \
+	git-receive-pack$X git-rev-parse$X \
+	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
-	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
+	git-ssh-upload$X git-unpack-file$X \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
-	git-update-ref$X git-symbolic-ref$X git-check-ref-format$X \
+	git-update-ref$X git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X \
-	git-grep$X
+	git-grep$X git-add$X git-rm$X git-rev-list$X \
+	git-check-ref-format$X \
+	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
+	git-ls-files$X git-ls-tree$X \
+	git-read-tree$X git-commit-tree$X \
+	git-apply$X git-show-branch$X git-diff-files$X \
+	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -199,7 +202,7 @@ LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
-	tree-walk.h log-tree.h
+	tree-walk.h log-tree.h dir.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -210,7 +213,7 @@ LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o index.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o \
-	quote.o read-cache.o refs.o run-command.o \
+	quote.o read-cache.o refs.o run-command.o dir.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
@@ -218,7 +221,14 @@ LIB_OBJS = \
 
 BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
-	builtin-grep.o
+	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
+	builtin-rm.o builtin-init-db.o \
+	builtin-tar-tree.o builtin-upload-tar.o \
+	builtin-ls-files.o builtin-ls-tree.o \
+	builtin-read-tree.o builtin-commit-tree.o \
+	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
+	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
+	builtin-cat-file.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -418,6 +428,9 @@ else
 	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
 endif
 endif
+ifdef NO_INET_NTOP
+	LIB_OBJS += compat/inet_ntop.o
+endif
 
 ifdef NO_ICONV
 	ALL_CFLAGS += -DNO_ICONV
@@ -459,6 +472,7 @@ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
 ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+ALL_CFLAGS += -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
@@ -565,10 +579,6 @@ git-http-push$X: revision.o http.o http-push.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-init-db.o: init-db.c
-	$(CC) -c $(ALL_CFLAGS) \
-		-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $*.c
-
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(GITLIBS)
 $(DIFF_OBJS): diffcore.h
@@ -625,7 +635,14 @@ install: all
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
-	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(bindir_SQ)/$p' && ln '$(DESTDIR_SQ)$(bindir_SQ)/git$X' '$(DESTDIR_SQ)$(bindir_SQ)/$p' ;)
+	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
+	then \
+		ln -f '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
+			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' || \
+		cp '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
+			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X'; \
+	fi
+	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 
 install-doc:
 	$(MAKE) -C Documentation install
@@ -652,6 +669,25 @@ dist: git.spec git-tar-tree
 rpm: dist
 	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
 
+htmldocs = git-htmldocs-$(GIT_VERSION)
+manpages = git-manpages-$(GIT_VERSION)
+dist-doc:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir
+	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
+	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar .
+	gzip -n -9 -f $(htmldocs).tar
+	:
+	rm -fr .doc-tmp-dir
+	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
+	$(MAKE) -C Documentation DESTDIR=. \
+		man1=../.doc-tmp-dir/man1 \
+		man7=../.doc-tmp-dir/man7 \
+		install
+	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
+	gzip -n -9 -f $(manpages).tar
+	rm -fr .doc-tmp-dir
+
 ### Cleaning rules
 
 clean:
@@ -659,8 +695,9 @@ clean:
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
-	rm -rf $(GIT_TARNAME)
+	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	rm -f $(htmldocs).tar $(manpages).tar
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

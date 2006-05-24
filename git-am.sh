@@ -59,46 +59,12 @@ fall_back_3way () {
 	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
 	git-write-tree >"$dotest/patch-merge-base+" &&
 	# index has the base tree now.
-	(
-	    cd "$dotest/patch-merge-tmp-dir" &&
-	    GIT_INDEX_FILE="../patch-merge-tmp-index" \
-	    GIT_OBJECT_DIRECTORY="$O_OBJECT" \
-	    git-apply $binary --index <../patch
-        )
+	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
+	git-apply $binary --cached <"$dotest/patch"
     then
 	echo Using index info to reconstruct a base tree...
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
-    else
-	# Otherwise, try nearby trees that can be used to apply the
-	# patch.
-	(
-	    N=10
-
-	    # Hoping the patch is against our recent commits...
-	    git-rev-list --max-count=$N HEAD
-
-	    # or hoping the patch is against known tags...
-	    git-ls-remote --tags .
-	) |
-	while read base junk
-	do
-	    # See if we have it as a tree...
-	    git-cat-file tree "$base" >/dev/null 2>&1 || continue
-
-	    rm -fr "$dotest"/patch-merge-* &&
-	    mkdir "$dotest/patch-merge-tmp-dir" || break
-	    (
-		cd "$dotest/patch-merge-tmp-dir" &&
-		GIT_INDEX_FILE=../patch-merge-tmp-index &&
-		GIT_OBJECT_DIRECTORY="$O_OBJECT" &&
-		export GIT_INDEX_FILE GIT_OBJECT_DIRECTORY &&
-		git-read-tree "$base" &&
-		git-apply $binary --index &&
-		mv ../patch-merge-tmp-index ../patch-merge-index &&
-		echo "$base" >../patch-merge-base
-	    ) <"$dotest/patch"  2>/dev/null && break
-	done
     fi
 
     test -f "$dotest/patch-merge-index" &&

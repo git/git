@@ -10,8 +10,6 @@
 const char *write_ref = NULL;
 const char *write_ref_log_details = NULL;
 
-const unsigned char *current_ref = NULL;
-
 int get_tree = 0;
 int get_history = 0;
 int get_all = 0;
@@ -213,16 +211,15 @@ int pull(char *target)
 	save_commit_buffer = 0;
 	track_object_refs = 0;
 	if (write_ref) {
-		lock = lock_ref_sha1(write_ref, current_ref, 1);
+		lock = lock_ref_sha1(write_ref, NULL, 0);
 		if (!lock) {
 			error("Can't lock ref %s", write_ref);
 			return -1;
 		}
 	}
 
-	if (!get_recover) {
+	if (!get_recover)
 		for_each_ref(mark_complete);
-	}
 
 	if (interpret_target(target, sha1)) {
 		error("Could not interpret %s as something to pull", target);

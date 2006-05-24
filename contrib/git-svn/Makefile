@@ -30,6 +30,7 @@ git-svn.html : git-svn.txt
 		-f ../../Documentation/asciidoc.conf $<
 test: git-svn
 	cd t && $(SHELL) ./t0000-contrib-git-svn.sh
+	cd t && $(SHELL) ./t0001-contrib-git-svn-props.sh
 
 clean:
 	rm -f git-svn *.xml *.html *.1

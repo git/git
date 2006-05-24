@@ -7,6 +7,7 @@
 #include "tree-walk.h"
 #include "diff.h"
 #include "revision.h"
+#include "builtin.h"
 
 /* bits #0-15 in revision.h */
 
@@ -36,7 +37,7 @@ static const char rev_list_usage[] =
 "    --bisect"
 ;
 
-struct rev_info revs;
+static struct rev_info revs;
 
 static int bisect_list = 0;
 static int show_timestamp = 0;
@@ -84,7 +85,7 @@ static void show_commit(struct commit *commit)
 		static char pretty_header[16384];
 		pretty_print_commit(revs.commit_format, commit, ~0,
 				    pretty_header, sizeof(pretty_header),
-				    revs.abbrev);
+				    revs.abbrev, NULL, NULL);
 		printf("%s%c", pretty_header, hdr_termination);
 	}
 	fflush(stdout);
@@ -291,7 +292,7 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
-int main(int argc, const char **argv)
+int cmd_rev_list(int argc, const char **argv, char **envp)
 {
 	struct commit_list *list;
 	int i;
