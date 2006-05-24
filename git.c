@@ -54,7 +54,20 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "add", cmd_add },
 		{ "rev-list", cmd_rev_list },
 		{ "init-db", cmd_init_db },
-		{ "check-ref-format", cmd_check_ref_format }
+		{ "tar-tree", cmd_tar_tree },
+		{ "upload-tar", cmd_upload_tar },
+		{ "check-ref-format", cmd_check_ref_format },
+		{ "ls-files", cmd_ls_files },
+		{ "ls-tree", cmd_ls_tree },
+		{ "tar-tree", cmd_tar_tree },
+		{ "read-tree", cmd_read_tree },
+		{ "commit-tree", cmd_commit_tree },
+		{ "apply", cmd_apply },
+		{ "show-branch", cmd_show_branch },
+		{ "diff-files", cmd_diff_files },
+		{ "diff-index", cmd_diff_index },
+		{ "diff-stages", cmd_diff_stages },
+		{ "diff-tree", cmd_diff_tree }
 	};
 	int i;
 

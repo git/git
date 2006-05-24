@@ -3,13 +3,14 @@
 #include "cache.h"
 #include "commit.h"
 #include "refs.h"
+#include "builtin.h"
 
 static const char show_branch_usage[] =
 "git-show-branch [--dense] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
 static int default_num = 0;
 static int default_alloc = 0;
-static char **default_arg = NULL;
+static const char **default_arg = NULL;
 
 #define UNINTERESTING	01
 
@@ -548,7 +549,7 @@ static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 	return 0;
 }
 
-int main(int ac, char **av)
+int cmd_show_branch(int ac, const char **av, char **envp)
 {
 	struct commit *rev[MAX_REVS], *commit;
 	struct commit_list *list = NULL, *seen = NULL;
@@ -581,7 +582,7 @@ int main(int ac, char **av)
 	}
 
 	while (1 < ac && av[1][0] == '-') {
-		char *arg = av[1];
+		const char *arg = av[1];
 		if (!strcmp(arg, "--")) {
 			ac--; av++;
 			break;
