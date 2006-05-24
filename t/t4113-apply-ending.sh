@@ -29,7 +29,25 @@ test_expect_success setup \
 
 # test
 
-test_expect_failure apply \
+test_expect_failure 'apply at the end' \
     'git-apply --index test-patch'
+
+cat >test-patch <<\EOF
+diff a/file b/file
+--- a/file
++++ b/file
+@@ -1,2 +1,3 @@
++a
+ b
+ c
+EOF
+
+echo >file 'a
+b
+c'
+git-update-index file
+
+test_expect_failure 'apply at the beginning' \
+	'git-apply --index test-patch'
 
 test_done
