@@ -32,7 +32,7 @@ test_expect_success \
 
 
 name='try a deep --rmdir with a commit'
-git checkout -b mybranch remotes/git-svn
+git checkout -f -b mybranch remotes/git-svn
 mv dir/a/b/c/d/e/file dir/file
 cp dir/file file
 git update-index --add --remove dir/a/b/c/d/e/file dir/file file
@@ -58,7 +58,7 @@ test_expect_code 1 "$name" \
 
 name='detect node change from directory to file #1'
 rm -rf dir $GIT_DIR/index
-git checkout -b mybranch2 remotes/git-svn
+git checkout -f -b mybranch2 remotes/git-svn
 mv bar/zzz zzz
 rm -rf bar
 mv zzz bar
@@ -73,7 +73,7 @@ test_expect_code 1 "$name" \
 
 name='detect node change from file to directory #2'
 rm -f $GIT_DIR/index
-git checkout -b mybranch3 remotes/git-svn
+git checkout -f -b mybranch3 remotes/git-svn
 rm bar/zzz
 git-update-index --remove bar/zzz
 mkdir bar/zzz
@@ -88,7 +88,7 @@ test_expect_code 1 "$name" \
 
 name='detect node change from directory to file #2'
 rm -f $GIT_DIR/index
-git checkout -b mybranch4 remotes/git-svn
+git checkout -f -b mybranch4 remotes/git-svn
 rm -rf dir
 git update-index --remove -- dir/file
 touch dir
@@ -103,7 +103,7 @@ test_expect_code 1 "$name" \
 
 name='remove executable bit from a file'
 rm -f $GIT_DIR/index
-git checkout -b mybranch5 remotes/git-svn
+git checkout -f -b mybranch5 remotes/git-svn
 chmod -x exec.sh
 git update-index exec.sh
 git commit -m "$name"
