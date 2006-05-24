@@ -28,9 +28,6 @@ extern const char *write_ref;
 /* If set additional text will appear in the ref log. */
 extern const char *write_ref_log_details;
 
-/* If set, the hash that the current value of write_ref must be. */
-extern const unsigned char *current_ref;
-
 /* Set to fetch the target tree. */
 extern int get_tree;
 
