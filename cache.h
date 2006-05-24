@@ -258,6 +258,7 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 					unsigned char *sha1_ret);
 
 const char *show_date(unsigned long time, int timezone);
+const char *show_rfc2822_date(unsigned long time, int timezone);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);

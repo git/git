@@ -30,6 +30,7 @@ struct cmt_fmt_map {
 	{ "raw",	1,	CMIT_FMT_RAW },
 	{ "medium",	1,	CMIT_FMT_MEDIUM },
 	{ "short",	1,	CMIT_FMT_SHORT },
+	{ "email",	1,	CMIT_FMT_EMAIL },
 	{ "full",	5,	CMIT_FMT_FULL },
 	{ "fuller",	5,	CMIT_FMT_FULLER },
 	{ "oneline",	1,	CMIT_FMT_ONELINE },
@@ -438,12 +439,20 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	time = strtoul(date, &date, 10);
 	tz = strtol(date, NULL, 10);
 
+	if (fmt == CMIT_FMT_EMAIL) {
+		what = "From";
+		filler = "";
+	}
 	ret = sprintf(buf, "%s: %.*s%.*s\n", what,
 		      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
 		      filler, namelen, line);
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
 		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
+		break;
+	case CMIT_FMT_EMAIL:
+		ret += sprintf(buf + ret, "Date: %s\n",
+			       show_rfc2822_date(time, tz));
 		break;
 	case CMIT_FMT_FULLER:
 		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz));
@@ -455,10 +464,12 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	return ret;
 }
 
-static int is_empty_line(const char *line, int len)
+static int is_empty_line(const char *line, int *len_p)
 {
+	int len = *len_p;
 	while (len && isspace(line[len-1]))
 		len--;
+	*len_p = len;
 	return !len;
 }
 
@@ -467,7 +478,8 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	struct commit_list *parent = commit->parents;
 	int offset;
 
-	if ((fmt == CMIT_FMT_ONELINE) || !parent || !parent->next)
+	if ((fmt == CMIT_FMT_ONELINE) || (fmt == CMIT_FMT_EMAIL) ||
+	    !parent || !parent->next)
 		return 0;
 
 	offset = sprintf(buf, "Merge:");
@@ -486,13 +498,16 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
-	int indent = (fmt == CMIT_FMT_ONELINE) ? 0 : 4;
+	int indent = 4;
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
+
+	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
+		indent = 0;
 
 	for (;;) {
 		const char *line = msg;
@@ -516,7 +531,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		if (hdr) {
 			if (linelen == 1) {
 				hdr = 0;
-				if (fmt != CMIT_FMT_ONELINE)
+				if ((fmt != CMIT_FMT_ONELINE) && !subject)
 					buf[offset++] = '\n';
 				continue;
 			}
@@ -554,8 +569,10 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			continue;
 		}
 
-		if (is_empty_line(line, linelen)) {
+		if (is_empty_line(line, &linelen)) {
 			if (!body)
+				continue;
+			if (subject)
 				continue;
 			if (fmt == CMIT_FMT_SHORT)
 				break;
@@ -563,11 +580,26 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			body = 1;
 		}
 
+		if (subject) {
+			int slen = strlen(subject);
+			memcpy(buf + offset, subject, slen);
+			offset += slen;
+		}
 		memset(buf + offset, ' ', indent);
 		memcpy(buf + offset + indent, line, linelen);
 		offset += linelen + indent;
+		buf[offset++] = '\n';
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
+		if (after_subject) {
+			int slen = strlen(after_subject);
+			if (slen > space - offset - 1)
+				slen = space - offset - 1;
+			memcpy(buf + offset, after_subject, slen);
+			offset += slen;
+			after_subject = NULL;
+		}
+		subject = NULL;
 	}
 	while (offset && isspace(buf[offset-1]))
 		offset--;

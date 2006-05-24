@@ -58,6 +58,8 @@ struct rev_info {
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;
 	struct log_info *loginfo;
+	int		nr, total;
+	const char	*mime_boundary;
 
 	/* special limits */
 	int max_count;
