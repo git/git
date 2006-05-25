@@ -197,8 +197,8 @@ fi
 if [ "$?" -eq 0 ]; then
 	if [ "$newbranch" ]; then
 		if [ "$newbranch_log" ]; then
-			mkdir -p $(dirname "$GIT_DIR/logs/refs/heads/$branchname")
-			touch "$GIT_DIR/logs/refs/heads/$branchname"
+			mkdir -p $(dirname "$GIT_DIR/logs/refs/heads/$newbranch")
+			touch "$GIT_DIR/logs/refs/heads/$newbranch"
 		fi
 		git-update-ref -m "checkout: Created from $new_name" "refs/heads/$newbranch" $new || exit
 		branch="$newbranch"

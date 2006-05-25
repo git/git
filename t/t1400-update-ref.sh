@@ -178,22 +178,36 @@ rm -f .git/$m .git/logs/$m expect
 
 test_expect_success \
     'creating initial files' \
-    'cp ../../COPYING COPYING &&
-     git-add COPYING &&
+    'echo TEST >F &&
+     git-add F &&
+	 GIT_AUTHOR_DATE="2005-05-26 23:30" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:30" git-commit -m add -a &&
-	 cp ../../Makefile COPYING &&
-	 GIT_COMMITTER_DATE="2005-05-26 23:41" git-commit -m change -a'
+	 h_TEST=$(git-rev-parse --verify HEAD)
+	 echo The other day this did not work. >M &&
+	 echo And then Bob told me how to fix it. >>M &&
+	 echo OTHER >F &&
+	 GIT_AUTHOR_DATE="2005-05-26 23:41" \
+	 GIT_COMMITTER_DATE="2005-05-26 23:41" git-commit -F M -a &&
+	 h_OTHER=$(git-rev-parse --verify HEAD)
+	 rm -f M'
+
+cat >expect <<EOF
+$Z $h_TEST $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	commit: add
+$h_TEST $h_OTHER $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000	commit: The other day this did not work.
+EOF
+test_expect_success \
+	'git-commit logged updates' \
+	'diff expect .git/logs/$m'
+unset h_TEST h_OTHER
 
 test_expect_success \
-	'git-cat-file blob master:COPYING (expect Makefile)' \
-	'git-cat-file blob master:COPYING | diff - ../../Makefile'
+	'git-cat-file blob master:F (expect OTHER)' \
+	'test OTHER = $(git-cat-file blob master:F)'
 test_expect_success \
-	'git-cat-file blob master@{2005-05-26 23:30}:COPYING (expect COPYING)' \
-	'git-cat-file blob "master@{2005-05-26 23:30}:COPYING" \
-	  | diff - ../../COPYING'
+	'git-cat-file blob master@{2005-05-26 23:30}:F (expect TEST)' \
+	'test TEST = $(git-cat-file blob "master@{2005-05-26 23:30}:F")'
 test_expect_success \
-	'git-cat-file blob master@{2005-05-26 23:42}:COPYING (expect Makefile)' \
-	'git-cat-file blob "master@{2005-05-26 23:42}:COPYING" \
-	  | diff - ../../Makefile'
+	'git-cat-file blob master@{2005-05-26 23:42}:F (expect OTHER)' \
+	'test OTHER = $(git-cat-file blob "master@{2005-05-26 23:42}:F")'
 
 test_done
