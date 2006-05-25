@@ -116,6 +116,7 @@ git-update-index
 git-update-ref
 git-update-server-info
 git-upload-pack
+git-upload-tar
 git-var
 git-verify-pack
 git-verify-tag

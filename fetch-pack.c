@@ -18,6 +18,12 @@ static const char *exec = "git-upload-pack";
 #define SEEN		(1U << 3)
 #define POPPED		(1U << 4)
 
+/*
+ * After sending this many "have"s if we do not get any new ACK , we
+ * give up traversing our history.
+ */
+#define MAX_IN_VAIN 256
+
 static struct commit_list *rev_list = NULL;
 static int non_common_revs = 0, multi_ack = 0, use_thin_pack = 0;
 
@@ -134,6 +140,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	int fetching;
 	int count = 0, flushes = 0, retval;
 	const unsigned char *sha1;
+	unsigned in_vain = 0;
+	int got_continue = 0;
 
 	for_each_ref(rev_list_insert_ref);
 
@@ -172,6 +180,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		packet_write(fd[1], "have %s\n", sha1_to_hex(sha1));
 		if (verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
+		in_vain++;
 		if (!(31 & ++count)) {
 			int ack;
 
@@ -200,9 +209,16 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 						lookup_commit(result_sha1);
 					mark_common(commit, 0, 1);
 					retval = 0;
+					in_vain = 0;
+					got_continue = 1;
 				}
 			} while (ack);
 			flushes--;
+			if (got_continue && MAX_IN_VAIN < in_vain) {
+				if (verbose)
+					fprintf(stderr, "giving up\n");
+				break; /* give up */
+			}
 		}
 	}
 done:
