@@ -626,6 +626,9 @@ fi
 if test -z "$no_edit"
 then
 	{
+		echo ""
+		echo "# Please enter the commit message for your changes."
+		echo "# (Comment lines starting with '#' will not be included)"
 		test -z "$only_include_assumed" || echo "$only_include_assumed"
 		run_status
 	} >>"$GIT_DIR"/COMMIT_EDITMSG
