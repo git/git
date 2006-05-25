@@ -148,6 +148,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int nr = 0, total, i, j;
 	int use_stdout = 0;
 	int numbered = 0;
+	int start_number = -1;
 	int keep_subject = 0;
 
 	init_revisions(&rev);
@@ -171,7 +172,14 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		else if (!strcmp(argv[i], "-n") ||
 				!strcmp(argv[i], "--numbered"))
 			numbered = 1;
-		else if (!strcmp(argv[i], "-k") ||
+		else if (!strncmp(argv[i], "--start-number=", 15))
+			start_number = strtol(argv[i] + 15, NULL, 10);
+		else if (!strcmp(argv[i], "--start-number")) {
+			i++;
+			if (i == argc)
+				die("Need a number for --start-number");
+			start_number = strtol(argv[i], NULL, 10);
+		} else if (!strcmp(argv[i], "-k") ||
 				!strcmp(argv[i], "--keep-subject")) {
 			keep_subject = 1;
 			rev.total = -1;
@@ -193,6 +201,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	}
 	argc = j;
 
+	if (numbered && start_number < 0)
+		start_number = 1;
 	if (numbered && keep_subject < 0)
 		die ("-n and -k are mutually exclusive.");
 
@@ -219,11 +229,11 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	}
 	total = nr;
 	if (numbered)
-		rev.total = total;
+		rev.total = total + start_number - 1;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
-		rev.nr = total - nr;
+		rev.nr = rev.total - nr;
 		if (!use_stdout)
 			reopen_stdout(commit, rev.nr, keep_subject);
 		shown = log_tree_commit(&rev, commit);
