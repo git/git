@@ -14,7 +14,8 @@ test_expect_success \
     'prepare an trivial repository' \
     'echo Hello > A &&
      git-update-index --add A &&
-     git-commit -m "Initial commit."'
+     git-commit -m "Initial commit." &&
+     HEAD=$(git-rev-parse --verify HEAD)'
 
 test_expect_success \
     'git branch --help should return success now.' \
@@ -31,5 +32,33 @@ test_expect_success \
 test_expect_success \
     'git branch a/b/c should create a branch' \
     'git-branch a/b/c && test -f .git/refs/heads/a/b/c'
+
+cat >expect <<EOF
+0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from HEAD
+EOF
+test_expect_success \
+    'git branch -l d/e/f should create a branch and a log' \
+	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
+     git-branch -l d/e/f &&
+	 test -f .git/refs/heads/d/e/f &&
+	 test -f .git/logs/refs/heads/d/e/f &&
+	 diff expect .git/logs/refs/heads/d/e/f'
+
+test_expect_success \
+    'git branch -d d/e/f should delete a branch and a log' \
+	'git-branch -d d/e/f &&
+	 test ! -f .git/refs/heads/d/e/f &&
+	 test ! -f .git/logs/refs/heads/d/e/f'
+
+cat >expect <<EOF
+0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	checkout: Created from master^0
+EOF
+test_expect_success \
+    'git checkout -b g/h/i -l should create a branch and a log' \
+	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
+     git-checkout -b g/h/i -l master &&
+	 test -f .git/refs/heads/g/h/i &&
+	 test -f .git/logs/refs/heads/g/h/i &&
+	 diff expect .git/logs/refs/heads/g/h/i'
 
 test_done
