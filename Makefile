@@ -496,37 +496,43 @@ $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
 
 common-cmds.h: Documentation/git-*.txt
-	./generate-cmdlist.sh > $@
+	./generate-cmdlist.sh > $@+
+	mv $@+ $@
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
-	rm -f $@
+	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
-	    $@.sh >$@
-	chmod +x $@
+	    $@.sh >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
-	rm -f $@
+	rm -f $@ $@+
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $@.perl >$@
-	chmod +x $@
+	    $@.perl >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
-	rm -f $@
+	rm -f $@ $@+
 	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
 	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $@.py >$@
-	chmod +x $@
+	    $@.py >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 git-cherry-pick: git-revert
-	cp $< $@
+	cp $< $@+
+	mv $@+ $@
 
 git-status: git-commit
-	cp $< $@
+	cp $< $@+
+	mv $@+ $@
 
 # These can record GIT_VERSION
 git$X git.spec \
@@ -653,7 +659,8 @@ install-doc:
 ### Maintainer's dist rules
 
 git.spec: git.spec.in
-	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
+	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@+
+	mv $@+ $@
 
 GIT_TARNAME=git-$(GIT_VERSION)
 dist: git.spec git-tar-tree
@@ -724,4 +731,3 @@ check-docs::
 		*) echo "no link: $$v";; \
 		esac ; \
 	done | sort
-
