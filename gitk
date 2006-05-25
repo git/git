@@ -655,7 +655,7 @@ proc makewindow {} {
     bind . <Control-q> doquit
     bind . <Control-f> dofind
     bind . <Control-g> {findnext 0}
-    bind . <Control-r> findprev
+    bind . <Control-r> dosearchback
     bind . <Control-s> dosearch
     bind . <Control-equal> {incrfont 1}
     bind . <Control-KP_Add> {incrfont 1}
@@ -4196,41 +4196,90 @@ proc nextfile {} {
 proc clear_ctext {{first 1.0}} {
     global ctext smarktop smarkbot
 
-    if {![info exists smarktop] || [$ctext compare $first < $smarktop]} {
-	set smarktop $first
+    set l [lindex [split $first .] 0]
+    if {![info exists smarktop] || [$ctext compare $first < $smarktop.0]} {
+	set smarktop $l
     }
-    if {![info exists smarkbot] || [$ctext compare $first < $smarkbot]} {
-	set smarkbot $first
+    if {![info exists smarkbot] || [$ctext compare $first < $smarkbot.0]} {
+	set smarkbot $l
     }
     $ctext delete $first end
 }
 
 proc incrsearch {name ix op} {
-    global ctext searchstring
+    global ctext searchstring searchdirn
 
     $ctext tag remove found 1.0 end
+    if {[catch {$ctext index anchor}]} {
+	# no anchor set, use start of selection, or of visible area
+	set sel [$ctext tag ranges sel]
+	if {$sel ne {}} {
+	    $ctext mark set anchor [lindex $sel 0]
+	} elseif {$searchdirn eq "-forwards"} {
+	    $ctext mark set anchor @0,0
+	} else {
+	    $ctext mark set anchor @0,[winfo height $ctext]
+	}
+    }
     if {$searchstring ne {}} {
+	set here [$ctext search $searchdirn -- $searchstring anchor]
+	if {$here ne {}} {
+	    $ctext see $here
+	}
 	searchmarkvisible 1
     }
 }
 
 proc dosearch {} {
-    global sstring ctext searchstring
+    global sstring ctext searchstring searchdirn
 
     focus $sstring
     $sstring icursor end
-    $ctext tag remove sel 1.0 end
-    if {$searchstring eq {}} return
-    set here [$ctext index insert]
-    set match [$ctext search -count mlen -- $searchstring $here]
-    if {$match eq {}} {
-	bell
-	return
+    set searchdirn -forwards
+    if {$searchstring ne {}} {
+	set sel [$ctext tag ranges sel]
+	if {$sel ne {}} {
+	    set start "[lindex $sel 0] + 1c"
+	} elseif {[catch {set start [$ctext index anchor]}]} {
+	    set start "@0,0"
+	}
+	set match [$ctext search -count mlen -- $searchstring $start]
+	$ctext tag remove sel 1.0 end
+	if {$match eq {}} {
+	    bell
+	    return
+	}
+	$ctext see $match
+	set mend "$match + $mlen c"
+	$ctext tag add sel $match $mend
+	$ctext mark unset anchor
     }
-    $ctext see $match
-    set mend "$match + $mlen c"
-    $ctext tag add sel $match $mend
-    $ctext mark set insert $mend
+}
+
+proc dosearchback {} {
+    global sstring ctext searchstring searchdirn
+
+    focus $sstring
+    $sstring icursor end
+    set searchdirn -backwards
+    if {$searchstring ne {}} {
+	set sel [$ctext tag ranges sel]
+	if {$sel ne {}} {
+	    set start [lindex $sel 0]
+	} elseif {[catch {set start [$ctext index anchor]}]} {
+	    set start @0,[winfo height $ctext]
+	}
+	set match [$ctext search -backwards -count ml -- $searchstring $start]
+	$ctext tag remove sel 1.0 end
+	if {$match eq {}} {
+	    bell
+	    return
+	}
+	$ctext see $match
+	set mend "$match + $ml c"
+	$ctext tag add sel $match $mend
+	$ctext mark unset anchor
+    }
 }
 
 proc searchmark {first last} {
@@ -4268,7 +4317,7 @@ proc searchmarkvisible {doall} {
 }
 
 proc scrolltext {f0 f1} {
-    global ctext smarktop smarkbot searchstring
+    global searchstring
 
     .ctop.cdet.left.sb set $f0 $f1
     if {$searchstring ne {}} {
@@ -5343,6 +5392,7 @@ set fh_serial 0
 set highlight_names {}
 set nhl_names {}
 set highlight_paths {}
+set searchdirn -forwards
 
 set optim_delay 16
 
