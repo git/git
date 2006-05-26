@@ -383,7 +383,7 @@ proc makewindow {} {
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
     global rowctxmenu mergemax
-    global highlight_files highlight_names
+    global highlight_files gdttype
     global searchstring sstring
 
     menu .bar
@@ -498,26 +498,33 @@ proc makewindow {} {
     set fstring .ctop.top.bar.findstring
     lappend entries $fstring
     entry $fstring -width 30 -font $textfont -textvariable findstring
+    trace add variable findstring write find_change
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
     set findtypemenu [tk_optionMenu .ctop.top.bar.findtype \
 			  findtype Exact IgnCase Regexp]
+    trace add variable findtype write find_change
     .ctop.top.bar.findtype configure -font $uifont
     .ctop.top.bar.findtype.menu configure -font $uifont
     set findloc "All fields"
     tk_optionMenu .ctop.top.bar.findloc findloc "All fields" Headline \
-	Comments Author Committer Files Pickaxe
+	Comments Author Committer
+    trace add variable findloc write find_change
     .ctop.top.bar.findloc configure -font $uifont
     .ctop.top.bar.findloc.menu configure -font $uifont
-
     pack .ctop.top.bar.findloc -side right
     pack .ctop.top.bar.findtype -side right
-    # for making sure type==Exact whenever loc==Pickaxe
-    trace add variable findloc write findlocchange
 
-    label .ctop.top.lbar.flabel -text "Highlight:  Commits touching paths:" \
+    label .ctop.top.lbar.flabel -text "Highlight:  Commits " \
 	-font $uifont
     pack .ctop.top.lbar.flabel -side left -fill y
+    set gdttype "touching paths:"
+    set gm [tk_optionMenu .ctop.top.lbar.gdttype gdttype "touching paths:" \
+		"adding/removing string:"]
+    trace add variable gdttype write hfiles_change
+    $gm conf -font $uifont
+    .ctop.top.lbar.gdttype conf -font $uifont
+    pack .ctop.top.lbar.gdttype -side left -fill y
     entry .ctop.top.lbar.fent -width 25 -font $textfont \
 	-textvariable highlight_files
     trace add variable highlight_files write hfiles_change
@@ -531,14 +538,6 @@ proc makewindow {} {
     $viewhlmenu conf -font $uifont
     .ctop.top.lbar.vhl conf -font $uifont
     pack .ctop.top.lbar.vhl -side left -fill y
-    label .ctop.top.lbar.alabel -text " OR author/committer:" \
-	-font $uifont
-    pack .ctop.top.lbar.alabel -side left -fill y
-    entry .ctop.top.lbar.aent -width 20 -font $textfont \
-	-textvariable highlight_names
-    trace add variable highlight_names write hnames_change
-    lappend entries .ctop.top.lbar.aent
-    pack .ctop.top.lbar.aent -side right -fill x -expand 1
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
@@ -1807,12 +1806,17 @@ proc makepatterns {l} {
 }
 
 proc do_file_hl {serial} {
-    global highlight_files filehighlight highlight_paths
+    global highlight_files filehighlight highlight_paths gdttype
 
-    if {[catch {set paths [shellsplit $highlight_files]}]} return
-    set highlight_paths [makepatterns $paths]
-    highlight_filelist
-    set cmd [concat | git-diff-tree -r -s --stdin -- $paths]
+    if {$gdttype eq "touching paths:"} {
+	if {[catch {set paths [shellsplit $highlight_files]}]} return
+	set highlight_paths [makepatterns $paths]
+	highlight_filelist
+	set gdtargs [concat -- $paths]
+    } else {
+	set gdtargs [list "-S$highlight_files"]
+    }
+    set cmd [concat | git-diff-tree -r -s --stdin $gdtargs]
     set filehighlight [open $cmd r+]
     fconfigure $filehighlight -blocking 0
     fileevent $filehighlight readable readfhighlight
@@ -1859,8 +1863,9 @@ proc readfhighlight {} {
     set fhighlights($row) 1
 }
 
-proc hnames_change {name ix op} {
-    global highlight_names nhighlights nhl_names mainfont
+proc find_change {name ix op} {
+    global nhighlights mainfont
+    global findstring findpattern findtype
 
     # delete previous highlights, if any
     set rows [array names nhighlights]
@@ -1873,30 +1878,41 @@ proc hnames_change {name ix op} {
 	unset nhighlights
 	unbolden $rows
     }
-    if {[catch {set nhl_names [shellsplit $highlight_names]}]} {
-	set nhl_names {}
-	return
+    if {$findtype ne "Regexp"} {
+	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
+		   $findstring]
+	set findpattern "*$e*"
     }
     drawvisible
 }
 
-proc asknamehighlight {row id} {
-    global nhl_names nhighlights commitinfo iddrawn mainfont
+proc askfindhighlight {row id} {
+    global nhighlights commitinfo iddrawn mainfont
+    global findstring findtype findloc findpattern
 
     if {![info exists commitinfo($id)]} {
 	getcommit $id
     }
+    set info $commitinfo($id)
     set isbold 0
-    set author [lindex $commitinfo($id) 1]
-    set committer [lindex $commitinfo($id) 3]
-    foreach name $nhl_names {
-	set pattern "*$name*"
-	if {[string match -nocase $pattern $author]} {
-	    set isbold 2
-	    break
+    set fldtypes {Headline Author Date Committer CDate Comments}
+    foreach f $info ty $fldtypes {
+	if {$findloc ne "All fields" && $findloc ne $ty} {
+	    continue
 	}
-	if {!$isbold && [string match -nocase $pattern $committer]} {
-	    set isbold 1
+	if {$findtype eq "Regexp"} {
+	    set doesmatch [regexp $findstring $f]
+	} elseif {$findtype eq "IgnCase"} {
+	    set doesmatch [string match -nocase $findpattern $f]
+	} else {
+	    set doesmatch [string match $findpattern $f]
+	}
+	if {$doesmatch} {
+	    if {$ty eq "Author"} {
+		set isbold 2
+	    } else {
+		set isbold 1
+	    }
 	}
     }
     if {[info exists iddrawn($id)]} {
@@ -2681,7 +2697,7 @@ proc drawcmitrow {row} {
     global displayorder rowidlist
     global idrangedrawn iddrawn
     global commitinfo parentlist numcommits
-    global filehighlight fhighlights nhl_names nhighlights
+    global filehighlight fhighlights findstring nhighlights
     global hlview vhighlights
 
     if {$row >= $numcommits} return
@@ -2709,8 +2725,8 @@ proc drawcmitrow {row} {
     if {[info exists filehighlight] && ![info exists fhighlights($row)]} {
 	askfilehighlight $row $id
     }
-    if {$nhl_names ne {} && ![info exists nhighlights($row)]} {
-	asknamehighlight $row $id
+    if {$findstring ne {} && ![info exists nhighlights($row)]} {
+	askfindhighlight $row $id
     }
     if {[info exists iddrawn($id)]} return
     set col [lsearch -exact [lindex $rowidlist $row] $id]
@@ -3073,10 +3089,6 @@ proc dofind {} {
     unmarkmatches
     focus .
     set matchinglines {}
-    if {$findloc == "Pickaxe"} {
-	findpatches
-	return
-    }
     if {$findtype == "IgnCase"} {
 	set foundstring [string tolower $findstring]
     } else {
@@ -3086,17 +3098,13 @@ proc dofind {} {
     if {$foundstrlen == 0} return
     regsub -all {[*?\[\\]} $foundstring {\\&} matchstring
     set matchstring "*$matchstring*"
-    if {$findloc == "Files"} {
-	findfiles
-	return
-    }
     if {![info exists selectedline]} {
 	set oldsel -1
     } else {
 	set oldsel $selectedline
     }
     set didsel 0
-    set fldtypes {Headline Author Date Committer CDate Comment}
+    set fldtypes {Headline Author Date Committer CDate Comments}
     set l -1
     foreach id $displayorder {
 	set d $commitdata($id)
@@ -3199,18 +3207,6 @@ proc findprev {} {
     }
 }
 
-proc findlocchange {name ix op} {
-    global findloc findtype findtypemenu
-    if {$findloc == "Pickaxe"} {
-	set findtype Exact
-	set state disabled
-    } else {
-	set state normal
-    }
-    $findtypemenu entryconf 1 -state $state
-    $findtypemenu entryconf 2 -state $state
-}
-
 proc stopfindproc {{done 0}} {
     global findprocpid findprocfile findids
     global ctext findoldcursor phase maincursor textcursor
@@ -3226,247 +3222,6 @@ proc stopfindproc {{done 0}} {
     }
     catch {unset findinprogress}
     notbusy find
-}
-
-proc findpatches {} {
-    global findstring selectedline numcommits
-    global findprocpid findprocfile
-    global finddidsel ctext displayorder findinprogress
-    global findinsertpos
-
-    if {$numcommits == 0} return
-
-    # make a list of all the ids to search, starting at the one
-    # after the selected line (if any)
-    if {[info exists selectedline]} {
-	set l $selectedline
-    } else {
-	set l -1
-    }
-    set inputids {}
-    for {set i 0} {$i < $numcommits} {incr i} {
-	if {[incr l] >= $numcommits} {
-	    set l 0
-	}
-	append inputids [lindex $displayorder $l] "\n"
-    }
-
-    if {[catch {
-	set f [open [list | git-diff-tree --stdin -s -r -S$findstring \
-			 << $inputids] r]
-    } err]} {
-	error_popup "Error starting search process: $err"
-	return
-    }
-
-    set findinsertpos end
-    set findprocfile $f
-    set findprocpid [pid $f]
-    fconfigure $f -blocking 0
-    fileevent $f readable readfindproc
-    set finddidsel 0
-    nowbusy find
-    set findinprogress 1
-}
-
-proc readfindproc {} {
-    global findprocfile finddidsel
-    global commitrow matchinglines findinsertpos curview
-
-    set n [gets $findprocfile line]
-    if {$n < 0} {
-	if {[eof $findprocfile]} {
-	    stopfindproc 1
-	    if {!$finddidsel} {
-		bell
-	    }
-	}
-	return
-    }
-    if {![regexp {^[0-9a-f]{40}} $line id]} {
-	error_popup "Can't parse git-diff-tree output: $line"
-	stopfindproc
-	return
-    }
-    if {![info exists commitrow($curview,$id)]} {
-	puts stderr "spurious id: $id"
-	return
-    }
-    set l $commitrow($curview,$id)
-    insertmatch $l $id
-}
-
-proc insertmatch {l id} {
-    global matchinglines findinsertpos finddidsel
-
-    if {$findinsertpos == "end"} {
-	if {$matchinglines != {} && $l < [lindex $matchinglines 0]} {
-	    set matchinglines [linsert $matchinglines 0 $l]
-	    set findinsertpos 1
-	} else {
-	    lappend matchinglines $l
-	}
-    } else {
-	set matchinglines [linsert $matchinglines $findinsertpos $l]
-	incr findinsertpos
-    }
-    markheadline $l $id
-    if {!$finddidsel} {
-	findselectline $l
-	set finddidsel 1
-    }
-}
-
-proc findfiles {} {
-    global selectedline numcommits displayorder ctext
-    global ffileline finddidsel parentlist
-    global findinprogress findstartline findinsertpos
-    global treediffs fdiffid fdiffsneeded fdiffpos
-    global findmergefiles
-
-    if {$numcommits == 0} return
-
-    if {[info exists selectedline]} {
-	set l [expr {$selectedline + 1}]
-    } else {
-	set l 0
-    }
-    set ffileline $l
-    set findstartline $l
-    set diffsneeded {}
-    set fdiffsneeded {}
-    while 1 {
-	set id [lindex $displayorder $l]
-	if {$findmergefiles || [llength [lindex $parentlist $l]] == 1} {
-	    if {![info exists treediffs($id)]} {
-		append diffsneeded "$id\n"
-		lappend fdiffsneeded $id
-	    }
-	}
-	if {[incr l] >= $numcommits} {
-	    set l 0
-	}
-	if {$l == $findstartline} break
-    }
-
-    # start off a git-diff-tree process if needed
-    if {$diffsneeded ne {}} {
-	if {[catch {
-	    set df [open [list | git-diff-tree -r --stdin << $diffsneeded] r]
-	} err ]} {
-	    error_popup "Error starting search process: $err"
-	    return
-	}
-	catch {unset fdiffid}
-	set fdiffpos 0
-	fconfigure $df -blocking 0
-	fileevent $df readable [list readfilediffs $df]
-    }
-
-    set finddidsel 0
-    set findinsertpos end
-    set id [lindex $displayorder $l]
-    nowbusy find
-    set findinprogress 1
-    findcont
-    update
-}
-
-proc readfilediffs {df} {
-    global findid fdiffid fdiffs
-
-    set n [gets $df line]
-    if {$n < 0} {
-	if {[eof $df]} {
-	    donefilediff
-	    if {[catch {close $df} err]} {
-		stopfindproc
-		bell
-		error_popup "Error in git-diff-tree: $err"
-	    } elseif {[info exists findid]} {
-		set id $findid
-		stopfindproc
-		bell
-		error_popup "Couldn't find diffs for $id"
-	    }
-	}
-	return
-    }
-    if {[regexp {^([0-9a-f]{40})$} $line match id]} {
-	# start of a new string of diffs
-	donefilediff
-	set fdiffid $id
-	set fdiffs {}
-    } elseif {[string match ":*" $line]} {
-	lappend fdiffs [lindex $line 5]
-    }
-}
-
-proc donefilediff {} {
-    global fdiffid fdiffs treediffs findid
-    global fdiffsneeded fdiffpos
-
-    if {[info exists fdiffid]} {
-	while {[lindex $fdiffsneeded $fdiffpos] ne $fdiffid
-	       && $fdiffpos < [llength $fdiffsneeded]} {
-	    # git-diff-tree doesn't output anything for a commit
-	    # which doesn't change anything
-	    set nullid [lindex $fdiffsneeded $fdiffpos]
-	    set treediffs($nullid) {}
-	    if {[info exists findid] && $nullid eq $findid} {
-		unset findid
-		findcont
-	    }
-	    incr fdiffpos
-	}
-	incr fdiffpos
-
-	if {![info exists treediffs($fdiffid)]} {
-	    set treediffs($fdiffid) $fdiffs
-	}
-	if {[info exists findid] && $fdiffid eq $findid} {
-	    unset findid
-	    findcont
-	}
-    }
-}
-
-proc findcont {} {
-    global findid treediffs parentlist
-    global ffileline findstartline finddidsel
-    global displayorder numcommits matchinglines findinprogress
-    global findmergefiles
-
-    set l $ffileline
-    while {1} {
-	set id [lindex $displayorder $l]
-	if {$findmergefiles || [llength [lindex $parentlist $l]] == 1} {
-	    if {![info exists treediffs($id)]} {
-		set findid $id
-		set ffileline $l
-		return
-	    }
-	    set doesmatch 0
-	    foreach f $treediffs($id) {
-		set x [findmatches $f]
-		if {$x != {}} {
-		    set doesmatch 1
-		    break
-		}
-	    }
-	    if {$doesmatch} {
-		insertmatch $l $id
-	    }
-	}
-	if {[incr l] >= $numcommits} {
-	    set l 0
-	}
-	if {$l == $findstartline} break
-    }
-    stopfindproc
-    if {!$finddidsel} {
-	bell
-    }
 }
 
 # mark a commit as matching by putting a yellow background
@@ -4965,7 +4720,7 @@ proc doquit {} {
 }
 
 proc doprefs {} {
-    global maxwidth maxgraphpct diffopts findmergefiles
+    global maxwidth maxgraphpct diffopts
     global oldprefs prefstop
 
     set top .gitkprefs
@@ -4974,7 +4729,7 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+    foreach v {maxwidth maxgraphpct diffopts} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -4990,10 +4745,6 @@ proc doprefs {} {
 	-font optionfont
     spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $top.maxpctl $top.maxpct -sticky w
-    checkbutton $top.findm -variable findmergefiles
-    label $top.findml -text "Include merges for \"Find\" in \"Files\"" \
-	-font optionfont
-    grid $top.findm $top.findml - -sticky w
     label $top.ddisp -text "Diff display options"
     grid $top.ddisp - -sticky w -pady 10
     label $top.diffoptl -text "Options for diff program" \
@@ -5010,10 +4761,10 @@ proc doprefs {} {
 }
 
 proc prefscan {} {
-    global maxwidth maxgraphpct diffopts findmergefiles
+    global maxwidth maxgraphpct diffopts
     global oldprefs prefstop
 
-    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+    foreach v {maxwidth maxgraphpct diffopts} {
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -5389,7 +5140,6 @@ if {$i >= 0} {
 set history {}
 set historyindex 0
 set fh_serial 0
-set highlight_names {}
 set nhl_names {}
 set highlight_paths {}
 set searchdirn -forwards
