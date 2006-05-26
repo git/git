@@ -382,19 +382,40 @@ static void check_header_line(char *line)
 	check_header(line, header);
 }
 
+static int is_rfc2822_header(char *line)
+{
+	/*
+	 * The section that defines the loosest possible
+	 * field name is "3.6.8 Optional fields".
+	 *
+	 * optional-field = field-name ":" unstructured CRLF
+	 * field-name = 1*ftext
+	 * ftext = %d33-57 / %59-126
+	 */
+	int ch;
+	char *cp = line;
+	while ((ch = *cp++)) {
+		if (ch == ':')
+			return cp != line;
+		if ((33 <= ch && ch <= 57) ||
+		    (59 <= ch && ch <= 126))
+			continue;
+		break;
+	}
+	return 0;
+}
+
 static int read_one_header_line(char *line, int sz, FILE *in)
 {
 	int ofs = 0;
 	while (ofs < sz) {
-		const char *colon;
 		int peek, len;
 		if (fgets(line + ofs, sz - ofs, in) == NULL)
 			break;
 		len = eatspace(line + ofs);
 		if (len == 0)
 			break;
-		colon = strchr(line, ':');
-		if (!colon || !isspace(colon[1])) {
+		if (!is_rfc2822_header(line)) {
 			/* Re-add the newline */
 			line[ofs + len] = '\n';
 			line[ofs + len + 1] = '\0';
