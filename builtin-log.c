@@ -201,7 +201,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	}
 	argc = j;
 
-	if (numbered && start_number < 0)
+	if (start_number < 0)
 		start_number = 1;
 	if (numbered && keep_subject < 0)
 		die ("-n and -k are mutually exclusive.");
@@ -233,12 +233,21 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
-		rev.nr = rev.total - nr;
+		rev.nr = total - nr + (start_number - 1);
 		if (!use_stdout)
 			reopen_stdout(commit, rev.nr, keep_subject);
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
+
+		/* We put one extra blank line between formatted
+		 * patches and this flag is used by log-tree code
+		 * to see if it needs to emit a LF before showing
+		 * the log; when using one file per patch, we do
+		 * not want the extra blank line.
+		 */
+		if (!use_stdout)
+			rev.shown_one = 0;
 		if (shown) {
 			if (rev.mime_boundary)
 				printf("\n--%s%s--\n\n\n",
