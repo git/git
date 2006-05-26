@@ -108,7 +108,8 @@ static int get_value(const char* key_, const char* regex_)
 
 int main(int argc, const char **argv)
 {
-	setup_git_directory();
+	int nongit = 0;
+	setup_git_directory_gently(&nongit);
 
 	while (1 < argc) {
 		if (!strcmp(argv[1], "--int"))
