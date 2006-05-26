@@ -141,7 +141,7 @@ int cmd_cat_file(int argc, const char **argv, char **envp)
 
 		/* custom pretty-print here */
 		if (!strcmp(type, tree_type))
-			return execl_git_cmd("ls-tree", argv[2], NULL);
+			return cmd_ls_tree(2, argv + 1, NULL);
 
 		buf = read_sha1_file(sha1, type, &size);
 		if (!buf)
