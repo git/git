@@ -16,25 +16,20 @@ test_expect_success 'prepare repository' \
 	 echo git >c &&
 	 cat b b >d'
 
-test_expect_success 'diff without --binary' \
-	'git-diff | git-apply --stat --summary >current &&
-	 cmp current - <<\EOF
+cat > expected <<\EOF
  a |    2 +-
  b |  Bin
  c |    2 +-
  d |  Bin
  4 files changed, 2 insertions(+), 2 deletions(-)
-EOF'
+EOF
+test_expect_success 'diff without --binary' \
+	'git-diff | git-apply --stat --summary >current &&
+	 cmp current expected'
 
 test_expect_success 'diff with --binary' \
 	'git-diff --binary | git-apply --stat --summary >current &&
-	 cmp current - <<\EOF
- a |    2 +-
- b |  Bin
- c |    2 +-
- d |  Bin
- 4 files changed, 2 insertions(+), 2 deletions(-)
-EOF'
+	 cmp current expected'
 
 # apply needs to be able to skip the binary material correctly
 # in order to report the line number of a corrupt patch.
