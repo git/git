@@ -357,21 +357,21 @@ proc readrefs {} {
     close $refd
 }
 
-proc show_error {w msg} {
+proc show_error {w top msg} {
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    button $w.ok -text OK -command "destroy $w"
+    button $w.ok -text OK -command "destroy $top"
     pack $w.ok -side bottom -fill x
-    bind $w <Visibility> "grab $w; focus $w"
-    bind $w <Key-Return> "destroy $w"
-    tkwait window $w
+    bind $top <Visibility> "grab $top; focus $top"
+    bind $top <Key-Return> "destroy $top"
+    tkwait window $top
 }
 
 proc error_popup msg {
     set w .error
     toplevel $w
     wm transient $w .
-    show_error $w $msg
+    show_error $w $w $msg
 }
 
 proc makewindow {} {
@@ -4917,7 +4917,7 @@ foreach arg $argv {
 # check that we can find a .git directory somewhere...
 set gitdir [gitdir]
 if {![file isdirectory $gitdir]} {
-    show_error . "Cannot find the git directory \"$gitdir\"."
+    show_error {} . "Cannot find the git directory \"$gitdir\"."
     exit 1
 }
 
@@ -4939,7 +4939,7 @@ if {$i >= 0} {
 	if {$i > 0} {
 	    set err [string range $err [expr {$i + 6}] end]
 	}
-	show_error . "Bad arguments to gitk:\n$err"
+	show_error {} . "Bad arguments to gitk:\n$err"
 	exit 1
     }
 }
