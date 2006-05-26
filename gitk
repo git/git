@@ -1660,7 +1660,7 @@ proc bolden {row font} {
     global canv linehtag selectedline
 
     $canv itemconf $linehtag($row) -font $font
-    if {$row == $selectedline} {
+    if {[info exists selectedline] && $row == $selectedline} {
 	$canv delete secsel
 	set t [eval $canv create rect [$canv bbox $linehtag($row)] \
 		   -outline {{}} -tags secsel \
@@ -1673,7 +1673,7 @@ proc bolden_name {row font} {
     global canv2 linentag selectedline
 
     $canv2 itemconf $linentag($row) -font $font
-    if {$row == $selectedline} {
+    if {[info exists selectedline] && $row == $selectedline} {
 	$canv2 delete secsel
 	set t [eval $canv2 create rect [$canv2 bbox $linentag($row)] \
 		   -outline {{}} -tags secsel \
@@ -1715,7 +1715,6 @@ proc addvhighlight {n} {
 
 proc delvhighlight {} {
     global hlview vhighlights
-    global selectedline
 
     if {![info exists hlview]} return
     unset hlview
