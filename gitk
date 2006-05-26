@@ -4937,7 +4937,7 @@ if {$i >= 0} {
 	# so look for "fatal:".
 	set i [string first "fatal:" $err]
 	if {$i > 0} {
-	    set err [string range [expr {$i + 6}] end]
+	    set err [string range $err [expr {$i + 6}] end]
 	}
 	show_error . "Bad arguments to gitk:\n$err"
 	exit 1
