@@ -151,7 +151,7 @@ foreach my $f (@bfiles) {
     my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
     chomp $blob;
     `git-cat-file blob $blob > $tmpdir/blob`;
-    if (system('cmp', '-q', $f, "$tmpdir/blob")) {
+    if (system('cmp', '-s', $f, "$tmpdir/blob")) {
 	warn "Binary file $f in CVS does not match parent.\n";
 	$dirty = 1;
 	next;
