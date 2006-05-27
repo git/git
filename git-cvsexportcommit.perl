@@ -1,5 +1,12 @@
 #!/usr/bin/perl -w
 
+# Known limitations:
+# - cannot add or remove binary files
+# - cannot add parent directories when needed
+# - does not propagate permissions
+# - tells "ready for commit" even when things could not be completed
+#   (eg addition of a binary file)
+
 use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
