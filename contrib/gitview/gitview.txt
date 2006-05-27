@@ -25,6 +25,9 @@ OPTIONS
 
 	<args>
 		All the valid option for git-rev-list(1)
+	Key Bindings:
+	F5:
+		To reread references.
 
 EXAMPLES
 ------
@@ -33,6 +36,5 @@ EXAMPLES
 	  or drivers/scsi subdirectories
 
 	gitview --since=2.weeks.ago
-	  Show the changes during the last two weeks 
+	  Show the changes during the last two weeks
 
-	

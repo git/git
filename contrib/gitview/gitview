@@ -425,7 +425,7 @@ class DiffWindow:
 class GitView:
 	""" This is the main class
 	"""
-	version = "0.7"
+	version = "0.8"
 
 	def __init__(self, with_diff=0):
 		self.with_diff = with_diff
@@ -449,8 +449,17 @@ class GitView:
 
 		self.accel_group = gtk.AccelGroup()
 		self.window.add_accel_group(self.accel_group)
+		self.accel_group.connect_group(0xffc2, 0, gtk.ACCEL_LOCKED, self.refresh);
 
-		self.construct()
+		self.window.add(self.construct())
+
+	def refresh(self, widget, event=None, *arguments, **keywords):
+		self.get_encoding()
+		self.get_bt_sha1()
+		Commit.children_sha1 = {}
+		self.set_branch(sys.argv[without_diff:])
+		self.window.show()
+		return True
 
 	def get_bt_sha1(self):
 		""" Update the bt_sha1 dictionary with the
@@ -500,9 +509,9 @@ class GitView:
 		menu_bar.show()
 		vbox.pack_start(menu_bar, expand=False, fill=True)
 		vbox.pack_start(paned, expand=True, fill=True)
-		self.window.add(vbox)
 		paned.show()
 		vbox.show()
+		return vbox
 
 
 	def construct_top(self):
@@ -987,8 +996,8 @@ class GitView:
 		window.set_diff(commit_sha1, parent_sha1, encoding)
 		self.treeview.grab_focus()
 
+without_diff = 0
 if __name__ == "__main__":
-	without_diff = 0
 
 	if (len(sys.argv) > 1 ):
 		if (sys.argv[1] == "--without-diff"):
