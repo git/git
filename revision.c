@@ -733,6 +733,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->abbrev = DEFAULT_ABBREV;
 				continue;
 			}
+			if (!strncmp(arg, "--abbrev=", 9)) {
+				revs->abbrev = strtoul(arg + 9, NULL, 10);
+				if (revs->abbrev < MINIMUM_ABBREV)
+					revs->abbrev = MINIMUM_ABBREV;
+				else if (revs->abbrev > 40)
+					revs->abbrev = 40;
+				continue;
+			}
 			if (!strcmp(arg, "--abbrev-commit")) {
 				revs->abbrev_commit = 1;
 				continue;
