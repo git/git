@@ -983,10 +983,15 @@ class GitView:
 		try:
 			self.treeview.set_cursor(self.index[revid])
 		except KeyError:
-			print "Revision %s not present in the list" % revid
+			dialog = gtk.MessageDialog(parent=None, flags=0,
+					type=gtk.MESSAGE_WARNING, buttons=gtk.BUTTONS_CLOSE,
+					message_format=None)
+			dialog.set_markup("Revision <b>%s</b> not present in the list" % revid)
 			# revid == 0 is the parent of the first commit
 			if (revid != 0 ):
-				print "Try running gitview without any options"
+				dialog.format_secondary_text("Try running gitview without any options")
+			dialog.run()
+			dialog.destroy()
 
 		self.treeview.grab_focus()
 
