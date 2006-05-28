@@ -240,11 +240,18 @@ static int eatspace(char *line)
 #define SEEN_FROM 01
 #define SEEN_DATE 02
 #define SEEN_SUBJECT 04
-#define SEEN_PREFIX  0x08
+#define SEEN_BOGUS_UNIX_FROM 010
+#define SEEN_PREFIX  020
 
 /* First lines of body can have From:, Date:, and Subject: */
 static void handle_inbody_header(int *seen, char *line)
 {
+	if (!memcmp(">From", line, 5) && isspace(line[5])) {
+		if (!(*seen & SEEN_BOGUS_UNIX_FROM)) {
+			*seen |= SEEN_BOGUS_UNIX_FROM;
+			return;
+		}
+	}
 	if (!memcmp("From:", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_FROM) && handle_from(line+6)) {
 			*seen |= SEEN_FROM;
