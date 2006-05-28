@@ -163,7 +163,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 				struct tree *tree = lookup_tree(posns[i]->sha1);
 				any_dirs = 1;
 				parse_tree(tree);
-				subposns[i] = tree->entries;
+				subposns[i] = create_tree_entry_list(tree);
 				posns[i] = posns[i]->next;
 				src[i + merge] = &df_conflict_entry;
 				continue;
@@ -368,7 +368,7 @@ static int unpack_trees(merge_fn_t fn)
 	if (len) {
 		posns = xmalloc(len * sizeof(struct tree_entry_list *));
 		for (i = 0; i < len; i++) {
-			posns[i] = ((struct tree *) posn->item)->entries;
+			posns[i] = create_tree_entry_list((struct tree *) posn->item);
 			posn = posn->next;
 		}
 		if (unpack_trees_rec(posns, len, "", fn, &indpos))

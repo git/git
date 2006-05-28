@@ -1704,6 +1704,7 @@ static struct object_list **process_blob(struct blob *blob,
 		return p;
 
 	obj->flags |= SEEN;
+	name = strdup(name);
 	return add_object(obj, p, path, name);
 }
 
@@ -1713,7 +1714,7 @@ static struct object_list **process_tree(struct tree *tree,
 					 const char *name)
 {
 	struct object *obj = &tree->object;
-	struct tree_entry_list *entry;
+	struct tree_desc desc;
 	struct name_path me;
 
 	obj->flags |= LOCAL;
@@ -1724,21 +1725,30 @@ static struct object_list **process_tree(struct tree *tree,
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 
 	obj->flags |= SEEN;
+	name = strdup(name);
 	p = add_object(obj, p, NULL, name);
 	me.up = path;
 	me.elem = name;
 	me.elem_len = strlen(name);
-	entry = tree->entries;
-	tree->entries = NULL;
-	while (entry) {
-		struct tree_entry_list *next = entry->next;
-		if (entry->directory)
-			p = process_tree(lookup_tree(entry->sha1), p, &me, entry->name);
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+
+		if (S_ISDIR(mode))
+			p = process_tree(lookup_tree(sha1), p, &me, name);
 		else
-			p = process_blob(lookup_blob(entry->sha1), p, &me, entry->name);
-		free(entry);
-		entry = next;
+			p = process_blob(lookup_blob(sha1), p, &me, name);
 	}
+	free(tree->buffer);
+	tree->buffer = NULL;
 	return p;
 }
 

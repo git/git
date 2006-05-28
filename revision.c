@@ -63,8 +63,7 @@ void mark_tree_uninteresting(struct tree *tree)
 		return;
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
-	entry = tree->entries;
-	tree->entries = NULL;
+	entry = create_tree_entry_list(tree);
 	while (entry) {
 		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
