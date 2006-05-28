@@ -34,7 +34,7 @@ my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_version, $_upgrade, $_authors);
 my (@_branch_from, %tree_map, %users);
-my $_svn_co_url_revs;
+my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
@@ -336,7 +336,7 @@ sub show_ignore {
 	my %ign;
 	File::Find::find({wanted=>sub{if(lstat $_ && -d _ && -d "$_/.svn"){
 		s#^\./##;
-		@{$ign{$_}} = safe_qx(qw(svn propget svn:ignore),$_);
+		@{$ign{$_}} = svn_propget_base('svn:ignore', $_);
 		}}, no_chdir=>1},'.');
 
 	print "\n# /\n";
@@ -859,7 +859,7 @@ sub sys { system(@_) == 0 or croak $? }
 
 sub eol_cp {
 	my ($from, $to) = @_;
-	my $es = safe_qx(qw/svn propget svn:eol-style/, $to);
+	my $es = svn_propget_base('svn:eol-style', $to);
 	open my $rfd, '<', $from or croak $!;
 	binmode $rfd or croak $!;
 	open my $wfd, '>', $to or croak $!;
@@ -897,7 +897,7 @@ sub do_update_index {
 	while (my $x = <$p>) {
 		chomp $x;
 		if (!$no_text_base && lstat $x && ! -l _ &&
-				safe_qx(qw/svn propget svn:keywords/,$x)) {
+				svn_propget_base('svn:keywords', $x)) {
 			my $mode = -x _ ? 0755 : 0644;
 			my ($v,$d,$f) = File::Spec->splitpath($x);
 			my $tb = File::Spec->catfile($d, '.svn', 'tmp',
@@ -1135,6 +1135,9 @@ sub svn_compat_check {
 	if (grep /usage: checkout URL\[\@REV\]/,@co_help) {
 		$_svn_co_url_revs = 1;
 	}
+	if (grep /\[TARGET\[\@REV\]\.\.\.\]/, `svn propget -h`) {
+		$_svn_pg_peg_revs = 1;
+	}
 
 	# I really, really hope nobody hits this...
 	unless (grep /stop-on-copy/, (safe_qx(qw(svn log -h)))) {
@@ -1212,6 +1215,12 @@ sub load_authors {
 		$users{$user} = [$name, $email];
 	}
 	close $authors or croak $!;
+}
+
+sub svn_propget_base {
+	my ($p, $f) = @_;
+	$f .= '@BASE' if $_svn_pg_peg_revs;
+	return safe_qx(qw/svn propget/, $p, $f);
 }
 
 __END__
