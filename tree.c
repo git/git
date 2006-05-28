@@ -78,19 +78,26 @@ int read_tree_recursive(struct tree *tree,
 			int stage, const char **match,
 			read_tree_fn_t fn)
 {
-	struct tree_entry_list *list;
+	struct tree_desc desc;
+
 	if (parse_tree(tree))
 		return -1;
-	list = tree->entries;
-	while (list) {
-		struct tree_entry_list *current = list;
-		list = list->next;
-		if (!match_tree_entry(base, baselen, current->name,
-				      current->mode, match))
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+
+		if (!match_tree_entry(base, baselen, name, mode, match))
 			continue;
 
-		switch (fn(current->sha1, base, baselen,
-			   current->name, current->mode, stage)) {
+		switch (fn(sha1, base, baselen, name, mode, stage)) {
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
@@ -98,16 +105,16 @@ int read_tree_recursive(struct tree *tree,
 		default:
 			return -1;
 		}
-		if (current->directory) {
+		if (S_ISDIR(mode)) {
 			int retval;
-			int pathlen = strlen(current->name);
+			int pathlen = strlen(name);
 			char *newbase;
 
 			newbase = xmalloc(baselen + 1 + pathlen);
 			memcpy(newbase, base, baselen);
-			memcpy(newbase + baselen, current->name, pathlen);
+			memcpy(newbase + baselen, name, pathlen);
 			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(lookup_tree(current->sha1),
+			retval = read_tree_recursive(lookup_tree(sha1),
 						     newbase,
 						     baselen + pathlen + 1,
 						     stage, match, fn);
