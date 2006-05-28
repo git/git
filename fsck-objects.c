@@ -441,6 +441,7 @@ int main(int argc, char **argv)
 {
 	int i, heads;
 
+	track_object_refs = 1;
 	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {

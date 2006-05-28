@@ -8,7 +8,7 @@
 
 const char *tree_type = "tree";
 
-static int read_one_entry(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+static int read_one_entry(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
 {
 	int len;
 	unsigned int size;
@@ -89,7 +89,7 @@ int read_tree_recursive(struct tree *tree,
 				      current->mode, match))
 			continue;
 
-		switch (fn(current->item.any->sha1, base, baselen,
+		switch (fn(current->sha1, base, baselen,
 			   current->name, current->mode, stage)) {
 		case 0:
 			continue;
@@ -107,7 +107,7 @@ int read_tree_recursive(struct tree *tree,
 			memcpy(newbase, base, baselen);
 			memcpy(newbase + baselen, current->name, pathlen);
 			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(current->item.tree,
+			retval = read_tree_recursive(lookup_tree(current->sha1),
 						     newbase,
 						     baselen + pathlen + 1,
 						     stage, match, fn);
@@ -170,6 +170,7 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
 		entry->name = path;
+		entry->sha1 = sha1;
 		entry->mode = mode;
 		entry->directory = S_ISDIR(mode) != 0;
 		entry->executable = (mode & S_IXUSR) != 0;
@@ -178,12 +179,6 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 		entry->next = NULL;
 
 		update_tree_entry(&desc);
-
-		if (entry->directory) {
-			entry->item.tree = lookup_tree(sha1);
-		} else {
-			entry->item.blob = lookup_blob(sha1);
-		}
 		n_refs++;
 		*list_p = entry;
 		list_p = &entry->next;
@@ -193,8 +188,16 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 		struct tree_entry_list *entry;
 		unsigned i = 0;
 		struct object_refs *refs = alloc_object_refs(n_refs);
-		for (entry = item->entries; entry; entry = entry->next)
-			refs->ref[i++] = entry->item.any;
+		for (entry = item->entries; entry; entry = entry->next) {
+			struct object *obj;
+
+			if (entry->directory)
+				obj = &lookup_tree(entry->sha1)->object;
+			else
+				obj = &lookup_blob(entry->sha1)->object;
+			refs->ref[i++] = obj;
+		}
+
 		set_object_refs(&item->object, refs);
 	}
 

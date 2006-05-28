@@ -13,11 +13,7 @@ struct tree_entry_list {
 	unsigned zeropad : 1;
 	unsigned int mode;
 	const char *name;
-	union {
-		struct object *any;
-		struct tree *tree;
-		struct blob *blob;
-	} item;
+	const unsigned char *sha1;
 };
 
 struct tree {
@@ -37,7 +33,7 @@ int parse_tree(struct tree *tree);
 struct tree *parse_tree_indirect(const unsigned char *sha1);
 
 #define READ_TREE_RECURSIVE 1
-typedef int (*read_tree_fn_t)(unsigned char *, const char *, int, const char *, unsigned int, int);
+typedef int (*read_tree_fn_t)(const unsigned char *, const char *, int, const char *, unsigned int, int);
 
 extern int read_tree_recursive(struct tree *tree,
 			       const char *base, int baselen,

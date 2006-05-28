@@ -1733,9 +1733,9 @@ static struct object_list **process_tree(struct tree *tree,
 	while (entry) {
 		struct tree_entry_list *next = entry->next;
 		if (entry->directory)
-			p = process_tree(entry->item.tree, p, &me, entry->name);
+			p = process_tree(lookup_tree(entry->sha1), p, &me, entry->name);
 		else
-			p = process_blob(entry->item.blob, p, &me, entry->name);
+			p = process_blob(lookup_blob(entry->sha1), p, &me, entry->name);
 		free(entry);
 		entry = next;
 	}
