@@ -197,17 +197,16 @@ static int fsck_tree(struct tree *item)
 			default:
 				break;
 			}
-			free(last->name);
 			free(last);
 		}
 
 		last = entry;
 	}
-	if (last) {
-		free(last->name);
+	if (last)
 		free(last);
-	}
 	item->entries = NULL;
+	free(item->buffer);
+	item->buffer = NULL;
 
 	retval = 0;
 	if (has_full_path) {
