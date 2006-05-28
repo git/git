@@ -643,7 +643,7 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 }
 
 static int write_index_ext_header(SHA_CTX *context, int fd,
-				  unsigned long ext, unsigned long sz)
+				  unsigned int ext, unsigned int sz)
 {
 	ext = htonl(ext);
 	sz = htonl(sz);
