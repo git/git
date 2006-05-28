@@ -203,7 +203,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 
 	if (start_number < 0)
 		start_number = 1;
-	if (numbered && keep_subject < 0)
+	if (numbered && keep_subject)
 		die ("-n and -k are mutually exclusive.");
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
