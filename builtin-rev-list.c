@@ -103,6 +103,7 @@ static struct object_list **process_blob(struct blob *blob,
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
 	obj->flags |= SEEN;
+	name = strdup(name);
 	return add_object(obj, p, path, name);
 }
 
@@ -122,6 +123,7 @@ static struct object_list **process_tree(struct tree *tree,
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
+	name = strdup(name);
 	p = add_object(obj, p, path, name);
 	me.up = path;
 	me.elem = name;
@@ -134,6 +136,7 @@ static struct object_list **process_tree(struct tree *tree,
 			p = process_tree(entry->item.tree, p, &me, entry->name);
 		else
 			p = process_blob(entry->item.blob, p, &me, entry->name);
+		free(entry->name);
 		free(entry);
 		entry = next;
 	}

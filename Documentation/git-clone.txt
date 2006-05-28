@@ -9,8 +9,8 @@ git-clone - Clones a repository
 SYNOPSIS
 --------
 [verse]
-'git-clone' [-l [-s]] [-q] [-n] [--bare] [-o <name>] [-u <upload-pack>]
-	  [--reference <repository>]
+'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
+	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
 	  <repository> [<directory>]
 
 DESCRIPTION
@@ -88,6 +88,11 @@ OPTIONS
 	by 'git-clone-pack', '--exec=<upload-pack>' is passed to
 	the command to specify non-default path for the command
 	run on the other end.
+
+--template=<template_directory>::
+	Specify the directory from which templates will be used;
+	if unset the templates are taken from the installation
+	defined default, typically `/usr/share/git-core/templates`.
 
 <repository>::
 	The (possibly remote) repository to clone from.  It can

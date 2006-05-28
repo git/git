@@ -9,7 +9,7 @@
 unset CDPATH
 
 usage() {
-	echo >&2 "Usage: $0 [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
+	echo >&2 "Usage: $0 [--template=<template_directory>] [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
 	exit 1
 }
 
@@ -102,6 +102,7 @@ quiet=
 local=no
 use_local=no
 local_shared=no
+unset template
 no_checkout=
 upload_pack=
 bare=
@@ -120,6 +121,11 @@ while
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
           local_shared=yes; use_local=yes ;;
+	1,--template) usage ;;
+	*,--template)
+		shift; template="--template=$1" ;;
+	*,--template=*)
+	  template="$1" ;;
 	*,-q|*,--quiet) quiet=-q ;;
 	*,--use-separate-remote)
 		use_separate_remote=t ;;
@@ -203,7 +209,7 @@ trap 'err=$?; cd ..; rm -r "$D"; exit $err' 0
 case "$bare" in
 yes) GIT_DIR="$D" ;;
 *) GIT_DIR="$D/.git" ;;
-esac && export GIT_DIR && git-init-db || usage
+esac && export GIT_DIR && git-init-db ${template+"$template"} || usage
 case "$bare" in
 yes)
 	GIT_DIR="$D" ;;
