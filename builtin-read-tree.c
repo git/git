@@ -9,6 +9,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "tree-walk.h"
 #include "cache-tree.h"
 #include <sys/time.h>
 #include <signal.h>
@@ -775,19 +776,28 @@ static int read_cache_unmerged(void)
 
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
-	struct tree_entry_list *ent;
+	struct tree_desc desc;
 	int cnt;
 
 	memcpy(it->sha1, tree->object.sha1, 20);
-	for (cnt = 0, ent = tree->entries; ent; ent = ent->next) {
-		if (!ent->directory)
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+	cnt = 0;
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+		if (!S_ISDIR(mode))
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(ent->sha1);
+			struct tree *subtree = lookup_tree(sha1);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
-			sub = cache_tree_sub(it, ent->name);
+			sub = cache_tree_sub(it, name);
 			sub->cache_tree = cache_tree();
 			prime_cache_tree_rec(sub->cache_tree, subtree);
 			cnt += sub->cache_tree->entry_count;
