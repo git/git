@@ -53,8 +53,8 @@ static void mark_blob_uninteresting(struct blob *blob)
 
 void mark_tree_uninteresting(struct tree *tree)
 {
+	struct tree_desc desc;
 	struct object *obj = &tree->object;
-	struct tree_entry_list *entry;
 
 	if (obj->flags & UNINTERESTING)
 		return;
@@ -63,16 +63,29 @@ void mark_tree_uninteresting(struct tree *tree)
 		return;
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
-	entry = create_tree_entry_list(tree);
-	while (entry) {
-		struct tree_entry_list *next = entry->next;
-		if (entry->directory)
-			mark_tree_uninteresting(lookup_tree(entry->sha1));
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+
+		if (S_ISDIR(mode))
+			mark_tree_uninteresting(lookup_tree(sha1));
 		else
-			mark_blob_uninteresting(lookup_blob(entry->sha1));
-		free(entry);
-		entry = next;
+			mark_blob_uninteresting(lookup_blob(sha1));
 	}
+
+	/*
+	 * We don't care about the tree any more
+	 * after it has been marked uninteresting.
+	 */
+	free(tree->buffer);
+	tree->buffer = NULL;
 }
 
 void mark_parents_uninteresting(struct commit *commit)
