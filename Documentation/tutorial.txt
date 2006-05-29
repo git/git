@@ -429,7 +429,9 @@ $ gitk --since="2 weeks ago" drivers/
 -------------------------------------
 
 allows you to browse any commits from the last 2 weeks of commits
-that modified files under the "drivers" directory.
+that modified files under the "drivers" directory.  (Note: you can
+adjust gitk's fonts by holding down the control key while pressing
+"-" or "+".)
 
 Finally, most commands that take filenames will optionally allow you
 to precede any filename by a commit, to specify a particular version
