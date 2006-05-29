@@ -5,24 +5,11 @@
 
 extern const char *tree_type;
 
-struct tree_entry_list {
-	struct tree_entry_list *next;
-	unsigned directory : 1;
-	unsigned executable : 1;
-	unsigned symlink : 1;
-	unsigned int mode;
-	const char *name;
-	const unsigned char *sha1;
-};
-
 struct tree {
 	struct object object;
 	void *buffer;
 	unsigned long size;
 };
-
-struct tree_entry_list *create_tree_entry_list(struct tree *);
-void free_tree_entry_list(struct tree_entry_list *);
 
 struct tree *lookup_tree(const unsigned char *sha1);
 

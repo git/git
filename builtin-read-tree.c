@@ -30,7 +30,17 @@ static int merge_size = 0;
 
 static struct object_list *trees = NULL;
 
-static struct cache_entry df_conflict_entry = { 
+static struct cache_entry df_conflict_entry = {
+};
+
+struct tree_entry_list {
+	struct tree_entry_list *next;
+	unsigned directory : 1;
+	unsigned executable : 1;
+	unsigned symlink : 1;
+	unsigned int mode;
+	const char *name;
+	const unsigned char *sha1;
 };
 
 static struct tree_entry_list df_conflict_list = {
@@ -39,6 +49,39 @@ static struct tree_entry_list df_conflict_list = {
 };
 
 typedef int (*merge_fn_t)(struct cache_entry **src);
+
+static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
+{
+	struct tree_desc desc;
+	struct tree_entry_list *ret = NULL;
+	struct tree_entry_list **list_p = &ret;
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *path;
+		const unsigned char *sha1;
+		struct tree_entry_list *entry;
+
+		sha1 = tree_entry_extract(&desc, &path, &mode);
+		update_tree_entry(&desc);
+
+		entry = xmalloc(sizeof(struct tree_entry_list));
+		entry->name = path;
+		entry->sha1 = sha1;
+		entry->mode = mode;
+		entry->directory = S_ISDIR(mode) != 0;
+		entry->executable = (mode & S_IXUSR) != 0;
+		entry->symlink = S_ISLNK(mode) != 0;
+		entry->next = NULL;
+
+		*list_p = entry;
+		list_p = &entry->next;
+	}
+	return ret;
+}
 
 static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 {
