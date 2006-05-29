@@ -377,7 +377,7 @@ At this point you should know everything necessary to read the man
 pages for any of the git commands; one good place to start would be
 with the commands mentioned in link:everyday.html[Everyday git].  You
 should be able to find any unknown jargon in the
-link:glossary.html[Glosssay].
+link:glossary.html[Glossary].
 
 The link:cvs-migration.html[CVS migration] document explains how to
 import a CVS repository into git, and shows how to use git in a
