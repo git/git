@@ -322,7 +322,11 @@ sub extract_valid_address {
 	} else {
 		# less robust/correct than the monster regexp in Email::Valid,
 		# but still does a 99% job, and one less dependency
-		return ($address =~ /([^\"<>\s]+@[^<>\s]+)/);
+		my $cleaned_address;
+		if ($address =~ /([^\"<>\s]+@[^<>\s]+)/) {
+			$cleaned_address = $1;
+		}
+		return $cleaned_address;
 	}
 }
 
@@ -416,6 +420,7 @@ X-Mailer: git-send-email $gitversion
 }
 
 $reply_to = $initial_reply_to;
+$references = $initial_reply_to;
 make_message_id();
 $subject = $initial_subject;
 
