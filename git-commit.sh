@@ -260,20 +260,41 @@ do
   -m|--m|--me|--mes|--mess|--messa|--messag|--message)
       case "$#" in 1) usage ;; esac
       shift
-      log_given=t$log_given
-      log_message="$1"
+      log_given=m$log_given
+      if test "$log_message" = ''
+      then
+          log_message="$1"
+      else
+          log_message="$log_message
+
+$1"
+      fi
       no_edit=t
       shift
       ;;
   -m*)
-      log_given=t$log_given
-      log_message=`expr "$1" : '-m\(.*\)'`
+      log_given=m$log_given
+      if test "$log_message" = ''
+      then
+          log_message=`expr "$1" : '-m\(.*\)'`
+      else
+          log_message="$log_message
+
+`expr "$1" : '-m\(.*\)'`"
+      fi
       no_edit=t
       shift
       ;;
   --m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
-      log_given=t$log_given
-      log_message=`expr "$1" : '-[^=]*=\(.*\)'`
+      log_given=m$log_given
+      if test "$log_message" = ''
+      then
+          log_message=`expr "$1" : '-[^=]*=\(.*\)'`
+      else
+          log_message="$log_message
+
+`expr "$1" : '-[^=]*=\(.*\)'`"
+      fi
       no_edit=t
       shift
       ;;
@@ -378,7 +399,9 @@ esac
 
 case "$log_given" in
 tt*)
-  die "Only one of -c/-C/-F/-m can be used." ;;
+  die "Only one of -c/-C/-F can be used." ;;
+*tm*|*mt*)
+  die "Option -m cannot be combined with -c/-C/-F." ;;
 esac
 
 case "$#,$also,$only,$amend" in
