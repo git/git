@@ -200,8 +200,11 @@ struct object *parse_object(const unsigned char *sha1)
 			obj = &blob->object;
 		} else if (!strcmp(type, tree_type)) {
 			struct tree *tree = lookup_tree(sha1);
-			parse_tree_buffer(tree, buffer, size);
 			obj = &tree->object;
+			if (!tree->object.parsed) {
+				parse_tree_buffer(tree, buffer, size);
+				buffer = NULL;
+			}
 		} else if (!strcmp(type, commit_type)) {
 			struct commit *commit = lookup_commit(sha1);
 			parse_commit_buffer(commit, buffer, size);

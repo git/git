@@ -39,7 +39,7 @@ static struct tree_entry_list df_conflict_list = {
 
 typedef int (*merge_fn_t)(struct cache_entry **src);
 
-static int entcmp(char *name1, int dir1, char *name2, int dir2)
+static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 {
 	int len1 = strlen(name1);
 	int len2 = strlen(name2);
@@ -67,7 +67,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	int src_size = len + 1;
 	do {
 		int i;
-		char *first;
+		const char *first;
 		int firstdir = 0;
 		int pathlen;
 		unsigned ce_size;

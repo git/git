@@ -136,10 +136,11 @@ static struct object_list **process_tree(struct tree *tree,
 			p = process_tree(entry->item.tree, p, &me, entry->name);
 		else
 			p = process_blob(entry->item.blob, p, &me, entry->name);
-		free(entry->name);
 		free(entry);
 		entry = next;
 	}
+	free(tree->buffer);
+	tree->buffer = NULL;
 	return p;
 }
 

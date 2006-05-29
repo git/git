@@ -3,6 +3,7 @@
 #include "blob.h"
 #include "commit.h"
 #include "tag.h"
+#include "tree-walk.h"
 #include <stdlib.h>
 
 const char *tree_type = "tree";
@@ -145,46 +146,45 @@ struct tree *lookup_tree(const unsigned char *sha1)
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 {
-	void *bufptr = buffer;
+	struct tree_desc desc;
 	struct tree_entry_list **list_p;
 	int n_refs = 0;
 
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
+	item->buffer = buffer;
+	item->size = size;
+
+	desc.buf = buffer;
+	desc.size = size;
+
 	list_p = &item->entries;
-	while (size) {
-		struct object *obj;
+	while (desc.size) {
+		unsigned mode;
+		const char *path;
+		const unsigned char *sha1;
 		struct tree_entry_list *entry;
-		int len = 1+strlen(bufptr);
-		unsigned char *file_sha1 = bufptr + len;
-		char *path = strchr(bufptr, ' ');
-		unsigned int mode;
-		if (size < len + 20 || !path || 
-		    sscanf(bufptr, "%o", &mode) != 1)
-			return -1;
+
+		sha1 = tree_entry_extract(&desc, &path, &mode);
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
-		entry->name = strdup(path + 1);
+		entry->name = path;
+		entry->mode = mode;
 		entry->directory = S_ISDIR(mode) != 0;
 		entry->executable = (mode & S_IXUSR) != 0;
 		entry->symlink = S_ISLNK(mode) != 0;
-		entry->zeropad = *(char *)bufptr == '0';
-		entry->mode = mode;
+		entry->zeropad = *(const char *)(desc.buf) == '0';
 		entry->next = NULL;
 
-		bufptr += len + 20;
-		size -= len + 20;
+		update_tree_entry(&desc);
 
 		if (entry->directory) {
-			entry->item.tree = lookup_tree(file_sha1);
-			obj = &entry->item.tree->object;
+			entry->item.tree = lookup_tree(sha1);
 		} else {
-			entry->item.blob = lookup_blob(file_sha1);
-			obj = &entry->item.blob->object;
+			entry->item.blob = lookup_blob(sha1);
 		}
-		if (obj)
-			n_refs++;
+		n_refs++;
 		*list_p = entry;
 		list_p = &entry->next;
 	}
@@ -206,7 +206,6 @@ int parse_tree(struct tree *item)
 	 char type[20];
 	 void *buffer;
 	 unsigned long size;
-	 int ret;
 
 	if (item->object.parsed)
 		return 0;
@@ -219,9 +218,7 @@ int parse_tree(struct tree *item)
 		return error("Object %s not a tree",
 			     sha1_to_hex(item->object.sha1));
 	}
-	ret = parse_tree_buffer(item, buffer, size);
-	free(buffer);
-	return ret;
+	return parse_tree_buffer(item, buffer, size);
 }
 
 struct tree *parse_tree_indirect(const unsigned char *sha1)

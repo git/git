@@ -12,7 +12,7 @@ struct tree_entry_list {
 	unsigned symlink : 1;
 	unsigned zeropad : 1;
 	unsigned int mode;
-	char *name;
+	const char *name;
 	union {
 		struct object *any;
 		struct tree *tree;
@@ -22,6 +22,8 @@ struct tree_entry_list {
 
 struct tree {
 	struct object object;
+	void *buffer;
+	unsigned long size;
 	struct tree_entry_list *entries;
 };
 
