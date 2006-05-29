@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "tree.h"
+#include "tree-walk.h"
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
@@ -36,27 +37,32 @@ static int process(struct object *obj);
 
 static int process_tree(struct tree *tree)
 {
-	struct tree_entry_list *entry;
+	struct tree_desc desc;
 
 	if (parse_tree(tree))
 		return -1;
 
-	entry = create_tree_entry_list(tree);
-	while (entry) {
-		struct tree_entry_list *next = entry->next;
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
 
-		if (entry->directory) {
-			struct tree *tree = lookup_tree(entry->sha1);
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+
+		if (S_ISDIR(mode)) {
+			struct tree *tree = lookup_tree(sha1);
 			process_tree(tree);
 		} else {
-			struct blob *blob = lookup_blob(entry->sha1);
+			struct blob *blob = lookup_blob(sha1);
 			process(&blob->object);
 		}
-		free(entry);
-		entry = next;
 	}
 	free(tree->buffer);
 	tree->buffer = NULL;
+	tree->size = 0;
 	return 0;
 }
 
