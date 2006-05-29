@@ -47,18 +47,33 @@ void update_tree_entry(struct tree_desc *desc)
 	desc->size = size - len;
 }
 
+static const char *get_mode(const char *str, unsigned int *modep)
+{
+	unsigned char c;
+	unsigned int mode = 0;
+
+	while ((c = *str++) != ' ') {
+		if (c < '0' || c > '7')
+			return NULL;
+		mode = (mode << 3) + (c - '0');
+	}
+	*modep = mode;
+	return str;
+}
+
 const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
 {
 	void *tree = desc->buf;
 	unsigned long size = desc->size;
 	int len = strlen(tree)+1;
 	const unsigned char *sha1 = tree + len;
-	const char *path = strchr(tree, ' ');
+	const char *path;
 	unsigned int mode;
 
-	if (!path || size < len + 20 || sscanf(tree, "%o", &mode) != 1)
+	path = get_mode(tree, &mode);
+	if (!path || size < len + 20)
 		die("corrupt tree file");
-	*pathp = path+1;
+	*pathp = path;
 	*modep = canon_mode(mode);
 	return sha1;
 }

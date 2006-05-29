@@ -10,6 +10,7 @@
 #include "object.h"
 #include "tree.h"
 #include "cache-tree.h"
+#include "tree-walk.h"
 #include <sys/time.h>
 #include <signal.h>
 #include "builtin.h"
@@ -40,7 +41,7 @@ static struct tree_entry_list df_conflict_list = {
 
 typedef int (*merge_fn_t)(struct cache_entry **src);
 
-static int entcmp(char *name1, int dir1, char *name2, int dir2)
+static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 {
 	int len1 = strlen(name1);
 	int len2 = strlen(name2);
@@ -68,7 +69,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	int src_size = len + 1;
 	do {
 		int i;
-		char *first;
+		const char *first;
 		int firstdir = 0;
 		int pathlen;
 		unsigned ce_size;
@@ -162,9 +163,10 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			}
 
 			if (posns[i]->directory) {
+				struct tree *tree = lookup_tree(posns[i]->sha1);
 				any_dirs = 1;
-				parse_tree(posns[i]->item.tree);
-				subposns[i] = posns[i]->item.tree->entries;
+				parse_tree(tree);
+				subposns[i] = create_tree_entry_list(tree);
 				posns[i] = posns[i]->next;
 				src[i + merge] = &df_conflict_entry;
 				continue;
@@ -188,7 +190,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 			any_files = 1;
 
-			memcpy(ce->sha1, posns[i]->item.any->sha1, 20);
+			memcpy(ce->sha1, posns[i]->sha1, 20);
 			src[i + merge] = ce;
 			subposns[i] = &df_conflict_list;
 			posns[i] = posns[i]->next;
@@ -369,7 +371,7 @@ static int unpack_trees(merge_fn_t fn)
 	if (len) {
 		posns = xmalloc(len * sizeof(struct tree_entry_list *));
 		for (i = 0; i < len; i++) {
-			posns[i] = ((struct tree *) posn->item)->entries;
+			posns[i] = create_tree_entry_list((struct tree *) posn->item);
 			posn = posn->next;
 		}
 		if (unpack_trees_rec(posns, len, prefix ? prefix : "",
@@ -800,19 +802,31 @@ static int read_cache_unmerged(void)
 
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
-	struct tree_entry_list *ent;
-	int cnt;
+	struct tree_desc desc;
+	int cnt = 0;
 
 	memcpy(it->sha1, tree->object.sha1, 20);
-	for (cnt = 0, ent = tree->entries; ent; ent = ent->next) {
-		if (!ent->directory)
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+
+		if (!S_ISDIR(mode))
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = (struct tree *)ent->item.tree;
+			struct tree *subtree;
+
+			subtree = lookup_tree(sha1);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
-			sub = cache_tree_sub(it, ent->name);
+			sub = cache_tree_sub(it, name);
 			sub->cache_tree = cache_tree();
 			prime_cache_tree_rec(sub->cache_tree, subtree);
 			cnt += sub->cache_tree->entry_count;

@@ -9,7 +9,7 @@ struct object **objs;
 static int nr_objs;
 int obj_allocs;
 
-int track_object_refs = 1;
+int track_object_refs = 0;
 
 static int hashtable_index(const unsigned char *sha1)
 {
@@ -200,8 +200,11 @@ struct object *parse_object(const unsigned char *sha1)
 			obj = &blob->object;
 		} else if (!strcmp(type, tree_type)) {
 			struct tree *tree = lookup_tree(sha1);
-			parse_tree_buffer(tree, buffer, size);
 			obj = &tree->object;
+			if (!tree->object.parsed) {
+				parse_tree_buffer(tree, buffer, size);
+				buffer = NULL;
+			}
 		} else if (!strcmp(type, commit_type)) {
 			struct commit *commit = lookup_commit(sha1);
 			parse_commit_buffer(commit, buffer, size);

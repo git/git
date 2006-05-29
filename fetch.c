@@ -42,16 +42,22 @@ static int process_tree(struct tree *tree)
 	if (parse_tree(tree))
 		return -1;
 
-	entry = tree->entries;
-	tree->entries = NULL;
+	entry = create_tree_entry_list(tree);
 	while (entry) {
 		struct tree_entry_list *next = entry->next;
-		if (process(entry->item.any))
-			return -1;
-		free(entry->name);
+
+		if (entry->directory) {
+			struct tree *tree = lookup_tree(entry->sha1);
+			process_tree(tree);
+		} else {
+			struct blob *blob = lookup_blob(entry->sha1);
+			process(&blob->object);
+		}
 		free(entry);
 		entry = next;
 	}
+	free(tree->buffer);
+	tree->buffer = NULL;
 	return 0;
 }
 
