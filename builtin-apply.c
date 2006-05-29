@@ -1335,6 +1335,7 @@ static int apply_line(char *output, const char *patch, int plen)
 
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 {
+	int match_beginning, match_end;
 	char *buf = desc->buffer;
 	const char *patch = frag->patch;
 	int offset, size = frag->size;
@@ -1397,10 +1398,22 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 	newlines = new;
 	leading = frag->leading;
 	trailing = frag->trailing;
+
+	/*
+	 * If we don't have any leading/trailing data in the patch,
+	 * we want it to match at the beginning/end of the file.
+	 */
+	match_beginning = !leading && (frag->oldpos == 1);
+	match_end = !trailing;
+
 	lines = 0;
 	pos = frag->newpos;
 	for (;;) {
 		offset = find_offset(buf, desc->size, oldlines, oldsize, pos, &lines);
+		if (match_end && offset + oldsize != desc->size)
+			offset = -1;
+		if (match_beginning && offset)
+			offset = -1;
 		if (offset >= 0) {
 			int diff = newsize - oldsize;
 			unsigned long size = desc->size + diff;
@@ -1430,6 +1443,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 		/* Am I at my context limits? */
 		if ((leading <= p_context) && (trailing <= p_context))
 			break;
+		if (match_beginning || match_end) {
+			match_beginning = match_end = 0;
+			continue;
+		}
 		/* Reduce the number of context lines
 		 * Reduce both leading and trailing if they are equal
 		 * otherwise just reduce the larger context.
