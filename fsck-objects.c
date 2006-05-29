@@ -8,6 +8,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "pack.h"
+#include "cache-tree.h"
 
 #define REACHABLE 0x0001
 
@@ -438,6 +439,28 @@ static int fsck_head_link(void)
 	return 0;
 }
 
+static int fsck_cache_tree(struct cache_tree *it)
+{
+	int i;
+	int err = 0;
+
+	if (0 <= it->entry_count) {
+		struct object *obj = parse_object(it->sha1);
+		if (!obj) {
+			error("%s: invalid sha1 pointer in cache-tree",
+			      sha1_to_hex(it->sha1));
+			return 1;
+		}
+		mark_reachable(obj, REACHABLE);
+		obj->used = 1;
+		if (obj->type != tree_type)
+			err |= objerror(obj, "non-tree in cache-tree");
+	}
+	for (i = 0; i < it->subtree_nr; i++)
+		err |= fsck_cache_tree(it->down[i]->cache_tree);
+	return err;
+}
+
 int main(int argc, char **argv)
 {
 	int i, heads;
@@ -547,6 +570,8 @@ int main(int argc, char **argv)
 			obj->used = 1;
 			mark_reachable(obj, REACHABLE);
 		}
+		if (active_cache_tree)
+			fsck_cache_tree(active_cache_tree);
 	}
 
 	check_connectivity();

@@ -8,6 +8,7 @@
  */
 #include <fnmatch.h>
 #include "cache.h"
+#include "cache-tree.h"
 #include "quote.h"
 #include "blob.h"
 #include "delta.h"
@@ -1918,6 +1919,7 @@ static void remove_file(struct patch *patch)
 	if (write_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
 			die("unable to remove %s from index", patch->old_name);
+		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
 	if (!cached)
 		unlink(patch->old_name);
@@ -2019,8 +2021,9 @@ static void create_file(struct patch *patch)
 
 	if (!mode)
 		mode = S_IFREG | 0644;
-	create_one_file(path, mode, buf, size);	
+	create_one_file(path, mode, buf, size);
 	add_index_file(path, mode, buf, size);
+	cache_tree_invalidate_path(active_cache_tree, path);
 }
 
 static void write_out_one_result(struct patch *patch)

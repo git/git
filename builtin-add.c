@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
+#include "cache-tree.h"
 
 static const char builtin_add_usage[] =
 "git-add [-n] [-v] <filepattern>...";
@@ -117,6 +118,7 @@ static int add_file_to_index(const char *path, int verbose)
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
+	cache_tree_invalidate_path(active_cache_tree, path);
 	return 0;
 }
 

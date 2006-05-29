@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
+#include "cache-tree.h"
 
 static const char builtin_rm_usage[] =
 "git-rm [-n] [-v] [-f] <filepattern>...";
@@ -117,6 +118,7 @@ int cmd_rm(int argc, const char **argv, char **envp)
 
 		if (remove_file_from_cache(path))
 			die("git rm: unable to remove %s", path);
+		cache_tree_invalidate_path(active_cache_tree, path);
 	}
 
 	/*
