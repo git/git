@@ -303,7 +303,7 @@ EOT
 }
 
 # Variables we set as part of the loop over files
-our ($message_id, $cc, %mail, $subject, $reply_to, $message);
+our ($message_id, $cc, %mail, $subject, $reply_to, $references, $message);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -367,7 +367,11 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	$header .= "In-Reply-To: $reply_to\n" if $reply_to;
+	if ($reply_to) {
+
+		$header .= "In-Reply-To: $reply_to\n";
+		$header .= "References: $references\n";
+	}
 
 	if ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
@@ -482,6 +486,11 @@ foreach my $t (@files) {
 	# set up for the next message
 	if ($chain_reply_to || length($reply_to) == 0) {
 		$reply_to = $message_id;
+		if (length $references > 0) {
+			$references .= " $message_id";
+		} else {
+			$references = "$message_id";
+		}
 	}
 	make_message_id();
 }
