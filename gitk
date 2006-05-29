@@ -538,6 +538,15 @@ proc makewindow {} {
     $viewhlmenu conf -font $uifont
     .ctop.top.lbar.vhl conf -font $uifont
     pack .ctop.top.lbar.vhl -side left -fill y
+    label .ctop.top.lbar.rlabel -text " OR " -font $uifont
+    pack .ctop.top.lbar.rlabel -side left -fill y
+    global highlight_related
+    set m [tk_optionMenu .ctop.top.lbar.relm highlight_related None \
+	       "Descendent" "Not descendent" "Ancestor" "Not ancestor"]
+    $m conf -font $uifont
+    .ctop.top.lbar.relm conf -font $uifont
+    trace add variable highlight_related write vrel_change
+    pack .ctop.top.lbar.relm -side left -fill y
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
@@ -1642,7 +1651,7 @@ proc showview {n} {
 # Stuff relating to the highlighting facility
 
 proc ishighlighted {row} {
-    global vhighlights fhighlights nhighlights
+    global vhighlights fhighlights nhighlights rhighlights
 
     if {[info exists nhighlights($row)] && $nhighlights($row) > 0} {
 	return $nhighlights($row)
@@ -1652,6 +1661,9 @@ proc ishighlighted {row} {
     }
     if {[info exists fhighlights($row)] && $fhighlights($row) > 0} {
 	return $fhighlights($row)
+    }
+    if {[info exists rhighlights($row)] && $rhighlights($row) > 0} {
+	return $rhighlights($row)
     }
     return 0
 }
@@ -1923,6 +1935,135 @@ proc askfindhighlight {row id} {
 	}
     }
     set nhighlights($row) $isbold
+}
+
+proc vrel_change {name ix op} {
+    global highlight_related
+
+    rhighlight_none
+    if {$highlight_related ne "None"} {
+	after idle drawvisible
+    }
+}
+
+# prepare for testing whether commits are descendents or ancestors of a
+proc rhighlight_sel {a} {
+    global descendent desc_todo ancestor anc_todo
+    global highlight_related rhighlights
+
+    catch {unset descendent}
+    set desc_todo [list $a]
+    catch {unset ancestor}
+    set anc_todo [list $a]
+    if {$highlight_related ne "None"} {
+	rhighlight_none
+	after idle drawvisible
+    }
+}
+
+proc rhighlight_none {} {
+    global rhighlights
+
+    set rows [array names rhighlights]
+    if {$rows ne {}} {
+	unset rhighlights
+	unbolden $rows
+    }
+}
+
+proc is_descendent {a} {
+    global curview children commitrow descendent desc_todo
+
+    set v $curview
+    set la $commitrow($v,$a)
+    set todo $desc_todo
+    set leftover {}
+    set done 0
+    for {set i 0} {$i < [llength $todo]} {incr i} {
+	set do [lindex $todo $i]
+	if {$commitrow($v,$do) < $la} {
+	    lappend leftover $do
+	    continue
+	}
+	foreach nk $children($v,$do) {
+	    if {![info exists descendent($nk)]} {
+		set descendent($nk) 1
+		lappend todo $nk
+		if {$nk eq $a} {
+		    set done 1
+		}
+	    }
+	}
+	if {$done} {
+	    set desc_todo [concat $leftover [lrange $todo [expr {$i+1}] end]]
+	    return
+	}
+    }
+    set descendent($a) 0
+    set desc_todo $leftover
+}
+
+proc is_ancestor {a} {
+    global curview parentlist commitrow ancestor anc_todo
+
+    set v $curview
+    set la $commitrow($v,$a)
+    set todo $anc_todo
+    set leftover {}
+    set done 0
+    for {set i 0} {$i < [llength $todo]} {incr i} {
+	set do [lindex $todo $i]
+	if {![info exists commitrow($v,$do)] || $commitrow($v,$do) > $la} {
+	    lappend leftover $do
+	    continue
+	}
+	foreach np [lindex $parentlist $commitrow($v,$do)] {
+	    if {![info exists ancestor($np)]} {
+		set ancestor($np) 1
+		lappend todo $np
+		if {$np eq $a} {
+		    set done 1
+		}
+	    }
+	}
+	if {$done} {
+	    set anc_todo [concat $leftover [lrange $todo [expr {$i+1}] end]]
+	    return
+	}
+    }
+    set ancestor($a) 0
+    set anc_todo $leftover
+}
+
+proc askrelhighlight {row id} {
+    global descendent highlight_related iddrawn mainfont rhighlights
+    global selectedline ancestor
+
+    if {![info exists selectedline]} return
+    set isbold 0
+    if {$highlight_related eq "Descendent" ||
+	$highlight_related eq "Not descendent"} {
+	if {![info exists descendent($id)]} {
+	    is_descendent $id
+	}
+	if {$descendent($id) == ($highlight_related eq "Descendent")} {
+	    set isbold 1
+	}
+    } elseif {$highlight_related eq "Ancestor" ||
+	      $highlight_related eq "Not ancestor"} {
+	if {![info exists ancestor($id)]} {
+	    is_ancestor $id
+	}
+	if {$ancestor($id) == ($highlight_related eq "Ancestor")} {
+	    set isbold 1
+	}
+    }
+    if {[info exists iddrawn($id)]} {
+	if {$isbold && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+    }
+    set rhighlights($row) $isbold
 }
 
 # Graph layout functions
@@ -2698,6 +2839,7 @@ proc drawcmitrow {row} {
     global commitinfo parentlist numcommits
     global filehighlight fhighlights findstring nhighlights
     global hlview vhighlights
+    global highlight_related rhighlights
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
@@ -2726,6 +2868,9 @@ proc drawcmitrow {row} {
     }
     if {$findstring ne {} && ![info exists nhighlights($row)]} {
 	askfindhighlight $row $id
+    }
+    if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
+	askrelhighlight $row $id
     }
     if {[info exists iddrawn($id)]} return
     set col [lsearch -exact [lindex $rowidlist $row] $id]
@@ -2775,7 +2920,7 @@ proc drawvisible {} {
 
 proc clear_display {} {
     global iddrawn idrangedrawn
-    global vhighlights fhighlights nhighlights
+    global vhighlights fhighlights nhighlights rhighlights
 
     allcanvs delete all
     catch {unset iddrawn}
@@ -2783,6 +2928,7 @@ proc clear_display {} {
     catch {unset vhighlights}
     catch {unset fhighlights}
     catch {unset nhighlights}
+    catch {unset rhighlights}
 }
 
 proc findcrossings {id} {
@@ -3407,6 +3553,7 @@ proc selectline {l isnew} {
     $sha1entry insert 0 $id
     $sha1entry selection from 0
     $sha1entry selection to end
+    rhighlight_sel $id
 
     $ctext conf -state normal
     clear_ctext
@@ -3514,6 +3661,7 @@ proc unselectline {} {
     catch {unset selectedline}
     catch {unset currentid}
     allcanvs delete secsel
+    rhighlight_none
 }
 
 proc reselectline {} {
