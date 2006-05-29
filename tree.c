@@ -217,6 +217,7 @@ struct tree_entry_list *create_tree_entry_list(struct tree *tree)
 		struct tree_entry_list *entry;
 
 		sha1 = tree_entry_extract(&desc, &path, &mode);
+		update_tree_entry(&desc);
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
 		entry->name = path;
@@ -225,10 +226,8 @@ struct tree_entry_list *create_tree_entry_list(struct tree *tree)
 		entry->directory = S_ISDIR(mode) != 0;
 		entry->executable = (mode & S_IXUSR) != 0;
 		entry->symlink = S_ISLNK(mode) != 0;
-		entry->zeropad = *(const char *)(desc.buf) == '0';
 		entry->next = NULL;
 
-		update_tree_entry(&desc);
 		*list_p = entry;
 		list_p = &entry->next;
 	}
