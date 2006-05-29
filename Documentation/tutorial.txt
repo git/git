@@ -435,10 +435,16 @@ adjust gitk's fonts by holding down the control key while pressing
 
 Finally, most commands that take filenames will optionally allow you
 to precede any filename by a commit, to specify a particular version
-fo the file:
+of the file:
 
 -------------------------------------
 $ git diff v2.5:Makefile HEAD:Makefile.in
+-------------------------------------
+
+You can also use "git cat-file -p" to see any such file:
+
+-------------------------------------
+$ git cat-file -p v2.5:Makefile
 -------------------------------------
 
 Next Steps
