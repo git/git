@@ -19,8 +19,8 @@ ignored=
 ignoredonly=
 cleandir=
 quiet=
-rmf="rm -f"
-rmrf="rm -rf"
+rmf="rm -f --"
+rmrf="rm -rf --"
 rm_refuse="echo Not removing"
 echo1="echo"
 
