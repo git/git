@@ -20,8 +20,10 @@ struct tree {
 	struct object object;
 	void *buffer;
 	unsigned long size;
-	struct tree_entry_list *entries;
 };
+
+struct tree_entry_list *create_tree_entry_list(struct tree *);
+void free_tree_entry_list(struct tree_entry_list *);
 
 struct tree *lookup_tree(const unsigned char *sha1);
 

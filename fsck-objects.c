@@ -11,6 +11,7 @@
 #include "cache-tree.h"
 
 #define REACHABLE 0x0001
+#define SEEN      0x0002
 
 static int show_root = 0;
 static int show_tags = 0;
@@ -161,7 +162,7 @@ static int fsck_tree(struct tree *item)
 	struct tree_entry_list *entry, *last;
 
 	last = NULL;
-	for (entry = item->entries; entry; entry = entry->next) {
+	for (entry = create_tree_entry_list(item); entry; entry = entry->next) {
 		if (strchr(entry->name, '/'))
 			has_full_path = 1;
 		has_zero_pad |= entry->zeropad;
@@ -205,7 +206,6 @@ static int fsck_tree(struct tree *item)
 	}
 	if (last)
 		free(last);
-	item->entries = NULL;
 	free(item->buffer);
 	item->buffer = NULL;
 
@@ -277,6 +277,9 @@ static int fsck_sha1(unsigned char *sha1)
 	struct object *obj = parse_object(sha1);
 	if (!obj)
 		return error("%s: object not found", sha1_to_hex(sha1));
+	if (obj->flags & SEEN)
+		return 0;
+	obj->flags |= SEEN;
 	if (obj->type == blob_type)
 		return 0;
 	if (obj->type == tree_type)

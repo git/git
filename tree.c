@@ -151,22 +151,65 @@ struct tree *lookup_tree(const unsigned char *sha1)
 	return (struct tree *) obj;
 }
 
+static int track_tree_refs(struct tree *item)
+{
+	int n_refs = 0, i;
+	struct object_refs *refs;
+	struct tree_desc desc;
+
+	/* Count how many entries there are.. */
+	desc.buf = item->buffer;
+	desc.size = item->size;
+	while (desc.size) {
+		n_refs++;
+		update_tree_entry(&desc);
+	}
+
+	/* Allocate object refs and walk it again.. */
+	i = 0;
+	refs = alloc_object_refs(n_refs);
+	desc.buf = item->buffer;
+	desc.size = item->size;
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+		struct object *obj;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+		if (S_ISDIR(mode))
+			obj = &lookup_tree(sha1)->object;
+		else
+			obj = &lookup_blob(sha1)->object;
+		refs->ref[i++] = obj;
+	}
+	set_object_refs(&item->object, refs);
+	return 0;
+}
+
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 {
-	struct tree_desc desc;
-	struct tree_entry_list **list_p;
-	int n_refs = 0;
-
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
 	item->buffer = buffer;
 	item->size = size;
 
-	desc.buf = buffer;
-	desc.size = size;
+	if (track_object_refs)
+		track_tree_refs(item);
+	return 0;
+}
 
-	list_p = &item->entries;
+struct tree_entry_list *create_tree_entry_list(struct tree *tree)
+{
+	struct tree_desc desc;
+	struct tree_entry_list *ret = NULL;
+	struct tree_entry_list **list_p = &ret;
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
 	while (desc.size) {
 		unsigned mode;
 		const char *path;
@@ -186,29 +229,19 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 		entry->next = NULL;
 
 		update_tree_entry(&desc);
-		n_refs++;
 		*list_p = entry;
 		list_p = &entry->next;
 	}
+	return ret;
+}
 
-	if (track_object_refs) {
-		struct tree_entry_list *entry;
-		unsigned i = 0;
-		struct object_refs *refs = alloc_object_refs(n_refs);
-		for (entry = item->entries; entry; entry = entry->next) {
-			struct object *obj;
-
-			if (entry->directory)
-				obj = &lookup_tree(entry->sha1)->object;
-			else
-				obj = &lookup_blob(entry->sha1)->object;
-			refs->ref[i++] = obj;
-		}
-
-		set_object_refs(&item->object, refs);
+void free_tree_entry_list(struct tree_entry_list *list)
+{
+	while (list) {
+		struct tree_entry_list *next = list->next;
+		free(list);
+		list = next;
 	}
-
-	return 0;
 }
 
 int parse_tree(struct tree *item)

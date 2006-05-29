@@ -53,7 +53,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	}
 }
 
-static int show_tree(unsigned char *sha1, const char *base, int baselen,
+static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		     const char *pathname, unsigned mode, int stage)
 {
 	int retval = 0;
