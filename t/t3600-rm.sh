@@ -8,30 +8,34 @@ test_description='Test of the various options to git-rm.'
 . ./test-lib.sh
 
 # Setup some files to be removed, some with funny characters
-touch -- foo bar baz 'space embedded' -q
-git-add -- foo bar baz 'space embedded' -q
-git-commit -m "add normal files"
-test_tabs=y
-if touch -- 'tab	embedded' 'newline
+test_expect_success \
+    'Initialize test directory' \
+    "touch -- foo bar baz 'space embedded' -q &&
+     git-add -- foo bar baz 'space embedded' -q &&
+     git-commit -m 'add normal files' &&
+     test_tabs=y &&
+     if touch -- 'tab	embedded' 'newline
 embedded'
-then
-git-add -- 'tab	embedded' 'newline
-embedded'
-git-commit -m "add files with tabs and newlines"
-else
-    say 'Your filesystem does not allow tabs in filenames.'
-    test_tabs=n
-fi
+     then
+     git-add -- 'tab	embedded' 'newline
+embedded' &&
+     git-commit -m 'add files with tabs and newlines'
+     else
+         say 'Your filesystem does not allow tabs in filenames.'
+         test_tabs=n
+     fi"
 
 # Later we will try removing an unremovable path to make sure
 # git-rm barfs, but if the test is run as root that cannot be
 # arranged.
-: >test-file
-chmod a-w .
-rm -f test-file
-test -f test-file && test_failed_remove=y
-chmod 775 .
-rm -f test-file
+test_expect_success \
+    'Determine rm behavior' \
+    ': >test-file
+     chmod a-w .
+     rm -f test-file
+     test -f test-file && test_failed_remove=y
+     chmod 775 .
+     rm -f test-file'
 
 test_expect_success \
     'Pre-check that foo exists and is in index before git-rm foo' \
