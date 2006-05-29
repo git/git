@@ -5,8 +5,13 @@ GIT pack format
 
    - The header appears at the beginning and consists of the following:
 
-     4-byte signature
-     4-byte version number (network byte order)
+     4-byte signature:
+         The signature is: {'P', 'A', 'C', 'K'}
+
+     4-byte version number (network byte order):
+         GIT currently accepts version number 2 or 3 but
+         generates version 2 only.
+
      4-byte number of objects contained in the pack (network byte order)
 
      Observation: we cannot have more than 4G versions ;-) and
@@ -41,7 +46,7 @@ GIT pack format
     8-byte integers to go beyond 4G objects per pack, but it is
     not strictly necessary.
 
-  - The header is followed by sorted 28-byte entries, one entry
+  - The header is followed by sorted 24-byte entries, one entry
     per object in the pack.  Each entry is:
 
     4-byte network byte order integer, recording where the
