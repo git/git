@@ -37,7 +37,8 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
+my (@to,@cc,@initial_cc,@bcclist,
+	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
 my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc) = (1, 0, 0, 0);
@@ -56,6 +57,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
 		    "cc=s" => \@initial_cc,
+		    "bcc=s" => \@bcclist,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
@@ -160,6 +162,7 @@ sub expand_aliases {
 
 @to = expand_aliases(@to);
 @initial_cc = expand_aliases(@initial_cc);
+@bcclist = expand_aliases(@bcclist);
 
 if (!defined $initial_subject && $compose) {
 	do {
@@ -269,6 +272,9 @@ Options:
    --cc           Specify an initial "Cc:" list for the entire series
                   of emails.
 
+   --bcc          Specify a list of email addresses that should be Bcc:
+		  on all the emails.
+
    --compose      Use \$EDITOR to edit an introductory message for the
                   patch series.
 
@@ -348,7 +354,7 @@ sub send_message
 {
 	my @recipients = unique_email_list(@to);
 	my $to = join (",\n\t", @recipients);
-	@recipients = unique_email_list(@recipients,@cc);
+	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
