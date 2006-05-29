@@ -21,7 +21,7 @@ const char *git_exec_path(void)
 		return current_exec_path;
 
 	env = getenv("GIT_EXEC_PATH");
-	if (env) {
+	if (env && *env) {
 		return env;
 	}
 
@@ -43,7 +43,7 @@ int execv_git_cmd(const char **argv)
 		const char *exec_dir = paths[i];
 		const char *tmp;
 
-		if (!exec_dir) continue;
+		if (!exec_dir || !*exec_dir) continue;
 
 		if (*exec_dir != '/') {
 			if (!getcwd(git_command, sizeof(git_command))) {
