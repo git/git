@@ -29,6 +29,7 @@ CONFIGURATION
 git-imap-send requires the following values in the repository
 configuration file (shown with examples):
 
+..........................
 [imap]
     Folder = "INBOX.Drafts"
 
@@ -38,8 +39,9 @@ configuration file (shown with examples):
 [imap]
     Host = imap.server.com
     User = bob
-    Password = pwd
+    Pass = pwd
     Port = 143
+..........................
 
 
 BUGS

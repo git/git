@@ -14,6 +14,30 @@ stop_here () {
     exit 1
 }
 
+stop_here_user_resolve () {
+    if [ -n "$resolvemsg" ]; then
+	    echo "$resolvemsg"
+	    stop_here $1
+    fi
+    cmdline=$(basename $0)
+    if test '' != "$interactive"
+    then
+        cmdline="$cmdline -i"
+    fi
+    if test '' != "$threeway"
+    then
+        cmdline="$cmdline -3"
+    fi
+    if test '.dotest' != "$dotest"
+    then
+        cmdline="$cmdline -d=$dotest"
+    fi
+    echo "When you have resolved this problem run \"$cmdline --resolved\"."
+    echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+
+    stop_here $1
+}
+
 go_next () {
 	rm -f "$dotest/$msgnum" "$dotest/msg" "$dotest/msg-clean" \
 		"$dotest/patch" "$dotest/info"
@@ -35,46 +59,12 @@ fall_back_3way () {
 	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
 	git-write-tree >"$dotest/patch-merge-base+" &&
 	# index has the base tree now.
-	(
-	    cd "$dotest/patch-merge-tmp-dir" &&
-	    GIT_INDEX_FILE="../patch-merge-tmp-index" \
-	    GIT_OBJECT_DIRECTORY="$O_OBJECT" \
-	    git-apply $binary --index <../patch
-        )
+	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
+	git-apply $binary --cached <"$dotest/patch"
     then
 	echo Using index info to reconstruct a base tree...
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
-    else
-	# Otherwise, try nearby trees that can be used to apply the
-	# patch.
-	(
-	    N=10
-
-	    # Hoping the patch is against our recent commits...
-	    git-rev-list --max-count=$N HEAD
-
-	    # or hoping the patch is against known tags...
-	    git-ls-remote --tags .
-	) |
-	while read base junk
-	do
-	    # See if we have it as a tree...
-	    git-cat-file tree "$base" >/dev/null 2>&1 || continue
-
-	    rm -fr "$dotest"/patch-merge-* &&
-	    mkdir "$dotest/patch-merge-tmp-dir" || break
-	    (
-		cd "$dotest/patch-merge-tmp-dir" &&
-		GIT_INDEX_FILE=../patch-merge-tmp-index &&
-		GIT_OBJECT_DIRECTORY="$O_OBJECT" &&
-		export GIT_INDEX_FILE GIT_OBJECT_DIRECTORY &&
-		git-read-tree "$base" &&
-		git-apply $binary --index &&
-		mv ../patch-merge-tmp-index ../patch-merge-index &&
-		echo "$base" >../patch-merge-base
-	    ) <"$dotest/patch"  2>/dev/null && break
-	done
     fi
 
     test -f "$dotest/patch-merge-index" &&
@@ -101,7 +91,7 @@ fall_back_3way () {
 }
 
 prec=4
-dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws=
+dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws= resolvemsg=
 
 while case "$#" in 0) break;; esac
 do
@@ -137,6 +127,9 @@ do
 	--whitespace=*)
 	ws=$1; shift ;;
 
+	--resolvemsg=*)
+	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
+
 	--)
 	shift; break ;;
 	-*)
@@ -165,7 +158,7 @@ then
 else
 	# Make sure we are not given --skip nor --resolved
 	test ",$skip,$resolved," = ,,, ||
-		die "we are not resuming."
+		die "Resolve operation not in progress, we are not resuming."
 
 	# Start afresh.
 	mkdir -p "$dotest" || exit
@@ -374,7 +367,14 @@ do
 		if test '' = "$changed"
 		then
 			echo "No changes - did you forget update-index?"
-			stop_here $this
+			stop_here_user_resolve $this
+		fi
+		unmerged=$(git-ls-files -u)
+		if test -n "$unmerged"
+		then
+			echo "You still have unmerged paths in your index"
+			echo "did you forget update-index?"
+			stop_here_user_resolve $this
 		fi
 		apply_status=0
 		;;
@@ -400,7 +400,7 @@ do
 	if test $apply_status != 0
 	then
 		echo Patch failed at $msgnum.
-		stop_here $this
+		stop_here_user_resolve $this
 	fi
 
 	if test -x "$GIT_DIR"/hooks/pre-applypatch

@@ -28,9 +28,12 @@ struct diff_options {
 		 with_raw:1,
 		 with_stat:1,
 		 tree_in_recursive:1,
+		 binary:1,
 		 full_index:1,
 		 silent_on_remove:1,
-		 find_copies_harder:1;
+		 find_copies_harder:1,
+		 summary:1;
+	int context;
 	int break_opt;
 	int detect_rename;
 	int line_termination;
@@ -74,6 +77,8 @@ struct combine_diff_path {
 
 extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			      int dense, struct rev_info *);
+
+extern void diff_tree_combined(const unsigned char *sha1, const unsigned char parent[][20], int num_parent, int dense, struct rev_info *rev);
 
 extern void diff_tree_combined_merge(const unsigned char *sha1, int, struct rev_info *);
 

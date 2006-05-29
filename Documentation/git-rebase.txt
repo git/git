@@ -3,38 +3,53 @@ git-rebase(1)
 
 NAME
 ----
-git-rebase - Rebase local commits to new upstream head
+git-rebase - Rebase local commits to a new head
 
 SYNOPSIS
 --------
 'git-rebase' [--onto <newbase>] <upstream> [<branch>]
 
+'git-rebase' --continue | --skip | --abort
+
 DESCRIPTION
 -----------
-git-rebase applies to <upstream> (or optionally to <newbase>) commits
-from <branch> that do not appear in <upstream>. When <branch> is not
-specified it defaults to the current branch (HEAD).
+git-rebase replaces <branch> with a new branch of the same name.  When
+the --onto option is provided the new branch starts out with a HEAD equal
+to <newbase>, otherwise it is equal to <upstream>.  It then attempts to
+create a new commit for each commit from the original <branch> that does
+not exist in the <upstream> branch.
 
-When git-rebase is complete, <branch> will be updated to point to the
-newly created line of commit objects, so the previous line will not be
-accessible unless there are other references to it already.
+It is possible that a merge failure will prevent this process from being
+completely automatic.  You will have to resolve any such merge failure
+and run `git rebase --continue`.  Another option is to bypass the commit
+that caused the merge failure with `git rebase --skip`.  To restore the
+original <branch> and remove the .dotest working files, use the command
+`git rebase --abort` instead.
+
+Note that if <branch> is not specified on the command line, the currently
+checked out branch is used.
 
 Assume the following history exists and the current branch is "topic":
 
+------------
           A---B---C topic
          /
     D---E---F---G master
+------------
 
 From this point, the result of either of the following commands:
+
 
     git-rebase master
     git-rebase master topic
 
 would be:
 
+------------
                   A'--B'--C' topic
                  /
     D---E---F---G master
+------------
 
 While, starting from the same point, the result of either of the following
 commands:
@@ -44,21 +59,33 @@ commands:
 
 would be:
 
+------------
               A'--B'--C' topic
              /
     D---E---F---G master
+------------
 
 In case of conflict, git-rebase will stop at the first problematic commit
-and leave conflict markers in the tree.  After resolving the conflict manually
-and updating the index with the desired resolution, you can continue the
-rebasing process with
+and leave conflict markers in the tree.  You can use git diff to locate
+the markers (<<<<<<) and make edits to resolve the conflict.  For each
+file you edit, you need to tell git that the conflict has been resolved,
+typically this would be done with
 
-    git am --resolved --3way
+
+    git update-index <filename>
+
+
+After resolving the conflict manually and updating the index with the
+desired resolution, you can continue the rebasing process with
+
+
+    git rebase --continue
+
 
 Alternatively, you can undo the git-rebase with
 
-    git reset --hard ORIG_HEAD
-    rm -r .dotest
+
+    git rebase --abort
 
 OPTIONS
 -------
@@ -72,6 +99,28 @@ OPTIONS
 
 <branch>::
 	Working branch; defaults to HEAD.
+
+--continue::
+	Restart the rebasing process after having resolved a merge conflict.
+
+--abort::
+	Restore the original branch and abort the rebase operation.
+
+NOTES
+-----
+When you rebase a branch, you are changing its history in a way that
+will cause problems for anyone who already has a copy of the branch
+in their repository and tries to pull updates from you.  You should
+understand the implications of using 'git rebase' on a repository that
+you share.
+
+When the git rebase command is run, it will first execute a "pre-rebase"
+hook if one exists.  You can use this hook to do sanity checks and
+reject the rebase if it isn't appropriate.  Please see the template
+pre-rebase hook script for an example.
+
+You must be in the top directory of your project to start (or continue)
+a rebase.  Upon completion, <branch> will be the current branch.
 
 Author
 ------

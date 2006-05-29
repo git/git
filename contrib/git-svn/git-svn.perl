@@ -8,7 +8,7 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
-$VERSION = '0.11.0';
+$VERSION = '1.0.0';
 
 use Cwd qw/abs_path/;
 $GIT_DIR = abs_path($ENV{GIT_DIR} || '.git');
@@ -42,7 +42,8 @@ my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision, %fc_opts } ],
-	init => [ \&init, "Initialize and fetch (import)", { } ],
+	init => [ \&init, "Initialize a repo for tracking" .
+			  " (requires URL argument)", { } ],
 	commit => [ \&commit, "Commit git revisions to SVN",
 			{	'stdin|' => \$_stdin,
 				'edit|e' => \$_edit,
@@ -220,7 +221,8 @@ when you have upgraded your tools and habits to use refs/remotes/$GIT_SVN
 }
 
 sub init {
-	$SVN_URL = shift or croak "SVN repository location required\n";
+	$SVN_URL = shift or die "SVN repository location required " .
+				"as a command-line argument\n";
 	unless (-d $GIT_DIR) {
 		sys('git-init-db');
 	}

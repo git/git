@@ -27,8 +27,10 @@ int main(int argc, char **argv)
 {
 	unsigned char sha1[20];
 
-	if (argc != 2 || get_sha1(argv[1], sha1))
+	if (argc != 2)
 		usage("git-unpack-file <sha1>");
+	if (get_sha1(argv[1], sha1))
+		die("Not a valid object name %s", argv[1]);
 
 	setup_git_directory();
 	git_config(git_default_config);

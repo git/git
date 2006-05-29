@@ -63,7 +63,7 @@ OPTIONS
 	Only meaningful with `--stdin`; paths are separated with
 	NUL character instead of LF.
 
---::
+\--::
 	Do not interpret any more arguments as options.
 
 The order of the flags used to matter, but not anymore.

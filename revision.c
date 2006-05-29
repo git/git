@@ -477,6 +477,36 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 	for_each_ref(handle_one_ref);
 }
 
+static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
+{
+	unsigned char sha1[20];
+	struct object *it;
+	struct commit *commit;
+	struct commit_list *parents;
+
+	if (*arg == '^') {
+		flags ^= UNINTERESTING;
+		arg++;
+	}
+	if (get_sha1(arg, sha1))
+		return 0;
+	while (1) {
+		it = get_reference(revs, arg, sha1, 0);
+		if (strcmp(it->type, tag_type))
+			break;
+		memcpy(sha1, ((struct tag*)it)->tagged->sha1, 20);
+	}
+	if (strcmp(it->type, commit_type))
+		return 0;
+	commit = (struct commit *)it;
+	for (parents = commit->parents; parents; parents = parents->next) {
+		it = &parents->item->object;
+		it->flags |= flags;
+		add_pending_object(revs, it, arg);
+	}
+	return 1;
+}
+
 void init_revisions(struct rev_info *revs)
 {
 	memset(revs, 0, sizeof(*revs));
@@ -544,7 +574,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->max_count = atoi(arg + 12);
 				continue;
 			}
-			/* accept -<digit>, like traditilnal "head" */
+			/* accept -<digit>, like traditional "head" */
 			if ((*arg == '-') && isdigit(arg[1])) {
 				revs->max_count = atoi(arg + 1);
 				continue;
@@ -664,6 +694,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "-c")) {
 				revs->diff = 1;
+				revs->dense_combined_merges = 0;
 				revs->combine_merges = 1;
 				continue;
 			}
@@ -740,37 +771,56 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				include = get_reference(revs, next, sha1, flags);
 				if (!exclude || !include)
 					die("Invalid revision range %s..%s", arg, next);
+
+				if (!seen_dashdash) {
+					*dotdot = '.';
+					verify_non_filename(revs->prefix, arg);
+				}
 				add_pending_object(revs, exclude, this);
 				add_pending_object(revs, include, next);
 				continue;
 			}
 			*dotdot = '.';
 		}
+		dotdot = strstr(arg, "^@");
+		if (dotdot && !dotdot[2]) {
+			*dotdot = 0;
+			if (add_parents_only(revs, arg, flags))
+				continue;
+			*dotdot = '^';
+		}
 		local_flags = 0;
 		if (*arg == '^') {
 			local_flags = UNINTERESTING;
 			arg++;
 		}
-		if (get_sha1(arg, sha1) < 0) {
+		if (get_sha1(arg, sha1)) {
 			int j;
 
 			if (seen_dashdash || local_flags)
 				die("bad revision '%s'", arg);
 
-			/* If we didn't have a "--", all filenames must exist */
+			/* If we didn't have a "--":
+			 * (1) all filenames must exist;
+			 * (2) all rev-args must not be interpretable
+			 *     as a valid filename.
+			 * but the latter we have checked in the main loop.
+			 */
 			for (j = i; j < argc; j++)
 				verify_filename(revs->prefix, argv[j]);
 
 			revs->prune_data = get_pathspec(revs->prefix, argv + i);
 			break;
 		}
+		if (!seen_dashdash)
+			verify_non_filename(revs->prefix, arg);
 		object = get_reference(revs, arg, sha1, flags ^ local_flags);
 		add_pending_object(revs, object, arg);
 	}
 	if (def && !revs->pending_objects) {
 		unsigned char sha1[20];
 		struct object *object;
-		if (get_sha1(def, sha1) < 0)
+		if (get_sha1(def, sha1))
 			die("bad default revision '%s'", def);
 		object = get_reference(revs, def, sha1, 0);
 		add_pending_object(revs, object, def);

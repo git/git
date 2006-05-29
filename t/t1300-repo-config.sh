@@ -229,7 +229,7 @@ test_expect_failure 'invalid key' 'git-repo-config inval.2key blabla'
 test_expect_success 'correct key' 'git-repo-config 123456.a123 987'
 
 test_expect_success 'hierarchical section' \
-	'git-repo-config 1.2.3.alpha beta'
+	'git-repo-config Version.1.2.3eX.Alpha beta'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -241,11 +241,29 @@ noIndent= sillyValue ; 'nother silly comment
 	NoNewLine = wow2 for me
 [123456]
 	a123 = 987
-[1.2.3]
-	alpha = beta
+[Version "1.2.3eX"]
+	Alpha = beta
 EOF
 
 test_expect_success 'hierarchical section value' 'cmp .git/config expect'
+
+cat > expect << EOF
+beta.noindent=sillyValue
+nextsection.nonewline=wow2 for me
+123456.a123=987
+version.1.2.3eX.alpha=beta
+EOF
+
+test_expect_success 'working --list' \
+	'git-repo-config --list > output && cmp output expect'
+
+cat > expect << EOF
+beta.noindent sillyValue
+nextsection.nonewline wow2 for me
+EOF
+
+test_expect_success '--get-regexp' \
+	'git-repo-config --get-regexp in > output && cmp output expect'
 
 cat > .git/config << EOF
 [novalue]
@@ -254,6 +272,42 @@ EOF
 
 test_expect_success 'get variable with no value' \
 	'git-repo-config --get novalue.variable ^$'
+
+git-repo-config > output 2>&1
+
+test_expect_success 'no arguments, but no crash' \
+	"test $? = 129 && grep usage output"
+
+cat > .git/config << EOF
+[a.b]
+	c = d
+EOF
+
+git-repo-config a.x y
+
+cat > expect << EOF
+[a.b]
+	c = d
+[a]
+	x = y
+EOF
+
+test_expect_success 'new section is partial match of another' 'cmp .git/config expect'
+
+git-repo-config b.x y
+git-repo-config a.b c
+
+cat > expect << EOF
+[a.b]
+	c = d
+[a]
+	x = y
+	b = c
+[b]
+	x = y
+EOF
+
+test_expect_success 'new variable inserts into proper section' 'cmp .git/config expect'
 
 test_done
 

@@ -106,7 +106,7 @@ but can be used to amend a merge commit.
 	index and the latest commit does not match on the
 	specified paths to avoid confusion.
 
---::
+\--::
 	Do not interpret any more arguments as options.
 
 <file>...::

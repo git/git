@@ -8,7 +8,7 @@ git-merge-index - Runs a merge for files needing merging
 
 SYNOPSIS
 --------
-'git-merge-index' [-o] [-q] <merge-program> (-a | -- | <file>\*)
+'git-merge-index' [-o] [-q] <merge-program> (-a | \-- | <file>\*)
 
 DESCRIPTION
 -----------
@@ -19,7 +19,7 @@ files are passed as arguments 5, 6 and 7.
 
 OPTIONS
 -------
---::
+\--::
 	Do not interpret any more arguments as options.
 
 -a::

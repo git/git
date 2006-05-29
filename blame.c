@@ -515,9 +515,9 @@ static int compare_tree_path(struct rev_info* revs,
 	paths[1] = NULL;
 
 	diff_tree_setup_paths(get_pathspec(revs->prefix, paths),
-			      &revs->diffopt);
+			      &revs->pruning);
 	ret = rev_compare_tree(revs, c1->tree, c2->tree);
-	diff_tree_release_paths(&revs->diffopt);
+	diff_tree_release_paths(&revs->pruning);
 	return ret;
 }
 
@@ -531,9 +531,9 @@ static int same_tree_as_empty_path(struct rev_info *revs, struct tree* t1,
 	paths[1] = NULL;
 
 	diff_tree_setup_paths(get_pathspec(revs->prefix, paths),
-			      &revs->diffopt);
+			      &revs->pruning);
 	ret = rev_same_tree_as_empty(revs, t1);
-	diff_tree_release_paths(&revs->diffopt);
+	diff_tree_release_paths(&revs->pruning);
 	return ret;
 }
 
@@ -834,7 +834,7 @@ int main(int argc, const char **argv)
 
 	args[0] = filename;
 	args[1] = NULL;
-	diff_tree_setup_paths(args, &rev.diffopt);
+	diff_tree_setup_paths(args, &rev.pruning);
 	prepare_revision_walk(&rev);
 	process_commits(&rev, filename, &initial);
 

@@ -25,14 +25,12 @@ do
 	force=1
 	;;
     -l)
-        cd "$GIT_DIR/refs" &&
 	case "$#" in
 	1)
-		find tags -type f -print ;;
-	*)
-		shift
-		find tags -type f -print | grep "$@" ;;
+		set x . ;;
 	esac
+	shift
+	git rev-parse --symbolic --tags | sort | grep "$@"
 	exit $?
 	;;
     -m)

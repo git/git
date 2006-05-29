@@ -270,14 +270,22 @@ fetch_main () {
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
 	  fi
-	  remote_name_quoted=$(perl -e '
+	  max_depth=5
+	  depth=0
+	  head="ref: $remote_name"
+	  while (expr "z$head" : "zref:" && expr $depth \< $max_depth) >/dev/null
+	  do
+	    remote_name_quoted=$(perl -e '
 	      my $u = $ARGV[0];
+              $u =~ s/^ref:\s*//;
 	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
 	      print "$u";
-	  ' "$remote_name")
-	  head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted") &&
+	  ' "$head")
+	    head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted")
+	    depth=$( expr \( $depth + 1 \) )
+	  done
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
-		  die "Failed to fetch $remote_name from $remote"
+	      die "Failed to fetch $remote_name from $remote"
 	  echo >&2 Fetching "$remote_name from $remote" using http
 	  git-http-fetch -v -a "$head" "$remote/" || exit
 	  ;;

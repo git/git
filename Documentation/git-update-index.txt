@@ -10,12 +10,12 @@ SYNOPSIS
 --------
 [verse]
 'git-update-index'
-	     [--add] [--remove | --force-remove] [--replace] 
-	     [--refresh [-q] [--unmerged] [--ignore-missing]]
+	     [--add] [--remove | --force-remove] [--replace]
+	     [--refresh] [-q] [--unmerged] [--ignore-missing]
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
-	     [--really-refresh]
+	     [--really-refresh] [--unresolve] [--again]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
@@ -80,6 +80,14 @@ OPTIONS
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
 
+--again::
+	Runs `git-update-index` itself on the paths whose index
+	entries are different from those from the `HEAD` commit.
+
+--unresolve::
+	Restores the 'unmerged' or 'needs updating' state of a
+	file during a merge if it was cleared by accident.
+
 --info-only::
 	Do not create objects in the object database for all
 	<file> arguments that follow this flag; just insert
@@ -109,7 +117,7 @@ OPTIONS
 	Only meaningful with `--stdin`; paths are separated with
 	NUL character instead of LF.
 
---::
+\--::
 	Do not interpret any more arguments as options.
 
 <file>::
@@ -247,34 +255,33 @@ To update and refresh only the files already checked out:
 $ git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
 ----------------
 
-On an inefficient filesystem with `core.ignorestat` set:
-
+On an inefficient filesystem with `core.ignorestat` set::
++
 ------------
-$ git update-index --really-refresh <1>
-$ git update-index --no-assume-unchanged foo.c <2>
-$ git diff --name-only <3>
+$ git update-index --really-refresh              <1>
+$ git update-index --no-assume-unchanged foo.c   <2>
+$ git diff --name-only                           <3>
 $ edit foo.c
-$ git diff --name-only <4>
+$ git diff --name-only                           <4>
 M foo.c
-$ git update-index foo.c <5>
-$ git diff --name-only <6>
+$ git update-index foo.c                         <5>
+$ git diff --name-only                           <6>
 $ edit foo.c
-$ git diff --name-only <7>
-$ git update-index --no-assume-unchanged foo.c <8>
-$ git diff --name-only <9>
+$ git diff --name-only                           <7>
+$ git update-index --no-assume-unchanged foo.c   <8>
+$ git diff --name-only                           <9>
 M foo.c
-
-<1> forces lstat(2) to set "assume unchanged" bits for paths
-    that match index.
+------------
++
+<1> forces lstat(2) to set "assume unchanged" bits for paths that match index.
 <2> mark the path to be edited.
 <3> this does lstat(2) and finds index matches the path.
-<4> this does lstat(2) and finds index does not match the path.
+<4> this does lstat(2) and finds index does *not* match the path.
 <5> registering the new version to index sets "assume unchanged" bit.
 <6> and it is assumed unchanged.
 <7> even after you edit it.
 <8> you can tell about the change after the fact.
 <9> now it checks with lstat(2) and finds it has been changed.
-------------
 
 
 Configuration

@@ -608,6 +608,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int abbrev = opt->full_index ? 40 : DEFAULT_ABBREV;
 	mmfile_t result_file;
 
+	context = opt->context;
 	/* Read the result of merge first */
 	if (!working_tree_file)
 		result = grab_blob(elem->sha1, &result_size);
@@ -831,15 +832,16 @@ void show_combined_diff(struct combine_diff_path *p,
 	}
 }
 
-void diff_tree_combined_merge(const unsigned char *sha1,
-			     int dense, struct rev_info *rev)
+void diff_tree_combined(const unsigned char *sha1,
+			const unsigned char parent[][20],
+			int num_parent,
+			int dense,
+			struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
-	struct commit *commit = lookup_commit(sha1);
 	struct diff_options diffopts;
-	struct commit_list *parents;
 	struct combine_diff_path *p, *paths = NULL;
-	int num_parent, i, num_paths;
+	int i, num_paths;
 	int do_diffstat;
 
 	do_diffstat = (opt->output_format == DIFF_FORMAT_DIFFSTAT ||
@@ -849,17 +851,8 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 	diffopts.with_stat = 0;
 	diffopts.recursive = 1;
 
-	/* count parents */
-	for (parents = commit->parents, num_parent = 0;
-	     parents;
-	     parents = parents->next, num_parent++)
-		; /* nothing */
-
 	/* find set of paths that everybody touches */
-	for (parents = commit->parents, i = 0;
-	     parents;
-	     parents = parents->next, i++) {
-		struct commit *parent = parents->item;
+	for (i = 0; i < num_parent; i++) {
 		/* show stat against the first parent even
 		 * when doing combined diff.
 		 */
@@ -867,8 +860,7 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 			diffopts.output_format = DIFF_FORMAT_DIFFSTAT;
 		else
 			diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
-		diff_tree_sha1(parent->object.sha1, commit->object.sha1, "",
-			       &diffopts);
+		diff_tree_sha1(parent[i], sha1, "", &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 
@@ -906,4 +898,26 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 		paths = paths->next;
 		free(tmp);
 	}
+}
+
+void diff_tree_combined_merge(const unsigned char *sha1,
+			     int dense, struct rev_info *rev)
+{
+	int num_parent;
+	const unsigned char (*parent)[20];
+	struct commit *commit = lookup_commit(sha1);
+	struct commit_list *parents;
+
+	/* count parents */
+	for (parents = commit->parents, num_parent = 0;
+	     parents;
+	     parents = parents->next, num_parent++)
+		; /* nothing */
+
+	parent = xmalloc(num_parent * sizeof(*parent));
+	for (parents = commit->parents, num_parent = 0;
+	     parents;
+	     parents = parents->next, num_parent++)
+		memcpy(parent + num_parent, parents->item->object.sha1, 20);
+	diff_tree_combined(sha1, parent, num_parent, dense, rev);
 }

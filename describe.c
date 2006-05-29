@@ -105,11 +105,11 @@ static void describe(char *arg, int last_one)
 	static int initialized = 0;
 	struct commit_name *n;
 
-	if (get_sha1(arg, sha1) < 0)
-		usage(describe_usage);
+	if (get_sha1(arg, sha1))
+		die("Not a valid object name %s", arg);
 	cmit = lookup_commit_reference(sha1);
 	if (!cmit)
-		usage(describe_usage);
+		die("%s is not a valid '%s' object", arg, commit_type);
 
 	if (!initialized) {
 		initialized = 1;

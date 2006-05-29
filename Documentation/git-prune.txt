@@ -28,7 +28,7 @@ OPTIONS
 	Do not remove anything; just report what it would
 	remove.
 
---::
+\--::
 	Do not interpret any more arguments as options.
 
 <head>...::

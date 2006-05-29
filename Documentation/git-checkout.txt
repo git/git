@@ -66,19 +66,19 @@ the `Makefile` to two revisions back, deletes hello.c by
 mistake, and gets it back from the index.
 +
 ------------
-$ git checkout master <1>
-$ git checkout master~2 Makefile <2>
+$ git checkout master             <1>
+$ git checkout master~2 Makefile  <2>
 $ rm -f hello.c
-$ git checkout hello.c <3>
-
-<1> switch branch
-<2> take out a file out of other commit
-<3> or "git checkout -- hello.c", as in the next example.
+$ git checkout hello.c            <3>
 ------------
 +
-If you have an unfortunate branch that is named `hello.c`, the
-last step above would be confused as an instruction to switch to
-that branch.  You should instead write:
+<1> switch branch
+<2> take out a file out of other commit
+<3> restore hello.c from HEAD of current branch
++
+If you have an unfortunate branch that is named `hello.c`, this
+step would be confused as an instruction to switch to that branch.
+You should instead write:
 +
 ------------
 $ git checkout -- hello.c

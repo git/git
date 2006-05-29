@@ -137,7 +137,7 @@ esac >.msg
 # $prev and $commit on top of us (when cherry-picking or replaying).
 
 echo >&2 "First trying simple merge strategy to $me."
-git-read-tree -m -u $base $head $next &&
+git-read-tree -m -u --aggressive $base $head $next &&
 result=$(git-write-tree 2>/dev/null) || {
     echo >&2 "Simple $me fails; trying Automatic $me."
     git-merge-index -o git-merge-one-file -a || {

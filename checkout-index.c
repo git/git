@@ -270,12 +270,16 @@ int main(int argc, char **argv)
 	/* Check out named files first */
 	for ( ; i < argc; i++) {
 		const char *arg = argv[i];
+		const char *p;
 
 		if (all)
 			die("git-checkout-index: don't mix '--all' and explicit filenames");
 		if (read_from_stdin)
 			die("git-checkout-index: don't mix '--stdin' and explicit filenames");
-		checkout_file(prefix_path(prefix, prefix_length, arg));
+		p = prefix_path(prefix, prefix_length, arg);
+		checkout_file(p);
+		if (p < arg || p > arg + strlen(arg))
+			free((char*)p);
 	}
 
 	if (read_from_stdin) {
@@ -285,6 +289,8 @@ int main(int argc, char **argv)
 		strbuf_init(&buf);
 		while (1) {
 			char *path_name;
+			const char *p;
+
 			read_line(&buf, stdin, line_termination);
 			if (buf.eof)
 				break;
@@ -292,7 +298,10 @@ int main(int argc, char **argv)
 				path_name = unquote_c_style(buf.buf, NULL);
 			else
 				path_name = buf.buf;
-			checkout_file(prefix_path(prefix, prefix_length, path_name));
+			p = prefix_path(prefix, prefix_length, path_name);
+			checkout_file(p);
+			if (p < path_name || p > path_name + strlen(path_name))
+				free((char *)p);
 			if (path_name != buf.buf)
 				free(path_name);
 		}

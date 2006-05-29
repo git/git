@@ -205,11 +205,10 @@ sub show_date {
     }
     my $t = $time + $minutes * 60;
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday) = gmtime($t);
-    return sprintf("%s %s %d %02d:%02d:%02d %d %+05d",
-		   $weekday_names[$wday],
-		   $month_names[$mon],
-		   $mday, $hour, $min, $sec,
-		   $year+1900, $tz);
+    return sprintf("%s, %d %s %d %02d:%02d:%02d %+05d",
+		   $weekday_names[$wday], $mday,
+		   $month_names[$mon], $year+1900,
+		   $hour, $min, $sec, $tz);
 }
 
 print "From nobody Mon Sep 17 00:00:00 2001\n";
@@ -275,7 +274,7 @@ print "\n---\n\n";
 close FH or die "close $commsg pipe";
 ' "$keep_subject" "$num" "$signoff" "$headers" "$mimemagic" $commsg
 
-	git-diff-tree -p $diff_opts "$commit" | git-apply --stat --summary
+	git-diff-tree -p --stat --summary $diff_opts "$commit"
 	echo
 	case "$mimemagic" in
 	'');;

@@ -15,6 +15,7 @@ SYNOPSIS
 'git-repo-config' [type] --get-all name [value_regex]
 'git-repo-config' [type] --unset name [value_regex]
 'git-repo-config' [type] --unset-all name [value_regex]
+'git-repo-config' -l | --list
 
 DESCRIPTION
 -----------
@@ -22,10 +23,11 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-If you want to set/unset an option which can occur on multiple lines, you
-should provide a POSIX regex for the value. If you want to handle the lines
-*not* matching the regex, just prepend a single exclamation mark in front
-(see EXAMPLES).
+If you want to set/unset an option which can occur on multiple
+lines, a POSIX regexp `value_regex` needs to be given.  Only the
+existing values that match the regexp are updated or unset.  If
+you want to handle the lines that do *not* match the regex, just
+prepend a single exclamation mark in front (see EXAMPLES).
 
 The type specifier can be either '--int' or '--bool', which will make
 'git-repo-config' ensure that the variable(s) are of the given type and
@@ -33,10 +35,10 @@ convert the value to the canonical form (simple decimal number for int,
 a "true" or "false" string for bool). If no type specifier is passed,
 no checks or transformations are performed on the value.
 
-This command will fail if
+This command will fail if:
 
-. .git/config is invalid,
-. .git/config can not be written to,
+. The .git/config file is invalid,
+. Can not write to .git/config,
 . no section was provided,
 . the section or key is invalid,
 . you try to unset an option which does not exist, or
@@ -48,7 +50,7 @@ OPTIONS
 
 --replace-all::
 	Default behaviour is to replace at most one line. This replaces
-	all lines matching the key (and optionally the value_regex)
+	all lines matching the key (and optionally the value_regex).
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
@@ -58,11 +60,17 @@ OPTIONS
 	Like get, but does not fail if the number of values for the key
 	is not exactly one.
 
+--get-regexp::
+	Like --get-all, but interprets the name as a regular expression.
+
 --unset::
 	Remove the line matching the key from .git/config.
 
 --unset-all::
 	Remove all matching lines from .git/config.
+
+-l, --list::
+	List all variables set in .git/config.
 
 
 EXAMPLE

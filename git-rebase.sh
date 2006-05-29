@@ -4,37 +4,61 @@
 #
 
 USAGE='[--onto <newbase>] <upstream> [<branch>]'
-LONG_USAGE='git-rebase applies to <upstream> (or optionally to <newbase>) commits
-from <branch> that do not appear in <upstream>. When <branch> is not
-specified it defaults to the current branch (HEAD).
+LONG_USAGE='git-rebase replaces <branch> with a new branch of the
+same name.  When the --onto option is provided the new branch starts
+out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
+It then attempts to create a new commit for each commit from the original
+<branch> that does not exist in the <upstream> branch.
 
-When git-rebase is complete, <branch> will be updated to point to the
-newly created line of commit objects, so the previous line will not be
-accessible unless there are other references to it already.
+It is possible that a merge failure will prevent this process from being
+completely automatic.  You will have to resolve any such merge failure
+and run git rebase --continue.  Another option is to bypass the commit
+that caused the merge failure with git rebase --skip.  To restore the
+original <branch> and remove the .dotest working files, use the command
+git rebase --abort instead.
 
-Assuming the following history:
+Note that if <branch> is not specified on the command line, the
+currently checked out branch is used.  You must be in the top
+directory of your project to start (or continue) a rebase.
 
-          A---B---C topic
-         /
-    D---E---F---G master
+Example:       git-rebase master~1 topic
 
-The result of the following command:
-
-    git-rebase --onto master~1 master topic
-
-  would be:
-
-              A'\''--B'\''--C'\'' topic
-             /
-    D---E---F---G master
+        A---B---C topic                   A'\''--B'\''--C'\'' topic
+       /                   -->           /
+  D---E---F---G master          D---E---F---G master
 '
-
 . git-sh-setup
 
+RESOLVEMSG="
+When you have resolved this problem run \"git rebase --continue\".
+If you would prefer to skip this patch, instead run \"git rebase --skip\".
+To restore the original branch and stop rebasing run \"git rebase --abort\".
+"
 unset newbase
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
+	--continue)
+		diff=$(git-diff-files)
+		case "$diff" in
+		?*)	echo "You must edit all merge conflicts and then"
+			echo "mark them as resolved using git update-index"
+			exit 1
+			;;
+		esac
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
+		exit
+		;;
+	--skip)
+		git am -3 --skip --resolvemsg="$RESOLVEMSG"
+		exit
+		;;
+	--abort)
+		[ -d .dotest ] || die "No rebase in progress?"
+		git reset --hard ORIG_HEAD
+		rm -r .dotest
+		exit
+		;;
 	--onto)
 		test 2 -le "$#" || usage
 		newbase="$2"
@@ -129,4 +153,5 @@ then
 fi
 
 git-format-patch -k --stdout --full-index "$upstream" ORIG_HEAD |
-git am --binary -3 -k
+git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+

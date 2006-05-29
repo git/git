@@ -136,12 +136,14 @@ extern const char *setup_git_directory(void);
 extern const char *prefix_path(const char *prefix, int len, const char *path);
 extern const char *prefix_filename(const char *prefix, int len, const char *path);
 extern void verify_filename(const char *prefix, const char *name);
+extern void verify_non_filename(const char *prefix, const char *name);
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
 /* Initialize and use the cache information */
 extern int read_cache(void);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
+extern int verify_path(const char *path);
 extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
@@ -158,6 +160,12 @@ extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_o
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
+#define REFRESH_REALLY		0x0001	/* ignore_valid */
+#define REFRESH_UNMERGED	0x0002	/* allow unmerged */
+#define REFRESH_QUIET		0x0004	/* be quiet about it */
+#define REFRESH_IGNORE_MISSING	0x0008	/* ignore non-existent */
+extern int refresh_cache(unsigned int flags);
+
 struct cache_file {
 	struct cache_file *next;
 	char lockfile[PATH_MAX];
@@ -169,7 +177,7 @@ extern void rollback_index_file(struct cache_file *);
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int assume_unchanged;
-extern int only_use_symrefs;
+extern int prefer_symlink_refs;
 extern int warn_ambiguous_refs;
 extern int diff_rename_limit_default;
 extern int shared_repository;
@@ -362,5 +370,9 @@ extern int receive_keep_pack(int fd[2], const char *me, int quiet);
 
 /* pager.c */
 extern void setup_pager(void);
+
+/* base85 */
+int decode_85(char *dst, char *line, int linelen);
+void encode_85(char *buf, unsigned char *data, int bytes);
 
 #endif /* CACHE_H */

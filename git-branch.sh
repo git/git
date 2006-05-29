@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[(-d | -D) <branchname>] | [[-f] <branchname> [<start-point>]]'
+USAGE='[(-d | -D) <branchname>] | [[-f] <branchname> [<start-point>]] | -r'
 LONG_USAGE='If no arguments, show available branches and mark current branch with a star.
 If one argument, create a new branch <branchname> based off of current HEAD.
 If two arguments, create a new branch <branchname> based off of <start-point>.'
@@ -82,8 +82,7 @@ done
 
 case "$#" in
 0)
-	git-rev-parse --symbolic --all |
-	sed -ne 's|^refs/heads/||p' |
+	git-rev-parse --symbolic --branches |
 	sort |
 	while read ref
 	do

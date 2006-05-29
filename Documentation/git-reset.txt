@@ -43,16 +43,17 @@ OPTIONS
 	Commit to make the current HEAD.
 
 Examples
-~~~~~~~~
+--------
 
 Undo a commit and redo::
 +
 ------------
 $ git commit ...
-$ git reset --soft HEAD^ <1>
-$ edit <2>
-$ git commit -a -c ORIG_HEAD <3>
-
+$ git reset --soft HEAD^      <1>
+$ edit                        <2>
+$ git commit -a -c ORIG_HEAD  <3>
+------------
++
 <1> This is most often done when you remembered what you
 just committed is incomplete, or you misspelled your commit
 message, or both.  Leaves working tree as it was before "reset".
@@ -60,43 +61,43 @@ message, or both.  Leaves working tree as it was before "reset".
 <3> "reset" copies the old head to .git/ORIG_HEAD; redo the
 commit by starting with its log message.  If you do not need to
 edit the message further, you can give -C option instead.
-------------
 
 Undo commits permanently::
 +
 ------------
 $ git commit ...
-$ git reset --hard HEAD~3 <1>
-
+$ git reset --hard HEAD~3   <1>
+------------
++
 <1> The last three commits (HEAD, HEAD^, and HEAD~2) were bad
 and you do not want to ever see them again.  Do *not* do this if
 you have already given these commits to somebody else.
-------------
 
 Undo a commit, making it a topic branch::
 +
 ------------
-$ git branch topic/wip <1>
-$ git reset --hard HEAD~3 <2>
-$ git checkout topic/wip <3>
-
+$ git branch topic/wip     <1>
+$ git reset --hard HEAD~3  <2>
+$ git checkout topic/wip   <3>
+------------
++
 <1> You have made some commits, but realize they were premature
 to be in the "master" branch.  You want to continue polishing
 them in a topic branch, so create "topic/wip" branch off of the
 current HEAD.
 <2> Rewind the master branch to get rid of those three commits.
 <3> Switch to "topic/wip" branch and keep working.
-------------
 
 Undo update-index::
 +
 ------------
-$ edit <1>
+$ edit                                     <1>
 $ git-update-index frotz.c filfre.c
-$ mailx <2>
-$ git reset <3>
-$ git pull git://info.example.com/ nitfol <4>
-
+$ mailx                                    <2>
+$ git reset                                <3>
+$ git pull git://info.example.com/ nitfol  <4>
+------------
++
 <1> you are happily working on something, and find the changes
 in these files are in good order.  You do not want to see them
 when you run "git diff", because you plan to work on other files
@@ -109,12 +110,11 @@ index changes for these two files.  Your changes in working tree
 remain there.
 <4> then you can pull and merge, leaving frotz.c and filfre.c
 changes still in the working tree.
-------------
 
 Undo a merge or pull::
 +
 ------------
-$ git pull <1>
+$ git pull                         <1>
 Trying really trivial in-index merge...
 fatal: Merge requires file-level merging
 Nope.
@@ -122,20 +122,19 @@ Nope.
 Auto-merging nitfol
 CONFLICT (content): Merge conflict in nitfol
 Automatic merge failed/prevented; fix up by hand
-$ git reset --hard <2>
-
+$ git reset --hard                 <2>
+$ git pull . topic/branch          <3>
+Updating from 41223... to 13134...
+Fast forward
+$ git reset --hard ORIG_HEAD       <4>
+------------
++
 <1> try to update from the upstream resulted in a lot of
 conflicts; you were not ready to spend a lot of time merging
 right now, so you decide to do that later.
 <2> "pull" has not made merge commit, so "git reset --hard"
 which is a synonym for "git reset --hard HEAD" clears the mess
 from the index file and the working tree.
-
-$ git pull . topic/branch <3>
-Updating from 41223... to 13134...
-Fast forward
-$ git reset --hard ORIG_HEAD <4>
-
 <3> merge a topic branch into the current branch, which resulted
 in a fast forward.
 <4> but you decided that the topic branch is not ready for public
@@ -143,7 +142,6 @@ consumption yet.  "pull" or "merge" always leaves the original
 tip of the current branch in ORIG_HEAD, so resetting hard to it
 brings your index file and the working tree back to that state,
 and resets the tip of the branch to that commit.
-------------
 
 Interrupted workflow::
 +
@@ -155,21 +153,21 @@ need to get to the other branch for a quick bugfix.
 ------------
 $ git checkout feature ;# you were working in "feature" branch and
 $ work work work       ;# got interrupted
-$ git commit -a -m 'snapshot WIP' <1>
+$ git commit -a -m 'snapshot WIP'                 <1>
 $ git checkout master
 $ fix fix fix
 $ git commit ;# commit with real log
 $ git checkout feature
-$ git reset --soft HEAD^ ;# go back to WIP state <2>
-$ git reset <3>
-
+$ git reset --soft HEAD^ ;# go back to WIP state  <2>
+$ git reset                                       <3>
+------------
++
 <1> This commit will get blown away so a throw-away log message is OK.
 <2> This removes the 'WIP' commit from the commit history, and sets
     your working tree to the state just before you made that snapshot.
-<3> After <2>, the index file still has all the WIP changes you
-    committed in <1>.  This sets it to the last commit you were
-    basing the WIP changes on.
-------------
+<3> At this point the index file still has all the WIP changes you
+    committed as 'snapshot WIP'.  This updates the index to show your
+    WIP files as uncommitted.
 
 Author
 ------

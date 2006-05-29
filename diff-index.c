@@ -11,7 +11,6 @@ COMMON_DIFF_OPTIONS_HELP;
 int main(int argc, const char **argv)
 {
 	struct rev_info rev;
-	int match_missing = 0;
 	int cached = 0;
 	int i;
 

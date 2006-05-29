@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "builtin.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
@@ -116,7 +117,7 @@ static void copy_templates_1(char *path, int baselen,
 	}
 }
 
-static void copy_templates(const char *git_dir, int len, char *template_dir)
+static void copy_templates(const char *git_dir, int len, const char *template_dir)
 {
 	char path[PATH_MAX];
 	char template_path[PATH_MAX];
@@ -163,7 +164,7 @@ static void copy_templates(const char *git_dir, int len, char *template_dir)
 	closedir(dir);
 }
 
-static void create_default_files(const char *git_dir, char *template_path)
+static void create_default_files(const char *git_dir, const char *template_path)
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
@@ -234,15 +235,16 @@ static const char init_db_usage[] =
  * On the other hand, it might just make lookup slower and messier. You
  * be the judge.  The default case is to have one DB per managed directory.
  */
-int main(int argc, char **argv)
+int cmd_init_db(int argc, const char **argv, char **envp)
 {
 	const char *git_dir;
 	const char *sha1_dir;
-	char *path, *template_dir = NULL;
+	const char *template_dir = NULL;
+	char *path;
 	int len, i;
 
 	for (i = 1; i < argc; i++, argv++) {
-		char *arg = argv[1];
+		const char *arg = argv[1];
 		if (!strncmp(arg, "--template=", 11))
 			template_dir = arg+11;
 		else if (!strcmp(arg, "--shared"))

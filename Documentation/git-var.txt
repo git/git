@@ -19,7 +19,8 @@ OPTIONS
 -l::
 	Cause the logical variables to be listed. In addition, all the
 	variables of the git configuration file .git/config are listed
-	as well.
+	as well. (However, the configuration variables listing functionality
+	is deprecated in favor of `git-repo-config -l`.)
 
 EXAMPLE
 --------

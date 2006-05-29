@@ -11,20 +11,25 @@
 #include "cache-tree.h"
 #include "quote.h"
 #include "blob.h"
+#include "delta.h"
 
 //  --check turns on checking that the working tree matches the
 //    files that are being modified, but doesn't apply the patch
 //  --stat does just a diffstat, and doesn't actually apply
 //  --numstat does numeric diffstat, and doesn't actually apply
 //  --index-info shows the old and new index info for paths if available.
+//  --index updates the cache as well.
+//  --cached updates only the cache without ever touching the working tree.
 //
 static const char *prefix;
 static int prefix_length = -1;
+static int newfd = -1;
 
 static int p_value = 1;
 static int allow_binary_replacement = 0;
 static int check_index = 0;
 static int write_index = 0;
+static int cached = 0;
 static int diffstat = 0;
 static int numstat = 0;
 static int summary = 0;
@@ -35,7 +40,7 @@ static int show_index_info = 0;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -114,6 +119,9 @@ struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
 	int is_rename, is_copy, is_new, is_delete, is_binary;
+#define BINARY_DELTA_DEFLATED 1
+#define BINARY_LITERAL_DEFLATED 2
+	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
 	struct fragment *fragments;
@@ -967,6 +975,88 @@ static inline int metadata_changes(struct patch *patch)
 		 patch->old_mode != patch->new_mode);
 }
 
+static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
+{
+	/* We have read "GIT binary patch\n"; what follows is a line
+	 * that says the patch method (currently, either "deflated
+	 * literal" or "deflated delta") and the length of data before
+	 * deflating; a sequence of 'length-byte' followed by base-85
+	 * encoded data follows.
+	 *
+	 * Each 5-byte sequence of base-85 encodes up to 4 bytes,
+	 * and we would limit the patch line to 66 characters,
+	 * so one line can fit up to 13 groups that would decode
+	 * to 52 bytes max.  The length byte 'A'-'Z' corresponds
+	 * to 1-26 bytes, and 'a'-'z' corresponds to 27-52 bytes.
+	 * The end of binary is signalled with an empty line.
+	 */
+	int llen, used;
+	struct fragment *fragment;
+	char *data = NULL;
+
+	patch->fragments = fragment = xcalloc(1, sizeof(*fragment));
+
+	/* Grab the type of patch */
+	llen = linelen(buffer, size);
+	used = llen;
+	linenr++;
+
+	if (!strncmp(buffer, "delta ", 6)) {
+		patch->is_binary = BINARY_DELTA_DEFLATED;
+		patch->deflate_origlen = strtoul(buffer + 6, NULL, 10);
+	}
+	else if (!strncmp(buffer, "literal ", 8)) {
+		patch->is_binary = BINARY_LITERAL_DEFLATED;
+		patch->deflate_origlen = strtoul(buffer + 8, NULL, 10);
+	}
+	else
+		return error("unrecognized binary patch at line %d: %.*s",
+			     linenr-1, llen-1, buffer);
+	buffer += llen;
+	while (1) {
+		int byte_length, max_byte_length, newsize;
+		llen = linelen(buffer, size);
+		used += llen;
+		linenr++;
+		if (llen == 1)
+			break;
+		/* Minimum line is "A00000\n" which is 7-byte long,
+		 * and the line length must be multiple of 5 plus 2.
+		 */
+		if ((llen < 7) || (llen-2) % 5)
+			goto corrupt;
+		max_byte_length = (llen - 2) / 5 * 4;
+		byte_length = *buffer;
+		if ('A' <= byte_length && byte_length <= 'Z')
+			byte_length = byte_length - 'A' + 1;
+		else if ('a' <= byte_length && byte_length <= 'z')
+			byte_length = byte_length - 'a' + 27;
+		else
+			goto corrupt;
+		/* if the input length was not multiple of 4, we would
+		 * have filler at the end but the filler should never
+		 * exceed 3 bytes
+		 */
+		if (max_byte_length < byte_length ||
+		    byte_length <= max_byte_length - 4)
+			goto corrupt;
+		newsize = fragment->size + byte_length;
+		data = xrealloc(data, newsize);
+		if (decode_85(data + fragment->size,
+			      buffer + 1,
+			      byte_length))
+			goto corrupt;
+		fragment->size = newsize;
+		buffer += llen;
+		size -= llen;
+	}
+	fragment->patch = data;
+	return used;
+ corrupt:
+	return error("corrupt binary patch at line %d: %.*s",
+		     linenr-1, llen-1, buffer);
+}
+
 static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 {
 	int hdrsize, patchsize;
@@ -983,19 +1073,34 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 			"Files ",
 			NULL,
 		};
+		static const char git_binary[] = "GIT binary patch\n";
 		int i;
 		int hd = hdrsize + offset;
 		unsigned long llen = linelen(buffer + hd, size - hd);
 
-		if (!memcmp(" differ\n", buffer + hd + llen - 8, 8))
+		if (llen == sizeof(git_binary) - 1 &&
+		    !memcmp(git_binary, buffer + hd, llen)) {
+			int used;
+			linenr++;
+			used = parse_binary(buffer + hd + llen,
+					    size - hd - llen, patch);
+			if (used)
+				patchsize = used + llen;
+			else
+				patchsize = 0;
+		}
+		else if (!memcmp(" differ\n", buffer + hd + llen - 8, 8)) {
 			for (i = 0; binhdr[i]; i++) {
 				int len = strlen(binhdr[i]);
 				if (len < size - hd &&
 				    !memcmp(binhdr[i], buffer + hd, len)) {
+					linenr++;
 					patch->is_binary = 1;
+					patchsize = llen;
 					break;
 				}
 			}
+		}
 
 		/* Empty patch cannot be applied if:
 		 * - it is a binary patch and we do not do binary_replace, or
@@ -1346,75 +1451,149 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 	return offset;
 }
 
+static char *inflate_it(const void *data, unsigned long size,
+			unsigned long inflated_size)
+{
+	z_stream stream;
+	void *out;
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+
+	stream.next_in = (unsigned char *)data;
+	stream.avail_in = size;
+	stream.next_out = out = xmalloc(inflated_size);
+	stream.avail_out = inflated_size;
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
+		free(out);
+		return NULL;
+	}
+	return out;
+}
+
+static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
+{
+	unsigned long dst_size;
+	struct fragment *fragment = patch->fragments;
+	void *data;
+	void *result;
+
+	data = inflate_it(fragment->patch, fragment->size,
+			  patch->deflate_origlen);
+	if (!data)
+		return error("corrupt patch data");
+	switch (patch->is_binary) {
+	case BINARY_DELTA_DEFLATED:
+		result = patch_delta(desc->buffer, desc->size,
+				     data,
+				     patch->deflate_origlen,
+				     &dst_size);
+		free(desc->buffer);
+		desc->buffer = result;
+		free(data);
+		break;
+	case BINARY_LITERAL_DEFLATED:
+		free(desc->buffer);
+		desc->buffer = data;
+		dst_size = patch->deflate_origlen;
+		break;
+	}
+	if (!desc->buffer)
+		return -1;
+	desc->size = desc->alloc = dst_size;
+	return 0;
+}
+
+static int apply_binary(struct buffer_desc *desc, struct patch *patch)
+{
+	const char *name = patch->old_name ? patch->old_name : patch->new_name;
+	unsigned char sha1[20];
+	unsigned char hdr[50];
+	int hdrlen;
+
+	if (!allow_binary_replacement)
+		return error("cannot apply binary patch to '%s' "
+			     "without --allow-binary-replacement",
+			     name);
+
+	/* For safety, we require patch index line to contain
+	 * full 40-byte textual SHA1 for old and new, at least for now.
+	 */
+	if (strlen(patch->old_sha1_prefix) != 40 ||
+	    strlen(patch->new_sha1_prefix) != 40 ||
+	    get_sha1_hex(patch->old_sha1_prefix, sha1) ||
+	    get_sha1_hex(patch->new_sha1_prefix, sha1))
+		return error("cannot apply binary patch to '%s' "
+			     "without full index line", name);
+
+	if (patch->old_name) {
+		/* See if the old one matches what the patch
+		 * applies to.
+		 */
+		write_sha1_file_prepare(desc->buffer, desc->size,
+					blob_type, sha1, hdr, &hdrlen);
+		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
+			return error("the patch applies to '%s' (%s), "
+				     "which does not match the "
+				     "current contents.",
+				     name, sha1_to_hex(sha1));
+	}
+	else {
+		/* Otherwise, the old one must be empty. */
+		if (desc->size)
+			return error("the patch applies to an empty "
+				     "'%s' but it is not empty", name);
+	}
+
+	get_sha1_hex(patch->new_sha1_prefix, sha1);
+	if (!memcmp(sha1, null_sha1, 20)) {
+		free(desc->buffer);
+		desc->alloc = desc->size = 0;
+		desc->buffer = NULL;
+		return 0; /* deletion patch */
+	}
+
+	if (has_sha1_file(sha1)) {
+		/* We already have the postimage */
+		char type[10];
+		unsigned long size;
+
+		free(desc->buffer);
+		desc->buffer = read_sha1_file(sha1, type, &size);
+		if (!desc->buffer)
+			return error("the necessary postimage %s for "
+				     "'%s' cannot be read",
+				     patch->new_sha1_prefix, name);
+		desc->alloc = desc->size = size;
+	}
+	else {
+		/* We have verified desc matches the preimage;
+		 * apply the patch data to it, which is stored
+		 * in the patch->fragments->{patch,size}.
+		 */
+		if (apply_binary_fragment(desc, patch))
+			return error("binary patch does not apply to '%s'",
+				     name);
+
+		/* verify that the result matches */
+		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
+					sha1, hdr, &hdrlen);
+		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
+			return error("binary patch to '%s' creates incorrect result", name);
+	}
+
+	return 0;
+}
+
 static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 
-	if (patch->is_binary) {
-		unsigned char sha1[20];
-
-		if (!allow_binary_replacement)
-			return error("cannot apply binary patch to '%s' "
-				     "without --allow-binary-replacement",
-				     name);
-
-		/* For safety, we require patch index line to contain
-		 * full 40-byte textual SHA1 for old and new, at least for now.
-		 */
-		if (strlen(patch->old_sha1_prefix) != 40 ||
-		    strlen(patch->new_sha1_prefix) != 40 ||
-		    get_sha1_hex(patch->old_sha1_prefix, sha1) ||
-		    get_sha1_hex(patch->new_sha1_prefix, sha1))
-			return error("cannot apply binary patch to '%s' "
-				     "without full index line", name);
-
-		if (patch->old_name) {
-			unsigned char hdr[50];
-			int hdrlen;
-
-			/* See if the old one matches what the patch
-			 * applies to.
-			 */
-			write_sha1_file_prepare(desc->buffer, desc->size,
-						blob_type, sha1, hdr, &hdrlen);
-			if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
-				return error("the patch applies to '%s' (%s), "
-					     "which does not match the "
-					     "current contents.",
-					     name, sha1_to_hex(sha1));
-		}
-		else {
-			/* Otherwise, the old one must be empty. */
-			if (desc->size)
-				return error("the patch applies to an empty "
-					     "'%s' but it is not empty", name);
-		}
-
-		/* For now, we do not record post-image data in the patch,
-		 * and require the object already present in the recipient's
-		 * object database.
-		 */
-		if (desc->buffer) {
-			free(desc->buffer);
-			desc->alloc = desc->size = 0;
-		}
-		get_sha1_hex(patch->new_sha1_prefix, sha1);
-
-		if (memcmp(sha1, null_sha1, 20)) {
-			char type[10];
-			unsigned long size;
-
-			desc->buffer = read_sha1_file(sha1, type, &size);
-			if (!desc->buffer)
-				return error("the necessary postimage %s for "
-					     "'%s' does not exist",
-					     patch->new_sha1_prefix, name);
-			desc->alloc = desc->size = size;
-		}
-
-		return 0;
-	}
+	if (patch->is_binary)
+		return apply_binary(desc, patch);
 
 	while (frag) {
 		if (apply_one_fragment(desc, frag) < 0)
@@ -1425,7 +1604,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 	return 0;
 }
 
-static int apply_data(struct patch *patch, struct stat *st)
+static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	char *buf;
 	unsigned long size, alloc;
@@ -1434,7 +1613,17 @@ static int apply_data(struct patch *patch, struct stat *st)
 	size = 0;
 	alloc = 0;
 	buf = NULL;
-	if (patch->old_name) {
+	if (cached) {
+		if (ce) {
+			char type[20];
+			buf = read_sha1_file(ce->sha1, type, &size);
+			if (!buf)
+				return error("read of %s failed",
+					     patch->old_name);
+			alloc = size;
+		}
+	}
+	else if (patch->old_name) {
 		size = st->st_size;
 		alloc = size + 8192;
 		buf = xmalloc(alloc);
@@ -1462,16 +1651,21 @@ static int check_patch(struct patch *patch)
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
+	struct cache_entry *ce = NULL;
 
 	if (old_name) {
-		int changed;
-		int stat_ret = lstat(old_name, &st);
+		int changed = 0;
+		int stat_ret = 0;
+		unsigned st_mode = 0;
 
+		if (!cached)
+			stat_ret = lstat(old_name, &st);
 		if (check_index) {
 			int pos = cache_name_pos(old_name, strlen(old_name));
 			if (pos < 0)
 				return error("%s: does not exist in index",
 					     old_name);
+			ce = active_cache[pos];
 			if (stat_ret < 0) {
 				struct checkout costate;
 				if (errno != ENOENT)
@@ -1484,40 +1678,46 @@ static int check_patch(struct patch *patch)
 				costate.quiet = 0;
 				costate.not_new = 0;
 				costate.refresh_cache = 1;
-				if (checkout_entry(active_cache[pos],
+				if (checkout_entry(ce,
 						   &costate,
 						   NULL) ||
 				    lstat(old_name, &st))
 					return -1;
 			}
-
-			changed = ce_match_stat(active_cache[pos], &st, 1);
+			if (!cached)
+				changed = ce_match_stat(ce, &st, 1);
 			if (changed)
 				return error("%s: does not match index",
 					     old_name);
+			if (cached)
+				st_mode = ntohl(ce->ce_mode);
 		}
 		else if (stat_ret < 0)
 			return error("%s: %s", old_name, strerror(errno));
 
+		if (!cached)
+			st_mode = ntohl(create_ce_mode(st.st_mode));
+
 		if (patch->is_new < 0)
 			patch->is_new = 0;
-		st.st_mode = ntohl(create_ce_mode(st.st_mode));
 		if (!patch->old_mode)
-			patch->old_mode = st.st_mode;
-		if ((st.st_mode ^ patch->old_mode) & S_IFMT)
+			patch->old_mode = st_mode;
+		if ((st_mode ^ patch->old_mode) & S_IFMT)
 			return error("%s: wrong type", old_name);
-		if (st.st_mode != patch->old_mode)
+		if (st_mode != patch->old_mode)
 			fprintf(stderr, "warning: %s has type %o, expected %o\n",
-				old_name, st.st_mode, patch->old_mode);
+				old_name, st_mode, patch->old_mode);
 	}
 
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
 		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
 			return error("%s: already exists in index", new_name);
-		if (!lstat(new_name, &st))
-			return error("%s: already exists in working directory", new_name);
-		if (errno != ENOENT)
-			return error("%s: %s", new_name, strerror(errno));
+		if (!cached) {
+			if (!lstat(new_name, &st))
+				return error("%s: already exists in working directory", new_name);
+			if (errno != ENOENT)
+				return error("%s: %s", new_name, strerror(errno));
+		}
 		if (!patch->new_mode) {
 			if (patch->is_new)
 				patch->new_mode = S_IFREG | 0644;
@@ -1534,9 +1734,9 @@ static int check_patch(struct patch *patch)
 			return error("new mode (%o) of %s does not match old mode (%o)%s%s",
 				patch->new_mode, new_name, patch->old_mode,
 				same ? "" : " of ", same ? "" : old_name);
-	}	
+	}
 
-	if (apply_data(patch, &st) < 0)
+	if (apply_data(patch, &st, ce) < 0)
 		return error("%s: patch does not apply", name);
 	return 0;
 }
@@ -1603,7 +1803,7 @@ static void numstat_patch_list(struct patch *patch)
 {
 	for ( ; patch; patch = patch->next) {
 		const char *name;
-		name = patch->old_name ? patch->old_name : patch->new_name;
+		name = patch->new_name ? patch->new_name : patch->old_name;
 		printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
 		if (line_termination && quote_c_style(name, NULL, NULL, 0))
 			quote_c_style(name, NULL, stdout, 0);
@@ -1720,7 +1920,8 @@ static void remove_file(struct patch *patch)
 			die("unable to remove %s from index", patch->old_name);
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
-	unlink(patch->old_name);
+	if (!cached)
+		unlink(patch->old_name);
 }
 
 static void add_index_file(const char *path, unsigned mode, void *buf, unsigned long size)
@@ -1737,9 +1938,11 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = htons(namelen);
-	if (lstat(path, &st) < 0)
-		die("unable to stat newly created file %s", path);
-	fill_stat_cache_info(ce, &st);
+	if (!cached) {
+		if (lstat(path, &st) < 0)
+			die("unable to stat newly created file %s", path);
+		fill_stat_cache_info(ce, &st);
+	}
 	if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
 		die("unable to create backing store for newly created file %s", path);
 	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
@@ -1776,6 +1979,8 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
  */
 static void create_one_file(char *path, unsigned mode, const char *buf, unsigned long size)
 {
+	if (cached)
+		return;
 	if (!try_create_file(path, mode, buf, size))
 		return;
 
@@ -1876,7 +2081,6 @@ static int use_patch(struct patch *p)
 
 static int apply_patch(int fd, const char *filename)
 {
-	int newfd;
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
 	struct patch *list = NULL, **listp = &list;
@@ -1907,12 +2111,11 @@ static int apply_patch(int fd, const char *filename)
 		size -= nr;
 	}
 
-	newfd = -1;
 	if (whitespace_error && (new_whitespace == error_on_whitespace))
 		apply = 0;
 
 	write_index = check_index && apply;
-	if (write_index)
+	if (write_index && newfd < 0)
 		newfd = hold_index_file_for_update(&cache_file, get_index_file());
 	if (check_index) {
 		if (read_cache() < 0)
@@ -1924,12 +2127,6 @@ static int apply_patch(int fd, const char *filename)
 
 	if (apply)
 		write_out_results(list, skipped_patch);
-
-	if (write_index) {
-		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_index_file(&cache_file))
-			die("Unable to write new cachefile");
-	}
 
 	if (show_index_info)
 		show_index_list(list);
@@ -1993,7 +2190,8 @@ int main(int argc, char **argv)
 			diffstat = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--allow-binary-replacement")) {
+		if (!strcmp(arg, "--allow-binary-replacement") ||
+		    !strcmp(arg, "--binary")) {
 			allow_binary_replacement = 1;
 			continue;
 		}
@@ -2014,6 +2212,11 @@ int main(int argc, char **argv)
 		}
 		if (!strcmp(arg, "--index")) {
 			check_index = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--cached")) {
+			check_index = 1;
+			cached = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--apply")) {
@@ -2088,5 +2291,12 @@ int main(int argc, char **argv)
 				whitespace_error == 1 ? "" : "s",
 				whitespace_error == 1 ? "s" : "");
 	}
+
+	if (write_index) {
+		if (write_cache(newfd, active_cache, active_nr) ||
+		    commit_index_file(&cache_file))
+			die("Unable to write new cachefile");
+	}
+
 	return 0;
 }

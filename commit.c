@@ -22,23 +22,33 @@ struct sort_node
 
 const char *commit_type = "commit";
 
+struct cmt_fmt_map {
+	const char *n;
+	size_t cmp_len;
+	enum cmit_fmt v;
+} cmt_fmts[] = {
+	{ "raw",	1,	CMIT_FMT_RAW },
+	{ "medium",	1,	CMIT_FMT_MEDIUM },
+	{ "short",	1,	CMIT_FMT_SHORT },
+	{ "full",	5,	CMIT_FMT_FULL },
+	{ "fuller",	5,	CMIT_FMT_FULLER },
+	{ "oneline",	1,	CMIT_FMT_ONELINE },
+};
+
 enum cmit_fmt get_commit_format(const char *arg)
 {
-	if (!*arg)
+	int i;
+
+	if (!arg || !*arg)
 		return CMIT_FMT_DEFAULT;
-	if (!strcmp(arg, "=raw"))
-		return CMIT_FMT_RAW;
-	if (!strcmp(arg, "=medium"))
-		return CMIT_FMT_MEDIUM;
-	if (!strcmp(arg, "=short"))
-		return CMIT_FMT_SHORT;
-	if (!strcmp(arg, "=full"))
-		return CMIT_FMT_FULL;
-	if (!strcmp(arg, "=fuller"))
-		return CMIT_FMT_FULLER;
-	if (!strcmp(arg, "=oneline"))
-		return CMIT_FMT_ONELINE;
-	die("invalid --pretty format");
+	if (*arg == '=')
+		arg++;
+	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
+		if (!strncmp(arg, cmt_fmts[i].n, cmt_fmts[i].cmp_len))
+			return cmt_fmts[i].v;
+	}
+
+	die("invalid --pretty format: %s", arg);
 }
 
 static struct commit *check_commit(struct object *obj,

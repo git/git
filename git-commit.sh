@@ -640,6 +640,8 @@ case "$no_edit" in
 		exit 1
 		;;
 	esac
+	git-var GIT_AUTHOR_IDENT > /dev/null  || die
+	git-var GIT_COMMITTER_IDENT > /dev/null  || die
 	${VISUAL:-${EDITOR:-vi}} "$GIT_DIR/COMMIT_EDITMSG"
 	;;
 esac

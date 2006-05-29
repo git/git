@@ -40,7 +40,8 @@ my $compose_filename = ".msg.$$";
 my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
-my ($chain_reply_to, $smtp_server, $quiet, $suppress_from, $no_signed_off_cc) = (1, "localhost", 0, 0, 0);
+my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc) = (1, 0, 0, 0);
+my $smtp_server;
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -89,6 +90,41 @@ sub gitvar_ident {
 my ($author) = gitvar_ident('GIT_AUTHOR_IDENT');
 my ($committer) = gitvar_ident('GIT_COMMITTER_IDENT');
 
+my %aliases;
+chomp(my @alias_files = `git-repo-config --get-all sendemail.aliasesfile`);
+chomp(my $aliasfiletype = `git-repo-config sendemail.aliasfiletype`);
+my %parse_alias = (
+	# multiline formats can be supported in the future
+	mutt => sub { my $fh = shift; while (<$fh>) {
+		if (/^alias\s+(\S+)\s+(.*)$/) {
+			my ($alias, $addr) = ($1, $2);
+			$addr =~ s/#.*$//; # mutt allows # comments
+			 # commas delimit multiple addresses
+			$aliases{$alias} = [ split(/\s*,\s*/, $addr) ];
+		}}},
+	mailrc => sub { my $fh = shift; while (<$fh>) {
+		if (/^alias\s+(\S+)\s+(.*)$/) {
+			# spaces delimit multiple addresses
+			$aliases{$1} = [ split(/\s+/, $2) ];
+		}}},
+	pine => sub { my $fh = shift; while (<$fh>) {
+		if (/^(\S+)\s+(.*)$/) {
+			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
+		}}},
+	gnus => sub { my $fh = shift; while (<$fh>) {
+		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
+			$aliases{$1} = [ $2 ];
+		}}}
+);
+
+if (@alias_files && defined $parse_alias{$aliasfiletype}) {
+	foreach my $file (@alias_files) {
+		open my $fh, '<', $file or die "opening $file: $!\n";
+		$parse_alias{$aliasfiletype}->($fh);
+		close $fh;
+	}
+}
+
 my $prompting = 0;
 if (!defined $from) {
 	$from = $author || $committer;
@@ -112,6 +148,19 @@ if (!@to) {
 	$prompting++;
 }
 
+sub expand_aliases {
+	my @cur = @_;
+	my @last;
+	do {
+		@last = @cur;
+		@cur = map { $aliases{$_} ? @{$aliases{$_}} : $_ } @last;
+	} while (join(',',@cur) ne join(',',@last));
+	return @cur;
+}
+
+@to = expand_aliases(@to);
+@initial_cc = expand_aliases(@initial_cc);
+
 if (!defined $initial_subject && $compose) {
 	do {
 		$_ = $term->readline("What subject should the emails start with? ",
@@ -131,8 +180,14 @@ if (!defined $initial_reply_to && $prompting) {
 	$initial_reply_to =~ s/(^\s+|\s+$)//g;
 }
 
-if (!defined $smtp_server) {
-	$smtp_server = "localhost";
+if (!$smtp_server) {
+	foreach (qw( /usr/sbin/sendmail /usr/lib/sendmail )) {
+		if (-x $_) {
+			$smtp_server = $_;
+			last;
+		}
+	}
+	$smtp_server ||= 'localhost'; # could be 127.0.0.1, too... *shrug*
 }
 
 if ($compose) {
@@ -252,6 +307,10 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $message);
 
 sub extract_valid_address {
 	my $address = shift;
+
+	# check for a local address:
+	return $address if ($address =~ /^([\w\-]+)$/);
+
 	if ($have_email_valid) {
 		return Email::Valid->address($address);
 	} else {
@@ -291,6 +350,13 @@ sub send_message
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc);
 	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
+	my $gitversion = '@@GIT_VERSION@@';
+	if ($gitversion =~ m/..GIT_VERSION../) {
+	    $gitversion = `git --version`;
+	    chomp $gitversion;
+	    # keep only what's after the last space
+	    $gitversion =~ s/^.* //;
+	}
 
 	my $header = "From: $from
 To: $to
@@ -299,30 +365,43 @@ Subject: $subject
 Reply-To: $from
 Date: $date
 Message-Id: $message_id
-X-Mailer: git-send-email @@GIT_VERSION@@
+X-Mailer: git-send-email $gitversion
 ";
 	$header .= "In-Reply-To: $reply_to\n" if $reply_to;
 
-	$smtp ||= Net::SMTP->new( $smtp_server );
-	$smtp->mail( $from ) or die $smtp->message;
-	$smtp->to( @recipients ) or die $smtp->message;
-	$smtp->data or die $smtp->message;
-	$smtp->datasend("$header\n$message") or die $smtp->message;
-	$smtp->dataend() or die $smtp->message;
-	$smtp->ok or die "Failed to send $subject\n".$smtp->message;
-
+	if ($smtp_server =~ m#^/#) {
+		my $pid = open my $sm, '|-';
+		defined $pid or die $!;
+		if (!$pid) {
+			exec($smtp_server,'-i',@recipients) or die $!;
+		}
+		print $sm "$header\n$message";
+		close $sm or die $?;
+	} else {
+		$smtp ||= Net::SMTP->new( $smtp_server );
+		$smtp->mail( $from ) or die $smtp->message;
+		$smtp->to( @recipients ) or die $smtp->message;
+		$smtp->data or die $smtp->message;
+		$smtp->datasend("$header\n$message") or die $smtp->message;
+		$smtp->dataend() or die $smtp->message;
+		$smtp->ok or die "Failed to send $subject\n".$smtp->message;
+	}
 	if ($quiet) {
 		printf "Sent %s\n", $subject;
 	} else {
-		print "OK. Log says:
-Date: $date
-Server: $smtp_server Port: 25
-From: $from
-Subject: $subject
-Cc: $cc
-To: $to
-
-Result: ", $smtp->code, ' ', ($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
+		print "OK. Log says:\nDate: $date\n";
+		if ($smtp) {
+			print "Server: $smtp_server\n";
+		} else {
+			print "Sendmail: $smtp_server\n";
+		}
+		print "From: $from\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
+		if ($smtp) {
+			print "Result: ", $smtp->code, ' ',
+				($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
+		} else {
+			print "Result: OK\n";
+		}
 	}
 }
 
@@ -423,9 +502,14 @@ sub unique_email_list(@) {
 	my @emails;
 
 	foreach my $entry (@_) {
-		my $clean = extract_valid_address($entry);
-		next if $seen{$clean}++;
-		push @emails, $entry;
+		if (my $clean = extract_valid_address($entry)) {
+			$seen{$clean} ||= 0;
+			next if $seen{$clean}++;
+			push @emails, $entry;
+		} else {
+			print STDERR "W: unable to extract a valid address",
+					" from: $entry\n";
+		}
 	}
 	return @emails;
 }

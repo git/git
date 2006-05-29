@@ -76,8 +76,8 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 	char ref[1000];
 	int fd, len, written;
 
-#ifdef USE_SYMLINK_HEAD
-	if (!only_use_symrefs) {
+#ifndef NO_SYMLINK_HEAD
+	if (prefer_symlink_refs) {
 		unlink(git_HEAD);
 		if (!symlink(refs_heads_master, git_HEAD))
 			return 0;
@@ -114,7 +114,7 @@ int read_ref(const char *filename, unsigned char *sha1)
 	return -1;
 }
 
-static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1))
+static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1), int trim)
 {
 	int retval = 0;
 	DIR *dir = opendir(git_path("%s", base));
@@ -146,7 +146,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			if (stat(git_path("%s", path), &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				retval = do_for_each_ref(path, fn);
+				retval = do_for_each_ref(path, fn, trim);
 				if (retval)
 					break;
 				continue;
@@ -160,7 +160,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 				      "commit object!", path);
 				continue;
 			}
-			retval = fn(path, sha1);
+			retval = fn(path + trim, sha1);
 			if (retval)
 				break;
 		}
@@ -180,7 +180,22 @@ int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
 
 int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref("refs", fn);
+	return do_for_each_ref("refs", fn, 0);
+}
+
+int for_each_tag_ref(int (*fn)(const char *path, const unsigned char *sha1))
+{
+	return do_for_each_ref("refs/tags", fn, 10);
+}
+
+int for_each_branch_ref(int (*fn)(const char *path, const unsigned char *sha1))
+{
+	return do_for_each_ref("refs/heads", fn, 11);
+}
+
+int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *sha1))
+{
+	return do_for_each_ref("refs/remotes", fn, 13);
 }
 
 static char *ref_file_name(const char *ref)
@@ -205,12 +220,9 @@ static char *ref_lock_file_name(const char *ref)
 
 int get_ref_sha1(const char *ref, unsigned char *sha1)
 {
-	const char *filename;
-
 	if (check_ref_format(ref))
 		return -1;
-	filename = git_path("refs/%s", ref);
-	return read_ref(filename, sha1);
+	return read_ref(git_path("refs/%s", ref), sha1);
 }
 
 static int lock_ref_file(const char *filename, const char *lock_filename,

@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <sys/ioctl.h>
 #include "git-compat-util.h"
 #include "exec_cmd.h"
 
@@ -47,6 +46,15 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log },
 		{ "whatchanged", cmd_whatchanged },
 		{ "show", cmd_show },
+		{ "push", cmd_push },
+		{ "count-objects", cmd_count_objects },
+		{ "diff", cmd_diff },
+		{ "grep", cmd_grep },
+		{ "rm", cmd_rm },
+		{ "add", cmd_add },
+		{ "rev-list", cmd_rev_list },
+		{ "init-db", cmd_init_db },
+		{ "check-ref-format", cmd_check_ref_format }
 	};
 	int i;
 
