@@ -9,7 +9,7 @@ struct object **objs;
 static int nr_objs;
 int obj_allocs;
 
-int track_object_refs = 1;
+int track_object_refs = 0;
 
 static int hashtable_index(const unsigned char *sha1)
 {

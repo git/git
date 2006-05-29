@@ -161,9 +161,10 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			}
 
 			if (posns[i]->directory) {
+				struct tree *tree = lookup_tree(posns[i]->sha1);
 				any_dirs = 1;
-				parse_tree(posns[i]->item.tree);
-				subposns[i] = posns[i]->item.tree->entries;
+				parse_tree(tree);
+				subposns[i] = tree->entries;
 				posns[i] = posns[i]->next;
 				src[i + merge] = &df_conflict_entry;
 				continue;
@@ -187,7 +188,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 			any_files = 1;
 
-			memcpy(ce->sha1, posns[i]->item.any->sha1, 20);
+			memcpy(ce->sha1, posns[i]->sha1, 20);
 			src[i + merge] = ce;
 			subposns[i] = &df_conflict_list;
 			posns[i] = posns[i]->next;
@@ -783,7 +784,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = (struct tree *)ent->item.tree;
+			struct tree *subtree = lookup_tree(ent->sha1);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, ent->name);
