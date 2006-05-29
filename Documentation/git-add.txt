@@ -14,11 +14,13 @@ DESCRIPTION
 A simple wrapper for git-update-index to add files to the index,
 for people used to do "cvs add".
 
+It only adds non-ignored files, to add ignored files use
+"git update-index --add".
 
 OPTIONS
 -------
 <file>...::
-	Files to add to the index.
+	Files to add to the index (see gitlink:git-ls-files[1]).
 
 -n::
         Don't actually add the file(s), just show if they exist.
@@ -68,6 +70,7 @@ git-add git-*.sh::
 See Also
 --------
 gitlink:git-rm[1]
+gitlink:git-ls-files[1]
 
 Author
 ------

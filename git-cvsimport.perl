@@ -23,13 +23,13 @@ use File::Basename qw(basename dirname);
 use Time::Local;
 use IO::Socket;
 use IO::Pipe;
-use POSIX qw(strftime dup2);
+use POSIX qw(strftime dup2 ENOENT);
 use IPC::Open2;
 
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S);
+our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L);
 my (%conv_author_name, %conv_author_email);
 
 sub usage() {
@@ -85,7 +85,7 @@ sub write_author_info($) {
 	close ($f);
 }
 
-getopts("hivmkuo:d:p:C:z:s:M:P:A:S:") or usage();
+getopts("hivmkuo:d:p:C:z:s:M:P:A:S:L:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();
@@ -315,15 +315,7 @@ sub _line {
 			chomp $cnt;
 			die "Duh: Filesize $cnt" if $cnt !~ /^\d+$/;
 			$line="";
-			$res=0;
-			while($cnt) {
-				my $buf;
-				my $num = $self->{'socketi'}->read($buf,$cnt);
-				die "Server: Filesize $cnt: $num: $!\n" if not defined $num or $num<=0;
-				print $fh $buf;
-				$res += $num;
-				$cnt -= $num;
-			}
+			$res = $self->_fetchfile($fh, $cnt);
 		} elsif($line =~ s/^ //) {
 			print $fh $line;
 			$res += length($line);
@@ -335,14 +327,7 @@ sub _line {
 			chomp $cnt;
 			die "Duh: Mbinary $cnt" if $cnt !~ /^\d+$/ or $cnt<1;
 			$line="";
-			while($cnt) {
-				my $buf;
-				my $num = $self->{'socketi'}->read($buf,$cnt);
-				die "S: Mbinary $cnt: $num: $!\n" if not defined $num or $num<=0;
-				print $fh $buf;
-				$res += $num;
-				$cnt -= $num;
-			}
+			$res += $self->_fetchfile($fh, $cnt);
 		} else {
 			chomp $line;
 			if($line eq "ok") {
@@ -383,6 +368,23 @@ sub file {
 	close ($fh);
 
 	return ($name, $res);
+}
+sub _fetchfile {
+	my ($self, $fh, $cnt) = @_;
+	my $res = 0;
+	my $bufsize = 1024 * 1024;
+	while($cnt) {
+	    if ($bufsize > $cnt) {
+		$bufsize = $cnt;
+	    }
+	    my $buf;
+	    my $num = $self->{'socketi'}->read($buf,$bufsize);
+	    die "Server: Filesize $cnt: $num: $!\n" if not defined $num or $num<=0;
+	    print $fh $buf;
+	    $res += $num;
+	    $cnt -= $num;
+	}
+	return $res;
 }
 
 
@@ -429,21 +431,24 @@ sub getwd() {
 	return $pwd;
 }
 
-
-sub get_headref($$) {
-    my $name    = shift;
-    my $git_dir = shift; 
-    my $sha;
-    
-    if (open(C,"$git_dir/refs/heads/$name")) {
-	chomp($sha = <C>);
-	close(C);
-	length($sha) == 40
-	    or die "Cannot get head id for $name ($sha): $!\n";
-    }
-    return $sha;
+sub is_sha1 {
+	my $s = shift;
+	return $s =~ /^[a-f0-9]{40}$/;
 }
 
+sub get_headref ($$) {
+    my $name    = shift;
+    my $git_dir = shift; 
+    
+    my $f = "$git_dir/refs/heads/$name";
+    if(open(my $fh, $f)) {
+	    chomp(my $r = <$fh>);
+	    is_sha1($r) or die "Cannot get head id for $name ($r): $!";
+	    return $r;
+    }
+    die "unable to open $f: $!" unless $! == POSIX::ENOENT;
+    return undef;
+}
 
 -d $git_tree
 	or mkdir($git_tree,0777)
@@ -561,98 +566,66 @@ unless($pid) {
 
 my $state = 0;
 
-my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
-my(@old,@new,@skipped);
-my $commit = sub {
-	my $pid;
-	while(@old) {
-		my @o2;
-		if(@old > 55) {
-			@o2 = splice(@old,0,50);
-		} else {
-			@o2 = @old;
-			@old = ();
-		}
-		system("git-update-index","--force-remove","--",@o2);
-		die "Cannot remove files: $?\n" if $?;
-	}
-	while(@new) {
-		my @n2;
-		if(@new > 12) {
-			@n2 = splice(@new,0,10);
-		} else {
-			@n2 = @new;
-			@new = ();
-		}
-		system("git-update-index","--add",
-			(map { ('--cacheinfo', @$_) } @n2));
-		die "Cannot add files: $?\n" if $?;
-	}
+sub update_index (\@\@) {
+	my $old = shift;
+	my $new = shift;
+	open(my $fh, '|-', qw(git-update-index -z --index-info))
+		or die "unable to open git-update-index: $!";
+	print $fh
+		(map { "0 0000000000000000000000000000000000000000\t$_\0" }
+			@$old),
+		(map { '100' . sprintf('%o', $_->[0]) . " $_->[1]\t$_->[2]\0" }
+			@$new)
+		or die "unable to write to git-update-index: $!";
+	close $fh
+		or die "unable to write to git-update-index: $!";
+	$? and die "git-update-index reported error: $?";
+}
 
-	$pid = open(C,"-|");
-	die "Cannot fork: $!" unless defined $pid;
-	unless($pid) {
-		exec("git-write-tree");
-		die "Cannot exec git-write-tree: $!\n";
-	}
-	chomp(my $tree = <C>);
-	length($tree) == 40
-		or die "Cannot get tree id ($tree): $!\n";
-	close(C)
+sub write_tree () {
+	open(my $fh, '-|', qw(git-write-tree))
+		or die "unable to open git-write-tree: $!";
+	chomp(my $tree = <$fh>);
+	is_sha1($tree)
+		or die "Cannot get tree id ($tree): $!";
+	close($fh)
 		or die "Error running git-write-tree: $?\n";
 	print "Tree ID $tree\n" if $opt_v;
+	return $tree;
+}
 
-	my $parent = "";
-	if(open(C,"$git_dir/refs/heads/$last_branch")) {
-		chomp($parent = <C>);
-		close(C);
-		length($parent) == 40
-			or die "Cannot get parent id ($parent): $!\n";
-		print "Parent ID $parent\n" if $opt_v;
-	}
+my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
+my(@old,@new,@skipped);
+sub commit {
+	update_index(@old, @new);
+	@old = @new = ();
+	my $tree = write_tree();
+	my $parent = get_headref($last_branch, $git_dir);
+	print "Parent ID " . ($parent ? $parent : "(empty)") . "\n" if $opt_v;
 
-	my $pr = IO::Pipe->new() or die "Cannot open pipe: $!\n";
-	my $pw = IO::Pipe->new() or die "Cannot open pipe: $!\n";
-	$pid = fork();
-	die "Fork: $!\n" unless defined $pid;
-	unless($pid) {
-		$pr->writer();
-		$pw->reader();
-		open(OUT,">&STDOUT");
-		dup2($pw->fileno(),0);
-		dup2($pr->fileno(),1);
-		$pr->close();
-		$pw->close();
+	my @commit_args;
+	push @commit_args, ("-p", $parent) if $parent;
 
-		my @par = ();
-		@par = ("-p",$parent) if $parent;
-
-		# loose detection of merges
-		# based on the commit msg
-		foreach my $rx (@mergerx) {
-			if ($logmsg =~ $rx) {
-				my $mparent = $1;
-				if ($mparent eq 'HEAD') { $mparent = $opt_o };
-				if ( -e "$git_dir/refs/heads/$mparent") {
-					$mparent = get_headref($mparent, $git_dir);
-					push @par, '-p', $mparent;
-					print OUT "Merge parent branch: $mparent\n" if $opt_v;
-				}
-			}
+	# loose detection of merges
+	# based on the commit msg
+	foreach my $rx (@mergerx) {
+		next unless $logmsg =~ $rx && $1;
+		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
+		if(my $sha1 = get_headref($mparent, $git_dir)) {
+			push @commit_args, '-p', $mparent;
+			print "Merge parent branch: $mparent\n" if $opt_v;
 		}
-
-		exec("env",
-			"GIT_AUTHOR_NAME=$author_name",
-			"GIT_AUTHOR_EMAIL=$author_email",
-			"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-			"GIT_COMMITTER_NAME=$author_name",
-			"GIT_COMMITTER_EMAIL=$author_email",
-			"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-			"git-commit-tree", $tree,@par);
-		die "Cannot exec git-commit-tree: $!\n";
 	}
-	$pw->writer();
-	$pr->reader();
+
+	my $commit_date = strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date));
+	$ENV{GIT_AUTHOR_NAME} = $author_name;
+	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
+	$ENV{GIT_AUTHOR_DATE} = $commit_date;
+	$ENV{GIT_COMMITTER_NAME} = $author_name;
+	$ENV{GIT_COMMITTER_EMAIL} = $author_email;
+	$ENV{GIT_COMMITTER_DATE} = $commit_date;
+	my $pid = open2(my $commit_read, my $commit_write,
+		'git-commit-tree', $tree, @commit_args);
 
 	# compatibility with git2cvs
 	substr($logmsg,32767) = "" if length($logmsg) > 32767;
@@ -661,18 +634,17 @@ my $commit = sub {
 	if (@skipped) {
 	    $logmsg .= "\n\n\nSKIPPED:\n\t";
 	    $logmsg .= join("\n\t", @skipped) . "\n";
+	    @skipped = ();
 	}
 
-	print $pw "$logmsg\n"
+	print($commit_write "$logmsg\n") && close($commit_write)
 		or die "Error writing to git-commit-tree: $!\n";
-	$pw->close();
 
-	print "Committed patch $patchset ($branch ".strftime("%Y-%m-%d %H:%M:%S",gmtime($date)).")\n" if $opt_v;
-	chomp(my $cid = <$pr>);
-	length($cid) == 40
-		or die "Cannot get commit id ($cid): $!\n";
+	print "Committed patch $patchset ($branch $commit_date)\n" if $opt_v;
+	chomp(my $cid = <$commit_read>);
+	is_sha1($cid) or die "Cannot get commit id ($cid): $!\n";
 	print "Commit ID $cid\n" if $opt_v;
-	$pr->close();
+	close($commit_read);
 
 	waitpid($pid,0);
 	die "Error running git-commit-tree: $?\n" if $?;
@@ -716,6 +688,7 @@ my $commit = sub {
 	}
 };
 
+my $commitcount = 1;
 while(<CVS>) {
 	chomp;
 	if($state == 0 and /^-+$/) {
@@ -849,7 +822,14 @@ while(<CVS>) {
 	} elsif($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif(($state == 9 or $state == 10) and /^-+$/) {
-		&$commit();
+		$commitcount++;
+		if ($opt_L && $commitcount > $opt_L) {
+			last;
+		}
+		commit();
+		if (($commitcount & 1023) == 0) {
+			system("git repack -a -d");
+		}
 		$state = 1;
 	} elsif($state == 11 and /^-+$/) {
 		$state = 1;
@@ -859,7 +839,7 @@ while(<CVS>) {
 		print "* UNKNOWN LINE * $_\n";
 	}
 }
-&$commit() if $branch and $state != 11;
+commit() if $branch and $state != 11;
 
 unlink($git_index);
 

@@ -45,42 +45,46 @@ static int verify_tag(char *buffer, unsigned long size)
 	unsigned char sha1[20];
 	const char *object, *type_line, *tag_line, *tagger_line;
 
-	if (size < 64 || size > MAXSIZE-1)
-		return -1;
+	if (size < 64)
+		return error("wanna fool me ? you obviously got the size wrong !\n");
+
 	buffer[size] = 0;
 
 	/* Verify object line */
 	object = buffer;
 	if (memcmp(object, "object ", 7))
-		return -1;
+		return error("char%d: does not start with \"object \"\n", 0);
+
 	if (get_sha1_hex(object + 7, sha1))
-		return -1;
+		return error("char%d: could not get SHA1 hash\n", 7);
 
 	/* Verify type line */
 	type_line = object + 48;
 	if (memcmp(type_line - 1, "\ntype ", 6))
-		return -1;
+		return error("char%d: could not find \"\\ntype \"\n", 47);
 
 	/* Verify tag-line */
 	tag_line = strchr(type_line, '\n');
 	if (!tag_line)
-		return -1;
+		return error("char%td: could not find next \"\\n\"\n", type_line - buffer);
 	tag_line++;
 	if (memcmp(tag_line, "tag ", 4) || tag_line[4] == '\n')
-		return -1;
+		return error("char%td: no \"tag \" found\n", tag_line - buffer);
 
 	/* Get the actual type */
 	typelen = tag_line - type_line - strlen("type \n");
 	if (typelen >= sizeof(type))
-		return -1;
+		return error("char%td: type too long\n", type_line+5 - buffer);
+
 	memcpy(type, type_line+5, typelen);
 	type[typelen] = 0;
 
 	/* Verify that the object matches */
 	if (get_sha1_hex(object + 7, sha1))
-		return -1;
+		return error("char%d: could not get SHA1 hash but this is really odd since i got it before !\n", 7);
+
 	if (verify_object(sha1, type))
-		return -1;
+		return error("char%d: could not verify object %s\n", 7, sha1);
 
 	/* Verify the tag-name: we don't allow control characters or spaces in it */
 	tag_line += 4;
@@ -90,14 +94,14 @@ static int verify_tag(char *buffer, unsigned long size)
 			break;
 		if (c > ' ')
 			continue;
-		return -1;
+		return error("char%td: could not verify tag name\n", tag_line - buffer);
 	}
 
 	/* Verify the tagger line */
 	tagger_line = tag_line;
 
 	if (memcmp(tagger_line, "tagger", 6) || (tagger_line[6] == '\n'))
-		return -1;
+		return error("char%td: could not find \"tagger\"\n", tagger_line - buffer);
 
 	/* The actual stuff afterwards we don't care about.. */
 	return 0;
@@ -105,8 +109,8 @@ static int verify_tag(char *buffer, unsigned long size)
 
 int main(int argc, char **argv)
 {
-	unsigned long size;
-	char buffer[MAXSIZE];
+	unsigned long size = 4096;
+	char *buffer = malloc(size);
 	unsigned char result_sha1[20];
 
 	if (argc != 1)
@@ -114,13 +118,9 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
-	// Read the signature
-	size = 0;
-	for (;;) {
-		int ret = xread(0, buffer + size, MAXSIZE - size);
-		if (ret <= 0)
-			break;
-		size += ret;
+	if (read_pipe(0, &buffer, &size)) {
+		free(buffer);
+		die("could not read from stdin");
 	}
 
 	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntype\ntagger "
@@ -129,6 +129,9 @@ int main(int argc, char **argv)
 
 	if (write_sha1_file(buffer, size, tag_type, result_sha1) < 0)
 		die("unable to write tag file");
+
+	free(buffer);
+
 	printf("%s\n", sha1_to_hex(result_sha1));
 	return 0;
 }

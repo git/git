@@ -3,11 +3,12 @@
 #include "blob.h"
 #include "commit.h"
 #include "tag.h"
+#include "tree-walk.h"
 #include <stdlib.h>
 
 const char *tree_type = "tree";
 
-static int read_one_entry(unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+static int read_one_entry(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
 {
 	int len;
 	unsigned int size;
@@ -77,19 +78,26 @@ int read_tree_recursive(struct tree *tree,
 			int stage, const char **match,
 			read_tree_fn_t fn)
 {
-	struct tree_entry_list *list;
+	struct tree_desc desc;
+
 	if (parse_tree(tree))
 		return -1;
-	list = tree->entries;
-	while (list) {
-		struct tree_entry_list *current = list;
-		list = list->next;
-		if (!match_tree_entry(base, baselen, current->name,
-				      current->mode, match))
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+
+		if (!match_tree_entry(base, baselen, name, mode, match))
 			continue;
 
-		switch (fn(current->item.any->sha1, base, baselen,
-			   current->name, current->mode, stage)) {
+		switch (fn(sha1, base, baselen, name, mode, stage)) {
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
@@ -97,16 +105,16 @@ int read_tree_recursive(struct tree *tree,
 		default:
 			return -1;
 		}
-		if (current->directory) {
+		if (S_ISDIR(mode)) {
 			int retval;
-			int pathlen = strlen(current->name);
+			int pathlen = strlen(name);
 			char *newbase;
 
 			newbase = xmalloc(baselen + 1 + pathlen);
 			memcpy(newbase, base, baselen);
-			memcpy(newbase + baselen, current->name, pathlen);
+			memcpy(newbase + baselen, name, pathlen);
 			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(current->item.tree,
+			retval = read_tree_recursive(lookup_tree(sha1),
 						     newbase,
 						     baselen + pathlen + 1,
 						     stage, match, fn);
@@ -143,62 +151,97 @@ struct tree *lookup_tree(const unsigned char *sha1)
 	return (struct tree *) obj;
 }
 
+static int track_tree_refs(struct tree *item)
+{
+	int n_refs = 0, i;
+	struct object_refs *refs;
+	struct tree_desc desc;
+
+	/* Count how many entries there are.. */
+	desc.buf = item->buffer;
+	desc.size = item->size;
+	while (desc.size) {
+		n_refs++;
+		update_tree_entry(&desc);
+	}
+
+	/* Allocate object refs and walk it again.. */
+	i = 0;
+	refs = alloc_object_refs(n_refs);
+	desc.buf = item->buffer;
+	desc.size = item->size;
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+		struct object *obj;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+		update_tree_entry(&desc);
+		if (S_ISDIR(mode))
+			obj = &lookup_tree(sha1)->object;
+		else
+			obj = &lookup_blob(sha1)->object;
+		refs->ref[i++] = obj;
+	}
+	set_object_refs(&item->object, refs);
+	return 0;
+}
+
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 {
-	void *bufptr = buffer;
-	struct tree_entry_list **list_p;
-	int n_refs = 0;
-
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
-	list_p = &item->entries;
-	while (size) {
-		struct object *obj;
+	item->buffer = buffer;
+	item->size = size;
+
+	if (track_object_refs)
+		track_tree_refs(item);
+	return 0;
+}
+
+struct tree_entry_list *create_tree_entry_list(struct tree *tree)
+{
+	struct tree_desc desc;
+	struct tree_entry_list *ret = NULL;
+	struct tree_entry_list **list_p = &ret;
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *path;
+		const unsigned char *sha1;
 		struct tree_entry_list *entry;
-		int len = 1+strlen(bufptr);
-		unsigned char *file_sha1 = bufptr + len;
-		char *path = strchr(bufptr, ' ');
-		unsigned int mode;
-		if (size < len + 20 || !path || 
-		    sscanf(bufptr, "%o", &mode) != 1)
-			return -1;
+
+		sha1 = tree_entry_extract(&desc, &path, &mode);
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
-		entry->name = strdup(path + 1);
+		entry->name = path;
+		entry->sha1 = sha1;
+		entry->mode = mode;
 		entry->directory = S_ISDIR(mode) != 0;
 		entry->executable = (mode & S_IXUSR) != 0;
 		entry->symlink = S_ISLNK(mode) != 0;
-		entry->zeropad = *(char *)bufptr == '0';
-		entry->mode = mode;
+		entry->zeropad = *(const char *)(desc.buf) == '0';
 		entry->next = NULL;
 
-		bufptr += len + 20;
-		size -= len + 20;
-
-		if (entry->directory) {
-			entry->item.tree = lookup_tree(file_sha1);
-			obj = &entry->item.tree->object;
-		} else {
-			entry->item.blob = lookup_blob(file_sha1);
-			obj = &entry->item.blob->object;
-		}
-		if (obj)
-			n_refs++;
+		update_tree_entry(&desc);
 		*list_p = entry;
 		list_p = &entry->next;
 	}
+	return ret;
+}
 
-	if (track_object_refs) {
-		struct tree_entry_list *entry;
-		unsigned i = 0;
-		struct object_refs *refs = alloc_object_refs(n_refs);
-		for (entry = item->entries; entry; entry = entry->next)
-			refs->ref[i++] = entry->item.any;
-		set_object_refs(&item->object, refs);
+void free_tree_entry_list(struct tree_entry_list *list)
+{
+	while (list) {
+		struct tree_entry_list *next = list->next;
+		free(list);
+		list = next;
 	}
-
-	return 0;
 }
 
 int parse_tree(struct tree *item)
@@ -206,7 +249,6 @@ int parse_tree(struct tree *item)
 	 char type[20];
 	 void *buffer;
 	 unsigned long size;
-	 int ret;
 
 	if (item->object.parsed)
 		return 0;
@@ -219,9 +261,7 @@ int parse_tree(struct tree *item)
 		return error("Object %s not a tree",
 			     sha1_to_hex(item->object.sha1));
 	}
-	ret = parse_tree_buffer(item, buffer, size);
-	free(buffer);
-	return ret;
+	return parse_tree_buffer(item, buffer, size);
 }
 
 struct tree *parse_tree_indirect(const unsigned char *sha1)

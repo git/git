@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "tree.h"
+#include "builtin.h"
 
 #define BLOCKING (1ul << 14)
 
@@ -76,7 +77,7 @@ static int new_parent(int idx)
 	return 1;
 }
 
-int main(int argc, char **argv)
+int cmd_commit_tree(int argc, const char **argv, char **envp)
 {
 	int i;
 	int parents = 0;
@@ -98,7 +99,7 @@ int main(int argc, char **argv)
 
 	check_valid(tree_sha1, tree_type);
 	for (i = 2; i < argc; i += 2) {
-		char *a, *b;
+		const char *a, *b;
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p"))
 			usage(commit_tree_usage);

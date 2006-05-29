@@ -149,7 +149,7 @@ static void free_patch(struct patch *p)
 	free(p);
 }
 
-static int get_blob_sha1_internal(unsigned char *sha1, const char *base,
+static int get_blob_sha1_internal(const unsigned char *sha1, const char *base,
 				  int baselen, const char *pathname,
 				  unsigned mode, int stage);
 
@@ -178,7 +178,7 @@ static int get_blob_sha1(struct tree *t, const char *pathname,
 	return 0;
 }
 
-static int get_blob_sha1_internal(unsigned char *sha1, const char *base,
+static int get_blob_sha1_internal(const unsigned char *sha1, const char *base,
 				  int baselen, const char *pathname,
 				  unsigned mode, int stage)
 {

@@ -9,8 +9,6 @@
 
 const char *write_ref = NULL;
 
-const unsigned char *current_ref = NULL;
-
 int get_tree = 0;
 int get_history = 0;
 int get_all = 0;
@@ -43,16 +41,22 @@ static int process_tree(struct tree *tree)
 	if (parse_tree(tree))
 		return -1;
 
-	entry = tree->entries;
-	tree->entries = NULL;
+	entry = create_tree_entry_list(tree);
 	while (entry) {
 		struct tree_entry_list *next = entry->next;
-		if (process(entry->item.any))
-			return -1;
-		free(entry->name);
+
+		if (entry->directory) {
+			struct tree *tree = lookup_tree(entry->sha1);
+			process_tree(tree);
+		} else {
+			struct blob *blob = lookup_blob(entry->sha1);
+			process(&blob->object);
+		}
 		free(entry);
 		entry = next;
 	}
+	free(tree->buffer);
+	tree->buffer = NULL;
 	return 0;
 }
 
@@ -205,19 +209,12 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 int pull(char *target)
 {
 	unsigned char sha1[20];
-	int fd = -1;
 
 	save_commit_buffer = 0;
 	track_object_refs = 0;
-	if (write_ref && current_ref) {
-		fd = lock_ref_sha1(write_ref, current_ref);
-		if (fd < 0)
-			return -1;
-	}
 
-	if (!get_recover) {
+	if (!get_recover)
 		for_each_ref(mark_complete);
-	}
 
 	if (interpret_target(target, sha1))
 		return error("Could not interpret %s as something to pull",
@@ -227,12 +224,7 @@ int pull(char *target)
 	if (loop())
 		return -1;
 	
-	if (write_ref) {
-		if (current_ref) {
-			write_ref_sha1(write_ref, fd, sha1);
-		} else {
-			write_ref_sha1_unlocked(write_ref, sha1);
-		}
-	}
+	if (write_ref)
+		write_ref_sha1_unlocked(write_ref, sha1);
 	return 0;
 }

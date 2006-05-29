@@ -7,6 +7,7 @@ MAN7_TXT=git.txt
 DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
 
 ARTICLES = tutorial
+ARTICLES += tutorial-2
 ARTICLES += core-tutorial
 ARTICLES += cvs-migration
 ARTICLES += diffcore
@@ -51,9 +52,9 @@ man1: $(DOC_MAN1)
 man7: $(DOC_MAN7)
 
 install: man
-	$(INSTALL) -d -m755 $(DESTDIR)/$(man1) $(DESTDIR)/$(man7)
-	$(INSTALL) $(DOC_MAN1) $(DESTDIR)/$(man1)
-	$(INSTALL) $(DOC_MAN7) $(DESTDIR)/$(man7)
+	$(INSTALL) -d -m755 $(DESTDIR)$(man1) $(DESTDIR)$(man7)
+	$(INSTALL) $(DOC_MAN1) $(DESTDIR)$(man1)
+	$(INSTALL) $(DOC_MAN7) $(DESTDIR)$(man7)
 
 
 #

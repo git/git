@@ -30,6 +30,7 @@ struct cmt_fmt_map {
 	{ "raw",	1,	CMIT_FMT_RAW },
 	{ "medium",	1,	CMIT_FMT_MEDIUM },
 	{ "short",	1,	CMIT_FMT_SHORT },
+	{ "email",	1,	CMIT_FMT_EMAIL },
 	{ "full",	5,	CMIT_FMT_FULL },
 	{ "fuller",	5,	CMIT_FMT_FULLER },
 	{ "oneline",	1,	CMIT_FMT_ONELINE },
@@ -421,6 +422,46 @@ static int get_one_line(const char *msg, unsigned long len)
 	return ret;
 }
 
+static int is_rfc2047_special(char ch)
+{
+	return ((ch & 0x80) || (ch == '=') || (ch == '?') || (ch == '_'));
+}
+
+static int add_rfc2047(char *buf, const char *line, int len)
+{
+	char *bp = buf;
+	int i, needquote;
+	static const char q_utf8[] = "=?utf-8?q?";
+
+	for (i = needquote = 0; !needquote && i < len; i++) {
+		unsigned ch = line[i];
+		if (ch & 0x80)
+			needquote++;
+		if ((i + 1 < len) &&
+		    (ch == '=' && line[i+1] == '?'))
+			needquote++;
+	}
+	if (!needquote)
+		return sprintf(buf, "%.*s", len, line);
+
+	memcpy(bp, q_utf8, sizeof(q_utf8)-1);
+	bp += sizeof(q_utf8)-1;
+	for (i = 0; i < len; i++) {
+		unsigned ch = line[i];
+		if (is_rfc2047_special(ch)) {
+			sprintf(bp, "=%02X", ch);
+			bp += 3;
+		}
+		else if (ch == ' ')
+			*bp++ = '_';
+		else
+			*bp++ = ch;
+	}
+	memcpy(bp, "?=", 2);
+	bp += 2;
+	return bp - buf;
+}
+
 static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const char *line)
 {
 	char *date;
@@ -438,12 +479,34 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	time = strtoul(date, &date, 10);
 	tz = strtol(date, NULL, 10);
 
-	ret = sprintf(buf, "%s: %.*s%.*s\n", what,
-		      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
-		      filler, namelen, line);
+	if (fmt == CMIT_FMT_EMAIL) {
+		char *name_tail = strchr(line, '<');
+		int display_name_length;
+		if (!name_tail)
+			return 0;
+		while (line < name_tail && isspace(name_tail[-1]))
+			name_tail--;
+		display_name_length = name_tail - line;
+		filler = "";
+		strcpy(buf, "From: ");
+		ret = strlen(buf);
+		ret += add_rfc2047(buf + ret, line, display_name_length);
+		memcpy(buf + ret, name_tail, namelen - display_name_length);
+		ret += namelen - display_name_length;
+		buf[ret++] = '\n';
+	}
+	else {
+		ret = sprintf(buf, "%s: %.*s%.*s\n", what,
+			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
+			      filler, namelen, line);
+	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
 		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
+		break;
+	case CMIT_FMT_EMAIL:
+		ret += sprintf(buf + ret, "Date: %s\n",
+			       show_rfc2822_date(time, tz));
 		break;
 	case CMIT_FMT_FULLER:
 		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz));
@@ -455,10 +518,12 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	return ret;
 }
 
-static int is_empty_line(const char *line, int len)
+static int is_empty_line(const char *line, int *len_p)
 {
+	int len = *len_p;
 	while (len && isspace(line[len-1]))
 		len--;
+	*len_p = len;
 	return !len;
 }
 
@@ -467,7 +532,8 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	struct commit_list *parent = commit->parents;
 	int offset;
 
-	if ((fmt == CMIT_FMT_ONELINE) || !parent || !parent->next)
+	if ((fmt == CMIT_FMT_ONELINE) || (fmt == CMIT_FMT_EMAIL) ||
+	    !parent || !parent->next)
 		return 0;
 
 	offset = sprintf(buf, "Merge:");
@@ -486,13 +552,30 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
-	int indent = (fmt == CMIT_FMT_ONELINE) ? 0 : 4;
+	int indent = 4;
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
+	int plain_non_ascii = 0;
+
+	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
+		indent = 0;
+
+	/* After-subject is used to pass in Content-Type: multipart
+	 * MIME header; in that case we do not have to do the
+	 * plaintext content type even if the commit message has
+	 * non 7-bit ASCII character.  Otherwise, check if we need
+	 * to say this is not a 7-bit ASCII.
+	 */
+	if (fmt == CMIT_FMT_EMAIL && !after_subject) {
+		int i;
+		for (i = 0; !plain_non_ascii && msg[i] && i < len; i++)
+			if (msg[i] & 0x80)
+				plain_non_ascii = 1;
+	}
 
 	for (;;) {
 		const char *line = msg;
@@ -516,7 +599,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		if (hdr) {
 			if (linelen == 1) {
 				hdr = 0;
-				if (fmt != CMIT_FMT_ONELINE)
+				if ((fmt != CMIT_FMT_ONELINE) && !subject)
 					buf[offset++] = '\n';
 				continue;
 			}
@@ -554,8 +637,10 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			continue;
 		}
 
-		if (is_empty_line(line, linelen)) {
+		if (is_empty_line(line, &linelen)) {
 			if (!body)
+				continue;
+			if (subject)
 				continue;
 			if (fmt == CMIT_FMT_SHORT)
 				break;
@@ -563,11 +648,36 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			body = 1;
 		}
 
-		memset(buf + offset, ' ', indent);
-		memcpy(buf + offset + indent, line, linelen);
-		offset += linelen + indent;
+		if (subject) {
+			int slen = strlen(subject);
+			memcpy(buf + offset, subject, slen);
+			offset += slen;
+			offset += add_rfc2047(buf + offset, line, linelen);
+		}
+		else {
+			memset(buf + offset, ' ', indent);
+			memcpy(buf + offset + indent, line, linelen);
+			offset += linelen + indent;
+		}
+		buf[offset++] = '\n';
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
+		if (subject && plain_non_ascii) {
+			static const char header[] =
+				"Content-Type: text/plain; charset=UTF-8\n"
+				"Content-Transfer-Encoding: 8bit\n";
+			memcpy(buf + offset, header, sizeof(header)-1);
+			offset += sizeof(header)-1;
+		}
+		if (after_subject) {
+			int slen = strlen(after_subject);
+			if (slen > space - offset - 1)
+				slen = space - offset - 1;
+			memcpy(buf + offset, after_subject, slen);
+			offset += slen;
+			after_subject = NULL;
+		}
+		subject = NULL;
 	}
 	while (offset && isspace(buf[offset-1]))
 		offset--;

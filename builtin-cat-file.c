@@ -7,6 +7,7 @@
 #include "exec_cmd.h"
 #include "tag.h"
 #include "tree.h"
+#include "builtin.h"
 
 static void flush_buffer(const char *buf, unsigned long size)
 {
@@ -93,7 +94,7 @@ static int pprint_tag(const unsigned char *sha1, const char *buf, unsigned long 
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_cat_file(int argc, const char **argv, char **envp)
 {
 	unsigned char sha1[20];
 	char type[20];
@@ -140,7 +141,7 @@ int main(int argc, char **argv)
 
 		/* custom pretty-print here */
 		if (!strcmp(type, tree_type))
-			return execl_git_cmd("ls-tree", argv[2], NULL);
+			return cmd_ls_tree(2, argv + 1, NULL);
 
 		buf = read_sha1_file(sha1, type, &size);
 		if (!buf)

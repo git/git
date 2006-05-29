@@ -2,13 +2,14 @@
 #include "diff.h"
 #include "commit.h"
 #include "revision.h"
+#include "builtin.h"
 
 static const char diff_cache_usage[] =
 "git-diff-index [-m] [--cached] "
 "[<common diff options>] <tree-ish> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-int main(int argc, const char **argv)
+int cmd_diff_index(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 	int cached = 0;

@@ -233,7 +233,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 	return 0;
 }
 
-static void add_head(struct rev_info *revs)
+void add_head(struct rev_info *revs)
 {
 	unsigned char sha1[20];
 	struct object *obj;

@@ -1,10 +1,16 @@
 #!/usr/bin/perl -w
 
+# Known limitations:
+# - cannot add or remove binary files
+# - does not propagate permissions
+# - tells "ready for commit" even when things could not be completed
+#   (eg addition of a binary file)
+
 use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
-use File::Basename qw(basename);
+use File::Basename qw(basename dirname);
 
 unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
@@ -84,7 +90,7 @@ close MSG;
 `git-cat-file commit $commit | sed -e '1,/^\$/d' >> .msg`;
 $? && die "Error extracting the commit message";
 
-my (@afiles, @dfiles, @mfiles);
+my (@afiles, @dfiles, @mfiles, @dirs);
 my @files = safe_pipe_capture('git-diff-tree', '-r', $parent, $commit);
 #print @files;
 $? && die "Error in git-diff-tree";
@@ -92,7 +98,14 @@ foreach my $f (@files) {
     chomp $f;
     my @fields = split(m!\s+!, $f);
     if ($fields[4] eq 'A') {
-	push @afiles, $fields[5];
+        my $path = $fields[5];
+	push @afiles, $path;
+        # add any needed parent directories
+	$path = dirname $path;
+	while (!-d $path and ! grep { $_ eq $path } @dirs) {
+	    unshift @dirs, $path;
+	    $path = dirname $path;
+	}
     }
     if ($fields[4] eq 'M') {
 	push @mfiles, $fields[5];
@@ -107,13 +120,21 @@ undef @files; # don't need it anymore
 
 # check that the files are clean and up to date according to cvs
 my $dirty;
+foreach my $d (@dirs) {
+    if (-e $d) {
+	$dirty = 1;
+	warn "$d exists and is not a directory!\n";
+    }
+}
 foreach my $f (@afiles) {
     # This should return only one value
     my @status = grep(m/^File/,  safe_pipe_capture('cvs', '-q', 'status' ,$f));
     if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
-    unless ($status[0] =~ m/Status: Unknown$/) {
+    if (-d dirname $f and $status[0] !~ m/Status: Unknown$/
+	and $status[0] !~ m/^File: no file /) {
  	$dirty = 1;
 	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
+	warn "Status was: $status\n";
     }
 }
 foreach my $f (@mfiles, @dfiles) {
@@ -139,6 +160,19 @@ if ($dirty) {
 ###
 
 
+print "Creating new directories\n";
+foreach my $d (@dirs) {
+    unless (mkdir $d) {
+        warn "Could not mkdir $d: $!";
+	$dirty = 1;
+    }
+    `cvs add $d`;
+    if ($?) {
+	$dirty = 1;
+	warn "Failed to cvs add directory $d -- you may need to do it manually";
+    }
+}
+
 print "'Patching' binary files\n";
 
 my @bfiles = grep(m/^Binary/, safe_pipe_capture('git-diff-tree', '-p', $parent, $commit));
@@ -151,7 +185,7 @@ foreach my $f (@bfiles) {
     my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
     chomp $blob;
     `git-cat-file blob $blob > $tmpdir/blob`;
-    if (system('cmp', '-q', $f, "$tmpdir/blob")) {
+    if (system('cmp', '-s', $f, "$tmpdir/blob")) {
 	warn "Binary file $f in CVS does not match parent.\n";
 	$dirty = 1;
 	next;

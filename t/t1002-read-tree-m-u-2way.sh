@@ -75,7 +75,7 @@ test_expect_success \
      git-update-index --add yomin &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >4.out || return 1
-     diff --unified=0 M.out 4.out >4diff.out
+     diff -U0 M.out 4.out >4diff.out
      compare_change 4diff.out expected &&
      check_cache_at yomin clean &&
      sum bozbar frotz nitfol >actual4.sum &&
@@ -94,7 +94,7 @@ test_expect_success \
      echo yomin yomin >yomin &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >5.out || return 1
-     diff --unified=0 M.out 5.out >5diff.out
+     diff -U0 M.out 5.out >5diff.out
      compare_change 5diff.out expected &&
      check_cache_at yomin dirty &&
      sum bozbar frotz nitfol >actual5.sum &&
@@ -112,7 +112,7 @@ test_expect_success \
      git-update-index --add frotz &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >6.out &&
-     diff --unified=0 M.out 6.out &&
+     diff -U0 M.out 6.out &&
      check_cache_at frotz clean &&
      sum bozbar frotz nitfol >actual3.sum &&
      cmp M.sum actual3.sum &&
@@ -129,7 +129,7 @@ test_expect_success \
      echo frotz frotz >frotz &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >7.out &&
-     diff --unified=0 M.out 7.out &&
+     diff -U0 M.out 7.out &&
      check_cache_at frotz dirty &&
      sum bozbar frotz nitfol >actual7.sum &&
      if cmp M.sum actual7.sum; then false; else :; fi &&
@@ -206,7 +206,7 @@ test_expect_success \
      git-update-index --add nitfol &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >14.out || return 1
-     diff --unified=0 M.out 14.out >14diff.out
+     diff -U0 M.out 14.out >14diff.out
      compare_change 14diff.out expected &&
      sum bozbar frotz >actual14.sum &&
      grep -v nitfol M.sum > expected14.sum &&
@@ -227,7 +227,7 @@ test_expect_success \
      echo nitfol nitfol nitfol >nitfol &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >15.out || return 1
-     diff --unified=0 M.out 15.out >15diff.out
+     diff -U0 M.out 15.out >15diff.out
      compare_change 15diff.out expected &&
      check_cache_at nitfol dirty &&
      sum bozbar frotz >actual15.sum &&
@@ -264,7 +264,7 @@ test_expect_success \
      git-update-index --add bozbar &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >18.out &&
-     diff --unified=0 M.out 18.out &&
+     diff -U0 M.out 18.out &&
      check_cache_at bozbar clean &&
      sum bozbar frotz nitfol >actual18.sum &&
      cmp M.sum actual18.sum'
@@ -278,7 +278,7 @@ test_expect_success \
      echo gnusto gnusto >bozbar &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >19.out &&
-     diff --unified=0 M.out 19.out &&
+     diff -U0 M.out 19.out &&
      check_cache_at bozbar dirty &&
      sum frotz nitfol >actual19.sum &&
      grep -v bozbar  M.sum > expected19.sum &&
@@ -297,7 +297,7 @@ test_expect_success \
      git-update-index --add bozbar &&
      git-read-tree -m -u $treeH $treeM &&
      git-ls-files --stage >20.out &&
-     diff --unified=0 M.out 20.out &&
+     diff -U0 M.out 20.out &&
      check_cache_at bozbar clean &&
      sum bozbar frotz nitfol >actual20.sum &&
      cmp M.sum actual20.sum'
@@ -338,7 +338,7 @@ test_expect_success \
      git-update-index --add DF &&
      git-read-tree -m -u $treeDF $treeDFDF &&
      git-ls-files --stage >DFDFcheck.out &&
-     diff --unified=0 DFDF.out DFDFcheck.out &&
+     diff -U0 DFDF.out DFDFcheck.out &&
      check_cache_at DF/DF clean'
 
 test_done

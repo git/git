@@ -116,7 +116,7 @@ SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
-	git-format-patch.sh git-ls-remote.sh \
+	git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-prune.sh git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
@@ -149,19 +149,16 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-apply$X git-cat-file$X \
-	git-checkout-index$X git-clone-pack$X git-commit-tree$X \
-	git-convert-objects$X git-diff-files$X \
-	git-diff-index$X git-diff-stages$X \
-	git-diff-tree$X git-fetch-pack$X git-fsck-objects$X \
+	git-checkout-index$X git-clone-pack$X \
+	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
-	git-ls-files$X git-ls-tree$X git-mailinfo$X git-merge-base$X \
+	git-mailinfo$X git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
-	git-peek-remote$X git-prune-packed$X git-read-tree$X \
+	git-peek-remote$X git-prune-packed$X \
 	git-receive-pack$X git-rev-parse$X \
-	git-send-pack$X git-show-branch$X git-shell$X \
+	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
-	git-ssh-upload$X git-tar-tree$X git-unpack-file$X \
+	git-ssh-upload$X git-unpack-file$X \
 	git-unpack-objects$X git-update-index$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X git-write-tree$X \
 	git-update-ref$X git-symbolic-ref$X \
@@ -172,7 +169,11 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X \
 	git-grep$X git-add$X git-rm$X git-rev-list$X \
 	git-check-ref-format$X \
-	git-init-db$X
+	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
+	git-ls-files$X git-ls-tree$X \
+	git-read-tree$X git-commit-tree$X \
+	git-apply$X git-show-branch$X git-diff-files$X \
+	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -221,7 +222,13 @@ LIB_OBJS = \
 BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
 	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
-	builtin-rm.o builtin-init-db.o
+	builtin-rm.o builtin-init-db.o \
+	builtin-tar-tree.o builtin-upload-tar.o \
+	builtin-ls-files.o builtin-ls-tree.o \
+	builtin-read-tree.o builtin-commit-tree.o \
+	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
+	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
+	builtin-cat-file.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -421,6 +428,9 @@ else
 	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
 endif
 endif
+ifdef NO_INET_NTOP
+	LIB_OBJS += compat/inet_ntop.o
+endif
 
 ifdef NO_ICONV
 	ALL_CFLAGS += -DNO_ICONV
@@ -486,37 +496,43 @@ $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
 
 common-cmds.h: Documentation/git-*.txt
-	./generate-cmdlist.sh > $@
+	./generate-cmdlist.sh > $@+
+	mv $@+ $@
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
-	rm -f $@
+	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
-	    $@.sh >$@
-	chmod +x $@
+	    $@.sh >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
-	rm -f $@
+	rm -f $@ $@+
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $@.perl >$@
-	chmod +x $@
+	    $@.perl >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
-	rm -f $@
+	rm -f $@ $@+
 	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
 	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $@.py >$@
-	chmod +x $@
+	    $@.py >$@+
+	chmod +x $@+
+	mv $@+ $@
 
 git-cherry-pick: git-revert
-	cp $< $@
+	cp $< $@+
+	mv $@+ $@
 
 git-status: git-commit
-	cp $< $@
+	cp $< $@+
+	mv $@+ $@
 
 # These can record GIT_VERSION
 git$X git.spec \
@@ -628,7 +644,14 @@ install: all
 	$(MAKE) -C templates install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
-	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(bindir_SQ)/$p' && ln '$(DESTDIR_SQ)$(bindir_SQ)/git$X' '$(DESTDIR_SQ)$(bindir_SQ)/$p' ;)
+	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
+	then \
+		ln -f '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
+			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' || \
+		cp '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
+			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X'; \
+	fi
+	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 
 install-doc:
 	$(MAKE) -C Documentation install
@@ -639,7 +662,8 @@ install-doc:
 ### Maintainer's dist rules
 
 git.spec: git.spec.in
-	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@
+	sed -e 's/@@VERSION@@/$(GIT_VERSION)/g' < $< > $@+
+	mv $@+ $@
 
 GIT_TARNAME=git-$(GIT_VERSION)
 dist: git.spec git-tar-tree
@@ -666,7 +690,7 @@ dist-doc:
 	:
 	rm -fr .doc-tmp-dir
 	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
-	$(MAKE) -C Documentation DESTDIR=. \
+	$(MAKE) -C Documentation DESTDIR=./ \
 		man1=../.doc-tmp-dir/man1 \
 		man7=../.doc-tmp-dir/man7 \
 		install
@@ -710,4 +734,3 @@ check-docs::
 		*) echo "no link: $$v";; \
 		esac ; \
 	done | sort
-

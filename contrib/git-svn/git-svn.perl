@@ -8,7 +8,7 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $REV_DIR/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
-$VERSION = '1.0.0';
+$VERSION = '1.1.0-pre';
 
 use Cwd qw/abs_path/;
 $GIT_DIR = abs_path($ENV{GIT_DIR} || '.git');
@@ -39,6 +39,10 @@ my $_svn_co_url_revs;
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
 		'authors-file|A=s' => \$_authors );
+
+# yes, 'native' sets "\n".  Patches to fix this for non-*nix systems welcome:
+my %EOL = ( CR => "\015", LF => "\012", CRLF => "\015\012", native => "\012" );
+
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision, %fc_opts } ],
@@ -207,7 +211,7 @@ sub rebuild {
 		push @svn_up, '--ignore-externals' unless $_no_ignore_ext;
 		sys(@svn_up,"-r$newest_rev");
 		$ENV{GIT_INDEX_FILE} = $GIT_SVN_INDEX;
-		git_addremove();
+		index_changes();
 		exec('git-write-tree');
 	}
 	waitpid $pid, 0;
@@ -249,7 +253,7 @@ sub fetch {
 		chdir $SVN_WC or croak $!;
 		read_uuid();
 		$last_commit = git_commit($base, @parents);
-		assert_svn_wc_clean($base->{revision}, $last_commit);
+		assert_tree($last_commit);
 	} else {
 		chdir $SVN_WC or croak $!;
 		read_uuid();
@@ -259,16 +263,20 @@ sub fetch {
 	push @svn_up, '--ignore-externals' unless $_no_ignore_ext;
 	my $last = $base;
 	while (my $log_msg = next_log_entry($svn_log)) {
-		assert_svn_wc_clean($last->{revision}, $last_commit);
+		assert_tree($last_commit);
 		if ($last->{revision} >= $log_msg->{revision}) {
 			croak "Out of order: last >= current: ",
 				"$last->{revision} >= $log_msg->{revision}\n";
 		}
+		# Revert is needed for cases like:
+		# https://svn.musicpd.org/Jamming/trunk (r166:167), but
+		# I can't seem to reproduce something like that on a test...
+		sys(qw/svn revert -R ./);
+		assert_svn_wc_clean($last->{revision});
 		sys(@svn_up,"-r$log_msg->{revision}");
 		$last_commit = git_commit($log_msg, $last_commit, @parents);
 		$last = $log_msg;
 	}
-	assert_svn_wc_clean($last->{revision}, $last_commit);
 	unless (-e "$GIT_DIR/refs/heads/master") {
 		sys(qw(git-update-ref refs/heads/master),$last_commit);
 	}
@@ -314,7 +322,6 @@ sub commit {
 		$svn_current_rev = svn_commit_tree($svn_current_rev, $c);
 	}
 	print "Done committing ",scalar @revs," revisions to SVN\n";
-
 }
 
 sub show_ignore {
@@ -367,13 +374,11 @@ sub setup_git_svn {
 }
 
 sub assert_svn_wc_clean {
-	my ($svn_rev, $treeish) = @_;
+	my ($svn_rev) = @_;
 	croak "$svn_rev is not an integer!\n" unless ($svn_rev =~ /^\d+$/);
-	croak "$treeish is not a sha1!\n" unless ($treeish =~ /^$sha1$/o);
 	my $lcr = svn_info('.')->{'Last Changed Rev'};
 	if ($svn_rev != $lcr) {
 		print STDERR "Checking for copy-tree ... ";
-		# use
 		my @diff = grep(/^Index: /,(safe_qx(qw(svn diff),
 						"-r$lcr:$svn_rev")));
 		if (@diff) {
@@ -389,7 +394,6 @@ sub assert_svn_wc_clean {
 		print STDERR $_ foreach @status;
 		croak;
 	}
-	assert_tree($treeish);
 }
 
 sub assert_tree {
@@ -416,7 +420,7 @@ sub assert_tree {
 		unlink $tmpindex or croak $!;
 	}
 	$ENV{GIT_INDEX_FILE} = $tmpindex;
-	git_addremove();
+	index_changes(1);
 	chomp(my $tree = `git-write-tree`);
 	if ($old_index) {
 		$ENV{GIT_INDEX_FILE} = $old_index;
@@ -426,6 +430,7 @@ sub assert_tree {
 	if ($tree ne $expected) {
 		croak "Tree mismatch, Got: $tree, Expected: $expected\n";
 	}
+	unlink $tmpindex;
 }
 
 sub parse_diff_tree {
@@ -562,7 +567,8 @@ sub precommit_check {
 sub svn_checkout_tree {
 	my ($svn_rev, $treeish) = @_;
 	my $from = file_to_s("$REV_DIR/$svn_rev");
-	assert_svn_wc_clean($svn_rev,$from);
+	assert_svn_wc_clean($svn_rev);
+	assert_tree($from);
 	print "diff-tree $from $treeish\n";
 	my $pid = open my $diff_fh, '-|';
 	defined $pid or croak $!;
@@ -852,13 +858,75 @@ sub svn_info {
 
 sub sys { system(@_) == 0 or croak $? }
 
-sub git_addremove {
-	system( "git-diff-files --name-only -z ".
-				" | git-update-index --remove -z --stdin && ".
-		"git-ls-files -z --others ".
-			"'--exclude-from=$GIT_DIR/$GIT_SVN/info/exclude'".
-				" | git-update-index --add -z --stdin"
-		) == 0 or croak $?
+sub eol_cp {
+	my ($from, $to) = @_;
+	my $es = safe_qx(qw/svn propget svn:eol-style/, $to);
+	open my $rfd, '<', $from or croak $!;
+	binmode $rfd or croak $!;
+	open my $wfd, '>', $to or croak $!;
+	binmode $wfd or croak $!;
+
+	my $eol = $EOL{$es} or undef;
+	if ($eol) {
+		print  "$eol: $from => $to\n";
+	}
+	my $buf;
+	while (1) {
+		my ($r, $w, $t);
+		defined($r = sysread($rfd, $buf, 4096)) or croak $!;
+		return unless $r;
+		$buf =~ s/(?:\015|\012|\015\012)/$eol/gs if $eol;
+		for ($w = 0; $w < $r; $w += $t) {
+			$t = syswrite($wfd, $buf, $r - $w, $w) or croak $!;
+		}
+	}
+}
+
+sub do_update_index {
+	my ($z_cmd, $cmd, $no_text_base) = @_;
+
+	my $z = open my $p, '-|';
+	defined $z or croak $!;
+	unless ($z) { exec @$z_cmd or croak $! }
+
+	my $pid = open my $ui, '|-';
+	defined $pid or croak $!;
+	unless ($pid) {
+		exec('git-update-index',"--$cmd",'-z','--stdin') or croak $!;
+	}
+	local $/ = "\0";
+	while (my $x = <$p>) {
+		chomp $x;
+		if (!$no_text_base && lstat $x && ! -l _ &&
+				safe_qx(qw/svn propget svn:keywords/,$x)) {
+			my $mode = -x _ ? 0755 : 0644;
+			my ($v,$d,$f) = File::Spec->splitpath($x);
+			my $tb = File::Spec->catfile($d, '.svn', 'tmp',
+						'text-base',"$f.svn-base");
+			$tb =~ s#^/##;
+			unless (-f $tb) {
+				$tb = File::Spec->catfile($d, '.svn',
+						'text-base',"$f.svn-base");
+				$tb =~ s#^/##;
+			}
+			unlink $x or croak $!;
+			eol_cp($tb, $x);
+			chmod(($mode &~ umask), $x) or croak $!;
+		}
+		print $ui $x,"\0";
+	}
+	close $ui or croak $!;
+}
+
+sub index_changes {
+	my $no_text_base = shift;
+	do_update_index([qw/git-diff-files --name-only -z/],
+			'remove',
+			$no_text_base);
+	do_update_index([qw/git-ls-files -z --others/,
+			      "--exclude-from=$GIT_DIR/$GIT_SVN/info/exclude"],
+			'add',
+			$no_text_base);
 }
 
 sub s_to_file {
@@ -936,7 +1004,7 @@ sub git_commit {
 	defined $pid or croak $!;
 	if ($pid == 0) {
 		$ENV{GIT_INDEX_FILE} = $GIT_SVN_INDEX;
-		git_addremove();
+		index_changes();
 		chomp(my $tree = `git-write-tree`);
 		croak if $?;
 		if (exists $tree_map{$tree}) {

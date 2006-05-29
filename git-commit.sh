@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>) [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-u] [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
@@ -134,13 +134,17 @@ run_status () {
 	report "Changed but not updated" \
 	    "use git-update-index to mark for commit"
 
+        option=""
+        if test -z "$untracked_files"; then
+            option="--directory --no-empty-directory"
+        fi
 	if test -f "$GIT_DIR/info/exclude"
 	then
-	    git-ls-files -z --others --directory \
+	    git-ls-files -z --others $option \
 		--exclude-from="$GIT_DIR/info/exclude" \
 		--exclude-per-directory=.gitignore
 	else
-	    git-ls-files -z --others --directory \
+	    git-ls-files -z --others $option \
 		--exclude-per-directory=.gitignore
 	fi |
 	perl -e '$/ = "\0";
@@ -203,6 +207,7 @@ verbose=
 signoff=
 force_author=
 only_include_assumed=
+untracked_files=
 while case "$#" in 0) break;; esac
 do
   case "$1" in
@@ -338,6 +343,12 @@ do
       ;;
   -v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
       verbose=t
+      shift
+      ;;
+  -u|--u|--un|--unt|--untr|--untra|--untrac|--untrack|--untracke|--untracked|\
+  --untracked-|--untracked-f|--untracked-fi|--untracked-fil|--untracked-file|\
+  --untracked-files)
+      untracked_files=t
       shift
       ;;
   --)
@@ -615,6 +626,9 @@ fi
 if test -z "$no_edit"
 then
 	{
+		echo ""
+		echo "# Please enter the commit message for your changes."
+		echo "# (Comment lines starting with '#' will not be included)"
 		test -z "$only_include_assumed" || echo "$only_include_assumed"
 		run_status
 	} >>"$GIT_DIR"/COMMIT_EDITMSG

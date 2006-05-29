@@ -58,11 +58,19 @@ http://* | https://* )
 	;;
 
 rsync://* )
-	mkdir $tmpdir
+	mkdir $tmpdir &&
+	rsync -rlq "$peek_repo/HEAD" $tmpdir &&
 	rsync -rq "$peek_repo/refs" $tmpdir || {
 		echo "failed	slurping"
 		exit
 	}
+	head=$(cat "$tmpdir/HEAD") &&
+	case "$head" in
+	ref:' '*)
+		head=$(expr "z$head" : 'zref: \(.*\)') &&
+		head=$(cat "$tmpdir/$head") || exit
+	esac &&
+	echo "$head	HEAD"
 	(cd $tmpdir && find refs -type f) |
 	while read path
 	do

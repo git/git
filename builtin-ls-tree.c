@@ -7,6 +7,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "quote.h"
+#include "builtin.h"
 
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
@@ -15,7 +16,7 @@ static int line_termination = '\n';
 #define LS_NAME_ONLY 8
 static int abbrev = 0;
 static int ls_options = 0;
-const char **pathspec;
+static const char **pathspec;
 static int chomp_prefix = 0;
 static const char *prefix;
 
@@ -52,7 +53,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	}
 }
 
-static int show_tree(unsigned char *sha1, const char *base, int baselen,
+static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		     const char *pathname, unsigned mode, int stage)
 {
 	int retval = 0;
@@ -84,7 +85,7 @@ static int show_tree(unsigned char *sha1, const char *base, int baselen,
 	return retval;
 }
 
-int main(int argc, const char **argv)
+int cmd_ls_tree(int argc, const char **argv, char **envp)
 {
 	unsigned char sha1[20];
 	struct tree *tree;
