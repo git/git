@@ -20,9 +20,10 @@ a_empty_cr=
 a_empty_crlf=
 
 cd import
-	cat >> kw.c <<''
+	cat >> kw.c <<\EOF
 /* Make it look like somebody copied a file from CVS into SVN: */
 /* $Id: kw.c,v 1.1.1.1 1994/03/06 00:00:00 eric Exp $ */
+EOF
 
 	printf "Hello\r\nWorld\r\n" > crlf
 	a_crlf=`git-hash-object -w crlf`
