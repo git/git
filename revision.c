@@ -54,6 +54,7 @@ static void mark_blob_uninteresting(struct blob *blob)
 void mark_tree_uninteresting(struct tree *tree)
 {
 	struct tree_desc desc;
+	struct name_entry entry;
 	struct object *obj = &tree->object;
 
 	if (obj->flags & UNINTERESTING)
@@ -66,18 +67,11 @@ void mark_tree_uninteresting(struct tree *tree)
 
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
-	while (desc.size) {
-		unsigned mode;
-		const char *name;
-		const unsigned char *sha1;
-
-		sha1 = tree_entry_extract(&desc, &name, &mode);
-		update_tree_entry(&desc);
-
-		if (S_ISDIR(mode))
-			mark_tree_uninteresting(lookup_tree(sha1));
+	while (tree_entry(&desc, &entry)) {
+		if (S_ISDIR(entry.mode))
+			mark_tree_uninteresting(lookup_tree(entry.sha1));
 		else
-			mark_blob_uninteresting(lookup_blob(sha1));
+			mark_blob_uninteresting(lookup_blob(entry.sha1));
 	}
 
 	/*

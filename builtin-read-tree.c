@@ -53,28 +53,23 @@ typedef int (*merge_fn_t)(struct cache_entry **src);
 static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
 {
 	struct tree_desc desc;
+	struct name_entry one;
 	struct tree_entry_list *ret = NULL;
 	struct tree_entry_list **list_p = &ret;
 
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 
-	while (desc.size) {
-		unsigned mode;
-		const char *path;
-		const unsigned char *sha1;
+	while (tree_entry(&desc, &one)) {
 		struct tree_entry_list *entry;
 
-		sha1 = tree_entry_extract(&desc, &path, &mode);
-		update_tree_entry(&desc);
-
 		entry = xmalloc(sizeof(struct tree_entry_list));
-		entry->name = path;
-		entry->sha1 = sha1;
-		entry->mode = mode;
-		entry->directory = S_ISDIR(mode) != 0;
-		entry->executable = (mode & S_IXUSR) != 0;
-		entry->symlink = S_ISLNK(mode) != 0;
+		entry->name = one.path;
+		entry->sha1 = one.sha1;
+		entry->mode = one.mode;
+		entry->directory = S_ISDIR(one.mode) != 0;
+		entry->executable = (one.mode & S_IXUSR) != 0;
+		entry->symlink = S_ISLNK(one.mode) != 0;
 		entry->next = NULL;
 
 		*list_p = entry;
@@ -820,27 +815,22 @@ static int read_cache_unmerged(void)
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
 	struct tree_desc desc;
+	struct name_entry entry;
 	int cnt;
 
 	memcpy(it->sha1, tree->object.sha1, 20);
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 	cnt = 0;
-	while (desc.size) {
-		unsigned mode;
-		const char *name;
-		const unsigned char *sha1;
-
-		sha1 = tree_entry_extract(&desc, &name, &mode);
-		update_tree_entry(&desc);
-		if (!S_ISDIR(mode))
+	while (tree_entry(&desc, &entry)) {
+		if (!S_ISDIR(entry.mode))
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(sha1);
+			struct tree *subtree = lookup_tree(entry.sha1);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
-			sub = cache_tree_sub(it, name);
+			sub = cache_tree_sub(it, entry.path);
 			sub->cache_tree = cache_tree();
 			prime_cache_tree_rec(sub->cache_tree, subtree);
 			cnt += sub->cache_tree->entry_count;
