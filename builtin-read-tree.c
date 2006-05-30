@@ -9,8 +9,8 @@
 
 #include "object.h"
 #include "tree.h"
-#include "cache-tree.h"
 #include "tree-walk.h"
+#include "cache-tree.h"
 #include <sys/time.h>
 #include <signal.h>
 #include "builtin.h"
@@ -31,7 +31,17 @@ static int merge_size = 0;
 
 static struct object_list *trees = NULL;
 
-static struct cache_entry df_conflict_entry = { 
+static struct cache_entry df_conflict_entry = {
+};
+
+struct tree_entry_list {
+	struct tree_entry_list *next;
+	unsigned directory : 1;
+	unsigned executable : 1;
+	unsigned symlink : 1;
+	unsigned int mode;
+	const char *name;
+	const unsigned char *sha1;
 };
 
 static struct tree_entry_list df_conflict_list = {
@@ -40,6 +50,39 @@ static struct tree_entry_list df_conflict_list = {
 };
 
 typedef int (*merge_fn_t)(struct cache_entry **src);
+
+static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
+{
+	struct tree_desc desc;
+	struct tree_entry_list *ret = NULL;
+	struct tree_entry_list **list_p = &ret;
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (desc.size) {
+		unsigned mode;
+		const char *path;
+		const unsigned char *sha1;
+		struct tree_entry_list *entry;
+
+		sha1 = tree_entry_extract(&desc, &path, &mode);
+		update_tree_entry(&desc);
+
+		entry = xmalloc(sizeof(struct tree_entry_list));
+		entry->name = path;
+		entry->sha1 = sha1;
+		entry->mode = mode;
+		entry->directory = S_ISDIR(mode) != 0;
+		entry->executable = (mode & S_IXUSR) != 0;
+		entry->symlink = S_ISLNK(mode) != 0;
+		entry->next = NULL;
+
+		*list_p = entry;
+		list_p = &entry->next;
+	}
+	return ret;
+}
 
 static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 {
@@ -803,12 +846,12 @@ static int read_cache_unmerged(void)
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
 	struct tree_desc desc;
-	int cnt = 0;
+	int cnt;
 
 	memcpy(it->sha1, tree->object.sha1, 20);
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
-
+	cnt = 0;
 	while (desc.size) {
 		unsigned mode;
 		const char *name;
@@ -816,14 +859,11 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 
 		sha1 = tree_entry_extract(&desc, &name, &mode);
 		update_tree_entry(&desc);
-
 		if (!S_ISDIR(mode))
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree;
-
-			subtree = lookup_tree(sha1);
+			struct tree *subtree = lookup_tree(sha1);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, name);

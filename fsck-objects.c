@@ -9,6 +9,7 @@
 #include "refs.h"
 #include "pack.h"
 #include "cache-tree.h"
+#include "tree-walk.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -116,15 +117,15 @@ static void check_connectivity(void)
 #define TREE_UNORDERED (-1)
 #define TREE_HAS_DUPS  (-2)
 
-static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
+static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, const char *name2)
 {
-	int len1 = strlen(a->name);
-	int len2 = strlen(b->name);
+	int len1 = strlen(name1);
+	int len2 = strlen(name2);
 	int len = len1 < len2 ? len1 : len2;
 	unsigned char c1, c2;
 	int cmp;
 
-	cmp = memcmp(a->name, b->name, len);
+	cmp = memcmp(name1, name2, len);
 	if (cmp < 0)
 		return 0;
 	if (cmp > 0)
@@ -135,8 +136,8 @@ static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
 	 * Now we need to order the next one, but turn
 	 * a '\0' into a '/' for a directory entry.
 	 */
-	c1 = a->name[len];
-	c2 = b->name[len];
+	c1 = name1[len];
+	c2 = name2[len];
 	if (!c1 && !c2)
 		/*
 		 * git-write-tree used to write out a nonsense tree that has
@@ -144,9 +145,9 @@ static int verify_ordered(struct tree_entry_list *a, struct tree_entry_list *b)
 		 * sure we do not have duplicate entries.
 		 */
 		return TREE_HAS_DUPS;
-	if (!c1 && a->directory)
+	if (!c1 && S_ISDIR(mode1))
 		c1 = '/';
-	if (!c2 && b->directory)
+	if (!c2 && S_ISDIR(mode2))
 		c2 = '/';
 	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
@@ -159,17 +160,32 @@ static int fsck_tree(struct tree *item)
 	int has_bad_modes = 0;
 	int has_dup_entries = 0;
 	int not_properly_sorted = 0;
-	struct tree_entry_list *entry, *last;
+	struct tree_desc desc;
+	unsigned o_mode;
+	const char *o_name;
+	const unsigned char *o_sha1;
 
-	last = NULL;
-	for (entry = create_tree_entry_list(item); entry; entry = entry->next) {
-		if (strchr(entry->name, '/'))
+	desc.buf = item->buffer;
+	desc.size = item->size;
+
+	o_mode = 0;
+	o_name = NULL;
+	o_sha1 = NULL;
+	while (desc.size) {
+		unsigned mode;
+		const char *name;
+		const unsigned char *sha1;
+
+		sha1 = tree_entry_extract(&desc, &name, &mode);
+
+		if (strchr(name, '/'))
 			has_full_path = 1;
-		has_zero_pad |= entry->zeropad;
+		has_zero_pad |= *(char *)desc.buf == '0';
+		update_tree_entry(&desc);
 
-		switch (entry->mode) {
+		switch (mode) {
 		/*
-		 * Standard modes.. 
+		 * Standard modes..
 		 */
 		case S_IFREG | 0755:
 		case S_IFREG | 0644:
@@ -188,8 +204,8 @@ static int fsck_tree(struct tree *item)
 			has_bad_modes = 1;
 		}
 
-		if (last) {
-			switch (verify_ordered(last, entry)) {
+		if (o_name) {
+			switch (verify_ordered(o_mode, o_name, mode, name)) {
 			case TREE_UNORDERED:
 				not_properly_sorted = 1;
 				break;
@@ -199,13 +215,12 @@ static int fsck_tree(struct tree *item)
 			default:
 				break;
 			}
-			free(last);
 		}
 
-		last = entry;
+		o_mode = mode;
+		o_name = name;
+		o_sha1 = sha1;
 	}
-	if (last)
-		free(last);
 	free(item->buffer);
 	item->buffer = NULL;
 

@@ -138,11 +138,15 @@ int cmd_diff_tree(int argc, const char **argv, char **envp)
 	if (opt->diffopt.detect_rename)
 		opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
 				       DIFF_SETUP_USE_CACHE);
-	while (fgets(line, sizeof(line), stdin))
-		if (line[0] == '\n')
+	while (fgets(line, sizeof(line), stdin)) {
+		unsigned char sha1[20];
+
+		if (get_sha1_hex(line, sha1)) {
+			fputs(line, stdout);
 			fflush(stdout);
+		}
 		else
 			diff_tree_stdin(line);
-
+	}
 	return 0;
 }

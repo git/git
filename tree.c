@@ -201,49 +201,6 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 	return 0;
 }
 
-struct tree_entry_list *create_tree_entry_list(struct tree *tree)
-{
-	struct tree_desc desc;
-	struct tree_entry_list *ret = NULL;
-	struct tree_entry_list **list_p = &ret;
-
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
-
-	while (desc.size) {
-		unsigned mode;
-		const char *path;
-		const unsigned char *sha1;
-		struct tree_entry_list *entry;
-
-		sha1 = tree_entry_extract(&desc, &path, &mode);
-
-		entry = xmalloc(sizeof(struct tree_entry_list));
-		entry->name = path;
-		entry->sha1 = sha1;
-		entry->mode = mode;
-		entry->directory = S_ISDIR(mode) != 0;
-		entry->executable = (mode & S_IXUSR) != 0;
-		entry->symlink = S_ISLNK(mode) != 0;
-		entry->zeropad = *(const char *)(desc.buf) == '0';
-		entry->next = NULL;
-
-		update_tree_entry(&desc);
-		*list_p = entry;
-		list_p = &entry->next;
-	}
-	return ret;
-}
-
-void free_tree_entry_list(struct tree_entry_list *list)
-{
-	while (list) {
-		struct tree_entry_list *next = list->next;
-		free(list);
-		list = next;
-	}
-}
-
 int parse_tree(struct tree *item)
 {
 	 char type[20];
