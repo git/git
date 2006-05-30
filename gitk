@@ -632,6 +632,8 @@ proc makewindow {} {
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
+    bind . <Shift-Key-Up> "next_highlight -1"
+    bind . <Shift-Key-Down> "next_highlight 1"
     bindkey <Key-Right> "goforw"
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
@@ -892,6 +894,8 @@ Gitk key bindings:
 <Ctrl-Down>	Scroll commit list down one line
 <Ctrl-PageUp>	Scroll commit list up one page
 <Ctrl-PageDown>	Scroll commit list down one page
+<Shift-Up>	Move to previous highlighted line
+<Shift-Down>	Move to next highlighted line
 <Delete>, b	Scroll diff view up one page
 <Backspace>	Scroll diff view up one page
 <Space>		Scroll diff view down one page
@@ -899,11 +903,12 @@ u		Scroll diff view up 18 lines
 d		Scroll diff view down 18 lines
 <Ctrl-F>		Find
 <Ctrl-G>		Move to next find hit
-<Ctrl-R>		Move to previous find hit
 <Return>	Move to next find hit
 /		Move to next find hit, or redo find
 ?		Move to previous find hit
 f		Scroll diff view to next file
+<Ctrl-S>		Search for next hit in diff view
+<Ctrl-R>		Search for previous hit in diff view
 <Ctrl-KP+>	Increase font size
 <Ctrl-plus>	Increase font size
 <Ctrl-KP->	Decrease font size
@@ -1669,8 +1674,9 @@ proc ishighlighted {row} {
 }
 
 proc bolden {row font} {
-    global canv linehtag selectedline
+    global canv linehtag selectedline boldrows
 
+    lappend boldrows $row
     $canv itemconf $linehtag($row) -font $font
     if {[info exists selectedline] && $row == $selectedline} {
 	$canv delete secsel
@@ -1682,8 +1688,9 @@ proc bolden {row font} {
 }
 
 proc bolden_name {row font} {
-    global canv2 linentag selectedline
+    global canv2 linentag selectedline boldnamerows
 
+    lappend boldnamerows $row
     $canv2 itemconf $linentag($row) -font $font
     if {[info exists selectedline] && $row == $selectedline} {
 	$canv2 delete secsel
@@ -1694,14 +1701,18 @@ proc bolden_name {row font} {
     }
 }
 
-proc unbolden {rows} {
-    global mainfont
+proc unbolden {} {
+    global mainfont boldrows
 
-    foreach row $rows {
+    set stillbold {}
+    foreach row $boldrows {
 	if {![ishighlighted $row]} {
 	    bolden $row $mainfont
+	} else {
+	    lappend stillbold $row
 	}
     }
+    set boldrows $stillbold
 }
 
 proc addvhighlight {n} {
@@ -1730,11 +1741,8 @@ proc delvhighlight {} {
 
     if {![info exists hlview]} return
     unset hlview
-    set rows [array names vhighlights]
-    if {$rows ne {}} {
-	unset vhighlights
-	unbolden $rows
-    }
+    catch {unset vhighlights}
+    unbolden
 }
 
 proc vhighlightmore {} {
@@ -1787,11 +1795,8 @@ proc hfiles_change {name ix op} {
 	# delete previous highlights
 	catch {close $filehighlight}
 	unset filehighlight
-	set rows [array names fhighlights]
-	if {$rows ne {}} {
-	    unset fhighlights
-	    unbolden $rows
-	}
+	catch {unset fhighlights}
+	unbolden
 	unhighlight_filelist
     }
     set highlight_paths {}
@@ -1817,7 +1822,7 @@ proc makepatterns {l} {
 }
 
 proc do_file_hl {serial} {
-    global highlight_files filehighlight highlight_paths gdttype
+    global highlight_files filehighlight highlight_paths gdttype fhl_list
 
     if {$gdttype eq "touching paths:"} {
 	if {[catch {set paths [shellsplit $highlight_files]}]} return
@@ -1831,64 +1836,72 @@ proc do_file_hl {serial} {
     set filehighlight [open $cmd r+]
     fconfigure $filehighlight -blocking 0
     fileevent $filehighlight readable readfhighlight
+    set fhl_list {}
     drawvisible
     flushhighlights
 }
 
 proc flushhighlights {} {
-    global filehighlight
+    global filehighlight fhl_list
 
     if {[info exists filehighlight]} {
+	lappend fhl_list {}
 	puts $filehighlight ""
 	flush $filehighlight
     }
 }
 
 proc askfilehighlight {row id} {
-    global filehighlight fhighlights
+    global filehighlight fhighlights fhl_list
 
-    set fhighlights($row) 0
+    lappend fhl_list $id
+    set fhighlights($row) -1
     puts $filehighlight $id
 }
 
 proc readfhighlight {} {
     global filehighlight fhighlights commitrow curview mainfont iddrawn
+    global fhl_list
 
-    set n [gets $filehighlight line]
-    if {$n < 0} {
-	if {[eof $filehighlight]} {
-	    # strange...
-	    puts "oops, git-diff-tree died"
-	    catch {close $filehighlight}
-	    unset filehighlight
+    while {[gets $filehighlight line] >= 0} {
+	set line [string trim $line]
+	set i [lsearch -exact $fhl_list $line]
+	if {$i < 0} continue
+	for {set j 0} {$j < $i} {incr j} {
+	    set id [lindex $fhl_list $j]
+	    if {[info exists commitrow($curview,$id)]} {
+		set fhighlights($commitrow($curview,$id)) 0
+	    }
 	}
-	return
+	set fhl_list [lrange $fhl_list [expr {$i+1}] end]
+	if {$line eq {}} continue
+	if {![info exists commitrow($curview,$line)]} continue
+	set row $commitrow($curview,$line)
+	if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+	set fhighlights($row) 1
     }
-    set line [string trim $line]
-    if {$line eq {}} return
-    if {![info exists commitrow($curview,$line)]} return
-    set row $commitrow($curview,$line)
-    if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
-	bolden $row [concat $mainfont bold]
+    if {[eof $filehighlight]} {
+	# strange...
+	puts "oops, git-diff-tree died"
+	catch {close $filehighlight}
+	unset filehighlight
     }
-    set fhighlights($row) 1
+    next_hlcont
 }
 
 proc find_change {name ix op} {
-    global nhighlights mainfont
+    global nhighlights mainfont boldnamerows
     global findstring findpattern findtype
 
     # delete previous highlights, if any
-    set rows [array names nhighlights]
-    if {$rows ne {}} {
-	foreach row $rows {
-	    if {$nhighlights($row) >= 2} {
-		bolden_name $row $mainfont
-	    }
-	}
-	unset nhighlights
-	unbolden $rows
+    foreach row $boldnamerows {
+	bolden_name $row $mainfont
     }
+    set boldnamerows {}
+    catch {unset nhighlights}
+    unbolden
     if {$findtype ne "Regexp"} {
 	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
 		   $findstring]
@@ -1964,11 +1977,8 @@ proc rhighlight_sel {a} {
 proc rhighlight_none {} {
     global rhighlights
 
-    set rows [array names rhighlights]
-    if {$rows ne {}} {
-	unset rhighlights
-	unbolden $rows
-    }
+    catch {unset rhighlights}
+    unbolden
 }
 
 proc is_descendent {a} {
@@ -2064,6 +2074,81 @@ proc askrelhighlight {row id} {
 	}
     }
     set rhighlights($row) $isbold
+}
+
+proc next_hlcont {} {
+    global fhl_row fhl_dirn displayorder numcommits
+    global vhighlights fhighlights nhighlights rhighlights
+    global hlview filehighlight findstring highlight_related
+
+    if {![info exists fhl_dirn] || $fhl_dirn == 0} return
+    set row $fhl_row
+    while {1} {
+	if {$row < 0 || $row >= $numcommits} {
+	    bell
+	    set fhl_dirn 0
+	    return
+	}
+	set id [lindex $displayorder $row]
+	if {[info exists hlview]} {
+	    if {![info exists vhighlights($row)]} {
+		askvhighlight $row $id
+	    }
+	    if {$vhighlights($row) > 0} break
+	}
+	if {$findstring ne {}} {
+	    if {![info exists nhighlights($row)]} {
+		askfindhighlight $row $id
+	    }
+	    if {$nhighlights($row) > 0} break
+	}
+	if {$highlight_related ne "None"} {
+	    if {![info exists rhighlights($row)]} {
+		askrelhighlight $row $id
+	    }
+	    if {$rhighlights($row) > 0} break
+	}
+	if {[info exists filehighlight]} {
+	    if {![info exists fhighlights($row)]} {
+		# ask for a few more while we're at it...
+		set r $row
+		for {set n 0} {$n < 100} {incr n} {
+		    if {![info exists fhighlights($r)]} {
+			askfilehighlight $r [lindex $displayorder $r]
+		    }
+		    incr r $fhl_dirn
+		    if {$r < 0 || $r >= $numcommits} break
+		}
+		flushhighlights
+	    }
+	    if {$fhighlights($row) < 0} {
+		set fhl_row $row
+		return
+	    }
+	    if {$fhighlights($row) > 0} break
+	}
+	incr row $fhl_dirn
+    }
+    set fhl_dirn 0
+    selectline $row 1
+}
+
+proc next_highlight {dirn} {
+    global selectedline fhl_row fhl_dirn
+    global hlview filehighlight findstring highlight_related
+
+    if {![info exists selectedline]} return
+    if {!([info exists hlview] || $findstring ne {} ||
+	  $highlight_related ne "None" || [info exists filehighlight])} return
+    set fhl_row [expr {$selectedline + $dirn}]
+    set fhl_dirn $dirn
+    next_hlcont
+}
+
+proc cancel_next_highlight {} {
+    global fhl_dirn
+
+    set fhl_dirn 0
 }
 
 # Graph layout functions
@@ -2785,7 +2870,7 @@ proc drawcmittext {id row col rmx} {
     global commitlisted commitinfo rowidlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
-    global mainfont canvxmax
+    global mainfont canvxmax boldrows boldnamerows
 
     set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
     set x [xc $row $col]
@@ -2814,8 +2899,10 @@ proc drawcmittext {id row col rmx} {
     set nfont $mainfont
     set isbold [ishighlighted $row]
     if {$isbold > 0} {
+	lappend boldrows $row
 	lappend font bold
 	if {$isbold > 1} {
+	    lappend boldnamerows $row
 	    lappend nfont bold
 	}
     }
@@ -3232,6 +3319,7 @@ proc dofind {} {
 
     stopfindproc
     unmarkmatches
+    cancel_next_highlight
     focus .
     set matchinglines {}
     if {$findtype == "IgnCase"} {
@@ -3490,6 +3578,7 @@ proc selectline {l isnew} {
     catch {unset pending_select}
     $canv delete hover
     normalline
+    cancel_next_highlight
     if {$l < 0 || $l >= $numcommits} return
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -3662,6 +3751,7 @@ proc unselectline {} {
     catch {unset currentid}
     allcanvs delete secsel
     rhighlight_none
+    cancel_next_highlight
 }
 
 proc reselectline {} {
@@ -5290,6 +5380,8 @@ set fh_serial 0
 set nhl_names {}
 set highlight_paths {}
 set searchdirn -forwards
+set boldrows {}
+set boldnamerows {}
 
 set optim_delay 16
 
