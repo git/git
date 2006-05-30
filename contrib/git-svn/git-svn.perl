@@ -567,7 +567,6 @@ sub precommit_check {
 sub svn_checkout_tree {
 	my ($svn_rev, $treeish) = @_;
 	my $from = file_to_s("$REV_DIR/$svn_rev");
-	assert_svn_wc_clean($svn_rev);
 	assert_tree($from);
 	print "diff-tree $from $treeish\n";
 	my $pid = open my $diff_fh, '-|';

@@ -1,5 +1,5 @@
-A short git tutorial
-====================
+A git core tutorial for developers
+==================================
 
 Introduction
 ------------

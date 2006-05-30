@@ -66,7 +66,7 @@ $ git prune <4>
 <1> running without "--full" is usually cheap and assures the
 repository health reasonably well.
 <2> check how many loose objects there are and how much
-diskspace is wasted by not repacking.
+disk space is wasted by not repacking.
 <3> without "-a" repacks incrementally.  repacking every 4-5MB
 of loose objects accumulation may be a good rule of thumb.
 <4> after repack, prune removes the duplicate loose objects.
@@ -86,7 +86,7 @@ Individual Developer (Standalone)[[Individual Developer (Standalone)]]
 ----------------------------------------------------------------------
 
 A standalone individual developer does not exchange patches with
-other poeple, and works alone in a single repository, using the
+other people, and works alone in a single repository, using the
 following commands.
 
   * gitlink:git-show-branch[1] to see where you are.
@@ -370,7 +370,7 @@ Examples
 Run git-daemon to serve /pub/scm from inetd.::
 +
 ------------
-$ grep git /etc/inet.conf
+$ grep git /etc/inetd.conf
 git	stream	tcp	nowait	nobody \
   /usr/bin/git-daemon git-daemon --inetd --syslog --export-all /pub/scm
 ------------

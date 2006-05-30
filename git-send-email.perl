@@ -37,7 +37,8 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
+my (@to,@cc,@initial_cc,@bcclist,
+	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
 my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc) = (1, 0, 0, 0);
@@ -56,6 +57,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
 		    "cc=s" => \@initial_cc,
+		    "bcc=s" => \@bcclist,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
@@ -160,6 +162,7 @@ sub expand_aliases {
 
 @to = expand_aliases(@to);
 @initial_cc = expand_aliases(@initial_cc);
+@bcclist = expand_aliases(@bcclist);
 
 if (!defined $initial_subject && $compose) {
 	do {
@@ -269,6 +272,9 @@ Options:
    --cc           Specify an initial "Cc:" list for the entire series
                   of emails.
 
+   --bcc          Specify a list of email addresses that should be Bcc:
+		  on all the emails.
+
    --compose      Use \$EDITOR to edit an introductory message for the
                   patch series.
 
@@ -303,7 +309,7 @@ EOT
 }
 
 # Variables we set as part of the loop over files
-our ($message_id, $cc, %mail, $subject, $reply_to, $message);
+our ($message_id, $cc, %mail, $subject, $reply_to, $references, $message);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -316,7 +322,11 @@ sub extract_valid_address {
 	} else {
 		# less robust/correct than the monster regexp in Email::Valid,
 		# but still does a 99% job, and one less dependency
-		return ($address =~ /([^\"<>\s]+@[^<>\s]+)/);
+		my $cleaned_address;
+		if ($address =~ /([^\"<>\s]+@[^<>\s]+)/) {
+			$cleaned_address = $1;
+		}
+		return $cleaned_address;
 	}
 }
 
@@ -348,7 +358,7 @@ sub send_message
 {
 	my @recipients = unique_email_list(@to);
 	my $to = join (",\n\t", @recipients);
-	@recipients = unique_email_list(@recipients,@cc);
+	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
@@ -367,13 +377,19 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	$header .= "In-Reply-To: $reply_to\n" if $reply_to;
+	if ($reply_to) {
+
+		$header .= "In-Reply-To: $reply_to\n";
+		$header .= "References: $references\n";
+	}
 
 	if ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
-			exec($smtp_server,'-i',@recipients) or die $!;
+			exec($smtp_server,'-i',
+			     map { scalar extract_valid_address($_) }
+			     @recipients) or die $!;
 		}
 		print $sm "$header\n$message";
 		close $sm or die $?;
@@ -406,6 +422,7 @@ X-Mailer: git-send-email $gitversion
 }
 
 $reply_to = $initial_reply_to;
+$references = $initial_reply_to || '';
 make_message_id();
 $subject = $initial_subject;
 
@@ -482,6 +499,11 @@ foreach my $t (@files) {
 	# set up for the next message
 	if ($chain_reply_to || length($reply_to) == 0) {
 		$reply_to = $message_id;
+		if (length $references > 0) {
+			$references .= " $message_id";
+		} else {
+			$references = "$message_id";
+		}
 	}
 	make_message_id();
 }
