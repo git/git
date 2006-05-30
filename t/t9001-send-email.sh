@@ -13,10 +13,14 @@ test_expect_success \
 
 test_expect_success \
     'Setup helper tool' \
-    'echo "#!/bin/sh" > fake.sendmail
-     echo "shift" >> fake.sendmail
-     echo "echo \"\$*\" > commandline" >> fake.sendmail
-     echo "cat > msgtxt" >> fake.sendmail
+    '(echo "#!/bin/sh"
+      echo shift
+      echo for a
+      echo do
+      echo "  echo \"!\$a!\""
+      echo "done >commandline"
+      echo "cat > msgtxt"
+      ) >fake.sendmail
      chmod +x ./fake.sendmail
      git add fake.sendmail
      GIT_AUTHOR_NAME="A" git commit -a -m "Second."'
@@ -26,9 +30,12 @@ test_expect_success \
     'git format-patch -n HEAD^1
      git send-email -from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" ./0001*txt'
 
+cat >expected <<\EOF
+!nobody@example.com!
+!author@example.com!
+EOF
 test_expect_success \
     'Verify commandline' \
-    'cline=$(cat commandline)
-     [ "$cline" == "nobody@example.com author@example.com" ]'
+    'diff commandline expected'
 
 test_done

@@ -387,7 +387,9 @@ X-Mailer: git-send-email $gitversion
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
-			exec($smtp_server,'-i',@recipients) or die $!;
+			exec($smtp_server,'-i',
+			     map { scalar extract_valid_address($_) }
+			     @recipients) or die $!;
 		}
 		print $sm "$header\n$message";
 		close $sm or die $?;
@@ -420,7 +422,7 @@ X-Mailer: git-send-email $gitversion
 }
 
 $reply_to = $initial_reply_to;
-$references = $initial_reply_to;
+$references = $initial_reply_to || '';
 make_message_id();
 $subject = $initial_subject;
 
