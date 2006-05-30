@@ -32,12 +32,14 @@ const char *git_exec_path(void)
 int execv_git_cmd(const char **argv)
 {
 	char git_command[PATH_MAX + 1];
-	int len,  i;
+	int i;
 	const char *paths[] = { current_exec_path,
 				getenv("GIT_EXEC_PATH"),
 				builtin_exec_path };
 
 	for (i = 0; i < ARRAY_SIZE(paths); ++i) {
+		size_t len;
+		int rc;
 		const char *exec_dir = paths[i];
 		const char *tmp;
 
@@ -46,8 +48,9 @@ int execv_git_cmd(const char **argv)
 		if (*exec_dir != '/') {
 			if (!getcwd(git_command, sizeof(git_command))) {
 				fprintf(stderr, "git: cannot determine "
-					"current directory\n");
-				exit(1);
+					"current directory: %s\n",
+					strerror(errno));
+				break;
 			}
 			len = strlen(git_command);
 
@@ -57,17 +60,28 @@ int execv_git_cmd(const char **argv)
 				while (*exec_dir == '/')
 					exec_dir++;
 			}
-			snprintf(git_command + len, sizeof(git_command) - len,
-				 "/%s", exec_dir);
+
+			rc = snprintf(git_command + len,
+				      sizeof(git_command) - len, "/%s",
+				      exec_dir);
+			if (rc < 0 || rc >= sizeof(git_command) - len) {
+				fprintf(stderr, "git: command name given "
+					"is too long.\n");
+				break;
+			}
 		} else {
+			if (strlen(exec_dir) + 1 > sizeof(git_command)) {
+				fprintf(stderr, "git: command name given "
+					"is too long.\n");
+				break;
+			}
 			strcpy(git_command, exec_dir);
 		}
 
 		len = strlen(git_command);
-		len += snprintf(git_command + len, sizeof(git_command) - len,
-				"/git-%s", argv[0]);
-
-		if (sizeof(git_command) <= len) {
+		rc = snprintf(git_command + len, sizeof(git_command) - len,
+			      "/git-%s", argv[0]);
+		if (rc < 0 || rc >= sizeof(git_command) - len) {
 			fprintf(stderr,
 				"git: command name given is too long.\n");
 			break;
