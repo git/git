@@ -12,11 +12,11 @@ test_description='Testing multi_ack pack fetching
 
 # Some convenience functions
 
-function add () {
-	local name=$1
-	local text="$@"
-	local branch=${name:0:1}
-	local parents=""
+add () {
+	name=$1
+	text="$@"
+	branch=`echo $name | sed -e 's/^\(.\).*$/\1/'`
+	parents=""
 
 	shift
 	while test $1; do
@@ -36,13 +36,13 @@ function add () {
 	eval ${branch}TIP=$commit
 }
 
-function count_objects () {
+count_objects () {
 	ls .git/objects/??/* 2>>log2.txt | wc -l | tr -d " "
 }
 
-function test_expect_object_count () {
-	local message=$1
-	local count=$2
+test_expect_object_count () {
+	message=$1
+	count=$2
 
 	output="$(count_objects)"
 	test_expect_success \
@@ -50,18 +50,18 @@ function test_expect_object_count () {
 		"test $count = $output"
 }
 
-function pull_to_client () {
-	local number=$1
-	local heads=$2
-	local count=$3
-	local no_strict_count_check=$4
+pull_to_client () {
+	number=$1
+	heads=$2
+	count=$3
+	no_strict_count_check=$4
 
 	cd client
 	test_expect_success "$number pull" \
 		"git-fetch-pack -k -v .. $heads"
 	case "$heads" in *A*) echo $ATIP > .git/refs/heads/A;; esac
 	case "$heads" in *B*) echo $BTIP > .git/refs/heads/B;; esac
-	git-symbolic-ref HEAD refs/heads/${heads:0:1}
+	git-symbolic-ref HEAD refs/heads/`echo $heads | sed -e 's/^\(.\).*$/\1/'`
 
 	test_expect_success "fsck" 'git-fsck-objects --full > fsck.txt 2>&1'
 

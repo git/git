@@ -69,7 +69,9 @@ on_committer_date()
 {
     _date=$1
     shift 1
-    GIT_COMMITTER_DATE=$_date "$@"
+    export GIT_COMMITTER_DATE="$_date"
+    "$@"
+    unset GIT_COMMITTER_DATE
 }
 
 # Execute a command and suppress any error output.
