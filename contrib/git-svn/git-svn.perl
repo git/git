@@ -35,6 +35,7 @@ my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity,
 	$_repack, $_repack_nr, $_repack_flags,
+	$_template, $_shared,
 	$_version, $_upgrade, $_authors, $_branch_all_refs);
 my (@_branch_from, %tree_map, %users);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
@@ -54,7 +55,9 @@ my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision, %fc_opts } ],
 	init => [ \&init, "Initialize a repo for tracking" .
-			  " (requires URL argument)", { } ],
+			  " (requires URL argument)",
+			  { 'template=s' => \$_template,
+			    'shared' => \$_shared } ],
 	commit => [ \&commit, "Commit git revisions to SVN",
 			{	'stdin|' => \$_stdin,
 				'edit|e' => \$_edit,
@@ -217,7 +220,10 @@ sub init {
 	$SVN_URL = shift or die "SVN repository location required " .
 				"as a command-line argument\n";
 	unless (-d $GIT_DIR) {
-		sys('git-init-db');
+		my @init_db = ('git-init-db');
+		push @init_db, "--template=$_template" if defined $_template;
+		push @init_db, "--shared" if defined $_shared;
+		sys(@init_db);
 	}
 	setup_git_svn();
 }
