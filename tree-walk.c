@@ -37,7 +37,7 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 
 void update_tree_entry(struct tree_desc *desc)
 {
-	void *buf = desc->buf;
+	const void *buf = desc->buf;
 	unsigned long size = desc->size;
 	int len = strlen(buf) + 1 + 20;
 
@@ -63,7 +63,7 @@ static const char *get_mode(const char *str, unsigned int *modep)
 
 const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
 {
-	void *tree = desc->buf;
+	const void *tree = desc->buf;
 	unsigned long size = desc->size;
 	int len = strlen(tree)+1;
 	const unsigned char *sha1 = tree + len;
@@ -76,6 +76,35 @@ const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pat
 	*pathp = path;
 	*modep = canon_mode(mode);
 	return sha1;
+}
+
+int tree_entry(struct tree_desc *desc, struct name_entry *entry)
+{
+	const void *tree = desc->buf, *path;
+	unsigned long len, size = desc->size;
+
+	if (!size)
+		return 0;
+
+	path = get_mode(tree, &entry->mode);
+	if (!path)
+		die("corrupt tree file");
+
+	entry->path = path;
+	len = strlen(path);
+	entry->pathlen = len;
+
+	path += len + 1;
+	entry->sha1 = path;
+
+	path += 20;
+	len = path - tree;
+	if (len > size)
+		die("corrupt tree file");
+
+	desc->buf = path;
+	desc->size = size - len;
+	return 1;
 }
 
 void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callback_t callback)

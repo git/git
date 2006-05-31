@@ -2,7 +2,7 @@
 #define TREE_WALK_H
 
 struct tree_desc {
-	void *buf;
+	const void *buf;
 	unsigned long size;
 };
 
@@ -15,6 +15,9 @@ struct name_entry {
 
 void update_tree_entry(struct tree_desc *);
 const unsigned char *tree_entry_extract(struct tree_desc *, const char **, unsigned int *);
+
+/* Helper function that does both of the above and returns true for success */
+int tree_entry(struct tree_desc *, struct name_entry *);
 
 void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1);
 

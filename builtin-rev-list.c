@@ -114,6 +114,7 @@ static struct object_list **process_tree(struct tree *tree,
 {
 	struct object *obj = &tree->object;
 	struct tree_desc desc;
+	struct name_entry entry;
 	struct name_path me;
 
 	if (!revs.tree_objects)
@@ -132,18 +133,11 @@ static struct object_list **process_tree(struct tree *tree,
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 
-	while (desc.size) {
-		unsigned mode;
-		const char *name;
-		const unsigned char *sha1;
-
-		sha1 = tree_entry_extract(&desc, &name, &mode);
-		update_tree_entry(&desc);
-
-		if (S_ISDIR(mode))
-			p = process_tree(lookup_tree(sha1), p, &me, name);
+	while (tree_entry(&desc, &entry)) {
+		if (S_ISDIR(entry.mode))
+			p = process_tree(lookup_tree(entry.sha1), p, &me, name);
 		else
-			p = process_blob(lookup_blob(sha1), p, &me, name);
+			p = process_blob(lookup_blob(entry.sha1), p, &me, name);
 	}
 	free(tree->buffer);
 	tree->buffer = NULL;

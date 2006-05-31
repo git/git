@@ -39,25 +39,19 @@ static int process(struct object *obj);
 static int process_tree(struct tree *tree)
 {
 	struct tree_desc desc;
+	struct name_entry entry;
 
 	if (parse_tree(tree))
 		return -1;
 
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
-	while (desc.size) {
-		unsigned mode;
-		const char *name;
-		const unsigned char *sha1;
-
-		sha1 = tree_entry_extract(&desc, &name, &mode);
-		update_tree_entry(&desc);
-
-		if (S_ISDIR(mode)) {
-			struct tree *tree = lookup_tree(sha1);
+	while (tree_entry(&desc, &entry)) {
+		if (S_ISDIR(entry.mode)) {
+			struct tree *tree = lookup_tree(entry.sha1);
 			process_tree(tree);
 		} else {
-			struct blob *blob = lookup_blob(sha1);
+			struct blob *blob = lookup_blob(entry.sha1);
 			process(&blob->object);
 		}
 	}
