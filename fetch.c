@@ -209,7 +209,7 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 
 int pull(char *target)
 {
-	struct ref_lock *lock;
+	struct ref_lock *lock = NULL;
 	unsigned char sha1[20];
 	char *msg;
 	int ret;
@@ -229,15 +229,18 @@ int pull(char *target)
 
 	if (interpret_target(target, sha1)) {
 		error("Could not interpret %s as something to pull", target);
-		unlock_ref(lock);
+		if (lock)
+			unlock_ref(lock);
 		return -1;
 	}
 	if (process(lookup_unknown_object(sha1))) {
-		unlock_ref(lock);
+		if (lock)
+			unlock_ref(lock);
 		return -1;
 	}
 	if (loop()) {
-		unlock_ref(lock);
+		if (lock)
+			unlock_ref(lock);
 		return -1;
 	}
 
