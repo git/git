@@ -12,6 +12,37 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
+static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
+{
+	int signoff_len = strlen(signoff);
+	static const char signed_off_by[] = "Signed-off-by: ";
+	char *cp = buf;
+
+	/* Do we have enough space to add it? */
+	if (buf_sz - at <= strlen(signed_off_by) + signoff_len + 2)
+		return at;
+
+	/* First see if we already have the sign-off by the signer */
+	while (1) {
+		cp = strstr(cp, signed_off_by);
+		if (!cp)
+			break;
+		cp += strlen(signed_off_by);
+		if ((cp + signoff_len < buf + at) &&
+		    !strncmp(cp, signoff, signoff_len) &&
+		    isspace(cp[signoff_len]))
+			return at; /* we already have him */
+	}
+
+	strcpy(buf + at, signed_off_by);
+	at += strlen(signed_off_by);
+	strcpy(buf + at, signoff);
+	at += signoff_len;
+	buf[at++] = '\n';
+	buf[at] = 0;
+	return at;
+}
+
 void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 {
 	static char this_header[16384];
@@ -111,6 +142,10 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	 * And then the pretty-printed message itself
 	 */
 	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev, subject, after_subject);
+
+	if (opt->add_signoff)
+		len = append_signoff(this_header, sizeof(this_header), len,
+				     opt->add_signoff);
 	printf("%s%s%s", this_header, extra, sep);
 }
 
