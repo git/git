@@ -162,7 +162,7 @@ int main(int argc, const char **argv)
 
 	while (*argp) {
 		const char *file = *argp++;
-		FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "rt");
+		FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
 		int file_done = 0;
 
 		if ( !f )
