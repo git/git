@@ -25,7 +25,6 @@ long curl_low_speed_limit = -1;
 long curl_low_speed_time = -1;
 
 struct curl_slist *pragma_header;
-struct curl_slist *no_range_header;
 
 struct active_request_slot *active_queue_head = NULL;
 
@@ -208,7 +207,6 @@ void http_init(void)
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
-	no_range_header = curl_slist_append(no_range_header, "Range:");
 
 #ifdef USE_CURL_MULTI
 	{
@@ -344,9 +342,14 @@ struct active_request_slot *get_active_slot(void)
 	slot->finished = NULL;
 	slot->callback_data = NULL;
 	slot->callback_func = NULL;
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_range_header);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, NULL);
+	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, NULL);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, NULL);
+	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 
 	return slot;
 }
