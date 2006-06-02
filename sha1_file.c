@@ -617,6 +617,12 @@ static void prepare_packed_git_one(char *objdir, int local)
 
 		/* we have .idx.  Is it a file we can map? */
 		strcpy(path + len, de->d_name);
+		for (p = packed_git; p; p = p->next) {
+			if (!memcmp(path, p->pack_name, len + namelen - 4))
+				break;
+		}
+		if (p)
+			continue;
 		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
@@ -626,12 +632,12 @@ static void prepare_packed_git_one(char *objdir, int local)
 	closedir(dir);
 }
 
+static int prepare_packed_git_run_once = 0;
 void prepare_packed_git(void)
 {
-	static int run_once = 0;
 	struct alternate_object_database *alt;
 
-	if (run_once)
+	if (prepare_packed_git_run_once)
 		return;
 	prepare_packed_git_one(get_object_directory(), 1);
 	prepare_alt_odb();
@@ -640,7 +646,13 @@ void prepare_packed_git(void)
 		prepare_packed_git_one(alt->base, 0);
 		alt->name[-1] = '/';
 	}
-	run_once = 1;
+	prepare_packed_git_run_once = 1;
+}
+
+static void reprepare_packed_git(void)
+{
+	prepare_packed_git_run_once = 0;
+	prepare_packed_git();
 }
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
@@ -1212,9 +1224,12 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	if (!map) {
 		struct pack_entry e;
 
-		if (!find_pack_entry(sha1, &e))
-			return error("unable to find %s", sha1_to_hex(sha1));
-		return packed_object_info(&e, type, sizep);
+		if (find_pack_entry(sha1, &e))
+			return packed_object_info(&e, type, sizep);
+		reprepare_packed_git();
+		if (find_pack_entry(sha1, &e))
+			return packed_object_info(&e, type, sizep);
+		return error("unable to find %s", sha1_to_hex(sha1));
 	}
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
@@ -1256,6 +1271,9 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 		munmap(map, mapsize);
 		return buf;
 	}
+	reprepare_packed_git();
+	if (find_pack_entry(sha1, &e))
+		return read_packed_sha1(sha1, type, size);
 	return NULL;
 }
 
