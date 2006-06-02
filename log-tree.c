@@ -51,7 +51,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
 	const char *extra;
 	int len;
-	char *subject = NULL, *after_subject = NULL;
+	const char *subject = NULL, *extra_headers = opt->extra_headers;
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
@@ -100,6 +100,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 			static char subject_buffer[1024];
 			static char buffer[1024];
 			snprintf(subject_buffer, sizeof(subject_buffer) - 1,
+				 "%s"
 				 "MIME-Version: 1.0\n"
 				 "Content-Type: multipart/mixed;\n"
 				 " boundary=\"%s%s\"\n"
@@ -110,9 +111,10 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 				 "Content-Type: text/plain; "
 				 "charset=UTF-8; format=fixed\n"
 				 "Content-Transfer-Encoding: 8bit\n\n",
+				 extra_headers ? extra_headers : "",
 				 mime_boundary_leader, opt->mime_boundary,
 				 mime_boundary_leader, opt->mime_boundary);
-			after_subject = subject_buffer;
+			extra_headers = subject_buffer;
 
 			snprintf(buffer, sizeof(buffer) - 1,
 				 "--%s%s\n"
@@ -141,7 +143,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev, subject, after_subject);
+	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev, subject, extra_headers);
 
 	if (opt->add_signoff)
 		len = append_signoff(this_header, sizeof(this_header), len,

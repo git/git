@@ -85,6 +85,23 @@ static int istitlechar(char c)
 		(c >= '0' && c <= '9') || c == '.' || c == '_';
 }
 
+static char *extra_headers = NULL;
+static int extra_headers_size = 0;
+
+static int git_format_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "format.headers")) {
+		int len = strlen(value);
+		extra_headers_size += len + 1;
+		extra_headers = realloc(extra_headers, extra_headers_size);
+		extra_headers[extra_headers_size - len - 1] = 0;
+		strcat(extra_headers, value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
+
 static FILE *realstdout = NULL;
 static char *output_directory = NULL;
 
@@ -161,6 +178,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+
+	git_config(git_format_config);
+	rev.extra_headers = extra_headers;
 
 	/*
 	 * Parse the arguments before setup_revisions(), or something
