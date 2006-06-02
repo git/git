@@ -617,6 +617,12 @@ static void prepare_packed_git_one(char *objdir, int local)
 
 		/* we have .idx.  Is it a file we can map? */
 		strcpy(path + len, de->d_name);
+		for (p = packed_git; p; p = p->next) {
+			if (!memcmp(path, p->pack_name, len + namelen - 4))
+				break;
+		}
+		if (p)
+			continue;
 		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
