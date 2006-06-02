@@ -1269,9 +1269,9 @@ int main(int argc, char **argv)
 	if (pull(commit_id))
 		rc = 1;
 
-	curl_slist_free_all(no_pragma_header);
-
 	http_cleanup();
+
+	curl_slist_free_all(no_pragma_header);
 
 	if (corrupt_object_found) {
 		fprintf(stderr,
