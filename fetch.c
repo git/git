@@ -46,13 +46,20 @@ static int process_tree(struct tree *tree)
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 	while (tree_entry(&desc, &entry)) {
+		struct object *obj = NULL;
+
 		if (S_ISDIR(entry.mode)) {
 			struct tree *tree = lookup_tree(entry.sha1);
-			process_tree(tree);
-		} else {
-			struct blob *blob = lookup_blob(entry.sha1);
-			process(&blob->object);
+			if (tree)
+				obj = &tree->object;
 		}
+		else {
+			struct blob *blob = lookup_blob(entry.sha1);
+			if (blob)
+				obj = &blob->object;
+		}
+		if (!obj || process(obj))
+			return -1;
 	}
 	free(tree->buffer);
 	tree->buffer = NULL;
