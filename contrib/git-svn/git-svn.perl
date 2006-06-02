@@ -14,6 +14,7 @@ use Cwd qw/abs_path/;
 $GIT_DIR = abs_path($ENV{GIT_DIR} || '.git');
 $ENV{GIT_DIR} = $GIT_DIR;
 
+my $LC_ALL = $ENV{LC_ALL};
 # make sure the svn binary gives consistent output between locales and TZs:
 $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
@@ -704,23 +705,34 @@ sub svn_commit_tree {
 	my ($oneline) = ($log_msg{msg} =~ /([^\n\r]+)/);
 	print "Committing $commit: $oneline\n";
 
+	if (defined $LC_ALL) {
+		$ENV{LC_ALL} = $LC_ALL;
+	} else {
+		delete $ENV{LC_ALL};
+	}
 	my @ci_output = safe_qx(qw(svn commit -F),$commit_msg);
-	my ($committed) = grep(/^Committed revision \d+\./,@ci_output);
+	$ENV{LC_ALL} = 'C';
 	unlink $commit_msg;
-	defined $committed or croak
+	my ($committed) = ($ci_output[$#ci_output] =~ /(\d+)/);
+	if (!defined $committed) {
+		my $out = join("\n",@ci_output);
+		print STDERR "W: Trouble parsing \`svn commit' output:\n\n",
+				$out, "\n\nAssuming English locale...";
+		($committed) = ($out =~ /^Committed revision \d+\./sm);
+		defined $committed or die " FAILED!\n",
 			"Commit output failed to parse committed revision!\n",
-			join("\n",@ci_output),"\n";
-	my ($rev_committed) = ($committed =~ /^Committed revision (\d+)\./);
+		print STDERR " OK\n";
+	}
 
 	my @svn_up = qw(svn up);
 	push @svn_up, '--ignore-externals' unless $_no_ignore_ext;
-	if ($rev_committed == ($svn_rev + 1)) {
-		push @svn_up, "-r$rev_committed";
+	if ($committed == ($svn_rev + 1)) {
+		push @svn_up, "-r$committed";
 		sys(@svn_up);
 		my $info = svn_info('.');
 		my $date = $info->{'Last Changed Date'} or die "Missing date\n";
-		if ($info->{'Last Changed Rev'} != $rev_committed) {
-			croak "$info->{'Last Changed Rev'} != $rev_committed\n"
+		if ($info->{'Last Changed Rev'} != $committed) {
+			croak "$info->{'Last Changed Rev'} != $committed\n"
 		}
 		my ($Y,$m,$d,$H,$M,$S,$tz) = ($date =~
 					/(\d{4})\-(\d\d)\-(\d\d)\s
@@ -728,16 +740,16 @@ sub svn_commit_tree {
 					 or croak "Failed to parse date: $date\n";
 		$log_msg{date} = "$tz $Y-$m-$d $H:$M:$S";
 		$log_msg{author} = $info->{'Last Changed Author'};
-		$log_msg{revision} = $rev_committed;
+		$log_msg{revision} = $committed;
 		$log_msg{msg} .= "\n";
 		my $parent = file_to_s("$REV_DIR/$svn_rev");
 		git_commit(\%log_msg, $parent, $commit);
-		return $rev_committed;
+		return $committed;
 	}
 	# resync immediately
 	push @svn_up, "-r$svn_rev";
 	sys(@svn_up);
-	return fetch("$rev_committed=$commit")->{revision};
+	return fetch("$committed=$commit")->{revision};
 }
 
 # read the entire log into a temporary file (which is removed ASAP)
