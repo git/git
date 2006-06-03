@@ -16,7 +16,7 @@ which introduced the line. Start annotation from the given revision.
 
 OPTIONS
 -------
--c, --compability::
+-c, --compatibility::
 	Use the same output mode as git-annotate (Default: off).
 
 -l, --long::

@@ -49,7 +49,7 @@ OPTIONS
 -------
 
 --replace-all::
-	Default behaviour is to replace at most one line. This replaces
+	Default behavior is to replace at most one line. This replaces
 	all lines matching the key (and optionally the value_regex).
 
 --get::

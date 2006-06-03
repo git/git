@@ -13,7 +13,7 @@ DESCRIPTION
 -----------
 A "patch ID" is nothing but a SHA1 of the diff associated with a patch, with
 whitespace and line numbers ignored.  As such, it's "reasonably stable", but at
-the same time also reasonably unique, ie two patches that have the same "patch
+the same time also reasonably unique, i.e., two patches that have the same "patch
 ID" are almost guaranteed to be the same thing.
 
 IOW, you can use this thing to look for likely duplicate commits.

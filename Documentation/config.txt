@@ -2,7 +2,7 @@ CONFIGURATION FILE
 ------------------
 
 The git configuration file contains a number of variables that affect
-the git commands behaviour. They can be used by both the git plumbing
+the git commands behavior. They can be used by both the git plumbing
 and the porcelains. The variables are divided to sections, where
 in the fully qualified variable name the variable itself is the last
 dot-separated segment and the section name is everything before the last
@@ -53,7 +53,7 @@ core.gitProxy::
 	may be set multiple times and is matched in the given order;
 	the first match wins.
 
-	Can be overriden by the 'GIT_PROXY_COMMAND' environment variable
+	Can be overridden by the 'GIT_PROXY_COMMAND' environment variable
 	(which always applies universally, without the special "for"
 	handling).
 
@@ -115,12 +115,12 @@ http.sslCert::
 
 http.sslKey::
 	File containing the SSL private key when fetching or pushing
-	over HTTPS. Can be overriden by the 'GIT_SSL_KEY' environment
+	over HTTPS. Can be overridden by the 'GIT_SSL_KEY' environment
 	variable.
 
 http.sslCAInfo::
 	File containing the certificates to verify the peer with when
-	fetching or pushing over HTTPS. Can be overriden by the
+	fetching or pushing over HTTPS. Can be overridden by the
 	'GIT_SSL_CAINFO' environment variable.
 
 http.sslCAPath::
@@ -129,13 +129,13 @@ http.sslCAPath::
 	by the 'GIT_SSL_CAPATH' environment variable.
 
 http.maxRequests::
-	How many HTTP requests to launch in parallel. Can be overriden
+	How many HTTP requests to launch in parallel. Can be overridden
 	by the 'GIT_HTTP_MAX_REQUESTS' environment variable. Default is 5.
 
 http.lowSpeedLimit, http.lowSpeedTime::
 	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
 	for longer than 'http.lowSpeedTime' seconds, the transfer is aborted.
-	Can be overriden by the 'GIT_HTTP_LOW_SPEED_LIMIT' and
+	Can be overridden by the 'GIT_HTTP_LOW_SPEED_LIMIT' and
 	'GIT_HTTP_LOW_SPEED_TIME' environment variables.
 
 i18n.commitEncoding::
@@ -166,12 +166,12 @@ showbranch.default::
 
 user.email::
 	Your email address to be recorded in any newly created commits.
-	Can be overriden by the 'GIT_AUTHOR_EMAIL' and 'GIT_COMMITTER_EMAIL'
+	Can be overridden by the 'GIT_AUTHOR_EMAIL' and 'GIT_COMMITTER_EMAIL'
 	environment variables.  See gitlink:git-commit-tree[1].
 
 user.name::
 	Your full name to be recorded in any newly created commits.
-	Can be overriden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
+	Can be overridden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
 	environment variables.  See gitlink:git-commit-tree[1].
 
 whatchanged.difftree::

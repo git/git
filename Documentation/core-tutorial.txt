@@ -184,7 +184,7 @@ $ git-cat-file -t 557db03de997c86a4a028e1ebd3a1ceb225be238
 ----------------
 
 where the `-t` tells `git-cat-file` to tell you what the "type" of the
-object is. git will tell you that you have a "blob" object (ie just a
+object is. git will tell you that you have a "blob" object (i.e., just a
 regular file), and you can see the contents with
 
 ----------------
@@ -619,7 +619,7 @@ $ git tag -s <tagname>
 ----------------
 
 which will sign the current `HEAD` (but you can also give it another
-argument that specifies the thing to tag, ie you could have tagged the
+argument that specifies the thing to tag, i.e., you could have tagged the
 current `mybranch` point by using `git tag <tagname> mybranch`).
 
 You normally only do signed tags for major releases or things
@@ -1097,7 +1097,7 @@ commit object by downloading from `repo.git/objects/xx/xxx\...`
 using the object name of that commit object.  Then it reads the
 commit object to find out its parent commits and the associate
 tree object; it repeats this process until it gets all the
-necessary objects.  Because of this behaviour, they are
+necessary objects.  Because of this behavior, they are
 sometimes also called 'commit walkers'.
 +
 The 'commit walkers' are sometimes also called 'dumb

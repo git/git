@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Many git Porcelainish commands take mixture of flags
+Many git porcelainish commands take mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
 meant for underlying `git-rev-list` command they use internally
 and flags and parameters for other commands they use as the
@@ -91,7 +91,7 @@ OPTIONS
 
 --short, --short=number::
 	Instead of outputting the full SHA1 values of object names try to
-	abbriviate them to a shorter unique name. When no length is specified
+	abbreviate them to a shorter unique name. When no length is specified
 	7 is used. The minimum length is 4.
 
 --since=datestring, --after=datestring::

@@ -85,7 +85,7 @@ $ git diff arch/i386 include/asm-i386   <3>
 nor deletion.
 <2> show only names and the nature of change, but not actual
 diff output.  --name-status disables usual patch generation
-which in turn also disables recursive behaviour, so without -r
+which in turn also disables recursive behavior, so without -r
 you would only see the directory name if there is a change in a
 file in a subdirectory.
 <3> limit diff output to named subtrees.

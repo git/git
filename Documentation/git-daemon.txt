@@ -20,7 +20,7 @@ aka 9418. It waits for a connection, and will just execute "git-upload-pack"
 when it gets one.
 
 It's careful in that there's a magic request-line that gives the command and
-what directory to upload, and it verifies that the directory is ok.
+what directory to upload, and it verifies that the directory is OK.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any git directory that hasn't explicitly been marked
@@ -28,7 +28,7 @@ for export this way (unless the '--export-all' parameter is specified). If you
 pass some directory paths as 'git-daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
-This is ideally suited for read-only updates, ie pulling from git repositories.
+This is ideally suited for read-only updates, i.e., pulling from git repositories.
 
 OPTIONS
 -------

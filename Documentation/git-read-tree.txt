@@ -205,7 +205,7 @@ The `git-write-tree` command refuses to write a nonsensical tree, and it
 will complain about unmerged entries if it sees a single entry that is not
 stage 0.
 
-Ok, this all sounds like a collection of totally nonsensical rules,
+OK, this all sounds like a collection of totally nonsensical rules,
 but it's actually exactly what you want in order to do a fast
 merge. The different stages represent the "result tree" (stage 0, aka
 "merged"), the original tree (stage 1, aka "orig"), and the two trees
@@ -226,7 +226,7 @@ populated.  Here is an outline of how the algorithm works:
 
 - the index file saves and restores with all this information, so you
   can merge things incrementally, but as long as it has entries in
-  stages 1/2/3 (ie "unmerged entries") you can't write the result. So
+  stages 1/2/3 (i.e., "unmerged entries") you can't write the result. So
   now the merge algorithm ends up being really simple:
 
   * you walk the index in order, and ignore all entries of stage 0,

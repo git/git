@@ -100,7 +100,7 @@ update
 This hook is invoked by `git-receive-pack` on the remote repository,
 which is happens when a `git push` is done on a local repository.
 Just before updating the ref on the remote repository, the update hook
-is invoked.  It's exit status determins the success or failure of
+is invoked.  It's exit status determines the success or failure of
 the ref update.
 
 The hook executes once for each ref to be updated, and takes
@@ -151,7 +151,7 @@ so it is a poor place to do log old..new.
 
 The default post-update hook, when enabled, runs
 `git-update-server-info` to keep the information used by dumb
-transports (eg, http) up-to-date.  If you are publishing
+transports (e.g., http) up-to-date.  If you are publishing
 a git repository that is accessible via http, you should
 probably enable this hook.
 

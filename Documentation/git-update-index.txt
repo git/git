@@ -40,7 +40,7 @@ OPTIONS
 --remove::
 	If a specified file is in the index but is missing then it's
 	removed.
-	Default behaviour is to ignore removed file.
+	Default behavior is to ignore removed file.
 
 --refresh::
 	Looks at the current index and checks to see if merges or

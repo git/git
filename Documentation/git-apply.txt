@@ -113,7 +113,7 @@ OPTIONS
 	When `git-apply` is used for statistics and not applying a
 	patch, it defaults to `nowarn`.
 	You can use different `<option>` to control this
-	behaviour:
+	behavior:
 +
 * `nowarn` turns off the trailing whitespace warning.
 * `warn` outputs warnings for a few such errors, but applies the
