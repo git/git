@@ -21,7 +21,6 @@ use warnings;
 use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
-use Net::SMTP;
 
 # most mail servers generate the Date: header, but not all...
 $ENV{LC_ALL} = 'C';
@@ -394,6 +393,7 @@ X-Mailer: git-send-email $gitversion
 		print $sm "$header\n$message";
 		close $sm or die $?;
 	} else {
+		require Net::SMTP;
 		$smtp ||= Net::SMTP->new( $smtp_server );
 		$smtp->mail( $from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
