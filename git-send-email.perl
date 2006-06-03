@@ -314,18 +314,15 @@ sub extract_valid_address {
 	my $address = shift;
 
 	# check for a local address:
-	return $address if ($address =~ /^([\w\-]+)$/);
+	return $address if ($address =~ /^([\w\-.]+)$/);
 
 	if ($have_email_valid) {
 		return Email::Valid->address($address);
 	} else {
 		# less robust/correct than the monster regexp in Email::Valid,
 		# but still does a 99% job, and one less dependency
-		my $cleaned_address;
-		if ($address =~ /([^\"<>\s]+@[^<>\s]+)/) {
-			$cleaned_address = $1;
-		}
-		return $cleaned_address;
+		$address =~ /([\w\-.]+@[\w\-.]+)/;
+		return $1;
 	}
 }
 
