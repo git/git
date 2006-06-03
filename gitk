@@ -743,7 +743,7 @@ proc click {w} {
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont uifont
     global stuffsaved findmergefiles maxgraphpct
-    global maxwidth
+    global maxwidth showneartags
     global viewname viewfiles viewargs viewperm nextviewnum
     global cmitmode wrapcomment
 
@@ -759,6 +759,7 @@ proc savestuff {w} {
 	puts $f [list set maxwidth $maxwidth]
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
+	puts $f [list set showneartags $showneartags]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
@@ -3523,7 +3524,7 @@ proc commit_descriptor {p} {
     if {[llength $commitinfo($p)] > 1} {
 	set l [lindex $commitinfo($p) 0]
     }
-    return "$p ($l)"
+    return "$p ($l)\n"
 }
 
 # append some text to the ctext widget, and make any SHA1 ID
@@ -3533,7 +3534,6 @@ proc appendwithlinks {text tags} {
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
-    $ctext insert end "\n"
     set links [regexp -indices -all -inline {[0-9a-f]{40}} $text]
     foreach l $links {
 	set s [lindex $l 0]
@@ -3568,6 +3568,54 @@ proc viewnextline {dir} {
     allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
 }
 
+# add a list of tag names at position pos
+proc appendrefs {pos l} {
+    global ctext commitrow linknum curview idtags
+
+    if {[catch {$ctext index $pos}]} return
+    set tags {}
+    foreach id $l {
+	foreach tag $idtags($id) {
+	    lappend tags [concat $tag $id]
+	}
+    }
+    set tags [lsort -index 1 $tags]
+    set sep {}
+    foreach tag $tags {
+	set name [lindex $tag 0]
+	set id [lindex $tag 1]
+	set lk link$linknum
+	incr linknum
+	$ctext insert $pos $sep
+	$ctext insert $pos $name $lk
+	$ctext tag conf $lk -foreground blue
+	if {[info exists commitrow($curview,$id)]} {
+	    $ctext tag bind $lk <1> \
+		[list selectline $commitrow($curview,$id) 1]
+	    $ctext tag conf $lk -underline 1
+	    $ctext tag bind $lk <Enter> { %W configure -cursor hand2 }
+	    $ctext tag bind $lk <Leave> { %W configure -cursor $curtextcursor }
+	}
+	set sep ", "
+    }
+}
+
+# called when we have finished computing the nearby tags
+proc dispneartags {} {
+    global selectedline currentid ctext anc_tags desc_tags showneartags
+
+    if {![info exists selectedline] || !$showneartags} return
+    set id $currentid
+    $ctext conf -state normal
+    if {[info exists anc_tags($id)]} {
+	appendrefs follows $anc_tags($id)
+    }
+    if {[info exists desc_tags($id)]} {
+	appendrefs precedes $desc_tags($id)
+    }
+    $ctext conf -state disabled
+}
+
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
@@ -3575,7 +3623,7 @@ proc selectline {l isnew} {
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
-    global cmitmode
+    global cmitmode desc_tags anc_tags showneartags allcommits
 
     catch {unset pending_select}
     $canv delete hover
@@ -3678,16 +3726,35 @@ proc selectline {l isnew} {
 	}
     } else {
 	foreach p $olds {
-	    append headers "Parent: [commit_descriptor $p]\n"
+	    append headers "Parent: [commit_descriptor $p]"
 	}
     }
 
     foreach c [lindex $childlist $l] {
-	append headers "Child:  [commit_descriptor $c]\n"
+	append headers "Child:  [commit_descriptor $c]"
     }
 
     # make anything that looks like a SHA1 ID be a clickable link
     appendwithlinks $headers {}
+    if {$showneartags} {
+	if {![info exists allcommits]} {
+	    getallcommits
+	}
+	$ctext insert end "Follows: "
+	$ctext mark set follows "end -1c"
+	$ctext mark gravity follows left
+	if {[info exists anc_tags($id)]} {
+	    appendrefs follows $anc_tags($id)
+	}
+	$ctext insert end "\nPrecedes: "
+	$ctext mark set precedes "end -1c"
+	$ctext mark gravity precedes left
+	if {[info exists desc_tags($id)]} {
+	    appendrefs precedes $desc_tags($id)
+	}
+	$ctext insert end "\n"
+    }
+    $ctext insert end "\n"
     appendwithlinks [lindex $info 5] {comment}
 
     $ctext tag delete Comments
@@ -4814,12 +4881,19 @@ proc domktag {} {
 
 proc redrawtags {id} {
     global canv linehtag commitrow idpos selectedline curview
+    global mainfont
 
     if {![info exists commitrow($curview,$id)]} return
     drawcmitrow $commitrow($curview,$id)
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($commitrow($curview,$id)) $xt [lindex $idpos($id) 2]
+    set text [$canv itemcget $linehtag($commitrow($curview,$id)) -text]
+    set xr [expr {$xt + [font measure $mainfont $text]}]
+    if {$xr > $canvxmax} {
+	set canvxmax $xr
+	setcanvscroll
+    }
     if {[info exists selectedline]
 	&& $selectedline == $commitrow($curview,$id)} {
 	selectline $selectedline 0
@@ -4893,22 +4967,164 @@ proc wrcomcan {} {
     unset wrcomtop
 }
 
-proc listrefs {id} {
-    global idtags idheads idotherrefs
+# Stuff for finding nearby tags
+proc getallcommits {} {
+    global allcstart allcommits
 
-    set x {}
-    if {[info exists idtags($id)]} {
-	set x $idtags($id)
+    set fd [open [concat | git rev-list --all --topo-order --parents] r]
+    fconfigure $fd -blocking 0
+    set allcommits "reading"
+    nowbusy allcommits
+    restartgetall $fd
+}
+
+proc restartgetall {fd} {
+    global allcstart
+
+    fileevent $fd readable [list getallclines $fd]
+    set allcstart [clock clicks -milliseconds]
+}
+
+proc combine_dtags {l1 l2} {
+    global tagisdesc notfirstd
+
+    set res [lsort -unique [concat $l1 $l2]]
+    for {set i 0} {$i < [llength $res]} {incr i} {
+	set x [lindex $res $i]
+	for {set j [expr {$i+1}]} {$j < [llength $res]} {} {
+	    set y [lindex $res $j]
+	    if {[info exists tagisdesc($x,$y)]} {
+		if {$tagisdesc($x,$y) > 0} {
+		    # x is a descendent of y, exclude x
+		    set res [lreplace $res $i $i]
+		    incr i -1
+		    break
+		} else {
+		    # y is a descendent of x, exclude y
+		    set res [lreplace $res $j $j]
+		}
+	    } else {
+		# no relation, keep going
+		incr j
+	    }
+	}
     }
-    set y {}
-    if {[info exists idheads($id)]} {
-	set y $idheads($id)
+    return $res
+}
+
+proc combine_atags {l1 l2} {
+    global tagisdesc
+
+    set res [lsort -unique [concat $l1 $l2]]
+    for {set i 0} {$i < [llength $res]} {incr i} {
+	set x [lindex $res $i]
+	for {set j [expr {$i+1}]} {$j < [llength $res]} {} {
+	    set y [lindex $res $j]
+	    if {[info exists tagisdesc($x,$y)]} {
+		if {$tagisdesc($x,$y) < 0} {
+		    # x is an ancestor of y, exclude x
+		    set res [lreplace $res $i $i]
+		    incr i -1
+		    break
+		} else {
+		    # y is an ancestor of x, exclude y
+		    set res [lreplace $res $j $j]
+		}
+	    } else {
+		# no relation, keep going
+		incr j
+	    }
+	}
     }
-    set z {}
-    if {[info exists idotherrefs($id)]} {
-	set z $idotherrefs($id)
+    return $res
+}
+
+proc getallclines {fd} {
+    global allparents allchildren allcommits allcstart
+    global desc_tags anc_tags idtags alldtags tagisdesc allids
+
+    while {[gets $fd line] >= 0} {
+	set id [lindex $line 0]
+	lappend allids $id
+	set olds [lrange $line 1 end]
+	set allparents($id) $olds
+	if {![info exists allchildren($id)]} {
+	    set allchildren($id) {}
+	}
+	foreach p $olds {
+	    lappend allchildren($p) $id
+	}
+	# compute nearest tagged descendents as we go
+	set dtags {}
+	foreach child $allchildren($id) {
+	    if {[info exists idtags($child)]} {
+		set ctags [list $child]
+	    } else {
+		set ctags $desc_tags($child)
+	    }
+	    if {$dtags eq {}} {
+		set dtags $ctags
+	    } elseif {$ctags ne $dtags} {
+		set dtags [combine_dtags $dtags $ctags]
+	    }
+	}
+	set desc_tags($id) $dtags
+	if {[info exists idtags($id)]} {
+	    set adt $dtags
+	    foreach tag $dtags {
+		set adt [concat $adt $alldtags($tag)]
+	    }
+	    set adt [lsort -unique $adt]
+	    set alldtags($id) $adt
+	    foreach tag $adt {
+		set tagisdesc($id,$tag) -1
+		set tagisdesc($tag,$id) 1
+	    }
+	}
+	if {[clock clicks -milliseconds] - $allcstart >= 50} {
+	    fileevent $fd readable {}
+	    after idle restartgetall $fd
+	    return
+	}
     }
-    return [list $x $y $z]
+    if {[eof $fd]} {
+	after idle restartatags [llength $allids]
+	if {[catch {close $fd} err]} {
+	    error_popup "Error reading full commit graph: $err.\n\
+			 Results may be incomplete."
+	}
+    }
+}
+
+# walk backward through the tree and compute nearest tagged ancestors
+proc restartatags {i} {
+    global allids allparents idtags anc_tags t0
+
+    set t0 [clock clicks -milliseconds]
+    while {[incr i -1] >= 0} {
+	set id [lindex $allids $i]
+	set atags {}
+	foreach p $allparents($id) {
+	    if {[info exists idtags($p)]} {
+		set ptags [list $p]
+	    } else {
+		set ptags $anc_tags($p)
+	    }
+	    if {$atags eq {}} {
+		set atags $ptags
+	    } elseif {$ptags ne $atags} {
+		set atags [combine_atags $atags $ptags]
+	    }
+	}
+	set anc_tags($id) $atags
+	if {[clock clicks -milliseconds] - $t0 >= 50} {
+	    after idle restartatags $i
+	    return
+	}
+    }
+    set allcommits "done"
+    notbusy allcommits
+    dispneartags
 }
 
 proc rereadrefs {} {
@@ -4959,7 +5175,7 @@ proc doquit {} {
 
 proc doprefs {} {
     global maxwidth maxgraphpct diffopts
-    global oldprefs prefstop
+    global oldprefs prefstop showneartags
 
     set top .gitkprefs
     set prefstop $top
@@ -4967,7 +5183,7 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct diffopts} {
+    foreach v {maxwidth maxgraphpct diffopts showneartags} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -4989,6 +5205,11 @@ proc doprefs {} {
 	-font optionfont
     entry $top.diffopt -width 20 -textvariable diffopts
     grid x $top.diffoptl $top.diffopt -sticky w
+    frame $top.ntag
+    label $top.ntag.l -text "Display nearby tags" -font optionfont
+    checkbutton $top.ntag.b -variable showneartags
+    pack $top.ntag.b $top.ntag.l -side left
+    grid x $top.ntag -sticky w
     frame $top.buts
     button $top.buts.ok -text "OK" -command prefsok
     button $top.buts.can -text "Cancel" -command prefscan
@@ -5000,9 +5221,9 @@ proc doprefs {} {
 
 proc prefscan {} {
     global maxwidth maxgraphpct diffopts
-    global oldprefs prefstop
+    global oldprefs prefstop showneartags
 
-    foreach v {maxwidth maxgraphpct diffopts} {
+    foreach v {maxwidth maxgraphpct diffopts showneartags} {
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -5011,13 +5232,15 @@ proc prefscan {} {
 
 proc prefsok {} {
     global maxwidth maxgraphpct
-    global oldprefs prefstop
+    global oldprefs prefstop showneartags
 
     catch {destroy $prefstop}
     unset prefstop
     if {$maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
+    } elseif {$showneartags != $oldprefs(showneartags)} {
+	reselectline
     }
 }
 
@@ -5328,6 +5551,7 @@ set downarrowlen 7
 set mingaplen 30
 set cmitmode "patch"
 set wrapcomment "none"
+set showneartags 1
 
 set colors {green red blue magenta darkgrey brown orange}
 
