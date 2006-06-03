@@ -309,9 +309,16 @@ sub commit {
 	}
 	chomp @revs;
 
-	fetch();
-	chdir $SVN_WC or croak $!;
+	chdir $SVN_WC or croak "Unable to chdir $SVN_WC: $!\n";
 	my $info = svn_info('.');
+	my $fetched = fetch();
+	if ($info->{Revision} != $fetched->{revision}) {
+		print STDERR "There are new revisions that were fetched ",
+				"and need to be merged (or acknowledged) ",
+				"before committing.\n";
+		exit 1;
+	}
+	$info = svn_info('.');
 	read_uuid($info);
 	my $svn_current_rev =  $info->{'Last Changed Rev'};
 	foreach my $c (@revs) {
