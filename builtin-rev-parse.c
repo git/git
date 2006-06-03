@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "refs.h"
 #include "quote.h"
+#include "builtin.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -163,7 +164,7 @@ static int show_file(const char *arg)
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_rev_parse(int argc, const char **argv, char **envp)
 {
 	int i, as_is = 0, verify = 0;
 	unsigned char sha1[20];
