@@ -187,7 +187,7 @@ proc getcommitlines {fd view}  {
 	if {$view == $curview} {
 	    layoutmore
 	} elseif {[info exists hlview] && $view == $hlview} {
-	    highlightmore
+	    vhighlightmore
 	}
     }
     if {[clock clicks -milliseconds] >= $nextupdate} {
@@ -223,7 +223,7 @@ proc readcommit {id} {
 
 proc updatecommits {} {
     global viewdata curview phase displayorder
-    global children commitrow
+    global children commitrow selectedline thickerline
 
     if {$phase ne {}} {
 	stop_rev_list
@@ -235,6 +235,8 @@ proc updatecommits {} {
 	catch {unset commitrow($n,$id)}
     }
     set curview -1
+    catch {unset selectedline}
+    catch {unset thickerline}
     catch {unset viewdata($n)}
     readrefs
     showview $n
@@ -381,6 +383,8 @@ proc makewindow {} {
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
     global rowctxmenu mergemax wrapcomment
+    global highlight_files gdttype
+    global searchstring sstring
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -396,20 +400,14 @@ proc makewindow {} {
     .bar.edit configure -font $uifont
 
     menu .bar.view -font $uifont
-    menu .bar.view.hl -font $uifont -tearoff 0
     .bar add cascade -label "View" -menu .bar.view
     .bar.view add command -label "New view..." -command {newview 0}
     .bar.view add command -label "Edit view..." -command editview \
 	-state disabled
     .bar.view add command -label "Delete view" -command delview -state disabled
-    .bar.view add cascade -label "Highlight" -menu .bar.view.hl
     .bar.view add separator
     .bar.view add radiobutton -label "All files" -command {showview 0} \
 	-variable selectedview -value 0
-    .bar.view.hl add command -label "New view..." -command {newview 1}
-    .bar.view.hl add command -label "Remove" -command delhighlight \
-	-state disabled
-    .bar.view.hl add separator
     
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
@@ -436,6 +434,8 @@ proc makewindow {} {
     }
     frame .ctop.top
     frame .ctop.top.bar
+    frame .ctop.top.lbar
+    pack .ctop.top.lbar -side bottom -fill x
     pack .ctop.top.bar -side bottom -fill x
     set cscroll .ctop.top.csb
     scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
@@ -497,31 +497,74 @@ proc makewindow {} {
     set findstring {}
     set fstring .ctop.top.bar.findstring
     lappend entries $fstring
-    entry $fstring -width 30 -font $textfont -textvariable findstring -font $textfont
+    entry $fstring -width 30 -font $textfont -textvariable findstring
+    trace add variable findstring write find_change
     pack $fstring -side left -expand 1 -fill x
     set findtype Exact
     set findtypemenu [tk_optionMenu .ctop.top.bar.findtype \
 			  findtype Exact IgnCase Regexp]
+    trace add variable findtype write find_change
     .ctop.top.bar.findtype configure -font $uifont
     .ctop.top.bar.findtype.menu configure -font $uifont
     set findloc "All fields"
     tk_optionMenu .ctop.top.bar.findloc findloc "All fields" Headline \
-	Comments Author Committer Files Pickaxe
+	Comments Author Committer
+    trace add variable findloc write find_change
     .ctop.top.bar.findloc configure -font $uifont
     .ctop.top.bar.findloc.menu configure -font $uifont
-
     pack .ctop.top.bar.findloc -side right
     pack .ctop.top.bar.findtype -side right
-    # for making sure type==Exact whenever loc==Pickaxe
-    trace add variable findloc write findlocchange
+
+    label .ctop.top.lbar.flabel -text "Highlight:  Commits " \
+	-font $uifont
+    pack .ctop.top.lbar.flabel -side left -fill y
+    set gdttype "touching paths:"
+    set gm [tk_optionMenu .ctop.top.lbar.gdttype gdttype "touching paths:" \
+		"adding/removing string:"]
+    trace add variable gdttype write hfiles_change
+    $gm conf -font $uifont
+    .ctop.top.lbar.gdttype conf -font $uifont
+    pack .ctop.top.lbar.gdttype -side left -fill y
+    entry .ctop.top.lbar.fent -width 25 -font $textfont \
+	-textvariable highlight_files
+    trace add variable highlight_files write hfiles_change
+    lappend entries .ctop.top.lbar.fent
+    pack .ctop.top.lbar.fent -side left -fill x -expand 1
+    label .ctop.top.lbar.vlabel -text " OR in view" -font $uifont
+    pack .ctop.top.lbar.vlabel -side left -fill y
+    global viewhlmenu selectedhlview
+    set viewhlmenu [tk_optionMenu .ctop.top.lbar.vhl selectedhlview None]
+    $viewhlmenu entryconf 0 -command delvhighlight
+    $viewhlmenu conf -font $uifont
+    .ctop.top.lbar.vhl conf -font $uifont
+    pack .ctop.top.lbar.vhl -side left -fill y
+    label .ctop.top.lbar.rlabel -text " OR " -font $uifont
+    pack .ctop.top.lbar.rlabel -side left -fill y
+    global highlight_related
+    set m [tk_optionMenu .ctop.top.lbar.relm highlight_related None \
+	       "Descendent" "Not descendent" "Ancestor" "Not ancestor"]
+    $m conf -font $uifont
+    .ctop.top.lbar.relm conf -font $uifont
+    trace add variable highlight_related write vrel_change
+    pack .ctop.top.lbar.relm -side left -fill y
 
     panedwindow .ctop.cdet -orient horizontal
     .ctop add .ctop.cdet
     frame .ctop.cdet.left
+    frame .ctop.cdet.left.bot
+    pack .ctop.cdet.left.bot -side bottom -fill x
+    button .ctop.cdet.left.bot.search -text "Search" -command dosearch \
+	-font $uifont
+    pack .ctop.cdet.left.bot.search -side left -padx 5
+    set sstring .ctop.cdet.left.bot.sstring
+    entry $sstring -width 20 -font $textfont -textvariable searchstring
+    lappend entries $sstring
+    trace add variable searchstring write incrsearch
+    pack $sstring -side left -expand 1 -fill x
     set ctext .ctop.cdet.left.ctext
     text $ctext -bg white -state disabled -font $textfont \
 	-width $geometry(ctextw) -height $geometry(ctexth) \
-	-yscrollcommand {.ctop.cdet.left.sb set} -wrap none
+	-yscrollcommand scrolltext -wrap none
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
@@ -574,6 +617,7 @@ proc makewindow {} {
     pack $cflist -side left -fill both -expand 1
     $cflist tag configure highlight \
 	-background [$cflist cget -selectbackground]
+    $cflist tag configure bold -font [concat $mainfont bold]
     .ctop.cdet add .ctop.cdet.right
     bind .ctop.cdet <Configure> {resizecdetpanes %W %w}
 
@@ -589,6 +633,8 @@ proc makewindow {} {
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
+    bind . <Shift-Key-Up> "next_highlight -1"
+    bind . <Shift-Key-Down> "next_highlight 1"
     bindkey <Key-Right> "goforw"
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
@@ -620,7 +666,8 @@ proc makewindow {} {
     bind . <Control-q> doquit
     bind . <Control-f> dofind
     bind . <Control-g> {findnext 0}
-    bind . <Control-r> findprev
+    bind . <Control-r> dosearchback
+    bind . <Control-s> dosearch
     bind . <Control-equal> {incrfont 1}
     bind . <Control-KP_Add> {incrfont 1}
     bind . <Control-minus> {incrfont -1}
@@ -665,6 +712,7 @@ proc canvscan {op w x y} {
 proc scrollcanv {cscroll f0 f1} {
     $cscroll set $f0 $f1
     drawfrac $f0 $f1
+    flushhighlights
 }
 
 # when we make a key binding for the toplevel, make sure
@@ -695,7 +743,7 @@ proc click {w} {
 proc savestuff {w} {
     global canv canv2 canv3 ctext cflist mainfont textfont uifont
     global stuffsaved findmergefiles maxgraphpct
-    global maxwidth
+    global maxwidth showneartags
     global viewname viewfiles viewargs viewperm nextviewnum
     global cmitmode wrapcomment
 
@@ -711,6 +759,7 @@ proc savestuff {w} {
 	puts $f [list set maxwidth $maxwidth]
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
+	puts $f [list set showneartags $showneartags]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
@@ -848,6 +897,8 @@ Gitk key bindings:
 <Ctrl-Down>	Scroll commit list down one line
 <Ctrl-PageUp>	Scroll commit list up one page
 <Ctrl-PageDown>	Scroll commit list down one page
+<Shift-Up>	Move to previous highlighted line
+<Shift-Down>	Move to next highlighted line
 <Delete>, b	Scroll diff view up one page
 <Backspace>	Scroll diff view up one page
 <Space>		Scroll diff view down one page
@@ -855,11 +906,12 @@ u		Scroll diff view up 18 lines
 d		Scroll diff view down 18 lines
 <Ctrl-F>		Find
 <Ctrl-G>		Move to next find hit
-<Ctrl-R>		Move to previous find hit
 <Return>	Move to next find hit
 /		Move to next find hit, or redo find
 ?		Move to previous find hit
 f		Scroll diff view to next file
+<Ctrl-S>		Search for next hit in diff view
+<Ctrl-R>		Search for previous hit in diff view
 <Ctrl-KP+>	Increase font size
 <Ctrl-plus>	Increase font size
 <Ctrl-KP->	Decrease font size
@@ -926,7 +978,7 @@ proc treeview {w l openlevs} {
 		$w insert end $str
 		$w image create end -align center -image $bm -padx 1 \
 		    -name a:$ix
-		$w insert end $d
+		$w insert end $d [highlight_tag $prefix]
 		$w mark set s:$ix "end -1c"
 		$w mark gravity s:$ix left
 	    }
@@ -938,7 +990,7 @@ proc treeview {w l openlevs} {
 		set str "\n"
 		for {set i 0} {$i < $lev} {incr i} {append str "\t"}
 		$w insert end $str
-		$w insert end $tail
+		$w insert end $tail [highlight_tag $f]
 	    }
 	    lappend treecontents($prefix) $tail
 	}
@@ -975,6 +1027,22 @@ proc linetoelt {l} {
     }
 }
 
+proc highlight_tree {y prefix} {
+    global treeheight treecontents cflist
+
+    foreach e $treecontents($prefix) {
+	set path $prefix$e
+	if {[highlight_tag $path] ne {}} {
+	    $cflist tag add bold $y.0 "$y.0 lineend"
+	}
+	incr y
+	if {[string index $e end] eq "/" && $treeheight($path) > 1} {
+	    set y [highlight_tree $y $path]
+	}
+    }
+    return $y
+}
+
 proc treeclosedir {w dir} {
     global treediropen treeheight treeparent treeindex
 
@@ -1008,8 +1076,8 @@ proc treeopendir {w dir} {
 	incr treeheight($x) $n
     }
     foreach e $treecontents($dir) {
+	set de $dir$e
 	if {[string index $e end] eq "/"} {
-	    set de $dir$e
 	    set iy $treeindex($de)
 	    $w mark set d:$iy e:$ix
 	    $w mark gravity d:$iy left
@@ -1017,13 +1085,13 @@ proc treeopendir {w dir} {
 	    set treediropen($de) 0
 	    $w image create e:$ix -align center -image tri-rt -padx 1 \
 		-name a:$iy
-	    $w insert e:$ix $e
+	    $w insert e:$ix $e [highlight_tag $de]
 	    $w mark set s:$iy e:$ix
 	    $w mark gravity s:$iy left
 	    set treeheight($de) 1
 	} else {
 	    $w insert e:$ix $str
-	    $w insert e:$ix $e
+	    $w insert e:$ix $e [highlight_tag $de]
 	}
     }
     $w mark gravity e:$ix left
@@ -1119,20 +1187,56 @@ proc init_flist {first} {
     set difffilestart {}
 }
 
-proc add_flist {fl} {
-    global flistmode cflist
+proc highlight_tag {f} {
+    global highlight_paths
+
+    foreach p $highlight_paths {
+	if {[string match $p $f]} {
+	    return "bold"
+	}
+    }
+    return {}
+}
+
+proc highlight_filelist {} {
+    global cmitmode cflist
 
     $cflist conf -state normal
-    if {$flistmode eq "flat"} {
-	foreach f $fl {
-	    $cflist insert end "\n$f"
+    if {$cmitmode ne "tree"} {
+	set end [lindex [split [$cflist index end] .] 0]
+	for {set l 2} {$l < $end} {incr l} {
+	    set line [$cflist get $l.0 "$l.0 lineend"]
+	    if {[highlight_tag $line] ne {}} {
+		$cflist tag add bold $l.0 "$l.0 lineend"
+	    }
 	}
+    } else {
+	highlight_tree 2 {}
+    }
+    $cflist conf -state disabled
+}
+
+proc unhighlight_filelist {} {
+    global cflist
+
+    $cflist conf -state normal
+    $cflist tag remove bold 1.0 end
+    $cflist conf -state disabled
+}
+
+proc add_flist {fl} {
+    global cflist
+
+    $cflist conf -state normal
+    foreach f $fl {
+	$cflist insert end "\n"
+	$cflist insert end $f [highlight_tag $f]
     }
     $cflist conf -state disabled
 }
 
 proc sel_flist {w x y} {
-    global flistmode ctext difffilestart cflist cflist_top cmitmode
+    global ctext difffilestart cflist cflist_top cmitmode
 
     if {$cmitmode eq "tree"} return
     if {![info exists cflist_top]} return
@@ -1315,25 +1419,27 @@ proc vieweditor {top n title} {
     focus $top.t
 }
 
-proc doviewmenu {m first cmd op args} {
+proc doviewmenu {m first cmd op argv} {
     set nmenu [$m index end]
     for {set i $first} {$i <= $nmenu} {incr i} {
 	if {[$m entrycget $i -command] eq $cmd} {
-	    eval $m $op $i $args
+	    eval $m $op $i $argv
 	    break
 	}
     }
 }
 
 proc allviewmenus {n op args} {
+    global viewhlmenu
+
     doviewmenu .bar.view 7 [list showview $n] $op $args
-    doviewmenu .bar.view.hl 3 [list addhighlight $n] $op $args
+    doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
 }
 
 proc newviewok {top n} {
     global nextviewnum newviewperm newviewname newishighlight
     global viewname viewfiles viewperm selectedview curview
-    global viewargs newviewargs
+    global viewargs newviewargs viewhlmenu
 
     if {[catch {
 	set newargs [shellsplit $newviewargs($n)]
@@ -1361,14 +1467,17 @@ proc newviewok {top n} {
 	if {!$newishighlight} {
 	    after idle showview $n
 	} else {
-	    after idle addhighlight $n
+	    after idle addvhighlight $n
 	}
     } else {
 	# editing an existing view
 	set viewperm($n) $newviewperm($n)
 	if {$newviewname($n) ne $viewname($n)} {
 	    set viewname($n) $newviewname($n)
-	    allviewmenus $n entryconf -label $viewname($n)
+	    doviewmenu .bar.view 7 [list showview $n] \
+		entryconf [list -label $viewname($n)]
+	    doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
+		entryconf [list -label $viewname($n) -value $viewname($n)]
 	}
 	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n)} {
 	    set viewfiles($n) $files
@@ -1382,9 +1491,13 @@ proc newviewok {top n} {
 }
 
 proc delview {} {
-    global curview viewdata viewperm
+    global curview viewdata viewperm hlview selectedhlview
 
     if {$curview == 0} return
+    if {[info exists hlview] && $hlview == $curview} {
+	set selectedhlview None
+	unset hlview
+    }
     allviewmenus $curview delete
     set viewdata($curview) {}
     set viewperm($curview) 0
@@ -1392,12 +1505,12 @@ proc delview {} {
 }
 
 proc addviewmenu {n} {
-    global viewname
+    global viewname viewhlmenu
 
     .bar.view add radiobutton -label $viewname($n) \
 	-command [list showview $n] -variable selectedview -value $n
-    .bar.view.hl add radiobutton -label $viewname($n) \
-	-command [list addhighlight $n] -variable selectedhlview -value $n
+    $viewhlmenu add radiobutton -label $viewname($n) \
+	-command [list addvhighlight $n] -variable selectedhlview
 }
 
 proc flatten {var} {
@@ -1429,8 +1542,9 @@ proc showview {n} {
     global pending_select phase
     global commitidx rowlaidout rowoptim linesegends
     global commfd nextupdate
-    global selectedview hlview selectedhlview
+    global selectedview
     global vparentlist vchildlist vdisporder vcmitlisted
+    global hlview selectedhlview
 
     if {$n == $curview} return
     set selid {}
@@ -1469,14 +1583,15 @@ proc showview {n} {
     catch {unset matchinglines}
     catch {unset treediffs}
     clear_display
+    if {[info exists hlview] && $hlview == $n} {
+	unset hlview
+	set selectedhlview None
+    }
 
     set curview $n
     set selectedview $n
-    set selectedhlview -1
     .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
     .bar.view entryconf 3 -state [expr {$n == 0? "disabled": "normal"}]
-    catch {unset hlview}
-    .bar.view.hl entryconf 1 -state disabled
 
     if {![info exists viewdata($n)]} {
 	set pending_select $selid
@@ -1541,18 +1656,75 @@ proc showview {n} {
     }
 }
 
-proc addhighlight {n} {
-    global hlview curview viewdata highlighted highlightedrows
-    global selectedhlview
+# Stuff relating to the highlighting facility
+
+proc ishighlighted {row} {
+    global vhighlights fhighlights nhighlights rhighlights
+
+    if {[info exists nhighlights($row)] && $nhighlights($row) > 0} {
+	return $nhighlights($row)
+    }
+    if {[info exists vhighlights($row)] && $vhighlights($row) > 0} {
+	return $vhighlights($row)
+    }
+    if {[info exists fhighlights($row)] && $fhighlights($row) > 0} {
+	return $fhighlights($row)
+    }
+    if {[info exists rhighlights($row)] && $rhighlights($row) > 0} {
+	return $rhighlights($row)
+    }
+    return 0
+}
+
+proc bolden {row font} {
+    global canv linehtag selectedline boldrows
+
+    lappend boldrows $row
+    $canv itemconf $linehtag($row) -font $font
+    if {[info exists selectedline] && $row == $selectedline} {
+	$canv delete secsel
+	set t [eval $canv create rect [$canv bbox $linehtag($row)] \
+		   -outline {{}} -tags secsel \
+		   -fill [$canv cget -selectbackground]]
+	$canv lower $t
+    }
+}
+
+proc bolden_name {row font} {
+    global canv2 linentag selectedline boldnamerows
+
+    lappend boldnamerows $row
+    $canv2 itemconf $linentag($row) -font $font
+    if {[info exists selectedline] && $row == $selectedline} {
+	$canv2 delete secsel
+	set t [eval $canv2 create rect [$canv2 bbox $linentag($row)] \
+		   -outline {{}} -tags secsel \
+		   -fill [$canv2 cget -selectbackground]]
+	$canv2 lower $t
+    }
+}
+
+proc unbolden {} {
+    global mainfont boldrows
+
+    set stillbold {}
+    foreach row $boldrows {
+	if {![ishighlighted $row]} {
+	    bolden $row $mainfont
+	} else {
+	    lappend stillbold $row
+	}
+    }
+    set boldrows $stillbold
+}
+
+proc addvhighlight {n} {
+    global hlview curview viewdata vhl_done vhighlights commitidx
 
     if {[info exists hlview]} {
-	delhighlight
+	delvhighlight
     }
     set hlview $n
-    set selectedhlview $n
-    .bar.view.hl entryconf 1 -state normal
-    set highlighted($n) 0
-    set highlightedrows {}
     if {$n != $curview && ![info exists viewdata($n)]} {
 	set viewdata($n) [list getcommits {{}} {{}} {} {} {} 0 0 0 {}]
 	set vparentlist($n) {}
@@ -1560,34 +1732,25 @@ proc addhighlight {n} {
 	set vdisporder($n) {}
 	set vcmitlisted($n) {}
 	start_rev_list $n
-    } else {
-	highlightmore
+    }
+    set vhl_done $commitidx($hlview)
+    if {$vhl_done > 0} {
+	drawvisible
     }
 }
 
-proc delhighlight {} {
-    global hlview highlightedrows canv linehtag mainfont
-    global selectedhlview selectedline
+proc delvhighlight {} {
+    global hlview vhighlights
 
     if {![info exists hlview]} return
     unset hlview
-    set selectedhlview {}
-    .bar.view.hl entryconf 1 -state disabled
-    foreach l $highlightedrows {
-	$canv itemconf $linehtag($l) -font $mainfont
-	if {$l == $selectedline} {
-	    $canv delete secsel
-	    set t [eval $canv create rect [$canv bbox $linehtag($l)] \
-		       -outline {{}} -tags secsel \
-		       -fill [$canv cget -selectbackground]]
-	    $canv lower $t
-	}
-    }
+    catch {unset vhighlights}
+    unbolden
 }
 
-proc highlightmore {} {
-    global hlview highlighted commitidx highlightedrows linehtag mainfont
-    global displayorder vdisporder curview canv commitrow selectedline
+proc vhighlightmore {} {
+    global hlview vhl_done commitidx vhighlights
+    global displayorder vdisporder curview mainfont
 
     set font [concat $mainfont bold]
     set max $commitidx($hlview)
@@ -1596,25 +1759,399 @@ proc highlightmore {} {
     } else {
 	set disp $vdisporder($hlview)
     }
-    for {set i $highlighted($hlview)} {$i < $max} {incr i} {
+    set vr [visiblerows]
+    set r0 [lindex $vr 0]
+    set r1 [lindex $vr 1]
+    for {set i $vhl_done} {$i < $max} {incr i} {
 	set id [lindex $disp $i]
 	if {[info exists commitrow($curview,$id)]} {
 	    set row $commitrow($curview,$id)
-	    if {[info exists linehtag($row)]} {
-		$canv itemconf $linehtag($row) -font $font
-		lappend highlightedrows $row
-		if {$row == $selectedline} {
-		    $canv delete secsel
-		    set t [eval $canv create rect \
-			       [$canv bbox $linehtag($row)] \
-			       -outline {{}} -tags secsel \
-			       -fill [$canv cget -selectbackground]]
-		    $canv lower $t
+	    if {$r0 <= $row && $row <= $r1} {
+		if {![highlighted $row]} {
+		    bolden $row $font
 		}
+		set vhighlights($row) 1
 	    }
 	}
     }
-    set highlighted($hlview) $max
+    set vhl_done $max
+}
+
+proc askvhighlight {row id} {
+    global hlview vhighlights commitrow iddrawn mainfont
+
+    if {[info exists commitrow($hlview,$id)]} {
+	if {[info exists iddrawn($id)] && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+	set vhighlights($row) 1
+    } else {
+	set vhighlights($row) 0
+    }
+}
+
+proc hfiles_change {name ix op} {
+    global highlight_files filehighlight fhighlights fh_serial
+    global mainfont highlight_paths
+
+    if {[info exists filehighlight]} {
+	# delete previous highlights
+	catch {close $filehighlight}
+	unset filehighlight
+	catch {unset fhighlights}
+	unbolden
+	unhighlight_filelist
+    }
+    set highlight_paths {}
+    after cancel do_file_hl $fh_serial
+    incr fh_serial
+    if {$highlight_files ne {}} {
+	after 300 do_file_hl $fh_serial
+    }
+}
+
+proc makepatterns {l} {
+    set ret {}
+    foreach e $l {
+	set ee [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} $e]
+	if {[string index $ee end] eq "/"} {
+	    lappend ret "$ee*"
+	} else {
+	    lappend ret $ee
+	    lappend ret "$ee/*"
+	}
+    }
+    return $ret
+}
+
+proc do_file_hl {serial} {
+    global highlight_files filehighlight highlight_paths gdttype fhl_list
+
+    if {$gdttype eq "touching paths:"} {
+	if {[catch {set paths [shellsplit $highlight_files]}]} return
+	set highlight_paths [makepatterns $paths]
+	highlight_filelist
+	set gdtargs [concat -- $paths]
+    } else {
+	set gdtargs [list "-S$highlight_files"]
+    }
+    set cmd [concat | git-diff-tree -r -s --stdin $gdtargs]
+    set filehighlight [open $cmd r+]
+    fconfigure $filehighlight -blocking 0
+    fileevent $filehighlight readable readfhighlight
+    set fhl_list {}
+    drawvisible
+    flushhighlights
+}
+
+proc flushhighlights {} {
+    global filehighlight fhl_list
+
+    if {[info exists filehighlight]} {
+	lappend fhl_list {}
+	puts $filehighlight ""
+	flush $filehighlight
+    }
+}
+
+proc askfilehighlight {row id} {
+    global filehighlight fhighlights fhl_list
+
+    lappend fhl_list $id
+    set fhighlights($row) -1
+    puts $filehighlight $id
+}
+
+proc readfhighlight {} {
+    global filehighlight fhighlights commitrow curview mainfont iddrawn
+    global fhl_list
+
+    while {[gets $filehighlight line] >= 0} {
+	set line [string trim $line]
+	set i [lsearch -exact $fhl_list $line]
+	if {$i < 0} continue
+	for {set j 0} {$j < $i} {incr j} {
+	    set id [lindex $fhl_list $j]
+	    if {[info exists commitrow($curview,$id)]} {
+		set fhighlights($commitrow($curview,$id)) 0
+	    }
+	}
+	set fhl_list [lrange $fhl_list [expr {$i+1}] end]
+	if {$line eq {}} continue
+	if {![info exists commitrow($curview,$line)]} continue
+	set row $commitrow($curview,$line)
+	if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+	set fhighlights($row) 1
+    }
+    if {[eof $filehighlight]} {
+	# strange...
+	puts "oops, git-diff-tree died"
+	catch {close $filehighlight}
+	unset filehighlight
+    }
+    next_hlcont
+}
+
+proc find_change {name ix op} {
+    global nhighlights mainfont boldnamerows
+    global findstring findpattern findtype
+
+    # delete previous highlights, if any
+    foreach row $boldnamerows {
+	bolden_name $row $mainfont
+    }
+    set boldnamerows {}
+    catch {unset nhighlights}
+    unbolden
+    if {$findtype ne "Regexp"} {
+	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
+		   $findstring]
+	set findpattern "*$e*"
+    }
+    drawvisible
+}
+
+proc askfindhighlight {row id} {
+    global nhighlights commitinfo iddrawn mainfont
+    global findstring findtype findloc findpattern
+
+    if {![info exists commitinfo($id)]} {
+	getcommit $id
+    }
+    set info $commitinfo($id)
+    set isbold 0
+    set fldtypes {Headline Author Date Committer CDate Comments}
+    foreach f $info ty $fldtypes {
+	if {$findloc ne "All fields" && $findloc ne $ty} {
+	    continue
+	}
+	if {$findtype eq "Regexp"} {
+	    set doesmatch [regexp $findstring $f]
+	} elseif {$findtype eq "IgnCase"} {
+	    set doesmatch [string match -nocase $findpattern $f]
+	} else {
+	    set doesmatch [string match $findpattern $f]
+	}
+	if {$doesmatch} {
+	    if {$ty eq "Author"} {
+		set isbold 2
+	    } else {
+		set isbold 1
+	    }
+	}
+    }
+    if {[info exists iddrawn($id)]} {
+	if {$isbold && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+	if {$isbold >= 2} {
+	    bolden_name $row [concat $mainfont bold]
+	}
+    }
+    set nhighlights($row) $isbold
+}
+
+proc vrel_change {name ix op} {
+    global highlight_related
+
+    rhighlight_none
+    if {$highlight_related ne "None"} {
+	after idle drawvisible
+    }
+}
+
+# prepare for testing whether commits are descendents or ancestors of a
+proc rhighlight_sel {a} {
+    global descendent desc_todo ancestor anc_todo
+    global highlight_related rhighlights
+
+    catch {unset descendent}
+    set desc_todo [list $a]
+    catch {unset ancestor}
+    set anc_todo [list $a]
+    if {$highlight_related ne "None"} {
+	rhighlight_none
+	after idle drawvisible
+    }
+}
+
+proc rhighlight_none {} {
+    global rhighlights
+
+    catch {unset rhighlights}
+    unbolden
+}
+
+proc is_descendent {a} {
+    global curview children commitrow descendent desc_todo
+
+    set v $curview
+    set la $commitrow($v,$a)
+    set todo $desc_todo
+    set leftover {}
+    set done 0
+    for {set i 0} {$i < [llength $todo]} {incr i} {
+	set do [lindex $todo $i]
+	if {$commitrow($v,$do) < $la} {
+	    lappend leftover $do
+	    continue
+	}
+	foreach nk $children($v,$do) {
+	    if {![info exists descendent($nk)]} {
+		set descendent($nk) 1
+		lappend todo $nk
+		if {$nk eq $a} {
+		    set done 1
+		}
+	    }
+	}
+	if {$done} {
+	    set desc_todo [concat $leftover [lrange $todo [expr {$i+1}] end]]
+	    return
+	}
+    }
+    set descendent($a) 0
+    set desc_todo $leftover
+}
+
+proc is_ancestor {a} {
+    global curview parentlist commitrow ancestor anc_todo
+
+    set v $curview
+    set la $commitrow($v,$a)
+    set todo $anc_todo
+    set leftover {}
+    set done 0
+    for {set i 0} {$i < [llength $todo]} {incr i} {
+	set do [lindex $todo $i]
+	if {![info exists commitrow($v,$do)] || $commitrow($v,$do) > $la} {
+	    lappend leftover $do
+	    continue
+	}
+	foreach np [lindex $parentlist $commitrow($v,$do)] {
+	    if {![info exists ancestor($np)]} {
+		set ancestor($np) 1
+		lappend todo $np
+		if {$np eq $a} {
+		    set done 1
+		}
+	    }
+	}
+	if {$done} {
+	    set anc_todo [concat $leftover [lrange $todo [expr {$i+1}] end]]
+	    return
+	}
+    }
+    set ancestor($a) 0
+    set anc_todo $leftover
+}
+
+proc askrelhighlight {row id} {
+    global descendent highlight_related iddrawn mainfont rhighlights
+    global selectedline ancestor
+
+    if {![info exists selectedline]} return
+    set isbold 0
+    if {$highlight_related eq "Descendent" ||
+	$highlight_related eq "Not descendent"} {
+	if {![info exists descendent($id)]} {
+	    is_descendent $id
+	}
+	if {$descendent($id) == ($highlight_related eq "Descendent")} {
+	    set isbold 1
+	}
+    } elseif {$highlight_related eq "Ancestor" ||
+	      $highlight_related eq "Not ancestor"} {
+	if {![info exists ancestor($id)]} {
+	    is_ancestor $id
+	}
+	if {$ancestor($id) == ($highlight_related eq "Ancestor")} {
+	    set isbold 1
+	}
+    }
+    if {[info exists iddrawn($id)]} {
+	if {$isbold && ![ishighlighted $row]} {
+	    bolden $row [concat $mainfont bold]
+	}
+    }
+    set rhighlights($row) $isbold
+}
+
+proc next_hlcont {} {
+    global fhl_row fhl_dirn displayorder numcommits
+    global vhighlights fhighlights nhighlights rhighlights
+    global hlview filehighlight findstring highlight_related
+
+    if {![info exists fhl_dirn] || $fhl_dirn == 0} return
+    set row $fhl_row
+    while {1} {
+	if {$row < 0 || $row >= $numcommits} {
+	    bell
+	    set fhl_dirn 0
+	    return
+	}
+	set id [lindex $displayorder $row]
+	if {[info exists hlview]} {
+	    if {![info exists vhighlights($row)]} {
+		askvhighlight $row $id
+	    }
+	    if {$vhighlights($row) > 0} break
+	}
+	if {$findstring ne {}} {
+	    if {![info exists nhighlights($row)]} {
+		askfindhighlight $row $id
+	    }
+	    if {$nhighlights($row) > 0} break
+	}
+	if {$highlight_related ne "None"} {
+	    if {![info exists rhighlights($row)]} {
+		askrelhighlight $row $id
+	    }
+	    if {$rhighlights($row) > 0} break
+	}
+	if {[info exists filehighlight]} {
+	    if {![info exists fhighlights($row)]} {
+		# ask for a few more while we're at it...
+		set r $row
+		for {set n 0} {$n < 100} {incr n} {
+		    if {![info exists fhighlights($r)]} {
+			askfilehighlight $r [lindex $displayorder $r]
+		    }
+		    incr r $fhl_dirn
+		    if {$r < 0 || $r >= $numcommits} break
+		}
+		flushhighlights
+	    }
+	    if {$fhighlights($row) < 0} {
+		set fhl_row $row
+		return
+	    }
+	    if {$fhighlights($row) > 0} break
+	}
+	incr row $fhl_dirn
+    }
+    set fhl_dirn 0
+    selectline $row 1
+}
+
+proc next_highlight {dirn} {
+    global selectedline fhl_row fhl_dirn
+    global hlview filehighlight findstring highlight_related
+
+    if {![info exists selectedline]} return
+    if {!([info exists hlview] || $findstring ne {} ||
+	  $highlight_related ne "None" || [info exists filehighlight])} return
+    set fhl_row [expr {$selectedline + $dirn}]
+    set fhl_dirn $dirn
+    next_hlcont
+}
+
+proc cancel_next_highlight {} {
+    global fhl_dirn
+
+    set fhl_dirn 0
 }
 
 # Graph layout functions
@@ -2336,8 +2873,7 @@ proc drawcmittext {id row col rmx} {
     global commitlisted commitinfo rowidlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
-    global mainfont canvxmax
-    global hlview commitrow highlightedrows
+    global mainfont canvxmax boldrows boldnamerows
 
     set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
     set x [xc $row $col]
@@ -2363,15 +2899,21 @@ proc drawcmittext {id row col rmx} {
     set date [lindex $commitinfo($id) 2]
     set date [formatdate $date]
     set font $mainfont
-    if {[info exists hlview] && [info exists commitrow($hlview,$id)]} {
+    set nfont $mainfont
+    set isbold [ishighlighted $row]
+    if {$isbold > 0} {
+	lappend boldrows $row
 	lappend font bold
-	lappend highlightedrows $row
+	if {$isbold > 1} {
+	    lappend boldnamerows $row
+	    lappend nfont bold
+	}
     }
     set linehtag($row) [$canv create text $xt $y -anchor w \
 			    -text $headline -font $font]
     $canv bind $linehtag($row) <Button-3> "rowmenu %X %Y $id"
     set linentag($row) [$canv2 create text 3 $y -anchor w \
-			    -text $name -font $mainfont]
+			    -text $name -font $nfont]
     set linedtag($row) [$canv3 create text 3 $y -anchor w \
 			    -text $date -font $mainfont]
     set xr [expr {$xt + [font measure $mainfont $headline]}]
@@ -2385,6 +2927,9 @@ proc drawcmitrow {row} {
     global displayorder rowidlist
     global idrangedrawn iddrawn
     global commitinfo parentlist numcommits
+    global filehighlight fhighlights findstring nhighlights
+    global hlview vhighlights
+    global highlight_related rhighlights
 
     if {$row >= $numcommits} return
     foreach id [lindex $rowidlist $row] {
@@ -2405,6 +2950,18 @@ proc drawcmitrow {row} {
     }
 
     set id [lindex $displayorder $row]
+    if {[info exists hlview] && ![info exists vhighlights($row)]} {
+	askvhighlight $row $id
+    }
+    if {[info exists filehighlight] && ![info exists fhighlights($row)]} {
+	askfilehighlight $row $id
+    }
+    if {$findstring ne {} && ![info exists nhighlights($row)]} {
+	askfindhighlight $row $id
+    }
+    if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
+	askrelhighlight $row $id
+    }
     if {[info exists iddrawn($id)]} return
     set col [lsearch -exact [lindex $rowidlist $row] $id]
     if {$col < 0} {
@@ -2453,10 +3010,15 @@ proc drawvisible {} {
 
 proc clear_display {} {
     global iddrawn idrangedrawn
+    global vhighlights fhighlights nhighlights rhighlights
 
     allcanvs delete all
     catch {unset iddrawn}
     catch {unset idrangedrawn}
+    catch {unset vhighlights}
+    catch {unset fhighlights}
+    catch {unset nhighlights}
+    catch {unset rhighlights}
 }
 
 proc findcrossings {id} {
@@ -2760,12 +3322,9 @@ proc dofind {} {
 
     stopfindproc
     unmarkmatches
+    cancel_next_highlight
     focus .
     set matchinglines {}
-    if {$findloc == "Pickaxe"} {
-	findpatches
-	return
-    }
     if {$findtype == "IgnCase"} {
 	set foundstring [string tolower $findstring]
     } else {
@@ -2775,17 +3334,13 @@ proc dofind {} {
     if {$foundstrlen == 0} return
     regsub -all {[*?\[\\]} $foundstring {\\&} matchstring
     set matchstring "*$matchstring*"
-    if {$findloc == "Files"} {
-	findfiles
-	return
-    }
     if {![info exists selectedline]} {
 	set oldsel -1
     } else {
 	set oldsel $selectedline
     }
     set didsel 0
-    set fldtypes {Headline Author Date Committer CDate Comment}
+    set fldtypes {Headline Author Date Committer CDate Comments}
     set l -1
     foreach id $displayorder {
 	set d $commitdata($id)
@@ -2888,18 +3443,6 @@ proc findprev {} {
     }
 }
 
-proc findlocchange {name ix op} {
-    global findloc findtype findtypemenu
-    if {$findloc == "Pickaxe"} {
-	set findtype Exact
-	set state disabled
-    } else {
-	set state normal
-    }
-    $findtypemenu entryconf 1 -state $state
-    $findtypemenu entryconf 2 -state $state
-}
-
 proc stopfindproc {{done 0}} {
     global findprocpid findprocfile findids
     global ctext findoldcursor phase maincursor textcursor
@@ -2915,247 +3458,6 @@ proc stopfindproc {{done 0}} {
     }
     catch {unset findinprogress}
     notbusy find
-}
-
-proc findpatches {} {
-    global findstring selectedline numcommits
-    global findprocpid findprocfile
-    global finddidsel ctext displayorder findinprogress
-    global findinsertpos
-
-    if {$numcommits == 0} return
-
-    # make a list of all the ids to search, starting at the one
-    # after the selected line (if any)
-    if {[info exists selectedline]} {
-	set l $selectedline
-    } else {
-	set l -1
-    }
-    set inputids {}
-    for {set i 0} {$i < $numcommits} {incr i} {
-	if {[incr l] >= $numcommits} {
-	    set l 0
-	}
-	append inputids [lindex $displayorder $l] "\n"
-    }
-
-    if {[catch {
-	set f [open [list | git diff-tree --stdin -s -r -S$findstring \
-			 << $inputids] r]
-    } err]} {
-	error_popup "Error starting search process: $err"
-	return
-    }
-
-    set findinsertpos end
-    set findprocfile $f
-    set findprocpid [pid $f]
-    fconfigure $f -blocking 0
-    fileevent $f readable readfindproc
-    set finddidsel 0
-    nowbusy find
-    set findinprogress 1
-}
-
-proc readfindproc {} {
-    global findprocfile finddidsel
-    global commitrow matchinglines findinsertpos curview
-
-    set n [gets $findprocfile line]
-    if {$n < 0} {
-	if {[eof $findprocfile]} {
-	    stopfindproc 1
-	    if {!$finddidsel} {
-		bell
-	    }
-	}
-	return
-    }
-    if {![regexp {^[0-9a-f]{40}} $line id]} {
-	error_popup "Can't parse git diff-tree output: $line"
-	stopfindproc
-	return
-    }
-    if {![info exists commitrow($curview,$id)]} {
-	puts stderr "spurious id: $id"
-	return
-    }
-    set l $commitrow($curview,$id)
-    insertmatch $l $id
-}
-
-proc insertmatch {l id} {
-    global matchinglines findinsertpos finddidsel
-
-    if {$findinsertpos == "end"} {
-	if {$matchinglines != {} && $l < [lindex $matchinglines 0]} {
-	    set matchinglines [linsert $matchinglines 0 $l]
-	    set findinsertpos 1
-	} else {
-	    lappend matchinglines $l
-	}
-    } else {
-	set matchinglines [linsert $matchinglines $findinsertpos $l]
-	incr findinsertpos
-    }
-    markheadline $l $id
-    if {!$finddidsel} {
-	findselectline $l
-	set finddidsel 1
-    }
-}
-
-proc findfiles {} {
-    global selectedline numcommits displayorder ctext
-    global ffileline finddidsel parentlist
-    global findinprogress findstartline findinsertpos
-    global treediffs fdiffid fdiffsneeded fdiffpos
-    global findmergefiles
-
-    if {$numcommits == 0} return
-
-    if {[info exists selectedline]} {
-	set l [expr {$selectedline + 1}]
-    } else {
-	set l 0
-    }
-    set ffileline $l
-    set findstartline $l
-    set diffsneeded {}
-    set fdiffsneeded {}
-    while 1 {
-	set id [lindex $displayorder $l]
-	if {$findmergefiles || [llength [lindex $parentlist $l]] == 1} {
-	    if {![info exists treediffs($id)]} {
-		append diffsneeded "$id\n"
-		lappend fdiffsneeded $id
-	    }
-	}
-	if {[incr l] >= $numcommits} {
-	    set l 0
-	}
-	if {$l == $findstartline} break
-    }
-
-    # start off a git diff-tree process if needed
-    if {$diffsneeded ne {}} {
-	if {[catch {
-	    set df [open [list | git diff-tree -r --stdin << $diffsneeded] r]
-	} err ]} {
-	    error_popup "Error starting search process: $err"
-	    return
-	}
-	catch {unset fdiffid}
-	set fdiffpos 0
-	fconfigure $df -blocking 0
-	fileevent $df readable [list readfilediffs $df]
-    }
-
-    set finddidsel 0
-    set findinsertpos end
-    set id [lindex $displayorder $l]
-    nowbusy find
-    set findinprogress 1
-    findcont
-    update
-}
-
-proc readfilediffs {df} {
-    global findid fdiffid fdiffs
-
-    set n [gets $df line]
-    if {$n < 0} {
-	if {[eof $df]} {
-	    donefilediff
-	    if {[catch {close $df} err]} {
-		stopfindproc
-		bell
-		error_popup "Error in git diff-tree: $err"
-	    } elseif {[info exists findid]} {
-		set id $findid
-		stopfindproc
-		bell
-		error_popup "Couldn't find diffs for $id"
-	    }
-	}
-	return
-    }
-    if {[regexp {^([0-9a-f]{40})$} $line match id]} {
-	# start of a new string of diffs
-	donefilediff
-	set fdiffid $id
-	set fdiffs {}
-    } elseif {[string match ":*" $line]} {
-	lappend fdiffs [lindex $line 5]
-    }
-}
-
-proc donefilediff {} {
-    global fdiffid fdiffs treediffs findid
-    global fdiffsneeded fdiffpos
-
-    if {[info exists fdiffid]} {
-	while {[lindex $fdiffsneeded $fdiffpos] ne $fdiffid
-	       && $fdiffpos < [llength $fdiffsneeded]} {
-	    # git diff-tree doesn't output anything for a commit
-	    # which doesn't change anything
-	    set nullid [lindex $fdiffsneeded $fdiffpos]
-	    set treediffs($nullid) {}
-	    if {[info exists findid] && $nullid eq $findid} {
-		unset findid
-		findcont
-	    }
-	    incr fdiffpos
-	}
-	incr fdiffpos
-
-	if {![info exists treediffs($fdiffid)]} {
-	    set treediffs($fdiffid) $fdiffs
-	}
-	if {[info exists findid] && $fdiffid eq $findid} {
-	    unset findid
-	    findcont
-	}
-    }
-}
-
-proc findcont {} {
-    global findid treediffs parentlist
-    global ffileline findstartline finddidsel
-    global displayorder numcommits matchinglines findinprogress
-    global findmergefiles
-
-    set l $ffileline
-    while {1} {
-	set id [lindex $displayorder $l]
-	if {$findmergefiles || [llength [lindex $parentlist $l]] == 1} {
-	    if {![info exists treediffs($id)]} {
-		set findid $id
-		set ffileline $l
-		return
-	    }
-	    set doesmatch 0
-	    foreach f $treediffs($id) {
-		set x [findmatches $f]
-		if {$x != {}} {
-		    set doesmatch 1
-		    break
-		}
-	    }
-	    if {$doesmatch} {
-		insertmatch $l $id
-	    }
-	}
-	if {[incr l] >= $numcommits} {
-	    set l 0
-	}
-	if {$l == $findstartline} break
-    }
-    stopfindproc
-    if {!$finddidsel} {
-	bell
-    }
 }
 
 # mark a commit as matching by putting a yellow background
@@ -3222,7 +3524,7 @@ proc commit_descriptor {p} {
     if {[llength $commitinfo($p)] > 1} {
 	set l [lindex $commitinfo($p) 0]
     }
-    return "$p ($l)"
+    return "$p ($l)\n"
 }
 
 # append some text to the ctext widget, and make any SHA1 ID
@@ -3232,7 +3534,6 @@ proc appendwithlinks {text tags} {
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
-    $ctext insert end "\n"
     set links [regexp -indices -all -inline {[0-9a-f]{40}} $text]
     foreach l $links {
 	set s [lindex $l 0]
@@ -3267,6 +3568,64 @@ proc viewnextline {dir} {
     allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
 }
 
+# add a list of tag or branch names at position pos
+# returns the number of names inserted
+proc appendrefs {pos l var} {
+    global ctext commitrow linknum curview idtags $var
+
+    if {[catch {$ctext index $pos}]} {
+	return 0
+    }
+    set tags {}
+    foreach id $l {
+	foreach tag [set $var\($id\)] {
+	    lappend tags [concat $tag $id]
+	}
+    }
+    set tags [lsort -index 1 $tags]
+    set sep {}
+    foreach tag $tags {
+	set name [lindex $tag 0]
+	set id [lindex $tag 1]
+	set lk link$linknum
+	incr linknum
+	$ctext insert $pos $sep
+	$ctext insert $pos $name $lk
+	$ctext tag conf $lk -foreground blue
+	if {[info exists commitrow($curview,$id)]} {
+	    $ctext tag bind $lk <1> \
+		[list selectline $commitrow($curview,$id) 1]
+	    $ctext tag conf $lk -underline 1
+	    $ctext tag bind $lk <Enter> { %W configure -cursor hand2 }
+	    $ctext tag bind $lk <Leave> { %W configure -cursor $curtextcursor }
+	}
+	set sep ", "
+    }
+    return [llength $tags]
+}
+
+# called when we have finished computing the nearby tags
+proc dispneartags {} {
+    global selectedline currentid ctext anc_tags desc_tags showneartags
+    global desc_heads
+
+    if {![info exists selectedline] || !$showneartags} return
+    set id $currentid
+    $ctext conf -state normal
+    if {[info exists desc_heads($id)]} {
+	if {[appendrefs branch $desc_heads($id) idheads] > 1} {
+	    $ctext insert "branch -2c" "es"
+	}
+    }
+    if {[info exists anc_tags($id)]} {
+	appendrefs follows $anc_tags($id) idtags
+    }
+    if {[info exists desc_tags($id)]} {
+	appendrefs precedes $desc_tags($id) idtags
+    }
+    $ctext conf -state disabled
+}
+
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
@@ -3274,11 +3633,12 @@ proc selectline {l isnew} {
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
-    global cmitmode
+    global cmitmode desc_tags anc_tags showneartags allcommits desc_heads
 
     catch {unset pending_select}
     $canv delete hover
     normalline
+    cancel_next_highlight
     if {$l < 0 || $l >= $numcommits} return
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -3342,9 +3702,10 @@ proc selectline {l isnew} {
     $sha1entry insert 0 $id
     $sha1entry selection from 0
     $sha1entry selection to end
+    rhighlight_sel $id
 
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     set linknum 0
     set info $commitinfo($id)
     set date [formatdate [lindex $info 2]]
@@ -3375,16 +3736,44 @@ proc selectline {l isnew} {
 	}
     } else {
 	foreach p $olds {
-	    append headers "Parent: [commit_descriptor $p]\n"
+	    append headers "Parent: [commit_descriptor $p]"
 	}
     }
 
     foreach c [lindex $childlist $l] {
-	append headers "Child:  [commit_descriptor $c]\n"
+	append headers "Child:  [commit_descriptor $c]"
     }
 
     # make anything that looks like a SHA1 ID be a clickable link
     appendwithlinks $headers {}
+    if {$showneartags} {
+	if {![info exists allcommits]} {
+	    getallcommits
+	}
+	$ctext insert end "Branch: "
+	$ctext mark set branch "end -1c"
+	$ctext mark gravity branch left
+	if {[info exists desc_heads($id)]} {
+	    if {[appendrefs branch $desc_heads($id) idheads] > 1} {
+		# turn "Branch" into "Branches"
+		$ctext insert "branch -2c" "es"
+	    }
+	}
+	$ctext insert end "\nFollows: "
+	$ctext mark set follows "end -1c"
+	$ctext mark gravity follows left
+	if {[info exists anc_tags($id)]} {
+	    appendrefs follows $anc_tags($id) idtags
+	}
+	$ctext insert end "\nPrecedes: "
+	$ctext mark set precedes "end -1c"
+	$ctext mark gravity precedes left
+	if {[info exists desc_tags($id)]} {
+	    appendrefs precedes $desc_tags($id) idtags
+	}
+	$ctext insert end "\n"
+    }
+    $ctext insert end "\n"
     appendwithlinks [lindex $info 5] {comment}
 
     $ctext tag delete Comments
@@ -3448,6 +3837,8 @@ proc unselectline {} {
     catch {unset selectedline}
     catch {unset currentid}
     allcanvs delete secsel
+    rhighlight_none
+    cancel_next_highlight
 }
 
 proc reselectline {} {
@@ -3581,7 +3972,7 @@ proc showfile {f} {
     fconfigure $bf -blocking 0
     fileevent $bf readable [list getblobline $bf $diffids]
     $ctext config -state normal
-    $ctext delete $commentend end
+    clear_ctext $commentend
     $ctext insert end "\n"
     $ctext insert end "$f\n" filesep
     $ctext config -state disabled
@@ -3881,6 +4272,138 @@ proc nextfile {} {
     }
 }
 
+proc clear_ctext {{first 1.0}} {
+    global ctext smarktop smarkbot
+
+    set l [lindex [split $first .] 0]
+    if {![info exists smarktop] || [$ctext compare $first < $smarktop.0]} {
+	set smarktop $l
+    }
+    if {![info exists smarkbot] || [$ctext compare $first < $smarkbot.0]} {
+	set smarkbot $l
+    }
+    $ctext delete $first end
+}
+
+proc incrsearch {name ix op} {
+    global ctext searchstring searchdirn
+
+    $ctext tag remove found 1.0 end
+    if {[catch {$ctext index anchor}]} {
+	# no anchor set, use start of selection, or of visible area
+	set sel [$ctext tag ranges sel]
+	if {$sel ne {}} {
+	    $ctext mark set anchor [lindex $sel 0]
+	} elseif {$searchdirn eq "-forwards"} {
+	    $ctext mark set anchor @0,0
+	} else {
+	    $ctext mark set anchor @0,[winfo height $ctext]
+	}
+    }
+    if {$searchstring ne {}} {
+	set here [$ctext search $searchdirn -- $searchstring anchor]
+	if {$here ne {}} {
+	    $ctext see $here
+	}
+	searchmarkvisible 1
+    }
+}
+
+proc dosearch {} {
+    global sstring ctext searchstring searchdirn
+
+    focus $sstring
+    $sstring icursor end
+    set searchdirn -forwards
+    if {$searchstring ne {}} {
+	set sel [$ctext tag ranges sel]
+	if {$sel ne {}} {
+	    set start "[lindex $sel 0] + 1c"
+	} elseif {[catch {set start [$ctext index anchor]}]} {
+	    set start "@0,0"
+	}
+	set match [$ctext search -count mlen -- $searchstring $start]
+	$ctext tag remove sel 1.0 end
+	if {$match eq {}} {
+	    bell
+	    return
+	}
+	$ctext see $match
+	set mend "$match + $mlen c"
+	$ctext tag add sel $match $mend
+	$ctext mark unset anchor
+    }
+}
+
+proc dosearchback {} {
+    global sstring ctext searchstring searchdirn
+
+    focus $sstring
+    $sstring icursor end
+    set searchdirn -backwards
+    if {$searchstring ne {}} {
+	set sel [$ctext tag ranges sel]
+	if {$sel ne {}} {
+	    set start [lindex $sel 0]
+	} elseif {[catch {set start [$ctext index anchor]}]} {
+	    set start @0,[winfo height $ctext]
+	}
+	set match [$ctext search -backwards -count ml -- $searchstring $start]
+	$ctext tag remove sel 1.0 end
+	if {$match eq {}} {
+	    bell
+	    return
+	}
+	$ctext see $match
+	set mend "$match + $ml c"
+	$ctext tag add sel $match $mend
+	$ctext mark unset anchor
+    }
+}
+
+proc searchmark {first last} {
+    global ctext searchstring
+
+    set mend $first.0
+    while {1} {
+	set match [$ctext search -count mlen -- $searchstring $mend $last.end]
+	if {$match eq {}} break
+	set mend "$match + $mlen c"
+	$ctext tag add found $match $mend
+    }
+}
+
+proc searchmarkvisible {doall} {
+    global ctext smarktop smarkbot
+
+    set topline [lindex [split [$ctext index @0,0] .] 0]
+    set botline [lindex [split [$ctext index @0,[winfo height $ctext]] .] 0]
+    if {$doall || $botline < $smarktop || $topline > $smarkbot} {
+	# no overlap with previous
+	searchmark $topline $botline
+	set smarktop $topline
+	set smarkbot $botline
+    } else {
+	if {$topline < $smarktop} {
+	    searchmark $topline [expr {$smarktop-1}]
+	    set smarktop $topline
+	}
+	if {$botline > $smarkbot} {
+	    searchmark [expr {$smarkbot+1}] $botline
+	    set smarkbot $botline
+	}
+    }
+}
+
+proc scrolltext {f0 f1} {
+    global searchstring
+
+    .ctop.cdet.left.sb set $f0 $f1
+    if {$searchstring ne {}} {
+	searchmarkvisible 0
+    }
+}
+
 proc setcoords {} {
     global linespc charspc canvx0 canvy0 mainfont
     global xspc1 xspc2 lthickness
@@ -4115,7 +4638,7 @@ proc lineclick {x y id isnew} {
     }
     # fill the details pane with info about this line
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     $ctext tag conf link -foreground blue -underline 1
     $ctext tag bind link <Enter> { %W configure -cursor hand2 }
     $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
@@ -4208,7 +4731,7 @@ proc doseldiff {oldid newid} {
     global commitinfo
 
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     init_flist "Top"
     $ctext insert end "From "
     $ctext tag conf link -foreground blue -underline 1
@@ -4377,12 +4900,19 @@ proc domktag {} {
 
 proc redrawtags {id} {
     global canv linehtag commitrow idpos selectedline curview
+    global mainfont
 
     if {![info exists commitrow($curview,$id)]} return
     drawcmitrow $commitrow($curview,$id)
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($commitrow($curview,$id)) $xt [lindex $idpos($id) 2]
+    set text [$canv itemcget $linehtag($commitrow($curview,$id)) -text]
+    set xr [expr {$xt + [font measure $mainfont $text]}]
+    if {$xr > $canvxmax} {
+	set canvxmax $xr
+	setcanvscroll
+    }
     if {[info exists selectedline]
 	&& $selectedline == $commitrow($curview,$id)} {
 	selectline $selectedline 0
@@ -4456,22 +4986,177 @@ proc wrcomcan {} {
     unset wrcomtop
 }
 
-proc listrefs {id} {
-    global idtags idheads idotherrefs
+# Stuff for finding nearby tags
+proc getallcommits {} {
+    global allcstart allcommits
 
-    set x {}
-    if {[info exists idtags($id)]} {
-	set x $idtags($id)
+    set fd [open [concat | git rev-list --all --topo-order --parents] r]
+    fconfigure $fd -blocking 0
+    set allcommits "reading"
+    nowbusy allcommits
+    restartgetall $fd
+}
+
+proc restartgetall {fd} {
+    global allcstart
+
+    fileevent $fd readable [list getallclines $fd]
+    set allcstart [clock clicks -milliseconds]
+}
+
+proc combine_dtags {l1 l2} {
+    global tagisdesc notfirstd
+
+    set res [lsort -unique [concat $l1 $l2]]
+    for {set i 0} {$i < [llength $res]} {incr i} {
+	set x [lindex $res $i]
+	for {set j [expr {$i+1}]} {$j < [llength $res]} {} {
+	    set y [lindex $res $j]
+	    if {[info exists tagisdesc($x,$y)]} {
+		if {$tagisdesc($x,$y) > 0} {
+		    # x is a descendent of y, exclude x
+		    set res [lreplace $res $i $i]
+		    incr i -1
+		    break
+		} else {
+		    # y is a descendent of x, exclude y
+		    set res [lreplace $res $j $j]
+		}
+	    } else {
+		# no relation, keep going
+		incr j
+	    }
+	}
     }
-    set y {}
-    if {[info exists idheads($id)]} {
-	set y $idheads($id)
+    return $res
+}
+
+proc combine_atags {l1 l2} {
+    global tagisdesc
+
+    set res [lsort -unique [concat $l1 $l2]]
+    for {set i 0} {$i < [llength $res]} {incr i} {
+	set x [lindex $res $i]
+	for {set j [expr {$i+1}]} {$j < [llength $res]} {} {
+	    set y [lindex $res $j]
+	    if {[info exists tagisdesc($x,$y)]} {
+		if {$tagisdesc($x,$y) < 0} {
+		    # x is an ancestor of y, exclude x
+		    set res [lreplace $res $i $i]
+		    incr i -1
+		    break
+		} else {
+		    # y is an ancestor of x, exclude y
+		    set res [lreplace $res $j $j]
+		}
+	    } else {
+		# no relation, keep going
+		incr j
+	    }
+	}
     }
-    set z {}
-    if {[info exists idotherrefs($id)]} {
-	set z $idotherrefs($id)
+    return $res
+}
+
+proc getallclines {fd} {
+    global allparents allchildren allcommits allcstart
+    global desc_tags anc_tags idtags alldtags tagisdesc allids
+    global desc_heads idheads
+
+    while {[gets $fd line] >= 0} {
+	set id [lindex $line 0]
+	lappend allids $id
+	set olds [lrange $line 1 end]
+	set allparents($id) $olds
+	if {![info exists allchildren($id)]} {
+	    set allchildren($id) {}
+	}
+	foreach p $olds {
+	    lappend allchildren($p) $id
+	}
+	# compute nearest tagged descendents as we go
+	# also compute descendent heads
+	set dtags {}
+	set dheads {}
+	foreach child $allchildren($id) {
+	    if {[info exists idtags($child)]} {
+		set ctags [list $child]
+	    } else {
+		set ctags $desc_tags($child)
+	    }
+	    if {$dtags eq {}} {
+		set dtags $ctags
+	    } elseif {$ctags ne $dtags} {
+		set dtags [combine_dtags $dtags $ctags]
+	    }
+	    set cheads $desc_heads($child)
+	    if {$dheads eq {}} {
+		set dheads $cheads
+	    } elseif {$cheads ne $dheads} {
+		set dheads [lsort -unique [concat $dheads $cheads]]
+	    }
+	}
+	set desc_tags($id) $dtags
+	if {[info exists idtags($id)]} {
+	    set adt $dtags
+	    foreach tag $dtags {
+		set adt [concat $adt $alldtags($tag)]
+	    }
+	    set adt [lsort -unique $adt]
+	    set alldtags($id) $adt
+	    foreach tag $adt {
+		set tagisdesc($id,$tag) -1
+		set tagisdesc($tag,$id) 1
+	    }
+	}
+	if {[info exists idheads($id)]} {
+	    lappend dheads $id
+	}
+	set desc_heads($id) $dheads
+	if {[clock clicks -milliseconds] - $allcstart >= 50} {
+	    fileevent $fd readable {}
+	    after idle restartgetall $fd
+	    return
+	}
     }
-    return [list $x $y $z]
+    if {[eof $fd]} {
+	after idle restartatags [llength $allids]
+	if {[catch {close $fd} err]} {
+	    error_popup "Error reading full commit graph: $err.\n\
+			 Results may be incomplete."
+	}
+    }
+}
+
+# walk backward through the tree and compute nearest tagged ancestors
+proc restartatags {i} {
+    global allids allparents idtags anc_tags t0
+
+    set t0 [clock clicks -milliseconds]
+    while {[incr i -1] >= 0} {
+	set id [lindex $allids $i]
+	set atags {}
+	foreach p $allparents($id) {
+	    if {[info exists idtags($p)]} {
+		set ptags [list $p]
+	    } else {
+		set ptags $anc_tags($p)
+	    }
+	    if {$atags eq {}} {
+		set atags $ptags
+	    } elseif {$ptags ne $atags} {
+		set atags [combine_atags $atags $ptags]
+	    }
+	}
+	set anc_tags($id) $atags
+	if {[clock clicks -milliseconds] - $t0 >= 50} {
+	    after idle restartatags $i
+	    return
+	}
+    }
+    set allcommits "done"
+    notbusy allcommits
+    dispneartags
 }
 
 proc rereadrefs {} {
@@ -4502,7 +5187,7 @@ proc showtag {tag isnew} {
 	addtohistory [list showtag $tag 0]
     }
     $ctext conf -state normal
-    $ctext delete 0.0 end
+    clear_ctext
     set linknum 0
     if {[info exists tagcontents($tag)]} {
 	set text $tagcontents($tag)
@@ -4521,8 +5206,8 @@ proc doquit {} {
 }
 
 proc doprefs {} {
-    global maxwidth maxgraphpct diffopts findmergefiles
-    global oldprefs prefstop
+    global maxwidth maxgraphpct diffopts
+    global oldprefs prefstop showneartags
 
     set top .gitkprefs
     set prefstop $top
@@ -4530,7 +5215,7 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+    foreach v {maxwidth maxgraphpct diffopts showneartags} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -4546,16 +5231,17 @@ proc doprefs {} {
 	-font optionfont
     spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $top.maxpctl $top.maxpct -sticky w
-    checkbutton $top.findm -variable findmergefiles
-    label $top.findml -text "Include merges for \"Find\" in \"Files\"" \
-	-font optionfont
-    grid $top.findm $top.findml - -sticky w
     label $top.ddisp -text "Diff display options"
     grid $top.ddisp - -sticky w -pady 10
     label $top.diffoptl -text "Options for diff program" \
 	-font optionfont
     entry $top.diffopt -width 20 -textvariable diffopts
     grid x $top.diffoptl $top.diffopt -sticky w
+    frame $top.ntag
+    label $top.ntag.l -text "Display nearby tags" -font optionfont
+    checkbutton $top.ntag.b -variable showneartags
+    pack $top.ntag.b $top.ntag.l -side left
+    grid x $top.ntag -sticky w
     frame $top.buts
     button $top.buts.ok -text "OK" -command prefsok
     button $top.buts.can -text "Cancel" -command prefscan
@@ -4566,10 +5252,10 @@ proc doprefs {} {
 }
 
 proc prefscan {} {
-    global maxwidth maxgraphpct diffopts findmergefiles
-    global oldprefs prefstop
+    global maxwidth maxgraphpct diffopts
+    global oldprefs prefstop showneartags
 
-    foreach v {maxwidth maxgraphpct diffopts findmergefiles} {
+    foreach v {maxwidth maxgraphpct diffopts showneartags} {
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -4578,13 +5264,15 @@ proc prefscan {} {
 
 proc prefsok {} {
     global maxwidth maxgraphpct
-    global oldprefs prefstop
+    global oldprefs prefstop showneartags
 
     catch {destroy $prefstop}
     unset prefstop
     if {$maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
+    } elseif {$showneartags != $oldprefs(showneartags)} {
+	reselectline
     }
 }
 
@@ -4893,9 +5581,9 @@ set fastdate 0
 set uparrowlen 7
 set downarrowlen 7
 set mingaplen 30
-set flistmode "flat"
 set cmitmode "patch"
 set wrapcomment "none"
+set showneartags 1
 
 set colors {green red blue magenta darkgrey brown orange}
 
@@ -4946,13 +5634,19 @@ if {$i >= 0} {
 
 set history {}
 set historyindex 0
+set fh_serial 0
+set nhl_names {}
+set highlight_paths {}
+set searchdirn -forwards
+set boldrows {}
+set boldnamerows {}
 
 set optim_delay 16
 
 set nextviewnum 1
 set curview 0
 set selectedview 0
-set selectedhlview {}
+set selectedhlview None
 set viewfiles(0) {}
 set viewperm(0) 0
 set viewargs(0) {}
