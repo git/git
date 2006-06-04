@@ -85,6 +85,23 @@ static int istitlechar(char c)
 		(c >= '0' && c <= '9') || c == '.' || c == '_';
 }
 
+static char *extra_headers = NULL;
+static int extra_headers_size = 0;
+
+static int git_format_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "format.headers")) {
+		int len = strlen(value);
+		extra_headers_size += len + 1;
+		extra_headers = realloc(extra_headers, extra_headers_size);
+		extra_headers[extra_headers_size - len - 1] = 0;
+		strcat(extra_headers, value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
+
 static FILE *realstdout = NULL;
 static char *output_directory = NULL;
 
@@ -150,6 +167,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int numbered = 0;
 	int start_number = -1;
 	int keep_subject = 0;
+	char *add_signoff = NULL;
 
 	init_revisions(&rev);
 	rev.commit_format = CMIT_FMT_EMAIL;
@@ -160,6 +178,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+
+	git_config(git_format_config);
+	rev.extra_headers = extra_headers;
 
 	/*
 	 * Parse the arguments before setup_revisions(), or something
@@ -179,11 +200,13 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			if (i == argc)
 				die("Need a number for --start-number");
 			start_number = strtol(argv[i], NULL, 10);
-		} else if (!strcmp(argv[i], "-k") ||
+		}
+		else if (!strcmp(argv[i], "-k") ||
 				!strcmp(argv[i], "--keep-subject")) {
 			keep_subject = 1;
 			rev.total = -1;
-		} else if (!strcmp(argv[i], "-o")) {
+		}
+		else if (!strcmp(argv[i], "-o")) {
 			if (argc < 3)
 				die ("Which directory?");
 			if (mkdir(argv[i + 1], 0777) < 0 && errno != EEXIST)
@@ -191,6 +214,16 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 						argv[i + 1]);
 			output_directory = strdup(argv[i + 1]);
 			i++;
+		}
+		else if (!strcmp(argv[i], "--signoff") ||
+			 !strcmp(argv[i], "-s")) {
+			const char *committer = git_committer_info(1);
+			const char *endpos = strchr(committer, '>');
+			if (!endpos)
+				die("bogos committer info %s\n", committer);
+			add_signoff = xmalloc(endpos - committer + 2);
+			memcpy(add_signoff, committer, endpos - committer + 1);
+			add_signoff[endpos - committer + 1] = 0;
 		}
 		else if (!strcmp(argv[i], "--attach"))
 			rev.mime_boundary = git_version_string;
@@ -230,6 +263,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	total = nr;
 	if (numbered)
 		rev.total = total + start_number - 1;
+	rev.add_signoff = add_signoff;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];

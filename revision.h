@@ -60,6 +60,8 @@ struct rev_info {
 	struct log_info *loginfo;
 	int		nr, total;
 	const char	*mime_boundary;
+	const char	*add_signoff;
+	const char	*extra_headers;
 
 	/* special limits */
 	int max_count;
