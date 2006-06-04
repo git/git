@@ -450,6 +450,9 @@ class GitView:
 		self.accel_group = gtk.AccelGroup()
 		self.window.add_accel_group(self.accel_group)
 		self.accel_group.connect_group(0xffc2, 0, gtk.ACCEL_LOCKED, self.refresh);
+		self.accel_group.connect_group(0xffc1, 0, gtk.ACCEL_LOCKED, self.maximize);
+		self.accel_group.connect_group(0xffc8, 0, gtk.ACCEL_LOCKED, self.fullscreen);
+		self.accel_group.connect_group(0xffc9, 0, gtk.ACCEL_LOCKED, self.unfullscreen);
 
 		self.window.add(self.construct())
 
@@ -459,6 +462,18 @@ class GitView:
 		Commit.children_sha1 = {}
 		self.set_branch(sys.argv[without_diff:])
 		self.window.show()
+		return True
+
+	def maximize(self, widget, event=None, *arguments, **keywords):
+		self.window.maximize()
+		return True
+
+	def fullscreen(self, widget, event=None, *arguments, **keywords):
+		self.window.fullscreen()
+		return True
+
+	def unfullscreen(self, widget, event=None, *arguments, **keywords):
+		self.window.unfullscreen()
 		return True
 
 	def get_bt_sha1(self):
