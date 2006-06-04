@@ -166,7 +166,10 @@ fast_forward_local () {
 	    mb=$(git-merge-base "$local" "$2") &&
 	    case "$2,$mb" in
 	    $local,*)
-		echo >&2 "* $1: same as $3"
+	        if test -n "$verbose"
+		then
+			echo >&2 "* $1: same as $3"
+		fi
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
