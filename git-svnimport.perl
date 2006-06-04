@@ -63,10 +63,17 @@ my $svn_dir = $ARGV[1];
 
 our @mergerx = ();
 if ($opt_m) {
-	@mergerx = ( qr/\W(?:from|of|merge|merging|merged) (\w+)/i );
+	my $branch_esc = quotemeta ($branch_name);
+	my $trunk_esc  = quotemeta ($trunk_name);
+	@mergerx =
+	(
+		qr!\b(?:merg(?:ed?|ing))\b.*?\b((?:(?<=$branch_esc/)[\w\.\-]+)|(?:$trunk_esc))\b!i,
+		qr!\b(?:from|of)\W+((?:(?<=$branch_esc/)[\w\.\-]+)|(?:$trunk_esc))\b!i,
+		qr!\b(?:from|of)\W+(?:the )?([\w\.\-]+)[-\s]branch\b!i
+	);
 }
 if ($opt_M) {
-	push (@mergerx, qr/$opt_M/);
+	unshift (@mergerx, qr/$opt_M/);
 }
 
 # Absolutize filename now, since we will have chdir'ed by the time we
