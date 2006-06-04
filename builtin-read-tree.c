@@ -376,6 +376,7 @@ static void check_updates(struct cache_entry **src, int nr)
 					fprintf(stderr, "%4u%% (%u/%u) done\r",
 						percent, cnt, total);
 					last_percent = percent;
+					progress_update = 0;
 				}
 			}
 		}
