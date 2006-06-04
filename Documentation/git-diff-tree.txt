@@ -32,7 +32,7 @@ include::diff-options.txt[]
 <path>...::
 	If provided, the results are limited to a subset of files
 	matching one of these prefix strings.
-	ie file matches `/^<pattern1>|<pattern2>|.../`
+	i.e., file matches `/^<pattern1>|<pattern2>|.../`
 	Note that this parameter does not provide any wildcard or regexp
 	features.
 
@@ -54,7 +54,7 @@ include::diff-options.txt[]
 +
 When a single commit is given on one line of such input, it compares
 the commit with its parents.  The following flags further affects its
-behaviour.  This does not apply to the case where two <tree-ish>
+behavior.  This does not apply to the case where two <tree-ish>
 separated with a single space are given.
 
 -m::

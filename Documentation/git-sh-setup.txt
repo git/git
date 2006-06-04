@@ -13,7 +13,7 @@ DESCRIPTION
 -----------
 
 Sets up the normal git environment variables and a few helper functions
-(currently just "die()"), and returns ok if it all looks like a git archive.
+(currently just "die()"), and returns OK if it all looks like a git archive.
 So, to make the rest of the git scripts more careful and readable,
 use it as follows:
 

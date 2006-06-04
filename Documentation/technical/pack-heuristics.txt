@@ -288,7 +288,7 @@ And of course there is the "Other Shoe" Factor too.
         - we actively try to generate deltas from a larger object to a
           smaller one
         - this means that the top-of-tree very seldom has deltas
-          (ie deltas in _practice_ are "backwards deltas")
+          (i.e. deltas in _practice_ are "backwards deltas")
 
 Again, we should reread that whole paragraph.  Not just because
 Linus has slipped Linus's Law in there on us, but because it is

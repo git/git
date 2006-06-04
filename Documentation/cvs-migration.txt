@@ -1,7 +1,7 @@
 git for CVS users
 =================
 
-So you're a CVS user. That's ok, it's a treatable condition.  The job of
+So you're a CVS user. That's OK, it's a treatable condition.  The job of
 this document is to put you on the road to recovery, by helping you
 convert an existing cvs repository to git, and by showing you how to use a
 git repository in a cvs-like fashion.
@@ -159,7 +159,7 @@ other than `master`.
 
 [NOTE]
 ============
-Because of this behaviour, if the shared repository and the developer's
+Because of this behavior, if the shared repository and the developer's
 repository both have branches named `origin`, then a push like the above
 attempts to update the `origin` branch in the shared repository from the
 developer's `origin` branch.  The results may be unexpected, so it's

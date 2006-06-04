@@ -817,25 +817,26 @@ static int oneway_merge(struct cache_entry **src)
 
 static int read_cache_unmerged(void)
 {
-	int i, deleted;
+	int i;
 	struct cache_entry **dst;
+	struct cache_entry *last = NULL;
 
 	read_cache();
 	dst = active_cache;
-	deleted = 0;
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce)) {
-			deleted++;
+			if (last && !strcmp(ce->name, last->name))
+				continue;
 			invalidate_ce_path(ce);
-			continue;
+			last = ce;
+			ce->ce_mode = 0;
+			ce->ce_flags &= ~htons(CE_STAGEMASK);
 		}
-		if (deleted)
-			*dst = ce;
-		dst++;
+		*dst++ = ce;
 	}
-	active_nr -= deleted;
-	return deleted;
+	active_nr = dst - active_cache;
+	return !!last;
 }
 
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
@@ -935,7 +936,10 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 			continue;
 		}
 
-		/* This differs from "-m" in that we'll silently ignore unmerged entries */
+		/* This differs from "-m" in that we'll silently ignore
+		 * unmerged entries and overwrite working tree files that
+		 * correspond to them.
+		 */
 		if (!strcmp(arg, "--reset")) {
 			if (stage || merge || prefix)
 				usage(read_tree_usage);

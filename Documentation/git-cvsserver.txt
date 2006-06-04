@@ -94,7 +94,7 @@ To get a checkout with the Eclipse CVS client:
 4. Pick 'HEAD' when it asks what branch/tag to check out. Untick the
    "launch commit wizard" to avoid committing the .project file.
 
-Protocol notes: If you are using anonymous acces via pserver, just select that.
+Protocol notes: If you are using anonymous access via pserver, just select that.
 Those using SSH access should choose the 'ext' protocol, and configure 'ext'
 access on the Preferences->Team->CVS->ExtConnection pane. Set CVS_SERVER to
 'git-cvsserver'. Not that password support is not good when using 'ext',

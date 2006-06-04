@@ -24,7 +24,7 @@ gitlink:git-revert[1] is your friend.
 OPTIONS
 -------
 --mixed::
-	Resets the index but not the working tree (ie, the changed files
+	Resets the index but not the working tree (i.e., the changed files
 	are preserved but not marked for commit) and reports what has not
 	been updated. This is the default action.
 

@@ -12,7 +12,7 @@ This document presents a brief summary of each tool and the corresponding
 link.
 
 
-Alternative/Augmentative Procelains
+Alternative/Augmentative Porcelains
 -----------------------------------
 
    - *Cogito* (http://www.kernel.org/pub/software/scm/cogito/)

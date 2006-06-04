@@ -30,7 +30,7 @@ OPTIONS
 -------
 --cached::
 	Instead of searching in the working tree files, check
-	the blobs registerd in the index file.
+	the blobs registered in the index file.
 
 -a | --text::
 	Process binary files as if they were text.
@@ -65,7 +65,7 @@ OPTIONS
 -[ABC] <context>::
 	Show `context` trailing (`A` -- after), or leading (`B`
 	-- before), or both (`C` -- context) lines, and place a
-	line containing `--` between continguous groups of
+	line containing `--` between contiguous groups of
 	matches.
 
 -f <file>::

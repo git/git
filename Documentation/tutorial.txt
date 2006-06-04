@@ -194,7 +194,7 @@ $ git clone /home/alice/project myrepo
 
 This creates a new directory "myrepo" containing a clone of Alice's
 repository.  The clone is on an equal footing with the original
-project, posessing its own copy of the original project's history.
+project, possessing its own copy of the original project's history.
 
 Bob then makes some changes and commits them:
 
@@ -240,7 +240,7 @@ $ git log -p master..bob-incoming
 shows a list of all the changes that Bob made since he branched from
 Alice's master branch.
 
-After examing those changes, and possibly fixing things, Alice can
+After examining those changes, and possibly fixing things, Alice can
 pull the changes into her master branch:
 
 -------------------------------------
@@ -374,7 +374,7 @@ project, so
 $ git grep "hello" v2.5
 -------------------------------------
 
-searches for all occurences of "hello" in v2.5.
+searches for all occurrences of "hello" in v2.5.
 
 If you leave out the commit name, git grep will search any of the
 files it manages in your current directory.  So
@@ -482,6 +482,6 @@ digressions that may be interesting at this point are:
     smart enough to perform a close-to-optimal search even in the
     case of complex non-linear history with lots of merged branches.
 
-  * link:everyday.html[Everday GIT with 20 Commands Or So]
+  * link:everyday.html[Everyday GIT with 20 Commands Or So]
 
   * link:cvs-migration.html[git for CVS users].

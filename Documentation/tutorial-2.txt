@@ -49,7 +49,7 @@ tree
 
 A tree can refer to one or more "blob" objects, each corresponding to
 a file.  In addition, a tree can also refer to other tree objects,
-thus creating a directory heirarchy.  You can examine the contents of
+thus creating a directory hierarchy.  You can examine the contents of
 any tree using ls-tree (remember that a long enough initial portion
 of the SHA1 will also work):
 

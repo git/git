@@ -98,7 +98,7 @@ but can be used to amend a merge commit.
 	Instead of committing only the files specified on the
 	command line, update them in the index file and then
 	commit the whole index.  This is the traditional
-	behaviour.
+	behavior.
 
 -o|--only::
 	Commit only the files specified on the command line.
