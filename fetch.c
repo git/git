@@ -8,6 +8,7 @@
 #include "refs.h"
 
 const char *write_ref = NULL;
+const char *write_ref_log_details = NULL;
 
 int get_tree = 0;
 int get_history = 0;
@@ -202,23 +203,51 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 
 int pull(char *target)
 {
+	struct ref_lock *lock = NULL;
 	unsigned char sha1[20];
+	char *msg;
+	int ret;
 
 	save_commit_buffer = 0;
 	track_object_refs = 0;
+	if (write_ref) {
+		lock = lock_ref_sha1(write_ref, NULL, 0);
+		if (!lock) {
+			error("Can't lock ref %s", write_ref);
+			return -1;
+		}
+	}
 
 	if (!get_recover)
 		for_each_ref(mark_complete);
 
-	if (interpret_target(target, sha1))
-		return error("Could not interpret %s as something to pull",
-			     target);
-	if (process(lookup_unknown_object(sha1)))
+	if (interpret_target(target, sha1)) {
+		error("Could not interpret %s as something to pull", target);
+		if (lock)
+			unlock_ref(lock);
 		return -1;
-	if (loop())
+	}
+	if (process(lookup_unknown_object(sha1))) {
+		if (lock)
+			unlock_ref(lock);
 		return -1;
-	
-	if (write_ref)
-		write_ref_sha1_unlocked(write_ref, sha1);
+	}
+	if (loop()) {
+		if (lock)
+			unlock_ref(lock);
+		return -1;
+	}
+
+	if (write_ref) {
+		if (write_ref_log_details) {
+			msg = xmalloc(strlen(write_ref_log_details) + 12);
+			sprintf(msg, "fetch from %s", write_ref_log_details);
+		} else
+			msg = NULL;
+		ret = write_ref_sha1(lock, sha1, msg ? msg : "fetch (unknown)");
+		if (msg)
+			free(msg);
+		return ret;
+	}
 	return 0;
 }

@@ -25,6 +25,9 @@ extern int fetch_ref(char *ref, unsigned char *sha1);
 /* If set, the ref filename to write the target value to. */
 extern const char *write_ref;
 
+/* If set additional text will appear in the ref log. */
+extern const char *write_ref_log_details;
+
 /* Set to fetch the target tree. */
 extern int get_tree;
 

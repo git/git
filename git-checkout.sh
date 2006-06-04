@@ -5,10 +5,13 @@ SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
 
 old=$(git-rev-parse HEAD)
+old_name=HEAD
 new=
+new_name=
 force=
 branch=
 newbranch=
+newbranch_log=
 merge=
 while [ "$#" != "0" ]; do
     arg="$1"
@@ -23,6 +26,9 @@ while [ "$#" != "0" ]; do
 			die "git checkout: branch $newbranch already exists"
 		git-check-ref-format "heads/$newbranch" ||
 			die "git checkout: we do not like '$newbranch' as a branch name."
+		;;
+	"-l")
+		newbranch_log=1
 		;;
 	"-f")
 		force=1
@@ -44,6 +50,7 @@ while [ "$#" != "0" ]; do
 				exit 1
 			fi
 			new="$rev"
+			new_name="$arg^0"
 			if [ -f "$GIT_DIR/refs/heads/$arg" ]; then
 				branch="$arg"
 			fi
@@ -51,9 +58,11 @@ while [ "$#" != "0" ]; do
 		then
 			# checking out selected paths from a tree-ish.
 			new="$rev"
+			new_name="$arg^{tree}"
 			branch=
 		else
 			new=
+			new_name=
 			branch=
 			set x "$arg" "$@"
 			shift
@@ -114,7 +123,7 @@ then
 	cd "$cdup"
 fi
 
-[ -z "$new" ] && new=$old
+[ -z "$new" ] && new=$old && new_name="$old_name"
 
 # If we don't have an old branch that we're switching to,
 # and we don't have a new branch name for the target we
@@ -187,9 +196,11 @@ fi
 #
 if [ "$?" -eq 0 ]; then
 	if [ "$newbranch" ]; then
-		leading=`expr "refs/heads/$newbranch" : '\(.*\)/'` &&
-		mkdir -p "$GIT_DIR/$leading" &&
-		echo $new >"$GIT_DIR/refs/heads/$newbranch" || exit
+		if [ "$newbranch_log" ]; then
+			mkdir -p $(dirname "$GIT_DIR/logs/refs/heads/$newbranch")
+			touch "$GIT_DIR/logs/refs/heads/$newbranch"
+		fi
+		git-update-ref -m "checkout: Created from $new_name" "refs/heads/$newbranch" $new || exit
 		branch="$newbranch"
 	fi
 	[ "$branch" ] &&

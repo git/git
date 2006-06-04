@@ -124,6 +124,13 @@ syntax.
   happen to have both heads/master and tags/master, you can
   explicitly say 'heads/master' to tell git which one you mean.
 
+* A suffix '@' followed by a date specification enclosed in a brace
+  pair (e.g. '\{yesterday\}', '\{1 month 2 weeks 3 days 1 hour 1
+  second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
+  of the ref at a prior point in time.  This suffix may only be
+  used immediately following a ref name and the ref must have an
+  existing log ($GIT_DIR/logs/<ref>).
+
 * A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
   'rev{caret}'
