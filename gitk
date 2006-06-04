@@ -3568,14 +3568,17 @@ proc viewnextline {dir} {
     allcanvs yview moveto [expr {$newtop * 1.0 / $ymax}]
 }
 
-# add a list of tag names at position pos
-proc appendrefs {pos l} {
-    global ctext commitrow linknum curview idtags
+# add a list of tag or branch names at position pos
+# returns the number of names inserted
+proc appendrefs {pos l var} {
+    global ctext commitrow linknum curview idtags $var
 
-    if {[catch {$ctext index $pos}]} return
+    if {[catch {$ctext index $pos}]} {
+	return 0
+    }
     set tags {}
     foreach id $l {
-	foreach tag $idtags($id) {
+	foreach tag [set $var\($id\)] {
 	    lappend tags [concat $tag $id]
 	}
     }
@@ -3598,20 +3601,27 @@ proc appendrefs {pos l} {
 	}
 	set sep ", "
     }
+    return [llength $tags]
 }
 
 # called when we have finished computing the nearby tags
 proc dispneartags {} {
     global selectedline currentid ctext anc_tags desc_tags showneartags
+    global desc_heads
 
     if {![info exists selectedline] || !$showneartags} return
     set id $currentid
     $ctext conf -state normal
+    if {[info exists desc_heads($id)]} {
+	if {[appendrefs branch $desc_heads($id) idheads] > 1} {
+	    $ctext insert "branch -2c" "es"
+	}
+    }
     if {[info exists anc_tags($id)]} {
-	appendrefs follows $anc_tags($id)
+	appendrefs follows $anc_tags($id) idtags
     }
     if {[info exists desc_tags($id)]} {
-	appendrefs precedes $desc_tags($id)
+	appendrefs precedes $desc_tags($id) idtags
     }
     $ctext conf -state disabled
 }
@@ -3623,7 +3633,7 @@ proc selectline {l isnew} {
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
-    global cmitmode desc_tags anc_tags showneartags allcommits
+    global cmitmode desc_tags anc_tags showneartags allcommits desc_heads
 
     catch {unset pending_select}
     $canv delete hover
@@ -3740,17 +3750,26 @@ proc selectline {l isnew} {
 	if {![info exists allcommits]} {
 	    getallcommits
 	}
-	$ctext insert end "Follows: "
+	$ctext insert end "Branch: "
+	$ctext mark set branch "end -1c"
+	$ctext mark gravity branch left
+	if {[info exists desc_heads($id)]} {
+	    if {[appendrefs branch $desc_heads($id) idheads] > 1} {
+		# turn "Branch" into "Branches"
+		$ctext insert "branch -2c" "es"
+	    }
+	}
+	$ctext insert end "\nFollows: "
 	$ctext mark set follows "end -1c"
 	$ctext mark gravity follows left
 	if {[info exists anc_tags($id)]} {
-	    appendrefs follows $anc_tags($id)
+	    appendrefs follows $anc_tags($id) idtags
 	}
 	$ctext insert end "\nPrecedes: "
 	$ctext mark set precedes "end -1c"
 	$ctext mark gravity precedes left
 	if {[info exists desc_tags($id)]} {
-	    appendrefs precedes $desc_tags($id)
+	    appendrefs precedes $desc_tags($id) idtags
 	}
 	$ctext insert end "\n"
     }
@@ -5042,6 +5061,7 @@ proc combine_atags {l1 l2} {
 proc getallclines {fd} {
     global allparents allchildren allcommits allcstart
     global desc_tags anc_tags idtags alldtags tagisdesc allids
+    global desc_heads idheads
 
     while {[gets $fd line] >= 0} {
 	set id [lindex $line 0]
@@ -5055,7 +5075,9 @@ proc getallclines {fd} {
 	    lappend allchildren($p) $id
 	}
 	# compute nearest tagged descendents as we go
+	# also compute descendent heads
 	set dtags {}
+	set dheads {}
 	foreach child $allchildren($id) {
 	    if {[info exists idtags($child)]} {
 		set ctags [list $child]
@@ -5066,6 +5088,12 @@ proc getallclines {fd} {
 		set dtags $ctags
 	    } elseif {$ctags ne $dtags} {
 		set dtags [combine_dtags $dtags $ctags]
+	    }
+	    set cheads $desc_heads($child)
+	    if {$dheads eq {}} {
+		set dheads $cheads
+	    } elseif {$cheads ne $dheads} {
+		set dheads [lsort -unique [concat $dheads $cheads]]
 	    }
 	}
 	set desc_tags($id) $dtags
@@ -5081,6 +5109,10 @@ proc getallclines {fd} {
 		set tagisdesc($tag,$id) 1
 	    }
 	}
+	if {[info exists idheads($id)]} {
+	    lappend dheads $id
+	}
+	set desc_heads($id) $dheads
 	if {[clock clicks -milliseconds] - $allcstart >= 50} {
 	    fileevent $fd readable {}
 	    after idle restartgetall $fd
