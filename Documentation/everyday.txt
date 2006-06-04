@@ -377,6 +377,29 @@ git	stream	tcp	nowait	nobody \
 +
 The actual configuration line should be on one line.
 
+Run git-daemon to serve /pub/scm from xinetd.::
++
+------------
+$ cat /etc/xinetd.d/git-daemon
+# default: off
+# description: The git server offers access to git repositories
+service git
+{
+        disable = no
+        type            = UNLISTED
+        port            = 9418
+        socket_type     = stream
+        wait            = no
+        user            = nobody
+        server          = /usr/bin/git-daemon
+        server_args     = --inetd --syslog --export-all --base-path=/pub/scm
+        log_on_failure  += USERID
+}
+------------
++
+Check your xinetd(8) documentation and setup, this is from a Fedora system.
+Others might be different.
+
 Give push/pull only access to developers.::
 +
 ------------
