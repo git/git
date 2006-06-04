@@ -799,10 +799,8 @@ static int oneway_merge(struct cache_entry **src)
 		return error("Cannot do a oneway merge of %d trees",
 			     merge_size);
 
-	if (!a) {
-		invalidate_ce_path(old);
+	if (!a)
 		return deleted_entry(old, old);
-	}
 	if (old && same(old, a)) {
 		if (reset) {
 			struct stat st;
@@ -1034,7 +1032,7 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
 	 */
-	if (trees && trees->item && (!merge || (stage == 2))) {
+	if (trees && trees->item && !prefix && (!merge || (stage == 2))) {
 		cache_tree_free(&active_cache_tree);
 		prime_cache_tree();
 	}
