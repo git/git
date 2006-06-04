@@ -271,30 +271,25 @@ static void write_global_extended_header(const unsigned char *sha1)
 static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 {
 	int pathlen = path->len;
+	struct name_entry entry;
 
-	while (tree->size) {
-		const char *name;
-		const unsigned char *sha1;
-		unsigned mode;
+	while (tree_entry(tree, &entry)) {
 		void *eltbuf;
 		char elttype[20];
 		unsigned long eltsize;
 
-		sha1 = tree_entry_extract(tree, &name, &mode);
-		update_tree_entry(tree);
-
-		eltbuf = read_sha1_file(sha1, elttype, &eltsize);
+		eltbuf = read_sha1_file(entry.sha1, elttype, &eltsize);
 		if (!eltbuf)
-			die("cannot read %s", sha1_to_hex(sha1));
+			die("cannot read %s", sha1_to_hex(entry.sha1));
 
 		path->len = pathlen;
-		strbuf_append_string(path, name);
-		if (S_ISDIR(mode))
+		strbuf_append_string(path, entry.path);
+		if (S_ISDIR(entry.mode))
 			strbuf_append_string(path, "/");
 
-		write_entry(sha1, path, mode, eltbuf, eltsize);
+		write_entry(entry.sha1, path, entry.mode, eltbuf, eltsize);
 
-		if (S_ISDIR(mode)) {
+		if (S_ISDIR(entry.mode)) {
 			struct tree_desc subtree;
 			subtree.buf = eltbuf;
 			subtree.size = eltsize;

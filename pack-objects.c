@@ -690,25 +690,20 @@ static void add_pbase_object(struct tree_desc *tree,
 			     const char *name,
 			     int cmplen)
 {
-	while (tree->size) {
-		const unsigned char *sha1;
-		const char *entry_name;
-		int entry_len;
-		unsigned mode;
+	struct name_entry entry;
+
+	while (tree_entry(tree,&entry)) {
 		unsigned long size;
 		char type[20];
 
-		sha1 = tree_entry_extract(tree, &entry_name, &mode);
-		update_tree_entry(tree);
-		entry_len = strlen(entry_name);
-		if (entry_len != cmplen ||
-		    memcmp(entry_name, name, cmplen) ||
-		    !has_sha1_file(sha1) ||
-		    sha1_object_info(sha1, type, &size))
+		if (entry.pathlen != cmplen ||
+		    memcmp(entry.path, name, cmplen) ||
+		    !has_sha1_file(entry.sha1) ||
+		    sha1_object_info(entry.sha1, type, &size))
 			continue;
 		if (name[cmplen] != '/') {
 			unsigned hash = name_hash(up, name);
-			add_object_entry(sha1, hash, 1);
+			add_object_entry(entry.sha1, hash, 1);
 			return;
 		}
 		if (!strcmp(type, tree_type)) {
@@ -718,15 +713,15 @@ static void add_pbase_object(struct tree_desc *tree,
 			const char *down = name+cmplen+1;
 			int downlen = name_cmp_len(down);
 
-			tree = pbase_tree_get(sha1);
+			tree = pbase_tree_get(entry.sha1);
 			if (!tree)
 				return;
 			sub.buf = tree->tree_data;
 			sub.size = tree->tree_size;
 
 			me.up = up;
-			me.elem = entry_name;
-			me.len = entry_len;
+			me.elem = entry.path;
+			me.len = entry.pathlen;
 			add_pbase_object(&sub, &me, down, downlen);
 			pbase_tree_put(tree);
 		}

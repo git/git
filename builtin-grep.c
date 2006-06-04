@@ -578,11 +578,9 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 		     struct tree_desc *tree,
 		     const char *tree_name, const char *base)
 {
-	unsigned mode;
 	int len;
 	int hit = 0;
-	const char *path;
-	const unsigned char *sha1;
+	struct name_entry entry;
 	char *down;
 	char *path_buf = xmalloc(PATH_MAX + strlen(tree_name) + 100);
 
@@ -597,36 +595,32 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 	}
 	len = strlen(path_buf);
 
-	while (tree->size) {
-		int pathlen;
-		sha1 = tree_entry_extract(tree, &path, &mode);
-		pathlen = strlen(path);
-		strcpy(path_buf + len, path);
+	while (tree_entry(tree, &entry)) {
+		strcpy(path_buf + len, entry.path);
 
-		if (S_ISDIR(mode))
+		if (S_ISDIR(entry.mode))
 			/* Match "abc/" against pathspec to
 			 * decide if we want to descend into "abc"
 			 * directory.
 			 */
-			strcpy(path_buf + len + pathlen, "/");
+			strcpy(path_buf + len + entry.pathlen, "/");
 
 		if (!pathspec_matches(paths, down))
 			;
-		else if (S_ISREG(mode))
-			hit |= grep_sha1(opt, sha1, path_buf);
-		else if (S_ISDIR(mode)) {
+		else if (S_ISREG(entry.mode))
+			hit |= grep_sha1(opt, entry.sha1, path_buf);
+		else if (S_ISDIR(entry.mode)) {
 			char type[20];
 			struct tree_desc sub;
 			void *data;
-			data = read_sha1_file(sha1, type, &sub.size);
+			data = read_sha1_file(entry.sha1, type, &sub.size);
 			if (!data)
 				die("unable to read tree (%s)",
-				    sha1_to_hex(sha1));
+				    sha1_to_hex(entry.sha1));
 			sub.buf = data;
 			hit |= grep_tree(opt, paths, &sub, tree_name, down);
 			free(data);
 		}
-		update_tree_entry(tree);
 	}
 	return hit;
 }

@@ -9,6 +9,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "tree-walk.h"
 #include "cache-tree.h"
 #include <sys/time.h>
 #include <signal.h>
@@ -29,7 +30,17 @@ static int merge_size = 0;
 
 static struct object_list *trees = NULL;
 
-static struct cache_entry df_conflict_entry = { 
+static struct cache_entry df_conflict_entry = {
+};
+
+struct tree_entry_list {
+	struct tree_entry_list *next;
+	unsigned directory : 1;
+	unsigned executable : 1;
+	unsigned symlink : 1;
+	unsigned int mode;
+	const char *name;
+	const unsigned char *sha1;
 };
 
 static struct tree_entry_list df_conflict_list = {
@@ -39,7 +50,35 @@ static struct tree_entry_list df_conflict_list = {
 
 typedef int (*merge_fn_t)(struct cache_entry **src);
 
-static int entcmp(char *name1, int dir1, char *name2, int dir2)
+static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
+{
+	struct tree_desc desc;
+	struct name_entry one;
+	struct tree_entry_list *ret = NULL;
+	struct tree_entry_list **list_p = &ret;
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (tree_entry(&desc, &one)) {
+		struct tree_entry_list *entry;
+
+		entry = xmalloc(sizeof(struct tree_entry_list));
+		entry->name = one.path;
+		entry->sha1 = one.sha1;
+		entry->mode = one.mode;
+		entry->directory = S_ISDIR(one.mode) != 0;
+		entry->executable = (one.mode & S_IXUSR) != 0;
+		entry->symlink = S_ISLNK(one.mode) != 0;
+		entry->next = NULL;
+
+		*list_p = entry;
+		list_p = &entry->next;
+	}
+	return ret;
+}
+
+static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 {
 	int len1 = strlen(name1);
 	int len2 = strlen(name2);
@@ -67,7 +106,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	int src_size = len + 1;
 	do {
 		int i;
-		char *first;
+		const char *first;
 		int firstdir = 0;
 		int pathlen;
 		unsigned ce_size;
@@ -161,9 +200,10 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			}
 
 			if (posns[i]->directory) {
+				struct tree *tree = lookup_tree(posns[i]->sha1);
 				any_dirs = 1;
-				parse_tree(posns[i]->item.tree);
-				subposns[i] = posns[i]->item.tree->entries;
+				parse_tree(tree);
+				subposns[i] = create_tree_entry_list(tree);
 				posns[i] = posns[i]->next;
 				src[i + merge] = &df_conflict_entry;
 				continue;
@@ -187,7 +227,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 			any_files = 1;
 
-			memcpy(ce->sha1, posns[i]->item.any->sha1, 20);
+			memcpy(ce->sha1, posns[i]->sha1, 20);
 			src[i + merge] = ce;
 			subposns[i] = &df_conflict_list;
 			posns[i] = posns[i]->next;
@@ -368,7 +408,7 @@ static int unpack_trees(merge_fn_t fn)
 	if (len) {
 		posns = xmalloc(len * sizeof(struct tree_entry_list *));
 		for (i = 0; i < len; i++) {
-			posns[i] = ((struct tree *) posn->item)->entries;
+			posns[i] = create_tree_entry_list((struct tree *) posn->item);
 			posn = posn->next;
 		}
 		if (unpack_trees_rec(posns, len, "", fn, &indpos))
@@ -775,19 +815,23 @@ static int read_cache_unmerged(void)
 
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
-	struct tree_entry_list *ent;
+	struct tree_desc desc;
+	struct name_entry entry;
 	int cnt;
 
 	memcpy(it->sha1, tree->object.sha1, 20);
-	for (cnt = 0, ent = tree->entries; ent; ent = ent->next) {
-		if (!ent->directory)
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+	cnt = 0;
+	while (tree_entry(&desc, &entry)) {
+		if (!S_ISDIR(entry.mode))
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = (struct tree *)ent->item.tree;
+			struct tree *subtree = lookup_tree(entry.sha1);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
-			sub = cache_tree_sub(it, ent->name);
+			sub = cache_tree_sub(it, entry.path);
 			sub->cache_tree = cache_tree();
 			prime_cache_tree_rec(sub->cache_tree, subtree);
 			cnt += sub->cache_tree->entry_count;
