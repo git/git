@@ -214,7 +214,7 @@ static int do_push(const char *repo)
 {
 	const char *uri[MAX_URI];
 	int i, n;
-	int remote;
+	int common_argc;
 	const char **argv;
 	int argc;
 
@@ -231,23 +231,25 @@ static int do_push(const char *repo)
 		argv[argc++] = "--force";
 	if (execute)
 		argv[argc++] = execute;
-	if (thin)
-		argv[argc++] = "--thin";
-	remote = argc;
-	argv[argc++] = "dummy-remote";
-	while (refspec_nr--)
-		argv[argc++] = *refspec++;
-	argv[argc] = NULL;
+	common_argc = argc;
 
 	for (i = 0; i < n; i++) {
 		int error;
+		int dest_argc = common_argc;
+		int dest_refspec_nr = refspec_nr;
+		const char **dest_refspec = refspec;
 		const char *dest = uri[i];
 		const char *sender = "git-send-pack";
 		if (!strncmp(dest, "http://", 7) ||
 		    !strncmp(dest, "https://", 8))
 			sender = "git-http-push";
+		else if (thin)
+			argv[dest_argc++] = "--thin";
 		argv[0] = sender;
-		argv[remote] = dest;
+		argv[dest_argc++] = dest;
+		while (dest_refspec_nr--)
+			argv[dest_argc++] = *dest_refspec++;
+		argv[dest_argc] = NULL;
 		error = run_command_v(argc, argv);
 		if (!error)
 			continue;
