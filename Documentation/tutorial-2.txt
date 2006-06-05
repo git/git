@@ -136,7 +136,7 @@ The "tree" object here refers to the new state of the tree:
 ------------------------------------------------
 $ git ls-tree d0492b36
 100644 blob a0423896973644771497bdc03eb99d5281615b51    file.txt
-$ git cat-file commit a0423896
+$ git cat-file blob a0423896
 hello world!
 ------------------------------------------------
 
