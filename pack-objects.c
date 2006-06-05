@@ -463,48 +463,21 @@ static void rehash_objects(void)
 	}
 }
 
-struct name_path {
-	struct name_path *up;
-	const char *elem;
-	int len;
-};
-
-#define DIRBITS 12
-
-static unsigned name_hash(struct name_path *path, const char *name)
+static unsigned name_hash(const char *name)
 {
-	struct name_path *p = path;
-	const char *n = name + strlen(name);
-	unsigned hash = 0, name_hash = 0, name_done = 0;
+	unsigned char c;
+	unsigned hash = 0;
 
-	if (n != name && n[-1] == '\n')
-		n--;
-	while (name <= --n) {
-		unsigned char c = *n;
-		if (c == '/' && !name_done) {
-			name_hash = hash;
-			name_done = 1;
-			hash = 0;
-		}
-		hash = hash * 11 + c;
-	}
-	if (!name_done) {
-		name_hash = hash;
-		hash = 0;
-	}
-	for (p = path; p; p = p->up) {
-		hash = hash * 11 + '/';
-		n = p->elem + p->len;
-		while (p->elem <= --n) {
-			unsigned char c = *n;
-			hash = hash * 11 + c;
-		}
-	}
 	/*
-	 * Make sure "Makefile" and "t/Makefile" are hashed separately
-	 * but close enough.
+	 * This effectively just creates a sortable number from the
+	 * last sixteen non-whitespace characters. Last characters
+	 * count "most", so things that end in ".c" sort together.
 	 */
-	hash = (name_hash<<DIRBITS) | (hash & ((1U<<DIRBITS )-1));
+	while ((c = *name++) != 0) {
+		if (isspace(c))
+			continue;
+		hash = (hash >> 2) + (c << 24);
+	}
 	return hash;
 }
 
@@ -686,9 +659,9 @@ static int name_cmp_len(const char *name)
 }
 
 static void add_pbase_object(struct tree_desc *tree,
-			     struct name_path *up,
 			     const char *name,
-			     int cmplen)
+			     int cmplen,
+			     const char *fullname)
 {
 	struct name_entry entry;
 
@@ -702,13 +675,12 @@ static void add_pbase_object(struct tree_desc *tree,
 		    sha1_object_info(entry.sha1, type, &size))
 			continue;
 		if (name[cmplen] != '/') {
-			unsigned hash = name_hash(up, name);
+			unsigned hash = name_hash(fullname);
 			add_object_entry(entry.sha1, hash, 1);
 			return;
 		}
 		if (!strcmp(type, tree_type)) {
 			struct tree_desc sub;
-			struct name_path me;
 			struct pbase_tree_cache *tree;
 			const char *down = name+cmplen+1;
 			int downlen = name_cmp_len(down);
@@ -719,10 +691,7 @@ static void add_pbase_object(struct tree_desc *tree,
 			sub.buf = tree->tree_data;
 			sub.size = tree->tree_size;
 
-			me.up = up;
-			me.elem = entry.path;
-			me.len = entry.pathlen;
-			add_pbase_object(&sub, &me, down, downlen);
+			add_pbase_object(&sub, down, downlen, fullname);
 			pbase_tree_put(tree);
 		}
 	}
@@ -778,14 +747,14 @@ static void add_preferred_base_object(char *name, unsigned hash)
 
 	for (it = pbase_tree; it; it = it->next) {
 		if (cmplen == 0) {
-			hash = name_hash(NULL, "");
+			hash = name_hash("");
 			add_object_entry(it->pcache.sha1, hash, 1);
 		}
 		else {
 			struct tree_desc tree;
 			tree.buf = it->pcache.tree_data;
 			tree.size = it->pcache.tree_size;
-			add_pbase_object(&tree, NULL, name, cmplen);
+			add_pbase_object(&tree, name, cmplen, name);
 		}
 	}
 }
@@ -1328,7 +1297,7 @@ int main(int argc, char **argv)
 		}
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
-		hash = name_hash(NULL, line+41);
+		hash = name_hash(line+41);
 		add_preferred_base_object(line+41, hash);
 		add_object_entry(sha1, hash, 0);
 	}
