@@ -202,6 +202,7 @@ int main(int argc, const char **argv, char **envp)
 	char *slash = strrchr(cmd, '/');
 	char git_command[PATH_MAX + 1];
 	const char *exec_path = NULL;
+	int done_alias = 0;
 
 	/*
 	 * Take the basename of argv[0] as the command
@@ -229,7 +230,6 @@ int main(int argc, const char **argv, char **envp)
 	if (!strncmp(cmd, "git-", 4)) {
 		cmd += 4;
 		argv[0] = cmd;
-		handle_alias(&argc, &argv);
 		handle_internal_command(argc, argv, envp);
 		die("cannot handle %s internally", cmd);
 	}
@@ -287,13 +287,21 @@ int main(int argc, const char **argv, char **envp)
 	exec_path = git_exec_path();
 	prepend_to_path(exec_path, strlen(exec_path));
 
-	handle_alias(&argc, &argv);
+	while (1) {
+		/* See if it's an internal command */
+		handle_internal_command(argc, argv, envp);
 
-	/* See if it's an internal command */
-	handle_internal_command(argc, argv, envp);
+		/* .. then try the external ones */
+		execv_git_cmd(argv);
 
-	/* .. then try the external ones */
-	execv_git_cmd(argv);
+		/* It could be an alias -- this works around the insanity
+		 * of overriding "git log" with "git show" by having
+		 * alias.log = show
+		 */
+		if (done_alias || !handle_alias(&argc, &argv))
+			break;
+		done_alias = 1;
+	}
 
 	if (errno == ENOENT)
 		cmd_usage(0, exec_path, "'%s' is not a git-command", cmd);
