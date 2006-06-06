@@ -15,7 +15,7 @@
 #define DO_NONFLAGS	8
 static int filter = ~0;
 
-static char *def = NULL;
+static const char *def = NULL;
 
 #define NORMAL 0
 #define REVERSED 1
@@ -111,7 +111,7 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 }
 
 /* Output a flag, only if filter allows it. */
-static int show_flag(char *arg)
+static int show_flag(const char *arg)
 {
 	if (!(filter & DO_FLAGS))
 		return 0;
@@ -124,7 +124,7 @@ static int show_flag(char *arg)
 
 static void show_default(void)
 {
-	char *s = def;
+	const char *s = def;
 
 	if (s) {
 		unsigned char sha1[20];
@@ -173,7 +173,7 @@ int cmd_rev_parse(int argc, const char **argv, char **envp)
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+		const char *arg = argv[i];
 		char *dotdot;
 
 		if (as_is) {
@@ -330,7 +330,7 @@ int cmd_rev_parse(int argc, const char **argv, char **envp)
 		if (dotdot) {
 			unsigned char end[20];
 			char *next = dotdot + 2;
-			char *this = arg;
+			const char *this = arg;
 			*dotdot = 0;
 			if (!*next)
 				next = "HEAD";
