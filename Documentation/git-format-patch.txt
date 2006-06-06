@@ -40,8 +40,7 @@ OPTIONS
 -------
 -o|--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
-	current working directory. This option is ignored if
-	--stdout is specified.
+	current working directory.
 
 -n|--numbered::
 	Name output in '[PATCH n/m]' format.
