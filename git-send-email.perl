@@ -313,7 +313,7 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $references, $message);
 sub extract_valid_address {
 	my $address = shift;
 	my $local_part_regexp = '[^<>"\s@]+';
-	my $domain_regexp = '[^.<>"\s@]+\.[^<>"\s@]+';
+	my $domain_regexp = '[^.<>"\s@]+(?:\.[^.<>"\s@]+)+';
 
 	# check for a local address:
 	return $address if ($address =~ /^($local_part_regexp)$/);
