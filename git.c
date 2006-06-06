@@ -251,6 +251,11 @@ int main(int argc, const char **argv, char **envp)
 		cmd = *++argv;
 		argc--;
 
+		if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
+			setup_pager();
+			continue;
+		}
+
 		if (strncmp(cmd, "--", 2))
 			break;
 
