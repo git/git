@@ -2072,7 +2072,7 @@ static void write_out_results(struct patch *list, int skipped_patch)
 	}
 }
 
-static struct cache_file cache_file;
+static struct lock_file lock_file;
 
 static struct excludes {
 	struct excludes *next;
@@ -2133,8 +2133,12 @@ static int apply_patch(int fd, const char *filename)
 		apply = 0;
 
 	write_index = check_index && apply;
-	if (write_index && newfd < 0)
-		newfd = hold_index_file_for_update(&cache_file, get_index_file());
+	if (write_index && newfd < 0) {
+		newfd = hold_lock_file_for_update(&lock_file,
+						  get_index_file());
+		if (newfd < 0)
+			die("unable to create new index file");
+	}
 	if (check_index) {
 		if (read_cache() < 0)
 			die("unable to read index file");
@@ -2312,8 +2316,8 @@ int cmd_apply(int argc, const char **argv, char **envp)
 
 	if (write_index) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_index_file(&cache_file))
-			die("Unable to write new cachefile");
+		    commit_lock_file(&lock_file))
+			die("Unable to write new index file");
 	}
 
 	return 0;

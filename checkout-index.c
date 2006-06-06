@@ -168,7 +168,7 @@ static int checkout_all(void)
 static const char checkout_cache_usage[] =
 "git-checkout-index [-u] [-q] [-a] [-f] [-n] [--stage=[123]|all] [--prefix=<string>] [--temp] [--] <file>...";
 
-static struct cache_file cache_file;
+static struct lock_file lock_file;
 
 int main(int argc, char **argv)
 {
@@ -211,9 +211,8 @@ int main(int argc, char **argv)
 		if (!strcmp(arg, "-u") || !strcmp(arg, "--index")) {
 			state.refresh_cache = 1;
 			if (newfd < 0)
-				newfd = hold_index_file_for_update
-					(&cache_file,
-					 get_index_file());
+				newfd = hold_lock_file_for_update
+					(&lock_file, get_index_file());
 			if (newfd < 0)
 				die("cannot open index.lock file.");
 			continue;
@@ -262,7 +261,7 @@ int main(int argc, char **argv)
 		 */
 		if (state.refresh_cache) {
 			close(newfd); newfd = -1;
-			rollback_index_file(&cache_file);
+			rollback_lock_file(&lock_file);
 		}
 		state.refresh_cache = 0;
 	}
@@ -312,7 +311,7 @@ int main(int argc, char **argv)
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||
-	     commit_index_file(&cache_file)))
-		die("Unable to write new cachefile");
+	     commit_lock_file(&lock_file)))
+		die("Unable to write new index file");
 	return 0;
 }

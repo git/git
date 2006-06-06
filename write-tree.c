@@ -11,7 +11,7 @@ static int missing_ok = 0;
 
 static const char write_tree_usage[] = "git-write-tree [--missing-ok]";
 
-static struct cache_file cache_file;
+static struct lock_file lock_file;
 
 int main(int argc, char **argv)
 {
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
-	newfd = hold_index_file_for_update(&cache_file, get_index_file());
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
 	entries = read_cache();
 	if (argc == 2) {
 		if (!strcmp(argv[1], "--missing-ok"))
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 			die("git-write-tree: error building trees");
 		if (0 <= newfd) {
 			if (!write_cache(newfd, active_cache, active_nr))
-				commit_index_file(&cache_file);
+				commit_lock_file(&lock_file);
 		}
 		/* Not being able to write is fine -- we are only interested
 		 * in updating the cache-tree part, and if the next caller

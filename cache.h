@@ -167,13 +167,13 @@ extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 #define REFRESH_IGNORE_MISSING	0x0008	/* ignore non-existent */
 extern int refresh_cache(unsigned int flags);
 
-struct cache_file {
-	struct cache_file *next;
-	char lockfile[PATH_MAX];
+struct lock_file {
+	struct lock_file *next;
+	char filename[PATH_MAX];
 };
-extern int hold_index_file_for_update(struct cache_file *, const char *path);
-extern int commit_index_file(struct cache_file *);
-extern void rollback_index_file(struct cache_file *);
+extern int hold_lock_file_for_update(struct lock_file *, const char *path);
+extern int commit_lock_file(struct lock_file *);
+extern void rollback_lock_file(struct lock_file *);
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;

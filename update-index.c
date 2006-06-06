@@ -186,7 +186,7 @@ static void chmod_path(int flip, const char *path)
 	die("git-update-index: cannot chmod %cx '%s'", flip, path);
 }
 
-static struct cache_file cache_file;
+static struct lock_file lock_file;
 
 static void update_one(const char *path, const char *prefix, int prefix_length)
 {
@@ -489,9 +489,9 @@ int main(int argc, const char **argv)
 
 	git_config(git_default_config);
 
-	newfd = hold_index_file_for_update(&cache_file, get_index_file());
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
 	if (newfd < 0)
-		die("unable to create new cachefile");
+		die("unable to create new index file");
 
 	entries = read_cache();
 	if (entries < 0)
@@ -645,8 +645,8 @@ int main(int argc, const char **argv)
  finish:
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_index_file(&cache_file))
-			die("Unable to write new cachefile");
+		    commit_lock_file(&lock_file))
+			die("Unable to write new index file");
 	}
 
 	return has_errors ? 1 : 0;
