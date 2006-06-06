@@ -301,19 +301,18 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 		unlock_ref(lock);
 		return NULL;
 	}
+	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
 	lock->ref_file = strdup(path);
-	lock->lock_file = strdup(mkpath("%s.lock", lock->ref_file));
 	lock->log_file = strdup(git_path("logs/%s", lock->ref_file + plen));
 	lock->force_write = lstat(lock->ref_file, &st) && errno == ENOENT;
 
-	if (safe_create_leading_directories(lock->lock_file))
-		die("unable to create directory for %s", lock->lock_file);
-	lock->lock_fd = open(lock->lock_file,
-		O_WRONLY | O_CREAT | O_EXCL, 0666);
+	if (safe_create_leading_directories(lock->ref_file))
+		die("unable to create directory for %s", lock->ref_file);
+	lock->lock_fd = hold_lock_file_for_update(lock->lk, lock->ref_file);
 	if (lock->lock_fd < 0) {
 		error("Couldn't open lock file %s: %s",
-			lock->lock_file, strerror(errno));
+		      lock->lk->filename, strerror(errno));
 		unlock_ref(lock);
 		return NULL;
 	}
@@ -341,12 +340,12 @@ void unlock_ref (struct ref_lock *lock)
 {
 	if (lock->lock_fd >= 0) {
 		close(lock->lock_fd);
-		unlink(lock->lock_file);
+		/* Do not free lock->lk -- atexit() still looks at them */
+		if (lock->lk)
+			rollback_lock_file(lock->lk);
 	}
 	if (lock->ref_file)
 		free(lock->ref_file);
-	if (lock->lock_file)
-		free(lock->lock_file);
 	if (lock->log_file)
 		free(lock->log_file);
 	free(lock);
@@ -415,7 +414,7 @@ int write_ref_sha1(struct ref_lock *lock,
 	if (write(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
 	    write(lock->lock_fd, &term, 1) != 1
 		|| close(lock->lock_fd) < 0) {
-		error("Couldn't write %s", lock->lock_file);
+		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);
 		return -1;
 	}
@@ -423,7 +422,7 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return -1;
 	}
-	if (rename(lock->lock_file, lock->ref_file) < 0) {
+	if (commit_lock_file(lock->lk)) {
 		error("Couldn't set %s", lock->ref_file);
 		unlock_ref(lock);
 		return -1;

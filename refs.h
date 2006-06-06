@@ -3,8 +3,8 @@
 
 struct ref_lock {
 	char *ref_file;
-	char *lock_file;
 	char *log_file;
+	struct lock_file *lk;
 	unsigned char old_sha1[20];
 	int lock_fd;
 	int force_write;
