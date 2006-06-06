@@ -788,6 +788,7 @@ static void finish_request(struct transfer_request *request)
 	}
 }
 
+#ifdef USE_CURL_MULTI
 void fill_active_slots(void)
 {
 	struct transfer_request *request = request_queue_head;
@@ -821,6 +822,7 @@ void fill_active_slots(void)
 		slot = slot->next;
 	}
 }
+#endif
 
 static void get_remote_object_list(unsigned char parent);
 
@@ -851,8 +853,10 @@ static void add_fetch_request(struct object *obj)
 	request->next = request_queue_head;
 	request_queue_head = request;
 
+#ifdef USE_CURL_MULTI
 	fill_active_slots();
 	step_active_slots();
+#endif
 }
 
 static int add_send_request(struct object *obj, struct remote_lock *lock)
@@ -889,8 +893,10 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 	request->next = request_queue_head;
 	request_queue_head = request;
 
+#ifdef USE_CURL_MULTI
 	fill_active_slots();
 	step_active_slots();
+#endif
 
 	return 1;
 }
@@ -2523,7 +2529,9 @@ int main(int argc, char **argv)
 		if (objects_to_send)
 			fprintf(stderr, "    sending %d objects\n",
 				objects_to_send);
+#ifdef USE_CURL_MULTI
 		fill_active_slots();
+#endif
 		finish_all_active_slots();
 
 		/* Update the remote branch if all went well */
