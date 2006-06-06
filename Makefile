@@ -552,7 +552,7 @@ http.o: http.c
 	$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
 
 ifdef NO_EXPAT
-http-fetch.o: http-fetch.c
+http-fetch.o: http-fetch.c http.h
 	$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_EXPAT $<
 endif
 
@@ -576,6 +576,7 @@ git-ssh-push$X: rsh.o
 
 git-imap-send$X: imap-send.o $(LIB_FILE)
 
+http.o http-fetch.o http-push.o: http.h
 git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
