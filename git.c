@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include "git-compat-util.h"
 #include "exec_cmd.h"
+#include "cache.h"
 
 #include "builtin.h"
 
@@ -30,6 +31,113 @@ static void prepend_to_path(const char *dir, int len)
 	memcpy(path + len + 1, old_path, path_len - len);
 
 	setenv("PATH", path, 1);
+}
+
+static const char *alias_command;
+static char *alias_string = NULL;
+
+static int git_alias_config(const char *var, const char *value)
+{
+	if (!strncmp(var, "alias.", 6) && !strcmp(var + 6, alias_command)) {
+		alias_string = strdup(value);
+	}
+	return 0;
+}
+
+static int split_cmdline(char *cmdline, const char ***argv)
+{
+	int src, dst, count = 0, size = 16;
+	char quoted = 0;
+
+	*argv = malloc(sizeof(char*) * size);
+
+	/* split alias_string */
+	(*argv)[count++] = cmdline;
+	for (src = dst = 0; cmdline[src];) {
+		char c = cmdline[src];
+		if (!quoted && isspace(c)) {
+			cmdline[dst++] = 0;
+			while (cmdline[++src]
+					&& isspace(cmdline[src]))
+				; /* skip */
+			if (count >= size) {
+				size += 16;
+				*argv = realloc(*argv, sizeof(char*) * size);
+			}
+			(*argv)[count++] = cmdline + dst;
+		} else if(!quoted && (c == '\'' || c == '"')) {
+			quoted = c;
+			src++;
+		} else if (c == quoted) {
+			quoted = 0;
+			src++;
+		} else {
+			if (c == '\\' && quoted != '\'') {
+				src++;
+				c = cmdline[src];
+				if (!c) {
+					free(*argv);
+					*argv = NULL;
+					return error("cmdline ends with \\");
+				}
+			}
+			cmdline[dst++] = c;
+			src++;
+		}
+	}
+
+	cmdline[dst] = 0;
+
+	if (quoted) {
+		free(*argv);
+		*argv = NULL;
+		return error("unclosed quote");
+	}
+
+	return count;
+}
+
+static int handle_alias(int *argcp, const char ***argv)
+{
+	int nongit = 0, ret = 0;
+	const char *subdir;
+
+	subdir = setup_git_directory_gently(&nongit);
+	if (!nongit) {
+		int count;
+		const char** new_argv;
+
+		alias_command = (*argv)[0];
+		git_config(git_alias_config);
+		if (alias_string) {
+
+			count = split_cmdline(alias_string, &new_argv);
+
+			if (count < 1)
+				die("empty alias for %s", alias_command);
+
+			if (!strcmp(alias_command, new_argv[0]))
+				die("recursive alias: %s", alias_command);
+
+			/* insert after command name */
+			if (*argcp > 1) {
+				new_argv = realloc(new_argv, sizeof(char*) *
+						(count + *argcp - 1));
+				memcpy(new_argv + count, *argv, sizeof(char*) *
+						(*argcp - 1));
+			}
+
+			*argv = new_argv;
+			*argcp += count - 1;
+
+			ret = 1;
+		}
+	}
+
+	if (subdir)
+		chdir(subdir);
+
+	return ret;
 }
 
 const char git_version_string[] = GIT_VERSION;
@@ -94,6 +202,7 @@ int main(int argc, const char **argv, char **envp)
 	char *slash = strrchr(cmd, '/');
 	char git_command[PATH_MAX + 1];
 	const char *exec_path = NULL;
+	int done_alias = 0;
 
 	/*
 	 * Take the basename of argv[0] as the command
@@ -178,11 +287,21 @@ int main(int argc, const char **argv, char **envp)
 	exec_path = git_exec_path();
 	prepend_to_path(exec_path, strlen(exec_path));
 
-	/* See if it's an internal command */
-	handle_internal_command(argc, argv, envp);
+	while (1) {
+		/* See if it's an internal command */
+		handle_internal_command(argc, argv, envp);
 
-	/* .. then try the external ones */
-	execv_git_cmd(argv);
+		/* .. then try the external ones */
+		execv_git_cmd(argv);
+
+		/* It could be an alias -- this works around the insanity
+		 * of overriding "git log" with "git show" by having
+		 * alias.log = show
+		 */
+		if (done_alias || !handle_alias(&argc, &argv))
+			break;
+		done_alias = 1;
+	}
 
 	if (errno == ENOENT)
 		cmd_usage(0, exec_path, "'%s' is not a git-command", cmd);
