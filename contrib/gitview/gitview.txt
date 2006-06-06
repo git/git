@@ -26,8 +26,14 @@ OPTIONS
 	<args>
 		All the valid option for git-rev-list(1)
 	Key Bindings:
+	F4:
+		To maximize the window
 	F5:
 		To reread references.
+	F11:
+		Full screen
+	F12:
+		Leave full screen
 
 EXAMPLES
 ------

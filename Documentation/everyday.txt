@@ -336,15 +336,20 @@ master, nor exposed as a part of a stable branch.
 <11> make sure I did not accidentally rewind master beyond what I
 already pushed out.  "ko" shorthand points at the repository I have
 at kernel.org, and looks like this:
-    $ cat .git/remotes/ko
-    URL: kernel.org:/pub/scm/git/git.git
-    Pull: master:refs/tags/ko-master
-    Pull: maint:refs/tags/ko-maint
-    Push: master
-    Push: +pu
-    Push: maint
++
+------------
+$ cat .git/remotes/ko
+URL: kernel.org:/pub/scm/git/git.git
+Pull: master:refs/tags/ko-master
+Pull: maint:refs/tags/ko-maint
+Push: master
+Push: +pu
+Push: maint
+------------
++
 In the output from "git show-branch", "master" should have
 everything "ko-master" has.
+
 <12> push out the bleeding edge.
 <13> push the tag out, too.
 
@@ -376,6 +381,29 @@ git	stream	tcp	nowait	nobody \
 ------------
 +
 The actual configuration line should be on one line.
+
+Run git-daemon to serve /pub/scm from xinetd.::
++
+------------
+$ cat /etc/xinetd.d/git-daemon
+# default: off
+# description: The git server offers access to git repositories
+service git
+{
+        disable = no
+        type            = UNLISTED
+        port            = 9418
+        socket_type     = stream
+        wait            = no
+        user            = nobody
+        server          = /usr/bin/git-daemon
+        server_args     = --inetd --syslog --export-all --base-path=/pub/scm
+        log_on_failure  += USERID
+}
+------------
++
+Check your xinetd(8) documentation and setup, this is from a Fedora system.
+Others might be different.
 
 Give push/pull only access to developers.::
 +

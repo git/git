@@ -135,9 +135,9 @@ static struct object_list **process_tree(struct tree *tree,
 
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
-			p = process_tree(lookup_tree(entry.sha1), p, &me, name);
+			p = process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
 		else
-			p = process_blob(lookup_blob(entry.sha1), p, &me, name);
+			p = process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
 	}
 	free(tree->buffer);
 	tree->buffer = NULL;
