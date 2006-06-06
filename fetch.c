@@ -150,7 +150,8 @@ static int process(struct object *obj)
 	if (has_sha1_file(obj->sha1)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
-	} else {
+	}
+	else {
 		if (obj->flags & COMPLETE)
 			return 0;
 		prefetch(obj->sha1);
@@ -255,7 +256,8 @@ int pull(char *target)
 		if (write_ref_log_details) {
 			msg = xmalloc(strlen(write_ref_log_details) + 12);
 			sprintf(msg, "fetch from %s", write_ref_log_details);
-		} else
+		}
+		else
 			msg = NULL;
 		ret = write_ref_sha1(lock, sha1, msg ? msg : "fetch (unknown)");
 		if (msg)

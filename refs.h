@@ -3,8 +3,8 @@
 
 struct ref_lock {
 	char *ref_file;
-	char *lock_file;
 	char *log_file;
+	struct lock_file *lk;
 	unsigned char old_sha1[20];
 	int lock_fd;
 	int force_write;
@@ -24,13 +24,13 @@ extern int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *
 extern int get_ref_sha1(const char *ref, unsigned char *sha1);
 
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/
-extern struct ref_lock* lock_ref_sha1(const char *ref, const unsigned char *old_sha1, int mustexist);
+extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1, int mustexist);
 
 /** Locks any ref (for 'HEAD' type refs). */
-extern struct ref_lock* lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int mustexist);
+extern struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int mustexist);
 
 /** Release any lock taken but not written. **/
-extern void unlock_ref (struct ref_lock *lock);
+extern void unlock_ref(struct ref_lock *lock);
 
 /** Writes sha1 into the ref specified by the lock. **/
 extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, const char *msg);

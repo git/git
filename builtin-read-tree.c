@@ -877,7 +877,7 @@ static void prime_cache_tree(void)
 
 static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] <sha1> [<sha2> [<sha3>]])";
 
-static struct cache_file cache_file;
+static struct lock_file lock_file;
 
 int cmd_read_tree(int argc, const char **argv, char **envp)
 {
@@ -888,9 +888,9 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	setup_git_directory();
 	git_config(git_default_config);
 
-	newfd = hold_index_file_for_update(&cache_file, get_index_file());
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
 	if (newfd < 0)
-		die("unable to create new cachefile");
+		die("unable to create new index file");
 
 	git_config(git_default_config);
 
@@ -1039,7 +1039,7 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	}
 
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    commit_index_file(&cache_file))
+	    commit_lock_file(&lock_file))
 		die("unable to write new index file");
 	return 0;
 }

@@ -186,6 +186,7 @@ static void process_response(void *callback_data)
 	finish_request(request);
 }
 
+#ifdef USE_CURL_MULTI
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)
 {
@@ -349,6 +350,41 @@ static void start_fetch_loose(struct transfer_request *request)
 	}
 }
 
+static void start_mkcol(struct transfer_request *request)
+{
+	char *hex = sha1_to_hex(request->obj->sha1);
+	struct active_request_slot *slot;
+	char *posn;
+
+	request->url = xmalloc(strlen(remote->url) + 13);
+	strcpy(request->url, remote->url);
+	posn = request->url + strlen(remote->url);
+	strcpy(posn, "objects/");
+	posn += 8;
+	memcpy(posn, hex, 2);
+	posn += 2;
+	strcpy(posn, "/");
+
+	slot = get_active_slot();
+	slot->callback_func = process_response;
+	slot->callback_data = request;
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1); /* undo PUT setup */
+	curl_easy_setopt(slot->curl, CURLOPT_URL, request->url);
+	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, request->errorstr);
+	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_MKCOL);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
+
+	if (start_active_slot(slot)) {
+		request->slot = slot;
+		request->state = RUN_MKCOL;
+	} else {
+		request->state = ABORTED;
+		free(request->url);
+		request->url = NULL;
+	}
+}
+#endif
+
 static void start_fetch_packed(struct transfer_request *request)
 {
 	char *url;
@@ -435,40 +471,6 @@ static void start_fetch_packed(struct transfer_request *request)
 		fprintf(stderr, "Unable to start GET request\n");
 		remote->can_update_info_refs = 0;
 		release_request(request);
-	}
-}
-
-static void start_mkcol(struct transfer_request *request)
-{
-	char *hex = sha1_to_hex(request->obj->sha1);
-	struct active_request_slot *slot;
-	char *posn;
-
-	request->url = xmalloc(strlen(remote->url) + 13);
-	strcpy(request->url, remote->url);
-	posn = request->url + strlen(remote->url);
-	strcpy(posn, "objects/");
-	posn += 8;
-	memcpy(posn, hex, 2);
-	posn += 2;
-	strcpy(posn, "/");
-
-	slot = get_active_slot();
-	slot->callback_func = process_response;
-	slot->callback_data = request;
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1); /* undo PUT setup */
-	curl_easy_setopt(slot->curl, CURLOPT_URL, request->url);
-	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, request->errorstr);
-	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_MKCOL);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
-
-	if (start_active_slot(slot)) {
-		request->slot = slot;
-		request->state = RUN_MKCOL;
-	} else {
-		request->state = ABORTED;
-		free(request->url);
-		request->url = NULL;
 	}
 }
 
@@ -788,6 +790,7 @@ static void finish_request(struct transfer_request *request)
 	}
 }
 
+#ifdef USE_CURL_MULTI
 void fill_active_slots(void)
 {
 	struct transfer_request *request = request_queue_head;
@@ -821,6 +824,7 @@ void fill_active_slots(void)
 		slot = slot->next;
 	}
 }
+#endif
 
 static void get_remote_object_list(unsigned char parent);
 
@@ -851,8 +855,10 @@ static void add_fetch_request(struct object *obj)
 	request->next = request_queue_head;
 	request_queue_head = request;
 
+#ifdef USE_CURL_MULTI
 	fill_active_slots();
 	step_active_slots();
+#endif
 }
 
 static int add_send_request(struct object *obj, struct remote_lock *lock)
@@ -889,8 +895,10 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 	request->next = request_queue_head;
 	request_queue_head = request;
 
+#ifdef USE_CURL_MULTI
 	fill_active_slots();
 	step_active_slots();
+#endif
 
 	return 1;
 }
@@ -2523,7 +2531,9 @@ int main(int argc, char **argv)
 		if (objects_to_send)
 			fprintf(stderr, "    sending %d objects\n",
 				objects_to_send);
+#ifdef USE_CURL_MULTI
 		fill_active_slots();
+#endif
 		finish_all_active_slots();
 
 		/* Update the remote branch if all went well */

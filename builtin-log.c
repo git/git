@@ -103,7 +103,7 @@ static int git_format_config(const char *var, const char *value)
 
 
 static FILE *realstdout = NULL;
-static char *output_directory = NULL;
+static const char *output_directory = NULL;
 
 static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 {
@@ -206,14 +206,14 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			keep_subject = 1;
 			rev.total = -1;
 		}
-		else if (!strcmp(argv[i], "-o")) {
-			if (argc < 3)
-				die ("Which directory?");
-			if (mkdir(argv[i + 1], 0777) < 0 && errno != EEXIST)
-				die("Could not create directory %s",
-						argv[i + 1]);
-			output_directory = strdup(argv[i + 1]);
+		else if (!strcmp(argv[i], "--output-directory") ||
+			 !strcmp(argv[i], "-o")) {
 			i++;
+			if (argc <= i)
+				die("Which directory?");
+			if (output_directory)
+				die("Two output directories?");
+			output_directory = argv[i];
 		}
 		else if (!strcmp(argv[i], "--signoff") ||
 			 !strcmp(argv[i], "-s")) {
@@ -242,6 +242,14 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
+
+	if (output_directory) {
+		if (use_stdout)
+			die("standard output, or directory, which one?");
+		if (mkdir(output_directory, 0777) < 0 && errno != EEXIST)
+			die("Could not create directory %s",
+			    output_directory);
+	}
 
 	if (rev.pending_objects && rev.pending_objects->next == NULL) {
 		rev.pending_objects->item->flags |= UNINTERESTING;
@@ -293,8 +301,6 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		if (!use_stdout)
 			fclose(stdout);
 	}
-	if (output_directory)
-		free(output_directory);
 	free(list);
 	return 0;
 }
