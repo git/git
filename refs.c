@@ -259,7 +259,7 @@ int check_ref_format(const char *ref)
 	}
 }
 
-static struct ref_lock* verify_lock(struct ref_lock *lock,
+static struct ref_lock *verify_lock(struct ref_lock *lock,
 	const unsigned char *old_sha1, int mustexist)
 {
 	char buf[40];
@@ -285,7 +285,7 @@ static struct ref_lock* verify_lock(struct ref_lock *lock,
 	return lock;
 }
 
-static struct ref_lock* lock_ref_sha1_basic(const char *path,
+static struct ref_lock *lock_ref_sha1_basic(const char *path,
 	int plen,
 	const unsigned char *old_sha1, int mustexist)
 {
@@ -320,7 +320,7 @@ static struct ref_lock* lock_ref_sha1_basic(const char *path,
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 }
 
-struct ref_lock* lock_ref_sha1(const char *ref,
+struct ref_lock *lock_ref_sha1(const char *ref,
 	const unsigned char *old_sha1, int mustexist)
 {
 	if (check_ref_format(ref))
@@ -329,14 +329,14 @@ struct ref_lock* lock_ref_sha1(const char *ref,
 		5 + strlen(ref), old_sha1, mustexist);
 }
 
-struct ref_lock* lock_any_ref_for_update(const char *ref,
+struct ref_lock *lock_any_ref_for_update(const char *ref,
 	const unsigned char *old_sha1, int mustexist)
 {
 	return lock_ref_sha1_basic(git_path("%s", ref),
 		strlen(ref), old_sha1, mustexist);
 }
 
-void unlock_ref (struct ref_lock *lock)
+void unlock_ref(struct ref_lock *lock)
 {
 	if (lock->lock_fd >= 0) {
 		close(lock->lock_fd);
@@ -384,7 +384,8 @@ static int log_ref_write(struct ref_lock *lock,
 			sha1_to_hex(sha1),
 			comitter,
 			msg);
-	} else {
+	}
+	else {
 		maxlen = strlen(comitter) + 2*40 + 4;
 		logrec = xmalloc(maxlen);
 		len = snprintf(logrec, maxlen, "%s %s %s\n",
@@ -477,10 +478,12 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 						"warning: Log %s has gap after %s.\n",
 						logfile, show_rfc2822_date(date, tz));
 				}
-			} else if (date == at_time) {
+			}
+			else if (date == at_time) {
 				if (get_sha1_hex(rec + 41, sha1))
 					die("Log %s is corrupt.", logfile);
-			} else {
+			}
+			else {
 				if (get_sha1_hex(rec + 41, logged_sha1))
 					die("Log %s is corrupt.", logfile);
 				if (memcmp(logged_sha1, sha1, 20)) {
