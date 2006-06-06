@@ -312,20 +312,19 @@ our ($message_id, $cc, %mail, $subject, $reply_to, $references, $message);
 
 sub extract_valid_address {
 	my $address = shift;
+	my $local_part_regexp = '[^<>"\s@]+';
+	my $domain_regexp = '[^.<>"\s@]+(?:\.[^.<>"\s@]+)+';
 
 	# check for a local address:
-	return $address if ($address =~ /^([\w\-]+)$/);
+	return $address if ($address =~ /^($local_part_regexp)$/);
 
 	if ($have_email_valid) {
-		return Email::Valid->address($address);
+		return scalar Email::Valid->address($address);
 	} else {
 		# less robust/correct than the monster regexp in Email::Valid,
 		# but still does a 99% job, and one less dependency
-		my $cleaned_address;
-		if ($address =~ /([^\"<>\s]+@[^<>\s]+)/) {
-			$cleaned_address = $1;
-		}
-		return $cleaned_address;
+		$address =~ /($local_part_regexp\@$domain_regexp)/;
+		return $1;
 	}
 }
 
@@ -387,7 +386,7 @@ X-Mailer: git-send-email $gitversion
 		defined $pid or die $!;
 		if (!$pid) {
 			exec($smtp_server,'-i',
-			     map { scalar extract_valid_address($_) }
+			     map { extract_valid_address($_) }
 			     @recipients) or die $!;
 		}
 		print $sm "$header\n$message";
