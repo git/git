@@ -49,7 +49,7 @@ OPTIONS
 	Non default number of digits can be specified with --abbrev=<n>.
 
 --full-name::
-	Instead of showing the path names relative the current working
+	Instead of showing the path names relative to the current working
 	directory, show the full path names.
 
 paths::
