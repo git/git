@@ -8,7 +8,7 @@ git-tar-tree - Creates a tar archive of the files in the named tree
 
 SYNOPSIS
 --------
-'git-tar-tree' <tree-ish> [ <base> ]
+'git-tar-tree' [--remote=<repo>] <tree-ish> [ <base> ]
 
 DESCRIPTION
 -----------
@@ -23,6 +23,35 @@ commit time as recorded in the referenced commit object is used instead.
 Additionally the commit ID is stored in a global extended pax header.
 It can be extracted using git-get-tar-commit-id.
 
+OPTIONS
+-------
+
+<tree-ish>::
+	The tree or commit to produce tar archive for.  If it is
+	the object name of a commit object.
+
+<base>::
+	Leading path to the files in the resulting tar archive.
+
+--remote=<repo>::
+	Instead of making a tar archive from local repository,
+	retrieve a tar archive from a remote repository.
+
+Examples
+--------
+git tar-tree HEAD | (cd /var/tmp/ && mkdir junk && tar Cxf junk -)::
+
+	Create a tar archive that contains the contents of the
+	latest commit on the current branch, and extracts it in
+	`/var/tmp/junk` directory.
+
+git tar-tree v2.6.17 linux-2.6.17 | gzip >linux-2.6.17.tar.gz
+
+	Create a tarball for v2.6.17 release.
+
+git tar-tree --remote=example.com:git.git v0.99 >git-0.99.tar
+
+	Get a tarball v0.99 from example.com.
 
 Author
 ------
