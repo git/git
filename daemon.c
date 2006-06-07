@@ -267,12 +267,17 @@ static int upload(char *dir)
 static int execute(void)
 {
 	static char line[1000];
-	int len;
+	int pktlen, len;
 
 	alarm(init_timeout ? init_timeout : timeout);
-	len = packet_read_line(0, line, sizeof(line));
+	pktlen = packet_read_line(0, line, sizeof(line));
 	alarm(0);
 
+	len = strlen(line);
+	if (pktlen != len)
+		loginfo("Extended attributes (%d bytes) exist <%.*s>",
+			(int) pktlen - len,
+			(int) pktlen - len, line + len + 1);
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
 
