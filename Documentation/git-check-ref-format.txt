@@ -19,8 +19,9 @@ branch head is stored under `$GIT_DIR/refs/heads` directory, and
 a tag is stored under `$GIT_DIR/refs/tags` directory.  git
 imposes the following rules on how refs are named:
 
-. It could be named hierarchically (i.e. separated with slash
-  `/`), but each of its component cannot begin with a dot `.`;
+. It can include slash `/` for hierarchical (directory)
+  grouping, but no slash-separated component can begin with a
+  dot `.`;
 
 . It cannot have two consecutive dots `..` anywhere;
 

@@ -21,7 +21,7 @@ object name of the commit.
 OPTIONS
 -------
 <committish>::
-	The object name of the comittish. 
+	The object name of the committish.
 
 --all::
 	Instead of using only the annotated tags, use any ref

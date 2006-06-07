@@ -113,12 +113,12 @@ gitcvs.logfile::
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
-	over HTTPS. Can be overriden by the 'GIT_SSL_NO_VERIFY' environment
+	over HTTPS. Can be overridden by the 'GIT_SSL_NO_VERIFY' environment
 	variable.
 
 http.sslCert::
 	File containing the SSL certificate when fetching or pushing
-	over HTTPS. Can be overriden by the 'GIT_SSL_CERT' environment
+	over HTTPS. Can be overridden by the 'GIT_SSL_CERT' environment
 	variable.
 
 http.sslKey::
@@ -133,7 +133,7 @@ http.sslCAInfo::
 
 http.sslCAPath::
 	Path containing files with the CA certificates to verify the peer
-	with when fetching or pushing over HTTPS. Can be overriden
+	with when fetching or pushing over HTTPS. Can be overridden
 	by the 'GIT_SSL_CAPATH' environment variable.
 
 http.maxRequests::

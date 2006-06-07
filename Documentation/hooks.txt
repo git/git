@@ -100,7 +100,7 @@ update
 This hook is invoked by `git-receive-pack` on the remote repository,
 which is happens when a `git push` is done on a local repository.
 Just before updating the ref on the remote repository, the update hook
-is invoked.  It's exit status determines the success or failure of
+is invoked.  Its exit status determines the success or failure of
 the ref update.
 
 The hook executes once for each ref to be updated, and takes

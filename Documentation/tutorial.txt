@@ -357,7 +357,7 @@ $ git diff v2.5 HEAD	 # compare the current HEAD to v2.5
 $ git branch stable v2.5 # start a new branch named "stable" based
 			 # at v2.5
 $ git reset --hard HEAD^ # reset your current branch and working
-			 # directory its state at HEAD^
+			 # directory to its state at HEAD^
 -------------------------------------
 
 Be careful with that last command: in addition to losing any changes

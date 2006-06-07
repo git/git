@@ -45,7 +45,7 @@ Everybody uses these commands to feed and care git repositories.
 
   * gitlink:git-fsck-objects[1] to validate the repository.
 
-  * gitlink:git-prune[1] to garbage collect crufts in the
+  * gitlink:git-prune[1] to garbage collect cruft in the
     repository.
 
   * gitlink:git-repack[1] to pack loose objects for efficiency.

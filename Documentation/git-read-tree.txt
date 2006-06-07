@@ -257,7 +257,7 @@ file that does not match stage 2.
 This is done to prevent you from losing your work-in-progress
 changes, and mixing your random changes in an unrelated merge
 commit.  To illustrate, suppose you start from what has been
-commited last to your repository:
+committed last to your repository:
 
 ----------------
 $ JC=`git-rev-parse --verify "HEAD^0"`
