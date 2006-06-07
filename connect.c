@@ -322,7 +322,10 @@ static enum protocol get_protocol(const char *name)
 
 #ifndef NO_IPV6
 
-static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
+/*
+ * Returns a connected socket() fd, or else die()s.
+ */
+static int git_tcp_connect_sock(char *host)
 {
 	int sockfd = -1;
 	char *colon, *end;
@@ -356,7 +359,8 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 		die("Unable to look up %s (%s)", host, gai_strerror(gai));
 
 	for (ai0 = ai; ai; ai = ai->ai_next) {
-		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		sockfd = socket(ai->ai_family,
+				ai->ai_socktype, ai->ai_protocol);
 		if (sockfd < 0)
 			continue;
 		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
@@ -372,15 +376,15 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 	if (sockfd < 0)
 		die("unable to connect a socket (%s)", strerror(errno));
 
-	fd[0] = sockfd;
-	fd[1] = sockfd;
-	packet_write(sockfd, "%s %s\n", prog, path);
-	return 0;
+	return sockfd;
 }
 
 #else /* NO_IPV6 */
 
-static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
+/*
+ * Returns a connected socket() fd, or else die()s.
+ */
+static int git_tcp_connect_sock(char *host)
 {
 	int sockfd = -1;
 	char *colon, *end;
@@ -406,7 +410,6 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 		*colon = 0;
 		port = colon + 1;
 	}
-
 
 	he = gethostbyname(host);
 	if (!he)
@@ -441,13 +444,21 @@ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 	if (sockfd < 0)
 		die("unable to connect a socket (%s)", strerror(errno));
 
-	fd[0] = sockfd;
-	fd[1] = sockfd;
-	packet_write(sockfd, "%s %s\n", prog, path);
-	return 0;
+	return sockfd;
 }
 
 #endif /* NO_IPV6 */
+
+
+static void git_tcp_connect(int fd[2],
+			    const char *prog, char *host, char *path)
+{
+	int sockfd = git_tcp_connect_sock(host);
+
+	fd[0] = sockfd;
+	fd[1] = sockfd;
+}
+
 
 static char *git_proxy_command = NULL;
 static const char *rhost_name = NULL;
@@ -510,7 +521,8 @@ static int git_use_proxy(const char *host)
 	return (git_proxy_command && *git_proxy_command);
 }
 
-static int git_proxy_connect(int fd[2], const char *prog, char *host, char *path)
+static void git_proxy_connect(int fd[2],
+			      const char *prog, char *host, char *path)
 {
 	char *port = STR(DEFAULT_GIT_PORT);
 	char *colon, *end;
@@ -547,12 +559,12 @@ static int git_proxy_connect(int fd[2], const char *prog, char *host, char *path
 		execlp(git_proxy_command, git_proxy_command, host, port, NULL);
 		die("exec failed");
 	}
+	if (pid < 0)
+		die("fork failed");
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
 	close(pipefd[0][1]);
 	close(pipefd[1][0]);
-	packet_write(fd[1], "%s %s\n", prog, path);
-	return pid;
 }
 
 /*
@@ -620,14 +632,26 @@ int git_connect(int fd[2], char *url, const char *prog)
 	}
 
 	if (protocol == PROTO_GIT) {
-		int ret;
+		/* These underlying connection commands die() if they
+		 * cannot connect.
+		 */
+		char *target_host = strdup(host);
 		if (git_use_proxy(host))
-			ret = git_proxy_connect(fd, prog, host, path);
+			git_proxy_connect(fd, prog, host, path);
 		else
-			ret = git_tcp_connect(fd, prog, host, path);
+			git_tcp_connect(fd, prog, host, path);
+		/*
+		 * Separate original protocol components prog and path
+		 * from extended components with a NUL byte.
+		 */
+		packet_write(fd[1],
+			     "%s %s%chost=%s%c",
+			     prog, path, 0,
+			     target_host, 0);
+		free(target_host);
 		if (free_path)
 			free(path);
-		return ret;
+		return 0;
 	}
 
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)

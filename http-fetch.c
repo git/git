@@ -399,6 +399,7 @@ void prefetch(unsigned char *sha1)
 	snprintf(newreq->filename, sizeof(newreq->filename), "%s", filename);
 	snprintf(newreq->tmpfile, sizeof(newreq->tmpfile),
 		 "%s.temp", filename);
+	newreq->slot = NULL;
 	newreq->next = NULL;
 
 	if (object_queue_head == NULL) {
