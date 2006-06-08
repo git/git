@@ -17,58 +17,66 @@ if ever -- only if somebody cares enough and submits a clean
 patch, perhaps ;-).
 
 
-UI
---
-
-* Make "git branch -d foo" while on foo branch suggest "maybe
-  you want to go back to 'master'?"
-
-
 Design issues
 -------------
 
-* tree entries in index?
+* tree entries in index?  -- sorry, stalled
 
-* "intent to add" index entries?
+* "intent to add" index entries?  -- together with the above
+  needs rethinking.
 
 * Plug-in file-level merges.  On the other hand, we may not even
   need this; just tell people to run "xxdiff -U" on the working
-  tree files.
-
-* Doing a merge in a separate directory?
+  tree files (or kompare).
 
 
 Technical (heavier)
 -------------------
 
-* Maybe a pack optimizer.
-
-  Given a set of objects and a set of refs (probably a handful
-  branch heads and point release tags), find a set of packs to
-  allow reasonably minimum download for all of these classes of
-  people: (1) somebody cloning the repository from scratch, (2)
-  somebody who tends to follow the master branch head reasonably
-  closely, (3) somebody who tends to follow only the point
-  releases.
-
-  This needs a matching smart on the dumb protocol downloader.
-
 * Libification.  There are many places "run once" mentality is
   ingrained in the management of basic data structures, which
-  need to be fixed.  [Matthias Urlichs is already working on
-  this: <pan.2005.10.03.20.48.52.132570@smurf.noris.de>]
+  need to be fixed.  [Matthias Urlichs was already working on
+  this: <pan.2005.10.03.20.48.52.132570@smurf.noris.de>, but I
+  do not know what happened to his efforts]
+
+* Lazy clones that can be controlled by the user, ranging from
+  totally on-demand a la CVS/SVN to "cache down to this old
+  commit so that I can make full use of git on at least recent
+  history".  This need a lot of work in making tools to exit
+  gracefully when they hit unavailable objects while offline.
 
 
 Technical (milder)
 ------------------
 
-* Shallow clones.
+* duplicated refspec given to "fetch-pack a a a" makes it emit
+  strange error message because it triggers the "match only
+  once" logic.  Maybe strip the dups on the input side
+  (Uwe Zeisberger
+  <20060608073857.GA5072@informatik.uni-freiburg.de>). 
+
+* upload-pack support for start fetching from any valid point on
+  the history, not just published refs. (Erik W. Biederman
+  <m164jc9ekx.fsf@ebiederm.dsl.xmission.com>)
+
+* git-daemon side support for virtual hosting.  Client side
+  is ready in 1.4.0 (Jon Loeliger <1149610100.23938.75.camel@cashmere.sps.mot.com>).
+
+* teach git-upload-pack not to ack-continue early when the
+  client has roots it does not know about but it already has
+  learned the fork points for all the requested heads
+  (Ralf Baechle <20060524131022.GA11449@linux-mips.org>).
+
+* Per user .gitconfig across repositories -- ongoing.
 
 * Encourage competition between annotate vs blame.  Maybe come
   up with some nontrivial test cases.
 
-* Subprojects.  Try "gitlink".
+* Subprojects.  Try "gitlink" -- sorry, stalled.
 
+* Rebase and checkout -m should be able to use recursive
+  strategy as well.  These commands currently do not work across
+  renames.
 
 * Decide what to do about rebase applied to merged head.  One
   extreme is to allow rebase if "rev-list ours..theirs" gives
@@ -107,6 +115,9 @@ Technical (trivial)
 -------------------
 
 * git-proxy should be spawned with sh -c 'command' $1 $2.
+
+* Maybe a true git-proxy command that reads the first request
+  pkt-line, and redirects the request to its real destination.
 
 * test scripts for the relative directory path stuff.
 

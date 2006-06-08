@@ -4,6 +4,12 @@
 maint_at=$(git rev-parse --verify refs/heads/maint)
 master_at=$(git rev-parse --verify refs/heads/master)
 
+log () {
+	git log --no-merges "$@" |
+	git shortlog |
+	perl -pe 'if (!/^    / && !/^$/) { s/^/   / }'
+}
+
 echo "To: git@vger.kernel.org"
 echo "Subject: What's in git.git"
 echo "X-maint-at: $maint_at"
@@ -16,7 +22,7 @@ then
 	echo
 	echo "* The 'maint' branch has these fixes since the last announcement."
 	echo
-	git log --no-merges $tagged heads/maint | git shortlog
+	log $tagged heads/maint
 fi
 
 tagged=`git rev-parse --not --verify tags/sa/master`
@@ -26,7 +32,7 @@ then
 	echo
 	echo "* The 'master' branch has these since the last announcement."
 	echo
-	git log --no-merges $tagged heads/master | git shortlog
+	log $tagged heads/master
 fi
 
 list=`git-rev-list refs/heads/master..refs/heads/next 2>/dev/null`
@@ -35,7 +41,7 @@ then
 	echo
 	echo "* The 'next' branch, in addition, has these."
 	echo
-	git log --no-merges refs/heads/master..refs/heads/next | git shortlog
+	log heads/master..heads/next ^heads/cleannext
 fi
 
 list=`git-rev-list ^refs/heads/master ^refs/heads/next refs/heads/pu 2>/dev/null`
@@ -44,5 +50,5 @@ then
 	echo
 	echo "* The 'pu' branch, in addition, has these."
 	echo
-	git log --no-merges ^refs/heads/master ^refs/heads/next refs/heads/pu | git shortlog
+	log ^heads/master heads/next..heads/pu
 fi
