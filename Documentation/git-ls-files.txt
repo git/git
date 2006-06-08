@@ -195,8 +195,7 @@ An exclude pattern is of the following format:
 
  - if it does not contain a slash '/', it is a shell glob
    pattern and used to match against the filename without
-   leading directories (i.e. the same way as the current
-   implementation).
+   leading directories.
 
  - otherwise, it is a shell glob pattern, suitable for
    consumption by fnmatch(3) with FNM_PATHNAME flag.  I.e. a
@@ -221,6 +220,19 @@ An example:
         --exclude-from=.git/ignore \
         --exclude-per-directory=.gitignore
 --------------------------------------------------------------
+
+Another example:
+
+--------------------------------------------------------------
+    $ cat .gitignore
+    vmlinux*
+    $ ls arch/foo/kernel/vm*
+    arch/foo/kernel/vmlinux.lds.S
+    $ echo '!/vmlinux*' >arch/foo/kernel/.gitignore
+--------------------------------------------------------------
+
+The second .gitignore keeps `arch/foo/kernel/vmlinux.lds.S` file
+from getting ignored.
 
 
 See Also
