@@ -8,9 +8,10 @@ git-ls-tree - Lists the contents of a tree object
 
 SYNOPSIS
 --------
+[verse]
 'git-ls-tree' [-d] [-r] [-t] [-z]
-	[--name-only] [--name-status] [--full-name] [--abbrev=[<n>]]
-	<tree-ish> [paths...]
+	    [--name-only] [--name-status] [--full-name] [--abbrev=[<n>]]
+	    <tree-ish> [paths...]
 
 DESCRIPTION
 -----------
@@ -47,6 +48,10 @@ OPTIONS
 	lines, show only handful hexdigits prefix.
 	Non default number of digits can be specified with --abbrev=<n>.
 
+--full-name::
+	Instead of showing the path names relative to the current working
+	directory, show the full path names.
+
 paths::
 	When paths are given, show them (note that this isn't really raw
 	pathnames, but rather a list of patterns to match).  Otherwise
@@ -71,8 +76,6 @@ Documentation
 --------------
 Documentation by David Greaves, Junio C Hamano and the git-list
 <git@vger.kernel.org>.
-
-This manual page is a stub. You can help the git documentation by expanding it.
 
 GIT
 ---

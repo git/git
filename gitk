@@ -238,6 +238,7 @@ proc updatecommits {} {
     catch {unset selectedline}
     catch {unset thickerline}
     catch {unset viewdata($n)}
+    discardallcommits
     readrefs
     showview $n
 }
@@ -4988,13 +4989,28 @@ proc wrcomcan {} {
 
 # Stuff for finding nearby tags
 proc getallcommits {} {
-    global allcstart allcommits
+    global allcstart allcommits allcfd
 
     set fd [open [concat | git rev-list --all --topo-order --parents] r]
+    set allcfd $fd
     fconfigure $fd -blocking 0
     set allcommits "reading"
     nowbusy allcommits
     restartgetall $fd
+}
+
+proc discardallcommits {} {
+    global allparents allchildren allcommits allcfd
+    global desc_tags anc_tags alldtags tagisdesc allids desc_heads
+
+    if {![info exists allcommits]} return
+    if {$allcommits eq "reading"} {
+	catch {close $allcfd}
+    }
+    foreach v {allcommits allchildren allparents allids desc_tags anc_tags
+		alldtags tagisdesc desc_heads} {
+	catch {unset $v}
+    }
 }
 
 proc restartgetall {fd} {

@@ -2,15 +2,15 @@ CONFIGURATION FILE
 ------------------
 
 The git configuration file contains a number of variables that affect
-the git commands behavior. They can be used by both the git plumbing
-and the porcelains. The variables are divided to sections, where
+the git command's behavior. They can be used by both the git plumbing
+and the porcelains. The variables are divided into sections, where
 in the fully qualified variable name the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive and only alphanumeric
 characters are allowed. Some variables may appear multiple times.
 
 The syntax is fairly flexible and permissive; whitespaces are mostly
-ignored. The '#' and ';' characters begin commends to the end of line,
+ignored. The '#' and ';' characters begin comments to the end of line,
 blank lines are ignored, lines containing strings enclosed in square
 brackets start sections and all the other lines are recognized
 as setting variables, in the form 'name = value'. If there is no equal
@@ -35,8 +35,8 @@ Variables
 ~~~~~~~~~
 
 Note that this list is non-comprehensive and not necessarily complete.
-For command-specific variables, you will find more detailed description
-in the appropriate manual page. You will find description of non-core
+For command-specific variables, you will find a more detailed description
+in the appropriate manual page. You will find a description of non-core
 porcelain configuration variables in the respective porcelain documentation.
 
 core.fileMode::
@@ -52,10 +52,10 @@ core.gitProxy::
 	on hostnames ending with the specified domain string. This variable
 	may be set multiple times and is matched in the given order;
 	the first match wins.
-
-	Can be overridden by the 'GIT_PROXY_COMMAND' environment variable
-	(which always applies universally, without the special "for"
-	handling).
++
+Can be overridden by the 'GIT_PROXY_COMMAND' environment variable
+(which always applies universally, without the special "for"
+handling).
 
 core.ignoreStat::
 	The working copy files are assumed to stay unchanged until you
@@ -91,6 +91,15 @@ core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
 	and might match multiple refs in the .git/refs/ tree. True by default.
 
+alias.*::
+	Command aliases for the gitlink:git[1] command wrapper - e.g.
+	after defining "alias.last = cat-file commit HEAD", the invocation
+	"git last" is equivalent to "git cat-file commit HEAD". To avoid
+	confusion and troubles with script usage, aliases that
+	hide existing git commands are ignored. Arguments are split by
+	spaces, the usual shell quoting and escaping is supported.
+	quote pair and a backslash can be used to quote them.
+
 apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
@@ -113,12 +122,12 @@ gitcvs.logfile::
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
-	over HTTPS. Can be overriden by the 'GIT_SSL_NO_VERIFY' environment
+	over HTTPS. Can be overridden by the 'GIT_SSL_NO_VERIFY' environment
 	variable.
 
 http.sslCert::
 	File containing the SSL certificate when fetching or pushing
-	over HTTPS. Can be overriden by the 'GIT_SSL_CERT' environment
+	over HTTPS. Can be overridden by the 'GIT_SSL_CERT' environment
 	variable.
 
 http.sslKey::
@@ -133,7 +142,7 @@ http.sslCAInfo::
 
 http.sslCAPath::
 	Path containing files with the CA certificates to verify the peer
-	with when fetching or pushing over HTTPS. Can be overriden
+	with when fetching or pushing over HTTPS. Can be overridden
 	by the 'GIT_SSL_CAPATH' environment variable.
 
 http.maxRequests::

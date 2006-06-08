@@ -168,8 +168,9 @@ static int get_path_prefix(const struct strbuf *path, int maxlen)
 	int i = path->len;
 	if (i > maxlen)
 		i = maxlen;
-	while (i > 0 && path->buf[i] != '/')
+	do {
 		i--;
+	} while (i > 0 && path->buf[i] != '/');
 	return i;
 }
 

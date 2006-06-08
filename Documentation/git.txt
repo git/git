@@ -21,6 +21,9 @@ link:everyday.html[Everyday Git] for a useful minimum set of commands, and
 "man git-commandname" for documentation of each command.  CVS users may
 also want to read link:cvs-migration.html[CVS migration].
 
+The COMMAND is either a name of a Git command (see below) or an alias
+as defined in the configuration file (see gitlink:git-repo-config[1]).
+
 OPTIONS
 -------
 --version::
@@ -237,6 +240,10 @@ gitlink:git-upload-pack[1]::
 	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
 	what are asked for.
 
+gitlink:git-upload-tar[1]::
+	Invoked by 'git-tar-tree --remote' to return the tar
+	archive the other end asked for.
+
 
 High-level commands (porcelain)
 -------------------------------
@@ -377,6 +384,9 @@ gitlink:git-merge-one-file[1]::
 
 gitlink:git-prune[1]::
 	Prunes all unreachable objects from the object database.
+
+gitlink:git-quiltimport[1]::
+	Applies a quilt patchset onto the current branch.
 
 gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.

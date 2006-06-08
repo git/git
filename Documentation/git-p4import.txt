@@ -128,7 +128,7 @@ Therefore after the import you can use git to access any commit by its
 Perforce number, eg. git show p4/327.
 
 The tag associated with the HEAD commit is also how `git-p4import`
-determines if their are new changes to incrementally import from the
+determines if there are new changes to incrementally import from the
 Perforce repository.
 
 If you import from a repository with many thousands of changes

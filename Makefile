@@ -707,7 +707,7 @@ clean:
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
-	rm -f $(htmldocs).tar $(manpages).tar
+	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

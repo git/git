@@ -36,49 +36,62 @@ INSTALLATION
 
 1. If you are going to offer anonymous CVS access via pserver, add a line in
    /etc/inetd.conf like
-
++
+--
+------
    cvspserver stream tcp nowait nobody git-cvsserver pserver
 
-   Note: In some cases, you need to pass the 'pserver' argument twice for
-   git-cvsserver to see it. So the line would look like
+------
+Note: In some cases, you need to pass the 'pserver' argument twice for
+git-cvsserver to see it. So the line would look like
 
+------
    cvspserver stream tcp nowait nobody git-cvsserver pserver pserver
 
-   No special setup is needed for SSH access, other than having GIT tools
-   in the PATH. If you have clients that do not accept the CVS_SERVER
-   env variable, you can rename git-cvsserver to cvs.
-
+------
+No special setup is needed for SSH access, other than having GIT tools
+in the PATH. If you have clients that do not accept the CVS_SERVER
+env variable, you can rename git-cvsserver to cvs.
+--
 2. For each repo that you want accessible from CVS you need to edit config in
    the repo and add the following section.
-
++
+--
+------
    [gitcvs]
         enabled=1
         # optional for debugging
         logfile=/path/to/logfile
 
-   Note: you need to ensure each user that is going to invoke git-cvsserver has
-   write access to the log file and to the git repository. When offering anon
-   access via pserver, this means that the nobody user should have write access
-   to at least the sqlite database at the root of the repository.
-
+------
+Note: you need to ensure each user that is going to invoke git-cvsserver has
+write access to the log file and to the git repository. When offering anon
+access via pserver, this means that the nobody user should have write access
+to at least the sqlite database at the root of the repository.
+--
 3. On the client machine you need to set the following variables.
    CVSROOT should be set as per normal, but the directory should point at the
    appropriate git repo. For example:
++
+--
+For SSH access, CVS_SERVER should be set to git-cvsserver
 
-   For SSH access, CVS_SERVER should be set to git-cvsserver
+Example:
 
-   Example:
-
+------
      export CVSROOT=:ext:user@server:/var/git/project.git
      export CVS_SERVER=git-cvsserver
-
+------
+--
 4. For SSH clients that will make commits, make sure their .bashrc file
    sets the GIT_AUTHOR and GIT_COMMITTER variables.
 
 5. Clients should now be able to check out the project. Use the CVS 'module'
    name to indicate what GIT 'head' you want to check out. Example:
-
++
+------
      cvs co -d project-master master
+------
 
 Eclipse CVS Client Notes
 ------------------------

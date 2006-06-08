@@ -5,7 +5,6 @@ NAME
 ----
 git-shortlog - Summarize 'git log' output
 
-
 SYNOPSIS
 --------
 git-log --pretty=short | 'git-shortlog'
@@ -13,8 +12,22 @@ git-log --pretty=short | 'git-shortlog'
 DESCRIPTION
 -----------
 Summarizes 'git log' output in a format suitable for inclusion
-in release announcements.
+in release announcements. Each commit will be grouped by author
+the first line of the commit message will be shown.
 
+Additionally, "[PATCH]" will be stripped from the commit description.
+
+FILES
+-----
+'.mailmap'::
+	If this file exists, it will be used for mapping author email
+	addresses to a real author name. One mapping per line, first
+	the author name followed by the email address enclosed by
+	'<' and '>'. Use hash '#' for comments. Example:
+
+		# Keep alphabetized
+		Adam Morrow <adam@localhost.localdomain>
+		Eve Jones <eve@laptop.(none)>
 
 Author
 ------

@@ -109,6 +109,13 @@ file system::
 git archive::
 	Synonym for repository (for arch people).
 
+grafts::
+	Grafts enables two otherwise different lines of development to be
+	joined together by recording fake ancestry information for commits.
+	This way you can make git pretend the set of parents a commit
+	has is different from what was recorded when the commit was created.
+	Configured via the `.git/info/grafts` file.
+
 hash::
 	In git's context, synonym to object name.
 

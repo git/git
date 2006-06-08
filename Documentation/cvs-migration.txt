@@ -106,7 +106,7 @@ Make sure committers have a umask of at most 027, so that the directories
 they create are writable and searchable by other group members.
 
 Suppose this repository is now set up in /pub/repo.git on the host
-foo.com.  Then as an individual commiter you can clone the shared
+foo.com.  Then as an individual committer you can clone the shared
 repository:
 
 ------------------------------------------------
