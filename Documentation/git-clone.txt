@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  <repository> [<directory>]
+	  [--use-separate-remote] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -73,7 +73,7 @@ OPTIONS
 	files in `<directory>/.git`, make the `<directory>`
 	itself the `$GIT_DIR`. This implies `-n` option.  When
 	this option is used, neither the `origin` branch nor the
-	default	`remotes/origin` file is created.
+	default `remotes/origin` file is created.
 
 -o <name>::
 	Instead of using the branch name 'origin' to keep track
@@ -94,12 +94,17 @@ OPTIONS
 	if unset the templates are taken from the installation
 	defined default, typically `/usr/share/git-core/templates`.
 
+--use-separate-remote::
+	Save remotes heads under `$GIT_DIR/remotes/origin/' instead
+	of `$GIT_DIR/refs/heads/'.  Only the master branch is saved
+	in the latter.
+
 <repository>::
 	The (possibly remote) repository to clone from.  It can
 	be any URL git-fetch supports.
 
 <directory>::
-	The name of a new directory to clone into.  The	"humanish"
+	The name of a new directory to clone into.  The "humanish"
 	part of the source repository is used if no directory is
 	explicitly given ("repo" for "/path/to/repo.git" and "foo"
 	for "host.xz:foo/.git").  Cloning into an existing directory
