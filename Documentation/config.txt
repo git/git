@@ -95,9 +95,10 @@ alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
 	"git last" is equivalent to "git cat-file commit HEAD". To avoid
-	confusion, aliases that hide existing git commands are ignored.
-	Arguments are split at whitespaces, but single or double
-	quote pair can be used to quote them.
+	confusion and troubles with script usage, aliases that
+	hide existing git commands are ignored. Arguments are split by
+	spaces, the usual shell quoting and escaping is supported.
+	quote pair and a backslash can be used to quote them.
 
 apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
