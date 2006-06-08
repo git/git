@@ -657,6 +657,8 @@ int git_connect(int fd[2], char *url, const char *prog)
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
 	pid = fork();
+	if (pid < 0)
+		die("unable to fork");
 	if (!pid) {
 		snprintf(command, sizeof(command), "%s %s", prog,
 			 sq_quote(path));

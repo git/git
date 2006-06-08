@@ -924,6 +924,7 @@ imap_open_store( imap_server_conf_t *srvc )
 	struct hostent *he;
 	struct sockaddr_in addr;
 	int s, a[2], preauth;
+	pid_t pid;
 
 	ctx = xcalloc( sizeof(*ctx), 1 );
 
@@ -941,7 +942,10 @@ imap_open_store( imap_server_conf_t *srvc )
 			exit( 1 );
 		}
 
-		if (fork() == 0) {
+		pid = fork();
+		if (pid < 0)
+			_exit( 127 );
+		if (!pid) {
 			if (dup2( a[0], 0 ) == -1 || dup2( a[0], 1 ) == -1)
 				_exit( 127 );
 			close( a[0] );
