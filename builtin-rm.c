@@ -83,15 +83,15 @@ int cmd_rm(int argc, const char **argv, char **envp)
 		}
 		die(builtin_rm_usage);
 	}
-	pathspec = get_pathspec(prefix, argv + i);
+	if (argc <= i)
+		usage(builtin_rm_usage);
 
+	pathspec = get_pathspec(prefix, argv + i);
 	seen = NULL;
-	if (pathspec) {
-		for (i = 0; pathspec[i] ; i++)
-			/* nothing */;
-		seen = xmalloc(i);
-		memset(seen, 0, i);
-	}
+	for (i = 0; pathspec[i] ; i++)
+		/* nothing */;
+	seen = xmalloc(i);
+	memset(seen, 0, i);
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
@@ -120,6 +120,9 @@ int cmd_rm(int argc, const char **argv, char **envp)
 			die("git rm: unable to remove %s", path);
 		cache_tree_invalidate_path(active_cache_tree, path);
 	}
+
+	if (show_only)
+		return 0;
 
 	/*
 	 * Then, if we used "-f", remove the filenames from the

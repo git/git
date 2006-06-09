@@ -48,6 +48,7 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	int sizen;
 	int of;
 	int i;
+	pid_t pid;
 
 	if (!strcmp(url, "-")) {
 		*fd_in = 0;
@@ -91,7 +92,10 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv))
 		return error("Couldn't create socket");
 
-	if (!fork()) {
+	pid = fork();
+	if (pid < 0)
+		return error("Couldn't fork");
+	if (!pid) {
 		const char *ssh, *ssh_basename;
 		ssh = getenv("GIT_SSH");
 		if (!ssh) ssh = "ssh";

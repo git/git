@@ -391,11 +391,16 @@ Pull: refs/heads/$head_points_at:$origin_track" &&
 		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
 		while read dotslref
 		do
-			name=`expr "$dotslref" : './\(.*\)'` &&
-			test "$use_separate_remote" = '' && {
-				test "$head_points_at" = "$name" ||
-				test "$origin" = "$name"
-			} ||
+			name=`expr "$dotslref" : './\(.*\)'`
+			if test "z$head_points_at" = "z$name"
+			then
+				continue
+			fi
+			if test "$use_separate_remote" = '' &&
+			   test "z$origin" = "z$name"
+			then
+				continue
+			fi
 			echo "Pull: refs/heads/${name}:$remote_top/${name}"
 		done >>"$GIT_DIR/remotes/$origin" &&
 		case "$use_separate_remote" in
