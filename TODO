@@ -49,11 +49,19 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
+* git grep should be able to omit prefix when invoked from a
+  subdirectory.  Either make it an option or default with
+  --full-name like ls-files does.
+
 * duplicated refspec given to "fetch-pack a a a" makes it emit
   strange error message because it triggers the "match only
   once" logic.  Maybe strip the dups on the input side
   (Uwe Zeisberger
   <20060608073857.GA5072@informatik.uni-freiburg.de>). 
+
+* map only parts of huge packfiles and LRU fragments of them.
+  People are starting to try git on projects with deep history
+  and/or many objects, e.g. Mozilla.
 
 * upload-pack support for start fetching from any valid point on
   the history, not just published refs. (Erik W. Biederman
