@@ -287,7 +287,7 @@ int cmd_init_db(int argc, const char **argv, char **envp)
 	safe_create_dir(path, 1);
 
 	if (shared_repository)
-		git_config_set("core.sharedRepository", "true");
+		git_config_set("core.sharedrepository", "true");
 
 	return 0;
 }
