@@ -866,19 +866,26 @@ sub eol_cp {
 	binmode $wfd or croak $!;
 
 	my $eol = $EOL{$es} or undef;
-	if ($eol) {
-		print  "$eol: $from => $to\n";
-	}
 	my $buf;
+	use bytes;
 	while (1) {
 		my ($r, $w, $t);
 		defined($r = sysread($rfd, $buf, 4096)) or croak $!;
 		return unless $r;
-		$buf =~ s/(?:\015|\012|\015\012)/$eol/gs if $eol;
+		if ($eol) {
+			if ($buf =~ /\015$/) {
+				my $c;
+				defined($r = sysread($rfd,$c,1)) or croak $!;
+				$buf .= $c if $r > 0;
+			}
+			$buf =~ s/(?:\015\012|\015|\012)/$eol/gs;
+			$r = length($buf);
+		}
 		for ($w = 0; $w < $r; $w += $t) {
 			$t = syswrite($wfd, $buf, $r - $w, $w) or croak $!;
 		}
 	}
+	no bytes;
 }
 
 sub do_update_index {
