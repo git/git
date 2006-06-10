@@ -144,7 +144,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
-	git-get-tar-commit-id$X git-mailsplit$X \
+	git-mailsplit$X \
 	git-stripspace$X git-daemon$X
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
@@ -169,7 +169,7 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-grep$X git-add$X git-rm$X git-rev-list$X \
 	git-check-ref-format$X git-rev-parse$X \
 	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
-	git-ls-files$X git-ls-tree$X \
+	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
 	git-read-tree$X git-commit-tree$X \
 	git-apply$X git-show-branch$X git-diff-files$X \
 	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X

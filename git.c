@@ -163,7 +163,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "add", cmd_add },
 		{ "rev-list", cmd_rev_list },
 		{ "init-db", cmd_init_db },
-		{ "tar-tree", cmd_tar_tree },
+		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "upload-tar", cmd_upload_tar },
 		{ "check-ref-format", cmd_check_ref_format },
 		{ "ls-files", cmd_ls_files },
