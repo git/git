@@ -1,0 +1,16 @@
+GIT web Interface
+
+The one working on:
+  http://www.kernel.org/git/
+
+Get the gitweb.cgi by ftp:
+  ftp://ftp.kernel.org/pub/software/scm/gitweb/
+
+It reqires the git-core binaries installed on the system:
+  http://www.kernel.org/git/?p=git/git.git;a=summary
+
+The gitweb repository is here:
+  http://www.kernel.org/git/?p=git/gitweb.git;a=summary
+
+Any comment/question/concern to:
+  Kay Sievers <kay.sievers@vrfy.org>
