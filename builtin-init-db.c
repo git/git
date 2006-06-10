@@ -263,7 +263,9 @@ int cmd_init_db(int argc, const char **argv, char **envp)
 		if (!strncmp(arg, "--template=", 11))
 			template_dir = arg+11;
 		else if (!strcmp(arg, "--shared"))
-			shared_repository = 1;
+			shared_repository = PERM_GROUP;
+		else if (!strncmp(arg, "--shared=", 9))
+			shared_repository = git_config_perm("arg", arg+9);
 		else
 			die(init_db_usage);
 	}
@@ -301,8 +303,15 @@ int cmd_init_db(int argc, const char **argv, char **envp)
 	strcpy(path+len, "/info");
 	safe_create_dir(path, 1);
 
-	if (shared_repository)
-		git_config_set("core.sharedrepository", "true");
+	if (shared_repository) {
+		char buf[10];
+		/* We do not spell "group" and such, so that
+		 * the configuration can be read by older version
+		 * of git.
+		 */
+		sprintf(buf, "%d", shared_repository);
+		git_config_set("core.sharedrepository", buf);
+	}
 
 	return 0;
 }
