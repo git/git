@@ -29,7 +29,7 @@ http_fetch () {
 clone_dumb_http () {
 	# $1 - remote, $2 - local
 	cd "$2" &&
-	clone_tmp='.git/clone-tmp' &&
+	clone_tmp="$GIT_DIR/clone-tmp" &&
 	mkdir -p "$clone_tmp" || exit 1
 	http_fetch "$1/info/refs" "$clone_tmp/refs" || {
 		echo >&2 "Cannot get remote repository information.
@@ -207,15 +207,11 @@ mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
 trap 'err=$?; cd ..; rm -r "$D"; exit $err' 0
 case "$bare" in
-yes) GIT_DIR="$D" ;;
-*) GIT_DIR="$D/.git" ;;
-esac && export GIT_DIR && git-init-db ${template+"$template"} || usage
-case "$bare" in
 yes)
 	GIT_DIR="$D" ;;
 *)
 	GIT_DIR="$D/.git" ;;
-esac
+esac && export GIT_DIR && git-init-db ${template+"$template"} || usage
 
 if test -n "$reference"
 then
