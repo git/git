@@ -208,6 +208,12 @@ extern const unsigned char null_sha1[20];
 
 int git_mkstemp(char *path, size_t n, const char *template);
 
+enum sharedrepo {
+	PERM_UMASK = 0,
+	PERM_GROUP,
+	PERM_EVERYBODY
+};
+int git_config_perm(const char *var, const char *value);
 int adjust_shared_perm(const char *path);
 int safe_create_leading_directories(char *path);
 char *safe_strncpy(char *, const char *, size_t);

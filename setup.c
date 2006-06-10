@@ -219,12 +219,27 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	return cwd + offset;
 }
 
+int git_config_perm(const char *var, const char *value)
+{
+	if (value) {
+		if (!strcmp(value, "umask"))
+			return PERM_UMASK;
+		if (!strcmp(value, "group"))
+			return PERM_GROUP;
+		if (!strcmp(value, "all") ||
+		    !strcmp(value, "world") ||
+		    !strcmp(value, "everybody"))
+			return PERM_EVERYBODY;
+	}
+	return git_config_bool(var, value);
+}
+
 int check_repository_format_version(const char *var, const char *value)
 {
        if (strcmp(var, "core.repositoryformatversion") == 0)
                repository_format_version = git_config_int(var, value);
 	else if (strcmp(var, "core.sharedrepository") == 0)
-		shared_repository = git_config_bool(var, value);
+		shared_repository = git_config_perm(var, value);
        return 0;
 }
 

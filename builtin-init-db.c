@@ -199,6 +199,21 @@ static void create_default_files(const char *git_dir, const char *template_path)
 	git_config(git_default_config);
 
 	/*
+	 * We would have created the above under user's umask -- under
+	 * shared-repository settings, we would need to fix them up.
+	 */
+	if (shared_repository) {
+		path[len] = 0;
+		adjust_shared_perm(path);
+		strcpy(path + len, "refs");
+		adjust_shared_perm(path);
+		strcpy(path + len, "refs/heads");
+		adjust_shared_perm(path);
+		strcpy(path + len, "refs/tags");
+		adjust_shared_perm(path);
+	}
+
+	/*
 	 * Create the default symlink from ".git/HEAD" to the "master"
 	 * branch, if it does not exist yet.
 	 */
@@ -248,7 +263,9 @@ int cmd_init_db(int argc, const char **argv, char **envp)
 		if (!strncmp(arg, "--template=", 11))
 			template_dir = arg+11;
 		else if (!strcmp(arg, "--shared"))
-			shared_repository = 1;
+			shared_repository = PERM_GROUP;
+		else if (!strncmp(arg, "--shared=", 9))
+			shared_repository = git_config_perm("arg", arg+9);
 		else
 			die(init_db_usage);
 	}
@@ -286,8 +303,15 @@ int cmd_init_db(int argc, const char **argv, char **envp)
 	strcpy(path+len, "/info");
 	safe_create_dir(path, 1);
 
-	if (shared_repository)
-		git_config_set("core.sharedRepository", "true");
+	if (shared_repository) {
+		char buf[10];
+		/* We do not spell "group" and such, so that
+		 * the configuration can be read by older version
+		 * of git.
+		 */
+		sprintf(buf, "%d", shared_repository);
+		git_config_set("core.sharedrepository", buf);
+	}
 
 	return 0;
 }
