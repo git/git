@@ -402,3 +402,28 @@ int cmd_tar_tree(int argc, const char **argv, char **envp)
 		return remote_tar(argc, argv);
 	return generate_tar(argc, argv, envp);
 }
+
+/* ustar header + extended global header content */
+#define HEADERSIZE (2 * RECORDSIZE)
+
+int cmd_get_tar_commit_id(int argc, const char **argv, char **envp)
+{
+	char buffer[HEADERSIZE];
+	struct ustar_header *header = (struct ustar_header *)buffer;
+	char *content = buffer + RECORDSIZE;
+	ssize_t n;
+
+	n = xread(0, buffer, HEADERSIZE);
+	if (n < HEADERSIZE)
+		die("git-get-tar-commit-id: read error");
+	if (header->typeflag[0] != 'g')
+		return 1;
+	if (memcmp(content, "52 comment=", 11))
+		return 1;
+
+	n = xwrite(1, content + 11, 41);
+	if (n < 41)
+		die("git-get-tar-commit-id: write error");
+
+	return 0;
+}
