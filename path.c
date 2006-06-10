@@ -250,3 +250,26 @@ char *enter_repo(char *path, int strict)
 
 	return NULL;
 }
+
+int adjust_shared_perm(const char *path)
+{
+	struct stat st;
+	int mode;
+
+	if (!shared_repository)
+		return 0;
+	if (lstat(path, &st) < 0)
+		return -1;
+	mode = st.st_mode;
+	if (mode & S_IRUSR)
+		mode |= S_IRGRP;
+	if (mode & S_IWUSR)
+		mode |= S_IWGRP;
+	if (mode & S_IXUSR)
+		mode |= S_IXGRP;
+	if (S_ISDIR(mode))
+		mode |= S_ISGID;
+	if (chmod(path, mode) < 0)
+		return -2;
+	return 0;
+}

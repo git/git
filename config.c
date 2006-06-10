@@ -536,7 +536,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	 * contents of .git/config will be written into it.
 	 */
 	fd = open(lock_file, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0) {
+	if (fd < 0 || adjust_shared_perm(lock_file)) {
 		fprintf(stderr, "could not lock config file\n");
 		free(store.key);
 		ret = -1;

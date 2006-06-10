@@ -199,6 +199,21 @@ static void create_default_files(const char *git_dir, const char *template_path)
 	git_config(git_default_config);
 
 	/*
+	 * We would have created the above under user's umask -- under
+	 * shared-repository settings, we would need to fix them up.
+	 */
+	if (shared_repository) {
+		path[len] = 0;
+		adjust_shared_perm(path);
+		strcpy(path + len, "refs");
+		adjust_shared_perm(path);
+		strcpy(path + len, "refs/heads");
+		adjust_shared_perm(path);
+		strcpy(path + len, "refs/tags");
+		adjust_shared_perm(path);
+	}
+
+	/*
 	 * Create the default symlink from ".git/HEAD" to the "master"
 	 * branch, if it does not exist yet.
 	 */

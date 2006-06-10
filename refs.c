@@ -104,6 +104,11 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 		error("Unable to create %s", git_HEAD);
 		return -3;
 	}
+	if (adjust_shared_perm(git_HEAD)) {
+		unlink(lockpath);
+		error("Unable to fix permissions on %s", lockpath);
+		return -4;
+	}
 	return 0;
 }
 

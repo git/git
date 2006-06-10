@@ -27,11 +27,16 @@ int hold_lock_file_for_update(struct lock_file *lk, const char *path)
 	int fd;
 	sprintf(lk->filename, "%s.lock", path);
 	fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
-	if (fd >=0 && !lk->next) {
-		lk->next = lock_file_list;
-		lock_file_list = lk;
-		signal(SIGINT, remove_lock_file_on_signal);
-		atexit(remove_lock_file);
+	if (0 <= fd) {
+		if (!lk->next) {
+			lk->next = lock_file_list;
+			lock_file_list = lk;
+			signal(SIGINT, remove_lock_file_on_signal);
+			atexit(remove_lock_file);
+		}
+		if (adjust_shared_perm(lk->filename))
+			return error("cannot fix permission bits on %s",
+				     lk->filename);
 	}
 	return fd;
 }
