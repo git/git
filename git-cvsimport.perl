@@ -595,7 +595,11 @@ sub write_tree () {
 }
 
 my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
-my(@old,@new,@skipped);
+my(@old,@new,@skipped,%ignorebranch);
+
+# commits that cvsps cannot place anywhere...
+$ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
+
 sub commit {
 	update_index(@old, @new);
 	@old = @new = ();
@@ -751,7 +755,16 @@ while(<CVS>) {
 			$state = 11;
 			next;
 		}
+		if (exists $ignorebranch{$branch}) {
+			print STDERR "Skipping $branch\n";
+			$state = 11;
+			next;
+		}
 		if($ancestor) {
+			if($ancestor eq $branch) {
+				print STDERR "Branch $branch erroneously stems from itself -- changed ancestor to $opt_o\n";
+				$ancestor = $opt_o;
+			}
 			if(-f "$git_dir/refs/heads/$branch") {
 				print STDERR "Branch $branch already exists!\n";
 				$state=11;
@@ -759,6 +772,7 @@ while(<CVS>) {
 			}
 			unless(open(H,"$git_dir/refs/heads/$ancestor")) {
 				print STDERR "Branch $ancestor does not exist!\n";
+				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
@@ -766,6 +780,7 @@ while(<CVS>) {
 			close(H);
 			unless(open(H,"> $git_dir/refs/heads/$branch")) {
 				print STDERR "Could not create branch $branch: $!\n";
+				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
