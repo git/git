@@ -303,7 +303,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		parse_commit(p);
 		switch (rev_compare_tree(revs, p->tree, commit->tree)) {
 		case REV_TREE_SAME:
-			if (p->object.flags & UNINTERESTING) {
+			if (!revs->simplify_history || (p->object.flags & UNINTERESTING)) {
 				/* Even if a merge with an uninteresting
 				 * side branch brought the entire change
 				 * we are interested in, we do not want
@@ -519,6 +519,7 @@ void init_revisions(struct rev_info *revs)
 
 	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
+	revs->simplify_history = 1;
 	revs->pruning.recursive = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
@@ -754,6 +755,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (!strcmp(arg, "--full-diff")) {
 				revs->diff = 1;
 				revs->full_diff = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--full-history")) {
+				revs->simplify_history = 0;
 				continue;
 			}
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);

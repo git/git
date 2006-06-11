@@ -51,6 +51,7 @@ int cmd_whatchanged(int argc, const char **argv, char **envp)
 	init_revisions(&rev);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
+	rev.simplify_history = 0;
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
