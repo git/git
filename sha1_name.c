@@ -262,8 +262,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		if (str[am] == '@' && str[am+1] == '{' && str[len-1] == '}') {
 			int date_len = len - am - 3;
 			char *date_spec = xmalloc(date_len + 1);
-			strncpy(date_spec, str + am + 2, date_len);
-			date_spec[date_len] = 0;
+			safe_strncpy(date_spec, str + am + 2, date_len + 1);
 			at_time = approxidate(date_spec);
 			free(date_spec);
 			len = am;

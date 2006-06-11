@@ -112,7 +112,7 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 	int len = 0;
 
 	if (output_directory) {
-		strncpy(filename, output_directory, 1010);
+		safe_strncpy(filename, output_directory, 1010);
 		len = strlen(filename);
 		if (filename[len - 1] != '/')
 			filename[len++] = '/';
