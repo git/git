@@ -529,24 +529,38 @@ if ($opt_A) {
 	write_author_info("$git_dir/cvs-authors");
 }
 
-my $pid = open(CVS,"-|");
-die "Cannot fork: $!\n" unless defined $pid;
-unless($pid) {
-	my @opt;
-	@opt = split(/,/,$opt_p) if defined $opt_p;
-	unshift @opt, '-z', $opt_z if defined $opt_z;
-	unshift @opt, '-q'         unless defined $opt_v;
-	unless (defined($opt_p) && $opt_p =~ m/--no-cvs-direct/) {
-		push @opt, '--cvs-direct';
+
+#
+# run cvsps into a file unless we are getting
+# it passed as a file via $opt_P
+#
+unless ($opt_P) {
+	print "Running cvsps...\n" if $opt_v;
+	my $pid = open(CVSPS,"-|");
+	die "Cannot fork: $!\n" unless defined $pid;
+	unless($pid) {
+		my @opt;
+		@opt = split(/,/,$opt_p) if defined $opt_p;
+		unshift @opt, '-z', $opt_z if defined $opt_z;
+		unshift @opt, '-q'         unless defined $opt_v;
+		unless (defined($opt_p) && $opt_p =~ m/--no-cvs-direct/) {
+			push @opt, '--cvs-direct';
+		}
+		exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
+		die "Could not start cvsps: $!\n";
 	}
-	if ($opt_P) {
-	    exec("cat", $opt_P);
-	} else {
-	    exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
-	    die "Could not start cvsps: $!\n";
+	my ($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
+					     DIR => File::Spec->tmpdir());
+	while (<CVSPS>) {
+	    print $cvspsfh $_;
 	}
+	close CVSPS;
+	close $cvspsfh;
+	$opt_P = $cvspsfile;
 }
 
+
+open(CVS, "<$opt_P") or die $!;
 
 ## cvsps output:
 #---------------------
