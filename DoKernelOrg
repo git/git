@@ -35,15 +35,30 @@ case "$1" in
 	;;
 
 maint | master)
-	arch=x86_64
+	case `hostname` in
+	hera.kernel.org)
+		arch=x86_64 ;;
+	old-hera.kernel.org)
+		arch=i386 ;;
+	*)	echo >&2 "What are you talking about???"
+		exit 1 ;;
+	esac &&
+	: >./:all.log &&
 	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
-
-	echo "* Building $1"
+	echo "* Building $1" &&
 	git checkout "$1" &&
-	make rpm >./:rpm.log 2>&1 &&
-	make $J git >>./:rpm.log 2>&1 &&
+	make rpm >>./:all.log 2>&1 &&
+	case "$arch" in
+	i386)
+		status=$?
+		echo >&2 "Done -- move RPMS to the master machine."
+		make clean
+		exit $status ;;
+	esac &&
+	make dist-doc >>./:all.log 2>&1 &&
+	make $J git >>./:all.log 2>&1 &&
 	V=`./git --version | sed -e 's/git version //'` &&
-	ln git-$V.tar.gz $G/. &&
+	ln git-$V.tar.gz git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/. &&
 	ln $HOME/rpms/RPMS/$arch/git*-$V-* $G/RPMS/$arch/. &&
 	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
 	{
@@ -51,8 +66,7 @@ maint | master)
 		/usr/local/bin/yummy $G/RPMS/$arch
 		/usr/local/bin/yummy $G/RPMS/SRPMS
 		:
-	} &&
-	rm -fr ./:rpm.log &&
+	} >>./:all.log 2>&1 &&
 	make clean &&
 
 	: ;;
