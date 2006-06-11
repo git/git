@@ -29,6 +29,8 @@ The latest $kind release GIT $vername is available at the usual places:
 	http://www.kernel.org/pub/software/scm/git/
 
 	git-$vername.tar.{gz,bz2}			(tarball)
+	git-htmldocs-$vername.tar.{gz,bz2}		(preformatted documentation)
+	git-manpages-$vername.tar.{gz,bz2}		(preformatted documentation)
 	RPMS/\$arch/git-*-$vername-1.\$arch.rpm	(RPM)
 
 
