@@ -465,10 +465,15 @@ $git_dir = getwd()."/".$git_dir unless $git_dir =~ m#^/#;
 $ENV{"GIT_DIR"} = $git_dir;
 my $orig_git_index;
 $orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
-my ($git_ih, $git_index) = tempfile('gitXXXXXX', SUFFIX => '.idx',
-				    DIR => File::Spec->tmpdir());
-close ($git_ih);
-$ENV{GIT_INDEX_FILE} = $git_index;
+
+my %index; # holds filenames of one index per branch
+{   # init with an index for origin
+    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+			     DIR => File::Spec->tmpdir());
+    close ($fh);
+    $index{$opt_o} = $fn;
+}
+$ENV{GIT_INDEX_FILE} = $index{$opt_o};
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
@@ -496,6 +501,13 @@ unless(-d $git_dir) {
 	$tip_at_start = `git-rev-parse --verify HEAD`;
 
 	# populate index
+	unless ($index{$last_branch}) {
+	    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+				     DIR => File::Spec->tmpdir());
+	    close ($fh);
+	    $index{$last_branch} = $fn;
+	}
+	$ENV{GIT_INDEX_FILE} = $index{$last_branch};
 	system('git-read-tree', $last_branch);
 	die "read-tree failed: $?\n" if $?;
 
@@ -805,8 +817,17 @@ while(<CVS>) {
 		}
 		if(($ancestor || $branch) ne $last_branch) {
 			print "Switching from $last_branch to $branch\n" if $opt_v;
-			system("git-read-tree", $branch);
-			die "read-tree failed: $?\n" if $?;
+			unless ($index{$branch}) {
+			    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+						     DIR => File::Spec->tmpdir());
+			    close ($fh);
+			    $index{$branch} = $fn;
+			    $ENV{GIT_INDEX_FILE} = $index{$branch};
+			    system("git-read-tree", $branch);
+			    die "read-tree failed: $?\n" if $?;
+			} else {
+			    $ENV{GIT_INDEX_FILE} = $index{$branch};
+		        }
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
@@ -870,7 +891,9 @@ while(<CVS>) {
 }
 commit() if $branch and $state != 11;
 
-unlink($git_index);
+foreach my $git_index (values %index) {
+    unlink($git_index);
+}
 
 if (defined $orig_git_index) {
 	$ENV{GIT_INDEX_FILE} = $orig_git_index;
