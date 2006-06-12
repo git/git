@@ -4,6 +4,7 @@
 #
 
 test_description='git-svn tests'
+GIT_SVN_LC_ALL=$LC_ALL
 . ./lib-git-svn.sh
 
 mkdir import
@@ -163,6 +164,18 @@ test_expect_success "$name" \
      diff -u help $SVN_TREE/exec-2.sh"
 
 
+if test -n "$GIT_SVN_LC_ALL" && echo $GIT_SVN_LC_ALL | grep -q '\.UTF-8$'
+then
+	name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
+	echo '# hello' >> exec-2.sh
+	git update-index exec-2.sh
+	git commit -m 'éï∏'
+	export LC_ALL="$GIT_SVN_LC_ALL"
+	test_expect_success "$name" "git-svn commit HEAD"
+	unset LC_ALL
+else
+	echo "UTF-8 locale not set, test skipped ($GIT_SVN_LC_ALL)"
+fi
 
 name='test fetch functionality (svn => git) with alternate GIT_SVN_ID'
 GIT_SVN_ID=alt
