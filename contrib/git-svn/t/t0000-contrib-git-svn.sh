@@ -31,6 +31,7 @@ test_expect_success \
     'import an SVN revision into git' \
     'git-svn fetch'
 
+test_expect_success "checkout from svn" "svn co $svnrepo $SVN_TREE"
 
 name='try a deep --rmdir with a commit'
 git checkout -f -b mybranch remotes/git-svn
@@ -41,6 +42,7 @@ git commit -m "$name"
 
 test_expect_success "$name" \
     "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch &&
+     svn up $SVN_TREE &&
      test -d $SVN_TREE/dir && test ! -d $SVN_TREE/dir/a"
 
 
@@ -52,7 +54,7 @@ git update-index --remove dir/file
 git update-index --add dir/file/file
 git commit -m "$name"
 
-test_expect_code 1 "$name" \
+test_expect_failure "$name" \
     'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch' \
     || true
 
@@ -67,7 +69,7 @@ git update-index --remove -- bar/zzz
 git update-index --add -- bar
 git commit -m "$name"
 
-test_expect_code 1 "$name" \
+test_expect_failure "$name" \
     'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch2' \
     || true
 
@@ -82,7 +84,7 @@ echo yyy > bar/zzz/yyy
 git-update-index --add bar/zzz/yyy
 git commit -m "$name"
 
-test_expect_code 1 "$name" \
+test_expect_failure "$name" \
     'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch3' \
     || true
 
@@ -97,7 +99,7 @@ echo asdf > dir
 git update-index --add -- dir
 git commit -m "$name"
 
-test_expect_code 1 "$name" \
+test_expect_failure "$name" \
     'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch4' \
     || true
 
@@ -111,6 +113,7 @@ git commit -m "$name"
 
 test_expect_success "$name" \
     "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+     svn up $SVN_TREE &&
      test ! -x $SVN_TREE/exec.sh"
 
 
@@ -121,6 +124,7 @@ git commit -m "$name"
 
 test_expect_success "$name" \
     "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+     svn up $SVN_TREE &&
      test -x $SVN_TREE/exec.sh"
 
 
@@ -133,6 +137,7 @@ git commit -m "$name"
 
 test_expect_success "$name" \
     "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+     svn up $SVN_TREE &&
      test -L $SVN_TREE/exec.sh"
 
 
@@ -145,6 +150,7 @@ git commit -m "$name"
 
 test_expect_success "$name" \
     "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+     svn up $SVN_TREE &&
      test -x $SVN_TREE/bar/zzz &&
      test -L $SVN_TREE/exec-2.sh"
 
@@ -159,6 +165,7 @@ git commit -m "$name"
 
 test_expect_success "$name" \
     "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+     svn up $SVN_TREE &&
      test -f $SVN_TREE/exec-2.sh &&
      test ! -L $SVN_TREE/exec-2.sh &&
      diff -u help $SVN_TREE/exec-2.sh"

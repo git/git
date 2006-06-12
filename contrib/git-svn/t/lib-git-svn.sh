@@ -11,7 +11,7 @@ fi
 
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/git-svn
-SVN_TREE=$GIT_SVN_DIR/tree
+SVN_TREE=$GIT_SVN_DIR/svn-tree
 
 svnadmin >/dev/null 2>&1
 if test $? != 1
