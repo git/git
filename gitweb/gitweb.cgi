@@ -837,6 +837,25 @@ sub git_read_projects {
 	return @list;
 }
 
+sub git_get_project_config {
+	my $key = shift;
+
+	return unless ($key);
+	$key =~ s/^gitweb\.//;
+	return if ($key =~ m/\W/);
+
+	my $val = qx(git-repo-config --get gitweb.$key);
+	return ($val);
+}
+
+sub git_get_project_config_bool {
+	my $val = git_get_project_config (@_);
+	if ($val and $val =~ m/true|yes|on/) {
+		return (1);
+	}
+	return; # implicit false
+}
+
 sub git_project_list {
 	my @list = git_read_projects();
 	my @projects;
@@ -1233,6 +1252,7 @@ sub git_tag {
 
 sub git_blame {
 	my $fd;
+	die_error('403 Permission denied', "Permission denied.") if (!git_get_project_config_bool ('blame'));
 	die_error('404 Not Found', "What file will it be, master?") if (!$file_name);
 	$hash_base ||= git_read_head($project);
 	die_error(undef, "Reading commit failed.") unless ($hash_base);
@@ -1468,6 +1488,7 @@ sub git_blob {
 		my $base = $hash_base || git_read_head($project);
 		$hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
 	}
+	my $have_blame = git_get_project_config_bool ('blame');
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
@@ -1479,8 +1500,10 @@ sub git_blob {
 		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
 		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
 		if (defined $file_name) {
-			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;h=$hash;hb=$hash_base;f=$file_name")}, "blame") .
-			" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") .
+			if ($have_blame) {
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;h=$hash;hb=$hash_base;f=$file_name")}, "blame") .  " | ";
+			}
+			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") .
 			" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;hb=HEAD;f=$file_name")}, "head") . "<br/>\n";
 		} else {
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash")}, "plain") . "<br/>\n";
