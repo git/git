@@ -246,6 +246,8 @@ static int eatspace(char *line)
 /* First lines of body can have From:, Date:, and Subject: */
 static void handle_inbody_header(int *seen, char *line)
 {
+	if (*seen & SEEN_PREFIX)
+		return;
 	if (!memcmp(">From", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_BOGUS_UNIX_FROM)) {
 			*seen |= SEEN_BOGUS_UNIX_FROM;
