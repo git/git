@@ -47,6 +47,7 @@ extern int cmd_diff_stages(int argc, const char **argv, char **envp);
 extern int cmd_diff_tree(int argc, const char **argv, char **envp);
 extern int cmd_cat_file(int argc, const char **argv, char **envp);
 extern int cmd_rev_parse(int argc, const char **argv, char **envp);
+extern int cmd_update_index(int argc, const char **argv, char **envp);
 
 extern int cmd_write_tree(int argc, const char **argv, char **envp);
 extern int write_tree(unsigned char *sha1, int missing_ok, const char *prefix);

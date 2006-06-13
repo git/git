@@ -157,7 +157,7 @@ PROGRAMS = \
 	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-unpack-file$X \
-	git-unpack-objects$X git-update-index$X git-update-server-info$X \
+	git-unpack-objects$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
 	git-update-ref$X git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
@@ -170,7 +170,7 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
 	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
 	git-read-tree$X git-commit-tree$X git-write-tree$X \
-	git-apply$X git-show-branch$X git-diff-files$X \
+	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
 	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -221,7 +221,7 @@ BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
 	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
 	builtin-rm.o builtin-init-db.o builtin-rev-parse.o \
-	builtin-tar-tree.o builtin-upload-tar.o \
+	builtin-tar-tree.o builtin-upload-tar.o builtin-update-index.o \
 	builtin-ls-files.o builtin-ls-tree.o builtin-write-tree.o \
 	builtin-read-tree.o builtin-commit-tree.o builtin-mailinfo.o \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \

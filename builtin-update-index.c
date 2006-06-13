@@ -8,6 +8,7 @@
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
+#include "builtin.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -186,8 +187,6 @@ static void chmod_path(int flip, const char *path)
 	die("git-update-index: cannot chmod %cx '%s'", flip, path);
 }
 
-static struct lock_file lock_file;
-
 static void update_one(const char *path, const char *prefix, int prefix_length)
 {
 	const char *p = prefix_path(prefix, prefix_length, path);
@@ -238,7 +237,7 @@ static void read_index_info(int line_termination)
 		 * (2) mode SP type SP sha1          TAB path
 		 * The second format is to stuff git-ls-tree output
 		 * into the index file.
-		 * 
+		 *
 		 * (3) mode         SP sha1 SP stage TAB path
 		 * This format is to put higher order stages into the
 		 * index file and matches git-ls-files --stage output.
@@ -477,7 +476,7 @@ static int do_reupdate(int ac, const char **av,
 	return 0;
 }
 
-int main(int argc, const char **argv)
+int cmd_update_index(int argc, const char **argv, char **envp)
 {
 	int i, newfd, entries, has_errors = 0, line_termination = '\n';
 	int allow_options = 1;
@@ -486,12 +485,16 @@ int main(int argc, const char **argv)
 	int prefix_length = prefix ? strlen(prefix) : 0;
 	char set_executable_bit = 0;
 	unsigned int refresh_flags = 0;
+	struct lock_file *lock_file;
 
 	git_config(git_default_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
+	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
+	lock_file = xmalloc(sizeof(struct lock_file));
+
+	newfd = hold_lock_file_for_update(lock_file, get_index_file());
 	if (newfd < 0)
-		die("unable to create new index file");
+		die("unable to create new cachefile");
 
 	entries = read_cache();
 	if (entries < 0)
@@ -645,9 +648,11 @@ int main(int argc, const char **argv)
  finish:
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_lock_file(&lock_file))
+		    commit_lock_file(lock_file))
 			die("Unable to write new index file");
 	}
+
+	rollback_lock_file(lock_file);
 
 	return has_errors ? 1 : 0;
 }
