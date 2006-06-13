@@ -181,7 +181,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "rev-parse", cmd_rev_parse },
 		{ "write-tree", cmd_write_tree },
 		{ "mailsplit", cmd_mailsplit },
-		{ "mailinfo", cmd_mailinfo }
+		{ "mailinfo", cmd_mailinfo },
+		{ "stripspace", cmd_stripspace }
 	};
 	int i;
 

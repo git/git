@@ -56,4 +56,7 @@ extern int split_mbox(const char **mbox, const char *dir, int allow_bare, int nr
 
 extern int cmd_mailinfo(int argc, const char **argv, char **envp);
 extern int mailinfo(FILE *in, FILE *out, int ks, const char *encoding, const char *msg, const char *patch);
+
+extern int cmd_stripspace(int argc, const char **argv, char **envp);
+extern void stripspace(FILE *in, FILE *out);
 #endif

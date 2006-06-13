@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include "builtin.h"
 
 /*
  * Remove empty lines from the beginning and end.
@@ -28,21 +29,21 @@ static int cleanup(char *line)
 	return 1;
 }
 
-int main(int argc, char **argv)
+void stripspace(FILE *in, FILE *out)
 {
 	int empties = -1;
 	int incomplete = 0;
 	char line[1024];
 
-	while (fgets(line, sizeof(line), stdin)) {
+	while (fgets(line, sizeof(line), in)) {
 		incomplete = cleanup(line);
 
 		/* Not just an empty line? */
 		if (line[0] != '\n') {
 			if (empties > 0)
-				putchar('\n');
+				fputc('\n', out);
 			empties = 0;
-			fputs(line, stdout);
+			fputs(line, out);
 			continue;
 		}
 		if (empties < 0)
@@ -50,6 +51,11 @@ int main(int argc, char **argv)
 		empties++;
 	}
 	if (incomplete)
-		putchar('\n');
+		fputc('\n', out);
+}
+
+int cmd_stripspace(int argc, const char **argv, char **envp)
+{
+	stripspace(stdin, stdout);
 	return 0;
 }
