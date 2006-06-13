@@ -1,10 +1,11 @@
 #include "cache.h"
 #include "refs.h"
+#include "builtin.h"
 
 static const char git_update_ref_usage[] =
 "git-update-ref <refname> <value> [<oldval>] [-m <reason>]";
 
-int main(int argc, char **argv)
+int cmd_update_ref(int argc, const char **argv, char **envp)
 {
 	const char *refname=NULL, *value=NULL, *oldval=NULL, *msg=NULL;
 	struct ref_lock *lock;
@@ -52,5 +53,7 @@ int main(int argc, char **argv)
 		return 1;
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		return 1;
+
+	/* write_ref_sha1 always unlocks the ref, no need to do it explicitly */
 	return 0;
 }

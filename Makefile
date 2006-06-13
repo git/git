@@ -159,11 +159,11 @@ PROGRAMS = \
 	git-ssh-upload$X git-unpack-file$X \
 	git-unpack-objects$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
-	git-update-ref$X git-symbolic-ref$X \
+	git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
-BUILT_INS = git-log$X git-whatchanged$X git-show$X \
+BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
 	git-grep$X git-add$X git-rm$X git-rev-list$X git-stripspace$X \
 	git-check-ref-format$X git-rev-parse$X git-mailinfo$X \
@@ -226,7 +226,8 @@ BUILTIN_OBJS = \
 	builtin-read-tree.o builtin-commit-tree.o builtin-mailinfo.o \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
-	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o
+	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
+	builtin-update-ref.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz

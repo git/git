@@ -183,7 +183,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "mailsplit", cmd_mailsplit },
 		{ "mailinfo", cmd_mailinfo },
 		{ "stripspace", cmd_stripspace },
-		{ "update-index", cmd_update_index }
+		{ "update-index", cmd_update_index },
+		{ "update-ref", cmd_update_ref }
 	};
 	int i;
 
