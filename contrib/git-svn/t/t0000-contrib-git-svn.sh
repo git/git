@@ -193,5 +193,18 @@ test_expect_success "$name" \
      git-rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
      diff -u a b"
 
+name='check imported tree checksums expected tree checksums'
+cat > expected <<\EOF
+tree f735671b89a7eb30cab1d8597de35bd4271ab813
+tree 4b9af72bb861eaed053854ec502cf7df72618f0f
+tree 031b8d557afc6fea52894eaebb45bec52f1ba6d1
+tree 0b094cbff17168f24c302e297f55bfac65eb8bd3
+tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
+tree 56a30b966619b863674f5978696f4a3594f2fca9
+tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
+tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
+EOF
+test_expect_success "$name" "diff -u a expected"
+
 test_done
 
