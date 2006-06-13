@@ -20,9 +20,11 @@
 
 #define DEBUG 0
 
-static const char blame_usage[] = "[-c] [-l] [--] file [commit]\n"
+static const char blame_usage[] = "[-c] [-l] [-t] [-S <revs-file>] [--] file [commit]\n"
 	"  -c, --compability Use the same output mode as git-annotate (Default: off)\n"
 	"  -l, --long        Show long commit SHA1 (Default: off)\n"
+	"  -t, --time        Show raw timestamp (Default: off)\n"
+	"  -S, --revs-file   Use revisions from revs-file instead of calling git-rev-list\n"
 	"  -h, --help        This message";
 
 static struct commit **blame_lines;
@@ -680,12 +682,18 @@ static void get_commit_info(struct commit* commit, struct commit_info* ret)
 	*tmp = 0;
 }
 
-static const char* format_time(unsigned long time, const char* tz_str)
+static const char* format_time(unsigned long time, const char* tz_str,
+			       int show_raw_time)
 {
 	static char time_buf[128];
 	time_t t = time;
 	int minutes, tz;
 	struct tm *tm;
+
+	if (show_raw_time) {
+		sprintf(time_buf, "%lu %s", time, tz_str);
+		return time_buf;
+	}
 
 	tz = atoi(tz_str);
 	minutes = tz < 0 ? -tz : tz;
@@ -740,6 +748,7 @@ int main(int argc, const char **argv)
 	char filename_buf[256];
 	int sha1_len = 8;
 	int compability = 0;
+	int show_raw_time = 0;
 	int options = 1;
 	struct commit* start_commit;
 
@@ -767,6 +776,10 @@ int main(int argc, const char **argv)
 			} else if(!strcmp(argv[i], "-c") ||
 				  !strcmp(argv[i], "--compability")) {
 				compability = 1;
+				continue;
+			} else if(!strcmp(argv[i], "-t") ||
+				  !strcmp(argv[i], "--time")) {
+				show_raw_time = 1;
 				continue;
 			} else if(!strcmp(argv[i], "-S")) {
 				if (i + 1 < argc &&
@@ -873,14 +886,17 @@ int main(int argc, const char **argv)
 		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
 		if(compability) {
 			printf("\t(%10s\t%10s\t%d)", ci.author,
-			       format_time(ci.author_time, ci.author_tz), i+1);
+			       format_time(ci.author_time, ci.author_tz,
+					   show_raw_time),
+			       i+1);
 		} else {
 			if (found_rename)
 				printf(" %-*.*s", longest_file, longest_file,
 				       u->pathname);
 			printf(" (%-*.*s %10s %*d) ",
 			       longest_author, longest_author, ci.author,
-			       format_time(ci.author_time, ci.author_tz),
+			       format_time(ci.author_time, ci.author_tz,
+					   show_raw_time),
 			       max_digits, i+1);
 		}
 
