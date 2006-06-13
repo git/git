@@ -151,7 +151,7 @@ PROGRAMS = \
 	git-checkout-index$X git-clone-pack$X \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
-	git-mailinfo$X git-merge-base$X \
+	git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
@@ -166,7 +166,7 @@ PROGRAMS = \
 BUILT_INS = git-log$X git-whatchanged$X git-show$X \
 	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
 	git-grep$X git-add$X git-rm$X git-rev-list$X \
-	git-check-ref-format$X git-rev-parse$X \
+	git-check-ref-format$X git-rev-parse$X git-mailinfo$X \
 	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
 	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
 	git-read-tree$X git-commit-tree$X git-write-tree$X \
@@ -223,7 +223,7 @@ BUILTIN_OBJS = \
 	builtin-rm.o builtin-init-db.o builtin-rev-parse.o \
 	builtin-tar-tree.o builtin-upload-tar.o \
 	builtin-ls-files.o builtin-ls-tree.o builtin-write-tree.o \
-	builtin-read-tree.o builtin-commit-tree.o \
+	builtin-read-tree.o builtin-commit-tree.o builtin-mailinfo.o \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
 	builtin-cat-file.o builtin-mailsplit.o
@@ -379,9 +379,7 @@ ifdef NEEDS_LIBICONV
 	else
 		ICONV_LINK =
 	endif
-	LIB_4_ICONV = $(ICONV_LINK) -liconv
-else
-	LIB_4_ICONV =
+	LIBS += $(ICONV_LINK) -liconv
 endif
 ifdef NEEDS_SOCKET
 	LIBS += -lsocket
@@ -563,10 +561,6 @@ $(SIMPLE_PROGRAMS) : $(LIB_FILE)
 $(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIB_FILE) $(SIMPLE_LIB)
-
-git-mailinfo$X: mailinfo.o $(LIB_FILE)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIB_FILE) $(SIMPLE_LIB) $(LIB_4_ICONV)
 
 git-local-fetch$X: fetch.o
 git-ssh-fetch$X: rsh.o fetch.o

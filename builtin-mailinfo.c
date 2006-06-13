@@ -12,11 +12,12 @@
 #endif
 #include "git-compat-util.h"
 #include "cache.h"
+#include "builtin.h"
 
-static FILE *cmitmsg, *patchfile;
+static FILE *cmitmsg, *patchfile, *fin, *fout;
 
 static int keep_subject = 0;
-static char *metainfo_charset = NULL;
+static const char *metainfo_charset = NULL;
 static char line[1000];
 static char date[1000];
 static char name[1000];
@@ -49,7 +50,7 @@ static int bogus_from(char *line)
 
 	/* This is fallback, so do not bother if we already have an
 	 * e-mail address.
-	 */ 
+	 */
 	if (*email)
 		return 0;
 
@@ -322,13 +323,13 @@ static char *cleanup_subject(char *subject)
 			if (remove <= len *2) {
 				subject = p+1;
 				continue;
-			}	
+			}
 			break;
 		}
 		eatspace(subject);
 		return subject;
 	}
-}			
+}
 
 static void cleanup_space(char *buf)
 {
@@ -648,7 +649,7 @@ static void handle_info(void)
 	cleanup_space(email);
 	cleanup_space(sub);
 
-	printf("Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n",
+	fprintf(fout, "Author: %s\nEmail: %s\nSubject: %s\nDate: %s\n\n",
 	       name, email, sub, date);
 }
 
@@ -685,7 +686,7 @@ static int handle_commit_msg(int *seen)
 			continue;
 
 		fputs(line, cmitmsg);
-	} while (fgets(line, sizeof(line), stdin) != NULL);
+	} while (fgets(line, sizeof(line), fin) != NULL);
 	fclose(cmitmsg);
 	cmitmsg = NULL;
 	return 0;
@@ -706,7 +707,7 @@ static void handle_patch(void)
 		decode_transfer_encoding(line);
 		fputs(line, patchfile);
 		patch_lines++;
-	} while (fgets(line, sizeof(line), stdin) != NULL);
+	} while (fgets(line, sizeof(line), fin) != NULL);
 }
 
 /* multipart boundary and transfer encoding are set up for us, and we
@@ -719,7 +720,7 @@ static int handle_multipart_one_part(int *seen)
 {
 	int n = 0;
 
-	while (fgets(line, sizeof(line), stdin) != NULL) {
+	while (fgets(line, sizeof(line), fin) != NULL) {
 	again:
 		n++;
 		if (is_multipart_boundary(line))
@@ -740,7 +741,7 @@ static void handle_multipart_body(void)
 	int part_num = 0;
 
 	/* Skip up to the first boundary */
-	while (fgets(line, sizeof(line), stdin) != NULL)
+	while (fgets(line, sizeof(line), fin) != NULL)
 		if (is_multipart_boundary(line)) {
 			part_num = 1;
 			break;
@@ -749,7 +750,7 @@ static void handle_multipart_body(void)
 		return;
 	/* We are on boundary line.  Start slurping the subhead. */
 	while (1) {
-		int hdr = read_one_header_line(line, sizeof(line), stdin);
+		int hdr = read_one_header_line(line, sizeof(line), fin);
 		if (!hdr) {
 			if (handle_multipart_one_part(&seen) < 0)
 				return;
@@ -781,10 +782,45 @@ static void handle_body(void)
 	}
 }
 
+int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
+	     const char *msg, const char *patch)
+{
+	keep_subject = ks;
+	metainfo_charset = encoding;
+	fin = in;
+	fout = out;
+
+	cmitmsg = fopen(msg, "w");
+	if (!cmitmsg) {
+		perror(msg);
+		return -1;
+	}
+	patchfile = fopen(patch, "w");
+	if (!patchfile) {
+		perror(patch);
+		fclose(cmitmsg);
+		return -1;
+	}
+	while (1) {
+		int hdr = read_one_header_line(line, sizeof(line), fin);
+		if (!hdr) {
+			if (multipart_boundary[0])
+				handle_multipart_body();
+			else
+				handle_body();
+			handle_info();
+			break;
+		}
+		check_header_line(line);
+	}
+
+	return 0;
+}
+
 static const char mailinfo_usage[] =
 	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
 
-int main(int argc, char **argv)
+int cmd_mailinfo(int argc, const char **argv, char **envp)
 {
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
@@ -805,27 +841,6 @@ int main(int argc, char **argv)
 
 	if (argc != 3)
 		usage(mailinfo_usage);
-	cmitmsg = fopen(argv[1], "w");
-	if (!cmitmsg) {
-		perror(argv[1]);
-		exit(1);
-	}
-	patchfile = fopen(argv[2], "w");
-	if (!patchfile) {
-		perror(argv[2]);
-		exit(1);
-	}
-	while (1) {
-		int hdr = read_one_header_line(line, sizeof(line), stdin);
-		if (!hdr) {
-			if (multipart_boundary[0])
-				handle_multipart_body();
-			else
-				handle_body();
-			handle_info();
-			break;
-		}
-		check_header_line(line);
-	}
-	return 0;
+
+	return !!mailinfo(stdin, stdout, keep_subject, metainfo_charset, argv[1], argv[2]);
 }

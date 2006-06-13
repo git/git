@@ -1,6 +1,8 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
+#include <stdio.h>
+
 #ifndef PATH_MAX
 # define PATH_MAX 4096
 #endif
@@ -51,4 +53,7 @@ extern int write_tree(unsigned char *sha1, int missing_ok, const char *prefix);
 
 extern int cmd_mailsplit(int argc, const char **argv, char **envp);
 extern int split_mbox(const char **mbox, const char *dir, int allow_bare, int nr_prec, int skip);
+
+extern int cmd_mailinfo(int argc, const char **argv, char **envp);
+extern int mailinfo(FILE *in, FILE *out, int ks, const char *encoding, const char *msg, const char *patch);
 #endif

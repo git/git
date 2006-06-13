@@ -180,7 +180,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "cat-file", cmd_cat_file },
 		{ "rev-parse", cmd_rev_parse },
 		{ "write-tree", cmd_write_tree },
-		{ "mailsplit", cmd_mailsplit }
+		{ "mailsplit", cmd_mailsplit },
+		{ "mailinfo", cmd_mailinfo }
 	};
 	int i;
 
