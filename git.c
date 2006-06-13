@@ -179,7 +179,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "diff-tree", cmd_diff_tree },
 		{ "cat-file", cmd_cat_file },
 		{ "rev-parse", cmd_rev_parse },
-		{ "write-tree", cmd_write_tree }
+		{ "write-tree", cmd_write_tree },
+		{ "mailsplit", cmd_mailsplit }
 	};
 	int i;
 
