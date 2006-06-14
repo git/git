@@ -15,7 +15,7 @@ static const char **default_arg = NULL;
 #define UNINTERESTING	01
 
 #define REV_SHIFT	 2
-#define MAX_REVS	29 /* should not exceed bits_per_int - REV_SHIFT */
+#define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
 static struct commit *interesting(struct commit_list *list)
 {

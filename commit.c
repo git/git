@@ -56,10 +56,10 @@ static struct commit *check_commit(struct object *obj,
 				   const unsigned char *sha1,
 				   int quiet)
 {
-	if (obj->type != commit_type) {
+	if (obj->type != TYPE_COMMIT) {
 		if (!quiet)
 			error("Object %s is a %s, not a commit",
-			      sha1_to_hex(sha1), obj->type);
+			      sha1_to_hex(sha1), typename(obj->type));
 		return NULL;
 	}
 	return (struct commit *) obj;
@@ -86,11 +86,11 @@ struct commit *lookup_commit(const unsigned char *sha1)
 	if (!obj) {
 		struct commit *ret = xcalloc(1, sizeof(struct commit));
 		created_object(sha1, &ret->object);
-		ret->object.type = commit_type;
+		ret->object.type = TYPE_COMMIT;
 		return ret;
 	}
 	if (!obj->type)
-		obj->type = commit_type;
+		obj->type = TYPE_COMMIT;
 	return check_commit(obj, sha1, 0);
 }
 

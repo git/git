@@ -131,14 +131,14 @@ struct tree *lookup_tree(const unsigned char *sha1)
 	if (!obj) {
 		struct tree *ret = xcalloc(1, sizeof(struct tree));
 		created_object(sha1, &ret->object);
-		ret->object.type = tree_type;
+		ret->object.type = TYPE_TREE;
 		return ret;
 	}
 	if (!obj->type)
-		obj->type = tree_type;
-	if (obj->type != tree_type) {
-		error("Object %s is a %s, not a tree", 
-		      sha1_to_hex(sha1), obj->type);
+		obj->type = TYPE_TREE;
+	if (obj->type != TYPE_TREE) {
+		error("Object %s is a %s, not a tree",
+		      sha1_to_hex(sha1), typename(obj->type));
 		return NULL;
 	}
 	return (struct tree *) obj;
@@ -216,11 +216,11 @@ struct tree *parse_tree_indirect(const unsigned char *sha1)
 	do {
 		if (!obj)
 			return NULL;
-		if (obj->type == tree_type)
+		if (obj->type == TYPE_TREE)
 			return (struct tree *) obj;
-		else if (obj->type == commit_type)
+		else if (obj->type == TYPE_COMMIT)
 			obj = &(((struct commit *) obj)->tree->object);
-		else if (obj->type == tag_type)
+		else if (obj->type == TYPE_TAG)
 			obj = ((struct tag *) obj)->tagged;
 		else
 			return NULL;

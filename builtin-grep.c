@@ -630,10 +630,9 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 static int grep_object(struct grep_opt *opt, const char **paths,
 		       struct object *obj, const char *name)
 {
-	if (!strcmp(obj->type, blob_type))
+	if (obj->type == TYPE_BLOB)
 		return grep_sha1(opt, obj->sha1, name);
-	if (!strcmp(obj->type, commit_type) ||
-	    !strcmp(obj->type, tree_type)) {
+	if (obj->type == TYPE_COMMIT || obj->type == TYPE_TREE) {
 		struct tree_desc tree;
 		void *data;
 		int hit;
@@ -646,7 +645,7 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 		free(data);
 		return hit;
 	}
-	die("unable to grep from object of type %s", obj->type);
+	die("unable to grep from object of type %s", typename(obj->type));
 }
 
 static const char builtin_grep_usage[] =

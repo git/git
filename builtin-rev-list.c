@@ -158,16 +158,16 @@ static void show_commit_list(struct rev_info *revs)
 		const char *name = pending->name;
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
-		if (obj->type == tag_type) {
+		if (obj->type == TYPE_TAG) {
 			obj->flags |= SEEN;
 			p = add_object(obj, p, NULL, name);
 			continue;
 		}
-		if (obj->type == tree_type) {
+		if (obj->type == TYPE_TREE) {
 			p = process_tree((struct tree *)obj, p, NULL, name);
 			continue;
 		}
-		if (obj->type == blob_type) {
+		if (obj->type == TYPE_BLOB) {
 			p = process_blob((struct blob *)obj, p, NULL, name);
 			continue;
 		}

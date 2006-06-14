@@ -357,7 +357,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 {
 	unsigned char outer[20];
 	const char *sp;
-	const char *type_string = NULL;
+	unsigned int expected_type = 0;
 	struct object *o;
 
 	/*
@@ -381,13 +381,13 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 
 	sp++; /* beginning of type name, or closing brace for empty */
 	if (!strncmp(commit_type, sp, 6) && sp[6] == '}')
-		type_string = commit_type;
+		expected_type = TYPE_COMMIT;
 	else if (!strncmp(tree_type, sp, 4) && sp[4] == '}')
-		type_string = tree_type;
+		expected_type = TYPE_TREE;
 	else if (!strncmp(blob_type, sp, 4) && sp[4] == '}')
-		type_string = blob_type;
+		expected_type = TYPE_BLOB;
 	else if (sp[0] == '}')
-		type_string = NULL;
+		expected_type = TYPE_NONE;
 	else
 		return -1;
 
@@ -397,7 +397,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	o = parse_object(outer);
 	if (!o)
 		return -1;
-	if (!type_string) {
+	if (!expected_type) {
 		o = deref_tag(o, name, sp - name - 2);
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return -1;
@@ -412,18 +412,18 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		while (1) {
 			if (!o || (!o->parsed && !parse_object(o->sha1)))
 				return -1;
-			if (o->type == type_string) {
+			if (o->type == expected_type) {
 				memcpy(sha1, o->sha1, 20);
 				return 0;
 			}
-			if (o->type == tag_type)
+			if (o->type == TYPE_TAG)
 				o = ((struct tag*) o)->tagged;
-			else if (o->type == commit_type)
+			else if (o->type == TYPE_COMMIT)
 				o = &(((struct commit *) o)->tree->object);
 			else
 				return error("%.*s: expected %s type, but the object dereferences to %s type",
-					     len, name, type_string,
-					     o->type);
+					     len, name, typename(expected_type),
+					     typename(o->type));
 			if (!o->parsed)
 				parse_object(o->sha1);
 		}

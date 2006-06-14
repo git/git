@@ -9,6 +9,10 @@ struct object **objs;
 static int nr_objs;
 int obj_allocs;
 
+const char *type_names[] = {
+	"none", "blob", "tree", "commit", "bad"
+};
+
 int track_object_refs = 0;
 
 static int hashtable_index(const unsigned char *sha1)
@@ -50,7 +54,7 @@ void created_object(const unsigned char *sha1, struct object *obj)
 
 	obj->parsed = 0;
 	memcpy(obj->sha1, sha1, 20);
-	obj->type = NULL;
+	obj->type = TYPE_NONE;
 	obj->refs = NULL;
 	obj->used = 0;
 
@@ -179,7 +183,7 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 	if (!obj) {
 		union any_object *ret = xcalloc(1, sizeof(*ret));
 		created_object(sha1, &ret->object);
-		ret->object.type = NULL;
+		ret->object.type = TYPE_NONE;
 		return &ret->object;
 	}
 	return obj;

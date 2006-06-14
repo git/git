@@ -118,27 +118,27 @@ static struct object_list **process_queue_end = &process_queue;
 
 static int process_object(struct object *obj)
 {
-	if (obj->type == commit_type) {
+	if (obj->type == TYPE_COMMIT) {
 		if (process_commit((struct commit *)obj))
 			return -1;
 		return 0;
 	}
-	if (obj->type == tree_type) {
+	if (obj->type == TYPE_TREE) {
 		if (process_tree((struct tree *)obj))
 			return -1;
 		return 0;
 	}
-	if (obj->type == blob_type) {
+	if (obj->type == TYPE_BLOB) {
 		return 0;
 	}
-	if (obj->type == tag_type) {
+	if (obj->type == TYPE_TAG) {
 		if (process_tag((struct tag *)obj))
 			return -1;
 		return 0;
 	}
 	return error("Unable to determine requirements "
 		     "of type %s for %s",
-		     obj->type, sha1_to_hex(obj->sha1));
+		     typename(obj->type), sha1_to_hex(obj->sha1));
 }
 
 static int process(struct object *obj)
@@ -179,9 +179,7 @@ static int loop(void)
 		 */
 		if (! (obj->flags & TO_SCAN)) {
 			if (fetch(obj->sha1)) {
-				report_missing(obj->type
-					       ? obj->type
-					       : "object", obj->sha1);
+				report_missing(typename(obj->type), obj->sha1);
 				return -1;
 			}
 		}

@@ -46,7 +46,7 @@ static int rev_list_insert_ref(const char *path, const unsigned char *sha1)
 {
 	struct object *o = deref_tag(parse_object(sha1), path, 0);
 
-	if (o && o->type == commit_type)
+	if (o && o->type == TYPE_COMMIT)
 		rev_list_push((struct commit *)o, SEEN);
 
 	return 0;
@@ -251,14 +251,14 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 {
 	struct object *o = parse_object(sha1);
 
-	while (o && o->type == tag_type) {
+	while (o && o->type == TYPE_TAG) {
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
 		o->flags |= COMPLETE;
 		o = parse_object(t->tagged->sha1);
 	}
-	if (o && o->type == commit_type) {
+	if (o && o->type == TYPE_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 		commit->object.flags |= COMPLETE;
 		insert_by_date(commit, &complete);
@@ -352,7 +352,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		 * in sync with the other side at some time after
 		 * that (it is OK if we guess wrong here).
 		 */
-		if (o->type == commit_type) {
+		if (o->type == TYPE_COMMIT) {
 			struct commit *commit = (struct commit *)o;
 			if (!cutoff || cutoff < commit->date)
 				cutoff = commit->date;
@@ -371,7 +371,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		struct object *o = deref_tag(lookup_object(ref->old_sha1),
 					     NULL, 0);
 
-		if (!o || o->type != commit_type || !(o->flags & COMPLETE))
+		if (!o || o->type != TYPE_COMMIT || !(o->flags & COMPLETE))
 			continue;
 
 		if (!(o->flags & SEEN)) {
