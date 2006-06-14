@@ -43,12 +43,13 @@ typedef struct s_xdlclassifier {
 	xdlclass_t **rchash;
 	chastore_t ncha;
 	long count;
+	long flags;
 } xdlclassifier_t;
 
 
 
 
-static int xdl_init_classifier(xdlclassifier_t *cf, long size);
+static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags);
 static void xdl_free_classifier(xdlclassifier_t *cf);
 static int xdl_classify_record(xdlclassifier_t *cf, xrecord_t **rhash, unsigned int hbits,
 			       xrecord_t *rec);
@@ -63,8 +64,10 @@ static int xdl_optimize_ctxs(xdfile_t *xdf1, xdfile_t *xdf2);
 
 
 
-static int xdl_init_classifier(xdlclassifier_t *cf, long size) {
+static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
 	long i;
+
+	cf->flags = flags;
 
 	cf->hbits = xdl_hashbits((unsigned int) size);
 	cf->hsize = 1 << cf->hbits;
@@ -103,8 +106,9 @@ static int xdl_classify_record(xdlclassifier_t *cf, xrecord_t **rhash, unsigned 
 	line = rec->ptr;
 	hi = (long) XDL_HASHLONG(rec->ha, cf->hbits);
 	for (rcrec = cf->rchash[hi]; rcrec; rcrec = rcrec->next)
-		if (rcrec->ha == rec->ha && rcrec->size == rec->size &&
-		    !memcmp(line, rcrec->line, rec->size))
+		if (rcrec->ha == rec->ha &&
+				xdl_recmatch(rcrec->line, rcrec->size,
+					rec->ptr, rec->size, cf->flags))
 			break;
 
 	if (!rcrec) {
@@ -173,7 +177,7 @@ static int xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 				top = blk + bsize;
 			}
 			prev = cur;
-			hav = xdl_hash_record(&cur, top);
+			hav = xdl_hash_record(&cur, top, xpp->flags);
 			if (nrec >= narec) {
 				narec *= 2;
 				if (!(rrecs = (xrecord_t **) xdl_realloc(recs, narec * sizeof(xrecord_t *)))) {
@@ -268,7 +272,7 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	enl1 = xdl_guess_lines(mf1) + 1;
 	enl2 = xdl_guess_lines(mf2) + 1;
 
-	if (xdl_init_classifier(&cf, enl1 + enl2 + 1) < 0) {
+	if (xdl_init_classifier(&cf, enl1 + enl2 + 1, xpp->flags) < 0) {
 
 		return -1;
 	}

@@ -33,7 +33,6 @@
 #define XDL_ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 #define XDL_HASHLONG(v, b) (((unsigned long)(v) * GR_PRIME) >> ((CHAR_BIT * sizeof(unsigned long)) - (b)))
 #define XDL_PTRFREE(p) do { if (p) { xdl_free(p); (p) = NULL; } } while (0)
-#define XDL_RECMATCH(r1, r2) ((r1)->size == (r2)->size && memcmp((r1)->ptr, (r2)->ptr, (r1)->size) == 0)
 #define XDL_LE32_PUT(p, v) \
 do { \
 	unsigned char *__p = (unsigned char *) (p); \

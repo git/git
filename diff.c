@@ -678,7 +678,7 @@ static void builtin_diff(const char *name_a,
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = o->color_diff;
-		xpp.flags = XDF_NEED_MINIMAL;
+		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (!diffopts)
@@ -703,6 +703,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 			     struct diff_filespec *one,
 			     struct diff_filespec *two,
 			     struct diffstat_t *diffstat,
+			     struct diff_options *o,
 			     int complete_rewrite)
 {
 	mmfile_t mf1, mf2;
@@ -732,7 +733,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 
-		xpp.flags = XDF_NEED_MINIMAL;
+		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = 0;
 		xecfg.flags = 0;
 		ecb.outf = xdiff_outf;
@@ -1317,7 +1318,7 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat, 0);
+		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat, o, 0);
 		return;
 	}
 
@@ -1329,7 +1330,7 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 
 	if (p->status == DIFF_STATUS_MODIFIED && p->score)
 		complete_rewrite = 1;
-	builtin_diffstat(name, other, p->one, p->two, diffstat, complete_rewrite);
+	builtin_diffstat(name, other, p->one, p->two, diffstat, o, complete_rewrite);
 }
 
 static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
@@ -1534,6 +1535,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--color"))
 		options->color_diff = 1;
+	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
+		options->xdl_opts |= XDF_IGNORE_WHITESPACE;
+	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
+		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
 	else
 		return 0;
 	return 1;
