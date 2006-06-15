@@ -31,6 +31,7 @@ use File::Path qw/mkpath/;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
 use File::Spec qw//;
 use POSIX qw/strftime/;
+use IPC::Open3;
 use Memoize;
 memoize('revisions_eq');
 
@@ -2335,47 +2336,36 @@ sub libsvn_get_file {
 	my $p = $f;
 	return unless ($p =~ s#^\Q$SVN_PATH\E/?##);
 
-	my $fd = IO::File->new_tmpfile or croak $!;
+	my ($hash, $pid, $in, $out);
 	my $pool = SVN::Pool->new;
-	my ($r, $props) = $SVN->get_file($f, $rev, $fd, $pool);
+	defined($pid = open3($in, $out, '>&STDERR',
+				qw/git-hash-object -w --stdin/)) or croak $!;
+	my ($r, $props) = $SVN->get_file($f, $rev, $in, $pool);
+	$in->flush == 0 or croak $!;
+	close $in or croak $!;
 	$pool->clear;
-	$fd->flush == 0 or croak $!;
-	seek $fd, 0, 0 or croak $!;
-	if (my $es = $props->{'svn:eol-style'}) {
-		my $new_fd = IO::File->new_tmpfile or croak $!;
-		eol_cp_fd($fd, $new_fd, $es);
-		close $fd or croak $!;
-		$fd = $new_fd;
-		seek $fd, 0, 0 or croak $!;
-		$fd->flush == 0 or croak $!;
-	}
-	my $mode = '100644';
-	if (exists $props->{'svn:executable'}) {
-		$mode = '100755';
-	}
+	chomp($hash = do { local $/; <$out> });
+	close $out or croak $!;
+	waitpid $pid, 0;
+	$hash =~ /^$sha1$/o or die "not a sha1: $hash\n";
+
+	my $mode = exists $props->{'svn:executable'} ? '100755' : '100644';
 	if (exists $props->{'svn:special'}) {
 		$mode = '120000';
-		local $/;
-		my $link = <$fd>;
+		my $link = `git-cat-file blob $hash`;
 		$link =~ s/^link // or die "svn:special file with contents: <",
 						$link, "> is not understood\n";
-		seek $fd, 0, 0 or croak $!;
-		truncate $fd, 0 or croak $!;
-		print $fd $link or croak $!;
-		seek $fd, 0, 0 or croak $!;
-		$fd->flush == 0 or croak $!;
+		defined($pid = open3($in, $out, '>&STDERR',
+				qw/git-hash-object -w --stdin/)) or croak $!;
+		print $in $link;
+		$in->flush == 0 or croak $!;
+		close $in or croak $!;
+		chomp($hash = do { local $/; <$out> });
+		close $out or croak $!;
+		waitpid $pid, 0;
+		$hash =~ /^$sha1$/o or die "not a sha1: $hash\n";
 	}
-	my $pid = open my $ho, '-|';
-	defined $pid or croak $!;
-	if (!$pid) {
-		open STDIN, '<&', $fd or croak $!;
-		exec qw/git-hash-object -w --stdin/ or croak $!;
-	}
-	chomp(my $hash = do { local $/; <$ho> });
-	close $ho or croak $?;
-	$hash =~ /^$sha1$/o or die "not a sha1: $hash\n";
 	print $gui $mode,' ',$hash,"\t",$p,"\0" or croak $!;
-	close $fd or croak $?;
 }
 
 sub libsvn_log_entry {
