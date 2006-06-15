@@ -1005,12 +1005,6 @@ sub setup_git_svn {
 	close $fh;
 	s_to_file($SVN_URL,"$GIT_SVN_DIR/info/url");
 
-	open my $fd, '>>', "$GIT_SVN_DIR/info/exclude" or croak $!;
-	print $fd '.svn',"\n";
-	close $fd or croak $!;
-	my ($url, $path) = repo_path_split($SVN_URL);
-	s_to_file($url, "$GIT_SVN_DIR/info/repo_url");
-	s_to_file($path, "$GIT_SVN_DIR/info/repo_path");
 }
 
 sub assert_svn_wc_clean {
@@ -1649,6 +1643,12 @@ sub do_update_index {
 
 sub index_changes {
 	return if $_use_lib;
+
+	if (!-f "$GIT_SVN_DIR/info/exclude") {
+		open my $fd, '>>', "$GIT_SVN_DIR/info/exclude" or croak $!;
+		print $fd '.svn',"\n";
+		close $fd or croak $!;
+	}
 	my $no_text_base = shift;
 	do_update_index([qw/git-diff-files --name-only -z/],
 			'remove',
@@ -2018,9 +2018,6 @@ sub migration_check {
 		my $dn = dirname("$GIT_DIR/svn/$x");
 		mkpath([$dn]) unless -d $dn;
 		rename "$GIT_DIR/$x", "$GIT_DIR/svn/$x" or croak "$!: $x";
-		my ($url, $path) = repo_path_split($u);
-		s_to_file($url, "$GIT_DIR/svn/$x/info/repo_url");
-		s_to_file($path, "$GIT_DIR/svn/$x/info/repo_path");
 	}
 	migrate_revdb() if (-d $GIT_SVN_DIR && !-w $REVDB);
 	print "Done upgrading.\n";
@@ -2138,15 +2135,8 @@ sub write_grafts {
 sub read_url_paths {
 	my $l_map = {};
 	git_svn_each(sub { my $x = shift;
-			my $u = file_to_s("$GIT_DIR/svn/$x/info/repo_url");
-			my $p = file_to_s("$GIT_DIR/svn/$x/info/repo_path");
-			# we hate trailing slashes
-			if ($u =~ s#(?:^\/+|\/+$)##g) {
-				s_to_file($u,"$GIT_DIR/svn/$x/info/repo_url");
-			}
-			if ($p =~ s#(?:^\/+|\/+$)##g) {
-				s_to_file($p,"$GIT_DIR/svn/$x/info/repo_path");
-			}
+			my $url = file_to_s("$GIT_DIR/svn/$x/info/url");
+			my ($u, $p) = repo_path_split($url);
 			$l_map->{$u}->{$p} = $x;
 			});
 	return $l_map;
