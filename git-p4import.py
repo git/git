@@ -23,7 +23,6 @@ s = signal(SIGINT, SIG_DFL)
 if s != default_int_handler:
    signal(SIGINT, s)
 
-
 def die(msg, *args):
     for a in args:
         msg = "%s %s" % (msg, a)
@@ -38,6 +37,7 @@ verbosity = 1
 logfile = "/dev/null"
 ignore_warnings = False
 stitch = 0
+tagall = True
 
 def report(level, msg, *args):
     global verbosity
@@ -261,10 +261,9 @@ class git_command:
         self.make_tag("p4/%s"%id, commit)
         self.git("update-ref HEAD %s %s" % (commit, current) )
 
-
 try:
     opts, args = getopt.getopt(sys.argv[1:], "qhvt:",
-                    ["authors=","help","stitch=","timezone=","log=","ignore"])
+            ["authors=","help","stitch=","timezone=","log=","ignore","notags"])
 except getopt.GetoptError:
     usage()
 
@@ -275,6 +274,8 @@ for o, a in opts:
         verbosity += 1
     if o in ("--log"):
         logfile = a
+    if o in ("--notags"):
+        tagall = False
     if o in ("-h", "--help"):
         usage()
     if o in ("--ignore"):
@@ -350,7 +351,10 @@ for id in changes:
     report(1, "Importing changeset", id)
     change = p4.describe(id)
     p4.sync(id)
-    git.commit(change.author, change.email, change.date, change.msg, id)
+    if tagall :
+            git.commit(change.author, change.email, change.date, change.msg, id)
+    else:
+            git.commit(change.author, change.email, change.date, change.msg, "import")
     if stitch == 1:
         git.clean_directories()
         stitch = 0
