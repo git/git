@@ -42,7 +42,7 @@ my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_cp_similarity,
+	$_find_copies_harder, $_l, $_cp_similarity, $_cp_remote,
 	$_repack, $_repack_nr, $_repack_flags,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
@@ -86,6 +86,7 @@ my %cmd = (
 			{ 'revision|r=i' => \$_revision } ],
 	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)",
 			{ 'no-ignore-externals' => \$_no_ignore_ext,
+			  'copy-remote|remote=s' => \$_cp_remote,
 			  'upgrade' => \$_upgrade } ],
 	'graft-branches' => [ \&graft_branches,
 			'Detect merges/branches from already imported history',
@@ -134,7 +135,7 @@ init_vars();
 load_authors() if $_authors;
 load_all_refs() if $_branch_all_refs;
 svn_compat_check();
-migration_check() unless $cmd =~ /^(?:init|multi-init)$/;
+migration_check() unless $cmd =~ /^(?:init|rebuild|multi-init)$/;
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
 
@@ -174,6 +175,9 @@ sub version {
 }
 
 sub rebuild {
+	if (quiet_run(qw/git-rev-parse --verify/,"refs/remotes/$GIT_SVN^0")) {
+		copy_remote_ref();
+	}
 	$SVN_URL = shift or undef;
 	my $newest_rev = 0;
 	if ($_upgrade) {
@@ -1940,6 +1944,7 @@ sub svn_cmd_checkout {
 
 sub check_upgrade_needed {
 	if (!-r $REVDB) {
+		-d $GIT_SVN_DIR or mkpath([$GIT_SVN_DIR]);
 		open my $fh, '>>',$REVDB or croak $!;
 		close $fh;
 	}
@@ -2052,6 +2057,7 @@ sub migrate_revdb {
 			init_vars();
 			exit 0 if -r $REVDB;
 			print "Upgrading svn => git mapping...\n";
+			-d $GIT_SVN_DIR or mkpath([$GIT_SVN_DIR]);
 			open my $fh, '>>',$REVDB or croak $!;
 			close $fh;
 			rebuild();
@@ -2761,6 +2767,17 @@ sub revdb_get {
 	}
 	close $fh or croak $!;
 	return $ret;
+}
+
+sub copy_remote_ref {
+	my $origin = $_cp_remote ? $_cp_remote : 'origin';
+	my $ref = "refs/remotes/$GIT_SVN";
+	if (safe_qx('git-ls-remote', $origin, $ref)) {
+		sys(qw/git fetch/, $origin, "$ref:$ref");
+	} else {
+		die "Unable to find remote reference: ",
+				"refs/remotes/$GIT_SVN on $origin\n";
+	}
 }
 
 package SVN::Git::Editor;
