@@ -663,17 +663,15 @@ sub show_log {
 	my $pid = open(my $log,'-|');
 	defined $pid or croak $!;
 	if (!$pid) {
-		my @rl = (qw/git-log --abbrev-commit --pretty=raw
-				--default/, "remotes/$GIT_SVN");
-		push @rl, '--raw' if $_verbose;
-		exec(@rl, @args) or croak $!;
+		exec(git_svn_log_cmd($r_min,$r_max), @args) or croak $!;
 	}
 	setup_pager();
 	my (@k, $c, $d);
+
 	while (<$log>) {
 		if (/^commit ($sha1_short)/o) {
 			my $cmt = $1;
-			if ($c && defined $c->{r} && $c->{r} != $r_last) {
+			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
 				$r_last = $c->{r};
 				process_commit($c, $r_min, $r_max, \@k) or
 								goto out;
@@ -692,8 +690,7 @@ sub show_log {
 		} elsif ($d) {
 			push @{$c->{diff}}, $_;
 		} elsif (/^    (git-svn-id:.+)$/) {
-			my ($url, $rev, $uuid) = extract_metadata($1);
-			$c->{r} = $rev;
+			(undef, $c->{r}, undef) = extract_metadata($1);
 		} elsif (s/^    //) {
 			push @{$c->{l}}, $_;
 		}
@@ -714,6 +711,52 @@ out:
 }
 
 ########################### utility functions #########################
+
+sub cmt_showable {
+	my ($c) = @_;
+	return 1 if defined $c->{r};
+	if ($c->{l} && $c->{l}->[-1] eq "...\n" &&
+				$c->{a_raw} =~ /\@([a-f\d\-]+)>$/) {
+		my @msg = safe_qx(qw/git-cat-file commit/, $c->{c});
+		shift @msg while ($msg[0] ne "\n");
+		shift @msg;
+		@{$c->{l}} = grep !/^git-svn-id: /, @msg;
+
+		(undef, $c->{r}, undef) = extract_metadata(
+				(grep(/^git-svn-id: /, @msg))[-1]);
+	}
+	return defined $c->{r};
+}
+
+sub git_svn_log_cmd {
+	my ($r_min, $r_max) = @_;
+	my @cmd = (qw/git-log --abbrev-commit --pretty=raw
+			--default/, "refs/remotes/$GIT_SVN");
+	push @cmd, '--summary' if $_verbose;
+	return @cmd unless defined $r_max;
+	if ($r_max == $r_min) {
+		push @cmd, '--max-count=1';
+		if (my $c = revdb_get($REVDB, $r_max)) {
+			push @cmd, $c;
+		}
+	} else {
+		my ($c_min, $c_max);
+		$c_max = revdb_get($REVDB, $r_max);
+		$c_min = revdb_get($REVDB, $r_min);
+		if ($c_min && $c_max) {
+			if ($r_max > $r_max) {
+				push @cmd, "$c_min..$c_max";
+			} else {
+				push @cmd, "$c_max..$c_min";
+			}
+		} elsif ($r_max > $r_min) {
+			push @cmd, $c_max;
+		} else {
+			push @cmd, $c_min;
+		}
+	}
+	return @cmd;
+}
 
 sub fetch_child_id {
 	my $id = shift;
@@ -2206,6 +2249,7 @@ sub setup_pager { # translated to Perl from pager.c
 sub get_author_info {
 	my ($dest, $author, $t, $tz) = @_;
 	$author =~ s/(?:^\s*|\s*$)//g;
+	$dest->{a_raw} = $author;
 	my $_a;
 	if ($_authors) {
 		$_a = $rusers{$author} || undef;
@@ -2440,7 +2484,7 @@ sub svn_grab_base_rev {
 	close $fh;
 	if (defined $c && length $c) {
 		my ($url, $rev, $uuid) = extract_metadata((grep(/^git-svn-id: /,
-			safe_qx(qw/git-cat-file commit/, $c)))[0]);
+			safe_qx(qw/git-cat-file commit/, $c)))[-1]);
 		return ($rev, $c);
 	}
 	return (undef, undef);
