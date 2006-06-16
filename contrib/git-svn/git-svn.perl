@@ -1306,12 +1306,12 @@ sub svn_checkout_tree {
 		} elsif ($m->{chg} eq 'T') {
 			sys(qw(svn rm --force),$m->{file_b});
 			apply_mod_line_blob($m);
-			sys(qw(svn add --force), $m->{file_b});
+			sys(qw(svn add), $m->{file_b});
 			svn_check_prop_executable($m);
 		} elsif ($m->{chg} eq 'A') {
 			svn_ensure_parent_path( $m->{file_b} );
 			apply_mod_line_blob($m);
-			sys(qw(svn add --force), $m->{file_b});
+			sys(qw(svn add), $m->{file_b});
 			svn_check_prop_executable($m);
 		} else {
 			croak "Invalid chg: $m->{chg}\n";
