@@ -194,8 +194,12 @@ test_expect_success "$name" \
      diff -u a b"
 
 name='check imported tree checksums expected tree checksums'
-cat > expected <<\EOF
-tree f735671b89a7eb30cab1d8597de35bd4271ab813
+rm -f expected
+if test -n "$GIT_SVN_LC_ALL" && echo $GIT_SVN_LC_ALL | grep -q '\.UTF-8$'
+then
+	echo tree f735671b89a7eb30cab1d8597de35bd4271ab813 > expected
+fi
+cat >> expected <<\EOF
 tree 4b9af72bb861eaed053854ec502cf7df72618f0f
 tree 031b8d557afc6fea52894eaebb45bec52f1ba6d1
 tree 0b094cbff17168f24c302e297f55bfac65eb8bd3
