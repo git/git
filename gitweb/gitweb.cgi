@@ -49,6 +49,11 @@ my $projects_list =	"index/index.aux";
 my $default_blob_plain_mimetype = 'text/plain';
 my $default_text_plain_charset  = undef;
 
+# file to use for guessing MIME types before trying /etc/mime.types
+# (relative to the current git repository)
+my $mimetypes_file              = undef;
+
+
 # input validation and dispatch
 my $action = $cgi->param('a');
 if (defined $action) {
@@ -1486,12 +1491,51 @@ sub git_blob {
 	git_footer_html();
 }
 
+sub mimetype_guess_file {
+	my $filename = shift;
+	my $mimemap = shift;
+	-r $mimemap or return undef;
+
+	my %mimemap;
+	open(MIME, $mimemap) or return undef;
+	while (<MIME>) {
+		my ($mime, $exts) = split(/\t+/);
+		my @exts = split(/\s+/, $exts);
+		foreach my $ext (@exts) {
+			$mimemap{$ext} = $mime;
+		}
+	}
+	close(MIME);
+
+	$filename =~ /\.(.*?)$/;
+	return $mimemap{$1};
+}
+
+sub mimetype_guess {
+	my $filename = shift;
+	my $mime;
+	$filename =~ /\./ or return undef;
+
+	if ($mimetypes_file) {
+		my $file = $mimetypes_file;
+		$file =~ m#^/# or $file = "$projectroot/$path/$file";
+		$mime = mimetype_guess_file($filename, $file);
+	}
+	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
+	return $mime;
+}
+
 sub git_blob_plain_mimetype {
 	my $fd = shift;
 	my $filename = shift;
 
 	# just in case
 	return $default_blob_plain_mimetype unless $fd;
+
+	if ($filename) {
+		my $mime = mimetype_guess($filename);
+		$mime and return $mime;
+	}
 
 	if (-T $fd) {
 		return 'text/plain' .
