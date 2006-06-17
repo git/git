@@ -73,6 +73,18 @@ OPTIONS
 	List all variables set in .git/config.
 
 
+ENVIRONMENT
+-----------
+
+GIT_CONFIG::
+	Take the configuration from the given file instead of .git/config.
+
+GIT_CONFIG_LOCAL::
+	Currently the same as $GIT_CONFIG; when Git will support global
+	configuration files, this will cause it to take the configuration
+	from the global configuration file in addition to the given file.
+
+
 EXAMPLE
 -------
 

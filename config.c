@@ -317,7 +317,17 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 
 int git_config(config_fn_t fn)
 {
-	return git_config_from_file(fn, git_path("config"));
+	const char *filename = git_path("config");
+	/* Forward-compatibility cue: $GIT_CONFIG makes git read _only_
+	 * the given config file, $GIT_CONFIG_LOCAL will make it process
+	 * it in addition to the global config file, the same way it would
+	 * the per-repository config file otherwise. */
+	if (getenv("GIT_CONFIG")) {
+		filename = getenv("GIT_CONFIG");
+	} else if (getenv("GIT_CONFIG_LOCAL")) {
+		filename = getenv("GIT_CONFIG_LOCAL");
+	}
+	return git_config_from_file(fn, filename);
 }
 
 /*
