@@ -1,0 +1,317 @@
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] a commit.
+
+Here is a patch from A U Thor.
+
+---
+ foo |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/foo b/foo
+index 9123cdc..918dcf8 100644
+--- a/foo
++++ b/foo
+@@ -1 +1 @@
+-Fri Jun  9 00:44:04 PDT 2006
++Fri Jun  9 00:44:13 PDT 2006
+-- 
+1.4.0.g6f2b
+
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] another patch
+
+Here is a patch from A U Thor.  This addresses the issue raised in the
+message:
+
+From: Nit Picker <nit.picker@example.net>
+Subject: foo is too old
+Message-Id: <nitpicker.12121212@example.net>
+
+Hopefully this would fix the problem stated there.
+
+
+I have included an extra blank line above, but it does not have to be
+stripped away here, along with the               		   
+whitespaces at the end of the above line.  They are expected to be squashed
+when the message is made into a commit log by stripspace,
+Also, there are three blank lines after this paragraph,
+two truly blank and another full of spaces in between.
+
+            
+
+Hope this helps.
+
+---
+ foo |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/foo b/foo
+index 9123cdc..918dcf8 100644
+--- a/foo
++++ b/foo
+@@ -1 +1 @@
+-Fri Jun  9 00:44:04 PDT 2006
++Fri Jun  9 00:44:13 PDT 2006
+-- 
+1.4.0.g6f2b
+
+From nobody Mon Sep 17 00:00:00 2001
+From: Junio C Hamano <junio@kernel.org>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: re: [PATCH] another patch
+
+From: A U Thor <a.u.thor@example.com>
+Subject: [PATCH] third patch
+
+Here is a patch from A U Thor.  This addresses the issue raised in the
+message:
+
+From: Nit Picker <nit.picker@example.net>
+Subject: foo is too old
+Message-Id: <nitpicker.12121212@example.net>
+
+Hopefully this would fix the problem stated there.
+
+---
+ foo |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/foo b/foo
+index 9123cdc..918dcf8 100644
+--- a/foo
++++ b/foo
+@@ -1 +1 @@
+-Fri Jun  9 00:44:04 PDT 2006
++Fri Jun  9 00:44:13 PDT 2006
+-- 
+1.4.0.g6f2b
+
+From nobody Sat Aug 27 23:07:49 2005
+Path: news.gmane.org!not-for-mail
+Message-ID: <20050721.091036.01119516.yoshfuji@linux-ipv6.org>
+From: YOSHIFUJI Hideaki / =?iso-2022-jp?B?GyRCNUhGIzFRTEAbKEI=?= 
+	<yoshfuji@linux-ipv6.org>
+Newsgroups: gmane.comp.version-control.git
+Subject: [PATCH 1/2] GIT: Try all addresses for given remote name
+Date: Thu, 21 Jul 2005 09:10:36 -0400 (EDT)
+Lines: 99
+Organization: USAGI/WIDE Project
+Approved: news@gmane.org
+NNTP-Posting-Host: main.gmane.org
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Trace: sea.gmane.org 1121951434 29350 80.91.229.2 (21 Jul 2005 13:10:34 GMT)
+X-Complaints-To: usenet@sea.gmane.org
+NNTP-Posting-Date: Thu, 21 Jul 2005 13:10:34 +0000 (UTC)
+
+Hello.
+
+Try all addresses for given remote name until it succeeds.
+Also supports IPv6.
+
+Signed-of-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
+
+diff --git a/connect.c b/connect.c
+--- a/connect.c
++++ b/connect.c
+@@ -96,42 +96,57 @@ static enum protocol get_protocol(const 
+ 	die("I don't handle protocol '%s'", name);
+ }
+ 
+-static void lookup_host(const char *host, struct sockaddr *in)
+-{
+-	struct addrinfo *res;
+-	int ret;
+-
+-	ret = getaddrinfo(host, NULL, NULL, &res);
+-	if (ret)
+-		die("Unable to look up %s (%s)", host, gai_strerror(ret));
+-	*in = *res->ai_addr;
+-	freeaddrinfo(res);
+-}
++#define STR_(s)	# s
++#define STR(s)	STR_(s)
+ 
+ static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
+ {
+-	struct sockaddr addr;
+-	int port = DEFAULT_GIT_PORT, sockfd;
+-	char *colon;
+-
+-	colon = strchr(host, ':');
+-	if (colon) {
+-		char *end;
+-		unsigned long n = strtoul(colon+1, &end, 0);
+-		if (colon[1] && !*end) {
+-			*colon = 0;
+-			port = n;
++	int sockfd = -1;
++	char *colon, *end;
++	char *port = STR(DEFAULT_GIT_PORT);
++	struct addrinfo hints, *ai0, *ai;
++	int gai;
++
++	if (host[0] == '[') {
++		end = strchr(host + 1, ']');
++		if (end) {
++			*end = 0;
++			end++;
++			host++;
++		} else
++			end = host;
++	} else
++		end = host;
++	colon = strchr(end, ':');
++
++	if (colon)
++		port = colon + 1;
++
++	memset(&hints, 0, sizeof(hints));
++	hints.ai_socktype = SOCK_STREAM;
++	hints.ai_protocol = IPPROTO_TCP;
++
++	gai = getaddrinfo(host, port, &hints, &ai);
++	if (gai)
++		die("Unable to look up %s (%s)", host, gai_strerror(gai));
++
++	for (ai0 = ai; ai; ai = ai->ai_next) {
++		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
++		if (sockfd < 0)
++			continue;
++		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
++			close(sockfd);
++			sockfd = -1;
++			continue;
+ 		}
++		break;
+ 	}
+ 
+-	lookup_host(host, &addr);
+-	((struct sockaddr_in *)&addr)->sin_port = htons(port);
++	freeaddrinfo(ai0);
+ 
+-	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
+ 	if (sockfd < 0)
+ 		die("unable to create socket (%s)", strerror(errno));
+-	if (connect(sockfd, (void *)&addr, sizeof(addr)) < 0)
+-		die("unable to connect (%s)", strerror(errno));
++
+ 	fd[0] = sockfd;
+ 	fd[1] = sockfd;
+ 	packet_write(sockfd, "%s %s\n", prog, path);
+
+-- 
+YOSHIFUJI Hideaki @ USAGI Project  <yoshfuji@linux-ipv6.org>
+GPG-FP  : 9022 65EB 1ECF 3AD1 0BDF  80D8 4807 F894 E062 0EEA
+
+From nobody Sat Aug 27 23:07:49 2005
+Path: news.gmane.org!not-for-mail
+Message-ID: <u5tacjjdpxq.fsf@lysator.liu.se>
+From: =?iso-8859-1?Q?David_K=E5gedal?= <davidk@lysator.liu.se>
+Newsgroups: gmane.comp.version-control.git
+Subject: [PATCH] Fixed two bugs in git-cvsimport-script.
+Date: Mon, 15 Aug 2005 20:18:25 +0200
+Lines: 83
+Approved: news@gmane.org
+NNTP-Posting-Host: main.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+X-Trace: sea.gmane.org 1124130247 31839 80.91.229.2 (15 Aug 2005 18:24:07 GMT)
+X-Complaints-To: usenet@sea.gmane.org
+NNTP-Posting-Date: Mon, 15 Aug 2005 18:24:07 +0000 (UTC)
+Cc: "Junio C. Hamano" <junkio@cox.net>
+Original-X-From: git-owner@vger.kernel.org Mon Aug 15 20:24:05 2005
+
+The git-cvsimport-script had a copule of small bugs that prevented me
+from importing a big CVS repository.
+
+The first was that it didn't handle removed files with a multi-digit
+primary revision number.
+
+The second was that it was asking the CVS server for "F" messages,
+although they were not handled.
+
+I also updated the documentation for that script to correspond to
+actual flags.
+
+Signed-off-by: David K=E5gedal <davidk@lysator.liu.se>
+---
+
+ Documentation/git-cvsimport-script.txt |    9 ++++++++-
+ git-cvsimport-script                   |    4 ++--
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+50452f9c0c2df1f04d83a26266ba704b13861632
+diff --git a/Documentation/git-cvsimport-script.txt b/Documentation/git=
+-cvsimport-script.txt
+--- a/Documentation/git-cvsimport-script.txt
++++ b/Documentation/git-cvsimport-script.txt
+@@ -29,6 +29,10 @@ OPTIONS
+ 	currently, only the :local:, :ext: and :pserver: access methods=20
+ 	are supported.
+=20
++-C <target-dir>::
++        The GIT repository to import to.  If the directory doesn't
++        exist, it will be created.  Default is the current directory.
++
+ -i::
+ 	Import-only: don't perform a checkout after importing.  This option
+ 	ensures the working directory and cache remain untouched and will
+@@ -44,7 +48,7 @@ OPTIONS
+=20
+ -p <options-for-cvsps>::
+ 	Additional options for cvsps.
+-	The options '-x' and '-A' are implicit and should not be used here.
++	The options '-u' and '-A' are implicit and should not be used here.
+=20
+ 	If you need to pass multiple options, separate them with a comma.
+=20
+@@ -57,6 +61,9 @@ OPTIONS
+ -h::
+ 	Print a short usage message and exit.
+=20
++-z <fuzz>::
++        Pass the timestamp fuzz factor to cvsps.
++
+ OUTPUT
+ ------
+ If '-v' is specified, the script reports what it is doing.
+diff --git a/git-cvsimport-script b/git-cvsimport-script
+--- a/git-cvsimport-script
++++ b/git-cvsimport-script
+@@ -190,7 +190,7 @@ sub conn {
+ 	$self->{'socketo'}->write("Root $repo\n");
+=20
+ 	# Trial and error says that this probably is the minimum set
+-	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mo=
+de M Mbinary E F Checked-in Created Updated Merged Removed\n");
++	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mo=
+de M Mbinary E Checked-in Created Updated Merged Removed\n");
+=20
+ 	$self->{'socketo'}->write("valid-requests\n");
+ 	$self->{'socketo'}->flush();
+@@ -691,7 +691,7 @@ while(<CVS>) {
+ 		unlink($tmpname);
+ 		my $mode =3D pmode($cvs->{'mode'});
+ 		push(@new,[$mode, $sha, $fn]); # may be resurrected!
+-	} elsif($state =3D=3D 9 and /^\s+(\S+):\d(?:\.\d+)+->(\d(?:\.\d+)+)\(=
+DEAD\)\s*$/) {
++	} elsif($state =3D=3D 9 and /^\s+(\S+):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)=
+\(DEAD\)\s*$/) {
+ 		my $fn =3D $1;
+ 		$fn =3D~ s#^/+##;
+ 		push(@old,$fn);
+
+--=20
+David K=E5gedal
+-
+To unsubscribe from this list: send the line "unsubscribe git" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+

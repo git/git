@@ -1,0 +1,7 @@
+Hello.
+
+Try all addresses for given remote name until it succeeds.
+Also supports IPv6.
+
+Signed-of-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
+
