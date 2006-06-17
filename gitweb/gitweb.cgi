@@ -47,7 +47,7 @@ my $projects_list =	"index/index.aux";
 
 # default blob_plain mimetype and default charset for text/plain blob
 my $default_blob_plain_mimetype = 'text/plain';
-my $default_text_plain_charset  = 'utf-8';	# can be undefined
+my $default_text_plain_charset  = undef;
 
 # input validation and dispatch
 my $action = $cgi->param('a');
@@ -1523,9 +1523,9 @@ sub git_blob_plain {
 
 	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
 	undef $/;
-	binmode STDOUT, ':raw' unless $type =~ m/^text\//;
+	binmode STDOUT, ':raw';
 	print <$fd>;
-	binmode STDOUT, ':utf8' unless $type =~ m/^text\//;
+	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 	$/ = "\n";
 	close $fd;
 }
