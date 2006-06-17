@@ -39,11 +39,15 @@ my $home_link =		$my_uri;
 my $home_text =		"indextext.html";
 
 # URI of default stylesheet
-my $stylesheet = 	"gitweb.css";
+my $stylesheet =	"gitweb.css";
 
 # source of projects list
 #my $projects_list =	$projectroot;
 my $projects_list =	"index/index.aux";
+
+# default blob_plain mimetype and default charset for text/plain blob
+my $default_blob_plain_mimetype = 'text/plain';
+my $default_text_plain_charset  = 'utf-8';	# can be undefined
 
 # input validation and dispatch
 my $action = $cgi->param('a');
@@ -1482,15 +1486,46 @@ sub git_blob {
 	git_footer_html();
 }
 
+sub git_blob_plain_mimetype {
+	my $fd = shift;
+	my $filename = shift;
+
+	# just in case
+	return $default_blob_plain_mimetype unless $fd;
+
+	if (-T $fd) {
+		return 'text/plain' .
+		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
+	} elsif (! $filename) {
+		return 'application/octet-stream';
+	} elsif ($filename =~ m/\.png$/i) {
+		return 'image/png';
+	} elsif ($filename =~ m/\.gif$/i) {
+		return 'image/gif';
+	} elsif ($filename =~ m/\.jpe?g$/i) {
+		return 'image/jpeg';
+	} else {
+		return 'application/octet-stream';
+	}
+}
+
 sub git_blob_plain {
-	my $save_as = "$hash.txt";
+	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
+	my $type = git_blob_plain_mimetype($fd, $file_name);
+
+	# save as filename, even when no $file_name is given
+	my $save_as = "$hash";
 	if (defined $file_name) {
 		$save_as = $file_name;
+	} elsif ($type =~ m/^text\//) {
+		$save_as .= '.txt';
 	}
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8', '-content-disposition' => "inline; filename=\"$save_as\"");
-	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
+
+	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
 	undef $/;
+	binmode STDOUT, ':raw' unless $type =~ m/^text\//;
 	print <$fd>;
+	binmode STDOUT, ':utf8' unless $type =~ m/^text\//;
 	$/ = "\n";
 	close $fd;
 }
