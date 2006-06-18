@@ -34,21 +34,23 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 			continue;
 
 		if (ce_stage(ce)) {
-			struct {
-				struct combine_diff_path p;
-				struct combine_diff_parent filler[5];
-			} combine;
+			struct combine_diff_path *dpath;
 			int num_compare_stages = 0;
+			size_t path_len;
 
-			combine.p.next = NULL;
-			combine.p.len = ce_namelen(ce);
-			combine.p.path = xmalloc(combine.p.len + 1);
-			memcpy(combine.p.path, ce->name, combine.p.len);
-			combine.p.path[combine.p.len] = 0;
-			combine.p.mode = 0;
-			memset(combine.p.sha1, 0, 20);
-			memset(&combine.p.parent[0], 0,
-			       sizeof(combine.filler));
+			path_len = ce_namelen(ce);
+
+			dpath = xmalloc (combine_diff_path_size (5, path_len));
+			dpath->path = (char *) &(dpath->parent[5]);
+
+			dpath->next = NULL;
+			dpath->len = path_len;
+			memcpy(dpath->path, ce->name, path_len);
+			dpath->path[path_len] = '\0';
+			dpath->mode = 0;
+			memset(dpath->sha1, 0, 20);
+			memset(&(dpath->parent[0]), 0,
+					sizeof(struct combine_diff_parent)*5);
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
@@ -64,11 +66,11 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 				if (2 <= stage) {
 					int mode = ntohl(nce->ce_mode);
 					num_compare_stages++;
-					memcpy(combine.p.parent[stage-2].sha1,
+					memcpy(dpath->parent[stage-2].sha1,
 					       nce->sha1, 20);
-					combine.p.parent[stage-2].mode =
+					dpath->parent[stage-2].mode =
 						canon_mode(mode);
-					combine.p.parent[stage-2].status =
+					dpath->parent[stage-2].status =
 						DIFF_STATUS_MODIFIED;
 				}
 
@@ -83,13 +85,14 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 			i--;
 
 			if (revs->combine_merges && num_compare_stages == 2) {
-				show_combined_diff(&combine.p, 2,
+				show_combined_diff(dpath, 2,
 						   revs->dense_combined_merges,
 						   revs);
-				free(combine.p.path);
+				free(dpath);
 				continue;
 			}
-			free(combine.p.path);
+			free(dpath);
+			dpath = NULL;
 
 			/*
 			 * Show the diff for the 'ce' if we found the one
