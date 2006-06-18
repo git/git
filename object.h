@@ -9,6 +9,7 @@ struct object_list {
 
 struct object_refs {
 	unsigned count;
+	struct object *base;
 	struct object *ref[FLEX_ARRAY]; /* more */
 };
 
@@ -28,7 +29,6 @@ struct object {
 	unsigned type : TYPE_BITS;
 	unsigned flags : FLAG_BITS;
 	unsigned char sha1[20];
-	struct object_refs *refs;
 };
 
 extern int track_object_refs;
@@ -40,6 +40,8 @@ static inline const char *typename(unsigned int type)
 {
 	return type_names[type > TYPE_TAG ? TYPE_BAD : type];
 }
+
+extern struct object_refs *lookup_object_refs(struct object *);
 
 /** Internal only **/
 struct object *lookup_object(const unsigned char *sha1);
