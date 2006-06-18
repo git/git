@@ -667,7 +667,7 @@ git.spec: git.spec.in
 
 GIT_TARNAME=git-$(GIT_VERSION)
 dist: git.spec git-tar-tree
-	./git-tar-tree HEAD $(GIT_TARNAME) > $(GIT_TARNAME).tar
+	./git-tar-tree HEAD^{tree} $(GIT_TARNAME) > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
 	@cp git.spec $(GIT_TARNAME)
 	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
