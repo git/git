@@ -22,8 +22,10 @@ static unsigned long offset;
 static time_t archive_time;
 
 /* tries hard to write, either succeeds or dies in the attempt */
-static void reliable_write(void *buf, unsigned long size)
+static void reliable_write(const void *data, unsigned long size)
 {
+	const char *buf = data;
+
 	while (size > 0) {
 		long ret = xwrite(1, buf, size);
 		if (ret < 0) {
@@ -47,37 +49,13 @@ static void write_if_needed(void)
 	}
 }
 
-/* acquire the next record from the buffer; user must call write_if_needed() */
-static char *get_record(void)
-{
-	char *p = block + offset;
-	memset(p, 0, RECORDSIZE);
-	offset += RECORDSIZE;
-	return p;
-}
-
-/*
- * The end of tar archives is marked by 1024 nul bytes and after that
- * follows the rest of the block (if any).
- */
-static void write_trailer(void)
-{
-	get_record();
-	write_if_needed();
-	get_record();
-	write_if_needed();
-	while (offset) {
-		get_record();
-		write_if_needed();
-	}
-}
-
 /*
  * queues up writes, so that all our write(2) calls write exactly one
  * full block; pads writes to RECORDSIZE
  */
-static void write_blocked(void *buf, unsigned long size)
+static void write_blocked(const void *data, unsigned long size)
 {
+	const char *buf = data;
 	unsigned long tail;
 
 	if (offset) {
@@ -105,6 +83,21 @@ static void write_blocked(void *buf, unsigned long size)
 		offset += RECORDSIZE - tail;
 	}
 	write_if_needed();
+}
+
+/*
+ * The end of tar archives is marked by 2*512 nul bytes and after that
+ * follows the rest of the block (if any).
+ */
+static void write_trailer(void)
+{
+	int tail = BLOCKSIZE - offset;
+	memset(block + offset, 0, tail);
+	reliable_write(block, BLOCKSIZE);
+	if (tail < 2 * RECORDSIZE) {
+		memset(block, 0, offset);
+		reliable_write(block, BLOCKSIZE);
+	}
 }
 
 static void strbuf_append_string(struct strbuf *sb, const char *s)
