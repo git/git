@@ -25,7 +25,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 		return NULL;
 
 	data = delta_buf;
-	top = delta_buf + delta_size;
+	top = (const unsigned char *) delta_buf + delta_size;
 
 	/* make sure the orig file size matches what we expect */
 	size = get_delta_hdr_size(&data, top);
@@ -56,7 +56,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 			    cp_off + cp_size > src_size ||
 			    cp_size > size)
 				goto bad;
-			memcpy(out, src_buf + cp_off, cp_size);
+			memcpy(out, (char *) src_buf + cp_off, cp_size);
 			out += cp_size;
 			size -= cp_size;
 		} else if (cmd) {

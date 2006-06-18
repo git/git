@@ -148,7 +148,7 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 			buffer = xrealloc(buffer, alloc);
 			nr = alloc - size;
 		}
-		nr = xread(fd, buffer + size, nr);
+		nr = xread(fd, (char *) buffer + size, nr);
 		if (!nr)
 			break;
 		if (nr < 0)
@@ -164,7 +164,7 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 	 */
 	if (alloc < size + SLOP)
 		buffer = xrealloc(buffer, size + SLOP);
-	memset(buffer + size, 0, SLOP);
+	memset((char *) buffer + size, 0, SLOP);
 	return buffer;
 }
 
@@ -1194,7 +1194,7 @@ static int read_old_data(struct stat *st, const char *path, void *buf, unsigned 
 			return error("unable to open %s", path);
 		got = 0;
 		for (;;) {
-			int ret = xread(fd, buf + got, size - got);
+			int ret = xread(fd, (char *) buf + got, size - got);
 			if (ret <= 0)
 				break;
 			got += ret;

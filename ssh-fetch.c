@@ -24,7 +24,7 @@ static ssize_t force_write(int fd, void *buffer, size_t length)
 {
 	ssize_t ret = 0;
 	while (ret < length) {
-		ssize_t size = write(fd, buffer + ret, length - ret);
+		ssize_t size = write(fd, (char *) buffer + ret, length - ret);
 		if (size < 0) {
 			return size;
 		}

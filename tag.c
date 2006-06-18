@@ -47,10 +47,10 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 
 	if (size < 64)
 		return -1;
-	if (memcmp("object ", data, 7) || get_sha1_hex(data + 7, object))
+	if (memcmp("object ", data, 7) || get_sha1_hex((char *) data + 7, object))
 		return -1;
 
-	type_line = data + 48;
+	type_line = (char *) data + 48;
 	if (memcmp("\ntype ", type_line-1, 6))
 		return -1;
 

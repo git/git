@@ -123,7 +123,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	struct object_request *obj_req = (struct object_request *)data;
 	do {
 		ssize_t retval = write(obj_req->local,
-				       ptr + posn, size - posn);
+				       (char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
 		posn += retval;

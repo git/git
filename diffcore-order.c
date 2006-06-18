@@ -30,7 +30,7 @@ static void prepare_order(const char *orderfile)
 	close(fd);
 	if (map == MAP_FAILED)
 		return;
-	endp = map + st.st_size;
+	endp = (char *) map + st.st_size;
 	for (pass = 0; pass < 2; pass++) {
 		cnt = 0;
 		cp = map;

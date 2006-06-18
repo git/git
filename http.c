@@ -34,7 +34,7 @@ size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 	size_t size = eltsize * nmemb;
 	if (size > buffer->size - buffer->posn)
 		size = buffer->size - buffer->posn;
-	memcpy(ptr, buffer->buffer + buffer->posn, size);
+	memcpy(ptr, (char *) buffer->buffer + buffer->posn, size);
 	buffer->posn += size;
 	return size;
 }
@@ -49,7 +49,7 @@ size_t fwrite_buffer(const void *ptr, size_t eltsize,
 			buffer->size = buffer->posn + size;
 		buffer->buffer = xrealloc(buffer->buffer, buffer->size);
 	}
-	memcpy(buffer->buffer + buffer->posn, ptr, size);
+	memcpy((char *) buffer->buffer + buffer->posn, ptr, size);
 	buffer->posn += size;
 	data_received++;
 	return size;

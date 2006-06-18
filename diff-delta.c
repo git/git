@@ -284,7 +284,7 @@ create_delta(const struct delta_index *index,
 	ref_data = index->src_buf;
 	ref_top = ref_data + index->src_size;
 	data = trg_buf;
-	top = trg_buf + trg_size;
+	top = (const unsigned char *) trg_buf + trg_size;
 
 	outpos++;
 	val = 0;

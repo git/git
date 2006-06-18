@@ -706,7 +706,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, size - 20);
 	SHA1_Final(sha1, &c);
-	if (memcmp(sha1, (void *)hdr + size - 20, 20))
+	if (memcmp(sha1, (char *) hdr + size - 20, 20))
 		return error("bad index file sha1 signature");
 	return 0;
 }
@@ -770,7 +770,7 @@ int read_cache(void)
 
 	offset = sizeof(*hdr);
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = map + offset;
+		struct cache_entry *ce = (struct cache_entry *) ((char *) map + offset);
 		offset = offset + ce_size(ce);
 		active_cache[i] = ce;
 	}
@@ -783,10 +783,11 @@ int read_cache(void)
 		 * in 4-byte network byte order.
 		 */
 		unsigned long extsize;
-		memcpy(&extsize, map + offset + 4, 4);
+		memcpy(&extsize, (char *) map + offset + 4, 4);
 		extsize = ntohl(extsize);
-		if (read_index_extension(map + offset,
-					 map + offset + 8, extsize) < 0)
+		if (read_index_extension(((const char *) map) + offset,
+					 (char *) map + offset + 8,
+					 extsize) < 0)
 			goto unmap;
 		offset += 8;
 		offset += extsize;
@@ -820,7 +821,7 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 		}
 		write_buffer_len = buffered;
 		len -= partial;
-		data += partial;
+		data = (char *) data + partial;
  	}
  	return 0;
 }

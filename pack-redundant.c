@@ -246,12 +246,12 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
 	int p1_off, p2_off;
-	void *p1_base, *p2_base;
+	unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
-	
+
 	p1_off = p2_off = 256 * 4 + 4;
-	p1_base = (void *)p1->pack->index_base;
-	p2_base = (void *)p2->pack->index_base;
+	p1_base = (unsigned char *) p1->pack->index_base;
+	p2_base = (unsigned char *) p2->pack->index_base;
 
 	while (p1_off <= p1->pack->index_size - 3 * 20 &&
 	       p2_off <= p2->pack->index_size - 3 * 20)
@@ -351,11 +351,11 @@ static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
 	int p1_off, p2_off;
-	void *p1_base, *p2_base;
+	char *p1_base, *p2_base;
 
 	p1_off = p2_off = 256 * 4 + 4;
-	p1_base = (void *)p1->index_base;
-	p2_base = (void *)p2->index_base;
+	p1_base = (char *)p1->index_base;
+	p2_base = (char *)p2->index_base;
 
 	while (p1_off <= p1->index_size - 3 * 20 &&
 	       p2_off <= p2->index_size - 3 * 20)
@@ -534,7 +534,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 {
 	struct pack_list l;
 	size_t off;
-	void *base;
+	unsigned char *base;
 
 	if (!p->pack_local && !(alt_odb || verbose))
 		return NULL;
@@ -543,7 +543,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 	llist_init(&l.all_objects);
 
 	off = 256 * 4 + 4;
-	base = (void *)p->index_base;
+	base = (unsigned char *)p->index_base;
 	while (off <= p->index_size - 3 * 20) {
 		llist_insert_back(l.all_objects, base + off);
 		off += 24;
