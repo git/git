@@ -10,14 +10,14 @@ struct blob *lookup_blob(const unsigned char *sha1)
 	if (!obj) {
 		struct blob *ret = xcalloc(1, sizeof(struct blob));
 		created_object(sha1, &ret->object);
-		ret->object.type = blob_type;
+		ret->object.type = TYPE_BLOB;
 		return ret;
 	}
 	if (!obj->type)
-		obj->type = blob_type;
-	if (obj->type != blob_type) {
-		error("Object %s is a %s, not a blob", 
-		      sha1_to_hex(sha1), obj->type);
+		obj->type = TYPE_BLOB;
+	if (obj->type != TYPE_BLOB) {
+		error("Object %s is a %s, not a blob",
+		      sha1_to_hex(sha1), typename(obj->type));
 		return NULL;
 	}
 	return (struct blob *) obj;

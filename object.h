@@ -12,19 +12,34 @@ struct object_refs {
 	struct object *ref[FLEX_ARRAY]; /* more */
 };
 
+#define TYPE_BITS   3
+#define FLAG_BITS  27
+
+#define TYPE_NONE   0
+#define TYPE_BLOB   1
+#define TYPE_TREE   2
+#define TYPE_COMMIT 3
+#define TYPE_TAG    4
+#define TYPE_BAD    5
+
 struct object {
 	unsigned parsed : 1;
 	unsigned used : 1;
-	unsigned int flags;
+	unsigned type : TYPE_BITS;
+	unsigned flags : FLAG_BITS;
 	unsigned char sha1[20];
-	const char *type;
 	struct object_refs *refs;
-	void *util;
 };
 
 extern int track_object_refs;
 extern int obj_allocs;
 extern struct object **objs;
+extern const char *type_names[];
+
+static inline const char *typename(unsigned int type)
+{
+	return type_names[type > TYPE_TAG ? TYPE_BAD : type];
+}
 
 /** Internal only **/
 struct object *lookup_object(const unsigned char *sha1);

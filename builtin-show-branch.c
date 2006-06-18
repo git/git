@@ -15,7 +15,7 @@ static const char **default_arg = NULL;
 #define UNINTERESTING	01
 
 #define REV_SHIFT	 2
-#define MAX_REVS	29 /* should not exceed bits_per_int - REV_SHIFT */
+#define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -51,9 +51,9 @@ struct commit_name {
 static void name_commit(struct commit *commit, const char *head_name, int nth)
 {
 	struct commit_name *name;
-	if (!commit->object.util)
-		commit->object.util = xmalloc(sizeof(struct commit_name));
-	name = commit->object.util;
+	if (!commit->util)
+		commit->util = xmalloc(sizeof(struct commit_name));
+	name = commit->util;
 	name->head_name = head_name;
 	name->generation = nth;
 }
@@ -65,8 +65,8 @@ static void name_commit(struct commit *commit, const char *head_name, int nth)
  */
 static void name_parent(struct commit *commit, struct commit *parent)
 {
-	struct commit_name *commit_name = commit->object.util;
-	struct commit_name *parent_name = parent->object.util;
+	struct commit_name *commit_name = commit->util;
+	struct commit_name *parent_name = parent->util;
 	if (!commit_name)
 		return;
 	if (!parent_name ||
@@ -80,12 +80,12 @@ static int name_first_parent_chain(struct commit *c)
 	int i = 0;
 	while (c) {
 		struct commit *p;
-		if (!c->object.util)
+		if (!c->util)
 			break;
 		if (!c->parents)
 			break;
 		p = c->parents->item;
-		if (!p->object.util) {
+		if (!p->util) {
 			name_parent(c, p);
 			i++;
 		}
@@ -106,7 +106,7 @@ static void name_commits(struct commit_list *list,
 	/* First give names to the given heads */
 	for (cl = list; cl; cl = cl->next) {
 		c = cl->item;
-		if (c->object.util)
+		if (c->util)
 			continue;
 		for (i = 0; i < num_rev; i++) {
 			if (rev[i] == c) {
@@ -132,9 +132,9 @@ static void name_commits(struct commit_list *list,
 			struct commit_name *n;
 			int nth;
 			c = cl->item;
-			if (!c->object.util)
+			if (!c->util)
 				continue;
-			n = c->object.util;
+			n = c->util;
 			parents = c->parents;
 			nth = 0;
 			while (parents) {
@@ -142,7 +142,7 @@ static void name_commits(struct commit_list *list,
 				char newname[1000], *en;
 				parents = parents->next;
 				nth++;
-				if (p->object.util)
+				if (p->util)
 					continue;
 				en = newname;
 				switch (n->generation) {
@@ -257,7 +257,7 @@ static void join_revs(struct commit_list **list_p,
 static void show_one_commit(struct commit *commit, int no_name)
 {
 	char pretty[256], *cp;
-	struct commit_name *name = commit->object.util;
+	struct commit_name *name = commit->util;
 	if (commit->object.parsed)
 		pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
 				    pretty, sizeof(pretty), 0, NULL, NULL);

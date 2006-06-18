@@ -19,7 +19,7 @@ static void name_rev(struct commit *commit,
 		const char *tip_name, int merge_traversals, int generation,
 		int deref)
 {
-	struct rev_name *name = (struct rev_name *)commit->object.util;
+	struct rev_name *name = (struct rev_name *)commit->util;
 	struct commit_list *parents;
 	int parent_number = 1;
 
@@ -41,7 +41,7 @@ static void name_rev(struct commit *commit,
 
 	if (name == NULL) {
 		name = xmalloc(sizeof(rev_name));
-		commit->object.util = name;
+		commit->util = name;
 		goto copy_data;
 	} else if (name->merge_traversals > merge_traversals ||
 			(name->merge_traversals == merge_traversals &&
@@ -84,14 +84,14 @@ static int name_ref(const char *path, const unsigned char *sha1)
 	if (tags_only && strncmp(path, "refs/tags/", 10))
 		return 0;
 
-	while (o && o->type == tag_type) {
+	while (o && o->type == TYPE_TAG) {
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
 		o = parse_object(t->tagged->sha1);
 		deref = 1;
 	}
-	if (o && o->type == commit_type) {
+	if (o && o->type == TYPE_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
 		if (!strncmp(path, "refs/heads/", 11))
@@ -108,7 +108,13 @@ static int name_ref(const char *path, const unsigned char *sha1)
 static const char* get_rev_name(struct object *o)
 {
 	static char buffer[1024];
-	struct rev_name *n = (struct rev_name *)o->util;
+	struct rev_name *n;
+	struct commit *c;
+
+	if (o->type != TYPE_COMMIT)
+		return "undefined";
+	c = (struct commit *) o;
+	n = c->util;
 	if (!n)
 		return "undefined";
 
@@ -167,7 +173,7 @@ int main(int argc, char **argv)
 		}
 
 		o = deref_tag(parse_object(sha1), *argv, 0);
-		if (!o || o->type != commit_type) {
+		if (!o || o->type != TYPE_COMMIT) {
 			fprintf(stderr, "Could not get commit for %s. Skipping.\n",
 					*argv);
 			continue;

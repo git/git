@@ -34,7 +34,7 @@ static void objreport(struct object *obj, const char *severity,
                       const char *err, va_list params)
 {
 	fprintf(stderr, "%s in %s %s: ",
-	        severity, obj->type, sha1_to_hex(obj->sha1));
+	        severity, typename(obj->type), sha1_to_hex(obj->sha1));
 	vfprintf(stderr, err, params);
 	fputs("\n", stderr);
 }
@@ -74,7 +74,7 @@ static void check_connectivity(void)
 				; /* it is in pack */
 			else
 				printf("missing %s %s\n",
-				       obj->type, sha1_to_hex(obj->sha1));
+				       typename(obj->type), sha1_to_hex(obj->sha1));
 			continue;
 		}
 
@@ -87,20 +87,20 @@ static void check_connectivity(void)
 				    (has_sha1_file(ref->sha1)))
 					continue;
 				printf("broken link from %7s %s\n",
-				       obj->type, sha1_to_hex(obj->sha1));
+				       typename(obj->type), sha1_to_hex(obj->sha1));
 				printf("              to %7s %s\n",
-				       ref->type, sha1_to_hex(ref->sha1));
+				       typename(ref->type), sha1_to_hex(ref->sha1));
 			}
 		}
 
 		if (show_unreachable && !(obj->flags & REACHABLE)) {
 			printf("unreachable %s %s\n",
-			       obj->type, sha1_to_hex(obj->sha1));
+			       typename(obj->type), sha1_to_hex(obj->sha1));
 			continue;
 		}
 
 		if (!obj->used) {
-			printf("dangling %s %s\n", obj->type, 
+			printf("dangling %s %s\n", typename(obj->type),
 			       sha1_to_hex(obj->sha1));
 		}
 	}
@@ -282,7 +282,7 @@ static int fsck_tag(struct tag *tag)
 	if (!show_tags)
 		return 0;
 
-	printf("tagged %s %s", tagged->type, sha1_to_hex(tagged->sha1));
+	printf("tagged %s %s", typename(tagged->type), sha1_to_hex(tagged->sha1));
 	printf(" (%s) in %s\n", tag->tag, sha1_to_hex(tag->object.sha1));
 	return 0;
 }
@@ -295,16 +295,16 @@ static int fsck_sha1(unsigned char *sha1)
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
-	if (obj->type == blob_type)
+	if (obj->type == TYPE_BLOB)
 		return 0;
-	if (obj->type == tree_type)
+	if (obj->type == TYPE_TREE)
 		return fsck_tree((struct tree *) obj);
-	if (obj->type == commit_type)
+	if (obj->type == TYPE_COMMIT)
 		return fsck_commit((struct commit *) obj);
-	if (obj->type == tag_type)
+	if (obj->type == TYPE_TAG)
 		return fsck_tag((struct tag *) obj);
 	/* By now, parse_object() would've returned NULL instead. */
-	return objerror(obj, "unknown type '%s' (internal fsck error)", obj->type);
+	return objerror(obj, "unknown type '%d' (internal fsck error)", obj->type);
 }
 
 /*
@@ -470,7 +470,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 		}
 		mark_reachable(obj, REACHABLE);
 		obj->used = 1;
-		if (obj->type != tree_type)
+		if (obj->type != TYPE_TREE)
 			err |= objerror(obj, "non-tree in cache-tree");
 	}
 	for (i = 0; i < it->subtree_nr; i++)

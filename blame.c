@@ -110,8 +110,8 @@ static struct patch *get_patch(struct commit *commit, struct commit *other)
 	xdemitconf_t xecfg;
 	mmfile_t file_c, file_o;
 	xdemitcb_t ecb;
-	struct util_info *info_c = (struct util_info *)commit->object.util;
-	struct util_info *info_o = (struct util_info *)other->object.util;
+	struct util_info *info_c = (struct util_info *)commit->util;
+	struct util_info *info_o = (struct util_info *)other->util;
 	struct timeval tv_start, tv_end;
 
 	get_blob(commit);
@@ -197,7 +197,7 @@ static int get_blob_sha1_internal(const unsigned char *sha1, const char *base,
 
 static void get_blob(struct commit *commit)
 {
-	struct util_info *info = commit->object.util;
+	struct util_info *info = commit->util;
 	char type[20];
 
 	if (info->buf)
@@ -223,8 +223,8 @@ static void print_patch(struct patch *p)
 /* For debugging only */
 static void print_map(struct commit *cmit, struct commit *other)
 {
-	struct util_info *util = cmit->object.util;
-	struct util_info *util2 = other->object.util;
+	struct util_info *util = cmit->util;
+	struct util_info *util2 = other->util;
 
 	int i;
 	int max =
@@ -259,8 +259,8 @@ static void print_map(struct commit *cmit, struct commit *other)
 static void fill_line_map(struct commit *commit, struct commit *other,
 			  struct patch *p)
 {
-	struct util_info *util = commit->object.util;
-	struct util_info *util2 = other->object.util;
+	struct util_info *util = commit->util;
+	struct util_info *util2 = other->util;
 	int *map = util->line_map;
 	int *map2 = util2->line_map;
 	int cur_chunk = 0;
@@ -322,14 +322,14 @@ static void fill_line_map(struct commit *commit, struct commit *other,
 
 static int map_line(struct commit *commit, int line)
 {
-	struct util_info *info = commit->object.util;
+	struct util_info *info = commit->util;
 	assert(line >= 0 && line < info->num_lines);
 	return info->line_map[line];
 }
 
 static struct util_info* get_util(struct commit *commit)
 {
-	struct util_info *util = commit->object.util;
+	struct util_info *util = commit->util;
 
 	if (util)
 		return util;
@@ -340,13 +340,13 @@ static struct util_info* get_util(struct commit *commit)
 	util->line_map = NULL;
 	util->num_lines = -1;
 	util->pathname = NULL;
-	commit->object.util = util;
+	commit->util = util;
 	return util;
 }
 
 static int fill_util_info(struct commit *commit)
 {
-	struct util_info *util = commit->object.util;
+	struct util_info *util = commit->util;
 
 	assert(util);
 	assert(util->pathname);
@@ -359,7 +359,7 @@ static int fill_util_info(struct commit *commit)
 
 static void alloc_line_map(struct commit *commit)
 {
-	struct util_info *util = commit->object.util;
+	struct util_info *util = commit->util;
 	int i;
 
 	if (util->line_map)
@@ -383,7 +383,7 @@ static void alloc_line_map(struct commit *commit)
 
 static void init_first_commit(struct commit* commit, const char* filename)
 {
-	struct util_info* util = commit->object.util;
+	struct util_info* util = commit->util;
 	int i;
 
 	util->pathname = filename;
@@ -392,7 +392,7 @@ static void init_first_commit(struct commit* commit, const char* filename)
 
 	alloc_line_map(commit);
 
-	util = commit->object.util;
+	util = commit->util;
 
 	for (i = 0; i < util->num_lines; i++)
 		util->line_map[i] = i;
@@ -413,7 +413,7 @@ static void process_commits(struct rev_info *rev, const char *path,
 	assert(commit);
 	init_first_commit(commit, path);
 
-	util = commit->object.util;
+	util = commit->util;
 	num_blame_lines = util->num_lines;
 	blame_lines = xmalloc(sizeof(struct commit *) * num_blame_lines);
 	blame_contents = util->buf;
@@ -452,7 +452,7 @@ static void process_commits(struct rev_info *rev, const char *path,
 			continue;
 
 		alloc_line_map(commit);
-		util = commit->object.util;
+		util = commit->util;
 
 		for (parents = commit->parents;
 		     parents != NULL; parents = parents->next) {
@@ -512,7 +512,7 @@ static int compare_tree_path(struct rev_info* revs,
 {
 	int ret;
 	const char* paths[2];
-	struct util_info* util = c2->object.util;
+	struct util_info* util = c2->util;
 	paths[0] = util->pathname;
 	paths[1] = NULL;
 
@@ -541,7 +541,7 @@ static int same_tree_as_empty_path(struct rev_info *revs, struct tree* t1,
 
 static const char* find_rename(struct commit* commit, struct commit* parent)
 {
-	struct util_info* cutil = commit->object.util;
+	struct util_info* cutil = commit->util;
 	struct diff_options diff_opts;
 	const char *paths[1];
 	int i;
@@ -585,7 +585,7 @@ static void simplify_commit(struct rev_info *revs, struct commit *commit)
 		return;
 
 	if (!commit->parents) {
-		struct util_info* util = commit->object.util;
+		struct util_info* util = commit->util;
 		if (!same_tree_as_empty_path(revs, commit->tree,
 					     util->pathname))
 			commit->object.flags |= TREECHANGE;
@@ -612,7 +612,7 @@ static void simplify_commit(struct rev_info *revs, struct commit *commit)
 		case REV_TREE_NEW:
 		{
 
-			struct util_info* util = commit->object.util;
+			struct util_info* util = commit->util;
 			if (revs->remove_empty_trees &&
 			    same_tree_as_empty_path(revs, p->tree,
 						    util->pathname)) {
@@ -709,13 +709,13 @@ static const char* format_time(unsigned long time, const char* tz_str,
 
 static void topo_setter(struct commit* c, void* data)
 {
-	struct util_info* util = c->object.util;
+	struct util_info* util = c->util;
 	util->topo_data = data;
 }
 
 static void* topo_getter(struct commit* c)
 {
-	struct util_info* util = c->object.util;
+	struct util_info* util = c->util;
 	return util->topo_data;
 }
 
@@ -863,7 +863,7 @@ int main(int argc, const char **argv)
 		struct util_info* u;
 		if (!c)
 			c = initial;
-		u = c->object.util;
+		u = c->util;
 
 		if (!found_rename && strcmp(filename, u->pathname))
 			found_rename = 1;
@@ -881,7 +881,7 @@ int main(int argc, const char **argv)
 		if (!c)
 			c = initial;
 
-		u = c->object.util;
+		u = c->util;
 		get_commit_info(c, &ci);
 		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
 		if(compability) {

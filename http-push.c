@@ -1773,16 +1773,16 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
-		if (obj->type == tag_type) {
+		if (obj->type == TYPE_TAG) {
 			obj->flags |= SEEN;
 			p = add_object(obj, p, NULL, name);
 			continue;
 		}
-		if (obj->type == tree_type) {
+		if (obj->type == TYPE_TREE) {
 			p = process_tree((struct tree *)obj, p, NULL, name);
 			continue;
 		}
-		if (obj->type == blob_type) {
+		if (obj->type == TYPE_BLOB) {
 			p = process_blob((struct blob *)obj, p, NULL, name);
 			continue;
 		}
@@ -1949,12 +1949,12 @@ static int ref_newer(const unsigned char *new_sha1,
 	 * old.  Otherwise we require --force.
 	 */
 	o = deref_tag(parse_object(old_sha1), NULL, 0);
-	if (!o || o->type != commit_type)
+	if (!o || o->type != TYPE_COMMIT)
 		return 0;
 	old = (struct commit *) o;
 
 	o = deref_tag(parse_object(new_sha1), NULL, 0);
-	if (!o || o->type != commit_type)
+	if (!o || o->type != TYPE_COMMIT)
 		return 0;
 	new = (struct commit *) o;
 
@@ -2033,7 +2033,7 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 	fwrite_buffer(ref_info, 1, len, buf);
 	free(ref_info);
 
-	if (o->type == tag_type) {
+	if (o->type == TYPE_TAG) {
 		o = deref_tag(o, ls->dentry_name, 0);
 		if (o) {
 			len = strlen(ls->dentry_name) + 45;
