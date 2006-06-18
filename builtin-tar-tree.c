@@ -22,8 +22,10 @@ static unsigned long offset;
 static time_t archive_time;
 
 /* tries hard to write, either succeeds or dies in the attempt */
-static void reliable_write(void *buf, unsigned long size)
+static void reliable_write(const void *data, unsigned long size)
 {
+	const char *buf = data;
+
 	while (size > 0) {
 		long ret = xwrite(1, buf, size);
 		if (ret < 0) {
@@ -51,8 +53,9 @@ static void write_if_needed(void)
  * queues up writes, so that all our write(2) calls write exactly one
  * full block; pads writes to RECORDSIZE
  */
-static void write_blocked(void *buf, unsigned long size)
+static void write_blocked(const void *data, unsigned long size)
 {
+	const char *buf = data;
 	unsigned long tail;
 
 	if (offset) {
