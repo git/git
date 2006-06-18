@@ -24,6 +24,7 @@ static int trivial_merges_only = 0;
 static int aggressive = 0;
 static int verbose_update = 0;
 static volatile int progress_update = 0;
+static const char *prefix = NULL;
 
 static int head_idx = -1;
 static int merge_size = 0;
@@ -412,7 +413,8 @@ static int unpack_trees(merge_fn_t fn)
 			posns[i] = create_tree_entry_list((struct tree *) posn->item);
 			posn = posn->next;
 		}
-		if (unpack_trees_rec(posns, len, "", fn, &indpos))
+		if (unpack_trees_rec(posns, len, prefix ? prefix : "",
+				     fn, &indpos))
 			return -1;
 	}
 
@@ -762,6 +764,28 @@ static int twoway_merge(struct cache_entry **src)
 }
 
 /*
+ * Bind merge.
+ *
+ * Keep the index entries at stage0, collapse stage1 but make sure
+ * stage0 does not have anything there.
+ */
+static int bind_merge(struct cache_entry **src)
+{
+	struct cache_entry *old = src[0];
+	struct cache_entry *a = src[1];
+
+	if (merge_size != 1)
+		return error("Cannot do a bind merge of %d trees\n",
+			     merge_size);
+	if (a && old)
+		die("Entry '%s' overlaps.  Cannot bind.", a->name);
+	if (!a)
+		return keep_entry(old);
+	else
+		return merged_entry(a, NULL);
+}
+
+/*
  * One-way merge.
  *
  * The rule is:
@@ -851,7 +875,7 @@ static void prime_cache_tree(void)
 
 }
 
-static const char read_tree_usage[] = "git-read-tree (<sha> | -m [--aggressive] [-u | -i] <sha1> [<sha2> [<sha3>]])";
+static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] <sha1> [<sha2> [<sha3>]])";
 
 static struct lock_file lock_file;
 
@@ -896,12 +920,27 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 			continue;
 		}
 
+		/* "--prefix=<subdirectory>/" means keep the current index
+		 *  entries and put the entries from the tree under the
+		 * given subdirectory.
+		 */
+		if (!strncmp(arg, "--prefix=", 9)) {
+			if (stage || merge || prefix)
+				usage(read_tree_usage);
+			prefix = arg + 9;
+			merge = 1;
+			stage = 1;
+			if (read_cache_unmerged())
+				die("you need to resolve your current index first");
+			continue;
+		}
+
 		/* This differs from "-m" in that we'll silently ignore
 		 * unmerged entries and overwrite working tree files that
 		 * correspond to them.
 		 */
 		if (!strcmp(arg, "--reset")) {
-			if (stage || merge)
+			if (stage || merge || prefix)
 				usage(read_tree_usage);
 			reset = 1;
 			merge = 1;
@@ -922,7 +961,7 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 
 		/* "-m" stands for "merge", meaning we start in stage 1 */
 		if (!strcmp(arg, "-m")) {
-			if (stage || merge)
+			if (stage || merge || prefix)
 				usage(read_tree_usage);
 			if (read_cache_unmerged())
 				die("you need to resolve your current index first");
@@ -944,12 +983,31 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	if ((update||index_only) && !merge)
 		usage(read_tree_usage);
 
+	if (prefix) {
+		int pfxlen = strlen(prefix);
+		int pos;
+		if (prefix[pfxlen-1] != '/')
+			die("prefix must end with /");
+		if (stage != 2)
+			die("binding merge takes only one tree");
+		pos = cache_name_pos(prefix, pfxlen);
+		if (0 <= pos)
+			die("corrupt index file");
+		pos = -pos-1;
+		if (pos < active_nr &&
+		    !strncmp(active_cache[pos]->name, prefix, pfxlen))
+			die("subdirectory '%s' already exists.", prefix);
+		pos = cache_name_pos(prefix, pfxlen-1);
+		if (0 <= pos)
+			die("file '%.*s' already exists.", pfxlen-1, prefix);
+	}
+
 	if (merge) {
 		if (stage < 2)
 			die("just how do you expect me to merge %d trees?", stage-1);
 		switch (stage - 1) {
 		case 1:
-			fn = oneway_merge;
+			fn = prefix ? bind_merge : oneway_merge;
 			break;
 		case 2:
 			fn = twoway_merge;
@@ -975,7 +1033,7 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
 	 */
-	if (trees && trees->item && (!merge || (stage == 2))) {
+	if (trees && trees->item && !prefix && (!merge || (stage == 2))) {
 		cache_tree_free(&active_cache_tree);
 		prime_cache_tree();
 	}

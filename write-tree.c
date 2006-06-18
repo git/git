@@ -8,8 +8,10 @@
 #include "cache-tree.h"
 
 static int missing_ok = 0;
+static char *prefix = NULL;
 
-static const char write_tree_usage[] = "git-write-tree [--missing-ok]";
+static const char write_tree_usage[] =
+"git-write-tree [--missing-ok] [--prefix=<prefix>/]";
 
 static struct lock_file lock_file;
 
@@ -21,13 +23,18 @@ int main(int argc, char **argv)
 
 	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
 	entries = read_cache();
-	if (argc == 2) {
-		if (!strcmp(argv[1], "--missing-ok"))
+
+	while (1 < argc) {
+		char *arg = argv[1];
+		if (!strcmp(arg, "--missing-ok"))
 			missing_ok = 1;
+		else if (!strncmp(arg, "--prefix=", 9))
+			prefix = arg + 9;
 		else
 			die(write_tree_usage);
+		argc--; argv++;
 	}
-	
+
 	if (argc > 2)
 		die("too many options");
 
@@ -54,6 +61,12 @@ int main(int argc, char **argv)
 		 * performance penalty and not a big deal.
 		 */
 	}
-	printf("%s\n", sha1_to_hex(active_cache_tree->sha1));
+	if (prefix) {
+		struct cache_tree *subtree =
+			cache_tree_find(active_cache_tree, prefix);
+		printf("%s\n", sha1_to_hex(subtree->sha1));
+	}
+	else
+		printf("%s\n", sha1_to_hex(active_cache_tree->sha1));
 	return 0;
 }

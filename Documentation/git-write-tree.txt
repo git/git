@@ -8,7 +8,7 @@ git-write-tree - Creates a tree object from the current index
 
 SYNOPSIS
 --------
-'git-write-tree' [--missing-ok]
+'git-write-tree' [--missing-ok] [--prefix=<prefix>/]
 
 DESCRIPTION
 -----------
@@ -29,6 +29,12 @@ OPTIONS
 	Normally `git-write-tree` ensures that the objects referenced by the
 	directory exist in the object database.  This option disables this
 	check.
+
+--prefix=<prefix>/::
+	Writes a tree object that represents a subdirectory
+	`<prefix>`.  This can be used to write the tree object
+	for a subproject that is in the named subdirectory.
+
 
 Author
 ------
