@@ -369,7 +369,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 
 	/* Four-digit year or a timezone? */
 	if (n == 4) {
-		if (num <= 1200 && *offset == -1) {
+		if (num <= 1400 && *offset == -1) {
 			unsigned int minutes = num % 100;
 			unsigned int hours = num / 100;
 			*offset = hours*60 + minutes;
