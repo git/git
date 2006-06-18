@@ -203,6 +203,9 @@ if (!defined $action || $action eq "summary") {
 } elsif ($action eq "tag") {
 	git_tag();
 	exit;
+} elsif ($action eq "blame") {
+	git_blame();
+	exit;
 } else {
 	undef $action;
 	die_error(undef, "Unknown action.");
@@ -834,6 +837,25 @@ sub git_read_projects {
 	return @list;
 }
 
+sub git_get_project_config {
+	my $key = shift;
+
+	return unless ($key);
+	$key =~ s/^gitweb\.//;
+	return if ($key =~ m/\W/);
+
+	my $val = qx(git-repo-config --get gitweb.$key);
+	return ($val);
+}
+
+sub git_get_project_config_bool {
+	my $val = git_get_project_config (@_);
+	if ($val and $val =~ m/true|yes|on/) {
+		return (1);
+	}
+	return; # implicit false
+}
+
 sub git_project_list {
 	my @list = git_read_projects();
 	my @projects;
@@ -1228,6 +1250,108 @@ sub git_tag {
 	git_footer_html();
 }
 
+sub git_blame {
+	my $fd;
+	die_error('403 Permission denied', "Permission denied.") if (!git_get_project_config_bool ('blame'));
+	die_error('404 Not Found', "What file will it be, master?") if (!$file_name);
+	$hash_base ||= git_read_head($project);
+	die_error(undef, "Reading commit failed.") unless ($hash_base);
+	my %co = git_read_commit($hash_base)
+		or die_error(undef, "Reading commit failed.");
+	if (!defined $hash) {
+		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
+			or die_error(undef, "Error lookup file.");
+	}
+	open ($fd, "-|", "$gitbin/git-annotate", '-l', '-t', '-r', $file_name, $hash_base)
+		or die_error(undef, "Open failed.");
+	git_header_html();
+	print "<div class=\"page_nav\">\n" .
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base")}, "commit") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
+	print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, "blob") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;f=$file_name")}, "head") . "<br/>\n";
+	print "</div>\n".
+		"<div>" .
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
+		"</div>\n";
+	print "<div class=\"page_path\"><b>" . esc_html($file_name) . "</b></div>\n";
+	print "<div class=\"page_body\">\n";
+	print <<HTML;
+<table style="border-collapse: collapse;">
+  <tr>
+    <th>Commit</th>
+    <th>Age</th>
+    <th>Author</th>
+    <th>Line</th>
+    <th>Data</th>
+  </tr>
+HTML
+	my @line_class = (qw(light dark));
+	my $line_class_len = scalar (@line_class);
+	my $line_class_num = $#line_class;
+	while (my $line = <$fd>) {
+		my $long_rev;
+		my $short_rev;
+		my $author;
+		my $time;
+		my $lineno;
+		my $data;
+		my $age;
+		my $age_str;
+		my $age_style;
+
+		chomp $line;
+		$line_class_num = ($line_class_num + 1) % $line_class_len;
+
+		if ($line =~ m/^([0-9a-fA-F]{40})\t\(\s*([^\t]+)\t(\d+) \+\d\d\d\d\t(\d+)\)(.*)$/) {
+			$long_rev = $1;
+			$author   = $2;
+			$time     = $3;
+			$lineno   = $4;
+			$data     = $5;
+		} else {
+			print qq(  <tr><td colspan="5" style="color: red; background-color: yellow;">Unable to parse: $line</td></tr>\n);
+			next;
+		}
+		$short_rev  = substr ($long_rev, 0, 8);
+		$age        = time () - $time;
+		$age_str    = age_string ($age);
+		$age_str    =~ s/ /&nbsp;/g;
+		$age_style  = 'font-style: italic;';
+		$age_style .= ' color: #009900; background: transparent;' if ($age < 60*60*24*2);
+		$age_style .= ' font-weight: bold;' if ($age < 60*60*2);
+		$author     = esc_html ($author);
+		$author     =~ s/ /&nbsp;/g;
+		# escape tabs
+		while ((my $pos = index($data, "\t")) != -1) {
+			if (my $count = (8 - ($pos % 8))) {
+				my $spaces = ' ' x $count;
+				$data =~ s/\t/$spaces/;
+			}
+		}
+		$data = esc_html ($data);
+		$data =~ s/ /&nbsp;/g;
+
+		print <<HTML;
+  <tr class="$line_class[$line_class_num]">
+    <td style="font-family: monospace;"><a href="$my_uri?${\esc_param ("p=$project;a=commit;h=$long_rev")}" class="text">$short_rev..</a></td>
+    <td style="$age_style">$age_str</td>
+    <td>$author</td>
+    <td style="text-align: right;"><a id="$lineno" href="#$lineno" class="linenr">$lineno</a></td>
+    <td style="font-family: monospace;">$data</td>
+  </tr>
+HTML
+	} # while (my $line = <$fd>)
+	print "</table>\n\n";
+	close $fd or print "Reading blob failed.\n";
+	print "</div>";
+	git_footer_html();
+}
+
 sub git_tags {
 	my $head = git_read_head($project);
 	git_header_html();
@@ -1364,6 +1488,7 @@ sub git_blob {
 		my $base = $hash_base || git_read_head($project);
 		$hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
 	}
+	my $have_blame = git_get_project_config_bool ('blame');
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
@@ -1375,6 +1500,9 @@ sub git_blob {
 		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
 		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
 		if (defined $file_name) {
+			if ($have_blame) {
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;h=$hash;hb=$hash_base;f=$file_name")}, "blame") .  " | ";
+			}
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash;f=$file_name")}, "plain") .
 			" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;hb=HEAD;f=$file_name")}, "head") . "<br/>\n";
 		} else {
@@ -1496,6 +1624,7 @@ sub git_tree {
 			      "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$t_hash$base_key;f=$base$t_name")}, "blob") .
+#			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;h=$t_hash$base_key;f=$base$t_name")}, "blame") .
 			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash_base;f=$base$t_name")}, "history") .
 			      "</td>\n";
 		} elsif ($t_type eq "tree") {

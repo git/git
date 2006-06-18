@@ -71,10 +71,9 @@ int setup_ident(void)
 		len = strlen(git_default_email);
 		git_default_email[len++] = '.';
 		if (he && (domainname = strchr(he->h_name, '.')))
-			strncpy(git_default_email + len, domainname + 1, sizeof(git_default_email) - len);
+			safe_strncpy(git_default_email + len, domainname + 1, sizeof(git_default_email) - len);
 		else
-			strncpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
-		git_default_email[sizeof(git_default_email) - 1] = 0;
+			safe_strncpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
 	}
 	/* And set the default date */
 	datestamp(git_default_date, sizeof(git_default_date));

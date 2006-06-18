@@ -122,9 +122,9 @@ static int handle_alias(int *argcp, const char ***argv)
 			/* insert after command name */
 			if (*argcp > 1) {
 				new_argv = realloc(new_argv, sizeof(char*) *
-						(count + *argcp - 1));
-				memcpy(new_argv + count, *argv, sizeof(char*) *
-						(*argcp - 1));
+						   (count + *argcp));
+				memcpy(new_argv + count, *argv + 1,
+				       sizeof(char*) * *argcp);
 			}
 
 			*argv = new_argv;

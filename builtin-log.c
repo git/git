@@ -51,6 +51,7 @@ int cmd_whatchanged(int argc, const char **argv, char **envp)
 	init_revisions(&rev);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
+	rev.simplify_history = 0;
 	return cmd_log_wc(argc, argv, envp, &rev);
 }
 
@@ -112,7 +113,7 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 	int len = 0;
 
 	if (output_directory) {
-		strncpy(filename, output_directory, 1010);
+		safe_strncpy(filename, output_directory, 1010);
 		len = strlen(filename);
 		if (filename[len - 1] != '/')
 			filename[len++] = '/';

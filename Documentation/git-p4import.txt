@@ -8,7 +8,7 @@ git-p4import - Import a Perforce repository into git
 
 SYNOPSIS
 --------
-`git-p4import` [-q|-v] [--authors <file>] [-t <timezone>] <//p4repo/path> <branch>
+`git-p4import` [-q|-v] [--notags] [--authors <file>] [-t <timezone>] <//p4repo/path> <branch>
 
 `git-p4import` --stitch <//p4repo/path>
 
@@ -42,6 +42,9 @@ OPTIONS
 \--authors::
 	Specify an authors file containing a mapping of Perforce user
 	ids to full names and email addresses (see Notes below).
+
+\--notags::
+	Do not create a tag for each imported commit.
 
 \--stitch::
 	Import the contents of the given perforce branch into the

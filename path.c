@@ -83,13 +83,18 @@ int git_mkstemp(char *path, size_t len, const char *template)
 }
 
 
-char *safe_strncpy(char *dest, const char *src, size_t n)
+size_t safe_strncpy(char *dest, const char *src, size_t size)
 {
-	strncpy(dest, src, n);
-	dest[n - 1] = '\0';
+	size_t ret = strlen(src);
 
-	return dest;
+	if (size) {
+		size_t len = (ret >= size) ? size - 1 : ret;
+		memcpy(dest, src, len);
+		dest[len] = '\0';
+	}
+	return ret;
 }
+
 
 int validate_symref(const char *path)
 {

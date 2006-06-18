@@ -20,14 +20,10 @@ do
   for j in 0 1 2 3
   do
     test $i -eq $j && continue
-    diff -u frotz.$i frotz.$j |
-    sed -e '
-	/^---/s|.*|--- a/frotz|
-	/^+++/s|.*|+++ b/frotz|' >diff.$i-$j
     cat frotz.$i >frotz
     test_expect_success \
         "apply diff between $i and $j" \
-	"git-apply <diff.$i-$j && diff frotz.$j frotz"
+	"git-apply <../t4101/diff.$i-$j && diff frotz.$j frotz"
   done
 done
 

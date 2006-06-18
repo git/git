@@ -29,8 +29,17 @@ git-svn.html : git-svn.txt
 	asciidoc -b xhtml11 -d manpage \
 		-f ../../Documentation/asciidoc.conf $<
 test: git-svn
-	cd t && $(SHELL) ./t0000-contrib-git-svn.sh
-	cd t && $(SHELL) ./t0001-contrib-git-svn-props.sh
+	cd t && $(SHELL) ./t0000-contrib-git-svn.sh $(TEST_FLAGS)
+	cd t && $(SHELL) ./t0001-contrib-git-svn-props.sh $(TEST_FLAGS)
+
+# we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
+full-test:
+	$(MAKE) test GIT_SVN_NO_LIB=1 GIT_SVN_NO_OPTIMIZE_COMMITS=1 LC_ALL=C
+	$(MAKE) test GIT_SVN_NO_LIB=0 GIT_SVN_NO_OPTIMIZE_COMMITS=1 LC_ALL=C
+	$(MAKE) test GIT_SVN_NO_LIB=1 GIT_SVN_NO_OPTIMIZE_COMMITS=0 \
+							LC_ALL=en_US.UTF-8
+	$(MAKE) test GIT_SVN_NO_LIB=0 GIT_SVN_NO_OPTIMIZE_COMMITS=0 \
+							LC_ALL=en_US.UTF-8
 
 clean:
 	rm -f git-svn *.xml *.html *.1

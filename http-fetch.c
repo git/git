@@ -584,10 +584,8 @@ static void process_alternates_response(void *callback_data)
 			// skip 'objects' at end
 			if (okay) {
 				target = xmalloc(serverlen + posn - i - 6);
-				strncpy(target, base, serverlen);
-				strncpy(target + serverlen, data + i,
-					posn - i - 7);
-				target[serverlen + posn - i - 7] = '\0';
+				safe_strncpy(target, base, serverlen);
+				safe_strncpy(target + serverlen, data + i, posn - i - 6);
 				if (get_verbosely)
 					fprintf(stderr,
 						"Also look at %s\n", target);
@@ -728,8 +726,8 @@ xml_cdata(void *userData, const XML_Char *s, int len)
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	if (ctx->cdata)
 		free(ctx->cdata);
-	ctx->cdata = xcalloc(len+1, 1);
-	strncpy(ctx->cdata, s, len);
+	ctx->cdata = xmalloc(len + 1);
+	safe_strncpy(ctx->cdata, s, len + 1);
 }
 
 static int remote_ls(struct alt_base *repo, const char *path, int flags,

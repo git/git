@@ -1,0 +1,9 @@
+Here is a patch from A U Thor.  This addresses the issue raised in the
+message:
+
+From: Nit Picker <nit.picker@example.net>
+Subject: foo is too old
+Message-Id: <nitpicker.12121212@example.net>
+
+Hopefully this would fix the problem stated there.
+

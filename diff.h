@@ -32,7 +32,8 @@ struct diff_options {
 		 full_index:1,
 		 silent_on_remove:1,
 		 find_copies_harder:1,
-		 summary:1;
+		 summary:1,
+		 color_diff:1;
 	int context;
 	int break_opt;
 	int detect_rename;

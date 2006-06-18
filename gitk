@@ -5196,6 +5196,24 @@ proc rereadrefs {} {
     }
 }
 
+proc listrefs {id} {
+    global idtags idheads idotherrefs
+
+    set x {}
+    if {[info exists idtags($id)]} {
+	set x $idtags($id)
+    }
+    set y {}
+    if {[info exists idheads($id)]} {
+	set y $idheads($id)
+    }
+    set z {}
+    if {[info exists idotherrefs($id)]} {
+	set z $idotherrefs($id)
+    }
+    return [list $x $y $z]
+}
+
 proc showtag {tag isnew} {
     global ctext tagcontents tagids linknum
 

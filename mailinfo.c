@@ -243,9 +243,20 @@ static int eatspace(char *line)
 #define SEEN_BOGUS_UNIX_FROM 010
 #define SEEN_PREFIX  020
 
-/* First lines of body can have From:, Date:, and Subject: */
+/* First lines of body can have From:, Date:, and Subject: or empty */
 static void handle_inbody_header(int *seen, char *line)
 {
+	if (*seen & SEEN_PREFIX)
+		return;
+	if (isspace(*line)) {
+		char *cp;
+		for (cp = line + 1; *cp; cp++) {
+			if (!isspace(*cp))
+				break;
+		}
+		if (!*cp)
+			return;
+	}
 	if (!memcmp(">From", line, 5) && isspace(line[5])) {
 		if (!(*seen & SEEN_BOGUS_UNIX_FROM)) {
 			*seen |= SEEN_BOGUS_UNIX_FROM;
@@ -314,6 +325,7 @@ static char *cleanup_subject(char *subject)
 			}	
 			break;
 		}
+		eatspace(subject);
 		return subject;
 	}
 }			
@@ -420,9 +432,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 		if (fgets(line + ofs, sz - ofs, in) == NULL)
 			break;
 		len = eatspace(line + ofs);
-		if (len == 0)
-			break;
-		if (!is_rfc2822_header(line)) {
+		if ((len == 0) || !is_rfc2822_header(line)) {
 			/* Re-add the newline */
 			line[ofs + len] = '\n';
 			line[ofs + len + 1] = '\0';
@@ -762,10 +772,8 @@ static void handle_body(void)
 {
 	int seen = 0;
 
-	if (line[0] || fgets(line, sizeof(line), stdin) != NULL) {
-		handle_commit_msg(&seen);
-		handle_patch();
-	}
+	handle_commit_msg(&seen);
+	handle_patch();
 	fclose(patchfile);
 	if (!patch_lines) {
 		fprintf(stderr, "No patch found\n");

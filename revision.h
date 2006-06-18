@@ -30,6 +30,7 @@ struct rev_info {
 			no_merges:1,
 			no_walk:1,
 			remove_empty_trees:1,
+			simplify_history:1,
 			lifo:1,
 			topo_order:1,
 			tag_objects:1,

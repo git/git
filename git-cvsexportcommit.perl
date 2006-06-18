@@ -134,7 +134,7 @@ foreach my $f (@afiles) {
 	and $status[0] !~ m/^File: no file /) {
  	$dirty = 1;
 	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
-	warn "Status was: $status\n";
+	warn "Status was: $status[0]\n";
     }
 }
 foreach my $f (@mfiles, @dfiles) {

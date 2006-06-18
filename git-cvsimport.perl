@@ -465,10 +465,15 @@ $git_dir = getwd()."/".$git_dir unless $git_dir =~ m#^/#;
 $ENV{"GIT_DIR"} = $git_dir;
 my $orig_git_index;
 $orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
-my ($git_ih, $git_index) = tempfile('gitXXXXXX', SUFFIX => '.idx',
-				    DIR => File::Spec->tmpdir());
-close ($git_ih);
-$ENV{GIT_INDEX_FILE} = $git_index;
+
+my %index; # holds filenames of one index per branch
+{   # init with an index for origin
+    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+			     DIR => File::Spec->tmpdir());
+    close ($fh);
+    $index{$opt_o} = $fn;
+}
+$ENV{GIT_INDEX_FILE} = $index{$opt_o};
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
@@ -496,6 +501,13 @@ unless(-d $git_dir) {
 	$tip_at_start = `git-rev-parse --verify HEAD`;
 
 	# populate index
+	unless ($index{$last_branch}) {
+	    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+				     DIR => File::Spec->tmpdir());
+	    close ($fh);
+	    $index{$last_branch} = $fn;
+	}
+	$ENV{GIT_INDEX_FILE} = $index{$last_branch};
 	system('git-read-tree', $last_branch);
 	die "read-tree failed: $?\n" if $?;
 
@@ -529,24 +541,38 @@ if ($opt_A) {
 	write_author_info("$git_dir/cvs-authors");
 }
 
-my $pid = open(CVS,"-|");
-die "Cannot fork: $!\n" unless defined $pid;
-unless($pid) {
-	my @opt;
-	@opt = split(/,/,$opt_p) if defined $opt_p;
-	unshift @opt, '-z', $opt_z if defined $opt_z;
-	unshift @opt, '-q'         unless defined $opt_v;
-	unless (defined($opt_p) && $opt_p =~ m/--no-cvs-direct/) {
-		push @opt, '--cvs-direct';
+
+#
+# run cvsps into a file unless we are getting
+# it passed as a file via $opt_P
+#
+unless ($opt_P) {
+	print "Running cvsps...\n" if $opt_v;
+	my $pid = open(CVSPS,"-|");
+	die "Cannot fork: $!\n" unless defined $pid;
+	unless($pid) {
+		my @opt;
+		@opt = split(/,/,$opt_p) if defined $opt_p;
+		unshift @opt, '-z', $opt_z if defined $opt_z;
+		unshift @opt, '-q'         unless defined $opt_v;
+		unless (defined($opt_p) && $opt_p =~ m/--no-cvs-direct/) {
+			push @opt, '--cvs-direct';
+		}
+		exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
+		die "Could not start cvsps: $!\n";
 	}
-	if ($opt_P) {
-	    exec("cat", $opt_P);
-	} else {
-	    exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
-	    die "Could not start cvsps: $!\n";
+	my ($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
+					     DIR => File::Spec->tmpdir());
+	while (<CVSPS>) {
+	    print $cvspsfh $_;
 	}
+	close CVSPS;
+	close $cvspsfh;
+	$opt_P = $cvspsfile;
 }
 
+
+open(CVS, "<$opt_P") or die $!;
 
 ## cvsps output:
 #---------------------
@@ -595,7 +621,11 @@ sub write_tree () {
 }
 
 my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
-my(@old,@new,@skipped);
+my(@old,@new,@skipped,%ignorebranch);
+
+# commits that cvsps cannot place anywhere...
+$ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
+
 sub commit {
 	update_index(@old, @new);
 	@old = @new = ();
@@ -751,7 +781,16 @@ while(<CVS>) {
 			$state = 11;
 			next;
 		}
+		if (exists $ignorebranch{$branch}) {
+			print STDERR "Skipping $branch\n";
+			$state = 11;
+			next;
+		}
 		if($ancestor) {
+			if($ancestor eq $branch) {
+				print STDERR "Branch $branch erroneously stems from itself -- changed ancestor to $opt_o\n";
+				$ancestor = $opt_o;
+			}
 			if(-f "$git_dir/refs/heads/$branch") {
 				print STDERR "Branch $branch already exists!\n";
 				$state=11;
@@ -759,6 +798,7 @@ while(<CVS>) {
 			}
 			unless(open(H,"$git_dir/refs/heads/$ancestor")) {
 				print STDERR "Branch $ancestor does not exist!\n";
+				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
@@ -766,6 +806,7 @@ while(<CVS>) {
 			close(H);
 			unless(open(H,"> $git_dir/refs/heads/$branch")) {
 				print STDERR "Could not create branch $branch: $!\n";
+				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
@@ -776,8 +817,17 @@ while(<CVS>) {
 		}
 		if(($ancestor || $branch) ne $last_branch) {
 			print "Switching from $last_branch to $branch\n" if $opt_v;
-			system("git-read-tree", $branch);
-			die "read-tree failed: $?\n" if $?;
+			unless ($index{$branch}) {
+			    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
+						     DIR => File::Spec->tmpdir());
+			    close ($fh);
+			    $index{$branch} = $fn;
+			    $ENV{GIT_INDEX_FILE} = $index{$branch};
+			    system("git-read-tree", $branch);
+			    die "read-tree failed: $?\n" if $?;
+			} else {
+			    $ENV{GIT_INDEX_FILE} = $index{$branch};
+		        }
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
@@ -841,7 +891,9 @@ while(<CVS>) {
 }
 commit() if $branch and $state != 11;
 
-unlink($git_index);
+foreach my $git_index (values %index) {
+    unlink($git_index);
+}
 
 if (defined $orig_git_index) {
 	$ENV{GIT_INDEX_FILE} = $orig_git_index;

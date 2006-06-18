@@ -20,7 +20,10 @@ OPTIONS
 	Use the same output mode as git-annotate (Default: off).
 
 -l, --long::
-	Show long rev (Defaults off).
+	Show long rev (Default: off).
+
+-t, --time::
+	Show raw timestamp (Default: off).
 
 -S, --rev-file <revs-file>::
 	Use revs from revs-file instead of calling git-rev-list.

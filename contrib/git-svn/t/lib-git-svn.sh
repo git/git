@@ -10,8 +10,8 @@ fi
 . ./test-lib.sh
 
 GIT_DIR=$PWD/.git
-GIT_SVN_DIR=$GIT_DIR/git-svn
-SVN_TREE=$GIT_SVN_DIR/tree
+GIT_SVN_DIR=$GIT_DIR/svn/git-svn
+SVN_TREE=$GIT_SVN_DIR/svn-tree
 
 svnadmin >/dev/null 2>&1
 if test $? != 1
