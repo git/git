@@ -30,7 +30,7 @@ int SHA1_Update(SHA_CTX *c, const void *ptr, unsigned long n)
 	unsigned long nb;
 	const unsigned char *p = ptr;
 
-	c->len += n << 3;
+	c->len += (uint64_t) n << 3;
 	while (n != 0) {
 		if (c->cnt || n < 64) {
 			nb = 64 - c->cnt;
