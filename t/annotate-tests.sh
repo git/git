@@ -111,9 +111,7 @@ test_expect_success \
 
 test_expect_success \
     'some edit' \
-    'mv file file1 &&
-     sed -e 1d -e "5s/3A/99/" file1 >file &&
-     rm -f file1 &&
+    'perl -pi -e "s/^1A.*\n$//; s/^3A/99/" file &&
     GIT_AUTHOR_NAME="D" git commit -a -m "edit"'
 
 test_expect_success \
