@@ -89,6 +89,14 @@ static void show_commit(struct commit *commit)
 		printf("%s%c", pretty_header, hdr_termination);
 	}
 	fflush(stdout);
+	if (commit->parents) {
+		free_commit_list(commit->parents);
+		commit->parents = NULL;
+	}
+	if (commit->buffer) {
+		free(commit->buffer);
+		commit->buffer = NULL;
+	}
 }
 
 static struct object_list **process_blob(struct blob *blob,

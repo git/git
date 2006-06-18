@@ -949,9 +949,11 @@ struct commit *get_revision(struct rev_info *revs)
 	}
 
 	do {
-		struct commit *commit = revs->commits->item;
+		struct commit_list *entry = revs->commits;
+		struct commit *commit = entry->item;
 
-		revs->commits = revs->commits->next;
+		revs->commits = entry->next;
+		free(entry);
 
 		/*
 		 * If we haven't done the list limiting, we need to look at

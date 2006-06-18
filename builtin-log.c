@@ -40,6 +40,8 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 		log_tree_commit(rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
+		free_commit_list(commit->parents);
+		commit->parents = NULL;
 	}
 	return 0;
 }
