@@ -711,12 +711,12 @@ int count_parents(struct commit * commit)
 
 void topo_sort_default_setter(struct commit *c, void *data)
 {
-	c->object.util = data;
+	c->util = data;
 }
 
 void *topo_sort_default_getter(struct commit *c)
 {
-	return c->object.util;
+	return c->util;
 }
 
 /*

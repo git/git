@@ -19,7 +19,7 @@ static void name_rev(struct commit *commit,
 		const char *tip_name, int merge_traversals, int generation,
 		int deref)
 {
-	struct rev_name *name = (struct rev_name *)commit->object.util;
+	struct rev_name *name = (struct rev_name *)commit->util;
 	struct commit_list *parents;
 	int parent_number = 1;
 
@@ -41,7 +41,7 @@ static void name_rev(struct commit *commit,
 
 	if (name == NULL) {
 		name = xmalloc(sizeof(rev_name));
-		commit->object.util = name;
+		commit->util = name;
 		goto copy_data;
 	} else if (name->merge_traversals > merge_traversals ||
 			(name->merge_traversals == merge_traversals &&
@@ -108,7 +108,13 @@ static int name_ref(const char *path, const unsigned char *sha1)
 static const char* get_rev_name(struct object *o)
 {
 	static char buffer[1024];
-	struct rev_name *n = (struct rev_name *)o->util;
+	struct rev_name *n;
+	struct commit *c;
+
+	if (o->type != TYPE_COMMIT)
+		return "undefined";
+	c = (struct commit *) o;
+	n = c->util;
 	if (!n)
 		return "undefined";
 

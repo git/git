@@ -29,7 +29,6 @@ struct object {
 	unsigned flags : FLAG_BITS;
 	unsigned char sha1[20];
 	struct object_refs *refs;
-	void *util;
 };
 
 extern int track_object_refs;
