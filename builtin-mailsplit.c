@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "cache.h"
+#include "builtin.h"
 
 static const char git_mailsplit_usage[] =
 "git-mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> <mbox>...";
@@ -102,14 +103,48 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	exit(1);
 }
 
-int main(int argc, const char **argv)
+int split_mbox(const char **mbox, const char *dir, int allow_bare, int nr_prec, int skip)
 {
-	int nr = 0, nr_prec = 4;
+	char *name = xmalloc(strlen(dir) + 2 + 3 * sizeof(skip));
+	int ret = -1;
+
+	while (*mbox) {
+		const char *file = *mbox++;
+		FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
+		int file_done = 0;
+
+		if ( !f ) {
+			error("cannot open mbox %s", file);
+			goto out;
+		}
+
+		if (fgets(buf, sizeof(buf), f) == NULL) {
+			if (f == stdin)
+				break; /* empty stdin is OK */
+			error("cannot read mbox %s", file);
+			goto out;
+		}
+
+		while (!file_done) {
+			sprintf(name, "%s/%0*d", dir, nr_prec, ++skip);
+			file_done = split_one(f, name, allow_bare);
+		}
+
+		if (f != stdin)
+			fclose(f);
+	}
+	ret = skip;
+out:
+	free(name);
+	return ret;
+}
+int cmd_mailsplit(int argc, const char **argv, char **envp)
+{
+	int nr = 0, nr_prec = 4, ret;
 	int allow_bare = 0;
 	const char *dir = NULL;
 	const char **argp;
 	static const char *stdin_only[] = { "-", NULL };
-	char *name;
 
 	for (argp = argv+1; *argp; argp++) {
 		const char *arg = *argp;
@@ -158,31 +193,9 @@ int main(int argc, const char **argv)
 			argp = stdin_only;
 	}
 
-	name = xmalloc(strlen(dir) + 2 + 3 * sizeof(nr));
+	ret = split_mbox(argp, dir, allow_bare, nr_prec, nr);
+	if (ret != -1)
+		printf("%d\n", ret);
 
-	while (*argp) {
-		const char *file = *argp++;
-		FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
-		int file_done = 0;
-
-		if ( !f )
-			die ("cannot open mbox %s", file);
-
-		if (fgets(buf, sizeof(buf), f) == NULL) {
-			if (f == stdin)
-				break; /* empty stdin is OK */
-			die("cannot read mbox %s", file);
-		}
-
-		while (!file_done) {
-			sprintf(name, "%s/%0*d", dir, nr_prec, ++nr);
-			file_done = split_one(f, name, allow_bare);
-		}
-
-		if (f != stdin)
-			fclose(f);
-	}
-
-	printf("%d\n", nr);
-	return 0;
+	return ret == -1;
 }

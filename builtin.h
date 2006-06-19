@@ -1,6 +1,8 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
+#include <stdio.h>
+
 #ifndef PATH_MAX
 # define PATH_MAX 4096
 #endif
@@ -45,5 +47,18 @@ extern int cmd_diff_stages(int argc, const char **argv, char **envp);
 extern int cmd_diff_tree(int argc, const char **argv, char **envp);
 extern int cmd_cat_file(int argc, const char **argv, char **envp);
 extern int cmd_rev_parse(int argc, const char **argv, char **envp);
+extern int cmd_update_index(int argc, const char **argv, char **envp);
+extern int cmd_update_ref(int argc, const char **argv, char **envp);
 
+extern int cmd_write_tree(int argc, const char **argv, char **envp);
+extern int write_tree(unsigned char *sha1, int missing_ok, const char *prefix);
+
+extern int cmd_mailsplit(int argc, const char **argv, char **envp);
+extern int split_mbox(const char **mbox, const char *dir, int allow_bare, int nr_prec, int skip);
+
+extern int cmd_mailinfo(int argc, const char **argv, char **envp);
+extern int mailinfo(FILE *in, FILE *out, int ks, const char *encoding, const char *msg, const char *patch);
+
+extern int cmd_stripspace(int argc, const char **argv, char **envp);
+extern void stripspace(FILE *in, FILE *out);
 #endif
