@@ -129,7 +129,7 @@ struct tree *lookup_tree(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		struct tree *ret = xcalloc(1, sizeof(struct tree));
+		struct tree *ret = alloc_tree_node();
 		created_object(sha1, &ret->object);
 		ret->object.type = TYPE_TREE;
 		return ret;

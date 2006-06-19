@@ -384,4 +384,15 @@ extern void setup_pager(void);
 int decode_85(char *dst, char *line, int linelen);
 void encode_85(char *buf, unsigned char *data, int bytes);
 
+/* alloc.c */
+struct blob;
+struct tree;
+struct commit;
+struct tag;
+extern struct blob *alloc_blob_node(void);
+extern struct tree *alloc_tree_node(void);
+extern struct commit *alloc_commit_node(void);
+extern struct tag *alloc_tag_node(void);
+extern void alloc_report(void);
+
 #endif /* CACHE_H */

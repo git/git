@@ -19,7 +19,7 @@ struct tag *lookup_tag(const unsigned char *sha1)
 {
         struct object *obj = lookup_object(sha1);
         if (!obj) {
-                struct tag *ret = xcalloc(1, sizeof(struct tag));
+                struct tag *ret = alloc_tag_node();
                 created_object(sha1, &ret->object);
                 ret->object.type = TYPE_TAG;
                 return ret;
