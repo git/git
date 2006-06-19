@@ -64,6 +64,7 @@ static void check_connectivity(void)
 
 	/* Look up all the requirements, warn about missing objects.. */
 	for (i = 0; i < obj_allocs; i++) {
+		const struct object_refs *refs;
 		struct object *obj = objs[i];
 
 		if (!obj)
@@ -78,8 +79,8 @@ static void check_connectivity(void)
 			continue;
 		}
 
-		if (obj->refs) {
-			const struct object_refs *refs = obj->refs;
+		refs = lookup_object_refs(obj);
+		if (refs) {
 			unsigned j;
 			for (j = 0; j < refs->count; j++) {
 				struct object *ref = refs->ref[j];
