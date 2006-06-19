@@ -500,9 +500,18 @@ int git_config_set_multivar(const char* key, const char* value,
 	int i, dot;
 	int fd = -1, in_fd;
 	int ret;
-	char* config_filename = strdup(git_path("config"));
-	char* lock_file = strdup(git_path("config.lock"));
+	char* config_filename;
+	char* lock_file;
 	const char* last_dot = strrchr(key, '.');
+
+	config_filename = getenv("GIT_CONFIG");
+	if (!config_filename) {
+		config_filename = getenv("GIT_CONFIG_LOCAL");
+		if (!config_filename)
+			config_filename  = git_path("config");
+	}
+	config_filename = strdup(config_filename);
+	lock_file = strdup(mkpath("%s.lock", config_filename));
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -610,7 +619,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		 * As a side effect, we make sure to transform only a valid
 		 * existing config file.
 		 */
-		if (git_config(store_aux)) {
+		if (git_config_from_file(store_aux, config_filename)) {
 			fprintf(stderr, "invalid config file\n");
 			free(store.key);
 			if (store.value_regex != NULL) {
