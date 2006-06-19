@@ -464,6 +464,7 @@ DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 template_dir_SQ = $(subst ','\'',$(template_dir))
+prefix_SQ = $(subst ','\'',$(prefix))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
@@ -484,7 +485,7 @@ all:
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
-git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS)
+git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
@@ -516,7 +517,7 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	chmod +x $@+
 	mv $@+ $@
 
-$(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
+$(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py GIT-CFLAGS
 	rm -f $@ $@+
 	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
 	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR_SQ)|g' \
@@ -540,19 +541,19 @@ git$X git.spec \
 	$(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	: GIT-VERSION-FILE
 
-%.o: %.c
+%.o: %.c GIT-CFLAGS
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.o: %.S
 	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
-exec_cmd.o: exec_cmd.c
+exec_cmd.o: exec_cmd.c GIT-CFLAGS
 	$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
 
-http.o: http.c
+http.o: http.c GIT-CFLAGS
 	$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
 
 ifdef NO_EXPAT
-http-fetch.o: http-fetch.c http.h
+http-fetch.o: http-fetch.c http.h GIT-CFLAGS
 	$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_EXPAT $<
 endif
 
@@ -608,6 +609,17 @@ TAGS:
 tags:
 	rm -f tags
 	find . -name '*.[hcS]' -print | xargs ctags -a
+
+### Detect prefix changes
+TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):$(GIT_VERSION):\
+             $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
+
+GIT-CFLAGS: .FORCE-GIT-CFLAGS
+	@FLAGS='$(TRACK_CFLAGS)'; \
+	    if test x"$$FLAGS" != x"`cat GIT-CFLAGS 2>/dev/null`" ; then \
+		echo 1>&2 "    * new build flags or prefix"; \
+		echo "$$FLAGS" >GIT-CFLAGS; \
+            fi
 
 ### Testing rules
 
@@ -711,10 +723,10 @@ clean:
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean
-	rm -f GIT-VERSION-FILE
+	rm -f GIT-VERSION-FILE GIT-CFLAGS
 
 .PHONY: all install clean strip
-.PHONY: .FORCE-GIT-VERSION-FILE TAGS tags
+.PHONY: .FORCE-GIT-VERSION-FILE TAGS tags .FORCE-GIT-CFLAGS
 
 ### Check documentation
 #
