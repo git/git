@@ -317,17 +317,33 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 
 int git_config(config_fn_t fn)
 {
-	const char *filename = git_path("config");
-	/* Forward-compatibility cue: $GIT_CONFIG makes git read _only_
-	 * the given config file, $GIT_CONFIG_LOCAL will make it process
-	 * it in addition to the global config file, the same way it would
-	 * the per-repository config file otherwise. */
-	if (getenv("GIT_CONFIG")) {
-		filename = getenv("GIT_CONFIG");
-	} else if (getenv("GIT_CONFIG_LOCAL")) {
+	int ret = 0;
+	char *repo_config = NULL;
+	const char *home = NULL, *filename;
+
+	/* $GIT_CONFIG makes git read _only_ the given config file,
+	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
+	 * global config file, the same way it would the per-repository
+	 * config file otherwise. */
+	filename = getenv("GIT_CONFIG");
+	if (!filename) {
+		home = getenv("HOME");
 		filename = getenv("GIT_CONFIG_LOCAL");
+		if (!filename)
+			filename = repo_config = strdup(git_path("config"));
 	}
-	return git_config_from_file(fn, filename);
+
+	if (home) {
+		char *user_config = strdup(mkpath("%s/.gitconfig", home));
+		if (access(user_config, R_OK) > 0)
+			ret = git_config_from_file(fn, user_config);
+		free(user_config);
+	}
+
+	ret += git_config_from_file(fn, filename);
+	if (repo_config)
+		free(repo_config);
+	return ret;
 }
 
 /*

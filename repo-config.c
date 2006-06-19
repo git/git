@@ -64,7 +64,22 @@ static int show_config(const char* key_, const char* value_)
 
 static int get_value(const char* key_, const char* regex_)
 {
+	int ret = -1;
 	char *tl;
+	char *global = NULL, *repo_config = NULL;
+	const char *local;
+
+	local = getenv("GIT_CONFIG");
+	if (!local) {
+		const char *home = getenv("HOME");
+		local = getenv("GIT_CONFIG_LOCAL");
+		if (!local)
+			local = repo_config;
+		else
+			local = repo_config = strdup(git_path("config"));
+		if (home)
+			global = strdup(mkpath("%s/.gitconfig", home));
+	}
 
 	key = strdup(key_);
 	for (tl=key+strlen(key)-1; tl >= key && *tl != '.'; --tl)
@@ -76,7 +91,7 @@ static int get_value(const char* key_, const char* regex_)
 		key_regexp = (regex_t*)malloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid key pattern: %s\n", key_);
-			return -1;
+			goto free_strings;
 		}
 	}
 
@@ -89,11 +104,16 @@ static int get_value(const char* key_, const char* regex_)
 		regexp = (regex_t*)malloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
-			return -1;
+			goto free_strings;
 		}
 	}
 
-	git_config(show_config);
+	if (do_all && global)
+		git_config_from_file(show_config, global);
+	git_config_from_file(show_config, local);
+	if (!do_all && !seen && global)
+		git_config_from_file(show_config, global);
+
 	free(key);
 	if (regexp) {
 		regfree(regexp);
@@ -101,9 +121,16 @@ static int get_value(const char* key_, const char* regex_)
 	}
 
 	if (do_all)
-		return !seen;
+		ret = !seen;
+	else
+		ret =  (seen == 1) ? 0 : 1;
 
-	return (seen == 1) ? 0 : 1;
+free_strings:
+	if (repo_config)
+		free(repo_config);
+	if (global)
+		free(global);
+	return ret;
 }
 
 int main(int argc, const char **argv)
