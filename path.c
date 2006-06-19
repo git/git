@@ -267,11 +267,21 @@ int adjust_shared_perm(const char *path)
 		return -1;
 	mode = st.st_mode;
 	if (mode & S_IRUSR)
-		mode |= S_IRGRP;
+		mode |= (shared_repository == PERM_GROUP
+			 ? S_IRGRP
+			 : (shared_repository == PERM_EVERYBODY
+			    ? (S_IRGRP|S_IROTH)
+			    : 0));
+
 	if (mode & S_IWUSR)
 		mode |= S_IWGRP;
+
 	if (mode & S_IXUSR)
-		mode |= S_IXGRP;
+		mode |= (shared_repository == PERM_GROUP
+			 ? S_IXGRP
+			 : (shared_repository == PERM_EVERYBODY
+			    ? (S_IXGRP|S_IXOTH)
+			    : 0));
 	if (S_ISDIR(mode))
 		mode |= S_ISGID;
 	if (chmod(path, mode) < 0)
