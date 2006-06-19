@@ -220,8 +220,11 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		}
 		else if (!strcmp(argv[i], "--signoff") ||
 			 !strcmp(argv[i], "-s")) {
-			const char *committer = git_committer_info(1);
-			const char *endpos = strchr(committer, '>');
+			const char *committer;
+			const char *endpos;
+			setup_ident();
+			committer = git_committer_info(1);
+			endpos = strchr(committer, '>');
 			if (!endpos)
 				die("bogos committer info %s\n", committer);
 			add_signoff = xmalloc(endpos - committer + 2);
