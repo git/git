@@ -447,7 +447,7 @@ static int add_rfc2047(char *buf, const char *line, int len)
 	memcpy(bp, q_utf8, sizeof(q_utf8)-1);
 	bp += sizeof(q_utf8)-1;
 	for (i = 0; i < len; i++) {
-		unsigned ch = line[i];
+		unsigned ch = line[i] & 0xFF;
 		if (is_rfc2047_special(ch)) {
 			sprintf(bp, "=%02X", ch);
 			bp += 3;
@@ -571,10 +571,23 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 	 * to say this is not a 7-bit ASCII.
 	 */
 	if (fmt == CMIT_FMT_EMAIL && !after_subject) {
-		int i;
-		for (i = 0; !plain_non_ascii && msg[i] && i < len; i++)
-			if (msg[i] & 0x80)
+		int i, ch, in_body;
+
+		for (in_body = i = 0; (ch = msg[i]) && i < len; i++) {
+			if (!in_body) {
+				/* author could be non 7-bit ASCII but
+				 * the log may so; skip over the
+				 * header part first.
+				 */
+				if (ch == '\n' &&
+				    i + 1 < len && msg[i+1] == '\n')
+					in_body = 1;
+			}
+			else if (ch & 0x80) {
 				plain_non_ascii = 1;
+				break;
+			}
+		}
 	}
 
 	for (;;) {
