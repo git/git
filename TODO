@@ -122,6 +122,9 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
+* git-clone fail .git/refs/foo (Yann Dirson <ydirson@altern.org>)
+  <20060610225040.GA7766@nowhere.earth>
+
 * git-proxy should be spawned with sh -c 'command' $1 $2.
 
 * Maybe a true git-proxy command that reads the first request

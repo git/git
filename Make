@@ -20,6 +20,20 @@ refs/heads/pu)
 	d="prefix=$HOME/git-test" ;;
 esac
 
+while case $# in 0) break ;; esac
+do 
+	case "$1" in
+	-pedantic)
+		O='-O2 -Werror -ansi -pedantic -std=c99 -D_XOPEN_SOURCE=500 -D_BSD_SOURCE'
+		;;
+	*)
+		echo >&2 "Eh $1?"
+		exit 1
+		;;
+	esac
+	shift
+done
+
 : ${O=-O2}
 make $d \
      PYTHON_PATH=/usr/bin/python2.4 \
