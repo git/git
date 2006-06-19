@@ -31,8 +31,7 @@ static int merge_size = 0;
 
 static struct object_list *trees = NULL;
 
-static struct cache_entry df_conflict_entry = {
-};
+static struct cache_entry df_conflict_entry;
 
 struct tree_entry_list {
 	struct tree_entry_list *next;

@@ -1136,13 +1136,14 @@ int fetch(unsigned char *sha1)
 
 static inline int needs_quote(int ch)
 {
-	switch (ch) {
-	case '/': case '-': case '.':
-	case 'A'...'Z':	case 'a'...'z':	case '0'...'9':
+	if (((ch >= 'A') && (ch <= 'Z'))
+			|| ((ch >= 'a') && (ch <= 'z'))
+			|| ((ch >= '0') && (ch <= '9'))
+			|| (ch == '/')
+			|| (ch == '-')
+			|| (ch == '.'))
 		return 0;
-	default:
-		return 1;
-	}
+	return 1;
 }
 
 static inline int hex(int v)
