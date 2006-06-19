@@ -38,9 +38,21 @@ my $home_link =		$my_uri;
 # html text to include at home page
 my $home_text =		"indextext.html";
 
+# URI of default stylesheet
+my $stylesheet =	"gitweb.css";
+
 # source of projects list
 #my $projects_list =	$projectroot;
 my $projects_list =	"index/index.aux";
+
+# default blob_plain mimetype and default charset for text/plain blob
+my $default_blob_plain_mimetype = 'text/plain';
+my $default_text_plain_charset  = undef;
+
+# file to use for guessing MIME types before trying /etc/mime.types
+# (relative to the current git repository)
+my $mimetypes_file              = undef;
+
 
 # input validation and dispatch
 my $action = $cgi->param('a');
@@ -260,68 +272,9 @@ sub git_header_html {
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 <meta name="robots" content="index, nofollow"/>
+<link rel="stylesheet" href="$stylesheet"/>
 <title>$title</title>
 $rss_link
-<style type="text/css">
-body {
-	font-family: sans-serif; font-size: 12px; border:solid #d9d8d1; border-width:1px;
-	margin:10px; background-color:#ffffff; color:#000000;
-}
-a { color:#0000cc; }
-a:hover, a:visited, a:active { color:#880000; }
-div.page_header { height:25px; padding:8px; font-size:18px; font-weight:bold; background-color:#d9d8d1; }
-div.page_header a:visited, a.header { color:#0000cc; }
-div.page_header a:hover { color:#880000; }
-div.page_nav { padding:8px; }
-div.page_nav a:visited { color:#0000cc; }
-div.page_path { padding:8px; border:solid #d9d8d1; border-width:0px 0px 1px}
-div.page_footer { height:17px; padding:4px 8px; background-color: #d9d8d1; }
-div.page_footer_text { float:left; color:#555555; font-style:italic; }
-div.page_body { padding:8px; }
-div.title, a.title {
-	display:block; padding:6px 8px;
-	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
-}
-a.title:hover { background-color: #d9d8d1; }
-div.title_text { padding:6px 0px; border: solid #d9d8d1; border-width:0px 0px 1px; }
-div.log_body { padding:8px 8px 8px 150px; }
-span.age { position:relative; float:left; width:142px; font-style:italic; }
-div.log_link {
-	padding:0px 8px;
-	font-size:10px; font-family:sans-serif; font-style:normal;
-	position:relative; float:left; width:136px;
-}
-div.list_head { padding:6px 8px 4px; border:solid #d9d8d1; border-width:1px 0px 0px; font-style:italic; }
-a.list { text-decoration:none; color:#000000; }
-a.list:hover { text-decoration:underline; color:#880000; }
-a.text { text-decoration:none; color:#0000cc; }
-a.text:visited { text-decoration:none; color:#880000; }
-a.text:hover { text-decoration:underline; color:#880000; }
-table { padding:8px 4px; }
-th { padding:2px 5px; font-size:12px; text-align:left; }
-tr.light:hover { background-color:#edece6; }
-tr.dark { background-color:#f6f6f0; }
-tr.dark:hover { background-color:#edece6; }
-td { padding:2px 5px; font-size:12px; vertical-align:top; }
-td.link { padding:2px 5px; font-family:sans-serif; font-size:10px; }
-div.pre { font-family:monospace; font-size:12px; white-space:pre; }
-div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
-div.index_include { border:solid #d9d8d1; border-width:0px 0px 1px; padding:12px 8px; }
-div.search { margin:4px 8px; position:absolute; top:56px; right:12px }
-a.linenr { color:#999999; text-decoration:none }
-a.rss_logo {
-	float:right; padding:3px 0px; width:35px; line-height:10px;
-	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
-	color:#ffffff; background-color:#ff6600;
-	font-weight:bold; font-family:sans-serif; font-size:10px;
-	text-align:center; text-decoration:none;
-}
-a.rss_logo:hover { background-color:#ee5500; }
-span.tag {
-	padding:0px 4px; font-size:10px; font-weight:normal;
-	background-color:#ffffaa; border:1px solid; border-color:#ffffcc #ffee00 #ffee00 #ffffcc;
-}
-</style>
 </head>
 <body>
 EOF
@@ -1538,15 +1491,85 @@ sub git_blob {
 	git_footer_html();
 }
 
+sub mimetype_guess_file {
+	my $filename = shift;
+	my $mimemap = shift;
+	-r $mimemap or return undef;
+
+	my %mimemap;
+	open(MIME, $mimemap) or return undef;
+	while (<MIME>) {
+		my ($mime, $exts) = split(/\t+/);
+		my @exts = split(/\s+/, $exts);
+		foreach my $ext (@exts) {
+			$mimemap{$ext} = $mime;
+		}
+	}
+	close(MIME);
+
+	$filename =~ /\.(.*?)$/;
+	return $mimemap{$1};
+}
+
+sub mimetype_guess {
+	my $filename = shift;
+	my $mime;
+	$filename =~ /\./ or return undef;
+
+	if ($mimetypes_file) {
+		my $file = $mimetypes_file;
+		$file =~ m#^/# or $file = "$projectroot/$path/$file";
+		$mime = mimetype_guess_file($filename, $file);
+	}
+	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
+	return $mime;
+}
+
+sub git_blob_plain_mimetype {
+	my $fd = shift;
+	my $filename = shift;
+
+	# just in case
+	return $default_blob_plain_mimetype unless $fd;
+
+	if ($filename) {
+		my $mime = mimetype_guess($filename);
+		$mime and return $mime;
+	}
+
+	if (-T $fd) {
+		return 'text/plain' .
+		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
+	} elsif (! $filename) {
+		return 'application/octet-stream';
+	} elsif ($filename =~ m/\.png$/i) {
+		return 'image/png';
+	} elsif ($filename =~ m/\.gif$/i) {
+		return 'image/gif';
+	} elsif ($filename =~ m/\.jpe?g$/i) {
+		return 'image/jpeg';
+	} else {
+		return 'application/octet-stream';
+	}
+}
+
 sub git_blob_plain {
-	my $save_as = "$hash.txt";
+	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
+	my $type = git_blob_plain_mimetype($fd, $file_name);
+
+	# save as filename, even when no $file_name is given
+	my $save_as = "$hash";
 	if (defined $file_name) {
 		$save_as = $file_name;
+	} elsif ($type =~ m/^text\//) {
+		$save_as .= '.txt';
 	}
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8', '-content-disposition' => "inline; filename=\"$save_as\"");
-	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
+
+	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
 	undef $/;
+	binmode STDOUT, ':raw';
 	print <$fd>;
+	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 	$/ = "\n";
 	close $fd;
 }
