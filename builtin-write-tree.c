@@ -16,7 +16,7 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 	int entries, was_valid, newfd;
 
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
-	struct lock_file *lock_file = xmalloc(sizeof(struct lock_file));
+	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	newfd = hold_lock_file_for_update(lock_file, get_index_file());
 
