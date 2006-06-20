@@ -111,7 +111,7 @@ test_expect_success \
 
 test_expect_success \
     'some edit' \
-    'perl -pi -e "s/^1A.*\n$//; s/^3A/99/" file &&
+    'perl -p -i.orig -e "s/^1A.*\n$//; s/^3A/99/" file &&
     GIT_AUTHOR_NAME="D" git commit -a -m "edit"'
 
 test_expect_success \

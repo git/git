@@ -1172,7 +1172,7 @@ static void one_remote_object(const char *hex)
 
 	obj->flags |= REMOTE;
 	if (!object_list_contains(objects, obj))
-		add_object(obj, &objects, NULL, "");
+		object_list_insert(obj, &objects);
 }
 
 static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
@@ -1700,6 +1700,15 @@ static int locking_available(void)
 	return lock_flags;
 }
 
+struct object_list **add_one_object(struct object *obj, struct object_list **p)
+{
+	struct object_list *entry = xmalloc(sizeof(struct object_list));
+	entry->item = obj;
+	entry->next = *p;
+	*p = entry;
+	return &entry->next;
+}
+
 static struct object_list **process_blob(struct blob *blob,
 					 struct object_list **p,
 					 struct name_path *path,
@@ -1713,8 +1722,7 @@ static struct object_list **process_blob(struct blob *blob,
 		return p;
 
 	obj->flags |= SEEN;
-	name = strdup(name);
-	return add_object(obj, p, path, name);
+	return add_one_object(obj, p);
 }
 
 static struct object_list **process_tree(struct tree *tree,
@@ -1736,7 +1744,7 @@ static struct object_list **process_tree(struct tree *tree,
 
 	obj->flags |= SEEN;
 	name = strdup(name);
-	p = add_object(obj, p, NULL, name);
+	p = add_one_object(obj, p);
 	me.up = path;
 	me.elem = name;
 	me.elem_len = strlen(name);
@@ -1757,8 +1765,9 @@ static struct object_list **process_tree(struct tree *tree,
 
 static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 {
+	int i;
 	struct commit *commit;
-	struct object_list **p = &objects, *pending;
+	struct object_list **p = &objects;
 	int count = 0;
 
 	while ((commit = get_revision(revs)) != NULL) {
@@ -1768,15 +1777,16 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 			count += add_send_request(&commit->object, lock);
 	}
 
-	for (pending = revs->pending_objects; pending; pending = pending->next) {
-		struct object *obj = pending->item;
-		const char *name = pending->name;
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object_array_entry *entry = revs->pending.objects + i;
+		struct object *obj = entry->item;
+		const char *name = entry->name;
 
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
 		if (obj->type == TYPE_TAG) {
 			obj->flags |= SEEN;
-			p = add_object(obj, p, NULL, name);
+			p = add_one_object(obj, p);
 			continue;
 		}
 		if (obj->type == TYPE_TREE) {

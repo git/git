@@ -99,26 +99,26 @@ static void show_commit(struct commit *commit)
 	}
 }
 
-static struct object_list **process_blob(struct blob *blob,
-					 struct object_list **p,
-					 struct name_path *path,
-					 const char *name)
+static void process_blob(struct blob *blob,
+			 struct object_array *p,
+			 struct name_path *path,
+			 const char *name)
 {
 	struct object *obj = &blob->object;
 
 	if (!revs.blob_objects)
-		return p;
+		return;
 	if (obj->flags & (UNINTERESTING | SEEN))
-		return p;
+		return;
 	obj->flags |= SEEN;
 	name = strdup(name);
-	return add_object(obj, p, path, name);
+	add_object(obj, p, path, name);
 }
 
-static struct object_list **process_tree(struct tree *tree,
-					 struct object_list **p,
-					 struct name_path *path,
-					 const char *name)
+static void process_tree(struct tree *tree,
+			 struct object_array *p,
+			 struct name_path *path,
+			 const char *name)
 {
 	struct object *obj = &tree->object;
 	struct tree_desc desc;
@@ -126,14 +126,14 @@ static struct object_list **process_tree(struct tree *tree,
 	struct name_path me;
 
 	if (!revs.tree_objects)
-		return p;
+		return;
 	if (obj->flags & (UNINTERESTING | SEEN))
-		return p;
+		return;
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
 	name = strdup(name);
-	p = add_object(obj, p, path, name);
+	add_object(obj, p, path, name);
 	me.up = path;
 	me.elem = name;
 	me.elem_len = strlen(name);
@@ -143,57 +143,59 @@ static struct object_list **process_tree(struct tree *tree,
 
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
-			p = process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
+			process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
 		else
-			p = process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
+			process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
 	}
 	free(tree->buffer);
 	tree->buffer = NULL;
-	return p;
 }
 
 static void show_commit_list(struct rev_info *revs)
 {
+	int i;
 	struct commit *commit;
-	struct object_list *objects = NULL, **p = &objects, *pending;
+	struct object_array objects = { 0, 0, NULL };
 
 	while ((commit = get_revision(revs)) != NULL) {
-		p = process_tree(commit->tree, p, NULL, "");
+		process_tree(commit->tree, &objects, NULL, "");
 		show_commit(commit);
 	}
-	for (pending = revs->pending_objects; pending; pending = pending->next) {
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object_array_entry *pending = revs->pending.objects + i;
 		struct object *obj = pending->item;
 		const char *name = pending->name;
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
 		if (obj->type == TYPE_TAG) {
 			obj->flags |= SEEN;
-			p = add_object(obj, p, NULL, name);
+			add_object_array(obj, name, &objects);
 			continue;
 		}
 		if (obj->type == TYPE_TREE) {
-			p = process_tree((struct tree *)obj, p, NULL, name);
+			process_tree((struct tree *)obj, &objects, NULL, name);
 			continue;
 		}
 		if (obj->type == TYPE_BLOB) {
-			p = process_blob((struct blob *)obj, p, NULL, name);
+			process_blob((struct blob *)obj, &objects, NULL, name);
 			continue;
 		}
 		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
 	}
-	while (objects) {
+	for (i = 0; i < objects.nr; i++) {
+		struct object_array_entry *p = objects.objects + i;
+
 		/* An object with name "foo\n0000000..." can be used to
 		 * confuse downstream git-pack-objects very badly.
 		 */
-		const char *ep = strchr(objects->name, '\n');
+		const char *ep = strchr(p->name, '\n');
 		if (ep) {
-			printf("%s %.*s\n", sha1_to_hex(objects->item->sha1),
-			       (int) (ep - objects->name),
-			       objects->name);
+			printf("%s %.*s\n", sha1_to_hex(p->item->sha1),
+			       (int) (ep - p->name),
+			       p->name);
 		}
 		else
-			printf("%s %s\n", sha1_to_hex(objects->item->sha1), objects->name);
-		objects = objects->next;
+			printf("%s %s\n", sha1_to_hex(p->item->sha1), p->name);
 	}
 }
 
@@ -348,7 +350,7 @@ int cmd_rev_list(int argc, const char **argv, char **envp)
 
 	if ((!list &&
 	     (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) &&
-	      !revs.pending_objects)) ||
+	      !revs.pending.nr)) ||
 	    revs.diff)
 		usage(rev_list_usage);
 

@@ -332,8 +332,8 @@ int run_diff_index(struct rev_info *revs, int cached)
 	}
 	mark_merge_entries();
 
-	ent = revs->pending_objects->item;
-	tree_name = revs->pending_objects->name;
+	ent = revs->pending.objects[0].item;
+	tree_name = revs->pending.objects[0].name;
 	tree = parse_tree_indirect(ent->sha1);
 	if (!tree)
 		return error("bad tree object %s", tree_name);

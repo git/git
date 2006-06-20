@@ -50,7 +50,7 @@ static int builtin_diff_files(struct rev_info *revs,
 	 * specified rev.max_count is reasonable (0 <= n <= 3), and
 	 * there is no other revision filtering parameter.
 	 */
-	if (revs->pending_objects ||
+	if (revs->pending.nr ||
 	    revs->min_age != -1 ||
 	    revs->max_age != -1 ||
 	    3 < revs->max_count)
@@ -172,7 +172,7 @@ static int builtin_diff_index(struct rev_info *revs,
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.
 	 */
-	if (!revs->pending_objects || revs->pending_objects->next ||
+	if (revs->pending.nr != 1 ||
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
@@ -181,10 +181,10 @@ static int builtin_diff_index(struct rev_info *revs,
 
 static int builtin_diff_tree(struct rev_info *revs,
 			     int argc, const char **argv,
-			     struct object_list *ent)
+			     struct object_array_entry *ent)
 {
 	const unsigned char *(sha1[2]);
-	int swap = 1;
+	int swap = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--raw"))
@@ -195,10 +195,10 @@ static int builtin_diff_tree(struct rev_info *revs,
 	}
 
 	/* We saw two trees, ent[0] and ent[1].
-	 * unless ent[0] is unintesting, they are swapped
+	 * if ent[1] is unintesting, they are swapped
 	 */
-	if (ent[0].item->flags & UNINTERESTING)
-		swap = 0;
+	if (ent[1].item->flags & UNINTERESTING)
+		swap = 1;
 	sha1[swap] = ent[0].item->sha1;
 	sha1[1-swap] = ent[1].item->sha1;
 	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
@@ -208,7 +208,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 
 static int builtin_diff_combined(struct rev_info *revs,
 				 int argc, const char **argv,
-				 struct object_list *ent,
+				 struct object_array_entry *ent,
 				 int ents)
 {
 	const unsigned char (*parent)[20];
@@ -242,13 +242,14 @@ void add_head(struct rev_info *revs)
 	obj = parse_object(sha1);
 	if (!obj)
 		return;
-	add_object(obj, &revs->pending_objects, NULL, "HEAD");
+	add_pending_object(revs, obj, "HEAD");
 }
 
 int cmd_diff(int argc, const char **argv, char **envp)
 {
+	int i;
 	struct rev_info rev;
-	struct object_list *list, ent[100];
+	struct object_array_entry ent[100];
 	int ents = 0, blobs = 0, paths = 0;
 	const char *path = NULL;
 	struct blobinfo blob[2];
@@ -281,7 +282,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	/* Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
 	 */
-	if (!rev.pending_objects) {
+	if (!rev.pending.nr) {
 		int i;
 		for (i = 1; i < argc; i++) {
 			const char *arg = argv[i];
@@ -294,7 +295,8 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		}
 	}
 
-	for (list = rev.pending_objects; list; list = list->next) {
+	for (i = 0; i < rev.pending.nr; i++) {
+		struct object_array_entry *list = rev.pending.objects+i;
 		struct object *obj = list->item;
 		const char *name = list->name;
 		int flags = (obj->flags & UNINTERESTING);
