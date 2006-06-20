@@ -261,6 +261,12 @@ sub git_header_html {
 		$title .= " - $project";
 		if (defined $action) {
 			$title .= "/$action";
+			if (defined $file_name) {
+				$title .= " - $file_name";
+				if ($action eq "tree" && $file_name !~ m|/$|) {
+					$title .= "/";
+				}
+			}
 		}
 	}
 	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status, -expires => $expires);
