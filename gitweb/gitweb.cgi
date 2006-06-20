@@ -252,6 +252,19 @@ sub unquote {
 	return $str;
 }
 
+# CSS class for given age value (in seconds)
+sub age_class {
+	my $age = shift;
+
+	if ($age < 60*60*2) {
+		return "age0";
+	} elsif ($age < 60*60*24*2) {
+		return "age1";
+	} else {
+		return "age2";
+	}
+}
+
 sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
@@ -261,6 +274,12 @@ sub git_header_html {
 		$title .= " - $project";
 		if (defined $action) {
 			$title .= "/$action";
+			if (defined $file_name) {
+				$title .= " - $file_name";
+				if ($action eq "tree" && $file_name !~ m|/$|) {
+					$title .= "/";
+				}
+			}
 		}
 	}
 	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status, -expires => $expires);
@@ -594,13 +613,13 @@ sub git_diff_print {
 		while (my $line = <$fd>) {
 			chomp($line);
 			my $char = substr($line, 0, 1);
-			my $color = "";
+			my $diff_class = "";
 			if ($char eq '+') {
-				$color = " style=\"color:#008800;\"";
+				$diff_class = " add";
 			} elsif ($char eq "-") {
-				$color = " style=\"color:#cc0000;\"";
+				$diff_class = " rem";
 			} elsif ($char eq "@") {
-				$color = " style=\"color:#990099;\"";
+				$diff_class = " chunk_header";
 			} elsif ($char eq "\\") {
 				# skip errors
 				next;
@@ -611,7 +630,7 @@ sub git_diff_print {
 					$line =~ s/\t/$spaces/;
 				}
 			}
-			print "<div class=\"pre\"$color>" . esc_html($line) . "</div>\n";
+			print "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
 		}
 	}
 	close $fd;
@@ -843,7 +862,7 @@ sub git_project_list {
 		close $fd;
 		print "</div>\n";
 	}
-	print "<table cellspacing=\"0\">\n" .
+	print "<table class=\"project_list\">\n" .
 	      "<tr>\n";
 	if (!defined($order) || (defined($order) && ($order eq "project"))) {
 		@projects = sort {$a->{'path'} cmp $b->{'path'}} @projects;
@@ -882,15 +901,7 @@ sub git_project_list {
 		print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary"), -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
 		      "<td>$pr->{'descr'}</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
-		my $colored_age;
-		if ($pr->{'commit'}{'age'} < 60*60*2) {
-			$colored_age = "<span style =\"color: #009900;\"><b><i>$pr->{'commit'}{'age_string'}</i></b></span>";
-		} elsif ($pr->{'commit'}{'age'} < 60*60*24*2) {
-			$colored_age = "<span style =\"color: #009900;\"><i>$pr->{'commit'}{'age_string'}</i></span>";
-		} else {
-			$colored_age = "<i>$pr->{'commit'}{'age_string'}</i>";
-		}
-		print "<td>$colored_age</td>\n" .
+		print "<td class=\"". age_class($pr->{'commit'}{'age'}) . "\">" . $pr->{'commit'}{'age_string'} . "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary")}, "summary") .
 		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=shortlog")}, "shortlog") .
@@ -1234,7 +1245,7 @@ sub git_blame {
 	print "<div class=\"page_path\"><b>" . esc_html($file_name) . "</b></div>\n";
 	print "<div class=\"page_body\">\n";
 	print <<HTML;
-<table style="border-collapse: collapse;">
+<table class="blame">
   <tr>
     <th>Commit</th>
     <th>Age</th>
@@ -1255,7 +1266,7 @@ HTML
 		my $data;
 		my $age;
 		my $age_str;
-		my $age_style;
+		my $age_class;
 
 		chomp $line;
 		$line_class_num = ($line_class_num + 1) % $line_class_len;
@@ -1267,16 +1278,14 @@ HTML
 			$lineno   = $4;
 			$data     = $5;
 		} else {
-			print qq(  <tr><td colspan="5" style="color: red; background-color: yellow;">Unable to parse: $line</td></tr>\n);
+			print qq(  <tr><td colspan="5" class="error">Unable to parse: $line</td></tr>\n);
 			next;
 		}
 		$short_rev  = substr ($long_rev, 0, 8);
 		$age        = time () - $time;
 		$age_str    = age_string ($age);
 		$age_str    =~ s/ /&nbsp;/g;
-		$age_style  = 'font-style: italic;';
-		$age_style .= ' color: #009900; background: transparent;' if ($age < 60*60*24*2);
-		$age_style .= ' font-weight: bold;' if ($age < 60*60*2);
+		$age_class  = age_class($age);
 		$author     = esc_html ($author);
 		$author     =~ s/ /&nbsp;/g;
 		# escape tabs
@@ -1287,15 +1296,14 @@ HTML
 			}
 		}
 		$data = esc_html ($data);
-		$data =~ s/ /&nbsp;/g;
 
 		print <<HTML;
   <tr class="$line_class[$line_class_num]">
-    <td style="font-family: monospace;"><a href="$my_uri?${\esc_param ("p=$project;a=commit;h=$long_rev")}" class="text">$short_rev..</a></td>
-    <td style="$age_style">$age_str</td>
+    <td class="sha1"><a href="$my_uri?${\esc_param ("p=$project;a=commit;h=$long_rev")}" class="text">$short_rev..</a></td>
+    <td class="$age_class">$age_str</td>
     <td>$author</td>
-    <td style="text-align: right;"><a id="$lineno" href="#$lineno" class="linenr">$lineno</a></td>
-    <td style="font-family: monospace;">$data</td>
+    <td class="linenr"><a id="$lineno" href="#$lineno" class="linenr">$lineno</a></td>
+    <td class="pre">$data</td>
   </tr>
 HTML
 	} # while (my $line = <$fd>)
@@ -1640,7 +1648,7 @@ sub git_tree {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td style=\"font-family:monospace\">" . mode_str($t_mode) . "</td>\n";
+		print "<td class=\"mode\">" . mode_str($t_mode) . "</td>\n";
 		if ($t_type eq "blob") {
 			print "<td class=\"list\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$t_hash$base_key;f=$base$t_name"), -class => "list"}, esc_html($t_name)) .
@@ -1906,7 +1914,7 @@ sub git_commit {
 	      "<tr>" .
 	      "<td></td><td> $ad{'rfc2822'}";
 	if ($ad{'hour_local'} < 6) {
-		printf(" (<span style=\"color: #cc0000;\">%02d:%02d</span> %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
+		printf(" (<span class=\"atnight\">%02d:%02d</span> %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
 	} else {
 		printf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'});
 	}
@@ -1914,10 +1922,10 @@ sub git_commit {
 	      "</tr>\n";
 	print "<tr><td>committer</td><td>" . esc_html($co{'committer'}) . "</td></tr>\n";
 	print "<tr><td></td><td> $cd{'rfc2822'}" . sprintf(" (%02d:%02d %s)", $cd{'hour_local'}, $cd{'minute_local'}, $cd{'tz_local'}) . "</td></tr>\n";
-	print "<tr><td>commit</td><td style=\"font-family:monospace\">$co{'id'}</td></tr>\n";
+	print "<tr><td>commit</td><td class=\"sha1\">$co{'id'}</td></tr>\n";
 	print "<tr>" .
 	      "<td>tree</td>" .
-	      "<td style=\"font-family:monospace\">" .
+	      "<td class=\"sha1\">" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash"), class => "list"}, $co{'tree'}) .
 	      "</td>" .
 	      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
@@ -1927,7 +1935,7 @@ sub git_commit {
 	foreach my $par (@$parents) {
 		print "<tr>" .
 		      "<td>parent</td>" .
-		      "<td style=\"font-family:monospace\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$par"), class => "list"}, $par) . "</td>" .
+		      "<td class=\"sha1\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$par"), class => "list"}, $par) . "</td>" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$par")}, "commit") .
 		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash;hp=$par")}, "commitdiff") .
@@ -1952,7 +1960,7 @@ sub git_commit {
 		}
 		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
 			$signed = 1;
-			print "<span style=\"color: #888888\">" . esc_html($line) . "</span><br/>\n";
+			print "<span class=\"signoff\">" . esc_html($line) . "</span><br/>\n";
 		} else {
 			$signed = 0;
 			print format_log_line_html($line) . "<br/>\n";
@@ -1964,7 +1972,7 @@ sub git_commit {
 		print(($#difftree + 1) . " files changed:\n");
 	}
 	print "</div>\n";
-	print "<table cellspacing=\"0\">\n";
+	print "<table class=\"diff_tree\">\n";
 	my $alternate = 0;
 	foreach my $line (@difftree) {
 		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
@@ -1992,12 +2000,12 @@ sub git_commit {
 			}
 			print "<td>" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
-			      "<td><span style=\"color: #008000;\">[new " . file_type($to_mode) . "$mode_chng]</span></td>\n" .
+			      "<td><span class=\"file_status new\">[new " . file_type($to_mode) . "$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob") . "</td>\n";
 		} elsif ($status eq "D") {
 			print "<td>" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
-			      "<td><span style=\"color: #c00000;\">[deleted " . file_type($from_mode). "]</span></td>\n" .
+			      "<td><span class=\"file_status deleted\">[deleted " . file_type($from_mode). "]</span></td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, "blob") .
 			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash;f=$file")}, "history") .
@@ -2005,7 +2013,7 @@ sub git_commit {
 		} elsif ($status eq "M" || $status eq "T") {
 			my $mode_chnge = "";
 			if ($from_mode != $to_mode) {
-				$mode_chnge = " <span style=\"color: #777777;\">[changed";
+				$mode_chnge = " <span class=\"file_status mode_chnge\">[changed";
 				if (((oct $from_mode) & S_IFMT) != ((oct $to_mode) & S_IFMT)) {
 					$mode_chnge .= " from " . file_type($from_mode) . " to " . file_type($to_mode);
 				}
@@ -2041,7 +2049,7 @@ sub git_commit {
 			}
 			print "<td>" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"), -class => "list"}, esc_html($to_file)) . "</td>\n" .
-			      "<td><span style=\"color: #777777;\">[moved from " .
+			      "<td><span class=\"file_status moved\">[moved from " .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file"), -class => "list"}, esc_html($from_file)) .
 			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" .
@@ -2401,7 +2409,7 @@ sub git_search {
 					my $match = esc_html($2) || "";
 					my $trail = esc_html($3) || "";
 					$trail = chop_str($trail, 30, 10);
-					my $text = "$lead<span style=\"color:#e00000\">$match</span>$trail";
+					my $text = "$lead<span class=\"match\">$match</span>$trail";
 					print chop_str($text, 80, 5) . "<br/>\n";
 				}
 			}
@@ -2450,7 +2458,7 @@ sub git_search {
 					while (my $setref = shift @files) {
 						my %set = %$setref;
 						print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$set{'id'};hb=$co{'id'};f=$set{'file'}"), class => "list"},
-						      "<span style=\"color:#e00000\">" . esc_html($set{'file'}) . "</span>") .
+						      "<span class=\"match\">" . esc_html($set{'file'}) . "</span>") .
 						      "<br/>\n";
 					}
 					print "</td>\n" .
