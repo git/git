@@ -29,8 +29,7 @@ git-svn.html : git-svn.txt
 	asciidoc -b xhtml11 -d manpage \
 		-f ../../Documentation/asciidoc.conf $<
 test: git-svn
-	cd t && $(SHELL) ./t0000-contrib-git-svn.sh $(TEST_FLAGS)
-	cd t && $(SHELL) ./t0001-contrib-git-svn-props.sh $(TEST_FLAGS)
+	cd t && for i in t????-*.sh; do $(SHELL) ./$$i $(TEST_FLAGS); done
 
 # we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
 full-test:
