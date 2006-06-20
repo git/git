@@ -99,6 +99,11 @@ int main(int argc, char **argv)
 {
 	int i, force_file = 0;
 
+	/* Without this we cannot rely on waitpid() to tell
+	 * what happened to our children.
+	 */
+	signal(SIGCHLD, SIG_DFL);
+
 	if (argc < 3)
 		usage("git-merge-index [-o] [-q] <merge-program> (-a | <filename>*)");
 
