@@ -335,7 +335,7 @@ int git_config(config_fn_t fn)
 
 	if (home) {
 		char *user_config = strdup(mkpath("%s/.gitconfig", home));
-		if (access(user_config, R_OK) > 0)
+		if (!access(user_config, R_OK))
 			ret = git_config_from_file(fn, user_config);
 		free(user_config);
 	}

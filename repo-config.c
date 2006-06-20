@@ -74,8 +74,6 @@ static int get_value(const char* key_, const char* regex_)
 		const char *home = getenv("HOME");
 		local = getenv("GIT_CONFIG_LOCAL");
 		if (!local)
-			local = repo_config;
-		else
 			local = repo_config = strdup(git_path("config"));
 		if (home)
 			global = strdup(mkpath("%s/.gitconfig", home));
