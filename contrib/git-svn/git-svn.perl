@@ -2841,13 +2841,20 @@ sub rmdirs {
 		exec qw/git-ls-tree --name-only -r -z/, $self->{c} or croak $!;
 	}
 	local $/ = "\0";
+	my @svn_path = split m#/#, $self->{svn_path};
 	while (<$fh>) {
 		chomp;
-		$_ = $self->{svn_path} . '/' . $_;
-		my ($dn) = ($_ =~ m#^(.*?)/?(?:[^/]+)$#);
-		delete $rm->{$dn};
-		last unless %$rm;
+		my @dn = (@svn_path, (split m#/#, $_));
+		while (pop @dn) {
+			delete $rm->{join '/', @dn};
+		}
+		unless (%$rm) {
+			close $fh;
+			return;
+		}
 	}
+	close $fh;
+
 	my ($r, $p, $bat) = ($self->{r}, $self->{pool}, $self->{bat});
 	foreach my $d (sort { $b =~ tr#/#/# <=> $a =~ tr#/#/# } keys %$rm) {
 		$self->close_directory($bat->{$d}, $p);
