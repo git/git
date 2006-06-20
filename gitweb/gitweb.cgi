@@ -39,7 +39,7 @@ my $home_link =		$my_uri;
 my $home_text =		"indextext.html";
 
 # URI of default stylesheet
-my $stylesheet =	"gitweb.css";
+my $stylesheet = 	"gitweb.css";
 
 # source of projects list
 #my $projects_list =	$projectroot;
@@ -272,7 +272,7 @@ sub git_header_html {
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 <meta name="robots" content="index, nofollow"/>
-<link rel="stylesheet" href="$stylesheet"/>
+<link rel="stylesheet" type="text/css" href="$stylesheet"/>
 <title>$title</title>
 $rss_link
 </head>
