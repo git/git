@@ -671,6 +671,11 @@ int main(int argc, char **argv)
 	int inetd_mode = 0;
 	int i;
 
+	/* Without this we cannot rely on waitpid() to tell
+	 * what happened to our children.
+	 */
+	signal(SIGCHLD, SIG_DFL);
+
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
