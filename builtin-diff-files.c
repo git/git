@@ -41,7 +41,7 @@ int cmd_diff_files(int argc, const char **argv, char **envp)
 	 * rev.max_count is reasonable (0 <= n <= 3),
 	 * there is no other revision filtering parameters.
 	 */
-	if (rev.pending_objects ||
+	if (rev.pending.nr ||
 	    rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_files_usage);
 	/*

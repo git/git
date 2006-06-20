@@ -32,7 +32,7 @@ int cmd_diff_index(int argc, const char **argv, char **envp)
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.
 	 */
-	if (!rev.pending_objects || rev.pending_objects->next ||
+	if (rev.pending.nr != 1 ||
 	    rev.max_count != -1 || rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_cache_usage);
 	return run_diff_index(&rev, cached);

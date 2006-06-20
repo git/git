@@ -125,11 +125,10 @@ static const char* get_rev_name(struct object *o)
 
 	return buffer;
 }
-	
+
 int main(int argc, char **argv)
 {
-	struct object_list *revs = NULL;
-	struct object_list **walker = &revs;
+	struct object_array revs = { 0, 0, NULL };
 	int as_is = 0, all = 0, transform_stdin = 0;
 
 	setup_git_directory();
@@ -184,9 +183,7 @@ int main(int argc, char **argv)
 		if (cutoff > commit->date)
 			cutoff = commit->date;
 
-		object_list_append((struct object *)commit, walker);
-		(*walker)->name = *argv;
-		walker = &((*walker)->next);
+		add_object_array((struct object *)commit, *argv, &revs);
 	}
 
 	for_each_ref(name_ref);
@@ -243,9 +240,13 @@ int main(int argc, char **argv)
 			if (objs[i])
 				printf("%s %s\n", sha1_to_hex(objs[i]->sha1),
 						get_rev_name(objs[i]));
-	} else
-		for ( ; revs; revs = revs->next)
-			printf("%s %s\n", revs->name, get_rev_name(revs->item));
+	} else {
+		int i;
+		for (i = 0; i < revs.nr; i++)
+			printf("%s %s\n",
+				revs.objects[i].name,
+				get_rev_name(revs.objects[i].item));
+	}
 
 	return 0;
 }
