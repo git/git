@@ -322,7 +322,9 @@ EOF
 			$searchtext = "";
 		}
 		my $search_hash;
-		if (defined $hash) {
+		if (defined $hash_base) {
+			$search_hash = $hash_base;
+		} elsif (defined $hash) {
 			$search_hash = $hash;
 		} else {
 			$search_hash  = "HEAD";
