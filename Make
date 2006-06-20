@@ -26,10 +26,17 @@ do
 	-pedantic)
 		O='-O2 -Werror -ansi -pedantic -std=c99 -D_XOPEN_SOURCE=500 -D_BSD_SOURCE'
 		;;
-	*)
+	--)
+		shift
+		break
+		;;
+	-*)
 		echo >&2 "Eh $1?"
 		exit 1
 		;;
+	*)
+		break
+		;;		
 	esac
 	shift
 done

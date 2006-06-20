@@ -17,8 +17,8 @@ do
 	then
 		echo "* $branch" &&
 		git checkout $branch &&
-		Meta/Make $J all &&
-		Meta/Make $J $nstall &&
+		Meta/Make -- $J all &&
+		Meta/Make -- $J $nstall &&
 		Meta/Make test &&
 		Meta/Make clean || exit $?
 	else
