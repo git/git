@@ -1518,7 +1518,7 @@ sub mimetype_guess {
 
 	if ($mimetypes_file) {
 		my $file = $mimetypes_file;
-		$file =~ m#^/# or $file = "$projectroot/$path/$file";
+		#$file =~ m#^/# or $file = "$projectroot/$path/$file";
 		$mime = mimetype_guess_file($filename, $file);
 	}
 	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
