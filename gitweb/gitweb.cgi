@@ -22,12 +22,12 @@ my $my_url = $cgi->url();
 my $my_uri = $cgi->url(-absolute => 1);
 my $rss_link = "";
 
+# location of the git-core binaries
+my $gitbin = "/usr/bin";
+
 # absolute fs-path which will be prepended to the project path
 #my $projectroot = "/pub/scm";
 my $projectroot = "/home/kay/public_html/pub/scm";
-
-# location of the git-core binaries
-my $gitbin = "/usr/bin";
 
 # version of the git-core binaries
 my $git_version = qx($gitbin/git --version);
