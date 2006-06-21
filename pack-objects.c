@@ -1221,6 +1221,10 @@ int main(int argc, char **argv)
 				local = 1;
 				continue;
 			}
+			if (!strcmp("--progress", arg)) {
+				progress = 1;
+				continue;
+			}
 			if (!strcmp("--incremental", arg)) {
 				incremental = 1;
 				continue;

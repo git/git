@@ -29,10 +29,11 @@ static int pathspec_matches(const char **paths, const char *name)
 		int matchlen = strlen(match);
 		const char *cp, *meta;
 
-		if ((matchlen <= namelen) &&
-		    !strncmp(name, match, matchlen) &&
-		    (match[matchlen-1] == '/' ||
-		     name[matchlen] == '\0' || name[matchlen] == '/'))
+		if (!matchlen ||
+		    ((matchlen <= namelen) &&
+		     !strncmp(name, match, matchlen) &&
+		     (match[matchlen-1] == '/' ||
+		      name[matchlen] == '\0' || name[matchlen] == '/')))
 			return 1;
 		if (!fnmatch(match, name, 0))
 			return 1;

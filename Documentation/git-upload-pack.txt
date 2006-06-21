@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Invoked by 'git-clone-pack' and/or 'git-fetch-pack', learns what
+Invoked by 'git-fetch-pack', learns what
 objects the other side is missing, and sends them after packing.
 
 This command is usually not invoked directly by the end user.

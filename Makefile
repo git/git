@@ -148,7 +148,7 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-checkout-index$X git-clone-pack$X \
+	git-checkout-index$X \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-merge-base$X \

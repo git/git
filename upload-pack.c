@@ -5,6 +5,9 @@
 #include "object.h"
 #include "commit.h"
 #include "exec_cmd.h"
+#include <signal.h>
+#include <sys/poll.h>
+#include <sys/wait.h>
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
@@ -18,6 +21,7 @@ static int use_thin_pack = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
 static unsigned int timeout = 0;
+static int use_sideband = 0;
 
 static void reset_timeout(void)
 {
@@ -31,19 +35,63 @@ static int strip(char *line, int len)
 	return len;
 }
 
+#define PACKET_MAX 1000
+static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
+{
+	ssize_t ssz;
+	const char *p;
+
+	if (!data) {
+		if (!use_sideband)
+			return 0;
+		packet_flush(1);
+	}
+
+	if (!use_sideband) {
+		if (fd == 3)
+			/* emergency quit */
+			fd = 2;
+		return safe_write(fd, data, sz);
+	}
+	p = data;
+	ssz = sz;
+	while (sz) {
+		unsigned n;
+		char hdr[5];
+
+		n = sz;
+		if (PACKET_MAX - 5 < n)
+			n = PACKET_MAX - 5;
+		sprintf(hdr, "%04x", n + 5);
+		hdr[4] = fd;
+		safe_write(1, hdr, 5);
+		safe_write(1, p, n);
+		p += n;
+		sz -= n;
+	}
+	return ssz;
+}
+
 static void create_pack_file(void)
 {
-	int fd[2];
-	pid_t pid;
+	/* Pipes between rev-list to pack-objects, pack-objects to us
+	 * and pack-objects error stream for progress bar.
+	 */
+	int lp_pipe[2], pu_pipe[2], pe_pipe[2];
+	pid_t pid_rev_list, pid_pack_objects;
 	int create_full_pack = (nr_our_refs == nr_needs && !nr_has);
+	char data[8193], progress[128];
+	char abort_msg[] = "aborting due to possible repository "
+		"corruption on the remote side.";
+	int buffered = -1;
 
-	if (pipe(fd) < 0)
+	if (pipe(lp_pipe) < 0)
 		die("git-upload-pack: unable to create pipe");
-	pid = fork();
-	if (pid < 0)
+	pid_rev_list = fork();
+	if (pid_rev_list < 0)
 		die("git-upload-pack: unable to fork git-rev-list");
 
-	if (!pid) {
+	if (!pid_rev_list) {
 		int i;
 		int args;
 		const char **argv;
@@ -60,10 +108,10 @@ static void create_pack_file(void)
 		argv = (const char **) p;
 		buf = xmalloc(args * 45);
 
-		dup2(fd[1], 1);
+		dup2(lp_pipe[1], 1);
 		close(0);
-		close(fd[0]);
-		close(fd[1]);
+		close(lp_pipe[0]);
+		close(lp_pipe[1]);
 		*p++ = "rev-list";
 		*p++ = use_thin_pack ? "--objects-edge" : "--objects";
 		if (create_full_pack || MAX_NEEDS <= nr_needs)
@@ -86,11 +134,184 @@ static void create_pack_file(void)
 		execv_git_cmd(argv);
 		die("git-upload-pack: unable to exec git-rev-list");
 	}
-	dup2(fd[0], 0);
-	close(fd[0]);
-	close(fd[1]);
-	execl_git_cmd("pack-objects", "--stdout", NULL);
-	die("git-upload-pack: unable to exec git-pack-objects");
+
+	if (pipe(pu_pipe) < 0)
+		die("git-upload-pack: unable to create pipe");
+	if (pipe(pe_pipe) < 0)
+		die("git-upload-pack: unable to create pipe");
+	pid_pack_objects = fork();
+	if (pid_pack_objects < 0) {
+		/* daemon sets things up to ignore TERM */
+		kill(pid_rev_list, SIGKILL);
+		die("git-upload-pack: unable to fork git-pack-objects");
+	}
+	if (!pid_pack_objects) {
+		dup2(lp_pipe[0], 0);
+		dup2(pu_pipe[1], 1);
+		dup2(pe_pipe[1], 2);
+
+		close(lp_pipe[0]);
+		close(lp_pipe[1]);
+		close(pu_pipe[0]);
+		close(pu_pipe[1]);
+		close(pe_pipe[0]);
+		close(pe_pipe[1]);
+		execl_git_cmd("pack-objects", "--stdout", "--progress", NULL);
+		kill(pid_rev_list, SIGKILL);
+		die("git-upload-pack: unable to exec git-pack-objects");
+	}
+
+	close(lp_pipe[0]);
+	close(lp_pipe[1]);
+
+	/* We read from pe_pipe[0] to capture stderr output for
+	 * progress bar, and pu_pipe[0] to capture the pack data.
+	 */
+	close(pe_pipe[1]);
+	close(pu_pipe[1]);
+
+	while (1) {
+		const char *who;
+		struct pollfd pfd[2];
+		pid_t pid;
+		int status;
+		ssize_t sz;
+		int pe, pu, pollsize;
+
+		pollsize = 0;
+		pe = pu = -1;
+
+		if (0 <= pu_pipe[0]) {
+			pfd[pollsize].fd = pu_pipe[0];
+			pfd[pollsize].events = POLLIN;
+			pu = pollsize;
+			pollsize++;
+		}
+		if (0 <= pe_pipe[0]) {
+			pfd[pollsize].fd = pe_pipe[0];
+			pfd[pollsize].events = POLLIN;
+			pe = pollsize;
+			pollsize++;
+		}
+
+		if (pollsize) {
+			if (poll(pfd, pollsize, -1) < 0) {
+				if (errno != EINTR) {
+					error("poll failed, resuming: %s",
+					      strerror(errno));
+					sleep(1);
+				}
+				continue;
+			}
+			if (0 <= pu && (pfd[pu].revents & (POLLIN|POLLHUP))) {
+				/* Data ready; we keep the last byte
+				 * to ourselves in case we detect
+				 * broken rev-list, so that we can
+				 * leave the stream corrupted.  This
+				 * is unfortunate -- unpack-objects
+				 * would happily accept a valid pack
+				 * data with trailing garbage, so
+				 * appending garbage after we pass all
+				 * the pack data is not good enough to
+				 * signal breakage to downstream.
+				 */
+				char *cp = data;
+				ssize_t outsz = 0;
+				if (0 <= buffered) {
+					*cp++ = buffered;
+					outsz++;
+				}
+				sz = read(pu_pipe[0], cp,
+					  sizeof(data) - outsz);
+				if (0 < sz)
+						;
+				else if (sz == 0) {
+					close(pu_pipe[0]);
+					pu_pipe[0] = -1;
+				}
+				else
+					goto fail;
+				sz += outsz;
+				if (1 < sz) {
+					buffered = data[sz-1] & 0xFF;
+					sz--;
+				}
+				else
+					buffered = -1;
+				sz = send_client_data(1, data, sz);
+				if (sz < 0)
+					goto fail;
+			}
+			if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
+				/* Status ready; we ship that in the side-band
+				 * or dump to the standard error.
+				 */
+				sz = read(pe_pipe[0], progress,
+					  sizeof(progress));
+				if (0 < sz)
+					send_client_data(2, progress, sz);
+				else if (sz == 0) {
+					close(pe_pipe[0]);
+					pe_pipe[0] = -1;
+				}
+				else
+					goto fail;
+			}
+		}
+
+		/* See if the children are still there */
+		if (pid_rev_list || pid_pack_objects) {
+			pid = waitpid(-1, &status, WNOHANG);
+			if (!pid)
+				continue;
+			who = ((pid == pid_rev_list) ? "git-rev-list" :
+			       (pid == pid_pack_objects) ? "git-pack-objects" :
+			       NULL);
+			if (!who) {
+				if (pid < 0) {
+					error("git-upload-pack: %s",
+					      strerror(errno));
+					goto fail;
+				}
+				error("git-upload-pack: we weren't "
+				      "waiting for %d", pid);
+				continue;
+			}
+			if (!WIFEXITED(status) || WEXITSTATUS(status) > 0) {
+				error("git-upload-pack: %s died with error.",
+				      who);
+				goto fail;
+			}
+			if (pid == pid_rev_list)
+				pid_rev_list = 0;
+			if (pid == pid_pack_objects)
+				pid_pack_objects = 0;
+			if (pid_rev_list || pid_pack_objects)
+				continue;
+		}
+
+		/* both died happily */
+		if (pollsize)
+			continue;
+
+		/* flush the data */
+		if (0 <= buffered) {
+			data[0] = buffered;
+			sz = send_client_data(1, data, 1);
+			if (sz < 0)
+				goto fail;
+			fprintf(stderr, "flushed.\n");
+		}
+		send_client_data(1, NULL, 0);
+		return;
+	}
+ fail:
+	if (pid_pack_objects)
+		kill(pid_pack_objects, SIGKILL);
+	if (pid_rev_list)
+		kill(pid_rev_list, SIGKILL);
+	send_client_data(3, abort_msg, sizeof(abort_msg));
+	die("git-upload-pack: %s", abort_msg);
 }
 
 static int got_sha1(char *hex, unsigned char *sha1)
@@ -197,6 +418,8 @@ static int receive_needs(void)
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
+		if (strstr(line+45, "side-band"))
+			use_sideband = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -218,7 +441,7 @@ static int receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
-	static char *capabilities = "multi_ack thin-pack";
+	static char *capabilities = "multi_ack thin-pack side-band";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

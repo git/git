@@ -96,7 +96,7 @@ Issues of note:
 
 	$ mkdir manual && cd manual
 	$ git init-db
-	$ git clone-pack git://git.kernel.org/pub/scm/git/git.git man html |
+	$ git fetch-pack git://git.kernel.org/pub/scm/git/git.git man html |
 	  while read a b
 	  do
 	    echo $a >.git/$b
