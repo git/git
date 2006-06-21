@@ -137,8 +137,7 @@ fi
 
 if [ "$force" ]
 then
-    git-read-tree --reset $new &&
-	git-checkout-index -q -f -u -a
+    git-read-tree --reset -u $new
 else
     git-update-index --refresh >/dev/null
     merge_error=$(git-read-tree -m -u $old $new 2>&1) || (

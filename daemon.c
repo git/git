@@ -264,10 +264,33 @@ static int upload(char *dir)
 	return -1;
 }
 
-static int execute(void)
+static int execute(struct sockaddr *addr)
 {
 	static char line[1000];
 	int pktlen, len;
+
+	if (addr) {
+		char addrbuf[256] = "";
+		int port = -1;
+
+		if (addr->sa_family == AF_INET) {
+			struct sockaddr_in *sin_addr = (void *) addr;
+			inet_ntop(addr->sa_family, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
+			port = sin_addr->sin_port;
+#ifndef NO_IPV6
+		} else if (addr && addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *sin6_addr = (void *) addr;
+
+			char *buf = addrbuf;
+			*buf++ = '['; *buf = '\0'; /* stpcpy() is cool */
+			inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(addrbuf) - 1);
+			strcat(buf, "]");
+
+			port = sin6_addr->sin6_port;
+#endif
+		}
+		loginfo("Connection from %s:%d", addrbuf, port);
+	}
 
 	alarm(init_timeout ? init_timeout : timeout);
 	pktlen = packet_read_line(0, line, sizeof(line));
@@ -414,8 +437,6 @@ static void check_max_connections(void)
 static void handle(int incoming, struct sockaddr *addr, int addrlen)
 {
 	pid_t pid = fork();
-	char addrbuf[256] = "";
-	int port = -1;
 
 	if (pid) {
 		unsigned idx;
@@ -436,26 +457,7 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 	dup2(incoming, 1);
 	close(incoming);
 
-	if (addr->sa_family == AF_INET) {
-		struct sockaddr_in *sin_addr = (void *) addr;
-		inet_ntop(AF_INET, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
-		port = sin_addr->sin_port;
-
-#ifndef NO_IPV6
-	} else if (addr->sa_family == AF_INET6) {
-		struct sockaddr_in6 *sin6_addr = (void *) addr;
-
-		char *buf = addrbuf;
-		*buf++ = '['; *buf = '\0'; /* stpcpy() is cool */
-		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(addrbuf) - 1);
-		strcat(buf, "]");
-
-		port = sin6_addr->sin6_port;
-#endif
-	}
-	loginfo("Connection from %s:%d", addrbuf, port);
-
-	exit(execute());
+	exit(execute(addr));
 }
 
 static void child_handler(int signo)
@@ -756,8 +758,16 @@ int main(int argc, char **argv)
 	}
 
 	if (inetd_mode) {
+		struct sockaddr_storage ss;
+		struct sockaddr *peer = (struct sockaddr *)&ss;
+		socklen_t slen = sizeof(ss);
+
 		fclose(stderr); //FIXME: workaround
-		return execute();
+
+		if (getpeername(0, peer, &slen))
+			peer = NULL;
+
+		return execute(peer);
 	}
 
 	return serve(port);
