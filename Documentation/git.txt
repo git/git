@@ -192,10 +192,6 @@ the working tree.
 Synching repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
-gitlink:git-clone-pack[1]::
-	Clones a repository into the current repository (engine
-	for ssh and local transport).
-
 gitlink:git-fetch-pack[1]::
 	Updates from a remote repository (engine for ssh and
 	local transport).
@@ -237,7 +233,7 @@ gitlink:git-update-server-info[1]::
 	clients discover references and packs on it.
 
 gitlink:git-upload-pack[1]::
-	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
+	Invoked by 'git-fetch-pack' to push
 	what are asked for.
 
 gitlink:git-upload-tar[1]::

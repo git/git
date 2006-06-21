@@ -18,8 +18,7 @@ information fed from the remote end.
 This command is usually not invoked directly by the end user.
 The UI for the protocol is on the 'git-send-pack' side, and the
 program pair is meant to be used to push updates to remote
-repository.  For pull operations, see 'git-fetch-pack' and
-'git-clone-pack'.
+repository.  For pull operations, see 'git-fetch-pack'.
 
 The command allows for creation and fast forwarding of sha1 refs
 (heads/tags) on the remote end (strictly speaking, it is the

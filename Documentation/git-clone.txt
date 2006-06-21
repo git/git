@@ -62,7 +62,7 @@ OPTIONS
 --quiet::
 -q::
 	Operate quietly.  This flag is passed to "rsync" and
-	"git-clone-pack" commands when given.
+	"git-fetch-pack" commands when given.
 
 -n::
 	No checkout of HEAD is performed after the clone is complete.
@@ -85,7 +85,7 @@ OPTIONS
 --upload-pack <upload-pack>::
 -u <upload-pack>::
 	When given, and the repository to clone from is handled
-	by 'git-clone-pack', '--exec=<upload-pack>' is passed to
+	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 
