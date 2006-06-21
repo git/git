@@ -86,8 +86,9 @@ if (defined $order) {
 	}
 }
 
-my $project = $cgi->param('p');
+my $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
 if (defined $project) {
+	$project =~ s|^/||; $project =~ s|/$||;
 	$project = validate_input($project);
 	if (!defined($project)) {
 		die_error(undef, "Invalid project parameter.");
