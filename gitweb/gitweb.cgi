@@ -16,21 +16,21 @@ use Encode;
 use Fcntl ':mode';
 binmode STDOUT, ':utf8';
 
-my $cgi = new CGI;
-my $version = "267";
-my $my_url = $cgi->url();
-my $my_uri = $cgi->url(-absolute => 1);
-my $rss_link = "";
+our $cgi = new CGI;
+our $version = "267";
+our $my_url = $cgi->url();
+our $my_uri = $cgi->url(-absolute => 1);
+our $rss_link = "";
 
 # location of the git-core binaries
-my $gitbin = "/usr/bin";
+our $gitbin = "/usr/bin";
 
 # absolute fs-path which will be prepended to the project path
-#my $projectroot = "/pub/scm";
-my $projectroot = "/home/kay/public_html/pub/scm";
+#our $projectroot = "/pub/scm";
+our $projectroot = "/home/kay/public_html/pub/scm";
 
 # version of the git-core binaries
-my $git_version = qx($gitbin/git --version);
+our $git_version = qx($gitbin/git --version);
 if ($git_version =~ m/git version (.*)$/) {
 	$git_version = $1;
 } else {
@@ -38,32 +38,31 @@ if ($git_version =~ m/git version (.*)$/) {
 }
 
 # location for temporary files needed for diffs
-my $git_temp = "/tmp/gitweb";
+our $git_temp = "/tmp/gitweb";
 
 # target of the home link on top of all pages
-my $home_link = $my_uri;
+our $home_link = $my_uri;
 
 # html text to include at home page
-my $home_text = "indextext.html";
+our $home_text = "indextext.html";
 
 # URI of default stylesheet
-my $stylesheet = "gitweb.css";
+our $stylesheet = "gitweb.css";
 
 # source of projects list
-#my $projects_list = $projectroot;
-my $projects_list = "index/index.aux";
+#our $projects_list = $projectroot;
+our $projects_list = "index/index.aux";
 
 # default blob_plain mimetype and default charset for text/plain blob
-my $default_blob_plain_mimetype = 'text/plain';
-my $default_text_plain_charset  = undef;
+our $default_blob_plain_mimetype = 'text/plain';
+our $default_text_plain_charset  = undef;
 
 # file to use for guessing MIME types before trying /etc/mime.types
 # (relative to the current git repository)
-my $mimetypes_file = undef;
-
+our $mimetypes_file = undef;
 
 # input validation and dispatch
-my $action = $cgi->param('a');
+our $action = $cgi->param('a');
 if (defined $action) {
 	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
 		undef $action;
@@ -78,7 +77,7 @@ if (defined $action) {
 	}
 }
 
-my $order = $cgi->param('o');
+our $order = $cgi->param('o');
 if (defined $order) {
 	if ($order =~ m/[^0-9a-zA-Z_]/) {
 		undef $order;
@@ -86,7 +85,7 @@ if (defined $order) {
 	}
 }
 
-my $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
+our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
 if (defined $project) {
 	$project =~ s|^/||; $project =~ s|/$||;
 	$project = validate_input($project);
@@ -109,7 +108,7 @@ if (defined $project) {
 	exit;
 }
 
-my $file_name = $cgi->param('f');
+our $file_name = $cgi->param('f');
 if (defined $file_name) {
 	$file_name = validate_input($file_name);
 	if (!defined($file_name)) {
@@ -117,7 +116,7 @@ if (defined $file_name) {
 	}
 }
 
-my $hash = $cgi->param('h');
+our $hash = $cgi->param('h');
 if (defined $hash) {
 	$hash = validate_input($hash);
 	if (!defined($hash)) {
@@ -125,7 +124,7 @@ if (defined $hash) {
 	}
 }
 
-my $hash_parent = $cgi->param('hp');
+our $hash_parent = $cgi->param('hp');
 if (defined $hash_parent) {
 	$hash_parent = validate_input($hash_parent);
 	if (!defined($hash_parent)) {
@@ -133,7 +132,7 @@ if (defined $hash_parent) {
 	}
 }
 
-my $hash_base = $cgi->param('hb');
+our $hash_base = $cgi->param('hb');
 if (defined $hash_base) {
 	$hash_base = validate_input($hash_base);
 	if (!defined($hash_base)) {
@@ -141,7 +140,7 @@ if (defined $hash_base) {
 	}
 }
 
-my $page = $cgi->param('pg');
+our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]$/) {
 		undef $page;
@@ -149,7 +148,7 @@ if (defined $page) {
 	}
 }
 
-my $searchtext = $cgi->param('s');
+our $searchtext = $cgi->param('s');
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
 		undef $searchtext;
