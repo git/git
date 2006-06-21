@@ -43,7 +43,7 @@ void update_tree_entry(struct tree_desc *desc)
 
 	if (size < len)
 		die("corrupt tree file");
-	desc->buf = buf + len;
+	desc->buf = (char *) buf + len;
 	desc->size = size - len;
 }
 
@@ -66,7 +66,7 @@ const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pat
 	const void *tree = desc->buf;
 	unsigned long size = desc->size;
 	int len = strlen(tree)+1;
-	const unsigned char *sha1 = tree + len;
+	const unsigned char *sha1 = (unsigned char *) tree + len;
 	const char *path;
 	unsigned int mode;
 
@@ -80,7 +80,8 @@ const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pat
 
 int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 {
-	const void *tree = desc->buf, *path;
+	const void *tree = desc->buf;
+	const char *path;
 	unsigned long len, size = desc->size;
 
 	if (!size)
@@ -95,10 +96,10 @@ int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 	entry->pathlen = len;
 
 	path += len + 1;
-	entry->sha1 = path;
+	entry->sha1 = (const unsigned char *) path;
 
 	path += 20;
-	len = path - tree;
+	len = path - (char *) tree;
 	if (len > size)
 		die("corrupt tree file");
 

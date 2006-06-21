@@ -560,7 +560,7 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 		else
 			line[0] = bytes - 26 + 'a' - 1;
 		encode_85(line + 1, cp, bytes);
-		cp += bytes;
+		cp = (char *) cp + bytes;
 		puts(line);
 	}
 	printf("\n");

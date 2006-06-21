@@ -156,7 +156,7 @@ static void prepare_pack_revindex(struct pack_revindex *rix)
 
 	rix->revindex = xmalloc(sizeof(unsigned long) * (num_ent + 1));
 	for (i = 0; i < num_ent; i++) {
-		unsigned int hl = *((unsigned int *)(index + 24 * i));
+		unsigned int hl = *((unsigned int *)((char *) index + 24*i));
 		rix->revindex[i] = ntohl(hl);
 	}
 	/* This knows the pack format -- the 20-byte trailer
@@ -300,7 +300,7 @@ static unsigned long write_object(struct sha1file *f,
 		use_packed_git(p);
 
 		datalen = find_packed_object_size(p, entry->in_pack_offset);
-		buf = p->pack_base + entry->in_pack_offset;
+		buf = (char *) p->pack_base + entry->in_pack_offset;
 		sha1write(f, buf, datalen);
 		unuse_packed_git(p);
 		hdrlen = 0; /* not really */

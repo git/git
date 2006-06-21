@@ -22,7 +22,7 @@ ssize_t safe_write(int fd, const void *buf, ssize_t n)
 	while (n) {
 		int ret = xwrite(fd, buf, n);
 		if (ret > 0) {
-			buf += ret;
+			buf = (char *) buf + ret;
 			n -= ret;
 			continue;
 		}
@@ -68,7 +68,7 @@ static void safe_read(int fd, void *buffer, unsigned size)
 	int n = 0;
 
 	while (n < size) {
-		int ret = xread(fd, buffer + n, size - n);
+		int ret = xread(fd, (char *) buffer + n, size - n);
 		if (ret < 0)
 			die("read error (%s)", strerror(errno));
 		if (!ret)

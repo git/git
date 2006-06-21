@@ -17,7 +17,7 @@ static int sha1flush(struct sha1file *f, unsigned int count)
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
-			buf += ret;
+			buf = (char *) buf + ret;
 			count -= ret;
 			if (count)
 				continue;
@@ -57,7 +57,7 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 		memcpy(f->buffer + offset, buf, nr);
 		count -= nr;
 		offset += nr;
-		buf += nr;
+		buf = (char *) buf + nr;
 		left -= nr;
 		if (!left) {
 			SHA1_Update(&f->ctx, f->buffer, offset);

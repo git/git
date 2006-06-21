@@ -103,12 +103,12 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 		if (!slash) {
 			newlen += sprintf(new + newlen, "%o %s", mode, path);
 			new[newlen++] = '\0';
-			memcpy(new + newlen, buffer + len - 20, 20);
+			memcpy(new + newlen, (char *) buffer + len - 20, 20);
 			newlen += 20;
 
 			used += len;
 			size -= len;
-			buffer += len;
+			buffer = (char *) buffer + len;
 			continue;
 		}
 
@@ -121,7 +121,7 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 
 		used += len;
 		size -= len;
-		buffer += len;
+		buffer = (char *) buffer + len;
 	}
 
 	write_sha1_file(new, newlen, tree_type, result_sha1);
@@ -137,13 +137,13 @@ static void convert_tree(void *buffer, unsigned long size, unsigned char *result
 	while (size) {
 		int len = 1+strlen(buffer);
 
-		convert_binary_sha1(buffer + len);
+		convert_binary_sha1((char *) buffer + len);
 
 		len += 20;
 		if (len > size)
 			die("corrupt tree object");
 		size -= len;
-		buffer += len;
+		buffer = (char *) buffer + len;
 	}
 
 	write_subdirectory(orig_buffer, orig_size, "", 0, result_sha1);
@@ -244,14 +244,14 @@ static void convert_date(void *buffer, unsigned long size, unsigned char *result
 	// "tree <sha1>\n"
 	memcpy(new + newlen, buffer, 46);
 	newlen += 46;
-	buffer += 46;
+	buffer = (char *) buffer + 46;
 	size -= 46;
 
 	// "parent <sha1>\n"
 	while (!memcmp(buffer, "parent ", 7)) {
 		memcpy(new + newlen, buffer, 48);
 		newlen += 48;
-		buffer += 48;
+		buffer = (char *) buffer + 48;
 		size -= 48;
 	}
 
@@ -275,11 +275,11 @@ static void convert_commit(void *buffer, unsigned long size, unsigned char *resu
 
 	if (memcmp(buffer, "tree ", 5))
 		die("Bad commit '%s'", (char*) buffer);
-	convert_ascii_sha1(buffer+5);
-	buffer += 46;    /* "tree " + "hex sha1" + "\n" */
+	convert_ascii_sha1((char *) buffer + 5);
+	buffer = (char *) buffer + 46;    /* "tree " + "hex sha1" + "\n" */
 	while (!memcmp(buffer, "parent ", 7)) {
-		convert_ascii_sha1(buffer+7);
-		buffer += 48;
+		convert_ascii_sha1((char *) buffer + 7);
+		buffer = (char *) buffer + 48;
 	}
 	convert_date(orig_buffer, orig_size, result_sha1);
 }
