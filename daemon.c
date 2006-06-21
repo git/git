@@ -762,7 +762,7 @@ int main(int argc, char **argv)
 		struct sockaddr *peer = (struct sockaddr *)&ss;
 		socklen_t slen = sizeof(ss);
 
-		fclose(stderr); //FIXME: workaround
+		freopen("/dev/null", "w", stderr);
 
 		if (getpeername(0, peer, &slen))
 			peer = NULL;
