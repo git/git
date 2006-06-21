@@ -36,11 +36,13 @@ static int strip(char *line, int len)
 
 static void create_pack_file(void)
 {
-	/* Pipes between rev-list to pack-objects and pack-objects to us. */
-	int lp_pipe[2], pu_pipe[2];
+	/* Pipes between rev-list to pack-objects, pack-objects to us
+	 * and pack-objects error stream for progress bar.
+	 */
+	int lp_pipe[2], pu_pipe[2], pe_pipe[2];
 	pid_t pid_rev_list, pid_pack_objects;
 	int create_full_pack = (nr_our_refs == nr_needs && !nr_has);
-	char data[8193];
+	char data[8193], progress[128];
 	int buffered = -1;
 
 	if (pipe(lp_pipe) < 0)
@@ -95,6 +97,8 @@ static void create_pack_file(void)
 
 	if (pipe(pu_pipe) < 0)
 		die("git-upload-pack: unable to create pipe");
+	if (pipe(pe_pipe) < 0)
+		die("git-upload-pack: unable to create pipe");
 	pid_pack_objects = fork();
 	if (pid_pack_objects < 0) {
 		/* daemon sets things up to ignore TERM */
@@ -104,12 +108,15 @@ static void create_pack_file(void)
 	if (!pid_pack_objects) {
 		dup2(lp_pipe[0], 0);
 		dup2(pu_pipe[1], 1);
+		dup2(pe_pipe[1], 2);
 
 		close(lp_pipe[0]);
 		close(lp_pipe[1]);
 		close(pu_pipe[0]);
 		close(pu_pipe[1]);
-		execl_git_cmd("pack-objects", "--stdout", NULL);
+		close(pe_pipe[0]);
+		close(pe_pipe[1]);
+		execl_git_cmd("pack-objects", "--stdout", "--progress", NULL);
 		kill(pid_rev_list, SIGKILL);
 		die("git-upload-pack: unable to exec git-pack-objects");
 	}
@@ -117,25 +124,34 @@ static void create_pack_file(void)
 	close(lp_pipe[0]);
 	close(lp_pipe[1]);
 
-	/* We read from pu_pipe[0] to capture the pack data.
+	/* We read from pe_pipe[0] to capture stderr output for
+	 * progress bar, and pu_pipe[0] to capture the pack data.
 	 */
+	close(pe_pipe[1]);
 	close(pu_pipe[1]);
 
 	while (1) {
 		const char *who;
+		char *cp;
 		struct pollfd pfd[2];
 		pid_t pid;
 		int status;
 		ssize_t sz;
-		int pu, pollsize;
+		int pe, pu, pollsize;
 
 		pollsize = 0;
-		pu = -1;
+		pe = pu = -1;
 
 		if (0 <= pu_pipe[0]) {
 			pfd[pollsize].fd = pu_pipe[0];
 			pfd[pollsize].events = POLLIN;
 			pu = pollsize;
+			pollsize++;
+		}
+		if (0 <= pe_pipe[0]) {
+			pfd[pollsize].fd = pe_pipe[0];
+			pfd[pollsize].events = POLLIN;
+			pe = pollsize;
 			pollsize++;
 		}
 
@@ -185,6 +201,22 @@ static void create_pack_file(void)
 					buffered = -1;
 				sz = xwrite(1, data, sz);
 				if (sz < 0)
+					goto fail;
+			}
+			if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
+				/* Status ready; we do not use it for now,
+				 * but later we will add side-band to send it
+				 * to the other side.
+				 */
+				sz = read(pe_pipe[0], progress,
+					  sizeof(progress));
+				if (0 < sz)
+					write(2, progress, sz);
+				else if (sz == 0) {
+					close(pe_pipe[0]);
+					pe_pipe[0] = -1;
+				}
+				else
 					goto fail;
 			}
 		}
