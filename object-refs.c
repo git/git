@@ -127,6 +127,9 @@ void mark_reachable(struct object *obj, unsigned int mask)
 
 	if (!track_object_refs)
 		die("cannot do reachability with object refs turned off");
+	/* nothing to lookup */
+	if (!refs_hash_size)
+		return;
 	/* If we've been here already, don't bother */
 	if (obj->flags & mask)
 		return;
