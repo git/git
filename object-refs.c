@@ -12,6 +12,18 @@ static unsigned int hash_obj(struct object *obj, unsigned int n)
 	return hash % n;
 }
 
+static void insert_ref_hash(struct object_refs *ref, struct object_refs **hash, unsigned int size)
+{
+	int j = hash_obj(ref->base, size);
+
+	while (hash[j]) {
+		j++;
+		if (j >= size)
+			j = 0;
+	}
+	hash[j] = ref;
+}
+
 static void grow_refs_hash(void)
 {
 	int i;
@@ -20,28 +32,14 @@ static void grow_refs_hash(void)
 
 	new_hash = calloc(new_hash_size, sizeof(struct object_refs *));
 	for (i = 0; i < refs_hash_size; i++) {
-		int j;
 		struct object_refs *ref = refs_hash[i];
 		if (!ref)
 			continue;
-		j = hash_obj(ref->base, new_hash_size);
-		new_hash[j] = ref;
+		insert_ref_hash(ref, new_hash, new_hash_size);
 	}
 	free(refs_hash);
 	refs_hash = new_hash;
 	refs_hash_size = new_hash_size;
-}
-
-static void insert_ref_hash(struct object_refs *ref)
-{
-	int j = hash_obj(ref->base, refs_hash_size);
-
-	while (refs_hash[j]) {
-		j++;
-		if (j >= refs_hash_size)
-			j = 0;
-	}
-	refs_hash[j] = ref;
 }
 
 static void add_object_refs(struct object *obj, struct object_refs *ref)
@@ -51,7 +49,7 @@ static void add_object_refs(struct object *obj, struct object_refs *ref)
 	if (nr > refs_hash_size * 2 / 3)
 		grow_refs_hash();
 	ref->base = obj;
-	insert_ref_hash(ref);
+	insert_ref_hash(ref, refs_hash, refs_hash_size);
 	nr_object_refs = nr;
 }
 
