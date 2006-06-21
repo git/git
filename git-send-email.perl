@@ -65,6 +65,20 @@ my $rc = GetOptions("from=s" => \$from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
 	 );
 
+# Verify the user input
+
+foreach my $entry (@to) {
+	die "Comma in --to entry: $entry'\n" unless $entry !~ m/,/;
+}
+
+foreach my $entry (@initial_cc) {
+	die "Comma in --cc entry: $entry'\n" unless $entry !~ m/,/;
+}
+
+foreach my $entry (@bcclist) {
+	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
+}
+
 # Now, let's fill any that aren't set in with defaults:
 
 sub gitvar {
