@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "exec_cmd.h"
+#include "pkt-line.h"
 #include <sys/wait.h>
 #include <sys/time.h>
 
@@ -23,7 +24,7 @@ static int finish_pack(const char *pack_tmp_name, const char *me)
 
 	pid = fork();
 	if (pid < 0)
-		die("git-clone-pack: unable to fork off git-index-pack");
+		die("%s: unable to fork off git-index-pack", me);
 	if (!pid) {
 		close(0);
 		dup2(pipe_fd[1], 1);
@@ -94,11 +95,69 @@ static int finish_pack(const char *pack_tmp_name, const char *me)
 	exit(1);
 }
 
-int receive_unpack_pack(int fd[2], const char *me, int quiet)
+static pid_t setup_sideband(int sideband, const char *me, int fd[2], int xd[2])
+{
+	pid_t side_pid;
+
+	if (!sideband) {
+		fd[0] = xd[0];
+		fd[1] = xd[1];
+		return 0;
+	}
+	/* xd[] is talking with upload-pack; subprocess reads from
+	 * xd[0], spits out band#2 to stderr, and feeds us band#1
+	 * through our fd[0].
+	 */
+	if (pipe(fd) < 0)
+		die("%s: unable to set up pipe", me);
+	side_pid = fork();
+	if (side_pid < 0)
+		die("%s: unable to fork off sideband demultiplexer", me);
+	if (!side_pid) {
+		/* subprocess */
+		close(fd[0]);
+		if (xd[0] != xd[1])
+			close(xd[1]);
+		while (1) {
+			char buf[1024];
+			int len = packet_read_line(xd[0], buf, sizeof(buf));
+			if (len == 0)
+				break;
+			if (len < 1)
+				die("%s: protocol error: no band designator",
+				    me);
+			len--;
+			switch (buf[0] & 0xFF) {
+			case 3:
+				safe_write(2, buf+1, len);
+				fprintf(stderr, "\n");
+				exit(1);
+			case 2:
+				safe_write(2, buf+1, len);
+				continue;
+			case 1:
+				safe_write(fd[1], buf+1, len);
+				continue;
+			default:
+				die("%s: protocol error: bad band #%d",
+				    me, (buf[0] & 0xFF));
+			}
+		}
+		exit(0);
+	}
+	close(xd[0]);
+	close(fd[1]);
+	fd[1] = xd[1];
+	return side_pid;
+}
+
+int receive_unpack_pack(int xd[2], const char *me, int quiet, int sideband)
 {
 	int status;
-	pid_t pid;
+	pid_t pid, side_pid;
+	int fd[2];
 
+	side_pid = setup_sideband(sideband, me, fd, xd);
 	pid = fork();
 	if (pid < 0)
 		die("%s: unable to fork off git-unpack-objects", me);
@@ -147,10 +206,10 @@ int receive_unpack_pack(int fd[2], const char *me, int quiet)
  */
 #define usec_to_binarymsec(x) ((int)(x) / (1000512 >> 10))
 
-int receive_keep_pack(int fd[2], const char *me, int quiet)
+int receive_keep_pack(int xd[2], const char *me, int quiet, int sideband)
 {
 	char tmpfile[PATH_MAX];
-	int ofd, ifd;
+	int ofd, ifd, fd[2];
 	unsigned long total;
 	static struct timeval prev_tv;
 	struct average {
@@ -159,6 +218,8 @@ int receive_keep_pack(int fd[2], const char *me, int quiet)
 	} download[NR_AVERAGE] = { {0, 0}, };
 	unsigned long avg_bytes, avg_time;
 	int idx = 0;
+
+	setup_sideband(sideband, me, fd, xd);
 
 	ifd = fd[0];
 	snprintf(tmpfile, sizeof(tmpfile),

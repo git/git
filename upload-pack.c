@@ -21,6 +21,7 @@ static int use_thin_pack = 0;
 static unsigned char has_sha1[MAX_HAS][20];
 static unsigned char needs_sha1[MAX_NEEDS][20];
 static unsigned int timeout = 0;
+static int use_sideband = 0;
 
 static void reset_timeout(void)
 {
@@ -34,6 +35,43 @@ static int strip(char *line, int len)
 	return len;
 }
 
+#define PACKET_MAX 1000
+static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
+{
+	ssize_t ssz;
+	const char *p;
+
+	if (!data) {
+		if (!use_sideband)
+			return 0;
+		packet_flush(1);
+	}
+
+	if (!use_sideband) {
+		if (fd == 3)
+			/* emergency quit */
+			fd = 2;
+		return safe_write(fd, data, sz);
+	}
+	p = data;
+	ssz = sz;
+	while (sz) {
+		unsigned n;
+		char hdr[5];
+
+		n = sz;
+		if (PACKET_MAX - 5 < n)
+			n = PACKET_MAX - 5;
+		sprintf(hdr, "%04x", n + 5);
+		hdr[4] = fd;
+		safe_write(1, hdr, 5);
+		safe_write(1, p, n);
+		p += n;
+		sz -= n;
+	}
+	return ssz;
+}
+
 static void create_pack_file(void)
 {
 	/* Pipes between rev-list to pack-objects, pack-objects to us
@@ -43,6 +81,8 @@ static void create_pack_file(void)
 	pid_t pid_rev_list, pid_pack_objects;
 	int create_full_pack = (nr_our_refs == nr_needs && !nr_has);
 	char data[8193], progress[128];
+	char abort_msg[] = "aborting due to possible repository "
+		"corruption on the remote side.";
 	int buffered = -1;
 
 	if (pipe(lp_pipe) < 0)
@@ -132,7 +172,6 @@ static void create_pack_file(void)
 
 	while (1) {
 		const char *who;
-		char *cp;
 		struct pollfd pfd[2];
 		pid_t pid;
 		int status;
@@ -199,19 +238,18 @@ static void create_pack_file(void)
 				}
 				else
 					buffered = -1;
-				sz = xwrite(1, data, sz);
+				sz = send_client_data(1, data, sz);
 				if (sz < 0)
 					goto fail;
 			}
 			if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
-				/* Status ready; we do not use it for now,
-				 * but later we will add side-band to send it
-				 * to the other side.
+				/* Status ready; we ship that in the side-band
+				 * or dump to the standard error.
 				 */
 				sz = read(pe_pipe[0], progress,
 					  sizeof(progress));
 				if (0 < sz)
-					write(2, progress, sz);
+					send_client_data(2, progress, sz);
 				else if (sz == 0) {
 					close(pe_pipe[0]);
 					pe_pipe[0] = -1;
@@ -259,11 +297,12 @@ static void create_pack_file(void)
 		/* flush the data */
 		if (0 <= buffered) {
 			data[0] = buffered;
-			sz = xwrite(1, data, 1);
+			sz = send_client_data(1, data, 1);
 			if (sz < 0)
 				goto fail;
 			fprintf(stderr, "flushed.\n");
 		}
+		send_client_data(1, NULL, 0);
 		return;
 	}
  fail:
@@ -271,7 +310,8 @@ static void create_pack_file(void)
 		kill(pid_pack_objects, SIGKILL);
 	if (pid_rev_list)
 		kill(pid_rev_list, SIGKILL);
-	die("git-upload-pack: aborting due to possible repository corruption on the remote side.");
+	send_client_data(3, abort_msg, sizeof(abort_msg));
+	die("git-upload-pack: %s", abort_msg);
 }
 
 static int got_sha1(char *hex, unsigned char *sha1)
@@ -378,6 +418,8 @@ static int receive_needs(void)
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
+		if (strstr(line+45, "side-band"))
+			use_sideband = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -399,7 +441,7 @@ static int receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
-	static char *capabilities = "multi_ack thin-pack";
+	static char *capabilities = "multi_ack thin-pack side-band";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

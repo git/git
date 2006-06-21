@@ -374,8 +374,8 @@ extern char git_commit_encoding[MAX_ENCODING_LENGTH];
 extern int copy_fd(int ifd, int ofd);
 
 /* Finish off pack transfer receiving end */
-extern int receive_unpack_pack(int fd[2], const char *me, int quiet);
-extern int receive_keep_pack(int fd[2], const char *me, int quiet);
+extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);
+extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
 
 /* pager.c */
 extern void setup_pager(void);
