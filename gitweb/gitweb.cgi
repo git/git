@@ -17,33 +17,33 @@ use Fcntl ':mode';
 binmode STDOUT, ':utf8';
 
 my $cgi = new CGI;
-my $version =		"267";
-my $my_url =		$cgi->url();
-my $my_uri =		$cgi->url(-absolute => 1);
-my $rss_link =		"";
+my $version = "267";
+my $my_url = $cgi->url();
+my $my_uri = $cgi->url(-absolute => 1);
+my $rss_link = "";
 
 # absolute fs-path which will be prepended to the project path
-#my $projectroot =	"/pub/scm";
-my $projectroot =	"/home/kay/public_html/pub/scm";
+#my $projectroot = "/pub/scm";
+my $projectroot = "/home/kay/public_html/pub/scm";
 
 # location of the git-core binaries
-my $gitbin =		"/usr/bin";
+my $gitbin = "/usr/bin";
 
 # location for temporary files needed for diffs
-my $git_temp =		"/tmp/gitweb";
+my $git_temp = "/tmp/gitweb";
 
 # target of the home link on top of all pages
-my $home_link =		$my_uri;
+my $home_link = $my_uri;
 
 # html text to include at home page
-my $home_text =		"indextext.html";
+my $home_text = "indextext.html";
 
 # URI of default stylesheet
-my $stylesheet = 	"gitweb.css";
+my $stylesheet = "gitweb.css";
 
 # source of projects list
-#my $projects_list =	$projectroot;
-my $projects_list =	"index/index.aux";
+#my $projects_list = $projectroot;
+my $projects_list = "index/index.aux";
 
 # default blob_plain mimetype and default charset for text/plain blob
 my $default_blob_plain_mimetype = 'text/plain';
@@ -51,7 +51,7 @@ my $default_text_plain_charset  = undef;
 
 # file to use for guessing MIME types before trying /etc/mime.types
 # (relative to the current git repository)
-my $mimetypes_file              = undef;
+my $mimetypes_file = undef;
 
 
 # input validation and dispatch
@@ -349,7 +349,7 @@ sub git_footer_html {
 
 sub die_error {
 	my $status = shift || "403 Forbidden";
-	my $error = shift || "Malformed query, file missing or permission denied"; 
+	my $error = shift || "Malformed query, file missing or permission denied";
 
 	git_header_html($status);
 	print "<div class=\"page_body\">\n" .
@@ -1066,7 +1066,7 @@ sub git_summary {
 			      "<td>";
 			if (length($co{'title_short'}) < length($co{'title'})) {
 				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list", -title => "$co{'title'}"},
-			              "<b>" . esc_html($co{'title_short'}) . "$ref</b>");
+				      "<b>" . esc_html($co{'title_short'}) . "$ref</b>");
 			} else {
 				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"},
 				      "<b>" . esc_html($co{'title'}) . "$ref</b>");
@@ -1124,7 +1124,7 @@ sub git_summary {
 				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
 				if ($tag{'reftype'} eq "commit") {
 				      print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-				            " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
+					    " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
 				}
 				print "</td>\n" .
 				      "</tr>";
@@ -1362,7 +1362,7 @@ sub git_tags {
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
 			if ($tag{'reftype'} eq "commit") {
 			      print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-			            " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
+				    " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
 			}
 			print "</td>\n" .
 			      "</tr>";
@@ -1942,7 +1942,7 @@ sub git_commit {
 		      "</td>" .
 		      "</tr>\n";
 	}
-	print "</table>". 
+	print "</table>".
 	      "</div>\n";
 	print "<div class=\"page_body\">\n";
 	my $comment = $co{'comment'};
