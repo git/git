@@ -25,7 +25,7 @@ static const char *exec = "git-upload-pack";
 #define MAX_IN_VAIN 256
 
 static struct commit_list *rev_list = NULL;
-static int non_common_revs = 0, multi_ack = 0, use_thin_pack = 0;
+static int non_common_revs = 0, multi_ack = 0, use_thin_pack = 0, use_sideband;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -165,9 +165,14 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			continue;
 		}
 
-		packet_write(fd[1], "want %s%s%s\n", sha1_to_hex(remote),
-			     (multi_ack ? " multi_ack" : ""),
-			     (use_thin_pack ? " thin-pack" : ""));
+		if (!fetching)
+			packet_write(fd[1], "want %s%s%s%s\n",
+				     sha1_to_hex(remote),
+				     (multi_ack ? " multi_ack" : ""),
+				     (use_sideband ? " side-band" : ""),
+				     (use_thin_pack ? " thin-pack" : ""));
+		else
+			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
 	packet_flush(fd[1]);
@@ -421,6 +426,11 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;
 	}
+	if (server_supports("side-band")) {
+		if (verbose)
+			fprintf(stderr, "Server supports side-band\n");
+		use_sideband = 1;
+	}
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
@@ -437,9 +447,9 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 			fprintf(stderr, "warning: no common commits\n");
 
 	if (keep_pack)
-		status = receive_keep_pack(fd, "git-fetch-pack", quiet);
+		status = receive_keep_pack(fd, "git-fetch-pack", quiet, use_sideband);
 	else
-		status = receive_unpack_pack(fd, "git-fetch-pack", quiet);
+		status = receive_unpack_pack(fd, "git-fetch-pack", quiet, use_sideband);
 
 	if (status)
 		die("git-fetch-pack: fetch failed.");

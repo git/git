@@ -17,7 +17,6 @@ git-cherry
 git-cherry-pick
 git-clean
 git-clone
-git-clone-pack
 git-commit
 git-commit-tree
 git-convert-objects

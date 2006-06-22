@@ -16,8 +16,9 @@
  * The writing side could use stdio, but since the reading
  * side can't, we stay with pure read/write interfaces.
  */
-static void safe_write(int fd, const void *buf, unsigned n)
+ssize_t safe_write(int fd, const void *buf, ssize_t n)
 {
+	ssize_t nn = n;
 	while (n) {
 		int ret = xwrite(fd, buf, n);
 		if (ret > 0) {
@@ -29,6 +30,7 @@ static void safe_write(int fd, const void *buf, unsigned n)
 			die("write error (disk full?)");
 		die("write error (%s)", strerror(errno));
 	}
+	return nn;
 }
 
 /*
