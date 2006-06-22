@@ -67,16 +67,16 @@ continue_merge () {
 	prev_head=`git-rev-parse HEAD^0`
 
 	# save the resulting commit so we can read-tree on it later
-	echo "$prev_head" > "$dotest/`printf %0${prec}d $msgnum`.result"
+	echo "$prev_head" > "$dotest/cmt.$msgnum.result"
 	echo "$prev_head" > "$dotest/prev_head"
 
 	# onto the next patch:
 	msgnum=$(($msgnum + 1))
-	printf "%0${prec}d" "$msgnum" > "$dotest/msgnum"
+	echo "$msgnum" >"$dotest/msgnum"
 }
 
 call_merge () {
-	cmt="$(cat $dotest/`printf %0${prec}d $1`)"
+	cmt="$(cat $dotest/cmt.$1)"
 	echo "$cmt" > "$dotest/current"
 	git-merge-$strategy "$cmt^" -- HEAD "$cmt"
 	rv=$?
@@ -108,15 +108,12 @@ finish_rb_merge () {
 	end="`cat $dotest/end`"
 	while test "$msgnum" -le "$end"
 	do
-		msgnum=`printf "%0${prec}d" "$msgnum"`
-		printf "%0${prec}d" "$msgnum" > "$dotest/msgnum"
-
-		git-read-tree `cat "$dotest/$msgnum.result"`
+		git-read-tree `cat "$dotest/cmt.$msgnum.result"`
 		git-checkout-index -q -f -u -a
-		git-commit -C "`cat $dotest/$msgnum`"
+		git-commit -C "`cat $dotest/cmt.$msgnum`"
 
-		echo "Committed $msgnum"
-		echo '    '`git-rev-list --pretty=oneline -1 HEAD | \
+		printf "Committed %0${prec}d" $msgnum
+		echo ' '`git-rev-list --pretty=oneline -1 HEAD | \
 					sed 's/^[a-f0-9]\+ //'`
 		msgnum=$(($msgnum + 1))
 	done
@@ -322,11 +319,11 @@ for cmt in `git-rev-list --no-merges "$upstream"..ORIG_HEAD \
 			| perl -e 'print reverse <>'`
 do
 	msgnum=$(($msgnum + 1))
-	echo "$cmt" > "$dotest/`printf "%0${prec}d" $msgnum`"
+	echo "$cmt" > "$dotest/cmt.$msgnum"
 done
 
-printf "%0${prec}d" 1 > "$dotest/msgnum"
-printf "%0${prec}d" "$msgnum" > "$dotest/end"
+echo 1 >"$dotest/msgnum"
+echo $msgnum >"$dotest/end"
 
 end=$msgnum
 msgnum=1
