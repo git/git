@@ -612,7 +612,7 @@ tags:
 	find . -name '*.[hcS]' -print | xargs ctags -a
 
 ### Detect prefix changes
-TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):$(GIT_VERSION):\
+TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):$(GIT_PYTHON_DIR_SQ):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
 
 GIT-CFLAGS: .FORCE-GIT-CFLAGS
