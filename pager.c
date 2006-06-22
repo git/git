@@ -46,7 +46,7 @@ void setup_pager(void)
 	close(fd[0]);
 	close(fd[1]);
 
-	setenv("LESS", "-S", 0);
+	setenv("LESS", "-RS", 0);
 	run_pager(pager);
 	die("unable to execute pager '%s'", pager);
 	exit(255);

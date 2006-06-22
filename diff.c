@@ -25,6 +25,20 @@ int git_diff_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
+enum color_diff {
+	DIFF_PLAIN = 0,
+	DIFF_METAINFO = 1,
+	DIFF_FILE_OLD = 2,
+	DIFF_FILE_NEW = 3,
+};
+
+static const char *diff_colors[] = {
+	"\033[0;0m",
+	"\033[1;35m",
+	"\033[1;31m",
+	"\033[1;34m",
+};
+
 static char *quote_one(const char *str)
 {
 	int needlen;
@@ -177,23 +191,54 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 }
 
 struct emit_callback {
+	struct xdiff_emit_state xm;
+	int nparents, color_diff;
 	const char **label_path;
 };
 
-static int fn_out(void *priv, mmbuffer_t *mb, int nbuf)
+static inline void color_diff(int diff_use_color, enum color_diff ix)
+{
+	if (diff_use_color)
+		fputs(diff_colors[ix], stdout);
+}
+
+static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
 	int i;
 	struct emit_callback *ecbdata = priv;
 
 	if (ecbdata->label_path[0]) {
+		color_diff(ecbdata->color_diff, DIFF_METAINFO);
 		printf("--- %s\n", ecbdata->label_path[0]);
+		color_diff(ecbdata->color_diff, DIFF_METAINFO);
 		printf("+++ %s\n", ecbdata->label_path[1]);
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
 	}
-	for (i = 0; i < nbuf; i++)
-		if (!fwrite(mb[i].ptr, mb[i].size, 1, stdout))
-			return -1;
-	return 0;
+
+	/* This is not really necessary for now because
+	 * this codepath only deals with two-way diffs.
+	 */
+	for (i = 0; i < len && line[i] == '@'; i++)
+		;
+	if (2 <= i && i < len && line[i] == ' ') {
+		ecbdata->nparents = i - 1;
+		color_diff(ecbdata->color_diff, DIFF_METAINFO);
+	}
+	else if (len < ecbdata->nparents)
+		color_diff(ecbdata->color_diff, DIFF_PLAIN);
+	else {
+		int nparents = ecbdata->nparents;
+		int color = DIFF_PLAIN;
+		for (i = 0; i < nparents && len; i++) {
+			if (line[i] == '-')
+				color = DIFF_FILE_OLD;
+			else if (line[i] == '+')
+				color = DIFF_FILE_NEW;
+		}
+		color_diff(ecbdata->color_diff, color);
+	}
+	fwrite(line, len, 1, stdout);
+	color_diff(ecbdata->color_diff, DIFF_PLAIN);
 }
 
 static char *pprint_rename(const char *a, const char *b)
@@ -549,25 +594,35 @@ static void builtin_diff(const char *name_a,
 	b_two = quote_two("b/", name_b);
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
+	color_diff(o->color_diff, DIFF_METAINFO);
 	printf("diff --git %s %s\n", a_one, b_two);
 	if (lbl[0][0] == '/') {
 		/* /dev/null */
+		color_diff(o->color_diff, DIFF_METAINFO);
 		printf("new file mode %06o\n", two->mode);
-		if (xfrm_msg && xfrm_msg[0])
+		if (xfrm_msg && xfrm_msg[0]) {
+			color_diff(o->color_diff, DIFF_METAINFO);
 			puts(xfrm_msg);
+		}
 	}
 	else if (lbl[1][0] == '/') {
 		printf("deleted file mode %06o\n", one->mode);
-		if (xfrm_msg && xfrm_msg[0])
+		if (xfrm_msg && xfrm_msg[0]) {
+			color_diff(o->color_diff, DIFF_METAINFO);
 			puts(xfrm_msg);
+		}
 	}
 	else {
 		if (one->mode != two->mode) {
+			color_diff(o->color_diff, DIFF_METAINFO);
 			printf("old mode %06o\n", one->mode);
+			color_diff(o->color_diff, DIFF_METAINFO);
 			printf("new mode %06o\n", two->mode);
 		}
-		if (xfrm_msg && xfrm_msg[0])
+		if (xfrm_msg && xfrm_msg[0]) {
+			color_diff(o->color_diff, DIFF_METAINFO);
 			puts(xfrm_msg);
+		}
 		/*
 		 * we do not run diff between different kind
 		 * of objects.
@@ -575,6 +630,7 @@ static void builtin_diff(const char *name_a,
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
 		if (complete_rewrite) {
+			color_diff(o->color_diff, DIFF_PLAIN);
 			emit_rewrite_diff(name_a, name_b, one, two);
 			goto free_ab_and_return;
 		}
@@ -602,7 +658,9 @@ static void builtin_diff(const char *name_a,
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
 
+		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
+		ecbdata.color_diff = o->color_diff;
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
@@ -612,8 +670,9 @@ static void builtin_diff(const char *name_a,
 			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
 		else if (!strncmp(diffopts, "-u", 2))
 			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
-		ecb.outf = fn_out;
+		ecb.outf = xdiff_outf;
 		ecb.priv = &ecbdata;
+		ecbdata.xm.consume = fn_out_consume;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
@@ -1456,6 +1515,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		else if (40 < options->abbrev)
 			options->abbrev = 40;
 	}
+	else if (!strcmp(arg, "--color"))
+		options->color_diff = 1;
 	else
 		return 0;
 	return 1;
