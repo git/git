@@ -322,10 +322,12 @@ EOF
 			$searchtext = "";
 		}
 		my $search_hash;
-		if (defined $hash) {
+		if (defined $hash_base) {
+			$search_hash = $hash_base;
+		} elsif (defined $hash) {
 			$search_hash = $hash;
 		} else {
-			$search_hash  = "HEAD";
+			$search_hash = "HEAD";
 		}
 		$cgi->param("a", "search");
 		$cgi->param("h", $search_hash);
@@ -1765,8 +1767,8 @@ sub git_opml {
 		}
 
 		my $path = esc_html(chop_str($proj{'path'}, 25, 5));
-		my $rss =  "$my_url?p=$proj{'path'};a=rss";
-		my $html =  "$my_url?p=$proj{'path'};a=summary";
+		my $rss  = "$my_url?p=$proj{'path'};a=rss";
+		my $html = "$my_url?p=$proj{'path'};a=summary";
 		print "<outline type=\"rss\" text=\"$path\" title=\"$path\" xmlUrl=\"$rss\" htmlUrl=\"$html\"/>\n";
 	}
 	print "</outline>\n".
@@ -1941,7 +1943,7 @@ sub git_commit {
 	      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") .
 	      "</td>" .
 	      "</tr>\n";
-	my $parents  = $co{'parents'};
+	my $parents = $co{'parents'};
 	foreach my $par (@$parents) {
 		print "<tr>" .
 		      "<td>parent</td>" .
