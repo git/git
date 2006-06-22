@@ -309,5 +309,29 @@ EOF
 
 test_expect_success 'new variable inserts into proper section' 'cmp .git/config expect'
 
+cat > other-config << EOF
+[ein]
+	bahn = strasse
+EOF
+
+cat > expect << EOF
+ein.bahn=strasse
+EOF
+
+GIT_CONFIG=other-config git-repo-config -l > output
+
+test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
+
+GIT_CONFIG=other-config git-repo-config anwohner.park ausweis
+
+cat > expect << EOF
+[ein]
+	bahn = strasse
+[anwohner]
+	park = ausweis
+EOF
+
+test_expect_success '--set in alternative GIT_CONFIG' 'cmp other-config expect'
+
 test_done
 

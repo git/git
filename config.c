@@ -317,7 +317,33 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 
 int git_config(config_fn_t fn)
 {
-	return git_config_from_file(fn, git_path("config"));
+	int ret = 0;
+	char *repo_config = NULL;
+	const char *home = NULL, *filename;
+
+	/* $GIT_CONFIG makes git read _only_ the given config file,
+	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
+	 * global config file, the same way it would the per-repository
+	 * config file otherwise. */
+	filename = getenv("GIT_CONFIG");
+	if (!filename) {
+		home = getenv("HOME");
+		filename = getenv("GIT_CONFIG_LOCAL");
+		if (!filename)
+			filename = repo_config = strdup(git_path("config"));
+	}
+
+	if (home) {
+		char *user_config = strdup(mkpath("%s/.gitconfig", home));
+		if (!access(user_config, R_OK))
+			ret = git_config_from_file(fn, user_config);
+		free(user_config);
+	}
+
+	ret += git_config_from_file(fn, filename);
+	if (repo_config)
+		free(repo_config);
+	return ret;
 }
 
 /*
@@ -490,9 +516,18 @@ int git_config_set_multivar(const char* key, const char* value,
 	int i, dot;
 	int fd = -1, in_fd;
 	int ret;
-	char* config_filename = strdup(git_path("config"));
-	char* lock_file = strdup(git_path("config.lock"));
+	char* config_filename;
+	char* lock_file;
 	const char* last_dot = strrchr(key, '.');
+
+	config_filename = getenv("GIT_CONFIG");
+	if (!config_filename) {
+		config_filename = getenv("GIT_CONFIG_LOCAL");
+		if (!config_filename)
+			config_filename  = git_path("config");
+	}
+	config_filename = strdup(config_filename);
+	lock_file = strdup(mkpath("%s.lock", config_filename));
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -600,7 +635,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		 * As a side effect, we make sure to transform only a valid
 		 * existing config file.
 		 */
-		if (git_config(store_aux)) {
+		if (git_config_from_file(store_aux, config_filename)) {
 			fprintf(stderr, "invalid config file\n");
 			free(store.key);
 			if (store.value_regex != NULL) {
