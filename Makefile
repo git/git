@@ -144,34 +144,33 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
-	git-mailsplit$X \
-	git-stripspace$X git-daemon$X
+	git-daemon$X
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
 	git-checkout-index$X \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
-	git-mailinfo$X git-merge-base$X \
+	git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
 	git-peek-remote$X git-prune-packed$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-unpack-file$X \
-	git-unpack-objects$X git-update-index$X git-update-server-info$X \
-	git-upload-pack$X git-verify-pack$X git-write-tree$X \
-	git-update-ref$X git-symbolic-ref$X \
+	git-unpack-objects$X git-update-server-info$X \
+	git-upload-pack$X git-verify-pack$X \
+	git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
-BUILT_INS = git-log$X git-whatchanged$X git-show$X \
-	git-count-objects$X git-diff$X git-push$X \
-	git-grep$X git-add$X git-rm$X git-rev-list$X \
-	git-check-ref-format$X git-rev-parse$X \
+BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
+	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
+	git-grep$X git-add$X git-rm$X git-rev-list$X git-stripspace$X \
+	git-check-ref-format$X git-rev-parse$X git-mailinfo$X \
 	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
 	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
-	git-read-tree$X git-commit-tree$X \
-	git-apply$X git-show-branch$X git-diff-files$X \
+	git-read-tree$X git-commit-tree$X git-write-tree$X \
+	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
 	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -222,12 +221,13 @@ BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
 	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
 	builtin-rm.o builtin-init-db.o builtin-rev-parse.o \
-	builtin-tar-tree.o builtin-upload-tar.o \
-	builtin-ls-files.o builtin-ls-tree.o \
-	builtin-read-tree.o builtin-commit-tree.o \
+	builtin-tar-tree.o builtin-upload-tar.o builtin-update-index.o \
+	builtin-ls-files.o builtin-ls-tree.o builtin-write-tree.o \
+	builtin-read-tree.o builtin-commit-tree.o builtin-mailinfo.o \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
-	builtin-cat-file.o
+	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
+	builtin-update-ref.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -380,9 +380,7 @@ ifdef NEEDS_LIBICONV
 	else
 		ICONV_LINK =
 	endif
-	LIB_4_ICONV = $(ICONV_LINK) -liconv
-else
-	LIB_4_ICONV =
+	LIBS += $(ICONV_LINK) -liconv
 endif
 ifdef NEEDS_SOCKET
 	LIBS += -lsocket
@@ -565,10 +563,6 @@ $(SIMPLE_PROGRAMS) : $(LIB_FILE)
 $(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIB_FILE) $(SIMPLE_LIB)
-
-git-mailinfo$X: mailinfo.o $(LIB_FILE)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIB_FILE) $(SIMPLE_LIB) $(LIB_4_ICONV)
 
 git-local-fetch$X: fetch.o
 git-ssh-fetch$X: rsh.o fetch.o
