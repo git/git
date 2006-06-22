@@ -7,7 +7,7 @@ git-rebase - Rebase local commits to a new head
 
 SYNOPSIS
 --------
-'git-rebase' [--onto <newbase>] <upstream> [<branch>]
+'git-rebase' [--merge] [--onto <newbase>] <upstream> [<branch>]
 
 'git-rebase' --continue | --skip | --abort
 
@@ -105,6 +105,24 @@ OPTIONS
 
 --abort::
 	Restore the original branch and abort the rebase operation.
+
+--skip::
+	Restart the rebasing process by skipping the current patch.
+	This does not work with the --merge option.
+
+--merge::
+	Use merging strategies to rebase.  When the recursive (default) merge
+	strategy is used, this allows rebase to be aware of renames on the
+	upstream side.
+
+-s <strategy>, \--strategy=<strategy>::
+	Use the given merge strategy; can be supplied more than
+	once to specify them in the order they should be tried.
+	If there is no `-s` option, a built-in list of strategies
+	is used instead (`git-merge-recursive` when merging a single
+	head, `git-merge-octopus` otherwise).  This implies --merge.
+
+include::merge-strategies.txt[]
 
 NOTES
 -----

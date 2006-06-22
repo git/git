@@ -34,7 +34,93 @@ When you have resolved this problem run \"git rebase --continue\".
 If you would prefer to skip this patch, instead run \"git rebase --skip\".
 To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
+
+MRESOLVEMSG="
+When you have resolved this problem run \"git rebase --continue\".
+To restore the original branch and stop rebasing run \"git rebase --abort\".
+"
 unset newbase
+strategy=recursive
+do_merge=
+dotest=$GIT_DIR/.dotest-merge
+prec=4
+
+continue_merge () {
+	test -n "$prev_head" || die "prev_head must be defined"
+	test -d "$dotest" || die "$dotest directory does not exist"
+
+	unmerged=$(git-ls-files -u)
+	if test -n "$unmerged"
+	then
+		echo "You still have unmerged paths in your index"
+		echo "did you forget update-index?"
+		die "$MRESOLVEMSG"
+	fi
+
+	if test -n "`git-diff-index HEAD`"
+	then
+		git-commit -C "`cat $dotest/current`"
+	else
+		echo "Previous merge succeeded automatically"
+	fi
+
+	prev_head=`git-rev-parse HEAD^0`
+
+	# save the resulting commit so we can read-tree on it later
+	echo "$prev_head" > "$dotest/cmt.$msgnum.result"
+	echo "$prev_head" > "$dotest/prev_head"
+
+	# onto the next patch:
+	msgnum=$(($msgnum + 1))
+	echo "$msgnum" >"$dotest/msgnum"
+}
+
+call_merge () {
+	cmt="$(cat $dotest/cmt.$1)"
+	echo "$cmt" > "$dotest/current"
+	git-merge-$strategy "$cmt^" -- HEAD "$cmt"
+	rv=$?
+	case "$rv" in
+	0)
+		git-commit -C "$cmt" || die "commit failed: $MRESOLVEMSG"
+		;;
+	1)
+		test -d "$GIT_DIR/rr-cache" && git-rerere
+		die "$MRESOLVEMSG"
+		;;
+	2)
+		echo "Strategy: $rv $strategy failed, try another" 1>&2
+		die "$MRESOLVEMSG"
+		;;
+	*)
+		die "Unknown exit code ($rv) from command:" \
+			"git-merge-$strategy $cmt^ -- HEAD $cmt"
+		;;
+	esac
+}
+
+finish_rb_merge () {
+	set -e
+
+	msgnum=1
+	echo "Finalizing rebased commits..."
+	git-reset --hard "`cat $dotest/onto`"
+	end="`cat $dotest/end`"
+	while test "$msgnum" -le "$end"
+	do
+		git-read-tree `cat "$dotest/cmt.$msgnum.result"`
+		git-checkout-index -q -f -u -a
+		git-commit -C "`cat $dotest/cmt.$msgnum`"
+
+		printf "Committed %0${prec}d" $msgnum
+		echo ' '`git-rev-list --pretty=oneline -1 HEAD | \
+					sed 's/^[a-f0-9]\+ //'`
+		msgnum=$(($msgnum + 1))
+	done
+	rm -r "$dotest"
+	echo "All done."
+}
+
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -46,23 +132,66 @@ do
 			exit 1
 			;;
 		esac
+		if test -d "$dotest"
+		then
+			prev_head="`cat $dotest/prev_head`"
+			end="`cat $dotest/end`"
+			msgnum="`cat $dotest/msgnum`"
+			onto="`cat $dotest/onto`"
+			continue_merge
+			while test "$msgnum" -le "$end"
+			do
+				call_merge "$msgnum"
+				continue_merge
+			done
+			finish_rb_merge
+			exit
+		fi
 		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--skip)
+		if test -d "$dotest"
+		then
+			die "--skip is not supported when using --merge"
+		fi
 		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--abort)
-		[ -d .dotest ] || die "No rebase in progress?"
+		if test -d "$dotest"
+		then
+			rm -r "$dotest"
+		elif test -d .dotest
+		then
+			rm -r .dotest
+		else
+			die "No rebase in progress?"
+		fi
 		git reset --hard ORIG_HEAD
-		rm -r .dotest
 		exit
 		;;
 	--onto)
 		test 2 -le "$#" || usage
 		newbase="$2"
 		shift
+		;;
+	-M|-m|--m|--me|--mer|--merg|--merge)
+		do_merge=t
+		;;
+	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
+		--strateg=*|--strategy=*|\
+	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
+		case "$#,$1" in
+		*,*=*)
+			strategy=`expr "$1" : '-[^=]*=\(.*\)'` ;;
+		1,*)
+			usage ;;
+		*)
+			strategy="$2"
+			shift ;;
+		esac
+		do_merge=t
 		;;
 	-*)
 		usage
@@ -75,16 +204,25 @@ do
 done
 
 # Make sure we do not have .dotest
-if mkdir .dotest
+if test -z "$do_merge"
 then
-	rmdir .dotest
-else
-	echo >&2 '
+	if mkdir .dotest
+	then
+		rmdir .dotest
+	else
+		echo >&2 '
 It seems that I cannot create a .dotest directory, and I wonder if you
 are in the middle of patch application or another rebase.  If that is not
 the case, please rm -fr .dotest and run me again.  I am stopping in case
 you still have something valuable there.'
-	exit 1
+		exit 1
+	fi
+else
+	if test -d "$dotest"
+	then
+		die "previous dotest directory $dotest still exists." \
+			'try git-rebase < --continue | --abort >'
+	fi
 fi
 
 # The tree must be really really clean.
@@ -152,6 +290,48 @@ then
 	exit 0
 fi
 
-git-format-patch -k --stdout --full-index "$upstream"..ORIG_HEAD |
-git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+if test -z "$do_merge"
+then
+	git-format-patch -k --stdout --full-index "$upstream"..ORIG_HEAD |
+	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+	exit $?
+fi
 
+if test "@@NO_PYTHON@@" && test "$strategy" = "recursive"
+then
+	die 'The recursive merge strategy currently relies on Python,
+which this installation of git was not configured with.  Please consider
+a different merge strategy (e.g. octopus, resolve, stupid, ours)
+or install Python and git with Python support.'
+
+fi
+
+# start doing a rebase with git-merge
+# this is rename-aware if the recursive (default) strategy is used
+
+mkdir -p "$dotest"
+echo "$onto" > "$dotest/onto"
+prev_head=`git-rev-parse HEAD^0`
+echo "$prev_head" > "$dotest/prev_head"
+
+msgnum=0
+for cmt in `git-rev-list --no-merges "$upstream"..ORIG_HEAD \
+			| perl -e 'print reverse <>'`
+do
+	msgnum=$(($msgnum + 1))
+	echo "$cmt" > "$dotest/cmt.$msgnum"
+done
+
+echo 1 >"$dotest/msgnum"
+echo $msgnum >"$dotest/end"
+
+end=$msgnum
+msgnum=1
+
+while test "$msgnum" -le "$end"
+do
+	call_merge "$msgnum"
+	continue_merge
+done
+
+finish_rb_merge
