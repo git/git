@@ -93,7 +93,7 @@ typedef struct {
 	char *data;
 	int len;
 	unsigned char flags;
-	unsigned char crlf:1;
+	unsigned int crlf:1;
 } msg_data_t;
 
 #define DRV_OK          0

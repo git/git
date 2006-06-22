@@ -22,6 +22,7 @@
 #include <string.h>
 #include "delta.h"
 
+#include "git-compat-util.h"
 
 /* maximum hash entry list for the same hash bucket */
 #define HASH_LIMIT 64
@@ -131,7 +132,7 @@ struct delta_index {
 	const void *src_buf;
 	unsigned long src_size;
 	unsigned int hash_mask;
-	struct index_entry *hash[0];
+	struct index_entry *hash[FLEX_ARRAY];
 };
 
 struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
@@ -283,7 +284,7 @@ create_delta(const struct delta_index *index,
 	ref_data = index->src_buf;
 	ref_top = ref_data + index->src_size;
 	data = trg_buf;
-	top = trg_buf + trg_size;
+	top = (const unsigned char *) trg_buf + trg_size;
 
 	outpos++;
 	val = 0;

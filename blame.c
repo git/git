@@ -301,9 +301,9 @@ static void fill_line_map(struct commit *commit, struct commit *other,
 				if (DEBUG)
 					printf("map: i1: %d %d %p i2: %d %d %p\n",
 					       i1, map[i1],
-					       i1 != -1 ? blame_lines[map[i1]] : NULL,
+					       (void *) (i1 != -1 ? blame_lines[map[i1]] : NULL),
 					       i2, map2[i2],
-					       i2 != -1 ? blame_lines[map2[i2]] : NULL);
+					       (void *) (i2 != -1 ? blame_lines[map2[i2]] : NULL));
 				if (map2[i2] != -1 &&
 				    blame_lines[map[i1]] &&
 				    !blame_lines[map2[i2]])

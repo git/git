@@ -206,7 +206,14 @@ char *unquote_c_style(const char *quoted, const char **endp)
 				case '\\': case '"':
 					break; /* verbatim */
 
-				case '0'...'7':
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
 					/* octal */
 					ac = ((ch - '0') << 6);
 					if ((ch = *sp++) < '0' || '7' < ch)

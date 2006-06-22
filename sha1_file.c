@@ -486,8 +486,9 @@ int use_packed_git(struct packed_git *p)
 		 * this is cheap.
 		 */
 		if (memcmp((char*)(p->index_base) + p->index_size - 40,
-			   p->pack_base + p->pack_size - 20, 20)) {
-			      
+			   (char *) p->pack_base + p->pack_size - 20,
+			   20)) {
+
 			die("packfile %s does not match index.", p->pack_name);
 		}
 	}
@@ -701,7 +702,7 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
 	int bytes = strlen(buffer) + 1;
 	unsigned char *buf = xmalloc(1+size);
 
-	memcpy(buf, buffer + bytes, stream->total_out - bytes);
+	memcpy(buf, (char *) buffer + bytes, stream->total_out - bytes);
 	bytes = stream->total_out - bytes;
 	if (bytes < size) {
 		stream->next_out = buf + bytes;
@@ -853,7 +854,7 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	if (offset >= p->pack_size)
 		die("object offset outside of pack file");
 
-	pack =  p->pack_base + offset;
+	pack =  (unsigned char *) p->pack_base + offset;
 	c = *pack++;
 	offset++;
 	*type = (c >> 4) & 7;
@@ -883,7 +884,7 @@ int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
 	ptr = unpack_object_header(p, ptr, kindp, sizep);
 	if (*kindp != OBJ_DELTA)
 		goto done;
-	memcpy(base, p->pack_base + ptr, 20);
+	memcpy(base, (char *) p->pack_base + ptr, 20);
 	status = 0;
  done:
 	unuse_packed_git(p);
@@ -903,7 +904,7 @@ void packed_object_info_detail(struct pack_entry *e,
 	enum object_type kind;
 
 	offset = unpack_object_header(p, e->offset, &kind, size);
-	pack = p->pack_base + offset;
+	pack = (unsigned char *) p->pack_base + offset;
 	if (kind != OBJ_DELTA)
 		*delta_chain_length = 0;
 	else {
@@ -919,7 +920,7 @@ void packed_object_info_detail(struct pack_entry *e,
 			find_pack_entry_one(pack, &base_ent, p);
 			offset = unpack_object_header(p, base_ent.offset,
 						      &kind, &junk);
-			pack = p->pack_base + offset;
+			pack = (unsigned char *) p->pack_base + offset;
 			chain_length++;
 		} while (kind == OBJ_DELTA);
 		*delta_chain_length = chain_length;
@@ -957,7 +958,7 @@ static int packed_object_info(struct pack_entry *entry,
 		die("cannot map packed file");
 
 	offset = unpack_object_header(p, entry->offset, &kind, &size);
-	pack = p->pack_base + offset;
+	pack = (unsigned char *) p->pack_base + offset;
 	left = p->pack_size - offset;
 
 	switch (kind) {
@@ -1096,7 +1097,7 @@ void *unpack_entry_gently(struct pack_entry *entry,
 	void *retval;
 
 	offset = unpack_object_header(p, entry->offset, &kind, &size);
-	pack = p->pack_base + offset;
+	pack = (unsigned char *) p->pack_base + offset;
 	left = p->pack_size - offset;
 	switch (kind) {
 	case OBJ_DELTA:
@@ -1134,7 +1135,7 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 	void *index = p->index_base + 256;
 	if (n < 0 || num_packed_objects(p) <= n)
 		return -1;
-	memcpy(sha1, (index + 24 * n + 4), 20);
+	memcpy(sha1, (char *) index + (24 * n) + 4, 20);
 	return 0;
 }
 
@@ -1148,9 +1149,9 @@ int find_pack_entry_one(const unsigned char *sha1,
 
 	do {
 		int mi = (lo + hi) / 2;
-		int cmp = memcmp(index + 24 * mi + 4, sha1, 20);
+		int cmp = memcmp((char *) index + (24 * mi) + 4, sha1, 20);
 		if (!cmp) {
-			e->offset = ntohl(*((unsigned int *)(index + 24 * mi)));
+			e->offset = ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
 			memcpy(e->sha1, sha1, 20);
 			e->p = p;
 			return 1;
@@ -1290,7 +1291,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 		ref_length = strlen(ref_type);
 
 		if (memcmp(buffer, ref_type, ref_length) ||
-		    get_sha1_hex(buffer + ref_length, actual_sha1)) {
+		    get_sha1_hex((char *) buffer + ref_length, actual_sha1)) {
 			free(buffer);
 			return NULL;
 		}
@@ -1408,7 +1409,7 @@ static int write_buffer(int fd, const void *buf, size_t len)
 			return error("file write error (%s)", strerror(errno));
 		}
 		len -= size;
-		buf += size;
+		buf = (char *) buf + size;
 	}
 	return 0;
 }

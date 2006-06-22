@@ -196,7 +196,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	struct transfer_request *request = (struct transfer_request *)data;
 	do {
 		ssize_t retval = write(request->local_fileno,
-				       ptr + posn, size - posn);
+				       (char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
 		posn += retval;
@@ -1077,13 +1077,14 @@ static int fetch_indices(void)
 
 static inline int needs_quote(int ch)
 {
-	switch (ch) {
-	case '/': case '-': case '.':
-	case 'A'...'Z':	case 'a'...'z':	case '0'...'9':
+	if (((ch >= 'A') && (ch <= 'Z'))
+			|| ((ch >= 'a') && (ch <= 'z'))
+			|| ((ch >= '0') && (ch <= '9'))
+			|| (ch == '/')
+			|| (ch == '-')
+			|| (ch == '.'))
 		return 0;
-	default:
-		return 1;
-	}
+	return 1;
 }
 
 static inline int hex(int v)
