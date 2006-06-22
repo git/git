@@ -479,17 +479,18 @@ sub commit_lib {
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $commit_msg = "$GIT_SVN_DIR/.svn-commit.tmp.$$";
 
+	if (defined $LC_ALL) {
+		$ENV{LC_ALL} = $LC_ALL;
+	} else {
+		delete $ENV{LC_ALL};
+	}
 	foreach my $c (@revs) {
+		my $log_msg = get_commit_message($c, $commit_msg);
+
 		# fork for each commit because there's a memory leak I
 		# can't track down... (it's probably in the SVN code)
 		defined(my $pid = open my $fh, '-|') or croak $!;
 		if (!$pid) {
-			if (defined $LC_ALL) {
-				$ENV{LC_ALL} = $LC_ALL;
-			} else {
-				delete $ENV{LC_ALL};
-			}
-			my $log_msg = get_commit_message($c, $commit_msg);
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
 						ra => $SVN,
@@ -535,6 +536,7 @@ sub commit_lib {
 			($r_last, $cmt_last) = ($r_new, $cmt_new);
 		}
 	}
+	$ENV{LC_ALL} = 'C';
 	unlink $commit_msg;
 }
 

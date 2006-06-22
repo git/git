@@ -470,7 +470,6 @@ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
 ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
-ALL_CFLAGS += -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
@@ -546,6 +545,8 @@ git$X git.spec \
 
 exec_cmd.o: exec_cmd.c GIT-CFLAGS
 	$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
+builtin-init-db.o: builtin-init-db.c GIT-CFLAGS
+	$(CC) -o $*.o -c $(ALL_CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $<
 
 http.o: http.c GIT-CFLAGS
 	$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
@@ -605,7 +606,7 @@ tags:
 	find . -name '*.[hcS]' -print | xargs ctags -a
 
 ### Detect prefix changes
-TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):$(GIT_VERSION):\
+TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):$(GIT_PYTHON_DIR_SQ):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
 
 GIT-CFLAGS: .FORCE-GIT-CFLAGS
