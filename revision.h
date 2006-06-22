@@ -18,7 +18,7 @@ typedef void (prune_fn_t)(struct rev_info *revs, struct commit *commit);
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
-	struct object_list *pending_objects;
+	struct object_array pending;
 
 	/* Basic information */
 	const char *prefix;
@@ -99,9 +99,11 @@ struct name_path {
 	const char *elem;
 };
 
-extern struct object_list **add_object(struct object *obj,
-				       struct object_list **p,
-				       struct name_path *path,
-				       const char *name);
+extern void add_object(struct object *obj,
+		       struct object_array *p,
+		       struct name_path *path,
+		       const char *name);
+
+extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
 
 #endif

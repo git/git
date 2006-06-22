@@ -200,3 +200,20 @@ int object_list_contains(struct object_list *list, struct object *obj)
 	}
 	return 0;
 }
+
+void add_object_array(struct object *obj, const char *name, struct object_array *array)
+{
+	unsigned nr = array->nr;
+	unsigned alloc = array->alloc;
+	struct object_array_entry *objects = array->objects;
+
+	if (nr >= alloc) {
+		alloc = (alloc + 32) * 2;
+		objects = xrealloc(objects, alloc * sizeof(*objects));
+		array->alloc = alloc;
+		array->objects = objects;
+	}
+	objects[nr].item = obj;
+	objects[nr].name = name;
+	array->nr = ++nr;
+}

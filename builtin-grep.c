@@ -658,7 +658,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	int cached = 0;
 	int seen_dashdash = 0;
 	struct grep_opt opt;
-	struct object_list *list, **tail, *object_list = NULL;
+	struct object_array list = { 0, 0, NULL };
 	const char *prefix = setup_git_directory();
 	const char **paths = NULL;
 	int i;
@@ -678,7 +678,6 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	 * that continues up to the -- (if exists), and then paths.
 	 */
 
-	tail = &object_list;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		argc--; argv++;
@@ -852,12 +851,9 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		/* Is it a rev? */
 		if (!get_sha1(arg, sha1)) {
 			struct object *object = parse_object(sha1);
-			struct object_list *elem;
 			if (!object)
 				die("bad object %s", arg);
-			elem = object_list_insert(object, tail);
-			elem->name = arg;
-			tail = &elem->next;
+			add_object_array(object, arg, &list);
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
@@ -882,16 +878,16 @@ int cmd_grep(int argc, const char **argv, char **envp)
 		paths[1] = NULL;
 	}
 
-	if (!object_list)
+	if (!list.nr)
 		return !grep_cache(&opt, paths, cached);
 
 	if (cached)
 		die("both --cached and trees are given.");
 
-	for (list = object_list; list; list = list->next) {
+	for (i = 0; i < list.nr; i++) {
 		struct object *real_obj;
-		real_obj = deref_tag(list->item, NULL, 0);
-		if (grep_object(&opt, paths, real_obj, list->name))
+		real_obj = deref_tag(list.objects[i].item, NULL, 0);
+		if (grep_object(&opt, paths, real_obj, list.objects[i].name))
 			hit = 1;
 	}
 	return !hit;

@@ -31,17 +31,12 @@ static char *path_name(struct name_path *path, const char *name)
 	return n;
 }
 
-struct object_list **add_object(struct object *obj,
-				       struct object_list **p,
-				       struct name_path *path,
-				       const char *name)
+void add_object(struct object *obj,
+		struct object_array *p,
+		struct name_path *path,
+		const char *name)
 {
-	struct object_list *entry = xmalloc(sizeof(*entry));
-	entry->item = obj;
-	entry->next = *p;
-	entry->name = path_name(path, name);
-	*p = entry;
-	return &entry->next;
+	add_object_array(obj, path_name(path, name), p);
 }
 
 static void mark_blob_uninteresting(struct blob *blob)
@@ -117,9 +112,9 @@ void mark_parents_uninteresting(struct commit *commit)
 	}
 }
 
-static void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
+void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
 {
-	add_object(obj, &revs->pending_objects, NULL, name);
+	add_object_array(obj, name, &revs->pending);
 }
 
 static struct object *get_reference(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags)
@@ -836,7 +831,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		object = get_reference(revs, arg, sha1, flags ^ local_flags);
 		add_pending_object(revs, object, arg);
 	}
-	if (def && !revs->pending_objects) {
+	if (def && !revs->pending.nr) {
 		unsigned char sha1[20];
 		struct object *object;
 		if (get_sha1(def, sha1))
@@ -868,11 +863,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 void prepare_revision_walk(struct rev_info *revs)
 {
-	struct object_list *list;
+	int nr = revs->pending.nr;
+	struct object_array_entry *list = revs->pending.objects;
 
-	list = revs->pending_objects;
-	revs->pending_objects = NULL;
-	while (list) {
+	revs->pending.nr = 0;
+	revs->pending.alloc = 0;
+	revs->pending.objects = NULL;
+	while (--nr >= 0) {
 		struct commit *commit = handle_commit(revs, list->item, list->name);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
@@ -880,7 +877,7 @@ void prepare_revision_walk(struct rev_info *revs)
 				insert_by_date(commit, &revs->commits);
 			}
 		}
-		list = list->next;
+		list++;
 	}
 
 	if (revs->no_walk)

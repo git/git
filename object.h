@@ -4,13 +4,21 @@
 struct object_list {
 	struct object *item;
 	struct object_list *next;
-	const char *name;
 };
 
 struct object_refs {
 	unsigned count;
 	struct object *base;
 	struct object *ref[FLEX_ARRAY]; /* more */
+};
+
+struct object_array {
+	unsigned int nr;
+	unsigned int alloc;
+	struct object_array_entry {
+		struct object *item;
+		const char *name;
+	} *objects;
 };
 
 #define TYPE_BITS   3
@@ -71,5 +79,8 @@ void object_list_append(struct object *item,
 unsigned object_list_length(struct object_list *list);
 
 int object_list_contains(struct object_list *list, struct object *obj);
+
+/* Object array handling .. */
+void add_object_array(struct object *obj, const char *name, struct object_array *array);
 
 #endif /* OBJECT_H */

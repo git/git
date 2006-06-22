@@ -257,8 +257,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			    output_directory);
 	}
 
-	if (rev.pending_objects && rev.pending_objects->next == NULL) {
-		rev.pending_objects->item->flags |= UNINTERESTING;
+	if (rev.pending.nr == 1) {
+		rev.pending.objects[0].item->flags |= UNINTERESTING;
 		add_head(&rev);
 	}
 
