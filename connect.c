@@ -581,6 +581,11 @@ int git_connect(int fd[2], char *url, const char *prog)
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
 
+	/* Without this we cannot rely on waitpid() to tell
+	 * what happened to our children.
+	 */
+	signal(SIGCHLD, SIG_DFL);
+
 	host = strstr(url, "://");
 	if(host) {
 		*host = '\0';
