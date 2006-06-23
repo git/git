@@ -3,8 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-
-USAGE='[-n] [--no-commit] [-s <strategy>]... <merge-message> <head> <remote>+'
+USAGE='[-n] [--no-commit] [--squash] [-s <strategy>]... <merge-message> <head> <remote>+'
 . git-sh-setup
 
 LF='
@@ -42,20 +41,49 @@ restorestate() {
 	fi
 }
 
+finish_up_to_date () {
+	case "$squash" in
+	t)
+		echo "$1 (nothing to squash)" ;;
+	'')
+		echo "$1" ;;
+	esac
+	dropsave
+}
+
+squash_message () {
+	echo Squashed commit of the following:
+	echo
+	git-log --no-merges ^"$head" $remote
+}
+
 finish () {
 	test '' = "$2" || echo "$2"
-	case "$merge_msg" in
-	'')
-		echo "No merge message -- not updating HEAD"
+	case "$squash" in
+	t)
+		echo "Squash commit -- not updating HEAD"
+		squash_message >"$GIT_DIR/SQUASH_MSG"
 		;;
-	*)
-		git-update-ref HEAD "$1" "$head" || exit 1
+	'')
+		case "$merge_msg" in
+		'')
+			echo "No merge message -- not updating HEAD"
+			;;
+		*)
+			git-update-ref HEAD "$1" "$head" || exit 1
+			;;
+		esac
 		;;
 	esac
-
-	case "$no_summary" in
+	case "$1" in
 	'')
-		git-diff-tree --stat --summary -M "$head" "$1"
+		;;
+	?*)
+		case "$no_summary" in
+		'')
+			git-diff-tree --stat --summary -M "$head" "$1"
+			;;
+		esac
 		;;
 	esac
 }
@@ -66,6 +94,8 @@ do
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
 		no_summary=t ;;
+	--sq|--squ|--squa|--squas|--squash)
+		squash=t no_commit=t ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
 		no_commit=t ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
@@ -152,8 +182,7 @@ f,*)
 ?,1,"$1",*)
 	# If head can reach all the merge then we are up to date.
 	# but first the most common case of merging one remote.
-	echo "Already up-to-date."
-	dropsave
+	finish_up_to_date "Already up-to-date."
 	exit 0
 	;;
 ?,1,"$head",*)
@@ -205,8 +234,7 @@ f,*)
 	done
 	if test "$up_to_date" = t
 	then
-		echo "Already up-to-date. Yeeah!"
-		dropsave
+		finish_up_to_date "Already up-to-date. Yeeah!"
 		exit 0
 	fi
 	;;
@@ -310,11 +338,17 @@ case "$best_strategy" in
 	git-merge-$best_strategy $common -- "$head_arg" "$@"
 	;;
 esac
-for remote
-do
-	echo $remote
-done >"$GIT_DIR/MERGE_HEAD"
-echo "$merge_msg" >"$GIT_DIR/MERGE_MSG"
+
+if test "$squash" = t
+then
+	finish
+else
+	for remote
+	do
+		echo $remote
+	done >"$GIT_DIR/MERGE_HEAD"
+	echo "$merge_msg" >"$GIT_DIR/MERGE_MSG"
+fi
 
 if test "$merge_was_ok" = t
 then
