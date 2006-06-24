@@ -490,7 +490,8 @@ export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 
 all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk
 
-all:
+all: perl/Makefile
+	$(MAKE) -C perl
 	$(MAKE) -C templates
 
 strip: $(PROGRAMS) git$X
@@ -522,7 +523,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
 	rm -f $@ $@+
-	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
+	sed -e '1s|#!.*perl\(.*\)|#!$(PERL_PATH_SQ)\1 -I'"$$(make -s -C perl instlibdir)"'|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@+
 	chmod +x $@+
@@ -608,6 +609,9 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
+perl/Makefile:	perl/Git.pm perl/Makefile.PL
+	(cd perl && $(PERL_PATH) Makefile.PL PREFIX="$(prefix)" DEFINE="$(ALL_CFLAGS)" LIBS="$(LIBS)")
+
 doc:
 	$(MAKE) -C Documentation all
 
@@ -663,6 +667,7 @@ install: all
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates install
+	$(MAKE) -C perl install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
@@ -730,7 +735,8 @@ clean:
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
-	$(MAKE) -C templates clean
+	[ ! -e perl/Makefile ] || $(MAKE) -C perl/ clean
+	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 	rm -f GIT-VERSION-FILE GIT-CFLAGS
 
