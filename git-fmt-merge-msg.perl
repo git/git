@@ -7,6 +7,7 @@
 
 use strict;
 use Git;
+use Error qw(:try);
 
 my $repo = Git->repository();
 
@@ -31,7 +32,17 @@ sub andjoin {
 }
 
 sub repoconfig {
-	my ($val) = $repo->command_oneline('repo-config', '--get', 'merge.summary');
+	my $val;
+	try {
+		$val = $repo->command_oneline('repo-config', '--get', 'merge.summary');
+	} catch Git::Error::Command with {
+		my ($E) = shift;
+		if ($E->value() == 1) {
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
 	return $val;
 }
 
