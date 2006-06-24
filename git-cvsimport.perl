@@ -470,6 +470,9 @@ my %index; # holds filenames of one index per branch
 $index{$opt_o} = tmpnam();
 
 $ENV{GIT_INDEX_FILE} = $index{$opt_o};
+system("git-read-tree", $opt_o);
+die "read-tree failed: $?\n" if $?;
+
 unless(-d $git_dir) {
 	system("git-init-db");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
@@ -813,17 +816,15 @@ while(<CVS>) {
 			unless ($index{$branch}) {
 			    $index{$branch} = tmpnam();
 			    $ENV{GIT_INDEX_FILE} = $index{$branch};
+			    system("git-read-tree", $branch);
+			    die "read-tree failed: $?\n" if $?;
 			}
+			# just in case
+			$ENV{GIT_INDEX_FILE} = $index{$branch};
 			if ($ancestor) {
+			    print "have ancestor $ancestor" if $opt_v;
 			    system("git-read-tree", $ancestor);
 			    die "read-tree failed: $?\n" if $?;
-			} else {
-			    unless ($index{$branch}) {
-				$index{$branch} = tmpnam();
-				$ENV{GIT_INDEX_FILE} = $index{$branch};
-				system("git-read-tree", $branch);
-				die "read-tree failed: $?\n" if $?;
-			    }
 			}
 		} else {
 			# just in case
