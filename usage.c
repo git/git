@@ -12,19 +12,19 @@ static void report(const char *prefix, const char *err, va_list params)
 	fputs("\n", stderr);
 }
 
-void usage_builtin(const char *err)
+static NORETURN void usage_builtin(const char *err)
 {
 	fprintf(stderr, "usage: %s\n", err);
 	exit(129);
 }
 
-void die_builtin(const char *err, va_list params)
+static NORETURN void die_builtin(const char *err, va_list params)
 {
 	report("fatal: ", err, params);
 	exit(128);
 }
 
-void error_builtin(const char *err, va_list params)
+static void error_builtin(const char *err, va_list params)
 {
 	report("error: ", err, params);
 }
