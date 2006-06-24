@@ -8,6 +8,8 @@
 #include "../cache.h"
 #include "../exec_cmd.h"
 
+#define die perlyshadow_die__
+
 /* XS and Perl interface */
 #include "EXTERN.h"
 #include "perl.h"
@@ -15,10 +17,47 @@
 
 #include "ppport.h"
 
+#undef die
+
+
+static char *
+report_xs(const char *prefix, const char *err, va_list params)
+{
+	static char buf[4096];
+	strcpy(buf, prefix);
+	vsnprintf(buf + strlen(prefix), 4096 - strlen(prefix), err, params);
+	return buf;
+}
+
+void
+die_xs(const char *err, va_list params)
+{
+	char *str;
+	str = report_xs("fatal: ", err, params);
+	croak(str);
+}
+
+int
+error_xs(const char *err, va_list params)
+{
+	char *str;
+	str = report_xs("error: ", err, params);
+	warn(str);
+	return -1;
+}
+
 
 MODULE = Git		PACKAGE = Git
 
 PROTOTYPES: DISABLE
+
+
+BOOT:
+{
+	set_error_routine(error_xs);
+	set_die_routine(die_xs);
+}
+
 
 # /* TODO: xs_call_gate(). See Git.pm. */
 

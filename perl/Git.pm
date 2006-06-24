@@ -88,7 +88,8 @@ increate nonwithstanding).
 =cut
 
 
-use Carp qw(carp croak);
+use Carp qw(carp); # croak is bad - throw instead
+use Error qw(:try);
 
 require XSLoader;
 XSLoader::load('Git', $VERSION);
@@ -143,14 +144,14 @@ sub repository {
 	if (defined $args[0]) {
 		if ($#args % 2 != 1) {
 			# Not a hash.
-			$#args == 0 or croak "bad usage";
-			%opts = (Directory => $args[0]);
+			$#args == 0 or throw Error::Simple("bad usage");
+			%opts = ( Directory => $args[0] );
 		} else {
 			%opts = @args;
 		}
 
 		if ($opts{Directory}) {
-			-d $opts{Directory} or croak "Directory not found: $!";
+			-d $opts{Directory} or throw Error::Simple("Directory not found: $!");
 			if (-d $opts{Directory}."/.git") {
 				# TODO: Might make this more clever
 				$opts{WorkingCopy} = $opts{Directory};
@@ -242,11 +243,11 @@ read.
 sub command_pipe {
 	my ($self, $cmd, @args) = _maybe_self(@_);
 
-	$cmd =~ /^[a-z0-9A-Z_-]+$/ or croak "bad command: $cmd";
+	$cmd =~ /^[a-z0-9A-Z_-]+$/ or throw Error::Simple("bad command: $cmd");
 
 	my $pid = open(my $fh, "-|");
 	if (not defined $pid) {
-		croak "open failed: $!";
+		throw Error::Simple("open failed: $!");
 	} elsif ($pid == 0) {
 		_cmd_exec($self, $cmd, @args);
 	}
@@ -271,16 +272,17 @@ The function returns only after the command has finished running.
 sub command_noisy {
 	my ($self, $cmd, @args) = _maybe_self(@_);
 
-	$cmd =~ /^[a-z0-9A-Z_-]+$/ or croak "bad command: $cmd";
+	$cmd =~ /^[a-z0-9A-Z_-]+$/ or throw Error::Simple("bad command: $cmd");
 
 	my $pid = fork;
 	if (not defined $pid) {
-		croak "fork failed: $!";
+		throw Error::Simple("fork failed: $!");
 	} elsif ($pid == 0) {
 		_cmd_exec($self, $cmd, @args);
 	}
 	if (waitpid($pid, 0) > 0 and $? != 0) {
-		croak "exit status: $?";
+		# This is the best candidate for a custom exception class.
+		throw Error::Simple("exit status: $?");
 	}
 }
 
@@ -340,10 +342,10 @@ are involved.
 
 =back
 
-=head1 TODO
+=head1 ERROR HANDLING
 
-This is still fairly crude.
-We need some good way to report errors back except just dying.
+All functions are supposed to throw Perl exceptions in case of errors.
+See L<Error>.
 
 =head1 COPYRIGHT
 
@@ -372,8 +374,8 @@ sub _cmd_exec {
 		$self->{opts}->{Repository} and $ENV{'GIT_DIR'} = $self->{opts}->{Repository};
 		$self->{opts}->{WorkingCopy} and chdir($self->{opts}->{WorkingCopy});
 	}
-	xs__execv_git_cmd(@args);
-	croak "exec failed: $!";
+	_execv_git_cmd(@args);
+	die "exec failed: $!";
 }
 
 # Execute the given Git command ($_[0]) with arguments ($_[1..])
@@ -388,7 +390,8 @@ sub _cmd_close {
 			# It's just close, no point in fatalities
 			carp "error closing pipe: $!";
 		} elsif ($? >> 8) {
-			croak "exit status: ".($? >> 8);
+			# This is the best candidate for a custom exception class.
+			throw Error::Simple("exit status: ".($? >> 8));
 		}
 		# else we might e.g. closed a live stream; the command
 		# dying of SIGPIPE would drive us here.
@@ -415,6 +418,8 @@ sub _call_gate {
 		#xs_call_gate($self->{opts}->{Repository});
 	}
 
+	# Having to call throw from the C code is a sure path to insanity.
+	local $SIG{__DIE__} = sub { throw Error::Simple("@_"); };
 	&$xsfunc(@args);
 }
 
@@ -422,7 +427,7 @@ sub AUTOLOAD {
 	my $xsname;
 	our $AUTOLOAD;
 	($xsname = $AUTOLOAD) =~ s/.*:://;
-	croak "&Git::$xsname not defined" if $xsname =~ /^xs_/;
+	throw Error::Simple("&Git::$xsname not defined") if $xsname =~ /^xs_/;
 	$xsname = 'xs_'.$xsname;
 	_call_gate(\&$xsname, @_);
 }
