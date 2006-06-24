@@ -24,11 +24,8 @@ static int cmd_log_wc(int argc, const char **argv, char **envp,
 	rev->verbose_header = 1;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->always_show_header) {
-		if (rev->diffopt.pickaxe || rev->diffopt.filter) {
+		if (rev->diffopt.pickaxe || rev->diffopt.filter)
 			rev->always_show_header = 0;
-			if (rev->diffopt.output_format == DIFF_FORMAT_RAW)
-				rev->diffopt.output_format = DIFF_FORMAT_NO_OUTPUT;
-		}
 	}
 
 	if (argc > 1)
