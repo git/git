@@ -84,6 +84,9 @@ int cmd_diff_tree(int argc, const char **argv, char **envp)
 		usage(diff_tree_usage);
 	}
 
+	if (!opt->diffopt.output_format)
+		opt->diffopt.output_format = DIFF_FORMAT_RAW;
+
 	/*
 	 * NOTE! We expect "a ^b" to be equal to "a..b", so we
 	 * reverse the order of the objects if the second one

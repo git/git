@@ -178,7 +178,6 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.diff = 1;
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
-	rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 
 	git_config(git_format_config);
 	rev.extra_headers = extra_headers;
@@ -246,6 +245,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
+
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 
 	if (output_directory) {
 		if (use_stdout)

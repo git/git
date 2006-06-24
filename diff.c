@@ -1420,7 +1420,6 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 void diff_setup(struct diff_options *options)
 {
 	memset(options, 0, sizeof(*options));
-	options->output_format = DIFF_FORMAT_RAW;
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
