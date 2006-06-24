@@ -36,7 +36,8 @@ $VERSION = '0.01';
   my $lastrev = <$fh>; chomp $lastrev;
   $repo->command_close_pipe($fh, $c);
 
-  my $lastrev = $repo->command_oneline('rev-list', '--all');
+  my $lastrev = $repo->command_oneline( [ 'rev-list', '--all' ],
+                                        STDERR => 0 );
 
 =cut
 
@@ -178,8 +179,20 @@ sub repository {
 
 =item command ( COMMAND [, ARGUMENTS... ] )
 
+=item command ( [ COMMAND, ARGUMENTS... ], { Opt => Val ... } )
+
 Execute the given Git C<COMMAND> (specify it without the 'git-'
 prefix), optionally with the specified extra C<ARGUMENTS>.
+
+The second more elaborate form can be used if you want to further adjust
+the command execution. Currently, only one option is supported:
+
+B<STDERR> - How to deal with the command's error output. By default (C<undef>)
+it is delivered to the caller's C<STDERR>. A false value (0 or '') will cause
+it to be thrown away. If you want to process it, you can get it in a filehandle
+you specify, but you must be extremely careful; if the error output is not
+very short and you want to read it in the same process as where you called
+C<command()>, you are set up for a nice deadlock!
 
 The method can be called without any instance or on a specified Git repository
 (in that case the command will be run in the repository context).
@@ -231,6 +244,8 @@ sub command {
 
 =item command_oneline ( COMMAND [, ARGUMENTS... ] )
 
+=item command_oneline ( [ COMMAND, ARGUMENTS... ], { Opt => Val ... } )
+
 Execute the given C<COMMAND> in the same way as command()
 does but always return a scalar string containing the first line
 of the command's standard output.
@@ -256,6 +271,8 @@ sub command_oneline {
 
 =item command_output_pipe ( COMMAND [, ARGUMENTS... ] )
 
+=item command_output_pipe ( [ COMMAND, ARGUMENTS... ], { Opt => Val ... } )
+
 Execute the given C<COMMAND> in the same way as command()
 does but return a pipe filehandle from which the command output can be
 read.
@@ -271,6 +288,8 @@ sub command_output_pipe {
 
 
 =item command_input_pipe ( COMMAND [, ARGUMENTS... ] )
+
+=item command_input_pipe ( [ COMMAND, ARGUMENTS... ], { Opt => Val ... } )
 
 Execute the given C<COMMAND> in the same way as command_output_pipe()
 does but return an input pipe filehandle instead; the command output
@@ -534,13 +553,27 @@ sub _check_valid_cmd {
 # Common backend for the pipe creators.
 sub _command_common_pipe {
 	my $direction = shift;
-	my ($self, $cmd, @args) = _maybe_self(@_);
+	my ($self, @p) = _maybe_self(@_);
+	my (%opts, $cmd, @args);
+	if (ref $p[0]) {
+		($cmd, @args) = @{shift @p};
+		%opts = ref $p[0] ? %{$p[0]} : @p;
+	} else {
+		($cmd, @args) = @p;
+	}
 	_check_valid_cmd($cmd);
 
 	my $pid = open(my $fh, $direction);
 	if (not defined $pid) {
 		throw Error::Simple("open failed: $!");
 	} elsif ($pid == 0) {
+		if (defined $opts{STDERR}) {
+			close STDERR;
+		}
+		if ($opts{STDERR}) {
+			open (STDERR, '>&', $opts{STDERR})
+				or die "dup failed: $!";
+		}
 		_cmd_exec($self, $cmd, @args);
 	}
 	return wantarray ? ($fh, join(' ', $cmd, @args)) : $fh;
