@@ -47,12 +47,5 @@ int cmd_diff_files(int argc, const char **argv, char **envp)
 	if (rev.pending.nr ||
 	    rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_files_usage);
-	/*
-	 * Backward compatibility wart - "diff-files -s" used to
-	 * defeat the common diff option "-s" which asked for
-	 * DIFF_FORMAT_NO_OUTPUT.
-	 */
-	if (rev.diffopt.output_format == DIFF_FORMAT_NO_OUTPUT)
-		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 	return run_diff_files(&rev, silent);
 }
