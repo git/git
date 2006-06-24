@@ -636,6 +636,12 @@ test-delta$X: test-delta.c diff-delta.o patch-delta.o
 test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
+test-sha1$X: test-sha1.o $(GITLIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
+check-sha1:: test-sha1$X
+	./test-sha1.sh
+
 check:
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 

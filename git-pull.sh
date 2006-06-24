@@ -99,5 +99,5 @@ case "$strategy_args" in
 	;;
 esac
 
-merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD")
+merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
 git-merge $no_summary $no_commit $strategy_args "$merge_name" HEAD $merge_head
