@@ -176,11 +176,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.verbose_header = 1;
 	rev.diff = 1;
-	rev.diffopt.with_raw = 0;
-	rev.diffopt.with_stat = 1;
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
-	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 
 	git_config(git_format_config);
 	rev.extra_headers = extra_headers;

@@ -771,7 +771,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 	if (rev->loginfo)
 		show_log(rev, rev->loginfo, "\n");
 
-	if (opt->output_format == DIFF_FORMAT_RAW) {
+	if (opt->output_format & DIFF_FORMAT_RAW) {
 		offset = strlen(COLONS) - num_parent;
 		if (offset < 0)
 			offset = 0;
@@ -791,8 +791,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 		printf(" %s ", diff_unique_abbrev(p->sha1, opt->abbrev));
 	}
 
-	if (opt->output_format == DIFF_FORMAT_RAW ||
-	    opt->output_format == DIFF_FORMAT_NAME_STATUS) {
+	if (opt->output_format & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS)) {
 		for (i = 0; i < num_parent; i++)
 			putchar(p->parent[i].status);
 		putchar(inter_name_termination);
@@ -818,17 +817,12 @@ void show_combined_diff(struct combine_diff_path *p,
 	struct diff_options *opt = &rev->diffopt;
 	if (!p->len)
 		return;
-	switch (opt->output_format) {
-	case DIFF_FORMAT_RAW:
-	case DIFF_FORMAT_NAME_STATUS:
-	case DIFF_FORMAT_NAME:
+	if (opt->output_format & (DIFF_FORMAT_RAW |
+				  DIFF_FORMAT_NAME |
+				  DIFF_FORMAT_NAME_STATUS)) {
 		show_raw_diff(p, num_parent, rev);
-		return;
-	case DIFF_FORMAT_PATCH:
+	} else if (opt->output_format & DIFF_FORMAT_PATCH) {
 		show_patch_diff(p, num_parent, dense, rev);
-		return;
-	default:
-		return;
 	}
 }
 
@@ -842,13 +836,9 @@ void diff_tree_combined(const unsigned char *sha1,
 	struct diff_options diffopts;
 	struct combine_diff_path *p, *paths = NULL;
 	int i, num_paths;
-	int do_diffstat;
 
-	do_diffstat = (opt->output_format == DIFF_FORMAT_DIFFSTAT ||
-		       opt->with_stat);
 	diffopts = *opt;
-	diffopts.with_raw = 0;
-	diffopts.with_stat = 0;
+	diffopts.output_format &= ~(DIFF_FORMAT_RAW | DIFF_FORMAT_DIFFSTAT);
 	diffopts.recursive = 1;
 
 	/* find set of paths that everybody touches */
@@ -856,19 +846,18 @@ void diff_tree_combined(const unsigned char *sha1,
 		/* show stat against the first parent even
 		 * when doing combined diff.
 		 */
-		if (i == 0 && do_diffstat)
-			diffopts.output_format = DIFF_FORMAT_DIFFSTAT;
+		if (i == 0 && opt->output_format & DIFF_FORMAT_DIFFSTAT)
+			diffopts.output_format |= DIFF_FORMAT_DIFFSTAT;
 		else
-			diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
+			diffopts.output_format |= DIFF_FORMAT_NO_OUTPUT;
 		diff_tree_sha1(parent[i], sha1, "", &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 
-		if (do_diffstat && rev->loginfo)
-			show_log(rev, rev->loginfo,
-				 opt->with_stat ? "---\n" : "\n");
+		if (opt->output_format & DIFF_FORMAT_DIFFSTAT && rev->loginfo)
+			show_log(rev, rev->loginfo, "---\n");
 		diff_flush(&diffopts);
-		if (opt->with_stat)
+		if (opt->output_format & DIFF_FORMAT_DIFFSTAT)
 			putchar('\n');
 	}
 
@@ -878,17 +867,21 @@ void diff_tree_combined(const unsigned char *sha1,
 			num_paths++;
 	}
 	if (num_paths) {
-		if (opt->with_raw) {
-			int saved_format = opt->output_format;
-			opt->output_format = DIFF_FORMAT_RAW;
+		if (opt->output_format & (DIFF_FORMAT_RAW |
+					  DIFF_FORMAT_NAME |
+					  DIFF_FORMAT_NAME_STATUS)) {
 			for (p = paths; p; p = p->next) {
-				show_combined_diff(p, num_parent, dense, rev);
+				if (p->len)
+					show_raw_diff(p, num_parent, rev);
 			}
-			opt->output_format = saved_format;
 			putchar(opt->line_termination);
 		}
-		for (p = paths; p; p = p->next) {
-			show_combined_diff(p, num_parent, dense, rev);
+		if (opt->output_format & DIFF_FORMAT_PATCH) {
+			for (p = paths; p; p = p->next) {
+				if (p->len)
+					show_patch_diff(p, num_parent, dense,
+							rev);
+			}
 		}
 	}
 

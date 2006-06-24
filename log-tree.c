@@ -163,8 +163,13 @@ int log_tree_diff_flush(struct rev_info *opt)
 		return 0;
 	}
 
-	if (opt->loginfo && !opt->no_commit_id)
-		show_log(opt, opt->loginfo, opt->diffopt.with_stat ? "---\n" : "\n");
+	if (opt->loginfo && !opt->no_commit_id) {
+		if (opt->diffopt.output_format & DIFF_FORMAT_DIFFSTAT) {
+			show_log(opt, opt->loginfo,  "---\n");
+		} else {
+			show_log(opt, opt->loginfo,  "\n");
+		}
+	}
 	diff_flush(&opt->diffopt);
 	return 1;
 }
