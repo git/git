@@ -48,7 +48,7 @@ require Exporter;
 
 # Methods which can be called as standalone functions as well:
 @EXPORT_OK = qw(command command_oneline command_pipe command_noisy
-                hash_object);
+                exec_path hash_object);
 
 
 =head1 DESCRIPTION
@@ -286,6 +286,19 @@ sub command_noisy {
 		croak "exit status: $?";
 	}
 }
+
+
+=item exec_path ()
+
+Return path to the git sub-command executables (the same as
+C<git --exec-path>). Useful mostly only internally.
+
+Implementation of this function is very fast; no external command calls
+are involved.
+
+=cut
+
+# Implemented in Git.xs.
 
 
 =item hash_object ( FILENAME [, TYPE ] )

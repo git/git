@@ -6,6 +6,7 @@
 
 /* libgit interface */
 #include "../cache.h"
+#include "../exec_cmd.h"
 
 /* XS and Perl interface */
 #include "EXTERN.h"
@@ -20,6 +21,17 @@ MODULE = Git		PACKAGE = Git
 PROTOTYPES: DISABLE
 
 # /* TODO: xs_call_gate(). See Git.pm. */
+
+
+const char *
+xs_exec_path()
+CODE:
+{
+	RETVAL = git_exec_path();
+}
+OUTPUT:
+	RETVAL
+
 
 char *
 xs_hash_object(file, type = "blob")
