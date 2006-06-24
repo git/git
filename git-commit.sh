@@ -199,6 +199,7 @@ only=
 logfile=
 use_commit=
 amend=
+edit_flag=
 no_edit=
 log_given=
 log_message=
@@ -246,7 +247,7 @@ do
       shift
       ;;
   -e|--e|--ed|--edi|--edit)
-      no_edit=
+      edit_flag=t
       shift
       ;;
   -i|--i|--in|--inc|--incl|--inclu|--includ|--include)
@@ -384,6 +385,7 @@ $1"
       ;;
   esac
 done
+case "$edit_flag" in t) no_edit= ;; esac
 
 ################################################################
 # Sanity check options

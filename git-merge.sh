@@ -55,7 +55,7 @@ finish () {
 
 	case "$no_summary" in
 	'')
-		git-diff-tree -p --stat --summary -M "$head" "$1"
+		git-diff-tree --stat --summary -M "$head" "$1"
 		;;
 	esac
 }
