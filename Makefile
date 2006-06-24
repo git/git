@@ -744,7 +744,7 @@ clean:
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
-	[ ! -e perl/Makefile ] || $(MAKE) -C perl/ clean
+	[ ! -e perl/Makefile ] || $(MAKE) -C perl/ clean || $(MAKE) -C perl/ clean
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 	rm -f GIT-VERSION-FILE GIT-CFLAGS
