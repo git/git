@@ -33,6 +33,28 @@ OUTPUT:
 	RETVAL
 
 
+void
+xs__execv_git_cmd(...)
+CODE:
+{
+	const char **argv;
+	int i;
+
+	argv = malloc(sizeof(const char *) * (items + 1));
+	if (!argv)
+		croak("malloc failed");
+	for (i = 0; i < items; i++)
+		argv[i] = strdup(SvPV_nolen(ST(i)));
+	argv[i] = NULL;
+
+	execv_git_cmd(argv);
+
+	for (i = 0; i < items; i++)
+		if (argv[i])
+			free((char *) argv[i]);
+	free((char **) argv);
+}
+
 char *
 xs_hash_object(file, type = "blob")
 	SV *file;

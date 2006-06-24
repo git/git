@@ -122,9 +122,6 @@ to the subdirectory and the directory is assumed to be the working copy.
 If the directory does not have the subdirectory, C<WorkingCopy> is left
 undefined and C<Repository> is pointed to the directory itself.
 
-B<GitPath> - Path to the C<git> binary executable. By default the C<$PATH>
-is searched for it.
-
 You should not use both C<Directory> and either of C<Repository> and
 C<WorkingCopy> - the results of that are undefined.
 
@@ -363,10 +360,13 @@ sub _cmd_exec {
 		$self->{opts}->{Repository} and $ENV{'GIT_DIR'} = $self->{opts}->{Repository};
 		$self->{opts}->{WorkingCopy} and chdir($self->{opts}->{WorkingCopy});
 	}
-	my $git = $self->{opts}->{GitPath};
-	$git ||= 'git';
-	exec ($git, @args) or croak "exec failed: $!";
+	xs__execv_git_cmd(@args);
+	croak "exec failed: $!";
 }
+
+# Execute the given Git command ($_[0]) with arguments ($_[1..])
+# by searching for it at proper places.
+# _execv_git_cmd(), implemented in Git.xs.
 
 # Close pipe to a subprocess.
 sub _cmd_close {
