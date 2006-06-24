@@ -29,16 +29,13 @@ static int show_config(const char* key_, const char* value_)
 	const char *vptr = value;
 	int dup_error = 0;
 
-	if (value_ == NULL)
-		value_ = "";
-
 	if (!use_key_regexp && strcmp(key_, key))
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
 	if (regexp != NULL &&
 			 (do_not_match ^
-			  regexec(regexp, value_, 0, NULL, 0)))
+			  regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
 
 	if (show_keys)
@@ -46,11 +43,11 @@ static int show_config(const char* key_, const char* value_)
 	if (seen && !do_all)
 		dup_error = 1;
 	if (type == T_INT)
-		sprintf(value, "%d", git_config_int(key_, value_));
+		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
 	else if (type == T_BOOL)
 		vptr = git_config_bool(key_, value_) ? "true" : "false";
 	else
-		vptr = value_;
+		vptr = value_?value_:"";
 	seen++;
 	if (dup_error) {
 		error("More than one value for the key %s: %s",
