@@ -203,7 +203,7 @@ static void emit_rewrite_diff(const char *name_a,
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one)) {
-		mf->ptr = ""; /* does not matter */
+		mf->ptr = (char *)""; /* does not matter */
 		mf->size = 0;
 		return 0;
 	}
@@ -395,7 +395,7 @@ static void show_stats(struct diffstat_t* data)
 	}
 
 	for (i = 0; i < data->nr; i++) {
-		char *prefix = "";
+		const char *prefix = "";
 		char *name = data->files[i]->name;
 		int added = data->files[i]->added;
 		int deleted = data->files[i]->deleted;
@@ -917,7 +917,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 			err_empty:
 				err = -1;
 			empty:
-				s->data = "";
+				s->data = (char *)"";
 				s->size = 0;
 				return err;
 			}
@@ -1408,7 +1408,7 @@ int diff_setup_done(struct diff_options *options)
 	return 0;
 }
 
-int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)
+static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)
 {
 	char c, *eq;
 	int len;
@@ -1720,16 +1720,12 @@ static void diff_flush_raw(struct diff_filepair *p,
 		free((void*)path_two);
 }
 
-static void diff_flush_name(struct diff_filepair *p,
-			    int inter_name_termination,
-			    int line_termination)
+static void diff_flush_name(struct diff_filepair *p, int line_termination)
 {
 	char *path = p->two->path;
 
 	if (line_termination)
 		path = quote_one(p->two->path);
-	else
-		path = p->two->path;
 	printf("%s%c", path, line_termination);
 	if (p->two->path != path)
 		free(path);
@@ -1950,9 +1946,7 @@ static void flush_one_pair(struct diff_filepair *p,
 				       options, diff_output_format);
 			break;
 		case DIFF_FORMAT_NAME:
-			diff_flush_name(p,
-					inter_name_termination,
-					line_termination);
+			diff_flush_name(p, line_termination);
 			break;
 		case DIFF_FORMAT_NO_OUTPUT:
 			break;
