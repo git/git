@@ -616,7 +616,7 @@ static void builtin_diff(const char *name_a,
 	const char *lbl[2];
 	char *a_one, *b_two;
 	const char *set = get_color(o->color_diff, DIFF_METAINFO);
-	const char *reset = get_color(o->color_diff, DIFF_PLAIN);
+	const char *reset = get_color(o->color_diff, DIFF_RESET);
 
 	a_one = quote_two("a/", name_a);
 	b_two = quote_two("b/", name_b);

@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Spec;
-use File::Temp qw(tempfile);
+use File::Temp qw(tempfile tmpnam);
 use File::Path qw(mkpath);
 use File::Basename qw(basename dirname);
 use Time::Local;
@@ -467,12 +467,8 @@ my $orig_git_index;
 $orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
 
 my %index; # holds filenames of one index per branch
-{   # init with an index for origin
-    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
-			     DIR => File::Spec->tmpdir());
-    close ($fh);
-    $index{$opt_o} = $fn;
-}
+$index{$opt_o} = tmpnam();
+
 $ENV{GIT_INDEX_FILE} = $index{$opt_o};
 unless(-d $git_dir) {
 	system("git-init-db");
@@ -502,10 +498,7 @@ unless(-d $git_dir) {
 
 	# populate index
 	unless ($index{$last_branch}) {
-	    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
-				     DIR => File::Spec->tmpdir());
-	    close ($fh);
-	    $index{$last_branch} = $fn;
+	    $index{$last_branch} = tmpnam();
 	}
 	$ENV{GIT_INDEX_FILE} = $index{$last_branch};
 	system('git-read-tree', $last_branch);
@@ -818,16 +811,28 @@ while(<CVS>) {
 		if(($ancestor || $branch) ne $last_branch) {
 			print "Switching from $last_branch to $branch\n" if $opt_v;
 			unless ($index{$branch}) {
-			    my ($fh, $fn) = tempfile('gitXXXXXX', SUFFIX => '.idx',
-						     DIR => File::Spec->tmpdir());
-			    close ($fh);
-			    $index{$branch} = $fn;
+			    $index{$branch} = tmpnam();
+			    $ENV{GIT_INDEX_FILE} = $index{$branch};
+			}
+			if ($ancestor) {
+			    system("git-read-tree", $ancestor);
+			    die "read-tree failed: $?\n" if $?;
+			} else {
+			    unless ($index{$branch}) {
+				$index{$branch} = tmpnam();
+				$ENV{GIT_INDEX_FILE} = $index{$branch};
+				system("git-read-tree", $branch);
+				die "read-tree failed: $?\n" if $?;
+			    }
+			}
+		} else {
+			# just in case
+			unless ($index{$branch}) {
+			    $index{$branch} = tmpnam();
 			    $ENV{GIT_INDEX_FILE} = $index{$branch};
 			    system("git-read-tree", $branch);
 			    die "read-tree failed: $?\n" if $?;
-			} else {
-			    $ENV{GIT_INDEX_FILE} = $index{$branch};
-		        }
+			}
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
