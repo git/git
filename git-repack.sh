@@ -49,8 +49,9 @@ name=$(git-rev-list --objects --all $rev_list 2>&1 |
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
 else
-	echo "Pack pack-$name created."
-
+	if test "$quiet" != '-q'; then
+	    echo "Pack pack-$name created."
+	fi
 	mkdir -p "$PACKDIR" || exit
 
 	mv .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
