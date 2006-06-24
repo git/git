@@ -48,7 +48,7 @@ require Exporter;
 
 # Methods which can be called as standalone functions as well:
 @EXPORT_OK = qw(command command_oneline command_pipe command_noisy
-                exec_path hash_object);
+                version exec_path hash_object);
 
 
 =head1 DESCRIPTION
@@ -283,6 +283,18 @@ sub command_noisy {
 		croak "exit status: $?";
 	}
 }
+
+
+=item version ()
+
+Return the Git version in use.
+
+Implementation of this function is very fast; no external command calls
+are involved.
+
+=cut
+
+# Implemented in Git.xs.
 
 
 =item exec_path ()

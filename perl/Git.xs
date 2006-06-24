@@ -24,6 +24,16 @@ PROTOTYPES: DISABLE
 
 
 const char *
+xs_version()
+CODE:
+{
+	RETVAL = GIT_VERSION;
+}
+OUTPUT:
+	RETVAL
+
+
+const char *
 xs_exec_path()
 CODE:
 {

@@ -610,7 +610,10 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 
 
 perl/Makefile:	perl/Git.pm perl/Makefile.PL
-	(cd perl && $(PERL_PATH) Makefile.PL PREFIX="$(prefix)" DEFINE="$(ALL_CFLAGS)" LIBS="$(LIBS)")
+	(cd perl && $(PERL_PATH) Makefile.PL \
+		PREFIX="$(prefix)" \
+		DEFINE="$(ALL_CFLAGS) -DGIT_VERSION=\\\"$(GIT_VERSION)\\\"" \
+		LIBS="$(LIBS)")
 
 doc:
 	$(MAKE) -C Documentation all
