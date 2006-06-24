@@ -8,7 +8,7 @@ USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <rep
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 . git-sh-setup
 
-strategy_args= no_summary= no_commit=
+strategy_args= no_summary= no_commit= squash=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
 do
 	case "$1" in
@@ -17,6 +17,8 @@ do
 		no_summary=-n ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
 		no_commit=--no-commit ;;
+	--sq|--squ|--squa|--squas|--squash)
+		squash=--squash ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
@@ -100,4 +102,5 @@ case "$strategy_args" in
 esac
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-git-merge $no_summary $no_commit $strategy_args "$merge_name" HEAD $merge_head
+git-merge $no_summary $no_commit $squash $strategy_args \
+	"$merge_name" HEAD $merge_head
