@@ -42,6 +42,8 @@ static void generate_id_list(void)
 
 		if (!memcmp(line, "diff-tree ", 10))
 			p += 10;
+		else if (!memcmp(line, "commit ", 7))
+			p += 7;
 
 		if (!get_sha1_hex(p, n)) {
 			flush_current_id(patchlen, sha1, &ctx);

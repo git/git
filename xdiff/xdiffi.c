@@ -45,7 +45,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		      long *kvdf, long *kvdb, int need_min, xdpsplit_t *spl,
 		      xdalgoenv_t *xenv);
 static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1, long chg2);
-static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo);
+static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags);
 
 
 
@@ -397,7 +397,7 @@ static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1,
 }
 
 
-static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo) {
+static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	long ix, ixo, ixs, ixref, grpsiz, nrec = xdf->nrec;
 	char *rchg = xdf->rchg, *rchgo = xdfo->rchg;
 	xrecord_t **recs = xdf->recs;
@@ -440,7 +440,7 @@ static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo) {
 			 * the group.
 			 */
 			while (ixs > 0 && recs[ixs - 1]->ha == recs[ix - 1]->ha &&
-			       XDL_RECMATCH(recs[ixs - 1], recs[ix - 1])) {
+			       xdl_recmatch(recs[ixs - 1]->ptr, recs[ixs - 1]->size, recs[ix - 1]->ptr, recs[ix - 1]->size, flags)) {
 				rchg[--ixs] = 1;
 				rchg[--ix] = 0;
 
@@ -468,7 +468,7 @@ static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo) {
 			 * the group.
 			 */
 			while (ix < nrec && recs[ixs]->ha == recs[ix]->ha &&
-			       XDL_RECMATCH(recs[ixs], recs[ix])) {
+			       xdl_recmatch(recs[ixs]->ptr, recs[ixs]->size, recs[ix]->ptr, recs[ix]->size, flags)) {
 				rchg[ixs++] = 0;
 				rchg[ix++] = 1;
 
@@ -546,8 +546,8 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 		return -1;
 	}
-	if (xdl_change_compact(&xe.xdf1, &xe.xdf2) < 0 ||
-	    xdl_change_compact(&xe.xdf2, &xe.xdf1) < 0 ||
+	if (xdl_change_compact(&xe.xdf1, &xe.xdf2, xpp->flags) < 0 ||
+	    xdl_change_compact(&xe.xdf2, &xe.xdf1, xpp->flags) < 0 ||
 	    xdl_build_script(&xe, &xscr) < 0) {
 
 		xdl_free_env(&xe);
