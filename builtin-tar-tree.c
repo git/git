@@ -233,8 +233,8 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	/* XXX: should we provide more meaningful info here? */
 	sprintf(header.uid, "%07o", 0);
 	sprintf(header.gid, "%07o", 0);
-	safe_strncpy(header.uname, "git", sizeof(header.uname));
-	safe_strncpy(header.gname, "git", sizeof(header.gname));
+	strlcpy(header.uname, "git", sizeof(header.uname));
+	strlcpy(header.gname, "git", sizeof(header.gname));
 	sprintf(header.devmajor, "%07o", 0);
 	sprintf(header.devminor, "%07o", 0);
 
