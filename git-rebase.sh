@@ -59,15 +59,16 @@ continue_merge () {
 
 	if test -n "`git-diff-index HEAD`"
 	then
+		printf "Committed: %0${prec}d" $msgnum
 		git-commit -C "`cat $dotest/current`"
 	else
-		echo "Previous merge succeeded automatically"
+		printf "Already applied: %0${prec}d" $msgnum
 	fi
+	echo ' '`git-rev-list --pretty=oneline -1 HEAD | \
+				sed 's/^[a-f0-9]\+ //'`
 
 	prev_head=`git-rev-parse HEAD^0`
-
 	# save the resulting commit so we can read-tree on it later
-	echo "$prev_head" > "$dotest/cmt.$msgnum.result"
 	echo "$prev_head" > "$dotest/prev_head"
 
 	# onto the next patch:
@@ -82,7 +83,7 @@ call_merge () {
 	rv=$?
 	case "$rv" in
 	0)
-		git-commit -C "$cmt" || die "commit failed: $MRESOLVEMSG"
+		return
 		;;
 	1)
 		test -d "$GIT_DIR/rr-cache" && git-rerere
@@ -100,23 +101,6 @@ call_merge () {
 }
 
 finish_rb_merge () {
-	set -e
-
-	msgnum=1
-	echo "Finalizing rebased commits..."
-	git-reset --hard "`cat $dotest/onto`"
-	end="`cat $dotest/end`"
-	while test "$msgnum" -le "$end"
-	do
-		git-read-tree `cat "$dotest/cmt.$msgnum.result"`
-		git-checkout-index -q -f -u -a
-		git-commit -C "`cat $dotest/cmt.$msgnum`"
-
-		printf "Committed %0${prec}d" $msgnum
-		echo ' '`git-rev-list --pretty=oneline -1 HEAD | \
-					sed 's/^[a-f0-9]\+ //'`
-		msgnum=$(($msgnum + 1))
-	done
 	rm -r "$dotest"
 	echo "All done."
 }
@@ -153,7 +137,18 @@ do
 	--skip)
 		if test -d "$dotest"
 		then
-			die "--skip is not supported when using --merge"
+			prev_head="`cat $dotest/prev_head`"
+			end="`cat $dotest/end`"
+			msgnum="`cat $dotest/msgnum`"
+			msgnum=$(($msgnum + 1))
+			onto="`cat $dotest/onto`"
+			while test "$msgnum" -le "$end"
+			do
+				call_merge "$msgnum"
+				continue_merge
+			done
+			finish_rb_merge
+			exit
 		fi
 		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit
