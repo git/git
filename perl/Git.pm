@@ -663,18 +663,29 @@ sub _command_common_pipe {
 	}
 	_check_valid_cmd($cmd);
 
-	my $pid = open(my $fh, $direction);
-	if (not defined $pid) {
-		throw Error::Simple("open failed: $!");
-	} elsif ($pid == 0) {
-		if (defined $opts{STDERR}) {
-			close STDERR;
+	my $fh;
+	if ($^O eq '##INSERT_ACTIVESTATE_STRING_HERE##') {
+		# ActiveState Perl
+		#defined $opts{STDERR} and
+		#	warn 'ignoring STDERR option - running w/ ActiveState';
+		$direction eq '-|' or
+			die 'input pipe for ActiveState not implemented';
+		tie ($fh, 'Git::activestate_pipe', $cmd, @args);
+
+	} else {
+		my $pid = open($fh, $direction);
+		if (not defined $pid) {
+			throw Error::Simple("open failed: $!");
+		} elsif ($pid == 0) {
+			if (defined $opts{STDERR}) {
+				close STDERR;
+			}
+			if ($opts{STDERR}) {
+				open (STDERR, '>&', $opts{STDERR})
+					or die "dup failed: $!";
+			}
+			_cmd_exec($self, $cmd, @args);
 		}
-		if ($opts{STDERR}) {
-			open (STDERR, '>&', $opts{STDERR})
-				or die "dup failed: $!";
-		}
-		_cmd_exec($self, $cmd, @args);
 	}
 	return wantarray ? ($fh, join(' ', $cmd, @args)) : $fh;
 }
@@ -747,6 +758,41 @@ sub AUTOLOAD {
 }
 
 sub DESTROY { }
+
+
+# Pipe implementation for ActiveState Perl.
+
+package Git::activestate_pipe;
+use strict;
+
+sub TIEHANDLE {
+	my ($class, @params) = @_;
+	# FIXME: This is probably horrible idea and the thing will explode
+	# at the moment you give it arguments that require some quoting,
+	# but I have no ActiveState clue... --pasky
+	my $cmdline = join " ", @params;
+	my @data = qx{$cmdline};
+	bless { i => 0, data => \@data }, $class;
+}
+
+sub READLINE {
+	my $self = shift;
+	if ($self->{i} >= scalar @{$self->{data}}) {
+		return undef;
+	}
+	return $self->{'data'}->[ $self->{i}++ ];
+}
+
+sub CLOSE {
+	my $self = shift;
+	delete $self->{data};
+	delete $self->{i};
+}
+
+sub EOF {
+	my $self = shift;
+	return ($self->{i} >= scalar @{$self->{data}});
+}
 
 
 1; # Famous last words
