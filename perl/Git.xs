@@ -104,9 +104,9 @@ CODE:
 }
 
 char *
-xs_hash_object(file, type = "blob")
-	SV *file;
+xs_hash_object(type, file)
 	char *type;
+	SV *file;
 CODE:
 {
 	unsigned char sha1[20];

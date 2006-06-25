@@ -485,13 +485,13 @@ sub wc_chdir {
 }
 
 
-=item hash_object ( FILENAME [, TYPE ] )
+=item hash_object ( TYPE, FILENAME )
 
-=item hash_object ( FILEHANDLE [, TYPE ] )
+=item hash_object ( TYPE, FILEHANDLE )
 
 Compute the SHA1 object id of the given C<FILENAME> (or data waiting in
-C<FILEHANDLE>) considering it is of the C<TYPE> object type (C<blob>
-(default), C<commit>, C<tree>).
+C<FILEHANDLE>) considering it is of the C<TYPE> object type (C<blob>,
+C<commit>, C<tree>).
 
 In case of C<FILEHANDLE> passed instead of file name, all the data
 available are read and hashed, and the filehandle is automatically
