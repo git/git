@@ -54,9 +54,24 @@ else
 	fi
 	mkdir -p "$PACKDIR" || exit
 
-	mv .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
-	mv .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" ||
-	exit
+	for sfx in pack idx
+	do
+		if test -f "$PACKDIR/pack-$name.$sfx"
+		then
+			mv -f "$PACKDIR/pack-$name.$sfx" \
+				"$PACKDIR/old-pack-$name.$sfx"
+		fi
+	done &&
+	mv -f .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
+	mv -f .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" &&
+	test -f "$PACKDIR/pack-$name.pack" &&
+	test -f "$PACKDIR/pack-$name.idx" || {
+		echo >&2 "Couldn't replace the existing pack with updated one."
+		echo >&2 "The original set of packs have been saved as"
+		echo >&2 "old-pack-$name.{pack,idx} in $PACKDIR."
+		exit 1
+	}
+	rm -f "$PACKDIR/old-pack-$name.pack" "$PACKDIR/old-pack-$name.idx"
 fi
 
 if test "$remove_redundant" = t
