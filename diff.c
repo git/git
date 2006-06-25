@@ -1424,6 +1424,7 @@ void diff_setup(struct diff_options *options)
 	options->break_opt = -1;
 	options->rename_limit = -1;
 	options->context = 3;
+	options->msg_sep = "\n";
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;

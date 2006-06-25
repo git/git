@@ -57,6 +57,7 @@ struct diff_options {
 	int rename_limit;
 	int setup;
 	int abbrev;
+	const char *msg_sep;
 	const char *stat_sep;
 	long xdl_opts;
 

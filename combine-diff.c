@@ -701,7 +701,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		const char *abb;
 
 		if (rev->loginfo)
-			show_log(rev, rev->loginfo, "\n");
+			show_log(rev, opt->msg_sep);
 		dump_quoted_path(dense ? "diff --cc " : "diff --combined ", elem->path);
 		printf("index ");
 		for (i = 0; i < num_parent; i++) {
@@ -769,7 +769,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 		inter_name_termination = 0;
 
 	if (rev->loginfo)
-		show_log(rev, rev->loginfo, "\n");
+		show_log(rev, opt->msg_sep);
 
 	if (opt->output_format & DIFF_FORMAT_RAW) {
 		offset = strlen(COLONS) - num_parent;
@@ -855,7 +855,8 @@ void diff_tree_combined(const unsigned char *sha1,
 		paths = intersect_paths(paths, i, num_parent);
 
 		if (opt->output_format & DIFF_FORMAT_DIFFSTAT && rev->loginfo)
-			show_log(rev, rev->loginfo, "---\n");
+			show_log(rev, opt->msg_sep);
+
 		diff_flush(&diffopts);
 		if (opt->output_format & DIFF_FORMAT_DIFFSTAT)
 			putchar('\n');

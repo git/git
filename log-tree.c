@@ -43,9 +43,10 @@ static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 	return at;
 }
 
-void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
+void show_log(struct rev_info *opt, const char *sep)
 {
 	static char this_header[16384];
+	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
@@ -163,13 +164,9 @@ int log_tree_diff_flush(struct rev_info *opt)
 		return 0;
 	}
 
-	if (opt->loginfo && !opt->no_commit_id) {
-		if (opt->diffopt.output_format & DIFF_FORMAT_DIFFSTAT) {
-			show_log(opt, opt->loginfo,  "---\n");
-		} else {
-			show_log(opt, opt->loginfo,  "\n");
-		}
-	}
+	if (opt->loginfo && !opt->no_commit_id)
+		show_log(opt, opt->diffopt.msg_sep);
+
 	diff_flush(&opt->diffopt);
 	return 1;
 }
@@ -266,7 +263,7 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	shown = log_tree_diff(opt, commit, &log);
 	if (!shown && opt->loginfo && opt->always_show_header) {
 		log.parent = NULL;
-		show_log(opt, opt->loginfo, "");
+		show_log(opt, "");
 		shown = 1;
 	}
 	opt->loginfo = NULL;
