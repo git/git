@@ -235,7 +235,7 @@ BUILTIN_OBJS = \
 	builtin-update-ref.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
-LIBS = $(GITLIBS) -lz
+EXTLIBS = -lz
 
 #
 # Platform specific tweaks
@@ -393,14 +393,14 @@ ifdef NEEDS_LIBICONV
 	else
 		ICONV_LINK =
 	endif
-	LIBS += $(ICONV_LINK) -liconv
+	EXTLIBS += $(ICONV_LINK) -liconv
 endif
 ifdef NEEDS_SOCKET
-	LIBS += -lsocket
+	EXTLIBS += -lsocket
 	SIMPLE_LIB += -lsocket
 endif
 ifdef NEEDS_NSL
-	LIBS += -lnsl
+	EXTLIBS += -lnsl
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_D_TYPE_IN_DIRENT
@@ -463,7 +463,7 @@ ifdef MOZILLA_SHA1
 	LIB_OBJS += mozilla-sha1/sha1.o
 else
 	SHA1_HEADER = <openssl/sha.h>
-	LIBS += $(LIB_4_CRYPTO)
+	EXTLIBS += $(LIB_4_CRYPTO)
 endif
 endif
 endif
@@ -489,9 +489,13 @@ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
+LIBS = $(GITLIBS) $(EXTLIBS)
+
 ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
+
+
 ### Build rules
 
 all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk
@@ -615,11 +619,15 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
-perl/Makefile:	perl/Git.pm perl/Makefile.PL
+PERL_DEFINE = $(ALL_CFLAGS) -DGIT_VERSION='"$(GIT_VERSION)"'
+PERL_DEFINE_SQ = $(subst ','\'',$(PERL_DEFINE))
+PERL_LIBS = $(EXTLIBS)
+PERL_LIBS_SQ = $(subst ','\'',$(PERL_LIBS))
+perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
 	(cd perl && $(PERL_PATH) Makefile.PL \
-		PREFIX="$(prefix)" \
-		DEFINE="$(ALL_CFLAGS) -DGIT_VERSION=\\\"$(GIT_VERSION)\\\"" \
-		LIBS="$(LIBS)")
+		PREFIX='$(prefix_SQ)' \
+		DEFINE='$(PERL_DEFINE_SQ)' \
+		LIBS='$(PERL_LIBS_SQ)')
 
 doc:
 	$(MAKE) -C Documentation all

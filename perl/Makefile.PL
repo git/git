@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 sub MY::postamble {
 	return <<'MAKE_FRAG';
 instlibdir:
-	@echo $(INSTALLSITELIB)
+	@echo $(INSTALLSITEARCH)
 
 MAKE_FRAG
 }

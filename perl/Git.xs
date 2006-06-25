@@ -29,7 +29,7 @@ report_xs(const char *prefix, const char *err, va_list params)
 	return buf;
 }
 
-void
+static void NORETURN
 die_xs(const char *err, va_list params)
 {
 	char *str;
@@ -37,13 +37,12 @@ die_xs(const char *err, va_list params)
 	croak(str);
 }
 
-int
+static void
 error_xs(const char *err, va_list params)
 {
 	char *str;
 	str = report_xs("error: ", err, params);
 	warn(str);
-	return -1;
 }
 
 
