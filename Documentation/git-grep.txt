@@ -16,7 +16,7 @@ SYNOPSIS
 	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
 	   [-c | --count]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
-	   [-f <file>] [-e <pattern>]
+	   [-f <file>] [-e] <pattern>
 	   [<tree>...]
 	   [--] [<path>...]
 
@@ -70,6 +70,11 @@ OPTIONS
 
 -f <file>::
 	Read patterns from <file>, one per line.
+
+-e::
+	The next parameter is the pattern. This option has to be
+	used for patterns starting with - and should be used in
+	scripts passing user input to grep.
 
 `<tree>...`::
 	Search blobs in the trees for specified patterns.
