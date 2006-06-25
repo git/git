@@ -21,7 +21,7 @@ make clean >/dev/null 2>&1 &&
 case "$1" in
 '')
 	echo "* Building all"
-	branches='next master maint'
+	branches='next master maint pu'
 	nstalled=install
 	for branch in $branches
 	do
@@ -44,6 +44,7 @@ case "$1" in
 maint | master)
 	case `hostname` in
 	hera.kernel.org)
+		narch='x86_64 i386'
 		arch=x86_64 ;;
 	old-hera.kernel.org)
 		arch=i386 ;;
@@ -66,11 +67,17 @@ maint | master)
 	make $J git >>./:all.log 2>&1 &&
 	V=`./git --version | sed -e 's/git version //'` &&
 	ln git-$V.tar.gz git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/. &&
-	ln $HOME/rpms/RPMS/$arch/git*-$V-* $G/RPMS/$arch/. &&
+	for a in $narch
+	do
+		ln $HOME/rpms/RPMS/$a/git*-$V-* $G/RPMS/$a/.
+	done &&
 	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
 	{
 		# I do not know how it exits, and I do not care much.
-		/usr/local/bin/yummy $G/RPMS/$arch
+		for a in $narch
+		do
+			/usr/local/bin/yummy $G/RPMS/$a
+		done
 		/usr/local/bin/yummy $G/RPMS/SRPMS
 		:
 	} >>./:all.log 2>&1 &&
