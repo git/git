@@ -531,9 +531,12 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	chmod +x $@+
 	mv $@+ $@
 
-$(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
+$(patsubst %.perl,%,$(SCRIPT_PERL)): perl/Makefile
+$(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	rm -f $@ $@+
-	sed -e '1s|#!.*perl\(.*\)|#!$(PERL_PATH_SQ)\1 -I'"$$(make -s -C perl instlibdir)"'|' \
+	INSTLIBDIR=$$(make -s -C perl instlibdir) && \
+	sed -e '1s|#!.*perl\(.*\)|#!$(PERL_PATH_SQ)\1|' \
+	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@+
 	chmod +x $@+
