@@ -1,5 +1,12 @@
 #!/bin/sh
 
+case "`uname -m 2>/dev/null`" in
+x86_64)
+	USE_PIC=YesPlease
+	export USE_PIC
+	;;
+esac
+
 J='-l 4 -j'
 G=/pub/software/scm/git &&
 
