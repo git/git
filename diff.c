@@ -2115,17 +2115,16 @@ void diff_flush(struct diff_options *options)
 	}
 
 	if (output_format & DIFF_FORMAT_DIFFSTAT) {
-		struct diffstat_t *diffstat;
+		struct diffstat_t diffstat;
 
-		diffstat = xcalloc(sizeof (struct diffstat_t), 1);
-		diffstat->xm.consume = diffstat_consume;
+		memset(&diffstat, 0, sizeof(struct diffstat_t));
+		diffstat.xm.consume = diffstat_consume;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (check_pair_status(p))
-				diff_flush_stat(p, options, diffstat);
+				diff_flush_stat(p, options, &diffstat);
 		}
-		show_stats(diffstat);
-		free(diffstat);
+		show_stats(&diffstat);
 	}
 
 	if (output_format & DIFF_FORMAT_SUMMARY) {
