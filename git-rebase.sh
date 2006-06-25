@@ -82,7 +82,10 @@ call_merge () {
 	rv=$?
 	case "$rv" in
 	0)
-		git-commit -C "$cmt" || die "commit failed: $MRESOLVEMSG"
+		if test -n "`git-diff-index HEAD`"
+		then
+			git-commit -C "$cmt" || die "commit failed: $MRESOLVEMSG"
+		fi
 		;;
 	1)
 		test -d "$GIT_DIR/rr-cache" && git-rerere
@@ -110,9 +113,13 @@ finish_rb_merge () {
 	do
 		git-read-tree `cat "$dotest/cmt.$msgnum.result"`
 		git-checkout-index -q -f -u -a
-		git-commit -C "`cat $dotest/cmt.$msgnum`"
-
-		printf "Committed %0${prec}d" $msgnum
+		if test -n "`git-diff-index HEAD`"
+		then
+			git-commit -C "`cat $dotest/cmt.$msgnum`"
+			printf "Committed %0${prec}d" $msgnum
+		else
+			printf "Already applied: %0${prec}d" $msgnum
+		fi
 		echo ' '`git-rev-list --pretty=oneline -1 HEAD | \
 					sed 's/^[a-f0-9]\+ //'`
 		msgnum=$(($msgnum + 1))
