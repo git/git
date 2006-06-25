@@ -137,7 +137,18 @@ do
 	--skip)
 		if test -d "$dotest"
 		then
-			die "--skip is not supported when using --merge"
+			prev_head="`cat $dotest/prev_head`"
+			end="`cat $dotest/end`"
+			msgnum="`cat $dotest/msgnum`"
+			msgnum=$(($msgnum + 1))
+			onto="`cat $dotest/onto`"
+			while test "$msgnum" -le "$end"
+			do
+				call_merge "$msgnum"
+				continue_merge
+			done
+			finish_rb_merge
+			exit
 		fi
 		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit

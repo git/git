@@ -108,7 +108,6 @@ OPTIONS
 
 --skip::
 	Restart the rebasing process by skipping the current patch.
-	This does not work with the --merge option.
 
 --merge::
 	Use merging strategies to rebase.  When the recursive (default) merge
