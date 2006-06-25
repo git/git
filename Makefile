@@ -117,6 +117,11 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 ### --- END CONFIGURATION SECTION ---
 
+# Those must not be GNU-specific; they are shared with perl/ which may
+# be built by a different compiler.
+BASIC_CFLAGS =
+BASIC_LDFLAGS =
+
 SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
@@ -254,13 +259,13 @@ ifeq ($(uname_S),Darwin)
 	NO_STRLCPY = YesPlease
 	## fink
 	ifeq ($(shell test -d /sw/lib && echo y),y)
-		ALL_CFLAGS += -I/sw/include
-		ALL_LDFLAGS += -L/sw/lib
+		BASIC_CFLAGS += -I/sw/include
+		BASIC_LDFLAGS += -L/sw/lib
 	endif
 	## darwinports
 	ifeq ($(shell test -d /opt/local/lib && echo y),y)
-		ALL_CFLAGS += -I/opt/local/include
-		ALL_LDFLAGS += -L/opt/local/lib
+		BASIC_CFLAGS += -I/opt/local/include
+		BASIC_LDFLAGS += -L/opt/local/lib
 	endif
 endif
 ifeq ($(uname_S),SunOS)
@@ -280,7 +285,7 @@ ifeq ($(uname_S),SunOS)
 	endif
 	INSTALL = ginstall
 	TAR = gtar
-	ALL_CFLAGS += -D__EXTENSIONS__
+	BASIC_CFLAGS += -D__EXTENSIONS__
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
@@ -298,21 +303,22 @@ ifeq ($(uname_O),Cygwin)
 endif
 ifeq ($(uname_S),FreeBSD)
 	NEEDS_LIBICONV = YesPlease
-	ALL_CFLAGS += -I/usr/local/include
-	ALL_LDFLAGS += -L/usr/local/lib
+	BASIC_CFLAGS += -I/usr/local/include
+	BASIC_LDFLAGS += -L/usr/local/lib
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	ALL_CFLAGS += -I/usr/local/include
-	ALL_LDFLAGS += -L/usr/local/lib
+	BASIC_CFLAGS += -I/usr/local/include
+	BASIC_LDFLAGS += -L/usr/local/lib
 endif
 ifeq ($(uname_S),NetBSD)
 	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
 		NEEDS_LIBICONV = YesPlease
 	endif
-	ALL_CFLAGS += -I/usr/pkg/include
-	ALL_LDFLAGS += -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
+	BASIC_CFLAGS += -I/usr/pkg/include
+	BASIC_LDFLAGS += -L/usr/pkg/lib
+	ALL_LDFLAGS += -Wl,-rpath,/usr/pkg/lib
 endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
@@ -326,9 +332,9 @@ ifeq ($(uname_S),IRIX64)
 	NO_STRLCPY = YesPlease
 	NO_SOCKADDR_STORAGE=YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
-	ALL_CFLAGS += -DPATH_MAX=1024
+	BASIC_CFLAGS += -DPATH_MAX=1024
 	# for now, build 32-bit version
-	ALL_LDFLAGS += -L/usr/lib32
+	BASIC_LDFLAGS += -L/usr/lib32
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -349,7 +355,7 @@ endif
 ifndef NO_CURL
 	ifdef CURLDIR
 		# This is still problematic -- gcc does not always want -R.
-		ALL_CFLAGS += -I$(CURLDIR)/include
+		BASIC_CFLAGS += -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
 	else
 		CURL_LIBCURL = -lcurl
@@ -370,13 +376,13 @@ ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		ALL_CFLAGS += -I$(OPENSSLDIR)/include
+		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
 		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
 	else
 		OPENSSL_LINK =
 	endif
 else
-	ALL_CFLAGS += -DNO_OPENSSL
+	BASIC_CFLAGS += -DNO_OPENSSL
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
@@ -388,7 +394,7 @@ endif
 ifdef NEEDS_LIBICONV
 	ifdef ICONVDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		ALL_CFLAGS += -I$(ICONVDIR)/include
+		BASIC_CFLAGS += -I$(ICONVDIR)/include
 		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
 	else
 		ICONV_LINK =
@@ -404,13 +410,13 @@ ifdef NEEDS_NSL
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_D_TYPE_IN_DIRENT
-	ALL_CFLAGS += -DNO_D_TYPE_IN_DIRENT
+	BASIC_CFLAGS += -DNO_D_TYPE_IN_DIRENT
 endif
 ifdef NO_D_INO_IN_DIRENT
-	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT
+	BASIC_CFLAGS += -DNO_D_INO_IN_DIRENT
 endif
 ifdef NO_SYMLINK_HEAD
-	ALL_CFLAGS += -DNO_SYMLINK_HEAD
+	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
 endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
@@ -433,13 +439,13 @@ ifdef NO_MMAP
 	COMPAT_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
-	ALL_CFLAGS += -DNO_IPV6
+	BASIC_CFLAGS += -DNO_IPV6
 endif
 ifdef NO_SOCKADDR_STORAGE
 ifdef NO_IPV6
-	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in
+	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in
 else
-	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
+	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in6
 endif
 endif
 ifdef NO_INET_NTOP
@@ -447,7 +453,7 @@ ifdef NO_INET_NTOP
 endif
 
 ifdef NO_ICONV
-	ALL_CFLAGS += -DNO_ICONV
+	BASIC_CFLAGS += -DNO_ICONV
 endif
 
 ifdef PPC_SHA1
@@ -471,7 +477,7 @@ ifdef USE_PIC
 	ALL_CFLAGS += -fPIC
 endif
 ifdef NO_ACCURATE_DIFF
-	ALL_CFLAGS += -DNO_ACCURATE_DIFF
+	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
 # Shell quote (do not use $(call) to accomodate ancient setups);
@@ -491,8 +497,12 @@ GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
-ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
+
+ALL_CFLAGS += $(BASIC_CFLAGS)
+ALL_LDFLAGS += $(BASIC_LDFLAGS)
+
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 
 
@@ -622,9 +632,9 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
-PERL_DEFINE = $(ALL_CFLAGS) -DGIT_VERSION='"$(GIT_VERSION)"'
+PERL_DEFINE = $(BASIC_CFLAGS) -DGIT_VERSION='"$(GIT_VERSION)"'
 PERL_DEFINE_SQ = $(subst ','\'',$(PERL_DEFINE))
-PERL_LIBS = $(EXTLIBS)
+PERL_LIBS = $(BASIC_LDFLAGS) $(EXTLIBS)
 PERL_LIBS_SQ = $(subst ','\'',$(PERL_LIBS))
 perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
 	(cd perl && $(PERL_PATH) Makefile.PL \
