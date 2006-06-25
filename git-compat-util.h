@@ -79,6 +79,11 @@ extern void gitunsetenv(const char *);
 extern char *gitstrcasestr(const char *haystack, const char *needle);
 #endif
 
+#ifdef NO_STRLCPY
+#define strlcpy gitstrlcpy
+extern size_t gitstrlcpy(char *, const char *, size_t);
+#endif
+
 static inline void *xmalloc(size_t size)
 {
 	void *ret = malloc(size);

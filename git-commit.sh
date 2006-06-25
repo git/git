@@ -696,13 +696,18 @@ t)
 	fi
 esac
 
-sed -e '
-    /^diff --git a\/.*/{
-	s///
-	q
-    }
-    /^#/d
-' "$GIT_DIR"/COMMIT_EDITMSG |
+if test -z "$no_edit"
+then
+    sed -e '
+        /^diff --git a\/.*/{
+	    s///
+	    q
+	}
+	/^#/d
+    ' "$GIT_DIR"/COMMIT_EDITMSG
+else
+    cat "$GIT_DIR"/COMMIT_EDITMSG
+fi |
 git-stripspace >"$GIT_DIR"/COMMIT_MSG
 
 if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |

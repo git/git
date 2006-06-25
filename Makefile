@@ -26,6 +26,8 @@ all:
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
+# Define NO_STRLCPY if you don't have strlcpy.
+#
 # Define NO_SETENV if you don't have setenv in the C library.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -240,9 +242,13 @@ LIBS = $(GITLIBS) -lz
 # because maintaining the nesting to match is a pain.  If
 # we had "elif" things would have been much nicer...
 
+ifeq ($(uname_S),Linux)
+	NO_STRLCPY = YesPlease
+endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	NO_STRLCPY = YesPlease
 	## fink
 	ifeq ($(shell test -d /sw/lib && echo y),y)
 		ALL_CFLAGS += -I/sw/include
@@ -259,6 +265,7 @@ ifeq ($(uname_S),SunOS)
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
 	ifeq ($(uname_R),5.8)
 		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
@@ -276,6 +283,7 @@ ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
 	NO_D_INO_IN_DIRENT = YesPlease
 	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	# There are conflicting reports about this.
@@ -305,12 +313,14 @@ ifeq ($(uname_S),NetBSD)
 endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
+	NO_STRLCPY = YesPlease
 	NEEDS_LIBICONV=YesPlease
 endif
 ifeq ($(uname_S),IRIX64)
 	NO_IPV6=YesPlease
 	NO_SETENV=YesPlease
 	NO_STRCASESTR=YesPlease
+	NO_STRLCPY = YesPlease
 	NO_SOCKADDR_STORAGE=YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
 	ALL_CFLAGS += -DPATH_MAX=1024
@@ -402,6 +412,10 @@ endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
 	COMPAT_OBJS += compat/strcasestr.o
+endif
+ifdef NO_STRLCPY
+	COMPAT_CFLAGS += -DNO_STRLCPY
+	COMPAT_OBJS += compat/strlcpy.o
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV

@@ -280,17 +280,17 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "user.name")) {
-		safe_strncpy(git_default_name, value, sizeof(git_default_name));
+		strlcpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
 	}
 
 	if (!strcmp(var, "user.email")) {
-		safe_strncpy(git_default_email, value, sizeof(git_default_email));
+		strlcpy(git_default_email, value, sizeof(git_default_email));
 		return 0;
 	}
 
 	if (!strcmp(var, "i18n.commitencoding")) {
-		safe_strncpy(git_commit_encoding, value, sizeof(git_commit_encoding));
+		strlcpy(git_commit_encoding, value, sizeof(git_commit_encoding));
 		return 0;
 	}
 

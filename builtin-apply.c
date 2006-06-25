@@ -125,6 +125,7 @@ struct patch {
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
+	int inaccurate_eof:1;
 	struct fragment *fragments;
 	char *result;
 	unsigned long resultsize;
@@ -1333,7 +1334,8 @@ static int apply_line(char *output, const char *patch, int plen)
 	return plen;
 }
 
-static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
+static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
+	int inaccurate_eof)
 {
 	int match_beginning, match_end;
 	char *buf = desc->buffer;
@@ -1386,13 +1388,11 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag)
 		size -= len;
 	}
 
-#ifdef NO_ACCURATE_DIFF
-	if (oldsize > 0 && old[oldsize - 1] == '\n' &&
+	if (inaccurate_eof && oldsize > 0 && old[oldsize - 1] == '\n' &&
 			newsize > 0 && new[newsize - 1] == '\n') {
 		oldsize--;
 		newsize--;
 	}
-#endif
 
 	oldlines = old;
 	newlines = new;
@@ -1614,7 +1614,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag) < 0)
+		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
 			return error("patch failed: %s:%ld",
 				     name, frag->oldpos);
 		frag = frag->next;
@@ -2097,7 +2097,7 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd, const char *filename)
+static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 {
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
@@ -2113,6 +2113,7 @@ static int apply_patch(int fd, const char *filename)
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
+		patch->inaccurate_eof = inaccurate_eof;
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
@@ -2180,6 +2181,8 @@ int cmd_apply(int argc, const char **argv, char **envp)
 {
 	int i;
 	int read_stdin = 1;
+	int inaccurate_eof = 0;
+
 	const char *whitespace_option = NULL;
 
 	for (i = 1; i < argc; i++) {
@@ -2188,7 +2191,7 @@ int cmd_apply(int argc, const char **argv, char **envp)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>");
+			apply_patch(0, "<stdin>", inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2265,6 +2268,10 @@ int cmd_apply(int argc, const char **argv, char **envp)
 			parse_whitespace_option(arg + 13);
 			continue;
 		}
+		if (!strcmp(arg, "--inaccurate-eof")) {
+			inaccurate_eof = 1;
+			continue;
+		}
 
 		if (check_index && prefix_length < 0) {
 			prefix = setup_git_directory();
@@ -2281,12 +2288,12 @@ int cmd_apply(int argc, const char **argv, char **envp)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg);
+		apply_patch(fd, arg, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>");
+		apply_patch(0, "<stdin>", inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {

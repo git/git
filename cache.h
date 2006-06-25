@@ -181,7 +181,6 @@ extern int assume_unchanged;
 extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
-extern int diff_rename_limit_default;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
 
@@ -216,7 +215,6 @@ enum sharedrepo {
 int git_config_perm(const char *var, const char *value);
 int adjust_shared_perm(const char *path);
 int safe_create_leading_directories(char *path);
-size_t safe_strncpy(char *, const char *, size_t);
 char *enter_repo(char *path, int strict);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
