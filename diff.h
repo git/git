@@ -46,6 +46,7 @@ struct diff_options {
 	int setup;
 	int abbrev;
 	const char *stat_sep;
+	long xdl_opts;
 
 	int nr_paths;
 	const char **paths;

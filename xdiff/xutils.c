@@ -186,12 +186,61 @@ long xdl_guess_lines(mmfile_t *mf) {
 	return nl + 1;
 }
 
+int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
+{
+	int i1, i2;
 
-unsigned long xdl_hash_record(char const **data, char const *top) {
+	if (flags & XDF_IGNORE_WHITESPACE) {
+		for (i1 = i2 = 0; i1 < s1 && i2 < s2; i1++, i2++) {
+			if (isspace(l1[i1]))
+				while (isspace(l1[i1]) && i1 < s1)
+					i1++;
+			else if (isspace(l2[i2]))
+				while (isspace(l2[i2]) && i2 < s2)
+					i2++;
+			else if (l1[i1] != l2[i2])
+				return l2[i2] - l1[i1];
+		}
+		if (i1 >= s1)
+			return 1;
+		else if (i2 >= s2)
+			return -1;
+	} else if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
+		for (i1 = i2 = 0; i1 < s1 && i2 < s2; i1++, i2++) {
+			if (isspace(l1[i1])) {
+				if (!isspace(l2[i2]))
+					return -1;
+				while (isspace(l1[i1]) && i1 < s1)
+					i1++;
+				while (isspace(l2[i2]) && i2 < s2)
+					i2++;
+			} else if (l1[i1] != l2[i2])
+				return l2[i2] - l1[i1];
+		}
+		if (i1 >= s1)
+			return 1;
+		else if (i2 >= s2)
+			return -1;
+	} else
+		return s1 == s2 && !memcmp(l1, l2, s1);
+
+	return 0;
+}
+
+unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 	unsigned long ha = 5381;
 	char const *ptr = *data;
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
+		if (isspace(*ptr) && (flags & XDF_WHITESPACE_FLAGS)) {
+			while (ptr < top && isspace(*ptr) && ptr[1] != '\n')
+				ptr++;
+			if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
+				ha += (ha << 5);
+				ha ^= (unsigned long) ' ';
+			}
+			continue;
+		}
 		ha += (ha << 5);
 		ha ^= (unsigned long) *ptr;
 	}
