@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <signal.h>
 
 static char *server_capabilities = NULL;
 
