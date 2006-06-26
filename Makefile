@@ -94,6 +94,8 @@ CFLAGS = -g -O2 -Wall
 LDFLAGS =
 ALL_CFLAGS = $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
+PERL_CFLAGS =
+PERL_LDFLAGS =
 STRIP ?= strip
 
 prefix = $(HOME)
@@ -119,8 +121,8 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 # Those must not be GNU-specific; they are shared with perl/ which may
 # be built by a different compiler.
-BASIC_CFLAGS =
-BASIC_LDFLAGS =
+BASIC_CFLAGS = $(PERL_CFLAGS)
+BASIC_LDFLAGS = $(PERL_LDFLAGS)
 
 SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
