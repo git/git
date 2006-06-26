@@ -566,6 +566,9 @@ then
 elif test -f "$GIT_DIR/MERGE_HEAD" && test -f "$GIT_DIR/MERGE_MSG"
 then
 	cat "$GIT_DIR/MERGE_MSG"
+elif test -f "$GIT_DIR/SQUASH_MSG"
+then
+	cat "$GIT_DIR/SQUASH_MSG"
 fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
@@ -663,7 +666,7 @@ else
 fi
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" -a -z "$amend" ]
 then
-	rm -f "$GIT_DIR/COMMIT_EDITMSG"
+	rm -f "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
 	run_status
 	exit 1
 fi
@@ -734,7 +737,7 @@ else
 	false
 fi
 ret="$?"
-rm -f "$GIT_DIR/COMMIT_MSG" "$GIT_DIR/COMMIT_EDITMSG"
+rm -f "$GIT_DIR/COMMIT_MSG" "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
 if test -d "$GIT_DIR/rr-cache"
 then
 	git-rerere
