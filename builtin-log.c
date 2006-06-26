@@ -160,6 +160,71 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 	freopen(filename, "w", stdout);
 }
 
+static void reset_all_objects_flags()
+{
+	int i;
+
+	for (i = 0; i < obj_allocs; i++)
+		if (objs[i])
+			objs[i]->flags = 0;
+}
+
+static int get_patch_id(struct commit *commit, struct diff_options *options,
+		unsigned char *sha1)
+{
+	diff_tree_sha1(commit->parents->item->object.sha1, commit->object.sha1,
+			"", options);
+	diffcore_std(options);
+	return diff_flush_patch_id(options, sha1);
+}
+
+static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
+{
+	struct rev_info check_rev;
+	struct commit *commit;
+	struct object *o1, *o2;
+	unsigned flags1, flags2;
+	unsigned char sha1[20];
+
+	if (rev->pending.nr != 2)
+		die("Need exactly one range.");
+
+	o1 = rev->pending.objects[0].item;
+	flags1 = o1->flags;
+	o2 = rev->pending.objects[1].item;
+	flags2 = o2->flags;
+
+	if ((flags1 & UNINTERESTING) == (flags2 & UNINTERESTING))
+		die("Not a range.");
+
+	diff_setup(options);
+	options->recursive = 1;
+	if (diff_setup_done(options) < 0)
+		die("diff_setup_done failed");
+
+	/* given a range a..b get all patch ids for b..a */
+	init_revisions(&check_rev);
+	o1->flags ^= UNINTERESTING;
+	o2->flags ^= UNINTERESTING;
+	add_pending_object(&check_rev, o1, "o1");
+	add_pending_object(&check_rev, o2, "o2");
+	prepare_revision_walk(&check_rev);
+
+	while ((commit = get_revision(&check_rev)) != NULL) {
+		/* ignore merges */
+		if (commit->parents && commit->parents->next)
+			continue;
+
+		if (!get_patch_id(commit, options, sha1))
+			created_object(sha1, xcalloc(1, sizeof(struct object)));
+	}
+
+	/* reset for next revision walk */
+	reset_all_objects_flags();
+	o1->flags = flags1;
+	o2->flags = flags2;
+}
+
 int cmd_format_patch(int argc, const char **argv, char **envp)
 {
 	struct commit *commit;
@@ -170,6 +235,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int numbered = 0;
 	int start_number = -1;
 	int keep_subject = 0;
+	int ignore_if_in_upstream = 0;
+	struct diff_options patch_id_opts;
 	char *add_signoff = NULL;
 
 	init_revisions(&rev);
@@ -235,6 +302,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			rev.mime_boundary = git_version_string;
 		else if (!strncmp(argv[i], "--attach=", 9))
 			rev.mime_boundary = argv[i] + 9;
+		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
+			ignore_if_in_upstream = 1;
 		else
 			argv[j++] = argv[i];
 	}
@@ -262,14 +331,25 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		add_head(&rev);
 	}
 
+	if (ignore_if_in_upstream)
+		get_patch_ids(&rev, &patch_id_opts);
+
 	if (!use_stdout)
 		realstdout = fdopen(dup(1), "w");
 
 	prepare_revision_walk(&rev);
 	while ((commit = get_revision(&rev)) != NULL) {
+		unsigned char sha1[20];
+
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)
 			continue;
+
+		if (ignore_if_in_upstream &&
+				!get_patch_id(commit, &patch_id_opts, sha1) &&
+				lookup_object(sha1))
+			continue;
+
 		nr++;
 		list = realloc(list, nr * sizeof(list[0]));
 		list[nr - 1] = commit;
