@@ -1,6 +1,8 @@
 #ifndef PKTLINE_H
 #define PKTLINE_H
 
+#include "git-compat-util.h"
+
 /*
  * Silly packetized line writing interface
  */
