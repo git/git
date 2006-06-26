@@ -41,7 +41,7 @@ then
 	echo
 	echo "* The 'next' branch, in addition, has these."
 	echo
-	log heads/master..heads/next ^heads/cleannext
+	log heads/master..heads/next
 fi
 
 list=`git-rev-list ^refs/heads/master ^refs/heads/next refs/heads/pu 2>/dev/null`
