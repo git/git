@@ -15,14 +15,14 @@ for branch in $branches
 do
 	if git rev-parse --verify refs/heads/$branch 2>/dev/null
 	then
-		echo "* $branch" &&
+		echo "** $branch" &&
 		git checkout $branch &&
 		Meta/Make -- $J all &&
 		Meta/Make -- $J $nstall &&
 		Meta/Make test &&
 		Meta/Make clean || exit $?
 	else
-		echo "* No $branch"
+		echo "** No $branch"
 	fi
 done >./:all.log 2>&1
 
