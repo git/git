@@ -1,0 +1,8 @@
+$ git log -SF master
+commit 889b315013ef9f2e2f90aa0b054b267c8a557847
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:02:00 2006 +0000
+
+    Third
+
+$
