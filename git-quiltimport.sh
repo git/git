@@ -9,7 +9,7 @@ while case "$#" in 0) break;; esac
 do
 	case "$1" in
 	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
-		quilt_author=$(expr "$1" : '-[^=]*\(.*\)')
+		quilt_author=$(expr "z$1" : 'z-[^=]*\(.*\)')
 		shift
 		;;
 
@@ -26,7 +26,7 @@ do
 		;;
 
 	--pa=*|--pat=*|--patc=*|--patch=*|--patche=*|--patches=*)
-		QUILT_PATCHES=$(expr "$1" : '-[^=]*\(.*\)')
+		QUILT_PATCHES=$(expr "z$1" : 'z-[^=]*\(.*\)')
 		shift
 		;;
 

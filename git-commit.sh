@@ -223,13 +223,13 @@ do
   -F*|-f*)
       no_edit=t
       log_given=t$log_given
-      logfile=`expr "$1" : '-[Ff]\(.*\)'`
+      logfile=`expr "z$1" : 'z-[Ff]\(.*\)'`
       shift
       ;;
   --F=*|--f=*|--fi=*|--fil=*|--file=*)
       no_edit=t
       log_given=t$log_given
-      logfile=`expr "$1" : '-[^=]*=\(.*\)'`
+      logfile=`expr "z$1" : 'z-[^=]*=\(.*\)'`
       shift
       ;;
   -a|--a|--al|--all)
@@ -237,7 +237,7 @@ do
       shift
       ;;
   --au=*|--aut=*|--auth=*|--autho=*|--author=*)
-      force_author=`expr "$1" : '-[^=]*=\(.*\)'`
+      force_author=`expr "z$1" : 'z-[^=]*=\(.*\)'`
       shift
       ;;
   --au|--aut|--auth|--autho|--author)
@@ -277,11 +277,11 @@ $1"
       log_given=m$log_given
       if test "$log_message" = ''
       then
-          log_message=`expr "$1" : '-m\(.*\)'`
+          log_message=`expr "z$1" : 'z-m\(.*\)'`
       else
           log_message="$log_message
 
-`expr "$1" : '-m\(.*\)'`"
+`expr "z$1" : 'z-m\(.*\)'`"
       fi
       no_edit=t
       shift
@@ -290,11 +290,11 @@ $1"
       log_given=m$log_given
       if test "$log_message" = ''
       then
-          log_message=`expr "$1" : '-[^=]*=\(.*\)'`
+          log_message=`expr "z$1" : 'z-[^=]*=\(.*\)'`
       else
           log_message="$log_message
 
-`expr "$1" : '-[^=]*=\(.*\)'`"
+`expr "z$1" : 'zq-[^=]*=\(.*\)'`"
       fi
       no_edit=t
       shift
@@ -321,7 +321,7 @@ $1"
   --reedit-me=*|--reedit-mes=*|--reedit-mess=*|--reedit-messa=*|\
   --reedit-messag=*|--reedit-message=*)
       log_given=t$log_given
-      use_commit=`expr "$1" : '-[^=]*=\(.*\)'`
+      use_commit=`expr "z$1" : 'z-[^=]*=\(.*\)'`
       no_edit=
       shift
       ;;
@@ -346,7 +346,7 @@ $1"
   --reuse-mes=*|--reuse-mess=*|--reuse-messa=*|--reuse-messag=*|\
   --reuse-message=*)
       log_given=t$log_given
-      use_commit=`expr "$1" : '-[^=]*=\(.*\)'`
+      use_commit=`expr "z$1" : 'z-[^=]*=\(.*\)'`
       no_edit=t
       shift
       ;;

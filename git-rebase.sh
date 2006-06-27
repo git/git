@@ -179,7 +179,7 @@ do
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
 		case "$#,$1" in
 		*,*=*)
-			strategy=`expr "$1" : '-[^=]*=\(.*\)'` ;;
+			strategy=`expr "z$1" : 'z-[^=]*=\(.*\)'` ;;
 		1,*)
 			usage ;;
 		*)
