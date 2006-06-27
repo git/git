@@ -133,7 +133,7 @@ while
 	*,--reference)
 		shift; reference="$1" ;;
 	*,--reference=*)
-		reference=`expr "$1" : '--reference=\(.*\)'` ;;
+		reference=`expr "z$1" : 'z--reference=\(.*\)'` ;;
 	*,-o|*,--or|*,--ori|*,--orig|*,--origi|*,--origin)
 		case "$2" in
 		'')

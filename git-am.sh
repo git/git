@@ -97,7 +97,7 @@ while case "$#" in 0) break;; esac
 do
 	case "$1" in
 	-d=*|--d=*|--do=*|--dot=*|--dote=*|--dotes=*|--dotest=*)
-	dotest=`expr "$1" : '-[^=]*=\(.*\)'`; shift ;;
+	dotest=`expr "z$1" : 'z-[^=]*=\(.*\)'`; shift ;;
 	-d|--d|--do|--dot|--dote|--dotes|--dotest)
 	case "$#" in 1) usage ;; esac; shift
 	dotest="$1"; shift;;
