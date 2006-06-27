@@ -164,9 +164,22 @@ int log_tree_diff_flush(struct rev_info *opt)
 		return 0;
 	}
 
-	if (opt->loginfo && !opt->no_commit_id)
+	if (opt->loginfo && !opt->no_commit_id) {
+		/* When showing a verbose header (i.e. log message),
+		 * and not in --pretty=oneline format, we would want
+		 * an extra newline between the end of log and the
+		 * output for readability.
+		 */
 		show_log(opt, opt->diffopt.msg_sep);
-
+		if (opt->verbose_header &&
+		    opt->commit_format != CMIT_FMT_ONELINE) {
+			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
+			if ((pch & opt->diffopt.output_format) == pch)
+				printf("---%c", opt->diffopt.line_termination);
+			else
+				putchar(opt->diffopt.line_termination);
+		}
+	}
 	diff_flush(&opt->diffopt);
 	return 1;
 }

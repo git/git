@@ -72,7 +72,6 @@ int cmd_diff_tree(int argc, const char **argv, char **envp)
 	init_revisions(opt);
 	opt->abbrev = 0;
 	opt->diff = 1;
-	opt->diffopt.msg_sep = "---\n";
 	argc = setup_revisions(argc, argv, opt, NULL);
 
 	while (--argc > 0) {

@@ -1424,7 +1424,7 @@ void diff_setup(struct diff_options *options)
 	options->break_opt = -1;
 	options->rename_limit = -1;
 	options->context = 3;
-	options->msg_sep = "\n";
+	options->msg_sep = "";
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
@@ -1454,6 +1454,11 @@ int diff_setup_done(struct diff_options *options)
 	if (options->output_format & (DIFF_FORMAT_PATCH |
 				      DIFF_FORMAT_DIFFSTAT |
 				      DIFF_FORMAT_CHECKDIFF))
+		options->recursive = 1;
+	/*
+	 * Also pickaxe would not work very well if you do not say recursive
+	 */
+	if (options->pickaxe)
 		options->recursive = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)
@@ -2143,9 +2148,6 @@ void diff_flush(struct diff_options *options)
 	if (output_format & DIFF_FORMAT_DIFFSTAT) {
 		struct diffstat_t diffstat;
 
-		if (separator++)
-			putchar('\n');
-
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
 		diffstat.xm.consume = diffstat_consume;
 		for (i = 0; i < q->nr; i++) {
@@ -2154,14 +2156,13 @@ void diff_flush(struct diff_options *options)
 				diff_flush_stat(p, options, &diffstat);
 		}
 		show_stats(&diffstat);
+		separator++;
 	}
 
 	if (output_format & DIFF_FORMAT_SUMMARY && !is_summary_empty(q)) {
-		if (separator++)
-			putchar('\n');
-
 		for (i = 0; i < q->nr; i++)
 			diff_summary(q->queue[i]);
+		separator++;
 	}
 
 	if (output_format & DIFF_FORMAT_PATCH) {

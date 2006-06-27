@@ -835,31 +835,33 @@ void diff_tree_combined(const unsigned char *sha1,
 	struct diff_options *opt = &rev->diffopt;
 	struct diff_options diffopts;
 	struct combine_diff_path *p, *paths = NULL;
-	int i, num_paths;
+	int i, num_paths, needsep, show_log_first;
 
 	diffopts = *opt;
-	diffopts.output_format &= ~(DIFF_FORMAT_RAW | DIFF_FORMAT_DIFFSTAT);
+	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.recursive = 1;
 
+	show_log_first = rev->loginfo;
+	needsep = 0;
 	/* find set of paths that everybody touches */
 	for (i = 0; i < num_parent; i++) {
 		/* show stat against the first parent even
 		 * when doing combined diff.
 		 */
 		if (i == 0 && opt->output_format & DIFF_FORMAT_DIFFSTAT)
-			diffopts.output_format |= DIFF_FORMAT_DIFFSTAT;
+			diffopts.output_format = DIFF_FORMAT_DIFFSTAT;
 		else
-			diffopts.output_format |= DIFF_FORMAT_NO_OUTPUT;
+			diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 		diff_tree_sha1(parent[i], sha1, "", &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 
-		if (opt->output_format & DIFF_FORMAT_DIFFSTAT && rev->loginfo)
+		if (show_log_first && i == 0) {
 			show_log(rev, opt->msg_sep);
-
+			if (rev->verbose_header && opt->output_format)
+				putchar(opt->line_termination);
+		}
 		diff_flush(&diffopts);
-		if (opt->output_format & DIFF_FORMAT_DIFFSTAT)
-			putchar('\n');
 	}
 
 	/* find out surviving paths */
@@ -875,9 +877,13 @@ void diff_tree_combined(const unsigned char *sha1,
 				if (p->len)
 					show_raw_diff(p, num_parent, rev);
 			}
-			putchar(opt->line_termination);
+			needsep = 1;
 		}
+		else if (opt->output_format & DIFF_FORMAT_DIFFSTAT)
+			needsep = 1;
 		if (opt->output_format & DIFF_FORMAT_PATCH) {
+			if (needsep)
+				putchar(opt->line_termination);
 			for (p = paths; p; p = p->next) {
 				if (p->len)
 					show_patch_diff(p, num_parent, dense,
