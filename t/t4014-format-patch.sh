@@ -37,7 +37,7 @@ test_expect_success "format-patch --ignore-if-in-upstream" '
 
 	git format-patch --stdout master..side >patch0 &&
 	cnt=`grep "^From " patch0 | wc -l` &&
-	test "$cnt" = 3
+	test $cnt = 3
 
 '
 
@@ -46,7 +46,7 @@ test_expect_success "format-patch --ignore-if-in-upstream" '
 	git format-patch --stdout \
 		--ignore-if-in-upstream master..side >patch1 &&
 	cnt=`grep "^From " patch1 | wc -l` &&
-	test "$cnt" = 2
+	test $cnt = 2
 
 '
 
@@ -55,7 +55,7 @@ test_expect_success "format-patch result applies" '
 	git checkout -b rebuild-0 master &&
 	git am -3 patch0 &&
 	cnt=`git rev-list master.. | wc -l` &&
-	test "$cnt" = 2
+	test $cnt = 2
 '
 
 test_expect_success "format-patch --ignore-if-in-upstream result applies" '
@@ -63,7 +63,7 @@ test_expect_success "format-patch --ignore-if-in-upstream result applies" '
 	git checkout -b rebuild-1 master &&
 	git am -3 patch1 &&
 	cnt=`git rev-list master.. | wc -l` &&
-	test "$cnt" = 2
+	test $cnt = 2
 '
 
 test_done
