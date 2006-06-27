@@ -2093,15 +2093,43 @@ static void diff_summary(struct diff_filepair *p)
 	}
 }
 
+static int is_summary_empty(const struct diff_queue_struct *q)
+{
+	int i;
+
+	for (i = 0; i < q->nr; i++) {
+		const struct diff_filepair *p = q->queue[i];
+
+		switch (p->status) {
+		case DIFF_STATUS_DELETED:
+		case DIFF_STATUS_ADDED:
+		case DIFF_STATUS_COPIED:
+		case DIFF_STATUS_RENAMED:
+			return 0;
+		default:
+			if (p->score)
+				return 0;
+			if (p->one->mode && p->two->mode &&
+			    p->one->mode != p->two->mode)
+				return 0;
+			break;
+		}
+	}
+	return 1;
+}
+
 void diff_flush(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i, output_format = options->output_format;
+	int separator = 0;
 
 	/*
 	 * Order: raw, stat, summary, patch
 	 * or:    name/name-status/checkdiff (other bits clear)
 	 */
+	if (!q->nr)
+		goto free_queue;
 
 	if (output_format & (DIFF_FORMAT_RAW |
 			     DIFF_FORMAT_NAME |
@@ -2112,10 +2140,14 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				flush_one_pair(p, options);
 		}
+		separator++;
 	}
 
 	if (output_format & DIFF_FORMAT_DIFFSTAT) {
 		struct diffstat_t diffstat;
+
+		if (separator++)
+			putchar('\n');
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
 		diffstat.xm.consume = diffstat_consume;
@@ -2127,18 +2159,22 @@ void diff_flush(struct diff_options *options)
 		show_stats(&diffstat);
 	}
 
-	if (output_format & DIFF_FORMAT_SUMMARY) {
+	if (output_format & DIFF_FORMAT_SUMMARY && !is_summary_empty(q)) {
+		if (separator++)
+			putchar('\n');
+
 		for (i = 0; i < q->nr; i++)
 			diff_summary(q->queue[i]);
 	}
 
 	if (output_format & DIFF_FORMAT_PATCH) {
-		if (output_format & (DIFF_FORMAT_DIFFSTAT |
-				     DIFF_FORMAT_SUMMARY)) {
-			if (options->stat_sep)
+		if (separator) {
+			if (options->stat_sep) {
+				/* attach patch instead of inline */
 				fputs(options->stat_sep, stdout);
-			else
+			} else {
 				putchar(options->line_termination);
+			}
 		}
 
 		for (i = 0; i < q->nr; i++) {
@@ -2150,6 +2186,7 @@ void diff_flush(struct diff_options *options)
 
 	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
+free_queue:
 	free(q->queue);
 	q->queue = NULL;
 	q->nr = q->alloc = 0;
