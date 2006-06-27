@@ -1,0 +1,30 @@
+$ git whatchanged master
+commit c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:03:00 2006 +0000
+
+    Side
+
+:100644 100644 35d242b... 7289e35... M	dir/sub
+:100644 100644 01e79c3... f4615da... M	file0
+:000000 100644 0000000... 7289e35... A	file3
+
+commit 889b315013ef9f2e2f90aa0b054b267c8a557847
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:02:00 2006 +0000
+
+    Third
+
+:100644 100644 8422d40... cead32e... M	dir/sub
+:000000 100644 0000000... b1e6722... A	file1
+
+commit 7952a93e09bf565b5592766a438b40cd81f4846f
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:01:00 2006 +0000
+
+    Second
+
+:100644 100644 35d242b... 8422d40... M	dir/sub
+:100644 100644 01e79c3... b414108... M	file0
+:100644 000000 01e79c3... 0000000... D	file2
+$

@@ -1,0 +1,6 @@
+$ git diff-tree -c --stat master
+176b998f5d647cbd77a9d8acf4531e930754d16d
+ dir/sub |    2 ++
+ file0   |    3 +++
+ 2 files changed, 5 insertions(+), 0 deletions(-)
+$
