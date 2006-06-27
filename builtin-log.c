@@ -160,15 +160,6 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 	freopen(filename, "w", stdout);
 }
 
-static void reset_all_objects_flags()
-{
-	int i;
-
-	for (i = 0; i < obj_allocs; i++)
-		if (objs[i])
-			objs[i]->flags = 0;
-}
-
 static int get_patch_id(struct commit *commit, struct diff_options *options,
 		unsigned char *sha1)
 {
@@ -220,7 +211,10 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
 	}
 
 	/* reset for next revision walk */
-	reset_all_objects_flags();
+	clear_commit_marks((struct commit *)o1,
+			SEEN | UNINTERESTING | SHOWN | ADDED);
+	clear_commit_marks((struct commit *)o2,
+			SEEN | UNINTERESTING | SHOWN | ADDED);
 	o1->flags = flags1;
 	o2->flags = flags2;
 }
