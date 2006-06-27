@@ -1438,9 +1438,6 @@ int diff_setup_done(struct diff_options *options)
 	    (0 <= options->rename_limit && !options->detect_rename))
 		return -1;
 
-	if (options->output_format & DIFF_FORMAT_NO_OUTPUT)
-		options->output_format = 0;
-
 	if (options->output_format & (DIFF_FORMAT_NAME |
 				      DIFF_FORMAT_NAME_STATUS |
 				      DIFF_FORMAT_CHECKDIFF |
