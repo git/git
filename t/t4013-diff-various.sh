@@ -163,6 +163,22 @@ diff-tree -p -m master
 diff-tree -c master
 diff-tree -c --abbrev master
 diff-tree --cc master
+# stat only should show the diffstat with the first parent
+diff-tree -c --stat master
+diff-tree --cc --stat master
+diff-tree -c --stat --summary master
+diff-tree --cc --stat --summary master
+# stat summary should show the diffstat and summary with the first parent
+diff-tree -c --stat --summary side
+diff-tree --cc --stat --summary side
+# this one gives an extra newline after stat, which should be removed
+# diff-tree --cc --patch-with-stat master
+# this one gives an extra newline after stat, which should be removed
+# other than that it shows the correct example -- stat and summary are
+# against the first parent, and patch-looking combined diff follows.
+diff-tree --cc --patch-with-stat --summary master
+# this is correct
+diff-tree --cc --patch-with-stat --summary side
 
 log master
 log -p master
@@ -170,8 +186,11 @@ log --root master
 log --root -p master
 log --patch-with-stat master
 log --root --patch-with-stat master
-#log --root --patch-with-stat --summary master
+log --root --patch-with-stat --summary master
+log --root -c --patch-with-stat --summary master
+log --root --cc --patch-with-stat --summary master
 log -SF master
+log -SF -p master
 
 whatchanged master
 whatchanged -p master
@@ -180,10 +199,15 @@ whatchanged --root -p master
 whatchanged --patch-with-stat master
 whatchanged --root --patch-with-stat master
 whatchanged --root --patch-with-stat --summary master
+whatchanged --root -c --patch-with-stat --summary master
+whatchanged --root --cc --patch-with-stat --summary master
 whatchanged -SF master
+whatchanged -SF -p master
 
 log --patch-with-stat master -- dir/
 whatchanged --patch-with-stat master -- dir/
+log --patch-with-stat --summary master -- dir/
+whatchanged --patch-with-stat --summary master -- dir/
 
 show initial
 show --root initial
@@ -194,8 +218,6 @@ show --stat --summary side
 show --patch-with-stat side
 show --patch-with-raw side
 show --patch-with-stat --summary side
-
-
 
 EOF
 
