@@ -79,7 +79,6 @@ int cmd_log(int argc, const char **argv, char **envp)
 
 	init_revisions(&rev);
 	rev.always_show_header = 1;
-	rev.diffopt.recursive = 1;
 	cmd_log_init(argc, argv, envp, &rev);
 	return cmd_log_walk(&rev);
 }
