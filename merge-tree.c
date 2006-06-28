@@ -1,10 +1,78 @@
 #include "cache.h"
 #include "tree-walk.h"
+#include "blob.h"
 
 static const char merge_tree_usage[] = "git-merge-tree <base-tree> <branch1> <branch2>";
 static int resolve_directories = 1;
 
+struct merge_list {
+	struct merge_list *next;
+	struct merge_list *link;	/* other stages for this object */
+
+	unsigned int stage : 2,
+		     flags : 30;
+	unsigned int mode;
+	const char *path;
+	struct blob *blob;
+};
+
+static struct merge_list *merge_result, **merge_result_end = &merge_result;
+
+static void add_merge_entry(struct merge_list *entry)
+{
+	*merge_result_end = entry;
+	merge_result_end = &entry->next;
+}
+
 static void merge_trees(struct tree_desc t[3], const char *base);
+
+static const char *explanation(struct merge_list *entry)
+{
+	switch (entry->stage) {
+	case 0:
+		return "merged";
+	case 3:
+		return "added in remote";
+	case 2:
+		if (entry->link)
+			return "added in both";
+		return "added in local";
+	}
+
+	/* Existed in base */
+	entry = entry->link;
+	if (!entry)
+		return "removed in both";
+
+	if (entry->link)
+		return "changed in both";
+
+	if (entry->stage == 3)
+		return "removed in local";
+	return "removed in remote";
+}
+
+static void show_result_list(struct merge_list *entry)
+{
+	printf("%s\n", explanation(entry));
+	do {
+		struct merge_list *link = entry->link;
+		static const char *desc[4] = { "result", "base", "our", "their" };
+		printf("  %-6s %o %s %s\n", desc[entry->stage], entry->mode, sha1_to_hex(entry->blob->object.sha1), entry->path);
+		entry = link;
+	} while (entry);
+}
+
+static void show_result(void)
+{
+	struct merge_list *walk;
+
+	walk = merge_result;
+	while (walk) {
+		show_result_list(walk);
+		walk = walk->next;
+	}
+}
 
 /* An empty entry never compares same, not even to another empty entry */
 static int same_entry(struct name_entry *a, struct name_entry *b)
@@ -15,24 +83,34 @@ static int same_entry(struct name_entry *a, struct name_entry *b)
 		a->mode == b->mode;
 }
 
-static const char *sha1_to_hex_zero(const unsigned char *sha1)
+static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsigned char *sha1, const char *path)
 {
-	if (sha1)
-		return sha1_to_hex(sha1);
-	return "0000000000000000000000000000000000000000";
+	struct merge_list *res = xmalloc(sizeof(*res));
+
+	memset(res, 0, sizeof(*res));
+	res->stage = stage;
+	res->path = path;
+	res->mode = mode;
+	res->blob = lookup_blob(sha1);
+	return res;
 }
 
 static void resolve(const char *base, struct name_entry *branch1, struct name_entry *result)
 {
+	struct merge_list *orig, *final;
+	const char *path;
+
 	/* If it's already branch1, don't bother showing it */
 	if (!branch1)
 		return;
 
-	printf("0 %06o->%06o %s->%s %s%s\n",
-		branch1->mode, result->mode,
-		sha1_to_hex_zero(branch1->sha1),
-		sha1_to_hex_zero(result->sha1),
-		base, result->path);
+	path = strdup(mkpath("%s%s", base, result->path));
+	orig = create_entry(2, branch1->mode, branch1->sha1, path);
+	final = create_entry(0, result->mode, result->sha1, path);
+
+	final->link = orig;
+
+	add_merge_entry(final);
 }
 
 static int unresolved_directory(const char *base, struct name_entry n[3])
@@ -71,16 +149,40 @@ static int unresolved_directory(const char *base, struct name_entry n[3])
 	return 1;
 }
 
+
+static struct merge_list *link_entry(unsigned stage, const char *base, struct name_entry *n, struct merge_list *entry)
+{
+	const char *path;
+	struct merge_list *link;
+
+	if (!n->mode)
+		return entry;
+	if (entry)
+		path = entry->path;
+	else
+		path = strdup(mkpath("%s%s", base, n->path));
+	link = create_entry(stage, n->mode, n->sha1, path);
+	link->link = entry;
+	return link;
+}
+
 static void unresolved(const char *base, struct name_entry n[3])
 {
+	struct merge_list *entry = NULL;
+
 	if (unresolved_directory(base, n))
 		return;
-	if (n[0].sha1)
-		printf("1 %06o %s %s%s\n", n[0].mode, sha1_to_hex(n[0].sha1), base, n[0].path);
-	if (n[1].sha1)
-		printf("2 %06o %s %s%s\n", n[1].mode, sha1_to_hex(n[1].sha1), base, n[1].path);
-	if (n[2].sha1)
-		printf("3 %06o %s %s%s\n", n[2].mode, sha1_to_hex(n[2].sha1), base, n[2].path);
+
+	/*
+	 * Do them in reverse order so that the resulting link
+	 * list has the stages in order - link_entry adds new
+	 * links at the front.
+	 */
+	entry = link_entry(3, base, n + 2, entry);
+	entry = link_entry(2, base, n + 1, entry);
+	entry = link_entry(1, base, n + 0, entry);
+
+	add_merge_entry(entry);
 }
 
 /*
@@ -172,5 +274,7 @@ int main(int argc, char **argv)
 	free(buf1);
 	free(buf2);
 	free(buf3);
+
+	show_result();
 	return 0;
 }
