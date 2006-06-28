@@ -206,7 +206,6 @@ int main(int argc, const char **argv, char **envp)
 {
 	const char *cmd = argv[0];
 	char *slash = strrchr(cmd, '/');
-	char git_command[PATH_MAX + 1];
 	const char *exec_path = NULL;
 	int done_alias = 0;
 
@@ -313,7 +312,7 @@ int main(int argc, const char **argv, char **envp)
 		cmd_usage(0, exec_path, "'%s' is not a git-command", cmd);
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
-		git_command, strerror(errno));
+		cmd, strerror(errno));
 
 	return 1;
 }
