@@ -54,8 +54,13 @@ continue_merge () {
 
 	if test -n "`git-diff-index HEAD`"
 	then
+		if ! git-commit -C "`cat $dotest/current`"
+		then
+			echo "Commit failed, please do not call \"git commit\""
+			echo "directly, but instead do one of the following: "
+			die "$RESOLVEMSG"
+		fi
 		printf "Committed: %0${prec}d" $msgnum
-		git-commit -C "`cat $dotest/current`"
 	else
 		printf "Already applied: %0${prec}d" $msgnum
 	fi
