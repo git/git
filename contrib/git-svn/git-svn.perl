@@ -46,7 +46,7 @@ my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity, $_cp_remote,
-	$_repack, $_repack_nr, $_repack_flags,
+	$_repack, $_repack_nr, $_repack_flags, $_q,
 	$_message, $_file, $_follow_parent, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
@@ -62,6 +62,7 @@ my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$_repack,
 		'no-metadata' => \$_no_metadata,
+		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
 
 my ($_trunk, $_tags, $_branches);
@@ -1454,12 +1455,12 @@ sub libsvn_checkout_tree {
 	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @$mods) {
 		my $f = $m->{chg};
 		if (defined $o{$f}) {
-			$ed->$f($m);
+			$ed->$f($m, $_q);
 		} else {
 			croak "Invalid change type: $f\n";
 		}
 	}
-	$ed->rmdirs if $_rmdir;
+	$ed->rmdirs($_q) if $_rmdir;
 	return $mods;
 }
 
@@ -2685,6 +2686,7 @@ sub libsvn_fetch {
 		my $m = $paths->{$f}->action();
 		$f =~ s#^/+##;
 		if ($m =~ /^[DR]$/) {
+			print "\t$m\t$f\n" unless $_q;
 			process_rm($gui, $last_commit, $f);
 			next if $m eq 'D';
 			# 'R' can be file replacements, too, right?
@@ -2693,14 +2695,17 @@ sub libsvn_fetch {
 		my $t = $SVN->check_path($f, $rev, $pool);
 		if ($t == $SVN::Node::file) {
 			if ($m =~ /^[AMR]$/) {
-				push @amr, $f;
+				push @amr, [ $m, $f ];
 			} else {
 				die "Unrecognized action: $m, ($f r$rev)\n";
 			}
 		}
 		$pool->clear;
 	}
-	libsvn_get_file($gui, $_, $rev) foreach (@amr);
+	foreach (@amr) {
+		print "\t$_->[0]\t$_->[1]\n" unless $_q;
+		libsvn_get_file($gui, $_->[1], $rev)
+	}
 	close $gui or croak $?;
 	return libsvn_log_entry($rev, $author, $date, $msg, [$last_commit]);
 }
@@ -2773,6 +2778,7 @@ sub libsvn_traverse {
 		if ($t == $SVN::Node::dir) {
 			libsvn_traverse($gui, $cwd, $d, $rev);
 		} elsif ($t == $SVN::Node::file) {
+			print "\tA\t$cwd/$d\n" unless $_q;
 			libsvn_get_file($gui, "$cwd/$d", $rev);
 		}
 	}
@@ -3109,7 +3115,7 @@ sub url_path {
 }
 
 sub rmdirs {
-	my ($self) = @_;
+	my ($self, $q) = @_;
 	my $rm = $self->{rm};
 	delete $rm->{''}; # we never delete the url we're tracking
 	return unless %$rm;
@@ -3150,6 +3156,7 @@ sub rmdirs {
 	foreach my $d (sort { $b =~ tr#/#/# <=> $a =~ tr#/#/# } keys %$rm) {
 		$self->close_directory($bat->{$d}, $p);
 		my ($dn) = ($d =~ m#^(.*?)/?(?:[^/]+)$#);
+		print "\tD+\t/$d/\n" unless $q;
 		$self->SUPER::delete_entry($d, $r, $bat->{$dn}, $p);
 		delete $bat->{$d};
 	}
@@ -3190,21 +3197,23 @@ sub ensure_path {
 }
 
 sub A {
-	my ($self, $m) = @_;
+	my ($self, $m, $q) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 					undef, -1);
+	print "\tA\t$m->{file_b}\n" unless $q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
 
 sub C {
-	my ($self, $m) = @_;
+	my ($self, $m, $q) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
+	print "\tC\t$m->{file_a} => $m->{file_b}\n" unless $q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
@@ -3218,11 +3227,12 @@ sub delete_entry {
 }
 
 sub R {
-	my ($self, $m) = @_;
+	my ($self, $m, $q) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
+	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 
@@ -3232,11 +3242,12 @@ sub R {
 }
 
 sub M {
-	my ($self, $m) = @_;
+	my ($self, $m, $q) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->open_file($self->repo_path($m->{file_b}),
 				$pbat,$self->{r},$self->{pool});
+	print "\t$m->{chg}\t$m->{file_b}\n" unless $q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
@@ -3285,9 +3296,10 @@ sub chg_file {
 }
 
 sub D {
-	my ($self, $m) = @_;
+	my ($self, $m, $q) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
+	print "\tD\t$m->{file_b}\n" unless $q;
 	$self->delete_entry($m->{file_b}, $pbat);
 }
 
