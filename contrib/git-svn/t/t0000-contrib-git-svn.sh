@@ -5,6 +5,16 @@
 
 test_description='git-svn tests'
 GIT_SVN_LC_ALL=$LC_ALL
+
+case "$LC_ALL" in
+*.UTF-8)
+	have_utf8=t
+	;;
+*)
+	have_utf8=
+	;;
+esac
+
 . ./lib-git-svn.sh
 
 mkdir import
@@ -173,7 +183,7 @@ then
 fi
 
 
-if test -n "$GIT_SVN_LC_ALL" && echo $GIT_SVN_LC_ALL | grep -q '\.UTF-8$'
+if test "$have_utf8" = t
 then
 	name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
 	echo '# hello' >> exec-2.sh
@@ -203,7 +213,7 @@ fi
 
 name='check imported tree checksums expected tree checksums'
 rm -f expected
-if test -n "$GIT_SVN_LC_ALL" && echo $GIT_SVN_LC_ALL | grep -q '\.UTF-8$'
+if test "$have_utf8" = t
 then
 	echo tree f735671b89a7eb30cab1d8597de35bd4271ab813 > expected
 fi

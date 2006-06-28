@@ -134,7 +134,7 @@ usage(1) unless defined $cmd;
 init_vars();
 load_authors() if $_authors;
 load_all_refs() if $_branch_all_refs;
-svn_compat_check();
+svn_compat_check() unless $_use_lib;
 migration_check() unless $cmd =~ /^(?:init|rebuild|multi-init)$/;
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
@@ -379,7 +379,8 @@ sub fetch_lib {
 			# performance sucks with it enabled, so it's much
 			# faster to fetch revision ranges instead of relying
 			# on the limiter.
-			$SVN_LOG->get_log( '/'.$SVN_PATH, $min, $max, 0, 1, 1,
+			libsvn_get_log($SVN_LOG, '/'.$SVN_PATH,
+					$min, $max, 0, 1, 1,
 				sub {
 					my $log_msg;
 					if ($last_commit) {
@@ -924,7 +925,7 @@ sub graft_file_copy_lib {
 	$SVN::Error::handler = \&libsvn_skip_unknown_revs;
 	while (1) {
 		my $pool = SVN::Pool->new;
-		$SVN_LOG->get_log( "/$path", $min, $max, 0, 1, 1,
+		libsvn_get_log($SVN_LOG, "/$path", $min, $max, 0, 1, 1,
 			sub {
 				libsvn_graft_file_copies($grafts, $tree_paths,
 							$path, @_);
@@ -2358,8 +2359,8 @@ sub libsvn_load {
 	return unless $_use_lib;
 	$_use_lib = eval {
 		require SVN::Core;
-		if ($SVN::Core::VERSION lt '1.2.1') {
-			die "Need SVN::Core 1.2.1 or better ",
+		if ($SVN::Core::VERSION lt '1.1.0') {
+			die "Need SVN::Core 1.1.0 or better ",
 					"(got $SVN::Core::VERSION) ",
 					"Falling back to command-line svn\n";
 		}
@@ -2392,9 +2393,15 @@ sub libsvn_get_file {
 	my $pool = SVN::Pool->new;
 	defined($pid = open3($in, $out, '>&STDERR',
 				qw/git-hash-object -w --stdin/)) or croak $!;
-	my ($r, $props) = $SVN->get_file($f, $rev, $in, $pool);
+	# redirect STDOUT for SVN 1.1.x compatibility
+	open my $stdout, '>&', \*STDOUT or croak $!;
+	open STDOUT, '>&', $in or croak $!;
+	$| = 1; # not sure if this is necessary, better safe than sorry...
+	my ($r, $props) = $SVN->get_file($f, $rev, \*STDOUT, $pool);
 	$in->flush == 0 or croak $!;
+	open STDOUT, '>&', $stdout or croak $!;
 	close $in or croak $!;
+	close $stdout or croak $!;
 	$pool->clear;
 	chomp($hash = do { local $/; <$out> });
 	close $out or croak $!;
@@ -2566,7 +2573,8 @@ sub revisions_eq {
 	if ($_use_lib) {
 		# should be OK to use Pool here (r1 - r0) should be small
 		my $pool = SVN::Pool->new;
-		$SVN->get_log("/$path", $r0, $r1, 0, 1, 1, sub {$nr++},$pool);
+		libsvn_get_log($SVN, "/$path", $r0, $r1,
+				0, 1, 1, sub {$nr++}, $pool);
 		$pool->clear;
 	} else {
 		my ($url, undef) = repo_path_split($SVN_URL);
@@ -2604,6 +2612,14 @@ sub libsvn_find_parent_branch {
 	}
 	print STDERR "Nope, branch point not imported or unknown\n";
 	return undef;
+}
+
+sub libsvn_get_log {
+	my ($ra, @args) = @_;
+	if ($SVN::Core::VERSION le '1.2.0') {
+		splice(@args, 3, 1);
+	}
+	$ra->get_log(@args);
 }
 
 sub libsvn_new_tree {

@@ -33,7 +33,13 @@ svnrepo=$PWD/svnrepo
 
 set -e
 
-svnadmin create $svnrepo
+if svnadmin create --help | grep fs-type >/dev/null
+then
+	svnadmin create --fs-type fsfs "$svnrepo"
+else
+	svnadmin create "$svnrepo"
+fi
+
 svnrepo="file://$svnrepo/test-git-svn"
 
 
