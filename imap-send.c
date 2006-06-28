@@ -242,7 +242,7 @@ socket_read( Socket_t *sock, char *buf, int len )
 }
 
 static int
-socket_write( Socket_t *sock, char *buf, int len )
+socket_write( Socket_t *sock, const char *buf, int len )
 {
 	int n = write( sock->fd, buf, len );
 	if (n != len) {

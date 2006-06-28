@@ -1274,7 +1274,7 @@ xml_cdata(void *userData, const XML_Char *s, int len)
 	strlcpy(ctx->cdata, s, len + 1);
 }
 
-static struct remote_lock *lock_remote(char *path, long timeout)
+static struct remote_lock *lock_remote(const char *path, long timeout)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
@@ -2130,7 +2130,7 @@ static int remote_exists(const char *path)
 	return -1;
 }
 
-static void fetch_symref(char *path, char **symref, unsigned char *sha1)
+static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 {
 	char *url;
 	struct buffer buffer;

@@ -165,7 +165,7 @@ static int handle_subject(char *line)
 
 static int slurp_attr(const char *line, const char *name, char *attr)
 {
-	char *ends, *ap = strcasestr(line, name);
+	const char *ends, *ap = strcasestr(line, name);
 	size_t sz;
 
 	if (!ap) {

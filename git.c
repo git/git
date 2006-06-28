@@ -16,7 +16,8 @@
 
 static void prepend_to_path(const char *dir, int len)
 {
-	char *path, *old_path = getenv("PATH");
+	const char *old_path = getenv("PATH");
+	char *path;
 	int path_len = len;
 
 	if (!old_path)

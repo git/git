@@ -543,7 +543,7 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 		const char *hex = abbrev
 			? find_unique_abbrev(p->object.sha1, abbrev)
 			: sha1_to_hex(p->object.sha1);
-		char *dots = (abbrev && strlen(hex) != 40) ? "..." : "";
+		const char *dots = (abbrev && strlen(hex) != 40) ? "..." : "";
 		parent = parent->next;
 
 		offset += sprintf(buf + offset, " %s%s", hex, dots);

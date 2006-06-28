@@ -329,7 +329,7 @@ int cmd_rev_parse(int argc, const char **argv, char **envp)
 		dotdot = strstr(arg, "..");
 		if (dotdot) {
 			unsigned char end[20];
-			char *next = dotdot + 2;
+			const char *next = dotdot + 2;
 			const char *this = arg;
 			*dotdot = 0;
 			if (!*next)
