@@ -100,7 +100,7 @@ static int split_cmdline(char *cmdline, const char ***argv)
 
 static int handle_alias(int *argcp, const char ***argv)
 {
-	int nongit = 0, ret = 0;
+	int nongit = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
 
 	subdir = setup_git_directory_gently(&nongit);
@@ -137,6 +137,8 @@ static int handle_alias(int *argcp, const char ***argv)
 
 	if (subdir)
 		chdir(subdir);
+
+	errno = saved_errno;
 
 	return ret;
 }
