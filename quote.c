@@ -13,7 +13,7 @@
  *  a!b      ==> a'\!'b    ==> 'a'\!'b'
  */
 #undef EMIT
-#define EMIT(x) ( (++len < n) && (*bp++ = (x)) )
+#define EMIT(x) do { if (++len < n) *bp++ = (x); } while(0)
 
 static inline int need_bs_quote(char c)
 {
