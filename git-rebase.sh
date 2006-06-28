@@ -34,11 +34,6 @@ When you have resolved this problem run \"git rebase --continue\".
 If you would prefer to skip this patch, instead run \"git rebase --skip\".
 To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
-
-MRESOLVEMSG="
-When you have resolved this problem run \"git rebase --continue\".
-To restore the original branch and stop rebasing run \"git rebase --abort\".
-"
 unset newbase
 strategy=recursive
 do_merge=
@@ -54,7 +49,7 @@ continue_merge () {
 	then
 		echo "You still have unmerged paths in your index"
 		echo "did you forget update-index?"
-		die "$MRESOLVEMSG"
+		die "$RESOLVEMSG"
 	fi
 
 	if test -n "`git-diff-index HEAD`"
@@ -87,11 +82,11 @@ call_merge () {
 		;;
 	1)
 		test -d "$GIT_DIR/rr-cache" && git-rerere
-		die "$MRESOLVEMSG"
+		die "$RESOLVEMSG"
 		;;
 	2)
 		echo "Strategy: $rv $strategy failed, try another" 1>&2
-		die "$MRESOLVEMSG"
+		die "$RESOLVEMSG"
 		;;
 	*)
 		die "Unknown exit code ($rv) from command:" \
