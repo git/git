@@ -451,8 +451,7 @@ static int git_tcp_connect_sock(char *host)
 #endif /* NO_IPV6 */
 
 
-static void git_tcp_connect(int fd[2],
-			    const char *prog, char *host, char *path)
+static void git_tcp_connect(int fd[2], char *host)
 {
 	int sockfd = git_tcp_connect_sock(host);
 
@@ -522,8 +521,7 @@ static int git_use_proxy(const char *host)
 	return (git_proxy_command && *git_proxy_command);
 }
 
-static void git_proxy_connect(int fd[2],
-			      const char *prog, char *host, char *path)
+static void git_proxy_connect(int fd[2], char *host)
 {
 	const char *port = STR(DEFAULT_GIT_PORT);
 	char *colon, *end;
@@ -643,9 +641,9 @@ int git_connect(int fd[2], char *url, const char *prog)
 		 */
 		char *target_host = strdup(host);
 		if (git_use_proxy(host))
-			git_proxy_connect(fd, prog, host, path);
+			git_proxy_connect(fd, host);
 		else
-			git_tcp_connect(fd, prog, host, path);
+			git_tcp_connect(fd, host);
 		/*
 		 * Separate original protocol components prog and path
 		 * from extended components with a NUL byte.
