@@ -150,8 +150,7 @@ else
 	# Match the index to the working tree, and do a three-way.
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
-	git read-tree --reset $new &&
-	git checkout-index -f -u -q -a &&
+	git read-tree --reset -u $new &&
 	git read-tree -m -u --aggressive $old $new $work || exit
 
 	if result=`git write-tree 2>/dev/null`
