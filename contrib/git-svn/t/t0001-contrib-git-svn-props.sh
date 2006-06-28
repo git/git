@@ -21,8 +21,8 @@ a_empty_crlf=
 
 cd import
 	cat >> kw.c <<\EOF
-/* Make it look like somebody copied a file from CVS into SVN: */
-/* $Id: kw.c,v 1.1.1.1 1994/03/06 00:00:00 eric Exp $ */
+/* Somebody prematurely put a keyword into this file */
+/* $Id$ */
 EOF
 
 	printf "Hello\r\nWorld\r\n" > crlf

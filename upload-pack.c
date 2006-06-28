@@ -95,8 +95,8 @@ static void create_pack_file(void)
 		int i;
 		int args;
 		const char **argv;
+		const char **p;
 		char *buf;
-		char **p;
 
 		if (create_full_pack) {
 			args = 10;
@@ -441,7 +441,7 @@ static int receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
-	static char *capabilities = "multi_ack thin-pack side-band";
+	static const char *capabilities = "multi_ack thin-pack side-band";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

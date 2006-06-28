@@ -97,7 +97,7 @@ static int compare_names(const void *_a, const void *_b)
 	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
 }
 
-static void describe(char *arg, int last_one)
+static void describe(const char *arg, int last_one)
 {
 	unsigned char sha1[20];
 	struct commit *cmit;

@@ -236,6 +236,7 @@ static struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 {
+	char *tail = buffer;
 	char *bufptr = buffer;
 	unsigned char parent[20];
 	struct commit_list **pptr;
@@ -245,9 +246,10 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 	if (item->object.parsed)
 		return 0;
 	item->object.parsed = 1;
-	if (memcmp(bufptr, "tree ", 5))
+	tail += size;
+	if (tail <= bufptr + 5 || memcmp(bufptr, "tree ", 5))
 		return error("bogus commit object %s", sha1_to_hex(item->object.sha1));
-	if (get_sha1_hex(bufptr + 5, parent) < 0)
+	if (tail <= bufptr + 45 || get_sha1_hex(bufptr + 5, parent) < 0)
 		return error("bad tree pointer in commit %s",
 			     sha1_to_hex(item->object.sha1));
 	item->tree = lookup_tree(parent);
@@ -257,10 +259,12 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 	pptr = &item->parents;
 
 	graft = lookup_commit_graft(item->object.sha1);
-	while (!memcmp(bufptr, "parent ", 7)) {
+	while (bufptr + 48 < tail && !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
-		if (get_sha1_hex(bufptr + 7, parent) || bufptr[47] != '\n')
+		if (tail <= bufptr + 48 ||
+		    get_sha1_hex(bufptr + 7, parent) ||
+		    bufptr[47] != '\n')
 			return error("bad parents in commit %s", sha1_to_hex(item->object.sha1));
 		bufptr += 48;
 		if (graft)
@@ -543,7 +547,7 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 		const char *hex = abbrev
 			? find_unique_abbrev(p->object.sha1, abbrev)
 			: sha1_to_hex(p->object.sha1);
-		char *dots = (abbrev && strlen(hex) != 40) ? "..." : "";
+		const char *dots = (abbrev && strlen(hex) != 40) ? "..." : "";
 		parent = parent->next;
 
 		offset += sprintf(buf + offset, " %s%s", hex, dots);

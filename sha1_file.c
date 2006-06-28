@@ -343,7 +343,7 @@ static void read_info_alternates(const char * relative_base, int depth)
 
 void prepare_alt_odb(void)
 {
-	char *alt;
+	const char *alt;
 
 	alt = getenv(ALTERNATE_DB_ENVIRONMENT);
 	if (!alt) alt = "";

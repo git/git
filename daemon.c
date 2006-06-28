@@ -35,7 +35,7 @@ static char *base_path = NULL;
  * after ~user/.  E.g. a request to git://host/~alice/frotz would
  * go to /home/alice/pub_git/frotz with --user-path=pub_git.
  */
-static char *user_path = NULL;
+static const char *user_path = NULL;
 
 /* Timeout, and initial timeout */
 static unsigned int timeout = 0;
@@ -472,7 +472,7 @@ static void child_handler(int signo)
 			children_reaped = reaped + 1;
 			/* XXX: Custom logging, since we don't wanna getpid() */
 			if (verbose) {
-				char *dead = "";
+				const char *dead = "";
 				if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
 					dead = " (with error)";
 				if (log_syslog)

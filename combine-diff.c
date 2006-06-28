@@ -205,7 +205,8 @@ static void consume_line(void *state_, char *line, unsigned long len)
 }
 
 static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
-			 struct sline *sline, int cnt, int n, int num_parent)
+			 struct sline *sline, unsigned int cnt, int n,
+			 int num_parent)
 {
 	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
@@ -293,7 +294,7 @@ static unsigned long find_next(struct sline *sline,
 			       unsigned long mark,
 			       unsigned long i,
 			       unsigned long cnt,
-			       int uninteresting)
+			       int look_for_uninteresting)
 {
 	/* We have examined up to i-1 and are about to look at i.
 	 * Find next interesting or uninteresting line.  Here,
@@ -303,7 +304,7 @@ static unsigned long find_next(struct sline *sline,
 	 * that are surrounded by interesting() ones.
 	 */
 	while (i <= cnt)
-		if (uninteresting
+		if (look_for_uninteresting
 		    ? !(sline[i].flag & mark)
 		    : (sline[i].flag & mark))
 			return i;
@@ -489,7 +490,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 	return has_interesting;
 }
 
-static void show_parent_lno(struct sline *sline, unsigned long l0, unsigned long l1, unsigned long cnt, int n)
+static void show_parent_lno(struct sline *sline, unsigned long l0, unsigned long l1, int n)
 {
 	l0 = sline[l0].p_lno[n];
 	l1 = sline[l1].p_lno[n];
@@ -523,7 +524,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent)
 			rlines--; /* pointing at the last delete hunk */
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		for (i = 0; i < num_parent; i++)
-			show_parent_lno(sline, lno, hunk_end, cnt, i);
+			show_parent_lno(sline, lno, hunk_end, i);
 		printf(" +%lu,%lu ", lno+1, rlines);
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
 		putchar('\n');
@@ -619,18 +620,18 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		if (0 <= (fd = open(elem->path, O_RDONLY)) &&
 		    !fstat(fd, &st)) {
 			int len = st.st_size;
-			int cnt = 0;
+			int sz = 0;
 
 			elem->mode = canon_mode(st.st_mode);
 			result_size = len;
 			result = xmalloc(len + 1);
-			while (cnt < len) {
-				int done = xread(fd, result+cnt, len-cnt);
+			while (sz < len) {
+				int done = xread(fd, result+sz, len-sz);
 				if (done == 0)
 					break;
 				if (done < 0)
 					die("read error '%s'", elem->path);
-				cnt += done;
+				sz += done;
 			}
 			result[len] = 0;
 		}
@@ -645,7 +646,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			close(fd);
 	}
 
-	for (cnt = 0, cp = result; cp - result < result_size; cp++) {
+	for (cnt = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n')
 			cnt++;
 	}
@@ -658,7 +659,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		sline[lno].lost_tail = &sline[lno].lost_head;
 		sline[lno].flag = 0;
 	}
-	for (lno = 0, cp = result; cp - result < result_size; cp++) {
+	for (lno = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n') {
 			sline[lno].len = cp - sline[lno].bol;
 			lno++;
@@ -739,9 +740,9 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	}
 	free(result);
 
-	for (i = 0; i < cnt; i++) {
-		if (sline[i].lost_head) {
-			struct lline *ll = sline[i].lost_head;
+	for (lno = 0; lno < cnt; lno++) {
+		if (sline[lno].lost_head) {
+			struct lline *ll = sline[lno].lost_head;
 			while (ll) {
 				struct lline *tmp = ll;
 				ll = ll->next;
