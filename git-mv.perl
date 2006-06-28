@@ -6,7 +6,7 @@
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Linus Torvalds.
 
-
+BEGIN { unshift @INC, '@@INSTLIBDIR@@'; }
 use warnings;
 use strict;
 use Getopt::Std;
