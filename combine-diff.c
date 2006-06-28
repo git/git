@@ -841,7 +841,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.recursive = 1;
 
-	show_log_first = rev->loginfo;
+	show_log_first = !!rev->loginfo;
 	needsep = 0;
 	/* find set of paths that everybody touches */
 	for (i = 0; i < num_parent; i++) {
