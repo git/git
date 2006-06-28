@@ -98,8 +98,8 @@ int execv_git_cmd(const char **argv)
 		argv[0] = git_command;
 
 		if (getenv("GIT_TRACE")) {
-			fputs("trace: exec:", stderr);
 			const char **p = argv;
+			fputs("trace: exec:", stderr);
 			while (*p) {
 				fputc(' ', stderr);
 				sq_quote_print(stderr, *p);
