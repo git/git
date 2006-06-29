@@ -179,7 +179,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.diff = 1;
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
-	rev.diffopt.msg_sep = "---\n";
+	rev.diffopt.msg_sep = "";
+	rev.diffopt.recursive = 1;
 
 	git_config(git_format_config);
 	rev.extra_headers = extra_headers;
