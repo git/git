@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "tree-walk.h"
+#include "xdiff-interface.h"
 #include "blob.h"
 
 static const char merge_tree_usage[] = "git-merge-tree <base-tree> <branch1> <branch2>";
@@ -52,6 +53,77 @@ static const char *explanation(struct merge_list *entry)
 	return "removed in remote";
 }
 
+extern void *merge_file(struct blob *, struct blob *, struct blob *, unsigned long *);
+
+static void *result(struct merge_list *entry, unsigned long *size)
+{
+	char type[20];
+	struct blob *base, *our, *their;
+
+	if (!entry->stage)
+		return read_sha1_file(entry->blob->object.sha1, type, size);
+	base = NULL;
+	if (entry->stage == 1) {
+		base = entry->blob;
+		entry = entry->link;
+	}
+	our = NULL;
+	if (entry && entry->stage == 2) {
+		our = entry->blob;
+		entry = entry->link;
+	}
+	their = NULL;
+	if (entry)
+		their = entry->blob;
+	return merge_file(base, our, their, size);
+}
+
+static void *origin(struct merge_list *entry, unsigned long *size)
+{
+	char type[20];
+	while (entry) {
+		if (entry->stage == 2)
+			return read_sha1_file(entry->blob->object.sha1, type, size);
+		entry = entry->link;
+	}
+	return NULL;
+}
+
+static int show_outf(void *priv_, mmbuffer_t *mb, int nbuf)
+{
+	int i;
+	for (i = 0; i < nbuf; i++)
+		printf("%.*s", (int) mb[i].size, mb[i].ptr);
+	return 0;
+}
+
+static void show_diff(struct merge_list *entry)
+{
+	unsigned long size;
+	mmfile_t src, dst;
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
+	xdemitcb_t ecb;
+
+	xpp.flags = XDF_NEED_MINIMAL;
+	xecfg.ctxlen = 3;
+	xecfg.flags = 0;
+	ecb.outf = show_outf;
+	ecb.priv = NULL;
+
+	src.ptr = origin(entry, &size);
+	if (!src.ptr)
+		size = 0;
+	src.size = size;
+	dst.ptr = result(entry, &size);
+	if (!dst.ptr)
+		size = 0;
+	dst.size = size;
+	xdl_diff(&src, &dst, &xpp, &xecfg, &ecb);
+	free(src.ptr);
+	free(dst.ptr);
+}
+
 static void show_result_list(struct merge_list *entry)
 {
 	printf("%s\n", explanation(entry));
@@ -70,6 +142,7 @@ static void show_result(void)
 	walk = merge_result;
 	while (walk) {
 		show_result_list(walk);
+		show_diff(walk);
 		walk = walk->next;
 	}
 }
