@@ -341,6 +341,9 @@ endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
+ifeq ($(uname_M),x86_64)
+	USE_PIC = YesPlease
+endif
 
 -include config.mak
 
