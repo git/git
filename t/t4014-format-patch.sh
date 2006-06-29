@@ -21,15 +21,15 @@ test_expect_success setup '
 	for i in D E F; do echo "$i"; done >>file &&
 	git update-index file &&
 	git commit -m "Side change #2" &&
-	git tag C1 &&
+	git tag C2 &&
 
 	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file &&
 	git update-index file &&
 	git commit -m "Side change #3" &&
 
 	git checkout master &&
-	git diff-tree -p C1 | git apply --index &&
-	git commit -m "Master accepts moral equivalent of #1"
+	git diff-tree -p C2 | git apply --index &&
+	git commit -m "Master accepts moral equivalent of #2"
 
 '
 
