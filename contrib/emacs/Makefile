@@ -3,9 +3,9 @@
 EMACS = emacs
 
 ELC = git.elc vc-git.elc
-INSTALL = install
+INSTALL ?= install
 INSTALL_ELC = $(INSTALL) -m 644
-prefix = $(HOME)
+prefix ?= $(HOME)
 emacsdir = $(prefix)/share/emacs/site-lisp
 
 all: $(ELC)

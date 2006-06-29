@@ -100,6 +100,8 @@ template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
+export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
+
 CC = gcc
 AR = ar
 TAR = tar

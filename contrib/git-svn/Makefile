@@ -1,8 +1,8 @@
 all: git-svn
 
 prefix?=$(HOME)
-bindir=$(prefix)/bin
-mandir=$(prefix)/man
+bindir?=$(prefix)/bin
+mandir?=$(prefix)/man
 man1=$(mandir)/man1
 INSTALL?=install
 doc_conf=../../Documentation/asciidoc.conf
