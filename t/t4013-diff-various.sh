@@ -85,6 +85,7 @@ test_expect_success setup '
 +*+ [initial] Initial
 EOF
 
+V=`git version | sed -e 's/^git version //'`
 while read cmd
 do
 	case "$cmd" in
@@ -99,7 +100,7 @@ do
 	test_expect_success "git $cmd" '
 		{
 			echo "\$ git $cmd"
-			git $cmd
+			git $cmd | sed -e "s/$V/g-i-t--v-e-r-s-i-o-n/"
 			echo "\$"
 		} >"$actual" &&
 		if test -f "$expect"
@@ -218,6 +219,13 @@ show --stat --summary side
 show --patch-with-stat side
 show --patch-with-raw side
 show --patch-with-stat --summary side
+
+format-patch --stdout initial..side
+format-patch --stdout initial..master^
+format-patch --stdout initial..master
+format-patch --attach --stdout initial..side
+format-patch --attach --stdout initial..master^
+format-patch --attach --stdout initial..master
 
 EOF
 
