@@ -39,6 +39,7 @@ extern "C" {
 #define XDL_PATCH_IGNOREBSPACE (1 << 8)
 
 #define XDL_EMIT_FUNCNAMES (1 << 0)
+#define XDL_EMIT_COMMON (1 << 1)
 
 #define XDL_MMB_READONLY (1 << 0)
 

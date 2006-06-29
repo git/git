@@ -73,6 +73,7 @@ First digit tells the family:
 	4 - the diff commands
 	5 - the pull and exporting commands
 	6 - the revision tree commands (even e.g. merge-base)
+	7 - the porcelainish commands concerning the working tree
 
 Second digit tells the particular command we are testing.
 
