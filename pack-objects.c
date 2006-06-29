@@ -988,6 +988,13 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return -1;
 
 	/*
+	 * We do not bother to try a delta that we discarded
+	 * on an earlier try.
+	 */
+	if (trg_entry->in_pack && trg_entry->in_pack == src_entry->in_pack)
+		return 0;
+
+	/*
 	 * If the current object is at pack edge, take the depth the
 	 * objects that depend on the current object into account --
 	 * otherwise they would become too deep.
