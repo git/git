@@ -105,4 +105,6 @@ struct commit_graft *read_graft_line(char *buf, int len);
 int register_commit_graft(struct commit_graft *, int);
 int read_graft_file(const char *graft_file);
 
+extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2);
+
 #endif /* COMMIT_H */
