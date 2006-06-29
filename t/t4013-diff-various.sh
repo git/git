@@ -138,7 +138,10 @@ diff-tree --pretty --summary initial
 diff-tree --pretty --stat --summary initial
 diff-tree --pretty --root -p initial
 diff-tree --pretty --root --stat initial
-#diff-tree --pretty --root --summary initial
+# improved by Timo's patch
+diff-tree --pretty --root --summary initial
+# improved by Timo's patch
+diff-tree --pretty --root --summary -r initial
 diff-tree --pretty --root --stat --summary initial
 diff-tree --pretty --patch-with-stat initial
 diff-tree --pretty --root --patch-with-stat initial
@@ -150,6 +153,7 @@ diff-tree --pretty=oneline --root initial
 diff-tree --pretty=oneline -p initial
 diff-tree --pretty=oneline --root -p initial
 diff-tree --pretty=oneline --patch-with-stat initial
+# improved by Timo's patch
 diff-tree --pretty=oneline --root --patch-with-stat initial
 diff-tree --pretty=oneline --patch-with-raw initial
 diff-tree --pretty=oneline --root --patch-with-raw initial
@@ -172,11 +176,9 @@ diff-tree --cc --stat --summary master
 # stat summary should show the diffstat and summary with the first parent
 diff-tree -c --stat --summary side
 diff-tree --cc --stat --summary side
-# this one gives an extra newline after stat, which should be removed
-# diff-tree --cc --patch-with-stat master
-# this one gives an extra newline after stat, which should be removed
-# other than that it shows the correct example -- stat and summary are
-# against the first parent, and patch-looking combined diff follows.
+# improved by Timo's patch
+diff-tree --cc --patch-with-stat master
+# improved by Timo's patch
 diff-tree --cc --patch-with-stat --summary master
 # this is correct
 diff-tree --cc --patch-with-stat --summary side
@@ -188,7 +190,9 @@ log --root -p master
 log --patch-with-stat master
 log --root --patch-with-stat master
 log --root --patch-with-stat --summary master
+# improved by Timo's patch
 log --root -c --patch-with-stat --summary master
+# improved by Timo's patch
 log --root --cc --patch-with-stat --summary master
 log -SF master
 log -SF -p master
@@ -200,7 +204,9 @@ whatchanged --root -p master
 whatchanged --patch-with-stat master
 whatchanged --root --patch-with-stat master
 whatchanged --root --patch-with-stat --summary master
+# improved by Timo's patch
 whatchanged --root -c --patch-with-stat --summary master
+# improved by Timo's patch
 whatchanged --root --cc --patch-with-stat --summary master
 whatchanged -SF master
 whatchanged -SF -p master

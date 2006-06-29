@@ -28,6 +28,9 @@ int cmd_diff_index(int argc, const char **argv, char **envp)
 		else
 			usage(diff_cache_usage);
 	}
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_RAW;
+
 	/*
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.

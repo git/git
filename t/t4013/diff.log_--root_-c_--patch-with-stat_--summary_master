@@ -5,11 +5,10 @@ Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:04:00 2006 +0000
 
     Merge branch 'side'
----
+
  dir/sub |    2 ++
  file0   |    3 +++
  2 files changed, 5 insertions(+), 0 deletions(-)
-
 
 diff --combined dir/sub
 index cead32e,7289e35..992913c

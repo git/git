@@ -1,4 +1,4 @@
-$ git diff-tree --cc --patch-with-stat --summary master
+$ git diff-tree --cc --patch-with-stat master
 176b998f5d647cbd77a9d8acf4531e930754d16d
  dir/sub |    2 ++
  file0   |    3 +++

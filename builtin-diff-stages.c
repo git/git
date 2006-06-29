@@ -85,6 +85,9 @@ int cmd_diff_stages(int ac, const char **av, char **envp)
 		ac--; av++;
 	}
 
+	if (!diff_options.output_format)
+		diff_options.output_format = DIFF_FORMAT_RAW;
+
 	if (ac < 3 ||
 	    sscanf(av[1], "%d", &stage1) != 1 ||
 	    ! (0 <= stage1 && stage1 <= 3) ||

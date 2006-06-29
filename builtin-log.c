@@ -14,25 +14,22 @@
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
 
-static int cmd_log_wc(int argc, const char **argv, char **envp,
+static void cmd_log_init(int argc, const char **argv, char **envp,
 		      struct rev_info *rev)
 {
-	struct commit *commit;
-
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
-	if (rev->always_show_header) {
-		if (rev->diffopt.pickaxe || rev->diffopt.filter) {
-			rev->always_show_header = 0;
-			if (rev->diffopt.output_format == DIFF_FORMAT_RAW)
-				rev->diffopt.output_format = DIFF_FORMAT_NO_OUTPUT;
-		}
-	}
-
+	if (rev->diffopt.pickaxe || rev->diffopt.filter)
+		rev->always_show_header = 0;
 	if (argc > 1)
 		die("unrecognized argument: %s", argv[1]);
+}
+
+static int cmd_log_walk(struct rev_info *rev)
+{
+	struct commit *commit;
 
 	prepare_revision_walk(rev);
 	setup_pager();
@@ -54,7 +51,10 @@ int cmd_whatchanged(int argc, const char **argv, char **envp)
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.simplify_history = 0;
-	return cmd_log_wc(argc, argv, envp, &rev);
+	cmd_log_init(argc, argv, envp, &rev);
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_RAW;
+	return cmd_log_walk(&rev);
 }
 
 int cmd_show(int argc, const char **argv, char **envp)
@@ -69,7 +69,8 @@ int cmd_show(int argc, const char **argv, char **envp)
 	rev.always_show_header = 1;
 	rev.ignore_merges = 0;
 	rev.no_walk = 1;
-	return cmd_log_wc(argc, argv, envp, &rev);
+	cmd_log_init(argc, argv, envp, &rev);
+	return cmd_log_walk(&rev);
 }
 
 int cmd_log(int argc, const char **argv, char **envp)
@@ -78,8 +79,8 @@ int cmd_log(int argc, const char **argv, char **envp)
 
 	init_revisions(&rev);
 	rev.always_show_header = 1;
-	rev.diffopt.recursive = 1;
-	return cmd_log_wc(argc, argv, envp, &rev);
+	cmd_log_init(argc, argv, envp, &rev);
+	return cmd_log_walk(&rev);
 }
 
 static int istitlechar(char c)
@@ -237,11 +238,10 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.verbose_header = 1;
 	rev.diff = 1;
-	rev.diffopt.with_raw = 0;
-	rev.diffopt.with_stat = 1;
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
-	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	rev.diffopt.msg_sep = "";
+	rev.diffopt.recursive = 1;
 
 	git_config(git_format_config);
 	rev.extra_headers = extra_headers;
@@ -311,6 +311,9 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
+
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 
 	if (output_directory) {
 		if (use_stdout)
