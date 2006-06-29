@@ -2217,7 +2217,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
-		xecfg.flags = 3;
+		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
