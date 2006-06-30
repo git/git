@@ -1,12 +1,5 @@
 #!/bin/sh
 
-case "`uname -m 2>/dev/null`" in
-x86_64)
-	USE_PIC=YesPlease
-	export USE_PIC
-	;;
-esac
-
 # DDD=' -DUSE_SYMLINK_HEAD=0'
 # PATH=/usr/bin:/bin
 PATH=$HOME/bin/Linux:/usr/bin:/bin
