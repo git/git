@@ -549,7 +549,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/Makefile
 $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	rm -f $@ $@+
-	INSTLIBDIR=`make -s -C perl instlibdir` && \
+	INSTLIBDIR=`$(MAKE) -C perl -s --no-print-directory instlibdir` && \
 	sed -e '1s|#!.*perl\(.*\)|#!$(PERL_PATH_SQ)\1|' \
 	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
