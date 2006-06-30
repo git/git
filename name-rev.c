@@ -234,12 +234,15 @@ int main(int argc, char **argv)
 				fwrite(p_start, p - p_start, 1, stdout);
 		}
 	} else if (all) {
-		int i;
+		int i, max;
 
-		for (i = 0; i < obj_allocs; i++)
-			if (objs[i])
-				printf("%s %s\n", sha1_to_hex(objs[i]->sha1),
-						get_rev_name(objs[i]));
+		max = get_max_object_index();
+		for (i = 0; i < max; i++) {
+			struct object * obj = get_indexed_object(i);
+			if (!obj)
+				continue;
+			printf("%s %s\n", sha1_to_hex(obj->sha1), get_rev_name(obj));
+		}
 	} else {
 		int i;
 		for (i = 0; i < revs.nr; i++)

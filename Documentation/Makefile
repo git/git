@@ -25,10 +25,10 @@ DOC_MAN1=$(patsubst %.txt,%.1,$(MAN1_TXT))
 DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 
 prefix?=$(HOME)
-bin=$(prefix)/bin
-mandir=$(prefix)/man
-man1=$(mandir)/man1
-man7=$(mandir)/man7
+bindir?=$(prefix)/bin
+mandir?=$(prefix)/man
+man1dir=$(mandir)/man1
+man7dir=$(mandir)/man7
 # DESTDIR=
 
 INSTALL?=install
@@ -52,9 +52,9 @@ man1: $(DOC_MAN1)
 man7: $(DOC_MAN7)
 
 install: man
-	$(INSTALL) -d -m755 $(DESTDIR)$(man1) $(DESTDIR)$(man7)
-	$(INSTALL) $(DOC_MAN1) $(DESTDIR)$(man1)
-	$(INSTALL) $(DOC_MAN7) $(DESTDIR)$(man7)
+	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir) $(DESTDIR)$(man7dir)
+	$(INSTALL) $(DOC_MAN1) $(DESTDIR)$(man1dir)
+	$(INSTALL) $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 
 #

@@ -100,6 +100,8 @@ template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
+export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
+
 CC = gcc
 AR = ar
 TAR = tar
@@ -718,8 +720,8 @@ dist-doc:
 	rm -fr .doc-tmp-dir
 	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
 	$(MAKE) -C Documentation DESTDIR=./ \
-		man1=../.doc-tmp-dir/man1 \
-		man7=../.doc-tmp-dir/man7 \
+		man1dir=../.doc-tmp-dir/man1 \
+		man7dir=../.doc-tmp-dir/man7 \
 		install
 	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
 	gzip -n -9 -f $(manpages).tar

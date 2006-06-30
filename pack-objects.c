@@ -989,9 +989,10 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/*
 	 * We do not bother to try a delta that we discarded
-	 * on an earlier try.
+	 * on an earlier try, but only when reusing delta data.
 	 */
-	if (trg_entry->in_pack && trg_entry->in_pack == src_entry->in_pack)
+	if (!no_reuse_delta && trg_entry->in_pack &&
+	    trg_entry->in_pack == src_entry->in_pack)
 		return 0;
 
 	/*

@@ -5,9 +5,18 @@
 #include "commit.h"
 #include "tag.h"
 
-struct object **objs;
-static int nr_objs;
-int obj_allocs;
+static struct object **objs;
+static int nr_objs, obj_allocs;
+
+unsigned int get_max_object_index(void)
+{
+	return obj_allocs;
+}
+
+struct object *get_indexed_object(unsigned int idx)
+{
+	return objs[idx];
+}
 
 const char *type_names[] = {
 	"none", "blob", "tree", "commit", "bad"

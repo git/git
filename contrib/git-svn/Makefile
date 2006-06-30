@@ -1,9 +1,9 @@
 all: git-svn
 
 prefix?=$(HOME)
-bindir=$(prefix)/bin
-mandir=$(prefix)/man
-man1=$(mandir)/man1
+bindir?=$(prefix)/bin
+mandir?=$(prefix)/man
+man1dir=$(mandir)/man1
 INSTALL?=install
 doc_conf=../../Documentation/asciidoc.conf
 -include ../../config.mak
@@ -17,7 +17,7 @@ install: all
 	$(INSTALL) git-svn $(DESTDIR)$(bindir)
 
 install-doc: doc
-	$(INSTALL) git-svn.1 $(DESTDIR)$(man1)
+	$(INSTALL) git-svn.1 $(DESTDIR)$(man1dir)
 
 doc: git-svn.1
 git-svn.1 : git-svn.xml
