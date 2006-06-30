@@ -55,23 +55,36 @@ maint | master)
 	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 	echo "* Building $1" &&
 	git checkout "$1" &&
+	make $J git >./:all.log 2>&1 &&
+	V=`./git --version | sed -e 's/git version //'` &&
 	make rpm >>./:all.log 2>&1 &&
 	case "$arch" in
 	i386)
 		status=$?
-		echo >&2 "Done -- move RPMS to the master machine."
-		make clean
+		case "$status" in
+		0)
+			echo >&2 "Done -- move RPMS to the master machine."
+			(
+				cd "$HOME/rpms/RPMS/$arch" &&
+				tar cf "$HOME/$V.tar" *-$V-*.$a.rpm &&
+				ls -ld $HOME/$V.tar
+			)
+			make clean
+			;;
+		?)
+			echo >&2 "Failed with status $status"
+			;;
+		esac
 		exit $status ;;
 	esac &&
 	make dist-doc >>./:all.log 2>&1 &&
-	make $J git >>./:all.log 2>&1 &&
-	V=`./git --version | sed -e 's/git version //'` &&
 	ln git-$V.tar.gz git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/. &&
 	for a in $narch
 	do
-		ln $HOME/rpms/RPMS/$a/git*-$V-* $G/RPMS/$a/.
+		mkdir -p "$G/RPMS/$a"
+		ln $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm $G/RPMS/$a/.
 	done &&
-	ln $HOME/rpms/SRPMS/git-$V-* $G/RPMS/SRPMS/. &&
+	ln $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/RPMS/SRPMS/. &&
 	{
 		# I do not know how it exits, and I do not care much.
 		for a in $narch
