@@ -771,6 +771,7 @@ clean:
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
 	[ ! -f perl/Makefile ] || $(MAKE) -C perl/ clean || $(MAKE) -C perl/ clean
+	rm -f perl/ppport.h perl/Makefile.old
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 	rm -f GIT-VERSION-FILE GIT-CFLAGS
