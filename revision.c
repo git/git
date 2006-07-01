@@ -536,6 +536,18 @@ void init_revisions(struct rev_info *revs)
 	diff_setup(&revs->diffopt);
 }
 
+static void add_pending_commit_list(struct rev_info *revs,
+                                    struct commit_list *commit_list,
+                                    unsigned int flags)
+{
+	while (commit_list) {
+		struct object *object = &commit_list->item->object;
+		object->flags |= flags;
+		add_pending_object(revs, object, sha1_to_hex(object->sha1));
+		commit_list = commit_list->next;
+	}
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -771,27 +783,45 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			unsigned char from_sha1[20];
 			const char *next = dotdot + 2;
 			const char *this = arg;
+			int symmetric = *next == '.';
+			unsigned int flags_exclude = flags ^ UNINTERESTING;
+
 			*dotdot = 0;
+			next += symmetric;
+
 			if (!*next)
 				next = "HEAD";
 			if (dotdot == arg)
 				this = "HEAD";
 			if (!get_sha1(this, from_sha1) &&
 			    !get_sha1(next, sha1)) {
-				struct object *exclude;
-				struct object *include;
+				struct commit *a, *b;
+				struct commit_list *exclude;
 
-				exclude = get_reference(revs, this, from_sha1, flags ^ UNINTERESTING);
-				include = get_reference(revs, next, sha1, flags);
-				if (!exclude || !include)
-					die("Invalid revision range %s..%s", arg, next);
+				a = lookup_commit_reference(from_sha1);
+				b = lookup_commit_reference(sha1);
+				if (!a || !b) {
+					die(symmetric ?
+					    "Invalid symmetric difference expression %s...%s" :
+					    "Invalid revision range %s..%s",
+					    arg, next);
+				}
 
 				if (!seen_dashdash) {
 					*dotdot = '.';
 					verify_non_filename(revs->prefix, arg);
 				}
-				add_pending_object(revs, exclude, this);
-				add_pending_object(revs, include, next);
+
+				if (symmetric) {
+					exclude = get_merge_bases_clean(a, b);
+					add_pending_commit_list(revs, exclude,
+					                        flags_exclude);
+					a->object.flags |= flags;
+				} else
+					a->object.flags |= flags_exclude;
+				b->object.flags |= flags;
+				add_pending_object(revs, &a->object, this);
+				add_pending_object(revs, &b->object, next);
 				continue;
 			}
 			*dotdot = '.';
