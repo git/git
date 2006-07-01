@@ -970,11 +970,12 @@ struct unpacked {
  * one.
  */
 static int try_delta(struct unpacked *trg, struct unpacked *src,
-		     struct delta_index *src_index, unsigned max_depth)
+		     unsigned max_depth)
 {
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
-	unsigned long size, src_size, delta_size, sizediff, max_size;
+	unsigned long trg_size, src_size, delta_size, sizediff, max_size, sz;
+	char type[10];
 	void *delta_buf;
 
 	/* Don't bother doing diffs between different types */
@@ -1009,19 +1010,38 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return 0;
 
 	/* Now some size filtering heuristics. */
-	size = trg_entry->size;
-	max_size = size/2 - 20;
+	trg_size = trg_entry->size;
+	max_size = trg_size/2 - 20;
 	max_size = max_size * (max_depth - src_entry->depth) / max_depth;
 	if (max_size == 0)
 		return 0;
 	if (trg_entry->delta && trg_entry->delta_size <= max_size)
 		max_size = trg_entry->delta_size-1;
 	src_size = src_entry->size;
-	sizediff = src_size < size ? size - src_size : 0;
+	sizediff = src_size < trg_size ? trg_size - src_size : 0;
 	if (sizediff >= max_size)
 		return 0;
 
-	delta_buf = create_delta(src_index, trg->data, size, &delta_size, max_size);
+	/* Load data if not already done */
+	if (!trg->data) {
+		trg->data = read_sha1_file(trg_entry->sha1, type, &sz);
+		if (sz != trg_size)
+			die("object %s inconsistent object length (%lu vs %lu)",
+			    sha1_to_hex(trg_entry->sha1), sz, trg_size);
+	}
+	if (!src->data) {
+		src->data = read_sha1_file(src_entry->sha1, type, &sz);
+		if (sz != src_size)
+			die("object %s inconsistent object length (%lu vs %lu)",
+			    sha1_to_hex(src_entry->sha1), sz, src_size);
+	}
+	if (!src->index) {
+		src->index = create_delta_index(src->data, src_size);
+		if (!src->index)
+			die("out of memory");
+	}
+
+	delta_buf = create_delta(src->index, trg->data, trg_size, &delta_size, max_size);
 	if (!delta_buf)
 		return 0;
 
@@ -1054,8 +1074,6 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	while (--i >= 0) {
 		struct object_entry *entry = list[i];
 		struct unpacked *n = array + idx;
-		unsigned long size;
-		char type[10];
 		int j;
 
 		if (!entry->preferred_base)
@@ -1082,11 +1100,8 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		free_delta_index(n->index);
 		n->index = NULL;
 		free(n->data);
+		n->data = NULL;
 		n->entry = entry;
-		n->data = read_sha1_file(entry->sha1, type, &size);
-		if (size != entry->size)
-			die("object %s inconsistent object length (%lu vs %lu)",
-			    sha1_to_hex(entry->sha1), size, entry->size);
 
 		j = window;
 		while (--j > 0) {
@@ -1097,7 +1112,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
-			if (try_delta(n, m, m->index, depth) < 0)
+			if (try_delta(n, m, depth) < 0)
 				break;
 		}
 		/* if we made n a delta, and if n is already at max
@@ -1106,10 +1121,6 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		 */
 		if (entry->delta && depth <= entry->depth)
 			continue;
-
-		n->index = create_delta_index(n->data, size);
-		if (!n->index)
-			die("out of memory");
 
 		idx++;
 		if (idx >= window)
