@@ -849,9 +849,10 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 
 /* merge-rebase stuff */
 
-#define PARENT1 1
-#define PARENT2 2
-#define UNINTERESTING 4
+/* bits #0..7 in revision.h */
+#define PARENT1		(1u<< 8)
+#define PARENT2		(1u<< 9)
+#define UNINTERESTING	(1u<<10)
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -1080,9 +1081,20 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2)
 		tmp = next;
 	}
 
-	/* reset flags */
+	return result;
+}
+
+struct commit_list *get_merge_bases_clean(struct commit *rev1,
+                                          struct commit *rev2)
+{
+	unsigned int flags1 = rev1->object.flags;
+	unsigned int flags2 = rev2->object.flags;
+	struct commit_list *result = get_merge_bases(rev1, rev2);
+
 	clear_commit_marks(rev1, PARENT1 | PARENT2 | UNINTERESTING);
 	clear_commit_marks(rev2, PARENT1 | PARENT2 | UNINTERESTING);
+	rev1->object.flags = flags1;
+	rev2->object.flags = flags2;
 
 	return result;
 }
