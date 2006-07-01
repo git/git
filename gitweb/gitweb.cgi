@@ -2295,16 +2295,13 @@ sub git_history {
 	      "</div>\n";
 	print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
 
-	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -- \'$file_name\'";
-	my $commit;
+	open my $fd, "-|",
+		"$gitbin/git-rev-list --full-history $hash -- \'$file_name\'";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
 	while (my $line = <$fd>) {
 		if ($line =~ m/^([0-9a-fA-F]{40})/){
-			$commit = $1;
-			next;
-		}
-		if ($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/ && (defined $commit)) {
+			my $commit = $1;
 			my %co = git_read_commit($commit);
 			if (!%co) {
 				next;
@@ -2336,7 +2333,6 @@ sub git_history {
 			}
 			print "</td>\n" .
 			      "</tr>\n";
-			undef $commit;
 		}
 	}
 	print "</table>\n";
