@@ -1,0 +1,84 @@
+git-instaweb(1)
+===============
+
+NAME
+----
+git-instaweb - instantly browse your working repository in gitweb
+
+SYNOPSIS
+--------
+'git-instaweb' [--local] [--httpd=<httpd>] [--port=<port>] [--browser=<browser>]
+
+'git-instaweb' [--start] [--stop] [--restart]
+
+DESCRIPTION
+-----------
+A simple script to setup gitweb and a web server for browsing the local
+repository.
+
+OPTIONS
+-------
+
+-l|--local::
+	Only bind the web server to the local IP (127.0.0.1).
+
+-d|--httpd::
+	The HTTP daemon command-line that will be executed.
+	Command-line options may be specified here, and the
+	configuration file will be added at the end of the command-line.
+	Currently, lighttpd and apache2 are the only supported servers.
+	(Default: lighttpd)
+
+-m|--module-path::
+	The module path (only needed if httpd is Apache).
+	(Default: /usr/lib/apache2/modules)
+
+-p|--port::
+	The port number to bind the httpd to.  (Default: 1234)
+
+-b|--browser::
+
+	The web browser command-line to execute to view the gitweb page.
+	If blank, the URL of the gitweb instance will be printed to
+	stdout.  (Default: 'firefox')
+
+--start::
+	Start the httpd instance and exit.  This does not generate
+	any of the configuration files for spawning a new instance.
+
+--stop::
+	Stop the httpd instance and exit.  This does not generate
+	any of the configuration files for spawning a new instance,
+	nor does it close the browser.
+
+--restart::
+	Restart the httpd instance and exit.  This does not generate
+	any of the configuration files for spawning a new instance.
+
+CONFIGURATION
+-------------
+
+You may specify configuration in your .git/config
+
+-----------------------------------------------------------------------
+[instaweb]
+	local = true
+	httpd = apache2 -f
+	port = 4321
+	browser = konqueror
+	modulepath = /usr/lib/apache2/modules
+
+-----------------------------------------------------------------------
+
+Author
+------
+Written by Eric Wong <normalperson@yhbt.net>
+
+Documentation
+--------------
+Documentation by Eric Wong <normalperson@yhbt.net>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
