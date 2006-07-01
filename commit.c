@@ -397,13 +397,12 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 {
 	struct commit_list *parents;
 
+	if (!commit)
+		return;
 	parents = commit->parents;
 	commit->object.flags &= ~mark;
 	while (parents) {
-		struct commit *parent = parents->item;
-		if (parent && parent->object.parsed &&
-		    (parent->object.flags & mark))
-			clear_commit_marks(parent, mark);
+		clear_commit_marks(parents->item, mark);
 		parents = parents->next;
 	}
 }
