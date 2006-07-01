@@ -328,7 +328,7 @@ static enum protocol get_protocol(const char *name)
  */
 static int git_tcp_connect_sock(char *host)
 {
-	int sockfd = -1;
+	int sockfd = -1, saved_errno = 0;
 	char *colon, *end;
 	const char *port = STR(DEFAULT_GIT_PORT);
 	struct addrinfo hints, *ai0, *ai;
@@ -362,9 +362,12 @@ static int git_tcp_connect_sock(char *host)
 	for (ai0 = ai; ai; ai = ai->ai_next) {
 		sockfd = socket(ai->ai_family,
 				ai->ai_socktype, ai->ai_protocol);
-		if (sockfd < 0)
+		if (sockfd < 0) {
+			saved_errno = errno;
 			continue;
+		}
 		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+			saved_errno = errno;
 			close(sockfd);
 			sockfd = -1;
 			continue;
@@ -375,7 +378,7 @@ static int git_tcp_connect_sock(char *host)
 	freeaddrinfo(ai0);
 
 	if (sockfd < 0)
-		die("unable to connect a socket (%s)", strerror(errno));
+		die("unable to connect a socket (%s)", strerror(saved_errno));
 
 	return sockfd;
 }
@@ -387,7 +390,7 @@ static int git_tcp_connect_sock(char *host)
  */
 static int git_tcp_connect_sock(char *host)
 {
-	int sockfd = -1;
+	int sockfd = -1, saved_errno = 0;
 	char *colon, *end;
 	char *port = STR(DEFAULT_GIT_PORT), *ep;
 	struct hostent *he;
@@ -426,8 +429,10 @@ static int git_tcp_connect_sock(char *host)
 
 	for (ap = he->h_addr_list; *ap; ap++) {
 		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
-		if (sockfd < 0)
+		if (sockfd < 0) {
+			saved_errno = errno;
 			continue;
+		}
 
 		memset(&sa, 0, sizeof sa);
 		sa.sin_family = he->h_addrtype;
@@ -435,6 +440,7 @@ static int git_tcp_connect_sock(char *host)
 		memcpy(&sa.sin_addr, *ap, he->h_length);
 
 		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+			saved_errno = errno;
 			close(sockfd);
 			sockfd = -1;
 			continue;
@@ -443,7 +449,7 @@ static int git_tcp_connect_sock(char *host)
 	}
 
 	if (sockfd < 0)
-		die("unable to connect a socket (%s)", strerror(errno));
+		die("unable to connect a socket (%s)", strerror(saved_errno));
 
 	return sockfd;
 }
