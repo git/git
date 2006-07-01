@@ -1676,6 +1676,7 @@ sub git_tree {
 			      "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$t_hash$base_key;f=$base$t_name")}, "tree") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash_base;f=$base$t_name")}, "history") .
 			      "</td>\n";
 		}
 		print "</tr>\n";
