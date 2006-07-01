@@ -280,7 +280,7 @@ int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list **pp, *parent;
-	int tree_changed = 0;
+	int tree_changed = 0, tree_same = 0;
 
 	if (!commit->tree)
 		return;
@@ -298,6 +298,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		parse_commit(p);
 		switch (rev_compare_tree(revs, p->tree, commit->tree)) {
 		case REV_TREE_SAME:
+			tree_same = 1;
 			if (!revs->simplify_history || (p->object.flags & UNINTERESTING)) {
 				/* Even if a merge with an uninteresting
 				 * side branch brought the entire change
@@ -334,7 +335,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		}
 		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
 	}
-	if (tree_changed)
+	if (tree_changed && !tree_same)
 		commit->object.flags |= TREECHANGE;
 }
 
@@ -896,6 +897,8 @@ static int rewrite_one(struct rev_info *revs, struct commit **pp)
 		struct commit *p = *pp;
 		if (!revs->limited)
 			add_parents_to_list(revs, p, &revs->commits);
+		if (p->parents && p->parents->next)
+			return 0;
 		if (p->object.flags & (TREECHANGE | UNINTERESTING))
 			return 0;
 		if (!p->parents)
@@ -988,8 +991,15 @@ struct commit *get_revision(struct rev_info *revs)
 		    commit->parents && commit->parents->next)
 			continue;
 		if (revs->prune_fn && revs->dense) {
-			if (!(commit->object.flags & TREECHANGE))
-				continue;
+			/* Commit without changes? */
+			if (!(commit->object.flags & TREECHANGE)) {
+				/* drop merges unless we want parenthood */
+				if (!revs->parents)
+					continue;
+				/* non-merge - always ignore it */
+				if (commit->parents && !commit->parents->next)
+					continue;
+			}
 			if (revs->parents)
 				rewrite_parents(revs, commit);
 		}
