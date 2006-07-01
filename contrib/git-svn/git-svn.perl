@@ -264,9 +264,19 @@ when you have upgraded your tools and habits to use refs/remotes/$GIT_SVN
 }
 
 sub init {
-	$SVN_URL = shift or die "SVN repository location required " .
+	my $url = shift or die "SVN repository location required " .
 				"as a command-line argument\n";
-	$SVN_URL =~ s!/+$!!; # strip trailing slash
+	$url =~ s!/+$!!; # strip trailing slash
+
+	if (my $repo_path = shift) {
+		unless (-d $repo_path) {
+			mkpath([$repo_path]);
+		}
+		$GIT_DIR = $ENV{GIT_DIR} = $repo_path . "/.git";
+		init_vars();
+	}
+
+	$SVN_URL = $url;
 	unless (-d $GIT_DIR) {
 		my @init_db = ('git-init-db');
 		push @init_db, "--template=$_template" if defined $_template;
