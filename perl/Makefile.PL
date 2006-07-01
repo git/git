@@ -5,6 +5,11 @@ sub MY::postamble {
 instlibdir:
 	@echo '$(INSTALLSITEARCH)'
 
+check:
+	perl -MDevel::PPPort -le 'Devel::PPPort::WriteFile(".ppport.h")' && \
+	perl .ppport.h --compat-version=5.6.0 Git.xs && \
+	rm .ppport.h
+
 MAKE_FRAG
 }
 
@@ -24,8 +29,3 @@ WriteMakefile(
 	MYEXTLIB        => '../libgit.a',
 	INC             => '-I. -I..',
 );
-
-
-use Devel::PPPort;
-
--s 'ppport.h' or Devel::PPPort::WriteFile();

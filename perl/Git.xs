@@ -15,8 +15,6 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include "ppport.h"
-
 #undef die
 
 
