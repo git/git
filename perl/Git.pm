@@ -511,7 +511,19 @@ are involved.
 
 =cut
 
-# Implemented in Git.xs.
+sub hash_object {
+	my ($self, $type, $file) = _maybe_self(@_);
+
+	# hash_object_* implemented in Git.xs.
+
+	if (ref($file) eq 'GLOB') {
+		my $hash = hash_object_pipe($type, fileno($file));
+		close $file;
+		return $hash;
+	} else {
+		hash_object_file($type, $file);
+	}
+}
 
 
 

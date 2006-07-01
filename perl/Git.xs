@@ -104,42 +104,36 @@ CODE:
 }
 
 char *
-xs_hash_object(type, file)
+xs_hash_object_pipe(type, fd)
 	char *type;
-	SV *file;
+	int fd;
 CODE:
 {
 	unsigned char sha1[20];
 
-	if (SvTYPE(file) == SVt_RV)
-		file = SvRV(file);
+	if (index_pipe(sha1, fd, type, 0))
+		croak("Unable to hash given filehandle");
+	RETVAL = sha1_to_hex(sha1);
+}
+OUTPUT:
+	RETVAL
 
-	if (SvTYPE(file) == SVt_PVGV) {
-		/* Filehandle */
-		PerlIO *pio;
+char *
+xs_hash_object_file(type, path)
+	char *type;
+	char *path;
+CODE:
+{
+	unsigned char sha1[20];
+	int fd = open(path, O_RDONLY);
+	struct stat st;
 
-		pio = IoIFP(sv_2io(file));
-		if (!pio)
-			croak("You passed me something weird - a dir glob?");
-		/* XXX: I just hope PerlIO didn't read anything from it yet.
-		 * --pasky */
-		if (index_pipe(sha1, PerlIO_fileno(pio), type, 0))
-			croak("Unable to hash given filehandle");
-		/* Avoid any nasty surprises. */
-		PerlIO_close(pio);
+	if (fd < 0 ||
+	    fstat(fd, &st) < 0 ||
+	    index_fd(sha1, fd, &st, 0, type))
+		croak("Unable to hash %s", path);
+	close(fd);
 
-	} else {
-		/* String */
-		char *path = SvPV_nolen(file);
-		int fd = open(path, O_RDONLY);
-		struct stat st;
-
-		if (fd < 0 ||
-		    fstat(fd, &st) < 0 ||
-		    index_fd(sha1, fd, &st, 0, type))
-			croak("Unable to hash %s", path);
-		close(fd);
-	}
 	RETVAL = sha1_to_hex(sha1);
 }
 OUTPUT:
