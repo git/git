@@ -1,5 +1,6 @@
 #!/bin/sh
 
+: ${M=''}
 : ${J=-j2}
 
 test -z "$(git diff --cached --name-status)" || {
@@ -17,9 +18,9 @@ do
 	then
 		echo "** $branch" &&
 		git checkout $branch &&
-		Meta/Make -- $J all &&
-		Meta/Make -- $J $nstall &&
-		Meta/Make test &&
+		Meta/Make $M -- $J all &&
+		Meta/Make $M -- $J $nstall &&
+		Meta/Make $M -- test &&
 		Meta/Make clean || exit $?
 	else
 		echo "** No $branch"
