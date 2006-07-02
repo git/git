@@ -851,14 +851,14 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 /* bits #0..7 in revision.h */
 #define PARENT1		(1u<< 8)
 #define PARENT2		(1u<< 9)
-#define UNINTERESTING	(1u<<10)
+#define STALE		(1u<<10)
 
 static struct commit *interesting(struct commit_list *list)
 {
 	while (list) {
 		struct commit *commit = list->item;
 		list = list->next;
-		if (commit->object.flags & UNINTERESTING)
+		if (commit->object.flags & STALE)
 			continue;
 		return commit;
 	}
@@ -920,17 +920,17 @@ static struct commit *interesting(struct commit_list *list)
  *
  * Next, we pop B and something very interesting happens.  It has flags==3
  * so it is also placed on the result list, and its parents are marked
- * uninteresting, retroactively, and placed back on the list:
+ * stale, retroactively, and placed back on the list:
  *
  *    list=C(7), result=C(7) B(3)
  *
  * Now, list does not have any interesting commit.  So we find the newest
- * commit from the result list that is not marked uninteresting.  Which is
+ * commit from the result list that is not marked stale.  Which is
  * commit B.
  *
  *
  * Another pathological example how this thing used to fail to mark an
- * ancestor of a merge base as UNINTERESTING before we introduced the
+ * ancestor of a merge base as STALE before we introduced the
  * postprocessing phase (mark_reachable_commits).
  *
  *		  2
@@ -960,8 +960,8 @@ static struct commit *interesting(struct commit_list *list)
  *	 C7			2 3 7 1 3 2 1 2
  *
  * At this point, unfortunately, everybody in the list is
- * uninteresting, so we fail to complete the following two
- * steps to fully marking uninteresting commits.
+ * stale, so we fail to complete the following two
+ * steps to fully marking stale commits.
  *
  *	 D7			2 3 7 7 3 2 1 2
  *	 E7			2 3 7 7 7 2 1 2
@@ -981,10 +981,10 @@ static void mark_reachable_commits(struct commit_list *result,
 	 */
 	for (tmp = result; tmp; tmp = tmp->next) {
 		struct commit *c = tmp->item;
-		/* Reinject uninteresting ones to list,
+		/* Reinject stale ones to list,
 		 * so we can scan their parents.
 		 */
-		if (c->object.flags & UNINTERESTING)
+		if (c->object.flags & STALE)
 			commit_list_insert(c, &list);
 	}
 	while (list) {
@@ -995,8 +995,8 @@ static void mark_reachable_commits(struct commit_list *result,
 		list = list->next;
 		free(tmp);
 
-		/* Anything taken out of the list is uninteresting, so
-		 * mark all its parents uninteresting.  We do not
+		/* Anything taken out of the list is stale, so
+		 * mark all its parents stale.  We do not
 		 * parse new ones (we already parsed all the relevant
 		 * ones).
 		 */
@@ -1004,8 +1004,8 @@ static void mark_reachable_commits(struct commit_list *result,
 		while (parents) {
 			struct commit *p = parents->item;
 			parents = parents->next;
-			if (!(p->object.flags & UNINTERESTING)) {
-				p->object.flags |= UNINTERESTING;
+			if (!(p->object.flags & STALE)) {
+				p->object.flags |= STALE;
 				commit_list_insert(p, &list);
 			}
 		}
@@ -1034,7 +1034,7 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 		struct commit *commit = list->item;
 		struct commit_list *parents;
 		int flags = commit->object.flags
-			& (PARENT1 | PARENT2 | UNINTERESTING);
+			& (PARENT1 | PARENT2 | STALE);
 
 		tmp = list;
 		list = list->next;
@@ -1042,8 +1042,8 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 		if (flags == (PARENT1 | PARENT2)) {
 			insert_by_date(commit, &result);
 
-			/* Mark parents of a found merge uninteresting */
-			flags |= UNINTERESTING;
+			/* Mark parents of a found merge stale */
+			flags |= STALE;
 		}
 		parents = commit->parents;
 		while (parents) {
@@ -1067,7 +1067,7 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 	for (tmp = result, list = NULL; tmp; ) {
 		struct commit *commit = tmp->item;
 		struct commit_list *next = tmp->next;
-		if (commit->object.flags & UNINTERESTING) {
+		if (commit->object.flags & STALE) {
 			if (list != NULL)
 				list->next = next;
 			free(tmp);
@@ -1075,15 +1075,15 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 			if (list == NULL)
 				result = tmp;
 			list = tmp;
-			commit->object.flags |= UNINTERESTING;
+			commit->object.flags |= STALE;
 		}
 
 		tmp = next;
 	}
 
 	if (cleanup) {
-		clear_commit_marks(rev1, PARENT1 | PARENT2 | UNINTERESTING);
-		clear_commit_marks(rev2, PARENT1 | PARENT2 | UNINTERESTING);
+		clear_commit_marks(rev1, PARENT1 | PARENT2 | STALE);
+		clear_commit_marks(rev2, PARENT1 | PARENT2 | STALE);
 	}
 
 	return result;
