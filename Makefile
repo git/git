@@ -144,7 +144,7 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  git-cherry-pick git-status
+	  git-cherry-pick git-status git-instaweb
 
 # The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
@@ -545,6 +545,20 @@ git-cherry-pick: git-revert
 
 git-status: git-commit
 	cp $< $@+
+	mv $@+ $@
+
+git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
+	rm -f $@ $@+
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
+	    $@.sh | sed \
+	    -e 's|@@GITWEB_CGI@@|#!$(PERL_PATH_SQ)|; T; r gitweb/gitweb.cgi' \
+	    | sed \
+	    -e 's|@@GITWEB_CSS@@||; T; r gitweb/gitweb.css' \
+	    > $@+
+	chmod +x $@+
 	mv $@+ $@
 
 # These can record GIT_VERSION
