@@ -233,6 +233,15 @@ format-patch --attach --stdout initial..side
 format-patch --attach --stdout initial..master^
 format-patch --attach --stdout initial..master
 
+diff --abbrev initial..side
+diff -r initial..side
+diff --stat initial..side
+diff -r --stat initial..side
+diff initial..side
+diff --patch-with-stat initial..side
+diff --patch-with-raw initial..side
+diff --patch-with-stat -r initial..side
+diff --patch-with-raw -r initial..side
 EOF
 
 test_done
