@@ -1012,7 +1012,8 @@ static void mark_reachable_commits(struct commit_list *result,
 	}
 }
 
-struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2)
+struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
+                                    int cleanup)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
@@ -1080,20 +1081,10 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2)
 		tmp = next;
 	}
 
-	return result;
-}
-
-struct commit_list *get_merge_bases_clean(struct commit *rev1,
-                                          struct commit *rev2)
-{
-	unsigned int flags1 = rev1->object.flags;
-	unsigned int flags2 = rev2->object.flags;
-	struct commit_list *result = get_merge_bases(rev1, rev2);
-
-	clear_commit_marks(rev1, PARENT1 | PARENT2 | UNINTERESTING);
-	clear_commit_marks(rev2, PARENT1 | PARENT2 | UNINTERESTING);
-	rev1->object.flags = flags1;
-	rev2->object.flags = flags2;
+	if (cleanup) {
+		clear_commit_marks(rev1, PARENT1 | PARENT2 | UNINTERESTING);
+		clear_commit_marks(rev2, PARENT1 | PARENT2 | UNINTERESTING);
+	}
 
 	return result;
 }

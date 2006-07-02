@@ -813,7 +813,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				}
 
 				if (symmetric) {
-					exclude = get_merge_bases_clean(a, b);
+					exclude = get_merge_bases(a, b, 1);
 					add_pending_commit_list(revs, exclude,
 					                        flags_exclude);
 					a->object.flags |= flags;
