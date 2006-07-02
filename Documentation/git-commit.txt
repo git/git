@@ -15,9 +15,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Updates the index file for given paths, or all modified files if
-'-a' is specified, and makes a commit object.  The command
-VISUAL and EDITOR environment variables to edit the commit log
-message.
+'-a' is specified, and makes a commit object.  The command specified
+by either the VISUAL or EDITOR environment variables are used to edit
+the commit log message.
 
 Several environment variable are used during commits.  They are
 documented in gitlink:git-commit-tree[1].
