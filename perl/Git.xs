@@ -59,7 +59,7 @@ BOOT:
 # /* TODO: xs_call_gate(). See Git.pm. */
 
 
-const char *
+char *
 xs_version()
 CODE:
 {
@@ -69,11 +69,11 @@ OUTPUT:
 	RETVAL
 
 
-const char *
+char *
 xs_exec_path()
 CODE:
 {
-	RETVAL = git_exec_path();
+	RETVAL = (char *)git_exec_path();
 }
 OUTPUT:
 	RETVAL
