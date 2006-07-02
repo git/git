@@ -5,7 +5,11 @@
 # Read .git/FETCH_HEAD and make a human readable merge message
 # by grouping branches and tags together to form a single line.
 
-BEGIN { unshift @INC, '@@INSTLIBDIR@@'; }
+BEGIN {
+	unless (exists $ENV{'RUNNING_GIT_TESTS'}) {
+		unshift @INC, '@@INSTLIBDIR@@';
+	}
+}
 use strict;
 use Git;
 use Error qw(:try);
