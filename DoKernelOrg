@@ -65,8 +65,9 @@ maint | master)
 		0)
 			echo >&2 "Done -- move RPMS to the master machine."
 			(
-				cd "$HOME/rpms/RPMS/$arch" &&
-				tar cf "$HOME/$V.tar" *-$V-*.$a.rpm &&
+				cd "$HOME/rpms/" &&
+				tar cf "$HOME/$V.tar" \
+					RPMS/$arch/*-$V-*.$arch.rpm &&
 				ls -ld $HOME/$V.tar
 			)
 			make clean
@@ -76,7 +77,7 @@ maint | master)
 			;;
 		esac
 		exit $status ;;
-	esac &&
+	esac >>./:all.log 2>&1 &&
 	make dist-doc >>./:all.log 2>&1 &&
 	ln git-$V.tar.gz git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/. &&
 	for a in $narch
