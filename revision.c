@@ -997,7 +997,7 @@ struct commit *get_revision(struct rev_info *revs)
 				if (!revs->parents)
 					continue;
 				/* non-merge - always ignore it */
-				if (commit->parents && !commit->parents->next)
+				if (!commit->parents || !commit->parents->next)
 					continue;
 			}
 			if (revs->parents)
