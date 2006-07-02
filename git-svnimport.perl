@@ -534,7 +534,7 @@ sub commit {
 	my($author_name,$author_email,$dest);
 	my(@old,@new,@parents);
 
-	if (not defined $author) {
+	if (not defined $author or $author eq "") {
 		$author_name = $author_email = "unknown";
 	} elsif (defined $users_file) {
 		die "User $author is not listed in $users_file\n"
