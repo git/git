@@ -254,8 +254,10 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	init_revisions(&rev);
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
-	if (!rev.diffopt.output_format)
+	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+		diff_setup_done(&rev.diffopt);
+	}
 
 	/* Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
