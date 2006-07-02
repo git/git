@@ -333,6 +333,7 @@ ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
 
+-include config.mak.autogen
 -include config.mak
 
 ifdef WITH_OWN_SUBPROCESS_PY

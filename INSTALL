@@ -13,6 +13,15 @@ that uses $prefix, the built results have some paths encoded,
 which are derived from $prefix, so "make all; make prefix=/usr
 install" would not work.
 
+Alternatively you can use autoconf generated ./configure script to
+set up install paths (via config.mak.autogen), so you can write instead
+
+	$ autoconf ;# as yourself if ./configure doesn't exist yet
+	$ ./configure --prefix=/usr ;# as yourself
+	$ make all doc ;# as yourself
+	# make install install-doc ;# as root
+
+
 Issues of note:
 
  - git normally installs a helper script wrapper called "git", which
