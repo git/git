@@ -8,14 +8,10 @@
 #include "../cache.h"
 #include "../exec_cmd.h"
 
-#define die perlyshadow_die__
-
 /* XS and Perl interface */
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-
-#undef die
 
 
 static char *
