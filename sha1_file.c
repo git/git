@@ -1458,7 +1458,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
+	deflateInit(&stream, zlib_compression_level);
 	size = deflateBound(&stream, len+hdrlen);
 	compressed = xmalloc(size);
 
@@ -1511,7 +1511,7 @@ static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
+	deflateInit(&stream, zlib_compression_level);
 	size = deflateBound(&stream, len + hdrlen);
 	buf = xmalloc(size);
 

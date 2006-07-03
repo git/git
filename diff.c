@@ -583,7 +583,7 @@ static unsigned char *deflate_it(char *data,
 	z_stream stream;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
+	deflateInit(&stream, zlib_compression_level);
 	bound = deflateBound(&stream, size);
 	deflated = xmalloc(bound);
 	stream.next_out = deflated;
