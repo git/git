@@ -5,79 +5,97 @@
 #include "commit.h"
 #include "tag.h"
 
-struct object **objs;
-static int nr_objs;
-int obj_allocs;
+static struct object **obj_hash;
+static int nr_objs, obj_hash_size;
+
+unsigned int get_max_object_index(void)
+{
+	return obj_hash_size;
+}
+
+struct object *get_indexed_object(unsigned int idx)
+{
+	return obj_hash[idx];
+}
 
 const char *type_names[] = {
 	"none", "blob", "tree", "commit", "bad"
 };
 
+static unsigned int hash_obj(struct object *obj, unsigned int n)
+{
+	unsigned int hash = *(unsigned int *)obj->sha1;
+	return hash % n;
+}
+
+static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
+{
+	int j = hash_obj(obj, size);
+
+	while (hash[j]) {
+		j++;
+		if (j >= size)
+			j = 0;
+	}
+	hash[j] = obj;
+}
+
 static int hashtable_index(const unsigned char *sha1)
 {
 	unsigned int i;
 	memcpy(&i, sha1, sizeof(unsigned int));
-	return (int)(i % obj_allocs);
-}
-
-static int find_object(const unsigned char *sha1)
-{
-	int i;
-
-	if (!objs)
-		return -1;
-
-	i = hashtable_index(sha1);
-	while (objs[i]) {
-		if (memcmp(sha1, objs[i]->sha1, 20) == 0)
-			return i;
-		i++;
-		if (i == obj_allocs)
-			i = 0;
-	}
-	return -1 - i;
+	return (int)(i % obj_hash_size);
 }
 
 struct object *lookup_object(const unsigned char *sha1)
 {
-	int pos = find_object(sha1);
-	if (pos >= 0)
-		return objs[pos];
-	return NULL;
+	int i;
+	struct object *obj;
+
+	if (!obj_hash)
+		return NULL;
+
+	i = hashtable_index(sha1);
+	while ((obj = obj_hash[i]) != NULL) {
+		if (!memcmp(sha1, obj->sha1, 20))
+			break;
+		i++;
+		if (i == obj_hash_size)
+			i = 0;
+	}
+	return obj;
+}
+
+static void grow_object_hash(void)
+{
+	int i;
+	int new_hash_size = obj_hash_size < 32 ? 32 : 2 * obj_hash_size;
+	struct object **new_hash;
+
+	new_hash = calloc(new_hash_size, sizeof(struct object *));
+	for (i = 0; i < obj_hash_size; i++) {
+		struct object *obj = obj_hash[i];
+		if (!obj)
+			continue;
+		insert_obj_hash(obj, new_hash, new_hash_size);
+	}
+	free(obj_hash);
+	obj_hash = new_hash;
+	obj_hash_size = new_hash_size;
 }
 
 void created_object(const unsigned char *sha1, struct object *obj)
 {
-	int pos;
-
 	obj->parsed = 0;
-	memcpy(obj->sha1, sha1, 20);
-	obj->type = TYPE_NONE;
 	obj->used = 0;
+	obj->type = TYPE_NONE;
+	obj->flags = 0;
+	memcpy(obj->sha1, sha1, 20);
 
-	if (obj_allocs - 1 <= nr_objs * 2) {
-		int i, count = obj_allocs;
-		obj_allocs = (obj_allocs < 32 ? 32 : 2 * obj_allocs);
-		objs = xrealloc(objs, obj_allocs * sizeof(struct object *));
-		memset(objs + count, 0, (obj_allocs - count)
-				* sizeof(struct object *));
-		for (i = 0; i < obj_allocs; i++)
-			if (objs[i]) {
-				int j = find_object(objs[i]->sha1);
-				if (j != i) {
-					j = -1 - j;
-					objs[j] = objs[i];
-					objs[i] = NULL;
-				}
-			}
-	}
+	if (obj_hash_size - 1 <= nr_objs * 2)
+		grow_object_hash();
 
-	pos = find_object(sha1);
-	if (pos >= 0)
-		die("Inserting %s twice\n", sha1_to_hex(sha1));
-	pos = -pos-1;
-
-	objs[pos] = obj;
+	insert_obj_hash(obj, obj_hash, obj_hash_size);
 	nr_objs++;
 }
 
@@ -222,7 +240,7 @@ void clear_object_marks(unsigned mark)
 {
 	int i;
 
-	for (i = 0; i < obj_allocs; i++)
-		if (objs[i])
-			objs[i]->flags &= ~mark;
+	for (i = 0; i < obj_hash_size; i++)
+		if (obj_hash[i])
+			obj_hash[i]->flags &= ~mark;
 }

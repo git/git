@@ -60,12 +60,13 @@ static int objwarning(struct object *obj, const char *err, ...)
 
 static void check_connectivity(void)
 {
-	int i;
+	int i, max;
 
 	/* Look up all the requirements, warn about missing objects.. */
-	for (i = 0; i < obj_allocs; i++) {
+	max = get_max_object_index();
+	for (i = 0; i < max; i++) {
 		const struct object_refs *refs;
-		struct object *obj = objs[i];
+		struct object *obj = get_indexed_object(i);
 
 		if (!obj)
 			continue;

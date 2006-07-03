@@ -40,9 +40,10 @@ struct object {
 };
 
 extern int track_object_refs;
-extern int obj_allocs;
-extern struct object **objs;
 extern const char *type_names[];
+
+extern unsigned int get_max_object_index(void);
+extern struct object *get_indexed_object(unsigned int);
 
 static inline const char *typename(unsigned int type)
 {

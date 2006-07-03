@@ -1,3 +1,6 @@
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/poll.h>
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -5,9 +8,6 @@
 #include "object.h"
 #include "commit.h"
 #include "exec_cmd.h"
-#include <signal.h>
-#include <sys/poll.h>
-#include <sys/wait.h>
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
