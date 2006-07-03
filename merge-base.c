@@ -6,7 +6,7 @@ static int show_all = 0;
 
 static int merge_base(struct commit *rev1, struct commit *rev2)
 {
-	struct commit_list *result = get_merge_bases(rev1, rev2);
+	struct commit_list *result = get_merge_bases(rev1, rev2, 0);
 
 	if (!result)
 		return 1;
