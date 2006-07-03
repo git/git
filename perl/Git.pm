@@ -572,6 +572,24 @@ sub ident_person {
 }
 
 
+=item get_object ( TYPE, SHA1 )
+
+Return contents of the given object in a scalar string. If the object has
+not been found, undef is returned; however, do not rely on this! Currently,
+if you use multiple repositories at once, get_object() on one repository
+_might_ return the object even though it exists only in another repository.
+(But do not rely on this behaviour either.)
+
+The method must be called on a repository instance.
+
+Implementation of this method is very fast; no external command calls
+are involved. That's why it is broken, too. ;-)
+
+=cut
+
+# Implemented in Git.xs.
+
+
 =item hash_object ( TYPE, FILENAME )
 
 =item hash_object ( TYPE, FILEHANDLE )

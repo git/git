@@ -111,6 +111,30 @@ CODE:
 	free((char **) argv);
 }
 
+
+SV *
+xs_get_object(type, id)
+	char *type;
+	char *id;
+CODE:
+{
+	unsigned char sha1[20];
+	unsigned long size;
+	void *buf;
+
+	if (strlen(id) != 40 || get_sha1_hex(id, sha1) < 0)
+		XSRETURN_UNDEF;
+
+	buf = read_sha1_file(sha1, type, &size);
+	if (!buf)
+		XSRETURN_UNDEF;
+	RETVAL = newSVpvn(buf, size);
+	free(buf);
+}
+OUTPUT:
+	RETVAL
+
+
 char *
 xs_hash_object_pipe(type, fd)
 	char *type;
