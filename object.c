@@ -240,7 +240,7 @@ void clear_object_marks(unsigned mark)
 {
 	int i;
 
-	for (i = 0; i < obj_allocs; i++)
-		if (objs[i])
-			objs[i]->flags &= ~mark;
+	for (i = 0; i < obj_hash_size; i++)
+		if (obj_hash[i])
+			obj_hash[i]->flags &= ~mark;
 }
