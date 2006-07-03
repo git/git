@@ -83,4 +83,6 @@ int object_list_contains(struct object_list *list, struct object *obj);
 /* Object array handling .. */
 void add_object_array(struct object *obj, const char *name, struct object_array *array);
 
+void clear_object_marks(unsigned);
+
 #endif /* OBJECT_H */
