@@ -1058,7 +1058,7 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 	}
 
 	if (!result)
-		return NULL;
+		goto finish;
 
 	if (result->next && list)
 		mark_reachable_commits(result, list);
@@ -1081,6 +1081,7 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 		tmp = next;
 	}
 
+ finish:
 	if (cleanup) {
 		clear_commit_marks(rev1, PARENT1 | PARENT2 | STALE);
 		clear_commit_marks(rev2, PARENT1 | PARENT2 | STALE);
