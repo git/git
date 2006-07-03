@@ -521,6 +521,55 @@ sub config {
 }
 
 
+=item ident ( TYPE | IDENTSTR )
+
+=item ident_person ( TYPE | IDENTSTR | IDENTARRAY )
+
+This suite of functions retrieves and parses ident information, as stored
+in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
+C<TYPE> can be either I<author> or I<committer>; case is insignificant).
+
+The C<ident> method retrieves the ident information from C<git-var>
+and either returns it as a scalar string or as an array with the fields parsed.
+Alternatively, it can take a prepared ident string (e.g. from the commit
+object) and just parse it.
+
+C<ident_person> returns the person part of the ident - name and email;
+it can take the same arguments as C<ident> or the array returned by C<ident>.
+
+The synopsis is like:
+
+	my ($name, $email, $time_tz) = ident('author');
+	"$name <$email>" eq ident_person('author');
+	"$name <$email>" eq ident_person($name);
+	$time_tz =~ /^\d+ [+-]\d{4}$/;
+
+Both methods must be called on a repository instance.
+
+=cut
+
+sub ident {
+	my ($self, $type) = @_;
+	my $identstr;
+	if (lc $type eq lc 'committer' or lc $type eq lc 'author') {
+		$identstr = $self->command_oneline('var', 'GIT_'.uc($type).'_IDENT');
+	} else {
+		$identstr = $type;
+	}
+	if (wantarray) {
+		return $identstr =~ /^(.*) <(.*)> (\d+ [+-]\d{4})$/;
+	} else {
+		return $identstr;
+	}
+}
+
+sub ident_person {
+	my ($self, @ident) = @_;
+	$#ident == 0 and @ident = $self->ident($ident[0]);
+	return "$ident[0] <$ident[1]>";
+}
+
+
 =item hash_object ( TYPE, FILENAME )
 
 =item hash_object ( TYPE, FILEHANDLE )

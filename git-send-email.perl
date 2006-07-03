@@ -84,15 +84,8 @@ foreach my $entry (@bcclist) {
 
 # Now, let's fill any that aren't set in with defaults:
 
-sub gitvar_ident {
-    my ($name) = @_;
-    my $val = $repo->command('var', $name);
-    my @field = split(/\s+/, $val);
-    return join(' ', @field[0...(@field-3)]);
-}
-
-my ($author) = gitvar_ident('GIT_AUTHOR_IDENT');
-my ($committer) = gitvar_ident('GIT_COMMITTER_IDENT');
+my ($author) = $repo->ident_person('author');
+my ($committer) = $repo->ident_person('committer');
 
 my %aliases;
 my @alias_files = $repo->config('sendemail.aliasesfile');
