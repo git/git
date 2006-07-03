@@ -5,7 +5,16 @@
 # Read .git/FETCH_HEAD and make a human readable merge message
 # by grouping branches and tags together to form a single line.
 
+BEGIN {
+	unless (exists $ENV{'RUNNING_GIT_TESTS'}) {
+		unshift @INC, '@@INSTLIBDIR@@';
+	}
+}
 use strict;
+use Git;
+use Error qw(:try);
+
+my $repo = Git->repository();
 
 my @src;
 my %src;
@@ -28,13 +37,22 @@ sub andjoin {
 }
 
 sub repoconfig {
-	my ($val) = qx{git-repo-config --get merge.summary};
+	my $val;
+	try {
+		$val = $repo->command_oneline('repo-config', '--get', 'merge.summary');
+	} catch Git::Error::Command with {
+		my ($E) = shift;
+		if ($E->value() == 1) {
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
 	return $val;
 }
 
 sub current_branch {
-	my ($bra) = qx{git-symbolic-ref HEAD};
-	chomp($bra);
+	my ($bra) = $repo->command_oneline('symbolic-ref', 'HEAD');
 	$bra =~ s|^refs/heads/||;
 	if ($bra ne 'master') {
 		$bra = " into $bra";
@@ -47,11 +65,10 @@ sub current_branch {
 sub shortlog {
 	my ($tip) = @_;
 	my @result;
-	foreach ( qx{git-log --no-merges --topo-order --pretty=oneline $tip ^HEAD} ) {
+	foreach ($repo->command('log', '--no-merges', '--topo-order', '--pretty=oneline', $tip, '^HEAD')) {
 		s/^[0-9a-f]{40}\s+//;
 		push @result, $_;
 	}
-	die "git-log failed\n" if $?;
 	return @result;
 }
 
@@ -168,6 +185,6 @@ for (@origin) {
 			print "  ...\n";
 			last;
 		}
-		print "  $log";
+		print "  $log\n";
 	}
 }

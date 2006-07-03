@@ -6,10 +6,15 @@
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Linus Torvalds.
 
-
+BEGIN {
+	unless (exists $ENV{'RUNNING_GIT_TESTS'}) {
+		unshift @INC, '@@INSTLIBDIR@@';
+	}
+}
 use warnings;
 use strict;
 use Getopt::Std;
+use Git;
 
 sub usage() {
 	print <<EOT;
@@ -24,9 +29,7 @@ getopts("hnfkv") || usage;
 usage() if $opt_h;
 @ARGV >= 1 or usage;
 
-my $GIT_DIR = `git rev-parse --git-dir`;
-exit 1 if $?; # rev-parse would have given "not a git dir" message.
-chomp($GIT_DIR);
+my $repo = Git->repository();
 
 my (@srcArgs, @dstArgs, @srcs, @dsts);
 my ($src, $dst, $base, $dstDir);
@@ -62,11 +65,11 @@ else {
     $dstDir = "";
 }
 
-my $subdir_prefix = `git rev-parse --show-prefix`;
-chomp($subdir_prefix);
+my $subdir_prefix = $repo->wc_subdir();
 
 # run in git base directory, so that git-ls-files lists all revisioned files
-chdir "$GIT_DIR/..";
+chdir $repo->wc_path();
+$repo->wc_chdir('');
 
 # normalize paths, needed to compare against versioned files and update-index
 # also, this is nicer to end-users by doing ".//a/./b/.//./c" ==> "a/b/c"
@@ -84,12 +87,10 @@ my (@allfiles,@srcfiles,@dstfiles);
 my $safesrc;
 my (%overwritten, %srcForDst);
 
-$/ = "\0";
-open(F, 'git-ls-files -z |')
-        or die "Failed to open pipe from git-ls-files: " . $!;
-
-@allfiles = map { chomp; $_; } <F>;
-close(F);
+{
+	local $/ = "\0";
+	@allfiles = $repo->command('ls-files', '-z');
+}
 
 
 my ($i, $bad);
@@ -219,28 +220,28 @@ if ($opt_n) {
 }
 else {
     if (@changedfiles) {
-	open(H, "| git-update-index -z --stdin")
-		or die "git-update-index failed to update changed files with code $!\n";
+	my ($fd, $ctx) = $repo->command_input_pipe('update-index', '-z', '--stdin');
 	foreach my $fileName (@changedfiles) {
-		print H "$fileName\0";
+		print $fd "$fileName\0";
 	}
-	close(H);
+	git_cmd_try { $repo->command_close_pipe($fd, $ctx); }
+		'git-update-index failed to update changed files with code %d';
     }
     if (@addedfiles) {
-	open(H, "| git-update-index --add -z --stdin")
-		or die "git-update-index failed to add new names with code $!\n";
+	my ($fd, $ctx) = $repo->command_input_pipe('update-index', '--add', '-z', '--stdin');
 	foreach my $fileName (@addedfiles) {
-		print H "$fileName\0";
+		print $fd "$fileName\0";
 	}
-	close(H);
+	git_cmd_try { $repo->command_close_pipe($fd, $ctx); }
+		'git-update-index failed to add new files with code %d';
     }
     if (@deletedfiles) {
-	open(H, "| git-update-index --remove -z --stdin")
-		or die "git-update-index failed to remove old names with code $!\n";
+	my ($fd, $ctx) = $repo->command_input_pipe('update-index', '--remove', '-z', '--stdin');
 	foreach my $fileName (@deletedfiles) {
-		print H "$fileName\0";
+		print $fd "$fileName\0";
 	}
-	close(H);
+	git_cmd_try { $repo->command_close_pipe($fd, $ctx); }
+		'git-update-index failed to remove old files with code %d';
     }
 }
 
