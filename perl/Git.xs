@@ -52,7 +52,21 @@ BOOT:
 }
 
 
-# /* TODO: xs_call_gate(). See Git.pm. */
+void
+xs__call_gate(repoid, git_dir)
+	long repoid;
+	char *git_dir;
+CODE:
+{
+	static long last_repoid;
+	if (repoid != last_repoid) {
+		setup_git(git_dir,
+		          getenv(DB_ENVIRONMENT),
+		          getenv(INDEX_ENVIRONMENT),
+		          getenv(GRAFT_ENVIRONMENT));
+		last_repoid = repoid;
+	}
+}
 
 
 char *

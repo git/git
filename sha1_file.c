@@ -126,16 +126,22 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
 char *sha1_file_name(const unsigned char *sha1)
 {
 	static char *name, *base;
+	static const char *last_objdir;
+	const char *sha1_file_directory = get_object_directory();
 
-	if (!base) {
-		const char *sha1_file_directory = get_object_directory();
+	if (!last_objdir || strcmp(last_objdir, sha1_file_directory)) {
 		int len = strlen(sha1_file_directory);
+		if (base)
+			free(base);
 		base = xmalloc(len + 60);
 		memcpy(base, sha1_file_directory, len);
 		memset(base+len, 0, 60);
 		base[len] = '/';
 		base[len+3] = '/';
 		name = base + len + 1;
+		if (last_objdir)
+			free((char *) last_objdir);
+		last_objdir = strdup(sha1_file_directory);
 	}
 	fill_sha1_path(name, sha1);
 	return base;
@@ -145,14 +151,20 @@ char *sha1_pack_name(const unsigned char *sha1)
 {
 	static const char hex[] = "0123456789abcdef";
 	static char *name, *base, *buf;
+	static const char *last_objdir;
+	const char *sha1_file_directory = get_object_directory();
 	int i;
 
-	if (!base) {
-		const char *sha1_file_directory = get_object_directory();
+	if (!last_objdir || strcmp(last_objdir, sha1_file_directory)) {
 		int len = strlen(sha1_file_directory);
+		if (base)
+			free(base);
 		base = xmalloc(len + 60);
 		sprintf(base, "%s/pack/pack-1234567890123456789012345678901234567890.pack", sha1_file_directory);
 		name = base + len + 11;
+		if (last_objdir)
+			free((char *) last_objdir);
+		last_objdir = strdup(sha1_file_directory);
 	}
 
 	buf = name;
@@ -170,14 +182,20 @@ char *sha1_pack_index_name(const unsigned char *sha1)
 {
 	static const char hex[] = "0123456789abcdef";
 	static char *name, *base, *buf;
+	static const char *last_objdir;
+	const char *sha1_file_directory = get_object_directory();
 	int i;
 
-	if (!base) {
-		const char *sha1_file_directory = get_object_directory();
+	if (!last_objdir || strcmp(last_objdir, sha1_file_directory)) {
 		int len = strlen(sha1_file_directory);
+		if (base)
+			free(base);
 		base = xmalloc(len + 60);
 		sprintf(base, "%s/pack/pack-1234567890123456789012345678901234567890.idx", sha1_file_directory);
 		name = base + len + 11;
+		if (last_objdir)
+			free((char *) last_objdir);
+		last_objdir = strdup(sha1_file_directory);
 	}
 
 	buf = name;

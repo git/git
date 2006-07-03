@@ -116,6 +116,9 @@ extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
 extern struct cache_tree *active_cache_tree;
 
+extern void setup_git(char *new_git_dir, char *new_git_object_dir,
+                      char *new_git_index_file, char *new_git_graft_file);
+
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
