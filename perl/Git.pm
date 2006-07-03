@@ -473,7 +473,6 @@ and the directory must exist.
 
 sub wc_chdir {
 	my ($self, $subdir) = @_;
-
 	$self->wc_path()
 		or throw Error::Simple("bare repository");
 
@@ -483,6 +482,42 @@ sub wc_chdir {
 	# can delete it now and we will never know. But at least we tried.
 
 	$self->{opts}->{WorkingSubdir} = $subdir;
+}
+
+
+=item config ( VARIABLE )
+
+Retrieve the configuration C<VARIABLE> in the same manner as C<repo-config>
+does. In scalar context requires the variable to be set only one time
+(exception is thrown otherwise), in array context returns allows the
+variable to be set multiple times and returns all the values.
+
+Must be called on a repository instance.
+
+This currently wraps command('repo-config') so it is not so fast.
+
+=cut
+
+sub config {
+	my ($self, $var) = @_;
+	$self->repo_path()
+		or throw Error::Simple("not a repository");
+
+	try {
+		if (wantarray) {
+			return $self->command('repo-config', '--get-all', $var);
+		} else {
+			return $self->command_oneline('repo-config', '--get', $var);
+		}
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			# Key not found.
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
 }
 
 
