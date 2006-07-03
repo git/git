@@ -29,6 +29,19 @@ Issues of note:
    has been actively developed since 1997, and people have moved over to
    graphical file managers.
 
+ - You can use git after building but without installing if you
+   wanted to.  Various git commands need to find other git
+   commands and scripts to do their work, so you would need to
+   arrange a few environment variables to tell them that their
+   friends will be found in your built source area instead of at
+   their standard installation area.  Something like this works
+   for me:
+
+	GIT_EXEC_PATH=`pwd`
+	PATH=`pwd`:$PATH
+	PERL5LIB=`pwd`/perl/blib/lib:`pwd`/perl/blib/arch/auto/Git
+	export GIT_EXEC_PATH PATH PERL5LIB
+
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries:
 
