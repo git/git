@@ -553,11 +553,11 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
-	    $@.sh | sed \
-	    -e 's|@@GITWEB_CGI@@|#!$(PERL_PATH_SQ)|; T; r gitweb/gitweb.cgi' \
-	    | sed \
-	    -e 's|@@GITWEB_CSS@@||; T; r gitweb/gitweb.css' \
-	    > $@+
+	    -e '/@@GITWEB_CGI@@/rgitweb/gitweb.cgi' \
+	    -e '/@@GITWEB_CGI@@/d' \
+	    -e '/@@GITWEB_CSS@@/rgitweb/gitweb.css' \
+	    -e '/@@GITWEB_CSS@@/d' \
+	    $@.sh > $@+
 	chmod +x $@+
 	mv $@+ $@
 
