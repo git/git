@@ -397,12 +397,13 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 {
 	struct commit_list *parents;
 
-	if (!commit)
-		return;
 	parents = commit->parents;
 	commit->object.flags &= ~mark;
 	while (parents) {
-		clear_commit_marks(parents->item, mark);
+		struct commit *parent = parents->item;
+		if (parent && parent->object.parsed &&
+		    (parent->object.flags & mark))
+			clear_commit_marks(parent, mark);
 		parents = parents->next;
 	}
 }
@@ -1058,7 +1059,7 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 	}
 
 	if (!result)
-		return NULL;
+		goto finish;
 
 	if (result->next && list)
 		mark_reachable_commits(result, list);
@@ -1081,10 +1082,9 @@ struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2,
 		tmp = next;
 	}
 
-	if (cleanup) {
-		clear_commit_marks(rev1, PARENT1 | PARENT2 | STALE);
-		clear_commit_marks(rev2, PARENT1 | PARENT2 | STALE);
-	}
+ finish:
+	if (cleanup)
+		clear_object_marks(PARENT1 | PARENT2 | STALE);
 
 	return result;
 }
