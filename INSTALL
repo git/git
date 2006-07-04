@@ -39,8 +39,8 @@ Issues of note:
 
 	GIT_EXEC_PATH=`pwd`
 	PATH=`pwd`:$PATH
-	PERL5LIB=`pwd`/perl/blib/lib:`pwd`/perl/blib/arch/auto/Git
-	export GIT_EXEC_PATH PATH PERL5LIB
+	GITPERLLIB=`pwd`/perl/blib/lib:`pwd`/perl/blib/arch/auto/Git
+	export GIT_EXEC_PATH PATH GITPERLLIB
 
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries:
