@@ -244,9 +244,9 @@ int git_config_bool(const char *name, const char *value)
 		return 1;
 	if (!*value)
 		return 0;
-	if (!strcasecmp(value, "true"))
+	if (!strcasecmp(value, "true") || !strcasecmp(value, "yes"))
 		return 1;
-	if (!strcasecmp(value, "false"))
+	if (!strcasecmp(value, "false") || !strcasecmp(value, "no"))
 		return 0;
 	return git_config_int(name, value) != 0;
 }
