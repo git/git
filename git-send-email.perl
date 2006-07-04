@@ -22,6 +22,17 @@ use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
 
+package FakeTerm;
+sub new {
+	my ($class, $reason) = @_;
+	return bless \$reason, shift;
+}
+sub readline {
+	my $self = shift;
+	die "Cannot use readline on FakeTerm: $$self";
+}
+package main;
+
 # most mail servers generate the Date: header, but not all...
 $ENV{LC_ALL} = 'C';
 use POSIX qw/strftime/;
@@ -46,7 +57,12 @@ my $smtp_server;
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
 
-my $term = new Term::ReadLine 'git-send-email';
+my $term = eval {
+	new Term::ReadLine 'git-send-email';
+};
+if ($@) {
+	$term = new FakeTerm "$@: going non-interactive";
+}
 
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:

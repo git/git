@@ -492,7 +492,7 @@ static void start_put(struct transfer_request *request)
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
+	deflateInit(&stream, zlib_compression_level);
 	size = deflateBound(&stream, len + hdrlen);
 	request->buffer.buffer = xmalloc(size);
 

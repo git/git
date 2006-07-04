@@ -183,6 +183,7 @@ extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
+extern int zlib_compression_level;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
