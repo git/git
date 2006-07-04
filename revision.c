@@ -817,6 +817,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 					exclude = get_merge_bases(a, b, 1);
 					add_pending_commit_list(revs, exclude,
 					                        flags_exclude);
+					free_commit_list(exclude);
 					a->object.flags |= flags;
 				} else
 					a->object.flags |= flags_exclude;
