@@ -12,11 +12,40 @@
 
 static char *server_capabilities = NULL;
 
+static int check_ref(const char *name, int len, unsigned int flags)
+{
+	if (!flags)
+		return 1;
+
+	if (len > 45 || memcmp(name, "refs/", 5))
+		return 0;
+
+	/* Skip the "refs/" part */
+	name += 5;
+	len -= 5;
+
+	/* REF_NORMAL means that we don't want the magic fake tag refs */
+	if ((flags & REF_NORMAL) && check_ref_format(name) < 0)
+		return 0;
+
+	/* REF_HEADS means that we want regular branch heads */
+	if ((flags & REF_HEADS) && !memcmp(name, "heads/", 6))
+		return 1;
+
+	/* REF_TAGS means that we want tags */
+	if ((flags & REF_TAGS) && !memcmp(name, "tags/", 5))
+		return 1;
+
+	/* All type bits clear means that we are ok with anything */
+	return !(flags & ~REF_NORMAL);
+}
+
 /*
  * Read all the refs from the other end
  */
 struct ref **get_remote_heads(int in, struct ref **list,
-			      int nr_match, char **match, int ignore_funny)
+			      int nr_match, char **match,
+			      unsigned int flags)
 {
 	*list = NULL;
 	for (;;) {
@@ -43,10 +72,8 @@ struct ref **get_remote_heads(int in, struct ref **list,
 			server_capabilities = strdup(name + name_len + 1);
 		}
 
-		if (ignore_funny && 45 < len && !memcmp(name, "refs/", 5) &&
-		    check_ref_format(name + 5))
+		if (!check_ref(name, name_len, flags))
 			continue;
-
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
 		ref = xcalloc(1, sizeof(*ref) + len - 40);
