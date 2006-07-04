@@ -143,7 +143,7 @@ SCRIPT_SH = \
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-shortlog.perl git-fmt-merge-msg.perl git-rerere.perl \
+	git-shortlog.perl git-rerere.perl \
 	git-annotate.perl git-cvsserver.perl \
 	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl \
 	git-send-email.perl
@@ -185,7 +185,8 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
 	git-read-tree$X git-commit-tree$X git-write-tree$X \
 	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
-	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
+	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X \
+	git-fmt-merge-msg$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -241,7 +242,7 @@ BUILTIN_OBJS = \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
 	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
-	builtin-update-ref.o
+	builtin-update-ref.o builtin-fmt-merge-msg.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS = -lz
