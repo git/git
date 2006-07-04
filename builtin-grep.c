@@ -817,8 +817,12 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			}
 			usage(builtin_grep_usage);
 		}
-		if (!strcmp("--", arg))
+		if (!strcmp("--", arg)) {
+			/* later processing wants to have this at argv[1] */
+			argv--;
+			argc++;
 			break;
+		}
 		if (*arg == '-')
 			usage(builtin_grep_usage);
 
