@@ -446,7 +446,7 @@ static int exec_grep(int argc, const char **argv)
 
 static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 {
-	int i, nr, argc, hit, len;
+	int i, nr, argc, hit, len, status;
 	const char *argv[MAXARGS+1];
 	char randarg[ARGBUF];
 	char *argptr = randarg;
@@ -536,12 +536,17 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		argv[argc++] = name;
 		if (argc < MAXARGS)
 			continue;
-		hit += exec_grep(argc, argv);
+		status = exec_grep(argc, argv);
+		if (0 < status)
+			hit = 1;
 		argc = nr;
 	}
-	if (argc > nr)
-		hit += exec_grep(argc, argv);
-	return 0;
+	if (argc > nr) {
+		status = exec_grep(argc, argv);
+		if (0 < status)
+			hit = 1;
+	}
+	return hit;
 }
 
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
@@ -652,6 +657,13 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 static const char builtin_grep_usage[] =
 "git-grep <option>* <rev>* [-e] <pattern> [<path>...]";
 
+static const char emsg_invalid_context_len[] =
+"%s: invalid context length argument";
+static const char emsg_missing_context_len[] =
+"missing context length argument";
+static const char emsg_missing_argument[] =
+"option requires an argument -%s";
+
 int cmd_grep(int argc, const char **argv, char **envp)
 {
 	int hit = 0;
@@ -759,7 +771,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			case 'A': case 'B': case 'C':
 				if (!arg[2]) {
 					if (argc <= 1)
-						usage(builtin_grep_usage);
+						die(emsg_missing_context_len);
 					scan = *++argv;
 					argc--;
 				}
@@ -771,7 +783,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 				break;
 			}
 			if (sscanf(scan, "%u", &num) != 1)
-				usage(builtin_grep_usage);
+				die(emsg_invalid_context_len, scan);
 			switch (arg[1]) {
 			case 'A':
 				opt.post_context = num;
@@ -790,7 +802,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 			int lno = 0;
 			char buf[1024];
 			if (argc <= 1)
-				usage(builtin_grep_usage);
+				die(emsg_missing_argument, arg);
 			patterns = fopen(argv[1], "r");
 			if (!patterns)
 				die("'%s': %s", argv[1], strerror(errno));
@@ -815,10 +827,14 @@ int cmd_grep(int argc, const char **argv, char **envp)
 				argc--;
 				continue;
 			}
-			usage(builtin_grep_usage);
+			die(emsg_missing_argument, arg);
 		}
-		if (!strcmp("--", arg))
+		if (!strcmp("--", arg)) {
+			/* later processing wants to have this at argv[1] */
+			argv--;
+			argc++;
 			break;
+		}
 		if (*arg == '-')
 			usage(builtin_grep_usage);
 
