@@ -446,7 +446,7 @@ static int exec_grep(int argc, const char **argv)
 
 static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 {
-	int i, nr, argc, hit, len;
+	int i, nr, argc, hit, len, status;
 	const char *argv[MAXARGS+1];
 	char randarg[ARGBUF];
 	char *argptr = randarg;
@@ -536,12 +536,17 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		argv[argc++] = name;
 		if (argc < MAXARGS)
 			continue;
-		hit += exec_grep(argc, argv);
+		status = exec_grep(argc, argv);
+		if (0 < status)
+			hit = 1;
 		argc = nr;
 	}
-	if (argc > nr)
-		hit += exec_grep(argc, argv);
-	return 0;
+	if (argc > nr) {
+		status = exec_grep(argc, argv);
+		if (0 < status)
+			hit = 1;
+	}
+	return hit;
 }
 
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
