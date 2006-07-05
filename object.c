@@ -235,12 +235,3 @@ void add_object_array(struct object *obj, const char *name, struct object_array 
 	objects[nr].name = name;
 	array->nr = ++nr;
 }
-
-void clear_object_marks(unsigned mark)
-{
-	int i;
-
-	for (i = 0; i < obj_hash_size; i++)
-		if (obj_hash[i])
-			obj_hash[i]->flags &= ~mark;
-}
