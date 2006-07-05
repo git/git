@@ -1420,11 +1420,11 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 void diff_setup(struct diff_options *options)
 {
 	memset(options, 0, sizeof(*options));
-	options->output_format = DIFF_FORMAT_RAW;
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
 	options->context = 3;
+	options->msg_sep = "";
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
@@ -1438,22 +1438,28 @@ int diff_setup_done(struct diff_options *options)
 	    (0 <= options->rename_limit && !options->detect_rename))
 		return -1;
 
+	if (options->output_format & (DIFF_FORMAT_NAME |
+				      DIFF_FORMAT_NAME_STATUS |
+				      DIFF_FORMAT_CHECKDIFF |
+				      DIFF_FORMAT_NO_OUTPUT))
+		options->output_format &= ~(DIFF_FORMAT_RAW |
+					    DIFF_FORMAT_DIFFSTAT |
+					    DIFF_FORMAT_SUMMARY |
+					    DIFF_FORMAT_PATCH);
+
 	/*
 	 * These cases always need recursive; we do not drop caller-supplied
 	 * recursive bits for other formats here.
 	 */
-	if ((options->output_format == DIFF_FORMAT_PATCH) ||
-	    (options->output_format == DIFF_FORMAT_DIFFSTAT) ||
-	    (options->output_format == DIFF_FORMAT_CHECKDIFF))
+	if (options->output_format & (DIFF_FORMAT_PATCH |
+				      DIFF_FORMAT_DIFFSTAT |
+				      DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
-
 	/*
-	 * These combinations do not make sense.
+	 * Also pickaxe would not work very well if you do not say recursive
 	 */
-	if (options->output_format == DIFF_FORMAT_RAW)
-		options->with_raw = 0;
-	if (options->output_format == DIFF_FORMAT_DIFFSTAT)
-		options->with_stat  = 0;
+	if (options->pickaxe)
+		options->recursive = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
@@ -1526,22 +1532,22 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
-		options->output_format = DIFF_FORMAT_PATCH;
+		options->output_format |= DIFF_FORMAT_PATCH;
 	else if (opt_arg(arg, 'U', "unified", &options->context))
-		options->output_format = DIFF_FORMAT_PATCH;
+		options->output_format |= DIFF_FORMAT_PATCH;
+	else if (!strcmp(arg, "--raw"))
+		options->output_format |= DIFF_FORMAT_RAW;
 	else if (!strcmp(arg, "--patch-with-raw")) {
-		options->output_format = DIFF_FORMAT_PATCH;
-		options->with_raw = 1;
+		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW;
 	}
 	else if (!strcmp(arg, "--stat"))
-		options->output_format = DIFF_FORMAT_DIFFSTAT;
+		options->output_format |= DIFF_FORMAT_DIFFSTAT;
 	else if (!strcmp(arg, "--check"))
-		options->output_format = DIFF_FORMAT_CHECKDIFF;
+		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
-		options->summary = 1;
+		options->output_format |= DIFF_FORMAT_SUMMARY;
 	else if (!strcmp(arg, "--patch-with-stat")) {
-		options->output_format = DIFF_FORMAT_PATCH;
-		options->with_stat = 1;
+		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_DIFFSTAT;
 	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
@@ -1550,19 +1556,20 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--full-index"))
 		options->full_index = 1;
 	else if (!strcmp(arg, "--binary")) {
-		options->output_format = DIFF_FORMAT_PATCH;
+		options->output_format |= DIFF_FORMAT_PATCH;
 		options->full_index = options->binary = 1;
 	}
 	else if (!strcmp(arg, "--name-only"))
-		options->output_format = DIFF_FORMAT_NAME;
+		options->output_format |= DIFF_FORMAT_NAME;
 	else if (!strcmp(arg, "--name-status"))
-		options->output_format = DIFF_FORMAT_NAME_STATUS;
+		options->output_format |= DIFF_FORMAT_NAME_STATUS;
 	else if (!strcmp(arg, "-R"))
 		options->reverse_diff = 1;
 	else if (!strncmp(arg, "-S", 2))
 		options->pickaxe = arg + 2;
-	else if (!strcmp(arg, "-s"))
-		options->output_format = DIFF_FORMAT_NO_OUTPUT;
+	else if (!strcmp(arg, "-s")) {
+		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
+	}
 	else if (!strncmp(arg, "-O", 2))
 		options->orderfile = arg + 2;
 	else if (!strncmp(arg, "--diff-filter=", 14))
@@ -1737,15 +1744,17 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 }
 
 static void diff_flush_raw(struct diff_filepair *p,
-			   int line_termination,
-			   int inter_name_termination,
-			   struct diff_options *options,
-			   int output_format)
+			   struct diff_options *options)
 {
 	int two_paths;
 	char status[10];
 	int abbrev = options->abbrev;
 	const char *path_one, *path_two;
+	int inter_name_termination = '\t';
+	int line_termination = options->line_termination;
+
+	if (!line_termination)
+		inter_name_termination = 0;
 
 	path_one = p->one->path;
 	path_two = p->two->path;
@@ -1774,7 +1783,7 @@ static void diff_flush_raw(struct diff_filepair *p,
 		two_paths = 0;
 		break;
 	}
-	if (output_format != DIFF_FORMAT_NAME_STATUS) {
+	if (!(options->output_format & DIFF_FORMAT_NAME_STATUS)) {
 		printf(":%06o %06o %s ",
 		       p->one->mode, p->two->mode,
 		       diff_unique_abbrev(p->one->sha1, abbrev));
@@ -1983,46 +1992,28 @@ static void diff_resolve_rename_copy(void)
 	diff_debug_queue("resolve-rename-copy done", q);
 }
 
-static void flush_one_pair(struct diff_filepair *p,
-			   int diff_output_format,
-			   struct diff_options *options,
-			   struct diffstat_t *diffstat)
+static int check_pair_status(struct diff_filepair *p)
 {
-	int inter_name_termination = '\t';
-	int line_termination = options->line_termination;
-	if (!line_termination)
-		inter_name_termination = 0;
-
 	switch (p->status) {
 	case DIFF_STATUS_UNKNOWN:
-		break;
+		return 0;
 	case 0:
 		die("internal error in diff-resolve-rename-copy");
-		break;
 	default:
-		switch (diff_output_format) {
-		case DIFF_FORMAT_DIFFSTAT:
-			diff_flush_stat(p, options, diffstat);
-			break;
-		case DIFF_FORMAT_CHECKDIFF:
-			diff_flush_checkdiff(p, options);
-			break;
-		case DIFF_FORMAT_PATCH:
-			diff_flush_patch(p, options);
-			break;
-		case DIFF_FORMAT_RAW:
-		case DIFF_FORMAT_NAME_STATUS:
-			diff_flush_raw(p, line_termination,
-				       inter_name_termination,
-				       options, diff_output_format);
-			break;
-		case DIFF_FORMAT_NAME:
-			diff_flush_name(p, line_termination);
-			break;
-		case DIFF_FORMAT_NO_OUTPUT:
-			break;
-		}
+		return 1;
 	}
+}
+
+static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
+{
+	int fmt = opt->output_format;
+
+	if (fmt & DIFF_FORMAT_CHECKDIFF)
+		diff_flush_checkdiff(p, opt);
+	else if (fmt & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS))
+		diff_flush_raw(p, opt);
+	else if (fmt & DIFF_FORMAT_NAME)
+		diff_flush_name(p, opt->line_termination);
 }
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
@@ -2243,58 +2234,96 @@ int diff_flush_patch_id(struct diff_options *options, unsigned char *sha1)
 	return result;
 }
 
+static int is_summary_empty(const struct diff_queue_struct *q)
+{
+	int i;
+
+	for (i = 0; i < q->nr; i++) {
+		const struct diff_filepair *p = q->queue[i];
+
+		switch (p->status) {
+		case DIFF_STATUS_DELETED:
+		case DIFF_STATUS_ADDED:
+		case DIFF_STATUS_COPIED:
+		case DIFF_STATUS_RENAMED:
+			return 0;
+		default:
+			if (p->score)
+				return 0;
+			if (p->one->mode && p->two->mode &&
+			    p->one->mode != p->two->mode)
+				return 0;
+			break;
+		}
+	}
+	return 1;
+}
+
 void diff_flush(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int i;
-	int diff_output_format = options->output_format;
-	struct diffstat_t *diffstat = NULL;
+	int i, output_format = options->output_format;
+	int separator = 0;
 
-	if (diff_output_format == DIFF_FORMAT_DIFFSTAT || options->with_stat) {
-		diffstat = xcalloc(sizeof (struct diffstat_t), 1);
-		diffstat->xm.consume = diffstat_consume;
-	}
+	/*
+	 * Order: raw, stat, summary, patch
+	 * or:    name/name-status/checkdiff (other bits clear)
+	 */
+	if (!q->nr)
+		goto free_queue;
 
-	if (options->with_raw) {
+	if (output_format & (DIFF_FORMAT_RAW |
+			     DIFF_FORMAT_NAME |
+			     DIFF_FORMAT_NAME_STATUS |
+			     DIFF_FORMAT_CHECKDIFF)) {
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			flush_one_pair(p, DIFF_FORMAT_RAW, options, NULL);
+			if (check_pair_status(p))
+				flush_one_pair(p, options);
 		}
-		putchar(options->line_termination);
+		separator++;
 	}
-	if (options->with_stat) {
+
+	if (output_format & DIFF_FORMAT_DIFFSTAT) {
+		struct diffstat_t diffstat;
+
+		memset(&diffstat, 0, sizeof(struct diffstat_t));
+		diffstat.xm.consume = diffstat_consume;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			flush_one_pair(p, DIFF_FORMAT_DIFFSTAT, options,
-				       diffstat);
+			if (check_pair_status(p))
+				diff_flush_stat(p, options, &diffstat);
 		}
-		show_stats(diffstat);
-		free(diffstat);
-		diffstat = NULL;
-		if (options->summary)
-			for (i = 0; i < q->nr; i++)
-				diff_summary(q->queue[i]);
-		if (options->stat_sep)
-			fputs(options->stat_sep, stdout);
-		else
-			putchar(options->line_termination);
-	}
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		flush_one_pair(p, diff_output_format, options, diffstat);
+		show_stats(&diffstat);
+		separator++;
 	}
 
-	if (diffstat) {
-		show_stats(diffstat);
-		free(diffstat);
-	}
-
-	for (i = 0; i < q->nr; i++) {
-		if (diffstat && options->summary)
+	if (output_format & DIFF_FORMAT_SUMMARY && !is_summary_empty(q)) {
+		for (i = 0; i < q->nr; i++)
 			diff_summary(q->queue[i]);
-		diff_free_filepair(q->queue[i]);
+		separator++;
 	}
 
+	if (output_format & DIFF_FORMAT_PATCH) {
+		if (separator) {
+			if (options->stat_sep) {
+				/* attach patch instead of inline */
+				fputs(options->stat_sep, stdout);
+			} else {
+				putchar(options->line_termination);
+			}
+		}
+
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if (check_pair_status(p))
+				diff_flush_patch(p, options);
+		}
+	}
+
+	for (i = 0; i < q->nr; i++)
+		diff_free_filepair(q->queue[i]);
+free_queue:
 	free(q->queue);
 	q->queue = NULL;
 	q->nr = q->alloc = 0;

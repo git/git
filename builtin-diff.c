@@ -39,8 +39,6 @@ static int builtin_diff_files(struct rev_info *revs,
 			revs->max_count = 3;
 		else if (!strcmp(arg, "-q"))
 			silent = 1;
-		else if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -56,7 +54,7 @@ static int builtin_diff_files(struct rev_info *revs,
 	    3 < revs->max_count)
 		usage(builtin_diff_usage);
 	if (revs->max_count < 0 &&
-	    (revs->diffopt.output_format == DIFF_FORMAT_PATCH))
+	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
 	/*
 	 * Backward compatibility wart - "diff-files -s" used to
@@ -107,14 +105,9 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	/* Blob vs file in the working tree*/
 	struct stat st;
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
+
 	if (lstat(path, &st))
 		die("'%s': %s", path, strerror(errno));
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
@@ -137,14 +130,9 @@ static int builtin_diff_blobs(struct rev_info *revs,
 	 */
 	unsigned mode = canon_mode(S_IFREG | 0644);
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
+
 	stuff_change(&revs->diffopt,
 		     mode, mode,
 		     blob[1].sha1, blob[0].sha1,
@@ -162,8 +150,6 @@ static int builtin_diff_index(struct rev_info *revs,
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached"))
 			cached = 1;
-		else if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -185,14 +171,9 @@ static int builtin_diff_tree(struct rev_info *revs,
 {
 	const unsigned char *(sha1[2]);
 	int swap = 0;
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+
+	if (argc > 1)
+		usage(builtin_diff_usage);
 
 	/* We saw two trees, ent[0] and ent[1].
 	 * if ent[1] is unintesting, they are swapped
@@ -214,14 +195,9 @@ static int builtin_diff_combined(struct rev_info *revs,
 	const unsigned char (*parent)[20];
 	int i;
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
+
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	parent = xmalloc(ents * sizeof(*parent));
@@ -276,9 +252,13 @@ int cmd_diff(int argc, const char **argv, char **envp)
 
 	git_config(git_diff_config);
 	init_revisions(&rev);
-	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
+	if (!rev.diffopt.output_format) {
+		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+		diff_setup_done(&rev.diffopt);
+	}
+
 	/* Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
 	 */
