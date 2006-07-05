@@ -239,7 +239,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	int expect_status_report = 0;
 
 	/* No funny business with the matcher */
-	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, 1);
+	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL);
 	get_local_heads();
 
 	/* Does the other end support the reporting? */

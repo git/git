@@ -2617,7 +2617,7 @@ sub libsvn_connect {
 sub libsvn_get_file {
 	my ($gui, $f, $rev) = @_;
 	my $p = $f;
-	return unless ($p =~ s#^\Q$SVN_PATH\E/?##);
+	return unless ($p =~ s#^\Q$SVN_PATH\E/##);
 
 	my ($hash, $pid, $in, $out);
 	my $pool = SVN::Pool->new;

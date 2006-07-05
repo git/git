@@ -7,11 +7,11 @@ static const char peek_remote_usage[] =
 "git-peek-remote [--exec=upload-pack] [host:]directory";
 static const char *exec = "git-upload-pack";
 
-static int peek_remote(int fd[2])
+static int peek_remote(int fd[2], unsigned flags)
 {
 	struct ref *ref;
 
-	get_remote_heads(fd[0], &ref, 0, NULL, 0);
+	get_remote_heads(fd[0], &ref, 0, NULL, flags);
 	packet_flush(fd[1]);
 
 	while (ref) {
@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 	int fd[2];
 	pid_t pid;
 	int nongit = 0;
+	unsigned flags = 0;
 
 	setup_git_directory_gently(&nongit);
 
@@ -35,22 +36,35 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!strncmp("--exec=", arg, 7))
+			if (!strncmp("--exec=", arg, 7)) {
 				exec = arg + 7;
-			else
-				usage(peek_remote_usage);
-			continue;
+				continue;
+			}
+			if (!strcmp("--tags", arg)) {
+				flags |= REF_TAGS;
+				continue;
+			}
+			if (!strcmp("--heads", arg)) {
+				flags |= REF_HEADS;
+				continue;
+			}
+			if (!strcmp("--refs", arg)) {
+				flags |= REF_NORMAL;
+				continue;
+			}
+			usage(peek_remote_usage);
 		}
 		dest = arg;
 		break;
 	}
+
 	if (!dest || i != argc - 1)
 		usage(peek_remote_usage);
 
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
-	ret = peek_remote(fd);
+	ret = peek_remote(fd, flags);
 	close(fd[0]);
 	close(fd[1]);
 	finish_connect(pid);

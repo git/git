@@ -95,16 +95,17 @@
   "Register FILE into the git version-control system."
   (vc-git--run-command file "update-index" "--add" "--"))
 
-(defun vc-git-print-log (file)
+(defun vc-git-print-log (file &optional buffer)
   (let ((name (file-relative-name file))
         (coding-system-for-read git-commits-coding-system))
-    (vc-do-command nil 'async "git" name "rev-list" "--pretty" "HEAD" "--")))
+    (vc-do-command buffer 'async "git" name "rev-list" "--pretty" "HEAD" "--")))
 
-(defun vc-git-diff (file &optional rev1 rev2)
-  (let ((name (file-relative-name file)))
+(defun vc-git-diff (file &optional rev1 rev2 buffer)
+  (let ((name (file-relative-name file))
+        (buf (or buffer "*vc-diff*")))
     (if (and rev1 rev2)
-        (vc-do-command "*vc-diff*" 0 "git" name "diff-tree" "-p" rev1 rev2 "--")
-      (vc-do-command "*vc-diff*" 0 "git" name "diff-index" "-p" (or rev1 "HEAD") "--"))
+        (vc-do-command buf 0 "git" name "diff-tree" "-p" rev1 rev2 "--")
+      (vc-do-command buf 0 "git" name "diff-index" "-p" (or rev1 "HEAD") "--"))
     ; git-diff-index doesn't set exit status like diff does
     (if (vc-git-workfile-unchanged-p file) 0 1)))
 
