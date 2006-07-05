@@ -386,6 +386,7 @@ proc makewindow {} {
     global rowctxmenu mergemax wrapcomment
     global highlight_files gdttype
     global searchstring sstring
+    global bgcolor fgcolor bglist fglist diffcolors
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -446,18 +447,19 @@ proc makewindow {} {
     .ctop add .ctop.top
     set canv .ctop.top.clist.canv
     canvas $canv -height $geometry(canvh) -width $geometry(canv1) \
-	-bg white -bd 0 \
+	-background $bgcolor -bd 0 \
 	-yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
     .ctop.top.clist add $canv
     set canv2 .ctop.top.clist.canv2
     canvas $canv2 -height $geometry(canvh) -width $geometry(canv2) \
-	-bg white -bd 0 -yscrollincr $linespc
+	-background $bgcolor -bd 0 -yscrollincr $linespc
     .ctop.top.clist add $canv2
     set canv3 .ctop.top.clist.canv3
     canvas $canv3 -height $geometry(canvh) -width $geometry(canv3) \
-	-bg white -bd 0 -yscrollincr $linespc
+	-background $bgcolor -bd 0 -yscrollincr $linespc
     .ctop.top.clist add $canv3
     bind .ctop.top.clist <Configure> {resizeclistpanes %W %w}
+    lappend bglist $canv $canv2 $canv3
 
     set sha1entry .ctop.top.bar.sha1
     set entries $sha1entry
@@ -563,19 +565,22 @@ proc makewindow {} {
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
     set ctext .ctop.cdet.left.ctext
-    text $ctext -bg white -state disabled -font $textfont \
+    text $ctext -background $bgcolor -foreground $fgcolor \
+	-state disabled -font $textfont \
 	-width $geometry(ctextw) -height $geometry(ctexth) \
 	-yscrollcommand scrolltext -wrap none
     scrollbar .ctop.cdet.left.sb -command "$ctext yview"
     pack .ctop.cdet.left.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
     .ctop.cdet add .ctop.cdet.left
+    lappend bglist $ctext
+    lappend fglist $ctext
 
     $ctext tag conf comment -wrap $wrapcomment
     $ctext tag conf filesep -font [concat $textfont bold] -back "#aaaaaa"
-    $ctext tag conf hunksep -fore blue
-    $ctext tag conf d0 -fore red
-    $ctext tag conf d1 -fore "#00a000"
+    $ctext tag conf hunksep -fore [lindex $diffcolors 2]
+    $ctext tag conf d0 -fore [lindex $diffcolors 0]
+    $ctext tag conf d1 -fore [lindex $diffcolors 1]
     $ctext tag conf m0 -fore red
     $ctext tag conf m1 -fore blue
     $ctext tag conf m2 -fore green
@@ -608,11 +613,15 @@ proc makewindow {} {
     pack .ctop.cdet.right.mode -side top -fill x
     set cflist .ctop.cdet.right.cfiles
     set indent [font measure $mainfont "nn"]
-    text $cflist -width $geometry(cflistw) -background white -font $mainfont \
+    text $cflist -width $geometry(cflistw) \
+	-background $bgcolor -foreground $fgcolor \
+	-font $mainfont \
 	-tabs [list $indent [expr {2 * $indent}]] \
 	-yscrollcommand ".ctop.cdet.right.sb set" \
 	-cursor [. cget -cursor] \
 	-spacing1 1 -spacing3 1
+    lappend bglist $cflist
+    lappend fglist $cflist
     scrollbar .ctop.cdet.right.sb -command "$cflist yview"
     pack .ctop.cdet.right.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
@@ -747,6 +756,7 @@ proc savestuff {w} {
     global maxwidth showneartags
     global viewname viewfiles viewargs viewperm nextviewnum
     global cmitmode wrapcomment
+    global colors bgcolor fgcolor diffcolors
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -761,6 +771,10 @@ proc savestuff {w} {
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set showneartags $showneartags]
+	puts $f [list set bgcolor $bgcolor]
+	puts $f [list set fgcolor $fgcolor]
+	puts $f [list set colors $colors]
+	puts $f [list set diffcolors $diffcolors]
 	puts $f "set geometry(width) [winfo width .ctop]"
 	puts $f "set geometry(height) [winfo height .ctop]"
 	puts $f "set geometry(canv1) [expr {[winfo width $canv]-2}]"
@@ -2870,11 +2884,11 @@ proc drawlines {id} {
 }
 
 proc drawcmittext {id row col rmx} {
-    global linespc canv canv2 canv3 canvy0
+    global linespc canv canv2 canv3 canvy0 fgcolor
     global commitlisted commitinfo rowidlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
-    global mainfont canvxmax boldrows boldnamerows
+    global mainfont canvxmax boldrows boldnamerows fgcolor
 
     set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
     set x [xc $row $col]
@@ -2882,7 +2896,7 @@ proc drawcmittext {id row col rmx} {
     set orad [expr {$linespc / 3}]
     set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
 	       [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
-	       -fill $ofill -outline black -width 1]
+	       -fill $ofill -outline $fgcolor -width 1 -tags circle]
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
     set xt [xc $row [llength [lindex $rowidlist $row]]]
@@ -2910,13 +2924,13 @@ proc drawcmittext {id row col rmx} {
 	    lappend nfont bold
 	}
     }
-    set linehtag($row) [$canv create text $xt $y -anchor w \
-			    -text $headline -font $font]
+    set linehtag($row) [$canv create text $xt $y -anchor w -fill $fgcolor \
+			    -text $headline -font $font -tags text]
     $canv bind $linehtag($row) <Button-3> "rowmenu %X %Y $id"
-    set linentag($row) [$canv2 create text 3 $y -anchor w \
-			    -text $name -font $nfont]
-    set linedtag($row) [$canv3 create text 3 $y -anchor w \
-			    -text $date -font $mainfont]
+    set linentag($row) [$canv2 create text 3 $y -anchor w -fill $fgcolor \
+			    -text $name -font $nfont -tags text]
+    set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
+			    -text $date -font $mainfont -tags text]
     set xr [expr {$xt + [font measure $mainfont $headline]}]
     if {$xr > $canvxmax} {
 	set canvxmax $xr
@@ -3138,7 +3152,7 @@ proc bindline {t id} {
 proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs
     global linespc lthickness
-    global canv mainfont commitrow rowtextx curview
+    global canv mainfont commitrow rowtextx curview fgcolor
 
     set marks {}
     set ntags 0
@@ -3201,8 +3215,8 @@ proc drawtags {id x xt y1} {
 			-width 0 -fill "#ffddaa" -tags tag.$id
 	    }
 	}
-	set t [$canv create text $xl $y1 -anchor w -text $tag \
-		   -font $mainfont -tags tag.$id]
+	set t [$canv create text $xl $y1 -anchor w -text $tag -fill $fgcolor \
+		   -font $mainfont -tags [list tag.$id text]]
 	if {$ntags >= 0} {
 	    $canv bind $t <1> [list showtag $tag 1]
 	}
@@ -3223,10 +3237,11 @@ proc xcoord {i level ln} {
 }
 
 proc show_status {msg} {
-    global canv mainfont
+    global canv mainfont fgcolor
 
     clear_display
-    $canv create text 3 3 -anchor nw -text $msg -font $mainfont -tags textitems
+    $canv create text 3 3 -anchor nw -text $msg -font $mainfont \
+	-tags text -fill $fgcolor
 }
 
 proc finishcommits {} {
@@ -4574,7 +4589,8 @@ proc linehover {} {
     set t [$canv create rectangle $x0 $y0 $x1 $y1 \
 	       -fill \#ffff80 -outline black -width 1 -tags hover]
     $canv raise $t
-    set t [$canv create text $x $y -anchor nw -text $text -tags hover -font $mainfont]
+    set t [$canv create text $x $y -anchor nw -text $text -tags hover \
+	       -font $mainfont]
     $canv raise $t
 }
 
@@ -5242,6 +5258,7 @@ proc doquit {} {
 proc doprefs {} {
     global maxwidth maxgraphpct diffopts
     global oldprefs prefstop showneartags
+    global bgcolor fgcolor ctext diffcolors
 
     set top .gitkprefs
     set prefstop $top
@@ -5265,6 +5282,7 @@ proc doprefs {} {
 	-font optionfont
     spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $top.maxpctl $top.maxpct -sticky w
+
     label $top.ddisp -text "Diff display options"
     grid $top.ddisp - -sticky w -pady 10
     label $top.diffoptl -text "Options for diff program" \
@@ -5276,6 +5294,34 @@ proc doprefs {} {
     checkbutton $top.ntag.b -variable showneartags
     pack $top.ntag.b $top.ntag.l -side left
     grid x $top.ntag -sticky w
+
+    label $top.cdisp -text "Colors: press to choose"
+    grid $top.cdisp - -sticky w -pady 10
+    label $top.bg -padx 40 -relief sunk -background $bgcolor
+    button $top.bgbut -text "Background" -font optionfont \
+	-command [list choosecolor bgcolor 0 $top.bg background setbg]
+    grid x $top.bgbut $top.bg -sticky w
+    label $top.fg -padx 40 -relief sunk -background $fgcolor
+    button $top.fgbut -text "Foreground" -font optionfont \
+	-command [list choosecolor fgcolor 0 $top.fg foreground setfg]
+    grid x $top.fgbut $top.fg -sticky w
+    label $top.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
+    button $top.diffoldbut -text "Diff: old lines" -font optionfont \
+	-command [list choosecolor diffcolors 0 $top.diffold "diff old lines" \
+		      [list $ctext tag conf d0 -foreground]]
+    grid x $top.diffoldbut $top.diffold -sticky w
+    label $top.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
+    button $top.diffnewbut -text "Diff: new lines" -font optionfont \
+	-command [list choosecolor diffcolors 1 $top.diffnew "diff new lines" \
+		      [list $ctext tag conf d1 -foreground]]
+    grid x $top.diffnewbut $top.diffnew -sticky w
+    label $top.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
+    button $top.hunksepbut -text "Diff: hunk header" -font optionfont \
+	-command [list choosecolor diffcolors 2 $top.hunksep \
+		      "diff hunk header" \
+		      [list $ctext tag conf hunksep -foreground]]
+    grid x $top.hunksepbut $top.hunksep -sticky w
+
     frame $top.buts
     button $top.buts.ok -text "OK" -command prefsok
     button $top.buts.can -text "Cancel" -command prefscan
@@ -5283,6 +5329,35 @@ proc doprefs {} {
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
     grid $top.buts - - -pady 10 -sticky ew
+}
+
+proc choosecolor {v vi w x cmd} {
+    global $v
+
+    set c [tk_chooseColor -initialcolor [lindex [set $v] $vi] \
+	       -title "Gitk: choose color for $x"]
+    if {$c eq {}} return
+    $w conf -background $c
+    lset $v $vi $c
+    eval $cmd $c
+}
+
+proc setbg {c} {
+    global bglist
+
+    foreach w $bglist {
+	$w conf -background $c
+    }
+}
+
+proc setfg {c} {
+    global fglist canv
+
+    foreach w $fglist {
+	$w conf -foreground $c
+    }
+    allcanvs itemconf text -fill $c
+    $canv itemconf circle -outline $c
 }
 
 proc prefscan {} {
@@ -5620,6 +5695,9 @@ set wrapcomment "none"
 set showneartags 1
 
 set colors {green red blue magenta darkgrey brown orange}
+set bgcolor white
+set fgcolor black
+set diffcolors {red "#00a000" blue}
 
 catch {source ~/.gitk}
 
