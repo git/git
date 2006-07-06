@@ -14,12 +14,10 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define THEY_HAVE (1U << 0)
 #define OUR_REF (1U << 1)
 #define WANTED (1U << 2)
-#define MAX_HAS 256
-#define MAX_NEEDS 256
-static int nr_has = 0, nr_needs = 0, multi_ack = 0, nr_our_refs = 0;
+static int multi_ack = 0, nr_our_refs = 0;
 static int use_thin_pack = 0;
-static struct object *has_tip[MAX_HAS];
-static struct object *needs_tip[MAX_NEEDS];
+static struct object_array have_obj;
+static struct object_array want_obj;
 static unsigned int timeout = 0;
 static int use_sideband = 0;
 
@@ -79,7 +77,7 @@ static void create_pack_file(void)
 	 */
 	int lp_pipe[2], pu_pipe[2], pe_pipe[2];
 	pid_t pid_rev_list, pid_pack_objects;
-	int create_full_pack = (nr_our_refs == nr_needs && !nr_has);
+	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
 	char data[8193], progress[128];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
@@ -103,7 +101,7 @@ static void create_pack_file(void)
 			use_thin_pack = 0; /* no point doing it */
 		}
 		else
-			args = nr_has + nr_needs + 5;
+			args = have_obj.nr + want_obj.nr + 5;
 		p = xmalloc(args * sizeof(char *));
 		argv = (const char **) p;
 		buf = xmalloc(args * 45);
@@ -114,20 +112,22 @@ static void create_pack_file(void)
 		close(lp_pipe[1]);
 		*p++ = "rev-list";
 		*p++ = use_thin_pack ? "--objects-edge" : "--objects";
-		if (create_full_pack || MAX_NEEDS <= nr_needs)
+		if (create_full_pack)
 			*p++ = "--all";
 		else {
-			for (i = 0; i < nr_needs; i++) {
+			for (i = 0; i < want_obj.nr; i++) {
+				struct object *o = want_obj.objects[i].item;
 				*p++ = buf;
-				memcpy(buf, sha1_to_hex(needs_tip[i]->sha1), 41);
+				memcpy(buf, sha1_to_hex(o->sha1), 41);
 				buf += 41;
 			}
 		}
 		if (!create_full_pack)
-			for (i = 0; i < nr_has; i++) {
+			for (i = 0; i < have_obj.nr; i++) {
+				struct object *o = have_obj.objects[i].item;
 				*p++ = buf;
 				*buf++ = '^';
-				memcpy(buf, sha1_to_hex(has_tip[i]->sha1), 41);
+				memcpy(buf, sha1_to_hex(o->sha1), 41);
 				buf += 41;
 			}
 		*p++ = NULL;
@@ -316,28 +316,29 @@ static void create_pack_file(void)
 
 static int got_sha1(char *hex, unsigned char *sha1)
 {
+	struct object *o;
+
 	if (get_sha1_hex(hex, sha1))
 		die("git-upload-pack: expected SHA1 object, got '%s'", hex);
 	if (!has_sha1_file(sha1))
 		return 0;
-	if (nr_has < MAX_HAS) {
-		struct object *o = lookup_object(sha1);
-		if (!(o && o->parsed))
-			o = parse_object(sha1);
-		if (!o)
-			die("oops (%s)", sha1_to_hex(sha1));
-		if (o->type == TYPE_COMMIT) {
-			struct commit_list *parents;
-			if (o->flags & THEY_HAVE)
-				return 0;
-			o->flags |= THEY_HAVE;
-			for (parents = ((struct commit*)o)->parents;
-			     parents;
-			     parents = parents->next)
-				parents->item->object.flags |= THEY_HAVE;
-		}
-		has_tip[nr_has++] = o;
+
+	o = lookup_object(sha1);
+	if (!(o && o->parsed))
+		o = parse_object(sha1);
+	if (!o)
+		die("oops (%s)", sha1_to_hex(sha1));
+	if (o->type == TYPE_COMMIT) {
+		struct commit_list *parents;
+		if (o->flags & THEY_HAVE)
+			return 0;
+		o->flags |= THEY_HAVE;
+		for (parents = ((struct commit*)o)->parents;
+		     parents;
+		     parents = parents->next)
+			parents->item->object.flags |= THEY_HAVE;
 	}
+	add_object_array(o, NULL, &have_obj);
 	return 1;
 }
 
@@ -355,26 +356,24 @@ static int get_common_commits(void)
 		reset_timeout();
 
 		if (!len) {
-			if (nr_has == 0 || multi_ack)
+			if (have_obj.nr == 0 || multi_ack)
 				packet_write(1, "NAK\n");
 			continue;
 		}
 		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
 			if (got_sha1(line+5, sha1) &&
-					(multi_ack || nr_has == 1)) {
-				if (nr_has >= MAX_HAS)
-					multi_ack = 0;
+			    (multi_ack || have_obj.nr == 1)) {
 				packet_write(1, "ACK %s%s\n",
-					sha1_to_hex(sha1),
-					multi_ack ?  " continue" : "");
+					     sha1_to_hex(sha1),
+					     multi_ack ?  " continue" : "");
 				if (multi_ack)
 					memcpy(last_sha1, sha1, 20);
 			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
-			if (nr_has > 0) {
+			if (have_obj.nr > 0) {
 				if (multi_ack)
 					packet_write(1, "ACK %s\n",
 							sha1_to_hex(last_sha1));
@@ -387,26 +386,18 @@ static int get_common_commits(void)
 	}
 }
 
-static int receive_needs(void)
+static void receive_needs(void)
 {
 	static char line[1000];
-	int len, needs;
+	int len;
 
-	needs = 0;
 	for (;;) {
 		struct object *o;
 		unsigned char sha1_buf[20];
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 		if (!len)
-			return needs;
-
-		if (needs == MAX_NEEDS) {
-			fprintf(stderr,
-				"warning: supporting only a max of %d requests. "
-				"sending everything instead.\n",
-				MAX_NEEDS);
-		}
+			return;
 
 		if (strncmp("want ", line, 5) ||
 		    get_sha1_hex(line+5, sha1_buf))
@@ -432,9 +423,7 @@ static int receive_needs(void)
 			die("git-upload-pack: not our ref %s", line+5);
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
-			if (needs < MAX_NEEDS)
-				needs_tip[needs] = o;
-			needs++;
+			add_object_array(o, NULL, &want_obj);
 		}
 	}
 }
@@ -470,8 +459,8 @@ static int upload_pack(void)
 	head_ref(send_ref);
 	for_each_ref(send_ref);
 	packet_flush(1);
-	nr_needs = receive_needs();
-	if (!nr_needs)
+	receive_needs();
+	if (!want_obj.nr)
 		return 0;
 	get_common_commits();
 	create_pack_file();
