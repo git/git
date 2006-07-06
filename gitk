@@ -312,7 +312,7 @@ proc getcommit {id} {
 
 proc readrefs {} {
     global tagids idtags headids idheads tagcontents
-    global otherrefids idotherrefs
+    global otherrefids idotherrefs mainhead
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
@@ -358,6 +358,13 @@ proc readrefs {} {
 	}
     }
     close $refd
+    set mainhead {}
+    catch {
+	set thehead [exec git symbolic-ref HEAD]
+	if {[string match "refs/heads/*" $thehead]} {
+	    set mainhead [string range $thehead 11 end]
+	}
+    }
 }
 
 proc show_error {w top msg} {
@@ -3150,9 +3157,9 @@ proc bindline {t id} {
 }
 
 proc drawtags {id x xt y1} {
-    global idtags idheads idotherrefs
+    global idtags idheads idotherrefs mainhead
     global linespc lthickness
-    global canv mainfont commitrow rowtextx curview fgcolor
+    global canv mainfont commitrow rowtextx curview fgcolor bgcolor
 
     set marks {}
     set ntags 0
@@ -3177,8 +3184,14 @@ proc drawtags {id x xt y1} {
     set yb [expr {$yt + $linespc - 1}]
     set xvals {}
     set wvals {}
+    set i -1
     foreach tag $marks {
-	set wid [font measure $mainfont $tag]
+	incr i
+	if {$i >= $ntags && $i < $ntags + $nheads && $tag eq $mainhead} {
+	    set wid [font measure [concat $mainfont bold] $tag]
+	} else {
+	    set wid [font measure $mainfont $tag]
+	}
 	lappend xvals $xt
 	lappend wvals $wid
 	set xt [expr {$xt + $delta + $wid + $lthickness + $linespc}]
@@ -3189,6 +3202,7 @@ proc drawtags {id x xt y1} {
     foreach tag $marks x $xvals wid $wvals {
 	set xl [expr {$x + $delta}]
 	set xr [expr {$x + $delta + $wid + $lthickness}]
+	set font $mainfont
 	if {[incr ntags -1] >= 0} {
 	    # draw a tag
 	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
@@ -3200,6 +3214,9 @@ proc drawtags {id x xt y1} {
 	    # draw a head or other ref
 	    if {[incr nheads -1] >= 0} {
 		set col green
+		if {$tag eq $mainhead} {
+		    lappend font bold
+		}
 	    } else {
 		set col "#ddddff"
 	    }
@@ -3216,7 +3233,7 @@ proc drawtags {id x xt y1} {
 	    }
 	}
 	set t [$canv create text $xl $y1 -anchor w -text $tag -fill $fgcolor \
-		   -font $mainfont -tags [list tag.$id text]]
+		   -font $font -tags [list tag.$id text]]
 	if {$ntags >= 0} {
 	    $canv bind $t <1> [list showtag $tag 1]
 	}
