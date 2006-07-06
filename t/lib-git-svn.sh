@@ -1,13 +1,11 @@
-PATH=$PWD/../:$PATH
-if test -d ../../../t
-then
-    cd ../../../t
-else
-    echo "Must be run in contrib/git-svn/t" >&2
-    exit 1
-fi
-
 . ./test-lib.sh
+
+if test -n "$NO_SVN_TESTS"
+then
+	test_expect_success 'skipping git-svn tests, NO_SVN_TESTS defined' :
+	test_done
+	exit
+fi
 
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/git-svn
@@ -16,7 +14,7 @@ SVN_TREE=$GIT_SVN_DIR/svn-tree
 svnadmin >/dev/null 2>&1
 if test $? != 1
 then
-    test_expect_success 'skipping contrib/git-svn test' :
+    test_expect_success 'skipping git-svn tests, svnadmin not found' :
     test_done
     exit
 fi
@@ -24,7 +22,7 @@ fi
 svn >/dev/null 2>&1
 if test $? != 1
 then
-    test_expect_success 'skipping contrib/git-svn test' :
+    test_expect_success 'skipping git-svn tests, svn not found' :
     test_done
     exit
 fi
