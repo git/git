@@ -18,8 +18,8 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define MAX_NEEDS 256
 static int nr_has = 0, nr_needs = 0, multi_ack = 0, nr_our_refs = 0;
 static int use_thin_pack = 0;
-static unsigned char has_sha1[MAX_HAS][20];
-static unsigned char needs_sha1[MAX_NEEDS][20];
+static struct object *has_tip[MAX_HAS];
+static struct object *needs_tip[MAX_NEEDS];
 static unsigned int timeout = 0;
 static int use_sideband = 0;
 
@@ -119,7 +119,7 @@ static void create_pack_file(void)
 		else {
 			for (i = 0; i < nr_needs; i++) {
 				*p++ = buf;
-				memcpy(buf, sha1_to_hex(needs_sha1[i]), 41);
+				memcpy(buf, sha1_to_hex(needs_tip[i]->sha1), 41);
 				buf += 41;
 			}
 		}
@@ -127,7 +127,7 @@ static void create_pack_file(void)
 			for (i = 0; i < nr_has; i++) {
 				*p++ = buf;
 				*buf++ = '^';
-				memcpy(buf, sha1_to_hex(has_sha1[i]), 41);
+				memcpy(buf, sha1_to_hex(has_tip[i]->sha1), 41);
 				buf += 41;
 			}
 		*p++ = NULL;
@@ -336,7 +336,7 @@ static int got_sha1(char *hex, unsigned char *sha1)
 			     parents = parents->next)
 				parents->item->object.flags |= THEY_HAVE;
 		}
-		memcpy(has_sha1[nr_has++], sha1, 20);
+		has_tip[nr_has++] = o;
 	}
 	return 1;
 }
@@ -395,23 +395,21 @@ static int receive_needs(void)
 	needs = 0;
 	for (;;) {
 		struct object *o;
-		unsigned char dummy[20], *sha1_buf;
+		unsigned char sha1_buf[20];
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 		if (!len)
 			return needs;
 
-		sha1_buf = dummy;
 		if (needs == MAX_NEEDS) {
 			fprintf(stderr,
 				"warning: supporting only a max of %d requests. "
 				"sending everything instead.\n",
 				MAX_NEEDS);
 		}
-		else if (needs < MAX_NEEDS)
-			sha1_buf = needs_sha1[needs];
 
-		if (strncmp("want ", line, 5) || get_sha1_hex(line+5, sha1_buf))
+		if (strncmp("want ", line, 5) ||
+		    get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
 		if (strstr(line+45, "multi_ack"))
@@ -434,6 +432,8 @@ static int receive_needs(void)
 			die("git-upload-pack: not our ref %s", line+5);
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
+			if (needs < MAX_NEEDS)
+				needs_tip[needs] = o;
 			needs++;
 		}
 	}
