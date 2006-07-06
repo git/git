@@ -17,7 +17,11 @@ case "$1" in
         usage ;;
 esac
 
-rev=$(git-rev-parse --verify --default HEAD "$@") || exit
+case $# in
+0) rev=HEAD ;;
+1) rev=$(git-rev-parse --verify "$1") || exit ;;
+*) usage ;;
+esac
 rev=$(git-rev-parse --verify $rev^0) || exit
 
 # We need to remember the set of paths that _could_ be left
