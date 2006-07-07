@@ -329,7 +329,9 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	}
 	if (len > 0 && line[len-1] == '\n')
 		len--;
-	printf("%s%.*s%s\n", set, (int) len, line, reset);
+	fputs (set, stdout);
+	fwrite (line, len, 1, stdout);
+	puts (reset);
 }
 
 static char *pprint_rename(const char *a, const char *b)
