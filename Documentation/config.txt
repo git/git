@@ -110,6 +110,22 @@ apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
+diff.color::
+	When true (or `always`), always use colors in patch.
+	When false (or `never`), never.  When set to `auto`, use
+	colors only when the output is to the terminal.
+
+diff.color.<slot>::
+	Use customized color for diff colorization.  `<slot>`
+	specifies which part of the patch to use the specified
+	color, and is one of `plain` (context text), `meta`
+	(metainformation), `frag` (hunk header), `old` (removed
+	lines), or `new` (added lines).  The value for these
+	configuration variables can be one of: `normal`, `bold`,
+	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`,
+	`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, or
+	`white`.
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the git diff option '-l'.
