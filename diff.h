@@ -42,6 +42,7 @@ struct diff_options {
 	unsigned recursive:1,
 		 tree_in_recursive:1,
 		 binary:1,
+		 text:1,
 		 full_index:1,
 		 silent_on_remove:1,
 		 find_copies_harder:1,

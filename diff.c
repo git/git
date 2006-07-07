@@ -723,7 +723,7 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
+	if (!o->text && (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1560,6 +1560,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--binary")) {
 		options->output_format |= DIFF_FORMAT_PATCH;
 		options->full_index = options->binary = 1;
+	}
+	else if (!strcmp(arg, "--text")) {
+		options->text = 1;
 	}
 	else if (!strcmp(arg, "--name-only"))
 		options->output_format |= DIFF_FORMAT_NAME;
