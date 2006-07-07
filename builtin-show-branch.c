@@ -6,7 +6,7 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--dense] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
+"git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
 static int default_num = 0;
 static int default_alloc = 0;
