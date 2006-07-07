@@ -164,7 +164,7 @@ static int show_file(const char *arg)
 	return 0;
 }
 
-static int try_difference(char *arg)
+static int try_difference(const char *arg)
 {
 	char *dotdot;
 	unsigned char sha1[20];
