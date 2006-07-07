@@ -549,6 +549,49 @@ static void add_pending_commit_list(struct rev_info *revs,
 	}
 }
 
+static void prepare_show_merge(struct rev_info *revs)
+{
+	struct commit_list *bases;
+	struct commit *head, *other;
+	unsigned char sha1[20];
+	const char **prune = NULL;
+	int i, prune_num = 1; /* counting terminating NULL */
+
+	if (get_sha1("HEAD", sha1) || !(head = lookup_commit(sha1)))
+		die("--merge without HEAD?");
+	if (get_sha1("MERGE_HEAD", sha1) || !(other = lookup_commit(sha1)))
+		die("--merge without MERGE_HEAD?");
+	add_pending_object(revs, &head->object, "HEAD");
+	add_pending_object(revs, &other->object, "MERGE_HEAD");
+	bases = get_merge_bases(head, other, 1);
+	while (bases) {
+		struct commit *it = bases->item;
+		struct commit_list *n = bases->next;
+		free(bases);
+		bases = n;
+		it->object.flags |= UNINTERESTING;
+		add_pending_object(revs, &it->object, "(merge-base)");
+	}
+
+	if (!active_nr)
+		read_cache();
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (!ce_stage(ce))
+			continue;
+		if (ce_path_match(ce, revs->prune_data)) {
+			prune_num++;
+			prune = xrealloc(prune, sizeof(*prune) * prune_num);
+			prune[prune_num-2] = ce->name;
+			prune[prune_num-1] = NULL;
+		}
+		while ((i+1 < active_nr) &&
+		       ce_same_name(ce, active_cache[i+1]))
+			i++;
+	}
+	revs->prune_data = prune;
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -558,7 +601,7 @@ static void add_pending_commit_list(struct rev_info *revs,
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
-	int i, flags, seen_dashdash;
+	int i, flags, seen_dashdash, show_merge;
 	const char **unrecognized = argv + 1;
 	int left = 1;
 
@@ -575,7 +618,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		break;
 	}
 
-	flags = 0;
+	flags = show_merge = 0;
 	for (i = 1; i < argc; i++) {
 		struct object *object;
 		const char *arg = argv[i];
@@ -640,6 +683,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				if (++i >= argc)
 					die("bad --default argument");
 				def = argv[i];
+				continue;
+			}
+			if (!strcmp(arg, "--merge")) {
+				show_merge = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--topo-order")) {
@@ -863,6 +910,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		object = get_reference(revs, arg, sha1, flags ^ local_flags);
 		add_pending_object(revs, object, arg);
 	}
+	if (show_merge)
+		prepare_show_merge(revs);
 	if (def && !revs->pending.nr) {
 		unsigned char sha1[20];
 		struct object *object;
