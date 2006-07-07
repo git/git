@@ -94,5 +94,11 @@
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
 
+--text::
+	Treat all files as text.
+
+-a::
+	Shorthand for "--text".
+
 For more detailed explanation on these common options, see also
 link:diffcore.html[diffcore documentation].
