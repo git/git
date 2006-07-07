@@ -1561,7 +1561,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_PATCH;
 		options->full_index = options->binary = 1;
 	}
-	else if (!strcmp(arg, "--text")) {
+	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text")) {
 		options->text = 1;
 	}
 	else if (!strcmp(arg, "--name-only"))
