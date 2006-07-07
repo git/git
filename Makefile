@@ -656,6 +656,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 # with that.
 
 export NO_PYTHON
+export NO_SVN_TESTS
 
 test: all
 	$(MAKE) -C t/ all
