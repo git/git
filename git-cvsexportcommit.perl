@@ -63,15 +63,15 @@ foreach my $p (@commit) {
 }
 
 if ($parent) {
+    my $found;
     # double check that it's a valid parent
     foreach my $p (@parents) {
-	my $found;
 	if ($p eq $parent) {
 	    $found = 1;
 	    last;
 	}; # found it
-	die "Did not find $parent in the parents for this commit!";
     }
+    die "Did not find $parent in the parents for this commit!" if !$found;
 } else { # we don't have a parent from the cmdline...
     if (@parents == 1) { # it's safe to get it from the commit
 	$parent = $parents[0];
