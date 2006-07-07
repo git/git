@@ -473,7 +473,6 @@ and the directory must exist.
 
 sub wc_chdir {
 	my ($self, $subdir) = @_;
-
 	$self->wc_path()
 		or throw Error::Simple("bare repository");
 
@@ -483,6 +482,91 @@ sub wc_chdir {
 	# can delete it now and we will never know. But at least we tried.
 
 	$self->{opts}->{WorkingSubdir} = $subdir;
+}
+
+
+=item config ( VARIABLE )
+
+Retrieve the configuration C<VARIABLE> in the same manner as C<repo-config>
+does. In scalar context requires the variable to be set only one time
+(exception is thrown otherwise), in array context returns allows the
+variable to be set multiple times and returns all the values.
+
+Must be called on a repository instance.
+
+This currently wraps command('repo-config') so it is not so fast.
+
+=cut
+
+sub config {
+	my ($self, $var) = @_;
+	$self->repo_path()
+		or throw Error::Simple("not a repository");
+
+	try {
+		if (wantarray) {
+			return $self->command('repo-config', '--get-all', $var);
+		} else {
+			return $self->command_oneline('repo-config', '--get', $var);
+		}
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			# Key not found.
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
+}
+
+
+=item ident ( TYPE | IDENTSTR )
+
+=item ident_person ( TYPE | IDENTSTR | IDENTARRAY )
+
+This suite of functions retrieves and parses ident information, as stored
+in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
+C<TYPE> can be either I<author> or I<committer>; case is insignificant).
+
+The C<ident> method retrieves the ident information from C<git-var>
+and either returns it as a scalar string or as an array with the fields parsed.
+Alternatively, it can take a prepared ident string (e.g. from the commit
+object) and just parse it.
+
+C<ident_person> returns the person part of the ident - name and email;
+it can take the same arguments as C<ident> or the array returned by C<ident>.
+
+The synopsis is like:
+
+	my ($name, $email, $time_tz) = ident('author');
+	"$name <$email>" eq ident_person('author');
+	"$name <$email>" eq ident_person($name);
+	$time_tz =~ /^\d+ [+-]\d{4}$/;
+
+Both methods must be called on a repository instance.
+
+=cut
+
+sub ident {
+	my ($self, $type) = @_;
+	my $identstr;
+	if (lc $type eq lc 'committer' or lc $type eq lc 'author') {
+		$identstr = $self->command_oneline('var', 'GIT_'.uc($type).'_IDENT');
+	} else {
+		$identstr = $type;
+	}
+	if (wantarray) {
+		return $identstr =~ /^(.*) <(.*)> (\d+ [+-]\d{4})$/;
+	} else {
+		return $identstr;
+	}
+}
+
+sub ident_person {
+	my ($self, @ident) = @_;
+	$#ident == 0 and @ident = $self->ident($ident[0]);
+	return "$ident[0] <$ident[1]>";
 }
 
 

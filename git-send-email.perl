@@ -21,6 +21,7 @@ use warnings;
 use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
+use Git;
 
 package FakeTerm;
 sub new {
@@ -57,6 +58,7 @@ my $smtp_server;
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
 
+my $repo = Git->repository();
 my $term = eval {
 	new Term::ReadLine 'git-send-email';
 };
@@ -97,33 +99,12 @@ foreach my $entry (@bcclist) {
 
 # Now, let's fill any that aren't set in with defaults:
 
-sub gitvar {
-    my ($var) = @_;
-    my $fh;
-    my $pid = open($fh, '-|');
-    die "$!" unless defined $pid;
-    if (!$pid) {
-	exec('git-var', $var) or die "$!";
-    }
-    my ($val) = <$fh>;
-    close $fh or die "$!";
-    chomp($val);
-    return $val;
-}
-
-sub gitvar_ident {
-    my ($name) = @_;
-    my $val = gitvar($name);
-    my @field = split(/\s+/, $val);
-    return join(' ', @field[0...(@field-3)]);
-}
-
-my ($author) = gitvar_ident('GIT_AUTHOR_IDENT');
-my ($committer) = gitvar_ident('GIT_COMMITTER_IDENT');
+my ($author) = $repo->ident_person('author');
+my ($committer) = $repo->ident_person('committer');
 
 my %aliases;
-chomp(my @alias_files = `git-repo-config --get-all sendemail.aliasesfile`);
-chomp(my $aliasfiletype = `git-repo-config sendemail.aliasfiletype`);
+my @alias_files = $repo->config('sendemail.aliasesfile');
+my $aliasfiletype = $repo->config('sendemail.aliasfiletype');
 my %parse_alias = (
 	# multiline formats can be supported in the future
 	mutt => sub { my $fh = shift; while (<$fh>) {
@@ -148,7 +129,7 @@ my %parse_alias = (
 		}}}
 );
 
-if (@alias_files && defined $parse_alias{$aliasfiletype}) {
+if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 	foreach my $file (@alias_files) {
 		open my $fh, '<', $file or die "opening $file: $!\n";
 		$parse_alias{$aliasfiletype}->($fh);
@@ -390,10 +371,7 @@ sub send_message
 	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
-	    $gitversion = `git --version`;
-	    chomp $gitversion;
-	    # keep only what's after the last space
-	    $gitversion =~ s/^.* //;
+	    $gitversion = Git::version();
 	}
 
 	my $header = "From: $from

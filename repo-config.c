@@ -118,7 +118,7 @@ static int get_value(const char* key_, const char* regex_)
 	if (do_all)
 		ret = !seen;
 	else
-		ret =  (seen == 1) ? 0 : 1;
+		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
 
 free_strings:
 	if (repo_config)
