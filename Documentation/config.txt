@@ -91,7 +91,7 @@ core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
 	and might match multiple refs in the .git/refs/ tree. True by default.
 
-core.compression:
+core.compression::
 	An integer -1..9, indicating the compression level for objects that
 	are not in a pack file. -1 is the zlib and git default. 0 means no
 	compression, and 1..9 are various speed/size tradeoffs, 9 being
