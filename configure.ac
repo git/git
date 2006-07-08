@@ -48,13 +48,24 @@ AC_DEFUN([GIT_CONF_APPEND_LINE],
 
 
 ## Checks for typedefs, structures, and compiler characteristics.
+AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
+
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
-#
+AC_CHECK_MEMBER(struct dirent.d_ino,[],
+GIT_CONF_APPEND_LINE(NO_D_INO_IN_DIRENT=YesPlease),
+[#include <dirent.h>])
+
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
-#
+AC_CHECK_MEMBER(struct dirent.d_type,[],
+GIT_CONF_APPEND_LINE(NO_D_TYPE_IN_DIRENT=YesPlease),
+[#include <dirent.h>])
+
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
 # sockaddr_storage.
+AC_CHECK_TYPE(struct sockaddr_storage,[],
+GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=YesPlease),
+[#include <netinet/in.h>])
 
 
 ## Checks for library functions.
