@@ -35,7 +35,7 @@ If you would prefer to skip this patch, instead run \"git rebase --skip\".
 To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
 unset newbase
-strategy=recursive
+strategy=recur
 do_merge=
 dotest=$GIT_DIR/.dotest-merge
 prec=4
@@ -292,7 +292,7 @@ then
 	exit $?
 fi
 
-if test "@@NO_PYTHON@@" && test "$strategy" = "recursive"
+if test "@@NO_PYTHON@@" && test "$strategy" = "recur"
 then
 	die 'The recursive merge strategy currently relies on Python,
 which this installation of git was not configured with.  Please consider

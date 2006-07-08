@@ -1,0 +1,10 @@
+#!/bin/sh -x
+cd t || exit
+./t3400-rebase.sh              "$@" && \
+./t6020-merge-df.sh            "$@" && \
+./t3401-rebase-partial.sh      "$@" && \
+./t6021-merge-criss-cross.sh   "$@" && \
+./t3402-rebase-merge.sh        "$@" && \
+./t6022-merge-rename.sh        "$@" && \
+./t6010-merge-base.sh          "$@" && \
+:
