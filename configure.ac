@@ -22,6 +22,13 @@ AC_DEFUN([GIT_CONF_APPEND_LINE],
 
 
 ## Checks for programs.
+AC_MSG_NOTICE([CHECKS for programs])
+
+AC_PROG_CC
+#AC_PROG_INSTALL		# needs install-sh or install.sh in sources
+AC_CHECK_TOOL(AR, ar, :)
+AC_CHECK_PROGS(TAR, [gtar tar])
+
 # Define NO_PYTHON if you want to loose all benefits of the recursive merge.
 
 

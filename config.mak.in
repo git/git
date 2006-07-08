@@ -1,6 +1,11 @@
 # git Makefile configuration, included in main Makefile
 # @configure_input@
 
+CC = @CC@
+AR = @AR@
+TAR = @TAR@
+#INSTALL = @INSTALL@		# needs install-sh or install.sh in sources
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
