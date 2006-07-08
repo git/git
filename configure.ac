@@ -69,12 +69,21 @@ GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=YesPlease),
 
 
 ## Checks for library functions.
+## (in default C library and libraries checked by AC_CHECK_LIB)
+AC_MSG_NOTICE([CHECKS for library functions])
+
 # Define NO_STRCASESTR if you don't have strcasestr.
-#
+AC_CHECK_FUNC(strcasestr,[],
+GIT_CONF_APPEND_LINE(NO_STRCASESTR=YesPlease))
+
 # Define NO_STRLCPY if you don't have strlcpy.
-#
+AC_CHECK_FUNC(strlcpy,[],
+GIT_CONF_APPEND_LINE(NO_STRLCPY=YesPlease))
+
 # Define NO_SETENV if you don't have setenv in the C library.
-#
+AC_CHECK_FUNC(setenv,[],
+GIT_CONF_APPEND_LINE(NO_SETENV=YesPlease))
+
 # Define NO_MMAP if you want to avoid mmap.
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
