@@ -2323,7 +2323,7 @@ int cmd_apply(int argc, const char **argv, char **envp)
 
 	if (write_index) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_lock_file(&lock_file))
+		    close(newfd) || commit_lock_file(&lock_file))
 			die("Unable to write new index file");
 	}
 
