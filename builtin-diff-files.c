@@ -18,7 +18,7 @@ int cmd_diff_files(int argc, const char **argv, char **envp)
 	struct rev_info rev;
 	int silent = 0;
 
-	git_config(git_diff_config);
+	git_config(git_default_config); /* no "diff" UI options */
 	init_revisions(&rev);
 	rev.abbrev = 0;
 

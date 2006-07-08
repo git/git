@@ -67,7 +67,7 @@ int cmd_diff_tree(int argc, const char **argv, char **envp)
 	static struct rev_info *opt = &log_tree_opt;
 	int read_stdin = 0;
 
-	git_config(git_diff_config);
+	git_config(git_default_config); /* no "diff" UI options */
 	nr_sha1 = 0;
 	init_revisions(opt);
 	opt->abbrev = 0;
