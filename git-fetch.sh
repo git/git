@@ -278,7 +278,7 @@ fetch_main () {
 	  head="ref: $remote_name"
 	  while (expr "z$head" : "zref:" && expr $depth \< $max_depth) >/dev/null
 	  do
-	    remote_name_quoted=$(perl -e '
+	    remote_name_quoted=$(@@PERL@@ -e '
 	      my $u = $ARGV[0];
               $u =~ s/^ref:\s*//;
 	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
