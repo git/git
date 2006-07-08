@@ -26,22 +26,36 @@ AC_DEFUN([GIT_CONF_APPEND_LINE],
 
 
 ## Checks for libraries.
+AC_MSG_NOTICE([CHECKS for libraries])
+
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies MOZILLA_SHA1.
-#
+# Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
+AC_CHECK_LIB([ssl], [SHA1_Init],[],
+[AC_CHECK_LIB([crypto], [SHA1_INIT],
+ GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=YesPlease),
+ GIT_CONF_APPEND_LINE(NO_OPENSSL=YesPlease))])
+
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
-#
+AC_CHECK_LIB([curl], [curl_global_init],[],
+GIT_CONF_APPEND_LINE(NO_CURL=YesPlease))
+
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
-#
-# Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
-#
+AC_CHECK_LIB([expat], [XML_ParserCreate],[],
+GIT_CONF_APPEND_LINE(NO_EXPAT=YesPlease))
+
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
-#
+AC_CHECK_LIB([c], [iconv],[],
+[AC_CHECK_LIB([iconv],[iconv],
+ GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=YesPlease),[])])
+
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
+AC_CHECK_LIB([c], [socket],[],
+[AC_CHECK_LIB([socket],[socket],
+ GIT_CONF_APPEND_LINE(NEEDS_SOCKET=YesPlease),[])])
 
 
 ## Checks for header files.
