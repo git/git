@@ -110,8 +110,14 @@ int git_diff_config(const char *var, const char *value)
 	if (!strcmp(var, "diff.color")) {
 		if (!value)
 			diff_use_color_default = 1; /* bool */
-		else if (!strcasecmp(value, "auto"))
-			diff_use_color_default = isatty(1);
+		else if (!strcasecmp(value, "auto")) {
+			diff_use_color_default = 0;
+			if (isatty(1)) {
+				char *term = getenv("TERM");
+				if (term && strcmp(term, "dumb"))
+					diff_use_color_default = 1;
+			}
+		}
 		else if (!strcasecmp(value, "never"))
 			diff_use_color_default = 0;
 		else if (!strcasecmp(value, "always"))
