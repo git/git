@@ -47,7 +47,7 @@ Then such a short-hand is specified in place of
 <repository> without <refspec> parameters on the command
 line, <refspec> specified on `Push:` lines or `Pull:`
 lines are used for `git-push` and `git-fetch`/`git-pull`,
-respectively.  Multiple `Push:` and and `Pull:` lines may
+respectively.  Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 
 The name of a file in `$GIT_DIR/branches` directory can be
