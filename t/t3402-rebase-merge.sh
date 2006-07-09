@@ -51,7 +51,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'reference merge' '
-	git merge -s recur "reference merge" HEAD master
+	git merge -s recursive "reference merge" HEAD master
 '
 
 test_expect_success rebase '
