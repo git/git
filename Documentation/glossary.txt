@@ -86,7 +86,7 @@ directory::
 ent::
 	Favorite synonym to "tree-ish" by some total geeks. See
 	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
-	explanation.
+	explanation.  Avoid this term, not to confuse people.
 
 fast forward::
 	A fast-forward is a special type of merge where you have

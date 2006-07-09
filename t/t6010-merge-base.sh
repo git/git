@@ -44,6 +44,43 @@ A=$(doit 1 A $B)
 G=$(doit 7 G $B $E)
 H=$(doit 8 H $A $F)
 
+# Setup for second test to demonstrate that relying on timestamps in a
+# distributed SCM to provide a _consistent_ partial ordering of commits
+# leads to insanity.
+#
+#               Relative
+# Structure     timestamps
+#
+#   PL  PR        +4  +4
+#  /  \/  \      /  \/  \
+# L2  C2  R2    +3  -1  +3
+# |   |   |     |   |   |
+# L1  C1  R1    +2  -2  +2
+# |   |   |     |   |   |
+# L0  C0  R0    +1  -3  +1
+#   \ |  /        \ |  /
+#     S             0
+#
+# The left and right chains of commits can be of any length and complexity as
+# long as all of the timestamps are greater than that of S.
+
+S=$(doit  0 S)
+
+C0=$(doit -3 C0 $S)
+C1=$(doit -2 C1 $C0)
+C2=$(doit -1 C2 $C1)
+
+L0=$(doit  1 L0 $S)
+L1=$(doit  2 L1 $L0)
+L2=$(doit  3 L2 $L1)
+
+R0=$(doit  1 R0 $S)
+R1=$(doit  2 R1 $R0)
+R2=$(doit  3 R2 $R1)
+
+PL=$(doit  4 PL $L2 $C2)
+PR=$(doit  4 PR $C2 $R2)
+
 test_expect_success 'compute merge-base (single)' \
     'MB=$(git-merge-base G H) &&
      expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
@@ -55,5 +92,13 @@ test_expect_success 'compute merge-base (all)' \
 test_expect_success 'compute merge-base with show-branch' \
     'MB=$(git-show-branch --merge-base G H) &&
      expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
+
+test_expect_success 'compute merge-base (single)' \
+    'MB=$(git-merge-base PL PR) &&
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/C2"'
+
+test_expect_success 'compute merge-base (all)' \
+    'MB=$(git-merge-base --all PL PR) &&
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/C2"'
 
 test_done

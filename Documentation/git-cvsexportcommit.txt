@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommmit' [-h] [-v] [-c] [-p] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git-cvsexportcommit' [-h] [-v] [-c] [-p] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION

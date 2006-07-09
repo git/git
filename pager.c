@@ -5,6 +5,8 @@
  * something different on Windows, for example.
  */
 
+int pager_in_use;
+
 static void run_pager(const char *pager)
 {
 	execlp(pager, pager, NULL);
@@ -23,6 +25,8 @@ void setup_pager(void)
 		pager = "less";
 	else if (!*pager || !strcmp(pager, "cat"))
 		return;
+
+	pager_in_use = 1; /* means we are emitting to terminal */
 
 	if (pipe(fd) < 0)
 		return;

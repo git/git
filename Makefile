@@ -67,7 +67,7 @@ all:
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
 #
-# Define NO_PYTHON if you want to loose all benefits of the recursive merge.
+# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 #
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
@@ -492,7 +492,7 @@ ifdef NO_ACCURATE_DIFF
 	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
-# Shell quote (do not use $(call) to accomodate ancient setups);
+# Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
 

@@ -779,7 +779,7 @@ sub req_update
 
     #$log->debug("update state : " . Dumper($state));
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1031,7 +1031,7 @@ sub req_ci
 
     my @committedfiles = ();
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         my $committedfile = $filename;
@@ -1145,7 +1145,7 @@ sub req_ci
 
     $updater->update();
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @committedfiles )
     {
         $filename = filecleanup($filename);
@@ -1190,7 +1190,7 @@ sub req_status
     # if no files were specified, we need to work out what files we should be providing status on ...
     argsfromdir($updater);
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1291,7 +1291,7 @@ sub req_diff
     # if no files were specified, we need to work out what files we should be providing status on ...
     argsfromdir($updater);
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1433,7 +1433,7 @@ sub req_log
     # if no files were specified, we need to work out what files we should be providing status on ...
     argsfromdir($updater);
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1519,7 +1519,7 @@ sub req_annotate
 
     chdir $tmpdir;
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);

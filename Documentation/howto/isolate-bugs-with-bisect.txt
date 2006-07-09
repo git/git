@@ -28,7 +28,7 @@ Then do
 
 and at this point "git bisect" will churn for a while, and tell you what 
 the mid-point between those two commits are, and check that state out as 
-the head of the bew "bisect" branch.
+the head of the new "bisect" branch.
 
 Compile and reboot.
 
