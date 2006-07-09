@@ -362,7 +362,7 @@ static int log_ref_write(struct ref_lock *lock,
 	int logfd, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
 	char *logrec;
-	const char *comitter;
+	const char *committer;
 
 	if (log_all_ref_updates) {
 		if (safe_create_leading_directories(lock->log_file) < 0)
@@ -380,23 +380,23 @@ static int log_ref_write(struct ref_lock *lock,
 	}
 
 	setup_ident();
-	comitter = git_committer_info(1);
+	committer = git_committer_info(1);
 	if (msg) {
-		maxlen = strlen(comitter) + strlen(msg) + 2*40 + 5;
+		maxlen = strlen(committer) + strlen(msg) + 2*40 + 5;
 		logrec = xmalloc(maxlen);
 		len = snprintf(logrec, maxlen, "%s %s %s\t%s\n",
 			sha1_to_hex(lock->old_sha1),
 			sha1_to_hex(sha1),
-			comitter,
+			committer,
 			msg);
 	}
 	else {
-		maxlen = strlen(comitter) + 2*40 + 4;
+		maxlen = strlen(committer) + 2*40 + 4;
 		logrec = xmalloc(maxlen);
 		len = snprintf(logrec, maxlen, "%s %s %s\n",
 			sha1_to_hex(lock->old_sha1),
 			sha1_to_hex(sha1),
-			comitter);
+			committer);
 	}
 	written = len <= maxlen ? write(logfd, logrec, len) : -1;
 	free(logrec);
