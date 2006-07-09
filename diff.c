@@ -102,7 +102,13 @@ static const char *parse_diff_color_value(const char *value, const char *var)
 	die("bad config value '%s' for variable '%s'", value, var);
 }
 
-int git_diff_config(const char *var, const char *value)
+/*
+ * These are to give UI layer defaults.
+ * The core-level commands such as git-diff-files should
+ * never be affected by the setting of diff.renames
+ * the user happens to have in the configuration file.
+ */
+int git_diff_ui_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);

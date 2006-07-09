@@ -250,7 +250,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	 * Other cases are errors.
 	 */
 
-	git_config(git_diff_config);
+	git_config(git_diff_ui_config);
 	init_revisions(&rev);
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
