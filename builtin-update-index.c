@@ -648,7 +648,7 @@ int cmd_update_index(int argc, const char **argv, char **envp)
  finish:
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_lock_file(lock_file))
+		    close(newfd) || commit_lock_file(lock_file))
 			die("Unable to write new index file");
 	}
 

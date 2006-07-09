@@ -615,6 +615,13 @@ git Diffs
 	gitlink:git-diff-files[1];
 	gitlink:git-diff-tree[1]
 
+other
+~~~~~
+'GIT_TRACE'::
+	If this variable is set git will print `trace:` messages on
+	stderr telling about alias expansion, built-in command
+	execution and external command execution.
+
 Discussion[[Discussion]]
 ------------------------
 include::README[]

@@ -311,7 +311,7 @@ int main(int argc, char **argv)
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||
-	     commit_lock_file(&lock_file)))
+	     close(newfd) || commit_lock_file(&lock_file)))
 		die("Unable to write new index file");
 	return 0;
 }

@@ -147,7 +147,7 @@ run_status () {
 	    git-ls-files -z --others $option \
 		--exclude-per-directory=.gitignore
 	fi |
-	perl -e '$/ = "\0";
+	@@PERL@@ -e '$/ = "\0";
 	    my $shown = 0;
 	    while (<>) {
 		chomp;

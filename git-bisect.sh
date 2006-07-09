@@ -13,7 +13,7 @@ git bisect log			show bisect log.'
 . git-sh-setup
 
 sq() {
-	perl -e '
+	@@PERL@@ -e '
 		for (@ARGV) {
 			s/'\''/'\'\\\\\'\''/g;
 			print " '\''$_'\''";

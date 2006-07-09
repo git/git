@@ -11,6 +11,7 @@
 #include "git-compat-util.h"
 #include "exec_cmd.h"
 #include "cache.h"
+#include "quote.h"
 
 #include "builtin.h"
 
@@ -120,6 +121,18 @@ static int handle_alias(int *argcp, const char ***argv)
 			if (!strcmp(alias_command, new_argv[0]))
 				die("recursive alias: %s", alias_command);
 
+			if (getenv("GIT_TRACE")) {
+				int i;
+				fprintf(stderr, "trace: alias expansion: %s =>",
+					alias_command);
+				for (i = 0; i < count; ++i) {
+					fputc(' ', stderr);
+					sq_quote_print(stderr, new_argv[i]);
+				}
+				fputc('\n', stderr);
+				fflush(stderr);
+			}
+
 			/* insert after command name */
 			if (*argcp > 1) {
 				new_argv = realloc(new_argv, sizeof(char*) *
@@ -202,6 +215,18 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		struct cmd_struct *p = commands+i;
 		if (strcmp(p->cmd, cmd))
 			continue;
+
+		if (getenv("GIT_TRACE")) {
+			int i;
+			fprintf(stderr, "trace: built-in: git");
+			for (i = 0; i < argc; ++i) {
+				fputc(' ', stderr);
+				sq_quote_print(stderr, argv[i]);
+			}
+			putc('\n', stderr);
+			fflush(stderr);
+		}
+
 		exit(p->fn(argc, argv, envp));
 	}
 }
