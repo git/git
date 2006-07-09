@@ -29,7 +29,7 @@ AC_PROG_CC
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
 #
-# Define NO_PYTHON if you want to loose all benefits of the recursive merge.
+# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 
 
 ## Checks for libraries.
