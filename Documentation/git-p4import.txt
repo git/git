@@ -128,7 +128,7 @@ Tags
 A git tag of the form p4/xx is created for every change imported from
 the Perforce repository where xx is the Perforce changeset number.
 Therefore after the import you can use git to access any commit by its
-Perforce number, eg. git show p4/327.
+Perforce number, e.g. git show p4/327.
 
 The tag associated with the HEAD commit is also how `git-p4import`
 determines if there are new changes to incrementally import from the
@@ -143,7 +143,7 @@ may delete the tags.
 
 Notes
 -----
-You can interrupt the import (eg. ctrl-c) at any time and restart it
+You can interrupt the import (e.g. ctrl-c) at any time and restart it
 without worry.
 
 Author information is automatically determined by querying the

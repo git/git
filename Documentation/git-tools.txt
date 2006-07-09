@@ -42,7 +42,7 @@ History Viewers
 
    - *gitk* (shipped with git-core)
 
-   gitk is a simple TK GUI for browsing history of GIT repositories easily.
+   gitk is a simple Tk GUI for browsing history of GIT repositories easily.
 
 
    - *gitview*  (contrib/)

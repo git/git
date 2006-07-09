@@ -124,7 +124,7 @@ up your changes, along with other changes.
 
 The two commits #2' and #3' in the above picture record the same
 changes your e-mail submission for #2 and #3 contained, but
-probably with the new sign-off line added by the upsteam
+probably with the new sign-off line added by the upstream
 maintainer and definitely with different committer and ancestry
 information, they are different objects from #2 and #3 commits.
 

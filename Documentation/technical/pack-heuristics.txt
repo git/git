@@ -73,7 +73,7 @@ The traditional insight:
 
     <pasky> yes
 
-And Bable-like confusion flowed.
+And Babel-like confusion flowed.
 
     <njs`> oh, hmm, and I'm not sure what this sliding window means either
 
@@ -257,7 +257,7 @@ proclaim it a non-issue.  Good style too!
         (type, basename, size)).
 
         Then we walk through this list, and calculate a delta of
-        each object against the last n (tunable paramater) objects,
+        each object against the last n (tunable parameter) objects,
         and pick the smallest of these deltas.
 
 Vastly simplified, but the essence is there!
@@ -395,7 +395,7 @@ used as setup for a later optimization, which is a real word:
         do "object name->location in packfile" translation.
 
     <njs`> I'm assuming the real win for delta-ing large->small is
-        more homogenous statistics for gzip to run over?
+        more homogeneous statistics for gzip to run over?
 
         (You have to put the bytes in one place or another, but
         putting them in a larger blob wins on compression)
@@ -448,7 +448,7 @@ design options, etc.
 
         Bugs happen, but they are "simple" bugs. And bugs that
         actually get some object store detail wrong are almost always
-        so obious that they never go anywhere.
+        so obvious that they never go anywhere.
 
     <njs`> Yeah.
 

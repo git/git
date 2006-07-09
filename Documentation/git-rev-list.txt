@@ -64,7 +64,7 @@ OPTIONS
 
 --objects-edge::
 	Similar to `--objects`, but also print the IDs of
-	excluded commits refixed with a `-` character.  This is
+	excluded commits prefixed with a `-` character.  This is
 	used by `git-pack-objects` to build 'thin' pack, which
 	records objects in deltified form based on objects
 	contained in these excluded commits to reduce network

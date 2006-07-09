@@ -83,7 +83,7 @@ your local modifications interfere with the merge, again, it
 stops before touching anything.
 
 So in the above two "failed merge" case, you do not have to
-worry about lossage of data --- you simply were not ready to do
+worry about loss of data --- you simply were not ready to do
 a merge, so no merge happened at all.  You may want to finish
 whatever you were in the middle of doing, and retry the same
 pull after you are done and ready.

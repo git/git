@@ -29,7 +29,7 @@ OPTIONS
 
 
 --all::
-	Processes all packs. Any filenames on the commandline are ignored.
+	Processes all packs. Any filenames on the command line are ignored.
 
 --alt-odb::
 	Don't require objects present in packs from alternate object

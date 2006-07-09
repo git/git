@@ -94,7 +94,7 @@ static int read_pack_info_file(const char *infofile)
 
 	fp = fopen(infofile, "r");
 	if (!fp)
-		return 1; /* nonexisting is not an error. */
+		return 1; /* nonexistent is not an error. */
 
 	while (fgets(line, sizeof(line), fp)) {
 		int len = strlen(line);

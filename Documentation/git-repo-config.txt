@@ -119,8 +119,8 @@ you can set the filemode to true with
 % git repo-config core.filemode true
 ------------
 
-The hypothetic proxy command entries actually have a postfix to discern
-to what URL they apply. Here is how to change the entry for kernel.org
+The hypothetical proxy command entries actually have a postfix to discern
+what URL they apply to. Here is how to change the entry for kernel.org
 to "ssh".
 
 ------------
