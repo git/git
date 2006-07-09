@@ -105,6 +105,9 @@ static int git_format_config(const char *var, const char *value)
 		strcat(extra_headers, value);
 		return 0;
 	}
+	if (!strcmp(var, "diff.color")) {
+		return 0;
+	}
 	return git_diff_config(var, value);
 }
 
