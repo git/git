@@ -599,7 +599,7 @@ then
 	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
 	test '' != "$GIT_AUTHOR_NAME" &&
 	test '' != "$GIT_AUTHOR_EMAIL" ||
-	die "malformatted --author parameter"
+	die "malformed --author parameter"
 	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 elif test '' != "$use_commit"
 then

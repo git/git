@@ -21,11 +21,11 @@
 #define DEBUG 0
 
 static const char blame_usage[] = "[-c] [-l] [-t] [-S <revs-file>] [--] file [commit]\n"
-	"  -c, --compability Use the same output mode as git-annotate (Default: off)\n"
-	"  -l, --long        Show long commit SHA1 (Default: off)\n"
-	"  -t, --time        Show raw timestamp (Default: off)\n"
-	"  -S, --revs-file   Use revisions from revs-file instead of calling git-rev-list\n"
-	"  -h, --help        This message";
+	"  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
+	"  -l, --long          Show long commit SHA1 (Default: off)\n"
+	"  -t, --time          Show raw timestamp (Default: off)\n"
+	"  -S, --revs-file     Use revisions from revs-file instead of calling git-rev-list\n"
+	"  -h, --help          This message";
 
 static struct commit **blame_lines;
 static int num_blame_lines;
@@ -747,7 +747,7 @@ int main(int argc, const char **argv)
 	const char *filename = NULL, *commit = NULL;
 	char filename_buf[256];
 	int sha1_len = 8;
-	int compability = 0;
+	int compatibility = 0;
 	int show_raw_time = 0;
 	int options = 1;
 	struct commit* start_commit;
@@ -774,8 +774,8 @@ int main(int argc, const char **argv)
 				sha1_len = 40;
 				continue;
 			} else if(!strcmp(argv[i], "-c") ||
-				  !strcmp(argv[i], "--compability")) {
-				compability = 1;
+				  !strcmp(argv[i], "--compatibility")) {
+				compatibility = 1;
 				continue;
 			} else if(!strcmp(argv[i], "-t") ||
 				  !strcmp(argv[i], "--time")) {
@@ -784,7 +784,7 @@ int main(int argc, const char **argv)
 			} else if(!strcmp(argv[i], "-S")) {
 				if (i + 1 < argc &&
 				    !read_ancestry(argv[i + 1], &sha1_p)) {
-					compability = 1;
+					compatibility = 1;
 					i++;
 					continue;
 				}
@@ -884,7 +884,7 @@ int main(int argc, const char **argv)
 		u = c->util;
 		get_commit_info(c, &ci);
 		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
-		if(compability) {
+		if(compatibility) {
 			printf("\t(%10s\t%10s\t%d)", ci.author,
 			       format_time(ci.author_time, ci.author_tz,
 					   show_raw_time),

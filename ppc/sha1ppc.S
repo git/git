@@ -62,7 +62,7 @@
  * computation of W[t+4].
  *
  * The first 16 rounds use W values loaded directly from memory, while the
- * remianing 64 use values computed from those first 16.  We preload
+ * remaining 64 use values computed from those first 16.  We preload
  * 4 values before starting, so there are three kinds of rounds:
  * - The first 12 (all f0) also load the W values from memory.
  * - The next 64 compute W(i+4) in parallel. 8*f0, 20*f1, 20*f2, 16*f1.

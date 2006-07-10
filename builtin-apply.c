@@ -765,7 +765,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			continue;
 
 		/*
-		 * Make sure we don't find any unconnected patch fragmants.
+		 * Make sure we don't find any unconnected patch fragments.
 		 * That's a sign that we didn't find a header, and that a
 		 * patch has become corrupted/broken up.
 		 */
@@ -990,7 +990,7 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	 * so one line can fit up to 13 groups that would decode
 	 * to 52 bytes max.  The length byte 'A'-'Z' corresponds
 	 * to 1-26 bytes, and 'a'-'z' corresponds to 27-52 bytes.
-	 * The end of binary is signalled with an empty line.
+	 * The end of binary is signaled with an empty line.
 	 */
 	int llen, used;
 	struct fragment *fragment;

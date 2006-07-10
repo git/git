@@ -49,7 +49,7 @@ if [ -n "$quilt_author" ] ; then
 	quilt_author_email=$(expr "z$quilt_author" : '.*<\([^>]*\)') &&
 	test '' != "$quilt_author_name" &&
 	test '' != "$quilt_author_email" ||
-	die "malformatted --author parameter"
+	die "malformed --author parameter"
 fi
 
 # Quilt patch directory

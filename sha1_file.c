@@ -1660,7 +1660,7 @@ int has_sha1_file(const unsigned char *sha1)
 
 /*
  * reads from fd as long as possible into a supplied buffer of size bytes.
- * If neccessary the buffer's size is increased using realloc()
+ * If necessary the buffer's size is increased using realloc()
  *
  * returns 0 if anything went fine and -1 otherwise
  *

@@ -4,7 +4,7 @@
 #
 
 # See http://marc.theaimsgroup.com/?l=git&m=111463358500362&w=2 for a
-# nice decription of what this is about.
+# nice description of what this is about.
 
 
 test_description='Test criss-cross merge'

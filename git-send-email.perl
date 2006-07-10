@@ -361,7 +361,7 @@ Options:
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
-  --suppress-from Supress sending emails to yourself if your address
+  --suppress-from Suppress sending emails to yourself if your address
                   appears in a From: line.
 
    --quiet	Make git-send-email less verbose.  One line per email should be

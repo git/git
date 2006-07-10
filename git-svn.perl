@@ -2429,7 +2429,7 @@ sub extract_metadata {
 							\s([a-f\d\-]+)$/x);
 	if (!$rev || !$uuid || !$url) {
 		# some of the original repositories I made had
-		# indentifiers like this:
+		# identifiers like this:
 		($rev, $uuid) = ($id =~/^git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
 	}
 	return ($url, $rev, $uuid);

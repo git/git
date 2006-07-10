@@ -198,8 +198,8 @@ int receive_unpack_pack(int xd[2], const char *me, int quiet, int sideband)
 
 /*
  * A "binary msec" is a power-of-two-msec, aka 1/1024th of a second.
- * Keeing the time in that format means that "bytes / msecs" means
- * is the same as kB/s (modulo rounding).
+ * Keeping the time in that format means that "bytes / msecs" means
+ * the same as kB/s (modulo rounding).
  *
  * 1000512 is a magic number (usecs in a second, rounded up by half
  * of 1024, to make "rounding" come out right ;)

@@ -63,7 +63,7 @@ esac
 shift ;# away the initial 'x'
 
 # $# is now 0 if there was no explicit refspec on the command line
-# and there was no defalt refspec to push from remotes/ file.
+# and there was no default refspec to push from remotes/ file.
 # we will let git-send-pack to do its "matching refs" thing.
 
 case "$remote" in
