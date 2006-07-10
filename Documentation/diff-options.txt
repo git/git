@@ -4,18 +4,21 @@
 -u::
 	Synonym for "-p".
 
+--raw::
+	Generate the raw format.
+
 --patch-with-raw::
-	Generate patch but keep also the default raw diff output.
+	Synonym for "-p --raw".
 
 --stat::
-	Generate a diffstat instead of a patch.
+	Generate a diffstat.
 
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
 
 --patch-with-stat::
-	Generate patch and prepend its diffstat.
+	Synonym for "-p --stat".
 
 -z::
 	\0 line termination on output
@@ -26,10 +29,25 @@
 --name-status::
 	Show only names and status of changed files.
 
+--color::
+	Show colored diff.
+
+--no-color::
+	Turn off colored diff, even when the configuration file
+	gives the default to color output.
+
+--no-renames::
+	Turn off rename detection, even when the configuration
+	file gives the default to do so.
+
 --full-index::
 	Instead of the first handful characters, show full
 	object name of pre- and post-image blob on the "index"
-	line when generating a patch format output.	
+	line when generating a patch format output.
+
+--binary::
+	In addition to --full-index, output "binary diff" that
+	can be applied with "git apply".
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object

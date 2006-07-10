@@ -47,7 +47,7 @@ int cmd_whatchanged(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_config);
+	git_config(git_diff_ui_config);
 	init_revisions(&rev);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
@@ -62,7 +62,7 @@ int cmd_show(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_config);
+	git_config(git_diff_ui_config);
 	init_revisions(&rev);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
@@ -79,7 +79,7 @@ int cmd_log(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_config);
+	git_config(git_diff_ui_config);
 	init_revisions(&rev);
 	rev.always_show_header = 1;
 	cmd_log_init(argc, argv, envp, &rev);
@@ -108,7 +108,7 @@ static int git_format_config(const char *var, const char *value)
 	if (!strcmp(var, "diff.color")) {
 		return 0;
 	}
-	return git_diff_config(var, value);
+	return git_diff_ui_config(var, value);
 }
 
 

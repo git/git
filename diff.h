@@ -123,7 +123,7 @@ extern int diff_scoreopt_parse(const char *opt);
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
-extern int git_diff_config(const char *var, const char *value);
+extern int git_diff_ui_config(const char *var, const char *value);
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);
 extern int diff_setup_done(struct diff_options *);
