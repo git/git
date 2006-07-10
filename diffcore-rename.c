@@ -96,11 +96,15 @@ static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
 	return &(rename_src[first]);
 }
 
-static int is_exact_match(struct diff_filespec *src, struct diff_filespec *dst)
+static int is_exact_match(struct diff_filespec *src,
+			  struct diff_filespec *dst,
+			  int contents_too)
 {
 	if (src->sha1_valid && dst->sha1_valid &&
 	    !memcmp(src->sha1, dst->sha1, 20))
 		return 1;
+	if (!contents_too)
+		return 0;
 	if (diff_populate_filespec(src, 1) || diff_populate_filespec(dst, 1))
 		return 0;
 	if (src->size != dst->size)
@@ -242,7 +246,7 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
 	struct diff_score *mx;
-	int i, j, rename_count;
+	int i, j, rename_count, contents_too;
 	int num_create, num_src, dst_cnt;
 
 	if (!minimum_score)
@@ -273,16 +277,23 @@ void diffcore_rename(struct diff_options *options)
 
 	/* We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
+	 * The first round matches up the up-to-date entries,
+	 * and then during the second round we try to match
+	 * cache-dirty entries as well.
 	 */
-	for (i = 0; i < rename_dst_nr; i++) {
-		struct diff_filespec *two = rename_dst[i].two;
-		for (j = 0; j < rename_src_nr; j++) {
-			struct diff_filespec *one = rename_src[j].one;
-			if (!is_exact_match(one, two))
-				continue;
-			record_rename_pair(i, j, MAX_SCORE);
-			rename_count++;
-			break; /* we are done with this entry */
+	for (contents_too = 0; contents_too < 2; contents_too++) {
+		for (i = 0; i < rename_dst_nr; i++) {
+			struct diff_filespec *two = rename_dst[i].two;
+			if (rename_dst[i].pair)
+				continue; /* dealt with an earlier round */
+			for (j = 0; j < rename_src_nr; j++) {
+				struct diff_filespec *one = rename_src[j].one;
+				if (!is_exact_match(one, two, contents_too))
+					continue;
+				record_rename_pair(i, j, MAX_SCORE);
+				rename_count++;
+				break; /* we are done with this entry */
+			}
 		}
 	}
 
