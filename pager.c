@@ -5,8 +5,6 @@
  * something different on Windows, for example.
  */
 
-int pager_in_use;
-
 static void run_pager(const char *pager)
 {
 	execlp(pager, pager, NULL);
