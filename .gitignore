@@ -137,4 +137,10 @@ git-core.spec
 *.[ao]
 *.py[co]
 config.mak
+autom4te.cache
+config.log
+config.status
+config.mak.in
+config.mak.autogen
+configure
 git-blame
