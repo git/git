@@ -179,7 +179,7 @@ my @bfiles = grep(m/^Binary/, safe_pipe_capture('git-diff-tree', '-p', $parent, 
 @bfiles = map { chomp } @bfiles;
 foreach my $f (@bfiles) {
     # check that the file in cvs matches the "old" file
-    # extract the file to $tmpdir and comparre with cmp
+    # extract the file to $tmpdir and compare with cmp
     my $tree = safe_pipe_capture('git-rev-parse', "$parent^{tree}");
     chomp $tree;
     my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
@@ -273,7 +273,7 @@ sub cleanupcvs {
     }
 }
 
-# An alterative to `command` that allows input to be passed as an array
+# An alternative to `command` that allows input to be passed as an array
 # to work around shell problems with weird characters in arguments
 # if the exec returns non-zero we die
 sub safe_pipe_capture {

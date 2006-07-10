@@ -176,7 +176,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 		usage(builtin_diff_usage);
 
 	/* We saw two trees, ent[0] and ent[1].
-	 * if ent[1] is unintesting, they are swapped
+	 * if ent[1] is uninteresting, they are swapped
 	 */
 	if (ent[1].item->flags & UNINTERESTING)
 		swap = 1;

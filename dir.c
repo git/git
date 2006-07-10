@@ -336,7 +336,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				if (dir->show_other_directories &&
 				    (subdir || !dir->hide_empty_directories) &&
 				    !dir_exists(fullname, baselen + len)) {
-					// Rewind the read subdirectory
+					/* Rewind the read subdirectory */
 					while (dir->nr > rewind_base)
 						free(dir->entries[--dir->nr]);
 					break;

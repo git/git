@@ -104,7 +104,7 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 			if (n < MAX_URI)
 				uri[n++] = strdup(s);
 			else
-				error("more than %d URL's specified, ignoreing the rest", MAX_URI);
+				error("more than %d URL's specified, ignoring the rest", MAX_URI);
 		}
 		else if (is_refspec && !has_explicit_refspec)
 			add_refspec(strdup(s));
@@ -273,7 +273,7 @@ static int do_push(const char *repo)
 int cmd_push(int argc, const char **argv, char **envp)
 {
 	int i;
-	const char *repo = "origin";	// default repository
+	const char *repo = "origin";	/* default repository */
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

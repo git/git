@@ -39,6 +39,9 @@ if ($git_version =~ m/git version (.*)$/) {
 
 # location for temporary files needed for diffs
 our $git_temp = "/tmp/gitweb";
+if (! -d $git_temp) {
+    mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+}
 
 # target of the home link on top of all pages
 our $home_link = $my_uri;
@@ -1455,6 +1458,91 @@ sub git_get_hash_by_path {
 	}
 }
 
+sub mimetype_guess_file {
+	my $filename = shift;
+	my $mimemap = shift;
+	-r $mimemap or return undef;
+
+	my %mimemap;
+	open(MIME, $mimemap) or return undef;
+	while (<MIME>) {
+		my ($mime, $exts) = split(/\t+/);
+		my @exts = split(/\s+/, $exts);
+		foreach my $ext (@exts) {
+			$mimemap{$ext} = $mime;
+		}
+	}
+	close(MIME);
+
+	$filename =~ /\.(.*?)$/;
+	return $mimemap{$1};
+}
+
+sub mimetype_guess {
+	my $filename = shift;
+	my $mime;
+	$filename =~ /\./ or return undef;
+
+	if ($mimetypes_file) {
+		my $file = $mimetypes_file;
+		#$file =~ m#^/# or $file = "$projectroot/$path/$file";
+		$mime = mimetype_guess_file($filename, $file);
+	}
+	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
+	return $mime;
+}
+
+sub git_blob_plain_mimetype {
+	my $fd = shift;
+	my $filename = shift;
+
+	if ($filename) {
+		my $mime = mimetype_guess($filename);
+		$mime and return $mime;
+	}
+
+	# just in case
+	return $default_blob_plain_mimetype unless $fd;
+
+	if (-T $fd) {
+		return 'text/plain' .
+		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
+	} elsif (! $filename) {
+		return 'application/octet-stream';
+	} elsif ($filename =~ m/\.png$/i) {
+		return 'image/png';
+	} elsif ($filename =~ m/\.gif$/i) {
+		return 'image/gif';
+	} elsif ($filename =~ m/\.jpe?g$/i) {
+		return 'image/jpeg';
+	} else {
+		return 'application/octet-stream';
+	}
+}
+
+sub git_blob_plain {
+	my $type = shift;
+	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error("Couldn't cat $file_name, $hash");
+
+	$type ||= git_blob_plain_mimetype($fd, $file_name);
+
+	# save as filename, even when no $file_name is given
+	my $save_as = "$hash";
+	if (defined $file_name) {
+		$save_as = $file_name;
+	} elsif ($type =~ m/^text\//) {
+		$save_as .= '.txt';
+	}
+
+	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
+	undef $/;
+	binmode STDOUT, ':raw';
+	print <$fd>;
+	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	$/ = "\n";
+	close $fd;
+}
+
 sub git_blob {
 	if (!defined $hash && defined $file_name) {
 		my $base = $hash_base || git_read_head($project);
@@ -1462,6 +1550,11 @@ sub git_blob {
 	}
 	my $have_blame = git_get_project_config_bool ('blame');
 	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
+	my $mimetype = git_blob_plain_mimetype($fd, $file_name);
+	if ($mimetype !~ m/^text\//) {
+		close $fd;
+		return git_blob_plain($mimetype);
+	}
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		print "<div class=\"page_nav\">\n" .
@@ -1508,89 +1601,6 @@ sub git_blob {
 	close $fd or print "Reading blob failed.\n";
 	print "</div>";
 	git_footer_html();
-}
-
-sub mimetype_guess_file {
-	my $filename = shift;
-	my $mimemap = shift;
-	-r $mimemap or return undef;
-
-	my %mimemap;
-	open(MIME, $mimemap) or return undef;
-	while (<MIME>) {
-		my ($mime, $exts) = split(/\t+/);
-		my @exts = split(/\s+/, $exts);
-		foreach my $ext (@exts) {
-			$mimemap{$ext} = $mime;
-		}
-	}
-	close(MIME);
-
-	$filename =~ /\.(.*?)$/;
-	return $mimemap{$1};
-}
-
-sub mimetype_guess {
-	my $filename = shift;
-	my $mime;
-	$filename =~ /\./ or return undef;
-
-	if ($mimetypes_file) {
-		my $file = $mimetypes_file;
-		#$file =~ m#^/# or $file = "$projectroot/$path/$file";
-		$mime = mimetype_guess_file($filename, $file);
-	}
-	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
-	return $mime;
-}
-
-sub git_blob_plain_mimetype {
-	my $fd = shift;
-	my $filename = shift;
-
-	# just in case
-	return $default_blob_plain_mimetype unless $fd;
-
-	if ($filename) {
-		my $mime = mimetype_guess($filename);
-		$mime and return $mime;
-	}
-
-	if (-T $fd) {
-		return 'text/plain' .
-		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
-	} elsif (! $filename) {
-		return 'application/octet-stream';
-	} elsif ($filename =~ m/\.png$/i) {
-		return 'image/png';
-	} elsif ($filename =~ m/\.gif$/i) {
-		return 'image/gif';
-	} elsif ($filename =~ m/\.jpe?g$/i) {
-		return 'image/jpeg';
-	} else {
-		return 'application/octet-stream';
-	}
-}
-
-sub git_blob_plain {
-	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
-	my $type = git_blob_plain_mimetype($fd, $file_name);
-
-	# save as filename, even when no $file_name is given
-	my $save_as = "$hash";
-	if (defined $file_name) {
-		$save_as = $file_name;
-	} elsif ($type =~ m/^text\//) {
-		$save_as .= '.txt';
-	}
-
-	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
-	undef $/;
-	binmode STDOUT, ':raw';
-	print <$fd>;
-	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
-	$/ = "\n";
-	close $fd;
 }
 
 sub git_tree {

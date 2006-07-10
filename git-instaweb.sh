@@ -25,7 +25,7 @@ conf=$GIT_DIR/gitweb/httpd.conf
 
 # Defaults:
 
-# if installed, it doens't need further configuration (module_path)
+# if installed, it doesn't need further configuration (module_path)
 test -z "$httpd" && httpd='lighttpd -f'
 
 # probably the most popular browser among gitweb users

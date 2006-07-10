@@ -68,7 +68,7 @@ int fetch(unsigned char *sha1)
 	struct object_list *temp;
 
 	if (memcmp(sha1, in_transit->item->sha1, 20)) {
-		// we must have already fetched it to clean the queue
+		/* we must have already fetched it to clean the queue */
 		return has_sha1_file(sha1) ? 0 : -1;
 	}
 	prefetches--;
@@ -85,7 +85,7 @@ int fetch(unsigned char *sha1)
 		if (read(fd_in, &remote, 1) < 1)
 			return -1;
 	}
-	//fprintf(stderr, "Got %d\n", remote);
+	/* fprintf(stderr, "Got %d\n", remote); */
 	if (remote < 0)
 		return remote;
 	ret = write_sha1_from_fd(sha1, fd_in, conn_buf, 4096, &conn_buf_posn);

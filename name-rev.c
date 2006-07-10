@@ -5,7 +5,7 @@
 #include "refs.h"
 
 static const char name_rev_usage[] =
-	"git-name-rev [--tags] ( --all | --stdin | commitish [commitish...] )\n";
+	"git-name-rev [--tags] ( --all | --stdin | committish [committish...] )\n";
 
 typedef struct rev_name {
 	const char *tip_name;

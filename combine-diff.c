@@ -320,7 +320,7 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 	unsigned long i;
 
 	/* Two groups of interesting lines may have a short gap of
-	 * unintersting lines.  Connect such groups to give them a
+	 * uninteresting lines.  Connect such groups to give them a
 	 * bit of context.
 	 *
 	 * We first start from what the interesting() function says,

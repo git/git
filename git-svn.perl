@@ -760,7 +760,7 @@ sub commit_diff {
 		exit 1;
 	}
 	if (defined $_file) {
-		$_message = file_to_s($_message);
+		$_message = file_to_s($_file);
 	} else {
 		$_message ||= get_commit_message($tb,
 					"$GIT_DIR/.svn-commit.tmp.$$")->{msg};
@@ -1518,12 +1518,12 @@ sub get_commit_message {
 	open my $msg, '>', $commit_msg or croak $!;
 
 	chomp(my $type = `git-cat-file -t $commit`);
-	if ($type eq 'commit') {
+	if ($type eq 'commit' || $type eq 'tag') {
 		my $pid = open my $msg_fh, '-|';
 		defined $pid or croak $!;
 
 		if ($pid == 0) {
-			exec(qw(git-cat-file commit), $commit) or croak $!;
+			exec('git-cat-file', $type, $commit) or croak $!;
 		}
 		my $in_msg = 0;
 		while (<$msg_fh>) {
@@ -2429,7 +2429,7 @@ sub extract_metadata {
 							\s([a-f\d\-]+)$/x);
 	if (!$rev || !$uuid || !$url) {
 		# some of the original repositories I made had
-		# indentifiers like this:
+		# identifiers like this:
 		($rev, $uuid) = ($id =~/^git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
 	}
 	return ($url, $rev, $uuid);

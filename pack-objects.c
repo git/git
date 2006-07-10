@@ -28,7 +28,7 @@ struct object_entry {
 	struct object_entry *delta;	/* delta base object */
 	struct packed_git *in_pack; 	/* already in pack */
 	unsigned int in_pack_offset;
-	struct object_entry *delta_child; /* delitified objects who bases me */
+	struct object_entry *delta_child; /* deltified objects who bases me */
 	struct object_entry *delta_sibling; /* other deltified objects who
 					     * uses the same base as me
 					     */
@@ -39,7 +39,7 @@ struct object_entry {
 };
 
 /*
- * Objects we are going to pack are colected in objects array (dynamically
+ * Objects we are going to pack are collected in objects array (dynamically
  * expanded).  nr_objects & nr_alloc controls this array.  They are stored
  * in the order we see -- typically rev-list --objects order that gives us
  * nice "minimum seek" order.

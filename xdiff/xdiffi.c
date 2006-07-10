@@ -84,7 +84,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		 * We need to extent the diagonal "domain" by one. If the next
 		 * values exits the box boundaries we need to change it in the
 		 * opposite direction because (max - min) must be a power of two.
-		 * Also we initialize the extenal K value to -1 so that we can
+		 * Also we initialize the external K value to -1 so that we can
 		 * avoid extra conditions check inside the core loop.
 		 */
 		if (fmin > dmin)
@@ -119,7 +119,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		 * We need to extent the diagonal "domain" by one. If the next
 		 * values exits the box boundaries we need to change it in the
 		 * opposite direction because (max - min) must be a power of two.
-		 * Also we initialize the extenal K value to -1 so that we can
+		 * Also we initialize the external K value to -1 so that we can
 		 * avoid extra conditions check inside the core loop.
 		 */
 		if (bmin > dmin)
@@ -405,7 +405,7 @@ static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	/*
 	 * This is the same of what GNU diff does. Move back and forward
 	 * change groups for a consistent and pretty diff output. This also
-	 * helps in finding joineable change groups and reduce the diff size.
+	 * helps in finding joinable change groups and reduce the diff size.
 	 */
 	for (ix = ixo = 0;;) {
 		/*

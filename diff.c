@@ -44,12 +44,12 @@ enum color_diff {
 #define COLOR_WHITE   "\033[37m"
 
 static const char *diff_colors[] = {
-	[DIFF_RESET]    = COLOR_RESET,
-	[DIFF_PLAIN]    = COLOR_NORMAL,
-	[DIFF_METAINFO] = COLOR_BOLD,
-	[DIFF_FRAGINFO] = COLOR_CYAN,
-	[DIFF_FILE_OLD] = COLOR_RED,
-	[DIFF_FILE_NEW] = COLOR_GREEN,
+	COLOR_RESET,
+	COLOR_NORMAL,
+	COLOR_BOLD,
+	COLOR_CYAN,
+	COLOR_RED,
+	COLOR_GREEN
 };
 
 static int parse_diff_color_slot(const char *var, int ofs)

@@ -17,7 +17,7 @@
  * in that size, you're doing something wrong.
  */
 
-// Some random size
+/* Some random size */
 #define MAXSIZE (8192)
 
 /*
@@ -123,7 +123,8 @@ int main(int argc, char **argv)
 		die("could not read from stdin");
 	}
 
-	// Verify it for some basic sanity: it needs to start with "object <sha1>\ntype\ntagger "
+	/* Verify it for some basic sanity: it needs to start with
+	   "object <sha1>\ntype\ntagger " */
 	if (verify_tag(buffer, size) < 0)
 		die("invalid tag signature file");
 

@@ -568,7 +568,7 @@ class Popen(object):
         # Windows methods
         #
         def _get_handles(self, stdin, stdout, stderr):
-            """Construct and return tupel with IO objects:
+            """Construct and return tuple with IO objects:
             p2cread, p2cwrite, c2pread, c2pwrite, errread, errwrite
             """
             if stdin == None and stdout == None and stderr == None:
@@ -635,7 +635,7 @@ class Popen(object):
 
 
         def _find_w9xpopen(self):
-            """Find and return absolut path to w9xpopen.exe"""
+            """Find and return absolute path to w9xpopen.exe"""
             w9xpopen = os.path.join(os.path.dirname(GetModuleFileName(0)),
                                     "w9xpopen.exe")
             if not os.path.exists(w9xpopen):
@@ -812,7 +812,7 @@ class Popen(object):
         # POSIX methods
         #
         def _get_handles(self, stdin, stdout, stderr):
-            """Construct and return tupel with IO objects:
+            """Construct and return tuple with IO objects:
             p2cread, p2cwrite, c2pread, c2pwrite, errread, errwrite
             """
             p2cread, p2cwrite = None, None

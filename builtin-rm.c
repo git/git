@@ -129,7 +129,7 @@ int cmd_rm(int argc, const char **argv, char **envp)
 	 * workspace. If we fail to remove the first one, we
 	 * abort the "git rm" (but once we've successfully removed
 	 * any file at all, we'll go ahead and commit to it all:
-	 * by then we've already committed ourself and can't fail
+	 * by then we've already committed ourselves and can't fail
 	 * in the middle)
 	 */
 	if (force) {

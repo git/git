@@ -81,7 +81,7 @@ test_valid_repo"
 
 cd "$base_dir"
 
-test_expect_failure 'that info/alternates is neccessary' \
+test_expect_failure 'that info/alternates is necessary' \
 'cd C &&
 rm .git/objects/info/alternates &&
 test_valid_repo'

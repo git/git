@@ -182,7 +182,7 @@ git-apply --index "$PATCHFILE" || {
 	# This is not so wrong.  Depending on which base we picked,
 	# orig_tree may be wildly different from ours, but his_tree
 	# has the same set of wildly different changes in parts the
-	# patch did not touch, so resolve ends up cancelling them,
+	# patch did not touch, so resolve ends up canceling them,
 	# saying that we reverted all those changes.
 
 	if git-merge-resolve $orig_tree -- HEAD $his_tree

@@ -941,7 +941,7 @@ int cmd_grep(int argc, const char **argv, char **envp)
 	 * pattern, but then what follows it must be zero or more
 	 * valid refs up to the -- (if exists), and then existing
 	 * paths.  If there is an explicit pattern, then the first
-	 * unrecocnized non option is the beginning of the refs list
+	 * unrecognized non option is the beginning of the refs list
 	 * that continues up to the -- (if exists), and then paths.
 	 */
 
