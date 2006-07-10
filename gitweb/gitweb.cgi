@@ -39,6 +39,9 @@ if ($git_version =~ m/git version (.*)$/) {
 
 # location for temporary files needed for diffs
 our $git_temp = "/tmp/gitweb";
+if (! -d $git_temp) {
+    mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+}
 
 # target of the home link on top of all pages
 our $home_link = $my_uri;
