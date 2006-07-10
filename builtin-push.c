@@ -273,7 +273,7 @@ static int do_push(const char *repo)
 int cmd_push(int argc, const char **argv, char **envp)
 {
 	int i;
-	const char *repo = "origin";	// default repository
+	const char *repo = "origin";	/* default repository */
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

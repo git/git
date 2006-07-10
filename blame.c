@@ -44,8 +44,8 @@ struct util_info {
 };
 
 struct chunk {
-	int off1, len1;	// ---
-	int off2, len2;	// +++
+	int off1, len1;	/* --- */
+	int off2, len2;	/* +++ */
 };
 
 struct patch {
@@ -255,7 +255,7 @@ static void print_map(struct commit *cmit, struct commit *other)
 }
 #endif
 
-// p is a patch from commit to other.
+/* p is a patch from commit to other. */
 static void fill_line_map(struct commit *commit, struct commit *other,
 			  struct patch *p)
 {

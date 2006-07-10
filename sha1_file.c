@@ -453,7 +453,7 @@ int use_packed_git(struct packed_git *p)
 {
 	if (!p->pack_size) {
 		struct stat st;
-		// We created the struct before we had the pack
+		/* We created the struct before we had the pack */
 		stat(p->pack_name, &st);
 		if (!S_ISREG(st.st_mode))
 			die("packfile %s not a regular file", p->pack_name);
@@ -1504,7 +1504,7 @@ static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
 	int hdrlen;
 	void *buf;
 
-	// need to unpack and recompress it by itself
+	/* need to unpack and recompress it by itself */
 	unpacked = read_packed_sha1(sha1, type, &len);
 
 	hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;

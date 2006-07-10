@@ -14,14 +14,15 @@
 #include "delta.h"
 #include "builtin.h"
 
-//  --check turns on checking that the working tree matches the
-//    files that are being modified, but doesn't apply the patch
-//  --stat does just a diffstat, and doesn't actually apply
-//  --numstat does numeric diffstat, and doesn't actually apply
-//  --index-info shows the old and new index info for paths if available.
-//  --index updates the cache as well.
-//  --cached updates only the cache without ever touching the working tree.
-//
+/*
+ *  --check turns on checking that the working tree matches the
+ *    files that are being modified, but doesn't apply the patch
+ *  --stat does just a diffstat, and doesn't actually apply
+ *  --numstat does numeric diffstat, and doesn't actually apply
+ *  --index-info shows the old and new index info for paths if available.
+ *  --index updates the cache as well.
+ *  --cached updates only the cache without ever touching the working tree.
+ */
 static const char *prefix;
 static int prefix_length = -1;
 static int newfd = -1;
@@ -284,8 +285,8 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 {
 	char *name;
 
-	first += 4;	// skip "--- "
-	second += 4;	// skip "+++ "
+	first += 4;	/* skip "--- " */
+	second += 4;	/* skip "+++ " */
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
