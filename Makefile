@@ -33,6 +33,10 @@ all:
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
+# Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
+# tests.  These tests take up a significant amount of the total test time
+# but are not needed unless you plan to talk to SVN repos.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -134,7 +138,7 @@ SCRIPT_PERL = \
 	git-shortlog.perl git-rerere.perl \
 	git-annotate.perl git-cvsserver.perl \
 	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl \
-	git-send-email.perl
+	git-send-email.perl git-svn.perl
 
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
@@ -653,6 +657,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 # with that.
 
 export NO_PYTHON
+export NO_SVN_TESTS
 
 test: all
 	$(MAKE) -C t/ all

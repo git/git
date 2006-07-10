@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Eric Wong
 #
 
-test_description='git-svn tests'
+test_description='git-svn basic tests'
 GIT_SVN_LC_ALL=$LC_ALL
 
 case "$LC_ALL" in
@@ -16,6 +16,8 @@ case "$LC_ALL" in
 esac
 
 . ./lib-git-svn.sh
+
+echo 'define NO_SVN_TESTS to skip git-svn tests'
 
 mkdir import
 cd import

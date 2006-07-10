@@ -224,7 +224,7 @@ Merge tracking in Subversion is lacking and doing branched development
 with Subversion is cumbersome as a result.  git-svn completely forgoes
 any automated merge/branch tracking on the Subversion side and leaves it
 entirely up to the user on the git side.  It's simply not worth it to do
-a useful translation when the the original signal is weak.
+a useful translation when the original signal is weak.
 
 TRACKING MULTIPLE REPOSITORIES OR BRANCHES
 ------------------------------------------
