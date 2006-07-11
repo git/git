@@ -56,6 +56,9 @@ OPTIONS
 	Print the contents of the commit in raw-format; each
 	record is separated with a NUL character.
 
+--parents::
+	Print the parents of the commit.
+
 --objects::
 	Print the object IDs of any object referenced by the listed commits.
 	'git-rev-list --objects foo ^bar' thus means "send me all object IDs
@@ -101,6 +104,9 @@ OPTIONS
 
 --remove-empty::
 	Stop when a given path disappears from the tree.
+
+--no-merges::
+	Do not print commits with more than one parent.
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack

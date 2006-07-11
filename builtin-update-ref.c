@@ -12,6 +12,7 @@ int cmd_update_ref(int argc, const char **argv, char **envp)
 	unsigned char sha1[20], oldsha1[20];
 	int i;
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 
