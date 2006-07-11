@@ -435,7 +435,6 @@ sub send_message
 To: $to
 Cc: $cc
 Subject: $subject
-Reply-To: $from
 Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
