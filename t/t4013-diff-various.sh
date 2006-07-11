@@ -70,7 +70,7 @@ test_expect_success setup '
 	for i in 1 2; do echo $i; done >>dir/sub &&
 	git update-index file0 dir/sub &&
 
-	EDITOR=: VISUAL=: git commit --amend &&
+	git commit --amend &&
 	git show-branch
 '
 
