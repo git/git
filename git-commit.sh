@@ -635,9 +635,12 @@ fi
 PARENTS="-p HEAD"
 if test -z "$initial_commit"
 then
+	rloga='commit'
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+		rloga='commit (merge)'
 		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
 	elif test -n "$amend"; then
+		rloga='commit (amend)'
 		PARENTS=$(git-cat-file commit HEAD |
 			sed -n -e '/^$/q' -e 's/^parent /-p /p')
 	fi
@@ -649,6 +652,7 @@ else
 	fi
 	PARENTS=""
 	current=
+	rloga='commit (initial)'
 fi
 
 if test -z "$no_edit"
@@ -724,7 +728,7 @@ then
 	fi &&
 	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
 	rlogm=$(sed -e 1q "$GIT_DIR"/COMMIT_MSG) &&
-	git-update-ref -m "commit: $rlogm" HEAD $commit $current &&
+	git-update-ref -m "$rloga: $rlogm" HEAD $commit $current &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD" &&
 	if test -f "$NEXT_INDEX"
 	then
