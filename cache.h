@@ -176,6 +176,7 @@ extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
 
 /* Environment bits from configuration mechanism */
+extern int use_legacy_headers;
 extern int trust_executable_bit;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
