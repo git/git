@@ -190,7 +190,6 @@ test_expect_success \
 	 GIT_COMMITTER_DATE="2005-05-26 23:41" git-commit -F M -a &&
 	 h_OTHER=$(git-rev-parse --verify HEAD) &&
 	 echo FIXED >F &&
-	 EDITOR=true \
 	 GIT_AUTHOR_DATE="2005-05-26 23:44" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:44" git-commit --amend &&
 	 h_FIXED=$(git-rev-parse --verify HEAD) &&

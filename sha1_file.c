@@ -684,7 +684,7 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 	return map;
 }
 
-int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size)
+static int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size)
 {
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
@@ -720,7 +720,7 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
  * too permissive for what we want to check. So do an anal
  * object header parse by hand.
  */
-int parse_sha1_header(char *hdr, char *type, unsigned long *sizep)
+static int parse_sha1_header(char *hdr, char *type, unsigned long *sizep)
 {
 	int i;
 	unsigned long size;

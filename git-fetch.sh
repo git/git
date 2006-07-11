@@ -80,7 +80,7 @@ rref=
 rsync_slurped_objects=
 
 rloga="$rloga $remote_nick"
-test "$remote_nick" == "$remote" || rloga="$rloga $remote"
+test "$remote_nick" = "$remote" || rloga="$rloga $remote"
 
 if test "" = "$append"
 then

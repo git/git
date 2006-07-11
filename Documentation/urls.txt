@@ -10,9 +10,9 @@ to name the remote repository:
 - https://host.xz/path/to/repo.git/
 - git://host.xz/path/to/repo.git/
 - git://host.xz/~user/path/to/repo.git/
-- ssh://host.xz/path/to/repo.git/
-- ssh://host.xz/~user/path/to/repo.git/
-- ssh://host.xz/~/path/to/repo.git
+- ssh://[user@]host.xz/path/to/repo.git/
+- ssh://[user@]host.xz/~user/path/to/repo.git/
+- ssh://[user@]host.xz/~/path/to/repo.git
 ===============================================================
 
 SSH Is the default transport protocol and also supports an
