@@ -891,9 +891,9 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 static int grep_object(struct grep_opt *opt, const char **paths,
 		       struct object *obj, const char *name)
 {
-	if (obj->type == TYPE_BLOB)
+	if (obj->type == OBJ_BLOB)
 		return grep_sha1(opt, obj->sha1, name);
-	if (obj->type == TYPE_COMMIT || obj->type == TYPE_TREE) {
+	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
 		int hit;

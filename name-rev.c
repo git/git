@@ -84,14 +84,14 @@ static int name_ref(const char *path, const unsigned char *sha1)
 	if (tags_only && strncmp(path, "refs/tags/", 10))
 		return 0;
 
-	while (o && o->type == TYPE_TAG) {
+	while (o && o->type == OBJ_TAG) {
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
 		o = parse_object(t->tagged->sha1);
 		deref = 1;
 	}
-	if (o && o->type == TYPE_COMMIT) {
+	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
 		if (!strncmp(path, "refs/heads/", 11))
@@ -111,7 +111,7 @@ static const char* get_rev_name(struct object *o)
 	struct rev_name *n;
 	struct commit *c;
 
-	if (o->type != TYPE_COMMIT)
+	if (o->type != OBJ_COMMIT)
 		return "undefined";
 	c = (struct commit *) o;
 	n = c->util;
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
 		}
 
 		o = deref_tag(parse_object(sha1), *argv, 0);
-		if (!o || o->type != TYPE_COMMIT) {
+		if (!o || o->type != OBJ_COMMIT) {
 			fprintf(stderr, "Could not get commit for %s. Skipping.\n",
 					*argv);
 			continue;

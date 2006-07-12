@@ -135,7 +135,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	/*
 	 * Tag object? Look what it points to..
 	 */
-	while (object->type == TYPE_TAG) {
+	while (object->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) object;
 		if (revs->tag_objects && !(flags & UNINTERESTING))
 			add_pending_object(revs, object, tag->tag);
@@ -148,7 +148,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	 * Commit object? Just return it, we'll do all the complex
 	 * reachability crud.
 	 */
-	if (object->type == TYPE_COMMIT) {
+	if (object->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)object;
 		if (parse_commit(commit) < 0)
 			die("unable to parse commit %s", name);
@@ -164,7 +164,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	 * Tree object? Either mark it uniniteresting, or add it
 	 * to the list of objects to look at later..
 	 */
-	if (object->type == TYPE_TREE) {
+	if (object->type == OBJ_TREE) {
 		struct tree *tree = (struct tree *)object;
 		if (!revs->tree_objects)
 			return NULL;
@@ -179,7 +179,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	/*
 	 * Blob object? You know the drill by now..
 	 */
-	if (object->type == TYPE_BLOB) {
+	if (object->type == OBJ_BLOB) {
 		struct blob *blob = (struct blob *)object;
 		if (!revs->blob_objects)
 			return NULL;
@@ -494,11 +494,11 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, sha1, 0);
-		if (it->type != TYPE_TAG)
+		if (it->type != OBJ_TAG)
 			break;
 		memcpy(sha1, ((struct tag*)it)->tagged->sha1, 20);
 	}
-	if (it->type != TYPE_COMMIT)
+	if (it->type != OBJ_COMMIT)
 		return 0;
 	commit = (struct commit *)it;
 	for (parents = commit->parents; parents; parents = parents->next) {
