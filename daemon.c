@@ -674,6 +674,15 @@ static void sanitize_stdfds(void)
 		close(fd);
 }
 
+static void store_pid(const char *path)
+{
+	FILE *f = fopen(path, "w");
+	if (!f)
+		die("cannot open pid file %s: %s", path, strerror(errno));
+	fprintf(f, "%d\n", getpid());
+	fclose(f);
+}
+
 static int serve(int port)
 {
 	int socknum, *socklist;
@@ -689,6 +698,7 @@ int main(int argc, char **argv)
 {
 	int port = DEFAULT_GIT_PORT;
 	int inetd_mode = 0;
+	const char *pid_file = NULL;
 	int i;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -753,6 +763,10 @@ int main(int argc, char **argv)
 			user_path = arg + 12;
 			continue;
 		}
+		if (!strncmp(arg, "--pid-file=", 11)) {
+			pid_file = arg + 11;
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
 			break;
@@ -786,6 +800,9 @@ int main(int argc, char **argv)
 	}
 
 	sanitize_stdfds();
+
+	if (pid_file)
+		store_pid(pid_file);
 
 	return serve(port);
 }
