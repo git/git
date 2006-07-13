@@ -84,7 +84,7 @@ revert)
 		s/^[^ ]* /Revert "/
 		s/$/"/'
 	echo
-	echo "This reverts $commit commit."
+	echo "This reverts commit $commit."
 	test "$rev" = "$commit" ||
 	echo "(original 'git revert' arguments: $@)"
 	base=$commit next=$prev

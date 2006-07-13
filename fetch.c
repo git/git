@@ -118,20 +118,20 @@ static struct object_list **process_queue_end = &process_queue;
 
 static int process_object(struct object *obj)
 {
-	if (obj->type == TYPE_COMMIT) {
+	if (obj->type == OBJ_COMMIT) {
 		if (process_commit((struct commit *)obj))
 			return -1;
 		return 0;
 	}
-	if (obj->type == TYPE_TREE) {
+	if (obj->type == OBJ_TREE) {
 		if (process_tree((struct tree *)obj))
 			return -1;
 		return 0;
 	}
-	if (obj->type == TYPE_BLOB) {
+	if (obj->type == OBJ_BLOB) {
 		return 0;
 	}
-	if (obj->type == TYPE_TAG) {
+	if (obj->type == OBJ_TAG) {
 		if (process_tag((struct tag *)obj))
 			return -1;
 		return 0;

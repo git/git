@@ -381,13 +381,13 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 
 	sp++; /* beginning of type name, or closing brace for empty */
 	if (!strncmp(commit_type, sp, 6) && sp[6] == '}')
-		expected_type = TYPE_COMMIT;
+		expected_type = OBJ_COMMIT;
 	else if (!strncmp(tree_type, sp, 4) && sp[4] == '}')
-		expected_type = TYPE_TREE;
+		expected_type = OBJ_TREE;
 	else if (!strncmp(blob_type, sp, 4) && sp[4] == '}')
-		expected_type = TYPE_BLOB;
+		expected_type = OBJ_BLOB;
 	else if (sp[0] == '}')
-		expected_type = TYPE_NONE;
+		expected_type = OBJ_NONE;
 	else
 		return -1;
 
@@ -416,9 +416,9 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 				memcpy(sha1, o->sha1, 20);
 				return 0;
 			}
-			if (o->type == TYPE_TAG)
+			if (o->type == OBJ_TAG)
 				o = ((struct tag*) o)->tagged;
-			else if (o->type == TYPE_COMMIT)
+			else if (o->type == OBJ_COMMIT)
 				o = &(((struct commit *) o)->tree->object);
 			else
 				return error("%.*s: expected %s type, but the object dereferences to %s type",

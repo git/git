@@ -19,7 +19,8 @@ struct object *get_indexed_object(unsigned int idx)
 }
 
 const char *type_names[] = {
-	"none", "blob", "tree", "commit", "bad"
+	"none", "commit", "tree", "blob", "tag",
+	"bad type 5", "bad type 6", "delta", "bad",
 };
 
 static unsigned int hash_obj(struct object *obj, unsigned int n)
@@ -88,7 +89,7 @@ void created_object(const unsigned char *sha1, struct object *obj)
 {
 	obj->parsed = 0;
 	obj->used = 0;
-	obj->type = TYPE_NONE;
+	obj->type = OBJ_NONE;
 	obj->flags = 0;
 	memcpy(obj->sha1, sha1, 20);
 
@@ -131,7 +132,7 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 	if (!obj) {
 		union any_object *ret = xcalloc(1, sizeof(*ret));
 		created_object(sha1, &ret->object);
-		ret->object.type = TYPE_NONE;
+		ret->object.type = OBJ_NONE;
 		return &ret->object;
 	}
 	return obj;

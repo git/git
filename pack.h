@@ -1,20 +1,7 @@
 #ifndef PACK_H
 #define PACK_H
 
-/*
- * The packed object type is stored in 3 bits.
- * The type value 0 is a reserved prefix if ever there is more than 7
- * object types, or any future format extensions.
- */
-enum object_type {
-	OBJ_EXT = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5/6 for future expansion */
-	OBJ_DELTA = 7,
-};
+#include "object.h"
 
 /*
  * Packed object header
