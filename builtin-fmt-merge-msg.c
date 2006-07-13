@@ -76,6 +76,7 @@ static int handle_line(char *line)
 	unsigned char *sha1;
 	char *src, *origin;
 	struct src_data *src_data;
+	int pulling_head = 0;
 
 	if (len < 43 || line[40] != '\t')
 		return 1;
@@ -101,8 +102,11 @@ static int handle_line(char *line)
 	if (src) {
 		*src = 0;
 		src += 4;
-	} else
-		src = "HEAD";
+		pulling_head = 0;
+	} else {
+		src = line;
+		pulling_head = 1;
+	}
 
 	i = find_in_list(&srcs, src);
 	if (i < 0) {
@@ -112,7 +116,10 @@ static int handle_line(char *line)
 	}
 	src_data = srcs.payload[i];
 
-	if (!strncmp(line, "branch ", 7)) {
+	if (pulling_head) {
+		origin = strdup(src);
+		src_data->head_status |= 1;
+	} else if (!strncmp(line, "branch ", 7)) {
 		origin = strdup(line + 7);
 		append_to_list(&src_data->branch, origin, NULL);
 		src_data->head_status |= 2;
@@ -124,9 +131,6 @@ static int handle_line(char *line)
 		origin = strdup(line + 14);
 		append_to_list(&src_data->r_branch, origin, NULL);
 		src_data->head_status |= 2;
-	} else if (!strcmp(line, "HEAD")) {
-		origin = strdup(src);
-		src_data->head_status |= 1;
 	} else {
 		origin = strdup(src);
 		append_to_list(&src_data->generic, strdup(line), NULL);
