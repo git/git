@@ -43,7 +43,9 @@ case ",$all_into_one," in
 	;;
 esac
 pack_objects="$pack_objects $local $quiet $no_reuse_delta$extra"
-name=$(git-rev-list --objects --all $rev_list 2>&1 |
+name=$( { git-rev-list --objects --all $rev_list ||
+	  echo "git-rev-list died with exit code $?"
+	} |
 	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
 	exit 1
 if [ -z "$name" ]; then
