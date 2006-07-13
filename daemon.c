@@ -95,6 +95,12 @@ static void loginfo(const char *err, ...)
 	va_end(params);
 }
 
+static void NORETURN daemon_die(const char *err, va_list params)
+{
+	logreport(LOG_ERR, err, params);
+	exit(1);
+}
+
 static int avoid_alias(char *p)
 {
 	int sl, ndot;
@@ -746,16 +752,13 @@ int main(int argc, char **argv)
 		usage(daemon_usage);
 	}
 
-	if (log_syslog)
+	if (log_syslog) {
 		openlog("git-daemon", 0, LOG_DAEMON);
-
-	if (strict_paths && (!ok_paths || !*ok_paths)) {
-		if (!inetd_mode)
-			die("git-daemon: option --strict-paths requires a whitelist");
-
-		logerror("option --strict-paths requires a whitelist");
-		exit (1);
+		set_die_routine(daemon_die);
 	}
+
+	if (strict_paths && (!ok_paths || !*ok_paths))
+		die("option --strict-paths requires a whitelist");
 
 	if (inetd_mode) {
 		struct sockaddr_storage ss;
