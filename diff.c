@@ -26,8 +26,8 @@ enum color_diff {
 	DIFF_FILE_NEW = 5,
 };
 
-/* "\033[1;30;47m\0" is 11 bytes */
-static char diff_colors[][16] = {
+/* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
+static char diff_colors[][24] = {
 	"\033[m",	/* reset */
 	"",		/* normal */
 	"\033[1m",	/* bold */
@@ -57,12 +57,16 @@ static int parse_color(const char *name, int len)
 		"normal", "black", "red", "green", "yellow",
 		"blue", "magenta", "cyan", "white"
 	};
+	char *end;
 	int i;
 	for (i = 0; i < ARRAY_SIZE(color_names); i++) {
 		const char *str = color_names[i];
 		if (!strncasecmp(name, str, len) && !str[len])
 			return i - 1;
 	}
+	i = strtol(name, &end, 10);
+	if (*name && !*end && i >= -1 && i <= 255)
+		return i;
 	return -2;
 }
 
@@ -135,14 +139,22 @@ static void parse_diff_color_value(const char *value, const char *var, char *dst
 		if (fg >= 0) {
 			if (sep++)
 				*dst++ = ';';
-			*dst++ = '3';
-			*dst++ = '0' + fg;
+			if (fg < 8) {
+				*dst++ = '3';
+				*dst++ = '0' + fg;
+			} else {
+				dst += sprintf(dst, "38;5;%d", fg);
+			}
 		}
 		if (bg >= 0) {
 			if (sep++)
 				*dst++ = ';';
-			*dst++ = '4';
-			*dst++ = '0' + bg;
+			if (bg < 8) {
+				*dst++ = '4';
+				*dst++ = '0' + bg;
+			} else {
+				dst += sprintf(dst, "48;5;%d", bg);
+			}
 		}
 		*dst++ = 'm';
 	}
