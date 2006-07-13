@@ -943,6 +943,8 @@ and returns the process output as a string."
   (let ((map (make-keymap))
         (diff-map (make-sparse-keymap)))
     (suppress-keymap map)
+    (define-key map "?"   'git-help)
+    (define-key map "h"   'git-help)
     (define-key map " "   'git-next-file)
     (define-key map "a"   'git-add-file)
     (define-key map "c"   'git-commit-file)
@@ -1011,6 +1013,11 @@ Commands:
         (git-refresh-status)
         (goto-char (point-min)))
     (message "%s is not a git working tree." dir)))
+
+(defun git-help ()
+  "Display help for Git mode."
+  (interactive)
+  (describe-function 'git-status-mode))
 
 (provide 'git)
 ;;; git.el ends here
