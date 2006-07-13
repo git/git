@@ -674,6 +674,24 @@ static void sanitize_stdfds(void)
 		close(fd);
 }
 
+static void daemonize(void)
+{
+	switch (fork()) {
+		case 0:
+			break;
+		case -1:
+			die("fork failed: %s", strerror(errno));
+		default:
+			exit(0);
+	}
+	if (setsid() == -1)
+		die("setsid failed: %s", strerror(errno));
+	close(0);
+	close(1);
+	close(2);
+	sanitize_stdfds();
+}
+
 static void store_pid(const char *path)
 {
 	FILE *f = fopen(path, "w");
@@ -699,6 +717,7 @@ int main(int argc, char **argv)
 	int port = DEFAULT_GIT_PORT;
 	int inetd_mode = 0;
 	const char *pid_file = NULL;
+	int detach = 0;
 	int i;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -767,6 +786,11 @@ int main(int argc, char **argv)
 			pid_file = arg + 11;
 			continue;
 		}
+		if (!strcmp(arg, "--detach")) {
+			detach = 1;
+			log_syslog = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
 			break;
@@ -799,7 +823,10 @@ int main(int argc, char **argv)
 		return execute(peer);
 	}
 
-	sanitize_stdfds();
+	if (detach)
+		daemonize();
+	else
+		sanitize_stdfds();
 
 	if (pid_file)
 		store_pid(pid_file);
