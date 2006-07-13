@@ -25,6 +25,8 @@ extern int cmd_diff(int argc, const char **argv, char **envp);
 extern int cmd_format_patch(int argc, const char **argv, char **envp);
 extern int cmd_count_objects(int argc, const char **argv, char **envp);
 
+extern int cmd_prune(int argc, const char **argv, char **envp);
+
 extern int cmd_push(int argc, const char **argv, char **envp);
 extern int cmd_grep(int argc, const char **argv, char **envp);
 extern int cmd_rm(int argc, const char **argv, char **envp);

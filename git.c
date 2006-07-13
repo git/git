@@ -188,7 +188,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "stripspace", cmd_stripspace },
 		{ "update-index", cmd_update_index },
 		{ "update-ref", cmd_update_ref },
-		{ "fmt-merge-msg", cmd_fmt_merge_msg }
+		{ "fmt-merge-msg", cmd_fmt_merge_msg },
+		{ "prune", cmd_prune },
 	};
 	int i;
 
