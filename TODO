@@ -122,6 +122,10 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
+* git-cherry-pick should check if the original commit message is
+  just a single liner, in which case it should add a LF before
+  appending "cherry-picked from..." message.
+
 * git-clone fail .git/refs/foo (Yann Dirson <ydirson@altern.org>)
   <20060610225040.GA7766@nowhere.earth>
 
