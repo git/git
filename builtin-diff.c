@@ -285,9 +285,9 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		obj = deref_tag(obj, NULL, 0);
 		if (!obj)
 			die("invalid object '%s' given.", name);
-		if (obj->type == TYPE_COMMIT)
+		if (obj->type == OBJ_COMMIT)
 			obj = &((struct commit *)obj)->tree->object;
-		if (obj->type == TYPE_TREE) {
+		if (obj->type == OBJ_TREE) {
 			if (ARRAY_SIZE(ent) <= ents)
 				die("more than %d trees given: '%s'",
 				    (int) ARRAY_SIZE(ent), name);
@@ -297,7 +297,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 			ents++;
 			continue;
 		}
-		if (obj->type == TYPE_BLOB) {
+		if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die("more than two blobs given: '%s'", name);
 			memcpy(blob[blobs].sha1, obj->sha1, 20);
