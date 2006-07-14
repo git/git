@@ -1,5 +1,5 @@
 $ git format-patch --attach --stdout initial..master^
-From 7952a93e09bf565b5592766a438b40cd81f4846f Mon Sep 17 00:00:00 2001
+From 1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
 Subject: [PATCH] Second
@@ -11,6 +11,9 @@ This is a multi-part message in MIME format.
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/plain; charset=UTF-8; format=fixed
 Content-Transfer-Encoding: 8bit
+
+
+This is the second commit.
 ---
  dir/sub |    2 ++
  file0   |    3 +++
@@ -18,10 +21,10 @@ Content-Transfer-Encoding: 8bit
  3 files changed, 5 insertions(+), 3 deletions(-)
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/x-patch;
- name="7952a93e09bf565b5592766a438b40cd81f4846f.diff"
+ name="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: inline;
- filename="7952a93e09bf565b5592766a438b40cd81f4846f.diff"
+ filename="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
@@ -57,7 +60,7 @@ index 01e79c3..0000000
 
 
 
-From 889b315013ef9f2e2f90aa0b054b267c8a557847 Mon Sep 17 00:00:00 2001
+From 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:02:00 +0000
 Subject: [PATCH] Third
@@ -75,10 +78,10 @@ Content-Transfer-Encoding: 8bit
  2 files changed, 5 insertions(+), 0 deletions(-)
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/x-patch;
- name="889b315013ef9f2e2f90aa0b054b267c8a557847.diff"
+ name="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: inline;
- filename="889b315013ef9f2e2f90aa0b054b267c8a557847.diff"
+ filename="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
 
 diff --git a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644

@@ -1,6 +1,6 @@
 $ git show master
-commit 176b998f5d647cbd77a9d8acf4531e930754d16d
-Merge: 889b315... c7a2ab9...
+commit 59d314ad6f356dd08601a4cd5e530381da3e3c64
+Merge: 9a6d494... c7a2ab9...
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:04:00 2006 +0000
 

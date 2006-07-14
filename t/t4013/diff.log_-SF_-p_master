@@ -1,5 +1,5 @@
 $ git log -SF -p master
-commit 889b315013ef9f2e2f90aa0b054b267c8a557847
+commit 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:02:00 2006 +0000
 

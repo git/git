@@ -1,5 +1,5 @@
 $ git diff-tree -p -m master
-176b998f5d647cbd77a9d8acf4531e930754d16d
+59d314ad6f356dd08601a4cd5e530381da3e3c64
 diff --git a/dir/sub b/dir/sub
 index cead32e..992913c 100644
 --- a/dir/sub
@@ -21,7 +21,7 @@ index b414108..10a8a9f 100644
 +A
 +B
 +C
-176b998f5d647cbd77a9d8acf4531e930754d16d
+59d314ad6f356dd08601a4cd5e530381da3e3c64
 diff --git a/dir/sub b/dir/sub
 index 7289e35..992913c 100644
 --- a/dir/sub
