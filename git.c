@@ -133,13 +133,12 @@ static int handle_alias(int *argcp, const char ***argv)
 				fflush(stderr);
 			}
 
+			new_argv = realloc(new_argv, sizeof(char*) *
+					   (count + *argcp + 1));
 			/* insert after command name */
-			if (*argcp > 1) {
-				new_argv = realloc(new_argv, sizeof(char*) *
-						   (count + *argcp));
-				memcpy(new_argv + count, *argv + 1,
-				       sizeof(char*) * *argcp);
-			}
+			memcpy(new_argv + count, *argv + 1,
+			       sizeof(char*) * *argcp);
+			new_argv[count+*argcp] = NULL;
 
 			*argv = new_argv;
 			*argcp += count - 1;
