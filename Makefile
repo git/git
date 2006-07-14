@@ -179,7 +179,8 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X \
 	git-symbolic-ref$X \
 	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
-	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
+	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
+	git-merge-recur$X
 
 BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
@@ -652,6 +653,11 @@ git-http-fetch$X: fetch.o http.o http-fetch.o $(GITLIBS)
 git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
+
+merge-recursive.o path-list.o: path-list.h
+git-merge-recur$X: merge-recursive.o path-list.o $(LIB_FILE)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIBS)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)

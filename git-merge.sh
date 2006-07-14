@@ -9,15 +9,20 @@ USAGE='[-n] [--no-commit] [--squash] [-s <strategy>]... <merge-message> <head> <
 LF='
 '
 
-all_strategies='recursive octopus resolve stupid ours'
-default_twohead_strategies='recursive'
+all_strategies='recursive recur octopus resolve stupid ours'
+case "${GIT_USE_RECUR_FOR_RECURSIVE}" in
+'')
+	default_twohead_strategies=recursive ;;
+?*)
+	default_twohead_strategies=recur ;;
+esac
 default_octopus_strategies='octopus'
 no_trivial_merge_strategies='ours'
 use_strategies=
 
 index_merge=t
 if test "@@NO_PYTHON@@"; then
-	all_strategies='resolve octopus stupid ours'
+	all_strategies='recur resolve octopus stupid ours'
 	default_twohead_strategies='resolve'
 fi
 
@@ -116,6 +121,10 @@ do
 		*)
 			strategy="$2"
 			shift ;;
+		esac
+		case "$strategy,${GIT_USE_RECUR_FOR_RECURSIVE}" in
+		recursive,?*)
+			strategy=recur ;;
 		esac
 		case " $all_strategies " in
 		*" $strategy "*)

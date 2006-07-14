@@ -35,7 +35,13 @@ If you would prefer to skip this patch, instead run \"git rebase --skip\".
 To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
 unset newbase
-strategy=recursive
+case "${GIT_USE_RECUR_FOR_RECURSIVE}" in
+'')
+	strategy=recursive ;;
+?*)
+	strategy=recur ;;
+esac
+
 do_merge=
 dotest=$GIT_DIR/.dotest-merge
 prec=4
@@ -199,6 +205,11 @@ do
 	esac
 	shift
 done
+
+case "$strategy,${GIT_USE_RECUR_FOR_RECURSIVE}" in
+recursive,?*)
+	strategy=recur ;;
+esac
 
 # Make sure we do not have .dotest
 if test -z "$do_merge"
