@@ -5,7 +5,7 @@ const char *tag_type = "tag";
 
 struct object *deref_tag(struct object *o, const char *warn, int warnlen)
 {
-	while (o && o->type == TYPE_TAG)
+	while (o && o->type == OBJ_TAG)
 		o = parse_object(((struct tag *)o)->tagged->sha1);
 	if (!o && warn) {
 		if (!warnlen)
@@ -21,12 +21,12 @@ struct tag *lookup_tag(const unsigned char *sha1)
         if (!obj) {
                 struct tag *ret = alloc_tag_node();
                 created_object(sha1, &ret->object);
-                ret->object.type = TYPE_TAG;
+                ret->object.type = OBJ_TAG;
                 return ret;
         }
 	if (!obj->type)
-		obj->type = TYPE_TAG;
-        if (obj->type != TYPE_TAG) {
+		obj->type = OBJ_TAG;
+        if (obj->type != OBJ_TAG) {
                 error("Object %s is a %s, not a tree",
                       sha1_to_hex(sha1), typename(obj->type));
                 return NULL;

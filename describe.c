@@ -67,7 +67,7 @@ static int get_name(const char *path, const unsigned char *sha1)
 	 * Otherwise only annotated tags are used.
 	 */
 	if (!strncmp(path, "refs/tags/", 10)) {
-		if (object->type == TYPE_TAG)
+		if (object->type == OBJ_TAG)
 			prio = 2;
 		else
 			prio = 1;

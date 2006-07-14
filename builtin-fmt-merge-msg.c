@@ -181,7 +181,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	int flags = UNINTERESTING | TREECHANGE | SEEN | SHOWN | ADDED;
 
 	branch = deref_tag(parse_object(sha1), sha1_to_hex(sha1), 40);
-	if (!branch || branch->type != TYPE_COMMIT)
+	if (!branch || branch->type != OBJ_COMMIT)
 		return;
 
 	setup_revisions(0, NULL, rev, NULL);

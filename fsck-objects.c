@@ -297,13 +297,13 @@ static int fsck_sha1(unsigned char *sha1)
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
-	if (obj->type == TYPE_BLOB)
+	if (obj->type == OBJ_BLOB)
 		return 0;
-	if (obj->type == TYPE_TREE)
+	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj);
-	if (obj->type == TYPE_COMMIT)
+	if (obj->type == OBJ_COMMIT)
 		return fsck_commit((struct commit *) obj);
-	if (obj->type == TYPE_TAG)
+	if (obj->type == OBJ_TAG)
 		return fsck_tag((struct tag *) obj);
 	/* By now, parse_object() would've returned NULL instead. */
 	return objerror(obj, "unknown type '%d' (internal fsck error)", obj->type);
@@ -472,7 +472,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 		}
 		mark_reachable(obj, REACHABLE);
 		obj->used = 1;
-		if (obj->type != TYPE_TREE)
+		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, "non-tree in cache-tree");
 	}
 	for (i = 0; i < it->subtree_nr; i++)
