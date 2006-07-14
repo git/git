@@ -1331,31 +1331,29 @@ char *write_sha1_file_prepare(void *buf,
 static int link_temp_to_file(const char *tmpfile, char *filename)
 {
 	int ret;
+	char *dir;
 
 	if (!link(tmpfile, filename))
 		return 0;
 
 	/*
-	 * Try to mkdir the last path component if that failed
-	 * with an ENOENT.
+	 * Try to mkdir the last path component if that failed.
 	 *
 	 * Re-try the "link()" regardless of whether the mkdir
 	 * succeeds, since a race might mean that somebody
 	 * else succeeded.
 	 */
 	ret = errno;
-	if (ret == ENOENT) {
-		char *dir = strrchr(filename, '/');
-		if (dir) {
-			*dir = 0;
-			mkdir(filename, 0777);
-			if (adjust_shared_perm(filename))
-				return -2;
-			*dir = '/';
-			if (!link(tmpfile, filename))
-				return 0;
-			ret = errno;
-		}
+	dir = strrchr(filename, '/');
+	if (dir) {
+		*dir = 0;
+		mkdir(filename, 0777);
+		if (adjust_shared_perm(filename))
+			return -2;
+		*dir = '/';
+		if (!link(tmpfile, filename))
+			return 0;
+		ret = errno;
 	}
 	return ret;
 }
