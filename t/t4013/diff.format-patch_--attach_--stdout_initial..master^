@@ -72,6 +72,7 @@ This is a multi-part message in MIME format.
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/plain; charset=UTF-8; format=fixed
 Content-Transfer-Encoding: 8bit
+
 ---
  dir/sub |    2 ++
  file1   |    3 +++

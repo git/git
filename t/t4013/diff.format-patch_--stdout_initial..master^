@@ -48,6 +48,7 @@ From 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:02:00 +0000
 Subject: [PATCH] Third
+
 ---
  dir/sub |    2 ++
  file1   |    3 +++
