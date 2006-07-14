@@ -12,15 +12,21 @@ static int find_short_object_filename(int len, const char *name, unsigned char *
 	char hex[40];
 	int found = 0;
 	static struct alternate_object_database *fakeent;
+	static const char *last_objdir;
+	const char *objdir = get_object_directory();
 
-	if (!fakeent) {
-		const char *objdir = get_object_directory();
+	if (!last_objdir || strcmp(last_objdir, objdir)) {
 		int objdir_len = strlen(objdir);
 		int entlen = objdir_len + 43;
+		if (fakeent)
+			free(fakeent);
 		fakeent = xmalloc(sizeof(*fakeent) + entlen);
 		memcpy(fakeent->base, objdir, objdir_len);
 		fakeent->name = fakeent->base + objdir_len + 1;
 		fakeent->name[-1] = '/';
+		if (last_objdir)
+			free((char *) last_objdir);
+		last_objdir = strdup(objdir);
 	}
 	fakeent->next = alt_odb_list;
 
