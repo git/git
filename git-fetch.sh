@@ -153,7 +153,7 @@ fast_forward_local () {
 	then
 		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
 		then
-			[ "$verbose" ] && echo >&2 "* $1: same as $3"
+			[ "$verbose" ] && echo >&2 "* $1: same as $3" ||:
 		else
 			echo >&2 "* $1: updating with $3"
 			git-update-ref -m "$rloga: updating tag" "$1" "$2"

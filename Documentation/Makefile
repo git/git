@@ -46,6 +46,7 @@ all: html man
 
 html: $(DOC_HTML)
 
+$(DOC_HTML) $(DOC_MAN1) $(DOC_MAN7): asciidoc.conf
 
 man: man1 man7
 man1: $(DOC_MAN1)
