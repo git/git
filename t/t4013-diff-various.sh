@@ -7,6 +7,9 @@ test_description='Various diff formatting options'
 
 . ./test-lib.sh
 
+LF='
+'
+
 test_expect_success setup '
 
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
@@ -31,7 +34,7 @@ test_expect_success setup '
 	for i in C D; do echo $i; done >>dir/sub &&
 	rm -f file2 &&
 	git update-index --remove file0 file2 dir/sub &&
-	git commit -m Second &&
+	git commit -m "Second${LF}${LF}This is the second commit." &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:02:00 +0000" &&
 	GIT_COMMITTER_DATE="2006-06-26 00:02:00 +0000" &&

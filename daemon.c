@@ -95,6 +95,12 @@ static void loginfo(const char *err, ...)
 	va_end(params);
 }
 
+static void NORETURN daemon_die(const char *err, va_list params)
+{
+	logreport(LOG_ERR, err, params);
+	exit(1);
+}
+
 static int avoid_alias(char *p)
 {
 	int sl, ndot;
@@ -656,6 +662,45 @@ static int service_loop(int socknum, int *socklist)
 	}
 }
 
+/* if any standard file descriptor is missing open it to /dev/null */
+static void sanitize_stdfds(void)
+{
+	int fd = open("/dev/null", O_RDWR, 0);
+	while (fd != -1 && fd < 2)
+		fd = dup(fd);
+	if (fd == -1)
+		die("open /dev/null or dup failed: %s", strerror(errno));
+	if (fd > 2)
+		close(fd);
+}
+
+static void daemonize(void)
+{
+	switch (fork()) {
+		case 0:
+			break;
+		case -1:
+			die("fork failed: %s", strerror(errno));
+		default:
+			exit(0);
+	}
+	if (setsid() == -1)
+		die("setsid failed: %s", strerror(errno));
+	close(0);
+	close(1);
+	close(2);
+	sanitize_stdfds();
+}
+
+static void store_pid(const char *path)
+{
+	FILE *f = fopen(path, "w");
+	if (!f)
+		die("cannot open pid file %s: %s", path, strerror(errno));
+	fprintf(f, "%d\n", getpid());
+	fclose(f);
+}
+
 static int serve(int port)
 {
 	int socknum, *socklist;
@@ -671,6 +716,8 @@ int main(int argc, char **argv)
 {
 	int port = DEFAULT_GIT_PORT;
 	int inetd_mode = 0;
+	const char *pid_file = NULL;
+	int detach = 0;
 	int i;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -735,6 +782,15 @@ int main(int argc, char **argv)
 			user_path = arg + 12;
 			continue;
 		}
+		if (!strncmp(arg, "--pid-file=", 11)) {
+			pid_file = arg + 11;
+			continue;
+		}
+		if (!strcmp(arg, "--detach")) {
+			detach = 1;
+			log_syslog = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
 			break;
@@ -746,16 +802,13 @@ int main(int argc, char **argv)
 		usage(daemon_usage);
 	}
 
-	if (log_syslog)
+	if (log_syslog) {
 		openlog("git-daemon", 0, LOG_DAEMON);
-
-	if (strict_paths && (!ok_paths || !*ok_paths)) {
-		if (!inetd_mode)
-			die("git-daemon: option --strict-paths requires a whitelist");
-
-		logerror("option --strict-paths requires a whitelist");
-		exit (1);
+		set_die_routine(daemon_die);
 	}
+
+	if (strict_paths && (!ok_paths || !*ok_paths))
+		die("option --strict-paths requires a whitelist");
 
 	if (inetd_mode) {
 		struct sockaddr_storage ss;
@@ -769,6 +822,14 @@ int main(int argc, char **argv)
 
 		return execute(peer);
 	}
+
+	if (detach)
+		daemonize();
+	else
+		sanitize_stdfds();
+
+	if (pid_file)
+		store_pid(pid_file);
 
 	return serve(port);
 }

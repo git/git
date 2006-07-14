@@ -655,6 +655,9 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			continue;
 		}
 
+		if (!subject)
+			body = 1;
+
 		if (is_empty_line(line, &linelen)) {
 			if (!body)
 				continue;
@@ -662,8 +665,6 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 				continue;
 			if (fmt == CMIT_FMT_SHORT)
 				break;
-		} else {
-			body = 1;
 		}
 
 		if (subject) {
@@ -701,6 +702,12 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		offset--;
 	/* Make sure there is an EOLN for the non-oneline case */
 	if (fmt != CMIT_FMT_ONELINE)
+		buf[offset++] = '\n';
+	/*
+	 * make sure there is another EOLN to separate the headers from whatever
+	 * body the caller appends if we haven't already written a body
+	 */
+	if (fmt == CMIT_FMT_EMAIL && !body)
 		buf[offset++] = '\n';
 	buf[offset] = '\0';
 	return offset;

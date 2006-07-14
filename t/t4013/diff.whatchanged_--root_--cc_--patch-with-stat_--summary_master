@@ -1,6 +1,6 @@
 $ git whatchanged --root --cc --patch-with-stat --summary master
-commit 176b998f5d647cbd77a9d8acf4531e930754d16d
-Merge: 889b315... c7a2ab9...
+commit 59d314ad6f356dd08601a4cd5e530381da3e3c64
+Merge: 9a6d494... c7a2ab9...
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:04:00 2006 +0000
 
@@ -81,7 +81,7 @@ index 0000000..7289e35
 +1
 +2
 
-commit 889b315013ef9f2e2f90aa0b054b267c8a557847
+commit 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:02:00 2006 +0000
 
@@ -112,11 +112,13 @@ index 0000000..b1e6722
 +B
 +C
 
-commit 7952a93e09bf565b5592766a438b40cd81f4846f
+commit 1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:01:00 2006 +0000
 
     Second
+    
+    This is the second commit.
 ---
  dir/sub |    2 ++
  file0   |    3 +++

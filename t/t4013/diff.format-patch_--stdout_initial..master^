@@ -1,8 +1,10 @@
 $ git format-patch --stdout initial..master^
-From 7952a93e09bf565b5592766a438b40cd81f4846f Mon Sep 17 00:00:00 2001
+From 1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
 Subject: [PATCH] Second
+
+This is the second commit.
 ---
  dir/sub |    2 ++
  file0   |    3 +++
@@ -42,10 +44,11 @@ index 01e79c3..0000000
 g-i-t--v-e-r-s-i-o-n
 
 
-From 889b315013ef9f2e2f90aa0b054b267c8a557847 Mon Sep 17 00:00:00 2001
+From 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:02:00 +0000
 Subject: [PATCH] Third
+
 ---
  dir/sub |    2 ++
  file1   |    3 +++

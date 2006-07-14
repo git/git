@@ -120,9 +120,11 @@ info/grafts::
 
 info/exclude::
 	This file, by convention among Porcelains, stores the
-	exclude pattern list.  `git status` looks at it, but
-	otherwise it is not looked at by any of the core git
-	commands.
+	exclude pattern list. `.gitignore` is the per-directory
+	ignore file.  `git status`, `git add`, `git rm` and `git
+	clean` look at it but the core git commands do not look
+	at it.  See also: gitlink:git-ls-files[1] `--exclude-from`
+	and `--exclude-per-directory`.
 
 remotes::
 	Stores shorthands to be used to give URL and default

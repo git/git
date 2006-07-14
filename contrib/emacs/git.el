@@ -59,14 +59,16 @@
 
 (defcustom git-committer-name nil
   "User name to use for commits.
-The default is to fall back to the repository config, then to `add-log-full-name' and then to `user-full-name'."
+The default is to fall back to the repository config,
+then to `add-log-full-name' and then to `user-full-name'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Name")))
 
 (defcustom git-committer-email nil
   "Email address to use for commits.
-The default is to fall back to the git repository config, then to `add-log-mailing-address' and then to `user-mail-address'."
+The default is to fall back to the git repository config,
+then to `add-log-mailing-address' and then to `user-mail-address'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Email")))
@@ -85,6 +87,7 @@ The default is to fall back to the git repository config, then to `add-log-maili
   "Name of the per-directory ignore file."
   :group 'git
   :type 'string)
+
 
 (defface git-status-face
   '((((class color) (background light)) (:foreground "purple")))
@@ -149,7 +152,8 @@ The default is to fall back to the git repository config, then to `add-log-maili
     (apply #'call-process "git" nil buffer nil args)))
 
 (defun git-call-process-env-string (env &rest args)
-  "Wrapper for call-process that sets environment strings, and returns the process output as a string."
+  "Wrapper for call-process that sets environment strings,
+and returns the process output as a string."
   (with-temp-buffer
     (and (eq 0 (apply #' git-call-process-env t env args))
          (buffer-string))))
@@ -939,6 +943,8 @@ The default is to fall back to the git repository config, then to `add-log-maili
   (let ((map (make-keymap))
         (diff-map (make-sparse-keymap)))
     (suppress-keymap map)
+    (define-key map "?"   'git-help)
+    (define-key map "h"   'git-help)
     (define-key map " "   'git-next-file)
     (define-key map "a"   'git-add-file)
     (define-key map "c"   'git-commit-file)
@@ -1007,6 +1013,11 @@ Commands:
         (git-refresh-status)
         (goto-char (point-min)))
     (message "%s is not a git working tree." dir)))
+
+(defun git-help ()
+  "Display help for Git mode."
+  (interactive)
+  (describe-function 'git-status-mode))
 
 (provide 'git)
 ;;; git.el ends here

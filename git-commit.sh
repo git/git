@@ -138,32 +138,26 @@ run_status () {
         if test -z "$untracked_files"; then
             option="--directory --no-empty-directory"
         fi
+	hdr_shown=
 	if test -f "$GIT_DIR/info/exclude"
 	then
-	    git-ls-files -z --others $option \
+	    git-ls-files --others $option \
 		--exclude-from="$GIT_DIR/info/exclude" \
 		--exclude-per-directory=.gitignore
 	else
-	    git-ls-files -z --others $option \
+	    git-ls-files --others $option \
 		--exclude-per-directory=.gitignore
 	fi |
-	@@PERL@@ -e '$/ = "\0";
-	    my $shown = 0;
-	    while (<>) {
-		chomp;
-		s|\\|\\\\|g;
-		s|\t|\\t|g;
-		s|\n|\\n|g;
-		s/^/#	/;
-		if (!$shown) {
-		    print "#\n# Untracked files:\n";
-		    print "#   (use \"git add\" to add to commit)\n";
-		    print "#\n";
-		    $shown = 1;
-		}
-		print "$_\n";
-	    }
-	'
+	while read line; do
+	    if [ -z "$hdr_shown" ]; then
+		echo '#'
+		echo '# Untracked files:'
+		echo '#   (use "git add" to add to commit)'
+		echo '#'
+		hdr_shown=1
+	    fi
+	    echo "#	$line"
+	done
 
 	if test -n "$verbose" -a -z "$IS_INITIAL"
 	then

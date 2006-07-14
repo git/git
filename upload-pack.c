@@ -49,6 +49,10 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 		if (fd == 3)
 			/* emergency quit */
 			fd = 2;
+		if (fd == 2) {
+			xwrite(fd, data, sz);
+			return sz;
+		}
 		return safe_write(fd, data, sz);
 	}
 	p = data;
