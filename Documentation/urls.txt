@@ -10,20 +10,21 @@ to name the remote repository:
 - https://host.xz/path/to/repo.git/
 - git://host.xz/path/to/repo.git/
 - git://host.xz/~user/path/to/repo.git/
-- ssh://+++[user@+++]host.xz/path/to/repo.git/
-- ssh://+++[user@+++]host.xz/~user/path/to/repo.git/
-- ssh://+++[user@+++]host.xz/~/path/to/repo.git
+- ssh://{startsb}user@{endsb}host.xz/path/to/repo.git/
+- ssh://{startsb}user@{endsb}host.xz/~user/path/to/repo.git/
+- ssh://{startsb}user@{endsb}host.xz/~/path/to/repo.git
 ===============================================================
 
-SSH is the default transport protocol and also supports an
-scp-like syntax.  Both syntaxes support username expansion,
+SSH is the default transport protocol.  You can optionally specify
+which user to log-in as, and an alternate, scp-like syntax is also
+supported.  Both syntaxes support username expansion,
 as does the native git protocol. The following three are
 identical to the last three above, respectively:
 
 ===============================================================
-- host.xz:/path/to/repo.git/
-- host.xz:~user/path/to/repo.git/
-- host.xz:path/to/repo.git
+- {startsb}user@{endsb}host.xz:/path/to/repo.git/
+- {startsb}user@{endsb}host.xz:~user/path/to/repo.git/
+- {startsb}user@{endsb}host.xz:path/to/repo.git
 ===============================================================
 
 To sync with a local directory, use:
