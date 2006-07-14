@@ -15,7 +15,7 @@ to name the remote repository:
 - ssh://+++[user@+++]host.xz/~/path/to/repo.git
 ===============================================================
 
-SSH Is the default transport protocol and also supports an
+SSH is the default transport protocol and also supports an
 scp-like syntax.  Both syntaxes support username expansion,
 as does the native git protocol. The following three are
 identical to the last three above, respectively:
