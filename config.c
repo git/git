@@ -279,6 +279,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.legacyheaders")) {
+		use_legacy_headers = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.compression")) {
 		int level = git_config_int(var, value);
 		if (level == -1)
