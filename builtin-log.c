@@ -249,6 +249,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int keep_subject = 0;
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
+	char *in_reply_to = NULL;
 	struct diff_options patch_id_opts;
 	char *add_signoff = NULL;
 	char message_id[1024];
@@ -320,6 +321,14 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			ignore_if_in_upstream = 1;
 		else if (!strcmp(argv[i], "--thread"))
 			thread = 1;
+		else if (!strncmp(argv[i], "--in-reply-to=", 14))
+			in_reply_to = argv[i] + 14;
+		else if (!strcmp(argv[i], "--in-reply-to")) {
+			i++;
+			if (i == argc)
+				die("Need a Message-Id for --in-reply-to");
+			in_reply_to = argv[i];
+		}
 		else
 			argv[j++] = argv[i];
 	}
@@ -377,6 +386,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	if (numbered)
 		rev.total = total + start_number - 1;
 	rev.add_signoff = add_signoff;
+	rev.ref_message_id = in_reply_to;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];

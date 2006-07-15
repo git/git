@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [--thread]
 	           [-s | --signoff] [--diff-options] [--start-number <n>]
+		   [--in-reply-to=Message-Id]
 		   <since>[..<until>]
 
 DESCRIPTION
@@ -71,6 +72,11 @@ OPTIONS
 	Add In-Reply-To and References headers to make the second and
 	subsequent mails appear as replies to the first.  Also generates
 	the Message-Id header to reference.
+
+--in-reply-to=Message-Id::
+	Make the first mail (or all the mails with --no-thread) appear as a
+	reply to the given Message-Id, which avoids breaking threads to
+	provide a new patch series.
 
 CONFIGURATION
 -------------
