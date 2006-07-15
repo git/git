@@ -147,7 +147,7 @@ init_vars();
 load_authors() if $_authors;
 load_all_refs() if $_branch_all_refs;
 svn_compat_check() unless $_use_lib;
-migration_check() unless $cmd =~ /^(?:init|rebuild|multi-init)$/;
+migration_check() unless $cmd =~ /^(?:init|rebuild|multi-init|commit-diff)$/;
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
 
