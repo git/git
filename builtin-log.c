@@ -248,6 +248,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int start_number = -1;
 	int keep_subject = 0;
 	int ignore_if_in_upstream = 0;
+	int thread = 0;
 	struct diff_options patch_id_opts;
 	char *add_signoff = NULL;
 	char message_id[1024];
@@ -317,6 +318,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			rev.mime_boundary = argv[i] + 9;
 		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
 			ignore_if_in_upstream = 1;
+		else if (!strcmp(argv[i], "--thread"))
+			thread = 1;
 		else
 			argv[j++] = argv[i];
 	}
@@ -379,15 +382,17 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		commit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
 		/* Make the second and subsequent mails replies to the first */
-		if (nr == (total - 2)) {
-			strncpy(ref_message_id, message_id,
-				sizeof(ref_message_id));
-			ref_message_id[sizeof(ref_message_id)-1] = '\0';
-			rev.ref_message_id = ref_message_id;
+		if (thread) {
+			if (nr == (total - 2)) {
+				strncpy(ref_message_id, message_id,
+					sizeof(ref_message_id));
+				ref_message_id[sizeof(ref_message_id)-1]='\0';
+				rev.ref_message_id = ref_message_id;
+			}
+			gen_message_id(message_id, sizeof(message_id),
+				       sha1_to_hex(commit->object.sha1));
+			rev.message_id = message_id;
 		}
-		gen_message_id(message_id, sizeof(message_id),
-			       sha1_to_hex(commit->object.sha1));
-		rev.message_id = message_id;
 		if (!use_stdout)
 			reopen_stdout(commit, rev.nr, keep_subject);
 		shown = log_tree_commit(&rev, commit);

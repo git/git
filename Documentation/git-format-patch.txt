@@ -9,7 +9,7 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach]
+'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [--thread]
 	           [-s | --signoff] [--diff-options] [--start-number <n>]
 		   <since>[..<until>]
 
@@ -35,6 +35,10 @@ they are created in the current working directory.
 If -n is specified, instead of "[PATCH] Subject", the first line
 is formatted as "[PATCH n/m] Subject".
 
+If given --thread, git-format-patch will generate In-Reply-To and
+References headers to make the second and subsequent patch mails appear
+as replies to the first mail; this also generates a Message-Id header to
+reference.
 
 OPTIONS
 -------
@@ -63,6 +67,10 @@ OPTIONS
 --attach::
 	Create attachments instead of inlining patches.
 
+--thread::
+	Add In-Reply-To and References headers to make the second and
+	subsequent mails appear as replies to the first.  Also generates
+	the Message-Id header to reference.
 
 CONFIGURATION
 -------------
