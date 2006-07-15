@@ -10,6 +10,8 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include <time.h>
+#include <sys/time.h>
 
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
@@ -233,8 +235,9 @@ static void gen_message_id(char *dest, unsigned int length, char *base)
 	const char *email_end = strrchr(committer, '>');
 	if(!email_start || !email_end || email_start > email_end - 1)
 		die("Could not extract email from committer identity.");
-	snprintf(dest, length, "%s.%u.git.%.*s", base, time(NULL),
-		 email_end - email_start - 1, email_start + 1);
+	snprintf(dest, length, "%s.%lu.git.%.*s", base,
+		 (unsigned long) time(NULL),
+		 (int)(email_end - email_start - 1), email_start + 1);
 }
 
 int cmd_format_patch(int argc, const char **argv, char **envp)
@@ -249,7 +252,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int keep_subject = 0;
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
-	char *in_reply_to = NULL;
+	const char *in_reply_to = NULL;
 	struct diff_options patch_id_opts;
 	char *add_signoff = NULL;
 	char message_id[1024];
