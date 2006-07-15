@@ -226,6 +226,17 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
 	o2->flags = flags2;
 }
 
+static void gen_message_id(char *dest, unsigned int length, char *base)
+{
+	const char *committer = git_committer_info(1);
+	const char *email_start = strrchr(committer, '<');
+	const char *email_end = strrchr(committer, '>');
+	if(!email_start || !email_end || email_start > email_end - 1)
+		die("Could not extract email from committer identity.");
+	snprintf(dest, length, "%s.%u.git.%.*s", base, time(NULL),
+		 email_end - email_start - 1, email_start + 1);
+}
+
 int cmd_format_patch(int argc, const char **argv, char **envp)
 {
 	struct commit *commit;
@@ -239,6 +250,8 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int ignore_if_in_upstream = 0;
 	struct diff_options patch_id_opts;
 	char *add_signoff = NULL;
+	char message_id[1024];
+	char ref_message_id[1024];
 
 	git_config(git_format_config);
 	init_revisions(&rev);
@@ -365,6 +378,16 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 		int shown;
 		commit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
+		/* Make the second and subsequent mails replies to the first */
+		if (nr == (total - 2)) {
+			strncpy(ref_message_id, message_id,
+				sizeof(ref_message_id));
+			ref_message_id[sizeof(ref_message_id)-1] = '\0';
+			rev.ref_message_id = ref_message_id;
+		}
+		gen_message_id(message_id, sizeof(message_id),
+			       sha1_to_hex(commit->object.sha1));
+		rev.message_id = message_id;
 		if (!use_stdout)
 			reopen_stdout(commit, rev.nr, keep_subject);
 		shown = log_tree_commit(&rev, commit);

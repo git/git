@@ -61,6 +61,8 @@ struct rev_info {
 	struct log_info *loginfo;
 	int		nr, total;
 	const char	*mime_boundary;
+	const char	*message_id;
+	const char	*ref_message_id;
 	const char	*add_signoff;
 	const char	*extra_headers;
 
