@@ -266,6 +266,7 @@ int main(int argc, char **argv)
 	unsigned char sha1[20];
 
 	setup_git_directory();
+	git_config(git_default_config);
 
 	quiet = !isatty(2);
 
