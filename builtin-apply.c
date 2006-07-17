@@ -1732,9 +1732,14 @@ static int check_patch(struct patch *patch)
 		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
 			return error("%s: already exists in index", new_name);
 		if (!cached) {
-			if (!lstat(new_name, &st))
-				return error("%s: already exists in working directory", new_name);
-			if (errno != ENOENT)
+			struct stat nst;
+			if (!lstat(new_name, &nst)) {
+				if (S_ISDIR(nst.st_mode))
+					; /* ok */
+				else
+					return error("%s: already exists in working directory", new_name);
+			}
+			else if ((errno != ENOENT) && (errno != ENOTDIR))
 				return error("%s: %s", new_name, strerror(errno));
 		}
 		if (!patch->new_mode) {
@@ -2008,6 +2013,16 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 			return;
 		if (!try_create_file(path, mode, buf, size))
 			return;
+	}
+
+	if (errno == EEXIST) {
+		/* We may be trying to create a file where a directory
+		 * used to be.
+		 */
+		struct stat st;
+		errno = 0;
+		if (!lstat(path, &st) && S_ISDIR(st.st_mode) && !rmdir(path))
+			errno = EEXIST;
 	}
 
 	if (errno == EEXIST) {
