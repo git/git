@@ -1664,13 +1664,14 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	return 0;
 }
 
-static int check_patch(struct patch *patch)
+static int check_patch(struct patch *patch, struct patch *prev_patch)
 {
 	struct stat st;
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
+	int ok_if_exists;
 
 	if (old_name) {
 		int changed = 0;
@@ -1728,13 +1729,28 @@ static int check_patch(struct patch *patch)
 				old_name, st_mode, patch->old_mode);
 	}
 
+	if (new_name && prev_patch && prev_patch->is_delete &&
+	    !strcmp(prev_patch->old_name, new_name))
+		/* A type-change diff is always split into a patch to
+		 * delete old, immediately followed by a patch to
+		 * create new (see diff.c::run_diff()); in such a case
+		 * it is Ok that the entry to be deleted by the
+		 * previous patch is still in the working tree and in
+		 * the index.
+		 */
+		ok_if_exists = 1;
+	else
+		ok_if_exists = 0;
+
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
-		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
+		if (check_index &&
+		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
+		    !ok_if_exists)
 			return error("%s: already exists in index", new_name);
 		if (!cached) {
 			struct stat nst;
 			if (!lstat(new_name, &nst)) {
-				if (S_ISDIR(nst.st_mode))
+				if (S_ISDIR(nst.st_mode) || ok_if_exists)
 					; /* ok */
 				else
 					return error("%s: already exists in working directory", new_name);
@@ -1767,10 +1783,13 @@ static int check_patch(struct patch *patch)
 
 static int check_patch_list(struct patch *patch)
 {
+	struct patch *prev_patch = NULL;
 	int error = 0;
 
-	for (;patch ; patch = patch->next)
-		error |= check_patch(patch);
+	for (prev_patch = NULL; patch ; patch = patch->next) {
+		error |= check_patch(patch, prev_patch);
+		prev_patch = patch;
+	}
 	return error;
 }
 
