@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright (C) 2005 Paul Mackerras.  All rights reserved.
+# Copyright (C) 2005-2006 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -341,13 +341,13 @@ proc readrefs {} {
 	    set tag {}
 	    catch {
 		set commit [exec git rev-parse "$id^0"]
-		if {"$commit" != "$id"} {
+		if {$commit != $id} {
 		    set tagids($name) $commit
 		    lappend idtags($commit) $name
 		}
 	    }		
 	    catch {
-	        set tagcontents($name) [exec git cat-file tag "$id"]
+	        set tagcontents($name) [exec git cat-file tag $id]
 	    }
 	} elseif { $type == "heads" } {
 	    set headids($name) $id
@@ -3263,8 +3263,7 @@ proc show_status {msg} {
 
 proc finishcommits {} {
     global commitidx phase curview
-    global canv mainfont ctext maincursor textcursor
-    global findinprogress pending_select
+    global pending_select
 
     if {$commitidx($curview) > 0} {
 	drawrest
@@ -3307,9 +3306,7 @@ proc notbusy {what} {
 }
 
 proc drawrest {} {
-    global numcommits
     global startmsecs
-    global canvy0 numcommits linespc
     global rowlaidout commitidx curview
     global pending_select
 
@@ -3323,6 +3320,7 @@ proc drawrest {} {
     }
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
+    #global numcommits
     #puts "overall $drawmsecs ms for $numcommits commits"
 }
 
