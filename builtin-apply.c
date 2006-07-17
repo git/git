@@ -2059,32 +2059,42 @@ static void create_file(struct patch *patch)
 	cache_tree_invalidate_path(active_cache_tree, path);
 }
 
-static void write_out_one_result(struct patch *patch)
+/* phase zero is to remove, phase one is to create */
+static void write_out_one_result(struct patch *patch, int phase)
 {
 	if (patch->is_delete > 0) {
-		remove_file(patch);
+		if (phase == 0)
+			remove_file(patch);
 		return;
 	}
 	if (patch->is_new > 0 || patch->is_copy) {
-		create_file(patch);
+		if (phase == 1)
+			create_file(patch);
 		return;
 	}
 	/*
 	 * Rename or modification boils down to the same
 	 * thing: remove the old, write the new
 	 */
-	remove_file(patch);
+	if (phase == 0)
+		remove_file(patch);
+	if (phase == 1)
 	create_file(patch);
 }
 
 static void write_out_results(struct patch *list, int skipped_patch)
 {
+	int phase;
+
 	if (!list && !skipped_patch)
 		die("No changes");
 
-	while (list) {
-		write_out_one_result(list);
-		list = list->next;
+	for (phase = 0; phase < 2; phase++) {
+		struct patch *l = list;
+		while (l) {
+			write_out_one_result(l, phase);
+			l = l->next;
+		}
 	}
 }
 
