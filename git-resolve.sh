@@ -15,6 +15,7 @@ dropheads() {
 
 head=$(git-rev-parse --verify "$1"^0) &&
 merge=$(git-rev-parse --verify "$2"^0) &&
+merge_name="$2" &&
 merge_msg="$3" || usage
 
 #
@@ -43,7 +44,8 @@ case "$common" in
 "$head")
 	echo "Updating from $head to $merge"
 	git-read-tree -u -m $head $merge || exit 1
-	git-update-ref HEAD "$merge" "$head"
+	git-update-ref -m "resolve $merge_name: Fast forward" \
+		HEAD "$merge" "$head"
 	git-diff-tree -p $head $merge | git-apply --stat
 	dropheads
 	exit 0
@@ -100,6 +102,7 @@ if [ $? -ne 0 ]; then
 fi
 result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
 echo "Committed merge $result_commit"
-git-update-ref HEAD "$result_commit" "$head"
+git-update-ref -m "resolve $merge_name: In-index merge" \
+	HEAD "$result_commit" "$head"
 git-diff-tree -p $head $result_commit | git-apply --stat
 dropheads
