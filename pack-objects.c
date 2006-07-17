@@ -269,6 +269,22 @@ static unsigned long write_object(struct sha1file *f,
 				 * and we do not need to deltify it.
 				 */
 
+	if (!entry->in_pack && !entry->delta) {
+		unsigned char *map;
+		unsigned long mapsize;
+		map = map_sha1_file(entry->sha1, &mapsize);
+		if (map && !legacy_loose_object(map)) {
+			/* We can copy straight into the pack file */
+			sha1write(f, map, mapsize);
+			munmap(map, mapsize);
+			written++;
+			reused++;
+			return mapsize;
+		}
+		if (map)
+			munmap(map, mapsize);
+	}
+
 	if (! to_reuse) {
 		buf = read_sha1_file(entry->sha1, type, &size);
 		if (!buf)
