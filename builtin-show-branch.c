@@ -172,7 +172,7 @@ static void name_commits(struct commit_list *list,
 static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 {
 	if (!commit->object.flags) {
-		insert_by_date(commit, seen_p);
+		commit_list_insert(commit, seen_p);
 		return 1;
 	}
 	return 0;
@@ -218,9 +218,8 @@ static void join_revs(struct commit_list **list_p,
 	 * Postprocess to complete well-poisoning.
 	 *
 	 * At this point we have all the commits we have seen in
-	 * seen_p list (which happens to be sorted chronologically but
-	 * it does not really matter).  Mark anything that can be
-	 * reached from uninteresting commits not interesting.
+	 * seen_p list.  Mark anything that can be reached from
+	 * uninteresting commits not interesting.
 	 */
 	for (;;) {
 		int changed = 0;
@@ -700,6 +699,8 @@ int cmd_show_branch(int ac, const char **av, char **envp)
 
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
+
+	sort_by_date(&seen);
 
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
