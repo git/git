@@ -2034,7 +2034,7 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 			return;
 	}
 
-	if (errno == EEXIST) {
+	if (errno == EEXIST || errno == EACCES) {
 		/* We may be trying to create a file where a directory
 		 * used to be.
 		 */
