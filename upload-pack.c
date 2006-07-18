@@ -182,6 +182,8 @@ static void create_pack_file(void)
 		ssize_t sz;
 		int pe, pu, pollsize;
 
+		reset_timeout();
+
 		pollsize = 0;
 		pe = pu = -1;
 
