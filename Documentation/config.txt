@@ -208,6 +208,17 @@ showbranch.default::
 	The default set of branches for gitlink:git-show-branch[1].
 	See gitlink:git-show-branch[1].
 
+tar.umask::
+	By default, git-link:git-tar-tree[1] sets file and directories modes
+	to 0666 or 0777. While this is both useful and acceptable for projects
+	such as the Linux Kernel, it might be excessive for other projects.
+	With this variable, it becomes possible to tell
+	git-link:git-tar-tree[1] to apply a specific umask to the modes above.
+	The special value "user" indicates that the user's current umask will
+	be used. This should be enough for most projects, as it will lead to
+	the same permissions as git-link:git-checkout[1] would use. The default
+	value remains 0, which means world read-write.
+
 user.email::
 	Your email address to be recorded in any newly created commits.
 	Can be overridden by the 'GIT_AUTHOR_EMAIL' and 'GIT_COMMITTER_EMAIL'
