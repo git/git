@@ -584,6 +584,8 @@ and returns the process output as a string."
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
                             (with-current-buffer buffer (erase-buffer))
                             (git-set-files-state files 'uptodate)
+                            (when (file-directory-p ".git/rr-cache")
+                              (git-run-command nil nil "rerere"))
                             (git-refresh-files)
                             (git-refresh-ewoc-hf git-status)
                             (message "Committed %s." commit))
