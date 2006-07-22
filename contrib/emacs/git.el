@@ -55,7 +55,8 @@
 ;;;; ------------------------------------------------------------
 
 (defgroup git nil
-  "Git user interface")
+  "A user interface for the git versioning system."
+  :group 'tools)
 
 (defcustom git-committer-name nil
   "User name to use for commits.
