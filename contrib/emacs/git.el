@@ -258,7 +258,7 @@ and returns the process output as a string."
     (set-buffer (find-file-noselect ignore-name))
     (goto-char (point-max))
     (unless (zerop (current-column)) (insert "\n"))
-    (insert name "\n")
+    (insert "/" name "\n")
     (sort-lines nil (point-min) (point-max))
     (save-buffer))
   (when created
