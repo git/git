@@ -2326,6 +2326,9 @@ sub git_history {
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 	      "</div>\n";
+	if (!defined $hash && defined $file_name) {
+		$hash = git_get_hash_by_path($hash_base, $file_name);
+	}
 	if (defined $hash) {
 		my $ftype = git_get_type($hash);
 
