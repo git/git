@@ -63,6 +63,7 @@ static const char *base_name;
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
 static volatile sig_atomic_t progress_update = 0;
+static int window = 10;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -1216,16 +1217,26 @@ static void setup_progress_signal(void)
 	setitimer(ITIMER_REAL, &v, NULL);
 }
 
+static int git_pack_config(const char *k, const char *v)
+{
+	if(!strcmp(k, "pack.window")) {
+		window = git_config_int(k, v);
+		return 0;
+	}
+	return git_default_config(k, v);
+}
+
 int main(int argc, char **argv)
 {
 	SHA_CTX ctx;
 	char line[40 + 1 + PATH_MAX + 2];
-	int window = 10, depth = 10, pack_to_stdout = 0;
+	int depth = 10, pack_to_stdout = 0;
 	struct object_entry **list;
 	int num_preferred_base = 0;
 	int i;
 
 	setup_git_directory();
+	git_config(git_pack_config);
 
 	progress = isatty(2);
 	for (i = 1; i < argc; i++) {
