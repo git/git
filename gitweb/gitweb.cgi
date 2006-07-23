@@ -1199,6 +1199,20 @@ sub git_summary {
 	git_footer_html();
 }
 
+sub git_print_page_path {
+	my $name = shift;
+	my $type = shift;
+
+	if (!defined $name) {
+		print "<div class=\"page_path\"><b>/</b></div>\n";
+	} elsif ($type =~ "blob") {
+		print "<div class=\"page_path\"><b>" .
+			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;f=$file_name")}, esc_html($name)) . "</b><br/></div>\n";
+	} else {
+		print "<div class=\"page_path\"><b>" . esc_html($name) . "</b><br/></div>\n";
+	}
+}
+
 sub git_tag {
 	my $head = git_read_head($project);
 	git_header_html();
@@ -1266,7 +1280,7 @@ sub git_blame {
 		"<div>" .
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
 		"</div>\n";
-	print "<div class=\"page_path\"><b>" . esc_html($file_name) . "</b></div>\n";
+	git_print_page_path($file_name);
 	print "<div class=\"page_body\">\n";
 	print <<HTML;
 <table class="blame">
@@ -1604,9 +1618,7 @@ sub git_blob {
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">$hash</div>\n";
 	}
-	if (defined $file_name) {
-		print "<div class=\"page_path\"><b>" . esc_html($file_name) . "</b></div>\n";
-	}
+	git_print_page_path($file_name, "blob");
 	print "<div class=\"page_body\">\n";
 	my $nr;
 	while (my $line = <$fd>) {
@@ -1671,10 +1683,8 @@ sub git_tree {
 	}
 	if (defined $file_name) {
 		$base = esc_html("$file_name/");
-		print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b></div>\n";
-	} else {
-		print "<div class=\"page_path\"><b>/</b></div>\n";
 	}
+	git_print_page_path($file_name);
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -2132,9 +2142,7 @@ sub git_blobdiff {
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	}
-	if (defined $file_name) {
-		print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b></div>\n";
-	}
+	git_print_page_path($file_name, "blob");
 	print "<div class=\"page_body\">\n" .
 	      "<div class=\"diff_info\">blob:" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash_parent;hb=$hash_base;f=$file_name")}, $hash_parent) .
@@ -2308,6 +2316,7 @@ sub git_history {
 	if (!defined $hash_base) {
 		$hash_base = git_read_head($project);
 	}
+	my $ftype;
 	my %co = git_read_commit($hash_base);
 	if (!%co) {
 		die_error(undef, "Unknown commit object.");
@@ -2330,17 +2339,9 @@ sub git_history {
 		$hash = git_get_hash_by_path($hash_base, $file_name);
 	}
 	if (defined $hash) {
-		my $ftype = git_get_type($hash);
-
-		if ($ftype =~ "blob") {
-		    print "<div class=\"page_path\"><b>/" .
-			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;f=$file_name")}, esc_html($file_name)) . "</b><br/></div>\n";
-		} else {
-		    print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
-		}
-	} else {
-		print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
+		$ftype = git_get_type($hash);
 	}
+	git_print_page_path($file_name, $ftype);
 
 	open my $fd, "-|",
 		"$GIT rev-list --full-history $hash_base -- \'$file_name\'";
