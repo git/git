@@ -227,7 +227,7 @@ if (!defined $action || $action eq "summary") {
 	git_tag();
 	exit;
 } elsif ($action eq "blame") {
-	git_blame();
+	git_blame2();
 	exit;
 } else {
 	undef $action;
@@ -1249,6 +1249,75 @@ sub git_tag {
 		print esc_html($line) . "<br/>\n";
 	}
 	print "</div>\n";
+	git_footer_html();
+}
+
+sub git_read_blame_line {
+	my %bl;
+	$_ = shift;
+
+	($bl{'hash'}, $bl{'lineno'}, $bl{'data'}) = /^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
+
+	return %bl;
+}
+
+sub git_blame2 {
+	my $fd;
+	my $ftype;
+	die_error(undef, "Permission denied.") if (!git_get_project_config_bool ('blame'));
+	die_error('404 Not Found', "File name not defined") if (!$file_name);
+	$hash_base ||= git_read_head($project);
+	die_error(undef, "Reading commit failed") unless ($hash_base);
+	my %co = git_read_commit($hash_base)
+		or die_error(undef, "Reading commit failed");
+	if (!defined $hash) {
+		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
+			or die_error(undef, "Error looking up file");
+	}
+	$ftype = git_get_type($hash);
+	if ($ftype !~ "blob") {
+		die_error("400 Bad Request", "object is not a blob");
+	}
+	open ($fd, "-|", $GIT, "blame", '-l', $file_name, $hash_base)
+		or die_error(undef, "Open failed");
+	git_header_html();
+	print "<div class=\"page_nav\">\n" .
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base")}, "commit") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
+	print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, "blob") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;f=$file_name")}, "head") . "<br/>\n";
+	print "</div>\n".
+		"<div>" .
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
+		"</div>\n";
+	git_print_page_path($file_name, $ftype);
+
+	print "<div class=\"page_body\">\n";
+
+	print "<table class=\"blame\">\n";
+	print "<tr><th>Commit</th><th>Line</th><th>Data</th></tr>\n";
+	while (my $line = <$fd>) {
+		my %blame_line = git_read_blame_line($line);
+		my $full_rev = $blame_line{'hash'};
+		my $rev = substr($full_rev, 0, 8);
+		my $lineno = $blame_line{'lineno'};
+		my $data = $blame_line{'data'};
+
+		print "<tr>\n";
+		print "<td class=\"sha1\">" .
+			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$full_rev;f=$file_name")}, esc_html($rev)) . "</td>\n";
+		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" . esc_html($lineno) . "</a></td>\n";
+		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
+		print "</tr>\n";
+	}
+	print "</table>\n";
+	print "</div>";
+
+	close $fd or print "Reading blob failed\n";
 	git_footer_html();
 }
 
