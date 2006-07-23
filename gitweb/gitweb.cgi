@@ -1531,6 +1531,14 @@ sub git_blob_plain_mimetype {
 }
 
 sub git_blob_plain {
+	if (!defined $hash) {
+                if (defined $file_name) {
+                        my $base = $hash_base || git_read_head($project);
+                        $hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
+                } else {
+                        die_error(undef, "No file name defined.");
+                }
+        }
 	my $type = shift;
 	open my $fd, "-|", "$GIT cat-file blob $hash" or die_error("Couldn't cat $file_name, $hash");
 
@@ -1554,10 +1562,14 @@ sub git_blob_plain {
 }
 
 sub git_blob {
-	if (!defined $hash && defined $file_name) {
-		my $base = $hash_base || git_read_head($project);
-		$hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
-	}
+	if (!defined $hash) {
+                if (defined $file_name) {
+                        my $base = $hash_base || git_read_head($project);
+                        $hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
+                } else {
+                        die_error(undef, "No file name defined.");
+                }
+        }
 	my $have_blame = git_get_project_config_bool ('blame');
 	open my $fd, "-|", "$GIT cat-file blob $hash" or die_error(undef, "Open failed.");
 	my $mimetype = git_blob_plain_mimetype($fd, $file_name);
@@ -1687,7 +1699,7 @@ sub git_tree {
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$t_hash$base_key;f=$base$t_name")}, "blob") .
 #			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;h=$t_hash$base_key;f=$base$t_name")}, "blame") .
-			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$hash_base;f=$base$t_name")}, "history") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$t_hash;hb=$hash_base;f=$base$t_name")}, "history") .
 			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$t_hash;f=$base$t_name")}, "raw") .
 			      "</td>\n";
 		} elsif ($t_type eq "tree") {
@@ -2314,7 +2326,18 @@ sub git_history {
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) . "\n" .
 	      "</div>\n";
-	print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
+	if (defined $hash) {
+		my $ftype = git_get_type($hash);
+
+		if ($ftype =~ "blob") {
+		    print "<div class=\"page_path\"><b>/" .
+			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;f=$file_name")}, esc_html($file_name)) . "</b><br/></div>\n";
+		} else {
+		    print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
+		}
+	} else {
+		print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
+	}
 
 	open my $fd, "-|",
 		"$GIT rev-list --full-history $hash_base -- \'$file_name\'";
