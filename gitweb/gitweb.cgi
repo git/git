@@ -1295,9 +1295,11 @@ sub git_blame2 {
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
 		"</div>\n";
 	git_print_page_path($file_name, $ftype);
-
+	my @rev_color = (qw(light dark));
+	my $num_colors = scalar(@rev_color);
+	my $current_color = 0;
+	my $last_rev;
 	print "<div class=\"page_body\">\n";
-
 	print "<table class=\"blame\">\n";
 	print "<tr><th>Commit</th><th>Line</th><th>Data</th></tr>\n";
 	while (my $line = <$fd>) {
@@ -1307,7 +1309,13 @@ sub git_blame2 {
 		my $lineno = $blame_line{'lineno'};
 		my $data = $blame_line{'data'};
 
-		print "<tr>\n";
+		if (!defined $last_rev) {
+			$last_rev = $full_rev;
+		} elsif ($last_rev ne $full_rev) {
+			$last_rev = $full_rev;
+			$current_color = ++$current_color % $num_colors;
+		}
+		print "<tr class=\"$rev_color[$current_color]\">\n";
 		print "<td class=\"sha1\">" .
 			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$full_rev;f=$file_name")}, esc_html($rev)) . "</td>\n";
 		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" . esc_html($lineno) . "</a></td>\n";
@@ -1316,7 +1324,6 @@ sub git_blame2 {
 	}
 	print "</table>\n";
 	print "</div>";
-
 	close $fd or print "Reading blob failed\n";
 	git_footer_html();
 }
