@@ -1252,15 +1252,6 @@ sub git_tag {
 	git_footer_html();
 }
 
-sub git_read_blame_line {
-	my %bl;
-	$_ = shift;
-
-	($bl{'hash'}, $bl{'lineno'}, $bl{'data'}) = /^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
-
-	return %bl;
-}
-
 sub git_blame2 {
 	my $fd;
 	my $ftype;
@@ -1302,12 +1293,12 @@ sub git_blame2 {
 	print "<div class=\"page_body\">\n";
 	print "<table class=\"blame\">\n";
 	print "<tr><th>Commit</th><th>Line</th><th>Data</th></tr>\n";
-	while (my $line = <$fd>) {
-		my %blame_line = git_read_blame_line($line);
-		my $full_rev = $blame_line{'hash'};
+	while (<$fd>) {
+		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
+		my $full_rev = $1;
 		my $rev = substr($full_rev, 0, 8);
-		my $lineno = $blame_line{'lineno'};
-		my $data = $blame_line{'data'};
+		my $lineno = $2;
+		my $data = $3;
 
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
