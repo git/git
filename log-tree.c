@@ -129,7 +129,8 @@ void show_log(struct rev_info *opt, const char *sep)
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else {
-		printf("%s%s",
+		printf("%s%s%s",
+		       diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
 		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
 		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
 		if (opt->parents)
@@ -139,6 +140,8 @@ void show_log(struct rev_info *opt, const char *sep)
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+		printf("%s",
+		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
 	}
 
 	/*
