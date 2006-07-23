@@ -2022,7 +2022,13 @@ sub git_commit {
 		print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff");
 	}
 	print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") . "\n" .
-	      "<br/><br/></div>\n";
+		"<br/>\n";
+	if (defined $file_name && defined $co{'parent'}) {
+		my $parent = $co{'parent'};
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;hb=$parent;f=$file_name")}, "blame") . "\n";
+	}
+	print "<br/></div>\n";
+
 	if (defined $co{'parent'}) {
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash"), -class => "title"}, esc_html($co{'title'}) . $ref) . "\n" .
