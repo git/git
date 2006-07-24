@@ -37,6 +37,18 @@ all:
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
 #
+# Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
+# installed in /sw, but don't want GIT to link against any libraries
+# installed there.  If defined you may specify your own (or Fink's)
+# include directories and library directories by defining CFLAGS
+# and LDFLAGS appropriately.
+#
+# Define NO_DARWIN_PORTS if you are building on Darwin/Mac OS X,
+# have DarwinPorts installed in /opt/local, but don't want GIT to
+# link against any libraries installed there.  If defined you may
+# specify your own (or DarwinPort's) include directories and
+# library directories by defining CFLAGS and LDFLAGS appropriately.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -254,15 +266,17 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_STRLCPY = YesPlease
-	## fink
-	ifeq ($(shell test -d /sw/lib && echo y),y)
-		ALL_CFLAGS += -I/sw/include
-		ALL_LDFLAGS += -L/sw/lib
+	ifndef NO_FINK
+		ifeq ($(shell test -d /sw/lib && echo y),y)
+			ALL_CFLAGS += -I/sw/include
+			ALL_LDFLAGS += -L/sw/lib
+		endif
 	endif
-	## darwinports
-	ifeq ($(shell test -d /opt/local/lib && echo y),y)
-		ALL_CFLAGS += -I/opt/local/include
-		ALL_LDFLAGS += -L/opt/local/lib
+	ifndef NO_DARWIN_PORTS
+		ifeq ($(shell test -d /opt/local/lib && echo y),y)
+			ALL_CFLAGS += -I/opt/local/include
+			ALL_LDFLAGS += -L/opt/local/lib
+		endif
 	endif
 endif
 ifeq ($(uname_S),SunOS)
