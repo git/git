@@ -89,6 +89,8 @@ static int name_first_parent_chain(struct commit *c)
 			name_parent(c, p);
 			i++;
 		}
+		else
+			break;
 		c = p;
 	}
 	return i;

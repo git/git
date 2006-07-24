@@ -156,8 +156,10 @@ fi
 
 if test -d "$dotest"
 then
-	test ",$#," = ",0," ||
-	die "previous dotest directory $dotest still exists but mbox given."
+	if test ",$#," != ",0," || ! tty -s
+	then
+		die "previous dotest directory $dotest still exists but mbox given."
+	fi
 	resume=yes
 else
 	# Make sure we are not given --skip nor --resolved

@@ -2709,6 +2709,12 @@ sub libsvn_fetch {
 			} else {
 				die "Unrecognized action: $m, ($f r$rev)\n";
 			}
+		} elsif ($t == $SVN::Node::dir && $m =~ /^[AR]$/) {
+			my @traversed = ();
+			libsvn_traverse($gui, '', $f, $rev, \@traversed);
+			foreach (@traversed) {
+				push @amr, [ $m, $_ ]
+			}
 		}
 		$pool->clear;
 	}
@@ -2778,7 +2784,7 @@ sub libsvn_parse_revision {
 }
 
 sub libsvn_traverse {
-	my ($gui, $pfx, $path, $rev) = @_;
+	my ($gui, $pfx, $path, $rev, $files) = @_;
 	my $cwd = "$pfx/$path";
 	my $pool = SVN::Pool->new;
 	$cwd =~ s#^/+##g;
@@ -2786,10 +2792,15 @@ sub libsvn_traverse {
 	foreach my $d (keys %$dirent) {
 		my $t = $dirent->{$d}->kind;
 		if ($t == $SVN::Node::dir) {
-			libsvn_traverse($gui, $cwd, $d, $rev);
+			libsvn_traverse($gui, $cwd, $d, $rev, $files);
 		} elsif ($t == $SVN::Node::file) {
-			print "\tA\t$cwd/$d\n" unless $_q;
-			libsvn_get_file($gui, "$cwd/$d", $rev);
+			my $file = "$cwd/$d";
+			if (defined $files) {
+				push @$files, $file;
+			} else {
+				print "\tA\t$file\n" unless $_q;
+				libsvn_get_file($gui, $file, $rev);
+			}
 		}
 	}
 	$pool->clear;
@@ -2913,9 +2924,7 @@ sub libsvn_new_tree {
 	}
 	my ($paths, $rev, $author, $date, $msg) = @_;
 	open my $gui, '| git-update-index -z --index-info' or croak $!;
-	my $pool = SVN::Pool->new;
-	libsvn_traverse($gui, '', $SVN_PATH, $rev, $pool);
-	$pool->clear;
+	libsvn_traverse($gui, '', $SVN_PATH, $rev);
 	close $gui or croak $?;
 	return libsvn_log_entry($rev, $author, $date, $msg);
 }

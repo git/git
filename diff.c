@@ -17,15 +17,6 @@ static int diff_detect_rename_default = 0;
 static int diff_rename_limit_default = -1;
 static int diff_use_color_default = 0;
 
-enum color_diff {
-	DIFF_RESET = 0,
-	DIFF_PLAIN = 1,
-	DIFF_METAINFO = 2,
-	DIFF_FRAGINFO = 3,
-	DIFF_FILE_OLD = 4,
-	DIFF_FILE_NEW = 5,
-};
-
 /* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
 static char diff_colors[][24] = {
 	"\033[m",	/* reset */
@@ -33,7 +24,8 @@ static char diff_colors[][24] = {
 	"\033[1m",	/* bold */
 	"\033[36m",	/* cyan */
 	"\033[31m",	/* red */
-	"\033[32m"	/* green */
+	"\033[32m",	/* green */
+	"\033[33m"	/* yellow */
 };
 
 static int parse_diff_color_slot(const char *var, int ofs)
@@ -48,6 +40,8 @@ static int parse_diff_color_slot(const char *var, int ofs)
 		return DIFF_FILE_OLD;
 	if (!strcasecmp(var+ofs, "new"))
 		return DIFF_FILE_NEW;
+	if (!strcasecmp(var+ofs, "commit"))
+		return DIFF_COMMIT;
 	die("bad config variable '%s'", var);
 }
 
@@ -370,7 +364,7 @@ struct emit_callback {
 	const char **label_path;
 };
 
-static inline const char *get_color(int diff_use_color, enum color_diff ix)
+const char *diff_get_color(int diff_use_color, enum color_diff ix)
 {
 	if (diff_use_color)
 		return diff_colors[ix];
@@ -381,8 +375,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
 	int i;
 	struct emit_callback *ecbdata = priv;
-	const char *set = get_color(ecbdata->color_diff, DIFF_METAINFO);
-	const char *reset = get_color(ecbdata->color_diff, DIFF_RESET);
+	const char *set = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
+	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
 	if (ecbdata->label_path[0]) {
 		printf("%s--- %s%s\n", set, ecbdata->label_path[0], reset);
@@ -397,7 +391,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		;
 	if (2 <= i && i < len && line[i] == ' ') {
 		ecbdata->nparents = i - 1;
-		set = get_color(ecbdata->color_diff, DIFF_FRAGINFO);
+		set = diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO);
 	}
 	else if (len < ecbdata->nparents)
 		set = reset;
@@ -410,7 +404,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			else if (line[i] == '+')
 				color = DIFF_FILE_NEW;
 		}
-		set = get_color(ecbdata->color_diff, color);
+		set = diff_get_color(ecbdata->color_diff, color);
 	}
 	if (len > 0 && line[len-1] == '\n')
 		len--;
@@ -767,8 +761,8 @@ static void builtin_diff(const char *name_a,
 	mmfile_t mf1, mf2;
 	const char *lbl[2];
 	char *a_one, *b_two;
-	const char *set = get_color(o->color_diff, DIFF_METAINFO);
-	const char *reset = get_color(o->color_diff, DIFF_RESET);
+	const char *set = diff_get_color(o->color_diff, DIFF_METAINFO);
+	const char *reset = diff_get_color(o->color_diff, DIFF_RESET);
 
 	a_one = quote_two("a/", name_a);
 	b_two = quote_two("b/", name_b);

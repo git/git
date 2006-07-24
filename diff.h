@@ -69,6 +69,17 @@ struct diff_options {
 	add_remove_fn_t add_remove;
 };
 
+enum color_diff {
+	DIFF_RESET = 0,
+	DIFF_PLAIN = 1,
+	DIFF_METAINFO = 2,
+	DIFF_FRAGINFO = 3,
+	DIFF_FILE_OLD = 4,
+	DIFF_FILE_NEW = 5,
+	DIFF_COMMIT = 6,
+};
+const char *diff_get_color(int diff_use_color, enum color_diff ix);
+
 extern const char mime_boundary_leader[];
 
 extern void diff_tree_setup_paths(const char **paths, struct diff_options *);

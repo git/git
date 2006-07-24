@@ -37,7 +37,20 @@ OPTIONS
 	Instead of making a tar archive from local repository,
 	retrieve a tar archive from a remote repository.
 
-Examples
+CONFIGURATION
+-------------
+By default, file and directories modes are set to 0666 or 0777. It is
+possible to change this by setting the "umask" variable in the
+repository configuration as follows :
+
+[tar]
+        umask = 002	;# group friendly
+
+The special umask value "user" indicates that the user's current umask
+will be used instead. The default value remains 0, which means world
+readable/writable files and directories.
+
+EXAMPLES
 --------
 git tar-tree HEAD junk | (cd /var/tmp/ && tar xf -)::
 

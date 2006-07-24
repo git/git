@@ -70,7 +70,8 @@ case "$#" in
 0)
 	test -f "$GIT_DIR/branches/origin" ||
 		test -f "$GIT_DIR/remotes/origin" ||
-			die "Where do you want to fetch from today?"
+			git-repo-config --get remote.origin.url >/dev/null ||
+				die "Where do you want to fetch from today?"
 	set origin ;;
 esac
 

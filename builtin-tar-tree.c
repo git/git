@@ -20,6 +20,7 @@ static char block[BLOCKSIZE];
 static unsigned long offset;
 
 static time_t archive_time;
+static int tar_umask;
 
 /* tries hard to write, either succeeds or dies in the attempt */
 static void reliable_write(const void *data, unsigned long size)
@@ -188,13 +189,13 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	} else {
 		if (S_ISDIR(mode)) {
 			*header.typeflag = TYPEFLAG_DIR;
-			mode |= 0777;
+			mode = (mode | 0777) & ~tar_umask;
 		} else if (S_ISLNK(mode)) {
 			*header.typeflag = TYPEFLAG_LNK;
 			mode |= 0777;
 		} else if (S_ISREG(mode)) {
 			*header.typeflag = TYPEFLAG_REG;
-			mode |= (mode & 0100) ? 0777 : 0666;
+			mode = (mode | ((mode & 0100) ? 0777 : 0666)) & ~tar_umask;
 		} else {
 			error("unsupported file mode: 0%o (SHA1: %s)",
 			      mode, sha1_to_hex(sha1));
@@ -293,6 +294,20 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
+int git_tar_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "tar.umask")) {
+		if (!strcmp(value, "user")) {
+			tar_umask = umask(0);
+			umask(tar_umask);
+		} else {
+			tar_umask = git_config_int(var, value);
+		}
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 static int generate_tar(int argc, const char **argv, char** envp)
 {
 	unsigned char sha1[20], tree_sha1[20];
@@ -305,7 +320,7 @@ static int generate_tar(int argc, const char **argv, char** envp)
 	current_path.len = current_path.eof = 0;
 
 	setup_git_directory();
-	git_config(git_default_config);
+	git_config(git_tar_config);
 
 	switch (argc) {
 	case 3:
