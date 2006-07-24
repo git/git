@@ -14,7 +14,7 @@
 
 Imports a project from one or more Arch repositories. It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
-parameters suppplied. If it cannot find the remote branch a merge comes from
+parameters supplied. If it cannot find the remote branch a merge comes from
 it will just import it as a regular commit. If it can find it, it will mark it 
 as a merge whenever possible.
 
@@ -88,7 +88,7 @@ usage if $opt_h;
 # $arch_branches:
 # values associated with keys:
 #   =1 - Arch version / git 'branch' detected via abrowse on a limit
-#   >1 - Arch version / git 'branch' of an auxilliary branch we've merged
+#   >1 - Arch version / git 'branch' of an auxiliary branch we've merged
 my %arch_branches = map { $_ => 1 } @ARGV;
 
 $ENV{'TMPDIR'} = $opt_t if $opt_t; # $ENV{TMPDIR} will affect tempdir() calls:
@@ -667,7 +667,7 @@ sub apply_cset {
     if (`find $tmp/changeset/patches -type f -name '*.patch'`) {
         # this can be sped up considerably by doing
         #    (find | xargs cat) | patch
-        # but that cna get mucked up by patches
+        # but that can get mucked up by patches
         # with missing trailing newlines or the standard 
         # 'missing newline' flag in the patch - possibly
         # produced with an old/buggy diff.
@@ -1026,7 +1026,7 @@ sub commitid2pset {
 }
 
 
-# an alterative to `command` that allows input to be passed as an array
+# an alternative to `command` that allows input to be passed as an array
 # to work around shell problems with weird characters in arguments
 sub safe_pipe_capture {
     my @output;

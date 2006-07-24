@@ -492,7 +492,7 @@ static void start_put(struct transfer_request *request)
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
+	deflateInit(&stream, zlib_compression_level);
 	size = deflateBound(&stream, len + hdrlen);
 	request->buffer.buffer = xmalloc(size);
 
@@ -1784,16 +1784,16 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
-		if (obj->type == TYPE_TAG) {
+		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
 			p = add_one_object(obj, p);
 			continue;
 		}
-		if (obj->type == TYPE_TREE) {
+		if (obj->type == OBJ_TREE) {
 			p = process_tree((struct tree *)obj, p, NULL, name);
 			continue;
 		}
-		if (obj->type == TYPE_BLOB) {
+		if (obj->type == OBJ_BLOB) {
 			p = process_blob((struct blob *)obj, p, NULL, name);
 			continue;
 		}
@@ -1960,12 +1960,12 @@ static int ref_newer(const unsigned char *new_sha1,
 	 * old.  Otherwise we require --force.
 	 */
 	o = deref_tag(parse_object(old_sha1), NULL, 0);
-	if (!o || o->type != TYPE_COMMIT)
+	if (!o || o->type != OBJ_COMMIT)
 		return 0;
 	old = (struct commit *) o;
 
 	o = deref_tag(parse_object(new_sha1), NULL, 0);
-	if (!o || o->type != TYPE_COMMIT)
+	if (!o || o->type != OBJ_COMMIT)
 		return 0;
 	new = (struct commit *) o;
 
@@ -2044,7 +2044,7 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 	fwrite_buffer(ref_info, 1, len, buf);
 	free(ref_info);
 
-	if (o->type == TYPE_TAG) {
+	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, ls->dentry_name, 0);
 		if (o) {
 			len = strlen(ls->dentry_name) + 45;

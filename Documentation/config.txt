@@ -91,6 +91,12 @@ core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
 	and might match multiple refs in the .git/refs/ tree. True by default.
 
+core.compression::
+	An integer -1..9, indicating the compression level for objects that
+	are not in a pack file. -1 is the zlib and git default. 0 means no
+	compression, and 1..9 are various speed/size tradeoffs, 9 being
+	slowest.
+
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
@@ -104,9 +110,30 @@ apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
+diff.color::
+	When true (or `always`), always use colors in patch.
+	When false (or `never`), never.  When set to `auto`, use
+	colors only when the output is to the terminal.
+
+diff.color.<slot>::
+	Use customized color for diff colorization.  `<slot>`
+	specifies which part of the patch to use the specified
+	color, and is one of `plain` (context text), `meta`
+	(metainformation), `frag` (hunk header), `old` (removed
+	lines), or `new` (added lines).  The value for these
+	configuration variables can be one of: `normal`, `bold`,
+	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`,
+	`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, or
+	`white`.
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the git diff option '-l'.
+
+diff.renames::
+	Tells git to detect renames.  If set to any boolean value, it
+	will enable basic rename detection.  If set to "copies" or
+	"copy", it will detect copies, as well.
 
 format.headers::
 	Additional email headers to include in a patch to be submitted
@@ -166,6 +193,10 @@ merge.summary::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.
 
+pack.window::
+	The size of the window used by gitlink:git-pack-objects[1] when no
+	window size is given on the command line. Defaults to 10.
+
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
 	at once.
@@ -180,6 +211,17 @@ show.difftree::
 showbranch.default::
 	The default set of branches for gitlink:git-show-branch[1].
 	See gitlink:git-show-branch[1].
+
+tar.umask::
+	By default, git-link:git-tar-tree[1] sets file and directories modes
+	to 0666 or 0777. While this is both useful and acceptable for projects
+	such as the Linux Kernel, it might be excessive for other projects.
+	With this variable, it becomes possible to tell
+	git-link:git-tar-tree[1] to apply a specific umask to the modes above.
+	The special value "user" indicates that the user's current umask will
+	be used. This should be enough for most projects, as it will lead to
+	the same permissions as git-link:git-checkout[1] would use. The default
+	value remains 0, which means world read-write.
 
 user.email::
 	Your email address to be recorded in any newly created commits.

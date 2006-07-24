@@ -107,8 +107,8 @@ init_claim( defined $starting_rev ? $head : 'dirty');
 unless (defined $starting_rev) {
 	my %ident;
 	@ident{'author', 'author_email', 'author_date'} = $repo->ident('author');
-	my $diff = $repo->command_output_pipe('diff', '-R', 'HEAD', '--', $filename);
-	_git_diff_parse($diff, $head, "dirty", %ident);
+	my $diff = $repo->command_output_pipe('diff', 'HEAD', '--', $filename);
+	_git_diff_parse($diff, [$head], "dirty", %ident);
 	$repo->command_close_pipe($diff);
 }
 handle_rev();
@@ -153,14 +153,13 @@ sub handle_rev {
 
 		my %revinfo = git_commit_info($rev);
 
-		foreach my $p (@{$revs{$rev}{'parents'}}) {
+		if (exists $revs{$rev}{parents} &&
+		    scalar @{$revs{$rev}{parents}} != 0) {
 
-			git_diff_parse($p, $rev, %revinfo);
-			push @revqueue, $p;
-		}
+			git_diff_parse($revs{$rev}{'parents'}, $rev, %revinfo);
+			push @revqueue, @{$revs{$rev}{'parents'}};
 
-
-		if (scalar @{$revs{$rev}{parents}} == 0) {
+		} else {
 			# We must be at the initial rev here, so claim everything that is left.
 			for (my $i = 0; $i < @{$revs{$rev}{lines}}; $i++) {
 				if (ref ${$revs{$rev}{lines}}[$i] eq '' || ${$revs{$rev}{lines}}[$i][1] eq '') {
@@ -244,89 +243,171 @@ sub git_find_parent {
 # Get a diff between the current revision and a parent.
 # Record the commit information that results.
 sub git_diff_parse {
-	my ($parent, $rev, %revinfo) = @_;
+	my ($parents, $rev, %revinfo) = @_;
 
-	my $diff = $repo->command_output_pipe('diff-tree', '-M', '-p',
-			$rev, $parent, '--',
-			$revs{$rev}{'filename'}, $revs{$parent}{'filename'});
+	my @filenames = ( $revs{$rev}{'filename'} );
+	foreach my $parent (@$parents) {
+		push @filenames, $revs{$parent}{'filename'};
+	}
 
-	_git_diff_parse($diff, $parent, $rev, %revinfo);
+	my $diff = $repo->command_output_pipe('diff-tree', '-M', '-p', '-c',
+			$rev, '--', @filenames )
+		or die "Failed to call git-diff for annotation: $!";
+
+	_git_diff_parse($diff, $parents, $rev, %revinfo);
 
 	$repo->command_close_pipe($diff);
 }
 
 sub _git_diff_parse {
-	my ($diff, $parent, $rev, %revinfo) = @_;
+	my ($diff, $parents, $rev, %revinfo) = @_;
 
-	my ($ri, $pi) = (0,0);
+	my $ri = 0;
+
 	my $slines = $revs{$rev}{'lines'};
-	my @plines;
+	my (%plines, %pi);
 
 	my $gotheader = 0;
 	my ($remstart);
-	my ($hunk_start, $hunk_index);
+	my $parent_count = @$parents;
+
+	my $diff_header_regexp = "^@";
+	$diff_header_regexp .= "@" x @$parents;
+	$diff_header_regexp .= ' -\d+,\d+' x @$parents;
+	$diff_header_regexp .= ' \+(\d+),\d+';
+
+	my %claim_regexps;
+	my $allparentplus = '^' . '\\+' x @$parents . '(.*)$';
+
+	{
+		my $i = 0;
+		foreach my $parent (@$parents) {
+
+			$pi{$parent} = 0;
+			my $r = '^' . '.' x @$parents . '(.*)$';
+			my $p = $r;
+			substr($p,$i+1, 1) = '\\+';
+
+			my $m = $r;
+			substr($m,$i+1, 1) = '-';
+
+			$claim_regexps{$parent}{plus} = $p;
+			$claim_regexps{$parent}{minus} = $m;
+
+			$plines{$parent} = [];
+
+			$i++;
+		}
+	}
+
+	DIFF:
 	while(<$diff>) {
 		chomp;
-		if (m/^@@ -(\d+),(\d+) \+(\d+),(\d+)/) {
-			$remstart = $1;
-			# Adjust for 0-based arrays
-			$remstart--;
-			# Reinit hunk tracking.
-			$hunk_start = $remstart;
-			$hunk_index = 0;
+		if (m/$diff_header_regexp/) {
+			$remstart = $1 - 1;
+			# (0-based arrays)
+
 			$gotheader = 1;
 
-			for (my $i = $ri; $i < $remstart; $i++) {
-				$plines[$pi++] = $slines->[$i];
-				$ri++;
+			printf("Copying from %d to %d\n", $ri, $remstart);
+			foreach my $parent (@$parents) {
+				for (my $i = $ri; $i < $remstart; $i++) {
+					$plines{$parent}[$pi{$parent}++] = $slines->[$i];
+				}
 			}
-			next;
+			$ri = $remstart;
+
+			next DIFF;
+
 		} elsif (!$gotheader) {
-			next;
+			# Skip over the leadin.
+			next DIFF;
 		}
 
-		if (m/^\+(.*)$/) {
-			my $line = $1;
-			$plines[$pi++] = [ $line, '', '', '', 0 ];
-			next;
-
-		} elsif (m/^-(.*)$/) {
-			my $line = $1;
-			if (get_line($slines, $ri) eq $line) {
-				# Found a match, claim
-				claim_line($ri, $rev, $slines, %revinfo);
-			} else {
-				die sprintf("Sync error: %d/%d\n|%s\n|%s\n%s => %s\n",
-						$ri, $hunk_start + $hunk_index,
-						$line,
-						get_line($slines, $ri),
-						$rev, $parent);
-			}
-			$ri++;
-
-		} elsif (m/^\\/) {
+		if (m/^\\/) {
 			;
 			# Skip \No newline at end of file.
 			# But this can be internationalized, so only look
 			# for an initial \
 
 		} else {
-			if (substr($_,1) ne get_line($slines,$ri) ) {
-				die sprintf("Line %d (%d) does not match:\n|%s\n|%s\n%s => %s\n",
-						$hunk_start + $hunk_index, $ri,
-						substr($_,1),
-						get_line($slines,$ri),
-						$rev, $parent);
+			my %claims = ();
+			my $negclaim = 0;
+			my $allclaimed = 0;
+			my $line;
+
+			if (m/$allparentplus/) {
+				claim_line($ri, $rev, $slines, %revinfo);
+				$allclaimed = 1;
+
 			}
-			$plines[$pi++] = $slines->[$ri++];
+
+			PARENT:
+			foreach my $parent (keys %claim_regexps) {
+				my $m = $claim_regexps{$parent}{minus};
+				my $p = $claim_regexps{$parent}{plus};
+
+				if (m/$m/) {
+					$line = $1;
+					$plines{$parent}[$pi{$parent}++] = [ $line, '', '', '', 0 ];
+					$negclaim++;
+
+				} elsif (m/$p/) {
+					$line = $1;
+					if (get_line($slines, $ri) eq $line) {
+						# Found a match, claim
+						$claims{$parent}++;
+
+					} else {
+						die sprintf("Sync error: %d\n|%s\n|%s\n%s => %s\n",
+								$ri, $line,
+								get_line($slines, $ri),
+								$rev, $parent);
+					}
+				}
+			}
+
+			if (%claims) {
+				foreach my $parent (@$parents) {
+					next if $claims{$parent} || $allclaimed;
+					$plines{$parent}[$pi{$parent}++] = $slines->[$ri];
+					    #[ $line, '', '', '', 0 ];
+				}
+				$ri++;
+
+			} elsif ($negclaim) {
+				next DIFF;
+
+			} else {
+				if (substr($_,scalar @$parents) ne get_line($slines,$ri) ) {
+				        foreach my $parent (@$parents) {
+						printf("parent %s is on line %d\n", $parent, $pi{$parent});
+					}
+
+					die sprintf("Line %d, does not match:\n|%s|\n|%s|\n%s\n",
+						    $ri,
+						substr($_,scalar @$parents),
+						get_line($slines,$ri), $rev);
+				}
+				foreach my $parent (@$parents) {
+					$plines{$parent}[$pi{$parent}++] = $slines->[$ri];
+				}
+				$ri++;
+			}
 		}
-		$hunk_index++;
-	}
-	for (my $i = $ri; $i < @{$slines} ; $i++) {
-		push @plines, $slines->[$ri++];
 	}
 
-	$revs{$parent}{lines} = \@plines;
+	for (my $i = $ri; $i < @{$slines} ; $i++) {
+		foreach my $parent (@$parents) {
+			push @{$plines{$parent}}, $slines->[$ri];
+		}
+		$ri++;
+	}
+
+	foreach my $parent (@$parents) {
+		$revs{$parent}{lines} = $plines{$parent};
+	}
+
 	return;
 }
 

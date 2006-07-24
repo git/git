@@ -9,6 +9,8 @@ LC_ALL=C
 PAGER=cat
 TZ=UTC
 export LANG LC_ALL PAGER TZ
+EDITOR=:
+VISUAL=:
 unset AUTHOR_DATE
 unset AUTHOR_EMAIL
 unset AUTHOR_NAME
@@ -26,10 +28,12 @@ unset GIT_DIR
 unset GIT_EXTERNAL_DIFF
 unset GIT_INDEX_FILE
 unset GIT_OBJECT_DIRECTORY
+unset GIT_TRACE
 unset SHA1_FILE_DIRECTORIES
 unset SHA1_FILE_DIRECTORY
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
+export EDITOR VISUAL
 
 # Each test should start with something like this, after copyright notices:
 #

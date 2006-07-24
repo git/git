@@ -45,6 +45,23 @@ size_t sq_quote_buf(char *dst, size_t n, const char *src)
 	return len;
 }
 
+void sq_quote_print(FILE *stream, const char *src)
+{
+	char c;
+
+	fputc('\'', stream);
+	while ((c = *src++)) {
+		if (need_bs_quote(c)) {
+			fputs("'\\", stream);
+			fputc(c, stream);
+			fputc('\'', stream);
+		} else {
+			fputc(c, stream);
+		}
+	}
+	fputc('\'', stream);
+}
+
 char *sq_quote(const char *src)
 {
 	char *buf;

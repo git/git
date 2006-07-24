@@ -35,7 +35,8 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 				      missing_ok, 0) < 0)
 			die("git-write-tree: error building trees");
 		if (0 <= newfd) {
-			if (!write_cache(newfd, active_cache, active_nr))
+			if (!write_cache(newfd, active_cache, active_nr)
+					&& !close(newfd))
 				commit_lock_file(lock_file);
 		}
 		/* Not being able to write is fine -- we are only interested

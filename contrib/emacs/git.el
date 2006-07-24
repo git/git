@@ -55,18 +55,21 @@
 ;;;; ------------------------------------------------------------
 
 (defgroup git nil
-  "Git user interface")
+  "A user interface for the git versioning system."
+  :group 'tools)
 
 (defcustom git-committer-name nil
   "User name to use for commits.
-The default is to fall back to the repository config, then to `add-log-full-name' and then to `user-full-name'."
+The default is to fall back to the repository config,
+then to `add-log-full-name' and then to `user-full-name'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Name")))
 
 (defcustom git-committer-email nil
   "Email address to use for commits.
-The default is to fall back to the git repository config, then to `add-log-mailing-address' and then to `user-mail-address'."
+The default is to fall back to the git repository config,
+then to `add-log-mailing-address' and then to `user-mail-address'."
   :group 'git
   :type '(choice (const :tag "Default" nil)
                  (string :tag "Email")))
@@ -81,10 +84,17 @@ The default is to fall back to the git repository config, then to `add-log-maili
   :group 'git
   :type 'boolean)
 
+(defcustom git-reuse-status-buffer t
+  "Whether `git-status' should try to reuse an existing buffer
+if there is already one that displays the same directory."
+  :group 'git
+  :type 'boolean)
+
 (defcustom git-per-dir-ignore-file ".gitignore"
   "Name of the per-directory ignore file."
   :group 'git
   :type 'string)
+
 
 (defface git-status-face
   '((((class color) (background light)) (:foreground "purple")))
@@ -149,7 +159,8 @@ The default is to fall back to the git repository config, then to `add-log-maili
     (apply #'call-process "git" nil buffer nil args)))
 
 (defun git-call-process-env-string (env &rest args)
-  "Wrapper for call-process that sets environment strings, and returns the process output as a string."
+  "Wrapper for call-process that sets environment strings,
+and returns the process output as a string."
   (with-temp-buffer
     (and (eq 0 (apply #' git-call-process-env t env args))
          (buffer-string))))
@@ -254,7 +265,7 @@ The default is to fall back to the git repository config, then to `add-log-maili
     (set-buffer (find-file-noselect ignore-name))
     (goto-char (point-max))
     (unless (zerop (current-column)) (insert "\n"))
-    (insert name "\n")
+    (insert "/" name "\n")
     (sort-lines nil (point-min) (point-max))
     (save-buffer))
   (when created
@@ -580,6 +591,8 @@ The default is to fall back to the git repository config, then to `add-log-maili
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
                             (with-current-buffer buffer (erase-buffer))
                             (git-set-files-state files 'uptodate)
+                            (when (file-directory-p ".git/rr-cache")
+                              (git-run-command nil nil "rerere"))
                             (git-refresh-files)
                             (git-refresh-ewoc-hf git-status)
                             (message "Committed %s." commit))
@@ -939,6 +952,8 @@ The default is to fall back to the git repository config, then to `add-log-maili
   (let ((map (make-keymap))
         (diff-map (make-sparse-keymap)))
     (suppress-keymap map)
+    (define-key map "?"   'git-help)
+    (define-key map "h"   'git-help)
     (define-key map " "   'git-next-file)
     (define-key map "a"   'git-add-file)
     (define-key map "c"   'git-commit-file)
@@ -995,18 +1010,39 @@ Commands:
   (set (make-local-variable 'list-buffers-directory) default-directory)
   (run-hooks 'git-status-mode-hook)))
 
+(defun git-find-status-buffer (dir)
+  "Find the git status buffer handling a specified directory."
+  (let ((list (buffer-list))
+        (fulldir (expand-file-name dir))
+        found)
+    (while (and list (not found))
+      (let ((buffer (car list)))
+        (with-current-buffer buffer
+          (when (and list-buffers-directory
+                     (string-equal fulldir (expand-file-name list-buffers-directory))
+                     (string-match "\\*git-status\\*$" (buffer-name buffer)))
+            (setq found buffer))))
+      (setq list (cdr list)))
+    found))
+
 (defun git-status (dir)
   "Entry point into git-status mode."
   (interactive "DSelect directory: ")
   (setq dir (git-get-top-dir dir))
   (if (file-directory-p (concat (file-name-as-directory dir) ".git"))
-      (let ((buffer (create-file-buffer (expand-file-name "*git-status*" dir))))
+      (let ((buffer (or (and git-reuse-status-buffer (git-find-status-buffer dir))
+                        (create-file-buffer (expand-file-name "*git-status*" dir)))))
         (switch-to-buffer buffer)
         (cd dir)
         (git-status-mode)
         (git-refresh-status)
         (goto-char (point-min)))
     (message "%s is not a git working tree." dir)))
+
+(defun git-help ()
+  "Display help for Git mode."
+  (interactive)
+  (describe-function 'git-status-mode))
 
 (provide 'git)
 ;;; git.el ends here

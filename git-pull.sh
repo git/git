@@ -45,7 +45,7 @@ do
 done
 
 orig_head=$(git-rev-parse --verify HEAD) || die "Pulling into a black hole?"
-git-fetch --update-head-ok "$@" || exit 1
+git-fetch --update-head-ok --reflog-action=pull "$@" || exit 1
 
 curr_head=$(git-rev-parse --verify HEAD)
 if test "$curr_head" != "$orig_head"
@@ -102,5 +102,6 @@ case "$strategy_args" in
 esac
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-git-merge $no_summary $no_commit $squash $strategy_args \
+git-merge "--reflog-action=pull $*" \
+	$no_summary $no_commit $squash $strategy_args \
 	"$merge_name" HEAD $merge_head

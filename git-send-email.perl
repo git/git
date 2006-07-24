@@ -23,9 +23,55 @@ use Getopt::Long;
 use Data::Dumper;
 use Git;
 
+package FakeTerm;
+sub new {
+	my ($class, $reason) = @_;
+	return bless \$reason, shift;
+}
+sub readline {
+	my $self = shift;
+	die "Cannot use readline on FakeTerm: $$self";
+}
+package main;
+
 # most mail servers generate the Date: header, but not all...
-$ENV{LC_ALL} = 'C';
-use POSIX qw/strftime/;
+sub format_2822_time {
+	my ($time) = @_;
+	my @localtm = localtime($time);
+	my @gmttm = gmtime($time);
+	my $localmin = $localtm[1] + $localtm[2] * 60;
+	my $gmtmin = $gmttm[1] + $gmttm[2] * 60;
+	if ($localtm[0] != $gmttm[0]) {
+		die "local zone differs from GMT by a non-minute interval\n";
+	}
+	if ((($gmttm[6] + 1) % 7) == $localtm[6]) {
+		$localmin += 1440;
+	} elsif ((($gmttm[6] - 1) % 7) == $localtm[6]) {
+		$localmin -= 1440;
+	} elsif ($gmttm[6] != $localtm[6]) {
+		die "local time offset greater than or equal to 24 hours\n";
+	}
+	my $offset = $localmin - $gmtmin;
+	my $offhour = $offset / 60;
+	my $offmin = abs($offset % 60);
+	if (abs($offhour) >= 24) {
+		die ("local time offset greater than or equal to 24 hours\n");
+	}
+
+	return sprintf("%s, %2d %s %d %02d:%02d:%02d %s%02d%02d",
+		       qw(Sun Mon Tue Wed Thu Fri Sat)[$localtm[6]],
+		       $localtm[3],
+		       qw(Jan Feb Mar Apr May Jun
+			  Jul Aug Sep Oct Nov Dec)[$localtm[4]],
+		       $localtm[5]+1900,
+		       $localtm[2],
+		       $localtm[1],
+		       $localtm[0],
+		       ($offset >= 0) ? '+' : '-',
+		       abs($offhour),
+		       $offmin,
+		       );
+}
 
 my $have_email_valid = eval { require Email::Valid; 1 };
 my $smtp;
@@ -48,8 +94,12 @@ my $smtp_server;
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
 
 my $repo = Git->repository();
-
-my $term = new Term::ReadLine 'git-send-email';
+my $term = eval {
+	new Term::ReadLine 'git-send-email';
+};
+if ($@) {
+	$term = new FakeTerm "$@: going non-interactive";
+}
 
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
@@ -292,7 +342,7 @@ Options:
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
-  --suppress-from Supress sending emails to yourself if your address
+  --suppress-from Suppress sending emails to yourself if your address
                   appears in a From: line.
 
    --quiet	Make git-send-email less verbose.  One line per email should be
@@ -353,7 +403,7 @@ sub send_message
 	my @recipients = unique_email_list(@to);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
-	my $date = strftime('%a, %d %b %Y %H:%M:%S %z', localtime($time++));
+	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
 	    $gitversion = Git::version();
@@ -363,7 +413,6 @@ sub send_message
 To: $to
 Cc: $cc
 Subject: $subject
-Reply-To: $from
 Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion

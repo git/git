@@ -188,17 +188,29 @@ test_expect_success \
 	 echo OTHER >F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:41" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:41" git-commit -F M -a &&
-	 h_OTHER=$(git-rev-parse --verify HEAD)
+	 h_OTHER=$(git-rev-parse --verify HEAD) &&
+	 echo FIXED >F &&
+	 GIT_AUTHOR_DATE="2005-05-26 23:44" \
+	 GIT_COMMITTER_DATE="2005-05-26 23:44" git-commit --amend &&
+	 h_FIXED=$(git-rev-parse --verify HEAD) &&
+	 echo TEST+FIXED >F &&
+	 echo Merged initial commit and a later commit. >M &&
+	 echo $h_TEST >.git/MERGE_HEAD &&
+	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
+	 GIT_COMMITTER_DATE="2005-05-26 23:45" git-commit -F M &&
+	 h_MERGED=$(git-rev-parse --verify HEAD)
 	 rm -f M'
 
 cat >expect <<EOF
-$Z $h_TEST $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	commit: add
+$Z $h_TEST $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	commit (initial): add
 $h_TEST $h_OTHER $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000	commit: The other day this did not work.
+$h_OTHER $h_FIXED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151040 +0000	commit (amend): The other day this did not work.
+$h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	commit (merge): Merged initial commit and a later commit.
 EOF
 test_expect_success \
 	'git-commit logged updates' \
 	'diff expect .git/logs/$m'
-unset h_TEST h_OTHER
+unset h_TEST h_OTHER h_FIXED h_MERGED
 
 test_expect_success \
 	'git-cat-file blob master:F (expect OTHER)' \

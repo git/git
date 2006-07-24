@@ -186,6 +186,7 @@ extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
+extern int zlib_compression_level;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -221,8 +222,6 @@ int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size);
-extern int parse_sha1_header(char *hdr, char *type, unsigned long *sizep);
 extern int sha1_object_info(const unsigned char *, char *, unsigned long *);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
@@ -324,13 +323,17 @@ struct ref {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+#define REF_NORMAL	(1u << 0)
+#define REF_HEADS	(1u << 1)
+#define REF_TAGS	(1u << 2)
+
 extern int git_connect(int fd[2], char *url, const char *prog);
 extern int finish_connect(pid_t pid);
 extern int path_match(const char *path, int nr, char **match);
 extern int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		      int nr_refspec, char **refspec, int all);
 extern int get_ack(int fd, unsigned char *result_sha1);
-extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, int ignore_funny);
+extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, unsigned int flags);
 extern int server_supports(const char *feature);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1);
@@ -380,6 +383,7 @@ extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
 
 /* pager.c */
 extern void setup_pager(void);
+extern int pager_in_use;
 
 /* base85 */
 int decode_85(char *dst, char *line, int linelen);

@@ -244,9 +244,9 @@ int git_config_bool(const char *name, const char *value)
 		return 1;
 	if (!*value)
 		return 0;
-	if (!strcasecmp(value, "true"))
+	if (!strcasecmp(value, "true") || !strcasecmp(value, "yes"))
 		return 1;
-	if (!strcasecmp(value, "false"))
+	if (!strcasecmp(value, "false") || !strcasecmp(value, "no"))
 		return 0;
 	return git_config_int(name, value) != 0;
 }
@@ -276,6 +276,16 @@ int git_default_config(const char *var, const char *value)
 
 	if (!strcmp(var, "core.warnambiguousrefs")) {
 		warn_ambiguous_refs = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.compression")) {
+		int level = git_config_int(var, value);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die("bad zlib compression level %d", level);
+		zlib_compression_level = level;
 		return 0;
 	}
 

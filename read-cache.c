@@ -748,7 +748,7 @@ int read_cache(void)
 		die("index file open failed (%s)", strerror(errno));
 	}
 
-	size = 0; // avoid gcc warning
+	size = 0; /* avoid gcc warning */
 	map = MAP_FAILED;
 	if (!fstat(fd, &st)) {
 		size = st.st_size;

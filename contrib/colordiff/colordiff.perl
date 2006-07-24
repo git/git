@@ -110,7 +110,7 @@ foreach $config_file (@config_files) {
     }
 }
 
-# colordiff specfic options here.  Need to pre-declare if using variables
+# colordiff specific options here.  Need to pre-declare if using variables
 GetOptions(
     "no-banner" => sub { $show_banner = 0 },
     "plain-text=s" => \&set_color,

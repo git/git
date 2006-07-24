@@ -324,7 +324,7 @@ test -d "$GIT_DIR/refs/reference-tmp" && rm -fr "$GIT_DIR/refs/reference-tmp"
 if test -f "$GIT_DIR/CLONE_HEAD"
 then
 	# Read git-fetch-pack -k output and store the remote branches.
-	perl -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin"
+	@@PERL@@ -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin"
 fi
 
 cd "$D" || exit

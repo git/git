@@ -3,183 +3,222 @@
  *
  * Copyright (C) 2005 Paul Mackerras <paulus@samba.org>
  */
-#define FS	80
 
 /*
- * We roll the registers for T, A, B, C, D, E around on each
- * iteration; T on iteration t is A on iteration t+1, and so on.
- * We use registers 7 - 12 for this.
+ * PowerPC calling convention:
+ * %r0 - volatile temp
+ * %r1 - stack pointer.
+ * %r2 - reserved
+ * %r3-%r12 - Incoming arguments & return values; volatile.
+ * %r13-%r31 - Callee-save registers
+ * %lr - Return address, volatile
+ * %ctr - volatile
+ *
+ * Register usage in this routine:
+ * %r0 - temp
+ * %r3 - argument (pointer to 5 words of SHA state)
+ * %r4 - argument (pointer to data to hash)
+ * %r5 - Contant K in SHA round (initially number of blocks to hash)
+ * %r6-%r10 - Working copies of SHA variables A..E (actually E..A order)
+ * %r11-%r26 - Data being hashed W[].
+ * %r27-%r31 - Previous copies of A..E, for final add back.
+ * %ctr - loop count
  */
-#define RT(t)	((((t)+5)%6)+7)
-#define RA(t)	((((t)+4)%6)+7)
-#define RB(t)	((((t)+3)%6)+7)
-#define RC(t)	((((t)+2)%6)+7)
-#define RD(t)	((((t)+1)%6)+7)
-#define RE(t)	((((t)+0)%6)+7)
 
-/* We use registers 16 - 31 for the W values */
-#define W(t)	(((t)%16)+16)
 
-#define STEPD0(t)				\
-	and	%r6,RB(t),RC(t);		\
-	andc	%r0,RD(t),RB(t);		\
-	rotlwi	RT(t),RA(t),5;			\
-	rotlwi	RB(t),RB(t),30;			\
-	or	%r6,%r6,%r0;			\
-	add	%r0,RE(t),%r15;			\
-	add	RT(t),RT(t),%r6;		\
-	add	%r0,%r0,W(t);			\
-	add	RT(t),RT(t),%r0
+/*
+ * We roll the registers for A, B, C, D, E around on each
+ * iteration; E on iteration t is D on iteration t+1, and so on.
+ * We use registers 6 - 10 for this.  (Registers 27 - 31 hold
+ * the previous values.)
+ */
+#define RA(t)	(((t)+4)%5+6)
+#define RB(t)	(((t)+3)%5+6)
+#define RC(t)	(((t)+2)%5+6)
+#define RD(t)	(((t)+1)%5+6)
+#define RE(t)	(((t)+0)%5+6)
 
-#define STEPD1(t)				\
-	xor	%r6,RB(t),RC(t);		\
-	rotlwi	RT(t),RA(t),5;			\
-	rotlwi	RB(t),RB(t),30;			\
-	xor	%r6,%r6,RD(t);			\
-	add	%r0,RE(t),%r15;			\
-	add	RT(t),RT(t),%r6;		\
-	add	%r0,%r0,W(t);			\
-	add	RT(t),RT(t),%r0
+/* We use registers 11 - 26 for the W values */
+#define W(t)	((t)%16+11)
 
-#define STEPD2(t)				\
-	and	%r6,RB(t),RC(t);		\
-	and	%r0,RB(t),RD(t);		\
-	rotlwi	RT(t),RA(t),5;			\
-	rotlwi	RB(t),RB(t),30;			\
-	or	%r6,%r6,%r0;			\
-	and	%r0,RC(t),RD(t);		\
-	or	%r6,%r6,%r0;			\
-	add	%r0,RE(t),%r15;			\
-	add	RT(t),RT(t),%r6;		\
-	add	%r0,%r0,W(t);			\
-	add	RT(t),RT(t),%r0
+/* Register 5 is used for the constant k */
 
-#define LOADW(t)				\
-	lwz	W(t),(t)*4(%r4)
+/*
+ * The basic SHA-1 round function is:
+ * E += ROTL(A,5) + F(B,C,D) + W[i] + K;  B = ROTL(B,30)
+ * Then the variables are renamed: (A,B,C,D,E) = (E,A,B,C,D).
+ *
+ * Every 20 rounds, the function F() and the contant K changes:
+ * - 20 rounds of f0(b,c,d) = "bit wise b ? c : d" =  (^b & d) + (b & c)
+ * - 20 rounds of f1(b,c,d) = b^c^d = (b^d)^c
+ * - 20 rounds of f2(b,c,d) = majority(b,c,d) = (b&d) + ((b^d)&c)
+ * - 20 more rounds of f1(b,c,d)
+ *
+ * These are all scheduled for near-optimal performance on a G4.
+ * The G4 is a 3-issue out-of-order machine with 3 ALUs, but it can only
+ * *consider* starting the oldest 3 instructions per cycle.  So to get
+ * maximum performace out of it, you have to treat it as an in-order
+ * machine.  Which means interleaving the computation round t with the
+ * computation of W[t+4].
+ *
+ * The first 16 rounds use W values loaded directly from memory, while the
+ * remaining 64 use values computed from those first 16.  We preload
+ * 4 values before starting, so there are three kinds of rounds:
+ * - The first 12 (all f0) also load the W values from memory.
+ * - The next 64 compute W(i+4) in parallel. 8*f0, 20*f1, 20*f2, 16*f1.
+ * - The last 4 (all f1) do not do anything with W.
+ *
+ * Therefore, we have 6 different round functions:
+ * STEPD0_LOAD(t,s) - Perform round t and load W(s).  s < 16
+ * STEPD0_UPDATE(t,s) - Perform round t and compute W(s).  s >= 16.
+ * STEPD1_UPDATE(t,s)
+ * STEPD2_UPDATE(t,s)
+ * STEPD1(t) - Perform round t with no load or update.
+ *
+ * The G5 is more fully out-of-order, and can find the parallelism
+ * by itself.  The big limit is that it has a 2-cycle ALU latency, so
+ * even though it's 2-way, the code has to be scheduled as if it's
+ * 4-way, which can be a limit.  To help it, we try to schedule the
+ * read of RA(t) as late as possible so it doesn't stall waiting for
+ * the previous round's RE(t-1), and we try to rotate RB(t) as early
+ * as possible while reading RC(t) (= RB(t-1)) as late as possible.
+ */
 
-#define UPDATEW(t)				\
-	xor	%r0,W((t)-3),W((t)-8);		\
-	xor	W(t),W((t)-16),W((t)-14);	\
-	xor	W(t),W(t),%r0;			\
-	rotlwi	W(t),W(t),1
+/* the initial loads. */
+#define LOADW(s) \
+	lwz	W(s),(s)*4(%r4)
 
-#define STEP0LD4(t)				\
-	STEPD0(t);   LOADW((t)+4);		\
-	STEPD0((t)+1); LOADW((t)+5);		\
-	STEPD0((t)+2); LOADW((t)+6);		\
-	STEPD0((t)+3); LOADW((t)+7)
+/*
+ * Perform a step with F0, and load W(s).  Uses W(s) as a temporary
+ * before loading it.
+ * This is actually 10 instructions, which is an awkward fit.
+ * It can execute grouped as listed, or delayed one instruction.
+ * (If delayed two instructions, there is a stall before the start of the
+ * second line.)  Thus, two iterations take 7 cycles, 3.5 cycles per round.
+ */
+#define STEPD0_LOAD(t,s) \
+add RE(t),RE(t),W(t); andc   %r0,RD(t),RB(t);  and    W(s),RC(t),RB(t); \
+add RE(t),RE(t),%r0;  rotlwi %r0,RA(t),5;      rotlwi RB(t),RB(t),30;   \
+add RE(t),RE(t),W(s); add    %r0,%r0,%r5;      lwz    W(s),(s)*4(%r4);  \
+add RE(t),RE(t),%r0
 
-#define STEPUP4(t, fn)				\
-	STEP##fn(t);   UPDATEW((t)+4);		\
-	STEP##fn((t)+1); UPDATEW((t)+5);	\
-	STEP##fn((t)+2); UPDATEW((t)+6);	\
-	STEP##fn((t)+3); UPDATEW((t)+7)
+/*
+ * This is likewise awkward, 13 instructions.  However, it can also
+ * execute starting with 2 out of 3 possible moduli, so it does 2 rounds
+ * in 9 cycles, 4.5 cycles/round.
+ */
+#define STEPD0_UPDATE(t,s,loadk...) \
+add RE(t),RE(t),W(t); andc   %r0,RD(t),RB(t); xor    W(s),W((s)-16),W((s)-3); \
+add RE(t),RE(t),%r0;  and    %r0,RC(t),RB(t); xor    W(s),W(s),W((s)-8);      \
+add RE(t),RE(t),%r0;  rotlwi %r0,RA(t),5;     xor    W(s),W(s),W((s)-14);     \
+add RE(t),RE(t),%r5;  loadk; rotlwi RB(t),RB(t),30;  rotlwi W(s),W(s),1;     \
+add RE(t),RE(t),%r0
 
-#define STEPUP20(t, fn)				\
-	STEPUP4(t, fn);				\
-	STEPUP4((t)+4, fn);			\
-	STEPUP4((t)+8, fn);			\
-	STEPUP4((t)+12, fn);			\
-	STEPUP4((t)+16, fn)
+/* Nicely optimal.  Conveniently, also the most common. */
+#define STEPD1_UPDATE(t,s,loadk...) \
+add RE(t),RE(t),W(t); xor    %r0,RD(t),RB(t); xor    W(s),W((s)-16),W((s)-3); \
+add RE(t),RE(t),%r5;  loadk; xor %r0,%r0,RC(t);  xor W(s),W(s),W((s)-8);      \
+add RE(t),RE(t),%r0;  rotlwi %r0,RA(t),5;     xor    W(s),W(s),W((s)-14);     \
+add RE(t),RE(t),%r0;  rotlwi RB(t),RB(t),30;  rotlwi W(s),W(s),1
+
+/*
+ * The naked version, no UPDATE, for the last 4 rounds.  3 cycles per.
+ * We could use W(s) as a temp register, but we don't need it.
+ */
+#define STEPD1(t) \
+                        add   RE(t),RE(t),W(t); xor    %r0,RD(t),RB(t); \
+rotlwi RB(t),RB(t),30;  add   RE(t),RE(t),%r5;  xor    %r0,%r0,RC(t);   \
+add    RE(t),RE(t),%r0; rotlwi %r0,RA(t),5;     /* spare slot */        \
+add    RE(t),RE(t),%r0
+
+/*
+ * 14 instructions, 5 cycles per.  The majority function is a bit
+ * awkward to compute.  This can execute with a 1-instruction delay,
+ * but it causes a 2-instruction delay, which triggers a stall.
+ */
+#define STEPD2_UPDATE(t,s,loadk...) \
+add RE(t),RE(t),W(t); and    %r0,RD(t),RB(t); xor    W(s),W((s)-16),W((s)-3); \
+add RE(t),RE(t),%r0;  xor    %r0,RD(t),RB(t); xor    W(s),W(s),W((s)-8);      \
+add RE(t),RE(t),%r5;  loadk; and %r0,%r0,RC(t);  xor W(s),W(s),W((s)-14);     \
+add RE(t),RE(t),%r0;  rotlwi %r0,RA(t),5;     rotlwi W(s),W(s),1;             \
+add RE(t),RE(t),%r0;  rotlwi RB(t),RB(t),30
+
+#define STEP0_LOAD4(t,s)		\
+	STEPD0_LOAD(t,s);		\
+	STEPD0_LOAD((t+1),(s)+1);	\
+	STEPD0_LOAD((t)+2,(s)+2);	\
+	STEPD0_LOAD((t)+3,(s)+3)
+
+#define STEPUP4(fn, t, s, loadk...)		\
+	STEP##fn##_UPDATE(t,s,);		\
+	STEP##fn##_UPDATE((t)+1,(s)+1,);	\
+	STEP##fn##_UPDATE((t)+2,(s)+2,);	\
+	STEP##fn##_UPDATE((t)+3,(s)+3,loadk)
+
+#define STEPUP20(fn, t, s, loadk...)	\
+	STEPUP4(fn, t, s,);		\
+	STEPUP4(fn, (t)+4, (s)+4,);	\
+	STEPUP4(fn, (t)+8, (s)+8,);	\
+	STEPUP4(fn, (t)+12, (s)+12,);	\
+	STEPUP4(fn, (t)+16, (s)+16, loadk)
 
 	.globl	sha1_core
 sha1_core:
-	stwu	%r1,-FS(%r1)
-	stw	%r15,FS-68(%r1)
-	stw	%r16,FS-64(%r1)
-	stw	%r17,FS-60(%r1)
-	stw	%r18,FS-56(%r1)
-	stw	%r19,FS-52(%r1)
-	stw	%r20,FS-48(%r1)
-	stw	%r21,FS-44(%r1)
-	stw	%r22,FS-40(%r1)
-	stw	%r23,FS-36(%r1)
-	stw	%r24,FS-32(%r1)
-	stw	%r25,FS-28(%r1)
-	stw	%r26,FS-24(%r1)
-	stw	%r27,FS-20(%r1)
-	stw	%r28,FS-16(%r1)
-	stw	%r29,FS-12(%r1)
-	stw	%r30,FS-8(%r1)
-	stw	%r31,FS-4(%r1)
+	stwu	%r1,-80(%r1)
+	stmw	%r13,4(%r1)
 
 	/* Load up A - E */
-	lwz	RA(0),0(%r3)	/* A */
-	lwz	RB(0),4(%r3)	/* B */
-	lwz	RC(0),8(%r3)	/* C */
-	lwz	RD(0),12(%r3)	/* D */
-	lwz	RE(0),16(%r3)	/* E */
+	lmw	%r27,0(%r3)
 
 	mtctr	%r5
 
-1:	LOADW(0)
+1:
+	LOADW(0)
+	lis	%r5,0x5a82
+	mr	RE(0),%r31
 	LOADW(1)
+	mr	RD(0),%r30
+	mr	RC(0),%r29
 	LOADW(2)
+	ori	%r5,%r5,0x7999	/* K0-19 */
+	mr	RB(0),%r28
 	LOADW(3)
+	mr	RA(0),%r27
 
-	lis	%r15,0x5a82	/* K0-19 */
-	ori	%r15,%r15,0x7999
-	STEP0LD4(0)
-	STEP0LD4(4)
-	STEP0LD4(8)
-	STEPUP4(12, D0)
-	STEPUP4(16, D0)
+	STEP0_LOAD4(0, 4)
+	STEP0_LOAD4(4, 8)
+	STEP0_LOAD4(8, 12)
+	STEPUP4(D0, 12, 16,)
+	STEPUP4(D0, 16, 20, lis %r5,0x6ed9)
 
-	lis	%r15,0x6ed9	/* K20-39 */
-	ori	%r15,%r15,0xeba1
-	STEPUP20(20, D1)
+	ori	%r5,%r5,0xeba1	/* K20-39 */
+	STEPUP20(D1, 20, 24, lis %r5,0x8f1b)
 
-	lis	%r15,0x8f1b	/* K40-59 */
-	ori	%r15,%r15,0xbcdc
-	STEPUP20(40, D2)
+	ori	%r5,%r5,0xbcdc	/* K40-59 */
+	STEPUP20(D2, 40, 44, lis %r5,0xca62)
 
-	lis	%r15,0xca62	/* K60-79 */
-	ori	%r15,%r15,0xc1d6
-	STEPUP4(60, D1)
-	STEPUP4(64, D1)
-	STEPUP4(68, D1)
-	STEPUP4(72, D1)
+	ori	%r5,%r5,0xc1d6	/* K60-79 */
+	STEPUP4(D1, 60, 64,)
+	STEPUP4(D1, 64, 68,)
+	STEPUP4(D1, 68, 72,)
+	STEPUP4(D1, 72, 76,)
+	addi	%r4,%r4,64
 	STEPD1(76)
 	STEPD1(77)
 	STEPD1(78)
 	STEPD1(79)
 
-	lwz	%r20,16(%r3)
-	lwz	%r19,12(%r3)
-	lwz	%r18,8(%r3)
-	lwz	%r17,4(%r3)
-	lwz	%r16,0(%r3)
-	add	%r20,RE(80),%r20
-	add	RD(0),RD(80),%r19
-	add	RC(0),RC(80),%r18
-	add	RB(0),RB(80),%r17
-	add	RA(0),RA(80),%r16
-	mr	RE(0),%r20
-	stw	RA(0),0(%r3)
-	stw	RB(0),4(%r3)
-	stw	RC(0),8(%r3)
-	stw	RD(0),12(%r3)
-	stw	RE(0),16(%r3)
+	/* Add results to original values */
+	add	%r31,%r31,RE(0)
+	add	%r30,%r30,RD(0)
+	add	%r29,%r29,RC(0)
+	add	%r28,%r28,RB(0)
+	add	%r27,%r27,RA(0)
 
-	addi	%r4,%r4,64
 	bdnz	1b
 
-	lwz	%r15,FS-68(%r1)
-	lwz	%r16,FS-64(%r1)
-	lwz	%r17,FS-60(%r1)
-	lwz	%r18,FS-56(%r1)
-	lwz	%r19,FS-52(%r1)
-	lwz	%r20,FS-48(%r1)
-	lwz	%r21,FS-44(%r1)
-	lwz	%r22,FS-40(%r1)
-	lwz	%r23,FS-36(%r1)
-	lwz	%r24,FS-32(%r1)
-	lwz	%r25,FS-28(%r1)
-	lwz	%r26,FS-24(%r1)
-	lwz	%r27,FS-20(%r1)
-	lwz	%r28,FS-16(%r1)
-	lwz	%r29,FS-12(%r1)
-	lwz	%r30,FS-8(%r1)
-	lwz	%r31,FS-4(%r1)
-	addi	%r1,%r1,FS
+	/* Save final hash, restore registers, and return */
+	stmw	%r27,0(%r3)
+	lmw	%r13,4(%r1)
+	addi	%r1,%r1,80
 	blr

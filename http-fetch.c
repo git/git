@@ -490,7 +490,7 @@ static int setup_index(struct alt_base *repo, unsigned char *sha1)
 {
 	struct packed_git *new_pack;
 	if (has_pack_file(sha1))
-		return 0; // don't list this as something we can get
+		return 0; /* don't list this as something we can get */
 
 	if (fetch_index(repo, sha1))
 		return -1;
@@ -570,7 +570,7 @@ static void process_alternates_response(void *callback_data)
 						 base[serverlen - 1] != '/');
 					i += 3;
 				}
-				// If the server got removed, give up.
+				/* If the server got removed, give up. */
 				okay = strchr(base, ':') - base + 3 <
 					serverlen;
 			} else if (alt_req->http_specific) {
@@ -581,7 +581,7 @@ static void process_alternates_response(void *callback_data)
 					okay = 1;
 				}
 			}
-			// skip 'objects' at end
+			/* skip 'objects' at end */
 			if (okay) {
 				target = xmalloc(serverlen + posn - i - 6);
 				strlcpy(target, base, serverlen);

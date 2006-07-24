@@ -15,7 +15,7 @@ int cmd_diff_index(int argc, const char **argv, char **envp)
 	int cached = 0;
 	int i;
 
-	git_config(git_diff_config);
+	git_config(git_default_config); /* no "diff" UI options */
 	init_revisions(&rev);
 	rev.abbrev = 0;
 
@@ -28,6 +28,9 @@ int cmd_diff_index(int argc, const char **argv, char **envp)
 		else
 			usage(diff_cache_usage);
 	}
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_RAW;
+
 	/*
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.

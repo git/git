@@ -28,6 +28,22 @@ all:
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
+# Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
+# tests.  These tests take up a significant amount of the total test time
+# but are not needed unless you plan to talk to SVN repos.
+#
+# Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
+# installed in /sw, but don't want GIT to link against any libraries
+# installed there.  If defined you may specify your own (or Fink's)
+# include directories and library directories by defining CFLAGS
+# and LDFLAGS appropriately.
+#
+# Define NO_DARWIN_PORTS if you are building on Darwin/Mac OS X,
+# have DarwinPorts installed in /opt/local, but don't want GIT to
+# link against any libraries installed there.  If defined you may
+# specify your own (or DarwinPort's) include directories and
+# library directories by defining CFLAGS and LDFLAGS appropriately.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -63,7 +79,7 @@ all:
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
 #
-# Define NO_PYTHON if you want to loose all benefits of the recursive merge.
+# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 #
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
@@ -130,7 +146,7 @@ SCRIPT_SH = \
 	git-fetch.sh \
 	git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
-	git-prune.sh git-pull.sh git-rebase.sh \
+	git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-resolve.sh git-revert.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
@@ -141,10 +157,10 @@ SCRIPT_SH = \
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-shortlog.perl git-fmt-merge-msg.perl git-rerere.perl \
+	git-shortlog.perl git-rerere.perl \
 	git-annotate.perl git-cvsserver.perl \
 	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl \
-	git-send-email.perl
+	git-send-email.perl git-svn.perl
 
 SCRIPT_PYTHON = \
 	git-merge-recursive.py
@@ -152,7 +168,7 @@ SCRIPT_PYTHON = \
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
-	  git-cherry-pick git-status
+	  git-cherry-pick git-status git-instaweb
 
 # The ones that do not have to link with lcrypto, lz nor xdiff.
 SIMPLE_PROGRAMS = \
@@ -183,7 +199,8 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
 	git-read-tree$X git-commit-tree$X git-write-tree$X \
 	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
-	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X
+	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X \
+	git-fmt-merge-msg$X git-prune$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -227,7 +244,7 @@ LIB_OBJS = \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
-	alloc.o $(DIFF_OBJS)
+	alloc.o merge-file.o $(DIFF_OBJS)
 
 BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
@@ -239,7 +256,7 @@ BUILTIN_OBJS = \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
 	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
-	builtin-update-ref.o
+	builtin-update-ref.o builtin-fmt-merge-msg.o builtin-prune.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS = -lz
@@ -259,15 +276,17 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_STRLCPY = YesPlease
-	## fink
-	ifeq ($(shell test -d /sw/lib && echo y),y)
-		BASIC_CFLAGS += -I/sw/include
-		BASIC_LDFLAGS += -L/sw/lib
+	ifndef NO_FINK
+		ifeq ($(shell test -d /sw/lib && echo y),y)
+			BASIC_CFLAGS += -I/sw/include
+			BASIC_LDFLAGS += -L/sw/lib
+		endif
 	endif
-	## darwinports
-	ifeq ($(shell test -d /opt/local/lib && echo y),y)
-		BASIC_CFLAGS += -I/opt/local/include
-		BASIC_LDFLAGS += -L/opt/local/lib
+	ifndef NO_DARWIN_PORTS
+		ifeq ($(shell test -d /opt/local/lib && echo y),y)
+			BASIC_CFLAGS += -I/opt/local/include
+			BASIC_LDFLAGS += -L/opt/local/lib
+		endif
 	endif
 endif
 ifeq ($(uname_S),SunOS)
@@ -485,7 +504,7 @@ ifdef NO_ACCURATE_DIFF
 	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
-# Shell quote (do not use $(call) to accomodate ancient setups);
+# Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
 
@@ -539,6 +558,7 @@ common-cmds.h: Documentation/git-*.txt
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
@@ -578,6 +598,20 @@ git-cherry-pick: git-revert
 
 git-status: git-commit
 	cp $< $@+
+	mv $@+ $@
+
+git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
+	rm -f $@ $@+
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
+	    -e '/@@GITWEB_CGI@@/r gitweb/gitweb.cgi' \
+	    -e '/@@GITWEB_CGI@@/d' \
+	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
+	    -e '/@@GITWEB_CSS@@/d' \
+	    $@.sh > $@+
+	chmod +x $@+
 	mv $@+ $@
 
 # These can record GIT_VERSION
@@ -622,11 +656,11 @@ git-ssh-push$X: rsh.o
 git-imap-send$X: imap-send.o $(LIB_FILE)
 
 http.o http-fetch.o http-push.o: http.h
-git-http-fetch$X: fetch.o http.o http-fetch.o $(LIB_FILE)
+git-http-fetch$X: fetch.o http.o http-fetch.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-git-http-push$X: revision.o http.o http-push.o $(LIB_FILE)
+git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
@@ -682,6 +716,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 # with that.
 
 export NO_PYTHON
+export NO_SVN_TESTS
 
 test: all
 	$(MAKE) -C t/ all
@@ -694,6 +729,12 @@ test-delta$X: test-delta.c diff-delta.o patch-delta.o
 
 test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
+test-sha1$X: test-sha1.o $(GITLIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
+check-sha1:: test-sha1$X
+	./test-sha1.sh
 
 check:
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done

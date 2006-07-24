@@ -135,7 +135,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	/*
 	 * Tag object? Look what it points to..
 	 */
-	while (object->type == TYPE_TAG) {
+	while (object->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) object;
 		if (revs->tag_objects && !(flags & UNINTERESTING))
 			add_pending_object(revs, object, tag->tag);
@@ -148,7 +148,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	 * Commit object? Just return it, we'll do all the complex
 	 * reachability crud.
 	 */
-	if (object->type == TYPE_COMMIT) {
+	if (object->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)object;
 		if (parse_commit(commit) < 0)
 			die("unable to parse commit %s", name);
@@ -164,7 +164,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	 * Tree object? Either mark it uniniteresting, or add it
 	 * to the list of objects to look at later..
 	 */
-	if (object->type == TYPE_TREE) {
+	if (object->type == OBJ_TREE) {
 		struct tree *tree = (struct tree *)object;
 		if (!revs->tree_objects)
 			return NULL;
@@ -179,7 +179,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	/*
 	 * Blob object? You know the drill by now..
 	 */
-	if (object->type == TYPE_BLOB) {
+	if (object->type == OBJ_BLOB) {
 		struct blob *blob = (struct blob *)object;
 		if (!revs->blob_objects)
 			return NULL;
@@ -494,11 +494,11 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, sha1, 0);
-		if (it->type != TYPE_TAG)
+		if (it->type != OBJ_TAG)
 			break;
 		memcpy(sha1, ((struct tag*)it)->tagged->sha1, 20);
 	}
-	if (it->type != TYPE_COMMIT)
+	if (it->type != OBJ_COMMIT)
 		return 0;
 	commit = (struct commit *)it;
 	for (parents = commit->parents; parents; parents = parents->next) {
@@ -537,6 +537,61 @@ void init_revisions(struct rev_info *revs)
 	diff_setup(&revs->diffopt);
 }
 
+static void add_pending_commit_list(struct rev_info *revs,
+                                    struct commit_list *commit_list,
+                                    unsigned int flags)
+{
+	while (commit_list) {
+		struct object *object = &commit_list->item->object;
+		object->flags |= flags;
+		add_pending_object(revs, object, sha1_to_hex(object->sha1));
+		commit_list = commit_list->next;
+	}
+}
+
+static void prepare_show_merge(struct rev_info *revs)
+{
+	struct commit_list *bases;
+	struct commit *head, *other;
+	unsigned char sha1[20];
+	const char **prune = NULL;
+	int i, prune_num = 1; /* counting terminating NULL */
+
+	if (get_sha1("HEAD", sha1) || !(head = lookup_commit(sha1)))
+		die("--merge without HEAD?");
+	if (get_sha1("MERGE_HEAD", sha1) || !(other = lookup_commit(sha1)))
+		die("--merge without MERGE_HEAD?");
+	add_pending_object(revs, &head->object, "HEAD");
+	add_pending_object(revs, &other->object, "MERGE_HEAD");
+	bases = get_merge_bases(head, other, 1);
+	while (bases) {
+		struct commit *it = bases->item;
+		struct commit_list *n = bases->next;
+		free(bases);
+		bases = n;
+		it->object.flags |= UNINTERESTING;
+		add_pending_object(revs, &it->object, "(merge-base)");
+	}
+
+	if (!active_nr)
+		read_cache();
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (!ce_stage(ce))
+			continue;
+		if (ce_path_match(ce, revs->prune_data)) {
+			prune_num++;
+			prune = xrealloc(prune, sizeof(*prune) * prune_num);
+			prune[prune_num-2] = ce->name;
+			prune[prune_num-1] = NULL;
+		}
+		while ((i+1 < active_nr) &&
+		       ce_same_name(ce, active_cache[i+1]))
+			i++;
+	}
+	revs->prune_data = prune;
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -546,7 +601,7 @@ void init_revisions(struct rev_info *revs)
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
-	int i, flags, seen_dashdash;
+	int i, flags, seen_dashdash, show_merge;
 	const char **unrecognized = argv + 1;
 	int left = 1;
 
@@ -563,7 +618,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		break;
 	}
 
-	flags = 0;
+	flags = show_merge = 0;
 	for (i = 1; i < argc; i++) {
 		struct object *object;
 		const char *arg = argv[i];
@@ -628,6 +683,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				if (++i >= argc)
 					die("bad --default argument");
 				def = argv[i];
+				continue;
+			}
+			if (!strcmp(arg, "--merge")) {
+				show_merge = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--topo-order")) {
@@ -772,27 +831,46 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			unsigned char from_sha1[20];
 			const char *next = dotdot + 2;
 			const char *this = arg;
+			int symmetric = *next == '.';
+			unsigned int flags_exclude = flags ^ UNINTERESTING;
+
 			*dotdot = 0;
+			next += symmetric;
+
 			if (!*next)
 				next = "HEAD";
 			if (dotdot == arg)
 				this = "HEAD";
 			if (!get_sha1(this, from_sha1) &&
 			    !get_sha1(next, sha1)) {
-				struct object *exclude;
-				struct object *include;
+				struct commit *a, *b;
+				struct commit_list *exclude;
 
-				exclude = get_reference(revs, this, from_sha1, flags ^ UNINTERESTING);
-				include = get_reference(revs, next, sha1, flags);
-				if (!exclude || !include)
-					die("Invalid revision range %s..%s", arg, next);
+				a = lookup_commit_reference(from_sha1);
+				b = lookup_commit_reference(sha1);
+				if (!a || !b) {
+					die(symmetric ?
+					    "Invalid symmetric difference expression %s...%s" :
+					    "Invalid revision range %s..%s",
+					    arg, next);
+				}
 
 				if (!seen_dashdash) {
 					*dotdot = '.';
 					verify_non_filename(revs->prefix, arg);
 				}
-				add_pending_object(revs, exclude, this);
-				add_pending_object(revs, include, next);
+
+				if (symmetric) {
+					exclude = get_merge_bases(a, b, 1);
+					add_pending_commit_list(revs, exclude,
+					                        flags_exclude);
+					free_commit_list(exclude);
+					a->object.flags |= flags;
+				} else
+					a->object.flags |= flags_exclude;
+				b->object.flags |= flags;
+				add_pending_object(revs, &a->object, this);
+				add_pending_object(revs, &b->object, next);
 				continue;
 			}
 			*dotdot = '.';
@@ -832,6 +910,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		object = get_reference(revs, arg, sha1, flags ^ local_flags);
 		add_pending_object(revs, object, arg);
 	}
+	if (show_merge)
+		prepare_show_merge(revs);
 	if (def && !revs->pending.nr) {
 		unsigned char sha1[20];
 		struct object *object;
@@ -852,8 +932,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	}
 	if (revs->combine_merges) {
 		revs->ignore_merges = 0;
-		if (revs->dense_combined_merges &&
-		    (revs->diffopt.output_format != DIFF_FORMAT_DIFFSTAT))
+		if (revs->dense_combined_merges && !revs->diffopt.output_format)
 			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 	}
 	revs->diffopt.abbrev = revs->abbrev;

@@ -12,7 +12,7 @@ static int add_info_ref(const char *path, const unsigned char *sha1)
 	struct object *o = parse_object(sha1);
 
 	fprintf(info_ref_fp, "%s	%s\n", sha1_to_hex(sha1), path);
-	if (o->type == TYPE_TAG) {
+	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, path, 0);
 		if (o)
 			fprintf(info_ref_fp, "%s	%s^{}\n",
@@ -94,7 +94,7 @@ static int read_pack_info_file(const char *infofile)
 
 	fp = fopen(infofile, "r");
 	if (!fp)
-		return 1; /* nonexisting is not an error. */
+		return 1; /* nonexistent is not an error. */
 
 	while (fgets(line, sizeof(line), fp)) {
 		int len = strlen(line);

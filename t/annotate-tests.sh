@@ -94,7 +94,7 @@ test_expect_success \
 test_expect_success \
     'merge-setup part 4' \
     'echo "evil merge." >>file &&
-     EDITOR=: VISUAL=: git commit -a --amend'
+     git commit -a --amend'
 
 test_expect_success \
     'Two lines blamed on A, one on B, two on B1, one on B2, one on A U Thor' \

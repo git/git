@@ -100,12 +100,30 @@ static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
 }
 
 
+int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
+		    xdemitconf_t const *xecfg) {
+	xdfile_t *xdf = &xe->xdf1;
+	const char *rchg = xdf->rchg;
+	long ix;
+
+	for (ix = 0; ix < xdf->nrec; ix++) {
+		if (rchg[ix])
+			continue;
+		if (xdl_emit_record(xdf, ix, "", ecb))
+			return -1;
+	}
+	return 0;
+}
+
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
 	char funcbuf[40];
 	long funclen = 0;
+
+	if (xecfg->flags & XDL_EMIT_COMMON)
+		return xdl_emit_common(xe, xscr, ecb, xecfg);
 
 	for (xch = xche = xscr; xch; xch = xche->next) {
 		xche = xdl_get_hunk(xch, xecfg);

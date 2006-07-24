@@ -43,10 +43,7 @@ struct tree_entry_list {
 	const unsigned char *sha1;
 };
 
-static struct tree_entry_list df_conflict_list = {
-	.name = NULL,
-	.next = &df_conflict_list
-};
+static struct tree_entry_list df_conflict_list;
 
 typedef int (*merge_fn_t)(struct cache_entry **src);
 
@@ -333,14 +330,9 @@ static void setup_progress_signal(void)
 	setitimer(ITIMER_REAL, &v, NULL);
 }
 
+static struct checkout state;
 static void check_updates(struct cache_entry **src, int nr)
 {
-	static struct checkout state = {
-		.base_dir = "",
-		.force = 1,
-		.quiet = 1,
-		.refresh_cache = 1,
-	};
 	unsigned short mask = htons(CE_UPDATE);
 	unsigned last_percent = 200, cnt = 0, total = 0;
 
@@ -884,6 +876,12 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	unsigned char sha1[20];
 	merge_fn_t fn = NULL;
 
+	df_conflict_list.next = &df_conflict_list;
+	state.base_dir = "";
+	state.force = 1;
+	state.quiet = 1;
+	state.refresh_cache = 1;
+
 	setup_git_directory();
 	git_config(git_default_config);
 
@@ -1038,7 +1036,7 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	}
 
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    commit_lock_file(&lock_file))
+	    close(newfd) || commit_lock_file(&lock_file))
 		die("unable to write new index file");
 	return 0;
 }

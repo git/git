@@ -57,7 +57,7 @@ Issues of note:
 
 	- "libcurl" and "curl" executable.  git-http-fetch and
 	  git-fetch use them.  If you do not use http
-	  transfer, you are probabaly OK if you do not have
+	  transfer, you are probably OK if you do not have
 	  them.
 
 	- expat library; git-http-push uses it for remote lock
@@ -82,7 +82,7 @@ Issues of note:
 	  git, and if you only use git to track other peoples work you'll
 	  never notice the lack of it. 
 
-        - "wish", the TCL/Tk windowing shell is used in gitk to show the
+        - "wish", the Tcl/Tk windowing shell is used in gitk to show the
           history graphically
 
 	- "ssh" is used to push and pull over the net

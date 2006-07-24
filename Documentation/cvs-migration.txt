@@ -93,7 +93,7 @@ machine where the repository is hosted.  If you don't want to give them a
 full shell on the machine, there is a restricted shell which only allows
 users to do git pushes and pulls; see gitlink:git-shell[1].
 
-Put all the committers should in the same group, and make the repository
+Put all the committers in the same group, and make the repository
 writable by that group:
 
 ------------------------------------------------

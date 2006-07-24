@@ -56,7 +56,7 @@ static struct commit *check_commit(struct object *obj,
 				   const unsigned char *sha1,
 				   int quiet)
 {
-	if (obj->type != TYPE_COMMIT) {
+	if (obj->type != OBJ_COMMIT) {
 		if (!quiet)
 			error("Object %s is a %s, not a commit",
 			      sha1_to_hex(sha1), typename(obj->type));
@@ -86,11 +86,11 @@ struct commit *lookup_commit(const unsigned char *sha1)
 	if (!obj) {
 		struct commit *ret = alloc_commit_node();
 		created_object(sha1, &ret->object);
-		ret->object.type = TYPE_COMMIT;
+		ret->object.type = OBJ_COMMIT;
 		return ret;
 	}
 	if (!obj->type)
-		obj->type = TYPE_COMMIT;
+		obj->type = OBJ_COMMIT;
 	return check_commit(obj, sha1, 0);
 }
 
@@ -412,12 +412,13 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 {
 	struct commit_list *parents;
 
-	parents = commit->parents;
 	commit->object.flags &= ~mark;
+	parents = commit->parents;
 	while (parents) {
 		struct commit *parent = parents->item;
-		if (parent && parent->object.parsed &&
-		    (parent->object.flags & mark))
+
+		/* Have we already cleared this? */
+		if (mark & parent->object.flags)
 			clear_commit_marks(parent, mark);
 		parents = parents->next;
 	}
@@ -669,6 +670,9 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			continue;
 		}
 
+		if (!subject)
+			body = 1;
+
 		if (is_empty_line(line, &linelen)) {
 			if (!body)
 				continue;
@@ -676,8 +680,6 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 				continue;
 			if (fmt == CMIT_FMT_SHORT)
 				break;
-		} else {
-			body = 1;
 		}
 
 		if (subject) {
@@ -715,6 +717,12 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		offset--;
 	/* Make sure there is an EOLN for the non-oneline case */
 	if (fmt != CMIT_FMT_ONELINE)
+		buf[offset++] = '\n';
+	/*
+	 * make sure there is another EOLN to separate the headers from whatever
+	 * body the caller appends if we haven't already written a body
+	 */
+	if (fmt == CMIT_FMT_EMAIL && !body)
 		buf[offset++] = '\n';
 	buf[offset] = '\0';
 	return offset;
@@ -860,4 +868,148 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 		setter(work_item, NULL);
 	}
 	free(nodes);
+}
+
+/* merge-rebase stuff */
+
+/* bits #0..7 in revision.h */
+#define PARENT1		(1u<< 8)
+#define PARENT2		(1u<< 9)
+#define STALE		(1u<<10)
+#define RESULT		(1u<<11)
+
+static struct commit *interesting(struct commit_list *list)
+{
+	while (list) {
+		struct commit *commit = list->item;
+		list = list->next;
+		if (commit->object.flags & STALE)
+			continue;
+		return commit;
+	}
+	return NULL;
+}
+
+static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+{
+	struct commit_list *list = NULL;
+	struct commit_list *result = NULL;
+
+	if (one == two)
+		/* We do not mark this even with RESULT so we do not
+		 * have to clean it up.
+		 */
+		return commit_list_insert(one, &result);
+
+	parse_commit(one);
+	parse_commit(two);
+
+	one->object.flags |= PARENT1;
+	two->object.flags |= PARENT2;
+	insert_by_date(one, &list);
+	insert_by_date(two, &list);
+
+	while (interesting(list)) {
+		struct commit *commit;
+		struct commit_list *parents;
+		struct commit_list *n;
+		int flags;
+
+		commit = list->item;
+		n = list->next;
+		free(list);
+		list = n;
+
+		flags = commit->object.flags & (PARENT1 | PARENT2 | STALE);
+		if (flags == (PARENT1 | PARENT2)) {
+			if (!(commit->object.flags & RESULT)) {
+				commit->object.flags |= RESULT;
+				insert_by_date(commit, &result);
+			}
+			/* Mark parents of a found merge stale */
+			flags |= STALE;
+		}
+		parents = commit->parents;
+		while (parents) {
+			struct commit *p = parents->item;
+			parents = parents->next;
+			if ((p->object.flags & flags) == flags)
+				continue;
+			parse_commit(p);
+			p->object.flags |= flags;
+			insert_by_date(p, &list);
+		}
+	}
+
+	/* Clean up the result to remove stale ones */
+	list = result; result = NULL;
+	while (list) {
+		struct commit_list *n = list->next;
+		if (!(list->item->object.flags & STALE))
+			insert_by_date(list->item, &result);
+		free(list);
+		list = n;
+	}
+	return result;
+}
+
+struct commit_list *get_merge_bases(struct commit *one,
+				    struct commit *two,
+                                    int cleanup)
+{
+	const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
+	struct commit_list *list;
+	struct commit **rslt;
+	struct commit_list *result;
+	int cnt, i, j;
+
+	result = merge_bases(one, two);
+	if (one == two)
+		return result;
+	if (!result || !result->next) {
+		if (cleanup) {
+			clear_commit_marks(one, all_flags);
+			clear_commit_marks(two, all_flags);
+		}
+		return result;
+	}
+
+	/* There are more than one */
+	cnt = 0;
+	list = result;
+	while (list) {
+		list = list->next;
+		cnt++;
+	}
+	rslt = xcalloc(cnt, sizeof(*rslt));
+	for (list = result, i = 0; list; list = list->next)
+		rslt[i++] = list->item;
+	free_commit_list(result);
+
+	clear_commit_marks(one, all_flags);
+	clear_commit_marks(two, all_flags);
+	for (i = 0; i < cnt - 1; i++) {
+		for (j = i+1; j < cnt; j++) {
+			if (!rslt[i] || !rslt[j])
+				continue;
+			result = merge_bases(rslt[i], rslt[j]);
+			clear_commit_marks(rslt[i], all_flags);
+			clear_commit_marks(rslt[j], all_flags);
+			for (list = result; list; list = list->next) {
+				if (rslt[i] == list->item)
+					rslt[i] = NULL;
+				if (rslt[j] == list->item)
+					rslt[j] = NULL;
+			}
+		}
+	}
+
+	/* Surviving ones in rslt[] are the independent results */
+	result = NULL;
+	for (i = 0; i < cnt; i++) {
+		if (rslt[i])
+			insert_by_date(rslt[i], &result);
+	}
+	free(rslt);
+	return result;
 }

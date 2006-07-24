@@ -16,54 +16,56 @@ use Encode;
 use Fcntl ':mode';
 binmode STDOUT, ':utf8';
 
-my $cgi = new CGI;
-my $version = "267";
-my $my_url = $cgi->url();
-my $my_uri = $cgi->url(-absolute => 1);
-my $rss_link = "";
+our $cgi = new CGI;
+our $version = "267";
+our $my_url = $cgi->url();
+our $my_uri = $cgi->url(-absolute => 1);
+our $rss_link = "";
 
-# location of the git-core binaries
-my $gitbin = "/usr/bin";
+# core git executable to use
+# this can just be "git" if your webserver has a sensible PATH
+our $GIT = "/usr/bin/git";
 
 # absolute fs-path which will be prepended to the project path
-#my $projectroot = "/pub/scm";
-my $projectroot = "/home/kay/public_html/pub/scm";
+#our $projectroot = "/pub/scm";
+our $projectroot = "/home/kay/public_html/pub/scm";
 
-# version of the git-core binaries
-my $git_version = qx($gitbin/git --version);
-if ($git_version =~ m/git version (.*)$/) {
-	$git_version = $1;
-} else {
-	$git_version = "unknown";
-}
+# version of the core git binary
+our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
 # location for temporary files needed for diffs
-my $git_temp = "/tmp/gitweb";
+our $git_temp = "/tmp/gitweb";
+if (! -d $git_temp) {
+    mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+}
 
 # target of the home link on top of all pages
-my $home_link = $my_uri;
+our $home_link = $my_uri;
+
+# name of your site or organization to appear in page titles
+# replace this with something more descriptive for clearer bookmarks
+our $site_name = $ENV{'SERVER_NAME'} || "Untitled";
 
 # html text to include at home page
-my $home_text = "indextext.html";
+our $home_text = "indextext.html";
 
 # URI of default stylesheet
-my $stylesheet = "gitweb.css";
+our $stylesheet = "gitweb.css";
 
 # source of projects list
-#my $projects_list = $projectroot;
-my $projects_list = "index/index.aux";
+#our $projects_list = $projectroot;
+our $projects_list = "index/index.aux";
 
 # default blob_plain mimetype and default charset for text/plain blob
-my $default_blob_plain_mimetype = 'text/plain';
-my $default_text_plain_charset  = undef;
+our $default_blob_plain_mimetype = 'text/plain';
+our $default_text_plain_charset  = undef;
 
 # file to use for guessing MIME types before trying /etc/mime.types
 # (relative to the current git repository)
-my $mimetypes_file = undef;
-
+our $mimetypes_file = undef;
 
 # input validation and dispatch
-my $action = $cgi->param('a');
+our $action = $cgi->param('a');
 if (defined $action) {
 	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
 		undef $action;
@@ -78,7 +80,7 @@ if (defined $action) {
 	}
 }
 
-my $order = $cgi->param('o');
+our $order = $cgi->param('o');
 if (defined $order) {
 	if ($order =~ m/[^0-9a-zA-Z_]/) {
 		undef $order;
@@ -86,7 +88,7 @@ if (defined $order) {
 	}
 }
 
-my $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
+our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
 if (defined $project) {
 	$project =~ s|^/||; $project =~ s|/$||;
 	$project = validate_input($project);
@@ -109,7 +111,7 @@ if (defined $project) {
 	exit;
 }
 
-my $file_name = $cgi->param('f');
+our $file_name = $cgi->param('f');
 if (defined $file_name) {
 	$file_name = validate_input($file_name);
 	if (!defined($file_name)) {
@@ -117,7 +119,7 @@ if (defined $file_name) {
 	}
 }
 
-my $hash = $cgi->param('h');
+our $hash = $cgi->param('h');
 if (defined $hash) {
 	$hash = validate_input($hash);
 	if (!defined($hash)) {
@@ -125,7 +127,7 @@ if (defined $hash) {
 	}
 }
 
-my $hash_parent = $cgi->param('hp');
+our $hash_parent = $cgi->param('hp');
 if (defined $hash_parent) {
 	$hash_parent = validate_input($hash_parent);
 	if (!defined($hash_parent)) {
@@ -133,7 +135,7 @@ if (defined $hash_parent) {
 	}
 }
 
-my $hash_base = $cgi->param('hb');
+our $hash_base = $cgi->param('hb');
 if (defined $hash_base) {
 	$hash_base = validate_input($hash_base);
 	if (!defined($hash_base)) {
@@ -141,7 +143,7 @@ if (defined $hash_base) {
 	}
 }
 
-my $page = $cgi->param('pg');
+our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]$/) {
 		undef $page;
@@ -149,7 +151,7 @@ if (defined $page) {
 	}
 }
 
-my $searchtext = $cgi->param('s');
+our $searchtext = $cgi->param('s');
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
 		undef $searchtext;
@@ -278,7 +280,7 @@ sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
 
-	my $title = "git";
+	my $title = "$site_name git";
 	if (defined $project) {
 		$title .= " - $project";
 		if (defined $action) {
@@ -291,7 +293,17 @@ sub git_header_html {
 			}
 		}
 	}
-	print $cgi->header(-type=>'text/html',  -charset => 'utf-8', -status=> $status, -expires => $expires);
+	my $content_type;
+	# require explicit support from the UA if we are to send the page as
+	# 'application/xhtml+xml', otherwise send it as plain old 'text/html'.
+	# we have to do this because MSIE sometimes globs '*/*', pretending to
+	# support xhtml+xml but choking when it gets what it asked for.
+	if ($cgi->http('HTTP_ACCEPT') =~ m/(,|;|\s|^)application\/xhtml\+xml(,|;|\s|$)/ && $cgi->Accept('application/xhtml+xml') != 0) {
+		$content_type = 'application/xhtml+xml';
+	} else {
+		$content_type = 'text/html';
+	}
+	print $cgi->header(-type=>$content_type,  -charset => 'utf-8', -status=> $status, -expires => $expires);
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -299,7 +311,7 @@ sub git_header_html {
 <!-- git web interface v$version, (C) 2005-2006, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke -->
 <!-- git core binaries version $git_version -->
 <head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<meta http-equiv="content-type" content="$content_type; charset=utf-8"/>
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 <link rel="stylesheet" type="text/css" href="$stylesheet"/>
@@ -376,7 +388,7 @@ sub die_error {
 sub git_get_type {
 	my $hash = shift;
 
-	open my $fd, "-|", "$gitbin/git-cat-file -t $hash" or return;
+	open my $fd, "-|", "$GIT cat-file -t $hash" or return;
 	my $type = <$fd>;
 	close $fd or return;
 	chomp $type;
@@ -388,7 +400,7 @@ sub git_read_head {
 	my $oENV = $ENV{'GIT_DIR'};
 	my $retval = undef;
 	$ENV{'GIT_DIR'} = "$projectroot/$project";
-	if (open my $fd, "-|", "$gitbin/git-rev-parse", "--verify", "HEAD") {
+	if (open my $fd, "-|", $GIT, "rev-parse", "--verify", "HEAD") {
 		my $head = <$fd>;
 		close $fd;
 		if (defined $head && $head =~ /^([0-9a-fA-F]{40})$/) {
@@ -428,7 +440,7 @@ sub git_read_tag {
 	my %tag;
 	my @comment;
 
-	open my $fd, "-|", "$gitbin/git-cat-file tag $tag_id" or return;
+	open my $fd, "-|", "$GIT cat-file tag $tag_id" or return;
 	$tag{'id'} = $tag_id;
 	while (my $line = <$fd>) {
 		chomp $line;
@@ -500,7 +512,7 @@ sub git_read_commit {
 		@commit_lines = @$commit_text;
 	} else {
 		$/ = "\0";
-		open my $fd, "-|", "$gitbin/git-rev-list --header --parents --max-count=1 $commit_id" or return;
+		open my $fd, "-|", "$GIT rev-list --header --parents --max-count=1 $commit_id" or return;
 		@commit_lines = split '\n', <$fd>;
 		close $fd or return;
 		$/ = "\n";
@@ -598,7 +610,7 @@ sub git_diff_print {
 	if (defined $from) {
 		$from_tmp = "$git_temp/gitweb_" . $$ . "_from";
 		open my $fd2, "> $from_tmp";
-		open my $fd, "-|", "$gitbin/git-cat-file blob $from";
+		open my $fd, "-|", "$GIT cat-file blob $from";
 		my @file = <$fd>;
 		print $fd2 @file;
 		close $fd2;
@@ -609,7 +621,7 @@ sub git_diff_print {
 	if (defined $to) {
 		$to_tmp = "$git_temp/gitweb_" . $$ . "_to";
 		open my $fd2, "> $to_tmp";
-		open my $fd, "-|", "$gitbin/git-cat-file blob $to";
+		open my $fd, "-|", "$GIT cat-file blob $to";
 		my @file = <$fd>;
 		print $fd2 @file;
 		close $fd2;
@@ -828,7 +840,7 @@ sub git_get_project_config {
 	$key =~ s/^gitweb\.//;
 	return if ($key =~ m/\W/);
 
-	my $val = qx($gitbin/git-repo-config --get gitweb.$key);
+	my $val = qx($GIT repo-config --get gitweb.$key);
 	return ($val);
 }
 
@@ -1050,7 +1062,7 @@ sub git_summary {
 	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
 	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n" .
 	      "</table>\n";
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=17 " . git_read_head($project) or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT rev-list --max-count=17 " . git_read_head($project) or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
@@ -1238,7 +1250,7 @@ sub git_blame {
 		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
 			or die_error(undef, "Error lookup file.");
 	}
-	open ($fd, "-|", "$gitbin/git-annotate", '-l', '-t', '-r', $file_name, $hash_base)
+	open ($fd, "-|", $GIT, "annotate", '-l', '-t', '-r', $file_name, $hash_base)
 		or die_error(undef, "Open failed.");
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
@@ -1433,7 +1445,7 @@ sub git_get_hash_by_path {
 	my $tree = $base;
 	my @parts = split '/', $path;
 	while (my $part = shift @parts) {
-		open my $fd, "-|", "$gitbin/git-ls-tree $tree" or die_error(undef, "Open git-ls-tree failed.");
+		open my $fd, "-|", "$GIT ls-tree $tree" or die_error(undef, "Open git-ls-tree failed.");
 		my (@entries) = map { chomp; $_ } <$fd>;
 		close $fd or return undef;
 		foreach my $line (@entries) {
@@ -1456,13 +1468,103 @@ sub git_get_hash_by_path {
 	}
 }
 
+sub mimetype_guess_file {
+	my $filename = shift;
+	my $mimemap = shift;
+	-r $mimemap or return undef;
+
+	my %mimemap;
+	open(MIME, $mimemap) or return undef;
+	while (<MIME>) {
+		my ($mime, $exts) = split(/\t+/);
+		my @exts = split(/\s+/, $exts);
+		foreach my $ext (@exts) {
+			$mimemap{$ext} = $mime;
+		}
+	}
+	close(MIME);
+
+	$filename =~ /\.(.*?)$/;
+	return $mimemap{$1};
+}
+
+sub mimetype_guess {
+	my $filename = shift;
+	my $mime;
+	$filename =~ /\./ or return undef;
+
+	if ($mimetypes_file) {
+		my $file = $mimetypes_file;
+		#$file =~ m#^/# or $file = "$projectroot/$path/$file";
+		$mime = mimetype_guess_file($filename, $file);
+	}
+	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
+	return $mime;
+}
+
+sub git_blob_plain_mimetype {
+	my $fd = shift;
+	my $filename = shift;
+
+	if ($filename) {
+		my $mime = mimetype_guess($filename);
+		$mime and return $mime;
+	}
+
+	# just in case
+	return $default_blob_plain_mimetype unless $fd;
+
+	if (-T $fd) {
+		return 'text/plain' .
+		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
+	} elsif (! $filename) {
+		return 'application/octet-stream';
+	} elsif ($filename =~ m/\.png$/i) {
+		return 'image/png';
+	} elsif ($filename =~ m/\.gif$/i) {
+		return 'image/gif';
+	} elsif ($filename =~ m/\.jpe?g$/i) {
+		return 'image/jpeg';
+	} else {
+		return 'application/octet-stream';
+	}
+}
+
+sub git_blob_plain {
+	my $type = shift;
+	open my $fd, "-|", "$GIT cat-file blob $hash" or die_error("Couldn't cat $file_name, $hash");
+
+	$type ||= git_blob_plain_mimetype($fd, $file_name);
+
+	# save as filename, even when no $file_name is given
+	my $save_as = "$hash";
+	if (defined $file_name) {
+		$save_as = $file_name;
+	} elsif ($type =~ m/^text\//) {
+		$save_as .= '.txt';
+	}
+
+	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
+	undef $/;
+	binmode STDOUT, ':raw';
+	print <$fd>;
+	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	$/ = "\n";
+	close $fd;
+}
+
 sub git_blob {
 	if (!defined $hash && defined $file_name) {
 		my $base = $hash_base || git_read_head($project);
 		$hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
 	}
 	my $have_blame = git_get_project_config_bool ('blame');
-	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT cat-file blob $hash" or die_error(undef, "Open failed.");
+	my $mimetype = git_blob_plain_mimetype($fd, $file_name);
+	if ($mimetype !~ m/^text\//) {
+		close $fd;
+		return git_blob_plain($mimetype);
+	}
 	git_header_html();
 	if (defined $hash_base && (my %co = git_read_commit($hash_base))) {
 		print "<div class=\"page_nav\">\n" .
@@ -1511,89 +1613,6 @@ sub git_blob {
 	git_footer_html();
 }
 
-sub mimetype_guess_file {
-	my $filename = shift;
-	my $mimemap = shift;
-	-r $mimemap or return undef;
-
-	my %mimemap;
-	open(MIME, $mimemap) or return undef;
-	while (<MIME>) {
-		my ($mime, $exts) = split(/\t+/);
-		my @exts = split(/\s+/, $exts);
-		foreach my $ext (@exts) {
-			$mimemap{$ext} = $mime;
-		}
-	}
-	close(MIME);
-
-	$filename =~ /\.(.*?)$/;
-	return $mimemap{$1};
-}
-
-sub mimetype_guess {
-	my $filename = shift;
-	my $mime;
-	$filename =~ /\./ or return undef;
-
-	if ($mimetypes_file) {
-		my $file = $mimetypes_file;
-		#$file =~ m#^/# or $file = "$projectroot/$path/$file";
-		$mime = mimetype_guess_file($filename, $file);
-	}
-	$mime ||= mimetype_guess_file($filename, '/etc/mime.types');
-	return $mime;
-}
-
-sub git_blob_plain_mimetype {
-	my $fd = shift;
-	my $filename = shift;
-
-	# just in case
-	return $default_blob_plain_mimetype unless $fd;
-
-	if ($filename) {
-		my $mime = mimetype_guess($filename);
-		$mime and return $mime;
-	}
-
-	if (-T $fd) {
-		return 'text/plain' .
-		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
-	} elsif (! $filename) {
-		return 'application/octet-stream';
-	} elsif ($filename =~ m/\.png$/i) {
-		return 'image/png';
-	} elsif ($filename =~ m/\.gif$/i) {
-		return 'image/gif';
-	} elsif ($filename =~ m/\.jpe?g$/i) {
-		return 'image/jpeg';
-	} else {
-		return 'application/octet-stream';
-	}
-}
-
-sub git_blob_plain {
-	open my $fd, "-|", "$gitbin/git-cat-file blob $hash" or return;
-	my $type = git_blob_plain_mimetype($fd, $file_name);
-
-	# save as filename, even when no $file_name is given
-	my $save_as = "$hash";
-	if (defined $file_name) {
-		$save_as = $file_name;
-	} elsif ($type =~ m/^text\//) {
-		$save_as .= '.txt';
-	}
-
-	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
-	undef $/;
-	binmode STDOUT, ':raw';
-	print <$fd>;
-	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
-	$/ = "\n";
-	close $fd;
-}
-
 sub git_tree {
 	if (!defined $hash) {
 		$hash = git_read_head($project);
@@ -1606,7 +1625,7 @@ sub git_tree {
 		}
 	}
 	$/ = "\0";
-	open my $fd, "-|", "$gitbin/git-ls-tree -z $hash" or die_error(undef, "Open git-ls-tree failed.");
+	open my $fd, "-|", "$GIT ls-tree -z $hash" or die_error(undef, "Open git-ls-tree failed.");
 	chomp (my (@entries) = <$fd>);
 	close $fd or die_error(undef, "Reading tree failed.");
 	$/ = "\n";
@@ -1669,6 +1688,7 @@ sub git_tree {
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$t_hash$base_key;f=$base$t_name")}, "blob") .
 #			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;h=$t_hash$base_key;f=$base$t_name")}, "blame") .
 			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash_base;f=$base$t_name")}, "history") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$t_hash;f=$base$t_name")}, "raw") .
 			      "</td>\n";
 		} elsif ($t_type eq "tree") {
 			print "<td class=\"list\">" .
@@ -1676,6 +1696,7 @@ sub git_tree {
 			      "</td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$t_hash$base_key;f=$base$t_name")}, "tree") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;h=$hash_base;f=$base$t_name")}, "history") .
 			      "</td>\n";
 		}
 		print "</tr>\n";
@@ -1687,7 +1708,7 @@ sub git_tree {
 
 sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
-	open my $fd, "-|", "$gitbin/git-rev-list --max-count=150 " . git_read_head($project) or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT rev-list --max-count=150 " . git_read_head($project) or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading rev-list failed.");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
@@ -1707,7 +1728,7 @@ sub git_rss {
 			last;
 		}
 		my %cd = date_str($co{'committer_epoch'});
-		open $fd, "-|", "$gitbin/git-diff-tree -r $co{'parent'} $co{'id'}" or next;
+		open $fd, "-|", "$GIT diff-tree -r $co{'parent'} $co{'id'}" or next;
 		my @difftree = map { chomp; $_ } <$fd>;
 		close $fd or next;
 		print "<item>\n" .
@@ -1749,7 +1770,7 @@ sub git_opml {
 	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
 	      "<opml version=\"1.0\">\n".
 	      "<head>".
-	      "  <title>Git OPML Export</title>\n".
+	      "  <title>$site_name Git OPML Export</title>\n".
 	      "</head>\n".
 	      "<body>\n".
 	      "<outline text=\"git RSS feeds\">\n";
@@ -1795,7 +1816,7 @@ sub git_log {
 	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", "$gitbin/git-rev-list $limit $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT rev-list $limit $hash" or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -1886,7 +1907,7 @@ sub git_commit {
 		$root = " --root";
 		$parent = "";
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r -M $root $parent $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT diff-tree -r -M $root $parent $hash" or die_error(undef, "Open failed.");
 	@difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
@@ -2128,7 +2149,7 @@ sub git_commitdiff {
 	if (!defined $hash_parent) {
 		$hash_parent = $co{'parent'};
 	}
-	open my $fd, "-|", "$gitbin/git-diff-tree -r $hash_parent $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT diff-tree -r $hash_parent $hash" or die_error(undef, "Open failed.");
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
@@ -2218,14 +2239,14 @@ sub git_commitdiff {
 
 sub git_commitdiff_plain {
 	mkdir($git_temp, 0700);
-	open my $fd, "-|", "$gitbin/git-diff-tree -r $hash_parent $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT diff-tree -r $hash_parent $hash" or die_error(undef, "Open failed.");
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
 	# try to figure out the next tag after this commit
 	my $tagname;
 	my $refs = read_info_ref("tags");
-	open $fd, "-|", "$gitbin/git-rev-list HEAD";
+	open $fd, "-|", "$GIT rev-list HEAD";
 	chomp (my (@commits) = <$fd>);
 	close $fd;
 	foreach my $commit (@commits) {
@@ -2295,16 +2316,13 @@ sub git_history {
 	      "</div>\n";
 	print "<div class=\"page_path\"><b>/" . esc_html($file_name) . "</b><br/></div>\n";
 
-	open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -- \'$file_name\'";
-	my $commit;
+	open my $fd, "-|",
+		"$GIT rev-list --full-history $hash -- \'$file_name\'";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
 	while (my $line = <$fd>) {
 		if ($line =~ m/^([0-9a-fA-F]{40})/){
-			$commit = $1;
-			next;
-		}
-		if ($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/ && (defined $commit)) {
+			my $commit = $1;
 			my %co = git_read_commit($commit);
 			if (!%co) {
 				next;
@@ -2336,7 +2354,6 @@ sub git_history {
 			}
 			print "</td>\n" .
 			      "</tr>\n";
-			undef $commit;
 		}
 	}
 	print "</table>\n";
@@ -2387,7 +2404,7 @@ sub git_search {
 	my $alternate = 0;
 	if ($commit_search) {
 		$/ = "\0";
-		open my $fd, "-|", "$gitbin/git-rev-list --header --parents $hash" or next;
+		open my $fd, "-|", "$GIT rev-list --header --parents $hash" or next;
 		while (my $commit_text = <$fd>) {
 			if (!grep m/$searchtext/i, $commit_text) {
 				next;
@@ -2437,7 +2454,7 @@ sub git_search {
 
 	if ($pickaxe_search) {
 		$/ = "\n";
-		open my $fd, "-|", "$gitbin/git-rev-list $hash | $gitbin/git-diff-tree -r --stdin -S\'$searchtext\'";
+		open my $fd, "-|", "$GIT rev-list $hash | $GIT diff-tree -r --stdin -S\'$searchtext\'";
 		undef %co;
 		my @files;
 		while (my $line = <$fd>) {
@@ -2508,7 +2525,7 @@ sub git_shortlog {
 	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", "$gitbin/git-rev-list $limit $hash" or die_error(undef, "Open failed.");
+	open my $fd, "-|", "$GIT rev-list $limit $hash" or die_error(undef, "Open failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 

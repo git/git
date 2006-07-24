@@ -51,6 +51,10 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 		if (fd == 3)
 			/* emergency quit */
 			fd = 2;
+		if (fd == 2) {
+			xwrite(fd, data, sz);
+			return sz;
+		}
 		return safe_write(fd, data, sz);
 	}
 	p = data;
@@ -177,6 +181,8 @@ static void create_pack_file(void)
 		int status;
 		ssize_t sz;
 		int pe, pu, pollsize;
+
+		reset_timeout();
 
 		pollsize = 0;
 		pe = pu = -1;
@@ -326,7 +332,7 @@ static int got_sha1(char *hex, unsigned char *sha1)
 			o = parse_object(sha1);
 		if (!o)
 			die("oops (%s)", sha1_to_hex(sha1));
-		if (o->type == TYPE_COMMIT) {
+		if (o->type == OBJ_COMMIT) {
 			struct commit_list *parents;
 			if (o->flags & THEY_HAVE)
 				return 0;
@@ -457,7 +463,7 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 		o->flags |= OUR_REF;
 		nr_our_refs++;
 	}
-	if (o->type == TYPE_TAG) {
+	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, refname, 0);
 		packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
 	}

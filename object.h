@@ -24,12 +24,19 @@ struct object_array {
 #define TYPE_BITS   3
 #define FLAG_BITS  27
 
-#define TYPE_NONE   0
-#define TYPE_BLOB   1
-#define TYPE_TREE   2
-#define TYPE_COMMIT 3
-#define TYPE_TAG    4
-#define TYPE_BAD    5
+/*
+ * The object type is stored in 3 bits.
+ */
+enum object_type {
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5/6 for future expansion */
+	OBJ_DELTA = 7,
+	OBJ_BAD,
+};
 
 struct object {
 	unsigned parsed : 1;
@@ -40,14 +47,14 @@ struct object {
 };
 
 extern int track_object_refs;
-extern const char *type_names[];
+extern const char *type_names[9];
 
 extern unsigned int get_max_object_index(void);
 extern struct object *get_indexed_object(unsigned int);
 
 static inline const char *typename(unsigned int type)
 {
-	return type_names[type > TYPE_TAG ? TYPE_BAD : type];
+	return type_names[type > OBJ_BAD ? OBJ_BAD : type];
 }
 
 extern struct object_refs *lookup_object_refs(struct object *);

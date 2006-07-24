@@ -11,6 +11,7 @@
 #include "git-compat-util.h"
 #include "exec_cmd.h"
 #include "cache.h"
+#include "quote.h"
 
 #include "builtin.h"
 
@@ -120,13 +121,24 @@ static int handle_alias(int *argcp, const char ***argv)
 			if (!strcmp(alias_command, new_argv[0]))
 				die("recursive alias: %s", alias_command);
 
-			/* insert after command name */
-			if (*argcp > 1) {
-				new_argv = realloc(new_argv, sizeof(char*) *
-						   (count + *argcp));
-				memcpy(new_argv + count, *argv + 1,
-				       sizeof(char*) * *argcp);
+			if (getenv("GIT_TRACE")) {
+				int i;
+				fprintf(stderr, "trace: alias expansion: %s =>",
+					alias_command);
+				for (i = 0; i < count; ++i) {
+					fputc(' ', stderr);
+					sq_quote_print(stderr, new_argv[i]);
+				}
+				fputc('\n', stderr);
+				fflush(stderr);
 			}
+
+			new_argv = realloc(new_argv, sizeof(char*) *
+					   (count + *argcp + 1));
+			/* insert after command name */
+			memcpy(new_argv + count, *argv + 1,
+			       sizeof(char*) * *argcp);
+			new_argv[count+*argcp] = NULL;
 
 			*argv = new_argv;
 			*argcp += count - 1;
@@ -187,7 +199,9 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "mailinfo", cmd_mailinfo },
 		{ "stripspace", cmd_stripspace },
 		{ "update-index", cmd_update_index },
-		{ "update-ref", cmd_update_ref }
+		{ "update-ref", cmd_update_ref },
+		{ "fmt-merge-msg", cmd_fmt_merge_msg },
+		{ "prune", cmd_prune },
 	};
 	int i;
 
@@ -201,6 +215,18 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		struct cmd_struct *p = commands+i;
 		if (strcmp(p->cmd, cmd))
 			continue;
+
+		if (getenv("GIT_TRACE")) {
+			int i;
+			fprintf(stderr, "trace: built-in: git");
+			for (i = 0; i < argc; ++i) {
+				fputc(' ', stderr);
+				sq_quote_print(stderr, argv[i]);
+			}
+			putc('\n', stderr);
+			fflush(stderr);
+		}
+
 		exit(p->fn(argc, argv, envp));
 	}
 }
@@ -249,6 +275,11 @@ int main(int argc, const char **argv, char **envp)
 	while (argc > 1) {
 		cmd = *++argv;
 		argc--;
+
+		if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
+			setup_pager();
+			continue;
+		}
 
 		if (strncmp(cmd, "--", 2))
 			break;

@@ -12,7 +12,7 @@
 static const char git_usage[] =
 	"Usage: git [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ ARGS ]";
 
-/* most gui terms set COLUMNS (although some don't export it) */
+/* most GUI terminals set COLUMNS (although some don't export it) */
 static int term_columns(void)
 {
 	char *col_string = getenv("COLUMNS");

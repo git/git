@@ -13,42 +13,19 @@
 
 static int use_size_cache;
 
+static int diff_detect_rename_default = 0;
 static int diff_rename_limit_default = -1;
 static int diff_use_color_default = 0;
 
-enum color_diff {
-	DIFF_RESET = 0,
-	DIFF_PLAIN = 1,
-	DIFF_METAINFO = 2,
-	DIFF_FRAGINFO = 3,
-	DIFF_FILE_OLD = 4,
-	DIFF_FILE_NEW = 5,
-};
-
-#define COLOR_NORMAL  ""
-#define COLOR_BOLD    "\033[1m"
-#define COLOR_DIM     "\033[2m"
-#define COLOR_UL      "\033[4m"
-#define COLOR_BLINK   "\033[5m"
-#define COLOR_REVERSE "\033[7m"
-#define COLOR_RESET   "\033[m"
-
-#define COLOR_BLACK   "\033[30m"
-#define COLOR_RED     "\033[31m"
-#define COLOR_GREEN   "\033[32m"
-#define COLOR_YELLOW  "\033[33m"
-#define COLOR_BLUE    "\033[34m"
-#define COLOR_MAGENTA "\033[35m"
-#define COLOR_CYAN    "\033[36m"
-#define COLOR_WHITE   "\033[37m"
-
-static const char *diff_colors[] = {
-	[DIFF_RESET]    = COLOR_RESET,
-	[DIFF_PLAIN]    = COLOR_NORMAL,
-	[DIFF_METAINFO] = COLOR_BOLD,
-	[DIFF_FRAGINFO] = COLOR_CYAN,
-	[DIFF_FILE_OLD] = COLOR_RED,
-	[DIFF_FILE_NEW] = COLOR_GREEN,
+/* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
+static char diff_colors[][24] = {
+	"\033[m",	/* reset */
+	"",		/* normal */
+	"\033[1m",	/* bold */
+	"\033[36m",	/* cyan */
+	"\033[31m",	/* red */
+	"\033[32m",	/* green */
+	"\033[33m"	/* yellow */
 };
 
 static int parse_diff_color_slot(const char *var, int ofs)
@@ -63,45 +40,131 @@ static int parse_diff_color_slot(const char *var, int ofs)
 		return DIFF_FILE_OLD;
 	if (!strcasecmp(var+ofs, "new"))
 		return DIFF_FILE_NEW;
+	if (!strcasecmp(var+ofs, "commit"))
+		return DIFF_COMMIT;
 	die("bad config variable '%s'", var);
 }
 
-static const char *parse_diff_color_value(const char *value, const char *var)
+static int parse_color(const char *name, int len)
 {
-	if (!strcasecmp(value, "normal"))
-		return COLOR_NORMAL;
-	if (!strcasecmp(value, "bold"))
-		return COLOR_BOLD;
-	if (!strcasecmp(value, "dim"))
-		return COLOR_DIM;
-	if (!strcasecmp(value, "ul"))
-		return COLOR_UL;
-	if (!strcasecmp(value, "blink"))
-		return COLOR_BLINK;
-	if (!strcasecmp(value, "reverse"))
-		return COLOR_REVERSE;
-	if (!strcasecmp(value, "reset"))
-		return COLOR_RESET;
-	if (!strcasecmp(value, "black"))
-		return COLOR_BLACK;
-	if (!strcasecmp(value, "red"))
-		return COLOR_RED;
-	if (!strcasecmp(value, "green"))
-		return COLOR_GREEN;
-	if (!strcasecmp(value, "yellow"))
-		return COLOR_YELLOW;
-	if (!strcasecmp(value, "blue"))
-		return COLOR_BLUE;
-	if (!strcasecmp(value, "magenta"))
-		return COLOR_MAGENTA;
-	if (!strcasecmp(value, "cyan"))
-		return COLOR_CYAN;
-	if (!strcasecmp(value, "white"))
-		return COLOR_WHITE;
+	static const char * const color_names[] = {
+		"normal", "black", "red", "green", "yellow",
+		"blue", "magenta", "cyan", "white"
+	};
+	char *end;
+	int i;
+	for (i = 0; i < ARRAY_SIZE(color_names); i++) {
+		const char *str = color_names[i];
+		if (!strncasecmp(name, str, len) && !str[len])
+			return i - 1;
+	}
+	i = strtol(name, &end, 10);
+	if (*name && !*end && i >= -1 && i <= 255)
+		return i;
+	return -2;
+}
+
+static int parse_attr(const char *name, int len)
+{
+	static const int attr_values[] = { 1, 2, 4, 5, 7 };
+	static const char * const attr_names[] = {
+		"bold", "dim", "ul", "blink", "reverse"
+	};
+	int i;
+	for (i = 0; i < ARRAY_SIZE(attr_names); i++) {
+		const char *str = attr_names[i];
+		if (!strncasecmp(name, str, len) && !str[len])
+			return attr_values[i];
+	}
+	return -1;
+}
+
+static void parse_diff_color_value(const char *value, const char *var, char *dst)
+{
+	const char *ptr = value;
+	int attr = -1;
+	int fg = -2;
+	int bg = -2;
+
+	if (!strcasecmp(value, "reset")) {
+		strcpy(dst, "\033[m");
+		return;
+	}
+
+	/* [fg [bg]] [attr] */
+	while (*ptr) {
+		const char *word = ptr;
+		int val, len = 0;
+
+		while (word[len] && !isspace(word[len]))
+			len++;
+
+		ptr = word + len;
+		while (*ptr && isspace(*ptr))
+			ptr++;
+
+		val = parse_color(word, len);
+		if (val >= -1) {
+			if (fg == -2) {
+				fg = val;
+				continue;
+			}
+			if (bg == -2) {
+				bg = val;
+				continue;
+			}
+			goto bad;
+		}
+		val = parse_attr(word, len);
+		if (val < 0 || attr != -1)
+			goto bad;
+		attr = val;
+	}
+
+	if (attr >= 0 || fg >= 0 || bg >= 0) {
+		int sep = 0;
+
+		*dst++ = '\033';
+		*dst++ = '[';
+		if (attr >= 0) {
+			*dst++ = '0' + attr;
+			sep++;
+		}
+		if (fg >= 0) {
+			if (sep++)
+				*dst++ = ';';
+			if (fg < 8) {
+				*dst++ = '3';
+				*dst++ = '0' + fg;
+			} else {
+				dst += sprintf(dst, "38;5;%d", fg);
+			}
+		}
+		if (bg >= 0) {
+			if (sep++)
+				*dst++ = ';';
+			if (bg < 8) {
+				*dst++ = '4';
+				*dst++ = '0' + bg;
+			} else {
+				dst += sprintf(dst, "48;5;%d", bg);
+			}
+		}
+		*dst++ = 'm';
+	}
+	*dst = 0;
+	return;
+bad:
 	die("bad config value '%s' for variable '%s'", value, var);
 }
 
-int git_diff_config(const char *var, const char *value)
+/*
+ * These are to give UI layer defaults.
+ * The core-level commands such as git-diff-files should
+ * never be affected by the setting of diff.renames
+ * the user happens to have in the configuration file.
+ */
+int git_diff_ui_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);
@@ -110,8 +173,14 @@ int git_diff_config(const char *var, const char *value)
 	if (!strcmp(var, "diff.color")) {
 		if (!value)
 			diff_use_color_default = 1; /* bool */
-		else if (!strcasecmp(value, "auto"))
-			diff_use_color_default = isatty(1);
+		else if (!strcasecmp(value, "auto")) {
+			diff_use_color_default = 0;
+			if (isatty(1) || pager_in_use) {
+				char *term = getenv("TERM");
+				if (term && strcmp(term, "dumb"))
+					diff_use_color_default = 1;
+			}
+		}
 		else if (!strcasecmp(value, "never"))
 			diff_use_color_default = 0;
 		else if (!strcasecmp(value, "always"))
@@ -120,9 +189,19 @@ int git_diff_config(const char *var, const char *value)
 			diff_use_color_default = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "diff.renames")) {
+		if (!value)
+			diff_detect_rename_default = DIFF_DETECT_RENAME;
+		else if (!strcasecmp(value, "copies") ||
+			 !strcasecmp(value, "copy"))
+			diff_detect_rename_default = DIFF_DETECT_COPY;
+		else if (git_config_bool(var,value))
+			diff_detect_rename_default = DIFF_DETECT_RENAME;
+		return 0;
+	}
 	if (!strncmp(var, "diff.color.", 11)) {
 		int slot = parse_diff_color_slot(var, 11);
-		diff_colors[slot] = parse_diff_color_value(value, var);
+		parse_diff_color_value(value, var, diff_colors[slot]);
 		return 0;
 	}
 	return git_default_config(var, value);
@@ -285,7 +364,7 @@ struct emit_callback {
 	const char **label_path;
 };
 
-static inline const char *get_color(int diff_use_color, enum color_diff ix)
+const char *diff_get_color(int diff_use_color, enum color_diff ix)
 {
 	if (diff_use_color)
 		return diff_colors[ix];
@@ -296,8 +375,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
 	int i;
 	struct emit_callback *ecbdata = priv;
-	const char *set = get_color(ecbdata->color_diff, DIFF_METAINFO);
-	const char *reset = get_color(ecbdata->color_diff, DIFF_RESET);
+	const char *set = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
+	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
 	if (ecbdata->label_path[0]) {
 		printf("%s--- %s%s\n", set, ecbdata->label_path[0], reset);
@@ -312,7 +391,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		;
 	if (2 <= i && i < len && line[i] == ' ') {
 		ecbdata->nparents = i - 1;
-		set = get_color(ecbdata->color_diff, DIFF_FRAGINFO);
+		set = diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO);
 	}
 	else if (len < ecbdata->nparents)
 		set = reset;
@@ -325,11 +404,13 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			else if (line[i] == '+')
 				color = DIFF_FILE_NEW;
 		}
-		set = get_color(ecbdata->color_diff, color);
+		set = diff_get_color(ecbdata->color_diff, color);
 	}
 	if (len > 0 && line[len-1] == '\n')
 		len--;
-	printf("%s%.*s%s\n", set, (int) len, line, reset);
+	fputs (set, stdout);
+	fwrite (line, len, 1, stdout);
+	puts (reset);
 }
 
 static char *pprint_rename(const char *a, const char *b)
@@ -583,7 +664,7 @@ static unsigned char *deflate_it(char *data,
 	z_stream stream;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, Z_BEST_COMPRESSION);
+	deflateInit(&stream, zlib_compression_level);
 	bound = deflateBound(&stream, size);
 	deflated = xmalloc(bound);
 	stream.next_out = deflated;
@@ -680,8 +761,8 @@ static void builtin_diff(const char *name_a,
 	mmfile_t mf1, mf2;
 	const char *lbl[2];
 	char *a_one, *b_two;
-	const char *set = get_color(o->color_diff, DIFF_METAINFO);
-	const char *reset = get_color(o->color_diff, DIFF_RESET);
+	const char *set = diff_get_color(o->color_diff, DIFF_METAINFO);
+	const char *reset = diff_get_color(o->color_diff, DIFF_RESET);
 
 	a_one = quote_two("a/", name_a);
 	b_two = quote_two("b/", name_b);
@@ -721,7 +802,7 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
+	if (!o->text && (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1420,15 +1501,16 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 void diff_setup(struct diff_options *options)
 {
 	memset(options, 0, sizeof(*options));
-	options->output_format = DIFF_FORMAT_RAW;
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
 	options->context = 3;
+	options->msg_sep = "";
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
 	options->color_diff = diff_use_color_default;
+	options->detect_rename = diff_detect_rename_default;
 }
 
 int diff_setup_done(struct diff_options *options)
@@ -1438,22 +1520,28 @@ int diff_setup_done(struct diff_options *options)
 	    (0 <= options->rename_limit && !options->detect_rename))
 		return -1;
 
+	if (options->output_format & (DIFF_FORMAT_NAME |
+				      DIFF_FORMAT_NAME_STATUS |
+				      DIFF_FORMAT_CHECKDIFF |
+				      DIFF_FORMAT_NO_OUTPUT))
+		options->output_format &= ~(DIFF_FORMAT_RAW |
+					    DIFF_FORMAT_DIFFSTAT |
+					    DIFF_FORMAT_SUMMARY |
+					    DIFF_FORMAT_PATCH);
+
 	/*
 	 * These cases always need recursive; we do not drop caller-supplied
 	 * recursive bits for other formats here.
 	 */
-	if ((options->output_format == DIFF_FORMAT_PATCH) ||
-	    (options->output_format == DIFF_FORMAT_DIFFSTAT) ||
-	    (options->output_format == DIFF_FORMAT_CHECKDIFF))
+	if (options->output_format & (DIFF_FORMAT_PATCH |
+				      DIFF_FORMAT_DIFFSTAT |
+				      DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
-
 	/*
-	 * These combinations do not make sense.
+	 * Also pickaxe would not work very well if you do not say recursive
 	 */
-	if (options->output_format == DIFF_FORMAT_RAW)
-		options->with_raw = 0;
-	if (options->output_format == DIFF_FORMAT_DIFFSTAT)
-		options->with_stat  = 0;
+	if (options->pickaxe)
+		options->recursive = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
@@ -1526,22 +1614,22 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
-		options->output_format = DIFF_FORMAT_PATCH;
+		options->output_format |= DIFF_FORMAT_PATCH;
 	else if (opt_arg(arg, 'U', "unified", &options->context))
-		options->output_format = DIFF_FORMAT_PATCH;
+		options->output_format |= DIFF_FORMAT_PATCH;
+	else if (!strcmp(arg, "--raw"))
+		options->output_format |= DIFF_FORMAT_RAW;
 	else if (!strcmp(arg, "--patch-with-raw")) {
-		options->output_format = DIFF_FORMAT_PATCH;
-		options->with_raw = 1;
+		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW;
 	}
 	else if (!strcmp(arg, "--stat"))
-		options->output_format = DIFF_FORMAT_DIFFSTAT;
+		options->output_format |= DIFF_FORMAT_DIFFSTAT;
 	else if (!strcmp(arg, "--check"))
-		options->output_format = DIFF_FORMAT_CHECKDIFF;
+		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
-		options->summary = 1;
+		options->output_format |= DIFF_FORMAT_SUMMARY;
 	else if (!strcmp(arg, "--patch-with-stat")) {
-		options->output_format = DIFF_FORMAT_PATCH;
-		options->with_stat = 1;
+		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_DIFFSTAT;
 	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
@@ -1550,19 +1638,23 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--full-index"))
 		options->full_index = 1;
 	else if (!strcmp(arg, "--binary")) {
-		options->output_format = DIFF_FORMAT_PATCH;
+		options->output_format |= DIFF_FORMAT_PATCH;
 		options->full_index = options->binary = 1;
 	}
+	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text")) {
+		options->text = 1;
+	}
 	else if (!strcmp(arg, "--name-only"))
-		options->output_format = DIFF_FORMAT_NAME;
+		options->output_format |= DIFF_FORMAT_NAME;
 	else if (!strcmp(arg, "--name-status"))
-		options->output_format = DIFF_FORMAT_NAME_STATUS;
+		options->output_format |= DIFF_FORMAT_NAME_STATUS;
 	else if (!strcmp(arg, "-R"))
 		options->reverse_diff = 1;
 	else if (!strncmp(arg, "-S", 2))
 		options->pickaxe = arg + 2;
-	else if (!strcmp(arg, "-s"))
-		options->output_format = DIFF_FORMAT_NO_OUTPUT;
+	else if (!strcmp(arg, "-s")) {
+		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
+	}
 	else if (!strncmp(arg, "-O", 2))
 		options->orderfile = arg + 2;
 	else if (!strncmp(arg, "--diff-filter=", 14))
@@ -1601,10 +1693,14 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--color"))
 		options->color_diff = 1;
+	else if (!strcmp(arg, "--no-color"))
+		options->color_diff = 0;
 	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
 		options->xdl_opts |= XDF_IGNORE_WHITESPACE;
 	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
 		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+	else if (!strcmp(arg, "--no-renames"))
+		options->detect_rename = 0;
 	else
 		return 0;
 	return 1;
@@ -1737,15 +1833,17 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 }
 
 static void diff_flush_raw(struct diff_filepair *p,
-			   int line_termination,
-			   int inter_name_termination,
-			   struct diff_options *options,
-			   int output_format)
+			   struct diff_options *options)
 {
 	int two_paths;
 	char status[10];
 	int abbrev = options->abbrev;
 	const char *path_one, *path_two;
+	int inter_name_termination = '\t';
+	int line_termination = options->line_termination;
+
+	if (!line_termination)
+		inter_name_termination = 0;
 
 	path_one = p->one->path;
 	path_two = p->two->path;
@@ -1774,7 +1872,7 @@ static void diff_flush_raw(struct diff_filepair *p,
 		two_paths = 0;
 		break;
 	}
-	if (output_format != DIFF_FORMAT_NAME_STATUS) {
+	if (!(options->output_format & DIFF_FORMAT_NAME_STATUS)) {
 		printf(":%06o %06o %s ",
 		       p->one->mode, p->two->mode,
 		       diff_unique_abbrev(p->one->sha1, abbrev));
@@ -1983,46 +2081,28 @@ static void diff_resolve_rename_copy(void)
 	diff_debug_queue("resolve-rename-copy done", q);
 }
 
-static void flush_one_pair(struct diff_filepair *p,
-			   int diff_output_format,
-			   struct diff_options *options,
-			   struct diffstat_t *diffstat)
+static int check_pair_status(struct diff_filepair *p)
 {
-	int inter_name_termination = '\t';
-	int line_termination = options->line_termination;
-	if (!line_termination)
-		inter_name_termination = 0;
-
 	switch (p->status) {
 	case DIFF_STATUS_UNKNOWN:
-		break;
+		return 0;
 	case 0:
 		die("internal error in diff-resolve-rename-copy");
-		break;
 	default:
-		switch (diff_output_format) {
-		case DIFF_FORMAT_DIFFSTAT:
-			diff_flush_stat(p, options, diffstat);
-			break;
-		case DIFF_FORMAT_CHECKDIFF:
-			diff_flush_checkdiff(p, options);
-			break;
-		case DIFF_FORMAT_PATCH:
-			diff_flush_patch(p, options);
-			break;
-		case DIFF_FORMAT_RAW:
-		case DIFF_FORMAT_NAME_STATUS:
-			diff_flush_raw(p, line_termination,
-				       inter_name_termination,
-				       options, diff_output_format);
-			break;
-		case DIFF_FORMAT_NAME:
-			diff_flush_name(p, line_termination);
-			break;
-		case DIFF_FORMAT_NO_OUTPUT:
-			break;
-		}
+		return 1;
 	}
+}
+
+static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
+{
+	int fmt = opt->output_format;
+
+	if (fmt & DIFF_FORMAT_CHECKDIFF)
+		diff_flush_checkdiff(p, opt);
+	else if (fmt & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS))
+		diff_flush_raw(p, opt);
+	else if (fmt & DIFF_FORMAT_NAME)
+		diff_flush_name(p, opt->line_termination);
 }
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
@@ -2243,58 +2323,96 @@ int diff_flush_patch_id(struct diff_options *options, unsigned char *sha1)
 	return result;
 }
 
+static int is_summary_empty(const struct diff_queue_struct *q)
+{
+	int i;
+
+	for (i = 0; i < q->nr; i++) {
+		const struct diff_filepair *p = q->queue[i];
+
+		switch (p->status) {
+		case DIFF_STATUS_DELETED:
+		case DIFF_STATUS_ADDED:
+		case DIFF_STATUS_COPIED:
+		case DIFF_STATUS_RENAMED:
+			return 0;
+		default:
+			if (p->score)
+				return 0;
+			if (p->one->mode && p->two->mode &&
+			    p->one->mode != p->two->mode)
+				return 0;
+			break;
+		}
+	}
+	return 1;
+}
+
 void diff_flush(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int i;
-	int diff_output_format = options->output_format;
-	struct diffstat_t *diffstat = NULL;
+	int i, output_format = options->output_format;
+	int separator = 0;
 
-	if (diff_output_format == DIFF_FORMAT_DIFFSTAT || options->with_stat) {
-		diffstat = xcalloc(sizeof (struct diffstat_t), 1);
-		diffstat->xm.consume = diffstat_consume;
-	}
+	/*
+	 * Order: raw, stat, summary, patch
+	 * or:    name/name-status/checkdiff (other bits clear)
+	 */
+	if (!q->nr)
+		goto free_queue;
 
-	if (options->with_raw) {
+	if (output_format & (DIFF_FORMAT_RAW |
+			     DIFF_FORMAT_NAME |
+			     DIFF_FORMAT_NAME_STATUS |
+			     DIFF_FORMAT_CHECKDIFF)) {
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			flush_one_pair(p, DIFF_FORMAT_RAW, options, NULL);
+			if (check_pair_status(p))
+				flush_one_pair(p, options);
 		}
-		putchar(options->line_termination);
+		separator++;
 	}
-	if (options->with_stat) {
+
+	if (output_format & DIFF_FORMAT_DIFFSTAT) {
+		struct diffstat_t diffstat;
+
+		memset(&diffstat, 0, sizeof(struct diffstat_t));
+		diffstat.xm.consume = diffstat_consume;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			flush_one_pair(p, DIFF_FORMAT_DIFFSTAT, options,
-				       diffstat);
+			if (check_pair_status(p))
+				diff_flush_stat(p, options, &diffstat);
 		}
-		show_stats(diffstat);
-		free(diffstat);
-		diffstat = NULL;
-		if (options->summary)
-			for (i = 0; i < q->nr; i++)
-				diff_summary(q->queue[i]);
-		if (options->stat_sep)
-			fputs(options->stat_sep, stdout);
-		else
-			putchar(options->line_termination);
-	}
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		flush_one_pair(p, diff_output_format, options, diffstat);
+		show_stats(&diffstat);
+		separator++;
 	}
 
-	if (diffstat) {
-		show_stats(diffstat);
-		free(diffstat);
-	}
-
-	for (i = 0; i < q->nr; i++) {
-		if (diffstat && options->summary)
+	if (output_format & DIFF_FORMAT_SUMMARY && !is_summary_empty(q)) {
+		for (i = 0; i < q->nr; i++)
 			diff_summary(q->queue[i]);
-		diff_free_filepair(q->queue[i]);
+		separator++;
 	}
 
+	if (output_format & DIFF_FORMAT_PATCH) {
+		if (separator) {
+			if (options->stat_sep) {
+				/* attach patch instead of inline */
+				fputs(options->stat_sep, stdout);
+			} else {
+				putchar(options->line_termination);
+			}
+		}
+
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if (check_pair_status(p))
+				diff_flush_patch(p, options);
+		}
+	}
+
+	for (i = 0; i < q->nr; i++)
+		diff_free_filepair(q->queue[i]);
+free_queue:
 	free(q->queue);
 	q->queue = NULL;
 	q->nr = q->alloc = 0;

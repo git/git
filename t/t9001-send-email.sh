@@ -25,10 +25,13 @@ test_expect_success \
      git add fake.sendmail
      GIT_AUTHOR_NAME="A" git commit -a -m "Second."'
 
-test_expect_success \
-    'Extract patches and send' \
-    'git format-patch -n HEAD^1
-     git send-email -from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" ./0001*txt'
+test_expect_success 'Extract patches' '
+    patches=`git format-patch -n HEAD^1`
+'
+
+test_expect_success 'Send patches' '
+     git send-email -from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
+'
 
 cat >expected <<\EOF
 !nobody@example.com!
