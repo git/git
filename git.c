@@ -35,6 +35,27 @@ static void prepend_to_path(const char *dir, int len)
 	setenv("PATH", path, 1);
 }
 
+static int handle_options(const char*** argv, int* argc)
+{
+	int handled = 0;
+
+	while (*argc > 0) {
+		const char *cmd = (*argv)[0];
+		if (cmd[0] != '-')
+			break;
+
+		if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
+			setup_pager();
+		} else
+			die ("Unknown option: %s", cmd);
+
+		(*argv)++;
+		(*argc)--;
+		handled++;
+	}
+	return handled;
+}
+
 static const char *alias_command;
 static char *alias_string = NULL;
 
@@ -106,7 +127,7 @@ static int handle_alias(int *argcp, const char ***argv)
 
 	subdir = setup_git_directory_gently(&nongit);
 	if (!nongit) {
-		int count;
+		int count, option_count;
 		const char** new_argv;
 
 		alias_command = (*argv)[0];
@@ -114,6 +135,10 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (alias_string) {
 
 			count = split_cmdline(alias_string, &new_argv);
+			option_count = handle_options(&new_argv, &count);
+			memmove(new_argv - option_count, new_argv,
+					count * sizeof(char *));
+			new_argv -= option_count;
 
 			if (count < 1)
 				die("empty alias for %s", alias_command);
@@ -273,13 +298,12 @@ int main(int argc, const char **argv, char **envp)
 
 	/* Look for flags.. */
 	while (argc > 1) {
-		cmd = *++argv;
+		argv++;
 		argc--;
 
-		if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
-			setup_pager();
-			continue;
-		}
+		handle_options(&argv, &argc);
+
+		cmd = *argv;
 
 		if (strncmp(cmd, "--", 2))
 			break;
