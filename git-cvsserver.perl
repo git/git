@@ -81,7 +81,7 @@ my $methods = {
 
 # $state holds all the bits of information the clients sends us that could
 # potentially be useful when it comes to actually _doing_ something.
-my $state = {};
+my $state = { prependdir => '' };
 $log->info("--------------- STARTING -----------------");
 
 my $TEMP_DIR = tempdir( CLEANUP => 1 );
