@@ -2129,12 +2129,6 @@ sub update
     # first lets get the commit list
     $ENV{GIT_DIR} = $self->{git_path};
 
-    # prepare database queries
-    my $db_insert_rev = $self->{dbh}->prepare_cached("INSERT INTO revision (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
-    my $db_insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO commitmsgs (key, value) VALUES (?,?)",{},1);
-    my $db_delete_head = $self->{dbh}->prepare_cached("DELETE FROM head",{},1);
-    my $db_insert_head = $self->{dbh}->prepare_cached("INSERT INTO head (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
-
     my $commitinfo = `git-cat-file commit $self->{module} 2>&1`;
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{40}/ )
     {
@@ -2323,7 +2317,7 @@ sub update
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $db_insert_rev->execute($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
                 elsif ( $3 eq "M" )
                 {
@@ -2337,7 +2331,7 @@ sub update
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $db_insert_rev->execute($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
                 elsif ( $3 eq "A" )
                 {
@@ -2351,7 +2345,7 @@ sub update
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $db_insert_rev->execute($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
                 else
                 {
@@ -2408,7 +2402,7 @@ sub update
                     };
 
 
-                    $db_insert_rev->execute($git_filename, $newrevision, $git_hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
             }
             close FILELIST;
@@ -2424,7 +2418,7 @@ sub update
                     $head->{$file}{modified} = $commit->{date};
                     $head->{$file}{author} = $commit->{author};
 
-                    $db_insert_rev->execute($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $commit->{date}, $commit->{author}, $head->{$file}{mode});
+                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $commit->{date}, $commit->{author}, $head->{$file}{mode});
                 }
             }
             # END : "Detect deleted files"
@@ -2433,7 +2427,7 @@ sub update
 
         if (exists $commit->{mergemsg})
         {
-            $db_insert_mergelog->execute($commit->{hash}, $commit->{mergemsg});
+            $self->insert_mergelog($commit->{hash}, $commit->{mergemsg});
         }
 
         $lastpicked = $commit->{hash};
@@ -2441,10 +2435,10 @@ sub update
         $self->_set_prop("last_commit", $commit->{hash});
     }
 
-    $db_delete_head->execute();
+    $self->delete_head();
     foreach my $file ( keys %$head )
     {
-        $db_insert_head->execute(
+        $self->insert_head(
             $file,
             $head->{$file}{revision},
             $head->{$file}{filehash},
@@ -2460,6 +2454,54 @@ sub update
 
     # Ending exclusive lock here
     $self->{dbh}->commit() or die "Failed to commit changes to SQLite";
+}
+
+sub insert_rev
+{
+    my $self = shift;
+    my $name = shift;
+    my $revision = shift;
+    my $filehash = shift;
+    my $commithash = shift;
+    my $modified = shift;
+    my $author = shift;
+    my $mode = shift;
+
+    my $insert_rev = $self->{dbh}->prepare_cached("INSERT INTO revision (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    $insert_rev->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
+}
+
+sub insert_mergelog
+{
+    my $self = shift;
+    my $key = shift;
+    my $value = shift;
+
+    my $insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO commitmsgs (key, value) VALUES (?,?)",{},1);
+    $insert_mergelog->execute($key, $value);
+}
+
+sub delete_head
+{
+    my $self = shift;
+
+    my $delete_head = $self->{dbh}->prepare_cached("DELETE FROM head",{},1);
+    $delete_head->execute();
+}
+
+sub insert_head
+{
+    my $self = shift;
+    my $name = shift;
+    my $revision = shift;
+    my $filehash = shift;
+    my $commithash = shift;
+    my $modified = shift;
+    my $author = shift;
+    my $mode = shift;
+
+    my $insert_head = $self->{dbh}->prepare_cached("INSERT INTO head (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    $insert_head->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
 }
 
 sub _headrev
