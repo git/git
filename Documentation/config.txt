@@ -97,6 +97,12 @@ core.compression::
 	compression, and 1..9 are various speed/size tradeoffs, 9 being
 	slowest.
 
+core.legacyheaders::
+	A boolean which enables the legacy object header format in case
+	you want to interoperate with old clients accessing the object
+	database directly (where the "http://" and "rsync://" protocols
+	count as direct access).
+
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
