@@ -225,9 +225,16 @@ reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
 	taglist=`IFS="	" &&
-		  git-ls-remote $upload_pack --tags "$remote" |
+		  (
+			git-ls-remote $upload_pack --tags "$remote" ||
+			echo fail ouch
+		  ) |
 	          while read sha1 name
 		  do
+			case "$sha1" in
+			fail)
+				exit 1
+			esac
 			case "$name" in
 			*^*) continue ;;
 			esac
@@ -237,7 +244,7 @@ then
 			else
 			    echo >&2 "warning: tag ${name} ignored"
 			fi
-		  done`
+		  done` || exit
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.
