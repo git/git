@@ -44,10 +44,42 @@ static int handle_options(const char*** argv, int* argc)
 		if (cmd[0] != '-')
 			break;
 
-		if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
+		/*
+		 * For legacy reasons, the "version" and "help"
+		 * commands can be written with "--" prepended
+		 * to make them look like flags.
+		 */
+		if (!strcmp(cmd, "--help") || !strcmp(cmd, "--version"))
+			break;
+
+		/*
+		 * Check remaining flags.
+		 */
+		if (!strncmp(cmd, "--exec-path", 11)) {
+			cmd += 11;
+			if (*cmd == '=')
+				git_set_exec_path(cmd + 1);
+			else {
+				puts(git_exec_path());
+				exit(0);
+			}
+		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			setup_pager();
-		} else
-			die ("Unknown option: %s", cmd);
+		} else if (!strcmp(cmd, "--git-dir")) {
+			if (*argc < 1)
+				return -1;
+			setenv("GIT_DIR", (*argv)[1], 1);
+			(*argv)++;
+			(*argc)--;
+		} else if (!strncmp(cmd, "--git-dir=", 10)) {
+			setenv("GIT_DIR", cmd + 10, 1);
+		} else if (!strcmp(cmd, "--bare")) {
+			static char git_dir[1024];
+			setenv("GIT_DIR", getcwd(git_dir, 1024), 1);
+		} else {
+			fprintf(stderr, "Unknown option: %s\n", cmd);
+			cmd_usage(0, NULL, NULL);
+		}
 
 		(*argv)++;
 		(*argc)--;
@@ -293,50 +325,19 @@ int main(int argc, const char **argv, char **envp)
 		die("cannot handle %s internally", cmd);
 	}
 
-	/* Default command: "help" */
-	cmd = "help";
-
 	/* Look for flags.. */
-	while (argc > 1) {
-		argv++;
-		argc--;
-
-		handle_options(&argv, &argc);
-
-		cmd = *argv;
-
-		if (strncmp(cmd, "--", 2))
-			break;
-
-		cmd += 2;
-
-		/*
-		 * For legacy reasons, the "version" and "help"
-		 * commands can be written with "--" prepended
-		 * to make them look like flags.
-		 */
-		if (!strcmp(cmd, "help"))
-			break;
-		if (!strcmp(cmd, "version"))
-			break;
-
-		/*
-		 * Check remaining flags (which by now must be
-		 * "--exec-path", but maybe we will accept
-		 * other arguments some day)
-		 */
-		if (!strncmp(cmd, "exec-path", 9)) {
-			cmd += 9;
-			if (*cmd == '=') {
-				git_set_exec_path(cmd + 1);
-				continue;
-			}
-			puts(git_exec_path());
-			exit(0);
-		}
-		cmd_usage(0, NULL, NULL);
+	argv++;
+	argc--;
+	handle_options(&argv, &argc);
+	if (argc > 0) {
+		if (!strncmp(argv[0], "--", 2))
+			argv[0] += 2;
+	} else {
+		/* Default command: "help" */
+		argv[0] = "help";
+		argc = 1;
 	}
-	argv[0] = cmd;
+	cmd = argv[0];
 
 	/*
 	 * We search for git commands in the following order:
