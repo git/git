@@ -144,9 +144,9 @@ void show_log(struct rev_info *opt, const char *sep)
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
-		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 		printf("%s",
 		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
+		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 	}
 
 	/*
