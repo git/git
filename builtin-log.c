@@ -10,6 +10,8 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include <time.h>
+#include <sys/time.h>
 
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
@@ -226,6 +228,18 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
 	o2->flags = flags2;
 }
 
+static void gen_message_id(char *dest, unsigned int length, char *base)
+{
+	const char *committer = git_committer_info(1);
+	const char *email_start = strrchr(committer, '<');
+	const char *email_end = strrchr(committer, '>');
+	if(!email_start || !email_end || email_start > email_end - 1)
+		die("Could not extract email from committer identity.");
+	snprintf(dest, length, "%s.%lu.git.%.*s", base,
+		 (unsigned long) time(NULL),
+		 (int)(email_end - email_start - 1), email_start + 1);
+}
+
 int cmd_format_patch(int argc, const char **argv, char **envp)
 {
 	struct commit *commit;
@@ -237,8 +251,12 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	int start_number = -1;
 	int keep_subject = 0;
 	int ignore_if_in_upstream = 0;
+	int thread = 0;
+	const char *in_reply_to = NULL;
 	struct diff_options patch_id_opts;
 	char *add_signoff = NULL;
+	char message_id[1024];
+	char ref_message_id[1024];
 
 	git_config(git_format_config);
 	init_revisions(&rev);
@@ -304,6 +322,16 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 			rev.mime_boundary = argv[i] + 9;
 		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
 			ignore_if_in_upstream = 1;
+		else if (!strcmp(argv[i], "--thread"))
+			thread = 1;
+		else if (!strncmp(argv[i], "--in-reply-to=", 14))
+			in_reply_to = argv[i] + 14;
+		else if (!strcmp(argv[i], "--in-reply-to")) {
+			i++;
+			if (i == argc)
+				die("Need a Message-Id for --in-reply-to");
+			in_reply_to = argv[i];
+		}
 		else
 			argv[j++] = argv[i];
 	}
@@ -361,10 +389,23 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	if (numbered)
 		rev.total = total + start_number - 1;
 	rev.add_signoff = add_signoff;
+	rev.ref_message_id = in_reply_to;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
+		/* Make the second and subsequent mails replies to the first */
+		if (thread) {
+			if (nr == (total - 2)) {
+				strncpy(ref_message_id, message_id,
+					sizeof(ref_message_id));
+				ref_message_id[sizeof(ref_message_id)-1]='\0';
+				rev.ref_message_id = ref_message_id;
+			}
+			gen_message_id(message_id, sizeof(message_id),
+				       sha1_to_hex(commit->object.sha1));
+			rev.message_id = message_id;
+		}
 		if (!use_stdout)
 			reopen_stdout(commit, rev.nr, keep_subject);
 		shown = log_tree_commit(&rev, commit);
