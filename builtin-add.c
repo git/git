@@ -21,8 +21,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 
 	for (specs = 0; pathspec[specs];  specs++)
 		/* nothing */;
-	seen = xmalloc(specs);
-	memset(seen, 0, specs);
+	seen = xcalloc(specs, 1);
 
 	src = dst = dir->entries;
 	i = dir->nr;
