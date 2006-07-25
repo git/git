@@ -639,8 +639,7 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			/* deleted file */
 			result_size = 0;
 			elem->mode = 0;
-			result = xmalloc(1);
-			result[0] = 0;
+			result = xcalloc(1, 1);
 		}
 		if (0 <= fd)
 			close(fd);

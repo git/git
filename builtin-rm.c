@@ -90,8 +90,7 @@ int cmd_rm(int argc, const char **argv, char **envp)
 	seen = NULL;
 	for (i = 0; pathspec[i] ; i++)
 		/* nothing */;
-	seen = xmalloc(i);
-	memset(seen, 0, i);
+	seen = xcalloc(i, 1);
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
