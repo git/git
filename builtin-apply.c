@@ -1664,13 +1664,14 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	return 0;
 }
 
-static int check_patch(struct patch *patch)
+static int check_patch(struct patch *patch, struct patch *prev_patch)
 {
 	struct stat st;
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
+	int ok_if_exists;
 
 	if (old_name) {
 		int changed = 0;
@@ -1728,13 +1729,33 @@ static int check_patch(struct patch *patch)
 				old_name, st_mode, patch->old_mode);
 	}
 
+	if (new_name && prev_patch && prev_patch->is_delete &&
+	    !strcmp(prev_patch->old_name, new_name))
+		/* A type-change diff is always split into a patch to
+		 * delete old, immediately followed by a patch to
+		 * create new (see diff.c::run_diff()); in such a case
+		 * it is Ok that the entry to be deleted by the
+		 * previous patch is still in the working tree and in
+		 * the index.
+		 */
+		ok_if_exists = 1;
+	else
+		ok_if_exists = 0;
+
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
-		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
+		if (check_index &&
+		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
+		    !ok_if_exists)
 			return error("%s: already exists in index", new_name);
 		if (!cached) {
-			if (!lstat(new_name, &st))
-				return error("%s: already exists in working directory", new_name);
-			if (errno != ENOENT)
+			struct stat nst;
+			if (!lstat(new_name, &nst)) {
+				if (S_ISDIR(nst.st_mode) || ok_if_exists)
+					; /* ok */
+				else
+					return error("%s: already exists in working directory", new_name);
+			}
+			else if ((errno != ENOENT) && (errno != ENOTDIR))
 				return error("%s: %s", new_name, strerror(errno));
 		}
 		if (!patch->new_mode) {
@@ -1762,10 +1783,13 @@ static int check_patch(struct patch *patch)
 
 static int check_patch_list(struct patch *patch)
 {
+	struct patch *prev_patch = NULL;
 	int error = 0;
 
-	for (;patch ; patch = patch->next)
-		error |= check_patch(patch);
+	for (prev_patch = NULL; patch ; patch = patch->next) {
+		error |= check_patch(patch, prev_patch);
+		prev_patch = patch;
+	}
 	return error;
 }
 
@@ -2010,6 +2034,16 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 			return;
 	}
 
+	if (errno == EEXIST || errno == EACCES) {
+		/* We may be trying to create a file where a directory
+		 * used to be.
+		 */
+		struct stat st;
+		errno = 0;
+		if (!lstat(path, &st) && S_ISDIR(st.st_mode) && !rmdir(path))
+			errno = EEXIST;
+	}
+
 	if (errno == EEXIST) {
 		unsigned int nr = getpid();
 
@@ -2044,32 +2078,42 @@ static void create_file(struct patch *patch)
 	cache_tree_invalidate_path(active_cache_tree, path);
 }
 
-static void write_out_one_result(struct patch *patch)
+/* phase zero is to remove, phase one is to create */
+static void write_out_one_result(struct patch *patch, int phase)
 {
 	if (patch->is_delete > 0) {
-		remove_file(patch);
+		if (phase == 0)
+			remove_file(patch);
 		return;
 	}
 	if (patch->is_new > 0 || patch->is_copy) {
-		create_file(patch);
+		if (phase == 1)
+			create_file(patch);
 		return;
 	}
 	/*
 	 * Rename or modification boils down to the same
 	 * thing: remove the old, write the new
 	 */
-	remove_file(patch);
+	if (phase == 0)
+		remove_file(patch);
+	if (phase == 1)
 	create_file(patch);
 }
 
 static void write_out_results(struct patch *list, int skipped_patch)
 {
+	int phase;
+
 	if (!list && !skipped_patch)
 		die("No changes");
 
-	while (list) {
-		write_out_one_result(list);
-		list = list->next;
+	for (phase = 0; phase < 2; phase++) {
+		struct patch *l = list;
+		while (l) {
+			write_out_one_result(l, phase);
+			l = l->next;
+		}
 	}
 }
 
