@@ -8,8 +8,8 @@ LC_CTYPE=C
 export PATH LANG LC_CTYPE
 
 # for now...
-GIT_SVN_NO_LIB=1
-export GIT_SVN_NO_LIB
+#GIT_SVN_NO_LIB=1
+#export GIT_SVN_NO_LIB
 
 case "`git symbolic-ref HEAD`" in
 refs/heads/next)
