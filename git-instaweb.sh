@@ -54,6 +54,10 @@ start_httpd () {
 			fi
 		done
 	fi
+	if test $? != 0; then
+		echo "Could not execute http daemon $httpd."
+		exit 1
+	fi
 }
 
 stop_httpd () {
@@ -184,7 +188,7 @@ EOF
 	else
 		# plain-old CGI
 		list_mods=`echo "$httpd" | sed "s/-f$/-l/"`
-		$list_mods | grep 'mod_cgi\.c' >/dev/null || \
+		$list_mods | grep 'mod_cgi\.c' >/dev/null 2>&1 || \
 		echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
 		cat >> "$conf" <<EOF
 AddHandler cgi-script .cgi
@@ -234,4 +238,5 @@ esac
 
 start_httpd
 test -z "$browser" && browser=echo
-$browser http://127.0.0.1:$port
+url=http://127.0.0.1:$port
+$browser $url || echo $url
