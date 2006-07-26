@@ -115,6 +115,7 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
 extern struct cache_tree *active_cache_tree;
+extern int cache_errno;
 
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
@@ -142,6 +143,7 @@ extern void verify_non_filename(const char *prefix, const char *name);
 
 /* Initialize and use the cache information */
 extern int read_cache(void);
+extern int read_cache_from(const char *path);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int verify_path(const char *path);
 extern int cache_name_pos(const char *name, int namelen);
@@ -149,6 +151,7 @@ extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
 extern int add_cache_entry(struct cache_entry *ce, int option);
+extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_cache_entry_at(int pos);
 extern int remove_file_from_cache(const char *path);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
