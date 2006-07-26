@@ -59,4 +59,19 @@ test_expect_success \
      git-diff-tree -r -M --name-status  HEAD^ HEAD | \
      grep -E "^R100.+path0/README.+path2/README"'
 
+test_expect_success \
+    'moving whole subdirectory into subdirectory' \
+    'git-mv path2 path1'
+
+test_expect_success \
+    'commiting the change' \
+    'git-commit -m dir-move -a'
+
+test_expect_success \
+    'checking the commit' \
+    'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+     grep -E "^R100.+path2/COPYING.+path1/path2/COPYING" &&
+     git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+     grep -E "^R100.+path2/README.+path1/path2/README"'
+
 test_done
