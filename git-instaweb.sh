@@ -183,8 +183,10 @@ PerlPassEnv GIT_EXEC_DIR
 EOF
 	else
 		# plain-old CGI
+		list_mods=`echo "$httpd" | sed "s/-f$/-l/"`
+		$list_mods | grep 'mod_cgi\.c' >/dev/null || \
+		echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
 		cat >> "$conf" <<EOF
-LoadModule cgi_module $module_path/mod_cgi.so
 AddHandler cgi-script .cgi
 <Location /gitweb.cgi>
 	Options +ExecCGI
