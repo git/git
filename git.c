@@ -202,6 +202,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "update-ref", cmd_update_ref },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg },
 		{ "prune", cmd_prune },
+		{ "mv", cmd_mv },
 	};
 	int i;
 

@@ -154,6 +154,7 @@ extern int add_cache_entry(struct cache_entry *ce, int option);
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_cache_entry_at(int pos);
 extern int remove_file_from_cache(const char *path);
+extern int add_file_to_index(const char *path, int verbose);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st, int);
 extern int ce_modified(struct cache_entry *ce, struct stat *st, int);
