@@ -795,7 +795,7 @@ sub git_read_projects {
 	if (-d $projects_list) {
 		# search in directory
 		my $dir = $projects_list;
-		opendir my $dh, $dir or return undef;
+		opendir my ($dh), $dir or return undef;
 		while (my $dir = readdir($dh)) {
 			if (-e "$projectroot/$dir/HEAD") {
 				my $pr = {
@@ -810,7 +810,7 @@ sub git_read_projects {
 		# 'git%2Fgit.git Linus+Torvalds'
 		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
-		open my $fd , $projects_list or return undef;
+		open my ($fd), $projects_list or return undef;
 		while (my $line = <$fd>) {
 			chomp $line;
 			my ($path, $owner) = split ' ', $line;

@@ -547,12 +547,15 @@ sub req_Argument
 {
     my ( $cmd, $data ) = @_;
 
-    # TODO :  Not quite sure how Argument and Argumentx differ, but I assume
-    # it's for multi-line arguments ... somehow ...
+    # Argumentx means: append to last Argument (with a newline in front)
 
     $log->debug("$cmd : $data");
 
-    push @{$state->{arguments}}, $data;
+    if ( $cmd eq 'Argumentx') {
+        ${$state->{arguments}}[$#{$state->{arguments}}] .= "\n" . $data;
+    } else {
+        push @{$state->{arguments}}, $data;
+    }
 }
 
 # expand-modules \n
