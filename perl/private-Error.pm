@@ -43,8 +43,6 @@ $Error::ObjectifyCallback = \&throw_Error_Simple;
 
 # Exported subs are defined in Error::subs
 
-use Scalar::Util ();
-
 sub import {
     shift;
     local $Exporter::ExportLevel = $Exporter::ExportLevel + 1;
@@ -290,6 +288,14 @@ use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
+
+sub blessed {
+	my $item = shift;
+	local $@; # don't kill an outer $@
+	ref $item and eval { $item->can('can') };
+}
+
+
 sub run_clauses ($$$\@) {
     my($clauses,$err,$wantarray,$result) = @_;
     my $code = undef;
@@ -312,7 +318,7 @@ sub run_clauses ($$$\@) {
 		    $i -= 2;
 		    next CATCHLOOP;
 		}
-		elsif(Scalar::Util::blessed($err) && $err->isa($pkg)) {
+		elsif(blessed($err) && $err->isa($pkg)) {
 		    $code = $catch->[$i+1];
 		    while(1) {
 			my $more = 0;
@@ -421,7 +427,7 @@ sub try (&;$) {
 
     if (defined($err))
     {
-        if (Scalar::Util::blessed($err) && $err->can('throw'))
+        if (blessed($err) && $err->can('throw'))
         {
             throw $err;
         }
