@@ -575,7 +575,7 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	    -e '/@@GITWEB_CGI@@/d' \
 	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
 	    -e '/@@GITWEB_CSS@@/d' \
-	    $@.sh > $@+
+	    $@.sh | sed "s|/usr/bin/git|$(bindir)/git|" > $@+
 	chmod +x $@+
 	mv $@+ $@
 
