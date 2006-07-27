@@ -204,6 +204,7 @@ static const char local_pull_usage[] =
  */
 int main(int argc, char **argv)
 {
+	const char *write_ref = NULL;
 	char *commit_id;
 	int arg = 1;
 
@@ -240,9 +241,8 @@ int main(int argc, char **argv)
 		usage(local_pull_usage);
 	commit_id = argv[arg];
 	path = argv[arg + 1];
-	write_ref_log_details = path;
 
-	if (pull(commit_id))
+	if (pull(commit_id, write_ref, path))
 		return 1;
 
 	return 0;

@@ -8,9 +8,6 @@
 #include "blob.h"
 #include "refs.h"
 
-const char *write_ref = NULL;
-const char *write_ref_log_details = NULL;
-
 int get_tree = 0;
 int get_history = 0;
 int get_all = 0;
@@ -213,7 +210,8 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 	return 0;
 }
 
-int pull(char *target)
+int pull(char *target, const char *write_ref,
+         const char *write_ref_log_details)
 {
 	struct ref_lock *lock = NULL;
 	unsigned char sha1[20];

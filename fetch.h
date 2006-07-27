@@ -22,12 +22,6 @@ extern void prefetch(unsigned char *sha1);
  */
 extern int fetch_ref(char *ref, unsigned char *sha1);
 
-/* If set, the ref filename to write the target value to. */
-extern const char *write_ref;
-
-/* If set additional text will appear in the ref log. */
-extern const char *write_ref_log_details;
-
 /* Set to fetch the target tree. */
 extern int get_tree;
 
@@ -46,6 +40,9 @@ extern int get_recover;
 /* Report what we got under get_verbosely */
 extern void pull_say(const char *, const char *);
 
-extern int pull(char *target);
+/* If write_ref is set, the ref filename to write the target value to. */
+/* If write_ref_log_details is set, additional text will appear in the ref log. */
+extern int pull(char *target, const char *write_ref,
+		const char *write_ref_log_details);
 
 #endif /* PULL_H */

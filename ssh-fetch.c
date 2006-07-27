@@ -123,6 +123,7 @@ static const char ssh_fetch_usage[] =
   " [-c] [-t] [-a] [-v] [--recover] [-w ref] commit-id url";
 int main(int argc, char **argv)
 {
+	const char *write_ref = NULL;
 	char *commit_id;
 	char *url;
 	int arg = 1;
@@ -159,7 +160,6 @@ int main(int argc, char **argv)
 	}
 	commit_id = argv[arg];
 	url = argv[arg + 1];
-	write_ref_log_details = url;
 
 	if (setup_connection(&fd_in, &fd_out, prog, url, arg, argv + 1))
 		return 1;
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	if (get_version())
 		return 1;
 
-	if (pull(commit_id))
+	if (pull(commit_id, write_ref, url))
 		return 1;
 
 	return 0;

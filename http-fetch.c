@@ -1216,6 +1216,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
 
 int main(int argc, char **argv)
 {
+	const char *write_ref = NULL;
 	char *commit_id;
 	char *url;
 	char *path;
@@ -1250,7 +1251,6 @@ int main(int argc, char **argv)
 	}
 	commit_id = argv[arg];
 	url = argv[arg + 1];
-	write_ref_log_details = url;
 
 	http_init();
 
@@ -1268,7 +1268,7 @@ int main(int argc, char **argv)
 			alt->path_len = strlen(path);
 	}
 
-	if (pull(commit_id))
+	if (pull(commit_id, write_ref, url))
 		rc = 1;
 
 	http_cleanup();
