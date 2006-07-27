@@ -194,9 +194,9 @@ int fetch_ref(char *ref, unsigned char *sha1)
 }
 
 static const char local_pull_usage[] =
-"git-local-fetch [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path";
+"git-local-fetch [-c] [-t] [-a] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path";
 
-/* 
+/*
  * By default we only use file copy.
  * If -l is specified, a hard link is attempted.
  * If -s is specified, then a symlink is attempted.

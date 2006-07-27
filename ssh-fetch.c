@@ -120,7 +120,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
 
 static const char ssh_fetch_usage[] =
   MY_PROGRAM_NAME
-  " [-c] [-t] [-a] [-v] [-d] [--recover] [-w ref] commit-id url";
+  " [-c] [-t] [-a] [-v] [--recover] [-w ref] commit-id url";
 int main(int argc, char **argv)
 {
 	char *commit_id;

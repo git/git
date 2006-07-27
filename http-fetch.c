@@ -1245,7 +1245,7 @@ int main(int argc, char **argv)
 		arg++;
 	}
 	if (argc < arg + 2) {
-		usage("git-http-fetch [-c] [-t] [-a] [-d] [-v] [--recover] [-w ref] commit-id url");
+		usage("git-http-fetch [-c] [-t] [-a] [-v] [--recover] [-w ref] commit-id url");
 		return 1;
 	}
 	commit_id = argv[arg];
