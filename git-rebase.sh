@@ -280,7 +280,7 @@ git-reset --hard "$onto"
 # we just fast forwarded.
 if test "$mb" = "$branch"
 then
-	echo >&2 "Fast-forwarded $branch to $newbase."
+	echo >&2 "Fast-forwarded $branch_name to $onto_name."
 	exit 0
 fi
 
