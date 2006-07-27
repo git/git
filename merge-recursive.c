@@ -47,8 +47,8 @@ static struct commit *make_virtual_commit(struct tree *tree, const char *comment
 }
 
 /*
- * TODO: we should not have to copy the SHA1s around, but rather reference
- * them. That way, sha_eq() is just sha1 == sha2.
+ * Since we use get_tree_entry(), which does not put the read object into
+ * the object pool, we cannot rely on a == b.
  */
 static int sha_eq(const unsigned char *a, const unsigned char *b)
 {
@@ -58,9 +58,8 @@ static int sha_eq(const unsigned char *a, const unsigned char *b)
 }
 
 /*
- * TODO: check if we can just reuse the active_cache structure: it is already
- * sorted (by name, stage).
- * Only problem: do not write it when flushing the cache.
+ * Since we want to write the index eventually, we cannot reuse the index
+ * for these (temporary) data.
  */
 struct stage_data
 {
