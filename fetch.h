@@ -42,7 +42,7 @@ extern void pull_say(const char *, const char *);
 
 /* If write_ref is set, the ref filename to write the target value to. */
 /* If write_ref_log_details is set, additional text will appear in the ref log. */
-extern int pull(char *target, const char *write_ref,
+extern int pull(int targets, char **target, const char **write_ref,
 		const char *write_ref_log_details);
 
 #endif /* PULL_H */

@@ -1268,7 +1268,7 @@ int main(int argc, char **argv)
 			alt->path_len = strlen(path);
 	}
 
-	if (pull(commit_id, write_ref, url))
+	if (pull(1, &commit_id, &write_ref, url))
 		rc = 1;
 
 	http_cleanup();

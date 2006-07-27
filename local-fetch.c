@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 	commit_id = argv[arg];
 	path = argv[arg + 1];
 
-	if (pull(commit_id, write_ref, path))
+	if (pull(1, &commit_id, &write_ref, path))
 		return 1;
 
 	return 0;

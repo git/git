@@ -210,55 +210,67 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 	return 0;
 }
 
-int pull(char *target, const char *write_ref,
+int pull(int targets, char **target, const char **write_ref,
          const char *write_ref_log_details)
 {
-	struct ref_lock *lock = NULL;
-	unsigned char sha1[20];
+	struct ref_lock **lock = xcalloc(targets, sizeof(struct ref_lock *));
+	unsigned char *sha1 = xmalloc(targets * 20);
 	char *msg;
 	int ret;
+	int i;
 
 	save_commit_buffer = 0;
 	track_object_refs = 0;
-	if (write_ref) {
-		lock = lock_ref_sha1(write_ref, NULL, 0);
-		if (!lock) {
-			error("Can't lock ref %s", write_ref);
-			return -1;
+
+	for (i = 0; i < targets; i++) {
+		if (!write_ref[i])
+			continue;
+
+		lock[i] = lock_ref_sha1(write_ref[i], NULL, 0);
+		if (!lock[i]) {
+			error("Can't lock ref %s", write_ref[i]);
+			goto unlock_and_fail;
 		}
 	}
 
 	if (!get_recover)
 		for_each_ref(mark_complete);
 
-	if (interpret_target(target, sha1)) {
-		error("Could not interpret %s as something to pull", target);
-		if (lock)
-			unlock_ref(lock);
-		return -1;
-	}
-	if (process(lookup_unknown_object(sha1))) {
-		if (lock)
-			unlock_ref(lock);
-		return -1;
-	}
-	if (loop()) {
-		if (lock)
-			unlock_ref(lock);
-		return -1;
+	for (i = 0; i < targets; i++) {
+		if (interpret_target(target[i], &sha1[20 * i])) {
+			error("Could not interpret %s as something to pull", target[i]);
+			goto unlock_and_fail;
+		}
+		if (process(lookup_unknown_object(&sha1[20 * i])))
+			goto unlock_and_fail;
 	}
 
-	if (write_ref) {
-		if (write_ref_log_details) {
-			msg = xmalloc(strlen(write_ref_log_details) + 12);
-			sprintf(msg, "fetch from %s", write_ref_log_details);
-		}
-		else
-			msg = NULL;
-		ret = write_ref_sha1(lock, sha1, msg ? msg : "fetch (unknown)");
-		if (msg)
-			free(msg);
-		return ret;
+	if (loop())
+		goto unlock_and_fail;
+
+	if (write_ref_log_details) {
+		msg = xmalloc(strlen(write_ref_log_details) + 12);
+		sprintf(msg, "fetch from %s", write_ref_log_details);
+	} else {
+		msg = NULL;
 	}
+	for (i = 0; i < targets; i++) {
+		if (!write_ref[i])
+			continue;
+		ret = write_ref_sha1(lock[i], &sha1[20 * i], msg ? msg : "fetch (unknown)");
+		lock[i] = NULL;
+		if (ret)
+			goto unlock_and_fail;
+	}
+	if (msg)
+		free(msg);
+
 	return 0;
+
+
+unlock_and_fail:
+	for (i = 0; i < targets; i++)
+		if (lock[i])
+			unlock_ref(lock[i]);
+	return -1;
 }
