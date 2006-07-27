@@ -7,6 +7,7 @@
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
+#include "strbuf.h"
 
 int get_tree = 0;
 int get_history = 0;
@@ -208,6 +209,45 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 		insert_by_date(commit, &complete);
 	}
 	return 0;
+}
+
+int pull_targets_stdin(char ***target, const char ***write_ref)
+{
+	int targets = 0, targets_alloc = 0;
+	struct strbuf buf;
+	*target = NULL; *write_ref = NULL;
+	strbuf_init(&buf);
+	while (1) {
+		char *rf_one = NULL;
+		char *tg_one;
+
+		read_line(&buf, stdin, '\n');
+		if (buf.eof)
+			break;
+		tg_one = buf.buf;
+		rf_one = strchr(tg_one, '\t');
+		if (rf_one)
+			*rf_one++ = 0;
+
+		if (targets >= targets_alloc) {
+			targets_alloc = targets_alloc ? targets_alloc * 2 : 64;
+			*target = xrealloc(*target, targets_alloc * sizeof(**target));
+			*write_ref = xrealloc(*write_ref, targets_alloc * sizeof(**write_ref));
+		}
+		(*target)[targets] = strdup(tg_one);
+		(*write_ref)[targets] = rf_one ? strdup(rf_one) : NULL;
+		targets++;
+	}
+	return targets;
+}
+
+void pull_targets_free(int targets, char **target, const char **write_ref)
+{
+	while (targets--) {
+		free(target[targets]);
+		if (write_ref[targets])
+			free((char *) write_ref[targets]);
+	}
 }
 
 int pull(int targets, char **target, const char **write_ref,

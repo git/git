@@ -40,6 +40,12 @@ extern int get_recover;
 /* Report what we got under get_verbosely */
 extern void pull_say(const char *, const char *);
 
+/* Load pull targets from stdin */
+extern int pull_targets_stdin(char ***target, const char ***write_ref);
+
+/* Free up loaded targets */
+extern void pull_targets_free(int targets, char **target, const char **write_ref);
+
 /* If write_ref is set, the ref filename to write the target value to. */
 /* If write_ref_log_details is set, additional text will appear in the ref log. */
 extern int pull(int targets, char **target, const char **write_ref,
