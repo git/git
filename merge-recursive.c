@@ -197,11 +197,6 @@ static int index_only = 0;
  */
 static int git_read_tree(const struct tree *tree)
 {
-#if 0
-	fprintf(stderr, "GIT_INDEX_FILE='%s' git-read-tree %s\n",
-		getenv("GIT_INDEX_FILE"),
-		sha1_to_hex(tree->object.sha1));
-#endif
 	int rc;
 	const char *argv[] = { "git-read-tree", NULL, NULL, };
 	if (cache_dirty)
@@ -219,14 +214,6 @@ static int git_merge_trees(const char *update_arg,
 			   struct tree *head,
 			   struct tree *merge)
 {
-#if 0
-	fprintf(stderr, "GIT_INDEX_FILE='%s' git-read-tree %s -m %s %s %s\n",
-		getenv("GIT_INDEX_FILE"),
-		update_arg,
-		sha1_to_hex(common->object.sha1),
-		sha1_to_hex(head->object.sha1),
-		sha1_to_hex(merge->object.sha1));
-#endif
 	int rc;
 	const char *argv[] = {
 		"git-read-tree", NULL, "-m", NULL, NULL, NULL,
@@ -247,10 +234,6 @@ static int git_merge_trees(const char *update_arg,
  */
 static struct tree *git_write_tree(void)
 {
-#if 0
-	fprintf(stderr, "GIT_INDEX_FILE='%s' git-write-tree\n",
-		getenv("GIT_INDEX_FILE"));
-#endif
 	FILE *fp;
 	int rc;
 	char buf[41];
@@ -672,11 +655,6 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			argv[6] = lb = strdup(mkpath("%s/%s", branch2Name, b->path));
 			argv[4] = lo = strdup(mkpath("orig/%s", o->path));
 
-#if 0
-			printf("%s %s %s %s %s %s %s %s %s %s\n",
-			       argv[0], argv[1], argv[2], argv[3], argv[4],
-			       argv[5], argv[6], argv[7], argv[8], argv[9]);
-#endif
 			code = run_command_v(10, argv);
 
 			free(la);
