@@ -22,56 +22,6 @@
 
 #include "path-list.h"
 
-/*#define DEBUG*/
-
-#ifdef DEBUG
-#define debug(...) fprintf(stderr, __VA_ARGS__)
-#else
-#define debug(...) do { ; /* nothing */ } while (0)
-#endif
-
-#ifdef DEBUG
-#include "quote.h"
-static void show_ce_entry(const char *tag, struct cache_entry *ce)
-{
-	if (tag && *tag &&
-	    (ce->ce_flags & htons(CE_VALID))) {
-		static char alttag[4];
-		memcpy(alttag, tag, 3);
-		if (isalpha(tag[0]))
-			alttag[0] = tolower(tag[0]);
-		else if (tag[0] == '?')
-			alttag[0] = '!';
-		else {
-			alttag[0] = 'v';
-			alttag[1] = tag[0];
-			alttag[2] = ' ';
-			alttag[3] = 0;
-		}
-		tag = alttag;
-	}
-
-	fprintf(stderr,"%s%06o %s %d\t",
-			tag,
-			ntohl(ce->ce_mode),
-			sha1_to_hex(ce->sha1),
-			ce_stage(ce));
-	write_name_quoted("", 0, ce->name,
-			'\n', stderr);
-	fputc('\n', stderr);
-}
-
-static void ls_files(void) {
-	int i;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		show_ce_entry("", ce);
-	}
-	fprintf(stderr, "---\n");
-	if (0) ls_files(); /* avoid "unused" warning */
-}
-#endif
-
 /*
  * A virtual commit has
  * - (const char *)commit->util set to the name, and
@@ -346,13 +296,9 @@ static int save_files_dirs(const unsigned char *sha1,
 static int get_files_dirs(struct tree *tree)
 {
 	int n;
-	debug("get_files_dirs ...\n");
-	if (read_tree_recursive(tree, "", 0, 0, NULL, save_files_dirs) != 0) {
-		debug("  get_files_dirs done (0)\n");
+	if (read_tree_recursive(tree, "", 0, 0, NULL, save_files_dirs) != 0)
 		return 0;
-	}
 	n = current_file_set.nr + current_directory_set.nr;
-	debug("  get_files_dirs done (%d)\n", n);
 	return n;
 }
 
@@ -434,11 +380,6 @@ static struct path_list *get_renames(struct tree *tree,
 	int i;
 	struct path_list *renames;
 	struct diff_options opts;
-#ifdef DEBUG
-	time_t t = time(0);
-
-	debug("get_renames ...\n");
-#endif
 
 	renames = xcalloc(1, sizeof(struct path_list));
 	diff_setup(&opts);
@@ -479,9 +420,6 @@ static struct path_list *get_renames(struct tree *tree,
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_queued_diff.nr = 0;
 	diff_flush(&opts);
-#ifdef DEBUG
-	debug("  get_renames done in %ld\n", time(0)-t);
-#endif
 	return renames;
 }
 
@@ -829,7 +767,6 @@ static void conflict_rename_rename_2(struct rename *ren1,
 	free(new_path1);
 }
 
-/* General TODO: get rid of all the debug messages */
 static int process_renames(struct path_list *a_renames,
 			   struct path_list *b_renames,
 			   const char *a_branch,
