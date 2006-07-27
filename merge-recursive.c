@@ -609,7 +609,7 @@ static char *git_unpack_file(const unsigned char *sha1, char *path)
 
 static struct merge_file_info merge_file(struct diff_filespec *o,
 		struct diff_filespec *a, struct diff_filespec *b,
-		const char *branch1Name, const char *branch2Name)
+		const char *branch1, const char *branch2)
 {
 	struct merge_file_info result;
 	result.merge = 0;
@@ -651,8 +651,8 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			git_unpack_file(a->sha1, src1);
 			git_unpack_file(b->sha1, src2);
 
-			argv[2] = la = strdup(mkpath("%s/%s", branch1Name, a->path));
-			argv[6] = lb = strdup(mkpath("%s/%s", branch2Name, b->path));
+			argv[2] = la = strdup(mkpath("%s/%s", branch1, a->path));
+			argv[6] = lb = strdup(mkpath("%s/%s", branch2, b->path));
 			argv[4] = lo = strdup(mkpath("orig/%s", o->path));
 			argv[7] = src1;
 			argv[8] = orig;
@@ -966,8 +966,8 @@ static unsigned char *has_sha(const unsigned char *sha)
 
 /* Per entry merge function */
 static int process_entry(const char *path, struct stage_data *entry,
-			 const char *branch1Name,
-			 const char *branch2Name)
+			 const char *branch1,
+			 const char *branch2)
 {
 	/*
 	printf("processing entry, clean cache: %s\n", index_only ? "yes": "no");
@@ -997,14 +997,14 @@ static int process_entry(const char *path, struct stage_data *entry,
 			if (!a_sha) {
 				output("CONFLICT (delete/modify): %s deleted in %s "
 				       "and modified in %s. Version %s of %s left in tree.",
-				       path, branch1Name,
-				       branch2Name, branch2Name, path);
+				       path, branch1,
+				       branch2, branch2, path);
 				update_file(0, b_sha, b_mode, path);
 			} else {
 				output("CONFLICT (delete/modify): %s deleted in %s "
 				       "and modified in %s. Version %s of %s left in tree.",
-				       path, branch2Name,
-				       branch1Name, branch1Name, path);
+				       path, branch2,
+				       branch1, branch1, path);
 				update_file(0, a_sha, a_mode, path);
 			}
 		}
@@ -1019,14 +1019,14 @@ static int process_entry(const char *path, struct stage_data *entry,
 		const char *conf;
 
 		if (a_sha) {
-			add_branch = branch1Name;
-			other_branch = branch2Name;
+			add_branch = branch1;
+			other_branch = branch2;
 			mode = a_mode;
 			sha = a_sha;
 			conf = "file/directory";
 		} else {
-			add_branch = branch2Name;
-			other_branch = branch1Name;
+			add_branch = branch2;
+			other_branch = branch1;
 			mode = b_mode;
 			sha = b_sha;
 			conf = "directory/file";
@@ -1060,8 +1060,8 @@ static int process_entry(const char *path, struct stage_data *entry,
 		} else {
 			const char *new_path1, *new_path2;
 			clean_merge = 0;
-			new_path1 = unique_path(path, branch1Name);
-			new_path2 = unique_path(path, branch2Name);
+			new_path1 = unique_path(path, branch1);
+			new_path2 = unique_path(path, branch2);
 			output("CONFLICT (add/add): File %s added non-identically "
 			       "in both branches. Adding as %s and %s instead.",
 			       path, new_path1, new_path2);
@@ -1085,7 +1085,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 		b.mode = b_mode;
 
 		mfi = merge_file(&o, &a, &b,
-				 branch1Name, branch2Name);
+				 branch1, branch2);
 
 		if (mfi.clean)
 			update_file(1, mfi.sha, mfi.mode, path);
@@ -1111,8 +1111,8 @@ static int process_entry(const char *path, struct stage_data *entry,
 static int merge_trees(struct tree *head,
 		       struct tree *merge,
 		       struct tree *common,
-		       const char *branch1Name,
-		       const char *branch2Name,
+		       const char *branch1,
+		       const char *branch2,
 		       struct tree **result)
 {
 	int code, clean;
@@ -1143,13 +1143,13 @@ static int merge_trees(struct tree *head,
 		re_head  = get_renames(head, common, head, merge, entries);
 		re_merge = get_renames(merge, common, head, merge, entries);
 		clean = process_renames(re_head, re_merge,
-				branch1Name, branch2Name);
+				branch1, branch2);
 		for (i = 0; i < entries->nr; i++) {
 			const char *path = entries->items[i].path;
 			struct stage_data *e = entries->items[i].util;
 			if (e->processed)
 				continue;
-			if (!process_entry(path, e, branch1Name, branch2Name))
+			if (!process_entry(path, e, branch1, branch2))
 				clean = 0;
 		}
 
@@ -1179,8 +1179,8 @@ static int merge_trees(struct tree *head,
 static
 int merge(struct commit *h1,
 			  struct commit *h2,
-			  const char *branch1Name,
-			  const char *branch2Name,
+			  const char *branch1,
+			  const char *branch2,
 			  int call_depth /* =0 */,
 			  struct commit *ancestor /* =None */,
 			  struct commit **result)
@@ -1236,7 +1236,7 @@ int merge(struct commit *h1,
 	}
 
 	clean = merge_trees(h1->tree, h2->tree, merged_common_ancestors->tree,
-			    branch1Name, branch2Name, &mrtree);
+			    branch1, branch2, &mrtree);
 
 	if (!ancestor && (clean || index_only)) {
 		*result = make_virtual_commit(mrtree, "merged tree");
