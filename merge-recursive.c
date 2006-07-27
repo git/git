@@ -642,7 +642,7 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			char src2[PATH_MAX];
 			const char *argv[] = {
 				"merge", "-L", NULL, "-L", NULL, "-L", NULL,
-				src1, orig, src2,
+				NULL, NULL, NULL,
 				NULL
 			};
 			char *la, *lb, *lo;
@@ -654,6 +654,9 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			argv[2] = la = strdup(mkpath("%s/%s", branch1Name, a->path));
 			argv[6] = lb = strdup(mkpath("%s/%s", branch2Name, b->path));
 			argv[4] = lo = strdup(mkpath("orig/%s", o->path));
+			argv[7] = src1;
+			argv[8] = orig;
+			argv[9] = src2,
 
 			code = run_command_v(10, argv);
 
