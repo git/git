@@ -446,7 +446,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 			break;
 	}
 	/* Count mbox From headers as headers */
-	if (!ofs && !memcmp(line, "From ", 5))
+	if (!ofs && (!memcmp(line, "From ", 5) || !memcmp(line, ">From ", 6)))
 		ofs = 1;
 	return ofs;
 }
