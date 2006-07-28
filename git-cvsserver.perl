@@ -1142,9 +1142,7 @@ sub req_ci
         exit;
     }
 
-    open FILE, ">", "$ENV{GIT_DIR}refs/heads/$state->{module}";
-    print FILE $commithash;
-    close FILE;
+    print LOCKFILE $commithash;
 
     $updater->update();
 
@@ -1171,7 +1169,9 @@ sub req_ci
     }
 
     close LOCKFILE;
-    unlink($lockfile);
+    my $reffile = "$ENV{GIT_DIR}refs/heads/$state->{module}";
+    unlink($reffile);
+    rename($lockfile, $reffile);
     chdir "/";
 
     print "ok\n";
