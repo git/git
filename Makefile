@@ -617,7 +617,7 @@ git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 merge-recursive.o path-list.o: path-list.h
-git-merge-recur$X: merge-recursive.o path-list.o $(LIB_FILE)
+git-merge-recur$X: merge-recursive.o path-list.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS)
 
