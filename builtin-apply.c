@@ -120,7 +120,7 @@ struct fragment {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete, is_binary;
+	int is_rename, is_copy, is_new, is_delete, is_binary, is_reverse;
 #define BINARY_DELTA_DEFLATED 1
 #define BINARY_LITERAL_DEFLATED 2
 	unsigned long deflate_origlen;
@@ -1119,6 +1119,34 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	return offset + hdrsize + patchsize;
 }
 
+#define swap(a,b) myswap((a),(b),sizeof(a))
+
+#define myswap(a, b, size) do {		\
+	unsigned char mytmp[size];	\
+	memcpy(mytmp, &a, size);		\
+	memcpy(&a, &b, size);		\
+	memcpy(&b, mytmp, size);		\
+} while (0)
+
+static void reverse_patches(struct patch *p)
+{
+	for (; p; p = p->next) {
+		struct fragment *frag = p->fragments;
+
+		swap(p->new_name, p->old_name);
+		swap(p->new_mode, p->old_mode);
+		swap(p->is_new, p->is_delete);
+		swap(p->lines_added, p->lines_deleted);
+		swap(p->old_sha1_prefix, p->new_sha1_prefix);
+
+		for (; frag; frag = frag->next) {
+			swap(frag->newpos, frag->oldpos);
+			swap(frag->newlines, frag->oldlines);
+		}
+		p->is_reverse = !p->is_reverse;
+	}
+}
+
 static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 static const char minuses[]= "----------------------------------------------------------------------";
 
@@ -1336,7 +1364,7 @@ static int apply_line(char *output, const char *patch, int plen)
 }
 
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
-	int inaccurate_eof)
+	int reverse, int inaccurate_eof)
 {
 	int match_beginning, match_end;
 	char *buf = desc->buffer;
@@ -1350,6 +1378,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 	int pos, lines;
 
 	while (size > 0) {
+		char first;
 		int len = linelen(patch, size);
 		int plen;
 
@@ -1366,16 +1395,23 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 		plen = len-1;
 		if (len < size && patch[len] == '\\')
 			plen--;
-		switch (*patch) {
+		first = *patch;
+		if (reverse) {
+			if (first == '-')
+				first = '+';
+			else if (first == '+')
+				first = '-';
+		}
+		switch (first) {
 		case ' ':
 		case '-':
 			memcpy(old + oldsize, patch + 1, plen);
 			oldsize += plen;
-			if (*patch == '-')
+			if (first == '-')
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (*patch != '+' || !no_add)
+			if (first != '+' || !no_add)
 				newsize += apply_line(new + newsize, patch,
 						      plen);
 			break;
@@ -1615,7 +1651,8 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
+		if (apply_one_fragment(desc, frag, patch->is_reverse,
+					patch->inaccurate_eof) < 0)
 			return error("patch failed: %s:%ld",
 				     name, frag->oldpos);
 		frag = frag->next;
@@ -2142,7 +2179,8 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd, const char *filename, int inaccurate_eof)
+static int apply_patch(int fd, const char *filename,
+		int reverse, int inaccurate_eof)
 {
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
@@ -2162,6 +2200,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
+		if (reverse)
+			reverse_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
 			*listp = patch;
@@ -2226,6 +2266,7 @@ int cmd_apply(int argc, const char **argv, char **envp)
 {
 	int i;
 	int read_stdin = 1;
+	int reverse = 0;
 	int inaccurate_eof = 0;
 
 	const char *whitespace_option = NULL;
@@ -2236,7 +2277,7 @@ int cmd_apply(int argc, const char **argv, char **envp)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>", inaccurate_eof);
+			apply_patch(0, "<stdin>", reverse, inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2313,6 +2354,10 @@ int cmd_apply(int argc, const char **argv, char **envp)
 			parse_whitespace_option(arg + 13);
 			continue;
 		}
+		if (!strcmp(arg, "-R") || !strcmp(arg, "--reverse")) {
+			reverse = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
 			inaccurate_eof = 1;
 			continue;
@@ -2333,12 +2378,12 @@ int cmd_apply(int argc, const char **argv, char **envp)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg, inaccurate_eof);
+		apply_patch(fd, arg, reverse, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>", inaccurate_eof);
+		apply_patch(0, "<stdin>", reverse, inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {
