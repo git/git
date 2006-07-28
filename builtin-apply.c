@@ -1535,6 +1535,12 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 	void *data;
 	void *result;
 
+	/* Binary patch is irreversible */
+	if (patch->is_reverse)
+		return error("cannot reverse-apply a binary patch to '%s'",
+			     patch->new_name
+			     ? patch->new_name : patch->old_name);
+
 	data = inflate_it(fragment->patch, fragment->size,
 			  patch->deflate_origlen);
 	if (!data)
