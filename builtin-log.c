@@ -49,8 +49,9 @@ int cmd_whatchanged(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_ui_config);
 	init_revisions(&rev);
+	git_config(git_diff_ui_config);
+	diff_setup(&rev.diffopt);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.simplify_history = 0;
@@ -64,8 +65,9 @@ int cmd_show(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_ui_config);
 	init_revisions(&rev);
+	git_config(git_diff_ui_config);
+	diff_setup(&rev.diffopt);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.combine_merges = 1;
@@ -81,8 +83,9 @@ int cmd_log(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_ui_config);
 	init_revisions(&rev);
+	git_config(git_diff_ui_config);
+	diff_setup(&rev.diffopt);
 	rev.always_show_header = 1;
 	cmd_log_init(argc, argv, envp, &rev);
 	return cmd_log_walk(&rev);

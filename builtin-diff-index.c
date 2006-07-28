@@ -15,8 +15,8 @@ int cmd_diff_index(int argc, const char **argv, char **envp)
 	int cached = 0;
 	int i;
 
-	git_config(git_default_config); /* no "diff" UI options */
 	init_revisions(&rev);
+	git_config(git_default_config); /* no "diff" UI options */
 	rev.abbrev = 0;
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
