@@ -36,7 +36,7 @@ our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 # location for temporary files needed for diffs
 our $git_temp = "/tmp/gitweb";
 if (! -d $git_temp) {
-    mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+	mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
 }
 
 # target of the home link on top of all pages
@@ -104,7 +104,7 @@ if (defined $project) {
 		die_error(undef, "No such project.");
 	}
 	$rss_link = "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
-		    "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>";
+	            "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>";
 	$ENV{'GIT_DIR'} = "$projectroot/$project";
 } else {
 	git_project_list();
@@ -303,7 +303,7 @@ sub git_header_html {
 	} else {
 		$content_type = 'text/html';
 	}
-	print $cgi->header(-type=>$content_type,  -charset => 'utf-8', -status=> $status, -expires => $expires);
+	print $cgi->header(-type=>$content_type, -charset => 'utf-8', -status=> $status, -expires => $expires);
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -1138,17 +1138,17 @@ sub git_summary {
 				      "</td>\n" .
 				      "<td>";
 				if (defined($comment)) {
-				      print $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, esc_html($comment));
+					print $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, esc_html($comment));
 				}
 				print "</td>\n" .
 				      "<td class=\"link\">";
 				if ($tag{'type'} eq "tag") {
-				      print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
+					print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
 				}
 				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
 				if ($tag{'reftype'} eq "commit") {
-				      print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-					    " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
+					print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
+					      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
 				}
 				print "</td>\n" .
 				      "</tr>";
@@ -1457,17 +1457,17 @@ sub git_tags {
 			      "</td>\n" .
 			      "<td>";
 			if (defined($comment)) {
-			      print $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, $comment);
+				print $cgi->a({-class => "list", -href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, $comment);
 			}
 			print "</td>\n" .
 			      "<td class=\"link\">";
 			if ($tag{'type'} eq "tag") {
-			      print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}")}, "tag") . " | ";
 			}
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$tag{'reftype'};h=$tag{'refid'}")}, $tag{'reftype'});
 			if ($tag{'reftype'} eq "commit") {
-			      print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
-				    " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
+				print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$tag{'name'}")}, "shortlog") .
+				      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$tag{'refid'}")}, "log");
 			}
 			print "</td>\n" .
 			      "</tr>";
@@ -1613,13 +1613,14 @@ sub git_blob_plain_mimetype {
 
 sub git_blob_plain {
 	if (!defined $hash) {
-                if (defined $file_name) {
-                        my $base = $hash_base || git_read_head($project);
-                        $hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
-                } else {
-                        die_error(undef, "No file name defined.");
-                }
-        }
+		if (defined $file_name) {
+			my $base = $hash_base || git_read_head($project);
+			$hash = git_get_hash_by_path($base, $file_name, "blob")
+				or die_error(undef, "Error lookup file.");
+		} else {
+			die_error(undef, "No file name defined.");
+		}
+	}
 	my $type = shift;
 	open my $fd, "-|", "$GIT cat-file blob $hash" or die_error("Couldn't cat $file_name, $hash");
 
@@ -1644,13 +1645,14 @@ sub git_blob_plain {
 
 sub git_blob {
 	if (!defined $hash) {
-                if (defined $file_name) {
-                        my $base = $hash_base || git_read_head($project);
-                        $hash = git_get_hash_by_path($base, $file_name, "blob") || die_error(undef, "Error lookup file.");
-                } else {
-                        die_error(undef, "No file name defined.");
-                }
-        }
+		if (defined $file_name) {
+			my $base = $hash_base || git_read_head($project);
+			$hash = git_get_hash_by_path($base, $file_name, "blob")
+				or die_error(undef, "Error lookup file.");
+		} else {
+			die_error(undef, "No file name defined.");
+		}
+	}
 	my $have_blame = git_get_project_config_bool ('blame');
 	open my $fd, "-|", "$GIT cat-file blob $hash" or die_error(undef, "Open failed.");
 	my $mimetype = git_blob_plain_mimetype($fd, $file_name);
@@ -1677,7 +1679,7 @@ sub git_blob {
 			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;h=$hash")}, "plain") . "<br/>\n";
 		}
 		print "</div>\n".
-		       "<div>" .
+		      "<div>" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
 		      "</div>\n";
 	} else {
@@ -2305,7 +2307,7 @@ sub git_commitdiff {
 		my $status = $5;
 		my $file = validate_input(unquote($6));
 		if ($status eq "A") {
-			print "<div class=\"diff_info\">" .  file_type($to_mode) . ":" .
+			print "<div class=\"diff_info\">" . file_type($to_mode) . ":" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id) . "(new)" .
 			      "</div>\n";
 			git_diff_print(undef, "/dev/null", $to_id, "b/$file");
@@ -2359,7 +2361,7 @@ sub git_commitdiff_plain {
 	      "Date: $ad{'rfc2822'} ($ad{'tz_local'})\n".
 	      "Subject: $co{'title'}\n";
 	if (defined $tagname) {
-	      print "X-Git-Tag: $tagname\n";
+		print "X-Git-Tag: $tagname\n";
 	}
 	print "X-Git-Url: $my_url?p=$project;a=commitdiff;h=$hash\n" .
 	      "\n";
