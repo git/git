@@ -234,7 +234,7 @@ int cmd_prune(int argc, const char **argv, char **envp)
 	 * Set up revision parsing, and mark us as being interested
 	 * in all object types, not just commits.
 	 */
-	init_revisions(&revs);
+	init_revisions(&revs, setup_git_directory());
 	revs.tag_objects = 1;
 	revs.blob_objects = 1;
 	revs.tree_objects = 1;

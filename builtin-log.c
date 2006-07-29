@@ -48,10 +48,10 @@ static int cmd_log_walk(struct rev_info *rev)
 int cmd_whatchanged(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
+	const char *prefix = setup_git_directory();
 
-	init_revisions(&rev);
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.simplify_history = 0;
@@ -64,10 +64,10 @@ int cmd_whatchanged(int argc, const char **argv, char **envp)
 int cmd_show(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
+	const char *prefix = setup_git_directory();
 
-	init_revisions(&rev);
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.combine_merges = 1;
@@ -82,10 +82,10 @@ int cmd_show(int argc, const char **argv, char **envp)
 int cmd_log(int argc, const char **argv, char **envp)
 {
 	struct rev_info rev;
+	const char *prefix = setup_git_directory();
 
-	init_revisions(&rev);
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 	rev.always_show_header = 1;
 	cmd_log_init(argc, argv, envp, &rev);
 	return cmd_log_walk(&rev);
@@ -188,6 +188,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
 	struct object *o1, *o2;
 	unsigned flags1, flags2;
 	unsigned char sha1[20];
+	const char *prefix = setup_git_directory();
 
 	if (rev->pending.nr != 2)
 		die("Need exactly one range.");
@@ -206,7 +207,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
 		die("diff_setup_done failed");
 
 	/* given a range a..b get all patch ids for b..a */
-	init_revisions(&check_rev);
+	init_revisions(&check_rev, prefix);
 	o1->flags ^= UNINTERESTING;
 	o2->flags ^= UNINTERESTING;
 	add_pending_object(&check_rev, o1, "o1");
@@ -260,9 +261,10 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	char *add_signoff = NULL;
 	char message_id[1024];
 	char ref_message_id[1024];
+	const char *prefix = setup_git_directory();
 
 	git_config(git_format_config);
-	init_revisions(&rev);
+	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.verbose_header = 1;
 	rev.diff = 1;

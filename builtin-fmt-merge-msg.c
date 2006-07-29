@@ -250,6 +250,7 @@ int cmd_fmt_merge_msg(int argc, char **argv, char **envp)
 	const char *sep = "";
 	unsigned char head_sha1[20];
 	const char *head, *current_branch;
+	const char *prefix = setup_git_directory();
 
 	git_config(fmt_merge_msg_config);
 
@@ -342,7 +343,7 @@ int cmd_fmt_merge_msg(int argc, char **argv, char **envp)
 		struct rev_info rev;
 
 		head = lookup_commit(head_sha1);
-		init_revisions(&rev);
+		init_revisions(&rev, prefix);
 		rev.commit_format = CMIT_FMT_ONELINE;
 		rev.ignore_merges = 1;
 		rev.limited = 1;

@@ -227,7 +227,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	struct rev_info rev;
 	struct object_array_entry ent[100];
 	int ents = 0, blobs = 0, paths = 0;
-	const char *path = NULL;
+	const char *path = NULL, *prefix;
 	struct blobinfo blob[2];
 
 	/*
@@ -250,9 +250,9 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	 * Other cases are errors.
 	 */
 
-	init_revisions(&rev);
+	prefix = setup_git_directory();
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
