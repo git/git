@@ -265,6 +265,9 @@ LIBS = $(GITLIBS) -lz
 ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
 endif
+ifeq ($(uname_S),GNU/kFreeBSD)
+	NO_STRLCPY = YesPlease
+endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
