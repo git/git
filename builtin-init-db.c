@@ -250,7 +250,7 @@ static const char init_db_usage[] =
  * On the other hand, it might just make lookup slower and messier. You
  * be the judge.  The default case is to have one DB per managed directory.
  */
-int cmd_init_db(int argc, const char **argv, char **envp)
+int cmd_init_db(int argc, const char **argv, const char *prefix)
 {
 	const char *git_dir;
 	const char *sha1_dir;

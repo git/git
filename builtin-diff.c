@@ -221,13 +221,13 @@ void add_head(struct rev_info *revs)
 	add_pending_object(revs, obj, "HEAD");
 }
 
-int cmd_diff(int argc, const char **argv, char **envp)
+int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct rev_info rev;
 	struct object_array_entry ent[100];
 	int ents = 0, blobs = 0, paths = 0;
-	const char *path = NULL, *prefix;
+	const char *path = NULL;
 	struct blobinfo blob[2];
 
 	/*
@@ -250,7 +250,6 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	 * Other cases are errors.
 	 */
 
-	prefix = setup_git_directory();
 	git_config(git_diff_ui_config);
 	init_revisions(&rev, prefix);
 

@@ -242,7 +242,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	free_list(&subjects);
 }
 
-int cmd_fmt_merge_msg(int argc, char **argv, char **envp)
+int cmd_fmt_merge_msg(int argc, char **argv, const char *prefix)
 {
 	int limit = 20, i = 0;
 	char line[1024];
@@ -250,7 +250,6 @@ int cmd_fmt_merge_msg(int argc, char **argv, char **envp)
 	const char *sep = "";
 	unsigned char head_sha1[20];
 	const char *head, *current_branch;
-	const char *prefix = setup_git_directory();
 
 	git_config(fmt_merge_msg_config);
 

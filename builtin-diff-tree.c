@@ -59,7 +59,7 @@ static const char diff_tree_usage[] =
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_tree(int argc, const char **argv, char **envp)
+int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 {
 	int nr_sha1;
 	char line[1000];
@@ -67,7 +67,7 @@ int cmd_diff_tree(int argc, const char **argv, char **envp)
 	static struct rev_info *opt = &log_tree_opt;
 	int read_stdin = 0;
 
-	init_revisions(opt, setup_git_directory());
+	init_revisions(opt, prefix);
 	git_config(git_default_config); /* no "diff" UI options */
 	nr_sha1 = 0;
 	opt->abbrev = 0;

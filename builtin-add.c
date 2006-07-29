@@ -123,11 +123,10 @@ static int add_file_to_index(const char *path, int verbose)
 
 static struct lock_file lock_file;
 
-int cmd_add(int argc, const char **argv, char **envp)
+int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
 	int verbose = 0, show_only = 0;
-	const char *prefix = setup_git_directory();
 	const char **pathspec;
 	struct dir_struct dir;
 
