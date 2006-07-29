@@ -7,9 +7,7 @@
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
-
-const char *write_ref = NULL;
-const char *write_ref_log_details = NULL;
+#include "strbuf.h"
 
 int get_tree = 0;
 int get_history = 0;
@@ -213,54 +211,106 @@ static int mark_complete(const char *path, const unsigned char *sha1)
 	return 0;
 }
 
-int pull(char *target)
+int pull_targets_stdin(char ***target, const char ***write_ref)
 {
-	struct ref_lock *lock = NULL;
-	unsigned char sha1[20];
+	int targets = 0, targets_alloc = 0;
+	struct strbuf buf;
+	*target = NULL; *write_ref = NULL;
+	strbuf_init(&buf);
+	while (1) {
+		char *rf_one = NULL;
+		char *tg_one;
+
+		read_line(&buf, stdin, '\n');
+		if (buf.eof)
+			break;
+		tg_one = buf.buf;
+		rf_one = strchr(tg_one, '\t');
+		if (rf_one)
+			*rf_one++ = 0;
+
+		if (targets >= targets_alloc) {
+			targets_alloc = targets_alloc ? targets_alloc * 2 : 64;
+			*target = xrealloc(*target, targets_alloc * sizeof(**target));
+			*write_ref = xrealloc(*write_ref, targets_alloc * sizeof(**write_ref));
+		}
+		(*target)[targets] = strdup(tg_one);
+		(*write_ref)[targets] = rf_one ? strdup(rf_one) : NULL;
+		targets++;
+	}
+	return targets;
+}
+
+void pull_targets_free(int targets, char **target, const char **write_ref)
+{
+	while (targets--) {
+		free(target[targets]);
+		if (write_ref && write_ref[targets])
+			free((char *) write_ref[targets]);
+	}
+}
+
+int pull(int targets, char **target, const char **write_ref,
+         const char *write_ref_log_details)
+{
+	struct ref_lock **lock = xcalloc(targets, sizeof(struct ref_lock *));
+	unsigned char *sha1 = xmalloc(targets * 20);
 	char *msg;
 	int ret;
+	int i;
 
 	save_commit_buffer = 0;
 	track_object_refs = 0;
-	if (write_ref) {
-		lock = lock_ref_sha1(write_ref, NULL, 0);
-		if (!lock) {
-			error("Can't lock ref %s", write_ref);
-			return -1;
+
+	for (i = 0; i < targets; i++) {
+		if (!write_ref || !write_ref[i])
+			continue;
+
+		lock[i] = lock_ref_sha1(write_ref[i], NULL, 0);
+		if (!lock[i]) {
+			error("Can't lock ref %s", write_ref[i]);
+			goto unlock_and_fail;
 		}
 	}
 
 	if (!get_recover)
 		for_each_ref(mark_complete);
 
-	if (interpret_target(target, sha1)) {
-		error("Could not interpret %s as something to pull", target);
-		if (lock)
-			unlock_ref(lock);
-		return -1;
-	}
-	if (process(lookup_unknown_object(sha1))) {
-		if (lock)
-			unlock_ref(lock);
-		return -1;
-	}
-	if (loop()) {
-		if (lock)
-			unlock_ref(lock);
-		return -1;
+	for (i = 0; i < targets; i++) {
+		if (interpret_target(target[i], &sha1[20 * i])) {
+			error("Could not interpret %s as something to pull", target[i]);
+			goto unlock_and_fail;
+		}
+		if (process(lookup_unknown_object(&sha1[20 * i])))
+			goto unlock_and_fail;
 	}
 
-	if (write_ref) {
-		if (write_ref_log_details) {
-			msg = xmalloc(strlen(write_ref_log_details) + 12);
-			sprintf(msg, "fetch from %s", write_ref_log_details);
-		}
-		else
-			msg = NULL;
-		ret = write_ref_sha1(lock, sha1, msg ? msg : "fetch (unknown)");
-		if (msg)
-			free(msg);
-		return ret;
+	if (loop())
+		goto unlock_and_fail;
+
+	if (write_ref_log_details) {
+		msg = xmalloc(strlen(write_ref_log_details) + 12);
+		sprintf(msg, "fetch from %s", write_ref_log_details);
+	} else {
+		msg = NULL;
 	}
+	for (i = 0; i < targets; i++) {
+		if (!write_ref || !write_ref[i])
+			continue;
+		ret = write_ref_sha1(lock[i], &sha1[20 * i], msg ? msg : "fetch (unknown)");
+		lock[i] = NULL;
+		if (ret)
+			goto unlock_and_fail;
+	}
+	if (msg)
+		free(msg);
+
 	return 0;
+
+
+unlock_and_fail:
+	for (i = 0; i < targets; i++)
+		if (lock[i])
+			unlock_ref(lock[i]);
+	return -1;
 }

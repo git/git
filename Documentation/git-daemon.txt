@@ -11,7 +11,7 @@ SYNOPSIS
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
              [--timeout=n] [--init-timeout=n] [--strict-paths]
              [--base-path=path] [--user-path | --user-path=path]
-	     [directory...]
+	     [--reuseaddr] [--detach] [--pid-file=file] [directory...]
 
 DESCRIPTION
 -----------
@@ -81,6 +81,17 @@ OPTIONS
 
 --verbose::
 	Log details about the incoming connections and requested files.
+
+--reuseaddr::
+	Use SO_REUSEADDR when binding the listening socket.
+	This allows the server to restart without waiting for
+	old connections to time out.
+
+--detach::
+	Detach from the shell. Implies --syslog.
+
+--pid-file=file::
+	Save the process id in 'file'.
 
 <directory>::
 	A directory to add to the whitelist of allowed directories. Unless

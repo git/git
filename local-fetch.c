@@ -8,8 +8,9 @@
 static int use_link = 0;
 static int use_symlink = 0;
 static int use_filecopy = 1;
+static int commits_on_stdin = 0;
 
-static char *path; /* "Remote" git repository */
+static const char *path; /* "Remote" git repository */
 
 void prefetch(unsigned char *sha1)
 {
@@ -194,17 +195,19 @@ int fetch_ref(char *ref, unsigned char *sha1)
 }
 
 static const char local_pull_usage[] =
-"git-local-fetch [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path";
+"git-local-fetch [-c] [-t] [-a] [-v] [-w filename] [--recover] [-l] [-s] [-n] [--stdin] commit-id path";
 
-/* 
+/*
  * By default we only use file copy.
  * If -l is specified, a hard link is attempted.
  * If -s is specified, then a symlink is attempted.
  * If -n is _not_ specified, then a regular file-to-file copy is done.
  */
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
-	char *commit_id;
+	int commits;
+	const char **write_ref = NULL;
+	char **commit_id;
 	int arg = 1;
 
 	setup_git_directory();
@@ -229,21 +232,30 @@ int main(int argc, char **argv)
 		else if (argv[arg][1] == 'v')
 			get_verbosely = 1;
 		else if (argv[arg][1] == 'w')
-			write_ref = argv[++arg];
+			write_ref = &argv[++arg];
 		else if (!strcmp(argv[arg], "--recover"))
 			get_recover = 1;
+		else if (!strcmp(argv[arg], "--stdin"))
+			commits_on_stdin = 1;
 		else
 			usage(local_pull_usage);
 		arg++;
 	}
-	if (argc < arg + 2)
+	if (argc < arg + 2 - commits_on_stdin)
 		usage(local_pull_usage);
-	commit_id = argv[arg];
-	path = argv[arg + 1];
-	write_ref_log_details = path;
+	if (commits_on_stdin) {
+		commits = pull_targets_stdin(&commit_id, &write_ref);
+	} else {
+		commit_id = (char **) &argv[arg++];
+		commits = 1;
+	}
+	path = argv[arg];
 
-	if (pull(commit_id))
+	if (pull(commits, commit_id, write_ref, path))
 		return 1;
+
+	if (commits_on_stdin)
+		pull_targets_free(commits, commit_id, write_ref);
 
 	return 0;
 }

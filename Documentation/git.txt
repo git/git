@@ -8,7 +8,8 @@ git - the stupid content tracker
 
 SYNOPSIS
 --------
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ARGS]
+'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate]
+	[--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]
 
 DESCRIPTION
 -----------
@@ -41,6 +42,15 @@ OPTIONS
 	environment variable. If no path is given 'git' will print
 	the current setting and then exit.
 
+-p|--paginate::
+	Pipe all output into 'less' (or if set, $PAGER).
+
+--git-dir=<path>::
+	Set the path to the repository. This can also be controlled by
+	setting the GIT_DIR environment variable.
+
+--bare::
+	Same as --git-dir=`pwd`.
 
 FURTHER DOCUMENTATION
 ---------------------

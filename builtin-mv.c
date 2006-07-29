@@ -56,11 +56,10 @@ static const char *add_slash(const char *path)
 
 static struct lock_file lock_file;
 
-int cmd_mv(int argc, const char **argv, char **envp)
+int cmd_mv(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd, count;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
-	const char *prefix = setup_git_directory();
 	const char **source, **destination, **dest_path;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;

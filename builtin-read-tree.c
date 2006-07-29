@@ -870,7 +870,7 @@ static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--aggressive
 
 static struct lock_file lock_file;
 
-int cmd_read_tree(int argc, const char **argv, char **envp)
+int cmd_read_tree(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];
@@ -882,7 +882,6 @@ int cmd_read_tree(int argc, const char **argv, char **envp)
 	state.quiet = 1;
 	state.refresh_cache = 1;
 
-	setup_git_directory();
 	git_config(git_default_config);
 
 	newfd = hold_lock_file_for_update(&lock_file, get_index_file());

@@ -221,15 +221,15 @@ static void show_man_page(const char *git_cmd)
 	execlp("man", "man", page, NULL);
 }
 
-int cmd_version(int argc, const char **argv, char **envp)
+int cmd_version(int argc, const char **argv, const char *prefix)
 {
 	printf("git version %s\n", git_version_string);
 	return 0;
 }
 
-int cmd_help(int argc, const char **argv, char **envp)
+int cmd_help(int argc, const char **argv, const char *prefix)
 {
-	const char *help_cmd = argv[1];
+	const char *help_cmd = argc > 1 ? argv[1] : NULL;
 	if (!help_cmd)
 		cmd_usage(0, git_exec_path(), NULL);
 	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a"))

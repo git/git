@@ -834,7 +834,7 @@ int main(int argc, const char **argv)
 	}
 
 
-	init_revisions(&rev);
+	init_revisions(&rev, setup_git_directory());
 	rev.remove_empty_trees = 1;
 	rev.topo_order = 1;
 	rev.prune_fn = simplify_commit;

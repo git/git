@@ -446,7 +446,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 			break;
 	}
 	/* Count mbox From headers as headers */
-	if (!ofs && !memcmp(line, "From ", 5))
+	if (!ofs && (!memcmp(line, "From ", 5) || !memcmp(line, ">From ", 6)))
 		ofs = 1;
 	return ofs;
 }
@@ -836,7 +836,7 @@ int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 static const char mailinfo_usage[] =
 	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
 
-int cmd_mailinfo(int argc, const char **argv, char **envp)
+int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery

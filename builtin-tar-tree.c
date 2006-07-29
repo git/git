@@ -308,7 +308,7 @@ int git_tar_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
-static int generate_tar(int argc, const char **argv, char** envp)
+static int generate_tar(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;
@@ -319,7 +319,6 @@ static int generate_tar(int argc, const char **argv, char** envp)
 	current_path.alloc = PATH_MAX;
 	current_path.len = current_path.eof = 0;
 
-	setup_git_directory();
 	git_config(git_tar_config);
 
 	switch (argc) {
@@ -402,19 +401,19 @@ static int remote_tar(int argc, const char **argv)
 	return !!ret;
 }
 
-int cmd_tar_tree(int argc, const char **argv, char **envp)
+int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 {
 	if (argc < 2)
 		usage(tar_tree_usage);
 	if (!strncmp("--remote=", argv[1], 9))
 		return remote_tar(argc, argv);
-	return generate_tar(argc, argv, envp);
+	return generate_tar(argc, argv, prefix);
 }
 
 /* ustar header + extended global header content */
 #define HEADERSIZE (2 * RECORDSIZE)
 
-int cmd_get_tar_commit_id(int argc, const char **argv, char **envp)
+int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 {
 	char buffer[HEADERSIZE];
 	struct ustar_header *header = (struct ustar_header *)buffer;

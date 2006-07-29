@@ -13,13 +13,13 @@ static const char diff_files_usage[] =
 "git-diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_files(int argc, const char **argv, char **envp)
+int cmd_diff_files(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	int silent = 0;
 
+	init_revisions(&rev, prefix);
 	git_config(git_default_config); /* no "diff" UI options */
-	init_revisions(&rev);
 	rev.abbrev = 0;
 
 	argc = setup_revisions(argc, argv, &rev, NULL);

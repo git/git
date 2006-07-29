@@ -615,6 +615,8 @@ $(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIB_FILE) $(SIMPLE_LIB)
 
+ssh-pull.o: ssh-fetch.c
+ssh-push.o: ssh-upload.c
 git-local-fetch$X: fetch.o
 git-ssh-fetch$X: rsh.o fetch.o
 git-ssh-upload$X: rsh.o
