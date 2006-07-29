@@ -1525,29 +1525,15 @@ sub git_get_hash_by_path {
 	my $path = shift || return undef;
 
 	my $tree = $base;
-	my @parts = split '/', $path;
-	while (my $part = shift @parts) {
-		open my $fd, "-|", $GIT, "ls-tree", $tree or die_error(undef, "Open git-ls-tree failed.");
-		my (@entries) = map { chomp; $_ } <$fd>;
-		close $fd or return undef;
-		foreach my $line (@entries) {
-			#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-			$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
-			my $t_mode = $1;
-			my $t_type = $2;
-			my $t_hash = $3;
-			my $t_name = validate_input(unquote($4));
-			if ($t_name eq $part) {
-				if (!(@parts)) {
-					return $t_hash;
-				}
-				if ($t_type eq "tree") {
-					$tree = $t_hash;
-				}
-				last;
-			}
-		}
-	}
+
+	open my $fd, "-|", $GIT, "ls-tree", $base, "--", $path
+		or die_error(undef, "Open git-ls-tree failed.");
+	my $line = <$fd>;
+	close $fd or return undef;
+
+	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
+	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
+	return $3;
 }
 
 sub mimetype_guess_file {
