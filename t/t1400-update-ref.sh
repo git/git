@@ -14,6 +14,8 @@ D=4444444444444444444444444444444444444444
 E=5555555555555555555555555555555555555555
 F=6666666666666666666666666666666666666666
 m=refs/heads/master
+n_dir=refs/heads/gu
+n=$n_dir/fixes
 
 test_expect_success \
 	"create $m" \
@@ -24,6 +26,16 @@ test_expect_success \
 	'git-update-ref $m $B $A &&
 	 test $B = $(cat .git/$m)'
 rm -f .git/$m
+
+test_expect_success \
+	"fail to create $n" \
+	'touch .git/$n_dir
+	 git-update-ref $n $A >out 2>err
+	 test $? = 1 &&
+	 test "" = "$(cat out)" &&
+	 grep "error: unable to resolve reference" err &&
+	 grep $n err'
+rm -f .git/$n_dir out err
 
 test_expect_success \
 	"create $m (by HEAD)" \
