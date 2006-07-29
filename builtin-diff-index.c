@@ -9,13 +9,13 @@ static const char diff_cache_usage[] =
 "[<common diff options>] <tree-ish> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_index(int argc, const char **argv, char **envp)
+int cmd_diff_index(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	int cached = 0;
 	int i;
 
-	init_revisions(&rev);
+	init_revisions(&rev, prefix);
 	git_config(git_default_config); /* no "diff" UI options */
 	rev.abbrev = 0;
 

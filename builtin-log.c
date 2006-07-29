@@ -16,7 +16,7 @@
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
 
-static void cmd_log_init(int argc, const char **argv, char **envp,
+static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
 	rev->abbrev = DEFAULT_ABBREV;
@@ -45,29 +45,27 @@ static int cmd_log_walk(struct rev_info *rev)
 	return 0;
 }
 
-int cmd_whatchanged(int argc, const char **argv, char **envp)
+int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	init_revisions(&rev);
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.simplify_history = 0;
-	cmd_log_init(argc, argv, envp, &rev);
+	cmd_log_init(argc, argv, prefix, &rev);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 	return cmd_log_walk(&rev);
 }
 
-int cmd_show(int argc, const char **argv, char **envp)
+int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	init_revisions(&rev);
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
 	rev.combine_merges = 1;
@@ -75,19 +73,18 @@ int cmd_show(int argc, const char **argv, char **envp)
 	rev.always_show_header = 1;
 	rev.ignore_merges = 0;
 	rev.no_walk = 1;
-	cmd_log_init(argc, argv, envp, &rev);
+	cmd_log_init(argc, argv, prefix, &rev);
 	return cmd_log_walk(&rev);
 }
 
-int cmd_log(int argc, const char **argv, char **envp)
+int cmd_log(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	init_revisions(&rev);
 	git_config(git_diff_ui_config);
-	diff_setup(&rev.diffopt);
+	init_revisions(&rev, prefix);
 	rev.always_show_header = 1;
-	cmd_log_init(argc, argv, envp, &rev);
+	cmd_log_init(argc, argv, prefix, &rev);
 	return cmd_log_walk(&rev);
 }
 
@@ -181,7 +178,7 @@ static int get_patch_id(struct commit *commit, struct diff_options *options,
 	return diff_flush_patch_id(options, sha1);
 }
 
-static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
+static void get_patch_ids(struct rev_info *rev, struct diff_options *options, const char *prefix)
 {
 	struct rev_info check_rev;
 	struct commit *commit;
@@ -206,7 +203,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options)
 		die("diff_setup_done failed");
 
 	/* given a range a..b get all patch ids for b..a */
-	init_revisions(&check_rev);
+	init_revisions(&check_rev, prefix);
 	o1->flags ^= UNINTERESTING;
 	o2->flags ^= UNINTERESTING;
 	add_pending_object(&check_rev, o1, "o1");
@@ -243,7 +240,7 @@ static void gen_message_id(char *dest, unsigned int length, char *base)
 		 (int)(email_end - email_start - 1), email_start + 1);
 }
 
-int cmd_format_patch(int argc, const char **argv, char **envp)
+int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
 	struct commit **list = NULL;
@@ -262,7 +259,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	char ref_message_id[1024];
 
 	git_config(git_format_config);
-	init_revisions(&rev);
+	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.verbose_header = 1;
 	rev.diff = 1;
@@ -366,7 +363,7 @@ int cmd_format_patch(int argc, const char **argv, char **envp)
 	}
 
 	if (ignore_if_in_upstream)
-		get_patch_ids(&rev, &patch_id_opts);
+		get_patch_ids(&rev, &patch_id_opts, prefix);
 
 	if (!use_stdout)
 		realstdout = fdopen(dup(1), "w");

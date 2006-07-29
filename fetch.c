@@ -245,7 +245,7 @@ void pull_targets_free(int targets, char **target, const char **write_ref)
 {
 	while (targets--) {
 		free(target[targets]);
-		if (write_ref[targets])
+		if (write_ref && write_ref[targets])
 			free((char *) write_ref[targets]);
 	}
 }
@@ -263,7 +263,7 @@ int pull(int targets, char **target, const char **write_ref,
 	track_object_refs = 0;
 
 	for (i = 0; i < targets; i++) {
-		if (!write_ref[i])
+		if (!write_ref || !write_ref[i])
 			continue;
 
 		lock[i] = lock_ref_sha1(write_ref[i], NULL, 0);
@@ -295,7 +295,7 @@ int pull(int targets, char **target, const char **write_ref,
 		msg = NULL;
 	}
 	for (i = 0; i < targets; i++) {
-		if (!write_ref[i])
+		if (!write_ref || !write_ref[i])
 			continue;
 		ret = write_ref_sha1(lock[i], &sha1[20 * i], msg ? msg : "fetch (unknown)");
 		lock[i] = NULL;

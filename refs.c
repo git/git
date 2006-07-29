@@ -294,6 +294,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *path,
 	int plen,
 	const unsigned char *old_sha1, int mustexist)
 {
+	const char *orig_path = path;
 	struct ref_lock *lock;
 	struct stat st;
 
@@ -303,7 +304,11 @@ static struct ref_lock *lock_ref_sha1_basic(const char *path,
 	plen = strlen(path) - plen;
 	path = resolve_ref(path, lock->old_sha1, mustexist);
 	if (!path) {
+		int last_errno = errno;
+		error("unable to resolve reference %s: %s",
+			orig_path, strerror(errno));
 		unlock_ref(lock);
+		errno = last_errno;
 		return NULL;
 	}
 	lock->lk = xcalloc(1, sizeof(struct lock_file));

@@ -6,7 +6,7 @@
 #include "refs.h"
 #include "builtin.h"
 
-int cmd_check_ref_format(int argc, const char **argv, char **envp)
+int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 {
 	if (argc != 2)
 		usage("git check-ref-format refname");

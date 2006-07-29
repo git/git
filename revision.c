@@ -509,7 +509,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 	return 1;
 }
 
-void init_revisions(struct rev_info *revs)
+void init_revisions(struct rev_info *revs, const char *prefix)
 {
 	memset(revs, 0, sizeof(*revs));
 
@@ -521,7 +521,7 @@ void init_revisions(struct rev_info *revs)
 	revs->pruning.change = file_change;
 	revs->lifo = 1;
 	revs->dense = 1;
-	revs->prefix = setup_git_directory();
+	revs->prefix = prefix;
 	revs->max_age = -1;
 	revs->min_age = -1;
 	revs->max_count = -1;

@@ -55,10 +55,9 @@ static void diff_stages(int stage1, int stage2, const char **pathspec)
 	}
 }
 
-int cmd_diff_stages(int ac, const char **av, char **envp)
+int cmd_diff_stages(int ac, const char **av, const char *prefix)
 {
 	int stage1, stage2;
-	const char *prefix = setup_git_directory();
 	const char **pathspec = NULL;
 
 	git_config(git_default_config); /* no "diff" UI options */

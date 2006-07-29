@@ -60,13 +60,11 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 	return 0;
 }
 
-int cmd_write_tree(int argc, const char **argv, char **envp)
+int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int missing_ok = 0, ret;
 	const char *prefix = NULL;
 	unsigned char sha1[20];
-
-	setup_git_directory();
 
 	while (1 < argc) {
 		const char *arg = argv[1];

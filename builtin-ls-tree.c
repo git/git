@@ -18,7 +18,7 @@ static int abbrev = 0;
 static int ls_options = 0;
 static const char **pathspec;
 static int chomp_prefix = 0;
-static const char *prefix;
+static const char *ls_tree_prefix;
 
 static const char ls_tree_usage[] =
 	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] [--full-name] [--abbrev[=<n>]] <tree-ish> [path...]";
@@ -71,7 +71,7 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		return 0;
 
 	if (chomp_prefix &&
-	    (baselen < chomp_prefix || memcmp(prefix, base, chomp_prefix)))
+	    (baselen < chomp_prefix || memcmp(ls_tree_prefix, base, chomp_prefix)))
 		return 0;
 
 	if (!(ls_options & LS_NAME_ONLY))
@@ -85,13 +85,13 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 	return retval;
 }
 
-int cmd_ls_tree(int argc, const char **argv, char **envp)
+int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20];
 	struct tree *tree;
 
-	prefix = setup_git_directory();
 	git_config(git_default_config);
+	ls_tree_prefix = prefix;
 	if (prefix && *prefix)
 		chomp_prefix = strlen(prefix);
 	while (1 < argc && argv[1][0] == '-') {

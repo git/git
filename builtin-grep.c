@@ -919,14 +919,13 @@ static const char emsg_missing_context_len[] =
 static const char emsg_missing_argument[] =
 "option requires an argument -%s";
 
-int cmd_grep(int argc, const char **argv, char **envp)
+int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
 	int cached = 0;
 	int seen_dashdash = 0;
 	struct grep_opt opt;
 	struct object_array list = { 0, 0, NULL };
-	const char *prefix = setup_git_directory();
 	const char **paths = NULL;
 	int i;
 
