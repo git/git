@@ -1063,7 +1063,7 @@ sub git_summary {
 	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n" .
 	      "</table>\n";
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=17", git_read_head($project)
-		or die_error(undef, "Open failed.");
+		or die_error(undef, "Open git-rev-list failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
@@ -1271,7 +1271,7 @@ sub git_blame2 {
 		die_error("400 Bad Request", "object is not a blob");
 	}
 	open ($fd, "-|", $GIT, "blame", '-l', $file_name, $hash_base)
-		or die_error(undef, "Open failed");
+		or die_error(undef, "Open git-blame failed.");
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
@@ -1333,7 +1333,7 @@ sub git_blame {
 			or die_error(undef, "Error lookup file.");
 	}
 	open ($fd, "-|", $GIT, "annotate", '-l', '-t', '-r', $file_name, $hash_base)
-		or die_error(undef, "Open failed.");
+		or die_error(undef, "Open git-annotate failed.");
 	git_header_html();
 	print "<div class=\"page_nav\">\n" .
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
@@ -1609,7 +1609,8 @@ sub git_blob_plain {
 		}
 	}
 	my $type = shift;
-	open my $fd, "-|", $GIT, "cat-file", "blob", $hash or die_error("Couldn't cat $file_name, $hash");
+	open my $fd, "-|", $GIT, "cat-file", "blob", $hash
+		or die_error("Couldn't cat $file_name, $hash");
 
 	$type ||= git_blob_plain_mimetype($fd, $file_name);
 
@@ -1641,7 +1642,8 @@ sub git_blob {
 		}
 	}
 	my $have_blame = git_get_project_config_bool ('blame');
-	open my $fd, "-|", $GIT, "cat-file", "blob", $hash or die_error(undef, "Open failed.");
+	open my $fd, "-|", $GIT, "cat-file", "blob", $hash
+		or die_error(undef, "Couldn't cat $file_name, $hash.");
 	my $mimetype = git_blob_plain_mimetype($fd, $file_name);
 	if ($mimetype !~ m/^text\//) {
 		close $fd;
@@ -1705,7 +1707,8 @@ sub git_tree {
 		}
 	}
 	$/ = "\0";
-	open my $fd, "-|", $GIT, "ls-tree", '-z', $hash or die_error(undef, "Open git-ls-tree failed.");
+	open my $fd, "-|", $GIT, "ls-tree", '-z', $hash
+		or die_error(undef, "Open git-ls-tree failed.");
 	chomp (my (@entries) = <$fd>);
 	close $fd or die_error(undef, "Reading tree failed.");
 	$/ = "\n";
@@ -1787,7 +1790,7 @@ sub git_tree {
 sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=150", git_read_head($project)
-		or die_error(undef, "Open failed.");
+		or die_error(undef, "Open git-rev-list failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading rev-list failed.");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
@@ -1895,7 +1898,8 @@ sub git_log {
 	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", $GIT, "rev-list", $limit, $hash or die_error(undef, "Open failed.");
+	open my $fd, "-|", $GIT, "rev-list", $limit, $hash
+		or die_error(undef, "Open git-rev-list failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -1985,7 +1989,7 @@ sub git_commit {
 		$parent = "--root";
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', '-M', $parent, $hash
-		or die_error(undef, "Open failed.");
+		or die_error(undef, "Open git-diff-tree failed.");
 	@difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed.");
 
@@ -2232,7 +2236,7 @@ sub git_commitdiff {
 		$hash_parent = $co{'parent'};
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
-		or die_error(undef, "Open failed.");
+		or die_error(undef, "Open git-diff-tree failed.");
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
@@ -2323,7 +2327,7 @@ sub git_commitdiff {
 sub git_commitdiff_plain {
 	mkdir($git_temp, 0700);
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
-		or die_error(undef, "Open failed.");
+		or die_error(undef, "Open git-diff-tree failed.");
 	my (@difftree) = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
@@ -2616,7 +2620,8 @@ sub git_shortlog {
 	      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$hash;hb=$hash")}, "tree") . "<br/>\n";
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", $GIT, "rev-list", $limit, $hash or die_error(undef, "Open failed.");
+	open my $fd, "-|", $GIT, "rev-list", $limit, $hash
+		or die_error(undef, "Open git-rev-list failed.");
 	my (@revlist) = map { chomp; $_ } <$fd>;
 	close $fd;
 
