@@ -477,9 +477,9 @@ static char *unique_path(const char *path, const char *branch)
 	char *newpath = xmalloc(strlen(path) + 1 + strlen(branch) + 8 + 1);
 	int suffix = 0;
 	struct stat st;
-	char *p = newpath + strlen(newpath);
+	char *p = newpath + strlen(path);
 	strcpy(newpath, path);
-	strcat(newpath, "~");
+	*(p++) = '~';
 	strcpy(p, branch);
 	for (; *p; ++p)
 		if ('/' == *p)
