@@ -635,7 +635,7 @@ sub git_diff_print {
 		$/ = "\n";
 	} else {
 		while (my $line = <$fd>) {
-			chomp($line);
+			chomp $line;
 			my $char = substr($line, 0, 1);
 			my $diff_class = "";
 			if ($char eq '+') {
@@ -944,7 +944,7 @@ sub read_info_ref {
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
 	open my $fd, "$projectroot/$project/info/refs" or return;
 	while (my $line = <$fd>) {
-		chomp($line);
+		chomp $line;
 		if ($line =~ m/^([0-9a-fA-F]{40})\t.*$type\/([^\^]+)/) {
 			if (defined $refs{$1}) {
 				$refs{$1} .= " / $2";
