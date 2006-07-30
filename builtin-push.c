@@ -270,7 +270,7 @@ static int do_push(const char *repo)
 	return 0;
 }
 
-int cmd_push(int argc, const char **argv, char **envp)
+int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	const char *repo = "origin";	/* default repository */

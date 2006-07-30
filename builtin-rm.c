@@ -43,11 +43,10 @@ static int remove_file(const char *name)
 
 static struct lock_file lock_file;
 
-int cmd_rm(int argc, const char **argv, char **envp)
+int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
 	int verbose = 0, show_only = 0, force = 0;
-	const char *prefix = setup_git_directory();
 	const char **pathspec;
 	char *seen;
 

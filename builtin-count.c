@@ -67,7 +67,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 	}
 }
 
-int cmd_count_objects(int ac, const char **av, char **ep)
+int cmd_count_objects(int ac, const char **av, const char *prefix)
 {
 	int i;
 	int verbose = 0;

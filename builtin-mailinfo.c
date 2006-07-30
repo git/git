@@ -836,7 +836,7 @@ int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 static const char mailinfo_usage[] =
 	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
 
-int cmd_mailinfo(int argc, const char **argv, char **envp)
+int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery

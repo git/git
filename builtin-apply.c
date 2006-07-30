@@ -2268,7 +2268,7 @@ static int git_apply_config(const char *var, const char *value)
 }
 
 
-int cmd_apply(int argc, const char **argv, char **envp)
+int cmd_apply(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int read_stdin = 1;

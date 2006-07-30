@@ -214,52 +214,55 @@ static int handle_alias(int *argcp, const char ***argv)
 
 const char git_version_string[] = GIT_VERSION;
 
+#define NEEDS_PREFIX 1
+
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
 	const char *cmd = argv[0];
 	static struct cmd_struct {
 		const char *cmd;
-		int (*fn)(int, const char **, char **);
+		int (*fn)(int, const char **, const char *);
+		int prefix;
 	} commands[] = {
 		{ "version", cmd_version },
 		{ "help", cmd_help },
-		{ "log", cmd_log },
-		{ "whatchanged", cmd_whatchanged },
-		{ "show", cmd_show },
+		{ "log", cmd_log, NEEDS_PREFIX },
+		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX },
+		{ "show", cmd_show, NEEDS_PREFIX },
 		{ "push", cmd_push },
-		{ "format-patch", cmd_format_patch },
+		{ "format-patch", cmd_format_patch, NEEDS_PREFIX },
 		{ "count-objects", cmd_count_objects },
-		{ "diff", cmd_diff },
-		{ "grep", cmd_grep },
-		{ "rm", cmd_rm },
-		{ "add", cmd_add },
-		{ "rev-list", cmd_rev_list },
+		{ "diff", cmd_diff, NEEDS_PREFIX },
+		{ "grep", cmd_grep, NEEDS_PREFIX },
+		{ "rm", cmd_rm, NEEDS_PREFIX },
+		{ "add", cmd_add, NEEDS_PREFIX },
+		{ "rev-list", cmd_rev_list, NEEDS_PREFIX },
 		{ "init-db", cmd_init_db },
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "upload-tar", cmd_upload_tar },
 		{ "check-ref-format", cmd_check_ref_format },
-		{ "ls-files", cmd_ls_files },
-		{ "ls-tree", cmd_ls_tree },
-		{ "tar-tree", cmd_tar_tree },
-		{ "read-tree", cmd_read_tree },
-		{ "commit-tree", cmd_commit_tree },
+		{ "ls-files", cmd_ls_files, NEEDS_PREFIX },
+		{ "ls-tree", cmd_ls_tree, NEEDS_PREFIX },
+		{ "tar-tree", cmd_tar_tree, NEEDS_PREFIX },
+		{ "read-tree", cmd_read_tree, NEEDS_PREFIX },
+		{ "commit-tree", cmd_commit_tree, NEEDS_PREFIX },
 		{ "apply", cmd_apply },
-		{ "show-branch", cmd_show_branch },
-		{ "diff-files", cmd_diff_files },
-		{ "diff-index", cmd_diff_index },
-		{ "diff-stages", cmd_diff_stages },
-		{ "diff-tree", cmd_diff_tree },
-		{ "cat-file", cmd_cat_file },
-		{ "rev-parse", cmd_rev_parse },
-		{ "write-tree", cmd_write_tree },
+		{ "show-branch", cmd_show_branch, NEEDS_PREFIX },
+		{ "diff-files", cmd_diff_files, NEEDS_PREFIX },
+		{ "diff-index", cmd_diff_index, NEEDS_PREFIX },
+		{ "diff-stages", cmd_diff_stages, NEEDS_PREFIX },
+		{ "diff-tree", cmd_diff_tree, NEEDS_PREFIX },
+		{ "cat-file", cmd_cat_file, NEEDS_PREFIX },
+		{ "rev-parse", cmd_rev_parse, NEEDS_PREFIX },
+		{ "write-tree", cmd_write_tree, NEEDS_PREFIX },
 		{ "mailsplit", cmd_mailsplit },
 		{ "mailinfo", cmd_mailinfo },
 		{ "stripspace", cmd_stripspace },
-		{ "update-index", cmd_update_index },
-		{ "update-ref", cmd_update_ref },
-		{ "fmt-merge-msg", cmd_fmt_merge_msg },
-		{ "prune", cmd_prune },
-		{ "mv", cmd_mv },
+		{ "update-index", cmd_update_index, NEEDS_PREFIX },
+		{ "update-ref", cmd_update_ref, NEEDS_PREFIX },
+		{ "fmt-merge-msg", cmd_fmt_merge_msg, NEEDS_PREFIX },
+		{ "prune", cmd_prune, NEEDS_PREFIX },
+		{ "mv", cmd_mv, NEEDS_PREFIX },
 	};
 	int i;
 
@@ -271,9 +274,13 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		struct cmd_struct *p = commands+i;
+		const char *prefix;
 		if (strcmp(p->cmd, cmd))
 			continue;
 
+		prefix = NULL;
+		if (p->prefix)
+			prefix = setup_git_directory();
 		if (getenv("GIT_TRACE")) {
 			int i;
 			fprintf(stderr, "trace: built-in: git");
@@ -285,7 +292,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			fflush(stderr);
 		}
 
-		exit(p->fn(argc, argv, envp));
+		exit(p->fn(argc, argv, prefix));
 	}
 }
 
