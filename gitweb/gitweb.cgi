@@ -1064,7 +1064,7 @@ sub git_summary {
 	      "</table>\n";
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=17", git_read_head($project)
 		or die_error(undef, "Open git-rev-list failed.");
-	my (@revlist) = map { chomp; $_ } <$fd>;
+	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 	print "<div>\n" .
 	      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog"), -class => "title"}, "shortlog") .
@@ -1709,7 +1709,7 @@ sub git_tree {
 	$/ = "\0";
 	open my $fd, "-|", $GIT, "ls-tree", '-z', $hash
 		or die_error(undef, "Open git-ls-tree failed.");
-	chomp (my (@entries) = <$fd>);
+	my @entries = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading tree failed.");
 	$/ = "\n";
 
@@ -1791,7 +1791,7 @@ sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=150", git_read_head($project)
 		or die_error(undef, "Open git-rev-list failed.");
-	my (@revlist) = map { chomp; $_ } <$fd>;
+	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading rev-list failed.");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
@@ -1900,7 +1900,7 @@ sub git_log {
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", $GIT, "rev-list", $limit, $hash
 		or die_error(undef, "Open git-rev-list failed.");
-	my (@revlist) = map { chomp; $_ } <$fd>;
+	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	if ($hash ne $head || $page) {
@@ -1983,14 +1983,13 @@ sub git_commit {
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
 
-	my @difftree;
 	my $parent = $co{'parent'};
 	if (!defined $parent) {
 		$parent = "--root";
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', '-M', $parent, $hash
 		or die_error(undef, "Open git-diff-tree failed.");
-	@difftree = map { chomp; $_ } <$fd>;
+	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed.");
 
 	# non-textual hash id's can be cached
@@ -2237,7 +2236,7 @@ sub git_commitdiff {
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed.");
-	my (@difftree) = map { chomp; $_ } <$fd>;
+	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
 	# non-textual hash id's can be cached
@@ -2328,14 +2327,14 @@ sub git_commitdiff_plain {
 	mkdir($git_temp, 0700);
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed.");
-	my (@difftree) = map { chomp; $_ } <$fd>;
+	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading diff-tree failed.");
 
 	# try to figure out the next tag after this commit
 	my $tagname;
 	my $refs = read_info_ref("tags");
 	open $fd, "-|", $GIT, "rev-list", "HEAD";
-	chomp (my (@commits) = <$fd>);
+	my @commits = map { chomp; $_ } <$fd>;
 	close $fd;
 	foreach my $commit (@commits) {
 		if (defined $refs->{$commit}) {
@@ -2622,7 +2621,7 @@ sub git_shortlog {
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", $GIT, "rev-list", $limit, $hash
 		or die_error(undef, "Open git-rev-list failed.");
-	my (@revlist) = map { chomp; $_ } <$fd>;
+	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
 	if ($hash ne $head || $page) {
