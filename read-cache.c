@@ -24,6 +24,11 @@ unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
 
 struct cache_tree *active_cache_tree = NULL;
 
+int cache_errno = 0;
+
+static void *cache_mmap = NULL;
+static size_t cache_mmap_size = 0;
+
 /*
  * This only updates the "non-critical" parts of the directory
  * cache, ie the parts that aren't tracked by GIT, and only used
@@ -314,6 +319,45 @@ int remove_file_from_cache(const char *path)
 	return 0;
 }
 
+int add_file_to_index(const char *path, int verbose)
+{
+	int size, namelen;
+	struct stat st;
+	struct cache_entry *ce;
+
+	if (lstat(path, &st))
+		die("%s: unable to stat (%s)", path, strerror(errno));
+
+	if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode))
+		die("%s: can only add regular files or symbolic links", path);
+
+	namelen = strlen(path);
+	size = cache_entry_size(namelen);
+	ce = xcalloc(1, size);
+	memcpy(ce->name, path, namelen);
+	ce->ce_flags = htons(namelen);
+	fill_stat_cache_info(ce, &st);
+
+	ce->ce_mode = create_ce_mode(st.st_mode);
+	if (!trust_executable_bit) {
+		/* If there is an existing entry, pick the mode bits
+		 * from it.
+		 */
+		int pos = cache_name_pos(path, namelen);
+		if (pos >= 0)
+			ce->ce_mode = active_cache[pos]->ce_mode;
+	}
+
+	if (index_path(ce->sha1, path, &st, 1))
+		die("unable to index file %s", path);
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD))
+		die("unable to add %s to index",path);
+	if (verbose)
+		printf("add '%s'\n", path);
+	cache_tree_invalidate_path(active_cache_tree, path);
+	return 0;
+}
+
 int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 {
 	int len = ce_namelen(a);
@@ -577,22 +621,6 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	return 0;
 }
 
-/* Three functions to allow overloaded pointer return; see linux/err.h */
-static inline void *ERR_PTR(long error)
-{
-	return (void *) error;
-}
-
-static inline long PTR_ERR(const void *ptr)
-{
-	return (long) ptr;
-}
-
-static inline long IS_ERR(const void *ptr)
-{
-	return (unsigned long)ptr > (unsigned long)-1000L;
-}
-
 /*
  * "refresh" does not calculate a new sha1 file or bring the
  * cache up-to-date for mode/content changes. But what it
@@ -604,14 +632,16 @@ static inline long IS_ERR(const void *ptr)
  * For example, you'd want to do this after doing a "git-read-tree",
  * to link up the stat cache details with the proper files.
  */
-static struct cache_entry *refresh_entry(struct cache_entry *ce, int really)
+struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
 {
 	struct stat st;
 	struct cache_entry *updated;
 	int changed, size;
 
-	if (lstat(ce->name, &st) < 0)
-		return ERR_PTR(-errno);
+	if (lstat(ce->name, &st) < 0) {
+		cache_errno = errno;
+		return NULL;
+	}
 
 	changed = ce_match_stat(ce, &st, really);
 	if (!changed) {
@@ -619,11 +649,13 @@ static struct cache_entry *refresh_entry(struct cache_entry *ce, int really)
 		    !(ce->ce_flags & htons(CE_VALID)))
 			; /* mark this one VALID again */
 		else
-			return NULL;
+			return ce;
 	}
 
-	if (ce_modified(ce, &st, really))
-		return ERR_PTR(-EINVAL);
+	if (ce_modified(ce, &st, really)) {
+		cache_errno = EINVAL;
+		return NULL;
+	}
 
 	size = ce_size(ce);
 	updated = xmalloc(size);
@@ -666,13 +698,13 @@ int refresh_cache(unsigned int flags)
 			continue;
 		}
 
-		new = refresh_entry(ce, really);
-		if (!new)
+		new = refresh_cache_entry(ce, really);
+		if (new == ce)
 			continue;
-		if (IS_ERR(new)) {
-			if (not_new && PTR_ERR(new) == -ENOENT)
+		if (!new) {
+			if (not_new && cache_errno == ENOENT)
 				continue;
-			if (really && PTR_ERR(new) == -EINVAL) {
+			if (really && cache_errno == EINVAL) {
 				/* If we are doing --really-refresh that
 				 * means the index is not valid anymore.
 				 */
@@ -729,39 +761,43 @@ static int read_index_extension(const char *ext, void *data, unsigned long sz)
 
 int read_cache(void)
 {
+	return read_cache_from(get_index_file());
+}
+
+/* remember to discard_cache() before reading a different cache! */
+int read_cache_from(const char *path)
+{
 	int fd, i;
 	struct stat st;
-	unsigned long size, offset;
-	void *map;
+	unsigned long offset;
 	struct cache_header *hdr;
 
 	errno = EBUSY;
-	if (active_cache)
+	if (cache_mmap)
 		return active_nr;
 
 	errno = ENOENT;
 	index_file_timestamp = 0;
-	fd = open(get_index_file(), O_RDONLY);
+	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT)
 			return 0;
 		die("index file open failed (%s)", strerror(errno));
 	}
 
-	size = 0; /* avoid gcc warning */
-	map = MAP_FAILED;
+	cache_mmap = MAP_FAILED;
 	if (!fstat(fd, &st)) {
-		size = st.st_size;
+		cache_mmap_size = st.st_size;
 		errno = EINVAL;
-		if (size >= sizeof(struct cache_header) + 20)
-			map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+		if (cache_mmap_size >= sizeof(struct cache_header) + 20)
+			cache_mmap = mmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	}
 	close(fd);
-	if (map == MAP_FAILED)
+	if (cache_mmap == MAP_FAILED)
 		die("index file mmap failed (%s)", strerror(errno));
 
-	hdr = map;
-	if (verify_hdr(hdr, size) < 0)
+	hdr = cache_mmap;
+	if (verify_hdr(hdr, cache_mmap_size) < 0)
 		goto unmap;
 
 	active_nr = ntohl(hdr->hdr_entries);
@@ -770,12 +806,12 @@ int read_cache(void)
 
 	offset = sizeof(*hdr);
 	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = (struct cache_entry *) ((char *) map + offset);
+		struct cache_entry *ce = (struct cache_entry *) ((char *) cache_mmap + offset);
 		offset = offset + ce_size(ce);
 		active_cache[i] = ce;
 	}
 	index_file_timestamp = st.st_mtime;
-	while (offset <= size - 20 - 8) {
+	while (offset <= cache_mmap_size - 20 - 8) {
 		/* After an array of active_nr index entries,
 		 * there can be arbitrary number of extended
 		 * sections, each of which is prefixed with
@@ -783,10 +819,10 @@ int read_cache(void)
 		 * in 4-byte network byte order.
 		 */
 		unsigned long extsize;
-		memcpy(&extsize, (char *) map + offset + 4, 4);
+		memcpy(&extsize, (char *) cache_mmap + offset + 4, 4);
 		extsize = ntohl(extsize);
-		if (read_index_extension(((const char *) map) + offset,
-					 (char *) map + offset + 8,
+		if (read_index_extension(((const char *) cache_mmap) + offset,
+					 (char *) cache_mmap + offset + 8,
 					 extsize) < 0)
 			goto unmap;
 		offset += 8;
@@ -795,7 +831,7 @@ int read_cache(void)
 	return active_nr;
 
 unmap:
-	munmap(map, size);
+	munmap(cache_mmap, cache_mmap_size);
 	errno = EINVAL;
 	die("index file corrupt");
 }
