@@ -385,6 +385,40 @@ sub die_error {
 	exit;
 }
 
+sub git_page_nav {
+	my ($current, $suppress, $head, $treehead, $treebase, $extra) = @_;
+	$extra = '' if !defined $extra; # pager or formats
+
+	my @navs = qw(summary shortlog log commit commitdiff tree);
+	if ($suppress) {
+		@navs = grep { $_ ne $suppress } @navs;
+	}
+
+	my %arg = map { $_, ''} @navs;
+	if (defined $head) {
+		for (qw(commit commitdiff)) {
+			$arg{$_} = ";h=$head";
+		}
+		if ($current =~ m/^(tree | log | shortlog | commit | commitdiff | search)$/x) {
+			for (qw(shortlog log)) {
+				$arg{$_} = ";h=$head";
+			}
+		}
+	}
+	$arg{tree} .= ";h=$treehead" if defined $treehead;
+	$arg{tree} .= ";hb=$treebase" if defined $treebase;
+
+	print "<div class=\"page_nav\">\n" .
+		(join " | ",
+		 map { $_ eq $current
+					 ? $_
+					 : $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$_$arg{$_}")}, "$_")
+				 }
+		 @navs);
+	print "<br/>$extra<br/>\n" .
+	      "</div>\n";
+}
+
 sub git_get_type {
 	my $hash = shift;
 
