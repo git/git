@@ -421,7 +421,7 @@ sub git_page_nav {
 }
 
 sub git_get_paging_nav {
-	my ($project, $action, $hash, $head, $page, $nrevs) = @_;
+	my ($action, $hash, $head, $page, $nrevs) = @_;
 	my $paging_nav;
 
 
@@ -1903,7 +1903,7 @@ sub git_log {
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	my $paging_nav = git_get_paging_nav($project, 'log', $hash, $head, $page, $#revlist);
+	my $paging_nav = git_get_paging_nav('log', $hash, $head, $page, $#revlist);
 
 	git_header_html();
 	git_page_nav('log','', $hash,undef,undef, $paging_nav);
@@ -2566,7 +2566,7 @@ sub git_shortlog {
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	my $paging_nav = git_get_paging_nav($project, 'shortlog', $hash, $head, $page, $#revlist);
+	my $paging_nav = git_get_paging_nav('shortlog', $hash, $head, $page, $#revlist);
 
 	git_header_html();
 	git_page_nav('shortlog','', $hash,$hash,$hash, $paging_nav);
