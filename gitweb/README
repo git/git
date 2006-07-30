@@ -21,6 +21,8 @@ You can specify the following configuration variables when building GIT:
    overview page.
  * GITWEB_CSS
    Points to the location where you put gitweb.css on your web server.
+ * GITWEB_LOGO
+   Points to the location where you put git-logo.png on your web server.
 
 Any comment/question/concern to:
   Kay Sievers <kay.sievers@vrfy.org>
