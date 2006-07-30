@@ -420,6 +420,36 @@ sub git_page_nav {
 	      "</div>\n";
 }
 
+sub git_get_paging_nav {
+	my ($project, $action, $hash, $head, $page, $nrevs) = @_;
+	my $paging_nav;
+
+
+	if ($hash ne $head || $page) {
+		$paging_nav .= $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$action")}, "HEAD");
+	} else {
+		$paging_nav .= "HEAD";
+	}
+
+	if ($page > 0) {
+		$paging_nav .= " &sdot; " .
+			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$action;h=$hash;pg=" . ($page-1)),
+							 -accesskey => "p", -title => "Alt-p"}, "prev");
+	} else {
+		$paging_nav .= " &sdot; prev";
+	}
+
+	if ($nrevs >= (100 * ($page+1)-1)) {
+		$paging_nav .= " &sdot; " .
+			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$action;h=$hash;pg=" . ($page+1)),
+							 -accesskey => "n", -title => "Alt-n"}, "next");
+	} else {
+		$paging_nav .= " &sdot; next";
+	}
+
+	return $paging_nav;
+}
+
 sub git_get_type {
 	my $hash = shift;
 
@@ -1873,24 +1903,7 @@ sub git_log {
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	my $paging_nav = '';
-	if ($hash ne $head || $page) {
-		$paging_nav .= $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "HEAD");
-	} else {
-		$paging_nav .= "HEAD";
-	}
-	if ($page > 0) {
-		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash;pg=" . ($page-1)), -accesskey => "p", -title => "Alt-p"}, "prev");
-	} else {
-		$paging_nav .= " &sdot; prev";
-	}
-	if ($#revlist >= (100 * ($page+1)-1)) {
-		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log;h=$hash;pg=" . ($page+1)), -accesskey => "n", -title => "Alt-n"}, "next");
-	} else {
-		$paging_nav .= " &sdot; next";
-	}
+	my $paging_nav = git_get_paging_nav($project, 'log', $hash, $head, $page, $#revlist);
 
 	git_header_html();
 	git_page_nav('log','', $hash,undef,undef, $paging_nav);
@@ -2553,24 +2566,7 @@ sub git_shortlog {
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	my $paging_nav = '';
-	if ($hash ne $head || $page) {
-		$paging_nav .= $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "HEAD");
-	} else {
-		$paging_nav .= "HEAD";
-	}
-	if ($page > 0) {
-		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash;pg=" . ($page-1)), -accesskey => "p", -title => "Alt-p"}, "prev");
-	} else {
-		$paging_nav .= " &sdot; prev";
-	}
-	if ($#revlist >= (100 * ($page+1)-1)) {
-		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog;h=$hash;pg=" . ($page+1)), -accesskey => "n", -title => "Alt-n"}, "next");
-	} else {
-		$paging_nav .= " &sdot; next";
-	}
+	my $paging_nav = git_get_paging_nav($project, 'shortlog', $hash, $head, $page, $#revlist);
 
 	git_header_html();
 	git_page_nav('shortlog','', $hash,$hash,$hash, $paging_nav);
