@@ -250,6 +250,7 @@ sub esc_html {
 	my $str = shift;
 	$str = decode("utf8", $str, Encode::FB_DEFAULT);
 	$str = escapeHTML($str);
+	$str =~ s/\014/^L/g; # escape FORM FEED (FF) character (e.g. in COPYING file)
 	return $str;
 }
 
