@@ -227,7 +227,7 @@ if (!defined $action || $action eq "summary") {
 	git_tag();
 	exit;
 } elsif ($action eq "blame") {
-	git_blame();
+	git_blame2();
 	exit;
 } else {
 	undef $action;
@@ -1252,6 +1252,73 @@ sub git_tag {
 	git_footer_html();
 }
 
+sub git_blame2 {
+	my $fd;
+	my $ftype;
+	die_error(undef, "Permission denied.") if (!git_get_project_config_bool ('blame'));
+	die_error('404 Not Found', "File name not defined") if (!$file_name);
+	$hash_base ||= git_read_head($project);
+	die_error(undef, "Reading commit failed") unless ($hash_base);
+	my %co = git_read_commit($hash_base)
+		or die_error(undef, "Reading commit failed");
+	if (!defined $hash) {
+		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
+			or die_error(undef, "Error looking up file");
+	}
+	$ftype = git_get_type($hash);
+	if ($ftype !~ "blob") {
+		die_error("400 Bad Request", "object is not a blob");
+	}
+	open ($fd, "-|", $GIT, "blame", '-l', $file_name, $hash_base)
+		or die_error(undef, "Open failed");
+	git_header_html();
+	print "<div class=\"page_nav\">\n" .
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, "summary") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=shortlog")}, "shortlog") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=log")}, "log") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base")}, "commit") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash_base")}, "commitdiff") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash_base")}, "tree") . "<br/>\n";
+	print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, "blob") .
+		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;f=$file_name")}, "head") . "<br/>\n";
+	print "</div>\n".
+		"<div>" .
+		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$hash_base"), -class => "title"}, esc_html($co{'title'})) .
+		"</div>\n";
+	git_print_page_path($file_name, $ftype);
+	my @rev_color = (qw(light dark));
+	my $num_colors = scalar(@rev_color);
+	my $current_color = 0;
+	my $last_rev;
+	print "<div class=\"page_body\">\n";
+	print "<table class=\"blame\">\n";
+	print "<tr><th>Commit</th><th>Line</th><th>Data</th></tr>\n";
+	while (<$fd>) {
+		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
+		my $full_rev = $1;
+		my $rev = substr($full_rev, 0, 8);
+		my $lineno = $2;
+		my $data = $3;
+
+		if (!defined $last_rev) {
+			$last_rev = $full_rev;
+		} elsif ($last_rev ne $full_rev) {
+			$last_rev = $full_rev;
+			$current_color = ++$current_color % $num_colors;
+		}
+		print "<tr class=\"$rev_color[$current_color]\">\n";
+		print "<td class=\"sha1\">" .
+			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$full_rev;f=$file_name")}, esc_html($rev)) . "</td>\n";
+		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" . esc_html($lineno) . "</a></td>\n";
+		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
+		print "</tr>\n";
+	}
+	print "</table>\n";
+	print "</div>";
+	close $fd or print "Reading blob failed\n";
+	git_footer_html();
+}
+
 sub git_blame {
 	my $fd;
 	die_error('403 Permission denied', "Permission denied.") if (!git_get_project_config_bool ('blame'));
@@ -1953,7 +2020,13 @@ sub git_commit {
 		print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash")}, "commitdiff");
 	}
 	print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tree;h=$co{'tree'};hb=$hash")}, "tree") . "\n" .
-	      "<br/><br/></div>\n";
+		"<br/>\n";
+	if (defined $file_name && defined $co{'parent'}) {
+		my $parent = $co{'parent'};
+		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;hb=$parent;f=$file_name")}, "blame") . "\n";
+	}
+	print "<br/></div>\n";
+
 	if (defined $co{'parent'}) {
 		print "<div>\n" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$hash"), -class => "title"}, esc_html($co{'title'}) . $ref) . "\n" .
