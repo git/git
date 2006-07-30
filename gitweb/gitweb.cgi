@@ -416,7 +416,7 @@ sub git_page_nav {
 					 : $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$_$arg{$_}")}, "$_")
 				 }
 		 @navs);
-	print "<br/>$extra<br/>\n" .
+	print "<br/>\n$extra<br/>\n" .
 	      "</div>\n";
 }
 
