@@ -2,10 +2,7 @@
 #define BUILTIN_H
 
 #include <stdio.h>
-
-#ifndef PATH_MAX
-# define PATH_MAX 4096
-#endif
+#include <limits.h>
 
 extern const char git_version_string[];
 
