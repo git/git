@@ -352,6 +352,7 @@ ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
 
+-include config.mak.autogen
 -include config.mak
 
 ifdef WITH_OWN_SUBPROCESS_PY
@@ -771,6 +772,8 @@ clean:
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
+	rm -rf autom4te.cache
+	rm -f config.log config.mak.autogen configure config.status config.cache
 	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
