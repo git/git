@@ -15,6 +15,9 @@
 
 #include "builtin.h"
 
+const char git_usage_string[] =
+	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ ARGS ]";
+
 static void prepend_to_path(const char *dir, int len)
 {
 	const char *old_path = getenv("PATH");
@@ -78,7 +81,7 @@ static int handle_options(const char*** argv, int* argc)
 			setenv("GIT_DIR", getcwd(git_dir, 1024), 1);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
-			cmd_usage(0, NULL, NULL);
+			usage(git_usage_string);
 		}
 
 		(*argv)++;
@@ -375,7 +378,7 @@ int main(int argc, const char **argv, char **envp)
 	}
 
 	if (errno == ENOENT)
-		cmd_usage(0, exec_path, "'%s' is not a git-command", cmd);
+		help_unknown_cmd(cmd);
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		cmd, strerror(errno));

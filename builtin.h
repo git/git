@@ -5,12 +5,9 @@
 #include <limits.h>
 
 extern const char git_version_string[];
+extern const char git_usage_string[];
 
-void cmd_usage(int show_all, const char *exec_path, const char *fmt, ...)
-#ifdef __GNUC__
-	__attribute__((__format__(__printf__, 3, 4), __noreturn__))
-#endif
-	;
+extern void help_unknown_cmd(const char *cmd);
 
 extern int cmd_help(int argc, const char **argv, const char *prefix);
 extern int cmd_version(int argc, const char **argv, const char *prefix);
