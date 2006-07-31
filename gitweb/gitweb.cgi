@@ -776,7 +776,7 @@ sub chop_str {
 	my $tail = $2;
 	if (length($tail) > 4) {
 		$tail = " ...";
-		$body =~ s/&[^;]$//; # remove chopped character entities
+		$body =~ s/&[^;]*$//; # remove chopped character entities
 	}
 	return "$body$tail";
 }
