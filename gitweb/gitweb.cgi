@@ -2347,7 +2347,7 @@ sub git_history {
 	git_print_page_path($file_name, $ftype);
 
 	open my $fd, "-|",
-		$GIT, "rev-list", "--full-history", $hash_base, "--", "\'$file_name\'";
+		$GIT, "rev-list", "--full-history", $hash_base, "--", $file_name;
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
 	while (my $line = <$fd>) {
