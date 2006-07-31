@@ -67,6 +67,10 @@ while [ "$#" != "0" ]; do
 			set x "$arg" "$@"
 			shift
 		fi
+		case "$1" in
+		--)
+			shift ;;
+		esac
 		break
 		;;
     esac
