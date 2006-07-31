@@ -161,65 +161,34 @@ if (defined $searchtext) {
 }
 
 # dispatch
-if (!defined $action || $action eq "summary") {
-	git_summary();
-	exit;
-} elsif ($action eq "heads") {
-	git_heads();
-	exit;
-} elsif ($action eq "tags") {
-	git_tags();
-	exit;
-} elsif ($action eq "blob") {
-	git_blob();
-	exit;
-} elsif ($action eq "blob_plain") {
-	git_blob_plain();
-	exit;
-} elsif ($action eq "tree") {
-	git_tree();
-	exit;
-} elsif ($action eq "rss") {
-	git_rss();
-	exit;
-} elsif ($action eq "commit") {
-	git_commit();
-	exit;
-} elsif ($action eq "log") {
-	git_log();
-	exit;
-} elsif ($action eq "blobdiff") {
-	git_blobdiff();
-	exit;
-} elsif ($action eq "blobdiff_plain") {
-	git_blobdiff_plain();
-	exit;
-} elsif ($action eq "commitdiff") {
-	git_commitdiff();
-	exit;
-} elsif ($action eq "commitdiff_plain") {
-	git_commitdiff_plain();
-	exit;
-} elsif ($action eq "history") {
-	git_history();
-	exit;
-} elsif ($action eq "search") {
-	git_search();
-	exit;
-} elsif ($action eq "shortlog") {
-	git_shortlog();
-	exit;
-} elsif ($action eq "tag") {
-	git_tag();
-	exit;
-} elsif ($action eq "blame") {
-	git_blame2();
-	exit;
-} else {
+my %actions = (
+	"blame" => \&git_blame2,
+	"blobdiff" => \&git_blobdiff,
+	"blobdiff_plain" => \&git_blobdiff_plain,
+	"blob" => \&git_blob,
+	"blob_plain" => \&git_blob_plain,
+	"commitdiff" => \&git_commitdiff,
+	"commitdiff_plain" => \&git_commitdiff_plain,
+	"commit" => \&git_commit,
+	"heads" => \&git_heads,
+	"history" => \&git_history,
+	"log" => \&git_log,
+	"rss" => \&git_rss,
+	"search" => \&git_search,
+	"shortlog" => \&git_shortlog,
+	"summary" => \&git_summary,
+	"tag" => \&git_tag,
+	"tags" => \&git_tags,
+	"tree" => \&git_tree,
+);
+
+$action = 'summary' if (!defined($action));
+if (!defined($actions{$action})) {
 	undef $action;
 	die_error(undef, "Unknown action.");
-	exit;
 }
+$actions{$action}->();
+exit;
 
 ## ======================================================================
 ## validation, quoting/unquoting and escaping
