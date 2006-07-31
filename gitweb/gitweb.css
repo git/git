@@ -181,10 +181,14 @@ td {
 	vertical-align: top;
 }
 
-td.link {
+td.link, td.selflink {
 	padding: 2px 5px;
 	font-family: sans-serif;
 	font-size: 10px;
+}
+
+td.selflink {
+	padding-right: 0px;
 }
 
 td.sha1 {
@@ -194,6 +198,10 @@ td.sha1 {
 td.error {
 	color: red;
 	background-color: yellow;
+}
+
+td.current_head {
+	text-decoration: underline;
 }
 
 table.diff_tree span.file_status.new {
