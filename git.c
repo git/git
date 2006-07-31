@@ -156,52 +156,48 @@ static int handle_alias(int *argcp, const char ***argv)
 {
 	int nongit = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
+	int count, option_count;
+	const char** new_argv;
 
 	subdir = setup_git_directory_gently(&nongit);
-	if (!nongit) {
-		int count, option_count;
-		const char** new_argv;
 
-		alias_command = (*argv)[0];
-		git_config(git_alias_config);
-		if (alias_string) {
+	alias_command = (*argv)[0];
+	git_config(git_alias_config);
+	if (alias_string) {
+		count = split_cmdline(alias_string, &new_argv);
+		option_count = handle_options(&new_argv, &count);
+		memmove(new_argv - option_count, new_argv,
+				count * sizeof(char *));
+		new_argv -= option_count;
 
-			count = split_cmdline(alias_string, &new_argv);
-			option_count = handle_options(&new_argv, &count);
-			memmove(new_argv - option_count, new_argv,
-					count * sizeof(char *));
-			new_argv -= option_count;
+		if (count < 1)
+			die("empty alias for %s", alias_command);
 
-			if (count < 1)
-				die("empty alias for %s", alias_command);
+		if (!strcmp(alias_command, new_argv[0]))
+			die("recursive alias: %s", alias_command);
 
-			if (!strcmp(alias_command, new_argv[0]))
-				die("recursive alias: %s", alias_command);
-
-			if (getenv("GIT_TRACE")) {
-				int i;
-				fprintf(stderr, "trace: alias expansion: %s =>",
-					alias_command);
-				for (i = 0; i < count; ++i) {
-					fputc(' ', stderr);
-					sq_quote_print(stderr, new_argv[i]);
-				}
-				fputc('\n', stderr);
-				fflush(stderr);
+		if (getenv("GIT_TRACE")) {
+			int i;
+			fprintf(stderr, "trace: alias expansion: %s =>",
+				alias_command);
+			for (i = 0; i < count; ++i) {
+				fputc(' ', stderr);
+				sq_quote_print(stderr, new_argv[i]);
 			}
-
-			new_argv = realloc(new_argv, sizeof(char*) *
-					   (count + *argcp + 1));
-			/* insert after command name */
-			memcpy(new_argv + count, *argv + 1,
-			       sizeof(char*) * *argcp);
-			new_argv[count+*argcp] = NULL;
-
-			*argv = new_argv;
-			*argcp += count - 1;
-
-			ret = 1;
+			fputc('\n', stderr);
+			fflush(stderr);
 		}
+
+		new_argv = realloc(new_argv, sizeof(char*) *
+				   (count + *argcp + 1));
+		/* insert after command name */
+		memcpy(new_argv + count, *argv + 1, sizeof(char*) * *argcp);
+		new_argv[count+*argcp] = NULL;
+
+		*argv = new_argv;
+		*argcp += count - 1;
+
+		ret = 1;
 	}
 
 	if (subdir)
