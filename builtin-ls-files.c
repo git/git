@@ -24,7 +24,6 @@ static int show_valid_bit = 0;
 static int line_terminator = '\n';
 
 static int prefix_len = 0, prefix_offset = 0;
-static const char *prefix = NULL;
 static const char **pathspec = NULL;
 static int error_unmatch = 0;
 static char *ps_matched = NULL;
@@ -207,7 +206,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	}
 }
 
-static void show_files(struct dir_struct *dir)
+static void show_files(struct dir_struct *dir, const char *prefix)
 {
 	int i;
 
@@ -253,7 +252,7 @@ static void show_files(struct dir_struct *dir)
 /*
  * Prune the index to only contain stuff starting with "prefix"
  */
-static void prune_cache(void)
+static void prune_cache(const char *prefix)
 {
 	int pos = cache_name_pos(prefix, prefix_len);
 	unsigned int first, last;
@@ -276,7 +275,7 @@ static void prune_cache(void)
 	active_nr = last;
 }
 
-static void verify_pathspec(void)
+static const char *verify_pathspec(const char *prefix)
 {
 	const char **p, *n, *prev;
 	char *real_prefix;
@@ -313,7 +312,7 @@ static void verify_pathspec(void)
 		memcpy(real_prefix, prev, max);
 		real_prefix[max] = 0;
 	}
-	prefix = real_prefix;
+	return real_prefix;
 }
 
 static const char ls_files_usage[] =
@@ -453,7 +452,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 
 	/* Verify that the pathspec matches the prefix */
 	if (pathspec)
-		verify_pathspec();
+		prefix = verify_pathspec(prefix);
 
 	/* Treat unmatching pathspec elements as errors */
 	if (pathspec && error_unmatch) {
@@ -476,8 +475,8 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 
 	read_cache();
 	if (prefix)
-		prune_cache();
-	show_files(&dir);
+		prune_cache(prefix);
+	show_files(&dir, prefix);
 
 	if (ps_matched) {
 		/* We need to make sure all pathspec matched otherwise
