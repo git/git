@@ -71,6 +71,11 @@ git tar-tree --remote=example.com:git.git v1.4.0 >git-1.4.0.tar::
 
 	Get a tarball v1.4.0 from example.com.
 
+git tar-tree HEAD:Documentation/ git-docs > git-1.4.0-docs.tar::
+
+	Put everything in the current head's Documentation/ directory
+	into 'git-1.4.0-docs.tar', with the prefix 'git-docs/'.
+
 Author
 ------
 Written by Rene Scharfe.
