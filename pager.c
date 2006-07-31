@@ -15,10 +15,12 @@ void setup_pager(void)
 {
 	pid_t pid;
 	int fd[2];
-	const char *pager = getenv("PAGER");
+	const char *pager = getenv("GIT_PAGER");
 
 	if (!isatty(1))
 		return;
+	if (!pager)
+		pager = getenv("PAGER");
 	if (!pager)
 		pager = "less";
 	else if (!*pager || !strcmp(pager, "cat"))
