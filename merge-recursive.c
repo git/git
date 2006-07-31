@@ -19,7 +19,7 @@
 #include "diffcore.h"
 #include "run-command.h"
 #include "tag.h"
-
+#include "unpack-trees.h"
 #include "path-list.h"
 
 /*
@@ -124,7 +124,7 @@ static int flush_cache(void)
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 	int fd = hold_lock_file_for_update(lock, getenv("GIT_INDEX_FILE"));
 	if (fd < 0)
-		die("could not lock %s", temporary_index_file);
+		die("could not lock %s", lock->filename);
 	if (write_cache(fd, active_cache, active_nr) ||
 			close(fd) || commit_lock_file(lock))
 		die ("unable to write %s", getenv("GIT_INDEX_FILE"));
@@ -191,41 +191,59 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
  */
 static int index_only = 0;
 
-/*
- * TODO: this can be streamlined by refactoring builtin-read-tree.c
- */
-static int git_read_tree(const struct tree *tree)
+static int git_read_tree(struct tree *tree)
 {
 	int rc;
-	const char *argv[] = { "git-read-tree", NULL, NULL, };
+	struct object_list *trees = NULL;
+	struct unpack_trees_options opts;
+
 	if (cache_dirty)
 		die("read-tree with dirty cache");
-	argv[1] = sha1_to_hex(tree->object.sha1);
-	rc = run_command_v(2, argv);
-	return rc < 0 ? -1: rc;
+
+	memset(&opts, 0, sizeof(opts));
+	object_list_append(&tree->object, &trees);
+	rc = unpack_trees(trees, &opts);
+	cache_tree_free(&active_cache_tree);
+
+	if (rc == 0)
+		cache_dirty = 1;
+
+	return rc;
 }
 
-/*
- * TODO: this can be streamlined by refactoring builtin-read-tree.c
- */
-static int git_merge_trees(const char *update_arg,
+static int git_merge_trees(int index_only,
 			   struct tree *common,
 			   struct tree *head,
 			   struct tree *merge)
 {
 	int rc;
-	const char *argv[] = {
-		"git-read-tree", NULL, "-m", NULL, NULL, NULL,
-		NULL,
-	};
-	if (cache_dirty)
-		flush_cache();
-	argv[1] = update_arg;
-	argv[3] = sha1_to_hex(common->object.sha1);
-	argv[4] = sha1_to_hex(head->object.sha1);
-	argv[5] = sha1_to_hex(merge->object.sha1);
-	rc = run_command_v(6, argv);
-	return rc < 0 ? -1: rc;
+	struct object_list *trees = NULL;
+	struct unpack_trees_options opts;
+
+	if (!cache_dirty) {
+		read_cache_from(getenv("GIT_INDEX_FILE"));
+		cache_dirty = 1;
+	}
+
+	memset(&opts, 0, sizeof(opts));
+	if (index_only)
+		opts.index_only = 1;
+	else
+		opts.update = 1;
+	opts.merge = 1;
+	opts.head_idx = 2;
+	opts.fn = threeway_merge;
+
+	object_list_append(&common->object, &trees);
+	object_list_append(&head->object, &trees);
+	object_list_append(&merge->object, &trees);
+
+	rc = unpack_trees(trees, &opts);
+	cache_tree_free(&active_cache_tree);
+
+	cache_dirty = 1;
+
+	return rc;
 }
 
 /*
@@ -239,8 +257,14 @@ static struct tree *git_write_tree(void)
 	unsigned char sha1[20];
 	int ch;
 	unsigned i = 0;
-	if (cache_dirty)
+	if (cache_dirty) {
+		for (i = 0; i < active_nr; i++) {
+			struct cache_entry *ce = active_cache[i];
+			if (ce_stage(ce))
+				return NULL;
+		}
 		flush_cache();
+	}
 	fp = popen("git-write-tree 2>/dev/null", "r");
 	while ((ch = fgetc(fp)) != EOF)
 		if (i < sizeof(buf)-1 && ch >= '0' && ch <= 'f')
@@ -477,9 +501,9 @@ static char *unique_path(const char *path, const char *branch)
 	char *newpath = xmalloc(strlen(path) + 1 + strlen(branch) + 8 + 1);
 	int suffix = 0;
 	struct stat st;
-	char *p = newpath + strlen(newpath);
+	char *p = newpath + strlen(path);
 	strcpy(newpath, path);
-	strcat(newpath, "~");
+	*(p++) = '~';
 	strcpy(p, branch);
 	for (; *p; ++p)
 		if ('/' == *p)
@@ -1121,7 +1145,7 @@ static int merge_trees(struct tree *head,
 		return 1;
 	}
 
-	code = git_merge_trees(index_only ? "-i": "-u", common, head, merge);
+	code = git_merge_trees(index_only, common, head, merge);
 
 	if (code != 0)
 		die("merging of trees %s and %s failed",
