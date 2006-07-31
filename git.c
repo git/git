@@ -211,6 +211,7 @@ static int handle_alias(int *argcp, const char ***argv)
 const char git_version_string[] = GIT_VERSION;
 
 #define NEEDS_PREFIX 1
+#define USE_PAGER 2
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
@@ -218,13 +219,13 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 	static struct cmd_struct {
 		const char *cmd;
 		int (*fn)(int, const char **, const char *);
-		int prefix;
+		int option;
 	} commands[] = {
 		{ "version", cmd_version },
 		{ "help", cmd_help },
-		{ "log", cmd_log, NEEDS_PREFIX },
-		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX },
-		{ "show", cmd_show, NEEDS_PREFIX },
+		{ "log", cmd_log, NEEDS_PREFIX | USE_PAGER },
+		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX | USE_PAGER },
+		{ "show", cmd_show, NEEDS_PREFIX | USE_PAGER },
 		{ "push", cmd_push },
 		{ "format-patch", cmd_format_patch, NEEDS_PREFIX },
 		{ "count-objects", cmd_count_objects },
@@ -275,8 +276,10 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			continue;
 
 		prefix = NULL;
-		if (p->prefix)
+		if (p->option & NEEDS_PREFIX)
 			prefix = setup_git_directory();
+		if (p->option & USE_PAGER)
+			setup_pager();
 		if (getenv("GIT_TRACE")) {
 			int i;
 			fprintf(stderr, "trace: built-in: git");
