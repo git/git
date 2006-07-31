@@ -54,7 +54,7 @@ void stripspace(FILE *in, FILE *out)
 		fputc('\n', out);
 }
 
-int cmd_stripspace(int argc, const char **argv, char **envp)
+int cmd_stripspace(int argc, const char **argv, const char *prefix)
 {
 	stripspace(stdin, stdout);
 	return 0;

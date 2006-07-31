@@ -120,7 +120,7 @@ struct fragment {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete, is_binary;
+	int is_rename, is_copy, is_new, is_delete, is_binary, is_reverse;
 #define BINARY_DELTA_DEFLATED 1
 #define BINARY_LITERAL_DEFLATED 2
 	unsigned long deflate_origlen;
@@ -1119,6 +1119,34 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	return offset + hdrsize + patchsize;
 }
 
+#define swap(a,b) myswap((a),(b),sizeof(a))
+
+#define myswap(a, b, size) do {		\
+	unsigned char mytmp[size];	\
+	memcpy(mytmp, &a, size);		\
+	memcpy(&a, &b, size);		\
+	memcpy(&b, mytmp, size);		\
+} while (0)
+
+static void reverse_patches(struct patch *p)
+{
+	for (; p; p = p->next) {
+		struct fragment *frag = p->fragments;
+
+		swap(p->new_name, p->old_name);
+		swap(p->new_mode, p->old_mode);
+		swap(p->is_new, p->is_delete);
+		swap(p->lines_added, p->lines_deleted);
+		swap(p->old_sha1_prefix, p->new_sha1_prefix);
+
+		for (; frag; frag = frag->next) {
+			swap(frag->newpos, frag->oldpos);
+			swap(frag->newlines, frag->oldlines);
+		}
+		p->is_reverse = !p->is_reverse;
+	}
+}
+
 static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 static const char minuses[]= "----------------------------------------------------------------------";
 
@@ -1336,7 +1364,7 @@ static int apply_line(char *output, const char *patch, int plen)
 }
 
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
-	int inaccurate_eof)
+	int reverse, int inaccurate_eof)
 {
 	int match_beginning, match_end;
 	char *buf = desc->buffer;
@@ -1350,6 +1378,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 	int pos, lines;
 
 	while (size > 0) {
+		char first;
 		int len = linelen(patch, size);
 		int plen;
 
@@ -1366,16 +1395,23 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 		plen = len-1;
 		if (len < size && patch[len] == '\\')
 			plen--;
-		switch (*patch) {
+		first = *patch;
+		if (reverse) {
+			if (first == '-')
+				first = '+';
+			else if (first == '+')
+				first = '-';
+		}
+		switch (first) {
 		case ' ':
 		case '-':
 			memcpy(old + oldsize, patch + 1, plen);
 			oldsize += plen;
-			if (*patch == '-')
+			if (first == '-')
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (*patch != '+' || !no_add)
+			if (first != '+' || !no_add)
 				newsize += apply_line(new + newsize, patch,
 						      plen);
 			break;
@@ -1499,6 +1535,12 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 	void *data;
 	void *result;
 
+	/* Binary patch is irreversible */
+	if (patch->is_reverse)
+		return error("cannot reverse-apply a binary patch to '%s'",
+			     patch->new_name
+			     ? patch->new_name : patch->old_name);
+
 	data = inflate_it(fragment->patch, fragment->size,
 			  patch->deflate_origlen);
 	if (!data)
@@ -1615,7 +1657,8 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
+		if (apply_one_fragment(desc, frag, patch->is_reverse,
+					patch->inaccurate_eof) < 0)
 			return error("patch failed: %s:%ld",
 				     name, frag->oldpos);
 		frag = frag->next;
@@ -1664,13 +1707,14 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	return 0;
 }
 
-static int check_patch(struct patch *patch)
+static int check_patch(struct patch *patch, struct patch *prev_patch)
 {
 	struct stat st;
 	const char *old_name = patch->old_name;
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
+	int ok_if_exists;
 
 	if (old_name) {
 		int changed = 0;
@@ -1728,13 +1772,33 @@ static int check_patch(struct patch *patch)
 				old_name, st_mode, patch->old_mode);
 	}
 
+	if (new_name && prev_patch && prev_patch->is_delete &&
+	    !strcmp(prev_patch->old_name, new_name))
+		/* A type-change diff is always split into a patch to
+		 * delete old, immediately followed by a patch to
+		 * create new (see diff.c::run_diff()); in such a case
+		 * it is Ok that the entry to be deleted by the
+		 * previous patch is still in the working tree and in
+		 * the index.
+		 */
+		ok_if_exists = 1;
+	else
+		ok_if_exists = 0;
+
 	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
-		if (check_index && cache_name_pos(new_name, strlen(new_name)) >= 0)
+		if (check_index &&
+		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
+		    !ok_if_exists)
 			return error("%s: already exists in index", new_name);
 		if (!cached) {
-			if (!lstat(new_name, &st))
-				return error("%s: already exists in working directory", new_name);
-			if (errno != ENOENT)
+			struct stat nst;
+			if (!lstat(new_name, &nst)) {
+				if (S_ISDIR(nst.st_mode) || ok_if_exists)
+					; /* ok */
+				else
+					return error("%s: already exists in working directory", new_name);
+			}
+			else if ((errno != ENOENT) && (errno != ENOTDIR))
 				return error("%s: %s", new_name, strerror(errno));
 		}
 		if (!patch->new_mode) {
@@ -1762,10 +1826,13 @@ static int check_patch(struct patch *patch)
 
 static int check_patch_list(struct patch *patch)
 {
+	struct patch *prev_patch = NULL;
 	int error = 0;
 
-	for (;patch ; patch = patch->next)
-		error |= check_patch(patch);
+	for (prev_patch = NULL; patch ; patch = patch->next) {
+		error |= check_patch(patch, prev_patch);
+		prev_patch = patch;
+	}
 	return error;
 }
 
@@ -2010,6 +2077,16 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 			return;
 	}
 
+	if (errno == EEXIST || errno == EACCES) {
+		/* We may be trying to create a file where a directory
+		 * used to be.
+		 */
+		struct stat st;
+		errno = 0;
+		if (!lstat(path, &st) && S_ISDIR(st.st_mode) && !rmdir(path))
+			errno = EEXIST;
+	}
+
 	if (errno == EEXIST) {
 		unsigned int nr = getpid();
 
@@ -2044,32 +2121,42 @@ static void create_file(struct patch *patch)
 	cache_tree_invalidate_path(active_cache_tree, path);
 }
 
-static void write_out_one_result(struct patch *patch)
+/* phase zero is to remove, phase one is to create */
+static void write_out_one_result(struct patch *patch, int phase)
 {
 	if (patch->is_delete > 0) {
-		remove_file(patch);
+		if (phase == 0)
+			remove_file(patch);
 		return;
 	}
 	if (patch->is_new > 0 || patch->is_copy) {
-		create_file(patch);
+		if (phase == 1)
+			create_file(patch);
 		return;
 	}
 	/*
 	 * Rename or modification boils down to the same
 	 * thing: remove the old, write the new
 	 */
-	remove_file(patch);
+	if (phase == 0)
+		remove_file(patch);
+	if (phase == 1)
 	create_file(patch);
 }
 
 static void write_out_results(struct patch *list, int skipped_patch)
 {
+	int phase;
+
 	if (!list && !skipped_patch)
 		die("No changes");
 
-	while (list) {
-		write_out_one_result(list);
-		list = list->next;
+	for (phase = 0; phase < 2; phase++) {
+		struct patch *l = list;
+		while (l) {
+			write_out_one_result(l, phase);
+			l = l->next;
+		}
 	}
 }
 
@@ -2098,7 +2185,8 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd, const char *filename, int inaccurate_eof)
+static int apply_patch(int fd, const char *filename,
+		int reverse, int inaccurate_eof)
 {
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
@@ -2118,6 +2206,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
+		if (reverse)
+			reverse_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
 			*listp = patch;
@@ -2178,10 +2268,11 @@ static int git_apply_config(const char *var, const char *value)
 }
 
 
-int cmd_apply(int argc, const char **argv, char **envp)
+int cmd_apply(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int read_stdin = 1;
+	int reverse = 0;
 	int inaccurate_eof = 0;
 
 	const char *whitespace_option = NULL;
@@ -2192,7 +2283,7 @@ int cmd_apply(int argc, const char **argv, char **envp)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>", inaccurate_eof);
+			apply_patch(0, "<stdin>", reverse, inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2269,6 +2360,10 @@ int cmd_apply(int argc, const char **argv, char **envp)
 			parse_whitespace_option(arg + 13);
 			continue;
 		}
+		if (!strcmp(arg, "-R") || !strcmp(arg, "--reverse")) {
+			reverse = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
 			inaccurate_eof = 1;
 			continue;
@@ -2289,12 +2384,12 @@ int cmd_apply(int argc, const char **argv, char **envp)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg, inaccurate_eof);
+		apply_patch(fd, arg, reverse, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>", inaccurate_eof);
+		apply_patch(0, "<stdin>", reverse, inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {

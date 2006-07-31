@@ -242,7 +242,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	free_list(&subjects);
 }
 
-int cmd_fmt_merge_msg(int argc, char **argv, char **envp)
+int cmd_fmt_merge_msg(int argc, char **argv, const char *prefix)
 {
 	int limit = 20, i = 0;
 	char line[1024];
@@ -342,7 +342,7 @@ int cmd_fmt_merge_msg(int argc, char **argv, char **envp)
 		struct rev_info rev;
 
 		head = lookup_commit(head_sha1);
-		init_revisions(&rev);
+		init_revisions(&rev, prefix);
 		rev.commit_format = CMIT_FMT_ONELINE;
 		rev.ignore_merges = 1;
 		rev.limited = 1;

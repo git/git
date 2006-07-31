@@ -37,6 +37,18 @@ all:
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
 #
+# Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
+# installed in /sw, but don't want GIT to link against any libraries
+# installed there.  If defined you may specify your own (or Fink's)
+# include directories and library directories by defining CFLAGS
+# and LDFLAGS appropriately.
+#
+# Define NO_DARWIN_PORTS if you are building on Darwin/Mac OS X,
+# have DarwinPorts installed in /opt/local, but don't want GIT to
+# link against any libraries installed there.  If defined you may
+# specify your own (or DarwinPort's) include directories and
+# library directories by defining CFLAGS and LDFLAGS appropriately.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -104,6 +116,8 @@ template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
+export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
+
 CC = gcc
 AR = ar
 TAR = tar
@@ -137,7 +151,7 @@ SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-shortlog.perl git-rerere.perl \
 	git-annotate.perl git-cvsserver.perl \
-	git-svnimport.perl git-mv.perl git-cvsexportcommit.perl \
+	git-svnimport.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
 
 SCRIPT_PYTHON = \
@@ -179,7 +193,7 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-read-tree$X git-commit-tree$X git-write-tree$X \
 	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
 	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X \
-	git-fmt-merge-msg$X git-prune$X
+	git-fmt-merge-msg$X git-prune$X git-mv$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -208,7 +222,7 @@ LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
-	tree-walk.h log-tree.h dir.h
+	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -223,7 +237,7 @@ LIB_OBJS = \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
-	alloc.o merge-file.o $(DIFF_OBJS)
+	alloc.o merge-file.o path-list.o unpack-trees.o $(DIFF_OBJS)
 
 BUILTIN_OBJS = \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
@@ -235,7 +249,8 @@ BUILTIN_OBJS = \
 	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
 	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
-	builtin-update-ref.o builtin-fmt-merge-msg.o builtin-prune.o
+	builtin-update-ref.o builtin-fmt-merge-msg.o builtin-prune.o \
+	builtin-mv.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -251,19 +266,24 @@ LIBS = $(GITLIBS) -lz
 ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
 endif
+ifeq ($(uname_S),GNU/kFreeBSD)
+	NO_STRLCPY = YesPlease
+endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_STRLCPY = YesPlease
-	## fink
-	ifeq ($(shell test -d /sw/lib && echo y),y)
-		ALL_CFLAGS += -I/sw/include
-		ALL_LDFLAGS += -L/sw/lib
+	ifndef NO_FINK
+		ifeq ($(shell test -d /sw/lib && echo y),y)
+			ALL_CFLAGS += -I/sw/include
+			ALL_LDFLAGS += -L/sw/lib
+		endif
 	endif
-	## darwinports
-	ifeq ($(shell test -d /opt/local/lib && echo y),y)
-		ALL_CFLAGS += -I/opt/local/include
-		ALL_LDFLAGS += -L/opt/local/lib
+	ifndef NO_DARWIN_PORTS
+		ifeq ($(shell test -d /opt/local/lib && echo y),y)
+			ALL_CFLAGS += -I/opt/local/include
+			ALL_LDFLAGS += -L/opt/local/lib
+		endif
 	endif
 endif
 ifeq ($(uname_S),SunOS)
@@ -337,6 +357,7 @@ ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
 
+-include config.mak.autogen
 -include config.mak
 
 ifdef WITH_OWN_SUBPROCESS_PY
@@ -562,7 +583,7 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	    -e '/@@GITWEB_CGI@@/d' \
 	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
 	    -e '/@@GITWEB_CSS@@/d' \
-	    $@.sh > $@+
+	    $@.sh | sed "s|/usr/bin/git|$(bindir)/git|" > $@+
 	chmod +x $@+
 	mv $@+ $@
 
@@ -599,6 +620,8 @@ $(SIMPLE_PROGRAMS) : git-%$X : %.o
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIB_FILE) $(SIMPLE_LIB)
 
+ssh-pull.o: ssh-fetch.c
+ssh-push.o: ssh-upload.c
 git-local-fetch$X: fetch.o
 git-ssh-fetch$X: rsh.o fetch.o
 git-ssh-upload$X: rsh.o
@@ -745,8 +768,8 @@ dist-doc:
 	rm -fr .doc-tmp-dir
 	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
 	$(MAKE) -C Documentation DESTDIR=./ \
-		man1=../.doc-tmp-dir/man1 \
-		man7=../.doc-tmp-dir/man7 \
+		man1dir=../.doc-tmp-dir/man1 \
+		man7dir=../.doc-tmp-dir/man7 \
 		install
 	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
 	gzip -n -9 -f $(manpages).tar
@@ -759,6 +782,8 @@ clean:
 		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
+	rm -rf autom4te.cache
+	rm -f config.log config.mak.autogen configure config.status config.cache
 	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz

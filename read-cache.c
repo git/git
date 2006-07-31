@@ -319,6 +319,45 @@ int remove_file_from_cache(const char *path)
 	return 0;
 }
 
+int add_file_to_index(const char *path, int verbose)
+{
+	int size, namelen;
+	struct stat st;
+	struct cache_entry *ce;
+
+	if (lstat(path, &st))
+		die("%s: unable to stat (%s)", path, strerror(errno));
+
+	if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode))
+		die("%s: can only add regular files or symbolic links", path);
+
+	namelen = strlen(path);
+	size = cache_entry_size(namelen);
+	ce = xcalloc(1, size);
+	memcpy(ce->name, path, namelen);
+	ce->ce_flags = htons(namelen);
+	fill_stat_cache_info(ce, &st);
+
+	ce->ce_mode = create_ce_mode(st.st_mode);
+	if (!trust_executable_bit) {
+		/* If there is an existing entry, pick the mode bits
+		 * from it.
+		 */
+		int pos = cache_name_pos(path, namelen);
+		if (pos >= 0)
+			ce->ce_mode = active_cache[pos]->ce_mode;
+	}
+
+	if (index_path(ce->sha1, path, &st, 1))
+		die("unable to index file %s", path);
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD))
+		die("unable to add %s to index",path);
+	if (verbose)
+		printf("add '%s'\n", path);
+	cache_tree_invalidate_path(active_cache_tree, path);
+	return 0;
+}
+
 int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 {
 	int len = ce_namelen(a);

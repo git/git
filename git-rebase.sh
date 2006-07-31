@@ -137,7 +137,8 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG" \
+			--reflog-action=rebase
 		exit
 		;;
 	--skip)
@@ -156,7 +157,8 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG"
+		git am -3 --skip --resolvemsg="$RESOLVEMSG" \
+			--reflog-action=rebase
 		exit
 		;;
 	--abort)
@@ -299,7 +301,8 @@ fi
 if test -z "$do_merge"
 then
 	git-format-patch -k --stdout --full-index "$upstream"..ORIG_HEAD |
-	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+	git am --binary -3 -k --resolvemsg="$RESOLVEMSG" \
+		--reflog-action=rebase
 	exit $?
 fi
 

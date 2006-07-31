@@ -306,12 +306,12 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
-int cmd_rev_list(int argc, const char **argv, char **envp)
+int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct commit_list *list;
 	int i;
 
-	init_revisions(&revs);
+	init_revisions(&revs, prefix);
 	revs.abbrev = 0;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	argc = setup_revisions(argc, argv, &revs, NULL);

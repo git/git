@@ -20,6 +20,7 @@ verbose=
 update_head_ok=
 exec=
 upload_pack=
+keep=--thin
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -69,7 +70,8 @@ case "$#" in
 0)
 	test -f "$GIT_DIR/branches/origin" ||
 		test -f "$GIT_DIR/remotes/origin" ||
-			die "Where do you want to fetch from today?"
+			git-repo-config --get remote.origin.url >/dev/null ||
+				die "Where do you want to fetch from today?"
 	set origin ;;
 esac
 
@@ -153,7 +155,7 @@ fast_forward_local () {
 	then
 		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
 		then
-			[ "$verbose" ] && echo >&2 "* $1: same as $3"
+			[ "$verbose" ] && echo >&2 "* $1: same as $3" ||:
 		else
 			echo >&2 "* $1: updating with $3"
 			git-update-ref -m "$rloga: updating tag" "$1" "$2"
@@ -223,9 +225,16 @@ reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
 	taglist=`IFS="	" &&
-		  git-ls-remote $upload_pack --tags "$remote" |
+		  (
+			git-ls-remote $upload_pack --tags "$remote" ||
+			echo fail ouch
+		  ) |
 	          while read sha1 name
 		  do
+			case "$sha1" in
+			fail)
+				exit 1
+			esac
 			case "$name" in
 			*^*) continue ;;
 			esac
@@ -235,7 +244,7 @@ then
 			else
 			    echo >&2 "warning: tag ${name} ignored"
 			fi
-		  done`
+		  done` || exit
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.
@@ -347,7 +356,7 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack $exec $keep --thin "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack $exec $keep "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do

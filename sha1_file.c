@@ -684,26 +684,74 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 	return map;
 }
 
-static int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size)
+static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
+	unsigned char c;
+	unsigned int word, bits;
+	unsigned long size;
+	static const char *typename[8] = {
+		NULL,	/* OBJ_EXT */
+		"commit", "tree", "blob", "tag",
+		NULL, NULL, NULL
+	};
+	const char *type;
+
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
 	stream->next_in = map;
 	stream->avail_in = mapsize;
 	stream->next_out = buffer;
-	stream->avail_out = size;
+	stream->avail_out = bufsiz;
 
+	/*
+	 * Is it a zlib-compressed buffer? If so, the first byte
+	 * must be 0x78 (15-bit window size, deflated), and the
+	 * first 16-bit word is evenly divisible by 31
+	 */
+	word = (map[0] << 8) + map[1];
+	if (map[0] == 0x78 && !(word % 31)) {
+		inflateInit(stream);
+		return inflate(stream, 0);
+	}
+
+	c = *map++;
+	mapsize--;
+	type = typename[(c >> 4) & 7];
+	if (!type)
+		return -1;
+
+	bits = 4;
+	size = c & 0xf;
+	while ((c & 0x80)) {
+		if (bits >= 8*sizeof(long))
+			return -1;
+		c = *map++;
+		size += (c & 0x7f) << bits;
+		bits += 7;
+		mapsize--;
+	}
+
+	/* Set up the stream for the rest.. */
+	stream->next_in = map;
+	stream->avail_in = mapsize;
 	inflateInit(stream);
-	return inflate(stream, 0);
+
+	/* And generate the fake traditional header */
+	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu", type, size);
+	return 0;
 }
 
 static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size)
 {
 	int bytes = strlen(buffer) + 1;
 	unsigned char *buf = xmalloc(1+size);
+	unsigned long n;
 
-	memcpy(buf, (char *) buffer + bytes, stream->total_out - bytes);
-	bytes = stream->total_out - bytes;
+	n = stream->total_out - bytes;
+	if (n > size)
+		n = size;
+	memcpy(buf, (char *) buffer + bytes, n);
+	bytes = n;
 	if (bytes < size) {
 		stream->next_out = buf + bytes;
 		stream->avail_out = size - bytes;
@@ -1331,31 +1379,29 @@ char *write_sha1_file_prepare(void *buf,
 static int link_temp_to_file(const char *tmpfile, char *filename)
 {
 	int ret;
+	char *dir;
 
 	if (!link(tmpfile, filename))
 		return 0;
 
 	/*
-	 * Try to mkdir the last path component if that failed
-	 * with an ENOENT.
+	 * Try to mkdir the last path component if that failed.
 	 *
 	 * Re-try the "link()" regardless of whether the mkdir
 	 * succeeds, since a race might mean that somebody
 	 * else succeeded.
 	 */
 	ret = errno;
-	if (ret == ENOENT) {
-		char *dir = strrchr(filename, '/');
-		if (dir) {
-			*dir = 0;
-			mkdir(filename, 0777);
-			if (adjust_shared_perm(filename))
-				return -2;
-			*dir = '/';
-			if (!link(tmpfile, filename))
-				return 0;
-			ret = errno;
-		}
+	dir = strrchr(filename, '/');
+	if (dir) {
+		*dir = 0;
+		mkdir(filename, 0777);
+		if (adjust_shared_perm(filename))
+			return -2;
+		*dir = '/';
+		if (!link(tmpfile, filename))
+			return 0;
+		ret = errno;
 	}
 	return ret;
 }
@@ -1414,6 +1460,49 @@ static int write_buffer(int fd, const void *buf, size_t len)
 	return 0;
 }
 
+static int write_binary_header(unsigned char *hdr, enum object_type type, unsigned long len)
+{
+	int hdr_len;
+	unsigned char c;
+
+	c = (type << 4) | (len & 15);
+	len >>= 4;
+	hdr_len = 1;
+	while (len) {
+		*hdr++ = c | 0x80;
+		hdr_len++;
+		c = (len & 0x7f);
+		len >>= 7;
+	}
+	*hdr = c;
+	return hdr_len;
+}
+
+static void setup_object_header(z_stream *stream, const char *type, unsigned long len)
+{
+	int obj_type, hdr;
+
+	if (use_legacy_headers) {
+		while (deflate(stream, 0) == Z_OK)
+			/* nothing */;
+		return;
+	}
+	if (!strcmp(type, blob_type))
+		obj_type = OBJ_BLOB;
+	else if (!strcmp(type, tree_type))
+		obj_type = OBJ_TREE;
+	else if (!strcmp(type, commit_type))
+		obj_type = OBJ_COMMIT;
+	else if (!strcmp(type, tag_type))
+		obj_type = OBJ_TAG;
+	else
+		die("trying to generate bogus object of type '%s'", type);
+	hdr = write_binary_header(stream->next_out, obj_type, len);
+	stream->total_out = hdr;
+	stream->next_out += hdr;
+	stream->avail_out -= hdr;
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
@@ -1459,7 +1548,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, zlib_compression_level);
-	size = deflateBound(&stream, len+hdrlen);
+	size = 8 + deflateBound(&stream, len+hdrlen);
 	compressed = xmalloc(size);
 
 	/* Compress it */
@@ -1469,8 +1558,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* First header.. */
 	stream.next_in = hdr;
 	stream.avail_in = hdrlen;
-	while (deflate(&stream, 0) == Z_OK)
-		/* nothing */;
+	setup_object_header(&stream, type, len);
 
 	/* Then the data itself.. */
 	stream.next_in = buf;

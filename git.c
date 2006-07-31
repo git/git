@@ -35,6 +35,59 @@ static void prepend_to_path(const char *dir, int len)
 	setenv("PATH", path, 1);
 }
 
+static int handle_options(const char*** argv, int* argc)
+{
+	int handled = 0;
+
+	while (*argc > 0) {
+		const char *cmd = (*argv)[0];
+		if (cmd[0] != '-')
+			break;
+
+		/*
+		 * For legacy reasons, the "version" and "help"
+		 * commands can be written with "--" prepended
+		 * to make them look like flags.
+		 */
+		if (!strcmp(cmd, "--help") || !strcmp(cmd, "--version"))
+			break;
+
+		/*
+		 * Check remaining flags.
+		 */
+		if (!strncmp(cmd, "--exec-path", 11)) {
+			cmd += 11;
+			if (*cmd == '=')
+				git_set_exec_path(cmd + 1);
+			else {
+				puts(git_exec_path());
+				exit(0);
+			}
+		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
+			setup_pager();
+		} else if (!strcmp(cmd, "--git-dir")) {
+			if (*argc < 1)
+				return -1;
+			setenv("GIT_DIR", (*argv)[1], 1);
+			(*argv)++;
+			(*argc)--;
+		} else if (!strncmp(cmd, "--git-dir=", 10)) {
+			setenv("GIT_DIR", cmd + 10, 1);
+		} else if (!strcmp(cmd, "--bare")) {
+			static char git_dir[1024];
+			setenv("GIT_DIR", getcwd(git_dir, 1024), 1);
+		} else {
+			fprintf(stderr, "Unknown option: %s\n", cmd);
+			cmd_usage(0, NULL, NULL);
+		}
+
+		(*argv)++;
+		(*argc)--;
+		handled++;
+	}
+	return handled;
+}
+
 static const char *alias_command;
 static char *alias_string = NULL;
 
@@ -103,49 +156,48 @@ static int handle_alias(int *argcp, const char ***argv)
 {
 	int nongit = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
+	int count, option_count;
+	const char** new_argv;
 
 	subdir = setup_git_directory_gently(&nongit);
-	if (!nongit) {
-		int count;
-		const char** new_argv;
 
-		alias_command = (*argv)[0];
-		git_config(git_alias_config);
-		if (alias_string) {
+	alias_command = (*argv)[0];
+	git_config(git_alias_config);
+	if (alias_string) {
+		count = split_cmdline(alias_string, &new_argv);
+		option_count = handle_options(&new_argv, &count);
+		memmove(new_argv - option_count, new_argv,
+				count * sizeof(char *));
+		new_argv -= option_count;
 
-			count = split_cmdline(alias_string, &new_argv);
+		if (count < 1)
+			die("empty alias for %s", alias_command);
 
-			if (count < 1)
-				die("empty alias for %s", alias_command);
+		if (!strcmp(alias_command, new_argv[0]))
+			die("recursive alias: %s", alias_command);
 
-			if (!strcmp(alias_command, new_argv[0]))
-				die("recursive alias: %s", alias_command);
-
-			if (getenv("GIT_TRACE")) {
-				int i;
-				fprintf(stderr, "trace: alias expansion: %s =>",
-					alias_command);
-				for (i = 0; i < count; ++i) {
-					fputc(' ', stderr);
-					sq_quote_print(stderr, new_argv[i]);
-				}
-				fputc('\n', stderr);
-				fflush(stderr);
+		if (getenv("GIT_TRACE")) {
+			int i;
+			fprintf(stderr, "trace: alias expansion: %s =>",
+				alias_command);
+			for (i = 0; i < count; ++i) {
+				fputc(' ', stderr);
+				sq_quote_print(stderr, new_argv[i]);
 			}
-
-			/* insert after command name */
-			if (*argcp > 1) {
-				new_argv = realloc(new_argv, sizeof(char*) *
-						   (count + *argcp));
-				memcpy(new_argv + count, *argv + 1,
-				       sizeof(char*) * *argcp);
-			}
-
-			*argv = new_argv;
-			*argcp += count - 1;
-
-			ret = 1;
+			fputc('\n', stderr);
+			fflush(stderr);
 		}
+
+		new_argv = realloc(new_argv, sizeof(char*) *
+				   (count + *argcp + 1));
+		/* insert after command name */
+		memcpy(new_argv + count, *argv + 1, sizeof(char*) * *argcp);
+		new_argv[count+*argcp] = NULL;
+
+		*argv = new_argv;
+		*argcp += count - 1;
+
+		ret = 1;
 	}
 
 	if (subdir)
@@ -158,51 +210,55 @@ static int handle_alias(int *argcp, const char ***argv)
 
 const char git_version_string[] = GIT_VERSION;
 
+#define NEEDS_PREFIX 1
+
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
 	const char *cmd = argv[0];
 	static struct cmd_struct {
 		const char *cmd;
-		int (*fn)(int, const char **, char **);
+		int (*fn)(int, const char **, const char *);
+		int prefix;
 	} commands[] = {
 		{ "version", cmd_version },
 		{ "help", cmd_help },
-		{ "log", cmd_log },
-		{ "whatchanged", cmd_whatchanged },
-		{ "show", cmd_show },
+		{ "log", cmd_log, NEEDS_PREFIX },
+		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX },
+		{ "show", cmd_show, NEEDS_PREFIX },
 		{ "push", cmd_push },
-		{ "format-patch", cmd_format_patch },
+		{ "format-patch", cmd_format_patch, NEEDS_PREFIX },
 		{ "count-objects", cmd_count_objects },
-		{ "diff", cmd_diff },
-		{ "grep", cmd_grep },
-		{ "rm", cmd_rm },
-		{ "add", cmd_add },
-		{ "rev-list", cmd_rev_list },
+		{ "diff", cmd_diff, NEEDS_PREFIX },
+		{ "grep", cmd_grep, NEEDS_PREFIX },
+		{ "rm", cmd_rm, NEEDS_PREFIX },
+		{ "add", cmd_add, NEEDS_PREFIX },
+		{ "rev-list", cmd_rev_list, NEEDS_PREFIX },
 		{ "init-db", cmd_init_db },
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "upload-tar", cmd_upload_tar },
 		{ "check-ref-format", cmd_check_ref_format },
-		{ "ls-files", cmd_ls_files },
-		{ "ls-tree", cmd_ls_tree },
-		{ "tar-tree", cmd_tar_tree },
-		{ "read-tree", cmd_read_tree },
-		{ "commit-tree", cmd_commit_tree },
+		{ "ls-files", cmd_ls_files, NEEDS_PREFIX },
+		{ "ls-tree", cmd_ls_tree, NEEDS_PREFIX },
+		{ "tar-tree", cmd_tar_tree, NEEDS_PREFIX },
+		{ "read-tree", cmd_read_tree, NEEDS_PREFIX },
+		{ "commit-tree", cmd_commit_tree, NEEDS_PREFIX },
 		{ "apply", cmd_apply },
-		{ "show-branch", cmd_show_branch },
-		{ "diff-files", cmd_diff_files },
-		{ "diff-index", cmd_diff_index },
-		{ "diff-stages", cmd_diff_stages },
-		{ "diff-tree", cmd_diff_tree },
-		{ "cat-file", cmd_cat_file },
-		{ "rev-parse", cmd_rev_parse },
-		{ "write-tree", cmd_write_tree },
+		{ "show-branch", cmd_show_branch, NEEDS_PREFIX },
+		{ "diff-files", cmd_diff_files, NEEDS_PREFIX },
+		{ "diff-index", cmd_diff_index, NEEDS_PREFIX },
+		{ "diff-stages", cmd_diff_stages, NEEDS_PREFIX },
+		{ "diff-tree", cmd_diff_tree, NEEDS_PREFIX },
+		{ "cat-file", cmd_cat_file, NEEDS_PREFIX },
+		{ "rev-parse", cmd_rev_parse, NEEDS_PREFIX },
+		{ "write-tree", cmd_write_tree, NEEDS_PREFIX },
 		{ "mailsplit", cmd_mailsplit },
 		{ "mailinfo", cmd_mailinfo },
 		{ "stripspace", cmd_stripspace },
-		{ "update-index", cmd_update_index },
-		{ "update-ref", cmd_update_ref },
-		{ "fmt-merge-msg", cmd_fmt_merge_msg },
-		{ "prune", cmd_prune },
+		{ "update-index", cmd_update_index, NEEDS_PREFIX },
+		{ "update-ref", cmd_update_ref, NEEDS_PREFIX },
+		{ "fmt-merge-msg", cmd_fmt_merge_msg, NEEDS_PREFIX },
+		{ "prune", cmd_prune, NEEDS_PREFIX },
+		{ "mv", cmd_mv, NEEDS_PREFIX },
 	};
 	int i;
 
@@ -214,9 +270,13 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		struct cmd_struct *p = commands+i;
+		const char *prefix;
 		if (strcmp(p->cmd, cmd))
 			continue;
 
+		prefix = NULL;
+		if (p->prefix)
+			prefix = setup_git_directory();
 		if (getenv("GIT_TRACE")) {
 			int i;
 			fprintf(stderr, "trace: built-in: git");
@@ -228,7 +288,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			fflush(stderr);
 		}
 
-		exit(p->fn(argc, argv, envp));
+		exit(p->fn(argc, argv, prefix));
 	}
 }
 
@@ -269,51 +329,19 @@ int main(int argc, const char **argv, char **envp)
 		die("cannot handle %s internally", cmd);
 	}
 
-	/* Default command: "help" */
-	cmd = "help";
-
 	/* Look for flags.. */
-	while (argc > 1) {
-		cmd = *++argv;
-		argc--;
-
-		if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
-			setup_pager();
-			continue;
-		}
-
-		if (strncmp(cmd, "--", 2))
-			break;
-
-		cmd += 2;
-
-		/*
-		 * For legacy reasons, the "version" and "help"
-		 * commands can be written with "--" prepended
-		 * to make them look like flags.
-		 */
-		if (!strcmp(cmd, "help"))
-			break;
-		if (!strcmp(cmd, "version"))
-			break;
-
-		/*
-		 * Check remaining flags (which by now must be
-		 * "--exec-path", but maybe we will accept
-		 * other arguments some day)
-		 */
-		if (!strncmp(cmd, "exec-path", 9)) {
-			cmd += 9;
-			if (*cmd == '=') {
-				git_set_exec_path(cmd + 1);
-				continue;
-			}
-			puts(git_exec_path());
-			exit(0);
-		}
-		cmd_usage(0, NULL, NULL);
+	argv++;
+	argc--;
+	handle_options(&argv, &argc);
+	if (argc > 0) {
+		if (!strncmp(argv[0], "--", 2))
+			argv[0] += 2;
+	} else {
+		/* Default command: "help" */
+		argv[0] = "help";
+		argc = 1;
 	}
-	argv[0] = cmd;
+	cmd = argv[0];
 
 	/*
 	 * We search for git commands in the following order:

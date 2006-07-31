@@ -97,6 +97,11 @@ void show_log(struct rev_info *opt, const char *sep)
 			subject = "Subject: ";
 
 		printf("From %s Mon Sep 17 00:00:00 2001\n", sha1);
+		if (opt->message_id)
+			printf("Message-Id: <%s>\n", opt->message_id);
+		if (opt->ref_message_id)
+			printf("In-Reply-To: <%s>\nReferences: <%s>\n",
+			       opt->ref_message_id, opt->ref_message_id);
 		if (opt->mime_boundary) {
 			static char subject_buffer[1024];
 			static char buffer[1024];
@@ -129,7 +134,8 @@ void show_log(struct rev_info *opt, const char *sep)
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else {
-		printf("%s%s",
+		printf("%s%s%s",
+		       diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
 		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
 		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
 		if (opt->parents)
@@ -138,6 +144,8 @@ void show_log(struct rev_info *opt, const char *sep)
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
+		printf("%s",
+		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 	}
 

@@ -55,7 +55,8 @@
 ;;;; ------------------------------------------------------------
 
 (defgroup git nil
-  "Git user interface")
+  "A user interface for the git versioning system."
+  :group 'tools)
 
 (defcustom git-committer-name nil
   "User name to use for commits.
@@ -80,6 +81,12 @@ then to `add-log-mailing-address' and then to `user-mail-address'."
 
 (defcustom git-append-signed-off-by nil
   "Whether to append a Signed-off-by line to the commit message before editing."
+  :group 'git
+  :type 'boolean)
+
+(defcustom git-reuse-status-buffer t
+  "Whether `git-status' should try to reuse an existing buffer
+if there is already one that displays the same directory."
   :group 'git
   :type 'boolean)
 
@@ -258,7 +265,7 @@ and returns the process output as a string."
     (set-buffer (find-file-noselect ignore-name))
     (goto-char (point-max))
     (unless (zerop (current-column)) (insert "\n"))
-    (insert name "\n")
+    (insert "/" name "\n")
     (sort-lines nil (point-min) (point-max))
     (save-buffer))
   (when created
@@ -584,6 +591,8 @@ and returns the process output as a string."
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
                             (with-current-buffer buffer (erase-buffer))
                             (git-set-files-state files 'uptodate)
+                            (when (file-directory-p ".git/rr-cache")
+                              (git-run-command nil nil "rerere"))
                             (git-refresh-files)
                             (git-refresh-ewoc-hf git-status)
                             (message "Committed %s." commit))
@@ -1001,12 +1010,28 @@ Commands:
   (set (make-local-variable 'list-buffers-directory) default-directory)
   (run-hooks 'git-status-mode-hook)))
 
+(defun git-find-status-buffer (dir)
+  "Find the git status buffer handling a specified directory."
+  (let ((list (buffer-list))
+        (fulldir (expand-file-name dir))
+        found)
+    (while (and list (not found))
+      (let ((buffer (car list)))
+        (with-current-buffer buffer
+          (when (and list-buffers-directory
+                     (string-equal fulldir (expand-file-name list-buffers-directory))
+                     (string-match "\\*git-status\\*$" (buffer-name buffer)))
+            (setq found buffer))))
+      (setq list (cdr list)))
+    found))
+
 (defun git-status (dir)
   "Entry point into git-status mode."
   (interactive "DSelect directory: ")
   (setq dir (git-get-top-dir dir))
   (if (file-directory-p (concat (file-name-as-directory dir) ".git"))
-      (let ((buffer (create-file-buffer (expand-file-name "*git-status*" dir))))
+      (let ((buffer (or (and git-reuse-status-buffer (git-find-status-buffer dir))
+                        (create-file-buffer (expand-file-name "*git-status*" dir)))))
         (switch-to-buffer buffer)
         (cd dir)
         (git-status-mode)

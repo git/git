@@ -266,7 +266,7 @@ yes,yes)
 	    echo "$repo/objects" >> "$GIT_DIR/objects/info/alternates"
 	    ;;
 	esac
-	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
+	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 	;;
 *)
 	case "$repo" in
@@ -296,7 +296,7 @@ yes,yes)
 		    done
 		    rm -f "$GIT_DIR/TMP_ALT"
 		fi
-		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
+		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 		;;
 	http://*)
 		if test -z "@@NO_CURL@@"

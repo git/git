@@ -52,7 +52,8 @@ then
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-git-update-ref -m "reset $reset_type $@" HEAD "$rev"
+git-update-ref -m "reset $reset_type $*" HEAD "$rev"
+update_ref_status=$?
 
 case "$reset_type" in
 --hard )
@@ -66,3 +67,5 @@ case "$reset_type" in
 esac
 
 rm -f "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/rr-cache/MERGE_RR" "$GIT_DIR/SQUASH_MSG"
+
+exit $update_ref_status

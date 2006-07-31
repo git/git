@@ -322,14 +322,13 @@ static const char ls_files_usage[] =
 	"[ --exclude-per-directory=<filename> ] [--full-name] [--abbrev] "
 	"[--] [<file>]*";
 
-int cmd_ls_files(int argc, const char **argv, char** envp)
+int cmd_ls_files(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int exc_given = 0;
 	struct dir_struct dir;
 
 	memset(&dir, 0, sizeof(dir));
-	prefix = setup_git_directory();
 	if (prefix)
 		prefix_offset = strlen(prefix);
 	git_config(git_default_config);

@@ -77,7 +77,7 @@ static int new_parent(int idx)
 	return 1;
 }
 
-int cmd_commit_tree(int argc, const char **argv, char **envp)
+int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int parents = 0;
@@ -88,8 +88,6 @@ int cmd_commit_tree(int argc, const char **argv, char **envp)
 	unsigned int size;
 
 	setup_ident();
-	setup_git_directory();
-
 	git_config(git_default_config);
 
 	if (argc < 2)

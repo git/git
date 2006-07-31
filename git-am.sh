@@ -91,6 +91,7 @@ fall_back_3way () {
 }
 
 prec=4
+rloga=am
 dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws= resolvemsg=
 
 while case "$#" in 0) break;; esac
@@ -130,6 +131,9 @@ do
 	--resolvemsg=*)
 	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
 
+	--reflog-action=*)
+	rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`; shift ;;
+
 	--)
 	shift; break ;;
 	-*)
@@ -152,8 +156,10 @@ fi
 
 if test -d "$dotest"
 then
-	test ",$#," = ",0," ||
-	die "previous dotest directory $dotest still exists but mbox given."
+	if test ",$#," != ",0," || ! tty -s
+	then
+		die "previous dotest directory $dotest still exists but mbox given."
+	fi
 	resume=yes
 else
 	# Make sure we are not given --skip nor --resolved
@@ -413,7 +419,7 @@ do
 	parent=$(git-rev-parse --verify HEAD) &&
 	commit=$(git-commit-tree $tree -p $parent <"$dotest/final-commit") &&
 	echo Committed: $commit &&
-	git-update-ref -m "am: $SUBJECT" HEAD $commit $parent ||
+	git-update-ref -m "$rloga: $SUBJECT" HEAD $commit $parent ||
 	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch

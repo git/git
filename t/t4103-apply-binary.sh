@@ -35,8 +35,8 @@ git-commit -m 'Second Version'
 git-diff-tree -p master binary >B.diff
 git-diff-tree -p -C master binary >C.diff
 
-git-diff-tree -p --full-index master binary >BF.diff
-git-diff-tree -p --full-index -C master binary >CF.diff
+git-diff-tree -p --binary master binary >BF.diff
+git-diff-tree -p --binary -C master binary >CF.diff
 
 test_expect_success 'stat binary diff -- should not fail.' \
 	'git-checkout master

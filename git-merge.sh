@@ -63,7 +63,13 @@ squash_message () {
 }
 
 finish () {
-	test '' = "$2" || echo "$2"
+	if test '' = "$2"
+	then
+		rlogm="$rloga"
+	else
+		echo "$2"
+		rlogm="$rloga: $2"
+	fi
 	case "$squash" in
 	t)
 		echo "Squash commit -- not updating HEAD"
@@ -75,7 +81,7 @@ finish () {
 			echo "No merge message -- not updating HEAD"
 			;;
 		*)
-			git-update-ref HEAD "$1" "$head" || exit 1
+			git-update-ref -m "$rlogm" HEAD "$1" "$head" || exit 1
 			;;
 		esac
 		;;
@@ -93,6 +99,7 @@ finish () {
 	esac
 }
 
+rloga=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -126,6 +133,9 @@ do
 			die "available strategies are: $all_strategies" ;;
 		esac
 		;;
+	--reflog-action=*)
+		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		;;
 	-*)	usage ;;
 	*)	break ;;
 	esac
@@ -140,6 +150,7 @@ shift
 
 # All the rest are remote heads
 test "$#" = 0 && usage ;# we need at least one remote head.
+test "$rloga" = '' && rloga="merge: $@"
 
 remoteheads=
 for remote
@@ -325,7 +336,7 @@ if test '' != "$result_tree"
 then
     parents=$(git-show-branch --independent "$head" "$@" | sed -e 's/^/-p /')
     result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree $parents) || exit
-    finish "$result_commit" "Merge $result_commit, made by $wt_strategy."
+    finish "$result_commit" "Merge made by $wt_strategy."
     dropsave
     exit 0
 fi
