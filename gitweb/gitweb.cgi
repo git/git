@@ -1024,6 +1024,8 @@ sub read_info_ref {
 	open my $fd, "$projectroot/$project/info/refs" or return;
 	while (my $line = <$fd>) {
 		chomp $line;
+		# attention: for $type == "" it saves only last path part of ref name
+		# e.g. from 'refs/heads/jn/gitweb' it would leave only 'gitweb'
 		if ($line =~ m/^([0-9a-fA-F]{40})\t.*$type\/([^\^]+)/) {
 			if (defined $refs{$1}) {
 				$refs{$1} .= " / $2";
@@ -1034,6 +1036,16 @@ sub read_info_ref {
 	}
 	close $fd or return;
 	return \%refs;
+}
+
+sub git_get_referencing {
+	my ($refs, $id) = @_;
+
+	if (defined $refs->{$id}) {
+		return ' <span class="tag">' . esc_html($refs->{$id}) . '</span>';
+	} else {
+		return "";
+	}
 }
 
 sub git_read_refs {
@@ -1151,10 +1163,7 @@ sub git_summary {
 		}
 		$alternate ^= 1;
 		if ($i-- > 0) {
-			my $ref = "";
-			if (defined $refs->{$commit}) {
-				$ref = " <span class=\"tag\">" . esc_html($refs->{$commit}) . "</span>";
-			}
+			my $ref = git_get_referencing($refs, $commit);
 			print "<td><i>$co{'age_string'}</i></td>\n" .
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 			      "<td>";
@@ -1728,10 +1737,7 @@ sub git_tree {
 	$/ = "\n";
 
 	my $refs = read_info_ref();
-	my $ref = "";
-	if (defined $refs->{$hash_base}) {
-		$ref = " <span class=\"tag\">" . esc_html($refs->{$hash_base}) . "</span>";
-	}
+	my $ref = git_get_referencing($refs, $hash_base);
 	git_header_html();
 	my $base_key = "";
 	my $base = "";
@@ -1912,10 +1918,7 @@ sub git_log {
 	}
 	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
 		my $commit = $revlist[$i];
-		my $ref = "";
-		if (defined $refs->{$commit}) {
-			$ref = " <span class=\"tag\">" . esc_html($refs->{$commit}) . "</span>";
-		}
+		my $ref = git_get_referencing($refs, $commit);
 		my %co = git_read_commit($commit);
 		next if !%co;
 		my %ad = date_str($co{'author_epoch'});
@@ -1979,16 +1982,13 @@ sub git_commit {
 		$expires = "+1d";
 	}
 	my $refs = read_info_ref();
-	my $ref = "";
-	if (defined $refs->{$co{'id'}}) {
-		$ref = " <span class=\"tag\">" . esc_html($refs->{$co{'id'}}) . "</span>";
-	}
-	git_header_html(undef, $expires);
+	my $ref = git_get_referencing($refs, $co{'id'});
 	my $formats_nav = '';
 	if (defined $file_name && defined $co{'parent'}) {
 		my $parent = $co{'parent'};
 		$formats_nav .= $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;hb=$parent;f=$file_name")}, "blame");
 	}
+	git_header_html(undef, $expires);
 	git_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
 							 $hash, $co{'tree'}, $hash,
 							 $formats_nav);
@@ -1996,7 +1996,7 @@ sub git_commit {
 	if (defined $co{'parent'}) {
 		git_header_div('commitdiff', esc_html($co{'title'}) . $ref, $hash);
 	} else {
-		git_header_div('tree', esc_html($co{'title'}), $co{'tree'}, $hash);
+		git_header_div('tree', esc_html($co{'title'}) . $ref, $co{'tree'}, $hash);
 	}
 	print "<div class=\"title_text\">\n" .
 	      "<table cellspacing=\"0\">\n";
@@ -2206,13 +2206,10 @@ sub git_commitdiff {
 		$expires = "+1d";
 	}
 	my $refs = read_info_ref();
-	my $ref = "";
-	if (defined $refs->{$co{'id'}}) {
-		$ref = " <span class=\"tag\">" . esc_html($refs->{$co{'id'}}) . "</span>";
-	}
-	git_header_html(undef, $expires);
+	my $ref = git_get_referencing($refs, $co{'id'});
 	my $formats_nav =
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff_plain;h=$hash;hp=$hash_parent")}, "plain");
+	git_header_html(undef, $expires);
 	git_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
 	git_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
 	print "<div class=\"page_body\">\n";
@@ -2364,10 +2361,7 @@ sub git_history {
 			if (!%co) {
 				next;
 			}
-			my $ref = "";
-			if (defined $refs->{$commit}) {
-				$ref = " <span class=\"tag\">" . esc_html($refs->{$commit}) . "</span>";
-			}
+			my $ref = git_get_referencing($refs, $commit);
 			if ($alternate) {
 				print "<tr class=\"dark\">\n";
 			} else {
@@ -2559,10 +2553,7 @@ sub git_shortlog {
 	my $alternate = 0;
 	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
 		my $commit = $revlist[$i];
-		my $ref = "";
-		if (defined $refs->{$commit}) {
-			$ref = " <span class=\"tag\">" . esc_html($refs->{$commit}) . "</span>";
-		}
+		my $ref = git_get_referencing($refs, $commit);
 		my %co = git_read_commit($commit);
 		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
