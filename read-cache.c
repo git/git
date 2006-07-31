@@ -61,7 +61,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 		unsigned char sha1[20];
 		if (!index_fd(sha1, fd, st, 0, NULL))
 			match = memcmp(sha1, ce->sha1, 20);
-		close(fd);
+		/* index_fd() closed the file descriptor already */
 	}
 	return match;
 }
