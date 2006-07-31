@@ -43,6 +43,8 @@ static struct commit *make_virtual_commit(struct tree *tree, const char *comment
 	commit->tree = tree;
 	commit->util = (void*)comment;
 	*(int*)commit->object.sha1 = virtual_id++;
+	/* avoid warnings */
+	commit->object.parsed = 1;
 	return commit;
 }
 
