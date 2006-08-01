@@ -133,7 +133,10 @@ static pid_t setup_sideband(int sideband, const char *me, int fd[2], int xd[2])
 				fprintf(stderr, "\n");
 				exit(1);
 			case 2:
+				/* color sideband */
+				safe_write(2, "\033[44;37;1m", 10);
 				safe_write(2, buf+1, len);
+				safe_write(2, "\033[m", 3);
 				continue;
 			case 1:
 				safe_write(fd[1], buf+1, len);
