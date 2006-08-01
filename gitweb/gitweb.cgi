@@ -1035,7 +1035,7 @@ sub git_print_page_path {
 
 	if (!defined $name) {
 		print "<div class=\"page_path\"><b>/</b></div>\n";
-	} elsif ($type =~ "blob") {
+	} elsif (defined $type && $type eq 'blob') {
 		print "<div class=\"page_path\"><b>" .
 			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob_plain;f=$file_name")}, esc_html($name)) . "</b><br/></div>\n";
 	} else {
@@ -1550,7 +1550,7 @@ sub git_blame {
 		" | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blame;f=$file_name")}, "head");
 	git_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name);
+	git_print_page_path($file_name, 'blob');
 	print "<div class=\"page_body\">\n";
 	print <<HTML;
 <table class="blame">
@@ -1773,7 +1773,7 @@ sub git_tree {
 	if (defined $file_name) {
 		$base = esc_html("$file_name/");
 	}
-	git_print_page_path($file_name);
+	git_print_page_path($file_name, 'tree');
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
