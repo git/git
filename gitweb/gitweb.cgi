@@ -81,14 +81,6 @@ if (defined $action) {
 	}
 }
 
-our $order = $cgi->param('o');
-if (defined $order) {
-	if ($order =~ m/[^0-9a-zA-Z_]/) {
-		undef $order;
-		die_error(undef, "Invalid order parameter.");
-	}
-}
-
 our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
 if (defined $project) {
 	$project =~ s|^/||; $project =~ s|/$||;
@@ -1297,10 +1289,15 @@ sub git_logo {
 }
 
 sub git_project_list {
+	my $order = $cgi->param('o');
+	if (defined $order && $order !~ m/project|descr|owner|age/) {
+		die_error(undef, "Invalid order parameter '$order'.");
+	}
+
 	my @list = git_read_projects();
 	my @projects;
 	if (!@list) {
-		die_error(undef, "No project found.");
+		die_error(undef, "No projects found.");
 	}
 	foreach my $pr (@list) {
 		my $head = git_read_head($pr->{'path'});
@@ -1322,6 +1319,7 @@ sub git_project_list {
 		}
 		push @projects, $pr;
 	}
+
 	git_header_html();
 	if (-f $home_text) {
 		print "<div class=\"index_include\">\n";
@@ -1332,29 +1330,42 @@ sub git_project_list {
 	}
 	print "<table class=\"project_list\">\n" .
 	      "<tr>\n";
-	if (!defined($order) || (defined($order) && ($order eq "project"))) {
+	$order ||= "project";
+	if ($order eq "project") {
 		@projects = sort {$a->{'path'} cmp $b->{'path'}} @projects;
 		print "<th>Project</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=project")}, "Project") . "</th>\n";
+		print "<th>" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("o=project"),
+		               -class => "header"}, "Project") .
+		      "</th>\n";
 	}
-	if (defined($order) && ($order eq "descr")) {
+	if ($order eq "descr") {
 		@projects = sort {$a->{'descr'} cmp $b->{'descr'}} @projects;
 		print "<th>Description</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=descr")}, "Description") . "</th>\n";
+		print "<th>" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("o=descr"),
+		               -class => "header"}, "Description") .
+		      "</th>\n";
 	}
-	if (defined($order) && ($order eq "owner")) {
+	if ($order eq "owner") {
 		@projects = sort {$a->{'owner'} cmp $b->{'owner'}} @projects;
 		print "<th>Owner</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=owner")}, "Owner") . "</th>\n";
+		print "<th>" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("o=owner"),
+		               -class => "header"}, "Owner") .
+		      "</th>\n";
 	}
-	if (defined($order) && ($order eq "age")) {
+	if ($order eq "age") {
 		@projects = sort {$a->{'commit'}{'age'} <=> $b->{'commit'}{'age'}} @projects;
 		print "<th>Last Change</th>\n";
 	} else {
-		print "<th>" . $cgi->a({-class => "header", -href => "$my_uri?" . esc_param("o=age")}, "Last Change") . "</th>\n";
+		print "<th>" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("o=age"),
+		               -class => "header"}, "Last Change") .
+		      "</th>\n";
 	}
 	print "<th></th>\n" .
 	      "</tr>\n";
@@ -1366,14 +1377,16 @@ sub git_project_list {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary"), -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
+		print "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary"),
+		                        -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
 		      "<td>" . esc_html($pr->{'descr'}) . "</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
-		print "<td class=\"". age_class($pr->{'commit'}{'age'}) . "\">" . $pr->{'commit'}{'age_string'} . "</td>\n" .
+		print "<td class=\"". age_class($pr->{'commit'}{'age'}) . "\">" .
+		      $pr->{'commit'}{'age_string'} . "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary")}, "summary") .
-		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=shortlog")}, "shortlog") .
-		      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=log")}, "log") .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=summary")}, "summary")   . " | " .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=shortlog")}, "shortlog") . " | " .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$pr->{'path'};a=log")}, "log") .
 		      "</td>\n" .
 		      "</tr>\n";
 	}
