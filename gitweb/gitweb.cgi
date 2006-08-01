@@ -779,9 +779,11 @@ sub mimetype_guess_file {
 	open(MIME, $mimemap) or return undef;
 	while (<MIME>) {
 		my ($mime, $exts) = split(/\t+/);
-		my @exts = split(/\s+/, $exts);
-		foreach my $ext (@exts) {
-			$mimemap{$ext} = $mime;
+		if (defined $exts) {
+			my @exts = split(/\s+/, $exts);
+			foreach my $ext (@exts) {
+				$mimemap{$ext} = $mime;
+			}
 		}
 	}
 	close(MIME);
