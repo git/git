@@ -8,6 +8,7 @@ sed -e '
 /^our .GIT = /s|"/usr/bin/|"/home/junio/bin/Linux/|
 /^our .projectroot = /s|".*"|"/opt/packrat/playpen/public/in-place/git"|
 /^our .stylesheet = /s|".*"|"/gitweb.css"|
+/^our .logo = /s|".*"|"/git-logo.png"|
 /^our .projects_list = /s|".*"|"/opt/packrat/playpen/public/in-place/git/index/index.aux"|
 ' gitweb.cgi >gitweb.cgi++
 
