@@ -711,6 +711,7 @@ proc makewindow {} {
     $rowctxmenu add command -label "Make patch" -command mkpatch
     $rowctxmenu add command -label "Create tag" -command mktag
     $rowctxmenu add command -label "Write commit to file" -command writecommit
+    $rowctxmenu add command -label "Create new branch" -command mkbranch
 }
 
 # mouse-2 makes all windows scan vertically, but only the one
@@ -5018,6 +5019,61 @@ proc wrcomcan {} {
     unset wrcomtop
 }
 
+proc mkbranch {} {
+    global rowmenuid mkbrtop
+
+    set top .makebranch
+    catch {destroy $top}
+    toplevel $top
+    label $top.title -text "Create new branch"
+    grid $top.title - -pady 10
+    label $top.id -text "ID:"
+    entry $top.sha1 -width 40 -relief flat
+    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 conf -state readonly
+    grid $top.id $top.sha1 -sticky w
+    label $top.nlab -text "Name:"
+    entry $top.name -width 40
+    grid $top.nlab $top.name -sticky w
+    frame $top.buts
+    button $top.buts.go -text "Create" -command [list mkbrgo $top]
+    button $top.buts.can -text "Cancel" -command "catch {destroy $top}"
+    grid $top.buts.go $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - -pady 10 -sticky ew
+    focus $top.name
+}
+
+proc mkbrgo {top} {
+    global headids idheads
+
+    set name [$top.name get]
+    set id [$top.sha1 get]
+    if {$name eq {}} {
+	error_popup "Please specify a name for the new branch"
+	return
+    }
+    catch {destroy $top}
+    nowbusy newbranch
+    update
+    if {[catch {
+	exec git branch $name $id
+    } err]} {
+	notbusy newbranch
+	error_popup $err
+    } else {
+	set headids($name) $id
+	if {![info exists idheads($id)]} {
+	    addedhead $id
+	}
+	lappend idheads($id) $name
+	# XXX should update list of heads displayed for selected commit
+	notbusy newbranch
+	redrawtags $id
+    }
+}
+
 # Stuff for finding nearby tags
 proc getallcommits {} {
     global allcstart allcommits allcfd allids
@@ -5216,6 +5272,30 @@ proc restartatags {} {
     set travindex 0
     notbusy allcommits
     dispneartags
+}
+
+# update the desc_heads array for a new head just added
+proc addedhead {hid} {
+    global desc_heads allparents
+
+    set todo [list $hid]
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists desc_heads($do)] ||
+	    [lsearch -exact $desc_heads($do) $hid] >= 0} continue
+	set oldheads $desc_heads($do)
+	lappend desc_heads($do) $hid
+	set heads $desc_heads($do)
+	while {1} {
+	    set p $allparents($do)
+	    if {[llength $p] != 1 || ![info exists desc_heads($p)] ||
+		$desc_heads($p) ne $oldheads} break
+	    set do $p
+	    set desc_heads($do) $heads
+	}
+	set todo [concat $todo $p]
+    }
 }
 
 proc changedrefs {} {
