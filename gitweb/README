@@ -24,5 +24,9 @@ You can specify the following configuration variables when building GIT:
  * GITWEB_LOGO
    Points to the location where you put git-logo.png on your web server.
 
-Any comment/question/concern to:
+Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
+
+Any comment/question/concern to:
+  Git mailing list <git@vger.kernel.org>
+
