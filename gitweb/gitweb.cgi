@@ -14,6 +14,7 @@ use CGI::Util qw(unescape);
 use CGI::Carp qw(fatalsToBrowser);
 use Encode;
 use Fcntl ':mode';
+use File::Find qw();
 binmode STDOUT, ':utf8';
 
 our $cgi = new CGI;
@@ -697,23 +698,14 @@ sub git_read_refs {
 	my @reflist;
 
 	my @refs;
-	opendir my $dh, "$projectroot/$project/$ref_dir";
-	while (my $dir = readdir($dh)) {
-		if ($dir =~ m/^\./) {
-			next;
+	my $pfxlen = length("$projectroot/$project/$ref_dir");
+	File::Find::find(sub {
+		return if (/^\./);
+		if (-f $_) {
+			push @refs, substr($File::Find::name, $pfxlen + 1);
 		}
-		if (-d "$projectroot/$project/$ref_dir/$dir") {
-			opendir my $dh2, "$projectroot/$project/$ref_dir/$dir";
-			my @subdirs = grep !m/^\./, readdir $dh2;
-			closedir($dh2);
-			foreach my $subdir (@subdirs) {
-				push @refs, "$dir/$subdir"
-			}
-			next;
-		}
-		push @refs, $dir;
-	}
-	closedir($dh);
+	}, "$projectroot/$project/$ref_dir");
+
 	foreach my $ref_file (@refs) {
 		my $ref_id = git_read_hash("$project/$ref_dir/$ref_file");
 		my $type = git_get_type($ref_id) || next;
