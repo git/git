@@ -4932,7 +4932,7 @@ proc domktag {} {
 
 proc redrawtags {id} {
     global canv linehtag commitrow idpos selectedline curview
-    global mainfont
+    global mainfont canvxmax
 
     if {![info exists commitrow($curview,$id)]} return
     drawcmitrow $commitrow($curview,$id)
@@ -5020,8 +5020,9 @@ proc wrcomcan {} {
 
 # Stuff for finding nearby tags
 proc getallcommits {} {
-    global allcstart allcommits allcfd
+    global allcstart allcommits allcfd allids
 
+    set allids {}
     set fd [open [concat | git rev-list --all --topo-order --parents] r]
     set allcfd $fd
     fconfigure $fd -blocking 0
@@ -5105,10 +5106,52 @@ proc combine_atags {l1 l2} {
     return $res
 }
 
+proc forward_pass {id children} {
+    global idtags desc_tags idheads desc_heads alldtags tagisdesc
+
+    set dtags {}
+    set dheads {}
+    foreach child $children {
+	if {[info exists idtags($child)]} {
+	    set ctags [list $child]
+	} else {
+	    set ctags $desc_tags($child)
+	}
+	if {$dtags eq {}} {
+	    set dtags $ctags
+	} elseif {$ctags ne $dtags} {
+	    set dtags [combine_dtags $dtags $ctags]
+	}
+	set cheads $desc_heads($child)
+	if {$dheads eq {}} {
+	    set dheads $cheads
+	} elseif {$cheads ne $dheads} {
+	    set dheads [lsort -unique [concat $dheads $cheads]]
+	}
+    }
+    set desc_tags($id) $dtags
+    if {[info exists idtags($id)]} {
+	set adt $dtags
+	foreach tag $dtags {
+	    set adt [concat $adt $alldtags($tag)]
+	}
+	set adt [lsort -unique $adt]
+	set alldtags($id) $adt
+	foreach tag $adt {
+	    set tagisdesc($id,$tag) -1
+	    set tagisdesc($tag,$id) 1
+	}
+    }
+    if {[info exists idheads($id)]} {
+	lappend dheads $id
+    }
+    set desc_heads($id) $dheads
+}
+
 proc getallclines {fd} {
     global allparents allchildren allcommits allcstart
-    global desc_tags anc_tags idtags alldtags tagisdesc allids
-    global desc_heads idheads
+    global desc_tags anc_tags idtags tagisdesc allids
+    global desc_heads idheads travindex
 
     while {[gets $fd line] >= 0} {
 	set id [lindex $line 0]
@@ -5123,43 +5166,7 @@ proc getallclines {fd} {
 	}
 	# compute nearest tagged descendents as we go
 	# also compute descendent heads
-	set dtags {}
-	set dheads {}
-	foreach child $allchildren($id) {
-	    if {[info exists idtags($child)]} {
-		set ctags [list $child]
-	    } else {
-		set ctags $desc_tags($child)
-	    }
-	    if {$dtags eq {}} {
-		set dtags $ctags
-	    } elseif {$ctags ne $dtags} {
-		set dtags [combine_dtags $dtags $ctags]
-	    }
-	    set cheads $desc_heads($child)
-	    if {$dheads eq {}} {
-		set dheads $cheads
-	    } elseif {$cheads ne $dheads} {
-		set dheads [lsort -unique [concat $dheads $cheads]]
-	    }
-	}
-	set desc_tags($id) $dtags
-	if {[info exists idtags($id)]} {
-	    set adt $dtags
-	    foreach tag $dtags {
-		set adt [concat $adt $alldtags($tag)]
-	    }
-	    set adt [lsort -unique $adt]
-	    set alldtags($id) $adt
-	    foreach tag $adt {
-		set tagisdesc($id,$tag) -1
-		set tagisdesc($tag,$id) 1
-	    }
-	}
-	if {[info exists idheads($id)]} {
-	    lappend dheads $id
-	}
-	set desc_heads($id) $dheads
+	forward_pass $id $allchildren($id)
 	if {[clock clicks -milliseconds] - $allcstart >= 50} {
 	    fileevent $fd readable {}
 	    after idle restartgetall $fd
@@ -5167,7 +5174,9 @@ proc getallclines {fd} {
 	}
     }
     if {[eof $fd]} {
-	after idle restartatags [llength $allids]
+	set travindex [llength $allids]
+	set allcommits "traversing"
+	after idle restartatags
 	if {[catch {close $fd} err]} {
 	    error_popup "Error reading full commit graph: $err.\n\
 			 Results may be incomplete."
@@ -5176,10 +5185,11 @@ proc getallclines {fd} {
 }
 
 # walk backward through the tree and compute nearest tagged ancestors
-proc restartatags {i} {
-    global allids allparents idtags anc_tags t0
+proc restartatags {} {
+    global allids allparents idtags anc_tags travindex
 
     set t0 [clock clicks -milliseconds]
+    set i $travindex
     while {[incr i -1] >= 0} {
 	set id [lindex $allids $i]
 	set atags {}
@@ -5197,17 +5207,41 @@ proc restartatags {i} {
 	}
 	set anc_tags($id) $atags
 	if {[clock clicks -milliseconds] - $t0 >= 50} {
-	    after idle restartatags $i
+	    set travindex $i
+	    after idle restartatags
 	    return
 	}
     }
     set allcommits "done"
+    set travindex 0
     notbusy allcommits
     dispneartags
 }
 
+proc changedrefs {} {
+    global desc_heads desc_tags anc_tags allcommits allids
+    global allchildren allparents idtags travindex
+
+    if {![info exists allcommits]} return
+    catch {unset desc_heads}
+    catch {unset desc_tags}
+    catch {unset anc_tags}
+    catch {unset alldtags}
+    catch {unset tagisdesc}
+    foreach id $allids {
+	forward_pass $id $allchildren($id)
+    }
+    if {$allcommits ne "reading"} {
+	set travindex [llength $allids]
+	if {$allcommits ne "traversing"} {
+	    set allcommits "traversing"
+	    after idle restartatags
+	}
+    }
+}
+
 proc rereadrefs {} {
-    global idtags idheads idotherrefs
+    global idtags idheads idotherrefs mainhead
 
     set refids [concat [array names idtags] \
 		    [array names idheads] [array names idotherrefs]]
@@ -5216,12 +5250,16 @@ proc rereadrefs {} {
 	    set ref($id) [listrefs $id]
 	}
     }
+    set oldmainhead $mainhead
     readrefs
+    changedrefs
     set refids [lsort -unique [concat $refids [array names idtags] \
 			[array names idheads] [array names idotherrefs]]]
     foreach id $refids {
 	set v [listrefs $id]
-	if {![info exists ref($id)] || $ref($id) != $v} {
+	if {![info exists ref($id)] || $ref($id) != $v ||
+	    ($id eq $oldmainhead && $id ne $mainhead) ||
+	    ($id eq $mainhead && $id ne $oldmainhead)} {
 	    redrawtags $id
 	}
     }
