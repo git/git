@@ -384,6 +384,23 @@ proc error_popup msg {
     show_error $w $w $msg
 }
 
+proc confirm_popup msg {
+    global confirm_ok
+    set confirm_ok 0
+    set w .confirm
+    toplevel $w
+    wm transient $w .
+    message $w.m -text $msg -justify center -aspect 400
+    pack $w.m -side top -fill x -padx 20 -pady 20
+    button $w.ok -text OK -command "set confirm_ok 1; destroy $w"
+    pack $w.ok -side left -fill x
+    button $w.cancel -text Cancel -command "destroy $w"
+    pack $w.cancel -side right -fill x
+    bind $w <Visibility> "grab $w; focus $w"
+    tkwait window $w
+    return $confirm_ok
+}
+
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist
     global textfont mainfont uifont
@@ -394,6 +411,7 @@ proc makewindow {} {
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors
+    global headctxmenu
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -712,6 +730,13 @@ proc makewindow {} {
     $rowctxmenu add command -label "Create tag" -command mktag
     $rowctxmenu add command -label "Write commit to file" -command writecommit
     $rowctxmenu add command -label "Create new branch" -command mkbranch
+
+    set headctxmenu .headctxmenu
+    menu $headctxmenu -tearoff 0
+    $headctxmenu add command -label "Check out this branch" \
+	-command cobranch
+    $headctxmenu add command -label "Remove this branch" \
+	-command rmbranch
 }
 
 # mouse-2 makes all windows scan vertically, but only the one
@@ -3237,6 +3262,8 @@ proc drawtags {id x xt y1} {
 		   -font $font -tags [list tag.$id text]]
 	if {$ntags >= 0} {
 	    $canv bind $t <1> [list showtag $tag 1]
+	} elseif {$nheads >= 0} {
+	    $canv bind $t <Button-3> [list headmenu %X %Y $id $tag]
 	}
     }
     return $xt
@@ -5074,6 +5101,73 @@ proc mkbrgo {top} {
     }
 }
 
+# context menu for a head
+proc headmenu {x y id head} {
+    global headmenuid headmenuhead headctxmenu
+
+    set headmenuid $id
+    set headmenuhead $head
+    tk_popup $headctxmenu $x $y
+}
+
+proc cobranch {} {
+    global headmenuid headmenuhead mainhead headids
+
+    # check the tree is clean first??
+    set oldmainhead $mainhead
+    nowbusy checkout
+    update
+    if {[catch {
+	exec git checkout $headmenuhead
+    } err]} {
+	notbusy checkout
+	error_popup $err
+    } else {
+	notbusy checkout
+	set maainhead $headmenuhead
+	if {[info exists headids($oldmainhead)]} {
+	    redrawtags $headids($oldmainhead)
+	}
+	redrawtags $headmenuid
+    }
+}
+
+proc rmbranch {} {
+    global desc_heads headmenuid headmenuhead mainhead
+    global headids idheads
+
+    set head $headmenuhead
+    set id $headmenuid
+    if {$head eq $mainhead} {
+	error_popup "Cannot delete the currently checked-out branch"
+	return
+    }
+    if {$desc_heads($id) eq $id} {
+	# the stuff on this branch isn't on any other branch
+	if {![confirm_popup "The commits on branch $head aren't on any other\
+			branch.\nReally delete branch $head?"]} return
+    }
+    nowbusy rmbranch
+    update
+    if {[catch {exec git branch -D $head} err]} {
+	notbusy rmbranch
+	error_popup $err
+	return
+    }
+    unset headids($head)
+    if {$idheads($id) eq $head} {
+	unset idheads($id)
+	removedhead $id
+    } else {
+	set i [lsearch -exact $idheads($id) $head]
+	if {$i >= 0} {
+	    set idheads($id) [lreplace $idheads($id) $i $i]
+	}
+    }
+    redrawtags $id
+    notbusy rmbranch
+}
+
 # Stuff for finding nearby tags
 proc getallcommits {} {
     global allcstart allcommits allcfd allids
@@ -5293,6 +5387,30 @@ proc addedhead {hid} {
 		$desc_heads($p) ne $oldheads} break
 	    set do $p
 	    set desc_heads($do) $heads
+	}
+	set todo [concat $todo $p]
+    }
+}
+
+# update the desc_heads array for a head just removed
+proc removedhead {hid} {
+    global desc_heads allparents
+
+    set todo [list $hid]
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists desc_heads($do)]} continue
+	set i [lsearch -exact $desc_heads($do) $hid]
+	if {$i < 0} continue
+	set oldheads $desc_heads($do)
+	set heads [lreplace $desc_heads($do) $i $i]
+	while {1} {
+	    set desc_heads($do) $heads
+	    set p $allparents($do)
+	    if {[llength $p] != 1 || ![info exists desc_heads($p)] ||
+		$desc_heads($p) ne $oldheads} break
+	    set do $p
 	}
 	set todo [concat $todo $p]
     }
