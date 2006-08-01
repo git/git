@@ -116,6 +116,13 @@ template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
+# default configuration for gitweb
+GITWEB_SITENAME =
+GITWEB_PROJECTROOT = /pub/git
+GITWEB_LIST =
+GITWEB_HOMETEXT = indextext.html
+GITWEB_CSS = gitweb.css
+
 export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
 
 CC = gcc
@@ -514,7 +521,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk
+all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
 
 all:
 	$(MAKE) -C templates
@@ -572,6 +579,20 @@ git-status: git-commit
 	cp $< $@+
 	mv $@+ $@
 
+gitweb/gitweb.cgi: gitweb/gitweb.perl
+	rm -f $@ $@+
+	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
+	    -e 's|@@GIT_VERSION@@|$(GIT_VERSION)|g' \
+	    -e 's|@@GIT_BINDIR@@|$(bindir)|g' \
+	    -e 's|@@GITWEB_SITENAME@@|$(GITWEB_SITENAME)|g' \
+	    -e 's|@@GITWEB_PROJECTROOT@@|$(GITWEB_PROJECTROOT)|g' \
+	    -e 's|@@GITWEB_LIST@@|$(GITWEB_LIST)|g' \
+	    -e 's|@@GITWEB_HOMETEXT@@|$(GITWEB_HOMETEXT)|g' \
+	    -e 's|@@GITWEB_CSS@@|$(GITWEB_CSS)|g' \
+	    $< >$@+
+	chmod +x $@+
+	mv $@+ $@
+
 git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
@@ -582,7 +603,7 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	    -e '/@@GITWEB_CGI@@/d' \
 	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
 	    -e '/@@GITWEB_CSS@@/d' \
-	    $@.sh | sed "s|/usr/bin/git|$(bindir)/git|" > $@+
+	    $@.sh > $@+
 	chmod +x $@+
 	mv $@+ $@
 

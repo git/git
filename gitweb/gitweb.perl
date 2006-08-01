@@ -18,18 +18,18 @@ use File::Find qw();
 binmode STDOUT, ':utf8';
 
 our $cgi = new CGI;
-our $version = "267";
+our $version = "@@GIT_VERSION@@";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
 our $rss_link = "";
 
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
-our $GIT = "/usr/bin/git";
+our $GIT = "@@GIT_BINDIR@@/git";
 
 # absolute fs-path which will be prepended to the project path
 #our $projectroot = "/pub/scm";
-our $projectroot = "/home/kay/public_html/pub/scm";
+our $projectroot = "@@GITWEB_PROJECTROOT@@";
 
 # version of the core git binary
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
@@ -45,17 +45,16 @@ our $home_link = $my_uri;
 
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
-our $site_name = $ENV{'SERVER_NAME'} || "Untitled";
+our $site_name = "@@GITWEB_SITENAME@@" || $ENV{'SERVER_NAME'} || "Untitled";
 
 # html text to include at home page
-our $home_text = "indextext.html";
+our $home_text = "@@GITWEB_HOMETEXT@@";
 
 # URI of default stylesheet
-our $stylesheet = "gitweb.css";
+our $stylesheet = "@@GITWEB_CSS@@";
 
 # source of projects list
-#our $projects_list = $projectroot;
-our $projects_list = "index/index.aux";
+our $projects_list = "@@GITWEB_LIST@@" || "$projectroot";
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
