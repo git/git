@@ -18,18 +18,18 @@ use File::Find qw();
 binmode STDOUT, ':utf8';
 
 our $cgi = new CGI;
-our $version = "267";
+our $version = "@@GIT_VERSION@@";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
 our $rss_link = "";
 
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
-our $GIT = "/usr/bin/git";
+our $GIT = "@@GIT_BINDIR@@/git";
 
 # absolute fs-path which will be prepended to the project path
 #our $projectroot = "/pub/scm";
-our $projectroot = "/home/kay/public_html/pub/scm";
+our $projectroot = "@@GITWEB_PROJECTROOT@@";
 
 # version of the core git binary
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
@@ -45,17 +45,18 @@ our $home_link = $my_uri;
 
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
-our $site_name = $ENV{'SERVER_NAME'} || "Untitled";
+our $site_name = "@@GITWEB_SITENAME@@" || $ENV{'SERVER_NAME'} || "Untitled";
 
 # html text to include at home page
-our $home_text = "indextext.html";
+our $home_text = "@@GITWEB_HOMETEXT@@";
 
 # URI of default stylesheet
-our $stylesheet = "gitweb.css";
+our $stylesheet = "@@GITWEB_CSS@@";
+# URI of GIT logo
+our $logo = "@@GITWEB_LOGO@@";
 
 # source of projects list
-#our $projects_list = $projectroot;
-our $projects_list = "index/index.aux";
+our $projects_list = "@@GITWEB_LIST@@" || "$projectroot";
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
@@ -72,10 +73,7 @@ if (defined $action) {
 		undef $action;
 		die_error(undef, "Invalid action parameter.");
 	}
-	if ($action eq "git-logo.png") {
-		git_logo();
-		exit;
-	} elsif ($action eq "opml") {
+	if ($action eq "opml") {
 		git_opml();
 		exit;
 	}
@@ -874,7 +872,7 @@ $rss_link
 EOF
 	print "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
-	      "<img src=\"$my_uri?" . esc_param("a=git-logo.png") . "\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
+	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
 	print $cgi->a({-href => esc_param($home_link)}, "projects") . " / ";
 	if (defined $project) {
@@ -1267,26 +1265,6 @@ sub git_diff_print {
 ## ======================================================================
 ## ======================================================================
 ## actions
-
-# git-logo (cached in browser for one day)
-sub git_logo {
-	binmode STDOUT, ':raw';
-	print $cgi->header(-type => 'image/png', -expires => '+1d');
-	# cat git-logo.png | hexdump -e '16/1 " %02x"  "\n"' | sed 's/ /\\x/g'
-	print	"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" .
-		"\x00\x00\x00\x48\x00\x00\x00\x1b\x04\x03\x00\x00\x00\x2d\xd9\xd4" .
-		"\x2d\x00\x00\x00\x18\x50\x4c\x54\x45\xff\xff\xff\x60\x60\x5d\xb0" .
-		"\xaf\xaa\x00\x80\x00\xce\xcd\xc7\xc0\x00\x00\xe8\xe8\xe6\xf7\xf7" .
-		"\xf6\x95\x0c\xa7\x47\x00\x00\x00\x73\x49\x44\x41\x54\x28\xcf\x63" .
-		"\x48\x67\x20\x04\x4a\x5c\x18\x0a\x08\x2a\x62\x53\x61\x20\x02\x08" .
-		"\x0d\x69\x45\xac\xa1\xa1\x01\x30\x0c\x93\x60\x36\x26\x52\x91\xb1" .
-		"\x01\x11\xd6\xe1\x55\x64\x6c\x6c\xcc\x6c\x6c\x0c\xa2\x0c\x70\x2a" .
-		"\x62\x06\x2a\xc1\x62\x1d\xb3\x01\x02\x53\xa4\x08\xe8\x00\x03\x18" .
-		"\x26\x56\x11\xd4\xe1\x20\x97\x1b\xe0\xb4\x0e\x35\x24\x71\x29\x82" .
-		"\x99\x30\xb8\x93\x0a\x11\xb9\x45\x88\xc1\x8d\xa0\xa2\x44\x21\x06" .
-		"\x27\x41\x82\x40\x85\xc1\x45\x89\x20\x70\x01\x00\xa4\x3d\x21\xc5" .
-		"\x12\x1c\x9a\xfe\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82";
-}
 
 sub git_project_list {
 	my $order = $cgi->param('o');
