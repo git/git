@@ -1433,7 +1433,7 @@ sub git_summary {
 	my $headlist = git_read_refs("refs/heads");
 	if (defined @$headlist) {
 		git_header_div('heads');
-		git_heads_body($taglist, $head, 0, 15,
+		git_heads_body($headlist, $head, 0, 15,
 		               $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=heads")}, "..."));
 	}
 
