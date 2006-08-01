@@ -175,7 +175,7 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_use_color_default = 1; /* bool */
 		else if (!strcasecmp(value, "auto")) {
 			diff_use_color_default = 0;
-			if (isatty(1) || pager_in_use) {
+			if (isatty(1) || (pager_in_use && pager_use_color)) {
 				char *term = getenv("TERM");
 				if (term && strcmp(term, "dumb"))
 					diff_use_color_default = 1;

@@ -34,7 +34,6 @@ static int cmd_log_walk(struct rev_info *rev)
 	struct commit *commit;
 
 	prepare_revision_walk(rev);
-	setup_pager();
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
 		free(commit->buffer);

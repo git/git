@@ -116,6 +116,10 @@ apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
+pager.color::
+	A boolean to enable/disable colored output when the pager is in
+	use (default is true).
+
 diff.color::
 	When true (or `always`), always use colors in patch.
 	When false (or `never`), never.  When set to `auto`, use
