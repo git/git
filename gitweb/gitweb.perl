@@ -31,14 +31,8 @@ our $GIT = "@@GIT_BINDIR@@/git";
 #our $projectroot = "/pub/scm";
 our $projectroot = "@@GITWEB_PROJECTROOT@@";
 
-# version of the core git binary
-our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
-
 # location for temporary files needed for diffs
 our $git_temp = "/tmp/gitweb";
-if (! -d $git_temp) {
-	mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
-}
 
 # target of the home link on top of all pages
 our $home_link = $my_uri;
@@ -56,7 +50,7 @@ our $stylesheet = "@@GITWEB_CSS@@";
 our $logo = "@@GITWEB_LOGO@@";
 
 # source of projects list
-our $projects_list = "@@GITWEB_LIST@@" || "$projectroot";
+our $projects_list = "@@GITWEB_LIST@@";
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
@@ -65,6 +59,17 @@ our $default_text_plain_charset  = undef;
 # file to use for guessing MIME types before trying /etc/mime.types
 # (relative to the current git repository)
 our $mimetypes_file = undef;
+
+our $GITWEB_CONFIG = "@@GITWEB_CONFIG@@";
+require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
+
+# version of the core git binary
+our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
+
+$projects_list ||= $projectroot;
+if (! -d $git_temp) {
+	mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+}
 
 # input validation and dispatch
 our $action = $cgi->param('a');
