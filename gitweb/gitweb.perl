@@ -18,18 +18,18 @@ use File::Find qw();
 binmode STDOUT, ':utf8';
 
 our $cgi = new CGI;
-our $version = "@@GIT_VERSION@@";
+our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
 our $rss_link = "";
 
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
-our $GIT = "@@GIT_BINDIR@@/git";
+our $GIT = "++GIT_BINDIR++/git";
 
 # absolute fs-path which will be prepended to the project path
 #our $projectroot = "/pub/scm";
-our $projectroot = "@@GITWEB_PROJECTROOT@@";
+our $projectroot = "++GITWEB_PROJECTROOT++";
 
 # location for temporary files needed for diffs
 our $git_temp = "/tmp/gitweb";
@@ -39,18 +39,18 @@ our $home_link = $my_uri;
 
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
-our $site_name = "@@GITWEB_SITENAME@@" || $ENV{'SERVER_NAME'} || "Untitled";
+our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
 
 # html text to include at home page
-our $home_text = "@@GITWEB_HOMETEXT@@";
+our $home_text = "++GITWEB_HOMETEXT++";
 
 # URI of default stylesheet
-our $stylesheet = "@@GITWEB_CSS@@";
+our $stylesheet = "++GITWEB_CSS++";
 # URI of GIT logo
-our $logo = "@@GITWEB_LOGO@@";
+our $logo = "++GITWEB_LOGO++";
 
 # source of projects list
-our $projects_list = "@@GITWEB_LIST@@";
+our $projects_list = "++GITWEB_LIST++";
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
@@ -60,7 +60,7 @@ our $default_text_plain_charset  = undef;
 # (relative to the current git repository)
 our $mimetypes_file = undef;
 
-our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "@@GITWEB_CONFIG@@";
+our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
 require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 
 # version of the core git binary
