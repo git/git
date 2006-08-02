@@ -8,7 +8,7 @@
 
 #define MAX_URI (16)
 
-static const char push_usage[] = "git push [--all] [--tags] [--force] <repository> [<refspec>...]";
+static const char push_usage[] = "git push [--all] [--tags] [-f | --force] <repository> [<refspec>...]";
 
 static int all = 0, tags = 0, force = 0, thin = 1;
 static const char *execute = NULL;
@@ -291,7 +291,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			tags = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--force")) {
+		if (!strcmp(arg, "--force") || !strcmp(arg, "-f")) {
 			force = 1;
 			continue;
 		}
