@@ -60,7 +60,7 @@ our $default_text_plain_charset  = undef;
 # (relative to the current git repository)
 our $mimetypes_file = undef;
 
-our $GITWEB_CONFIG = "@@GITWEB_CONFIG@@";
+our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "@@GITWEB_CONFIG@@";
 require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 
 # version of the core git binary
