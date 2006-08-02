@@ -263,6 +263,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, NEEDS_PREFIX },
 		{ "prune", cmd_prune, NEEDS_PREFIX },
 		{ "mv", cmd_mv, NEEDS_PREFIX },
+		{ "prune-packed", cmd_prune_packed, NEEDS_PREFIX },
 	};
 	int i;
 

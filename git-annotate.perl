@@ -309,7 +309,6 @@ sub _git_diff_parse {
 
 			$gotheader = 1;
 
-			printf("Copying from %d to %d\n", $ri, $remstart);
 			foreach my $parent (@$parents) {
 				for (my $i = $ri; $i < $remstart; $i++) {
 					$plines{$parent}[$pi{$parent}++] = $slines->[$i];
