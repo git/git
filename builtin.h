@@ -20,6 +20,7 @@ extern int cmd_format_patch(int argc, const char **argv, const char *prefix);
 extern int cmd_count_objects(int argc, const char **argv, const char *prefix);
 
 extern int cmd_prune(int argc, const char **argv, const char *prefix);
+extern int cmd_prune_packed(int argc, const char **argv, const char *prefix);
 
 extern int cmd_push(int argc, const char **argv, const char *prefix);
 extern int cmd_grep(int argc, const char **argv, const char *prefix);
