@@ -19,6 +19,11 @@ all:
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
 #
+# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
+# do not support the 'size specifiers' introduced by C99, namely ll, hh,
+# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
+# some c compilers supported these specifiers prior to C99 as an extension.
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_STRLCPY if you don't have strlcpy.
@@ -455,6 +460,9 @@ endif
 ifdef NO_D_INO_IN_DIRENT
 	BASIC_CFLAGS += -DNO_D_INO_IN_DIRENT
 endif
+ifdef NO_C99_FORMAT
+	BASIC_CFLAGS += -DNO_C99_FORMAT
+endif
 ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
 endif
@@ -786,7 +794,7 @@ install: all
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(MAKE) -C templates install
+	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'

@@ -6,11 +6,9 @@ prefix ?= $(HOME)
 template_dir ?= $(prefix)/share/git-core/templates/
 # DESTDIR=
 
-# Shell quote;
-# Result of this needs to be placed inside ''
-shq = $(subst ','\'',$(1))
-# This has surrounding ''
-shellquote = '$(call shq,$(1))'
+# Shell quote (do not use $(call) to accomodate ancient setups);
+DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
+template_dir_SQ = $(subst ','\'',$(template_dir))
 
 all: boilerplates.made custom
 
@@ -43,6 +41,6 @@ clean:
 	rm -rf blt boilerplates.made
 
 install: all
-	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(template_dir))
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(template_dir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd $(call shellquote,$(DESTDIR)$(template_dir)) && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && $(TAR) xf -)
