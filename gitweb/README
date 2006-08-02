@@ -23,6 +23,11 @@ You can specify the following configuration variables when building GIT:
    Points to the location where you put gitweb.css on your web server.
  * GITWEB_LOGO
    Points to the location where you put git-logo.png on your web server.
+ * GITWEB_CONFIG
+   This file will be loaded using 'require'.  If the environment
+   $GITWEB_CONFIG is set when gitweb.cgi is executed the file in the
+   environment variable will be loaded instead of the file
+   specified when gitweb.cgi was created.
 
 Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>

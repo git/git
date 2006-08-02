@@ -127,6 +127,7 @@ GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
 # default configuration for gitweb
+GITWEB_CONFIG = gitweb_config.perl
 GITWEB_SITENAME =
 GITWEB_PROJECTROOT = /pub/git
 GITWEB_LIST =
@@ -627,14 +628,15 @@ git-status: git-commit
 gitweb/gitweb.cgi: gitweb/gitweb.perl
 	rm -f $@ $@+
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
-	    -e 's|@@GIT_VERSION@@|$(GIT_VERSION)|g' \
-	    -e 's|@@GIT_BINDIR@@|$(bindir)|g' \
-	    -e 's|@@GITWEB_SITENAME@@|$(GITWEB_SITENAME)|g' \
-	    -e 's|@@GITWEB_PROJECTROOT@@|$(GITWEB_PROJECTROOT)|g' \
-	    -e 's|@@GITWEB_LIST@@|$(GITWEB_LIST)|g' \
-	    -e 's|@@GITWEB_HOMETEXT@@|$(GITWEB_HOMETEXT)|g' \
-	    -e 's|@@GITWEB_CSS@@|$(GITWEB_CSS)|g' \
-	    -e 's|@@GITWEB_LOGO@@|$(GITWEB_LOGO)|g' \
+	    -e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
+	    -e 's|++GIT_BINDIR++|$(bindir)|g' \
+	    -e 's|++GITWEB_CONFIG++|$(GITWEB_CONFIG)|g' \
+	    -e 's|++GITWEB_SITENAME++|$(GITWEB_SITENAME)|g' \
+	    -e 's|++GITWEB_PROJECTROOT++|$(GITWEB_PROJECTROOT)|g' \
+	    -e 's|++GITWEB_LIST++|$(GITWEB_LIST)|g' \
+	    -e 's|++GITWEB_HOMETEXT++|$(GITWEB_HOMETEXT)|g' \
+	    -e 's|++GITWEB_CSS++|$(GITWEB_CSS)|g' \
+	    -e 's|++GITWEB_LOGO++|$(GITWEB_LOGO)|g' \
 	    $< >$@+
 	chmod +x $@+
 	mv $@+ $@
