@@ -5124,7 +5124,7 @@ proc cobranch {} {
 	error_popup $err
     } else {
 	notbusy checkout
-	set maainhead $headmenuhead
+	set mainhead $headmenuhead
 	if {[info exists headids($oldmainhead)]} {
 	    redrawtags $headids($oldmainhead)
 	}
@@ -5142,7 +5142,7 @@ proc rmbranch {} {
 	error_popup "Cannot delete the currently checked-out branch"
 	return
     }
-    if {$desc_heads($id) eq $id} {
+    if {$desc_heads($id) eq $id && $idheads($id) eq [list $head]} {
 	# the stuff on this branch isn't on any other branch
 	if {![confirm_popup "The commits on branch $head aren't on any other\
 			branch.\nReally delete branch $head?"]} return
