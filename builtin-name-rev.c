@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "builtin.h"
 #include "cache.h"
 #include "commit.h"
 #include "tag.h"
@@ -126,12 +127,11 @@ static const char* get_rev_name(struct object *o)
 	return buffer;
 }
 
-int main(int argc, char **argv)
+int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
 	int as_is = 0, all = 0, transform_stdin = 0;
 
-	setup_git_directory();
 	git_config(git_default_config);
 
 	if (argc < 2)
