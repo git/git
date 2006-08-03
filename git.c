@@ -267,6 +267,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "repo-config", cmd_repo_config },
 		{ "name-rev", cmd_name_rev, NEEDS_PREFIX },
 		{ "pack-objects", cmd_pack_objects, NEEDS_PREFIX },
+		{ "unpack-objects", cmd_unpack_objects, NEEDS_PREFIX },
 	};
 	int i;
 

@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
@@ -112,7 +113,7 @@ static void write_object(void *buf, unsigned long size, const char *type)
 }
 
 static int resolve_delta(const char *type,
-	void *base, unsigned long base_size, 
+	void *base, unsigned long base_size,
 	void *delta, unsigned long delta_size)
 {
 	void *result;
@@ -260,12 +261,10 @@ static void unpack_all(void)
 		die("unresolved deltas left after unpacking");
 }
 
-int main(int argc, char **argv)
+int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	unsigned char sha1[20];
-
-	setup_git_directory();
 
 	quiet = !isatty(2);
 
