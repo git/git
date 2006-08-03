@@ -133,7 +133,7 @@ static int builtin_diff_blobs(struct rev_info *revs,
 	stuff_change(&revs->diffopt,
 		     mode, mode,
 		     blob[0].sha1, blob[1].sha1,
-		     blob[0].name, blob[0].name);
+		     blob[0].name, blob[1].name);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
