@@ -397,6 +397,9 @@ gitlink:git-quiltimport[1]::
 gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.
 
+gitlink:git-svn[1]::
+	Bidirectional operation between a single Subversion branch and git.
+
 gitlink:git-svnimport[1]::
 	Import a SVN repository into git.
 
@@ -441,6 +444,9 @@ gitlink:git-get-tar-commit-id[1]::
 
 gitlink:git-imap-send[1]::
 	Dump a mailbox from stdin into an imap folder.
+
+gitlink:git-instaweb[1]::
+	Instantly browse your working repository in gitweb.
 
 gitlink:git-mailinfo[1]::
 	Extracts patch and authorship information from a single
