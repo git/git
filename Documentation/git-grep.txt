@@ -16,7 +16,7 @@ SYNOPSIS
 	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
 	   [-c | --count]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
-	   [-f <file>] [-e] <pattern>
+	   [-f <file>] [-e] <pattern> [--and|--or|--not|(|)|-e <pattern>...]
 	   [<tree>...]
 	   [--] [<path>...]
 
@@ -74,15 +74,29 @@ OPTIONS
 -e::
 	The next parameter is the pattern. This option has to be
 	used for patterns starting with - and should be used in
-	scripts passing user input to grep.
+	scripts passing user input to grep.  Multiple patterns are
+	combined by 'or'.
+
+--and | --or | --not | ( | )::
+	Specify how multiple patterns are combined using boolean
+	expressions.  `--or` is the default operator.  `--and` has
+	higher precedence than `--or`.  `-e` has to be used for all
+	patterns.
 
 `<tree>...`::
 	Search blobs in the trees for specified patterns.
 
-`--`::
+\--::
 	Signals the end of options; the rest of the parameters
 	are <path> limiters.
 
+
+Example
+-------
+
+git grep -e \'#define\' --and \( -e MAX_PATH -e PATH_MAX \)::
+	Looks for a line that has `#define` and either `MAX_PATH` or
+	`PATH_MAX`.
 
 Author
 ------

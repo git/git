@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include <regex.h>
 
@@ -128,7 +129,7 @@ free_strings:
 	return ret;
 }
 
-int main(int argc, const char **argv)
+int cmd_repo_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
 	setup_git_directory_gently(&nongit);

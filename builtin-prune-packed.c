@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 
 static const char prune_packed_usage[] =
@@ -54,7 +55,7 @@ static void prune_packed_objects(void)
 	}
 }
 
-int cmd_prune_packed(int argc, char **argv, const char *prefix)
+int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
 	int i;
 

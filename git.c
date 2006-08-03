@@ -264,6 +264,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "prune", cmd_prune, NEEDS_PREFIX },
 		{ "mv", cmd_mv, NEEDS_PREFIX },
 		{ "prune-packed", cmd_prune_packed, NEEDS_PREFIX },
+		{ "repo-config", cmd_repo_config },
 	};
 	int i;
 
