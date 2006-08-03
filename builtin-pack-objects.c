@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "object.h"
 #include "blob.h"
@@ -1226,7 +1227,7 @@ static int git_pack_config(const char *k, const char *v)
 	return git_default_config(k, v);
 }
 
-int main(int argc, char **argv)
+int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	SHA_CTX ctx;
 	char line[40 + 1 + PATH_MAX + 2];
@@ -1235,7 +1236,6 @@ int main(int argc, char **argv)
 	int num_preferred_base = 0;
 	int i;
 
-	setup_git_directory();
 	git_config(git_pack_config);
 
 	progress = isatty(2);
