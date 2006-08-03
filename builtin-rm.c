@@ -80,7 +80,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			force = 1;
 			continue;
 		}
-		die(builtin_rm_usage);
+		usage(builtin_rm_usage);
 	}
 	if (argc <= i)
 		usage(builtin_rm_usage);

@@ -267,7 +267,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		else if (!strncmp(arg, "--shared=", 9))
 			shared_repository = git_config_perm("arg", arg+9);
 		else
-			die(init_db_usage);
+			usage(init_db_usage);
 	}
 
 	/*

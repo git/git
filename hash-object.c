@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 		if (!no_more_flags && argv[i][0] == '-') {
 			if (!strcmp(argv[i], "-t")) {
 				if (argc <= ++i)
-					die(hash_object_usage);
+					usage(hash_object_usage);
 				type = argv[i];
 			}
 			else if (!strcmp(argv[i], "-w")) {
@@ -66,8 +66,8 @@ int main(int argc, char **argv)
 				hash_stdin(type, write_object);
 			}
 			else
-				die(hash_object_usage);
-		} 
+				usage(hash_object_usage);
+		}
 		else {
 			const char *arg = argv[i];
 			if (0 <= prefix_length)
