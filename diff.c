@@ -1799,13 +1799,9 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 				 struct diff_filespec *one,
 				 struct diff_filespec *two)
 {
-	struct diff_filepair *dp = xmalloc(sizeof(*dp));
+	struct diff_filepair *dp = xcalloc(1, sizeof(*dp));
 	dp->one = one;
 	dp->two = two;
-	dp->score = 0;
-	dp->status = 0;
-	dp->source_stays = 0;
-	dp->broken_pair = 0;
 	if (queue)
 		diff_q(queue, dp);
 	return dp;

@@ -205,6 +205,7 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 	fill_filespec(two, dst->sha1, dst->mode);
 
 	dp = diff_queue(NULL, one, two);
+	dp->renamed_pair = 1;
 	if (!strcmp(src->path, dst->path))
 		dp->score = rename_src[src_index].score;
 	else

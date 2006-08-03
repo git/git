@@ -88,7 +88,7 @@ static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--aggressive
 
 static struct lock_file lock_file;
 
-int cmd_read_tree(int argc, const char **argv, const char *prefix)
+int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];
