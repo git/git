@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 	unsigned char result_sha1[20];
 
 	if (argc != 1)
-		usage("cat <signaturefile> | git-mktag");
+		usage("git-mktag < signaturefile");
 
 	setup_git_directory();
 
