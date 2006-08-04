@@ -22,6 +22,7 @@ SYNOPSIS
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
+	     [ \--merge ]
 	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION
@@ -122,6 +123,10 @@ OPTIONS
 	chronological order.  This option makes them appear in
 	topological order (i.e. descendant commits are shown
 	before their parents).
+
+--merge::
+	After a failed merge, show refs that touch files having a
+	conflict and don't exist on all heads to merge.
 
 Author
 ------
