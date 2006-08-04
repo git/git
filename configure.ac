@@ -203,6 +203,14 @@ AC_CHECK_MEMBER(struct dirent.d_type,[],
 AC_CHECK_TYPE(struct sockaddr_storage,[],
 [GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=YesPlease)],
 [#include <netinet/in.h>])
+# Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
+AC_CHECK_TYPE([struct addrinfo],[
+AC_CHECK_FUNC([getaddrinfo],[],
+[GIT_CONF_APPEND_LINE(NO_IPV6=YesPlease)])],[],[
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+])
 #
 # Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
@@ -243,8 +251,6 @@ AC_CHECK_FUNC(setenv,[],
 [GIT_CONF_APPEND_LINE(NO_SETENV=YesPlease)])
 #
 # Define NO_MMAP if you want to avoid mmap.
-#
-# Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 
