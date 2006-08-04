@@ -269,6 +269,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "pack-objects", cmd_pack_objects, NEEDS_PREFIX },
 		{ "unpack-objects", cmd_unpack_objects, NEEDS_PREFIX },
 		{ "symbolic-ref", cmd_symbolic_ref, NEEDS_PREFIX },
+		{ "checkout-index", cmd_checkout_index, NEEDS_PREFIX },
 	};
 	int i;
 

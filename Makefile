@@ -173,7 +173,6 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-checkout-index$X \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-merge-base$X \
@@ -187,7 +186,9 @@ PROGRAMS = \
 	git-pack-redundant$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
-BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
+BUILT_INS = \
+	git-checkout-index$X \
+	git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
 	git-grep$X git-add$X git-rm$X git-rev-list$X git-stripspace$X \
 	git-check-ref-format$X git-rev-parse$X git-mailinfo$X \
@@ -245,6 +246,7 @@ LIB_OBJS = \
 	alloc.o merge-file.o path-list.o $(DIFF_OBJS)
 
 BUILTIN_OBJS = \
+	builtin-checkout-index.o \
 	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
 	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
 	builtin-rm.o builtin-init-db.o builtin-rev-parse.o \
