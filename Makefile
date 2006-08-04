@@ -187,19 +187,9 @@ PROGRAMS = \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X
 
 BUILT_INS = \
-	git-checkout-index$X \
-	git-log$X git-whatchanged$X git-show$X git-update-ref$X \
-	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
-	git-grep$X git-add$X git-rm$X git-rev-list$X git-stripspace$X \
-	git-check-ref-format$X git-rev-parse$X git-mailinfo$X \
-	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
-	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
-	git-read-tree$X git-commit-tree$X git-write-tree$X \
-	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
-	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X \
-	git-fmt-merge-msg$X git-prune$X git-mv$X git-prune-packed$X \
-	git-repo-config$X git-name-rev$X git-pack-objects$X \
-	git-unpack-objects$X git-symbolic-ref$X
+	git-format-patch$X git-show$X git-whatchanged$X \
+	git-get-tar-commit-id$X \
+	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -228,7 +218,7 @@ LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
-	tree-walk.h log-tree.h dir.h path-list.h
+	tree-walk.h log-tree.h dir.h path-list.h builtin.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -243,23 +233,49 @@ LIB_OBJS = \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
-	alloc.o merge-file.o path-list.o $(DIFF_OBJS)
+	alloc.o merge-file.o path-list.o help.o $(DIFF_OBJS)
 
 BUILTIN_OBJS = \
+	builtin-add.o \
+	builtin-apply.o \
+	builtin-cat-file.o \
 	builtin-checkout-index.o \
-	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
-	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
-	builtin-rm.o builtin-init-db.o builtin-rev-parse.o \
-	builtin-tar-tree.o builtin-upload-tar.o builtin-update-index.o \
-	builtin-ls-files.o builtin-ls-tree.o builtin-write-tree.o \
-	builtin-read-tree.o builtin-commit-tree.o builtin-mailinfo.o \
-	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
-	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
-	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
-	builtin-update-ref.o builtin-fmt-merge-msg.o builtin-prune.o \
-	builtin-mv.o builtin-prune-packed.o builtin-repo-config.o \
-	builtin-name-rev.o builtin-pack-objects.o builtin-unpack-objects.o \
-	builtin-symbolic-ref.o
+	builtin-check-ref-format.o \
+	builtin-commit-tree.o \
+	builtin-count-objects.o \
+	builtin-diff.o \
+	builtin-diff-files.o \
+	builtin-diff-index.o \
+	builtin-diff-stages.o \
+	builtin-diff-tree.o \
+	builtin-fmt-merge-msg.o \
+	builtin-grep.o \
+	builtin-init-db.o \
+	builtin-log.o \
+	builtin-ls-files.o \
+	builtin-ls-tree.o \
+	builtin-mailinfo.o \
+	builtin-mailsplit.o \
+	builtin-mv.o \
+	builtin-name-rev.o \
+	builtin-pack-objects.o \
+	builtin-prune.o \
+	builtin-prune-packed.o \
+	builtin-push.o \
+	builtin-read-tree.o \
+	builtin-repo-config.o \
+	builtin-rev-list.o \
+	builtin-rev-parse.o \
+	builtin-rm.o \
+	builtin-show-branch.o \
+	builtin-stripspace.o \
+	builtin-symbolic-ref.o \
+	builtin-tar-tree.o \
+	builtin-unpack-objects.o \
+	builtin-update-index.o \
+	builtin-update-ref.o \
+	builtin-upload-tar.o \
+	builtin-write-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -540,7 +556,7 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
-builtin-help.o: common-cmds.h
+help.o: common-cmds.h
 
 $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
