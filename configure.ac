@@ -189,6 +189,27 @@ AC_CHECK_MEMBER(struct dirent.d_type,[],
 AC_CHECK_TYPE(struct sockaddr_storage,[],
 [GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=YesPlease)],
 [#include <netinet/in.h>])
+#
+# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
+# do not support the 'size specifiers' introduced by C99, namely ll, hh,
+# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
+# some C compilers supported these specifiers prior to C99 as an extension.
+AC_CACHE_CHECK(whether IO functions support %ll %hh %j %z %t size specifiers,
+ ac_cv_c_c99_format,
+[# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+		[[char buf[64];
+		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
+		  exit(1);
+		else if (strcmp(buf, "12345"))
+		  exit(2);]])],
+	[ac_cv_c_c99_format=yes],
+	[ac_cv_c_c99_format=no])
+])
+if test $ac_cv_c_c99_format = no; then
+	GIT_CONF_APPEND_LINE(NO_C99_FORMAT=YesPlease)
+fi
 
 
 ## Checks for library functions.
