@@ -314,6 +314,7 @@ static int generate_tar(int argc, const char **argv, const char *prefix)
 	struct commit *commit;
 	struct tree_desc tree;
 	struct strbuf current_path;
+	void *buffer;
 
 	current_path.buf = xmalloc(PATH_MAX);
 	current_path.alloc = PATH_MAX;
@@ -341,8 +342,8 @@ static int generate_tar(int argc, const char **argv, const char *prefix)
 	} else
 		archive_time = time(NULL);
 
-	tree.buf = read_object_with_reference(sha1, tree_type, &tree.size,
-	                                      tree_sha1);
+	tree.buf = buffer = read_object_with_reference(sha1, tree_type,
+	                                               &tree.size, tree_sha1);
 	if (!tree.buf)
 		die("not a reference to a tag, commit or tree object: %s",
 		    sha1_to_hex(sha1));
@@ -351,6 +352,7 @@ static int generate_tar(int argc, const char **argv, const char *prefix)
 		write_entry(tree_sha1, &current_path, 040777, NULL, 0);
 	traverse_tree(&tree, &current_path);
 	write_trailer();
+	free(buffer);
 	free(current_path.buf);
 	return 0;
 }

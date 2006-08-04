@@ -117,7 +117,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			verbose = 1;
 			continue;
 		}
-		die(builtin_add_usage);
+		usage(builtin_add_usage);
 	}
 	pathspec = get_pathspec(prefix, argv + i);
 

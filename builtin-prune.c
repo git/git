@@ -10,7 +10,7 @@
 #include "builtin.h"
 #include "cache-tree.h"
 
-static const char prune_usage[] = "git prune [-n]";
+static const char prune_usage[] = "git-prune [-n]";
 static int show_only = 0;
 static struct rev_info revs;
 

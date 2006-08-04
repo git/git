@@ -80,7 +80,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			force = 1;
 			continue;
 		}
-		die(builtin_rm_usage);
+		usage(builtin_rm_usage);
 	}
 	if (argc <= i)
 		usage(builtin_rm_usage);
@@ -115,7 +115,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
-			die("git rm: unable to remove %s", path);
+			die("git-rm: unable to remove %s", path);
 		cache_tree_invalidate_path(active_cache_tree, path);
 	}
 
@@ -139,7 +139,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!removed)
-				die("git rm: %s: %s", path, strerror(errno));
+				die("git-rm: %s: %s", path, strerror(errno));
 		}
 	}
 

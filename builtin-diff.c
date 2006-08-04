@@ -23,7 +23,7 @@ struct blobinfo {
 };
 
 static const char builtin_diff_usage[] =
-"diff <options> <rev>{0,2} -- <path>*";
+"git-diff <options> <rev>{0,2} -- <path>*";
 
 static int builtin_diff_files(struct rev_info *revs,
 			      int argc, const char **argv)

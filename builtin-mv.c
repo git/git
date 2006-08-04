@@ -99,7 +99,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			ignore_errors = 1;
 			continue;
 		}
-		die(builtin_mv_usage);
+		usage(builtin_mv_usage);
 	}
 	count = argc - i - 1;
 	if (count < 1)
