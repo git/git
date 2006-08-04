@@ -172,8 +172,7 @@ AC_CHECK_LIB([expat], [XML_ParserCreate],[],
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 AC_CHECK_LIB([c], [iconv],[],
-[AC_CHECK_LIB([iconv],[iconv],
- [GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=YesPlease)],[])])
+[GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=YesPlease)])
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
