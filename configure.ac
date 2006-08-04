@@ -154,8 +154,8 @@ AC_MSG_NOTICE([CHECKS for libraries])
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
-AC_CHECK_LIB([ssl], [SHA1_Init],[],
-[AC_CHECK_LIB([crypto], [SHA1_INIT],
+AC_CHECK_LIB([crypto], [SHA1_Init],[],
+[AC_CHECK_LIB([ssl], [SHA1_Init],
  [GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=YesPlease)],
  [GIT_CONF_APPEND_LINE(NO_OPENSSL=YesPlease)])])
 #
