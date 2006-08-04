@@ -51,7 +51,7 @@ fi; \
 ## Site configuration
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 #
-# Define NO_SVN_TESTS if you want to skip time-consuming SVN interopability
+# Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
 #
@@ -81,7 +81,24 @@ fi; \
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
-# Define NO_PYTHON if you want to loose all benefits of the recursive merge.
+# Define SHELL_PATH to provide path to shell.
+GIT_ARG_SET_PATH(shell)
+#
+# Define PERL_PATH to provide path to Perl.
+GIT_ARG_SET_PATH(perl)
+#
+# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
+# Define PYTHON_PATH to provide path to Python.
+AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python])
+AS_HELP_STRING([--no-python], [don't use python scripts])],
+ [if test "$withval" = "no"; then \
+    NO_PYTHON=YesPlease; \
+  elif test "$withval" != "yes"; then \
+    PYTHON_PATH=$withval; \
+  fi; \
+ ])
+AC_SUBST(NO_PYTHON)
+AC_SUBST(PYTHON_PATH)
 #
 ## --enable-FEATURE[=ARG] and --disable-FEATURE
 # Define COLLISION_CHECK below if you believe that SHA1's
@@ -101,27 +118,13 @@ fi; \
 ## Checks for programs.
 AC_MSG_NOTICE([CHECKS for programs])
 #
-GIT_ARG_SET_PATH(shell)
-GIT_ARG_SET_PATH(perl)
-AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python])
-AS_HELP_STRING([--no-python], [don't use python scripts])],
- [if test "$withval" = "no"; then \
-    NO_PYTHON=YesPlease; \
-  elif test "$withval" != "yes"; then \
-    PYTHON_PATH=$withval; \
-  fi; \
- ])
-AC_SUBST(NO_PYTHON)
-AC_SUBST(PYTHON_PATH)
-
-
-#
-# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
-# Define PYTHON_PATH to provide path to Python.
 AC_PROG_CC
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
+#
+# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
+# Define PYTHON_PATH to provide path to Python.
 if test -z "$NO_PYTHON"; then
 	AC_PATH_PROGS(PYTHON_PATH, [python2.4 python2.3 python2 python])
 	if test -n "$PYTHON_PATH"; then
@@ -194,7 +197,7 @@ AC_CHECK_TYPE(struct sockaddr_storage,[],
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
 # j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
 # some C compilers supported these specifiers prior to C99 as an extension.
-AC_CACHE_CHECK(whether IO functions support %ll %hh %j %z %t size specifiers,
+AC_CACHE_CHECK(whether formatted IO functions support C99 size specifiers,
  ac_cv_c_c99_format,
 [# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
 AC_RUN_IFELSE(
