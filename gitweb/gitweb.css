@@ -171,6 +171,10 @@ tr.dark {
 	background-color: #f6f6f0;
 }
 
+tr.dark2 {
+	background-color: #f6f6f0;
+}
+
 tr.dark:hover {
 	background-color: #edece6;
 }

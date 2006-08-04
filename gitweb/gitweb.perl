@@ -1498,7 +1498,7 @@ sub git_blame2 {
 	git_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, $ftype);
-	my @rev_color = (qw(light dark));
+	my @rev_color = (qw(light2 dark2));
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
 	my $last_rev;
