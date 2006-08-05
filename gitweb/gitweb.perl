@@ -1464,7 +1464,7 @@ sub git_blame2 {
 	die_error(undef, "Permission denied.") if (!git_get_project_config_bool ('blame'));
 	die_error('404 Not Found', "File name not defined") if (!$file_name);
 	$hash_base ||= git_read_head($project);
-	die_error(undef, "Reading commit failed") unless ($hash_base);
+	die_error(undef, "Couldn't find base commit.") unless ($hash_base);
 	my %co = git_read_commit($hash_base)
 		or die_error(undef, "Reading commit failed");
 	if (!defined $hash) {
@@ -1473,7 +1473,7 @@ sub git_blame2 {
 	}
 	$ftype = git_get_type($hash);
 	if ($ftype !~ "blob") {
-		die_error("400 Bad Request", "object is not a blob");
+		die_error("400 Bad Request", "Object is not a blob");
 	}
 	open ($fd, "-|", $GIT, "blame", '-l', $file_name, $hash_base)
 		or die_error(undef, "Open git-blame failed.");
@@ -1520,9 +1520,9 @@ sub git_blame2 {
 sub git_blame {
 	my $fd;
 	die_error('403 Permission denied', "Permission denied.") if (!git_get_project_config_bool ('blame'));
-	die_error('404 Not Found', "What file will it be, master?") if (!$file_name);
+	die_error('404 Not Found', "File name not defined.") if (!$file_name);
 	$hash_base ||= git_read_head($project);
-	die_error(undef, "Reading commit failed.") unless ($hash_base);
+	die_error(undef, "Couldn't find base commit.") unless ($hash_base);
 	my %co = git_read_commit($hash_base)
 		or die_error(undef, "Reading commit failed.");
 	if (!defined $hash) {
@@ -2116,7 +2116,7 @@ sub git_commitdiff {
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed.");
 	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading diff-tree failed.");
+	close $fd or die_error(undef, "Reading git-diff-tree failed.");
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -2487,7 +2487,7 @@ sub git_rss {
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=150", git_read_head($project)
 		or die_error(undef, "Open git-rev-list failed.");
 	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading rev-list failed.");
+	close $fd or die_error(undef, "Reading git-rev-list failed.");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
 	      "<rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n";
