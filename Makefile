@@ -22,7 +22,7 @@ all:
 # Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
 # j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
-# some c compilers supported these specifiers prior to C99 as an extension.
+# some C compilers supported these specifiers prior to C99 as an extension.
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
