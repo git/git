@@ -810,8 +810,10 @@ static int process_renames(struct path_list *a_renames,
 		} else {
 			compare = strcmp(a_renames->items[i].path,
 					b_renames->items[j].path);
-			ren1 = a_renames->items[i++].util;
-			ren2 = b_renames->items[j++].util;
+			if (compare <= 0)
+				ren1 = a_renames->items[i++].util;
+			if (compare >= 0)
+				ren2 = b_renames->items[j++].util;
 		}
 
 		/* TODO: refactor, so that 1/2 are not needed */
