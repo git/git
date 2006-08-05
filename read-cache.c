@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "cache-tree.h"
+#include <time.h>
 
 /* Index extensions.
  *
@@ -923,7 +924,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		 * $ echo filfre >nitfol
 		 * $ git-update-index --add nitfol
 		 *
-		 * but it does not.  Whe the second update-index runs,
+		 * but it does not.  When the second update-index runs,
 		 * it notices that the entry "frotz" has the same timestamp
 		 * as index, and if we were to smudge it by resetting its
 		 * size to zero here, then the object name recorded
@@ -945,7 +946,9 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
-	int i, removed;
+	int i, removed, recent;
+	struct stat st;
+	time_t now;
 
 	for (i = removed = 0; i < entries; i++)
 		if (!cache[i]->ce_mode)
@@ -959,15 +962,19 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
+	now = fstat(newfd, &st) ? 0 : st.st_mtime;
+	recent = 0;
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
+		time_t entry_time = (time_t) ntohl(ce->ce_mtime.sec);
 		if (!ce->ce_mode)
 			continue;
-		if (index_file_timestamp &&
-		    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
+		if (index_file_timestamp && index_file_timestamp <= entry_time)
 			ce_smudge_racily_clean_entry(ce);
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
+		if (now && now <= entry_time)
+			recent++;
 	}
 
 	/* Write extension data here */
@@ -981,6 +988,35 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		else {
 			free(data);
 			return -1;
+		}
+	}
+
+	/*
+	 * To prevent later ce_match_stat() from always falling into
+	 * check_fs(), if we have too many entries that can trigger
+	 * racily clean check, we are better off delaying the return.
+	 * We arbitrarily say if more than 20 paths or 25% of total
+	 * paths are very new, we delay the return until the index
+	 * file gets a new timestamp.
+	 *
+	 * NOTE! NOTE! NOTE!
+	 *
+	 * This assumes that nobody is touching the working tree while
+	 * we are updating the index.
+	 */
+	if (20 < recent || entries <= recent * 4) {
+		now = fstat(newfd, &st) ? 0 : st.st_mtime;
+		while (now && !fstat(newfd, &st) && st.st_mtime <= now) {
+			struct timespec rq, rm;
+			off_t where = lseek(newfd, 0, SEEK_CUR);
+			rq.tv_sec = 0;
+			rq.tv_nsec = 250000000;
+			nanosleep(&rq, &rm);
+			if ((where == (off_t) -1) ||
+			    (write(newfd, "", 1) != 1) ||
+			    (lseek(newfd, -1, SEEK_CUR) != where) ||
+			    ftruncate(newfd, where))
+				break;
 		}
 	}
 	return ce_flush(&c, newfd);
