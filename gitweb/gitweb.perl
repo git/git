@@ -76,7 +76,6 @@ if (! -d $git_temp) {
 our $action = $cgi->param('a');
 if (defined $action) {
 	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
-		undef $action;
 		die_error(undef, "Invalid action parameter.");
 	}
 	# action which does not check rest of parameters
@@ -89,16 +88,13 @@ if (defined $action) {
 our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
 if (defined $project) {
 	$project =~ s|^/||; $project =~ s|/$||;
-	$project = validate_input($project);
-	if (!defined($project)) {
+	if (!validate_input($project)) {
 		die_error(undef, "Invalid project parameter.");
 	}
 	if (!(-d "$projectroot/$project")) {
-		undef $project;
 		die_error(undef, "No such directory.");
 	}
 	if (!(-e "$projectroot/$project/HEAD")) {
-		undef $project;
 		die_error(undef, "No such project.");
 	}
 	$rss_link = "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
@@ -111,32 +107,28 @@ if (defined $project) {
 
 our $file_name = $cgi->param('f');
 if (defined $file_name) {
-	$file_name = validate_input($file_name);
-	if (!defined($file_name)) {
+	if (!validate_input($file_name)) {
 		die_error(undef, "Invalid file parameter.");
 	}
 }
 
 our $hash = $cgi->param('h');
 if (defined $hash) {
-	$hash = validate_input($hash);
-	if (!defined($hash)) {
+	if (!validate_input($hash)) {
 		die_error(undef, "Invalid hash parameter.");
 	}
 }
 
 our $hash_parent = $cgi->param('hp');
 if (defined $hash_parent) {
-	$hash_parent = validate_input($hash_parent);
-	if (!defined($hash_parent)) {
+	if (!validate_input($hash_parent)) {
 		die_error(undef, "Invalid hash parent parameter.");
 	}
 }
 
 our $hash_base = $cgi->param('hb');
 if (defined $hash_base) {
-	$hash_base = validate_input($hash_base);
-	if (!defined($hash_base)) {
+	if (!validate_input($hash_base)) {
 		die_error(undef, "Invalid hash base parameter.");
 	}
 }
@@ -144,7 +136,6 @@ if (defined $hash_base) {
 our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]$/) {
-		undef $page;
 		die_error(undef, "Invalid page parameter.");
 	}
 }
@@ -152,7 +143,6 @@ if (defined $page) {
 our $searchtext = $cgi->param('s');
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
-		undef $searchtext;
 		die_error(undef, "Invalid search parameter.");
 	}
 	$searchtext = quotemeta $searchtext;
@@ -182,7 +172,6 @@ my %actions = (
 
 $action = 'summary' if (!defined($action));
 if (!defined($actions{$action})) {
-	undef $action;
 	die_error(undef, "Unknown action.");
 }
 $actions{$action}->();
