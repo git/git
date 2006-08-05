@@ -21,7 +21,6 @@ our $cgi = new CGI;
 our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
-our $rss_link = "";
 
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
@@ -97,8 +96,6 @@ if (defined $project && $project) {
 	if (!(-e "$projectroot/$project/HEAD")) {
 		die_error(undef, "No such project");
 	}
-	$rss_link = "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
-	            "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>";
 	$ENV{'GIT_DIR'} = "$projectroot/$project";
 } else {
 	git_project_list();
@@ -862,11 +859,13 @@ sub git_header_html {
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 <link rel="stylesheet" type="text/css" href="$stylesheet"/>
-$rss_link
-</head>
-<body>
 EOF
-	print "<div class=\"page_header\">\n" .
+	print "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
+	      "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>\n" .
+	      "</head>\n";
+
+	print "<body>\n" .
+	      "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
