@@ -184,7 +184,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		return NULL;
 	bad_dir_environ:
-		if (!nongit_ok) {
+		if (nongit_ok) {
 			*nongit_ok = 1;
 			return NULL;
 		}

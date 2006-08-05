@@ -257,6 +257,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char message_id[1024];
 	char ref_message_id[1024];
 
+	setup_ident();
 	git_config(git_format_config);
 	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;
@@ -306,7 +307,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			 !strcmp(argv[i], "-s")) {
 			const char *committer;
 			const char *endpos;
-			setup_ident();
 			committer = git_committer_info(1);
 			endpos = strchr(committer, '>');
 			if (!endpos)
