@@ -2323,7 +2323,7 @@ sub git_history {
 
 sub git_search {
 	if (!defined $searchtext) {
-		die_error("", "Text field empty.");
+		die_error(undef, "Text field empty.");
 	}
 	if (!defined $hash) {
 		$hash = git_read_head($project);
