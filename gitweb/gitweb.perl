@@ -71,6 +71,7 @@ if (! -d $git_temp) {
 	mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
 }
 
+# ======================================================================
 # input validation and dispatch
 our $action = $cgi->param('a');
 if (defined $action) {
@@ -78,6 +79,7 @@ if (defined $action) {
 		undef $action;
 		die_error(undef, "Invalid action parameter.");
 	}
+	# action which does not check rest of parameters
 	if ($action eq "opml") {
 		git_opml();
 		exit;
