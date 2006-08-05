@@ -68,7 +68,7 @@ our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
 $projects_list ||= $projectroot;
 if (! -d $git_temp) {
-	mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+	mkdir($git_temp, 0700) || die_error(undef, "Couldn't mkdir $git_temp");
 }
 
 # ======================================================================
@@ -1658,7 +1658,7 @@ sub git_blob_plain {
 	}
 	my $type = shift;
 	open my $fd, "-|", $GIT, "cat-file", "blob", $hash
-		or die_error("Couldn't cat $file_name, $hash");
+		or die_error(undef, "Couldn't cat $file_name, $hash");
 
 	$type ||= git_blob_plain_mimetype($fd, $file_name);
 
