@@ -1265,7 +1265,7 @@ sub git_diff_print {
 sub git_project_list {
 	my $order = $cgi->param('o');
 	if (defined $order && $order !~ m/project|descr|owner|age/) {
-		die_error(undef, "Invalid order parameter '$order'");
+		die_error(undef, "Unknown order parameter");
 	}
 
 	my @list = git_read_projects();
