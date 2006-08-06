@@ -126,6 +126,7 @@ git-verify-tag
 git-whatchanged
 git-write-tree
 git-core-*/?*
+gitweb/gitweb.cgi
 test-date
 test-delta
 test-dump-cache-tree

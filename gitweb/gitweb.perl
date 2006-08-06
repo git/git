@@ -85,7 +85,10 @@ if (defined $action) {
 }
 
 our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
-$project =~ s|^/||; $project =~ s|/$||;
+if (defined $project) {
+	$project =~ s|^/||;
+	$project =~ s|/$||;
+}
 if (defined $project && $project) {
 	if (!validate_input($project)) {
 		die_error(undef, "Invalid project parameter");
@@ -856,7 +859,7 @@ sub git_header_html {
 	# 'application/xhtml+xml', otherwise send it as plain old 'text/html'.
 	# we have to do this because MSIE sometimes globs '*/*', pretending to
 	# support xhtml+xml but choking when it gets what it asked for.
-	if ($cgi->http('HTTP_ACCEPT') =~ m/(,|;|\s|^)application\/xhtml\+xml(,|;|\s|$)/ && $cgi->Accept('application/xhtml+xml') != 0) {
+	if (defined $cgi->http('HTTP_ACCEPT') && $cgi->http('HTTP_ACCEPT') =~ m/(,|;|\s|^)application\/xhtml\+xml(,|;|\s|$)/ && $cgi->Accept('application/xhtml+xml') != 0) {
 		$content_type = 'application/xhtml+xml';
 	} else {
 		$content_type = 'text/html';
@@ -874,11 +877,15 @@ sub git_header_html {
 <title>$title</title>
 <link rel="stylesheet" type="text/css" href="$stylesheet"/>
 EOF
-	print "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
-	      "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>\n" .
-	      "</head>\n";
+	if (defined $project) {
+		printf('<link rel="alternate" title="%s log" '.
+		       'href="%s" type="application/rss+xml"/>'."\n",
+		       esc_param($project),
+		       esc_param("$my_uri?p=$project;a=rss"));
+	}
 
-	print "<body>\n" .
+	print "</head>\n" .
+	      "<body>\n" .
 	      "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
@@ -1983,7 +1990,7 @@ sub git_commit {
 	foreach my $line (@difftree) {
 		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
 		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M      rev-tree.c'
-		if (!($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/)) {
+		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/) {
 			next;
 		}
 		my $from_mode = $1;
@@ -2109,7 +2116,7 @@ sub git_commitdiff {
 		die_error(undef, "Unknown commit object");
 	}
 	if (!defined $hash_parent) {
-		$hash_parent = $co{'parent'};
+		$hash_parent = $co{'parent'} || '--root';
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
@@ -2156,7 +2163,9 @@ sub git_commitdiff {
 	foreach my $line (@difftree) {
 		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
 		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M      rev-tree.c'
-		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/;
+		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
+			next;
+		}
 		my $from_mode = $1;
 		my $to_mode = $2;
 		my $from_id = $3;
@@ -2191,6 +2200,13 @@ sub git_commitdiff {
 
 sub git_commitdiff_plain {
 	mkdir($git_temp, 0700);
+	my %co = git_read_commit($hash);
+	if (!%co) {
+		die_error(undef, "Unknown commit object");
+	}
+	if (!defined $hash_parent) {
+		$hash_parent = $co{'parent'} || '--root';
+	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
@@ -2212,7 +2228,6 @@ sub git_commitdiff_plain {
 	}
 
 	print $cgi->header(-type => "text/plain", -charset => 'utf-8', '-content-disposition' => "inline; filename=\"git-$hash.patch\"");
-	my %co = git_read_commit($hash);
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my $comment = $co{'comment'};
 	print "From: $co{'author'}\n" .
@@ -2230,7 +2245,9 @@ sub git_commitdiff_plain {
 	print "---\n\n";
 
 	foreach my $line (@difftree) {
-		$line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/;
+		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
+			next;
+		}
 		my $from_id = $3;
 		my $to_id = $4;
 		my $status = $5;
