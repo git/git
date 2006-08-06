@@ -210,6 +210,7 @@ int main(int argc, const char **argv)
 	char **commit_id;
 	int arg = 1;
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 
