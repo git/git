@@ -85,7 +85,10 @@ if (defined $action) {
 }
 
 our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
-$project =~ s|^/||; $project =~ s|/$||;
+if (defined $project) {
+	$project =~ s|^/||;
+	$project =~ s|/$||;
+}
 if (defined $project && $project) {
 	if (!validate_input($project)) {
 		die_error(undef, "Invalid project parameter");
@@ -874,11 +877,15 @@ sub git_header_html {
 <title>$title</title>
 <link rel="stylesheet" type="text/css" href="$stylesheet"/>
 EOF
-	print "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
-	      "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>\n" .
-	      "</head>\n";
+	if (defined $project) {
+		printf('<link rel="alternate" title="%s log" '.
+		       'href="%s" type="application/rss+xml"/>'."\n",
+		       esc_param($project),
+		       esc_param("$my_uri?p=$project;a=rss"));
+	}
 
-	print "<body>\n" .
+	print "</head>\n" .
+	      "<body>\n" .
 	      "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
