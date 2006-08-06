@@ -221,6 +221,20 @@ sub unquote {
 	return $str;
 }
 
+# escape tabs (convert tabs to spaces)
+sub untabify {
+	my $line = shift;
+
+	while ((my $pos = index($line, "\t")) != -1) {
+		if (my $count = (8 - ($pos % 8))) {
+			my $spaces = ' ' x $count;
+			$line =~ s/\t/$spaces/;
+		}
+	}
+
+	return $line;
+}
+
 ## ----------------------------------------------------------------------
 ## HTML aware string manipulation
 
@@ -1237,12 +1251,7 @@ sub git_diff_print {
 				# skip errors
 				next;
 			}
-			while ((my $pos = index($line, "\t")) != -1) {
-				if (my $count = (8 - (($pos-1) % 8))) {
-					my $spaces = ' ' x $count;
-					$line =~ s/\t/$spaces/;
-				}
-			}
+			$line = untabify($line);
 			print "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
 		}
 	}
@@ -1582,13 +1591,8 @@ HTML
 		$age_class  = age_class($age);
 		$author     = esc_html ($author);
 		$author     =~ s/ /&nbsp;/g;
-		# escape tabs
-		while ((my $pos = index($data, "\t")) != -1) {
-			if (my $count = (8 - ($pos % 8))) {
-				my $spaces = ' ' x $count;
-				$data =~ s/\t/$spaces/;
-			}
-		}
+
+		$data = untabify($data);
 		$data = esc_html ($data);
 
 		print <<HTML;
@@ -1711,12 +1715,7 @@ sub git_blob {
 	while (my $line = <$fd>) {
 		chomp $line;
 		$nr++;
-		while ((my $pos = index($line, "\t")) != -1) {
-			if (my $count = (8 - ($pos % 8))) {
-				my $spaces = ' ' x $count;
-				$line =~ s/\t/$spaces/;
-			}
-		}
+		$line = untabify($line);
 		printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n", $nr, $nr, $nr, esc_html($line);
 	}
 	close $fd or print "Reading blob failed.\n";
