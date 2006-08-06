@@ -2109,7 +2109,7 @@ sub git_commitdiff {
 		die_error(undef, "Unknown commit object");
 	}
 	if (!defined $hash_parent) {
-		$hash_parent = $co{'parent'};
+		$hash_parent = $co{'parent'} || '--root';
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
