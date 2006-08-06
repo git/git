@@ -21,7 +21,6 @@ our $cgi = new CGI;
 our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
-our $rss_link = "";
 
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
@@ -68,16 +67,17 @@ our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
 $projects_list ||= $projectroot;
 if (! -d $git_temp) {
-	mkdir($git_temp, 0700) || die_error("Couldn't mkdir $git_temp");
+	mkdir($git_temp, 0700) || die_error(undef, "Couldn't mkdir $git_temp");
 }
 
+# ======================================================================
 # input validation and dispatch
 our $action = $cgi->param('a');
 if (defined $action) {
 	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
-		undef $action;
-		die_error(undef, "Invalid action parameter.");
+		die_error(undef, "Invalid action parameter");
 	}
+	# action which does not check rest of parameters
 	if ($action eq "opml") {
 		git_opml();
 		exit;
@@ -85,22 +85,17 @@ if (defined $action) {
 }
 
 our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
-if (defined $project) {
-	$project =~ s|^/||; $project =~ s|/$||;
-	$project = validate_input($project);
-	if (!defined($project)) {
-		die_error(undef, "Invalid project parameter.");
+$project =~ s|^/||; $project =~ s|/$||;
+if (defined $project && $project) {
+	if (!validate_input($project)) {
+		die_error(undef, "Invalid project parameter");
 	}
 	if (!(-d "$projectroot/$project")) {
-		undef $project;
-		die_error(undef, "No such directory.");
+		die_error(undef, "No such directory");
 	}
 	if (!(-e "$projectroot/$project/HEAD")) {
-		undef $project;
-		die_error(undef, "No such project.");
+		die_error(undef, "No such project");
 	}
-	$rss_link = "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
-	            "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>";
 	$ENV{'GIT_DIR'} = "$projectroot/$project";
 } else {
 	git_project_list();
@@ -109,49 +104,43 @@ if (defined $project) {
 
 our $file_name = $cgi->param('f');
 if (defined $file_name) {
-	$file_name = validate_input($file_name);
-	if (!defined($file_name)) {
-		die_error(undef, "Invalid file parameter.");
+	if (!validate_input($file_name)) {
+		die_error(undef, "Invalid file parameter");
 	}
 }
 
 our $hash = $cgi->param('h');
 if (defined $hash) {
-	$hash = validate_input($hash);
-	if (!defined($hash)) {
-		die_error(undef, "Invalid hash parameter.");
+	if (!validate_input($hash)) {
+		die_error(undef, "Invalid hash parameter");
 	}
 }
 
 our $hash_parent = $cgi->param('hp');
 if (defined $hash_parent) {
-	$hash_parent = validate_input($hash_parent);
-	if (!defined($hash_parent)) {
-		die_error(undef, "Invalid hash parent parameter.");
+	if (!validate_input($hash_parent)) {
+		die_error(undef, "Invalid hash parent parameter");
 	}
 }
 
 our $hash_base = $cgi->param('hb');
 if (defined $hash_base) {
-	$hash_base = validate_input($hash_base);
-	if (!defined($hash_base)) {
-		die_error(undef, "Invalid hash base parameter.");
+	if (!validate_input($hash_base)) {
+		die_error(undef, "Invalid hash base parameter");
 	}
 }
 
 our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]$/) {
-		undef $page;
-		die_error(undef, "Invalid page parameter.");
+		die_error(undef, "Invalid page parameter");
 	}
 }
 
 our $searchtext = $cgi->param('s');
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
-		undef $searchtext;
-		die_error(undef, "Invalid search parameter.");
+		die_error(undef, "Invalid search parameter");
 	}
 	$searchtext = quotemeta $searchtext;
 }
@@ -180,8 +169,7 @@ my %actions = (
 
 $action = 'summary' if (!defined($action));
 if (!defined($actions{$action})) {
-	undef $action;
-	die_error(undef, "Unknown action.");
+	die_error(undef, "Unknown action");
 }
 $actions{$action}->();
 exit;
@@ -231,6 +219,20 @@ sub unquote {
 		$str =~ s/\\([0-7]{1,3})/chr(oct($1))/eg;
 	}
 	return $str;
+}
+
+# escape tabs (convert tabs to spaces)
+sub untabify {
+	my $line = shift;
+
+	while ((my $pos = index($line, "\t")) != -1) {
+		if (my $count = (8 - ($pos % 8))) {
+			my $spaces = ' ' x $count;
+			$line =~ s/\t/$spaces/;
+		}
+	}
+
+	return $line;
 }
 
 ## ----------------------------------------------------------------------
@@ -427,7 +429,7 @@ sub git_get_hash_by_path {
 	my $tree = $base;
 
 	open my $fd, "-|", $GIT, "ls-tree", $base, "--", $path
-		or die_error(undef, "Open git-ls-tree failed.");
+		or die_error(undef, "Open git-ls-tree failed");
 	my $line = <$fd>;
 	close $fd or return undef;
 
@@ -871,11 +873,13 @@ sub git_header_html {
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 <link rel="stylesheet" type="text/css" href="$stylesheet"/>
-$rss_link
-</head>
-<body>
 EOF
-	print "<div class=\"page_header\">\n" .
+	print "<link rel=\"alternate\" title=\"" . esc_param($project) . " log\" href=\"" .
+	      "$my_uri?" . esc_param("p=$project;a=rss") . "\" type=\"application/rss+xml\"/>\n" .
+	      "</head>\n";
+
+	print "<body>\n" .
+	      "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
@@ -1247,12 +1251,7 @@ sub git_diff_print {
 				# skip errors
 				next;
 			}
-			while ((my $pos = index($line, "\t")) != -1) {
-				if (my $count = (8 - (($pos-1) % 8))) {
-					my $spaces = ' ' x $count;
-					$line =~ s/\t/$spaces/;
-				}
-			}
+			$line = untabify($line);
 			print "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
 		}
 	}
@@ -1274,13 +1273,13 @@ sub git_diff_print {
 sub git_project_list {
 	my $order = $cgi->param('o');
 	if (defined $order && $order !~ m/project|descr|owner|age/) {
-		die_error(undef, "Invalid order parameter '$order'.");
+		die_error(undef, "Unknown order parameter");
 	}
 
 	my @list = git_read_projects();
 	my @projects;
 	if (!@list) {
-		die_error(undef, "No projects found.");
+		die_error(undef, "No projects found");
 	}
 	foreach my $pr (@list) {
 		my $head = git_read_head($pr->{'path'});
@@ -1414,7 +1413,7 @@ sub git_summary {
 	      "</table>\n";
 
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=17", git_read_head($project)
-		or die_error(undef, "Open git-rev-list failed.");
+		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 	git_header_div('shortlog');
@@ -1470,10 +1469,10 @@ sub git_tag {
 sub git_blame2 {
 	my $fd;
 	my $ftype;
-	die_error(undef, "Permission denied.") if (!git_get_project_config_bool ('blame'));
+	die_error(undef, "Permission denied") if (!git_get_project_config_bool ('blame'));
 	die_error('404 Not Found', "File name not defined") if (!$file_name);
 	$hash_base ||= git_read_head($project);
-	die_error(undef, "Reading commit failed") unless ($hash_base);
+	die_error(undef, "Couldn't find base commit") unless ($hash_base);
 	my %co = git_read_commit($hash_base)
 		or die_error(undef, "Reading commit failed");
 	if (!defined $hash) {
@@ -1482,10 +1481,10 @@ sub git_blame2 {
 	}
 	$ftype = git_get_type($hash);
 	if ($ftype !~ "blob") {
-		die_error("400 Bad Request", "object is not a blob");
+		die_error("400 Bad Request", "Object is not a blob");
 	}
 	open ($fd, "-|", $GIT, "blame", '-l', $file_name, $hash_base)
-		or die_error(undef, "Open git-blame failed.");
+		or die_error(undef, "Open git-blame failed");
 	git_header_html();
 	my $formats_nav =
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, "blob") .
@@ -1528,18 +1527,18 @@ sub git_blame2 {
 
 sub git_blame {
 	my $fd;
-	die_error('403 Permission denied', "Permission denied.") if (!git_get_project_config_bool ('blame'));
-	die_error('404 Not Found', "What file will it be, master?") if (!$file_name);
+	die_error('403 Permission denied', "Permission denied") if (!git_get_project_config_bool ('blame'));
+	die_error('404 Not Found', "File name not defined") if (!$file_name);
 	$hash_base ||= git_read_head($project);
-	die_error(undef, "Reading commit failed.") unless ($hash_base);
+	die_error(undef, "Couldn't find base commit") unless ($hash_base);
 	my %co = git_read_commit($hash_base)
-		or die_error(undef, "Reading commit failed.");
+		or die_error(undef, "Reading commit failed");
 	if (!defined $hash) {
 		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
-			or die_error(undef, "Error lookup file.");
+			or die_error(undef, "Error lookup file");
 	}
 	open ($fd, "-|", $GIT, "annotate", '-l', '-t', '-r', $file_name, $hash_base)
-		or die_error(undef, "Open git-annotate failed.");
+		or die_error(undef, "Open git-annotate failed");
 	git_header_html();
 	my $formats_nav =
 		$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$hash;hb=$hash_base;f=$file_name")}, "blob") .
@@ -1592,13 +1591,8 @@ HTML
 		$age_class  = age_class($age);
 		$author     = esc_html ($author);
 		$author     =~ s/ /&nbsp;/g;
-		# escape tabs
-		while ((my $pos = index($data, "\t")) != -1) {
-			if (my $count = (8 - ($pos % 8))) {
-				my $spaces = ' ' x $count;
-				$data =~ s/\t/$spaces/;
-			}
-		}
+
+		$data = untabify($data);
 		$data = esc_html ($data);
 
 		print <<HTML;
@@ -1649,14 +1643,14 @@ sub git_blob_plain {
 		if (defined $file_name) {
 			my $base = $hash_base || git_read_head($project);
 			$hash = git_get_hash_by_path($base, $file_name, "blob")
-				or die_error(undef, "Error lookup file.");
+				or die_error(undef, "Error lookup file");
 		} else {
-			die_error(undef, "No file name defined.");
+			die_error(undef, "No file name defined");
 		}
 	}
 	my $type = shift;
 	open my $fd, "-|", $GIT, "cat-file", "blob", $hash
-		or die_error("Couldn't cat $file_name, $hash");
+		or die_error(undef, "Couldn't cat $file_name, $hash");
 
 	$type ||= git_blob_plain_mimetype($fd, $file_name);
 
@@ -1682,14 +1676,14 @@ sub git_blob {
 		if (defined $file_name) {
 			my $base = $hash_base || git_read_head($project);
 			$hash = git_get_hash_by_path($base, $file_name, "blob")
-				or die_error(undef, "Error lookup file.");
+				or die_error(undef, "Error lookup file");
 		} else {
-			die_error(undef, "No file name defined.");
+			die_error(undef, "No file name defined");
 		}
 	}
 	my $have_blame = git_get_project_config_bool ('blame');
 	open my $fd, "-|", $GIT, "cat-file", "blob", $hash
-		or die_error(undef, "Couldn't cat $file_name, $hash.");
+		or die_error(undef, "Couldn't cat $file_name, $hash");
 	my $mimetype = git_blob_plain_mimetype($fd, $file_name);
 	if ($mimetype !~ m/^text\//) {
 		close $fd;
@@ -1721,12 +1715,7 @@ sub git_blob {
 	while (my $line = <$fd>) {
 		chomp $line;
 		$nr++;
-		while ((my $pos = index($line, "\t")) != -1) {
-			if (my $count = (8 - ($pos % 8))) {
-				my $spaces = ' ' x $count;
-				$line =~ s/\t/$spaces/;
-			}
-		}
+		$line = untabify($line);
 		printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n", $nr, $nr, $nr, esc_html($line);
 	}
 	close $fd or print "Reading blob failed.\n";
@@ -1747,9 +1736,9 @@ sub git_tree {
 	}
 	$/ = "\0";
 	open my $fd, "-|", $GIT, "ls-tree", '-z', $hash
-		or die_error(undef, "Open git-ls-tree failed.");
+		or die_error(undef, "Open git-ls-tree failed");
 	my @entries = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading tree failed.");
+	close $fd or die_error(undef, "Reading tree failed");
 	$/ = "\n";
 
 	my $refs = read_info_ref();
@@ -1828,7 +1817,7 @@ sub git_log {
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", $GIT, "rev-list", $limit, $hash
-		or die_error(undef, "Open git-rev-list failed.");
+		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -1889,7 +1878,7 @@ sub git_log {
 sub git_commit {
 	my %co = git_read_commit($hash);
 	if (!%co) {
-		die_error(undef, "Unknown commit object.");
+		die_error(undef, "Unknown commit object");
 	}
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = date_str($co{'committer_epoch'}, $co{'committer_tz'});
@@ -1899,9 +1888,9 @@ sub git_commit {
 		$parent = "--root";
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', '-M', $parent, $hash
-		or die_error(undef, "Open git-diff-tree failed.");
+		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading git-diff-tree failed.");
+	close $fd or die_error(undef, "Reading git-diff-tree failed");
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -2117,15 +2106,15 @@ sub git_commitdiff {
 	mkdir($git_temp, 0700);
 	my %co = git_read_commit($hash);
 	if (!%co) {
-		die_error(undef, "Unknown commit object.");
+		die_error(undef, "Unknown commit object");
 	}
 	if (!defined $hash_parent) {
 		$hash_parent = $co{'parent'};
 	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
-		or die_error(undef, "Open git-diff-tree failed.");
+		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading diff-tree failed.");
+	close $fd or die_error(undef, "Reading git-diff-tree failed");
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -2203,9 +2192,9 @@ sub git_commitdiff {
 sub git_commitdiff_plain {
 	mkdir($git_temp, 0700);
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
-		or die_error(undef, "Open git-diff-tree failed.");
+		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading diff-tree failed.");
+	close $fd or die_error(undef, "Reading diff-tree failed");
 
 	# try to figure out the next tag after this commit
 	my $tagname;
@@ -2263,7 +2252,7 @@ sub git_history {
 	my $ftype;
 	my %co = git_read_commit($hash_base);
 	if (!%co) {
-		die_error(undef, "Unknown commit object.");
+		die_error(undef, "Unknown commit object");
 	}
 	my $refs = read_info_ref();
 	git_header_html();
@@ -2321,14 +2310,14 @@ sub git_history {
 
 sub git_search {
 	if (!defined $searchtext) {
-		die_error("", "Text field empty.");
+		die_error(undef, "Text field empty");
 	}
 	if (!defined $hash) {
 		$hash = git_read_head($project);
 	}
 	my %co = git_read_commit($hash);
 	if (!%co) {
-		die_error(undef, "Unknown commit object.");
+		die_error(undef, "Unknown commit object");
 	}
 	# pickaxe may take all resources of your box and run for several minutes
 	# with every query - so decide by yourself how public you make this feature :)
@@ -2466,7 +2455,7 @@ sub git_shortlog {
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 	open my $fd, "-|", $GIT, "rev-list", $limit, $hash
-		or die_error(undef, "Open git-rev-list failed.");
+		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -2494,9 +2483,9 @@ sub git_shortlog {
 sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=150", git_read_head($project)
-		or die_error(undef, "Open git-rev-list failed.");
+		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading rev-list failed.");
+	close $fd or die_error(undef, "Reading git-rev-list failed");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
 	      "<rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n";
