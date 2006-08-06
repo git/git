@@ -2193,6 +2193,13 @@ sub git_commitdiff {
 
 sub git_commitdiff_plain {
 	mkdir($git_temp, 0700);
+	my %co = git_read_commit($hash);
+	if (!%co) {
+		die_error(undef, "Unknown commit object");
+	}
+	if (!defined $hash_parent) {
+		$hash_parent = $co{'parent'} || '--root';
+	}
 	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
@@ -2214,7 +2221,6 @@ sub git_commitdiff_plain {
 	}
 
 	print $cgi->header(-type => "text/plain", -charset => 'utf-8', '-content-disposition' => "inline; filename=\"git-$hash.patch\"");
-	my %co = git_read_commit($hash);
 	my %ad = date_str($co{'author_epoch'}, $co{'author_tz'});
 	my $comment = $co{'comment'};
 	print "From: $co{'author'}\n" .
