@@ -154,31 +154,36 @@ AC_MSG_NOTICE([CHECKS for libraries])
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
-AC_CHECK_LIB([crypto], [SHA1_Init],[],
+AC_CHECK_LIB([crypto], [SHA1_Init],
+[GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=)],
 [AC_CHECK_LIB([ssl], [SHA1_Init],
- [GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=YesPlease)],
+ [GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=YesPlease)
+  GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=)],
  [GIT_CONF_APPEND_LINE(NO_OPENSSL=YesPlease)])])
 #
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
-AC_CHECK_LIB([curl], [curl_global_init],[],
+AC_CHECK_LIB([curl], [curl_global_init],
+[GIT_CONF_APPEND_LINE(NO_CURL=)],
 [GIT_CONF_APPEND_LINE(NO_CURL=YesPlease)])
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
-AC_CHECK_LIB([expat], [XML_ParserCreate],[],
+AC_CHECK_LIB([expat], [XML_ParserCreate],
+[GIT_CONF_APPEND_LINE(NO_EXPAT=)],
 [GIT_CONF_APPEND_LINE(NO_EXPAT=YesPlease)])
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
-AC_CHECK_LIB([c], [iconv],[],
+AC_CHECK_LIB([c], [iconv],
+[GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=)],
 [GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=YesPlease)])
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
-AC_CHECK_LIB([c], [socket],[],
-[AC_CHECK_LIB([socket],[socket],
- [GIT_CONF_APPEND_LINE(NEEDS_SOCKET=YesPlease)],[])])
+AC_CHECK_LIB([c], [socket],
+[GIT_CONF_APPEND_LINE(NEEDS_SOCKET=)],
+[GIT_CONF_APPEND_LINE(NEEDS_SOCKET=YesPlease)])
 
 
 ## Checks for header files.
@@ -188,25 +193,30 @@ AC_CHECK_LIB([c], [socket],[],
 AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
 #
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
-AC_CHECK_MEMBER(struct dirent.d_ino,[],
+AC_CHECK_MEMBER(struct dirent.d_ino,
+[GIT_CONF_APPEND_LINE(NO_D_INO_IN_DIRENT=)],
 [GIT_CONF_APPEND_LINE(NO_D_INO_IN_DIRENT=YesPlease)],
 [#include <dirent.h>])
 #
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
-AC_CHECK_MEMBER(struct dirent.d_type,[],
+AC_CHECK_MEMBER(struct dirent.d_type,
+[GIT_CONF_APPEND_LINE(NO_D_TYPE_IN_DIRENT=)],
 [GIT_CONF_APPEND_LINE(NO_D_TYPE_IN_DIRENT=YesPlease)],
 [#include <dirent.h>])
 #
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
 # sockaddr_storage.
-AC_CHECK_TYPE(struct sockaddr_storage,[],
+AC_CHECK_TYPE(struct sockaddr_storage,
+[GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=)],
 [GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=YesPlease)],
 [#include <netinet/in.h>])
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 AC_CHECK_TYPE([struct addrinfo],[
-AC_CHECK_FUNC([getaddrinfo],[],
-[GIT_CONF_APPEND_LINE(NO_IPV6=YesPlease)])],[],[
+ AC_CHECK_FUNC([getaddrinfo],
+  [GIT_CONF_APPEND_LINE(NO_IPV6=)],
+  [GIT_CONF_APPEND_LINE(NO_IPV6=YesPlease)])
+],[GIT_CONF_APPEND_LINE(NO_IPV6=YesPlease)],[
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -231,6 +241,8 @@ AC_RUN_IFELSE(
 ])
 if test $ac_cv_c_c99_format = no; then
 	GIT_CONF_APPEND_LINE(NO_C99_FORMAT=YesPlease)
+else
+	GIT_CONF_APPEND_LINE(NO_C99_FORMAT=)
 fi
 
 
@@ -239,15 +251,18 @@ fi
 AC_MSG_NOTICE([CHECKS for library functions])
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
-AC_CHECK_FUNC(strcasestr,[],
+AC_CHECK_FUNC(strcasestr,
+[GIT_CONF_APPEND_LINE(NO_STRCASESTR=)],
 [GIT_CONF_APPEND_LINE(NO_STRCASESTR=YesPlease)])
 #
 # Define NO_STRLCPY if you don't have strlcpy.
-AC_CHECK_FUNC(strlcpy,[],
+AC_CHECK_FUNC(strlcpy,
+[GIT_CONF_APPEND_LINE(NO_STRLCPY=)],
 [GIT_CONF_APPEND_LINE(NO_STRLCPY=YesPlease)])
 #
 # Define NO_SETENV if you don't have setenv in the C library.
-AC_CHECK_FUNC(setenv,[],
+AC_CHECK_FUNC(setenv,
+[GIT_CONF_APPEND_LINE(NO_SETENV=)],
 [GIT_CONF_APPEND_LINE(NO_SETENV=YesPlease)])
 #
 # Define NO_MMAP if you want to avoid mmap.
