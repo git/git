@@ -1065,7 +1065,6 @@ sub git_shortlog_body {
 		#my $ref = defined $refs ? git_get_referencing($refs, $commit) : '';
 		my $ref = git_get_referencing($refs, $commit);
 		my %co = git_read_commit($commit);
-		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -1638,7 +1637,6 @@ sub git_heads {
 	git_header_div('summary', $project);
 
 	my $taglist = git_read_refs("refs/heads");
-	my $alternate = 0;
 	if (defined @$taglist) {
 		git_heads_body($taglist, $head);
 	}
