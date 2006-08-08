@@ -6,18 +6,6 @@
 #include "pack.h"
 #include "csum-file.h"
 
-static int max_depth = 10;
-static unsigned long object_count;
-static unsigned long duplicate_count;
-static unsigned long packoff;
-static unsigned long overflow_count;
-static int packfd;
-static int current_depth;
-static void *lastdat;
-static unsigned long lastdatlen;
-static unsigned char lastsha1[20];
-static unsigned char packsha1[20];
-
 struct object_entry
 {
 	struct object_entry *next;
@@ -25,40 +13,57 @@ struct object_entry
 	unsigned char sha1[20];
 };
 
-struct overflow_object_entry
+struct object_entry_block
 {
-	struct overflow_object_entry *next;
-	struct object_entry oe;
+	struct object_entry_block *next_block;
+	struct object_entry *next_free;
+	struct object_entry *end;
+	struct object_entry entries[0];
 };
 
-struct object_entry *pool_start;
-struct object_entry *pool_next;
-struct object_entry *pool_end;
-struct overflow_object_entry *overflow;
-struct object_entry *table[1 << 16];
+static int max_depth = 10;
+static unsigned long alloc_count;
+static unsigned long object_count;
+static unsigned long duplicate_count;
+static unsigned long packoff;
+static int packfd;
+static int current_depth;
+static void *lastdat;
+static unsigned long lastdatlen;
+static unsigned char lastsha1[20];
+static unsigned char packsha1[20];
+struct object_entry *object_table[1 << 16];
+struct object_entry_block *blocks;
+
+static void alloc_objects(int cnt)
+{
+	struct object_entry_block *b;
+
+	b = xmalloc(sizeof(struct object_entry_block)
+		+ cnt * sizeof(struct object_entry));
+	b->next_block = blocks;
+	b->next_free = b->entries;
+	b->end = b->entries + cnt;
+	blocks = b;
+	alloc_count += cnt;
+}
 
 static struct object_entry* new_object(unsigned char *sha1)
 {
-	if (pool_next != pool_end) {
-		struct object_entry *e = pool_next++;
-		memcpy(e->sha1, sha1, sizeof(e->sha1));
-		return e;
-	} else {
-		struct overflow_object_entry *e;
+	struct object_entry *e;
 
-		e = xmalloc(sizeof(struct overflow_object_entry));
-		e->next = overflow;
-		memcpy(e->oe.sha1, sha1, sizeof(e->oe.sha1));
-		overflow = e;
-		overflow_count++;
-		return &e->oe;
-	}
+	if (blocks->next_free == blocks->end)
+		alloc_objects(1000);
+
+	e = blocks->next_free++;
+	memcpy(e->sha1, sha1, sizeof(e->sha1));
+	return e;
 }
 
 static struct object_entry* insert_object(unsigned char *sha1)
 {
 	unsigned int h = sha1[0] << 8 | sha1[1];
-	struct object_entry *e = table[h];
+	struct object_entry *e = object_table[h];
 	struct object_entry *p = 0;
 
 	while (e) {
@@ -74,7 +79,7 @@ static struct object_entry* insert_object(unsigned char *sha1)
 	if (p)
 		p->next = e;
 	else
-		table[h] = e;
+		object_table[h] = e;
 	return e;
 }
 
@@ -246,17 +251,16 @@ static void write_index(const char *idx_name)
 	struct sha1file *f;
 	struct object_entry **idx, **c, **last;
 	struct object_entry *e;
-	struct overflow_object_entry *o;
+	struct object_entry_block *o;
 	unsigned int array[256];
 	int i;
 
 	/* Build the sorted table of object IDs. */
 	idx = xmalloc(object_count * sizeof(struct object_entry*));
 	c = idx;
-	for (e = pool_start; e != pool_next; e++)
-		*c++ = e;
-	for (o = overflow; o; o = o->next)
-		*c++ = &o->oe;
+	for (o = blocks; o; o = o->next_block)
+		for (e = o->entries; e != o->next_free; e++)
+			*c++ = e;
 	last = idx + object_count;
 	qsort(idx, object_count, sizeof(struct object_entry*), oecmp);
 
@@ -297,14 +301,11 @@ int main(int argc, const char **argv)
 	idx_name = xmalloc(strlen(base_name) + 5);
 	sprintf(idx_name, "%s.idx", base_name);
 
-	packfd = open(pack_name, O_RDWR|O_CREAT|O_TRUNC, 0666);
+	packfd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
 	if (packfd < 0)
 		die("Can't create pack file %s: %s", pack_name, strerror(errno));
 
-	pool_start = xmalloc(est_obj_cnt * sizeof(struct object_entry));
-	pool_next = pool_start;
-	pool_end = pool_start + est_obj_cnt;
-
+	alloc_objects(est_obj_cnt);
 	init_pack_header();
 	for (;;) {
 		unsigned long datlen;
@@ -334,8 +335,6 @@ int main(int argc, const char **argv)
 			e->offset = packoff;
 			write_blob(dat, datlen);
 			object_count++;
-			printf("%s\n", sha1_to_hex(sha1));
-			fflush(stdout);
 
 			if (lastdat)
 				free(lastdat);
@@ -351,8 +350,8 @@ int main(int argc, const char **argv)
 	close(packfd);
 	write_index(idx_name);
 
-	fprintf(stderr, "%lu objects, %lu duplicates, %lu pool overflow\n",
-		object_count, duplicate_count, overflow_count);
+	fprintf(stderr, "%lu objects, %lu duplicates, %lu allocated (%lu overflow)\n",
+		object_count, duplicate_count, alloc_count, alloc_count - est_obj_cnt);
 
 	return 0;
 }
