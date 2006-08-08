@@ -595,6 +595,13 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	chmod +x $@+
 	mv $@+ $@
 
+configure: configure.ac
+	rm -f $@ $<+
+	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $< > $<+
+	autoconf -o $@ $<+
+	rm -f $<+
+
 # These can record GIT_VERSION
 git$X git.spec \
 	$(patsubst %.sh,%,$(SCRIPT_SH)) \
