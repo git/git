@@ -24,14 +24,39 @@ struct object_entry_block
 struct last_object
 {
 	void *data;
-	unsigned long len;
-	int depth;
+	unsigned int len;
+	unsigned int depth;
 	unsigned char sha1[20];
+};
+
+struct tree;
+struct tree_entry
+{
+	struct tree *tree;
+	mode_t mode;
+	unsigned char sha1[20];
+	char name[FLEX_ARRAY]; /* more */
+};
+
+struct tree
+{
+	struct last_object last_tree;
+	unsigned long entry_count;
+	struct tree_entry **entries;
+};
+
+struct branch
+{
+	struct branch *next_branch;
+	struct tree_entry tree;
+	unsigned char sha1[20];
+	const char *name;
 };
 
 /* Stats and misc. counters. */
 static int max_depth = 10;
 static unsigned long alloc_count;
+static unsigned long branch_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
 static unsigned long object_count_by_type[9];
@@ -48,6 +73,10 @@ struct object_entry *object_table[1 << 16];
 
 /* Our last blob */
 struct last_object last_blob;
+
+/* Branch data */
+struct branch *branches;
+struct branch *current_branch;
 
 static void alloc_objects(int cnt)
 {
@@ -129,6 +158,32 @@ static ssize_t ywrite(int fd, void *buffer, size_t length)
 	return ret;
 }
 
+static const char* read_string()
+{
+	static char sn[PATH_MAX];
+	unsigned long slen;
+
+	if (yread(0, &slen, 4) != 4)
+		die("Can't obtain string");
+	if (!slen)
+		return 0;
+	if (slen > (PATH_MAX - 1))
+		die("Can't handle excessive string length %lu", slen);
+
+	if (yread(0, sn, slen) != slen)
+		die("Can't obtain string of length %lu", slen);
+	sn[slen] = 0;
+	return sn;
+}
+
+static const char* read_required_string()
+{
+	const char *r = read_string();
+	if (!r)
+		die("Expected string command parameter, didn't find one");
+	return r;
+}
+
 static unsigned long encode_header(
 	enum object_type type,
 	unsigned long size,
@@ -156,7 +211,8 @@ static int store_object(
 	enum object_type type,
 	void *dat,
 	unsigned long datlen,
-	struct last_object *last)
+	struct last_object *last,
+	unsigned char *sha1out)
 {
 	void *out, *delta;
 	struct object_entry *e;
@@ -171,6 +227,8 @@ static int store_object(
 	SHA1_Update(&c, hdr, hdrlen);
 	SHA1_Update(&c, dat, datlen);
 	SHA1_Final(sha1, &c);
+	if (sha1out)
+		memcpy(sha1out, sha1, sizeof(sha1));
 
 	e = insert_object(sha1);
 	if (e->offset) {
@@ -347,8 +405,106 @@ static void new_blob()
 	if (yread(0, dat, datlen) != datlen)
 		die("Con't obtain %lu bytes of blob data", datlen);
 
-	if (!store_object(OBJ_BLOB, dat, datlen, &last_blob))
+	if (!store_object(OBJ_BLOB, dat, datlen, &last_blob, 0))
 		free(dat);
+}
+
+static struct branch* lookup_branch(const char *name)
+{
+	struct branch *b;
+	for (b = branches; b; b = b->next_branch) {
+		if (!strcmp(name, b->name))
+			return b;
+	}
+	die("No branch named '%s' has been declared", name);
+}
+
+static struct tree* deep_copy_tree (struct tree *t)
+{
+	struct tree *r = xmalloc(sizeof(struct tree));
+	unsigned long i;
+
+	if (t->last_tree.data) {
+		r->last_tree.data = xmalloc(t->last_tree.len);
+		r->last_tree.len = t->last_tree.len;
+		r->last_tree.depth = t->last_tree.depth;
+		memcpy(r->last_tree.data, t->last_tree.data, t->last_tree.len);
+		memcpy(r->last_tree.sha1, t->last_tree.sha1, sizeof(t->last_tree.sha1));
+	}
+
+	r->entry_count = t->entry_count;
+	r->entries = xmalloc(t->entry_count * sizeof(struct tree_entry*));
+	for (i = 0; i < t->entry_count; i++) {
+		struct tree_entry *a = t->entries[i];
+		struct tree_entry *b;
+
+		b = xmalloc(sizeof(struct tree_entry) + strlen(a->name) + 1);
+		b->tree = a->tree ? deep_copy_tree(a->tree) : 0;
+		b->mode = a->mode;
+		memcpy(b->sha1, a->sha1, sizeof(a->sha1));
+		strcpy(b->name, a->name);
+		r->entries[i] = b;
+	}
+
+	return r;
+}
+
+static void store_tree (struct tree_entry *e)
+{
+	struct tree *t = e->tree;
+	unsigned long maxlen, i;
+	char *buf, *c;
+
+	if (memcmp(null_sha1, e->sha1, sizeof(e->sha1)))
+		return;
+
+	maxlen = t->entry_count * 32;
+	for (i = 0; i < t->entry_count; i++)
+		maxlen += strlen(t->entries[i]->name);
+
+	buf = c = xmalloc(maxlen);
+	for (i = 0; i < t->entry_count; i++) {
+		struct tree_entry *e = t->entries[i];
+		c += sprintf(c, "%o %s", e->mode, e->name) + 1;
+		if (e->tree)
+			store_tree(e);
+		memcpy(c, e->sha1, sizeof(e->sha1));
+		c += sizeof(e->sha1);
+	}
+
+	if (!store_object(OBJ_TREE, buf, c - buf, &t->last_tree, e->sha1))
+		free(buf);
+}
+
+static void new_branch()
+{
+	struct branch *nb = xcalloc(1, sizeof(struct branch));
+	const char *source_name;
+
+	nb->name = strdup(read_required_string());
+	source_name = read_string();
+	if (source_name) {
+		struct branch *sb = lookup_branch(source_name);
+		nb->tree.tree = deep_copy_tree(sb->tree.tree);
+		memcpy(nb->tree.sha1, sb->tree.sha1, sizeof(sb->tree.sha1));
+		memcpy(nb->sha1, sb->sha1, sizeof(sb->sha1));
+	} else {
+		nb->tree.tree = xcalloc(1, sizeof(struct tree));
+		nb->tree.tree->entries = xmalloc(8*sizeof(struct tree_entry*));
+	}
+	nb->next_branch = branches;
+	branches = nb;
+	branch_count++;
+}
+
+static void set_branch()
+{
+	current_branch = lookup_branch(read_required_string());
+}
+
+static void commit()
+{
+	store_tree(&current_branch->tree);
 }
 
 int main(int argc, const char **argv)
@@ -376,7 +532,10 @@ int main(int argc, const char **argv)
 			break;
 
 		switch (cmd) {
-		case 'blob': new_blob(); break;
+		case 'blob': new_blob();   break;
+		case 'newb': new_branch(); break;
+		case 'setb': set_branch(); break;
+		case 'comt': commit();     break;
 		default:
 			die("Invalid command %lu", cmd);
 		}
@@ -393,6 +552,7 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE]);
 	fprintf(stderr, "      commits:   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT]);
 	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG]);
+	fprintf(stderr, "Total branches:  %10lu\n", branch_count);
 	fprintf(stderr, "---------------------------------------------------\n");
 
 	stat(pack_name, &sb);
