@@ -1065,7 +1065,6 @@ sub git_shortlog_body {
 		#my $ref = defined $refs ? git_get_referencing($refs, $commit) : '';
 		my $ref = git_get_referencing($refs, $commit);
 		my %co = git_read_commit($commit);
-		my %ad = date_str($co{'author_epoch'});
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -1499,7 +1498,7 @@ sub git_blame2 {
 	git_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, $ftype);
-	my @rev_color = (qw(light dark));
+	my @rev_color = (qw(light2 dark2));
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
 	my $last_rev;
@@ -1638,7 +1637,6 @@ sub git_heads {
 	git_header_div('summary', $project);
 
 	my $taglist = git_read_refs("refs/heads");
-	my $alternate = 0;
 	if (defined @$taglist) {
 		git_heads_body($taglist, $head);
 	}
@@ -2017,11 +2015,11 @@ sub git_commit {
 			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob") . "</td>\n";
 		} elsif ($status eq "D") {
 			print "<td>" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
 			      "<td><span class=\"file_status deleted\">[deleted " . file_type($from_mode). "]</span></td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, "blob") .
-			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$hash;f=$file")}, "history") .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$file")}, "blob") .
+			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$parent;f=$file")}, "history") .
 			      "</td>\n"
 		} elsif ($status eq "M" || $status eq "T") {
 			my $mode_chnge = "";
@@ -2063,7 +2061,7 @@ sub git_commit {
 			print "<td>" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"), -class => "list"}, esc_html($to_file)) . "</td>\n" .
 			      "<td><span class=\"file_status moved\">[moved from " .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$from_file"), -class => "list"}, esc_html($from_file)) .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$from_file"), -class => "list"}, esc_html($from_file)) .
 			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">" .
 			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
@@ -2179,15 +2177,17 @@ sub git_commitdiff {
 			git_diff_print(undef, "/dev/null", $to_id, "b/$file");
 		} elsif ($status eq "D") {
 			print "<div class=\"diff_info\">" . file_type($from_mode) . ":" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, $from_id) . "(deleted)" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash_parent;f=$file")}, $from_id) . "(deleted)" .
 			      "</div>\n";
 			git_diff_print($from_id, "a/$file", undef, "/dev/null");
 		} elsif ($status eq "M") {
 			if ($from_id ne $to_id) {
 				print "<div class=\"diff_info\">" .
-				      file_type($from_mode) . ":" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash;f=$file")}, $from_id) .
+				      file_type($from_mode) . ":" .
+				      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$hash_parent;f=$file")}, $from_id) .
 				      " -> " .
-				      file_type($to_mode) . ":" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id);
+				      file_type($to_mode) . ":" .
+				      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, $to_id);
 				print "</div>\n";
 				git_diff_print($from_id, "a/$file",  $to_id, "b/$file");
 			}
