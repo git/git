@@ -37,7 +37,7 @@ AC_DEFUN([GIT_ARG_SET_PATH],
 AC_DEFUN([GIT_CONF_APPEND_PATH],
 [PROGRAM=m4_toupper($1); \
 if test "$withval" = "no"; then \
-	AC_MSG_WARN([You cannot use git without $1]); \
+	AC_MSG_ERROR([You cannot use git without $1]); \
 else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
