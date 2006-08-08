@@ -252,7 +252,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
-		{ "push", cmd_push },
+		{ "push", cmd_push, RUN_SETUP },
 		{ "read-tree", cmd_read_tree, RUN_SETUP },
 		{ "repo-config", cmd_repo_config },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },

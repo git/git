@@ -59,7 +59,7 @@ void show_log(struct rev_info *opt, const char *sep)
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
 		if (opt->parents)
 			show_parents(commit, abbrev_commit);
-		putchar('\n');
+		putchar(opt->diffopt.line_termination);
 		return;
 	}
 
