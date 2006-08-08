@@ -298,7 +298,7 @@ yes,yes)
 		fi
 		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 		;;
-	http://*)
+	https://*|http://*)
 		if test -z "@@NO_CURL@@"
 		then
 			clone_dumb_http "$repo" "$D"
