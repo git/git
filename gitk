@@ -5062,6 +5062,7 @@ proc domktag {} {
     set tagids($tag) $id
     lappend idtags($id) $tag
     redrawtags $id
+    addedtag $id
 }
 
 proc redrawtags {id} {
@@ -5503,6 +5504,82 @@ proc restartatags {} {
     set travindex 0
     notbusy allcommits
     dispneartags
+}
+
+# update the desc_tags and anc_tags arrays for a new tag just added
+proc addedtag {id} {
+    global desc_tags anc_tags allparents allchildren allcommits
+    global idtags tagisdesc alldtags
+
+    if {![info exists desc_tags($id)]} return
+    set adt $desc_tags($id)
+    foreach t $desc_tags($id) {
+	set adt [concat $adt $alldtags($t)]
+    }
+    set adt [lsort -unique $adt]
+    set alldtags($id) $adt
+    foreach t $adt {
+	set tagisdesc($id,$t) -1
+	set tagisdesc($t,$id) 1
+    }
+    if {[info exists anc_tags($id)]} {
+	set todo $anc_tags($id)
+	while {$todo ne {}} {
+	    set do [lindex $todo 0]
+	    set todo [lrange $todo 1 end]
+	    if {[info exists tagisdesc($id,$do)]} continue
+	    set tagisdesc($do,$id) -1
+	    set tagisdesc($id,$do) 1
+	    if {[info exists anc_tags($do)]} {
+		set todo [concat $todo $anc_tags($do)]
+	    }
+	}
+    }
+
+    set lastold $desc_tags($id)
+    set lastnew [list $id]
+    set nup 0
+    set nch 0
+    set todo $allparents($id)
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists desc_tags($do)]} continue
+	if {$desc_tags($do) ne $lastold} {
+	    set lastold $desc_tags($do)
+	    set lastnew [combine_dtags $lastold [list $id]]
+	    incr nch
+	}
+	if {$lastold eq $lastnew} continue
+	set desc_tags($do) $lastnew
+	incr nup
+	if {![info exists idtags($do)]} {
+	    set todo [concat $todo $allparents($do)]
+	}
+    }
+
+    if {![info exists anc_tags($id)]} return
+    set lastold $anc_tags($id)
+    set lastnew [list $id]
+    set nup 0
+    set nch 0
+    set todo $allchildren($id)
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists anc_tags($do)]} continue
+	if {$anc_tags($do) ne $lastold} {
+	    set lastold $anc_tags($do)
+	    set lastnew [combine_atags $lastold [list $id]]
+	    incr nch
+	}
+	if {$lastold eq $lastnew} continue
+	set anc_tags($do) $lastnew
+	incr nup
+	if {![info exists idtags($do)]} {
+	    set todo [concat $todo $allchildren($do)]
+	}
+    }
 }
 
 # update the desc_heads array for a new head just added
