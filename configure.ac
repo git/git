@@ -105,7 +105,10 @@ AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python
 AS_HELP_STRING([--no-python], [don't use python scripts])],
  [if test "$withval" = "no"; then \
     NO_PYTHON=YesPlease; \
-  elif test "$withval" != "yes"; then \
+  elif test "$withval" = "yes"; then \
+    NO_PYTHON=; \
+  else \
+    NO_PYTHON=; \
     PYTHON_PATH=$withval; \
   fi; \
  ])
@@ -138,15 +141,15 @@ AC_CHECK_PROGS(TAR, [gtar tar])
 # Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 # Define PYTHON_PATH to provide path to Python.
 if test -z "$NO_PYTHON"; then
-	AC_PATH_PROGS(PYTHON_PATH, [python2.4 python2.3 python2 python])
+	if test -z "$PYTHON_PATH"; then
+		AC_PATH_PROGS(PYTHON_PATH, [python python2.4 python2.3 python2])
+	fi
 	if test -n "$PYTHON_PATH"; then
 		GIT_CONF_APPEND_LINE([PYTHON_PATH=@PYTHON_PATH@])
-	else
-		GIT_CONF_APPEND_LINE([NO_PYTHON=@NO_PYTHON@])
+		NO_PYTHON=""
 	fi
-else
-	GIT_CONF_APPEND_LINE([NO_PYTHON=@NO_PYTHON@])
 fi
+GIT_CONF_APPEND_LINE([NO_PYTHON=@NO_PYTHON@])
 
 
 ## Checks for libraries.
