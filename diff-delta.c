@@ -148,7 +148,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 		return NULL;
 
 	/* Determine index hash size.  Note that indexing skips the
-	   first byte to allow for optimizing the rabin polynomial
+	   first byte to allow for optimizing the Rabin's polynomial
 	   initialization in create_delta(). */
 	entries = (bufsize - 1)  / RABIN_WINDOW;
 	hsize = entries / 4;
@@ -205,7 +205,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 
 	/*
 	 * Determine a limit on the number of entries in the same hash
-	 * bucket.  This guard us against patological data sets causing
+	 * bucket.  This guards us against pathological data sets causing
 	 * really bad hash distribution with most entries in the same hash
 	 * bucket that would bring us to O(m*n) computing costs (m and n
 	 * corresponding to reference and target buffer sizes).
@@ -240,7 +240,7 @@ void free_delta_index(struct delta_index *index)
 
 /*
  * The maximum size for any opcode sequence, including the initial header
- * plus rabin window plus biggest copy.
+ * plus Rabin window plus biggest copy.
  */
 #define MAX_OP_SIZE	(5 + 5 + 1 + RABIN_WINDOW + 7)
 

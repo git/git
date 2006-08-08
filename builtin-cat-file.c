@@ -94,7 +94,7 @@ static int pprint_tag(const unsigned char *sha1, const char *buf, unsigned long 
 	return 0;
 }
 
-int cmd_cat_file(int argc, const char **argv, char **envp)
+int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20];
 	char type[20];
@@ -102,7 +102,6 @@ int cmd_cat_file(int argc, const char **argv, char **envp)
 	unsigned long size;
 	int opt;
 
-	setup_git_directory();
 	git_config(git_default_config);
 	if (argc != 3)
 		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");

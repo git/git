@@ -8,7 +8,7 @@
 
 #define MAX_URI (16)
 
-static const char push_usage[] = "git push [--all] [--tags] [--force] <repository> [<refspec>...]";
+static const char push_usage[] = "git-push [--all] [--tags] [-f | --force] <repository> [<refspec>...]";
 
 static int all = 0, tags = 0, force = 0, thin = 1;
 static const char *execute = NULL;
@@ -104,7 +104,7 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 			if (n < MAX_URI)
 				uri[n++] = strdup(s);
 			else
-				error("more than %d URL's specified, ignoreing the rest", MAX_URI);
+				error("more than %d URL's specified, ignoring the rest", MAX_URI);
 		}
 		else if (is_refspec && !has_explicit_refspec)
 			add_refspec(strdup(s));
@@ -270,10 +270,10 @@ static int do_push(const char *repo)
 	return 0;
 }
 
-int cmd_push(int argc, const char **argv, char **envp)
+int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	const char *repo = "origin";	// default repository
+	const char *repo = "origin";	/* default repository */
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -291,7 +291,7 @@ int cmd_push(int argc, const char **argv, char **envp)
 			tags = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--force")) {
+		if (!strcmp(arg, "--force") || !strcmp(arg, "-f")) {
 			force = 1;
 			continue;
 		}

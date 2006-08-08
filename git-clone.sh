@@ -205,7 +205,7 @@ dir="$2"
 [ -e "$dir" ] && echo "$dir already exists." && usage
 mkdir -p "$dir" &&
 D=$(cd "$dir" && pwd) &&
-trap 'err=$?; cd ..; rm -r "$D"; exit $err' 0
+trap 'err=$?; cd ..; rm -rf "$D"; exit $err' 0
 case "$bare" in
 yes)
 	GIT_DIR="$D" ;;
@@ -266,7 +266,7 @@ yes,yes)
 	    echo "$repo/objects" >> "$GIT_DIR/objects/info/alternates"
 	    ;;
 	esac
-	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
+	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 	;;
 *)
 	case "$repo" in
@@ -296,9 +296,9 @@ yes,yes)
 		    done
 		    rm -f "$GIT_DIR/TMP_ALT"
 		fi
-		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD"
+		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 		;;
-	http://*)
+	https://*|http://*)
 		if test -z "@@NO_CURL@@"
 		then
 			clone_dumb_http "$repo" "$D"
@@ -324,7 +324,8 @@ test -d "$GIT_DIR/refs/reference-tmp" && rm -fr "$GIT_DIR/refs/reference-tmp"
 if test -f "$GIT_DIR/CLONE_HEAD"
 then
 	# Read git-fetch-pack -k output and store the remote branches.
-	perl -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin"
+	@@PERL@@ -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin" ||
+	exit
 fi
 
 cd "$D" || exit

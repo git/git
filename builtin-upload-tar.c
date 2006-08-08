@@ -15,7 +15,7 @@ static int nak(const char *reason)
 	return 1;
 }
 
-int cmd_upload_tar(int argc, const char **argv, char **envp)
+int cmd_upload_tar(int argc, const char **argv, const char *prefix)
 {
 	int len;
 	const char *dir = argv[1];

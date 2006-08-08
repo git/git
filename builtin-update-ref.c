@@ -5,14 +5,14 @@
 static const char git_update_ref_usage[] =
 "git-update-ref <refname> <value> [<oldval>] [-m <reason>]";
 
-int cmd_update_ref(int argc, const char **argv, char **envp)
+int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
 	const char *refname=NULL, *value=NULL, *oldval=NULL, *msg=NULL;
 	struct ref_lock *lock;
 	unsigned char sha1[20], oldsha1[20];
 	int i;
 
-	setup_git_directory();
+	setup_ident();
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {

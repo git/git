@@ -8,24 +8,24 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git-diff' [ --diff-options ] <ent>{0,2} [<path>...]
+'git-diff' [ --diff-options ] <tree-ish>{0,2} [<path>...]
 
 DESCRIPTION
 -----------
-Show changes between two ents, an ent and the working tree, an
-ent and the index file, or the index file and the working tree.
+Show changes between two trees, a tree and the working tree, a
+tree and the index file, or the index file and the working tree.
 The combination of what is compared with what is determined by
-the number of ents given to the command.
+the number of trees given to the command.
 
-* When no <ent> is given, the working tree and the index
-  file is compared, using `git-diff-files`.
+* When no <tree-ish> is given, the working tree and the index
+  file are compared, using `git-diff-files`.
 
-* When one <ent> is given, the working tree and the named
-  tree is compared, using `git-diff-index`.  The option
+* When one <tree-ish> is given, the working tree and the named
+  tree are compared, using `git-diff-index`.  The option
   `--cached` can be given to compare the index file and
   the named tree.
 
-* When two <ent>s are given, these two trees are compared
+* When two <tree-ish>s are given, these two trees are compared
   using `git-diff-tree`.
 
 OPTIONS

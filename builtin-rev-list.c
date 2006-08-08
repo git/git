@@ -167,16 +167,16 @@ static void show_commit_list(struct rev_info *revs)
 		const char *name = pending->name;
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
-		if (obj->type == TYPE_TAG) {
+		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
 			add_object_array(obj, name, &objects);
 			continue;
 		}
-		if (obj->type == TYPE_TREE) {
+		if (obj->type == OBJ_TREE) {
 			process_tree((struct tree *)obj, &objects, NULL, name);
 			continue;
 		}
-		if (obj->type == TYPE_BLOB) {
+		if (obj->type == OBJ_BLOB) {
 			process_blob((struct blob *)obj, &objects, NULL, name);
 			continue;
 		}
@@ -306,12 +306,12 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
-int cmd_rev_list(int argc, const char **argv, char **envp)
+int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct commit_list *list;
 	int i;
 
-	init_revisions(&revs);
+	init_revisions(&revs, prefix);
 	revs.abbrev = 0;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	argc = setup_revisions(argc, argv, &revs, NULL);

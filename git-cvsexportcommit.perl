@@ -16,9 +16,9 @@ unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
 }
 
-our ($opt_h, $opt_p, $opt_v, $opt_c, $opt_f, $opt_m );
+our ($opt_h, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m );
 
-getopts('hpvcfm:');
+getopts('hpvcfam:');
 
 $opt_h && usage();
 
@@ -29,7 +29,6 @@ our ($tmpdir, $tmpdirname) = tempdir('git-cvsapplycommit-XXXXXX',
 				     TMPDIR => 1,
 				     CLEANUP => 1);
 
-print Dumper(@ARGV);
 # resolve target commit
 my $commit;
 $commit = pop @ARGV;
@@ -53,25 +52,45 @@ if (@ARGV) {
 # find parents from the commit itself
 my @commit  = safe_pipe_capture('git-cat-file', 'commit', $commit);
 my @parents;
-foreach my $p (@commit) {
-    if ($p =~ m/^$/) { # end of commit headers, we're done
-	last;
+my $committer;
+my $author;
+my $stage = 'headers'; # headers, msg
+my $title;
+my $msg = '';
+
+foreach my $line (@commit) {
+    chomp $line;
+    if ($stage eq 'headers' && $line eq '') {
+	$stage = 'msg';
+	next;
     }
-    if ($p =~ m/^parent (\w{40})$/) { # found a parent
-	push @parents, $1;
+
+    if ($stage eq 'headers') {
+	if ($line =~ m/^parent (\w{40})$/) { # found a parent
+	    push @parents, $1;
+	} elsif ($line =~ m/^author (.+) \d+ \+\d+$/) {
+	    $author = $1;
+	} elsif ($line =~ m/^committer (.+) \d+ \+\d+$/) {
+	    $committer = $1;
+	}
+    } else {
+	$msg .= $line . "\n";
+	unless ($title) {
+	    $title = $line;
+	}
     }
 }
 
 if ($parent) {
+    my $found;
     # double check that it's a valid parent
     foreach my $p (@parents) {
-	my $found;
 	if ($p eq $parent) {
 	    $found = 1;
 	    last;
 	}; # found it
-	die "Did not find $parent in the parents for this commit!";
     }
+    die "Did not find $parent in the parents for this commit!" if !$found;
 } else { # we don't have a parent from the cmdline...
     if (@parents == 1) { # it's safe to get it from the commit
 	$parent = $parents[0];
@@ -84,11 +103,17 @@ $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
 
 # grab the commit message
 open(MSG, ">.msg") or die "Cannot open .msg for writing";
-print MSG $opt_m;
+if ($opt_m) {
+    print MSG $opt_m;
+}
+print MSG $msg;
+if ($opt_a) {
+    print MSG "\n\nAuthor: $author\n";
+    if ($author ne $committer) {
+	print MSG "Committer: $committer\n";
+    }
+}
 close MSG;
-
-`git-cat-file commit $commit | sed -e '1,/^\$/d' >> .msg`;
-$? && die "Error extracting the commit message";
 
 my (@afiles, @dfiles, @mfiles, @dirs);
 my @files = safe_pipe_capture('git-diff-tree', '-r', $parent, $commit);
@@ -179,7 +204,7 @@ my @bfiles = grep(m/^Binary/, safe_pipe_capture('git-diff-tree', '-p', $parent, 
 @bfiles = map { chomp } @bfiles;
 foreach my $f (@bfiles) {
     # check that the file in cvs matches the "old" file
-    # extract the file to $tmpdir and comparre with cmp
+    # extract the file to $tmpdir and compare with cmp
     my $tree = safe_pipe_capture('git-rev-parse', "$parent^{tree}");
     chomp $tree;
     my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
@@ -233,6 +258,7 @@ foreach my $f (@dfiles) {
 }
 
 print "Commit to CVS\n";
+print "Patch: $title\n";
 my $commitfiles = join(' ', @afiles, @mfiles, @dfiles);
 my $cmd = "cvs commit -F .msg $commitfiles";
 
@@ -273,7 +299,7 @@ sub cleanupcvs {
     }
 }
 
-# An alterative to `command` that allows input to be passed as an array
+# An alternative to `command` that allows input to be passed as an array
 # to work around shell problems with weird characters in arguments
 # if the exec returns non-zero we die
 sub safe_pipe_capture {

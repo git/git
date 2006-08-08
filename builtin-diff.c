@@ -23,7 +23,7 @@ struct blobinfo {
 };
 
 static const char builtin_diff_usage[] =
-"diff <options> <rev>{0,2} -- <path>*";
+"git-diff <options> <rev>{0,2} -- <path>*";
 
 static int builtin_diff_files(struct rev_info *revs,
 			      int argc, const char **argv)
@@ -39,8 +39,6 @@ static int builtin_diff_files(struct rev_info *revs,
 			revs->max_count = 3;
 		else if (!strcmp(arg, "-q"))
 			silent = 1;
-		else if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -56,7 +54,7 @@ static int builtin_diff_files(struct rev_info *revs,
 	    3 < revs->max_count)
 		usage(builtin_diff_usage);
 	if (revs->max_count < 0 &&
-	    (revs->diffopt.output_format == DIFF_FORMAT_PATCH))
+	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
 	/*
 	 * Backward compatibility wart - "diff-files -s" used to
@@ -107,14 +105,9 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	/* Blob vs file in the working tree*/
 	struct stat st;
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
+
 	if (lstat(path, &st))
 		die("'%s': %s", path, strerror(errno));
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
@@ -132,23 +125,15 @@ static int builtin_diff_blobs(struct rev_info *revs,
 			      int argc, const char **argv,
 			      struct blobinfo *blob)
 {
-	/* Blobs: the arguments are reversed when setup_revisions()
-	 * picked them up.
-	 */
 	unsigned mode = canon_mode(S_IFREG | 0644);
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
+
 	stuff_change(&revs->diffopt,
 		     mode, mode,
-		     blob[1].sha1, blob[0].sha1,
-		     blob[0].name, blob[0].name);
+		     blob[0].sha1, blob[1].sha1,
+		     blob[0].name, blob[1].name);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -162,8 +147,6 @@ static int builtin_diff_index(struct rev_info *revs,
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached"))
 			cached = 1;
-		else if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -185,17 +168,12 @@ static int builtin_diff_tree(struct rev_info *revs,
 {
 	const unsigned char *(sha1[2]);
 	int swap = 0;
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+
+	if (argc > 1)
+		usage(builtin_diff_usage);
 
 	/* We saw two trees, ent[0] and ent[1].
-	 * if ent[1] is unintesting, they are swapped
+	 * if ent[1] is uninteresting, they are swapped
 	 */
 	if (ent[1].item->flags & UNINTERESTING)
 		swap = 1;
@@ -214,14 +192,9 @@ static int builtin_diff_combined(struct rev_info *revs,
 	const unsigned char (*parent)[20];
 	int i;
 
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--raw"))
-			revs->diffopt.output_format = DIFF_FORMAT_RAW;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+	if (argc > 1)
+		usage(builtin_diff_usage);
+
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	parent = xmalloc(ents * sizeof(*parent));
@@ -245,7 +218,7 @@ void add_head(struct rev_info *revs)
 	add_pending_object(revs, obj, "HEAD");
 }
 
-int cmd_diff(int argc, const char **argv, char **envp)
+int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct rev_info rev;
@@ -274,11 +247,15 @@ int cmd_diff(int argc, const char **argv, char **envp)
 	 * Other cases are errors.
 	 */
 
-	git_config(git_diff_config);
-	init_revisions(&rev);
-	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	git_config(git_diff_ui_config);
+	init_revisions(&rev, prefix);
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
+	if (!rev.diffopt.output_format) {
+		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+		diff_setup_done(&rev.diffopt);
+	}
+
 	/* Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
 	 */
@@ -305,9 +282,9 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		obj = deref_tag(obj, NULL, 0);
 		if (!obj)
 			die("invalid object '%s' given.", name);
-		if (obj->type == TYPE_COMMIT)
+		if (obj->type == OBJ_COMMIT)
 			obj = &((struct commit *)obj)->tree->object;
-		if (obj->type == TYPE_TREE) {
+		if (obj->type == OBJ_TREE) {
 			if (ARRAY_SIZE(ent) <= ents)
 				die("more than %d trees given: '%s'",
 				    (int) ARRAY_SIZE(ent), name);
@@ -317,7 +294,7 @@ int cmd_diff(int argc, const char **argv, char **envp)
 			ents++;
 			continue;
 		}
-		if (obj->type == TYPE_BLOB) {
+		if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die("more than two blobs given: '%s'", name);
 			memcpy(blob[blobs].sha1, obj->sha1, 20);
@@ -366,7 +343,15 @@ int cmd_diff(int argc, const char **argv, char **envp)
 		return builtin_diff_index(&rev, argc, argv);
 	else if (ents == 2)
 		return builtin_diff_tree(&rev, argc, argv, ent);
+	else if ((ents == 3) && (ent[0].item->flags & UNINTERESTING)) {
+		/* diff A...B where there is one sane merge base between
+		 * A and B.  We have ent[0] == merge-base, ent[1] == A,
+		 * and ent[2] == B.  Show diff between the base and B.
+		 */
+		return builtin_diff_tree(&rev, argc, argv, ent);
+	}
 	else
-		return builtin_diff_combined(&rev, argc, argv, ent, ents);
+		return builtin_diff_combined(&rev, argc, argv,
+					     ent, ents);
 	usage(builtin_diff_usage);
 }

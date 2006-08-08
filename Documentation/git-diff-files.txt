@@ -37,7 +37,7 @@ omit diff output for unmerged entries and just show "Unmerged".
 	commit with these flags.
 
 -q::
-	Remain silent even on nonexisting files
+	Remain silent even on nonexistent files
 
 Output format
 -------------

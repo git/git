@@ -6,7 +6,7 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--dense] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
+"git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
 static int default_num = 0;
 static int default_alloc = 0;
@@ -89,6 +89,8 @@ static int name_first_parent_chain(struct commit *c)
 			name_parent(c, p);
 			i++;
 		}
+		else
+			break;
 		c = p;
 	}
 	return i;
@@ -172,7 +174,7 @@ static void name_commits(struct commit_list *list,
 static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 {
 	if (!commit->object.flags) {
-		insert_by_date(commit, seen_p);
+		commit_list_insert(commit, seen_p);
 		return 1;
 	}
 	return 0;
@@ -218,9 +220,8 @@ static void join_revs(struct commit_list **list_p,
 	 * Postprocess to complete well-poisoning.
 	 *
 	 * At this point we have all the commits we have seen in
-	 * seen_p list (which happens to be sorted chronologically but
-	 * it does not really matter).  Mark anything that can be
-	 * reached from uninteresting commits not interesting.
+	 * seen_p list.  Mark anything that can be reached from
+	 * uninteresting commits not interesting.
 	 */
 	for (;;) {
 		int changed = 0;
@@ -549,7 +550,7 @@ static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 	return 0;
 }
 
-int cmd_show_branch(int ac, const char **av, char **envp)
+int cmd_show_branch(int ac, const char **av, const char *prefix)
 {
 	struct commit *rev[MAX_REVS], *commit;
 	struct commit_list *list = NULL, *seen = NULL;
@@ -572,7 +573,6 @@ int cmd_show_branch(int ac, const char **av, char **envp)
 	int topics = 0;
 	int dense = 1;
 
-	setup_git_directory();
 	git_config(git_show_branch_config);
 
 	/* If nothing is specified, try the default first */
@@ -700,6 +700,8 @@ int cmd_show_branch(int ac, const char **av, char **envp)
 
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
+
+	sort_by_date(&seen);
 
 	if (merge_base)
 		return show_merge_base(seen, num_rev);

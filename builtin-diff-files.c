@@ -13,13 +13,13 @@ static const char diff_files_usage[] =
 "git-diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_files(int argc, const char **argv, char **envp)
+int cmd_diff_files(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	int silent = 0;
 
-	git_config(git_diff_config);
-	init_revisions(&rev);
+	init_revisions(&rev, prefix);
+	git_config(git_default_config); /* no "diff" UI options */
 	rev.abbrev = 0;
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
@@ -36,6 +36,9 @@ int cmd_diff_files(int argc, const char **argv, char **envp)
 			usage(diff_files_usage);
 		argv++; argc--;
 	}
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_RAW;
+
 	/*
 	 * Make sure there are NO revision (i.e. pending object) parameter,
 	 * rev.max_count is reasonable (0 <= n <= 3),

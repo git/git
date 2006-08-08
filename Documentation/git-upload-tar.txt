@@ -17,7 +17,7 @@ to the other end over the git protocol.
 
 This command is usually not invoked directly by the end user.
 The UI for the protocol is on the 'git-tar-tree' side, and the
-program pair is meant to be used to get a tar achive from a
+program pair is meant to be used to get a tar archive from a
 remote repository.
 
 

@@ -55,13 +55,12 @@ static void diff_stages(int stage1, int stage2, const char **pathspec)
 	}
 }
 
-int cmd_diff_stages(int ac, const char **av, char **envp)
+int cmd_diff_stages(int ac, const char **av, const char *prefix)
 {
 	int stage1, stage2;
-	const char *prefix = setup_git_directory();
 	const char **pathspec = NULL;
 
-	git_config(git_diff_config);
+	git_config(git_default_config); /* no "diff" UI options */
 	read_cache();
 	diff_setup(&diff_options);
 	while (1 < ac && av[1][0] == '-') {
@@ -84,6 +83,9 @@ int cmd_diff_stages(int ac, const char **av, char **envp)
 		}
 		ac--; av++;
 	}
+
+	if (!diff_options.output_format)
+		diff_options.output_format = DIFF_FORMAT_RAW;
 
 	if (ac < 3 ||
 	    sscanf(av[1], "%d", &stage1) != 1 ||

@@ -20,6 +20,7 @@ static char block[BLOCKSIZE];
 static unsigned long offset;
 
 static time_t archive_time;
+static int tar_umask;
 
 /* tries hard to write, either succeeds or dies in the attempt */
 static void reliable_write(const void *data, unsigned long size)
@@ -188,13 +189,13 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	} else {
 		if (S_ISDIR(mode)) {
 			*header.typeflag = TYPEFLAG_DIR;
-			mode |= 0777;
+			mode = (mode | 0777) & ~tar_umask;
 		} else if (S_ISLNK(mode)) {
 			*header.typeflag = TYPEFLAG_LNK;
 			mode |= 0777;
 		} else if (S_ISREG(mode)) {
 			*header.typeflag = TYPEFLAG_REG;
-			mode |= (mode & 0100) ? 0777 : 0666;
+			mode = (mode | ((mode & 0100) ? 0777 : 0666)) & ~tar_umask;
 		} else {
 			error("unsupported file mode: 0%o (SHA1: %s)",
 			      mode, sha1_to_hex(sha1));
@@ -293,19 +294,33 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
-static int generate_tar(int argc, const char **argv, char** envp)
+int git_tar_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "tar.umask")) {
+		if (!strcmp(value, "user")) {
+			tar_umask = umask(0);
+			umask(tar_umask);
+		} else {
+			tar_umask = git_config_int(var, value);
+		}
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
+static int generate_tar(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20], tree_sha1[20];
 	struct commit *commit;
 	struct tree_desc tree;
 	struct strbuf current_path;
+	void *buffer;
 
 	current_path.buf = xmalloc(PATH_MAX);
 	current_path.alloc = PATH_MAX;
 	current_path.len = current_path.eof = 0;
 
-	setup_git_directory();
-	git_config(git_default_config);
+	git_config(git_tar_config);
 
 	switch (argc) {
 	case 3:
@@ -327,8 +342,8 @@ static int generate_tar(int argc, const char **argv, char** envp)
 	} else
 		archive_time = time(NULL);
 
-	tree.buf = read_object_with_reference(sha1, tree_type, &tree.size,
-	                                      tree_sha1);
+	tree.buf = buffer = read_object_with_reference(sha1, tree_type,
+	                                               &tree.size, tree_sha1);
 	if (!tree.buf)
 		die("not a reference to a tag, commit or tree object: %s",
 		    sha1_to_hex(sha1));
@@ -337,6 +352,7 @@ static int generate_tar(int argc, const char **argv, char** envp)
 		write_entry(tree_sha1, &current_path, 040777, NULL, 0);
 	traverse_tree(&tree, &current_path);
 	write_trailer();
+	free(buffer);
 	free(current_path.buf);
 	return 0;
 }
@@ -387,19 +403,19 @@ static int remote_tar(int argc, const char **argv)
 	return !!ret;
 }
 
-int cmd_tar_tree(int argc, const char **argv, char **envp)
+int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 {
 	if (argc < 2)
 		usage(tar_tree_usage);
 	if (!strncmp("--remote=", argv[1], 9))
 		return remote_tar(argc, argv);
-	return generate_tar(argc, argv, envp);
+	return generate_tar(argc, argv, prefix);
 }
 
 /* ustar header + extended global header content */
 #define HEADERSIZE (2 * RECORDSIZE)
 
-int cmd_get_tar_commit_id(int argc, const char **argv, char **envp)
+int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 {
 	char buffer[HEADERSIZE];
 	struct ustar_header *header = (struct ustar_header *)buffer;

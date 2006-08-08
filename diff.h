@@ -20,19 +20,32 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    const unsigned char *sha1,
 		    const char *base, const char *path);
 
+#define DIFF_FORMAT_RAW		0x0001
+#define DIFF_FORMAT_DIFFSTAT	0x0002
+#define DIFF_FORMAT_SUMMARY	0x0004
+#define DIFF_FORMAT_PATCH	0x0008
+
+/* These override all above */
+#define DIFF_FORMAT_NAME	0x0010
+#define DIFF_FORMAT_NAME_STATUS	0x0020
+#define DIFF_FORMAT_CHECKDIFF	0x0040
+
+/* Same as output_format = 0 but we know that -s flag was given
+ * and we should not give default value to output_format.
+ */
+#define DIFF_FORMAT_NO_OUTPUT	0x0080
+
 struct diff_options {
 	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
 	unsigned recursive:1,
-		 with_raw:1,
-		 with_stat:1,
 		 tree_in_recursive:1,
 		 binary:1,
+		 text:1,
 		 full_index:1,
 		 silent_on_remove:1,
 		 find_copies_harder:1,
-		 summary:1,
 		 color_diff:1;
 	int context;
 	int break_opt;
@@ -45,6 +58,7 @@ struct diff_options {
 	int rename_limit;
 	int setup;
 	int abbrev;
+	const char *msg_sep;
 	const char *stat_sep;
 	long xdl_opts;
 
@@ -54,6 +68,17 @@ struct diff_options {
 	change_fn_t change;
 	add_remove_fn_t add_remove;
 };
+
+enum color_diff {
+	DIFF_RESET = 0,
+	DIFF_PLAIN = 1,
+	DIFF_METAINFO = 2,
+	DIFF_FRAGINFO = 3,
+	DIFF_FILE_OLD = 4,
+	DIFF_FILE_NEW = 5,
+	DIFF_COMMIT = 6,
+};
+const char *diff_get_color(int diff_use_color, enum color_diff ix);
 
 extern const char mime_boundary_leader[];
 
@@ -109,7 +134,7 @@ extern int diff_scoreopt_parse(const char *opt);
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
-extern int git_diff_config(const char *var, const char *value);
+extern int git_diff_ui_config(const char *var, const char *value);
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);
 extern int diff_setup_done(struct diff_options *);
@@ -148,18 +173,10 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  -O<file>      reorder diffs according to the <file>.\n" \
 "  -S<string>    find filepair whose only one side contains the string.\n" \
 "  --pickaxe-all\n" \
-"                show all files diff when -S is used and hit is found.\n"
+"                show all files diff when -S is used and hit is found.\n" \
+"  -a  --text    treat all files as text.\n"
 
 extern int diff_queue_is_empty(void);
-
-#define DIFF_FORMAT_RAW		1
-#define DIFF_FORMAT_PATCH	2
-#define DIFF_FORMAT_NO_OUTPUT	3
-#define DIFF_FORMAT_NAME	4
-#define DIFF_FORMAT_NAME_STATUS	5
-#define DIFF_FORMAT_DIFFSTAT	6
-#define DIFF_FORMAT_CHECKDIFF	7
-
 extern void diff_flush(struct diff_options*);
 
 /* diff-raw status letters */

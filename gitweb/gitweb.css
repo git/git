@@ -60,6 +60,7 @@ div.page_footer_text {
 
 div.page_body {
 	padding: 8px;
+	font-family: monospace;
 }
 
 div.title, a.title {
@@ -79,6 +80,7 @@ div.title_text {
 	padding: 6px 0px;
 	border: solid #d9d8d1;
 	border-width: 0px 0px 1px;
+	font-family: monospace;
 }
 
 div.log_body {
@@ -142,8 +144,13 @@ table {
 	padding: 8px 4px;
 }
 
-table.project_list, table.diff_tree {
+table.project_list {
 	border-spacing: 0;
+}
+
+table.diff_tree {
+	border-spacing: 0;
+	font-family: monospace;
 }
 
 table.blame {

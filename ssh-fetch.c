@@ -68,7 +68,7 @@ int fetch(unsigned char *sha1)
 	struct object_list *temp;
 
 	if (memcmp(sha1, in_transit->item->sha1, 20)) {
-		// we must have already fetched it to clean the queue
+		/* we must have already fetched it to clean the queue */
 		return has_sha1_file(sha1) ? 0 : -1;
 	}
 	prefetches--;
@@ -85,7 +85,7 @@ int fetch(unsigned char *sha1)
 		if (read(fd_in, &remote, 1) < 1)
 			return -1;
 	}
-	//fprintf(stderr, "Got %d\n", remote);
+	/* fprintf(stderr, "Got %d\n", remote); */
 	if (remote < 0)
 		return remote;
 	ret = write_sha1_from_fd(sha1, fd_in, conn_buf, 4096, &conn_buf_posn);
@@ -120,9 +120,10 @@ int fetch_ref(char *ref, unsigned char *sha1)
 
 static const char ssh_fetch_usage[] =
   MY_PROGRAM_NAME
-  " [-c] [-t] [-a] [-v] [-d] [--recover] [-w ref] commit-id url";
+  " [-c] [-t] [-a] [-v] [--recover] [-w ref] commit-id url";
 int main(int argc, char **argv)
 {
+	const char *write_ref = NULL;
 	char *commit_id;
 	char *url;
 	int arg = 1;
@@ -131,6 +132,7 @@ int main(int argc, char **argv)
 	prog = getenv("GIT_SSH_PUSH");
 	if (!prog) prog = "git-ssh-upload";
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 
@@ -159,7 +161,6 @@ int main(int argc, char **argv)
 	}
 	commit_id = argv[arg];
 	url = argv[arg + 1];
-	write_ref_log_details = url;
 
 	if (setup_connection(&fd_in, &fd_out, prog, url, arg, argv + 1))
 		return 1;
@@ -167,7 +168,7 @@ int main(int argc, char **argv)
 	if (get_version())
 		return 1;
 
-	if (pull(commit_id))
+	if (pull(1, &commit_id, &write_ref, url))
 		return 1;
 
 	return 0;

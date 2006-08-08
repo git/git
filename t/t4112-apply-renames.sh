@@ -11,31 +11,7 @@ test_description='git-apply should not get confused with rename/copy.
 
 # setup
 
-mkdir -p include/arch/x86_64/klibc klibc/arch/x86_64/include/klibc
-
-cat >include/arch/x86_64/klibc/archsetjmp.h <<\EOF
-/*
- * arch/x86_64/include/klibc/archsetjmp.h
- */
-
-#ifndef _KLIBC_ARCHSETJMP_H
-#define _KLIBC_ARCHSETJMP_H
-
-struct __jmp_buf {
-  unsigned long __rbx;
-  unsigned long __rsp;
-  unsigned long __rbp;
-  unsigned long __r12;
-  unsigned long __r13;
-  unsigned long __r14;
-  unsigned long __r15;
-  unsigned long __rip;
-};
-
-typedef struct __jmp_buf jmp_buf[1];
-
-#endif /* _SETJMP_H */
-EOF
+mkdir -p klibc/arch/x86_64/include/klibc
 
 cat >klibc/arch/x86_64/include/klibc/archsetjmp.h <<\EOF
 /*
@@ -139,7 +115,7 @@ rename to include/arch/m32r/klibc/archsetjmp.h
 +#endif /* _KLIBC_ARCHSETJMP_H */
 EOF
 
-find include klibc -type f -print | xargs git-update-index --add --
+find klibc -type f -print | xargs git-update-index --add --
 
 test_expect_success 'check rename/copy patch' 'git-apply --check patch'
 

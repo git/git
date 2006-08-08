@@ -241,11 +241,6 @@ static void unpack_one(unsigned nr, unsigned total)
 	}
 }
 
-/*
- * We unpack from the end, older files first. Now, usually
- * there are deltas etc, so we'll not actually write the
- * objects in that order, but we might as well try..
- */
 static void unpack_all(void)
 {
 	int i;

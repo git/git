@@ -13,6 +13,15 @@ that uses $prefix, the built results have some paths encoded,
 which are derived from $prefix, so "make all; make prefix=/usr
 install" would not work.
 
+Alternatively you can use autoconf generated ./configure script to
+set up install paths (via config.mak.autogen), so you can write instead
+
+	$ autoconf ;# as yourself if ./configure doesn't exist yet
+	$ ./configure --prefix=/usr ;# as yourself
+	$ make all doc ;# as yourself
+	# make install install-doc ;# as root
+
+
 Issues of note:
 
  - git normally installs a helper script wrapper called "git", which
@@ -57,7 +66,7 @@ Issues of note:
 
 	- "libcurl" and "curl" executable.  git-http-fetch and
 	  git-fetch use them.  If you do not use http
-	  transfer, you are probabaly OK if you do not have
+	  transfer, you are probably OK if you do not have
 	  them.
 
 	- expat library; git-http-push uses it for remote lock
@@ -82,7 +91,7 @@ Issues of note:
 	  git, and if you only use git to track other peoples work you'll
 	  never notice the lack of it. 
 
-        - "wish", the TCL/Tk windowing shell is used in gitk to show the
+        - "wish", the Tcl/Tk windowing shell is used in gitk to show the
           history graphically
 
 	- "ssh" is used to push and pull over the net

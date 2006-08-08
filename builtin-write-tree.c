@@ -35,7 +35,8 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 				      missing_ok, 0) < 0)
 			die("git-write-tree: error building trees");
 		if (0 <= newfd) {
-			if (!write_cache(newfd, active_cache, active_nr))
+			if (!write_cache(newfd, active_cache, active_nr)
+					&& !close(newfd))
 				commit_lock_file(lock_file);
 		}
 		/* Not being able to write is fine -- we are only interested
@@ -59,13 +60,11 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 	return 0;
 }
 
-int cmd_write_tree(int argc, const char **argv, char **envp)
+int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int missing_ok = 0, ret;
 	const char *prefix = NULL;
 	unsigned char sha1[20];
-
-	setup_git_directory();
 
 	while (1 < argc) {
 		const char *arg = argv[1];
@@ -74,7 +73,7 @@ int cmd_write_tree(int argc, const char **argv, char **envp)
 		else if (!strncmp(arg, "--prefix=", 9))
 			prefix = arg + 9;
 		else
-			die(write_tree_usage);
+			usage(write_tree_usage);
 		argc--; argv++;
 	}
 

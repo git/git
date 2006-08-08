@@ -164,17 +164,60 @@ static int show_file(const char *arg)
 	return 0;
 }
 
-int cmd_rev_parse(int argc, const char **argv, char **envp)
+static int try_difference(const char *arg)
+{
+	char *dotdot;
+	unsigned char sha1[20];
+	unsigned char end[20];
+	const char *next;
+	const char *this;
+	int symmetric;
+
+	if (!(dotdot = strstr(arg, "..")))
+		return 0;
+	next = dotdot + 2;
+	this = arg;
+	symmetric = (*next == '.');
+
+	*dotdot = 0;
+	next += symmetric;
+
+	if (!*next)
+		next = "HEAD";
+	if (dotdot == arg)
+		this = "HEAD";
+	if (!get_sha1(this, sha1) && !get_sha1(next, end)) {
+		show_rev(NORMAL, end, next);
+		show_rev(symmetric ? NORMAL : REVERSED, sha1, this);
+		if (symmetric) {
+			struct commit_list *exclude;
+			struct commit *a, *b;
+			a = lookup_commit_reference(sha1);
+			b = lookup_commit_reference(end);
+			exclude = get_merge_bases(a, b, 1);
+			while (exclude) {
+				struct commit_list *n = exclude->next;
+				show_rev(REVERSED,
+					 exclude->item->object.sha1,NULL);
+				free(exclude);
+				exclude = n;
+			}
+		}
+		return 1;
+	}
+	*dotdot = '.';
+	return 0;
+}
+
+int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0;
 	unsigned char sha1[20];
-	const char *prefix = setup_git_directory();
 
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		char *dotdot;
 
 		if (as_is) {
 			if (show_file(arg) && as_is < 2)
@@ -326,23 +369,8 @@ int cmd_rev_parse(int argc, const char **argv, char **envp)
 		}
 
 		/* Not a flag argument */
-		dotdot = strstr(arg, "..");
-		if (dotdot) {
-			unsigned char end[20];
-			const char *next = dotdot + 2;
-			const char *this = arg;
-			*dotdot = 0;
-			if (!*next)
-				next = "HEAD";
-			if (dotdot == arg)
-				this = "HEAD";
-			if (!get_sha1(this, sha1) && !get_sha1(next, end)) {
-				show_rev(NORMAL, end, next);
-				show_rev(REVERSED, sha1, this);
-				continue;
-			}
-			*dotdot = '.';
-		}
+		if (try_difference(arg))
+			continue;
 		if (!get_sha1(arg, sha1)) {
 			show_rev(NORMAL, sha1, arg);
 			continue;

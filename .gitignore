@@ -46,6 +46,7 @@ git-http-push
 git-imap-send
 git-index-pack
 git-init-db
+git-instaweb
 git-local-fetch
 git-log
 git-lost-found
@@ -106,6 +107,7 @@ git-ssh-push
 git-ssh-upload
 git-status
 git-stripspace
+git-svn
 git-svnimport
 git-symbolic-ref
 git-tag
@@ -135,4 +137,10 @@ git-core.spec
 *.[ao]
 *.py[co]
 config.mak
+autom4te.cache
+config.log
+config.status
+config.mak.in
+config.mak.autogen
+configure
 git-blame

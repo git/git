@@ -29,6 +29,7 @@
  */
 
 extern char *sq_quote(const char *src);
+extern void sq_quote_print(FILE *stream, const char *src);
 extern size_t sq_quote_buf(char *dst, size_t n, const char *src);
 
 /* This unwraps what sq_quote() produces in place, but returns

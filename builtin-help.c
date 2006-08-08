@@ -9,10 +9,8 @@
 #include "exec_cmd.h"
 #include "common-cmds.h"
 
-static const char git_usage[] =
-	"Usage: git [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ ARGS ]";
 
-/* most gui terms set COLUMNS (although some don't export it) */
+/* most GUI terminals set COLUMNS (although some don't export it) */
 static int term_columns(void)
 {
 	char *col_string = getenv("COLUMNS");
@@ -178,31 +176,6 @@ static void list_common_cmds_help(void)
 	puts("(use 'git help -a' to get a list of all installed git commands)");
 }
 
-void cmd_usage(int show_all, const char *exec_path, const char *fmt, ...)
-{
-	if (fmt) {
-		va_list ap;
-
-		va_start(ap, fmt);
-		printf("git: ");
-		vprintf(fmt, ap);
-		va_end(ap);
-		putchar('\n');
-	}
-	else
-		puts(git_usage);
-
-	if (exec_path) {
-		putchar('\n');
-		if (show_all)
-			list_commands(exec_path, "git-*");
-		else
-			list_common_cmds_help();
-        }
-
-	exit(1);
-}
-
 static void show_man_page(const char *git_cmd)
 {
 	const char *page;
@@ -221,21 +194,40 @@ static void show_man_page(const char *git_cmd)
 	execlp("man", "man", page, NULL);
 }
 
-int cmd_version(int argc, const char **argv, char **envp)
+void help_unknown_cmd(const char *cmd)
+{
+	printf("git: '%s' is not a git-command\n\n", cmd);
+	list_common_cmds_help();
+	exit(1);
+}
+
+int cmd_version(int argc, const char **argv, const char *prefix)
 {
 	printf("git version %s\n", git_version_string);
 	return 0;
 }
 
-int cmd_help(int argc, const char **argv, char **envp)
+int cmd_help(int argc, const char **argv, const char *prefix)
 {
-	const char *help_cmd = argv[1];
-	if (!help_cmd)
-		cmd_usage(0, git_exec_path(), NULL);
-	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a"))
-		cmd_usage(1, git_exec_path(), NULL);
+	const char *help_cmd = argc > 1 ? argv[1] : NULL;
+	const char *exec_path = git_exec_path();
+
+	if (!help_cmd) {
+		printf("usage: %s\n\n", git_usage_string);
+		list_common_cmds_help();
+		exit(1);
+	}
+
+	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
+		printf("usage: %s\n\n", git_usage_string);
+		if(exec_path)
+			list_commands(exec_path, "git-*");
+		exit(1);
+	}
+
 	else
 		show_man_page(help_cmd);
+
 	return 0;
 }
 

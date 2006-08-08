@@ -4901,7 +4901,7 @@ proc domktag {} {
 
 proc redrawtags {id} {
     global canv linehtag commitrow idpos selectedline curview
-    global mainfont
+    global mainfont canvxmax
 
     if {![info exists commitrow($curview,$id)]} return
     drawcmitrow $commitrow($curview,$id)

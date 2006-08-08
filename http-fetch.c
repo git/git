@@ -36,6 +36,8 @@ enum XML_Status {
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
 
+static int commits_on_stdin = 0;
+
 static int got_alternates = -1;
 static int corrupt_object_found = 0;
 
@@ -43,7 +45,7 @@ static struct curl_slist *no_pragma_header;
 
 struct alt_base
 {
-	char *base;
+	const char *base;
 	int path_len;
 	int got_indices;
 	struct packed_git *packs;
@@ -81,7 +83,7 @@ struct object_request
 };
 
 struct alternates_request {
-	char *base;
+	const char *base;
 	char *url;
 	struct buffer *buffer;
 	struct active_request_slot *slot;
@@ -142,7 +144,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
-static void fetch_alternates(char *base);
+static void fetch_alternates(const char *base);
 
 static void process_object_response(void *callback_data);
 
@@ -490,7 +492,7 @@ static int setup_index(struct alt_base *repo, unsigned char *sha1)
 {
 	struct packed_git *new_pack;
 	if (has_pack_file(sha1))
-		return 0; // don't list this as something we can get
+		return 0; /* don't list this as something we can get */
 
 	if (fetch_index(repo, sha1))
 		return -1;
@@ -507,7 +509,7 @@ static void process_alternates_response(void *callback_data)
 		(struct alternates_request *)callback_data;
 	struct active_request_slot *slot = alt_req->slot;
 	struct alt_base *tail = alt;
-	char *base = alt_req->base;
+	const char *base = alt_req->base;
 	static const char null_byte = '\0';
 	char *data;
 	int i = 0;
@@ -570,7 +572,7 @@ static void process_alternates_response(void *callback_data)
 						 base[serverlen - 1] != '/');
 					i += 3;
 				}
-				// If the server got removed, give up.
+				/* If the server got removed, give up. */
 				okay = strchr(base, ':') - base + 3 <
 					serverlen;
 			} else if (alt_req->http_specific) {
@@ -581,7 +583,7 @@ static void process_alternates_response(void *callback_data)
 					okay = 1;
 				}
 			}
-			// skip 'objects' at end
+			/* skip 'objects' at end */
 			if (okay) {
 				target = xmalloc(serverlen + posn - i - 6);
 				strlcpy(target, base, serverlen);
@@ -612,7 +614,7 @@ static void process_alternates_response(void *callback_data)
 	got_alternates = 1;
 }
 
-static void fetch_alternates(char *base)
+static void fetch_alternates(const char *base)
 {
 	struct buffer buffer;
 	char *url;
@@ -1185,7 +1187,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
         char *url;
         char hex[42];
         struct buffer buffer;
-	char *base = alt->base;
+	const char *base = alt->base;
 	struct active_request_slot *slot;
 	struct slot_results results;
         buffer.size = 41;
@@ -1214,14 +1216,17 @@ int fetch_ref(char *ref, unsigned char *sha1)
         return 0;
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
-	char *commit_id;
-	char *url;
+	int commits;
+	const char **write_ref = NULL;
+	char **commit_id;
+	const char *url;
 	char *path;
 	int arg = 1;
 	int rc = 0;
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 
@@ -1237,20 +1242,26 @@ int main(int argc, char **argv)
 		} else if (argv[arg][1] == 'v') {
 			get_verbosely = 1;
 		} else if (argv[arg][1] == 'w') {
-			write_ref = argv[arg + 1];
+			write_ref = &argv[arg + 1];
 			arg++;
 		} else if (!strcmp(argv[arg], "--recover")) {
 			get_recover = 1;
+		} else if (!strcmp(argv[arg], "--stdin")) {
+			commits_on_stdin = 1;
 		}
 		arg++;
 	}
-	if (argc < arg + 2) {
-		usage("git-http-fetch [-c] [-t] [-a] [-d] [-v] [--recover] [-w ref] commit-id url");
+	if (argc < arg + 2 - commits_on_stdin) {
+		usage("git-http-fetch [-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url");
 		return 1;
 	}
-	commit_id = argv[arg];
-	url = argv[arg + 1];
-	write_ref_log_details = url;
+	if (commits_on_stdin) {
+		commits = pull_targets_stdin(&commit_id, &write_ref);
+	} else {
+		commit_id = (char **) &argv[arg++];
+		commits = 1;
+	}
+	url = argv[arg];
 
 	http_init();
 
@@ -1268,12 +1279,15 @@ int main(int argc, char **argv)
 			alt->path_len = strlen(path);
 	}
 
-	if (pull(commit_id))
+	if (pull(commits, commit_id, write_ref, url))
 		rc = 1;
 
 	http_cleanup();
 
 	curl_slist_free_all(no_pragma_header);
+
+	if (commits_on_stdin)
+		pull_targets_free(commits, commit_id, write_ref);
 
 	if (corrupt_object_found) {
 		fprintf(stderr,

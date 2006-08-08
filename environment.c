@@ -11,6 +11,7 @@
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
+int use_legacy_headers = 1;
 int trust_executable_bit = 1;
 int assume_unchanged = 0;
 int prefer_symlink_refs = 0;
@@ -20,6 +21,9 @@ int repository_format_version = 0;
 char git_commit_encoding[MAX_ENCODING_LENGTH] = "utf-8";
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace = NULL;
+int zlib_compression_level = Z_DEFAULT_COMPRESSION;
+int pager_in_use;
+int pager_use_color = 1;
 
 static int dyn_git_object_dir, dyn_git_index_file, dyn_git_graft_file;
 static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,

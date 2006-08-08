@@ -15,12 +15,14 @@ SYNOPSIS
 	     [ \--sparse ]
 	     [ \--no-merges ]
 	     [ \--remove-empty ]
+	     [ \--not ]
 	     [ \--all ]
 	     [ \--topo-order ]
 	     [ \--parents ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
+	     [ \--merge ]
 	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION
@@ -37,6 +39,14 @@ not in 'baz'".
 A special notation <commit1>..<commit2> can be used as a
 short-hand for {caret}<commit1> <commit2>.
 
+Another special notation is <commit1>...<commit2> which is useful for
+merges.  The resulting set of commits is the symmetric difference
+between the two operands.  The following two commands are equivalent:
+
+------------
+$ git-rev-list A B --not $(git-merge-base --all A B)
+$ git-rev-list A...B
+------------
 
 OPTIONS
 -------
@@ -47,6 +57,9 @@ OPTIONS
 	Print the contents of the commit in raw-format; each
 	record is separated with a NUL character.
 
+--parents::
+	Print the parents of the commit.
+
 --objects::
 	Print the object IDs of any object referenced by the listed commits.
 	'git-rev-list --objects foo ^bar' thus means "send me all object IDs
@@ -55,7 +68,7 @@ OPTIONS
 
 --objects-edge::
 	Similar to `--objects`, but also print the IDs of
-	excluded commits refixed with a `-` character.  This is
+	excluded commits prefixed with a `-` character.  This is
 	used by `git-pack-objects` to build 'thin' pack, which
 	records objects in deltified form based on objects
 	contained in these excluded commits to reduce network
@@ -93,6 +106,14 @@ OPTIONS
 --remove-empty::
 	Stop when a given path disappears from the tree.
 
+--no-merges::
+	Do not print commits with more than one parent.
+
+--not::
+	Reverses the meaning of the '{caret}' prefix (or lack
+	thereof) for all following revision specifiers, up to
+	the next `--not`.
+
 --all::
 	Pretend as if all the refs in `$GIT_DIR/refs/` are
 	listed on the command line as <commit>.
@@ -102,6 +123,10 @@ OPTIONS
 	chronological order.  This option makes them appear in
 	topological order (i.e. descendant commits are shown
 	before their parents).
+
+--merge::
+	After a failed merge, show refs that touch files having a
+	conflict and don't exist on all heads to merge.
 
 Author
 ------

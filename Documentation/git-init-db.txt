@@ -25,7 +25,7 @@ DESCRIPTION
 -----------
 This command creates an empty git repository - basically a `.git` directory
 with subdirectories for `objects`, `refs/heads`, `refs/tags`, and
-templated files.
+template files.
 An initial `HEAD` file that references the HEAD of the master branch
 is also created.
 

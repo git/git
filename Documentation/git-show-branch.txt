@@ -52,6 +52,11 @@ OPTIONS
         appear in topological order (i.e., descendant commits
         are shown before their parents).
 
+--sparse::
+	By default, the output omits merges that are reachable
+	from only one tip being shown.  This option makes them
+	visible.
+
 --more=<n>::
 	Usually the command stops output upon showing the commit
 	that is the common ancestor of all the branches.  This

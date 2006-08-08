@@ -8,7 +8,7 @@
 #   $2 - file in branch1 SHA1 (or empty)
 #   $3 - file in branch2 SHA1 (or empty)
 #   $4 - pathname in repository
-#   $5 - orignal file mode (or empty)
+#   $5 - original file mode (or empty)
 #   $6 - file in branch1 mode (or empty)
 #   $7 - file in branch2 mode (or empty)
 #

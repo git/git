@@ -131,7 +131,8 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG" \
+			--reflog-action=rebase
 		exit
 		;;
 	--skip)
@@ -150,7 +151,8 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG"
+		git am -3 --skip --resolvemsg="$RESOLVEMSG" \
+			--reflog-action=rebase
 		exit
 		;;
 	--abort)
@@ -264,14 +266,11 @@ onto=$(git-rev-parse --verify "${onto_name}^0") || exit
 
 # Check if we are already based on $onto, but this should be
 # done only when upstream and onto are the same.
-if test "$upstream" = "$onto"
+mb=$(git-merge-base "$onto" "$branch")
+if test "$upstream" = "$onto" && test "$mb" = "$onto"
 then
-	mb=$(git-merge-base "$onto" "$branch")
-	if test "$mb" = "$onto"
-	then
-		echo >&2 "Current branch $branch_name is up to date."
-		exit 0
-	fi
+	echo >&2 "Current branch $branch_name is up to date."
+	exit 0
 fi
 
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
@@ -279,16 +278,17 @@ git-reset --hard "$onto"
 
 # If the $onto is a proper descendant of the tip of the branch, then
 # we just fast forwarded.
-if test "$mb" = "$onto"
+if test "$mb" = "$branch"
 then
-	echo >&2 "Fast-forwarded $branch to $newbase."
+	echo >&2 "Fast-forwarded $branch_name to $onto_name."
 	exit 0
 fi
 
 if test -z "$do_merge"
 then
 	git-format-patch -k --stdout --full-index "$upstream"..ORIG_HEAD |
-	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+	git am --binary -3 -k --resolvemsg="$RESOLVEMSG" \
+		--reflog-action=rebase
 	exit $?
 fi
 
@@ -311,7 +311,7 @@ echo "$prev_head" > "$dotest/prev_head"
 
 msgnum=0
 for cmt in `git-rev-list --no-merges "$upstream"..ORIG_HEAD \
-			| perl -e 'print reverse <>'`
+			| @@PERL@@ -e 'print reverse <>'`
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$dotest/cmt.$msgnum"

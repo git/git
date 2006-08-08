@@ -348,7 +348,7 @@ static void cleanup_space(char *buf)
 	}
 }
 
-static void decode_header_bq(char *it);
+static void decode_header(char *it);
 typedef int (*header_fn_t)(char *);
 struct header_def {
 	const char *name;
@@ -371,7 +371,7 @@ static void check_header(char *line, struct header_def *header)
 			/* Unwrap inline B and Q encoding, and optionally
 			 * normalize the meta information to utf8.
 			 */
-			decode_header_bq(line + len + 2);
+			decode_header(line + len + 2);
 			header[i].func(line + len + 2);
 			break;
 		}
@@ -446,7 +446,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 			break;
 	}
 	/* Count mbox From headers as headers */
-	if (!ofs && !memcmp(line, "From ", 5))
+	if (!ofs && (!memcmp(line, "From ", 5) || !memcmp(line, ">From ", 6)))
 		ofs = 1;
 	return ofs;
 }
@@ -566,16 +566,19 @@ static void convert_to_utf8(char *line, char *charset)
 #endif
 }
 
-static void decode_header_bq(char *it)
+static int decode_header_bq(char *it)
 {
 	char *in, *out, *ep, *cp, *sp;
 	char outbuf[1000];
+	int rfc2047 = 0;
 
 	in = it;
 	out = outbuf;
 	while ((ep = strstr(in, "=?")) != NULL) {
 		int sz, encoding;
 		char charset_q[256], piecebuf[256];
+		rfc2047 = 1;
+
 		if (in != ep) {
 			sz = ep - in;
 			memcpy(out, in, sz);
@@ -589,19 +592,19 @@ static void decode_header_bq(char *it)
 		ep += 2;
 		cp = strchr(ep, '?');
 		if (!cp)
-			return; /* no munging */
+			return rfc2047; /* no munging */
 		for (sp = ep; sp < cp; sp++)
 			charset_q[sp - ep] = tolower(*sp);
 		charset_q[cp - ep] = 0;
 		encoding = cp[1];
 		if (!encoding || cp[2] != '?')
-			return; /* no munging */
+			return rfc2047; /* no munging */
 		ep = strstr(cp + 3, "?=");
 		if (!ep)
-			return; /* no munging */
+			return rfc2047; /* no munging */
 		switch (tolower(encoding)) {
 		default:
-			return; /* no munging */
+			return rfc2047; /* no munging */
 		case 'b':
 			sz = decode_b_segment(cp + 3, piecebuf, ep);
 			break;
@@ -610,7 +613,7 @@ static void decode_header_bq(char *it)
 			break;
 		}
 		if (sz < 0)
-			return;
+			return rfc2047;
 		if (metainfo_charset)
 			convert_to_utf8(piecebuf, charset_q);
 		strcpy(out, piecebuf);
@@ -619,6 +622,19 @@ static void decode_header_bq(char *it)
 	}
 	strcpy(out, in);
 	strcpy(it, outbuf);
+	return rfc2047;
+}
+
+static void decode_header(char *it)
+{
+
+	if (decode_header_bq(it))
+		return;
+	/* otherwise "it" is a straight copy of the input.
+	 * This can be binary guck but there is no charset specified.
+	 */
+	if (metainfo_charset)
+		convert_to_utf8(it, "");
 }
 
 static void decode_transfer_encoding(char *line)
@@ -820,7 +836,7 @@ int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 static const char mailinfo_usage[] =
 	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
 
-int cmd_mailinfo(int argc, const char **argv, char **envp)
+int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery

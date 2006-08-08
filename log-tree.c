@@ -43,9 +43,10 @@ static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 	return at;
 }
 
-void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
+void show_log(struct rev_info *opt, const char *sep)
 {
 	static char this_header[16384];
+	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
@@ -58,7 +59,7 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
 		if (opt->parents)
 			show_parents(commit, abbrev_commit);
-		putchar('\n');
+		putchar(opt->diffopt.line_termination);
 		return;
 	}
 
@@ -96,6 +97,11 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 			subject = "Subject: ";
 
 		printf("From %s Mon Sep 17 00:00:00 2001\n", sha1);
+		if (opt->message_id)
+			printf("Message-Id: <%s>\n", opt->message_id);
+		if (opt->ref_message_id)
+			printf("In-Reply-To: <%s>\nReferences: <%s>\n",
+			       opt->ref_message_id, opt->ref_message_id);
 		if (opt->mime_boundary) {
 			static char subject_buffer[1024];
 			static char buffer[1024];
@@ -128,7 +134,8 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else {
-		printf("%s%s",
+		printf("%s%s%s",
+		       diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
 		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
 		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
 		if (opt->parents)
@@ -137,6 +144,8 @@ void show_log(struct rev_info *opt, struct log_info *log, const char *sep)
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
+		printf("%s",
+		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 	}
 
@@ -163,8 +172,22 @@ int log_tree_diff_flush(struct rev_info *opt)
 		return 0;
 	}
 
-	if (opt->loginfo && !opt->no_commit_id)
-		show_log(opt, opt->loginfo, opt->diffopt.with_stat ? "---\n" : "\n");
+	if (opt->loginfo && !opt->no_commit_id) {
+		/* When showing a verbose header (i.e. log message),
+		 * and not in --pretty=oneline format, we would want
+		 * an extra newline between the end of log and the
+		 * output for readability.
+		 */
+		show_log(opt, opt->diffopt.msg_sep);
+		if (opt->verbose_header &&
+		    opt->commit_format != CMIT_FMT_ONELINE) {
+			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
+			if ((pch & opt->diffopt.output_format) == pch)
+				printf("---%c", opt->diffopt.line_termination);
+			else
+				putchar(opt->diffopt.line_termination);
+		}
+	}
 	diff_flush(&opt->diffopt);
 	return 1;
 }
@@ -261,7 +284,7 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	shown = log_tree_diff(opt, commit, &log);
 	if (!shown && opt->loginfo && opt->always_show_header) {
 		log.parent = NULL;
-		show_log(opt, opt->loginfo, "");
+		show_log(opt, "");
 		shown = 1;
 	}
 	opt->loginfo = NULL;

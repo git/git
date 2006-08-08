@@ -151,12 +151,12 @@ static int ref_newer(const unsigned char *new_sha1,
 	 * old.  Otherwise we require --force.
 	 */
 	o = deref_tag(parse_object(old_sha1), NULL, 0);
-	if (!o || o->type != TYPE_COMMIT)
+	if (!o || o->type != OBJ_COMMIT)
 		return 0;
 	old = (struct commit *) o;
 
 	o = deref_tag(parse_object(new_sha1), NULL, 0);
-	if (!o || o->type != TYPE_COMMIT)
+	if (!o || o->type != OBJ_COMMIT)
 		return 0;
 	new = (struct commit *) o;
 
@@ -239,7 +239,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	int expect_status_report = 0;
 
 	/* No funny business with the matcher */
-	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, 1);
+	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL);
 	get_local_heads();
 
 	/* Does the other end support the reporting? */

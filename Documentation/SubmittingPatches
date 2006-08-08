@@ -49,7 +49,7 @@ People on the git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
 e-mail tools, so that they may comment on specific portions of
-your code.  For this reason, all patches should be submited
+your code.  For this reason, all patches should be submitted
 "inline".  WARNING: Be wary of your MUAs word-wrap
 corrupting your patch.  Do not cut-n-paste your patch; you can
 lose tabs that way if you are not careful.

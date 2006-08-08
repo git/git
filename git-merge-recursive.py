@@ -47,7 +47,7 @@ cacheOnly = False
 
 def merge(h1, h2, branch1Name, branch2Name, graph, callDepth=0, ancestor=None):
     '''Merge the commits h1 and h2, return the resulting virtual
-    commit object and a flag indicating the cleaness of the merge.'''
+    commit object and a flag indicating the cleanness of the merge.'''
     assert(isinstance(h1, Commit) and isinstance(h2, Commit))
 
     global outputIndent

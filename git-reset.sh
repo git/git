@@ -17,7 +17,11 @@ case "$1" in
         usage ;;
 esac
 
-rev=$(git-rev-parse --verify --default HEAD "$@") || exit
+case $# in
+0) rev=HEAD ;;
+1) rev=$(git-rev-parse --verify "$1") || exit ;;
+*) usage ;;
+esac
 rev=$(git-rev-parse --verify $rev^0) || exit
 
 # We need to remember the set of paths that _could_ be left
@@ -48,7 +52,8 @@ then
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-git-update-ref -m "reset $reset_type $@" HEAD "$rev"
+git-update-ref -m "reset $reset_type $*" HEAD "$rev"
+update_ref_status=$?
 
 case "$reset_type" in
 --hard )
@@ -62,3 +67,5 @@ case "$reset_type" in
 esac
 
 rm -f "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/rr-cache/MERGE_RR" "$GIT_DIR/SQUASH_MSG"
+
+exit $update_ref_status

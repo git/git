@@ -49,14 +49,7 @@ static int checkout_stage; /* default to checkout stage0 */
 static int to_tempfile;
 static char topath[4][MAXPATHLEN+1];
 
-static struct checkout state = {
-	.base_dir = "",
-	.base_dir_len = 0,
-	.force = 0,
-	.quiet = 0,
-	.not_new = 0,
-	.refresh_cache = 0,
-};
+static struct checkout state;
 
 static void write_tempfile_record (const char *name)
 {
@@ -177,6 +170,7 @@ int main(int argc, char **argv)
 	int all = 0;
 	int read_from_stdin = 0;
 
+	state.base_dir = "";
 	prefix = setup_git_directory();
 	git_config(git_default_config);
 	prefix_length = prefix ? strlen(prefix) : 0;
@@ -311,7 +305,7 @@ int main(int argc, char **argv)
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||
-	     commit_lock_file(&lock_file)))
+	     close(newfd) || commit_lock_file(&lock_file)))
 		die("Unable to write new index file");
 	return 0;
 }

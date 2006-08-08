@@ -31,7 +31,7 @@ test_expect_success 'cloning with reference' \
 
 cd "$base_dir"
 
-test_expect_success 'existance of info/alternates' \
+test_expect_success 'existence of info/alternates' \
 'test `wc -l <C/.git/objects/info/alternates` = 2'
 
 cd "$base_dir"

@@ -154,7 +154,7 @@ test_sequence()
 	test_bisection_diff 0 $_bisect_option u5 ^U
 	
 #
-# the following illustrate's Linus' binary bug blatt idea. 
+# the following illustrates Linus' binary bug blatt idea.
 #
 # assume the bug is actually at l3, but you don't know that - all you know is that l3 is broken
 # and it wasn't broken before

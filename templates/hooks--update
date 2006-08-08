@@ -60,7 +60,7 @@ then
 			echo "Changes since $prev:"
 			git rev-list --pretty $prev..$3 | $short
 			echo ---
-			git diff $prev..$3 | diffstat -p1
+			git diff --stat $prev..$3
 			echo ---
 		fi
 		;;
@@ -75,7 +75,7 @@ else
 	base=$(git-merge-base "$2" "$3")
 	case "$base" in
 	"$2")
-		git diff "$3" "^$base" | diffstat -p1
+		git diff --stat "$3" "^$base"
 		echo
 		echo "New commits:"
 		;;

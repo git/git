@@ -24,6 +24,8 @@ void setup_pager(void)
 	else if (!*pager || !strcmp(pager, "cat"))
 		return;
 
+	pager_in_use = 1; /* means we are emitting to terminal */
+
 	if (pipe(fd) < 0)
 		return;
 	pid = fork();

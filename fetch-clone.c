@@ -129,10 +129,12 @@ static pid_t setup_sideband(int sideband, const char *me, int fd[2], int xd[2])
 			len--;
 			switch (buf[0] & 0xFF) {
 			case 3:
+				safe_write(2, "remote: ", 8);
 				safe_write(2, buf+1, len);
-				fprintf(stderr, "\n");
+				safe_write(2, "\n", 1);
 				exit(1);
 			case 2:
+				safe_write(2, "remote: ", 8);
 				safe_write(2, buf+1, len);
 				continue;
 			case 1:
@@ -198,8 +200,8 @@ int receive_unpack_pack(int xd[2], const char *me, int quiet, int sideband)
 
 /*
  * A "binary msec" is a power-of-two-msec, aka 1/1024th of a second.
- * Keeing the time in that format means that "bytes / msecs" means
- * is the same as kB/s (modulo rounding).
+ * Keeping the time in that format means that "bytes / msecs" means
+ * the same as kB/s (modulo rounding).
  *
  * 1000512 is a magic number (usecs in a second, rounded up by half
  * of 1024, to make "rounding" come out right ;)

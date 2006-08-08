@@ -8,7 +8,7 @@ git-push - Update remote refs along with associated objects
 
 SYNOPSIS
 --------
-'git-push' [--all] [--tags] [--force] <repository> <refspec>...
+'git-push' [--all] [--tags] [-f | --force] <repository> <refspec>...
 
 DESCRIPTION
 -----------
@@ -67,7 +67,7 @@ Some short-cut notations are also supported.
 
 -f, \--force::
 	Usually, the command refuses to update a remote ref that is
-	not a descendent of the local ref used to overwrite it.
+	not a descendant of the local ref used to overwrite it.
 	This flag disables the check.  This can cause the
 	remote repository to lose commits; use it with care.
 

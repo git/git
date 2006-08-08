@@ -115,6 +115,7 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
 extern struct cache_tree *active_cache_tree;
+extern int cache_errno;
 
 extern void setup_git(char *new_git_dir, char *new_git_object_dir,
                       char *new_git_index_file, char *new_git_graft_file);
@@ -145,6 +146,7 @@ extern void verify_non_filename(const char *prefix, const char *name);
 
 /* Initialize and use the cache information */
 extern int read_cache(void);
+extern int read_cache_from(const char *path);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
 extern int verify_path(const char *path);
 extern int cache_name_pos(const char *name, int namelen);
@@ -152,8 +154,10 @@ extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
 extern int add_cache_entry(struct cache_entry *ce, int option);
+extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_cache_entry_at(int pos);
 extern int remove_file_from_cache(const char *path);
+extern int add_file_to_index(const char *path, int verbose);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st, int);
 extern int ce_modified(struct cache_entry *ce, struct stat *st, int);
@@ -179,6 +183,7 @@ extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
 
 /* Environment bits from configuration mechanism */
+extern int use_legacy_headers;
 extern int trust_executable_bit;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
@@ -186,6 +191,7 @@ extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
+extern int zlib_compression_level;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -221,8 +227,6 @@ int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern int unpack_sha1_header(z_stream *stream, void *map, unsigned long mapsize, void *buffer, unsigned long size);
-extern int parse_sha1_header(char *hdr, char *type, unsigned long *sizep);
 extern int sha1_object_info(const unsigned char *, char *, unsigned long *);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
@@ -324,13 +328,17 @@ struct ref {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+#define REF_NORMAL	(1u << 0)
+#define REF_HEADS	(1u << 1)
+#define REF_TAGS	(1u << 2)
+
 extern int git_connect(int fd[2], char *url, const char *prog);
 extern int finish_connect(pid_t pid);
 extern int path_match(const char *path, int nr, char **match);
 extern int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		      int nr_refspec, char **refspec, int all);
 extern int get_ack(int fd, unsigned char *result_sha1);
-extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, int ignore_funny);
+extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, unsigned int flags);
 extern int server_supports(const char *feature);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1);
@@ -380,6 +388,8 @@ extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
 
 /* pager.c */
 extern void setup_pager(void);
+extern int pager_in_use;
+extern int pager_use_color;
 
 /* base85 */
 int decode_85(char *dst, char *line, int linelen);
