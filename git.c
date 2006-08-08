@@ -229,7 +229,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "log", cmd_log, NEEDS_PREFIX | USE_PAGER },
 		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX | USE_PAGER },
 		{ "show", cmd_show, NEEDS_PREFIX | USE_PAGER },
-		{ "push", cmd_push },
+		{ "push", cmd_push, NEEDS_PREFIX },
 		{ "format-patch", cmd_format_patch, NEEDS_PREFIX },
 		{ "count-objects", cmd_count_objects },
 		{ "diff", cmd_diff, NEEDS_PREFIX },
