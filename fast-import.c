@@ -34,6 +34,8 @@ static int max_depth = 10;
 static unsigned long alloc_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
+static unsigned long object_count_by_type[9];
+static unsigned long duplicate_count_by_type[9];
 
 /* The .pack file */
 static int pack_fd;
@@ -173,10 +175,12 @@ static int store_object(
 	e = insert_object(sha1);
 	if (e->offset) {
 		duplicate_count++;
+		duplicate_count_by_type[type]++;
 		return 0;
 	}
 	e->offset = pack_offset;
 	object_count++;
+	object_count_by_type[type]++;
 
 	if (last->data && last->depth < max_depth)
 		delta = diff_delta(last->data, last->len,
@@ -232,7 +236,7 @@ static int store_object(
 static void init_pack_header()
 {
 	const char* magic = "PACK";
-	unsigned long version = 2;
+	unsigned long version = 3;
 	unsigned long zero = 0;
 
 	version = htonl(version);
@@ -331,12 +335,29 @@ static void write_index(const char *idx_name)
 	free(idx);
 }
 
+static void new_blob()
+{
+	unsigned long datlen;
+	void *dat;
+
+	if (yread(0, &datlen, 4) != 4)
+		die("Can't obtain blob length");
+
+	dat = xmalloc(datlen);
+	if (yread(0, dat, datlen) != datlen)
+		die("Con't obtain %lu bytes of blob data", datlen);
+
+	if (!store_object(OBJ_BLOB, dat, datlen, &last_blob))
+		free(dat);
+}
+
 int main(int argc, const char **argv)
 {
 	const char *base_name = argv[1];
 	int est_obj_cnt = atoi(argv[2]);
 	char *pack_name;
 	char *idx_name;
+	struct stat sb;
 
 	pack_name = xmalloc(strlen(base_name) + 6);
 	sprintf(pack_name, "%s.pack", base_name);
@@ -345,30 +366,41 @@ int main(int argc, const char **argv)
 
 	pack_fd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
 	if (pack_fd < 0)
-		die("Can't create pack file %s: %s", pack_name, strerror(errno));
+		die("Can't create %s: %s", pack_name, strerror(errno));
 
 	alloc_objects(est_obj_cnt);
 	init_pack_header();
 	for (;;) {
-		unsigned long datlen;
-		void *dat;
-
-		if (yread(0, &datlen, 4) != 4)
+		unsigned long cmd;
+		if (yread(0, &cmd, 4) != 4)
 			break;
 
-		dat = xmalloc(datlen);
-		if (yread(0, dat, datlen) != datlen)
-			break;
-
-		if (!store_object(OBJ_BLOB, dat, datlen, &last_blob))
-			free(dat);
+		switch (cmd) {
+		case 'blob': new_blob(); break;
+		default:
+			die("Invalid command %lu", cmd);
+		}
 	}
 	fixup_header_footer();
 	close(pack_fd);
 	write_index(idx_name);
 
-	fprintf(stderr, "%lu objects, %lu duplicates, %lu allocated (%lu overflow)\n",
-		object_count, duplicate_count, alloc_count, alloc_count - est_obj_cnt);
+	fprintf(stderr, "%s statistics:\n", argv[0]);
+	fprintf(stderr, "---------------------------------------------------\n");
+	fprintf(stderr, "Alloc'd objects: %10lu (%10lu overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
+	fprintf(stderr, "Total objects:   %10lu (%10lu duplicates)\n", object_count, duplicate_count);
+	fprintf(stderr, "      blobs  :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB]);
+	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE]);
+	fprintf(stderr, "      commits:   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT]);
+	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG]);
+	fprintf(stderr, "---------------------------------------------------\n");
+
+	stat(pack_name, &sb);
+	fprintf(stderr, "Pack size:       %10lu KiB\n", (unsigned long)(sb.st_size/1024));
+	stat(idx_name, &sb);
+	fprintf(stderr, "Index size:      %10lu KiB\n", (unsigned long)(sb.st_size/1024));
+
+	fprintf(stderr, "\n");
 
 	return 0;
 }
