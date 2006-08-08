@@ -18,22 +18,34 @@ struct object_entry_block
 	struct object_entry_block *next_block;
 	struct object_entry *next_free;
 	struct object_entry *end;
-	struct object_entry entries[0];
+	struct object_entry entries[FLEX_ARRAY]; /* more */
 };
 
+struct last_object
+{
+	void *data;
+	unsigned long len;
+	int depth;
+	unsigned char sha1[20];
+};
+
+/* Stats and misc. counters. */
 static int max_depth = 10;
 static unsigned long alloc_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
-static unsigned long packoff;
-static int packfd;
-static int current_depth;
-static void *lastdat;
-static unsigned long lastdatlen;
-static unsigned char lastsha1[20];
-static unsigned char packsha1[20];
-struct object_entry *object_table[1 << 16];
+
+/* The .pack file */
+static int pack_fd;
+static unsigned long pack_offset;
+static unsigned char pack_sha1[20];
+
+/* Table of objects we've written. */
 struct object_entry_block *blocks;
+struct object_entry *object_table[1 << 16];
+
+/* Our last blob */
+struct last_object last_blob;
 
 static void alloc_objects(int cnt)
 {
@@ -115,7 +127,10 @@ static ssize_t ywrite(int fd, void *buffer, size_t length)
 	return ret;
 }
 
-static unsigned long encode_header(enum object_type type, unsigned long size, unsigned char *hdr)
+static unsigned long encode_header(
+	enum object_type type,
+	unsigned long size,
+	unsigned char *hdr)
 {
 	int n = 1;
 	unsigned char c;
@@ -135,41 +150,62 @@ static unsigned long encode_header(enum object_type type, unsigned long size, un
 	return n;
 }
 
-static void write_blob(void *dat, unsigned long datlen)
+static int store_object(
+	enum object_type type,
+	void *dat,
+	unsigned long datlen,
+	struct last_object *last)
 {
-	z_stream s;
 	void *out, *delta;
-	unsigned char hdr[64];
+	struct object_entry *e;
+	unsigned char hdr[96];
+	unsigned char sha1[20];
 	unsigned long hdrlen, deltalen;
+	SHA_CTX c;
+	z_stream s;
 
-	if (lastdat && current_depth < max_depth) {
-		delta = diff_delta(lastdat, lastdatlen,
+	hdrlen = sprintf((char*)hdr,"%s %lu",type_names[type],datlen) + 1;
+	SHA1_Init(&c);
+	SHA1_Update(&c, hdr, hdrlen);
+	SHA1_Update(&c, dat, datlen);
+	SHA1_Final(sha1, &c);
+
+	e = insert_object(sha1);
+	if (e->offset) {
+		duplicate_count++;
+		return 0;
+	}
+	e->offset = pack_offset;
+	object_count++;
+
+	if (last->data && last->depth < max_depth)
+		delta = diff_delta(last->data, last->len,
 			dat, datlen,
 			&deltalen, 0);
-	} else
+	else
 		delta = 0;
 
 	memset(&s, 0, sizeof(s));
 	deflateInit(&s, zlib_compression_level);
 
 	if (delta) {
-		current_depth++;
+		last->depth++;
 		s.next_in = delta;
 		s.avail_in = deltalen;
 		hdrlen = encode_header(OBJ_DELTA, deltalen, hdr);
-		if (ywrite(packfd, hdr, hdrlen) != hdrlen)
+		if (ywrite(pack_fd, hdr, hdrlen) != hdrlen)
 			die("Can't write object header: %s", strerror(errno));
-		if (ywrite(packfd, lastsha1, sizeof(lastsha1)) != sizeof(lastsha1))
+		if (ywrite(pack_fd, last->sha1, sizeof(sha1)) != sizeof(sha1))
 			die("Can't write object base: %s", strerror(errno));
-		packoff += hdrlen + sizeof(lastsha1);
+		pack_offset += hdrlen + sizeof(sha1);
 	} else {
-		current_depth = 0;
+		last->depth = 0;
 		s.next_in = dat;
 		s.avail_in = datlen;
-		hdrlen = encode_header(OBJ_BLOB, datlen, hdr);
-		if (ywrite(packfd, hdr, hdrlen) != hdrlen)
+		hdrlen = encode_header(type, datlen, hdr);
+		if (ywrite(pack_fd, hdr, hdrlen) != hdrlen)
 			die("Can't write object header: %s", strerror(errno));
-		packoff += hdrlen;
+		pack_offset += hdrlen;
 	}
 
 	s.avail_out = deflateBound(&s, s.avail_in);
@@ -178,13 +214,19 @@ static void write_blob(void *dat, unsigned long datlen)
 		/* nothing */;
 	deflateEnd(&s);
 
-	if (ywrite(packfd, out, s.total_out) != s.total_out)
+	if (ywrite(pack_fd, out, s.total_out) != s.total_out)
 		die("Failed writing compressed data %s", strerror(errno));
-	packoff += s.total_out;
+	pack_offset += s.total_out;
 
 	free(out);
 	if (delta)
 		free(delta);
+	if (last->data)
+		free(last->data);
+	last->data = dat;
+	last->len = datlen;
+	memcpy(last->sha1, sha1, sizeof(sha1));
+	return 1;
 }
 
 static void init_pack_header()
@@ -195,13 +237,13 @@ static void init_pack_header()
 
 	version = htonl(version);
 
-	if (ywrite(packfd, (char*)magic, 4) != 4)
+	if (ywrite(pack_fd, (char*)magic, 4) != 4)
 		die("Can't write pack magic: %s", strerror(errno));
-	if (ywrite(packfd, &version, 4) != 4)
+	if (ywrite(pack_fd, &version, 4) != 4)
 		die("Can't write pack version: %s", strerror(errno));
-	if (ywrite(packfd, &zero, 4) != 4)
+	if (ywrite(pack_fd, &zero, 4) != 4)
 		die("Can't write 0 object count: %s", strerror(errno));
-	packoff = 4 * 3;
+	pack_offset = 4 * 3;
 }
 
 static void fixup_header_footer()
@@ -212,30 +254,30 @@ static void fixup_header_footer()
 	char *buf;
 	size_t n;
 
-	if (lseek(packfd, 0, SEEK_SET) != 0)
+	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die("Failed seeking to start: %s", strerror(errno));
 
 	SHA1_Init(&c);
-	if (yread(packfd, hdr, 8) != 8)
+	if (yread(pack_fd, hdr, 8) != 8)
 		die("Failed reading header: %s", strerror(errno));
 	SHA1_Update(&c, hdr, 8);
 
 	cnt = htonl(object_count);
 	SHA1_Update(&c, &cnt, 4);
-	if (ywrite(packfd, &cnt, 4) != 4)
+	if (ywrite(pack_fd, &cnt, 4) != 4)
 		die("Failed writing object count: %s", strerror(errno));
 
 	buf = xmalloc(128 * 1024);
 	for (;;) {
-		n = xread(packfd, buf, 128 * 1024);
+		n = xread(pack_fd, buf, 128 * 1024);
 		if (n <= 0)
 			break;
 		SHA1_Update(&c, buf, n);
 	}
 	free(buf);
 
-	SHA1_Final(packsha1, &c);
-	if (ywrite(packfd, packsha1, sizeof(packsha1)) != sizeof(packsha1))
+	SHA1_Final(pack_sha1, &c);
+	if (ywrite(pack_fd, pack_sha1, sizeof(pack_sha1)) != sizeof(pack_sha1))
 		die("Failed writing pack checksum: %s", strerror(errno));
 }
 
@@ -284,7 +326,7 @@ static void write_index(const char *idx_name)
 		sha1write(f, &offset, 4);
 		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
 	}
-	sha1write(f, packsha1, sizeof(packsha1));
+	sha1write(f, pack_sha1, sizeof(pack_sha1));
 	sha1close(f, NULL, 1);
 	free(idx);
 }
@@ -301,53 +343,28 @@ int main(int argc, const char **argv)
 	idx_name = xmalloc(strlen(base_name) + 5);
 	sprintf(idx_name, "%s.idx", base_name);
 
-	packfd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
-	if (packfd < 0)
+	pack_fd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
+	if (pack_fd < 0)
 		die("Can't create pack file %s: %s", pack_name, strerror(errno));
 
 	alloc_objects(est_obj_cnt);
 	init_pack_header();
 	for (;;) {
 		unsigned long datlen;
-		int hdrlen;
 		void *dat;
-		char hdr[128];
-		unsigned char sha1[20];
-		SHA_CTX c;
-		struct object_entry *e;
 
 		if (yread(0, &datlen, 4) != 4)
-
 			break;
 
 		dat = xmalloc(datlen);
 		if (yread(0, dat, datlen) != datlen)
 			break;
 
-		hdrlen = sprintf(hdr, "blob %lu", datlen) + 1;
-		SHA1_Init(&c);
-		SHA1_Update(&c, hdr, hdrlen);
-		SHA1_Update(&c, dat, datlen);
-		SHA1_Final(sha1, &c);
-
-		e = insert_object(sha1);
-		if (!e->offset) {
-			e->offset = packoff;
-			write_blob(dat, datlen);
-			object_count++;
-
-			if (lastdat)
-				free(lastdat);
-			lastdat = dat;
-			lastdatlen = datlen;
-			memcpy(lastsha1, sha1, sizeof(sha1));
-		} else {
-			duplicate_count++;
+		if (!store_object(OBJ_BLOB, dat, datlen, &last_blob))
 			free(dat);
-		}
 	}
 	fixup_header_footer();
-	close(packfd);
+	close(pack_fd);
 	write_index(idx_name);
 
 	fprintf(stderr, "%lu objects, %lu duplicates, %lu allocated (%lu overflow)\n",
