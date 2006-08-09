@@ -1223,6 +1223,18 @@ int merge(struct commit *h1,
 		output_commit_title(iter->item);
 
 	merged_common_ancestors = pop_commit(&ca);
+	if (merged_common_ancestors == NULL) {
+		/* if there is no common ancestor, make an empty tree */
+		struct tree *tree = xcalloc(1, sizeof(struct tree));
+		unsigned char hdr[40];
+		int hdrlen;
+
+		tree->object.parsed = 1;
+		tree->object.type = OBJ_TREE;
+		write_sha1_file_prepare(NULL, 0, tree_type, tree->object.sha1,
+					hdr, &hdrlen);
+		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
+	}
 
 	for (iter = ca; iter; iter = iter->next) {
 		output_indent = call_depth + 1;
