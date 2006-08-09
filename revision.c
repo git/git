@@ -936,7 +936,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 	}
 	revs->diffopt.abbrev = revs->abbrev;
-	diff_setup_done(&revs->diffopt);
+	if (diff_setup_done(&revs->diffopt) < 0)
+		die("diff_setup_done failed");
 
 	return left;
 }

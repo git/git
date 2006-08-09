@@ -1528,10 +1528,8 @@ int diff_setup_done(struct diff_options *options)
 	if (count > 1)
 		die("--name-only, --name-status, --check and -s are mutually exclusive");
 
-	if ((options->find_copies_harder &&
-	     options->detect_rename != DIFF_DETECT_COPY) ||
-	    (0 <= options->rename_limit && !options->detect_rename))
-		return -1;
+	if (options->find_copies_harder)
+		options->detect_rename = DIFF_DETECT_COPY;
 
 	if (options->output_format & (DIFF_FORMAT_NAME |
 				      DIFF_FORMAT_NAME_STATUS |

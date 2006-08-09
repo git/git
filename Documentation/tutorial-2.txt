@@ -244,6 +244,7 @@ $ git ls-files --stage
 $ git cat-file -t 513feba2
 blob
 $ git cat-file blob 513feba2
+hello world!
 hello world, again
 ------------------------------------------------
 
