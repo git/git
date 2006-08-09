@@ -46,52 +46,28 @@ else \
 	fi; \
 fi; \
 ]) # GIT_CONF_APPEND_PATH
+#
+# GIT_PARSE_WITH(PACKAGE)
+# -----------------------
+# For use in AC_ARG_WITH action-if-found, for packages default ON.
+# * Set NO_PACKAGE=YesPlease for --without-PACKAGE
+# * Set PACKAGEDIR=PATH for --with-PACKAGE=PATH
+# * Unset NO_PACKAGE for --with-PACKAGE without ARG
+AC_DEFUN([GIT_PARSE_WITH],
+[PACKAGE=m4_toupper($1); \
+if test "$withval" = "no"; then \
+	m4_toupper(NO_$1)=YesPlease; \
+elif test "$withval" = "yes"; then \
+	m4_toupper(NO_$1)=; \
+else \
+	m4_toupper(NO_$1)=; \
+	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
+fi \
+])# GIT_PARSE_WITH
 
 
-## Site configuration
+## Site configuration related to programs (before tests)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
-#
-# Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
-# tests.  These tests take up a significant amount of the total test time
-# but are not needed unless you plan to talk to SVN repos.
-#
-# Define MOZILLA_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
-# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
-# choice) has very fast version optimized for i586.
-#
-# Define PPC_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine optimized for PowerPC.
-#
-# Define ARM_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine optimized for ARM.
-#
-# Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies MOZILLA_SHA1.
-#
-# Define NO_CURL if you do not have curl installed.  git-http-pull and
-# git-http-push are not built, and you cannot use http:// and https://
-# transports.
-#
-# Define CURLDIR=/foo/bar if your curl header and library files are in
-# /foo/bar/include and /foo/bar/lib directories.
-#
-# Define NO_EXPAT if you do not have expat installed.  git-http-push is
-# not built, and you cannot push using http:// and https:// transports.
-#
-# Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
-# installed in /sw, but don't want GIT to link against any libraries
-# installed there.  If defined you may specify your own (or Fink's)
-# include directories and library directories by defining CFLAGS
-# and LDFLAGS appropriately.
-#
-# Define NO_DARWIN_PORTS if you are building on Darwin/Mac OS X,
-# have DarwinPorts installed in /opt/local, but don't want GIT to
-# link against any libraries installed there.  If defined you may
-# specify your own (or DarwinPort's) include directories and
-# library directories by defining CFLAGS and LDFLAGS appropriately.
-#
-# Define NO_MMAP if you want to avoid mmap.
 #
 # Define SHELL_PATH to provide path to shell.
 GIT_ARG_SET_PATH(shell)
@@ -114,20 +90,6 @@ AS_HELP_STRING([--without-python], [don't use python scripts])],
  ])
 AC_SUBST(NO_PYTHON)
 AC_SUBST(PYTHON_PATH)
-#
-## --enable-FEATURE[=ARG] and --disable-FEATURE
-# Define COLLISION_CHECK below if you believe that SHA1's
-# 1461501637330902918203684832716283019655932542976 hashes do not give you
-# sufficient guarantee that no collisions between objects will ever happen.
-#
-# Define USE_NSEC below if you want git to care about sub-second file mtimes
-# and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
-# it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
-# randomly break unless your underlying filesystem supports those sub-second
-# times (my ext3 doesn't).
-#
-# Define USE_STDEV below if you want git to care about the underlying device
-# change being considered an inode change from the update-cache perspective.
 
 
 ## Checks for programs.
@@ -259,6 +221,7 @@ else
 fi
 AC_SUBST(NO_C99_FORMAT)
 
+
 ## Checks for library functions.
 ## (in default C library and libraries checked by AC_CHECK_LIB)
 AC_MSG_NOTICE([CHECKS for library functions])
@@ -297,6 +260,87 @@ AC_SUBST(NO_SETENV)
 #
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
+
+
+## Site configuration (override autodetection)
+## --with-PACKAGE[=ARG] and --without-PACKAGE
+AC_MSG_NOTICE([CHECKS for site configuration])
+#
+# Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
+# tests.  These tests take up a significant amount of the total test time
+# but are not needed unless you plan to talk to SVN repos.
+#
+# Define MOZILLA_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
+# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
+# choice) has very fast version optimized for i586.
+#
+# Define PPC_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine optimized for PowerPC.
+#
+# Define ARM_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine optimized for ARM.
+#
+# Define NO_OPENSSL environment variable if you do not have OpenSSL.
+# This also implies MOZILLA_SHA1.
+#
+# Define OPENSSLDIR=/foo/bar if your openssl header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+AC_ARG_WITH(openssl,
+AS_HELP_STRING([--with-openssl],[use OpenSSL library (default is YES)])
+AS_HELP_STRING([],              [ARG can be prefix for openssl library and headers]),\
+GIT_PARSE_WITH(openssl))
+#
+# Define NO_CURL if you do not have curl installed.  git-http-pull and
+# git-http-push are not built, and you cannot use http:// and https://
+# transports.
+#
+# Define CURLDIR=/foo/bar if your curl header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+AC_ARG_WITH(curl,
+AS_HELP_STRING([--with-curl],[support http(s):// transports (default is YES)])
+AS_HELP_STRING([],           [ARG can be also prefix for curl library and headers]),
+GIT_PARSE_WITH(curl))
+#
+# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# not built, and you cannot push using http:// and https:// transports.
+#
+# Define EXPATDIR=/foo/bar if your expat header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+AC_ARG_WITH(expat,
+AS_HELP_STRING([--with-expat],
+[support git-push using http:// and https:// transports via WebDAV (default is YES)])
+AS_HELP_STRING([],            [ARG can be also prefix for expat library and headers]),
+GIT_PARSE_WITH(expat))
+#
+# Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
+# installed in /sw, but don't want GIT to link against any libraries
+# installed there.  If defined you may specify your own (or Fink's)
+# include directories and library directories by defining CFLAGS
+# and LDFLAGS appropriately.
+#
+# Define NO_DARWIN_PORTS if you are building on Darwin/Mac OS X,
+# have DarwinPorts installed in /opt/local, but don't want GIT to
+# link against any libraries installed there.  If defined you may
+# specify your own (or DarwinPort's) include directories and
+# library directories by defining CFLAGS and LDFLAGS appropriately.
+#
+# Define NO_MMAP if you want to avoid mmap.
+
+## --enable-FEATURE[=ARG] and --disable-FEATURE
+#
+# Define COLLISION_CHECK below if you believe that SHA1's
+# 1461501637330902918203684832716283019655932542976 hashes do not give you
+# sufficient guarantee that no collisions between objects will ever happen.
+#
+# Define USE_NSEC below if you want git to care about sub-second file mtimes
+# and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
+# it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
+# randomly break unless your underlying filesystem supports those sub-second
+# times (my ext3 doesn't).
+#
+# Define USE_STDEV below if you want git to care about the underlying device
+# change being considered an inode change from the update-cache perspective.
 
 
 ## Output files
