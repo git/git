@@ -90,7 +90,11 @@ cd ../doc-htmlpages &&
     fi
 
 cd ../Documentation &&
-make man1="$DOCREPO/doc-manpages/man1" man7="$DOCREPO/doc-manpages/man7" \
+make \
+    man1="$DOCREPO/doc-manpages/man1" \
+    man7="$DOCREPO/doc-manpages/man7" \
+    man1dir="$DOCREPO/doc-manpages/man1" \
+    man7dir="$DOCREPO/doc-manpages/man7" \
 	install >../:man.log 2>&1 &&
 
 cd ../doc-manpages &&
