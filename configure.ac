@@ -102,7 +102,7 @@ GIT_ARG_SET_PATH(perl)
 # Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 # Define PYTHON_PATH to provide path to Python.
 AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python])
-AS_HELP_STRING([--no-python], [don't use python scripts])],
+AS_HELP_STRING([--without-python], [don't use python scripts])],
  [if test "$withval" = "no"; then \
     NO_PYTHON=YesPlease; \
   elif test "$withval" = "yes"; then \
