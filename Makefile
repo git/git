@@ -676,6 +676,13 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	chmod +x $@+
 	mv $@+ $@
 
+configure: configure.ac
+	rm -f $@ $<+
+	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $< > $<+
+	autoconf -o $@ $<+
+	rm -f $<+
+
 # These can record GIT_VERSION
 git$X git.spec \
 	$(patsubst %.sh,%,$(SCRIPT_SH)) \
@@ -883,7 +890,7 @@ clean:
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf autom4te.cache
-	rm -f config.log config.mak.autogen configure config.status config.cache
+	rm -f configure config.log config.mak.autogen config.mak.append config.status config.cache
 	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz

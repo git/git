@@ -16,7 +16,7 @@ install" would not work.
 Alternatively you can use autoconf generated ./configure script to
 set up install paths (via config.mak.autogen), so you can write instead
 
-	$ autoconf ;# as yourself if ./configure doesn't exist yet
+	$ make configure ;# as yourself
 	$ ./configure --prefix=/usr ;# as yourself
 	$ make all doc ;# as yourself
 	# make install install-doc ;# as root

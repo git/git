@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([git], [1.4.1], [git@vger.kernel.org])
+AC_INIT([git], [@@GIT_VERSION@@], [git@vger.kernel.org])
 
 AC_CONFIG_SRCDIR([git.c])
 
@@ -37,7 +37,7 @@ AC_DEFUN([GIT_ARG_SET_PATH],
 AC_DEFUN([GIT_CONF_APPEND_PATH],
 [PROGRAM=m4_toupper($1); \
 if test "$withval" = "no"; then \
-	AC_MSG_WARN([You cannot use git without $1]); \
+	AC_MSG_ERROR([You cannot use git without $1]); \
 else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
@@ -105,7 +105,10 @@ AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python
 AS_HELP_STRING([--no-python], [don't use python scripts])],
  [if test "$withval" = "no"; then \
     NO_PYTHON=YesPlease; \
-  elif test "$withval" != "yes"; then \
+  elif test "$withval" = "yes"; then \
+    NO_PYTHON=; \
+  else \
+    NO_PYTHON=; \
     PYTHON_PATH=$withval; \
   fi; \
  ])
@@ -138,14 +141,13 @@ AC_CHECK_PROGS(TAR, [gtar tar])
 # Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 # Define PYTHON_PATH to provide path to Python.
 if test -z "$NO_PYTHON"; then
-	AC_PATH_PROGS(PYTHON_PATH, [python2.4 python2.3 python2 python])
+	if test -z "$PYTHON_PATH"; then
+		AC_PATH_PROGS(PYTHON_PATH, [python python2.4 python2.3 python2])
+	fi
 	if test -n "$PYTHON_PATH"; then
 		GIT_CONF_APPEND_LINE([PYTHON_PATH=@PYTHON_PATH@])
-	else
-		GIT_CONF_APPEND_LINE([NO_PYTHON=@NO_PYTHON@])
+		NO_PYTHON=""
 	fi
-else
-	GIT_CONF_APPEND_LINE([NO_PYTHON=@NO_PYTHON@])
 fi
 
 
@@ -155,35 +157,41 @@ AC_MSG_NOTICE([CHECKS for libraries])
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
 AC_CHECK_LIB([crypto], [SHA1_Init],
-[GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=)],
+[NEEDS_SSL_WITH_CRYPTO=],
 [AC_CHECK_LIB([ssl], [SHA1_Init],
- [GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=YesPlease)
-  GIT_CONF_APPEND_LINE(NEEDS_SSL_WITH_CRYPTO=)],
- [GIT_CONF_APPEND_LINE(NO_OPENSSL=YesPlease)])])
+ [NEEDS_SSL_WITH_CRYPTO=YesPlease
+  NEEDS_SSL_WITH_CRYPTO=],
+ [NO_OPENSSL=YesPlease])])
+AC_SUBST(NEEDS_SSL_WITH_CRYPTO)
+AC_SUBST(NO_OPENSSL)
 #
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
 AC_CHECK_LIB([curl], [curl_global_init],
-[GIT_CONF_APPEND_LINE(NO_CURL=)],
-[GIT_CONF_APPEND_LINE(NO_CURL=YesPlease)])
+[NO_CURL=],
+[NO_CURL=YesPlease])
+AC_SUBST(NO_CURL)
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 AC_CHECK_LIB([expat], [XML_ParserCreate],
-[GIT_CONF_APPEND_LINE(NO_EXPAT=)],
-[GIT_CONF_APPEND_LINE(NO_EXPAT=YesPlease)])
+[NO_EXPAT=],
+[NO_EXPAT=YesPlease])
+AC_SUBST(NO_EXPAT)
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 AC_CHECK_LIB([c], [iconv],
-[GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=)],
-[GIT_CONF_APPEND_LINE(NEEDS_LIBICONV=YesPlease)])
+[NEEDS_LIBICONV=],
+[NEEDS_LIBICONV=YesPlease])
+AC_SUBST(NEEDS_LIBICONV)
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 AC_CHECK_LIB([c], [socket],
-[GIT_CONF_APPEND_LINE(NEEDS_SOCKET=)],
-[GIT_CONF_APPEND_LINE(NEEDS_SOCKET=YesPlease)])
+[NEEDS_SOCKET=],
+[NEEDS_SOCKET=YesPlease])
+AC_SUBST(NEEDS_SOCKET)
 
 
 ## Checks for header files.
@@ -194,33 +202,38 @@ AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
 #
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 AC_CHECK_MEMBER(struct dirent.d_ino,
-[GIT_CONF_APPEND_LINE(NO_D_INO_IN_DIRENT=)],
-[GIT_CONF_APPEND_LINE(NO_D_INO_IN_DIRENT=YesPlease)],
+[NO_D_INO_IN_DIRENT=],
+[NO_D_INO_IN_DIRENT=YesPlease],
 [#include <dirent.h>])
+AC_SUBST(NO_D_INO_IN_DIRENT)
 #
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
 AC_CHECK_MEMBER(struct dirent.d_type,
-[GIT_CONF_APPEND_LINE(NO_D_TYPE_IN_DIRENT=)],
-[GIT_CONF_APPEND_LINE(NO_D_TYPE_IN_DIRENT=YesPlease)],
+[NO_D_TYPE_IN_DIRENT=],
+[NO_D_TYPE_IN_DIRENT=YesPlease],
 [#include <dirent.h>])
+AC_SUBST(NO_D_TYPE_IN_DIRENT)
 #
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
 # sockaddr_storage.
 AC_CHECK_TYPE(struct sockaddr_storage,
-[GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=)],
-[GIT_CONF_APPEND_LINE(NO_SOCKADDR_STORAGE=YesPlease)],
+[NO_SOCKADDR_STORAGE=],
+[NO_SOCKADDR_STORAGE=YesPlease],
 [#include <netinet/in.h>])
+AC_SUBST(NO_SOCKADDR_STORAGE)
+#
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 AC_CHECK_TYPE([struct addrinfo],[
  AC_CHECK_FUNC([getaddrinfo],
-  [GIT_CONF_APPEND_LINE(NO_IPV6=)],
-  [GIT_CONF_APPEND_LINE(NO_IPV6=YesPlease)])
-],[GIT_CONF_APPEND_LINE(NO_IPV6=YesPlease)],[
+  [NO_IPV6=],
+  [NO_IPV6=YesPlease])
+],[NO_IPV6=YesPlease],[
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 ])
+AC_SUBST(NO_IPV6)
 #
 # Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
@@ -240,11 +253,11 @@ AC_RUN_IFELSE(
 	[ac_cv_c_c99_format=no])
 ])
 if test $ac_cv_c_c99_format = no; then
-	GIT_CONF_APPEND_LINE(NO_C99_FORMAT=YesPlease)
+	NO_C99_FORMAT=YesPlease
 else
-	GIT_CONF_APPEND_LINE(NO_C99_FORMAT=)
+	NO_C99_FORMAT=
 fi
-
+AC_SUBST(NO_C99_FORMAT)
 
 ## Checks for library functions.
 ## (in default C library and libraries checked by AC_CHECK_LIB)
@@ -252,18 +265,21 @@ AC_MSG_NOTICE([CHECKS for library functions])
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 AC_CHECK_FUNC(strcasestr,
-[GIT_CONF_APPEND_LINE(NO_STRCASESTR=)],
-[GIT_CONF_APPEND_LINE(NO_STRCASESTR=YesPlease)])
+[NO_STRCASESTR=],
+[NO_STRCASESTR=YesPlease])
+AC_SUBST(NO_STRCASESTR)
 #
 # Define NO_STRLCPY if you don't have strlcpy.
 AC_CHECK_FUNC(strlcpy,
-[GIT_CONF_APPEND_LINE(NO_STRLCPY=)],
-[GIT_CONF_APPEND_LINE(NO_STRLCPY=YesPlease)])
+[NO_STRLCPY=],
+[NO_STRLCPY=YesPlease])
+AC_SUBST(NO_STRLCPY)
 #
 # Define NO_SETENV if you don't have setenv in the C library.
 AC_CHECK_FUNC(setenv,
-[GIT_CONF_APPEND_LINE(NO_SETENV=)],
-[GIT_CONF_APPEND_LINE(NO_SETENV=YesPlease)])
+[NO_SETENV=],
+[NO_SETENV=YesPlease])
+AC_SUBST(NO_SETENV)
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
