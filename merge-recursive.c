@@ -116,6 +116,7 @@ static void output_commit_title(struct commit *commit)
 	}
 }
 
+static const char *current_index_file = NULL;
 static const char *original_index_file;
 static const char *temporary_index_file;
 static int cache_dirty = 0;
@@ -124,12 +125,12 @@ static int flush_cache(void)
 {
 	/* flush temporary index */
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int fd = hold_lock_file_for_update(lock, getenv("GIT_INDEX_FILE"));
+	int fd = hold_lock_file_for_update(lock, current_index_file);
 	if (fd < 0)
 		die("could not lock %s", lock->filename);
 	if (write_cache(fd, active_cache, active_nr) ||
 			close(fd) || commit_lock_file(lock))
-		die ("unable to write %s", getenv("GIT_INDEX_FILE"));
+		die ("unable to write %s", current_index_file);
 	discard_cache();
 	cache_dirty = 0;
 	return 0;
@@ -137,11 +138,12 @@ static int flush_cache(void)
 
 static void setup_index(int temp)
 {
-	const char *idx = temp ? temporary_index_file: original_index_file;
-	if (cache_dirty)
-		die("fatal: cache changed flush_cache();");
+	current_index_file = temp ? temporary_index_file: original_index_file;
+	if (cache_dirty) {
+		discard_cache();
+		cache_dirty = 0;
+	}
 	unlink(temporary_index_file);
-	setenv("GIT_INDEX_FILE", idx, 1);
 	discard_cache();
 }
 
@@ -174,7 +176,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 {
 	struct cache_entry *ce;
 	if (!cache_dirty)
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 	cache_dirty++;
 	ce = make_cache_entry(mode, sha1 ? sha1 : null_sha1, path, stage, refresh);
 	if (!ce)
@@ -223,7 +225,7 @@ static int git_merge_trees(int index_only,
 	struct unpack_trees_options opts;
 
 	if (!cache_dirty) {
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 		cache_dirty = 1;
 	}
 
@@ -248,38 +250,34 @@ static int git_merge_trees(int index_only,
 	return rc;
 }
 
-/*
- * TODO: this can be streamlined by refactoring builtin-write-tree.c
- */
 static struct tree *git_write_tree(void)
 {
-	FILE *fp;
-	int rc;
-	char buf[41];
-	unsigned char sha1[20];
-	int ch;
-	unsigned i = 0;
+	struct tree *result = NULL;
+
 	if (cache_dirty) {
+		unsigned i;
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
 				return NULL;
 		}
-		flush_cache();
-	}
-	fp = popen("git-write-tree 2>/dev/null", "r");
-	while ((ch = fgetc(fp)) != EOF)
-		if (i < sizeof(buf)-1 && ch >= '0' && ch <= 'f')
-			buf[i++] = ch;
-		else
-			break;
-	rc = pclose(fp);
-	if (rc == -1 || WEXITSTATUS(rc))
-		return NULL;
-	buf[i] = '\0';
-	if (get_sha1(buf, sha1) != 0)
-		return NULL;
-	return lookup_tree(sha1);
+	} else
+		read_cache_from(current_index_file);
+
+	if (!active_cache_tree)
+		active_cache_tree = cache_tree();
+
+	if (!cache_tree_fully_valid(active_cache_tree) &&
+			cache_tree_update(active_cache_tree,
+				active_cache, active_nr, 0, 0) < 0)
+		die("error building trees");
+
+	result = lookup_tree(active_cache_tree->sha1);
+
+	flush_cache();
+	cache_dirty = 0;
+
+	return result;
 }
 
 static int save_files_dirs(const unsigned char *sha1,
@@ -342,7 +340,7 @@ static struct path_list *get_unmerged(void)
 
 	unmerged->strdup_paths = 1;
 	if (!cache_dirty) {
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 		cache_dirty++;
 	}
 	for (i = 0; i < active_nr; i++) {
@@ -472,10 +470,6 @@ static int remove_path(const char *name)
 	return ret;
 }
 
-/*
- * TODO: once we no longer call external programs, we'd probably be better off
- * not setting / getting the environment variable GIT_INDEX_FILE all the time.
- */
 int remove_file(int clean, const char *path)
 {
 	int update_cache = index_only || clean;
@@ -483,7 +477,7 @@ int remove_file(int clean, const char *path)
 
 	if (update_cache) {
 		if (!cache_dirty)
-			read_cache_from(getenv("GIT_INDEX_FILE"));
+			read_cache_from(current_index_file);
 		cache_dirty++;
 		if (remove_file_from_cache(path))
 			return -1;
@@ -1199,6 +1193,17 @@ static int merge_trees(struct tree *head,
 	return clean;
 }
 
+static struct commit_list *reverse_commit_list(struct commit_list *list)
+{
+	struct commit_list *next = NULL, *current, *backup;
+	for (current = list; current; current = backup) {
+		backup = current->next;
+		current->next = next;
+		next = current;
+	}
+	return next;
+}
+
 /*
  * Merge the commits h1 and h2, return the resulting virtual
  * commit object and a flag indicating the cleaness of the merge.
@@ -1224,13 +1229,25 @@ int merge(struct commit *h1,
 	if (ancestor)
 		commit_list_insert(ancestor, &ca);
 	else
-		ca = get_merge_bases(h1, h2, 1);
+		ca = reverse_commit_list(get_merge_bases(h1, h2, 1));
 
 	output("found %u common ancestor(s):", commit_list_count(ca));
 	for (iter = ca; iter; iter = iter->next)
 		output_commit_title(iter->item);
 
 	merged_common_ancestors = pop_commit(&ca);
+	if (merged_common_ancestors == NULL) {
+		/* if there is no common ancestor, make an empty tree */
+		struct tree *tree = xcalloc(1, sizeof(struct tree));
+		unsigned char hdr[40];
+		int hdrlen;
+
+		tree->object.parsed = 1;
+		tree->object.type = OBJ_TREE;
+		write_sha1_file_prepare(NULL, 0, tree_type, tree->object.sha1,
+					hdr, &hdrlen);
+		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
+	}
 
 	for (iter = ca; iter; iter = iter->next) {
 		output_indent = call_depth + 1;
