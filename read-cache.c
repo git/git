@@ -858,6 +858,18 @@ int discard_cache()
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 
+static int ce_write_flush(SHA_CTX *context, int fd)
+{
+	unsigned int buffered = write_buffer_len;
+	if (buffered) {
+		SHA1_Update(context, write_buffer, buffered);
+		if (write(fd, write_buffer, buffered) != buffered)
+			return -1;
+		write_buffer_len = 0;
+	}
+	return 0;
+}
+
 static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 {
 	while (len) {
@@ -868,8 +880,8 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 		memcpy(write_buffer + buffered, data, partial);
 		buffered += partial;
 		if (buffered == WRITE_BUFFER_SIZE) {
-			SHA1_Update(context, write_buffer, WRITE_BUFFER_SIZE);
-			if (write(fd, write_buffer, WRITE_BUFFER_SIZE) != WRITE_BUFFER_SIZE)
+			write_buffer_len = buffered;
+			if (ce_write_flush(context, fd))
 				return -1;
 			buffered = 0;
 		}
@@ -979,19 +991,15 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
-	now = fstat(newfd, &st) ? 0 : st.st_mtime;
-	recent = 0;
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
-		time_t entry_time = (time_t) ntohl(ce->ce_mtime.sec);
 		if (!ce->ce_mode)
 			continue;
-		if (index_file_timestamp && index_file_timestamp <= entry_time)
+		if (index_file_timestamp &&
+		    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
 			ce_smudge_racily_clean_entry(ce);
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
-		if (now && now <= entry_time)
-			recent++;
 	}
 
 	/* Write extension data here */
@@ -1021,19 +1029,42 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 	 * This assumes that nobody is touching the working tree while
 	 * we are updating the index.
 	 */
-	if (20 < recent || entries <= recent * 4) {
-		now = fstat(newfd, &st) ? 0 : st.st_mtime;
-		while (now && !fstat(newfd, &st) && st.st_mtime <= now) {
-			struct timespec rq, rm;
-			off_t where = lseek(newfd, 0, SEEK_CUR);
-			rq.tv_sec = 0;
-			rq.tv_nsec = 250000000;
-			nanosleep(&rq, &rm);
-			if ((where == (off_t) -1) ||
-			    (write(newfd, "", 1) != 1) ||
-			    (lseek(newfd, -1, SEEK_CUR) != where) ||
-			    ftruncate(newfd, where))
-				break;
+
+	/* Make sure that the new index file has st_mtime
+	 * that is current enough -- ce_write() batches the data
+	 * so it might not have written anything yet.
+	 */
+	ce_write_flush(&c, newfd);
+
+	now = fstat(newfd, &st) ? 0 : st.st_mtime;
+	if (now) {
+		recent = 0;
+		for (i = 0; i < entries; i++) {
+			struct cache_entry *ce = cache[i];
+			time_t entry_time = (time_t) ntohl(ce->ce_mtime.sec);
+			if (!ce->ce_mode)
+				continue;
+			if (now && now <= entry_time)
+				recent++;
+		}
+		if (20 < recent && entries <= recent * 4) {
+#if 0
+			fprintf(stderr, "entries    %d\n", entries);
+			fprintf(stderr, "recent     %d\n", recent);
+			fprintf(stderr, "now        %lu\n", now);
+#endif
+			while (!fstat(newfd, &st) && st.st_mtime <= now) {
+				struct timespec rq, rm;
+				off_t where = lseek(newfd, 0, SEEK_CUR);
+				rq.tv_sec = 0;
+				rq.tv_nsec = 250000000;
+				nanosleep(&rq, &rm);
+				if ((where == (off_t) -1) ||
+				    (write(newfd, "", 1) != 1) ||
+				    (lseek(newfd, -1, SEEK_CUR) != where) ||
+				    ftruncate(newfd, where))
+					break;
+			}
 		}
 	}
 	return ce_flush(&c, newfd);
