@@ -7,7 +7,7 @@ x86_64)
 	;;
 esac
 
-J='-l 4 -j'
+: ${J='-l 4 -j'}
 G=/pub/software/scm/git &&
 
 cd $HOME/git &&
@@ -21,7 +21,7 @@ make clean >/dev/null 2>&1 &&
 case "$1" in
 '')
 	echo "* Building all"
-	branches='next master maint pu'
+	: ${branches='next master maint pu'}
 	nstalled=install
 	for branch in $branches
 	do
