@@ -1191,6 +1191,17 @@ static int merge_trees(struct tree *head,
 	return clean;
 }
 
+static struct commit_list *reverse_commit_list(struct commit_list *list)
+{
+	struct commit_list *next = NULL, *current, *backup;
+	for (current = list; current; current = backup) {
+		backup = current->next;
+		current->next = next;
+		next = current;
+	}
+	return next;
+}
+
 /*
  * Merge the commits h1 and h2, return the resulting virtual
  * commit object and a flag indicating the cleaness of the merge.
@@ -1216,7 +1227,7 @@ int merge(struct commit *h1,
 	if (ancestor)
 		commit_list_insert(ancestor, &ca);
 	else
-		ca = get_merge_bases(h1, h2, 1);
+		ca = reverse_commit_list(get_merge_bases(h1, h2, 1));
 
 	output("found %u common ancestor(s):", commit_list_count(ca));
 	for (iter = ca; iter; iter = iter->next)
