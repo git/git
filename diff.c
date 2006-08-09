@@ -1515,9 +1515,10 @@ void diff_setup(struct diff_options *options)
 
 int diff_setup_done(struct diff_options *options)
 {
-	if ((options->find_copies_harder &&
-	     options->detect_rename != DIFF_DETECT_COPY) ||
-	    (0 <= options->rename_limit && !options->detect_rename))
+	if (options->find_copies_harder)
+		options->detect_rename = DIFF_DETECT_COPY;
+
+	if ((0 <= options->rename_limit && !options->detect_rename)
 		return -1;
 
 	if (options->output_format & (DIFF_FORMAT_NAME |
