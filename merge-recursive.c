@@ -248,38 +248,34 @@ static int git_merge_trees(int index_only,
 	return rc;
 }
 
-/*
- * TODO: this can be streamlined by refactoring builtin-write-tree.c
- */
 static struct tree *git_write_tree(void)
 {
-	FILE *fp;
-	int rc;
-	char buf[41];
-	unsigned char sha1[20];
-	int ch;
-	unsigned i = 0;
+	struct tree *result = NULL;
+
 	if (cache_dirty) {
+		unsigned i;
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
 				return NULL;
 		}
-		flush_cache();
-	}
-	fp = popen("git-write-tree 2>/dev/null", "r");
-	while ((ch = fgetc(fp)) != EOF)
-		if (i < sizeof(buf)-1 && ch >= '0' && ch <= 'f')
-			buf[i++] = ch;
-		else
-			break;
-	rc = pclose(fp);
-	if (rc == -1 || WEXITSTATUS(rc))
-		return NULL;
-	buf[i] = '\0';
-	if (get_sha1(buf, sha1) != 0)
-		return NULL;
-	return lookup_tree(sha1);
+	} else
+		read_cache_from(getenv("GIT_INDEX_FILE"));
+
+	if (!active_cache_tree)
+		active_cache_tree = cache_tree();
+
+	if (!cache_tree_fully_valid(active_cache_tree) &&
+			cache_tree_update(active_cache_tree,
+				active_cache, active_nr, 0, 0) < 0)
+		die("error building trees");
+
+	result = lookup_tree(active_cache_tree->sha1);
+
+	flush_cache();
+	cache_dirty = 0;
+
+	return result;
 }
 
 static int save_files_dirs(const unsigned char *sha1,
