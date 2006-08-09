@@ -116,6 +116,7 @@ static void output_commit_title(struct commit *commit)
 	}
 }
 
+static const char *current_index_file = NULL;
 static const char *original_index_file;
 static const char *temporary_index_file;
 static int cache_dirty = 0;
@@ -124,12 +125,12 @@ static int flush_cache(void)
 {
 	/* flush temporary index */
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int fd = hold_lock_file_for_update(lock, getenv("GIT_INDEX_FILE"));
+	int fd = hold_lock_file_for_update(lock, current_index_file);
 	if (fd < 0)
 		die("could not lock %s", lock->filename);
 	if (write_cache(fd, active_cache, active_nr) ||
 			close(fd) || commit_lock_file(lock))
-		die ("unable to write %s", getenv("GIT_INDEX_FILE"));
+		die ("unable to write %s", current_index_file);
 	discard_cache();
 	cache_dirty = 0;
 	return 0;
@@ -137,11 +138,10 @@ static int flush_cache(void)
 
 static void setup_index(int temp)
 {
-	const char *idx = temp ? temporary_index_file: original_index_file;
+	current_index_file = temp ? temporary_index_file: original_index_file;
 	if (cache_dirty)
 		die("fatal: cache changed flush_cache();");
 	unlink(temporary_index_file);
-	setenv("GIT_INDEX_FILE", idx, 1);
 	discard_cache();
 }
 
@@ -174,7 +174,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 {
 	struct cache_entry *ce;
 	if (!cache_dirty)
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 	cache_dirty++;
 	ce = make_cache_entry(mode, sha1 ? sha1 : null_sha1, path, stage, refresh);
 	if (!ce)
@@ -223,7 +223,7 @@ static int git_merge_trees(int index_only,
 	struct unpack_trees_options opts;
 
 	if (!cache_dirty) {
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 		cache_dirty = 1;
 	}
 
@@ -260,7 +260,7 @@ static struct tree *git_write_tree(void)
 				return NULL;
 		}
 	} else
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 
 	if (!active_cache_tree)
 		active_cache_tree = cache_tree();
@@ -338,7 +338,7 @@ static struct path_list *get_unmerged(void)
 
 	unmerged->strdup_paths = 1;
 	if (!cache_dirty) {
-		read_cache_from(getenv("GIT_INDEX_FILE"));
+		read_cache_from(current_index_file);
 		cache_dirty++;
 	}
 	for (i = 0; i < active_nr; i++) {
@@ -468,10 +468,6 @@ static int remove_path(const char *name)
 	return ret;
 }
 
-/*
- * TODO: once we no longer call external programs, we'd probably be better off
- * not setting / getting the environment variable GIT_INDEX_FILE all the time.
- */
 int remove_file(int clean, const char *path)
 {
 	int update_cache = index_only || clean;
@@ -479,7 +475,7 @@ int remove_file(int clean, const char *path)
 
 	if (update_cache) {
 		if (!cache_dirty)
-			read_cache_from(getenv("GIT_INDEX_FILE"));
+			read_cache_from(current_index_file);
 		cache_dirty++;
 		if (remove_file_from_cache(path))
 			return -1;
