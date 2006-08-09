@@ -139,8 +139,10 @@ static int flush_cache(void)
 static void setup_index(int temp)
 {
 	current_index_file = temp ? temporary_index_file: original_index_file;
-	if (cache_dirty)
-		die("fatal: cache changed flush_cache();");
+	if (cache_dirty) {
+		discard_cache();
+		cache_dirty = 0;
+	}
 	unlink(temporary_index_file);
 	discard_cache();
 }
