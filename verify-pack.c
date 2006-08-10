@@ -26,6 +26,15 @@ static int verify_one_pack(const char *path, int verbose)
 		len += 4;
 	}
 
+	/*
+	 * add_packed_git() uses our buffer (containing "foo.idx") to
+	 * build the pack filename ("foo.pack").  Make sure it fits.
+	 */
+	if (len + 1 >= PATH_MAX) {
+		arg[len - 4] = '\0';
+		return error("name too long: %s.pack", arg);
+	}
+
 	pack = add_packed_git(arg, len, 1);
 	if (!pack)
 		return error("packfile %s not found.", arg);
