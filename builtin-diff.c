@@ -253,7 +253,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
-		diff_setup_done(&rev.diffopt);
+		if (diff_setup_done(&rev.diffopt) < 0)
+			die("diff_setup_done failed");
 	}
 
 	/* Do we have --cached and not have a pending object, then
@@ -348,6 +349,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		 * A and B.  We have ent[0] == merge-base, ent[1] == A,
 		 * and ent[2] == B.  Show diff between the base and B.
 		 */
+		ent[1] = ent[2];
 		return builtin_diff_tree(&rev, argc, argv, ent);
 	}
 	else
