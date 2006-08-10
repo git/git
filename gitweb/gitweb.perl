@@ -1003,7 +1003,7 @@ sub git_get_paging_nav {
 	if ($page > 0) {
 		$paging_nav .= " &sdot; " .
 			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$action;h=$hash;pg=" . ($page-1)),
-							 -accesskey => "p", -title => "Alt-p"}, "prev");
+			         -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		$paging_nav .= " &sdot; prev";
 	}
@@ -1011,7 +1011,7 @@ sub git_get_paging_nav {
 	if ($nrevs >= (100 * ($page+1)-1)) {
 		$paging_nav .= " &sdot; " .
 			$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$action;h=$hash;pg=" . ($page+1)),
-							 -accesskey => "n", -title => "Alt-n"}, "next");
+			         -accesskey => "n", -title => "Alt-n"}, "next");
 	} else {
 		$paging_nav .= " &sdot; next";
 	}
@@ -1844,9 +1844,9 @@ sub git_log {
 		next if !%co;
 		my %ad = date_str($co{'author_epoch'});
 		git_header_div('commit',
-									 "<span class=\"age\">$co{'age_string'}</span>" .
-									 esc_html($co{'title'}) . $ref,
-									 $commit);
+		               "<span class=\"age\">$co{'age_string'}</span>" .
+		               esc_html($co{'title'}) . $ref,
+		               $commit);
 		print "<div class=\"title_text\">\n" .
 		      "<div class=\"log_link\">\n" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
@@ -1911,8 +1911,8 @@ sub git_commit {
 	}
 	git_header_html(undef, $expires);
 	git_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
-							 $hash, $co{'tree'}, $hash,
-							 $formats_nav);
+	             $hash, $co{'tree'}, $hash,
+	             $formats_nav);
 
 	if (defined $co{'parent'}) {
 		git_header_div('commitdiff', esc_html($co{'title'}) . $ref, $hash);
