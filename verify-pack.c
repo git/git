@@ -18,13 +18,12 @@ static int verify_one_pack(const char *path, int verbose)
 		if (has_extension(arg, len, ".pack")) {
 			strcpy(arg + len - 5, ".idx");
 			len--;
+		} else if (!has_extension(arg, len, ".idx")) {
+			if (len + 4 >= PATH_MAX)
+				return error("name too long: %s.idx", arg);
+			strcpy(arg + len, ".idx");
+			len += 4;
 		}
-		/* Should name foo.idx now */
-		if ((g = add_packed_git(arg, len, 1)))
-			break;
-		/* No?  did you name just foo? */
-		strcpy(arg + len, ".idx");
-		len += 4;
 		if ((g = add_packed_git(arg, len, 1)))
 			break;
 		return error("packfile %s not found.", arg);
