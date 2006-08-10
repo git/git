@@ -530,7 +530,7 @@ static void start_put(struct transfer_request *request)
 	request->dest = xmalloc(strlen(request->url) + 14);
 	sprintf(request->dest, "Destination: %s", request->url);
 	posn += 38;
-	*(posn++) = '.';
+	*(posn++) = '_';
 	strcpy(posn, request->lock->token);
 
 	slot = get_active_slot();
