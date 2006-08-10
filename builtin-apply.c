@@ -1698,6 +1698,14 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	desc.buffer = buf;
 	if (apply_fragments(&desc, patch) < 0)
 		return -1;
+
+	/* NUL terminate the result */
+	if (desc.alloc <= desc.size) {
+		desc.buffer = xrealloc(desc.buffer, desc.size + 1);
+		desc.alloc++;
+	}
+	desc.buffer[desc.size] = 0;
+
 	patch->result = desc.buffer;
 	patch->resultsize = desc.size;
 
@@ -2040,6 +2048,9 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	int fd;
 
 	if (S_ISLNK(mode))
+		/* Although buf:size is counted string, it also is NUL
+		 * terminated.
+		 */
 		return symlink(buf, path);
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
