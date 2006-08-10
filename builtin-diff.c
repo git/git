@@ -349,6 +349,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		 * A and B.  We have ent[0] == merge-base, ent[1] == A,
 		 * and ent[2] == B.  Show diff between the base and B.
 		 */
+		ent[1] = ent[2];
 		return builtin_diff_tree(&rev, argc, argv, ent);
 	}
 	else
