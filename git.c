@@ -270,6 +270,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "version", cmd_version },
 		{ "whatchanged", cmd_whatchanged, RUN_SETUP | USE_PAGER },
 		{ "write-tree", cmd_write_tree, RUN_SETUP },
+		{ "verify-pack", cmd_verify_pack },
 	};
 	int i;
 

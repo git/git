@@ -275,6 +275,7 @@ BUILTIN_OBJS = \
 	builtin-update-index.o \
 	builtin-update-ref.o \
 	builtin-upload-tar.o \
+	builtin-verify-pack.o \
 	builtin-write-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
