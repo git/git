@@ -1700,10 +1700,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		return -1;
 
 	/* NUL terminate the result */
-	if (desc.alloc <= desc.size) {
+	if (desc.alloc <= desc.size)
 		desc.buffer = xrealloc(desc.buffer, desc.size + 1);
-		desc.alloc++;
-	}
 	desc.buffer[desc.size] = 0;
 
 	patch->result = desc.buffer;
