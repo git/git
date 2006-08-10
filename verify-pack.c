@@ -5,7 +5,8 @@ static int verify_one_pack(const char *path, int verbose)
 {
 	char arg[PATH_MAX];
 	int len;
-	struct packed_git *g;
+	struct packed_git *pack;
+	int err;
 
 	len = strlcpy(arg, path, PATH_MAX);
 	if (len >= PATH_MAX)
@@ -25,10 +26,14 @@ static int verify_one_pack(const char *path, int verbose)
 		len += 4;
 	}
 
-	if (!(g = add_packed_git(arg, len, 1)))
+	pack = add_packed_git(arg, len, 1);
+	if (!pack)
 		return error("packfile %s not found.", arg);
 
-	return verify_pack(g, verbose);
+	err = verify_pack(pack, verbose);
+	free(pack);
+
+	return err;
 }
 
 static const char verify_pack_usage[] = "git-verify-pack [-v] <pack>...";
