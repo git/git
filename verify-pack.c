@@ -10,7 +10,7 @@ static int verify_one_pack(char *arg, int verbose)
 		/* Should name foo.idx, but foo.pack may be named;
 		 * convert it to foo.idx
 		 */
-		if (!strcmp(arg + len - 5, ".pack")) {
+		if (has_extension(arg, len, ".pack")) {
 			strcpy(arg + len - 5, ".idx");
 			len--;
 		}

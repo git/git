@@ -447,7 +447,7 @@ int main(int argc, char **argv)
 		usage(index_pack_usage);
 	if (!index_name) {
 		int len = strlen(pack_name);
-		if (len < 5 || strcmp(pack_name + len - 5, ".pack"))
+		if (!has_extension(pack_name, len, ".pack"))
 			die("packfile name '%s' does not end with '.pack'",
 			    pack_name);
 		index_name_buf = xmalloc(len);

@@ -147,7 +147,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			namelen = strlen(de->d_name);
 			if (namelen > 255)
 				continue;
-			if (namelen>5 && !strcmp(de->d_name+namelen-5,".lock"))
+			if (has_extension(de->d_name, namelen, ".lock"))
 				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
 			if (stat(git_path("%s", path), &st) < 0)
