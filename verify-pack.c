@@ -1,11 +1,16 @@
 #include "cache.h"
 #include "pack.h"
 
-static int verify_one_pack(char *arg, int verbose)
+static int verify_one_pack(const char *path, int verbose)
 {
-	int len = strlen(arg);
+	char arg[PATH_MAX];
+	int len;
 	struct packed_git *g;
-	
+
+	len = strlcpy(arg, path, PATH_MAX);
+	if (len >= PATH_MAX)
+		return error("name too long: %s", path);
+
 	while (1) {
 		/* Should name foo.idx, but foo.pack may be named;
 		 * convert it to foo.idx
@@ -37,8 +42,6 @@ int main(int ac, char **av)
 	int nothing_done = 1;
 
 	while (1 < ac) {
-		char path[PATH_MAX];
-
 		if (!no_more_options && av[1][0] == '-') {
 			if (!strcmp("-v", av[1]))
 				verbose = 1;
@@ -48,8 +51,7 @@ int main(int ac, char **av)
 				usage(verify_pack_usage);
 		}
 		else {
-			strcpy(path, av[1]);
-			if (verify_one_pack(path, verbose))
+			if (verify_one_pack(av[1], verbose))
 				errs++;
 			nothing_done = 0;
 		}
