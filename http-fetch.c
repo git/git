@@ -870,7 +870,7 @@ static void process_ls_pack(struct remote_ls_ctx *ls)
 
 	if (strlen(ls->dentry_name) == 63 &&
 	    !strncmp(ls->dentry_name, "objects/pack/pack-", 18) &&
-	    !strncmp(ls->dentry_name+58, ".pack", 5)) {
+	    has_extension(ls->dentry_name, 63, ".pack")) {
 		get_sha1_hex(ls->dentry_name + 18, sha1);
 		setup_index(ls->repo, sha1);
 	}
