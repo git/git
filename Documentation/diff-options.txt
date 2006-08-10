@@ -36,6 +36,9 @@
 	Turn off colored diff, even when the configuration file
 	gives the default to color output.
 
+--color-words::
+	Show colored word diff, i.e. color words which have changed.
+
 --no-renames::
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
