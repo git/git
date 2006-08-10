@@ -11,23 +11,23 @@ static int verify_one_pack(const char *path, int verbose)
 	if (len >= PATH_MAX)
 		return error("name too long: %s", path);
 
-	while (1) {
-		/* Should name foo.idx, but foo.pack may be named;
-		 * convert it to foo.idx
-		 */
-		if (has_extension(arg, len, ".pack")) {
-			strcpy(arg + len - 5, ".idx");
-			len--;
-		} else if (!has_extension(arg, len, ".idx")) {
-			if (len + 4 >= PATH_MAX)
-				return error("name too long: %s.idx", arg);
-			strcpy(arg + len, ".idx");
-			len += 4;
-		}
-		if ((g = add_packed_git(arg, len, 1)))
-			break;
-		return error("packfile %s not found.", arg);
+	/*
+	 * In addition to "foo.idx" we accept "foo.pack" and "foo";
+	 * normalize these forms to "foo.idx" for add_packed_git().
+	 */
+	if (has_extension(arg, len, ".pack")) {
+		strcpy(arg + len - 5, ".idx");
+		len--;
+	} else if (!has_extension(arg, len, ".idx")) {
+		if (len + 4 >= PATH_MAX)
+			return error("name too long: %s.idx", arg);
+		strcpy(arg + len, ".idx");
+		len += 4;
 	}
+
+	if (!(g = add_packed_git(arg, len, 1)))
+		return error("packfile %s not found.", arg);
+
 	return verify_pack(g, verbose);
 }
 
