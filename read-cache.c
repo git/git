@@ -841,14 +841,14 @@ int discard_cache()
 {
 	int ret;
 
+	active_nr = active_cache_changed = 0;
+	index_file_timestamp = 0;
+	cache_tree_free(&active_cache_tree);
 	if (cache_mmap == NULL)
 		return 0;
 	ret = munmap(cache_mmap, cache_mmap_size);
 	cache_mmap = NULL;
 	cache_mmap_size = 0;
-	active_nr = active_cache_changed = 0;
-	index_file_timestamp = 0;
-	cache_tree_free(&active_cache_tree);
 
 	/* no need to throw away allocated active_cache */
 	return ret;
