@@ -34,6 +34,7 @@ int main(int ac, char **av)
 	int errs = 0;
 	int verbose = 0;
 	int no_more_options = 0;
+	int nothing_done = 1;
 
 	while (1 < ac) {
 		char path[PATH_MAX];
@@ -50,8 +51,13 @@ int main(int ac, char **av)
 			strcpy(path, av[1]);
 			if (verify_one_pack(path, verbose))
 				errs++;
+			nothing_done = 0;
 		}
 		ac--; av++;
 	}
+
+	if (nothing_done)
+		usage(verify_pack_usage);
+
 	return !!errs;
 }
