@@ -49,7 +49,7 @@ static const char verify_pack_usage[] = "git-verify-pack [-v] <pack>...";
 
 int main(int ac, char **av)
 {
-	int errs = 0;
+	int err = 0;
 	int verbose = 0;
 	int no_more_options = 0;
 	int nothing_done = 1;
@@ -65,7 +65,7 @@ int main(int ac, char **av)
 		}
 		else {
 			if (verify_one_pack(av[1], verbose))
-				errs++;
+				err = 1;
 			nothing_done = 0;
 		}
 		ac--; av++;
@@ -74,5 +74,5 @@ int main(int ac, char **av)
 	if (nothing_done)
 		usage(verify_pack_usage);
 
-	return !!errs;
+	return err;
 }
