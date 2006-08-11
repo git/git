@@ -31,6 +31,7 @@ use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
 use File::Spec qw//;
+use File::Copy qw/copy/;
 use POSIX qw/strftime/;
 use IPC::Open3;
 use Memoize;
@@ -76,9 +77,6 @@ my %cmt_opts = ( 'edit|e' => \$_edit,
 		'l=i' => \$_l,
 		'copy-similarity|C=i'=> \$_cp_similarity
 );
-
-# yes, 'native' sets "\n".  Patches to fix this for non-*nix systems welcome:
-my %EOL = ( CR => "\015", LF => "\012", CRLF => "\015\012", native => "\012" );
 
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN",
@@ -1760,43 +1758,6 @@ sub svn_info {
 
 sub sys { system(@_) == 0 or croak $? }
 
-sub eol_cp {
-	my ($from, $to) = @_;
-	my $es = svn_propget_base('svn:eol-style', $to);
-	open my $rfd, '<', $from or croak $!;
-	binmode $rfd or croak $!;
-	open my $wfd, '>', $to or croak $!;
-	binmode $wfd or croak $!;
-	eol_cp_fd($rfd, $wfd, $es);
-	close $rfd or croak $!;
-	close $wfd or croak $!;
-}
-
-sub eol_cp_fd {
-	my ($rfd, $wfd, $es) = @_;
-	my $eol = defined $es ? $EOL{$es} : undef;
-	my $buf;
-	use bytes;
-	while (1) {
-		my ($r, $w, $t);
-		defined($r = sysread($rfd, $buf, 4096)) or croak $!;
-		return unless $r;
-		if ($eol) {
-			if ($buf =~ /\015$/) {
-				my $c;
-				defined($r = sysread($rfd,$c,1)) or croak $!;
-				$buf .= $c if $r > 0;
-			}
-			$buf =~ s/(?:\015\012|\015|\012)/$eol/gs;
-			$r = length($buf);
-		}
-		for ($w = 0; $w < $r; $w += $t) {
-			$t = syswrite($wfd, $buf, $r - $w, $w) or croak $!;
-		}
-	}
-	no bytes;
-}
-
 sub do_update_index {
 	my ($z_cmd, $cmd, $no_text_base) = @_;
 
@@ -1824,9 +1785,11 @@ sub do_update_index {
 						'text-base',"$f.svn-base");
 				$tb =~ s#^/##;
 			}
+			my @s = stat($x);
 			unlink $x or croak $!;
-			eol_cp($tb, $x);
+			copy($tb, $x);
 			chmod(($mode &~ umask), $x) or croak $!;
+			utime $s[8], $s[9], $x;
 		}
 		print $ui $x,"\0";
 	}
