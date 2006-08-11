@@ -49,10 +49,6 @@ Technical (heavier)
 Technical (milder)
 ------------------
 
-* git grep should be able to omit prefix when invoked from a
-  subdirectory.  Either make it an option or default with
-  --full-name like ls-files does.
-
 * duplicated refspec given to "fetch-pack a a a" makes it emit
   strange error message because it triggers the "match only
   once" logic.  Maybe strip the dups on the input side
@@ -70,42 +66,7 @@ Technical (milder)
 * git-daemon side support for virtual hosting.  Client side
   is ready in 1.4.0 (Jon Loeliger <1149610100.23938.75.camel@cashmere.sps.mot.com>).
 
-* teach git-upload-pack not to ack-continue early when the
-  client has roots it does not know about but it already has
-  learned the fork points for all the requested heads
-  (Ralf Baechle <20060524131022.GA11449@linux-mips.org>).
-
-* Per user .gitconfig across repositories -- ongoing.
-
-* Encourage competition between annotate vs blame.  Maybe come
-  up with some nontrivial test cases.
-
 * Subprojects.  Try "gitlink" -- sorry, stalled.
-
-* Rebase and checkout -m should be able to use recursive
-  strategy as well.  These commands currently do not work across
-  renames.
-
-* Decide what to do about rebase applied to merged head.  One
-  extreme is to allow rebase if "rev-list ours..theirs" gives
-  anything.  This loosens the current merge-base based approach.
-  The other extreme is to refuse rebase if "rev-list
-  theirs..ours" contains any merge commit, which was discussed
-  on the list.
-
-  <43CC695E.2020506@codeweavers.com>
-
-* Decide what the right thing to do upon an empty merge commit,
-  when both branches happen to have obtained the same set of
-  changes through different history.  Not recording such keeps
-  the history simpler, and the next merge would soon create a
-  true merge commit anyway, but this does not feel quite right.
-
-  <20060114021800.4688.qmail@web31803.mail.mud.yahoo.com>
-
-* diff stopping at the first output; qgit wants to know if this
-  tree has any A or D from the other tree and nothing else.
-  Would help internal tree-diff in rev-list as well.
 
 * daemon --strict-symlink.
 
