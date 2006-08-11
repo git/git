@@ -2580,7 +2580,9 @@ sub libsvn_connect {
 sub libsvn_get_file {
 	my ($gui, $f, $rev) = @_;
 	my $p = $f;
-	return unless ($p =~ s#^\Q$SVN_PATH\E/##);
+	if (length $SVN_PATH > 0) {
+		return unless ($p =~ s#^\Q$SVN_PATH\E/##);
+	}
 
 	my ($hash, $pid, $in, $out);
 	my $pool = SVN::Pool->new;
@@ -2627,6 +2629,7 @@ sub libsvn_log_entry {
 	if (defined $_authors && ! defined $users{$author}) {
 		die "Author: $author not defined in $_authors file\n";
 	}
+	$msg = '' if ($rev == 0 && !defined $msg);
 	return { revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
 		author => $author, msg => $msg."\n", parents => $parents || [] }
 }
