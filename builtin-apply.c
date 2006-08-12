@@ -2234,12 +2234,9 @@ static int apply_patch(int fd, const char *filename,
 		apply = 0;
 
 	write_index = check_index && apply;
-	if (write_index && newfd < 0) {
+	if (write_index && newfd < 0)
 		newfd = hold_lock_file_for_update(&lock_file,
-						  get_index_file());
-		if (newfd < 0)
-			die("unable to create new index file");
-	}
+						  get_index_file(), 1);
 	if (check_index) {
 		if (read_cache() < 0)
 			die("unable to read index file");

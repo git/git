@@ -319,13 +319,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *path,
 
 	if (safe_create_leading_directories(lock->ref_file))
 		die("unable to create directory for %s", lock->ref_file);
-	lock->lock_fd = hold_lock_file_for_update(lock->lk, lock->ref_file);
-	if (lock->lock_fd < 0) {
-		error("Couldn't open lock file %s: %s",
-		      lock->lk->filename, strerror(errno));
-		unlock_ref(lock);
-		return NULL;
-	}
+	lock->lock_fd = hold_lock_file_for_update(lock->lk, lock->ref_file, 1);
 
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 }

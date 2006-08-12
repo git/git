@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 			state.refresh_cache = 1;
 			if (newfd < 0)
 				newfd = hold_lock_file_for_update
-					(&lock_file, get_index_file());
+					(&lock_file, get_index_file(), 1);
 			if (newfd < 0)
 				die("cannot open index.lock file.");
 			continue;

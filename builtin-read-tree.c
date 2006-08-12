@@ -884,9 +884,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 
 	git_config(git_default_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
-	if (newfd < 0)
-		die("unable to create new index file");
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
 
 	git_config(git_default_config);
 
