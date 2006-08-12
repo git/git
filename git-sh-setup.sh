@@ -35,17 +35,12 @@ case "$1" in
 	exit
 esac
 
+# Make sure we are in a valid repository of a vintage we understand.
 if [ -z "$SUBDIRECTORY_OK" ]
 then
 	: ${GIT_DIR=.git}
-	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
-
-	# Make sure we are in a valid repository of a vintage we understand.
-	GIT_DIR="$GIT_DIR" git repo-config --get core.nosuch >/dev/null
-	if test $? = 128
-	then
-	    exit
-	fi
+	GIT_DIR=$(GIT_DIR="$GIT_DIR" git-rev-parse --git-dir) || exit
 else
 	GIT_DIR=$(git-rev-parse --git-dir) || exit
 fi
+: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
