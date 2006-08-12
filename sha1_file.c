@@ -608,7 +608,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		int namelen = strlen(de->d_name);
 		struct packed_git *p;
 
-		if (!has_extension(de->d_name, namelen, ".idx"))
+		if (!has_extension(de->d_name, ".idx"))
 			continue;
 
 		/* we have .idx.  Is it a file we can map? */

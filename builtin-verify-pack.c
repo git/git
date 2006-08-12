@@ -17,10 +17,10 @@ static int verify_one_pack(const char *path, int verbose)
 	 * In addition to "foo.idx" we accept "foo.pack" and "foo";
 	 * normalize these forms to "foo.idx" for add_packed_git().
 	 */
-	if (has_extension(arg, len, ".pack")) {
+	if (has_extension(arg, ".pack")) {
 		strcpy(arg + len - 5, ".idx");
 		len--;
-	} else if (!has_extension(arg, len, ".idx")) {
+	} else if (!has_extension(arg, ".idx")) {
 		if (len + 4 >= PATH_MAX)
 			return error("name too long: %s.idx", arg);
 		strcpy(arg + len, ".idx");
