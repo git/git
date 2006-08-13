@@ -179,7 +179,7 @@ struct lock_file {
 	struct lock_file *next;
 	char filename[PATH_MAX];
 };
-extern int hold_lock_file_for_update(struct lock_file *, const char *path);
+extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
 

@@ -1158,27 +1158,24 @@ sub repo_path_split {
 		}
 	}
 
-	my ($url, $path) = ($full_url =~ m!^([a-z\+]+://[^/]*)(.*)$!i);
-	$path =~ s#^/+##;
-	my @paths = split(m#/+#, $path);
-
 	if ($_use_lib) {
-		while (1) {
-			$SVN = libsvn_connect($url);
-			last if (defined $SVN &&
-				defined eval { $SVN->get_latest_revnum });
-			my $n = shift @paths || last;
-			$url .= "/$n";
-		}
+		my $tmp = libsvn_connect($full_url);
+		my $url = $tmp->get_repos_root;
+		$full_url =~ s#^\Q$url\E/*##;
+		push @repo_path_split_cache, qr/^(\Q$url\E)/;
+		return ($url, $full_url);
 	} else {
+		my ($url, $path) = ($full_url =~ m!^([a-z\+]+://[^/]*)(.*)$!i);
+		$path =~ s#^/+##;
+		my @paths = split(m#/+#, $path);
 		while (quiet_run(qw/svn ls --non-interactive/, $url)) {
 			my $n = shift @paths || last;
 			$url .= "/$n";
 		}
+		push @repo_path_split_cache, qr/^(\Q$url\E)/;
+		$path = join('/',@paths);
+		return ($url, $path);
 	}
-	push @repo_path_split_cache, qr/^(\Q$url\E)/;
-	$path = join('/',@paths);
-	return ($url, $path);
 }
 
 sub setup_git_svn {
