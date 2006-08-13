@@ -5,5 +5,33 @@ The one working on:
 
 From the git version 1.4.0 gitweb is bundled with git.
 
-Any comment/question/concern to:
+
+How to configure gitweb for your local system:
+
+You can specify the following configuration variables when building GIT:
+ * GITWEB_SITENAME
+   Shown in the title of all generated pages, defaults to the servers name.
+ * GITWEB_PROJECTROOT
+   The root directory for all projects shown by gitweb.
+ * GITWEB_LIST
+   points to a directory to scan for projects (defaults to project root)
+   or to a file for explicit listing of projects.
+ * GITWEB_HOMETEXT
+   points to an .html file which is included on the gitweb project
+   overview page.
+ * GITWEB_CSS
+   Points to the location where you put gitweb.css on your web server.
+ * GITWEB_LOGO
+   Points to the location where you put git-logo.png on your web server.
+ * GITWEB_CONFIG
+   This file will be loaded using 'require'.  If the environment
+   $GITWEB_CONFIG is set when gitweb.cgi is executed the file in the
+   environment variable will be loaded instead of the file
+   specified when gitweb.cgi was created.
+
+Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
+
+Any comment/question/concern to:
+  Git mailing list <git@vger.kernel.org>
+
