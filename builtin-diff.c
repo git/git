@@ -56,13 +56,6 @@ static int builtin_diff_files(struct rev_info *revs,
 	if (revs->max_count < 0 &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
-	/*
-	 * Backward compatibility wart - "diff-files -s" used to
-	 * defeat the common diff option "-s" which asked for
-	 * DIFF_FORMAT_NO_OUTPUT.
-	 */
-	if (revs->diffopt.output_format == DIFF_FORMAT_NO_OUTPUT)
-		revs->diffopt.output_format = DIFF_FORMAT_RAW;
 	return run_diff_files(revs, silent);
 }
 
