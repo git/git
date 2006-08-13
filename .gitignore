@@ -140,7 +140,7 @@ config.mak
 autom4te.cache
 config.log
 config.status
-config.mak.in
 config.mak.autogen
+config.mak.append
 configure
 git-blame
